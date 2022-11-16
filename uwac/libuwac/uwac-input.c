@@ -732,6 +732,7 @@ static void pointer_handle_enter(void* data, struct wl_pointer* pointer, uint32_
 	}
 
 	input->display->serial = serial;
+	input->display->pointer_focus_serial = serial;
 	window = wl_surface_get_user_data(surface);
 	if (window)
 		window->pointer_enter_serial = serial;
@@ -1162,5 +1163,5 @@ UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t l
 	{
 		seat->pointer_type = 1;
 	}
-	return set_cursor_image(seat, seat->display->serial);
+	return set_cursor_image(seat, seat->display->pointer_focus_serial);
 }
