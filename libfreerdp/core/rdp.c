@@ -1711,7 +1711,8 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 			}
 			else if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CREATE_RESPONSE))
 				status = STATE_RUN_FAILED;
-
+			else if (Stream_GetRemainingLength(s) > 0)
+				status = STATE_RUN_CONTINUE;
 			break;
 
 		case CONNECTION_STATE_MCS_CREATE_RESPONSE:
