@@ -1,20 +1,61 @@
-# Security Policy
+# FreeRDP Security Policies and Procedures
 
-## Supported Versions
+This document describes the security policy and procedures for the [FreeRDP Project](https://github.com/FreeRDP/FreeRDP).
+The following topics are covered:
 
-We support only the latest stable branch and development/master.
-Since the protocol is a moving target we do not strictly distinguish between feature and security updates, but keep the API forward compatible within the stable branch.
+  * [Supported Versions](#supported-versions)
+  * [Reporting a Vulnerability](#reporting-a-vulnerability)
+  * [Disclosure Procedure](#disclosure-procedure)
 
-| Version | Supported          |
-| ------- | ------------------ |
-| master  | :white_check_mark: |
-| 2.x.x   | :white_check_mark: |
-| < 2.0.0 | :x:                |
 
-## Reporting a Vulnerability
+## Supported versions
 
-Please report a vulnerability to security@freerdp.com
-For encrypted communication you can use the following GPG key:
+Security is very important for us therefore we try to provide security updates and support for
+the latest stable version as well as for the development branch.
+Since our development branch is, like the protocol itself, a moving target we won't request CVEs for issues that are *only* found on the development branch.
+
+The following table shows the currently supported versions:
+
+| Version | Branch       | Supported          | 
+| ------- |--------------| ------------------ |
+| < 2.0.0 | stable-1.x   | :x:                |
+| 2.x.x   | stable-2.0   | :heavy_check_mark: |
+| -       | master       | :white_check_mark: |
+
+
+## Reporting a vulnerability
+
+**IMPORTANT**: Please, do not file security vulnerabilities as public issues on GitHub
+
+In advance: **Thank you** for reporting a security vulnerability and making FreeRDP more stable! We really appreciate your effort.
+Please let us know who we should give the credit or attributions to.
+
+
+If you have found a security vulnerability in FreeRDP you can either directly open an [Advisory on GitHub](https://github.com/FreeRDP/FreeRDP/security/advisories/new)[^1] or send us an email to mailto:security@freerdp.com
+
+In case of an email you can use the [FreeRDP security team GPG key](#reporting-gpg-key) for encrypted communication.
+
+Once we receive a report we will review it and respond as soon as possible.
+
+###
+
+
+## Disclosure procedure
+
+When the FreeRDP team receives a report one of the team members will be assigned as primary contact.
+The primary contact will do all further communications and coordinate the fix and release process. 
+
+How your report will be handled:
+
+* When a report is received we will acknowledge the reception and review the reported issue(s) as soon as possible.
+* Once confirmed we will determine the affected versions. If not reported via GitHub a [security advisory draft on GitHub](https://github.com/FreeRDP/FreeRDP/security/advisories) will be created for any issue. If it applies we will request a CVE.
+* On a private branch we will fix the issue and check the code for any potential similar problem. 
+* After the fix is validated we will create and publish a new release for all supported versions and publish the advisories.
+
+## Reporting GPG key 
+
+FreeRDP's security reporting public gpg key https://pub.freerdp.com/FreeRDP-security-team.pub.asc
+
 ```
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 
@@ -69,3 +110,4 @@ Vw2F8gu/fHiadawxWIhUH+plFVQZc1KwgPcIMW3S
 =O0kP
 -----END PGP PUBLIC KEY BLOCK-----
 ```
+[^1]: https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing/privately-reporting-a-security-vulnerability
