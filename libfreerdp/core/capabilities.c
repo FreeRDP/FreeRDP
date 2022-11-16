@@ -3216,7 +3216,7 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 				Stream_Read_UINT32(sub, captureFlags);   /* captureFlags (4 bytes) */
 				Stream_Read_UINT32(sub, rfxCapsLength);  /* capsLength (4 bytes) */
 				settings->RemoteFxCaptureFlags = captureFlags;
-				settings->RemoteFxOnly = (captureFlags & CARDP_CAPS_CAPTURE_NON_CAC) ? TRUE : FALSE;
+				settings->RemoteFxOnly = (captureFlags & CARDP_CAPS_CAPTURE_NON_CAC) ? FALSE : TRUE;
 
 				if (rfxCapsLength)
 				{
