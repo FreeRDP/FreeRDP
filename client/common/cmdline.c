@@ -1799,7 +1799,7 @@ static int parse_tls_enforce(rdpSettings* settings, const char* Value)
 	{
 		struct map_t
 		{
-			char* name;
+			const char* name;
 			UINT16 version;
 		};
 		const struct map_t map[] = {
@@ -1862,8 +1862,8 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	}
 	CommandLineSwitchCase(arg, "enforce-tlsv1_2")
 	{
-		WLog_WARN(TAG, "Option /enforce-tlsv1_2 is deprecated, use /tls:enforce:1_2 instead");
-		rc = parse_tls_enforce(settings, arg->Value);
+		WLog_WARN(TAG, "Option /enforce-tlsv1_2 is deprecated, use /tls:enforce:1.2 instead");
+		rc = parse_tls_enforce(settings, "1.2");
 	}
 #endif
 	CommandLineSwitchDefault(arg)
