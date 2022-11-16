@@ -1,6 +1,13 @@
-# 20xx-xx-xx Version 2.8.x
+# 2022-11-16 Version 2.9.0
 
 Notewhorth changes:
+* Backported #8252: Support sending server redirection PDU
+* Backported #8406: Ensure X11 client cursor is never smaller 1x1
+* Backported #8403: Fixed multiple client side input validation issues
+  (CVE-2022-39316, CVE-2022-39317, CVE-2022-39318, CVE-2022-39319,
+	 CVE-2022-39320, CVE-2022-41877, CVE-2022-39347)
+* Backported #7282: Proxy server now discards input events sent before
+  activation was received
 * Backported #8324: Internal replacements for md4, md5 and hmac-md5
    For the time being the RDP protocol requires these outdated hash
    algorithms. So any distribution that wants to ship a working
@@ -14,7 +21,7 @@ Fixed issues:
 * Backported #7282: Discard input events before activation (Fixes #8374)
 
 For a complete and detailed change log since the last release run:
-git log 2.8.1..2.8.x
+git log 2.8.1..2.9.0
 
 
 # 2022-10-12 Version 2.8.1
