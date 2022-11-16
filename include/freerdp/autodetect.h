@@ -30,18 +30,26 @@ extern "C"
 #endif
 	typedef struct rdp_autodetect rdpAutoDetect;
 
-	typedef BOOL (*pRTTMeasureRequest)(rdpAutoDetect* autodetect, UINT16 sequenceNumber);
-	typedef BOOL (*pRTTMeasureResponse)(rdpAutoDetect* autodetect, UINT16 sequenceNumber);
-	typedef BOOL (*pBandwidthMeasureStart)(rdpAutoDetect* autodetect, UINT16 sequenceNumber);
-	typedef BOOL (*pBandwidthMeasureStop)(rdpAutoDetect* autodetect, UINT16 sequenceNumber);
-	typedef BOOL (*pBandwidthMeasureResults)(rdpAutoDetect* autodetect, UINT16 responseType,
+	typedef BOOL (*pRTTMeasureRequest)(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
+	                                   UINT16 sequenceNumber);
+	typedef BOOL (*pRTTMeasureResponse)(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
+	                                    UINT16 sequenceNumber);
+	typedef BOOL (*pBandwidthMeasureStart)(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
+	                                       UINT16 sequenceNumber);
+	typedef BOOL (*pBandwidthMeasureStop)(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
+	                                      UINT16 sequenceNumber);
+	typedef BOOL (*pBandwidthMeasureResults)(rdpAutoDetect* autodetect,
+	                                         RDP_TRANSPORT_TYPE transport, UINT16 responseType,
 	                                         UINT16 sequenceNumber);
-	typedef BOOL (*pNetworkCharacteristicsResult)(rdpAutoDetect* autodetect, UINT16 sequenceNumber);
-	typedef BOOL (*pClientBandwidthMeasureResult)(rdpAutoDetect* autodetect, UINT16 responseType,
+	typedef BOOL (*pNetworkCharacteristicsResult)(rdpAutoDetect* autodetect,
+	                                              RDP_TRANSPORT_TYPE transport,
+	                                              UINT16 sequenceNumber);
+	typedef BOOL (*pClientBandwidthMeasureResult)(rdpAutoDetect* autodetect,
+	                                              RDP_TRANSPORT_TYPE transport, UINT16 responseType,
 	                                              UINT16 sequenceNumber, UINT32 timeDelta,
 	                                              UINT32 byteCount);
-	typedef BOOL (*pRxTxReceived)(rdpAutoDetect* autodetect, UINT16 requestType,
-	                              UINT16 sequenceNumber);
+	typedef BOOL (*pRxTxReceived)(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
+	                              UINT16 requestType, UINT16 sequenceNumber);
 
 	struct rdp_autodetect
 	{

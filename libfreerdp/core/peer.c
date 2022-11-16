@@ -541,7 +541,8 @@ static state_run_t peer_recv_handle_auto_detect(freerdp_peer* client, wStream* s
 		{
 			case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST:
 			{
-				if (autodetect_send_connecttime_rtt_measure_request(rdp->autodetect, 0x23))
+				if (autodetect_send_connecttime_rtt_measure_request(rdp->autodetect,
+				                                                    RDP_TRANSPORT_TCP, 0x23))
 					ret = STATE_RUN_SUCCESS;
 				rdp_server_transition_to_state(rdp,
 				                               CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE);

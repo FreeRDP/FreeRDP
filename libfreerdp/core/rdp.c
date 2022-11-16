@@ -1179,13 +1179,13 @@ state_run_t rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securit
 	if (securityFlags & SEC_AUTODETECT_REQ)
 	{
 		/* Server Auto-Detect Request PDU */
-		return autodetect_recv_request_packet(rdp->autodetect, s);
+		return autodetect_recv_request_packet(rdp->autodetect, RDP_TRANSPORT_TCP, s);
 	}
 
 	if (securityFlags & SEC_AUTODETECT_RSP)
 	{
 		/* Client Auto-Detect Response PDU */
-		return autodetect_recv_response_packet(rdp->autodetect, s);
+		return autodetect_recv_response_packet(rdp->autodetect, RDP_TRANSPORT_TCP, s);
 	}
 
 	if (securityFlags & SEC_HEARTBEAT)
