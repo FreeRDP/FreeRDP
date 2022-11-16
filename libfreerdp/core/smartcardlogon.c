@@ -460,7 +460,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		status = list_provider_keys(settings, provider, csp, scope, userFilter, domainFilter,
 		                            &cert_list, &count);
 		NCryptFreeObject((NCRYPT_HANDLE)provider);
-		if (status != ERROR_SUCCESS)
+		if (!status)
 		{
 			WLog_ERR(TAG, "error listing keys from CSP loaded from %s", Pkcs11Module);
 			goto out;
