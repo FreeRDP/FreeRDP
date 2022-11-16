@@ -137,7 +137,7 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 
 	if (surface && buffer_add_listener_success > -1)
 	{
-		wl_surface_attach(surface, buffer, -x, -y);
+		wl_surface_attach(surface, buffer, 0, 0);
 		wl_surface_damage(surface, 0, 0, image->width, image->height);
 		wl_surface_commit(surface);
 	}
