@@ -121,6 +121,7 @@ struct uwac_display
 	bool running;
 	UwacTask dispatch_fd_task;
 	uint32_t serial;
+	uint32_t pointer_focus_serial;
 
 	struct wl_list windows;
 
