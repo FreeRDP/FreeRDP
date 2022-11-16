@@ -77,6 +77,14 @@ typedef struct
 	UINT32 height;
 } RECTANGLE_32;
 
+/** @brief type of RDP transport */
+typedef enum
+{
+	RDP_TRANSPORT_TCP = 0,
+	RDP_TRANSPORT_UDP_R,
+	RDP_TRANSPORT_UDP_L
+} RDP_TRANSPORT_TYPE;
+
 /* Plugin events */
 
 #include <freerdp/message.h>
