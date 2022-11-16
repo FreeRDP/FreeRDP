@@ -16,6 +16,7 @@ DEB_CMAKE_EXTRA_FLAGS :=  -DCMAKE_SKIP_RPATH=FALSE \
                           -DWITH_DSP_FFMPEG=ON \
                           -DCHANNEL_URBDRC=ON \
                           -DCHANNEL_URBDRC_CLIENT=ON \
+                          -DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON \
                           -DWITH_SERVER=ON \
                           -DWITH_WAYLAND=ON \
                           -DWITH_CAIRO=ON \
