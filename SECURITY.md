@@ -31,7 +31,7 @@ In advance: **Thank you** for reporting a security vulnerability and making Free
 Please let us know who we should give the credit or attributions to.
 
 
-If you have found a security vulnerability in FreeRDP you can either direclty open an [Advisory on GitHub](https://github.com/FreeRDP/FreeRDP/security/advisories/new)[^1] or send us an email to mailto:security@freerdp.com
+If you have found a security vulnerability in FreeRDP you can either directly open an [Advisory on GitHub](https://github.com/FreeRDP/FreeRDP/security/advisories/new)[^1] or send us an email to mailto:security@freerdp.com
 
 In case of an email you can use the [FreeRDP security team GPG key](#reporting-gpg-key) for encrypted communication.
 
@@ -47,7 +47,7 @@ The primary contact will do all further communications and coordinate the fix an
 
 How your report will be handled:
 
-* When a report is received we will acknolege the reception and review the reported issue(s) as soon as possible.
+* When a report is received we will acknowledge the reception and review the reported issue(s) as soon as possible.
 * Once confirmed we will determine the affected versions. If not reported via GitHub a [security advisory draft on GitHub](https://github.com/FreeRDP/FreeRDP/security/advisories) will be created for any issue. If it applies we will request a CVE.
 * On a private branch we will fix the issue and check the code for any potential similar problem. 
 * After the fix is validated we will create and publish a new release for all supported versions and publish the advisories.
