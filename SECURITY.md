@@ -12,7 +12,7 @@ The following topics are covered:
 
 Security is very important for us therefore we try to provide security updates and support for
 the latest stable version as well as for the development branch.
-Since our development branch is, like the protcol itself, a moving target we won't request CVEs for issues that are *only* found on the development branch.
+Since our development branch is, like the protocol itself, a moving target we won't request CVEs for issues that are *only* found on the development branch.
 
 The following table shows the currently supported versions:
 
