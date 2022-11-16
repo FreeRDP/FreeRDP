@@ -83,6 +83,7 @@ struct rdp_transport
 	wLog* log;
 	rdpTransportIo io;
 	HANDLE ioEvent;
+	BOOL useIoEvent;
 };
 
 static void transport_ssl_cb(SSL* ssl, int where, int ret)
@@ -1007,7 +1008,7 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 
 		events[nCount++] = transport->rereadEvent;
 
-		if (transport->ioEvent)
+		if (transport->useIoEvent)
 		{
 			if (count < 2)
 				return 0;
@@ -1518,6 +1519,7 @@ HANDLE transport_get_front_bio(rdpTransport* transport)
 BOOL transport_io_callback_set_event(rdpTransport* transport, BOOL set)
 {
 	WINPR_ASSERT(transport);
+	transport->useIoEvent = TRUE;
 	if (!set)
 		return ResetEvent(transport->ioEvent);
 	return SetEvent(transport->ioEvent);
