@@ -1000,6 +1000,38 @@ static BOOL rdg_send_handshake(rdpRdg* rdg)
 	return status;
 }
 
+static BOOL rdg_send_extauth_sspi(rdpRdg* rdg)
+{
+	wStream* s;
+	BOOL status;
+	UINT32 packetSize = 8 + 4 + 2;
+
+	WINPR_ASSERT(rdg);
+
+	const SecBuffer* authToken = credssp_auth_get_output_buffer(rdg->auth);
+	if (!authToken)
+		return FALSE;
+	packetSize += authToken->cbBuffer;
+
+	s = Stream_New(NULL, packetSize);
+
+	if (!s)
+		return FALSE;
+
+	Stream_Write_UINT16(s, PKT_TYPE_EXTENDED_AUTH_MSG); /* Type (2 bytes) */
+	Stream_Write_UINT16(s, 0);                          /* Reserved (2 bytes) */
+	Stream_Write_UINT32(s, packetSize);                 /* PacketLength (4 bytes) */
+	Stream_Write_UINT32(s, ERROR_SUCCESS);              /* Error code */
+	Stream_Write_UINT16(s, (UINT16)authToken->cbBuffer);
+	Stream_Write(s, authToken->pvBuffer, authToken->cbBuffer);
+
+	Stream_SealLength(s);
+	status = rdg_write_packet(rdg, s);
+	Stream_Free(s, TRUE);
+
+	return status;
+}
+
 static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 {
 	wStream* s;
@@ -1308,6 +1340,9 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 		return FALSE;
 	}
 
+	if (rdg->extAuth == HTTP_EXTENDED_AUTH_SSPI_NTLM)
+		return rdg_send_extauth_sspi(rdg);
+
 	return rdg_send_tunnel_request(rdg);
 }
 
@@ -1443,6 +1478,53 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 	return rdg_send_channel_create(rdg);
 }
 
+static BOOL rdg_process_extauth_sspi(rdpRdg* rdg, wStream* s)
+{
+	UINT32 errorCode;
+	UINT16 authBlobLen;
+	SecBuffer authToken = { 0 };
+	BYTE* authTokenData = NULL;
+
+	WINPR_ASSERT(rdg);
+
+	Stream_Read_UINT32(s, errorCode);
+	Stream_Read_UINT16(s, authBlobLen);
+
+	if (errorCode != ERROR_SUCCESS)
+	{
+		WLog_ERR(TAG, "[%s] EXTAUTH_SSPI_NTLM failed with error %s [0x%08X]", __FUNCTION__,
+		         GetSecurityStatusString(errorCode), errorCode);
+		return FALSE;
+	}
+
+	if (authBlobLen == 0)
+	{
+		if (credssp_auth_is_complete(rdg->auth))
+		{
+			credssp_auth_free(rdg->auth);
+			rdg->auth = NULL;
+			return rdg_send_tunnel_request(rdg);
+		}
+		return FALSE;
+	}
+
+	authTokenData = malloc(authBlobLen);
+	Stream_Read(s, authTokenData, authBlobLen);
+
+	authToken.pvBuffer = authTokenData;
+	authToken.cbBuffer = authBlobLen;
+
+	credssp_auth_take_input_buffer(rdg->auth, &authToken);
+
+	if (credssp_auth_authenticate(rdg->auth) < 0)
+		return FALSE;
+
+	if (credssp_auth_have_output_token(rdg->auth))
+		return rdg_send_extauth_sspi(rdg);
+
+	return FALSE;
+}
+
 static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 {
 	UINT16 fieldsPresent;
@@ -1519,6 +1601,14 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 		case PKT_TYPE_DATA:
 			WLog_ERR(TAG, "[%s] Unexpected packet type DATA", __FUNCTION__);
 			return FALSE;
+
+		case PKT_TYPE_EXTENDED_AUTH_MSG:
+			status = rdg_process_extauth_sspi(rdg, s);
+			break;
+
+		default:
+			WLog_ERR(TAG, "[%s] PKG TYPE 0x%x not implemented", __FUNCTION__, type);
+			return FALSE;
 	}
 
 	return status;
@@ -1574,7 +1664,7 @@ static BOOL rdg_get_gateway_credentials(rdpContext* context, rdp_auth_reason rea
 	}
 }
 
-static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls)
+static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls, TCHAR* authPkg)
 {
 	rdpContext* context = rdg->context;
 	rdpSettings* settings = context->settings;
@@ -1585,7 +1675,7 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls)
 	if (!rdg->auth)
 		return FALSE;
 
-	if (!credssp_auth_init(rdg->auth, AUTH_PKG, tls->Bindings))
+	if (!credssp_auth_init(rdg->auth, authPkg, tls->Bindings))
 		return FALSE;
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon))
@@ -1765,7 +1855,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 	WINPR_ASSERT(rpcFallback);
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
 	{
-		if (!rdg_auth_init(rdg, tls))
+		if (!rdg_auth_init(rdg, tls, AUTH_PKG))
 			return FALSE;
 
 		if (!rdg_send_http_request(rdg, tls, method, TransferEncodingIdentity))
@@ -1880,7 +1970,13 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 			rdg->transferEncoding.isWebsocketTransport = TRUE;
 			rdg->transferEncoding.context.websocket.state = WebsocketStateOpcodeAndFin;
 			rdg->transferEncoding.context.websocket.responseStreamBuffer = NULL;
-
+			if (rdg->extAuth == HTTP_EXTENDED_AUTH_SSPI_NTLM)
+			{
+				/* create a new auth context for SSPI_NTLM. This must be done after the last
+				 * rdg_send_http_request */
+				if (!rdg_auth_init(rdg, tls, NTLM_SSP_NAME))
+					return FALSE;
+			}
 			return TRUE;
 		default:
 			return FALSE;
@@ -1904,6 +2000,14 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 	{
 		if (!rdg_send_http_request(rdg, tls, method, TransferEncodingChunked))
 			return FALSE;
+
+		if (rdg->extAuth == HTTP_EXTENDED_AUTH_SSPI_NTLM)
+		{
+			/* create a new auth context for SSPI_NTLM. This must be done after the last
+			 * rdg_send_http_request (RDG_IN_DATA is always after RDG_OUT_DATA) */
+			if (!rdg_auth_init(rdg, tls, NTLM_SSP_NAME))
+				return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -2592,7 +2696,8 @@ rdpRdg* rdg_new(rdpContext* context)
 		rdg->state = RDG_CLIENT_STATE_INITIAL;
 		rdg->context = context;
 		rdg->settings = rdg->context->settings;
-		rdg->extAuth = HTTP_EXTENDED_AUTH_NONE;
+		rdg->extAuth = (rdg->settings->GatewayHttpExtAuthSspiNtln ? HTTP_EXTENDED_AUTH_SSPI_NTLM
+		                                                          : HTTP_EXTENDED_AUTH_NONE);
 
 		if (rdg->settings->GatewayAccessToken)
 			rdg->extAuth = HTTP_EXTENDED_AUTH_PAA;
@@ -2641,6 +2746,10 @@ rdpRdg* rdg_new(rdpContext* context)
 			{
 				case HTTP_EXTENDED_AUTH_PAA:
 					if (!http_context_set_rdg_auth_scheme(rdg->http, "PAA"))
+						goto rdg_alloc_error;
+
+				case HTTP_EXTENDED_AUTH_SSPI_NTLM:
+					if (!http_context_set_rdg_auth_scheme(rdg->http, "SSPI_NTLM"))
 						goto rdg_alloc_error;
 
 					break;

@@ -222,6 +222,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_GatewayHttpUseWebsockets:
 			return settings->GatewayHttpUseWebsockets;
 
+		case FreeRDP_GatewayHttpExtAuthSspiNtln:
+			return settings->GatewayHttpExtAuthSspiNtln;
+
 		case FreeRDP_GatewayRpcTransport:
 			return settings->GatewayRpcTransport;
 
@@ -828,6 +831,9 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_GatewayHttpUseWebsockets:
 			settings->GatewayHttpUseWebsockets = cnv.c;
+			break;
+		case FreeRDP_GatewayHttpExtAuthSspiNtln:
+			settings->GatewayHttpExtAuthSspiNtln = cnv.c;
 			break;
 
 		case FreeRDP_GatewayRpcTransport:
