@@ -131,8 +131,8 @@ SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider, LPCWST
 {
 
 #ifdef WITH_PKCS11
-	if (_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0 ||
-	    _wcscmp(pszProviderName, MS_SCARD_PROV) == 0)
+	if (pszProviderName && (_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0 ||
+	                        _wcscmp(pszProviderName, MS_SCARD_PROV) == 0))
 	{
 		return winpr_NCryptOpenStorageProviderEx(phProvider, pszProviderName, dwFlags, NULL);
 	}
@@ -146,8 +146,8 @@ SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider
                                                   LPCSTR* modulePaths)
 {
 #ifdef WITH_PKCS11
-	if (_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0 ||
-	    _wcscmp(pszProviderName, MS_SCARD_PROV) == 0)
+	if (pszProviderName && (_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0 ||
+	                        _wcscmp(pszProviderName, MS_SCARD_PROV) == 0))
 	{
 		return NCryptOpenP11StorageProviderEx(phProvider, pszProviderName, dwFlags, modulePaths);
 	}
