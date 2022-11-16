@@ -110,6 +110,7 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
 
 %cmake  -DCMAKE_SKIP_RPATH=FALSE \
         -DCMAKE_SKIP_INSTALL_RPATH=FALSE \
+        -DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON \
         -DWITH_PULSE=ON \
         -DWITH_CHANNELS=ON \
         -DWITH_CUPS=ON \
