@@ -259,8 +259,8 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 
 	xscale = (settings->SmartSizing ? xfc->scaledWidth / (double)settings->DesktopWidth : 1);
 	yscale = (settings->SmartSizing ? xfc->scaledHeight / (double)settings->DesktopHeight : 1);
-	xTargetSize = pointer->width * xscale;
-	yTargetSize = pointer->height * yscale;
+	xTargetSize = MAX(1, pointer->width * xscale);
+	yTargetSize = MAX(1, pointer->height * yscale);
 
 	WLog_DBG(TAG, "%s: scaled: %" PRIu32 "x%" PRIu32 ", desktop: %" PRIu32 "x%" PRIu32, __func__,
 	         xfc->scaledWidth, xfc->scaledHeight, settings->DesktopWidth, settings->DesktopHeight);
