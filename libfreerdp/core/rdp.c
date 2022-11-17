@@ -1697,7 +1697,7 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 					if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CREATE_REQUEST))
 						status = STATE_RUN_FAILED;
 					else
-						status = STATE_RUN_TRY_AGAIN;
+						status = STATE_RUN_CONTINUE;
 				}
 			}
 			break;
@@ -1979,14 +1979,17 @@ state_run_t rdp_recv_callback(rdpTransport* transport, wStream* s, void* extra)
 	{
 		const rdpRdp* rdp = context->rdp;
 		const char* old = rdp_get_state_string(rdp);
+		const size_t orem = Stream_GetPosition(s);
 
 		if (rc == STATE_RUN_TRY_AGAIN)
 			Stream_SetPosition(s, start);
 		rc = rdp_recv_callback_int(transport, s, extra);
 
+		const char* now = rdp_get_state_string(rdp);
+		const size_t rem = Stream_GetPosition(s);
+
 		WLog_VRB(TAG, "(client)[%s -> %s] current return %s [%" PRIuz " bytes not processed]", old,
-		         rdp_get_state_string(rdp), state_run_result_string(rc, buffer, sizeof(buffer)),
-		         Stream_GetRemainingLength(s));
+		         now, state_run_result_string(rc, buffer, sizeof(buffer)), rem - orem);
 	} while ((rc == STATE_RUN_TRY_AGAIN) || (rc == STATE_RUN_CONTINUE));
 	return rc;
 }
