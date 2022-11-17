@@ -22,6 +22,7 @@
 #define WINPR_CRT_STRING_H
 
 #include <wchar.h>
+#include <stdio.h>
 #include <string.h>
 #include <winpr/config.h>
 #include <winpr/winpr.h>
