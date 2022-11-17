@@ -1416,11 +1416,13 @@ fail:
 
 static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 {
-	WinPrAsn1Decoder dec, dec2, dec3;
-	BOOL error;
-	WinPrAsn1_tagId tag;
-	WinPrAsn1_OctetString octet_string;
-	WinPrAsn1_INTEGER val;
+	WinPrAsn1Decoder dec = { 0 };
+	WinPrAsn1Decoder dec2 = { 0 };
+	WinPrAsn1Decoder dec3 = { 0 };
+	BOOL error = FALSE;
+	WinPrAsn1_tagId tag = { 0 };
+	WinPrAsn1_OctetString octet_string = { 0 };
+	WinPrAsn1_INTEGER val = { 0 };
 	UINT32 version = 0;
 
 	WINPR_ASSERT(nla);
@@ -1431,13 +1433,20 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 	WLog_DBG(TAG, "<<----- receiving...");
 
 	/* TSRequest */
-	if (!WinPrAsn1DecReadSequence(&dec, &dec2))
+	const size_t offset = WinPrAsn1DecReadSequence(&dec, &dec2);
+	if (offset == 0)
+		return -1;
+	if (Stream_GetRemainingLength(s) < offset)
 		return -1;
 	dec = dec2;
 
 	/* version [0] INTEGER */
-	if (!WinPrAsn1DecReadContextualInteger(&dec, 0, &error, &val))
+	if (WinPrAsn1DecReadContextualInteger(&dec, 0, &error, &val) == 0)
 		return -1;
+
+	if (!Stream_SafeSeek(s, offset))
+		return -1;
+
 	version = (UINT)val;
 	WLog_DBG(TAG, "   <<----- protocol version %" PRIu32, version);
 
@@ -1452,19 +1461,19 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 		return -1;
 	}
 
-	while (WinPrAsn1DecReadContextualTag(&dec, &tag, &dec2))
+	while (WinPrAsn1DecReadContextualTag(&dec, &tag, &dec2) != 0)
 	{
 		switch (tag)
 		{
 			case 1:
 				WLog_DBG(TAG, "   <<----- nego token");
 				/* negoTokens [1] SEQUENCE OF SEQUENCE */
-				if (!WinPrAsn1DecReadSequence(&dec2, &dec3) ||
-				    !WinPrAsn1DecReadSequence(&dec3, &dec2))
+				if ((WinPrAsn1DecReadSequence(&dec2, &dec3) == 0) ||
+				    (WinPrAsn1DecReadSequence(&dec3, &dec2) == 0))
 					return -1;
 				/* negoToken [0] OCTET STRING */
-				if (!WinPrAsn1DecReadContextualOctetString(&dec2, 0, &error, &octet_string,
-				                                           FALSE) &&
+				if ((WinPrAsn1DecReadContextualOctetString(&dec2, 0, &error, &octet_string,
+				                                           FALSE) == 0) &&
 				    error)
 					return -1;
 				if (!nla_sec_buffer_alloc_from_data(&nla->negoToken, octet_string.data, 0,
@@ -1474,7 +1483,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 			case 2:
 				WLog_DBG(TAG, "   <<----- auth info");
 				/* authInfo [2] OCTET STRING */
-				if (!WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE))
+				if (WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE) == 0)
 					return -1;
 				if (!nla_sec_buffer_alloc_from_data(&nla->authInfo, octet_string.data, 0,
 				                                    octet_string.len))
@@ -1483,7 +1492,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 			case 3:
 				WLog_DBG(TAG, "   <<----- public key auth");
 				/* pubKeyAuth [3] OCTET STRING */
-				if (!WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE))
+				if (WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE) == 0)
 					return -1;
 				if (!nla_sec_buffer_alloc_from_data(&nla->pubKeyAuth, octet_string.data, 0,
 				                                    octet_string.len))
@@ -1491,7 +1500,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 				break;
 			case 4:
 				/* errorCode [4] INTEGER */
-				if (!WinPrAsn1DecReadInteger(&dec2, &val))
+				if (WinPrAsn1DecReadInteger(&dec2, &val) == 0)
 					return -1;
 				nla->errorCode = (UINT)val;
 				WLog_DBG(TAG, "   <<----- error code %s 0x%08" PRIx32, NtStatus2Tag(nla->errorCode),
@@ -1500,7 +1509,7 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 			case 5:
 				WLog_DBG(TAG, "   <<----- client nonce");
 				/* clientNonce [5] OCTET STRING */
-				if (!WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE))
+				if (WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE) == 0)
 					return -1;
 				if (!nla_sec_buffer_alloc_from_data(&nla->ClientNonce, octet_string.data, 0,
 				                                    octet_string.len))
