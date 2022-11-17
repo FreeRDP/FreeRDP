@@ -580,7 +580,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	/* some 2008 server freeze at logon if we announce support for monitor layout PDU with
 	 * #monitors < 2. So let's announce it only if we have more than 1 monitor.
 	 */
-	if (settings->MonitorCount)
+	if (settings->MonitorCount > 1)
 		settings->SupportMonitorLayoutPdu = TRUE;
 
 	rc = TRUE;
