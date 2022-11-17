@@ -385,7 +385,7 @@ static UINT dvcchannel_send_close(DVCMAN_CHANNEL* channel)
 	return drdynvc_send(drdynvc, s);
 }
 
-static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, bool perRequest)
+static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest)
 {
 	UINT error = CHANNEL_RC_OK;
 	drdynvcPlugin* drdynvc;
@@ -1686,6 +1686,17 @@ static UINT drdynvc_virtual_channel_event_disconnected(drdynvcPlugin* drdynvc)
 
 		CloseHandle(drdynvc->thread);
 		drdynvc->thread = NULL;
+	}
+	else
+	{
+		{
+			/* Disconnect remaining dynamic channels that the server did not.
+			 * This is required to properly shut down channels by calling the appropriate
+			 * event handlers. */
+			DVCMAN* drdynvcMgr = (DVCMAN*)drdynvc->channel_mgr;
+
+			HashTable_Foreach(drdynvcMgr->channelsById, channelByIdCleanerFn, drdynvc);
+		}
 	}
 
 	WINPR_ASSERT(drdynvc->channelEntryPoints.pVirtualChannelCloseEx);
