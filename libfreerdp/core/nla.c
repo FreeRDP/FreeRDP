@@ -1436,8 +1436,6 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 	const size_t offset = WinPrAsn1DecReadSequence(&dec, &dec2);
 	if (offset == 0)
 		return -1;
-	if (Stream_GetRemainingLength(s) < offset)
-		return -1;
 	dec = dec2;
 
 	/* version [0] INTEGER */
