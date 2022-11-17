@@ -137,8 +137,8 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 
 	if (!freerdp_settings_get_bool(gdi->context->settings, FreeRDP_DeactivateClientDecoding))
 	{
-		const UINT32 width = (UINT32)MIN(0, gdi->width);
-		const UINT32 height = (UINT32)MIN(0, gdi->height);
+		const UINT32 width = (UINT32)MAX(0, gdi->width);
+		const UINT32 height = (UINT32)MAX(0, gdi->height);
 
 		if (!freerdp_client_codecs_reset(
 		        context->codecs, freerdp_settings_get_codecs_flags(settings), width, height))
