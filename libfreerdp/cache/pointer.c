@@ -280,7 +280,8 @@ rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 
 	if (index >= pointer_cache->cacheSize)
 	{
-		WLog_ERR(TAG, "invalid pointer index:%" PRIu32 "", index);
+		WLog_ERR(TAG, "invalid pointer index:%" PRIu32 " [%" PRIu32 "]", index,
+		         pointer_cache->cacheSize);
 		return NULL;
 	}
 
@@ -297,7 +298,8 @@ BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer*
 
 	if (index >= pointer_cache->cacheSize)
 	{
-		WLog_ERR(TAG, "invalid pointer index:%" PRIu32 "", index);
+		WLog_ERR(TAG, "invalid pointer index:%" PRIu32 " [%" PRIu32 "]", index,
+		         pointer_cache->cacheSize);
 		return FALSE;
 	}
 
