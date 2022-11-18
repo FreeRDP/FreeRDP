@@ -47,14 +47,18 @@ BOOL utils_str_copy(const char* value, char** dst)
 auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason)
 {
 	rdpSettings* settings;
+	rdpSettings* origSettings;
 	BOOL prompt = FALSE;
 	BOOL proceed;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
 	WINPR_ASSERT(instance->context->settings);
+	WINPR_ASSERT(instance->context->rdp);
+	WINPR_ASSERT(instance->context->rdp->originalSettings);
 
 	settings = instance->context->settings;
+	origSettings = instance->context->rdp->originalSettings;
 
 	if (freerdp_shall_disconnect_context(instance->context))
 		return AUTH_FAILED;
@@ -84,20 +88,35 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 
 	if (!utils_sync_credentials(settings, FALSE))
 		return AUTH_FAILED;
+
+	/* update original settings with provided user credentials */
+	if (!utils_str_copy(settings->GatewayUsername, &origSettings->GatewayUsername))
+		return AUTH_FAILED;
+	if (!utils_str_copy(settings->GatewayDomain, &origSettings->GatewayDomain))
+		return AUTH_FAILED;
+	if (!utils_str_copy(settings->GatewayPassword, &origSettings->GatewayPassword))
+		return AUTH_FAILED;
+	if (!utils_sync_credentials(origSettings, FALSE))
+		return AUTH_FAILED;
+
 	return AUTH_SUCCESS;
 }
 
 auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL override)
 {
 	rdpSettings* settings;
+	rdpSettings* origSettings;
 	BOOL prompt = !override;
 	BOOL proceed;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
 	WINPR_ASSERT(instance->context->settings);
+	WINPR_ASSERT(instance->context->rdp);
+	WINPR_ASSERT(instance->context->rdp->originalSettings);
 
 	settings = instance->context->settings;
+	origSettings = instance->context->rdp->originalSettings;
 
 	if (freerdp_shall_disconnect_context(instance->context))
 		return AUTH_FAILED;
@@ -148,6 +167,17 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 
 	if (!utils_sync_credentials(settings, TRUE))
 		return AUTH_FAILED;
+
+	/* update original settings with provided user credentials */
+	if (!utils_str_copy(settings->Username, &origSettings->Username))
+		return AUTH_FAILED;
+	if (!utils_str_copy(settings->Domain, &origSettings->Domain))
+		return AUTH_FAILED;
+	if (!utils_str_copy(settings->Password, &origSettings->Password))
+		return AUTH_FAILED;
+	if (!utils_sync_credentials(origSettings, TRUE))
+		return AUTH_FAILED;
+
 	return AUTH_SUCCESS;
 }
 
