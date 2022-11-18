@@ -21,6 +21,7 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/utils/rdpdr_utils.h>
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
@@ -31,9 +32,29 @@
 #include <freerdp/channels/log.h>
 #include "rdpdr_main.h"
 
-#define TAG "rdpdr.server"
+#define TAG CHANNELS_TAG("rdpdr.server")
+
+#define RDPDR_ADD_PRINTER_EVENT 0x00000001
+#define RDPDR_UPDATE_PRINTER_EVENT 0x00000002
+#define RDPDR_DELETE_PRINTER_EVENT 0x00000003
+#define RDPDR_RENAME_PRINTER_EVENT 0x00000004
 
 static UINT32 g_ClientId = 0;
+
+static const WCHAR* rdpdr_read_ustring(wStream* s, size_t bytelen)
+{
+	const size_t charlen = (bytelen + 1) / sizeof(WCHAR);
+	const WCHAR* str = (const WCHAR*)Stream_Pointer(s);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, bytelen))
+		return NULL;
+	if (_wcsnlen(str, charlen) == charlen)
+	{
+		WLog_WARN(TAG, "[rdpdr] unicode string not '\0' terminated");
+		return NULL;
+	}
+	Stream_Seek(s, bytelen);
+	return str;
+}
 
 static RDPDR_IRP* rdpdr_server_irp_new(void)
 {
@@ -153,6 +174,7 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
                                                      RDPDR_HEADER* header)
 {
 	UINT32 UnicodeFlag;
+	UINT32 CodePage;
 	UINT32 ComputerNameLen;
 
 	WINPR_ASSERT(context);
@@ -165,11 +187,17 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT32(s, UnicodeFlag);     /* UnicodeFlag (4 bytes) */
-	Stream_Seek_UINT32(s);                  /* CodePage (4 bytes), MUST be set to zero */
+	Stream_Read_UINT32(s, CodePage);        /* CodePage (4 bytes), MUST be set to zero */
 	Stream_Read_UINT32(s, ComputerNameLen); /* ComputerNameLen (4 bytes) */
 	/* UnicodeFlag is either 0 or 1, the other 31 bits must be ignored.
 	 */
 	UnicodeFlag = UnicodeFlag & 0x00000001;
+
+	if (CodePage != 0)
+		WLog_WARN(TAG,
+		          "[MS-RDPEFS] 2.2.2.4 Client Name Request (DR_CORE_CLIENT_NAME_REQ)::CodePage "
+		          "must be 0, but is 0x%08" PRIx32,
+		          CodePage);
 
 	/**
 	 * Caution: ComputerNameLen is given *bytes*,
@@ -279,7 +307,7 @@ static UINT rdpdr_server_write_capability_set_header(wStream* s, RDPDR_CAPABILIT
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpdr_server_read_general_capability_set(RdpdrServerContext* context, wStream* s,
-                                                     RDPDR_CAPABILITY_HEADER* header)
+                                                     const RDPDR_CAPABILITY_HEADER* header)
 {
 	UINT32 ioCode1;
 	UINT32 extraFlags1;
@@ -413,7 +441,7 @@ static UINT rdpdr_server_write_general_capability_set(RdpdrServerContext* contex
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpdr_server_read_printer_capability_set(RdpdrServerContext* context, wStream* s,
-                                                     RDPDR_CAPABILITY_HEADER* header)
+                                                     const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -457,7 +485,7 @@ static UINT rdpdr_server_write_printer_capability_set(RdpdrServerContext* contex
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpdr_server_read_port_capability_set(RdpdrServerContext* context, wStream* s,
-                                                  RDPDR_CAPABILITY_HEADER* header)
+                                                  const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_UNUSED(context);
 	WINPR_UNUSED(s);
@@ -499,7 +527,7 @@ static UINT rdpdr_server_write_port_capability_set(RdpdrServerContext* context, 
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpdr_server_read_drive_capability_set(RdpdrServerContext* context, wStream* s,
-                                                   RDPDR_CAPABILITY_HEADER* header)
+                                                   const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -542,7 +570,7 @@ static UINT rdpdr_server_write_drive_capability_set(RdpdrServerContext* context,
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpdr_server_read_smartcard_capability_set(RdpdrServerContext* context, wStream* s,
-                                                       RDPDR_CAPABILITY_HEADER* header)
+                                                       const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -702,6 +730,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 	for (i = 0; i < numCapabilities; i++)
 	{
 		RDPDR_CAPABILITY_HEADER capabilityHeader = { 0 };
+		const size_t start = Stream_GetPosition(s);
 
 		if ((status = rdpdr_server_read_capability_set_header(s, &capabilityHeader)))
 		{
@@ -776,10 +805,28 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 				break;
 
 			default:
-				WLog_DBG(TAG, "Unknown capabilityType %" PRIu16 "",
-				         capabilityHeader.CapabilityType);
-				Stream_Seek(s, capabilityHeader.CapabilityLength - RDPDR_CAPABILITY_HEADER_LENGTH);
+				WLog_WARN(TAG, "Unknown capabilityType %" PRIu16 "",
+				          capabilityHeader.CapabilityType);
+				if (Stream_GetRemainingLength(s) < capabilityHeader.CapabilityLength)
+					WLog_WARN(TAG,
+					          "short capability data, expected %" PRIu16 ", but only got %" PRIuz
+					          " bytes",
+					          capabilityHeader.CapabilityLength, Stream_GetRemainingLength(s));
+				else
+					Stream_Seek(s,
+					            capabilityHeader.CapabilityLength - RDPDR_CAPABILITY_HEADER_LENGTH);
 				return ERROR_INVALID_DATA;
+		}
+
+		const size_t end = Stream_GetPosition(s);
+		const size_t diff = end - start;
+		if (diff != capabilityHeader.CapabilityLength)
+		{
+			WLog_WARN(TAG,
+			          "{capability %s[0x%04" PRIx16 "]} processed %" PRIuz
+			          " bytes, but expected to be %" PRIu16,
+			          rdpdr_cap_type_string(capabilityHeader.CapabilityType),
+			          capabilityHeader.CapabilityType, diff, capabilityHeader.CapabilityLength);
 		}
 	}
 
@@ -922,6 +969,11 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 				break;
 
 			default:
+				WLog_WARN(TAG,
+				          "[MS-RDPEFS] 2.2.2.9 Client Device List Announce Request "
+				          "(DR_CORE_DEVICELIST_ANNOUNCE_REQ) unknown device type %04" PRIx16
+				          " at position %" PRIu32,
+				          DeviceType, i);
 				break;
 		}
 
@@ -937,7 +989,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* context, wStream* s,
-                                                            RDPDR_HEADER* header)
+                                                            const RDPDR_HEADER* header)
 {
 	UINT32 i;
 	UINT32 DeviceCount;
@@ -1004,6 +1056,428 @@ static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 	}
 
 	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_io_create_request(RdpdrServerContext* context, wStream* s,
+                                                   UINT32 DeviceId, UINT32 FileId,
+                                                   UINT32 CompletionId)
+{
+	const WCHAR* path;
+	UINT32 DesiredAccess, AllocationSize, FileAttributes, SharedAccess, CreateDisposition,
+	    CreateOptions, PathLength;
+
+	WINPR_ASSERT(context);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, DesiredAccess);
+	Stream_Read_UINT32(s, AllocationSize);
+	Stream_Read_UINT32(s, FileAttributes);
+	Stream_Read_UINT32(s, SharedAccess);
+	Stream_Read_UINT32(s, CreateDisposition);
+	Stream_Read_UINT32(s, CreateOptions);
+	Stream_Read_UINT32(s, PathLength);
+
+	path = rdpdr_read_ustring(s, PathLength);
+	if (!path && (PathLength > 0))
+		return ERROR_INVALID_DATA;
+
+	WLog_WARN(TAG, "[MS-RDPEFS] 2.2.1.4.1 Device Create Request (DR_CREATE_REQ) not implemented");
+	WLog_WARN(TAG, "TODO");
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_io_close_request(RdpdrServerContext* context, wStream* s,
+                                                  UINT32 DeviceId, UINT32 FileId,
+                                                  UINT32 CompletionId)
+{
+	WINPR_ASSERT(context);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+		return ERROR_INVALID_DATA;
+
+	Stream_Seek(s, 32); /* Padding */
+
+	WLog_WARN(TAG, "[MS-RDPEFS] 2.2.1.4.2 Device Close Request (DR_CLOSE_REQ) not implemented");
+	WLog_WARN(TAG, "TODO");
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_io_read_request(RdpdrServerContext* context, wStream* s,
+                                                 UINT32 DeviceId, UINT32 FileId,
+                                                 UINT32 CompletionId)
+{
+	UINT32 Length;
+	UINT64 Offset;
+
+	WINPR_ASSERT(context);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, Length);
+	Stream_Read_UINT64(s, Offset);
+	Stream_Seek(s, 20); /* Padding */
+
+	WLog_WARN(TAG, "[MS-RDPEFS] 2.2.1.4.3 Device Read Request (DR_READ_REQ) not implemented");
+	WLog_WARN(TAG, "TODO");
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_io_write_request(RdpdrServerContext* context, wStream* s,
+                                                  UINT32 DeviceId, UINT32 FileId,
+                                                  UINT32 CompletionId)
+{
+	UINT32 Length;
+	UINT64 Offset;
+	const BYTE* data;
+
+	WINPR_ASSERT(context);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, Length);
+	Stream_Read_UINT64(s, Offset);
+	Stream_Seek(s, 20); /* Padding */
+
+	data = Stream_Pointer(s);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, Length))
+		return ERROR_INVALID_DATA;
+	Stream_Seek(s, Length);
+
+	WLog_WARN(TAG, "[MS-RDPEFS] 2.2.1.4.4 Device Write Request (DR_WRITE_REQ) not implemented");
+	WLog_WARN(TAG, "TODO");
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_io_device_control_request(RdpdrServerContext* context, wStream* s,
+                                                           UINT32 DeviceId, UINT32 FileId,
+                                                           UINT32 CompletionId)
+{
+	UINT32 OutputBufferLength;
+	UINT32 InputBufferLength;
+	UINT32 IoControlCode;
+	const BYTE* InputBuffer;
+
+	WINPR_ASSERT(context);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, OutputBufferLength);
+	Stream_Read_UINT32(s, InputBufferLength);
+	Stream_Read_UINT32(s, IoControlCode);
+	Stream_Seek(s, 20); /* Padding */
+
+	InputBuffer = Stream_Pointer(s);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, InputBufferLength))
+		return ERROR_INVALID_DATA;
+	Stream_Seek(s, InputBufferLength);
+
+	WLog_WARN(TAG, "[MS-RDPEFS] 2.2.1.4.5 Device Control Request (DR_CONTROL_REQ) not implemented");
+	WLog_WARN(TAG, "TODO");
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_io_query_volume_information_request(RdpdrServerContext* context,
+                                                                     wStream* s, UINT32 DeviceId,
+                                                                     UINT32 FileId,
+                                                                     UINT32 CompletionId)
+{
+	UINT32 FsInformationClass;
+	UINT32 Length;
+	const BYTE* QueryVolumeBuffer;
+
+	WINPR_ASSERT(context);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, FsInformationClass);
+	Stream_Read_UINT32(s, Length);
+	Stream_Seek(s, 24); /* Padding */
+
+	QueryVolumeBuffer = Stream_Pointer(s);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, Length))
+		return ERROR_INVALID_DATA;
+	Stream_Seek(s, Length);
+
+	WLog_WARN(TAG, "[MS-RDPEFS] 2.2.3.3.6 Server Drive Query Volume Information Request "
+	               "(DR_DRIVE_QUERY_VOLUME_INFORMATION_REQ) not implemented");
+	WLog_WARN(TAG, "TODO");
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_io_set_volume_information_request(RdpdrServerContext* context,
+                                                                   wStream* s, UINT32 DeviceId,
+                                                                   UINT32 FileId,
+                                                                   UINT32 CompletionId)
+{
+	UINT32 FsInformationClass;
+	UINT32 Length;
+	const BYTE* SetVolumeBuffer;
+
+	WINPR_ASSERT(context);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, FsInformationClass);
+	Stream_Read_UINT32(s, Length);
+	Stream_Seek(s, 24); /* Padding */
+
+	SetVolumeBuffer = Stream_Pointer(s);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, Length))
+		return ERROR_INVALID_DATA;
+	Stream_Seek(s, Length);
+
+	WLog_WARN(TAG, "[MS-RDPEFS] 2.2.3.3.7 Server Drive Set Volume Information Request "
+	               "(DR_DRIVE_SET_VOLUME_INFORMATION_REQ) not implemented");
+	WLog_WARN(TAG, "TODO");
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_io_query_information_request(RdpdrServerContext* context,
+                                                              wStream* s, UINT32 DeviceId,
+                                                              UINT32 FileId, UINT32 CompletionId)
+{
+	UINT32 FsInformationClass;
+	UINT32 Length;
+	const BYTE* QueryBuffer;
+
+	WINPR_ASSERT(context);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, FsInformationClass);
+	Stream_Read_UINT32(s, Length);
+	Stream_Seek(s, 24); /* Padding */
+
+	QueryBuffer = Stream_Pointer(s);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, Length))
+		return ERROR_INVALID_DATA;
+	Stream_Seek(s, Length);
+
+	WLog_WARN(TAG, "[MS-RDPEFS] 2.2.3.3.8 Server Drive Query Information Request "
+	               "(DR_DRIVE_QUERY_INFORMATION_REQ) not implemented");
+	WLog_WARN(TAG, "TODO");
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_io_set_information_request(RdpdrServerContext* context, wStream* s,
+                                                            UINT32 DeviceId, UINT32 FileId,
+                                                            UINT32 CompletionId)
+{
+	UINT32 FsInformationClass;
+	UINT32 Length;
+	const BYTE* SetBuffer;
+
+	WINPR_ASSERT(context);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, FsInformationClass);
+	Stream_Read_UINT32(s, Length);
+	Stream_Seek(s, 24); /* Padding */
+
+	SetBuffer = Stream_Pointer(s);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, Length))
+		return ERROR_INVALID_DATA;
+	Stream_Seek(s, Length);
+
+	WLog_WARN(TAG, "[MS-RDPEFS] 2.2.3.3.9 Server Drive Set Information Request "
+	               "(DR_DRIVE_SET_INFORMATION_REQ) not implemented");
+	WLog_WARN(TAG, "TODO");
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_io_query_directory_request(RdpdrServerContext* context, wStream* s,
+                                                            UINT32 DeviceId, UINT32 FileId,
+                                                            UINT32 CompletionId)
+{
+	BYTE InitialQuery;
+	UINT32 FsInformationClass;
+	UINT32 PathLength;
+	const WCHAR* Path;
+
+	WINPR_ASSERT(context);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, FsInformationClass);
+	Stream_Read_UINT8(s, InitialQuery);
+	Stream_Read_UINT32(s, PathLength);
+	Stream_Seek(s, 23); /* Padding */
+
+	Path = rdpdr_read_ustring(s, PathLength);
+	if (!Path && (PathLength > 0))
+		return ERROR_INVALID_DATA;
+
+	WLog_WARN(TAG, "[MS-RDPEFS] 2.2.3.3.10 Server Drive Query Directory Request "
+	               "(DR_DRIVE_QUERY_DIRECTORY_REQ) not implemented");
+	WLog_WARN(TAG, "TODO");
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_io_change_directory_request(RdpdrServerContext* context,
+                                                             wStream* s, UINT32 DeviceId,
+                                                             UINT32 FileId, UINT32 CompletionId)
+{
+	BYTE WatchTree;
+	UINT32 CompletionFilter;
+
+	WINPR_ASSERT(context);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT8(s, WatchTree);
+	Stream_Read_UINT32(s, CompletionFilter);
+	Stream_Seek(s, 27); /* Padding */
+
+	WLog_WARN(TAG, "[MS-RDPEFS] 2.2.3.3.11 Server Drive NotifyChange Directory Request "
+	               "(DR_DRIVE_NOTIFY_CHANGE_DIRECTORY_REQ) not implemented");
+	WLog_WARN(TAG, "TODO");
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_io_directory_control_request(RdpdrServerContext* context,
+                                                              wStream* s, UINT32 DeviceId,
+                                                              UINT32 FileId, UINT32 CompletionId,
+                                                              UINT32 MinorFunction)
+{
+	WINPR_ASSERT(context);
+
+	switch (MinorFunction)
+	{
+		case IRP_MN_QUERY_DIRECTORY:
+			return rdpdr_server_receive_io_query_directory_request(context, s, DeviceId, FileId,
+			                                                       CompletionId);
+		case IRP_MN_NOTIFY_CHANGE_DIRECTORY:
+			return rdpdr_server_receive_io_change_directory_request(context, s, DeviceId, FileId,
+			                                                        CompletionId);
+		default:
+			WLog_WARN(TAG,
+			          "[MS-RDPEFS] 2.2.1.4 Device I/O Request (DR_DEVICE_IOREQUEST) "
+			          "MajorFunction=%s, MinorFunction=%08" PRIx32 " is not supported",
+			          rdpdr_irp_string(IRP_MJ_DIRECTORY_CONTROL), MinorFunction);
+			return ERROR_INVALID_DATA;
+	}
+}
+
+static UINT rdpdr_server_receive_io_lock_control_request(RdpdrServerContext* context, wStream* s,
+                                                         UINT32 DeviceId, UINT32 FileId,
+                                                         UINT32 CompletionId)
+{
+	UINT32 Operation;
+	UINT32 Lock;
+	UINT32 NumLocks;
+
+	WINPR_ASSERT(context);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 32))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, Operation);
+	Stream_Read_UINT32(s, Lock);
+	Stream_Read_UINT32(s, NumLocks);
+	Stream_Seek(s, 20); /* Padding */
+
+	Lock &= 0x01; /* Only byte 0 is of importance */
+
+	for (UINT32 x = 0; x < NumLocks; x++)
+	{
+		UINT64 Length;
+		UINT64 Offset;
+
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
+			return ERROR_INVALID_DATA;
+
+		Stream_Read_UINT64(s, Length);
+		Stream_Read_UINT64(s, Offset);
+	}
+
+	WLog_WARN(TAG, "[MS-RDPEFS] 2.2.3.3.12 Server Drive Lock Control Request (DR_DRIVE_LOCK_REQ) "
+	               "not implemented");
+	WLog_WARN(TAG, "TODO");
+
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_device_io_request(RdpdrServerContext* context, wStream* s,
+                                                   RDPDR_HEADER* header)
+{
+	UINT32 DeviceId;
+	UINT32 FileId;
+	UINT32 CompletionId;
+	UINT32 MajorFunction;
+	UINT32 MinorFunction;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(header);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, DeviceId);
+	Stream_Read_UINT32(s, FileId);
+	Stream_Read_UINT32(s, CompletionId);
+	Stream_Read_UINT32(s, MajorFunction);
+	Stream_Read_UINT32(s, MinorFunction);
+	if ((MinorFunction != 0) && (MajorFunction != IRP_MJ_DIRECTORY_CONTROL))
+		WLog_WARN(TAG,
+		          "[MS-RDPEFS] 2.2.1.4 Device I/O Request (DR_DEVICE_IOREQUEST) MajorFunction=%s, "
+		          "MinorFunction=0x%08" PRIx32 " != 0",
+		          rdpdr_irp_string(MajorFunction), MinorFunction);
+
+	switch (MajorFunction)
+	{
+		case IRP_MJ_CREATE:
+			return rdpdr_server_receive_io_create_request(context, s, DeviceId, FileId,
+			                                              CompletionId);
+		case IRP_MJ_CLOSE:
+			return rdpdr_server_receive_io_close_request(context, s, DeviceId, FileId,
+			                                             CompletionId);
+		case IRP_MJ_READ:
+			return rdpdr_server_receive_io_read_request(context, s, DeviceId, FileId, CompletionId);
+		case IRP_MJ_WRITE:
+			return rdpdr_server_receive_io_write_request(context, s, DeviceId, FileId,
+			                                             CompletionId);
+		case IRP_MJ_DEVICE_CONTROL:
+			return rdpdr_server_receive_io_device_control_request(context, s, DeviceId, FileId,
+			                                                      CompletionId);
+		case IRP_MJ_QUERY_VOLUME_INFORMATION:
+			return rdpdr_server_receive_io_query_volume_information_request(context, s, DeviceId,
+			                                                                FileId, CompletionId);
+		case IRP_MJ_QUERY_INFORMATION:
+			return rdpdr_server_receive_io_query_information_request(context, s, DeviceId, FileId,
+			                                                         CompletionId);
+		case IRP_MJ_SET_INFORMATION:
+			return rdpdr_server_receive_io_set_information_request(context, s, DeviceId, FileId,
+			                                                       CompletionId);
+		case IRP_MJ_DIRECTORY_CONTROL:
+			return rdpdr_server_receive_io_directory_control_request(context, s, DeviceId, FileId,
+			                                                         CompletionId, MinorFunction);
+		case IRP_MJ_LOCK_CONTROL:
+			return rdpdr_server_receive_io_lock_control_request(context, s, DeviceId, FileId,
+			                                                    CompletionId);
+		default:
+			WLog_WARN(
+			    TAG,
+			    "[MS-RDPEFS] 2.2.1.4 Device I/O Request (DR_DEVICE_IOREQUEST) not implemented");
+			WLog_WARN(TAG,
+			          "got DeviceId=0x%08" PRIx32 ", FileId=0x%08" PRIx32
+			          ", CompletionId=0x%08" PRIx32 ", MajorFunction=0x%08" PRIx32
+			          ", MinorFunction=0x%08" PRIx32,
+			          DeviceId, FileId, CompletionId, MajorFunction, MinorFunction);
+			return ERROR_INVALID_DATA;
+	}
 }
 
 /**
@@ -1077,6 +1551,183 @@ static UINT rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 	return rdpdr_seal_send_free_request(context, s);
 }
 
+static UINT rdpdr_server_receive_prn_cache_add_printer(RdpdrServerContext* context, wStream* s)
+{
+	char PortDosName[9] = { 0 };
+	UINT32 PnPNameLen;
+	UINT32 DriverNameLen;
+	UINT32 PrinterNameLen;
+	UINT32 CachedFieldsLen;
+	const WCHAR* PnPName;
+	const WCHAR* DriverName;
+	const WCHAR* PrinterName;
+	const BYTE* config;
+
+	WINPR_ASSERT(context);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read(s, PortDosName, 8);
+	Stream_Read_UINT32(s, PnPNameLen);
+	Stream_Read_UINT32(s, DriverNameLen);
+	Stream_Read_UINT32(s, PrinterNameLen);
+	Stream_Read_UINT32(s, CachedFieldsLen);
+
+	PnPName = rdpdr_read_ustring(s, PnPNameLen);
+	if (!PnPName && (PnPNameLen > 0))
+		return ERROR_INVALID_DATA;
+	DriverName = rdpdr_read_ustring(s, DriverNameLen);
+	if (!DriverName && (DriverNameLen > 0))
+		return ERROR_INVALID_DATA;
+	PrinterName = rdpdr_read_ustring(s, PrinterNameLen);
+	if (!PrinterName && (PrinterNameLen > 0))
+		return ERROR_INVALID_DATA;
+
+	config = Stream_Pointer(s);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, CachedFieldsLen))
+		return ERROR_INVALID_DATA;
+	Stream_Seek(s, CachedFieldsLen);
+
+	WLog_WARN(TAG,
+	          "[MS-RDPEPC] 2.2.2.3 Add Printer Cachedata (DR_PRN_ADD_CACHEDATA) not implemented");
+	WLog_WARN(TAG, "TODO");
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_prn_cache_update_printer(RdpdrServerContext* context, wStream* s)
+{
+	UINT32 PrinterNameLen;
+	UINT32 CachedFieldsLen;
+	const WCHAR* PrinterName;
+	const BYTE* config;
+
+	WINPR_ASSERT(context);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, PrinterNameLen);
+	Stream_Read_UINT32(s, CachedFieldsLen);
+
+	PrinterName = rdpdr_read_ustring(s, PrinterNameLen);
+	if (!PrinterName && (PrinterNameLen > 0))
+		return ERROR_INVALID_DATA;
+
+	config = Stream_Pointer(s);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, CachedFieldsLen))
+		return ERROR_INVALID_DATA;
+	Stream_Seek(s, CachedFieldsLen);
+
+	WLog_WARN(
+	    TAG,
+	    "[MS-RDPEPC] 2.2.2.4 Update Printer Cachedata (DR_PRN_UPDATE_CACHEDATA) not implemented");
+	WLog_WARN(TAG, "TODO");
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_prn_cache_delete_printer(RdpdrServerContext* context, wStream* s)
+{
+	UINT32 PrinterNameLen;
+	const WCHAR* PrinterName;
+
+	WINPR_ASSERT(context);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, PrinterNameLen);
+
+	PrinterName = rdpdr_read_ustring(s, PrinterNameLen);
+	if (!PrinterName && (PrinterNameLen > 0))
+		return ERROR_INVALID_DATA;
+
+	WLog_WARN(
+	    TAG,
+	    "[MS-RDPEPC] 2.2.2.5 Delete Printer Cachedata (DR_PRN_DELETE_CACHEDATA) not implemented");
+	WLog_WARN(TAG, "TODO");
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_prn_cache_rename_cachedata(RdpdrServerContext* context, wStream* s)
+{
+	UINT32 OldPrinterNameLen;
+	UINT32 NewPrinterNameLen;
+	const WCHAR* OldPrinterName;
+	const WCHAR* NewPrinterName;
+
+	WINPR_ASSERT(context);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, OldPrinterNameLen);
+	Stream_Read_UINT32(s, NewPrinterNameLen);
+
+	OldPrinterName = rdpdr_read_ustring(s, OldPrinterNameLen);
+	if (!OldPrinterName && (OldPrinterNameLen > 0))
+		return ERROR_INVALID_DATA;
+	NewPrinterName = rdpdr_read_ustring(s, NewPrinterNameLen);
+	if (!NewPrinterName && (NewPrinterNameLen > 0))
+		return ERROR_INVALID_DATA;
+
+	WLog_WARN(
+	    TAG,
+	    "[MS-RDPEPC] 2.2.2.6 Rename Printer Cachedata (DR_PRN_RENAME_CACHEDATA) not implemented");
+	WLog_WARN(TAG, "TODO");
+	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_receive_prn_cache_data_request(RdpdrServerContext* context, wStream* s,
+                                                        const RDPDR_HEADER* header)
+{
+	UINT32 EventId;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(header);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, EventId);
+	switch (EventId)
+	{
+		case RDPDR_ADD_PRINTER_EVENT:
+			return rdpdr_server_receive_prn_cache_add_printer(context, s);
+		case RDPDR_UPDATE_PRINTER_EVENT:
+			return rdpdr_server_receive_prn_cache_update_printer(context, s);
+		case RDPDR_DELETE_PRINTER_EVENT:
+			return rdpdr_server_receive_prn_cache_delete_printer(context, s);
+		case RDPDR_RENAME_PRINTER_EVENT:
+			return rdpdr_server_receive_prn_cache_rename_cachedata(context, s);
+		default:
+			WLog_WARN(TAG, "[MS-RDPEPC] PAKID_PRN_CACHE_DATA unknown EventId=0x%08" PRIx32,
+			          EventId);
+			return ERROR_INVALID_DATA;
+	}
+}
+
+static UINT rdpdr_server_receive_prn_using_xps_request(RdpdrServerContext* context, wStream* s,
+                                                       const RDPDR_HEADER* header)
+{
+	UINT32 PrinterId;
+	UINT32 Flags;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(header);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, PrinterId);
+	Stream_Read_UINT32(s, Flags);
+
+	WLog_WARN(TAG,
+	          "[MS-RDPEPC] 2.2.2.2 Server Printer Set XPS Mode (DR_PRN_USING_XPS) not implemented");
+	WLog_WARN(TAG, "PrinterId=0x%08" PRIx32 ", Flags=0x%08" PRIx32, PrinterId, Flags);
+	return CHANNEL_RC_OK;
+}
+
 /**
  * Function description
  *
@@ -1084,124 +1735,83 @@ static UINT rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
  */
 static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
 {
-	UINT error = CHANNEL_RC_OK;
+	UINT error = ERROR_INVALID_DATA;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
-	WLog_DBG(TAG, "RdpdrServerReceivePdu: Component: 0x%04" PRIX16 " PacketId: 0x%04" PRIX16 "",
-	         header->Component, header->PacketId);
-	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), Stream_Length(s));
+
+	WLog_DBG(TAG,
+	         "RdpdrServerReceivePdu: Component: %s [0x%04" PRIx16 "] PacketId: %s [0x%04" PRIx16
+	         "]",
+	         rdpdr_component_string(header->Component), header->Component,
+	         rdpdr_packetid_string(header->PacketId), header->PacketId);
 
 	if (header->Component == RDPDR_CTYP_CORE)
 	{
 		switch (header->PacketId)
 		{
-			case PAKID_CORE_CLIENTID_CONFIRM:
-				if ((error = rdpdr_server_receive_announce_response(context, s, header)))
-				{
-					WLog_ERR(TAG,
-					         "rdpdr_server_receive_announce_response failed with error %" PRIu32
-					         "!",
-					         error);
-					return error;
-				}
+			case PAKID_CORE_SERVER_ANNOUNCE:
+				WLog_ERR(TAG, "[MS-RDPEFS] 2.2.2.2 Server Announce Request "
+				              "(DR_CORE_SERVER_ANNOUNCE_REQ) must not be sent by a client!");
+				break;
 
+			case PAKID_CORE_CLIENTID_CONFIRM:
+				error = rdpdr_server_receive_announce_response(context, s, header);
 				break;
 
 			case PAKID_CORE_CLIENT_NAME:
-				if ((error = rdpdr_server_receive_client_name_request(context, s, header)))
-				{
-					WLog_ERR(TAG,
-					         "rdpdr_server_receive_client_name_request failed with error %" PRIu32
-					         "!",
-					         error);
-					return error;
-				}
+				error = rdpdr_server_receive_client_name_request(context, s, header);
+				if (error == CHANNEL_RC_OK)
+					error = rdpdr_server_send_core_capability_request(context);
+				if (error == CHANNEL_RC_OK)
+					error = rdpdr_server_send_client_id_confirm(context);
+				break;
 
-				if ((error = rdpdr_server_send_core_capability_request(context)))
-				{
-					WLog_ERR(TAG,
-					         "rdpdr_server_send_core_capability_request failed with error %" PRIu32
-					         "!",
-					         error);
-					return error;
-				}
+			case PAKID_CORE_USER_LOGGEDON:
+				WLog_ERR(TAG, "[MS-RDPEFS] 2.2.2.5 Server User Logged On (DR_CORE_USER_LOGGEDON) "
+				              "must not be sent by a client!");
+				break;
 
-				if ((error = rdpdr_server_send_client_id_confirm(context)))
-				{
-					WLog_ERR(TAG,
-					         "rdpdr_server_send_client_id_confirm failed with error %" PRIu32 "!",
-					         error);
-					return error;
-				}
-
+			case PAKID_CORE_SERVER_CAPABILITY:
+				WLog_ERR(TAG, "[MS-RDPEFS] 2.2.2.7 Server Core Capability Request "
+				              "(DR_CORE_CAPABILITY_REQ) must not be sent by a client!");
 				break;
 
 			case PAKID_CORE_CLIENT_CAPABILITY:
-				if ((error = rdpdr_server_receive_core_capability_response(context, s, header)))
+				error = rdpdr_server_receive_core_capability_response(context, s, header);
+				if (error == CHANNEL_RC_OK)
 				{
-					WLog_ERR(
-					    TAG,
-					    "rdpdr_server_receive_core_capability_response failed with error %" PRIu32
-					    "!",
-					    error);
-					return error;
+					if (context->priv->UserLoggedOnPdu)
+						error = rdpdr_server_send_user_logged_on(context);
 				}
-
-				if (context->priv->UserLoggedOnPdu)
-					if ((error = rdpdr_server_send_user_logged_on(context)))
-					{
-						WLog_ERR(TAG,
-						         "rdpdr_server_send_user_logged_on failed with error %" PRIu32 "!",
-						         error);
-						return error;
-					}
 
 				break;
 
 			case PAKID_CORE_DEVICELIST_ANNOUNCE:
-				if ((error = rdpdr_server_receive_device_list_announce_request(context, s, header)))
-				{
-					WLog_ERR(TAG,
-					         "rdpdr_server_receive_device_list_announce_request failed with error "
-					         "%" PRIu32 "!",
-					         error);
-					return error;
-				}
-
-				break;
-
-			case PAKID_CORE_DEVICE_REPLY:
-				break;
-
-			case PAKID_CORE_DEVICE_IOREQUEST:
-				break;
-
-			case PAKID_CORE_DEVICE_IOCOMPLETION:
-				if ((error = rdpdr_server_receive_device_io_completion(context, s, header)))
-				{
-					WLog_ERR(TAG,
-					         "rdpdr_server_receive_device_io_completion failed with error %" PRIu32
-					         "!",
-					         error);
-					return error;
-				}
-
+				error = rdpdr_server_receive_device_list_announce_request(context, s, header);
 				break;
 
 			case PAKID_CORE_DEVICELIST_REMOVE:
-				if ((error = rdpdr_server_receive_device_list_remove_request(context, s, header)))
-				{
-					WLog_ERR(TAG,
-					         "rdpdr_server_receive_device_io_completion failed with error %" PRIu32
-					         "!",
-					         error);
-					return error;
-				}
+				error = rdpdr_server_receive_device_list_remove_request(context, s, header);
+				break;
 
+			case PAKID_CORE_DEVICE_REPLY:
+				WLog_ERR(TAG, "[MS-RDPEFS] 2.2.2.1 Server Device Announce Response "
+				              "(DR_CORE_DEVICE_ANNOUNCE_RSP) must not be sent by a client!");
+				break;
+
+			case PAKID_CORE_DEVICE_IOREQUEST:
+				error = rdpdr_server_receive_device_io_request(context, s, header);
+				break;
+
+			case PAKID_CORE_DEVICE_IOCOMPLETION:
+				error = rdpdr_server_receive_device_io_completion(context, s, header);
 				break;
 
 			default:
+				WLog_WARN(TAG, "Unknown RDPDR_HEADER.Component: %s [0x%04" PRIx16 "], PacketId: %s",
+				          rdpdr_component_string(header->Component), header->Component,
+				          rdpdr_packetid_string(header->PacketId));
 				break;
 		}
 	}
@@ -1210,19 +1820,25 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RD
 		switch (header->PacketId)
 		{
 			case PAKID_PRN_CACHE_DATA:
+				error = rdpdr_server_receive_prn_cache_data_request(context, s, header);
 				break;
 
 			case PAKID_PRN_USING_XPS:
+				error = rdpdr_server_receive_prn_using_xps_request(context, s, header);
 				break;
 
 			default:
+				WLog_WARN(TAG, "Unknown RDPDR_HEADER.Component: %s [0x%04" PRIx16 "], PacketId: %s",
+				          rdpdr_component_string(header->Component), header->Component,
+				          rdpdr_packetid_string(header->PacketId));
 				break;
 		}
 	}
 	else
 	{
-		WLog_WARN(TAG, "Unknown RDPDR_HEADER.Component: 0x%04" PRIX16 "", header->Component);
-		return ERROR_INVALID_DATA;
+		WLog_WARN(TAG, "Unknown RDPDR_HEADER.Component: %s [0x%04" PRIx16 "], PacketId: %s",
+		          rdpdr_component_string(header->Component), header->Component,
+		          rdpdr_packetid_string(header->PacketId));
 	}
 
 	return error;
@@ -1318,21 +1934,20 @@ static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
 
 		if (BytesReturned >= RDPDR_HEADER_LENGTH)
 		{
-			RDPDR_HEADER header = { 0 };
-
 			Stream_SetPosition(s, 0);
 			Stream_SetLength(s, BytesReturned);
 
 			while (Stream_GetRemainingLength(s) >= RDPDR_HEADER_LENGTH)
 			{
+				RDPDR_HEADER header = { 0 };
+
 				Stream_Read_UINT16(s, header.Component); /* Component (2 bytes) */
 				Stream_Read_UINT16(s, header.PacketId);  /* PacketId (2 bytes) */
 
 				if ((error = rdpdr_server_receive_pdu(context, s, &header)))
 				{
 					WLog_ERR(TAG, "rdpdr_server_receive_pdu failed with error %" PRIu32 "!", error);
-					// goto out_stream;
-					error = CHANNEL_RC_OK;
+					goto out_stream;
 				}
 			}
 		}
