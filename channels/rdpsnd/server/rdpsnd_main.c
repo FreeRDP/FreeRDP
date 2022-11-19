@@ -157,7 +157,7 @@ static UINT rdpsnd_server_recv_quality_mode(RdpsndServerContext* context, wStrea
 {
 	WINPR_ASSERT(context);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 	{
 		WLog_ERR(TAG, "not enough data in stream!");
 		return ERROR_INVALID_DATA;

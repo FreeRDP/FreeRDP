@@ -26,7 +26,8 @@
 #include "../codec/ncrush.h"
 #include "../codec/xcrush.h"
 
-#define TAG "com.freerdp.core"
+#include <freerdp/log.h>
+#define TAG FREERDP_TAG("core")
 
 //#define WITH_BULK_DEBUG 1
 
