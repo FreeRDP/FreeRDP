@@ -1207,7 +1207,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* 
                                       t_isoch_transfer_cb cb, UINT32 Timeout)
 {
 	int rc;
-	UINT32 iso_packet_size;
+	UINT32 iso_packet_size = 0;
 	UDEVICE* pdev = (UDEVICE*)idev;
 	ASYNC_TRANSFER_USER_DATA* user_data;
 	struct libusb_transfer* iso_transfer = NULL;
