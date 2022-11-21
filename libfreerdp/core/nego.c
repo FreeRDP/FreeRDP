@@ -1165,7 +1165,7 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 	Stream_Read_UINT8(s, flags);
 	if (flags != 0)
 	{
-		WLog_WARN(TAG, "RDP_NEG_FAILURE::flags = 0x02" PRIx8, flags);
+		WLog_WARN(TAG, "RDP_NEG_FAILURE::flags = 0x%02" PRIx8, flags);
 		return FALSE;
 	}
 	Stream_Read_UINT16(s, length);
