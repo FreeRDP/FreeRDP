@@ -611,7 +611,6 @@ static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCe
                                         DWORD* retCount)
 {
 	BOOL rc = FALSE;
-	int res;
 	SmartcardCertInfo** cert_list = NULL;
 
 	WINPR_ASSERT(settings);
