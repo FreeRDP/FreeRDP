@@ -3,7 +3,6 @@
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/crypto.h>
-#include <winpr/wincrypt.h>
 
 #ifdef _WIN32
 //#define WITH_CRYPTUI	1
