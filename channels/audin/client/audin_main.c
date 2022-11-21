@@ -44,7 +44,7 @@
 
 #define SNDIN_VERSION 0x02
 
-enum
+enum MSG_SNDIN_CMD
 {
 	MSG_SNDIN_VERSION = 0x01,
 	MSG_SNDIN_FORMATS = 0x02,
@@ -53,7 +53,7 @@ enum
 	MSG_SNDIN_DATA_INCOMING = 0x05,
 	MSG_SNDIN_DATA = 0x06,
 	MSG_SNDIN_FORMATCHANGE = 0x07
-} MSG_SNDIN_CMD;
+};
 
 typedef struct
 {
