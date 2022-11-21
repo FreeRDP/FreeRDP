@@ -398,7 +398,6 @@ static int test_ntlm_server_authenticate(TEST_NTLM_SERVER* ntlm)
 
 	if (!hash_set && status == SEC_I_CONTINUE_NEEDED)
 	{
-		SecPkgContext_AuthIdentity AuthIdentity = { 0 };
 		SecPkgContext_AuthNtlmHash AuthNtlmHash = { 0 };
 
 		if (ntlm->UseNtlmV2Hash)

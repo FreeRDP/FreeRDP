@@ -2157,7 +2157,6 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 {
 	UINT32 index;
-	UINT32 flags;
 	UINT32 monitorCount;
 	UINT32 monitorAttributeSize;
 	rdpContext* context;

@@ -152,8 +152,6 @@ static BOOL rdp_capability_set_finish(wStream* s, UINT16 header, UINT16 type)
 static BOOL rdp_apply_general_capability_set(rdpSettings* settings, const rdpSettings* src)
 {
 	UINT16 extraFlags;
-	BYTE refreshRectSupport;
-	BYTE suppressOutputSupport;
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
