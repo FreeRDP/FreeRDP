@@ -430,6 +430,7 @@ rdpPrinterDriver* cups_freerdp_printer_client_subsystem_entry(void)
 
 		uniq_cups_driver->id_sequence = 1;
 	}
+	uniq_cups_driver->driver.AddRef(&uniq_cups_driver->driver);
 
 	WINPR_ASSERT(uniq_cups_driver->driver.AddRef);
 	uniq_cups_driver->driver.AddRef(&uniq_cups_driver->driver);
