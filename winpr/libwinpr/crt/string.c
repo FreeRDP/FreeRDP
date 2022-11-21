@@ -112,8 +112,6 @@ int _wcscmp(const WCHAR* string1, const WCHAR* string2)
 		else if ((w1 == '\0') || (w2 == '\0'))
 			return (int)w1 - w2;
 	}
-
-	return 0;
 }
 
 int _wcsncmp(const WCHAR* string1, const WCHAR* string2, size_t count)
