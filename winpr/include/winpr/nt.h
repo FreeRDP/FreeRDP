@@ -1559,54 +1559,6 @@ extern "C"
 {
 #endif
 
-	WINPR_API VOID _RtlInitAnsiString(PANSI_STRING DestinationString, PCSZ SourceString);
-
-	WINPR_API VOID _RtlInitUnicodeString(PUNICODE_STRING DestinationString, PCWSTR SourceString);
-
-	WINPR_API NTSTATUS _RtlAnsiStringToUnicodeString(PUNICODE_STRING DestinationString,
-	                                                 PCANSI_STRING SourceString,
-	                                                 BOOLEAN AllocateDestinationString);
-
-	WINPR_API VOID _RtlFreeUnicodeString(PUNICODE_STRING UnicodeString);
-
-	WINPR_API ULONG _RtlNtStatusToDosError(NTSTATUS status);
-
-	WINPR_API VOID _InitializeObjectAttributes(POBJECT_ATTRIBUTES InitializedAttributes,
-	                                           PUNICODE_STRING ObjectName, ULONG Attributes,
-	                                           HANDLE RootDirectory,
-	                                           PSECURITY_DESCRIPTOR SecurityDescriptor);
-
-	WINPR_API NTSTATUS _NtCreateFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
-	                                 POBJECT_ATTRIBUTES ObjectAttributes,
-	                                 PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize,
-	                                 ULONG FileAttributes, ULONG ShareAccess,
-	                                 ULONG CreateDisposition, ULONG CreateOptions, PVOID EaBuffer,
-	                                 ULONG EaLength);
-
-	WINPR_API NTSTATUS _NtOpenFile(PHANDLE FileHandle, ACCESS_MASK DesiredAccess,
-	                               POBJECT_ATTRIBUTES ObjectAttributes,
-	                               PIO_STATUS_BLOCK IoStatusBlock, ULONG ShareAccess,
-	                               ULONG OpenOptions);
-
-	WINPR_API NTSTATUS _NtReadFile(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine,
-	                               PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer,
-	                               ULONG Length, PLARGE_INTEGER ByteOffset, PULONG Key);
-
-	WINPR_API NTSTATUS _NtWriteFile(HANDLE FileHandle, HANDLE Event, PIO_APC_ROUTINE ApcRoutine,
-	                                PVOID ApcContext, PIO_STATUS_BLOCK IoStatusBlock, PVOID Buffer,
-	                                ULONG Length, PLARGE_INTEGER ByteOffset, PULONG Key);
-
-	WINPR_API NTSTATUS _NtDeviceIoControlFile(HANDLE FileHandle, HANDLE Event,
-	                                          PIO_APC_ROUTINE ApcRoutine, PVOID ApcContext,
-	                                          PIO_STATUS_BLOCK IoStatusBlock, ULONG IoControlCode,
-	                                          PVOID InputBuffer, ULONG InputBufferLength,
-	                                          PVOID OutputBuffer, ULONG OutputBufferLength);
-
-	WINPR_API NTSTATUS _NtClose(HANDLE Handle);
-
-	WINPR_API NTSTATUS _NtWaitForSingleObject(HANDLE Handle, BOOLEAN Alertable,
-	                                          PLARGE_INTEGER Timeout);
-
 	WINPR_API const char* NtStatus2Tag(DWORD ntstatus);
 
 #ifdef __cplusplus
