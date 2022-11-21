@@ -30,6 +30,10 @@
 
 #include "../log.h"
 
+#include <winternl.h>
+
+#pragma comment(lib, "ntdll.lib")
+
 #define WTSAPI_CHANNEL_MAGIC 0x44484356
 #define TAG WINPR_TAG("wtsapi")
 
@@ -662,11 +666,11 @@ BOOL Win32_WTSVirtualChannelPurge_Internal(HANDLE hChannelHandle, ULONG IoContro
 	}
 
 	ntstatus =
-	    _NtDeviceIoControlFile(pChannel->hFile, 0, 0, 0, &ioStatusBlock, IoControlCode, 0, 0, 0, 0);
+	    NtDeviceIoControlFile(pChannel->hFile, 0, 0, 0, &ioStatusBlock, IoControlCode, 0, 0, 0, 0);
 
 	if (ntstatus == STATUS_PENDING)
 	{
-		ntstatus = _NtWaitForSingleObject(pChannel->hFile, 0, 0);
+		ntstatus = NtWaitForSingleObject(pChannel->hFile, 0, 0);
 
 		if (ntstatus >= 0)
 			ntstatus = ioStatusBlock.Status;
@@ -675,14 +679,14 @@ BOOL Win32_WTSVirtualChannelPurge_Internal(HANDLE hChannelHandle, ULONG IoContro
 	if (ntstatus == STATUS_BUFFER_OVERFLOW)
 	{
 		ntstatus = STATUS_BUFFER_TOO_SMALL;
-		error = _RtlNtStatusToDosError(ntstatus);
+		error = RtlNtStatusToDosError(ntstatus);
 		SetLastError(error);
 		return FALSE;
 	}
 
 	if (ntstatus < 0)
 	{
-		error = _RtlNtStatusToDosError(ntstatus);
+		error = RtlNtStatusToDosError(ntstatus);
 		SetLastError(error);
 		return FALSE;
 	}

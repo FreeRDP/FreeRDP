@@ -5,7 +5,6 @@ set(MODULE_PREFIX "TEST_IO")
 set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
-	TestIoDevice.c
 	TestIoGetOverlappedResult.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
