@@ -1708,7 +1708,7 @@ BOOL rdp_set_state(rdpRdp* rdp, CONNECTION_STATE state)
 	return TRUE;
 }
 
-const char* rdp_get_state_string(rdpRdp* rdp)
+const char* rdp_get_state_string(const rdpRdp* rdp)
 {
 	CONNECTION_STATE state = rdp_get_state(rdp);
 	return rdp_state_string(state);
