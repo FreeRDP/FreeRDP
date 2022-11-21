@@ -609,7 +609,6 @@ static state_run_t peer_recv_handle_licensing(freerdp_peer* client, wStream* s)
 	{
 		case LICENSE_STATE_INITIAL:
 		{
-			const rdpSettings* settings = rdp->settings;
 			const BOOL required =
 			    freerdp_settings_get_bool(settings, FreeRDP_ServerLicenseRequired);
 
