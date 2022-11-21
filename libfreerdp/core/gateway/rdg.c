@@ -936,11 +936,9 @@ static BOOL rdg_read_all(rdpTls* tls, BYTE* buffer, size_t size,
 
 static wStream* rdg_receive_packet(rdpRdg* rdg)
 {
-	wStream* s;
 	const size_t header = sizeof(RdgPacketHeader);
 	size_t packetLength;
-	WINPR_ASSERT(header <= INT_MAX);
-	s = Stream_New(NULL, 1024);
+	wStream* s = Stream_New(NULL, 1024);
 
 	if (!s)
 		return NULL;
@@ -1287,10 +1285,8 @@ static BOOL rdg_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 static BOOL rdg_skip_seed_payload(rdpTls* tls, SSIZE_T lastResponseLength,
                                   rdg_http_encoding_context* transferEncoding)
 {
-	BYTE seed_payload[10];
+	BYTE seed_payload[10] = { 0 };
 	const size_t size = sizeof(seed_payload);
-
-	WINPR_ASSERT(size < SSIZE_MAX);
 
 	/* Per [MS-TSGU] 3.3.5.1 step 4, after final OK response RDG server sends
 	 * random "seed" payload of limited size. In practice it's 10 bytes.
