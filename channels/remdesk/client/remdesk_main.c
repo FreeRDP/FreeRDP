@@ -343,7 +343,6 @@ static UINT remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s,
 		case REMDESK_ERROR_HELPEESAIDNO:
 			WLog_DBG(TAG, "remote assistance connection request was denied");
 			return ERROR_CONNECTION_REFUSED;
-			break;
 
 		default:
 			break;
