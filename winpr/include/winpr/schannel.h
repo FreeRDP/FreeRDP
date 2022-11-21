@@ -22,6 +22,7 @@
 
 #include <winpr/sspi.h>
 #include <winpr/crypto.h>
+#include <winpr/wincrypt.h>
 
 #if defined(_WIN32) && !defined(_UWP)
 

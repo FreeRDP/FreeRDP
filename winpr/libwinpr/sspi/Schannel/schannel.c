@@ -23,6 +23,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
+#include <winpr/wincrypt.h>
 
 #include "schannel.h"
 
