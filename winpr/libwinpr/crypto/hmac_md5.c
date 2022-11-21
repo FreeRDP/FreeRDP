@@ -1,4 +1,6 @@
 #include <assert.h>
+#include <string.h>
+
 #include "hmac_md5.h"
 #include "md5.h"
 
