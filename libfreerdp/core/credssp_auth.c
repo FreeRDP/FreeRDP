@@ -122,8 +122,9 @@ BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bind
 	return TRUE;
 }
 
-BOOL credssp_auth_setup_auth_data(rdpCredsspAuth* auth, const SEC_WINNT_AUTH_IDENTITY* identity,
-                                  SEC_WINNT_AUTH_IDENTITY_WINPR* pAuthData)
+static BOOL credssp_auth_setup_auth_data(rdpCredsspAuth* auth,
+                                         const SEC_WINNT_AUTH_IDENTITY* identity,
+                                         SEC_WINNT_AUTH_IDENTITY_WINPR* pAuthData)
 {
 	SEC_WINNT_AUTH_IDENTITY_EXW* identityEx;
 
@@ -835,7 +836,7 @@ static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 	return TRUE;
 }
 
-TCHAR* tcs_strdup_from_char(const char* str)
+static TCHAR* tcs_strdup_from_char(const char* str)
 {
 #ifdef UNICODE
 	TCHAR* ret;
