@@ -22,6 +22,7 @@
 
 /* OpenSSL includes windows.h */
 #include <winpr/windows.h>
+#include <winpr/crypto.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -55,6 +56,7 @@ extern "C"
 
 	FREERDP_API CryptoCert crypto_cert_read(const BYTE* data, UINT32 length);
 	FREERDP_API CryptoCert crypto_cert_pem_read(const char* data);
+	FREERDP_API WINPR_MD_TYPE crypto_cert_get_signature_alg(X509* xcert);
 	FREERDP_API BYTE* crypto_cert_hash(X509* xcert, const char* hash, UINT32* length);
 	FREERDP_API char* crypto_cert_fingerprint_by_hash(X509* xcert, const char* hash);
 	FREERDP_API char* crypto_cert_fingerprint_by_hash_ex(X509* xcert, const char* hash,
