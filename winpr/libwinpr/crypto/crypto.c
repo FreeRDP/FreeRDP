@@ -22,6 +22,7 @@
 #endif
 
 #include <winpr/crypto.h>
+#include <winpr/wincrypt.h>
 
 /**
  * CryptAcquireCertificatePrivateKey
