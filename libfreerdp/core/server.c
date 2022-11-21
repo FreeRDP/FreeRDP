@@ -533,13 +533,9 @@ void WTSVirtualChannelManagerGetFileDescriptor(HANDLE hServer, void** fds, int* 
 BOOL WTSVirtualChannelManagerOpen(HANDLE hServer)
 {
 	WTSVirtualChannelManager* vcm = (WTSVirtualChannelManager*)hServer;
-	const freerdp_peer* client;
 
 	if (!vcm)
 		return FALSE;
-
-	WINPR_ASSERT(vcm->client);
-	client = vcm->client;
 
 	if (vcm->drdynvc_state == DRDYNVC_STATE_NONE)
 	{
