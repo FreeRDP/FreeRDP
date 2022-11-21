@@ -616,7 +616,25 @@ static SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 	SEC_CHANNEL_BINDINGS* ChannelBindings;
 	SecPkgContext_Bindings* ContextBindings;
 	const size_t PrefixLength = strnlen(TLS_SERVER_END_POINT, ARRAYSIZE(TLS_SERVER_END_POINT));
-	BYTE* CertificateHash = crypto_cert_hash(cert, "sha256", &CertificateHashLength);
+
+	/* See https://www.rfc-editor.org/rfc/rfc5929 for details about hashes */
+	WINPR_MD_TYPE alg = crypto_cert_get_signature_alg(cert);
+	const char* hash;
+	switch (alg)
+	{
+
+		case WINPR_MD_MD5:
+		case WINPR_MD_SHA1:
+			hash = winpr_md_type_to_string(WINPR_MD_SHA256);
+			break;
+		default:
+			hash = winpr_md_type_to_string(alg);
+			break;
+	}
+	if (!hash)
+		return NULL;
+
+	BYTE* CertificateHash = crypto_cert_hash(cert, hash, &CertificateHashLength);
 	if (!CertificateHash)
 		return NULL;
 

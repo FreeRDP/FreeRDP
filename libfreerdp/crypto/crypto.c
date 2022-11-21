@@ -17,9 +17,12 @@
  * limitations under the License.
  */
 
+#include <openssl/objects.h>
+
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/crypto.h>
 
 #include <freerdp/log.h>
@@ -1167,4 +1170,52 @@ X509* crypto_cert_from_pem(const char* data, size_t len, BOOL fromFile)
 		WLog_ERR(TAG, "PEM_read_bio_X509 returned NULL [input length %" PRIuz "]", len);
 
 	return x509;
+}
+
+WINPR_MD_TYPE crypto_cert_get_signature_alg(X509* xcert)
+{
+	WINPR_ASSERT(xcert);
+
+	const int nid = X509_get_signature_nid(xcert);
+
+	int hash_nid = 0;
+	if (OBJ_find_sigid_algs(nid, &hash_nid, NULL) != 1)
+		return WINPR_MD_NONE;
+
+	switch (hash_nid)
+	{
+		case NID_md2:
+			return WINPR_MD_MD2;
+		case NID_md4:
+			return WINPR_MD_MD4;
+		case NID_md5:
+			return WINPR_MD_MD5;
+		case NID_sha1:
+			return WINPR_MD_SHA1;
+		case NID_sha224:
+			return WINPR_MD_SHA224;
+		case NID_sha256:
+			return WINPR_MD_SHA256;
+		case NID_sha384:
+			return WINPR_MD_SHA384;
+		case NID_sha512:
+			return WINPR_MD_SHA512;
+		case NID_ripemd160:
+			return WINPR_MD_RIPEMD160;
+		case NID_sha3_224:
+			return WINPR_MD_SHA3_224;
+		case NID_sha3_256:
+			return WINPR_MD_SHA3_256;
+		case NID_sha3_384:
+			return WINPR_MD_SHA3_384;
+		case NID_sha3_512:
+			return WINPR_MD_SHA3_512;
+		case NID_shake128:
+			return WINPR_MD_SHAKE128;
+		case NID_shake256:
+			return WINPR_MD_SHAKE256;
+		case NID_undef:
+		default:
+			return WINPR_MD_NONE;
+	}
 }
