@@ -623,7 +623,7 @@ static UINT rdpgfx_recv_evict_cache_entry_pdu(GENERIC_CHANNEL_CALLBACK* callback
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpgfx_load_cache_import_offer(RDPGFX_PLUGIN* gfx, RDPGFX_CACHE_IMPORT_OFFER_PDU* offer)
+static UINT rdpgfx_load_cache_import_offer(RDPGFX_PLUGIN* gfx, RDPGFX_CACHE_IMPORT_OFFER_PDU* offer)
 {
 	int idx, count;
 	UINT error = CHANNEL_RC_OK;

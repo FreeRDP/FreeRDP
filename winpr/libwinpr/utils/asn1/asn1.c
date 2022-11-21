@@ -705,8 +705,9 @@ size_t WinPrAsn1EncGeneralString(WinPrAsn1Encoder* enc, WinPrAsn1_STRING str)
 	return WinPrAsn1EncMemoryChunk(enc, ER_TAG_GENERAL_STRING, &chunk);
 }
 
-size_t WinPrAsn1EncContextualMemoryChunk(WinPrAsn1Encoder* enc, BYTE wireType,
-                                         WinPrAsn1_tagId tagId, const WinPrAsn1_MemoryChunk* mchunk)
+static size_t WinPrAsn1EncContextualMemoryChunk(WinPrAsn1Encoder* enc, BYTE wireType,
+                                                WinPrAsn1_tagId tagId,
+                                                const WinPrAsn1_MemoryChunk* mchunk)
 {
 	wStream s;
 	size_t len, outLen;
@@ -1339,8 +1340,8 @@ size_t WinPrAsn1DecPeekContextualTag(WinPrAsn1Decoder* dec, WinPrAsn1_tagId* tag
 	return readContextualTag(dec, &staticS, tagId, ctxtDec);
 }
 
-size_t readContextualHeader(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error,
-                            WinPrAsn1Decoder* content)
+static size_t readContextualHeader(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error,
+                                   WinPrAsn1Decoder* content)
 {
 	WinPrAsn1_tag ftag;
 	size_t ret;
