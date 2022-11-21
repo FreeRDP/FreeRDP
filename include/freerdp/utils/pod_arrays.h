@@ -129,9 +129,9 @@ extern "C"
 {
 #endif
 
-	POD_ARRAYS_IMPL(UINT16, uint16);
-	POD_ARRAYS_IMPL(UINT32, uint32);
-	POD_ARRAYS_IMPL(UINT64, uint64);
+	POD_ARRAYS_IMPL(UINT16, uint16)
+	POD_ARRAYS_IMPL(UINT32, uint32)
+	POD_ARRAYS_IMPL(UINT64, uint64)
 
 #ifdef __cplusplus
 }

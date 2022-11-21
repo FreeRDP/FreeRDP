@@ -56,7 +56,7 @@ static BOOL cb_basic_struct(BasicStruct* v, void* target)
 	return (v->v1 == 1) && (v->v2 == 2);
 }
 
-POD_ARRAYS_IMPL(BasicStruct, basicstruct);
+POD_ARRAYS_IMPL(BasicStruct, basicstruct)
 
 int TestPodArrays(int argc, char* argv[])
 {

@@ -46,18 +46,18 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 	if (!bitmap_interleaved_context_reset(encoder) || !bitmap_interleaved_context_reset(decoder))
 		goto fail;
 
-	PROFILER_ENTER(profiler_comp);
+	PROFILER_ENTER(profiler_comp)
 	rc =
 	    interleaved_compress(encoder, tmp, &DstSize, w, h, pSrcData, format, step, x, y, NULL, bpp);
-	PROFILER_EXIT(profiler_comp);
+	PROFILER_EXIT(profiler_comp)
 
 	if (!rc)
 		goto fail;
 
-	PROFILER_ENTER(profiler_decomp);
+	PROFILER_ENTER(profiler_decomp)
 	rc = interleaved_decompress(decoder, tmp, DstSize, w, h, bpp, pDstData, format, step, x, y, w,
 	                            h, NULL);
-	PROFILER_EXIT(profiler_decomp);
+	PROFILER_EXIT(profiler_decomp)
 
 	if (!rc)
 		goto fail;
@@ -126,8 +126,8 @@ static BOOL run_encode_decode(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
 {
 	BOOL rc = FALSE;
 	UINT32 x;
-	PROFILER_DEFINE(profiler_comp);
-	PROFILER_DEFINE(profiler_decomp);
+	PROFILER_DEFINE(profiler_comp)
+	PROFILER_DEFINE(profiler_decomp)
 	PROFILER_CREATE(profiler_comp, get_profiler_name(TRUE, bpp))
 	PROFILER_CREATE(profiler_decomp, get_profiler_name(FALSE, bpp))
 
@@ -145,11 +145,11 @@ static BOOL run_encode_decode(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
 	rc = TRUE;
 fail:
 	PROFILER_PRINT_HEADER
-	PROFILER_PRINT(profiler_comp);
-	PROFILER_PRINT(profiler_decomp);
+	PROFILER_PRINT(profiler_comp)
+	PROFILER_PRINT(profiler_decomp)
 	PROFILER_PRINT_FOOTER
-	PROFILER_FREE(profiler_comp);
-	PROFILER_FREE(profiler_decomp);
+	PROFILER_FREE(profiler_comp)
+	PROFILER_FREE(profiler_decomp)
 	return rc;
 }
 
