@@ -25,6 +25,7 @@
 #include <winpr/spec.h>
 #include <winpr/smartcard.h>
 #include <winpr/asn1.h>
+#include <winpr/wincrypt.h>
 
 #include "../log.h"
 #include "ncrypt.h"

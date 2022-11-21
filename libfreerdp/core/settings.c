@@ -33,6 +33,7 @@
 #include <winpr/path.h>
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
+#include <winpr/wincrypt.h>
 
 #include <freerdp/settings.h>
 #include <freerdp/build-config.h>

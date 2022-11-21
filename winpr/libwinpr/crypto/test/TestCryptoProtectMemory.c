@@ -2,6 +2,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/crypto.h>
+#include <winpr/wincrypt.h>
 #include <winpr/ssl.h>
 #include <winpr/wlog.h>
 

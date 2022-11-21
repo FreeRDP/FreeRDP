@@ -149,6 +149,7 @@
  */
 
 #include <winpr/crt.h>
+#include <winpr/wincrypt.h>
 
 #ifndef _WIN32
 
