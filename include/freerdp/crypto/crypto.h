@@ -22,7 +22,7 @@
 
 /* OpenSSL includes windows.h */
 #include <winpr/windows.h>
-#include <winpr/crypto.h>
+#include <winpr/custom-crypto.h>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>

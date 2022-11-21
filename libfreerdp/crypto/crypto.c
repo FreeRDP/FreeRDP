@@ -25,7 +25,6 @@
 
 #include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/crypto.h>
 
 #include <freerdp/log.h>
 #include <freerdp/crypto/crypto.h>
