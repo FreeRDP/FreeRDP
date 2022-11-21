@@ -394,7 +394,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	for (; now < dueDate; now = GetTickCount64())
 	{
 		HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
-		DWORD status = 0;
+		DWORD wstatus = 0;
 		DWORD nevents = freerdp_get_event_handles(rdp->context, events, ARRAYSIZE(events));
 		if (!nevents)
 		{
@@ -402,8 +402,8 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 			return FALSE;
 		}
 
-		status = WaitForMultipleObjectsEx(nevents, events, FALSE, (dueDate - now), TRUE);
-		switch (status)
+		wstatus = WaitForMultipleObjectsEx(nevents, events, FALSE, (dueDate - now), TRUE);
+		switch (wstatus)
 		{
 			case WAIT_TIMEOUT:
 				/* will make us quit with a timeout */

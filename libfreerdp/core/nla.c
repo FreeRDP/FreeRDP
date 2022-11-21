@@ -1163,7 +1163,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 			                   { 4, FreeRDP_CspName } };
 		WinPrAsn1_OctetString octet_string = { 0 };
 		char* str;
-		BOOL ret;
+		BOOL res;
 
 		/* TSSmartCardCreds */
 		if (!WinPrAsn1EncSeqContainer(enc))
@@ -1173,9 +1173,9 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 		str = freerdp_settings_get_string_writable(settings, FreeRDP_Password);
 		octet_string.len =
 		    ConvertToUnicode(CP_UTF8, 0, str, -1, (LPWSTR*)&octet_string.data, 0) * sizeof(WCHAR);
-		ret = WinPrAsn1EncContextualOctetString(enc, 0, &octet_string);
+		res = WinPrAsn1EncContextualOctetString(enc, 0, &octet_string);
 		free(octet_string.data);
-		if (!ret)
+		if (!res)
 			goto out;
 
 		/* cspData [1] SEQUENCE */
