@@ -1075,11 +1075,28 @@ static BOOL rdp_apply_pointer_capability_set(rdpSettings* settings, const rdpSet
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
 
-	if (!src->ColorPointerFlag)
-		settings->ColorPointerFlag = FALSE;
+	if (!freerdp_settings_get_bool(src, FreeRDP_ColorPointerFlag))
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_ColorPointerFlag, FALSE))
+			return FALSE;
+	}
 
-	settings->PointerCacheSize = src->PointerCacheSize;
-	settings->ColorPointerCacheSize = src->ColorPointerCacheSize;
+	const UINT32 pointerCacheSize = freerdp_settings_get_uint32(src, FreeRDP_PointerCacheSize);
+	const UINT32 colorPointerCacheSize =
+	    freerdp_settings_get_uint32(src, FreeRDP_ColorPointerCacheSize);
+	const UINT32 dstPointerCacheSize =
+	    freerdp_settings_get_uint32(settings, FreeRDP_PointerCacheSize);
+	const UINT32 dstColorPointerCacheSize =
+	    freerdp_settings_get_uint32(settings, FreeRDP_ColorPointerCacheSize);
+
+	/* We want the minimum of our setting and the remote announced value. */
+	const UINT32 actualPointerCacheSize = MIN(pointerCacheSize, dstPointerCacheSize);
+	const UINT32 actualColorPointerCacheSize = MIN(colorPointerCacheSize, dstColorPointerCacheSize);
+
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_PointerCacheSize, actualPointerCacheSize) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_ColorPointerCacheSize,
+	                                 actualColorPointerCacheSize))
+		return FALSE;
 
 	return TRUE;
 }
