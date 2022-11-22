@@ -176,7 +176,7 @@ extern "C"
 
 	FREERDP_API BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src);
 	FREERDP_API BOOL pf_context_init_server_context(freerdp_peer* client);
-	FREERDP_API pClientContext* pf_context_create_client_context(rdpSettings* clientSettings);
+	FREERDP_API pClientContext* pf_context_create_client_context(const rdpSettings* clientSettings);
 
 	FREERDP_API proxyData* proxy_data_new(void);
 	FREERDP_API void proxy_data_set_client_context(proxyData* pdata, pClientContext* context);
