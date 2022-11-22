@@ -617,7 +617,10 @@ BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* ch
 	}
 
 	count = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount);
-	settings->StaticChannelArray[count++] = channel;
+
+	ADDIN_ARGV** cur = &settings->StaticChannelArray[count++];
+	freerdp_addin_argv_free(*cur);
+	*cur = channel;
 	return freerdp_settings_set_uint32(settings, FreeRDP_StaticChannelCount, count);
 }
 
