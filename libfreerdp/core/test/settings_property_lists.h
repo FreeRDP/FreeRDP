@@ -212,6 +212,7 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_ClientSessionId,
 	FreeRDP_ClusterInfoFlags,
 	FreeRDP_ColorDepth,
+	FreeRDP_ColorPointerCacheSize,
 	FreeRDP_CompDeskSupportLevel,
 	FreeRDP_CompressionLevel,
 	FreeRDP_ConnectionType,

@@ -219,6 +219,8 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		settings_reg_query_bool(settings, FreeRDP_ColorPointerFlag, hKey, _T("LargePointer"));
 		settings_reg_query_dword(settings, FreeRDP_LargePointerFlag, hKey, _T("ColorPointer"));
 		settings_reg_query_dword(settings, FreeRDP_PointerCacheSize, hKey, _T("PointerCacheSize"));
+		settings_reg_query_dword(settings, FreeRDP_ColorPointerCacheSize, hKey,
+		                         _T("ColorPointerCacheSize"));
 		RegCloseKey(hKey);
 	}
 }
@@ -485,10 +487,29 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		if (!freerdp_settings_set_string(settings, FreeRDP_ClientHostname, ClientHostname))
 			goto out_fail;
 	}
+
+	/* [MS-RDPBCGR] 2.2.7.1.5 Pointer Capability Set (TS_POINTER_CAPABILITYSET)
+	 *
+	 * if we are in server mode send a reasonable large cache size,
+	 * if we are in client mode just set the value to the maximum we want to
+	 * support and during capability exchange that size will be limited to the
+	 * sizes the server supports */
+	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_PointerCacheSize, 25) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_ColorPointerCacheSize, 25))
+			goto out_fail;
+	}
+	else
+	{
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_PointerCacheSize, UINT16_MAX) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_ColorPointerCacheSize, UINT16_MAX))
+			goto out_fail;
+	}
+
 	if (!freerdp_settings_set_bool(settings, FreeRDP_ColorPointerFlag, TRUE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_LargePointerFlag,
 	                                 (LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384)) ||
-	    !freerdp_settings_set_uint32(settings, FreeRDP_PointerCacheSize, 20) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_SoundBeepsEnabled, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_DrawGdiPlusEnabled, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_DrawAllowSkipAlpha, TRUE) ||
