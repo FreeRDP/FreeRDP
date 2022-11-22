@@ -32,7 +32,8 @@
 
 #define TAG FREERDP_TAG("cache.pointer")
 
-static BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer);
+static BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer,
+                              BOOL colorCache);
 static rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index);
 
 static void pointer_free(rdpContext* context, rdpPointer* pointer)
@@ -163,7 +164,7 @@ static BOOL update_pointer_color(rdpContext* context, const POINTER_COLOR_UPDATE
 	if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
 		goto out_fail;
 
-	if (!pointer_cache_put(cache->pointer, pointer_color->cacheIndex, pointer))
+	if (!pointer_cache_put(cache->pointer, pointer_color->cacheIndex, pointer, TRUE))
 		goto out_fail;
 
 	if (!IFCALLRESULT(TRUE, pointer->Set, context, pointer))
@@ -203,7 +204,7 @@ static BOOL update_pointer_large(rdpContext* context, const POINTER_LARGE_UPDATE
 	if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
 		goto out_fail;
 
-	if (!pointer_cache_put(cache->pointer, pointer_large->cacheIndex, pointer))
+	if (!pointer_cache_put(cache->pointer, pointer_large->cacheIndex, pointer, FALSE))
 		goto out_fail;
 
 	if (!IFCALLRESULT(TRUE, pointer->Set, context, pointer))
@@ -242,7 +243,7 @@ static BOOL update_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* po
 	if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
 		goto out_fail;
 
-	if (!pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex, pointer))
+	if (!pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex, pointer, FALSE))
 		goto out_fail;
 
 	if (!IFCALLRESULT(TRUE, pointer->Set, context, pointer))
@@ -290,16 +291,22 @@ rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 	return pointer;
 }
 
-BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer)
+BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer,
+                       BOOL colorCache)
 {
 	rdpPointer* prevPointer;
+	const size_t id = colorCache ? FreeRDP_ColorPointerCacheSize : FreeRDP_PointerCacheSize;
 
 	WINPR_ASSERT(pointer_cache);
+	WINPR_ASSERT(pointer_cache->context);
 
-	if (index >= pointer_cache->cacheSize)
+	const UINT32 size = freerdp_settings_get_uint32(pointer_cache->context->settings, id);
+	if ((index >= pointer_cache->cacheSize) || (index >= size))
 	{
-		WLog_ERR(TAG, "invalid pointer index:%" PRIu32 " [%" PRIu32 "]", index,
-		         pointer_cache->cacheSize);
+		WLog_ERR(TAG,
+		         "invalid pointer index:%" PRIu32 " [allocated %" PRIu32 ", %s size %" PRIu32 "]",
+		         index, pointer_cache->cacheSize,
+		         colorCache ? "color-pointer-cache" : "pointer-cache", size);
 		return FALSE;
 	}
 
@@ -350,7 +357,10 @@ rdpPointerCache* pointer_cache_new(rdpContext* context)
 
 	/* seen invalid pointer cache requests by mstsc (off by 1) so we ensure the cache entry size
 	 * matches */
-	pointer_cache->cacheSize = freerdp_settings_get_uint32(settings, FreeRDP_PointerCacheSize) + 1;
+	const UINT32 size = freerdp_settings_get_uint32(settings, FreeRDP_PointerCacheSize);
+	const UINT32 colorSize = freerdp_settings_get_uint32(settings, FreeRDP_ColorPointerCacheSize);
+	pointer_cache->cacheSize = MAX(size, colorSize) + 1;
+
 	pointer_cache->entries = (rdpPointer**)calloc(pointer_cache->cacheSize, sizeof(rdpPointer*));
 
 	if (!pointer_cache->entries)
