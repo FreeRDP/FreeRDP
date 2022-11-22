@@ -273,6 +273,26 @@ extern "C"
 	 */
 	WINPR_API SSIZE_T ConvertUtf8NToWChar(const char* str, size_t len, WCHAR* wstr, size_t wlen);
 
+	/** \brief Converts multistrings form UTF-8 to UTF-16
+	 *
+	 * The function does string conversions of any input string of len characters.
+	 * Any character in the buffer (incuding any '\0') is converted.
+	 *
+	 * Supplying len = 0 will return the required size of the buffer in characters.
+	 *
+	 * \warning Supplying a buffer length smaller than required will result in
+	 * platform dependent (=undefined) behaviour!
+	 *
+	 *  \param str A CHAR string of \b len length
+	 *  \param len The (buffer) length in characters of \b str
+	 *  \param wstr A pointer to the result WCHAR string
+	 *  \param wlen The length in WCHAR characters of the result buffer
+	 *
+	 *  \return the size of the converted string in WCHAR characters (including any '\0'), or -1 for
+	 * failure
+	 */
+	WINPR_API SSIZE_T ConvertMszUtf8NToWChar(const char* str, size_t len, WCHAR* wstr, size_t wlen);
+
 	/** \brief Converts form UTF-16 to UTF-8, returns an allocated string
 	 *
 	 * The function does string conversions of any '\0' terminated input string
@@ -325,6 +345,20 @@ extern "C"
 	 *  \return An allocated zero terminated UTF-16 string or NULL in case of failure.
 	 */
 	WINPR_API WCHAR* ConvertUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize);
+
+	/** \brief Converts multistring form UTF-8 to UTF-16, returns an allocated string
+	 *
+	 * The function does string conversions of any input string of len characters.
+	 * Any character in the buffer (incuding any '\0') is converted.
+	 *
+	 *  \param str A CHAR string of \b len byte length
+	 *  \param len The (buffer) length in characters of \b str
+	 *  \param pSize Ignored if NULL, otherwise receives the length of the result string in
+	 * characters (including any '\0' character)
+	 *
+	 *  \return An allocated double zero terminated UTF-16 string or NULL in case of failure.
+	 */
+	WINPR_API WCHAR* ConvertMszUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize);
 
 	WINPR_API int ConvertToUnicode(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 	                               int cbMultiByte, LPWSTR* lpWideCharStr, int cchWideChar);
