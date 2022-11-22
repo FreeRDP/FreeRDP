@@ -1144,11 +1144,7 @@ static BOOL rdp_write_pointer_capability_set(wStream* s, const rdpSettings* sett
 	Stream_Write_UINT16(s, colorPointerFlag); /* colorPointerFlag (2 bytes) */
 	Stream_Write_UINT16(
 	    s, (UINT16)settings->ColorPointerCacheSize); /* colorPointerCacheSize (2 bytes) */
-
-	if (settings->LargePointerFlag)
-	{
-		Stream_Write_UINT16(s, (UINT16)settings->PointerCacheSize); /* pointerCacheSize (2 bytes) */
-	}
+	Stream_Write_UINT16(s, (UINT16)settings->PointerCacheSize); /* pointerCacheSize (2 bytes) */
 
 	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_POINTER);
 }
