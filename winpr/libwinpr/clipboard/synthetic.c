@@ -168,11 +168,6 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 			return NULL;
 
 		size = ConvertLineEndingToLF(pDstData, size);
-		if (size < 0)
-		{
-			free(pDstData);
-			return NULL;
-		}
 		*pSize = (UINT32)size;
 		return pDstData;
 	}

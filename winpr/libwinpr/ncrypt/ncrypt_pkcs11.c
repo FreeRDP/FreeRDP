@@ -208,7 +208,7 @@ static CK_RV object_load_attributes(NCryptP11ProviderHandle* provider, CK_SESSIO
 		case CKR_OK:
 			if (!attributes_have_unallocated_buffers(attributes, count))
 				return rv;
-			/* fallthrought */
+			/* fallthrough */
 		case CKR_ATTRIBUTE_SENSITIVE:
 		case CKR_ATTRIBUTE_TYPE_INVALID:
 		case CKR_BUFFER_TOO_SMALL:

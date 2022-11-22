@@ -904,7 +904,7 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 
 		if (cnt)
 		{
-			float rate = ((float)cnt) / ((float)size) * 100.0f;
+			const float rate = ((float)cnt) / ((float)size) * 100.0f;
 			printf("Progressive RemoteFX decompression failure\n");
 			printf("Actual, Expected (%d/%d = %.3f%%):\n", cnt, size, rate);
 		}

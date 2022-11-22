@@ -1657,11 +1657,11 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	if (compare)
 	{
 		cnt[2] = test_bmp_cmp_count(actual, expected, dstSize, 2, margin); /* red */
-		err[2] = ((float)cnt[2]) / ((float)dstSize / 4) * 100.0f;
+		err[2] = ((float)cnt[2]) / ((float)dstSize / 4.0f) * 100.0f;
 		cnt[1] = test_bmp_cmp_count(actual, expected, dstSize, 1, margin); /* green */
-		err[1] = ((float)cnt[1]) / ((float)dstSize / 4) * 100.0f;
+		err[1] = ((float)cnt[1]) / ((float)dstSize / 4.0f) * 100.0f;
 		cnt[0] = test_bmp_cmp_count(actual, expected, dstSize, 0, margin); /* blue */
-		err[0] = ((float)cnt[0]) / ((float)dstSize / 4) * 100.0f;
+		err[0] = ((float)cnt[0]) / ((float)dstSize / 4.0f) * 100.0f;
 
 		if (cnt[0] || cnt[1] || cnt[2])
 		{
@@ -1678,11 +1678,11 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 		}
 
 		cnt[2] = test_bmp_cmp_count(actual1, expected, dstSize, 2, margin); /* red */
-		err[2] = ((float)cnt[2]) / ((float)dstSize / 4) * 100.0f;
+		err[2] = ((float)cnt[2]) / ((float)dstSize / 4.0f) * 100.0f;
 		cnt[1] = test_bmp_cmp_count(actual1, expected, dstSize, 1, margin); /* green */
-		err[1] = ((float)cnt[1]) / ((float)dstSize / 4) * 100.0f;
+		err[1] = ((float)cnt[1]) / ((float)dstSize / 4.0f) * 100.0f;
 		cnt[0] = test_bmp_cmp_count(actual1, expected, dstSize, 0, margin); /* blue */
-		err[0] = ((float)cnt[0]) / ((float)dstSize / 4) * 100.0f;
+		err[0] = ((float)cnt[0]) / ((float)dstSize / 4.0f) * 100.0f;
 
 		if (cnt[0] || cnt[1] || cnt[2])
 		{
