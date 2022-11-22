@@ -1584,7 +1584,9 @@ BOOL rdp_server_reactivate(rdpRdp* rdp)
 	rdp_finalize_set_flag(rdp, FINALIZE_DEACTIVATE_REACTIVATE);
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE))
 		return FALSE;
-	return rdp_peer_handle_state_demand_active(client) > 0;
+
+	state_run_t rc = rdp_peer_handle_state_demand_active(client);
+	return state_run_success(rc);
 }
 
 BOOL rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
