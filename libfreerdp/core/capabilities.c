@@ -1079,6 +1079,7 @@ static BOOL rdp_apply_pointer_capability_set(rdpSettings* settings, const rdpSet
 		settings->ColorPointerFlag = FALSE;
 
 	settings->PointerCacheSize = src->PointerCacheSize;
+	settings->ColorPointerCacheSize = src->ColorPointerCacheSize;
 
 	return TRUE;
 }
@@ -1093,8 +1094,8 @@ static BOOL rdp_apply_pointer_capability_set(rdpSettings* settings, const rdpSet
 
 static BOOL rdp_read_pointer_capability_set(wStream* s, rdpSettings* settings)
 {
-	UINT16 colorPointerFlag;
-	UINT16 colorPointerCacheSize;
+	UINT16 colorPointerFlag = 0;
+	UINT16 colorPointerCacheSize = 0;
 	UINT16 pointerCacheSize = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
@@ -1109,7 +1110,8 @@ static BOOL rdp_read_pointer_capability_set(wStream* s, rdpSettings* settings)
 
 	WINPR_ASSERT(settings);
 	settings->ColorPointerFlag = colorPointerFlag;
-	settings->PointerCacheSize = MAX(pointerCacheSize, colorPointerCacheSize);
+	settings->PointerCacheSize = pointerCacheSize;
+	settings->ColorPointerCacheSize = colorPointerCacheSize;
 
 	return TRUE;
 }
@@ -1134,12 +1136,14 @@ static BOOL rdp_write_pointer_capability_set(wStream* s, const rdpSettings* sett
 		return FALSE;
 	if (settings->PointerCacheSize > UINT16_MAX)
 		return FALSE;
+	if (settings->ColorPointerCacheSize > UINT16_MAX)
+		return FALSE;
 
 	WINPR_ASSERT(settings);
 	colorPointerFlag = (settings->ColorPointerFlag) ? 1 : 0;
 	Stream_Write_UINT16(s, colorPointerFlag); /* colorPointerFlag (2 bytes) */
-	Stream_Write_UINT16(s,
-	                    (UINT16)settings->PointerCacheSize); /* colorPointerCacheSize (2 bytes) */
+	Stream_Write_UINT16(
+	    s, (UINT16)settings->ColorPointerCacheSize); /* colorPointerCacheSize (2 bytes) */
 
 	if (settings->LargePointerFlag)
 	{
