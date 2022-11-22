@@ -2744,6 +2744,8 @@ rdpRdg* rdg_new(rdpContext* context)
 					if (!http_context_set_rdg_auth_scheme(rdg->http, "PAA"))
 						goto rdg_alloc_error;
 
+					break;
+
 				case HTTP_EXTENDED_AUTH_SSPI_NTLM:
 					if (!http_context_set_rdg_auth_scheme(rdg->http, "SSPI_NTLM"))
 						goto rdg_alloc_error;
