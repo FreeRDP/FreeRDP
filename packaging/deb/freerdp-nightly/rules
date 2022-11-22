@@ -6,7 +6,8 @@ DEB_HOST_ARCH=$(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 SANATIZE_ADDRESS = -DWITH_SANITIZE_ADDRESS=ON
 
-DEB_CMAKE_EXTRA_FLAGS :=  -DCMAKE_SKIP_RPATH=FALSE \
+DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
+                          -DCMAKE_SKIP_RPATH=FALSE \
                           -DCMAKE_SKIP_INSTALL_RPATH=FALSE \
                           -DWITH_PULSE=ON \
                           -DWITH_CHANNELS=ON \
