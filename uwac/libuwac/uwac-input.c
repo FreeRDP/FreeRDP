@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 #include <assert.h>
 #include <errno.h>
 #include <time.h>
@@ -71,8 +72,8 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 	wl_shm_pool_destroy(pool);
 
 	if (munmap(data, size) < 0)
-		fprintf(stderr, "%s: munmap(%p, %" PRIuz ") failed with [%d] %s\n", __FUNCTION__, data,
-		        size, errno, strerror(errno));
+		fprintf(stderr, "%s: munmap(%p, %z) failed with [%d] %s\n", __FUNCTION__, data, size, errno,
+		        strerror(errno));
 
 error_mmap:
 	close(fd);
