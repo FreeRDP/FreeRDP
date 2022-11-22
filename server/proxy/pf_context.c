@@ -243,7 +243,7 @@ out_fail:
 	return rc;
 }
 
-pClientContext* pf_context_create_client_context(rdpSettings* clientSettings)
+pClientContext* pf_context_create_client_context(const rdpSettings* clientSettings)
 {
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 	pClientContext* pc;
