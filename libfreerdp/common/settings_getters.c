@@ -1502,6 +1502,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_ColorDepth:
 			return settings->ColorDepth;
 
+		case FreeRDP_ColorPointerCacheSize:
+			return settings->ColorPointerCacheSize;
+
 		case FreeRDP_CompDeskSupportLevel:
 			return settings->CompDeskSupportLevel;
 
@@ -1897,6 +1900,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 
 		case FreeRDP_ColorDepth:
 			settings->ColorDepth = cnv.c;
+			break;
+
+		case FreeRDP_ColorPointerCacheSize:
+			settings->ColorPointerCacheSize = cnv.c;
 			break;
 
 		case FreeRDP_CompDeskSupportLevel:

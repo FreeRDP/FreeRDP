@@ -274,6 +274,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_ClientSessionId, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_ClientSessionId" },
 	{ FreeRDP_ClusterInfoFlags, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_ClusterInfoFlags" },
 	{ FreeRDP_ColorDepth, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_ColorDepth" },
+	{ FreeRDP_ColorPointerCacheSize, FREERDP_SETTINGS_TYPE_UINT32,
+	  "FreeRDP_ColorPointerCacheSize" },
 	{ FreeRDP_CompDeskSupportLevel, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_CompDeskSupportLevel" },
 	{ FreeRDP_CompressionLevel, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_CompressionLevel" },
 	{ FreeRDP_ConnectionType, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_ConnectionType" },
