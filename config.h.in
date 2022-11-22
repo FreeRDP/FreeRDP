@@ -186,4 +186,7 @@
 #cmakedefine WITH_INTERNAL_MD4
 #cmakedefine WITH_INTERNAL_MD5
 
+/* Uwac */
+#cmakedefine HAVE_PIXMAN_REGION
+
 #endif /* FREERDP_CONFIG_H */

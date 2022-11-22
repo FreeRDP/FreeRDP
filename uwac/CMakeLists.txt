@@ -23,6 +23,14 @@ set(UWAC_VERSION "${UWAC_VERSION_MAJOR}.${UWAC_VERSION_MINOR}.${UWAC_VERSION_REV
 set(UWAC_VERSION_FULL "${UWAC_VERSION}")
 set(UWAC_API_VERSION "${UWAC_VERSION_MAJOR}")
 
+option(HAVE_PIXMAN_REGION "Use PIXMAN or FreeRDP for region calculations" OFF)
+
+if (HAVE_PIXMAN_REGION)
+	include(FindPkgConfig)
+	pkg_check_modules(pixman REQUIRED pixman-1)
+	include_directories(${pixman_INCLUDE_DIRS})
+endif()
+
 add_subdirectory(include)
 add_subdirectory(libuwac)
 
