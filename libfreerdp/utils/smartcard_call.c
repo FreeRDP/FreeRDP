@@ -307,7 +307,7 @@ static DWORD filter_device_by_name_w(wLinkedList* list, LPWSTR* mszReaders, DWOR
 	*mszReaders = NULL;
 	rc = filter_device_by_name_a(list, &readers, cchReaders);
 
-	*mszReaders = ConvertUtf8NToWCharAlloc(readers, rc, NULL);
+	*mszReaders = ConvertMszUtf8NToWCharAlloc(readers, rc, NULL);
 	if (!*mszReaders)
 		rc = 0;
 

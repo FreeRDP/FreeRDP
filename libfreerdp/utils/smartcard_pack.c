@@ -342,7 +342,7 @@ static char* smartcard_convert_string_list(const void* in, size_t bytes, BOOL un
 
 	if (unicode)
 	{
-		mszA = ConvertWCharNToUtf8Alloc(string.wz, bytes / sizeof(WCHAR), &length);
+		mszA = ConvertMszWCharNToUtf8Alloc(string.wz, bytes / sizeof(WCHAR), &length);
 		if (!mszA)
 			return NULL;
 	}
@@ -353,7 +353,7 @@ static char* smartcard_convert_string_list(const void* in, size_t bytes, BOOL un
 			return NULL;
 		CopyMemory(mszA, string.sz, bytes - 1);
 		mszA[bytes - 1] = '\0';
-		length = strnlen(mszA, bytes);
+		length = bytes - 1;
 	}
 
 	for (index = 1; index < length; index++)
