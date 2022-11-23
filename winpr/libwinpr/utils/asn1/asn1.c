@@ -930,12 +930,12 @@ static size_t readTagAndLen(WinPrAsn1Decoder* dec, wStream* s, WinPrAsn1_tag* ta
 {
 	size_t lenBytes;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
-		return FALSE;
+	if (Stream_GetRemainingLength(s) < 1)
+		return 0;
 
 	Stream_Read(s, tag, 1);
 	lenBytes = readLen(s, len, (dec->encoding == WINPR_ASN1_DER));
-	if (!lenBytes)
+	if (lenBytes == 0)
 		return 0;
 
 	return 1 + lenBytes;
