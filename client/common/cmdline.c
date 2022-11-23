@@ -2978,7 +2978,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					}
 					else if (option_equals(c, "extauth-sspi-ntlm"))
 					{
-						if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpExtAuthSspiNtln,
+						if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpExtAuthSspiNtlm,
 						                               TRUE))
 							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}

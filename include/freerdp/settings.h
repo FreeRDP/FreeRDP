@@ -772,7 +772,7 @@ typedef struct
 #define FreeRDP_GatewayAcceptedCert (1998)
 #define FreeRDP_GatewayAcceptedCertLength (1999)
 #define FreeRDP_GatewayHttpUseWebsockets (2000)
-#define FreeRDP_GatewayHttpExtAuthSspiNtln (2001)
+#define FreeRDP_GatewayHttpExtAuthSspiNtlm (2001)
 #define FreeRDP_ProxyType (2015)
 #define FreeRDP_ProxyHostname (2016)
 #define FreeRDP_ProxyPort (2017)
@@ -1338,7 +1338,7 @@ struct rdp_settings
 	ALIGN64 char* GatewayAcceptedCert;        /* 1998 */
 	ALIGN64 UINT32 GatewayAcceptedCertLength; /* 1999 */
 	ALIGN64 BOOL GatewayHttpUseWebsockets;    /* 2000 */
-	ALIGN64 BOOL GatewayHttpExtAuthSspiNtln;  /* 2001 */
+	ALIGN64 BOOL GatewayHttpExtAuthSspiNtlm;  /* 2001 */
 	UINT64 padding2015[2015 - 2002];          /* 2002 */
 
 	/* Proxy */
