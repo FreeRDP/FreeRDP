@@ -74,8 +74,16 @@ static WINPR_NORETURN(void usage(const char* app))
 	printf("Usage:\n");
 	printf("%s -h                               Display this help text.\n", app);
 	printf("%s --help                           Display this help text.\n", app);
+	printf("%s --buildconfig                    Print the build configuration.\n", app);
 	printf("%s <config ini file>                Start the proxy with <config.ini>\n", app);
 	printf("%s --dump-config <config ini file>  Create a template <config.ini>\n", app);
+	exit(0);
+}
+
+static WINPR_NORETURN(void buildconfig(const char* app))
+{
+	printf("This is FreeRDP version %s (%s)\n", FREERDP_VERSION_FULL, FREERDP_GIT_REVISION);
+	printf("%s", freerdp_get_build_config());
 	exit(0);
 }
 
@@ -102,6 +110,8 @@ int main(int argc, char* argv[])
 			usage(argv[0]);
 		else if (_stricmp(arg, "--help") == 0)
 			usage(argv[0]);
+		else if (_stricmp(arg, "--buildconfig") == 0)
+			buildconfig(argv[0]);
 		else if (_stricmp(arg, "--dump-config") == 0)
 		{
 			if (argc <= 2)
