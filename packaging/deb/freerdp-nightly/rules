@@ -50,6 +50,7 @@ override_dh_install:
 	dh_install --fail-missing
 
 override_dh_auto_test:
+	true
 
 override_dh_clean:
 	rm -f config.h
