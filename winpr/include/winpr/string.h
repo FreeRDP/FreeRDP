@@ -237,6 +237,26 @@ extern "C"
 	 */
 	WINPR_API SSIZE_T ConvertWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t len);
 
+	/** \brief Converts multistrings form UTF-16 to UTF-8
+	 *
+	 * The function does string conversions of any input string of wlen characters.
+	 * Any character in the buffer (incuding any '\0') is converted.
+	 *
+	 * Supplying len = 0 will return the required size of the buffer in characters.
+	 *
+	 * \warning Supplying a buffer length smaller than required will result in
+	 * platform dependent (=undefined) behaviour!
+	 *
+	 *  \param wstr A WCHAR string of \b wlen length
+	 *  \param wlen The (buffer) length in characters of \b wstr
+	 *  \param str A pointer to the result string
+	 *  \param len The length in characters of the result buffer
+	 *
+	 *  \return the size of the converted string in CHAR characters (including any '\0'), or -1 for
+	 * failure
+	 */
+	WINPR_API SSIZE_T ConvertMszWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t len);
+
 	/** \brief Converts form UTF-8 to UTF-16
 	 *
 	 * The function does string conversions of any '\0' terminated input string
@@ -318,6 +338,20 @@ extern "C"
 	 *  \return An allocated zero terminated UTF-8 string or NULL in case of failure.
 	 */
 	WINPR_API char* ConvertWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pSize);
+
+	/** \brief Converts multistring form UTF-16 to UTF-8, returns an allocated string
+	 *
+	 * The function does string conversions of any input string of len characters.
+	 * Any character in the buffer (incuding any '\0') is converted.
+	 *
+	 *  \param str A WCHAR string of \b len character length
+	 *  \param len The (buffer) length in characters of \b str
+	 *  \param pSize Ignored if NULL, otherwise receives the length of the result string in
+	 * characters (including any '\0' character)
+	 *
+	 *  \return An allocated double zero terminated UTF-8 string or NULL in case of failure.
+	 */
+	WINPR_API char* ConvertMszWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pSize);
 
 	/** \brief Converts form UTF-8 to UTF-16, returns an allocated string
 	 *
