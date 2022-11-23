@@ -578,7 +578,6 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 	if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
 		char* title = NULL;
-		WCHAR* titleW = NULL;
 
 		if (windowState->titleInfo.length == 0)
 		{
@@ -598,9 +597,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 		free(railWindow->title);
 		railWindow->title = title;
-		titleW = ConvertUtf8ToWCharAlloc(railWindow->title, NULL);
-		SetWindowTextW(railWindow->hWnd, titleW);
-		free(titleW);
+		SetWindowTextW(railWindow->hWnd, windowState->titleInfo.string);
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
