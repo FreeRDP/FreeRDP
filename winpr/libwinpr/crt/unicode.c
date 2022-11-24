@@ -519,10 +519,10 @@ char* ConvertWCharToUtf8Alloc(const WCHAR* wstr, size_t* pUtfCharLength)
 		*pUtfCharLength = 0;
 	if (rc <= 0)
 		return NULL;
-	tmp = calloc((size_t)rc + 3ull, sizeof(char));
+	tmp = calloc((size_t)rc + 1ull, sizeof(char));
 	if (!tmp)
 		return NULL;
-	const SSIZE_T rc2 = ConvertWCharToUtf8(wstr, tmp, (size_t)rc + 2ull);
+	const SSIZE_T rc2 = ConvertWCharToUtf8(wstr, tmp, (size_t)rc + 1ull);
 	if (rc2 <= 0)
 	{
 		free(tmp);
@@ -543,10 +543,10 @@ char* ConvertWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pUtfCharL
 		*pUtfCharLength = 0;
 	if (rc <= 0)
 		return NULL;
-	tmp = calloc((size_t)rc + 3ull, sizeof(char));
+	tmp = calloc((size_t)rc + 1ull, sizeof(char));
 	if (!tmp)
 		return NULL;
-	const SSIZE_T rc2 = ConvertWCharNToUtf8(wstr, wlen, tmp, (size_t)rc + 2ull);
+	const SSIZE_T rc2 = ConvertWCharNToUtf8(wstr, wlen, tmp, (size_t)rc + 1ull);
 	if (rc2 <= 0)
 	{
 		free(tmp);
@@ -567,10 +567,10 @@ char* ConvertMszWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pUtfCh
 		*pUtfCharLength = 0;
 	if (rc <= 0)
 		return NULL;
-	tmp = calloc((size_t)rc + 3ull, sizeof(char));
+	tmp = calloc((size_t)rc + 1ull, sizeof(char));
 	if (!tmp)
 		return NULL;
-	const SSIZE_T rc2 = ConvertMszWCharNToUtf8(wstr, wlen, tmp, (size_t)rc + 2ull);
+	const SSIZE_T rc2 = ConvertMszWCharNToUtf8(wstr, wlen, tmp, (size_t)rc + 1ull);
 	if (rc2 <= 0)
 	{
 		free(tmp);
@@ -590,10 +590,10 @@ WCHAR* ConvertUtf8ToWCharAlloc(const char* str, size_t* pSize)
 		*pSize = 0;
 	if (rc <= 0)
 		return NULL;
-	tmp = calloc((size_t)rc + 3ull, sizeof(WCHAR));
+	tmp = calloc((size_t)rc + 1ull, sizeof(WCHAR));
 	if (!tmp)
 		return NULL;
-	const SSIZE_T rc2 = ConvertUtf8ToWChar(str, tmp, (size_t)rc + 2ull);
+	const SSIZE_T rc2 = ConvertUtf8ToWChar(str, tmp, (size_t)rc + 1ull);
 	if (rc2 <= 0)
 	{
 		free(tmp);
@@ -613,10 +613,10 @@ WCHAR* ConvertUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize)
 		*pSize = 0;
 	if (rc <= 0)
 		return NULL;
-	tmp = calloc((size_t)rc + 3ull, sizeof(WCHAR));
+	tmp = calloc((size_t)rc + 1ull, sizeof(WCHAR));
 	if (!tmp)
 		return NULL;
-	const SSIZE_T rc2 = ConvertUtf8NToWChar(str, len, tmp, (size_t)rc + 2ull);
+	const SSIZE_T rc2 = ConvertUtf8NToWChar(str, len, tmp, (size_t)rc + 1ull);
 	if (rc2 <= 0)
 	{
 		free(tmp);
@@ -636,10 +636,10 @@ WCHAR* ConvertMszUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize)
 		*pSize = 0;
 	if (rc <= 0)
 		return NULL;
-	tmp = calloc((size_t)rc + 3ull, sizeof(WCHAR));
+	tmp = calloc((size_t)rc + 1ull, sizeof(WCHAR));
 	if (!tmp)
 		return NULL;
-	const SSIZE_T rc2 = ConvertMszUtf8NToWChar(str, len, tmp, (size_t)rc + 2ull);
+	const SSIZE_T rc2 = ConvertMszUtf8NToWChar(str, len, tmp, (size_t)rc + 1ull);
 	if (rc2 <= 0)
 	{
 		free(tmp);
