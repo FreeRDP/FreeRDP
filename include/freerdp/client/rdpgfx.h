@@ -152,7 +152,7 @@ struct s_rdpgfx_client_context
 	pcRdpgfxUpdateSurfaceArea UpdateSurfaceArea;
 	pcRdpgfxUpdateWindowFromSurface UpdateWindowFromSurface;
 
-	/* These callbacks allow crating/destroying a window directly
+	/* These callbacks allow creating/destroying a window directly
 	 * mapped to a surface.
 	 * NOTE: The surface is already locked.
 	 */
