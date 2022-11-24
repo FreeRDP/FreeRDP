@@ -116,8 +116,10 @@ static pstatus_t general_ChromaFilter(BYTE* pDst[3], const UINT32 dstStep[3],
 		{
 			const UINT32 val2x = (x * 2);
 			const UINT32 val2x1 = val2x + 1;
-			const INT32 up = pU[val2x] * 4;
-			const INT32 vp = pV[val2x] * 4;
+			const BYTE inU = pU[val2x];
+			const BYTE inV = pV[val2x];
+			const INT32 up = inU * 4;
+			const INT32 vp = inV * 4;
 			INT32 u2020;
 			INT32 v2020;
 
@@ -126,8 +128,9 @@ static pstatus_t general_ChromaFilter(BYTE* pDst[3], const UINT32 dstStep[3],
 
 			u2020 = up - pU[val2x1] - pU1[val2x] - pU1[val2x1];
 			v2020 = vp - pV[val2x1] - pV1[val2x] - pV1[val2x1];
-			pU[val2x] = CLIP(u2020);
-			pV[val2x] = CLIP(v2020);
+
+			pU[val2x] = CONDITIONAL_CLIP(u2020, inU);
+			pV[val2x] = CONDITIONAL_CLIP(v2020, inV);
 		}
 	}
 

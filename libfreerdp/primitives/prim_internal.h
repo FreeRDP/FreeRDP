@@ -209,6 +209,19 @@ static INLINE BYTE CLIP(INT64 X)
 	return (BYTE)X;
 }
 
+static INLINE BYTE CONDITIONAL_CLIP(INT32 in, BYTE original)
+{
+	BYTE out = CLIP(in);
+	BYTE diff;
+	if (out > original)
+		diff = out - original;
+	else
+		diff = original - out;
+	if (diff < 30)
+		return original;
+	return out;
+}
+
 /**
  * | R |   ( | 256     0    403 | |    Y    | )
  * | G | = ( | 256   -48   -120 | | U - 128 | ) >> 8
