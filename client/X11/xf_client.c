@@ -146,6 +146,9 @@ static const struct xf_exit_code_map_t xf_exit_code_map[] = {
 	{ FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS, XF_EXIT_CONNECT_NO_OR_MISSING_CREDENTIALS }
 };
 
+static BOOL xf_setup_x11(xfContext* xfc);
+static void xf_teardown_x11(xfContext* xfc);
+
 static int xf_map_error_to_exit_code(DWORD error)
 {
 	size_t x;
@@ -697,11 +700,6 @@ BOOL xf_create_window(xfContext* xfc)
 		xfc->drawable = xf_CreateDummyWindow(xfc);
 	}
 
-	if (xfc->modifierMap)
-		XFreeModifiermap(xfc->modifierMap);
-
-	xfc->modifierMap = XGetModifierMapping(xfc->display);
-
 	if (!xfc->gc)
 		xfc->gc = XCreateGC(xfc->display, xfc->drawable, GCGraphicsExposures, &gcv);
 
@@ -790,12 +788,6 @@ static void xf_window_free(xfContext* xfc)
 	{
 		XFreeGC(xfc->display, xfc->gc);
 		xfc->gc = 0;
-	}
-
-	if (xfc->modifierMap)
-	{
-		XFreeModifiermap(xfc->modifierMap);
-		xfc->modifierMap = NULL;
 	}
 }
 
@@ -1193,6 +1185,9 @@ static BOOL xf_pre_connect(freerdp* instance)
 	xfc = (xfContext*)instance->context;
 	WINPR_ASSERT(context);
 
+	if (!xf_setup_x11(xfc))
+		return FALSE;
+
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
@@ -1408,7 +1403,6 @@ static void xf_post_disconnect(freerdp* instance)
 		xf_DestroyDummyWindow(xfc, xfc->drawable);
 
 	xf_window_free(xfc);
-	xf_keyboard_free(xfc);
 }
 
 static void xf_post_final_disconnect(freerdp* instance)
@@ -1421,6 +1415,9 @@ static void xf_post_final_disconnect(freerdp* instance)
 
 	context = instance->context;
 	xfc = (xfContext*)context;
+
+	xf_keyboard_free(xfc);
+	xf_teardown_x11(xfc);
 }
 
 static int xf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
@@ -1754,29 +1751,45 @@ static Atom get_supported_atom(xfContext* xfc, const char* atomName)
 
 	return None;
 }
-static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
+
+void xf_teardown_x11(xfContext* xfc)
 {
-	xfContext* xfc = (xfContext*)instance->context;
-	WINPR_ASSERT(context);
 	WINPR_ASSERT(xfc);
-	WINPR_ASSERT(!xfc->display);
-	WINPR_ASSERT(!xfc->mutex);
-	WINPR_ASSERT(!xfc->x11event);
-	instance->PreConnect = xf_pre_connect;
-	instance->PostConnect = xf_post_connect;
-	instance->PostDisconnect = xf_post_disconnect;
-	instance->PostFinalDisconnect = xf_post_final_disconnect;
-	instance->AuthenticateEx = client_cli_authenticate_ex;
-	instance->ChooseSmartcard = client_cli_choose_smartcard;
-	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
-	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
-	instance->PresentGatewayMessage = client_cli_present_gateway_message;
-	instance->LogonErrorInfo = xf_logon_error_info;
-	PubSub_SubscribeTerminate(context->pubSub, xf_TerminateEventHandler);
-#ifdef WITH_XRENDER
-	PubSub_SubscribeZoomingChange(context->pubSub, xf_ZoomingChangeEventHandler);
-	PubSub_SubscribePanningChange(context->pubSub, xf_PanningChangeEventHandler);
-#endif
+
+	if (xfc->display)
+	{
+		XCloseDisplay(xfc->display);
+		xfc->display = NULL;
+	}
+
+	if (xfc->x11event)
+	{
+		CloseHandle(xfc->x11event);
+		xfc->x11event = NULL;
+	}
+
+	if (xfc->mutex)
+	{
+		CloseHandle(xfc->mutex);
+		xfc->mutex = NULL;
+	}
+
+	if (xfc->vscreen.monitors)
+	{
+		free(xfc->vscreen.monitors);
+		xfc->vscreen.monitors = NULL;
+	}
+	xfc->vscreen.nmonitors = 0;
+
+	free(xfc->supportedAtoms);
+	xfc->supportedAtoms = NULL;
+	xfc->supportedAtomCount = 0;
+}
+
+BOOL xf_setup_x11(xfContext* xfc)
+{
+
+	WINPR_ASSERT(xfc);
 	xfc->UseXThreads = TRUE;
 	/* uncomment below if debugging to prevent keyboard grap */
 	/* xfc->debug = TRUE; */
@@ -1796,7 +1809,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	{
 		WLog_ERR(TAG, "failed to open display: %s", XDisplayName(NULL));
 		WLog_ERR(TAG, "Please check that the $DISPLAY environment variable is properly set.");
-		goto fail_open_display;
+		goto fail;
 	}
 
 	xfc->mutex = CreateMutex(NULL, FALSE, NULL);
@@ -1804,7 +1817,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	if (!xfc->mutex)
 	{
 		WLog_ERR(TAG, "Could not create mutex!");
-		goto fail_create_mutex;
+		goto fail;
 	}
 
 	xfc->xfds = ConnectionNumber(xfc->display);
@@ -1880,7 +1893,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	if (!xfc->x11event)
 	{
 		WLog_ERR(TAG, "Could not create xfds event");
-		goto fail_xfds_event;
+		goto fail;
 	}
 
 	xfc->colormap = DefaultColormap(xfc->display, xfc->screen_number);
@@ -1897,33 +1910,49 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	if (!xf_get_pixmap_info(xfc))
 	{
 		WLog_ERR(TAG, "Failed to get pixmap info");
-		goto fail_pixmap_info;
+		goto fail;
 	}
 
 	xfc->vscreen.monitors = calloc(16, sizeof(MONITOR_INFO));
 
 	if (!xfc->vscreen.monitors)
-		goto fail_vscreen_monitors;
+		goto fail;
+	return TRUE;
+
+fail:
+	xf_teardown_x11(xfc);
+	return FALSE;
+}
+
+static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
+{
+	xfContext* xfc = (xfContext*)instance->context;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(!xfc->display);
+	WINPR_ASSERT(!xfc->mutex);
+	WINPR_ASSERT(!xfc->x11event);
+	instance->PreConnect = xf_pre_connect;
+	instance->PostConnect = xf_post_connect;
+	instance->PostDisconnect = xf_post_disconnect;
+	instance->PostFinalDisconnect = xf_post_final_disconnect;
+	instance->AuthenticateEx = client_cli_authenticate_ex;
+	instance->ChooseSmartcard = client_cli_choose_smartcard;
+	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
+	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
+	instance->PresentGatewayMessage = client_cli_present_gateway_message;
+	instance->LogonErrorInfo = xf_logon_error_info;
+	PubSub_SubscribeTerminate(context->pubSub, xf_TerminateEventHandler);
+#ifdef WITH_XRENDER
+	PubSub_SubscribeZoomingChange(context->pubSub, xf_ZoomingChangeEventHandler);
+	PubSub_SubscribePanningChange(context->pubSub, xf_PanningChangeEventHandler);
+#endif
 
 	return TRUE;
-fail_vscreen_monitors:
-fail_pixmap_info:
-	CloseHandle(xfc->x11event);
-	xfc->x11event = NULL;
-fail_xfds_event:
-	CloseHandle(xfc->mutex);
-	xfc->mutex = NULL;
-fail_create_mutex:
-	XCloseDisplay(xfc->display);
-	xfc->display = NULL;
-fail_open_display:
-	return FALSE;
 }
 
 static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 {
-	xfContext* xfc = (xfContext*)instance->context;
-
 	if (!context)
 		return;
 
@@ -1932,32 +1961,6 @@ static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 	PubSub_UnsubscribeZoomingChange(context->pubSub, xf_ZoomingChangeEventHandler);
 	PubSub_UnsubscribePanningChange(context->pubSub, xf_PanningChangeEventHandler);
 #endif
-
-	if (xfc->display)
-	{
-		XCloseDisplay(xfc->display);
-		xfc->display = NULL;
-	}
-
-	if (xfc->x11event)
-	{
-		CloseHandle(xfc->x11event);
-		xfc->x11event = NULL;
-	}
-
-	if (xfc->mutex)
-	{
-		CloseHandle(xfc->mutex);
-		xfc->mutex = NULL;
-	}
-
-	if (xfc->vscreen.monitors)
-	{
-		free(xfc->vscreen.monitors);
-		xfc->vscreen.monitors = NULL;
-	}
-
-	free(xfc->supportedAtoms);
 }
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
