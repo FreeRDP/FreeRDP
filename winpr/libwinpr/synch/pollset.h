@@ -64,7 +64,10 @@ void pollset_uninit(WINPR_POLL_SET* set);
 void pollset_reset(WINPR_POLL_SET* set);
 BOOL pollset_add(WINPR_POLL_SET* set, int fd, ULONG mode);
 int pollset_poll(WINPR_POLL_SET* set, DWORD dwMilliseconds);
+
 BOOL pollset_isSignaled(WINPR_POLL_SET* set, size_t idx);
+BOOL pollset_isReadSignaled(WINPR_POLL_SET* set, size_t idx);
+BOOL pollset_isWriteSignaled(WINPR_POLL_SET* set, size_t idx);
 
 #endif
 
