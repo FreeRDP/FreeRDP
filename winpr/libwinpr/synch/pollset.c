@@ -4,6 +4,7 @@
 #include "pollset.h"
 #include <winpr/handle.h>
 #include <winpr/sysinfo.h>
+#include <winpr/assert.h>
 #include "../log.h"
 
 #define TAG WINPR_TAG("sync.pollset")
@@ -25,6 +26,7 @@ static INT16 handle_mode_to_pollevent(ULONG mode)
 
 BOOL pollset_init(WINPR_POLL_SET* set, size_t nhandles)
 {
+	WINPR_ASSERT(set);
 #ifdef HAVE_POLL_H
 	if (nhandles > MAXIMUM_WAIT_OBJECTS)
 	{
@@ -58,6 +60,7 @@ BOOL pollset_init(WINPR_POLL_SET* set, size_t nhandles)
 
 void pollset_uninit(WINPR_POLL_SET* set)
 {
+	WINPR_ASSERT(set);
 #ifdef HAVE_POLL_H
 	if (!set->isStatic)
 		free(set->pollset);
@@ -68,6 +71,7 @@ void pollset_uninit(WINPR_POLL_SET* set)
 
 void pollset_reset(WINPR_POLL_SET* set)
 {
+	WINPR_ASSERT(set);
 #ifndef HAVE_POLL_H
 	FD_ZERO(&set->rset_base);
 	FD_ZERO(&set->wset_base);
@@ -79,6 +83,7 @@ void pollset_reset(WINPR_POLL_SET* set)
 
 BOOL pollset_add(WINPR_POLL_SET* set, int fd, ULONG mode)
 {
+	WINPR_ASSERT(set);
 #ifdef HAVE_POLL_H
 	struct pollfd* item;
 	if (set->fillIndex == set->size)
@@ -114,6 +119,7 @@ BOOL pollset_add(WINPR_POLL_SET* set, int fd, ULONG mode)
 
 int pollset_poll(WINPR_POLL_SET* set, DWORD dwMilliseconds)
 {
+	WINPR_ASSERT(set);
 	int ret = 0;
 	UINT64 dueTime, now;
 
@@ -197,6 +203,8 @@ int pollset_poll(WINPR_POLL_SET* set, DWORD dwMilliseconds)
 
 BOOL pollset_isSignaled(WINPR_POLL_SET* set, size_t idx)
 {
+	WINPR_ASSERT(set);
+
 	if (idx > set->fillIndex)
 	{
 		WLog_ERR(TAG, "%s: index=%d out of pollset(fillIndex=%" PRIuz ")", __FUNCTION__, idx,
@@ -220,4 +228,49 @@ BOOL pollset_isSignaled(WINPR_POLL_SET* set, size_t idx)
 	return FALSE;
 #endif
 }
+
+BOOL pollset_isReadSignaled(WINPR_POLL_SET* set, size_t idx)
+{
+	WINPR_ASSERT(set);
+
+	if (idx > set->fillIndex)
+	{
+		WLog_ERR(TAG, "%s: index=%d out of pollset(fillIndex=%" PRIuz ")", __FUNCTION__, idx,
+		         set->fillIndex);
+		return FALSE;
+	}
+
+#ifdef HAVE_POLL_H
+	return !!(set->pollset[idx].revents & POLLIN);
+#else
+	FdIndex* fdIndex = &set->fdIndex[idx];
+	if (fdIndex->fd < 0)
+		return FALSE;
+
+	return FD_ISSET(fdIndex->fd, &set->rset);
+#endif
+}
+
+BOOL pollset_isWriteSignaled(WINPR_POLL_SET* set, size_t idx)
+{
+	WINPR_ASSERT(set);
+
+	if (idx > set->fillIndex)
+	{
+		WLog_ERR(TAG, "%s: index=%d out of pollset(fillIndex=%" PRIuz ")", __FUNCTION__, idx,
+		         set->fillIndex);
+		return FALSE;
+	}
+
+#ifdef HAVE_POLL_H
+	return !!(set->pollset[idx].revents & POLLOUT);
+#else
+	FdIndex* fdIndex = &set->fdIndex[idx];
+	if (fdIndex->fd < 0)
+		return FALSE;
+
+	return FD_ISSET(fdIndex->fd, &set->wset);
+#endif
+}
+
 #endif
