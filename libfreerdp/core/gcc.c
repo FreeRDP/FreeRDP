@@ -775,13 +775,21 @@ BOOL gcc_write_server_data_blocks(wStream* s, rdpMcs* mcs)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(mcs);
-	return gcc_write_server_core_data(s, mcs) &&          /* serverCoreData */
-	       gcc_write_server_network_data(s, mcs) &&       /* serverNetworkData */
-	       gcc_write_server_security_data(s, mcs) &&      /* serverSecurityData */
-	       gcc_write_server_message_channel_data(s, mcs); /* serverMessageChannelData */
-	/* TODO: Send these GCC data blocks only when the client sent them */
-	// gcc_write_server_multitransport_channel_data(s, settings); /* serverMultitransportChannelData
-	// */
+
+	if (!gcc_write_server_core_data(s, mcs) ||          /* serverCoreData */
+	    !gcc_write_server_network_data(s, mcs) ||       /* serverNetworkData */
+	    !gcc_write_server_security_data(s, mcs) ||      /* serverSecurityData */
+	    !gcc_write_server_message_channel_data(s, mcs)) /* serverMessageChannelData */
+		return FALSE;
+
+	const rdpSettings* settings = mcs_get_const_settings(mcs);
+	WINPR_ASSERT(settings);
+
+	if (settings->SupportMultitransport && (settings->MultitransportFlags != 0))
+		/* serverMultitransportChannelData */
+		return gcc_write_server_multitransport_channel_data(s, mcs);
+
+	return TRUE;
 }
 
 BOOL gcc_read_user_data_header(wStream* s, UINT16* type, UINT16* length)
@@ -2314,7 +2322,9 @@ BOOL gcc_read_client_multitransport_channel_data(wStream* s, rdpMcs* mcs, UINT16
 	if (blockLength < 4)
 		return FALSE;
 
-	Stream_Read_UINT32(s, settings->MultitransportFlags);
+	UINT32 remoteFlags;
+	Stream_Read_UINT32(s, remoteFlags);
+	settings->MultitransportFlags &= remoteFlags; /* merge local and remote flags */
 	return TRUE;
 }
 
@@ -2343,24 +2353,28 @@ BOOL gcc_write_client_multitransport_channel_data(wStream* s, const rdpMcs* mcs)
 BOOL gcc_read_server_multitransport_channel_data(wStream* s, rdpMcs* mcs)
 {
 	rdpSettings* settings = mcs_get_settings(mcs);
+	UINT32 remoteFlags;
+
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(settings);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
-	Stream_Read_UINT32(s, settings->MultitransportFlags); /* flags, merge with client setting */
+	Stream_Read_UINT32(s, remoteFlags);
+	settings->MultitransportFlags &= remoteFlags; /* merge with client setting */
 	return TRUE;
 }
 
 BOOL gcc_write_server_multitransport_channel_data(wStream* s, const rdpMcs* mcs)
 {
 	const rdpSettings* settings = mcs_get_const_settings(mcs);
-	UINT32 flags = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(settings);
+
 	if (!gcc_write_user_data_header(s, SC_MULTITRANSPORT, 8))
 		return FALSE;
-	Stream_Write_UINT32(s, flags); /* flags (4 bytes) */
+
+	Stream_Write_UINT32(s, settings->MultitransportFlags); /* flags (4 bytes) */
 	return TRUE;
 }
