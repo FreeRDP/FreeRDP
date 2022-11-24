@@ -190,6 +190,7 @@ typedef enum
 #define TRANSPORT_TYPE_UDP_FECR 0x00000001
 #define TRANSPORT_TYPE_UDP_FECL 0x00000004
 #define TRANSPORT_TYPE_UDP_PREFERRED 0x00000100
+#define SOFTSYNC_TCP_TO_UDP 0x00000200
 
 /* Static Virtual Channel Options */
 #define CHANNEL_OPTION_INITIALIZED 0x80000000
@@ -1023,18 +1024,18 @@ struct rdp_settings
 	UINT64 padding0192[192 - 150];        /* 150 */
 
 	/* Client/Server Security Data */
-	ALIGN64 BOOL UseRdpSecurityLayer;       /* 192 */
-	ALIGN64 UINT32 EncryptionMethods;       /* 193 */
-	ALIGN64 UINT32 ExtEncryptionMethods;    /* 194 */
-	ALIGN64 UINT32 EncryptionLevel;         /* 195 */
-	ALIGN64 BYTE* ServerRandom;             /* 196 */
-	ALIGN64 UINT32 ServerRandomLength;      /* 197 */
-	ALIGN64 BYTE* ServerCertificate;        /* 198 */
-	ALIGN64 UINT32 ServerCertificateLength; /* 199 */
-	ALIGN64 BYTE* ClientRandom;             /* 200 */
-	ALIGN64 UINT32 ClientRandomLength;      /* 201 */
-	ALIGN64 BOOL ServerLicenseRequired;     /* 202 */
-	ALIGN64 char* ServerLicenseCompanyName; /* 203 */
+	ALIGN64 BOOL UseRdpSecurityLayer;                /* 192 */
+	ALIGN64 UINT32 EncryptionMethods;                /* 193 */
+	ALIGN64 UINT32 ExtEncryptionMethods;             /* 194 */
+	ALIGN64 UINT32 EncryptionLevel;                  /* 195 */
+	ALIGN64 BYTE* ServerRandom;                      /* 196 */
+	ALIGN64 UINT32 ServerRandomLength;               /* 197 */
+	ALIGN64 BYTE* ServerCertificate;                 /* 198 */
+	ALIGN64 UINT32 ServerCertificateLength;          /* 199 */
+	ALIGN64 BYTE* ClientRandom;                      /* 200 */
+	ALIGN64 UINT32 ClientRandomLength;               /* 201 */
+	ALIGN64 BOOL ServerLicenseRequired;              /* 202 */
+	ALIGN64 char* ServerLicenseCompanyName;          /* 203 */
 	ALIGN64 UINT32 ServerLicenseProductVersion;      /* 204 */
 	ALIGN64 char* ServerLicenseProductName;          /* 205 */
 	ALIGN64 char** ServerLicenseProductIssuers;      /* 206 */
@@ -1403,9 +1404,9 @@ struct rdp_settings
 	 */
 
 	/* Capabilities */
-	ALIGN64 BYTE* ReceivedCapabilities;      /* 2240 */
-	ALIGN64 UINT32 ReceivedCapabilitiesSize; /* 2241 */
-	ALIGN64 BYTE** ReceivedCapabilityData;   /* 2242 */
+	ALIGN64 BYTE* ReceivedCapabilities;          /* 2240 */
+	ALIGN64 UINT32 ReceivedCapabilitiesSize;     /* 2241 */
+	ALIGN64 BYTE** ReceivedCapabilityData;       /* 2242 */
 	ALIGN64 UINT32* ReceivedCapabilityDataSizes; /* 2243 */
 	UINT64 padding2304[2304 - 2244];             /* 2244 */
 
