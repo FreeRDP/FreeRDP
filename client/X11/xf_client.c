@@ -1411,6 +1411,18 @@ static void xf_post_disconnect(freerdp* instance)
 	xf_keyboard_free(xfc);
 }
 
+static void xf_post_final_disconnect(freerdp* instance)
+{
+	xfContext* xfc;
+	rdpContext* context;
+
+	if (!instance || !instance->context)
+		return;
+
+	context = instance->context;
+	xfc = (xfContext*)context;
+}
+
 static int xf_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 {
 	xfContext* xfc = (xfContext*)instance->context;
@@ -1753,6 +1765,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PreConnect = xf_pre_connect;
 	instance->PostConnect = xf_post_connect;
 	instance->PostDisconnect = xf_post_disconnect;
+	instance->PostFinalDisconnect = xf_post_final_disconnect;
 	instance->AuthenticateEx = client_cli_authenticate_ex;
 	instance->ChooseSmartcard = client_cli_choose_smartcard;
 	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
