@@ -460,7 +460,11 @@ owned by rdpRdp */
 		ALIGN64 pPostDisconnect
 		    PostDisconnect; /**< (offset 55)
 		                                                                Callback for cleaning up
-		                       resources allocated by connect callbacks. */
+		                       resources allocated by post connect callback.
+
+		                       This will be called before disconnecting and cleaning up the
+		                       channels.
+ */
 
 		ALIGN64 pAuthenticate GatewayAuthenticate; /**< (offset 56)
 		                                 Callback for gateway authentication.
@@ -482,7 +486,14 @@ owned by rdpRdp */
 		                   * callback for loading channel configuration. Might be called multiple
 		                   * times when redirection occurs. */
 
-		UINT64 paddingD[64 - 60]; /* 60 */
+		ALIGN64 pPostDisconnect
+		    PostFinalDisconnect;  /** < (offset 60)
+		                           * callback for cleaning up resources allocated in PreConnect
+		                           *
+		                           * This will be called after all instance related channels and
+		                           * threads have been stopped
+		                           */
+		UINT64 paddingD[64 - 61]; /* 61 */
 
 		ALIGN64 pSendChannelData
 		    SendChannelData; /* (offset 64)
