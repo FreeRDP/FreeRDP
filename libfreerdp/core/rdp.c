@@ -1205,23 +1205,12 @@ state_run_t rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securit
 
 	if (securityFlags & SEC_TRANSPORT_REQ)
 	{
-		HRESULT hr = E_ABORT;
-		/* Initiate Multitransport Request PDU */
-		// TODO: This message is server -> client only
-		state_run_t rc = multitransport_client_recv_request(rdp->multitransport, s);
-		if (state_run_failed(rc))
-			return rc;
-		if (!multitransport_client_send_response(rdp->multitransport, hr))
-			return STATE_RUN_FAILED;
-		return STATE_RUN_SUCCESS;
+		return multitransport_recv_request(rdp->multitransport, s);
 	}
 
 	if (securityFlags & SEC_TRANSPORT_RSP)
 	{
-		/* Initiate Multitransport Request PDU */
-		HRESULT hr; // TODO: Do something with this result
-		// TODO: This message is client -> server only
-		return multitransport_server_recv_response(rdp->multitransport, s, &hr) ? 0 : -1;
+		return multitransport_recv_response(rdp->multitransport, s);
 	}
 
 	if (securityFlags & SEC_LICENSE_PKT)
