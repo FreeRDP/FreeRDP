@@ -1874,17 +1874,8 @@ void rdp_reset(rdpRdp* rdp)
 	settings = rdp->settings;
 	bulk_reset(rdp->bulk);
 
-	if (rdp->rc4_decrypt_key)
-	{
-		winpr_RC4_Free(rdp->rc4_decrypt_key);
-		rdp->rc4_decrypt_key = NULL;
-	}
-
-	if (rdp->rc4_encrypt_key)
-	{
-		winpr_RC4_Free(rdp->rc4_encrypt_key);
-		rdp->rc4_encrypt_key = NULL;
-	}
+	rdp_free_rc4_decrypt_keys(rdp);
+	rdp_free_rc4_encrypt_keys(rdp);
 
 	if (rdp->fips_encrypt)
 	{
@@ -1943,8 +1934,8 @@ void rdp_free(rdpRdp* rdp)
 	if (rdp)
 	{
 		DeleteCriticalSection(&rdp->critical);
-		winpr_RC4_Free(rdp->rc4_decrypt_key);
-		winpr_RC4_Free(rdp->rc4_encrypt_key);
+		rdp_free_rc4_decrypt_keys(rdp);
+		rdp_free_rc4_encrypt_keys(rdp);
 		winpr_Cipher_Free(rdp->fips_encrypt);
 		winpr_Cipher_Free(rdp->fips_decrypt);
 		freerdp_settings_free(rdp->settings);
@@ -1963,4 +1954,38 @@ void rdp_free(rdpRdp* rdp)
 		bulk_free(rdp->bulk);
 		free(rdp);
 	}
+}
+
+BOOL rdp_reset_rc4_encrypt_keys(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+	rdp_free_rc4_encrypt_keys(rdp);
+	rdp->rc4_encrypt_key = winpr_RC4_New(rdp->encrypt_key, rdp->rc4_key_len);
+
+	rdp->encrypt_use_count = 0;
+	return rdp->rc4_encrypt_key != NULL;
+}
+
+void rdp_free_rc4_encrypt_keys(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+	winpr_RC4_Free(rdp->rc4_encrypt_key);
+	rdp->rc4_encrypt_key = NULL;
+}
+
+void rdp_free_rc4_decrypt_keys(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+	winpr_RC4_Free(rdp->rc4_decrypt_key);
+	rdp->rc4_decrypt_key = NULL;
+}
+
+BOOL rdp_reset_rc4_decrypt_keys(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+	rdp_free_rc4_decrypt_keys(rdp);
+	rdp->rc4_decrypt_key = winpr_RC4_New(rdp->decrypt_key, rdp->rc4_key_len);
+
+	rdp->decrypt_use_count = 0;
+	return rdp->rc4_decrypt_key != NULL;
 }
