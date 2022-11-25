@@ -635,22 +635,44 @@ BOOL xf_create_window(xfContext* xfc)
 	XEvent xevent = { 0 };
 	int width, height;
 	char* windowTitle;
-	rdpGdi* gdi;
 	rdpSettings* settings;
 
 	WINPR_ASSERT(xfc);
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	gdi = xfc->common.context.gdi;
-	WINPR_ASSERT(gdi);
-
 	width = settings->DesktopWidth;
 	height = settings->DesktopHeight;
 
 	if (!xfc->hdc)
-		if (!(xfc->hdc = gdi_CreateDC(gdi->dstFormat)))
+		if (!(xfc->hdc = gdi_CreateDC(xf_get_local_color_format(xfc, TRUE))))
 			return FALSE;
+
+	const XSetWindowAttributes empty = { 0 };
+	xfc->attribs = empty;
+
+	XVisualInfo vinfo = { 0 };
+	if (XMatchVisualInfo(xfc->display, xfc->screen_number, 32, TrueColor, &vinfo))
+	{
+		Window root = XDefaultRootWindow(xfc->display);
+		xfc->visual = vinfo.visual;
+		xfc->attribs.colormap = xfc->colormap =
+		    XCreateColormap(xfc->display, root, vinfo.visual, AllocNone);
+	}
+	else
+	{
+		xfc->visual = DefaultVisual(xfc->display, xfc->screen_number);
+		xfc->attribs.colormap = xfc->colormap = DefaultColormap(xfc->display, xfc->screen_number);
+	}
+
+	/*
+	 * Detect if the server visual has an inverted colormap
+	 * (BGR vs RGB, or red being the least significant byte)
+	 */
+	if (vinfo.red_mask & 0xFF)
+	{
+		xfc->invert = FALSE;
+	}
 
 	if (!xfc->remote_app)
 	{
@@ -658,9 +680,12 @@ BOOL xf_create_window(xfContext* xfc)
 		xfc->attribs.border_pixel = WhitePixelOfScreen(xfc->screen);
 		xfc->attribs.backing_store = xfc->primary ? NotUseful : Always;
 		xfc->attribs.override_redirect = False;
-		xfc->attribs.colormap = xfc->colormap;
+
 		xfc->attribs.bit_gravity = NorthWestGravity;
 		xfc->attribs.win_gravity = NorthWestGravity;
+		xfc->attribs_mask = CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
+		                    CWBorderPixel | CWWinGravity | CWBitGravity;
+
 #ifdef WITH_XRENDER
 		xfc->offset_x = 0;
 		xfc->offset_y = 0;
@@ -722,8 +747,15 @@ BOOL xf_create_window(xfContext* xfc)
 	               settings->DesktopHeight);
 	XFlush(xfc->display);
 
+	return TRUE;
+}
+
+BOOL xf_create_image(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
 	if (!xfc->image)
 	{
+		const rdpSettings* settings = xfc->common.context.settings;
 		rdpGdi* cgdi = xfc->common.context.gdi;
 		WINPR_ASSERT(cgdi);
 
@@ -733,7 +765,6 @@ BOOL xf_create_window(xfContext* xfc)
 		xfc->image->byte_order = LSBFirst;
 		xfc->image->bitmap_bit_order = LSBFirst;
 	}
-
 	return TRUE;
 }
 
@@ -839,10 +870,8 @@ void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 
 static BOOL xf_get_pixmap_info(xfContext* xfc)
 {
-	int i;
 	int vi_count = 0;
 	int pf_count = 0;
-	XVisualInfo* vi = NULL;
 	XVisualInfo* vis = NULL;
 	XVisualInfo tpl = { 0 };
 	XPixmapFormatValues* pfs = NULL;
@@ -856,7 +885,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 		return 1;
 	}
 
-	for (i = 0; i < pf_count; i++)
+	for (int i = 0; i < pf_count; i++)
 	{
 		const XPixmapFormatValues* pf = &pfs[i];
 
@@ -869,6 +898,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 
 	XFree(pfs);
 
+	tpl.depth = xfc->depth;
 	tpl.class = TrueColor;
 	tpl.screen = xfc->screen_number;
 
@@ -879,7 +909,8 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 		return FALSE;
 	}
 
-	vis = XGetVisualInfo(xfc->display, VisualClassMask | VisualScreenMask, &tpl, &vi_count);
+	vis = XGetVisualInfo(xfc->display, VisualDepthMask | VisualClassMask | VisualScreenMask, &tpl,
+	                     &vi_count);
 
 	if (!vis)
 	{
@@ -887,28 +918,13 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 		return FALSE;
 	}
 
-	vi = vis;
-
-	for (i = 0; i < vi_count; i++)
+	for (int i = 0; i < vi_count; i++)
 	{
-		vi = vis + i;
+		const XVisualInfo* vi = &vis[i];
 
 		if (vi->visual == window_attributes.visual)
 		{
-			xfc->visual = vi->visual;
 			break;
-		}
-	}
-
-	if (xfc->visual)
-	{
-		/*
-		 * Detect if the server visual has an inverted colormap
-		 * (BGR vs RGB, or red being the least significant byte)
-		 */
-		if (vi->red_mask & 0xFF)
-		{
-			xfc->invert = FALSE;
 		}
 	}
 
@@ -1283,7 +1299,16 @@ static BOOL xf_post_connect(freerdp* instance)
 	update = context->update;
 	WINPR_ASSERT(update);
 
+	if (!xf_create_window(xfc))
+		return FALSE;
+
+	if (!xf_get_pixmap_info(xfc))
+		return FALSE;
+
 	if (!gdi_init(instance, xf_get_local_color_format(xfc, TRUE)))
+		return FALSE;
+
+	if (!xf_create_image(xfc))
 		return FALSE;
 
 	if (!xf_register_pointer(context->graphics))
@@ -1329,12 +1354,6 @@ static BOOL xf_post_connect(freerdp* instance)
 
 	if (settings->RemoteApplicationMode)
 		xfc->remote_app = TRUE;
-
-	if (!xf_create_window(xfc))
-	{
-		WLog_ERR(TAG, "xf_create_window failed");
-		return FALSE;
-	}
 
 	if (settings->SoftwareGdi)
 	{
@@ -1823,7 +1842,7 @@ BOOL xf_setup_x11(xfContext* xfc)
 	xfc->xfds = ConnectionNumber(xfc->display);
 	xfc->screen_number = DefaultScreen(xfc->display);
 	xfc->screen = ScreenOfDisplay(xfc->display, xfc->screen_number);
-	xfc->depth = DefaultDepthOfScreen(xfc->screen);
+	xfc->depth = 32; // DefaultDepthOfScreen(xfc->screen);
 	xfc->big_endian = (ImageByteOrder(xfc->display) == MSBFirst);
 	xfc->invert = TRUE;
 	xfc->complex_regions = TRUE;
@@ -1896,8 +1915,6 @@ BOOL xf_setup_x11(xfContext* xfc)
 		goto fail;
 	}
 
-	xfc->colormap = DefaultColormap(xfc->display, xfc->screen_number);
-
 	if (xfc->debug)
 	{
 		WLog_INFO(TAG, "Enabling X11 debug mode.");
@@ -1906,12 +1923,6 @@ BOOL xf_setup_x11(xfContext* xfc)
 	}
 
 	xf_check_extensions(xfc);
-
-	if (!xf_get_pixmap_info(xfc))
-	{
-		WLog_ERR(TAG, "Failed to get pixmap info");
-		goto fail;
-	}
 
 	xfc->vscreen.monitors = calloc(16, sizeof(MONITOR_INFO));
 

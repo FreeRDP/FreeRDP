@@ -496,12 +496,11 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	window->decorations = xfc->decorations;
 	window->is_mapped = FALSE;
 	window->is_transient = FALSE;
-	window->handle = XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen), xfc->workArea.x,
-	                               xfc->workArea.y, xfc->workArea.width, xfc->workArea.height, 0,
-	                               xfc->depth, InputOutput, xfc->visual,
-	                               CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
-	                                   CWBorderPixel | CWWinGravity | CWBitGravity,
-	                               &xfc->attribs);
+
+	window->handle =
+	    XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen), xfc->workArea.x,
+	                  xfc->workArea.y, xfc->workArea.width, xfc->workArea.height, 0, xfc->depth,
+	                  InputOutput, xfc->visual, xfc->attribs_mask, &xfc->attribs);
 	window->shmid = shm_open(get_shm_id(), (O_CREAT | O_RDWR), (S_IREAD | S_IWRITE));
 
 	if (window->shmid < 0)
@@ -811,9 +810,10 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->maxHorz = FALSE;
 	appWindow->minimized = FALSE;
 	appWindow->rail_ignore_configure = FALSE;
-	appWindow->handle = XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen), appWindow->x,
-	                                  appWindow->y, appWindow->width, appWindow->height, 0,
-	                                  xfc->depth, InputOutput, xfc->visual, 0, &xfc->attribs);
+	appWindow->handle =
+	    XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen), appWindow->x, appWindow->y,
+	                  appWindow->width, appWindow->height, 0, xfc->depth, InputOutput, xfc->visual,
+	                  xfc->attribs_mask, &xfc->attribs);
 
 	if (!appWindow->handle)
 		return FALSE;

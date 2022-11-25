@@ -210,6 +210,7 @@ struct xf_context
 	wArrayList* xevents;
 	BOOL actionScriptExists;
 
+	int attribs_mask;
 	XSetWindowAttributes attribs;
 	BOOL complex_regions;
 	VIRTUAL_SCREEN vscreen;
@@ -299,6 +300,7 @@ struct xf_context
 };
 
 BOOL xf_create_window(xfContext* xfc);
+BOOL xf_create_image(xfContext* xfc);
 void xf_toggle_fullscreen(xfContext* xfc);
 
 enum XF_EXIT_CODE
