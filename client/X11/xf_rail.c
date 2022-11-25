@@ -85,6 +85,7 @@ void xf_rail_disable_remoteapp_mode(xfContext* xfc)
 		xfc->remote_app = FALSE;
 		xf_DestroyDummyWindow(xfc, xfc->drawable);
 		xf_create_window(xfc);
+		xf_create_image(xfc);
 	}
 }
 
