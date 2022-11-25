@@ -285,4 +285,10 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo);
 BOOL rdp_send_error_info(rdpRdp* rdp);
 
+void rdp_free_rc4_encrypt_keys(rdpRdp* rdp);
+BOOL rdp_reset_rc4_encrypt_keys(rdpRdp* rdp);
+
+void rdp_free_rc4_decrypt_keys(rdpRdp* rdp);
+BOOL rdp_reset_rc4_decrypt_keys(rdpRdp* rdp);
+
 #endif /* FREERDP_LIB_CORE_RDP_H */

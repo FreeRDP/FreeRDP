@@ -790,10 +790,9 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		goto end;
 	}
 
-	rdp->rc4_decrypt_key = winpr_RC4_New(rdp->decrypt_key, rdp->rc4_key_len);
-	rdp->rc4_encrypt_key = winpr_RC4_New(rdp->encrypt_key, rdp->rc4_key_len);
-
-	if (!rdp->rc4_decrypt_key || !rdp->rc4_encrypt_key)
+	if (!rdp_reset_rc4_encrypt_keys(rdp))
+		goto end;
+	if (!rdp_reset_rc4_decrypt_keys(rdp))
 		goto end;
 
 	ret = TRUE;
@@ -804,12 +803,11 @@ end:
 	{
 		winpr_Cipher_Free(rdp->fips_decrypt);
 		winpr_Cipher_Free(rdp->fips_encrypt);
-		winpr_RC4_Free(rdp->rc4_decrypt_key);
-		winpr_RC4_Free(rdp->rc4_encrypt_key);
 		rdp->fips_decrypt = NULL;
 		rdp->fips_encrypt = NULL;
-		rdp->rc4_decrypt_key = NULL;
-		rdp->rc4_encrypt_key = NULL;
+
+		rdp_free_rc4_decrypt_keys(rdp);
+		rdp_free_rc4_encrypt_keys(rdp);
 	}
 
 	return ret;
@@ -922,10 +920,10 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 		goto end;
 	}
 
-	rdp->rc4_decrypt_key = winpr_RC4_New(rdp->decrypt_key, rdp->rc4_key_len);
-	rdp->rc4_encrypt_key = winpr_RC4_New(rdp->encrypt_key, rdp->rc4_key_len);
+	if (!rdp_reset_rc4_encrypt_keys(rdp))
+		goto end;
 
-	if (!rdp->rc4_decrypt_key || !rdp->rc4_encrypt_key)
+	if (!rdp_reset_rc4_decrypt_keys(rdp))
 		goto end;
 
 	ret = tpkt_ensure_stream_consumed(s, length);
@@ -936,12 +934,11 @@ end:
 	{
 		winpr_Cipher_Free(rdp->fips_encrypt);
 		winpr_Cipher_Free(rdp->fips_decrypt);
-		winpr_RC4_Free(rdp->rc4_encrypt_key);
-		winpr_RC4_Free(rdp->rc4_decrypt_key);
 		rdp->fips_encrypt = NULL;
 		rdp->fips_decrypt = NULL;
-		rdp->rc4_encrypt_key = NULL;
-		rdp->rc4_decrypt_key = NULL;
+
+		rdp_free_rc4_encrypt_keys(rdp);
+		rdp_free_rc4_decrypt_keys(rdp);
 	}
 
 	return ret;
