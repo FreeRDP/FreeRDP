@@ -761,12 +761,6 @@ static LONG WINAPI PCSC_SCardListReaderGroups_Internal(SCARDCONTEXT hContext, LP
 	PCSC_LONG status = SCARD_S_SUCCESS;
 	BOOL pcchGroupsAlloc = FALSE;
 	PCSC_DWORD pcsc_cchGroups = 0;
-	union
-	{
-		LPSTR lpstr;
-		LPSTR* lppstr;
-	} conv;
-	conv.lpstr = mszGroups;
 
 	if (!pcchGroups)
 		return SCARD_E_INVALID_PARAMETER;
@@ -786,17 +780,22 @@ static LONG WINAPI PCSC_SCardListReaderGroups_Internal(SCARDCONTEXT hContext, LP
 
 		if (status == SCARD_S_SUCCESS)
 		{
-			*conv.lppstr = calloc(1, pcsc_cchGroups);
+			LPSTR tmp = calloc(1, pcsc_cchGroups);
 
-			if (!*conv.lppstr)
+			if (!tmp)
 				return SCARD_E_NO_MEMORY;
 
-			status = g_PCSC.pfnSCardListReaderGroups(hContext, *conv.lppstr, &pcsc_cchGroups);
+			status = g_PCSC.pfnSCardListReaderGroups(hContext, tmp, &pcsc_cchGroups);
 
 			if (status != SCARD_S_SUCCESS)
-				free(*conv.lppstr);
+			{
+				free(tmp);
+				tmp = NULL;
+			}
 			else
-				PCSC_AddMemoryBlock(hContext, *conv.lppstr);
+				PCSC_AddMemoryBlock(hContext, tmp);
+
+			*(LPSTR*)mszGroups = tmp;
 		}
 	}
 	else
@@ -833,12 +832,6 @@ static LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext, LPWSTR msz
 	LPSTR mszGroupsA = NULL;
 	LPSTR* pMszGroupsA = &mszGroupsA;
 	LONG status = SCARD_S_SUCCESS;
-	union
-	{
-		LPWSTR lpstr;
-		LPWSTR* lppstr;
-	} conv;
-	conv.lpstr = mszGroups;
 
 	if (!g_PCSC.pfnSCardListReaderGroups)
 		return PCSC_SCard_LogError("g_PCSC.pfnSCardListReaderGroups");
@@ -854,7 +847,7 @@ static LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext, LPWSTR msz
 		WCHAR* str = ConvertMszUtf8NToWCharAlloc(*pMszGroupsA, *pcchGroups, &size);
 		if (!str)
 			return SCARD_E_NO_MEMORY;
-		*conv.lppstr = str;
+		*(WCHAR**)mszGroups = str;
 		*pcchGroups = (DWORD)size;
 		PCSC_AddMemoryBlock(hContext, str);
 		PCSC_SCardFreeMemory_Internal(hContext, *pMszGroupsA);
@@ -872,13 +865,6 @@ static LONG WINAPI PCSC_SCardListReaders_Internal(SCARDCONTEXT hContext, LPCSTR 
 	PCSC_LONG status = SCARD_S_SUCCESS;
 	BOOL pcchReadersAlloc = FALSE;
 	PCSC_DWORD pcsc_cchReaders = 0;
-	union
-	{
-		LPSTR lpstr;
-		LPSTR* lppstr;
-	} conv;
-	conv.lpstr = mszReaders;
-
 	if (!pcchReaders)
 		return SCARD_E_INVALID_PARAMETER;
 
@@ -899,18 +885,22 @@ static LONG WINAPI PCSC_SCardListReaders_Internal(SCARDCONTEXT hContext, LPCSTR 
 
 		if (status == SCARD_S_SUCCESS)
 		{
-			*conv.lppstr = calloc(1, pcsc_cchReaders);
+			char* tmp = calloc(1, pcsc_cchReaders);
 
-			if (!*conv.lppstr)
+			if (!tmp)
 				return SCARD_E_NO_MEMORY;
 
-			status =
-			    g_PCSC.pfnSCardListReaders(hContext, mszGroups, *conv.lppstr, &pcsc_cchReaders);
+			status = g_PCSC.pfnSCardListReaders(hContext, mszGroups, tmp, &pcsc_cchReaders);
 
 			if (status != SCARD_S_SUCCESS)
-				free(*conv.lppstr);
+			{
+				free(tmp);
+				tmp = NULL;
+			}
 			else
-				PCSC_AddMemoryBlock(hContext, *conv.lppstr);
+				PCSC_AddMemoryBlock(hContext, tmp);
+
+			*(char**)mszReaders = tmp;
 		}
 	}
 	else
@@ -965,12 +955,6 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 	LPSTR* pMszReadersA = &mszReadersA;
 	LONG status = SCARD_S_SUCCESS;
 	BOOL nullCardContext = FALSE;
-	union
-	{
-		LPWSTR lpstr;
-		LPWSTR* lppstr;
-	} conv;
-	conv.lpstr = mszReaders;
 
 	if (!g_PCSC.pfnSCardListReaders)
 		return PCSC_SCard_LogError("g_PCSC.pfnSCardListReaders");
@@ -1007,7 +991,7 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 			free(mszGroupsA);
 			return SCARD_E_NO_MEMORY;
 		}
-		*conv.lppstr = str;
+		*(LPWSTR*)mszReaders = str;
 		*pcchReaders = (DWORD)size;
 		PCSC_AddMemoryBlock(hContext, str);
 		PCSC_SCardFreeMemory_Internal(hContext, *pMszReadersA);
@@ -2013,33 +1997,18 @@ static LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard, LPSTR mszReaderN
 
 	if (tATR)
 	{
-		union
-		{
-			BYTE* pb;
-			BYTE** ppb;
-		} conv;
-		conv.pb = pbAtr;
 		PCSC_AddMemoryBlock(hContext, tATR);
-		*conv.ppb = tATR;
+		*(BYTE**)pbAtr = tATR;
 	}
 
 	if (tReader)
 	{
-		union
-		{
-			CHAR* pc;
-			CHAR** ppc;
-			WCHAR* pw;
-			WCHAR** ppw;
-		} conv, dst;
-		dst.pc = mszReaderNames;
-
 		if (unicode)
 		{
 			size_t size = 0;
-			conv.pw = ConvertMszUtf8NToWCharAlloc(tReader, *pcchReaderLen, &size);
+			WCHAR* tmp = ConvertMszUtf8NToWCharAlloc(tReader, *pcchReaderLen, &size);
 
-			if (conv.pw == NULL)
+			if (tmp == NULL)
 			{
 				status = ERROR_NOT_ENOUGH_MEMORY;
 				goto out_fail;
@@ -2047,14 +2016,14 @@ static LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard, LPSTR mszReaderN
 
 			free(tReader);
 
-			PCSC_AddMemoryBlock(hContext, conv.pw);
-			*dst.ppw = conv.pw;
+			PCSC_AddMemoryBlock(hContext, tmp);
+			*(WCHAR**)mszReaderNames = tmp;
 		}
 		else
 		{
 			tReader[pcsc_cchReaderLen - 1] = '\0';
 			PCSC_AddMemoryBlock(hContext, tReader);
-			*dst.ppc = tReader;
+			*(char**)mszReaderNames = tReader;
 		}
 	}
 
@@ -2359,12 +2328,7 @@ static LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dwAttrI
 	PCSC_SCARDHANDLE* pCard = NULL;
 	PCSC_DWORD pcsc_dwAttrId = (PCSC_DWORD)dwAttrId;
 	PCSC_DWORD pcsc_cbAttrLen = 0;
-	union
-	{
-		BYTE* pb;
-		BYTE** ppb;
-	} conv;
-	conv.pb = pbAttr;
+
 	if (!g_PCSC.pfnSCardGetAttrib)
 		return PCSC_SCard_LogError("g_PCSC.pfnSCardGetAttrib");
 
@@ -2409,7 +2373,7 @@ static LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dwAttrI
 				free(tmp);
 			else
 				PCSC_AddMemoryBlock(hContext, tmp);
-			*conv.ppb = tmp;
+			*(BYTE**)pbAttr = tmp;
 		}
 	}
 	else
@@ -2432,13 +2396,7 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 	WCHAR* pbAttrW = NULL;
 	SCARDCONTEXT hContext;
 	LONG status = SCARD_S_SUCCESS;
-	union
-	{
-		WCHAR** ppw;
-		BYTE* pb;
-		BYTE** ppb;
-	} conv;
-	conv.pb = pbAttr;
+
 	hContext = PCSC_GetCardContextFromHandle(hCard);
 
 	if (!hContext)
@@ -2490,7 +2448,7 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 			if (cbAttrLen == SCARD_AUTOALLOCATE)
 			{
 				WINPR_ASSERT(length <= UINT32_MAX / sizeof(WCHAR));
-				*conv.ppw = friendlyNameW;
+				*(WCHAR**)pbAttr = friendlyNameW;
 				*pcbAttrLen = (UINT32)length * sizeof(WCHAR);
 				PCSC_AddMemoryBlock(hContext, friendlyNameW);
 			}
@@ -2513,7 +2471,7 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 	{
 		if (cbAttrLen == SCARD_AUTOALLOCATE)
 		{
-			*conv.ppb = (BYTE*)namePCSC;
+			*(CHAR**)pbAttr = namePCSC;
 			WINPR_ASSERT(length <= UINT32_MAX);
 			*pcbAttrLen = (UINT32)length;
 			PCSC_AddMemoryBlock(hContext, namePCSC);
@@ -2542,16 +2500,9 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 	SCARDCONTEXT hContext;
 	BOOL pcbAttrLenAlloc = FALSE;
 	LONG status = SCARD_S_SUCCESS;
-	union
-	{
-		BYTE* pb;
-		BYTE** ppb;
-	} conv;
 
 	if (NULL == pcbAttrLen)
 		return SCARD_E_INVALID_PARAMETER;
-
-	conv.pb = pbAttr;
 
 	cbAttrLen = *pcbAttrLen;
 
@@ -2561,7 +2512,7 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 			return SCARD_E_INVALID_PARAMETER;
 
 		pcbAttrLenAlloc = TRUE;
-		*conv.ppb = NULL;
+		*(BYTE**)pbAttr = NULL;
 	}
 	else
 	{
@@ -2601,7 +2552,7 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 				 */
 
 				if (pcbAttrLenAlloc)
-					vendorName = (char*)*conv.ppb;
+					vendorName = (char*)*(BYTE**)pbAttr;
 				else
 					vendorName = (char*)pbAttr;
 
@@ -2632,17 +2583,10 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 
 				if (status == SCARD_S_SUCCESS)
 				{
-					union
-					{
-						BYTE* pb;
-						LPDWORD pd;
-					} conv1;
-					conv1.pb = pbAttr;
-
 					if (cbAttrLen < sizeof(DWORD))
 						return SCARD_E_INSUFFICIENT_BUFFER;
 
-					*conv1.pd = PCSC_ConvertProtocolsToWinSCard(dwProtocol);
+					*(DWORD*)pbAttr = PCSC_ConvertProtocolsToWinSCard(dwProtocol);
 					*pcbAttrLen = sizeof(DWORD);
 				}
 			}
@@ -2653,19 +2597,12 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 			{
 				UINT32 channelType = 0x20; /* USB */
 				UINT32 channelNumber = 0;
-				union
-				{
-					BYTE* pb;
-					BYTE** ppb;
-					DWORD* ppd;
-				} conv1;
 
-				conv1.pb = pbAttr;
 				if (cbAttrLen < sizeof(DWORD))
 					return SCARD_E_INSUFFICIENT_BUFFER;
 
 				status = SCARD_S_SUCCESS;
-				*conv1.ppd = (channelType << 16u) | channelNumber;
+				*(DWORD*)pbAttr = (channelType << 16u) | channelNumber;
 				*pcbAttrLen = sizeof(DWORD);
 			}
 		}
@@ -2839,15 +2776,7 @@ static LONG WINAPI PCSC_SCardReadCacheA(SCARDCONTEXT hContext, UUID* CardIdentif
 
 	if (*DataLen == SCARD_AUTOALLOCATE)
 	{
-		BYTE* mem;
-		union
-		{
-			BYTE* pb;
-			BYTE** ppb;
-		} conv;
-
-		conv.pb = Data;
-		mem = calloc(1, data->len);
+		BYTE* mem = calloc(1, data->len);
 		if (!mem)
 			return SCARD_E_NO_MEMORY;
 
@@ -2858,7 +2787,7 @@ static LONG WINAPI PCSC_SCardReadCacheA(SCARDCONTEXT hContext, UUID* CardIdentif
 		}
 
 		memcpy(mem, data->data, data->len);
-		*conv.ppb = mem;
+		*(BYTE**)Data = mem;
 	}
 	else
 		memcpy(Data, data->data, data->len);
@@ -2891,15 +2820,7 @@ static LONG WINAPI PCSC_SCardReadCacheW(SCARDCONTEXT hContext, UUID* CardIdentif
 
 	if (*DataLen == SCARD_AUTOALLOCATE)
 	{
-		BYTE* mem;
-		union
-		{
-			BYTE* pb;
-			BYTE** ppb;
-		} conv;
-
-		conv.pb = Data;
-		mem = calloc(1, data->len);
+		BYTE* mem = calloc(1, data->len);
 		if (!mem)
 			return SCARD_E_NO_MEMORY;
 
@@ -2910,7 +2831,7 @@ static LONG WINAPI PCSC_SCardReadCacheW(SCARDCONTEXT hContext, UUID* CardIdentif
 		}
 
 		memcpy(mem, data->data, data->len);
-		*conv.ppb = mem;
+		*(BYTE**)Data = mem;
 	}
 	else
 		memcpy(Data, data->data, data->len);
