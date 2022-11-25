@@ -1824,7 +1824,7 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz " [%s|%s]", __FUNCTION__, id,
 			         freerdp_settings_get_name_for_key(id),
 			         freerdp_settings_get_type_name_for_key(id));
-			return FALSE;
+			return 0;
 	}
 }
 
