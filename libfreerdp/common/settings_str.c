@@ -653,8 +653,12 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 	size_t x;
 
 	WINPR_ASSERT(log);
-	WINPR_ASSERT(settings);
-	WINPR_ASSERT(other);
+
+	if (!settings || !other)
+	{
+		WLog_Print(log, level, "settings=%p, other=%p", settings, other);
+		return settings != other;
+	}
 
 	for (x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
@@ -783,7 +787,12 @@ void freerdp_settings_dump(wLog* log, DWORD level, const rdpSettings* settings)
 	size_t x;
 
 	WINPR_ASSERT(log);
-	WINPR_ASSERT(settings);
+
+	if (!settings)
+	{
+		WLog_Print(log, level, "settings=NULL");
+		return;
+	}
 
 	for (x = 0; x < ARRAYSIZE(settings_map); x++)
 	{

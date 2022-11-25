@@ -1776,6 +1776,7 @@ UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings)
 
 const char* freerdp_settings_get_server_name(const rdpSettings* settings)
 {
+	WINPR_ASSERT(settings);
 	const char* hostname = settings->ServerHostname;
 
 	if (settings->UserSpecifiedServerName)
@@ -1917,6 +1918,12 @@ BOOL freerdp_device_equal(const RDPDR_DEVICE* what, const RDPDR_DEVICE* expect)
 
 char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer, size_t length)
 {
+	const UINT32 mask =
+	    RAIL_LEVEL_SUPPORTED | RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED |
+	    RAIL_LEVEL_SHELL_INTEGRATION_SUPPORTED | RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED |
+	    RAIL_LEVEL_SERVER_TO_CLIENT_IME_SYNC_SUPPORTED | RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED |
+	    RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED | RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
+
 	if (flags & RAIL_LEVEL_SUPPORTED)
 		winpr_str_append("RAIL_LEVEL_SUPPORTED", buffer, length, "|");
 	if (flags & RAIL_LEVEL_DOCKED_LANGBAR_SUPPORTED)
@@ -1935,6 +1942,12 @@ char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer, size_t le
 		winpr_str_append("RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED", buffer, length, "|");
 	if (flags & RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED)
 		winpr_str_append("RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED", buffer, length, "|");
+	if ((flags & mask) != 0)
+	{
+		char tbuffer[64] = { 0 };
+		_snprintf(tbuffer, sizeof(tbuffer), "RAIL_FLAG_UNKNOWN 0x%08" PRIx32, flags & mask);
+		winpr_str_append(tbuffer, buffer, length, "|");
+	}
 	return buffer;
 }
 
