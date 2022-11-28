@@ -465,7 +465,9 @@ static const char* get_shm_id(void)
 
 Window xf_CreateDummyWindow(xfContext* xfc)
 {
-	return XCreateSimpleWindow(xfc->display, DefaultRootWindow(xfc->display), 0, 0, 1, 1, 0, 0, 0);
+	return XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen), xfc->workArea.x,
+	                     xfc->workArea.y, 1, 1, 0, xfc->depth, InputOutput, xfc->visual,
+	                     xfc->attribs_mask, &xfc->attribs);
 }
 
 void xf_DestroyDummyWindow(xfContext* xfc, Window window)
