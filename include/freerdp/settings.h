@@ -2125,9 +2125,30 @@ extern "C"
 	FREERDP_API BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name,
 	                                                     const char* value);
 
+	/** \brief Get a key index for the name string of that key
+	 *
+	 *  \param value A key name string like FreeRDP_ServerMode
+	 *
+	 *  \return The key index or -1 in case of an error (e.g. name does not exist)
+	 */
 	FREERDP_API SSIZE_T freerdp_settings_get_key_for_name(const char* value);
+
+	/** \brief Get a key type for the name string of that key
+	 *
+	 *  \param value A key name string like FreeRDP_ServerMode
+	 *
+	 *  \return The key type (e.g. FREERDP_SETTINGS_TYPE_BOOL) or -1 in case of an error (e.g. name
+	 * does not exist)
+	 */
 	FREERDP_API SSIZE_T freerdp_settings_get_type_for_name(const char* value);
 
+	/** \brief Get a key type for the key index
+	 *
+	 *  \param key The key index like FreeRDP_ServerMode
+	 *
+	 *  \return The key type (e.g. FREERDP_SETTINGS_TYPE_BOOL) or -1 in case of an error (e.g. name
+	 * does not exist)
+	 */
 	FREERDP_API SSIZE_T freerdp_settings_get_type_for_key(size_t key);
 	FREERDP_API const char* freerdp_settings_get_type_name_for_key(size_t key);
 	FREERDP_API const char* freerdp_settings_get_type_name_for_type(SSIZE_T type);
@@ -2135,9 +2156,25 @@ extern "C"
 	FREERDP_API const char* freerdp_settings_get_name_for_key(size_t key);
 	FREERDP_API UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings);
 
-	FREERDP_API BOOL freerdp_settings_update_from_caps(rdpSettings* settings, BYTE* capsFlags,
-	                                                   BYTE** capsData, UINT32* capsSizes,
-	                                                   UINT32 capsCount, BOOL serverReceivedCaps);
+	/** \brief Parse capability data and apply to settings
+	 *
+	 *  The capability message is stored in raw form in the settings, the data parsed and applied to
+	 * the settings.
+	 *
+	 *  \param settings A pointer to the settings to use
+	 *  \param capsFlags A pointer to the capablity flags, must have capsCount fields
+	 *  \param capsData A pointer array to the RAW capability data, must have capsCount fields
+	 *  \param capsSizes A pointer to an array of RAW capability sizes, must have capsCount fields
+	 *  \param capsCount The number of capabilities contained in the RAW data
+	 *  \param serverReceivedCaps Indicates if the parser should assume to be a server or client
+	 * instance
+	 *
+	 *  \return \b TRUE for success, \b FALSE in case of an error
+	 */
+	FREERDP_API BOOL freerdp_settings_update_from_caps(rdpSettings* settings, const BYTE* capsFlags,
+	                                                   const BYTE** capsData,
+	                                                   const UINT32* capsSizes, UINT32 capsCount,
+	                                                   BOOL serverReceivedCaps);
 
 	/** \brief A helper function to return the correct server name.
 	 *
