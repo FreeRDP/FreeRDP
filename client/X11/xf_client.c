@@ -326,6 +326,7 @@ static BOOL xf_desktop_resize(rdpContext* context)
 		BOOL same = (xfc->primary == xfc->drawing) ? TRUE : FALSE;
 		XFreePixmap(xfc->display, xfc->primary);
 
+		WINPR_ASSERT(xfc->depth != 0);
 		if (!(xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, settings->DesktopWidth,
 		                                   settings->DesktopHeight, xfc->depth)))
 			return FALSE;
@@ -371,66 +372,67 @@ static BOOL xf_desktop_resize(rdpContext* context)
 	return TRUE;
 }
 
-static BOOL xf_sw_end_paint(rdpContext* context)
+static BOOL xf_paint(xfContext* xfc, const GDI_RGN* region)
 {
-	int i;
-	INT32 x, y;
-	UINT32 w, h;
-	int ninvalid;
-	HGDI_RGN cinvalid;
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(region);
+
+	if (xfc->remote_app)
+	{
+		const RECTANGLE_16 rect = { .left = region->x,
+			                        .top = region->y,
+			                        .right = region->x + region->w,
+			                        .bottom = region->y + region->h };
+		xf_rail_paint(xfc, &rect);
+	}
+	else
+	{
+		const BOOL sw =
+		    freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_SoftwareGdi);
+		if (sw)
+			XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, region->x, region->y,
+			          region->x, region->y, region->w, region->h);
+		xf_draw_screen(xfc, region->x, region->y, region->w, region->h);
+	}
+	return TRUE;
+}
+
+static BOOL xf_end_paint(rdpContext* context)
+{
 	xfContext* xfc = (xfContext*)context;
 	rdpGdi* gdi = context->gdi;
 
 	if (gdi->suppressOutput)
 		return TRUE;
 
-	x = gdi->primary->hdc->hwnd->invalid->x;
-	y = gdi->primary->hdc->hwnd->invalid->y;
-	w = gdi->primary->hdc->hwnd->invalid->w;
-	h = gdi->primary->hdc->hwnd->invalid->h;
-	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
-	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
-
-	if (!xfc->remote_app)
+	if (!xfc->complex_regions)
 	{
-		if (!xfc->complex_regions)
-		{
-			if (gdi->primary->hdc->hwnd->invalid->null)
-				return TRUE;
-
-			xf_lock_x11(xfc);
-			XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
-			xf_draw_screen(xfc, x, y, w, h);
-			xf_unlock_x11(xfc);
-		}
-		else
-		{
-			if (gdi->primary->hdc->hwnd->ninvalid < 1)
-				return TRUE;
-
-			xf_lock_x11(xfc);
-
-			for (i = 0; i < ninvalid; i++)
-			{
-				x = cinvalid[i].x;
-				y = cinvalid[i].y;
-				w = cinvalid[i].w;
-				h = cinvalid[i].h;
-				XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, x, y, x, y, w, h);
-				xf_draw_screen(xfc, x, y, w, h);
-			}
-
-			XFlush(xfc->display);
-			xf_unlock_x11(xfc);
-		}
+		const GDI_RGN* rgn = gdi->primary->hdc->hwnd->invalid;
+		if (rgn->null)
+			return TRUE;
+		xf_lock_x11(xfc);
+		if (!xf_paint(xfc, rgn))
+			return FALSE;
+		xf_unlock_x11(xfc);
 	}
 	else
 	{
-		if (gdi->primary->hdc->hwnd->invalid->null)
+		const INT32 ninvalid = gdi->primary->hdc->hwnd->ninvalid;
+		const GDI_RGN* cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+
+		if (gdi->primary->hdc->hwnd->ninvalid < 1)
 			return TRUE;
 
 		xf_lock_x11(xfc);
-		xf_rail_paint(xfc, x, y, x + w, y + h);
+
+		for (INT32 i = 0; i < ninvalid; i++)
+		{
+			const GDI_RGN* rgn = &cinvalid[i];
+			if (!xf_paint(xfc, rgn))
+				return FALSE;
+		}
+
+		XFlush(xfc->display);
 		xf_unlock_x11(xfc);
 	}
 
@@ -456,6 +458,7 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 		XDestroyImage(xfc->image);
 	}
 
+	WINPR_ASSERT(xfc->depth != 0);
 	if (!(xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 	                                (char*)gdi->primary_buffer, gdi->width, gdi->height,
 	                                xfc->scanline_pad, gdi->stride)))
@@ -469,78 +472,6 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 out:
 	xf_unlock_x11(xfc);
 	return ret;
-}
-
-static BOOL xf_hw_end_paint(rdpContext* context)
-{
-	INT32 x, y;
-	UINT32 w, h;
-	xfContext* xfc = (xfContext*)context;
-
-	WINPR_ASSERT(xfc);
-	WINPR_ASSERT(xfc->common.context.gdi);
-
-	if (xfc->common.context.gdi->suppressOutput)
-		return TRUE;
-
-	if (!xfc->remote_app)
-	{
-		if (!xfc->complex_regions)
-		{
-			if (xfc->hdc->hwnd->invalid->null)
-				return TRUE;
-
-			x = xfc->hdc->hwnd->invalid->x;
-			y = xfc->hdc->hwnd->invalid->y;
-			w = xfc->hdc->hwnd->invalid->w;
-			h = xfc->hdc->hwnd->invalid->h;
-			xf_lock_x11(xfc);
-			xf_draw_screen(xfc, x, y, w, h);
-			xf_unlock_x11(xfc);
-		}
-		else
-		{
-			int i;
-			int ninvalid;
-			HGDI_RGN cinvalid;
-
-			if (xfc->hdc->hwnd->ninvalid < 1)
-				return TRUE;
-
-			ninvalid = xfc->hdc->hwnd->ninvalid;
-			cinvalid = xfc->hdc->hwnd->cinvalid;
-			xf_lock_x11(xfc);
-
-			for (i = 0; i < ninvalid; i++)
-			{
-				x = cinvalid[i].x;
-				y = cinvalid[i].y;
-				w = cinvalid[i].w;
-				h = cinvalid[i].h;
-				xf_draw_screen(xfc, x, y, w, h);
-			}
-
-			XFlush(xfc->display);
-			xf_unlock_x11(xfc);
-		}
-	}
-	else
-	{
-		if (xfc->hdc->hwnd->invalid->null)
-			return TRUE;
-
-		x = xfc->hdc->hwnd->invalid->x;
-		y = xfc->hdc->hwnd->invalid->y;
-		w = xfc->hdc->hwnd->invalid->w;
-		h = xfc->hdc->hwnd->invalid->h;
-		xf_lock_x11(xfc);
-		xf_rail_paint(xfc, x, y, x + w, y + h);
-		xf_unlock_x11(xfc);
-	}
-
-	xfc->hdc->hwnd->invalid->null = TRUE;
-	xfc->hdc->hwnd->ninvalid = 0;
-	return TRUE;
 }
 
 static BOOL xf_hw_desktop_resize(rdpContext* context)
@@ -644,15 +575,16 @@ BOOL xf_create_window(xfContext* xfc)
 	width = settings->DesktopWidth;
 	height = settings->DesktopHeight;
 
-	if (!xfc->hdc)
-		if (!(xfc->hdc = gdi_CreateDC(xf_get_local_color_format(xfc, TRUE))))
-			return FALSE;
-
 	const XSetWindowAttributes empty = { 0 };
 	xfc->attribs = empty;
 
+	if (xfc->remote_app)
+		xfc->depth = 32;
+	else
+		xfc->depth = DefaultDepthOfScreen(xfc->screen);
+
 	XVisualInfo vinfo = { 0 };
-	if (XMatchVisualInfo(xfc->display, xfc->screen_number, 32, TrueColor, &vinfo))
+	if (XMatchVisualInfo(xfc->display, xfc->screen_number, xfc->depth, TrueColor, &vinfo))
 	{
 		Window root = XDefaultRootWindow(xfc->display);
 		xfc->visual = vinfo.visual;
@@ -661,6 +593,16 @@ BOOL xf_create_window(xfContext* xfc)
 	}
 	else
 	{
+		if (xfc->remote_app)
+		{
+			WLog_WARN(TAG,
+			          "[%s] running in remote app mode, but XServer does not support transparency",
+			          __FUNCTION__);
+			WLog_WARN(TAG,
+			          "[%s] display of remote applications might be distorted (black frames, ...)",
+			          __FUNCTION__);
+		}
+		xfc->depth = DefaultDepthOfScreen(xfc->screen);
 		xfc->visual = DefaultVisual(xfc->display, xfc->screen_number);
 		xfc->attribs.colormap = xfc->colormap = DefaultColormap(xfc->display, xfc->screen_number);
 	}
@@ -672,6 +614,12 @@ BOOL xf_create_window(xfContext* xfc)
 	if (vinfo.red_mask & 0xFF)
 	{
 		xfc->invert = FALSE;
+	}
+
+	if (!xfc->hdc)
+	{
+		if (!(xfc->hdc = gdi_CreateDC(xf_get_local_color_format(xfc, TRUE))))
+			return FALSE;
 	}
 
 	if (!xfc->remote_app)
@@ -722,12 +670,23 @@ BOOL xf_create_window(xfContext* xfc)
 	}
 	else
 	{
+		xfc->attribs.border_pixel = 0;
+		xfc->attribs.background_pixel = 0;
+		xfc->attribs.backing_store = xfc->primary ? NotUseful : Always;
+		xfc->attribs.override_redirect = False;
+
+		xfc->attribs.bit_gravity = NorthWestGravity;
+		xfc->attribs.win_gravity = NorthWestGravity;
+		xfc->attribs_mask = CWBackPixel | CWBackingStore | CWOverrideRedirect | CWColormap |
+		                    CWBorderPixel | CWWinGravity | CWBitGravity;
+
 		xfc->drawable = xf_CreateDummyWindow(xfc);
 	}
 
 	if (!xfc->gc)
 		xfc->gc = XCreateGC(xfc->display, xfc->drawable, GCGraphicsExposures, &gcv);
 
+	WINPR_ASSERT(xfc->depth != 0);
 	if (!xfc->primary)
 		xfc->primary = XCreatePixmap(xfc->display, xfc->drawable, settings->DesktopWidth,
 		                             settings->DesktopHeight, xfc->depth);
@@ -759,6 +718,7 @@ BOOL xf_create_image(xfContext* xfc)
 		rdpGdi* cgdi = xfc->common.context.gdi;
 		WINPR_ASSERT(cgdi);
 
+		WINPR_ASSERT(xfc->depth != 0);
 		xfc->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 		                          (char*)cgdi->primary_buffer, settings->DesktopWidth,
 		                          settings->DesktopHeight, xfc->scanline_pad, cgdi->stride);
@@ -870,12 +830,9 @@ void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 
 static BOOL xf_get_pixmap_info(xfContext* xfc)
 {
-	int vi_count = 0;
 	int pf_count = 0;
-	XVisualInfo* vis = NULL;
-	XVisualInfo tpl = { 0 };
 	XPixmapFormatValues* pfs = NULL;
-	XWindowAttributes window_attributes = { 0 };
+
 	WINPR_ASSERT(xfc->display);
 	pfs = XListPixmapFormats(xfc->display, &pf_count);
 
@@ -885,6 +842,7 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 		return 1;
 	}
 
+	WINPR_ASSERT(xfc->depth != 0);
 	for (int i = 0; i < pf_count; i++)
 	{
 		const XPixmapFormatValues* pf = &pfs[i];
@@ -897,43 +855,8 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 	}
 
 	XFree(pfs);
-
-	tpl.depth = xfc->depth;
-	tpl.class = TrueColor;
-	tpl.screen = xfc->screen_number;
-
-	if (XGetWindowAttributes(xfc->display, RootWindowOfScreen(xfc->screen), &window_attributes) ==
-	    0)
-	{
-		WLog_ERR(TAG, "XGetWindowAttributes failed");
-		return FALSE;
-	}
-
-	vis = XGetVisualInfo(xfc->display, VisualDepthMask | VisualClassMask | VisualScreenMask, &tpl,
-	                     &vi_count);
-
-	if (!vis)
-	{
-		WLog_ERR(TAG, "XGetVisualInfo failed");
-		return FALSE;
-	}
-
-	for (int i = 0; i < vi_count; i++)
-	{
-		const XVisualInfo* vi = &vis[i];
-
-		if (vi->visual == window_attributes.visual)
-		{
-			break;
-		}
-	}
-
-	XFree(vis);
-
 	if ((xfc->visual == NULL) || (xfc->scanline_pad == 0))
-	{
 		return FALSE;
-	}
 
 	return TRUE;
 }
@@ -1201,11 +1124,14 @@ static BOOL xf_pre_connect(freerdp* instance)
 	xfc = (xfContext*)instance->context;
 	WINPR_ASSERT(context);
 
-	if (!xf_setup_x11(xfc))
-		return FALSE;
-
 	settings = context->settings;
 	WINPR_ASSERT(settings);
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
+	{
+		if (!xf_setup_x11(xfc))
+			return FALSE;
+	}
 
 	channels = context->channels;
 	WINPR_ASSERT(channels);
@@ -1229,7 +1155,7 @@ static BOOL xf_pre_connect(freerdp* instance)
 		}
 	}
 
-	if (settings->AuthenticationOnly)
+	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 	{
 		/* Check +auth-only has a username and password. */
 		if (!freerdp_settings_get_string(settings, FreeRDP_Password))
@@ -1241,11 +1167,13 @@ static BOOL xf_pre_connect(freerdp* instance)
 		WLog_INFO(TAG, "Authentication only. Don't connect to X.");
 	}
 
-	if (!xf_keyboard_init(xfc))
-		return FALSE;
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
+	{
+		if (!xf_keyboard_init(xfc))
+			return FALSE;
 
-	xf_detect_monitors(xfc, &maxWidth, &maxHeight);
-
+		xf_detect_monitors(xfc, &maxWidth, &maxHeight);
+	}
 	if (maxWidth && maxHeight && !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 	{
 		settings->DesktopWidth = maxWidth;
@@ -1270,7 +1198,8 @@ static BOOL xf_pre_connect(freerdp* instance)
 	xfc->decorations = settings->Decorations;
 	xfc->grab_keyboard = settings->GrabKeyboard;
 	xfc->fullscreen_toggle = settings->ToggleFullscreen;
-	xf_button_map_init(xfc);
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
+		xf_button_map_init(xfc);
 	return TRUE;
 }
 
@@ -1298,6 +1227,9 @@ static BOOL xf_post_connect(freerdp* instance)
 
 	update = context->update;
 	WINPR_ASSERT(update);
+
+	if (settings->RemoteApplicationMode)
+		xfc->remote_app = TRUE;
 
 	if (!xf_create_window(xfc))
 		return FALSE;
@@ -1352,20 +1284,12 @@ static BOOL xf_post_connect(freerdp* instance)
 		}
 	}
 
-	if (settings->RemoteApplicationMode)
-		xfc->remote_app = TRUE;
-
 	if (settings->SoftwareGdi)
-	{
-		update->EndPaint = xf_sw_end_paint;
 		update->DesktopResize = xf_sw_desktop_resize;
-	}
 	else
-	{
-		update->EndPaint = xf_hw_end_paint;
 		update->DesktopResize = xf_hw_desktop_resize;
-	}
 
+	update->EndPaint = xf_end_paint;
 	update->PlaySound = xf_play_sound;
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 	update->SetKeyboardImeStatus = xf_keyboard_set_ime_status;
@@ -1842,7 +1766,6 @@ BOOL xf_setup_x11(xfContext* xfc)
 	xfc->xfds = ConnectionNumber(xfc->display);
 	xfc->screen_number = DefaultScreen(xfc->display);
 	xfc->screen = ScreenOfDisplay(xfc->display, xfc->screen_number);
-	xfc->depth = 32; // DefaultDepthOfScreen(xfc->screen);
 	xfc->big_endian = (ImageByteOrder(xfc->display) == MSBFirst);
 	xfc->invert = TRUE;
 	xfc->complex_regions = TRUE;
