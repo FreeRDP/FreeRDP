@@ -25,7 +25,9 @@
 
 #include <freerdp/client/rail.h>
 
-void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom);
+BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect);
+BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect);
+
 void xf_rail_send_client_system_command(xfContext* xfc, UINT32 windowId, UINT16 command);
 void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled);
 void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow);
@@ -38,10 +40,6 @@ xfAppWindow* xf_rail_add_window(xfContext* xfc, UINT64 id, UINT32 x, UINT32 y, U
 xfAppWindow* xf_rail_get_window(xfContext* xfc, UINT64 id);
 
 BOOL xf_rail_del_window(xfContext* xfc, UINT64 id);
-
-BOOL xf_rail_draw_window(xfContext* xfc, xfAppWindow* window, const char* data, UINT32 scanline,
-                         UINT32 width, UINT32 height, const RECTANGLE_16* src,
-                         const RECTANGLE_16* dst);
 
 int xf_rail_init(xfContext* xfc, RailClientContext* rail);
 int xf_rail_uninit(xfContext* xfc, RailClientContext* rail);

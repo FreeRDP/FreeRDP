@@ -210,63 +210,61 @@ void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->local_move.state = LMS_TERMINATING;
 }
 
-static void xf_rail_invalidate_region(xfContext* xfc, REGION16* invalidRegion)
+BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* rect)
 {
-	int index;
-	int count = 0;
-	RECTANGLE_16 updateRect;
-	RECTANGLE_16 windowRect;
-	ULONG_PTR* pKeys = NULL;
-	xfAppWindow* appWindow;
-	const RECTANGLE_16* extents;
-	REGION16 windowInvalidRegion;
+	xfAppWindow* appWindow = xf_rail_get_window(xfc, windowId);
+
+	WINPR_ASSERT(rect);
+
+	if (!appWindow)
+		return FALSE;
+
+	const RECTANGLE_16 windowRect = { .left = MAX(appWindow->x, 0),
+		                              .top = MAX(appWindow->y, 0),
+		                              .right = MAX(appWindow->x + appWindow->width, 0),
+		                              .bottom = MAX(appWindow->y + appWindow->height, 0) };
+
+	REGION16 windowInvalidRegion = { 0 };
 	region16_init(&windowInvalidRegion);
+	region16_union_rect(&windowInvalidRegion, &windowInvalidRegion, &windowRect);
+	region16_intersect_rect(&windowInvalidRegion, &windowInvalidRegion, rect);
+
+	if (!region16_is_empty(&windowInvalidRegion))
+	{
+		const RECTANGLE_16* extents = region16_extents(&windowInvalidRegion);
+		const RECTANGLE_16 updateRect = { .left = extents->left - appWindow->x,
+			                              .top = extents->top - appWindow->y,
+			                              .right = extents->right - appWindow->x,
+			                              .bottom = extents->bottom - appWindow->y };
+
+		xf_UpdateWindowArea(xfc, appWindow, updateRect.left, updateRect.top,
+		                    updateRect.right - updateRect.left, updateRect.bottom - updateRect.top);
+	}
+	region16_uninit(&windowInvalidRegion);
+	return TRUE;
+}
+
+BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect)
+{
+	BOOL rc = TRUE;
+	ULONG_PTR* pKeys = NULL;
+	size_t count = 0;
+
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(rect);
+
 	if (xfc->railWindows)
 		count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
-	for (index = 0; index < count; index++)
+	for (size_t index = 0; index < count; index++)
 	{
-		appWindow = xf_rail_get_window(xfc, *(UINT64*)pKeys[index]);
-
-		if (appWindow)
-		{
-			windowRect.left = MAX(appWindow->x, 0);
-			windowRect.top = MAX(appWindow->y, 0);
-			windowRect.right = MAX(appWindow->x + appWindow->width, 0);
-			windowRect.bottom = MAX(appWindow->y + appWindow->height, 0);
-			region16_clear(&windowInvalidRegion);
-			region16_intersect_rect(&windowInvalidRegion, invalidRegion, &windowRect);
-
-			if (!region16_is_empty(&windowInvalidRegion))
-			{
-				extents = region16_extents(&windowInvalidRegion);
-				updateRect.left = extents->left - appWindow->x;
-				updateRect.top = extents->top - appWindow->y;
-				updateRect.right = extents->right - appWindow->x;
-				updateRect.bottom = extents->bottom - appWindow->y;
-				xf_UpdateWindowArea(xfc, appWindow, updateRect.left, updateRect.top,
-				                    updateRect.right - updateRect.left,
-				                    updateRect.bottom - updateRect.top);
-			}
-		}
+		const UINT64 key = *(UINT64*)pKeys[index];
+		if (!xf_rail_paint_surface(xfc, key, rect))
+			rc = FALSE;
 	}
 
 	free(pKeys);
-	region16_uninit(&windowInvalidRegion);
-}
-
-void xf_rail_paint(xfContext* xfc, INT32 uleft, INT32 utop, UINT32 uright, UINT32 ubottom)
-{
-	REGION16 invalidRegion;
-	RECTANGLE_16 invalidRect;
-	invalidRect.left = uleft;
-	invalidRect.top = utop;
-	invalidRect.right = uright;
-	invalidRect.bottom = ubottom;
-	region16_init(&invalidRegion);
-	region16_union_rect(&invalidRegion, &invalidRegion, &invalidRect);
-	xf_rail_invalidate_region(xfc, &invalidRegion);
-	region16_uninit(&invalidRegion);
+	return rc;
 }
 
 /* RemoteApp Core Protocol Extension */
