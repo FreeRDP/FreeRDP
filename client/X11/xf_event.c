@@ -654,12 +654,7 @@ static BOOL xf_event_MappingNotify(xfContext* xfc, const XMappingEvent* event, B
 	WINPR_UNUSED(app);
 
 	if (event->request == MappingModifier)
-	{
-		if (xfc->modifierMap)
-			XFreeModifiermap(xfc->modifierMap);
-
-		xfc->modifierMap = XGetModifierMapping(xfc->display);
-	}
+		return xf_keyboard_update_modifier_map(xfc);
 
 	return TRUE;
 }

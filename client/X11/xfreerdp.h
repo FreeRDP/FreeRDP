@@ -385,6 +385,8 @@ BOOL xf_picture_transform_required(xfContext* xfc);
 void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt, const char* file,
                      int line);
 
-FREERDP_API DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
+BOOL xf_keyboard_update_modifier_map(xfContext* xfc);
+
+DWORD xf_exit_code_from_disconnect_reason(DWORD reason);
 
 #endif /* FREERDP_CLIENT_X11_FREERDP_H */
