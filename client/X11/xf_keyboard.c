@@ -44,6 +44,24 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
+static void xf_keyboard_modifier_map_free(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+	if (xfc->modifierMap)
+	{
+		XFreeModifiermap(xfc->modifierMap);
+		xfc->modifierMap = NULL;
+	}
+}
+
+BOOL xf_keyboard_update_modifier_map(xfContext* xfc)
+{
+	WINPR_ASSERT(xfc);
+	xf_keyboard_modifier_map_free(xfc);
+	xfc->modifierMap = XGetModifierMapping(xfc->display);
+	return xfc->modifierMap != NULL;
+}
+
 static void xf_keyboard_send_key(xfContext* xfc, BOOL down, const XKeyEvent* ev);
 
 static BOOL xf_sync_kbd_state(xfContext* xfc)
@@ -142,10 +160,7 @@ BOOL xf_keyboard_init(xfContext* xfc)
 	    freerdp_keyboard_init_ex(xfc->KeyboardLayout, settings->KeyboardRemappingList);
 	settings->KeyboardLayout = xfc->KeyboardLayout;
 
-	if (xfc->modifierMap)
-		XFreeModifiermap(xfc->modifierMap);
-
-	if (!(xfc->modifierMap = XGetModifierMapping(xfc->display)))
+	if (!xf_keyboard_update_modifier_map(xfc))
 		return FALSE;
 
 	xf_keyboard_action_script_init(xfc);
@@ -154,12 +169,7 @@ BOOL xf_keyboard_init(xfContext* xfc)
 
 void xf_keyboard_free(xfContext* xfc)
 {
-	if (xfc->modifierMap)
-	{
-		XFreeModifiermap(xfc->modifierMap);
-		xfc->modifierMap = NULL;
-	}
-
+	xf_keyboard_modifier_map_free(xfc);
 	xf_keyboard_action_script_free(xfc);
 }
 
@@ -326,6 +336,7 @@ static int xf_keyboard_get_keymask(xfContext* xfc, int keysym)
 	if (keycode == NoSymbol)
 		return 0;
 
+	WINPR_ASSERT(xfc->modifierMap);
 	for (modifierpos = 0; modifierpos < 8; modifierpos++)
 	{
 		int offset = xfc->modifierMap->max_keypermod * modifierpos;
