@@ -1951,8 +1951,9 @@ char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer, size_t le
 	return buffer;
 }
 
-BOOL freerdp_settings_update_from_caps(rdpSettings* settings, BYTE* capsFlags, BYTE** capsData,
-                                       UINT32* capsSizes, UINT32 capsCount, BOOL serverReceivedCaps)
+BOOL freerdp_settings_update_from_caps(rdpSettings* settings, const BYTE* capsFlags,
+                                       const BYTE** capsData, const UINT32* capsSizes,
+                                       UINT32 capsCount, BOOL serverReceivedCaps)
 {
 	UINT32 x;
 	WINPR_ASSERT(settings);
