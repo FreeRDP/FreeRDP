@@ -117,6 +117,8 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 	gdi = context->gdi;
 	xf_lock_x11(xfc);
 	depth = FreeRDPGetBitsPerPixel(bitmap->format);
+
+	WINPR_ASSERT(xfc->depth != 0);
 	xbitmap->pixmap =
 	    XCreatePixmap(xfc->display, xfc->drawable, bitmap->width, bitmap->height, xfc->depth);
 
@@ -145,6 +147,7 @@ static BOOL xf_Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
 			bitmap->format = gdi->dstFormat;
 		}
 
+		WINPR_ASSERT(xfc->depth != 0);
 		xbitmap->image =
 		    XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0, (char*)bitmap->data,
 		                 bitmap->width, bitmap->height, xfc->scanline_pad, 0);
@@ -782,6 +785,7 @@ UINT32 xf_get_local_color_format(xfContext* xfc, BOOL aligned)
 
 	invert = xfc->invert;
 
+	WINPR_ASSERT(xfc->depth != 0);
 	if (xfc->depth == 32)
 		DstFormat = (!invert) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_BGRA32;
 	else if (xfc->depth == 30)

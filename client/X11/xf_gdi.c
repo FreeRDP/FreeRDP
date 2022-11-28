@@ -231,6 +231,7 @@ static Pixmap xf_brush_new(xfContext* xfc, UINT32 width, UINT32 height, UINT32 b
 	gdi = xfc->common.context.gdi;
 	WINPR_ASSERT(gdi);
 
+	WINPR_ASSERT(xfc->depth != 0);
 	bitmap = XCreatePixmap(xfc->display, xfc->drawable, width, height, xfc->depth);
 
 	if (data)
@@ -1004,6 +1005,7 @@ static BOOL xf_gdi_update_screen(xfContext* xfc, BYTE* pSrcData, UINT32 scanline
 	if (!(rects = region16_rects(pRegion, &nbRects)))
 		return TRUE;
 
+	WINPR_ASSERT(xfc->depth != 0);
 	if (xfc->depth > 16)
 		bpp = 4;
 	else if (xfc->depth > 8)
