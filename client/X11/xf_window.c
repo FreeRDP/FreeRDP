@@ -499,6 +499,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	window->is_mapped = FALSE;
 	window->is_transient = FALSE;
 
+	WINPR_ASSERT(xfc->depth != 0);
 	window->handle =
 	    XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen), xfc->workArea.x,
 	                  xfc->workArea.y, xfc->workArea.width, xfc->workArea.height, 0, xfc->depth,
@@ -812,6 +813,8 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	appWindow->maxHorz = FALSE;
 	appWindow->minimized = FALSE;
 	appWindow->rail_ignore_configure = FALSE;
+
+	WINPR_ASSERT(xfc->depth != 0);
 	appWindow->handle =
 	    XCreateWindow(xfc->display, RootWindowOfScreen(xfc->screen), appWindow->x, appWindow->y,
 	                  appWindow->width, appWindow->height, 0, xfc->depth, InputOutput, xfc->visual,
@@ -1244,6 +1247,7 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 
 		if (!appWindow->image)
 		{
+			WINPR_ASSERT(xfc->depth != 0);
 			appWindow->image =
 			    XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0, surface->data,
 			                 surface->width, surface->height, xfc->scanline_pad, surface->scanline);
@@ -1295,6 +1299,8 @@ BOOL xf_AppWindowResize(xfContext* xfc, xfAppWindow* appWindow)
 
 	if (appWindow->pixmap != 0)
 		XFreePixmap(xfc->display, appWindow->pixmap);
+
+	WINPR_ASSERT(xfc->depth != 0);
 	appWindow->pixmap =
 	    XCreatePixmap(xfc->display, xfc->drawable, appWindow->width, appWindow->height, xfc->depth);
 	xf_AppWindowDestroyImage(appWindow);

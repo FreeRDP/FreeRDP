@@ -323,6 +323,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	if (FreeRDPAreColorFormatsEqualNoAlpha(gdi->dstFormat, surface->gdi.format))
 	{
+		WINPR_ASSERT(xfc->depth != 0);
 		surface->image =
 		    XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
 		                 (char*)surface->gdi.data, surface->gdi.mappedWidth,
@@ -344,6 +345,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		}
 
 		ZeroMemory(surface->stage, size);
+		WINPR_ASSERT(xfc->depth != 0);
 		surface->image =
 		    XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0, (char*)surface->stage,
 		                 surface->gdi.mappedWidth, surface->gdi.mappedHeight, xfc->scanline_pad,
