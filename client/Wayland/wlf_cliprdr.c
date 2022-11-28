@@ -673,7 +673,7 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 			else
 			{
 				size_t len = 0;
-				cdata = ConvertUtf8NToWCharAlloc(data, size, &len);
+				cdata = ConvertUtf8NToWCharAlloc((char*)data, size, &len);
 				free(data);
 				data = NULL;
 

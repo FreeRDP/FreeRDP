@@ -812,8 +812,8 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 	return NTE_NO_MORE_ITEMS;
 }
 
-static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, BYTE* piv_tag, BYTE* output,
-                                              size_t output_len)
+static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, const BYTE* piv_tag,
+                                              BYTE* output, size_t output_len)
 {
 	CK_SLOT_INFO slot_info = { 0 };
 	CK_FUNCTION_LIST_PTR p11 = NULL;
