@@ -69,10 +69,11 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 
 	for (x = 0; x < nbRects; x++)
 	{
-		const UINT32 nXSrc = rects[x].left;
-		const UINT32 nYSrc = rects[x].top;
-		const UINT32 swidth = rects[x].right - nXSrc;
-		const UINT32 sheight = rects[x].bottom - nYSrc;
+		const RECTANGLE_16* rect = &rects[x];
+		const UINT32 nXSrc = rect->left;
+		const UINT32 nYSrc = rect->top;
+		const UINT32 swidth = rect->right - nXSrc;
+		const UINT32 sheight = rect->bottom - nYSrc;
 		const UINT32 nXDst = surfaceX + nXSrc * sx;
 		const UINT32 nYDst = surfaceY + nYSrc * sy;
 		const UINT32 dwidth = swidth * sx;
@@ -91,7 +92,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 			XPutImage(xfc->display, xfc->primary, xfc->gc, surface->image, nXSrc, nYSrc, nXDst,
 			          nYDst, dwidth, dheight);
 			xf_lock_x11(xfc);
-			xf_rail_paint(xfc, nXDst, nYDst, nXDst + dwidth, nYDst + dheight);
+			xf_rail_paint_surface(xfc, surface->gdi.windowId, rect);
 			xf_unlock_x11(xfc);
 		}
 		else

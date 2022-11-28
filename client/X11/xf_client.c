@@ -830,9 +830,12 @@ void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 
 static BOOL xf_get_pixmap_info(xfContext* xfc)
 {
+	int vi_count = 0;
 	int pf_count = 0;
+	XVisualInfo* vis = NULL;
+	XVisualInfo tpl = { 0 };
 	XPixmapFormatValues* pfs = NULL;
-
+	XWindowAttributes window_attributes = { 0 };
 	WINPR_ASSERT(xfc->display);
 	pfs = XListPixmapFormats(xfc->display, &pf_count);
 
@@ -855,6 +858,39 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 	}
 
 	XFree(pfs);
+
+	tpl.depth = xfc->depth;
+	tpl.class = TrueColor;
+	tpl.screen = xfc->screen_number;
+
+	if (XGetWindowAttributes(xfc->display, RootWindowOfScreen(xfc->screen), &window_attributes) ==
+	    0)
+	{
+		WLog_ERR(TAG, "XGetWindowAttributes failed");
+		return FALSE;
+	}
+
+	vis = XGetVisualInfo(xfc->display, VisualDepthMask | VisualClassMask | VisualScreenMask, &tpl,
+	                     &vi_count);
+
+	if (!vis)
+	{
+		WLog_ERR(TAG, "XGetVisualInfo failed");
+		return FALSE;
+	}
+
+	for (int i = 0; i < vi_count; i++)
+	{
+		const XVisualInfo* vi = &vis[i];
+
+		if (vi->visual == window_attributes.visual)
+		{
+			break;
+		}
+	}
+
+	XFree(vis);
+
 	if ((xfc->visual == NULL) || (xfc->scanline_pad == 0))
 		return FALSE;
 
