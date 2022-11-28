@@ -105,7 +105,7 @@ static BOOL rdp_read_info_null_string(UINT32 flags, wStream* s, size_t cbLen, CH
 		}
 		else
 		{
-			const char* domain = Stream_Pointer(s);
+			const char* domain = (const char*)Stream_Pointer(s);
 			if (!Stream_SafeSeek(s, cbLen))
 				return FALSE;
 

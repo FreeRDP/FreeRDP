@@ -614,9 +614,9 @@ BOOL sspi_CopyAuthIdentityFieldsA(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, 
                                   char** pDomain, char** pPassword)
 {
 	BOOL success = FALSE;
-	char* UserA = NULL;
-	char* DomainA = NULL;
-	char* PasswordA = NULL;
+	const char* UserA = NULL;
+	const char* DomainA = NULL;
+	const char* PasswordA = NULL;
 	const WCHAR* UserW = NULL;
 	const WCHAR* DomainW = NULL;
 	const WCHAR* PasswordW = NULL;
@@ -710,9 +710,9 @@ BOOL sspi_CopyAuthIdentityFieldsW(const SEC_WINNT_AUTH_IDENTITY_INFO* identity, 
 	const char* UserA = NULL;
 	const char* DomainA = NULL;
 	const char* PasswordA = NULL;
-	WCHAR* UserW = NULL;
-	WCHAR* DomainW = NULL;
-	WCHAR* PasswordW = NULL;
+	const WCHAR* UserW = NULL;
+	const WCHAR* DomainW = NULL;
+	const WCHAR* PasswordW = NULL;
 	UINT32 UserLength = 0;
 	UINT32 DomainLength = 0;
 	UINT32 PasswordLength = 0;
@@ -866,12 +866,12 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
 {
 	int status;
 	UINT32 identityFlags;
-	char* UserA = NULL;
-	char* DomainA = NULL;
-	char* PasswordA = NULL;
-	WCHAR* UserW = NULL;
-	WCHAR* DomainW = NULL;
-	WCHAR* PasswordW = NULL;
+	const char* UserA = NULL;
+	const char* DomainA = NULL;
+	const char* PasswordA = NULL;
+	const WCHAR* UserW = NULL;
+	const WCHAR* DomainW = NULL;
+	const WCHAR* PasswordW = NULL;
 	UINT32 UserLength = 0;
 	UINT32 DomainLength = 0;
 	UINT32 PasswordLength = 0;

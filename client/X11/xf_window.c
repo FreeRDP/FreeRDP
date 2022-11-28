@@ -1248,9 +1248,9 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 		if (!appWindow->image)
 		{
 			WINPR_ASSERT(xfc->depth != 0);
-			appWindow->image =
-			    XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0, surface->data,
-			                 surface->width, surface->height, xfc->scanline_pad, surface->scanline);
+			appWindow->image = XCreateImage(xfc->display, xfc->visual, xfc->depth, ZPixmap, 0,
+			                                (char*)surface->data, surface->width, surface->height,
+			                                xfc->scanline_pad, surface->scanline);
 			if (!appWindow->image)
 			{
 				WLog_WARN(TAG,
