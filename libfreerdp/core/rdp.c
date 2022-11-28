@@ -1863,7 +1863,15 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 						status = STATE_RUN_FAILED;
 				}
 				else
+				{
+					char mask_buffer[256] = { 0 };
+					char flag_buffer[256] = { 0 };
+					WLog_ERR(TAG, "[%s] expected change, started with %s, got %s",
+					         rdp_get_state_string(rdp),
+					         rdp_finalize_flags_to_str(flags, mask_buffer, sizeof(mask_buffer)),
+					         rdp_finalize_flags_to_str(uflags, flag_buffer, sizeof(flag_buffer)));
 					status = STATE_RUN_FAILED;
+				}
 			}
 		}
 		break;
