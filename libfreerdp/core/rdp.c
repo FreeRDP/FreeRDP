@@ -1618,10 +1618,33 @@ static state_run_t rdp_recv_pdu(rdpRdp* rdp, wStream* s)
 		return STATE_RUN_FAILED;
 }
 
-static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, void* extra)
+static state_run_t rdp_handle_sc_flags(rdpRdp* rdp, wStream* s, UINT32 flag,
+                                       CONNECTION_STATE nextState)
 {
 	const UINT32 mask = FINALIZE_SC_SYNCHRONIZE_PDU | FINALIZE_SC_CONTROL_COOPERATE_PDU |
 	                    FINALIZE_SC_CONTROL_GRANTED_PDU | FINALIZE_SC_FONT_MAP_PDU;
+	state_run_t status = rdp_recv_pdu(rdp, s);
+	if (state_run_success(status))
+	{
+		const UINT32 flags = rdp->finalize_sc_pdus & mask;
+		if ((flags & flag) == flag)
+		{
+			if (!rdp_client_transition_to_state(rdp, nextState))
+				status = STATE_RUN_FAILED;
+		}
+		else
+		{
+			char mask_buffer[256] = { 0 };
+			WLog_ERR(TAG, "[%s] unexpected server message, expected flag %s",
+			         rdp_get_state_string(rdp),
+			         rdp_finalize_flags_to_str(flag, mask_buffer, sizeof(mask_buffer)));
+		}
+	}
+	return status;
+}
+
+static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, void* extra)
+{
 	state_run_t status = STATE_RUN_SUCCESS;
 	rdpRdp* rdp = (rdpRdp*)extra;
 
@@ -1850,94 +1873,20 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 			break;
 
 		case CONNECTION_STATE_FINALIZATION_CLIENT_SYNC:
-		{
-			const UINT32 flags = rdp->finalize_sc_pdus & mask;
-			status = rdp_recv_pdu(rdp, s);
-			if (state_run_success(status))
-			{
-				const UINT32 uflags = rdp->finalize_sc_pdus & mask;
-				if (flags != uflags)
-				{
-					if (!rdp_client_transition_to_state(
-					        rdp, CONNECTION_STATE_FINALIZATION_CLIENT_COOPERATE))
-						status = STATE_RUN_FAILED;
-				}
-				else
-				{
-					char mask_buffer[256] = { 0 };
-					char flag_buffer[256] = { 0 };
-					WLog_ERR(TAG, "[%s] expected change, started with %s, got %s",
-					         rdp_get_state_string(rdp),
-					         rdp_finalize_flags_to_str(flags, mask_buffer, sizeof(mask_buffer)),
-					         rdp_finalize_flags_to_str(uflags, flag_buffer, sizeof(flag_buffer)));
-					status = STATE_RUN_FAILED;
-				}
-			}
-		}
-		break;
+			status = rdp_handle_sc_flags(rdp, s, FINALIZE_SC_SYNCHRONIZE_PDU,
+			                             CONNECTION_STATE_FINALIZATION_CLIENT_COOPERATE);
+			break;
 		case CONNECTION_STATE_FINALIZATION_CLIENT_COOPERATE:
-		{
-			const UINT32 flags = rdp->finalize_sc_pdus & mask;
-			status = rdp_recv_pdu(rdp, s);
-			if (state_run_success(status))
-			{
-				const UINT32 uflags = rdp->finalize_sc_pdus & mask;
-				if (flags != uflags)
-				{
-					if (!rdp_client_transition_to_state(
-					        rdp, CONNECTION_STATE_FINALIZATION_CLIENT_GRANTED_CONTROL))
-						status = STATE_RUN_FAILED;
-				}
-				else
-					status = STATE_RUN_FAILED;
-			}
-		}
-		break;
+			status = rdp_handle_sc_flags(rdp, s, FINALIZE_SC_CONTROL_COOPERATE_PDU,
+			                             CONNECTION_STATE_FINALIZATION_CLIENT_GRANTED_CONTROL);
+			break;
 		case CONNECTION_STATE_FINALIZATION_CLIENT_GRANTED_CONTROL:
-		{
-			const UINT32 flags = rdp->finalize_sc_pdus & mask;
-			status = rdp_recv_pdu(rdp, s);
-			if (state_run_success(status))
-			{
-				const UINT32 uflags = rdp->finalize_sc_pdus & mask;
-				if (flags != uflags)
-				{
-					if (!rdp_client_transition_to_state(
-					        rdp, CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP))
-						status = STATE_RUN_FAILED;
-				}
-				else
-					status = STATE_RUN_FAILED;
-			}
-		}
-		break;
+			status = rdp_handle_sc_flags(rdp, s, FINALIZE_SC_CONTROL_GRANTED_PDU,
+			                             CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP);
+			break;
 		case CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP:
-		{
-			const UINT32 flags = rdp->finalize_sc_pdus & mask;
-			status = rdp_recv_pdu(rdp, s);
-			if (state_run_success(status))
-			{
-				const UINT32 uflags = rdp->finalize_sc_pdus & mask;
-				if (flags == uflags)
-					WLog_WARN(TAG, "Did not receive a FINALIZE_SC_FONT_MAP_PDU");
-
-				{
-					if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_ACTIVE))
-						status = STATE_RUN_FAILED;
-					else
-						status = STATE_RUN_ACTIVE;
-				}
-			}
-
-			if (state_run_failed(status))
-			{
-				char buffer[64] = { 0 };
-				WLog_DBG(TAG, "%s: %s - rdp_recv_pdu() - %s", __FUNCTION__,
-				         rdp_get_state_string(rdp),
-				         state_run_result_string(status, buffer, ARRAYSIZE(buffer)));
-			}
-		}
-		break;
+			status = rdp_handle_sc_flags(rdp, s, FINALIZE_SC_FONT_MAP_PDU, CONNECTION_STATE_ACTIVE);
+			break;
 
 		case CONNECTION_STATE_ACTIVE:
 			status = rdp_recv_pdu(rdp, s);
