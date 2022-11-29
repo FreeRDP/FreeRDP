@@ -86,6 +86,11 @@ static int convert_int(JNIEnv* env, const void* data, size_t size, void* buffer,
 	jsize rlen = (*env)->GetArrayLength(env, res);
 	if (buffersize > 0)
 	{
+		if (rlen > buffersize)
+		{
+			SetLastError(ERROR_INSUFFICIENT_BUFFER);
+			return 0;
+		}
 		rlen = MIN(rlen, buffersize);
 		(*env)->GetByteArrayRegion(env, res, 0, rlen, buffer);
 	}
@@ -129,11 +134,7 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		cbCharLen = (int)len + 1;
 	}
 	else
-	{
-		cbCharLen = strnlen(lpMultiByteStr, cbMultiByte);
-		if (cbCharLen < cbMultiByte)
-			cbCharLen++;
-	}
+		cbCharLen = cbMultiByte;
 
 	WINPR_ASSERT(lpMultiByteStr);
 	switch (CodePage)
@@ -174,11 +175,7 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 		cbCharLen = (int)len + 1;
 	}
 	else
-	{
-		cbCharLen = (int)_wcsnlen(lpWideCharStr, cchWideChar);
-		if (cbCharLen < cchWideChar)
-			cbCharLen++;
-	}
+		cbCharLen = cchWideChar;
 
 	/*
 	 * if cbMultiByte is 0, the function returns the required buffer size

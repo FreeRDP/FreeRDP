@@ -40,28 +40,19 @@
 int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte,
                             LPWSTR lpWideCharStr, int cchWideChar)
 {
-	BOOL addNullTerminator = FALSE;
+	const BOOL isNullTerminated = cbMultiByte < 0;
 
 	/* If cbMultiByte is 0, the function fails */
 	if ((cbMultiByte == 0) || (cbMultiByte < -1))
 		return 0;
 
 	/* If cbMultiByte is -1, the string is null-terminated */
-	if (cbMultiByte == -1)
+	if (isNullTerminated)
 	{
-		size_t len = strnlen((const char *)lpMultiByteStr, INT32_MAX);
+		size_t len = strnlen(lpMultiByteStr, INT32_MAX);
 		if (len >= INT32_MAX)
 			return 0;
-		cbMultiByte = (int)len;
-		addNullTerminator = TRUE;
-	}
-	else
-	{
-		const size_t len = strnlen(lpMultiByteStr, (size_t)cbMultiByte);
-		addNullTerminator = len < (size_t)cbMultiByte; /* If len == cbMultiByte no '\0' was found */
-		cbMultiByte = (int)len;
-		if (addNullTerminator)
-			cbMultiByte++;
+		cbMultiByte = (int)len + 1;
 	}
 
 	NSString *utf = [[NSString alloc] initWithBytes:lpMultiByteStr
@@ -85,51 +76,40 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 	}
 
 	if (cchWideChar == 0)
+		return utf16CharLen;
+	else if (cchWideChar < utf16CharLen)
 	{
-		cchWideChar = _wcsnlen(utf16, utf16CharLen);
-		if (addNullTerminator)
-			cchWideChar++;
+		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		return 0;
 	}
 	else
 	{
-		const size_t len = _wcsnlen(utf16, MIN(utf16CharLen, (size_t)cchWideChar));
+		const size_t mlen = MIN((size_t)utf16CharLen, cchWideChar);
+		const size_t len = _wcsnlen(utf16, mlen);
 		memcpy(lpWideCharStr, utf16, len * sizeof(WCHAR));
 		if ((len < (size_t)cchWideChar) && (len > 0) && (lpWideCharStr[len - 1] != '\0'))
 			lpWideCharStr[len] = '\0';
-		if (addNullTerminator && (len < cchWideChar))
-			cchWideChar = (int)len + 1;
-		else
-			cchWideChar = (int)len;
+		return utf16CharLen;
 	}
-	return cchWideChar;
 }
 
 int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int cchWideChar,
                             LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar,
                             LPBOOL lpUsedDefaultChar)
 {
-	BOOL addNullTerminator = FALSE;
+	const BOOL isNullTerminated = cchWideChar < 0;
 
 	/* If cchWideChar is 0, the function fails */
 	if ((cchWideChar == 0) || (cchWideChar < -1))
 		return 0;
 
 	/* If cchWideChar is -1, the string is null-terminated */
-	if (cchWideChar == -1)
+	if (isNullTerminated)
 	{
 		size_t len = _wcslen(lpWideCharStr);
 		if (len >= INT32_MAX)
 			return 0;
-		cchWideChar = (int)len;
-		addNullTerminator = TRUE;
-	}
-	else
-	{
-		const size_t len = _wcsnlen(lpWideCharStr, (size_t)cchWideChar);
-		addNullTerminator = len < (size_t)cchWideChar; /* If len == cchWideChar no '\0' was found */
-		cchWideChar = (int)len;
-		if (addNullTerminator)
-			cchWideChar++;
+		cchWideChar = (int)len + 1;
 	}
 
 	NSString *utf = [[NSString alloc] initWithCharacters:lpWideCharStr length:cchWideChar];
@@ -148,22 +128,19 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 	}
 
 	if (cbMultiByte == 0)
+		return utf8Len;
+	else if (cbMultiByte < utf8Len)
 	{
-		cbMultiByte = strnlen(utf8, utf8Len);
-		if (addNullTerminator)
-			cbMultiByte++;
+		SetLastError(ERROR_INSUFFICIENT_BUFFER);
+		return 0;
 	}
 	else
 	{
-		const size_t len = strnlen(utf8, MIN((size_t)cbMultiByte, utf8Len));
+		const size_t mlen = MIN((size_t)cbMultiByte, utf8Len);
+		const size_t len = strnlen(utf8, mlen);
 		memcpy(lpMultiByteStr, utf8, len * sizeof(char));
 		if ((len < (size_t)cbMultiByte) && (len > 0) && (lpMultiByteStr[len - 1] != '\0'))
 			lpMultiByteStr[len] = '\0';
-		if (addNullTerminator && (len < cbMultiByte))
-			cbMultiByte = (int)len + 1;
-		else
-			cbMultiByte = (int)len;
+		return utf8Len;
 	}
-
-	return cbMultiByte;
 }

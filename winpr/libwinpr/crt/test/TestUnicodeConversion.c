@@ -8,6 +8,10 @@
 
 #define TESTCASE_BUFFER_SIZE 8192
 
+#ifndef MIN
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif
+
 typedef struct
 {
 	char* utf8;
@@ -34,6 +38,38 @@ static void create_prefix(char* prefix, size_t prefixlen, size_t buffersize, SSI
 	          fkt, line, test->utf8, test->utf8len, test->utf16len, buffersize, rc, inputlen);
 }
 
+static BOOL check_short_buffer(const char* prefix, int rc, size_t buffersize,
+                               const testcase_t* test, BOOL utf8)
+{
+	if ((rc > 0) && ((size_t)rc <= buffersize))
+		return TRUE;
+
+	size_t len = test->utf8len;
+	if (!utf8)
+		len = test->utf16len;
+
+	if (buffersize > len)
+	{
+		fprintf(stderr,
+		        "%s length does not match buffersize: %" PRIdz " != %" PRIuz
+		        ",but is large enough to hold result\n",
+		        prefix, rc, buffersize);
+		return FALSE;
+	}
+	const DWORD err = GetLastError();
+	if (err != ERROR_INSUFFICIENT_BUFFER)
+	{
+
+		fprintf(stderr,
+		        "%s length does not match buffersize: %" PRIdz " != %" PRIuz
+		        ", unexpected GetLastError() 0x08%" PRIx32 "\n",
+		        prefix, rc, buffersize, err);
+		return FALSE;
+	}
+	else
+		return TRUE;
+}
+
 #define compare_utf16(what, buffersize, rc, inputlen, test) \
 	compare_utf16_int((what), (buffersize), (rc), (inputlen), (test), __FUNCTION__, __LINE__)
 static BOOL compare_utf16_int(const WCHAR* what, size_t buffersize, SSIZE_T rc, SSIZE_T inputlen,
@@ -57,38 +93,16 @@ static BOOL compare_utf16_int(const WCHAR* what, size_t buffersize, SSIZE_T rc, 
 	}
 	else
 	{
-		if (rc != buffersize)
-		{
-			if (rc != 0)
-			{
-				fprintf(stderr, "%s length does not match buffersize: %" PRIdz " != %" PRIuz "\n",
-				        prefix, rc, buffersize);
-				return FALSE;
-			}
-			else
-			{
-				const DWORD err = GetLastError();
-				if (err != ERROR_INSUFFICIENT_BUFFER)
-				{
-
-					fprintf(stderr,
-					        "%s length does not match buffersize: %" PRIdz " != %" PRIuz
-					        ", unexpected GetLastError() 0x08%" PRIx32 "\n",
-					        prefix, rc, buffersize, err);
-					return FALSE;
-				}
-				else
-					return TRUE;
-			}
-		}
+		if (!check_short_buffer(prefix, rc, buffersize, test, FALSE))
+			return FALSE;
 	}
 
-	if (buffersize > rc)
+	if ((rc > 0) && (buffersize > rc))
 	{
 		const size_t wlen = _wcsnlen(what, buffersize);
-		if (wlen != rc)
+		if (wlen > rc)
 		{
-			fprintf(stderr, "%s length does not match wcslen: %" PRIdz " != %" PRIuz "\n", prefix,
+			fprintf(stderr, "%s length does not match wcslen: %" PRIdz " < %" PRIuz "\n", prefix,
 			        rc, wlen);
 			return FALSE;
 		}
@@ -129,33 +143,11 @@ static BOOL compare_utf8_int(const char* what, size_t buffersize, SSIZE_T rc, SS
 	}
 	else
 	{
-		if (rc != buffersize)
-		{
-			if (rc != 0)
-			{
-				fprintf(stderr, "%s length does not match buffersize: %" PRIdz " != %" PRIuz "\n",
-				        prefix, rc, buffersize);
-				return FALSE;
-			}
-			else
-			{
-				const DWORD err = GetLastError();
-				if (err != ERROR_INSUFFICIENT_BUFFER)
-				{
-
-					fprintf(stderr,
-					        "%s length does not match buffersize: %" PRIdz " != %" PRIuz
-					        ", unexpected GetLastError() 0x08%" PRIx32 "\n",
-					        prefix, rc, buffersize, err);
-					return FALSE;
-				}
-				else
-					return TRUE;
-			}
-		}
+		if (!check_short_buffer(prefix, rc, buffersize, test, TRUE))
+			return FALSE;
 	}
 
-	if (buffersize > rc)
+	if ((rc > 0) && (buffersize > rc))
 	{
 		const size_t wlen = strnlen(what, buffersize);
 		if (wlen != rc)
@@ -349,7 +341,13 @@ static BOOL compare_win_utf16_int(const WCHAR* what, size_t buffersize, int rc, 
 
 	if (buffersize >= welen)
 	{
-		if (rc != welen)
+		if ((inputlen >= 0) && (rc > buffersize))
+		{
+			fprintf(stderr, "%s length does not match expectation: %d > %" PRIuz "\n", prefix, rc,
+			        buffersize);
+			return FALSE;
+		}
+		else if ((inputlen < 0) && (rc != welen))
 		{
 			fprintf(stderr, "%s length does not match expectation: %d != %" PRIuz "\n", prefix, rc,
 			        welen);
@@ -358,46 +356,30 @@ static BOOL compare_win_utf16_int(const WCHAR* what, size_t buffersize, int rc, 
 	}
 	else
 	{
-		if (rc != buffersize)
-		{
-			if (rc != 0)
-			{
-				fprintf(stderr, "%s length does not match buffersize: %d != %" PRIuz "\n", prefix,
-				        rc, buffersize);
-				return FALSE;
-			}
-			else
-			{
-				const DWORD err = GetLastError();
-				if (err != ERROR_INSUFFICIENT_BUFFER)
-				{
-
-					fprintf(stderr,
-					        "%s length does not match buffersize: %d != %" PRIuz
-					        ", unexpected GetLastError() 0x08%" PRIx32 "\n",
-					        prefix, rc, buffersize, err);
-					return FALSE;
-				}
-				else
-					return TRUE;
-			}
-		}
+		if (!check_short_buffer(prefix, rc, buffersize, test, FALSE))
+			return FALSE;
 	}
 
-	if (buffersize > rc)
+	if ((rc > 0) && (buffersize > rc))
 	{
 		size_t wlen = _wcsnlen(what, buffersize);
 		if (isNullTerminated)
 			wlen++;
-		if (wlen != rc)
+		if ((inputlen >= 0) && (buffersize < rc))
 		{
-			fprintf(stderr, "%s length does not match wcslen: %d != %" PRIuz "\n", prefix, rc,
-			        wlen);
+			fprintf(stderr, "%s length does not match wcslen: %d > %" PRIuz "\n", prefix, rc,
+			        buffersize);
+			return FALSE;
+		}
+		else if ((inputlen < 0) && (welen > rc))
+		{
+			fprintf(stderr, "%s length does not match wcslen: %d < %" PRIuz "\n", prefix, rc, wlen);
 			return FALSE;
 		}
 	}
 
-	if (memcmp(test->utf16, what, rc * sizeof(WCHAR)) != 0)
+	const size_t cmp_size = MIN(rc, test->utf16len) * sizeof(WCHAR);
+	if (memcmp(test->utf16, what, cmp_size) != 0)
 	{
 		fprintf(stderr, "%s contents does not match expectations: TODO '%s' != '%s'\n", prefix,
 		        test->utf8, test->utf8);
@@ -430,7 +412,13 @@ static BOOL compare_win_utf8_int(const char* what, size_t buffersize, SSIZE_T rc
 
 	if (buffersize > slen)
 	{
-		if (rc != slen)
+		if ((inputlen >= 0) && (rc > buffersize))
+		{
+			fprintf(stderr, "%s length does not match expectation: %" PRIdz " > %" PRIuz "\n",
+			        prefix, rc, buffersize);
+			return FALSE;
+		}
+		else if ((inputlen < 0) && (rc != slen))
 		{
 			fprintf(stderr, "%s length does not match expectation: %" PRIdz " != %" PRIuz "\n",
 			        prefix, rc, slen);
@@ -439,47 +427,26 @@ static BOOL compare_win_utf8_int(const char* what, size_t buffersize, SSIZE_T rc
 	}
 	else
 	{
-		if (rc != buffersize)
-		{
-			if (rc != 0)
-			{
-				fprintf(stderr, "%s length does not match buffersize: %" PRIdz " != %" PRIuz "\n",
-				        prefix, rc, buffersize);
-				return FALSE;
-			}
-			else
-			{
-				const DWORD err = GetLastError();
-				if (err != ERROR_INSUFFICIENT_BUFFER)
-				{
-
-					fprintf(stderr,
-					        "%s length does not match buffersize: %" PRIdz " != %" PRIuz
-					        ", unexpected GetLastError() 0x08%" PRIx32 "\n",
-					        prefix, rc, buffersize, err);
-					return FALSE;
-				}
-				else
-					return TRUE;
-			}
-		}
+		if (!check_short_buffer(prefix, rc, buffersize, test, TRUE))
+			return FALSE;
 	}
 
-	if (buffersize > rc)
+	if ((rc > 0) && (buffersize > rc))
 	{
 		size_t wlen = strnlen(what, buffersize);
 		if (isNullTerminated)
 			wlen++;
 
-		if (wlen != rc)
+		if (wlen > rc)
 		{
-			fprintf(stderr, "%s length does not match wcslen: %" PRIdz " != %" PRIuz "\n", prefix,
+			fprintf(stderr, "%s length does not match wcslen: %" PRIdz " < %" PRIuz "\n", prefix,
 			        rc, wlen);
 			return FALSE;
 		}
 	}
 
-	if (memcmp(test->utf8, what, rc) != 0)
+	const size_t cmp_size = MIN(test->utf8len, rc);
+	if (memcmp(test->utf8, what, cmp_size) != 0)
 	{
 		fprintf(stderr, "%s contents does not match expectations: '%s' != '%s'\n", prefix, what,
 		        test->utf8);
@@ -553,8 +520,10 @@ static BOOL test_win_convert_to_utf16_n(const testcase_t* test)
 
 		for (size_t y = 0; y < imax; y++)
 		{
+			char mbuffer[TESTCASE_BUFFER_SIZE] = { 0 };
 			WCHAR buffer[TESTCASE_BUFFER_SIZE] = { 0 };
-			const int rc = MultiByteToWideChar(CP_UTF8, 0, test->utf8, ilen[x], buffer, len[x]);
+			strncpy(mbuffer, test->utf8, test->utf8len);
+			const int rc = MultiByteToWideChar(CP_UTF8, 0, mbuffer, ilen[x], buffer, len[x]);
 			if (!compare_win_utf16(buffer, len[x], rc, ilen[x], test))
 				return FALSE;
 		}
@@ -627,9 +596,11 @@ static BOOL test_win_convert_to_utf8_n(const testcase_t* test)
 
 		for (size_t y = 0; y < imax; y++)
 		{
+			WCHAR wbuffer[TESTCASE_BUFFER_SIZE] = { 0 };
 			char buffer[TESTCASE_BUFFER_SIZE] = { 0 };
+			memcpy(wbuffer, test->utf16, test->utf16len * sizeof(WCHAR));
 			const int rc =
-			    WideCharToMultiByte(CP_UTF8, 0, test->utf16, ilen[x], buffer, len[x], NULL, NULL);
+			    WideCharToMultiByte(CP_UTF8, 0, wbuffer, ilen[x], buffer, len[x], NULL, NULL);
 			if (!compare_win_utf8(buffer, len[x], rc, ilen[x], test))
 				return FALSE;
 		}
