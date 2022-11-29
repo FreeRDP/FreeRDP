@@ -175,7 +175,9 @@ option(BUILD_FUZZERS "Use BUILD_FUZZERS to build fuzzing tests" OFF)
 
 if (BUILD_FUZZERS)
     if (NOT OSS_FUZZ)
-        add_compile_options(-fsanitize=fuzzer-no-link)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=fuzzer-no-link")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=fuzzer-no-link")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=fuzzer-no-link")
     endif ()
 
     if (OSS_FUZZ AND NOT DEFINED ENV{LIB_FUZZING_ENGINE})
