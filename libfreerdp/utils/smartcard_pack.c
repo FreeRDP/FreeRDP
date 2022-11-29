@@ -352,10 +352,15 @@ static char* smartcard_convert_string_list(const void* in, size_t bytes, BOOL un
 		if (!mszA)
 			return NULL;
 		CopyMemory(mszA, string.sz, bytes - 1);
-		length = bytes - 1;
+		length = bytes;
 	}
 
-	for (index = 0; index < length; index++)
+	if (length < 1)
+	{
+		free(mszA);
+		return NULL;
+	}
+	for (index = 0; index < length - 1; index++)
 	{
 		if (mszA[index] == '\0')
 			mszA[index] = ',';
