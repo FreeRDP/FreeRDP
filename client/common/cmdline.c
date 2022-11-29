@@ -2206,7 +2206,7 @@ static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			for (size_t y = 0; y < ARRAYSIZE(amap); y++)
 			{
 				const struct app_map* cur = &amap[y];
-				if (option_starts_with(val, cur->name))
+				if (option_starts_with(cur->name, val))
 				{
 					const char* xval = &val[strlen(cur->name)];
 					if (cur->fkt)
