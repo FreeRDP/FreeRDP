@@ -44,7 +44,7 @@
 int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte,
                             LPWSTR lpWideCharStr, int cchWideChar)
 {
-	BOOL isNullTerminated = TRUE;
+	const BOOL isNullTerminated = cbMultiByte < 0;
 	LPWSTR targetStart;
 
 	WINPR_UNUSED(dwFlags);
@@ -55,18 +55,15 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		return 0;
 
 	size_t len;
-	if (cbMultiByte == -1)
+	if (isNullTerminated)
 		len = strlen(lpMultiByteStr) + 1;
 	else
-	{
-		len = strnlen(lpMultiByteStr, cbMultiByte);
-		isNullTerminated = (len < cbMultiByte);
-		if (isNullTerminated)
-			len++;
-	}
+		len = cbMultiByte;
+
 	if (len >= INT_MAX)
 		return -1;
 	cbMultiByte = (int)len;
+
 	/*
 	 * if cchWideChar is 0, the function returns the required buffer size
 	 * in characters for lpWideCharStr and makes no use of the output parameter itself.
@@ -136,7 +133,6 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
                             LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar,
                             LPBOOL lpUsedDefaultChar)
 {
-	BOOL isNullTerminated = TRUE;
 	char* targetStart;
 
 	/* If cchWideChar is 0, the function fails */
@@ -150,12 +146,7 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 	if (cchWideChar == -1)
 		len = _wcslen(lpWideCharStr) + 1;
 	else
-	{
-		len = _wcsnlen(lpWideCharStr, cchWideChar);
-		isNullTerminated = len < cchWideChar;
-		if (isNullTerminated)
-			len++;
-	}
+		len = cchWideChar;
 
 	if (len >= INT32_MAX)
 		return 0;
