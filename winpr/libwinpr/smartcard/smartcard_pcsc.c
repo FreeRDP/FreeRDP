@@ -952,7 +952,6 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 {
 	LPSTR mszGroupsA = NULL;
 	LPSTR mszReadersA = NULL;
-	LPSTR* pMszReadersA = &mszReadersA;
 	LONG status = SCARD_S_SUCCESS;
 	BOOL nullCardContext = FALSE;
 
@@ -981,11 +980,13 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 			return SCARD_E_NO_MEMORY;
 	}
 
+	status =
+	    PCSC_SCardListReaders_Internal(hContext, mszGroupsA, (LPSTR*)&mszReadersA, pcchReaders);
 	if (status == SCARD_S_SUCCESS)
 	{
 		size_t size = 0;
-		WCHAR* str = ConvertMszUtf8NToWCharAlloc(*pMszReadersA, *pcchReaders, &size);
-
+		WCHAR* str = ConvertMszUtf8NToWCharAlloc(mszReadersA, *pcchReaders, &size);
+		PCSC_SCardFreeMemory_Internal(hContext, mszReadersA);
 		if (!str || (size > UINT32_MAX))
 		{
 			free(mszGroupsA);
@@ -994,7 +995,6 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 		*(LPWSTR*)mszReaders = str;
 		*pcchReaders = (DWORD)size;
 		PCSC_AddMemoryBlock(hContext, str);
-		PCSC_SCardFreeMemory_Internal(hContext, *pMszReadersA);
 	}
 
 	free(mszGroupsA);
