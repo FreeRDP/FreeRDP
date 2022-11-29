@@ -920,13 +920,13 @@ static SECURITY_STATUS check_for_piv_container_name(NCryptP11KeyHandle* key, BYT
 	{
 		if (strncmp(label, piv_cert_tags[i].label, label_len) == 0)
 		{
-			*pcbResult = PIV_CONTAINER_NAME_LEN * sizeof(WCHAR);
+			*pcbResult = (PIV_CONTAINER_NAME_LEN + 1) * sizeof(WCHAR);
 			if (!pbOutput)
 				return ERROR_SUCCESS;
-			else if (cbOutput < PIV_CONTAINER_NAME_LEN * sizeof(WCHAR))
+			if (cbOutput < (PIV_CONTAINER_NAME_LEN + 1) * sizeof(WCHAR))
 				return NTE_NO_MEMORY;
-			else
-				return get_piv_container_name(key, piv_cert_tags[i].tag, pbOutput, cbOutput);
+
+			return get_piv_container_name(key, piv_cert_tags[i].tag, pbOutput, cbOutput);
 		}
 	}
 	return NTE_NOT_FOUND;
