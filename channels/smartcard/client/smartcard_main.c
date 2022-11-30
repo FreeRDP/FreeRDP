@@ -48,7 +48,7 @@ static SMARTCARD_DEVICE* sSmartcard = NULL;
 
 static void smartcard_context_free(void* pCtx);
 
-static UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp);
+static UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* handled);
 
 static SMARTCARD_DEVICE* cast_device_from(DEVICE* device, const char* fkt, const char* file,
                                           size_t line)
@@ -123,19 +123,25 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 
 			if (element)
 			{
+				BOOL handled = FALSE;
 				WINPR_ASSERT(smartcard);
 
 				if ((status = smartcard_irp_device_control_call(
 				         smartcard->callctx, element->irp->output, &element->irp->IoStatus,
 				         &element->operation)))
 				{
+					element->irp->Discard(element->irp);
 					smartcard_operation_free(&element->operation, TRUE);
 					WLog_ERR(TAG, "smartcard_irp_device_control_call failed with error %" PRIu32 "",
 					         status);
 					break;
 				}
 
-				if ((error = smartcard_complete_irp(smartcard, element->irp)))
+				error = smartcard_complete_irp(smartcard, element->irp, &handled);
+				if (!handled)
+					element->irp->Discard(element->irp);
+
+				if (error)
 				{
 					smartcard_operation_free(&element->operation, TRUE);
 					WLog_ERR(TAG, "Queue_Enqueue failed!");
@@ -152,6 +158,23 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 
 	ExitThread(status);
 	return error;
+}
+
+static void smartcard_operation_queue_free(void* obj)
+{
+	wMessage* msg = obj;
+	if (!msg)
+		return;
+	if (msg->id != 0)
+		return;
+
+	scard_irp_queue_element* element = (scard_irp_queue_element*)msg->wParam;
+	if (!element)
+		return;
+	WINPR_ASSERT(element->irp);
+	WINPR_ASSERT(element->irp->Discard);
+	element->irp->Discard(element->irp);
+	smartcard_operation_free(&element->operation, TRUE);
 }
 
 static void* smartcard_context_new(void* smartcard, SCARDCONTEXT hContext)
@@ -174,6 +197,9 @@ static void* smartcard_context_new(void* smartcard, SCARDCONTEXT hContext)
 		WLog_ERR(TAG, "MessageQueue_New failed!");
 		goto fail;
 	}
+	wObject* obj = MessageQueue_Object(pContext->IrpQueue);
+	WINPR_ASSERT(obj);
+	obj->fnObjectFree = smartcard_operation_queue_free;
 
 	pContext->thread = CreateThread(NULL, 0, smartcard_context_thread, pContext, 0, NULL);
 
@@ -302,17 +328,19 @@ static UINT smartcard_init(DEVICE* device)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
+UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* handled)
 {
 	void* key;
 
 	WINPR_ASSERT(smartcard);
 	WINPR_ASSERT(irp);
+	WINPR_ASSERT(handled);
 
 	key = (void*)(size_t)irp->CompletionId;
 	ListDictionary_Remove(smartcard->rgOutstandingMessages, key);
 
 	WINPR_ASSERT(irp->Complete);
+	*handled = TRUE;
 	return irp->Complete(irp);
 }
 
@@ -326,12 +354,18 @@ UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
+static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* handled)
 {
 	void* key;
 	LONG status;
 	BOOL asyncIrp = FALSE;
 	SMARTCARD_CONTEXT* pContext = NULL;
+
+	WINPR_ASSERT(smartcard);
+	WINPR_ASSERT(handled);
+	WINPR_ASSERT(irp);
+	WINPR_ASSERT(irp->Complete);
+
 	key = (void*)(size_t)irp->CompletionId;
 
 	if (!ListDictionary_Add(smartcard->rgOutstandingMessages, key, irp))
@@ -359,7 +393,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 			smartcard_operation_free(&element->operation, TRUE);
 			irp->IoStatus = (UINT32)STATUS_UNSUCCESSFUL;
 
-			if ((error = smartcard_complete_irp(smartcard, irp)))
+			if ((error = smartcard_complete_irp(smartcard, irp, handled)))
 			{
 				WLog_ERR(TAG, "Queue_Enqueue failed!");
 				return error;
@@ -448,7 +482,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 				return (UINT32)status;
 			}
 
-			if ((error = smartcard_complete_irp(smartcard, irp)))
+			if ((error = smartcard_complete_irp(smartcard, irp, handled)))
 			{
 				WLog_ERR(TAG, "Queue_Enqueue failed!");
 				return error;
@@ -464,6 +498,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 					WLog_ERR(TAG, "MessageQueue_Post failed!");
 					return ERROR_INTERNAL_ERROR;
 				}
+				*handled = TRUE;
 			}
 		}
 	}
@@ -474,7 +509,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp)
 		         rdpdr_irp_string(irp->MajorFunction), irp->MinorFunction);
 		irp->IoStatus = (UINT32)STATUS_NOT_SUPPORTED;
 
-		if ((ustatus = smartcard_complete_irp(smartcard, irp)))
+		if ((ustatus = smartcard_complete_irp(smartcard, irp, handled)))
 		{
 			WLog_ERR(TAG, "Queue_Enqueue failed!");
 			return ustatus;
@@ -527,10 +562,16 @@ static DWORD WINAPI smartcard_thread_func(LPVOID arg)
 
 			if (irp)
 			{
-				if ((error = smartcard_process_irp(smartcard, irp)))
+				BOOL handled = FALSE;
+				if ((error = smartcard_process_irp(smartcard, irp, &handled)))
 				{
 					WLog_ERR(TAG, "smartcard_process_irp failed with error %" PRIu32 "!", error);
 					goto out;
+				}
+				if (!handled)
+				{
+					WINPR_ASSERT(irp->Discard);
+					irp->Discard(irp);
 				}
 			}
 		}
@@ -564,6 +605,21 @@ static UINT smartcard_irp_request(DEVICE* device, IRP* irp)
 	}
 
 	return CHANNEL_RC_OK;
+}
+
+static void smartcard_free_irp(void* obj)
+{
+	wMessage* msg = obj;
+	if (!msg)
+		return;
+	if (msg->id != 0)
+		return;
+
+	IRP* irp = (IRP*)msg->wParam;
+	if (!irp)
+		return;
+	WINPR_ASSERT(irp->Discard);
+	irp->Discard(irp);
 }
 
 /* smartcard is always built-in */
@@ -614,6 +670,10 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			WLog_ERR(TAG, "MessageQueue_New failed!");
 			goto fail;
 		}
+
+		wObject* obj = MessageQueue_Object(smartcard->IrpQueue);
+		WINPR_ASSERT(obj);
+		obj->fnObjectFree = smartcard_free_irp;
 
 		smartcard->rgOutstandingMessages = ListDictionary_New(TRUE);
 
