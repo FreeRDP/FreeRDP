@@ -322,8 +322,7 @@ error1:
 
 static rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count)
 {
-	rdpX509CertChain* x509_cert_chain;
-	x509_cert_chain = (rdpX509CertChain*)malloc(sizeof(rdpX509CertChain));
+	rdpX509CertChain* x509_cert_chain = (rdpX509CertChain*)malloc(sizeof(rdpX509CertChain));
 
 	if (!x509_cert_chain)
 		return NULL;
@@ -445,6 +444,7 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
                                                         const BYTE* sigdata, size_t sigdatalen,
                                                         wStream* s, UINT32 siglen)
 {
+	WINPR_ASSERT(certificate);
 #if defined(CERT_VALIDATE_PADDING) || defined(CERT_VALIDATE_RSA)
 	size_t i, sum;
 #endif
@@ -568,6 +568,7 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 	BYTE* sigdata;
 	size_t sigdatalen;
 
+	WINPR_ASSERT(certificate);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return FALSE;
 
@@ -674,6 +675,7 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certi
 	UINT32 numCertBlobs;
 	DEBUG_CERTIFICATE("Server X.509 Certificate Chain");
 
+	WINPR_ASSERT(certificate);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
@@ -778,8 +780,11 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, const BYTE
 	wStream *s, sbuffer;
 	UINT32 dwVersion;
 
+	WINPR_ASSERT(certificate);
 	if (length < 4) /* NULL certificate is not an error see #1795 */
 		return TRUE;
+
+	WINPR_ASSERT(server_cert);
 	s = Stream_StaticConstInit(&sbuffer, server_cert, length);
 
 	if (!s)
@@ -849,6 +854,10 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 	const BIGNUM* rsa_e = NULL;
 	const BIGNUM* rsa_n = NULL;
 	const BIGNUM* rsa_d = NULL;
+
+	if (!keycontent || !keyfile)
+		return NULL;
+
 	key = (rdpRsaKey*)calloc(1, sizeof(rdpRsaKey));
 
 	if (!key)
@@ -925,6 +934,10 @@ rdpRsaKey* key_new(const char* keyfile)
 	INT64 length;
 	char* buffer = NULL;
 	rdpRsaKey* key = NULL;
+
+	if (!keyfile)
+		return NULL;
+
 	fp = winpr_fopen(keyfile, "rb");
 
 	if (!fp)
@@ -963,6 +976,9 @@ out_free:
 
 rdpRsaKey* key_clone(const rdpRsaKey* key)
 {
+	if (!key)
+		return NULL;
+
 	rdpRsaKey* _key = (rdpRsaKey*)calloc(1, sizeof(rdpRsaKey));
 
 	if (!_key)
@@ -1013,6 +1029,10 @@ void key_free(rdpRsaKey* key)
 rdpCertificate* certificate_clone(rdpCertificate* certificate)
 {
 	UINT32 index;
+
+	if (!certificate)
+		return NULL;
+
 	rdpCertificate* _certificate = (rdpCertificate*)calloc(1, sizeof(rdpCertificate));
 
 	if (!_certificate)
