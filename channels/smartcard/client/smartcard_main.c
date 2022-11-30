@@ -140,15 +140,13 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 				error = smartcard_complete_irp(smartcard, element->irp, &handled);
 				if (!handled)
 					element->irp->Discard(element->irp);
+				smartcard_operation_free(&element->operation, TRUE);
 
 				if (error)
 				{
-					smartcard_operation_free(&element->operation, TRUE);
 					WLog_ERR(TAG, "Queue_Enqueue failed!");
 					break;
 				}
-
-				smartcard_operation_free(&element->operation, TRUE);
 			}
 		}
 	}
