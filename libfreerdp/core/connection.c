@@ -270,7 +270,7 @@ static BOOL rdp_client_wait_for_activation(rdpRdp* rdp)
 				break;
 		}
 
-		if (rdp_get_state(rdp) > CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE)
+		if (rdp_is_active_state(rdp))
 			return TRUE;
 	}
 
@@ -1213,6 +1213,7 @@ state_run_t rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 
 state_run_t rdp_client_connect_finalize(rdpRdp* rdp)
 {
+	WINPR_ASSERT(rdp);
 	/**
 	 * [MS-RDPBCGR] 1.3.1.1 - 8.
 	 * The client-to-server PDUs sent during this phase have no dependencies on any of the
@@ -1281,7 +1282,7 @@ BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 				return FALSE;
 			break;
 
-		case CONNECTION_STATE_ACTIVE:
+		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE:
 		{
 			ActivatedEventArgs activatedEvent = { 0 };
 			rdpContext* context = rdp->context;
@@ -1302,7 +1303,7 @@ BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 		rdpContext* context = rdp->context;
 		EventArgsInit(&stateEvent, "libfreerdp");
 		stateEvent.state = rdp_get_state(rdp);
-		stateEvent.active = rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE;
+		stateEvent.active = rdp_is_active_state(rdp);
 		PubSub_OnConnectionStateChange(rdp->pubSub, context, &stateEvent);
 	}
 
@@ -1477,9 +1478,6 @@ BOOL rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s)
 {
-	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_ATTACH_USER))
-		return FALSE;
-
 	if (!mcs_recv_attach_user_request(rdp->mcs, s))
 		return FALSE;
 
@@ -1664,7 +1662,7 @@ BOOL rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 	if (cstate >= CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT)
 		client = rdp->context->peer;
 
-	if (cstate < CONNECTION_STATE_ACTIVE)
+	if (!rdp_is_active_peer_state(cstate))
 	{
 		if (client)
 			client->activated = FALSE;

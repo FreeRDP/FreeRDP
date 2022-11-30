@@ -385,7 +385,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 		case FASTPATH_UPDATETYPE_PTR_NULL:
 		{
-			POINTER_SYSTEM_UPDATE pointer_system;
+			POINTER_SYSTEM_UPDATE pointer_system = { 0 };
 			pointer_system.type = SYSPTR_NULL;
 			rc = IFCALLRESULT(defaultReturn, pointer->PointerSystem, context, &pointer_system);
 		}
@@ -393,7 +393,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 		case FASTPATH_UPDATETYPE_PTR_DEFAULT:
 		{
-			POINTER_SYSTEM_UPDATE pointer_system;
+			POINTER_SYSTEM_UPDATE pointer_system = { 0 };
 			pointer_system.type = SYSPTR_DEFAULT;
 			rc = IFCALLRESULT(defaultReturn, pointer->PointerSystem, context, &pointer_system);
 		}
@@ -938,7 +938,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	WINPR_ASSERT(rdp);
 
 	state = rdp_get_state(rdp);
-	if (state != CONNECTION_STATE_ACTIVE)
+	if (!rdp_is_active_state(rdp))
 	{
 		WLog_WARN(TAG, "[%s] called before activation [%s]", __FUNCTION__, rdp_state_string(state));
 		goto fail;

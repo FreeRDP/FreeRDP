@@ -33,7 +33,7 @@ static BOOL pf_server_check_and_sync_input_state(pClientContext* pc)
 {
 	WINPR_ASSERT(pc);
 
-	if (freerdp_get_state(&pc->context) < CONNECTION_STATE_ACTIVE)
+	if (!freerdp_is_active_state(&pc->context))
 		return FALSE;
 	if (pc->input_state_sync_pending)
 	{
