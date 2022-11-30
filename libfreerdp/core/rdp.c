@@ -1637,10 +1637,12 @@ static state_run_t rdp_handle_sc_flags(rdpRdp* rdp, wStream* s, UINT32 flag,
 		}
 		else
 		{
+			char flag_buffer[256] = { 0 };
 			char mask_buffer[256] = { 0 };
-			WLog_ERR(TAG, "[%s] unexpected server message, expected flag %s",
-			         rdp_get_state_string(rdp),
-			         rdp_finalize_flags_to_str(flag, mask_buffer, sizeof(mask_buffer)));
+			WLog_WARN(TAG, "[%s] unexpected server message, expected flag %s [have %s]",
+			          rdp_get_state_string(rdp),
+			          rdp_finalize_flags_to_str(flag, flag_buffer, sizeof(flag_buffer)),
+			          rdp_finalize_flags_to_str(flags, mask_buffer, sizeof(mask_buffer)));
 		}
 	}
 	return status;
@@ -2369,7 +2371,7 @@ const char* rdp_finalize_flags_to_str(UINT32 flags, char* buffer, size_t size)
 	if (flags == 0)
 		winpr_str_append("NO_FLAG_SET", buffer, size, "|");
 	_snprintf(number, sizeof(number), " [0x%04" PRIx16 "]", flags);
-	winpr_str_append(number, buffer, size, "|");
+	winpr_str_append(number, buffer, size, "");
 	return buffer;
 }
 
