@@ -1631,6 +1631,9 @@ static state_run_t rdp_handle_sc_flags(rdpRdp* rdp, wStream* s, UINT32 flag,
 		{
 			if (!rdp_client_transition_to_state(rdp, nextState))
 				status = STATE_RUN_FAILED;
+			else
+				status = (rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE) ? STATE_RUN_ACTIVE
+				                                                         : STATE_RUN_SUCCESS;
 		}
 		else
 		{
