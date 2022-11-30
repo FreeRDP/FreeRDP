@@ -1052,7 +1052,7 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 			return FALSE;
 		}
 
-		packetSize += 2 + (UINT32)PAACookieLen * sizeof(WCHAR);
+		packetSize += 2 + (UINT32)(PAACookieLen + 1) * sizeof(WCHAR);
 		fieldsPresent = HTTP_TUNNEL_PACKET_FIELD_PAA_COOKIE;
 	}
 
@@ -1073,7 +1073,7 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 
 	if (PAACookie)
 	{
-		Stream_Write_UINT16(s, (UINT16)PAACookieLen * 2); /* PAA cookie string length */
+		Stream_Write_UINT16(s, (UINT16)PAACookieLen * sizeof(WCHAR)); /* PAA cookie string length */
 		Stream_Write_UTF16_String(s, PAACookie, (size_t)PAACookieLen);
 	}
 
