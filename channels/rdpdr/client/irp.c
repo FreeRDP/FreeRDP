@@ -65,7 +65,12 @@ static UINT irp_complete(IRP* irp)
 	rdpdrPlugin* rdpdr;
 	UINT error;
 
+	WINPR_ASSERT(irp);
+	WINPR_ASSERT(irp->output);
+	WINPR_ASSERT(irp->devman);
+
 	rdpdr = (rdpdrPlugin*)irp->devman->plugin;
+	WINPR_ASSERT(rdpdr);
 
 	pos = Stream_GetPosition(irp->output);
 	Stream_SetPosition(irp->output, RDPDR_DEVICE_IO_RESPONSE_LENGTH - 4);
@@ -134,7 +139,7 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, UINT* error)
 	if (!irp->output)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		winpr_aligned_free(irp);
+		irp_free(irp);
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
 		return NULL;
@@ -142,9 +147,7 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, UINT* error)
 
 	if (!rdpdr_write_iocompletion_header(irp->output, DeviceId, irp->CompletionId, 0))
 	{
-		if (irp->output)
-			Stream_Release(irp->output);
-		winpr_aligned_free(irp);
+		irp_free(irp);
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
 		return NULL;
