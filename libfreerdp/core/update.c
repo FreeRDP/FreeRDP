@@ -3322,7 +3322,7 @@ BOOL update_begin_paint(rdpUpdate* update)
 
 BOOL update_end_paint(rdpUpdate* update)
 {
-	BOOL rc = FALSE;
+	BOOL rc = TRUE;
 
 	if (!update)
 		return FALSE;
