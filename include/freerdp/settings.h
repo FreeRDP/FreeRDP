@@ -536,7 +536,6 @@ typedef struct
 #define FreeRDP_Domain (23)
 #define FreeRDP_PasswordHash (24)
 #define FreeRDP_WaitForOutputBufferFlush (25)
-#define FreeRDP_MaxTimeInCheckLoop (26)
 #define FreeRDP_AcceptedCert (27)
 #define FreeRDP_AcceptedCertLength (28)
 #define FreeRDP_UserSpecifiedServerName (29)
@@ -984,7 +983,7 @@ struct rdp_settings
 	ALIGN64 char* Domain;                  /* 23 */
 	ALIGN64 char* PasswordHash;            /* 24 */
 	ALIGN64 BOOL WaitForOutputBufferFlush; /* 25 */
-	ALIGN64 UINT32 MaxTimeInCheckLoop;     /* 26 */
+	UINT64 padding26[27 - 26];             /* 26 */
 	ALIGN64 char* AcceptedCert;            /* 27 */
 	ALIGN64 UINT32 AcceptedCertLength;     /* 28 */
 	ALIGN64 char* UserSpecifiedServerName; /* 29 */

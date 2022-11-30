@@ -254,7 +254,6 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_KeyboardType,
 	FreeRDP_LargePointerFlag,
 	FreeRDP_LoadBalanceInfoLength,
-	FreeRDP_MaxTimeInCheckLoop,
 	FreeRDP_MonitorAttributeFlags,
 	FreeRDP_MonitorCount,
 	FreeRDP_MonitorDefArraySize,

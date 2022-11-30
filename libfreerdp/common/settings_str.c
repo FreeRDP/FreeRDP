@@ -324,7 +324,6 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_LargePointerFlag, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_LargePointerFlag" },
 	{ FreeRDP_LoadBalanceInfoLength, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_LoadBalanceInfoLength" },
-	{ FreeRDP_MaxTimeInCheckLoop, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_MaxTimeInCheckLoop" },
 	{ FreeRDP_MonitorAttributeFlags, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_MonitorAttributeFlags" },
 	{ FreeRDP_MonitorCount, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_MonitorCount" },
