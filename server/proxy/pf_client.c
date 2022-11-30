@@ -309,6 +309,37 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	return pf_modules_run_hook(pc->pdata->module, HOOK_TYPE_CLIENT_PRE_CONNECT, pc->pdata, pc);
 }
 
+/** @brief arguments for updateBackIdFn */
+typedef struct
+{
+	pServerContext* ps;
+	const char* name;
+	UINT32 backId;
+} UpdateBackIdArgs;
+
+static BOOL updateBackIdFn(const void* key, void* value, void* arg)
+{
+	pServerStaticChannelContext* current = (pServerStaticChannelContext*)value;
+	UpdateBackIdArgs* updateArgs = (UpdateBackIdArgs*)arg;
+
+	if (strcmp(updateArgs->name, current->channel_name) != 0)
+		return TRUE;
+
+	current->back_channel_id = updateArgs->backId;
+	if (!HashTable_Insert(updateArgs->ps->channelsByBackId, &current->back_channel_id, current))
+	{
+		WLog_ERR(TAG, "error inserting channel in channelsByBackId table");
+	}
+	return FALSE;
+}
+
+static BOOL pf_client_update_back_id(pServerContext* ps, const char* name, UINT32 backId)
+{
+	UpdateBackIdArgs res = { ps, name, backId };
+
+	return HashTable_Foreach(ps->channelsByFrontId, updateBackIdFn, &res) == FALSE;
+}
+
 static BOOL pf_client_load_channels(freerdp* instance)
 {
 	pClientContext* pc;
@@ -364,6 +395,7 @@ static BOOL pf_client_load_channels(freerdp* instance)
 			CHANNEL_DEF* channels = (CHANNEL_DEF*)freerdp_settings_get_pointer_array_writable(
 			    settings, FreeRDP_ChannelDefArray, 0);
 			size_t x, size = freerdp_settings_get_uint32(settings, FreeRDP_ChannelDefArraySize);
+			UINT32 id = MCS_GLOBAL_CHANNEL_ID + 1;
 
 			WINPR_ASSERT(channels || (size == 0));
 
@@ -385,7 +417,14 @@ static BOOL pf_client_load_channels(freerdp* instance)
 					size--;
 				}
 				else
+				{
+					if (!pf_client_update_back_id(ps, cur->name, id++))
+					{
+						WLog_ERR(TAG, "unable to update backid for channel %s", cur->name);
+						return FALSE;
+					}
 					x++;
+				}
 			}
 
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_ChannelCount, x))
@@ -419,7 +458,7 @@ static BOOL pf_client_receive_channel_data_hook(freerdp* instance, UINT16 channe
 	pdata = ps->pdata;
 	WINPR_ASSERT(pdata);
 
-	channel = HashTable_GetItemValue(ps->channelsById, &channelId64);
+	channel = HashTable_GetItemValue(ps->channelsByBackId, &channelId64);
 	if (!channel)
 		return TRUE;
 

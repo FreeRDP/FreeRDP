@@ -56,7 +56,7 @@ pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const 
 		return NULL;
 	}
 
-	ret->channel_id = id;
+	ret->front_channel_id = id;
 	ret->channel_name = _strdup(name);
 	if (!ret->channel_name)
 	{
@@ -110,17 +110,27 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 	obj->fnObjectFree = intercept_context_entry_free;
 
 	/* channels by ids */
-	context->channelsById = HashTable_New(FALSE);
-	if (!context->channelsById)
+	context->channelsByFrontId = HashTable_New(FALSE);
+	if (!context->channelsByFrontId)
 		goto error;
-	if (!HashTable_SetHashFunction(context->channelsById, ChannelId_Hash))
+	if (!HashTable_SetHashFunction(context->channelsByFrontId, ChannelId_Hash))
 		goto error;
 
-	obj = HashTable_KeyObject(context->channelsById);
+	obj = HashTable_KeyObject(context->channelsByFrontId);
 	obj->fnObjectEquals = (OBJECT_EQUALS_FN)ChannelId_Compare;
 
-	obj = HashTable_ValueObject(context->channelsById);
+	obj = HashTable_ValueObject(context->channelsByFrontId);
 	obj->fnObjectFree = (OBJECT_FREE_FN)StaticChannelContext_free;
+
+	context->channelsByBackId = HashTable_New(FALSE);
+	if (!context->channelsByBackId)
+		goto error;
+	if (!HashTable_SetHashFunction(context->channelsByBackId, ChannelId_Hash))
+		goto error;
+
+	obj = HashTable_KeyObject(context->channelsByBackId);
+	obj->fnObjectEquals = (OBJECT_EQUALS_FN)ChannelId_Compare;
+
 	return TRUE;
 
 error:
@@ -146,7 +156,8 @@ void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 	}
 
 	HashTable_Free(context->interceptContextMap);
-	HashTable_Free(context->channelsById);
+	HashTable_Free(context->channelsByFrontId);
+	HashTable_Free(context->channelsByBackId);
 
 	if (context->vcm && (context->vcm != INVALID_HANDLE_VALUE))
 		WTSCloseServer((HANDLE)context->vcm);

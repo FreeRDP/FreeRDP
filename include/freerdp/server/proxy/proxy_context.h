@@ -74,7 +74,8 @@ extern "C"
 	struct p_server_static_channel_context
 	{
 		char* channel_name;
-		UINT32 channel_id;
+		UINT32 front_channel_id;
+		UINT32 back_channel_id;
 		pf_utils_channel_mode channelMode;
 		proxyChannelDataFn onFrontData;
 		proxyChannelDataFn onBackData;
@@ -97,7 +98,8 @@ extern "C"
 		HANDLE dynvcReady;
 
 		wHashTable* interceptContextMap;
-		wHashTable* channelsById;
+		wHashTable* channelsByFrontId;
+		wHashTable* channelsByBackId;
 	};
 	typedef struct p_server_context pServerContext;
 
