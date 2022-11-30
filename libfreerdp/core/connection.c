@@ -226,6 +226,59 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
 	return TRUE;
 }
 
+static BOOL rdp_client_wait_for_activation(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+
+	const rdpSettings* settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
+	UINT64 now = GetTickCount64();
+	UINT64 dueDate = now + freerdp_settings_get_uint32(settings, FreeRDP_TcpAckTimeout);
+
+	for (; now < dueDate; now = GetTickCount64())
+	{
+		HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		DWORD wstatus = 0;
+		DWORD nevents = freerdp_get_event_handles(rdp->context, events, ARRAYSIZE(events));
+		if (!nevents)
+		{
+			WLog_ERR(TAG, "error retrieving connection events");
+			return FALSE;
+		}
+
+		wstatus = WaitForMultipleObjectsEx(nevents, events, FALSE, (dueDate - now), TRUE);
+		switch (wstatus)
+		{
+			case WAIT_TIMEOUT:
+				/* will make us quit with a timeout */
+				now = dueDate + 1;
+				break;
+			case WAIT_ABANDONED:
+			case WAIT_FAILED:
+				return FALSE;
+			case WAIT_IO_COMPLETION:
+				break;
+			case WAIT_OBJECT_0:
+			default:
+				/* handles all WAIT_OBJECT_0 + [0 .. MAXIMUM_WAIT_OBJECTS-1] cases */
+				if (rdp_check_fds(rdp) < 0)
+				{
+					freerdp_set_last_error_if_not(rdp->context,
+					                              FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
+					return FALSE;
+				}
+				break;
+		}
+
+		if (rdp_get_state(rdp) > CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE)
+			return TRUE;
+	}
+
+	WLog_ERR(TAG, "Timeout waiting for activation");
+	freerdp_set_last_error_if_not(rdp->context, FREERDP_ERROR_CONNECT_ACTIVATION_TIMEOUT);
+	return FALSE;
+}
 /**
  * Establish RDP Connection based on the settings given in the 'rdp' parameter.
  * @msdn{cc240452}
@@ -241,7 +294,6 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	/* make sure SSL is initialize for earlier enough for crypto, by taking advantage of winpr SSL
 	 * FIPS flag for openssl initialization */
 	DWORD flags = WINPR_SSL_INIT_DEFAULT;
-	UINT64 dueDate, now;
 
 	WINPR_ASSERT(rdp);
 
@@ -388,51 +440,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	if (!transport_set_recv_callbacks(rdp->transport, rdp_recv_callback, rdp))
 		return FALSE;
 
-	now = GetTickCount64();
-	dueDate = now + freerdp_settings_get_uint32(settings, FreeRDP_TcpAckTimeout);
-
-	for (; now < dueDate; now = GetTickCount64())
-	{
-		HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
-		DWORD wstatus = 0;
-		DWORD nevents = freerdp_get_event_handles(rdp->context, events, ARRAYSIZE(events));
-		if (!nevents)
-		{
-			WLog_ERR(TAG, "error retrieving connection events");
-			return FALSE;
-		}
-
-		wstatus = WaitForMultipleObjectsEx(nevents, events, FALSE, (dueDate - now), TRUE);
-		switch (wstatus)
-		{
-			case WAIT_TIMEOUT:
-				/* will make us quit with a timeout */
-				now = dueDate + 1;
-				continue;
-			case WAIT_ABANDONED:
-			case WAIT_FAILED:
-				return FALSE;
-			case WAIT_IO_COMPLETION:
-				continue;
-			case WAIT_OBJECT_0:
-			default:
-				/* handles all WAIT_OBJECT_0 + [0 .. MAXIMUM_WAIT_OBJECTS-1] cases */
-				if (rdp_check_fds(rdp) < 0)
-				{
-					freerdp_set_last_error_if_not(rdp->context,
-					                              FREERDP_ERROR_CONNECT_TRANSPORT_FAILED);
-					return FALSE;
-				}
-				break;
-		}
-
-		if (rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE)
-			return TRUE;
-	}
-
-	WLog_ERR(TAG, "Timeout waiting for activation");
-	freerdp_set_last_error_if_not(rdp->context, FREERDP_ERROR_CONNECT_ACTIVATION_TIMEOUT);
-	return FALSE;
+	return rdp_client_wait_for_activation(rdp);
 }
 
 BOOL rdp_client_disconnect(rdpRdp* rdp)
