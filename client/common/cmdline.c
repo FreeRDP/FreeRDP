@@ -3913,19 +3913,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			settings->MultifragMaxRequestSize = (UINT32)val;
 		}
-		CommandLineSwitchCase(arg, "max-loop-time")
-		{
-			LONGLONG val;
-
-			if (!value_to_int(arg->Value, &val, -1, UINT32_MAX))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-
-			if (val < 0)
-				settings->MaxTimeInCheckLoop =
-				    10 * 60 * 60 * 1000; /* 10 hours can be considered as infinite */
-			else
-				settings->MaxTimeInCheckLoop = (UINT32)val;
-		}
 		CommandLineSwitchCase(arg, "auto-request-control")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteAssistanceRequestControl,

@@ -1118,8 +1118,6 @@ int transport_check_fds(rdpTransport* transport)
 	int status;
 	state_run_t recv_status;
 	wStream* received;
-	UINT64 now = GetTickCount64();
-	UINT64 dueDate = 0;
 	rdpContext* context = transport_get_context(transport);
 
 	WINPR_ASSERT(context);
@@ -1131,81 +1129,61 @@ int transport_check_fds(rdpTransport* transport)
 		return -1;
 	}
 
-	WINPR_ASSERT(context->settings);
-	dueDate = now + context->settings->MaxTimeInCheckLoop;
-
-	if (transport->haveMoreBytesToRead)
+	/**
+	 * Note: transport_read_pdu tries to read one PDU from
+	 * the transport layer.
+	 * The ReceiveBuffer might have a position > 0 in case of a non blocking
+	 * transport. If transport_read_pdu returns 0 the pdu couldn't be read at
+	 * this point.
+	 * Note that transport->ReceiveBuffer is replaced after each iteration
+	 * of this loop with a fresh stream instance from a pool.
+	 */
+	if ((status = transport_read_pdu(transport, transport->ReceiveBuffer)) <= 0)
 	{
-		transport->haveMoreBytesToRead = FALSE;
-		ResetEvent(transport->rereadEvent);
+		if (status < 0)
+			WLog_Print(transport->log, WLOG_DEBUG, "transport_check_fds: transport_read_pdu() - %i",
+			           status);
+		if (transport->haveMoreBytesToRead)
+		{
+			transport->haveMoreBytesToRead = FALSE;
+			ResetEvent(transport->rereadEvent);
+		}
+		return status;
 	}
 
-	while (now < dueDate)
+	received = transport->ReceiveBuffer;
+
+	if (!(transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0)))
+		return -1;
+
+	/**
+	 * status:
+	 * 	-1: error
+	 * 	 0: success
+	 * 	 1: redirection
+	 */
+	WINPR_ASSERT(transport->ReceiveCallback);
+	recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
+	Stream_Release(received);
+
+	if (state_run_failed(recv_status))
 	{
-		WINPR_ASSERT(context);
-		if (freerdp_shall_disconnect_context(context))
-		{
-			return -1;
-		}
-
-		/**
-		 * Note: transport_read_pdu tries to read one PDU from
-		 * the transport layer.
-		 * The ReceiveBuffer might have a position > 0 in case of a non blocking
-		 * transport. If transport_read_pdu returns 0 the pdu couldn't be read at
-		 * this point.
-		 * Note that transport->ReceiveBuffer is replaced after each iteration
-		 * of this loop with a fresh stream instance from a pool.
-		 */
-		if ((status = transport_read_pdu(transport, transport->ReceiveBuffer)) <= 0)
-		{
-			if (status < 0)
-				WLog_Print(transport->log, WLOG_DEBUG,
-				           "transport_check_fds: transport_read_pdu() - %i", status);
-
-			return status;
-		}
-
-		received = transport->ReceiveBuffer;
-
-		if (!(transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0)))
-			return -1;
-
-		/**
-		 * status:
-		 * 	-1: error
-		 * 	 0: success
-		 * 	 1: redirection
-		 */
-		WINPR_ASSERT(transport->ReceiveCallback);
-		recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
-		Stream_Release(received);
-
-		/* session redirection or activation */
-		if (recv_status == STATE_RUN_REDIRECT || recv_status == STATE_RUN_ACTIVE)
-		{
-			return recv_status;
-		}
-
-		if (state_run_failed(recv_status))
-		{
-			char buffer[64] = { 0 };
-			WLog_Print(transport->log, WLOG_ERROR,
-			           "transport_check_fds: transport->ReceiveCallback() - %s",
-			           state_run_result_string(recv_status, buffer, ARRAYSIZE(buffer)));
-			return -1;
-		}
-
-		now = GetTickCount64();
+		char buffer[64] = { 0 };
+		WLog_Print(transport->log, WLOG_ERROR,
+		           "transport_check_fds: transport->ReceiveCallback() - %s",
+		           state_run_result_string(recv_status, buffer, ARRAYSIZE(buffer)));
+		return -1;
 	}
 
-	if (now >= dueDate)
+	/* Run this again to be sure we consumed all input data.
+	 * This will be repeated until a (not fully) received packet is in buffer
+	 */
+	if (!transport->haveMoreBytesToRead)
 	{
-		SetEvent(transport->rereadEvent);
 		transport->haveMoreBytesToRead = TRUE;
+		SetEvent(transport->rereadEvent);
 	}
-
-	return 0;
+	return recv_status;
 }
 
 BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)

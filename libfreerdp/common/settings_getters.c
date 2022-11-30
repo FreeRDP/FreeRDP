@@ -216,14 +216,14 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_GatewayEnabled:
 			return settings->GatewayEnabled;
 
+		case FreeRDP_GatewayHttpExtAuthSspiNtlm:
+			return settings->GatewayHttpExtAuthSspiNtlm;
+
 		case FreeRDP_GatewayHttpTransport:
 			return settings->GatewayHttpTransport;
 
 		case FreeRDP_GatewayHttpUseWebsockets:
 			return settings->GatewayHttpUseWebsockets;
-
-		case FreeRDP_GatewayHttpExtAuthSspiNtlm:
-			return settings->GatewayHttpExtAuthSspiNtlm;
 
 		case FreeRDP_GatewayRpcTransport:
 			return settings->GatewayRpcTransport;
@@ -825,15 +825,16 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 			settings->GatewayEnabled = cnv.c;
 			break;
 
+		case FreeRDP_GatewayHttpExtAuthSspiNtlm:
+			settings->GatewayHttpExtAuthSspiNtlm = cnv.c;
+			break;
+
 		case FreeRDP_GatewayHttpTransport:
 			settings->GatewayHttpTransport = cnv.c;
 			break;
 
 		case FreeRDP_GatewayHttpUseWebsockets:
 			settings->GatewayHttpUseWebsockets = cnv.c;
-			break;
-		case FreeRDP_GatewayHttpExtAuthSspiNtlm:
-			settings->GatewayHttpExtAuthSspiNtlm = cnv.c;
 			break;
 
 		case FreeRDP_GatewayRpcTransport:
@@ -1620,9 +1621,6 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_LoadBalanceInfoLength:
 			return settings->LoadBalanceInfoLength;
 
-		case FreeRDP_MaxTimeInCheckLoop:
-			return settings->MaxTimeInCheckLoop;
-
 		case FreeRDP_MonitorAttributeFlags:
 			return settings->MonitorAttributeFlags;
 
@@ -2056,10 +2054,6 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 
 		case FreeRDP_LoadBalanceInfoLength:
 			settings->LoadBalanceInfoLength = cnv.c;
-			break;
-
-		case FreeRDP_MaxTimeInCheckLoop:
-			settings->MaxTimeInCheckLoop = cnv.c;
 			break;
 
 		case FreeRDP_MonitorAttributeFlags:
