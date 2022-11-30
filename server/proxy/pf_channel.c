@@ -160,7 +160,7 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 	{
 		proxyChannelDataEventInfo ev;
 
-		ev.channel_id = channel->channel_id;
+		ev.channel_id = channel->front_channel_id;
 		ev.channel_name = channel->channel_name;
 		ev.data = Stream_Buffer(t->currentPacket);
 		ev.data_len = Stream_GetPosition(t->currentPacket);
@@ -176,7 +176,7 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 
 	ps = pdata->ps;
 	r = ps->context.peer->SendChannelPacket(
-	    ps->context.peer, channel->channel_id, t->currentPacketSize, flags,
+	    ps->context.peer, channel->front_channel_id, t->currentPacketSize, flags,
 	    Stream_Buffer(t->currentPacket), Stream_GetPosition(t->currentPacket));
 
 	return r ? PF_CHANNEL_RESULT_DROP : PF_CHANNEL_RESULT_ERROR;
@@ -195,7 +195,7 @@ static PfChannelResult pf_channel_generic_back_data(proxyData* pdata,
 	switch (channel->channelMode)
 	{
 		case PF_UTILS_CHANNEL_PASSTHROUGH:
-			ev.channel_id = channel->channel_id;
+			ev.channel_id = channel->back_channel_id;
 			ev.channel_name = channel->channel_name;
 			ev.data = xdata;
 			ev.data_len = xsize;
@@ -229,7 +229,7 @@ static PfChannelResult pf_channel_generic_front_data(proxyData* pdata,
 	switch (channel->channelMode)
 	{
 		case PF_UTILS_CHANNEL_PASSTHROUGH:
-			ev.channel_id = channel->channel_id;
+			ev.channel_id = channel->front_channel_id;
 			ev.channel_name = channel->channel_name;
 			ev.data = xdata;
 			ev.data_len = xsize;

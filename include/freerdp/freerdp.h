@@ -65,6 +65,9 @@ extern "C"
 {
 #endif
 
+#define MCS_BASE_CHANNEL_ID 1001
+#define MCS_GLOBAL_CHANNEL_ID 1003
+
 /* Flags used by certificate callbacks */
 #define VERIFY_CERT_FLAG_NONE 0x00
 #define VERIFY_CERT_FLAG_LEGACY 0x02

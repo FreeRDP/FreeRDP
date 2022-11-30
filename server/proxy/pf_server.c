@@ -194,7 +194,6 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 	size_t accepted_channels_count;
 	size_t i;
 	pServerContext* ps = (pServerContext*)peer->context;
-	wHashTable* byId = ps->channelsById;
 
 	accepted_channels = WTSGetAcceptedChannelNames(peer, &accepted_channels_count);
 	if (!accepted_channels)
@@ -243,7 +242,8 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 			}
 		}
 
-		if (!HashTable_Insert(byId, &channelContext->channel_id, channelContext))
+		if (!HashTable_Insert(ps->channelsByFrontId, &channelContext->front_channel_id,
+		                      channelContext))
 		{
 			StaticChannelContext_free(channelContext);
 			PROXY_LOG_ERR(TAG, ps, "error inserting channelContext in byId table for '%s'", cname);
@@ -339,7 +339,6 @@ static BOOL pf_server_activate(freerdp_peer* peer)
 	WINPR_ASSERT(pdata);
 
 	settings = peer->context->settings;
-	WINPR_ASSERT(settings);
 
 	settings->CompressionLevel = PACKET_COMPR_TYPE_RDP8;
 	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_ACTIVATE, pdata, peer))
@@ -408,7 +407,7 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 	if (!pc)
 		goto original_cb;
 
-	channel = HashTable_GetItemValue(ps->channelsById, &channelId64);
+	channel = HashTable_GetItemValue(ps->channelsByFrontId, &channelId64);
 	if (!channel)
 	{
 		PROXY_LOG_ERR(TAG, ps, "channel id=%" PRIu64 " not registered here, dropping", channelId64);

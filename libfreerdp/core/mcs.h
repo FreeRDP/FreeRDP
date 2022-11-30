@@ -33,9 +33,6 @@ typedef struct rdp_mcs rdpMcs;
 #include <winpr/stream.h>
 #include <winpr/wtsapi.h>
 
-#define MCS_BASE_CHANNEL_ID 1001
-#define MCS_GLOBAL_CHANNEL_ID 1003
-
 enum MCS_Result
 {
 	MCS_Result_successful = 0,
