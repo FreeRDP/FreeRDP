@@ -185,7 +185,6 @@
  *channel messages (exchanged between client-side plug-ins and server-side applications).
  */
 
-static state_run_t rdp_client_connect_finalize(rdpRdp* rdp);
 static BOOL rdp_set_state(rdpRdp* rdp, CONNECTION_STATE state);
 
 static BOOL rdp_client_reset_codecs(rdpContext* context)
@@ -1804,6 +1803,12 @@ BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp)
 	return TRUE;
 }
 
+/* Here we are in client state CONFIRM_ACTIVE.
+ *
+ * This means:
+ * 1. send the CONFIRM_ACTIVE PDU to the server
+ * 2. register callbacks, the server can now start sending stuff
+ */
 state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s)
 {
 	WINPR_ASSERT(rdp);
@@ -1847,5 +1852,14 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s)
 	if (freerdp_shall_disconnect_context(rdp->context))
 		return STATE_RUN_SUCCESS;
 
-	return rdp_client_connect_finalize(rdp);
+	state_run_t status = STATE_RUN_SUCCESS;
+	if (!rdp->settings->SupportMonitorLayoutPdu)
+		status = rdp_client_connect_finalize(rdp);
+	else
+	{
+		if (!rdp_client_transition_to_state(rdp,
+		                                    CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT))
+			status = STATE_RUN_FAILED;
+	}
+	return status;
 }
