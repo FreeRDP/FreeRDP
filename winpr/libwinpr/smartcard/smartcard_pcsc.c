@@ -2006,7 +2006,7 @@ static LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard, LPSTR mszReaderN
 		if (unicode)
 		{
 			size_t size = 0;
-			WCHAR* tmp = ConvertMszUtf8NToWCharAlloc(tReader, *pcchReaderLen, &size);
+			WCHAR* tmp = ConvertMszUtf8NToWCharAlloc(tReader, pcsc_cchReaderLen + 1, &size);
 
 			if (tmp == NULL)
 			{
@@ -2418,7 +2418,7 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 		if (status != SCARD_S_SUCCESS)
 			return status;
 
-		namePCSC = ConvertWCharNToUtf8Alloc(pbAttrW, *pcbAttrLen, NULL);
+		namePCSC = ConvertMszWCharNToUtf8Alloc(pbAttrW, *pcbAttrLen, NULL);
 		PCSC_SCardFreeMemory_Internal(hContext, pbAttrW);
 	}
 	else

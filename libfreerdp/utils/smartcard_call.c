@@ -295,7 +295,7 @@ static DWORD filter_device_by_name_w(wLinkedList* list, LPWSTR* mszReaders, DWOR
 	if (LinkedList_Count(list) < 1)
 		return cchReaders;
 
-	readers = ConvertWCharNToUtf8Alloc(*mszReaders, cchReaders, NULL);
+	readers = ConvertMszWCharNToUtf8Alloc(*mszReaders, cchReaders, NULL);
 
 	if (!readers)
 	{

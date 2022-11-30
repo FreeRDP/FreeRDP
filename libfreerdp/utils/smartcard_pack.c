@@ -392,7 +392,7 @@ static char* smartcard_msz_dump_w(const WCHAR* msz, size_t len, char* buffer, si
 	size_t szlen = 0;
 	if (!msz)
 		return NULL;
-	char* sz = ConvertWCharNToUtf8Alloc(msz, len, &szlen);
+	char* sz = ConvertMszWCharNToUtf8Alloc(msz, len, &szlen);
 	if (!sz)
 		return NULL;
 
