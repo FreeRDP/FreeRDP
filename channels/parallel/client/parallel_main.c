@@ -398,6 +398,21 @@ static UINT parallel_free(DEVICE* device)
 	return CHANNEL_RC_OK;
 }
 
+static void parallel_message_free(void* obj)
+{
+	wMessage* msg = obj;
+	if (!msg)
+		return;
+	if (msg->id != 0)
+		return;
+
+	IRP* irp = (IRP*)msg->wParam;
+	if (!irp)
+		return;
+	WINPR_ASSERT(irp->Discard);
+	irp->Discard(irp);
+}
+
 /**
  * Function description
  *
@@ -464,6 +479,10 @@ UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 			error = CHANNEL_RC_NO_MEMORY;
 			goto error_out;
 		}
+
+		wObject* obj = MessageQueue_Object(parallel->queue);
+		WINPR_ASSERT(obj);
+		obj->fnObjectFree = parallel_message_free;
 
 		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*)parallel)))
 		{

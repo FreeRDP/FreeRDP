@@ -858,6 +858,21 @@ static void drive_file_objfree(void* obj)
 	drive_file_free((DRIVE_FILE*)obj);
 }
 
+static void drive_message_free(void* obj)
+{
+	wMessage* msg = obj;
+	if (!msg)
+		return;
+	if (msg->id != 0)
+		return;
+
+	IRP* irp = (IRP*)msg->wParam;
+	if (!irp)
+		return;
+	WINPR_ASSERT(irp->Discard);
+	irp->Discard(irp);
+}
+
 /**
  * Function description
  *
@@ -957,6 +972,10 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 			error = CHANNEL_RC_NO_MEMORY;
 			goto out_error;
 		}
+
+		wObject* obj = MessageQueue_Object(drive->IrpQueue);
+		WINPR_ASSERT(obj);
+		obj->fnObjectFree = drive_message_free;
 
 		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, (DEVICE*)drive)))
 		{
