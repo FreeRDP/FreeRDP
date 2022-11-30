@@ -1648,6 +1648,24 @@ static state_run_t rdp_handle_sc_flags(rdpRdp* rdp, wStream* s, UINT32 flag,
 	return status;
 }
 
+static state_run_t rdp_client_exchange_monitor_layout(rdpRdp* rdp, wStream* s)
+{
+	WINPR_ASSERT(rdp);
+
+	const UINT32 old = rdp->finalize_sc_pdus;
+	state_run_t status = rdp_recv_pdu(rdp, s);
+
+	/* This PDU is optional, so if we received a finalize PDU continue there */
+	if (state_run_success(status))
+	{
+		const BOOL changed = old != rdp->finalize_sc_pdus;
+		status = rdp_client_connect_finalize(rdp);
+		if (changed && state_run_success(status))
+			status = STATE_RUN_TRY_AGAIN;
+	}
+	return status;
+}
+
 static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, void* extra)
 {
 	state_run_t status = STATE_RUN_SUCCESS;
@@ -1845,32 +1863,16 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 			}
 			else if (status != STATE_RUN_REDIRECT)
 			{
-				if (!rdp->settings->SupportMonitorLayoutPdu)
-				{
-					if (!rdp_client_transition_to_state(
-					        rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE))
-						status = STATE_RUN_FAILED;
-					else
-						status = STATE_RUN_CONTINUE;
-				}
+				if (!rdp_client_transition_to_state(
+				        rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE))
+					status = STATE_RUN_FAILED;
 				else
-				{
-					if (!rdp_client_transition_to_state(
-					        rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT))
-						status = STATE_RUN_FAILED;
-				}
+					status = STATE_RUN_CONTINUE;
 			}
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT:
-			status = rdp_recv_pdu(rdp, s);
-			if (state_run_success(status))
-			{
-				status = STATE_RUN_TRY_AGAIN;
-				if (!rdp_client_transition_to_state(
-				        rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE))
-					status = STATE_RUN_FAILED;
-			}
+			status = rdp_client_exchange_monitor_layout(rdp, s);
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE:
