@@ -122,6 +122,23 @@ static void kerberos_log_msg(krb5_context ctx, krb5_error_code code)
 	krb5_free_error_message(ctx, msg);
 }
 
+static void kerberos_ContextFree(KRB_CONTEXT* ctx, BOOL allocated)
+{
+	if (ctx)
+	{
+		krb5_k_free_key(ctx->ctx, ctx->session_key);
+		krb5_k_free_key(ctx->ctx, ctx->initiator_key);
+		krb5_k_free_key(ctx->ctx, ctx->acceptor_key);
+
+		if (ctx->auth_ctx)
+			krb5_auth_con_free(ctx->ctx, ctx->auth_ctx);
+
+		krb5_free_context(ctx->ctx);
+		if (allocated)
+			free(ctx);
+	}
+}
+
 static KRB_CONTEXT* kerberos_ContextNew(void)
 {
 	KRB_CONTEXT* context;
@@ -946,17 +963,20 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 	/* On first call allocate a new context */
 	if (new_context.ctx)
 	{
+		const KRB_CONTEXT empty = { 0 };
+
 		context = kerberos_ContextNew();
 		if (!context)
 		{
 			status = SEC_E_INSUFFICIENT_MEMORY;
 			goto cleanup;
 		}
-		CopyMemory(context, &new_context, sizeof(KRB_CONTEXT));
-	}
+		*context = new_context;
+		new_context = empty;
 
-	sspi_SecureHandleSetLowerPointer(phNewContext, context);
-	sspi_SecureHandleSetUpperPointer(phNewContext, KERBEROS_SSP_NAME);
+		sspi_SecureHandleSetLowerPointer(phNewContext, context);
+		sspi_SecureHandleSetUpperPointer(phNewContext, KERBEROS_SSP_NAME);
+	}
 
 cleanup:
 
@@ -969,14 +989,7 @@ cleanup:
 	winpr_Digest_Free(md5);
 
 	free(target);
-
-	if (context == &new_context)
-	{
-		if (context->auth_ctx)
-			krb5_auth_con_free(context->ctx, context->auth_ctx);
-		if (context->ctx)
-			krb5_free_context(context->ctx);
-	}
+	kerberos_ContextFree(&new_context, FALSE);
 
 	return status;
 
@@ -1193,24 +1206,26 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 	/* On first call allocate new context */
 	if (new_context.ctx)
 	{
+		const KRB_CONTEXT empty = { 0 };
+
 		context = kerberos_ContextNew();
 		if (!context)
 		{
 			status = SEC_E_INSUFFICIENT_MEMORY;
 			goto cleanup;
 		}
-		CopyMemory(context, &new_context, sizeof(KRB_CONTEXT));
-		ZeroMemory(&new_context, sizeof(KRB_CONTEXT));
+		*context = new_context;
+		new_context = empty;
 		context->acceptor = TRUE;
+
+		sspi_SecureHandleSetLowerPointer(phNewContext, context);
+		sspi_SecureHandleSetUpperPointer(phNewContext, KERBEROS_SSP_NAME);
 	}
 
 	if (context->state == KERBEROS_STATE_FINAL)
 		status = SEC_E_OK;
 	else
 		status = SEC_I_CONTINUE_NEEDED;
-
-	sspi_SecureHandleSetLowerPointer(phNewContext, context);
-	sspi_SecureHandleSetUpperPointer(phNewContext, KERBEROS_SSP_NAME);
 
 cleanup:
 
@@ -1222,11 +1237,7 @@ cleanup:
 	if (entry.principal)
 		krb5_free_keytab_entry_contents(context->ctx, &entry);
 
-	if (new_context.auth_ctx)
-		krb5_auth_con_free(context->ctx, new_context.auth_ctx);
-	if (new_context.ctx)
-		krb5_free_context(new_context.ctx);
-
+	kerberos_ContextFree(&new_context, FALSE);
 	return status;
 
 bad_token:
@@ -1237,23 +1248,25 @@ bad_token:
 #endif /* WITH_GSSAPI */
 }
 
+static KRB_CONTEXT* get_context(PCtxtHandle phContext)
+{
+	if (!phContext)
+		return NULL;
+
+	TCHAR* name = sspi_SecureHandleGetUpperPointer(phContext);
+	if (_tcscmp(KERBEROS_SSP_NAME, name) != 0)
+		return NULL;
+	return sspi_SecureHandleGetLowerPointer(phContext);
+}
+
 static SECURITY_STATUS SEC_ENTRY kerberos_DeleteSecurityContext(PCtxtHandle phContext)
 {
 #ifdef WITH_GSSAPI
-	KRB_CONTEXT* context;
-	context = (KRB_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
-
+	KRB_CONTEXT* context = get_context(phContext);
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
-	krb5_k_free_key(context->ctx, context->session_key);
-	krb5_k_free_key(context->ctx, context->initiator_key);
-	krb5_k_free_key(context->ctx, context->acceptor_key);
-
-	if (context->auth_ctx)
-		krb5_auth_con_free(context->ctx, context->auth_ctx);
-
-	krb5_free_context(context->ctx);
+	kerberos_ContextFree(context, TRUE);
 
 	return SEC_E_OK;
 #else
@@ -1276,7 +1289,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 		UINT header, pad, trailer;
 		krb5_key key;
 		krb5_enctype enctype;
-		KRB_CONTEXT* context = (KRB_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+		KRB_CONTEXT* context = get_context(phContext);
 		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*)pBuffer;
 
 		WINPR_ASSERT(context);
@@ -1425,7 +1438,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
                                                          ULONG MessageSeqNo)
 {
 #ifdef WITH_GSSAPI
-	KRB_CONTEXT* context;
+	KRB_CONTEXT* context = get_context(phContext);
 	PSecBuffer sig_buffer, data_buffer;
 	char* header;
 	BYTE flags = 0;
@@ -1437,7 +1450,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 		                              { KRB5_CRYPTO_TYPE_PADDING, { 0 } },
 		                              { KRB5_CRYPTO_TYPE_TRAILER, { 0 } } };
 
-	context = sspi_SecureHandleGetLowerPointer(phContext);
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
@@ -1516,7 +1528,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
                                                          ULONG MessageSeqNo, ULONG* pfQOP)
 {
 #ifdef WITH_GSSAPI
-	KRB_CONTEXT* context;
+	KRB_CONTEXT* context = get_context(phContext);
 	PSecBuffer sig_buffer, data_buffer;
 	krb5_key key;
 	krb5_keyusage usage;
@@ -1532,7 +1544,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 		                      { KRB5_CRYPTO_TYPE_PADDING, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_TRAILER, { 0 } } };
 
-	context = sspi_SecureHandleGetLowerPointer(phContext);
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
@@ -1620,7 +1631,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
                                                         PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
 #ifdef WITH_GSSAPI
-	KRB_CONTEXT* context;
+	KRB_CONTEXT* context = get_context(phContext);
 	PSecBuffer sig_buffer, data_buffer;
 	krb5_key key;
 	krb5_keyusage usage;
@@ -1630,7 +1641,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 		                      { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_CHECKSUM, { 0 } } };
 
-	context = sspi_SecureHandleGetLowerPointer(phContext);
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
@@ -1696,7 +1706,6 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
                                                           ULONG MessageSeqNo, ULONG* pfQOP)
 {
 #ifdef WITH_GSSAPI
-	KRB_CONTEXT* context;
 	PSecBuffer sig_buffer, data_buffer;
 	krb5_key key;
 	krb5_keyusage usage;
@@ -1710,7 +1719,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
 		                      { KRB5_CRYPTO_TYPE_CHECKSUM, { 0 } } };
 	BYTE cmp_filler[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-	context = sspi_SecureHandleGetLowerPointer(phContext);
+	KRB_CONTEXT* context = get_context(phContext);
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
