@@ -129,7 +129,7 @@ def write_str(f, entry_dict):
     f.write('\t\t\t\tconst char* sval = freerdp_settings_get_string(src, cur->id);\n')
     f.write('\t\t\t\t\tsize_t len = 0;\n')
     f.write('\t\t\t\t\tif (sval) len = strlen(sval);\n')
-    f.write('\t\t\t\tif (!freerdp_settings_set_string_(dst, cur->id, sval, len, FALSE))\n')
+    f.write('\t\t\t\tif (!freerdp_settings_set_string_(dst, cur->id, sval, len, TRUE, FALSE))\n')
     f.write('\t\t\t\t\treturn FALSE;\n')
     f.write('\t\t\t}\n')
     f.write('\t\t\tbreak;\n')
@@ -355,7 +355,7 @@ def write_str(f, entry_dict):
     f.write('\t\tswitch(cur->type)\n')
     f.write('\t\t{\n')
     f.write('\t\t\tcase 7: /* strings */\n')
-    f.write('\t\t\t\tfreerdp_settings_set_string_(dst, cur->id, NULL, 0, cleanup);\n')
+    f.write('\t\t\t\tfreerdp_settings_set_string_(dst, cur->id, NULL, 0, TRUE, cleanup);\n')
     f.write('\t\t\tbreak;\n')
     f.write('\t\t\tcase 8: /* pointer */\n')
     f.write('\t\t\t\tfreerdp_settings_set_pointer_len(dst, cur->id, NULL, 0);\n')
@@ -505,7 +505,7 @@ def write_setter_case(f, val, isString, isPointer):
         f.write('\t\t\tsettings->' + val + ' = cnv.c;\n')
         f.write('\t\t\tbreak;\n\n')
     else:
-        f.write('\t\t\treturn update_string(&settings->' + val + ', cnv.cc, len, cleanup);\n\n')
+        f.write('\t\t\treturn update_string(&settings->' + val + ', cnv.cc, len, copy, cleanup);\n\n')
 
 def write_setter(f, entry_dict, entry_type, entry_name):
     isString = 'string' in entry_name
@@ -523,7 +523,7 @@ def write_setter(f, entry_dict, entry_type, entry_name):
     else:
         f.write('void* val')
     if isString:
-        f.write(', size_t len, BOOL cleanup)\n')
+        f.write(', size_t len, BOOL copy, BOOL cleanup)\n')
     else:
         f.write(')\n')
     f.write('{\n')
@@ -558,7 +558,7 @@ def write_setter(f, entry_dict, entry_type, entry_name):
     if isString:
         f.write('BOOL freerdp_settings_set_string_len(rdpSettings* settings, size_t id, const char* val, size_t len)\n')
         f.write('{\n')
-        f.write('\treturn freerdp_settings_set_string_(settings, id, val, len, TRUE);\n')
+        f.write('\treturn freerdp_settings_set_string_(settings, id, val, len, TRUE, TRUE);\n')
         f.write('}\n')
         f.write('\n')
 
@@ -566,7 +566,7 @@ def write_setter(f, entry_dict, entry_type, entry_name):
         f.write('{\n')
         f.write('\tsize_t len = 0;\n')
         f.write('\tif (val) len = strlen(val);\n')
-        f.write('\treturn freerdp_settings_set_string_(settings, id, val, len, TRUE);\n')
+        f.write('\treturn freerdp_settings_set_string_(settings, id, val, len, TRUE, TRUE);\n')
         f.write('}\n')
         f.write('\n')
 
@@ -618,7 +618,7 @@ try:
         f.write('#include "../core/settings.h"\n\n')
         f.write('#define TAG FREERDP_TAG("common.settings")\n\n')
 
-        f.write('static BOOL update_string(char** current, const char* next, size_t next_len, BOOL cleanup)\n')
+        f.write('static BOOL update_string(char** current, const char* next, size_t next_len, BOOL copy, BOOL cleanup)\n')
         f.write('{\n')
         f.write('\tif (cleanup)\n')
         f.write('\t{\n')
@@ -633,7 +633,10 @@ try:
         f.write('\t\treturn (*current != NULL);\n')
         f.write('\t}\n')
         f.write('\n')
-        f.write('\t*current = (next ? strndup(next, next_len) : NULL);\n')
+        f.write('\tif(copy)')
+        f.write('\t\t*current = (next ? strndup(next, next_len) : NULL);\n')
+        f.write('\telse')
+        f.write('\t\t*current = next;\n')
         f.write('\treturn !next || (*current != NULL);\n')
         f.write('}\n\n')
 

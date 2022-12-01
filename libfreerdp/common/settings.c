@@ -2005,7 +2005,7 @@ BOOL freerdp_settings_set_string_from_utf16(rdpSettings* settings, size_t id, co
 	WINPR_ASSERT(settings);
 
 	if (!param)
-		return freerdp_settings_set_string_(settings, id, NULL, 0, TRUE);
+		return freerdp_settings_set_string_(settings, id, NULL, 0, TRUE, TRUE);
 
 	size_t len = 0;
 
@@ -2013,7 +2013,7 @@ BOOL freerdp_settings_set_string_from_utf16(rdpSettings* settings, size_t id, co
 	if (!str && (len != 0))
 		return FALSE;
 
-	return freerdp_settings_set_string_(settings, id, str, len, TRUE);
+	return freerdp_settings_set_string_(settings, id, str, len, FALSE, TRUE);
 }
 
 BOOL freerdp_settings_set_string_from_utf16N(rdpSettings* settings, size_t id, const WCHAR* param,
@@ -2024,13 +2024,13 @@ BOOL freerdp_settings_set_string_from_utf16N(rdpSettings* settings, size_t id, c
 	WINPR_ASSERT(settings);
 
 	if (!param)
-		return freerdp_settings_set_string_(settings, id, NULL, length, TRUE);
+		return freerdp_settings_set_string_(settings, id, NULL, length, TRUE, TRUE);
 
 	char* str = ConvertWCharNToUtf8Alloc(param, length, &len);
 	if (!str && (length != 0))
 		return FALSE;
 
-	return freerdp_settings_set_string_(settings, id, str, len, TRUE);
+	return freerdp_settings_set_string_(settings, id, str, len, FALSE, TRUE);
 }
 
 WCHAR* freerdp_settings_get_string_as_utf16(const rdpSettings* settings, size_t id,

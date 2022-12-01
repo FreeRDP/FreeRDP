@@ -106,6 +106,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_Fullscreen, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_Fullscreen" },
 	{ FreeRDP_GatewayBypassLocal, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GatewayBypassLocal" },
 	{ FreeRDP_GatewayEnabled, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GatewayEnabled" },
+	{ FreeRDP_GatewayHttpExtAuthSspiNtlm, FREERDP_SETTINGS_TYPE_BOOL,
+	  "FreeRDP_GatewayHttpExtAuthSspiNtlm" },
 	{ FreeRDP_GatewayHttpTransport, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GatewayHttpTransport" },
 	{ FreeRDP_GatewayHttpUseWebsockets, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_GatewayHttpUseWebsockets" },
@@ -630,7 +632,7 @@ BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 				size_t len = 0;
 				if (sval)
 					len = strlen(sval);
-				if (!freerdp_settings_set_string_(dst, cur->id, sval, len, FALSE))
+				if (!freerdp_settings_set_string_(dst, cur->id, sval, len, TRUE, FALSE))
 					return FALSE;
 			}
 			break;
@@ -860,7 +862,7 @@ void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup)
 		switch (cur->type)
 		{
 			case 7: /* strings */
-				freerdp_settings_set_string_(dst, cur->id, NULL, 0, cleanup);
+				freerdp_settings_set_string_(dst, cur->id, NULL, 0, TRUE, cleanup);
 				break;
 			case 8: /* pointer */
 				freerdp_settings_set_pointer_len(dst, cur->id, NULL, 0);
