@@ -980,6 +980,12 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 cleanup:
 
+{
+	/* second_ticket is not allocated */
+	krb5_data edata = { 0 };
+	in_creds.second_ticket = edata;
+	krb5_free_cred_contents(context->ctx, &in_creds);
+}
 	if (rv)
 		kerberos_log_msg(context->ctx, rv);
 
