@@ -71,6 +71,23 @@ struct rdp_credssp_auth
 #endif
 };
 
+static const char* credssp_auth_state_string(const rdpCredsspAuth* auth)
+{
+	WINPR_ASSERT(auth);
+	switch (auth->state)
+	{
+		case AUTH_STATE_INITIAL:
+			return "AUTH_STATE_INITIAL";
+		case AUTH_STATE_CREDS:
+			return "AUTH_STATE_CREDS";
+		case AUTH_STATE_IN_PROGRESS:
+			return "AUTH_STATE_IN_PROGRESS";
+		case AUTH_STATE_FINAL:
+			return "AUTH_STATE_FINAL";
+		default:
+			return "AUTH_STATE_UNKNOWN";
+	}
+}
 static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* message);
 static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth);
 static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* settings);
@@ -103,6 +120,7 @@ BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bind
 	}
 
 	/* Package name will be stored in the info structure */
+	WINPR_ASSERT(auth->table->QuerySecurityPackageInfo);
 	status = auth->table->QuerySecurityPackageInfo(pkg_name, &auth->info);
 	if (status != SEC_E_OK)
 	{
@@ -210,6 +228,8 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 	WINPR_ASSERT(auth->table);
 	WINPR_ASSERT(auth->info);
 
+	WINPR_ASSERT(auth->state == AUTH_STATE_INITIAL);
+
 	/* Construct the service principal name */
 	if (!credssp_auth_set_spn(auth, target_service, target_hostname))
 		return FALSE;
@@ -231,6 +251,7 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 		pAuthData = (void*)&winprAuthData;
 	}
 
+	WINPR_ASSERT(auth->table->AcquireCredentialsHandle);
 	status =
 	    auth->table->AcquireCredentialsHandle(NULL, auth->info->Name, SECPKG_CRED_OUTBOUND, NULL,
 	                                          pAuthData, NULL, NULL, &auth->credentials, NULL);
@@ -263,6 +284,8 @@ BOOL credssp_auth_setup_server(rdpCredsspAuth* auth)
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->table);
 
+	WINPR_ASSERT(auth->state == AUTH_STATE_INITIAL);
+
 	if (auth->ntlmSettings.samFile || auth->ntlmSettings.hashCallback ||
 	    auth->kerberosSettings.keytab)
 	{
@@ -270,6 +293,7 @@ BOOL credssp_auth_setup_server(rdpCredsspAuth* auth)
 		pAuthData = &winprAuthData;
 	}
 
+	WINPR_ASSERT(auth->table->AcquireCredentialsHandle);
 	status =
 	    auth->table->AcquireCredentialsHandle(NULL, auth->info->Name, SECPKG_CRED_INBOUND, NULL,
 	                                          pAuthData, NULL, NULL, &auth->credentials, NULL);
@@ -379,13 +403,19 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 		return -1;
 
 	if (auth->server)
+	{
+		WINPR_ASSERT(auth->table->AcceptSecurityContext);
 		status = auth->table->AcceptSecurityContext(
 		    &auth->credentials, context, &input_buffer_desc, auth->flags, SECURITY_NATIVE_DREP,
 		    &auth->context, &output_buffer_desc, &auth->flags, NULL);
+	}
 	else
+	{
+		WINPR_ASSERT(auth->table->InitializeSecurityContext);
 		status = auth->table->InitializeSecurityContext(
 		    &auth->credentials, context, auth->spn, auth->flags, 0, SECURITY_NATIVE_DREP,
 		    &input_buffer_desc, 0, &auth->context, &output_buffer_desc, &auth->flags, NULL);
+	}
 
 	if (status == SEC_E_OK)
 	{
@@ -395,7 +425,9 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 
 		/* Not terrible if this fails, although encryption functions may run into issues down the
 		 * line, still, authentication succeeded */
-		auth->table->QueryContextAttributes(&auth->context, SECPKG_ATTR_SIZES, &auth->sizes);
+		WINPR_ASSERT(auth->table->QueryContextAttributes);
+		status =
+		    auth->table->QueryContextAttributes(&auth->context, SECPKG_ATTR_SIZES, &auth->sizes);
 		WLog_DBG(TAG, "Context sizes: cbMaxSignature=%d, cbSecurityTrailer=%d",
 		         auth->sizes.cbMaxSignature, auth->sizes.cbSecurityTrailer);
 
@@ -430,6 +462,15 @@ BOOL credssp_auth_encrypt(rdpCredsspAuth* auth, const SecBuffer* plaintext, SecB
 	WINPR_ASSERT(plaintext);
 	WINPR_ASSERT(ciphertext);
 
+	switch (auth->state)
+	{
+		case AUTH_STATE_INITIAL:
+			WLog_ERR(TAG, "[%s] Invalid state %s", __FUNCTION__, credssp_auth_state_string(auth));
+			return FALSE;
+		default:
+			break;
+	}
+
 	/* Allocate consecutive memory for ciphertext and signature */
 	buf = calloc(1, plaintext->cbBuffer + auth->sizes.cbSecurityTrailer);
 	if (!buf)
@@ -444,6 +485,7 @@ BOOL credssp_auth_encrypt(rdpCredsspAuth* auth, const SecBuffer* plaintext, SecB
 	buffers[1].cbBuffer = plaintext->cbBuffer;
 	CopyMemory(buffers[1].pvBuffer, plaintext->pvBuffer, plaintext->cbBuffer);
 
+	WINPR_ASSERT(auth->table->EncryptMessage);
 	status = auth->table->EncryptMessage(&auth->context, 0, &buffer_desc, sequence);
 	if (status != SEC_E_OK)
 	{
@@ -484,6 +526,15 @@ BOOL credssp_auth_decrypt(rdpCredsspAuth* auth, const SecBuffer* ciphertext, Sec
 	WINPR_ASSERT(ciphertext);
 	WINPR_ASSERT(plaintext);
 
+	switch (auth->state)
+	{
+		case AUTH_STATE_INITIAL:
+			WLog_ERR(TAG, "[%s] Invalid state %s", __FUNCTION__, credssp_auth_state_string(auth));
+			return FALSE;
+		default:
+			break;
+	}
+
 	/* Sanity check: ciphertext must at least have a signature */
 	if (ciphertext->cbBuffer < auth->sizes.cbSecurityTrailer)
 	{
@@ -503,6 +554,7 @@ BOOL credssp_auth_decrypt(rdpCredsspAuth* auth, const SecBuffer* ciphertext, Sec
 	CopyMemory(buffers[1].pvBuffer, (BYTE*)ciphertext->pvBuffer + auth->sizes.cbSecurityTrailer,
 	           buffers[1].cbBuffer);
 
+	WINPR_ASSERT(auth->table->DecryptMessage);
 	status = auth->table->DecryptMessage(&auth->context, &buffer_desc, sequence, &fqop);
 	if (status != SEC_E_OK)
 	{
@@ -523,6 +575,7 @@ BOOL credssp_auth_impersonate(rdpCredsspAuth* auth)
 
 	WINPR_ASSERT(auth && auth->table);
 
+	WINPR_ASSERT(auth->table->ImpersonateSecurityContext);
 	status = auth->table->ImpersonateSecurityContext(&auth->context);
 
 	if (status != SEC_E_OK)
@@ -541,6 +594,7 @@ BOOL credssp_auth_revert_to_self(rdpCredsspAuth* auth)
 
 	WINPR_ASSERT(auth && auth->table);
 
+	WINPR_ASSERT(auth->table->RevertSecurityContext);
 	status = auth->table->RevertSecurityContext(&auth->context);
 
 	if (status != SEC_E_OK)
@@ -621,9 +675,11 @@ void credssp_auth_free(rdpCredsspAuth* auth)
 		{
 			case AUTH_STATE_IN_PROGRESS:
 			case AUTH_STATE_FINAL:
+				WINPR_ASSERT(auth->table->DeleteSecurityContext);
 				auth->table->DeleteSecurityContext(&auth->context);
 				/* FALLTHROUGH */
 			case AUTH_STATE_CREDS:
+				WINPR_ASSERT(auth->table->FreeCredentialsHandle);
 				auth->table->FreeCredentialsHandle(&auth->credentials);
 				break;
 			case AUTH_STATE_INITIAL:
@@ -632,7 +688,10 @@ void credssp_auth_free(rdpCredsspAuth* auth)
 		}
 
 		if (auth->info)
+		{
+			WINPR_ASSERT(auth->table->FreeContextBuffer);
 			auth->table->FreeContextBuffer(auth->info);
+		}
 	}
 
 	sspi_FreeAuthIdentity(&auth->identity);
@@ -837,53 +896,35 @@ static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 	return TRUE;
 }
 
-static TCHAR* tcs_strdup_from_char(const char* str)
-{
-#ifdef UNICODE
-	return ConvertUtf8ToWCharAlloc(str, NULL);
-#else
-	return _strdup(str);
-#endif
-}
-
 BOOL credssp_auth_set_spn(rdpCredsspAuth* auth, const char* service, const char* hostname)
 {
 	size_t length;
+	char* spn;
+
+	WINPR_ASSERT(auth);
 
 	if (!hostname)
 		return FALSE;
 
 	if (!service)
+		spn = _strdup(hostname);
+	else
 	{
-		if (!(auth->spn = tcs_strdup_from_char(hostname)))
+		length = strlen(service) + strlen(hostname) + 2;
+		spn = calloc(length + 1, sizeof(char));
+		if (!spn)
 			return FALSE;
-		return TRUE;
-	}
 
-	length = strlen(service) + strlen(hostname) + 2;
-	auth->spn = malloc(length * sizeof(TCHAR));
-	if (!auth->spn)
+		sprintf_s(spn, length, "%s/%s", service, hostname);
+	}
+	if (!spn)
 		return FALSE;
 
-#ifndef UNICODE
-	sprintf_s(auth->spn, length, "%s/%s", service, hostname);
+#if defined(UNICODE)
+	auth->spn = ConvertUtf8ToWCharAlloc(spn, NULL);
+	free(spn);
 #else
-	{
-		TCHAR* serviceW = ConvertUtf8ToWCharAlloc(service, NULL);
-		TCHAR* hostnameW = ConvertUtf8ToWCharAlloc(hostname, NULL);
-
-		if (!serviceW || !hostnameW)
-		{
-			free(serviceW);
-			free(hostnameW);
-			return FALSE;
-		}
-
-		swprintf_s(auth->spn, length, _T("%s/%s"), serviceW, hostnameW);
-
-		free(serviceW);
-		free(hostnameW);
-	}
+	auth->spn = spn;
 #endif
 
 	return TRUE;
