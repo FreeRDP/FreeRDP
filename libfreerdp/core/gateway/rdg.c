@@ -1052,7 +1052,8 @@ static BOOL rdg_send_tunnel_request(rdpRdg* rdg)
 			return FALSE;
 		}
 
-		packetSize += 2 + (UINT32)(PAACookieLen + 1) * sizeof(WCHAR);
+		PAACookieLen += 1; /* include \0 */
+		packetSize += 2 + (UINT32)(PAACookieLen) * sizeof(WCHAR);
 		fieldsPresent = HTTP_TUNNEL_PACKET_FIELD_PAA_COOKIE;
 	}
 
@@ -1335,7 +1336,7 @@ static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 	         ", extendedAuth=%s",
 	         error, verMajor, verMinor, serverVersion, extended_auth_to_string(extendedAuth));
 
-	if (FAILED(errorCode))
+	if (FAILED((HRESULT)errorCode))
 	{
 		WLog_ERR(TAG, "Handshake error %s", error);
 		freerdp_set_last_error_log(rdg->context, errorCode);
@@ -1435,7 +1436,7 @@ static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 	WLog_DBG(TAG, "serverVersion=%" PRId16 ", errorCode=%s, fieldsPresent=%s", serverVersion, error,
 	         tunnel_response_fields_present_to_string(fieldsPresent));
 
-	if (FAILED(errorCode))
+	if (FAILED((HRESULT)errorCode))
 	{
 		WLog_ERR(TAG, "Tunnel creation error %s", error);
 		freerdp_set_last_error_log(rdg->context, errorCode);
@@ -1470,7 +1471,8 @@ static BOOL rdg_process_tunnel_authorization_response(rdpRdg* rdg, wStream* s)
 	WLog_DBG(TAG, "errorCode=%s, fieldsPresent=%s", error,
 	         tunnel_authorization_response_fields_present_to_string(fieldsPresent));
 
-	if (FAILED(errorCode))
+	/* [MS-TSGU] 3.7.5.2.7 */
+	if (errorCode != S_OK && errorCode != E_PROXY_QUARANTINE_ACCESSDENIED)
 	{
 		WLog_ERR(TAG, "Tunnel authorization error %s", error);
 		freerdp_set_last_error_log(rdg->context, errorCode);
@@ -1549,7 +1551,7 @@ static BOOL rdg_process_channel_response(rdpRdg* rdg, wStream* s)
 	WLog_DBG(TAG, "channel response errorCode=%s, fieldsPresent=%s", error,
 	         channel_response_fields_present_to_string(fieldsPresent));
 
-	if (FAILED(errorCode))
+	if (FAILED((HRESULT)errorCode))
 	{
 		WLog_ERR(TAG, "channel response errorCode=%s, fieldsPresent=%s", error,
 		         channel_response_fields_present_to_string(fieldsPresent));
