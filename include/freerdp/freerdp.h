@@ -628,8 +628,32 @@ owned by rdpRdp */
 
 	FREERDP_API const char* freerdp_nego_get_routing_token(rdpContext* context, DWORD* length);
 
+	/** \brief returns the current \b CONNECTION_STATE of the context.
+	 *
+	 *  \param context A pointer to the context to query state
+	 *
+	 *  \return A \b CONNECTION_STATE the context is currently in
+	 */
 	FREERDP_API CONNECTION_STATE freerdp_get_state(const rdpContext* context);
+
+	/** \brief returns a string representation of a \b CONNECTION_STATE
+	 *
+	 *  \param state the \b CONNECTION_STATE to stringify
+	 *
+	 *  \return The string representation of the \b CONNECTION_STATE
+	 */
 	FREERDP_API const char* freerdp_state_string(CONNECTION_STATE state);
+
+	/** \brief Queries if the current \b CONNECTION_STATE of the context is an active connection.
+	 *
+	 * A connection is active, if the connection sequence has been passed, no disconnection requests
+	 * have been received and no network or other errors have forced a disconnect.
+	 *
+	 *  \param context A pointer to the context to query state
+	 *
+	 *  \return \b TRUE if the connection state indicates an active connection, \b FALSE otherwise
+	 */
+	FREERDP_API BOOL freerdp_is_active_state(const rdpContext* context);
 
 	FREERDP_API BOOL freerdp_channels_from_mcs(rdpSettings* settings, const rdpContext* context);
 
