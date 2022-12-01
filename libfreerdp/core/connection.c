@@ -1601,6 +1601,61 @@ BOOL rdp_server_reactivate(rdpRdp* rdp)
 	return state_run_success(rc);
 }
 
+static BOOL rdp_is_active_peer_state(CONNECTION_STATE state)
+{
+	/* [MS-RDPBCGR] 1.3.1.1 Connection Sequence states:
+	 * 'upon receipt of the Font List PDU the server can start sending graphics
+	 *  output to the client'
+	 */
+	switch (state)
+	{
+		case CONNECTION_STATE_FINALIZATION_CLIENT_SYNC:
+		case CONNECTION_STATE_FINALIZATION_CLIENT_COOPERATE:
+		case CONNECTION_STATE_FINALIZATION_CLIENT_GRANTED_CONTROL:
+		case CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP:
+		case CONNECTION_STATE_ACTIVE:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
+static BOOL rdp_is_active_client_state(CONNECTION_STATE state)
+{
+	/* [MS-RDPBCGR] 1.3.1.1 Connection Sequence states:
+	 * 'Once the client has sent the Confirm Active PDU, it can start sending
+	 *  mouse and keyboard input to the server'
+	 */
+	switch (state)
+	{
+		case CONNECTION_STATE_FINALIZATION_SYNC:
+		case CONNECTION_STATE_FINALIZATION_COOPERATE:
+		case CONNECTION_STATE_FINALIZATION_REQUEST_CONTROL:
+		case CONNECTION_STATE_FINALIZATION_PERSISTENT_KEY_LIST:
+		case CONNECTION_STATE_FINALIZATION_FONT_LIST:
+		case CONNECTION_STATE_FINALIZATION_CLIENT_SYNC:
+		case CONNECTION_STATE_FINALIZATION_CLIENT_COOPERATE:
+		case CONNECTION_STATE_FINALIZATION_CLIENT_GRANTED_CONTROL:
+		case CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP:
+		case CONNECTION_STATE_ACTIVE:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
+BOOL rdp_is_active_state(const rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+
+	const CONNECTION_STATE state = rdp_get_state(rdp);
+	if (freerdp_settings_get_bool(rdp->context->settings, FreeRDP_ServerMode))
+		return rdp_is_active_peer_state(state);
+	else
+		return rdp_is_active_client_state(state);
+}
+
 BOOL rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 {
 	BOOL status = FALSE;

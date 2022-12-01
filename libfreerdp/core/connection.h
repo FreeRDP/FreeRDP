@@ -52,6 +52,7 @@ FREERDP_LOCAL BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE 
 
 FREERDP_LOCAL CONNECTION_STATE rdp_get_state(const rdpRdp* rdp);
 FREERDP_LOCAL const char* rdp_state_string(CONNECTION_STATE state);
+FREERDP_LOCAL BOOL rdp_is_active_state(const rdpRdp* rdp);
 
 FREERDP_LOCAL BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s);
