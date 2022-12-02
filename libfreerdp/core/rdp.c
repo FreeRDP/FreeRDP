@@ -2437,3 +2437,41 @@ BOOL rdp_reset_rc4_decrypt_keys(rdpRdp* rdp)
 	rdp->decrypt_use_count = 0;
 	return rdp->rc4_decrypt_key != NULL;
 }
+
+const char* rdp_security_flag_string(UINT32 securityFlags, char* buffer, size_t size)
+{
+	if (securityFlags & SEC_EXCHANGE_PKT)
+		winpr_str_append("SEC_EXCHANGE_PKT", buffer, size, "|");
+	if (securityFlags & SEC_TRANSPORT_REQ)
+		winpr_str_append("SEC_TRANSPORT_REQ", buffer, size, "|");
+	if (securityFlags & SEC_TRANSPORT_RSP)
+		winpr_str_append("SEC_TRANSPORT_RSP", buffer, size, "|");
+	if (securityFlags & SEC_ENCRYPT)
+		winpr_str_append("SEC_ENCRYPT", buffer, size, "|");
+	if (securityFlags & SEC_RESET_SEQNO)
+		winpr_str_append("SEC_RESET_SEQNO", buffer, size, "|");
+	if (securityFlags & SEC_IGNORE_SEQNO)
+		winpr_str_append("SEC_IGNORE_SEQNO", buffer, size, "|");
+	if (securityFlags & SEC_INFO_PKT)
+		winpr_str_append("SEC_INFO_PKT", buffer, size, "|");
+	if (securityFlags & SEC_LICENSE_PKT)
+		winpr_str_append("SEC_LICENSE_PKT", buffer, size, "|");
+	if (securityFlags & SEC_LICENSE_ENCRYPT_CS)
+		winpr_str_append("SEC_LICENSE_ENCRYPT_CS", buffer, size, "|");
+	if (securityFlags & SEC_LICENSE_ENCRYPT_SC)
+		winpr_str_append("SEC_LICENSE_ENCRYPT_SC", buffer, size, "|");
+	if (securityFlags & SEC_REDIRECTION_PKT)
+		winpr_str_append("SEC_REDIRECTION_PKT", buffer, size, "|");
+	if (securityFlags & SEC_SECURE_CHECKSUM)
+		winpr_str_append("SEC_SECURE_CHECKSUM", buffer, size, "|");
+	if (securityFlags & SEC_AUTODETECT_REQ)
+		winpr_str_append("SEC_AUTODETECT_REQ", buffer, size, "|");
+	if (securityFlags & SEC_AUTODETECT_RSP)
+		winpr_str_append("SEC_AUTODETECT_RSP", buffer, size, "|");
+	if (securityFlags & SEC_HEARTBEAT)
+		winpr_str_append("SEC_HEARTBEAT", buffer, size, "|");
+	if (securityFlags & SEC_FLAGSHI_VALID)
+		winpr_str_append("SEC_FLAGSHI_VALID", buffer, size, "|");
+
+	return buffer;
+}
