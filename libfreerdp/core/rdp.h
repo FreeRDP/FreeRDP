@@ -291,4 +291,6 @@ BOOL rdp_reset_rc4_encrypt_keys(rdpRdp* rdp);
 void rdp_free_rc4_decrypt_keys(rdpRdp* rdp);
 BOOL rdp_reset_rc4_decrypt_keys(rdpRdp* rdp);
 
+const char* rdp_security_flag_string(UINT32 securityFlags, char* buffer, size_t size);
+
 #endif /* FREERDP_LIB_CORE_RDP_H */
