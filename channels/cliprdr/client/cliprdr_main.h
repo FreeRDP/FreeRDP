@@ -52,13 +52,4 @@ typedef struct
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr);
 
-#ifdef WITH_DEBUG_CLIPRDR
-#define DEBUG_CLIPRDR(...) WLog_DBG(TAG, __VA_ARGS__)
-#else
-#define DEBUG_CLIPRDR(...) \
-	do                     \
-	{                      \
-	} while (0)
-#endif
-
 #endif /* FREERDP_CHANNEL_CLIPRDR_CLIENT_MAIN_H */

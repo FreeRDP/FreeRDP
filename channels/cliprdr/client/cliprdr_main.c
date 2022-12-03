@@ -37,7 +37,6 @@
 #include "cliprdr_format.h"
 #include "../cliprdr_common.h"
 
-#ifdef WITH_DEBUG_CLIPRDR
 static const char* CB_MSG_TYPE_STRINGS(UINT32 type)
 {
 	switch (type)
@@ -68,7 +67,6 @@ static const char* CB_MSG_TYPE_STRINGS(UINT32 type)
 			return "UNKNOWN";
 	}
 }
-#endif
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr)
 {
@@ -100,8 +98,9 @@ static UINT cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 	Stream_SetPosition(s, 4);
 	Stream_Write_UINT32(s, dataLen);
 	Stream_SetPosition(s, pos);
-#ifdef WITH_DEBUG_CLIPRDR
+
 	WLog_DBG(TAG, "Cliprdr Sending (%" PRIu32 " bytes)", dataLen + 8);
+#if defined(WITH_DEBUG_CLIPRDR)
 	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), dataLen + 8);
 #endif
 
@@ -127,29 +126,27 @@ static UINT cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 	return status;
 }
 
-#ifdef WITH_DEBUG_CLIPRDR
 static void cliprdr_print_general_capability_flags(UINT32 flags)
 {
-	WLog_INFO(TAG, "generalFlags (0x%08" PRIX32 ") {", flags);
+	WLog_DBG(TAG, "generalFlags (0x%08" PRIX32 ") {", flags);
 
 	if (flags & CB_USE_LONG_FORMAT_NAMES)
-		WLog_INFO(TAG, "\tCB_USE_LONG_FORMAT_NAMES");
+		WLog_DBG(TAG, "\tCB_USE_LONG_FORMAT_NAMES");
 
 	if (flags & CB_STREAM_FILECLIP_ENABLED)
-		WLog_INFO(TAG, "\tCB_STREAM_FILECLIP_ENABLED");
+		WLog_DBG(TAG, "\tCB_STREAM_FILECLIP_ENABLED");
 
 	if (flags & CB_FILECLIP_NO_FILE_PATHS)
-		WLog_INFO(TAG, "\tCB_FILECLIP_NO_FILE_PATHS");
+		WLog_DBG(TAG, "\tCB_FILECLIP_NO_FILE_PATHS");
 
 	if (flags & CB_CAN_LOCK_CLIPDATA)
-		WLog_INFO(TAG, "\tCB_CAN_LOCK_CLIPDATA");
+		WLog_DBG(TAG, "\tCB_CAN_LOCK_CLIPDATA");
 
 	if (flags & CB_HUGE_FILE_SUPPORT_ENABLED)
-		WLog_INFO(TAG, "\tCB_HUGE_FILE_SUPPORT_ENABLED");
+		WLog_DBG(TAG, "\tCB_HUGE_FILE_SUPPORT_ENABLED");
 
-	WLog_INFO(TAG, "}");
+	WLog_DBG(TAG, "}");
 }
-#endif
 
 /**
  * Function description
@@ -179,10 +176,9 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 
 	Stream_Read_UINT32(s, version);      /* version (4 bytes) */
 	Stream_Read_UINT32(s, generalFlags); /* generalFlags (4 bytes) */
-	DEBUG_CLIPRDR("Version: %" PRIu32 "", version);
-#ifdef WITH_DEBUG_CLIPRDR
+	WLog_DBG(TAG, "[%s] Version: %" PRIu32 "", __FUNCTION__, version);
+
 	cliprdr_print_general_capability_flags(generalFlags);
-#endif
 
 	cliprdr->useLongFormatNames = (generalFlags & CB_USE_LONG_FORMAT_NAMES);
 	cliprdr->streamFileClipEnabled = (generalFlags & CB_STREAM_FILECLIP_ENABLED);
@@ -460,9 +456,9 @@ static UINT cliprdr_order_recv(LPVOID userdata, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, dataLen))
 		return ERROR_INVALID_DATA;
 
-#ifdef WITH_DEBUG_CLIPRDR
 	WLog_DBG(TAG, "msgType: %s (%" PRIu16 "), msgFlags: %" PRIu16 " dataLen: %" PRIu32 "",
 	         CB_MSG_TYPE_STRINGS(msgType), msgType, msgFlags, dataLen);
+#if defined(WITH_DEBUG_CLIPRDR)
 	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), dataLen + 8);
 #endif
 
