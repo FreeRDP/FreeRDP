@@ -240,6 +240,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 						Stream_Free(s, TRUE);
 						return NULL;
 					}
+					formatNameSize += 1; /* append terminating '\0' */
 				}
 
 				if (formatNameSize > 15)
@@ -270,7 +271,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 				SSIZE_T size = ConvertUtf8ToWChar(format->formatName, NULL, 0);
 				if (size < 0)
 					return NULL;
-				formatNameSize = (size_t)size * sizeof(WCHAR);
+				formatNameSize = (size_t)(size + 1) * sizeof(WCHAR);
 			}
 
 			length += (UINT32)formatNameSize;
@@ -301,7 +302,8 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 				}
 
 				const size_t len = strnlen(format->formatName, rem / sizeof(WCHAR));
-				if (Stream_Write_UTF16_String_From_UTF8(s, len, format->formatName, len, TRUE) < 0)
+				if (Stream_Write_UTF16_String_From_UTF8(s, len + 1, format->formatName, len, TRUE) <
+				    0)
 				{
 					Stream_Free(s, TRUE);
 					return NULL;
