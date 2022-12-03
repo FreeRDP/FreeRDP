@@ -183,7 +183,7 @@ struct xf_clipboard
 #endif
 };
 
-static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard);
+static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL force);
 static void xf_cliprdr_set_selection_owner(xfContext* xfc, xfClipboard* clipboard, Time timestamp);
 
 static void xf_cliprdr_check_owner(xfClipboard* clipboard)
@@ -203,7 +203,7 @@ static void xf_cliprdr_check_owner(xfClipboard* clipboard)
 		if (clipboard->owner != owner)
 		{
 			clipboard->owner = owner;
-			xf_cliprdr_send_client_format_list(clipboard);
+			xf_cliprdr_send_client_format_list(clipboard, FALSE);
 		}
 	}
 }
@@ -746,7 +746,7 @@ static BOOL xf_clipboard_copy_formats(xfClipboard* clipboard, const CLIPRDR_FORM
 }
 
 static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FORMAT* formats,
-                                        UINT32 numFormats)
+                                        UINT32 numFormats, BOOL force)
 {
 	union
 	{
@@ -761,7 +761,7 @@ static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FO
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(formats || (numFormats == 0));
 
-	if (!xf_clipboard_changed(clipboard, formats, numFormats))
+	if (!force && !xf_clipboard_changed(clipboard, formats, numFormats))
 		return CHANNEL_RC_OK;
 
 	xf_clipboard_copy_formats(clipboard, formats, numFormats);
@@ -777,7 +777,7 @@ static void xf_cliprdr_get_requested_targets(xfClipboard* clipboard)
 {
 	UINT32 numFormats = 0;
 	CLIPRDR_FORMAT* formats = xf_cliprdr_get_client_formats(clipboard, &numFormats);
-	xf_cliprdr_send_format_list(clipboard, formats, numFormats);
+	xf_cliprdr_send_format_list(clipboard, formats, numFormats, FALSE);
 	xf_cliprdr_free_formats(formats, numFormats);
 }
 
@@ -1073,7 +1073,7 @@ static BOOL xf_cliprdr_process_selection_notify(xfClipboard* clipboard,
 	{
 		if (xevent->property == None)
 		{
-			xf_cliprdr_send_client_format_list(clipboard);
+			xf_cliprdr_send_client_format_list(clipboard, FALSE);
 		}
 		else
 		{
@@ -1318,7 +1318,7 @@ static BOOL xf_cliprdr_process_property_notify(xfClipboard* clipboard, const XPr
 
 	if (xevent->window == clipboard->root_window)
 	{
-		xf_cliprdr_send_client_format_list(clipboard);
+		xf_cliprdr_send_client_format_list(clipboard, FALSE);
 	}
 	else if ((xevent->window == xfc->drawable) && (xevent->state == PropertyNewValue) &&
 	         clipboard->incr_starts)
@@ -1432,7 +1432,7 @@ static UINT xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
+static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL force)
 {
 	UINT32 i, numFormats;
 	CLIPRDR_FORMAT* formats = NULL;
@@ -1462,7 +1462,7 @@ static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard)
 		format->formatName = clientFormat->formatName;
 	}
 
-	ret = xf_cliprdr_send_format_list(clipboard, formats, numFormats);
+	ret = xf_cliprdr_send_format_list(clipboard, formats, numFormats, force);
 	free(formats);
 
 	if (clipboard->owner && clipboard->owner != xfc->drawable)
@@ -1668,7 +1668,7 @@ static UINT xf_cliprdr_monitor_ready(CliprdrClientContext* context,
 
 	xf_clipboard_formats_free(clipboard);
 
-	if ((ret = xf_cliprdr_send_client_format_list(clipboard)) != CHANNEL_RC_OK)
+	if ((ret = xf_cliprdr_send_client_format_list(clipboard, TRUE)) != CHANNEL_RC_OK)
 		return ret;
 
 	clipboard->sync = TRUE;
