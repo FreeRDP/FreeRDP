@@ -492,7 +492,11 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	 * if we are in server mode send a reasonable large cache size,
 	 * if we are in client mode just set the value to the maximum we want to
 	 * support and during capability exchange that size will be limited to the
-	 * sizes the server supports */
+	 * sizes the server supports
+	 *
+	 * We have chosen 128 cursors in cache which is at worst 128 * 576kB (384x384 pixel cursor with
+	 * 32bit color depth)
+	 * */
 	if (freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_PointerCacheSize, 25) ||
@@ -501,13 +505,12 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	}
 	else
 	{
-		if (!freerdp_settings_set_uint32(settings, FreeRDP_PointerCacheSize, UINT16_MAX) ||
-		    !freerdp_settings_set_uint32(settings, FreeRDP_ColorPointerCacheSize, UINT16_MAX))
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_PointerCacheSize, 128) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_ColorPointerCacheSize, 128))
 			goto out_fail;
 	}
 
-	if (!freerdp_settings_set_bool(settings, FreeRDP_ColorPointerFlag, TRUE) ||
-	    !freerdp_settings_set_uint32(settings, FreeRDP_LargePointerFlag,
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_LargePointerFlag,
 	                                 (LARGE_POINTER_FLAG_96x96 | LARGE_POINTER_FLAG_384x384)) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_SoundBeepsEnabled, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_DrawGdiPlusEnabled, FALSE) ||
@@ -613,8 +616,10 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_uint32(settings, FreeRDP_RemoteAppNumIconCacheEntries, 12) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_VirtualChannelChunkSize,
 	                                 CHANNEL_CHUNK_LENGTH) ||
+	    /* [MS-RDPBCGR] 2.2.7.2.7 Large Pointer Capability Set (TS_LARGE_POINTER_CAPABILITYSET)
+	       requires at least this size */
 	    !freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
-	                                 (flags & FREERDP_SETTINGS_SERVER_MODE) ? 0 : 0xFFFF) ||
+	                                 (flags & FREERDP_SETTINGS_SERVER_MODE) ? 0 : 608299) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GatewayUseSameCredentials, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GatewayBypassLocal, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, TRUE) ||
