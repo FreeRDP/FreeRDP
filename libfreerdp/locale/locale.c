@@ -685,9 +685,9 @@ static BOOL freerdp_get_system_language_and_country_codes(char* language, size_t
 	}
 #else
 	{
-		int dot;
+		size_t dot;
 		DWORD nSize;
-		int underscore;
+		size_t underscore;
 		char* env_lang = NULL;
 		LPCSTR lang = "LANG";
 		/* LANG = <language>_<country>.<encoding> */
@@ -718,7 +718,7 @@ static BOOL freerdp_get_system_language_and_country_codes(char* language, size_t
 		else
 		{
 			/* Get language code */
-			size_t len = MIN(languageLen - 1, underscore);
+			size_t len = MIN(languageLen - 1u, underscore);
 			strncpy(language, env_lang, len);
 			language[len] = '\0';
 		}

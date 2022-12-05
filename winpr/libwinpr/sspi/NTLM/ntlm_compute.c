@@ -319,7 +319,6 @@ fail:
 
 static int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash)
 {
-	int i;
 	char PasswordHash[32] = { 0 };
 	INT64 PasswordHashLength = 0;
 	SSPI_CREDENTIALS* credentials = NULL;
@@ -333,14 +332,14 @@ static int ntlm_convert_password_hash(NTLM_CONTEXT* context, BYTE* hash)
 	PasswordHashLength = credentials->identity.PasswordLength - SSPI_CREDENTIALS_HASH_LENGTH_OFFSET;
 
 	WINPR_ASSERT(PasswordHashLength >= 0);
-	WINPR_ASSERT(PasswordHashLength < ARRAYSIZE(PasswordHash));
+	WINPR_ASSERT((size_t)PasswordHashLength < ARRAYSIZE(PasswordHash));
 	if (ConvertWCharNToUtf8(credentials->identity.Password, PasswordHashLength, PasswordHash,
 	                        ARRAYSIZE(PasswordHash)) <= 0)
 		return -1;
 
 	CharUpperBuffA(PasswordHash, (DWORD)PasswordHashLength);
 
-	for (i = 0; i < ARRAYSIZE(PasswordHash); i += 2)
+	for (size_t i = 0; i < ARRAYSIZE(PasswordHash); i += 2)
 	{
 		BYTE hn =
 		    (BYTE)(PasswordHash[i] > '9' ? PasswordHash[i] - 'A' + 10 : PasswordHash[i] - '0');

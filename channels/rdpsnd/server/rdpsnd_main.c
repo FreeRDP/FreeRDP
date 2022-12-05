@@ -337,8 +337,8 @@ static UINT rdpsnd_server_initialize(RdpsndServerContext* context, BOOL ownThrea
  */
 static UINT rdpsnd_server_select_format(RdpsndServerContext* context, UINT16 client_format_index)
 {
-	int bs;
-	int out_buffer_size;
+	size_t bs;
+	size_t out_buffer_size;
 	AUDIO_FORMAT* format;
 	UINT error = CHANNEL_RC_OK;
 

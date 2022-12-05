@@ -447,7 +447,7 @@ static BOOL license_check_stream_length(wStream* s, SSIZE_T expect, const char* 
 		WLog_WARN(TAG, "invalid %s, expected value %" PRIdz " invalid", where, expect);
 		return FALSE;
 	}
-	if (remain < expect)
+	if (remain < (size_t)expect)
 	{
 		WLog_WARN(TAG, "short %s, expected %" PRIdz " bytes, got %" PRIuz, where, expect, remain);
 		return FALSE;

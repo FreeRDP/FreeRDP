@@ -380,7 +380,7 @@ SSIZE_T ConvertWCharToUtf8(const WCHAR* wstr, char* str, size_t len)
 	    WideCharToMultiByte(CP_UTF8, 0, wstr, -1, str, (int)MIN(INT32_MAX, len), NULL, NULL);
 	if (rc <= 0)
 		return rc;
-	else if (rc == len)
+	else if ((size_t)rc == len)
 	{
 		if (str && (str[rc - 1] != '\0'))
 			return rc;
@@ -407,15 +407,15 @@ SSIZE_T ConvertWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t le
 	}
 	const int rc = WideCharToMultiByte(CP_UTF8, 0, wstr, (int)iwlen, str, (int)MIN(INT32_MAX, len),
 	                                   NULL, NULL);
-	if ((rc <= 0) || ((len > 0) && (rc > len)))
+	if ((rc <= 0) || ((len > 0) && ((size_t)rc > len)))
 		return -1;
 	else if (!isNullTerminated)
 	{
-		if (str && (rc < len))
+		if (str && ((size_t)rc < len))
 			str[rc] = '\0';
 		return rc;
 	}
-	else if (rc == len)
+	else if ((size_t)rc == len)
 	{
 		if (str && (str[rc - 1] != '\0'))
 			return rc;
