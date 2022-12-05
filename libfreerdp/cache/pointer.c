@@ -301,13 +301,21 @@ BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer*
 	WINPR_ASSERT(pointer_cache->context);
 
 	const UINT32 size = freerdp_settings_get_uint32(pointer_cache->context->settings, id);
-	if ((index >= pointer_cache->cacheSize) || (index >= size))
+	if (index >= pointer_cache->cacheSize)
 	{
 		WLog_ERR(TAG,
 		         "invalid pointer index:%" PRIu32 " [allocated %" PRIu32 ", %s size %" PRIu32 "]",
 		         index, pointer_cache->cacheSize,
 		         colorCache ? "color-pointer-cache" : "pointer-cache", size);
 		return FALSE;
+	}
+	if (index >= size)
+	{
+		WLog_WARN(TAG,
+		          "suspicious pointer index:%" PRIu32 " [allocated %" PRIu32 ", %s size %" PRIu32
+		          "]",
+		          index, pointer_cache->cacheSize,
+		          colorCache ? "color-pointer-cache" : "pointer-cache", size);
 	}
 
 	WINPR_ASSERT(pointer_cache->entries);
