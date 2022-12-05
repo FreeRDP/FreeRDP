@@ -1145,7 +1145,7 @@ UINT synthetic_file_read_close(struct synthetic_file* file, BOOL force)
 	 * so avoid caching to prevent running out of available file descriptors */
 	UINT64 size = 0;
 	file_get_size(file, &size);
-	if ((file->offset >= size) || force)
+	if ((file->offset < 0) || ((UINT64)file->offset >= size) || force)
 	{
 		WLog_VRB(TAG, "close file %d", file->fd);
 		if (CloseHandle(file->fd) < 0)

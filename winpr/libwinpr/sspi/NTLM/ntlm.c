@@ -1203,7 +1203,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
 
 	context = sspi_SecureHandleGetLowerPointer(phContext);
 
-	for (int i = 0; i < pMessage->cBuffers; i++)
+	for (ULONG i = 0; i < pMessage->cBuffers; i++)
 	{
 		if (pMessage->pBuffers[i].BufferType == SECBUFFER_DATA)
 			data_buffer = &pMessage->pBuffers[i];
@@ -1254,7 +1254,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
 
-	for (int i = 0; i < pMessage->cBuffers; i++)
+	for (ULONG i = 0; i < pMessage->cBuffers; i++)
 	{
 		if (pMessage->pBuffers[i].BufferType == SECBUFFER_DATA)
 			data_buffer = &pMessage->pBuffers[i];

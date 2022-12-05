@@ -84,7 +84,7 @@ static BOOL compare_utf16_int(const WCHAR* what, size_t buffersize, SSIZE_T rc, 
 	const size_t welen = _wcsnlen(test->utf16, test->utf16len);
 	if (buffersize > welen)
 	{
-		if (rc != welen)
+		if ((rc < 0) || ((size_t)rc != welen))
 		{
 			fprintf(stderr, "%s length does not match expectation: %" PRIdz " != %" PRIuz "\n",
 			        prefix, rc, welen);
@@ -97,10 +97,10 @@ static BOOL compare_utf16_int(const WCHAR* what, size_t buffersize, SSIZE_T rc, 
 			return FALSE;
 	}
 
-	if ((rc > 0) && (buffersize > rc))
+	if ((rc > 0) && (buffersize > (size_t)rc))
 	{
 		const size_t wlen = _wcsnlen(what, buffersize);
-		if (wlen > rc)
+		if ((rc < 0) || (wlen > (size_t)rc))
 		{
 			fprintf(stderr, "%s length does not match wcslen: %" PRIdz " < %" PRIuz "\n", prefix,
 			        rc, wlen);
@@ -134,7 +134,7 @@ static BOOL compare_utf8_int(const char* what, size_t buffersize, SSIZE_T rc, SS
 	const size_t slen = strnlen(test->utf8, test->utf8len);
 	if (buffersize > slen)
 	{
-		if (rc != slen)
+		if ((rc < 0) || ((size_t)rc != slen))
 		{
 			fprintf(stderr, "%s length does not match expectation: %" PRIdz " != %" PRIuz "\n",
 			        prefix, rc, slen);
@@ -147,10 +147,10 @@ static BOOL compare_utf8_int(const char* what, size_t buffersize, SSIZE_T rc, SS
 			return FALSE;
 	}
 
-	if ((rc > 0) && (buffersize > rc))
+	if ((rc > 0) && (buffersize > (size_t)rc))
 	{
 		const size_t wlen = strnlen(what, buffersize);
-		if (wlen != rc)
+		if (wlen != (size_t)rc)
 		{
 			fprintf(stderr, "%s length does not match strnlen: %" PRIdz " != %" PRIuz "\n", prefix,
 			        rc, wlen);
@@ -177,7 +177,7 @@ static BOOL test_convert_to_utf16(const testcase_t* test)
 
 	const SSIZE_T rc2 = ConvertUtf8ToWChar(test->utf8, NULL, 0);
 	const size_t wlen = _wcsnlen(test->utf16, test->utf16len);
-	if (rc2 != wlen)
+	if ((rc2 < 0) || ((size_t)rc2 != wlen))
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __FUNCTION__, __LINE__);
@@ -204,7 +204,7 @@ static BOOL test_convert_to_utf16_n(const testcase_t* test)
 
 	const SSIZE_T rc2 = ConvertUtf8NToWChar(test->utf8, test->utf8len, NULL, 0);
 	const size_t wlen = _wcsnlen(test->utf16, test->utf16len);
-	if (rc2 != wlen)
+	if ((rc2 < 0) || ((size_t)rc2 != wlen))
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, test->utf8len, test, __FUNCTION__,
@@ -241,7 +241,7 @@ static BOOL test_convert_to_utf8(const testcase_t* test)
 
 	const SSIZE_T rc2 = ConvertWCharToUtf8(test->utf16, NULL, 0);
 	const size_t wlen = strnlen(test->utf8, test->utf8len);
-	if (rc2 != wlen)
+	if ((rc2 < 0) || ((size_t)rc2 != wlen))
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, -1, test, __FUNCTION__, __LINE__);
@@ -269,7 +269,7 @@ static BOOL test_convert_to_utf8_n(const testcase_t* test)
 
 	const SSIZE_T rc2 = ConvertWCharNToUtf8(test->utf16, test->utf16len, NULL, 0);
 	const size_t wlen = strnlen(test->utf8, test->utf8len);
-	if (rc2 != wlen)
+	if ((rc2 < 0) || ((size_t)rc2 != wlen))
 	{
 		char prefix[8192] = { 0 };
 		create_prefix(prefix, ARRAYSIZE(prefix), 0, rc2, test->utf16len, test, __FUNCTION__,

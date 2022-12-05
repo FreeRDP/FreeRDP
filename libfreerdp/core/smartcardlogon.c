@@ -53,15 +53,15 @@ static void delete_file(char* path)
 		if (fp)
 		{
 			const char buffer[8192] = { 0 };
-			INT64 x, size = 0;
+			INT64 size = 0;
 			int rs = _fseeki64(fp, 0, SEEK_END);
 			if (rs == 0)
 				size = _ftelli64(fp);
 			_fseeki64(fp, 0, SEEK_SET);
 
-			for (x = 0; x < size; x += sizeof(buffer))
+			for (INT64 x = 0; x < size; x += sizeof(buffer))
 			{
-				fwrite(buffer, MIN(sizeof(buffer), size - x), 1, fp);
+				fwrite(buffer, MIN(sizeof(buffer), (size_t)size - x), 1, fp);
 			}
 
 			fclose(fp);

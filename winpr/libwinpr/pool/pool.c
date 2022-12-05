@@ -219,7 +219,7 @@ BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 #endif
 	ptpp->Minimum = cthrdMic;
 
-	while (ArrayList_Count(ptpp->Threads) < (INT64)ptpp->Minimum)
+	while (ArrayList_Count(ptpp->Threads) < ptpp->Minimum)
 	{
 		if (!(thread = CreateThread(NULL, 0, thread_pool_work_func, (void*)ptpp, 0, NULL)))
 		{

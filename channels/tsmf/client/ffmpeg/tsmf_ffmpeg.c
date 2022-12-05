@@ -197,7 +197,8 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 			/* The extradata format that FFmpeg uses is following CodecPrivate in Matroska.
 			   See http://haali.su/mkv/codecs.pdf */
 			p = mdecoder->codec_context->extradata;
-			if (mdecoder->codec_context->extradata_size < required)
+			if ((mdecoder->codec_context->extradata_size < 0) ||
+			    ((size_t)mdecoder->codec_context->extradata_size < required))
 				return FALSE;
 			*p++ = 1;                         /* Reserved? */
 			*p++ = media_type->ExtraData[8];  /* Profile */
@@ -208,18 +209,21 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 			s = media_type->ExtraData + 20;
 			size = ((UINT32)(*s)) * 256 + ((UINT32)(*(s + 1)));
 			required += size + 2;
-			if (mdecoder->codec_context->extradata_size < required)
+			if ((mdecoder->codec_context->extradata_size < 0) ||
+			    ((size_t)mdecoder->codec_context->extradata_size < required))
 				return FALSE;
 			memcpy(p, s, size + 2);
 			s += size + 2;
 			p += size + 2;
 			required++;
-			if (mdecoder->codec_context->extradata_size < required)
+			if ((mdecoder->codec_context->extradata_size < 0) ||
+			    ((size_t)mdecoder->codec_context->extradata_size < required))
 				return FALSE;
 			*p++ = 1; /* #pps */
 			size = ((UINT32)(*s)) * 256 + ((UINT32)(*(s + 1)));
 			required += size + 2;
-			if (mdecoder->codec_context->extradata_size < required)
+			if ((mdecoder->codec_context->extradata_size < 0) ||
+			    ((size_t)mdecoder->codec_context->extradata_size < required))
 				return FALSE;
 			memcpy(p, s, size + 2);
 		}
@@ -227,7 +231,9 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 		{
 			memcpy(mdecoder->codec_context->extradata, media_type->ExtraData,
 			       media_type->ExtraDataSize);
-			if (mdecoder->codec_context->extradata_size < media_type->ExtraDataSize + 8)
+			if ((mdecoder->codec_context->extradata_size < 0) ||
+			    ((size_t)mdecoder->codec_context->extradata_size <
+			     media_type->ExtraDataSize + 8ull))
 				return FALSE;
 			memset(mdecoder->codec_context->extradata + media_type->ExtraDataSize, 0, 8);
 		}

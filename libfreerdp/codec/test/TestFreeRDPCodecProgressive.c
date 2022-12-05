@@ -1039,7 +1039,6 @@ static BOOL colordiff(UINT32 format, UINT32 a, UINT32 b)
 
 static BOOL test_encode_decode(const char* path)
 {
-	int x, y;
 	BOOL res = FALSE;
 	int rc;
 	BYTE* resultData = NULL;
@@ -1087,11 +1086,11 @@ static BOOL test_encode_decode(const char* path)
 		dstImage->data = resultData;
 		winpr_image_write(dstImage, "/tmp/test.bmp");
 	}
-	for (y = 0; y < image->height; y++)
+	for (UINT32 y = 0; y < image->height; y++)
 	{
 		const BYTE* orig = &image->data[y * image->scanline];
 		const BYTE* dec = &resultData[y * image->scanline];
-		for (x = 0; x < image->width; x++)
+		for (UINT32 x = 0; x < image->width; x++)
 		{
 			const BYTE* po = &orig[x * 4];
 			const BYTE* pd = &dec[x * 4];

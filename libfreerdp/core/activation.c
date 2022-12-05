@@ -235,10 +235,6 @@ BOOL rdp_send_client_control_pdu(rdpRdp* rdp, UINT16 action)
 
 static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s, RDP_BITMAP_PERSISTENT_INFO* info)
 {
-	int index;
-	UINT32 key1;
-	UINT32 key2;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(info);
 
@@ -263,10 +259,10 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s, RDP_BITMAP_PERS
 	if (!Stream_EnsureRemainingCapacity(s, info->keyCount * 8ull))
 		return FALSE;
 
-	for (index = 0; index < info->keyCount; index++)
+	for (UINT32 index = 0; index < info->keyCount; index++)
 	{
-		key1 = (UINT32)info->keyList[index];
-		key2 = (UINT32)(info->keyList[index] >> 32);
+		const UINT32 key1 = (UINT32)info->keyList[index];
+		const UINT32 key2 = (UINT32)(info->keyList[index] >> 32);
 		Stream_Write_UINT32(s, key1);
 		Stream_Write_UINT32(s, key2);
 	}
