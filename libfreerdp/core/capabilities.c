@@ -1075,12 +1075,6 @@ static BOOL rdp_apply_pointer_capability_set(rdpSettings* settings, const rdpSet
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
 
-	if (!freerdp_settings_get_bool(src, FreeRDP_ColorPointerFlag))
-	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_ColorPointerFlag, FALSE))
-			return FALSE;
-	}
-
 	const UINT32 pointerCacheSize = freerdp_settings_get_uint32(src, FreeRDP_PointerCacheSize);
 	const UINT32 colorPointerCacheSize =
 	    freerdp_settings_get_uint32(src, FreeRDP_ColorPointerCacheSize);
@@ -1121,12 +1115,18 @@ static BOOL rdp_read_pointer_capability_set(wStream* s, rdpSettings* settings)
 	Stream_Read_UINT16(s, colorPointerFlag);      /* colorPointerFlag (2 bytes) */
 	Stream_Read_UINT16(s, colorPointerCacheSize); /* colorPointerCacheSize (2 bytes) */
 
+	if (colorPointerFlag == 0)
+	{
+		WLog_WARN(TAG, "[MS-RDPBCGR] 2.2.7.1.5 Pointer Capability Set "
+		               "(TS_POINTER_CAPABILITYSET)::colorPointerFlag received is %" PRIu16
+		               ". Vaue is ignored and always assumed to be TRUE");
+	}
+
 	/* pointerCacheSize is optional */
 	if (Stream_GetRemainingLength(s) >= 2)
 		Stream_Read_UINT16(s, pointerCacheSize); /* pointerCacheSize (2 bytes) */
 
 	WINPR_ASSERT(settings);
-	settings->ColorPointerFlag = colorPointerFlag;
 	settings->PointerCacheSize = pointerCacheSize;
 	settings->ColorPointerCacheSize = colorPointerCacheSize;
 
@@ -1143,7 +1143,6 @@ static BOOL rdp_read_pointer_capability_set(wStream* s, rdpSettings* settings)
 static BOOL rdp_write_pointer_capability_set(wStream* s, const rdpSettings* settings)
 {
 	size_t header;
-	UINT16 colorPointerFlag;
 
 	if (!Stream_EnsureRemainingCapacity(s, 32))
 		return FALSE;
@@ -1157,7 +1156,9 @@ static BOOL rdp_write_pointer_capability_set(wStream* s, const rdpSettings* sett
 		return FALSE;
 
 	WINPR_ASSERT(settings);
-	colorPointerFlag = (settings->ColorPointerFlag) ? 1 : 0;
+	const UINT32 colorPointerFlag =
+	    1; /* [MS-RDPBCGR] 2.2.7.1.5 Pointer Capability Set (TS_POINTER_CAPABILITYSET)
+	        * colorPointerFlag is ignored and always assumed to be TRUE */
 	Stream_Write_UINT16(s, colorPointerFlag); /* colorPointerFlag (2 bytes) */
 	Stream_Write_UINT16(
 	    s, (UINT16)settings->ColorPointerCacheSize); /* colorPointerCacheSize (2 bytes) */

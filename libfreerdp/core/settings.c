@@ -216,8 +216,7 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 
 	if (status == ERROR_SUCCESS)
 	{
-		settings_reg_query_bool(settings, FreeRDP_ColorPointerFlag, hKey, _T("LargePointer"));
-		settings_reg_query_dword(settings, FreeRDP_LargePointerFlag, hKey, _T("ColorPointer"));
+		settings_reg_query_dword(settings, FreeRDP_LargePointerFlag, hKey, _T("LargePointer"));
 		settings_reg_query_dword(settings, FreeRDP_PointerCacheSize, hKey, _T("PointerCacheSize"));
 		settings_reg_query_dword(settings, FreeRDP_ColorPointerCacheSize, hKey,
 		                         _T("ColorPointerCacheSize"));

@@ -100,9 +100,6 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_CertificateUseKnownHosts:
 			return settings->CertificateUseKnownHosts;
 
-		case FreeRDP_ColorPointerFlag:
-			return settings->ColorPointerFlag;
-
 		case FreeRDP_CompressionEnabled:
 			return settings->CompressionEnabled;
 
@@ -667,10 +664,6 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_CertificateUseKnownHosts:
 			settings->CertificateUseKnownHosts = cnv.c;
-			break;
-
-		case FreeRDP_ColorPointerFlag:
-			settings->ColorPointerFlag = cnv.c;
 			break;
 
 		case FreeRDP_CompressionEnabled:
@@ -1827,7 +1820,7 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 			WLog_ERR(TAG, "[%s] Invalid key index %" PRIuz " [%s|%s]", __FUNCTION__, id,
 			         freerdp_settings_get_name_for_key(id),
 			         freerdp_settings_get_type_name_for_key(id));
-			return 0;
+			return FALSE;
 	}
 }
 
