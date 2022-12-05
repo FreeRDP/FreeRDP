@@ -56,7 +56,6 @@ static const struct settings_str_entry settings_map[] = {
 	  "FreeRDP_CertificateCallbackPreferPEM" },
 	{ FreeRDP_CertificateUseKnownHosts, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_CertificateUseKnownHosts" },
-	{ FreeRDP_ColorPointerFlag, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_ColorPointerFlag" },
 	{ FreeRDP_CompressionEnabled, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_CompressionEnabled" },
 	{ FreeRDP_ConsoleSession, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_ConsoleSession" },
 	{ FreeRDP_CredentialsFromStdin, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_CredentialsFromStdin" },
@@ -657,12 +656,8 @@ BOOL freerdp_settings_print_diff(wLog* log, DWORD level, const rdpSettings* sett
 	size_t x;
 
 	WINPR_ASSERT(log);
-
-	if (!settings || !other)
-	{
-		WLog_Print(log, level, "settings=%p, other=%p", settings, other);
-		return settings != other;
-	}
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(other);
 
 	for (x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
@@ -791,12 +786,7 @@ void freerdp_settings_dump(wLog* log, DWORD level, const rdpSettings* settings)
 	size_t x;
 
 	WINPR_ASSERT(log);
-
-	if (!settings)
-	{
-		WLog_Print(log, level, "settings=NULL");
-		return;
-	}
+	WINPR_ASSERT(settings);
 
 	for (x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
