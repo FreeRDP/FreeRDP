@@ -1064,7 +1064,8 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->RedirectComPorts = (freerdp_settings_get_bool(settings, FreeRDP_RedirectSerialPorts) ||
 	                          freerdp_settings_get_bool(settings, FreeRDP_RedirectParallelPorts));
 	if (!FILE_POPULATE_STRING(&file->DrivesToRedirect, settings, FreeRDP_DrivesToRedirect) ||
-	    !FILE_POPULATE_STRING(&file->PreconnectionBlob, settings, FreeRDP_PreconnectionBlob))
+	    !FILE_POPULATE_STRING(&file->PreconnectionBlob, settings, FreeRDP_PreconnectionBlob) ||
+	    !FILE_POPULATE_STRING(&file->KdcProxyName, settings, FreeRDP_KerberosKdcUrl))
 		return FALSE;
 
 	{
@@ -2122,6 +2123,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		if (!freerdp_settings_set_string(settings, FreeRDP_PreconnectionBlob,
 		                                 file->PreconnectionBlob) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_SendPreconnectionPdu, TRUE))
+			return FALSE;
+	}
+
+	if (~((size_t)file->KdcProxyName))
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_KerberosKdcUrl, file->KdcProxyName))
 			return FALSE;
 	}
 
