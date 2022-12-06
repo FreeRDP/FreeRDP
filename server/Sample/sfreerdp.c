@@ -585,10 +585,21 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 
 	while (1)
 	{
-		WaitForSingleObject(context->event, INFINITE);
+		DWORD status;
+		DWORD nCount = 0;
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 
-		if (WaitForSingleObject(context->stopEvent, 0) == WAIT_OBJECT_0)
-			break;
+		handles[nCount++] = context->event;
+		handles[nCount++] = freerdp_abort_event(&context->_p);
+		handles[nCount++] = context->stopEvent;
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+		switch (status)
+		{
+			case WAIT_OBJECT_0:
+				break;
+			default:
+				goto fail;
+		}
 
 		Stream_SetPosition(s, 0);
 
@@ -611,7 +622,7 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 		Stream_SetPosition(s, BytesReturned);
 		WLog_DBG(TAG, "got %" PRIu32 " bytes", BytesReturned);
 	}
-
+fail:
 	Stream_Free(s, TRUE);
 	return 0;
 }

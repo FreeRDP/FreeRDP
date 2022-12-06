@@ -1353,8 +1353,20 @@ static DWORD WINAPI play_thread(LPVOID arg)
 		int rc;
 		wMessage message;
 		wStream* s;
-		HANDLE handle = MessageQueue_Event(rdpsnd->queue);
-		WaitForSingleObject(handle, INFINITE);
+		DWORD status;
+		DWORD nCount = 0;
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+
+		handles[nCount++] = MessageQueue_Event(rdpsnd->queue);
+		handles[nCount++] = freerdp_abort_event(rdpsnd->rdpcontext);
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
+		switch (status)
+		{
+			case WAIT_OBJECT_0:
+				break;
+			default:
+				return ERROR_TIMEOUT;
+		}
 
 		rc = MessageQueue_Peek(rdpsnd->queue, &message, TRUE);
 		if (rc < 1)
