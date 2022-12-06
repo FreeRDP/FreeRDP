@@ -1058,9 +1058,11 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		file->UsbDevicesToRedirect = redirectUsb;
 
 #endif
-	file->RedirectClipboard = freerdp_settings_get_bool(settings, FreeRDP_RedirectClipboard);
-	file->RedirectPrinters = freerdp_settings_get_bool(settings, FreeRDP_RedirectPrinters);
-	file->RedirectDrives = freerdp_settings_get_bool(settings, FreeRDP_RedirectDrives);
+	file->RedirectClipboard =
+	    freerdp_settings_get_bool(settings, FreeRDP_RedirectClipboard) ? 1 : 0;
+	file->RedirectPrinters = freerdp_settings_get_bool(settings, FreeRDP_RedirectPrinters) ? 1 : 0;
+	file->RedirectDrives = freerdp_settings_get_bool(settings, FreeRDP_RedirectDrives) ? 1 : 0;
+	file->RdgIsKdcProxy = freerdp_settings_get_bool(settings, FreeRDP_KerberosRdgIsProxy) ? 1 : 0;
 	file->RedirectComPorts = (freerdp_settings_get_bool(settings, FreeRDP_RedirectSerialPorts) ||
 	                          freerdp_settings_get_bool(settings, FreeRDP_RedirectParallelPorts));
 	if (!FILE_POPULATE_STRING(&file->DrivesToRedirect, settings, FreeRDP_DrivesToRedirect) ||
@@ -2129,6 +2131,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	if (~((size_t)file->KdcProxyName))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_KerberosKdcUrl, file->KdcProxyName))
+			return FALSE;
+	}
+
+	if (~((size_t)file->RdgIsKdcProxy))
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_KerberosRdgIsProxy,
+		                               file->RdgIsKdcProxy != 0))
 			return FALSE;
 	}
 

@@ -132,6 +132,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_IPv6Enabled, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_IPv6Enabled" },
 	{ FreeRDP_IgnoreCertificate, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_IgnoreCertificate" },
 	{ FreeRDP_JpegCodec, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_JpegCodec" },
+	{ FreeRDP_KerberosRdgIsProxy, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_KerberosRdgIsProxy" },
 	{ FreeRDP_ListMonitors, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_ListMonitors" },
 	{ FreeRDP_LocalConnection, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_LocalConnection" },
 	{ FreeRDP_LogonErrors, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_LogonErrors" },

@@ -289,6 +289,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_JpegCodec:
 			return settings->JpegCodec;
 
+		case FreeRDP_KerberosRdgIsProxy:
+			return settings->KerberosRdgIsProxy;
+
 		case FreeRDP_ListMonitors:
 			return settings->ListMonitors;
 
@@ -916,6 +919,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_JpegCodec:
 			settings->JpegCodec = cnv.c;
+			break;
+
+		case FreeRDP_KerberosRdgIsProxy:
+			settings->KerberosRdgIsProxy = cnv.c;
 			break;
 
 		case FreeRDP_ListMonitors:
