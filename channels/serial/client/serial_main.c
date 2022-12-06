@@ -676,7 +676,6 @@ static void terminate_pending_irp_threads(SERIAL_DEVICE* serial)
 		ULONG_PTR id = ids[i];
 		irpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)id);
 		TerminateThread(irpThread, 0);
-
 		if (WaitForSingleObject(irpThread, INFINITE) == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "WaitForSingleObject failed!");
