@@ -1304,7 +1304,12 @@ static UINT rdpsnd_virtual_channel_event_disconnected(rdpsndPlugin* rdpsnd)
 
 static void _queue_free(void* obj)
 {
-	wStream* s = obj;
+	wMessage* msg = obj;
+	if (!msg)
+		return;
+	if (msg->id != 0)
+		return;
+	wStream* s = msg->wParam;
 	Stream_Release(s);
 }
 
