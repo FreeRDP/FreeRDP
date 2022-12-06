@@ -3899,11 +3899,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 #endif
 		}
 #endif
-		CommandLineSwitchCase(arg, "fast-path")
-		{
-			settings->FastPathInput = enable;
-			settings->FastPathOutput = enable;
-		}
 		CommandLineSwitchCase(arg, "max-fast-path-size")
 		{
 			LONGLONG val;
