@@ -87,6 +87,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_IPv6Enabled,
 	FreeRDP_IgnoreCertificate,
 	FreeRDP_JpegCodec,
+	FreeRDP_KerberosRdgIsProxy,
 	FreeRDP_ListMonitors,
 	FreeRDP_LocalConnection,
 	FreeRDP_LogonErrors,
