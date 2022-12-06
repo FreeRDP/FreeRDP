@@ -50,10 +50,10 @@ static BOOL wf_scale_mouse_event_ex(wfContext* wfc, UINT16 flags, UINT16 buttonM
                                     INT32 y);
 #endif
 
-static BOOL g_flipping_in;
-static BOOL g_flipping_out;
+static BOOL g_flipping_in = FALSE;
+static BOOL g_flipping_out = FALSE;
 
-static BOOL alt_ctrl_down()
+static BOOL alt_ctrl_down(void)
 {
 	return ((GetAsyncKeyState(VK_CONTROL) & 0x8000) || (GetAsyncKeyState(VK_MENU) & 0x8000));
 }
@@ -429,6 +429,10 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					{
 						wfc->wasMaximized = FALSE;
 						wf_send_resize(wfc);
+					}
+					else if (wParam == SIZE_MINIMIZED)
+					{
+						g_focus_hWnd = NULL;
 					}
 				}
 
