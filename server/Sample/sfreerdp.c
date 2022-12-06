@@ -994,10 +994,10 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 {
 	BOOL rc;
 	DWORD error = CHANNEL_RC_OK;
-	HANDLE handles[32] = { 0 };
-	DWORD count;
-	DWORD status;
-	testPeerContext* context;
+	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+	DWORD count = 0;
+	DWORD status = 0;
+	testPeerContext* context = NULL;
 	struct server_info* info;
 	rdpSettings* settings;
 	rdpInput* input;
@@ -1031,17 +1031,13 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDumpReplay, TRUE) ||
 		    !freerdp_settings_set_string(settings, FreeRDP_TransportDumpFile, info->replay_dump))
-		{
-			freerdp_peer_free(client);
-			return 0;
-		}
+			goto fail;
 	}
 	if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, cert) ||
 	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, key))
 	{
 		WLog_ERR(TAG, "Memory allocation failed (strdup)");
-		freerdp_peer_free(client);
-		return 0;
+		goto fail;
 	}
 
 	settings->RdpSecurity = TRUE;
@@ -1054,7 +1050,8 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	settings->RemoteFxCodec = TRUE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32))
-		return FALSE;
+		goto fail;
+
 	settings->SuppressOutput = TRUE;
 	settings->RefreshRect = TRUE;
 
@@ -1080,7 +1077,8 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 
 	WINPR_ASSERT(client->Initialize);
 	rc = client->Initialize(client);
-	WINPR_ASSERT(rc);
+	if (!rc)
+		goto fail;
 
 	context = (testPeerContext*)client->context;
 	WINPR_ASSERT(context);
@@ -1177,6 +1175,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 
 	WINPR_ASSERT(client->Disconnect);
 	client->Disconnect(client);
+fail:
 	freerdp_peer_context_free(client);
 	freerdp_peer_free(client);
 	return error;
