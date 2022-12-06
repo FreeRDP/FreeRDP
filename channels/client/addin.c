@@ -581,7 +581,7 @@ static void free_msg(void* obj)
 {
 	wMessage* msg = (wMessage*)obj;
 
-	if (msg)
+	if (msg && (msg->id == 0))
 	{
 		wStream* s = (wStream*)msg->wParam;
 		Stream_Free(s, TRUE);
