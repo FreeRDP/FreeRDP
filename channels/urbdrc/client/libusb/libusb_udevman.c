@@ -578,8 +578,8 @@ static BOOL device_is_filtered(struct libusb_device* dev,
 	return filtered;
 }
 
-static int hotplug_callback(struct libusb_context* ctx, struct libusb_device* dev,
-                            libusb_hotplug_event event, void* user_data)
+static int LIBUSB_CALL hotplug_callback(struct libusb_context* ctx, struct libusb_device* dev,
+                                        libusb_hotplug_event event, void* user_data)
 {
 	VID_PID_PAIR pair;
 	struct libusb_device_descriptor desc;
