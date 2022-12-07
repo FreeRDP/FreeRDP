@@ -75,7 +75,7 @@ if(UNIX)
         if(NOT "$ENV{PKG_CONFIG_PATH} " STREQUAL " ")
           list(APPEND _KRB5_ROOT_HINTS "$ENV{PKG_CONFIG_PATH}")
         else()
-          message(SEND_ERROR "pkg_search_module failed : try to set PKG_CONFIG_PATH to PREFIX_OF_KERBEROS/lib/pkgconfig")
+          message(WARNING "pkg_search_module failed : try to set PKG_CONFIG_PATH to PREFIX_OF_KERBEROS/lib/pkgconfig")
         endif()
       else()
         if(${KRB_ROOT_FLAVOUR} STREQUAL "Heimdal")
@@ -106,7 +106,8 @@ if(NOT KRB5_FOUND) # not found by pkg-config. Let's take more traditional approa
 
   find_file(_KRB5_CONFIGURE_SCRIPT
       NAMES
-          "krb5-config${_KRB5_CONFIGURE_SCRIPT_SUFFIX}"
+        "krb5-config${_KRB5_CONFIGURE_SCRIPT_SUFFIX}"
+        "krb5-config"
       HINTS
           ${_KRB5_ROOT_HINTS}
       PATH_SUFFIXES
@@ -115,25 +116,32 @@ if(NOT KRB5_FOUND) # not found by pkg-config. Let's take more traditional approa
       NO_CMAKE_ENVIRONMENT_PATH
   )
 
-  # if not found in user-supplied directories, maybe system knows better
-  find_file(_KRB5_CONFIGURE_SCRIPT
-      NAMES
-          "krb5-config${_KRB5_CONFIGURE_SCRIPT_SUFFIX}"
-      PATH_SUFFIXES
-          bin
-  )
+  if (${_KRB5_CONFIGURE_SCRIPT} STREQUAL "_KRB5_CONFIGURE_SCRIPT-NOTFOUND")
+    # if not found in user-supplied directories, maybe system knows better
+    find_file(_KRB5_CONFIGURE_SCRIPT
+        NAMES
+      "krb5-config${_KRB5_CONFIGURE_SCRIPT_SUFFIX}"
+        PATH_SUFFIXES
+      bin
+    )
+  endif()
 
-  execute_process(
-       COMMAND ${_KRB5_CONFIGURE_SCRIPT} "--vendor"
-       OUTPUT_VARIABLE _KRB5_VENDOR
-       RESULT_VARIABLE _KRB5_CONFIGURE_FAILED
-  )
+  if (NOT ${_KRB5_CONFIGURE_SCRIPT} STREQUAL "_KRB5_CONFIGURE_SCRIPT-NOTFOUND")
+    execute_process(
+         COMMAND ${_KRB5_CONFIGURE_SCRIPT} "--vendor"
+         OUTPUT_VARIABLE _KRB5_VENDOR
+         RESULT_VARIABLE _KRB5_CONFIGURE_FAILED
+    )
+  else()
+    set(_KRB5_CONFIGURE_FAILED 1)
+  endif()
 
   if(NOT _KRB5_CONFIGURE_FAILED)
     string(STRIP "${_KRB5_VENDOR}" _KRB5_VENDOR)
     if((KRB5_FLAVOUR STREQUAL "Heimdal" AND NOT _KRB5_VENDOR STREQUAL "Heimdal")
-       OR (KRB5_FLAVOUR STREQUAL "MIT" AND NOT _KRB5_VENDOR STREQUAL "Massachusetts Institute of Technology"))
-      message(SEND_ERROR "Kerberos vendor and Kerberos flavour are not matching : _KRB5_VENDOR=${_KRB5_VENDOR} ; KRB5_FLAVOUR=${KRB5_FLAVOUR}")
+       OR (KRB5_FLAVOUR STREQUAL "MIT" AND NOT _KRB5_VENDOR STREQUAL "Massachusetts Institute of Technology")
+       OR (KRB5_FLAVOUR STREQUAL "MIT" AND NOT _KRB5_VENDOR STREQUAL "Apple MITKerberosShim"))
+      message(WARNING "Kerberos vendor and Kerberos flavour are not matching : _KRB5_VENDOR=${_KRB5_VENDOR} ; KRB5_FLAVOUR=${KRB5_FLAVOUR}")
       message(STATUS "Try to set the path to Kerberos root folder in the system variable KRB_ROOT_DIR")
     endif()
   else()
@@ -165,7 +173,13 @@ if(NOT KRB5_FOUND) # not found by pkg-config. Let's take more traditional approa
       endforeach()
     endif()
 
-    if(_KRB5_VENDOR STREQUAL "Massachusetts Institute of Technology")
+    if(_KRB5_VENDOR STREQUAL "Apple MITKerberosShim")
+      execute_process(
+            COMMAND ${_KRB5_CONFIGURE_SCRIPT} "--libs"
+            OUTPUT_VARIABLE _KRB5_LIB_FLAGS
+            RESULT_VARIABLE _KRB5_CONFIGURE_FAILED
+      )
+    elseif(_KRB5_VENDOR STREQUAL "Massachusetts Institute of Technology")
       execute_process(
             COMMAND ${_KRB5_CONFIGURE_SCRIPT} "--libs"
             OUTPUT_VARIABLE _KRB5_LIB_FLAGS
@@ -178,7 +192,7 @@ if(NOT KRB5_FOUND) # not found by pkg-config. Let's take more traditional approa
             RESULT_VARIABLE _KRB5_CONFIGURE_FAILED
       )
     else()
-      message(SEND_ERROR "Unknown vendor")
+      message(SEND_ERROR "Unknown vendor '${_KRB5_VENDOR}'")
     endif()
 
     if(NOT _KRB5_CONFIGURE_FAILED) # 0 means success
@@ -408,7 +422,7 @@ endif()
 
 include(FindPackageHandleStandardArgs)
 
-set(_KRB5_REQUIRED_VARS KRB5_LIBRARIES KRB5_FLAVOUR)
+set(_KRB5_REQUIRED_VARS KRB5_LIBRARIES KRB5_FLAVOUR KRB5_INCLUDE_DIR)
 
 find_package_handle_standard_args(KRB5
     REQUIRED_VARS
