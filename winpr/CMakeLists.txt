@@ -67,7 +67,7 @@ option(WITH_DEBUG_MUTEX "Print mutex debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_INTERNAL_MD4 "Use compiled in md4 hash functions instead of OpenSSL/MBedTLS" OFF)
 option(WITH_INTERNAL_MD5 "Use compiled in md5 hash functions instead of OpenSSL/MBedTLS" OFF)
 
-if (NOT WIN32 AND NOT ANDROID AND NOT IOS AND NOT APPLE)
+if (NOT WIN32 AND NOT ANDROID AND NOT IOS)
 	option(WITH_KRB5 "Compile support for kerberos authentication. (EXPERIMENTAL)" OFF)
 	if (WITH_KRB5)
 		find_package(KRB5 REQUIRED)
