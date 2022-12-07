@@ -78,7 +78,7 @@ if(UNIX)
           message(WARNING "pkg_search_module failed : try to set PKG_CONFIG_PATH to PREFIX_OF_KERBEROS/lib/pkgconfig")
         endif()
       else()
-        if(${KRB_ROOT_FLAVOUR} STREQUAL "Heimdal")
+        if("${KRB_ROOT_FLAVOUR}" STREQUAL "Heimdal")
           string(FIND "${_KRB5_PKG_PREFIX}" "heimdal" PKG_HEIMDAL_PREFIX_POSITION)
           if(PKG_HEIMDAL_PREFIX_POSITION STREQUAL "-1")
             message(WARNING "Try to set PKG_CONFIG_PATH to \"PREFIX_OF_KERBEROS/lib/pkgconfig\"")
@@ -138,9 +138,9 @@ if(NOT KRB5_FOUND) # not found by pkg-config. Let's take more traditional approa
 
   if(NOT _KRB5_CONFIGURE_FAILED)
     string(STRIP "${_KRB5_VENDOR}" _KRB5_VENDOR)
-    if((KRB5_FLAVOUR STREQUAL "Heimdal" AND NOT _KRB5_VENDOR STREQUAL "Heimdal")
-       OR (KRB5_FLAVOUR STREQUAL "MIT" AND NOT _KRB5_VENDOR STREQUAL "Massachusetts Institute of Technology")
-       OR (KRB5_FLAVOUR STREQUAL "MIT" AND NOT _KRB5_VENDOR STREQUAL "Apple MITKerberosShim"))
+    if(   (KRB5_FLAVOUR STREQUAL "Heimdal" AND NOT _KRB5_VENDOR STREQUAL "Heimdal")
+       OR (KRB5_FLAVOUR STREQUAL "MIT" AND NOT _KRB5_VENDOR STREQUAL "Apple MITKerberosShim")
+       OR (KRB5_FLAVOUR STREQUAL "MIT" AND NOT _KRB5_VENDOR STREQUAL "Massachusetts Institute of Technology"))
       message(WARNING "Kerberos vendor and Kerberos flavour are not matching : _KRB5_VENDOR=${_KRB5_VENDOR} ; KRB5_FLAVOUR=${KRB5_FLAVOUR}")
       message(STATUS "Try to set the path to Kerberos root folder in the system variable KRB_ROOT_DIR")
     endif()
@@ -422,7 +422,7 @@ endif()
 
 include(FindPackageHandleStandardArgs)
 
-set(_KRB5_REQUIRED_VARS KRB5_LIBRARIES KRB5_FLAVOUR KRB5_INCLUDE_DIR)
+set(_KRB5_REQUIRED_VARS KRB5_LIBRARIES KRB5_FLAVOUR)
 
 find_package_handle_standard_args(KRB5
     REQUIRED_VARS
