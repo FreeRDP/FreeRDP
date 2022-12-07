@@ -23,8 +23,12 @@ include(CheckIncludeFiles)
 include(CheckTypeSize)
 
 # export KRB_ROOT_FLAVOUR to use pkg-config system under UNIX
+if (NOT KRB_ROOT_FLAVOUR)
+	set(KRB_ROOT_FLAVOUR $ENV{KRB_ROOT_FLAVOUR})
+endif()
+
 if(UNIX)
-  if(NOT "$ENV{KRB_ROOT_FLAVOUR} " STREQUAL " ")
+  if(NOT "${KRB_ROOT_FLAVOUR} " STREQUAL " ")
     string(REGEX MATCH "^[M|m]it$" MIT_FLAVOUR "$ENV{KRB_ROOT_FLAVOUR}")
     if(NOT MIT_FLAVOUR)
       string(REGEX MATCH "^MIT$" MIT_FLAVOUR "$ENV{KRB_ROOT_FLAVOUR}")
