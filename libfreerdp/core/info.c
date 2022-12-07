@@ -505,10 +505,12 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 		/* skip reserved1 and reserved2 fields */
 		Stream_Seek(s, 4);
 
-		size_t rlen = strnlen(settings->DynamicDSTTimeZoneKeyName, 254);
+		size_t rlen = 0;
+		const char* tz = freerdp_settings_get_string(settings, FreeRDP_DynamicDSTTimeZoneKeyName);
+		if (tz)
+			rlen = strnlen(tz, 254);
 		Stream_Write_UINT16(s, (UINT16)rlen);
-		if (Stream_Write_UTF16_String_From_UTF8(
-		        s, rlen / sizeof(WCHAR), settings->DynamicDSTTimeZoneKeyName, rlen, FALSE) < 0)
+		if (Stream_Write_UTF16_String_From_UTF8(s, rlen / sizeof(WCHAR), tz, rlen, FALSE) < 0)
 			goto fail;
 		Stream_Write_UINT16(s, settings->DynamicDaylightTimeDisabled ? 0x01 : 0x00);
 	}
