@@ -25,7 +25,7 @@
 #include <winpr/sspi.h>
 #include <winpr/asn1.h>
 
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 #include <krb5/krb5.h>
 typedef krb5_data sspi_gss_data;
 #else
