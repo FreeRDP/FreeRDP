@@ -12,6 +12,7 @@ DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
                           -DWITH_PULSE=ON \
                           -DWITH_CHANNELS=ON \
                           -DWITH_CUPS=ON \
+                          -DWITH_KRB5=ON \
                           -DWITH_PCSC=ON \
                           -DWITH_FFMPEG=ON \
                           -DWITH_DSP_FFMPEG=ON \
