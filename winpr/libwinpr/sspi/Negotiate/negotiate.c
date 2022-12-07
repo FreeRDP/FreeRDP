@@ -296,7 +296,7 @@ static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm)
 	WINPR_ASSERT(kerberos);
 	WINPR_ASSERT(ntlm);
 
-#if !defined(WITH_GSS_NO_NTLM_FALLBACK)
+#if !defined(WITH_KRB5_NO_NTLM_FALLBACK)
 	*ntlm = TRUE;
 #else
 	*ntlm = FALSE;
@@ -316,7 +316,7 @@ static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm)
 		if (negotiate_get_dword(hKey, "kerberos", &dwValue))
 			*kerberos = (dwValue != 0) ? TRUE : FALSE;
 
-#if !defined(WITH_GSS_NO_NTLM_FALLBACK)
+#if !defined(WITH_KRB5_NO_NTLM_FALLBACK)
 		if (negotiate_get_dword(hKey, "ntlm", &dwValue))
 			*ntlm = (dwValue != 0) ? TRUE : FALSE;
 #endif

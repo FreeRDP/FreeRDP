@@ -87,9 +87,9 @@ if (NOT WIN32 AND NOT ANDROID AND NOT IOS)
 	endif()
 
 	include(CMakeDependentOption)
-	CMAKE_DEPENDENT_OPTION(WITH_GSS_NO_NTLM_FALLBACK "Do not fall back to NTLM if no kerberos ticket available" OFF "WITH_KRB5" OFF)
-	if (WITH_GSS_NO_NTLM_FALLBACK)
-		add_definitions("-DWITH_GSS_NO_NTLM_FALLBACK")
+	CMAKE_DEPENDENT_OPTION(WITH_KRB5_NO_NTLM_FALLBACK "Do not fall back to NTLM if no kerberos ticket available" OFF "WITH_KRB5" OFF)
+	if (WITH_KRB5_NO_NTLM_FALLBACK)
+		add_definitions("-DWITH_KRB5_NO_NTLM_FALLBACK")
 	endif()
 endif()
 
