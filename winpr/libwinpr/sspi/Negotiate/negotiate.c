@@ -680,9 +680,6 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 				}
 
 				init_context.mech = cred->mech;
-#ifndef WITH_SPNEGO
-				break;
-#endif
 			}
 
 			if (!WinPrAsn1EncOID(enc, cred->mech->oid))
@@ -694,7 +691,6 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		if (!init_context.mech)
 			goto cleanup;
 
-#ifdef WITH_SPNEGO
 		/* If the only available mech is NTLM use it directly otherwise use spnego */
 		if (init_context.mech->oid == &ntlm_OID)
 		{
@@ -708,10 +704,6 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			init_context.mechTypes.BufferType = SECBUFFER_DATA;
 			init_context.mechTypes.cbBuffer = WinPrAsn1EncEndContainer(enc);
 		}
-#else
-		init_context.spnego = FALSE;
-		output_buffer->cbBuffer = output_token.mechToken.cbBuffer;
-#endif
 
 		/* Allocate memory for the new context */
 		context = negotiate_ContextNew(&init_context);

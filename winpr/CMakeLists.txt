@@ -83,7 +83,6 @@ elseif(WITH_GSSAPI)
 		message(WARNING "Kerberos version not detected")
 	endif()
 endif()
-option(WITH_SPNEGO "Use SPNEGO negotiation" OFF)
 
 # This option MUST be off to avoid symbol conflicts when loading an external SSPI module library
 option(SSPI_DLL "Define and export SSPI API symbols for usage as a Windows SSPI DLL replacement" OFF)

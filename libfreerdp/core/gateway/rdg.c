@@ -43,11 +43,7 @@
 
 #define TAG FREERDP_TAG("core.gateway.rdg")
 
-#if defined(_WIN32) || defined(WITH_SPNEGO)
 #define AUTH_PKG NEGO_SSP_NAME
-#else
-#define AUTH_PKG NTLM_SSP_NAME
-#endif
 
 /* HTTP channel response fields present flags. */
 #define HTTP_CHANNEL_RESPONSE_FIELD_CHANNELID 0x1
