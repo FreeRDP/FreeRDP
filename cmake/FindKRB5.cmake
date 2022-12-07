@@ -24,37 +24,45 @@ include(CheckTypeSize)
 
 # export KRB_ROOT_FLAVOUR to use pkg-config system under UNIX
 if (NOT KRB_ROOT_FLAVOUR)
-	set(KRB_ROOT_FLAVOUR $ENV{KRB_ROOT_FLAVOUR})
+  set(KRB_ROOT_FLAVOUR $ENV{KRB_ROOT_FLAVOUR})
+endif()
+
+if (NOT KRB_ROOT_DIR)
+  set(KRB_ROOT_DIR $ENV{KRB_ROOT_DIR})
 endif()
 
 if(UNIX)
   if(NOT "${KRB_ROOT_FLAVOUR} " STREQUAL " ")
-    string(REGEX MATCH "^[M|m]it$" MIT_FLAVOUR "$ENV{KRB_ROOT_FLAVOUR}")
+    string(REGEX MATCH "^[M|m]it$" MIT_FLAVOUR "${KRB_ROOT_FLAVOUR}")
     if(NOT MIT_FLAVOUR)
-      string(REGEX MATCH "^MIT$" MIT_FLAVOUR "$ENV{KRB_ROOT_FLAVOUR}")
+      string(REGEX MATCH "^MIT$" MIT_FLAVOUR "${KRB_ROOT_FLAVOUR}")
     endif()
-    string(REGEX MATCH "^[H|h]eimdal$" HEIMDAL_FLAVOUR "$ENV{KRB_ROOT_FLAVOUR}")
+    string(REGEX MATCH "^[H|h]eimdal$" HEIMDAL_FLAVOUR "${KRB_ROOT_FLAVOUR}")
     if(NOT HEIMDAL_FLAVOUR)
-      string(REGEX MATCH "^HEIMDAL$" HEIMDAL_FLAVOUR "$ENV{KRB_ROOT_FLAVOUR}")
+      string(REGEX MATCH "^HEIMDAL$" HEIMDAL_FLAVOUR "${KRB_ROOT_FLAVOUR}")
     endif()
     if(MIT_FLAVOUR)
       set(KRB5_FLAVOUR "MIT")
     elseif(HEIMDAL_FLAVOUR)
       set(KRB5_FLAVOUR "Heimdal")
     else()
-      message(SEND_ERROR "Kerberos flavour unknown ($ENV{KRB_ROOT_FLAVOUR}). Choose MIT or Heimdal.")
+      message(SEND_ERROR "Kerberos flavour unknown (${KRB_ROOT_FLAVOUR}). Choose MIT or Heimdal.")
     endif()
   endif()
 endif()
 
 set(_KRB5_ROOT_HINTS
     "${KRB_ROOT_DIR}"
-    "$ENV{KRB_ROOT_DIR}"
 )
 
 # try to find library using system pkg-config if user did not specify root dir
 if(UNIX)
-  if("$ENV{KRB_ROOT_DIR} " STREQUAL " ")
+  if("${KRB_ROOT_DIR} " STREQUAL " ")
+    if (NOT KRB5_FLAVOUR)
+      message("KRB5_FLAVOUR not defined, defaulting to MIT")
+      set(KRB5_FLAVOUR "MIT")
+    endif()
+
     if(KRB5_FLAVOUR)
       find_package(PkgConfig QUIET)
       if(KRB5_FLAVOUR STREQUAL "MIT")
@@ -70,7 +78,7 @@ if(UNIX)
           message(SEND_ERROR "pkg_search_module failed : try to set PKG_CONFIG_PATH to PREFIX_OF_KERBEROS/lib/pkgconfig")
         endif()
       else()
-        if($ENV{KRB_ROOT_FLAVOUR} STREQUAL "Heimdal")
+        if(${KRB_ROOT_FLAVOUR} STREQUAL "Heimdal")
           string(FIND "${_KRB5_PKG_PREFIX}" "heimdal" PKG_HEIMDAL_PREFIX_POSITION)
           if(PKG_HEIMDAL_PREFIX_POSITION STREQUAL "-1")
             message(WARNING "Try to set PKG_CONFIG_PATH to \"PREFIX_OF_KERBEROS/lib/pkgconfig\"")
@@ -235,7 +243,7 @@ if(NOT KRB5_FOUND) # not found by pkg-config. Let's take more traditional approa
                    ${_KRB5_ROOT_HINTS}
                PATHS
                    /usr/heimdal
-		               /usr/local/heimdal
+                   /usr/local/heimdal
                PATH_SUFFIXES
                    include
                    inc
@@ -323,7 +331,7 @@ if(NOT KRB5_FOUND) # not found by pkg-config. Let's take more traditional approa
 
       if(KRB5_FLAVOUR STREQUAL "Heimdal")
         find_library(_KRB5_LIBRARY
-	                  NAMES
+                    NAMES
                         ${_KRB5_LIBNAME}
                     HINTS
                         ${_KRB5_LIBDIR_HINTS}
