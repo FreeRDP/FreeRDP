@@ -41,7 +41,7 @@
 
 #include "kerberos.h"
 
-#ifdef WITH_GSSAPI_HEIMDAL
+#ifdef WITH_KRB5_HEIMDAL
 #include <krb5-protos.h>
 #endif
 
@@ -76,7 +76,7 @@ const SecPkgInfoW KERBEROS_SecPkgInfoW = {
 	KERBEROS_SecPkgInfoW_Comment /* Comment */
 };
 
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 
 enum KERBEROS_STATE
 {
@@ -188,14 +188,14 @@ static INLINE void kerberos_set_krb_opts(krb5_context ctx, krb5_get_init_creds_o
 		                               krb_settings->pkinitX509Anchors);
 }
 
-#endif /* WITH_GSSAPI */
+#endif /* WITH_KRB5 */
 
 static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
     SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage, ULONG fCredentialUse, void* pvLogonID,
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 	SEC_WINPR_KERBEROS_SETTINGS* krb_settings = NULL;
 	KRB_CREDENTIALS* credentials = NULL;
 	krb5_error_code rv = 0;
@@ -310,7 +310,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 			kerberos_set_krb_opts(ctx, gic_opt, krb_settings);
 		}
 
-#ifdef WITH_GSSAPI_MIT
+#ifdef WITH_KRB5_MIT
 		krb5_get_init_creds_opt_set_out_ccache(ctx, gic_opt, ccache);
 		krb5_get_init_creds_opt_set_in_ccache(ctx, gic_opt, ccache);
 #endif
@@ -322,7 +322,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 		if ((rv = krb5_init_creds_get(ctx, creds_ctx)))
 			goto cleanup;
 
-#ifdef WITH_GSSAPI_HEIMDAL
+#ifdef WITH_KRB5_HEIMDAL
 		{
 			krb5_creds creds;
 			if ((rv = krb5_init_creds_get_creds(ctx, creds_ctx, &creds)))
@@ -412,7 +412,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(
 
 static SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCredential)
 {
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 	KRB_CREDENTIALS* credentials;
 	krb5_context ctx;
 
@@ -445,7 +445,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesW(PCredHandl
                                                                       ULONG ulAttribute,
                                                                       void* pBuffer)
 {
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 	if (ulAttribute == SECPKG_CRED_ATTR_NAMES)
 	{
 		return SEC_E_OK;
@@ -465,7 +465,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesA(PCredHandl
 	return kerberos_QueryCredentialsAttributesW(phCredential, ulAttribute, pBuffer);
 }
 
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 
 static BOOL kerberos_mk_tgt_token(SecBuffer* buf, int msg_type, char* sname, char* host,
                                   const krb5_data* ticket)
@@ -662,7 +662,7 @@ fail:
 	return FALSE;
 }
 
-#endif /* WITH_GSSAPI */
+#endif /* WITH_KRB5 */
 
 static BOOL kerberos_hash_channel_bindings(WINPR_DIGEST_CTX* md5, SEC_CHANNEL_BINDINGS* bindings)
 {
@@ -711,7 +711,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, ULONG* pfContextAttr, PTimeStamp ptsExpiry)
 {
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 	KRB_CREDENTIALS* credentials;
 	KRB_CONTEXT* context;
 	KRB_CONTEXT new_context = { 0 };
@@ -1004,7 +1004,7 @@ bad_token:
 	goto cleanup;
 #else
 	return SEC_E_UNSUPPORTED_FUNCTION;
-#endif /* WITH_GSSAPI */
+#endif /* WITH_KRB5 */
 }
 
 static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(
@@ -1037,7 +1037,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
     ULONG TargetDataRep, PCtxtHandle phNewContext, PSecBufferDesc pOutput, ULONG* pfContextAttr,
     PTimeStamp ptsExpity)
 {
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 	KRB_CREDENTIALS* credentials;
 	KRB_CONTEXT* context;
 	KRB_CONTEXT new_context = { 0 };
@@ -1251,7 +1251,7 @@ bad_token:
 	goto cleanup;
 #else
 	return SEC_E_UNSUPPORTED_FUNCTION;
-#endif /* WITH_GSSAPI */
+#endif /* WITH_KRB5 */
 }
 
 static KRB_CONTEXT* get_context(PCtxtHandle phContext)
@@ -1267,7 +1267,7 @@ static KRB_CONTEXT* get_context(PCtxtHandle phContext)
 
 static SECURITY_STATUS SEC_ENTRY kerberos_DeleteSecurityContext(PCtxtHandle phContext)
 {
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
@@ -1283,7 +1283,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DeleteSecurityContext(PCtxtHandle phCo
 static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle phContext,
                                                                   ULONG ulAttribute, void* pBuffer)
 {
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
 
@@ -1370,7 +1370,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(PCredHandle 
                                                                     void* pBuffer, ULONG cbBuffer,
                                                                     BOOL unicode)
 {
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 	KRB_CREDENTIALS* credentials;
 
 	if (!phCredential)
@@ -1443,7 +1443,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
                                                          PSecBufferDesc pMessage,
                                                          ULONG MessageSeqNo)
 {
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
 	PSecBuffer sig_buffer, data_buffer;
 	char* header;
@@ -1533,7 +1533,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
                                                          PSecBufferDesc pMessage,
                                                          ULONG MessageSeqNo, ULONG* pfQOP)
 {
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
 	PSecBuffer sig_buffer, data_buffer;
 	krb5_key key;
@@ -1636,7 +1636,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
                                                         PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
 	PSecBuffer sig_buffer, data_buffer;
 	krb5_key key;
@@ -1711,7 +1711,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
                                                           PSecBufferDesc pMessage,
                                                           ULONG MessageSeqNo, ULONG* pfQOP)
 {
-#ifdef WITH_GSSAPI
+#ifdef WITH_KRB5
 	PSecBuffer sig_buffer, data_buffer;
 	krb5_key key;
 	krb5_keyusage usage;

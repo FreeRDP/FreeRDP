@@ -123,7 +123,7 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
 %if 0%{?fedora} < 21 || 0%{?rhel} < 8
         -DWITH_WAYLAND=OFF \
 %endif
-        -DWITH_GSSAPI=OFF \
+        -DWITH_KRB5=OFF \
         -DCHANNEL_URBDRC=ON \
         -DCHANNEL_URBDRC_CLIENT=ON \
         -DWITH_SERVER=ON \

@@ -72,9 +72,9 @@ if(MBEDTLS_FOUND)
 	winpr_library_add_private(${MBEDTLS_LIBRARIES})
 endif()
 
-if(GSS_FOUND)
-	winpr_include_directory_add(${GSS_INCLUDE_DIR})
-	winpr_library_add_private(${GSS_LIBRARIES})
+if(KRB5_FOUND)
+	winpr_include_directory_add(${KRB5_INCLUDE_DIR})
+	winpr_library_add_private(${KRB5_LIBRARIES})
 endif()
 
 if(WIN32)

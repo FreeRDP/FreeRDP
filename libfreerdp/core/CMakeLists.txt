@@ -21,7 +21,7 @@ set(MODULE_PREFIX "FREERDP_CORE")
 freerdp_definition_add(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
 
 freerdp_include_directory_add(${OPENSSL_INCLUDE_DIR})
-freerdp_include_directory_add(${GSS_INCLUDE_DIR})
+freerdp_include_directory_add(${KRB5_INCLUDE_DIR})
 
 set(${MODULE_PREFIX}_GATEWAY_DIR "gateway")
 
