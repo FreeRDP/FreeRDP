@@ -1177,6 +1177,9 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	computerNameLenW *= sizeof(WCHAR);
 	WINPR_ASSERT(computerNameLenW >= 0);
 
+	if (computerNameLenW > 0)
+		computerNameLenW += sizeof(WCHAR); // also write '\0'
+
 	s = StreamPool_Take(rdpdr->pool, 16U + computerNameLenW);
 
 	if (!s)
