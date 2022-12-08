@@ -38,8 +38,13 @@
 #include <winpr/registry.h>
 #include <winpr/endian.h>
 #include <winpr/crypto.h>
+#include <winpr/path.h>
 
 #include "kerberos.h"
+
+#ifdef WITH_KRB5_MIT
+#include <profile.h>
+#endif
 
 #ifdef WITH_KRB5_HEIMDAL
 #include <krb5-protos.h>
@@ -188,6 +193,19 @@ static INLINE void kerberos_set_krb_opts(krb5_context ctx, krb5_get_init_creds_o
 		                               krb_settings->pkinitX509Anchors);
 }
 
+static char* create_temporary_file(void)
+{
+	BYTE buffer[32];
+	char* hex;
+	char* path;
+
+	winpr_RAND(buffer, sizeof(buffer));
+	hex = winpr_BinToHexString(buffer, sizeof(buffer), FALSE);
+	path = GetKnownSubPath(KNOWN_PATH_TEMP, hex);
+	free(hex);
+	return path;
+}
+
 #endif /* WITH_KRB5 */
 
 static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
@@ -210,6 +228,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	char* username = NULL;
 	char* password = NULL;
 	const char* fallback_ccache = "MEMORY:";
+#ifdef WITH_KRB5_MIT
+	char* tmp_profile_path = create_temporary_file();
+	profile_t profile = NULL;
+#endif
 
 	if (pAuthData)
 	{
@@ -297,6 +319,48 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	/* Get initial credentials if required */
 	if (fCredentialUse & SECPKG_CRED_OUTBOUND)
 	{
+		if (krb_settings && krb_settings->kdcUrl)
+		{
+#ifdef WITH_KRB5_MIT
+			const char *names[4] = { 0 };
+			char *realm = NULL;
+
+			if ((rv = krb5_get_profile(ctx, &profile)))
+				goto cleanup;
+
+			names[0] = "realms";
+			realm = calloc(principal->realm.length + 1, 1);
+			if (!realm)
+			{
+				rv = ENOMEM;
+				goto cleanup;
+			}
+			CopyMemory(realm, principal->realm.data, principal->realm.length);
+			names[1] = realm;
+			names[2] = "kdc";
+
+			profile_clear_relation(profile, names);
+			profile_add_relation(profile, names, krb_settings->kdcUrl);
+
+			free(realm);
+
+			if ((rv = profile_flush_to_file(profile, tmp_profile_path)))
+				goto cleanup;
+
+			profile_release(profile);
+			profile = NULL;
+			if ((rv = profile_init_path(tmp_profile_path, &profile)))
+				goto cleanup;
+
+			krb5_free_context(ctx);
+			ctx = NULL;
+			if ((rv = krb5_init_context_profile(profile, 0, &ctx)))
+				goto cleanup;
+#else
+			
+#endif
+		}
+
 		if ((rv = krb5_get_init_creds_opt_alloc(ctx, &gic_opt)))
 			goto cleanup;
 
@@ -367,6 +431,11 @@ cleanup:
 		}
 		krb5_free_context(ctx);
 	}
+
+#ifdef WITH_KRB5_MIT
+	winpr_DeleteFile(tmp_profile_path);
+	free(tmp_profile_path);
+#endif
 
 	/* If we managed to get credentials set the output */
 	if (credentials)
