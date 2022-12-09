@@ -52,7 +52,7 @@ steps:
   inputs:
     command: 'test'
     configuration: 'Release'
-    arguments: '--no-build'
+    arguments: '--no-build --configuration Release'
     projects: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.Tests\UiPath.FreeRdp.Tests.csproj'
 
 - task: MSBuild@1
@@ -78,7 +78,7 @@ steps:
   inputs:
     command: 'test'
     configuration: 'Release'
-    arguments: '--no-build /p:UseNugetRef=true'
+    arguments: '--no-build --configuration Release /p:UseNugetRef=true'
     projects: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.Tests\UiPath.FreeRdp.Tests.csproj'
 
 - task: NuGetCommand@2
@@ -87,3 +87,17 @@ steps:
     command: push
     packagesToPush: 'Output\nugets\UiPath.FreeRdpClient.*.nupkg'
     publishVstsFeed: '5b98d55c-1b14-4a03-893f-7a59746f1246/788028a9-5a01-48ee-b925-3af51ae46294'
+
+- task: PublishPipelineArtifact@1
+  name: publishFreeRDPOnly
+  inputs:
+    targetPath: '.' 
+    artifactName: 'freeRdpOnly' 
+    parallel: true
+
+- task: PublishPipelineArtifact@1
+  name: publishOpenSSL
+  inputs:
+    targetPath: '..\OpenSSL-VC-64' 
+    artifactName: 'openSSL' 
+    parallel: true
