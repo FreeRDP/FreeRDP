@@ -1738,14 +1738,14 @@ extern "C"
 	 */
 	FREERDP_API rdpSettings* freerdp_settings_clone(const rdpSettings* settings);
 
-	/** \brief Deep copies settings from \b src to \dst
+	/** \brief Deep copies settings from \b src to \b dst
 	 *
-	 * The function frees up all allocated data in \b dst before copying the data from \src
+	 * The function frees up all allocated data in \b dst before copying the data from \b src
 	 *
 	 * \param dst A pointer for the settings to copy data to. May be NULL (fails copy)
 	 * \param src A pointer to the settings to copy. May be NULL (fails copy)
 	 *
-	 *  \return TRUE for success, \b FALSE for failure.
+	 *  \return \b TRUE for success, \b FALSE for failure.
 	 */
 	FREERDP_API BOOL freerdp_settings_copy(rdpSettings* dst, const rdpSettings* src);
 

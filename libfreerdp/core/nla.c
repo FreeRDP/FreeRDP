@@ -404,11 +404,6 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	return TRUE;
 }
 
-/**
- * Initialize NTLM/Kerberos SSP authentication module (client).
- * @param credssp
- */
-
 static int nla_client_init(rdpNla* nla)
 {
 	rdpTls* tls = NULL;
@@ -626,7 +621,6 @@ fail:
 
 /**
  * Initialize NTLMSSP authentication module (server).
- * @param credssp
  */
 
 static int nla_server_init(rdpNla* nla)
@@ -698,7 +692,8 @@ static BOOL nla_server_recv_credentials(rdpNla* nla)
 
 /**
  * Authenticate with client using CredSSP (server).
- * @param credssp
+ * @param nla The NLA instance to use
+ *
  * @return 1 if authentication is successful
  */
 
@@ -839,7 +834,8 @@ static int nla_server_authenticate(rdpNla* nla)
 
 /**
  * Authenticate using CredSSP.
- * @param credssp
+ * @param nla The NLA instance to use
+ *
  * @return 1 if authentication is successful
  */
 
@@ -1116,7 +1112,9 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 
 /**
  * Encode TSCredentials structure.
- * @param credssp
+ * @param nla A pointer to the NLA to use
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 static BOOL nla_encode_ts_credentials(rdpNla* nla)
@@ -1302,7 +1300,10 @@ static BOOL nla_decrypt_ts_credentials(rdpNla* nla)
 
 /**
  * Send CredSSP message.
- * @param credssp
+ *
+ * @param nla A pointer to the NLA to use
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL nla_send(rdpNla* nla)
@@ -1608,7 +1609,10 @@ fail:
 
 /**
  * Create new CredSSP state machine.
- * @param transport
+ *
+ * @param context A pointer to the rdp context to use
+ * @param transport A pointer to the transport to use
+ *
  * @return new CredSSP state machine.
  */
 
@@ -1659,7 +1663,7 @@ cleanup:
 
 /**
  * Free CredSSP state machine.
- * @param credssp
+ * @param nla The NLA instance to free
  */
 
 void nla_free(rdpNla* nla)

@@ -2453,11 +2453,12 @@ BOOL tsg_disconnect(rdpTsg* tsg)
 }
 
 /**
- * @brief
+ * @brief Read data from TSG
  *
- * @param[in] tsg
- * @param[in] data
- * @param[in] length
+ * @param[in] tsg The TSG instance to read from
+ * @param[in] data A pointer to the data buffer
+ * @param[in] length length of data
+ *
  * @return < 0 on error; 0 if not enough data is available (non blocking mode); > 0 bytes to read
  */
 

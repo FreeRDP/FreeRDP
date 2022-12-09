@@ -1,4 +1,4 @@
-/**
+/*
  * FreeRDP: A Remote Desktop Protocol Implementation
  * GDI Drawing Functions
  *
@@ -34,9 +34,11 @@
 #include "drawing.h"
 
 /**
- * Set current foreground draw mode.\n
- * @msdn{dd144922}
+ * @brief Set current foreground draw mode.
+ * msdn{dd144922}
+ *
  * @param hdc device context
+ *
  * @return draw mode
  */
 
@@ -46,10 +48,12 @@ INT32 gdi_GetROP2(HGDI_DC hdc)
 }
 
 /**
- * Set current foreground draw mode.\n
- * @msdn{dd145088}
+ * @brief Set current foreground draw mode.
+ * msdn{dd145088}
+ *
  * @param hdc device context
  * @param fnDrawMode draw mode
+ *
  * @return previous draw mode
  */
 
@@ -64,9 +68,11 @@ INT32 gdi_SetROP2(HGDI_DC hdc, INT32 fnDrawMode)
 }
 
 /**
- * Get the current background color.\n
- * @msdn{dd144852}
+ * @brief Get the current background color.
+ * msdn{dd144852}
+ *
  * @param hdc device context
+ *
  * @return background color
  */
 
@@ -76,10 +82,12 @@ UINT32 gdi_GetBkColor(HGDI_DC hdc)
 }
 
 /**
- * Set the current background color.\n
- * @msdn{dd162964}
+ * @brief Set the current background color.\n
+ * msdn{dd162964}
+ *
  * @param hdc device color
  * @param crColor new background color
+ *
  * @return previous background color
  */
 
@@ -91,9 +99,11 @@ UINT32 gdi_SetBkColor(HGDI_DC hdc, UINT32 crColor)
 }
 
 /**
- * Get the current background mode.\n
- * @msdn{dd144853}
+ * @brief Get the current background mode.\n
+ * msdn{dd144853}
+ *
  * @param hdc device context
+ *
  * @return background mode
  */
 
@@ -103,10 +113,12 @@ UINT32 gdi_GetBkMode(HGDI_DC hdc)
 }
 
 /**
- * Set the current background mode.\n
- * @msdn{dd162965}
+ * @brief Set the current background mode.\n
+ * msdn{dd162965}
+ *
  * @param hdc device context
  * @param iBkMode background mode
+ *
  * @return previous background mode on success, 0 on failure
  */
 
@@ -123,10 +135,12 @@ INT32 gdi_SetBkMode(HGDI_DC hdc, INT32 iBkMode)
 }
 
 /**
- * Set the current text color.\n
- * @msdn{dd145093}
+ * @brief Set the current text color.\n
+ * msdn{dd145093}
+ *
  * @param hdc device context
  * @param crColor new text color
+ *
  * @return previous text color
  */
 

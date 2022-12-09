@@ -1,4 +1,4 @@
-/**
+/*
  * FreeRDP: A Remote Desktop Protocol Implementation
  * RPC over HTTP
  *
@@ -61,30 +61,30 @@ static const char* PTYPE_STRINGS[] = { "PTYPE_REQUEST",       "PTYPE_PING",
 	                                   "PTYPE_CO_CANCEL",     "PTYPE_ORPHANED",
 	                                   "PTYPE_RTS",           "" };
 
-/**
+/*
  * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
  * http://msdn.microsoft.com/en-us/library/cc243950/
- */
-
-/**
- *                                      Connection Establishment\n
  *
- *     Client                  Outbound Proxy           Inbound Proxy                 Server\n
- *        |                         |                         |                         |\n
- *        |-----------------IN Channel Request--------------->|                         |\n
- *        |---OUT Channel Request-->|                         |<-Legacy Server Response-|\n
- *        |                         |<--------------Legacy Server Response--------------|\n
- *        |                         |                         |                         |\n
- *        |---------CONN_A1-------->|                         |                         |\n
- *        |----------------------CONN_B1--------------------->|                         |\n
- *        |                         |----------------------CONN_A2--------------------->|\n
- *        |                         |                         |                         |\n
- *        |<--OUT Channel Response--|                         |---------CONN_B2-------->|\n
- *        |<--------CONN_A3---------|                         |                         |\n
- *        |                         |<---------------------CONN_C1----------------------|\n
- *        |                         |                         |<--------CONN_B3---------|\n
- *        |<--------CONN_C2---------|                         |                         |\n
- *        |                         |                         |                         |\n
+ *
+ *
+ *                                      Connection Establishment
+ *
+ *     Client                  Outbound Proxy           Inbound Proxy                 Server
+ *        |                         |                         |                         |
+ *        |-----------------IN Channel Request--------------->|                         |
+ *        |---OUT Channel Request-->|                         |<-Legacy Server Response-|
+ *        |                         |<--------------Legacy Server Response--------------|
+ *        |                         |                         |                         |
+ *        |---------CONN_A1-------->|                         |                         |
+ *        |----------------------CONN_B1--------------------->|                         |
+ *        |                         |----------------------CONN_A2--------------------->|
+ *        |                         |                         |                         |
+ *        |<--OUT Channel Response--|                         |---------CONN_B2-------->|
+ *        |<--------CONN_A3---------|                         |                         |
+ *        |                         |<---------------------CONN_C1----------------------|
+ *        |                         |                         |<--------CONN_B3---------|
+ *        |<--------CONN_C2---------|                         |                         |
+ *        |                         |                         |                         |
  *
  */
 
@@ -170,7 +170,7 @@ size_t rpc_offset_pad(size_t* offset, size_t pad)
 	return pad;
 }
 
-/**
+/*
  * PDU Segments:
  *  ________________________________
  * |                                |
@@ -189,7 +189,7 @@ size_t rpc_offset_pad(size_t* offset, size_t pad)
  * |________________________________|
  */
 
-/**
+/*
  * PDU Structure with verification trailer
  *
  * MUST only appear in a request PDU!
@@ -220,7 +220,7 @@ size_t rpc_offset_pad(size_t* offset, size_t pad)
  *
  */
 
-/**
+/*
  * Security Trailer:
  *
  * The sec_trailer structure MUST be placed at the end of the PDU, including past stub data,
@@ -307,7 +307,7 @@ BOOL rpc_get_stub_data_info(const rpcconn_hdr_t* header, size_t* poffset, size_t
 
 	sec_trailer_offset = frag_length - auth_length - 8;
 
-	/**
+	/*
 	 * According to [MS-RPCE], auth_pad_length is the number of padding
 	 * octets used to 4-byte align the security trailer, but in practice
 	 * we get values up to 15, which indicates 16-byte alignment.

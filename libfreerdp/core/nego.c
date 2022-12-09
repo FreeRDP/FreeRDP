@@ -97,8 +97,10 @@ static BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s);
 
 /**
  * Negotiate protocol security and connect.
- * @param nego
- * @return
+ *
+ * @param nego A pointer to the NEGO struct
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL nego_connect(rdpNego* nego)
@@ -278,12 +280,6 @@ BOOL nego_security_connect(rdpNego* nego)
 	return nego->SecurityConnected;
 }
 
-/**
- * Connect TCP layer.
- * @param nego
- * @return
- */
-
 static BOOL nego_tcp_connect(rdpNego* nego)
 {
 	rdpContext* context;
@@ -330,8 +326,10 @@ static BOOL nego_tcp_connect(rdpNego* nego)
 
 /**
  * Connect TCP layer. For direct approach, connect security layer as well.
- * @param nego
- * @return
+ *
+ * @param nego A pointer to the NEGO struct
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL nego_transport_connect(rdpNego* nego)
@@ -348,8 +346,10 @@ BOOL nego_transport_connect(rdpNego* nego)
 
 /**
  * Disconnect TCP layer.
- * @param nego
- * @return
+ *
+ * @param nego A pointer to the NEGO struct
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL nego_transport_disconnect(rdpNego* nego)
@@ -365,8 +365,10 @@ BOOL nego_transport_disconnect(rdpNego* nego)
 
 /**
  * Send preconnection information if enabled.
- * @param nego
- * @return
+ *
+ * @param nego A pointer to the NEGO struct
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL nego_send_preconnection_pdu(rdpNego* nego)
@@ -433,11 +435,6 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 	return TRUE;
 }
 
-/**
- * Attempt negotiating NLA + TLS extended security.
- * @param nego
- */
-
 static void nego_attempt_ext(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
@@ -479,11 +476,6 @@ static void nego_attempt_ext(rdpNego* nego)
 	}
 }
 
-/**
- * Attempt negotiating NLA + TLS security.
- * @param nego
- */
-
 static void nego_attempt_nla(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
@@ -523,11 +515,6 @@ static void nego_attempt_nla(rdpNego* nego)
 	}
 }
 
-/**
- * Attempt negotiating TLS security.
- * @param nego
- */
-
 static void nego_attempt_tls(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
@@ -563,11 +550,6 @@ static void nego_attempt_tls(rdpNego* nego)
 	}
 }
 
-/**
- * Attempt negotiating standard RDP security.
- * @param nego
- */
-
 static void nego_attempt_rdp(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
@@ -595,7 +577,10 @@ static void nego_attempt_rdp(rdpNego* nego)
 
 /**
  * Wait to receive a negotiation response
- * @param nego
+ *
+ * @param nego A pointer to the NEGO struct
+ *
+ * @return \b TRUE for success, \b FALSE for failure
  */
 
 BOOL nego_recv_response(rdpNego* nego)
@@ -630,11 +615,14 @@ BOOL nego_recv_response(rdpNego* nego)
 }
 
 /**
- * Receive protocol security negotiation message.\n
- * @msdn{cc240501}
- * @param transport transport
- * @param s stream
+ * Receive protocol security negotiation message.
+ * msdn{cc240501}
+ *
+ * @param transport The transport to read from
+ * @param s A stream to read the received data from
  * @param extra nego pointer
+ *
+ * @return \b 0 for success, \b -1 for failure
  */
 
 int nego_recv(rdpTransport* transport, wStream* s, void* extra)
@@ -714,9 +702,7 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 
 /**
  * Read optional routing token or cookie of X.224 Connection Request PDU.
- * @msdn{cc240470}
- * @param nego
- * @param s stream
+ * msdn{cc240470}
  */
 
 static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
@@ -805,9 +791,12 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 }
 
 /**
- * Read protocol security negotiation request message.\n
- * @param nego
- * @param s stream
+ * Read protocol security negotiation request message.
+ *
+ * @param nego A pointer to the NEGO struct
+ * @param s A stream to read from
+ *
+ * @return \b TRUE for success, \b FALSE for failure
  */
 
 BOOL nego_read_request(rdpNego* nego, wStream* s)
@@ -857,7 +846,8 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 
 /**
  * Send protocol security negotiation message.
- * @param nego
+ *
+ * @param nego A pointer to the NEGO struct
  */
 
 void nego_send(rdpNego* nego)
@@ -885,10 +875,13 @@ void nego_send(rdpNego* nego)
 }
 
 /**
- * Send RDP Negotiation Request (RDP_NEG_REQ).\n
- * @msdn{cc240500}\n
- * @msdn{cc240470}
- * @param nego
+ * Send RDP Negotiation Request (RDP_NEG_REQ).
+ * msdn{cc240500}
+ * msdn{cc240470}
+ *
+ * @param nego A pointer to the NEGO struct
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL nego_send_negotiation_request(rdpNego* nego)
@@ -978,12 +971,6 @@ fail:
 	Stream_Free(s, TRUE);
 	return rc;
 }
-
-/**
- * Process Negotiation Request from Connection Request message.
- * @param nego
- * @param s
- */
 
 static BOOL nego_process_correlation_info(rdpNego* nego, wStream* s)
 {
@@ -1094,11 +1081,6 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 	return TRUE;
 }
 
-/**
- * Process Negotiation Response from Connection Confirm message.
- * @param nego
- * @param s
- */
 static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
 {
 	static char buffer[1024] = { 0 };
@@ -1152,8 +1134,10 @@ BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 
 /**
  * Process Negotiation Failure from Connection Confirm message.
- * @param nego
- * @param s
+ * @param nego A pointer to the NEGO struct
+ * @param s The stream to read from
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
@@ -1217,8 +1201,8 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 }
 
 /**
- * Send RDP Negotiation Response (RDP_NEG_RSP).\n
- * @param nego
+ * Send RDP Negotiation Response (RDP_NEG_RSP).
+ * @param nego A pointer to the NEGO struct
  */
 
 BOOL nego_send_negotiation_response(rdpNego* nego)
@@ -1352,7 +1336,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 
 /**
  * Initialize NEGO state machine.
- * @param nego
+ * @param nego A pointer to the NEGO struct
  */
 
 void nego_init(rdpNego* nego)
@@ -1367,8 +1351,10 @@ void nego_init(rdpNego* nego)
 
 /**
  * Create a new NEGO state machine instance.
- * @param transport
- * @return
+ *
+ * @param transport The transport to use
+ *
+ * @return A pointer to the allocated NEGO instance or NULL
  */
 
 rdpNego* nego_new(rdpTransport* transport)
@@ -1385,7 +1371,7 @@ rdpNego* nego_new(rdpTransport* transport)
 
 /**
  * Free NEGO state machine.
- * @param nego
+ * @param nego A pointer to the NEGO struct
  */
 
 void nego_free(rdpNego* nego)
@@ -1400,9 +1386,11 @@ void nego_free(rdpNego* nego)
 
 /**
  * Set target hostname and port.
- * @param nego
- * @param hostname
- * @param port
+ * @param nego A pointer to the NEGO struct
+ * @param hostname The hostname to set
+ * @param port The port to set
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL nego_set_target(rdpNego* nego, const char* hostname, UINT16 port)
@@ -1417,9 +1405,9 @@ BOOL nego_set_target(rdpNego* nego, const char* hostname, UINT16 port)
 
 /**
  * Enable security layer negotiation.
- * @param nego pointer to the negotiation structure
- * @param enable_rdp whether to enable security layer negotiation (TRUE for enabled, FALSE for
- * disabled)
+ * @param nego A pointer to the NEGO struct pointer to the negotiation structure
+ * @param NegotiateSecurityLayer whether to enable security layer negotiation (TRUE for enabled,
+ * FALSE for disabled)
  */
 
 void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer)
@@ -1431,9 +1419,9 @@ void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer)
 
 /**
  * Enable restricted admin mode.
- * @param nego pointer to the negotiation structure
- * @param enable_restricted whether to enable security layer negotiation (TRUE for enabled, FALSE
- * for disabled)
+ * @param nego A pointer to the NEGO struct pointer to the negotiation structure
+ * @param RestrictedAdminModeRequired whether to enable security layer negotiation (TRUE for
+ * enabled, FALSE for disabled)
  */
 
 void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdminModeRequired)
@@ -1455,7 +1443,7 @@ void nego_set_gateway_bypass_local(rdpNego* nego, BOOL GatewayBypassLocal)
 
 /**
  * Enable RDP security protocol.
- * @param nego pointer to the negotiation structure
+ * @param nego A pointer to the NEGO struct pointer to the negotiation structure
  * @param enable_rdp whether to enable normal RDP protocol (TRUE for enabled, FALSE for disabled)
  */
 
@@ -1467,7 +1455,7 @@ void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp)
 
 /**
  * Enable TLS security protocol.
- * @param nego pointer to the negotiation structure
+ * @param nego A pointer to the NEGO struct pointer to the negotiation structure
  * @param enable_tls whether to enable TLS + RDP protocol (TRUE for enabled, FALSE for disabled)
  */
 
@@ -1479,7 +1467,7 @@ void nego_enable_tls(rdpNego* nego, BOOL enable_tls)
 
 /**
  * Enable NLA security protocol.
- * @param nego pointer to the negotiation structure
+ * @param nego A pointer to the NEGO struct pointer to the negotiation structure
  * @param enable_nla whether to enable network level authentication protocol (TRUE for enabled,
  * FALSE for disabled)
  */
@@ -1492,7 +1480,7 @@ void nego_enable_nla(rdpNego* nego, BOOL enable_nla)
 
 /**
  * Enable NLA extended security protocol.
- * @param nego pointer to the negotiation structure
+ * @param nego A pointer to the NEGO struct pointer to the negotiation structure
  * @param enable_ext whether to enable network level authentication extended protocol (TRUE for
  * enabled, FALSE for disabled)
  */
@@ -1505,9 +1493,11 @@ void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
 
 /**
  * Set routing token.
- * @param nego
- * @param RoutingToken
- * @param RoutingTokenLength
+ * @param nego A pointer to the NEGO struct
+ * @param RoutingToken A pointer to the routing token
+ * @param RoutingTokenLength The lenght of the routing token
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL nego_set_routing_token(rdpNego* nego, const BYTE* RoutingToken, DWORD RoutingTokenLength)
@@ -1528,8 +1518,10 @@ BOOL nego_set_routing_token(rdpNego* nego, const BYTE* RoutingToken, DWORD Routi
 
 /**
  * Set cookie.
- * @param nego
- * @param cookie
+ * @param nego A pointer to the NEGO struct
+ * @param cookie A pointer to the cookie string
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL nego_set_cookie(rdpNego* nego, const char* cookie)
@@ -1553,8 +1545,8 @@ BOOL nego_set_cookie(rdpNego* nego, const char* cookie)
 
 /**
  * Set cookie maximum length
- * @param nego
- * @param CookieMaxLength
+ * @param nego A pointer to the NEGO struct
+ * @param CookieMaxLength the length to set
  */
 
 void nego_set_cookie_max_length(rdpNego* nego, UINT32 CookieMaxLength)
@@ -1564,8 +1556,8 @@ void nego_set_cookie_max_length(rdpNego* nego, UINT32 CookieMaxLength)
 
 /**
  * Enable / disable preconnection PDU.
- * @param nego
- * @param send_pcpdu
+ * @param nego A pointer to the NEGO struct
+ * @param SendPreconnectionPdu The value to set
  */
 
 void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL SendPreconnectionPdu)
@@ -1575,8 +1567,8 @@ void nego_set_send_preconnection_pdu(rdpNego* nego, BOOL SendPreconnectionPdu)
 
 /**
  * Set preconnection id.
- * @param nego
- * @param id
+ * @param nego A pointer to the NEGO struct
+ * @param PreconnectionId the ID to set
  */
 
 void nego_set_preconnection_id(rdpNego* nego, UINT32 PreconnectionId)
@@ -1586,8 +1578,8 @@ void nego_set_preconnection_id(rdpNego* nego, UINT32 PreconnectionId)
 
 /**
  * Set preconnection blob.
- * @param nego
- * @param blob
+ * @param nego A pointer to the NEGO struct
+ * @param PreconnectionBlob A pointer to the blob to use
  */
 
 void nego_set_preconnection_blob(rdpNego* nego, const char* PreconnectionBlob)

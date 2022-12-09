@@ -136,11 +136,13 @@ HGDI_BITMAP gdi_CreateBitmapEx(UINT32 nWidth, UINT32 nHeight, UINT32 format, UIN
 }
 
 /**
- * Create a new bitmap of the given width and height compatible with the current device context.\n
- * @msdn{dd183488}
+ * Create a new bitmap of the given width and height compatible with the current device context.
+ * msdn{dd183488}
+ *
  * @param hdc device context
  * @param nWidth width
  * @param nHeight height
+ *
  * @return new bitmap
  */
 
@@ -559,8 +561,9 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nW
 }
 
 /**
- * Perform a bit blit operation on the given pixel buffers.\n
- * @msdn{dd183370}
+ * Perform a bit blit operation on the given pixel buffers.
+ * msdn{dd183370}
+ *
  * @param hdcDest destination device context
  * @param nXDest destination x1
  * @param nYDest destination y1

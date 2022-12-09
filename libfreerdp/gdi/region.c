@@ -61,12 +61,14 @@ static char* gdi_regn_str(char* buffer, size_t size, const HGDI_RGN rgn)
 }
 
 /**
- * Create a region from rectangular coordinates.\n
- * @msdn{dd183514}
+ * Create a region from rectangular coordinates.
+ * msdn{dd183514}
+ *
  * @param nLeftRect x1
  * @param nTopRect y1
  * @param nRightRect x2
  * @param nBottomRect y2
+ *
  * @return new region
  */
 
@@ -447,13 +449,15 @@ INLINE BOOL gdi_CopyOverlap(INT32 x, INT32 y, INT32 width, INT32 height, INT32 s
 }
 
 /**
- * Set the coordinates of a given rectangle.\n
- * @msdn{dd145085}
+ * Set the coordinates of a given rectangle.
+ * msdn{dd145085}
+ *
  * @param rc rectangle
  * @param xLeft x1
  * @param yTop y1
  * @param xRight x2
  * @param yBottom y2
+ *
  * @return nonzero if successful, 0 otherwise
  */
 
@@ -519,8 +523,9 @@ INLINE BOOL gdi_SetRectRgn(HGDI_RGN hRgn, INT32 nLeftRect, INT32 nTopRect, INT32
 }
 
 /**
- * Compare two regions for equality.\n
- * @msdn{dd162700}
+ * @brief Compare two regions for equality.
+ * msdn{dd162700}
+ *
  * @param hSrcRgn1 first region
  * @param hSrcRgn2 second region
  * @return nonzero if both regions are equal, 0 otherwise
@@ -538,8 +543,9 @@ INLINE BOOL gdi_EqualRgn(const HGDI_RGN hSrcRgn1, const HGDI_RGN hSrcRgn2)
 }
 
 /**
- * Copy coordinates from a rectangle to another rectangle
- * @msdn{dd183481}
+ * @brief Copy coordinates from a rectangle to another rectangle
+ * msdn{dd183481}
+ *
  * @param dst destination rectangle
  * @param src source rectangle
  * @return nonzero if successful, 0 otherwise
@@ -558,8 +564,8 @@ INLINE BOOL gdi_CopyRect(HGDI_RECT dst, const HGDI_RECT src)
 }
 
 /**
- * Check if a point is inside a rectangle.\n
- * @msdn{dd162882}
+ * Check if a point is inside a rectangle.
+ * msdn{dd162882}
  * @param rc rectangle
  * @param x point x position
  * @param y point y position
@@ -584,8 +590,8 @@ INLINE BOOL gdi_PtInRect(const HGDI_RECT rc, INT32 x, INT32 y)
 }
 
 /**
- * Invalidate a given region, such that it is redrawn on the next region update.\n
- * @msdn{dd145003}
+ * Invalidate a given region, such that it is redrawn on the next region update.
+ * msdn{dd145003}
  * @param hdc device context
  * @param x x1
  * @param y y1

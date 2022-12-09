@@ -178,10 +178,8 @@ static BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 }
 
 /**
- * Read Server Auto Reconnect Cookie (ARC_SC_PRIVATE_PACKET).\n
- * @msdn{cc240540}
- * @param s stream
- * @param settings settings
+ * Read Server Auto Reconnect Cookie (ARC_SC_PRIVATE_PACKET).
+ * msdn{cc240540}
  */
 
 static BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s, logon_info_ex* info)
@@ -230,10 +228,8 @@ static BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s, logon
 }
 
 /**
- * Read Client Auto Reconnect Cookie (ARC_CS_PRIVATE_PACKET).\n
- * @msdn{cc240541}
- * @param s stream
- * @param settings settings
+ * Read Client Auto Reconnect Cookie (ARC_CS_PRIVATE_PACKET).
+ * msdn{cc240541}
  */
 
 static BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
@@ -253,10 +249,8 @@ static BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 }
 
 /**
- * Write Client Auto Reconnect Cookie (ARC_CS_PRIVATE_PACKET).\n
- * @msdn{cc240541}
- * @param s stream
- * @param settings settings
+ * Write Client Auto Reconnect Cookie (ARC_CS_PRIVATE_PACKET).
+ * msdn{cc240541}
  */
 
 static void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
@@ -281,10 +275,8 @@ static void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 }
 
 /**
- * Read Extended Info Packet (TS_EXTENDED_INFO_PACKET).\n
- * @msdn{cc240476}
- * @param s stream
- * @param settings settings
+ * Read Extended Info Packet (TS_EXTENDED_INFO_PACKET).
+ * msdn{cc240476}
  */
 
 static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
@@ -433,10 +425,8 @@ end:
 }
 
 /**
- * Write Extended Info Packet (TS_EXTENDED_INFO_PACKET).\n
- * @msdn{cc240476}
- * @param s stream
- * @param settings settings
+ * Write Extended Info Packet (TS_EXTENDED_INFO_PACKET).
+ * msdn{cc240476}
  */
 
 static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
@@ -589,10 +579,8 @@ static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, 
 }
 
 /**
- * Read Info Packet (TS_INFO_PACKET).\n
- * @msdn{cc240475}
- * @param s stream
- * @param settings settings
+ * Read Info Packet (TS_INFO_PACKET).
+ * msdn{cc240475}
  */
 
 static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
@@ -663,10 +651,8 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 }
 
 /**
- * Write Info Packet (TS_INFO_PACKET).\n
- * @msdn{cc240475}
- * @param s stream
- * @param settings settings
+ * Write Info Packet (TS_INFO_PACKET).
+ * msdn{cc240475}
  */
 
 static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
@@ -873,8 +859,8 @@ fail:
 }
 
 /**
- * Read Client Info PDU (CLIENT_INFO_PDU).\n
- * @msdn{cc240474}
+ * Read Client Info PDU (CLIENT_INFO_PDU).
+ * msdn{cc240474}
  * @param rdp RDP module
  * @param s stream
  */
@@ -918,8 +904,8 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 }
 
 /**
- * Send Client Info PDU (CLIENT_INFO_PDU).\n
- * @msdn{cc240474}
+ * Send Client Info PDU (CLIENT_INFO_PDU).
+ * msdn{cc240474}
  * @param rdp RDP module
  */
 
