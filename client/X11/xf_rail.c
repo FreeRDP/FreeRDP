@@ -67,6 +67,12 @@ struct xf_rail_icon_cache
 	xfRailIcon scratch;
 };
 
+typedef struct
+{
+	xfContext* xfc;
+	const RECTANGLE_16* rect;
+} rail_paint_fn_arg_t;
+
 void xf_rail_enable_remoteapp_mode(xfContext* xfc)
 {
 	if (!xfc->remote_app)
@@ -244,27 +250,27 @@ BOOL xf_rail_paint_surface(xfContext* xfc, UINT64 windowId, const RECTANGLE_16* 
 	return TRUE;
 }
 
+static BOOL rail_paint_fn(const void* pvkey, void* value, void* pvarg)
+{
+	rail_paint_fn_arg_t* arg = pvarg;
+	WINPR_ASSERT(pvkey);
+	WINPR_ASSERT(arg);
+
+	const UINT64 key = *(UINT64*)pvkey;
+	return xf_rail_paint_surface(arg->xfc, key, arg->rect);
+}
+
 BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect)
 {
-	BOOL rc = TRUE;
-	ULONG_PTR* pKeys = NULL;
-	size_t count = 0;
+	const rail_paint_fn_arg_t arg = { .xfc = xfc, .rect = rect };
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(rect);
 
-	if (xfc->railWindows)
-		count = HashTable_GetKeys(xfc->railWindows, &pKeys);
+	if (!xfc->railWindows)
+		return TRUE;
 
-	for (size_t index = 0; index < count; index++)
-	{
-		const UINT64 key = *(UINT64*)pKeys[index];
-		if (!xf_rail_paint_surface(xfc, key, rect))
-			rc = FALSE;
-	}
-
-	free(pKeys);
-	return rc;
+	return HashTable_Foreach(xfc->railWindows, rail_paint_fn, &arg);
 }
 
 /* RemoteApp Core Protocol Extension */
