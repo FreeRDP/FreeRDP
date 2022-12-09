@@ -623,7 +623,7 @@ static SECURITY_STATUS parseKeyName(LPCWSTR pszKeyName, CK_SLOT_ID* slotId, CK_B
 	if (!pos)
 		return NTE_BAD_KEY;
 
-	if (pos - &asciiKeyName[1] > sizeof(CK_SLOT_ID) * 2ull)
+	if ((size_t)(pos - &asciiKeyName[1]) > sizeof(CK_SLOT_ID) * 2ull)
 		return NTE_BAD_KEY;
 
 	*slotId = (CK_SLOT_ID)0;

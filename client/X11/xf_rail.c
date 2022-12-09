@@ -256,13 +256,13 @@ static BOOL rail_paint_fn(const void* pvkey, void* value, void* pvarg)
 	WINPR_ASSERT(pvkey);
 	WINPR_ASSERT(arg);
 
-	const UINT64 key = *(UINT64*)pvkey;
+	const UINT64 key = *(const UINT64*)pvkey;
 	return xf_rail_paint_surface(arg->xfc, key, arg->rect);
 }
 
 BOOL xf_rail_paint(xfContext* xfc, const RECTANGLE_16* rect)
 {
-	const rail_paint_fn_arg_t arg = { .xfc = xfc, .rect = rect };
+	rail_paint_fn_arg_t arg = { .xfc = xfc, .rect = rect };
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(rect);
