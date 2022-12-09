@@ -51,7 +51,8 @@ steps:
   displayName: 'test'
   inputs:
     command: 'test'
-    arguments: '--no-build /p:Configuration=Release'
+    configuration: 'Release'
+    arguments: '--no-build'
     projects: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.Tests\UiPath.FreeRdp.Tests.csproj'
 
 - task: MSBuild@1
@@ -76,7 +77,8 @@ steps:
   displayName: 'test (UseNugetRef)'
   inputs:
     command: 'test'
-    arguments: '--no-build /p:Configuration=Release /p:UseNugetRef=true'
+    configuration: 'Release'
+    arguments: '--no-build /p:UseNugetRef=true'
     projects: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.Tests\UiPath.FreeRdp.Tests.csproj'
 
 - task: NuGetCommand@2
