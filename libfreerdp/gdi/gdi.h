@@ -68,7 +68,7 @@ static INLINE BYTE* gdi_get_brush_pointer(HGDI_DC hdcBrush, UINT32 x, UINT32 y)
 		case GDI_BS_HATCHED:
 		{
 			HGDI_BITMAP hBmpBrush = hdcBrush->brush->pattern;
-			/* According to @msdn{dd183396}, the system always positions a brush bitmap
+			/* According to msdn{dd183396}, the system always positions a brush bitmap
 			 * at the brush origin and copy across the client area.
 			 * Calculate the offset of the mapped pixel in the brush bitmap according to
 			 * brush origin and dest coordinates */

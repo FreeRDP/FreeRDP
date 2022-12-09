@@ -351,8 +351,8 @@ extern "C"
 	 * The function does string conversions of any input string of len characters.
 	 * Any character in the buffer (incuding any '\0') is converted.
 	 *
-	 *  \param str A WCHAR string of \b len character length
-	 *  \param len The (buffer) length in characters of \b str
+	 *  \param wstr A WCHAR string of \b len character length
+	 *  \param wlen The (buffer) length in characters of \b str
 	 *  \param pSize Ignored if NULL, otherwise receives the length of the result string in
 	 * characters (including any '\0' character)
 	 *
@@ -365,7 +365,6 @@ extern "C"
 	 * The function does string conversions of any '\0' terminated input string
 	 *
 	 *  \param str A '\0' terminated CHAR string, may be NULL
-	 *  \param len The (buffer) length in characters of \b str
 	 *  \param pSize Ignored if NULL, otherwise receives the length of the result string in
 	 * characters (wcslen)
 	 *

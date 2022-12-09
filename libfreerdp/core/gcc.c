@@ -266,10 +266,13 @@ static const BYTE h221_cs_key[4] = "Duca";
 static const BYTE h221_sc_key[4] = "McDn";
 
 /**
- * Read a GCC Conference Create Request.\n
- * @msdn{cc240836}
+ * Read a GCC Conference Create Request.
+ * msdn{cc240836}
+ *
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS instance
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_read_conference_create_request(wStream* s, rdpMcs* mcs)
@@ -333,10 +336,13 @@ BOOL gcc_read_conference_create_request(wStream* s, rdpMcs* mcs)
 }
 
 /**
- * Write a GCC Conference Create Request.\n
- * @msdn{cc240836}
+ * Write a GCC Conference Create Request.
+ * msdn{cc240836}
+ *
  * @param s stream
- * @param user_data client data blocks
+ * @param userData client data blocks
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_write_conference_create_request(wStream* s, wStream* userData)
@@ -794,11 +800,14 @@ BOOL gcc_read_user_data_header(wStream* s, UINT16* type, UINT16* length)
 }
 
 /**
- * Write a user data header (TS_UD_HEADER).\n
- * @msdn{cc240509}
+ * Write a user data header (TS_UD_HEADER).
+ * msdn{cc240509}
+ *
  * @param s stream
  * @param type data block type
  * @param length data block length
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_write_user_data_header(wStream* s, UINT16 type, UINT16 length)
@@ -897,10 +906,13 @@ static BOOL updateEarlyServerCaps(rdpSettings* settings, UINT32 earlyCapabilityF
 }
 
 /**
- * Read a client core data block (TS_UD_CS_CORE).\n
- * @msdn{cc240510}
+ * Read a client core data block (TS_UD_CS_CORE).
+ * msdn{cc240510}
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS instance
+ * @param blockLength the length of the block
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
@@ -1135,10 +1147,12 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 }
 
 /**
- * Write a client core data block (TS_UD_CS_CORE).\n
- * @msdn{cc240510}
- * @param s stream
- * @param settings rdp settings
+ * Write a client core data block (TS_UD_CS_CORE).
+ * msdn{cc240510}
+ * @param s The stream to write to
+ * @param mcs The MSC instance to get the data from
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
@@ -1292,10 +1306,13 @@ BOOL gcc_write_server_core_data(wStream* s, rdpMcs* mcs)
 }
 
 /**
- * Read a client security data block (TS_UD_CS_SEC).\n
- * @msdn{cc240511}
+ * Read a client security data block (TS_UD_CS_SEC).
+ * msdn{cc240511}
  * @param s stream
- * @param settings rdp settings
+ * @param mcs MCS instance
+ * @param blockLength the length of the block
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_read_client_security_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
@@ -1326,10 +1343,12 @@ BOOL gcc_read_client_security_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 }
 
 /**
- * Write a client security data block (TS_UD_CS_SEC).\n
- * @msdn{cc240511}
+ * Write a client security data block (TS_UD_CS_SEC).
+ * msdn{cc240511}
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS instance
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_write_client_security_data(wStream* s, const rdpMcs* mcs)
@@ -1769,10 +1788,14 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 }
 
 /**
- * Read a client network data block (TS_UD_CS_NET).\n
- * @msdn{cc240512}
+ * Read a client network data block (TS_UD_CS_NET).
+ * msdn{cc240512}
+ *
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS instance
+ * @param blockLength the length of the block
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
@@ -1820,10 +1843,12 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 }
 
 /**
- * Write a client network data block (TS_UD_CS_NET).\n
- * @msdn{cc240512}
+ * Write a client network data block (TS_UD_CS_NET).
+ * msdn{cc240512}
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS to use
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_write_client_network_data(wStream* s, const rdpMcs* mcs)
@@ -1919,10 +1944,13 @@ BOOL gcc_write_server_network_data(wStream* s, const rdpMcs* mcs)
 }
 
 /**
- * Read a client cluster data block (TS_UD_CS_CLUSTER).\n
- * @msdn{cc240514}
+ * Read a client cluster data block (TS_UD_CS_CLUSTER).
+ * msdn{cc240514}
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS instance
+ * @param blockLength the length of the block
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
@@ -1958,10 +1986,12 @@ BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 }
 
 /**
- * Write a client cluster data block (TS_UD_CS_CLUSTER).\n
- * @msdn{cc240514}
+ * Write a client cluster data block (TS_UD_CS_CLUSTER).
+ * msdn{cc240514}
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS instance
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_write_client_cluster_data(wStream* s, const rdpMcs* mcs)
@@ -1988,10 +2018,13 @@ BOOL gcc_write_client_cluster_data(wStream* s, const rdpMcs* mcs)
 }
 
 /**
- * Read a client monitor data block (TS_UD_CS_MONITOR).\n
- * @msdn{dd305336}
+ * Read a client monitor data block (TS_UD_CS_MONITOR).
+ * msdn{dd305336}
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS instance
+ * @param blockLength the lenght of the block
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
@@ -2052,10 +2085,12 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 }
 
 /**
- * Write a client monitor data block (TS_UD_CS_MONITOR).\n
- * @msdn{dd305336}
+ * Write a client monitor data block (TS_UD_CS_MONITOR).
+ * msdn{dd305336}
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS to use
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
@@ -2186,10 +2221,12 @@ BOOL gcc_write_client_monitor_extended_data(wStream* s, const rdpMcs* mcs)
 }
 
 /**
- * Read a client message channel data block (TS_UD_CS_MCS_MSGCHANNEL).\n
- * @msdn{jj217627}
+ * Read a client message channel data block (TS_UD_CS_MCS_MSGCHANNEL).
+ * msdn{jj217627}
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS instance
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_read_client_message_channel_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
@@ -2205,10 +2242,12 @@ BOOL gcc_read_client_message_channel_data(wStream* s, rdpMcs* mcs, UINT16 blockL
 }
 
 /**
- * Write a client message channel data block (TS_UD_CS_MCS_MSGCHANNEL).\n
- * @msdn{jj217627}
+ * Write a client message channel data block (TS_UD_CS_MCS_MSGCHANNEL).
+ * msdn{jj217627}
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS instance
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_write_client_message_channel_data(wStream* s, const rdpMcs* mcs)
@@ -2257,10 +2296,13 @@ BOOL gcc_write_server_message_channel_data(wStream* s, const rdpMcs* mcs)
 }
 
 /**
- * Read a client multitransport channel data block (TS_UD_CS_MULTITRANSPORT).\n
- * @msdn{jj217498}
+ * Read a client multitransport channel data block (TS_UD_CS_MULTITRANSPORT).
+ * msdn{jj217498}
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS instance
+ * @param blockLength the length of the block
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_read_client_multitransport_channel_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
@@ -2277,10 +2319,13 @@ BOOL gcc_read_client_multitransport_channel_data(wStream* s, rdpMcs* mcs, UINT16
 }
 
 /**
- * Write a client multitransport channel data block (TS_UD_CS_MULTITRANSPORT).\n
- * @msdn{jj217498}
+ * Write a client multitransport channel data block (TS_UD_CS_MULTITRANSPORT).
+ * msdn{jj217498}
+ *
  * @param s stream
- * @param settings rdp settings
+ * @param mcs The MCS instance
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL gcc_write_client_multitransport_channel_data(wStream* s, const rdpMcs* mcs)

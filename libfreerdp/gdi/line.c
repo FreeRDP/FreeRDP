@@ -35,14 +35,6 @@
 #include "clipping.h"
 #include "line.h"
 
-/**
- * Draw a line from the current position to the given position.\n
- * @msdn{dd145029}
- * @param hdc device context
- * @param nXEnd ending x position
- * @param nYEnd ending y position
- * @return nonzero if successful, 0 otherwise
- */
 static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 {
 	const UINT32 srcPixel = FreeRDPReadColor(pixelPtr, format);

@@ -54,7 +54,6 @@ typedef struct
 	CK_ULONG keyCertIdLen;
 } NCryptP11KeyHandle;
 
-/** @brief */
 typedef struct
 {
 	CK_SLOT_ID slotId;
@@ -65,7 +64,6 @@ typedef struct
 	CK_BYTE id[64];
 } NCryptKeyEnum;
 
-/** @brief */
 typedef struct
 {
 	CK_ULONG nslots;

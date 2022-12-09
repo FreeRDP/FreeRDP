@@ -1268,14 +1268,27 @@ BOOL gdi_resize_ex(rdpGdi* gdi, UINT32 width, UINT32 height, UINT32 stride, UINT
 
 /**
  * Initialize GDI
- * @param inst current instance
- * @return
+ *
+ * @param instance A pointer to the instance to use
+ * @param format The color format for the local framebuffer
+ * @return \b TRUE for success, \b FALSE for failure
  */
 BOOL gdi_init(freerdp* instance, UINT32 format)
 {
 	return gdi_init_ex(instance, format, 0, NULL, winpr_aligned_free);
 }
 
+/**
+ * Initialize GDI
+ *
+ * @param instance A pointer to the instance to use
+ * @param format The color format for the local framebuffer
+ * @param stride The size of a framebuffer line in bytes
+ * @param buffer A pointer to a buffer to be used as framebuffer
+ * @param pfree A custom function pointer to use to free the framebuffer
+ *
+ * @return \b TRUE for success, \b FALSE for failure
+ */
 BOOL gdi_init_ex(freerdp* instance, UINT32 format, UINT32 stride, BYTE* buffer,
                  void (*pfree)(void*))
 {

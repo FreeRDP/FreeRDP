@@ -280,7 +280,7 @@ static BOOL rdp_client_wait_for_activation(rdpRdp* rdp)
 }
 /**
  * Establish RDP Connection based on the settings given in the 'rdp' parameter.
- * @msdn{cc240452}
+ * msdn{cc240452}
  * @param rdp RDP module
  * @return true if the connection succeeded. FALSE otherwise.
  */

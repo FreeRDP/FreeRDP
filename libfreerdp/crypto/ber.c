@@ -107,9 +107,11 @@ size_t _ber_sizeof_length(size_t length)
 
 /**
  * Read BER Universal tag.
- * @param s stream
+ *
+ * @param s The stream to read from
  * @param tag BER universally-defined tag
- * @return
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL ber_read_universal_tag(wStream* s, BYTE tag, BOOL pc)
@@ -521,10 +523,12 @@ size_t ber_sizeof_contextual_octet_string(size_t length)
 	return ber_sizeof_contextual_tag(ret) + ret;
 }
 
-/**
- * Read a BER BOOLEAN
- * @param s
- * @param value
+/** \brief Read a BER BOOLEAN
+ *
+ * @param s The stream to read from.
+ * @param value A pointer to the value read, must not be NULL
+ *
+ * \return \b TRUE for success, \b FALSE for any failure
  */
 
 BOOL ber_read_BOOL(wStream* s, BOOL* value)
@@ -532,6 +536,7 @@ BOOL ber_read_BOOL(wStream* s, BOOL* value)
 	size_t length;
 	BYTE v;
 
+	WINPR_ASSERT(value);
 	if (!ber_read_universal_tag(s, BER_TAG_BOOLEAN, FALSE) || !ber_read_length(s, &length))
 		return FALSE;
 
@@ -550,8 +555,9 @@ BOOL ber_read_BOOL(wStream* s, BOOL* value)
 
 /**
  * Write a BER BOOLEAN
- * @param s
- * @param value
+ *
+ * @param s A pointer to the stream to write to
+ * @param value The value to write
  */
 
 void ber_write_BOOL(wStream* s, BOOL value)
@@ -615,8 +621,11 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 
 /**
  * Write a BER INTEGER
- * @param s
- * @param value
+ *
+ * @param s A pointer to the stream to write to
+ * @param value The value to write
+ *
+ * @return The size in bytes that were written
  */
 
 size_t ber_write_integer(wStream* s, UINT32 value)

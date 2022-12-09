@@ -31,8 +31,8 @@ static void rdp_read_system_time(wStream* s, SYSTEMTIME* system_time);
 static void rdp_write_system_time(wStream* s, SYSTEMTIME* system_time);
 
 /**
- * Read SYSTEM_TIME structure (TS_SYSTEMTIME).\n
- * @msdn{cc240478}
+ * Read SYSTEM_TIME structure (TS_SYSTEMTIME).
+ * msdn{cc240478}
  * @param s stream
  * @param system_time system time structure
  */
@@ -50,8 +50,8 @@ void rdp_read_system_time(wStream* s, SYSTEMTIME* system_time)
 }
 
 /**
- * Write SYSTEM_TIME structure (TS_SYSTEMTIME).\n
- * @msdn{cc240478}
+ * Write SYSTEM_TIME structure (TS_SYSTEMTIME).
+ * msdn{cc240478}
  * @param s stream
  * @param system_time system time structure
  */
@@ -74,10 +74,12 @@ void rdp_write_system_time(wStream* s, SYSTEMTIME* system_time)
 }
 
 /**
- * Read client time zone information (TS_TIME_ZONE_INFORMATION).\n
- * @msdn{cc240477}
+ * Read client time zone information (TS_TIME_ZONE_INFORMATION).
+ * msdn{cc240477}
  * @param s stream
  * @param settings settings
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
@@ -108,10 +110,12 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 }
 
 /**
- * Write client time zone information (TS_TIME_ZONE_INFORMATION).\n
- * @msdn{cc240477}
+ * Write client time zone information (TS_TIME_ZONE_INFORMATION).
+ * msdn{cc240477}
  * @param s stream
  * @param settings settings
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)

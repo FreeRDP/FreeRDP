@@ -120,10 +120,13 @@ static BOOL rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 typ
 static BOOL rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 share_id);
 
 /**
- * Read RDP Security Header.\n
- * @msdn{cc240579}
+ * @brief Read RDP Security Header.
+ * msdn{cc240579}
+ *
  * @param s stream
  * @param flags security flags
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length)
@@ -150,10 +153,12 @@ BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length)
 }
 
 /**
- * Write RDP Security Header.\n
- * @msdn{cc240579}
+ * Write RDP Security Header.
+ * msdn{cc240579}
  * @param s stream
  * @param flags security flags
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL rdp_write_security_header(wStream* s, UINT16 flags)
@@ -433,11 +438,13 @@ fail:
 }
 
 /**
- * Read an RDP packet header.\n
+ * Read an RDP packet header.
  * @param rdp rdp module
  * @param s stream
  * @param length RDP packet length
- * @param channel_id channel id
+ * @param channelId channel id
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
@@ -558,11 +565,13 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 }
 
 /**
- * Write an RDP packet header.\n
+ * Write an RDP packet header.
  * @param rdp rdp module
  * @param s stream
  * @param length RDP packet length
- * @param channel_id channel id
+ * @param channelId channel id
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
@@ -1288,10 +1297,14 @@ BOOL rdp_read_flow_control_pdu(wStream* s, UINT16* type, UINT16* channel_id)
 }
 
 /**
- * Decrypt an RDP packet.\n
+ * Decrypt an RDP packet.
+ *
  * @param rdp RDP module
  * @param s stream
- * @param length int
+ * @param pLength A pointer to the result variable, must not be NULL
+ * @param securityFlags the security flags to apply
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
@@ -1416,7 +1429,7 @@ const char* pdu_type_to_str(UINT16 pduType)
 }
 
 /**
- * Process an RDP packet.\n
+ * Process an RDP packet.
  * @param rdp RDP module
  * @param s stream
  */

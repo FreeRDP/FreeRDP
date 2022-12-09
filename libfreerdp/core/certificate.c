@@ -150,8 +150,6 @@ static const char* certificate_read_errors[] = { "Certificate tag",
 
 /**
  * Read X.509 Certificate
- * @param certificate certificate module
- * @param cert X.509 certificate
  */
 
 static BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
@@ -551,12 +549,6 @@ static BOOL certificate_write_server_public_signature(const rdpCertificate* cert
 	return TRUE;
 }
 
-/**
- * Read a Server Proprietary Certificate.\n
- * @param certificate certificate module
- * @param s stream
- */
-
 static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, wStream* s)
 {
 	UINT32 dwSigAlgId;
@@ -662,7 +654,7 @@ static BOOL certificate_write_server_proprietary_certificate(const rdpCertificat
 }
 
 /**
- * Read an X.509 Certificate Chain.\n
+ * Read an X.509 Certificate Chain.
  * @param certificate certificate module
  * @param s stream
  */
@@ -767,7 +759,7 @@ static BOOL certificate_write_server_x509_certificate_chain(const rdpCertificate
 }
 
 /**
- * Read a Server Certificate.\n
+ * Read a Server Certificate.
  * @param certificate certificate module
  * @param server_cert server certificate
  * @param length certificate length
@@ -1107,8 +1099,7 @@ out_fail:
 }
 
 /**
- * Instantiate new certificate module.\n
- * @param rdp RDP module
+ * Instantiate new certificate module.
  * @return new certificate module
  */
 

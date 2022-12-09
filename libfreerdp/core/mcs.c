@@ -330,7 +330,8 @@ static int mcs_initialize_client_channels(rdpMcs* mcs, const rdpSettings* settin
  * @param s stream
  * @param domainMCSPDU DomainMCSPDU type
  * @param length TPKT length
- * @return
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL mcs_read_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16* length,
@@ -508,10 +509,12 @@ static void mcs_print_domain_parameters(DomainParameters* domainParameters)
 
 /**
  * Merge MCS Domain Parameters.
- * @param domainParameters target parameters
- * @param domainParameters minimum parameters
- * @param domainParameters maximum parameters
- * @param domainParameters output parameters
+ * @param targetParameters target parameters
+ * @param minimumParameters minimum parameters
+ * @param maximumParameters maximum parameters
+ * @param pOutParameters output parameters
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
@@ -625,8 +628,8 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 }
 
 /**
- * Read an MCS Connect Initial PDU.\n
- * @msdn{cc240508}
+ * Read an MCS Connect Initial PDU.
+ * msdn{cc240508}
  * @param mcs MCS module
  * @param s stream
  */
@@ -695,11 +698,11 @@ BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 }
 
 /**
- * Write an MCS Connect Initial PDU.\n
- * @msdn{cc240508}
+ * Write an MCS Connect Initial PDU.
+ * msdn{cc240508}
  * @param s stream
  * @param mcs MCS module
- * @param user_data GCC Conference Create Request
+ * @param userData GCC Conference Create Request
  */
 
 BOOL mcs_write_connect_initial(wStream* s, rdpMcs* mcs, wStream* userData)
@@ -751,11 +754,13 @@ out:
 }
 
 /**
- * Write an MCS Connect Response PDU.\n
- * @msdn{cc240508}
+ * Write an MCS Connect Response PDU.
+ * msdn{cc240508}
  * @param s stream
  * @param mcs MCS module
- * @param user_data GCC Conference Create Response
+ * @param userData GCC Conference Create Response
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL mcs_write_connect_response(wStream* s, rdpMcs* mcs, wStream* userData)
@@ -793,8 +798,8 @@ out:
 }
 
 /**
- * Send MCS Connect Initial.\n
- * @msdn{cc240508}
+ * Send MCS Connect Initial.
+ * msdn{cc240508}
  * @param mcs mcs module
  */
 
@@ -873,8 +878,8 @@ out:
 }
 
 /**
- * Read MCS Connect Response.\n
- * @msdn{cc240501}
+ * Read MCS Connect Response.
+ * msdn{cc240501}
  * @param mcs mcs module
  */
 
@@ -914,8 +919,8 @@ BOOL mcs_recv_connect_response(rdpMcs* mcs, wStream* s)
 }
 
 /**
- * Send MCS Connect Response.\n
- * @msdn{cc240501}
+ * Send MCS Connect Response.
+ * msdn{cc240501}
  * @param mcs mcs module
  */
 
@@ -987,9 +992,9 @@ out:
 }
 
 /**
- * Read MCS Erect Domain Request.\n
- * @msdn{cc240523}
- * @param mcs
+ * Read MCS Erect Domain Request.
+ * msdn{cc240523}
+ * @param mcs MCS module to use
  * @param s stream
  */
 
@@ -1015,9 +1020,9 @@ BOOL mcs_recv_erect_domain_request(rdpMcs* mcs, wStream* s)
 }
 
 /**
- * Send MCS Erect Domain Request.\n
- * @msdn{cc240523}
- * @param mcs
+ * Send MCS Erect Domain Request.
+ * msdn{cc240523}
+ * @param mcs MCS module to use
  */
 
 BOOL mcs_send_erect_domain_request(rdpMcs* mcs)
@@ -1047,8 +1052,8 @@ BOOL mcs_send_erect_domain_request(rdpMcs* mcs)
 }
 
 /**
- * Read MCS Attach User Request.\n
- * @msdn{cc240524}
+ * Read MCS Attach User Request.
+ * msdn{cc240524}
  * @param mcs mcs module
  * @param s stream
  */
@@ -1066,8 +1071,8 @@ BOOL mcs_recv_attach_user_request(rdpMcs* mcs, wStream* s)
 }
 
 /**
- * Send MCS Attach User Request.\n
- * @msdn{cc240524}
+ * Send MCS Attach User Request.
+ * msdn{cc240524}
  * @param mcs mcs module
  */
 
@@ -1096,8 +1101,8 @@ BOOL mcs_send_attach_user_request(rdpMcs* mcs)
 }
 
 /**
- * Read MCS Attach User Confirm.\n
- * @msdn{cc240525}
+ * Read MCS Attach User Confirm.
+ * msdn{cc240525}
  * @param mcs mcs module
  */
 
@@ -1119,8 +1124,8 @@ BOOL mcs_recv_attach_user_confirm(rdpMcs* mcs, wStream* s)
 }
 
 /**
- * Send MCS Attach User Confirm.\n
- * @msdn{cc240525}
+ * Send MCS Attach User Confirm.
+ * msdn{cc240525}
  * @param mcs mcs module
  */
 
@@ -1152,8 +1157,8 @@ BOOL mcs_send_attach_user_confirm(rdpMcs* mcs)
 }
 
 /**
- * Read MCS Channel Join Request.\n
- * @msdn{cc240526}
+ * Read MCS Channel Join Request.
+ * msdn{cc240526}
  * @param mcs mcs module
  * @param s stream
  */
@@ -1186,10 +1191,13 @@ BOOL mcs_recv_channel_join_request(rdpMcs* mcs, const rdpSettings* settings, wSt
 }
 
 /**
- * Send MCS Channel Join Request.\n
- * @msdn{cc240526}
+ * Send MCS Channel Join Request.
+ * msdn{cc240526}
+ *
  * @param mcs mcs module
- * @param channel_id channel id
+ * @param channelId channel id
+ *
+ * @return \b TRUE for success, \b FALSE otherwise
  */
 
 BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channelId)
@@ -1219,8 +1227,8 @@ BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channelId)
 }
 
 /**
- * Read MCS Channel Join Confirm.\n
- * @msdn{cc240527}
+ * Read MCS Channel Join Confirm.
+ * msdn{cc240527}
  * @param mcs mcs module
  */
 
@@ -1249,8 +1257,8 @@ BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channelId)
 }
 
 /**
- * Send MCS Channel Join Confirm.\n
- * @msdn{cc240527}
+ * Send MCS Channel Join Confirm.
+ * msdn{cc240527}
  * @param mcs mcs module
  */
 
@@ -1289,7 +1297,7 @@ fail:
 }
 
 /**
- * Receive MCS Disconnect Provider Ultimatum PDU.\n
+ * Receive MCS Disconnect Provider Ultimatum PDU.
  * @param mcs mcs module
  */
 
@@ -1339,7 +1347,7 @@ BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs, wStream* s, int* reason
 }
 
 /**
- * Send MCS Disconnect Provider Ultimatum PDU.\n
+ * Send MCS Disconnect Provider Ultimatum PDU.
  * @param mcs mcs module
  */
 

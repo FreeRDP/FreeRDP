@@ -53,14 +53,16 @@ extern UwacErrorHandler uwacErrorHandler;
 
 typedef struct uwac_task UwacTask;
 
-/** @brief */
+/** @brief task struct
+ */
 struct uwac_task
 {
 	void (*run)(UwacTask* task, uint32_t events);
 	struct wl_list link;
 };
 
-/** @brief a global registry object */
+/** @brief a global registry object
+ */
 struct uwac_global
 {
 	uint32_t name;
@@ -73,14 +75,16 @@ typedef struct uwac_global UwacGlobal;
 struct uwac_event_list_item;
 typedef struct uwac_event_list_item UwacEventListItem;
 
-/** @brief */
+/** @brief double linked list element
+ */
 struct uwac_event_list_item
 {
 	UwacEvent event;
 	UwacEventListItem *tail, *head;
 };
 
-/** @brief main connection object to a wayland display */
+/** @brief main connection object to a wayland display
+ */
 struct uwac_display
 {
 	struct wl_list globals;
