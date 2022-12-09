@@ -1134,7 +1134,7 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	{
 		char buffer[512] = { 0 };
 		char lbuffer[32] = { 0 };
-		WLog_ERR(TAG, "[%s] securityFlags=%s, missing required flag %s",
+		WLog_ERR(TAG, "[%s] securityFlags=%s, missing required flag %s", __FUNCTION__,
 		         rdp_security_flag_string(securityFlags, buffer, sizeof(buffer)),
 		         rdp_security_flag_string(SEC_LICENSE_PKT, lbuffer, sizeof(lbuffer)));
 		return STATE_RUN_FAILED;
