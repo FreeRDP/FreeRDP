@@ -344,11 +344,8 @@ cleanup:
 	if (rv)
 		kerberos_log_msg(ctx, rv);
 
-	if (domain)
 		free(domain);
-	if (username)
 		free(username);
-	if (password)
 		free(password);
 
 	if (principal)
@@ -360,7 +357,16 @@ cleanup:
 		krb5_get_init_creds_opt_free(ctx, gic_opt);
 #endif
 	if (ctx)
+	{
+		if (!credentials)
+		{
+			if (ccache)
+				krb5_cc_close(ctx, ccache);
+			if (keytab)
+				krb5_kt_close(ctx, keytab);
+		}
 		krb5_free_context(ctx);
+	}
 
 	/* If we managed to get credentials set the output */
 	if (credentials)
