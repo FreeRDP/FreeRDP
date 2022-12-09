@@ -796,31 +796,26 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 	}
 	else if (dwFlags == PATH_STYLE_NATIVE)
 	{
-		if (PATH_SEPARATOR_CHR == PATH_BACKSLASH_CHR)
-		{
-			/* Unix-style to Windows-style */
+#if (PATH_SEPARATOR_CHR == PATH_BACKSLASH_CHR)
+		/* Unix-style to Windows-style */
 
-			for (index = 0; index < cchPath; index++)
-			{
-				if (pszPath[index] == PATH_SLASH_CHR)
-					pszPath[index] = PATH_BACKSLASH_CHR;
-			}
-		}
-		else if (PATH_SEPARATOR_CHR == PATH_SLASH_CHR)
+		for (index = 0; index < cchPath; index++)
 		{
-			/* Windows-style to Unix-style */
+			if (pszPath[index] == PATH_SLASH_CHR)
+				pszPath[index] = PATH_BACKSLASH_CHR;
+		}
+#elif (PATH_SEPARATOR_CHR == PATH_SLASH_CHR)
+		/* Windows-style to Unix-style */
 
-			for (index = 0; index < cchPath; index++)
-			{
-				if (pszPath[index] == PATH_BACKSLASH_CHR)
-					pszPath[index] = PATH_SLASH_CHR;
-			}
-		}
-		else
+		for (index = 0; index < cchPath; index++)
 		{
-			/* Unexpected error */
-			return E_FAIL;
+			if (pszPath[index] == PATH_BACKSLASH_CHR)
+				pszPath[index] = PATH_SLASH_CHR;
 		}
+#else
+		/* Unexpected error */
+		return E_FAIL;
+#endif
 	}
 	else
 	{

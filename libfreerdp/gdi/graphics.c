@@ -312,7 +312,7 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, 
 	gdi = context->gdi;
 	gdi_glyph = (const gdiGlyph*)glyph;
 
-	if (!fOpRedundant && 0)
+	if (!fOpRedundant)
 	{
 		GDI_RECT rect = { 0 };
 
