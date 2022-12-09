@@ -41,10 +41,8 @@
 		}                                                                                     \
 	} while (0)
 #else
-#define WINPR_ASSERT(cond) \
-	do                     \
-	{                      \
-	} while (0)
+#include <assert.h>
+#define WINPR_ASSERT(cond) assert(cond)
 #endif
 
 #ifdef __cplusplus
