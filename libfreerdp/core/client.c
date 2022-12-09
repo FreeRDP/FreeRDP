@@ -460,7 +460,8 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 			    CHANNEL_EVENT_CONNECTED, cnv.pb, (UINT)hostnameLength);
 		}
 
-		if (getChannelError(instance->context) != CHANNEL_RC_OK)
+		error = getChannelError(instance->context);
+		if (error != CHANNEL_RC_OK)
 			goto fail;
 
 		pChannelOpenData = &channels->openDataList[index];
