@@ -64,8 +64,11 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 	wfContext* wfc = NULL;
 	DWORD rdp_scancode;
+	BOOL keystate;
 	rdpInput* input;
 	PKBDLLHOOKSTRUCT p;
+
+	static BOOL keystates[256] = { 0 };
 	DEBUG_KBD("Low-level keyboard hook, hWnd %X nCode %X wParam %X", g_focus_hWnd, nCode, wParam);
 
 	if (g_flipping_in)
@@ -110,6 +113,20 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 				input = wfc->common.context.input;
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE)p->scanCode, p->flags & LLKHF_EXTENDED);
+				keystate = keystates[p->scanCode & 0xFF];
+
+				switch (wParam)
+				{
+					case WM_KEYDOWN:
+					case WM_SYSKEYDOWN:
+						keystates[p->scanCode & 0xFF] = TRUE;
+						break;
+					case WM_KEYUP:
+					case WM_SYSKEYUP:
+					default:
+						keystates[p->scanCode & 0xFF] = FALSE;
+						break;
+				}
 				DEBUG_KBD("keydown %d scanCode 0x%08lX flags 0x%08lX vkCode 0x%08lX",
 				          (wParam == WM_KEYDOWN), p->scanCode, p->flags, p->vkCode);
 
@@ -138,10 +155,14 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					if (wParam == WM_KEYDOWN)
 					{
 						DEBUG_KBD("Pause, sent as Ctrl+NumLock");
-						freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_LCONTROL);
-						freerdp_input_send_keyboard_event_ex(input, TRUE, RDP_SCANCODE_NUMLOCK);
-						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_LCONTROL);
-						freerdp_input_send_keyboard_event_ex(input, FALSE, RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_ex(input, TRUE, FALSE,
+						                                     RDP_SCANCODE_LCONTROL);
+						freerdp_input_send_keyboard_event_ex(input, TRUE, FALSE,
+						                                     RDP_SCANCODE_NUMLOCK);
+						freerdp_input_send_keyboard_event_ex(input, FALSE, FALSE,
+						                                     RDP_SCANCODE_LCONTROL);
+						freerdp_input_send_keyboard_event_ex(input, FALSE, FALSE,
+						                                     RDP_SCANCODE_NUMLOCK);
 					}
 					else
 					{
@@ -156,7 +177,8 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 					rdp_scancode = RDP_SCANCODE_RSHIFT;
 				}
 
-				freerdp_input_send_keyboard_event_ex(input, !(p->flags & LLKHF_UP), rdp_scancode);
+				freerdp_input_send_keyboard_event_ex(input, !(p->flags & LLKHF_UP), keystate,
+				                                     rdp_scancode);
 
 				if (p->vkCode == VK_NUMLOCK || p->vkCode == VK_CAPITAL || p->vkCode == VK_SCROLL ||
 				    p->vkCode == VK_KANA)
@@ -165,6 +187,8 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				else
 					return 1;
 
+				break;
+			default:
 				break;
 		}
 	}
