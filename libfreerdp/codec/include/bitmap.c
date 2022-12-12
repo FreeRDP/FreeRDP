@@ -31,7 +31,10 @@ static INLINE BYTE* WRITEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd, UINT32 r
 	BYTE mask = 0x01;
 
 	if (cBits > 8)
+	{
+		WLog_ERR(TAG, "[%s] cBits %d > 8", __FUNCTION__, cBits);
 		return NULL;
+	}
 
 	if (!ENSURE_CAPACITY(pbDest, pbDestEnd, cBits))
 		return NULL;
@@ -62,7 +65,10 @@ static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd,
 	BYTE mask = 0x01;
 
 	if (cBits > 8)
+	{
+		WLog_ERR(TAG, "[%s] cBits %d > 8", __FUNCTION__, cBits);
 		return NULL;
+	}
 
 	if (!ENSURE_CAPACITY(pbDest, pbDestEnd, cBits))
 		return NULL;
@@ -104,10 +110,18 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 	RLEEXTRA
 
 	if ((rowDelta == 0) || (rowDelta < width))
+	{
+		WLog_ERR(TAG, "[%s] Invalid arguments: rowDelta=%" PRIu32 " == 0 || < width=%" PRIu32,
+		         __FUNCTION__, rowDelta, width);
 		return FALSE;
+	}
 
 	if (!pbSrcBuffer || !pbDestBuffer)
+	{
+		WLog_ERR(TAG, "[%s] Invalid arguments: pbSrcBuffer=%p, pbDestBuffer=%p", __FUNCTION__,
+		         pbSrcBuffer, pbDestBuffer);
 		return FALSE;
+	}
 
 	pbEnd = pbSrcBuffer + cbSrcBuffer;
 	pbDestEnd = pbDestBuffer + rowDelta * height;
@@ -201,7 +215,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 
 				if (code == LITE_SET_FG_FG_RUN || code == MEGA_MEGA_SET_FG_RUN)
 				{
-					if (pbSrc >= pbEnd)
+					if (!buffer_within_range(pbSrc, pbEnd))
 						return FALSE;
 					SRCREADPIXEL(fgPel, pbSrc);
 					SRCNEXTPIXEL(pbSrc);
@@ -233,11 +247,11 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			case MEGA_MEGA_DITHERED_RUN:
 				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
 				pbSrc = pbSrc + advance;
-				if (pbSrc >= pbEnd)
+				if (!buffer_within_range(pbSrc, pbEnd))
 					return FALSE;
 				SRCREADPIXEL(pixelA, pbSrc);
 				SRCNEXTPIXEL(pbSrc);
-				if (pbSrc >= pbEnd)
+				if (!buffer_within_range(pbSrc, pbEnd))
 					return FALSE;
 				SRCREADPIXEL(pixelB, pbSrc);
 				SRCNEXTPIXEL(pbSrc);
@@ -258,7 +272,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			case MEGA_MEGA_COLOR_RUN:
 				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
 				pbSrc = pbSrc + advance;
-				if (pbSrc >= pbEnd)
+				if (!buffer_within_range(pbSrc, pbEnd))
 					return FALSE;
 				SRCREADPIXEL(pixelA, pbSrc);
 				SRCNEXTPIXEL(pbSrc);
@@ -280,7 +294,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
 				pbSrc = pbSrc + advance;
 
-				if (pbSrc >= pbEnd)
+				if (!buffer_within_range(pbSrc, pbEnd))
 					return FALSE;
 				if (code == LITE_SET_FG_FGBG_IMAGE || code == MEGA_MEGA_SET_FGBG_IMAGE)
 				{
@@ -348,7 +362,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 					return FALSE;
 
 				UNROLL(runLength, {
-					if (pbSrc >= pbEnd)
+					if (!buffer_within_range(pbSrc, pbEnd))
 						return FALSE;
 					SRCREADPIXEL(temp, pbSrc);
 					SRCNEXTPIXEL(pbSrc);
@@ -420,6 +434,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 				break;
 
 			default:
+				WLog_ERR(TAG, "[%s] invalid code 0x%08" PRIx32, __FUNCTION__, code);
 				return FALSE;
 		}
 	}

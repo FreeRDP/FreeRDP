@@ -21,6 +21,7 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
 #include <freerdp/config.h>
 
 #include <freerdp/codec/interleaved.h>
@@ -95,6 +96,20 @@ static const BYTE g_MaskSpecialFgBg2 = 0x05;
 static const BYTE g_MaskRegularRunLength = 0x1F;
 static const BYTE g_MaskLiteRunLength = 0x0F;
 
+#define buffer_within_range(pbSrc, pbEnd) \
+	buffer_within_range_((pbSrc), (pbEnd), __FUNCTION__, __FILE__, __LINE__)
+static INLINE BOOL buffer_within_range_(const void* pbSrc, const void* pbEnd, const char* fkt,
+                                        const char* file, size_t line)
+{
+	WINPR_UNUSED(file);
+	if (pbSrc >= pbEnd)
+	{
+		WLog_ERR(TAG, "[%s:%" PRIuz "] pbSrc=%p >= pbEnd=%p", fkt, line, pbSrc, pbEnd);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 /**
  * Reads the supplied order header and extracts the compression
  * order code ID.
@@ -131,7 +146,11 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 	UINT32 runLength = 0;
 	UINT32 ladvance = 1;
 
-	if (pbOrderHdr >= pbEnd)
+	WINPR_ASSERT(pbOrderHdr);
+	WINPR_ASSERT(pbEnd);
+	WINPR_ASSERT(advance);
+
+	if (!buffer_within_range(pbOrderHdr, pbEnd))
 		return 0;
 
 	switch (code)
@@ -141,7 +160,7 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 
 			if (runLength == 0)
 			{
-				if (pbOrderHdr + 1 >= pbEnd)
+				if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
 					return 0;
 				runLength = (*(pbOrderHdr + 1)) + 1;
 				ladvance += 1;
@@ -158,7 +177,7 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 
 			if (runLength == 0)
 			{
-				if (pbOrderHdr + 1 >= pbEnd)
+				if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
 					return 0;
 
 				runLength = (*(pbOrderHdr + 1)) + 1;
@@ -180,7 +199,7 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 			if (runLength == 0)
 			{
 				/* An extended (MEGA) run. */
-				if (pbOrderHdr + 1 >= pbEnd)
+				if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
 					return 0;
 
 				runLength = (*(pbOrderHdr + 1)) + 32;
@@ -196,7 +215,7 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 			if (runLength == 0)
 			{
 				/* An extended (MEGA) run. */
-				if (pbOrderHdr + 1 >= pbEnd)
+				if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
 					return 0;
 
 				runLength = (*(pbOrderHdr + 1)) + 16;
@@ -213,7 +232,7 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 		case MEGA_MEGA_FGBG_IMAGE:
 		case MEGA_MEGA_SET_FGBG_IMAGE:
 		case MEGA_MEGA_COLOR_IMAGE:
-			if (pbOrderHdr + 2 >= pbEnd)
+			if (!buffer_within_range(pbOrderHdr + 2, pbEnd))
 				return 0;
 
 			runLength = ((UINT16)pbOrderHdr[1]) | ((UINT16)(pbOrderHdr[2] << 8));
@@ -225,20 +244,32 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 	return runLength;
 }
 
-static INLINE BOOL ensure_capacity(const BYTE* start, const BYTE* end, size_t size, size_t base)
+#define ensure_capacity(start, end, size, base) \
+	ensure_capacity_((start), (end), (size), (base), __FUNCTION__, __FILE__, __LINE__)
+static INLINE BOOL ensure_capacity_(const BYTE* start, const BYTE* end, size_t size, size_t base,
+                                    const char* fkt, const char* file, size_t line)
 {
 	const size_t available = (uintptr_t)end - (uintptr_t)start;
 	const BOOL rc = available >= size * base;
-	return rc && (start <= end);
+	const BOOL res = rc && (start <= end);
+
+	if (!res)
+		WLog_ERR(TAG,
+		         "[%s:%" PRIuz "] failed: start=%p <= end=%p, available=%" PRIuz " >= size=%" PRIuz
+		         " * base=%" PRIuz,
+		         fkt, line, start, end, available, size, base);
+	return res;
 }
 
 static INLINE void write_pixel_8(BYTE* _buf, BYTE _pix)
 {
+	WINPR_ASSERT(_buf);
 	*_buf = _pix;
 }
 
 static INLINE void write_pixel_24(BYTE* _buf, UINT32 _pix)
 {
+	WINPR_ASSERT(_buf);
 	(_buf)[0] = (BYTE)(_pix);
 	(_buf)[1] = (BYTE)((_pix) >> 8);
 	(_buf)[2] = (BYTE)((_pix) >> 16);
@@ -246,6 +277,7 @@ static INLINE void write_pixel_24(BYTE* _buf, UINT32 _pix)
 
 static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 {
+	WINPR_ASSERT(_buf);
 	_buf[0] = _pix & 0xFF;
 	_buf[1] = (_pix >> 8) & 0xFF;
 }
@@ -343,7 +375,11 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 	UINT32 BufferSize;
 
 	if (!interleaved || !pSrcData || !pDstData)
+	{
+		WLog_ERR(TAG, "[%s] invalid arguments: interleaved=%p, pSrcData=%p, pDstData=%p",
+		         __FUNCTION__, interleaved, pSrcData, pDstData);
 		return FALSE;
+	}
 
 	switch (bpp)
 	{
@@ -368,7 +404,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 			break;
 
 		default:
-			WLog_ERR(TAG, "Invalid color depth %" PRIu32 "", bpp);
+			WLog_ERR(TAG, "[%s] Invalid color depth %" PRIu32 "", __FUNCTION__, bpp);
 			return FALSE;
 	}
 
@@ -381,14 +417,20 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 	}
 
 	if (!interleaved->TempBuffer)
+	{
+		WLog_ERR(TAG, "[%s] interleaved->TempBuffer=%p", __FUNCTION__, interleaved->TempBuffer);
 		return FALSE;
+	}
 
 	switch (bpp)
 	{
 		case 24:
 			if (!RleDecompress24to24(pSrcData, SrcSize, interleaved->TempBuffer, scanline,
 			                         nSrcWidth, nSrcHeight))
+			{
+				WLog_ERR(TAG, "[%s] RleDecompress24to24 failed", __FUNCTION__);
 				return FALSE;
+			}
 
 			break;
 
@@ -396,24 +438,36 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 		case 15:
 			if (!RleDecompress16to16(pSrcData, SrcSize, interleaved->TempBuffer, scanline,
 			                         nSrcWidth, nSrcHeight))
+			{
+				WLog_ERR(TAG, "[%s] RleDecompress16to16 failed", __FUNCTION__);
 				return FALSE;
+			}
 
 			break;
 
 		case 8:
 			if (!RleDecompress8to8(pSrcData, SrcSize, interleaved->TempBuffer, scanline, nSrcWidth,
 			                       nSrcHeight))
+			{
+				WLog_ERR(TAG, "[%s] RleDecompress8to8 failed", __FUNCTION__);
 				return FALSE;
+			}
 
 			break;
 
 		default:
+			WLog_ERR(TAG, "[%s] Invalid color depth %" PRIu32 "", __FUNCTION__, bpp);
 			return FALSE;
 	}
 
-	return freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
-	                          interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette,
-	                          FREERDP_FLIP_VERTICAL);
+	if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
+	                        interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette,
+	                        FREERDP_FLIP_VERTICAL))
+	{
+		WLog_ERR(TAG, "[%s] freerdp_image_copy failed", __FUNCTION__);
+		return FALSE;
+	}
+	return TRUE;
 }
 
 BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData, UINT32* pDstSize,
