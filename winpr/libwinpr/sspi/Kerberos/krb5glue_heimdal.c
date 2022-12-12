@@ -152,50 +152,55 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 
 	WINPR_ASSERT(ctx);
 
-	krb5_get_init_creds_opt_alloc(ctx, &gic_opt);
-
-	krb5_get_init_creds_opt_set_forwardable(gic_opt, 0);
-	krb5_get_init_creds_opt_set_proxiable(gic_opt, 0);
-
-	if (krb_settings)
+	do
 	{
-		if (krb_settings->startTime)
-			start_time = krb_settings->startTime;
-		if (krb_settings->lifeTime)
-			krb5_get_init_creds_opt_set_tkt_life(gic_opt, krb_settings->lifeTime);
-		if (krb_settings->renewLifeTime)
-			krb5_get_init_creds_opt_set_renew_life(gic_opt, krb_settings->renewLifeTime);
-		if (krb_settings->withPac)
-			krb5_get_init_creds_opt_set_pac_request(ctx, gic_opt, TRUE);
-		if (krb_settings->pkinitX509Anchors || krb_settings->pkinitX509Identity)
+		if ((rv = krb5_get_init_creds_opt_alloc(ctx, &gic_opt)) != 0)
+			break;
+
+		krb5_get_init_creds_opt_set_forwardable(gic_opt, 0);
+		krb5_get_init_creds_opt_set_proxiable(gic_opt, 0);
+
+		if (krb_settings)
 		{
-			rv = krb5_get_init_creds_opt_set_pkinit(
-			    ctx, gic_opt, princ, krb_settings->pkinitX509Identity,
-			    krb_settings->pkinitX509Anchors, NULL, NULL, 0, prompter, password, password);
+			if (krb_settings->startTime)
+				start_time = krb_settings->startTime;
+			if (krb_settings->lifeTime)
+				krb5_get_init_creds_opt_set_tkt_life(gic_opt, krb_settings->lifeTime);
+			if (krb_settings->renewLifeTime)
+				krb5_get_init_creds_opt_set_renew_life(gic_opt, krb_settings->renewLifeTime);
+			if (krb_settings->withPac)
+				krb5_get_init_creds_opt_set_pac_request(ctx, gic_opt, TRUE);
+			if (krb_settings->pkinitX509Anchors || krb_settings->pkinitX509Identity)
+			{
+				if ((rv = krb5_get_init_creds_opt_set_pkinit(
+				         ctx, gic_opt, princ, krb_settings->pkinitX509Identity,
+				         krb_settings->pkinitX509Anchors, NULL, NULL, 0, prompter, password,
+				         password)) != 0)
+					break;
+			}
 		}
-	}
 
-	if (rv == 0)
-		rv = krb5_init_creds_init(ctx, princ, prompter, password, start_time, gic_opt, &creds_ctx);
-	if (rv == 0)
-		rv = krb5_init_creds_set_password(ctx, creds_ctx, password);
-	if (rv == 0 && krb_settings)
-	{
+		if ((rv = krb5_init_creds_init(ctx, princ, prompter, password, start_time, gic_opt,
+		                               &creds_ctx)) != 0)
+			break;
+		if ((rv = krb5_init_creds_set_password(ctx, creds_ctx, password)) != 0)
+			break;
 		if (krb_settings->armorCache)
 		{
 			krb5_ccache armor_cc = NULL;
-			rv = krb5_cc_resolve(ctx, krb_settings->armorCache, &armor_cc);
-			if (rv == 0)
-				rv = krb5_init_creds_set_fast_ccache(ctx, creds_ctx, armor_cc);
+			if ((rv = krb5_cc_resolve(ctx, krb_settings->armorCache, &armor_cc)) != 0)
+				break;
+			if ((rv = krb5_init_creds_set_fast_ccache(ctx, creds_ctx, armor_cc)) != 0)
+				break;
 			krb5_cc_close(ctx, armor_cc);
 		}
-	}
-	if (rv == 0)
-		rv = krb5_init_creds_get(ctx, creds_ctx);
-	if (rv == 0)
-		rv = krb5_init_creds_get_creds(ctx, creds_ctx, &creds);
-	if (rv == 0)
-		rv = krb5_cc_store_cred(ctx, ccache, &creds);
+		if ((rv = krb5_init_creds_get(ctx, creds_ctx)) != 0)
+			break;
+		if ((rv = krb5_init_creds_get_creds(ctx, creds_ctx, &creds)) != 0)
+			break;
+		if ((rv = krb5_cc_store_cred(ctx, ccache, &creds)) != 0)
+			break;
+	} while (0);
 
 	krb5_free_cred_contents(ctx, &creds);
 	krb5_init_creds_free(ctx, creds_ctx);
