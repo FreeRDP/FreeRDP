@@ -94,6 +94,7 @@ static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd,
 static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BYTE* pbDestBuffer,
                                  UINT32 rowDelta, UINT32 width, UINT32 height)
 {
+	char sbuffer[128] = { 0 };
 	const BYTE* pbSrc = pbSrcBuffer;
 	const BYTE* pbEnd;
 	const BYTE* pbDestEnd;
@@ -144,8 +145,11 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 		*/
 		code = ExtractCodeId(*pbSrc);
 
+		WLog_VRB(TAG, "[%s] pbSrc=%p code=%s, rem=%" PRIuz, __FUNCTION__, pbSrc,
+		         rle_code_str_buffer(code, sbuffer, sizeof(sbuffer)), pbEnd - pbSrc);
+
 		/* Handle Background Run Orders. */
-		if (code == REGULAR_BG_RUN || code == MEGA_MEGA_BG_RUN)
+		if ((code == REGULAR_BG_RUN) || (code == MEGA_MEGA_BG_RUN))
 		{
 			runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
 			pbSrc = pbSrc + advance;
@@ -434,7 +438,9 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 				break;
 
 			default:
-				WLog_ERR(TAG, "[%s] invalid code 0x%08" PRIx32, __FUNCTION__, code);
+				WLog_ERR(TAG,
+				         "[%s] invalid code 0x%08" PRIx32 ", pbSrcBuffer=%p, pbSrc=%p, pbEnd=%p",
+				         __FUNCTION__, code, pbSrcBuffer, pbSrc, pbEnd);
 				return FALSE;
 		}
 	}
