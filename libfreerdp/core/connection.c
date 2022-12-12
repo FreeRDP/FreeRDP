@@ -227,6 +227,7 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
 
 static BOOL rdp_client_wait_for_activation(rdpRdp* rdp)
 {
+	BOOL timedout = FALSE;
 	WINPR_ASSERT(rdp);
 
 	const rdpSettings* settings = rdp->settings;
@@ -235,7 +236,7 @@ static BOOL rdp_client_wait_for_activation(rdpRdp* rdp)
 	UINT64 now = GetTickCount64();
 	UINT64 dueDate = now + freerdp_settings_get_uint32(settings, FreeRDP_TcpAckTimeout);
 
-	for (; now < dueDate; now = GetTickCount64())
+	for (; (now < dueDate) && !timedout; now = GetTickCount64())
 	{
 		HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
 		DWORD wstatus = 0;
@@ -251,7 +252,7 @@ static BOOL rdp_client_wait_for_activation(rdpRdp* rdp)
 		{
 			case WAIT_TIMEOUT:
 				/* will make us quit with a timeout */
-				now = dueDate + 1;
+				timedout = TRUE;
 				break;
 			case WAIT_ABANDONED:
 			case WAIT_FAILED:
