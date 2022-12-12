@@ -32,8 +32,10 @@ typedef struct rdp_input rdpInput;
 /* keyboard Flags */
 #define KBD_FLAGS_EXTENDED 0x0100
 #define KBD_FLAGS_EXTENDED1 0x0200
-#define KBD_FLAGS_DOWN 0x4000
-#define KBD_FLAGS_RELEASE 0x8000
+#define KBD_FLAGS_DOWN \
+	0x4000 /**< Presence of this flag indicates the key was already down previously */
+#define KBD_FLAGS_RELEASE \
+	0x8000 /**< Presence of this flag inidcates a key was released. Absence a key press */
 
 /* Pointer Flags */
 #define PTR_FLAGS_HWHEEL 0x0400
@@ -96,7 +98,7 @@ extern "C"
 
 	FREERDP_API BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags);
 	FREERDP_API BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code);
-	FREERDP_API BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down,
+	FREERDP_API BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, BOOL repeat,
 	                                                      UINT32 rdp_scancode);
 	FREERDP_API BOOL freerdp_input_send_keyboard_pause_event(rdpInput* input);
 	FREERDP_API BOOL freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags,

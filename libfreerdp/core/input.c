@@ -557,24 +557,8 @@ static BOOL input_recv_keyboard_event(rdpInput* input, wStream* s)
 	Stream_Read_UINT16(s, keyCode);       /* keyCode (2 bytes) */
 	Stream_Seek(s, 2);                    /* pad2Octets (2 bytes) */
 
-	/**
-	 * Note: A lot of code in FreeRDP and in dependent projects checks the
-	 * KBDFLAGS_DOWN flag in order to detect a key press.
-	 * According to the specs only the absence of the slow-path
-	 * KBDFLAGS_RELEASE flag indicates a key-down event.
-	 * The slow-path KBDFLAGS_DOWN flag merely indicates that the key was
-	 * down prior to this event.
-	 * The checks for KBDFLAGS_DOWN only work successfully because the code
-	 * handling the fast-path keyboard input sets the KBDFLAGS_DOWN flag if
-	 * the FASTPATH_INPUT_KBDFLAGS_RELEASE flag is missing.
-	 * Since the same input callback is used for slow- and fast-path events
-	 * we have to follow that "convention" here.
-	 */
-
 	if (keyboardFlags & KBD_FLAGS_RELEASE)
 		keyboardFlags &= ~KBD_FLAGS_DOWN;
-	else
-		keyboardFlags |= KBD_FLAGS_DOWN;
 
 	if (keyCode & 0xFF00)
 		WLog_WARN(TAG,
@@ -603,8 +587,6 @@ static BOOL input_recv_unicode_keyboard_event(rdpInput* input, wStream* s)
 
 	if (keyboardFlags & KBD_FLAGS_RELEASE)
 		keyboardFlags &= ~KBD_FLAGS_DOWN;
-	else
-		keyboardFlags |= KBD_FLAGS_DOWN;
 
 	return IFCALLRESULT(TRUE, input->UnicodeKeyboardEvent, input, keyboardFlags, unicodeCode);
 }
@@ -780,13 +762,16 @@ BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code
 	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, flags, code);
 }
 
-BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, UINT32 rdp_scancode)
+BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, BOOL repeat,
+                                          UINT32 rdp_scancode)
 {
-	return freerdp_input_send_keyboard_event(
-	    input,
-	    (RDP_SCANCODE_EXTENDED(rdp_scancode) ? KBD_FLAGS_EXTENDED : 0) |
-	        ((down) ? KBD_FLAGS_DOWN : KBD_FLAGS_RELEASE),
-	    RDP_SCANCODE_CODE(rdp_scancode));
+	UINT16 flags = (RDP_SCANCODE_EXTENDED(rdp_scancode) ? KBD_FLAGS_EXTENDED : 0);
+	if (down && repeat)
+		flags |= KBD_FLAGS_DOWN;
+	else if (!down)
+		flags |= KBD_FLAGS_RELEASE;
+
+	return freerdp_input_send_keyboard_event(input, flags, RDP_SCANCODE_CODE(rdp_scancode));
 }
 
 BOOL freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
