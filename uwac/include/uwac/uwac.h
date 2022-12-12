@@ -261,6 +261,7 @@ struct uwac_key_event
 	uint32_t raw_key;
 	uint32_t sym;
 	bool pressed;
+	bool repeated;
 };
 typedef struct uwac_key_event UwacKeyEvent;
 

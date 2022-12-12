@@ -168,6 +168,7 @@ static void keyboard_repeat_func(UwacTask* task, uint32_t events)
 		key->sym = input->repeat_sym;
 		key->raw_key = input->repeat_key;
 		key->pressed = true;
+		key->repeated = true;
 	}
 }
 
@@ -418,6 +419,7 @@ static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32
 	keyEvent->sym = sym;
 	keyEvent->raw_key = key;
 	keyEvent->pressed = (state == WL_KEYBOARD_KEY_STATE_PRESSED);
+	keyEvent->repeated = false;
 }
 
 static void keyboard_handle_modifiers(void* data, struct wl_keyboard* keyboard, uint32_t serial,
