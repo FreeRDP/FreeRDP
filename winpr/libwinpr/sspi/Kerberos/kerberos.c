@@ -129,7 +129,7 @@ static void kerberos_log_msg(krb5_context ctx, krb5_error_code code)
 
 static void kerberos_ContextFree(KRB_CONTEXT* ctx, BOOL allocated)
 {
-	if (ctx)
+	if (ctx && ctx->ctx)
 	{
 		krb5_k_free_key(ctx->ctx, ctx->session_key);
 		krb5_k_free_key(ctx->ctx, ctx->initiator_key);
