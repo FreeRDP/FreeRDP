@@ -32,6 +32,13 @@ set(${MODULE_PREFIX}_KERBEROS_SRCS
 	Kerberos/kerberos.c
 	Kerberos/kerberos.h)
 
+if(KRB5_FOUND)
+	list(APPEND ${MODULE_PREFIX}_KERBEROS_SRCS
+		Kerberos/krb5glue_mit.c
+		Kerberos/krb5glue_heimdal.c
+		Kerberos/krb5glue.h)
+endif()
+
 set(${MODULE_PREFIX}_NEGOTIATE_SRCS
 	Negotiate/negotiate.c
 	Negotiate/negotiate.h)
