@@ -237,10 +237,10 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 		XLockDisplay(x11->display);
 		XTestGrabControl(x11->display, True);
 
-		if (flags & KBD_FLAGS_DOWN)
-			XTestFakeKeyEvent(x11->display, keycode, True, CurrentTime);
-		else if (flags & KBD_FLAGS_RELEASE)
+		if (flags & KBD_FLAGS_RELEASE)
 			XTestFakeKeyEvent(x11->display, keycode, False, CurrentTime);
+		else
+			XTestFakeKeyEvent(x11->display, keycode, True, CurrentTime);
 
 		XTestGrabControl(x11->display, False);
 		XFlush(x11->display);
