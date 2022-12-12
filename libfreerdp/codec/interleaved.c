@@ -196,6 +196,106 @@ static INLINE UINT32 ExtractCodeId(BYTE bOrderHdr)
 /**
  * Extract the run length of a compression order.
  */
+static UINT ExtractRunLengthRegularFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
+{
+	UINT runLength;
+
+	WINPR_ASSERT(pbOrderHdr);
+	WINPR_ASSERT(pbEnd);
+	WINPR_ASSERT(advance);
+
+	runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
+	if (runLength == 0)
+	{
+		if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
+			return 0;
+		runLength = *(pbOrderHdr + 1) + 1;
+		(*advance)++;
+	}
+	else
+		runLength = runLength * 8;
+
+	return runLength;
+}
+
+static UINT ExtractRunLengthLiteFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
+{
+	UINT runLength;
+
+	WINPR_ASSERT(pbOrderHdr);
+	WINPR_ASSERT(pbEnd);
+	WINPR_ASSERT(advance);
+
+	runLength = *pbOrderHdr & g_MaskLiteRunLength;
+	if (runLength == 0)
+	{
+		if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
+			return 0;
+		runLength = *(pbOrderHdr + 1) + 1;
+		(*advance)++;
+	}
+	else
+		runLength = runLength * 8;
+
+	return runLength;
+}
+
+static UINT ExtractRunLengthRegular(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
+{
+	UINT runLength;
+
+	WINPR_ASSERT(pbOrderHdr);
+	WINPR_ASSERT(pbEnd);
+	WINPR_ASSERT(advance);
+
+	runLength = *pbOrderHdr & g_MaskRegularRunLength;
+	if (runLength == 0)
+	{
+		if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
+			return 0;
+		runLength = *(pbOrderHdr + 1) + 32;
+		(*advance)++;
+	}
+
+	return runLength;
+}
+
+static UINT ExtractRunLengthMegaMega(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
+{
+	UINT runLength;
+
+	WINPR_ASSERT(pbOrderHdr);
+	WINPR_ASSERT(pbEnd);
+	WINPR_ASSERT(advance);
+
+	if (!buffer_within_range(pbOrderHdr + 2, pbEnd))
+		return 0;
+
+	runLength = ((UINT16)pbOrderHdr[1]) | (((UINT16)pbOrderHdr[2]) << 8);
+	(*advance) += 2;
+
+	return runLength;
+}
+
+static UINT ExtractRunLengthLite(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
+{
+	UINT runLength;
+
+	WINPR_ASSERT(pbOrderHdr);
+	WINPR_ASSERT(pbEnd);
+	WINPR_ASSERT(advance);
+
+	runLength = *pbOrderHdr & g_MaskLiteRunLength;
+	if (runLength == 0)
+	{
+		if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
+			return 0;
+		runLength = *(pbOrderHdr + 1) + 16;
+		(*advance)++;
+	}
+	return runLength;
+}
+
 static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const BYTE* pbEnd,
                                       UINT32* advance)
 {
@@ -212,72 +312,23 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 	switch (code)
 	{
 		case REGULAR_FGBG_IMAGE:
-			runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
-
-			if (runLength == 0)
-			{
-				if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
-					return 0;
-				runLength = (*(pbOrderHdr + 1)) + 1;
-				ladvance += 1;
-			}
-			else
-			{
-				runLength = runLength * 8;
-			}
-
+			runLength = ExtractRunLengthRegularFgBg(pbOrderHdr, pbEnd, &ladvance);
 			break;
 
 		case LITE_SET_FG_FGBG_IMAGE:
-			runLength = (*pbOrderHdr) & g_MaskLiteRunLength;
-
-			if (runLength == 0)
-			{
-				if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
-					return 0;
-
-				runLength = (*(pbOrderHdr + 1)) + 1;
-				ladvance += 1;
-			}
-			else
-			{
-				runLength = runLength * 8;
-			}
-
+			runLength = ExtractRunLengthLiteFgBg(pbOrderHdr, pbEnd, &ladvance);
 			break;
 
 		case REGULAR_BG_RUN:
 		case REGULAR_FG_RUN:
 		case REGULAR_COLOR_RUN:
 		case REGULAR_COLOR_IMAGE:
-			runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
-
-			if (runLength == 0)
-			{
-				/* An extended (MEGA) run. */
-				if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
-					return 0;
-
-				runLength = (*(pbOrderHdr + 1)) + 32;
-				ladvance += 1;
-			}
-
+			runLength = ExtractRunLengthRegular(pbOrderHdr, pbEnd, &ladvance);
 			break;
 
 		case LITE_SET_FG_FG_RUN:
 		case LITE_DITHERED_RUN:
-			runLength = (*pbOrderHdr) & g_MaskLiteRunLength;
-
-			if (runLength == 0)
-			{
-				/* An extended (MEGA) run. */
-				if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
-					return 0;
-
-				runLength = (*(pbOrderHdr + 1)) + 16;
-				ladvance += 1;
-			}
-
+			runLength = ExtractRunLengthLite(pbOrderHdr, pbEnd, &ladvance);
 			break;
 
 		case MEGA_MEGA_BG_RUN:
@@ -288,11 +339,12 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 		case MEGA_MEGA_FGBG_IMAGE:
 		case MEGA_MEGA_SET_FGBG_IMAGE:
 		case MEGA_MEGA_COLOR_IMAGE:
-			if (!buffer_within_range(pbOrderHdr + 2, pbEnd))
-				return 0;
+			runLength = ExtractRunLengthMegaMega(pbOrderHdr, pbEnd, &ladvance);
+			break;
 
-			runLength = ((UINT16)pbOrderHdr[1]) | ((UINT16)(pbOrderHdr[2] << 8));
-			ladvance += 2;
+		default:
+			runLength = 0;
+			ladvance = 0;
 			break;
 	}
 
