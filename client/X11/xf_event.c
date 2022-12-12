@@ -599,6 +599,29 @@ static BOOL xf_event_KeyRelease(xfContext* xfc, const XKeyEvent* event, BOOL app
 	return TRUE;
 }
 
+/* Release a key, but ignore the event in case of autorepeat.
+ */
+static BOOL xf_event_KeyReleaseOrIgnore(xfContext* xfc, const XKeyEvent* event, BOOL app)
+{
+	WINPR_ASSERT(xfc);
+	WINPR_ASSERT(event);
+
+	if ((event->type == KeyRelease) && XEventsQueued(xfc->display, QueuedAfterReading))
+	{
+		XEvent nev = { 0 };
+		XPeekEvent(xfc->display, &nev);
+
+		if ((nev.type == KeyPress) && (nev.xkey.time == event->time) &&
+		    (nev.xkey.keycode == event->keycode))
+		{
+			/* Key wasn’t actually released */
+			return TRUE;
+		}
+	}
+
+	return xf_event_KeyRelease(xfc, event, app);
+}
+
 static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL app)
 {
 	if (event->mode == NotifyGrab)
@@ -1161,7 +1184,7 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 			break;
 
 		case KeyRelease:
-			status = xf_event_KeyRelease(xfc, &event->xkey, xfc->remote_app);
+			status = xf_event_KeyReleaseOrIgnore(xfc, &event->xkey, xfc->remote_app);
 			break;
 
 		case FocusIn:
