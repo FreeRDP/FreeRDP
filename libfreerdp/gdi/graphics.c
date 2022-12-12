@@ -141,7 +141,10 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 	if ((FreeRDPGetBytesPerPixel(bitmap->format) == 0) || (DstWidth == 0) || (DstHeight == 0) ||
 	    (DstWidth > UINT32_MAX / DstHeight) ||
 	    (size > (UINT32_MAX / FreeRDPGetBytesPerPixel(bitmap->format))))
+	{
+		WLog_ERR(TAG, "[%s] invalid input data", __FUNCTION__);
 		return FALSE;
+	}
 
 	size *= FreeRDPGetBytesPerPixel(bitmap->format);
 	bitmap->length = size;
@@ -161,7 +164,7 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 			                         bitmap->top, bitmap->data, bitmap->format, gdi->stride,
 			                         gdi->height, &invalidRegion))
 			{
-				WLog_ERR(TAG, "rfx_process_message failure");
+				WLog_ERR(TAG, "[%s] rfx_process_message failed", __FUNCTION__);
 				return FALSE;
 			}
 
@@ -175,7 +178,7 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 
 			if (status < 1)
 			{
-				WLog_ERR(TAG, "nsc_process_message failure");
+				WLog_ERR(TAG, "[%s] nsc_process_message failed", __FUNCTION__);
 				return FALSE;
 			}
 
@@ -188,7 +191,10 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 			if (!interleaved_decompress(context->codecs->interleaved, pSrcData, SrcSize, DstWidth,
 			                            DstHeight, bpp, bitmap->data, bitmap->format, 0, 0, 0,
 			                            DstWidth, DstHeight, &gdi->palette))
+			{
+				WLog_ERR(TAG, "[%s] interleaved_decompress failed", __FUNCTION__);
 				return FALSE;
+			}
 		}
 		else
 		{
@@ -198,7 +204,10 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 			if (!planar_decompress(context->codecs->planar, pSrcData, SrcSize, DstWidth, DstHeight,
 			                       bitmap->data, bitmap->format, 0, 0, 0, DstWidth, DstHeight,
 			                       TRUE))
+			{
+				WLog_ERR(TAG, "[%s] planar_decompress failed", __FUNCTION__);
 				return FALSE;
+			}
 		}
 	}
 	else
@@ -214,12 +223,19 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 			const size_t dstSize = SrcSize * dbpp / sbpp;
 
 			if (dstSize < bitmap->length)
+			{
+				WLog_ERR(TAG, "[%s] dstSize %" PRIuz " < bitmap->length %" PRIu32, __FUNCTION__,
+				         dstSize, bitmap->length);
 				return FALSE;
+			}
 		}
 
 		if (!freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0, DstWidth, DstHeight,
 		                        pSrcData, SrcFormat, 0, 0, 0, &gdi->palette, FREERDP_FLIP_VERTICAL))
+		{
+			WLog_ERR(TAG, "[%s] freerdp_image_copy failed", __FUNCTION__);
 			return FALSE;
+		}
 	}
 
 	return TRUE;
