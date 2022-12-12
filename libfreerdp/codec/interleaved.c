@@ -96,6 +96,62 @@ static const BYTE g_MaskSpecialFgBg2 = 0x05;
 static const BYTE g_MaskRegularRunLength = 0x1F;
 static const BYTE g_MaskLiteRunLength = 0x0F;
 
+static const char* rle_code_str(UINT32 code)
+{
+	switch (code)
+	{
+		case REGULAR_BG_RUN:
+			return "REGULAR_BG_RUN";
+		case MEGA_MEGA_BG_RUN:
+			return "MEGA_MEGA_BG_RUN";
+		case REGULAR_FG_RUN:
+			return "REGULAR_FG_RUN";
+		case MEGA_MEGA_FG_RUN:
+			return "MEGA_MEGA_FG_RUN";
+		case LITE_SET_FG_FG_RUN:
+			return "LITE_SET_FG_FG_RUN";
+		case MEGA_MEGA_SET_FG_RUN:
+			return "MEGA_MEGA_SET_FG_RUN";
+		case LITE_DITHERED_RUN:
+			return "LITE_DITHERED_RUN";
+		case MEGA_MEGA_DITHERED_RUN:
+			return "MEGA_MEGA_DITHERED_RUN";
+		case REGULAR_COLOR_RUN:
+			return "REGULAR_COLOR_RUN";
+		case MEGA_MEGA_COLOR_RUN:
+			return "MEGA_MEGA_COLOR_RUN";
+		case REGULAR_FGBG_IMAGE:
+			return "REGULAR_FGBG_IMAGE";
+		case MEGA_MEGA_FGBG_IMAGE:
+			return "MEGA_MEGA_FGBG_IMAGE";
+		case LITE_SET_FG_FGBG_IMAGE:
+			return "LITE_SET_FG_FGBG_IMAGE";
+		case MEGA_MEGA_SET_FGBG_IMAGE:
+			return "MEGA_MEGA_SET_FGBG_IMAGE";
+		case REGULAR_COLOR_IMAGE:
+			return "REGULAR_COLOR_IMAGE";
+		case MEGA_MEGA_COLOR_IMAGE:
+			return "MEGA_MEGA_COLOR_IMAGE";
+		case SPECIAL_FGBG_1:
+			return "SPECIAL_FGBG_1";
+		case SPECIAL_FGBG_2:
+			return "SPECIAL_FGBG_2";
+		case SPECIAL_WHITE:
+			return "SPECIAL_WHITE";
+		case SPECIAL_BLACK:
+			return "SPECIAL_BLACK";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+static const char* rle_code_str_buffer(UINT32 code, char* buffer, size_t size)
+{
+	const char* str = rle_code_str(code);
+	_snprintf(buffer, size, "%s [0x%08" PRIx32 "]", str, code);
+	return buffer;
+}
+
 #define buffer_within_range(pbSrc, pbEnd) \
 	buffer_within_range_((pbSrc), (pbEnd), __FUNCTION__, __FILE__, __LINE__)
 static INLINE BOOL buffer_within_range_(const void* pbSrc, const void* pbEnd, const char* fkt,
