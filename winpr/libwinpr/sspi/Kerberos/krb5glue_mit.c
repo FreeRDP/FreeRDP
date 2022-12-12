@@ -24,6 +24,7 @@
 #include <winpr/endian.h>
 #include <winpr/crypto.h>
 #include <winpr/print.h>
+#include <winpr/assert.h>
 #include <errno.h>
 #include "krb5glue.h"
 #include <profile.h>
@@ -43,6 +44,9 @@ static char* create_temporary_file(void)
 
 void krb5glue_keys_free(krb5_context ctx, struct krb5glue_keyset* keyset)
 {
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(keyset);
+
 	krb5_k_free_key(ctx, keyset->session_key);
 	krb5_k_free_key(ctx, keyset->initiator_key);
 	krb5_k_free_key(ctx, keyset->acceptor_key);
@@ -51,6 +55,10 @@ void krb5glue_keys_free(krb5_context ctx, struct krb5glue_keyset* keyset)
 krb5_error_code krb5glue_update_keyset(krb5_context ctx, krb5_auth_context auth_ctx, BOOL acceptor,
                                        struct krb5glue_keyset* keyset)
 {
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(auth_ctx);
+	WINPR_ASSERT(keyset);
+
 	krb5glue_keys_free(ctx, keyset);
 	krb5_auth_con_getkey_k(ctx, auth_ctx, &keyset->session_key);
 	if (acceptor)
@@ -68,6 +76,9 @@ krb5_error_code krb5glue_update_keyset(krb5_context ctx, krb5_auth_context auth_
 
 krb5_prompt_type krb5glue_get_prompt_type(krb5_context ctx, krb5_prompt prompts[], int index)
 {
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(prompts);
+
 	krb5_prompt_type* types = krb5_get_prompt_types(ctx);
 	return types ? types[index] : 0;
 }
@@ -76,6 +87,10 @@ krb5_error_code krb5glue_log_error(krb5_context ctx, krb5_data* msg, const char*
 {
 	krb5_error* error = NULL;
 	krb5_error_code rv = 0;
+
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(msg);
+	WINPR_ASSERT(tag);
 
 	if (!(rv = krb5_rd_error(ctx, msg, &error)))
 	{
@@ -89,6 +104,8 @@ krb5_error_code krb5glue_log_error(krb5_context ctx, krb5_data* msg, const char*
 BOOL krb5glue_authenticator_validate_chksum(krb5glue_authenticator authenticator, int cksumtype,
                                             uint32_t* flags)
 {
+	WINPR_ASSERT(flags);
+
 	if (!authenticator || !authenticator->checksum ||
 	    authenticator->checksum->checksum_type != cksumtype || authenticator->checksum->length < 24)
 		return FALSE;
@@ -106,6 +123,8 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 	krb5_init_creds_context creds_ctx = NULL;
 	char* tmp_profile_path = create_temporary_file();
 	profile_t profile = NULL;
+
+	WINPR_ASSERT(ctx);
 
 	krb5_get_init_creds_opt_alloc(ctx, &gic_opt);
 

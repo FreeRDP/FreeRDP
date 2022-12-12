@@ -21,10 +21,13 @@
 
 #include <winpr/endian.h>
 #include <winpr/wlog.h>
+#include <winpr/assert.h>
 #include "krb5glue.h"
 
 void krb5glue_keys_free(krb5_context ctx, struct krb5glue_keyset* keyset)
 {
+	if (!ctx || !keyset)
+		return;
 	if (keyset->session_key)
 		krb5_crypto_destroy(ctx, keyset->session_key);
 	if (keyset->initiator_key)
@@ -38,6 +41,10 @@ krb5_error_code krb5glue_update_keyset(krb5_context ctx, krb5_auth_context auth_
 {
 	krb5_keyblock* keyblock = NULL;
 	krb5_error_code rv = 0;
+
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(auth_ctx);
+	WINPR_ASSERT(keyset);
 
 	krb5glue_keys_free(ctx, keyset);
 
@@ -78,7 +85,13 @@ krb5_error_code krb5glue_verify_checksum_iov(krb5_context ctx, krb5glue_key key,
                                              krb5_crypto_iov* iov, unsigned int iov_size,
                                              krb5_boolean* is_valid)
 {
-	krb5_error_code rv = krb5_verify_checksum_iov(ctx, key, usage, iov, iov_size, NULL);
+	krb5_error_code rv = 0;
+
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(key);
+	WINPR_ASSERT(is_valid);
+
+	rv = krb5_verify_checksum_iov(ctx, key, usage, iov, iov_size, NULL);
 	*is_valid = (rv == 0);
 	return rv;
 }
@@ -88,6 +101,11 @@ krb5_error_code krb5glue_crypto_length(krb5_context ctx, krb5glue_key key, int t
 {
 	krb5_error_code rv = 0;
 	size_t s = 0;
+
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(key);
+	WINPR_ASSERT(size);
+
 	rv = krb5_crypto_length(ctx, key, type, &s);
 	*size = (UINT)s;
 	return rv;
@@ -97,6 +115,10 @@ krb5_error_code krb5glue_log_error(krb5_context ctx, krb5_data* msg, const char*
 {
 	krb5_error error = { 0 };
 	krb5_error_code rv = 0;
+
+	WINPR_ASSERT(ctx);
+	WINPR_ASSERT(msg);
+	WINPR_ASSERT(tag);
 
 	if (!(rv = krb5_rd_error(ctx, msg, &error)))
 	{
@@ -109,6 +131,8 @@ krb5_error_code krb5glue_log_error(krb5_context ctx, krb5_data* msg, const char*
 BOOL krb5glue_authenticator_validate_chksum(krb5glue_authenticator authenticator, int cksumtype,
                                             uint32_t* flags)
 {
+	WINPR_ASSERT(flags);
+
 	if (!authenticator || !authenticator->cksum || authenticator->cksum->cksumtype != cksumtype ||
 	    authenticator->cksum->checksum.length < 24)
 		return FALSE;
@@ -125,6 +149,8 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 	krb5_get_init_creds_opt* gic_opt = NULL;
 	krb5_init_creds_context creds_ctx = NULL;
 	krb5_creds creds = { 0 };
+
+	WINPR_ASSERT(ctx);
 
 	krb5_get_init_creds_opt_alloc(ctx, &gic_opt);
 
