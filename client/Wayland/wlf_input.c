@@ -340,7 +340,7 @@ BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev)
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 		return TRUE;
 
-	return freerdp_input_send_keyboard_event_ex(input, ev->pressed, rdp_scancode);
+	return freerdp_input_send_keyboard_event_ex(input, ev->pressed, ev->repeated, rdp_scancode);
 }
 
 BOOL wlf_handle_ungrab_key(freerdp* instance, const UwacKeyEvent* ev)
