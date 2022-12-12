@@ -471,7 +471,13 @@ BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 	UINT32 index;
 
 	if (!context || !bitmapUpdate || !context->gdi || !context->codecs)
+	{
+		WLog_ERR(TAG,
+		         "[%s] Invalid arguments: context=%p, bitmapUpdate=%p, context->gdi=%p, "
+		         "context->codecs=%p",
+		         __FUNCTION__, context, bitmapUpdate, context->gdi, context->codecs);
 		return FALSE;
+	}
 
 	for (index = 0; index < bitmapUpdate->number; index++)
 	{
@@ -479,7 +485,10 @@ BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 		rdpBitmap* bmp = Bitmap_Alloc(context);
 
 		if (!bmp)
+		{
+			WLog_ERR(TAG, "[%s] Bitmap_Alloc failed", __FUNCTION__);
 			return FALSE;
+		}
 
 		Bitmap_SetDimensions(bmp, bitmap->width, bitmap->height);
 		Bitmap_SetRectangle(bmp, bitmap->destLeft, bitmap->destTop, bitmap->destRight,
@@ -489,18 +498,21 @@ BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 		                     bitmap->bitsPerPixel, bitmap->bitmapLength, bitmap->compressed,
 		                     RDP_CODEC_ID_NONE))
 		{
+			WLog_ERR(TAG, "[%s] bmp->Decompress failed", __FUNCTION__);
 			Bitmap_Free(context, bmp);
 			return FALSE;
 		}
 
 		if (!bmp->New(context, bmp))
 		{
+			WLog_ERR(TAG, "[%s] bmp->New failed", __FUNCTION__);
 			Bitmap_Free(context, bmp);
 			return FALSE;
 		}
 
 		if (!bmp->Paint(context, bmp))
 		{
+			WLog_ERR(TAG, "[%s] bmp->Paint failed", __FUNCTION__);
 			Bitmap_Free(context, bmp);
 			return FALSE;
 		}
