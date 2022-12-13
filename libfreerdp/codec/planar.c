@@ -1447,10 +1447,13 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, const BYTE*
 			context->rlePlanes[2] = &context->rlePlanesBuffer[offset];
 			offset += dstSizes[2];
 			context->rlePlanes[3] = &context->rlePlanesBuffer[offset];
-			// WLog_DBG(TAG, "R: [%"PRIu32"/%"PRIu32"] G: [%"PRIu32"/%"PRIu32"] B:
-			// [%"PRIu32"/%"PRIu32"]", 		dstSizes[1], planeSize, dstSizes[2], planeSize,
-			// dstSizes[3],
-			// planeSize);
+
+#if defined(WITH_DEBUG_CODECS)
+			WLog_DBG(TAG,
+			         "R: [%" PRIu32 "/%" PRIu32 "] G: [%" PRIu32 "/%" PRIu32 "] B: [% " PRIu32
+			         " / %" PRIu32 "] ",
+			         dstSizes[1], planeSize, dstSizes[2], planeSize, dstSizes[3], planeSize);
+#endif
 		}
 	}
 

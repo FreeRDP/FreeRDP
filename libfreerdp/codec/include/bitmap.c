@@ -145,8 +145,10 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 		*/
 		code = ExtractCodeId(*pbSrc);
 
+#if defined(WITH_DEBUG_CODECS)
 		WLog_VRB(TAG, "[%s] pbSrc=%p code=%s, rem=%" PRIuz, __FUNCTION__, pbSrc,
 		         rle_code_str_buffer(code, sbuffer, sizeof(sbuffer)), pbEnd - pbSrc);
+#endif
 
 		/* Handle Background Run Orders. */
 		if ((code == REGULAR_BG_RUN) || (code == MEGA_MEGA_BG_RUN))
