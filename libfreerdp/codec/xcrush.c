@@ -754,10 +754,31 @@ static int xcrush_generate_output(XCRUSH_CONTEXT* xcrush, BYTE* OutputBuffer, UI
 
 static INLINE size_t xcrush_copy_bytes(BYTE* dst, const BYTE* src, size_t num)
 {
+	size_t diff, rest, end, a;
+
 	WINPR_ASSERT(dst);
 	WINPR_ASSERT(src);
 
-	memmove(dst, src, num);
+	if (src + num < dst || src > dst + num)
+	{
+		memcpy(dst, src, num);
+	}
+	else
+	{
+		// src and dst overlaps
+		// we should copy the area that doesn't overlap repeatly
+		diff = (dst > src) ? dst - src : src - dst;
+		rest = num % diff;
+		end = num - rest;
+		for (a = 0; a < end; a += diff)
+		{
+			memcpy(&dst[a], &src[a], diff);
+		}
+
+		if (rest != 0)
+			memcpy(&dst[end], &src[end], rest);
+	}
+
 	return num;
 }
 
