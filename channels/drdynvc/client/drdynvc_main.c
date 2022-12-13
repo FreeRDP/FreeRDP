@@ -520,8 +520,8 @@ static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChan
 	WINPR_ASSERT(dvcman);
 	WINPR_UNUSED(drdynvc);
 
-	ArrayList_Free(dvcman->plugins);
 	HashTable_Free(dvcman->channelsById);
+	ArrayList_Free(dvcman->plugins);
 	ArrayList_Free(dvcman->plugin_names);
 	HashTable_Free(dvcman->listeners);
 
