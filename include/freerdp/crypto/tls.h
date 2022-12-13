@@ -82,7 +82,17 @@ struct rdp_tls
 	int alertLevel;
 	int alertDescription;
 	BOOL isGatewayTransport;
+	BOOL isClientMode;
 };
+
+/** @brief result of a handshake operation */
+typedef enum
+{
+	TLS_HANDSHAKE_SUCCESS,     /*!< handshake was successful */
+	TLS_HANDSHAKE_CONTINUE,    /*!< handshake is not completed */
+	TLS_HANDSHAKE_ERROR,       /*!< an error (probably IO error) happened */
+	TLS_HANDSHAKE_VERIFY_ERROR /*!< Certificate verification failed (client mode) */
+} TlsHandshakeResult;
 
 #ifdef __cplusplus
 extern "C"
@@ -90,7 +100,17 @@ extern "C"
 #endif
 
 	FREERDP_API int tls_connect(rdpTls* tls, BIO* underlying);
+
+	FREERDP_API TlsHandshakeResult tls_connect_ex(rdpTls* tls, BIO* underlying,
+	                                              const SSL_METHOD* methods);
+
 	FREERDP_API BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings);
+
+	FREERDP_API TlsHandshakeResult tls_accept_ex(rdpTls* tls, BIO* underlying,
+	                                             rdpSettings* settings, const SSL_METHOD* methods);
+
+	FREERDP_API TlsHandshakeResult tls_handshake(rdpTls* tls);
+
 	FREERDP_API BOOL tls_send_alert(rdpTls* tls);
 
 	FREERDP_API int tls_write_all(rdpTls* tls, const BYTE* data, int length);
