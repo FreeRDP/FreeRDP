@@ -364,10 +364,10 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 				pbSrc = pbSrc + advance;
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
 					return FALSE;
+				if (!ENSURE_CAPACITY(pbSrc, pbEnd, runLength))
+					return FALSE;
 
 				UNROLL(runLength, {
-					if (!buffer_within_range(pbSrc, pbEnd))
-						return FALSE;
 					SRCREADPIXEL(temp, pbSrc);
 					SRCNEXTPIXEL(pbSrc);
 					DESTWRITEPIXEL(pbDest, temp);
