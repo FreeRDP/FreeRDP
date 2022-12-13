@@ -110,6 +110,8 @@ struct rdpsnd_plugin
 	UINT16 wVersion;
 	UINT32 volume;
 	BOOL applyVolume;
+
+	size_t references;
 };
 
 static const char* rdpsnd_is_dyn_str(BOOL dynamic)
@@ -1318,6 +1320,12 @@ static void free_internals(rdpsndPlugin* rdpsnd)
 	if (!rdpsnd)
 		return;
 
+	if (rdpsnd->references > 0)
+		rdpsnd->references--;
+
+	if (rdpsnd->references > 0)
+		return;
+
 	freerdp_dsp_context_free(rdpsnd->dsp_context);
 	StreamPool_Free(rdpsnd->pool);
 	rdpsnd->pool = NULL;
@@ -1341,6 +1349,7 @@ static BOOL allocate_internals(rdpsndPlugin* rdpsnd)
 		if (!rdpsnd->dsp_context)
 			return FALSE;
 	}
+	rdpsnd->references++;
 
 	return TRUE;
 }
@@ -1666,7 +1675,7 @@ static UINT rdpsnd_on_new_channel_connection(IWTSListenerCallback* pListenerCall
 	callback->channel_mgr = listener_callback->channel_mgr;
 	callback->channel = pChannel;
 	listener_callback->channel_callback = callback;
-	*ppCallback = (IWTSVirtualChannelCallback*)callback;
+	*ppCallback = &callback->iface;
 	return CHANNEL_RC_OK;
 }
 
