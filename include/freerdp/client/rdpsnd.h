@@ -44,6 +44,8 @@ extern "C"
 	typedef void (*pcFree)(rdpsndDevicePlugin* device);
 	typedef BOOL (*pcDefaultFormat)(rdpsndDevicePlugin* device, const AUDIO_FORMAT* desired,
 	                                AUDIO_FORMAT* defaultFormat);
+	typedef UINT (*pcServerFormatAnnounce)(rdpsndDevicePlugin* device, const AUDIO_FORMAT* formats,
+	                                       size_t count);
 
 	struct rdpsnd_device_plugin
 	{
@@ -58,6 +60,7 @@ extern "C"
 		pcClose Close;
 		pcFree Free;
 		pcDefaultFormat DefaultFormat;
+		pcServerFormatAnnounce ServerFormatAnnounce;
 	};
 
 #define RDPSND_DEVICE_EXPORT_FUNC_NAME "freerdp_rdpsnd_client_subsystem_entry"
