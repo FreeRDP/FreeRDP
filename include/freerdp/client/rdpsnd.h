@@ -39,6 +39,8 @@ extern "C"
 	typedef UINT32 (*pcGetVolume)(rdpsndDevicePlugin* device);
 	typedef BOOL (*pcSetVolume)(rdpsndDevicePlugin* device, UINT32 value);
 	typedef UINT (*pcPlay)(rdpsndDevicePlugin* device, const BYTE* data, size_t size);
+	typedef UINT (*pcPlayEx)(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
+	                         const BYTE* data, size_t size);
 	typedef void (*pcStart)(rdpsndDevicePlugin* device);
 	typedef void (*pcClose)(rdpsndDevicePlugin* device);
 	typedef void (*pcFree)(rdpsndDevicePlugin* device);
@@ -61,6 +63,7 @@ extern "C"
 		pcFree Free;
 		pcDefaultFormat DefaultFormat;
 		pcServerFormatAnnounce ServerFormatAnnounce;
+		pcPlayEx PlayEx;
 	};
 
 #define RDPSND_DEVICE_EXPORT_FUNC_NAME "freerdp_rdpsnd_client_subsystem_entry"
