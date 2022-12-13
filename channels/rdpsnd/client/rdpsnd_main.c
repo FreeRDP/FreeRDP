@@ -630,12 +630,22 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 		wStream* pcmData = StreamPool_Take(rdpsnd->pool, 4096);
 
 		if (rdpsnd->device->FormatSupported(rdpsnd->device, format))
-			latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device, data, size);
+		{
+			if (rdpsnd->device->PlayEx)
+				latency = rdpsnd->device->PlayEx(rdpsnd->device, format, data, size);
+			else
+				latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device, data, size);
+		}
 		else if (freerdp_dsp_decode(rdpsnd->dsp_context, format, data, size, pcmData))
 		{
 			Stream_SealLength(pcmData);
-			latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device, Stream_Buffer(pcmData),
-			                       Stream_Length(pcmData));
+
+			if (rdpsnd->device->PlayEx)
+				latency = rdpsnd->device->PlayEx(rdpsnd->device, format, Stream_Buffer(pcmData),
+				                                 Stream_Length(pcmData));
+			else
+				latency = IFCALLRESULT(0, rdpsnd->device->Play, rdpsnd->device,
+				                       Stream_Buffer(pcmData), Stream_Length(pcmData));
 		}
 		else
 			status = ERROR_INTERNAL_ERROR;
