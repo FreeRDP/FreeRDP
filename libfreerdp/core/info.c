@@ -423,7 +423,8 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	size_t cbClientAddress;
 	const size_t cbClientAddressMax = rdp_get_client_address_max_size(rdp);
 	WCHAR* clientDir = NULL;
-	UINT16 cbClientDir;
+	size_t cbClientDir;
+	const size_t cbClientDirMax = 512;
 	UINT16 cbAutoReconnectCookie;
 	rdpSettings* settings;
 	if (!rdp || !rdp->settings || !s)
@@ -449,6 +450,15 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if ((rc < 0) || (rc > (UINT16_MAX / 2)))
 		goto fail;
 	cbClientDir = (UINT16)rc * 2;
+	if (cbClientDir > cbClientDirMax)
+	{
+		WLog_WARN(
+		    TAG, "[%s] the client dir %s [%" PRIuz "] exceeds the limit of %" PRIuz ", truncating.",
+		    __FUNCTION__, settings->ClientDir, cbClientDir, cbClientDirMax);
+
+		clientDir[(cbClientDirMax / sizeof(WCHAR)) - 1] = '\0';
+		cbClientDir = cbClientDirMax;
+	}
 
 	if (settings->ServerAutoReconnectCookie->cbLen > UINT16_MAX)
 		goto fail;
@@ -459,11 +469,10 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	Stream_Write(s, clientAddress, cbClientAddress); /* clientAddress */
 
-	Stream_Write_UINT16(s, cbClientDir + 2); /* cbClientDir (2 bytes) */
+	Stream_Write_UINT16(s, cbClientDir); /* cbClientDir (2 bytes) */
 
 	Stream_Write(s, clientDir, cbClientDir); /* clientDir */
 
-	Stream_Write_UINT16(s, 0);
 	if (!rdp_write_client_time_zone(s, settings)) /* clientTimeZone (172 bytes) */
 		goto fail;
 
