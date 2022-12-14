@@ -108,6 +108,16 @@ endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Mac")
 
+if(CMAKE_GENERATOR MATCHES "Ninja")
+	if (NOT ${CONFIGURATION} STREQUAL "")
+		set(safe_configuration "$CONFIGURATION")
+	else()
+		set(safe_configuration "")
+	endif()
+else()
+	set(safe_configuration "$(CONFIGURATION)")
+endif()
+
 if (${BUILD_SHARED_LIBS})
 	# Add a post-build event to copy the dependent libraries in the framework bundle 
 	# Call install_name_tool to reassign the library install name
@@ -116,15 +126,15 @@ if (${BUILD_SHARED_LIBS})
 		add_custom_command(TARGET ${MODULE_NAME} POST_BUILD 
 			COMMAND "${CMAKE_COMMAND}" -E copy 
 					"$<TARGET_FILE:${LIB}>"
-					"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
+					"${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
 			COMMENT "Copying ${LIB} to output directory"
 			COMMAND install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>"
 				"@executable_path/../Frameworks/${MODULE_OUTPUT_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
-				"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/${MODULE_OUTPUT_NAME}"
+				"${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.framework/${MODULE_OUTPUT_NAME}"
 			COMMENT Setting install name for ${LIB}
 			COMMAND "${CMAKE_COMMAND}" -E echo install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>"
 				"@executable_path/../Frameworks/${MODULE_OUTPUT_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
-				"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/${MODULE_OUTPUT_NAME}")
+				"${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.framework/${MODULE_OUTPUT_NAME}")
 	endforeach()
 
 	# Call install_name_tool to reassign the library install names in dependent libraries
@@ -134,7 +144,7 @@ if (${BUILD_SHARED_LIBS})
 			add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
 				COMMAND install_name_tool -change "$<TARGET_SONAME_FILE:${LIB}>"
 					"@executable_path/../Frameworks/${MODULE_OUTPUT_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
-					"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Contents/$<TARGET_FILE_NAME:${DEST}>"
+					"${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.framework/Contents/$<TARGET_FILE_NAME:${DEST}>"
 				COMMENT Setting install name for ${LIB} in module ${DEST})
 		endforeach()
 	endforeach()
@@ -142,7 +152,7 @@ if (${BUILD_SHARED_LIBS})
 endif()
 
 # Add post-build NIB file generation in unix makefiles. XCode handles this implicitly.
-# if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
+# if(NOT "${CMAKE_GENERATOR}" MATCHES "Xcode")
 	message(STATUS "Adding post-build NIB file generation event for ${MODULE_NAME}")
 
 	# Make sure we can find the 'ibtool' program. If we can NOT find it we
@@ -155,7 +165,7 @@ endif()
 
 	# Make sure the 'Resources' Directory is correctly created before we build
 	add_custom_command(TARGET ${MODULE_NAME} PRE_BUILD
-						  COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Versions/${MACOSX_BUNDLE_SHORT_VERSION_STRING}/Resources)
+						  COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.framework/Versions/${MACOSX_BUNDLE_SHORT_VERSION_STRING}/Resources)
 
 	# Compile the .xib files using the 'ibtool' program with the destination being the app package
 	foreach(xib ${${MODULE_PREFIX}_XIBS})
@@ -163,23 +173,33 @@ endif()
 						 
 		add_custom_command (TARGET ${MODULE_NAME} POST_BUILD 
 			COMMAND ${IBTOOL} --errors --warnings --notices --output-format human-readable-text 
-				--compile ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Versions/${MACOSX_BUNDLE_SHORT_VERSION_STRING}/Resources/${XIB_WE}.nib ${CMAKE_CURRENT_SOURCE_DIR}/${xib}
+				--compile ${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.framework/Versions/${MACOSX_BUNDLE_SHORT_VERSION_STRING}/Resources/${XIB_WE}.nib ${CMAKE_CURRENT_SOURCE_DIR}/${xib}
 			COMMENT "Compiling ${xib}")
 	endforeach()
 # endif()
 
+set(MAC_LIB_FRAMEWORK_HEADERS "")
 # Copy the public header files into the framework
 foreach(HEADER ${${MODULE_PREFIX}_HEADERS})
-	# message("adding post-build dependency: ${LIB}")
+	#message("adding post-build dependency: ${MODULE_NAME} ${HEADER}")
+	if( POLICY CMP0058 )
+		set(NinjaByproducts BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/${CONFIGURATION}/${MODULE_OUTPUT_NAME}.framework/Headers/${HEADER})
+	endif()
 	add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-		COMMAND ditto ${CMAKE_CURRENT_SOURCE_DIR}/${HEADER} ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Headers/
+		COMMAND ditto ${CMAKE_CURRENT_SOURCE_DIR}/${HEADER} ${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.framework/Headers/
+		${NinjaByproducts}
 		COMMENT Copying public header files to ${MODULE_NAME})
+	list(APPEND MAC_LIB_FRAMEWORK_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/${CONFIGURATION}/${MODULE_OUTPUT_NAME}.framework/Headers/${HEADER})
 endforeach()
+add_custom_target(
+  prepare-framework-headers
+  DEPENDS ${MAC_LIB_FRAMEWORK_HEADERS}
+)
 
 # Copy the FreeRDP header files into the framework
 add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-	COMMAND ditto ${CMAKE_SOURCE_DIR}/include/freerdp ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Headers/freerdp
-	COMMAND ditto ${CMAKE_SOURCE_DIR}/winpr/include/winpr ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.framework/Headers/winpr
+	COMMAND ditto ${CMAKE_SOURCE_DIR}/include/freerdp ${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.framework/Headers/freerdp
+	COMMAND ditto ${CMAKE_SOURCE_DIR}/winpr/include/winpr ${CMAKE_CURRENT_BINARY_DIR}/${CONFIGURATION}/${MODULE_OUTPUT_NAME}.framework/Headers/winpr
 	COMMENT Copying FreeRDP header files to ${MODULE_NAME})
 
 add_subdirectory(cli)
