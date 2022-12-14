@@ -55,6 +55,7 @@ add_executable(${MODULE_NAME}
 	${${MODULE_PREFIX}_RESOURCES})
 
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_OUTPUT_NAME}") 
+add_dependencies(${MODULE_NAME} prepare-framework-headers)
 
 # This is necessary for the xib file part below
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Info.plist ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
@@ -66,9 +67,19 @@ set_target_properties(${MODULE_NAME} PROPERTIES RESOURCE "${${MODULE_PREFIX}_RES
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -F../")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -F../")
 
+if(CMAKE_GENERATOR MATCHES "Ninja")
+	if (NOT ${CONFIGURATION} STREQUAL "")
+		set(safe_configuration "$CONFIGURATION")
+	else()
+		set(safe_configuration "")
+	endif()
+else()
+	set(safe_configuration "$(CONFIGURATION)")
+endif()
+
 # Tell XCode where to look for the MacFreeRDP framework
 set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS
-	"${XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS} ${CMAKE_CURRENT_BINARY_DIR}/../$(CONFIGURATION)")
+	"${XCODE_ATTRIBUTE_FRAMEWORK_SEARCH_PATHS} ${CMAKE_CURRENT_BINARY_DIR}/../${safe_configuration}")
 
 # Set the info plist to the custom instance
 set_target_properties(${MODULE_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
@@ -80,15 +91,15 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Mac")
 
 # Embed the FreeRDP framework into the app bundle
 add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
-	COMMAND mkdir ARGS -p ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.app/Contents/Frameworks
-	COMMAND ditto ${CMAKE_CURRENT_BINARY_DIR}/../$(CONFIGURATION)/MacFreeRDP.framework ${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.app/Contents/Frameworks/MacFreeRDP.framework
+	COMMAND mkdir ARGS -p ${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.app/Contents/Frameworks
+	COMMAND ditto ${CMAKE_CURRENT_BINARY_DIR}/../${safe_configuration}/MacFreeRDP.framework ${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.app/Contents/Frameworks/MacFreeRDP.framework
 	COMMAND install_name_tool -change "@executable_path/../Frameworks/MacFreeRDP.framework/Versions/${MAC_OS_X_BUNDLE_BUNDLE_VERSION}/MacFreeRDP"
 		"@executable_path/../Frameworks/MacFreeRDP.framework/Versions/Current/MacFreeRDP"
-		"${CMAKE_CURRENT_BINARY_DIR}/$(CONFIGURATION)/${MODULE_OUTPUT_NAME}.app/Contents/MacOS/${MODULE_NAME}"
+		"${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.app/Contents/MacOS/${MODULE_NAME}"
 	COMMENT Setting install name for MacFreeRDP)
 
 # Add post-build NIB file generation in unix makefiles. XCode handles this implicitly.
-if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
+if(NOT "${CMAKE_GENERATOR}" MATCHES "Xcode")
 	message(STATUS "Adding post-build NIB file generation event for ${MODULE_NAME}")
 	 
 	# Make sure we can find the 'ibtool' program. If we can NOT find it we skip generation of this project
@@ -99,7 +110,7 @@ if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
 	endif()
 
 	# Make sure the 'Resources' Directory is correctly created before we build
-	add_custom_command(TARGET ${MODULE_NAME} PRE_BUILD COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/\${CONFIGURATION}/${MODULE_OUTPUT_NAME}.app/Contents/Resources)
+	add_custom_command(TARGET ${MODULE_NAME} PRE_BUILD COMMAND mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.app/Contents/Resources)
 
 	# Compile the .xib files using the 'ibtool' program with the destination being the app package
 	foreach(xib ${${MODULE_PREFIX}_XIBS})
@@ -107,7 +118,7 @@ if("${CMAKE_GENERATOR}" MATCHES "Unix Makefiles")
 						 
 		add_custom_command (TARGET ${MODULE_NAME} POST_BUILD 
 			COMMAND ${IBTOOL} --errors --warnings --notices --output-format human-readable-text 
-				--compile ${CMAKE_CURRENT_BINARY_DIR}/\${CONFIGURATION}/${MODULE_OUTPUT_NAME}.app/Contents/Resources/${XIB_WE}.nib ${CMAKE_CURRENT_SOURCE_DIR}/${xib}
+				--compile ${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.app/Contents/Resources/${XIB_WE}.nib ${CMAKE_CURRENT_SOURCE_DIR}/${xib}
 			COMMENT "Compiling ${xib}")
 	endforeach()
 
