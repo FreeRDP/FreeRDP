@@ -26,12 +26,6 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-include(CheckIPOSupported)
-check_ipo_supported(RESULT supported OUTPUT error)
-if (supported)
-	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
-
 if(NOT DEFINED VENDOR)
 	set(VENDOR "FreeRDP" CACHE STRING "FreeRDP package vendor")
 endif()
@@ -83,6 +77,12 @@ include(CMakePackageConfigHelpers)
 include(InstallFreeRDPMan)
 include(GetGitRevisionDescription)
 include(SetFreeRDPCMakeInstallDir)
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT supported OUTPUT error)
+if (supported)
+	option(CMAKE_INTERPROCEDURAL_OPTIMIZATION "Enable LTO linking" TRUE)
+endif()
 
 # Soname versioning
 set(BUILD_NUMBER 0)
