@@ -653,7 +653,7 @@ const char* credssp_auth_pkg_name(rdpCredsspAuth* auth)
 	if (!auth->pkgNameA)
 	{
 		WINPR_ASSERT(auth->info->Name);
-		auth->pkgNameA = ConvertUtf8ToWCharAlloc(auth->info->Name, NULL);
+		auth->pkgNameA = ConvertWCharToUtf8Alloc(auth->info->Name, NULL);
 	}
 	return auth->pkgNameA;
 #else
