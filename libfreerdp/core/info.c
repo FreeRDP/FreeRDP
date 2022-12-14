@@ -484,31 +484,38 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if (cbClientAddress > (UINT16_MAX / sizeof(WCHAR)))
 		goto fail;
 
-	cbClientAddress = (UINT16)(cbClientAddress + 1) * sizeof(WCHAR);
-	if (cbClientAddress > cbClientAddressMax)
+	if (cbClientAddress > 0)
 	{
-		WLog_WARN(TAG,
-		          "[%s] the client address %s [%" PRIuz "] exceeds the limit of %" PRIuz
-		          ", truncating.",
-		          __FUNCTION__, settings->ClientAddress, cbClientAddress, cbClientAddressMax);
+		cbClientAddress = (UINT16)(cbClientAddress + 1) * sizeof(WCHAR);
+		if (cbClientAddress > cbClientAddressMax)
+		{
+			WLog_WARN(TAG,
+			          "[%s] the client address %s [%" PRIuz "] exceeds the limit of %" PRIuz
+			          ", truncating.",
+			          __FUNCTION__, settings->ClientAddress, cbClientAddress, cbClientAddressMax);
 
-		clientAddress[(cbClientAddressMax / sizeof(WCHAR)) - 1] = '\0';
-		cbClientAddress = cbClientAddressMax;
+			clientAddress[(cbClientAddressMax / sizeof(WCHAR)) - 1] = '\0';
+			cbClientAddress = cbClientAddressMax;
+		}
 	}
 
 	clientDir = ConvertUtf8ToWCharAlloc(settings->ClientDir, &cbClientDir);
 	if (cbClientDir > (UINT16_MAX / sizeof(WCHAR)))
 		goto fail;
 
-	cbClientDir = (UINT16)(cbClientDir + 1) * sizeof(WCHAR);
-	if (cbClientDir > cbClientDirMax)
+	if (cbClientDir > 0)
 	{
-		WLog_WARN(
-		    TAG, "[%s] the client dir %s [%" PRIuz "] exceeds the limit of %" PRIuz ", truncating.",
-		    __FUNCTION__, settings->ClientDir, cbClientDir, cbClientDirMax);
+		cbClientDir = (UINT16)(cbClientDir + 1) * sizeof(WCHAR);
+		if (cbClientDir > cbClientDirMax)
+		{
+			WLog_WARN(TAG,
+			          "[%s] the client dir %s [%" PRIuz "] exceeds the limit of %" PRIuz
+			          ", truncating.",
+			          __FUNCTION__, settings->ClientDir, cbClientDir, cbClientDirMax);
 
-		clientDir[(cbClientDirMax / sizeof(WCHAR)) - 1] = '\0';
-		cbClientDir = cbClientDirMax;
+			clientDir[(cbClientDirMax / sizeof(WCHAR)) - 1] = '\0';
+			cbClientDir = cbClientDirMax;
+		}
 	}
 
 	if (settings->ServerAutoReconnectCookie->cbLen > UINT16_MAX)
