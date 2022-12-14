@@ -251,13 +251,23 @@ static BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
  * @param settings settings
  */
 
-static void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
+static BOOL rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 {
 	BYTE* p;
 	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
-	rdpSettings* settings = rdp->settings;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+
+	settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
 	autoReconnectCookie = settings->ClientAutoReconnectCookie;
+	WINPR_ASSERT(autoReconnectCookie);
+
 	p = autoReconnectCookie->securityVerifier;
+	WINPR_ASSERT(p);
+
 	WLog_DBG(TAG,
 	         "ClientAutoReconnectCookie: Version: %" PRIu32 " LogonId: %" PRIu32 " ArcRandomBits: "
 	         "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8 "%02" PRIX8
@@ -266,10 +276,13 @@ static void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 	         "%02" PRIX8 "",
 	         autoReconnectCookie->version, autoReconnectCookie->logonId, p[0], p[1], p[2], p[3],
 	         p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
+	if (!Stream_EnsureRemainingCapacity(s, 12ull + 16ull))
+		return FALSE;
 	Stream_Write_UINT32(s, autoReconnectCookie->cbLen);         /* cbLen (4 bytes) */
 	Stream_Write_UINT32(s, autoReconnectCookie->version);       /* version (4 bytes) */
 	Stream_Write_UINT32(s, autoReconnectCookie->logonId);       /* LogonId (4 bytes) */
 	Stream_Write(s, autoReconnectCookie->securityVerifier, 16); /* SecurityVerifier (16 bytes) */
+	return TRUE;
 }
 
 /*
@@ -464,6 +477,9 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 		goto fail;
 	cbAutoReconnectCookie = (UINT16)settings->ServerAutoReconnectCookie->cbLen;
 
+	if (!Stream_EnsureRemainingCapacity(s, 4ull + cbClientAddress + 2ull + cbClientDir))
+		goto fail;
+
 	Stream_Write_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
 	Stream_Write_UINT16(s, cbClientAddress);     /* cbClientAddress (2 bytes) */
 
@@ -476,6 +492,9 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if (!rdp_write_client_time_zone(s, settings)) /* clientTimeZone (172 bytes) */
 		goto fail;
 
+	if (!Stream_EnsureRemainingCapacity(s, 10ull))
+		goto fail;
+
 	Stream_Write_UINT32(s, 0); /* clientSessionId (4 bytes), should be set to 0 */
 	freerdp_performance_flags_make(settings);
 	Stream_Write_UINT32(s, settings->PerformanceFlags); /* performanceFlags (4 bytes) */
@@ -485,7 +504,11 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	{
 		if (!rdp_compute_client_auto_reconnect_cookie(rdp))
 			goto fail;
-		rdp_write_client_auto_reconnect_cookie(rdp, s); /* autoReconnectCookie */
+		if (!rdp_write_client_auto_reconnect_cookie(rdp, s)) /* autoReconnectCookie */
+			goto fail;
+
+		if (!Stream_EnsureRemainingCapacity(s, 4ull))
+			goto fail;
 		Stream_Write_UINT16(s, 0);                      /* reserved1 (2 bytes) */
 		Stream_Write_UINT16(s, 0);                      /* reserved2 (2 bytes) */
 	}
