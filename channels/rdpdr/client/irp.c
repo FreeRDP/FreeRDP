@@ -107,7 +107,7 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, UINT* error)
 	if (!device)
 	{
 		if (error)
-			*error = CHANNEL_RC_OK;
+			*error = ERROR_INVALID_PARAMETER;
 
 		return NULL;
 	}
