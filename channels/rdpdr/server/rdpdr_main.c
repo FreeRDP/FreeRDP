@@ -4,8 +4,9 @@
  *
  * Copyright 2014 Dell Software <Mike.McDonald@software.dell.com>
  * Copyright 2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2015 Thincast Technologies GmbH
+ * Copyright 2015-2022 Thincast Technologies GmbH
  * Copyright 2015 DI (FH) Martin Haimberger <martin.haimberger@thincast.com>
+ * Copyright 2022 Armin Novak <anovak@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +40,113 @@
 #define RDPDR_DELETE_PRINTER_EVENT 0x00000003
 #define RDPDR_RENAME_PRINTER_EVENT 0x00000004
 
+#define RDPDR_HEADER_LENGTH 4
+#define RDPDR_CAPABILITY_HEADER_LENGTH 8
+
+struct s_rdpdr_server_private
+{
+	HANDLE Thread;
+	HANDLE StopEvent;
+	void* ChannelHandle;
+
+	UINT32 ClientId;
+	UINT16 VersionMajor;
+	UINT16 VersionMinor;
+	char* ClientComputerName;
+
+	BOOL UserLoggedOnPdu;
+
+	wListDictionary* IrpList;
+	UINT32 NextCompletionId;
+
+	wHashTable* devicelist;
+};
+
+static void rdpdr_device_free(RdpdrDevice* device)
+{
+	if (!device)
+		return;
+	free(device->DeviceData);
+	free(device);
+}
+
+static void rdpdr_device_free_h(void* obj)
+{
+	RdpdrDevice* other = obj;
+	rdpdr_device_free(other);
+}
+
+static UINT32 rdpdr_deviceid_hash(const void* id)
+{
+	WINPR_ASSERT(id);
+	return *((const UINT32*)id);
+}
+
+static RdpdrDevice* rdpdr_device_new(void)
+{
+	return calloc(1, sizeof(RdpdrDevice));
+}
+
+static void* rdpdr_device_clone(const void* val)
+{
+	const RdpdrDevice* other = val;
+	RdpdrDevice* tmp;
+
+	if (!other)
+		return NULL;
+
+	tmp = rdpdr_device_new();
+	if (!tmp)
+		goto fail;
+
+	*tmp = *other;
+	if (other->DeviceData)
+	{
+		tmp->DeviceData = malloc(other->DeviceDataLength);
+		if (!tmp->DeviceData)
+			goto fail;
+		memcpy(tmp->DeviceData, other->DeviceData, other->DeviceDataLength);
+	}
+	return tmp;
+
+fail:
+	rdpdr_device_free(tmp);
+	return NULL;
+}
+
+static RdpdrDevice* rdpdr_get_device_by_id(RdpdrServerPrivate* priv, UINT32 DeviceId)
+{
+	WINPR_ASSERT(priv);
+
+	return HashTable_GetItemValue(priv->devicelist, &DeviceId);
+}
+
+static BOOL rdpdr_remove_device_by_id(RdpdrServerPrivate* priv, UINT32 DeviceId)
+{
+	const RdpdrDevice* device = rdpdr_get_device_by_id(priv, DeviceId);
+	WINPR_ASSERT(priv);
+
+	if (!device)
+	{
+		WLog_WARN(TAG, "[del] Device Id: 0x%08" PRIX32 ": no such device", DeviceId);
+		return FALSE;
+	}
+	WLog_DBG(TAG, "[del] Device Name: %s Id: 0x%08" PRIX32 " DataLength: %" PRIu32 "",
+	         device->PreferredDosName, device->DeviceId, device->DeviceDataLength);
+	return HashTable_Remove(priv->devicelist, &DeviceId);
+}
+
+static BOOL rdpdr_add_device(RdpdrServerPrivate* priv, const RdpdrDevice* device)
+{
+	WINPR_ASSERT(priv);
+	WINPR_ASSERT(device);
+
+	WLog_DBG(TAG, "[add] Device Name: %s Id: 0x%08" PRIX32 " DataLength: %" PRIu32 "",
+	         device->PreferredDosName, device->DeviceId, device->DeviceDataLength);
+
+	return HashTable_Insert(priv->devicelist, &device->DeviceId, device);
+}
+
 static UINT32 g_ClientId = 0;
 
 static const WCHAR* rdpdr_read_ustring(wStream* s, size_t bytelen)
@@ -58,8 +166,7 @@ static const WCHAR* rdpdr_read_ustring(wStream* s, size_t bytelen)
 
 static RDPDR_IRP* rdpdr_server_irp_new(void)
 {
-	RDPDR_IRP* irp;
-	irp = (RDPDR_IRP*)calloc(1, sizeof(RDPDR_IRP));
+	RDPDR_IRP* irp = (RDPDR_IRP*)calloc(1, sizeof(RDPDR_IRP));
 	return irp;
 }
 
@@ -96,6 +203,18 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
 	Stream_SealLength(s);
 	length = Stream_Length(s);
 	WINPR_ASSERT(length <= ULONG_MAX);
+	Stream_SetPosition(s, 0);
+
+	if (length >= RDPDR_HEADER_LENGTH)
+	{
+		RDPDR_HEADER header = { 0 };
+		Stream_Read_UINT16(s, header.Component);
+		Stream_Read_UINT16(s, header.PacketId);
+
+		WLog_DBG(TAG, "sending message {Component %s[%04" PRIx16 "], PacketId %s[%04" PRIx16 "]",
+		         rdpdr_component_string(header.Component), header.Component,
+		         rdpdr_packetid_string(header.PacketId), header.PacketId);
+	}
 	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), Stream_Length(s));
 	status = WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR)Stream_Buffer(s),
 	                                (ULONG)length, &written);
@@ -110,14 +229,20 @@ static UINT rdpdr_seal_send_free_request(RdpdrServerContext* context, wStream* s
  */
 static UINT rdpdr_server_send_announce_request(RdpdrServerContext* context)
 {
+	UINT error;
 	wStream* s;
 	RDPDR_HEADER header = { 0 };
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	WLog_DBG(TAG, "RdpdrServerSendAnnounceRequest");
+
 	header.Component = RDPDR_CTYP_CORE;
 	header.PacketId = PAKID_CORE_SERVER_ANNOUNCE;
+
+	error = IFCALLRESULT(CHANNEL_RC_OK, context->SendServerAnnounce, context);
+	if (error != CHANNEL_RC_OK)
+		return error;
+
 	s = Stream_New(NULL, RDPDR_HEADER_LENGTH + 8);
 
 	if (!s)
@@ -140,7 +265,7 @@ static UINT rdpdr_server_send_announce_request(RdpdrServerContext* context)
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpdr_server_receive_announce_response(RdpdrServerContext* context, wStream* s,
-                                                   RDPDR_HEADER* header)
+                                                   const RDPDR_HEADER* header)
 {
 	UINT32 ClientId;
 	UINT16 VersionMajor;
@@ -162,7 +287,9 @@ static UINT rdpdr_server_receive_announce_response(RdpdrServerContext* context, 
 	         " ClientId: 0x%08" PRIX32 "",
 	         VersionMajor, VersionMinor, ClientId);
 	context->priv->ClientId = ClientId;
-	return CHANNEL_RC_OK;
+
+	return IFCALLRESULT(CHANNEL_RC_OK, context->ReceiveAnnounceResponse, context, VersionMajor,
+	                    VersionMinor, ClientId);
 }
 
 /**
@@ -171,7 +298,7 @@ static UINT rdpdr_server_receive_announce_response(RdpdrServerContext* context, 
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context, wStream* s,
-                                                     RDPDR_HEADER* header)
+                                                     const RDPDR_HEADER* header)
 {
 	UINT32 UnicodeFlag;
 	UINT32 CodePage;
@@ -251,7 +378,8 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	}
 	else
 	{
-		context->priv->ClientComputerName = _strdup((char*)Stream_Pointer(s));
+		const char* name = (const char*)Stream_Pointer(s);
+		context->priv->ClientComputerName = _strdup(name);
 		Stream_Seek(s, ComputerNameLen);
 
 		if (!context->priv->ClientComputerName)
@@ -262,7 +390,8 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	}
 
 	WLog_DBG(TAG, "ClientComputerName: %s", context->priv->ClientComputerName);
-	return CHANNEL_RC_OK;
+	return IFCALLRESULT(CHANNEL_RC_OK, context->ReceiveClientNameRequest, context, ComputerNameLen,
+	                    context->priv->ClientComputerName);
 }
 
 /**
@@ -287,7 +416,8 @@ static UINT rdpdr_server_read_capability_set_header(wStream* s, RDPDR_CAPABILITY
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpdr_server_write_capability_set_header(wStream* s, RDPDR_CAPABILITY_HEADER* header)
+static UINT rdpdr_server_write_capability_set_header(wStream* s,
+                                                     const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(header);
 	if (!Stream_EnsureRemainingCapacity(s, 8))
@@ -300,6 +430,16 @@ static UINT rdpdr_server_write_capability_set_header(wStream* s, RDPDR_CAPABILIT
 	Stream_Write_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */
 	Stream_Write_UINT32(s, header->Version);          /* Version (4 bytes) */
 	return CHANNEL_RC_OK;
+}
+
+static UINT rdpdr_server_write_capability_set_header_cb(RdpdrServerContext* context, wStream* s,
+                                                        const RDPDR_CAPABILITY_HEADER* header)
+{
+	UINT error = rdpdr_server_write_capability_set_header(s, header);
+	if (error != CHANNEL_RC_OK)
+		return error;
+
+	return IFCALLRESULT(CHANNEL_RC_OK, context->SendCaps, context, header, 0, NULL);
 }
 
 /**
@@ -421,7 +561,12 @@ static UINT rdpdr_server_write_general_capability_set(RdpdrServerContext* contex
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	rdpdr_server_write_capability_set_header(s, &header);
+	UINT error = rdpdr_server_write_capability_set_header(s, &header);
+	if (error != CHANNEL_RC_OK)
+		return error;
+
+	const BYTE* data = Stream_Pointer(s);
+	const size_t start = Stream_GetPosition(s);
 	Stream_Write_UINT32(s, 0); /* osType (4 bytes), ignored on receipt */
 	Stream_Write_UINT32(s, 0); /* osVersion (4 bytes), unused and must be set to zero */
 	Stream_Write_UINT16(s, context->priv->VersionMajor); /* protocolMajorVersion (2 bytes) */
@@ -433,7 +578,8 @@ static UINT rdpdr_server_write_general_capability_set(RdpdrServerContext* contex
 	Stream_Write_UINT32(
 	    s, 0); /* extraFlags2 (4 bytes), must be set to zero, reserved for future use */
 	Stream_Write_UINT32(s, SpecialTypeDeviceCap); /* SpecialTypeDeviceCap (4 bytes) */
-	return CHANNEL_RC_OK;
+	const size_t end = Stream_GetPosition(s);
+	return IFCALLRESULT(CHANNEL_RC_OK, context->SendCaps, context, &header, end - start, data);
 }
 
 /**
@@ -477,7 +623,7 @@ static UINT rdpdr_server_write_printer_capability_set(RdpdrServerContext* contex
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	return rdpdr_server_write_capability_set_header(s, &header);
+	return rdpdr_server_write_capability_set_header_cb(context, s, &header);
 }
 
 /**
@@ -519,7 +665,7 @@ static UINT rdpdr_server_write_port_capability_set(RdpdrServerContext* context, 
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	return rdpdr_server_write_capability_set_header(s, &header);
+	return rdpdr_server_write_capability_set_header_cb(context, s, &header);
 }
 
 /**
@@ -562,7 +708,7 @@ static UINT rdpdr_server_write_drive_capability_set(RdpdrServerContext* context,
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	return rdpdr_server_write_capability_set_header(s, &header);
+	return rdpdr_server_write_capability_set_header_cb(context, s, &header);
 }
 
 /**
@@ -604,7 +750,7 @@ static UINT rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* cont
 		return CHANNEL_RC_OK;
 	}
 
-	return rdpdr_server_write_capability_set_header(s, &header);
+	return rdpdr_server_write_capability_set_header_cb(context, s, &header);
 }
 
 /**
@@ -620,21 +766,22 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 	UINT error;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	WLog_DBG(TAG, "RdpdrServerSendCoreCapabilityRequest");
+
 	header.Component = RDPDR_CTYP_CORE;
 	header.PacketId = PAKID_CORE_SERVER_CAPABILITY;
 	numCapabilities = 1;
 
-	if (context->supportsDrives)
+	if ((context->supported & RDPDR_DTYP_FILESYSTEM) != 0)
 		numCapabilities++;
 
-	if (context->supportsPorts)
+	if (((context->supported & RDPDR_DTYP_PARALLEL) != 0) ||
+	    ((context->supported & RDPDR_DTYP_SERIAL) != 0))
 		numCapabilities++;
 
-	if (context->supportsPrinters)
+	if ((context->supported & RDPDR_DTYP_PRINT) != 0)
 		numCapabilities++;
 
-	if (context->supportsSmartcards)
+	if ((context->supported & RDPDR_DTYP_SMARTCARD) != 0)
 		numCapabilities++;
 
 	s = Stream_New(NULL, RDPDR_HEADER_LENGTH + 512);
@@ -657,7 +804,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 		goto out;
 	}
 
-	if (context->supportsDrives)
+	if ((context->supported & RDPDR_DTYP_FILESYSTEM) != 0)
 	{
 		if ((error = rdpdr_server_write_drive_capability_set(context, s)))
 		{
@@ -667,7 +814,8 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 		}
 	}
 
-	if (context->supportsPorts)
+	if (((context->supported & RDPDR_DTYP_PARALLEL) != 0) ||
+	    ((context->supported & RDPDR_DTYP_SERIAL) != 0))
 	{
 		if ((error = rdpdr_server_write_port_capability_set(context, s)))
 		{
@@ -677,7 +825,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 		}
 	}
 
-	if (context->supportsPrinters)
+	if ((context->supported & RDPDR_DTYP_PRINT) != 0)
 	{
 		if ((error = rdpdr_server_write_printer_capability_set(context, s)))
 		{
@@ -688,7 +836,7 @@ static UINT rdpdr_server_send_core_capability_request(RdpdrServerContext* contex
 		}
 	}
 
-	if (context->supportsSmartcards)
+	if ((context->supported & RDPDR_DTYP_SMARTCARD) != 0)
 	{
 		if ((error = rdpdr_server_write_smartcard_capability_set(context, s)))
 		{
@@ -711,7 +859,7 @@ out:
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* context, wStream* s,
-                                                          RDPDR_HEADER* header)
+                                                          const RDPDR_HEADER* header)
 {
 	UINT16 i = 0;
 	UINT status = 0;
@@ -728,6 +876,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 	Stream_Read_UINT16(s, numCapabilities); /* numCapabilities (2 bytes) */
 	Stream_Seek_UINT16(s);                  /* Padding (2 bytes) */
 
+	UINT16 caps = 0;
 	for (i = 0; i < numCapabilities; i++)
 	{
 		RDPDR_CAPABILITY_HEADER capabilityHeader = { 0 };
@@ -740,6 +889,12 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 			return status;
 		}
 
+		status = IFCALLRESULT(CHANNEL_RC_OK, context->ReceiveCaps, context, &capabilityHeader,
+		                      Stream_GetRemainingLength(s), Stream_Pointer(s));
+		if (status != CHANNEL_RC_OK)
+			return status;
+
+		caps |= capabilityHeader.CapabilityType;
 		switch (capabilityHeader.CapabilityType)
 		{
 			case CAP_GENERAL_TYPE:
@@ -819,6 +974,21 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 				return ERROR_INVALID_DATA;
 		}
 
+		for (UINT16 x = 0; x < 16; x++)
+		{
+			const UINT16 mask = (UINT16)(1 << x);
+			if (((caps & mask) != 0) && ((context->supported & mask) == 0))
+			{
+				WLog_WARN(TAG, "[%s] client sent capability %s we did not announce!", __FUNCTION__,
+				          freerdp_rdpdr_dtyp_string(x));
+			}
+
+			/* we assume the server supports the capability. so only deactivate what the client did
+			 * not respond with */
+			if ((caps & mask) == 0)
+				context->supported &= ~mask;
+		}
+
 		const size_t end = Stream_GetPosition(s);
 		const size_t diff = end - start;
 		if (diff != capabilityHeader.CapabilityLength)
@@ -846,7 +1016,7 @@ static UINT rdpdr_server_send_client_id_confirm(RdpdrServerContext* context)
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	WLog_DBG(TAG, "RdpdrServerSendClientIdConfirm");
+
 	header.Component = RDPDR_CTYP_CORE;
 	header.PacketId = PAKID_CORE_CLIENTID_CONFIRM;
 	s = Stream_New(NULL, RDPDR_HEADER_LENGTH + 8);
@@ -890,83 +1060,76 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 
 	for (i = 0; i < DeviceCount; i++)
 	{
-		UINT32 DeviceType = 0;
-		UINT32 DeviceId = 0;
-		UINT32 DeviceDataLength = 0;
-		char PreferredDosName[9] = { 0 };
+		UINT error;
+		RdpdrDevice device = { 0 };
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
 			return ERROR_INVALID_DATA;
 
-		Stream_Read_UINT32(s, DeviceType);       /* DeviceType (4 bytes) */
-		Stream_Read_UINT32(s, DeviceId);         /* DeviceId (4 bytes) */
-		Stream_Read(s, PreferredDosName, 8);     /* PreferredDosName (8 bytes) */
-		Stream_Read_UINT32(s, DeviceDataLength); /* DeviceDataLength (4 bytes) */
+		Stream_Read_UINT32(s, device.DeviceType);       /* DeviceType (4 bytes) */
+		Stream_Read_UINT32(s, device.DeviceId);         /* DeviceId (4 bytes) */
+		Stream_Read(s, device.PreferredDosName, 8);     /* PreferredDosName (8 bytes) */
+		Stream_Read_UINT32(s, device.DeviceDataLength); /* DeviceDataLength (4 bytes) */
+		device.DeviceData = Stream_Pointer(s);
 
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, DeviceDataLength))
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, device.DeviceDataLength))
 			return ERROR_INVALID_DATA;
 
-		WLog_DBG(TAG, "Device %" PRIu32 " Name: %s Id: 0x%08" PRIX32 " DataLength: %" PRIu32 "", i,
-		         PreferredDosName, DeviceId, DeviceDataLength);
+		if (!rdpdr_add_device(context->priv, &device))
+			return ERROR_INTERNAL_ERROR;
 
-		switch (DeviceType)
+		error = IFCALLRESULT(CHANNEL_RC_OK, context->ReceiveDeviceAnnounce, context, &device);
+		if (error != CHANNEL_RC_OK)
+			return error;
+
+		switch (device.DeviceType)
 		{
 			case RDPDR_DTYP_FILESYSTEM:
-				if (context->supportsDrives)
-				{
-					IFCALL(context->OnDriveCreate, context, DeviceId, PreferredDosName);
-				}
-
+				if ((context->supported & RDPDR_DTYP_FILESYSTEM) != 0)
+					error = IFCALLRESULT(CHANNEL_RC_OK, context->OnDriveCreate, context, &device);
 				break;
 
 			case RDPDR_DTYP_PRINT:
-				if (context->supportsPrinters)
-				{
-					IFCALL(context->OnPrinterCreate, context, DeviceId, PreferredDosName);
-				}
-
+				if ((context->supported & RDPDR_DTYP_PRINT) != 0)
+					error = IFCALLRESULT(CHANNEL_RC_OK, context->OnPrinterCreate, context, &device);
 				break;
 
 			case RDPDR_DTYP_SERIAL:
-				if (DeviceDataLength != 0)
+				if (device.DeviceDataLength != 0)
 				{
 					WLog_WARN(TAG, "[rdpdr] RDPDR_DTYP_SERIAL::DeviceDataLength != 0 [%" PRIu32 "]",
-					          DeviceDataLength);
+					          device.DeviceDataLength);
+					error = ERROR_INVALID_DATA;
 				}
-
-				if (context->supportsPorts)
-				{
-					IFCALL(context->OnPortCreate, context, DeviceId, PreferredDosName);
-				}
-
+				else if ((context->supported & RDPDR_DTYP_SERIAL) != 0)
+					error =
+					    IFCALLRESULT(CHANNEL_RC_OK, context->OnSerialPortCreate, context, &device);
 				break;
 
 			case RDPDR_DTYP_PARALLEL:
-				if (DeviceDataLength != 0)
+				if (device.DeviceDataLength != 0)
 				{
 					WLog_WARN(TAG,
 					          "[rdpdr] RDPDR_DTYP_PARALLEL::DeviceDataLength != 0 [%" PRIu32 "]",
-					          DeviceDataLength);
+					          device.DeviceDataLength);
+					error = ERROR_INVALID_DATA;
 				}
-				if (context->supportsPorts)
-				{
-					IFCALL(context->OnPortCreate, context, DeviceId, PreferredDosName);
-				}
-
+				else if ((context->supported & RDPDR_DTYP_PARALLEL) != 0)
+					error = IFCALLRESULT(CHANNEL_RC_OK, context->OnParallelPortCreate, context,
+					                     &device);
 				break;
 
 			case RDPDR_DTYP_SMARTCARD:
-				if (DeviceDataLength != 0)
+				if (device.DeviceDataLength != 0)
 				{
 					WLog_WARN(TAG,
 					          "[rdpdr] RDPDR_DTYP_SMARTCARD::DeviceDataLength != 0 [%" PRIu32 "]",
-					          DeviceDataLength);
+					          device.DeviceDataLength);
+					error = ERROR_INVALID_DATA;
 				}
-				if (context->supportsSmartcards)
-				{
-					IFCALL(context->OnSmartcardCreate, context, DeviceId, PreferredDosName);
-				}
-
+				else if ((context->supported & RDPDR_DTYP_SMARTCARD) != 0)
+					error =
+					    IFCALLRESULT(CHANNEL_RC_OK, context->OnSmartcardCreate, context, &device);
 				break;
 
 			default:
@@ -974,11 +1137,15 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 				          "[MS-RDPEFS] 2.2.2.9 Client Device List Announce Request "
 				          "(DR_CORE_DEVICELIST_ANNOUNCE_REQ) unknown device type %04" PRIx16
 				          " at position %" PRIu32,
-				          DeviceType, i);
+				          device.DeviceType, i);
+				error = ERROR_INVALID_DATA;
 				break;
 		}
 
-		Stream_Seek(s, DeviceDataLength);
+		if (error != CHANNEL_RC_OK)
+			return error;
+
+		Stream_Seek(s, device.DeviceDataLength);
 	}
 
 	return CHANNEL_RC_OK;
@@ -1009,51 +1176,64 @@ static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 
 	for (i = 0; i < DeviceCount; i++)
 	{
+		UINT error;
+		const RdpdrDevice* device;
+
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT32(s, DeviceId); /* DeviceId (4 bytes) */
+		device = rdpdr_get_device_by_id(context->priv, DeviceId);
 		WLog_DBG(TAG, "Device %" PRIu32 " Id: 0x%08" PRIX32 "", i, DeviceId);
-		DeviceType = 0; /* TODO: Save the device type on the announce request. */
+		DeviceType = 0;
+		if (device)
+			DeviceType = device->DeviceType;
+
+		error =
+		    IFCALLRESULT(CHANNEL_RC_OK, context->ReceiveDeviceRemove, context, DeviceId, device);
+		if (error != CHANNEL_RC_OK)
+			return error;
 
 		switch (DeviceType)
 		{
 			case RDPDR_DTYP_FILESYSTEM:
-				if (context->supportsDrives)
-				{
-					IFCALL(context->OnDriveDelete, context, DeviceId);
-				}
-
+				if ((context->supported & RDPDR_DTYP_FILESYSTEM) != 0)
+					error = IFCALLRESULT(CHANNEL_RC_OK, context->OnDriveDelete, context, DeviceId);
 				break;
 
 			case RDPDR_DTYP_PRINT:
-				if (context->supportsPrinters)
-				{
-					IFCALL(context->OnPrinterDelete, context, DeviceId);
-				}
-
+				if ((context->supported & RDPDR_DTYP_PRINT) != 0)
+					error =
+					    IFCALLRESULT(CHANNEL_RC_OK, context->OnPrinterDelete, context, DeviceId);
 				break;
 
 			case RDPDR_DTYP_SERIAL:
-			case RDPDR_DTYP_PARALLEL:
-				if (context->supportsPorts)
-				{
-					IFCALL(context->OnPortDelete, context, DeviceId);
-				}
+				if ((context->supported & RDPDR_DTYP_SERIAL) != 0)
+					error =
+					    IFCALLRESULT(CHANNEL_RC_OK, context->OnSerialPortDelete, context, DeviceId);
+				break;
 
+			case RDPDR_DTYP_PARALLEL:
+				if ((context->supported & RDPDR_DTYP_PARALLEL) != 0)
+					error = IFCALLRESULT(CHANNEL_RC_OK, context->OnParallelPortDelete, context,
+					                     DeviceId);
 				break;
 
 			case RDPDR_DTYP_SMARTCARD:
-				if (context->supportsSmartcards)
-				{
-					IFCALL(context->OnSmartcardDelete, context, DeviceId);
-				}
-
+				if ((context->supported & RDPDR_DTYP_SMARTCARD) != 0)
+					error =
+					    IFCALLRESULT(CHANNEL_RC_OK, context->OnSmartcardDelete, context, DeviceId);
 				break;
 
 			default:
 				break;
 		}
+
+		if (error != CHANNEL_RC_OK)
+			return error;
+
+		if (!rdpdr_remove_device_by_id(context->priv, DeviceId))
+			return ERROR_INVALID_DATA;
 	}
 
 	return CHANNEL_RC_OK;
@@ -1412,7 +1592,7 @@ static UINT rdpdr_server_receive_io_lock_control_request(RdpdrServerContext* con
 }
 
 static UINT rdpdr_server_receive_device_io_request(RdpdrServerContext* context, wStream* s,
-                                                   RDPDR_HEADER* header)
+                                                   const RDPDR_HEADER* header)
 {
 	UINT32 DeviceId;
 	UINT32 FileId;
@@ -1487,7 +1667,7 @@ static UINT rdpdr_server_receive_device_io_request(RdpdrServerContext* context, 
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT rdpdr_server_receive_device_io_completion(RdpdrServerContext* context, wStream* s,
-                                                      RDPDR_HEADER* header)
+                                                      const RDPDR_HEADER* header)
 {
 	UINT32 deviceId;
 	UINT32 completionId;
@@ -1536,7 +1716,6 @@ static UINT rdpdr_server_send_user_logged_on(RdpdrServerContext* context)
 	RDPDR_HEADER header = { 0 };
 
 	WINPR_ASSERT(context);
-	WLog_DBG(TAG, "RdpdrServerSendUserLoggedOn");
 	header.Component = RDPDR_CTYP_CORE;
 	header.PacketId = PAKID_CORE_USER_LOGGEDON;
 	s = Stream_New(NULL, RDPDR_HEADER_LENGTH);
@@ -1734,16 +1913,15 @@ static UINT rdpdr_server_receive_prn_using_xps_request(RdpdrServerContext* conte
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RDPDR_HEADER* header)
+static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s,
+                                     const RDPDR_HEADER* header)
 {
 	UINT error = ERROR_INVALID_DATA;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	WLog_DBG(TAG,
-	         "RdpdrServerReceivePdu: Component: %s [0x%04" PRIx16 "] PacketId: %s [0x%04" PRIx16
-	         "]",
+	WLog_DBG(TAG, "receiving message {Component %s[%04" PRIx16 "], PacketId %s[%04" PRIx16 "]",
 	         rdpdr_component_string(header->Component), header->Component,
 	         rdpdr_packetid_string(header->PacketId), header->PacketId);
 
@@ -1842,7 +2020,7 @@ static UINT rdpdr_server_receive_pdu(RdpdrServerContext* context, wStream* s, RD
 		          rdpdr_packetid_string(header->PacketId));
 	}
 
-	return error;
+	return IFCALLRESULT(error, context->ReceivePDU, context, header, error);
 }
 
 static DWORD WINAPI rdpdr_server_thread(LPVOID arg)
@@ -3307,68 +3485,86 @@ static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* ca
 	                                               FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);
 }
 
+static void rdpdr_server_private_free(RdpdrServerPrivate* ctx)
+{
+	if (!ctx)
+		return;
+	ListDictionary_Free(ctx->IrpList);
+	HashTable_Free(ctx->devicelist);
+	free(ctx->ClientComputerName);
+	free(ctx);
+}
+
+static RdpdrServerPrivate* rdpdr_server_private_new(void)
+{
+	RdpdrServerPrivate* priv = (RdpdrServerPrivate*)calloc(1, sizeof(RdpdrServerPrivate));
+
+	if (!priv)
+		goto fail;
+
+	priv->VersionMajor = RDPDR_VERSION_MAJOR;
+	priv->VersionMinor = RDPDR_VERSION_MINOR_RDP6X;
+	priv->ClientId = g_ClientId++;
+	priv->UserLoggedOnPdu = TRUE;
+	priv->NextCompletionId = 1;
+	priv->IrpList = ListDictionary_New(TRUE);
+
+	if (!priv->IrpList)
+		goto fail;
+
+	priv->devicelist = HashTable_New(FALSE);
+	if (!priv->devicelist)
+		goto fail;
+
+	HashTable_SetHashFunction(priv->devicelist, rdpdr_deviceid_hash);
+	wObject* obj = HashTable_ValueObject(priv->devicelist);
+	WINPR_ASSERT(obj);
+	obj->fnObjectFree = rdpdr_device_free_h;
+	obj->fnObjectNew = rdpdr_device_clone;
+
+	return priv;
+fail:
+	rdpdr_server_private_free(priv);
+	return NULL;
+}
+
 RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm)
 {
-	RdpdrServerContext* context;
-	context = (RdpdrServerContext*)calloc(1, sizeof(RdpdrServerContext));
+	RdpdrServerContext* context = (RdpdrServerContext*)calloc(1, sizeof(RdpdrServerContext));
 
-	if (context)
-	{
-		context->vcm = vcm;
-		context->Start = rdpdr_server_start;
-		context->Stop = rdpdr_server_stop;
-		context->DriveCreateDirectory = rdpdr_server_drive_create_directory;
-		context->DriveDeleteDirectory = rdpdr_server_drive_delete_directory;
-		context->DriveQueryDirectory = rdpdr_server_drive_query_directory;
-		context->DriveOpenFile = rdpdr_server_drive_open_file;
-		context->DriveReadFile = rdpdr_server_drive_read_file;
-		context->DriveWriteFile = rdpdr_server_drive_write_file;
-		context->DriveCloseFile = rdpdr_server_drive_close_file;
-		context->DriveDeleteFile = rdpdr_server_drive_delete_file;
-		context->DriveRenameFile = rdpdr_server_drive_rename_file;
-		context->priv = (RdpdrServerPrivate*)calloc(1, sizeof(RdpdrServerPrivate));
+	if (!context)
+		goto fail;
 
-		if (!context->priv)
-		{
-			WLog_ERR(TAG, "calloc failed!");
-			free(context);
-			return NULL;
-		}
+	context->vcm = vcm;
+	context->Start = rdpdr_server_start;
+	context->Stop = rdpdr_server_stop;
+	context->DriveCreateDirectory = rdpdr_server_drive_create_directory;
+	context->DriveDeleteDirectory = rdpdr_server_drive_delete_directory;
+	context->DriveQueryDirectory = rdpdr_server_drive_query_directory;
+	context->DriveOpenFile = rdpdr_server_drive_open_file;
+	context->DriveReadFile = rdpdr_server_drive_read_file;
+	context->DriveWriteFile = rdpdr_server_drive_write_file;
+	context->DriveCloseFile = rdpdr_server_drive_close_file;
+	context->DriveDeleteFile = rdpdr_server_drive_delete_file;
+	context->DriveRenameFile = rdpdr_server_drive_rename_file;
+	context->priv = rdpdr_server_private_new();
+	if (!context->priv)
+		goto fail;
 
-		context->priv->VersionMajor = RDPDR_VERSION_MAJOR;
-		context->priv->VersionMinor = RDPDR_VERSION_MINOR_RDP6X;
-		context->priv->ClientId = g_ClientId++;
-		context->priv->UserLoggedOnPdu = TRUE;
-		context->priv->NextCompletionId = 1;
-		context->priv->IrpList = ListDictionary_New(TRUE);
-
-		if (!context->priv->IrpList)
-		{
-			WLog_ERR(TAG, "ListDictionary_New failed!");
-			free(context->priv);
-			free(context);
-			return NULL;
-		}
-	}
-	else
-	{
-		WLog_ERR(TAG, "calloc failed!");
-	}
+	/* By default announce everything, the server application can deactivate that later on */
+	context->supported = UINT16_MAX;
 
 	return context;
+fail:
+	rdpdr_server_context_free(context);
+	return NULL;
 }
 
 void rdpdr_server_context_free(RdpdrServerContext* context)
 {
-	if (context)
-	{
-		if (context->priv)
-		{
-			ListDictionary_Free(context->priv->IrpList);
-			free(context->priv->ClientComputerName);
-			free(context->priv);
-		}
+	if (!context)
+		return;
 
-		free(context);
-	}
+	rdpdr_server_private_free(context->priv);
+	free(context);
 }

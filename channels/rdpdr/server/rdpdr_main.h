@@ -31,40 +31,6 @@
 #include <freerdp/settings.h>
 #include <freerdp/server/rdpdr.h>
 
-struct s_rdpdr_server_private
-{
-	HANDLE Thread;
-	HANDLE StopEvent;
-	void* ChannelHandle;
-
-	UINT32 ClientId;
-	UINT16 VersionMajor;
-	UINT16 VersionMinor;
-	char* ClientComputerName;
-
-	BOOL UserLoggedOnPdu;
-
-	wListDictionary* IrpList;
-	UINT32 NextCompletionId;
-};
-
-#define RDPDR_HEADER_LENGTH 4
-
-typedef struct
-{
-	UINT16 Component;
-	UINT16 PacketId;
-} RDPDR_HEADER;
-
-#define RDPDR_CAPABILITY_HEADER_LENGTH 8
-
-typedef struct
-{
-	UINT16 CapabilityType;
-	UINT16 CapabilityLength;
-	UINT32 Version;
-} RDPDR_CAPABILITY_HEADER;
-
 typedef struct S_RDPDR_IRP
 {
 	UINT32 CompletionId;
