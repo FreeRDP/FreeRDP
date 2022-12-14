@@ -106,7 +106,6 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, UINT* error)
 
 	if (!device)
 	{
-		WLog_WARN(TAG, "devman_get_device_by_id failed!");
 		if (error)
 			*error = CHANNEL_RC_OK;
 
