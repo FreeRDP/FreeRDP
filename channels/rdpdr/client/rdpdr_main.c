@@ -1596,8 +1596,10 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 			if (error != CHANNEL_RC_OK)
 			{
 				WLog_ERR(TAG,
-				         "Unknown message: Component: 0x%04" PRIX16 " PacketId: 0x%04" PRIX16 "",
-				         component, packetId);
+				         "Unknown message: Component: %s [0x%04" PRIX16
+				         "] PacketId: %s [0x%04" PRIX16 "]",
+				         rdpdr_component_string(component), component,
+				         rdpdr_packetid_string(packetId), packetId);
 			}
 		}
 	}
