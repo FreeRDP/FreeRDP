@@ -272,6 +272,27 @@ static void rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 	Stream_Write(s, autoReconnectCookie->securityVerifier, 16); /* SecurityVerifier (16 bytes) */
 }
 
+/*
+ * Get the cbClientAddress size limit
+ * see [MS-RDPBCGR] 2.2.1.11.1.1.1 Extended Info Packet (TS_EXTENDED_INFO_PACKET)
+ */
+
+static size_t rdp_get_client_address_max_size(const rdpRdp* rdp)
+{
+	UINT32 version;
+	rdpSettings* settings;
+
+	WINPR_ASSERT(rdp);
+
+	settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
+	version = freerdp_settings_get_uint32(settings, FreeRDP_RdpVersion);
+	if (version < RDP_VERSION_10_0)
+		return 64;
+	return 80;
+}
+
 /**
  * Read Extended Info Packet (TS_EXTENDED_INFO_PACKET).\n
  * @msdn{cc240476}
@@ -300,7 +321,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	 * is mandatory, connections via Microsoft's TS Gateway set cbClientAddress to 0.
 	 */
 
-	if ((cbClientAddress % 2) || cbClientAddress > 80)
+	if ((cbClientAddress % 2) || (cbClientAddress > rdp_get_client_address_max_size(rdp)))
 	{
 		WLog_ERR(TAG, "protocol error: invalid cbClientAddress value: %" PRIu16 "",
 		         cbClientAddress);
@@ -399,7 +420,8 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	int rc;
 	UINT16 clientAddressFamily;
 	WCHAR* clientAddress = NULL;
-	UINT16 cbClientAddress;
+	size_t cbClientAddress;
+	const size_t cbClientAddressMax = rdp_get_client_address_max_size(rdp);
 	WCHAR* clientDir = NULL;
 	UINT16 cbClientDir;
 	UINT16 cbAutoReconnectCookie;
@@ -412,6 +434,16 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if ((rc < 0) || (rc > (UINT16_MAX / 2)))
 		goto fail;
 	cbClientAddress = (UINT16)rc * 2;
+	if (cbClientAddress > cbClientAddressMax)
+	{
+		WLog_WARN(TAG,
+		          "[%s] the client address %s [%" PRIuz "] exceeds the limit of %" PRIuz
+		          ", truncating.",
+		          __FUNCTION__, settings->ClientAddress, cbClientAddress, cbClientAddressMax);
+
+		clientAddress[(cbClientAddressMax / sizeof(WCHAR)) - 1] = '\0';
+		cbClientAddress = cbClientAddressMax;
+	}
 
 	rc = ConvertToUnicode(CP_UTF8, 0, settings->ClientDir, -1, &clientDir, 0);
 	if ((rc < 0) || (rc > (UINT16_MAX / 2)))
@@ -423,11 +455,10 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	cbAutoReconnectCookie = (UINT16)settings->ServerAutoReconnectCookie->cbLen;
 
 	Stream_Write_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
-	Stream_Write_UINT16(s, cbClientAddress + 2); /* cbClientAddress (2 bytes) */
+	Stream_Write_UINT16(s, cbClientAddress);     /* cbClientAddress (2 bytes) */
 
 	Stream_Write(s, clientAddress, cbClientAddress); /* clientAddress */
 
-	Stream_Write_UINT16(s, 0);
 	Stream_Write_UINT16(s, cbClientDir + 2); /* cbClientDir (2 bytes) */
 
 	Stream_Write(s, clientDir, cbClientDir); /* clientDir */
