@@ -69,8 +69,8 @@ static const struct info_flags_t info_flags[] = {
 	{ INFO_HIDEF_RAIL_SUPPORTED, "INFO_HIDEF_RAIL_SUPPORTED" },
 };
 
-static BOOL rdp_read_info_null_string(UINT32 flags, wStream* s, size_t cbLen, CHAR** dst,
-                                      size_t max)
+static BOOL rdp_read_info_null_string(const char* what, UINT32 flags, wStream* s, size_t cbLen,
+                                      CHAR** dst, size_t max, BOOL isNullTerminated)
 {
 	CHAR* ret = NULL;
 
@@ -78,22 +78,23 @@ static BOOL rdp_read_info_null_string(UINT32 flags, wStream* s, size_t cbLen, CH
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
 
 	if (Stream_GetRemainingLength(s) < (size_t)(cbLen))
+	{
+		WLog_ERR(TAG, "protocol error: no data to read for %s [expected %" PRIuz "]", what, cbLen);
 		return FALSE;
+	}
 
 	if (cbLen > 0)
 	{
-		WCHAR domain[512 / sizeof(WCHAR) + sizeof(WCHAR)] = { 0 };
-		/* cbDomain is the size in bytes of the character data in the Domain field.
-		 * This size excludes (!) the length of the mandatory null terminator.
-		 * Maximum value including the mandatory null terminator: 512
-		 */
-		if ((cbLen % 2) || (cbLen > (max - nullSize)))
+		const WCHAR* domain = Stream_Pointer(s);
+
+		if (isNullTerminated && (max > 0))
+			max -= nullSize;
+
+		if ((cbLen > max) || (unicode && ((cbLen % 2) != 0)))
 		{
-			WLog_ERR(TAG, "protocol error: invalid value: %" PRIuz "", cbLen);
+			WLog_ERR(TAG, "protocol error: %s has invalid value: %" PRIuz "", what, cbLen);
 			return FALSE;
 		}
-
-		Stream_Read(s, domain, cbLen);
 
 		if (unicode)
 		{
@@ -109,6 +110,13 @@ static BOOL rdp_read_info_null_string(UINT32 flags, wStream* s, size_t cbLen, CH
 			if (!ret)
 				return FALSE;
 			memcpy(ret, domain, cbLen);
+		}
+
+		if (!Stream_SafeSeek(s, cbLen))
+		{
+			WLog_ERR(TAG, "protocol error: no data to read for %s [expected %" PRIuz "]", what,
+			         cbLen);
+			return FALSE;
 		}
 	}
 
@@ -327,27 +335,11 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
 	Stream_Read_UINT16(s, cbClientAddress);     /* cbClientAddress (2 bytes) */
 
-	/* cbClientAddress is the size in bytes of the character data in the clientAddress field.
-	 * This size includes the length of the mandatory null terminator.
-	 * The maximum allowed value is 80 bytes
-	 * Note: Although according to [MS-RDPBCGR 2.2.1.11.1.1.1] the null terminator
-	 * is mandatory, connections via Microsoft's TS Gateway set cbClientAddress to 0.
-	 */
-
-	if ((cbClientAddress % 2) || (cbClientAddress > rdp_get_client_address_max_size(rdp)))
-	{
-		WLog_ERR(TAG, "protocol error: invalid cbClientAddress value: %" PRIu16 "",
-		         cbClientAddress);
-		return FALSE;
-	}
-
 	settings->IPv6Enabled = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? TRUE : FALSE);
 
-	if (Stream_GetRemainingLength(s) < cbClientAddress)
-		return FALSE;
-
-	if (!rdp_read_info_null_string(INFO_UNICODE, s, cbClientAddress, &settings->ClientAddress,
-	                               (settings->RdpVersion < RDP_VERSION_10_0) ? 64 : 80))
+	if (!rdp_read_info_null_string("cbClientAddress", INFO_UNICODE, s, cbClientAddress,
+	                               &settings->ClientAddress, rdp_get_client_address_max_size(rdp),
+	                               TRUE))
 		return FALSE;
 
 	if (Stream_GetRemainingLength(s) < 2)
@@ -363,7 +355,8 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	 * sets cbClientDir to 0.
 	 */
 
-	if (!rdp_read_info_null_string(INFO_UNICODE, s, cbClientDir, &settings->ClientDir, 512))
+	if (!rdp_read_info_null_string("cbClientDir", INFO_UNICODE, s, cbClientDir,
+	                               &settings->ClientDir, 512, TRUE))
 		return FALSE;
 
 	/**
