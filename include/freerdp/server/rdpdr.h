@@ -35,6 +35,19 @@
 typedef struct s_rdpdr_server_context RdpdrServerContext;
 typedef struct s_rdpdr_server_private RdpdrServerPrivate;
 
+typedef struct
+{
+	UINT16 Component;
+	UINT16 PacketId;
+} RDPDR_HEADER;
+
+typedef struct
+{
+	UINT16 CapabilityType;
+	UINT16 CapabilityLength;
+	UINT32 Version;
+} RDPDR_CAPABILITY_HEADER;
+
 #ifndef __MINGW32__
 typedef struct
 {
@@ -51,8 +64,32 @@ typedef struct
 } FILE_DIRECTORY_INFORMATION;
 #endif
 
+typedef struct
+{
+	UINT32 DeviceType;
+	UINT32 DeviceId;
+	char PreferredDosName[9];
+	UINT32 DeviceDataLength;
+	BYTE* DeviceData;
+} RdpdrDevice;
+
 typedef UINT (*psRdpdrStart)(RdpdrServerContext* context);
 typedef UINT (*psRdpdrStop)(RdpdrServerContext* context);
+
+typedef UINT (*psRdpdrCapablityPDU)(RdpdrServerContext* context,
+                                    const RDPDR_CAPABILITY_HEADER* header, size_t size,
+                                    const BYTE* data);
+typedef UINT (*psRdpdrReceivePDU)(RdpdrServerContext* context, const RDPDR_HEADER* header,
+                                  UINT error);
+typedef UINT (*psRdpdrReceiveAnnounceResponse)(RdpdrServerContext* context, UINT16 VersionMajor,
+                                               UINT16 VersionMinor, UINT32 ClientId);
+typedef UINT (*psRdpdrSendServerAnnounce)(RdpdrServerContext* context);
+typedef UINT (*psRdpdrReceiveDeviceAnnounce)(RdpdrServerContext* context,
+                                             const RdpdrDevice* device);
+typedef UINT (*psRdpdrReceiveDeviceRemove)(RdpdrServerContext* context, UINT32 deviceId,
+                                           const RdpdrDevice* device);
+typedef UINT (*psRdpdrReceiveClientNameRequest)(RdpdrServerContext* context, size_t ComputerNameLen,
+                                                const char* name);
 
 typedef UINT (*psRdpdrDriveCreateDirectory)(RdpdrServerContext* context, void* callbackData,
                                             UINT32 deviceId, const char* path);
@@ -75,9 +112,6 @@ typedef UINT (*psRdpdrDriveDeleteFile)(RdpdrServerContext* context, void* callba
 typedef UINT (*psRdpdrDriveRenameFile)(RdpdrServerContext* context, void* callbackData,
                                        UINT32 deviceId, const char* oldPath, const char* newPath);
 
-typedef void (*psRdpdrOnDriveCreate)(RdpdrServerContext* context, UINT32 deviceId,
-                                     const char* name);
-typedef void (*psRdpdrOnDriveDelete)(RdpdrServerContext* context, UINT32 deviceId);
 typedef void (*psRdpdrOnDriveCreateDirectoryComplete)(RdpdrServerContext* context,
                                                       void* callbackData, UINT32 ioStatus);
 typedef void (*psRdpdrOnDriveDeleteDirectoryComplete)(RdpdrServerContext* context,
@@ -98,16 +132,8 @@ typedef void (*psRdpdrOnDriveDeleteFileComplete)(RdpdrServerContext* context, vo
 typedef void (*psRdpdrOnDriveRenameFileComplete)(RdpdrServerContext* context, void* callbackData,
                                                  UINT32 ioStatus);
 
-typedef void (*psRdpdrOnPortCreate)(RdpdrServerContext* context, UINT32 deviceId, const char* name);
-typedef void (*psRdpdrOnPortDelete)(RdpdrServerContext* context, UINT32 deviceId);
-
-typedef void (*psRdpdrOnPrinterCreate)(RdpdrServerContext* context, UINT32 deviceId,
-                                       const char* name);
-typedef void (*psRdpdrOnPrinterDelete)(RdpdrServerContext* context, UINT32 deviceId);
-
-typedef void (*psRdpdrOnSmartcardCreate)(RdpdrServerContext* context, UINT32 deviceId,
-                                         const char* name);
-typedef void (*psRdpdrOnSmartcardDelete)(RdpdrServerContext* context, UINT32 deviceId);
+typedef UINT (*psRdpdrOnDeviceCreate)(RdpdrServerContext* context, const RdpdrDevice* device);
+typedef UINT (*psRdpdrOnDeviceDelete)(RdpdrServerContext* context, UINT32 deviceId);
 
 struct s_rdpdr_server_context
 {
@@ -121,11 +147,30 @@ struct s_rdpdr_server_context
 	/* Server self-defined pointer. */
 	void* data;
 
-	/* Server supported redirections. Set by server. */
-	BOOL supportsDrives;
-	BOOL supportsPorts;
-	BOOL supportsPrinters;
-	BOOL supportsSmartcards;
+	/**< Server supported redirections.
+	 * initially used to determine which redirections are supported by the
+	 * server in the server capability, later on updated with what the client
+	 * actually wants to have supported.
+	 *
+	 * Use the \b RDPDR_DTYP_* defines as a mask to check.
+	 */
+	UINT16 supported;
+
+	/*** RDPDR message intercept callbacks */
+	psRdpdrCapablityPDU ReceiveCaps; /**< Called for each received capability */
+	psRdpdrCapablityPDU SendCaps;    /**< Called for each capability to be sent */
+	psRdpdrReceivePDU ReceivePDU;    /**< Called after a RDPDR pdu was received and parsed */
+	psRdpdrSendServerAnnounce
+	    SendServerAnnounce; /**< Called before the server sends the announce message */
+	psRdpdrReceiveAnnounceResponse
+	    ReceiveAnnounceResponse; /**< Called after the client announce response is received */
+	psRdpdrReceiveClientNameRequest
+	    ReceiveClientNameRequest; /**< Called after a client name request is received */
+	psRdpdrReceiveDeviceAnnounce
+	    ReceiveDeviceAnnounce; /** < Called after a new device request was received but before the
+	                              device is added */
+	psRdpdrReceiveDeviceRemove ReceiveDeviceRemove; /**< Called after a new device request was
+	                                                   received, but before it is removed */
 
 	/*** Drive APIs called by the server. ***/
 	psRdpdrDriveCreateDirectory DriveCreateDirectory;
@@ -139,8 +184,10 @@ struct s_rdpdr_server_context
 	psRdpdrDriveRenameFile DriveRenameFile;
 
 	/*** Drive callbacks registered by the server. ***/
-	psRdpdrOnDriveCreate OnDriveCreate;
-	psRdpdrOnDriveDelete OnDriveDelete;
+	psRdpdrOnDeviceCreate OnDriveCreate; /**< Called for devices of type \b RDPDR_DTYP_FILESYSTEM
+	                                        after \b ReceiveDeviceAnnounce */
+	psRdpdrOnDeviceDelete OnDriveDelete; /**< Called for devices of type \b RDPDR_DTYP_FILESYSTEM
+	                                        after \b ReceiveDeviceRemove */
 	psRdpdrOnDriveCreateDirectoryComplete OnDriveCreateDirectoryComplete;
 	psRdpdrOnDriveDeleteDirectoryComplete OnDriveDeleteDirectoryComplete;
 	psRdpdrOnDriveQueryDirectoryComplete OnDriveQueryDirectoryComplete;
@@ -151,17 +198,29 @@ struct s_rdpdr_server_context
 	psRdpdrOnDriveDeleteFileComplete OnDriveDeleteFileComplete;
 	psRdpdrOnDriveRenameFileComplete OnDriveRenameFileComplete;
 
-	/*** Port callbacks registered by the server. ***/
-	psRdpdrOnPortCreate OnPortCreate;
-	psRdpdrOnPortDelete OnPortDelete;
+	/*** Serial Port callbacks registered by the server. ***/
+	psRdpdrOnDeviceCreate OnSerialPortCreate; /**< Called for devices of type \b RDPDR_DTYP_SERIAL
+	                                       after \b ReceiveDeviceAnnounce */
+	psRdpdrOnDeviceDelete OnSerialPortDelete; /**< Called for devices of type \b RDPDR_DTYP_SERIAL
+	                                       after \b ReceiveDeviceRemove */
+
+	/*** Parallel Port callbacks registered by the server. ***/
+	psRdpdrOnDeviceCreate OnParallelPortCreate; /**< Called for devices of type \b
+	                                       RDPDR_DTYP_PARALLEL after \b ReceiveDeviceAnnounce */
+	psRdpdrOnDeviceDelete OnParallelPortDelete; /**< Called for devices of type \b
+	                                       RDPDR_DTYP_PARALLEL after \b ReceiveDeviceRemove */
 
 	/*** Printer callbacks registered by the server. ***/
-	psRdpdrOnPrinterCreate OnPrinterCreate;
-	psRdpdrOnPrinterDelete OnPrinterDelete;
+	psRdpdrOnDeviceCreate OnPrinterCreate; /**< Called for devices of type RDPDR_DTYP_PRINT after \b
+	                                          ReceiveDeviceAnnounce */
+	psRdpdrOnDeviceDelete OnPrinterDelete; /**< Called for devices of type RDPDR_DTYP_PRINT after \b
+	                                          ReceiveDeviceRemove */
 
 	/*** Smartcard callbacks registered by the server. ***/
-	psRdpdrOnSmartcardCreate OnSmartcardCreate;
-	psRdpdrOnSmartcardDelete OnSmartcardDelete;
+	psRdpdrOnDeviceCreate OnSmartcardCreate; /**< Called for devices of type RDPDR_DTYP_SMARTCARD
+	                                            after                    \b ReceiveDeviceAnnounce */
+	psRdpdrOnDeviceDelete OnSmartcardDelete; /**< Called for devices of type RDPDR_DTYP_SMARTCARD
+	                                            after \b                ReceiveDeviceRemove */
 
 	rdpContext* rdpcontext;
 };
