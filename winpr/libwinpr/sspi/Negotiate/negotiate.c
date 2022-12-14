@@ -495,8 +495,10 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 				else
 				{
 					/* negState [0] ENUMERATED */
-					if (!WinPrAsn1DecReadEnumerated(&dec2, &token->negState))
+					WinPrAsn1_ENUMERATED rd;
+					if (!WinPrAsn1DecReadEnumerated(&dec2, &rd))
 						return FALSE;
+					token->negState = rd;
 					WLog_DBG(TAG, "\tnegState [0] (%d)", token->negState);
 				}
 				break;
