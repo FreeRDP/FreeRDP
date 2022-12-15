@@ -130,12 +130,15 @@ struct s_IWTSListenerCallback
 
 struct s_IWTSVirtualChannelCallback
 {
-	/* Notifies the user about data that is being received. */
-	UINT (*OnDataReceived)(IWTSVirtualChannelCallback* pChannelCallback, wStream* data);
-	/* Notifies the user that the channel has been opened. */
-	UINT (*OnOpen)(IWTSVirtualChannelCallback* pChannelCallback);
-	/* Notifies the user that the channel has been closed. */
-	UINT (*OnClose)(IWTSVirtualChannelCallback* pChannelCallback);
+	UINT(*OnDataReceived)
+	(IWTSVirtualChannelCallback* pChannelCallback,
+	 wStream* data); /**< Notifies the user about data that is being received. */
+	UINT(*OnOpen)
+	(IWTSVirtualChannelCallback*
+	     pChannelCallback); /**< Notifies the user that the channel has been opened. */
+	UINT(*OnClose)
+	(IWTSVirtualChannelCallback*
+	     pChannelCallback); /**< Notifies the user that the channel has been closed. */
 };
 
 /* The DVC Plugin entry points */
