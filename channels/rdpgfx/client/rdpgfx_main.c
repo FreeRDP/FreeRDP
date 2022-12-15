@@ -45,32 +45,31 @@
 
 #define TAG CHANNELS_TAG("rdpgfx.client")
 
-static void free_surfaces(RdpgfxClientContext* context, wHashTable* SurfaceTable)
+static BOOL delete_surface(const void* key, void* value, void* arg)
 {
-	UINT error = 0;
-	ULONG_PTR* pKeys = NULL;
-	size_t count;
-	size_t index;
+	const UINT16 id = (UINT16)(key);
+	RdpgfxClientContext* context = arg;
+	RDPGFX_DELETE_SURFACE_PDU pdu = { 0 };
 
-	count = HashTable_GetKeys(SurfaceTable, &pKeys);
+	WINPR_UNUSED(value);
+	pdu.surfaceId = id - 1;
 
-	for (index = 0; index < count; index++)
+	if (context)
 	{
-		RDPGFX_DELETE_SURFACE_PDU pdu = { 0 };
-		pdu.surfaceId = ((UINT16)pKeys[index]) - 1;
+		UINT error = CHANNEL_RC_OK;
+		IFCALLRET(context->DeleteSurface, error, context, &pdu);
 
-		if (context)
+		if (error)
 		{
-			IFCALLRET(context->DeleteSurface, error, context, &pdu);
-
-			if (error)
-			{
-				WLog_ERR(TAG, "context->DeleteSurface failed with error %" PRIu32 "", error);
-			}
+			WLog_ERR(TAG, "context->DeleteSurface failed with error %" PRIu32 "", error);
 		}
 	}
+	return TRUE;
+}
 
-	free(pKeys);
+static void free_surfaces(RdpgfxClientContext* context, wHashTable* SurfaceTable)
+{
+	HashTable_Foreach(SurfaceTable, delete_surface, context);
 }
 
 static void evict_cache_slots(RdpgfxClientContext* context, UINT16 MaxCacheSlots, void** CacheSlots)
@@ -1065,6 +1064,13 @@ static UINT rdpgfx_recv_create_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 
 	if (context)
 	{
+		/* create surface PDU sometimes happens for surface ID that are already in use and have not
+		 * been removed yet. Ensure that there is no surface with the new ID by trying to remove it
+		 * manually.
+		 */
+		RDPGFX_DELETE_SURFACE_PDU deletePdu = { pdu.surfaceId };
+		IFCALL(context->DeleteSurface, context, &deletePdu);
+
 		IFCALLRET(context->CreateSurface, error, context, &pdu);
 
 		if (error)
