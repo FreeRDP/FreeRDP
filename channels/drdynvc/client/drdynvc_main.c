@@ -415,6 +415,36 @@ static UINT dvcchannel_send_close(DVCMAN_CHANNEL* channel)
 	return drdynvc_send(drdynvc, s);
 }
 
+static void check_open_close_receive(DVCMAN_CHANNEL* channel)
+{
+	WINPR_ASSERT(channel);
+
+	IWTSVirtualChannelCallback* cb = channel->channel_callback;
+	const char* name = channel->channel_name;
+	const UINT32 id = channel->channel_id;
+
+	WINPR_ASSERT(cb);
+	if (cb->OnOpen || cb->OnClose)
+	{
+		if (!cb->OnOpen || !cb->OnClose)
+			WLog_WARN(TAG, "[%s] {%s:%" PRIu32 "} OnOpen=%p, OnClose=%p", __FUNCTION__, name, id,
+			          cb->OnOpen, cb->OnClose);
+	}
+}
+
+static UINT dvcman_call_on_receive(DVCMAN_CHANNEL* channel, wStream* data)
+{
+	WINPR_ASSERT(channel);
+	WINPR_ASSERT(data);
+
+	IWTSVirtualChannelCallback* cb = channel->channel_callback;
+	WINPR_ASSERT(cb);
+
+	check_open_close_receive(channel);
+	WINPR_ASSERT(cb->OnDataReceived);
+	return cb->OnDataReceived(cb, data);
+}
+
 static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL fromHashTableFn)
 {
 	UINT error = CHANNEL_RC_OK;
@@ -445,11 +475,14 @@ static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL 
 
 			channel->state = DVC_CHANNEL_CLOSED;
 
-			if (channel->channel_callback)
+			IWTSVirtualChannelCallback* cb = channel->channel_callback;
+			if (cb)
 			{
-				IFCALL(channel->channel_callback->OnClose, channel->channel_callback);
-				channel->channel_callback = NULL;
+				check_open_close_receive(channel);
+				IFCALL(cb->OnClose, cb);
 			}
+
+			channel->channel_callback = NULL;
 
 			if (channel->dvcman && channel->dvcman->drdynvc)
 			{
@@ -733,6 +766,7 @@ static UINT dvcman_open_channel(drdynvcPlugin* drdynvc, DVCMAN_CHANNEL* channel)
 
 		if (pCallback->OnOpen)
 		{
+			check_open_close_receive(channel);
 			error = pCallback->OnOpen(pCallback);
 			if (error)
 			{
@@ -808,16 +842,14 @@ static UINT dvcman_receive_channel_data(DVCMAN_CHANNEL* channel, wStream* data,
 		{
 			Stream_SealLength(channel->dvc_data);
 			Stream_SetPosition(channel->dvc_data, 0);
-			status = channel->channel_callback->OnDataReceived(channel->channel_callback,
-			                                                   channel->dvc_data);
+
+			status = dvcman_call_on_receive(channel, channel->dvc_data);
 			Stream_Release(channel->dvc_data);
 			channel->dvc_data = NULL;
 		}
 	}
 	else
-	{
-		status = channel->channel_callback->OnDataReceived(channel->channel_callback, data);
-	}
+		status = dvcman_call_on_receive(channel, data);
 
 out:
 	return status;
