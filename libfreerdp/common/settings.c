@@ -2057,3 +2057,22 @@ WCHAR* freerdp_settings_get_string_as_utf16(const rdpSettings* settings, size_t 
 		return NULL;
 	return ConvertUtf8ToWCharAlloc(str, pCharLen);
 }
+
+const char* freerdp_rdpdr_dtyp_string(UINT32 type)
+{
+	switch (type)
+	{
+		case RDPDR_DTYP_FILESYSTEM:
+			return "RDPDR_DTYP_FILESYSTEM";
+		case RDPDR_DTYP_PARALLEL:
+			return "RDPDR_DTYP_PARALLEL";
+		case RDPDR_DTYP_PRINT:
+			return "RDPDR_DTYP_PRINT";
+		case RDPDR_DTYP_SERIAL:
+			return "RDPDR_DTYP_SERIAL";
+		case RDPDR_DTYP_SMARTCARD:
+			return "RDPDR_DTYP_SMARTCARD";
+		default:
+			return "RDPDR_DTYP_UNKNOWN";
+	}
+}
