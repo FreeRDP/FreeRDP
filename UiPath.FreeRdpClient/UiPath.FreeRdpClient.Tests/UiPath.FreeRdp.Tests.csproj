@@ -10,6 +10,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<None Include="C:\UiPath\FreeRDP\libfreerdp\**\*.c">
+			<Link >FreeRdpSRC\libfreerdp\%(RecursiveDir)%(Filename)%(Extension)</Link>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
 		<None Remove="NativeMethods.json" />
 		<None Remove="NativeMethods.txt" />
 	</ItemGroup>
