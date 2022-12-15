@@ -1006,6 +1006,17 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 	 */
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
 
+	/**
+	 * SSL_OP_NO_RENEGOTIATION
+	 *
+	 * Disable SSL client site renegotiation.
+	 */
+
+#if (OPENSSL_VERSION_NUMBER >= 0x10100000L && OPENSSL_VERSION_NUMBER < 0x30000000L) || \
+    defined(LIBRESSL_VERSION_NUMBER)
+	options |= SSL_OP_NO_RENEGOTIATION;
+#endif
+
 	if (!tls_prepare(tls, underlying, SSLv23_server_method(), options, FALSE))
 		return FALSE;
 
