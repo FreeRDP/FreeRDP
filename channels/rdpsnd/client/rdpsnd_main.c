@@ -112,6 +112,7 @@ struct rdpsnd_plugin
 	BOOL applyVolume;
 
 	size_t references;
+	BOOL OnOpenCalled;
 };
 
 static const char* rdpsnd_is_dyn_str(BOOL dynamic)
@@ -1603,6 +1604,10 @@ static UINT rdpsnd_on_open(IWTSVirtualChannelCallback* pChannelCallback)
 	rdpsnd = (rdpsndPlugin*)callback->plugin;
 	WINPR_ASSERT(rdpsnd);
 
+	if (rdpsnd->OnOpenCalled)
+		return CHANNEL_RC_OK;
+	rdpsnd->OnOpenCalled = TRUE;
+
 	if (!allocate_internals(rdpsnd))
 		return ERROR_OUTOFMEMORY;
 
@@ -1649,6 +1654,7 @@ static UINT rdpsnd_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 	rdpsnd = (rdpsndPlugin*)callback->plugin;
 	WINPR_ASSERT(rdpsnd);
 
+	rdpsnd->OnOpenCalled = FALSE;
 	if (rdpsnd->device)
 		IFCALL(rdpsnd->device->Close, rdpsnd->device);
 
