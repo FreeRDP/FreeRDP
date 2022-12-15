@@ -538,6 +538,26 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	return TRUE;
 }
 
+static BOOL option_is_rdp_file(const char* option)
+{
+	WINPR_ASSERT(option);
+
+	if (option_ends_with(option, ".rdp"))
+		return TRUE;
+	if (option_ends_with(option, ".rdpw"))
+		return TRUE;
+	return FALSE;
+}
+
+static BOOL option_is_incident_file(const char* option)
+{
+	WINPR_ASSERT(option);
+
+	if (option_ends_with(option, ".msrcIncident"))
+		return TRUE;
+	return FALSE;
+}
+
 static int freerdp_client_command_line_pre_filter(void* context, int index, int argc, LPSTR* argv)
 {
 	if (index == 1)
@@ -552,7 +572,7 @@ static int freerdp_client_command_line_pre_filter(void* context, int index, int 
 
 		if (length > 4)
 		{
-			if (option_ends_with(argv[index], ".rdp"))
+			if (option_is_rdp_file(argv[index]))
 			{
 				settings = (rdpSettings*)context;
 
@@ -565,7 +585,7 @@ static int freerdp_client_command_line_pre_filter(void* context, int index, int 
 
 		if (length > 13)
 		{
-			if (option_ends_with(argv[index], ".msrcIncident"))
+			if (option_is_incident_file(argv[index]))
 			{
 				settings = (rdpSettings*)context;
 
@@ -1279,7 +1299,7 @@ static int freerdp_detect_command_line_pre_filter(void* context, int index, int 
 
 		if (length > 4)
 		{
-			if (option_ends_with(argv[index], ".rdp"))
+			if (option_is_rdp_file(argv[index]))
 			{
 				return 1;
 			}
@@ -1287,7 +1307,7 @@ static int freerdp_detect_command_line_pre_filter(void* context, int index, int 
 
 		if (length > 13)
 		{
-			if (option_ends_with(argv[index], ".msrcIncident"))
+			if (option_is_incident_file(argv[index]))
 			{
 				return 1;
 			}
@@ -2347,8 +2367,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	 * legacy command line syntax. */
 	if (argc > 1)
 	{
-		ext = option_ends_with(argv[1], ".rdp");
-		assist = option_ends_with(argv[1], ".msrcIncident");
+		ext = option_is_rdp_file(argv[1]);
+		assist = option_is_incident_file(argv[1]);
 	}
 
 	if (!ext && !assist)
