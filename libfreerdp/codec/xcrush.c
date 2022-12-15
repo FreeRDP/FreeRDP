@@ -739,7 +739,7 @@ static INLINE size_t xcrush_copy_bytes(BYTE* dst, const BYTE* src, size_t num)
 	{
 		memcpy(dst, src, num);
 	}
-	else
+	else if (src != dst)
 	{
 		// src and dst overlaps
 		// we should copy the area that doesn't overlap repeatly
