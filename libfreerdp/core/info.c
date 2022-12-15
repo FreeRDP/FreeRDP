@@ -551,8 +551,8 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 		if (!Stream_EnsureRemainingCapacity(s, 4ull))
 			goto fail;
-		Stream_Write_UINT16(s, 0);                      /* reserved1 (2 bytes) */
-		Stream_Write_UINT16(s, 0);                      /* reserved2 (2 bytes) */
+		Stream_Write_UINT16(s, 0); /* reserved1 (2 bytes) */
+		Stream_Write_UINT16(s, 0); /* reserved2 (2 bytes) */
 	}
 
 	if (settings->EarlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE)
@@ -845,18 +845,17 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		cbPassword = (UINT16)cbPassword * sizeof(WCHAR);
 	}
 
-	const char* rain = freerdp_settings_get_string(settings, FreeRDP_RemoteAssistancePassword);
+	const char* altShell;
 	if (!settings->RemoteAssistanceMode)
-		rain = freerdp_settings_get_string(settings, FreeRDP_AlternateShell);
+		altShell = freerdp_settings_get_string(settings, FreeRDP_AlternateShell);
+	else if (settings->RemoteAssistancePassStub)
+		altShell = "*"; /* This field MUST be filled with "*" */
 	else
+		altShell = freerdp_settings_get_string(settings, FreeRDP_RemoteAssistancePassword);
+
+	if (altShell && strlen(altShell) > 0)
 	{
-		/* This field MUST be filled with "*" */
-		if (settings->RemoteAssistancePassStub)
-			rain = "*";
-	}
-	if (rain)
-	{
-		alternateShellW = ConvertUtf8ToWCharAlloc(rain, &cbAlternateShell);
+		alternateShellW = ConvertUtf8ToWCharAlloc(altShell, &cbAlternateShell);
 		if (!alternateShellW || (cbAlternateShell > (UINT16_MAX / sizeof(WCHAR))))
 			goto fail;
 		cbAlternateShell = (UINT16)cbAlternateShell * sizeof(WCHAR);
