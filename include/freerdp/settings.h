@@ -2209,6 +2209,14 @@ extern "C"
 	 */
 	FREERDP_API const char* freerdp_rdp_version_string(UINT32 version);
 
+	/** \brief Returns a string representation of \b RDPDR_DTYP_*
+	 *
+	 *  \param type The integer of the \b RDPDR_DTYP_* to stringify
+	 *
+	 *  \return A string representation of the \b RDPDR_DTYP_* or "RDPDR_DTYP_UNKNOWN"
+	 */
+	FREERDP_API const char* freerdp_rdpdr_dtyp_string(UINT32 type);
+
 #ifdef __cplusplus
 }
 #endif
