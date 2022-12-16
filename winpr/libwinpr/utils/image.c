@@ -152,9 +152,18 @@ fail:
 int winpr_bitmap_write(const char* filename, const BYTE* data, size_t width, size_t height,
                        size_t bpp)
 {
+	return winpr_bitmap_write_ex(filename, data, 0, width, height, bpp);
+}
+
+int winpr_bitmap_write_ex(const char* filename, const BYTE* data, size_t stride, size_t width,
+                          size_t height, size_t bpp)
+{
 	FILE* fp;
 	BYTE* bmp_header = NULL;
-	size_t img_size = width * height * (bpp / 8);
+	const size_t bpp_stride = width * (bpp / 8);
+
+	if (stride == 0)
+		stride = bpp_stride;
 
 	int ret = -1;
 	fp = winpr_fopen(filename, "w+b");
@@ -169,9 +178,15 @@ int winpr_bitmap_write(const char* filename, const BYTE* data, size_t width, siz
 	if (!bmp_header)
 		goto fail;
 
-	if (fwrite(bmp_header, WINPR_IMAGE_BMP_HEADER_LEN, 1, fp) != 1 ||
-	    fwrite((const void*)data, img_size, 1, fp) != 1)
+	if (fwrite(bmp_header, WINPR_IMAGE_BMP_HEADER_LEN, 1, fp) != 1)
 		goto fail;
+
+	for (size_t y = 0; y < height; y++)
+	{
+		const void* line = &data[stride * y];
+		if (fwrite(line, bpp_stride, 1, fp) != 1)
+			goto fail;
+	}
 
 	ret = 1;
 fail:

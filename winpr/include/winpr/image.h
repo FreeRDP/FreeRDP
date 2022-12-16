@@ -83,6 +83,8 @@ extern "C"
 
 	WINPR_API int winpr_bitmap_write(const char* filename, const BYTE* data, size_t width,
 	                                 size_t height, size_t bpp);
+	WINPR_API int winpr_bitmap_write_ex(const char* filename, const BYTE* data, size_t stride,
+	                                    size_t width, size_t height, size_t bpp);
 	WINPR_API BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp);
 
 	WINPR_API int winpr_image_write(wImage* image, const char* filename);
