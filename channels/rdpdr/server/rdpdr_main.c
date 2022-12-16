@@ -884,8 +884,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 
 		if ((status = rdpdr_server_read_capability_set_header(s, &capabilityHeader)))
 		{
-			WLog_ERR(TAG, "rdpdr_server_read_capability_set_header failed with error %" PRIu32 "!",
-			         status);
+			WLog_ERR(TAG, "%s failed with error %" PRIu32 "!", __FUNCTION__, status);
 			return status;
 		}
 
@@ -901,10 +900,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 				if ((status =
 				         rdpdr_server_read_general_capability_set(context, s, &capabilityHeader)))
 				{
-					WLog_ERR(TAG,
-					         "rdpdr_server_read_general_capability_set failed with error %" PRIu32
-					         "!",
-					         status);
+					WLog_ERR(TAG, "%s failed with error %" PRIu32 "!", __FUNCTION__, status);
 					return status;
 				}
 
@@ -914,10 +910,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 				if ((status =
 				         rdpdr_server_read_printer_capability_set(context, s, &capabilityHeader)))
 				{
-					WLog_ERR(TAG,
-					         "rdpdr_server_read_printer_capability_set failed with error %" PRIu32
-					         "!",
-					         status);
+					WLog_ERR(TAG, "%s failed with error %" PRIu32 "!", __FUNCTION__, status);
 					return status;
 				}
 
@@ -926,9 +919,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 			case CAP_PORT_TYPE:
 				if ((status = rdpdr_server_read_port_capability_set(context, s, &capabilityHeader)))
 				{
-					WLog_ERR(TAG,
-					         "rdpdr_server_read_port_capability_set failed with error %" PRIu32 "!",
-					         status);
+					WLog_ERR(TAG, "%s failed with error %" PRIu32 "!", __FUNCTION__, status);
 					return status;
 				}
 
@@ -938,10 +929,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 				if ((status =
 				         rdpdr_server_read_drive_capability_set(context, s, &capabilityHeader)))
 				{
-					WLog_ERR(TAG,
-					         "rdpdr_server_read_drive_capability_set failed with error %" PRIu32
-					         "!",
-					         status);
+					WLog_ERR(TAG, "%s failed with error %" PRIu32 "!", __FUNCTION__, status);
 					return status;
 				}
 
@@ -951,10 +939,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 				if ((status =
 				         rdpdr_server_read_smartcard_capability_set(context, s, &capabilityHeader)))
 				{
-					WLog_ERR(TAG,
-					         "rdpdr_server_read_smartcard_capability_set failed with error %" PRIu32
-					         "!",
-					         status);
+					WLog_ERR(TAG, "%s failed with error %" PRIu32 "!", __FUNCTION__, status);
 					return status;
 				}
 
@@ -980,7 +965,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 			if (((caps & mask) != 0) && ((context->supported & mask) == 0))
 			{
 				WLog_WARN(TAG, "[%s] client sent capability %s we did not announce!", __FUNCTION__,
-				          freerdp_rdpdr_dtyp_string(x));
+				          freerdp_rdpdr_dtyp_string(mask));
 			}
 
 			/* we assume the server supports the capability. so only deactivate what the client did
