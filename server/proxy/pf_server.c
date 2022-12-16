@@ -166,7 +166,8 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 		{
 			if (!ev.target_address)
 			{
-				WLog_ERR(TAG, "router: using CUSTOM_ADDR fetch method, but target_address == NULL");
+				PROXY_LOG_ERR(TAG, ps,
+				              "router: using CUSTOM_ADDR fetch method, but target_address == NULL");
 				return FALSE;
 			}
 
@@ -181,7 +182,7 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 			return TRUE;
 		}
 		default:
-			WLog_WARN(TAG, "unknown target fetch method: %d", ev.fetch_method);
+			PROXY_LOG_ERR(TAG, ps, "unknown target fetch method: %d", ev.fetch_method);
 			return FALSE;
 	}
 
@@ -493,7 +494,7 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyContent,
 	                                 config->PrivateKeyContent))
 	{
-		WLog_ERR(TAG, "Memory allocation failed (strdup)");
+		PROXY_LOG_ERR(TAG, ps, "Memory allocation failed (strdup)");
 		return FALSE;
 	}
 
@@ -607,7 +608,7 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 
 			if (tmp == 0)
 			{
-				WLog_ERR(TAG, "Failed to get FreeRDP transport event handles");
+				PROXY_LOG_ERR(TAG, ps, "Failed to get FreeRDP transport event handles");
 				break;
 			}
 
@@ -627,7 +628,7 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 
 		if (status == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "WaitForMultipleObjects failed (status: %" PRIu32 ")", status);
+			PROXY_LOG_ERR(TAG, ps, "WaitForMultipleObjects failed (status: %" PRIu32 ")", status);
 			break;
 		}
 
@@ -639,7 +640,7 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 		{
 			if (!WTSVirtualChannelManagerCheckFileDescriptor(ps->vcm))
 			{
-				WLog_ERR(TAG, "WTSVirtualChannelManagerCheckFileDescriptor failure");
+				PROXY_LOG_ERR(TAG, ps, "WTSVirtualChannelManagerCheckFileDescriptor failure");
 				goto fail;
 			}
 		}
@@ -647,13 +648,14 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 		/* only disconnect after checking client's and vcm's file descriptors  */
 		if (proxy_data_shall_disconnect(pdata))
 		{
-			WLog_INFO(TAG, "abort event is set, closing connection with peer %s", client->hostname);
+			PROXY_LOG_INFO(TAG, ps, "abort event is set, closing connection with peer %s",
+			               client->hostname);
 			break;
 		}
 
 		if (WaitForSingleObject(server->stopEvent, 0) == WAIT_OBJECT_0)
 		{
-			WLog_INFO(TAG, "Server shutting down, terminating peer");
+			PROXY_LOG_INFO(TAG, ps, "Server shutting down, terminating peer");
 			break;
 		}
 
@@ -665,7 +667,7 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 				/* Initialize drdynvc channel */
 				if (!WTSVirtualChannelManagerCheckFileDescriptor(ps->vcm))
 				{
-					WLog_ERR(TAG, "Failed to initialize drdynvc channel");
+					PROXY_LOG_ERR(TAG, ps, "Failed to initialize drdynvc channel");
 					goto fail;
 				}
 
