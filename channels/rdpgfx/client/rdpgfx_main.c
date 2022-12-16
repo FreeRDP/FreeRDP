@@ -2325,6 +2325,7 @@ static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdp
 
 	WINPR_ASSERT(base);
 	gfx->rdpcontext = rcontext;
+	gfx->log = WLog_Get(TAG);
 
 	gfx->SurfaceTable = HashTable_New(TRUE);
 	if (!gfx->SurfaceTable)
