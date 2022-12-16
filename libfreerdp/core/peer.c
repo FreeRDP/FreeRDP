@@ -1169,7 +1169,7 @@ static state_run_t peer_recv_callback(rdpTransport* transport, wStream* s, void*
 		WLog_VRB(TAG, "(server)[%s -> %s] current return %s [%" PRIuz " bytes not processed]", old,
 		         rdp_get_state_string(rdp), state_run_result_string(rc, buffer, sizeof(buffer)),
 		         Stream_GetRemainingLength(s));
-	} while ((rc == STATE_RUN_TRY_AGAIN) || (rc == STATE_RUN_CONTINUE) || (rc == STATE_RUN_ACTIVE));
+	} while (state_run_continue(rc));
 
 	return rc;
 }
