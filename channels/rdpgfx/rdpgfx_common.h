@@ -27,9 +27,7 @@
 
 #include <freerdp/channels/rdpgfx.h>
 #include <freerdp/api.h>
-
-FREERDP_LOCAL const char* rdpgfx_get_cmd_id_string(UINT16 cmdId);
-FREERDP_LOCAL const char* rdpgfx_get_codec_id_string(UINT16 codecId);
+#include <freerdp/utils/gfx.h>
 
 FREERDP_LOCAL UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header);
 FREERDP_LOCAL UINT rdpgfx_write_header(wStream* s, const RDPGFX_HEADER* header);
