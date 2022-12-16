@@ -25,6 +25,7 @@ include_directories(..)
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
 
+list(APPEND ${MODULE_PREFIX}_LIBS freerdp-client)
 list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
 list(APPEND ${MODULE_PREFIX}_LIBS winpr)
 
