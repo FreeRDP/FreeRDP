@@ -382,6 +382,65 @@ static BOOL shadow_client_capabilities(freerdp_peer* peer)
 	return ret;
 }
 
+static void shadow_reset_desktop_resize(rdpShadowClient* client)
+{
+	WINPR_ASSERT(client);
+	client->resizeRequested = FALSE;
+}
+
+static BOOL shadow_send_desktop_resize(rdpShadowClient* client)
+{
+	BOOL rc;
+	rdpUpdate* update;
+	rdpSettings* settings;
+	const freerdp_peer* peer;
+
+	WINPR_ASSERT(client);
+
+	settings = client->context.settings;
+	peer = client->context.peer;
+	WINPR_ASSERT(peer);
+	WINPR_ASSERT(client->server);
+	WINPR_ASSERT(client->server->surface);
+
+	const UINT32 resizeWidth = client->server->surface->width;
+	const UINT32 resizeHeight = client->server->surface->height;
+
+	if (client->resizeRequested)
+	{
+		if ((resizeWidth == client->resizeWidth) && (resizeHeight == client->resizeHeight))
+		{
+			const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+			const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+			WLog_WARN(TAG,
+			          "detected previous resize request for resolution %" PRIu32 "x%" PRIu32
+			          ", still have %" PRIu32 "x%" PRIu32 ", disconnecting peer",
+			          resizeWidth, resizeHeight, w, h);
+			return FALSE;
+		}
+	}
+
+	update = client->context.update;
+	WINPR_ASSERT(update);
+	WINPR_ASSERT(update->DesktopResize);
+
+	// Update peer resolution, required so that during disconnect/reconnect the correct resolution
+	// is sent to the client.
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, resizeWidth))
+		return FALSE;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, resizeHeight))
+		return FALSE;
+	rc = update->DesktopResize(update->context);
+	WLog_INFO(TAG, "Client %s resize requested (%" PRIu32 "x%" PRIu32 "@%" PRIu32 ")",
+	          peer->hostname, resizeWidth, resizeHeight,
+	          freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
+	client->resizeRequested = TRUE;
+	client->resizeWidth = resizeWidth;
+	client->resizeHeight = resizeHeight;
+
+	return rc;
+}
+
 static BOOL shadow_client_post_connect(freerdp_peer* peer)
 {
 	int authStatus;
@@ -425,17 +484,11 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 	/* Resize client if necessary */
 	if (shadow_client_recalc_desktop_size(client))
 	{
-		BOOL rc;
-		rdpUpdate* update = peer->context->update;
-		WINPR_ASSERT(update);
-		WINPR_ASSERT(update->DesktopResize);
-
-		rc = update->DesktopResize(update->context);
-		WLog_INFO(TAG, "Client from %s is resized (%" PRIu32 "x%" PRIu32 "@%" PRIu32 ")",
-		          peer->hostname, settings->DesktopWidth, settings->DesktopHeight,
-		          freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
+		shadow_send_desktop_resize(client);
 		return FALSE;
 	}
+
+	shadow_reset_desktop_resize(client);
 
 	if (shadow_client_channels_post_connect(client) != CHANNEL_RC_OK)
 		return FALSE;
@@ -1858,22 +1911,14 @@ static BOOL shadow_client_send_resize(rdpShadowClient* client, SHADOW_GFX_STATUS
 	}
 
 	/* Send Resize */
-	WINPR_ASSERT(peer->context);
-	WINPR_ASSERT(peer->context->update);
-	WINPR_ASSERT(peer->context->update->DesktopResize);
-	if (!peer->context->update->DesktopResize(peer->context->update->context))
-	{
-		WLog_ERR(TAG, "DesktopResize failed");
+	if (!shadow_send_desktop_resize(client))
 		return FALSE;
-	}
+	shadow_reset_desktop_resize(client);
 
 	/* Clear my invalidRegion. shadow_client_activate refreshes fullscreen */
 	EnterCriticalSection(&(client->lock));
 	region16_clear(&(client->invalidRegion));
 	LeaveCriticalSection(&(client->lock));
-	WLog_INFO(TAG, "Client from %s is resized (%" PRIu32 "x%" PRIu32 "@%" PRIu32 ")",
-	          peer->hostname, settings->DesktopWidth, settings->DesktopHeight,
-	          freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
 	return TRUE;
 }
 

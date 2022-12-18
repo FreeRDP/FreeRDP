@@ -116,6 +116,10 @@ struct rdp_shadow_client
 	RdpsndServerContext* rdpsnd;
 	audin_server_context* audin;
 	RdpgfxServerContext* rdpgfx;
+
+	BOOL resizeRequested;
+	UINT32 resizeWidth;
+	UINT32 resizeHeight;
 };
 
 struct rdp_shadow_server
