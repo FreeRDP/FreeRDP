@@ -481,15 +481,6 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 	          peer->hostname, settings->DesktopWidth, settings->DesktopHeight,
 	          freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
 
-	/* Resize client if necessary */
-	if (shadow_client_recalc_desktop_size(client))
-	{
-		shadow_send_desktop_resize(client);
-		return FALSE;
-	}
-
-	shadow_reset_desktop_resize(client);
-
 	if (shadow_client_channels_post_connect(client) != CHANNEL_RC_OK)
 		return FALSE;
 
@@ -644,6 +635,11 @@ static BOOL shadow_client_activate(freerdp_peer* peer)
 	settings = peer->context->settings;
 	WINPR_ASSERT(settings);
 
+	/* Resize client if necessary */
+	if (shadow_client_recalc_desktop_size(client))
+		return shadow_send_desktop_resize(client);
+
+	shadow_reset_desktop_resize(client);
 	client->activated = TRUE;
 	client->inLobby = client->mayView ? FALSE : TRUE;
 

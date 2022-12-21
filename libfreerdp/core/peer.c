@@ -759,22 +759,19 @@ static state_run_t rdp_peer_handle_state_active(freerdp_peer* client)
 	}
 	if (!client->connected)
 	{
-		switch (rdp_get_state(rdp))
-		{
-			case CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE:
-				ret = STATE_RUN_CONTINUE;
-				break;
-			case CONNECTION_STATE_ACTIVE:
-			default:
-				ret = STATE_RUN_FAILED;
-				break;
-		}
+		ret = STATE_RUN_FAILED;
 	}
 	else if (!client->activated)
 	{
-		IFCALLRET(client->Activate, client->activated, client);
+		BOOL activated = TRUE;
 
-		if (!client->activated)
+		/*  Set client->activated TRUE before calling the Activate callback.
+		 *  the Activate callback might reset the client->activated flag even if it returns success
+		 * (e.g. deactivate/reactivate sequence) */
+		client->activated = TRUE;
+		IFCALLRET(client->Activate, activated, client);
+
+		if (!activated)
 			ret = STATE_RUN_FAILED;
 		else
 			ret = STATE_RUN_SUCCESS;
