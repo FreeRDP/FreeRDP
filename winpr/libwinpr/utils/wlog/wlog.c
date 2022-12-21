@@ -754,25 +754,30 @@ LONG WLog_GetFilterLogLevel(wLog* log)
 	if (log->FilterLevel >= 0)
 		return log->FilterLevel;
 
+	log->FilterLevel = WLOG_FILTER_NOT_FILTERED;
 	for (i = 0; i < g_FilterCount; i++)
 	{
-		for (j = 0; j < g_Filters[i].NameCount; j++)
+		const wLogFilter* filter = &g_Filters[i];
+		for (j = 0; j < filter->NameCount; j++)
 		{
 			if (j >= log->NameCount)
 				break;
 
-			if (_stricmp(g_Filters[i].Names[j], "*") == 0)
+			if (_stricmp(filter->Names[j], "*") == 0)
 			{
 				match = TRUE;
+				log->FilterLevel = filter->Level;
 				break;
 			}
 
-			if (_stricmp(g_Filters[i].Names[j], log->Names[j]) != 0)
+			if (_stricmp(filter->Names[j], log->Names[j]) != 0)
 				break;
 
 			if (j == (log->NameCount - 1))
 			{
-				match = TRUE;
+				match = log->NameCount == filter->NameCount;
+				if (match)
+					log->FilterLevel = filter->Level;
 				break;
 			}
 		}
@@ -780,11 +785,6 @@ LONG WLog_GetFilterLogLevel(wLog* log)
 		if (match)
 			break;
 	}
-
-	if (match)
-		log->FilterLevel = g_Filters[i].Level;
-	else
-		log->FilterLevel = WLOG_FILTER_NOT_FILTERED;
 
 	return log->FilterLevel;
 }
