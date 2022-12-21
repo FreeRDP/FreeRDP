@@ -629,7 +629,7 @@ BOOL pf_server_config_dump(const char* file)
 	if (IniFile_SetKeyValueString(ini, section_certificates, key_private_key_file,
 	                              "<absolute path to some private key file> OR") < 0)
 		goto fail;
-	if (IniFile_SetKeyValueString(ini, section_certificates, key_private_key_file,
+	if (IniFile_SetKeyValueString(ini, section_certificates, key_private_key_content,
 	                              "<Contents of some private key file in PEM format>") < 0)
 		goto fail;
 
