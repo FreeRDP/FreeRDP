@@ -41,6 +41,8 @@
 
 #include "devman.h"
 
+#define TAG CHANNELS_TAG("rdpdr.client")
+
 static void devman_device_free(void* obj)
 {
 	DEVICE* device = (DEVICE*)obj;
@@ -62,7 +64,7 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 
 	if (!devman)
 	{
-		WLog_INFO(TAG, "calloc failed!");
+		WLog_Print(rdpdr->log, WLOG_INFO, "calloc failed!");
 		return NULL;
 	}
 
@@ -72,7 +74,7 @@ DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 
 	if (!devman->devices)
 	{
-		WLog_INFO(TAG, "ListDictionary_New failed!");
+		WLog_Print(rdpdr->log, WLOG_INFO, "ListDictionary_New failed!");
 		free(devman);
 		return NULL;
 	}

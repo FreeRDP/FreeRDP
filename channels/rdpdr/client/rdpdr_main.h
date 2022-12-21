@@ -42,7 +42,11 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
-#define TAG CHANNELS_TAG("rdpdr.client")
+#if !defined(Stream_CheckAndLogRequiredLengthWLog)
+#define Stream_CheckAndLogRequiredLengthWLog(log, s, len)                                     \
+	Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, len, "%s(%s:%d)", __FUNCTION__, \
+	                                       __FILE__, __LINE__)
+#endif
 
 typedef struct rdpdr_plugin rdpdrPlugin;
 
@@ -92,6 +96,7 @@ struct rdpdr_plugin
 	HANDLE stopEvent;
 #endif
 	rdpContext* rdpcontext;
+	wLog* log;
 };
 
 BOOL rdpdr_state_advance(rdpdrPlugin* rdpdr, enum RDPDR_CHANNEL_STATE next);

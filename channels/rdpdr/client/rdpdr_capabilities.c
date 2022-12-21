@@ -69,7 +69,7 @@ static UINT rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 2))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
@@ -77,7 +77,7 @@ static UINT rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* s)
 	if (capabilityLength < 4)
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < capabilityLength - 4U)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength - 4U))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4U);
@@ -97,7 +97,7 @@ static UINT rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 2))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
@@ -105,7 +105,7 @@ static UINT rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
 	if (capabilityLength < 4)
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < capabilityLength - 4U)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength - 4U))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4U);
@@ -125,7 +125,7 @@ static UINT rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 2))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
@@ -133,7 +133,7 @@ static UINT rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* s)
 	if (capabilityLength < 4U)
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < capabilityLength - 4U)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength - 4U))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4U);
@@ -153,7 +153,7 @@ static UINT rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 2))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
@@ -161,7 +161,7 @@ static UINT rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
 	if (capabilityLength < 4)
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < capabilityLength - 4U)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength - 4U))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4U);
@@ -181,7 +181,7 @@ static UINT rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
 	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (Stream_GetRemainingLength(s) < 2)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 2))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, capabilityLength);
@@ -189,7 +189,7 @@ static UINT rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
 	if (capabilityLength < 4)
 		return ERROR_INVALID_DATA;
 
-	if (Stream_GetRemainingLength(s) < capabilityLength - 4U)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength - 4U))
 		return ERROR_INVALID_DATA;
 
 	Stream_Seek(s, capabilityLength - 4U);
@@ -209,7 +209,7 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 	WINPR_ASSERT(rdpdr->state == RDPDR_CHANNEL_STATE_SERVER_CAPS);
 	rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_CLIENT_CAPS);
 
-	if (Stream_GetRemainingLength(s) < 4)
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 4))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT16(s, numCapabilities);
@@ -217,7 +217,7 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 
 	for (i = 0; i < numCapabilities; i++)
 	{
-		if (Stream_GetRemainingLength(s) < sizeof(UINT16))
+		if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, sizeof(UINT16)))
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT16(s, capabilityType);
@@ -267,7 +267,7 @@ UINT rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 
 	if (!s)
 	{
-		WLog_ERR(TAG, "Stream_New failed!");
+		WLog_Print(rdpdr->log, WLOG_ERROR, "Stream_New failed!");
 		return CHANNEL_RC_NO_MEMORY;
 	}
 

@@ -76,13 +76,13 @@ static UINT irp_complete(IRP* irp)
 	return irp_free(irp);
 }
 
-IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
+IRP* irp_new(DEVMAN* devman, wStream* s, wLog* log, UINT* error)
 {
 	IRP* irp;
 	DEVICE* device;
 	UINT32 DeviceId;
 
-	if (Stream_GetRemainingLength(s) < 20)
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 20))
 	{
 		if (error)
 			*error = ERROR_INVALID_DATA;
@@ -94,7 +94,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 
 	if (!device)
 	{
-		WLog_WARN(TAG, "devman_get_device_by_id failed!");
+		WLog_Print(log, WLOG_WARN, "devman_get_device_by_id failed!");
 		if (error)
 			*error = CHANNEL_RC_OK;
 
@@ -105,7 +105,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 
 	if (!irp)
 	{
-		WLog_ERR(TAG, "_aligned_malloc failed!");
+		WLog_Print(log, WLOG_ERROR, "_aligned_malloc failed!");
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
 		return NULL;
@@ -125,7 +125,7 @@ IRP* irp_new(DEVMAN* devman, wStream* s, UINT* error)
 	irp->output = Stream_New(NULL, 256);
 	if (!irp->output)
 	{
-		WLog_ERR(TAG, "Stream_New failed!");
+		WLog_Print(log, WLOG_ERROR, "Stream_New failed!");
 		_aligned_free(irp);
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
