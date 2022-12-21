@@ -84,7 +84,7 @@ static UINT irp_complete(IRP* irp)
 	return error;
 }
 
-IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, UINT* error)
+IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* error)
 {
 	IRP* irp;
 	DEVICE* device;
@@ -94,7 +94,7 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, UINT* error)
 	WINPR_ASSERT(pool);
 	WINPR_ASSERT(s);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 20))
 	{
 		if (error)
 			*error = ERROR_INVALID_DATA;
@@ -116,7 +116,7 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, UINT* error)
 
 	if (!irp)
 	{
-		WLog_ERR(TAG, "_aligned_malloc failed!");
+		WLog_Print(log, WLOG_ERROR, "_aligned_malloc failed!");
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;
 		return NULL;
@@ -137,7 +137,7 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, UINT* error)
 	irp->output = StreamPool_Take(pool, 256);
 	if (!irp->output)
 	{
-		WLog_ERR(TAG, "Stream_New failed!");
+		WLog_Print(log, WLOG_ERROR, "Stream_New failed!");
 		irp_free(irp);
 		if (error)
 			*error = CHANNEL_RC_NO_MEMORY;

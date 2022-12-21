@@ -42,8 +42,6 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
-#define TAG CHANNELS_TAG("rdpdr.client")
-
 typedef struct
 {
 	CHANNEL_DEF channelDef;
@@ -77,6 +75,7 @@ typedef struct
 #endif
 	rdpContext* rdpcontext;
 	wStreamPool* pool;
+	wLog* log;
 } rdpdrPlugin;
 
 UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s);
