@@ -68,6 +68,10 @@ extern "C"
 	                                                  UINT64 len, const char* fmt, ...);
 	WINPR_API BOOL Stream_CheckAndLogRequiredLengthExVa(const char* tag, DWORD level, wStream* s,
 	                                                    UINT64 len, const char* fmt, va_list args);
+
+#define Stream_CheckAndLogRequiredLengthWLog(log, s, len)                               \
+	Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, len, "%s(%s:%" PRIuz ")", \
+	                                       __FUNCTION__, __FILE__, __LINE__)
 	WINPR_API BOOL Stream_CheckAndLogRequiredLengthWLogEx(wLog* log, DWORD level, wStream* s,
 	                                                      UINT64 len, const char* fmt, ...);
 	WINPR_API BOOL Stream_CheckAndLogRequiredLengthWLogExVa(wLog* log, DWORD level, wStream* s,
