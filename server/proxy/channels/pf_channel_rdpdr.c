@@ -1720,7 +1720,7 @@ static PfChannelResult pf_rdpdr_back_data(proxyData* pdata,
 	if (pf_channel_smartcard_client_emulate(pdata->pc))
 		return PF_CHANNEL_RESULT_DROP;
 #endif
-	return PF_CHANNEL_RESULT_PASS;
+	return PF_CHANNEL_RESULT_DROP;
 }
 
 static PfChannelResult pf_rdpdr_front_data(proxyData* pdata,
@@ -1742,7 +1742,7 @@ static PfChannelResult pf_rdpdr_front_data(proxyData* pdata,
 	if (pf_channel_smartcard_client_emulate(pdata->pc))
 		return PF_CHANNEL_RESULT_DROP;
 #endif
-	return PF_CHANNEL_RESULT_PASS;
+	return PF_CHANNEL_RESULT_DROP;
 }
 
 BOOL pf_channel_setup_rdpdr(pServerContext* ps, pServerStaticChannelContext* channel)
