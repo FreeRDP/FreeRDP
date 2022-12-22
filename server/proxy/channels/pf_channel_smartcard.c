@@ -54,7 +54,8 @@ typedef struct
 	SMARTCARD_OPERATION op;
 	wStream* out;
 	pClientContext* pc;
-	UINT (*send_fkt)(pClientContext*, wStream*);
+	wLog* log;
+	pf_scard_send_fkt_t send_fkt;
 } pf_channel_client_queue_element;
 
 static pf_channel_client_context* scard_get_client_context(pClientContext* pc)
@@ -121,7 +122,7 @@ static VOID irp_thread(PTP_CALLBACK_INSTANCE Instance, PVOID Context, PTP_WORK W
 		if (rc == CHANNEL_RC_OK)
 		{
 			if (pf_channel_client_write_iostatus(arg->e->out, &arg->e->op, ioStatus))
-				arg->e->send_fkt(arg->e->pc, arg->e->out);
+				arg->e->send_fkt(arg->e->log, arg->e->pc, arg->e->out);
 		}
 	}
 	queue_free(arg->e);
@@ -156,8 +157,8 @@ fail:
 	return FALSE;
 }
 
-BOOL pf_channel_smartcard_client_handle(pClientContext* pc, wStream* s, wStream* out,
-                                        UINT (*send_fkt)(pClientContext*, wStream*))
+BOOL pf_channel_smartcard_client_handle(wLog* log, pClientContext* pc, wStream* s, wStream* out,
+                                        pf_scard_send_fkt_t send_fkt)
 {
 	BOOL rc = FALSE;
 	LONG status;
@@ -167,12 +168,14 @@ BOOL pf_channel_smartcard_client_handle(pClientContext* pc, wStream* s, wStream*
 	pf_channel_client_queue_element e = { 0 };
 	pf_channel_client_context* scard = scard_get_client_context(pc);
 
+	WINPR_ASSERT(log);
 	WINPR_ASSERT(send_fkt);
 	WINPR_ASSERT(s);
 
 	if (!scard)
 		return FALSE;
 
+	e.log = log;
 	e.pc = pc;
 	e.out = out;
 	e.send_fkt = send_fkt;
@@ -247,7 +250,7 @@ BOOL pf_channel_smartcard_client_handle(pClientContext* pc, wStream* s, wStream*
 			break;
 	}
 
-	rc = send_fkt(pc, out) == CHANNEL_RC_OK;
+	rc = send_fkt(log, pc, out) == CHANNEL_RC_OK;
 
 fail:
 	smartcard_operation_free(&e.op, FALSE);
