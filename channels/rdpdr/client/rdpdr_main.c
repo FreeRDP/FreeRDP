@@ -1502,7 +1502,7 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 	if (!rdpdr || !s)
 		return CHANNEL_RC_NULL_DATA;
 
-	rdpdr_dump_received_packet(s, "rdpdr-channel");
+	rdpdr_dump_received_packet(rdpdr->log, WLOG_TRACE, s, "[rdpdr-channel] receive");
 	if (Stream_GetRemainingLength(s) >= 4)
 	{
 		Stream_Read_UINT16(s, component); /* Component (2 bytes) */
@@ -1650,7 +1650,7 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	else
 	{
 		const size_t pos = Stream_GetPosition(s);
-		rdpdr_dump_send_packet(s, "rdpdr-channel");
+		rdpdr_dump_send_packet(rdpdr->log, WLOG_TRACE, s, "[rdpdr-channel] send");
 		status = plugin->channelEntryPoints.pVirtualChannelWriteEx(
 		    plugin->InitHandle, plugin->OpenHandle, Stream_Buffer(s), pos, s);
 	}
