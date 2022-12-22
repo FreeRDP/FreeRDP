@@ -99,6 +99,8 @@ extern "C"
 {
 #endif
 
+	FREERDP_API const SSL_METHOD* tls_get_ssl_method(BOOL isDtls, BOOL isClient);
+
 	FREERDP_API int tls_connect(rdpTls* tls, BIO* underlying);
 
 	FREERDP_API TlsHandshakeResult tls_connect_ex(rdpTls* tls, BIO* underlying,

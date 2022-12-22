@@ -775,7 +775,7 @@ static void adjustSslOptions(int* options)
 #endif
 }
 
-const SSL_METHOD* getSslMethod(BOOL isDtls, BOOL isClient)
+const SSL_METHOD* tls_get_ssl_method(BOOL isDtls, BOOL isClient)
 {
 	if (isClient)
 	{
@@ -946,7 +946,7 @@ static int pollAndHandshake(rdpTls* tls)
 
 int tls_connect(rdpTls* tls, BIO* underlying)
 {
-	const SSL_METHOD* method = getSslMethod(FALSE, TRUE);
+	const SSL_METHOD* method = tls_get_ssl_method(FALSE, TRUE);
 
 	WINPR_ASSERT(tls);
 	TlsHandshakeResult result = tls_connect_ex(tls, underlying, method);
@@ -980,7 +980,8 @@ static void tls_openssl_tlsext_debug_callback(SSL* s, int client_server, int typ
 BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 {
 	WINPR_ASSERT(tls);
-	TlsHandshakeResult res = tls_accept_ex(tls, underlying, settings, getSslMethod(FALSE, FALSE));
+	TlsHandshakeResult res =
+	    tls_accept_ex(tls, underlying, settings, tls_get_ssl_method(FALSE, FALSE));
 	switch (res)
 	{
 		case TLS_HANDSHAKE_SUCCESS:
