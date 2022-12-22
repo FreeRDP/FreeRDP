@@ -1235,7 +1235,7 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 			}
 			break;
 #else
-			return pf_channel_rdpdr_client_send_to_server(ps, s);
+			return pf_channel_rdpdr_client_send_to_server(rdpdr, ps, s);
 #endif
 		default:
 			WLog_ERR(TAG,

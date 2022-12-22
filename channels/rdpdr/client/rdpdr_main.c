@@ -165,6 +165,9 @@ static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 cou
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(ids || (count == 0));
 
+	if (count == 0)
+		return CHANNEL_RC_OK;
+
 	s = StreamPool_Take(rdpdr->pool, count * sizeof(UINT32) + 8);
 
 	if (!s)
@@ -1330,6 +1333,11 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	if (!device_foreach(rdpdr, TRUE, device_announce, &arg))
 		return ERROR_INVALID_DATA;
 
+	if (arg.count == 0)
+	{
+		Stream_Release(s);
+		return CHANNEL_RC_OK;
+	}
 	pos = Stream_GetPosition(s);
 	Stream_SetPosition(s, count_pos);
 	Stream_Write_UINT32(s, arg.count);
