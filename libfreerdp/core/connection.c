@@ -1109,7 +1109,7 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 					}
 				}
 
-				if (rdp_recv_message_channel_pdu(rdp, s, securityFlags) == 0)
+				if (rdp_recv_message_channel_pdu(rdp, s, securityFlags) == STATE_RUN_SUCCESS)
 					return tpkt_ensure_stream_consumed(s, length);
 			}
 		}
