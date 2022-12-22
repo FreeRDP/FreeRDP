@@ -139,19 +139,16 @@ typedef struct
 	Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, len,                             \
 	                                       proxy_server_rx " %s(%s:%" PRIuz ")", __FUNCTION__, \
 	                                       __FILE__, __LINE__)
-#define Stream_CheckAndLogRequiredLengthRx(srv, log, s, len)           \
-	({                                                                 \
-		BOOL res;                                                      \
-		if (srv)                                                       \
-		{                                                              \
-			res = Stream_CheckAndLogRequiredLengthSrv(log, s, len);    \
-		}                                                              \
-		else                                                           \
-		{                                                              \
-			res = Stream_CheckAndLogRequiredLengthClient(log, s, len); \
-		}                                                              \
-		res;                                                           \
-	})
+#define Stream_CheckAndLogRequiredLengthRx(srv, log, s, len) \
+	Stream_CheckAndLogRequiredLengthRx_(srv, log, s, len, __FUNCTION__, __FILE__, __LINE__)
+static BOOL Stream_CheckAndLogRequiredLengthRx_(BOOL srv, wLog* log, wStream* s, size_t len,
+                                                const char* fkt, const char* file, size_t line)
+{
+	const char* fmt =
+	    srv ? proxy_server_rx " %s(%s:%" PRIuz ")" : proxy_client_rx " %s(%s:%" PRIuz ")";
+
+	return Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, len, fmt, fkt, file, line);
+}
 
 static const char* rdpdr_server_state_to_string(pf_channel_server_state state)
 {
