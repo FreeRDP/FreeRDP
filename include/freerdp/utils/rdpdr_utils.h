@@ -35,7 +35,7 @@ FREERDP_API const char* scard_get_ioctl_string(UINT32 ioControlCode, BOOL funcNa
 FREERDP_API BOOL rdpdr_write_iocompletion_header(wStream* out, UINT32 DeviceId, UINT32 CompletionId,
                                                  UINT32 ioStatus);
 
-FREERDP_API void rdpdr_dump_received_packet(wStream* out, const char* custom);
-FREERDP_API void rdpdr_dump_send_packet(wStream* out, const char* custom);
+FREERDP_API void rdpdr_dump_received_packet(wLog* log, DWORD lvl, wStream* out, const char* custom);
+FREERDP_API void rdpdr_dump_send_packet(wLog* log, DWORD lvl, wStream* out, const char* custom);
 
 #endif

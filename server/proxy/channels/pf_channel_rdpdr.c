@@ -176,7 +176,7 @@ static UINT rdpdr_client_send(pClientContext* pc, wStream* s)
 		return ERROR_INTERNAL_ERROR;
 
 	Stream_SealLength(s);
-	rdpdr_dump_send_packet(s, "proxy-client");
+	rdpdr_dump_send_packet(WLog_Get(TAG), WLOG_TRACE, s, "proxy-client");
 	WINPR_ASSERT(pc->context.instance->SendChannelData);
 	if (!pc->context.instance->SendChannelData(pc->context.instance, channelId, Stream_Buffer(s),
 	                                           Stream_Length(s)))
@@ -1072,11 +1072,12 @@ BOOL pf_channel_send_client_queue(pClientContext* pc, pf_channel_client_context*
 		if (!s)
 			continue;
 
-		Stream_SetPosition(s, Stream_Length(s));
-		rdpdr_dump_send_packet(s, "proxy-client-queue");
+		const size_t len = Stream_Length(s);
+		Stream_SetPosition(s, len);
+		rdpdr_dump_send_packet(WLog_Get(TAG), WLOG_TRACE, s, "proxy-client-queue");
 		WINPR_ASSERT(pc->context.instance->SendChannelData);
 		if (!pc->context.instance->SendChannelData(pc->context.instance, channelId,
-		                                           Stream_Buffer(s), Stream_Length(s)))
+		                                           Stream_Buffer(s), len))
 		{
 			WLog_WARN(TAG, "xxxxxx TODO: Failed to send data!");
 		}
@@ -1152,7 +1153,7 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 		return FALSE;
 	}
 
-	rdpdr_dump_received_packet(s, "proxy-client");
+	rdpdr_dump_received_packet(WLog_Get(TAG), WLOG_TRACE, s, "proxy-client");
 	switch (rdpdr->state)
 	{
 		case STATE_CLIENT_EXPECT_SERVER_ANNOUNCE_REQUEST:
@@ -1235,7 +1236,7 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 			}
 			break;
 #else
-			return pf_channel_rdpdr_client_send_to_server(rdpdr, ps, s);
+			return pf_channel_rdpdr_client_send_to_server(ps, s);
 #endif
 		default:
 			WLog_ERR(TAG,
