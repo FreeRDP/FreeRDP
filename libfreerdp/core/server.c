@@ -1693,9 +1693,9 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 						break;
 
 					default:
-						bval = FALSE;
-						status = FALSE;
-						break;
+						*ppBuffer = NULL;
+						*pBytesReturned = 0;
+						return FALSE;
 				}
 			}
 
