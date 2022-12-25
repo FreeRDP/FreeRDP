@@ -64,6 +64,7 @@ struct rdp_peer_channel
 	wMessageQueue* queue;
 
 	BYTE dvc_open_state;
+	INT32 creationStatus;
 	UINT32 dvc_total_length;
 	rdpMcsChannel* mcsChannel;
 

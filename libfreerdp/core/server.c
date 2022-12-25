@@ -192,6 +192,7 @@ static BOOL wts_read_drdynvc_create_response(rdpPeerChannel* channel, wStream* s
 		channel->dvc_open_state = DVC_OPEN_STATE_SUCCEEDED;
 	}
 
+	channel->creationStatus = (INT32)CreationStatus;
 	IFCALLRET(channel->vcm->dvc_creation_status, status, channel->vcm->dvc_creation_status_userdata,
 	          channel->channelId, (INT32)CreationStatus);
 	if (!status)
@@ -1216,6 +1217,8 @@ static rdpPeerChannel* channel_new(WTSVirtualChannelManager* vcm, freerdp_peer* 
 	channel->channelId = ChannelId;
 	channel->index = index;
 	channel->channelType = type;
+	channel->creationStatus =
+	    (type == RDP_PEER_CHANNEL_TYPE_SVC) ? ERROR_SUCCESS : ERROR_OPERATION_IN_PROGRESS;
 	channel->receiveData = Stream_New(NULL, chunkSize);
 
 	if (!channel->receiveData)
@@ -1628,11 +1631,10 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 
 	WINPR_ASSERT(channel);
 
-	hEvent = MessageQueue_Event(channel->queue);
-
 	switch ((UINT32)WtsVirtualClass)
 	{
 		case WTSVirtualFileHandle:
+			hEvent = MessageQueue_Event(channel->queue);
 			pfd = GetEventWaitObject(hEvent);
 
 			if (pfd)
@@ -1657,6 +1659,8 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 			break;
 
 		case WTSVirtualEventHandle:
+			hEvent = MessageQueue_Event(channel->queue);
+
 			*ppBuffer = malloc(sizeof(HANDLE));
 
 			if (!*ppBuffer)
@@ -1713,7 +1717,24 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelQuery(HANDLE hChannelHandle, WTS_VIRTUAL_CL
 			}
 
 			break;
+		case WTSVirtualChannelOpenStatus:
+		{
+			INT32 value = channel->creationStatus;
+			status = TRUE;
 
+			*ppBuffer = malloc(sizeof(value));
+			if (!*ppBuffer)
+			{
+				SetLastError(E_OUTOFMEMORY);
+				status = FALSE;
+			}
+			else
+			{
+				CopyMemory(*ppBuffer, &value, sizeof(value));
+				*pBytesReturned = sizeof(value);
+			}
+			break;
+		}
 		default:
 			break;
 	}

@@ -760,8 +760,9 @@ typedef enum
 {
 	WTSVirtualClientData,
 	WTSVirtualFileHandle,
-	WTSVirtualEventHandle, /* Extended */
-	WTSVirtualChannelReady /* Extended */
+	WTSVirtualEventHandle,      /* Extended */
+	WTSVirtualChannelReady,     /* Extended */
+	WTSVirtualChannelOpenStatus /* Extended */
 } WTS_VIRTUAL_CLASS;
 
 typedef struct
