@@ -106,7 +106,7 @@ static BOOL upate_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskDa
 	if (lengthAndMask && andMaskData)
 	{
 		pointer->lengthAndMask = lengthAndMask;
-		pointer->andMaskData = (BYTE*)malloc(lengthAndMask);
+		pointer->andMaskData = (BYTE*)realloc(pointer->andMaskData, lengthAndMask);
 
 		if (!pointer->andMaskData)
 			return FALSE;
@@ -117,7 +117,7 @@ static BOOL upate_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskDa
 	if (lengthXorMask && xorMaskData)
 	{
 		pointer->lengthXorMask = lengthXorMask;
-		pointer->xorMaskData = (BYTE*)malloc(lengthXorMask);
+		pointer->xorMaskData = (BYTE*)realloc(pointer->xorMaskData, lengthXorMask);
 
 		if (!pointer->xorMaskData)
 			return FALSE;
