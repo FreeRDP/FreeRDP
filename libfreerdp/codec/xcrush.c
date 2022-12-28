@@ -29,7 +29,7 @@
 
 #include <freerdp/log.h>
 #include <freerdp/codec/xcrush.h>
-
+#include <winpr/wlog.h>
 #define TAG FREERDP_TAG("codec")
 
 #pragma pack(push, 1)
@@ -753,6 +753,10 @@ static INLINE size_t xcrush_copy_bytes(BYTE* dst, const BYTE* src, size_t num)
 
 		if (rest != 0)
 			memcpy(&dst[end], &src[end], rest);
+	}
+	else
+	{
+		WLog_WARN(TAG, "xcrush_copy_bytes overlap (src==dst) num = %d, diff = %d", num, src - dst);
 	}
 
 	return num;
