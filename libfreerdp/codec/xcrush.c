@@ -29,7 +29,6 @@
 
 #include <freerdp/log.h>
 #include <freerdp/codec/xcrush.h>
-#include <winpr/wlog.h>
 
 #define TAG FREERDP_TAG("codec")
 
@@ -735,27 +734,25 @@ static int xcrush_generate_output(XCRUSH_CONTEXT* xcrush, BYTE* OutputBuffer, UI
 
 static INLINE size_t xcrush_copy_bytes(BYTE* dst, const BYTE* src, size_t num)
 {
-	if (src < dst && src + num > dst)
+	size_t diff, rest, end, a;
+	if (src + num < dst || src > dst + num)
 	{
-		const size_t diff = dst - src;
-		const size_t rest = num % diff;
-		const size_t end = num - rest;
+		memcpy(dst, src, num);
+	}
+	else if (src != dst)
+	{
 		// src and dst overlaps
 		// we should copy the area that doesn't overlap repeatly
-		WLog_INFO(TAG, "xcrush_copy_bytes overlap (src< dst) num = %d\t, diff = %d", num, diff);
-
-		for (size_t a = 0; a < end; a += diff)
-			memcpy(dst + a, src, diff);
-		if (rest != 0)
-			memcpy(dst + end, src, rest);
-	}
-	else
-	{
-		if (dst <= src && dst + num >= src)
+		diff = (dst > src) ? dst - src : src - dst;
+		rest = num % diff;
+		end = num - rest;
+		for (a = 0; a < end; a += diff)
 		{
-			WLog_INFO(TAG, "xcrush_copy_bytes overlap (src>=dst) num = %d, diff = %d", num, src-dst);
+			memcpy(&dst[a], &src[a], diff);
 		}
-		memmove(dst, src, num);
+
+		if (rest != 0)
+			memcpy(&dst[end], &src[end], rest);
 	}
 
 	return num;
