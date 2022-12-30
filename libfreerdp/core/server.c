@@ -333,9 +333,27 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 				return wts_read_drdynvc_create_response(dvc, channel->receiveData, length);
 
 			case DATA_FIRST_PDU:
+				if (dvc->dvc_open_state != DVC_OPEN_STATE_SUCCEEDED)
+				{
+					WLog_ERR(TAG,
+					         "ChannelId %" PRIu32 " did not open successfully. "
+					         "Ignoring DYNVC_DATA_FIRST PDU",
+					         ChannelId);
+					return TRUE;
+				}
+
 				return wts_read_drdynvc_data_first(dvc, channel->receiveData, Sp, length);
 
 			case DATA_PDU:
+				if (dvc->dvc_open_state != DVC_OPEN_STATE_SUCCEEDED)
+				{
+					WLog_ERR(TAG,
+					         "ChannelId %" PRIu32 " did not open successfully. "
+					         "Ignoring DYNVC_DATA PDU",
+					         ChannelId);
+					return TRUE;
+				}
+
 				return wts_read_drdynvc_data(dvc, channel->receiveData, length);
 
 			case CLOSE_REQUEST_PDU:
