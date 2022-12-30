@@ -69,6 +69,7 @@ option(WITH_SAMPLE "Build sample code" OFF)
 
 option(WITH_CLIENT_COMMON "Build client common library" ON)
 CMAKE_DEPENDENT_OPTION(WITH_CLIENT "Build client binaries" ON "WITH_CLIENT_COMMON" OFF)
+CMAKE_DEPENDENT_OPTION(WITH_CLIENT_SDL "[experimental] Build SDL client " ON "WITH_CLIENT" OFF)
 
 option(WITH_SERVER "Build server binaries" OFF)
 

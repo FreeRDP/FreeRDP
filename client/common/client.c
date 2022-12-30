@@ -1421,9 +1421,9 @@ static BOOL freerdp_handle_touch_down(rdpClientContext* cctx, const FreeRDP_Touc
 		flags |= PTR_FLAGS_MOVE;
 		flags |= PTR_FLAGS_BUTTON1;
 
-        WINPR_ASSERT(contact->x <= UINT16_MAX);
-        WINPR_ASSERT(contact->y <= UINT16_MAX);
-        return freerdp_client_send_button_event(cctx, FALSE, flags, contact->x, contact->y);
+		WINPR_ASSERT(contact->x <= UINT16_MAX);
+		WINPR_ASSERT(contact->y <= UINT16_MAX);
+		return freerdp_client_send_button_event(cctx, FALSE, flags, contact->x, contact->y);
 	}
 	else
 	{
@@ -1465,9 +1465,9 @@ static BOOL freerdp_handle_touch_motion(rdpClientContext* cctx, const FreeRDP_To
 		UINT16 flags = 0;
 		flags |= PTR_FLAGS_MOVE;
 
-        WINPR_ASSERT(contact->x <= UINT16_MAX);
-        WINPR_ASSERT(contact->y <= UINT16_MAX);
-        return freerdp_client_send_button_event(cctx, FALSE, flags, contact->x, contact->y);
+		WINPR_ASSERT(contact->x <= UINT16_MAX);
+		WINPR_ASSERT(contact->y <= UINT16_MAX);
+		return freerdp_client_send_button_event(cctx, FALSE, flags, contact->x, contact->y);
 	}
 	else
 	{
@@ -1509,12 +1509,12 @@ static BOOL freerdp_client_touch_update(rdpClientContext* cctx, UINT32 flags, IN
 
 		if (contact->id == touchId)
 		{
-            *ppcontact = contact;
+			*ppcontact = contact;
 
 			contact->flags = flags;
 			contact->pressure = pressure;
 			contact->x = x;
-            contact->y = y;
+			contact->y = y;
 			return TRUE;
 		}
 	}

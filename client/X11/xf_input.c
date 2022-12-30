@@ -609,13 +609,13 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 	switch (evtype)
 	{
 		case XI_TouchBegin:
-			freerdp_client_handle_touch(&xfc->common, FREERDP_TOUCH_DOWN, touchId, x, y);
+			freerdp_client_handle_touch(&xfc->common, FREERDP_TOUCH_DOWN, touchId, 0, x, y);
 			break;
 		case XI_TouchUpdate:
-			freerdp_client_handle_touch(&xfc->common, FREERDP_TOUCH_MOTION, touchId, x, y);
+			freerdp_client_handle_touch(&xfc->common, FREERDP_TOUCH_MOTION, touchId, 0, x, y);
 			break;
 		case XI_TouchEnd:
-			freerdp_client_handle_touch(&xfc->common, FREERDP_TOUCH_UP, touchId, x, y);
+			freerdp_client_handle_touch(&xfc->common, FREERDP_TOUCH_UP, touchId, 0, x, y);
 			break;
 		default:
 			break;

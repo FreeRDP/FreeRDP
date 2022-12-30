@@ -28,6 +28,10 @@ if(FREERDP_VENDOR AND WITH_CLIENT)
 		endif()
 	endif()
 
+	if(WITH_CLIENT_SDL)
+		add_subdirectory(SDL)
+	endif()
+
 	if(WITH_X11)
 		add_subdirectory(X11)
 	endif()

@@ -65,5 +65,6 @@ enum RDP_CODEC_ID
 #define OSMINORTYPE_WINDOWS_RT 0x0009
 /* As of 2022-03-29 the following does not exist officially in [MS-RDPBCGR] */
 #define OSMINORTYPE_NATIVE_WAYLAND (0xFFFF - 1)
+#define OSMINORTYPE_NATIVE_SDL (0xFFFF - 2)
 
 #endif /* FREERDP_CONSTANTS_H */

@@ -85,8 +85,8 @@ extern "C"
 	{
 		ALIGN64 INT32 id;
 		ALIGN64 UINT32 count;
-        ALIGN64 INT32 x;
-        ALIGN64 INT32 y;
+		ALIGN64 INT32 x;
+		ALIGN64 INT32 y;
 		ALIGN64 UINT32 flags;
 		ALIGN64 UINT32 pressure;
 	} FreeRDP_TouchContact;
