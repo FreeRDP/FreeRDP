@@ -410,7 +410,7 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-    return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_UP, ev->id,0, x, y);
+	return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_UP, ev->id, 0, x, y);
 }
 
 BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
@@ -429,7 +429,7 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-    return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_DOWN, ev->id, 0,x, y);
+	return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_DOWN, ev->id, 0, x, y);
 }
 
 BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
@@ -448,5 +448,5 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-    return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_MOTION,0, ev->id, x, y);
+	return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_MOTION, 0, ev->id, x, y);
 }
