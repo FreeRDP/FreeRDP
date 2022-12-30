@@ -189,7 +189,6 @@ int xf_input_init(xfContext* xfc, Window window)
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	memset(xfc->contacts, 0, sizeof(xfc->contacts));
 	xfc->firstDist = -1.0;
 	xfc->z_vector = 0;
 	xfc->px_vector = 0;
@@ -596,7 +595,6 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 {
 	int x, y;
 	int touchId;
-	int contactId;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)
@@ -611,16 +609,13 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 	switch (evtype)
 	{
 		case XI_TouchBegin:
-			WLog_DBG(TAG, "TouchBegin: %d", touchId);
-			rdpei->TouchBegin(rdpei, touchId, x, y, &contactId);
+			freerdp_client_handle_touch(&xfc->common, FREERDP_TOUCH_DOWN, touchId, x, y);
 			break;
 		case XI_TouchUpdate:
-			WLog_DBG(TAG, "TouchUpdate: %d", touchId);
-			rdpei->TouchUpdate(rdpei, touchId, x, y, &contactId);
+			freerdp_client_handle_touch(&xfc->common, FREERDP_TOUCH_MOTION, touchId, x, y);
 			break;
 		case XI_TouchEnd:
-			WLog_DBG(TAG, "TouchEnd: %d", touchId);
-			rdpei->TouchEnd(rdpei, touchId, x, y, &contactId);
+			freerdp_client_handle_touch(&xfc->common, FREERDP_TOUCH_UP, touchId, x, y);
 			break;
 		default:
 			break;

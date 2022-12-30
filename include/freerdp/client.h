@@ -79,6 +79,17 @@ extern "C"
 	typedef int (*pRdpClientEntry)(RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 	/* Common Client Interface */
+#define FREERDP_MAX_TOUCH_CONTACTS 10
+
+	typedef struct
+	{
+		ALIGN64 INT32 id;
+		ALIGN64 UINT32 count;
+        ALIGN64 INT32 x;
+        ALIGN64 INT32 y;
+		ALIGN64 UINT32 flags;
+		ALIGN64 UINT32 pressure;
+	} FreeRDP_TouchContact;
 
 	struct rdp_client_context
 	{
@@ -106,7 +117,8 @@ extern "C"
 #else
 	    UINT64 reserved3[2];
 #endif
-		UINT64 reserved[128 - 8]; /**< (offset 8) */
+		ALIGN64 FreeRDP_TouchContact contacts[FREERDP_MAX_TOUCH_CONTACTS]; /**< (offset 8) */
+		UINT64 reserved[128 - 68];                                         /**< (offset 68) */
 	};
 
 	/* Common client functions */
@@ -192,6 +204,17 @@ extern "C"
 	FREERDP_API BOOL client_auto_reconnect(freerdp* instance);
 	FREERDP_API BOOL client_auto_reconnect_ex(freerdp* instance,
 	                                          BOOL (*window_events)(freerdp* instance));
+
+	typedef enum
+	{
+		FREERDP_TOUCH_DOWN = 0x01,
+		FREERDP_TOUCH_UP = 0x02,
+		FREERDP_TOUCH_MOTION = 0x04,
+		FREERDP_TOUCH_HAS_PRESSURE = 0x100
+	} FreeRDPTouchEventType;
+
+	FREERDP_API BOOL freerdp_client_handle_touch(rdpClientContext* cctx, UINT32 flags, INT32 finger,
+	                                             UINT32 pressure, INT32 x, INT32 y);
 
 	FREERDP_API BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags);
 
