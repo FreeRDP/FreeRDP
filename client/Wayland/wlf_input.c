@@ -396,197 +396,57 @@ BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent*
 
 BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 {
-	int32_t x = 0, y = 0;
-	size_t i;
-	int touchId;
+	int32_t x, y;
 	wlfContext* wlf;
 
-	if (!instance || !ev || !instance->context)
-		return FALSE;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(ev);
+	wlf = instance->context;
+	WINPR_ASSERT(wlf);
 
-	wlf = (wlfContext*)instance->context;
-	touchId = ev->id;
-
-	for (i = 0; i < MAX_CONTACTS; i++)
-	{
-		touchContact* contact = &wlf->contacts[i];
-		if (contact->id == touchId)
-		{
-			contact->id = 0;
-			x = (int32_t)contact->pos_x;
-			y = (int32_t)contact->pos_y;
-			break;
-		}
-	}
-
-	if (i == MAX_CONTACTS)
-		return FALSE;
-
-	WLog_DBG(TAG, "%s called | event_id: %u | x: %u / y: %u", __FUNCTION__, touchId, x, y);
+	x = ev->x;
+	y = ev->y;
 
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-#if defined(CHANNEL_RDPEI_CLIENT)
-	RdpeiClientContext* rdpei = wlf->common.rdpei;
-
-	if (wlf->contacts[i].emulate_mouse == TRUE)
-	{
-		UINT16 flags = 0;
-		flags |= PTR_FLAGS_BUTTON1;
-
-		WINPR_ASSERT(x <= UINT16_MAX);
-		WINPR_ASSERT(y <= UINT16_MAX);
-		return freerdp_client_send_button_event(&wlf->common, FALSE, flags, x, y);
-	}
-
-	if (!rdpei)
-		return FALSE;
-	{
-		int contactId;
-
-		WINPR_ASSERT(rdpei->TouchEnd);
-		rdpei->TouchEnd(rdpei, touchId, x, y, &contactId);
-	}
-#else
-	WLog_WARN(TAG, "Touch event detected but RDPEI support not compiled in. Recompile with "
-	               "-DWITH_CHANNELS=ON");
-#endif
-
-	return TRUE;
+    return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_UP, ev->id,0, x, y);
 }
 
 BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 {
 	int32_t x, y;
-	int i;
-	int touchId;
 	wlfContext* wlf;
 
-	if (!instance || !ev || !instance->context)
-		return FALSE;
-	wlf = (wlfContext*)instance->context;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(ev);
+	wlf = instance->context;
+	WINPR_ASSERT(wlf);
+
 	x = ev->x;
 	y = ev->y;
-	touchId = ev->id;
-
-	for (i = 0; i < MAX_CONTACTS; i++)
-	{
-		if (wlf->contacts[i].id == 0)
-		{
-			wlf->contacts[i].id = touchId;
-			wlf->contacts[i].pos_x = x;
-			wlf->contacts[i].pos_y = y;
-			wlf->contacts[i].emulate_mouse = FALSE;
-			break;
-		}
-	}
-
-	if (i == MAX_CONTACTS)
-		return FALSE;
-
-	WLog_DBG(TAG, "%s called | event_id: %u | x: %u / y: %u", __FUNCTION__, touchId, x, y);
 
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-#if defined(CHANNEL_RDPEI_CLIENT)
-	RdpeiClientContext* rdpei = wlf->common.rdpei;
-
-	// Emulate mouse click if touch is not possible, like in login screen
-	if (!rdpei)
-	{
-		wlf->contacts[i].emulate_mouse = TRUE;
-
-		UINT16 flags = 0;
-		flags |= PTR_FLAGS_DOWN;
-		flags |= PTR_FLAGS_MOVE;
-		flags |= PTR_FLAGS_BUTTON1;
-
-		WINPR_ASSERT(x <= UINT16_MAX);
-		WINPR_ASSERT(y <= UINT16_MAX);
-		return freerdp_client_send_button_event(&wlf->common, FALSE, flags, x, y);
-	}
-
-	WINPR_ASSERT(rdpei);
-
-	{
-		int contactId;
-
-		WINPR_ASSERT(rdpei->TouchBegin);
-		rdpei->TouchBegin(rdpei, touchId, x, y, &contactId);
-	}
-#else
-	WLog_WARN(TAG, "Touch event detected but RDPEI support not compiled in. Recompile with "
-	               "-DWITH_CHANNELS=ON");
-#endif
-
-	return TRUE;
+    return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_DOWN, ev->id, 0,x, y);
 }
 
 BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 {
 	int32_t x, y;
-	int i;
-	int touchId;
 	wlfContext* wlf;
 
-	if (!instance || !ev || !instance->context)
-		return FALSE;
-	wlf = (wlfContext*)instance->context;
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(ev);
+	wlf = instance->context;
+	WINPR_ASSERT(wlf);
+
 	x = ev->x;
 	y = ev->y;
-	touchId = ev->id;
-
-	for (i = 0; i < MAX_CONTACTS; i++)
-	{
-		if (wlf->contacts[i].id == touchId)
-		{
-			if ((fabs(wlf->contacts[i].pos_x - x) < DBL_EPSILON) &&
-			    (fabs(wlf->contacts[i].pos_y - y) < DBL_EPSILON))
-			{
-				return TRUE;
-			}
-			wlf->contacts[i].pos_x = x;
-			wlf->contacts[i].pos_y = y;
-			break;
-		}
-	}
-
-	if (i == MAX_CONTACTS)
-		return FALSE;
-
-	WLog_DBG(TAG, "%s called | event_id: %u | x: %u / y: %u", __FUNCTION__, touchId, x, y);
 
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
 		return FALSE;
 
-#if defined(CHANNEL_RDPEI_CLIENT)
-	RdpeiClientContext* rdpei = ((wlfContext*)instance->context)->common.rdpei;
-
-	if (wlf->contacts[i].emulate_mouse == TRUE)
-	{
-		UINT16 flags = 0;
-		flags |= PTR_FLAGS_MOVE;
-
-		WINPR_ASSERT(x <= UINT16_MAX);
-		WINPR_ASSERT(y <= UINT16_MAX);
-		return freerdp_client_send_button_event(&wlf->common, FALSE, flags, x, y);
-	}
-
-	if (!rdpei)
-		return FALSE;
-
-	{
-		int contactId;
-
-		WINPR_ASSERT(rdpei->TouchUpdate);
-		rdpei->TouchUpdate(rdpei, touchId, x, y, &contactId);
-	}
-#else
-	WLog_WARN(TAG, "Touch event detected but RDPEI support not compiled in. Recompile with "
-	               "-DWITH_CHANNELS=ON");
-#endif
-
-	return TRUE;
+    return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_MOTION,0, ev->id, x, y);
 }
