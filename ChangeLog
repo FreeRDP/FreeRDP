@@ -1,3 +1,8 @@
+# 20xx-xx-xx Version 2.x.x
+
+Fixed issues:
+* Backported #8581: Ignore data PDUs for DVCs that were not opened successfully
+
 # 2022-11-16 Version 2.9.0
 
 Notewhorth changes:
