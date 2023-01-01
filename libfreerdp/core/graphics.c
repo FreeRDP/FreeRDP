@@ -43,15 +43,6 @@ rdpBitmap* Bitmap_Alloc(rdpContext* context)
 	return bitmap;
 }
 
-static BOOL Bitmap_New(rdpContext* context, rdpBitmap* bitmap)
-{
-	if (!bitmap || !context)
-		return FALSE;
-
-	*bitmap = *context->graphics->Bitmap_Prototype;
-	return TRUE;
-}
-
 void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	if (bitmap)
@@ -105,18 +96,6 @@ rdpPointer* Pointer_Alloc(rdpContext* context)
 	}
 
 	return pointer;
-}
-
-static BOOL Pointer_New(rdpContext* context, rdpPointer* pointer)
-{
-	rdpPointer* proto;
-
-	if (!context || !context->graphics || !context->graphics->Pointer_Prototype)
-		return FALSE;
-
-	proto = context->graphics->Pointer_Prototype;
-	*pointer = *proto;
-	return TRUE;
 }
 
 /* static method */
@@ -204,8 +183,6 @@ rdpGraphics* graphics_new(rdpContext* context)
 		}
 
 		graphics->Bitmap_Prototype->size = sizeof(rdpBitmap);
-		graphics->Bitmap_Prototype->New = Bitmap_New;
-		graphics->Bitmap_Prototype->Free = NULL;
 		graphics->Pointer_Prototype = (rdpPointer*)calloc(1, sizeof(rdpPointer));
 
 		if (!graphics->Pointer_Prototype)
@@ -216,8 +193,6 @@ rdpGraphics* graphics_new(rdpContext* context)
 		}
 
 		graphics->Pointer_Prototype->size = sizeof(rdpPointer);
-		graphics->Pointer_Prototype->New = Pointer_New;
-		graphics->Pointer_Prototype->Free = NULL;
 		graphics->Glyph_Prototype = (rdpGlyph*)calloc(1, sizeof(rdpGlyph));
 
 		if (!graphics->Glyph_Prototype)
