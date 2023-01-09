@@ -282,7 +282,7 @@ static UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 
 	*pKeyList = NULL;
 
-	if (!settings->BitmapCachePersistEnabled)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
 		return 0;
 
 	if (!settings->BitmapCachePersistFile)

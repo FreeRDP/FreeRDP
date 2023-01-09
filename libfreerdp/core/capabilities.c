@@ -1861,9 +1861,9 @@ static BOOL rdp_print_offscreen_bitmap_cache_capability_set(wStream* s)
 static BOOL rdp_apply_bitmap_cache_host_support_capability_set(rdpSettings* settings,
                                                                const rdpSettings* src)
 {
-	if (freerdp_settings_get_bool(src, FreeRDP_BitmapCachePersistEnabled))
-		return freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled, TRUE);
-	return TRUE;
+	const BOOL val = (freerdp_settings_get_bool(src, FreeRDP_BitmapCachePersistEnabled) &&
+	                  freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled));
+	return freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled, val);
 }
 
 /*
@@ -2052,7 +2052,7 @@ static BOOL rdp_write_bitmap_cache_v2_capability_set(wStream* s, const rdpSettin
 		return FALSE;
 	cacheFlags = ALLOW_CACHE_WAITING_LIST_FLAG;
 
-	if (settings->BitmapCachePersistEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
 	{
 		cacheFlags |= PERSISTENT_KEYS_EXPECTED_FLAG;
 		settings->BitmapCacheV2CellInfo[0].persistent = 1;

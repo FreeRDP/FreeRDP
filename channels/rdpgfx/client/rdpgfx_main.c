@@ -637,7 +637,7 @@ static UINT rdpgfx_load_cache_import_offer(RDPGFX_PLUGIN* gfx, RDPGFX_CACHE_IMPO
 
 	offer->cacheEntriesCount = 0;
 
-	if (!settings->BitmapCachePersistEnabled)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
 		return CHANNEL_RC_OK;
 
 	if (!settings->BitmapCachePersistFile)
@@ -715,7 +715,7 @@ static UINT rdpgfx_save_persistent_cache(RDPGFX_PLUGIN* gfx)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(settings);
 
-	if (!settings->BitmapCachePersistEnabled)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
 		return CHANNEL_RC_OK;
 
 	if (!settings->BitmapCachePersistFile)
@@ -845,7 +845,7 @@ static UINT rdpgfx_send_cache_offer(RDPGFX_PLUGIN* gfx)
 	RdpgfxClientContext* context = gfx->context;
 	rdpSettings* settings = gfx->rdpcontext->settings;
 
-	if (!settings->BitmapCachePersistEnabled)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
 		return CHANNEL_RC_OK;
 
 	if (!settings->BitmapCachePersistFile)
@@ -930,7 +930,7 @@ static UINT rdpgfx_load_cache_import_reply(RDPGFX_PLUGIN* gfx, RDPGFX_CACHE_IMPO
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(reply);
-	if (!settings->BitmapCachePersistEnabled)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
 		return CHANNEL_RC_OK;
 
 	if (!settings->BitmapCachePersistFile)
