@@ -1253,9 +1253,10 @@ static UINT gdi_SolidFill(RdpgfxClientContext* context, const RDPGFX_SOLID_FILL_
 	b = solidFill->fillPixel.B;
 	g = solidFill->fillPixel.G;
 	r = solidFill->fillPixel.R;
-	/* a = solidFill->fillPixel.XA;
-	 * Ignore alpha channel, this is a solid fill. */
-	a = 0xFF;
+	if (FreeRDPColorHasAlpha(surface->format))
+		a = solidFill->fillPixel.XA;
+	else
+		a = 0xFF;
 	color = FreeRDPGetColor(surface->format, r, g, b, a);
 
 	for (index = 0; index < solidFill->fillRectCount; index++)
