@@ -53,6 +53,7 @@ typedef struct
 		void* v;
 	} computerName;
 	UINT32 SpecialDeviceCount;
+	UINT32 capabilityVersions[6];
 } pf_channel_common_context;
 
 typedef enum
@@ -589,12 +590,31 @@ static UINT rdpdr_process_server_core_capability_request(pf_channel_client_conte
 	{
 		UINT16 capabilityType;
 		UINT16 capabilityLength;
+		UINT32 capabilityVersion;
 
-		if (!Stream_CheckAndLogRequiredLengthClient(rdpdr->log, s, 2 * sizeof(UINT16)))
+		if (!Stream_CheckAndLogRequiredLengthClient(rdpdr->log, s,
+		                                            2 * sizeof(UINT16) + sizeof(UINT32)))
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT16(s, capabilityType);
 		Stream_Read_UINT16(s, capabilityLength);
+		if (capabilityLength < sizeof(UINT32))
+		{
+			WLog_Print(rdpdr->log, WLOG_ERROR, "[%s] capability %s has invalid length %" PRIu32, __FUNCTION__,
+			           rdpdr_cap_type_string(capabilityType), capabilityLength);
+			return ERROR_INVALID_DATA;
+		}
+
+		capabilityLength -= sizeof(UINT32);
+
+		Stream_Read_UINT32(s, capabilityVersion);
+
+		if (capabilityType < ARRAYSIZE(rdpdr->common.capabilityVersions))
+		{
+			WLog_Print(rdpdr->log, WLOG_DEBUG, "[%s] capability %s got version %" PRIu32, __FUNCTION__,
+			           rdpdr_cap_type_string(capabilityType), capabilityVersion);
+			rdpdr->common.capabilityVersions[capabilityType] = capabilityVersion;
+		}
 
 		switch (capabilityType)
 		{
@@ -619,6 +639,10 @@ static UINT rdpdr_process_server_core_capability_request(pf_channel_client_conte
 				break;
 
 			default:
+				WLog_Print(rdpdr->log, WLOG_WARN,
+				           "[%s] unknown capability 0x%04" PRIx16 ", length %" PRIu16
+				           ", version %" PRIu32,
+				           __FUNCTION__, capabilityType, capabilityLength, capabilityVersion);
 				break;
 		}
 
@@ -629,24 +653,28 @@ static UINT rdpdr_process_server_core_capability_request(pf_channel_client_conte
 	return CHANNEL_RC_OK;
 }
 
-static BOOL rdpdr_write_capset_header(wStream* s, UINT16 capabilityType, UINT16 capabilityLength,
-                                      UINT32 version)
+static BOOL rdpdr_write_capset_header(wLog* log, wStream* s, UINT16 capabilityType,
+                                      UINT16 capabilityLength, UINT32 version)
 {
 	WINPR_ASSERT(s);
 	if (!Stream_EnsureRemainingCapacity(s, capabilityLength + 8))
 		return FALSE;
+
+	WLog_Print(log, WLOG_DEBUG, "[%s] writing capability %s version %" PRIu32, __FUNCTION__,
+	           rdpdr_cap_type_string(capabilityType), version);
 	Stream_Write_UINT16(s, capabilityType);
 	Stream_Write_UINT16(s, capabilityLength + 8);
 	Stream_Write_UINT32(s, version);
 	return TRUE;
 }
 
-static BOOL rdpdr_write_general_capset(pf_channel_common_context* rdpdr, wStream* s)
+static BOOL rdpdr_write_general_capset(wLog* log, pf_channel_common_context* rdpdr, wStream* s)
 {
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 
-	if (!rdpdr_write_capset_header(s, CAP_GENERAL_TYPE, 36, GENERAL_CAPABILITY_VERSION_02))
+	if (!rdpdr_write_capset_header(log, s, CAP_GENERAL_TYPE, 36,
+	                               rdpdr->capabilityVersions[CAP_GENERAL_TYPE]))
 		return FALSE;
 	Stream_Write_UINT32(s, 0);                   /* osType, ignored on receipt */
 	Stream_Write_UINT32(s, 0);                   /* osVersion, should be ignored */
@@ -663,42 +691,46 @@ static BOOL rdpdr_write_general_capset(pf_channel_common_context* rdpdr, wStream
 	return TRUE;
 }
 
-static BOOL rdpdr_write_printer_capset(pf_channel_common_context* rdpdr, wStream* s)
+static BOOL rdpdr_write_printer_capset(wLog* log, pf_channel_common_context* rdpdr, wStream* s)
 {
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 
-	if (!rdpdr_write_capset_header(s, CAP_PRINTER_TYPE, 0, GENERAL_CAPABILITY_VERSION_01))
+	if (!rdpdr_write_capset_header(log, s, CAP_PRINTER_TYPE, 0,
+	                               rdpdr->capabilityVersions[CAP_PRINTER_TYPE]))
 		return FALSE;
 	return TRUE;
 }
 
-static BOOL rdpdr_write_port_capset(pf_channel_common_context* rdpdr, wStream* s)
+static BOOL rdpdr_write_port_capset(wLog* log, pf_channel_common_context* rdpdr, wStream* s)
 {
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 
-	if (!rdpdr_write_capset_header(s, CAP_PORT_TYPE, 0, GENERAL_CAPABILITY_VERSION_01))
+	if (!rdpdr_write_capset_header(log, s, CAP_PORT_TYPE, 0,
+	                               rdpdr->capabilityVersions[CAP_PORT_TYPE]))
 		return FALSE;
 	return TRUE;
 }
 
-static BOOL rdpdr_write_drive_capset(pf_channel_common_context* rdpdr, wStream* s)
+static BOOL rdpdr_write_drive_capset(wLog* log, pf_channel_common_context* rdpdr, wStream* s)
 {
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 
-	if (!rdpdr_write_capset_header(s, CAP_DRIVE_TYPE, 0, DRIVE_CAPABILITY_VERSION_02))
+	if (!rdpdr_write_capset_header(log, s, CAP_DRIVE_TYPE, 0,
+	                               rdpdr->capabilityVersions[CAP_DRIVE_TYPE]))
 		return FALSE;
 	return TRUE;
 }
 
-static BOOL rdpdr_write_smartcard_capset(pf_channel_common_context* rdpdr, wStream* s)
+static BOOL rdpdr_write_smartcard_capset(wLog* log, pf_channel_common_context* rdpdr, wStream* s)
 {
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
 
-	if (!rdpdr_write_capset_header(s, CAP_SMARTCARD_TYPE, 0, GENERAL_CAPABILITY_VERSION_01))
+	if (!rdpdr_write_capset_header(log, s, CAP_SMARTCARD_TYPE, 0,
+	                               rdpdr->capabilityVersions[CAP_SMARTCARD_TYPE]))
 		return FALSE;
 	return TRUE;
 }
@@ -711,15 +743,15 @@ static UINT rdpdr_send_server_capability_request(pf_channel_server_context* rdpd
 		return CHANNEL_RC_NO_MEMORY;
 	Stream_Write_UINT16(s, 5); /* numCapabilities */
 	Stream_Write_UINT16(s, 0); /* pad */
-	if (!rdpdr_write_general_capset(&rdpdr->common, s))
+	if (!rdpdr_write_general_capset(rdpdr->log, &rdpdr->common, s))
 		return CHANNEL_RC_NO_MEMORY;
-	if (!rdpdr_write_printer_capset(&rdpdr->common, s))
+	if (!rdpdr_write_printer_capset(rdpdr->log, &rdpdr->common, s))
 		return CHANNEL_RC_NO_MEMORY;
-	if (!rdpdr_write_port_capset(&rdpdr->common, s))
+	if (!rdpdr_write_port_capset(rdpdr->log, &rdpdr->common, s))
 		return CHANNEL_RC_NO_MEMORY;
-	if (!rdpdr_write_drive_capset(&rdpdr->common, s))
+	if (!rdpdr_write_drive_capset(rdpdr->log, &rdpdr->common, s))
 		return CHANNEL_RC_NO_MEMORY;
-	if (!rdpdr_write_smartcard_capset(&rdpdr->common, s))
+	if (!rdpdr_write_smartcard_capset(rdpdr->log, &rdpdr->common, s))
 		return CHANNEL_RC_NO_MEMORY;
 	return rdpdr_seal_send_free_request(rdpdr, s);
 }
@@ -806,15 +838,15 @@ static UINT rdpdr_send_client_capability_response(pClientContext* pc,
 
 	Stream_Write_UINT16(s, 5); /* numCapabilities */
 	Stream_Write_UINT16(s, 0); /* pad */
-	if (!rdpdr_write_general_capset(&rdpdr->common, s))
+	if (!rdpdr_write_general_capset(rdpdr->log, &rdpdr->common, s))
 		return CHANNEL_RC_NO_MEMORY;
-	if (!rdpdr_write_printer_capset(&rdpdr->common, s))
+	if (!rdpdr_write_printer_capset(rdpdr->log, &rdpdr->common, s))
 		return CHANNEL_RC_NO_MEMORY;
-	if (!rdpdr_write_port_capset(&rdpdr->common, s))
+	if (!rdpdr_write_port_capset(rdpdr->log, &rdpdr->common, s))
 		return CHANNEL_RC_NO_MEMORY;
-	if (!rdpdr_write_drive_capset(&rdpdr->common, s))
+	if (!rdpdr_write_drive_capset(rdpdr->log, &rdpdr->common, s))
 		return CHANNEL_RC_NO_MEMORY;
-	if (!rdpdr_write_smartcard_capset(&rdpdr->common, s))
+	if (!rdpdr_write_smartcard_capset(rdpdr->log, &rdpdr->common, s))
 		return CHANNEL_RC_NO_MEMORY;
 	return rdpdr_client_send(rdpdr->log, pc, s);
 }
@@ -1357,6 +1389,15 @@ static BOOL pf_channel_rdpdr_common_context_new(pf_channel_common_context* commo
 	common->versionMajor = RDPDR_VERSION_MAJOR;
 	common->versionMinor = RDPDR_VERSION_MINOR_RDP10X;
 	common->clientID = SCARD_DEVICE_ID;
+
+	const UINT32 versions[] = { 0,
+		                        GENERAL_CAPABILITY_VERSION_02,
+		                        PRINT_CAPABILITY_VERSION_01,
+		                        PORT_CAPABILITY_VERSION_01,
+		                        DRIVE_CAPABILITY_VERSION_02,
+		                        SMARTCARD_CAPABILITY_VERSION_01 };
+
+	memcpy(common->capabilityVersions, versions, sizeof(common->capabilityVersions));
 	return TRUE;
 }
 
