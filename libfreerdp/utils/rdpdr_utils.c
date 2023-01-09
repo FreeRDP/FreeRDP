@@ -403,18 +403,61 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 		}
 		break;
 		case PAKID_CORE_DEVICELIST_ANNOUNCE:
+		{
+			size_t offset = 8;
+			UINT32 count = 0;
+
+			if (pos >= offset)
+				Stream_Read_UINT32(s, count);
+
+			WLog_Print(log, lvl, "%s [%s | %s] [%" PRIu32 "] -> %" PRIuz, custom,
+			           rdpdr_component_string(component), rdpdr_packetid_string(packetid), count,
+			           pos);
+
+			for (UINT32 x = 0; x < count; x++)
+			{
+				RdpdrDevice device = { 0 };
+
+				offset += 20;
+				if (pos >= offset)
+				{
+					Stream_Read_UINT32(s, device.DeviceType);       /* DeviceType (4 bytes) */
+					Stream_Read_UINT32(s, device.DeviceId);         /* DeviceId (4 bytes) */
+					Stream_Read(s, device.PreferredDosName, 8);     /* PreferredDosName (8 bytes) */
+					Stream_Read_UINT32(s, device.DeviceDataLength); /* DeviceDataLength (4 bytes) */
+					device.DeviceData = Stream_Pointer(s);
+				}
+				offset += device.DeviceDataLength;
+
+				WLog_Print(log, lvl,
+				           "%s [announce][%" PRIu32 "] %s [0x%08" PRIx32
+				           "] %s [DeviceDataLength=%" PRIu32 "]",
+				           custom, x, freerdp_rdpdr_dtyp_string(device.DeviceType), device.DeviceId,
+				           device.PreferredDosName, device.DeviceDataLength);
+			}
+		}
+		break;
 		case PAKID_CORE_DEVICELIST_REMOVE:
 		{
-			{
-				UINT32 count = 0;
+			size_t offset = 8;
+			UINT32 count = 0;
 
-				if (pos >= 8)
-					Stream_Read_UINT32(s, count);
-				WLog_Print(log, lvl, "%s [%s | %s] [%" PRIu32 "] -> %" PRIuz, custom,
-				           rdpdr_component_string(component), rdpdr_packetid_string(packetid),
-				           count, pos);
-				if (count > 0)
-					WLog_WARN(TAG, "xxx");
+			if (pos >= offset)
+				Stream_Read_UINT32(s, count);
+
+			WLog_Print(log, lvl, "%s [%s | %s] [%" PRIu32 "] -> %" PRIuz, custom,
+			           rdpdr_component_string(component), rdpdr_packetid_string(packetid), count,
+			           pos);
+
+			for (UINT32 x = 0; x < count; x++)
+			{
+				UINT32 id = 0;
+
+				offset += 4;
+				if (pos >= offset)
+					Stream_Read_UINT32(s, id);
+
+				WLog_Print(log, lvl, "%s [remove][%" PRIu32 "] id=%" PRIu32, custom, x, id);
 			}
 		}
 		break;

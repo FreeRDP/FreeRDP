@@ -27,6 +27,7 @@
 #include <freerdp/types.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/utils/rdpdr_utils.h>
 
 /**
  * Server Interface
@@ -63,15 +64,6 @@ typedef struct
 	char FileName[512];
 } FILE_DIRECTORY_INFORMATION;
 #endif
-
-typedef struct
-{
-	UINT32 DeviceType;
-	UINT32 DeviceId;
-	char PreferredDosName[9];
-	UINT32 DeviceDataLength;
-	BYTE* DeviceData;
-} RdpdrDevice;
 
 typedef UINT (*psRdpdrStart)(RdpdrServerContext* context);
 typedef UINT (*psRdpdrStop)(RdpdrServerContext* context);
