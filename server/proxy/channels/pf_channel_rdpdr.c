@@ -587,9 +587,13 @@ static UINT rdpdr_process_server_core_capability_request(pf_channel_client_conte
 
 		if (header.CapabilityType < ARRAYSIZE(rdpdr->common.capabilityVersions))
 		{
-			WLog_Print(rdpdr->log, WLOG_TRACE, "[%s] capability %s got version %" PRIu32,
-			           __FUNCTION__, rdpdr_cap_type_string(header.CapabilityType), header.Version);
-			rdpdr->common.capabilityVersions[header.CapabilityType] = header.Version;
+			if (rdpdr->common.capabilityVersions[header.CapabilityType] > header.Version)
+				rdpdr->common.capabilityVersions[header.CapabilityType] = header.Version;
+
+			WLog_Print(rdpdr->log, WLOG_TRACE,
+			           "[%s] capability %s got version %" PRIu32 ", will use version %" PRIu32,
+			           __FUNCTION__, rdpdr_cap_type_string(header.CapabilityType), header.Version,
+			           rdpdr->common.capabilityVersions[header.CapabilityType]);
 		}
 
 		switch (header.CapabilityType)
@@ -743,6 +747,16 @@ static UINT rdpdr_process_client_capability_response(pf_channel_server_context* 
 		UINT error = rdpdr_read_capset_header(rdpdr->log, s, &header);
 		if (error != CHANNEL_RC_OK)
 			return error;
+		if (header.CapabilityType < ARRAYSIZE(rdpdr->common.capabilityVersions))
+		{
+			if (rdpdr->common.capabilityVersions[header.CapabilityType] > header.Version)
+				rdpdr->common.capabilityVersions[header.CapabilityType] = header.Version;
+
+			WLog_Print(rdpdr->log, WLOG_TRACE,
+			           "[%s] capability %s got version %" PRIu32 ", will use version %" PRIu32,
+			           __FUNCTION__, rdpdr_cap_type_string(header.CapabilityType), header.Version,
+			           rdpdr->common.capabilityVersions[header.CapabilityType]);
+		}
 
 		switch (header.CapabilityType)
 		{
@@ -1002,6 +1016,121 @@ static UINT rdpdr_process_server_device_announce_response(pf_channel_client_cont
 }
 #endif
 
+static BOOL pf_channel_rdpdr_rewrite_device_list_to(wStream* s, UINT32 fromVersion,
+                                                    UINT32 toVersion)
+{
+	BOOL rc = FALSE;
+	if (fromVersion == toVersion)
+	{
+		Stream_SealLength(s);
+		return TRUE;
+	}
+
+	const size_t cap = Stream_GetRemainingLength(s);
+	wStream* clone = Stream_New(NULL, cap);
+	if (!clone)
+		goto fail;
+	const size_t pos = Stream_GetPosition(s);
+	Stream_Copy(s, clone, cap);
+	Stream_SealLength(clone);
+
+	Stream_SetPosition(clone, 0);
+	Stream_SetPosition(s, pos);
+
+	/* Skip device count */
+	if (!Stream_SafeSeek(s, 4))
+		goto fail;
+
+	UINT32 count = 0;
+	if (Stream_GetRemainingLength(clone) < 4)
+		goto fail;
+	Stream_Read_UINT32(clone, count);
+
+	for (UINT32 x = 0; x < count; x++)
+	{
+		RdpdrDevice device = { 0 };
+		const size_t charCount = ARRAYSIZE(device.PreferredDosName);
+		if (Stream_GetRemainingLength(clone) < 20)
+			goto fail;
+
+		Stream_Read_UINT32(clone, device.DeviceType);           /* DeviceType (4 bytes) */
+		Stream_Read_UINT32(clone, device.DeviceId);             /* DeviceId (4 bytes) */
+		Stream_Read(clone, device.PreferredDosName, charCount); /* PreferredDosName (8 bytes) */
+		Stream_Read_UINT32(clone, device.DeviceDataLength);     /* DeviceDataLength (4 bytes) */
+		device.DeviceData = Stream_Pointer(clone);
+		if (!Stream_SafeSeek(clone, device.DeviceDataLength))
+			goto fail;
+
+		if (!Stream_EnsureRemainingCapacity(s, 20))
+			goto fail;
+		Stream_Write_UINT32(s, device.DeviceType);
+		Stream_Write_UINT32(s, device.DeviceId);
+		Stream_Write(s, device.PreferredDosName, charCount);
+
+		if (device.DeviceType == RDPDR_DTYP_FILESYSTEM)
+		{
+			if (toVersion == DRIVE_CAPABILITY_VERSION_01)
+				Stream_Write_UINT32(s, 0); /* No unicode name */
+			else
+			{
+				const size_t datalen = charCount * sizeof(WCHAR);
+				if (!Stream_EnsureRemainingCapacity(s, datalen + sizeof(UINT32)))
+					goto fail;
+				Stream_Write_UINT32(s, datalen);
+
+				const SSIZE_T rc = Stream_Write_UTF16_String_From_UTF8(
+				    s, charCount, device.PreferredDosName, charCount - 1, TRUE);
+				if (rc < 0)
+					goto fail;
+			}
+		}
+		else
+		{
+			Stream_Write_UINT32(s, device.DeviceDataLength);
+			if (!Stream_EnsureRemainingCapacity(s, device.DeviceDataLength))
+				goto fail;
+			Stream_Write(s, device.DeviceData, device.DeviceDataLength);
+		}
+	}
+
+	Stream_SealLength(s);
+	rc = TRUE;
+
+fail:
+	Stream_Free(clone, TRUE);
+	return rc;
+}
+
+static BOOL pf_channel_rdpdr_rewrite_device_list(pf_channel_client_context* rdpdr,
+                                                 pServerContext* ps, wStream* s, BOOL toServer)
+{
+	WINPR_ASSERT(rdpdr);
+	WINPR_ASSERT(ps);
+
+	if (Stream_Length(s) < 4)
+		return FALSE;
+
+	UINT16 component, packetid;
+	Stream_SetPosition(s, 0);
+	Stream_Read_UINT16(s, component);
+	Stream_Read_UINT16(s, packetid);
+	if ((component != RDPDR_CTYP_CORE) || (packetid != PAKID_CORE_DEVICELIST_ANNOUNCE))
+		return TRUE;
+
+	const pf_channel_server_context* srv =
+	    HashTable_GetItemValue(ps->interceptContextMap, RDPDR_SVC_CHANNEL_NAME);
+	if (!srv)
+		return FALSE;
+	UINT32 from = srv->common.capabilityVersions[CAP_DRIVE_TYPE];
+	UINT32 to = rdpdr->common.capabilityVersions[CAP_DRIVE_TYPE];
+	if (toServer)
+	{
+		from = rdpdr->common.capabilityVersions[CAP_DRIVE_TYPE];
+		to = srv->common.capabilityVersions[CAP_DRIVE_TYPE];
+	}
+	return pf_channel_rdpdr_rewrite_device_list_to(s, from, to);
+}
+
 static BOOL pf_channel_rdpdr_client_send_to_server(pf_channel_client_context* rdpdr,
                                                    pServerContext* ps, wStream* s)
 {
@@ -1016,6 +1145,8 @@ static BOOL pf_channel_rdpdr_client_send_to_server(pf_channel_client_context* rd
 		if (server_channel_id == 0)
 			return TRUE;
 
+		if (!pf_channel_rdpdr_rewrite_device_list(rdpdr, ps, s, TRUE))
+			return FALSE;
 		size_t len = Stream_Length(s);
 		Stream_SetPosition(s, len);
 		rdpdr_dump_send_packet(rdpdr->log, WLOG_TRACE, s, proxy_client_tx);
@@ -1127,8 +1258,9 @@ BOOL pf_channel_send_client_queue(pClientContext* pc, pf_channel_client_context*
 		if (!s)
 			continue;
 
-		const size_t len = Stream_Length(s);
+		size_t len = Stream_Length(s);
 		Stream_SetPosition(s, len);
+
 		rdpdr_dump_send_packet(rdpdr->log, WLOG_TRACE, s, proxy_server_tx " (queue) ");
 		WINPR_ASSERT(pc->context.instance->SendChannelData);
 		if (!pc->context.instance->SendChannelData(pc->context.instance, channelId,
@@ -1136,6 +1268,7 @@ BOOL pf_channel_send_client_queue(pClientContext* pc, pf_channel_client_context*
 		{
 			CLIENT_TX_LOG(rdpdr->log, WLOG_ERROR, "xxxxxx TODO: Failed to send data!");
 		}
+	skip:
 		Stream_Free(s, TRUE);
 	}
 	Queue_Unlock(rdpdr->queue);
@@ -1357,11 +1490,13 @@ static BOOL pf_channel_rdpdr_common_context_new(pf_channel_common_context* commo
 	return TRUE;
 }
 
-static BOOL pf_channel_rdpdr_client_pass_message(pClientContext* pc, UINT16 channelId,
-                                                 const char* channel_name, wStream* s)
+static BOOL pf_channel_rdpdr_client_pass_message(pServerContext* ps, pClientContext* pc,
+                                                 UINT16 channelId, const char* channel_name,
+                                                 wStream* s)
 {
 	pf_channel_client_context* rdpdr;
 
+	WINPR_ASSERT(ps);
 	WINPR_ASSERT(pc);
 
 	rdpdr = HashTable_GetItemValue(pc->interceptContextMap, channel_name);
@@ -1369,6 +1504,8 @@ static BOOL pf_channel_rdpdr_client_pass_message(pClientContext* pc, UINT16 chan
 		return TRUE; /* Ignore data for channels not available on proxy -> server connection */
 	WINPR_ASSERT(rdpdr->queue);
 
+	if (!pf_channel_rdpdr_rewrite_device_list(rdpdr, ps, s, FALSE))
+		return FALSE;
 	if (!Queue_Enqueue(rdpdr->queue, s))
 		return FALSE;
 	pf_channel_send_client_queue(pc, rdpdr);
@@ -1722,13 +1859,13 @@ BOOL pf_channel_rdpdr_server_handle(pServerContext* ps, UINT16 channelId, const 
 			if (!pf_channel_smartcard_client_emulate(pc) ||
 			    !filter_smartcard_device_list_announce_request(rdpdr, s))
 			{
-				if (!pf_channel_rdpdr_client_pass_message(pc, channelId, channel_name, s))
+				if (!pf_channel_rdpdr_client_pass_message(ps, pc, channelId, channel_name, s))
 					return FALSE;
 			}
 			else
 				return pf_channel_smartcard_server_handle(ps, s);
 #else
-			if (!pf_channel_rdpdr_client_pass_message(pc, channelId, channel_name, s))
+			if (!pf_channel_rdpdr_client_pass_message(ps, pc, channelId, channel_name, s))
 				return FALSE;
 #endif
 			break;
