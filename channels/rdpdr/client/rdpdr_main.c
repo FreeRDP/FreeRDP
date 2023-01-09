@@ -1128,10 +1128,18 @@ static UINT rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 8))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT16(s, rdpdr->versionMajor);
-	Stream_Read_UINT16(s, rdpdr->versionMinor);
+	Stream_Read_UINT16(s, rdpdr->serverVersionMajor);
+	Stream_Read_UINT16(s, rdpdr->serverVersionMinor);
 	Stream_Read_UINT32(s, rdpdr->clientID);
 	rdpdr->sequenceId++;
+
+	rdpdr->clientVersionMajor = MIN(RDPDR_VERSION_MAJOR, rdpdr->serverVersionMajor);
+	rdpdr->clientVersionMinor = MIN(RDPDR_VERSION_MINOR_RDP10X, rdpdr->serverVersionMinor);
+	WLog_Print(rdpdr->log, WLOG_DEBUG,
+	           "[rdpdr] server announces version %" PRIu32 ".%" PRIu32 ", client uses %" PRIu32
+	           ".%" PRIu32,
+	           rdpdr->serverVersionMajor, rdpdr->serverVersionMinor, rdpdr->clientVersionMajor,
+	           rdpdr->clientVersionMinor);
 	return CHANNEL_RC_OK;
 }
 
@@ -1156,8 +1164,8 @@ static UINT rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 
 	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);             /* Component (2 bytes) */
 	Stream_Write_UINT16(s, PAKID_CORE_CLIENTID_CONFIRM); /* PacketId (2 bytes) */
-	Stream_Write_UINT16(s, rdpdr->versionMajor);
-	Stream_Write_UINT16(s, rdpdr->versionMinor);
+	Stream_Write_UINT16(s, rdpdr->clientVersionMajor);
+	Stream_Write_UINT16(s, rdpdr->clientVersionMinor);
 	Stream_Write_UINT32(s, (UINT32)rdpdr->clientID);
 	return rdpdr_send(rdpdr, s);
 }
@@ -1225,10 +1233,15 @@ static UINT rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s
 	Stream_Read_UINT16(s, versionMinor);
 	Stream_Read_UINT32(s, clientID);
 
-	if (versionMajor != rdpdr->versionMajor || versionMinor != rdpdr->versionMinor)
+	if (versionMajor != rdpdr->clientVersionMajor || versionMinor != rdpdr->clientVersionMinor)
 	{
-		rdpdr->versionMajor = versionMajor;
-		rdpdr->versionMinor = versionMinor;
+		WLog_Print(rdpdr->log, WLOG_WARN,
+		           "[rdpdr] server announced version %" PRIu32 ".%" PRIu32 ", client uses %" PRIu32
+		           ".%" PRIu32 " but clientid confirm requests version %" PRIu32 ".%" PRIu32,
+		           rdpdr->serverVersionMajor, rdpdr->serverVersionMinor, rdpdr->clientVersionMajor,
+		           rdpdr->clientVersionMinor, versionMajor, versionMinor);
+		rdpdr->clientVersionMajor = versionMajor;
+		rdpdr->clientVersionMinor = versionMinor;
 	}
 
 	if (clientID != rdpdr->clientID)
@@ -1267,8 +1280,8 @@ static BOOL device_announce(ULONG_PTR key, void* element, void* data)
 	 * 3. other devices are sent only after user_loggedon
 	 */
 
-	if ((rdpdr->versionMinor == 0x0005) || (device->type == RDPDR_DTYP_SMARTCARD) ||
-	    arg->userLoggedOn)
+	if ((rdpdr->clientVersionMinor == RDPDR_VERSION_MINOR_RDP51) ||
+	    (device->type == RDPDR_DTYP_SMARTCARD) || arg->userLoggedOn)
 	{
 		size_t i;
 		size_t data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));

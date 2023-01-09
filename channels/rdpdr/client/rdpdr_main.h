@@ -55,8 +55,10 @@ typedef struct
 
 	DEVMAN* devman;
 
-	UINT16 versionMajor;
-	UINT16 versionMinor;
+	UINT16 serverVersionMajor;
+	UINT16 serverVersionMinor;
+	UINT16 clientVersionMajor;
+	UINT16 clientVersionMinor;
 	UINT32 clientID;
 	char computerName[256];
 
