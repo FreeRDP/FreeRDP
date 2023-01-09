@@ -33,7 +33,7 @@ extern "C"
 	{
 		UINT32 DeviceType;
 		UINT32 DeviceId;
-		char PreferredDosName[9];
+		char PreferredDosName[8];
 		UINT32 DeviceDataLength;
 		BYTE* DeviceData;
 	} RdpdrDevice;
