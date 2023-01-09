@@ -24,18 +24,37 @@
 #include <winpr/stream.h>
 #include <freerdp/api.h>
 
-FREERDP_API const char* rdpdr_component_string(UINT16 component);
-FREERDP_API const char* rdpdr_packetid_string(UINT16 packetid);
-FREERDP_API const char* rdpdr_irp_string(UINT32 major);
-FREERDP_API const char* rdpdr_cap_type_string(UINT16 capability);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-FREERDP_API LONG scard_log_status_error(const char* tag, const char* what, LONG status);
-FREERDP_API const char* scard_get_ioctl_string(UINT32 ioControlCode, BOOL funcName);
+	typedef struct
+	{
+		UINT32 DeviceType;
+		UINT32 DeviceId;
+		char PreferredDosName[9];
+		UINT32 DeviceDataLength;
+		BYTE* DeviceData;
+	} RdpdrDevice;
 
-FREERDP_API BOOL rdpdr_write_iocompletion_header(wStream* out, UINT32 DeviceId, UINT32 CompletionId,
-                                                 UINT32 ioStatus);
+	FREERDP_API const char* rdpdr_component_string(UINT16 component);
+	FREERDP_API const char* rdpdr_packetid_string(UINT16 packetid);
+	FREERDP_API const char* rdpdr_irp_string(UINT32 major);
+	FREERDP_API const char* rdpdr_cap_type_string(UINT16 capability);
 
-FREERDP_API void rdpdr_dump_received_packet(wLog* log, DWORD lvl, wStream* out, const char* custom);
-FREERDP_API void rdpdr_dump_send_packet(wLog* log, DWORD lvl, wStream* out, const char* custom);
+	FREERDP_API LONG scard_log_status_error(const char* tag, const char* what, LONG status);
+	FREERDP_API const char* scard_get_ioctl_string(UINT32 ioControlCode, BOOL funcName);
+
+	FREERDP_API BOOL rdpdr_write_iocompletion_header(wStream* out, UINT32 DeviceId,
+	                                                 UINT32 CompletionId, UINT32 ioStatus);
+
+	FREERDP_API void rdpdr_dump_received_packet(wLog* log, DWORD lvl, wStream* out,
+	                                            const char* custom);
+	FREERDP_API void rdpdr_dump_send_packet(wLog* log, DWORD lvl, wStream* out, const char* custom);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
