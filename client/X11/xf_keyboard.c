@@ -319,7 +319,7 @@ int xf_keyboard_read_keyboard_state(xfContext* xfc)
 	Window wdummy;
 	UINT32 state = 0;
 
-	if (!xfc->remote_app)
+	if (!xfc->remote_app && xfc->window)
 	{
 		XQueryPointer(xfc->display, xfc->window->handle, &wdummy, &wdummy, &dummy, &dummy, &dummy,
 		              &dummy, &state);
@@ -448,7 +448,7 @@ void xf_keyboard_focus_in(xfContext* xfc)
 
 	/* finish with a mouse pointer position like mstsc.exe if required */
 
-	if (xfc->remote_app)
+	if (xfc->remote_app || !xfc->window)
 		return;
 
 	if (XQueryPointer(xfc->display, xfc->window->handle, &w, &w, &d, &d, &x, &y, &state))

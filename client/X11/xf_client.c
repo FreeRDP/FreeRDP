@@ -295,7 +295,13 @@ void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt
 
 	if (w == 0 || h == 0)
 	{
-		WLog_WARN(TAG, "invalid width and/or height specified: w=%d h=%d", w, h);
+		WLog_WARN(TAG, "[%s] invalid width and/or height specified: w=%d h=%d", __FUNCTION__, w, h);
+		return;
+	}
+
+	if (!xfc->window)
+	{
+		WLog_WARN(TAG, "[%s] invalid xfc->window=%p", __FUNCTION__, xfc->window);
 		return;
 	}
 
