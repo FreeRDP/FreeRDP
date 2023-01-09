@@ -2583,7 +2583,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 
 			if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, rect->left, rect->top, width,
 			                        height, tile->data, progressive->format, tile->stride, nXSrc,
-			                        nYSrc, NULL, FREERDP_FLIP_NONE))
+			                        nYSrc, NULL, FREERDP_KEEP_DST_ALPHA))
 			{
 				rc = -42;
 				break;
