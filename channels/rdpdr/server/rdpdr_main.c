@@ -401,51 +401,12 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	                    context->priv->ClientComputerName);
 }
 
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT rdpdr_server_read_capability_set_header(wLog* log, wStream* s,
-                                                    RDPDR_CAPABILITY_HEADER* header)
-{
-	WINPR_ASSERT(header);
-	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 8))
-		return ERROR_INVALID_DATA;
-
-	Stream_Read_UINT16(s, header->CapabilityType);   /* CapabilityType (2 bytes) */
-	Stream_Read_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */
-	Stream_Read_UINT32(s, header->Version);          /* Version (4 bytes) */
-	return CHANNEL_RC_OK;
-}
-
-/**
- * Function description
- *
- * @return 0 on success, otherwise a Win32 error code
- */
-static UINT rdpdr_server_write_capability_set_header(wLog* log, wStream* s,
-                                                     const RDPDR_CAPABILITY_HEADER* header)
-{
-	WINPR_ASSERT(header);
-	if (!Stream_EnsureRemainingCapacity(s, 8))
-	{
-		WLog_Print(log, WLOG_ERROR, "not enough data in stream!");
-		return ERROR_INVALID_DATA;
-	}
-
-	Stream_Write_UINT16(s, header->CapabilityType);   /* CapabilityType (2 bytes) */
-	Stream_Write_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */
-	Stream_Write_UINT32(s, header->Version);          /* Version (4 bytes) */
-	return CHANNEL_RC_OK;
-}
-
 static UINT rdpdr_server_write_capability_set_header_cb(RdpdrServerContext* context, wStream* s,
                                                         const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	UINT error = rdpdr_server_write_capability_set_header(context->priv->log, s, header);
+	UINT error = rdpdr_write_capset_header(context->priv->log, s, header);
 	if (error != CHANNEL_RC_OK)
 		return error;
 
@@ -532,13 +493,12 @@ static UINT rdpdr_server_write_general_capability_set(RdpdrServerContext* contex
 	UINT32 extendedPdu;
 	UINT32 extraFlags1;
 	UINT32 SpecialTypeDeviceCap;
-	RDPDR_CAPABILITY_HEADER header = { 0 };
+	const RDPDR_CAPABILITY_HEADER header = { CAP_GENERAL_TYPE, RDPDR_CAPABILITY_HEADER_LENGTH + 36,
+		                                     GENERAL_CAPABILITY_VERSION_02 };
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	header.CapabilityType = CAP_GENERAL_TYPE;
-	header.CapabilityLength = RDPDR_CAPABILITY_HEADER_LENGTH + 36;
-	header.Version = GENERAL_CAPABILITY_VERSION_02;
+
 	ioCode1 = 0;
 	ioCode1 |= RDPDR_IRP_MJ_CREATE;                   /* always set */
 	ioCode1 |= RDPDR_IRP_MJ_CLEANUP;                  /* always set */
@@ -567,13 +527,7 @@ static UINT rdpdr_server_write_general_capability_set(RdpdrServerContext* contex
 	extraFlags1 |= ENABLE_ASYNCIO; /* optional */
 	SpecialTypeDeviceCap = 0;
 
-	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
-	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
-
-	UINT error = rdpdr_server_write_capability_set_header(context->priv->log, s, &header);
+	UINT error = rdpdr_write_capset_header(context->priv->log, s, &header);
 	if (error != CHANNEL_RC_OK)
 		return error;
 
@@ -620,20 +574,11 @@ static UINT rdpdr_server_read_printer_capability_set(RdpdrServerContext* context
  */
 static UINT rdpdr_server_write_printer_capability_set(RdpdrServerContext* context, wStream* s)
 {
-	RDPDR_CAPABILITY_HEADER header = { 0 };
+	const RDPDR_CAPABILITY_HEADER header = { CAP_PRINTER_TYPE, RDPDR_CAPABILITY_HEADER_LENGTH,
+		                                     PRINT_CAPABILITY_VERSION_01 };
 	WINPR_UNUSED(context);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-
-	header.CapabilityType = CAP_PRINTER_TYPE;
-	header.CapabilityLength = RDPDR_CAPABILITY_HEADER_LENGTH;
-	header.Version = PRINT_CAPABILITY_VERSION_01;
-
-	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
-	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
 
 	return rdpdr_server_write_capability_set_header_cb(context, s, &header);
 }
@@ -662,20 +607,11 @@ static UINT rdpdr_server_read_port_capability_set(RdpdrServerContext* context, w
  */
 static UINT rdpdr_server_write_port_capability_set(RdpdrServerContext* context, wStream* s)
 {
-	RDPDR_CAPABILITY_HEADER header = { 0 };
+	const RDPDR_CAPABILITY_HEADER header = { CAP_PORT_TYPE, RDPDR_CAPABILITY_HEADER_LENGTH,
+		                                     PORT_CAPABILITY_VERSION_01 };
 	WINPR_UNUSED(context);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-
-	header.CapabilityType = CAP_PORT_TYPE;
-	header.CapabilityLength = RDPDR_CAPABILITY_HEADER_LENGTH;
-	header.Version = PORT_CAPABILITY_VERSION_01;
-
-	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
-	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
 
 	return rdpdr_server_write_capability_set_header_cb(context, s, &header);
 }
@@ -704,21 +640,12 @@ static UINT rdpdr_server_read_drive_capability_set(RdpdrServerContext* context, 
  */
 static UINT rdpdr_server_write_drive_capability_set(RdpdrServerContext* context, wStream* s)
 {
-	RDPDR_CAPABILITY_HEADER header = { 0 };
+	const RDPDR_CAPABILITY_HEADER header = { CAP_DRIVE_TYPE, RDPDR_CAPABILITY_HEADER_LENGTH,
+		                                     DRIVE_CAPABILITY_VERSION_02 };
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 	WINPR_UNUSED(context);
-
-	header.CapabilityType = CAP_DRIVE_TYPE;
-	header.CapabilityLength = RDPDR_CAPABILITY_HEADER_LENGTH;
-	header.Version = DRIVE_CAPABILITY_VERSION_02;
-
-	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
-	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
-		return CHANNEL_RC_NO_MEMORY;
-	}
 
 	return rdpdr_server_write_capability_set_header_cb(context, s, &header);
 }
@@ -747,20 +674,12 @@ static UINT rdpdr_server_read_smartcard_capability_set(RdpdrServerContext* conte
  */
 static UINT rdpdr_server_write_smartcard_capability_set(RdpdrServerContext* context, wStream* s)
 {
-	RDPDR_CAPABILITY_HEADER header = { 0 };
-	header.CapabilityType = CAP_SMARTCARD_TYPE;
-	header.CapabilityLength = RDPDR_CAPABILITY_HEADER_LENGTH;
-	header.Version = SMARTCARD_CAPABILITY_VERSION_01;
+	const RDPDR_CAPABILITY_HEADER header = { CAP_SMARTCARD_TYPE, RDPDR_CAPABILITY_HEADER_LENGTH,
+		                                     SMARTCARD_CAPABILITY_VERSION_01 };
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
 
 	WINPR_UNUSED(context);
-
-	if (!Stream_EnsureRemainingCapacity(s, header.CapabilityLength))
-	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "Stream_EnsureRemainingCapacity failed!");
-		return CHANNEL_RC_OK;
-	}
 
 	return rdpdr_server_write_capability_set_header_cb(context, s, &header);
 }
@@ -897,8 +816,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 		RDPDR_CAPABILITY_HEADER capabilityHeader = { 0 };
 		const size_t start = Stream_GetPosition(s);
 
-		if ((status =
-		         rdpdr_server_read_capability_set_header(context->priv->log, s, &capabilityHeader)))
+		if ((status = rdpdr_read_capset_header(context->priv->log, s, &capabilityHeader)))
 		{
 			WLog_Print(context->priv->log, WLOG_ERROR, "%s failed with error %" PRIu32 "!",
 			           __FUNCTION__, status);
@@ -970,14 +888,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 			default:
 				WLog_Print(context->priv->log, WLOG_WARN, "Unknown capabilityType %" PRIu16 "",
 				           capabilityHeader.CapabilityType);
-				if (Stream_GetRemainingLength(s) < capabilityHeader.CapabilityLength)
-					WLog_Print(context->priv->log, WLOG_WARN,
-					           "short capability data, expected %" PRIu16 ", but only got %" PRIuz
-					           " bytes",
-					           capabilityHeader.CapabilityLength, Stream_GetRemainingLength(s));
-				else
-					Stream_Seek(s,
-					            capabilityHeader.CapabilityLength - RDPDR_CAPABILITY_HEADER_LENGTH);
+				Stream_Seek(s, capabilityHeader.CapabilityLength);
 				return ERROR_INVALID_DATA;
 		}
 
@@ -999,7 +910,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 
 		const size_t end = Stream_GetPosition(s);
 		const size_t diff = end - start;
-		if (diff != capabilityHeader.CapabilityLength)
+		if (diff != capabilityHeader.CapabilityLength + RDPDR_CAPABILITY_HEADER_LENGTH)
 		{
 			WLog_Print(context->priv->log, WLOG_WARN,
 			           "{capability %s[0x%04" PRIx16 "]} processed %" PRIuz

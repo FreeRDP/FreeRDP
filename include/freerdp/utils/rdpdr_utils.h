@@ -38,6 +38,13 @@ extern "C"
 		BYTE* DeviceData;
 	} RdpdrDevice;
 
+	typedef struct
+	{
+		UINT16 CapabilityType;
+		UINT16 CapabilityLength;
+		UINT32 Version;
+	} RDPDR_CAPABILITY_HEADER;
+
 	FREERDP_API const char* rdpdr_component_string(UINT16 component);
 	FREERDP_API const char* rdpdr_packetid_string(UINT16 packetid);
 	FREERDP_API const char* rdpdr_irp_string(UINT32 major);
@@ -52,6 +59,11 @@ extern "C"
 	FREERDP_API void rdpdr_dump_received_packet(wLog* log, DWORD lvl, wStream* out,
 	                                            const char* custom);
 	FREERDP_API void rdpdr_dump_send_packet(wLog* log, DWORD lvl, wStream* out, const char* custom);
+
+	FREERDP_API UINT rdpdr_read_capset_header(wLog* log, wStream* s,
+	                                          RDPDR_CAPABILITY_HEADER* header);
+	FREERDP_API UINT rdpdr_write_capset_header(wLog* log, wStream* s,
+	                                           const RDPDR_CAPABILITY_HEADER* header);
 
 #ifdef __cplusplus
 }

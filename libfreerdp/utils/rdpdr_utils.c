@@ -392,6 +392,7 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 		case PAKID_CORE_CLIENT_CAPABILITY:
 		case PAKID_CORE_SERVER_CAPABILITY:
 		{
+			size_t offset = 8;
 			UINT16 numCapabilities = 0;
 			if (pos >= 6)
 				Stream_Read_UINT16(s, numCapabilities);
@@ -400,6 +401,13 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 			WLog_Print(log, lvl, "%s [%s | %s] [caps:%" PRIu16 "] -> %" PRIuz, custom,
 			           rdpdr_component_string(component), rdpdr_packetid_string(packetid),
 			           numCapabilities, pos);
+			for (UINT16 x = 0; x < numCapabilities; x++)
+			{
+				RDPDR_CAPABILITY_HEADER header = { 0 };
+				const UINT error = rdpdr_read_capset_header(log, s, &header);
+				if (error == CHANNEL_RC_OK)
+					Stream_Seek(s, header.CapabilityLength);
+			}
 		}
 		break;
 		case PAKID_CORE_DEVICELIST_ANNOUNCE:
@@ -431,7 +439,7 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 
 				WLog_Print(log, lvl,
 				           "%s [announce][%" PRIu32 "] %s [0x%08" PRIx32
-				           "] %s [DeviceDataLength=%" PRIu32 "]",
+				           "] '%s' [DeviceDataLength=%" PRIu32 "]",
 				           custom, x, freerdp_rdpdr_dtyp_string(device.DeviceType), device.DeviceId,
 				           device.PreferredDosName, device.DeviceDataLength);
 			}
@@ -535,4 +543,50 @@ const char* rdpdr_cap_type_string(UINT16 capability)
 		default:
 			return "CAP_UNKNOWN";
 	}
+}
+
+UINT rdpdr_read_capset_header(wLog* log, wStream* s, RDPDR_CAPABILITY_HEADER* header)
+{
+	WINPR_ASSERT(header);
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 8))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT16(s, header->CapabilityType);   /* CapabilityType (2 bytes) */
+	Stream_Read_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */
+	Stream_Read_UINT32(s, header->Version);          /* Version (4 bytes) */
+
+	WLog_Print(log, WLOG_TRACE,
+	           "[%s] capability %s [0x%04" PRIx16 "] got version %" PRIu32 ", length %" PRIu16,
+	           __FUNCTION__, rdpdr_cap_type_string(header->CapabilityType), header->CapabilityType,
+	           header->Version, header->CapabilityLength);
+	if (header->CapabilityLength < 8)
+	{
+		WLog_Print(log, WLOG_ERROR, "[%s] capability %s got short length %" PRIu32, __FUNCTION__,
+		           rdpdr_cap_type_string(header->CapabilityType), header->CapabilityLength);
+		return ERROR_INVALID_DATA;
+	}
+	header->CapabilityLength -= 8;
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, header->CapabilityLength))
+		return ERROR_INVALID_DATA;
+	return CHANNEL_RC_OK;
+}
+
+UINT rdpdr_write_capset_header(wLog* log, wStream* s, const RDPDR_CAPABILITY_HEADER* header)
+{
+	WINPR_ASSERT(header);
+	WINPR_ASSERT(header->CapabilityLength >= 8);
+
+	if (!Stream_EnsureRemainingCapacity(s, header->CapabilityLength))
+	{
+		WLog_Print(log, WLOG_ERROR, "not enough data in stream!");
+		return ERROR_INVALID_DATA;
+	}
+
+	WLog_Print(log, WLOG_TRACE, "[%s] writing capability %s version %" PRIu32 ", length %" PRIu16,
+	           __FUNCTION__, rdpdr_cap_type_string(header->CapabilityType), header->Version,
+	           header->CapabilityLength);
+	Stream_Write_UINT16(s, header->CapabilityType);   /* CapabilityType (2 bytes) */
+	Stream_Write_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */
+	Stream_Write_UINT32(s, header->Version);          /* Version (4 bytes) */
+	return CHANNEL_RC_OK;
 }

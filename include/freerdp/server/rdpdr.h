@@ -42,13 +42,6 @@ typedef struct
 	UINT16 PacketId;
 } RDPDR_HEADER;
 
-typedef struct
-{
-	UINT16 CapabilityType;
-	UINT16 CapabilityLength;
-	UINT32 Version;
-} RDPDR_CAPABILITY_HEADER;
-
 #ifndef __MINGW32__
 typedef struct
 {
