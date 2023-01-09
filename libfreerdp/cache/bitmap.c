@@ -296,7 +296,7 @@ static int bitmap_cache_save_persistent(rdpBitmapCache* bitmapCache)
 	if (version != 2)
 		return 0; /* persistent bitmap cache already saved in egfx channel */
 
-	if (!settings->BitmapCachePersistEnabled)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
 		return 0;
 
 	if (!settings->BitmapCachePersistFile)

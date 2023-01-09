@@ -3825,7 +3825,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		CommandLineSwitchCase(arg, "persist-cache")
 		{
 			WLog_WARN(TAG, "/persist-cache is deprecated, use /cache:persist[:on|off] instead");
-			settings->BitmapCachePersistEnabled = enable;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled, enable))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 		CommandLineSwitchCase(arg, "persist-cache-file")
 		{
@@ -3834,7 +3835,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!freerdp_settings_set_string(settings, FreeRDP_BitmapCachePersistFile, arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 
-			settings->BitmapCachePersistEnabled = TRUE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled, TRUE))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 		CommandLineSwitchCase(arg, "offscreen-cache")
 		{

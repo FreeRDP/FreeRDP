@@ -1261,7 +1261,7 @@ state_run_t rdp_client_connect_finalize(rdpRdp* rdp)
 	 */
 
 	if (!rdp_finalize_is_flag_set(rdp, FINALIZE_DEACTIVATE_REACTIVATE) &&
-	    rdp->settings->BitmapCachePersistEnabled)
+	    freerdp_settings_get_bool(rdp->settings, FreeRDP_BitmapCachePersistEnabled))
 	{
 		if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_PERSISTENT_KEY_LIST))
 			return STATE_RUN_FAILED;
