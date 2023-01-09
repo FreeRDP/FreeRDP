@@ -251,7 +251,7 @@ static int persistent_cache_open_read(rdpPersistentCache* persistent)
 	long offset;
 
 	WINPR_ASSERT(persistent);
-	persistent->fp = fopen(persistent->filename, "rb");
+	persistent->fp = winpr_fopen(persistent->filename, "rb");
 
 	if (!persistent->fp)
 		return -1;
@@ -291,7 +291,7 @@ static int persistent_cache_open_write(rdpPersistentCache* persistent)
 {
 	WINPR_ASSERT(persistent);
 
-	persistent->fp = fopen(persistent->filename, "w+b");
+	persistent->fp = winpr_fopen(persistent->filename, "w+b");
 
 	if (!persistent->fp)
 		return -1;

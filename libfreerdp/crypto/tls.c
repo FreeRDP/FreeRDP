@@ -683,7 +683,7 @@ static void SSLCTX_keylog_cb(const SSL* ssl, const char* line)
 	dfile = SSL_get_ex_data(ssl, secrets_file_idx);
 	if (dfile)
 	{
-		FILE* f = fopen(dfile, "a+");
+		FILE* f = winpr_fopen(dfile, "a+");
 		fwrite(line, strlen(line), 1, f);
 		fwrite("\n", 1, 1, f);
 		fclose(f);
