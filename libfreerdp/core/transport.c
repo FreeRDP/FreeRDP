@@ -42,7 +42,7 @@
 #include <sys/socket.h>
 #endif /* _WIN32 */
 
-#ifdef HAVE_VALGRIND_MEMCHECK_H
+#ifdef FREERDP_HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
 #endif
 
@@ -635,7 +635,7 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 			continue;
 		}
 
-#ifdef HAVE_VALGRIND_MEMCHECK_H
+#ifdef FREERDP_HAVE_VALGRIND_MEMCHECK_H
 		VALGRIND_MAKE_MEM_DEFINED(data + read, bytes - read);
 #endif
 		read += status;

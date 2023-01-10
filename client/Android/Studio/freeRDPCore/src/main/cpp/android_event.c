@@ -19,10 +19,6 @@
 
 #define TAG CLIENT_TAG("android")
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #include "android_freerdp.h"
 #include "android_cliprdr.h"
 

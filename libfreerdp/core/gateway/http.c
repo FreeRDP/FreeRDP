@@ -31,7 +31,7 @@
 /* websocket need sha1 for Sec-Websocket-Accept */
 #include <winpr/crypto.h>
 
-#ifdef HAVE_VALGRIND_MEMCHECK_H
+#ifdef FREERDP_HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
 #endif
 
@@ -853,7 +853,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 			continue;
 		}
 
-#ifdef HAVE_VALGRIND_MEMCHECK_H
+#ifdef FREERDP_HAVE_VALGRIND_MEMCHECK_H
 		VALGRIND_MAKE_MEM_DEFINED(Stream_Pointer(response->data), status);
 #endif
 		Stream_Seek(response->data, (size_t)status);

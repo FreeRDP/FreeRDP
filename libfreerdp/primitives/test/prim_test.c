@@ -26,10 +26,6 @@
 #include <winpr/platform.h>
 #include <winpr/crypto.h>
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 primitives_t* generic = NULL;
 primitives_t* optimized = NULL;
 BOOL g_TestPrimitivesPerformance = FALSE;

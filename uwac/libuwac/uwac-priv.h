@@ -39,7 +39,7 @@
 #include "fullscreen-shell-unstable-v1-client-protocol.h"
 #endif
 
-#ifdef HAVE_PIXMAN_REGION
+#ifdef UWAC_HAVE_PIXMAN_REGION
 #include <pixman-1/pixman.h>
 #else
 #include <freerdp/codec/region.h>
@@ -218,7 +218,7 @@ struct uwac_buffer
 {
 	bool used;
 	bool dirty;
-#ifdef HAVE_PIXMAN_REGION
+#ifdef UWAC_HAVE_PIXMAN_REGION
 	pixman_region32_t damage;
 #else
 	REGION16 damage;

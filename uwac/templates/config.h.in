@@ -2,10 +2,10 @@
 #define UWAC_CONFIG_H
 
 /* Include files */
-#cmakedefine HAVE_TM_GMTOFF
-#cmakedefine HAVE_POLL_H
-#cmakedefine HAVE_SYSLOG_H
-#cmakedefine HAVE_JOURNALD_H
-#cmakedefine HAVE_PIXMAN_REGION
+#cmakedefine UWAC_HAVE_TM_GMTOFF
+#cmakedefine UWAC_HAVE_POLL_H
+#cmakedefine UWAC_HAVE_SYSLOG_H
+#cmakedefine UWAC_HAVE_JOURNALD_H
+#cmakedefine UWAC_HAVE_PIXMAN_REGION
 
 #endif /* UWAC_CONFIG_H */
