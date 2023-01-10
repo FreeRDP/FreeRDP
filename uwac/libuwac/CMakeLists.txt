@@ -78,7 +78,7 @@ if (WITH_LIBRARY_VERSIONING)
 endif()
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} PRIVATE ${WAYLAND_LIBS} ${XKBCOMMON_LIBS} ${EPOLLSHIM_LIBS})
-if (HAVE_PIXMAN_REGION)
+if (UWAC_HAVE_PIXMAN_REGION)
 	target_link_libraries(${MODULE_NAME} PRIVATE ${pixman_LINK_LIBRARIES})
 else()
 	target_link_libraries(${MODULE_NAME} PRIVATE freerdp)

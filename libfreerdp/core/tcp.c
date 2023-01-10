@@ -43,7 +43,7 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 
-#ifdef HAVE_POLL_H
+#ifdef WINPR_HAVE_POLL_H
 #include <poll.h>
 #else
 #include <time.h>
@@ -227,7 +227,7 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		{
 			int timeout = (int)arg1;
 			int sockfd = (int)ptr->socket;
-#ifdef HAVE_POLL_H
+#ifdef WINPR_HAVE_POLL_H
 			struct pollfd pollset;
 			pollset.fd = sockfd;
 			pollset.events = POLLIN;
@@ -262,7 +262,7 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		{
 			int timeout = (int)arg1;
 			int sockfd = (int)ptr->socket;
-#ifdef HAVE_POLL_H
+#ifdef WINPR_HAVE_POLL_H
 			struct pollfd pollset;
 			pollset.fd = sockfd;
 			pollset.events = POLLOUT;

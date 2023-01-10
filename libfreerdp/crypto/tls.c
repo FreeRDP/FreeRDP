@@ -36,11 +36,11 @@
 #include "../core/tcp.h"
 #include "opensslcompat.h"
 
-#ifdef HAVE_POLL_H
+#ifdef WINPR_HAVE_POLL_H
 #include <poll.h>
 #endif
 
-#ifdef HAVE_VALGRIND_MEMCHECK_H
+#ifdef FREERDP_HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
 #endif
 
@@ -195,7 +195,7 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 		}
 	}
 
-#ifdef HAVE_VALGRIND_MEMCHECK_H
+#ifdef FREERDP_HAVE_VALGRIND_MEMCHECK_H
 
 	if (status > 0)
 	{

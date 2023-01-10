@@ -184,7 +184,7 @@ static int create_tmpfile_cloexec(char* tmpname)
 	int fd;
 #ifdef USE_SHM
 	fd = shm_open(SHM_ANON, O_CREAT | O_RDWR, 0600);
-#elif defined(HAVE_MKOSTEMP)
+#elif defined(UWAC_HAVE_MKOSTEMP)
 	fd = mkostemp(tmpname, O_CLOEXEC);
 
 	if (fd >= 0)
@@ -267,7 +267,7 @@ int uwac_create_anonymous_file(off_t size)
 	if (fd < 0)
 		return -1;
 
-#ifdef HAVE_POSIX_FALLOCATE
+#ifdef UWAC_HAVE_POSIX_FALLOCATE
 	ret = posix_fallocate(fd, 0, size);
 
 	if (ret != 0)

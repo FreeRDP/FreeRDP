@@ -63,7 +63,7 @@ static void UwacWindowDestroyBuffers(UwacWindow* w)
 	for (i = 0; i < w->nbuffers; i++)
 	{
 		UwacBuffer* buffer = &w->buffers[i];
-#ifdef HAVE_PIXMAN_REGION
+#ifdef UWAC_HAVE_PIXMAN_REGION
 		pixman_region32_fini(&buffer->damage);
 #else
 		region16_uninit(&buffer->damage);
@@ -351,7 +351,7 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 	{
 		int bufferIdx = w->nbuffers + i;
 		UwacBuffer* buffer = &w->buffers[bufferIdx];
-#ifdef HAVE_PIXMAN_REGION
+#ifdef UWAC_HAVE_PIXMAN_REGION
 		pixman_region32_init(&buffer->damage);
 #else
 		region16_init(&buffer->damage);
@@ -654,7 +654,7 @@ static void frame_done_cb(void* data, struct wl_callback* callback, uint32_t tim
 
 static const struct wl_callback_listener frame_listener = { frame_done_cb };
 
-#ifdef HAVE_PIXMAN_REGION
+#ifdef UWAC_HAVE_PIXMAN_REGION
 static void damage_surface(UwacWindow* window, UwacBuffer* buffer)
 {
 	int nrects, i;
@@ -705,7 +705,7 @@ static void frame_done_cb(void* data, struct wl_callback* callback, uint32_t tim
 		event->window = window;
 }
 
-#ifdef HAVE_PIXMAN_REGION
+#ifdef UWAC_HAVE_PIXMAN_REGION
 UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y, uint32_t width,
                                    uint32_t height)
 {

@@ -18,7 +18,7 @@ write_basic_package_version_file(
 set(RDTK_BUILD_CONFIG_LIST "")
 GET_CMAKE_PROPERTY(res VARIABLES)
 FOREACH(var ${res})
-	IF (var MATCHES "^WITH_*|^BUILD_TESTING|^HAVE_*")
+    IF (var MATCHES "^WITH_*|^BUILD_TESTING|^RDTK_HAVE_*")
 		LIST(APPEND RDTK_BUILD_CONFIG_LIST "${var}=${${var}}")
 	ENDIF()
 ENDFOREACH()

@@ -27,10 +27,6 @@
 #include <string.h>
 #include <signal.h>
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
 #ifndef _WIN32
 #include <sys/time.h>
 #endif
