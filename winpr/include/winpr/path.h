@@ -25,9 +25,9 @@
 #include <winpr/error.h>
 #include <winpr/wtypes.h>
 
-//#define HAVE_PATHCCH_H	1
+//#define WINPR_HAVE_PATHCCH_H	1
 
-#ifdef HAVE_PATHCCH_H
+#ifdef WINPR_HAVE_PATHCCH_H
 
 #include <Pathcch.h>
 

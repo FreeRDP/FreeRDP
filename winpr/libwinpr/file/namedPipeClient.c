@@ -25,7 +25,7 @@
 #include <winpr/path.h>
 #include <winpr/file.h>
 
-#ifdef HAVE_UNISTD_H
+#ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 

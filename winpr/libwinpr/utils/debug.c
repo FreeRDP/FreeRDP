@@ -26,7 +26,7 @@
 #include <winpr/crt.h>
 #include <winpr/string.h>
 
-#if defined(HAVE_EXECINFO_H)
+#if defined(WINPR_HAVE_EXECINFO_H)
 #include <execinfo/debug.h>
 #endif
 
@@ -34,7 +34,7 @@
 #include <unwind/debug.h>
 #endif
 
-#if defined(HAVE_CORKSCREW)
+#if defined(WINPR_HAVE_CORKSCREW)
 #include <corkscrew/debug.h>
 #endif
 
@@ -92,9 +92,9 @@ void winpr_backtrace_free(void* buffer)
 
 #if defined(USE_UNWIND)
 	winpr_unwind_backtrace_free(buffer);
-#elif defined(HAVE_EXECINFO_H)
+#elif defined(WINPR_HAVE_EXECINFO_H)
 	winpr_execinfo_backtrace_free(buffer);
-#elif defined(HAVE_CORKSCREW)
+#elif defined(WINPR_HAVE_CORKSCREW)
 	winpr_corkscrew_backtrace_free(buffer);
 #elif defined(_WIN32) || defined(_WIN64)
 	winpr_win_backtrace_free(buffer);
@@ -107,9 +107,9 @@ void* winpr_backtrace(DWORD size)
 {
 #if defined(USE_UNWIND)
 	return winpr_unwind_backtrace(size);
-#elif defined(HAVE_EXECINFO_H)
+#elif defined(WINPR_HAVE_EXECINFO_H)
 	return winpr_execinfo_backtrace(size);
-#elif defined(HAVE_CORKSCREW)
+#elif defined(WINPR_HAVE_CORKSCREW)
 	return winpr_corkscrew_backtrace(size);
 #elif (defined(_WIN32) || defined(_WIN64)) && !defined(_UWP)
 	return winpr_win_backtrace(size);
@@ -132,9 +132,9 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 
 #if defined(USE_UNWIND)
 	return winpr_unwind_backtrace_symbols(buffer, used);
-#elif defined(HAVE_EXECINFO_H)
+#elif defined(WINPR_HAVE_EXECINFO_H)
 	return winpr_execinfo_backtrace_symbols(buffer, used);
-#elif defined(HAVE_CORKSCREW)
+#elif defined(WINPR_HAVE_CORKSCREW)
 	return winpr_corkscrew_backtrace_symbols(buffer, used);
 #elif (defined(_WIN32) || defined(_WIN64)) && !defined(_UWP)
 	return winpr_win_backtrace_symbols(buffer, used);
@@ -152,7 +152,7 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 		return;
 	}
 
-#if defined(HAVE_EXECINFO_H) && !defined(USE_UNWIND)
+#if defined(WINPR_HAVE_EXECINFO_H) && !defined(USE_UNWIND)
 	winpr_execinfo_backtrace_symbols_fd(buffer, fd);
 #elif !defined(ANDROID)
 	{

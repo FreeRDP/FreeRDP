@@ -24,13 +24,13 @@
 
 #include <winpr/winsock.h>
 
-#ifdef HAVE_UNISTD_H
+#ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_SYS_FILIO_H
+#ifdef WINPR_HAVE_SYS_FILIO_H
 #include <sys/filio.h>
 #endif
-#ifdef HAVE_SYS_SOCKIO_H
+#ifdef WINPR_HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
 

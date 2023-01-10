@@ -26,11 +26,11 @@
 #include <winpr/path.h>
 #include <winpr/file.h>
 
-#ifdef HAVE_UNISTD_H
+#ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_FCNTL_H
+#ifdef WINPR_HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
@@ -51,11 +51,11 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 
-#ifdef HAVE_AIO_H
-#undef HAVE_AIO_H /* disable for now, incomplete */
+#ifdef WINPR_HAVE_AIO_H
+#undef WINPR_HAVE_AIO_H /* disable for now, incomplete */
 #endif
 
-#ifdef HAVE_AIO_H
+#ifdef WINPR_HAVE_AIO_H
 #include <aio.h>
 #endif
 
@@ -202,7 +202,7 @@ static void _HandleCreatorsInit()
 	ArrayList_Append(_HandleCreators, GetFileHandleCreator());
 }
 
-#ifdef HAVE_AIO_H
+#ifdef WINPR_HAVE_AIO_H
 
 static BOOL g_AioSignalHandlerInstalled = FALSE;
 
@@ -227,7 +227,7 @@ int InstallAioSignalHandler()
 	return 0;
 }
 
-#endif /* HAVE_AIO_H */
+#endif /* WINPR_HAVE_AIO_H */
 
 HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                    LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,

@@ -26,7 +26,7 @@
 
 #ifndef _WIN32
 
-#ifdef HAVE_POLL_H
+#ifdef WINPR_HAVE_POLL_H
 #include <poll.h>
 #else
 #include <sys/select.h>
@@ -40,7 +40,7 @@ typedef struct
 
 struct winpr_poll_set
 {
-#ifdef HAVE_POLL_H
+#ifdef WINPR_HAVE_POLL_H
 	struct pollfd* pollset;
 	struct pollfd staticSet[MAXIMUM_WAIT_OBJECTS];
 	BOOL isStatic;

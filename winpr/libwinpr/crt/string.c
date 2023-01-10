@@ -694,7 +694,7 @@ INT64 GetLine(char** lineptr, size_t* size, FILE* stream)
 #endif
 }
 
-#if !defined(HAVE_STRNDUP)
+#if !defined(WINPR_HAVE_STRNDUP)
 char* strndup(const char* src, size_t n)
 {
 	char* dst = calloc(n + 1, sizeof(char));

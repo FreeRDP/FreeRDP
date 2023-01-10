@@ -39,7 +39,7 @@
 #pragma clang diagnostic ignored "-Wreserved-id-macro"
 #endif
 
-#ifdef HAVE_UNISTD_H
+#ifdef WINPR_HAVE_UNISTD_H
 #ifndef _XOPEN_SOURCE
 #define _XOPEN_SOURCE 500
 #endif

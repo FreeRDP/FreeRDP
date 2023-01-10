@@ -40,7 +40,7 @@ set(LODEPNG_SRCS
 	lodepng/lodepng.c
 	lodepng/lodepng.h)
 
-if (HAVE_SYSLOG_H)
+if (WINPR_HAVE_SYSLOG_H)
 	set(SYSLOG_SRCS
 		wlog/SyslogAppender.c
 		wlog/SyslogAppender.h
@@ -107,13 +107,13 @@ set(SRCS
 if (ANDROID)
 	list(APPEND SRCS android.h android.c)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-    if (NOT HAVE_UNWIND_H)
+    if (NOT WINPR_HAVE_UNWIND_H)
         message("[backtrace] android NDK without unwind.h, falling back to corkscrew")
-        set(HAVE_CORKSCREW 1)
+        set(WINPR_HAVE_CORKSCREW 1)
     endif()
 endif()
 
-if (HAVE_CORKSCREW)
+if (WINPR_HAVE_CORKSCREW)
     list(APPEND SRCS
         corkscrew/debug.c
         corkscrew/debug.h)
@@ -125,13 +125,13 @@ if (WIN32)
         windows/debug.h)
 endif()
 
-if (HAVE_EXECINFO_H)
+if (WINPR_HAVE_EXECINFO_H)
     list(APPEND SRCS
         execinfo/debug.c
         execinfo/debug.h)
 endif()
 
-if (HAVE_UNWIND_H)
+if (WINPR_HAVE_UNWIND_H)
     option(USE_UNWIND "Use unwind.h to generate backtraces" ON)
     if (USE_UNWIND)
         add_definitions(-DUSE_UNWIND)

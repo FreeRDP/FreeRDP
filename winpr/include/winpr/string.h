@@ -423,7 +423,7 @@ extern "C"
 
 	WINPR_API INT64 GetLine(char** lineptr, size_t* size, FILE* stream);
 
-#if !defined(HAVE_STRNDUP)
+#if !defined(WINPR_HAVE_STRNDUP)
 	WINPR_API char* strndup(const char* s, size_t n);
 #endif
 

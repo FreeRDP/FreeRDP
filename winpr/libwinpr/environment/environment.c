@@ -33,7 +33,7 @@
 #include <winpr/crt.h>
 #include <winpr/platform.h>
 
-#ifdef HAVE_UNISTD_H
+#ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 

@@ -20,7 +20,7 @@
 
 #include <winpr/config.h>
 
-#ifdef HAVE_UNISTD_H
+#ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
@@ -118,7 +118,7 @@ int _mach_safe_clock_gettime(int clk_id, struct timespec* t)
  * http://code.google.com/p/android/issues/detail?id=7807
  * http://aleksmaus.blogspot.ca/2011/12/missing-pthreadmutextimedlock-on.html
  */
-#if !defined(HAVE_PTHREAD_MUTEX_TIMEDLOCK)
+#if !defined(WINPR_HAVE_PTHREAD_MUTEX_TIMEDLOCK)
 #include <pthread.h>
 
 static long long ts_difftime(const struct timespec* o, const struct timespec* n)
@@ -458,7 +458,7 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 			status = pollset_poll(&pollset, waitTime);
 			if (status < 0)
 			{
-#ifdef HAVE_POLL_H
+#ifdef WINPR_HAVE_POLL_H
 				WLog_ERR(TAG, "poll() handle %" PRIu32 " (%" PRIu32 ") failure [%d] %s", index,
 				         nCount, errno, strerror(errno));
 #else
