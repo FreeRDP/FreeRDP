@@ -401,7 +401,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 		goto out_error;
 
 	memset(tz, 0, sizeof(TIME_ZONE_INFORMATION));
-#ifdef HAVE_TM_GMTOFF
+#ifdef WINPR_HAVE_TM_GMTOFF
 	{
 		long bias = -(local_time->tm_gmtoff / 60L);
 

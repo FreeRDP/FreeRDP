@@ -24,11 +24,11 @@
 
 #include <winpr/file.h>
 
-#ifdef HAVE_UNISTD_H
+#ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_FCNTL_H
+#ifdef WINPR_HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 

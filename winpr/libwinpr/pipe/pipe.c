@@ -28,7 +28,7 @@
 
 #include <winpr/pipe.h>
 
-#ifdef HAVE_UNISTD_H
+#ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
@@ -43,11 +43,11 @@
 #include <winpr/assert.h>
 #include <unistd.h>
 
-#ifdef HAVE_SYS_AIO_H
-#undef HAVE_SYS_AIO_H /* disable for now, incomplete */
+#ifdef WINPR_HAVE_SYS_AIO_H
+#undef WINPR_HAVE_SYS_AIO_H /* disable for now, incomplete */
 #endif
 
-#ifdef HAVE_SYS_AIO_H
+#ifdef WINPR_HAVE_SYS_AIO_H
 #include <aio.h>
 #endif
 
@@ -306,7 +306,7 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			return FALSE;
 
 		pipe->lpOverlapped = lpOverlapped;
-#ifdef HAVE_SYS_AIO_H
+#ifdef WINPR_HAVE_SYS_AIO_H
 		{
 			int aio_status;
 			struct aiocb cb = { 0 };
@@ -394,7 +394,7 @@ BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 			return FALSE;
 
 		pipe->lpOverlapped = lpOverlapped;
-#ifdef HAVE_SYS_AIO_H
+#ifdef WINPR_HAVE_SYS_AIO_H
 		{
 			struct aiocb cb = { 0 };
 

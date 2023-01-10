@@ -55,11 +55,11 @@
 
 #include <winpr/crt.h>
 
-#ifdef HAVE_UNISTD_H
+#ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#if defined(HAVE_GETPWUID_R)
+#if defined(WINPR_HAVE_GETPWUID_R)
 #include <sys/types.h>
 #include <pwd.h>
 #include <unistd.h>
@@ -204,7 +204,7 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 	switch (NameFormat)
 	{
 		case NameSamCompatible:
-#if defined(HAVE_GETPWUID_R)
+#if defined(WINPR_HAVE_GETPWUID_R)
 		{
 			int rc;
 			struct passwd pwd = { 0 };
@@ -217,7 +217,7 @@ BOOL GetUserNameExA(EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG 
 			if (result == NULL)
 				return FALSE;
 		}
-#elif defined(HAVE_GETLOGIN_R)
+#elif defined(WINPR_HAVE_GETLOGIN_R)
 			if (getlogin_r(lpNameBuffer, *nSize) != 0)
 				return FALSE;
 #else

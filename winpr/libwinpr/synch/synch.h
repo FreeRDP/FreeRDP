@@ -65,7 +65,7 @@ struct winpr_semaphore
 };
 typedef struct winpr_semaphore WINPR_SEMAPHORE;
 
-#ifdef HAVE_SYS_TIMERFD_H
+#ifdef WINPR_HAVE_SYS_TIMERFD_H
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>

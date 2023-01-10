@@ -2,27 +2,27 @@
 #define WINPR_CONFIG_H
 
 /* Include files */
-#cmakedefine HAVE_FCNTL_H
-#cmakedefine HAVE_UNISTD_H
-#cmakedefine HAVE_INTTYPES_H
-#cmakedefine HAVE_STDBOOL_H
-#cmakedefine HAVE_AIO_H
-#cmakedefine HAVE_SYS_FILIO_H
-#cmakedefine HAVE_SYS_SELECT_H
-#cmakedefine HAVE_SYS_SOCKIO_H
-#cmakedefine HAVE_SYS_EVENTFD_H
-#cmakedefine HAVE_SYS_TIMERFD_H
-#cmakedefine HAVE_TM_GMTOFF
-#cmakedefine HAVE_AIO_H
-#cmakedefine HAVE_POLL_H
-#cmakedefine HAVE_SYSLOG_H
-#cmakedefine HAVE_JOURNALD_H
-#cmakedefine HAVE_PTHREAD_MUTEX_TIMEDLOCK
-#cmakedefine HAVE_EXECINFO_H
-#cmakedefine HAVE_GETLOGIN_R
-#cmakedefine HAVE_GETPWUID_R
-#cmakedefine HAVE_STRNDUP
-#cmakedefine HAVE_UNWIND_H
+#cmakedefine WINPR_HAVE_FCNTL_H
+#cmakedefine WINPR_HAVE_UNISTD_H
+#cmakedefine WINPR_HAVE_INTTYPES_H
+#cmakedefine WINPR_HAVE_STDBOOL_H
+#cmakedefine WINPR_HAVE_AIO_H
+#cmakedefine WINPR_HAVE_SYS_FILIO_H
+#cmakedefine WINPR_HAVE_SYS_SELECT_H
+#cmakedefine WINPR_HAVE_SYS_SOCKIO_H
+#cmakedefine WINPR_HAVE_SYS_EVENTFD_H
+#cmakedefine WINPR_HAVE_SYS_TIMERFD_H
+#cmakedefine WINPR_HAVE_TM_GMTOFF
+#cmakedefine WINPR_HAVE_AIO_H
+#cmakedefine WINPR_HAVE_POLL_H
+#cmakedefine WINPR_HAVE_SYSLOG_H
+#cmakedefine WINPR_HAVE_JOURNALD_H
+#cmakedefine WINPR_HAVE_PTHREAD_MUTEX_TIMEDLOCK
+#cmakedefine WINPR_HAVE_EXECINFO_H
+#cmakedefine WINPR_HAVE_GETLOGIN_R
+#cmakedefine WINPR_HAVE_GETPWUID_R
+#cmakedefine WINPR_HAVE_STRNDUP
+#cmakedefine WINPR_HAVE_UNWIND_H
 
 #cmakedefine WITH_EVENTFD_READ_WRITE
 

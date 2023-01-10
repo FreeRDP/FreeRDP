@@ -145,12 +145,12 @@ static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, P
 		else if (_stricmp(env, "BINARY") == 0)
 			logAppenderType = WLOG_APPENDER_BINARY;
 
-#ifdef HAVE_SYSLOG_H
+#ifdef WINPR_HAVE_SYSLOG_H
 		else if (_stricmp(env, "SYSLOG") == 0)
 			logAppenderType = WLOG_APPENDER_SYSLOG;
 
-#endif /* HAVE_SYSLOG_H */
-#ifdef HAVE_JOURNALD_H
+#endif /* WINPR_HAVE_SYSLOG_H */
+#ifdef WINPR_HAVE_JOURNALD_H
 		else if (_stricmp(env, "JOURNALD") == 0)
 			logAppenderType = WLOG_APPENDER_JOURNALD;
 

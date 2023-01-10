@@ -31,11 +31,11 @@
 
 #include "synch.h"
 
-#ifdef HAVE_UNISTD_H
+#ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_SYS_EVENTFD_H
+#ifdef WINPR_HAVE_SYS_EVENTFD_H
 #include <sys/eventfd.h>
 #endif
 
@@ -77,7 +77,7 @@ static void dump_event(WINPR_EVENT* event, size_t index)
 }
 #endif /* WITH_DEBUG_EVENTS */
 
-#ifdef HAVE_SYS_EVENTFD_H
+#ifdef WINPR_HAVE_SYS_EVENTFD_H
 #if !defined(WITH_EVENTFD_READ_WRITE)
 static int eventfd_read(int fd, eventfd_t* value)
 {
@@ -91,7 +91,7 @@ static int eventfd_write(int fd, eventfd_t value)
 #endif
 #endif
 
-#ifndef HAVE_SYS_EVENTFD_H
+#ifndef WINPR_HAVE_SYS_EVENTFD_H
 static BOOL set_non_blocking_fd(int fd)
 {
 	int flags;
@@ -101,11 +101,11 @@ static BOOL set_non_blocking_fd(int fd)
 
 	return fcntl(fd, F_SETFL, flags | O_NONBLOCK) >= 0;
 }
-#endif /* !HAVE_SYS_EVENTFD_H */
+#endif /* !WINPR_HAVE_SYS_EVENTFD_H */
 
 BOOL winpr_event_init(WINPR_EVENT_IMPL* event)
 {
-#ifdef HAVE_SYS_EVENTFD_H
+#ifdef WINPR_HAVE_SYS_EVENTFD_H
 	event->fds[1] = -1;
 	event->fds[0] = eventfd(0, EFD_NONBLOCK);
 
@@ -130,7 +130,7 @@ out_error:
 void winpr_event_init_from_fd(WINPR_EVENT_IMPL* event, int fd)
 {
 	event->fds[0] = fd;
-#ifndef HAVE_SYS_EVENTFD_H
+#ifndef WINPR_HAVE_SYS_EVENTFD_H
 	event->fds[1] = fd;
 #endif
 }
@@ -140,7 +140,7 @@ BOOL winpr_event_set(WINPR_EVENT_IMPL* event)
 	int ret;
 	do
 	{
-#ifdef HAVE_SYS_EVENTFD_H
+#ifdef WINPR_HAVE_SYS_EVENTFD_H
 		eventfd_t value = 1;
 		ret = eventfd_write(event->fds[0], value);
 #else
@@ -158,7 +158,7 @@ BOOL winpr_event_reset(WINPR_EVENT_IMPL* event)
 	{
 		do
 		{
-#ifdef HAVE_SYS_EVENTFD_H
+#ifdef WINPR_HAVE_SYS_EVENTFD_H
 			eventfd_t value = 1;
 			ret = eventfd_read(event->fds[0], &value);
 #else
