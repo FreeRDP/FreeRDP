@@ -392,7 +392,6 @@ static void rdpdr_dump_packet(wLog* log, DWORD lvl, wStream* s, const char* cust
 		case PAKID_CORE_CLIENT_CAPABILITY:
 		case PAKID_CORE_SERVER_CAPABILITY:
 		{
-			size_t offset = 8;
 			UINT16 numCapabilities = 0;
 			if (pos >= 6)
 				Stream_Read_UINT16(s, numCapabilities);
