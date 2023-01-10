@@ -66,7 +66,7 @@ jobs:
 
     - run: |
        sudo apt update
-       sudo apt install libxrandr-dev libxinerama-dev libusb-1.0-0-dev xserver-xorg-dev libswscale-dev libswresample-dev libavutil-dev libavcodec-dev libcups2-dev libpulse-dev libasound2-dev libpcsclite-dev xsltproc libxcb-cursor-dev libxcursor-dev libcairo2-dev libfaac-dev libfaad-dev libjpeg-dev libgsm1-dev ninja-build libxfixes-dev libxkbcommon-dev libwayland-dev libpam0g-dev libxdamage-dev libxcb-damage0-dev ccache libxtst-dev libfuse-dev libsystemd-dev libcairo2-dev libsoxr-dev
+       sudo apt install libxrandr-dev libxinerama-dev libusb-1.0-0-dev xserver-xorg-dev libswscale-dev libswresample-dev libavutil-dev libavcodec-dev libcups2-dev libpulse-dev libasound2-dev libpcsclite-dev xsltproc libxcb-cursor-dev libxcursor-dev libcairo2-dev libfaac-dev libfaad-dev libjpeg-dev libgsm1-dev ninja-build libxfixes-dev libxkbcommon-dev libwayland-dev libpam0g-dev libxdamage-dev libxcb-damage0-dev ccache libxtst-dev libfuse-dev libsystemd-dev libcairo2-dev libsoxr-dev libsdl2-dev
        mkdir ci-build
        cd ci-build
        cmake -GNinja ../ci/cmake-preloads/config-linux-all.txt ..
