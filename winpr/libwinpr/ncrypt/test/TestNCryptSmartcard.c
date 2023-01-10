@@ -83,7 +83,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 
 		if (ConvertWCharToUtf8(name->pszName, providerNameStr, ARRAYSIZE(providerNameStr)) < 0)
 			continue;
-		printf("provider %ld: %s\n", j, providerNameStr);
+		printf("provider %" PRIuz ": %s\n", j, providerNameStr);
 
 		status = NCryptOpenStorageProvider(&provider, name->pszName, 0);
 		if (status != ERROR_SUCCESS)
@@ -101,7 +101,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 			if (ConvertWCharToUtf8(keyName->pszName, keyNameStr, ARRAYSIZE(keyNameStr)) < 0)
 				continue;
 
-			printf("\tkey %ld: %s\n", i, keyNameStr);
+			printf("\tkey %" PRIuz ": %s\n", i, keyNameStr);
 			status = NCryptOpenKey(provider, &phKey, keyName->pszName, keyName->dwLegacyKeySpec,
 			                       dwFlags);
 			if (status != ERROR_SUCCESS)
