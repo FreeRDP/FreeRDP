@@ -1052,6 +1052,14 @@ int main(int argc, char* argv[])
 	int status;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
 	rdpContext* context;
+
+	WLog_WARN(TAG, "[experimental] The SDL client is currently experimental!");
+	WLog_WARN(TAG, " If problems occur please check https://github.com/FreeRDP/FreeRDP/issues for "
+	               "know issues or create a new one!");
+	WLog_WARN(TAG, " Developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
+	               "- dont hesitate to ask some questions. (replies might take some time depending "
+	               "on your timezone)");
+
 	RdpClientEntry(&clientEntryPoints);
 	context = freerdp_client_context_new(&clientEntryPoints);
 
