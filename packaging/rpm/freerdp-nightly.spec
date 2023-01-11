@@ -49,6 +49,7 @@ BuildRequires: krb5-devel
 
 # (Open)Suse
 %if %{defined suse_version}
+BuildRequires: libSDL2-devel
 BuildRequires: docbook-xsl-stylesheets
 BuildRequires: libxslt-tools
 BuildRequires: pkg-config
@@ -66,6 +67,7 @@ BuildRequires: libswresample-devel
 %endif
 # fedora 21+
 %if 0%{?fedora} >= 21 || 0%{?rhel} >= 7
+BuildRequires: SDL2-devel
 BuildRequires: docbook-style-xsl
 BuildRequires: libxslt
 BuildRequires: pkgconfig

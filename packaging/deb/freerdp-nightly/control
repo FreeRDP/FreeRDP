@@ -43,6 +43,8 @@ Build-Depends:
  libpam0g-dev,
  uuid-dev, 
  libxml2-dev,
+ libsdl2-2.0-0,
+ libsdl2-dev,
 Standards-Version: 3.9.5
 Homepage: http://www.freerdp.com/
 Vcs-Browser: http://github.com/FreeRDP/FreeRDP.git
