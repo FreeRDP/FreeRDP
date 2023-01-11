@@ -48,16 +48,15 @@ BOOL NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 {
 	LPWSTR PasswordW = NULL;
 	BOOL result = FALSE;
+	int PasswordLengthW = 0;
 
 	if (!NtHash)
 		return FALSE;
 
-	if (!(PasswordW = (LPWSTR)calloc(PasswordLength, 2)))
-		return FALSE;
-
-	MultiByteToWideChar(CP_ACP, 0, Password, PasswordLength, PasswordW, PasswordLength);
-
-	if (!NTOWFv1W(PasswordW, PasswordLength * 2, NtHash))
+	PasswordLengthW = ConvertToUnicode(CP_ACP, 0, Password, PasswordLength, &PasswordW, 0);
+	if (PasswordLengthW < 0)
+		goto out_fail;
+	if (!NTOWFv1W(PasswordW, PasswordLengthW * sizeof(WCHAR), NtHash))
 		goto out_fail;
 
 	result = TRUE;
@@ -94,23 +93,26 @@ BOOL NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User, UINT32 UserLeng
 	LPWSTR DomainW = NULL;
 	LPWSTR PasswordW = NULL;
 	BOOL result = FALSE;
+	int UserLengthW = 0;
+	int DomainLengthW = 0;
+	int PasswordLengthW = 0;
 
 	if (!NtHash)
 		return FALSE;
 
-	UserW = (LPWSTR)calloc(UserLength, 2);
-	DomainW = (LPWSTR)calloc(DomainLength, 2);
-	PasswordW = (LPWSTR)calloc(PasswordLength, 2);
+	UserLengthW = ConvertToUnicode(CP_ACP, 0, User, UserLength, &UserW, 0);
+	DomainLengthW = ConvertToUnicode(CP_ACP, 0, Domain, DomainLength, &DomainW, 0);
+	PasswordLengthW = ConvertToUnicode(CP_ACP, 0, Password, PasswordLength, &PasswordW, 0);
 
-	if (!UserW || !DomainW || !PasswordW)
+	if (UserLengthW < 0)
+		goto out_fail;
+	if (DomainLengthW < 0)
+		goto out_fail;
+	if (PasswordLengthW < 0)
 		goto out_fail;
 
-	MultiByteToWideChar(CP_ACP, 0, User, UserLength, UserW, UserLength);
-	MultiByteToWideChar(CP_ACP, 0, Domain, DomainLength, DomainW, DomainLength);
-	MultiByteToWideChar(CP_ACP, 0, Password, PasswordLength, PasswordW, PasswordLength);
-
-	if (!NTOWFv2W(PasswordW, PasswordLength * 2, UserW, UserLength * 2, DomainW, DomainLength * 2,
-	              NtHash))
+	if (!NTOWFv2W(PasswordW, PasswordLengthW * sizeof(WCHAR), UserW, UserLengthW * sizeof(WCHAR),
+	              DomainW, DomainLengthW * sizeof(WCHAR), NtHash))
 		goto out_fail;
 
 	result = TRUE;
@@ -160,20 +162,21 @@ BOOL NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength, LPSTR Domai
 	LPWSTR UserW = NULL;
 	LPWSTR DomainW = NULL;
 	BOOL result = FALSE;
+	int UserLengthW = 0;
+	int DomainLengthW = 0;
 
 	if (!NtHash)
 		return FALSE;
 
-	UserW = (LPWSTR)calloc(UserLength, 2);
-	DomainW = (LPWSTR)calloc(DomainLength, 2);
-
-	if (!UserW || !DomainW)
+	UserLengthW = ConvertToUnicode(CP_ACP, 0, User, UserLength, &UserW, 0);
+	DomainLengthW = ConvertToUnicode(CP_ACP, 0, Domain, DomainLength, &DomainW, 0);
+	if (UserLengthW < 0)
+		goto out_fail;
+	if (DomainLengthW < 0)
 		goto out_fail;
 
-	MultiByteToWideChar(CP_ACP, 0, User, UserLength, UserW, UserLength);
-	MultiByteToWideChar(CP_ACP, 0, Domain, DomainLength, DomainW, DomainLength);
-
-	if (!NTOWFv2FromHashW(NtHashV1, UserW, UserLength * 2, DomainW, DomainLength * 2, NtHash))
+	if (!NTOWFv2FromHashW(NtHashV1, UserW, UserLength * sizeof(WCHAR), DomainW,
+	                      DomainLength * sizeof(WCHAR), NtHash))
 		goto out_fail;
 
 	result = TRUE;
