@@ -21,6 +21,8 @@
 
 #include <iostream>
 
+#include <freerdp/api.h>
+#include <freerdp/scancode.h>
 #include <freerdp/server/proxy/proxy_modules_api.h>
 
 #define TAG MODULE_TAG("demo")
@@ -323,6 +325,42 @@ static BOOL demo_server_peer_logon(proxyPlugin* plugin, proxyData* pdata, void* 
 	return TRUE;
 }
 
+static BOOL demo_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdata, void* arg)
+{
+	auto data = static_cast<proxyChannelToInterceptData*>(arg);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(data);
+
+	WLog_INFO(TAG, "%s", __FUNCTION__);
+	return TRUE;
+}
+
+static BOOL demo_static_channel_intercept_list(proxyPlugin* plugin, proxyData* pdata, void* arg)
+{
+	auto data = static_cast<proxyChannelToInterceptData*>(arg);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(data);
+
+	WLog_INFO(TAG, "%s", __FUNCTION__);
+	return TRUE;
+}
+
+static BOOL demo_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, void* arg)
+{
+	auto data = static_cast<proxyDynChannelInterceptData*>(arg);
+
+	WINPR_ASSERT(plugin);
+	WINPR_ASSERT(pdata);
+	WINPR_ASSERT(data);
+
+	WLog_INFO(TAG, "%s", __FUNCTION__);
+	return TRUE;
+}
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -363,6 +401,11 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 	plugin.DynamicChannelCreate = demo_dynamic_channel_create;
 	plugin.ServerFetchTargetAddr = demo_server_fetch_target_addr;
 	plugin.ServerPeerLogon = demo_server_peer_logon;
+
+	plugin.StaticChannelToIntercept = demo_static_channel_intercept_list;
+	plugin.DynChannelToIntercept = demo_dyn_channel_intercept_list;
+	plugin.DynChannelIntercept = demo_dyn_channel_intercept;
+
 	plugin.userdata = userdata;
 
 	custom = new (struct demo_custom_data);
