@@ -33,25 +33,21 @@ typedef struct _ChannelStateTracker ChannelStateTracker;
 typedef PfChannelResult (*ChannelTrackerPeekFn)(ChannelStateTracker* tracker, BOOL first,
                                                 BOOL lastPacket);
 
-/** @brief a tracker for channel packets */
-struct _ChannelStateTracker
-{
-	pServerStaticChannelContext* channel;
-	ChannelTrackerMode mode;
-	wStream* currentPacket;
-	size_t currentPacketReceived;
-	size_t currentPacketSize;
-	size_t currentPacketFragments;
-
-	ChannelTrackerPeekFn peekFn;
-	void* trackerData;
-	proxyData* pdata;
-};
-
 ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel,
                                         ChannelTrackerPeekFn fn, void* data);
 
 void channelTracker_free(ChannelStateTracker* t);
+
+BOOL channelTracker_setMode(ChannelStateTracker* tracker, ChannelTrackerMode mode);
+ChannelTrackerMode channelTracker_getMode(ChannelStateTracker* tracker);
+
+BOOL channelTracker_setPData(ChannelStateTracker* tracker, proxyData* pdata);
+proxyData* channelTracker_getPData(ChannelStateTracker* tracker);
+
+BOOL channelTracker_setCustomData(ChannelStateTracker* tracker, void* data);
+void* channelTracker_getCustomData(ChannelStateTracker* tracker);
+
+wStream* channelTracker_getCurrentPacket(ChannelStateTracker* tracker);
 
 PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* xdata, size_t xsize,
                                       UINT32 flags, size_t totalSize);
