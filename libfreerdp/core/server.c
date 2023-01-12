@@ -33,6 +33,7 @@
 #include <freerdp/constants.h>
 #include <freerdp/server/channels.h>
 #include <freerdp/channels/drdynvc.h>
+#include <freerdp/utils/drdynvc.h>
 
 #include "rdp.h"
 
@@ -318,7 +319,8 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 
 			length -= value;
 
-			DEBUG_DVC("Cmd %d ChannelId %" PRIu32 " length %" PRIu32 "", Cmd, ChannelId, length);
+			DEBUG_DVC("Cmd %s ChannelId %" PRIu32 " length %" PRIu32 "",
+			          drdynvc_get_packet_type(Cmd), ChannelId, length);
 			dvc = wts_get_dvc_channel_by_id(channel->vcm, ChannelId);
 			if (!dvc)
 			{

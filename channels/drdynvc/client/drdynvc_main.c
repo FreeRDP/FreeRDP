@@ -26,6 +26,7 @@
 #include <winpr/interlocked.h>
 
 #include <freerdp/channels/drdynvc.h>
+#include <freerdp/utils/drdynvc.h>
 
 #include "drdynvc_main.h"
 
@@ -1398,8 +1399,8 @@ static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 Thread
 	Cmd = (value & 0xf0) >> 4;
 	Sp = (value & 0x0c) >> 2;
 	cbChId = (value & 0x03) >> 0;
-	WLog_Print(drdynvc->log, WLOG_TRACE,
-	           "order_recv: Cmd=0x02" PRIx8 ", Sp=%" PRIu8 " cbChId=%" PRIu8, Cmd, Sp, cbChId);
+	WLog_Print(drdynvc->log, WLOG_TRACE, "order_recv: Cmd=%s, Sp=%" PRIu8 " cbChId=%" PRIu8,
+	           drdynvc_get_packet_type(Cmd), Sp, cbChId);
 
 	switch (Cmd)
 	{
