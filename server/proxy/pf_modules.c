@@ -292,6 +292,18 @@ static BOOL pf_modules_ArrayList_ForEachFkt(void* data, size_t index, va_list ap
 			result = IFCALLRESULT(TRUE, plugin->ServerPeerLogon, plugin, pdata, param);
 			break;
 
+		case FILTER_TYPE_INTERCEPT_CHANNEL:
+			result = IFCALLRESULT(TRUE, plugin->DynChannelIntercept, plugin, pdata, param);
+			break;
+
+		case FILTER_TYPE_DYN_INTERCEPT_LIST:
+			result = IFCALLRESULT(TRUE, plugin->DynChannelToIntercept, plugin, pdata, param);
+			break;
+
+		case FILTER_TYPE_STATIC_INTERCEPT_LIST:
+			result = IFCALLRESULT(TRUE, plugin->StaticChannelToIntercept, plugin, pdata, param);
+			break;
+
 		case FILTER_LAST:
 		default:
 			WLog_ERR(TAG, "invalid filter called");

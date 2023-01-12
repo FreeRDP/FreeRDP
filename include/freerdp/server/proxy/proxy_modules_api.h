@@ -6,6 +6,8 @@
  * Copyright 2019 Idan Freiberg <speidy@gmail.com>
  * Copyright 2021 Armin Novak <anovak@thincast.com>
  * Copyright 2021 Thincast Technologies GmbH
+ * Copyright 2023 Armin Novak <anovak@thincast.com>
+ * Copyright 2023 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,114 +25,130 @@
 #ifndef FREERDP_SERVER_PROXY_MODULES_API_H
 #define FREERDP_SERVER_PROXY_MODULES_API_H
 
-#include <freerdp/freerdp.h>
 #include <winpr/winpr.h>
+#include <winpr/stream.h>
 #include <winpr/sspi.h>
+
+#include <freerdp/server/proxy/proxy_types.h>
 
 #define MODULE_TAG(module) "proxy.modules." module
 
-typedef struct proxy_data proxyData;
-typedef struct proxy_module proxyModule;
-typedef struct proxy_plugin proxyPlugin;
-typedef struct proxy_plugins_manager proxyPluginsManager;
-
-/* hook callback. should return TRUE on success or FALSE on error. */
-typedef BOOL (*proxyHookFn)(proxyPlugin*, proxyData*, void*);
-
-/*
- * Filter callback:
- * 	It MUST return TRUE if the related event should be proxied,
- * 	or FALSE if it should be ignored.
- */
-typedef BOOL (*proxyFilterFn)(proxyPlugin*, proxyData*, void*);
-
-/* describes a plugin: name, description and callbacks to execute.
- *
- * This is public API, so always add new fields at the end of the struct to keep
- * some backward compatibility.
- */
-struct proxy_plugin
+#ifdef __cplusplus
+extern "C"
 {
-	const char* name;        /* 0: unique module name */
-	const char* description; /* 1: module description */
+#endif
 
-	UINT64 reserved1[32 - 2]; /* 2-32 */
+	typedef struct proxy_data proxyData;
+	typedef struct proxy_module proxyModule;
+	typedef struct proxy_plugin proxyPlugin;
+	typedef struct proxy_plugins_manager proxyPluginsManager;
 
-	BOOL (*PluginUnload)(proxyPlugin* plugin); /* 33 */
-	UINT64 reserved2[66 - 34];                 /* 34 - 65 */
+	/* hook callback. should return TRUE on success or FALSE on error. */
+	typedef BOOL (*proxyHookFn)(proxyPlugin*, proxyData*, void*);
 
-	/* proxy hooks. a module can set these function pointers to register hooks */
-	proxyHookFn ClientInitConnect;     /* 66 custom=rdpContext* */
-	proxyHookFn ClientUninitConnect;   /* 67 custom=rdpContext* */
-	proxyHookFn ClientPreConnect;      /* 68 custom=rdpContext* */
-	proxyHookFn ClientPostConnect;     /* 69 custom=rdpContext* */
-	proxyHookFn ClientPostDisconnect;  /* 70 custom=rdpContext* */
-	proxyHookFn ClientX509Certificate; /* 71 custom=rdpContext* */
-	proxyHookFn ClientLoginFailure;    /* 72 custom=rdpContext* */
-	proxyHookFn ClientEndPaint;        /* 73 custom=rdpContext* */
-	proxyHookFn ClientRedirect;        /* 74 custom=rdpContext* */
-	proxyHookFn ClientLoadChannels;    /* 75 custom=rdpContext* */
-	UINT64 reserved3[96 - 76];         /* 76-95 */
+	/*
+	 * Filter callback:
+	 * 	It MUST return TRUE if the related event should be proxied,
+	 * 	or FALSE if it should be ignored.
+	 */
+	typedef BOOL (*proxyFilterFn)(proxyPlugin*, proxyData*, void*);
 
-	proxyHookFn ServerPostConnect;       /* 96  custom=freerdp_peer* */
-	proxyHookFn ServerPeerActivate;      /* 97  custom=freerdp_peer* */
-	proxyHookFn ServerChannelsInit;      /* 98  custom=freerdp_peer* */
-	proxyHookFn ServerChannelsFree;      /* 99  custom=freerdp_peer* */
-	proxyHookFn ServerSessionEnd;        /* 100 custom=freerdp_peer* */
-	proxyHookFn ServerSessionInitialize; /* 101 custom=freerdp_peer* */
-	proxyHookFn ServerSessionStarted;    /* 102 custom=freerdp_peer* */
+	/* describes a plugin: name, description and callbacks to execute.
+	 *
+	 * This is public API, so always add new fields at the end of the struct to keep
+	 * some backward compatibility.
+	 */
+	struct proxy_plugin
+	{
+		const char* name;        /* 0: unique module name */
+		const char* description; /* 1: module description */
 
-	UINT64 reserved4[128 - 103]; /* 103 - 127 */
+		UINT64 reserved1[32 - 2]; /* 2-32 */
 
-	/* proxy filters. a module can set these function pointers to register filters */
-	proxyFilterFn KeyboardEvent;         /* 128 */
-	proxyFilterFn MouseEvent;            /* 129 */
-	proxyFilterFn ClientChannelData;     /* 130 passthrough channels data */
-	proxyFilterFn ServerChannelData;     /* 131 passthrough channels data */
-	proxyFilterFn DynamicChannelCreate;  /* 132 passthrough drdynvc channel create data */
-	proxyFilterFn ServerFetchTargetAddr; /* 133 */
-	proxyFilterFn ServerPeerLogon;       /* 134 */
-	proxyFilterFn ChannelCreate;         /* 135 passthrough drdynvc channel create data */
-	proxyFilterFn UnicodeEvent;          /* 136 */
-	proxyFilterFn MouseExEvent;          /* 137 */
-	UINT64 reserved5[160 - 138];         /* 138-159 */
+		BOOL (*PluginUnload)(proxyPlugin* plugin); /* 33 */
+		UINT64 reserved2[66 - 34];                 /* 34 - 65 */
 
-	/* Runtime data fields */
-	proxyPluginsManager* mgr; /* 160 */ /** Set during plugin registration */
-	void* userdata; /* 161 */           /** Custom data provided with RegisterPlugin, memory managed
-	                              outside of plugin. */
-	void* custom; /* 162 */ /** Custom configuration data, must be allocated in RegisterPlugin and
-	                  freed in PluginUnload */
+		/* proxy hooks. a module can set these function pointers to register hooks */
+		proxyHookFn ClientInitConnect;     /* 66 custom=rdpContext* */
+		proxyHookFn ClientUninitConnect;   /* 67 custom=rdpContext* */
+		proxyHookFn ClientPreConnect;      /* 68 custom=rdpContext* */
+		proxyHookFn ClientPostConnect;     /* 69 custom=rdpContext* */
+		proxyHookFn ClientPostDisconnect;  /* 70 custom=rdpContext* */
+		proxyHookFn ClientX509Certificate; /* 71 custom=rdpContext* */
+		proxyHookFn ClientLoginFailure;    /* 72 custom=rdpContext* */
+		proxyHookFn ClientEndPaint;        /* 73 custom=rdpContext* */
+		proxyHookFn ClientRedirect;        /* 74 custom=rdpContext* */
+		proxyHookFn ClientLoadChannels;    /* 75 custom=rdpContext* */
+		UINT64 reserved3[96 - 76];         /* 76-95 */
 
-	UINT64 reserved6[192 - 163]; /* 163-191 Add some filler data to allow for new callbacks or
-	                              * fields without breaking API */
-};
+		proxyHookFn ServerPostConnect;       /* 96  custom=freerdp_peer* */
+		proxyHookFn ServerPeerActivate;      /* 97  custom=freerdp_peer* */
+		proxyHookFn ServerChannelsInit;      /* 98  custom=freerdp_peer* */
+		proxyHookFn ServerChannelsFree;      /* 99  custom=freerdp_peer* */
+		proxyHookFn ServerSessionEnd;        /* 100 custom=freerdp_peer* */
+		proxyHookFn ServerSessionInitialize; /* 101 custom=freerdp_peer* */
+		proxyHookFn ServerSessionStarted;    /* 102 custom=freerdp_peer* */
 
-/*
- * Main API for use by external modules.
- * Supports:
- *  - Registering a plugin.
- *  - Setting/getting plugin's per-session specific data.
- *  - Aborting a session.
- */
-struct proxy_plugins_manager
-{
-	/* 0 used for registering a fresh new proxy plugin. */
-	BOOL (*RegisterPlugin)(struct proxy_plugins_manager* mgr, const proxyPlugin* plugin);
+		UINT64 reserved4[128 - 103]; /* 103 - 127 */
 
-	/* 1 used for setting plugin's per-session info. */
-	BOOL (*SetPluginData)(struct proxy_plugins_manager* mgr, const char*, proxyData*, void*);
+		/* proxy filters. a module can set these function pointers to register filters */
+		proxyFilterFn KeyboardEvent;         /* 128 */
+		proxyFilterFn MouseEvent;            /* 129 */
+		proxyFilterFn ClientChannelData;     /* 130 passthrough channels data */
+		proxyFilterFn ServerChannelData;     /* 131 passthrough channels data */
+		proxyFilterFn DynamicChannelCreate;  /* 132 passthrough drdynvc channel create data */
+		proxyFilterFn ServerFetchTargetAddr; /* 133 */
+		proxyFilterFn ServerPeerLogon;       /* 134 */
+		proxyFilterFn ChannelCreate;         /* 135 passthrough drdynvc channel create data */
+		proxyFilterFn UnicodeEvent;          /* 136 */
+		proxyFilterFn MouseExEvent;          /* 137 */
 
-	/* 2 used for getting plugin's per-session info. */
-	void* (*GetPluginData)(struct proxy_plugins_manager* mgr, const char*, proxyData*);
+		/* proxy dynamic channel filters:
+		 *
+		 * - a function that returns the list of channels to intercept
+		 * - a function to call with the data received
+		 */
+		proxyFilterFn DynChannelToIntercept;    /* 138 */
+		proxyFilterFn DynChannelIntercept;      /* 139 */
+		proxyFilterFn StaticChannelToIntercept; /* 140 */
+		UINT64 reserved5[160 - 141];            /* 141-159 */
 
-	/* 3 used for aborting a session. */
-	void (*AbortConnect)(struct proxy_plugins_manager* mgr, proxyData*);
+		/* Runtime data fields */
+		proxyPluginsManager* mgr; /* 160 */ /** Set during plugin registration */
+		void* userdata; /* 161 */ /** Custom data provided with RegisterPlugin, memory managed
+		                    outside of plugin. */
+		void* custom; /* 162 */   /** Custom configuration data, must be allocated in RegisterPlugin
+		                    and   freed in PluginUnload */
 
-	UINT64 reserved[128 - 4]; /* 4-127 reserved fields */
-};
+		UINT64 reserved6[192 - 163]; /* 163-191 Add some filler data to allow for new callbacks or
+		                              * fields without breaking API */
+	};
 
-typedef BOOL (*proxyModuleEntryPoint)(proxyPluginsManager* plugins_manager, void* userdata);
+	/*
+	 * Main API for use by external modules.
+	 * Supports:
+	 *  - Registering a plugin.
+	 *  - Setting/getting plugin's per-session specific data.
+	 *  - Aborting a session.
+	 */
+	struct proxy_plugins_manager
+	{
+		/* 0 used for registering a fresh new proxy plugin. */
+		BOOL (*RegisterPlugin)(struct proxy_plugins_manager* mgr, const proxyPlugin* plugin);
+
+		/* 1 used for setting plugin's per-session info. */
+		BOOL (*SetPluginData)(struct proxy_plugins_manager* mgr, const char*, proxyData*, void*);
+
+		/* 2 used for getting plugin's per-session info. */
+		void* (*GetPluginData)(struct proxy_plugins_manager* mgr, const char*, proxyData*);
+
+		/* 3 used for aborting a session. */
+		void (*AbortConnect)(struct proxy_plugins_manager* mgr, proxyData*);
+
+		UINT64 reserved[128 - 4]; /* 4-127 reserved fields */
+	};
+
+	typedef BOOL (*proxyModuleEntryPoint)(proxyPluginsManager* plugins_manager, void* userdata);
 
 /* filter events parameters */
 #define WINPR_PACK_PUSH
@@ -174,14 +192,6 @@ typedef struct
 	UINT32 flags;
 } proxyChannelDataEventInfo;
 
-typedef enum
-{
-	PROXY_FETCH_TARGET_METHOD_DEFAULT,
-	PROXY_FETCH_TARGET_METHOD_CONFIG,
-	PROXY_FETCH_TARGET_METHOD_LOAD_BALANCE_INFO,
-	PROXY_FETCH_TARGET_USE_CUSTOM_ADDR
-} ProxyFetchTargetMethod;
-
 typedef struct
 {
 	/* out values */
@@ -200,7 +210,32 @@ typedef struct server_peer_logon
 	const SEC_WINNT_AUTH_IDENTITY* identity;
 	BOOL automatic;
 } proxyServerPeerLogon;
+
+typedef struct dyn_channel_intercept_data
+{
+	const char* name;
+	UINT32 channelId;
+	wStream* data;
+	BOOL isBackData;
+	BOOL first;
+	BOOL last;
+	BOOL rewritten;
+	size_t packetSize;
+	PfChannelResult result;
+} proxyDynChannelInterceptData;
+
+typedef struct dyn_channel_to_intercept_data
+{
+	const char* name;
+	UINT32 channelId;
+	BOOL intercept;
+} proxyChannelToInterceptData;
+
 #define WINPR_PACK_POP
 #include <winpr/pack.h>
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_SERVER_PROXY_MODULES_API_H */

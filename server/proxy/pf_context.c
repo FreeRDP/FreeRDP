@@ -29,6 +29,8 @@
 
 #include "pf_client.h"
 #include "pf_utils.h"
+#include "proxy_modules.h"
+
 #include <freerdp/server/proxy/proxy_context.h>
 
 #include "channels/pf_channel_rdpdr.h"
@@ -65,7 +67,14 @@ pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const 
 		return NULL;
 	}
 
-	ret->channelMode = pf_utils_get_channel_mode(ps->pdata->config, name);
+	proxyChannelToInterceptData channel = { .name = name, .channelId = id, .intercept = FALSE };
+
+	if (pf_modules_run_filter(ps->pdata->module, FILTER_TYPE_STATIC_INTERCEPT_LIST, ps->pdata,
+	                          &channel) &&
+	    channel.intercept)
+		ret->channelMode = PF_UTILS_CHANNEL_INTERCEPT;
+	else
+		ret->channelMode = pf_utils_get_channel_mode(ps->pdata->config, name);
 	return ret;
 }
 

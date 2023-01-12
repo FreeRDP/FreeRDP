@@ -87,6 +87,35 @@ typedef enum
 	DYNCVC_READ_INCOMPLETE /*!< missing bytes to read the complete packet */
 } DynvcReadResult;
 
+static PfChannelResult data_cb(pServerContext* ps, pServerDynamicChannelContext* channel,
+                               BOOL isBackData, ChannelStateTracker* tracker, BOOL firstPacket,
+                               BOOL lastPacket)
+{
+	WINPR_ASSERT(ps);
+	WINPR_ASSERT(channel);
+	WINPR_ASSERT(tracker);
+	WINPR_ASSERT(ps->pdata);
+
+	wStream* currentPacket = channelTracker_getCurrentPacket(tracker);
+	proxyDynChannelInterceptData dyn = { .name = channel->channelName,
+		                                 .channelId = channel->channelId,
+		                                 .data = currentPacket,
+		                                 .isBackData = isBackData,
+		                                 .first = firstPacket,
+		                                 .last = lastPacket,
+		                                 .rewritten = FALSE,
+		                                 .packetSize = channelTracker_getCurrentPacketSize(tracker),
+		                                 .result = PF_CHANNEL_RESULT_ERROR };
+	Stream_SealLength(dyn.data);
+	if (!pf_modules_run_filter(ps->pdata->module, FILTER_TYPE_INTERCEPT_CHANNEL, ps->pdata, &dyn))
+		return PF_CHANNEL_RESULT_ERROR;
+
+	channelTracker_setCurrentPacketSize(tracker, dyn.packetSize);
+	if (dyn.rewritten)
+		return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, !isBackData);
+	return dyn.result;
+}
+
 static pServerDynamicChannelContext* DynamicChannelContext_new(pServerContext* ps, const char* name,
                                                                UINT32 id)
 {
@@ -106,15 +135,24 @@ static pServerDynamicChannelContext* DynamicChannelContext_new(pServerContext* p
 		return NULL;
 	}
 
-	ret->channelMode = pf_utils_get_channel_mode(ps->pdata->config, name);
+	ret->frontTracker.dataCallback = data_cb;
+	ret->backTracker.dataCallback = data_cb;
+
+	proxyChannelToInterceptData dyn = { .name = name, .channelId = id, .intercept = FALSE };
+	if (pf_modules_run_filter(ps->pdata->module, FILTER_TYPE_DYN_INTERCEPT_LIST, ps->pdata, &dyn) &&
+	    dyn.intercept)
+		ret->channelMode = PF_UTILS_CHANNEL_INTERCEPT;
+	else
+		ret->channelMode = pf_utils_get_channel_mode(ps->pdata->config, name);
 	ret->openStatus = CHANNEL_OPENSTATE_OPENED;
 	ret->packetReassembly = (ret->channelMode == PF_UTILS_CHANNEL_INTERCEPT);
 
 	return ret;
 }
 
-static void DynamicChannelContext_free(pServerDynamicChannelContext* c)
+static void DynamicChannelContext_free(void* ptr)
 {
+	pServerDynamicChannelContext* c = (pServerDynamicChannelContext*)ptr;
 	if (!c)
 		return;
 
@@ -137,8 +175,10 @@ static UINT32 ChannelId_Hash(const void* key)
 	return *v;
 }
 
-static BOOL ChannelId_Compare(const UINT32* v1, const UINT32* v2)
+static BOOL ChannelId_Compare(const void* objA, const void* objB)
 {
+	const UINT32* v1 = objA;
+	const UINT32* v2 = objB;
 	return (*v1 == *v2);
 }
 
@@ -557,10 +597,10 @@ static DynChannelContext* DynChannelContext_new(proxyData* pdata,
 		goto fail;
 
 	obj = HashTable_KeyObject(dyn->channels);
-	obj->fnObjectEquals = (OBJECT_EQUALS_FN)ChannelId_Compare;
+	obj->fnObjectEquals = ChannelId_Compare;
 
 	obj = HashTable_ValueObject(dyn->channels);
-	obj->fnObjectFree = (OBJECT_FREE_FN)DynamicChannelContext_free;
+	obj->fnObjectFree = DynamicChannelContext_free;
 
 	return dyn;
 
@@ -575,9 +615,11 @@ static PfChannelResult pf_dynvc_back_data(proxyData* pdata,
                                           size_t totalSize)
 {
 	WINPR_ASSERT(channel);
+
 	DynChannelContext* dyn = (DynChannelContext*)channel->context;
 	WINPR_UNUSED(pdata);
 	WINPR_ASSERT(dyn);
+
 	return channelTracker_update(dyn->backTracker, xdata, xsize, flags, totalSize);
 }
 
@@ -587,9 +629,11 @@ static PfChannelResult pf_dynvc_front_data(proxyData* pdata,
                                            size_t totalSize)
 {
 	WINPR_ASSERT(channel);
+
 	DynChannelContext* dyn = (DynChannelContext*)channel->context;
 	WINPR_UNUSED(pdata);
 	WINPR_ASSERT(dyn);
+
 	return channelTracker_update(dyn->frontTracker, xdata, xsize, flags, totalSize);
 }
 
