@@ -28,6 +28,7 @@ set(${MODULE_PREFIX}_SRCS
 	signal.c
     string.c
     gfx.c
+    drdynvc.c
 	smartcard_operations.c
 	smartcard_pack.c
 	smartcard_call.c
