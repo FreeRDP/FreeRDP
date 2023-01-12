@@ -1035,16 +1035,19 @@ void pf_server_free(proxyServer* server)
 
 	pf_server_stop(server);
 
-	while (ArrayList_Count(server->peer_list) > 0)
+	if (server->peer_list)
 	{
-		/* pf_server_stop triggers the threads to shut down.
-		 * loop here until all of them stopped.
-		 *
-		 * This must be done before ArrayList_Free otherwise the thread removal
-		 * in pf_server_handle_peer will deadlock due to both threads trying to
-		 * lock the list.
-		 */
-		Sleep(100);
+		while (ArrayList_Count(server->peer_list) > 0)
+		{
+			/* pf_server_stop triggers the threads to shut down.
+			 * loop here until all of them stopped.
+			 *
+			 * This must be done before ArrayList_Free otherwise the thread removal
+			 * in pf_server_handle_peer will deadlock due to both threads trying to
+			 * lock the list.
+			 */
+			Sleep(100);
+		}
 	}
 	ArrayList_Free(server->peer_list);
 	freerdp_listener_free(server->listener);
