@@ -39,6 +39,9 @@ typedef enum
 	FILTER_TYPE_SERVER_PEER_LOGON,                     /* proxyServerPeerLogon */
 	FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_CREATE,     /* proxyChannelDataEventInfo */
 
+	FILTER_TYPE_STATIC_INTERCEPT_LIST, /* proxyChannelToInterceptData */
+	FILTER_TYPE_DYN_INTERCEPT_LIST,    /* proxyChannelToInterceptData */
+	FILTER_TYPE_INTERCEPT_CHANNEL,     /* proxyDynChannelInterceptData */
 	FILTER_LAST
 } PF_FILTER_TYPE;
 
