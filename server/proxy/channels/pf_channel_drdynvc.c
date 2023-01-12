@@ -209,20 +209,22 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 
 	WINPR_ASSERT(tracker);
 
-	DynChannelContext* dynChannelContext = (DynChannelContext*)tracker->trackerData;
+	DynChannelContext* dynChannelContext =
+	    (DynChannelContext*)channelTracker_getCustomData(tracker);
 	WINPR_ASSERT(dynChannelContext);
 
 	BOOL isBackData = (tracker == dynChannelContext->backTracker);
 	DynChannelTrackerState* trackerState = NULL;
 
 	UINT32 flags = lastPacket ? CHANNEL_FLAG_LAST : 0;
-	proxyData* pdata = tracker->pdata;
+	proxyData* pdata = channelTracker_getPData(tracker);
 	WINPR_ASSERT(pdata);
 
 	const char* direction = isBackData ? "B->F" : "F->B";
 
-	s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(tracker->currentPacket),
-	                           Stream_GetPosition(tracker->currentPacket));
+	wStream* currentPacket = channelTracker_getCurrentPacket(tracker);
+	s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(currentPacket),
+	                           Stream_GetPosition(currentPacket));
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return PF_CHANNEL_RESULT_ERROR;
 
@@ -276,7 +278,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			{
 				/* we've not found the target channel, so we drop this chunk, plus all the rest of
 				 * the packet */
-				tracker->mode = CHANNEL_TRACKER_DROP;
+				channelTracker_setMode(tracker, CHANNEL_TRACKER_DROP);
 				return PF_CHANNEL_RESULT_DROP;
 			}
 		}
@@ -303,7 +305,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 		case CAPABILITY_REQUEST_PDU:
 			WLog_DBG(TAG, "DynvcTracker: %s CAPABILITY_%s", direction,
 			         isBackData ? "REQUEST" : "RESPONSE");
-			tracker->mode = CHANNEL_TRACKER_PASS;
+			channelTracker_setMode(tracker, CHANNEL_TRACKER_PASS);
 			return PF_CHANNEL_RESULT_PASS;
 
 		case CREATE_REQUEST_PDU:
@@ -325,12 +327,13 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 				if ((len == 0) || (len == nameLen))
 					return PF_CHANNEL_RESULT_ERROR;
 
+				wStream* currentPacket = channelTracker_getCurrentPacket(tracker);
 				dev.channel_id = dynChannelId;
 				dev.channel_name = name;
 				dev.data = Stream_Buffer(s);
-				dev.data_len = Stream_GetPosition(tracker->currentPacket);
+				dev.data_len = Stream_GetPosition(currentPacket);
 				dev.flags = flags;
-				dev.total_size = Stream_GetPosition(tracker->currentPacket);
+				dev.total_size = Stream_GetPosition(currentPacket);
 
 				if (!pf_modules_run_filter(pdata->module,
 				                           FILTER_TYPE_CLIENT_PASSTHROUGH_DYN_CHANNEL_CREATE, pdata,
@@ -388,21 +391,21 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 
 			WLog_DBG(TAG, "DynvcTracker(%s): %s Close request on channel", dynChannel->channelName,
 			         direction);
-			tracker->mode = CHANNEL_TRACKER_PASS;
+			channelTracker_setMode(tracker, CHANNEL_TRACKER_PASS);
 			dynChannel->openStatus = CHANNEL_OPENSTATE_CLOSED;
 			return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, !isBackData);
 
 		case SOFT_SYNC_REQUEST_PDU:
 			/* just pass then as is for now */
 			WLog_DBG(TAG, "SOFT_SYNC_REQUEST_PDU");
-			tracker->mode = CHANNEL_TRACKER_PASS;
+			channelTracker_setMode(tracker, CHANNEL_TRACKER_PASS);
 			/*TODO: return pf_treat_softsync_req(pdata, s);*/
 			return PF_CHANNEL_RESULT_PASS;
 
 		case SOFT_SYNC_RESPONSE_PDU:
 			/* just pass then as is for now */
 			WLog_DBG(TAG, "SOFT_SYNC_RESPONSE_PDU");
-			tracker->mode = CHANNEL_TRACKER_PASS;
+			channelTracker_setMode(tracker, CHANNEL_TRACKER_PASS);
 			return PF_CHANNEL_RESULT_PASS;
 
 		case DATA_FIRST_PDU:
@@ -414,7 +417,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 		case DATA_FIRST_COMPRESSED_PDU:
 		case DATA_COMPRESSED_PDU:
 			WLog_DBG(TAG, "TODO: compressed data packets, pass them as is for now");
-			tracker->mode = CHANNEL_TRACKER_PASS;
+			channelTracker_setMode(tracker, CHANNEL_TRACKER_PASS);
 			return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, !isBackData);
 
 		default:
@@ -505,7 +508,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			result = channelTracker_flushCurrent(tracker, firstPacket, lastPacket, !isBackData);
 			break;
 		case PF_UTILS_CHANNEL_BLOCK:
-			tracker->mode = CHANNEL_TRACKER_DROP;
+			channelTracker_setMode(tracker, CHANNEL_TRACKER_DROP);
 			result = PF_CHANNEL_RESULT_DROP;
 			break;
 		case PF_UTILS_CHANNEL_INTERCEPT:
@@ -563,12 +566,14 @@ static DynChannelContext* DynChannelContext_new(proxyData* pdata,
 	dyn->backTracker = channelTracker_new(channel, DynvcTrackerPeekFn, dyn);
 	if (!dyn->backTracker)
 		goto fail;
-	dyn->backTracker->pdata = pdata;
+	if (!channelTracker_setPData(dyn->backTracker, pdata))
+		goto fail;
 
 	dyn->frontTracker = channelTracker_new(channel, DynvcTrackerPeekFn, dyn);
 	if (!dyn->frontTracker)
 		goto fail;
-	dyn->frontTracker->pdata = pdata;
+	if (!channelTracker_setPData(dyn->frontTracker, pdata))
+		goto fail;
 
 	dyn->channels = HashTable_New(FALSE);
 	if (!dyn->channels)

@@ -25,6 +25,21 @@
 
 #define TAG PROXY_TAG("channel")
 
+/** @brief a tracker for channel packets */
+struct _ChannelStateTracker
+{
+	pServerStaticChannelContext* channel;
+	ChannelTrackerMode mode;
+	wStream* currentPacket;
+	size_t currentPacketReceived;
+	size_t currentPacketSize;
+	size_t currentPacketFragments;
+
+	ChannelTrackerPeekFn peekFn;
+	void* trackerData;
+	proxyData* pdata;
+};
+
 ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel,
                                         ChannelTrackerPeekFn fn, void* data)
 {
@@ -36,14 +51,19 @@ ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel,
 
 	ret->channel = channel;
 	ret->peekFn = fn;
-	ret->trackerData = data;
+
+	if (!channelTracker_setCustomData(ret, data))
+		goto fail;
+
 	ret->currentPacket = Stream_New(NULL, 10 * 1024);
 	if (!ret->currentPacket)
-	{
-		channelTracker_free(ret);
-		return NULL;
-	}
+		goto fail;
+
 	return ret;
+
+fail:
+	channelTracker_free(ret);
+	return NULL;
 }
 
 PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* xdata, size_t xsize,
@@ -255,4 +275,49 @@ BOOL pf_channel_setup_generic(pServerStaticChannelContext* channel)
 	channel->onBackData = pf_channel_generic_back_data;
 	channel->onFrontData = pf_channel_generic_front_data;
 	return TRUE;
+}
+
+BOOL channelTracker_setMode(ChannelStateTracker* tracker, ChannelTrackerMode mode)
+{
+	WINPR_ASSERT(tracker);
+	tracker->mode = mode;
+	return TRUE;
+}
+
+ChannelTrackerMode channelTracker_getMode(ChannelStateTracker* tracker)
+{
+	WINPR_ASSERT(tracker);
+	return tracker->mode;
+}
+
+BOOL channelTracker_setPData(ChannelStateTracker* tracker, proxyData* pdata)
+{
+	WINPR_ASSERT(tracker);
+	tracker->pdata = pdata;
+	return TRUE;
+}
+
+proxyData* channelTracker_getPData(ChannelStateTracker* tracker)
+{
+	WINPR_ASSERT(tracker);
+	return tracker->pdata;
+}
+
+wStream* channelTracker_getCurrentPacket(ChannelStateTracker* tracker)
+{
+	WINPR_ASSERT(tracker);
+	return tracker->currentPacket;
+}
+
+BOOL channelTracker_setCustomData(ChannelStateTracker* tracker, void* data)
+{
+	WINPR_ASSERT(tracker);
+	tracker->trackerData = data;
+	return TRUE;
+}
+
+void* channelTracker_getCustomData(ChannelStateTracker* tracker)
+{
+	WINPR_ASSERT(tracker);
+	return tracker->trackerData;
 }
