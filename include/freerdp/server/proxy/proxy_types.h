@@ -27,7 +27,7 @@ typedef enum
 	PF_UTILS_CHANNEL_NOT_HANDLED, /*!< channel not handled */
 	PF_UTILS_CHANNEL_BLOCK,       /*!< block and drop traffic on this channel */
 	PF_UTILS_CHANNEL_PASSTHROUGH, /*!< pass traffic from this channel */
-	PF_UTILS_CHANNEL_INTERCEPT,   /*!< inspect traffic from this channel */
+	PF_UTILS_CHANNEL_INTERCEPT    /*!< inspect traffic from this channel */
 } pf_utils_channel_mode;
 
 /** @brief result of a channel treatment */

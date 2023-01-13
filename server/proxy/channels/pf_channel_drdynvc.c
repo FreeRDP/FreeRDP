@@ -236,9 +236,12 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 
 	const char* direction = isBackData ? "B->F" : "F->B";
 
-	wStream* currentPacket = channelTracker_getCurrentPacket(tracker);
-	s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(currentPacket),
-	                           Stream_GetPosition(currentPacket));
+	{
+		wStream* currentPacket = channelTracker_getCurrentPacket(tracker);
+		s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(currentPacket),
+		                           Stream_GetPosition(currentPacket));
+	}
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return PF_CHANNEL_RESULT_ERROR;
 

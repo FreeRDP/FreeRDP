@@ -107,10 +107,12 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 		tracker->currentPacketFragments = 0;
 	}
 
-	const size_t currentPacketSize = channelTracker_getCurrentPacketSize(tracker);
-	if (tracker->currentPacketReceived + xsize > currentPacketSize)
-		WLog_INFO(TAG, "cumulated size is bigger (%" PRIuz ") than total size (%" PRIuz ")",
-		          tracker->currentPacketReceived + xsize, currentPacketSize);
+	{
+		const size_t currentPacketSize = channelTracker_getCurrentPacketSize(tracker);
+		if (tracker->currentPacketReceived + xsize > currentPacketSize)
+			WLog_INFO(TAG, "cumulated size is bigger (%" PRIuz ") than total size (%" PRIuz ")",
+			          tracker->currentPacketReceived + xsize, currentPacketSize);
+	}
 
 	tracker->currentPacketReceived += xsize;
 	tracker->currentPacketFragments++;
@@ -346,4 +348,5 @@ BOOL channelTracker_setCurrentPacketSize(ChannelStateTracker* tracker, size_t si
 {
 	WINPR_ASSERT(tracker);
 	tracker->currentPacketSize = size;
+	return TRUE;
 }
