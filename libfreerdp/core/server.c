@@ -272,11 +272,11 @@ static void wts_read_drdynvc_close_response(rdpPeerChannel* channel)
 static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 {
 	UINT32 length;
-	int value;
-	int Cmd;
-	int Sp;
-	int cbChId;
-	UINT32 ChannelId;
+	UINT8 value;
+	UINT8 Cmd;
+	UINT8 Sp;
+	UINT8 cbChId;
+	UINT32 ChannelId = 0;
 	rdpPeerChannel* dvc = NULL;
 
 	WINPR_ASSERT(channel);

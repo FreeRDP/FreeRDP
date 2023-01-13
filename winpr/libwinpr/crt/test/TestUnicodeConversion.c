@@ -51,7 +51,7 @@ static BOOL check_short_buffer(const char* prefix, int rc, size_t buffersize,
 	if (buffersize > len)
 	{
 		fprintf(stderr,
-		        "%s length does not match buffersize: %" PRIdz " != %" PRId32
+		        "%s length does not match buffersize: %" PRId32 " != %" PRIuz
 		        ",but is large enough to hold result\n",
 		        prefix, rc, buffersize);
 		return FALSE;
@@ -61,7 +61,7 @@ static BOOL check_short_buffer(const char* prefix, int rc, size_t buffersize,
 	{
 
 		fprintf(stderr,
-		        "%s length does not match buffersize: %" PRIdz " != %" PRId32
+		        "%s length does not match buffersize: %" PRId32 " != %" PRIuz
 		        ", unexpected GetLastError() 0x08%" PRIx32 "\n",
 		        prefix, rc, buffersize, err);
 		return FALSE;

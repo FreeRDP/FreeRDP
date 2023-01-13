@@ -206,6 +206,6 @@ extern "C"
 	FREERDP_API BOOL pf_config_plugin(proxyPluginsManager* plugins_manager, void* userdata);
 
 #ifdef __cplusplus
-};
+}
 #endif
 #endif /* FREERDP_SERVER_PROXY_CONFIG_H */

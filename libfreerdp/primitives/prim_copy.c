@@ -155,6 +155,7 @@ void primitives_init_copy(primitives_t* prims)
 	prims->copy = (__copy_t)(prims->copy_8u);
 }
 
+#if defined(WITH_SSE2) || defined(WITH_NEON)
 void primitives_init_copy_opt(primitives_t* prims)
 {
 	generic = primitives_get_generic();
@@ -174,3 +175,4 @@ void primitives_init_copy_opt(primitives_t* prims)
 	/* This is just an alias with void* parameters */
 	prims->copy = (__copy_t)(prims->copy_8u);
 }
+#endif
