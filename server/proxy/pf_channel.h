@@ -49,6 +49,9 @@ void* channelTracker_getCustomData(ChannelStateTracker* tracker);
 
 wStream* channelTracker_getCurrentPacket(ChannelStateTracker* tracker);
 
+size_t channelTracker_getCurrentPacketSize(ChannelStateTracker* tracker);
+BOOL channelTracker_setCurrentPacketSize(ChannelStateTracker* tracker, size_t size);
+
 PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* xdata, size_t xsize,
                                       UINT32 flags, size_t totalSize);
 
