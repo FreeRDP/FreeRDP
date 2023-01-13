@@ -67,8 +67,9 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 
 		if (settings->WindowTitle && settings->WindowTitle[0])
 		{
-			winTitle = [[NSString alloc] initWithCString:settings->WindowTitle
-			                                    encoding:NSUTF8StringEncoding];
+			winTitle = [[NSString alloc]
+			    initWithFormat:@"%@", [NSString stringWithCString:settings->WindowTitle
+			                                             encoding:NSUTF8StringEncoding]];
 		}
 		else
 		{
@@ -76,7 +77,7 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 			    initWithFormat:@"%@:%u",
 			                   [NSString stringWithCString:settings->ServerHostname
 			                                      encoding:NSUTF8StringEncoding],
-			                   settings -> ServerPort];
+			                   settings->ServerPort];
 		}
 
 		[window setTitle:winTitle];
@@ -132,7 +133,7 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 		if ([str isEqualToString:@"-NSDocumentRevisionsDebugMode"])
 			continue;
 
-		length = (int)([str length] + 1);
+		length = (int)([str lengthOfBytesUsingEncoding:NSUTF8StringEncoding] + 1);
 		cptr = (char *)malloc(length);
 		sprintf_s(cptr, length, "%s", [str UTF8String]);
 		context->argv[i++] = cptr;
