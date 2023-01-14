@@ -29,7 +29,6 @@ typedef struct rdp_nla rdpNla;
 #include <winpr/stream.h>
 #include <winpr/crypto.h>
 
-#include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/ber.h>
 #include <freerdp/crypto/der.h>
 #include <freerdp/crypto/crypto.h>

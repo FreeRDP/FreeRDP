@@ -23,7 +23,8 @@
 #include <winpr/stream.h>
 
 #include <freerdp/api.h>
-#include <freerdp/crypto/tls.h>
+
+#include "../../crypto/tls.h"
 
 #define HTTP_STATUS_CONTINUE 100
 #define HTTP_STATUS_SWITCH_PROTOCOLS 101

@@ -32,7 +32,7 @@
 #include <freerdp/utils/ringbuffer.h>
 
 #include <freerdp/log.h>
-#include <freerdp/crypto/tls.h>
+#include "../crypto/tls.h"
 #include "../core/tcp.h"
 #include "opensslcompat.h"
 

@@ -43,7 +43,6 @@ typedef enum
 #include <winpr/collections.h>
 
 #include <freerdp/api.h>
-#include <freerdp/crypto/tls.h>
 
 #include <time.h>
 #include <freerdp/types.h>
