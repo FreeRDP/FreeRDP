@@ -52,10 +52,10 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 
 		WINPR_ASSERT(settings);
 
-		if (settings->Fullscreen)
+		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		{
-			settings->DesktopWidth = screenFrame.size.width;
-			settings->DesktopHeight = screenFrame.size.height;
+			freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, screenFrame.size.width);
+			freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, screenFrame.size.height);
 		}
 
 		PubSub_SubscribeConnectionResult(context->pubSub, AppDelegate_ConnectionResultEventHandler);
@@ -64,20 +64,22 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 		PubSub_SubscribeResizeWindow(context->pubSub, AppDelegate_ResizeWindowEventHandler);
 		freerdp_client_start(context);
 		NSString *winTitle;
+		const char *WindowTitle = freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
 
-		if (settings->WindowTitle && settings->WindowTitle[0])
+		if (WindowTitle && WindowTitle[0])
 		{
 			winTitle = [[NSString alloc]
-			    initWithFormat:@"%@", [NSString stringWithCString:settings->WindowTitle
+			    initWithFormat:@"%@", [NSString stringWithCString:WindowTitle
 			                                             encoding:NSUTF8StringEncoding]];
 		}
 		else
 		{
+			const char *name = freerdp_settings_get_string(settings, FreeRDP_ServerHostname);
+			const UINT32 port = freerdp_settings_get_string(settings, FreeRDP_ServerPort);
 			winTitle = [[NSString alloc]
 			    initWithFormat:@"%@:%u",
-			                   [NSString stringWithCString:settings->ServerHostname
-			                                      encoding:NSUTF8StringEncoding],
-			                   settings->ServerPort];
+			                   [NSString stringWithCString:name encoding:NSUTF8StringEncoding],
+			                   port];
 		}
 
 		[window setTitle:winTitle];
@@ -298,8 +300,8 @@ void mac_set_view_size(rdpContext *context, MRDPView *view)
 	NSRect innerRect;
 	innerRect.origin.x = 0;
 	innerRect.origin.y = 0;
-	innerRect.size.width = context->settings->DesktopWidth;
-	innerRect.size.height = context->settings->DesktopHeight;
+	innerRect.size.width = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth);
+	innerRect.size.height = freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopHeight);
 	[view setFrame:innerRect];
 	// calculate window of same size, but keep position
 	NSRect outerRect = [[view window] frame];
@@ -311,6 +313,6 @@ void mac_set_view_size(rdpContext *context, MRDPView *view)
 	// set window to front
 	[NSApp activateIgnoringOtherApps:YES];
 
-	if (context->settings->Fullscreen)
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_Fullscreen))
 		[[view window] toggleFullScreen:nil];
 }
