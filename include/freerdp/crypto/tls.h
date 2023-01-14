@@ -99,28 +99,29 @@ extern "C"
 {
 #endif
 
-	FREERDP_API const SSL_METHOD* tls_get_ssl_method(BOOL isDtls, BOOL isClient);
+	FREERDP_API const SSL_METHOD* freerdp_tls_get_ssl_method(BOOL isDtls, BOOL isClient);
 
-	FREERDP_API int tls_connect(rdpTls* tls, BIO* underlying);
+	FREERDP_API int freerdp_tls_connect(rdpTls* tls, BIO* underlying);
 
-	FREERDP_API TlsHandshakeResult tls_connect_ex(rdpTls* tls, BIO* underlying,
-	                                              const SSL_METHOD* methods);
+	FREERDP_API TlsHandshakeResult freerdp_tls_connect_ex(rdpTls* tls, BIO* underlying,
+	                                                      const SSL_METHOD* methods);
 
-	FREERDP_API BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings);
+	FREERDP_API BOOL freerdp_tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings);
 
-	FREERDP_API TlsHandshakeResult tls_accept_ex(rdpTls* tls, BIO* underlying,
-	                                             rdpSettings* settings, const SSL_METHOD* methods);
+	FREERDP_API TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying,
+	                                                     rdpSettings* settings,
+	                                                     const SSL_METHOD* methods);
 
-	FREERDP_API TlsHandshakeResult tls_handshake(rdpTls* tls);
+	FREERDP_API TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls);
 
-	FREERDP_API BOOL tls_send_alert(rdpTls* tls);
+	FREERDP_API BOOL freerdp_tls_send_alert(rdpTls* tls);
 
-	FREERDP_API int tls_write_all(rdpTls* tls, const BYTE* data, int length);
+	FREERDP_API int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, int length);
 
-	FREERDP_API int tls_set_alert_code(rdpTls* tls, int level, int description);
+	FREERDP_API int freerdp_tls_set_alert_code(rdpTls* tls, int level, int description);
 
-	FREERDP_API rdpTls* tls_new(rdpSettings* settings);
-	FREERDP_API void tls_free(rdpTls* tls);
+	FREERDP_API rdpTls* freerdp_tls_new(rdpSettings* settings);
+	FREERDP_API void freerdp_tls_free(rdpTls* tls);
 
 #ifdef __cplusplus
 }

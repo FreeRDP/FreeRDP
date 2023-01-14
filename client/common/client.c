@@ -634,7 +634,7 @@ static DWORD client_cli_accept_certificate(rdpSettings* settings)
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
  *  when the connection requires it.
  *  This function will actually be called by tls_verify_certificate().
- *  @see rdp_client_connect() and tls_connect()
+ *  @see rdp_client_connect() and freerdp_tls_connect()
  *  @deprecated Use client_cli_verify_certificate_ex
  *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
  *  @param common_name
@@ -666,7 +666,7 @@ DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name, 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
  *  when the connection requires it.
  *  This function will actually be called by tls_verify_certificate().
- *  @see rdp_client_connect() and tls_connect()
+ *  @see rdp_client_connect() and freerdp_tls_connect()
  *  @param instance     pointer to the rdp_freerdp structure that contains the connection settings
  *  @param host         The host currently connecting to
  *  @param port         The port currently connecting to
@@ -719,7 +719,7 @@ DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
  *  when a stored certificate does not match the remote counterpart.
  *  This function will actually be called by tls_verify_certificate().
- *  @see rdp_client_connect() and tls_connect()
+ *  @see rdp_client_connect() and freerdp_tls_connect()
  *  @deprecated Use client_cli_verify_changed_certificate_ex
  *  @param instance - pointer to the rdp_freerdp structure that contains the connection settings
  *  @param common_name
@@ -764,7 +764,7 @@ DWORD client_cli_verify_changed_certificate(freerdp* instance, const char* commo
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
  *  when a stored certificate does not match the remote counterpart.
  *  This function will actually be called by tls_verify_certificate().
- *  @see rdp_client_connect() and tls_connect()
+ *  @see rdp_client_connect() and freerdp_tls_connect()
  *  @param instance        pointer to the rdp_freerdp structure that contains the connection
  * settings
  *  @param host            The host currently connecting to

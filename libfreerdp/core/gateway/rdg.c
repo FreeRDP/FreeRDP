@@ -1752,7 +1752,7 @@ static BOOL rdg_send_http_request(rdpRdg* rdg, rdpTls* tls, const char* method,
 	sz = Stream_Length(s);
 
 	if (sz <= INT_MAX)
-		status = tls_write_all(tls, Stream_Buffer(s), (int)sz);
+		status = freerdp_tls_write_all(tls, Stream_Buffer(s), (int)sz);
 
 	Stream_Free(s, TRUE);
 	return (status >= 0);
@@ -1821,7 +1821,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	tls->hostname = settings->GatewayHostname;
 	tls->port = (int)settings->GatewayPort;
 	tls->isGatewayTransport = TRUE;
-	status = tls_connect(tls, bufferedBio);
+	status = freerdp_tls_connect(tls, bufferedBio);
 	if (status < 1)
 	{
 		rdpContext* context = rdg->context;
@@ -2178,7 +2178,7 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 
 	Stream_SealLength(sWS);
 
-	status = tls_write_all(rdg->tlsOut, Stream_Buffer(sWS), Stream_Length(sWS));
+	status = freerdp_tls_write_all(rdg->tlsOut, Stream_Buffer(sWS), Stream_Length(sWS));
 	Stream_Free(sWS, TRUE);
 
 	if (status < 0)
@@ -2224,7 +2224,7 @@ static int rdg_write_chunked_data_packet(rdpRdg* rdg, const BYTE* buf, int isize
 		return -1;
 	}
 
-	status = tls_write_all(rdg->tlsIn, Stream_Buffer(sChunk), (int)len);
+	status = freerdp_tls_write_all(rdg->tlsIn, Stream_Buffer(sChunk), (int)len);
 	Stream_Free(sChunk, TRUE);
 
 	if (status < 0)
@@ -2710,12 +2710,12 @@ rdpRdg* rdg_new(rdpContext* context)
 
 		sprintf_s(bracedUuid, sizeof(bracedUuid), "{%s}", stringUuid);
 		RpcStringFreeA(&stringUuid);
-		rdg->tlsOut = tls_new(rdg->settings);
+		rdg->tlsOut = freerdp_tls_new(rdg->settings);
 
 		if (!rdg->tlsOut)
 			goto rdg_alloc_error;
 
-		rdg->tlsIn = tls_new(rdg->settings);
+		rdg->tlsIn = freerdp_tls_new(rdg->settings);
 
 		if (!rdg->tlsIn)
 			goto rdg_alloc_error;
@@ -2785,8 +2785,8 @@ void rdg_free(rdpRdg* rdg)
 	if (!rdg)
 		return;
 
-	tls_free(rdg->tlsOut);
-	tls_free(rdg->tlsIn);
+	freerdp_tls_free(rdg->tlsOut);
+	freerdp_tls_free(rdg->tlsIn);
 	http_context_free(rdg->http);
 	credssp_auth_free(rdg->auth);
 

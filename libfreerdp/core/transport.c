@@ -263,7 +263,7 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	if (!(tls = tls_new(settings)))
+	if (!(tls = freerdp_tls_new(settings)))
 		return FALSE;
 
 	transport->tls = tls;
@@ -280,7 +280,7 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 		tls->port = 3389;
 
 	tls->isGatewayTransport = FALSE;
-	tlsStatus = tls_connect(tls, transport->frontBio);
+	tlsStatus = freerdp_tls_connect(tls, transport->frontBio);
 
 	if (tlsStatus < 1)
 	{
@@ -483,11 +483,11 @@ static BOOL transport_default_accept_tls(rdpTransport* transport)
 	WINPR_ASSERT(settings);
 
 	if (!transport->tls)
-		transport->tls = tls_new(settings);
+		transport->tls = freerdp_tls_new(settings);
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 
-	if (!tls_accept(transport->tls, transport->frontBio, settings))
+	if (!freerdp_tls_accept(transport->tls, transport->frontBio, settings))
 		return FALSE;
 
 	transport->frontBio = transport->tls->bio;
@@ -524,9 +524,9 @@ BOOL transport_accept_nla(rdpTransport* transport)
 		transport_set_nla_mode(transport, FALSE);
 		nla_free(transport->nla);
 		transport->nla = NULL;
-		tls_set_alert_code(transport->tls, TLS_ALERT_LEVEL_FATAL,
-		                   TLS_ALERT_DESCRIPTION_ACCESS_DENIED);
-		tls_send_alert(transport->tls);
+		freerdp_tls_set_alert_code(transport->tls, TLS_ALERT_LEVEL_FATAL,
+		                           TLS_ALERT_DESCRIPTION_ACCESS_DENIED);
+		freerdp_tls_send_alert(transport->tls);
 		return FALSE;
 	}
 
@@ -1229,7 +1229,7 @@ static BOOL transport_default_disconnect(rdpTransport* transport)
 
 	if (transport->tls)
 	{
-		tls_free(transport->tls);
+		freerdp_tls_free(transport->tls);
 		transport->tls = NULL;
 	}
 	else
@@ -1388,7 +1388,7 @@ rdpNla* transport_get_nla(rdpTransport* transport)
 BOOL transport_set_tls(rdpTransport* transport, rdpTls* tls)
 {
 	WINPR_ASSERT(transport);
-	tls_free(transport->tls);
+	freerdp_tls_free(transport->tls);
 	transport->tls = tls;
 	return TRUE;
 }
