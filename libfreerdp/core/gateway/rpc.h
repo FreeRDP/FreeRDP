@@ -30,6 +30,8 @@
 #include <freerdp/log.h>
 #include <freerdp/utils/ringbuffer.h>
 
+#include "../../crypto/tls.h"
+
 typedef struct rdp_rpc rdpRpc;
 
 #pragma pack(push, 1)
@@ -83,7 +85,6 @@ typedef struct
 
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
-#include <freerdp/crypto/tls.h>
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/api.h>
 

@@ -28,7 +28,6 @@
 #include <ctype.h>
 
 #include <freerdp/log.h>
-#include <freerdp/crypto/tls.h>
 #include <freerdp/build-config.h>
 
 #include <winpr/crt.h>
@@ -42,6 +41,7 @@
 #include <winpr/debug.h>
 #include <winpr/asn1.h>
 
+#include "../crypto/tls.h"
 #include "nla.h"
 #include "utils.h"
 #include "credssp_auth.h"
