@@ -599,7 +599,7 @@ static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 	return cert;
 }
 
-static void tls_free_certificate(CryptoCert cert)
+static void freerdp_tls_free_certificate(CryptoCert cert)
 {
 	X509_free(cert->px509);
 	free(cert);
@@ -775,7 +775,7 @@ static void adjustSslOptions(int* options)
 #endif
 }
 
-const SSL_METHOD* tls_get_ssl_method(BOOL isDtls, BOOL isClient)
+const SSL_METHOD* freerdp_tls_get_ssl_method(BOOL isDtls, BOOL isClient)
 {
 	if (isClient)
 	{
@@ -794,7 +794,7 @@ const SSL_METHOD* tls_get_ssl_method(BOOL isDtls, BOOL isClient)
 	return (const SSL_METHOD*)SSLv23_server_method();
 }
 
-TlsHandshakeResult tls_connect_ex(rdpTls* tls, BIO* underlying, const SSL_METHOD* methods)
+TlsHandshakeResult freerdp_tls_connect_ex(rdpTls* tls, BIO* underlying, const SSL_METHOD* methods)
 {
 	WINPR_ASSERT(tls);
 
@@ -836,10 +836,10 @@ TlsHandshakeResult tls_connect_ex(rdpTls* tls, BIO* underlying, const SSL_METHOD
 	SSL_set_tlsext_host_name(tls->ssl, tls->hostname);
 #endif
 
-	return tls_handshake(tls);
+	return freerdp_tls_handshake(tls);
 }
 
-TlsHandshakeResult tls_handshake(rdpTls* tls)
+TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 {
 	TlsHandshakeResult ret = TLS_HANDSHAKE_ERROR;
 
@@ -887,13 +887,13 @@ TlsHandshakeResult tls_handshake(rdpTls* tls)
 			if (verify_status < 1)
 			{
 				WLog_ERR(TAG, "certificate not trusted, aborting.");
-				tls_send_alert(tls);
+				freerdp_tls_send_alert(tls);
 				ret = TLS_HANDSHAKE_VERIFY_ERROR;
 			}
 		}
 	} while (0);
 
-	tls_free_certificate(cert);
+	freerdp_tls_free_certificate(cert);
 	return ret;
 }
 
@@ -929,7 +929,7 @@ static int pollAndHandshake(rdpTls* tls)
 				return -1;
 		}
 
-		TlsHandshakeResult result = tls_handshake(tls);
+		TlsHandshakeResult result = freerdp_tls_handshake(tls);
 		switch (result)
 		{
 			case TLS_HANDSHAKE_CONTINUE:
@@ -944,12 +944,12 @@ static int pollAndHandshake(rdpTls* tls)
 	} while (TRUE);
 }
 
-int tls_connect(rdpTls* tls, BIO* underlying)
+int freerdp_tls_connect(rdpTls* tls, BIO* underlying)
 {
-	const SSL_METHOD* method = tls_get_ssl_method(FALSE, TRUE);
+	const SSL_METHOD* method = freerdp_tls_get_ssl_method(FALSE, TRUE);
 
 	WINPR_ASSERT(tls);
-	TlsHandshakeResult result = tls_connect_ex(tls, underlying, method);
+	TlsHandshakeResult result = freerdp_tls_connect_ex(tls, underlying, method);
 	switch (result)
 	{
 		case TLS_HANDSHAKE_SUCCESS:
@@ -977,11 +977,11 @@ static void tls_openssl_tlsext_debug_callback(SSL* s, int client_server, int typ
 }
 #endif
 
-BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
+BOOL freerdp_tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 {
 	WINPR_ASSERT(tls);
 	TlsHandshakeResult res =
-	    tls_accept_ex(tls, underlying, settings, tls_get_ssl_method(FALSE, FALSE));
+	    freerdp_tls_accept_ex(tls, underlying, settings, freerdp_tls_get_ssl_method(FALSE, FALSE));
 	switch (res)
 	{
 		case TLS_HANDSHAKE_SUCCESS:
@@ -997,8 +997,8 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 	return pollAndHandshake(tls) > 0;
 }
 
-TlsHandshakeResult tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettings* settings,
-                                 const SSL_METHOD* methods)
+TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettings* settings,
+                                         const SSL_METHOD* methods)
 {
 	WINPR_ASSERT(tls);
 
@@ -1140,10 +1140,10 @@ TlsHandshakeResult tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettings* sett
 	SSL_set_tlsext_debug_callback(tls->ssl, tls_openssl_tlsext_debug_callback);
 #endif
 
-	return tls_handshake(tls);
+	return freerdp_tls_handshake(tls);
 }
 
-BOOL tls_send_alert(rdpTls* tls)
+BOOL freerdp_tls_send_alert(rdpTls* tls)
 {
 	WINPR_ASSERT(tls);
 
@@ -1190,7 +1190,7 @@ BOOL tls_send_alert(rdpTls* tls)
 	return TRUE;
 }
 
-int tls_write_all(rdpTls* tls, const BYTE* data, int length)
+int freerdp_tls_write_all(rdpTls* tls, const BYTE* data, int length)
 {
 	WINPR_ASSERT(tls);
 	int status;
@@ -1226,7 +1226,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 	return length;
 }
 
-int tls_set_alert_code(rdpTls* tls, int level, int description)
+int freerdp_tls_set_alert_code(rdpTls* tls, int level, int description)
 {
 	WINPR_ASSERT(tls);
 	tls->alertLevel = level;
@@ -1785,7 +1785,7 @@ void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port
 	WLog_ERR(TAG, "A valid certificate for the wrong name should NOT be trusted!");
 }
 
-rdpTls* tls_new(rdpSettings* settings)
+rdpTls* freerdp_tls_new(rdpSettings* settings)
 {
 	rdpTls* tls;
 	tls = (rdpTls*)calloc(1, sizeof(rdpTls));
@@ -1811,7 +1811,7 @@ out_free:
 	return NULL;
 }
 
-void tls_free(rdpTls* tls)
+void freerdp_tls_free(rdpTls* tls)
 {
 	if (!tls)
 		return;

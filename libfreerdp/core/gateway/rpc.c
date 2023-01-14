@@ -356,7 +356,7 @@ SSIZE_T rpc_channel_write(RpcChannel* channel, const BYTE* data, size_t length)
 	if (!channel || (length > INT32_MAX))
 		return -1;
 
-	status = tls_write_all(channel->tls, data, (INT32)length);
+	status = freerdp_tls_write_all(channel->tls, data, (INT32)length);
 	return status;
 }
 
@@ -474,7 +474,7 @@ void rpc_channel_free(RpcChannel* channel)
 
 	credssp_auth_free(channel->auth);
 	http_context_free(channel->http);
-	tls_free(channel->tls);
+	freerdp_tls_free(channel->tls);
 	free(channel);
 }
 
@@ -705,7 +705,7 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)
 	}
 
 	channel->bio = bufferedBio;
-	tls = channel->tls = tls_new(settings);
+	tls = channel->tls = freerdp_tls_new(settings);
 
 	if (!tls)
 		return FALSE;
@@ -713,7 +713,7 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)
 	tls->hostname = settings->GatewayHostname;
 	tls->port = settings->GatewayPort;
 	tls->isGatewayTransport = TRUE;
-	tlsStatus = tls_connect(tls, bufferedBio);
+	tlsStatus = freerdp_tls_connect(tls, bufferedBio);
 
 	if (tlsStatus < 1)
 	{
