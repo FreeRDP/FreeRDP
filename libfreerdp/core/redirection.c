@@ -219,6 +219,12 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 	redirection = rdp->redirection;
 	WINPR_ASSERT(redirection);
 
+	{
+		char buffer[2048] = { 0 };
+		WLog_DBG(TAG, "RedirectionFlags=%s",
+		         rdp_redirection_flags_to_string(redirection->flags, buffer, sizeof(buffer)));
+	}
+
 	settings->RedirectionFlags = redirection->flags;
 	settings->RedirectedSessionId = redirection->sessionID;
 
