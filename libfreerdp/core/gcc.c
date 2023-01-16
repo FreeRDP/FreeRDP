@@ -66,6 +66,21 @@ static BOOL gcc_write_client_multitransport_channel_data(wStream* s, const rdpMc
 static BOOL gcc_read_server_multitransport_channel_data(wStream* s, rdpMcs* mcs);
 static BOOL gcc_write_server_multitransport_channel_data(wStream* s, const rdpMcs* mcs);
 
+static UINT32 gcc_filter_early_caps(UINT32 flags)
+{
+	const UINT32 mask =
+	    (RNS_UD_CS_SUPPORT_ERRINFO_PDU | RNS_UD_CS_WANT_32BPP_SESSION |
+	     RNS_UD_CS_SUPPORT_STATUSINFO_PDU | RNS_UD_CS_STRONG_ASYMMETRIC_KEYS |
+	     RNS_UD_CS_VALID_CONNECTION_TYPE | RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU |
+	     RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT | RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL |
+	     RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE | RNS_UD_CS_SUPPORT_HEARTBEAT_PDU |
+	     RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN);
+	if ((flags & ~mask) != 0)
+		WLog_WARN(TAG, "detected unsupported early capability flags 0x%08" PRIx32, flags & ~mask);
+
+	return flags & mask;
+}
+
 static rdpSettings* mcs_get_settings(rdpMcs* mcs)
 {
 	WINPR_ASSERT(mcs);
@@ -99,7 +114,8 @@ static const char* rdp_early_caps_string(UINT16 flags, char* buffer, size_t size
 	      RNS_UD_CS_SUPPORT_STATUSINFO_PDU | RNS_UD_CS_STRONG_ASYMMETRIC_KEYS |
 	      RNS_UD_CS_VALID_CONNECTION_TYPE | RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU |
 	      RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT | RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL |
-	      RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE | RNS_UD_CS_SUPPORT_HEARTBEAT_PDU);
+	      RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE | RNS_UD_CS_SUPPORT_HEARTBEAT_PDU |
+	      RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN);
 
 	if (flags & RNS_UD_CS_SUPPORT_ERRINFO_PDU)
 		append(buffer, size, "RNS_UD_CS_SUPPORT_ERRINFO_PDU");
@@ -121,6 +137,8 @@ static const char* rdp_early_caps_string(UINT16 flags, char* buffer, size_t size
 		append(buffer, size, "RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE");
 	if (flags & RNS_UD_CS_SUPPORT_HEARTBEAT_PDU)
 		append(buffer, size, "RNS_UD_CS_SUPPORT_HEARTBEAT_PDU");
+	if (flags & RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN)
+		append(buffer, size, "RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN");
 	if (flags & mask)
 		append(buffer, size, "RNS_UD_UNKNOWN_FLAG");
 	if (flags == 0)
@@ -895,7 +913,9 @@ static BOOL updateEarlyClientCaps(rdpSettings* settings, UINT32 earlyCapabilityF
 
 	if (!(earlyCapabilityFlags & RNS_UD_CS_VALID_CONNECTION_TYPE))
 		connectionType = 0;
+	const UINT16 serverCaps = earlyCapsFromSettings(settings);
 	settings->ConnectionType = connectionType;
+	settings->EarlyCapabilityFlags = gcc_filter_early_caps(earlyCapabilityFlags & serverCaps);
 
 	return TRUE;
 }
@@ -909,6 +929,7 @@ static BOOL updateEarlyServerCaps(rdpSettings* settings, UINT32 earlyCapabilityF
 	    settings->SupportDynamicTimeZone && (earlyCapabilityFlags & RNS_UD_SC_DYNAMIC_DST_SUPPORTED)
 	        ? TRUE
 	        : FALSE;
+	settings->EarlyCapabilityFlags = gcc_filter_early_caps(earlyCapabilityFlags);
 
 	return TRUE;
 }
@@ -1015,7 +1036,6 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 			break;
 
 		Stream_Read_UINT16(s, earlyCapabilityFlags); /* earlyCapabilityFlags (2 bytes) */
-		settings->EarlyCapabilityFlags = (UINT32)earlyCapabilityFlags;
 		blockLength -= 2;
 
 		/* clientDigProductId (64 bytes): Contains a value that uniquely identifies the client */
@@ -1150,7 +1170,6 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	WLog_DBG(TAG, "Received EarlyCapabilityFlags=%s",
 	         rdp_early_caps_string(earlyCapabilityFlags, buffer, sizeof(buffer)));
-	settings->EarlyCapabilityFlags = earlyCapabilityFlags;
 	return updateEarlyClientCaps(settings, earlyCapabilityFlags, connectionType);
 }
 
@@ -1277,17 +1296,17 @@ BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs)
 		Stream_Read_UINT32(s, settings->RequestedProtocols); /* clientRequestedProtocols */
 	}
 
+	UINT32 EarlyCapabilityFlags = 0;
 	if (Stream_GetRemainingLength(s) >= 4)
 	{
 		char buffer[2048] = { 0 };
 
-		Stream_Read_UINT32(s, settings->EarlyCapabilityFlags); /* earlyCapabilityFlags */
+		Stream_Read_UINT32(s, EarlyCapabilityFlags); /* earlyCapabilityFlags */
 		WLog_DBG(TAG, "Received EarlyCapabilityFlags=%s",
-		         rdp_early_caps_string(settings->EarlyCapabilityFlags, buffer, sizeof(buffer)));
+		         rdp_early_caps_string(EarlyCapabilityFlags, buffer, sizeof(buffer)));
 	}
 
-	return updateEarlyServerCaps(settings, settings->EarlyCapabilityFlags,
-	                             settings->ConnectionType);
+	return updateEarlyServerCaps(settings, EarlyCapabilityFlags, settings->ConnectionType);
 }
 
 /* TODO: This function modifies rdpMcs
