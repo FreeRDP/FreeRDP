@@ -1142,7 +1142,6 @@ static BOOL rdg_send_channel_create(rdpRdg* rdg)
 	WINPR_ASSERT(rdg);
 	serverName =
 	    freerdp_settings_get_string_as_utf16(rdg->settings, FreeRDP_ServerHostname, &serverNameLen);
-	ConvertUtf8ToWCharAlloc(rdg->settings->ServerHostname, &serverNameLen);
 
 	if (!serverName || (serverNameLen >= UINT16_MAX / sizeof(WCHAR)))
 		goto fail;
