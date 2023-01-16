@@ -251,6 +251,9 @@ typedef enum
 #define LB_TARGET_NET_ADDRESSES 0x00000800
 #define LB_CLIENT_TSV_URL 0x00001000
 #define LB_SERVER_TSV_CAPABLE 0x00002000
+#define LB_PASSWORD_IS_PK_ENCRYPTED 0x00004000
+#define LB_REDIRECTION_GUID 0x00008000
+#define LB_TARGET_CERTIFICATE 0x00010000
 
 #define LB_PASSWORD_MAX_LENGTH 512
 
@@ -681,6 +684,10 @@ typedef struct _RDPDR_PARALLEL RDPDR_PARALLEL;
 #define FreeRDP_RedirectionAcceptedCert (1231)
 #define FreeRDP_RedirectionAcceptedCertLength (1232)
 #define FreeRDP_RedirectionPreferType (1233)
+#define FreeRDP_RedirectionGuid (1234)
+#define FreeRDP_RedirectionGuidLength (1235)
+#define FreeRDP_RedirectionTargetCertificate (1236)
+#define FreeRDP_RedirectionTargetCertificateLength (1237)
 #define FreeRDP_Password51 (1280)
 #define FreeRDP_Password51Length (1281)
 #define FreeRDP_SmartcardLogon (1282)
@@ -1141,7 +1148,11 @@ struct rdp_settings
 	ALIGN64 char* RedirectionAcceptedCert;        /* 1231 */
 	ALIGN64 UINT32 RedirectionAcceptedCertLength; /* 1232 */
 	ALIGN64 UINT32 RedirectionPreferType;         /* 1233 */
-	UINT64 padding1280[1280 - 1234];              /* 1234 */
+	ALIGN64 BYTE* RedirectionGuid;                /* 1234 */
+	ALIGN64 UINT32 RedirectionGuidLength;         /* 1235 */
+	ALIGN64 BYTE* RedirectionTargetCertificate;   /* 1236 */
+	ALIGN64 UINT32 RedirectionTargetCertificateLength; /* 1237 */
+	UINT64 padding1280[1280 - 1238];                   /* 1238 */
 
 	/**
 	 * Security
