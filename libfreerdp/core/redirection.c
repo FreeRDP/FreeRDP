@@ -21,6 +21,7 @@
 
 #include <winpr/crt.h>
 #include <freerdp/log.h>
+#include <freerdp/redirection.h>
 #include <freerdp/utils/string.h>
 
 #include "connection.h"
@@ -82,6 +83,60 @@ static void redirection_free_data(BYTE** str, UINT32* length)
 	free(*str);
 	*length = 0;
 	*str = NULL;
+}
+
+static BOOL redirection_copy_string(char** dst, const char* str)
+{
+	redirection_free_string(dst);
+	if (!str)
+		return TRUE;
+
+	*dst = _strdup(str);
+	return *dst != NULL;
+}
+
+static BOOL redirection_copy_data(BYTE** dst, UINT32* plen, const BYTE* str, size_t len)
+{
+	redirection_free_data(dst, plen);
+
+	if (!str || (len == 0))
+		return TRUE;
+	if (len > UINT32_MAX)
+		return FALSE;
+
+	*dst = malloc(len);
+	if (!*dst)
+		return FALSE;
+	memcpy(*dst, str, len);
+	*plen = (UINT32)len;
+	return *dst != NULL;
+}
+
+static BOOL redirection_copy_array(char*** dst, UINT32* plen, const char** str, size_t len)
+{
+	redirection_free_array(dst, plen);
+
+	if (!str || (len == 0))
+		return TRUE;
+
+	*dst = calloc(len, sizeof(char));
+	if (!*dst)
+		return FALSE;
+	*plen = len;
+
+	for (UINT32 x = 0; x < len; x++)
+	{
+		if (str[x])
+			(*dst)[x] = _strdup(str[x]);
+
+		if (!((*dst)[x]))
+		{
+			redirection_free_array(dst, plen);
+			return FALSE;
+		}
+	}
+
+	return *dst != NULL;
 }
 
 static void rdp_print_redirection_flags(UINT32 flags)
@@ -553,5 +608,341 @@ void redirection_free(rdpRedirection* redirection)
 		                       &redirection->TargetNetAddressesCount);
 
 		free(redirection);
+	}
+}
+
+static SSIZE_T redir_write_string(UINT32 flag, wStream* s, const char* str)
+{
+	const size_t length = (strlen(str) + 1);
+	if (!Stream_EnsureRemainingCapacity(s, 4ull + length * sizeof(WCHAR)))
+		return -1;
+
+	const size_t pos = Stream_GetPosition(s);
+	Stream_Write_UINT32(s, (UINT32)length * sizeof(WCHAR));
+	if (Stream_Write_UTF16_String_From_UTF8(s, length, str, length, TRUE) < 0)
+		return -1;
+	return (SSIZE_T)(Stream_GetPosition(s) - pos);
+}
+
+static BOOL redir_write_data(UINT32 flag, wStream* s, UINT32 length, const BYTE* data)
+{
+	if (!Stream_EnsureRemainingCapacity(s, 4ull + length))
+		return FALSE;
+
+	Stream_Write_UINT32(s, length);
+	Stream_Write(s, data, length);
+	return TRUE;
+}
+
+BOOL rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirection* redirection)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(redirection);
+
+	if (!Stream_EnsureRemainingCapacity(s, 14))
+		goto fail;
+
+	Stream_Write_UINT16(s, 0);
+	Stream_Write_UINT16(s, SEC_REDIRECTION_PKT);
+
+	const size_t lengthOffset = Stream_GetPosition(s);
+	Stream_Seek_UINT16(s); /* placeholder for length */
+
+	if (redirection->sessionID)
+		Stream_Write_UINT32(s, redirection->sessionID);
+	else
+		Stream_Write_UINT32(s, 0);
+
+	Stream_Write_UINT32(s, redirection->flags);
+
+	if (redirection->flags & LB_TARGET_NET_ADDRESS)
+	{
+		if (redir_write_string(LB_TARGET_NET_ADDRESS, s, redirection->TargetNetAddress) < 0)
+			goto fail;
+	}
+
+	if (redirection->flags & LB_LOAD_BALANCE_INFO)
+	{
+		const UINT32 length = 13 + redirection->LoadBalanceInfoLength + 2;
+		if (!Stream_EnsureRemainingCapacity(s, length))
+			goto fail;
+		Stream_Write_UINT32(s, length);
+		Stream_Write(s, "Cookie: msts=", 13);
+		Stream_Write(s, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
+		Stream_Write_UINT8(s, 0x0d);
+		Stream_Write_UINT8(s, 0x0a);
+	}
+
+	if (redirection->flags & LB_USERNAME)
+	{
+		if (redir_write_string(LB_USERNAME, s, redirection->Username) < 0)
+			goto fail;
+	}
+
+	if (redirection->flags & LB_DOMAIN)
+	{
+		if (redir_write_string(LB_DOMAIN, s, redirection->Domain) < 0)
+			goto fail;
+	}
+
+	if (redirection->flags & LB_PASSWORD)
+	{
+		/* Password is eighter UNICODE or opaque data */
+		if (!redir_write_data(LB_PASSWORD, s, redirection->PasswordLength, redirection->Password))
+			goto fail;
+	}
+
+	if (redirection->flags & LB_TARGET_FQDN)
+	{
+		if (redir_write_string(LB_TARGET_FQDN, s, redirection->TargetFQDN) < 0)
+			goto fail;
+	}
+
+	if (redirection->flags & LB_TARGET_NETBIOS_NAME)
+	{
+		if (redir_write_string(LB_TARGET_NETBIOS_NAME, s, redirection->TargetNetBiosName) < 0)
+			goto fail;
+	}
+
+	if (redirection->flags & LB_CLIENT_TSV_URL)
+	{
+		if (!redir_write_data(LB_CLIENT_TSV_URL, s, redirection->TsvUrlLength, redirection->TsvUrl))
+			goto fail;
+	}
+
+	if (redirection->flags & LB_REDIRECTION_GUID)
+	{
+		if (!redir_write_data(LB_REDIRECTION_GUID, s, redirection->RedirectionGuidLength,
+		                      redirection->RedirectionGuid))
+			goto fail;
+	}
+
+	if (redirection->flags & LB_TARGET_CERTIFICATE)
+	{
+		if (!redir_write_data(LB_REDIRECTION_GUID, s, redirection->TargetCertificateLength,
+		                      redirection->TargetCertificate))
+			goto fail;
+	}
+
+	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
+	{
+		UINT32 i;
+		UINT32 length = 0;
+
+		if (!Stream_EnsureRemainingCapacity(s, 2 * sizeof(UINT32)))
+			goto fail;
+
+		const size_t start = Stream_GetPosition(s);
+		Stream_Seek_UINT32(s); /* length of field */
+		Stream_Write_UINT32(s, redirection->TargetNetAddressesCount);
+		for (i = 0; i < redirection->TargetNetAddressesCount; i++)
+		{
+			const SSIZE_T rcc =
+			    redir_write_string(LB_TARGET_NET_ADDRESSES, s, redirection->TargetNetAddresses[i]);
+			if (rcc < 0)
+				goto fail;
+			length += (UINT32)rcc;
+		}
+
+		/* Write length field */
+		const size_t end = Stream_GetPosition(s);
+		Stream_SetPosition(s, start);
+		Stream_Write_UINT32(s, length);
+		Stream_SetPosition(s, end);
+	}
+
+	/* Padding 8 bytes */
+	if (!Stream_EnsureRemainingCapacity(s, 8))
+		goto fail;
+	Stream_Zero(s, 8);
+
+	const size_t length = Stream_GetPosition(s);
+	Stream_SetPosition(s, lengthOffset);
+	Stream_Write_UINT16(s, (UINT16)length);
+	Stream_SetPosition(s, length);
+
+	rc = TRUE;
+fail:
+	return rc;
+}
+
+BOOL redirection_settings_are_valid(rdpRedirection* redirection, UINT32* pFlags)
+{
+	UINT32 flags = 0;
+
+	WINPR_ASSERT(redirection);
+
+	if (redirection->flags & LB_CLIENT_TSV_URL)
+	{
+		if (!redirection->TsvUrl || (redirection->TsvUrlLength == 0))
+			flags |= LB_CLIENT_TSV_URL;
+	}
+
+	if (redirection->flags & LB_SERVER_TSV_CAPABLE)
+	{
+		if ((redirection->flags & LB_CLIENT_TSV_URL) == 0)
+			flags |= LB_SERVER_TSV_CAPABLE;
+	}
+
+	if (redirection->flags & LB_USERNAME)
+	{
+		if (utils_str_is_empty(redirection->Username))
+			flags |= LB_USERNAME;
+	}
+
+	if (redirection->flags & LB_DOMAIN)
+	{
+		if (utils_str_is_empty(redirection->Domain))
+			flags |= LB_DOMAIN;
+	}
+
+	if (redirection->flags & LB_PASSWORD)
+	{
+		if (!redirection->Password || (redirection->PasswordLength == 0))
+			flags |= LB_PASSWORD;
+	}
+
+	if (redirection->flags & LB_TARGET_FQDN)
+	{
+		if (utils_str_is_empty(redirection->TargetFQDN))
+			flags |= LB_TARGET_FQDN;
+	}
+
+	if (redirection->flags & LB_LOAD_BALANCE_INFO)
+	{
+		if (!redirection->LoadBalanceInfo || (redirection->LoadBalanceInfoLength == 0))
+			flags |= LB_LOAD_BALANCE_INFO;
+	}
+
+	if (redirection->flags & LB_TARGET_NETBIOS_NAME)
+	{
+		if (utils_str_is_empty(redirection->TargetNetBiosName))
+			flags |= LB_TARGET_NETBIOS_NAME;
+	}
+
+	if (redirection->flags & LB_TARGET_NET_ADDRESS)
+	{
+		if (utils_str_is_empty(redirection->TargetNetAddress))
+			flags |= LB_TARGET_NET_ADDRESS;
+	}
+
+	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
+	{
+		if (!redirection->TargetNetAddresses || (redirection->TargetNetAddressesCount == 0))
+			flags |= LB_TARGET_NET_ADDRESSES;
+		else
+		{
+			for (UINT32 x = 0; x < redirection->TargetNetAddressesCount; x++)
+			{
+				if (!redirection->TargetNetAddresses[x])
+					flags |= LB_TARGET_NET_ADDRESSES;
+			}
+		}
+	}
+
+	if (redirection->flags & LB_REDIRECTION_GUID)
+	{
+		if (!redirection->RedirectionGuid || (redirection->RedirectionGuidLength == 0))
+			flags |= LB_REDIRECTION_GUID;
+	}
+
+	if (redirection->flags & LB_TARGET_CERTIFICATE)
+	{
+		if (!redirection->TargetCertificate || (redirection->TargetCertificateLength == 0))
+			flags |= LB_TARGET_CERTIFICATE;
+	}
+
+	if (pFlags)
+		*pFlags = flags;
+	return flags == 0;
+}
+
+BOOL redirection_set_flags(rdpRedirection* redirection, UINT32 flags)
+{
+	WINPR_ASSERT(redirection);
+	redirection->flags = flags;
+	return TRUE;
+}
+
+BOOL redirection_set_session_id(rdpRedirection* redirection, UINT32 session_id)
+{
+	WINPR_ASSERT(redirection);
+	redirection->sessionID = session_id;
+	return TRUE;
+}
+
+static BOOL redirection_unsupported(const char* fkt, UINT32 flag, UINT32 mask)
+{
+	char buffer[1024] = { 0 };
+	char buffer2[1024] = { 0 };
+	WLog_WARN(TAG, "[%s] supported flags are {%s}, have {%s}", fkt,
+	          rdp_redirection_flags_to_string(mask, buffer, sizeof(buffer)),
+	          rdp_redirection_flags_to_string(flag, buffer2, sizeof(buffer2)));
+	return FALSE;
+}
+
+BOOL redirection_set_byte_option(rdpRedirection* redirection, UINT32 flag, const BYTE* data,
+                                 size_t length)
+{
+	WINPR_ASSERT(redirection);
+	switch (flag)
+	{
+		case LB_CLIENT_TSV_URL:
+			return redirection_copy_data(&redirection->TsvUrl, &redirection->TsvUrlLength, data,
+			                             length);
+		case LB_PASSWORD:
+			return redirection_copy_data(&redirection->Password, &redirection->PasswordLength, data,
+			                             length);
+		case LB_LOAD_BALANCE_INFO:
+			return redirection_copy_data(&redirection->LoadBalanceInfo,
+			                             &redirection->LoadBalanceInfoLength, data, length);
+		case LB_REDIRECTION_GUID:
+			return redirection_copy_data(&redirection->RedirectionGuid,
+			                             &redirection->RedirectionGuidLength, data, length);
+		case LB_TARGET_CERTIFICATE:
+			return redirection_copy_data(&redirection->TargetCertificate,
+			                             &redirection->TargetCertificateLength, data, length);
+		default:
+			return redirection_unsupported(__FUNCTION__, flag,
+			                               LB_CLIENT_TSV_URL | LB_PASSWORD | LB_LOAD_BALANCE_INFO |
+			                                   LB_REDIRECTION_GUID | LB_TARGET_CERTIFICATE);
+	}
+}
+
+BOOL redirection_set_string_option(rdpRedirection* redirection, UINT32 flag, const char* str)
+{
+	WINPR_ASSERT(redirection);
+	switch (flag)
+	{
+		case LB_USERNAME:
+			return redirection_copy_string(&redirection->Username, str);
+		case LB_DOMAIN:
+			return redirection_copy_string(&redirection->Domain, str);
+		case LB_TARGET_FQDN:
+			return redirection_copy_string(&redirection->TargetFQDN, str);
+		case LB_TARGET_NETBIOS_NAME:
+			return redirection_copy_string(&redirection->TargetNetBiosName, str);
+		case LB_TARGET_NET_ADDRESS:
+			return redirection_copy_string(&redirection->TargetNetAddress, str);
+		default:
+			return redirection_unsupported(__FUNCTION__, flag,
+			                               LB_USERNAME | LB_DOMAIN | LB_TARGET_FQDN |
+			                                   LB_TARGET_NETBIOS_NAME | LB_TARGET_NET_ADDRESS);
+	}
+}
+
+BOOL redirection_set_array_option(rdpRedirection* redirection, UINT32 flag, const char** str,
+                                  size_t count)
+{
+	WINPR_ASSERT(redirection);
+	switch (flag)
+	{
+		case LB_TARGET_NET_ADDRESSES:
+			return redirection_copy_array(&redirection->TargetNetAddresses,
+			                              &redirection->TargetNetAddressesCount, str, count);
+		default:
+			return redirection_unsupported(__FUNCTION__, flag, LB_TARGET_NET_ADDRESSES);
 	}
 }
