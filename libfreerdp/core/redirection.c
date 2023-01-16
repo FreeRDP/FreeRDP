@@ -23,10 +23,11 @@
 
 #include <winpr/crt.h>
 #include <freerdp/log.h>
+#include <freerdp/utils/string.h>
 
 #include "connection.h"
-
 #include "redirection.h"
+#include "utils.h"
 
 #define TAG FREERDP_TAG("core.redirection")
 
@@ -47,50 +48,110 @@ struct rdp_redirection
 	char* TargetNetAddress;
 	UINT32 TargetNetAddressesCount;
 	char** TargetNetAddresses;
+	UINT32 RedirectionGuidLength;
+	BYTE* RedirectionGuid;
+	UINT32 TargetCertificateLength;
+	BYTE* TargetCertificate;
 };
+
+static void redirection_free_array(char*** what, UINT32* count)
+{
+	WINPR_ASSERT(what);
+	WINPR_ASSERT(count);
+
+	if (*what)
+	{
+		for (UINT32 x = 0; x < *count; x++)
+			free((*what)[x]);
+		free(*what);
+	}
+
+	*what = NULL;
+	*count = 0;
+}
+
+static void redirection_free_string(char** str)
+{
+	WINPR_ASSERT(str);
+	free(*str);
+	*str = NULL;
+}
+
+static void redirection_free_data(BYTE** str, UINT32* length)
+{
+	WINPR_ASSERT(str);
+	WINPR_ASSERT(length);
+	free(*str);
+	*length = 0;
+	*str = NULL;
+}
+
+static BOOL redirection_copy_data(char** dst, UINT32* plen, const char* str, UINT32 len)
+{
+	redirection_free_data(dst, plen);
+
+	if (!str || (len == 0))
+		return TRUE;
+
+	*dst = malloc(len);
+	if (!*dst)
+		return FALSE;
+	memcpy(*dst, str, len);
+	*plen = len;
+	return *dst != NULL;
+}
+
+static BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const BYTE* data,
+                                             size_t length)
+{
+	BYTE** pdata = NULL;
+	UINT32* plen = NULL;
+	switch (id)
+	{
+		case FreeRDP_TargetNetAddress:
+			pdata = &settings->TargetNetAddress;
+			plen = &settings->TargetNetAddressCount;
+			break;
+		case FreeRDP_LoadBalanceInfo:
+			pdata = &settings->LoadBalanceInfo;
+			plen = &settings->LoadBalanceInfoLength;
+			break;
+		case FreeRDP_RedirectionPassword:
+			pdata = &settings->RedirectionPassword;
+			plen = &settings->RedirectionPasswordLength;
+			break;
+		case FreeRDP_RedirectionTsvUrl:
+			pdata = &settings->RedirectionTsvUrl;
+			plen = &settings->RedirectionTsvUrlLength;
+			break;
+		case FreeRDP_RedirectionGuid:
+			pdata = &settings->RedirectionGuid;
+			plen = &settings->RedirectionGuidLength;
+			break;
+		case FreeRDP_RedirectionTargetCertificate:
+			pdata = &settings->RedirectionTargetCertificate;
+			plen = &settings->RedirectionTargetCertificateLength;
+			break;
+		default:
+			return FALSE;
+	}
+
+	return redirection_copy_data(pdata, plen, data, length);
+}
 
 static void rdp_print_redirection_flags(UINT32 flags)
 {
 	WLog_DBG(TAG, "redirectionFlags = {");
 
-	if (flags & LB_TARGET_NET_ADDRESS)
-		WLog_DBG(TAG, "\tLB_TARGET_NET_ADDRESS");
-
-	if (flags & LB_LOAD_BALANCE_INFO)
-		WLog_DBG(TAG, "\tLB_LOAD_BALANCE_INFO");
-
-	if (flags & LB_USERNAME)
-		WLog_DBG(TAG, "\tLB_USERNAME");
-
-	if (flags & LB_DOMAIN)
-		WLog_DBG(TAG, "\tLB_DOMAIN");
-
-	if (flags & LB_PASSWORD)
-		WLog_DBG(TAG, "\tLB_PASSWORD");
-
-	if (flags & LB_DONTSTOREUSERNAME)
-		WLog_DBG(TAG, "\tLB_DONTSTOREUSERNAME");
-
-	if (flags & LB_SMARTCARD_LOGON)
-		WLog_DBG(TAG, "\tLB_SMARTCARD_LOGON");
-
-	if (flags & LB_NOREDIRECT)
-		WLog_DBG(TAG, "\tLB_NOREDIRECT");
-
-	if (flags & LB_TARGET_FQDN)
-		WLog_DBG(TAG, "\tLB_TARGET_FQDN");
-
-	if (flags & LB_TARGET_NETBIOS_NAME)
-		WLog_DBG(TAG, "\tLB_TARGET_NETBIOS_NAME");
-
-	if (flags & LB_TARGET_NET_ADDRESSES)
-		WLog_DBG(TAG, "\tLB_TARGET_NET_ADDRESSES");
-
-	if (flags & LB_CLIENT_TSV_URL)
-		WLog_DBG(TAG, "\tLB_CLIENT_TSV_URL");
-
-	if (flags & LB_SERVER_TSV_CAPABLE)
-		WLog_DBG(TAG, "\tLB_SERVER_TSV_CAPABLE");
+	for (UINT32 x = 0; x < 32; x++)
+	{
+		const UINT32 mask = 1 << x;
+		if ((flags & mask) != 0)
+		{
+			char buffer[64] = { 0 };
+			WLog_DBG(TAG, "\t%s", rdp_redirection_flags_to_string(mask, buffer, sizeof(buffer)));
+		}
+	}
 
 	WLog_DBG(TAG, "}");
 }
@@ -98,13 +159,10 @@ static void rdp_print_redirection_flags(UINT32 flags)
 static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t maxLength)
 {
 	UINT32 length;
-	WCHAR* wstr = NULL;
+	const WCHAR* wstr = NULL;
 
-	if (Stream_GetRemainingLength(s) < 4)
-	{
-		WLog_ERR(TAG, "rdp_redirection_read_string failure: cannot read length");
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
-	}
 
 	Stream_Read_UINT32(s, length);
 
@@ -116,7 +174,7 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 		return FALSE;
 	}
 
-	if (Stream_GetRemainingLength(s) < length)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 	{
 		WLog_ERR(TAG,
 		         "rdp_redirection_read_string failure: insufficient stream length (%" PRIu32
@@ -125,7 +183,7 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 		return FALSE;
 	}
 
-	wstr = (WCHAR*)Stream_Pointer(s);
+	wstr = (const WCHAR*)Stream_Pointer(s);
 
 	if (wstr[length / 2 - 1])
 	{
@@ -133,10 +191,15 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 		return FALSE;
 	}
 
-	if (ConvertFromUnicode(CP_UTF8, 0, wstr, -1, str, 0, NULL, NULL) < 1)
+	redirection_free_string(str);
 	{
-		WLog_ERR(TAG, "rdp_redirection_read_string failure: string conversion failed");
-		return FALSE;
+		const int res =
+		    ConvertFromUnicode(CP_UTF8, 0, wstr, length / sizeof(WCHAR), str, 0, NULL, NULL);
+		if ((res < 0) || !(*str))
+		{
+			WLog_ERR(TAG, "rdp_redirection_read_string failure: string conversion failed");
+			return FALSE;
+		}
 	}
 
 	Stream_Seek(s, length);
@@ -145,23 +208,34 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 
 int rdp_redirection_apply_settings(rdpRdp* rdp)
 {
-	rdpSettings* settings = rdp->settings;
-	rdpRedirection* redirection = rdp->redirection;
+	rdpSettings* settings;
+	rdpRedirection* redirection;
+
+	WINPR_ASSERT(rdp);
+
+	settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
+	redirection = rdp->redirection;
+	WINPR_ASSERT(redirection);
+
 	settings->RedirectionFlags = redirection->flags;
 	settings->RedirectedSessionId = redirection->sessionID;
+
+	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_TargetNetAddress,
+		                                 redirection->TargetNetAddress))
+			return -1;
+	}
 
 	if (settings->RedirectionFlags & LB_LOAD_BALANCE_INFO)
 	{
 		/* LoadBalanceInfo may not contain a null terminator */
-		free(settings->LoadBalanceInfo);
-		settings->LoadBalanceInfoLength = redirection->LoadBalanceInfoLength;
-		settings->LoadBalanceInfo = (BYTE*)malloc(settings->LoadBalanceInfoLength);
-
-		if (!settings->LoadBalanceInfo)
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo,
+		                                      redirection->LoadBalanceInfo,
+		                                      redirection->LoadBalanceInfoLength))
 			return -1;
-
-		CopyMemory(settings->LoadBalanceInfo, redirection->LoadBalanceInfo,
-		           settings->LoadBalanceInfoLength);
 	}
 	else
 	{
@@ -169,128 +243,138 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 		 * Free previous LoadBalanceInfo, if any, otherwise it may end up
 		 * being reused for the redirected session, which is not what we want.
 		 */
-		free(settings->LoadBalanceInfo);
-		settings->LoadBalanceInfo = NULL;
-		settings->LoadBalanceInfoLength = 0;
-	}
-
-	if (settings->RedirectionFlags & LB_TARGET_FQDN)
-	{
-		free(settings->RedirectionTargetFQDN);
-		settings->RedirectionTargetFQDN = _strdup(redirection->TargetFQDN);
-
-		if (!settings->RedirectionTargetFQDN)
-			return -1;
-	}
-
-	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESS)
-	{
-		free(settings->TargetNetAddress);
-		settings->TargetNetAddress = _strdup(redirection->TargetNetAddress);
-
-		if (!settings->TargetNetAddress)
-			return -1;
-	}
-
-	if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
-	{
-		free(settings->RedirectionTargetNetBiosName);
-		settings->RedirectionTargetNetBiosName = _strdup(redirection->TargetNetBiosName);
-
-		if (!settings->RedirectionTargetNetBiosName)
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo, NULL, 0))
 			return -1;
 	}
 
 	if (settings->RedirectionFlags & LB_USERNAME)
 	{
-		free(settings->RedirectionUsername);
-		settings->RedirectionUsername = _strdup(redirection->Username);
-
-		if (!settings->RedirectionUsername)
+		if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionUsername,
+		                                 redirection->Username))
 			return -1;
 	}
 
 	if (settings->RedirectionFlags & LB_DOMAIN)
 	{
-		free(settings->RedirectionDomain);
-		settings->RedirectionDomain = _strdup(redirection->Domain);
-
-		if (!settings->RedirectionDomain)
+		if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionDomain, redirection->Domain))
 			return -1;
 	}
 
 	if (settings->RedirectionFlags & LB_PASSWORD)
 	{
 		/* Password may be a cookie without a null terminator */
-		free(settings->RedirectionPassword);
-		settings->RedirectionPasswordLength = redirection->PasswordLength;
-		/* For security reasons we'll allocate an additional zero WCHAR at the
-		 * end of the buffer that is not included in RedirectionPasswordLength
-		 */
-		settings->RedirectionPassword =
-		    (BYTE*)calloc(1, settings->RedirectionPasswordLength + sizeof(WCHAR));
-
-		if (!settings->RedirectionPassword)
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionPassword,
+		                                      redirection->Password, redirection->PasswordLength))
 			return -1;
+	}
 
-		CopyMemory(settings->RedirectionPassword, redirection->Password,
-		           settings->RedirectionPasswordLength);
+	if (settings->RedirectionFlags & LB_DONTSTOREUSERNAME)
+	{
+		// TODO
+	}
+
+	if (settings->RedirectionFlags & LB_SMARTCARD_LOGON)
+	{
+		// TODO
+	}
+
+	if (settings->RedirectionFlags & LB_NOREDIRECT)
+	{
+		// TODO
+	}
+
+	if (settings->RedirectionFlags & LB_TARGET_FQDN)
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionTargetFQDN,
+		                                 redirection->TargetFQDN))
+			return -1;
+	}
+
+	if (settings->RedirectionFlags & LB_TARGET_NETBIOS_NAME)
+	{
+		if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionTargetNetBiosName,
+		                                 redirection->TargetNetBiosName))
+			return -1;
+	}
+
+	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESSES)
+	{
+		if (!freerdp_target_net_addresses_copy(settings, redirection->TargetNetAddresses,
+		                                       redirection->TargetNetAddressesCount))
+			return -1;
 	}
 
 	if (settings->RedirectionFlags & LB_CLIENT_TSV_URL)
 	{
 		/* TsvUrl may not contain a null terminator */
-		free(settings->RedirectionTsvUrl);
-		settings->RedirectionTsvUrlLength = redirection->TsvUrlLength;
-		settings->RedirectionTsvUrl = (BYTE*)malloc(settings->RedirectionTsvUrlLength);
-
-		if (!settings->RedirectionTsvUrl)
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionTsvUrl,
+		                                      redirection->TsvUrl, redirection->TsvUrlLength))
 			return -1;
-
-		CopyMemory(settings->RedirectionTsvUrl, redirection->TsvUrl,
-		           settings->RedirectionTsvUrlLength);
 	}
 
-	if (settings->RedirectionFlags & LB_TARGET_NET_ADDRESSES)
+	if (settings->RedirectionFlags & LB_SERVER_TSV_CAPABLE)
 	{
-		UINT32 i;
-		freerdp_target_net_addresses_free(settings);
-		settings->TargetNetAddressCount = redirection->TargetNetAddressesCount;
-		settings->TargetNetAddresses =
-		    (char**)calloc(settings->TargetNetAddressCount, sizeof(char*));
+		// TODO
+	}
 
-		if (!settings->TargetNetAddresses)
-		{
-			settings->TargetNetAddressCount = 0;
+	if (settings->RedirectionFlags & LB_PASSWORD_IS_PK_ENCRYPTED)
+	{
+		// TODO
+	}
+
+	if (settings->RedirectionFlags & LB_REDIRECTION_GUID)
+	{
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionGuid,
+		                                      redirection->RedirectionGuid,
+		                                      redirection->RedirectionGuidLength))
 			return -1;
-		}
+	}
 
-		for (i = 0; i < settings->TargetNetAddressCount; i++)
-		{
-			settings->TargetNetAddresses[i] = _strdup(redirection->TargetNetAddresses[i]);
-
-			if (!settings->TargetNetAddresses[i])
-			{
-				UINT32 j;
-
-				for (j = 0; j < i; j++)
-					free(settings->TargetNetAddresses[j]);
-
-				return -1;
-			}
-		}
+	if (settings->RedirectionFlags & LB_TARGET_CERTIFICATE)
+	{
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionTargetCertificate,
+		                                      redirection->TargetCertificate,
+		                                      redirection->TargetCertificateLength))
+			return -1;
 	}
 
 	return 0;
 }
 
-static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
+static BOOL rdp_redirection_read_data(UINT32 flag, wStream* s, UINT32* pLength, BYTE** pData)
+{
+	char buffer[64] = { 0 };
+
+	WINPR_ASSERT(pLength);
+	WINPR_ASSERT(pData);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		return FALSE;
+
+	Stream_Read_UINT32(s, *pLength);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, *pLength))
+		return FALSE;
+
+	redirection_free_data(pData, pLength);
+	*pData = (BYTE*)malloc(*pLength);
+
+	if (!*pData)
+		return FALSE;
+
+	Stream_Read(s, *pData, *pLength);
+	WLog_DBG(TAG, "%s:", rdp_redirection_flags_to_string(flag, buffer, sizeof(buffer)));
+	winpr_HexDump(TAG, WLOG_DEBUG, *pData, *pLength);
+	return TRUE;
+}
+
+static int rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 {
 	UINT16 flags;
 	UINT16 length;
 	rdpRedirection* redirection = rdp->redirection;
 
-	if (Stream_GetRemainingLength(s) < 12)
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return -1;
 
 	Stream_Read_UINT16(s, flags);                  /* flags (2 bytes) */
@@ -329,23 +413,9 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		 * 0010  34 30 32 36 34 33 32 2e 31 35 36 32 39 2e 30 30  4026432.15629.00
 		 * 0020  30 30 0d 0a                                      00..
 		 */
-		if (Stream_GetRemainingLength(s) < 4)
+		if (!rdp_redirection_read_data(LB_LOAD_BALANCE_INFO, s, &redirection->LoadBalanceInfoLength,
+		                               &redirection->LoadBalanceInfo))
 			return -1;
-
-		Stream_Read_UINT32(s, redirection->LoadBalanceInfoLength);
-
-		if (Stream_GetRemainingLength(s) < redirection->LoadBalanceInfoLength)
-			return -1;
-
-		redirection->LoadBalanceInfo = (BYTE*)malloc(redirection->LoadBalanceInfoLength);
-
-		if (!redirection->LoadBalanceInfo)
-			return -1;
-
-		Stream_Read(s, redirection->LoadBalanceInfo, redirection->LoadBalanceInfoLength);
-		WLog_DBG(TAG, "loadBalanceInfo:");
-		winpr_HexDump(TAG, WLOG_DEBUG, redirection->LoadBalanceInfo,
-		              redirection->LoadBalanceInfoLength);
 	}
 
 	if (redirection->flags & LB_USERNAME)
@@ -359,7 +429,7 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_DOMAIN)
 	{
 		if (!rdp_redirection_read_unicode_string(s, &(redirection->Domain), 52))
-			return FALSE;
+			return -1;
 
 		WLog_DBG(TAG, "Domain: %s", redirection->Domain);
 	}
@@ -387,32 +457,24 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		 * Notwithstanding the above, we'll allocated an additional zero WCHAR at the
 		 * end of the buffer which won't get counted in PasswordLength.
 		 */
-		if (Stream_GetRemainingLength(s) < 4)
+		if (!rdp_redirection_read_data(LB_PASSWORD, s, &redirection->PasswordLength,
+		                               &redirection->Password))
 			return -1;
-
-		Stream_Read_UINT32(s, redirection->PasswordLength);
 
 		/* [MS-RDPBCGR] specifies 512 bytes as the upper limit for the password length
 		 * including the null terminatior(s). This should also be enough for the unknown
 		 * password cookie format (see previous comment).
 		 */
+		if ((redirection->flags & LB_PASSWORD_IS_PK_ENCRYPTED) == 0)
+		{
+			const size_t charLen = redirection->PasswordLength / sizeof(WCHAR);
+			if (redirection->PasswordLength > LB_PASSWORD_MAX_LENGTH)
+				return -1;
 
-		if (Stream_GetRemainingLength(s) < redirection->PasswordLength)
-			return -1;
-
-		if (redirection->PasswordLength > LB_PASSWORD_MAX_LENGTH)
-			return -1;
-
-		redirection->Password = (BYTE*)calloc(1, redirection->PasswordLength + sizeof(WCHAR));
-
-		if (!redirection->Password)
-			return -1;
-
-		Stream_Read(s, redirection->Password, redirection->PasswordLength);
-		WLog_DBG(TAG, "PasswordCookie:");
-#if defined(WITH_DEBUG_REDIR)
-		winpr_HexDump(TAG, WLOG_DEBUG, redirection->Password, redirection->PasswordLength);
-#endif
+			/* Ensure the text password is '\0' terminated */
+			if (_wcsnlen((const WCHAR*)redirection->Password, charLen) == charLen)
+				return -1;
+		}
 	}
 
 	if (redirection->flags & LB_TARGET_FQDN)
@@ -433,31 +495,33 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_CLIENT_TSV_URL)
 	{
-		if (Stream_GetRemainingLength(s) < 4)
+		if (!rdp_redirection_read_data(LB_CLIENT_TSV_URL, s, &redirection->TsvUrlLength,
+		                               &redirection->TsvUrl))
 			return -1;
+	}
 
-		Stream_Read_UINT32(s, redirection->TsvUrlLength);
-
-		if (Stream_GetRemainingLength(s) < redirection->TsvUrlLength)
+	if (redirection->flags & LB_REDIRECTION_GUID)
+	{
+		if (!rdp_redirection_read_data(LB_REDIRECTION_GUID, s, &redirection->RedirectionGuidLength,
+		                               &redirection->RedirectionGuid))
 			return -1;
+	}
 
-		redirection->TsvUrl = (BYTE*)malloc(redirection->TsvUrlLength);
-
-		if (!redirection->TsvUrl)
+	if (redirection->flags & LB_TARGET_CERTIFICATE)
+	{
+		if (!rdp_redirection_read_data(LB_TARGET_CERTIFICATE, s,
+		                               &redirection->TargetCertificateLength,
+		                               &redirection->TargetCertificate))
 			return -1;
-
-		Stream_Read(s, redirection->TsvUrl, redirection->TsvUrlLength);
-		WLog_DBG(TAG, "TsvUrl:");
-		winpr_HexDump(TAG, WLOG_DEBUG, redirection->TsvUrl, redirection->TsvUrlLength);
 	}
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
 	{
-		int i;
+		size_t i;
 		UINT32 count;
 		UINT32 targetNetAddressesLength;
 
-		if (Stream_GetRemainingLength(s) < 8)
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 			return -1;
 
 		Stream_Read_UINT32(s, targetNetAddressesLength);
@@ -466,16 +530,17 @@ static BOOL rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		redirection->TargetNetAddresses = (char**)calloc(count, sizeof(char*));
 
 		if (!redirection->TargetNetAddresses)
-			return FALSE;
+			return -1;
 
 		WLog_DBG(TAG, "TargetNetAddressesCount: %" PRIu32 "", redirection->TargetNetAddressesCount);
 
-		for (i = 0; i < (int)count; i++)
+		for (i = 0; i < count; i++)
 		{
 			if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddresses[i]), 80))
-				return FALSE;
+				return -1;
 
-			WLog_DBG(TAG, "TargetNetAddresses[%d]: %s", i, redirection->TargetNetAddresses[i]);
+			WLog_DBG(TAG, "TargetNetAddresses[%" PRIuz "]: %s", i,
+			         redirection->TargetNetAddresses[i]);
 		}
 	}
 
@@ -512,7 +577,7 @@ int rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s)
 	return status;
 }
 
-rdpRedirection* redirection_new()
+rdpRedirection* redirection_new(void)
 {
 	rdpRedirection* redirection;
 	redirection = (rdpRedirection*)calloc(1, sizeof(rdpRedirection));
@@ -528,26 +593,19 @@ void redirection_free(rdpRedirection* redirection)
 {
 	if (redirection)
 	{
-		free(redirection->TsvUrl);
-		free(redirection->Username);
-		free(redirection->Domain);
-		free(redirection->TargetFQDN);
-		free(redirection->TargetNetBiosName);
-		free(redirection->TargetNetAddress);
-		free(redirection->LoadBalanceInfo);
-		free(redirection->Password);
-
-		if (redirection->TargetNetAddresses)
-		{
-			int i;
-
-			for (i = 0; i < (int)redirection->TargetNetAddressesCount; i++)
-			{
-				free(redirection->TargetNetAddresses[i]);
-			}
-
-			free(redirection->TargetNetAddresses);
-		}
+		redirection_free_data(&redirection->TsvUrl, &redirection->TsvUrlLength);
+		redirection_free_string(&redirection->Username);
+		redirection_free_string(&redirection->Domain);
+		redirection_free_string(&redirection->TargetFQDN);
+		redirection_free_string(&redirection->TargetNetBiosName);
+		redirection_free_string(&redirection->TargetNetAddress);
+		redirection_free_data(&redirection->LoadBalanceInfo, &redirection->LoadBalanceInfoLength);
+		redirection_free_data(&redirection->Password, &redirection->PasswordLength);
+		redirection_free_data(&redirection->RedirectionGuid, &redirection->RedirectionGuidLength);
+		redirection_free_data(&redirection->TargetCertificate,
+		                      &redirection->TargetCertificateLength);
+		redirection_free_array(&redirection->TargetNetAddresses,
+		                       &redirection->TargetNetAddressesCount);
 
 		free(redirection);
 	}
