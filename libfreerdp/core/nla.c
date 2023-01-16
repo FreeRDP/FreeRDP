@@ -424,8 +424,10 @@ static int nla_client_init(rdpNla* nla)
 	nla->haveContext = FALSE;
 	nla->haveInputBuffer = FALSE;
 	nla->havePubKeyAuth = FALSE;
-	ZeroMemory(&nla->inputBuffer, sizeof(SecBuffer));
-	ZeroMemory(&nla->outputBuffer, sizeof(SecBuffer));
+
+	sspi_SecBufferFree(&nla->inputBuffer);
+	sspi_SecBufferFree(&nla->outputBuffer);
+
 	ZeroMemory(&nla->ContextSizes, sizeof(SecPkgContext_Sizes));
 	/*
 	 * from tspkg.dll: 0x00000132
@@ -436,6 +438,26 @@ static int nla_client_init(rdpNla* nla)
 	 */
 	nla->fContextReq = ISC_REQ_MUTUAL_AUTH | ISC_REQ_CONFIDENTIALITY | ISC_REQ_USE_SESSION_KEY;
 	return 1;
+}
+
+static BOOL nla_alloc_buffer(SecBuffer* buffer, size_t size)
+{
+	sspi_SecBufferFree(buffer);
+	buffer->BufferType = SECBUFFER_TOKEN;
+	return sspi_SecBufferAlloc(buffer, size) != 0;
+}
+
+static BOOL nla_transfer_buffer(SecBuffer* dst, SecBuffer* src)
+{
+	WINPR_ASSERT(dst);
+	WINPR_ASSERT(src);
+	sspi_SecBufferFree(dst);
+	dst->cbBuffer = src->cbBuffer;
+	src->cbBuffer = 0;
+
+	dst->pvBuffer = src->pvBuffer;
+	src->pvBuffer = NULL;
+	return TRUE;
 }
 
 int nla_client_begin(rdpNla* nla)
@@ -449,11 +471,8 @@ int nla_client_begin(rdpNla* nla)
 	nla->outputBufferDesc.ulVersion = SECBUFFER_VERSION;
 	nla->outputBufferDesc.cBuffers = 1;
 	nla->outputBufferDesc.pBuffers = &nla->outputBuffer;
-	nla->outputBuffer.BufferType = SECBUFFER_TOKEN;
-	nla->outputBuffer.cbBuffer = nla->cbMaxToken;
-	nla->outputBuffer.pvBuffer = malloc(nla->outputBuffer.cbBuffer);
 
-	if (!nla->outputBuffer.pvBuffer)
+	if (!nla_alloc_buffer(&nla->outputBuffer, nla->cbMaxToken))
 		return -1;
 
 	nla->status = nla->table->InitializeSecurityContext(
@@ -518,8 +537,8 @@ int nla_client_begin(rdpNla* nla)
 	if (nla->outputBuffer.cbBuffer < 1)
 		return -1;
 
-	nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
-	nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
+	if (!nla_transfer_buffer(&nla->negoToken, &nla->outputBuffer))
+		return -1;
 
 	if (!nla_send(nla, "Client: Sending Authentication Token"))
 	{
@@ -542,16 +561,15 @@ static int nla_client_recv(rdpNla* nla)
 		nla->inputBufferDesc.cBuffers = 1;
 		nla->inputBufferDesc.pBuffers = &nla->inputBuffer;
 		nla->inputBuffer.BufferType = SECBUFFER_TOKEN;
-		nla->inputBuffer.pvBuffer = nla->negoToken.pvBuffer;
-		nla->inputBuffer.cbBuffer = nla->negoToken.cbBuffer;
+
+		if (!nla_transfer_buffer(&nla->inputBuffer, &nla->negoToken))
+			return -1;
+
 		nla->outputBufferDesc.ulVersion = SECBUFFER_VERSION;
 		nla->outputBufferDesc.cBuffers = 1;
 		nla->outputBufferDesc.pBuffers = &nla->outputBuffer;
-		nla->outputBuffer.BufferType = SECBUFFER_TOKEN;
-		nla->outputBuffer.cbBuffer = nla->cbMaxToken;
-		nla->outputBuffer.pvBuffer = malloc(nla->outputBuffer.cbBuffer);
 
-		if (!nla->outputBuffer.pvBuffer)
+		if (!nla_alloc_buffer(&nla->outputBuffer, nla->cbMaxToken))
 			return -1;
 
 		nla->status = nla->table->InitializeSecurityContext(
@@ -560,8 +578,8 @@ static int nla_client_recv(rdpNla* nla)
 		    &nla->pfContextAttr, &nla->expiration);
 		WLog_VRB(TAG, "InitializeSecurityContext  %s [0x%08" PRIX32 "]",
 		         GetSecurityStatusString(nla->status), nla->status);
-		free(nla->inputBuffer.pvBuffer);
-		nla->inputBuffer.pvBuffer = NULL;
+
+		sspi_SecBufferFree(&nla->inputBuffer);
 
 		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 		{
@@ -607,8 +625,8 @@ static int nla_client_recv(rdpNla* nla)
 				return -1;
 		}
 
-		nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
-		nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
+		if (!nla_transfer_buffer(&nla->negoToken, &nla->outputBuffer))
+			return -1;
 
 		if (!nla_send(nla, "Client: Sending Authentication Token"))
 		{
@@ -799,8 +817,10 @@ static int nla_server_init(rdpNla* nla)
 	nla->haveContext = FALSE;
 	nla->haveInputBuffer = FALSE;
 	nla->havePubKeyAuth = FALSE;
-	ZeroMemory(&nla->inputBuffer, sizeof(SecBuffer));
-	ZeroMemory(&nla->outputBuffer, sizeof(SecBuffer));
+
+	sspi_SecBufferFree(&nla->inputBuffer);
+	sspi_SecBufferFree(&nla->outputBuffer);
+
 	ZeroMemory(&nla->inputBufferDesc, sizeof(SecBufferDesc));
 	ZeroMemory(&nla->outputBufferDesc, sizeof(SecBufferDesc));
 	ZeroMemory(&nla->ContextSizes, sizeof(SecPkgContext_Sizes));
@@ -843,10 +863,10 @@ static int nla_server_authenticate(rdpNla* nla)
 		if (nla_recv(nla, "Receiving Authentication Token") < 0)
 			return -1;
 
-		nla->inputBuffer.pvBuffer = nla->negoToken.pvBuffer;
-		nla->inputBuffer.cbBuffer = nla->negoToken.cbBuffer;
+		if (!nla_transfer_buffer(&nla->inputBuffer, &nla->negoToken))
+			return -1;
 
-		if (nla->negoToken.cbBuffer < 1)
+		if (nla->inputBuffer.cbBuffer < 1)
 		{
 			WLog_ERR(TAG, "CredSSP: invalid negoToken!");
 			return -1;
@@ -855,11 +875,8 @@ static int nla_server_authenticate(rdpNla* nla)
 		nla->outputBufferDesc.ulVersion = SECBUFFER_VERSION;
 		nla->outputBufferDesc.cBuffers = 1;
 		nla->outputBufferDesc.pBuffers = &nla->outputBuffer;
-		nla->outputBuffer.BufferType = SECBUFFER_TOKEN;
-		nla->outputBuffer.cbBuffer = nla->cbMaxToken;
-		nla->outputBuffer.pvBuffer = malloc(nla->outputBuffer.cbBuffer);
 
-		if (!nla->outputBuffer.pvBuffer)
+		if (!nla_alloc_buffer(&nla->outputBuffer, nla->cbMaxToken))
 			return -1;
 
 		nla->status = nla->table->AcceptSecurityContext(
@@ -868,8 +885,9 @@ static int nla_server_authenticate(rdpNla* nla)
 		    &nla->pfContextAttr, &nla->expiration);
 		WLog_VRB(TAG, "AcceptSecurityContext status %s [0x%08" PRIX32 "]",
 		         GetSecurityStatusString(nla->status), nla->status);
-		nla->negoToken.pvBuffer = nla->outputBuffer.pvBuffer;
-		nla->negoToken.cbBuffer = nla->outputBuffer.cbBuffer;
+
+		if (!nla_transfer_buffer(&nla->negoToken, &nla->outputBuffer))
+			return -1;
 
 		if ((nla->status == SEC_I_COMPLETE_AND_CONTINUE) || (nla->status == SEC_I_COMPLETE_NEEDED))
 		{
@@ -2261,6 +2279,8 @@ void nla_buffer_free(rdpNla* nla)
 	sspi_SecBufferFree(&nla->negoToken);
 	sspi_SecBufferFree(&nla->pubKeyAuth);
 	sspi_SecBufferFree(&nla->authInfo);
+	sspi_SecBufferFree(&nla->inputBuffer);
+	sspi_SecBufferFree(&nla->outputBuffer);
 }
 
 LPTSTR nla_make_spn(const char* ServiceClass, const char* hostname)
