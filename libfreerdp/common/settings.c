@@ -1331,6 +1331,12 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 		case FreeRDP_RedirectionTsvUrl:
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_RedirectionTsvUrlLength,
 			                                         data, len, sizeof(char));
+		case FreeRDP_RedirectionTargetCertificate:
+			return freerdp_settings_set_pointer_len_(
+			    settings, id, FreeRDP_RedirectionTargetCertificateLength, data, len, sizeof(BYTE));
+		case FreeRDP_RedirectionGuid:
+			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_RedirectionGuidLength,
+			                                         data, len, sizeof(BYTE));
 		case FreeRDP_LoadBalanceInfo:
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_LoadBalanceInfoLength,
 			                                         data, len, sizeof(char));

@@ -1715,11 +1715,17 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_RedirectionFlags:
 			return settings->RedirectionFlags;
 
+		case FreeRDP_RedirectionGuidLength:
+			return settings->RedirectionGuidLength;
+
 		case FreeRDP_RedirectionPasswordLength:
 			return settings->RedirectionPasswordLength;
 
 		case FreeRDP_RedirectionPreferType:
 			return settings->RedirectionPreferType;
+
+		case FreeRDP_RedirectionTargetCertificateLength:
+			return settings->RedirectionTargetCertificateLength;
 
 		case FreeRDP_RedirectionTsvUrlLength:
 			return settings->RedirectionTsvUrlLength;
@@ -2183,12 +2189,20 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 			settings->RedirectionFlags = cnv.c;
 			break;
 
+		case FreeRDP_RedirectionGuidLength:
+			settings->RedirectionGuidLength = cnv.c;
+			break;
+
 		case FreeRDP_RedirectionPasswordLength:
 			settings->RedirectionPasswordLength = cnv.c;
 			break;
 
 		case FreeRDP_RedirectionPreferType:
 			settings->RedirectionPreferType = cnv.c;
+			break;
+
+		case FreeRDP_RedirectionTargetCertificateLength:
+			settings->RedirectionTargetCertificateLength = cnv.c;
 			break;
 
 		case FreeRDP_RedirectionTsvUrlLength:
@@ -3400,8 +3414,14 @@ void* freerdp_settings_get_pointer_writable(rdpSettings* settings, size_t id)
 		case FreeRDP_ReceivedCapabilityDataSizes:
 			return settings->ReceivedCapabilityDataSizes;
 
+		case FreeRDP_RedirectionGuid:
+			return settings->RedirectionGuid;
+
 		case FreeRDP_RedirectionPassword:
 			return settings->RedirectionPassword;
+
+		case FreeRDP_RedirectionTargetCertificate:
+			return settings->RedirectionTargetCertificate;
 
 		case FreeRDP_RedirectionTsvUrl:
 			return settings->RedirectionTsvUrl;
@@ -3527,8 +3547,16 @@ BOOL freerdp_settings_set_pointer(rdpSettings* settings, size_t id, const void* 
 			settings->ReceivedCapabilityDataSizes = cnv.v;
 			break;
 
+		case FreeRDP_RedirectionGuid:
+			settings->RedirectionGuid = cnv.v;
+			break;
+
 		case FreeRDP_RedirectionPassword:
 			settings->RedirectionPassword = cnv.v;
+			break;
+
+		case FreeRDP_RedirectionTargetCertificate:
+			settings->RedirectionTargetCertificate = cnv.v;
 			break;
 
 		case FreeRDP_RedirectionTsvUrl:
