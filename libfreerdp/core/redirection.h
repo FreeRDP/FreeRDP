@@ -31,12 +31,11 @@ typedef struct rdp_redirection rdpRedirection;
 #include <winpr/wlog.h>
 #include <winpr/stream.h>
 
-FREERDP_LOCAL state_run_t rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);
-
 FREERDP_LOCAL int rdp_redirection_apply_settings(rdpRdp* rdp);
 
-FREERDP_LOCAL rdpRedirection* redirection_new(void);
-FREERDP_LOCAL void redirection_free(rdpRedirection* redirection);
+FREERDP_LOCAL state_run_t rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL
+rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirection* redirection);
 
 #define REDIR_TAG FREERDP_TAG("core.redirection")
 #ifdef WITH_DEBUG_REDIR
