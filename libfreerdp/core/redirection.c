@@ -729,7 +729,7 @@ BOOL rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirec
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
 	{
 		UINT32 i;
-		UINT32 length = 0;
+		UINT32 length = sizeof(UINT32);
 
 		if (!Stream_EnsureRemainingCapacity(s, 2 * sizeof(UINT32)))
 			goto fail;
