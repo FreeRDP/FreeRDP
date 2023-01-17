@@ -1018,7 +1018,7 @@ void key_free(rdpRsaKey* key)
 	free(key);
 }
 
-rdpCertificate* certificate_clone(rdpCertificate* certificate)
+rdpCertificate* certificate_clone(const rdpCertificate* certificate)
 {
 	UINT32 index;
 
