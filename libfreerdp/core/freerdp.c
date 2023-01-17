@@ -110,6 +110,11 @@ static int freerdp_connect_begin(freerdp* instance)
 		if (!rdp->originalSettings)
 			return 0;
 
+		freerdp_settings_free(rdp->remoteSettings);
+		rdp->remoteSettings = freerdp_settings_new(0);
+		if (!rdp->remoteSettings)
+			return 0;
+
 		WINPR_ASSERT(instance->LoadChannels);
 		if (!instance->LoadChannels(instance))
 			return 0;

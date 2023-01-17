@@ -216,6 +216,10 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 	settings = rdp->settings;
 	WINPR_ASSERT(settings);
 
+	freerdp_settings_free(rdp->remoteSettings);
+	rdp->remoteSettings = freerdp_settings_new(0);
+	WINPR_ASSERT(rdp->remoteSettings);
+
 	redirection = rdp->redirection;
 	WINPR_ASSERT(redirection);
 

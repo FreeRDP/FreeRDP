@@ -2045,7 +2045,8 @@ BOOL freerdp_get_stats(rdpRdp* rdp, UINT64* inBytes, UINT64* outBytes, UINT64* i
 rdpRdp* rdp_new(rdpContext* context)
 {
 	rdpRdp* rdp;
-	DWORD flags;
+	DWORD flags = 0;
+	DWORD remoteFlags = 0;
 	rdp = (rdpRdp*)calloc(1, sizeof(rdpRdp));
 
 	if (!rdp)
@@ -2057,6 +2058,8 @@ rdpRdp* rdp_new(rdpContext* context)
 
 	if (context->ServerMode)
 		flags |= FREERDP_SETTINGS_SERVER_MODE;
+	else
+		remoteFlags |= FREERDP_SETTINGS_SERVER_MODE;
 
 	if (!context->settings)
 	{
@@ -2073,6 +2076,11 @@ rdpRdp* rdp_new(rdpContext* context)
 	rdp->originalSettings = freerdp_settings_clone(rdp->settings);
 	if (!rdp->originalSettings)
 		return FALSE;
+
+	freerdp_settings_free(rdp->remoteSettings);
+	rdp->remoteSettings = freerdp_settings_new(remoteFlags);
+	if (!rdp->remoteSettings)
+		return false;
 
 	rdp->settings->instance = context->instance;
 
@@ -2279,6 +2287,7 @@ void rdp_free(rdpRdp* rdp)
 
 		freerdp_settings_free(rdp->settings);
 		freerdp_settings_free(rdp->originalSettings);
+		freerdp_settings_free(rdp->remoteSettings);
 
 		input_free(rdp->input);
 		update_free(rdp->update);
