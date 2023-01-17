@@ -35,14 +35,14 @@ struct rdp_redirection
 	UINT32 flags;
 	UINT32 sessionID;
 	BYTE* TsvUrl;
-	DWORD TsvUrlLength;
+	UINT32 TsvUrlLength;
 	char* Username;
 	char* Domain;
 	BYTE* Password;
-	DWORD PasswordLength;
+	UINT32 PasswordLength;
 	char* TargetFQDN;
 	BYTE* LoadBalanceInfo;
-	DWORD LoadBalanceInfoLength;
+	UINT32 LoadBalanceInfoLength;
 	char* TargetNetBiosName;
 	char* TargetNetAddress;
 	UINT32 TargetNetAddressesCount;
@@ -79,9 +79,9 @@ static void redirection_free_string(char** str)
 static void redirection_free_data(BYTE** str, UINT32* length)
 {
 	WINPR_ASSERT(str);
-	WINPR_ASSERT(length);
 	free(*str);
-	*length = 0;
+	if (length)
+		*length = 0;
 	*str = NULL;
 }
 
@@ -158,7 +158,7 @@ static void rdp_print_redirection_flags(UINT32 flags)
 
 static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t maxLength)
 {
-	UINT32 length;
+	UINT32 length = 0;
 	const WCHAR* wstr = NULL;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
@@ -168,18 +168,15 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 
 	if ((length % 2) || length < 2 || length > maxLength)
 	{
-		WLog_ERR(TAG,
-		         "rdp_redirection_read_string failure: invalid unicode string length: %" PRIu32 "",
+		WLog_ERR(TAG, "[%s] failure: invalid unicode string length: %" PRIu32 "", __FUNCTION__,
 		         length);
 		return FALSE;
 	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 	{
-		WLog_ERR(TAG,
-		         "rdp_redirection_read_string failure: insufficient stream length (%" PRIu32
-		         " bytes required)",
-		         length);
+		WLog_ERR(TAG, "[%s] failure: insufficient stream length (%" PRIu32 " bytes required)",
+		         __FUNCTION__, length);
 		return FALSE;
 	}
 
@@ -187,7 +184,7 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 
 	if (wstr[length / 2 - 1])
 	{
-		WLog_ERR(TAG, "rdp_redirection_read_string failure: unterminated unicode string");
+		WLog_ERR(TAG, "[%s] failure: unterminated unicode string", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -195,7 +192,7 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 	*str = ConvertWCharNToUtf8Alloc(wstr, length / sizeof(WCHAR), NULL);
 	if (!*str)
 	{
-		WLog_ERR(TAG, "rdp_redirection_read_string failure: string conversion failed");
+		WLog_ERR(TAG, "[%s] failure: string conversion failed", __FUNCTION__);
 		return FALSE;
 	}
 
@@ -205,8 +202,8 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 
 int rdp_redirection_apply_settings(rdpRdp* rdp)
 {
-	rdpSettings* settings;
-	rdpRedirection* redirection;
+	rdpSettings* settings = NULL;
+	rdpRedirection* redirection = NULL;
 
 	if (!rdp_reset_runtime_settings(rdp))
 		return -1;
@@ -354,7 +351,7 @@ static BOOL rdp_redirection_read_data(UINT32 flag, wStream* s, UINT32* pLength, 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, *pLength))
 		return FALSE;
 
-	redirection_free_data(pData, pLength);
+	redirection_free_data(pData, NULL);
 	*pData = (BYTE*)malloc(*pLength);
 
 	if (!*pData)
@@ -368,8 +365,8 @@ static BOOL rdp_redirection_read_data(UINT32 flag, wStream* s, UINT32* pLength, 
 
 static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT16 flags;
-	UINT16 length;
+	UINT16 flags = 0;
+	UINT16 length = 0;
 	rdpRedirection* redirection = rdp->redirection;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
@@ -515,9 +512,8 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
 	{
-		size_t i;
-		UINT32 count;
-		UINT32 targetNetAddressesLength;
+		UINT32 count = 0;
+		UINT32 targetNetAddressesLength = 0;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 			return STATE_RUN_FAILED;
@@ -530,14 +526,14 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		if (!redirection->TargetNetAddresses)
 			return STATE_RUN_FAILED;
 
-		WLog_DBG(TAG, "TargetNetAddressesCount: %" PRIu32 "", redirection->TargetNetAddressesCount);
+		WLog_DBG(TAG, "TargetNetAddressesCount: %" PRIu32 "", count);
 
-		for (i = 0; i < count; i++)
+		for (UINT32 i = 0; i < count; i++)
 		{
 			if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddresses[i]), 80))
 				return STATE_RUN_FAILED;
 
-			WLog_DBG(TAG, "TargetNetAddresses[%" PRIuz "]: %s", i,
+			WLog_DBG(TAG, "TargetNetAddresses[%" PRIu32 "]: %s", i,
 			         redirection->TargetNetAddresses[i]);
 		}
 	}
@@ -577,8 +573,7 @@ state_run_t rdp_recv_enhanced_security_redirection_packet(rdpRdp* rdp, wStream* 
 
 rdpRedirection* redirection_new(void)
 {
-	rdpRedirection* redirection;
-	redirection = (rdpRedirection*)calloc(1, sizeof(rdpRedirection));
+	rdpRedirection* redirection = (rdpRedirection*)calloc(1, sizeof(rdpRedirection));
 
 	if (redirection)
 	{
@@ -727,7 +722,6 @@ BOOL rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirec
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
 	{
-		UINT32 i;
 		UINT32 length = sizeof(UINT32);
 
 		if (!Stream_EnsureRemainingCapacity(s, 2 * sizeof(UINT32)))
@@ -736,7 +730,7 @@ BOOL rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirec
 		const size_t start = Stream_GetPosition(s);
 		Stream_Seek_UINT32(s); /* length of field */
 		Stream_Write_UINT32(s, redirection->TargetNetAddressesCount);
-		for (i = 0; i < redirection->TargetNetAddressesCount; i++)
+		for (UINT32 i = 0; i < redirection->TargetNetAddressesCount; i++)
 		{
 			const SSIZE_T rcc =
 			    redir_write_string(LB_TARGET_NET_ADDRESSES, s, redirection->TargetNetAddresses[i]);
