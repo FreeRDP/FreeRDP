@@ -156,6 +156,7 @@ struct rdp_rdp
 	rdpRedirection* redirection;
 	rdpSettings* settings;
 	rdpSettings* originalSettings;
+	rdpSettings* remoteSettings;
 	rdpTransport* transport;
 	rdpAutoDetect* autodetect;
 	rdpHeartbeat* heartbeat;

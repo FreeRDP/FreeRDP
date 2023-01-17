@@ -4213,13 +4213,13 @@ BOOL rdp_read_capability_set(wStream* sub, UINT16 type, rdpSettings* settings, B
 	return TRUE;
 }
 
-static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 totalLength)
+static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, rdpSettings* rcvSettings,
+                                     UINT16 totalLength)
 {
 	BOOL rc = FALSE;
 	size_t start, end, len;
 	UINT16 numberCapabilities;
 	UINT16 count;
-	rdpSettings* rcvSettings;
 
 #ifdef WITH_DEBUG_CAPABILITIES
 	const size_t capstart = Stream_GetPosition(s);
@@ -4227,10 +4227,6 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 t
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(settings);
-
-	rcvSettings = freerdp_settings_new(0);
-	if (!rcvSettings)
-		goto fail;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
@@ -4283,7 +4279,6 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, UINT16 t
 	}
 	rc = freerdp_capability_buffer_copy(settings, rcvSettings);
 fail:
-	freerdp_settings_free(rcvSettings);
 	return rc;
 }
 
@@ -4392,7 +4387,8 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	/* capabilitySets */
-	if (!rdp_read_capability_sets(s, rdp->settings, lengthCombinedCapabilities))
+	if (!rdp_read_capability_sets(s, rdp->settings, rdp->remoteSettings,
+	                              lengthCombinedCapabilities))
 	{
 		WLog_ERR(TAG, "rdp_read_capability_sets failed");
 		return FALSE;
@@ -4518,7 +4514,8 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 		return FALSE;
 
 	Stream_Seek(s, lengthSourceDescriptor); /* sourceDescriptor */
-	if (!rdp_read_capability_sets(s, rdp->settings, lengthCombinedCapabilities))
+	if (!rdp_read_capability_sets(s, rdp->settings, rdp->remoteSettings,
+	                              lengthCombinedCapabilities))
 		return FALSE;
 
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_SURFACE_COMMANDS])
