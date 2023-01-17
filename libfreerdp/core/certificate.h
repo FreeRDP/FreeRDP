@@ -50,7 +50,7 @@ FREERDP_LOCAL BOOL certificate_read_server_certificate(rdpCertificate* certifica
 FREERDP_LOCAL BOOL certificate_write_server_certificate(rdpCertificate* certificate,
                                                         UINT32 dwVersion, wStream* s);
 
-FREERDP_LOCAL rdpCertificate* certificate_clone(rdpCertificate* certificate);
+FREERDP_LOCAL rdpCertificate* certificate_clone(const rdpCertificate* certificate);
 
 FREERDP_LOCAL rdpCertificate* certificate_new(void);
 FREERDP_LOCAL void certificate_free(rdpCertificate* certificate);
