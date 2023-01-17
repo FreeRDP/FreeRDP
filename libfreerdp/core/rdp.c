@@ -2072,15 +2072,8 @@ rdpRdp* rdp_new(rdpContext* context)
 		rdp->settings = context->settings;
 
 	/* Keep a backup copy of settings for later comparisons */
-	freerdp_settings_free(rdp->originalSettings);
-	rdp->originalSettings = freerdp_settings_clone(rdp->settings);
-	if (!rdp->originalSettings)
+	if (!rdp_set_backup_settings(rdp))
 		return FALSE;
-
-	freerdp_settings_free(rdp->remoteSettings);
-	rdp->remoteSettings = freerdp_settings_new(remoteFlags);
-	if (!rdp->remoteSettings)
-		return false;
 
 	rdp->settings->instance = context->instance;
 
@@ -2486,4 +2479,38 @@ const char* rdp_security_flag_string(UINT32 securityFlags, char* buffer, size_t 
 		winpr_str_append("SEC_FLAGSHI_VALID", buffer, size, "|");
 
 	return buffer;
+}
+
+static BOOL rdp_reset_remote_settings(rdpRdp* rdp)
+{
+	UINT32 flags = 0;
+	WINPR_ASSERT(rdp);
+	freerdp_settings_free(rdp->remoteSettings);
+
+	if (!freerdp_settings_get_bool(rdp->settings, FreeRDP_ServerMode))
+		flags |= FREERDP_SETTINGS_SERVER_MODE;
+	rdp->remoteSettings = freerdp_settings_new(flags);
+	return rdp->remoteSettings != NULL;
+}
+
+BOOL rdp_set_backup_settings(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+	freerdp_settings_free(rdp->originalSettings);
+	rdp->originalSettings = freerdp_settings_clone(rdp->settings);
+	if (!rdp->originalSettings)
+		return FALSE;
+	return rdp_reset_remote_settings(rdp);
+}
+
+BOOL rdp_reset_runtime_settings(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+
+	freerdp_settings_free(rdp->settings);
+	rdp->context->settings = rdp->settings = freerdp_settings_clone(rdp->originalSettings);
+
+	if (!rdp->settings)
+		return FALSE;
+	return rdp_reset_remote_settings(rdp);
 }
