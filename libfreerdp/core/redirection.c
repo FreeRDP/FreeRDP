@@ -645,8 +645,9 @@ BOOL rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirec
 		goto fail;
 
 	Stream_Write_UINT16(s, 0);
-	Stream_Write_UINT16(s, SEC_REDIRECTION_PKT);
 
+	const size_t start = Stream_GetPosition(s);
+	Stream_Write_UINT16(s, SEC_REDIRECTION_PKT);
 	const size_t lengthOffset = Stream_GetPosition(s);
 	Stream_Seek_UINT16(s); /* placeholder for length */
 
@@ -758,10 +759,10 @@ BOOL rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirec
 		goto fail;
 	Stream_Zero(s, 8);
 
-	const size_t length = Stream_GetPosition(s);
+	const size_t end = Stream_GetPosition(s);
 	Stream_SetPosition(s, lengthOffset);
-	Stream_Write_UINT16(s, (UINT16)length);
-	Stream_SetPosition(s, length);
+	Stream_Write_UINT16(s, (UINT16)(end - start));
+	Stream_SetPosition(s, end);
 
 	rc = TRUE;
 fail:
