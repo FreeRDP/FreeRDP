@@ -2082,3 +2082,50 @@ const char* freerdp_rdpdr_dtyp_string(UINT32 type)
 			return "RDPDR_DTYP_UNKNOWN";
 	}
 }
+
+const char* freerdp_encryption_level_string(UINT32 EncryptionLevel)
+{
+	switch (EncryptionLevel)
+	{
+		case ENCRYPTION_LEVEL_NONE:
+			return "ENCRYPTION_LEVEL_NONE";
+		case ENCRYPTION_LEVEL_LOW:
+			return "ENCRYPTION_LEVEL_LOW";
+		case ENCRYPTION_LEVEL_CLIENT_COMPATIBLE:
+			return "ENCRYPTION_LEVEL_CLIENT_COMPATIBLE";
+		case ENCRYPTION_LEVEL_HIGH:
+			return "ENCRYPTION_LEVEL_HIGH";
+		case ENCRYPTION_LEVEL_FIPS:
+			return "ENCRYPTION_LEVEL_FIPS";
+		default:
+			return "ENCRYPTION_LEVEL_UNKNOWN";
+	}
+}
+
+const char* freerdp_encryption_methods_string(UINT32 EncryptionMethods, char* buffer, size_t size)
+{
+	if (EncryptionMethods == ENCRYPTION_METHOD_NONE)
+	{
+		winpr_str_append("ENCRYPTION_METHOD_NONE", buffer, size, "|");
+		return buffer;
+	}
+
+	if (EncryptionMethods & ENCRYPTION_METHOD_40BIT)
+	{
+		winpr_str_append("ENCRYPTION_METHOD_40BIT", buffer, size, "|");
+	}
+	if (EncryptionMethods & ENCRYPTION_METHOD_128BIT)
+	{
+		winpr_str_append("ENCRYPTION_METHOD_128BIT", buffer, size, "|");
+	}
+	if (EncryptionMethods & ENCRYPTION_METHOD_56BIT)
+	{
+		winpr_str_append("ENCRYPTION_METHOD_56BIT", buffer, size, "|");
+	}
+	if (EncryptionMethods & ENCRYPTION_METHOD_FIPS)
+	{
+		winpr_str_append("ENCRYPTION_METHOD_FIPS", buffer, size, "|");
+	}
+
+	return buffer;
+}

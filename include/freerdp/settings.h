@@ -2209,6 +2209,10 @@ extern "C"
 	 */
 	FREERDP_API const char* freerdp_rdpdr_dtyp_string(UINT32 type);
 
+	FREERDP_API const char* freerdp_encryption_level_string(UINT32 EncryptionLevel);
+	FREERDP_API const char* freerdp_encryption_methods_string(UINT32 EncryptionLevel, char* buffer,
+	                                                          size_t size);
+
 #ifdef __cplusplus
 }
 #endif
