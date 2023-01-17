@@ -105,14 +105,7 @@ static int freerdp_connect_begin(freerdp* instance)
 
 	if (status)
 	{
-		freerdp_settings_free(rdp->originalSettings);
-		rdp->originalSettings = freerdp_settings_clone(settings);
-		if (!rdp->originalSettings)
-			return 0;
-
-		freerdp_settings_free(rdp->remoteSettings);
-		rdp->remoteSettings = freerdp_settings_new(0);
-		if (!rdp->remoteSettings)
+		if (!rdp_set_backup_settings(rdp))
 			return 0;
 
 		WINPR_ASSERT(instance->LoadChannels);

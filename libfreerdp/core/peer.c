@@ -1240,7 +1240,7 @@ static BOOL freerdp_peer_send_server_redirection_pdu(freerdp_peer* peer,
 	if (!rdp_send_pdu(peer->context->rdp, s, PDU_TYPE_SERVER_REDIRECTION, 0))
 		goto fail;
 
-	return TRUE;
+	return rdp_reset_runtime_settings(peer->context->rdp);
 fail:
 	Stream_Release(s);
 	return FALSE;

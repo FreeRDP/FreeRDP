@@ -208,17 +208,11 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 	rdpSettings* settings;
 	rdpRedirection* redirection;
 
-	WINPR_ASSERT(rdp);
-
-	freerdp_settings_free(rdp->settings);
-	rdp->context->settings = rdp->settings = freerdp_settings_clone(rdp->originalSettings);
+	if (!rdp_reset_runtime_settings(rdp))
+		return -1;
 
 	settings = rdp->settings;
 	WINPR_ASSERT(settings);
-
-	freerdp_settings_free(rdp->remoteSettings);
-	rdp->remoteSettings = freerdp_settings_new(0);
-	WINPR_ASSERT(rdp->remoteSettings);
 
 	redirection = rdp->redirection;
 	WINPR_ASSERT(redirection);
