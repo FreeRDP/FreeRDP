@@ -2048,7 +2048,13 @@ BOOL freerdp_settings_set_string_from_utf16N(rdpSettings* settings, size_t id, c
 
 	char* str = ConvertWCharNToUtf8Alloc(param, length, &len);
 	if (!str && (length != 0))
-		return FALSE;
+	{
+		/* If the input string is an empty string, but length > 0
+		 * consider the conversion a success */
+		const size_t wlen = _wcsnlen(param, length);
+		if (wlen != 0)
+			return FALSE;
+	}
 
 	return freerdp_settings_set_string_(settings, id, str, len, FALSE, TRUE);
 }
