@@ -426,7 +426,7 @@ static BOOL mcs_init_domain_parameters(DomainParameters* domainParameters, UINT3
 
 static BOOL mcs_read_domain_parameters(wStream* s, DomainParameters* domainParameters)
 {
-	size_t length;
+	size_t length = 0;
 
 	if (!s || !domainParameters)
 		return FALSE;
@@ -536,6 +536,8 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 	}
 	else
 	{
+		WLog_ERR(TAG, "[%s] invalid maxChannelIds [%" PRIu32 ", %" PRIu32 "]", __FUNCTION__,
+		         targetParameters->maxChannelIds, maximumParameters->maxChannelIds);
 		return FALSE;
 	}
 
@@ -551,6 +553,8 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 	}
 	else
 	{
+		WLog_ERR(TAG, "[%s] invalid maxUserIds [%" PRIu32 ", %" PRIu32 "]", __FUNCTION__,
+		         targetParameters->maxUserIds, maximumParameters->maxUserIds);
 		return FALSE;
 	}
 
@@ -565,6 +569,8 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 	}
 	else
 	{
+		WLog_ERR(TAG, "[%s] invalid numPriorities [%" PRIu32 "]", __FUNCTION__,
+		         maximumParameters->numPriorities);
 		return FALSE;
 	}
 
@@ -579,6 +585,8 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 	}
 	else
 	{
+		WLog_ERR(TAG, "[%s] invalid maxHeight [%" PRIu32 ", %" PRIu32 "]", __FUNCTION__,
+		         targetParameters->maxHeight, minimumParameters->maxHeight);
 		return FALSE;
 	}
 
@@ -597,6 +605,8 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 		}
 		else
 		{
+			WLog_ERR(TAG, "[%s] invalid maxMCSPDUsize [%" PRIu32 ", %" PRIu32 "]", __FUNCTION__,
+			         targetParameters->maxMCSPDUsize, minimumParameters->maxMCSPDUsize);
 			return FALSE;
 		}
 	}
@@ -608,6 +618,8 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 		}
 		else
 		{
+			WLog_ERR(TAG, "[%s] invalid maxMCSPDUsize [%" PRIu32 "]", __FUNCTION__,
+			         maximumParameters->maxMCSPDUsize);
 			return FALSE;
 		}
 	}
@@ -621,6 +633,9 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 	}
 	else
 	{
+		WLog_ERR(TAG, "[%s] invalid protocolVersion [%" PRIu32 ", %" PRIu32 ", %" PRIu32 "]",
+		         __FUNCTION__, targetParameters->protocolVersion,
+		         minimumParameters->protocolVersion, maximumParameters->protocolVersion);
 		return FALSE;
 	}
 
@@ -636,10 +651,10 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 
 BOOL mcs_recv_connect_initial(rdpMcs* mcs, wStream* s)
 {
-	UINT16 li;
-	size_t length;
-	BOOL upwardFlag;
-	UINT16 tlength;
+	UINT16 li = 0;
+	size_t length = 0;
+	BOOL upwardFlag = FALSE;
+	UINT16 tlength = 0;
 
 	WINPR_ASSERT(mcs);
 	WINPR_ASSERT(s);
@@ -1448,26 +1463,31 @@ void mcs_free(rdpMcs* mcs)
 
 BOOL mcs_server_apply_to_settings(const rdpMcs* mcs, rdpSettings* settings)
 {
-	UINT32 x;
+	BOOL rc = FALSE;
 
 	WINPR_ASSERT(mcs);
 	WINPR_ASSERT(settings);
 
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ChannelCount, mcs->channelCount))
-		return FALSE;
+		goto fail;
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ChannelDefArray, NULL,
 	                                      mcs->channelCount))
-		return FALSE;
+		goto fail;
 
-	for (x = 0; x < mcs->channelCount; x++)
+	for (UINT32 x = 0; x < mcs->channelCount; x++)
 	{
 		const rdpMcsChannel* current = &mcs->channels[x];
 		CHANNEL_DEF def = { 0 };
 		def.options = current->options;
 		memcpy(def.name, current->Name, sizeof(def.name));
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_ChannelDefArray, x, &def))
-			return FALSE;
+			goto fail;
 	}
 
-	return TRUE;
+	rc = TRUE;
+fail:
+	if (!rc)
+		WLog_WARN(TAG, "[%s] failed to apply settings", __FUNCTION__);
+
+	return rc;
 }
