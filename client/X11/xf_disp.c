@@ -248,7 +248,7 @@ static void xf_disp_OnTimer(void* context, TimerEventArgs* e)
 	xf_disp_sendResize(xfDisp);
 }
 
-static void xf_disp_OnWindowStateChange(void* context, const WindowStateChangeEventArgs* e)
+static void xf_disp_OnWindowStateChange(void* context, WindowStateChangeEventArgs* e)
 {
 	xfContext* xfc;
 	xfDispContext* xfDisp;
