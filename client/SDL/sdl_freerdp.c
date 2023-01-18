@@ -948,11 +948,13 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 		}
 	}
 
+	freerdp_disconnect(instance);
+
 disconnect:
 	if (freerdp_settings_get_bool(instance->context->settings, FreeRDP_AuthenticationOnly))
 		WLog_Print(sdl->log, WLOG_INFO, "Authentication only, exit status %s [%" PRId32 "]",
 		           sdl_map_to_code_tag(exit_code), exit_code);
-	freerdp_disconnect(instance);
+
 	return exit_code;
 }
 
