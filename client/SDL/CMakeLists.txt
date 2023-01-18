@@ -18,9 +18,7 @@
 set(MODULE_NAME "sdl-client")
 set(MODULE_PREFIX "FREERDP_CLIENT_X11_CONTROL")
 
-find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIRS})
-message("xxxxxxxxxxxxx ${SDL2_INCLUDE_DIRS}")
 set(SRCS
     sdl_utils.c
     sdl_utils.h
