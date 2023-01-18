@@ -439,3 +439,13 @@ SSIZE_T Stream_Read_UTF16_String_As_UTF8_Buffer(wStream* s, size_t wcharLength, 
 	Stream_Seek(s, wcharLength * sizeof(WCHAR));
 	return ConvertWCharNToUtf8(ptr, wcharLength, utfBuffer, utfBufferCharLength);
 }
+
+BOOL Stream_SafeSeekEx(wStream* s, size_t size, const char* file, size_t line, const char* fkt)
+{
+	if (!Stream_CheckAndLogRequiredLengthEx(STREAM_TAG, WLOG_WARN, s, size, "%s(%s:%" PRIuz ")",
+	                                        fkt, file, line))
+		return FALSE;
+
+	Stream_Seek(s, size);
+	return TRUE;
+}
