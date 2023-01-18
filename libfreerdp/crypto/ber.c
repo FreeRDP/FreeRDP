@@ -53,7 +53,10 @@ BOOL ber_read_length(wStream* s, size_t* length)
 		else if (byte == 2)
 			Stream_Read_UINT16_BE(s, *length);
 		else
+		{
+			WLog_ERR(TAG, "ber: unexpected byte 0x%02" PRIx8 ", expected [1,2]", byte);
 			return FALSE;
+		}
 	}
 	else
 	{
