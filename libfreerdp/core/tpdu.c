@@ -246,14 +246,17 @@ BOOL tpdu_write_data(wStream* s)
 
 BOOL tpdu_read_data(wStream* s, UINT16* LI, UINT16 tpktlength)
 {
-	BYTE code;
-	BYTE li;
+	BYTE code = 0;
+	BYTE li = 0;
 
 	if (!tpdu_read_header(s, &code, &li, tpktlength))
 		return FALSE;
 
 	if (code != X224_TPDU_DATA)
+	{
+		WLog_ERR(TAG, "tpdu got code 0x%02" PRIx8 " expected X224_TPDU_DATA [0x%02x]", code);
 		return FALSE;
+	}
 
 	*LI = li;
 
