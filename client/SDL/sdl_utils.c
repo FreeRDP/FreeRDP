@@ -99,3 +99,25 @@ const char* sdl_event_type_str(Uint32 type)
 #undef EV_CASE_STR
 #undef STR
 }
+
+const char* sdl_error_string(Uint32 res)
+{
+	if (res >= 0)
+		return NULL;
+
+	return SDL_GetError();
+}
+
+BOOL sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file, size_t line,
+                      const char* fkt)
+{
+	const char* msg = sdl_error_string(res);
+
+	WINPR_UNUSED(file);
+
+	if (!msg)
+		return FALSE;
+
+	WLog_Print(log, WLOG_ERROR, "[%s:%" PRIuz "][%s]: %s", fkt, line, what, msg);
+	return TRUE;
+}
