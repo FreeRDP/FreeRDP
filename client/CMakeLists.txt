@@ -29,7 +29,12 @@ if(FREERDP_VENDOR AND WITH_CLIENT)
 	endif()
 
 	if(WITH_CLIENT_SDL)
-		add_subdirectory(SDL)
+		find_package(SDL2)
+		if (SDL2_FOUND)
+			add_subdirectory(SDL)
+		else()
+			message(WARNING "SDL2 requested but not found, continuing build without SDL client")
+		endif()
 	endif()
 
 	if(WITH_X11)
