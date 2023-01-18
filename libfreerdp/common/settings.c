@@ -1244,8 +1244,8 @@ BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name
 static BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, size_t id, SSIZE_T lenId,
                                               const void* data, size_t len, size_t size)
 {
-	BOOL rc;
-	void* copy;
+	BOOL rc = FALSE;
+	void* copy = NULL;
 	void* old = freerdp_settings_get_pointer_writable(settings, id);
 	free(old);
 	if (!freerdp_settings_set_pointer(settings, id, NULL))
