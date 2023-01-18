@@ -462,14 +462,8 @@ extern "C"
 		memset(_s->buffer, 0, _s->capacity);
 	}
 
-	static INLINE BOOL Stream_SafeSeek(wStream* s, size_t size)
-	{
-		if (Stream_GetRemainingLength(s) < size)
-			return FALSE;
-
-		Stream_Seek(s, size);
-		return TRUE;
-	}
+#define Stream_SafeSeek(s, size) Stream_SafeSeekEx(s, size, __FILE__, __LINE__, __FUNCTION__)
+	BOOL Stream_SafeSeekEx(wStream* s, size_t size, const char* file, size_t line, const char* fkt);
 
 	WINPR_API BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t charLength);
 	WINPR_API BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t charLength);
