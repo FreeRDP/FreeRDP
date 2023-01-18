@@ -208,22 +208,29 @@ BOOL nego_connect(rdpNego* nego)
 
 	WLog_DBG(TAG, "Negotiated %s security", protocol_security_string(nego->SelectedProtocol));
 	/* update settings with negotiated protocol security */
-	settings->RequestedProtocols = nego->RequestedProtocols;
-	settings->SelectedProtocol = nego->SelectedProtocol;
-	settings->NegotiationFlags = nego->flags;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_RequestedProtocols,
+	                                 nego->RequestedProtocols))
+		return FALSE;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_SelectedProtocol, nego->SelectedProtocol))
+		return FALSE;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_NegotiationFlags, nego->flags))
+		return FALSE;
 
 	if (nego->SelectedProtocol == PROTOCOL_RDP)
 	{
-		settings->UseRdpSecurityLayer = TRUE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, TRUE))
+			return FALSE;
 
-		if (!settings->EncryptionMethods)
+		if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionMethods) == 0)
 		{
 			/**
 			 * Advertise all supported encryption methods if the client
 			 * implementation did not set any security methods
 			 */
-			settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT |
-			                              ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionMethods,
+			                                 ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT |
+			                                     ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS))
+				return FALSE;
 		}
 	}
 
@@ -1248,7 +1255,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	{
 		flags = EXTENDED_CLIENT_DATA_SUPPORTED;
 
-		if (settings->SupportGraphicsPipeline)
+		if (freerdp_settings_get_bool(settings, FreeRDP_SupportGraphicsPipeline))
 			flags |= DYNVC_GFX_PROTOCOL_SUPPORTED;
 
 		/* RDP_NEG_DATA must be present for TLS, NLA, and RDP */
@@ -1275,26 +1282,37 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 	if (status)
 	{
 		/* update settings with negotiated protocol security */
-		settings->RequestedProtocols = nego->RequestedProtocols;
-		settings->SelectedProtocol = nego->SelectedProtocol;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_RequestedProtocols,
+		                                 nego->RequestedProtocols))
+			return FALSE;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_SelectedProtocol,
+		                                 nego->SelectedProtocol))
+			return FALSE;
 
-		if (settings->SelectedProtocol == PROTOCOL_RDP)
+		if (nego->SelectedProtocol == PROTOCOL_RDP)
 		{
-			settings->TlsSecurity = FALSE;
-			settings->NlaSecurity = FALSE;
-			settings->RdpSecurity = TRUE;
-			settings->UseRdpSecurityLayer = TRUE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, TRUE))
+				return FALSE;
 
-			if (settings->EncryptionLevel == ENCRYPTION_LEVEL_NONE)
+			if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionLevel) ==
+			    ENCRYPTION_LEVEL_NONE)
 			{
 				/**
 				 * If the server implementation did not explicitely set a
 				 * encryption level we default to client compatible
 				 */
-				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
+				                                 ENCRYPTION_LEVEL_CLIENT_COMPATIBLE))
+					return FALSE;
 			}
 
-			if (settings->LocalConnection)
+			if (freerdp_settings_get_bool(settings, FreeRDP_LocalConnection))
 			{
 				/**
 				 * Note: This hack was firstly introduced in commit 95f5e115 to
@@ -1303,31 +1321,49 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 				 * This also affects connections via port tunnels! (e.g. ssh -L)
 				 */
 				WLog_INFO(TAG, "Turning off encryption for local peer with standard rdp security");
-				settings->UseRdpSecurityLayer = FALSE;
-				settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+					return FALSE;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
+				                                 ENCRYPTION_LEVEL_NONE))
+					return FALSE;
 			}
-			else if (!settings->RdpServerRsaKey && !settings->PrivateKeyFile &&
-			         !settings->PrivateKeyContent)
+			else if (!freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey) &&
+			         !freerdp_settings_get_string(settings, FreeRDP_PrivateKeyFile) &&
+			         !freerdp_settings_get_string(settings, FreeRDP_PrivateKeyContent))
 			{
 				WLog_ERR(TAG, "Missing server certificate");
 				return FALSE;
 			}
 		}
-		else if (settings->SelectedProtocol == PROTOCOL_SSL)
+		else if (nego->SelectedProtocol == PROTOCOL_SSL)
 		{
-			settings->TlsSecurity = TRUE;
-			settings->NlaSecurity = FALSE;
-			settings->RdpSecurity = FALSE;
-			settings->UseRdpSecurityLayer = FALSE;
-			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+				return FALSE;
+
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
+			                                 ENCRYPTION_LEVEL_NONE))
+				return FALSE;
 		}
-		else if (settings->SelectedProtocol == PROTOCOL_HYBRID)
+		else if (nego->SelectedProtocol == PROTOCOL_HYBRID)
 		{
-			settings->TlsSecurity = TRUE;
-			settings->NlaSecurity = TRUE;
-			settings->RdpSecurity = FALSE;
-			settings->UseRdpSecurityLayer = FALSE;
-			settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+				return FALSE;
+
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
+			                                 ENCRYPTION_LEVEL_NONE))
+				return FALSE;
 		}
 	}
 
