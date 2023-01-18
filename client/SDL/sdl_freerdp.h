@@ -57,6 +57,8 @@ typedef struct
 
 	sdlDispContext* disp;
 	Uint32 sdl_pixel_format;
+
+	wLog* log;
 } sdlContext;
 
 void update_resizeable(sdlContext* sdl, BOOL enable);
