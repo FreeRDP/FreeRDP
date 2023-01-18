@@ -860,7 +860,7 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 		WLog_Print(sdl->log, WLOG_ERROR,
 		           "Authentication only, freerdp_get_last_error() %s [0x%08" PRIx32 "] %s",
 		           freerdp_get_last_error_name(code), code, freerdp_get_last_error_string(code));
-		goto disconnect;
+		goto terminate;
 	}
 
 	if (!rc)
@@ -874,7 +874,7 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 		else if (code == ERRINFO_SUCCESS)
 			exit_code = SDL_EXIT_CONN_FAILED;
 
-		goto disconnect;
+		goto terminate;
 	}
 
 	while (!freerdp_shall_disconnect_context(instance->context))
@@ -887,9 +887,9 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 		if (freerdp_focus_required(instance))
 		{
 			if (!sdl_keyboard_focus_in(instance->context))
-				goto disconnect;
+				break;
 			if (!sdl_keyboard_focus_in(instance->context))
-				goto disconnect;
+				break;
 		}
 
 		nCount = freerdp_get_event_handles(instance->context, handles, ARRAYSIZE(handles));
@@ -948,11 +948,13 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 		}
 	}
 
-disconnect:
+	freerdp_disconnect(instance);
+
+terminate:
 	if (freerdp_settings_get_bool(instance->context->settings, FreeRDP_AuthenticationOnly))
 		WLog_Print(sdl->log, WLOG_INFO, "Authentication only, exit status %s [%" PRId32 "]",
 		           sdl_map_to_code_tag(exit_code), exit_code);
-	freerdp_disconnect(instance);
+
 	return exit_code;
 }
 
