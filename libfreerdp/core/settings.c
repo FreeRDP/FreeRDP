@@ -741,18 +741,20 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!freerdp_settings_set_default_order_support(settings))
 		goto out_fail;
 
-	{
-		BOOL enable = freerdp_settings_get_bool(settings, FreeRDP_ServerMode);
+	const BOOL enable = freerdp_settings_get_bool(settings, FreeRDP_ServerMode);
 
-		if (!freerdp_settings_set_bool(settings, FreeRDP_SupportDynamicTimeZone, enable))
-			goto out_fail;
-		if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, enable))
-			goto out_fail;
-		if (!freerdp_settings_set_bool(settings, FreeRDP_SupportStatusInfoPdu, enable))
-			goto out_fail;
-		if (!freerdp_settings_set_bool(settings, FreeRDP_SupportErrorInfoPdu, enable))
-			goto out_fail;
+	{
+		const size_t keys[] = { FreeRDP_SupportDynamicTimeZone, FreeRDP_SupportGraphicsPipeline,
+			                    FreeRDP_SupportStatusInfoPdu, FreeRDP_SupportErrorInfoPdu,
+			                    FreeRDP_SupportAsymetricKeys };
+
+		for (size_t x = 0; x < ARRAYSIZE(keys); x++)
+		{
+			if (!freerdp_settings_set_bool(settings, keys[x], enable))
+				goto out_fail;
+		}
 	}
+
 	return settings;
 out_fail:
 	freerdp_settings_free(settings);

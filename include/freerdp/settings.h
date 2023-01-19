@@ -549,6 +549,9 @@ typedef struct
 #define FreeRDP_DesktopOrientation (147)
 #define FreeRDP_DesktopScaleFactor (148)
 #define FreeRDP_DeviceScaleFactor (149)
+#define FreeRDP_SupportEdgeActionV1 (150)
+#define FreeRDP_SupportEdgeActionV2 (151)
+#define FreeRDP_SupportSkipChannelJoin (152)
 #define FreeRDP_UseRdpSecurityLayer (192)
 #define FreeRDP_EncryptionMethods (193)
 #define FreeRDP_ExtEncryptionMethods (194)
@@ -1011,7 +1014,11 @@ struct rdp_settings
 	ALIGN64 UINT16 DesktopOrientation;    /* 147 */
 	ALIGN64 UINT32 DesktopScaleFactor;    /* 148 */
 	ALIGN64 UINT32 DeviceScaleFactor;     /* 149 */
-	UINT64 padding0192[192 - 150];        /* 150 */
+	ALIGN64 BOOL SupportEdgeActionV1;     /* 150 */
+	ALIGN64 BOOL SupportEdgeActionV2;     /* 151 */
+	ALIGN64 BOOL SupportSkipChannelJoin;  /* 152 */
+
+	UINT64 padding0192[192 - 153]; /* 153 */
 
 	/* Client/Server Security Data */
 	ALIGN64 BOOL UseRdpSecurityLayer;                /* 192 */
