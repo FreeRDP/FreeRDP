@@ -1432,13 +1432,10 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 {
-	UINT32 i;
-	rdpMcs* mcs;
-
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
-	mcs = rdp->mcs;
+	rdpMcs* mcs = rdp->mcs;
 	WINPR_ASSERT(mcs);
 
 	WINPR_ASSERT(rdp_get_state(rdp) == CONNECTION_STATE_MCS_CREATE_REQUEST);
@@ -1453,7 +1450,7 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 	WLog_INFO(TAG, "Accepted channels:");
 
 	WINPR_ASSERT(mcs->channels || (mcs->channelCount == 0));
-	for (i = 0; i < mcs->channelCount; i++)
+	for (UINT32 i = 0; i < mcs->channelCount; i++)
 	{
 		ADDIN_ARGV* arg;
 		rdpMcsChannel* cur = &mcs->channels[i];
@@ -1542,7 +1539,7 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 
 	WINPR_ASSERT(rdp_get_state(rdp) == CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST);
 
-	if (!mcs_recv_channel_join_request(mcs, rdp->context->settings, s, &channelId))
+	if (!mcs_recv_channel_join_request(mcs, rdp->settings, s, &channelId))
 		return FALSE;
 
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_RESPONSE))
