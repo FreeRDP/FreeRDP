@@ -2751,9 +2751,10 @@ BOOL license_server_configure(rdpLicense* license)
 		return FALSE;
 	else
 	{
-		BOOL r =
+		BOOL r = FALSE;
+		SSIZE_T res =
 		    certificate_write_server_certificate(license->certificate, CERT_CHAIN_VERSION_2, s);
-		if (r)
+		if (res >= 0)
 			r = license_read_binary_blob_data(license->ServerCertificate, BB_CERTIFICATE_BLOB,
 			                                  Stream_Buffer(s), Stream_GetPosition(s));
 

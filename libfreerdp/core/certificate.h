@@ -47,18 +47,18 @@
 
 FREERDP_LOCAL BOOL certificate_read_server_certificate(rdpCertificate* certificate,
                                                        const BYTE* server_cert, size_t length);
-FREERDP_LOCAL BOOL certificate_write_server_certificate(rdpCertificate* certificate,
-                                                        UINT32 dwVersion, wStream* s);
+FREERDP_LOCAL SSIZE_T certificate_write_server_certificate(const rdpCertificate* certificate,
+                                                           UINT32 dwVersion, wStream* s);
 
 FREERDP_LOCAL rdpCertificate* certificate_clone(const rdpCertificate* certificate);
 
 FREERDP_LOCAL rdpCertificate* certificate_new(void);
 FREERDP_LOCAL void certificate_free(rdpCertificate* certificate);
 
-FREERDP_LOCAL rdpRsaKey* key_new(const char* keyfile);
-FREERDP_LOCAL rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile);
-FREERDP_LOCAL void key_free(rdpRsaKey* key);
-FREERDP_LOCAL rdpRsaKey* key_clone(const rdpRsaKey* key);
+FREERDP_LOCAL rdpPrivateKey* key_new(const char* keyfile);
+FREERDP_LOCAL rdpPrivateKey* key_new_from_content(const char* keycontent, const char* keyfile);
+FREERDP_LOCAL void key_free(rdpPrivateKey* key);
+FREERDP_LOCAL rdpPrivateKey* key_clone(const rdpPrivateKey* key);
 
 #define CERTIFICATE_TAG FREERDP_TAG("core.certificate")
 #ifdef WITH_DEBUG_CERTIFICATE

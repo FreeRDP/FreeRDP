@@ -835,7 +835,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 
 	if (settings->RdpServerRsaKey)
 	{
-		rdpRsaKey* key = key_clone(settings->RdpServerRsaKey);
+		rdpPrivateKey* key = key_clone(settings->RdpServerRsaKey);
 		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_RdpServerRsaKey, key, 1))
 			goto out_fail;
 	}

@@ -1535,44 +1535,12 @@ fail:
 	return FALSE;
 }
 
-static const BYTE initial_signature[] = {
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01
-};
-
-/*
- * Terminal Services Signing Keys.
- * Yes, Terminal Services Private Key is publicly available.
- */
-
-const BYTE tssk_modulus[] = { 0x3d, 0x3a, 0x5e, 0xbd, 0x72, 0x43, 0x3e, 0xc9, 0x4d, 0xbb, 0xc1,
-	                          0x1e, 0x4a, 0xba, 0x5f, 0xcb, 0x3e, 0x88, 0x20, 0x87, 0xef, 0xf5,
-	                          0xc1, 0xe2, 0xd7, 0xb7, 0x6b, 0x9a, 0xf2, 0x52, 0x45, 0x95, 0xce,
-	                          0x63, 0x65, 0x6b, 0x58, 0x3a, 0xfe, 0xef, 0x7c, 0xe7, 0xbf, 0xfe,
-	                          0x3d, 0xf6, 0x5c, 0x7d, 0x6c, 0x5e, 0x06, 0x09, 0x1a, 0xf5, 0x61,
-	                          0xbb, 0x20, 0x93, 0x09, 0x5f, 0x05, 0x6d, 0xea, 0x87 };
-
-const BYTE tssk_privateExponent[] = {
-	0x87, 0xa7, 0x19, 0x32, 0xda, 0x11, 0x87, 0x55, 0x58, 0x00, 0x16, 0x16, 0x25, 0x65, 0x68, 0xf8,
-	0x24, 0x3e, 0xe6, 0xfa, 0xe9, 0x67, 0x49, 0x94, 0xcf, 0x92, 0xcc, 0x33, 0x99, 0xe8, 0x08, 0x60,
-	0x17, 0x9a, 0x12, 0x9f, 0x24, 0xdd, 0xb1, 0x24, 0x99, 0xc7, 0x3a, 0xb8, 0x0a, 0x7b, 0x0d, 0xdd,
-	0x35, 0x07, 0x79, 0x17, 0x0b, 0x51, 0x9b, 0xb3, 0xc7, 0x10, 0x01, 0x13, 0xe7, 0x3f, 0xf3, 0x5f
-};
-
-const BYTE tssk_exponent[] = { 0x5b, 0x7b, 0x88, 0xc0 };
-
 /* TODO: This function does manipulate data in rdpMcs
  * TODO: Split this out of this function
  */
 BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 {
-	BYTE* sigData;
-	size_t expLen = 0, keyLen, sigDataLen;
-	BYTE encryptedSignature[TSSK_KEY_LENGTH] = { 0 };
-	BYTE signature[sizeof(initial_signature)] = { 0 };
-	UINT32 headerLen, serverRandomLen, serverCertLen, wPublicKeyBlobLen;
+	UINT32 serverRandomLen = 0;
 	rdpSettings* settings = mcs_get_settings(mcs);
 
 	WINPR_ASSERT(s);
@@ -1708,90 +1676,51 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 			return FALSE;
 	}
 
-	headerLen = 12;
-	keyLen = 0;
-	wPublicKeyBlobLen = 0;
-	serverRandomLen = 0;
-	serverCertLen = 0;
-
 	if (settings->EncryptionMethods != ENCRYPTION_METHOD_NONE)
-	{
 		serverRandomLen = 32;
-		keyLen = settings->RdpServerRsaKey->ModulusLength;
-		expLen = sizeof(settings->RdpServerRsaKey->exponent);
-		wPublicKeyBlobLen = 4;  /* magic (RSA1) */
-		wPublicKeyBlobLen += 4; /* keylen */
-		wPublicKeyBlobLen += 4; /* bitlen */
-		wPublicKeyBlobLen += 4; /* datalen */
-		wPublicKeyBlobLen += expLen;
-		wPublicKeyBlobLen += keyLen;
-		wPublicKeyBlobLen += 8; /* 8 bytes of zero padding */
-		serverCertLen = 4;      /* dwVersion */
-		serverCertLen += 4;     /* dwSigAlgId */
-		serverCertLen += 4;     /* dwKeyAlgId */
-		serverCertLen += 2;     /* wPublicKeyBlobType */
-		serverCertLen += 2;     /* wPublicKeyBlobLen */
-		serverCertLen += wPublicKeyBlobLen;
-		serverCertLen += 2;                          /* wSignatureBlobType */
-		serverCertLen += 2;                          /* wSignatureBlobLen */
-		serverCertLen += sizeof(encryptedSignature); /* SignatureBlob */
-		serverCertLen += 8;                          /* 8 bytes of zero padding */
-		headerLen += sizeof(serverRandomLen);
-		headerLen += sizeof(serverCertLen);
-		headerLen += serverRandomLen;
-		headerLen += serverCertLen;
-	}
 
-	if (!gcc_write_user_data_header(s, SC_SECURITY, headerLen))
+	const size_t headerStart = Stream_GetPosition(s);
+	if (!gcc_write_user_data_header(s, SC_SECURITY,
+	                                12)) /* Write header for encryption type none, update later */
 		return FALSE;
 
 	Stream_Write_UINT32(s, settings->EncryptionMethods); /* encryptionMethod */
 	Stream_Write_UINT32(s, settings->EncryptionLevel);   /* encryptionLevel */
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_NONE)
-	{
 		return TRUE;
-	}
 
+	if (!Stream_EnsureRemainingCapacity(s, serverRandomLen + 8ull))
+		return FALSE;
 	Stream_Write_UINT32(s, serverRandomLen); /* serverRandomLen */
-	Stream_Write_UINT32(s, serverCertLen);   /* serverCertLen */
+	const size_t serverCertLenPos = Stream_GetPosition(s);
+	Stream_Seek_UINT32(s); /* serverCertLen */
 	settings->ServerRandomLength = serverRandomLen;
 	settings->ServerRandom = (BYTE*)malloc(serverRandomLen);
 
 	if (!settings->ServerRandom)
-	{
 		return FALSE;
-	}
 
 	winpr_RAND(settings->ServerRandom, serverRandomLen);
 	Stream_Write(s, settings->ServerRandom, serverRandomLen);
-	sigData = Stream_Pointer(s);
-	Stream_Write_UINT32(s, CERT_CHAIN_VERSION_1); /* dwVersion (4 bytes) */
-	Stream_Write_UINT32(s, SIGNATURE_ALG_RSA);    /* dwSigAlgId */
-	Stream_Write_UINT32(s, KEY_EXCHANGE_ALG_RSA); /* dwKeyAlgId */
-	Stream_Write_UINT16(s, BB_RSA_KEY_BLOB);      /* wPublicKeyBlobType */
-	Stream_Write_UINT16(s, wPublicKeyBlobLen);    /* wPublicKeyBlobLen */
-	Stream_Write(s, "RSA1", 4);                   /* magic */
-	WINPR_ASSERT(keyLen > 0);
-	WINPR_ASSERT(keyLen <= UINT32_MAX / 8);
-	Stream_Write_UINT32(s, (UINT32)keyLen + 8); /* keylen */
-	Stream_Write_UINT32(s, (UINT32)keyLen * 8); /* bitlen */
-	Stream_Write_UINT32(s, (UINT32)keyLen - 1); /* datalen */
-	Stream_Write(s, settings->RdpServerRsaKey->exponent, expLen);
-	Stream_Write(s, settings->RdpServerRsaKey->Modulus, keyLen);
-	Stream_Zero(s, 8);
-	sigDataLen = Stream_Pointer(s) - sigData;
-	Stream_Write_UINT16(s, BB_RSA_SIGNATURE_BLOB);          /* wSignatureBlobType */
-	Stream_Write_UINT16(s, sizeof(encryptedSignature) + 8); /* wSignatureBlobLen */
-	memcpy(signature, initial_signature, sizeof(initial_signature));
 
-	if (!winpr_Digest(WINPR_MD_MD5, sigData, sigDataLen, signature, sizeof(signature)))
+	const SSIZE_T res = certificate_write_server_certificate(
+	    settings->RdpServerRsaKey, CERT_TEMPORARILY_ISSUED | CERT_CHAIN_VERSION_1, s);
+	if (res < 0)
 		return FALSE;
 
-	crypto_rsa_private_encrypt(signature, sizeof(signature), TSSK_KEY_LENGTH, tssk_modulus,
-	                           tssk_privateExponent, encryptedSignature);
-	Stream_Write(s, encryptedSignature, sizeof(encryptedSignature));
-	Stream_Zero(s, 8);
+	/* Update header with real length */
+	const size_t end = Stream_GetPosition(s);
+	Stream_SetPosition(s, headerStart);
+	if (!gcc_write_user_data_header(s, SC_SECURITY, end - headerStart))
+		return FALSE;
+
+	/* Update certificate length with real value */
+	Stream_SetPosition(s, serverCertLenPos);
+	WINPR_ASSERT(res <= UINT32_MAX);
+	Stream_Write_UINT32(s, (UINT32)res);
+
+	Stream_SetPosition(s, end);
 	return TRUE;
 }
 

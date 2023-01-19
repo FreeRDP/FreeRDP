@@ -863,7 +863,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, rand_len))
 		return FALSE;
 
-	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
+	key_len = rdp->settings->RdpServerRsaKey->cert.cert_info.ModulusLength;
 	client_random = malloc(key_len);
 
 	if (!client_random)
@@ -885,7 +885,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	}
 
 	Stream_Read(s, crypt_client_random, rand_len);
-	mod = rdp->settings->RdpServerRsaKey->Modulus;
+	mod = rdp->settings->RdpServerRsaKey->cert.cert_info.Modulus;
 	priv_exp = rdp->settings->RdpServerRsaKey->PrivateExponent;
 
 	if (crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp,
