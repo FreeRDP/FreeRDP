@@ -1312,7 +1312,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 					return FALSE;
 			}
 
-			if (freerdp_settings_get_bool(settings, FreeRDP_LocalConnection))
+			if (freerdp_settings_get_bool(settings, FreeRDP_LocalConnection) && FALSE)
 			{
 				/**
 				 * Note: This hack was firstly introduced in commit 95f5e115 to

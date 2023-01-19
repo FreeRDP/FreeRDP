@@ -727,12 +727,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 
 			case SC_SECURITY:
 				if (!gcc_read_server_security_data(sub, mcs))
-				{
-					WLog_ERR(TAG,
-					         "gcc_read_server_data_blocks: gcc_read_server_security_data failed");
 					return FALSE;
-				}
-
 				break;
 
 			case SC_NET:
@@ -1373,7 +1368,7 @@ BOOL gcc_read_client_security_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	{
 		Stream_Read_UINT32(s, settings->EncryptionMethods); /* encryptionMethods */
 
-		if (settings->EncryptionMethods == 0)
+		if (settings->EncryptionMethods == ENCRYPTION_METHOD_NONE)
 			Stream_Read_UINT32(s, settings->EncryptionMethods); /* extEncryptionMethods */
 		else
 			Stream_Seek(s, 4);
@@ -1421,10 +1416,11 @@ BOOL gcc_write_client_security_data(wStream* s, const rdpMcs* mcs)
 
 BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 {
-	const BYTE* data;
-	UINT32 length;
+	const BYTE* data = NULL;
+	UINT32 length = 0;
 	BOOL validCryptoConfig = FALSE;
-	UINT32 serverEncryptionMethod;
+	UINT32 EncryptionMethod = 0;
+	UINT32 EncryptionLevel = 0;
 	rdpSettings* settings = mcs_get_settings(mcs);
 
 	WINPR_ASSERT(s);
@@ -1433,11 +1429,11 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 		return FALSE;
 
-	Stream_Read_UINT32(s, serverEncryptionMethod);    /* encryptionMethod */
-	Stream_Read_UINT32(s, settings->EncryptionLevel); /* encryptionLevel */
+	Stream_Read_UINT32(s, EncryptionMethod); /* encryptionMethod */
+	Stream_Read_UINT32(s, EncryptionLevel);  /* encryptionLevel */
 
 	/* Only accept valid/known encryption methods */
-	switch (serverEncryptionMethod)
+	switch (EncryptionMethod)
 	{
 		case ENCRYPTION_METHOD_NONE:
 			WLog_DBG(TAG, "Server rdp encryption method: NONE");
@@ -1460,20 +1456,19 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 			break;
 
 		default:
-			WLog_ERR(TAG, "Received unknown encryption method %08" PRIX32 "",
-			         serverEncryptionMethod);
+			WLog_ERR(TAG, "Received unknown encryption method %08" PRIX32 "", EncryptionMethod);
 			return FALSE;
 	}
 
-	if (settings->UseRdpSecurityLayer && !(settings->EncryptionMethods & serverEncryptionMethod))
+	if (settings->UseRdpSecurityLayer && !(settings->EncryptionMethods & EncryptionMethod))
 	{
 		WLog_WARN(TAG, "Server uses non-advertised encryption method 0x%08" PRIX32 "",
-		          serverEncryptionMethod);
+		          EncryptionMethod);
 		/* FIXME: Should we return FALSE; in this case ?? */
 	}
 
-	settings->EncryptionMethods = serverEncryptionMethod;
-
+	settings->EncryptionMethods = EncryptionMethod;
+	settings->EncryptionLevel = EncryptionLevel;
 	/* Verify encryption level/method combinations according to MS-RDPBCGR Section 5.3.2 */
 	switch (settings->EncryptionLevel)
 	{
