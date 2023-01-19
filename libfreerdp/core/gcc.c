@@ -1597,7 +1597,7 @@ BOOL gcc_write_server_security_data(wStream* s, const rdpMcs* mcs)
 	Stream_Write(s, settings->ServerRandom, settings->ServerRandomLength);
 
 	const SSIZE_T res = certificate_write_server_certificate(
-	    &settings->RdpServerRsaKey->cert, CERT_TEMPORARILY_ISSUED | CERT_CHAIN_VERSION_1, s);
+	    settings->RdpServerCertificate, CERT_TEMPORARILY_ISSUED | CERT_CHAIN_VERSION_1, s);
 	if (res < 0)
 		return FALSE;
 

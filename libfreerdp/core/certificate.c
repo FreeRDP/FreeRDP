@@ -984,9 +984,6 @@ static BOOL key_read_private(rdpPrivateKey* key, const char* pem, const char* ke
 		goto fail;
 	}
 
-	if (!cert_info_create(&key->cert.cert_info, rsa_n, rsa_e))
-		goto fail;
-
 	if (!read_bignum(&key->PrivateExponent, &key->PrivateExponentLength, rsa_d, TRUE))
 		goto fail;
 
@@ -1040,9 +1037,6 @@ rdpPrivateKey* key_new_from_content(const char* keycontent, const char* keyfile)
 		return NULL;
 
 	if (!key_read_private(key, keycontent, keyfile))
-		goto fail;
-
-	if (!cert_read_public(&key->cert, keycontent, keyfile))
 		goto fail;
 
 	return key;
@@ -1107,9 +1101,6 @@ rdpPrivateKey* key_clone(const rdpPrivateKey* key)
 	if (!_key)
 		return NULL;
 
-	if (!cert_clone_int(&_key->cert, &key->cert))
-		goto out_fail;
-
 	if (key->PrivateExponent)
 	{
 		_key->PrivateExponent = (BYTE*)malloc(key->PrivateExponentLength);
@@ -1132,7 +1123,6 @@ void key_free(rdpPrivateKey* key)
 	if (!key)
 		return;
 
-	certificate_free_int(&key->cert);
 	if (key->PrivateExponent)
 		memset(key->PrivateExponent, 0, key->PrivateExponentLength);
 	free(key->PrivateExponent);

@@ -364,7 +364,6 @@ typedef struct
 {
 	BYTE* PrivateExponent;
 	DWORD PrivateExponentLength;
-	rdpCertificate cert;
 } rdpPrivateKey;
 
 /* Channels */
