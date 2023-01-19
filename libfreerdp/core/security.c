@@ -327,9 +327,9 @@ BOOL security_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length, BYTE* 
 {
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
-	BYTE length_le[4];
-	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH];
-	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH];
+	BYTE length_le[4] = { 0 };
+	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
 	BOOL result = FALSE;
 
 	WINPR_ASSERT(rdp);
@@ -394,10 +394,10 @@ BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
 {
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
-	BYTE length_le[4];
-	BYTE use_count_le[4];
-	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH];
-	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH];
+	BYTE length_le[4] = { 0 };
+	BYTE use_count_le[4] = { 0 };
+	BYTE md5_digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
 	BOOL result = FALSE;
 
 	WINPR_ASSERT(rdp);
