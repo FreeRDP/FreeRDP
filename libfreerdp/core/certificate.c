@@ -932,7 +932,7 @@ static BIO* bio_from_pem(const char* pem)
 	return BIO_new_mem_buf((const void*)pem, strlen(pem));
 }
 
-static RSA* rsa_from_pem(const char* pem)
+static RSA* rsa_from_private_pem(const char* pem)
 {
 	RSA* rsa = NULL;
 	BIO* bio = bio_from_pem(pem);
@@ -944,10 +944,23 @@ static RSA* rsa_from_pem(const char* pem)
 	return rsa;
 }
 
+static RSA* rsa_from_public_pem(const char* pem)
+{
+	RSA* rsa = NULL;
+	BIO* bio = bio_from_pem(pem);
+	if (!bio)
+		return NULL;
+
+	rsa = PEM_read_bio_RSAPublicKey(bio, NULL, NULL, NULL);
+	BIO_free_all(bio);
+
+	return rsa;
+}
+
 static BOOL key_read_private(rdpPrivateKey* key, const char* pem, const char* keyfile)
 {
 	BOOL rc = FALSE;
-	RSA* rsa = rsa_from_pem(pem);
+	RSA* rsa = rsa_from_private_pem(pem);
 
 	const BIGNUM* rsa_e = NULL;
 	const BIGNUM* rsa_n = NULL;
@@ -1293,4 +1306,60 @@ void certificate_free(rdpCertificate* certificate)
 
 	certificate_free_int(certificate);
 	free(certificate);
+}
+
+rdpCertificate* certificate_new_from_file(const char* file)
+{
+	INT64 size = 0;
+	char* pem = NULL;
+	rdpCertificate* cert = NULL;
+	FILE* fp = winpr_fopen(file, "r");
+	if (!fp)
+		return NULL;
+
+	fseek(fp, 0, SEEK_END);
+	size = _ftelli64(fp);
+	fseek(fp, 0, SEEK_SET);
+	if (size <= 0)
+		goto fail;
+
+	pem = calloc((size_t)size + 2, sizeof(char));
+	if (!pem)
+		goto fail;
+	if (fread(pem, 1, (size_t)size, fp) != (size_t)size)
+		goto fail;
+
+	cert = certificate_new_from_pem(pem);
+fail:
+	free(pem);
+	fclose(fp);
+	return cert;
+}
+
+rdpCertificate* certificate_new_from_pem(const char* pem)
+{
+	const BIGNUM* rsa_e = NULL;
+	const BIGNUM* rsa_n = NULL;
+	const BIGNUM* rsa_d = NULL;
+	RSA* rsa = NULL;
+	rdpCertificate* cert = certificate_new();
+
+	if (!cert || !pem)
+		goto fail;
+
+	rsa = rsa_from_private_pem(pem);
+	if (!rsa)
+		goto fail;
+	RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
+	if (!rsa_n || !rsa_e || !rsa_d)
+		goto fail;
+	if (!cert_info_create(&cert->cert_info, rsa_n, rsa_e))
+		goto fail;
+	RSA_free(rsa);
+	return cert;
+
+fail:
+	RSA_free(rsa);
+	certificate_free(cert);
+	return NULL;
 }

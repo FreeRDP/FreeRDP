@@ -248,28 +248,35 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
 		return FALSE;
 
+	rdpPrivateKey* key = NULL;
+	rdpCertificate* cert = NULL;
 	if (settings->PrivateKeyFile)
 	{
-		settings->RdpServerRsaKey = key_new(settings->PrivateKeyFile);
-
-		if (!settings->RdpServerRsaKey)
-		{
-			WLog_ERR(TAG, "invalid RDP key file %s", settings->PrivateKeyFile);
-			return FALSE;
-		}
+		key = key_new(settings->PrivateKeyFile);
+		cert = certificate_new_from_file(settings->PrivateKeyFile);
 	}
 	else if (settings->PrivateKeyContent)
 	{
-		settings->RdpServerRsaKey = key_new_from_content(settings->PrivateKeyContent, NULL);
-
-		if (!settings->RdpServerRsaKey)
-		{
-			WLog_ERR(TAG, "invalid RDP key content");
-			return FALSE;
-		}
+		key = key_new_from_content(settings->PrivateKeyContent, NULL);
+		cert = certificate_new_from_pem(settings->PrivateKeyContent);
 	}
 
-	return TRUE;
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, key ? 1 : 0))
+		return FALSE;
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert,
+	                                      cert ? 1 : 0))
+		return FALSE;
+
+	if (settings->CertificateFile)
+	{
+
+	}
+	else if (settings->CertificateContent)
+	{
+
+	}
+
+	return key && cert;
 }
 
 #if defined(WITH_FREERDP_DEPRECATED)
