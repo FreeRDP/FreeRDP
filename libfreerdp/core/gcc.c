@@ -875,7 +875,17 @@ static UINT32 filterAndLogEarlyServerCapabilityFlags(UINT32 flags)
 
 static UINT32 earlyServerCapsFromSettings(const rdpSettings* settings)
 {
-	UINT32 EarlyCapabilityFlags = settings->EarlyCapabilityFlags;
+	UINT32 EarlyCapabilityFlags = 0;
+
+	if (settings->SupportEdgeActionV1)
+		EarlyCapabilityFlags |= RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V1;
+	if (settings->SupportDynamicTimeZone)
+		EarlyCapabilityFlags |= RNS_UD_SC_DYNAMIC_DST_SUPPORTED;
+	if (settings->SupportEdgeActionV2)
+		EarlyCapabilityFlags |= RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V2;
+	if (settings->SupportSkipChannelJoin)
+		EarlyCapabilityFlags |= RNS_UD_SC_SKIP_CHANNELJOIN_SUPPORTED;
+
 	return filterAndLogEarlyServerCapabilityFlags(EarlyCapabilityFlags);
 }
 
@@ -904,24 +914,26 @@ static UINT16 filterAndLogEarlyClientCapabilityFlags(UINT32 flags)
 
 static UINT16 earlyClientCapsFromSettings(const rdpSettings* settings)
 {
-	WINPR_ASSERT(settings);
-	UINT32 earlyCapabilityFlags = settings->EarlyCapabilityFlags;
+	UINT32 earlyCapabilityFlags = 0;
 
 	WINPR_ASSERT(settings);
 	if (settings->SupportErrorInfoPdu)
 		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_ERRINFO_PDU;
 
-	if (settings->ConnectionType)
-		earlyCapabilityFlags |= RNS_UD_CS_VALID_CONNECTION_TYPE;
-
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) == 32)
 		earlyCapabilityFlags |= RNS_UD_CS_WANT_32BPP_SESSION;
 
+	if (settings->SupportStatusInfoPdu)
+		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_STATUSINFO_PDU;
+
+	if (settings->ConnectionType)
+		earlyCapabilityFlags |= RNS_UD_CS_VALID_CONNECTION_TYPE;
+
+	if (settings->SupportMonitorLayoutPdu)
+		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
+
 	if (freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
 		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT;
-
-	if (settings->SupportHeartbeatPdu)
-		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_HEARTBEAT_PDU;
 
 	if (settings->SupportGraphicsPipeline)
 		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL;
@@ -929,11 +941,14 @@ static UINT16 earlyClientCapsFromSettings(const rdpSettings* settings)
 	if (settings->SupportDynamicTimeZone)
 		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE;
 
-	if (settings->SupportMonitorLayoutPdu)
-		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
+	if (settings->SupportHeartbeatPdu)
+		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_HEARTBEAT_PDU;
 
-	if (settings->SupportStatusInfoPdu)
-		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_STATUSINFO_PDU;
+	if (settings->SupportAsymetricKeys)
+		earlyCapabilityFlags |= RNS_UD_CS_STRONG_ASYMMETRIC_KEYS;
+
+	if (settings->SupportSkipChannelJoin)
+		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN;
 
 	return filterAndLogEarlyClientCapabilityFlags(earlyCapabilityFlags);
 }
@@ -943,9 +958,35 @@ static BOOL updateEarlyClientCaps(rdpSettings* settings, UINT32 earlyCapabilityF
 {
 	WINPR_ASSERT(settings);
 
+	if (settings->SupportErrorInfoPdu)
+		settings->SupportErrorInfoPdu =
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_ERRINFO_PDU) ? TRUE : FALSE;
+
+	/* RNS_UD_CS_WANT_32BPP_SESSION is already handled in gcc_read_client_core_data:
+	 *
+	 * it is evaluated in combination with highColorDepth and the server side
+	 * settings to determine the session color depth to use.
+	 */
+
+	if (settings->SupportStatusInfoPdu)
+		settings->SupportStatusInfoPdu =
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_STATUSINFO_PDU) ? TRUE : FALSE;
+
+	if (settings->SupportAsymetricKeys)
+		settings->SupportAsymetricKeys =
+		    (earlyCapabilityFlags & RNS_UD_CS_STRONG_ASYMMETRIC_KEYS) ? TRUE : FALSE;
+
+	if (settings->NetworkAutoDetect)
+		settings->NetworkAutoDetect =
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT) ? TRUE : FALSE;
+
+	if (settings->SupportSkipChannelJoin)
+		settings->SupportSkipChannelJoin =
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN) ? TRUE : FALSE;
+
 	if (settings->SupportMonitorLayoutPdu)
 		settings->SupportMonitorLayoutPdu =
-		    earlyCapabilityFlags & RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU;
+		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU) ? TRUE : FALSE;
 
 	if (settings->SupportHeartbeatPdu)
 		settings->SupportHeartbeatPdu =
@@ -959,18 +1000,9 @@ static BOOL updateEarlyClientCaps(rdpSettings* settings, UINT32 earlyCapabilityF
 		settings->SupportDynamicTimeZone =
 		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE) ? TRUE : FALSE;
 
-	if (settings->SupportStatusInfoPdu)
-		settings->SupportStatusInfoPdu =
-		    (earlyCapabilityFlags & RNS_UD_CS_SUPPORT_STATUSINFO_PDU) ? TRUE : FALSE;
-
-	if (settings->SupportErrorInfoPdu)
-		settings->SupportErrorInfoPdu =
-		    earlyCapabilityFlags & RNS_UD_CS_SUPPORT_ERRINFO_PDU ? TRUE : FALSE;
-
-	if (!(earlyCapabilityFlags & RNS_UD_CS_VALID_CONNECTION_TYPE))
+	if ((earlyCapabilityFlags & RNS_UD_CS_VALID_CONNECTION_TYPE) == 0)
 		connectionType = 0;
 	settings->ConnectionType = connectionType;
-	settings->EarlyCapabilityFlags = earlyCapabilityFlags;
 
 	filterAndLogEarlyClientCapabilityFlags(earlyCapabilityFlags);
 	return TRUE;
@@ -981,11 +1013,26 @@ static BOOL updateEarlyServerCaps(rdpSettings* settings, UINT32 earlyCapabilityF
 {
 	WINPR_ASSERT(settings);
 
+	settings->SupportEdgeActionV1 =
+	    settings->SupportEdgeActionV1 &&
+	            (earlyCapabilityFlags & RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V1)
+	        ? TRUE
+	        : FALSE;
 	settings->SupportDynamicTimeZone =
 	    settings->SupportDynamicTimeZone && (earlyCapabilityFlags & RNS_UD_SC_DYNAMIC_DST_SUPPORTED)
 	        ? TRUE
 	        : FALSE;
-	settings->EarlyCapabilityFlags = earlyCapabilityFlags;
+	settings->SupportEdgeActionV2 =
+	    settings->SupportEdgeActionV2 &&
+	            (earlyCapabilityFlags & RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V2)
+	        ? TRUE
+	        : FALSE;
+	settings->SupportSkipChannelJoin =
+	    settings->SupportSkipChannelJoin &&
+	            (earlyCapabilityFlags & RNS_UD_SC_SKIP_CHANNELJOIN_SUPPORTED)
+	        ? TRUE
+	        : FALSE;
+
 	filterAndLogEarlyServerCapabilityFlags(earlyCapabilityFlags);
 	return TRUE;
 }
@@ -1012,7 +1059,6 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	UINT16 highColorDepth = 0;
 	UINT16 supportedColorDepths = 0;
 	UINT32 serverSelectedProtocol = 0;
-	UINT16 earlyCapabilityFlags = 0;
 	rdpSettings* settings = mcs_get_settings(mcs);
 
 	WINPR_ASSERT(s);
@@ -1091,7 +1137,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		if (blockLength < 2)
 			break;
 
-		Stream_Read_UINT16(s, earlyCapabilityFlags); /* earlyCapabilityFlags (2 bytes) */
+		Stream_Read_UINT16(s, settings->EarlyCapabilityFlags); /* earlyCapabilityFlags (2 bytes) */
 		blockLength -= 2;
 
 		/* clientDigProductId (64 bytes): Contains a value that uniquely identifies the client */
@@ -1166,7 +1212,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 	if (highColorDepth > 0)
 	{
-		if (earlyCapabilityFlags & RNS_UD_CS_WANT_32BPP_SESSION)
+		if (settings->EarlyCapabilityFlags & RNS_UD_CS_WANT_32BPP_SESSION)
 			clientColorDepth = 32;
 		else
 			clientColorDepth = highColorDepth;
@@ -1225,9 +1271,9 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, clientColorDepth);
 
 	WLog_DBG(TAG, "Received EarlyCapabilityFlags=%s",
-	         rdp_early_client_caps_string(earlyCapabilityFlags, buffer, sizeof(buffer)));
+	         rdp_early_client_caps_string(settings->EarlyCapabilityFlags, buffer, sizeof(buffer)));
 
-	return updateEarlyClientCaps(settings, earlyCapabilityFlags, connectionType);
+	return updateEarlyClientCaps(settings, settings->EarlyCapabilityFlags, connectionType);
 }
 
 /**
@@ -1337,7 +1383,6 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs)
 {
 	UINT32 serverVersion;
-	UINT32 EarlyCapabilityFlags = 0;
 	rdpSettings* settings = mcs_get_settings(mcs);
 
 	WINPR_ASSERT(s);
@@ -1358,12 +1403,14 @@ BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs)
 	{
 		char buffer[2048] = { 0 };
 
-		Stream_Read_UINT32(s, EarlyCapabilityFlags); /* earlyCapabilityFlags */
-		WLog_DBG(TAG, "Received EarlyCapabilityFlags=%s",
-		         rdp_early_client_caps_string(EarlyCapabilityFlags, buffer, sizeof(buffer)));
+		Stream_Read_UINT32(s, settings->EarlyCapabilityFlags); /* earlyCapabilityFlags */
+		WLog_DBG(
+		    TAG, "Received EarlyCapabilityFlags=%s",
+		    rdp_early_client_caps_string(settings->EarlyCapabilityFlags, buffer, sizeof(buffer)));
 	}
 
-	return updateEarlyServerCaps(settings, EarlyCapabilityFlags, settings->ConnectionType);
+	return updateEarlyServerCaps(settings, settings->EarlyCapabilityFlags,
+	                             settings->ConnectionType);
 }
 
 /* TODO: This function modifies rdpMcs
@@ -1379,9 +1426,7 @@ BOOL gcc_write_server_core_data(wStream* s, rdpMcs* mcs)
 	if (!gcc_write_user_data_header(s, SC_CORE, 16))
 		return FALSE;
 
-	updateEarlyServerCaps(settings, settings->EarlyCapabilityFlags, settings->ConnectionType);
 	const UINT32 EarlyCapabilityFlags = earlyServerCapsFromSettings(settings);
-
 	Stream_Write_UINT32(s, settings->RdpVersion);         /* version (4 bytes) */
 	Stream_Write_UINT32(s, settings->RequestedProtocols); /* clientRequestedProtocols (4 bytes) */
 	Stream_Write_UINT32(s, EarlyCapabilityFlags);         /* earlyCapabilityFlags (4 bytes) */

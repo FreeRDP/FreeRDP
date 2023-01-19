@@ -481,6 +481,12 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_SupportEchoChannel:
 			return settings->SupportEchoChannel;
 
+		case FreeRDP_SupportEdgeActionV1:
+			return settings->SupportEdgeActionV1;
+
+		case FreeRDP_SupportEdgeActionV2:
+			return settings->SupportEdgeActionV2;
+
 		case FreeRDP_SupportErrorInfoPdu:
 			return settings->SupportErrorInfoPdu;
 
@@ -501,6 +507,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 
 		case FreeRDP_SupportSSHAgentChannel:
 			return settings->SupportSSHAgentChannel;
+
+		case FreeRDP_SupportSkipChannelJoin:
+			return settings->SupportSkipChannelJoin;
 
 		case FreeRDP_SupportStatusInfoPdu:
 			return settings->SupportStatusInfoPdu;
@@ -1177,6 +1186,14 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 			settings->SupportEchoChannel = cnv.c;
 			break;
 
+		case FreeRDP_SupportEdgeActionV1:
+			settings->SupportEdgeActionV1 = cnv.c;
+			break;
+
+		case FreeRDP_SupportEdgeActionV2:
+			settings->SupportEdgeActionV2 = cnv.c;
+			break;
+
 		case FreeRDP_SupportErrorInfoPdu:
 			settings->SupportErrorInfoPdu = cnv.c;
 			break;
@@ -1203,6 +1220,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_SupportSSHAgentChannel:
 			settings->SupportSSHAgentChannel = cnv.c;
+			break;
+
+		case FreeRDP_SupportSkipChannelJoin:
+			settings->SupportSkipChannelJoin = cnv.c;
 			break;
 
 		case FreeRDP_SupportStatusInfoPdu:
