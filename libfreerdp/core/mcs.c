@@ -959,6 +959,9 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 		return FALSE;
 	}
 
+	if (!gcc_update_server_data(mcs))
+		goto out;
+
 	if (!gcc_write_server_data_blocks(server_data, mcs))
 		goto out;
 
