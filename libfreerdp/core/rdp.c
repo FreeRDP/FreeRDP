@@ -1298,10 +1298,10 @@ BOOL rdp_read_flow_control_pdu(wStream* s, UINT16* type, UINT16* channel_id)
 
 BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 {
-	BYTE cmac[8];
-	BYTE wmac[8];
-	BOOL status;
-	INT32 length;
+	BYTE cmac[8] = { 0 };
+	BYTE wmac[8] = { 0 };
+	BOOL status = FALSE;
+	INT32 length = 0;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
