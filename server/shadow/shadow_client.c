@@ -2112,7 +2112,8 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	shadow_input_register_callbacks(peer->context->input);
 
 	rc = peer->Initialize(peer);
-	WINPR_ASSERT(rc);
+	if (!rc)
+		goto out;
 
 	update = peer->context->update;
 	WINPR_ASSERT(update);
