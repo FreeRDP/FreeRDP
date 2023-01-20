@@ -857,8 +857,7 @@ static UINT32 filterAndLogEarlyServerCapabilityFlags(UINT32 flags)
 {
 	const UINT32 mask =
 	    (RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V1 | RNS_UD_SC_DYNAMIC_DST_SUPPORTED |
-	     RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V2); // TODO: Not implemented
-	                                           // RNS_UD_SC_SKIP_CHANNELJOIN_SUPPORTED
+	     RNS_UD_SC_EDGE_ACTIONS_SUPPORTED_V2 | RNS_UD_SC_SKIP_CHANNELJOIN_SUPPORTED);
 	const UINT32 filtered = flags & mask;
 	const UINT32 unknown = flags & (~mask);
 	if (unknown != 0)
@@ -896,8 +895,8 @@ static UINT16 filterAndLogEarlyClientCapabilityFlags(UINT32 flags)
 	     RNS_UD_CS_SUPPORT_STATUSINFO_PDU | RNS_UD_CS_STRONG_ASYMMETRIC_KEYS |
 	     RNS_UD_CS_VALID_CONNECTION_TYPE | RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU |
 	     RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT | RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL |
-	     RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE |
-	     RNS_UD_CS_SUPPORT_HEARTBEAT_PDU); // unsupported RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN
+	     RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE | RNS_UD_CS_SUPPORT_HEARTBEAT_PDU |
+	     RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN);
 	const UINT32 filtered = flags & mask;
 	const UINT32 unknown = flags & ~mask;
 	if (unknown != 0)
@@ -2033,7 +2032,7 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2ull * channelCount))
 		return FALSE;
 
-	for (i = 0; i < parsedChannelCount; i++)
+	for (UINT32 i = 0; i < parsedChannelCount; i++)
 	{
 		rdpMcsChannel* channel = &mcs->channels[i];
 		Stream_Read_UINT16(s, channelId); /* channelId */

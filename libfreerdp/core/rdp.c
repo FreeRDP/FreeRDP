@@ -1793,17 +1793,25 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 				WLog_ERR(TAG, "mcs_recv_attach_user_confirm failure");
 				status = STATE_RUN_FAILED;
 			}
-			else if (!rdp_client_transition_to_state(rdp,
-			                                         CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST))
-				status = STATE_RUN_FAILED;
-			else if (!mcs_send_channel_join_request(rdp->mcs, rdp->mcs->userId))
+			else if (!freerdp_settings_get_bool(rdp->settings, FreeRDP_SupportSkipChannelJoin))
 			{
-				WLog_ERR(TAG, "mcs_send_channel_join_request failure");
-				status = STATE_RUN_FAILED;
+				if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST))
+					status = STATE_RUN_FAILED;
+				else if (!mcs_send_channel_join_request(rdp->mcs, rdp->mcs->userId))
+				{
+					WLog_ERR(TAG, "mcs_send_channel_join_request failure");
+					status = STATE_RUN_FAILED;
+				}
+				else if (!rdp_client_transition_to_state(
+				             rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_RESPONSE))
+					status = STATE_RUN_FAILED;
 			}
-			else if (!rdp_client_transition_to_state(rdp,
-			                                         CONNECTION_STATE_MCS_CHANNEL_JOIN_RESPONSE))
-				status = STATE_RUN_FAILED;
+			else
+			{
+				/* SKIP_CHANNELJOIN is active, consider channels to be joined */
+				if (!rdp_client_skip_mcs_channel_join(rdp))
+					status = STATE_RUN_FAILED;
+			}
 			break;
 
 		case CONNECTION_STATE_MCS_CHANNEL_JOIN_RESPONSE:
