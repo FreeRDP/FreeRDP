@@ -652,23 +652,23 @@ static BOOL rdp_write_order_capability_set(wStream* s, const rdpSettings* settin
 		strncpy(terminalDescriptor, dsc, len);
 	}
 	Stream_Write(s, terminalDescriptor,
-	             sizeof(terminalDescriptor));    /* terminalDescriptor (16 bytes) */
-	Stream_Write_UINT32(s, 0);                   /* pad4OctetsA (4 bytes) */
-	Stream_Write_UINT16(s, 1);                   /* desktopSaveXGranularity (2 bytes) */
-	Stream_Write_UINT16(s, 20);                  /* desktopSaveYGranularity (2 bytes) */
-	Stream_Write_UINT16(s, 0);                   /* pad2OctetsA (2 bytes) */
-	Stream_Write_UINT16(s, 1);                   /* maximumOrderLevel (2 bytes) */
-	Stream_Write_UINT16(s, 0);                   /* numberFonts (2 bytes) */
-	Stream_Write_UINT16(s, orderFlags);          /* orderFlags (2 bytes) */
-	Stream_Write(s, settings->OrderSupport, 32); /* orderSupport (32 bytes) */
-	Stream_Write_UINT16(s, 0);                   /* textFlags (2 bytes) */
-	Stream_Write_UINT16(s, orderSupportExFlags); /* orderSupportExFlags (2 bytes) */
-	Stream_Write_UINT32(s, 0);                   /* pad4OctetsB (4 bytes) */
-	Stream_Write_UINT32(s, 230400);              /* desktopSaveSize (4 bytes) */
-	Stream_Write_UINT16(s, 0);                   /* pad2OctetsC (2 bytes) */
-	Stream_Write_UINT16(s, 0);                   /* pad2OctetsD (2 bytes) */
+	             sizeof(terminalDescriptor));           /* terminalDescriptor (16 bytes) */
+	Stream_Write_UINT32(s, 0);                          /* pad4OctetsA (4 bytes) */
+	Stream_Write_UINT16(s, 1);                          /* desktopSaveXGranularity (2 bytes) */
+	Stream_Write_UINT16(s, 20);                         /* desktopSaveYGranularity (2 bytes) */
+	Stream_Write_UINT16(s, 0);                          /* pad2OctetsA (2 bytes) */
+	Stream_Write_UINT16(s, 1);                          /* maximumOrderLevel (2 bytes) */
+	Stream_Write_UINT16(s, 0);                          /* numberFonts (2 bytes) */
+	Stream_Write_UINT16(s, orderFlags);                 /* orderFlags (2 bytes) */
+	Stream_Write(s, settings->OrderSupport, 32);        /* orderSupport (32 bytes) */
+	Stream_Write_UINT16(s, 0);                          /* textFlags (2 bytes) */
+	Stream_Write_UINT16(s, orderSupportExFlags);        /* orderSupportExFlags (2 bytes) */
+	Stream_Write_UINT32(s, 0);                          /* pad4OctetsB (4 bytes) */
+	Stream_Write_UINT32(s, 230400);                     /* desktopSaveSize (4 bytes) */
+	Stream_Write_UINT16(s, 0);                          /* pad2OctetsC (2 bytes) */
+	Stream_Write_UINT16(s, 0);                          /* pad2OctetsD (2 bytes) */
 	Stream_Write_UINT16(s, settings->TextANSICodePage); /* textANSICodePage (2 bytes) */
-	Stream_Write_UINT16(s, 0);                   /* pad2OctetsE (2 bytes) */
+	Stream_Write_UINT16(s, 0);                          /* pad2OctetsE (2 bytes) */
 	return rdp_capability_set_finish(s, (UINT16)header, CAPSET_TYPE_ORDER);
 }
 
@@ -2423,12 +2423,11 @@ static BOOL rdp_apply_remote_programs_capability_set(rdpSettings* settings, cons
 	/* 2.2.2.2.3 HandshakeEx PDU (TS_RAIL_ORDER_HANDSHAKE_EX)
 	 * the handshake ex pdu is supported when both, client and server announce
 	 * it OR if we are ready to begin enhanced remoteAPP mode. */
+	UINT32 supportLevel = src->RemoteApplicationSupportLevel;
 	if (settings->RemoteApplicationMode)
-		settings->RemoteApplicationSupportLevel |=
-		    RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED & settings->RemoteApplicationSupportMask;
+		supportLevel |= RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
 
-	settings->RemoteApplicationSupportLevel =
-	    src->RemoteApplicationSupportLevel & settings->RemoteApplicationSupportMask;
+	settings->RemoteApplicationSupportLevel = supportLevel & settings->RemoteApplicationSupportMask;
 
 	return TRUE;
 }
