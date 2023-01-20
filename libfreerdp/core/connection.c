@@ -952,6 +952,54 @@ end:
 	return ret;
 }
 
+static BOOL rdp_client_send_client_info_and_change_state(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+	if (!rdp_client_establish_keys(rdp))
+		return FALSE;
+	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE))
+		return FALSE;
+	if (!rdp_send_client_info(rdp))
+		return FALSE;
+	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST))
+		return FALSE;
+	return TRUE;
+}
+
+BOOL rdp_client_skip_mcs_channel_join(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+
+	rdpMcs* mcs = rdp->mcs;
+	WINPR_ASSERT(mcs);
+
+	mcs->userChannelJoined = TRUE;
+	mcs->globalChannelJoined = TRUE;
+	mcs->messageChannelJoined = TRUE;
+
+	for (UINT32 i = 0; i < mcs->channelCount; i++)
+	{
+		rdpMcsChannel* cur = &mcs->channels[i];
+		cur->joined = TRUE;
+	}
+
+	return rdp_client_send_client_info_and_change_state(rdp);
+}
+
+static BOOL rdp_client_join_channel(rdpRdp* rdp, UINT16 ChannelId)
+{
+	WINPR_ASSERT(rdp);
+
+	rdpMcs* mcs = rdp->mcs;
+	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST))
+		return FALSE;
+	if (!mcs_send_channel_join_request(mcs, ChannelId))
+		return FALSE;
+	if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_RESPONSE))
+		return FALSE;
+	return TRUE;
+}
+
 BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 {
 	UINT32 i;
@@ -968,12 +1016,7 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 			return FALSE;
 
 		mcs->userChannelJoined = TRUE;
-
-		if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST))
-			return FALSE;
-		if (!mcs_send_channel_join_request(mcs, MCS_GLOBAL_CHANNEL_ID))
-			return FALSE;
-		if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_RESPONSE))
+		if (!rdp_client_join_channel(rdp, MCS_GLOBAL_CHANNEL_ID))
 			return FALSE;
 	}
 	else if (!mcs->globalChannelJoined)
@@ -985,13 +1028,8 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 
 		if (mcs->messageChannelId != 0)
 		{
-			if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST))
+			if (!rdp_client_join_channel(rdp, mcs->messageChannelId))
 				return FALSE;
-			if (!mcs_send_channel_join_request(mcs, mcs->messageChannelId))
-				return FALSE;
-			if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_RESPONSE))
-				return FALSE;
-
 			allJoined = FALSE;
 		}
 		else
@@ -999,14 +1037,8 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 			if (mcs->channelCount > 0)
 			{
 				const rdpMcsChannel* cur = &mcs->channels[0];
-				if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST))
+				if (!rdp_client_join_channel(rdp, cur->ChannelId))
 					return FALSE;
-				if (!mcs_send_channel_join_request(mcs, cur->ChannelId))
-					return FALSE;
-				if (!rdp_client_transition_to_state(rdp,
-				                                    CONNECTION_STATE_MCS_CHANNEL_JOIN_RESPONSE))
-					return FALSE;
-
 				allJoined = FALSE;
 			}
 		}
@@ -1021,13 +1053,8 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 		if (mcs->channelCount > 0)
 		{
 			const rdpMcsChannel* cur = &mcs->channels[0];
-			if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST))
+			if (!rdp_client_join_channel(rdp, cur->ChannelId))
 				return FALSE;
-			if (!mcs_send_channel_join_request(mcs, cur->ChannelId))
-				return FALSE;
-			if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_RESPONSE))
-				return FALSE;
-
 			allJoined = FALSE;
 		}
 	}
@@ -1049,27 +1076,15 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 		if (i + 1 < mcs->channelCount)
 		{
 			const rdpMcsChannel* cur = &mcs->channels[i + 1];
-			if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST))
+			if (!rdp_client_join_channel(rdp, cur->ChannelId))
 				return FALSE;
-			if (!mcs_send_channel_join_request(mcs, cur->ChannelId))
-				return FALSE;
-			if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_RESPONSE))
-				return FALSE;
-
 			allJoined = FALSE;
 		}
 	}
 
 	if (mcs->userChannelJoined && mcs->globalChannelJoined && allJoined)
 	{
-		if (!rdp_client_establish_keys(rdp))
-			return FALSE;
-
-		if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE))
-			return FALSE;
-		if (!rdp_send_client_info(rdp))
-			return FALSE;
-		if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST))
+		if (!rdp_client_send_client_info_and_change_state(rdp))
 			return FALSE;
 	}
 
@@ -1477,6 +1492,25 @@ BOOL rdp_server_accept_mcs_erect_domain_request(rdpRdp* rdp, wStream* s)
 	return rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_ATTACH_USER);
 }
 
+static BOOL rdp_server_skip_mcs_channel_join(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+
+	rdpMcs* mcs = rdp->mcs;
+	WINPR_ASSERT(mcs);
+
+	mcs->userChannelJoined = TRUE;
+	mcs->globalChannelJoined = TRUE;
+	mcs->messageChannelJoined = TRUE;
+
+	for (UINT32 i = 0; i < mcs->channelCount; i++)
+	{
+		rdpMcsChannel* cur = &mcs->channels[i];
+		cur->joined = TRUE;
+	}
+	return rdp_server_transition_to_state(rdp, CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE);
+}
+
 BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s)
 {
 	if (!mcs_recv_attach_user_request(rdp->mcs, s))
@@ -1488,6 +1522,8 @@ BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s)
 	if (!mcs_send_attach_user_confirm(rdp->mcs))
 		return FALSE;
 
+	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_SupportSkipChannelJoin))
+		return rdp_server_skip_mcs_channel_join(rdp);
 	return rdp_server_transition_to_state(rdp, CONNECTION_STATE_MCS_CHANNEL_JOIN_REQUEST);
 }
 

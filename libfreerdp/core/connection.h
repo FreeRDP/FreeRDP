@@ -43,6 +43,8 @@ FREERDP_LOCAL BOOL rdp_client_disconnect(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_reconnect(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_redirect(rdpRdp* rdp);
+
+FREERDP_LOCAL BOOL rdp_client_skip_mcs_channel_join(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s);
 FREERDP_LOCAL state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s);

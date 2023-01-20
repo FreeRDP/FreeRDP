@@ -754,6 +754,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 				goto out_fail;
 		}
 	}
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportSkipChannelJoin, TRUE))
+		goto out_fail;
 
 	return settings;
 out_fail:
