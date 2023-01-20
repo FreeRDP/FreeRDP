@@ -807,35 +807,38 @@ BOOL certificate_read_server_certificate(rdpCertificate* certificate, const BYTE
 	return ret;
 }
 
-BOOL certificate_write_server_certificate(rdpCertificate* certificate, UINT32 dwVersion, wStream* s)
+SSIZE_T certificate_write_server_certificate(const rdpCertificate* certificate, UINT32 dwVersion,
+                                             wStream* s)
 {
-	BOOL ret;
+	const size_t start = Stream_GetPosition(s);
 
 	WINPR_ASSERT(certificate);
 	WINPR_ASSERT(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
-		return FALSE;
+		return -1;
 	Stream_Write_UINT32(s, dwVersion); /* dwVersion (4 bytes) */
 
 	switch (dwVersion & CERT_CHAIN_VERSION_MASK)
 	{
 		case CERT_CHAIN_VERSION_1:
-			ret = certificate_write_server_proprietary_certificate(certificate, s);
+			if (!certificate_write_server_proprietary_certificate(certificate, s))
+				return -1;
 			break;
 
 		case CERT_CHAIN_VERSION_2:
-			ret = certificate_write_server_x509_certificate_chain(certificate, s);
+			if (!certificate_write_server_x509_certificate_chain(certificate, s))
+				return -1;
 			break;
 
 		default:
 			WLog_ERR(TAG, "invalid certificate chain version:%" PRIu32 "",
 			         dwVersion & CERT_CHAIN_VERSION_MASK);
-			ret = FALSE;
-			break;
+			return -1;
 	}
 
-	return ret;
+	const size_t end = Stream_GetPosition(s);
+	return end - start;
 }
 
 rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)

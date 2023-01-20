@@ -47,8 +47,8 @@
 
 FREERDP_LOCAL BOOL certificate_read_server_certificate(rdpCertificate* certificate,
                                                        const BYTE* server_cert, size_t length);
-FREERDP_LOCAL BOOL certificate_write_server_certificate(rdpCertificate* certificate,
-                                                        UINT32 dwVersion, wStream* s);
+FREERDP_LOCAL SSIZE_T certificate_write_server_certificate(const rdpCertificate* certificate,
+                                                           UINT32 dwVersion, wStream* s);
 
 FREERDP_LOCAL rdpCertificate* certificate_clone(const rdpCertificate* certificate);
 
