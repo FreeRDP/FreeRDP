@@ -154,12 +154,12 @@ static const char* certificate_read_errors[] = { "Certificate tag",
 
 static BOOL certificate_read_x509_certificate(rdpCertBlob* cert, rdpCertInfo* info)
 {
-	wStream* s;
-	size_t length;
-	BYTE padding;
-	UINT32 version;
-	size_t modulus_length;
-	size_t exponent_length;
+	wStream* s = NULL;
+	size_t length = 0;
+	BYTE padding = 0;
+	UINT32 version = 0;
+	size_t modulus_length = 0;
+	size_t exponent_length = 0;
 	int error = 0;
 
 	if (!cert || !info)
@@ -344,14 +344,12 @@ static rdpX509CertChain* certificate_new_x509_certificate_chain(UINT32 count)
 
 static void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 {
-	UINT32 i;
-
 	if (!x509_cert_chain)
 		return;
 
 	if (x509_cert_chain->array)
 	{
-		for (i = 0; i < x509_cert_chain->count; i++)
+		for (UINT32 i = 0; i < x509_cert_chain->count; i++)
 		{
 			struct rdp_CertBlob* element = &x509_cert_chain->array[i];
 			free(element->data);
@@ -365,11 +363,11 @@ static void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_
 static BOOL certificate_process_server_public_key(rdpCertificate* certificate, wStream* s,
                                                   UINT32 length)
 {
-	BYTE magic[4];
-	UINT32 keylen;
-	UINT32 bitlen;
-	UINT32 datalen;
-	BYTE* tmp;
+	BYTE magic[4] = { 0 };
+	UINT32 keylen = 0;
+	UINT32 bitlen = 0;
+	UINT32 datalen = 0;
+	BYTE* tmp = NULL;
 
 	WINPR_ASSERT(certificate);
 	WINPR_ASSERT(s);
@@ -551,14 +549,14 @@ static BOOL certificate_write_server_public_signature(const rdpCertificate* cert
 
 static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* certificate, wStream* s)
 {
-	UINT32 dwSigAlgId;
-	UINT32 dwKeyAlgId;
-	UINT16 wPublicKeyBlobType;
-	UINT16 wPublicKeyBlobLen;
-	UINT16 wSignatureBlobType;
-	UINT16 wSignatureBlobLen;
-	BYTE* sigdata;
-	size_t sigdatalen;
+	UINT32 dwSigAlgId = 0;
+	UINT32 dwKeyAlgId = 0;
+	UINT16 wPublicKeyBlobType = 0;
+	UINT16 wPublicKeyBlobLen = 0;
+	UINT16 wSignatureBlobType = 0;
+	UINT16 wSignatureBlobLen = 0;
+	BYTE* sigdata = NULL;
+	size_t sigdatalen = 0;
 
 	WINPR_ASSERT(certificate);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
@@ -661,10 +659,9 @@ static BOOL certificate_write_server_proprietary_certificate(const rdpCertificat
 
 static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certificate, wStream* s)
 {
-	UINT32 i;
-	BOOL ret;
-	UINT32 certLength;
-	UINT32 numCertBlobs;
+	BOOL ret = FALSE;
+	UINT32 certLength = 0;
+	UINT32 numCertBlobs = 0;
 	DEBUG_CERTIFICATE("Server X.509 Certificate Chain");
 
 	WINPR_ASSERT(certificate);
@@ -677,7 +674,7 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certi
 	if (!certificate->x509_cert_chain)
 		return FALSE;
 
-	for (i = 0; i < numCertBlobs; i++)
+	for (UINT32 i = 0; i < numCertBlobs; i++)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return FALSE;
@@ -731,7 +728,6 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* certi
 static BOOL certificate_write_server_x509_certificate_chain(const rdpCertificate* certificate,
                                                             wStream* s)
 {
-	UINT32 i;
 	UINT32 numCertBlobs = 0;
 
 	WINPR_ASSERT(certificate);
@@ -744,7 +740,7 @@ static BOOL certificate_write_server_x509_certificate_chain(const rdpCertificate
 		return FALSE;
 	Stream_Write_UINT32(s, numCertBlobs); /* numCertBlobs */
 
-	for (i = 0; i < numCertBlobs; i++)
+	for (UINT32 i = 0; i < numCertBlobs; i++)
 	{
 		const rdpCertBlob* cert = &certificate->x509_cert_chain->array[i];
 
@@ -768,9 +764,9 @@ static BOOL certificate_write_server_x509_certificate_chain(const rdpCertificate
 BOOL certificate_read_server_certificate(rdpCertificate* certificate, const BYTE* server_cert,
                                          size_t length)
 {
-	BOOL ret;
+	BOOL ret = FALSE;
 	wStream *s, sbuffer;
-	UINT32 dwVersion;
+	UINT32 dwVersion = 0;
 
 	WINPR_ASSERT(certificate);
 	if (length < 4) /* NULL certificate is not an error see #1795 */
