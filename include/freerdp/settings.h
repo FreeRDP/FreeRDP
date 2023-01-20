@@ -359,17 +359,15 @@ typedef struct rdp_CertInfo rdpCertInfo;
 struct rdp_certificate
 {
 	rdpCertInfo cert_info;
-	rdpX509CertChain* x509_cert_chain;
+	rdpX509CertChain x509_cert_chain;
 };
 typedef struct rdp_certificate rdpCertificate;
 
 typedef struct
 {
-	BYTE* Modulus;
-	DWORD ModulusLength;
+	rdpCertInfo cert;
 	BYTE* PrivateExponent;
 	DWORD PrivateExponentLength;
-	BYTE exponent[4];
 } rdpRsaKey;
 
 /* Channels */

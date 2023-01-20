@@ -767,7 +767,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	rdp->do_crypt_license = TRUE;
 
 	/* now calculate encrypt / decrypt and update keys */
-	if (!security_establish_keys(settings->ClientRandom, rdp))
+	if (!security_establish_keys(rdp))
 		goto end;
 
 	rdp->do_crypt = TRUE;
@@ -822,14 +822,42 @@ end:
 	return ret;
 }
 
+static BOOL rdp_update_client_random(rdpSettings* settings, const BYTE* crypt_random,
+                                     size_t crypt_random_len)
+{
+	const size_t length = 32;
+	WINPR_ASSERT(settings);
+
+	const rdpRsaKey* rsa = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey);
+	WINPR_ASSERT(rsa);
+
+	const rdpCertInfo* cinfo = &rsa->cert;
+	WINPR_ASSERT(cinfo);
+
+	const DWORD key_len = cinfo->ModulusLength;
+	const BYTE* mod = cinfo->Modulus;
+	const BYTE* priv_exp = rsa->PrivateExponent;
+
+	if (crypt_random_len != key_len + 8)
+	{
+		WLog_ERR(TAG, "invalid encrypted client random length");
+		return FALSE;
+	}
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ClientRandom, NULL, length))
+		return FALSE;
+
+	BYTE* client_random = freerdp_settings_get_pointer(settings, FreeRDP_ClientRandom);
+	WINPR_ASSERT(client_random);
+	return crypto_rsa_private_decrypt(crypt_random, crypt_random_len - 8, key_len, mod, priv_exp,
+	                                  client_random) > 0;
+}
+
 BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 {
-	BYTE* client_random = NULL;
-	BYTE* crypt_client_random = NULL;
-	UINT32 rand_len, key_len;
-	UINT16 channel_id, length, sec_flags;
-	BYTE* mod;
-	BYTE* priv_exp;
+	UINT32 rand_len = 0;
+	UINT16 channel_id = 0;
+	UINT16 length = 0;
+	UINT16 sec_flags = 0;
 	BOOL ret = FALSE;
 
 	if (!rdp->settings->UseRdpSecurityLayer)
@@ -864,43 +892,14 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, rand_len))
 		return FALSE;
 
-	key_len = rdp->settings->RdpServerRsaKey->ModulusLength;
-	client_random = malloc(key_len);
-
-	if (!client_random)
-		return FALSE;
-
-	if (rand_len != key_len + 8)
-	{
-		WLog_ERR(TAG, "invalid encrypted client random length");
-		free(client_random);
+	const BYTE* crypt_random = Stream_Pointer(s);
+	if (!Stream_SafeSeek(s, rand_len))
 		goto end;
-	}
-
-	crypt_client_random = calloc(1, rand_len);
-
-	if (!crypt_client_random)
-	{
-		free(client_random);
+	if (!rdp_update_client_random(rdp->settings, crypt_random, rand_len))
 		goto end;
-	}
-
-	Stream_Read(s, crypt_client_random, rand_len);
-	mod = rdp->settings->RdpServerRsaKey->Modulus;
-	priv_exp = rdp->settings->RdpServerRsaKey->PrivateExponent;
-
-	if (crypto_rsa_private_decrypt(crypt_client_random, rand_len - 8, key_len, mod, priv_exp,
-	                               client_random) <= 0)
-	{
-		free(client_random);
-		goto end;
-	}
-
-	rdp->settings->ClientRandom = client_random;
-	rdp->settings->ClientRandomLength = 32;
 
 	/* now calculate encrypt / decrypt and update keys */
-	if (!security_establish_keys(client_random, rdp))
+	if (!security_establish_keys(rdp))
 		goto end;
 
 	rdp->do_crypt = TRUE;
@@ -937,7 +936,6 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 
 	ret = tpkt_ensure_stream_consumed(s, length);
 end:
-	free(crypt_client_random);
 
 	if (!ret)
 	{

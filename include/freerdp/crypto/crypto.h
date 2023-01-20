@@ -91,11 +91,6 @@ extern "C"
 	FREERDP_API BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey,
 	                                            DWORD* PublicKeyLength);
 
-#define TSSK_KEY_LENGTH 64
-	WINPR_API extern const BYTE tssk_modulus[];
-	WINPR_API extern const BYTE tssk_privateExponent[];
-	WINPR_API extern const BYTE tssk_exponent[];
-
 	FREERDP_API SSIZE_T crypto_rsa_public_encrypt(const BYTE* input, size_t length,
 	                                              size_t key_length, const BYTE* modulus,
 	                                              const BYTE* exponent, BYTE* output);
