@@ -1948,7 +1948,7 @@ char* freerdp_rail_support_flags_to_string(UINT32 flags, char* buffer, size_t le
 		winpr_str_append("RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED", buffer, length, "|");
 	if (flags & RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED)
 		winpr_str_append("RAIL_LEVEL_LANGUAGE_IME_SYNC_SUPPORTED", buffer, length, "|");
-	if ((flags & mask) != 0)
+	if ((flags & ~mask) != 0)
 	{
 		char tbuffer[64] = { 0 };
 		_snprintf(tbuffer, sizeof(tbuffer), "RAIL_FLAG_UNKNOWN 0x%08" PRIx32, flags & mask);
