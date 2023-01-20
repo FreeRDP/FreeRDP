@@ -531,25 +531,31 @@ static void fips_expand_key_bits(BYTE* in, BYTE* out)
 		out[i] = fips_oddparity_table[fips_reverse_table[out[i]]];
 }
 
-BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
+BOOL security_establish_keys(rdpRdp* rdp)
 {
-	BYTE pre_master_secret[48];
-	BYTE master_secret[48];
-	BYTE session_key_blob[48];
-	BYTE* server_random;
+	BYTE pre_master_secret[48] = { 0 };
+	BYTE master_secret[48] = { 0 };
+	BYTE session_key_blob[48] = { 0 };
 	BYTE salt[] = { 0xD1, 0x26, 0x9E }; /* 40 bits: 3 bytes, 56 bits: 1 byte */
-	rdpSettings* settings;
-	BOOL status;
-	settings = rdp->settings;
-	server_random = settings->ServerRandom;
+	BOOL status = FALSE;
+
+	WINPR_ASSERT(rdp);
+	const rdpSettings* settings = rdp->settings;
+	WINPR_ASSERT(settings);
+
+	const BYTE* server_random = freerdp_settings_get_pointer(settings, FreeRDP_ServerRandom);
+	const BYTE* client_random = freerdp_settings_get_pointer(settings, FreeRDP_ClientRandom);
+	WINPR_ASSERT(client_random);
+	WINPR_ASSERT(server_random);
+	WINPR_ASSERT(freerdp_settings_get_uint32(settings, FreeRDP_ClientRandomLength) == 32);
+	WINPR_ASSERT(freerdp_settings_get_uint32(settings, FreeRDP_ServerRandomLength) == 32);
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		WINPR_DIGEST_CTX* sha1;
-		BYTE client_encrypt_key_t[WINPR_SHA1_DIGEST_LENGTH + 1];
-		BYTE client_decrypt_key_t[WINPR_SHA1_DIGEST_LENGTH + 1];
-
-		if (!(sha1 = winpr_Digest_New()))
+		BYTE client_encrypt_key_t[WINPR_SHA1_DIGEST_LENGTH + 1] = { 0 };
+		BYTE client_decrypt_key_t[WINPR_SHA1_DIGEST_LENGTH + 1] = { 0 };
+		WINPR_DIGEST_CTX* sha1 = winpr_Digest_New();
+		if (!sha1)
 			return FALSE;
 
 		if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1) ||
@@ -585,7 +591,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 
 		winpr_Digest_Free(sha1);
 
-		if (rdp->settings->ServerMode)
+		if (settings->ServerMode)
 		{
 			fips_expand_key_bits(client_encrypt_key_t, rdp->fips_decrypt_key);
 			fips_expand_key_bits(client_decrypt_key_t, rdp->fips_encrypt_key);
@@ -608,7 +614,7 @@ BOOL security_establish_keys(const BYTE* client_random, rdpRdp* rdp)
 
 	memcpy(rdp->sign_key, session_key_blob, 16);
 
-	if (rdp->settings->ServerMode)
+	if (settings->ServerMode)
 	{
 		status = security_md5_16_32_32(&session_key_blob[16], client_random, server_random,
 		                               rdp->encrypt_key);

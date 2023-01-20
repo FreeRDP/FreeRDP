@@ -53,6 +53,8 @@ FREERDP_LOCAL SSIZE_T certificate_write_server_certificate(const rdpCertificate*
 FREERDP_LOCAL rdpCertificate* certificate_clone(const rdpCertificate* certificate);
 
 FREERDP_LOCAL rdpCertificate* certificate_new(void);
+FREERDP_LOCAL rdpCertificate* certificate_new_from_file(const char* file);
+FREERDP_LOCAL rdpCertificate* certificate_new_from_pem(const char* pem);
 FREERDP_LOCAL void certificate_free(rdpCertificate* certificate);
 
 FREERDP_LOCAL rdpRsaKey* key_new(const char* keyfile);
