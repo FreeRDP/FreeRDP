@@ -26,6 +26,7 @@
 #include <winpr/assert.h>
 
 #include <freerdp/log.h>
+#include <freerdp/utils/string.h>
 
 #include "utils.h"
 #include "gcc.h"
@@ -2005,7 +2006,6 @@ BOOL gcc_write_client_network_data(wStream* s, const rdpMcs* mcs)
 
 BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 {
-	UINT32 i;
 	UINT16 channelId;
 	UINT16 MCSChannelId;
 	UINT16 channelCount;
@@ -2082,6 +2082,7 @@ BOOL gcc_write_server_network_data(wStream* s, const rdpMcs* mcs)
 
 BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 {
+	char buffer[128] = { 0 };
 	UINT32 redirectedSessionId;
 	rdpSettings* settings = mcs_get_settings(mcs);
 
@@ -2094,6 +2095,9 @@ BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	Stream_Read_UINT32(s, settings->ClusterInfoFlags); /* flags */
 	Stream_Read_UINT32(s, redirectedSessionId);        /* redirectedSessionId */
 
+	WLog_VRB(TAG, "[%s] read ClusterInfoFlags=%s, RedirectedSessionId=0x%08" PRIx32, __FUNCTION__,
+	         rdp_cluster_info_flags_to_string(settings->ClusterInfoFlags, buffer, sizeof(buffer)),
+	         redirectedSessionId);
 	if (settings->ClusterInfoFlags & REDIRECTED_SESSIONID_FIELD_VALID)
 		settings->RedirectedSessionId = redirectedSessionId;
 
@@ -2123,6 +2127,7 @@ BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 
 BOOL gcc_write_client_cluster_data(wStream* s, const rdpMcs* mcs)
 {
+	char buffer[128] = { 0 };
 	UINT32 flags;
 	const rdpSettings* settings = mcs_get_const_settings(mcs);
 
@@ -2136,9 +2141,12 @@ BOOL gcc_write_client_cluster_data(wStream* s, const rdpMcs* mcs)
 	if (settings->ConsoleSession || settings->RedirectedSessionId)
 		flags |= REDIRECTED_SESSIONID_FIELD_VALID;
 
-	if (settings->RedirectSmartCards)
+	if (settings->RedirectSmartCards && settings->SmartcardLogon)
 		flags |= REDIRECTED_SMARTCARD;
 
+	WLog_VRB(TAG, "[%s] write ClusterInfoFlags=%s, RedirectedSessionId=0x%08" PRIx32, __FUNCTION__,
+	         rdp_cluster_info_flags_to_string(flags, buffer, sizeof(buffer)),
+	         settings->RedirectedSessionId);
 	Stream_Write_UINT32(s, flags);                         /* flags */
 	Stream_Write_UINT32(s, settings->RedirectedSessionId); /* redirectedSessionID */
 	return TRUE;
