@@ -31,6 +31,7 @@ extern "C"
 #endif
 
 	FREERDP_API char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size);
+	FREERDP_API char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer, size_t size);
 
 #ifdef __cplusplus
 }
