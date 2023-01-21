@@ -60,3 +60,44 @@ char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
 	}
 	return buffer;
 }
+
+char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer, size_t size)
+{
+	char msg[32] = { 0 };
+	const UINT32 version = (flags & ServerSessionRedirectionVersionMask) >> 2;
+	if (flags & REDIRECTION_SUPPORTED)
+		winpr_str_append("REDIRECTION_SUPPORTED", buffer, size, "|");
+	if (flags & REDIRECTED_SESSIONID_FIELD_VALID)
+		winpr_str_append("REDIRECTED_SESSIONID_FIELD_VALID", buffer, size, "|");
+	if (flags & REDIRECTED_SMARTCARD)
+		winpr_str_append("REDIRECTED_SMARTCARD", buffer, size, "|");
+
+	const char* str = NULL;
+	switch (version)
+	{
+		case REDIRECTION_VERSION1:
+			str = "REDIRECTION_VERSION1";
+			break;
+		case REDIRECTION_VERSION2:
+			str = "REDIRECTION_VERSION2";
+			break;
+		case REDIRECTION_VERSION3:
+			str = "REDIRECTION_VERSION3";
+			break;
+		case REDIRECTION_VERSION4:
+			str = "REDIRECTION_VERSION4";
+			break;
+		case REDIRECTION_VERSION5:
+			str = "REDIRECTION_VERSION5";
+			break;
+		case REDIRECTION_VERSION6:
+			str = "REDIRECTION_VERSION6";
+			break;
+		default:
+			_snprintf(msg, sizeof(msg), "REDIRECTION_VERSION_UNKNOWN[0x%08" PRIx32 "]", version);
+			str = msg;
+			break;
+	}
+	winpr_str_append(str, buffer, size, "|");
+	return buffer;
+}
