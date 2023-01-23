@@ -541,7 +541,7 @@ static BOOL certificate_write_server_public_signature(const rdpCertificate* cert
 	Stream_Write_UINT16(s, wSignatureBlobType);
 	Stream_Write_UINT16(s, wSignatureBlobLen);
 
-	WLog_WARN(TAG, "TODO: Calcualte proper signature");
+	WLog_WARN(TAG, "TODO: Calculate proper signature");
 
 	Stream_Write(s, signature, wSignatureBlobLen);
 	return TRUE;
