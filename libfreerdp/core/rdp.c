@@ -131,6 +131,7 @@ static BOOL rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UI
 
 BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length)
 {
+	char buffer[256] = { 0 };
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(flags);
 
@@ -145,7 +146,7 @@ BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length)
 
 	Stream_Read_UINT16(s, *flags); /* flags */
 	Stream_Seek(s, 2);             /* flagsHi (unused) */
-
+	WLog_VRB(TAG, "%s", rdp_security_flag_string(*flags, buffer, sizeof(buffer)));
 	if (length)
 		*length -= 4;
 
@@ -163,11 +164,13 @@ BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length)
 
 BOOL rdp_write_security_header(wStream* s, UINT16 flags)
 {
+	char buffer[256] = { 0 };
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 4))
 		return FALSE;
 
+	WLog_VRB(TAG, "%s", rdp_security_flag_string(flags, buffer, sizeof(buffer)));
 	/* Basic Security Header */
 	Stream_Write_UINT16(s, flags); /* flags */
 	Stream_Write_UINT16(s, 0);     /* flagsHi (unused) */
@@ -626,7 +629,8 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 
 	if (sec_flags != 0)
 	{
-		rdp_write_security_header(s, sec_flags);
+		if (!rdp_write_security_header(s, sec_flags))
+			return FALSE;
 
 		if (sec_flags & SEC_ENCRYPT)
 		{
