@@ -266,7 +266,7 @@ FREERDP_LOCAL void* rdp_get_io_callback_context(rdpRdp* rdp);
 #endif
 
 const char* data_pdu_type_to_string(UINT8 type);
-const char* pdu_type_to_str(UINT16 pduType);
+const char* pdu_type_to_str(UINT16 pduType, char* buffer, size_t length);
 
 BOOL rdp_finalize_reset_flags(rdpRdp* rdp, BOOL clearAll);
 BOOL rdp_finalize_set_flag(rdpRdp* rdp, UINT32 flag);

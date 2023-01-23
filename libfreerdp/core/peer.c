@@ -466,13 +466,14 @@ static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (channelId == MCS_GLOBAL_CHANNEL_ID)
 	{
+		char buffer[256] = { 0 };
 		UINT16 pduLength, remain;
 		if (!rdp_read_share_control_header(s, &pduLength, &remain, &pduType, &pduSource))
 			return STATE_RUN_FAILED;
 
 		settings->PduSource = pduSource;
 
-		WLog_DBG(TAG, "Received %s", pdu_type_to_str(pduType));
+		WLog_DBG(TAG, "Received %s", pdu_type_to_str(pduType, buffer, sizeof(buffer)));
 		switch (pduType)
 		{
 			case PDU_TYPE_DATA:

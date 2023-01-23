@@ -4331,7 +4331,6 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	UINT16 length;
 	UINT16 lengthSourceDescriptor;
 	UINT16 lengthCombinedCapabilities;
-	const char* pduName;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->context);
@@ -4344,12 +4343,8 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 		return TRUE;
 
 	if (!rdp_read_share_control_header(s, NULL, NULL, &pduType, &pduSource))
-	{
-		WLog_ERR(TAG, "rdp_read_share_control_header failed");
 		return FALSE;
-	}
 
-	pduName = pdu_type_to_str(pduType);
 	if (pduType == PDU_TYPE_DATA)
 	{
 		/*
@@ -4366,8 +4361,14 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
 	{
 		if (pduType != PDU_TYPE_SERVER_REDIRECTION)
-			WLog_ERR(TAG, "expected %s %04x, got %04" PRIx16 "", pduName, PDU_TYPE_DEMAND_ACTIVE,
-			         pduType);
+		{
+			char buffer1[256] = { 0 };
+			char buffer2[256] = { 0 };
+
+			WLog_ERR(TAG, "[%s] expected %s, got %s", __FUNCTION__,
+			         pdu_type_to_str(PDU_TYPE_DEMAND_ACTIVE, buffer1, sizeof(buffer1)),
+			         pdu_type_to_str(pduType, buffer2, sizeof(buffer2)));
+		}
 
 		return FALSE;
 	}
@@ -4393,8 +4394,11 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 		return FALSE;
 	}
 
-	if (!Stream_SafeSeek(s, 4)) /* SessionId */
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
+
+	UINT32 SessionId = 0;
+	Stream_Read_UINT32(s, SessionId); /* SessionId */
 
 	{
 		rdp_secondary_update_internal* secondary = secondary_update_cast(rdp->update->secondary);

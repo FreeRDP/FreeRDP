@@ -177,8 +177,8 @@ BOOL rdp_write_security_header(wStream* s, UINT16 flags)
 BOOL rdp_read_share_control_header(wStream* s, UINT16* tpktLength, UINT16* remainingLength,
                                    UINT16* type, UINT16* channel_id)
 {
-	UINT16 len;
-	UINT16 tmp;
+	UINT16 len = 0;
+	UINT16 tmp = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(type);
@@ -1390,31 +1390,47 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 	return TRUE;
 }
 
-const char* pdu_type_to_str(UINT16 pduType)
+const char* pdu_type_to_str(UINT16 pduType, char* buffer, size_t length)
 {
-	static char buffer[1024] = { 0 };
+	const char* str;
 	switch (pduType)
 	{
 		case PDU_TYPE_DEMAND_ACTIVE:
-			return "PDU_TYPE_DEMAND_ACTIVE";
+			str = "PDU_TYPE_DEMAND_ACTIVE";
+			break;
 		case PDU_TYPE_CONFIRM_ACTIVE:
-			return "PDU_TYPE_CONFIRM_ACTIVE";
+			str = "PDU_TYPE_CONFIRM_ACTIVE";
+			break;
 		case PDU_TYPE_DEACTIVATE_ALL:
-			return "PDU_TYPE_DEACTIVATE_ALL";
+			str = "PDU_TYPE_DEACTIVATE_ALL";
+			break;
 		case PDU_TYPE_DATA:
-			return "PDU_TYPE_DATA";
+			str = "PDU_TYPE_DATA";
+			break;
 		case PDU_TYPE_SERVER_REDIRECTION:
-			return "PDU_TYPE_SERVER_REDIRECTION";
+			str = "PDU_TYPE_SERVER_REDIRECTION";
+			break;
 		case PDU_TYPE_FLOW_TEST:
-			return "PDU_TYPE_FLOW_TEST";
+			str = "PDU_TYPE_FLOW_TEST";
+			break;
 		case PDU_TYPE_FLOW_RESPONSE:
-			return "PDU_TYPE_FLOW_RESPONSE";
+			str = "PDU_TYPE_FLOW_RESPONSE";
+			break;
 		case PDU_TYPE_FLOW_STOP:
-			return "PDU_TYPE_FLOW_STOP";
+			str = "PDU_TYPE_FLOW_STOP";
+			break;
 		default:
-			_snprintf(buffer, sizeof(buffer), "UNKNOWN %04" PRIx16, pduType);
-			return buffer;
+			str = "PRU_TYPE_UNKNOWN";
+			break;
 	}
+
+	winpr_str_append(str, buffer, length, "");
+	{
+		char msg[32] = { 0 };
+		_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", pduType);
+		winpr_str_append(msg, buffer, length, "");
+	}
+	return buffer;
 }
 
 /**
@@ -1492,10 +1508,7 @@ static state_run_t rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 			UINT16 remain;
 
 			if (!rdp_read_share_control_header(s, NULL, &remain, &pduType, &pduSource))
-			{
-				WLog_ERR(TAG, "rdp_recv_tpkt_pdu: rdp_read_share_control_header() fail");
 				return STATE_RUN_FAILED;
-			}
 
 			sub = Stream_StaticInit(&subbuffer, Stream_Pointer(s), remain);
 			if (!Stream_SafeSeek(s, remain))
@@ -1534,17 +1547,22 @@ static state_run_t rdp_recv_tpkt_pdu(rdpRdp* rdp, wStream* s)
 					break;
 
 				default:
-					WLog_ERR(TAG, "incorrect PDU type: 0x%04" PRIX16 "", pduType);
-					break;
+				{
+					char buffer[256] = { 0 };
+					WLog_ERR(TAG, "incorrect PDU type: %s",
+					         pdu_type_to_str(pduType, buffer, sizeof(buffer)));
+				}
+				break;
 			}
 
 			diff = Stream_GetRemainingLength(sub);
 			if (diff > 0)
 			{
+				char buffer[256] = { 0 };
 				WLog_WARN(TAG,
 				          "pduType %s not properly parsed, %" PRIdz
 				          " bytes remaining unhandled. Skipping.",
-				          pdu_type_to_str(pduType), diff);
+				          pdu_type_to_str(pduType, buffer, sizeof(buffer)), diff);
 			}
 		}
 	}
