@@ -446,9 +446,13 @@ static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (rdp_get_state(rdp) <= CONNECTION_STATE_LICENSING)
 	{
-		if (!rdp_read_security_header(s, &securityFlags, NULL))
+		if (!rdp_read_security_header(s, &securityFlags, &length))
 			return STATE_RUN_FAILED;
-
+		if (securityFlags & SEC_ENCRYPT)
+		{
+			if (!rdp_decrypt(rdp, s, &length, securityFlags))
+				return STATE_RUN_FAILED;
+		}
 		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 	}
 
