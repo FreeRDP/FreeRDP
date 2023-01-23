@@ -369,11 +369,11 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	Stream_Read_UINT16(s, length);                 /* length (2 bytes) */
 	Stream_Read_UINT32(s, redirection->sessionID); /* sessionID (4 bytes) */
 	Stream_Read_UINT32(s, redirection->flags);     /* redirFlags (4 bytes) */
-	WLog_VRB(TAG,
-	         "flags: 0x%04" PRIX16 ", redirFlags: %s [0x%08" PRIX32 "] length: %" PRIu16
-	         ", sessionID: 0x%08" PRIX32 "",
-	         flags, rdp_redirection_flags_to_string(redirection->flags, buffer, sizeof(buffer)),
-	         redirection->flags, length, redirection->sessionID);
+	WLog_INFO(TAG,
+	          "flags: 0x%04" PRIX16 ", redirFlags: %s [0x%08" PRIX32 "] length: %" PRIu16
+	          ", sessionID: 0x%08" PRIX32 "",
+	          flags, rdp_redirection_flags_to_string(redirection->flags, buffer, sizeof(buffer)),
+	          redirection->flags, length, redirection->sessionID);
 
 	/* Although MS-RDPBCGR does not mention any length constraints limits for the
 	 * variable length null-terminated unicode strings in the RDP_SERVER_REDIRECTION_PACKET
