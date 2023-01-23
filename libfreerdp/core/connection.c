@@ -752,7 +752,8 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID))
 		goto end;
-	rdp_write_security_header(s, SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC);
+	if (!rdp_write_security_header(s, SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC))
+		goto end;
 	length = key_len + 8;
 	Stream_Write_UINT32(s, length);
 	Stream_Write(s, crypt_client_random, length);
