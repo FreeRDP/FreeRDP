@@ -1505,7 +1505,7 @@ static BOOL rdp_server_skip_mcs_channel_join(rdpRdp* rdp)
 		rdpMcsChannel* cur = &mcs->channels[i];
 		cur->joined = TRUE;
 	}
-	return rdp_server_transition_to_state(rdp, CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE);
+	return rdp_server_transition_to_state(rdp, CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT);
 }
 
 BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s)
