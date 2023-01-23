@@ -220,7 +220,7 @@ static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context, const BYTE* src, 
 
 	if (srcFormat->wFormatTag != WAVE_FORMAT_PCM)
 	{
-		WLog_ERR(TAG, "%s requires %s for sample input, got %s", __FUNCTION__,
+		WLog_ERR(TAG, "requires %s for sample input, got %s",
 		         audio_format_get_tag_string(WAVE_FORMAT_PCM),
 		         audio_format_get_tag_string(srcFormat->wFormatTag));
 		return FALSE;

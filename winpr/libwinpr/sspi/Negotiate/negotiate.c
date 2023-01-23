@@ -1437,7 +1437,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesW(PCredHand
                                                                        ULONG ulAttribute,
                                                                        void* pBuffer)
 {
-	WLog_ERR(TAG, "[%s]: TODO: Implement", __FUNCTION__);
+	WLog_ERR(TAG, "TODO: Implement");
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -1445,7 +1445,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesA(PCredHand
                                                                        ULONG ulAttribute,
                                                                        void* pBuffer)
 {
-	WLog_ERR(TAG, "[%s]: TODO: Implement", __FUNCTION__);
+	WLog_ERR(TAG, "TODO: Implement");
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 

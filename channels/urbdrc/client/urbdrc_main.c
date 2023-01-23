@@ -542,8 +542,7 @@ static UINT urbdrc_process_channel_notification(GENERIC_CHANNEL_CALLBACK* callba
 			break;
 
 		default:
-			WLog_Print(urbdrc->log, WLOG_TRACE, "%s: unknown FunctionId 0x%" PRIX32 "",
-			           __FUNCTION__, FunctionId);
+			WLog_Print(urbdrc->log, WLOG_TRACE, "unknown FunctionId 0x%" PRIX32 "", FunctionId);
 			error = 1;
 			break;
 	}

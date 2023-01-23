@@ -37,7 +37,7 @@ static void ios_OnChannelConnectedEventHandler(void *context, const ChannelConne
 
 	if (!context || !e)
 	{
-		WLog_FATAL(TAG, "%s(context=%p, EventArgs=%p", __FUNCTION__, context, (void *)e);
+		WLog_FATAL(TAG, "(context=%p, EventArgs=%p", context, (void *)e);
 		return;
 	}
 
@@ -66,7 +66,7 @@ static void ios_OnChannelDisconnectedEventHandler(void *context,
 
 	if (!context || !e)
 	{
-		WLog_FATAL(TAG, "%s(context=%p, EventArgs=%p", __FUNCTION__, context, (void *)e);
+		WLog_FATAL(TAG, "(context=%p, EventArgs=%p", context, (void *)e);
 		return;
 	}
 

@@ -311,6 +311,6 @@ BOOL freerdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize
 
 	Stream_Write(s, data, chunkSize);
 
-	/* WLog_DBG(TAG, "%s: sending data (flags=0x%x size=%d)", __FUNCTION__, flags, size); */
+	/* WLog_DBG(TAG, "sending data (flags=0x%x size=%d)",  flags, size); */
 	return rdp_send(rdp, s, channelId);
 }

@@ -99,7 +99,7 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 			{
 				if (!freerdp_get_last_error(transport_get_context(transport)))
 				{
-					WLog_Print(transport->log, WLOG_ERROR, "%s: ACCESS DENIED", __FUNCTION__);
+					WLog_Print(transport->log, WLOG_ERROR, "ACCESS DENIED");
 					freerdp_set_last_error_log(transport_get_context(transport),
 					                           FREERDP_ERROR_AUTHENTICATION_FAILED);
 				}
@@ -1001,8 +1001,7 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 	{
 		if (count < 1)
 		{
-			WLog_Print(transport->log, WLOG_ERROR, "%s: provided handles array is too small",
-			           __FUNCTION__);
+			WLog_Print(transport->log, WLOG_ERROR, "provided handles array is too small");
 			return 0;
 		}
 
@@ -1023,9 +1022,9 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 			if (nCount >= count)
 			{
 				WLog_Print(transport->log, WLOG_ERROR,
-				           "%s: provided handles array is too small (count=%" PRIu32
-				           " nCount=%" PRIu32 ")",
-				           __FUNCTION__, count, nCount);
+				           "provided handles array is too small (count=%" PRIu32 " nCount=%" PRIu32
+				           ")",
+				           count, nCount);
 				return 0;
 			}
 
@@ -1033,8 +1032,7 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 			{
 				if (BIO_get_event(transport->frontBio, &events[nCount]) != 1)
 				{
-					WLog_Print(transport->log, WLOG_ERROR, "%s: error getting the frontBio handle",
-					           __FUNCTION__);
+					WLog_Print(transport->log, WLOG_ERROR, "error getting the frontBio handle");
 					return 0;
 				}
 				nCount++;

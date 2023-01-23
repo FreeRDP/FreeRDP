@@ -141,7 +141,7 @@ HANDLE CreateMutexA(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner,
 	mutex = (WINPR_MUTEX*)calloc(1, sizeof(WINPR_MUTEX));
 
 	if (lpMutexAttributes)
-		WLog_WARN(TAG, "%s [%s] does not support lpMutexAttributes", __FUNCTION__, lpName);
+		WLog_WARN(TAG, "[%s] does not support lpMutexAttributes", lpName);
 
 	if (mutex)
 	{
@@ -170,8 +170,8 @@ HANDLE CreateMutexExA(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCSTR lpName, DW
 	/* TODO: support access modes */
 
 	if (dwDesiredAccess != 0)
-		WLog_WARN(TAG, "%s [%s] does not support dwDesiredAccess 0x%08" PRIx32, __FUNCTION__,
-		          lpName, dwDesiredAccess);
+		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, lpName,
+		          dwDesiredAccess);
 
 	if (dwFlags & CREATE_MUTEX_INITIAL_OWNER)
 		initial = TRUE;
@@ -186,8 +186,8 @@ HANDLE CreateMutexExW(LPSECURITY_ATTRIBUTES lpMutexAttributes, LPCWSTR lpName, D
 
 	/* TODO: support access modes */
 	if (dwDesiredAccess != 0)
-		WLog_WARN(TAG, "%s [%s] does not support dwDesiredAccess 0x%08" PRIx32, __FUNCTION__,
-		          lpName, dwDesiredAccess);
+		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, lpName,
+		          dwDesiredAccess);
 
 	if (dwFlags & CREATE_MUTEX_INITIAL_OWNER)
 		initial = TRUE;
@@ -201,7 +201,7 @@ HANDLE OpenMutexA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
 	WINPR_UNUSED(dwDesiredAccess);
 	WINPR_UNUSED(bInheritHandle);
 	WINPR_UNUSED(lpName);
-	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "TODO: Implement");
 	return NULL;
 }
 
@@ -211,7 +211,7 @@ HANDLE OpenMutexW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpName)
 	WINPR_UNUSED(dwDesiredAccess);
 	WINPR_UNUSED(bInheritHandle);
 	WINPR_UNUSED(lpName);
-	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "TODO: Implement");
 	return NULL;
 }
 

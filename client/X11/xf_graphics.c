@@ -265,7 +265,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 	xTargetSize = MAX(1, pointer->width * xscale);
 	yTargetSize = MAX(1, pointer->height * yscale);
 
-	WLog_DBG(TAG, "%s: scaled: %" PRIu32 "x%" PRIu32 ", desktop: %" PRIu32 "x%" PRIu32, __func__,
+	WLog_DBG(TAG, "scaled: %" PRIu32 "x%" PRIu32 ", desktop: %" PRIu32 "x%" PRIu32,
 	         xfc->scaledWidth, xfc->scaledHeight, settings->DesktopWidth, settings->DesktopHeight);
 	for (i = 0; i < xpointer->nCursors; i++)
 	{
@@ -335,10 +335,9 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 		const double ys = fabs(fabs(yscale) - 1.0);
 
 		WLog_DBG(TAG,
-		         "%s: cursorIndex %" PRId32 " scaling pointer %" PRIu32 "x%" PRIu32 " --> %" PRIu32
+		         "cursorIndex %" PRId32 " scaling pointer %" PRIu32 "x%" PRIu32 " --> %" PRIu32
 		         "x%" PRIu32 " [%lfx%lf]",
-		         __func__, cursorIndex, pointer->width, pointer->height, ci.width, ci.height,
-		         xscale, yscale);
+		         cursorIndex, pointer->width, pointer->height, ci.width, ci.height, xscale, yscale);
 		if ((xs > DBL_EPSILON) || (ys > DBL_EPSILON))
 		{
 			if (!freerdp_image_scale((BYTE*)ci.pixels, CursorFormat, 0, 0, 0, ci.width, ci.height,
@@ -367,7 +366,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 	}
 	else
 	{
-		WLog_DBG(TAG, "%s: using cached cursor %" PRId32, __func__, cursorIndex);
+		WLog_DBG(TAG, "using cached cursor %" PRId32, cursorIndex);
 	}
 
 	cursor[0] = xpointer->cursors[cursorIndex];
@@ -455,13 +454,13 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	rc = TRUE;
 
 fail:
-	WLog_DBG(TAG, "%s: %p", __func__, rc ? pointer : NULL);
+	WLog_DBG(TAG, "%p", rc ? pointer : NULL);
 	return rc;
 }
 
 static void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
-	WLog_DBG(TAG, "%s: %p", __func__, pointer);
+	WLog_DBG(TAG, "%p", pointer);
 
 #ifdef WITH_XCURSOR
 	UINT32 i;
@@ -489,7 +488,7 @@ static void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 
 static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
-	WLog_DBG(TAG, "%s: %p", __func__, pointer);
+	WLog_DBG(TAG, "%p", pointer);
 #ifdef WITH_XCURSOR
 	xfContext* xfc = (xfContext*)context;
 	Window handle = xf_Pointer_get_window(xfc);
@@ -511,7 +510,7 @@ static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	}
 	else
 	{
-		WLog_WARN(TAG, "%s: handle=%ld", __func__, handle);
+		WLog_WARN(TAG, "handle=%ld", handle);
 	}
 #endif
 	return TRUE;
@@ -519,7 +518,7 @@ static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 
 static BOOL xf_Pointer_SetNull(rdpContext* context)
 {
-	WLog_DBG(TAG, "%s", __func__);
+	WLog_DBG(TAG, "called");
 #ifdef WITH_XCURSOR
 	xfContext* xfc = (xfContext*)context;
 	static Cursor nullcursor = None;
@@ -551,7 +550,7 @@ static BOOL xf_Pointer_SetNull(rdpContext* context)
 
 static BOOL xf_Pointer_SetDefault(rdpContext* context)
 {
-	WLog_DBG(TAG, "%s", __func__);
+	WLog_DBG(TAG, "called");
 #ifdef WITH_XCURSOR
 	xfContext* xfc = (xfContext*)context;
 	Window handle = xf_Pointer_get_window(xfc);
@@ -577,11 +576,11 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 
 	if (!handle)
 	{
-		WLog_WARN(TAG, "%s: focus %d, handle%lu", __func__, xfc->focused, handle);
+		WLog_WARN(TAG, "focus %d, handle%lu", xfc->focused, handle);
 		return TRUE;
 	}
 
-	WLog_DBG(TAG, "%s: %" PRIu32 "x%" PRIu32, __func__, x, y);
+	WLog_DBG(TAG, "%" PRIu32 "x%" PRIu32, x, y);
 	if (xfc->remote_app && !xfc->focused)
 		return TRUE;
 
@@ -592,7 +591,7 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 	rc = XGetWindowAttributes(xfc->display, handle, &current);
 	if (rc == 0)
 	{
-		WLog_WARN(TAG, "%s: XGetWindowAttributes==%d", __func__, rc);
+		WLog_WARN(TAG, "XGetWindowAttributes==%d", rc);
 		goto out;
 	}
 
@@ -601,17 +600,17 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 	rc = XChangeWindowAttributes(xfc->display, handle, CWEventMask, &tmp);
 	if (rc == 0)
 	{
-		WLog_WARN(TAG, "%s: XChangeWindowAttributes==%d", __func__, rc);
+		WLog_WARN(TAG, "XChangeWindowAttributes==%d", rc);
 		goto out;
 	}
 
 	rc = XWarpPointer(xfc->display, None, handle, 0, 0, 0, 0, x, y);
 	if (rc == 0)
-		WLog_WARN(TAG, "%s: XWarpPointer==%d", __func__, rc);
+		WLog_WARN(TAG, "XWarpPointer==%d", rc);
 	tmp.event_mask = current.your_event_mask;
 	rc = XChangeWindowAttributes(xfc->display, handle, CWEventMask, &tmp);
 	if (rc == 0)
-		WLog_WARN(TAG, "%s: 2.try XChangeWindowAttributes==%d", __func__, rc);
+		WLog_WARN(TAG, "2.try XChangeWindowAttributes==%d", rc);
 	ret = TRUE;
 out:
 	xf_unlock_x11(xfc);

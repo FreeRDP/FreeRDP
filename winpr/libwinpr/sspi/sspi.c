@@ -514,8 +514,8 @@ SECURITY_STATUS SEC_ENTRY sspi_EnumerateSecurityPackagesW(ULONG* pcPackages,
 
 	if (!(g_SspiW && g_SspiW->EnumerateSecurityPackagesW))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -533,8 +533,8 @@ SECURITY_STATUS SEC_ENTRY sspi_EnumerateSecurityPackagesA(ULONG* pcPackages,
 
 	if (!(g_SspiA && g_SspiA->EnumerateSecurityPackagesA))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -566,8 +566,8 @@ SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageNa
 
 	if (!(g_SspiW && g_SspiW->QuerySecurityPackageInfoW))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -585,8 +585,8 @@ SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityPackageInfoA(SEC_CHAR* pszPackageNam
 
 	if (!(g_SspiA && g_SspiA->QuerySecurityPackageInfoA))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -608,8 +608,8 @@ SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleW(
 
 	if (!(g_SspiW && g_SspiW->AcquireCredentialsHandleW))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -631,8 +631,8 @@ SECURITY_STATUS SEC_ENTRY sspi_AcquireCredentialsHandleA(
 
 	if (!(g_SspiA && g_SspiA->AcquireCredentialsHandleA))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -652,8 +652,8 @@ SECURITY_STATUS SEC_ENTRY sspi_ExportSecurityContext(PCtxtHandle phContext, ULON
 
 	if (!(g_SspiW && g_SspiW->ExportSecurityContext))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -670,8 +670,8 @@ SECURITY_STATUS SEC_ENTRY sspi_FreeCredentialsHandle(PCredHandle phCredential)
 
 	if (!(g_SspiW && g_SspiW->FreeCredentialsHandle))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -690,8 +690,8 @@ SECURITY_STATUS SEC_ENTRY sspi_ImportSecurityContextW(SEC_WCHAR* pszPackage,
 
 	if (!(g_SspiW && g_SspiW->ImportSecurityContextW))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -710,8 +710,8 @@ SECURITY_STATUS SEC_ENTRY sspi_ImportSecurityContextA(SEC_CHAR* pszPackage,
 
 	if (!(g_SspiA && g_SspiA->ImportSecurityContextA))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -729,8 +729,8 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryCredentialsAttributesW(PCredHandle phCredent
 
 	if (!(g_SspiW && g_SspiW->QueryCredentialsAttributesW))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -748,8 +748,8 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryCredentialsAttributesA(PCredHandle phCredent
 
 	if (!(g_SspiA && g_SspiA->QueryCredentialsAttributesA))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -773,8 +773,8 @@ SECURITY_STATUS SEC_ENTRY sspi_AcceptSecurityContext(PCredHandle phCredential,
 
 	if (!(g_SspiW && g_SspiW->AcceptSecurityContext))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -793,8 +793,8 @@ SECURITY_STATUS SEC_ENTRY sspi_ApplyControlToken(PCtxtHandle phContext, PSecBuff
 
 	if (!(g_SspiW && g_SspiW->ApplyControlToken))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -811,8 +811,8 @@ SECURITY_STATUS SEC_ENTRY sspi_CompleteAuthToken(PCtxtHandle phContext, PSecBuff
 
 	if (!(g_SspiW && g_SspiW->CompleteAuthToken))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -829,8 +829,8 @@ SECURITY_STATUS SEC_ENTRY sspi_DeleteSecurityContext(PCtxtHandle phContext)
 
 	if (!(g_SspiW && g_SspiW->DeleteSecurityContext))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -847,8 +847,8 @@ SECURITY_STATUS SEC_ENTRY sspi_FreeContextBuffer(void* pvContextBuffer)
 
 	if (!(g_SspiW && g_SspiW->FreeContextBuffer))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -865,8 +865,8 @@ SECURITY_STATUS SEC_ENTRY sspi_ImpersonateSecurityContext(PCtxtHandle phContext)
 
 	if (!(g_SspiW && g_SspiW->ImpersonateSecurityContext))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -886,8 +886,8 @@ SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextW(
 
 	if (!(g_SspiW && g_SspiW->InitializeSecurityContextW))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -909,8 +909,8 @@ SECURITY_STATUS SEC_ENTRY sspi_InitializeSecurityContextA(
 
 	if (!(g_SspiA && g_SspiA->InitializeSecurityContextA))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -930,8 +930,8 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryContextAttributesW(PCtxtHandle phContext, UL
 
 	if (!(g_SspiW && g_SspiW->QueryContextAttributesW))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -949,8 +949,8 @@ SECURITY_STATUS SEC_ENTRY sspi_QueryContextAttributesA(PCtxtHandle phContext, UL
 
 	if (!(g_SspiA && g_SspiA->QueryContextAttributesA))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -967,8 +967,8 @@ SECURITY_STATUS SEC_ENTRY sspi_QuerySecurityContextToken(PCtxtHandle phContext, 
 
 	if (!(g_SspiW && g_SspiW->QuerySecurityContextToken))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -986,8 +986,8 @@ SECURITY_STATUS SEC_ENTRY sspi_SetContextAttributesW(PCtxtHandle phContext, ULON
 
 	if (!(g_SspiW && g_SspiW->SetContextAttributesW))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1005,8 +1005,8 @@ SECURITY_STATUS SEC_ENTRY sspi_SetContextAttributesA(PCtxtHandle phContext, ULON
 
 	if (!(g_SspiA && g_SspiA->SetContextAttributesA))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1023,8 +1023,8 @@ SECURITY_STATUS SEC_ENTRY sspi_RevertSecurityContext(PCtxtHandle phContext)
 
 	if (!(g_SspiW && g_SspiW->RevertSecurityContext))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1044,8 +1044,8 @@ SECURITY_STATUS SEC_ENTRY sspi_DecryptMessage(PCtxtHandle phContext, PSecBufferD
 
 	if (!(g_SspiW && g_SspiW->DecryptMessage))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1063,8 +1063,8 @@ SECURITY_STATUS SEC_ENTRY sspi_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 
 	if (!(g_SspiW && g_SspiW->EncryptMessage))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1082,8 +1082,8 @@ SECURITY_STATUS SEC_ENTRY sspi_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
 
 	if (!(g_SspiW && g_SspiW->MakeSignature))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1101,8 +1101,8 @@ SECURITY_STATUS SEC_ENTRY sspi_VerifySignature(PCtxtHandle phContext, PSecBuffer
 
 	if (!(g_SspiW && g_SspiW->VerifySignature))
 	{
-		WLog_Print(g_Log, WLOG_WARN, "[%s]: Security module does not provide an implementation",
-		           __FUNCTION__);
+		WLog_Print(g_Log, WLOG_WARN, "Security module does not provide an implementation");
+
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 

@@ -143,7 +143,7 @@ static BOOL wlf_Pointer_SetDefault(rdpContext* context)
 static BOOL wlf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
 	// TODO
-	WLog_WARN(TAG, "%s not implemented", __FUNCTION__);
+	WLog_WARN(TAG, "not implemented");
 	return TRUE;
 }
 

@@ -936,7 +936,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	state = rdp_get_state(rdp);
 	if (!rdp_is_active_state(rdp))
 	{
-		WLog_WARN(TAG, "[%s] called before activation [%s]", __FUNCTION__, rdp_state_string(state));
+		WLog_WARN(TAG, "called before activation [%s]", rdp_state_string(state));
 		goto fail;
 	}
 

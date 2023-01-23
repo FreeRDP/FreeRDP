@@ -289,19 +289,19 @@ void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt
 {
 	if (!xfc)
 	{
-		WLog_DBG(TAG, "[%s] called from [%s] xfc=%p", __FUNCTION__, fkt, xfc);
+		WLog_DBG(TAG, "called from [%s] xfc=%p", fkt, xfc);
 		return;
 	}
 
 	if (w == 0 || h == 0)
 	{
-		WLog_WARN(TAG, "[%s] invalid width and/or height specified: w=%d h=%d", __FUNCTION__, w, h);
+		WLog_WARN(TAG, "invalid width and/or height specified: w=%d h=%d", w, h);
 		return;
 	}
 
 	if (!xfc->window)
 	{
-		WLog_WARN(TAG, "[%s] invalid xfc->window=%p", __FUNCTION__, xfc->window);
+		WLog_WARN(TAG, "invalid xfc->window=%p", xfc->window);
 		return;
 	}
 
@@ -601,12 +601,8 @@ BOOL xf_create_window(xfContext* xfc)
 	{
 		if (xfc->remote_app)
 		{
-			WLog_WARN(TAG,
-			          "[%s] running in remote app mode, but XServer does not support transparency",
-			          __FUNCTION__);
-			WLog_WARN(TAG,
-			          "[%s] display of remote applications might be distorted (black frames, ...)",
-			          __FUNCTION__);
+			WLog_WARN(TAG, "running in remote app mode, but XServer does not support transparency");
+			WLog_WARN(TAG, "display of remote applications might be distorted (black frames, ...)");
 		}
 		xfc->depth = DefaultDepthOfScreen(xfc->screen);
 		xfc->visual = DefaultVisual(xfc->display, xfc->screen_number);
@@ -818,7 +814,7 @@ void xf_lock_x11_(xfContext* xfc, const char* fkt)
 		XLockDisplay(xfc->display);
 
 	xfc->locked++;
-	WLog_VRB(TAG, "%s:\t[%" PRIu32 "] from %s", __FUNCTION__, xfc->locked, fkt);
+	WLog_VRB(TAG, "[%" PRIu32 "] from %s", xfc->locked, fkt);
 }
 
 void xf_unlock_x11_(xfContext* xfc, const char* fkt)
@@ -826,7 +822,7 @@ void xf_unlock_x11_(xfContext* xfc, const char* fkt)
 	if (xfc->locked == 0)
 		WLog_WARN(TAG, "X11: trying to unlock although not locked!");
 
-	WLog_VRB(TAG, "%s:\t[%" PRIu32 "] from %s", __FUNCTION__, xfc->locked - 1, fkt);
+	WLog_VRB(TAG, "[%" PRIu32 "] from %s", xfc->locked - 1, fkt);
 	if (!xfc->UseXThreads)
 		ReleaseMutex(xfc->mutex);
 	else

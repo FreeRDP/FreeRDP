@@ -56,7 +56,7 @@ static UINT sf_peer_audin_open_result(audin_server_context* context, UINT32 resu
 	/* TODO: Implement */
 	WINPR_ASSERT(context);
 
-	WLog_WARN(TAG, "%s not implemented", __FUNCTION__);
+	WLog_WARN(TAG, "not implemented");
 	WLog_DBG(TAG, "AUDIN open result %" PRIu32 ".", result);
 	return CHANNEL_RC_OK;
 }
@@ -74,8 +74,8 @@ static UINT sf_peer_audin_receive_samples(audin_server_context* context, const A
 	WINPR_ASSERT(format);
 	WINPR_ASSERT(buf);
 
-	WLog_WARN(TAG, "%s not implemented", __FUNCTION__);
-	WLog_DBG(TAG, "%s receive %" PRIdz " frames.", __FUNCTION__, nframes);
+	WLog_WARN(TAG, "not implemented");
+	WLog_DBG(TAG, "receive %" PRIdz " frames.", nframes);
 	return CHANNEL_RC_OK;
 }
 

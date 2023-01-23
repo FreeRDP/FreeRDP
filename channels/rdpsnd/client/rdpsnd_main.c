@@ -1514,8 +1514,8 @@ static VOID VCAPITYPE rdpsnd_virtual_channel_init_event_ex(LPVOID lpUserParam, L
 	if (error && plugin && plugin->rdpcontext)
 	{
 		char buffer[8192];
-		_snprintf(buffer, sizeof(buffer), "%s %s reported an error",
-		          rdpsnd_is_dyn_str(plugin->dynamic), __FUNCTION__);
+		_snprintf(buffer, sizeof(buffer), "%s reported an error",
+		          rdpsnd_is_dyn_str(plugin->dynamic));
 		setChannelError(plugin->rdpcontext, error, buffer);
 	}
 }

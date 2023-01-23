@@ -473,20 +473,19 @@ static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 
 	if (numCodecs != 1)
 	{
-		WLog_ERR(TAG, "%s: numCodes is 0x%02" PRIX8 " (must be 0x01)", __FUNCTION__, numCodecs);
+		WLog_ERR(TAG, "numCodes is 0x%02" PRIX8 " (must be 0x01)", numCodecs);
 		return FALSE;
 	}
 
 	if (context->codec_id != 0x01)
 	{
-		WLog_ERR(TAG, "%s: invalid codec id (0x%02" PRIX32 ")", __FUNCTION__, context->codec_id);
+		WLog_ERR(TAG, "invalid codec id (0x%02" PRIX32 ")", context->codec_id);
 		return FALSE;
 	}
 
 	if (context->codec_version != WF_VERSION_1_0)
 	{
-		WLog_ERR(TAG, "%s: invalid codec version (0x%08" PRIX32 ")", __FUNCTION__,
-		         context->codec_version);
+		WLog_ERR(TAG, "invalid codec version (0x%08" PRIX32 ")", context->codec_version);
 		return FALSE;
 	}
 
@@ -533,8 +532,8 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 
 	if (!context->width || !context->height)
 	{
-		WLog_ERR(TAG, "%s: invalid channel with/height: %" PRIu16 "x%" PRIu16 "", __FUNCTION__,
-		         context->width, context->height);
+		WLog_ERR(TAG, "invalid channel with/height: %" PRIu16 "x%" PRIu16 "", context->width,
+		         context->height);
 		return FALSE;
 	}
 
@@ -604,7 +603,7 @@ static BOOL rfx_process_message_frame_begin(RFX_CONTEXT* context, RFX_MESSAGE* m
 
 	if (*pExpectedBlockType != WBT_FRAME_BEGIN)
 	{
-		WLog_ERR(TAG, "%s: message unexpected wants WBT_FRAME_BEGIN", __FUNCTION__);
+		WLog_ERR(TAG, "message unexpected wants WBT_FRAME_BEGIN");
 		return FALSE;
 	}
 
@@ -627,7 +626,7 @@ static BOOL rfx_process_message_frame_end(RFX_CONTEXT* context, RFX_MESSAGE* mes
 {
 	if (*pExpectedBlockType != WBT_FRAME_END)
 	{
-		WLog_ERR(TAG, "%s: message unexpected, wants WBT_FRAME_END", __FUNCTION__);
+		WLog_ERR(TAG, "message unexpected, wants WBT_FRAME_END");
 		return FALSE;
 	}
 
@@ -646,7 +645,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 
 	if (*pExpectedBlockType != WBT_REGION)
 	{
-		WLog_ERR(TAG, "%s: message unexpected wants WBT_REGION", __FUNCTION__);
+		WLog_ERR(TAG, "message unexpected wants WBT_REGION");
 		return FALSE;
 	}
 
@@ -709,13 +708,13 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 
 	if (regionType != CBT_REGION)
 	{
-		WLog_ERR(TAG, "%s: invalid region type 0x%04" PRIX16 "", __FUNCTION__, regionType);
+		WLog_ERR(TAG, "invalid region type 0x%04" PRIX16 "", regionType);
 		return TRUE;
 	}
 
 	if (numTileSets != 0x0001)
 	{
-		WLog_ERR(TAG, "%s: invalid number of tilesets (%" PRIu16 ")", __FUNCTION__, numTileSets);
+		WLog_ERR(TAG, "invalid number of tilesets (%" PRIu16 ")", numTileSets);
 		return FALSE;
 	}
 
@@ -754,7 +753,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	if (*pExpectedBlockType != WBT_EXTENSION)
 	{
-		WLog_ERR(TAG, "%s: message unexpected wants a tileset", __FUNCTION__);
+		WLog_ERR(TAG, "message unexpected wants a tileset");
 		return FALSE;
 	}
 
@@ -1043,7 +1042,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 
 		if (blockType > WBT_CONTEXT && context->decodedHeaderBlocks != RFX_DECODED_HEADERS)
 		{
-			WLog_ERR(TAG, "%s: incomplete header blocks processing", __FUNCTION__);
+			WLog_ERR(TAG, "incomplete header blocks processing");
 			return FALSE;
 		}
 
@@ -1062,7 +1061,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 
 			if (codecId != 0x01)
 			{
-				WLog_ERR(TAG, "%s: invalid codecId 0x%02" PRIX8 "", __FUNCTION__, codecId);
+				WLog_ERR(TAG, "invalid codecId 0x%02" PRIX8 "", codecId);
 				return FALSE;
 			}
 
@@ -1071,9 +1070,8 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 				/* If the blockType is set to WBT_CONTEXT, then channelId MUST be set to 0xFF.*/
 				if (channelId != 0xFF)
 				{
-					WLog_ERR(TAG,
-					         "%s: invalid channelId 0x%02" PRIX8 " for blockType 0x%08" PRIX32 "",
-					         __FUNCTION__, channelId, blockType);
+					WLog_ERR(TAG, "invalid channelId 0x%02" PRIX8 " for blockType 0x%08" PRIX32 "",
+					         channelId, blockType);
 					return FALSE;
 				}
 			}
@@ -1082,8 +1080,8 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 				/* For all other values of blockType, channelId MUST be set to 0x00. */
 				if (channelId != 0x00)
 				{
-					WLog_ERR(TAG, "%s: invalid channelId 0x%02" PRIX8 " for blockType WBT_CONTEXT",
-					         __FUNCTION__, channelId);
+					WLog_ERR(TAG, "invalid channelId 0x%02" PRIX8 " for blockType WBT_CONTEXT",
+					         channelId);
 					return FALSE;
 				}
 			}
@@ -1143,7 +1141,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 				break;
 
 			default:
-				WLog_ERR(TAG, "%s: unknown blockType 0x%" PRIX32 "", __FUNCTION__, blockType);
+				WLog_ERR(TAG, "unknown blockType 0x%" PRIX32 "", blockType);
 				return FALSE;
 		}
 	}
@@ -1213,7 +1211,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 		return TRUE;
 	}
 
-	WLog_ERR(TAG, "%s failed", __FUNCTION__);
+	WLog_ERR(TAG, "failed");
 	return FALSE;
 }
 
@@ -1657,7 +1655,7 @@ skip_encoding_loop:
 		return message;
 	}
 
-	WLog_ERR(TAG, "%s: failed", __FUNCTION__);
+	WLog_ERR(TAG, "failed");
 	message->freeRects = TRUE;
 	rfx_message_free(context, message);
 	return NULL;

@@ -2291,8 +2291,8 @@ static UINT rdpgfx_set_cache_slot_data(RdpgfxClientContext* context, UINT16 cach
 	/* Microsoft uses 1-based indexing for the egfx bitmap cache ! */
 	if (cacheSlot == 0 || cacheSlot > gfx->MaxCacheSlots)
 	{
-		WLog_ERR(TAG, "%s: invalid cache slot %" PRIu16 ", must be between 1 and %" PRIu16 "",
-		         __FUNCTION__, cacheSlot, gfx->MaxCacheSlots);
+		WLog_ERR(TAG, "invalid cache slot %" PRIu16 ", must be between 1 and %" PRIu16 "",
+		         cacheSlot, gfx->MaxCacheSlots);
 		return ERROR_INVALID_INDEX;
 	}
 
@@ -2309,8 +2309,8 @@ static void* rdpgfx_get_cache_slot_data(RdpgfxClientContext* context, UINT16 cac
 	/* Microsoft uses 1-based indexing for the egfx bitmap cache ! */
 	if (cacheSlot == 0 || cacheSlot > gfx->MaxCacheSlots)
 	{
-		WLog_ERR(TAG, "%s: invalid cache slot %" PRIu16 ", must be between 1 and %" PRIu16 "",
-		         __FUNCTION__, cacheSlot, gfx->MaxCacheSlots);
+		WLog_ERR(TAG, "invalid cache slot %" PRIu16 ", must be between 1 and %" PRIu16 "",
+		         cacheSlot, gfx->MaxCacheSlots);
 		return NULL;
 	}
 

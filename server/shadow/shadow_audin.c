@@ -68,7 +68,7 @@ static UINT AudinServerOpening(audin_server_context* context)
 static UINT AudinServerOpenResult(audin_server_context* context, UINT32 result)
 {
 	/* TODO: Implement */
-	WLog_WARN(TAG, "%s not implemented", __FUNCTION__);
+	WLog_WARN(TAG, "not implemented");
 	WLog_INFO(TAG, "AUDIN open result %" PRIu32 ".\n", result);
 	return CHANNEL_RC_OK;
 }

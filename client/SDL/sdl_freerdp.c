@@ -896,7 +896,7 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 
 		if (nCount == 0)
 		{
-			WLog_Print(sdl->log, WLOG_ERROR, "%s: freerdp_get_event_handles failed", __FUNCTION__);
+			WLog_Print(sdl->log, WLOG_ERROR, "freerdp_get_event_handles failed");
 			break;
 		}
 
@@ -917,8 +917,7 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 			}
 
 			if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_SUCCESS)
-				WLog_Print(sdl->log, WLOG_ERROR,
-				           "%s: WaitForMultipleObjects failed with %" PRIu32 "", __FUNCTION__,
+				WLog_Print(sdl->log, WLOG_ERROR, "WaitForMultipleObjects failed with %" PRIu32 "",
 				           status);
 			break;
 		}

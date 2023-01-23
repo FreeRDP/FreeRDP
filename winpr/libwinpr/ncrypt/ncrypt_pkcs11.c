@@ -361,8 +361,8 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 		}
 
 		fix_padded_string((char*)slotInfo.slotDescription, sizeof(slotInfo.slotDescription));
-		WLog_DBG(TAG, "%s: collecting keys for slot #%d(%lu) descr='%s' flags=0x%x", __FUNCTION__,
-		         i, state->slots[i], slotInfo.slotDescription, slotInfo.flags);
+		WLog_DBG(TAG, "collecting keys for slot #%d(%lu) descr='%s' flags=0x%x", i, state->slots[i],
+		         slotInfo.slotDescription, slotInfo.flags);
 
 		/* this is a safety guard as we're supposed to have listed only readers with tokens in them
 		 */
@@ -381,8 +381,7 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 		else
 		{
 			fix_padded_string((char*)tokenInfo.label, sizeof(tokenInfo.label));
-			WLog_DBG(TAG, "%s: token, label='%s' flags=0x%x", __FUNCTION__, tokenInfo.label,
-			         tokenInfo.flags);
+			WLog_DBG(TAG, "token, label='%s' flags=0x%x", tokenInfo.label, tokenInfo.flags);
 		}
 
 		WINPR_ASSERT(p11->C_OpenSession);
@@ -415,7 +414,7 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 			goto cleanup_FindObjects;
 		}
 
-		WLog_DBG(TAG, "%s: slot has %d objects", __FUNCTION__, nslotObjects);
+		WLog_DBG(TAG, "slot has %d objects", nslotObjects);
 		for (j = 0; j < nslotObjects; j++)
 		{
 			NCryptKeyEnum* key = &state->keys[state->nKeys];

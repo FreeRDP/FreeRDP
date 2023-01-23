@@ -512,7 +512,7 @@ static BOOL WTSReceiveChannelData(freerdp_peer* client, UINT16 channelId, const 
 		}
 	}
 
-	WLog_WARN(TAG, "[%s] unknown channelId %" PRIu16 " ignored", __FUNCTION__, channelId);
+	WLog_WARN(TAG, "unknown channelId %" PRIu16 " ignored", channelId);
 
 	return TRUE;
 }

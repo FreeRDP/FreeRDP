@@ -974,12 +974,12 @@ void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char
 	WINPR_ASSERT(context);
 
 	if (lastError)
-		WLog_ERR(TAG, "%s:%s %s [0x%08" PRIX32 "]", fkt, __FUNCTION__,
-		         freerdp_get_last_error_name(lastError), lastError);
+		WLog_ERR(TAG, "%s %s [0x%08" PRIX32 "]", fkt, freerdp_get_last_error_name(lastError),
+		         lastError);
 
 	if (lastError == FREERDP_ERROR_SUCCESS)
 	{
-		WLog_DBG(TAG, "%s:%s resetting error state", fkt, __FUNCTION__);
+		WLog_DBG(TAG, "%s resetting error state", fkt);
 	}
 	else if (context->LastError != FREERDP_ERROR_SUCCESS)
 	{

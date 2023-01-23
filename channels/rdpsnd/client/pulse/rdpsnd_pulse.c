@@ -514,7 +514,7 @@ static void rdpsnd_set_volume_success_cb(pa_context* c, int success, void* userd
 		return;
 	WINPR_ASSERT(c);
 
-	WLog_INFO(TAG, "%s: %d", __FUNCTION__, success);
+	WLog_INFO(TAG, "%d", success);
 }
 
 static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)

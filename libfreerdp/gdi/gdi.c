@@ -473,9 +473,9 @@ BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 	if (!context || !bitmapUpdate || !context->gdi || !context->codecs)
 	{
 		WLog_ERR(TAG,
-		         "[%s] Invalid arguments: context=%p, bitmapUpdate=%p, context->gdi=%p, "
+		         "Invalid arguments: context=%p, bitmapUpdate=%p, context->gdi=%p, "
 		         "context->codecs=%p",
-		         __FUNCTION__, context, bitmapUpdate, context->gdi, context->codecs);
+		         context, bitmapUpdate, context->gdi, context->codecs);
 		return FALSE;
 	}
 
@@ -486,7 +486,7 @@ BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 
 		if (!bmp)
 		{
-			WLog_ERR(TAG, "[%s] Bitmap_Alloc failed", __FUNCTION__);
+			WLog_ERR(TAG, "Bitmap_Alloc failed");
 			return FALSE;
 		}
 
@@ -498,21 +498,21 @@ BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 		                     bitmap->bitsPerPixel, bitmap->bitmapLength, bitmap->compressed,
 		                     RDP_CODEC_ID_NONE))
 		{
-			WLog_ERR(TAG, "[%s] bmp->Decompress failed", __FUNCTION__);
+			WLog_ERR(TAG, "bmp->Decompress failed");
 			Bitmap_Free(context, bmp);
 			return FALSE;
 		}
 
 		if (!bmp->New(context, bmp))
 		{
-			WLog_ERR(TAG, "[%s] bmp->New failed", __FUNCTION__);
+			WLog_ERR(TAG, "bmp->New failed");
 			Bitmap_Free(context, bmp);
 			return FALSE;
 		}
 
 		if (!bmp->Paint(context, bmp))
 		{
-			WLog_ERR(TAG, "[%s] bmp->Paint failed", __FUNCTION__);
+			WLog_ERR(TAG, "bmp->Paint failed");
 			Bitmap_Free(context, bmp);
 			return FALSE;
 		}
@@ -961,25 +961,25 @@ out_fail:
 
 static BOOL gdi_polygon_sc(rdpContext* context, const POLYGON_SC_ORDER* polygon_sc)
 {
-	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
+	WLog_WARN(TAG, "not implemented");
 	return FALSE;
 }
 
 static BOOL gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
-	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
+	WLog_WARN(TAG, "not implemented");
 	return FALSE;
 }
 
 static BOOL gdi_ellipse_sc(rdpContext* context, const ELLIPSE_SC_ORDER* ellipse_sc)
 {
-	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
+	WLog_WARN(TAG, "not implemented");
 	return FALSE;
 }
 
 static BOOL gdi_ellipse_cb(rdpContext* context, const ELLIPSE_CB_ORDER* ellipse_cb)
 {
-	WLog_WARN(TAG, "%s: not implemented", __FUNCTION__);
+	WLog_WARN(TAG, "not implemented");
 	return FALSE;
 }
 

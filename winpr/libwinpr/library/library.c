@@ -82,7 +82,7 @@
 DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory)
 {
 	/* TODO: Implement */
-	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return NULL;
 }
@@ -90,7 +90,7 @@ DLL_DIRECTORY_COOKIE AddDllDirectory(PCWSTR NewDirectory)
 BOOL RemoveDllDirectory(DLL_DIRECTORY_COOKIE Cookie)
 {
 	/* TODO: Implement */
-	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 }
@@ -98,7 +98,7 @@ BOOL RemoveDllDirectory(DLL_DIRECTORY_COOKIE Cookie)
 BOOL SetDefaultDllDirectories(DWORD DirectoryFlags)
 {
 	/* TODO: Implement */
-	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 }
@@ -127,7 +127,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 	if (!library)
 	{
 		const char* err = dlerror();
-		WLog_ERR(TAG, "%s failed with %s", __FUNCTION__, err);
+		WLog_ERR(TAG, "failed with %s", err);
 		return NULL;
 	}
 
@@ -156,10 +156,10 @@ HMODULE LoadLibraryW(LPCWSTR lpLibFileName)
 HMODULE LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
 	if (dwFlags != 0)
-		WLog_WARN(TAG, "%s does not support dwFlags 0x%08" PRIx32, __FUNCTION__, dwFlags);
+		WLog_WARN(TAG, "does not support dwFlags 0x%08" PRIx32, dwFlags);
 
 	if (hFile)
-		WLog_WARN(TAG, "%s does not support hFile != NULL", __FUNCTION__);
+		WLog_WARN(TAG, "does not support hFile != NULL");
 
 	return LoadLibraryA(lpLibFileName);
 }
@@ -167,10 +167,10 @@ HMODULE LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 HMODULE LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 {
 	if (dwFlags != 0)
-		WLog_WARN(TAG, "%s does not support dwFlags 0x%08" PRIx32, __FUNCTION__, dwFlags);
+		WLog_WARN(TAG, "does not support dwFlags 0x%08" PRIx32, dwFlags);
 
 	if (hFile)
-		WLog_WARN(TAG, "%s does not support hFile != NULL", __FUNCTION__);
+		WLog_WARN(TAG, "does not support hFile != NULL");
 
 	return LoadLibraryW(lpLibFileName);
 }
@@ -207,7 +207,7 @@ BOOL FreeLibrary(HMODULE hLibModule)
 HMODULE GetModuleHandleA(LPCSTR lpModuleName)
 {
 	/* TODO: Implement */
-	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return NULL;
 }
@@ -215,7 +215,7 @@ HMODULE GetModuleHandleA(LPCSTR lpModuleName)
 HMODULE GetModuleHandleW(LPCWSTR lpModuleName)
 {
 	/* TODO: Implement */
-	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return NULL;
 }
@@ -339,7 +339,7 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 	}
 
 #endif
-	WLog_ERR(TAG, "%s is not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "is not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return 0;
 }

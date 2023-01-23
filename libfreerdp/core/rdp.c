@@ -404,7 +404,7 @@ BOOL rdp_set_error_info(rdpRdp* rdp, UINT32 errorInfo)
 			}
 		}
 		else
-			WLog_ERR(TAG, "%s missing context=%p", __FUNCTION__, context);
+			WLog_ERR(TAG, "missing context=%p", context);
 	}
 	else
 	{
@@ -810,8 +810,8 @@ BOOL rdp_send_data_pdu(rdpRdp* rdp, wStream* s, BYTE type, UINT16 channel_id)
 	length += pad;
 	Stream_SetPosition(s, length);
 	Stream_SealLength(s);
-	WLog_DBG(TAG, "%s: sending data (type=0x%x size=%" PRIuz " channelId=%" PRIu16 ")",
-	         __FUNCTION__, type, Stream_Length(s), channel_id);
+	WLog_DBG(TAG, "sending data (type=0x%x size=%" PRIuz " channelId=%" PRIu16 ")", type,
+	         Stream_Length(s), channel_id);
 
 	rdp->outPackets++;
 	if (transport_write(rdp->transport, s) < 0)
@@ -1711,8 +1711,7 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 			{
 				if (nla_recv_pdu(rdp->nla, s) < 1)
 				{
-					WLog_ERR(TAG, "%s: %s - nla_recv_pdu() fail", __FUNCTION__,
-					         rdp_get_state_string(rdp));
+					WLog_ERR(TAG, "%s - nla_recv_pdu() fail", rdp_get_state_string(rdp));
 					status = STATE_RUN_FAILED;
 				}
 			}
@@ -1722,8 +1721,7 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 
 				if (nego_get_state(rdp->nego) != NEGO_STATE_FINAL)
 				{
-					WLog_ERR(TAG, "%s: %s - nego_recv() fail", __FUNCTION__,
-					         rdp_get_state_string(rdp));
+					WLog_ERR(TAG, "%s - nego_recv() fail", rdp_get_state_string(rdp));
 					status = STATE_RUN_FAILED;
 				}
 				else if (!nla_set_state(rdp->nla, NLA_STATE_FINAL))
@@ -1771,8 +1769,7 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 		case CONNECTION_STATE_MCS_CREATE_REQUEST:
 			if (!mcs_client_begin(rdp->mcs))
 			{
-				WLog_ERR(TAG, "%s: %s - mcs_client_begin() fail", __FUNCTION__,
-				         rdp_get_state_string(rdp));
+				WLog_ERR(TAG, "%s - mcs_client_begin() fail", rdp_get_state_string(rdp));
 				status = STATE_RUN_FAILED;
 			}
 			else if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CREATE_RESPONSE))
@@ -1840,9 +1837,9 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 			if (!rdp_client_connect_mcs_channel_join_confirm(rdp, s))
 			{
 				WLog_ERR(TAG,
-				         "%s: %s - "
+				         "%s - "
 				         "rdp_client_connect_mcs_channel_join_confirm() fail",
-				         __FUNCTION__, rdp_get_state_string(rdp));
+				         rdp_get_state_string(rdp));
 				status = STATE_RUN_FAILED;
 			}
 
@@ -1864,8 +1861,7 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 			if (state_run_failed(status))
 			{
 				char buffer[64] = { 0 };
-				WLog_DBG(TAG, "%s: %s - rdp_client_connect_license() - %s", __FUNCTION__,
-				         rdp_get_state_string(rdp),
+				WLog_DBG(TAG, "%s - rdp_client_connect_license() - %s", rdp_get_state_string(rdp),
 				         state_run_result_string(status, buffer, ARRAYSIZE(buffer)));
 			}
 
@@ -1887,9 +1883,9 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 			{
 				char buffer[64] = { 0 };
 				WLog_DBG(TAG,
-				         "%s: %s - "
+				         "%s - "
 				         "rdp_client_connect_demand_active() - %s",
-				         __FUNCTION__, rdp_get_state_string(rdp),
+				         rdp_get_state_string(rdp),
 				         state_run_result_string(status, buffer, ARRAYSIZE(buffer)));
 			}
 			else if (status != STATE_RUN_REDIRECT)
@@ -1932,15 +1928,13 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 			if (state_run_failed(status))
 			{
 				char buffer[64] = { 0 };
-				WLog_DBG(TAG, "%s: %s - rdp_recv_pdu() - %s", __FUNCTION__,
-				         rdp_get_state_string(rdp),
+				WLog_DBG(TAG, "%s - rdp_recv_pdu() - %s", rdp_get_state_string(rdp),
 				         state_run_result_string(status, buffer, ARRAYSIZE(buffer)));
 			}
 			break;
 
 		default:
-			WLog_ERR(TAG, "%s: %s state %d", __FUNCTION__, rdp_get_state_string(rdp),
-			         rdp_get_state(rdp));
+			WLog_ERR(TAG, "%s state %d", rdp_get_state_string(rdp), rdp_get_state(rdp));
 			status = STATE_RUN_FAILED;
 			break;
 	}
@@ -1948,7 +1942,7 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 	if (state_run_failed(status))
 	{
 		char buffer[64] = { 0 };
-		WLog_ERR(TAG, "%s: %s status %s", __FUNCTION__, rdp_get_state_string(rdp),
+		WLog_ERR(TAG, "%s status %s", rdp_get_state_string(rdp),
 		         state_run_result_string(status, buffer, ARRAYSIZE(buffer)));
 	}
 	return status;

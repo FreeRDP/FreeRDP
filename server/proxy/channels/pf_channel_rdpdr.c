@@ -593,8 +593,8 @@ static UINT rdpdr_process_server_core_capability_request(pf_channel_client_conte
 				rdpdr->common.capabilityVersions[header.CapabilityType] = header.Version;
 
 			WLog_Print(rdpdr->log, WLOG_TRACE,
-			           "[%s] capability %s got version %" PRIu32 ", will use version %" PRIu32,
-			           __FUNCTION__, rdpdr_cap_type_string(header.CapabilityType), header.Version,
+			           "capability %s got version %" PRIu32 ", will use version %" PRIu32,
+			           rdpdr_cap_type_string(header.CapabilityType), header.Version,
 			           rdpdr->common.capabilityVersions[header.CapabilityType]);
 		}
 
@@ -621,10 +621,10 @@ static UINT rdpdr_process_server_core_capability_request(pf_channel_client_conte
 				break;
 
 			default:
-				WLog_Print(
-				    rdpdr->log, WLOG_WARN,
-				    "[%s] unknown capability 0x%04" PRIx16 ", length %" PRIu16 ", version %" PRIu32,
-				    __FUNCTION__, header.CapabilityType, header.CapabilityLength, header.Version);
+				WLog_Print(rdpdr->log, WLOG_WARN,
+				           "unknown capability 0x%04" PRIx16 ", length %" PRIu16
+				           ", version %" PRIu32,
+				           header.CapabilityType, header.CapabilityLength, header.Version);
 				Stream_Seek(s, header.CapabilityLength);
 				break;
 		}
@@ -755,8 +755,8 @@ static UINT rdpdr_process_client_capability_response(pf_channel_server_context* 
 				rdpdr->common.capabilityVersions[header.CapabilityType] = header.Version;
 
 			WLog_Print(rdpdr->log, WLOG_TRACE,
-			           "[%s] capability %s got version %" PRIu32 ", will use version %" PRIu32,
-			           __FUNCTION__, rdpdr_cap_type_string(header.CapabilityType), header.Version,
+			           "capability %s got version %" PRIu32 ", will use version %" PRIu32,
+			           rdpdr_cap_type_string(header.CapabilityType), header.Version,
 			           rdpdr->common.capabilityVersions[header.CapabilityType]);
 		}
 
@@ -898,7 +898,7 @@ rdpdr_process_server_capability_request_or_clientid_confirm(pf_channel_client_co
 
 	if ((rdpdr->flags & mask) == mask)
 	{
-		CLIENT_RX_LOG(rdpdr->log, WLOG_WARN, "[%s]: already past this state, abort!", __FUNCTION__);
+		CLIENT_RX_LOG(rdpdr->log, WLOG_WARN, "already past this state, abort!");
 		return FALSE;
 	}
 
@@ -908,7 +908,7 @@ rdpdr_process_server_capability_request_or_clientid_confirm(pf_channel_client_co
 	Stream_Read_UINT16(s, component);
 	if (rcomponent != component)
 	{
-		CLIENT_RX_LOG(rdpdr->log, WLOG_WARN, "[%s]: got component %s, expected %s", __FUNCTION__,
+		CLIENT_RX_LOG(rdpdr->log, WLOG_WARN, "got component %s, expected %s",
 		              rdpdr_component_string(component), rdpdr_component_string(rcomponent));
 		return FALSE;
 	}
@@ -920,8 +920,8 @@ rdpdr_process_server_capability_request_or_clientid_confirm(pf_channel_client_co
 		case PAKID_CORE_SERVER_CAPABILITY:
 			if (rdpdr->flags & STATE_CLIENT_EXPECT_SERVER_CORE_CAPABILITY_REQUEST)
 			{
-				CLIENT_RX_LOG(rdpdr->log, WLOG_WARN, "[%s]: got duplicate packetid %s",
-				              __FUNCTION__, rdpdr_packetid_string(packetid));
+				CLIENT_RX_LOG(rdpdr->log, WLOG_WARN, "got duplicate packetid %s",
+				              rdpdr_packetid_string(packetid));
 				return FALSE;
 			}
 			rdpdr->flags |= STATE_CLIENT_EXPECT_SERVER_CORE_CAPABILITY_REQUEST;
@@ -930,8 +930,8 @@ rdpdr_process_server_capability_request_or_clientid_confirm(pf_channel_client_co
 		default:
 			if (rdpdr->flags & STATE_CLIENT_EXPECT_SERVER_CLIENT_ID_CONFIRM)
 			{
-				CLIENT_RX_LOG(rdpdr->log, WLOG_WARN, "[%s]: got duplicate packetid %s",
-				              __FUNCTION__, rdpdr_packetid_string(packetid));
+				CLIENT_RX_LOG(rdpdr->log, WLOG_WARN, "got duplicate packetid %s",
+				              rdpdr_packetid_string(packetid));
 				return FALSE;
 			}
 			rdpdr->flags |= STATE_CLIENT_EXPECT_SERVER_CLIENT_ID_CONFIRM;
@@ -1315,8 +1315,8 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 	rdpdr = HashTable_GetItemValue(pc->interceptContextMap, channel_name);
 	if (!rdpdr)
 	{
-		WLog_ERR(TAG, "[%s]: Channel %s [0x%04" PRIx16 "] missing context in interceptContextMap",
-		         __FUNCTION__, channel_name, channelId);
+		WLog_ERR(TAG, "Channel %s [0x%04" PRIx16 "] missing context in interceptContextMap",
+		         channel_name, channelId);
 		return FALSE;
 	}
 	s = rdpdr->common.buffer;
@@ -1325,8 +1325,8 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 	if (!Stream_EnsureRemainingCapacity(s, xsize))
 	{
 		CLIENT_RX_LOG(rdpdr->log, WLOG_ERROR,
-		              "[%s]: Channel %s [0x%04" PRIx16 "] not enough memory [need %" PRIuz "]",
-		              __FUNCTION__, channel_name, channelId, xsize);
+		              "Channel %s [0x%04" PRIx16 "] not enough memory [need %" PRIuz "]",
+		              channel_name, channelId, xsize);
 		return FALSE;
 	}
 	Stream_Write(s, xdata, xsize);
@@ -1419,10 +1419,9 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 					default:
 						CLIENT_RX_LOG(
 						    rdpdr->log, WLOG_ERROR,
-						    "[%s]: Channel %s [0x%04" PRIx16
+						    "Channel %s [0x%04" PRIx16
 						    "] we´ve reached an impossible state %s! [%s] aliens invaded!",
-						    __FUNCTION__, channel_name, channelId,
-						    rdpdr_client_state_to_string(rdpdr->state),
+						    channel_name, channelId, rdpdr_client_state_to_string(rdpdr->state),
 						    rdpdr_packetid_string(packetid));
 						return FALSE;
 				}
@@ -1433,10 +1432,9 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 #endif
 		default:
 			CLIENT_RX_LOG(rdpdr->log, WLOG_ERROR,
-			              "[%s]: Channel %s [0x%04" PRIx16
+			              "Channel %s [0x%04" PRIx16
 			              "] we´ve reached an impossible state %s! aliens invaded!",
-			              __FUNCTION__, channel_name, channelId,
-			              rdpdr_client_state_to_string(rdpdr->state));
+			              channel_name, channelId, rdpdr_client_state_to_string(rdpdr->state));
 			return FALSE;
 	}
 
@@ -1790,7 +1788,7 @@ static pf_channel_server_context* get_channel(pServerContext* ps, BOOL send)
 	if (!rdpdr)
 	{
 		SERVER_RXTX_LOG(send, rdpdr->log, WLOG_ERROR,
-		                "[%s]: Channel %s missing context in interceptContextMap", __FUNCTION__,
+		                "Channel %s missing context in interceptContextMap",
 		                RDPDR_SVC_CHANNEL_NAME);
 		return NULL;
 	}

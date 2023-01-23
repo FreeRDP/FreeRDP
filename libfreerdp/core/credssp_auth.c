@@ -375,7 +375,7 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 			break;
 		case AUTH_STATE_INITIAL:
 		case AUTH_STATE_FINAL:
-			WLog_ERR(TAG, "%s: context in invalid state!", __FUNCTION__);
+			WLog_ERR(TAG, "context in invalid state!");
 			return -1;
 	}
 
@@ -465,7 +465,7 @@ BOOL credssp_auth_encrypt(rdpCredsspAuth* auth, const SecBuffer* plaintext, SecB
 	switch (auth->state)
 	{
 		case AUTH_STATE_INITIAL:
-			WLog_ERR(TAG, "[%s] Invalid state %s", __FUNCTION__, credssp_auth_state_string(auth));
+			WLog_ERR(TAG, "Invalid state %s", credssp_auth_state_string(auth));
 			return FALSE;
 		default:
 			break;
@@ -529,7 +529,7 @@ BOOL credssp_auth_decrypt(rdpCredsspAuth* auth, const SecBuffer* ciphertext, Sec
 	switch (auth->state)
 	{
 		case AUTH_STATE_INITIAL:
-			WLog_ERR(TAG, "[%s] Invalid state %s", __FUNCTION__, credssp_auth_state_string(auth));
+			WLog_ERR(TAG, "Invalid state %s", credssp_auth_state_string(auth));
 			return FALSE;
 		default:
 			break;

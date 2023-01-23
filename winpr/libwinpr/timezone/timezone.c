@@ -154,7 +154,7 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 				goto end;
 
 			strncpy(tzid, &buf[pos], alloc);
-			WLog_DBG(TAG, "%s: tzid: %s", __FUNCTION__, tzid);
+			WLog_DBG(TAG, "tzid: %s", tzid);
 			goto end;
 		}
 
@@ -259,7 +259,7 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 	tzid = winpr_read_unix_timezone_identifier_from_file(fp);
 	fclose(fp);
 	if (tzid != NULL)
-		WLog_DBG(TAG, "%s: tzid: %s", __FUNCTION__, tzid);
+		WLog_DBG(TAG, "tzid: %s", tzid);
 	return tzid;
 #endif
 }

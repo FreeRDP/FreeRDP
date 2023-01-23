@@ -1450,7 +1450,7 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 				freerdp_settings_set_pointer(settings, id, NULL);
 			}
 			else
-				WLog_WARN(TAG, "Invalid id %" PRIuz " for %s", id, __FUNCTION__);
+				WLog_WARN(TAG, "Invalid id %" PRIuz, id);
 			return FALSE;
 	}
 }
@@ -1587,8 +1587,7 @@ void* freerdp_settings_get_pointer_array_writable(const rdpSettings* settings, s
 				goto fail;
 			return settings->RdpServerRsaKey;
 		default:
-			WLog_WARN(TAG, "Invalid id %s [%" PRIuz "] for %s",
-			          freerdp_settings_get_name_for_key(id), id, __FUNCTION__);
+			WLog_WARN(TAG, "Invalid id %s [%" PRIuz "]", freerdp_settings_get_name_for_key(id), id);
 			return NULL;
 	}
 
@@ -1748,8 +1747,7 @@ BOOL freerdp_settings_set_pointer_array(rdpSettings* settings, size_t id, size_t
 			return TRUE;
 
 		default:
-			WLog_WARN(TAG, "Invalid id %s [%" PRIuz "] for %s",
-			          freerdp_settings_get_name_for_key(id), id, __FUNCTION__);
+			WLog_WARN(TAG, "Invalid id %s [%" PRIuz "]", freerdp_settings_get_name_for_key(id), id);
 			return FALSE;
 	}
 

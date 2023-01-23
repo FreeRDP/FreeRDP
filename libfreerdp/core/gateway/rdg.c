@@ -318,8 +318,7 @@ static BOOL rdg_read_http_unicode_string(wStream* s, const WCHAR** string, UINT1
 	/* Read length of the string */
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 	{
-		WLog_ERR(TAG, "[%s]: Could not read stream length, only have % " PRIuz " bytes",
-		         __FUNCTION__, rem);
+		WLog_ERR(TAG, "Could not read stream length, only have % " PRIuz " bytes", rem);
 		return FALSE;
 	}
 	Stream_Read_UINT16(s, strLenBytes);
@@ -330,9 +329,8 @@ static BOOL rdg_read_http_unicode_string(wStream* s, const WCHAR** string, UINT1
 	/* seek past the string - if this fails something is wrong */
 	if (!Stream_SafeSeek(s, strLenBytes))
 	{
-		WLog_ERR(TAG,
-		         "[%s]: Could not read stream data, only have % " PRIuz " bytes, expected %" PRIu16,
-		         __FUNCTION__, rem - 4, strLenBytes);
+		WLog_ERR(TAG, "Could not read stream data, only have % " PRIuz " bytes, expected %" PRIu16,
+		         rem - 4, strLenBytes);
 		return FALSE;
 	}
 
@@ -1361,7 +1359,7 @@ static BOOL rdg_process_tunnel_response_optional(rdpRdg* rdg, wStream* s, UINT16
 		/* Seek over tunnelId (4 bytes) */
 		if (!Stream_SafeSeek(s, 4))
 		{
-			WLog_ERR(TAG, "[%s] Short tunnelId, got %" PRIuz ", expected 4", __FUNCTION__,
+			WLog_ERR(TAG, "Short tunnelId, got %" PRIuz ", expected 4",
 			         Stream_GetRemainingLength(s));
 			return FALSE;
 		}
@@ -1382,15 +1380,14 @@ static BOOL rdg_process_tunnel_response_optional(rdpRdg* rdg, wStream* s, UINT16
 		/* Seek over nonce (20 bytes) */
 		if (!Stream_SafeSeek(s, 20))
 		{
-			WLog_ERR(TAG, "[%s] Short nonce, got %" PRIuz ", expected 20", __FUNCTION__,
-			         Stream_GetRemainingLength(s));
+			WLog_ERR(TAG, "Short nonce, got %" PRIuz ", expected 20", Stream_GetRemainingLength(s));
 			return FALSE;
 		}
 
 		/* Read serverCert */
 		if (!rdg_read_http_unicode_string(s, NULL, NULL))
 		{
-			WLog_ERR(TAG, "[%s] Failed to read server certificate", __FUNCTION__);
+			WLog_ERR(TAG, "Failed to read server certificate");
 			return FALSE;
 		}
 	}
@@ -1407,7 +1404,7 @@ static BOOL rdg_process_tunnel_response_optional(rdpRdg* rdg, wStream* s, UINT16
 		/* Read message string and invoke callback */
 		if (!rdg_read_http_unicode_string(s, &msg, &msgLenBytes))
 		{
-			WLog_ERR(TAG, "[%s] Failed to read consent message", __FUNCTION__);
+			WLog_ERR(TAG, "Failed to read consent message");
 			return FALSE;
 		}
 
@@ -1501,7 +1498,7 @@ static BOOL rdg_process_extauth_sspi(rdpRdg* rdg, wStream* s)
 
 	if (errorCode != ERROR_SUCCESS)
 	{
-		WLog_ERR(TAG, "[%s] EXTAUTH_SSPI_NTLM failed with error %s [0x%08X]", __FUNCTION__,
+		WLog_ERR(TAG, "EXTAUTH_SSPI_NTLM failed with error %s [0x%08X]",
 		         GetSecurityStatusString(errorCode), errorCode);
 		return FALSE;
 	}
@@ -1584,8 +1581,7 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 
 	if (Stream_Length(s) < packetLength)
 	{
-		WLog_ERR(TAG, "[%s] Short packet %" PRIuz ", expected %" PRIuz, __FUNCTION__,
-		         Stream_Length(s), packetLength);
+		WLog_ERR(TAG, "Short packet %" PRIuz ", expected %" PRIuz, Stream_Length(s), packetLength);
 		return FALSE;
 	}
 
@@ -1608,7 +1604,7 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 			break;
 
 		case PKT_TYPE_DATA:
-			WLog_ERR(TAG, "[%s] Unexpected packet type DATA", __FUNCTION__);
+			WLog_ERR(TAG, "Unexpected packet type DATA");
 			return FALSE;
 
 		case PKT_TYPE_EXTENDED_AUTH_MSG:
@@ -1616,7 +1612,7 @@ static BOOL rdg_process_packet(rdpRdg* rdg, wStream* s)
 			break;
 
 		default:
-			WLog_ERR(TAG, "[%s] PKG TYPE 0x%x not implemented", __FUNCTION__, type);
+			WLog_ERR(TAG, "PKG TYPE 0x%x not implemented", type);
 			return FALSE;
 	}
 
@@ -2316,7 +2312,7 @@ static BOOL rdg_process_service_message(rdpRdg* rdg, wStream* s)
 	/* Read message string */
 	if (!rdg_read_http_unicode_string(s, &msg, &msgLenBytes))
 	{
-		WLog_ERR(TAG, "[%s] Failed to read string", __FUNCTION__);
+		WLog_ERR(TAG, "Failed to read string");
 		return FALSE;
 	}
 
@@ -2397,8 +2393,7 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 		case PKT_TYPE_SERVICE_MESSAGE:
 			if (!s)
 			{
-				WLog_ERR(TAG, "[%s] PKT_TYPE_SERVICE_MESSAGE requires payload but none was sent",
-				         __FUNCTION__);
+				WLog_ERR(TAG, "PKT_TYPE_SERVICE_MESSAGE requires payload but none was sent");
 				return FALSE;
 			}
 			status = rdg_process_service_message(rdg, s);

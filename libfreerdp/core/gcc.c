@@ -2090,7 +2090,7 @@ BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	Stream_Read_UINT32(s, settings->ClusterInfoFlags); /* flags */
 	Stream_Read_UINT32(s, redirectedSessionId);        /* redirectedSessionId */
 
-	WLog_VRB(TAG, "[%s] read ClusterInfoFlags=%s, RedirectedSessionId=0x%08" PRIx32, __FUNCTION__,
+	WLog_VRB(TAG, "read ClusterInfoFlags=%s, RedirectedSessionId=0x%08" PRIx32,
 	         rdp_cluster_info_flags_to_string(settings->ClusterInfoFlags, buffer, sizeof(buffer)),
 	         redirectedSessionId);
 	if (settings->ClusterInfoFlags & REDIRECTED_SESSIONID_FIELD_VALID)
@@ -2139,7 +2139,7 @@ BOOL gcc_write_client_cluster_data(wStream* s, const rdpMcs* mcs)
 	if (settings->RedirectSmartCards && settings->SmartcardLogon)
 		flags |= REDIRECTED_SMARTCARD;
 
-	WLog_VRB(TAG, "[%s] write ClusterInfoFlags=%s, RedirectedSessionId=0x%08" PRIx32, __FUNCTION__,
+	WLog_VRB(TAG, "write ClusterInfoFlags=%s, RedirectedSessionId=0x%08" PRIx32,
 	         rdp_cluster_info_flags_to_string(flags, buffer, sizeof(buffer)),
 	         settings->RedirectedSessionId);
 	Stream_Write_UINT32(s, flags);                         /* flags */
@@ -2233,7 +2233,7 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(settings);
 
-	WLog_DBG(TAG, "[%s] MonitorCount=%" PRIu32, __FUNCTION__, settings->MonitorCount);
+	WLog_DBG(TAG, "MonitorCount=%" PRIu32, settings->MonitorCount);
 	if (settings->MonitorCount > 1)
 	{
 		length = (20 * settings->MonitorCount) + 12;
@@ -2264,9 +2264,9 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 			const UINT32 bottom = top + current->height - 1;
 			const UINT32 flags = current->is_primary ? MONITOR_PRIMARY : 0;
 			WLog_DBG(TAG,
-			         "[%s] Monitor[%" PRIu32 "]: top=%" PRIu32 ", left=%" PRIu32 ", bottom=%" PRIu32
+			         "Monitor[%" PRIu32 "]: top=%" PRIu32 ", left=%" PRIu32 ", bottom=%" PRIu32
 			         ", right=%" PRIu32 ", flags" PRIu32,
-			         __FUNCTION__, i, top, left, bottom, right, flags);
+			         i, top, left, bottom, right, flags);
 			Stream_Write_UINT32(s, left);   /* left */
 			Stream_Write_UINT32(s, top);    /* top */
 			Stream_Write_UINT32(s, right);  /* right */
@@ -2274,7 +2274,7 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 			Stream_Write_UINT32(s, flags);  /* flags */
 		}
 	}
-	WLog_DBG(TAG, "[%s] FINISHED", __FUNCTION__);
+	WLog_DBG(TAG, "FINISHED");
 	return TRUE;
 }
 

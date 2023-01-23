@@ -732,7 +732,7 @@ BOOL security_encrypt(BYTE* data, size_t length, rdpRdp* rdp)
 	EnterCriticalSection(&rdp->critical);
 	if (!rdp->rc4_encrypt_key)
 	{
-		WLog_ERR(TAG, "[%s] rdp->rc4_encrypt_key=%p", __FUNCTION__, rdp->rc4_encrypt_key);
+		WLog_ERR(TAG, "rdp->rc4_encrypt_key=%p", rdp->rc4_encrypt_key);
 		goto fail;
 	}
 
@@ -766,7 +766,7 @@ BOOL security_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 	EnterCriticalSection(&rdp->critical);
 	if (!rdp->rc4_decrypt_key)
 	{
-		WLog_ERR(TAG, "[%s] rdp->rc4_decrypt_key=%p", __FUNCTION__, rdp->rc4_decrypt_key);
+		WLog_ERR(TAG, "rdp->rc4_decrypt_key=%p", rdp->rc4_decrypt_key);
 		goto fail;
 	}
 

@@ -110,8 +110,8 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 
 	{
 		char ebuffer[128] = { 0 };
-		WLog_VRB(TAG, "[%s] sending timestamp=0x%08" PRIx64 ", flags=%s, %" PRId32 "x%" PRId32,
-		         __FUNCTION__, time, ainput_flags_to_string(flags, ebuffer, sizeof(ebuffer)), x, y);
+		WLog_VRB(TAG, "sending timestamp=0x%08" PRIx64 ", flags=%s, %" PRId32 "x%" PRId32, time,
+		         ainput_flags_to_string(flags, ebuffer, sizeof(ebuffer)), x, y);
 	}
 
 	/* Message type */

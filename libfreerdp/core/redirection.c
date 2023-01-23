@@ -151,15 +151,13 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 
 	if ((length % 2) || length < 2 || length > maxLength)
 	{
-		WLog_ERR(TAG, "[%s] failure: invalid unicode string length: %" PRIu32 "", __FUNCTION__,
-		         length);
+		WLog_ERR(TAG, "failure: invalid unicode string length: %" PRIu32 "", length);
 		return FALSE;
 	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 	{
-		WLog_ERR(TAG, "[%s] failure: insufficient stream length (%" PRIu32 " bytes required)",
-		         __FUNCTION__, length);
+		WLog_ERR(TAG, "failure: insufficient stream length (%" PRIu32 " bytes required)", length);
 		return FALSE;
 	}
 
@@ -167,7 +165,7 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 
 	if (wstr[length / 2 - 1])
 	{
-		WLog_ERR(TAG, "[%s] failure: unterminated unicode string", __FUNCTION__);
+		WLog_ERR(TAG, "failure: unterminated unicode string");
 		return FALSE;
 	}
 
@@ -175,7 +173,7 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 	*str = ConvertWCharNToUtf8Alloc(wstr, length / sizeof(WCHAR), NULL);
 	if (!*str)
 	{
-		WLog_ERR(TAG, "[%s] failure: string conversion failed", __FUNCTION__);
+		WLog_ERR(TAG, "failure: string conversion failed");
 		return FALSE;
 	}
 
@@ -361,7 +359,7 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	{
 		char buffer1[1024] = { 0 };
 		char buffer2[1024] = { 0 };
-		WLog_ERR(TAG, "[%s] received invalid flags=%s, expected %s", __FUNCTION__,
+		WLog_ERR(TAG, "received invalid flags=%s, expected %s",
 		         rdp_security_flag_string(flags, buffer1, sizeof(buffer1)),
 		         rdp_security_flag_string(SEC_REDIRECTION_PKT, buffer2, sizeof(buffer2)));
 		return STATE_RUN_FAILED;

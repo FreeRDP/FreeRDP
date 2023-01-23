@@ -469,7 +469,7 @@ def write_getter_body(f, values, ret):
         for val in values:
             write_getter_case(f, val)
     f.write('\t\tdefault:\n')
-    f.write('\t\t\tWLog_ERR(TAG, "[%s] Invalid key index %" PRIuz " [%s|%s]", __FUNCTION__,  id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
+    f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
     f.write('\t\t\treturn ' + ret + ';\n')
     f.write('\t}\n')
     f.write('}\n\n')
@@ -556,7 +556,7 @@ def write_setter(f, entry_dict, entry_type, entry_name):
         for val in values:
             write_setter_case(f, val, isString, isPointer)
     f.write('\t\tdefault:\n')
-    f.write('\t\t\tWLog_ERR(TAG, "[%s] Invalid key index %" PRIuz " [%s|%s]", __FUNCTION__,  id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
+    f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
     f.write('\t\t\treturn FALSE;\n')
     f.write('\t}\n')
     f.write('\treturn TRUE;\n')
