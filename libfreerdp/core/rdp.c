@@ -2485,7 +2485,12 @@ const char* rdp_security_flag_string(UINT32 securityFlags, char* buffer, size_t 
 		winpr_str_append("SEC_HEARTBEAT", buffer, size, "|");
 	if (securityFlags & SEC_FLAGSHI_VALID)
 		winpr_str_append("SEC_FLAGSHI_VALID", buffer, size, "|");
+	{
+		char msg[32] = { 0 };
 
+		_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", securityFlags);
+		winpr_str_append(msg, buffer, size, "");
+	}
 	return buffer;
 }
 
