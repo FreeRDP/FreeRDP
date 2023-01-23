@@ -112,7 +112,7 @@ exit:
 	return status;
 }
 
-static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_length,
+static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, size_t key_length,
                                  const BYTE* modulus, const BYTE* exponent, size_t exponent_size,
                                  BYTE* output, size_t out_length)
 {
