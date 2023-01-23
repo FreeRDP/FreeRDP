@@ -428,8 +428,8 @@ static void check_open_close_receive(DVCMAN_CHANNEL* channel)
 	if (cb->OnOpen || cb->OnClose)
 	{
 		if (!cb->OnOpen || !cb->OnClose)
-			WLog_WARN(TAG, "[%s] {%s:%" PRIu32 "} OnOpen=%p, OnClose=%p", __FUNCTION__, name, id,
-			          cb->OnOpen, cb->OnClose);
+			WLog_WARN(TAG, "{%s:%" PRIu32 "} OnOpen=%p, OnClose=%p", name, id, cb->OnOpen,
+			          cb->OnClose);
 	}
 }
 

@@ -502,8 +502,7 @@ BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT1
 
 	if (mlength + min != length)
 	{
-		WLog_ERR(TAG, "[%s] length mismatch: %" PRIu16 "!= %" PRIu16, __FUNCTION__, mlength + min,
-		         length);
+		WLog_ERR(TAG, "length mismatch: %" PRIu16 "!= %" PRIu16, mlength + min, length);
 		return FALSE;
 	}
 

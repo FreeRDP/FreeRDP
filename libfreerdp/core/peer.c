@@ -812,8 +812,7 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 		case CONNECTION_STATE_NEGO:
 			if (!rdp_server_accept_nego(rdp, s))
 			{
-				WLog_ERR(TAG, "%s: %s - rdp_server_accept_nego() fail", __FUNCTION__,
-				         rdp_get_state_string(rdp));
+				WLog_ERR(TAG, "%s - rdp_server_accept_nego() fail", rdp_get_state_string(rdp));
 			}
 			else
 			{
@@ -849,9 +848,9 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			if (!rdp_server_accept_mcs_connect_initial(rdp, s))
 			{
 				WLog_ERR(TAG,
-				         "%s: %s - "
+				         "%s - "
 				         "rdp_server_accept_mcs_connect_initial() fail",
-				         __FUNCTION__, rdp_get_state_string(rdp));
+				         rdp_get_state_string(rdp));
 			}
 			else
 				ret = STATE_RUN_SUCCESS;
@@ -862,9 +861,9 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			if (!rdp_server_accept_mcs_erect_domain_request(rdp, s))
 			{
 				WLog_ERR(TAG,
-				         "%s: %s - "
+				         "%s - "
 				         "rdp_server_accept_mcs_erect_domain_request() fail",
-				         __FUNCTION__, rdp_get_state_string(rdp));
+				         rdp_get_state_string(rdp));
 			}
 			else
 				ret = STATE_RUN_SUCCESS;
@@ -875,9 +874,9 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			if (!rdp_server_accept_mcs_attach_user_request(rdp, s))
 			{
 				WLog_ERR(TAG,
-				         "%s: %s - "
+				         "%s - "
 				         "rdp_server_accept_mcs_attach_user_request() fail",
-				         __FUNCTION__, rdp_get_state_string(rdp));
+				         rdp_get_state_string(rdp));
 			}
 			else
 				ret = STATE_RUN_SUCCESS;
@@ -888,9 +887,9 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			if (!rdp_server_accept_mcs_channel_join_request(rdp, s))
 			{
 				WLog_ERR(TAG,
-				         "%s: %s - "
+				         "%s - "
 				         "rdp_server_accept_mcs_channel_join_request() fail",
-				         __FUNCTION__, rdp_get_state_string(rdp));
+				         rdp_get_state_string(rdp));
 			}
 			else
 				ret = STATE_RUN_SUCCESS;
@@ -903,9 +902,9 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 				if (!rdp_server_establish_keys(rdp, s))
 				{
 					WLog_ERR(TAG,
-					         "%s: %s - "
+					         "%s - "
 					         "rdp_server_establish_keys() fail",
-					         __FUNCTION__, rdp_get_state_string(rdp));
+					         rdp_get_state_string(rdp));
 					ret = STATE_RUN_FAILED;
 				}
 			}
@@ -922,9 +921,9 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			if (!rdp_recv_client_info(rdp, s))
 			{
 				WLog_ERR(TAG,
-				         "%s: %s - "
+				         "%s - "
 				         "rdp_recv_client_info() fail",
-				         __FUNCTION__, rdp_get_state_string(rdp));
+				         rdp_get_state_string(rdp));
 			}
 			else
 			{

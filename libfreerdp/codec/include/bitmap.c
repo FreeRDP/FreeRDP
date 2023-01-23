@@ -32,7 +32,7 @@ static INLINE BYTE* WRITEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd, UINT32 r
 
 	if (cBits > 8)
 	{
-		WLog_ERR(TAG, "[%s] cBits %d > 8", __FUNCTION__, cBits);
+		WLog_ERR(TAG, "cBits %d > 8", cBits);
 		return NULL;
 	}
 
@@ -66,7 +66,7 @@ static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd,
 
 	if (cBits > 8)
 	{
-		WLog_ERR(TAG, "[%s] cBits %d > 8", __FUNCTION__, cBits);
+		WLog_ERR(TAG, "cBits %d > 8", cBits);
 		return NULL;
 	}
 
@@ -112,15 +112,15 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 
 	if ((rowDelta == 0) || (rowDelta < width))
 	{
-		WLog_ERR(TAG, "[%s] Invalid arguments: rowDelta=%" PRIu32 " == 0 || < width=%" PRIu32,
-		         __FUNCTION__, rowDelta, width);
+		WLog_ERR(TAG, "Invalid arguments: rowDelta=%" PRIu32 " == 0 || < width=%" PRIu32, rowDelta,
+		         width);
 		return FALSE;
 	}
 
 	if (!pbSrcBuffer || !pbDestBuffer)
 	{
-		WLog_ERR(TAG, "[%s] Invalid arguments: pbSrcBuffer=%p, pbDestBuffer=%p", __FUNCTION__,
-		         pbSrcBuffer, pbDestBuffer);
+		WLog_ERR(TAG, "Invalid arguments: pbSrcBuffer=%p, pbDestBuffer=%p", pbSrcBuffer,
+		         pbDestBuffer);
 		return FALSE;
 	}
 
@@ -146,7 +146,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 		code = ExtractCodeId(*pbSrc);
 
 #if defined(WITH_DEBUG_CODECS)
-		WLog_VRB(TAG, "[%s] pbSrc=%p code=%s, rem=%" PRIuz, __FUNCTION__, pbSrc,
+		WLog_VRB(TAG, "pbSrc=%p code=%s, rem=%" PRIuz, pbSrc,
 		         rle_code_str_buffer(code, sbuffer, sizeof(sbuffer)), pbEnd - pbSrc);
 #endif
 
@@ -440,9 +440,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 				break;
 
 			default:
-				WLog_ERR(TAG,
-				         "[%s] invalid code 0x%08" PRIx32 ", pbSrcBuffer=%p, pbSrc=%p, pbEnd=%p",
-				         __FUNCTION__, code, pbSrcBuffer, pbSrc, pbEnd);
+				WLog_ERR(TAG, "invalid code 0x%08" PRIx32 ", pbSrcBuffer=%p, pbSrc=%p, pbEnd=%p",
+				         code, pbSrcBuffer, pbSrc, pbEnd);
 				return FALSE;
 		}
 	}

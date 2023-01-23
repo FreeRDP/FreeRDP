@@ -486,9 +486,9 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 		if (cbClientAddress > cbClientAddressMax)
 		{
 			WLog_WARN(TAG,
-			          "[%s] the client address %s [%" PRIuz "] exceeds the limit of %" PRIuz
+			          "the client address %s [%" PRIuz "] exceeds the limit of %" PRIuz
 			          ", truncating.",
-			          __FUNCTION__, settings->ClientAddress, cbClientAddress, cbClientAddressMax);
+			          settings->ClientAddress, cbClientAddress, cbClientAddressMax);
 
 			clientAddress[(cbClientAddressMax / sizeof(WCHAR)) - 1] = '\0';
 			cbClientAddress = cbClientAddressMax;
@@ -505,9 +505,8 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 		if (cbClientDir > cbClientDirMax)
 		{
 			WLog_WARN(TAG,
-			          "[%s] the client dir %s [%" PRIuz "] exceeds the limit of %" PRIuz
-			          ", truncating.",
-			          __FUNCTION__, settings->ClientDir, cbClientDir, cbClientDirMax);
+			          "the client dir %s [%" PRIuz "] exceeds the limit of %" PRIuz ", truncating.",
+			          settings->ClientDir, cbClientDir, cbClientDirMax);
 
 			clientDir[(cbClientDirMax / sizeof(WCHAR)) - 1] = '\0';
 			cbClientDir = cbClientDirMax;

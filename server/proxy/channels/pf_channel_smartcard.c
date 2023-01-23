@@ -259,7 +259,7 @@ fail:
 
 BOOL pf_channel_smartcard_server_handle(pServerContext* ps, wStream* s)
 {
-	WLog_ERR(TAG, "TODO: %s unimplemented", __FUNCTION__);
+	WLog_ERR(TAG, "TODO: unimplemented");
 	return TRUE;
 }
 

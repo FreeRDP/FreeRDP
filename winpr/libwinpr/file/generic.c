@@ -622,7 +622,7 @@ BOOL SetFileAttributesA(LPCSTR lpFileName, DWORD dwFileAttributes)
 		char buffer[8192] = { 0 };
 		const char* flags =
 		    flagsToStr(buffer, sizeof(buffer), dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
-		WLog_WARN(TAG, "[%s] Unsupported flags %s, ignoring!", __FUNCTION__, flags);
+		WLog_WARN(TAG, "Unsupported flags %s, ignoring!", flags);
 	}
 
 	fd = open(lpFileName, O_RDONLY);
@@ -663,7 +663,7 @@ BOOL SetFileAttributesW(LPCWSTR lpFileName, DWORD dwFileAttributes)
 		char buffer[8192] = { 0 };
 		const char* flags =
 		    flagsToStr(buffer, sizeof(buffer), dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
-		WLog_WARN(TAG, "[%s] Unsupported flags %s, ignoring!", __FUNCTION__, flags);
+		WLog_WARN(TAG, "Unsupported flags %s, ignoring!", flags);
 	}
 
 	lpCFileName = ConvertWCharToUtf8Alloc(lpFileName, NULL);
@@ -867,7 +867,7 @@ BOOL WINAPI SetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
 	if (handle->ops->SetFileTime)
 		return handle->ops->SetFileTime(handle, lpCreationTime, lpLastAccessTime, lpLastWriteTime);
 
-	WLog_ERR(TAG, "%s operation not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "operation not implemented");
 	return FALSE;
 }
 

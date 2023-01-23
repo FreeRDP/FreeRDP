@@ -269,14 +269,14 @@ BYTE* crypto_cert_hash(X509* xcert, const char* hash, UINT32* length)
 	}
 	if (!xcert || !length)
 	{
-		WLog_ERR(TAG, "[%s] Invalid arugments: xcert=%p, length=%p", __FUNCTION__, xcert, length);
+		WLog_ERR(TAG, "Invalid arugments: xcert=%p, length=%p", xcert, length);
 		return NULL;
 	}
 
 	fp = calloc(fp_len, sizeof(BYTE));
 	if (!fp)
 	{
-		WLog_ERR(TAG, "[%s] could not allocate %" PRIuz " bytes", __FUNCTION__, fp_len);
+		WLog_ERR(TAG, "could not allocate %" PRIuz " bytes", fp_len);
 		return NULL;
 	}
 

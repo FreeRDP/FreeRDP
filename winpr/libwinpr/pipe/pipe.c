@@ -119,7 +119,7 @@ static BOOL PipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	if (lpOverlapped)
 	{
-		WLog_ERR(TAG, "WinPR %s does not support the lpOverlapped parameter", __FUNCTION__);
+		WLog_ERR(TAG, "WinPR does not support the lpOverlapped parameter");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
@@ -157,7 +157,7 @@ static BOOL PipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 
 	if (lpOverlapped)
 	{
-		WLog_ERR(TAG, "WinPR %s does not support the lpOverlapped parameter", __FUNCTION__);
+		WLog_ERR(TAG, "WinPR does not support the lpOverlapped parameter");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
@@ -255,7 +255,7 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	if (lpOverlapped)
 	{
-		WLog_ERR(TAG, "WinPR %s does not support the lpOverlapped parameter", __FUNCTION__);
+		WLog_ERR(TAG, "WinPR does not support the lpOverlapped parameter");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
@@ -348,7 +348,7 @@ BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
 
 	if (lpOverlapped)
 	{
-		WLog_ERR(TAG, "WinPR %s does not support the lpOverlapped parameter", __FUNCTION__);
+		WLog_ERR(TAG, "WinPR does not support the lpOverlapped parameter");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
@@ -568,7 +568,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 	if (dwOpenMode & FILE_FLAG_OVERLAPPED)
 	{
-		WLog_ERR(TAG, "WinPR %s does not support the FILE_FLAG_OVERLAPPED flag", __FUNCTION__);
+		WLog_ERR(TAG, "WinPR does not support the FILE_FLAG_OVERLAPPED flag");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		return INVALID_HANDLE_VALUE;
 	}
@@ -725,7 +725,7 @@ HANDLE CreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWOR
                         DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,
                         LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	WLog_ERR(TAG, "%s is not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "is not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return NULL;
 }
@@ -738,7 +738,7 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 
 	if (lpOverlapped)
 	{
-		WLog_ERR(TAG, "WinPR %s does not support the lpOverlapped parameter", __FUNCTION__);
+		WLog_ERR(TAG, "WinPR does not support the lpOverlapped parameter");
 		SetLastError(ERROR_NOT_SUPPORTED);
 		return FALSE;
 	}
@@ -799,7 +799,7 @@ BOOL DisconnectNamedPipe(HANDLE hNamedPipe)
 BOOL PeekNamedPipe(HANDLE hNamedPipe, LPVOID lpBuffer, DWORD nBufferSize, LPDWORD lpBytesRead,
                    LPDWORD lpTotalBytesAvail, LPDWORD lpBytesLeftThisMessage)
 {
-	WLog_ERR(TAG, "%s: Not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "Not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 }
@@ -808,7 +808,7 @@ BOOL TransactNamedPipe(HANDLE hNamedPipe, LPVOID lpInBuffer, DWORD nInBufferSize
                        LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesRead,
                        LPOVERLAPPED lpOverlapped)
 {
-	WLog_ERR(TAG, "%s: Not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "Not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 }
@@ -853,7 +853,7 @@ BOOL WaitNamedPipeA(LPCSTR lpNamedPipeName, DWORD nTimeOut)
 
 BOOL WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 {
-	WLog_ERR(TAG, "%s: Not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "Not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 }
@@ -901,7 +901,7 @@ BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCol
 
 BOOL ImpersonateNamedPipeClient(HANDLE hNamedPipe)
 {
-	WLog_ERR(TAG, "%s: Not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "Not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 }
@@ -909,7 +909,7 @@ BOOL ImpersonateNamedPipeClient(HANDLE hNamedPipe)
 BOOL GetNamedPipeClientComputerNameA(HANDLE Pipe, LPCSTR ClientComputerName,
                                      ULONG ClientComputerNameLength)
 {
-	WLog_ERR(TAG, "%s: Not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "Not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 }
@@ -917,7 +917,7 @@ BOOL GetNamedPipeClientComputerNameA(HANDLE Pipe, LPCSTR ClientComputerName,
 BOOL GetNamedPipeClientComputerNameW(HANDLE Pipe, LPCWSTR ClientComputerName,
                                      ULONG ClientComputerNameLength)
 {
-	WLog_ERR(TAG, "%s: Not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "Not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return FALSE;
 }

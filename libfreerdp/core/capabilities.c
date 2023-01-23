@@ -4365,7 +4365,7 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
 			char buffer1[256] = { 0 };
 			char buffer2[256] = { 0 };
 
-			WLog_ERR(TAG, "[%s] expected %s, got %s", __FUNCTION__,
+			WLog_ERR(TAG, "expected %s, got %s",
 			         pdu_type_to_str(PDU_TYPE_DEMAND_ACTIVE, buffer1, sizeof(buffer1)),
 			         pdu_type_to_str(pduType, buffer2, sizeof(buffer2)));
 		}

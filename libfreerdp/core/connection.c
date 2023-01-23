@@ -1158,7 +1158,7 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	{
 		char buffer[512] = { 0 };
 		char lbuffer[32] = { 0 };
-		WLog_ERR(TAG, "[%s] securityFlags=%s, missing required flag %s", __FUNCTION__,
+		WLog_ERR(TAG, "securityFlags=%s, missing required flag %s",
 		         rdp_security_flag_string(securityFlags, buffer, sizeof(buffer)),
 		         rdp_security_flag_string(SEC_LICENSE_PKT, lbuffer, sizeof(lbuffer)));
 		return STATE_RUN_FAILED;
@@ -1283,7 +1283,7 @@ BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 {
 	const char* name = rdp_state_string(state);
 
-	WLog_DBG(TAG, "%s %s --> %s", __FUNCTION__, rdp_get_state_string(rdp), name);
+	WLog_DBG(TAG, "%s --> %s", rdp_get_state_string(rdp), name);
 	if (!rdp_set_state(rdp, state))
 		return FALSE;
 
@@ -1703,7 +1703,7 @@ BOOL rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 			client->activated = FALSE;
 	}
 
-	WLog_DBG(TAG, "%s %s --> %s", __FUNCTION__, rdp_get_state_string(rdp), rdp_state_string(state));
+	WLog_DBG(TAG, "%s --> %s", rdp_get_state_string(rdp), rdp_state_string(state));
 	if (!rdp_set_state(rdp, state))
 		goto fail;
 

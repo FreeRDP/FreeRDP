@@ -220,8 +220,7 @@ BOOL gdi_RectToCRgn(const HGDI_RECT rect, INT32* x, INT32* y, INT32* w, INT32* h
 	if ((tmp < 0) || (tmp > INT32_MAX))
 	{
 		char buffer[256];
-		WLog_ERR(TAG, "[%s] rectangle invalid %s", __FUNCTION__,
-		         gdi_rect_str(buffer, sizeof(buffer), rect));
+		WLog_ERR(TAG, "rectangle invalid %s", gdi_rect_str(buffer, sizeof(buffer), rect));
 		*w = 0;
 		rc = FALSE;
 	}
@@ -231,8 +230,7 @@ BOOL gdi_RectToCRgn(const HGDI_RECT rect, INT32* x, INT32* y, INT32* w, INT32* h
 	if ((tmp < 0) || (tmp > INT32_MAX))
 	{
 		char buffer[256];
-		WLog_ERR(TAG, "[%s] rectangle invalid %s", __FUNCTION__,
-		         gdi_rect_str(buffer, sizeof(buffer), rect));
+		WLog_ERR(TAG, "rectangle invalid %s", gdi_rect_str(buffer, sizeof(buffer), rect));
 		*h = 0;
 		rc = FALSE;
 	}

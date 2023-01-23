@@ -270,7 +270,7 @@ static int InitializeWaitableTimer(WINPR_TIMER* timer)
 		return -1;
 	}
 #elif !defined(TIMER_IMPL_DISPATCH)
-	WLog_ERR(TAG, "%s: os specific implementation is missing", __FUNCTION__);
+	WLog_ERR(TAG, "os specific implementation is missing");
 	result = -1;
 #endif
 
@@ -324,7 +324,7 @@ HANDLE CreateWaitableTimerA(LPSECURITY_ATTRIBUTES lpTimerAttributes, BOOL bManua
 	WINPR_TIMER* timer;
 
 	if (lpTimerAttributes)
-		WLog_WARN(TAG, "%s [%s] does not support lpTimerAttributes", __FUNCTION__, lpTimerName);
+		WLog_WARN(TAG, "[%s] does not support lpTimerAttributes", lpTimerName);
 
 	timer = (WINPR_TIMER*)calloc(1, sizeof(WINPR_TIMER));
 
@@ -398,8 +398,8 @@ HANDLE CreateWaitableTimerExA(LPSECURITY_ATTRIBUTES lpTimerAttributes, LPCSTR lp
 	BOOL bManualReset = (dwFlags & CREATE_WAITABLE_TIMER_MANUAL_RESET) ? TRUE : FALSE;
 
 	if (dwDesiredAccess != 0)
-		WLog_WARN(TAG, "%s [%s] does not support dwDesiredAccess 0x%08" PRIx32, __FUNCTION__,
-		          lpTimerName, dwDesiredAccess);
+		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, lpTimerName,
+		          dwDesiredAccess);
 
 	return CreateWaitableTimerA(lpTimerAttributes, bManualReset, lpTimerName);
 }
@@ -477,7 +477,7 @@ BOOL SetWaitableTimer(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPerio
 
 	if (fResume)
 	{
-		WLog_ERR(TAG, "%s does not support fResume", __FUNCTION__);
+		WLog_ERR(TAG, "does not support fResume");
 		return FALSE;
 	}
 
@@ -627,14 +627,14 @@ BOOL SetWaitableTimerEx(HANDLE hTimer, const LARGE_INTEGER* lpDueTime, LONG lPer
 HANDLE OpenWaitableTimerA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpTimerName)
 {
 	/* TODO: Implement */
-	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 	return NULL;
 }
 
 HANDLE OpenWaitableTimerW(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCWSTR lpTimerName)
 {
 	/* TODO: Implement */
-	WLog_ERR(TAG, "%s not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 	return NULL;
 }
 

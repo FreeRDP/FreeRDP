@@ -144,13 +144,13 @@ static BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char*
 	strval = IniFile_GetKeyValueString(ini, section, key);
 	if (!strval && required)
 	{
-		WLog_ERR(TAG, "[%s]: key '%s.%s' does not exist.", __FUNCTION__, section, key);
+		WLog_ERR(TAG, "key '%s.%s' does not exist.", section, key);
 		return FALSE;
 	}
 	val = IniFile_GetKeyValueInt(ini, section, key);
 	if ((val <= 0) || (val > UINT16_MAX))
 	{
-		WLog_ERR(TAG, "[%s]: invalid value %d for key '%s.%s'.", __FUNCTION__, val, section, key);
+		WLog_ERR(TAG, "invalid value %d for key '%s.%s'.", val, section, key);
 		return FALSE;
 	}
 
@@ -169,14 +169,14 @@ static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char*
 	strval = IniFile_GetKeyValueString(ini, section, key);
 	if (!strval && required)
 	{
-		WLog_ERR(TAG, "[%s]: key '%s.%s' does not exist.", __FUNCTION__, section, key);
+		WLog_ERR(TAG, "key '%s.%s' does not exist.", section, key);
 		return FALSE;
 	}
 
 	val = IniFile_GetKeyValueInt(ini, section, key);
 	if ((val < 0) || (val > INT32_MAX))
 	{
-		WLog_ERR(TAG, "[%s]: invalid value %d for key '%s.%s'.", __FUNCTION__, val, section, key);
+		WLog_ERR(TAG, "invalid value %d for key '%s.%s'.", val, section, key);
 		return FALSE;
 	}
 
@@ -192,8 +192,8 @@ static BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* k
 	str_value = IniFile_GetKeyValueString(ini, section, key);
 	if (!str_value)
 	{
-		WLog_WARN(TAG, "[%s]: key '%s.%s' not found, value defaults to %s.", __FUNCTION__, section,
-		          key, fallback ? bool_str_true : bool_str_false);
+		WLog_WARN(TAG, "key '%s.%s' not found, value defaults to %s.", section, key,
+		          fallback ? bool_str_true : bool_str_false);
 		return fallback;
 	}
 
@@ -220,7 +220,7 @@ static const char* pf_config_get_str(wIniFile* ini, const char* section, const c
 	if (!value)
 	{
 		if (required)
-			WLog_ERR(TAG, "[%s]: key '%s.%s' not found.", __FUNCTION__, section, key);
+			WLog_ERR(TAG, "key '%s.%s' not found.", section, key);
 		return NULL;
 	}
 
@@ -653,13 +653,13 @@ proxyConfig* pf_server_config_load_buffer(const char* buffer)
 
 	if (!ini)
 	{
-		WLog_ERR(TAG, "[%s]: IniFile_New() failed!", __FUNCTION__);
+		WLog_ERR(TAG, "IniFile_New() failed!");
 		return NULL;
 	}
 
 	if (IniFile_ReadBuffer(ini, buffer) < 0)
 	{
-		WLog_ERR(TAG, "[%s] failed to parse ini: '%s'", __FUNCTION__, buffer);
+		WLog_ERR(TAG, "failed to parse ini: '%s'", buffer);
 		goto out;
 	}
 
@@ -676,13 +676,13 @@ proxyConfig* pf_server_config_load_file(const char* path)
 
 	if (!ini)
 	{
-		WLog_ERR(TAG, "[%s]: IniFile_New() failed!", __FUNCTION__);
+		WLog_ERR(TAG, "IniFile_New() failed!");
 		return NULL;
 	}
 
 	if (IniFile_ReadFile(ini, path) < 0)
 	{
-		WLog_ERR(TAG, "[%s] failed to parse ini file: '%s'", __FUNCTION__, path);
+		WLog_ERR(TAG, "failed to parse ini file: '%s'", path);
 		goto out;
 	}
 
@@ -957,7 +957,7 @@ static BOOL config_plugin_keyboard_event(proxyPlugin* plugin, proxyData* pdata, 
 	WINPR_ASSERT(cfg);
 
 	rc = cfg->Keyboard;
-	WLog_DBG(TAG, "%s: %s", __FUNCTION__, boolstr(rc));
+	WLog_DBG(TAG, "%s", boolstr(rc));
 	return rc;
 }
 
@@ -981,7 +981,7 @@ static BOOL config_plugin_unicode_event(proxyPlugin* plugin, proxyData* pdata, v
 	WINPR_ASSERT(cfg);
 
 	rc = cfg->Keyboard;
-	WLog_DBG(TAG, "%s: %s", __FUNCTION__, boolstr(rc));
+	WLog_DBG(TAG, "%s", boolstr(rc));
 	return rc;
 }
 
@@ -1039,8 +1039,8 @@ static BOOL config_plugin_client_channel_data(proxyPlugin* plugin, proxyData* pd
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(channel);
 
-	WLog_DBG(TAG, "%s: %s [0x%04" PRIx16 "] got %" PRIuz, __FUNCTION__, channel->channel_name,
-	         channel->channel_id, channel->data_len);
+	WLog_DBG(TAG, "%s [0x%04" PRIx16 "] got %" PRIuz, channel->channel_name, channel->channel_id,
+	         channel->data_len);
 	return TRUE;
 }
 
@@ -1052,8 +1052,8 @@ static BOOL config_plugin_server_channel_data(proxyPlugin* plugin, proxyData* pd
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(channel);
 
-	WLog_DBG(TAG, "%s: %s [0x%04" PRIx16 "] got %" PRIuz, __FUNCTION__, channel->channel_name,
-	         channel->channel_id, channel->data_len);
+	WLog_DBG(TAG, "%s [0x%04" PRIx16 "] got %" PRIuz, channel->channel_name, channel->channel_id,
+	         channel->data_len);
 	return TRUE;
 }
 
@@ -1120,8 +1120,8 @@ static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData*
 			accept = cfg->CameraRedirection;
 	}
 
-	WLog_DBG(TAG, "%s: %s [0x%04" PRIx16 "]: %s", __FUNCTION__, channel->channel_name,
-	         channel->channel_id, boolstr(accept));
+	WLog_DBG(TAG, "%s [0x%04" PRIx16 "]: %s", channel->channel_name, channel->channel_id,
+	         boolstr(accept));
 	return accept;
 }
 
@@ -1174,7 +1174,7 @@ static BOOL config_plugin_channel_create(proxyPlugin* plugin, proxyData* pdata, 
 			accept = cfg->RemoteApp;
 	}
 
-	WLog_DBG(TAG, "%s: %s [static]: %s", __FUNCTION__, channel->channel_name, boolstr(accept));
+	WLog_DBG(TAG, "%s [static]: %s", channel->channel_name, boolstr(accept));
 	return accept;
 }
 

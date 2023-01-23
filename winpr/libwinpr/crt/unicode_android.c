@@ -44,7 +44,7 @@ static int convert_int(JNIEnv* env, const void* data, size_t size, void* buffer,
 
 	if (!utf8 || !utf16 || !stringClass)
 	{
-		WLog_ERR(TAG, "[%s] utf8-%p, utf16=%p, stringClass=%p", __func__, utf8, utf16, stringClass);
+		WLog_ERR(TAG, "utf8-%p, utf16=%p, stringClass=%p", utf8, utf16, stringClass);
 		return -1;
 	}
 
@@ -54,14 +54,14 @@ static int convert_int(JNIEnv* env, const void* data, size_t size, void* buffer,
 	    (*env)->GetMethodID(env, stringClass, "getBytes", "(Ljava/lang/String;)[B");
 	if (!constructorID || !getBytesID)
 	{
-		WLog_ERR(TAG, "[%s] constructorID=%p, getBytesID=%p", __func__, constructorID, getBytesID);
+		WLog_ERR(TAG, "constructorID=%p, getBytesID=%p", constructorID, getBytesID);
 		return -2;
 	}
 
 	jbyteArray ret = (*env)->NewByteArray(env, size);
 	if (!ret)
 	{
-		WLog_ERR(TAG, "[%s] NewByteArray(%" PRIuz ") failed", __func__, size);
+		WLog_ERR(TAG, "NewByteArray(%" PRIuz ") failed", size);
 		return -3;
 	}
 
@@ -70,16 +70,14 @@ static int convert_int(JNIEnv* env, const void* data, size_t size, void* buffer,
 	jobject obj = (*env)->NewObject(env, stringClass, constructorID, ret, toUTF16 ? utf8 : utf16);
 	if (!obj)
 	{
-		WLog_ERR(TAG, "[%s] NewObject(String, byteArray, UTF-%d) failed", __func__,
-		         toUTF16 ? 16 : 8);
+		WLog_ERR(TAG, "NewObject(String, byteArray, UTF-%d) failed", toUTF16 ? 16 : 8);
 		return -4;
 	}
 
 	jbyteArray res = (*env)->CallObjectMethod(env, obj, getBytesID, toUTF16 ? utf16 : utf8);
 	if (!res)
 	{
-		WLog_ERR(TAG, "[%s] CallObjectMethod(String, getBytes, UTF-%d) failed", __func__,
-		         toUTF16 ? 16 : 8);
+		WLog_ERR(TAG, "CallObjectMethod(String, getBytes, UTF-%d) failed", toUTF16 ? 16 : 8);
 		return -4;
 	}
 

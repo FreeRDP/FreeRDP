@@ -515,7 +515,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 		int rc = ftruncate(window->shmid, sizeof(window->handle));
 		if (rc != 0)
 		{
-			DEBUG_X11("%s: ftruncate failed with %s [%d]", __FUNCTION__, strerror(rc), rc);
+			DEBUG_X11("ftruncate failed with %s [%d]", strerror(rc), rc);
 		}
 		else
 		{
@@ -1223,8 +1223,7 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 	xfAppWindow* appWindow = xf_rail_get_window(xfc, surface->windowId);
 	if (!appWindow)
 	{
-		WLog_VRB(TAG, "[%s] Failed to find a window for id=0x%08" PRIx64, __func__,
-		         surface->windowId);
+		WLog_VRB(TAG, "Failed to find a window for id=0x%08" PRIx64, surface->windowId);
 		return CHANNEL_RC_OK;
 	}
 
@@ -1254,9 +1253,9 @@ UINT xf_AppUpdateWindowFromSurface(xfContext* xfc, gdiGfxSurface* surface)
 			if (!appWindow->image)
 			{
 				WLog_WARN(TAG,
-				          "[%s] Failed create a XImage[%" PRIu32 "x%" PRIu32 ", scanline=%" PRIu32
+				          "Failed create a XImage[%" PRIu32 "x%" PRIu32 ", scanline=%" PRIu32
 				          ", bpp=%" PRIu32 "] for window id=0x%08" PRIx64,
-				          __func__, surface->width, surface->height, surface->scanline, xfc->depth,
+				          surface->width, surface->height, surface->scanline, xfc->depth,
 				          surface->windowId);
 				goto fail;
 			}

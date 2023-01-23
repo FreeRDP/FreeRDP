@@ -31,27 +31,23 @@
 
 /*
  * log format in proxy is:
- * "[SessionID=%s] - [__FUNCTION__]: Log message"
- * both SessionID and __FUNCTION__ are optional, but if they should be written to the log,
+ * "[SessionID=%s]: Log message"
+ * SessionID is optional, but if they should be written to the log,
  * that's the format.
  */
 
 /* log macros that prepends session id and function name tp the log message */
-#define PROXY_LOG_INFO(_tag, _context, _format, ...)                                              \
-	WLog_INFO(TAG, "[SessionID=%s][%s]: " _format,                                                \
-	          (_context && _context->pdata) ? _context->pdata->session_id : "null", __FUNCTION__, \
-	          ##__VA_ARGS__)
-#define PROXY_LOG_ERR(_tag, _context, _format, ...)                                              \
-	WLog_ERR(TAG, "[SessionID=%s][%s]: " _format,                                                \
-	         (_context && _context->pdata) ? _context->pdata->session_id : "null", __FUNCTION__, \
-	         ##__VA_ARGS__)
-#define PROXY_LOG_DBG(_tag, _context, _format, ...)                                              \
-	WLog_DBG(TAG, "[SessionID=%s][%s]: " _format,                                                \
-	         (_context && _context->pdata) ? _context->pdata->session_id : "null", __FUNCTION__, \
-	         ##__VA_ARGS__)
-#define PROXY_LOG_WARN(_tag, _context, _format, ...)                                              \
-	WLog_WARN(TAG, "[SessionID=%s][%s]: " _format,                                                \
-	          (_context && _context->pdata) ? _context->pdata->session_id : "null", __FUNCTION__, \
-	          ##__VA_ARGS__)
+#define PROXY_LOG_INFO(_tag, _context, _format, ...) \
+	WLog_INFO(TAG, "[SessionID=%s]: " _format,       \
+	          (_context && _context->pdata) ? _context->pdata->session_id : "null", ##__VA_ARGS__)
+#define PROXY_LOG_ERR(_tag, _context, _format, ...) \
+	WLog_ERR(TAG, "[SessionID=%s]: " _format,       \
+	         (_context && _context->pdata) ? _context->pdata->session_id : "null", ##__VA_ARGS__)
+#define PROXY_LOG_DBG(_tag, _context, _format, ...) \
+	WLog_DBG(TAG, "[SessionID=%s]: " _format,       \
+	         (_context && _context->pdata) ? _context->pdata->session_id : "null", ##__VA_ARGS__)
+#define PROXY_LOG_WARN(_tag, _context, _format, ...) \
+	WLog_WARN(TAG, "[SessionID=%s]: " _format,       \
+	          (_context && _context->pdata) ? _context->pdata->session_id : "null", ##__VA_ARGS__)
 
 #endif /* FREERDP_SERVER_PROXY_LOG_H */

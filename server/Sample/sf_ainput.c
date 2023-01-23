@@ -44,8 +44,8 @@ static UINT sf_peer_ainput_mouse_event(ainput_server_context* context, UINT64 ti
 	/* TODO: Implement */
 	WINPR_ASSERT(context);
 
-	WLog_WARN(TAG, "%s not implemented: 0x%08" PRIx64 ", 0x%08" PRIx64 ", %" PRId32 "x%" PRId32,
-	          __FUNCTION__, timestamp, flags, x, y);
+	WLog_WARN(TAG, "not implemented: 0x%08" PRIx64 ", 0x%08" PRIx64 ", %" PRId32 "x%" PRId32,
+	          timestamp, flags, x, y);
 	return CHANNEL_RC_OK;
 }
 

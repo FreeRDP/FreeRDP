@@ -255,7 +255,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 
 		if (nCount == 0)
 		{
-			WLog_ERR(TAG, "%s: freerdp_get_event_handles failed", __FUNCTION__);
+			WLog_ERR(TAG, "freerdp_get_event_handles failed");
 			break;
 		}
 
@@ -263,8 +263,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 
 		if (status == WAIT_FAILED)
 		{
-			WLog_ERR(TAG, "%s: WaitForMultipleObjects failed with %" PRIu32 "", __FUNCTION__,
-			         status);
+			WLog_ERR(TAG, "WaitForMultipleObjects failed with %" PRIu32 "", status);
 			break;
 		}
 

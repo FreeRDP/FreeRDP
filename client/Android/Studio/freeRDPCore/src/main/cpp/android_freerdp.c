@@ -66,7 +66,7 @@ static void android_OnChannelConnectedEventHandler(void* context,
 
 	if (!context || !e)
 	{
-		WLog_FATAL(TAG, "%s(context=%p, EventArgs=%p", __FUNCTION__, context, (void*)e);
+		WLog_FATAL(TAG, "(context=%p, EventArgs=%p", context, (void*)e);
 		return;
 	}
 
@@ -89,7 +89,7 @@ static void android_OnChannelDisconnectedEventHandler(void* context,
 
 	if (!context || !e)
 	{
-		WLog_FATAL(TAG, "%s(context=%p, EventArgs=%p", __FUNCTION__, context, (void*)e);
+		WLog_FATAL(TAG, "(context=%p, EventArgs=%p", context, (void*)e);
 		return;
 	}
 
@@ -734,8 +734,7 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 
 	if (!inst || !inst->context)
 	{
-		WLog_FATAL(TAG, "%s(env=%p, cls=%p, instance=%d", __FUNCTION__, (void*)env, (void*)cls,
-		           instance);
+		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%d", (void*)env, (void*)cls, instance);
 		return JNI_FALSE;
 	}
 
@@ -758,8 +757,7 @@ JNIEXPORT jboolean JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_free
 
 	if (!inst || !inst->context || !cls || !env)
 	{
-		WLog_FATAL(TAG, "%s(env=%p, cls=%p, instance=%d", __FUNCTION__, (void*)env, (void*)cls,
-		           instance);
+		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%d", (void*)env, (void*)cls, instance);
 		return JNI_FALSE;
 	}
 
@@ -798,8 +796,7 @@ Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp_1update_1graphics(JNIEn
 
 	if (!env || !cls || !inst)
 	{
-		WLog_FATAL(TAG, "%s(env=%p, cls=%p, instance=%d", __FUNCTION__, (void*)env, (void*)cls,
-		           instance);
+		WLog_FATAL(TAG, "(env=%p, cls=%p, instance=%d", (void*)env, (void*)cls, instance);
 		return JNI_FALSE;
 	}
 

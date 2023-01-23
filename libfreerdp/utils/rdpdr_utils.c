@@ -555,12 +555,12 @@ UINT rdpdr_read_capset_header(wLog* log, wStream* s, RDPDR_CAPABILITY_HEADER* he
 	Stream_Read_UINT32(s, header->Version);          /* Version (4 bytes) */
 
 	WLog_Print(log, WLOG_TRACE,
-	           "[%s] capability %s [0x%04" PRIx16 "] got version %" PRIu32 ", length %" PRIu16,
-	           __FUNCTION__, rdpdr_cap_type_string(header->CapabilityType), header->CapabilityType,
+	           "capability %s [0x%04" PRIx16 "] got version %" PRIu32 ", length %" PRIu16,
+	           rdpdr_cap_type_string(header->CapabilityType), header->CapabilityType,
 	           header->Version, header->CapabilityLength);
 	if (header->CapabilityLength < 8)
 	{
-		WLog_Print(log, WLOG_ERROR, "[%s] capability %s got short length %" PRIu32, __FUNCTION__,
+		WLog_Print(log, WLOG_ERROR, "capability %s got short length %" PRIu32,
 		           rdpdr_cap_type_string(header->CapabilityType), header->CapabilityLength);
 		return ERROR_INVALID_DATA;
 	}
@@ -581,8 +581,8 @@ UINT rdpdr_write_capset_header(wLog* log, wStream* s, const RDPDR_CAPABILITY_HEA
 		return ERROR_INVALID_DATA;
 	}
 
-	WLog_Print(log, WLOG_TRACE, "[%s] writing capability %s version %" PRIu32 ", length %" PRIu16,
-	           __FUNCTION__, rdpdr_cap_type_string(header->CapabilityType), header->Version,
+	WLog_Print(log, WLOG_TRACE, "writing capability %s version %" PRIu32 ", length %" PRIu16,
+	           rdpdr_cap_type_string(header->CapabilityType), header->Version,
 	           header->CapabilityLength);
 	Stream_Write_UINT16(s, header->CapabilityType);   /* CapabilityType (2 bytes) */
 	Stream_Write_UINT16(s, header->CapabilityLength); /* CapabilityLength (2 bytes) */

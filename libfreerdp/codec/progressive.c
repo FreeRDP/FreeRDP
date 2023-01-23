@@ -2615,7 +2615,7 @@ static BOOL progressive_rfx_write_message_progressive_simple(PROGRESSIVE_CONTEXT
 	WINPR_ASSERT(context);
 	if (context->mode != RLGR1)
 	{
-		WLog_ERR(TAG, "%s: error, RLGR1 mode is required!", __FUNCTION__);
+		WLog_ERR(TAG, "error, RLGR1 mode is required!");
 		return FALSE;
 	}
 

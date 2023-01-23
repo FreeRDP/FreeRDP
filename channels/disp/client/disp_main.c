@@ -97,7 +97,7 @@ disp_send_display_control_monitor_layout_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 
 	Stream_Write_UINT32(s, MonitorLayoutSize); /* MonitorLayoutSize (4 bytes) */
 	Stream_Write_UINT32(s, NumMonitors);       /* NumMonitors (4 bytes) */
-	WLog_DBG(TAG, "%s: NumMonitors=%" PRIu32 "", __FUNCTION__, NumMonitors);
+	WLog_DBG(TAG, "NumMonitors=%" PRIu32 "", NumMonitors);
 
 	for (index = 0; index < NumMonitors; index++)
 	{

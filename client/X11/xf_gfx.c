@@ -280,7 +280,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	if (!surface->gdi.codecs)
 	{
-		WLog_ERR(TAG, "%s: global GDI codecs aren't set", __FUNCTION__);
+		WLog_ERR(TAG, "global GDI codecs aren't set");
 		goto out_free;
 	}
 
@@ -303,8 +303,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 			break;
 
 		default:
-			WLog_ERR(TAG, "%s: unknown pixelFormat 0x%" PRIx32 "", __FUNCTION__,
-			         createSurface->pixelFormat);
+			WLog_ERR(TAG, "unknown pixelFormat 0x%" PRIx32 "", createSurface->pixelFormat);
 			ret = ERROR_INTERNAL_ERROR;
 			goto out_free;
 	}
@@ -316,7 +315,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	if (!surface->gdi.data)
 	{
-		WLog_ERR(TAG, "%s: unable to allocate GDI data", __FUNCTION__);
+		WLog_ERR(TAG, "unable to allocate GDI data");
 		goto out_free;
 	}
 
@@ -341,7 +340,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 		if (!surface->stage)
 		{
-			WLog_ERR(TAG, "%s: unable to allocate stage buffer", __FUNCTION__);
+			WLog_ERR(TAG, "unable to allocate stage buffer");
 			goto out_free_gdidata;
 		}
 
@@ -355,7 +354,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	if (!surface->image)
 	{
-		WLog_ERR(TAG, "%s: an error occurred when creating the XImage", __FUNCTION__);
+		WLog_ERR(TAG, "an error occurred when creating the XImage");
 		goto error_surface_image;
 	}
 
@@ -366,7 +365,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	if (context->SetSurfaceData(context, surface->gdi.surfaceId, (void*)surface) != CHANNEL_RC_OK)
 	{
-		WLog_ERR(TAG, "%s: an error occurred during SetSurfaceData", __FUNCTION__);
+		WLog_ERR(TAG, "an error occurred during SetSurfaceData");
 		goto error_set_surface_data;
 	}
 
@@ -437,7 +436,7 @@ static UINT xf_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurfa
 	if (freerdp_settings_get_bool(gdi->context->settings, FreeRDP_RemoteApplicationMode))
 		return xf_AppUpdateWindowFromSurface(xfc, surface);
 
-	WLog_WARN(TAG, "[%s] function not implemented", __func__);
+	WLog_WARN(TAG, "function not implemented");
 	return CHANNEL_RC_OK;
 }
 

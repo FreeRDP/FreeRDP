@@ -228,7 +228,7 @@ static NTLM_CONTEXT* ntlm_ContextNew(void)
 			status = RegQueryValueExA(hKey, "WorkstationName", NULL, &dwType, (BYTE*)workstation,
 			                          &dwSize);
 			if (status != ERROR_SUCCESS)
-				WLog_WARN(TAG, "[%s]: Key ''WorkstationName' not found", __FUNCTION__);
+				WLog_WARN(TAG, "Key ''WorkstationName' not found");
 			workstation[dwSize] = '\0';
 
 			if (ntlm_SetContextWorkstation(context, workstation) < 0)
@@ -402,7 +402,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryCredentialsAttributesW(PCredHandle ph
 		return SEC_E_OK;
 	}
 
-	WLog_ERR(TAG, "[%s]: TODO: Implement", __FUNCTION__);
+	WLog_ERR(TAG, "TODO: Implement");
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -847,7 +847,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 		return ntlm_computeMicValue(context, (SecBuffer*)pBuffer);
 	}
 
-	WLog_ERR(TAG, "[%s]: TODO: Implement ulAttribute%08" PRIx32, __FUNCTION__, ulAttribute);
+	WLog_ERR(TAG, "TODO: Implement ulAttribute=0x%08" PRIx32, ulAttribute);
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
@@ -963,7 +963,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContex
 		return SEC_E_OK;
 	}
 
-	WLog_ERR(TAG, "[%s]: TODO: Implement ulAttribute=%08" PRIx32, __FUNCTION__, ulAttribute);
+	WLog_ERR(TAG, "TODO: Implement ulAttribute=%08" PRIx32, ulAttribute);
 	return SEC_E_UNSUPPORTED_FUNCTION;
 }
 

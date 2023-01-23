@@ -40,7 +40,7 @@
 static BOOL win_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
                                                rdpShadowClient* client, UINT32 flags)
 {
-	WLog_WARN(TAG, "%s: TODO: Implement!", __FUNCTION__);
+	WLog_WARN(TAG, "TODO: Implement!");
 	return TRUE;
 }
 

@@ -54,10 +54,9 @@ static BOOL is_within_surface(const gdiGfxSurface* surface, const RDPGFX_SURFACE
 	if (!is_rect_valid(&rect, surface->width, surface->height))
 	{
 		WLog_ERR(TAG,
-		         "%s: Command rect %" PRIu32 "x" PRIu32 "-" PRIu32 "x" PRIu32
+		         "Command rect %" PRIu32 "x" PRIu32 "-" PRIu32 "x" PRIu32
 		         " not within bounds of " PRIu32 "x" PRIu32,
-		         __FUNCTION__, rect.left, rect.top, cmd->width, cmd->height, surface->width,
-		         surface->height);
+		         rect.left, rect.top, cmd->width, cmd->height, surface->width, surface->height);
 		return FALSE;
 	}
 
@@ -348,8 +347,7 @@ static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* co
 
 	if (!surface)
 	{
-		WLog_ERR(TAG, "%s: unable to retrieve surfaceData for surfaceId=%" PRIu32 "", __FUNCTION__,
-		         cmd->surfaceId);
+		WLog_ERR(TAG, "unable to retrieve surfaceData for surfaceId=%" PRIu32 "", cmd->surfaceId);
 		return ERROR_NOT_FOUND;
 	}
 
@@ -360,8 +358,7 @@ static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* co
 	size = bpp * cmd->width * cmd->height * 1ULL;
 	if (cmd->length < size)
 	{
-		WLog_ERR(TAG, "%s: Not enough data, got %" PRIu32 ", expected %" PRIuz, __FUNCTION__,
-		         cmd->length, size);
+		WLog_ERR(TAG, "Not enough data, got %" PRIu32 ", expected %" PRIuz, cmd->length, size);
 		return ERROR_INVALID_DATA;
 	}
 
@@ -414,8 +411,7 @@ static UINT gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* contex
 
 	if (!surface)
 	{
-		WLog_ERR(TAG, "%s: unable to retrieve surfaceData for surfaceId=%" PRIu32 "", __FUNCTION__,
-		         cmd->surfaceId);
+		WLog_ERR(TAG, "unable to retrieve surfaceData for surfaceId=%" PRIu32 "", cmd->surfaceId);
 		return ERROR_NOT_FOUND;
 	}
 
@@ -474,8 +470,7 @@ static UINT gdi_SurfaceCommand_ClearCodec(rdpGdi* gdi, RdpgfxClientContext* cont
 
 	if (!surface)
 	{
-		WLog_ERR(TAG, "%s: unable to retrieve surfaceData for surfaceId=%" PRIu32 "", __FUNCTION__,
-		         cmd->surfaceId);
+		WLog_ERR(TAG, "unable to retrieve surfaceData for surfaceId=%" PRIu32 "", cmd->surfaceId);
 		return ERROR_NOT_FOUND;
 	}
 
@@ -533,8 +528,7 @@ static UINT gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	if (!surface)
 	{
-		WLog_ERR(TAG, "%s: unable to retrieve surfaceData for surfaceId=%" PRIu32 "", __FUNCTION__,
-		         cmd->surfaceId);
+		WLog_ERR(TAG, "unable to retrieve surfaceData for surfaceId=%" PRIu32 "", cmd->surfaceId);
 		return ERROR_NOT_FOUND;
 	}
 
@@ -594,8 +588,7 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	if (!surface)
 	{
-		WLog_ERR(TAG, "%s: unable to retrieve surfaceData for surfaceId=%" PRIu32 "", __FUNCTION__,
-		         cmd->surfaceId);
+		WLog_ERR(TAG, "unable to retrieve surfaceData for surfaceId=%" PRIu32 "", cmd->surfaceId);
 		return ERROR_NOT_FOUND;
 	}
 
@@ -605,7 +598,7 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
 
 		if (!surface->h264)
 		{
-			WLog_ERR(TAG, "%s: unable to create h264 context", __FUNCTION__);
+			WLog_ERR(TAG, "unable to create h264 context");
 			return ERROR_NOT_ENOUGH_MEMORY;
 		}
 
@@ -685,8 +678,7 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	if (!surface)
 	{
-		WLog_ERR(TAG, "%s: unable to retrieve surfaceData for surfaceId=%" PRIu32 "", __FUNCTION__,
-		         cmd->surfaceId);
+		WLog_ERR(TAG, "unable to retrieve surfaceData for surfaceId=%" PRIu32 "", cmd->surfaceId);
 		return ERROR_NOT_FOUND;
 	}
 
@@ -696,7 +688,7 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 
 		if (!surface->h264)
 		{
-			WLog_ERR(TAG, "%s: unable to create h264 context", __FUNCTION__);
+			WLog_ERR(TAG, "unable to create h264 context");
 			return ERROR_NOT_ENOUGH_MEMORY;
 		}
 
@@ -825,8 +817,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 
 	if (!surface)
 	{
-		WLog_ERR(TAG, "%s: unable to retrieve surfaceData for surfaceId=%" PRIu32 "", __FUNCTION__,
-		         cmd->surfaceId);
+		WLog_ERR(TAG, "unable to retrieve surfaceData for surfaceId=%" PRIu32 "", cmd->surfaceId);
 		return ERROR_NOT_FOUND;
 	}
 
@@ -961,8 +952,7 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* con
 
 	if (!surface)
 	{
-		WLog_ERR(TAG, "%s: unable to retrieve surfaceData for surfaceId=%" PRIu32 "", __FUNCTION__,
-		         cmd->surfaceId);
+		WLog_ERR(TAG, "unable to retrieve surfaceData for surfaceId=%" PRIu32 "", cmd->surfaceId);
 		return ERROR_NOT_FOUND;
 	}
 
@@ -1685,8 +1675,7 @@ static UINT gdi_MapSurfaceToOutput(RdpgfxClientContext* context,
 
 	if (surface->windowMapped)
 	{
-		WLog_WARN(TAG, "[%s] sufrace already windowMapped when trying to set outputMapped",
-		          __func__);
+		WLog_WARN(TAG, "sufrace already windowMapped when trying to set outputMapped");
 		goto fail;
 	}
 
@@ -1718,8 +1707,7 @@ gdi_MapSurfaceToScaledOutput(RdpgfxClientContext* context,
 
 	if (surface->windowMapped)
 	{
-		WLog_WARN(TAG, "[%s] sufrace already windowMapped when trying to set outputMapped",
-		          __func__);
+		WLog_WARN(TAG, "sufrace already windowMapped when trying to set outputMapped");
 		goto fail;
 	}
 
@@ -1755,8 +1743,7 @@ static UINT gdi_MapSurfaceToWindow(RdpgfxClientContext* context,
 
 	if (surface->outputMapped)
 	{
-		WLog_WARN(TAG, "[%s] sufrace already outputMapped when trying to set windowMapped",
-		          __func__);
+		WLog_WARN(TAG, "sufrace already outputMapped when trying to set windowMapped");
 		goto fail;
 	}
 
@@ -1764,8 +1751,8 @@ static UINT gdi_MapSurfaceToWindow(RdpgfxClientContext* context,
 	{
 		if (surface->windowId != surfaceToWindow->windowId)
 		{
-			WLog_WARN(TAG, "[%s] sufrace windowId mismatch, has %" PRIu64 ", expected %" PRIu64,
-			          __func__, surface->windowId, surfaceToWindow->windowId);
+			WLog_WARN(TAG, "sufrace windowId mismatch, has %" PRIu64 ", expected %" PRIu64,
+			          surface->windowId, surfaceToWindow->windowId);
 			goto fail;
 		}
 	}
@@ -1799,8 +1786,7 @@ gdi_MapSurfaceToScaledWindow(RdpgfxClientContext* context,
 
 	if (surface->outputMapped)
 	{
-		WLog_WARN(TAG, "[%s] sufrace already outputMapped when trying to set windowMapped",
-		          __func__);
+		WLog_WARN(TAG, "sufrace already outputMapped when trying to set windowMapped");
 		goto fail;
 	}
 
@@ -1808,8 +1794,8 @@ gdi_MapSurfaceToScaledWindow(RdpgfxClientContext* context,
 	{
 		if (surface->windowId != surfaceToWindow->windowId)
 		{
-			WLog_WARN(TAG, "[%s] sufrace windowId mismatch, has %" PRIu64 ", expected %" PRIu64,
-			          __func__, surface->windowId, surfaceToWindow->windowId);
+			WLog_WARN(TAG, "sufrace windowId mismatch, has %" PRIu64 ", expected %" PRIu64,
+			          surface->windowId, surfaceToWindow->windowId);
 			goto fail;
 		}
 	}

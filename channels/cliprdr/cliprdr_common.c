@@ -43,14 +43,14 @@ static BOOL cliprdr_validate_file_contents_request(const CLIPRDR_FILE_CONTENTS_R
 	{
 		if (request->cbRequested != sizeof(UINT64))
 		{
-			WLog_ERR(TAG, "[%s]: cbRequested must be %" PRIu32 ", got %" PRIu32 "", __FUNCTION__,
-			         sizeof(UINT64), request->cbRequested);
+			WLog_ERR(TAG, "cbRequested must be %" PRIu32 ", got %" PRIu32 "", sizeof(UINT64),
+			         request->cbRequested);
 			return FALSE;
 		}
 
 		if (request->nPositionHigh != 0 || request->nPositionLow != 0)
 		{
-			WLog_ERR(TAG, "[%s]: nPositionHigh and nPositionLow must be set to 0", __FUNCTION__);
+			WLog_ERR(TAG, "nPositionHigh and nPositionLow must be set to 0");
 			return FALSE;
 		}
 	}
@@ -193,8 +193,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 	UINT32 length;
 
 	if (formatList->common.msgType != CB_FORMAT_LIST)
-		WLog_WARN(TAG, "[%s] called with invalid type %08" PRIx32, __FUNCTION__,
-		          formatList->common.msgType);
+		WLog_WARN(TAG, "called with invalid type %08" PRIx32, formatList->common.msgType);
 
 	if (!useLongFormatNames)
 	{

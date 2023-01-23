@@ -248,7 +248,7 @@ BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCo
 		return TRUE;
 	}
 
-	WLog_ERR(TAG, "calling %s on a handle that is not a semaphore", __FUNCTION__);
+	WLog_ERR(TAG, "called on a handle that is not a semaphore");
 	return FALSE;
 }
 

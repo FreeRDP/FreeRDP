@@ -205,8 +205,8 @@ static UINT ainput_server_recv_mouse_event(ainput_server* ainput, wStream* s)
 	Stream_Read_INT32(s, x);
 	Stream_Read_INT32(s, y);
 
-	WLog_VRB(TAG, "[%s] received: time=0x%08" PRIx64 ", flags=%s, %" PRId32 "x%" PRId32,
-	         __FUNCTION__, time, ainput_flags_to_string(flags, buffer, sizeof(buffer)), x, y);
+	WLog_VRB(TAG, "received: time=0x%08" PRIx64 ", flags=%s, %" PRId32 "x%" PRId32, time,
+	         ainput_flags_to_string(flags, buffer, sizeof(buffer)), x, y);
 	IFCALLRET(ainput->context.MouseEvent, error, &ainput->context, time, flags, x, y);
 
 	return error;

@@ -97,8 +97,8 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 				if (targetCapacity > 0)
 				{
 					cchWideChar = 0;
-					WLog_ERR(TAG, "[%s] insufficient buffer supplied, got %d, required %d",
-					         __FUNCTION__, targetCapacity, targetLength);
+					WLog_ERR(TAG, "insufficient buffer supplied, got %d, required %d",
+					         targetCapacity, targetLength);
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
 				}
 				else
@@ -111,12 +111,12 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 				cchWideChar = targetLength;
 				break;
 			default:
-				WLog_WARN(TAG, "[%s] unexpected ICU error code %s [0x%08" PRIx32 "]", __func__,
-				          u_errorName(error), error);
+				WLog_WARN(TAG, "unexpected ICU error code %s [0x%08" PRIx32 "]", u_errorName(error),
+				          error);
 				if (U_FAILURE(error))
 				{
-					WLog_ERR(TAG, "[%s] unexpected ICU error code %s [0x%08" PRIx32 "] is fatal",
-					         __func__, u_errorName(error), error);
+					WLog_ERR(TAG, "unexpected ICU error code %s [0x%08" PRIx32 "] is fatal",
+					         u_errorName(error), error);
 					cchWideChar = 0;
 					SetLastError(ERROR_NO_UNICODE_TRANSLATION);
 				}
@@ -182,8 +182,8 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 			case U_BUFFER_OVERFLOW_ERROR:
 				if (targetCapacity > 0)
 				{
-					WLog_ERR(TAG, "[%s] insufficient buffer supplied, got %d, required %d",
-					         __FUNCTION__, targetCapacity, targetLength);
+					WLog_ERR(TAG, "insufficient buffer supplied, got %d, required %d",
+					         targetCapacity, targetLength);
 					cbMultiByte = 0;
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
 				}
@@ -197,12 +197,12 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 				cbMultiByte = targetLength;
 				break;
 			default:
-				WLog_WARN(TAG, "[%s] unexpected ICU error code %s [0x%08" PRIx32 "]", __func__,
-				          u_errorName(error), error);
+				WLog_WARN(TAG, "unexpected ICU error code %s [0x%08" PRIx32 "]", u_errorName(error),
+				          error);
 				if (U_FAILURE(error))
 				{
-					WLog_ERR(TAG, "[%s] unexpected ICU error code %s [0x%08" PRIx32 "] is fatal",
-					         __func__, u_errorName(error), error);
+					WLog_ERR(TAG, "unexpected ICU error code %s [0x%08" PRIx32 "] is fatal",
+					         u_errorName(error), error);
 					cbMultiByte = 0;
 					SetLastError(ERROR_NO_UNICODE_TRANSLATION);
 				}

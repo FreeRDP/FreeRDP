@@ -536,7 +536,7 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 	}
 	else
 	{
-		WLog_ERR(TAG, "[%s] invalid maxChannelIds [%" PRIu32 ", %" PRIu32 "]", __FUNCTION__,
+		WLog_ERR(TAG, "invalid maxChannelIds [%" PRIu32 ", %" PRIu32 "]",
 		         targetParameters->maxChannelIds, maximumParameters->maxChannelIds);
 		return FALSE;
 	}
@@ -553,8 +553,8 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 	}
 	else
 	{
-		WLog_ERR(TAG, "[%s] invalid maxUserIds [%" PRIu32 ", %" PRIu32 "]", __FUNCTION__,
-		         targetParameters->maxUserIds, maximumParameters->maxUserIds);
+		WLog_ERR(TAG, "invalid maxUserIds [%" PRIu32 ", %" PRIu32 "]", targetParameters->maxUserIds,
+		         maximumParameters->maxUserIds);
 		return FALSE;
 	}
 
@@ -569,8 +569,7 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 	}
 	else
 	{
-		WLog_ERR(TAG, "[%s] invalid numPriorities [%" PRIu32 "]", __FUNCTION__,
-		         maximumParameters->numPriorities);
+		WLog_ERR(TAG, "invalid numPriorities [%" PRIu32 "]", maximumParameters->numPriorities);
 		return FALSE;
 	}
 
@@ -585,8 +584,8 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 	}
 	else
 	{
-		WLog_ERR(TAG, "[%s] invalid maxHeight [%" PRIu32 ", %" PRIu32 "]", __FUNCTION__,
-		         targetParameters->maxHeight, minimumParameters->maxHeight);
+		WLog_ERR(TAG, "invalid maxHeight [%" PRIu32 ", %" PRIu32 "]", targetParameters->maxHeight,
+		         minimumParameters->maxHeight);
 		return FALSE;
 	}
 
@@ -605,7 +604,7 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 		}
 		else
 		{
-			WLog_ERR(TAG, "[%s] invalid maxMCSPDUsize [%" PRIu32 ", %" PRIu32 "]", __FUNCTION__,
+			WLog_ERR(TAG, "invalid maxMCSPDUsize [%" PRIu32 ", %" PRIu32 "]",
 			         targetParameters->maxMCSPDUsize, minimumParameters->maxMCSPDUsize);
 			return FALSE;
 		}
@@ -618,8 +617,7 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 		}
 		else
 		{
-			WLog_ERR(TAG, "[%s] invalid maxMCSPDUsize [%" PRIu32 "]", __FUNCTION__,
-			         maximumParameters->maxMCSPDUsize);
+			WLog_ERR(TAG, "invalid maxMCSPDUsize [%" PRIu32 "]", maximumParameters->maxMCSPDUsize);
 			return FALSE;
 		}
 	}
@@ -633,9 +631,9 @@ BOOL mcs_merge_domain_parameters(DomainParameters* targetParameters,
 	}
 	else
 	{
-		WLog_ERR(TAG, "[%s] invalid protocolVersion [%" PRIu32 ", %" PRIu32 ", %" PRIu32 "]",
-		         __FUNCTION__, targetParameters->protocolVersion,
-		         minimumParameters->protocolVersion, maximumParameters->protocolVersion);
+		WLog_ERR(TAG, "invalid protocolVersion [%" PRIu32 ", %" PRIu32 ", %" PRIu32 "]",
+		         targetParameters->protocolVersion, minimumParameters->protocolVersion,
+		         maximumParameters->protocolVersion);
 		return FALSE;
 	}
 
@@ -1487,7 +1485,7 @@ BOOL mcs_server_apply_to_settings(const rdpMcs* mcs, rdpSettings* settings)
 	rc = TRUE;
 fail:
 	if (!rc)
-		WLog_WARN(TAG, "[%s] failed to apply settings", __FUNCTION__);
+		WLog_WARN(TAG, "failed to apply settings");
 
 	return rc;
 }

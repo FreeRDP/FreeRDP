@@ -988,7 +988,7 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 out:
 	error = GetLastError();
 	if (error && rdpdr->rdpcontext)
-		setChannelError(rdpdr->rdpcontext, error, "%s reported an error", __FUNCTION__);
+		setChannelError(rdpdr->rdpcontext, error, "reported an error");
 
 	if (rdpdr->stopEvent)
 	{

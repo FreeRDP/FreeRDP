@@ -248,7 +248,7 @@ static BOOL pf_modules_ArrayList_ForEachFkt(void* data, size_t index, va_list ap
 	pdata = va_arg(ap, proxyData*);
 	param = va_arg(ap, void*);
 
-	WLog_VRB(TAG, "[%s]: running filter: %s", __FUNCTION__, plugin->name);
+	WLog_VRB(TAG, "running filter: %s", plugin->name);
 
 	switch (type)
 	{
@@ -375,7 +375,7 @@ static void* pf_modules_get_plugin_data(proxyPluginsManager* mgr, const char* pl
 static void pf_modules_abort_connect(proxyPluginsManager* mgr, proxyData* pdata)
 {
 	WINPR_ASSERT(pdata);
-	WLog_DBG(TAG, "%s is called!", __FUNCTION__);
+	WLog_DBG(TAG, "is called!");
 	proxy_data_abort_connect(pdata);
 }
 
@@ -413,8 +413,7 @@ static BOOL pf_modules_register_plugin(proxyPluginsManager* mgr,
 
 	if (!ArrayList_Append(module->plugins, &internal))
 	{
-		WLog_ERR(TAG, "[%s]: failed adding plugin to list: %s", __FUNCTION__,
-		         plugin_to_register->name);
+		WLog_ERR(TAG, "failed adding plugin to list: %s", plugin_to_register->name);
 		return FALSE;
 	}
 
@@ -479,14 +478,14 @@ static BOOL pf_modules_load_module(const char* module_path, proxyModule* module,
 
 	if (handle == NULL)
 	{
-		WLog_ERR(TAG, "[%s]: failed loading external library: %s", __FUNCTION__, module_path);
+		WLog_ERR(TAG, "failed loading external library: %s", module_path);
 		return FALSE;
 	}
 
 	pEntryPoint = (proxyModuleEntryPoint)GetProcAddress(handle, MODULE_ENTRY_POINT);
 	if (!pEntryPoint)
 	{
-		WLog_ERR(TAG, "[%s]: GetProcAddress failed while loading %s", __FUNCTION__, module_path);
+		WLog_ERR(TAG, "GetProcAddress failed while loading %s", module_path);
 		goto error;
 	}
 	if (!ArrayList_Append(module->handles, handle))
@@ -546,7 +545,7 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 
 	if (module->plugins == NULL)
 	{
-		WLog_ERR(TAG, "[%s]: ArrayList_New failed!", __FUNCTION__);
+		WLog_ERR(TAG, "ArrayList_New failed!");
 		goto error;
 	}
 	obj = ArrayList_Object(module->plugins);
@@ -559,7 +558,7 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 	if (module->handles == NULL)
 	{
 
-		WLog_ERR(TAG, "[%s]: ArrayList_New failed!", __FUNCTION__);
+		WLog_ERR(TAG, "ArrayList_New failed!");
 		goto error;
 	}
 	ArrayList_Object(module->handles)->fnObjectFree = free_handle;

@@ -759,7 +759,7 @@ static BOOL http_response_parse_header(HttpResponse* response)
 fail:
 
 	if (!rc)
-		WLog_ERR(TAG, "%s: parsing failed", __FUNCTION__);
+		WLog_ERR(TAG, "parsing failed");
 
 	return rc;
 }
@@ -844,7 +844,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		{
 			if (!BIO_should_retry(tls->bio))
 			{
-				WLog_ERR(TAG, "%s: Retries exceeded", __FUNCTION__);
+				WLog_ERR(TAG, "Retries exceeded");
 				ERR_print_errors_cb(print_bio_error, NULL);
 				goto out_error;
 			}
@@ -962,7 +962,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 			{
 				if (!BIO_should_retry(tls->bio))
 				{
-					WLog_ERR(TAG, "%s: Retries exceeded", __FUNCTION__);
+					WLog_ERR(TAG, "Retries exceeded");
 					ERR_print_errors_cb(print_bio_error, NULL);
 					goto out_error;
 				}
@@ -987,8 +987,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 
 		if (bodyLength != response->BodyLength)
 		{
-			WLog_WARN(TAG, "%s: %s unexpected body length: actual: %" PRIuz ", expected: %" PRIuz,
-			          __FUNCTION__, response->ContentType, response->BodyLength, bodyLength);
+			WLog_WARN(TAG, "%s unexpected body length: actual: %" PRIuz ", expected: %" PRIuz,
+			          response->ContentType, response->BodyLength, bodyLength);
 
 			if (bodyLength > 0)
 				response->BodyLength = MIN(bodyLength, response->BodyLength);

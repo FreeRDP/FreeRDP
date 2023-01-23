@@ -1290,7 +1290,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleW(
 
 	if (!table->AcquireCredentialsHandleW)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1320,7 +1320,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_AcquireCredentialsHandleA(
 
 	if (!table->AcquireCredentialsHandleA)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1356,7 +1356,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_ExportSecurityContext(PCtxtHandle phConte
 
 	if (!table->ExportSecurityContext)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1388,7 +1388,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_FreeCredentialsHandle(PCredHandle phCrede
 
 	if (!table->FreeCredentialsHandle)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1422,7 +1422,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextW(SEC_WCHAR* pszPack
 
 	if (!table->ImportSecurityContextW)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1456,7 +1456,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_ImportSecurityContextA(SEC_CHAR* pszPacka
 
 	if (!table->ImportSecurityContextA)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1489,7 +1489,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesW(PCredHandle p
 
 	if (!table->QueryCredentialsAttributesW)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1522,7 +1522,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_QueryCredentialsAttributesA(PCredHandle p
 
 	if (!table->QueryCredentialsAttributesA)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1556,7 +1556,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_SetCredentialsAttributesW(PCredHandle phC
 
 	if (!table->SetCredentialsAttributesW)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1590,7 +1590,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_SetCredentialsAttributesA(PCredHandle phC
 
 	if (!table->SetCredentialsAttributesA)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1627,7 +1627,7 @@ winpr_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSe
 
 	if (!table->AcceptSecurityContext)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1662,7 +1662,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_ApplyControlToken(PCtxtHandle phContext,
 
 	if (!table->ApplyControlToken)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1695,7 +1695,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_CompleteAuthToken(PCtxtHandle phContext,
 
 	if (!table->CompleteAuthToken)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1727,7 +1727,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_DeleteSecurityContext(PCtxtHandle phConte
 
 	if (!table->DeleteSecurityContext)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1768,7 +1768,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_ImpersonateSecurityContext(PCtxtHandle ph
 
 	if (!table->ImpersonateSecurityContext)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1803,7 +1803,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_InitializeSecurityContextW(
 
 	if (!table->InitializeSecurityContextW)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1840,7 +1840,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_InitializeSecurityContextA(
 
 	if (!table->InitializeSecurityContextA)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1875,7 +1875,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesW(PCtxtHandle phCon
 
 	if (!table->QueryContextAttributesW)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1908,7 +1908,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_QueryContextAttributesA(PCtxtHandle phCon
 
 	if (!table->QueryContextAttributesA)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1941,7 +1941,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityContextToken(PCtxtHandle phC
 
 	if (!table->QuerySecurityContextToken)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -1975,7 +1975,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesW(PCtxtHandle phConte
 
 	if (!table->SetContextAttributesW)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -2009,7 +2009,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_SetContextAttributesA(PCtxtHandle phConte
 
 	if (!table->SetContextAttributesA)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -2041,7 +2041,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_RevertSecurityContext(PCtxtHandle phConte
 
 	if (!table->RevertSecurityContext)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -2077,7 +2077,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_DecryptMessage(PCtxtHandle phContext,
 
 	if (!table->DecryptMessage)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -2110,7 +2110,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_EncryptMessage(PCtxtHandle phContext, ULO
 
 	if (!table->EncryptMessage)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -2143,7 +2143,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_MakeSignature(PCtxtHandle phContext, ULON
 
 	if (!table->MakeSignature)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
@@ -2177,7 +2177,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_VerifySignature(PCtxtHandle phContext,
 
 	if (!table->VerifySignature)
 	{
-		WLog_WARN(TAG, "[%s]: Security module does not provide an implementation", __FUNCTION__);
+		WLog_WARN(TAG, "Security module does not provide an implementation");
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 

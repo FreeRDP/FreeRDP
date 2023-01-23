@@ -896,7 +896,7 @@ static BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg, const PTSG_PACKET tsgPa
 		return FALSE;
 
 	rpc = tsg->rpc;
-	WLog_DBG(TAG, "%s: %s", __FUNCTION__, tsg_packet_to_string(tsgPacket));
+	WLog_DBG(TAG, "%s", tsg_packet_to_string(tsgPacket));
 	s = Stream_New(NULL, 108);
 
 	if (!s)
@@ -1052,7 +1052,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 	Stream_Read_UINT32(pdu->s, packet->packetId); /* PacketId (4 bytes) */
 	Stream_Read_UINT32(pdu->s, SwitchValue);      /* SwitchValue (4 bytes) */
 
-	WLog_DBG(TAG, "%s: %s", __FUNCTION__, tsg_packet_id_to_string(packet->packetId));
+	WLog_DBG(TAG, "%s", tsg_packet_id_to_string(packet->packetId));
 
 	if ((packet->packetId == TSG_PACKET_TYPE_CAPS_RESPONSE) &&
 	    (SwitchValue == TSG_PACKET_TYPE_CAPS_RESPONSE))
@@ -1451,7 +1451,7 @@ static BOOL TsProxyAuthorizeTunnelReadResponse(RPC_PDU* pdu)
 	Stream_Read_UINT32(pdu->s, packet->packetId); /* PacketId (4 bytes) */
 	Stream_Read_UINT32(pdu->s, SwitchValue);      /* SwitchValue (4 bytes) */
 
-	WLog_DBG(TAG, "%s: %s", __FUNCTION__, tsg_packet_id_to_string(packet->packetId));
+	WLog_DBG(TAG, "%s", tsg_packet_id_to_string(packet->packetId));
 
 	if (packet->packetId == E_PROXY_NAP_ACCESSDENIED)
 	{
@@ -1629,7 +1629,7 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	Stream_Read_UINT32(pdu->s, packet.packetId); /* PacketId (4 bytes) */
 	Stream_Read_UINT32(pdu->s, SwitchValue);     /* SwitchValue (4 bytes) */
 
-	WLog_DBG(TAG, "%s: %s", __FUNCTION__, tsg_packet_id_to_string(packet.packetId));
+	WLog_DBG(TAG, "%s", tsg_packet_id_to_string(packet.packetId));
 
 	if ((packet.packetId != TSG_PACKET_TYPE_MESSAGE_PACKET) ||
 	    (SwitchValue != TSG_PACKET_TYPE_MESSAGE_PACKET))

@@ -736,7 +736,7 @@ HANDLE CreateRemoteThread(HANDLE hProcess, LPSECURITY_ATTRIBUTES lpThreadAttribu
                           SIZE_T dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress,
                           LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
-	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return NULL;
 }
@@ -928,7 +928,7 @@ DWORD ResumeThread(HANDLE hThread)
 
 DWORD SuspendThread(HANDLE hThread)
 {
-	WLog_ERR(TAG, "%s: not implemented", __FUNCTION__);
+	WLog_ERR(TAG, "not implemented");
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	return (DWORD)-1;
 }

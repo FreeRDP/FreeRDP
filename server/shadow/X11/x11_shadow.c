@@ -201,7 +201,7 @@ static BOOL x11_shadow_input_synchronize_event(rdpShadowSubsystem* subsystem,
                                                rdpShadowClient* client, UINT32 flags)
 {
 	/* TODO: Implement */
-	WLog_WARN(TAG, "%s not implemented", __FUNCTION__);
+	WLog_WARN(TAG, "not implemented");
 	return TRUE;
 }
 
@@ -256,7 +256,7 @@ static BOOL x11_shadow_input_unicode_keyboard_event(rdpShadowSubsystem* subsyste
                                                     UINT16 code)
 {
 	/* TODO: Implement */
-	WLog_WARN(TAG, "%s not implemented", __FUNCTION__);
+	WLog_WARN(TAG, "not implemented");
 	return TRUE;
 }
 

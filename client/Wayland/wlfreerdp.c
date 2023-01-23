@@ -504,7 +504,7 @@ static int wlfreerdp_run(freerdp* instance)
 
 		if (WAIT_FAILED == status)
 		{
-			WLog_Print(context->log, WLOG_ERROR, "%s: WaitForMultipleObjects failed", __FUNCTION__);
+			WLog_Print(context->log, WLOG_ERROR, "WaitForMultipleObjects failed");
 			break;
 		}
 

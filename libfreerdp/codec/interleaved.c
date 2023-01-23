@@ -484,8 +484,8 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 
 	if (!interleaved || !pSrcData || !pDstData)
 	{
-		WLog_ERR(TAG, "[%s] invalid arguments: interleaved=%p, pSrcData=%p, pDstData=%p",
-		         __FUNCTION__, interleaved, pSrcData, pDstData);
+		WLog_ERR(TAG, "invalid arguments: interleaved=%p, pSrcData=%p, pDstData=%p", interleaved,
+		         pSrcData, pDstData);
 		return FALSE;
 	}
 
@@ -512,7 +512,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 			break;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid color depth %" PRIu32 "", __FUNCTION__, bpp);
+			WLog_ERR(TAG, "Invalid color depth %" PRIu32 "", bpp);
 			return FALSE;
 	}
 
@@ -526,7 +526,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 
 	if (!interleaved->TempBuffer)
 	{
-		WLog_ERR(TAG, "[%s] interleaved->TempBuffer=%p", __FUNCTION__, interleaved->TempBuffer);
+		WLog_ERR(TAG, "interleaved->TempBuffer=%p", interleaved->TempBuffer);
 		return FALSE;
 	}
 
@@ -536,7 +536,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 			if (!RleDecompress24to24(pSrcData, SrcSize, interleaved->TempBuffer, scanline,
 			                         nSrcWidth, nSrcHeight))
 			{
-				WLog_ERR(TAG, "[%s] RleDecompress24to24 failed", __FUNCTION__);
+				WLog_ERR(TAG, "RleDecompress24to24 failed");
 				return FALSE;
 			}
 
@@ -547,7 +547,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 			if (!RleDecompress16to16(pSrcData, SrcSize, interleaved->TempBuffer, scanline,
 			                         nSrcWidth, nSrcHeight))
 			{
-				WLog_ERR(TAG, "[%s] RleDecompress16to16 failed", __FUNCTION__);
+				WLog_ERR(TAG, "RleDecompress16to16 failed");
 				return FALSE;
 			}
 
@@ -557,14 +557,14 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 			if (!RleDecompress8to8(pSrcData, SrcSize, interleaved->TempBuffer, scanline, nSrcWidth,
 			                       nSrcHeight))
 			{
-				WLog_ERR(TAG, "[%s] RleDecompress8to8 failed", __FUNCTION__);
+				WLog_ERR(TAG, "RleDecompress8to8 failed");
 				return FALSE;
 			}
 
 			break;
 
 		default:
-			WLog_ERR(TAG, "[%s] Invalid color depth %" PRIu32 "", __FUNCTION__, bpp);
+			WLog_ERR(TAG, "Invalid color depth %" PRIu32 "", bpp);
 			return FALSE;
 	}
 
@@ -572,7 +572,7 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 	                        interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette,
 	                        FREERDP_FLIP_VERTICAL | FREERDP_KEEP_DST_ALPHA))
 	{
-		WLog_ERR(TAG, "[%s] freerdp_image_copy failed", __FUNCTION__);
+		WLog_ERR(TAG, "freerdp_image_copy failed");
 		return FALSE;
 	}
 	return TRUE;

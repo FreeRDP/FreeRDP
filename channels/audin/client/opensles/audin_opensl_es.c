@@ -67,7 +67,7 @@ static void audin_receive(void* context, const void* data, size_t size)
 
 	if (!opensles || !data)
 	{
-		WLog_ERR(TAG, "[%s] Invalid arguments context=%p, data=%p", __FUNCTION__, opensles, data);
+		WLog_ERR(TAG, "Invalid arguments context=%p, data=%p", opensles, data);
 		return;
 	}
 
