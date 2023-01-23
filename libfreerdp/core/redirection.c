@@ -139,23 +139,6 @@ static BOOL redirection_copy_array(char*** dst, UINT32* plen, const char** str, 
 	return *dst != NULL;
 }
 
-static void rdp_print_redirection_flags(UINT32 flags)
-{
-	WLog_DBG(TAG, "redirectionFlags = {");
-
-	for (UINT32 x = 0; x < 32; x++)
-	{
-		const UINT32 mask = 1 << x;
-		if ((flags & mask) != 0)
-		{
-			char buffer[64] = { 0 };
-			WLog_DBG(TAG, "\t%s", rdp_redirection_flags_to_string(mask, buffer, sizeof(buffer)));
-		}
-	}
-
-	WLog_DBG(TAG, "}");
-}
-
 static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t maxLength)
 {
 	UINT32 length = 0;
@@ -365,6 +348,7 @@ static BOOL rdp_redirection_read_data(UINT32 flag, wStream* s, UINT32* pLength, 
 
 static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 {
+	char buffer[256] = { 0 };
 	UINT16 flags = 0;
 	UINT16 length = 0;
 	rdpRedirection* redirection = rdp->redirection;
@@ -373,14 +357,23 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		return STATE_RUN_FAILED;
 
 	Stream_Read_UINT16(s, flags);                  /* flags (2 bytes) */
+	if (flags != SEC_REDIRECTION_PKT)
+	{
+		char buffer1[1024] = { 0 };
+		char buffer2[1024] = { 0 };
+		WLog_ERR(TAG, "[%s] received invalid flags=%s, expected %s", __FUNCTION__,
+		         rdp_security_flag_string(flags, buffer1, sizeof(buffer1)),
+		         rdp_security_flag_string(SEC_REDIRECTION_PKT, buffer2, sizeof(buffer2)));
+		return STATE_RUN_FAILED;
+	}
 	Stream_Read_UINT16(s, length);                 /* length (2 bytes) */
 	Stream_Read_UINT32(s, redirection->sessionID); /* sessionID (4 bytes) */
 	Stream_Read_UINT32(s, redirection->flags);     /* redirFlags (4 bytes) */
-	WLog_DBG(TAG,
-	         "flags: 0x%04" PRIX16 ", redirFlags: 0x%08" PRIX32 " length: %" PRIu16
+	WLog_VRB(TAG,
+	         "flags: 0x%04" PRIX16 ", redirFlags: %s [0x%08" PRIX32 "] length: %" PRIu16
 	         ", sessionID: 0x%08" PRIX32 "",
-	         flags, redirection->flags, length, redirection->sessionID);
-	rdp_print_redirection_flags(redirection->flags);
+	         flags, rdp_redirection_flags_to_string(redirection->flags, buffer, sizeof(buffer)),
+	         redirection->flags, length, redirection->sessionID);
 
 	/* Although MS-RDPBCGR does not mention any length constraints limits for the
 	 * variable length null-terminated unicode strings in the RDP_SERVER_REDIRECTION_PACKET
