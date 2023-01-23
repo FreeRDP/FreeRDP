@@ -63,7 +63,6 @@ char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
 
 char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer, size_t size)
 {
-	char msg[32] = { 0 };
 	const UINT32 version = (flags & ServerSessionRedirectionVersionMask) >> 2;
 	if (flags & REDIRECTION_SUPPORTED)
 		winpr_str_append("REDIRECTION_SUPPORTED", buffer, size, "|");
@@ -94,10 +93,14 @@ char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer, size_t size)
 			str = "REDIRECTION_VERSION6";
 			break;
 		default:
-			_snprintf(msg, sizeof(msg), "REDIRECTION_VERSION_UNKNOWN[0x%08" PRIx32 "]", version);
-			str = msg;
+			str = "REDIRECTION_VERSION_UNKNOWN";
 			break;
 	}
 	winpr_str_append(str, buffer, size, "|");
+	{
+		char msg[32] = { 0 };
+		_snprintf(msg, sizeof(msg), "[0x%08" PRIx32 "]", flags);
+		winpr_str_append(msg, buffer, size, "");
+	}
 	return buffer;
 }
