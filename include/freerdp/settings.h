@@ -716,13 +716,9 @@ typedef struct
 #define FreeRDP_KerberosRdgIsProxy (1352)
 #define FreeRDP_IgnoreCertificate (1408)
 #define FreeRDP_CertificateName (1409)
-#define FreeRDP_CertificateFile (1410)
-#define FreeRDP_PrivateKeyFile (1411)
 #define FreeRDP_RdpServerRsaKey (1413)
 #define FreeRDP_RdpServerCertificate (1414)
 #define FreeRDP_ExternalCertificateManagement (1415)
-#define FreeRDP_CertificateContent (1416)
-#define FreeRDP_PrivateKeyContent (1417)
 #define FreeRDP_AutoAcceptCertificate (1419)
 #define FreeRDP_AutoDenyCertificate (1420)
 #define FreeRDP_CertificateAcceptedFingerprints (1421)
@@ -1256,15 +1252,11 @@ struct rdp_settings
 	/* Server Certificate */
 	ALIGN64 BOOL IgnoreCertificate;                /* 1408 */
 	ALIGN64 char* CertificateName;                 /* 1409 */
-	ALIGN64 char* CertificateFile;                 /* 1410 */
-	ALIGN64 char* PrivateKeyFile;                  /* 1411 */
-	UINT64 padding1412[1413 - 1412];               /* 1412 */
+	UINT64 padding1410[1413 - 1410];               /* 1410 */
 	ALIGN64 rdpRsaKey* RdpServerRsaKey;            /* 1413 */
 	ALIGN64 rdpCertificate* RdpServerCertificate;  /* 1414 */
 	ALIGN64 BOOL ExternalCertificateManagement;    /* 1415 */
-	ALIGN64 char* CertificateContent;              /* 1416 */
-	ALIGN64 char* PrivateKeyContent;               /* 1417 */
-	UINT64 padding1418[1419 - 1418];               /* 1418 */
+	UINT64 padding1416[1419 - 1416];               /* 1416 */
 	ALIGN64 BOOL AutoAcceptCertificate;            /* 1419 */
 	ALIGN64 BOOL AutoDenyCertificate;              /* 1420 */
 	ALIGN64 char* CertificateAcceptedFingerprints; /* 1421 */

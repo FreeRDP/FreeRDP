@@ -2538,12 +2538,6 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_CertificateAcceptedFingerprints:
 			return settings->CertificateAcceptedFingerprints;
 
-		case FreeRDP_CertificateContent:
-			return settings->CertificateContent;
-
-		case FreeRDP_CertificateFile:
-			return settings->CertificateFile;
-
 		case FreeRDP_CertificateName:
 			return settings->CertificateName;
 
@@ -2660,12 +2654,6 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 
 		case FreeRDP_PreconnectionBlob:
 			return settings->PreconnectionBlob;
-
-		case FreeRDP_PrivateKeyContent:
-			return settings->PrivateKeyContent;
-
-		case FreeRDP_PrivateKeyFile:
-			return settings->PrivateKeyFile;
 
 		case FreeRDP_ProxyHostname:
 			return settings->ProxyHostname;
@@ -2819,12 +2807,6 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 		case FreeRDP_CertificateAcceptedFingerprints:
 			return settings->CertificateAcceptedFingerprints;
 
-		case FreeRDP_CertificateContent:
-			return settings->CertificateContent;
-
-		case FreeRDP_CertificateFile:
-			return settings->CertificateFile;
-
 		case FreeRDP_CertificateName:
 			return settings->CertificateName;
 
@@ -2941,12 +2923,6 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_PreconnectionBlob:
 			return settings->PreconnectionBlob;
-
-		case FreeRDP_PrivateKeyContent:
-			return settings->PrivateKeyContent;
-
-		case FreeRDP_PrivateKeyFile:
-			return settings->PrivateKeyFile;
 
 		case FreeRDP_ProxyHostname:
 			return settings->ProxyHostname;
@@ -3111,12 +3087,6 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 			return update_string(&settings->CertificateAcceptedFingerprints, cnv.cc, len, copy,
 			                     cleanup);
 
-		case FreeRDP_CertificateContent:
-			return update_string(&settings->CertificateContent, cnv.cc, len, copy, cleanup);
-
-		case FreeRDP_CertificateFile:
-			return update_string(&settings->CertificateFile, cnv.cc, len, copy, cleanup);
-
 		case FreeRDP_CertificateName:
 			return update_string(&settings->CertificateName, cnv.cc, len, copy, cleanup);
 
@@ -3233,12 +3203,6 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 		case FreeRDP_PreconnectionBlob:
 			return update_string(&settings->PreconnectionBlob, cnv.cc, len, copy, cleanup);
-
-		case FreeRDP_PrivateKeyContent:
-			return update_string(&settings->PrivateKeyContent, cnv.cc, len, copy, cleanup);
-
-		case FreeRDP_PrivateKeyFile:
-			return update_string(&settings->PrivateKeyFile, cnv.cc, len, copy, cleanup);
 
 		case FreeRDP_ProxyHostname:
 			return update_string(&settings->ProxyHostname, cnv.cc, len, copy, cleanup);
