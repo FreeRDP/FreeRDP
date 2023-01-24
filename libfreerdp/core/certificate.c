@@ -131,6 +131,39 @@
  *
  */
 
+struct rdp_CertBlob
+{
+	UINT32 length;
+	BYTE* data;
+};
+typedef struct rdp_CertBlob rdpCertBlob;
+
+struct rdp_X509CertChain
+{
+	UINT32 count;
+	rdpCertBlob* array;
+};
+typedef struct rdp_X509CertChain rdpX509CertChain;
+
+struct rdp_certificate
+{
+	char* pem;
+	size_t pem_length;
+
+	rdpCertInfo cert_info;
+	rdpX509CertChain x509_cert_chain;
+};
+
+struct rdp_rsa_key
+{
+	char* pem;
+	size_t pem_length;
+
+	rdpCertInfo cert;
+	BYTE* PrivateExponent;
+	DWORD PrivateExponentLength;
+};
+
 static const char rsa_magic[4] = "RSA1";
 
 static const char* certificate_read_errors[] = { "Certificate tag",
@@ -1418,4 +1451,62 @@ fail:
 void* freerdp_certificate_get_x509(const rdpCertificate* certificate)
 {
 	return NULL;
+}
+
+const char* freerdp_certificate_get_pem(const rdpCertificate* certificate, size_t* length)
+{
+	if (length)
+		*length = 0;
+
+	if (!certificate)
+		return NULL;
+
+	if (length)
+		*length = certificate->pem_length;
+	return certificate->pem;
+}
+
+const rdpCertInfo* freerdp_certificate_get_info(const rdpCertificate* certificate)
+{
+	if (!certificate)
+		return NULL;
+	return &certificate->cert_info;
+}
+
+rdpCertInfo* freerdp_certificate_get_info_writeable(const rdpCertificate* certificate)
+{
+	if (!certificate)
+		return NULL;
+	return &certificate->cert_info;
+}
+
+const BYTE* freerdp_key_get_exponent(rdpRsaKey* key, size_t* exponent_length)
+{
+	if (exponent_length)
+		*exponent_length = 0;
+	if (!key)
+		return NULL;
+
+	if (exponent_length)
+		*exponent_length = key->PrivateExponentLength;
+	return key->PrivateExponent;
+}
+
+const rdpCertInfo* freerdp_key_get_cert_info(rdpRsaKey* key)
+{
+	if (!key)
+		return NULL;
+	return &key->cert;
+}
+
+const char* freerdp_key_get_pem(const rdpRsaKey* key, size_t* length)
+{
+	if (length)
+		*length = 0;
+	if (!key)
+		return NULL;
+
+	if (length)
+		*length = key->pem_length;
+	return key->pem;
 }

@@ -1155,10 +1155,18 @@ fail:
 	return pemCert;
 }
 
+static BIO* bio_from_pem(const char* pem, size_t size)
+{
+	if (!pem || (size == 0) || (size > INT_MAX))
+		return NULL;
+
+	return BIO_new_mem_buf((const void*)pem, size);
+}
+
 X509* crypto_cert_from_pem(const char* data, size_t len)
 {
 	X509* x509 = NULL;
-	BIO* bio = BIO_new_mem_buf(data, len);
+	BIO* bio = bio_from_pem(data, len);
 
 	if (!bio)
 	{
@@ -1172,6 +1180,20 @@ X509* crypto_cert_from_pem(const char* data, size_t len)
 		WLog_ERR(TAG, "PEM_read_bio_X509 returned NULL [input length %" PRIuz "]", len);
 
 	return x509;
+}
+
+EVP_PKEY* crypto_key_from_pem(const char* data, size_t length)
+{
+	EVP_PKEY* privkey = NULL;
+	BIO* bio = bio_from_pem(data, length);
+	if (!bio)
+		return NULL;
+	privkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
+	BIO_free_all(bio);
+	if (!privkey)
+		WLog_ERR(TAG, "PEM_read_bio_PrivateKey returned NULL [input length %" PRIuz "]", length);
+
+	return privkey;
 }
 
 WINPR_MD_TYPE crypto_cert_get_signature_alg(X509* xcert)

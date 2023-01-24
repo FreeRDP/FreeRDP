@@ -30,20 +30,6 @@ extern "C"
 
 	/* Certificates */
 
-	struct rdp_CertBlob
-	{
-		UINT32 length;
-		BYTE* data;
-	};
-	typedef struct rdp_CertBlob rdpCertBlob;
-
-	struct rdp_X509CertChain
-	{
-		UINT32 count;
-		rdpCertBlob* array;
-	};
-	typedef struct rdp_X509CertChain rdpX509CertChain;
-
 	struct rdp_CertInfo
 	{
 		BYTE* Modulus;
@@ -52,29 +38,26 @@ extern "C"
 	};
 	typedef struct rdp_CertInfo rdpCertInfo;
 
-	struct rdp_certificate
-	{
-		rdpCertInfo cert_info;
-		rdpX509CertChain x509_cert_chain;
-	};
 	typedef struct rdp_certificate rdpCertificate;
-
-	typedef struct
-	{
-		rdpCertInfo cert;
-		BYTE* PrivateExponent;
-		DWORD PrivateExponentLength;
-	} rdpRsaKey;
+	typedef struct rdp_rsa_key rdpRsaKey;
 
 	FREERDP_API rdpCertificate* freerdp_certificate_new(void);
 	FREERDP_API rdpCertificate* freerdp_certificate_new_from_file(const char* file);
-	FREERDP_API rdpCertificate* freerdp_certificate_new_from_pem(const char* pem);
+	FREERDP_API rdpCertificate* freerdp_certificate_new_from_pem(const char* pem, size_t size);
 	FREERDP_API void freerdp_certificate_free(rdpCertificate* certificate);
-	FREERDP_API void* freerdp_certificate_get_x509(const rdpCertificate* certificate);
+	FREERDP_API const char* freerdp_certificate_get_pem(const rdpCertificate* certificate,
+	                                                    size_t* length);
+	FREERDP_API const rdpCertInfo* freerdp_certificate_get_info(const rdpCertificate* certificate);
+	FREERDP_API rdpCertInfo*
+	freerdp_certificate_get_info_writeable(const rdpCertificate* certificate);
 
 	FREERDP_API rdpRsaKey* freerdp_key_new_from_file(const char* keyfile);
-	FREERDP_API rdpRsaKey* freerdp_key_new_from_pem(const char* keycontent, const char* keyfile);
+	FREERDP_API rdpRsaKey* freerdp_key_new_from_pem(const char* pem, size_t size);
 	FREERDP_API void freerdp_key_free(rdpRsaKey* key);
+
+	FREERDP_API const char* freerdp_key_get_pem(const rdpRsaKey* key, size_t* length);
+	FREERDP_API const BYTE* freerdp_key_get_exponent(rdpRsaKey* key, size_t* exponent_length);
+	FREERDP_API const rdpCertInfo* freerdp_key_get_cert_info(rdpRsaKey* key);
 
 #ifdef __cplusplus
 }
