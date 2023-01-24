@@ -104,7 +104,6 @@ enum FASTPATH_INPUT_KBDFLAGS
 
 typedef struct
 {
-	BYTE fpOutputHeader;
 	BYTE length1;
 	BYTE length2;
 	BYTE fipsInformation[4];
@@ -117,7 +116,6 @@ typedef struct
 
 typedef struct
 {
-	BYTE updateHeader;
 	BYTE compressionFlags;
 	UINT16 size;
 
