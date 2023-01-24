@@ -57,8 +57,8 @@ FREERDP_LOCAL rdpCertificate* certificate_new_from_file(const char* file);
 FREERDP_LOCAL rdpCertificate* certificate_new_from_pem(const char* pem);
 FREERDP_LOCAL void certificate_free(rdpCertificate* certificate);
 
-FREERDP_LOCAL rdpRsaKey* key_new(const char* keyfile);
-FREERDP_LOCAL rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile);
+FREERDP_LOCAL rdpRsaKey* key_new_from_file(const char* keyfile);
+FREERDP_LOCAL rdpRsaKey* key_new_from_pem(const char* keycontent, const char* keyfile);
 FREERDP_LOCAL void key_free(rdpRsaKey* key);
 FREERDP_LOCAL rdpRsaKey* key_clone(const rdpRsaKey* key);
 
