@@ -156,7 +156,7 @@ BOOL tpkt_ensure_stream_consumed_(wStream* s, UINT16 length, const char* fkt)
 
 BOOL tpkt_write_header(wStream* s, UINT16 length)
 {
-	if (Stream_GetRemainingCapacity(s) < 4)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 4))
 		return FALSE;
 	Stream_Write_UINT8(s, 3);          /* version */
 	Stream_Write_UINT8(s, 0);          /* reserved */

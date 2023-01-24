@@ -131,7 +131,7 @@ static void rdp_write_capability_set_header(wStream* s, UINT16 length, UINT16 ty
 static size_t rdp_capability_set_start(wStream* s)
 {
 	size_t header = Stream_GetPosition(s);
-	if (Stream_GetRemainingCapacity(s) < CAPSET_HEADER_LENGTH)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), CAPSET_HEADER_LENGTH))
 		return SIZE_MAX;
 	Stream_Zero(s, CAPSET_HEADER_LENGTH);
 	return header;
@@ -3674,7 +3674,7 @@ BOOL rdp_print_capability_sets(wStream* s, size_t start, BOOL receiving)
 	}
 	else
 	{
-		if (Stream_GetRemainingCapacity(s) < 4)
+		if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 4))
 			goto fail;
 	}
 

@@ -117,19 +117,19 @@ static BOOL fastpath_write_update_header(wStream* s, FASTPATH_UPDATE_HEADER* fpU
 	fpUpdateHeader->updateHeader |= (fpUpdateHeader->fragmentation & 0x03) << 4;
 	fpUpdateHeader->updateHeader |= (fpUpdateHeader->compression & 0x03) << 6;
 
-	if (Stream_GetRemainingCapacity(s) < 1)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 1))
 		return FALSE;
 	Stream_Write_UINT8(s, fpUpdateHeader->updateHeader);
 
 	if (fpUpdateHeader->compression)
 	{
-		if (Stream_GetRemainingCapacity(s) < 1)
+		if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 1))
 			return FALSE;
 
 		Stream_Write_UINT8(s, fpUpdateHeader->compressionFlags);
 	}
 
-	if (Stream_GetRemainingCapacity(s) < 2)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 2))
 		return FALSE;
 
 	Stream_Write_UINT16(s, fpUpdateHeader->size);
@@ -149,7 +149,7 @@ static BOOL fastpath_write_update_pdu_header(wStream* s,
 	if (!s || !fpUpdatePduHeader || !rdp)
 		return FALSE;
 
-	if (Stream_GetRemainingCapacity(s) < 3)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 3))
 		return FALSE;
 
 	fpUpdatePduHeader->fpOutputHeader = 0;
@@ -164,13 +164,13 @@ static BOOL fastpath_write_update_pdu_header(wStream* s,
 		WINPR_ASSERT(rdp->settings);
 		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 		{
-			if (Stream_GetRemainingCapacity(s) < 4)
+			if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 4))
 				return FALSE;
 
 			Stream_Write(s, fpUpdatePduHeader->fipsInformation, 4);
 		}
 
-		if (Stream_GetRemainingCapacity(s) < 8)
+		if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 8))
 			return FALSE;
 
 		Stream_Write(s, fpUpdatePduHeader->dataSignature, 8);
@@ -1198,7 +1198,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 		fastpath_write_update_pdu_header(fs, &fpUpdatePduHeader, rdp);
 		fastpath_write_update_header(fs, &fpUpdateHeader);
 
-		if (Stream_GetRemainingCapacity(fs) < (size_t)DstSize + pad)
+		if (!Stream_CheckAndLogRequiredCapacity(TAG, (fs), (size_t)DstSize + pad))
 			return FALSE;
 		Stream_Write(fs, pDstData, DstSize);
 

@@ -36,6 +36,10 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.NTLM")
 
+#define NTLM_CheckAndLogRequiredCapacity(tag, s, nmemb, what)                                    \
+	Stream_CheckAndLogRequiredCapacityEx(tag, WLOG_WARN, s, nmemb, 1, "%s(%s:%" PRIuz ") " what, \
+	                                     __FUNCTION__, __FILE__, __LINE__)
+
 static char NTLM_CLIENT_SIGN_MAGIC[] = "session key to client-to-server signing key magic constant";
 static char NTLM_SERVER_SIGN_MAGIC[] = "session key to server-to-client signing key magic constant";
 static char NTLM_CLIENT_SEAL_MAGIC[] = "session key to client-to-server sealing key magic constant";
@@ -105,12 +109,10 @@ BOOL ntlm_write_version_info(wStream* s, const NTLM_VERSION_INFO* versionInfo)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(versionInfo);
 
-	if (Stream_GetRemainingCapacity(s) < 5 + sizeof(versionInfo->Reserved))
-	{
-		WLog_ERR(TAG, "NTLM_VERSION_INFO short header %" PRIuz ", expected %" PRIuz,
-		         Stream_GetRemainingCapacity(s), 5 + sizeof(versionInfo->Reserved));
+	if (!Stream_CheckAndLogRequiredCapacityEx(
+	        TAG, WLOG_WARN, s, 5ull + sizeof(versionInfo->Reserved), 1ull,
+	        "%s(%s:%" PRIuz ") NTLM_VERSION_INFO", __FUNCTION__, __FILE__, __LINE__))
 		return FALSE;
-	}
 
 	Stream_Write_UINT8(s, versionInfo->ProductMajorVersion); /* ProductMajorVersion (1 byte) */
 	Stream_Write_UINT8(s, versionInfo->ProductMinorVersion); /* ProductMinorVersion (1 byte) */
@@ -185,12 +187,9 @@ static BOOL ntlm_write_ntlm_v2_client_challenge(wStream* s,
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(challenge);
 
-	if (Stream_GetRemainingCapacity(s) < 28)
-	{
-		WLog_ERR(TAG, "NTLMv2_CLIENT_CHALLENGE expected 28bytes, have %" PRIuz "bytes",
-		         Stream_GetRemainingCapacity(s));
+	if (!NTLM_CheckAndLogRequiredCapacity(TAG, s, 28, "NTLMv2_CLIENT_CHALLENGE"))
 		return FALSE;
-	}
+
 	Stream_Write_UINT8(s, challenge->RespType);
 	Stream_Write_UINT8(s, challenge->HiRespType);
 	Stream_Write_UINT16(s, challenge->Reserved1);
@@ -224,12 +223,9 @@ BOOL ntlm_write_ntlm_v2_response(wStream* s, const NTLMv2_RESPONSE* response)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(response);
 
-	if (Stream_GetRemainingCapacity(s) < 16)
-	{
-		WLog_ERR(TAG, "NTLMv2_RESPONSE expected 16bytes, have %" PRIuz "bytes",
-		         Stream_GetRemainingCapacity(s));
+	if (!NTLM_CheckAndLogRequiredCapacity(TAG, s, 16ull, "NTLMv2_RESPONSE"))
 		return FALSE;
-	}
+
 	Stream_Write(s, response->Response, 16);
 	return ntlm_write_ntlm_v2_client_challenge(s, &(response->Challenge));
 }

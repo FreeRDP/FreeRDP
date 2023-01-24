@@ -34,7 +34,7 @@ static BOOL rdp_write_synchronize_pdu(wStream* s, const rdpSettings* settings)
 {
 	const UINT32 PduSource = freerdp_settings_get_uint32(settings, FreeRDP_PduSource);
 
-	if (Stream_GetRemainingCapacity(s) < 4)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 4))
 		return FALSE;
 	Stream_Write_UINT16(s, SYNCMSGTYPE_SYNC); /* messageType (2 bytes) */
 	Stream_Write_UINT16(s, PduSource);        /* targetUser (2 bytes) */
@@ -129,7 +129,7 @@ static BOOL rdp_write_client_control_pdu(wStream* s, UINT16 action, UINT16 grant
                                          UINT32 controlId)
 {
 	WINPR_ASSERT(s);
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 8))
 		return FALSE;
 	Stream_Write_UINT16(s, action);    /* action (2 bytes) */
 	Stream_Write_UINT16(s, grantId);   /* grantId (2 bytes) */
@@ -172,7 +172,7 @@ BOOL rdp_send_server_control_cooperate_pdu(rdpRdp* rdp)
 	wStream* s = rdp_data_pdu_init(rdp);
 	if (!s)
 		return FALSE;
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 8))
 	{
 		Stream_Free(s, TRUE);
 		return FALSE;
@@ -190,7 +190,7 @@ static BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp)
 	wStream* s = rdp_data_pdu_init(rdp);
 	if (!s)
 		return FALSE;
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 8))
 	{
 		Stream_Free(s, TRUE);
 		return FALSE;
@@ -487,7 +487,7 @@ static BOOL rdp_write_client_font_list_pdu(wStream* s, UINT16 flags)
 {
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 8))
 		return FALSE;
 	Stream_Write_UINT16(s, 0);     /* numberFonts (2 bytes) */
 	Stream_Write_UINT16(s, 0);     /* totalNumFonts (2 bytes) */
@@ -565,7 +565,7 @@ BOOL rdp_send_server_font_map_pdu(rdpRdp* rdp)
 	wStream* s = rdp_data_pdu_init(rdp);
 	if (!s)
 		return FALSE;
-	if (Stream_GetRemainingCapacity(s) < 8)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 8))
 	{
 		Stream_Free(s, TRUE);
 		return FALSE;
@@ -638,7 +638,7 @@ BOOL rdp_send_deactivate_all(rdpRdp* rdp)
 	if (!s)
 		return FALSE;
 
-	if (Stream_GetRemainingCapacity(s) < 7)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 7))
 		goto fail;
 
 	WINPR_ASSERT(rdp->settings);
