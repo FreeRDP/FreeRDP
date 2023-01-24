@@ -967,7 +967,7 @@ static RSA* rsa_from_public_pem(const char* pem)
 	return rsa;
 }
 
-static BOOL key_read_private(rdpRsaKey* key, const char* pem, const char* keyfile)
+static BOOL key_read_private(rdpRsaKey* key, const char* pem)
 {
 	BOOL rc = FALSE;
 	RSA* rsa = rsa_from_private_pem(pem);
@@ -979,14 +979,14 @@ static BOOL key_read_private(rdpRsaKey* key, const char* pem, const char* keyfil
 	WINPR_ASSERT(key);
 	if (!rsa)
 	{
-		WLog_ERR(TAG, "unable to load RSA key from %s: %s.", keyfile, strerror(errno));
+		WLog_ERR(TAG, "unable to load RSA key from PEM: %s", strerror(errno));
 		goto fail;
 	}
 
 	switch (RSA_check_key(rsa))
 	{
 		case 0:
-			WLog_ERR(TAG, "invalid RSA key in %s", keyfile);
+			WLog_ERR(TAG, "invalid RSA key in PEM");
 			goto fail;
 
 		case 1:
@@ -994,8 +994,7 @@ static BOOL key_read_private(rdpRsaKey* key, const char* pem, const char* keyfil
 			break;
 
 		default:
-			WLog_ERR(TAG, "unexpected error when checking RSA key from %s: %s.", keyfile,
-			         strerror(errno));
+			WLog_ERR(TAG, "unexpected error when checking RSA key from: %s", strerror(errno));
 			goto fail;
 	}
 
@@ -1003,7 +1002,7 @@ static BOOL key_read_private(rdpRsaKey* key, const char* pem, const char* keyfil
 
 	if (BN_num_bytes(rsa_e) > 4)
 	{
-		WLog_ERR(TAG, "RSA public exponent too large in %s", keyfile);
+		WLog_ERR(TAG, "RSA public exponent in PEM too large");
 		goto fail;
 	}
 
@@ -1030,7 +1029,7 @@ static X509* x509_from_pem(const char* pem)
 	return x509;
 }
 
-static BOOL cert_read_public(rdpCertificate* cert, const char* pem, const char* keyfile)
+static BOOL cert_read_public(rdpCertificate* cert, const char* pem)
 {
 	BOOL rc = FALSE;
 	X509* x509 = x509_from_pem(pem);
@@ -1039,7 +1038,7 @@ static BOOL cert_read_public(rdpCertificate* cert, const char* pem, const char* 
 
 	if (!x509)
 	{
-		WLog_ERR(TAG, "unable to load X509 from %s: %s.", keyfile, strerror(errno));
+		WLog_ERR(TAG, "unable to load X509 from: %s", strerror(errno));
 		goto fail;
 	}
 
@@ -1049,11 +1048,11 @@ fail:
 	return rc;
 }
 
-rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
+rdpRsaKey* freerdp_key_new_from_content(const char* keycontent)
 {
 	rdpRsaKey* key = NULL;
 
-	if (!keycontent || !keyfile)
+	if (!keycontent)
 		return NULL;
 
 	key = (rdpRsaKey*)calloc(1, sizeof(rdpRsaKey));
@@ -1061,7 +1060,7 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 	if (!key)
 		return NULL;
 
-	if (!key_read_private(key, keycontent, keyfile))
+	if (!key_read_private(key, keycontent))
 		goto fail;
 
 	return key;
@@ -1070,7 +1069,7 @@ fail:
 	return NULL;
 }
 
-rdpRsaKey* freerdp_key_new(const char* keyfile)
+rdpRsaKey* freerdp_key_new_from_file(const char* keyfile)
 {
 	FILE* fp = NULL;
 	INT64 length;
@@ -1106,7 +1105,7 @@ rdpRsaKey* freerdp_key_new(const char* keyfile)
 		goto out_free;
 
 	buffer[length] = '\0';
-	key = key_new_from_content(buffer, keyfile);
+	key = freerdp_key_new_from_content(buffer);
 out_free:
 
 	if (fp)
