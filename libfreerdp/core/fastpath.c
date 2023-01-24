@@ -46,6 +46,18 @@
 
 #define TAG FREERDP_TAG("core.fastpath")
 
+enum FASTPATH_INPUT_ENCRYPTION_FLAGS
+{
+	FASTPATH_INPUT_SECURE_CHECKSUM = 0x1,
+	FASTPATH_INPUT_ENCRYPTED = 0x2
+};
+
+enum FASTPATH_OUTPUT_ENCRYPTION_FLAGS
+{
+	FASTPATH_OUTPUT_SECURE_CHECKSUM = 0x1,
+	FASTPATH_OUTPUT_ENCRYPTED = 0x2
+};
+
 struct rdp_fastpath
 {
 	rdpRdp* rdp;
@@ -1195,8 +1207,10 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 		fpUpdatePduHeader.length = fpUpdateHeader.size + fpHeaderSize + pad;
 		Stream_SetPosition(fs, 0);
-		fastpath_write_update_pdu_header(fs, &fpUpdatePduHeader, rdp);
-		fastpath_write_update_header(fs, &fpUpdateHeader);
+		if (!fastpath_write_update_pdu_header(fs, &fpUpdatePduHeader, rdp))
+			return FALSE;
+		if (!fastpath_write_update_header(fs, &fpUpdateHeader))
+			return FALSE;
 
 		if (!Stream_CheckAndLogRequiredCapacity(TAG, (fs), (size_t)DstSize + pad))
 			return FALSE;
@@ -1283,4 +1297,21 @@ BYTE fastpath_get_encryption_flags(rdpFastPath* fastpath)
 {
 	WINPR_ASSERT(fastpath);
 	return fastpath->encryptionFlags;
+}
+
+BOOL fastpath_decrypt(rdpFastPath* fastpath, wStream* s, UINT16* length)
+{
+	WINPR_ASSERT(fastpath);
+	if (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_ENCRYPTED)
+	{
+		const UINT16 flags =
+		    (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_SECURE_CHECKSUM)
+		        ? SEC_SECURE_CHECKSUM
+		        : 0;
+
+		if (!rdp_decrypt(fastpath->rdp, s, length, flags))
+			return FALSE;
+	}
+
+	return TRUE;
 }

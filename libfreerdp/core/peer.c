@@ -676,14 +676,8 @@ static state_run_t peer_recv_fastpath_pdu(freerdp_peer* client, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return STATE_RUN_FAILED;
 
-	if (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_ENCRYPTED)
-	{
-		if (!rdp_decrypt(rdp, s, &length,
-		                 (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_SECURE_CHECKSUM)
-		                     ? SEC_SECURE_CHECKSUM
-		                     : 0))
-			return STATE_RUN_FAILED;
-	}
+	if (!fastpath_decrypt(fastpath, s, &length))
+		return STATE_RUN_FAILED;
 
 	rdp->inPackets++;
 
