@@ -1619,18 +1619,8 @@ static state_run_t rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 		rdp->autodetect->bandwidthMeasureByteCount += length;
 	}
 
-	if (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_ENCRYPTED)
-	{
-		UINT16 flags = (fastpath_get_encryption_flags(fastpath) & FASTPATH_OUTPUT_SECURE_CHECKSUM)
-		                   ? SEC_SECURE_CHECKSUM
-		                   : 0;
-
-		if (!rdp_decrypt(rdp, s, &length, flags))
-		{
-			WLog_ERR(TAG, "rdp_recv_fastpath_pdu: rdp_decrypt() fail");
-			return STATE_RUN_FAILED;
-		}
-	}
+	if (!fastpath_decrypt(fastpath, s, &length))
+		return STATE_RUN_FAILED;
 
 	return fastpath_recv_updates(rdp->fastpath, s);
 }
