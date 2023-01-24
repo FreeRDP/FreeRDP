@@ -35,7 +35,7 @@
 		if (!(cond))                                                                       \
 		{                                                                                  \
 			WLog_FATAL(STREAM_TAG, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, __FUNCTION__, \
-			           __LINE__);                                                          \
+			           (size_t)__LINE__);                                                  \
 			winpr_log_backtrace(STREAM_TAG, WLOG_FATAL, 20);                               \
 			abort();                                                                       \
 		}                                                                                  \

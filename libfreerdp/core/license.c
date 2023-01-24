@@ -464,7 +464,7 @@ static BOOL license_check_stream_capacity(wStream* s, size_t expect, const char*
 	WINPR_ASSERT(where);
 
 	if (!Stream_CheckAndLogRequiredCapacityEx(TAG, WLOG_WARN, s, expect, 1, "%s(%s:%" PRIuz ") %s",
-	                                          __FUNCTION__, __FILE__, __LINE__, where))
+	                                          __FUNCTION__, __FILE__, (size_t)__LINE__, where))
 		return FALSE;
 
 	return TRUE;
