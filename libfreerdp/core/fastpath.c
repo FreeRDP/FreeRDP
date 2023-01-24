@@ -119,29 +119,28 @@ static BOOL fastpath_read_update_header(wStream* s, BYTE* updateCode, BYTE* frag
 	return TRUE;
 }
 
-static BOOL fastpath_write_update_header(wStream* s, FASTPATH_UPDATE_HEADER* fpUpdateHeader)
+static BOOL fastpath_write_update_header(wStream* s, const FASTPATH_UPDATE_HEADER* fpUpdateHeader)
 {
-	if (!s || !fpUpdateHeader)
-		return FALSE;
+	BYTE updateHeader = 0;
+	WINPR_ASSERT(fpUpdateHeader);
 
-	fpUpdateHeader->updateHeader = 0;
-	fpUpdateHeader->updateHeader |= fpUpdateHeader->updateCode & 0x0F;
-	fpUpdateHeader->updateHeader |= (fpUpdateHeader->fragmentation & 0x03) << 4;
-	fpUpdateHeader->updateHeader |= (fpUpdateHeader->compression & 0x03) << 6;
+	updateHeader |= fpUpdateHeader->updateCode & 0x0F;
+	updateHeader |= (fpUpdateHeader->fragmentation & 0x03) << 4;
+	updateHeader |= (fpUpdateHeader->compression & 0x03) << 6;
 
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 1))
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 1))
 		return FALSE;
-	Stream_Write_UINT8(s, fpUpdateHeader->updateHeader);
+	Stream_Write_UINT8(s, updateHeader);
 
 	if (fpUpdateHeader->compression)
 	{
-		if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 1))
+		if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 1))
 			return FALSE;
 
 		Stream_Write_UINT8(s, fpUpdateHeader->compressionFlags);
 	}
 
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 2))
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 2))
 		return FALSE;
 
 	Stream_Write_UINT16(s, fpUpdateHeader->size);
@@ -155,19 +154,19 @@ static UINT32 fastpath_get_update_header_size(FASTPATH_UPDATE_HEADER* fpUpdateHe
 }
 
 static BOOL fastpath_write_update_pdu_header(wStream* s,
-                                             FASTPATH_UPDATE_PDU_HEADER* fpUpdatePduHeader,
+                                             const FASTPATH_UPDATE_PDU_HEADER* fpUpdatePduHeader,
                                              rdpRdp* rdp)
 {
-	if (!s || !fpUpdatePduHeader || !rdp)
+	BYTE fpOutputHeader = 0;
+	WINPR_ASSERT(fpUpdatePduHeader);
+	WINPR_ASSERT(rdp);
+
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 3))
 		return FALSE;
 
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 3))
-		return FALSE;
-
-	fpUpdatePduHeader->fpOutputHeader = 0;
-	fpUpdatePduHeader->fpOutputHeader |= (fpUpdatePduHeader->action & 0x03);
-	fpUpdatePduHeader->fpOutputHeader |= (fpUpdatePduHeader->secFlags & 0x03) << 6;
-	Stream_Write_UINT8(s, fpUpdatePduHeader->fpOutputHeader);       /* fpOutputHeader (1 byte) */
+	fpOutputHeader |= (fpUpdatePduHeader->action & 0x03);
+	fpOutputHeader |= (fpUpdatePduHeader->secFlags & 0x03) << 6;
+	Stream_Write_UINT8(s, fpOutputHeader);                          /* fpOutputHeader (1 byte) */
 	Stream_Write_UINT8(s, 0x80 | (fpUpdatePduHeader->length >> 8)); /* length1 */
 	Stream_Write_UINT8(s, fpUpdatePduHeader->length & 0xFF);        /* length2 */
 
@@ -176,19 +175,19 @@ static BOOL fastpath_write_update_pdu_header(wStream* s,
 		WINPR_ASSERT(rdp->settings);
 		if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 		{
-			if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 4))
+			if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 4))
 				return FALSE;
 
 			Stream_Write(s, fpUpdatePduHeader->fipsInformation, 4);
 		}
 
-		if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 8))
+		if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 8))
 			return FALSE;
 
 		Stream_Write(s, fpUpdatePduHeader->dataSignature, 8);
 	}
 
-	return FALSE;
+	return TRUE;
 }
 
 static UINT32 fastpath_get_update_pdu_header_size(FASTPATH_UPDATE_PDU_HEADER* fpUpdatePduHeader,
