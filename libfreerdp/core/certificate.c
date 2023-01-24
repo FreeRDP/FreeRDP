@@ -1066,11 +1066,11 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 
 	return key;
 fail:
-	key_free(key);
+	freerdp_key_free(key);
 	return NULL;
 }
 
-rdpRsaKey* key_new(const char* keyfile)
+rdpRsaKey* freerdp_key_new(const char* keyfile)
 {
 	FILE* fp = NULL;
 	INT64 length;
@@ -1139,11 +1139,11 @@ rdpRsaKey* key_clone(const rdpRsaKey* key)
 
 	return _key;
 out_fail:
-	key_free(_key);
+	freerdp_key_free(_key);
 	return NULL;
 }
 
-void key_free(rdpRsaKey* key)
+void freerdp_key_free(rdpRsaKey* key)
 {
 	if (!key)
 		return;
@@ -1324,7 +1324,7 @@ rdpCertificate* certificate_clone(const rdpCertificate* certificate)
 	return _certificate;
 out_fail:
 
-	certificate_free(_certificate);
+	freerdp_certificate_free(_certificate);
 	return NULL;
 }
 
@@ -1333,7 +1333,7 @@ out_fail:
  * @return new certificate module
  */
 
-rdpCertificate* certificate_new(void)
+rdpCertificate* freerdp_certificate_new(void)
 {
 	return (rdpCertificate*)calloc(1, sizeof(rdpCertificate));
 }
@@ -1351,7 +1351,7 @@ void certificate_free_int(rdpCertificate* certificate)
  * @param certificate certificate module to be freed
  */
 
-void certificate_free(rdpCertificate* certificate)
+void freerdp_certificate_free(rdpCertificate* certificate)
 {
 	if (!certificate)
 		return;
@@ -1360,7 +1360,7 @@ void certificate_free(rdpCertificate* certificate)
 	free(certificate);
 }
 
-rdpCertificate* certificate_new_from_file(const char* file)
+rdpCertificate* freerdp_certificate_new_from_file(const char* file)
 {
 	INT64 size = 0;
 	char* pem = NULL;
@@ -1381,20 +1381,20 @@ rdpCertificate* certificate_new_from_file(const char* file)
 	if (fread(pem, 1, (size_t)size, fp) != (size_t)size)
 		goto fail;
 
-	cert = certificate_new_from_pem(pem);
+	cert = freerdp_certificate_new_from_pem(pem);
 fail:
 	free(pem);
 	fclose(fp);
 	return cert;
 }
 
-rdpCertificate* certificate_new_from_pem(const char* pem)
+rdpCertificate* freerdp_certificate_new_from_pem(const char* pem)
 {
 	const BIGNUM* rsa_e = NULL;
 	const BIGNUM* rsa_n = NULL;
 	const BIGNUM* rsa_d = NULL;
 	RSA* rsa = NULL;
-	rdpCertificate* cert = certificate_new();
+	rdpCertificate* cert = freerdp_certificate_new();
 
 	if (!cert || !pem)
 		goto fail;
@@ -1412,6 +1412,11 @@ rdpCertificate* certificate_new_from_pem(const char* pem)
 
 fail:
 	RSA_free(rsa);
-	certificate_free(cert);
+	freerdp_certificate_free(cert);
+	return NULL;
+}
+
+void* freerdp_certificate_get_x509(const rdpCertificate* certificate)
+{
 	return NULL;
 }

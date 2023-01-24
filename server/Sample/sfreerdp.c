@@ -1004,9 +1004,6 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	rdpUpdate* update;
 	freerdp_peer* client = (freerdp_peer*)arg;
 
-	const char* key = "server.key";
-	const char* cert = "server.crt";
-
 	WINPR_ASSERT(client);
 
 	info = client->ContextExtra;
@@ -1018,11 +1015,6 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		return 0;
 	}
 
-	if (info->key)
-		key = info->key;
-	if (info->cert)
-		cert = info->cert;
-
 	/* Initialize the real server settings here */
 	WINPR_ASSERT(client->context);
 	settings = client->context->settings;
@@ -1032,12 +1024,6 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDumpReplay, TRUE) ||
 		    !freerdp_settings_set_string(settings, FreeRDP_TransportDumpFile, info->replay_dump))
 			goto fail;
-	}
-	if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, cert) ||
-	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, key))
-	{
-		WLog_ERR(TAG, "Memory allocation failed (strdup)");
-		goto fail;
 	}
 
 	settings->RdpSecurity = TRUE;

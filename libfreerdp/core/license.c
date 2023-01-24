@@ -2574,7 +2574,7 @@ rdpLicense* license_new(rdpRdp* rdp)
 	license->rdp = rdp;
 
 	license_set_state(license, LICENSE_STATE_INITIAL);
-	if (!(license->certificate = certificate_new()))
+	if (!(license->certificate = freerdp_certificate_new()))
 		goto out_error;
 	if (!(license->ProductInfo = license_new_product_info()))
 		goto out_error;
@@ -2624,7 +2624,7 @@ void license_free(rdpLicense* license)
 {
 	if (license)
 	{
-		certificate_free(license->certificate);
+		freerdp_certificate_free(license->certificate);
 		license_free_product_info(license->ProductInfo);
 		license_free_binary_blob(license->ErrorInfo);
 		license_free_binary_blob(license->LicenseInfo);

@@ -609,8 +609,8 @@ static BOOL pem_equal(const char* a, const char* b)
 	BOOL rc = FALSE;
 	size_t sa = strlen(a);
 	size_t sb = strlen(b);
-	X509* x1 = crypto_cert_from_pem(a, sa, FALSE);
-	X509* x2 = crypto_cert_from_pem(b, sb, FALSE);
+	X509* x1 = crypto_cert_from_pem(a, sa);
+	X509* x2 = crypto_cert_from_pem(b, sb);
 	char* f1 = NULL;
 	char* f2 = NULL;
 	if (!x1 || !x2)

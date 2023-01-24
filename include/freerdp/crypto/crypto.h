@@ -61,7 +61,7 @@ extern "C"
 	                                                     BOOL separator);
 	FREERDP_API char* crypto_cert_fingerprint(X509* xcert);
 	FREERDP_API BYTE* crypto_cert_pem(X509* xcert, STACK_OF(X509) * chain, size_t* length);
-	FREERDP_API X509* crypto_cert_from_pem(const char* data, size_t length, BOOL fromFile);
+	FREERDP_API X509* crypto_cert_from_pem(const char* data, size_t length);
 	FREERDP_API char* crypto_cert_subject(X509* xcert);
 	FREERDP_API char* crypto_cert_subject_common_name(X509* xcert, int* length);
 	FREERDP_API char** crypto_cert_get_dns_names(X509* xcert, int* count, int** lengths);

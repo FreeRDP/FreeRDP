@@ -28,6 +28,7 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/redirection.h>
+#include <freerdp/certificate.h>
 
 /** \file
  * \brief This is the FreeRDP settings module.
@@ -331,44 +332,6 @@ typedef struct
 	UINT32 logonId;
 	BYTE arcRandomBits[16];
 } ARC_SC_PRIVATE_PACKET;
-
-/* Certificates */
-
-struct rdp_CertBlob
-{
-	UINT32 length;
-	BYTE* data;
-};
-typedef struct rdp_CertBlob rdpCertBlob;
-
-struct rdp_X509CertChain
-{
-	UINT32 count;
-	rdpCertBlob* array;
-};
-typedef struct rdp_X509CertChain rdpX509CertChain;
-
-struct rdp_CertInfo
-{
-	BYTE* Modulus;
-	DWORD ModulusLength;
-	BYTE exponent[4];
-};
-typedef struct rdp_CertInfo rdpCertInfo;
-
-struct rdp_certificate
-{
-	rdpCertInfo cert_info;
-	rdpX509CertChain x509_cert_chain;
-};
-typedef struct rdp_certificate rdpCertificate;
-
-typedef struct
-{
-	rdpCertInfo cert;
-	BYTE* PrivateExponent;
-	DWORD PrivateExponentLength;
-} rdpRsaKey;
 
 /* Channels */
 

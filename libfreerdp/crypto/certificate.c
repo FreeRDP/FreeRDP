@@ -203,8 +203,8 @@ static int compare_pem(const char* current, const char* stored)
 	if (!current || !stored)
 		goto fail;
 
-	xcur = crypto_cert_from_pem(current, strlen(current), FALSE);
-	xstore = crypto_cert_from_pem(stored, strlen(stored), FALSE);
+	xcur = crypto_cert_from_pem(current, strlen(current));
+	xstore = crypto_cert_from_pem(stored, strlen(stored));
 	if (!xcur || !xstore)
 		goto fail;
 
@@ -445,7 +445,7 @@ static BOOL certificate_get_file_data(rdpCertificateStore* store, rdpCertificate
 		goto fail;
 	data->pem[read] = '\0';
 
-	certificate = crypto_cert_from_pem(data->pem, read, FALSE);
+	certificate = crypto_cert_from_pem(data->pem, read);
 	if (!certificate)
 		goto fail;
 
@@ -959,7 +959,7 @@ static BOOL update_from_pem(rdpCertificateData* data)
 
 	if (!data || !data->pem)
 		return FALSE;
-	x1 = crypto_cert_from_pem(data->pem, strlen(data->pem), FALSE);
+	x1 = crypto_cert_from_pem(data->pem, strlen(data->pem));
 	if (!x1)
 		goto fail;
 

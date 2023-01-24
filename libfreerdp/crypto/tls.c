@@ -1056,29 +1056,9 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 	if (!tls_prepare(tls, underlying, methods, options, FALSE))
 		return TLS_HANDSHAKE_ERROR;
 
-	if (settings->PrivateKeyFile)
+	const rdpRsaKey* key = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey);
+	if (!key)
 	{
-		bio = BIO_new_file(settings->PrivateKeyFile, "rb");
-
-		if (!bio)
-		{
-			WLog_ERR(TAG, "BIO_new_file failed for private key %s", settings->PrivateKeyFile);
-			return TLS_HANDSHAKE_ERROR;
-		}
-	}
-	else if (settings->PrivateKeyContent)
-	{
-		bio = BIO_new_mem_buf(settings->PrivateKeyContent, strlen(settings->PrivateKeyContent));
-
-		if (!bio)
-		{
-			WLog_ERR(TAG, "BIO_new_mem_buf failed for private key");
-			return TLS_HANDSHAKE_ERROR;
-		}
-	}
-	else
-	{
-		WLog_ERR(TAG, "no private key defined");
 		return TLS_HANDSHAKE_ERROR;
 	}
 
@@ -1104,18 +1084,15 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 		return TLS_HANDSHAKE_ERROR;
 	}
 
-	if (settings->CertificateFile)
-		x509 = crypto_cert_from_pem(settings->CertificateFile, strlen(settings->CertificateFile),
-		                            TRUE);
-	else if (settings->CertificateContent)
-		x509 = crypto_cert_from_pem(settings->CertificateContent,
-		                            strlen(settings->CertificateContent), FALSE);
-	else
+	rdpCertificate* certificate =
+	    freerdp_settings_get_pointer(settings, FreeRDP_RdpServerCertificate);
+	if (!certificate)
 	{
 		WLog_ERR(TAG, "no certificate defined");
 		return TLS_HANDSHAKE_ERROR;
 	}
 
+	x509 = freerdp_certificate_get_x509(certificate);
 	if (!x509)
 	{
 		WLog_ERR(TAG, "invalid certificate");

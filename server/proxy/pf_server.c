@@ -487,17 +487,6 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 			return FALSE;
 	}
 
-	if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, config->CertificateFile) ||
-	    !freerdp_settings_set_string(settings, FreeRDP_CertificateContent,
-	                                 config->CertificateContent) ||
-	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, config->PrivateKeyFile) ||
-	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyContent,
-	                                 config->PrivateKeyContent))
-	{
-		PROXY_LOG_ERR(TAG, ps, "Memory allocation failed (strdup)");
-		return FALSE;
-	}
-
 	if (config->RemoteApp)
 	{
 		const UINT32 mask =

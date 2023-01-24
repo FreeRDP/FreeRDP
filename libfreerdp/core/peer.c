@@ -248,27 +248,6 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
 		return FALSE;
 
-	if (settings->PrivateKeyFile)
-	{
-		settings->RdpServerRsaKey = key_new(settings->PrivateKeyFile);
-
-		if (!settings->RdpServerRsaKey)
-		{
-			WLog_ERR(TAG, "invalid RDP key file %s", settings->PrivateKeyFile);
-			return FALSE;
-		}
-	}
-	else if (settings->PrivateKeyContent)
-	{
-		settings->RdpServerRsaKey = key_new_from_content(settings->PrivateKeyContent, NULL);
-
-		if (!settings->RdpServerRsaKey)
-		{
-			WLog_ERR(TAG, "invalid RDP key content");
-			return FALSE;
-		}
-	}
-
 	return TRUE;
 }
 

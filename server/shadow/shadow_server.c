@@ -808,6 +808,25 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 		}
 	}
 
+	/* Load the private key and certificate in the server instance.
+	 * A copy will be provided for each peer. */
+	rdpSettings* settings = server->settings;
+	WINPR_ASSERT(settings);
+
+	rdpCertificate* cert = freerdp_certificate_new_from_file(server->CertificateFile);
+	if (!cert)
+		goto out_fail;
+
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
+		goto out_fail;
+
+	rdpRsaKey* key = freerdp_key_new_from_file(server->PrivateKeyFile);
+	if (!key)
+		goto out_fail;
+
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
+		goto out_fail;
+
 	ret = TRUE;
 out_fail:
 	makecert_context_free(makecert);

@@ -50,7 +50,7 @@ CryptoCert crypto_cert_pem_read(const char* data)
 	if (!cert)
 		return NULL;
 
-	cert->px509 = crypto_cert_from_pem(data, strlen(data), FALSE);
+	cert->px509 = crypto_cert_from_pem(data, strlen(data));
 	if (!cert->px509)
 	{
 		free(cert);
@@ -1155,14 +1155,10 @@ fail:
 	return pemCert;
 }
 
-X509* crypto_cert_from_pem(const char* data, size_t len, BOOL fromFile)
+X509* crypto_cert_from_pem(const char* data, size_t len)
 {
 	X509* x509 = NULL;
-	BIO* bio;
-	if (fromFile)
-		bio = BIO_new_file(data, "rb");
-	else
-		bio = BIO_new_mem_buf(data, len);
+	BIO* bio = BIO_new_mem_buf(data, len);
 
 	if (!bio)
 	{

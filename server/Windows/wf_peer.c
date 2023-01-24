@@ -235,20 +235,6 @@ static BOOL wf_peer_read_settings(freerdp_peer* client)
 	settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
-	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("CertificateFile"),
-	                                   &(settings->CertificateFile)))
-	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, "server.crt"))
-			return FALSE;
-	}
-
-	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("PrivateKeyFile"),
-	                                   &(settings->PrivateKeyFile)))
-	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, "server.key"))
-			return FALSE;
-	}
-
 	return TRUE;
 }
 

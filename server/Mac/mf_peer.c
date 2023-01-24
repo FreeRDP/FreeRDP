@@ -370,16 +370,6 @@ static void* mf_peer_main_loop(void* arg)
 	settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
-	/* Initialize the real server settings here */
-	freerdp_settings_set_string(settings, FreeRDP_CertificateFile, "server.crt");
-	freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, "server.key");
-
-	if (!settings->CertificateFile || !settings->PrivateKeyFile)
-	{
-		freerdp_peer_free(client);
-		return NULL;
-	}
-
 	settings->NlaSecurity = FALSE;
 	settings->RemoteFxCodec = TRUE;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32))
