@@ -389,17 +389,18 @@ BOOL Stream_CheckAndLogRequiredCapacityWLogEx(wLog* log, DWORD level, wStream* s
 	return TRUE;
 }
 
-BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, DWORD level, wStream* s, UINT64 len,
-                                        const char* fmt, ...)
+BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, DWORD level, wStream* s, size_t nmemb,
+                                        size_t size, const char* fmt, ...)
 {
-	const size_t actual = Stream_GetRemainingLength(s);
+	WINPR_ASSERT(size > 0);
+	const size_t actual = Stream_GetRemainingLength(s) / size;
 
-	if (actual < len)
+	if (actual < nmemb)
 	{
 		va_list args;
 
 		va_start(args, fmt);
-		Stream_CheckAndLogRequiredLengthExVa(tag, level, s, len, fmt, args);
+		Stream_CheckAndLogRequiredLengthExVa(tag, level, s, nmemb, size, fmt, args);
 		va_end(args);
 
 		return FALSE;
@@ -407,27 +408,30 @@ BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, DWORD level, wStream* s
 	return TRUE;
 }
 
-BOOL Stream_CheckAndLogRequiredLengthExVa(const char* tag, DWORD level, wStream* s, UINT64 len,
-                                          const char* fmt, va_list args)
+BOOL Stream_CheckAndLogRequiredLengthExVa(const char* tag, DWORD level, wStream* s, size_t nmemb,
+                                          size_t size, const char* fmt, va_list args)
 {
-	const size_t actual = Stream_GetRemainingLength(s);
+	WINPR_ASSERT(size > 0);
+	const size_t actual = Stream_GetRemainingLength(s) / size;
 
-	if (actual < len)
-		return Stream_CheckAndLogRequiredLengthWLogExVa(WLog_Get(tag), level, s, len, fmt, args);
+	if (actual < nmemb)
+		return Stream_CheckAndLogRequiredLengthWLogExVa(WLog_Get(tag), level, s, nmemb, size, fmt,
+		                                                args);
 	return TRUE;
 }
 
-BOOL Stream_CheckAndLogRequiredLengthWLogEx(wLog* log, DWORD level, wStream* s, UINT64 len,
-                                            const char* fmt, ...)
+BOOL Stream_CheckAndLogRequiredLengthWLogEx(wLog* log, DWORD level, wStream* s, size_t nmemb,
+                                            size_t size, const char* fmt, ...)
 {
-	const size_t actual = Stream_GetRemainingLength(s);
+	WINPR_ASSERT(size > 0);
+	const size_t actual = Stream_GetRemainingLength(s) / size;
 
-	if (actual < len)
+	if (actual < nmemb)
 	{
 		va_list args;
 
 		va_start(args, fmt);
-		Stream_CheckAndLogRequiredLengthWLogExVa(log, level, s, len, fmt, args);
+		Stream_CheckAndLogRequiredLengthWLogExVa(log, level, s, nmemb, size, fmt, args);
 		va_end(args);
 
 		return FALSE;
@@ -435,19 +439,22 @@ BOOL Stream_CheckAndLogRequiredLengthWLogEx(wLog* log, DWORD level, wStream* s, 
 	return TRUE;
 }
 
-BOOL Stream_CheckAndLogRequiredLengthWLogExVa(wLog* log, DWORD level, wStream* s, UINT64 len,
-                                              const char* fmt, va_list args)
+BOOL Stream_CheckAndLogRequiredLengthWLogExVa(wLog* log, DWORD level, wStream* s, size_t nmemb,
+                                              size_t size, const char* fmt, va_list args)
 {
-	const size_t actual = Stream_GetRemainingLength(s);
+	WINPR_ASSERT(size > 0);
+	const size_t actual = Stream_GetRemainingLength(s) / size;
 
-	if (actual < len)
+	if (actual < nmemb)
 	{
 		char prefix[1024] = { 0 };
 
 		vsnprintf(prefix, sizeof(prefix), fmt, args);
 
-		WLog_Print(log, level, "[%s] invalid length, got %" PRIuz ", require at least %" PRIuz,
-		           prefix, actual, len);
+		WLog_Print(log, level,
+		           "[%s] invalid length, got %" PRIuz ", require at least %" PRIuz
+		           " [element size=%" PRIuz "]",
+		           prefix, actual, nmemb, size);
 		winpr_log_backtrace_ex(log, level, 20);
 		return FALSE;
 	}
@@ -515,7 +522,7 @@ SSIZE_T Stream_Read_UTF16_String_As_UTF8_Buffer(wStream* s, size_t wcharLength, 
 
 BOOL Stream_SafeSeekEx(wStream* s, size_t size, const char* file, size_t line, const char* fkt)
 {
-	if (!Stream_CheckAndLogRequiredLengthEx(STREAM_TAG, WLOG_WARN, s, size, "%s(%s:%" PRIuz ")",
+	if (!Stream_CheckAndLogRequiredLengthEx(STREAM_TAG, WLOG_WARN, s, size, 1, "%s(%s:%" PRIuz ")",
 	                                        fkt, file, line))
 		return FALSE;
 
