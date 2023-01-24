@@ -1042,7 +1042,12 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 				free(monitors);
 			}
 			else
-				ret = STATE_RUN_SUCCESS;
+			{
+				if (Stream_GetRemainingLength(s) > 0)
+					ret = STATE_RUN_CONTINUE;
+				else
+					ret = STATE_RUN_SUCCESS;
+			}
 			if (!rdp_server_transition_to_state(
 			        rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE))
 				ret = STATE_RUN_FAILED;
