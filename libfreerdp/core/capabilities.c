@@ -3982,7 +3982,7 @@ BOOL rdp_read_capability_set(wStream* sub, UINT16 type, rdpSettings* settings, B
 
 		WINPR_ASSERT(settings->ReceivedCapabilityData);
 		tmp = realloc(settings->ReceivedCapabilityData[type], size);
-		if (!tmp)
+		if (!tmp && (size > 0))
 			return FALSE;
 		memcpy(tmp, Stream_Buffer(sub), size);
 		settings->ReceivedCapabilityData[type] = tmp;
