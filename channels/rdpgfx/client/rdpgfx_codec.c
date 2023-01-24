@@ -51,7 +51,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 
 	Stream_Read_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8ull * meta->numRegionRects))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, meta->numRegionRects, 8ull))
 		goto error_out;
 
 	meta->regionRects = (RECTANGLE_16*)calloc(meta->numRegionRects, sizeof(RECTANGLE_16));
@@ -91,7 +91,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 		         index, regionRect->left, regionRect->top, regionRect->right, regionRect->bottom);
 	}
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2ull * meta->numRegionRects))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, meta->numRegionRects, 2ull))
 	{
 		error = ERROR_INVALID_DATA;
 		goto error_out;

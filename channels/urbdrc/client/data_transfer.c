@@ -825,11 +825,14 @@ static UINT urb_isoch_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callbac
 	Stream_Read_UINT32(s, NumberOfPackets); /** NumberOfPackets */
 	Stream_Read_UINT32(s, ErrorCount);      /** ErrorCount */
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, NumberOfPackets * 12ULL + 4ULL))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, NumberOfPackets, 12ull))
 		return ERROR_INVALID_DATA;
 
 	packetDescriptorData = Stream_Pointer(s);
 	Stream_Seek(s, NumberOfPackets * 12);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UINT32)))
+		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(s, OutputBufferSize);
 
 	if (transferDir == USBD_TRANSFER_DIRECTION_OUT)

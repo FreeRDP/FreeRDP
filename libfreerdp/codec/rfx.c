@@ -516,7 +516,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 		return FALSE;
 	}
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5ull * numChannels))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, numChannels, 5ull))
 		return FALSE;
 
 	/* RFX_CHANNELT */
@@ -679,7 +679,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 		return TRUE;
 	}
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8ull * message->numRects))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, message->numRects, 8ull))
 		return FALSE;
 
 	tmpRects = realloc(message->rects, message->numRects * sizeof(RFX_RECT));
@@ -796,7 +796,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	quants = context->quants = (UINT32*)pmem;
 
 	/* quantVals */
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5ull * context->numQuant))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, context->numQuant, 5ull))
 		return FALSE;
 
 	for (i = 0; i < context->numQuant; i++)

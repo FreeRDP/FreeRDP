@@ -521,7 +521,7 @@ static UINT rdpgfx_recv_reset_graphics_pdu(GENERIC_CHANNEL_CALLBACK* callback, w
 	Stream_Read_UINT32(s, pdu.height);       /* height (4 bytes) */
 	Stream_Read_UINT32(s, pdu.monitorCount); /* monitorCount (4 bytes) */
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20ull * pdu.monitorCount))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, pdu.monitorCount, 20ull))
 		return ERROR_INVALID_DATA;
 
 	pdu.monitorDefArray = (MONITOR_DEF*)calloc(pdu.monitorCount, sizeof(MONITOR_DEF));
@@ -1001,7 +1001,7 @@ static UINT rdpgfx_recv_cache_import_reply_pdu(GENERIC_CHANNEL_CALLBACK* callbac
 
 	Stream_Read_UINT16(s, pdu.importedEntriesCount); /* cacheSlot (2 bytes) */
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2ull * pdu.importedEntriesCount))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, pdu.importedEntriesCount, 2ull))
 		return ERROR_INVALID_DATA;
 
 	if (pdu.importedEntriesCount > RDPGFX_CACHE_ENTRY_MAX_COUNT)
@@ -1477,7 +1477,7 @@ static UINT rdpgfx_recv_solid_fill_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStre
 
 	Stream_Read_UINT16(s, pdu.fillRectCount); /* fillRectCount (2 bytes) */
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8ull * pdu.fillRectCount))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, pdu.fillRectCount, 8ull))
 		return ERROR_INVALID_DATA;
 
 	pdu.fillRects = (RECTANGLE_16*)calloc(pdu.fillRectCount, sizeof(RECTANGLE_16));
@@ -1547,7 +1547,7 @@ static UINT rdpgfx_recv_surface_to_surface_pdu(GENERIC_CHANNEL_CALLBACK* callbac
 
 	Stream_Read_UINT16(s, pdu.destPtsCount); /* destPtsCount (2 bytes) */
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4ULL * pdu.destPtsCount))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, pdu.destPtsCount, 4ull))
 		return ERROR_INVALID_DATA;
 
 	pdu.destPts = (RDPGFX_POINT16*)calloc(pdu.destPtsCount, sizeof(RDPGFX_POINT16));
@@ -1663,7 +1663,7 @@ static UINT rdpgfx_recv_cache_to_surface_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 	Stream_Read_UINT16(s, pdu.surfaceId);    /* surfaceId (2 bytes) */
 	Stream_Read_UINT16(s, pdu.destPtsCount); /* destPtsCount (2 bytes) */
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4ull * pdu.destPtsCount))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, pdu.destPtsCount, 4ull))
 		return ERROR_INVALID_DATA;
 
 	pdu.destPts = (RDPGFX_POINT16*)calloc(pdu.destPtsCount, sizeof(RDPGFX_POINT16));

@@ -46,7 +46,7 @@ static BOOL rdp_recv_sync_pdu(rdpRdp* rdp, wStream* s, const char* what)
 	UINT16 msgType, targetUser;
 
 	WINPR_UNUSED(rdp);
-	if (!Stream_CheckAndLogRequiredLengthEx(TAG, WLOG_WARN, s, 4, "%s(%s:%" PRIuz ") %s",
+	if (!Stream_CheckAndLogRequiredLengthEx(TAG, WLOG_WARN, s, 4, 1, "%s(%s:%" PRIuz ") %s",
 	                                        __FUNCTION__, __FILE__, (size_t)__LINE__, what))
 		return FALSE;
 	Stream_Read_UINT16(s, msgType);

@@ -372,7 +372,7 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 
 			windowState->windowRects = newRect;
 
-			if (!Stream_CheckAndLogRequiredLength(TAG, s, 8ull * windowState->numWindowRects))
+			if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, windowState->numWindowRects, 8ull))
 				return FALSE;
 
 			/* windowRects */
@@ -416,7 +416,8 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 
 			windowState->visibilityRects = newRect;
 
-			if (!Stream_CheckAndLogRequiredLength(TAG, s, 8ull * windowState->numVisibilityRects))
+			if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, windowState->numVisibilityRects,
+			                                            8ull))
 				return FALSE;
 
 			/* visibilityRects */
@@ -912,7 +913,7 @@ static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDE
 
 		Stream_Read_UINT8(s, monitored_desktop->numWindowIds); /* numWindowIds (1 byte) */
 
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4ull * monitored_desktop->numWindowIds))
+		if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, monitored_desktop->numWindowIds, 4ull))
 			return FALSE;
 
 		if (monitored_desktop->numWindowIds > 0)

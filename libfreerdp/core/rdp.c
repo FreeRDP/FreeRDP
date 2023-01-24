@@ -944,7 +944,7 @@ static BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 
 	Stream_Read_UINT32(s, monitorCount); /* monitorCount (4 bytes) */
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20ull * monitorCount))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, monitorCount, 20ull))
 		return FALSE;
 
 	monitorDefArray = (MONITOR_DEF*)calloc(monitorCount, sizeof(MONITOR_DEF));

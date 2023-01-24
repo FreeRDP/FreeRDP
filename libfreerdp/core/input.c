@@ -692,7 +692,7 @@ BOOL input_recv(rdpInput* input, wStream* s)
 	Stream_Seek(s, 2);                   /* pad2Octets (2 bytes) */
 
 	/* Each input event uses 6 exactly bytes. */
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6ull * numberEvents))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, numberEvents, 6ull))
 		return FALSE;
 
 	for (i = 0; i < numberEvents; i++)

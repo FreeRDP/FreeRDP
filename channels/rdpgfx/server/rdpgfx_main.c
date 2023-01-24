@@ -1141,7 +1141,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 		return ERROR_INVALID_DATA;
 	}
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12ull * pdu.cacheEntriesCount))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, pdu.cacheEntriesCount, 12ull))
 		return ERROR_INVALID_DATA;
 
 	for (index = 0; index < pdu.cacheEntriesCount; index++)

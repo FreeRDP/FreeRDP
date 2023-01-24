@@ -2253,7 +2253,7 @@ static INLINE INT32 progressive_wb_read_region_header(PROGRESSIVE_CONTEXT* progr
 	}
 
 	len = Stream_GetRemainingLength(s);
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8ull * region->numRects))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, region->numRects, 8ull))
 	{
 		WLog_Print(progressive->log, WLOG_ERROR, "ProgressiveRegion data short for region->rects");
 		return -1015;

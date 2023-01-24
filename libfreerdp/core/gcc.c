@@ -2024,7 +2024,7 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 		mcs->channelCount = channelCount;
 	}
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2ull * channelCount))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, channelCount, 2ull))
 		return FALSE;
 
 	for (UINT32 i = 0; i < parsedChannelCount; i++)
