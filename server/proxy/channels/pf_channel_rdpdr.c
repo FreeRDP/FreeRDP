@@ -135,11 +135,11 @@ typedef struct
 #define Stream_CheckAndLogRequiredLengthSrv(log, s, len)                                       \
 	Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, len,                             \
 	                                       proxy_client_rx " %s(%s:%" PRIuz ")", __FUNCTION__, \
-	                                       __FILE__, __LINE__)
+	                                       __FILE__, (size_t)__LINE__)
 #define Stream_CheckAndLogRequiredLengthClient(log, s, len)                                    \
 	Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, len,                             \
 	                                       proxy_server_rx " %s(%s:%" PRIuz ")", __FUNCTION__, \
-	                                       __FILE__, __LINE__)
+	                                       __FILE__, (size_t)__LINE__)
 #define Stream_CheckAndLogRequiredLengthRx(srv, log, s, len) \
 	Stream_CheckAndLogRequiredLengthRx_(srv, log, s, len, __FUNCTION__, __FILE__, __LINE__)
 static BOOL Stream_CheckAndLogRequiredLengthRx_(BOOL srv, wLog* log, wStream* s, size_t len,

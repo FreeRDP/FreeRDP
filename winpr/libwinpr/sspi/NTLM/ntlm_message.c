@@ -37,7 +37,7 @@
 
 #define NTLM_CheckAndLogRequiredCapacity(tag, s, nmemb, what)                                    \
 	Stream_CheckAndLogRequiredCapacityEx(tag, WLOG_WARN, s, nmemb, 1, "%s(%s:%" PRIuz ") " what, \
-	                                     __FUNCTION__, __FILE__, __LINE__)
+	                                     __FUNCTION__, __FILE__, (size_t)__LINE__)
 
 static const char NTLM_SIGNATURE[8] = { 'N', 'T', 'L', 'M', 'S', 'S', 'P', '\0' };
 
@@ -437,7 +437,7 @@ static BOOL ntlm_write_negotiate_flags(wStream* s, UINT32 flags, const char* nam
 
 	if (!Stream_CheckAndLogRequiredCapacityEx(TAG, WLOG_WARN, s, 4ull, 1ull,
 	                                          "%s(%s:%" PRIuz ") %s::NegotiateFlags", __FUNCTION__,
-	                                          __FILE__, __LINE__, name))
+	                                          __FILE__, (size_t)__LINE__, name))
 		return FALSE;
 
 	WLog_DBG(TAG, "Write flags %s", ntlm_negotiate_flags_string(buffer, ARRAYSIZE(buffer), flags));

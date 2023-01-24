@@ -38,7 +38,7 @@
 
 #define NTLM_CheckAndLogRequiredCapacity(tag, s, nmemb, what)                                    \
 	Stream_CheckAndLogRequiredCapacityEx(tag, WLOG_WARN, s, nmemb, 1, "%s(%s:%" PRIuz ") " what, \
-	                                     __FUNCTION__, __FILE__, __LINE__)
+	                                     __FUNCTION__, __FILE__, (size_t)__LINE__)
 
 static char NTLM_CLIENT_SIGN_MAGIC[] = "session key to client-to-server signing key magic constant";
 static char NTLM_SERVER_SIGN_MAGIC[] = "session key to server-to-client signing key magic constant";
@@ -111,7 +111,7 @@ BOOL ntlm_write_version_info(wStream* s, const NTLM_VERSION_INFO* versionInfo)
 
 	if (!Stream_CheckAndLogRequiredCapacityEx(
 	        TAG, WLOG_WARN, s, 5ull + sizeof(versionInfo->Reserved), 1ull,
-	        "%s(%s:%" PRIuz ") NTLM_VERSION_INFO", __FUNCTION__, __FILE__, __LINE__))
+	        "%s(%s:%" PRIuz ") NTLM_VERSION_INFO", __FUNCTION__, __FILE__, (size_t)__LINE__))
 		return FALSE;
 
 	Stream_Write_UINT8(s, versionInfo->ProductMajorVersion); /* ProductMajorVersion (1 byte) */
