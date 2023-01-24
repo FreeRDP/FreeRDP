@@ -56,6 +56,33 @@ extern "C"
 	WINPR_API BOOL Stream_EnsureCapacity(wStream* s, size_t size);
 	WINPR_API BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size);
 
+#define Stream_CheckAndLogRequiredCapacityOfSize(tag, s, nmemb, size)                         \
+	Stream_CheckAndLogRequiredCapacityEx(tag, WLOG_WARN, s, nmemb, size, "%s(%s:%" PRIuz ")", \
+	                                     __FUNCTION__, __FILE__, (size_t)__LINE__)
+#define Stream_CheckAndLogRequiredCapacity(tag, s, len) \
+	Stream_CheckAndLogRequiredCapacityOfSize((tag), (s), (len), 1)
+
+	WINPR_API BOOL Stream_CheckAndLogRequiredCapacityEx(const char* tag, DWORD level, wStream* s,
+	                                                    size_t nmemb, size_t size, const char* fmt,
+	                                                    ...);
+	WINPR_API BOOL Stream_CheckAndLogRequiredCapacityExVa(const char* tag, DWORD level, wStream* s,
+	                                                      size_t nmemb, size_t size,
+	                                                      const char* fmt, va_list args);
+
+#define Stream_CheckAndLogRequiredCapacityOfSizeWLog(log, s, nmemb, size)                         \
+	Stream_CheckAndLogRequiredCapacityWLogEx(log, WLOG_WARN, s, nmemb, size, "%s(%s:%" PRIuz ")", \
+	                                         __FUNCTION__, __FILE__, (size_t)__LINE__)
+
+#define Stream_CheckAndLogRequiredCapacityWLog(log, s, len) \
+	Stream_CheckAndLogRequiredCapacityOfSizeWLog((log), (s), (len), 1)
+
+	WINPR_API BOOL Stream_CheckAndLogRequiredCapacityWLogEx(wLog* log, DWORD level, wStream* s,
+	                                                        size_t nmemb, size_t size,
+	                                                        const char* fmt, ...);
+	WINPR_API BOOL Stream_CheckAndLogRequiredCapacityWLogExVa(wLog* log, DWORD level, wStream* s,
+	                                                          size_t nmemb, size_t size,
+	                                                          const char* fmt, va_list args);
+
 	WINPR_API wStream* Stream_New(BYTE* buffer, size_t size);
 	WINPR_API wStream* Stream_StaticConstInit(wStream* s, const BYTE* buffer, size_t size);
 	WINPR_API wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size);
