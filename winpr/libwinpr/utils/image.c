@@ -385,7 +385,7 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 		goto fail;
 	if (!Stream_SafeSeek(s, bf.bfOffBits - Stream_GetPosition(s)))
 		goto fail;
-	if (Stream_GetRemainingCapacity(s) < bi.biSizeImage)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, bi.biSizeImage))
 		goto fail;
 
 	if (bi.biWidth < 0)

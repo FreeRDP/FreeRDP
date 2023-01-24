@@ -116,7 +116,7 @@ BOOL tpdu_read_header(wStream* s, BYTE* code, BYTE* li, UINT16 tpktlength)
 
 BOOL tpdu_write_header(wStream* s, UINT16 length, BYTE code)
 {
-	if (Stream_GetRemainingCapacity(s) < 3)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 3))
 		return FALSE;
 
 	Stream_Write_UINT8(s, length); /* LI */
@@ -128,7 +128,7 @@ BOOL tpdu_write_header(wStream* s, UINT16 length, BYTE code)
 	}
 	else
 	{
-		if (Stream_GetRemainingCapacity(s) < 5)
+		if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 5))
 			return FALSE;
 		Stream_Write_UINT16(s, 0); /* DST-REF */
 		Stream_Write_UINT16(s, 0); /* SRC-REF */

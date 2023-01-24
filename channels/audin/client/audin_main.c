@@ -568,7 +568,7 @@ static UINT audin_on_data_received(IWTSVirtualChannelCallback* pChannelCallback,
 	if (!audin)
 		return ERROR_INTERNAL_ERROR;
 
-	if (Stream_GetRemainingCapacity(data) < 1)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, data, 1))
 		return ERROR_NO_DATA;
 
 	Stream_Read_UINT8(data, MessageId);

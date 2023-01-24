@@ -165,7 +165,7 @@ BOOL rdp_write_security_header(wStream* s, UINT16 flags)
 {
 	WINPR_ASSERT(s);
 
-	if (Stream_GetRemainingCapacity(s) < 4)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 4))
 		return FALSE;
 
 	/* Basic Security Header */
@@ -239,7 +239,7 @@ BOOL rdp_write_share_control_header(wStream* s, UINT16 length, UINT16 type, UINT
 
 	if (length < RDP_PACKET_HEADER_MAX_LENGTH)
 		return FALSE;
-	if (Stream_GetRemainingCapacity(s) < 6)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 6))
 		return FALSE;
 	length -= RDP_PACKET_HEADER_MAX_LENGTH;
 	/* Share Control Header */
@@ -278,7 +278,7 @@ BOOL rdp_write_share_data_header(wStream* s, UINT16 length, BYTE type, UINT32 sh
 	if (length < headerLen)
 		return FALSE;
 	length -= headerLen;
-	if (Stream_GetRemainingCapacity(s) < 12)
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 12))
 		return FALSE;
 
 	/* Share Data Header */

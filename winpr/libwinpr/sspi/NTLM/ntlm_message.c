@@ -35,6 +35,10 @@
 #include "../../log.h"
 #define TAG WINPR_TAG("sspi.NTLM")
 
+#define NTLM_CheckAndLogRequiredCapacity(tag, s, nmemb, what)                                    \
+	Stream_CheckAndLogRequiredCapacityEx(tag, WLOG_WARN, s, nmemb, 1, "%s(%s:%" PRIuz ") " what, \
+	                                     __FUNCTION__, __FILE__, __LINE__)
+
 static const char NTLM_SIGNATURE[8] = { 'N', 'T', 'L', 'M', 'S', 'S', 'P', '\0' };
 
 static void ntlm_free_message_fields_buffer(NTLM_MESSAGE_FIELDS* fields);
@@ -272,12 +276,9 @@ static BOOL ntlm_write_message_header(wStream* s, const NTLM_MESSAGE_HEADER* hea
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	if (Stream_GetRemainingCapacity(s) < sizeof(NTLM_SIGNATURE) + 4)
-	{
-		WLog_ERR(TAG, "Short NTLM_MESSAGE_HEADER::header %" PRIuz ", expected 12",
-		         Stream_GetRemainingCapacity(s));
+	if (!NTLM_CheckAndLogRequiredCapacity(TAG, s, sizeof(NTLM_SIGNATURE) + 4ull,
+	                                      "NTLM_MESSAGE_HEADER::header"))
 		return FALSE;
-	}
 
 	Stream_Write(s, header->Signature, sizeof(NTLM_SIGNATURE));
 	Stream_Write_UINT32(s, header->MessageType);
@@ -320,12 +321,9 @@ static BOOL ntlm_write_message_fields(wStream* s, const NTLM_MESSAGE_FIELDS* fie
 	if (fields->MaxLen < 1)
 		MaxLen = fields->Len;
 
-	if (Stream_GetRemainingCapacity(s) < 8)
-	{
-		WLog_ERR(TAG, "Short NTLM_MESSAGE_FIELDS::header %" PRIuz ", expected %" PRIuz,
-		         Stream_GetRemainingCapacity(s), 8);
+	if (!NTLM_CheckAndLogRequiredCapacity(TAG, (s), 8, "NTLM_MESSAGE_FIELDS::header"))
 		return FALSE;
-	}
+
 	Stream_Write_UINT16(s, fields->Len);          /* Len (2 bytes) */
 	Stream_Write_UINT16(s, MaxLen);               /* MaxLen (2 bytes) */
 	Stream_Write_UINT32(s, fields->BufferOffset); /* BufferOffset (4 bytes) */
@@ -382,12 +380,9 @@ static BOOL ntlm_write_message_fields_buffer(wStream* s, const NTLM_MESSAGE_FIEL
 	if (fields->Len > 0)
 	{
 		Stream_SetPosition(s, fields->BufferOffset);
-		if (Stream_GetRemainingCapacity(s) < fields->Len)
-		{
-			WLog_ERR(TAG, "Short NTLM_MESSAGE_FIELDS::Len %" PRIuz ", expected %" PRIu16,
-			         Stream_GetRemainingCapacity(s), fields->Len);
+		if (!NTLM_CheckAndLogRequiredCapacity(TAG, (s), fields->Len, "NTLM_MESSAGE_FIELDS::Len"))
 			return FALSE;
-		}
+
 		Stream_Write(s, fields->Buffer, fields->Len);
 	}
 	return TRUE;
@@ -440,12 +435,10 @@ static BOOL ntlm_write_negotiate_flags(wStream* s, UINT32 flags, const char* nam
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(name);
 
-	if (Stream_GetRemainingCapacity(s) < 4)
-	{
-		WLog_ERR(TAG, "%s::NegotiateFlags expected 4bytes, have %" PRIuz "bytes", name,
-		         Stream_GetRemainingCapacity(s));
+	if (!Stream_CheckAndLogRequiredCapacityEx(TAG, WLOG_WARN, s, 4ull, 1ull,
+	                                          "%s(%s:%" PRIuz ") %s::NegotiateFlags", __FUNCTION__,
+	                                          __FILE__, __LINE__, name))
 		return FALSE;
-	}
 
 	WLog_DBG(TAG, "Write flags %s", ntlm_negotiate_flags_string(buffer, ARRAYSIZE(buffer), flags));
 	Stream_Write_UINT32(s, flags); /* NegotiateFlags (4 bytes) */
@@ -482,21 +475,12 @@ static BOOL ntlm_write_message_integrity_check(wStream* s, size_t offset, const 
 
 	pos = Stream_GetPosition(s);
 
-	if (offset + size > Stream_Capacity(s))
-	{
-		WLog_ERR(TAG,
-		         "%s::MessageIntegrityCheck invalid offset[length] %" PRIuz "[%" PRIuz
-		         "], got %" PRIuz,
-		         name, offset, size, Stream_GetRemainingCapacity(s));
+	if (!NTLM_CheckAndLogRequiredCapacity(TAG, s, offset, "MessageIntegrityCheck::offset"))
 		return FALSE;
-	}
+
 	Stream_SetPosition(s, offset);
-	if (Stream_GetRemainingCapacity(s) < size)
-	{
-		WLog_ERR(TAG, "%s::MessageIntegrityCheck expected %" PRIuz "bytes, got %" PRIuz "bytes",
-		         name, size, Stream_GetRemainingCapacity(s));
+	if (!NTLM_CheckAndLogRequiredCapacity(TAG, s, size, "MessageIntegrityCheck::size"))
 		return FALSE;
-	}
 
 	Stream_Write(s, data, size);
 	Stream_SetPosition(s, pos);
@@ -882,13 +866,8 @@ SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer bu
 	if (!ntlm_write_negotiate_flags(s, message->NegotiateFlags, "NTLM_CHALLENGE_MESSAGE"))
 		return SEC_E_INTERNAL_ERROR;
 
-	if (Stream_GetRemainingCapacity(s) < 16)
-	{
-		WLog_ERR(TAG,
-		         "NTLM_CHALLENGE_MESSAGE::ServerChallenge expected 16bytes, got %" PRIuz "bytes",
-		         Stream_GetRemainingCapacity(s));
+	if (!NTLM_CheckAndLogRequiredCapacity(TAG, s, 16, "NTLM_CHALLENGE_MESSAGE::ServerChallenge"))
 		return SEC_E_INTERNAL_ERROR;
-	}
 
 	Stream_Write(s, message->ServerChallenge, 8); /* ServerChallenge (8 bytes) */
 	Stream_Write(s, message->Reserved, 8);        /* Reserved (8 bytes), should be ignored */

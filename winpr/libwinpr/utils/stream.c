@@ -290,7 +290,7 @@ BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t length)
 	if (!s || !src)
 		return FALSE;
 
-	if (!Stream_CheckAndLogRequiredCapacity(STREAM_TAG, (s), sizeof(WCHAR) * length))
+	if (!Stream_CheckAndLogRequiredCapacityOfSize(STREAM_TAG, (s), length, sizeof(WCHAR)))
 		return FALSE;
 
 	for (x = 0; x < length; x++)
