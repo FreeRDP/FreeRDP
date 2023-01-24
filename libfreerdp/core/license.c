@@ -374,10 +374,10 @@ static void license_print_product_info(const LICENSE_PRODUCT_INFO* productInfo)
 	WINPR_ASSERT(productInfo->pbCompanyName);
 	WINPR_ASSERT(productInfo->pbProductId);
 
-	CompanyName = ConvertWCharToUtf8Alloc(productInfo->pbCompanyName,
-	                                      productInfo->cbCompanyName / sizeof(WCHAR));
-	ProductId =
-	    ConvertWCharToUtf8Alloc(productInfo->pbProductId, productInfo->cbProductId / sizeof(WCHAR));
+	CompanyName = ConvertWCharNToUtf8Alloc(productInfo->pbCompanyName,
+	                                       productInfo->cbCompanyName / sizeof(WCHAR), NULL);
+	ProductId = ConvertWCharNToUtf8Alloc(productInfo->pbProductId,
+	                                     productInfo->cbProductId / sizeof(WCHAR), NULL);
 	WLog_INFO(TAG, "ProductInfo:");
 	WLog_INFO(TAG, "\tdwVersion: 0x%08" PRIX32 "", productInfo->dwVersion);
 	WLog_INFO(TAG, "\tCompanyName: %s", CompanyName);
