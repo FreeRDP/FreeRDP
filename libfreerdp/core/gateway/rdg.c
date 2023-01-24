@@ -526,8 +526,18 @@ static int rdg_websocket_read_wstream(BIO* bio, wStream* s,
 		encodingContext->state = WebsocketStateOpcodeAndFin;
 		return 0;
 	}
-	if (s == NULL || Stream_GetRemainingCapacity(s) != encodingContext->payloadLength)
+	if (s == NULL)
+	{
+		WLog_WARN(TAG, "wStream* s=%p", s);
 		return -1;
+	}
+	if (Stream_GetRemainingCapacity(s) != encodingContext->payloadLength)
+	{
+		WLog_WARN(TAG,
+		          "wStream::capacity [%" PRIuz "] != encodingContext::paylaodLangth [%" PRIuz "]",
+		          Stream_GetRemainingCapacity(s), encodingContext->payloadLength);
+		return -1;
+	}
 
 	ERR_clear_error();
 	status = BIO_read(bio, Stream_Pointer(s), encodingContext->payloadLength);
