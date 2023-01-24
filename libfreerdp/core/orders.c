@@ -2457,7 +2457,7 @@ static CACHE_COLOR_TABLE_ORDER* update_read_cache_color_table_order(rdpUpdate* u
 		goto fail;
 	}
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4ull * cache_color_table->numberColors))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, cache_color_table->numberColors, 4ull))
 		goto fail;
 
 	colorTable = (UINT32*)&cache_color_table->colorTable;
@@ -2557,7 +2557,8 @@ static CACHE_GLYPH_ORDER* update_read_cache_glyph_order(rdpUpdate* update, wStre
 		if (!cache_glyph_order->unicodeCharacters)
 			goto fail;
 
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(WCHAR) * cache_glyph_order->cGlyphs))
+		if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, cache_glyph_order->cGlyphs,
+		                                            sizeof(WCHAR)))
 			goto fail;
 
 		Stream_Read_UTF16_String(s, cache_glyph_order->unicodeCharacters,
@@ -2664,7 +2665,7 @@ static CACHE_GLYPH_V2_ORDER* update_read_cache_glyph_v2_order(rdpUpdate* update,
 		if (!cache_glyph_v2->unicodeCharacters)
 			goto fail;
 
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(WCHAR) * cache_glyph_v2->cGlyphs))
+		if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, cache_glyph_v2->cGlyphs, sizeof(WCHAR)))
 			goto fail;
 
 		Stream_Read_UTF16_String(s, cache_glyph_v2->unicodeCharacters, cache_glyph_v2->cGlyphs);
@@ -2729,7 +2730,7 @@ static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BY
 	const BYTE* palette = Stream_Pointer(s) + 16;
 	const size_t bytesPerPixel = ((bpp + 1) / 8);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16ULL + bytesPerPixel * 4ULL))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, 4ULL + bytesPerPixel, 4ULL))
 		return FALSE;
 
 	for (y = 7; y >= 0; y--)
@@ -2829,7 +2830,7 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 				/* uncompressed brush */
 				UINT32 scanline = (cache_brush->bpp / 8) * 8;
 
-				if (!Stream_CheckAndLogRequiredLength(TAG, s, 8ull * scanline))
+				if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, scanline, 8ull))
 					goto fail;
 
 				for (i = 7; i >= 0; i--)
@@ -2967,7 +2968,7 @@ update_read_create_offscreen_bitmap_order(wStream* s,
 			deleteList->indices = new_indices;
 		}
 
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2ull * deleteList->cIndices))
+		if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, deleteList->cIndices, 2ull))
 			return FALSE;
 
 		for (i = 0; i < deleteList->cIndices; i++)

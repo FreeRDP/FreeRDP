@@ -160,7 +160,7 @@ static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min, size_t eleme
 	if (len > SIZE_MAX / 2)
 		return STATUS_BUFFER_TOO_SMALL;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, len * elementSize * 1ull))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, len, elementSize))
 		return STATUS_BUFFER_TOO_SMALL;
 
 	len *= elementSize;

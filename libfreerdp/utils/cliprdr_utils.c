@@ -82,7 +82,7 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 
 	Stream_Read_UINT32(s, count); /* cItems (4 bytes) */
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, CLIPRDR_FILEDESCRIPTOR_SIZE * count * 1ull))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, count, CLIPRDR_FILEDESCRIPTOR_SIZE))
 	{
 		result = ERROR_INCORRECT_SIZE;
 		goto out;

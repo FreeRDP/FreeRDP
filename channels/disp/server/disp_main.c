@@ -154,8 +154,8 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 		return ERROR_INVALID_DATA;
 	}
 
-	if (!Stream_CheckAndLogRequiredLength(
-	        TAG, s, pdu.NumMonitors * 1ull * DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, pdu.NumMonitors,
+	                                            DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE))
 		return ERROR_INVALID_DATA;
 
 	pdu.Monitors = (DISPLAY_CONTROL_MONITOR_LAYOUT*)calloc(pdu.NumMonitors,
