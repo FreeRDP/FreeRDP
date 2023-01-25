@@ -59,6 +59,7 @@ int sdl_list_monitors(sdlContext* sdl)
 	SDL_Init(SDL_INIT_VIDEO);
 	const int nmonitors = SDL_GetNumVideoDisplays();
 
+	printf("listing %d monitors:\n", nmonitors);
 	for (int i = 0; i < nmonitors; i++)
 	{
 		SDL_Rect rect = { 0 };
