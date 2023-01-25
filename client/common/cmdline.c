@@ -1580,7 +1580,10 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 			else if (option_equals("smartcard", arg->Value))
 				freerdp_smartcard_list(settings);
 			else
+			{
+				freerdp_client_print_command_line_help_ex(argc, argv, custom);
 				return COMMAND_LINE_ERROR;
+			}
 		}
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 		arg = CommandLineFindArgumentA(largs, "tune-list");
