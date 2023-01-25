@@ -963,6 +963,17 @@ terminate:
  * if available. */
 static BOOL sdl_client_global_init(void)
 {
+#if defined(_WIN32)
+	WSADATA wsaData = { 0 };
+	const DWORD wVersionRequested = MAKEWORD(1, 1);
+	const int rc = WSAStartup(wVersionRequested, &wsaData);
+	if (rc != 0)
+	{
+		WLog_ERR(SDL_TAG, "WSAStartup failed with %s [%d]", gai_strerrorA(rc), rc);
+		return FALSE;
+	}
+#endif
+
 	if (freerdp_handle_signals() != 0)
 		return FALSE;
 
@@ -972,6 +983,9 @@ static BOOL sdl_client_global_init(void)
 /* Optional global tear down */
 static void sdl_client_global_uninit(void)
 {
+#if defined(_WIN32)
+	WSACleanup();
+#endif
 }
 
 static int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
