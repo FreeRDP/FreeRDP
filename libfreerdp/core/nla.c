@@ -897,6 +897,7 @@ BOOL nla_encrypt_public_key_echo(rdpNla* nla)
 
 	WINPR_ASSERT(nla);
 
+	sspi_SecBufferFree(&nla->pubKeyAuth);
 	if (nla->server)
 	{
 		SecBuffer buf;
@@ -951,8 +952,11 @@ BOOL nla_encrypt_public_key_hash(rdpNla* nla)
 	if (!winpr_Digest_Final(sha256, buf.pvBuffer, WINPR_SHA256_DIGEST_LENGTH))
 		goto out;
 
-	if (credssp_auth_encrypt(nla->auth, &buf, &nla->pubKeyAuth, NULL, nla->sendSeqNum++))
-		status = TRUE;
+	sspi_SecBufferFree(&nla->pubKeyAuth);
+	if (!credssp_auth_encrypt(nla->auth, &buf, &nla->pubKeyAuth, NULL, nla->sendSeqNum++))
+		goto out;
+
+	status = TRUE;
 
 out:
 	winpr_Digest_Free(sha256);
@@ -1272,6 +1276,7 @@ static BOOL nla_encrypt_ts_credentials(rdpNla* nla)
 	if (!nla_encode_ts_credentials(nla))
 		return FALSE;
 
+	sspi_SecBufferFree(&nla->authInfo);
 	if (!credssp_auth_encrypt(nla->auth, &nla->tsCredentials, &nla->authInfo, NULL,
 	                          nla->sendSeqNum++))
 		return FALSE;
@@ -1289,6 +1294,7 @@ static BOOL nla_decrypt_ts_credentials(rdpNla* nla)
 		return FALSE;
 	}
 
+	sspi_SecBufferFree(&nla->tsCredentials);
 	if (!credssp_auth_decrypt(nla->auth, &nla->authInfo, &nla->tsCredentials, nla->recvSeqNum++))
 		return FALSE;
 
