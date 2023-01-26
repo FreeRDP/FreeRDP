@@ -1366,8 +1366,8 @@ BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs, wStream* s, int* reason
 
 BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs)
 {
-	wStream* s;
-	int status;
+	wStream* s = NULL;
+	int status = -1;
 	UINT16 length = 9;
 
 	WINPR_ASSERT(mcs);
@@ -1375,14 +1375,15 @@ BOOL mcs_send_disconnect_provider_ultimatum(rdpMcs* mcs)
 	s = Stream_New(NULL, length);
 
 	if (!s)
-	{
-		WLog_ERR(TAG, "Stream_New failed!");
-		return FALSE;
-	}
+		goto fail;
 
-	mcs_write_domain_mcspdu_header(s, DomainMCSPDU_DisconnectProviderUltimatum, length, 1);
-	per_write_enumerated(s, 0x80, 0);
+	if (!mcs_write_domain_mcspdu_header(s, DomainMCSPDU_DisconnectProviderUltimatum, length, 1))
+		goto fail;
+
+	if (!per_write_enumerated(s, 0x80, 0))
+		goto fail;
 	status = transport_write(mcs->transport, s);
+fail:
 	Stream_Free(s, TRUE);
 	return (status < 0) ? FALSE : TRUE;
 }
