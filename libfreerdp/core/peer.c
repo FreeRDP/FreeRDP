@@ -385,7 +385,8 @@ static state_run_t peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 t
 
 		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
 			mcs_send_disconnect_provider_ultimatum(client->context->rdp->mcs);
-			return STATE_RUN_FAILED;
+			WLog_WARN(TAG, "disconnect provider ultimatum sent to peer, closing connection");
+			return STATE_RUN_QUIT_SESSION;
 
 		case DATA_PDU_TYPE_FRAME_ACKNOWLEDGE:
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
@@ -759,6 +760,7 @@ static state_run_t rdp_peer_handle_state_active(freerdp_peer* client)
 	}
 	if (!client->connected)
 	{
+		WLog_ERR(TAG, "PostConnect for peer %p failed", client);
 		ret = STATE_RUN_FAILED;
 	}
 	else if (!client->activated)
@@ -772,7 +774,10 @@ static state_run_t rdp_peer_handle_state_active(freerdp_peer* client)
 		IFCALLRET(client->Activate, activated, client);
 
 		if (!activated)
+		{
+			WLog_ERR(TAG, "Activate for peer %p failed", client);
 			ret = STATE_RUN_FAILED;
+		}
 		else
 			ret = STATE_RUN_SUCCESS;
 	}
