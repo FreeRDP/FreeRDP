@@ -104,8 +104,6 @@ rdpCredsspAuth* credssp_auth_new(const rdpContext* rdp_ctx)
 
 BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bindings* bindings)
 {
-	SECURITY_STATUS status;
-
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->rdp_ctx);
 
@@ -121,7 +119,7 @@ BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bind
 
 	/* Package name will be stored in the info structure */
 	WINPR_ASSERT(auth->table->QuerySecurityPackageInfo);
-	status = auth->table->QuerySecurityPackageInfo(pkg_name, &auth->info);
+	const SECURITY_STATUS status = auth->table->QuerySecurityPackageInfo(pkg_name, &auth->info);
 	if (status != SEC_E_OK)
 	{
 		WLog_ERR(TAG, "QuerySecurityPackageInfo (%s) failed with %s [0x%08X]", pkg_name,
@@ -176,12 +174,12 @@ static BOOL credssp_auth_setup_auth_data(rdpCredsspAuth* auth,
 
 static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 {
-	SECURITY_STATUS status;
-
 	WINPR_ASSERT(auth);
 
 	if (auth->kerberosSettings.kdcUrl)
 	{
+		SECURITY_STATUS status = ERROR_INTERNAL_ERROR;
+
 #ifdef UNICODE
 		SecPkgCredentials_KdcUrlW secAttr = { NULL };
 		secAttr.KdcUrl = ConvertUtf8ToWCharAlloc(auth->kerberosSettings.kdcUrl, NULL);
@@ -220,9 +218,8 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
                                const char* target_hostname, const SEC_WINNT_AUTH_IDENTITY* identity,
                                const char* pkinit)
 {
-	SECURITY_STATUS status;
 	void* pAuthData = NULL;
-	SEC_WINNT_AUTH_IDENTITY_WINPR winprAuthData;
+	SEC_WINNT_AUTH_IDENTITY_WINPR winprAuthData = { 0 };
 
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->table);
@@ -252,7 +249,7 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 	}
 
 	WINPR_ASSERT(auth->table->AcquireCredentialsHandle);
-	status =
+	const SECURITY_STATUS status =
 	    auth->table->AcquireCredentialsHandle(NULL, auth->info->Name, SECPKG_CRED_OUTBOUND, NULL,
 	                                          pAuthData, NULL, NULL, &auth->credentials, NULL);
 
@@ -277,9 +274,8 @@ BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
 
 BOOL credssp_auth_setup_server(rdpCredsspAuth* auth)
 {
-	SECURITY_STATUS status;
 	void* pAuthData = NULL;
-	SEC_WINNT_AUTH_IDENTITY_WINPR winprAuthData;
+	SEC_WINNT_AUTH_IDENTITY_WINPR winprAuthData = { 0 };
 
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->table);
@@ -294,7 +290,7 @@ BOOL credssp_auth_setup_server(rdpCredsspAuth* auth)
 	}
 
 	WINPR_ASSERT(auth->table->AcquireCredentialsHandle);
-	status =
+	const SECURITY_STATUS status =
 	    auth->table->AcquireCredentialsHandle(NULL, auth->info->Name, SECPKG_CRED_INBOUND, NULL,
 	                                          pAuthData, NULL, NULL, &auth->credentials, NULL);
 	if (status != SEC_E_OK)
@@ -358,7 +354,7 @@ void credssp_auth_set_flags(rdpCredsspAuth* auth, ULONG flags)
 
 int credssp_auth_authenticate(rdpCredsspAuth* auth)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = ERROR_INTERNAL_ERROR;
 	SecBuffer input_buffers[2] = { 0 };
 	SecBufferDesc input_buffer_desc = { SECBUFFER_VERSION, 1, input_buffers };
 	CtxtHandle* context = NULL;
@@ -453,8 +449,8 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 BOOL credssp_auth_encrypt(rdpCredsspAuth* auth, const SecBuffer* plaintext, SecBuffer* ciphertext,
                           size_t* signature_length, ULONG sequence)
 {
-	SECURITY_STATUS status;
-	SecBuffer buffers[2];
+	SECURITY_STATUS status = ERROR_INTERNAL_ERROR;
+	SecBuffer buffers[2] = { 0 };
 	SecBufferDesc buffer_desc = { SECBUFFER_VERSION, 2, buffers };
 	BYTE* buf = NULL;
 
@@ -517,10 +513,9 @@ BOOL credssp_auth_encrypt(rdpCredsspAuth* auth, const SecBuffer* plaintext, SecB
 BOOL credssp_auth_decrypt(rdpCredsspAuth* auth, const SecBuffer* ciphertext, SecBuffer* plaintext,
                           ULONG sequence)
 {
-	SECURITY_STATUS status;
 	SecBuffer buffers[2];
 	SecBufferDesc buffer_desc = { SECBUFFER_VERSION, 2, buffers };
-	ULONG fqop;
+	ULONG fqop = 0;
 
 	WINPR_ASSERT(auth && auth->table);
 	WINPR_ASSERT(ciphertext);
@@ -555,7 +550,8 @@ BOOL credssp_auth_decrypt(rdpCredsspAuth* auth, const SecBuffer* ciphertext, Sec
 	           buffers[1].cbBuffer);
 
 	WINPR_ASSERT(auth->table->DecryptMessage);
-	status = auth->table->DecryptMessage(&auth->context, &buffer_desc, sequence, &fqop);
+	const SECURITY_STATUS status =
+	    auth->table->DecryptMessage(&auth->context, &buffer_desc, sequence, &fqop);
 	if (status != SEC_E_OK)
 	{
 		WLog_ERR(TAG, "DecryptMessage failed with %s [0x%08X]", GetSecurityStatusString(status),
@@ -571,12 +567,10 @@ BOOL credssp_auth_decrypt(rdpCredsspAuth* auth, const SecBuffer* ciphertext, Sec
 
 BOOL credssp_auth_impersonate(rdpCredsspAuth* auth)
 {
-	SECURITY_STATUS status;
-
 	WINPR_ASSERT(auth && auth->table);
 
 	WINPR_ASSERT(auth->table->ImpersonateSecurityContext);
-	status = auth->table->ImpersonateSecurityContext(&auth->context);
+	const SECURITY_STATUS status = auth->table->ImpersonateSecurityContext(&auth->context);
 
 	if (status != SEC_E_OK)
 	{
@@ -590,12 +584,10 @@ BOOL credssp_auth_impersonate(rdpCredsspAuth* auth)
 
 BOOL credssp_auth_revert_to_self(rdpCredsspAuth* auth)
 {
-	SECURITY_STATUS status;
-
 	WINPR_ASSERT(auth && auth->table);
 
 	WINPR_ASSERT(auth->table->RevertSecurityContext);
-	status = auth->table->RevertSecurityContext(&auth->context);
+	const SECURITY_STATUS status = auth->table->RevertSecurityContext(&auth->context);
 
 	if (status != SEC_E_OK)
 	{
