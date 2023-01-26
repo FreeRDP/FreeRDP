@@ -1321,6 +1321,39 @@ static BOOL nla_decrypt_ts_credentials(rdpNla* nla)
 	return TRUE;
 }
 
+static BOOL nla_write_octet_string(WinPrAsn1Encoder* enc, const SecBuffer* buffer,
+                                   WinPrAsn1_tagId tagId, const char* msg)
+{
+	BOOL res = FALSE;
+
+	WINPR_ASSERT(enc);
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(msg);
+
+	if (buffer->cbBuffer > 0)
+	{
+		size_t rc = 0;
+		WinPrAsn1_OctetString octet_string = { 0 };
+
+		WLog_DBG(TAG, "   ----->> %s", msg);
+		octet_string.data = buffer->pvBuffer;
+		octet_string.len = buffer->cbBuffer;
+		rc = WinPrAsn1EncContextualOctetString(enc, tagId, &octet_string);
+		if (rc != 0)
+			res = TRUE;
+	}
+
+	return res;
+}
+
+static BOOL nla_write_octet_string_free(WinPrAsn1Encoder* enc, SecBuffer* buffer,
+                                        WinPrAsn1_tagId tagId, const char* msg)
+{
+	BOOL rc = nla_write_octet_string(enc, buffer, tagId, msg);
+	sspi_SecBufferFree(buffer);
+	return rc;
+}
+
 /**
  * Send CredSSP message.
  *
@@ -1333,9 +1366,8 @@ BOOL nla_send(rdpNla* nla)
 {
 	BOOL rc = FALSE;
 	wStream* s = NULL;
-	size_t length;
-	WinPrAsn1Encoder* enc;
-	WinPrAsn1_OctetString octet_string;
+	size_t length = 0;
+	WinPrAsn1Encoder* enc = NULL;
 
 	WINPR_ASSERT(nla);
 
@@ -1358,14 +1390,11 @@ BOOL nla_send(rdpNla* nla)
 	{
 		const SecBuffer* buffer = credssp_auth_get_output_buffer(nla->auth);
 
-		WLog_DBG(TAG, "   ----->> nego token");
 		if (!WinPrAsn1EncContextualSeqContainer(enc, 1) || !WinPrAsn1EncSeqContainer(enc))
 			goto fail;
 
 		/* negoToken [0] OCTET STRING */
-		octet_string.data = buffer->pvBuffer;
-		octet_string.len = buffer->cbBuffer;
-		if (WinPrAsn1EncContextualOctetString(enc, 0, &octet_string) == 0)
+		if (!nla_write_octet_string(enc, buffer, 0, "negoToken"))
 			goto fail;
 
 		/* End negoTokens (SEQUENCE OF SEQUENCE) */
@@ -1376,23 +1405,15 @@ BOOL nla_send(rdpNla* nla)
 	/* authInfo [2] OCTET STRING */
 	if (nla->authInfo.cbBuffer > 0)
 	{
-		WLog_DBG(TAG, "   ----->> auth info");
-		octet_string.data = nla->authInfo.pvBuffer;
-		octet_string.len = nla->authInfo.cbBuffer;
-		if (WinPrAsn1EncContextualOctetString(enc, 2, &octet_string) == 0)
+		if (!nla_write_octet_string_free(enc, &nla->authInfo, 2, "auth info"))
 			goto fail;
-		sspi_SecBufferFree(&nla->authInfo);
 	}
 
 	/* pubKeyAuth [3] OCTET STRING */
 	if (nla->pubKeyAuth.cbBuffer > 0)
 	{
-		WLog_DBG(TAG, "   ----->> public key auth");
-		octet_string.data = nla->pubKeyAuth.pvBuffer;
-		octet_string.len = nla->pubKeyAuth.cbBuffer;
-		if (WinPrAsn1EncContextualOctetString(enc, 3, &octet_string) == 0)
+		if (!nla_write_octet_string_free(enc, &nla->pubKeyAuth, 3, "public key auth"))
 			goto fail;
-		sspi_SecBufferFree(&nla->pubKeyAuth);
 	}
 
 	/* errorCode [4] INTEGER */
@@ -1407,10 +1428,7 @@ BOOL nla_send(rdpNla* nla)
 	/* clientNonce [5] OCTET STRING */
 	if (!nla->server && nla->ClientNonce.cbBuffer > 0)
 	{
-		WLog_DBG(TAG, "   ----->> client nonce");
-		octet_string.data = nla->ClientNonce.pvBuffer;
-		octet_string.len = nla->ClientNonce.cbBuffer;
-		if (WinPrAsn1EncContextualOctetString(enc, 5, &octet_string) == 0)
+		if (!nla_write_octet_string(enc, &nla->ClientNonce, 5, "client nonce"))
 			goto fail;
 	}
 
