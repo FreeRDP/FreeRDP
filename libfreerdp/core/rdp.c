@@ -1317,6 +1317,9 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 	WINPR_ASSERT(pLength);
 
 	length = *pLength;
+	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_NONE)
+		return TRUE;
+
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
 		UINT16 len;
