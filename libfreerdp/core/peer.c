@@ -900,17 +900,16 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 
 		case CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT:
 			ret = STATE_RUN_SUCCESS;
-			if (rdp->settings->UseRdpSecurityLayer)
+
+			if (!rdp_server_establish_keys(rdp, s))
 			{
-				if (!rdp_server_establish_keys(rdp, s))
-				{
-					WLog_ERR(TAG,
-					         "%s - "
-					         "rdp_server_establish_keys() fail",
-					         rdp_get_state_string(rdp));
-					ret = STATE_RUN_FAILED;
-				}
+				WLog_ERR(TAG,
+				         "%s - "
+				         "rdp_server_establish_keys() fail",
+				         rdp_get_state_string(rdp));
+				ret = STATE_RUN_FAILED;
 			}
+
 			if (state_run_success(ret))
 			{
 				if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE))
@@ -937,16 +936,17 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			break;
 
 		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST:
-		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE:
-			if (settings->EarlyCapabilityFlags & RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT)
-			{
+			if (freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
 				ret = peer_recv_handle_auto_detect(client, s);
-			}
 			else
 			{
 				if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING))
 					ret = STATE_RUN_CONTINUE;
 			}
+			break;
+
+		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE:
+			ret = peer_recv_handle_auto_detect(client, s);
 			break;
 
 		case CONNECTION_STATE_LICENSING:
@@ -996,7 +996,7 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT:
-			if (settings->EarlyCapabilityFlags & RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU)
+			if (freerdp_settings_get_bool(settings, FreeRDP_SupportMonitorLayoutPdu))
 			{
 				MONITOR_DEF* monitors = NULL;
 
@@ -1045,7 +1045,8 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			}
 			else
 			{
-				if (Stream_GetRemainingLength(s) > 0)
+				const size_t len = Stream_GetRemainingLength(s);
+				if (len > 0)
 					ret = STATE_RUN_CONTINUE;
 				else
 					ret = STATE_RUN_SUCCESS;
