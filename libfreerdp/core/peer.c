@@ -920,14 +920,7 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			break;
 
 		case CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE:
-			if (!rdp_recv_client_info(rdp, s))
-			{
-				WLog_ERR(TAG,
-				         "%s - "
-				         "rdp_recv_client_info() fail",
-				         rdp_get_state_string(rdp));
-			}
-			else
+			if (rdp_recv_client_info(rdp, s))
 			{
 				if (rdp_server_transition_to_state(
 				        rdp, CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST))
@@ -936,13 +929,7 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			break;
 
 		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST:
-			if (freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
-				ret = peer_recv_handle_auto_detect(client, s);
-			else
-			{
-				if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING))
-					ret = STATE_RUN_CONTINUE;
-			}
+			ret = peer_recv_handle_auto_detect(client, s);
 			break;
 
 		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE:
