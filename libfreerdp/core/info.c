@@ -717,9 +717,15 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 		return FALSE;
 
 	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
-		return rdp_read_extended_info_packet(rdp, s); /* extraInfo */
+	{
+		if (!rdp_read_extended_info_packet(rdp, s)) /* extraInfo */
+			return FALSE;
+	}
 
-	return tpkt_ensure_stream_consumed(s, tpktlength);
+	const size_t xrem = Stream_GetRemainingLength(s);
+	if (!tpkt_ensure_stream_consumed(s, tpktlength))
+		Stream_Seek(s, xrem);
+	return TRUE;
 }
 
 /**
