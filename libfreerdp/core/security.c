@@ -866,9 +866,9 @@ BOOL security_fips_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 
 BOOL security_fips_check_signature(const BYTE* data, size_t length, const BYTE* sig, rdpRdp* rdp)
 {
-	BYTE buf[WINPR_SHA1_DIGEST_LENGTH];
-	BYTE use_count_le[4];
-	WINPR_HMAC_CTX* hmac;
+	BYTE buf[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
+	BYTE use_count_le[4] = { 0 };
+	WINPR_HMAC_CTX* hmac = NULL;
 	BOOL result = FALSE;
 	EnterCriticalSection(&rdp->critical);
 	security_UINT32_le(use_count_le, rdp->decrypt_use_count++);
@@ -893,6 +893,8 @@ BOOL security_fips_check_signature(const BYTE* data, size_t length, const BYTE* 
 		result = TRUE;
 
 out:
+	if (!result)
+		WLog_WARN(TAG, "signature check failed");
 	winpr_HMAC_Free(hmac);
 	return result;
 }
