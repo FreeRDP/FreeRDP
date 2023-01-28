@@ -1507,7 +1507,8 @@ static BOOL license_read_encrypted_premaster_secret_blob(wStream* s, LICENSE_BLO
 {
 	if (!license_read_binary_blob(s, blob))
 		return FALSE;
-	// TODO
+	WINPR_ASSERT(ModulusLength);
+	*ModulusLength = blob->length;
 	return TRUE;
 }
 
