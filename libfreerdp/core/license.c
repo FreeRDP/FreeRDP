@@ -1009,9 +1009,9 @@ void license_generate_randoms(rdpLicense* license)
 	winpr_RAND(license->ServerRandom, sizeof(license->ServerRandom)); /* ServerRandom */
 
 #ifdef LICENSE_NULL_PREMASTER_SECRET
-	ZeroMemory(license->PremasterSecret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
+	ZeroMemory(license->PremasterSecret, sizeof(license->PremasterSecret)); /* PremasterSecret */
 #else
-	winpr_RAND(license->PremasterSecret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
+	winpr_RAND(license->PremasterSecret, sizeof(license->PremasterSecret)); /* PremasterSecret */
 #endif
 }
 
@@ -1047,7 +1047,7 @@ static BOOL license_generate_keys(rdpLicense* license)
 	WLog_DBG(TAG, "ServerRandom:");
 	winpr_HexDump(TAG, WLOG_DEBUG, license->ServerRandom, sizeof(license->ServerRandom));
 	WLog_DBG(TAG, "PremasterSecret:");
-	winpr_HexDump(TAG, WLOG_DEBUG, license->PremasterSecret, PREMASTER_SECRET_LENGTH);
+	winpr_HexDump(TAG, WLOG_DEBUG, license->PremasterSecret, sizeof(license->PremasterSecret));
 	WLog_DBG(TAG, "MasterSecret:");
 	winpr_HexDump(TAG, WLOG_DEBUG, license->MasterSecret, sizeof(license->MasterSecret));
 	WLog_DBG(TAG, "SessionKeyBlob:");
@@ -1153,7 +1153,7 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 		return FALSE;
 
 	license->EncryptedPremasterSecret->type = BB_RANDOM_BLOB;
-	license->EncryptedPremasterSecret->length = PREMASTER_SECRET_LENGTH;
+	license->EncryptedPremasterSecret->length = sizeof(license->PremasterSecret);
 #ifndef LICENSE_NULL_PREMASTER_SECRET
 	{
 		const SSIZE_T length =
