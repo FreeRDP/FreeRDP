@@ -1076,7 +1076,7 @@ BOOL license_generate_hwid(rdpLicense* license)
 	WINPR_ASSERT(license->rdp);
 	WINPR_ASSERT(license->rdp->settings);
 
-	ZeroMemory(license->HardwareId, HWID_LENGTH);
+	ZeroMemory(license->HardwareId, sizeof(license->HardwareId));
 
 	if (license->rdp->settings->OldLicenseBehaviour)
 	{
@@ -2301,7 +2301,7 @@ BOOL license_answer_license_request(rdpLicense* license)
 
 		WINPR_ASSERT(license->EncryptedHardwareId);
 		license->EncryptedHardwareId->type = BB_ENCRYPTED_DATA_BLOB;
-		if (!license_encrypt_and_MAC(license, license->HardwareId, HWID_LENGTH,
+		if (!license_encrypt_and_MAC(license, license->HardwareId, sizeof(license->HardwareId),
 		                             license->EncryptedHardwareId, signature, sizeof(signature)))
 		{
 			free(license_data);
@@ -2397,7 +2397,7 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	Stream_SealLength(challengeRespData);
 
 	/* compute MAC of PLATFORM_CHALLENGE_RESPONSE_DATA + HWID */
-	length = Stream_Length(challengeRespData) + HWID_LENGTH;
+	length = Stream_Length(challengeRespData) + sizeof(license->HardwareId);
 	buffer = (BYTE*)malloc(length);
 	if (!buffer)
 	{
@@ -2406,7 +2406,8 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	}
 
 	CopyMemory(buffer, Stream_Buffer(challengeRespData), Stream_Length(challengeRespData));
-	CopyMemory(&buffer[Stream_Length(challengeRespData)], license->HardwareId, HWID_LENGTH);
+	CopyMemory(&buffer[Stream_Length(challengeRespData)], license->HardwareId,
+	           sizeof(license->HardwareId));
 	status = security_mac_data(license->MacSaltKey, sizeof(license->MacSaltKey),
 	                           sizeof(license->MacSaltKey), buffer, length, license->MACData);
 	free(buffer);
@@ -2418,7 +2419,7 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	}
 
 	license->EncryptedHardwareId->type = BB_ENCRYPTED_DATA_BLOB;
-	if (!license_rc4_with_licenseKey(license, license->HardwareId, HWID_LENGTH,
+	if (!license_rc4_with_licenseKey(license, license->HardwareId, sizeof(license->HardwareId),
 	                                 license->EncryptedHardwareId))
 	{
 		Stream_Free(challengeRespData, TRUE);
@@ -2436,9 +2437,10 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	WLog_DBG(TAG, "LicensingEncryptionKey:");
 	winpr_HexDump(TAG, WLOG_DEBUG, license->LicensingEncryptionKey, 16);
 	WLog_DBG(TAG, "HardwareId:");
-	winpr_HexDump(TAG, WLOG_DEBUG, license->HardwareId, HWID_LENGTH);
+	winpr_HexDump(TAG, WLOG_DEBUG, license->HardwareId, sizeof(license->HardwareId));
 	WLog_DBG(TAG, "EncryptedHardwareId:");
-	winpr_HexDump(TAG, WLOG_DEBUG, license->EncryptedHardwareId->data, HWID_LENGTH);
+	winpr_HexDump(TAG, WLOG_DEBUG, license->EncryptedHardwareId->data,
+	              license->EncryptedHardwareId->length);
 #endif
 	if (license_write_client_platform_challenge_response(license, s))
 		return license_send(license, s, PLATFORM_CHALLENGE_RESPONSE);
