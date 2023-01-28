@@ -718,13 +718,9 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		return FALSE;
 
 	/* encrypt client random */
-	free(settings->ClientRandom);
-	settings->ClientRandomLength = CLIENT_RANDOM_LENGTH;
-	settings->ClientRandom = malloc(settings->ClientRandomLength);
-
-	if (!settings->ClientRandom)
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ClientRandom, NULL,
+	                                      CLIENT_RANDOM_LENGTH))
 		return FALSE;
-
 	winpr_RAND(settings->ClientRandom, settings->ClientRandomLength);
 
 	WINPR_ASSERT(settings->RdpServerCertificate);
@@ -843,7 +839,7 @@ static BOOL rdp_update_client_random(rdpSettings* settings, const BYTE* crypt_ra
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ClientRandom, NULL, length))
 		return FALSE;
 
-	BYTE* client_random = freerdp_settings_get_pointer(settings, FreeRDP_ClientRandom);
+	BYTE* client_random = freerdp_settings_get_pointer_writable(settings, FreeRDP_ClientRandom);
 	WINPR_ASSERT(client_random);
 	return crypto_rsa_private_decrypt(crypt_random, crypt_random_len - 8, rsa, client_random,
 	                                  length) > 0;
