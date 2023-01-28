@@ -635,6 +635,10 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 
 		if (sec_flags & SEC_ENCRYPT)
 		{
+			BOOL res = FALSE;
+			if (!security_lock(rdp))
+				return FALSE;
+
 			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
 				data = Stream_Pointer(s) + 12;
@@ -653,10 +657,11 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 				Stream_Write_UINT8(s, *pad);
 
 				if (!security_hmac_signature(data, length, Stream_Pointer(s), rdp))
-					return FALSE;
+					goto unlock;
 
 				Stream_Seek(s, 8);
-				security_fips_encrypt(data, length + *pad, rdp);
+				if (!security_fips_encrypt(data, length + *pad, rdp))
+					goto unlock;
 			}
 			else
 			{
@@ -670,13 +675,21 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 					status = security_mac_signature(rdp, data, length, Stream_Pointer(s));
 
 				if (!status)
-					return FALSE;
+					goto unlock;
 
 				Stream_Seek(s, 8);
 
 				if (!security_encrypt(Stream_Pointer(s), length, rdp))
-					return FALSE;
+					goto unlock;
 			}
+			res = TRUE;
+
+		unlock:
+
+			if (!security_unlock(rdp))
+				return FALSE;
+			if (!res)
+				return FALSE;
 		}
 
 		rdp->sec_flags = 0;
@@ -1318,6 +1331,9 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(pLength);
 
+	if (!security_lock(rdp))
+		return FALSE;
+
 	length = *pLength;
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_NONE)
 		return TRUE;
@@ -1397,6 +1413,8 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 	}
 	res = TRUE;
 unlock:
+	if (!security_unlock(rdp))
+		return FALSE;
 	return res;
 }
 

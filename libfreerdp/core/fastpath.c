@@ -983,6 +983,10 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 
 	if (rdp->sec_flags & SEC_ENCRYPT)
 	{
+		BOOL status = FALSE;
+		if (!security_lock(rdp))
+			goto fail;
+
 		int sec_bytes = fastpath_get_sec_bytes(fastpath->rdp);
 		BYTE* fpInputEvents = Stream_Pointer(s) + sec_bytes;
 		UINT16 fpInputEvents_length = length - 3 - sec_bytes;
@@ -1001,30 +1005,36 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 
 			if (!security_hmac_signature(fpInputEvents, fpInputEvents_length, Stream_Pointer(s),
 			                             rdp))
-				goto fail;
+				goto unlock;
 
 			if (pad)
 				memset(fpInputEvents + fpInputEvents_length, 0, pad);
 
 			if (!security_fips_encrypt(fpInputEvents, fpInputEvents_length + pad, rdp))
-				goto fail;
+				goto unlock;
 
 			length += pad;
 		}
 		else
 		{
-			BOOL status;
-
+			BOOL res;
 			if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
-				status = security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length,
-				                                       TRUE, Stream_Pointer(s));
+				res = security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, TRUE,
+				                                    Stream_Pointer(s));
 			else
-				status = security_mac_signature(rdp, fpInputEvents, fpInputEvents_length,
-				                                Stream_Pointer(s));
+				res = security_mac_signature(rdp, fpInputEvents, fpInputEvents_length,
+				                             Stream_Pointer(s));
 
-			if (!status || !security_encrypt(fpInputEvents, fpInputEvents_length, rdp))
-				goto fail;
+			if (!res || !security_encrypt(fpInputEvents, fpInputEvents_length, rdp))
+				goto unlock;
 		}
+
+		status = TRUE;
+	unlock:
+		if (!security_unlock(rdp))
+			goto fail;
+		if (!status)
+			goto fail;
 	}
 
 	rdp->sec_flags = 0;
@@ -1220,15 +1230,19 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 		if (rdp->sec_flags & SEC_ENCRYPT)
 		{
+			BOOL res = FALSE;
+			if (!security_lock(rdp))
+				return FALSE;
 			UINT32 dataSize = fpUpdateHeaderSize + DstSize + pad;
 			BYTE* data = Stream_Pointer(fs) - dataSize;
 
 			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
 				if (!security_hmac_signature(data, dataSize - pad, pSignature, rdp))
-					return FALSE;
+					goto unlock;
 
-				security_fips_encrypt(data, dataSize, rdp);
+				if (!security_fips_encrypt(data, dataSize, rdp))
+					goto unlock;
 			}
 			else
 			{
@@ -1238,8 +1252,15 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 					status = security_mac_signature(rdp, data, dataSize, pSignature);
 
 				if (!status || !security_encrypt(data, dataSize, rdp))
-					return FALSE;
+					goto unlock;
 			}
+			res = TRUE;
+
+		unlock:
+			if (!security_unlock(rdp))
+				return FALSE;
+			if (!res)
+				return FALSE;
 		}
 
 		Stream_SealLength(fs);
