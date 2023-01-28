@@ -34,9 +34,9 @@
 int main(int argc, char** argv)
 {
 	int status = 0;
-	DWORD dwExitCode;
-	rdpSettings* settings;
-	rdpShadowServer* server;
+	DWORD dwExitCode = 0;
+	rdpSettings* settings = NULL;
+	rdpShadowServer* server = NULL;
 	COMMAND_LINE_ARGUMENT_A shadow_args[] = {
 		{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<tag>:<level>[,<tag>:<level>[,...]]", NULL,
 		  NULL, -1, NULL, "Set logger filters, see wLog(7) for details" },
@@ -104,26 +104,28 @@ int main(int argc, char** argv)
 	{
 		status = -1;
 		WLog_ERR(TAG, "Server new failed");
-		goto fail_server_new;
+		goto fail;
 	}
 
 	settings = server->settings;
 
-	settings->NlaSecurity = TRUE;
-	settings->TlsSecurity = TRUE;
-	settings->RdpSecurity = TRUE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
+		goto fail;
 
 	/* By default allow all GFX modes.
 	 * This can be changed with command line flags [+|-]gfx-CODEC
 	 */
-	freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32);
-	freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE);
-	freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE);
-	freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE);
-	freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE);
-	freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE);
-	freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, TRUE);
-	freerdp_settings_set_bool(settings, FreeRDP_GfxProgressiveV2, TRUE);
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, TRUE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressiveV2, TRUE))
+		goto fail;
 
 #ifdef WITH_SHADOW_X11
 	server->authentication = TRUE;
@@ -134,19 +136,19 @@ int main(int argc, char** argv)
 	if ((status = shadow_server_parse_command_line(server, argc, argv, shadow_args)) < 0)
 	{
 		shadow_server_command_line_status_print(server, argc, argv, status, shadow_args);
-		goto fail_parse_command_line;
+		goto fail;
 	}
 
 	if ((status = shadow_server_init(server)) < 0)
 	{
 		WLog_ERR(TAG, "Server initialization failed.");
-		goto fail_server_init;
+		goto fail;
 	}
 
 	if ((status = shadow_server_start(server)) < 0)
 	{
 		WLog_ERR(TAG, "Failed to start server.");
-		goto fail_server_start;
+		goto fail;
 	}
 
 #ifdef _WIN32
@@ -167,11 +169,8 @@ int main(int argc, char** argv)
 	else
 		status = (int)dwExitCode;
 
-fail_server_start:
+fail:
 	shadow_server_uninit(server);
-fail_server_init:
-fail_parse_command_line:
 	shadow_server_free(server);
-fail_server_new:
 	return status;
 }
