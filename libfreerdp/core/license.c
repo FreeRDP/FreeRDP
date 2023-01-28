@@ -1001,9 +1001,9 @@ void license_generate_randoms(rdpLicense* license)
 	WINPR_ASSERT(license);
 
 #ifdef LICENSE_NULL_CLIENT_RANDOM
-	ZeroMemory(license->ClientRandom, CLIENT_RANDOM_LENGTH); /* ClientRandom */
+	ZeroMemory(license->ClientRandom, sizeof(license->ClientRandom)); /* ClientRandom */
 #else
-	winpr_RAND(license->ClientRandom, CLIENT_RANDOM_LENGTH);       /* ClientRandom */
+	winpr_RAND(license->ClientRandom, sizeof(license->ClientRandom)); /* ClientRandom */
 #endif
 
 	winpr_RAND(license->ServerRandom, SERVER_RANDOM_LENGTH); /* ServerRandom */
@@ -1043,7 +1043,7 @@ static BOOL license_generate_keys(rdpLicense* license)
 	    license->LicensingEncryptionKey); /* LicensingEncryptionKey */
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "ClientRandom:");
-	winpr_HexDump(TAG, WLOG_DEBUG, license->ClientRandom, CLIENT_RANDOM_LENGTH);
+	winpr_HexDump(TAG, WLOG_DEBUG, license->ClientRandom, sizeof(license->ClientRandom));
 	WLog_DBG(TAG, "ServerRandom:");
 	winpr_HexDump(TAG, WLOG_DEBUG, license->ServerRandom, SERVER_RANDOM_LENGTH);
 	WLog_DBG(TAG, "PremasterSecret:");
@@ -1680,7 +1680,8 @@ BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
 	if (!s)
 		return FALSE;
 
-	if (!license_check_stream_capacity(s, 8 + CLIENT_RANDOM_LENGTH, "license info::ClientRandom"))
+	if (!license_check_stream_capacity(s, 8 + sizeof(license->ClientRandom),
+	                                   "license info::ClientRandom"))
 		return FALSE;
 
 	Stream_Write_UINT32(s,
@@ -1688,7 +1689,7 @@ BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
 	Stream_Write_UINT32(s, license->PlatformId);           /* PlatformId (4 bytes) */
 
 	/* ClientRandom (32 bytes) */
-	Stream_Write(s, license->ClientRandom, CLIENT_RANDOM_LENGTH);
+	Stream_Write(s, license->ClientRandom, sizeof(license->ClientRandom));
 
 	/* Licensing Binary Blob with EncryptedPreMasterSecret: */
 	if (!license_write_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret,
@@ -1742,7 +1743,7 @@ BOOL license_read_license_info(rdpLicense* license, wStream* s)
 	const rdpCertInfo* info = &license->certificate->cert_info;
 
 	/* ClientRandom (32 bytes) */
-	if (!license_check_stream_length(s, 8 + CLIENT_RANDOM_LENGTH, "license info"))
+	if (!license_check_stream_length(s, 8 + sizeof(license->ClientRandom), "license info"))
 		goto error;
 
 	Stream_Read_UINT32(s, PreferredKeyExchangeAlg); /* PreferredKeyExchangeAlg (4 bytes) */
@@ -1751,7 +1752,7 @@ BOOL license_read_license_info(rdpLicense* license, wStream* s)
 	Stream_Read_UINT32(s, license->PlatformId); /* PlatformId (4 bytes) */
 
 	/* ClientRandom (32 bytes) */
-	Stream_Read(s, license->ClientRandom, CLIENT_RANDOM_LENGTH);
+	Stream_Read(s, license->ClientRandom, sizeof(license->ClientRandom));
 
 	/* Licensing Binary Blob with EncryptedPreMasterSecret: */
 	if (!license_read_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret,
@@ -2197,13 +2198,14 @@ BOOL license_write_new_license_request_packet(const rdpLicense* license, wStream
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->certificate);
 
-	if (!license_check_stream_capacity(s, 8 + CLIENT_RANDOM_LENGTH, "License Request"))
+	if (!license_check_stream_capacity(s, 8 + sizeof(license->ClientRandom), "License Request"))
 		return FALSE;
 
 	Stream_Write_UINT32(s,
 	                    license->PreferredKeyExchangeAlg); /* PreferredKeyExchangeAlg (4 bytes) */
 	Stream_Write_UINT32(s, license->PlatformId);           /* PlatformId (4 bytes) */
-	Stream_Write(s, license->ClientRandom, CLIENT_RANDOM_LENGTH); /* ClientRandom (32 bytes) */
+	Stream_Write(s, license->ClientRandom,
+	             sizeof(license->ClientRandom)); /* ClientRandom (32 bytes) */
 
 	if (/* EncryptedPremasterSecret */
 	    !license_write_encrypted_premaster_secret_blob(
@@ -2219,7 +2221,7 @@ BOOL license_write_new_license_request_packet(const rdpLicense* license, wStream
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "PreferredKeyExchangeAlg: 0x%08" PRIX32 "", license->PreferredKeyExchangeAlg);
 	WLog_DBG(TAG, "ClientRandom:");
-	winpr_HexDump(TAG, WLOG_DEBUG, license->ClientRandom, CLIENT_RANDOM_LENGTH);
+	winpr_HexDump(TAG, WLOG_DEBUG, license->ClientRandom, sizeof(license->ClientRandom));
 	WLog_DBG(TAG, "EncryptedPremasterSecret");
 	winpr_HexDump(TAG, WLOG_DEBUG, license->EncryptedPremasterSecret->data,
 	              license->EncryptedPremasterSecret->length);
@@ -2238,7 +2240,8 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->certificate);
 
-	if (!license_check_stream_length(s, 8ull + CLIENT_RANDOM_LENGTH, "new license request"))
+	if (!license_check_stream_length(s, 8ull + sizeof(license->ClientRandom),
+	                                 "new license request"))
 		return FALSE;
 
 	Stream_Read_UINT32(s, PreferredKeyExchangeAlg); /* PreferredKeyExchangeAlg (4 bytes) */
@@ -2246,7 +2249,8 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 		return FALSE;
 
 	Stream_Read_UINT32(s, license->PlatformId);                  /* PlatformId (4 bytes) */
-	Stream_Read(s, license->ClientRandom, CLIENT_RANDOM_LENGTH); /* ClientRandom (32 bytes) */
+	Stream_Read(s, license->ClientRandom,
+	            sizeof(license->ClientRandom)); /* ClientRandom (32 bytes) */
 
 	/* EncryptedPremasterSecret */
 	if (!license_read_encrypted_premaster_secret_blob(

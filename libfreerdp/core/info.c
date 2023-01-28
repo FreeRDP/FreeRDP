@@ -153,7 +153,7 @@ static char* rdp_info_package_flags_description(UINT32 flags)
 
 static BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 {
-	BYTE ClientRandom[32] = { 0 };
+	BYTE ClientRandom[CLIENT_RANDOM_LENGTH] = { 0 };
 	BYTE AutoReconnectRandom[32] = { 0 };
 	ARC_SC_PRIVATE_PACKET* serverCookie;
 	ARC_CS_PRIVATE_PACKET* clientCookie;
@@ -167,18 +167,17 @@ static BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 	clientCookie->cbLen = 28;
 	clientCookie->version = serverCookie->version;
 	clientCookie->logonId = serverCookie->logonId;
-	ZeroMemory(clientCookie->securityVerifier, 16);
-	ZeroMemory(AutoReconnectRandom, sizeof(AutoReconnectRandom));
-	CopyMemory(AutoReconnectRandom, serverCookie->arcRandomBits, 16);
-	ZeroMemory(ClientRandom, sizeof(ClientRandom));
+	ZeroMemory(clientCookie->securityVerifier, sizeof(clientCookie->securityVerifier));
+	CopyMemory(AutoReconnectRandom, serverCookie->arcRandomBits,
+	           sizeof(serverCookie->arcRandomBits));
 
 	if (settings->SelectedProtocol == PROTOCOL_RDP)
 		CopyMemory(ClientRandom, settings->ClientRandom, settings->ClientRandomLength);
 
 	/* SecurityVerifier = HMAC_MD5(AutoReconnectRandom, ClientRandom) */
 
-	if (!winpr_HMAC(WINPR_MD_MD5, AutoReconnectRandom, 16, ClientRandom, 32,
-	                clientCookie->securityVerifier, 16))
+	if (!winpr_HMAC(WINPR_MD_MD5, AutoReconnectRandom, 16, ClientRandom, sizeof(ClientRandom),
+	                clientCookie->securityVerifier, sizeof(clientCookie->securityVerifier)))
 		return FALSE;
 
 	return TRUE;
