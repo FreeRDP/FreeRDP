@@ -726,20 +726,21 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		return FALSE;
 
 	winpr_RAND(settings->ClientRandom, settings->ClientRandomLength);
-	key_len = settings->RdpServerCertificate->cert_info.ModulusLength;
-	mod = settings->RdpServerCertificate->cert_info.Modulus;
-	exp = settings->RdpServerCertificate->cert_info.exponent;
+
+	WINPR_ASSERT(settings->RdpServerCertificate);
+	const rdpCertInfo* info = &settings->RdpServerCertificate->cert_info;
+
 	/*
 	 * client random must be (bitlen / 8) + 8 - see [MS-RDPBCGR] 5.3.4.1
 	 * for details
 	 */
-	crypt_client_random = calloc(key_len + 8, 1);
+	crypt_client_random = calloc(info->ModulusLength + 8, 1);
 
 	if (!crypt_client_random)
 		return FALSE;
 
-	crypto_rsa_public_encrypt(settings->ClientRandom, settings->ClientRandomLength, key_len, mod,
-	                          exp, crypt_client_random);
+	crypto_rsa_public_encrypt(settings->ClientRandom, settings->ClientRandomLength, info,
+	                          crypt_client_random, info->ModulusLength + 8);
 	/* send crypt client random to server */
 	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
 	s = Stream_New(NULL, length);
@@ -834,11 +835,7 @@ static BOOL rdp_update_client_random(rdpSettings* settings, const BYTE* crypt_ra
 	const rdpCertInfo* cinfo = &rsa->cert;
 	WINPR_ASSERT(cinfo);
 
-	const DWORD key_len = cinfo->ModulusLength;
-	const BYTE* mod = cinfo->Modulus;
-	const BYTE* priv_exp = rsa->PrivateExponent;
-
-	if (crypt_random_len != key_len + 8)
+	if (crypt_random_len != cinfo->ModulusLength + 8)
 	{
 		WLog_ERR(TAG, "invalid encrypted client random length");
 		return FALSE;
@@ -848,8 +845,8 @@ static BOOL rdp_update_client_random(rdpSettings* settings, const BYTE* crypt_ra
 
 	BYTE* client_random = freerdp_settings_get_pointer(settings, FreeRDP_ClientRandom);
 	WINPR_ASSERT(client_random);
-	return crypto_rsa_private_decrypt(crypt_random, crypt_random_len - 8, key_len, mod, priv_exp,
-	                                  client_random) > 0;
+	return crypto_rsa_private_decrypt(crypt_random, crypt_random_len - 8, rsa, client_random,
+	                                  length) > 0;
 }
 
 BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
