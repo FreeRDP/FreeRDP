@@ -152,6 +152,35 @@ static INLINE void shadow_client_free_queued_message(void* obj)
 	}
 }
 
+static void shadow_client_context_free(freerdp_peer* peer, rdpContext* context)
+{
+	rdpShadowClient* client = (rdpShadowClient*)context;
+	rdpShadowServer* server;
+
+	WINPR_UNUSED(peer);
+	if (!client)
+		return;
+
+	server = client->server;
+	if (server && server->clients)
+		ArrayList_Remove(server->clients, (void*)client);
+
+	if (client->encoder)
+	{
+		shadow_encoder_free(client->encoder);
+		client->encoder = NULL;
+	}
+
+	/* Clear queued messages and free resource */
+	WINPR_ASSERT(client->MsgQueue);
+	MessageQueue_Clear(client->MsgQueue);
+	MessageQueue_Free(client->MsgQueue);
+	WTSCloseServer((HANDLE)client->vcm);
+	client->vcm = NULL;
+	region16_uninit(&(client->invalidRegion));
+	DeleteCriticalSection(&(client->lock));
+}
+
 static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 {
 	BOOL NSCodec;
@@ -197,10 +226,10 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
 
 	if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, server->CertificateFile))
-		goto fail_cert_file;
+		goto fail;
 
 	if (!freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, server->PrivateKeyFile))
-		goto fail_privkey_file;
+		goto fail;
 
 	if (server->ipcSocket && (strncmp(bind_address, server->ipcSocket,
 	                                  strnlen(bind_address, sizeof(bind_address))) != 0))
@@ -214,68 +243,28 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	client->mayInteract = server->mayInteract;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(client->lock), 4000))
-		goto fail_client_lock;
+		goto fail;
 
 	region16_init(&(client->invalidRegion));
-	client->vcm = WTSOpenServerA((LPSTR)peer->context);
+	client->vcm = WTSOpenServerA(peer->context);
 
 	if (!client->vcm || client->vcm == INVALID_HANDLE_VALUE)
-		goto fail_open_server;
+		goto fail;
 
 	if (!(client->MsgQueue = MessageQueue_New(&cb)))
-		goto fail_message_queue;
+		goto fail;
 
 	if (!(client->encoder = shadow_encoder_new(client)))
-		goto fail_encoder_new;
+		goto fail;
 
-	if (ArrayList_Append(server->clients, (void*)client))
-		return TRUE;
+	if (!ArrayList_Append(server->clients, (void*)client))
+		goto fail;
 
-	shadow_encoder_free(client->encoder);
-	client->encoder = NULL;
-fail_encoder_new:
-	MessageQueue_Free(client->MsgQueue);
-	client->MsgQueue = NULL;
-fail_message_queue:
-	WTSCloseServer((HANDLE)client->vcm);
-	client->vcm = NULL;
-fail_open_server:
-	DeleteCriticalSection(&(client->lock));
-fail_client_lock:
-	freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, NULL);
-fail_privkey_file:
-	freerdp_settings_set_string(settings, FreeRDP_CertificateFile, NULL);
-fail_cert_file:
+	return TRUE;
+
+fail:
+	shadow_client_context_free(peer, client);
 	return FALSE;
-}
-
-static void shadow_client_context_free(freerdp_peer* peer, rdpContext* context)
-{
-	rdpShadowClient* client = (rdpShadowClient*)context;
-	rdpShadowServer* server;
-
-	WINPR_ASSERT(context);
-	WINPR_UNUSED(peer);
-	server = client->server;
-	WINPR_ASSERT(server);
-
-	WINPR_ASSERT(server->clients);
-	ArrayList_Remove(server->clients, (void*)client);
-
-	if (client->encoder)
-	{
-		shadow_encoder_free(client->encoder);
-		client->encoder = NULL;
-	}
-
-	/* Clear queued messages and free resource */
-	WINPR_ASSERT(client->MsgQueue);
-	MessageQueue_Clear(client->MsgQueue);
-	MessageQueue_Free(client->MsgQueue);
-	WTSCloseServer((HANDLE)client->vcm);
-	client->vcm = NULL;
-	region16_uninit(&(client->invalidRegion));
-	DeleteCriticalSection(&(client->lock));
 }
 
 static INLINE void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 numRects,
