@@ -259,13 +259,18 @@ static void security_UINT32_le(BYTE* output, UINT32 value)
 	output[3] = (value >> 24) & 0xFF;
 }
 
-BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length, BYTE* output)
+BOOL security_mac_data(const BYTE* mac_salt_key, size_t mac_salt_key_length, const BYTE* data,
+                       UINT32 length, BYTE* output, size_t output_length)
 {
 	WINPR_DIGEST_CTX* sha1 = NULL;
 	WINPR_DIGEST_CTX* md5 = NULL;
-	BYTE length_le[4];
-	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH];
+	BYTE length_le[4] = { 0 };
+	BYTE sha1_digest[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
 	BOOL result = FALSE;
+
+	WINPR_ASSERT(mac_salt_key_length == WINPR_MD5_DIGEST_LENGTH);
+	WINPR_ASSERT(output_length == WINPR_MD5_DIGEST_LENGTH);
+
 	/* MacData = MD5(MacSaltKey + pad2 + SHA1(MacSaltKey + pad1 + length + data)) */
 	security_UINT32_le(length_le, length); /* length must be little-endian */
 
@@ -276,7 +281,7 @@ BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
 		goto out;
 
-	if (!winpr_Digest_Update(sha1, mac_salt_key, 16)) /* MacSaltKey */
+	if (!winpr_Digest_Update(sha1, mac_salt_key, mac_salt_key_length)) /* MacSaltKey */
 		goto out;
 
 	if (!winpr_Digest_Update(sha1, pad1, sizeof(pad1))) /* pad1 */
@@ -313,7 +318,7 @@ BOOL security_mac_data(const BYTE* mac_salt_key, const BYTE* data, UINT32 length
 	if (!winpr_Digest_Update(md5, sha1_digest, sizeof(sha1_digest))) /* SHA1_Digest */
 		goto out;
 
-	if (!winpr_Digest_Final(md5, output, WINPR_MD5_DIGEST_LENGTH))
+	if (!winpr_Digest_Final(md5, output, output_length))
 		goto out;
 
 	result = TRUE;

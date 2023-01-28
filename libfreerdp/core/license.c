@@ -335,7 +335,7 @@ static BOOL license_read_server_upgrade_license(rdpLicense* license, wStream* s)
 static BOOL license_write_server_upgrade_license(const rdpLicense* license, wStream* s);
 
 static BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
-                                      BYTE* signature);
+                                      const BYTE* signature, size_t signature_length);
 static BOOL license_read_license_info(rdpLicense* license, wStream* s);
 static state_run_t license_client_recv(rdpLicense* license, wStream* s);
 static state_run_t license_server_recv(rdpLicense* license, wStream* s);
@@ -1056,7 +1056,7 @@ static BOOL license_generate_keys(rdpLicense* license)
 	winpr_HexDump(TAG, WLOG_DEBUG, license->MacSaltKey, sizeof(license->MacSaltKey));
 	WLog_DBG(TAG, "LicensingEncryptionKey:");
 	winpr_HexDump(TAG, WLOG_DEBUG, license->LicensingEncryptionKey,
-	              LICENSING_ENCRYPTION_KEY_LENGTH);
+	              sizeof(license->LicensingEncryptionKey));
 #endif
 	return ret;
 }
@@ -1178,8 +1178,8 @@ static BOOL license_rc4_with_licenseKey(const rdpLicense* license, const BYTE* i
 	WINPR_ASSERT(input || (len == 0));
 	WINPR_ASSERT(target);
 
-	rc4 =
-	    winpr_RC4_New_Allow_FIPS(license->LicensingEncryptionKey, LICENSING_ENCRYPTION_KEY_LENGTH);
+	rc4 = winpr_RC4_New_Allow_FIPS(license->LicensingEncryptionKey,
+	                               sizeof(license->LicensingEncryptionKey));
 	if (!rc4)
 		return FALSE;
 
@@ -1212,11 +1212,12 @@ error_buffer:
  * @return if the operation completed successfully
  */
 static BOOL license_encrypt_and_MAC(rdpLicense* license, const BYTE* input, size_t len,
-                                    LICENSE_BLOB* target, BYTE* mac)
+                                    LICENSE_BLOB* target, BYTE* mac, size_t mac_length)
 {
 	WINPR_ASSERT(license);
 	return license_rc4_with_licenseKey(license, input, len, target) &&
-	       security_mac_data(license->MacSaltKey, input, len, mac);
+	       security_mac_data(license->MacSaltKey, sizeof(license->MacSaltKey), input, len, mac,
+	                         mac_length);
 }
 
 /**
@@ -1233,7 +1234,7 @@ static BOOL license_encrypt_and_MAC(rdpLicense* license, const BYTE* input, size
 static BOOL license_decrypt_and_check_MAC(rdpLicense* license, const BYTE* input, size_t len,
                                           LICENSE_BLOB* target, const BYTE* packetMac)
 {
-	BYTE macData[16] = { 0 };
+	BYTE macData[sizeof(license->MACData)] = { 0 };
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(target);
@@ -1242,7 +1243,8 @@ static BOOL license_decrypt_and_check_MAC(rdpLicense* license, const BYTE* input
 		return TRUE;
 
 	return license_rc4_with_licenseKey(license, input, len, target) &&
-	       security_mac_data(license->MacSaltKey, target->data, len, macData) &&
+	       security_mac_data(license->MacSaltKey, sizeof(license->MacSaltKey), target->data, len,
+	                         macData, sizeof(macData)) &&
 	       (memcmp(packetMac, macData, sizeof(macData)) == 0);
 }
 
@@ -1667,7 +1669,8 @@ void license_free_scope_list(SCOPE_LIST* scopeList)
 	free(scopeList);
 }
 
-BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob, BYTE* signature)
+BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
+                               const BYTE* signature, size_t signature_length)
 {
 	wStream* s = license_send_stream_init(license);
 
@@ -1705,9 +1708,9 @@ BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
 		goto error;
 
 	/* MACData */
-	if (!license_check_stream_capacity(s, LICENSING_ENCRYPTION_KEY_LENGTH, "license info::MACData"))
+	if (!license_check_stream_capacity(s, signature_length, "license info::MACData"))
 		goto error;
-	Stream_Write(s, signature, LICENSING_ENCRYPTION_KEY_LENGTH);
+	Stream_Write(s, signature, signature_length);
 
 	return license_send(license, s, LICENSE_INFO);
 
@@ -1768,9 +1771,9 @@ BOOL license_read_license_info(rdpLicense* license, wStream* s)
 		goto error;
 
 	/* MACData */
-	if (!license_check_stream_length(s, LICENSING_ENCRYPTION_KEY_LENGTH, "license info::MACData"))
+	if (!license_check_stream_length(s, sizeof(license->MACData), "license info::MACData"))
 		goto error;
-	Stream_Read(s, license->MACData, LICENSING_ENCRYPTION_KEY_LENGTH);
+	Stream_Read(s, license->MACData, sizeof(license->MACData));
 
 	rc = TRUE;
 
@@ -1882,7 +1885,7 @@ fail:
 
 BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 {
-	BYTE macData[16] = { 0 };
+	BYTE macData[LICENSING_ENCRYPTION_KEY_LENGTH] = { 0 };
 	UINT32 ConnectFlags = 0;
 
 	WINPR_ASSERT(license);
@@ -1901,11 +1904,10 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 	license->EncryptedPlatformChallenge->type = BB_ENCRYPTED_DATA_BLOB;
 
 	/* MACData (16 bytes) */
-	if (!license_check_stream_length(s, LICENSING_ENCRYPTION_KEY_LENGTH,
-	                                 "license platform challenge::MAC"))
+	if (!license_check_stream_length(s, sizeof(macData), "license platform challenge::MAC"))
 		return FALSE;
 
-	Stream_Read(s, macData, 16);
+	Stream_Read(s, macData, sizeof(macData));
 	if (!license_decrypt_and_check_MAC(license, license->EncryptedPlatformChallenge->data,
 	                                   license->EncryptedPlatformChallenge->length,
 	                                   license->PlatformChallenge, macData))
@@ -1920,7 +1922,7 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 	winpr_HexDump(TAG, WLOG_DEBUG, license->PlatformChallenge->data,
 	              license->PlatformChallenge->length);
 	WLog_DBG(TAG, "MacData:");
-	winpr_HexDump(TAG, WLOG_DEBUG, macData, LICENSING_ENCRYPTION_KEY_LENGTH);
+	winpr_HexDump(TAG, WLOG_DEBUG, macData, sizeof(macData));
 #endif
 	return TRUE;
 }
@@ -1966,11 +1968,11 @@ BOOL license_send_platform_challenge_packet(rdpLicense* license)
 		goto fail;
 
 	/* MACData (16 bytes) */
-	if (!license_check_stream_length(s, LICENSING_ENCRYPTION_KEY_LENGTH,
+	if (!license_check_stream_length(s, sizeof(license->MACData),
 	                                 "license platform challenge::MAC"))
 		goto fail;
 
-	Stream_Write(s, license->MACData, LICENSING_ENCRYPTION_KEY_LENGTH);
+	Stream_Write(s, license->MACData, sizeof(license->MACData));
 
 	return license_send(license, s, PLATFORM_CHALLENGE);
 fail:
@@ -2044,14 +2046,15 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 
 	/* compute MAC and check it */
 	readMac = Stream_Pointer(s);
-	if (!Stream_SafeSeek(s, 16))
+	if (!Stream_SafeSeek(s, sizeof(computedMac)))
 	{
 		WLog_WARN(TAG, "short license new/upgrade, expected 16 bytes, got %" PRIuz,
 		          Stream_GetRemainingLength(s));
 		goto fail;
 	}
 
-	if (!security_mac_data(license->MacSaltKey, calBlob->data, calBlob->length, computedMac))
+	if (!security_mac_data(license->MacSaltKey, sizeof(license->MacSaltKey), calBlob->data,
+	                       calBlob->length, computedMac, sizeof(computedMac)))
 		goto fail;
 
 	if (memcmp(computedMac, readMac, sizeof(computedMac)) != 0)
@@ -2299,7 +2302,7 @@ BOOL license_answer_license_request(rdpLicense* license)
 		WINPR_ASSERT(license->EncryptedHardwareId);
 		license->EncryptedHardwareId->type = BB_ENCRYPTED_DATA_BLOB;
 		if (!license_encrypt_and_MAC(license, license->HardwareId, HWID_LENGTH,
-		                             license->EncryptedHardwareId, signature))
+		                             license->EncryptedHardwareId, signature, sizeof(signature)))
 		{
 			free(license_data);
 			return FALSE;
@@ -2314,7 +2317,7 @@ BOOL license_answer_license_request(rdpLicense* license)
 		calBlob->data = license_data;
 		calBlob->length = license_size;
 
-		status = license_send_license_info(license, calBlob, signature);
+		status = license_send_license_info(license, calBlob, signature, sizeof(signature));
 		license_free_binary_blob(calBlob);
 
 		return status;
@@ -2404,7 +2407,8 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 
 	CopyMemory(buffer, Stream_Buffer(challengeRespData), Stream_Length(challengeRespData));
 	CopyMemory(&buffer[Stream_Length(challengeRespData)], license->HardwareId, HWID_LENGTH);
-	status = security_mac_data(license->MacSaltKey, buffer, length, license->MACData);
+	status = security_mac_data(license->MacSaltKey, sizeof(license->MacSaltKey),
+	                           sizeof(license->MacSaltKey), buffer, length, license->MACData);
 	free(buffer);
 
 	if (!status)
