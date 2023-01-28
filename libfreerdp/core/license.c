@@ -181,9 +181,6 @@ struct rdp_license
 	LICENSE_TYPE type;
 	rdpRdp* rdp;
 	rdpCertificate* certificate;
-	BYTE* Modulus;
-	UINT32 ModulusLength;
-	BYTE Exponent[4];
 	BYTE HardwareId[HWID_LENGTH];
 	BYTE ClientRandom[CLIENT_RANDOM_LENGTH];
 	BYTE ServerRandom[SERVER_RANDOM_LENGTH];
@@ -1112,9 +1109,6 @@ BOOL license_generate_hwid(rdpLicense* license)
 
 static BOOL license_get_server_rsa_public_key(rdpLicense* license)
 {
-	BYTE* Exponent;
-	BYTE* Modulus;
-	int ModulusLength;
 	rdpSettings* settings;
 
 	WINPR_ASSERT(license);
@@ -1131,15 +1125,6 @@ static BOOL license_get_server_rsa_public_key(rdpLicense* license)
 			return FALSE;
 	}
 
-	Exponent = license->certificate->cert_info.exponent;
-	Modulus = license->certificate->cert_info.Modulus;
-	ModulusLength = license->certificate->cert_info.ModulusLength;
-	CopyMemory(license->Exponent, Exponent, 4);
-	license->ModulusLength = ModulusLength;
-	license->Modulus = (BYTE*)malloc(ModulusLength);
-	if (!license->Modulus)
-		return FALSE;
-	CopyMemory(license->Modulus, Modulus, ModulusLength);
 	return TRUE;
 }
 
@@ -1148,20 +1133,22 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 	BYTE* EncryptedPremasterSecret;
 
 	WINPR_ASSERT(license);
+	WINPR_ASSERT(license->certificate);
 
 	if (!license_get_server_rsa_public_key(license))
 		return FALSE;
 
 	WINPR_ASSERT(license->EncryptedPremasterSecret);
+	const rdpCertInfo* info = &license->certificate->cert_info;
 
 #ifdef WITH_DEBUG_LICENSE
-	WLog_DBG(TAG, "Modulus (%" PRIu32 " bits):", license->ModulusLength * 8);
-	winpr_HexDump(TAG, WLOG_DEBUG, license->Modulus, license->ModulusLength);
+	WLog_DBG(TAG, "Modulus (%" PRIu32 " bits):", info->ModulusLength * 8);
+	winpr_HexDump(TAG, WLOG_DEBUG, info->Modulus, info->ModulusLength);
 	WLog_DBG(TAG, "Exponent:");
-	winpr_HexDump(TAG, WLOG_DEBUG, license->Exponent, 4);
+	winpr_HexDump(TAG, WLOG_DEBUG, info->exponent, sizeof(info->exponent));
 #endif
 
-	EncryptedPremasterSecret = (BYTE*)calloc(1, license->ModulusLength);
+	EncryptedPremasterSecret = (BYTE*)calloc(1, info->ModulusLength);
 	if (!EncryptedPremasterSecret)
 		return FALSE;
 
@@ -1169,9 +1156,9 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 	license->EncryptedPremasterSecret->length = PREMASTER_SECRET_LENGTH;
 #ifndef LICENSE_NULL_PREMASTER_SECRET
 	{
-		SSIZE_T length = crypto_rsa_public_encrypt(
-		    license->PremasterSecret, PREMASTER_SECRET_LENGTH, license->ModulusLength,
-		    license->Modulus, license->Exponent, EncryptedPremasterSecret);
+		const SSIZE_T length = crypto_rsa_public_encrypt(
+		    license->PremasterSecret, PREMASTER_SECRET_LENGTH, info->ModulusLength, info->Modulus,
+		    info->exponent, EncryptedPremasterSecret);
 		if ((length < 0) || (length > UINT16_MAX))
 			return FALSE;
 		license->EncryptedPremasterSecret->length = (UINT16)length;
@@ -1686,6 +1673,9 @@ BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
 
 	WINPR_ASSERT(calBlob);
 	WINPR_ASSERT(signature);
+	WINPR_ASSERT(license->certificate);
+
+	const rdpCertInfo* info = &license->certificate->cert_info;
 
 	if (!s)
 		return FALSE;
@@ -1702,7 +1692,7 @@ BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
 
 	/* Licensing Binary Blob with EncryptedPreMasterSecret: */
 	if (!license_write_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret,
-	                                                   license->ModulusLength))
+	                                                   info->ModulusLength))
 		goto error;
 
 	/* Licensing Binary Blob with LicenseInfo: */
@@ -1747,6 +1737,9 @@ BOOL license_read_license_info(rdpLicense* license, wStream* s)
 	UINT32 PreferredKeyExchangeAlg;
 
 	WINPR_ASSERT(license);
+	WINPR_ASSERT(license->certificate);
+
+	const rdpCertInfo* info = &license->certificate->cert_info;
 
 	/* ClientRandom (32 bytes) */
 	if (!license_check_stream_length(s, 8 + CLIENT_RANDOM_LENGTH, "license info"))
@@ -1762,7 +1755,7 @@ BOOL license_read_license_info(rdpLicense* license, wStream* s)
 
 	/* Licensing Binary Blob with EncryptedPreMasterSecret: */
 	if (!license_read_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret,
-	                                                  &license->ModulusLength))
+	                                                  &info->ModulusLength))
 		goto error;
 
 	/* Licensing Binary Blob with LicenseInfo: */
@@ -2202,6 +2195,7 @@ BOOL license_read_error_alert_packet(rdpLicense* license, wStream* s)
 BOOL license_write_new_license_request_packet(const rdpLicense* license, wStream* s)
 {
 	WINPR_ASSERT(license);
+	WINPR_ASSERT(license->certificate);
 
 	if (!license_check_stream_capacity(s, 8 + CLIENT_RANDOM_LENGTH, "License Request"))
 		return FALSE;
@@ -2212,8 +2206,8 @@ BOOL license_write_new_license_request_packet(const rdpLicense* license, wStream
 	Stream_Write(s, license->ClientRandom, CLIENT_RANDOM_LENGTH); /* ClientRandom (32 bytes) */
 
 	if (/* EncryptedPremasterSecret */
-	    !license_write_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret,
-	                                                   license->ModulusLength) ||
+	    !license_write_encrypted_premaster_secret_blob(
+	        s, license->EncryptedPremasterSecret, license->certificate->cert_info.ModulusLength) ||
 	    /* ClientUserName */
 	    !license_write_binary_blob(s, license->ClientUserName) ||
 	    /* ClientMachineName */
@@ -2242,6 +2236,7 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 	UINT32 PreferredKeyExchangeAlg;
 
 	WINPR_ASSERT(license);
+	WINPR_ASSERT(license->certificate);
 
 	if (!license_check_stream_length(s, 8ull + CLIENT_RANDOM_LENGTH, "new license request"))
 		return FALSE;
@@ -2254,8 +2249,8 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 	Stream_Read(s, license->ClientRandom, CLIENT_RANDOM_LENGTH); /* ClientRandom (32 bytes) */
 
 	/* EncryptedPremasterSecret */
-	if (!license_read_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret,
-	                                                  &license->ModulusLength))
+	if (!license_read_encrypted_premaster_secret_blob(
+	        s, license->EncryptedPremasterSecret, &license->certificate->cert_info.ModulusLength))
 		return FALSE;
 
 	/* ClientUserName */
@@ -2608,7 +2603,6 @@ void license_free(rdpLicense* license)
 {
 	if (license)
 	{
-		free(license->Modulus);
 		certificate_free(license->certificate);
 		license_free_product_info(license->ProductInfo);
 		license_free_binary_blob(license->ErrorInfo);
