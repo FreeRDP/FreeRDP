@@ -22,6 +22,9 @@
 
 #include <winpr/crypto.h>
 
+#include "../log.h"
+#define TAG WINPR_TAG("crypto.cipher")
+
 #ifdef WITH_OPENSSL
 #include <openssl/aes.h>
 #include <openssl/rc4.h>
@@ -633,7 +636,10 @@ BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, 
 	int outl = (int)*olen;
 
 	if (ilen > INT_MAX)
+	{
+		WLog_ERR(TAG, "input length %" PRIuz " > %d, abort", ilen, INT_MAX);
 		return FALSE;
+	}
 
 	if (EVP_CipherUpdate((EVP_CIPHER_CTX*)ctx, output, &outl, input, (int)ilen) == 1)
 	{
@@ -647,6 +653,8 @@ BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, 
 		return TRUE;
 
 #endif
+
+	WLog_ERR(TAG, "Failed to update the data");
 	return FALSE;
 }
 
