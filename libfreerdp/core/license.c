@@ -1051,7 +1051,7 @@ static BOOL license_generate_keys(rdpLicense* license)
 	WLog_DBG(TAG, "MasterSecret:");
 	winpr_HexDump(TAG, WLOG_DEBUG, license->MasterSecret, sizeof(license->MasterSecret));
 	WLog_DBG(TAG, "SessionKeyBlob:");
-	winpr_HexDump(TAG, WLOG_DEBUG, license->SessionKeyBlob, SESSION_KEY_BLOB_LENGTH);
+	winpr_HexDump(TAG, WLOG_DEBUG, license->SessionKeyBlob, sizeof(license->SessionKeyBlob));
 	WLog_DBG(TAG, "MacSaltKey:");
 	winpr_HexDump(TAG, WLOG_DEBUG, license->MacSaltKey, MAC_SALT_KEY_LENGTH);
 	WLog_DBG(TAG, "LicensingEncryptionKey:");
