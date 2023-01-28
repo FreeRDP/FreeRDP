@@ -1815,10 +1815,12 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	if (!gcc_update_server_random(settings))
 		return FALSE;
 
+	if (!Stream_EnsureRemainingCapacity(s, sizeof(UINT32) + settings->ServerRandomLength))
+		return FALSE;
 	Stream_Write_UINT32(s, settings->ServerRandomLength); /* serverRandomLen */
 	const size_t posCertLen = Stream_GetPosition(s);
 	Stream_Seek_UINT32(s); /* serverCertLen */
-	Stream_Write(s, settings->ServerRandom, settings->ServerRandom);
+	Stream_Write(s, settings->ServerRandom, settings->ServerRandomLength);
 
 	const SSIZE_T len = certificate_write_server_certificate(
 	    settings->RdpServerRsaKey, CERT_TEMPORARILY_ISSUED | CERT_CHAIN_VERSION_1, s);
