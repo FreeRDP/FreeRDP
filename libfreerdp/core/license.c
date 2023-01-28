@@ -1006,7 +1006,7 @@ void license_generate_randoms(rdpLicense* license)
 	winpr_RAND(license->ClientRandom, sizeof(license->ClientRandom)); /* ClientRandom */
 #endif
 
-	winpr_RAND(license->ServerRandom, SERVER_RANDOM_LENGTH); /* ServerRandom */
+	winpr_RAND(license->ServerRandom, sizeof(license->ServerRandom)); /* ServerRandom */
 
 #ifdef LICENSE_NULL_PREMASTER_SECRET
 	ZeroMemory(license->PremasterSecret, PREMASTER_SECRET_LENGTH); /* PremasterSecret */
@@ -1045,7 +1045,7 @@ static BOOL license_generate_keys(rdpLicense* license)
 	WLog_DBG(TAG, "ClientRandom:");
 	winpr_HexDump(TAG, WLOG_DEBUG, license->ClientRandom, sizeof(license->ClientRandom));
 	WLog_DBG(TAG, "ServerRandom:");
-	winpr_HexDump(TAG, WLOG_DEBUG, license->ServerRandom, SERVER_RANDOM_LENGTH);
+	winpr_HexDump(TAG, WLOG_DEBUG, license->ServerRandom, sizeof(license->ServerRandom));
 	WLog_DBG(TAG, "PremasterSecret:");
 	winpr_HexDump(TAG, WLOG_DEBUG, license->PremasterSecret, PREMASTER_SECRET_LENGTH);
 	WLog_DBG(TAG, "MasterSecret:");
@@ -1790,10 +1790,10 @@ BOOL license_read_license_request_packet(rdpLicense* license, wStream* s)
 	WINPR_ASSERT(license);
 
 	/* ServerRandom (32 bytes) */
-	if (!license_check_stream_length(s, SERVER_RANDOM_LENGTH, "license request"))
+	if (!license_check_stream_length(s, sizeof(license->ServerRandom), "license request"))
 		return FALSE;
 
-	Stream_Read(s, license->ServerRandom, SERVER_RANDOM_LENGTH);
+	Stream_Read(s, license->ServerRandom, sizeof(license->ServerRandom));
 
 	/* ProductInfo */
 	if (!license_read_product_info(s, license->ProductInfo))
@@ -1822,7 +1822,7 @@ BOOL license_read_license_request_packet(rdpLicense* license, wStream* s)
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "ServerRandom:");
-	winpr_HexDump(TAG, WLOG_DEBUG, license->ServerRandom, SERVER_RANDOM_LENGTH);
+	winpr_HexDump(TAG, WLOG_DEBUG, license->ServerRandom, sizeof(license->ServerRandom));
 	license_print_product_info(license->ProductInfo);
 	license_print_scope_list(license->ScopeList);
 #endif
@@ -1834,9 +1834,9 @@ BOOL license_write_license_request_packet(const rdpLicense* license, wStream* s)
 	WINPR_ASSERT(license);
 
 	/* ServerRandom (32 bytes) */
-	if (!license_check_stream_capacity(s, SERVER_RANDOM_LENGTH, "license request"))
+	if (!license_check_stream_capacity(s, sizeof(license->ServerRandom), "license request"))
 		return FALSE;
-	Stream_Write(s, license->ServerRandom, SERVER_RANDOM_LENGTH);
+	Stream_Write(s, license->ServerRandom, sizeof(license->ServerRandom));
 
 	/* ProductInfo */
 	if (!license_write_product_info(s, license->ProductInfo))
