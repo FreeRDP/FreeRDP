@@ -1156,9 +1156,9 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 	license->EncryptedPremasterSecret->length = PREMASTER_SECRET_LENGTH;
 #ifndef LICENSE_NULL_PREMASTER_SECRET
 	{
-		const SSIZE_T length = crypto_rsa_public_encrypt(
-		    license->PremasterSecret, PREMASTER_SECRET_LENGTH, info->ModulusLength, info->Modulus,
-		    info->exponent, EncryptedPremasterSecret);
+		const SSIZE_T length =
+		    crypto_rsa_public_encrypt(license->PremasterSecret, sizeof(license->PremasterSecret),
+		                              info, EncryptedPremasterSecret, info->ModulusLength);
 		if ((length < 0) || (length > UINT16_MAX))
 			return FALSE;
 		license->EncryptedPremasterSecret->length = (UINT16)length;

@@ -112,7 +112,7 @@ exit:
 
 static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_length,
                                  const BYTE* modulus, const BYTE* exponent, size_t exponent_size,
-                                 BYTE* output)
+                                 BYTE* output, size_t out_length)
 {
 	BN_CTX* ctx = NULL;
 	int output_length = -1;
@@ -123,15 +123,15 @@ static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_le
 	BIGNUM* exp = NULL;
 	BIGNUM* x = NULL;
 	BIGNUM* y = NULL;
-	size_t bufferSize;
+	size_t bufferSize = 0;
 
 	if (!input || !modulus || !exponent || !output)
 		return -1;
 
-	if ((size_t)exponent_size > SIZE_MAX / 2)
+	if ((size_t)exponent_size > INT_MAX / 2)
 		return -1;
 
-	if (key_length >= SIZE_MAX / 2 - exponent_size)
+	if (key_length >= INT_MAX / 2 - exponent_size)
 		return -1;
 
 	bufferSize = 2ULL * key_length + exponent_size;
@@ -153,19 +153,19 @@ static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_le
 	crypto_reverse(input_reverse, length);
 
 	if (!(ctx = BN_CTX_new()))
-		goto fail_bn_ctx;
+		goto fail;
 
 	if (!(mod = BN_new()))
-		goto fail_bn_mod;
+		goto fail;
 
 	if (!(exp = BN_new()))
-		goto fail_bn_exp;
+		goto fail;
 
 	if (!(x = BN_new()))
-		goto fail_bn_x;
+		goto fail;
 
 	if (!(y = BN_new()))
-		goto fail_bn_y;
+		goto fail;
 
 	if (!BN_bin2bn(modulus_reverse, key_length, mod))
 		goto fail;
@@ -179,62 +179,67 @@ static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_le
 	output_length = BN_bn2bin(y, output);
 	if (output_length < 0)
 		goto fail;
+	if ((size_t)output_length > out_length)
+		goto fail;
 	crypto_reverse(output, output_length);
 
-	if ((UINT32)output_length < key_length)
-		memset(output + output_length, 0, key_length - output_length);
+	if ((size_t)output_length < key_length)
+	{
+		size_t diff = key_length - output_length;
+		if ((size_t)output_length + diff > out_length)
+			diff = out_length - (size_t)output_length;
+		memset(output + output_length, 0, diff);
+	}
 
 fail:
 	BN_free(y);
-fail_bn_y:
 	BN_clear_free(x);
-fail_bn_x:
 	BN_free(exp);
-fail_bn_exp:
 	BN_free(mod);
-fail_bn_mod:
 	BN_CTX_free(ctx);
-fail_bn_ctx:
 	free(input_reverse);
 	return output_length;
 }
 
-static int crypto_rsa_public(const BYTE* input, size_t length, size_t key_length,
-                             const BYTE* modulus, const BYTE* exponent, BYTE* output)
+static SSIZE_T crypto_rsa_public(const BYTE* input, size_t length, const rdpCertInfo* cert,
+                                 BYTE* output, size_t output_length)
 {
-	return crypto_rsa_common(input, length, key_length, modulus, exponent, EXPONENT_MAX_SIZE,
-	                         output);
+	WINPR_ASSERT(cert);
+	return crypto_rsa_common(input, length, cert->ModulusLength, cert->Modulus, cert->exponent,
+	                         sizeof(cert->exponent), output, output_length);
 }
 
-static int crypto_rsa_private(const BYTE* input, size_t length, size_t key_length,
-                              const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
+static SSIZE_T crypto_rsa_private(const BYTE* input, size_t length, const rdpRsaKey* key,
+                                  BYTE* output, size_t output_length)
 {
-	return crypto_rsa_common(input, length, key_length, modulus, private_exponent, key_length,
-	                         output);
+	WINPR_ASSERT(key);
+	return crypto_rsa_common(input, length, key->cert.ModulusLength, key->cert.Modulus,
+	                         key->PrivateExponent, key->PrivateExponentLength, output,
+	                         output_length);
 }
 
-SSIZE_T crypto_rsa_public_encrypt(const BYTE* input, size_t length, size_t key_length,
-                                  const BYTE* modulus, const BYTE* exponent, BYTE* output)
+SSIZE_T crypto_rsa_public_encrypt(const BYTE* input, size_t length, const rdpCertInfo* cert,
+                                  BYTE* output, size_t output_length)
 {
-	return crypto_rsa_public(input, length, key_length, modulus, exponent, output);
+	return crypto_rsa_public(input, length, cert, output, output_length);
 }
 
-SSIZE_T crypto_rsa_public_decrypt(const BYTE* input, size_t length, size_t key_length,
-                                  const BYTE* modulus, const BYTE* exponent, BYTE* output)
+SSIZE_T crypto_rsa_public_decrypt(const BYTE* input, size_t length, const rdpCertInfo* cert,
+                                  BYTE* output, size_t output_length)
 {
-	return crypto_rsa_public(input, length, key_length, modulus, exponent, output);
+	return crypto_rsa_public(input, length, cert, output, output_length);
 }
 
-SSIZE_T crypto_rsa_private_encrypt(const BYTE* input, size_t length, size_t key_length,
-                                   const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
+SSIZE_T crypto_rsa_private_encrypt(const BYTE* input, size_t length, const rdpRsaKey* key,
+                                   BYTE* output, size_t output_length)
 {
-	return crypto_rsa_private(input, length, key_length, modulus, private_exponent, output);
+	return crypto_rsa_private(input, length, key, output, output_length);
 }
 
-SSIZE_T crypto_rsa_private_decrypt(const BYTE* input, size_t length, size_t key_length,
-                                   const BYTE* modulus, const BYTE* private_exponent, BYTE* output)
+SSIZE_T crypto_rsa_private_decrypt(const BYTE* input, size_t length, const rdpRsaKey* key,
+                                   BYTE* output, size_t output_length)
 {
-	return crypto_rsa_private(input, length, key_length, modulus, private_exponent, output);
+	return crypto_rsa_private(input, length, key, output, output_length);
 }
 
 void crypto_reverse(BYTE* data, size_t length)
