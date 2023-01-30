@@ -215,9 +215,14 @@ static SSIZE_T crypto_rsa_private(const BYTE* input, size_t length, const rdpRsa
                                   BYTE* output, size_t output_length)
 {
 	WINPR_ASSERT(key);
-	return crypto_rsa_common(input, length, key->cert.ModulusLength, key->cert.Modulus,
-	                         key->PrivateExponent, key->PrivateExponentLength, output,
-	                         output_length);
+	const rdpCertInfo* info = freerdp_key_get_cert_info(key);
+
+	size_t PrivateExponentLength = 0;
+	const BYTE* PrivateExponent = freerdp_key_get_exponent(key, &PrivateExponentLength);
+	if (!info || !PrivateExponent)
+		return -1;
+	return crypto_rsa_common(input, length, info->ModulusLength, info->Modulus, PrivateExponent,
+	                         PrivateExponentLength, output, output_length);
 }
 
 SSIZE_T crypto_rsa_public_encrypt(const BYTE* input, size_t length, const rdpCertInfo* cert,

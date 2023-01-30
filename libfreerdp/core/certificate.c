@@ -1413,14 +1413,14 @@ rdpCertificate* freerdp_certificate_new_from_file(const char* file)
 	if (fread(pem, 1, (size_t)size, fp) != (size_t)size)
 		goto fail;
 
-	cert = freerdp_certificate_new_from_pem(pem);
+	cert = freerdp_certificate_new_from_pem(pem, size + 1);
 fail:
 	free(pem);
 	fclose(fp);
 	return cert;
 }
 
-rdpCertificate* freerdp_certificate_new_from_pem(const char* pem)
+rdpCertificate* freerdp_certificate_new_from_pem(const char* pem, size_t length)
 {
 	const BIGNUM* rsa_e = NULL;
 	const BIGNUM* rsa_n = NULL;
@@ -1473,14 +1473,14 @@ const rdpCertInfo* freerdp_certificate_get_info(const rdpCertificate* certificat
 	return &certificate->cert_info;
 }
 
-rdpCertInfo* freerdp_certificate_get_info_writeable(const rdpCertificate* certificate)
+rdpCertInfo* freerdp_certificate_get_info_writeable(rdpCertificate* certificate)
 {
 	if (!certificate)
 		return NULL;
 	return &certificate->cert_info;
 }
 
-const BYTE* freerdp_key_get_exponent(rdpRsaKey* key, size_t* exponent_length)
+const BYTE* freerdp_key_get_exponent(const rdpRsaKey* key, size_t* exponent_length)
 {
 	if (exponent_length)
 		*exponent_length = 0;
@@ -1492,7 +1492,7 @@ const BYTE* freerdp_key_get_exponent(rdpRsaKey* key, size_t* exponent_length)
 	return key->PrivateExponent;
 }
 
-const rdpCertInfo* freerdp_key_get_cert_info(rdpRsaKey* key)
+const rdpCertInfo* freerdp_key_get_cert_info(const rdpRsaKey* key)
 {
 	if (!key)
 		return NULL;

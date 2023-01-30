@@ -725,7 +725,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	winpr_RAND(settings->ClientRandom, settings->ClientRandomLength);
 
 	WINPR_ASSERT(settings->RdpServerCertificate);
-	const rdpCertInfo* info = &settings->RdpServerCertificate->cert_info;
+	const rdpCertInfo* info = freerdp_certificate_get_info(settings->RdpServerCertificate);
 
 	/*
 	 * client random must be (bitlen / 8) + 8 - see [MS-RDPBCGR] 5.3.4.1
@@ -829,7 +829,7 @@ static BOOL rdp_update_client_random(rdpSettings* settings, const BYTE* crypt_ra
 	const rdpRsaKey* rsa = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey);
 	WINPR_ASSERT(rsa);
 
-	const rdpCertInfo* cinfo = &rsa->cert;
+	const rdpCertInfo* cinfo = freerdp_key_get_cert_info(rsa);
 	WINPR_ASSERT(cinfo);
 
 	if (crypt_random_len != cinfo->ModulusLength + 8)

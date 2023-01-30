@@ -1084,7 +1084,7 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 		return TLS_HANDSHAKE_ERROR;
 	}
 
-	rdpCertificate* certificate =
+	const rdpCertificate* certificate =
 	    freerdp_settings_get_pointer(settings, FreeRDP_RdpServerCertificate);
 	if (!certificate)
 	{

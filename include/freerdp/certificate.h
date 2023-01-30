@@ -48,16 +48,15 @@ extern "C"
 	FREERDP_API const char* freerdp_certificate_get_pem(const rdpCertificate* certificate,
 	                                                    size_t* length);
 	FREERDP_API const rdpCertInfo* freerdp_certificate_get_info(const rdpCertificate* certificate);
-	FREERDP_API rdpCertInfo*
-	freerdp_certificate_get_info_writeable(const rdpCertificate* certificate);
+	FREERDP_API rdpCertInfo* freerdp_certificate_get_info_writeable(rdpCertificate* certificate);
 
 	FREERDP_API rdpRsaKey* freerdp_key_new_from_file(const char* keyfile);
 	FREERDP_API rdpRsaKey* freerdp_key_new_from_pem(const char* pem, size_t size);
 	FREERDP_API void freerdp_key_free(rdpRsaKey* key);
 
 	FREERDP_API const char* freerdp_key_get_pem(const rdpRsaKey* key, size_t* length);
-	FREERDP_API const BYTE* freerdp_key_get_exponent(rdpRsaKey* key, size_t* exponent_length);
-	FREERDP_API const rdpCertInfo* freerdp_key_get_cert_info(rdpRsaKey* key);
+	FREERDP_API const BYTE* freerdp_key_get_exponent(const rdpRsaKey* key, size_t* exponent_length);
+	FREERDP_API const rdpCertInfo* freerdp_key_get_cert_info(const rdpRsaKey* key);
 
 #ifdef __cplusplus
 }
