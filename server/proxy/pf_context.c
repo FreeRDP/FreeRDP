@@ -43,9 +43,11 @@ static UINT32 ChannelId_Hash(const void* key)
 	return *v;
 }
 
-static BOOL ChannelId_Compare(const UINT32* v1, const UINT32* v2)
+static BOOL ChannelId_Compare(const void* v1, const void* v2)
 {
-	return (*v1 == *v2);
+	const UINT32* u1 = (const UINT32*)v1;
+	const UINT32* u2 = (const UINT32*)v2;
+	return (*u1 == *u2);
 }
 
 pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const char* name,
@@ -89,8 +91,15 @@ void StaticChannelContext_free(pServerStaticChannelContext* ctx)
 	free(ctx);
 }
 
+static void StaticChannelContext_free_int(void* vctx)
+{
+	pServerStaticChannelContext* ctx = (pServerStaticChannelContext*)vctx;
+	StaticChannelContext_free(ctx);
+}
+
 /* Proxy context initialization callback */
 static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx);
+
 static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 {
 	wObject* obj;
@@ -126,10 +135,10 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 		goto error;
 
 	obj = HashTable_KeyObject(context->channelsByFrontId);
-	obj->fnObjectEquals = (OBJECT_EQUALS_FN)ChannelId_Compare;
+	obj->fnObjectEquals = ChannelId_Compare;
 
 	obj = HashTable_ValueObject(context->channelsByFrontId);
-	obj->fnObjectFree = (OBJECT_FREE_FN)StaticChannelContext_free;
+	obj->fnObjectFree = StaticChannelContext_free_int;
 
 	context->channelsByBackId = HashTable_New(FALSE);
 	if (!context->channelsByBackId)
@@ -138,7 +147,7 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 		goto error;
 
 	obj = HashTable_KeyObject(context->channelsByBackId);
-	obj->fnObjectEquals = (OBJECT_EQUALS_FN)ChannelId_Compare;
+	obj->fnObjectEquals = ChannelId_Compare;
 
 	return TRUE;
 
@@ -288,11 +297,9 @@ error:
 
 proxyData* proxy_data_new(void)
 {
-	BYTE temp[16];
-	char* hex;
-	proxyData* pdata;
-
-	pdata = calloc(1, sizeof(proxyData));
+	BYTE temp[16] = { 0 };
+	char* hex = NULL;
+	proxyData* pdata = calloc(1, sizeof(proxyData));
 	if (!pdata)
 		return NULL;
 
