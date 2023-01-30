@@ -71,6 +71,11 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char*
 	char* colon;
 	size_t len;
 	DWORD routing_token_length;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(target);
+	WINPR_ASSERT(port);
+
 	const size_t prefix_len = strnlen(ROUTING_TOKEN_PREFIX, sizeof(ROUTING_TOKEN_PREFIX));
 	const char* routing_token = freerdp_nego_get_routing_token(context, &routing_token_length);
 	pServerContext* ps = (pServerContext*)context;
@@ -193,14 +198,17 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 {
 	char** accepted_channels = NULL;
 	size_t accepted_channels_count;
-	size_t i;
+
+	WINPR_ASSERT(peer);
+
 	pServerContext* ps = (pServerContext*)peer->context;
+	WINPR_ASSERT(ps);
 
 	accepted_channels = WTSGetAcceptedChannelNames(peer, &accepted_channels_count);
 	if (!accepted_channels)
 		return TRUE;
 
-	for (i = 0; i < accepted_channels_count; i++)
+	for (size_t i = 0; i < accepted_channels_count; i++)
 	{
 		pServerStaticChannelContext* channelContext;
 		const char* cname = accepted_channels[i];
@@ -267,21 +275,17 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
  */
 static BOOL pf_server_post_connect(freerdp_peer* peer)
 {
-	pServerContext* ps;
-	pClientContext* pc;
 	rdpSettings* client_settings;
-	proxyData* pdata;
-	rdpSettings* frontSettings;
 
 	WINPR_ASSERT(peer);
 
-	ps = (pServerContext*)peer->context;
+	pServerContext* ps = (pServerContext*)peer->context;
 	WINPR_ASSERT(ps);
 
-	frontSettings = peer->context->settings;
+	rdpSettings* frontSettings = peer->context->settings;
 	WINPR_ASSERT(frontSettings);
 
-	pdata = ps->pdata;
+	proxyData* pdata = ps->pdata;
 	WINPR_ASSERT(pdata);
 
 	PROXY_LOG_INFO(TAG, ps, "Accepted client: %s", frontSettings->ClientHostname);
@@ -291,7 +295,7 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 		return FALSE;
 	}
 
-	pc = pf_context_create_client_context(frontSettings);
+	pClientContext* pc = pf_context_create_client_context(frontSettings);
 	if (pc == NULL)
 	{
 		PROXY_LOG_ERR(TAG, ps, "failed to create client context!");
@@ -327,19 +331,16 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 
 static BOOL pf_server_activate(freerdp_peer* peer)
 {
-	pServerContext* ps;
-	proxyData* pdata;
-	rdpSettings* settings;
-
 	WINPR_ASSERT(peer);
 
-	ps = (pServerContext*)peer->context;
+	pServerContext* ps = (pServerContext*)peer->context;
 	WINPR_ASSERT(ps);
 
-	pdata = ps->pdata;
+	proxyData* pdata = ps->pdata;
 	WINPR_ASSERT(pdata);
 
-	settings = peer->context->settings;
+	rdpSettings* settings = peer->context->settings;
+	WINPR_ASSERT(settings);
 
 	settings->CompressionLevel = PACKET_COMPR_TYPE_RDP8;
 	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_ACTIVATE, pdata, peer))
@@ -351,16 +352,14 @@ static BOOL pf_server_activate(freerdp_peer* peer)
 static BOOL pf_server_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* identity,
                             BOOL automatic)
 {
-	pServerContext* ps;
-	proxyData* pdata;
 	proxyServerPeerLogon info = { 0 };
 
 	WINPR_ASSERT(peer);
 
-	ps = (pServerContext*)peer->context;
+	pServerContext* ps = (pServerContext*)peer->context;
 	WINPR_ASSERT(ps);
 
-	pdata = ps->pdata;
+	proxyData* pdata = ps->pdata;
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(identity);
 
@@ -382,22 +381,19 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
                                                 const BYTE* data, size_t size, UINT32 flags,
                                                 size_t totalSize)
 {
-	pServerContext* ps;
-	pClientContext* pc;
-	proxyData* pdata;
 	const proxyConfig* config;
 	const pServerStaticChannelContext* channel;
 	UINT64 channelId64 = channelId;
 
 	WINPR_ASSERT(peer);
 
-	ps = (pServerContext*)peer->context;
+	pServerContext* ps = (pServerContext*)peer->context;
 	WINPR_ASSERT(ps);
 
-	pdata = ps->pdata;
+	proxyData* pdata = ps->pdata;
 	WINPR_ASSERT(pdata);
 
-	pc = pdata->pc;
+	pClientContext* pc = pdata->pc;
 	config = pdata->config;
 	WINPR_ASSERT(config);
 	/*
@@ -445,7 +441,6 @@ original_cb:
 static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 {
 	pServerContext* ps;
-	rdpSettings* settings;
 	proxyData* pdata;
 	const proxyConfig* config;
 	proxyServer* server;
@@ -456,7 +451,7 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	if (!ps)
 		return FALSE;
 
-	settings = peer->context->settings;
+	rdpSettings* settings = peer->context->settings;
 	WINPR_ASSERT(settings);
 
 	pdata = proxy_data_new();
@@ -526,6 +521,22 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	peer->Activate = pf_server_activate;
 	peer->Logon = pf_server_logon;
 	peer->AdjustMonitorsLayout = pf_server_adjust_monitor_layout;
+
+	/* Set up peer certificates */
+	rdpCertificate* cert =
+	    freerdp_certificate_new_from_pem(config->CertificatePEM, config->CertificatePEMLength);
+	if (!cert)
+		return FALSE;
+
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
+		return FALSE;
+
+	rdpRsaKey* key = freerdp_key_new_from_pem(config->PrivateKeyPEM, config->PrivateKeyPEMLength);
+	if (!key)
+		return FALSE;
+
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
+		return FALSE;
 
 	/* virtual channels receive data hook */
 	pdata->server_receive_channel_data_original = peer->ReceiveChannelData;
