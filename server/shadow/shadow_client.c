@@ -263,7 +263,7 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	return TRUE;
 
 fail:
-	shadow_client_context_free(peer, client);
+	shadow_client_context_free(peer, context);
 	return FALSE;
 }
 
