@@ -27,6 +27,8 @@
 #include <freerdp/log.h>
 #include <freerdp/crypto/crypto.h>
 
+#include "crypto.h"
+
 #define TAG FREERDP_TAG("crypto")
 
 CryptoCert crypto_cert_read(const BYTE* data, UINT32 length)
