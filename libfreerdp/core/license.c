@@ -373,9 +373,9 @@ static void license_print_product_info(const LICENSE_PRODUCT_INFO* productInfo)
 	WINPR_ASSERT(productInfo->pbCompanyName);
 	WINPR_ASSERT(productInfo->pbProductId);
 
-	CompanyName = ConvertWCharNToUtf8Alloc(productInfo->pbCompanyName,
+	CompanyName = ConvertWCharNToUtf8Alloc((const WCHAR*)productInfo->pbCompanyName,
 	                                       productInfo->cbCompanyName / sizeof(WCHAR), NULL);
-	ProductId = ConvertWCharNToUtf8Alloc(productInfo->pbProductId,
+	ProductId = ConvertWCharNToUtf8Alloc((const WCHAR*)productInfo->pbProductId,
 	                                     productInfo->cbProductId / sizeof(WCHAR), NULL);
 	WLog_INFO(TAG, "ProductInfo:");
 	WLog_INFO(TAG, "\tdwVersion: 0x%08" PRIX32 "", productInfo->dwVersion);
@@ -2419,8 +2419,8 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	CopyMemory(buffer, Stream_Buffer(challengeRespData), Stream_Length(challengeRespData));
 	CopyMemory(&buffer[Stream_Length(challengeRespData)], license->HardwareId,
 	           sizeof(license->HardwareId));
-	status = security_mac_data(license->MacSaltKey, sizeof(license->MacSaltKey),
-	                           sizeof(license->MacSaltKey), buffer, length, license->MACData);
+	status = security_mac_data(license->MacSaltKey, sizeof(license->MacSaltKey), buffer, length,
+	                           license->MACData, sizeof(license->MACData));
 	free(buffer);
 
 	if (!status)
