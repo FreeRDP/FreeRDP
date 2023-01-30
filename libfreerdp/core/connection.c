@@ -38,6 +38,7 @@
 #include <freerdp/listener.h>
 #include <freerdp/cache/pointer.h>
 
+#include "../crypto/crypto.h"
 #include "utils.h"
 
 #define TAG FREERDP_TAG("core.connection")

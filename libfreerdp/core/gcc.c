@@ -1656,7 +1656,7 @@ static BOOL gcc_update_server_random(rdpSettings* settings)
 	WINPR_ASSERT(settings);
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ServerRandom, NULL, length))
 		return FALSE;
-	BYTE* data = freerdp_settings_get_pointer(settings, FreeRDP_ServerRandom);
+	BYTE* data = freerdp_settings_get_pointer_writable(settings, FreeRDP_ServerRandom);
 	if (!data)
 		return FALSE;
 	winpr_RAND(data, length);
@@ -1823,7 +1823,7 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	Stream_Write(s, settings->ServerRandom, settings->ServerRandomLength);
 
 	const SSIZE_T len = certificate_write_server_certificate(
-	    settings->RdpServerRsaKey, CERT_TEMPORARILY_ISSUED | CERT_CHAIN_VERSION_1, s);
+	    settings->RdpServerCertificate, CERT_TEMPORARILY_ISSUED | CERT_CHAIN_VERSION_1, s);
 	if (len < 0)
 		return FALSE;
 	const size_t end = Stream_GetPosition(s);
