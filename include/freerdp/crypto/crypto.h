@@ -35,8 +35,6 @@
 #define D2I_X509_CONST
 #endif
 
-#define EXPONENT_MAX_SIZE 4
-
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/crypto/certificate.h>
@@ -90,20 +88,6 @@ extern "C"
 	                                                            UINT16 port);
 	FREERDP_API BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey,
 	                                            DWORD* PublicKeyLength);
-
-	FREERDP_API SSIZE_T crypto_rsa_public_encrypt(const BYTE* input, size_t length,
-	                                              const rdpCertInfo* cert, BYTE* output,
-	                                              size_t output_length);
-	FREERDP_API SSIZE_T crypto_rsa_public_decrypt(const BYTE* input, size_t length,
-	                                              const rdpCertInfo* cert, BYTE* output,
-	                                              size_t output_length);
-	FREERDP_API SSIZE_T crypto_rsa_private_encrypt(const BYTE* input, size_t length,
-	                                               const rdpRsaKey* key, BYTE* output,
-	                                               size_t output_length);
-	FREERDP_API SSIZE_T crypto_rsa_private_decrypt(const BYTE* input, size_t length,
-	                                               const rdpRsaKey* key, BYTE* output,
-	                                               size_t output_length);
-	FREERDP_API void crypto_reverse(BYTE* data, size_t length);
 
 	FREERDP_API char* crypto_base64_encode(const BYTE* data, size_t length);
 	FREERDP_API void crypto_base64_decode(const char* enc_data, size_t length, BYTE** dec_data,

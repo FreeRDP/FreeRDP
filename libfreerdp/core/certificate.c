@@ -36,6 +36,7 @@
 #include <openssl/rsa.h>
 
 #include "certificate.h"
+#include "../crypto/crypto.h"
 #include "../crypto/opensslcompat.h"
 
 #define TAG "com.freerdp.core"
