@@ -379,7 +379,7 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 		{
 			if (sspi_SetAuthIdentityWithUnicodePassword(
 			        nla->identity, settings->Username, settings->Domain,
-			        (const UINT16*)settings->RedirectionPassword,
+			        (const WCHAR*)settings->RedirectionPassword,
 			        settings->RedirectionPasswordLength / sizeof(WCHAR) - 1) < 0)
 				return FALSE;
 		}
