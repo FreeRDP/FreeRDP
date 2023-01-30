@@ -967,18 +967,18 @@ static BOOL read_bignum(BYTE** dst, UINT32* length, const BIGNUM* num, BOOL allo
 	return TRUE;
 }
 
-static BIO* bio_from_pem(const char* pem)
+static BIO* bio_from_pem(const char* pem, size_t pem_length)
 {
 	if (!pem)
 		return NULL;
 
-	return BIO_new_mem_buf((const void*)pem, strlen(pem));
+	return BIO_new_mem_buf((const void*)pem, pem_length);
 }
 
-static RSA* rsa_from_private_pem(const char* pem)
+static RSA* rsa_from_private_pem(const char* pem, size_t pem_length)
 {
 	RSA* rsa = NULL;
-	BIO* bio = bio_from_pem(pem);
+	BIO* bio = bio_from_pem(pem, pem_length);
 	if (!bio)
 		return NULL;
 
@@ -987,10 +987,10 @@ static RSA* rsa_from_private_pem(const char* pem)
 	return rsa;
 }
 
-static RSA* rsa_from_public_pem(const char* pem)
+static RSA* rsa_from_public_pem(const char* pem, size_t pem_length)
 {
 	RSA* rsa = NULL;
-	BIO* bio = bio_from_pem(pem);
+	BIO* bio = bio_from_pem(pem, pem_length);
 	if (!bio)
 		return NULL;
 
@@ -1000,10 +1000,10 @@ static RSA* rsa_from_public_pem(const char* pem)
 	return rsa;
 }
 
-static BOOL key_read_private(rdpRsaKey* key, const char* pem)
+static BOOL key_read_private(rdpRsaKey* key, const char* pem, size_t pem_length)
 {
 	BOOL rc = FALSE;
-	RSA* rsa = rsa_from_private_pem(pem);
+	RSA* rsa = rsa_from_private_pem(pem, pem_length);
 
 	const BIGNUM* rsa_e = NULL;
 	const BIGNUM* rsa_n = NULL;
@@ -1050,10 +1050,10 @@ fail:
 	return rc;
 }
 
-static X509* x509_from_pem(const char* pem)
+static X509* x509_from_pem(const char* pem, size_t pem_length)
 {
 	X509* x509 = NULL;
-	BIO* bio = bio_from_pem(pem);
+	BIO* bio = bio_from_pem(pem, pem_length);
 	if (!bio)
 		return NULL;
 
@@ -1062,10 +1062,10 @@ static X509* x509_from_pem(const char* pem)
 	return x509;
 }
 
-static BOOL cert_read_public(rdpCertificate* cert, const char* pem)
+static BOOL cert_read_public(rdpCertificate* cert, const char* pem, size_t pem_length)
 {
 	BOOL rc = FALSE;
-	X509* x509 = x509_from_pem(pem);
+	X509* x509 = x509_from_pem(pem, pem_length);
 
 	WINPR_ASSERT(cert);
 
@@ -1081,7 +1081,7 @@ fail:
 	return rc;
 }
 
-rdpRsaKey* freerdp_key_new_from_content(const char* keycontent)
+rdpRsaKey* freerdp_key_new_from_pem(const char* keycontent, size_t keycontent_length)
 {
 	rdpRsaKey* key = NULL;
 
@@ -1093,7 +1093,7 @@ rdpRsaKey* freerdp_key_new_from_content(const char* keycontent)
 	if (!key)
 		return NULL;
 
-	if (!key_read_private(key, keycontent))
+	if (!key_read_private(key, keycontent, keycontent_length))
 		goto fail;
 
 	return key;
@@ -1138,7 +1138,7 @@ rdpRsaKey* freerdp_key_new_from_file(const char* keyfile)
 		goto out_free;
 
 	buffer[length] = '\0';
-	key = freerdp_key_new_from_content(buffer);
+	key = freerdp_key_new_from_pem(buffer, length);
 out_free:
 
 	if (fp)
@@ -1431,7 +1431,7 @@ rdpCertificate* freerdp_certificate_new_from_pem(const char* pem, size_t length)
 	if (!cert || !pem)
 		goto fail;
 
-	rsa = rsa_from_private_pem(pem);
+	rsa = rsa_from_private_pem(pem, length);
 	if (!rsa)
 		goto fail;
 	RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
