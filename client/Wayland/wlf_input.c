@@ -397,11 +397,11 @@ BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent*
 BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 {
 	int32_t x, y;
-	wlfContext* wlf;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(ev);
-	wlf = instance->context;
+
+	wlfContext* wlf = (wlfContext*)instance->context;
 	WINPR_ASSERT(wlf);
 
 	x = ev->x;
@@ -416,11 +416,11 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 {
 	int32_t x, y;
-	wlfContext* wlf;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(ev);
-	wlf = instance->context;
+
+	wlfContext* wlf = (wlfContext*)instance->context;
 	WINPR_ASSERT(wlf);
 
 	x = ev->x;
@@ -435,11 +435,11 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 {
 	int32_t x, y;
-	wlfContext* wlf;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(ev);
-	wlf = instance->context;
+
+	wlfContext* wlf = (wlfContext*)instance->context;
 	WINPR_ASSERT(wlf);
 
 	x = ev->x;
