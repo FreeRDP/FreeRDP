@@ -389,7 +389,7 @@ int sspi_SetAuthIdentityA(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, c
 }
 
 int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, const char* user,
-                                            const char* domain, LPWSTR password,
+                                            const char* domain, LPCWSTR password,
                                             ULONG passwordLength)
 {
 	sspi_FreeAuthIdentity(identity);

@@ -1423,7 +1423,7 @@ extern "C"
 	                                              const WCHAR* password, size_t passwordLen);
 	WINPR_API int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity,
 	                                                      const char* user, const char* domain,
-	                                                      LPWSTR password, ULONG passwordLength);
+	                                                      LPCWSTR password, ULONG passwordLength);
 	WINPR_API UINT32 sspi_GetAuthIdentityVersion(const void* identity);
 	WINPR_API UINT32 sspi_GetAuthIdentityFlags(const void* identity);
 	WINPR_API BOOL sspi_GetAuthIdentityUserDomainW(const void* identity, const WCHAR** pUser,
