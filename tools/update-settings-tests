@@ -129,7 +129,7 @@ def write_str(f, entry_dict):
     f.write('\t\t\t\tconst char* sval = freerdp_settings_get_string(src, cur->id);\n')
     f.write('\t\t\t\t\tsize_t len = 0;\n')
     f.write('\t\t\t\t\tif (sval) len = strlen(sval);\n')
-    f.write('\t\t\t\tif (!freerdp_settings_set_string_(dst, cur->id, sval, len, TRUE, FALSE))\n')
+    f.write('\t\t\t\tif (!freerdp_settings_set_string_copy_(dst, cur->id, sval, len, FALSE))\n')
     f.write('\t\t\t\t\treturn FALSE;\n')
     f.write('\t\t\t}\n')
     f.write('\t\t\tbreak;\n')
@@ -355,7 +355,7 @@ def write_str(f, entry_dict):
     f.write('\t\tswitch(cur->type)\n')
     f.write('\t\t{\n')
     f.write('\t\t\tcase 7: /* strings */\n')
-    f.write('\t\t\t\tfreerdp_settings_set_string_(dst, cur->id, NULL, 0, TRUE, cleanup);\n')
+    f.write('\t\t\t\tfreerdp_settings_set_string_copy_(dst, cur->id, NULL, 0, cleanup);\n')
     f.write('\t\t\tbreak;\n')
     f.write('\t\t\tcase 8: /* pointer */\n')
     f.write('\t\t\t\tfreerdp_settings_set_pointer_len(dst, cur->id, NULL, 0);\n')
@@ -474,7 +474,7 @@ def write_getter_body(f, values, ret):
     f.write('\t}\n')
     f.write('}\n\n')
 
-def write_getter(f, entry_dict, entry_type, entry_name):
+def write_getter(f, entry_dict, entry_type, entry_name, postfix):
     isString = 'string' in entry_name
     isPointer = 'pointer' in entry_name
     values = get_values(entry_dict, entry_type)
@@ -503,34 +503,37 @@ def write_getter(f, entry_dict, entry_type, entry_name):
         f.write('char* freerdp_settings_get_' + entry_name.lower() + '_writable(rdpSettings* settings, size_t id)\n')
         write_getter_body(f, values, ret)
 
-def write_setter_case(f, val, isString, isPointer):
+def write_setter_case(f, val, postfix, isPointer):
     f.write('\t\tcase FreeRDP_' + val + ':\n')
     if isPointer:
         f.write('\t\t\tsettings->' + val + ' = cnv.v;\n')
         f.write('\t\t\tbreak;\n\n')
-    elif not isString:
+    elif not postfix:
         f.write('\t\t\tsettings->' + val + ' = cnv.c;\n')
         f.write('\t\t\tbreak;\n\n')
+    elif len(postfix) <= 1:
+        f.write('\t\t\treturn update_string' + postfix + '(&settings->' + val + ', cnv.c, len);\n\n')
     else:
-        f.write('\t\t\treturn update_string(&settings->' + val + ', cnv.cc, len, copy, cleanup);\n\n')
+        f.write('\t\t\treturn update_string' + postfix + '(&settings->' + val + ', cnv.cc, len, cleanup);\n\n')
 
-def write_setter(f, entry_dict, entry_type, entry_name):
+def write_setter(f, entry_dict, entry_type, entry_name, postfix):
     isString = 'string' in entry_name
     isPointer = 'pointer' in entry_name
     values = get_values(entry_dict, entry_type)
 
     f.write('BOOL freerdp_settings_set_' + entry_name.lower())
-    if isString:
-        f.write('_')
+    f.write(postfix)
     f.write('(rdpSettings* settings, size_t id, ')
-    if isString or isPointer:
+    if isString and len(postfix) > 1 or isPointer:
         f.write('const ')
     if not isPointer:
         f.write(entry_type + ' val')
     else:
         f.write('void* val')
-    if isString:
-        f.write(', size_t len, BOOL copy, BOOL cleanup)\n')
+    if isString and len(postfix) <= 1:
+        f.write(', size_t len)\n')
+    elif isString:
+        f.write(', size_t len, BOOL cleanup)\n')
     else:
         f.write(')\n')
     f.write('{\n')
@@ -554,7 +557,7 @@ def write_setter(f, entry_dict, entry_type, entry_name):
     f.write('\t{\n')
     if values:
         for val in values:
-            write_setter_case(f, val, isString, isPointer)
+            write_setter_case(f, val, postfix, isPointer)
     f.write('\t\tdefault:\n')
     f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
     f.write('\t\t\treturn FALSE;\n')
@@ -562,10 +565,10 @@ def write_setter(f, entry_dict, entry_type, entry_name):
     f.write('\treturn TRUE;\n')
     f.write('}\n\n')
     f.write('\n')
-    if isString:
+    if isString and len(postfix) <= 1:
         f.write('BOOL freerdp_settings_set_string_len(rdpSettings* settings, size_t id, const char* val, size_t len)\n')
         f.write('{\n')
-        f.write('\treturn freerdp_settings_set_string_(settings, id, val, len, TRUE, TRUE);\n')
+        f.write('\treturn freerdp_settings_set_string_copy_(settings, id, val, len, TRUE);\n')
         f.write('}\n')
         f.write('\n')
 
@@ -573,7 +576,7 @@ def write_setter(f, entry_dict, entry_type, entry_name):
         f.write('{\n')
         f.write('\tsize_t len = 0;\n')
         f.write('\tif (val) len = strlen(val);\n')
-        f.write('\treturn freerdp_settings_set_string_(settings, id, val, len, TRUE, TRUE);\n')
+        f.write('\treturn freerdp_settings_set_string_copy_(settings, id, val, len, TRUE);\n')
         f.write('}\n')
         f.write('\n')
 
@@ -625,48 +628,72 @@ try:
         f.write('#include "../core/settings.h"\n\n')
         f.write('#define TAG FREERDP_TAG("common.settings")\n\n')
 
-        f.write('static BOOL update_string(char** current, const char* next, size_t next_len, BOOL copy, BOOL cleanup)\n')
+        f.write('static void free_string(char** current, BOOL cleanup)\n')
         f.write('{\n')
         f.write('\tif (cleanup)\n')
         f.write('\t{\n')
         f.write('\t\tif (*current)\n')
         f.write('\t\t\tmemset(*current, 0, strlen(*current));\n')
         f.write('\t\tfree(*current);\n')
+        f.write('\t\t(*current) = NULL;\n')
         f.write('\t}\n')
-        f.write('\n')
+        f.write('}\n\n')
+
+        f.write('static BOOL alloc_empty_string(char** current, const char* next, size_t next_len)\n')
+        f.write('{\n')
         f.write('\tif (!next && (next_len > 0))\n')
         f.write('\t{\n')
         f.write('\t\t*current = calloc(next_len, 1);\n')
         f.write('\t\treturn (*current != NULL);\n')
         f.write('\t}\n')
+        f.write('\treturn FALSE;\n')
+        f.write('}\n\n')
+
+
+        f.write('static BOOL update_string_copy_(char** current, const char* next, size_t next_len, BOOL cleanup)\n')
+        f.write('{\n')
+        f.write('\tfree_string(current, cleanup);\n')
         f.write('\n')
-        f.write('\tif(copy)')
-        f.write('\t\t*current = (next ? strndup(next, next_len) : NULL);\n')
-        f.write('\telse')
-        f.write('\t\t*current = next;\n')
+        f.write('\tif (alloc_empty_string(current, next, next_len))\n')
+        f.write('\t\treturn TRUE;\n')
+        f.write('\n')
+        f.write('\t*current = (next ? strndup(next, next_len) : NULL);\n')
+        f.write('\treturn !next || (*current != NULL);\n')
+        f.write('}\n\n')
+
+        f.write('static BOOL update_string_(char** current, char* next, size_t next_len)\n')
+        f.write('{\n')
+        f.write('\tfree_string(current, TRUE);\n')
+        f.write('\n')
+        f.write('\tif (alloc_empty_string(current, next, next_len))\n')
+        f.write('\t\treturn TRUE;\n')
+        f.write('\n')
+        f.write('\t*current = next;\n')
         f.write('\treturn !next || (*current != NULL);\n')
         f.write('}\n\n')
 
         getter_list = dict(type_list)
         setter_list = dict(type_list)
-        write_getter(f, getter_list, 'BOOL', 'bool')
-        write_setter(f, setter_list, 'BOOL', 'bool')
-        write_getter(f, getter_list, 'UINT16', 'uint16')
-        write_setter(f, setter_list, 'UINT16', 'uint16')
-        write_getter(f, getter_list, 'INT16', 'int16')
-        write_setter(f, setter_list, 'INT16', 'int16')
-        write_getter(f, getter_list, 'UINT32', 'uint32')
-        write_setter(f, setter_list, 'UINT32', 'uint32')
-        write_getter(f, getter_list, 'INT32', 'int32')
-        write_setter(f, setter_list, 'INT32', 'int32')
-        write_getter(f, getter_list, 'UINT64', 'uint64')
-        write_setter(f, setter_list, 'UINT64', 'uint64')
-        write_getter(f, getter_list, 'INT64', 'int64')
-        write_setter(f, setter_list, 'INT64', 'int64')
-        write_getter(f, getter_list, 'char*', 'string')
-        write_setter(f, setter_list, 'char*', 'string')
-        write_getter(f, getter_list, '*', 'pointer')
-        write_setter(f, setter_list, '*', 'pointer')
+        setter_list2 = dict(type_list)
+        write_getter(f, getter_list, 'BOOL', 'bool', '')
+        write_setter(f, setter_list, 'BOOL', 'bool', '')
+        write_getter(f, getter_list, 'UINT16', 'uint16', '')
+        write_setter(f, setter_list, 'UINT16', 'uint16', '')
+        write_getter(f, getter_list, 'INT16', 'int16', '')
+        write_setter(f, setter_list, 'INT16', 'int16', '')
+        write_getter(f, getter_list, 'UINT32', 'uint32', '')
+        write_setter(f, setter_list, 'UINT32', 'uint32', '')
+        write_getter(f, getter_list, 'INT32', 'int32', '')
+        write_setter(f, setter_list, 'INT32', 'int32', '')
+        write_getter(f, getter_list, 'UINT64', 'uint64', '')
+        write_setter(f, setter_list, 'UINT64', 'uint64', '')
+        write_getter(f, getter_list, 'INT64', 'int64', '')
+        write_setter(f, setter_list, 'INT64', 'int64', '')
+        write_getter(f, getter_list, 'char*', 'string', '_')
+        write_setter(f, setter_list, 'char*', 'string', '_')
+        write_setter(f, setter_list2, 'char*', 'string', '_copy_')
+        write_getter(f, getter_list, '*', 'pointer', '')
+        write_setter(f, setter_list, '*', 'pointer', '')
 
         f.write('\n')
 

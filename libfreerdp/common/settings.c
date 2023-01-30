@@ -1570,7 +1570,7 @@ void* freerdp_settings_get_pointer_array_writable(const rdpSettings* settings, s
 			max = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
 			if (offset >= max)
 				goto fail;
-			return settings->TargetNetPorts[offset];
+			return (void*)(uintptr_t)settings->TargetNetPorts[offset];
 		case FreeRDP_ClientTimeZone:
 			max = 1;
 			if (offset >= max)
@@ -2023,7 +2023,7 @@ BOOL freerdp_settings_set_string_from_utf16(rdpSettings* settings, size_t id, co
 	WINPR_ASSERT(settings);
 
 	if (!param)
-		return freerdp_settings_set_string_(settings, id, NULL, 0, TRUE, TRUE);
+		return freerdp_settings_set_string_copy_(settings, id, NULL, 0, TRUE);
 
 	size_t len = 0;
 
@@ -2031,7 +2031,7 @@ BOOL freerdp_settings_set_string_from_utf16(rdpSettings* settings, size_t id, co
 	if (!str && (len != 0))
 		return FALSE;
 
-	return freerdp_settings_set_string_(settings, id, str, len, FALSE, TRUE);
+	return freerdp_settings_set_string_(settings, id, str, len);
 }
 
 BOOL freerdp_settings_set_string_from_utf16N(rdpSettings* settings, size_t id, const WCHAR* param,
@@ -2042,7 +2042,7 @@ BOOL freerdp_settings_set_string_from_utf16N(rdpSettings* settings, size_t id, c
 	WINPR_ASSERT(settings);
 
 	if (!param)
-		return freerdp_settings_set_string_(settings, id, NULL, length, TRUE, TRUE);
+		return freerdp_settings_set_string_copy_(settings, id, NULL, length, TRUE);
 
 	char* str = ConvertWCharNToUtf8Alloc(param, length, &len);
 	if (!str && (length != 0))
@@ -2054,7 +2054,7 @@ BOOL freerdp_settings_set_string_from_utf16N(rdpSettings* settings, size_t id, c
 			return FALSE;
 	}
 
-	return freerdp_settings_set_string_(settings, id, str, len, FALSE, TRUE);
+	return freerdp_settings_set_string_(settings, id, str, len);
 }
 
 WCHAR* freerdp_settings_get_string_as_utf16(const rdpSettings* settings, size_t id,
