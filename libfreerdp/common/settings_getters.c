@@ -8,26 +8,46 @@
 
 #define TAG FREERDP_TAG("common.settings")
 
-static BOOL update_string(char** current, const char* next, size_t next_len, BOOL copy,
-                          BOOL cleanup)
+static void free_string(char** current, BOOL cleanup)
 {
 	if (cleanup)
 	{
 		if (*current)
 			memset(*current, 0, strlen(*current));
 		free(*current);
+		(*current) = NULL;
 	}
+}
 
+static BOOL alloc_empty_string(char** current, const char* next, size_t next_len)
+{
 	if (!next && (next_len > 0))
 	{
 		*current = calloc(next_len, 1);
 		return (*current != NULL);
 	}
+	return FALSE;
+}
 
-	if (copy)
-		*current = (next ? strndup(next, next_len) : NULL);
-	else
-		*current = next;
+static BOOL update_string_copy_(char** current, const char* next, size_t next_len, BOOL cleanup)
+{
+	free_string(current, cleanup);
+
+	if (alloc_empty_string(current, next, next_len))
+		return TRUE;
+
+	*current = (next ? strndup(next, next_len) : NULL);
+	return !next || (*current != NULL);
+}
+
+static BOOL update_string_(char** current, char* next, size_t next_len)
+{
+	free_string(current, TRUE);
+
+	if (alloc_empty_string(current, next, next_len))
+		return TRUE;
+
+	*current = next;
 	return !next || (*current != NULL);
 }
 
@@ -3064,8 +3084,7 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 	}
 }
 
-BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* val, size_t len,
-                                  BOOL copy, BOOL cleanup)
+BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, char* val, size_t len)
 {
 	union
 	{
@@ -3081,274 +3100,271 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 	switch (id)
 	{
 		case FreeRDP_AcceptedCert:
-			return update_string(&settings->AcceptedCert, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->AcceptedCert, cnv.c, len);
 
 		case FreeRDP_ActionScript:
-			return update_string(&settings->ActionScript, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ActionScript, cnv.c, len);
 
 		case FreeRDP_AllowedTlsCiphers:
-			return update_string(&settings->AllowedTlsCiphers, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->AllowedTlsCiphers, cnv.c, len);
 
 		case FreeRDP_AlternateShell:
-			return update_string(&settings->AlternateShell, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->AlternateShell, cnv.c, len);
 
 		case FreeRDP_AssistanceFile:
-			return update_string(&settings->AssistanceFile, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->AssistanceFile, cnv.c, len);
 
 		case FreeRDP_AuthenticationPackageList:
-			return update_string(&settings->AuthenticationPackageList, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->AuthenticationPackageList, cnv.c, len);
 
 		case FreeRDP_AuthenticationServiceClass:
-			return update_string(&settings->AuthenticationServiceClass, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->AuthenticationServiceClass, cnv.c, len);
 
 		case FreeRDP_BitmapCachePersistFile:
-			return update_string(&settings->BitmapCachePersistFile, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->BitmapCachePersistFile, cnv.c, len);
 
 		case FreeRDP_CardName:
-			return update_string(&settings->CardName, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->CardName, cnv.c, len);
 
 		case FreeRDP_CertificateAcceptedFingerprints:
-			return update_string(&settings->CertificateAcceptedFingerprints, cnv.cc, len, copy,
-			                     cleanup);
+			return update_string_(&settings->CertificateAcceptedFingerprints, cnv.c, len);
 
 		case FreeRDP_CertificateContent:
-			return update_string(&settings->CertificateContent, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->CertificateContent, cnv.c, len);
 
 		case FreeRDP_CertificateFile:
-			return update_string(&settings->CertificateFile, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->CertificateFile, cnv.c, len);
 
 		case FreeRDP_CertificateName:
-			return update_string(&settings->CertificateName, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->CertificateName, cnv.c, len);
 
 		case FreeRDP_ClientAddress:
-			return update_string(&settings->ClientAddress, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ClientAddress, cnv.c, len);
 
 		case FreeRDP_ClientDir:
-			return update_string(&settings->ClientDir, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ClientDir, cnv.c, len);
 
 		case FreeRDP_ClientHostname:
-			return update_string(&settings->ClientHostname, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ClientHostname, cnv.c, len);
 
 		case FreeRDP_ClientProductId:
-			return update_string(&settings->ClientProductId, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ClientProductId, cnv.c, len);
 
 		case FreeRDP_ComputerName:
-			return update_string(&settings->ComputerName, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ComputerName, cnv.c, len);
 
 		case FreeRDP_ConfigPath:
-			return update_string(&settings->ConfigPath, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ConfigPath, cnv.c, len);
 
 		case FreeRDP_ConnectionFile:
-			return update_string(&settings->ConnectionFile, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ConnectionFile, cnv.c, len);
 
 		case FreeRDP_ContainerName:
-			return update_string(&settings->ContainerName, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ContainerName, cnv.c, len);
 
 		case FreeRDP_CspName:
-			return update_string(&settings->CspName, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->CspName, cnv.c, len);
 
 		case FreeRDP_CurrentPath:
-			return update_string(&settings->CurrentPath, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->CurrentPath, cnv.c, len);
 
 		case FreeRDP_Domain:
-			return update_string(&settings->Domain, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->Domain, cnv.c, len);
 
 		case FreeRDP_DrivesToRedirect:
-			return update_string(&settings->DrivesToRedirect, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->DrivesToRedirect, cnv.c, len);
 
 		case FreeRDP_DumpRemoteFxFile:
-			return update_string(&settings->DumpRemoteFxFile, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->DumpRemoteFxFile, cnv.c, len);
 
 		case FreeRDP_DynamicDSTTimeZoneKeyName:
-			return update_string(&settings->DynamicDSTTimeZoneKeyName, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->DynamicDSTTimeZoneKeyName, cnv.c, len);
 
 		case FreeRDP_GatewayAcceptedCert:
-			return update_string(&settings->GatewayAcceptedCert, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->GatewayAcceptedCert, cnv.c, len);
 
 		case FreeRDP_GatewayAccessToken:
-			return update_string(&settings->GatewayAccessToken, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->GatewayAccessToken, cnv.c, len);
 
 		case FreeRDP_GatewayDomain:
-			return update_string(&settings->GatewayDomain, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->GatewayDomain, cnv.c, len);
 
 		case FreeRDP_GatewayHostname:
-			return update_string(&settings->GatewayHostname, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->GatewayHostname, cnv.c, len);
 
 		case FreeRDP_GatewayPassword:
-			return update_string(&settings->GatewayPassword, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->GatewayPassword, cnv.c, len);
 
 		case FreeRDP_GatewayUsername:
-			return update_string(&settings->GatewayUsername, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->GatewayUsername, cnv.c, len);
 
 		case FreeRDP_HomePath:
-			return update_string(&settings->HomePath, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->HomePath, cnv.c, len);
 
 		case FreeRDP_ImeFileName:
-			return update_string(&settings->ImeFileName, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ImeFileName, cnv.c, len);
 
 		case FreeRDP_KerberosArmor:
-			return update_string(&settings->KerberosArmor, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->KerberosArmor, cnv.c, len);
 
 		case FreeRDP_KerberosCache:
-			return update_string(&settings->KerberosCache, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->KerberosCache, cnv.c, len);
 
 		case FreeRDP_KerberosKdcUrl:
-			return update_string(&settings->KerberosKdcUrl, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->KerberosKdcUrl, cnv.c, len);
 
 		case FreeRDP_KerberosKeytab:
-			return update_string(&settings->KerberosKeytab, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->KerberosKeytab, cnv.c, len);
 
 		case FreeRDP_KerberosLifeTime:
-			return update_string(&settings->KerberosLifeTime, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->KerberosLifeTime, cnv.c, len);
 
 		case FreeRDP_KerberosRealm:
-			return update_string(&settings->KerberosRealm, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->KerberosRealm, cnv.c, len);
 
 		case FreeRDP_KerberosRenewableLifeTime:
-			return update_string(&settings->KerberosRenewableLifeTime, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->KerberosRenewableLifeTime, cnv.c, len);
 
 		case FreeRDP_KerberosStartTime:
-			return update_string(&settings->KerberosStartTime, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->KerberosStartTime, cnv.c, len);
 
 		case FreeRDP_KeyboardRemappingList:
-			return update_string(&settings->KeyboardRemappingList, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->KeyboardRemappingList, cnv.c, len);
 
 		case FreeRDP_NtlmSamFile:
-			return update_string(&settings->NtlmSamFile, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->NtlmSamFile, cnv.c, len);
 
 		case FreeRDP_Password:
-			return update_string(&settings->Password, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->Password, cnv.c, len);
 
 		case FreeRDP_PasswordHash:
-			return update_string(&settings->PasswordHash, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->PasswordHash, cnv.c, len);
 
 		case FreeRDP_Pkcs11Module:
-			return update_string(&settings->Pkcs11Module, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->Pkcs11Module, cnv.c, len);
 
 		case FreeRDP_PkinitAnchors:
-			return update_string(&settings->PkinitAnchors, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->PkinitAnchors, cnv.c, len);
 
 		case FreeRDP_PlayRemoteFxFile:
-			return update_string(&settings->PlayRemoteFxFile, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->PlayRemoteFxFile, cnv.c, len);
 
 		case FreeRDP_PreconnectionBlob:
-			return update_string(&settings->PreconnectionBlob, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->PreconnectionBlob, cnv.c, len);
 
 		case FreeRDP_PrivateKeyContent:
-			return update_string(&settings->PrivateKeyContent, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->PrivateKeyContent, cnv.c, len);
 
 		case FreeRDP_PrivateKeyFile:
-			return update_string(&settings->PrivateKeyFile, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->PrivateKeyFile, cnv.c, len);
 
 		case FreeRDP_ProxyHostname:
-			return update_string(&settings->ProxyHostname, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ProxyHostname, cnv.c, len);
 
 		case FreeRDP_ProxyPassword:
-			return update_string(&settings->ProxyPassword, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ProxyPassword, cnv.c, len);
 
 		case FreeRDP_ProxyUsername:
-			return update_string(&settings->ProxyUsername, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ProxyUsername, cnv.c, len);
 
 		case FreeRDP_RDP2TCPArgs:
-			return update_string(&settings->RDP2TCPArgs, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RDP2TCPArgs, cnv.c, len);
 
 		case FreeRDP_ReaderName:
-			return update_string(&settings->ReaderName, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ReaderName, cnv.c, len);
 
 		case FreeRDP_RedirectionAcceptedCert:
-			return update_string(&settings->RedirectionAcceptedCert, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RedirectionAcceptedCert, cnv.c, len);
 
 		case FreeRDP_RedirectionDomain:
-			return update_string(&settings->RedirectionDomain, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RedirectionDomain, cnv.c, len);
 
 		case FreeRDP_RedirectionTargetFQDN:
-			return update_string(&settings->RedirectionTargetFQDN, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RedirectionTargetFQDN, cnv.c, len);
 
 		case FreeRDP_RedirectionTargetNetBiosName:
-			return update_string(&settings->RedirectionTargetNetBiosName, cnv.cc, len, copy,
-			                     cleanup);
+			return update_string_(&settings->RedirectionTargetNetBiosName, cnv.c, len);
 
 		case FreeRDP_RedirectionUsername:
-			return update_string(&settings->RedirectionUsername, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RedirectionUsername, cnv.c, len);
 
 		case FreeRDP_RemoteApplicationCmdLine:
-			return update_string(&settings->RemoteApplicationCmdLine, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RemoteApplicationCmdLine, cnv.c, len);
 
 		case FreeRDP_RemoteApplicationFile:
-			return update_string(&settings->RemoteApplicationFile, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RemoteApplicationFile, cnv.c, len);
 
 		case FreeRDP_RemoteApplicationGuid:
-			return update_string(&settings->RemoteApplicationGuid, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RemoteApplicationGuid, cnv.c, len);
 
 		case FreeRDP_RemoteApplicationIcon:
-			return update_string(&settings->RemoteApplicationIcon, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RemoteApplicationIcon, cnv.c, len);
 
 		case FreeRDP_RemoteApplicationName:
-			return update_string(&settings->RemoteApplicationName, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RemoteApplicationName, cnv.c, len);
 
 		case FreeRDP_RemoteApplicationProgram:
-			return update_string(&settings->RemoteApplicationProgram, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RemoteApplicationProgram, cnv.c, len);
 
 		case FreeRDP_RemoteApplicationWorkingDir:
-			return update_string(&settings->RemoteApplicationWorkingDir, cnv.cc, len, copy,
-			                     cleanup);
+			return update_string_(&settings->RemoteApplicationWorkingDir, cnv.c, len);
 
 		case FreeRDP_RemoteAssistancePassStub:
-			return update_string(&settings->RemoteAssistancePassStub, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RemoteAssistancePassStub, cnv.c, len);
 
 		case FreeRDP_RemoteAssistancePassword:
-			return update_string(&settings->RemoteAssistancePassword, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RemoteAssistancePassword, cnv.c, len);
 
 		case FreeRDP_RemoteAssistanceRCTicket:
-			return update_string(&settings->RemoteAssistanceRCTicket, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RemoteAssistanceRCTicket, cnv.c, len);
 
 		case FreeRDP_RemoteAssistanceSessionId:
-			return update_string(&settings->RemoteAssistanceSessionId, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->RemoteAssistanceSessionId, cnv.c, len);
 
 		case FreeRDP_ServerHostname:
-			return update_string(&settings->ServerHostname, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ServerHostname, cnv.c, len);
 
 		case FreeRDP_ServerLicenseCompanyName:
-			return update_string(&settings->ServerLicenseCompanyName, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ServerLicenseCompanyName, cnv.c, len);
 
 		case FreeRDP_ServerLicenseProductName:
-			return update_string(&settings->ServerLicenseProductName, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ServerLicenseProductName, cnv.c, len);
 
 		case FreeRDP_ShellWorkingDirectory:
-			return update_string(&settings->ShellWorkingDirectory, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->ShellWorkingDirectory, cnv.c, len);
 
 		case FreeRDP_SmartcardCertificate:
-			return update_string(&settings->SmartcardCertificate, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->SmartcardCertificate, cnv.c, len);
 
 		case FreeRDP_SmartcardPrivateKey:
-			return update_string(&settings->SmartcardPrivateKey, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->SmartcardPrivateKey, cnv.c, len);
 
 		case FreeRDP_SspiModule:
-			return update_string(&settings->SspiModule, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->SspiModule, cnv.c, len);
 
 		case FreeRDP_TargetNetAddress:
-			return update_string(&settings->TargetNetAddress, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->TargetNetAddress, cnv.c, len);
 
 		case FreeRDP_TerminalDescriptor:
-			return update_string(&settings->TerminalDescriptor, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->TerminalDescriptor, cnv.c, len);
 
 		case FreeRDP_TlsSecretsFile:
-			return update_string(&settings->TlsSecretsFile, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->TlsSecretsFile, cnv.c, len);
 
 		case FreeRDP_TransportDumpFile:
-			return update_string(&settings->TransportDumpFile, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->TransportDumpFile, cnv.c, len);
 
 		case FreeRDP_UserSpecifiedServerName:
-			return update_string(&settings->UserSpecifiedServerName, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->UserSpecifiedServerName, cnv.c, len);
 
 		case FreeRDP_Username:
-			return update_string(&settings->Username, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->Username, cnv.c, len);
 
 		case FreeRDP_WindowTitle:
-			return update_string(&settings->WindowTitle, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->WindowTitle, cnv.c, len);
 
 		case FreeRDP_WmClass:
-			return update_string(&settings->WmClass, cnv.cc, len, copy, cleanup);
+			return update_string_(&settings->WmClass, cnv.c, len);
 
 		default:
 			WLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id,
@@ -3361,7 +3377,7 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, const char* 
 
 BOOL freerdp_settings_set_string_len(rdpSettings* settings, size_t id, const char* val, size_t len)
 {
-	return freerdp_settings_set_string_(settings, id, val, len, TRUE, TRUE);
+	return freerdp_settings_set_string_copy_(settings, id, val, len, TRUE);
 }
 
 BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* val)
@@ -3369,7 +3385,302 @@ BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id, const char* v
 	size_t len = 0;
 	if (val)
 		len = strlen(val);
-	return freerdp_settings_set_string_(settings, id, val, len, TRUE, TRUE);
+	return freerdp_settings_set_string_copy_(settings, id, val, len, TRUE);
+}
+
+BOOL freerdp_settings_set_string_copy_(rdpSettings* settings, size_t id, const char* val,
+                                       size_t len, BOOL cleanup)
+{
+	union
+	{
+		void* v;
+		const void* cv;
+		char* c;
+		const char* cc;
+	} cnv;
+	WINPR_ASSERT(settings);
+
+	cnv.cc = val;
+
+	switch (id)
+	{
+		case FreeRDP_AcceptedCert:
+			return update_string_copy_(&settings->AcceptedCert, cnv.cc, len, cleanup);
+
+		case FreeRDP_ActionScript:
+			return update_string_copy_(&settings->ActionScript, cnv.cc, len, cleanup);
+
+		case FreeRDP_AllowedTlsCiphers:
+			return update_string_copy_(&settings->AllowedTlsCiphers, cnv.cc, len, cleanup);
+
+		case FreeRDP_AlternateShell:
+			return update_string_copy_(&settings->AlternateShell, cnv.cc, len, cleanup);
+
+		case FreeRDP_AssistanceFile:
+			return update_string_copy_(&settings->AssistanceFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_AuthenticationPackageList:
+			return update_string_copy_(&settings->AuthenticationPackageList, cnv.cc, len, cleanup);
+
+		case FreeRDP_AuthenticationServiceClass:
+			return update_string_copy_(&settings->AuthenticationServiceClass, cnv.cc, len, cleanup);
+
+		case FreeRDP_BitmapCachePersistFile:
+			return update_string_copy_(&settings->BitmapCachePersistFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_CardName:
+			return update_string_copy_(&settings->CardName, cnv.cc, len, cleanup);
+
+		case FreeRDP_CertificateAcceptedFingerprints:
+			return update_string_copy_(&settings->CertificateAcceptedFingerprints, cnv.cc, len,
+			                           cleanup);
+
+		case FreeRDP_CertificateContent:
+			return update_string_copy_(&settings->CertificateContent, cnv.cc, len, cleanup);
+
+		case FreeRDP_CertificateFile:
+			return update_string_copy_(&settings->CertificateFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_CertificateName:
+			return update_string_copy_(&settings->CertificateName, cnv.cc, len, cleanup);
+
+		case FreeRDP_ClientAddress:
+			return update_string_copy_(&settings->ClientAddress, cnv.cc, len, cleanup);
+
+		case FreeRDP_ClientDir:
+			return update_string_copy_(&settings->ClientDir, cnv.cc, len, cleanup);
+
+		case FreeRDP_ClientHostname:
+			return update_string_copy_(&settings->ClientHostname, cnv.cc, len, cleanup);
+
+		case FreeRDP_ClientProductId:
+			return update_string_copy_(&settings->ClientProductId, cnv.cc, len, cleanup);
+
+		case FreeRDP_ComputerName:
+			return update_string_copy_(&settings->ComputerName, cnv.cc, len, cleanup);
+
+		case FreeRDP_ConfigPath:
+			return update_string_copy_(&settings->ConfigPath, cnv.cc, len, cleanup);
+
+		case FreeRDP_ConnectionFile:
+			return update_string_copy_(&settings->ConnectionFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_ContainerName:
+			return update_string_copy_(&settings->ContainerName, cnv.cc, len, cleanup);
+
+		case FreeRDP_CspName:
+			return update_string_copy_(&settings->CspName, cnv.cc, len, cleanup);
+
+		case FreeRDP_CurrentPath:
+			return update_string_copy_(&settings->CurrentPath, cnv.cc, len, cleanup);
+
+		case FreeRDP_Domain:
+			return update_string_copy_(&settings->Domain, cnv.cc, len, cleanup);
+
+		case FreeRDP_DrivesToRedirect:
+			return update_string_copy_(&settings->DrivesToRedirect, cnv.cc, len, cleanup);
+
+		case FreeRDP_DumpRemoteFxFile:
+			return update_string_copy_(&settings->DumpRemoteFxFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_DynamicDSTTimeZoneKeyName:
+			return update_string_copy_(&settings->DynamicDSTTimeZoneKeyName, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayAcceptedCert:
+			return update_string_copy_(&settings->GatewayAcceptedCert, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayAccessToken:
+			return update_string_copy_(&settings->GatewayAccessToken, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayDomain:
+			return update_string_copy_(&settings->GatewayDomain, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayHostname:
+			return update_string_copy_(&settings->GatewayHostname, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayPassword:
+			return update_string_copy_(&settings->GatewayPassword, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayUsername:
+			return update_string_copy_(&settings->GatewayUsername, cnv.cc, len, cleanup);
+
+		case FreeRDP_HomePath:
+			return update_string_copy_(&settings->HomePath, cnv.cc, len, cleanup);
+
+		case FreeRDP_ImeFileName:
+			return update_string_copy_(&settings->ImeFileName, cnv.cc, len, cleanup);
+
+		case FreeRDP_KerberosArmor:
+			return update_string_copy_(&settings->KerberosArmor, cnv.cc, len, cleanup);
+
+		case FreeRDP_KerberosCache:
+			return update_string_copy_(&settings->KerberosCache, cnv.cc, len, cleanup);
+
+		case FreeRDP_KerberosKdcUrl:
+			return update_string_copy_(&settings->KerberosKdcUrl, cnv.cc, len, cleanup);
+
+		case FreeRDP_KerberosKeytab:
+			return update_string_copy_(&settings->KerberosKeytab, cnv.cc, len, cleanup);
+
+		case FreeRDP_KerberosLifeTime:
+			return update_string_copy_(&settings->KerberosLifeTime, cnv.cc, len, cleanup);
+
+		case FreeRDP_KerberosRealm:
+			return update_string_copy_(&settings->KerberosRealm, cnv.cc, len, cleanup);
+
+		case FreeRDP_KerberosRenewableLifeTime:
+			return update_string_copy_(&settings->KerberosRenewableLifeTime, cnv.cc, len, cleanup);
+
+		case FreeRDP_KerberosStartTime:
+			return update_string_copy_(&settings->KerberosStartTime, cnv.cc, len, cleanup);
+
+		case FreeRDP_KeyboardRemappingList:
+			return update_string_copy_(&settings->KeyboardRemappingList, cnv.cc, len, cleanup);
+
+		case FreeRDP_NtlmSamFile:
+			return update_string_copy_(&settings->NtlmSamFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_Password:
+			return update_string_copy_(&settings->Password, cnv.cc, len, cleanup);
+
+		case FreeRDP_PasswordHash:
+			return update_string_copy_(&settings->PasswordHash, cnv.cc, len, cleanup);
+
+		case FreeRDP_Pkcs11Module:
+			return update_string_copy_(&settings->Pkcs11Module, cnv.cc, len, cleanup);
+
+		case FreeRDP_PkinitAnchors:
+			return update_string_copy_(&settings->PkinitAnchors, cnv.cc, len, cleanup);
+
+		case FreeRDP_PlayRemoteFxFile:
+			return update_string_copy_(&settings->PlayRemoteFxFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_PreconnectionBlob:
+			return update_string_copy_(&settings->PreconnectionBlob, cnv.cc, len, cleanup);
+
+		case FreeRDP_PrivateKeyContent:
+			return update_string_copy_(&settings->PrivateKeyContent, cnv.cc, len, cleanup);
+
+		case FreeRDP_PrivateKeyFile:
+			return update_string_copy_(&settings->PrivateKeyFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_ProxyHostname:
+			return update_string_copy_(&settings->ProxyHostname, cnv.cc, len, cleanup);
+
+		case FreeRDP_ProxyPassword:
+			return update_string_copy_(&settings->ProxyPassword, cnv.cc, len, cleanup);
+
+		case FreeRDP_ProxyUsername:
+			return update_string_copy_(&settings->ProxyUsername, cnv.cc, len, cleanup);
+
+		case FreeRDP_RDP2TCPArgs:
+			return update_string_copy_(&settings->RDP2TCPArgs, cnv.cc, len, cleanup);
+
+		case FreeRDP_ReaderName:
+			return update_string_copy_(&settings->ReaderName, cnv.cc, len, cleanup);
+
+		case FreeRDP_RedirectionAcceptedCert:
+			return update_string_copy_(&settings->RedirectionAcceptedCert, cnv.cc, len, cleanup);
+
+		case FreeRDP_RedirectionDomain:
+			return update_string_copy_(&settings->RedirectionDomain, cnv.cc, len, cleanup);
+
+		case FreeRDP_RedirectionTargetFQDN:
+			return update_string_copy_(&settings->RedirectionTargetFQDN, cnv.cc, len, cleanup);
+
+		case FreeRDP_RedirectionTargetNetBiosName:
+			return update_string_copy_(&settings->RedirectionTargetNetBiosName, cnv.cc, len,
+			                           cleanup);
+
+		case FreeRDP_RedirectionUsername:
+			return update_string_copy_(&settings->RedirectionUsername, cnv.cc, len, cleanup);
+
+		case FreeRDP_RemoteApplicationCmdLine:
+			return update_string_copy_(&settings->RemoteApplicationCmdLine, cnv.cc, len, cleanup);
+
+		case FreeRDP_RemoteApplicationFile:
+			return update_string_copy_(&settings->RemoteApplicationFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_RemoteApplicationGuid:
+			return update_string_copy_(&settings->RemoteApplicationGuid, cnv.cc, len, cleanup);
+
+		case FreeRDP_RemoteApplicationIcon:
+			return update_string_copy_(&settings->RemoteApplicationIcon, cnv.cc, len, cleanup);
+
+		case FreeRDP_RemoteApplicationName:
+			return update_string_copy_(&settings->RemoteApplicationName, cnv.cc, len, cleanup);
+
+		case FreeRDP_RemoteApplicationProgram:
+			return update_string_copy_(&settings->RemoteApplicationProgram, cnv.cc, len, cleanup);
+
+		case FreeRDP_RemoteApplicationWorkingDir:
+			return update_string_copy_(&settings->RemoteApplicationWorkingDir, cnv.cc, len,
+			                           cleanup);
+
+		case FreeRDP_RemoteAssistancePassStub:
+			return update_string_copy_(&settings->RemoteAssistancePassStub, cnv.cc, len, cleanup);
+
+		case FreeRDP_RemoteAssistancePassword:
+			return update_string_copy_(&settings->RemoteAssistancePassword, cnv.cc, len, cleanup);
+
+		case FreeRDP_RemoteAssistanceRCTicket:
+			return update_string_copy_(&settings->RemoteAssistanceRCTicket, cnv.cc, len, cleanup);
+
+		case FreeRDP_RemoteAssistanceSessionId:
+			return update_string_copy_(&settings->RemoteAssistanceSessionId, cnv.cc, len, cleanup);
+
+		case FreeRDP_ServerHostname:
+			return update_string_copy_(&settings->ServerHostname, cnv.cc, len, cleanup);
+
+		case FreeRDP_ServerLicenseCompanyName:
+			return update_string_copy_(&settings->ServerLicenseCompanyName, cnv.cc, len, cleanup);
+
+		case FreeRDP_ServerLicenseProductName:
+			return update_string_copy_(&settings->ServerLicenseProductName, cnv.cc, len, cleanup);
+
+		case FreeRDP_ShellWorkingDirectory:
+			return update_string_copy_(&settings->ShellWorkingDirectory, cnv.cc, len, cleanup);
+
+		case FreeRDP_SmartcardCertificate:
+			return update_string_copy_(&settings->SmartcardCertificate, cnv.cc, len, cleanup);
+
+		case FreeRDP_SmartcardPrivateKey:
+			return update_string_copy_(&settings->SmartcardPrivateKey, cnv.cc, len, cleanup);
+
+		case FreeRDP_SspiModule:
+			return update_string_copy_(&settings->SspiModule, cnv.cc, len, cleanup);
+
+		case FreeRDP_TargetNetAddress:
+			return update_string_copy_(&settings->TargetNetAddress, cnv.cc, len, cleanup);
+
+		case FreeRDP_TerminalDescriptor:
+			return update_string_copy_(&settings->TerminalDescriptor, cnv.cc, len, cleanup);
+
+		case FreeRDP_TlsSecretsFile:
+			return update_string_copy_(&settings->TlsSecretsFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_TransportDumpFile:
+			return update_string_copy_(&settings->TransportDumpFile, cnv.cc, len, cleanup);
+
+		case FreeRDP_UserSpecifiedServerName:
+			return update_string_copy_(&settings->UserSpecifiedServerName, cnv.cc, len, cleanup);
+
+		case FreeRDP_Username:
+			return update_string_copy_(&settings->Username, cnv.cc, len, cleanup);
+
+		case FreeRDP_WindowTitle:
+			return update_string_copy_(&settings->WindowTitle, cnv.cc, len, cleanup);
+
+		case FreeRDP_WmClass:
+			return update_string_copy_(&settings->WmClass, cnv.cc, len, cleanup);
+
+		default:
+			WLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id,
+			         freerdp_settings_get_name_for_key(id),
+			         freerdp_settings_get_type_name_for_key(id));
+			return FALSE;
+	}
+	return TRUE;
 }
 
 void* freerdp_settings_get_pointer_writable(rdpSettings* settings, size_t id)
