@@ -1003,7 +1003,10 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 			Stream_Write_UINT8(s, 0x1);   /* TSFIPS_VERSION 1*/
 			Stream_Write_UINT8(s, pad);   /* padding */
 
-			if (!security_hmac_signature(fpInputEvents, fpInputEvents_length, Stream_Pointer(s),
+			if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 8))
+				goto unlock;
+
+			if (!security_hmac_signature(fpInputEvents, fpInputEvents_length, Stream_Pointer(s), 8,
 			                             rdp))
 				goto unlock;
 
@@ -1018,12 +1021,14 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 		else
 		{
 			BOOL res;
+			if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 8))
+				goto unlock;
 			if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
 				res = security_salted_mac_signature(rdp, fpInputEvents, fpInputEvents_length, TRUE,
-				                                    Stream_Pointer(s));
+				                                    Stream_Pointer(s), 8);
 			else
 				res = security_mac_signature(rdp, fpInputEvents, fpInputEvents_length,
-				                             Stream_Pointer(s));
+				                             Stream_Pointer(s), 8);
 
 			if (!res || !security_encrypt(fpInputEvents, fpInputEvents_length, rdp))
 				goto unlock;
@@ -1238,7 +1243,8 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 
 			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
-				if (!security_hmac_signature(data, dataSize - pad, pSignature, rdp))
+				// TODO: Ensure stream capacity
+				if (!security_hmac_signature(data, dataSize - pad, pSignature, 8, rdp))
 					goto unlock;
 
 				if (!security_fips_encrypt(data, dataSize, rdp))
@@ -1246,10 +1252,12 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			}
 			else
 			{
+				// TODO: Ensure stream capacity
 				if (rdp->sec_flags & SEC_SECURE_CHECKSUM)
-					status = security_salted_mac_signature(rdp, data, dataSize, TRUE, pSignature);
+					status =
+					    security_salted_mac_signature(rdp, data, dataSize, TRUE, pSignature, 8);
 				else
-					status = security_mac_signature(rdp, data, dataSize, pSignature);
+					status = security_mac_signature(rdp, data, dataSize, pSignature, 8);
 
 				if (!status || !security_encrypt(data, dataSize, rdp))
 					goto unlock;
