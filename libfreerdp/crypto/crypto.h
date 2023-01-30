@@ -47,6 +47,8 @@ extern "C"
 	                                                 size_t output_length);
 	FREERDP_LOCAL void crypto_reverse(BYTE* data, size_t length);
 
+	FREERDP_LOCAL EVP_PKEY* crypto_key_from_pem(const char* data, size_t length);
+
 #ifdef __cplusplus
 }
 #endif
