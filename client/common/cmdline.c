@@ -2565,6 +2565,51 @@ fail:
 	return rc;
 }
 
+static void fill_credential_string(COMMAND_LINE_ARGUMENT_A* args, const char* value)
+{
+	WINPR_ASSERT(args);
+	WINPR_ASSERT(value);
+
+	COMMAND_LINE_ARGUMENT_A* arg = CommandLineFindArgumentA(args, value);
+	if (!arg)
+		return;
+
+	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+		FillMemory(arg->Value, strlen(arg->Value), '*');
+}
+
+static void fill_credential_strings(COMMAND_LINE_ARGUMENT_A* args)
+{
+	const char* credentials[] = { "p",   "smartcard-logon",  "gp",        "gat",
+		                          "pth", "reconnect-cookie", "assistance" };
+
+	for (size_t x = 0; x < ARRAYSIZE(credentials); x++)
+	{
+		const char* cred = credentials[x];
+		fill_credential_string(args, cred);
+	}
+
+	COMMAND_LINE_ARGUMENT_A* arg = CommandLineFindArgumentA(args, "gateway");
+	if (arg && ((arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT) != 0))
+	{
+		const char* gwcreds[] = { "p:", "access-token:" };
+		char* tok = strtok(arg->Value, ",");
+		while (tok)
+		{
+			for (size_t x = 0; x < ARRAYSIZE(gwcreds); x++)
+			{
+				const char* opt = gwcreds[x];
+				if (option_starts_with(opt, tok))
+				{
+					char* val = &tok[strlen(opt)];
+					FillMemory(val, strlen(val), '*');
+				}
+			}
+			tok = strtok(NULL, ",");
+		}
+	}
+}
+
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int argc,
                                                          char** argv, BOOL allowUnknown)
 {
@@ -4310,24 +4355,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		settings->ServerPort = (UINT32)val;
 	}
 
-	arg = CommandLineFindArgumentA(largs, "p");
-	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
-	{
-		FillMemory(arg->Value, strlen(arg->Value), '*');
-	}
-
-	arg = CommandLineFindArgumentA(largs, "smartcard-logon");
-	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
-	{
-		if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
-			FillMemory(arg->Value, strlen(arg->Value), '*');
-	}
-
-	arg = CommandLineFindArgumentA(largs, "gp");
-	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
-	{
-		FillMemory(arg->Value, strlen(arg->Value), '*');
-	}
+	fill_credential_strings(largs);
 
 	return status;
 }
