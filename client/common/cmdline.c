@@ -2580,8 +2580,17 @@ static void fill_credential_string(COMMAND_LINE_ARGUMENT_A* args, const char* va
 
 static void fill_credential_strings(COMMAND_LINE_ARGUMENT_A* args)
 {
-	const char* credentials[] = { "p",   "smartcard-logon",  "gp",        "gat",
-		                          "pth", "reconnect-cookie", "assistance" };
+	const char* credentials[] = {
+		"p",
+		"smartcard-logon",
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
+		"gp",
+		"gat",
+#endif
+		"pth",
+		"reconnect-cookie",
+		"assistance"
+	};
 
 	for (size_t x = 0; x < ARRAYSIZE(credentials); x++)
 	{
@@ -3151,11 +3160,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!parse_gateway_options(settings, arg))
 				return COMMAND_LINE_ERROR;
 		}
-		CommandLineSwitchCase(arg, "g")
-		{
-			if (!parse_gateway_host_option(settings, arg->Value))
-				return FALSE;
-		}
 		CommandLineSwitchCase(arg, "proxy")
 		{
 			/* initial value */
@@ -3177,6 +3181,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				WLog_ERR(TAG, "Option http-proxy needs argument.");
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
+		}
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
+		CommandLineSwitchCase(arg, "g")
+		{
+			if (!parse_gateway_host_option(settings, arg->Value))
+				return FALSE;
 		}
 		CommandLineSwitchCase(arg, "gu")
 		{
@@ -3208,6 +3218,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!parse_gateway_usage_option(settings, arg->Value))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
+#endif
 		CommandLineSwitchCase(arg, "app")
 		{
 			int rc = parse_app_options(settings, arg);
