@@ -1433,10 +1433,10 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 			if (!freerdp_parse_hostname(address, &host, &port))
 				return FALSE;
 
-			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname, host))
-				return FALSE;
-
+			const BOOL rc = freerdp_settings_set_string(settings, FreeRDP_ServerHostname, host);
 			free(host);
+			if (!rc)
+				return FALSE;
 
 			if (port > 0)
 			{
@@ -1682,10 +1682,10 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		if (!freerdp_parse_hostname(file->GatewayHostname, &host, &port))
 			return FALSE;
 
-		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHostname, host))
-			return FALSE;
-
+		const BOOL rc = freerdp_settings_set_string(settings, FreeRDP_GatewayHostname, host);
 		free(host);
+		if (!rc)
+			return FALSE;
 
 		if (port > 0)
 		{
