@@ -166,6 +166,12 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "from-stdin", COMMAND_LINE_VALUE_OPTIONAL, "force", NULL, NULL, -1, NULL,
 	  "Read credentials from stdin. With <force> the prompt is done before connection, otherwise "
 	  "on server request." },
+	{ "gateway", COMMAND_LINE_VALUE_REQUIRED,
+	  "g:<gateway>[:<port>],u:<user>,d:<domain>,p:<password>,usage-method:["
+	  "direct|detect],access-token:<"
+	  "token>,type:[rpc|http[,no-websockets][,extauth-sspi-ntlm]|auto[,no-websockets][,extauth-"
+	  "sspi-ntlm]],",
+	  NULL, NULL, -1, "gw", "Gateway Hostname" },
 	{ "g", COMMAND_LINE_VALUE_REQUIRED, "<gateway>[:<port>]", NULL, NULL, -1, NULL,
 	  "Gateway Hostname" },
 	{ "gateway-usage-method", COMMAND_LINE_VALUE_REQUIRED, "[direct|detect]", NULL, NULL, -1, "gum",
