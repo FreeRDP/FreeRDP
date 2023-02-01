@@ -463,14 +463,16 @@ static long transport_bio_buffered_callback(BIO* bio, int mode, const char* argp
 
 static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 {
-	int i, ret;
-	int status;
-	int nchunks;
-	int committedBytes;
-	DataChunk chunks[2];
+	int ret = num;
+	int nchunks = 0;
+	size_t committedBytes = 0;
+	DataChunk chunks[2] = { 0 };
 	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*)BIO_get_data(bio);
 	BIO* next_bio = NULL;
-	ret = num;
+
+	WINPR_ASSERT(bio);
+	WINPR_ASSERT(ptr);
+
 	ptr->writeBlocked = FALSE;
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 
@@ -483,16 +485,15 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 		return -1;
 	}
 
-	committedBytes = 0;
 	nchunks = ringbuffer_peek(&ptr->xmitBuffer, chunks, ringbuffer_used(&ptr->xmitBuffer));
 	next_bio = BIO_next(bio);
 
-	for (i = 0; i < nchunks; i++)
+	for (int i = 0; i < nchunks; i++)
 	{
 		while (chunks[i].size)
 		{
 			ERR_clear_error();
-			status = BIO_write(next_bio, chunks[i].data, chunks[i].size);
+			const int status = BIO_write(next_bio, chunks[i].data, chunks[i].size);
 
 			if (status <= 0)
 			{
@@ -510,10 +511,12 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 					goto out; /* EWOULDBLOCK */
 				}
 			}
-
-			committedBytes += status;
-			chunks[i].size -= status;
-			chunks[i].data += status;
+			else
+			{
+				committedBytes += (size_t)status;
+				chunks[i].size -= (size_t)status;
+				chunks[i].data += status;
+			}
 		}
 	}
 
