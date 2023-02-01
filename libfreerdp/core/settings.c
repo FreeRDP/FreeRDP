@@ -975,19 +975,14 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 			}
 		}
 
-		if (settings->TargetNetPorts)
+		const void* ports = freerdp_settings_get_pointer(settings, FreeRDP_TargetNetPorts);
+		if (ports)
 		{
-			_settings->TargetNetPorts = (UINT32*)calloc(
-			    freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount),
-			    sizeof(UINT32));
-
-			if (!_settings->TargetNetPorts)
+			const UINT32 nrports =
+			    freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
+			if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_TargetNetPorts, ports,
+			                                      nrports))
 				goto out_fail;
-
-			for (index = 0;
-			     index < freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount);
-			     index++)
-				_settings->TargetNetPorts[index] = settings->TargetNetPorts[index];
 		}
 	}
 
