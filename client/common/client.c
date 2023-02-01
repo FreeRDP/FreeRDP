@@ -876,6 +876,9 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 	}
 #endif
 
+	if (freerdp_settings_get_bool(instance->context->settings, FreeRDP_GatewayAutoConsent))
+		return TRUE;
+
 	while (isConsentMandatory)
 	{
 		printf("I understand and agree to the terms of this policy (Y/N) \n");
