@@ -75,7 +75,7 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 		else
 		{
 			const char *name = freerdp_settings_get_string(settings, FreeRDP_ServerHostname);
-			const UINT32 port = freerdp_settings_get_string(settings, FreeRDP_ServerPort);
+			const UINT32 port = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
 			winTitle = [[NSString alloc]
 			    initWithFormat:@"%@:%u",
 			                   [NSString stringWithCString:name encoding:NSUTF8StringEncoding],
