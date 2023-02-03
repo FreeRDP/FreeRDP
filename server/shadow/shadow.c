@@ -27,6 +27,7 @@
 #include <winpr/tools/makecert.h>
 
 #include <freerdp/server/shadow.h>
+#include <freerdp/settings.h>
 
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("shadow")
@@ -35,8 +36,6 @@ int main(int argc, char** argv)
 {
 	int status = 0;
 	DWORD dwExitCode = 0;
-	rdpSettings* settings = NULL;
-	rdpShadowServer* server = NULL;
 	COMMAND_LINE_ARGUMENT_A shadow_args[] = {
 		{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<tag>:<level>[,<tag>:<level>[,...]]", NULL,
 		  NULL, -1, NULL, "Set logger filters, see wLog(7) for details" },
@@ -98,7 +97,7 @@ int main(int argc, char** argv)
 
 	shadow_subsystem_set_entry_builtin(NULL);
 
-	server = shadow_server_new();
+	rdpShadowServer* server = shadow_server_new();
 
 	if (!server)
 	{
@@ -107,7 +106,8 @@ int main(int argc, char** argv)
 		goto fail;
 	}
 
-	settings = server->settings;
+	rdpSettings* settings = server->settings;
+	WINPR_ASSERT(settings);
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE) ||

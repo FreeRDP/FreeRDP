@@ -225,12 +225,6 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	settings->DrawAllowDynamicColorFidelity = TRUE;
 	settings->CompressionLevel = PACKET_COMPR_TYPE_RDP6;
 
-	if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, server->CertificateFile))
-		goto fail;
-
-	if (!freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, server->PrivateKeyFile))
-		goto fail;
-
 	if (server->ipcSocket && (strncmp(bind_address, server->ipcSocket,
 	                                  strnlen(bind_address, sizeof(bind_address))) != 0))
 	{
