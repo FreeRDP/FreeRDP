@@ -25,19 +25,19 @@
 BOOL freerdp_smartcard_list(const rdpSettings* settings)
 {
 	SmartcardCertInfo** certs = NULL;
-	DWORD i, count;
+	size_t count = 0;
 
 	if (!smartcard_enumerateCerts(settings, &certs, &count, FALSE))
 		return FALSE;
 
-	for (i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const SmartcardCertInfo* info = certs[i];
 		char asciiStr[256] = { 0 };
 
 		WINPR_ASSERT(info);
 
-		printf("%" PRIu32 ": %s\n", i, info->subject);
+		printf("%" PRIuz ": %s\n", i, info->subject);
 
 		if (ConvertWCharToUtf8(info->csp, asciiStr, ARRAYSIZE(asciiStr)))
 			printf("\t* CSP: %s\n", asciiStr);

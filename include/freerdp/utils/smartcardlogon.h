@@ -19,8 +19,9 @@
 #ifndef LIBFREERDP_CORE_SMARTCARDLOGON_H
 #define LIBFREERDP_CORE_SMARTCARDLOGON_H
 
+#include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
-#include <freerdp/crypto/crypto.h>
+#include <freerdp/crypto/certificate.h>
 
 typedef struct SmartcardKeyInfo_st SmartcardKeyInfo;
 
@@ -28,7 +29,7 @@ typedef struct SmartcardCertInfo_st
 {
 	LPWSTR csp;
 	LPWSTR reader;
-	CryptoCert certificate;
+	rdpCertificate* certificate;
 	char* pkinitArgs;
 	UINT32 slotId;
 	char* keyName;
@@ -43,10 +44,10 @@ typedef struct SmartcardCertInfo_st
 } SmartcardCertInfo;
 
 FREERDP_API BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCertInfo*** scCerts,
-                                          DWORD* retCount, BOOL gateway);
+                                          size_t* retCount, BOOL gateway);
 FREERDP_API BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert,
                                    BOOL gateway);
 FREERDP_API void smartcardCertInfo_Free(SmartcardCertInfo* pscCert);
-FREERDP_API void smartcardCertList_Free(SmartcardCertInfo** pscCert, DWORD count);
+FREERDP_API void smartcardCertList_Free(SmartcardCertInfo** pscCert, size_t count);
 
 #endif /* LIBFREERDP_CORE_SMARTCARDLOGON_H */
