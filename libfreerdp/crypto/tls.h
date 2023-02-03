@@ -28,7 +28,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/crypto/certificate.h>
+#include <freerdp/crypto/certificate_store.h>
 
 #include <winpr/stream.h>
 

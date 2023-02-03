@@ -31,10 +31,15 @@
 #include <winpr/stream.h>
 #include <freerdp/utils/ringbuffer.h>
 
+#include <freerdp/crypto/certificate.h>
+#include <freerdp/crypto/certificate_data.h>
+
 #include <freerdp/log.h>
 #include "../crypto/tls.h"
 #include "../core/tcp.h"
+
 #include "opensslcompat.h"
+#include "certificate.h"
 
 #ifdef WINPR_HAVE_POLL_H
 #include <poll.h>
@@ -74,7 +79,8 @@ typedef struct
 	CRITICAL_SECTION lock;
 } BIO_RDP_TLS;
 
-static int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, UINT16 port);
+static int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* hostname,
+                                  UINT16 port);
 static void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port,
                                                       const char* common_name, char** alt_names,
                                                       int alt_names_count);
@@ -567,11 +573,9 @@ static BIO* BIO_new_rdp_tls(SSL_CTX* ctx, int client)
 	return bio;
 }
 
-static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
+static rdpCertificate* tls_get_certificate(rdpTls* tls, BOOL peer)
 {
-	CryptoCert cert;
 	X509* remote_cert;
-	STACK_OF(X509) * chain;
 
 	if (peer)
 		remote_cert = SSL_get_peer_certificate(tls->ssl);
@@ -584,40 +588,29 @@ static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 		return NULL;
 	}
 
-	cert = malloc(sizeof(*cert));
-
-	if (!cert)
-	{
-		X509_free(remote_cert);
-		return NULL;
-	}
-
-	cert->px509 = remote_cert;
 	/* Get the peer's chain. If it does not exist, we're setting NULL (clean data either way) */
-	chain = SSL_get_peer_cert_chain(tls->ssl);
-	cert->px509chain = chain;
-	return cert;
-}
+	STACK_OF(X509)* chain = SSL_get_peer_cert_chain(tls->ssl);
+	rdpCertificate* cert = freerdp_certificate_new_from_x509(remote_cert, chain);
+	X509_free(remote_cert);
 
-static void freerdp_tls_free_certificate(CryptoCert cert)
-{
-	X509_free(cert->px509);
-	free(cert);
+	return cert;
 }
 
 #define TLS_SERVER_END_POINT "tls-server-end-point:"
 
-static SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
+static SecPkgContext_Bindings* tls_get_channel_bindings(const rdpCertificate* cert)
 {
-	UINT32 CertificateHashLength;
-	BYTE* ChannelBindingToken;
-	UINT32 ChannelBindingTokenLength;
-	SEC_CHANNEL_BINDINGS* ChannelBindings;
-	SecPkgContext_Bindings* ContextBindings;
+	size_t CertificateHashLength = 0;
+	BYTE* ChannelBindingToken = NULL;
+	UINT32 ChannelBindingTokenLength = 0;
+	SEC_CHANNEL_BINDINGS* ChannelBindings = NULL;
+	SecPkgContext_Bindings* ContextBindings = NULL;
 	const size_t PrefixLength = strnlen(TLS_SERVER_END_POINT, ARRAYSIZE(TLS_SERVER_END_POINT));
 
+	WINPR_ASSERT(cert);
+
 	/* See https://www.rfc-editor.org/rfc/rfc5929 for details about hashes */
-	WINPR_MD_TYPE alg = crypto_cert_get_signature_alg(cert);
+	WINPR_MD_TYPE alg = freerdp_certificate_get_signature_alg(cert);
 	const char* hash;
 	switch (alg)
 	{
@@ -633,7 +626,7 @@ static SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 	if (!hash)
 		return NULL;
 
-	BYTE* CertificateHash = crypto_cert_hash(cert, hash, &CertificateHashLength);
+	char* CertificateHash = freerdp_certificate_get_hash(cert, hash, &CertificateHashLength);
 	if (!CertificateHash)
 		return NULL;
 
@@ -854,7 +847,7 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 	}
 
 	int verify_status;
-	CryptoCert cert = tls_get_certificate(tls, tls->isClientMode);
+	rdpCertificate* cert = tls_get_certificate(tls, tls->isClientMode);
 
 	if (!cert)
 	{
@@ -864,16 +857,17 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 
 	do
 	{
-		tls->Bindings = tls_get_channel_bindings(cert->px509);
+		tls->Bindings = tls_get_channel_bindings(cert);
 		if (!tls->Bindings)
 		{
 			WLog_ERR(TAG, "unable to retrieve bindings");
 			break;
 		}
 
-		if (!crypto_cert_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
+		if (!freerdp_certificate_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 		{
-			WLog_ERR(TAG, "crypto_cert_get_public_key failed to return the server public key.");
+			WLog_ERR(TAG,
+			         "freerdp_certificate_get_public_key failed to return the server public key.");
 			break;
 		}
 
@@ -893,7 +887,7 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 		}
 	} while (0);
 
-	freerdp_tls_free_certificate(cert);
+	freerdp_certificate_free(cert);
 	return ret;
 }
 
@@ -1006,7 +1000,6 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 	BIO* bio;
 	EVP_PKEY* privkey;
 	int status;
-	X509* x509;
 
 	/**
 	 * SSL_OP_NO_SSLv2:
@@ -1104,30 +1097,25 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 		return TLS_HANDSHAKE_ERROR;
 	}
 
+	rdpCertificate* cert = NULL;
 	if (settings->CertificateFile)
-		x509 = crypto_cert_from_pem(settings->CertificateFile, strlen(settings->CertificateFile),
-		                            TRUE);
+		cert = freerdp_certificate_new_from_file(settings->CertificateFile);
 	else if (settings->CertificateContent)
-		x509 = crypto_cert_from_pem(settings->CertificateContent,
-		                            strlen(settings->CertificateContent), FALSE);
+		cert = freerdp_certificate_new_from_pem(settings->CertificateContent);
 	else
 	{
 		WLog_ERR(TAG, "no certificate defined");
 		return TLS_HANDSHAKE_ERROR;
 	}
 
-	if (!x509)
+	if (!cert)
 	{
 		WLog_ERR(TAG, "invalid certificate");
 		return TLS_HANDSHAKE_ERROR;
 	}
 
-	status = SSL_use_certificate(tls->ssl, x509);
-	/* The local reference to the X509 certificate will anyway go out
-	 * of scope; so the reference count should be decremented weither
-	 * SSL_use_certificate succeeds or fails.
-	 */
-	X509_free(x509);
+	status = SSL_use_certificate(tls->ssl, freerdp_certificate_get_x509(cert));
+	freerdp_certificate_free(cert);
 
 	if (status <= 0)
 	{
@@ -1320,7 +1308,8 @@ static BOOL is_accepted(rdpTls* tls, const BYTE* pem, size_t length)
 	return FALSE;
 }
 
-static BOOL compare_fingerprint(const char* fp, const char* hash, CryptoCert cert, BOOL separator)
+static BOOL compare_fingerprint(const char* fp, const char* hash, const rdpCertificate* cert,
+                                BOOL separator)
 {
 	BOOL equal;
 	char* strhash;
@@ -1329,7 +1318,7 @@ static BOOL compare_fingerprint(const char* fp, const char* hash, CryptoCert cer
 	WINPR_ASSERT(hash);
 	WINPR_ASSERT(cert);
 
-	strhash = crypto_cert_fingerprint_by_hash_ex(cert->px509, hash, separator);
+	strhash = freerdp_certificate_get_fingerprint_by_hash_ex(cert, hash, separator);
 	if (!strhash)
 		return FALSE;
 
@@ -1338,8 +1327,11 @@ static BOOL compare_fingerprint(const char* fp, const char* hash, CryptoCert cer
 	return equal;
 }
 
-static BOOL compare_fingerprint_all(const char* fp, const char* hash, CryptoCert cert)
+static BOOL compare_fingerprint_all(const char* fp, const char* hash, const rdpCertificate* cert)
 {
+	WINPR_ASSERT(fp);
+	WINPR_ASSERT(hash);
+	WINPR_ASSERT(cert);
 	if (compare_fingerprint(fp, hash, cert, FALSE))
 		return TRUE;
 	if (compare_fingerprint(fp, hash, cert, TRUE))
@@ -1347,8 +1339,11 @@ static BOOL compare_fingerprint_all(const char* fp, const char* hash, CryptoCert
 	return FALSE;
 }
 
-static BOOL is_accepted_fingerprint(CryptoCert cert, const char* CertificateAcceptedFingerprints)
+static BOOL is_accepted_fingerprint(const rdpCertificate* cert,
+                                    const char* CertificateAcceptedFingerprints)
 {
+	WINPR_ASSERT(cert);
+
 	BOOL rc = FALSE;
 	if (CertificateAcceptedFingerprints)
 	{
@@ -1409,25 +1404,26 @@ static BOOL accept_cert(rdpTls* tls, const BYTE* pem, UINT32 length)
 	return TRUE;
 }
 
-static BOOL tls_extract_pem(CryptoCert cert, BYTE** PublicKey, size_t* PublicKeyLength)
+static BOOL tls_extract_pem(const rdpCertificate* cert, BYTE** PublicKey, size_t* PublicKeyLength)
 {
 	if (!cert || !PublicKey)
 		return FALSE;
-	*PublicKey = crypto_cert_pem(cert->px509, cert->px509chain, PublicKeyLength);
+	*PublicKey = freerdp_certificate_get_pem(cert, PublicKeyLength);
 	return *PublicKey != NULL;
 }
 
-int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, UINT16 port)
+int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* hostname,
+                           UINT16 port)
 {
 	int match;
 	int index;
 	size_t length;
 	BOOL certificate_status;
 	char* common_name = NULL;
-	int common_name_length = 0;
+	size_t common_name_length = 0;
 	char** dns_names = 0;
-	int dns_names_count = 0;
-	int* dns_names_lengths = NULL;
+	size_t dns_names_count = 0;
+	size_t* dns_names_lengths = NULL;
 	int verification_status = -1;
 	BOOL hostname_match = FALSE;
 	rdpCertificateData* certificate_data = NULL;
@@ -1499,15 +1495,15 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 			hostname = tls->settings->CertificateName;
 
 		/* attempt verification using OpenSSL and the ~/.freerdp/certs certificate store */
-		certificate_status =
-		    x509_verify_certificate(cert, certificate_store_get_certs_path(tls->certificate_store));
+		certificate_status = freerdp_certificate_verify(
+		    cert, freerdp_certificate_store_get_certs_path(tls->certificate_store));
 		/* verify certificate name match */
-		certificate_data = crypto_get_certificate_data(cert->px509, hostname, port);
+		certificate_data = freerdp_certificate_data_new(hostname, port, cert);
 		if (!certificate_data)
 			goto end;
 		/* extra common name and alternative names */
-		common_name = crypto_cert_subject_common_name(cert->px509, &common_name_length);
-		dns_names = crypto_cert_get_dns_names(cert->px509, &dns_names_count, &dns_names_lengths);
+		common_name = freerdp_certificate_get_common_name(cert, &common_name_length);
+		dns_names = freerdp_certificate_get_dns_names(cert, &dns_names_count, &dns_names_lengths);
 
 		/* compare against common name */
 
@@ -1545,15 +1541,16 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 		{
 			DWORD accept_certificate = 0;
 			size_t pem_length = 0;
-			char* issuer = crypto_cert_issuer(cert->px509);
-			char* subject = crypto_cert_subject(cert->px509);
-			char* pem = (char*)crypto_cert_pem(cert->px509, NULL, &pem_length);
+			char* issuer = freerdp_certificate_get_issuer(cert);
+			char* subject = freerdp_certificate_get_subject(cert);
+			char* pem = freerdp_certificate_get_pem(cert, &pem_length);
 
 			if (!pem)
 				goto end;
 
 			/* search for matching entry in known_hosts file */
-			match = certificate_store_contains_data(tls->certificate_store, certificate_data);
+			match =
+			    freerdp_certificate_store_contains_data(tls->certificate_store, certificate_data);
 
 			if (match == 1)
 			{
@@ -1598,7 +1595,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 						fp = pem;
 					}
 					else
-						fp = crypto_cert_fingerprint(cert->px509);
+						fp = freerdp_certificate_get_fingerprint(cert);
 					accept_certificate = instance->VerifyCertificateEx(
 					    instance, hostname, port, common_name, subject, issuer, fp, cflags);
 					if (!use_pem)
@@ -1607,7 +1604,8 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 #if defined(WITH_FREERDP_DEPRECATED)
 				else if (instance->VerifyCertificate)
 				{
-					char* fp = crypto_cert_fingerprint(cert->px509);
+					char* fp = freerdp_certificate_get_fingerprint(cert);
+
 					WLog_WARN(TAG, "The VerifyCertificate callback is deprecated, migrate your "
 					               "application to VerifyCertificateEx");
 					accept_certificate = instance->VerifyCertificate(instance, common_name, subject,
@@ -1619,11 +1617,11 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 			else if (match == -1)
 			{
 				rdpCertificateData* stored_data =
-				    certificate_store_load_data(tls->certificate_store, hostname, port);
+				    freerdp_certificate_store_load_data(tls->certificate_store, hostname, port);
 				/* entry was found in known_hosts file, but fingerprint does not match. ask user
 				 * to use it */
-				tls_print_certificate_error(
-				    hostname, port, pem, certificate_store_get_hosts_file(tls->certificate_store));
+				tls_print_certificate_error(hostname, port, pem,
+				                            freerdp_certificate_data_get_hash(stored_data));
 
 				if (!stored_data)
 					WLog_WARN(TAG, "Failed to get certificate entry for %s:%" PRIu16 "", hostname,
@@ -1650,10 +1648,10 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 				else if (instance->VerifyChangedCertificateEx)
 				{
 					DWORD cflags = flags | VERIFY_CERT_FLAG_CHANGED;
-					const char* old_subject = certificate_data_get_subject(stored_data);
-					const char* old_issuer = certificate_data_get_issuer(stored_data);
-					const char* old_fp = certificate_data_get_fingerprint(stored_data);
-					const char* old_pem = certificate_data_get_pem(stored_data);
+					const char* old_subject = freerdp_certificate_data_get_subject(stored_data);
+					const char* old_issuer = freerdp_certificate_data_get_issuer(stored_data);
+					const char* old_fp = freerdp_certificate_data_get_fingerprint(stored_data);
+					const char* old_pem = freerdp_certificate_data_get_pem(stored_data);
 					const BOOL fpIsAllocated =
 					    !old_pem || !freerdp_settings_get_bool(
 					                    tls->settings, FreeRDP_CertificateCallbackPreferPEM);
@@ -1666,7 +1664,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 					}
 					else
 					{
-						fp = crypto_cert_fingerprint(cert->px509);
+						fp = freerdp_certificate_get_fingerprint(cert);
 					}
 					accept_certificate = instance->VerifyChangedCertificateEx(
 					    instance, hostname, port, common_name, subject, issuer, fp, old_subject,
@@ -1677,10 +1675,11 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 #if defined(WITH_FREERDP_DEPRECATED)
 				else if (instance->VerifyChangedCertificate)
 				{
-					char* fp = crypto_cert_fingerprint(cert->px509);
-					const char* old_subject = certificate_data_get_subject(stored_data);
-					const char* old_issuer = certificate_data_get_issuer(stored_data);
-					const char* old_fingerprint = certificate_data_get_fingerprint(stored_data);
+					char* fp = freerdp_certificate_get_fingerprint(cert);
+					const char* old_subject = freerdp_certificate_data_get_subject(stored_data);
+					const char* old_issuer = freerdp_certificate_data_get_issuer(stored_data);
+					const char* old_fingerprint =
+					    freerdp_certificate_data_get_fingerprint(stored_data);
 
 					WLog_WARN(TAG, "The VerifyChangedCertificate callback is deprecated, migrate "
 					               "your application to VerifyChangedCertificateEx");
@@ -1691,7 +1690,7 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 				}
 #endif
 
-				certificate_data_free(stored_data);
+				freerdp_certificate_data_free(stored_data);
 			}
 			else if (match == 0)
 				accept_certificate = 2; /* success! */
@@ -1702,9 +1701,10 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 				case 1:
 
 					/* user accepted certificate, add entry in known_hosts file */
-					verification_status =
-					    certificate_store_save_data(tls->certificate_store, certificate_data) ? 1
-					                                                                          : -1;
+					verification_status = freerdp_certificate_store_save_data(
+					                          tls->certificate_store, certificate_data)
+					                          ? 1
+					                          : -1;
 					break;
 
 				case 2:
@@ -1728,12 +1728,9 @@ int tls_verify_certificate(rdpTls* tls, CryptoCert cert, const char* hostname, U
 	}
 
 end:
-	certificate_data_free(certificate_data);
+	freerdp_certificate_data_free(certificate_data);
 	free(common_name);
-
-	if (dns_names)
-		crypto_cert_dns_names_free(dns_names_count, dns_names_lengths, dns_names);
-
+	freerdp_certificate_free_dns_names(dns_names_count, dns_names_lengths, dns_names);
 	free(pemCert);
 	return verification_status;
 }
@@ -1797,7 +1794,7 @@ rdpTls* freerdp_tls_new(rdpSettings* settings)
 
 	if (!settings->ServerMode)
 	{
-		tls->certificate_store = certificate_store_new(settings);
+		tls->certificate_store = freerdp_certificate_store_new(settings);
 
 		if (!tls->certificate_store)
 			goto out_free;
@@ -1846,7 +1843,7 @@ void freerdp_tls_free(rdpTls* tls)
 
 	if (tls->certificate_store)
 	{
-		certificate_store_free(tls->certificate_store);
+		freerdp_certificate_store_free(tls->certificate_store);
 		tls->certificate_store = NULL;
 	}
 
