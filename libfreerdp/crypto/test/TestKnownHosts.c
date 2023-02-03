@@ -21,7 +21,7 @@
 #include <winpr/file.h>
 #include <winpr/sysinfo.h>
 
-#include <freerdp/crypto/certificate.h>
+#include <freerdp/crypto/certificate_store.h>
 
 /* Some certificates copied from /usr/share/ca-certificates */
 static const char pem1[] = "-----BEGIN CERTIFICATE-----\n"
@@ -183,405 +183,6 @@ fail:
 	return rc;
 }
 
-/* Test if host is found in current file. */
-static BOOL test_known_hosts_host_found(rdpCertificateStore* store)
-{
-	BOOL rc = FALSE;
-	rdpCertificateData* stored_data = NULL;
-	rdpCertificateData* data;
-
-	printf("%s\n", __FUNCTION__);
-	data = certificate_data_new("someurl", 3389);
-	if (!data)
-	{
-		fprintf(stderr, "Could not create certificate data!\n");
-		goto finish;
-	}
-	if (!certificate_data_set_subject(data, "subject") ||
-	    !certificate_data_set_issuer(data, "issuer") ||
-	    !certificate_data_set_fingerprint(data, "ff:11:22:dd"))
-		goto finish;
-
-	if (0 != certificate_store_contains_data(store, data))
-	{
-		fprintf(stderr, "Could not find data in v2 file!\n");
-		goto finish;
-	}
-
-	/* Test if we can read out the old fingerprint. */
-	stored_data = certificate_store_load_data(store, certificate_data_get_host(data),
-	                                          certificate_data_get_port(data));
-	if (!stored_data)
-	{
-		fprintf(stderr, "Could not read old fingerprint!\n");
-		goto finish;
-	}
-
-	printf("Got %s, %s '%s'\n", certificate_data_get_subject(stored_data),
-	       certificate_data_get_issuer(stored_data), certificate_data_get_fingerprint(stored_data));
-
-	rc = TRUE;
-finish:
-	printf("certificate_data_free %d\n", rc);
-	certificate_data_free(data);
-	certificate_data_free(stored_data);
-	return rc;
-}
-
-/* Test if host not found in current file. */
-static BOOL test_known_hosts_host_not_found(rdpCertificateStore* store)
-{
-	BOOL rc = FALSE;
-	rdpCertificateData* stored_data = NULL;
-	rdpCertificateData* data;
-
-	printf("%s\n", __FUNCTION__);
-	data = certificate_data_new("somehost", 1234);
-
-	if (!data)
-	{
-		fprintf(stderr, "Could not create certificate data!\n");
-		goto finish;
-	}
-
-	if (!certificate_data_set_fingerprint(data, "ff:aa:bb:cc"))
-		goto finish;
-
-	if (0 == certificate_store_contains_data(store, data))
-	{
-		fprintf(stderr, "Invalid host found in v2 file!\n");
-		goto finish;
-	}
-
-	/* Test if we read out the old fingerprint fails. */
-	stored_data = certificate_store_load_data(store, certificate_data_get_host(data),
-	                                          certificate_data_get_port(data));
-	if (stored_data)
-	{
-		fprintf(stderr, "Read out not existing old fingerprint succeeded?!\n");
-		goto finish;
-	}
-
-	rc = TRUE;
-finish:
-	printf("certificate_data_free %d\n", rc);
-	certificate_data_free(data);
-	certificate_data_free(stored_data);
-	return rc;
-}
-
-/* Test host add current file. */
-static BOOL test_known_hosts_host_add(rdpCertificateStore* store)
-{
-	BOOL rc = FALSE;
-	rdpCertificateData* data;
-
-	printf("%s\n", __FUNCTION__);
-
-	data = certificate_data_new("somehost", 1234);
-
-	if (!data)
-	{
-		fprintf(stderr, "Could not create certificate data!\n");
-		goto finish;
-	}
-	if (!certificate_data_set_subject(data, "ff:aa:bb:cc") ||
-	    !certificate_data_set_issuer(data, "ff:aa:bb:cc") ||
-	    !certificate_data_set_fingerprint(data, "ff:aa:bb:cc"))
-		goto finish;
-
-	if (!certificate_store_save_data(store, data))
-	{
-		fprintf(stderr, "Could not add host to file!\n");
-		goto finish;
-	}
-
-	if (0 != certificate_store_contains_data(store, data))
-	{
-		fprintf(stderr, "Could not find host written in v2 file!\n");
-		goto finish;
-	}
-	rc = TRUE;
-finish:
-	printf("certificate_data_free %d\n", rc);
-	certificate_data_free(data);
-	return rc;
-}
-
-/* Test host add NULL subject, issuer current file. */
-static BOOL test_known_hosts_host_add_remove_null(rdpCertificateStore* store)
-{
-	BOOL rc = FALSE;
-	rdpCertificateData* data;
-
-	printf("%s\n", __FUNCTION__);
-
-	data = certificate_data_new("somehost", 1234);
-
-	if (!data)
-	{
-		fprintf(stderr, "Could not create certificate data!\n");
-		goto finish;
-	}
-	if (!certificate_data_set_subject(data, NULL) || !certificate_data_set_issuer(data, NULL) ||
-	    !certificate_data_set_fingerprint(data, "ff:aa:bb:cc"))
-		goto finish;
-
-	if (!certificate_store_save_data(store, data))
-	{
-		fprintf(stderr, "Could not add host to file!\n");
-		goto finish;
-	}
-
-	if (0 != certificate_store_contains_data(store, data))
-	{
-		fprintf(stderr, "Could not find host written in v2 file!\n");
-		goto finish;
-	}
-
-	if (!certificate_store_remove_data(store, data))
-	{
-		fprintf(stderr, "Could not remove host written in v2 file!\n");
-		goto finish;
-	}
-	rc = TRUE;
-finish:
-	printf("certificate_data_free %d\n", rc);
-	certificate_data_free(data);
-	return rc;
-}
-
-/* Test host replace current file. */
-static BOOL test_known_hosts_host_replace(rdpCertificateStore* store)
-{
-	BOOL rc = FALSE;
-	rdpCertificateData* data;
-
-	printf("%s\n", __FUNCTION__);
-	data = certificate_data_new("somehost", 1234);
-
-	if (!data)
-	{
-		fprintf(stderr, "Could not create certificate data!\n");
-		goto finish;
-	}
-	if (!certificate_data_set_subject(data, "ff:aa:xx:cc") ||
-	    !certificate_data_set_issuer(data, "ff:aa:bb:ee") ||
-	    !certificate_data_set_fingerprint(data, "ff:aa:bb:dd:ee"))
-		goto finish;
-
-	if (!certificate_store_save_data(store, data))
-	{
-		fprintf(stderr, "Could not replace data!\n");
-		goto finish;
-	}
-
-	if (0 != certificate_store_contains_data(store, data))
-	{
-		fprintf(stderr, "Invalid host found in v2 file!\n");
-		goto finish;
-	}
-
-	rc = TRUE;
-finish:
-	printf("certificate_data_free %d\n", rc);
-	certificate_data_free(data);
-	return rc;
-}
-
-/* Test host replace invalid entry in current file. */
-static BOOL test_known_hosts_host_replace_invalid(rdpCertificateStore* store)
-{
-	BOOL rc = FALSE;
-	rdpCertificateData* data;
-
-	printf("%s\n", __FUNCTION__);
-	data = certificate_data_new(NULL, 1234);
-
-	if (data)
-	{
-		fprintf(stderr, "Could create invalid certificate data!\n");
-		goto finish;
-	}
-	if (certificate_data_set_fingerprint(data, "ff:aa:bb:dd:ee"))
-		goto finish;
-
-	if (certificate_store_save_data(store, data))
-	{
-		fprintf(stderr, "Invalid return for replace invalid entry!\n");
-		goto finish;
-	}
-
-	if (0 == certificate_store_contains_data(store, data))
-	{
-		fprintf(stderr, "Invalid host found in v2 file!\n");
-		goto finish;
-	}
-	rc = TRUE;
-finish:
-	printf("certificate_data_free %d\n", rc);
-	certificate_data_free(data);
-	return rc;
-}
-
-static BOOL test_known_hosts_file_emtpy_single(BOOL (*fkt)(rdpCertificateStore* store))
-{
-	BOOL rc = FALSE;
-	rdpSettings* settings = NULL;
-	rdpCertificateStore* store = NULL;
-	char* currentFileV2 = NULL;
-
-	printf("%s", __FUNCTION__);
-	if (!fkt)
-		return FALSE;
-
-	if (!setup_config(&settings))
-		goto finish;
-	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateUseKnownHosts, TRUE))
-		goto finish;
-
-	currentFileV2 =
-	    GetCombinedPath(freerdp_settings_get_string(settings, FreeRDP_ConfigPath), "known_hosts2");
-
-	if (!currentFileV2)
-	{
-		fprintf(stderr, "Could not get file path!\n");
-		goto finish;
-	}
-
-	printf("certificate_store_new\n");
-	store = certificate_store_new(settings);
-
-	if (!store)
-	{
-		fprintf(stderr, "Could not create certificate store!\n");
-		goto finish;
-	}
-
-	rc = fkt(store);
-
-finish:
-	freerdp_settings_free(settings);
-
-	printf("certificate_store_free\n");
-	certificate_store_free(store);
-
-	DeleteFileA(currentFileV2);
-	free(currentFileV2);
-	return rc;
-}
-
-static BOOL test_known_hosts_file_empty(void)
-{
-	BOOL rc = FALSE;
-
-	if (test_known_hosts_file_emtpy_single(test_known_hosts_host_found))
-	{
-		fprintf(stderr, "[%s] test_known_hosts_file_emtpy_single failed\n", __FUNCTION__);
-		goto finish;
-	}
-
-	if (!test_known_hosts_file_emtpy_single(test_known_hosts_host_not_found))
-	{
-		fprintf(stderr, "[%s] test_known_hosts_file_emtpy_single failed\n", __FUNCTION__);
-		goto finish;
-	}
-
-	if (!test_known_hosts_file_emtpy_single(test_known_hosts_host_add))
-	{
-		fprintf(stderr, "[%s] test_known_hosts_file_emtpy_single failed\n", __FUNCTION__);
-		goto finish;
-	}
-
-	if (!test_known_hosts_file_emtpy_single(test_known_hosts_host_add_remove_null))
-	{
-		fprintf(stderr, "[%s] test_known_hosts_file_emtpy_single failed\n", __FUNCTION__);
-		goto finish;
-	}
-
-	if (!test_known_hosts_file_emtpy_single(test_known_hosts_host_replace))
-	{
-		fprintf(stderr, "[%s] test_known_hosts_file_emtpy_single failed\n", __FUNCTION__);
-		goto finish;
-	}
-
-	if (!test_known_hosts_file_emtpy_single(test_known_hosts_host_replace_invalid))
-	{
-		fprintf(stderr, "[%s] test_known_hosts_file_emtpy_single failed\n", __FUNCTION__);
-		goto finish;
-	}
-
-	rc = TRUE;
-finish:
-
-	return rc;
-}
-
-static BOOL test_known_hosts_file(void)
-{
-	BOOL rc = FALSE;
-	rdpSettings* settings = NULL;
-	rdpCertificateStore* store = NULL;
-	char* currentFileV2 = NULL;
-
-	printf("%s", __FUNCTION__);
-	if (!setup_config(&settings))
-		goto finish;
-	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateUseKnownHosts, TRUE))
-		goto finish;
-
-	currentFileV2 =
-	    GetCombinedPath(freerdp_settings_get_string(settings, FreeRDP_ConfigPath), "known_hosts2");
-
-	if (!currentFileV2)
-	{
-		fprintf(stderr, "Could not get file path!\n");
-		goto finish;
-	}
-
-	printf("certificate_store_new\n");
-	store = certificate_store_new(settings);
-
-	if (!store)
-	{
-		fprintf(stderr, "Could not create certificate store!\n");
-		goto finish;
-	}
-
-	if (prepare(currentFileV2))
-		goto finish;
-
-	if (!test_known_hosts_host_found(store))
-		goto finish;
-
-	if (!test_known_hosts_host_not_found(store))
-		goto finish;
-
-	if (!test_known_hosts_host_add(store))
-		goto finish;
-
-	if (!test_known_hosts_host_add_remove_null(store))
-		goto finish;
-
-	if (!test_known_hosts_host_replace(store))
-		goto finish;
-
-	if (!test_known_hosts_host_replace_invalid(store))
-		goto finish;
-
-	rc = TRUE;
-finish:
-	freerdp_settings_free(settings);
-
-	printf("certificate_store_free\n");
-	certificate_store_free(store);
-
-	winpr_DeleteFile(currentFileV2);
-	free(currentFileV2);
-
-	return rc;
-}
-
 static BOOL equal(const char* a, const char* b)
 {
 	if (!a && !b)
@@ -595,46 +196,29 @@ static BOOL compare(const rdpCertificateData* data, const rdpCertificateData* st
 {
 	if (!data || !stored)
 		return FALSE;
-	if (!equal(certificate_data_get_subject(data), certificate_data_get_subject(stored)))
+	if (!equal(freerdp_certificate_data_get_subject(data),
+	           freerdp_certificate_data_get_subject(stored)))
 		return FALSE;
-	if (!equal(certificate_data_get_issuer(data), certificate_data_get_issuer(stored)))
+	if (!equal(freerdp_certificate_data_get_issuer(data),
+	           freerdp_certificate_data_get_issuer(stored)))
 		return FALSE;
-	if (!equal(certificate_data_get_fingerprint(data), certificate_data_get_fingerprint(stored)))
+	if (!equal(freerdp_certificate_data_get_fingerprint(data),
+	           freerdp_certificate_data_get_fingerprint(stored)))
 		return FALSE;
 	return TRUE;
 }
 
 static BOOL pem_equal(const char* a, const char* b)
 {
-	BOOL rc = FALSE;
-	size_t sa = strlen(a);
-	size_t sb = strlen(b);
-	X509* x1 = crypto_cert_from_pem(a, sa, FALSE);
-	X509* x2 = crypto_cert_from_pem(b, sb, FALSE);
-	char* f1 = NULL;
-	char* f2 = NULL;
-	if (!x1 || !x2)
-		goto fail;
-	f1 = crypto_cert_fingerprint(x1);
-	f2 = crypto_cert_fingerprint(x1);
-	if (!f1 || !f2)
-		goto fail;
-
-	rc = strcmp(f1, f2) == 0;
-
-fail:
-	free(f1);
-	free(f2);
-	X509_free(x1);
-	X509_free(x2);
-	return rc;
+	return strcmp(a, b) == 0;
 }
 
 static BOOL compare_ex(const rdpCertificateData* data, const rdpCertificateData* stored)
 {
 	if (!compare(data, stored))
 		return FALSE;
-	if (!pem_equal(certificate_data_get_pem(data), certificate_data_get_pem(stored)))
+	if (!pem_equal(freerdp_certificate_data_get_pem(data),
+	               freerdp_certificate_data_get_pem(stored)))
 		return FALSE;
 
 	return TRUE;
@@ -643,30 +227,30 @@ static BOOL compare_ex(const rdpCertificateData* data, const rdpCertificateData*
 static BOOL test_get_data(rdpCertificateStore* store, const rdpCertificateData* data)
 {
 	BOOL res;
-	rdpCertificateData* stored = certificate_store_load_data(store, certificate_data_get_host(data),
-	                                                         certificate_data_get_port(data));
+	rdpCertificateData* stored = freerdp_certificate_store_load_data(
+	    store, freerdp_certificate_data_get_host(data), freerdp_certificate_data_get_port(data));
 	if (!stored)
 		return FALSE;
 
 	res = compare(data, stored);
-	certificate_data_free(stored);
+	freerdp_certificate_data_free(stored);
 	return res;
 }
 
 static BOOL test_get_data_ex(rdpCertificateStore* store, const rdpCertificateData* data)
 {
 	BOOL res;
-	rdpCertificateData* stored = certificate_store_load_data(store, certificate_data_get_host(data),
-	                                                         certificate_data_get_port(data));
+	rdpCertificateData* stored = freerdp_certificate_store_load_data(
+	    store, freerdp_certificate_data_get_host(data), freerdp_certificate_data_get_port(data));
 	if (!stored)
 		return FALSE;
 
 	res = compare_ex(data, stored);
-	certificate_data_free(stored);
+	freerdp_certificate_data_free(stored);
 	return res;
 }
 
-static BOOL test_certs_dir(BOOL useHostsFile)
+static BOOL test_certs_dir(void)
 {
 	BOOL rc = FALSE;
 	rdpSettings* settings = NULL;
@@ -676,41 +260,26 @@ static BOOL test_certs_dir(BOOL useHostsFile)
 	rdpCertificateData* data3 = NULL;
 	rdpCertificateData* data4 = NULL;
 
-	printf("%s %d\n", __FUNCTION__, useHostsFile);
+	printf("%s\n", __FUNCTION__);
 	if (!setup_config(&settings))
 		goto fail;
-	/* Initialize certificate folder backend */
-	if (!freerdp_settings_set_bool(settings, FreeRDP_CertificateUseKnownHosts, useHostsFile))
-		goto fail;
-	printf("certificate_store_new()\n");
-	store = certificate_store_new(settings);
+
+	printf("freerdp_certificate_store_new()\n");
+	store = freerdp_certificate_store_new(settings);
 	if (!store)
 		goto fail;
 
 	{
-		printf("certificate_data_new()\n");
-		data1 = certificate_data_new("somehost", 1234);
-		data2 = certificate_data_new("otherhost", 4321);
-		data3 = certificate_data_new("otherhost4", 444);
-		data4 = certificate_data_new("otherhost", 4321);
+		printf("freerdp_certificate_data_new()\n");
+		data1 = freerdp_certificate_data_new_from_pem("somehost", 1234, pem1, strlen(pem1));
+		data2 = freerdp_certificate_data_new_from_pem("otherhost", 4321, pem2, strlen(pem2));
+		data3 = freerdp_certificate_data_new_from_pem("otherhost4", 444, pem3, strlen(pem3));
+		data4 = freerdp_certificate_data_new_from_pem("otherhost", 4321, pem4, strlen(pem4));
 		if (!data1 || !data2 || !data3 || !data4)
 			goto fail;
 
-		printf("certificate_data_set_pem(1 [%" PRIuz "])\n", strlen(pem1));
-		if (!certificate_data_set_pem(data1, pem1))
-			goto fail;
-		printf("certificate_data_set_pem(2 [%" PRIuz "])\n", strlen(pem2));
-		if (!certificate_data_set_pem(data2, pem2))
-			goto fail;
-		printf("certificate_data_set_pem(3 [%" PRIuz "])\n", strlen(pem3));
-		if (!certificate_data_set_pem(data3, pem3))
-			goto fail;
-		printf("certificate_data_set_pem(4 [%" PRIuz "])\n", strlen(pem4));
-		if (!certificate_data_set_pem(data4, pem4))
-			goto fail;
-
 		/* Find non existing in empty store */
-		printf("certificate_store_load_data on empty store\n");
+		printf("freerdp_certificate_store_load_data on empty store\n");
 		if (test_get_data(store, data1))
 			goto fail;
 		if (test_get_data_ex(store, data1))
@@ -725,26 +294,26 @@ static BOOL test_certs_dir(BOOL useHostsFile)
 			goto fail;
 
 		/* Add certificates */
-		printf("certificate_store_save_data\n");
-		if (!certificate_store_save_data(store, data1))
+		printf("freerdp_certificate_store_save_data\n");
+		if (!freerdp_certificate_store_save_data(store, data1))
 			goto fail;
-		if (!certificate_store_save_data(store, data2))
+		if (!freerdp_certificate_store_save_data(store, data2))
 			goto fail;
 
 		/* Find non existing in non empty store */
-		printf("certificate_store_load_data on filled store, non existing value\n");
+		printf("freerdp_certificate_store_load_data on filled store, non existing value\n");
 		if (test_get_data(store, data3))
 			goto fail;
 		if (test_get_data_ex(store, data3))
 			goto fail;
 
 		/* Add remaining certs */
-		printf("certificate_store_save_data\n");
-		if (!certificate_store_save_data(store, data3))
+		printf("freerdp_certificate_store_save_data\n");
+		if (!freerdp_certificate_store_save_data(store, data3))
 			goto fail;
 
 		/* Check existing can all be found */
-		printf("certificate_store_load_data on filled store, existing value\n");
+		printf("freerdp_certificate_store_load_data on filled store, existing value\n");
 		if (!test_get_data(store, data1))
 			goto fail;
 		if (!test_get_data_ex(store, data1))
@@ -759,34 +328,34 @@ static BOOL test_certs_dir(BOOL useHostsFile)
 			goto fail;
 
 		/* Modify existing entry */
-		printf("certificate_store_save_data modify data\n");
-		if (!certificate_store_save_data(store, data4))
+		printf("freerdp_certificate_store_save_data modify data\n");
+		if (!freerdp_certificate_store_save_data(store, data4))
 			goto fail;
 
 		/* Check new data is in store */
-		printf("certificate_store_load_data check modified data can be loaded\n");
+		printf("freerdp_certificate_store_load_data check modified data can be loaded\n");
 		if (!test_get_data(store, data4))
 			goto fail;
 		if (!test_get_data_ex(store, data4))
 			goto fail;
 
 		/* Check old data is no longer valid */
-		printf("certificate_store_load_data check original data no longer there\n");
+		printf("freerdp_certificate_store_load_data check original data no longer there\n");
 		if (test_get_data(store, data2))
 			goto fail;
 		if (test_get_data_ex(store, data2))
 			goto fail;
 
 		/* Delete a cert */
-		printf("certificate_store_remove_data\n");
-		if (!certificate_store_remove_data(store, data3))
+		printf("freerdp_certificate_store_remove_data\n");
+		if (!freerdp_certificate_store_remove_data(store, data3))
 			goto fail;
 		/* Delete non existing, should succeed */
-		printf("certificate_store_remove_data missing value\n");
-		if (!certificate_store_remove_data(store, data3))
+		printf("freerdp_certificate_store_remove_data missing value\n");
+		if (!freerdp_certificate_store_remove_data(store, data3))
 			goto fail;
 
-		printf("certificate_store_load_data on filled store, existing value\n");
+		printf("freerdp_certificate_store_load_data on filled store, existing value\n");
 		if (!test_get_data(store, data1))
 			goto fail;
 		if (!test_get_data_ex(store, data1))
@@ -796,7 +365,7 @@ static BOOL test_certs_dir(BOOL useHostsFile)
 		if (!test_get_data_ex(store, data4))
 			goto fail;
 
-		printf("certificate_store_load_data on filled store, removed value\n");
+		printf("freerdp_certificate_store_load_data on filled store, removed value\n");
 		if (test_get_data(store, data3))
 			goto fail;
 		if (test_get_data_ex(store, data3))
@@ -805,12 +374,12 @@ static BOOL test_certs_dir(BOOL useHostsFile)
 
 	rc = TRUE;
 fail:
-	printf("certificate_data_free %d\n", rc);
-	certificate_data_free(data1);
-	certificate_data_free(data2);
-	certificate_data_free(data3);
-	certificate_data_free(data4);
-	certificate_store_free(store);
+	printf("freerdp_certificate_data_free %d\n", rc);
+	freerdp_certificate_data_free(data1);
+	freerdp_certificate_data_free(data2);
+	freerdp_certificate_data_free(data3);
+	freerdp_certificate_data_free(data4);
+	freerdp_certificate_store_free(store);
 	freerdp_settings_free(settings);
 	return rc;
 }
@@ -819,14 +388,8 @@ int TestKnownHosts(int argc, char* argv[])
 {
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	if (!test_known_hosts_file_empty())
-		return -1;
 
-	if (!test_known_hosts_file())
-		return -1;
-	if (!test_certs_dir(FALSE))
-		return -1;
-	if (!test_certs_dir(TRUE))
+	if (!test_certs_dir())
 		return -1;
 	return 0;
 }
