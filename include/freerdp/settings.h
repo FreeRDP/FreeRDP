@@ -1223,7 +1223,7 @@ struct rdp_settings
 	ALIGN64 char* CertificateFile;                 /* 1410 */
 	ALIGN64 char* PrivateKeyFile;                  /* 1411 */
 	UINT64 padding1412[1413 - 1412];               /* 1412 */
-	ALIGN64 rdpRsaKey* RdpServerRsaKey;            /* 1413 */
+	ALIGN64 rdpPrivateKey* RdpServerRsaKey;        /* 1413 */
 	ALIGN64 rdpCertificate* RdpServerCertificate;  /* 1414 */
 	ALIGN64 BOOL ExternalCertificateManagement;    /* 1415 */
 	ALIGN64 char* CertificateContent;              /* 1416 */

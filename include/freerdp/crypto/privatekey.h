@@ -29,12 +29,12 @@ extern "C"
 {
 #endif
 
-	typedef struct rdp_rsa_key rdpRsaKey;
+	typedef struct rdp_private_key rdpPrivateKey;
 
-	FREERDP_API rdpRsaKey* freerdp_key_new(void);
-	FREERDP_API rdpRsaKey* freerdp_key_new_from_file(const char* keyfile);
-	FREERDP_API rdpRsaKey* freerdp_key_new_from_pem(const char* pem);
-	FREERDP_API void freerdp_key_free(rdpRsaKey* key);
+	FREERDP_API rdpPrivateKey* freerdp_key_new(void);
+	FREERDP_API rdpPrivateKey* freerdp_key_new_from_file(const char* keyfile);
+	FREERDP_API rdpPrivateKey* freerdp_key_new_from_pem(const char* pem);
+	FREERDP_API void freerdp_key_free(rdpPrivateKey* key);
 
 #ifdef __cplusplus
 }

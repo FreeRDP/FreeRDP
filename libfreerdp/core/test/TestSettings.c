@@ -852,7 +852,7 @@ static BOOL test_pointer_array(void)
 		  sizeof(rdpMonitor) },
 		{ TRUE, TRUE, FreeRDP_ClientTimeZone, -1, 1, sizeof(TIME_ZONE_INFORMATION) },
 		{ FALSE, FALSE, FreeRDP_RdpServerCertificate, -1, 1, sizeof(rdpCertificate*) },
-		//{ FALSE, FALSE, FreeRDP_RdpServerRsaKey, -1, 1, sizeof(rdpRsaKey*) },
+		//{ FALSE, FALSE, FreeRDP_RdpServerRsaKey, -1, 1, sizeof(rdpPrivateKey*) },
 		{ TRUE, TRUE, FreeRDP_RedirectionPassword, FreeRDP_RedirectionPasswordLength, 42,
 		  sizeof(char) },
 		{ TRUE, TRUE, FreeRDP_RedirectionTsvUrl, FreeRDP_RedirectionTsvUrlLength, 42,

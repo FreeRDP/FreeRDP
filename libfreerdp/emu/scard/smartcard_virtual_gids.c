@@ -140,7 +140,7 @@ struct vgids_context
 	vgidsSE currentSE;
 
 	rdpCertificate* certificate;
-	rdpRsaKey* privateKey;
+	rdpPrivateKey* privateKey;
 
 	wArrayList* files;
 };

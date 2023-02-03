@@ -133,7 +133,7 @@ static SSIZE_T crypto_rsa_public(const BYTE* input, size_t length, const rdpCert
 	                         sizeof(cert->exponent), output, output_length);
 }
 
-static SSIZE_T crypto_rsa_private(const BYTE* input, size_t length, const rdpRsaKey* key,
+static SSIZE_T crypto_rsa_private(const BYTE* input, size_t length, const rdpPrivateKey* key,
                                   BYTE* output, size_t output_length)
 {
 	WINPR_ASSERT(key);
@@ -158,13 +158,13 @@ SSIZE_T crypto_rsa_public_decrypt(const BYTE* input, size_t length, const rdpCer
 	return crypto_rsa_public(input, length, cert, output, output_length);
 }
 
-SSIZE_T crypto_rsa_private_encrypt(const BYTE* input, size_t length, const rdpRsaKey* key,
+SSIZE_T crypto_rsa_private_encrypt(const BYTE* input, size_t length, const rdpPrivateKey* key,
                                    BYTE* output, size_t output_length)
 {
 	return crypto_rsa_private(input, length, key, output, output_length);
 }
 
-SSIZE_T crypto_rsa_private_decrypt(const BYTE* input, size_t length, const rdpRsaKey* key,
+SSIZE_T crypto_rsa_private_decrypt(const BYTE* input, size_t length, const rdpPrivateKey* key,
                                    BYTE* output, size_t output_length)
 {
 	return crypto_rsa_private(input, length, key, output, output_length);

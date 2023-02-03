@@ -1324,7 +1324,7 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 				WLog_ERR(TAG, "FreeRDP_RdpServerRsaKey::len must be 0 or 1");
 				return FALSE;
 			}
-			settings->RdpServerRsaKey = (rdpRsaKey*)cnv.v;
+			settings->RdpServerRsaKey = (rdpPrivateKey*)cnv.v;
 			if (!settings->RdpServerRsaKey && (len > 0))
 			{
 				settings->RdpServerRsaKey = freerdp_key_new();

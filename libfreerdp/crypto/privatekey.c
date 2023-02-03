@@ -48,7 +48,7 @@
 
 #define TAG FREERDP_TAG("crypto")
 
-struct rdp_rsa_key
+struct rdp_private_key
 {
 	EVP_PKEY* evp;
 	BOOL isRSA;
@@ -77,11 +77,11 @@ static BYTE tssk_privateExponent[] = {
 	0x35, 0x07, 0x79, 0x17, 0x0b, 0x51, 0x9b, 0xb3, 0xc7, 0x10, 0x01, 0x13, 0xe7, 0x3f, 0xf3, 0x5f
 };
 
-static const rdpRsaKey tssk = { .PrivateExponent = tssk_privateExponent,
-	                            .PrivateExponentLength = sizeof(tssk_privateExponent),
-	                            .cert = { .Modulus = tssk_modulus,
-	                                      .ModulusLength = sizeof(tssk_modulus) } };
-const rdpRsaKey* priv_key_tssk = &tssk;
+static const rdpPrivateKey tssk = { .PrivateExponent = tssk_privateExponent,
+	                                .PrivateExponentLength = sizeof(tssk_privateExponent),
+	                                .cert = { .Modulus = tssk_modulus,
+	                                          .ModulusLength = sizeof(tssk_modulus) } };
+const rdpPrivateKey* priv_key_tssk = &tssk;
 
 static RSA* evp_pkey_to_rsa(const EVP_PKEY* evp)
 {
@@ -129,7 +129,7 @@ static EVP_PKEY* evp_pkey_utils_from_pem(const char* data, size_t len, BOOL from
 	return evp;
 }
 
-static BOOL key_read_private(rdpRsaKey* key)
+static BOOL key_read_private(rdpPrivateKey* key)
 {
 	BOOL rc = FALSE;
 
@@ -181,9 +181,9 @@ fail:
 	return rc;
 }
 
-rdpRsaKey* freerdp_key_new_from_pem(const char* pem)
+rdpPrivateKey* freerdp_key_new_from_pem(const char* pem)
 {
-	rdpRsaKey* key = freerdp_key_new();
+	rdpPrivateKey* key = freerdp_key_new();
 	if (!key || !pem)
 		goto fail;
 	key->evp = evp_pkey_utils_from_pem(pem, strlen(pem), FALSE);
@@ -197,10 +197,10 @@ fail:
 	return NULL;
 }
 
-rdpRsaKey* freerdp_key_new_from_file(const char* keyfile)
+rdpPrivateKey* freerdp_key_new_from_file(const char* keyfile)
 {
 
-	rdpRsaKey* key = freerdp_key_new();
+	rdpPrivateKey* key = freerdp_key_new();
 	if (!key || !keyfile)
 		goto fail;
 
@@ -215,17 +215,17 @@ fail:
 	return NULL;
 }
 
-rdpRsaKey* freerdp_key_new(void)
+rdpPrivateKey* freerdp_key_new(void)
 {
-	return calloc(1, sizeof(rdpRsaKey));
+	return calloc(1, sizeof(rdpPrivateKey));
 }
 
-rdpRsaKey* freerdp_key_clone(const rdpRsaKey* key)
+rdpPrivateKey* freerdp_key_clone(const rdpPrivateKey* key)
 {
 	if (!key)
 		return NULL;
 
-	rdpRsaKey* _key = (rdpRsaKey*)calloc(1, sizeof(rdpRsaKey));
+	rdpPrivateKey* _key = (rdpPrivateKey*)calloc(1, sizeof(rdpPrivateKey));
 
 	if (!_key)
 		return NULL;
@@ -255,7 +255,7 @@ out_fail:
 	return NULL;
 }
 
-void freerdp_key_free(rdpRsaKey* key)
+void freerdp_key_free(rdpPrivateKey* key)
 {
 	if (!key)
 		return;
@@ -268,7 +268,7 @@ void freerdp_key_free(rdpRsaKey* key)
 	free(key);
 }
 
-const rdpCertInfo* freerdp_key_get_info(const rdpRsaKey* key)
+const rdpCertInfo* freerdp_key_get_info(const rdpPrivateKey* key)
 {
 	WINPR_ASSERT(key);
 	if (!key->isRSA)
@@ -276,7 +276,7 @@ const rdpCertInfo* freerdp_key_get_info(const rdpRsaKey* key)
 	return &key->cert;
 }
 
-const BYTE* freerdp_key_get_exponent(const rdpRsaKey* key, size_t* plength)
+const BYTE* freerdp_key_get_exponent(const rdpPrivateKey* key, size_t* plength)
 {
 	WINPR_ASSERT(key);
 	if (!key->isRSA)
@@ -291,7 +291,7 @@ const BYTE* freerdp_key_get_exponent(const rdpRsaKey* key, size_t* plength)
 	return key->PrivateExponent;
 }
 
-RSA* freerdp_key_get_RSA(const rdpRsaKey* key)
+RSA* freerdp_key_get_RSA(const rdpPrivateKey* key)
 {
 	WINPR_ASSERT(key);
 	if (!key->isRSA)
