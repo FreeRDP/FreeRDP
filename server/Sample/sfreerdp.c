@@ -43,6 +43,7 @@
 
 #include <freerdp/constants.h>
 #include <freerdp/server/rdpsnd.h>
+#include <freerdp/settings.h>
 
 #include "sf_ainput.h"
 #include "sf_audin.h"
@@ -1004,9 +1005,6 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	rdpUpdate* update;
 	freerdp_peer* client = (freerdp_peer*)arg;
 
-	const char* key = "server.key";
-	const char* cert = "server.crt";
-
 	WINPR_ASSERT(client);
 
 	info = client->ContextExtra;
@@ -1018,11 +1016,6 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		return 0;
 	}
 
-	if (info->key)
-		key = info->key;
-	if (info->cert)
-		cert = info->cert;
-
 	/* Initialize the real server settings here */
 	WINPR_ASSERT(client->context);
 	settings = client->context->settings;
@@ -1033,14 +1026,20 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		    !freerdp_settings_set_string(settings, FreeRDP_TransportDumpFile, info->replay_dump))
 			goto fail;
 	}
-	if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, cert) ||
-	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, key))
-	{
-		WLog_ERR(TAG, "Memory allocation failed (strdup)");
-		goto fail;
-	}
 
-	settings->RdpSecurity = TRUE;
+	rdpPrivateKey* key = freerdp_key_new_from_file(info->key);
+	if (!key)
+		goto fail;
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
+		goto fail;
+	rdpCertificate* cert = freerdp_certificate_new_from_file(info->cert);
+	if (!cert)
+		goto fail;
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
+		goto fail;
+
+	settings->RdpSecurity =
+	    freerdp_certificate_is_rsa(cert); /* RDP security only works with legacy RSA certificates */
 	settings->TlsSecurity = TRUE;
 	settings->NlaSecurity = FALSE;
 	settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
@@ -1204,8 +1203,8 @@ static BOOL test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 static void test_server_mainloop(freerdp_listener* instance)
 {
 	HANDLE handles[32] = { 0 };
-	DWORD count;
-	DWORD status;
+	DWORD count = 0;
+	DWORD status = 0;
 
 	WINPR_ASSERT(instance);
 	while (1)
@@ -1276,11 +1275,11 @@ int main(int argc, char* argv[])
 {
 	int rc = -1;
 	BOOL started = FALSE;
-	WSADATA wsaData;
-	freerdp_listener* instance;
+	WSADATA wsaData = { 0 };
+	freerdp_listener* instance = NULL;
 	char* file = NULL;
-	char name[MAX_PATH];
-	long port = 3389, i;
+	char name[MAX_PATH] = { 0 };
+	long port = 3389;
 	BOOL localOnly = FALSE;
 	struct server_info info = { 0 };
 	const char* app = argv[0];
@@ -1289,7 +1288,7 @@ int main(int argc, char* argv[])
 
 	errno = 0;
 
-	for (i = 1; i < argc; i++)
+	for (int i = 1; i < argc; i++)
 	{
 		char* arg = argv[i];
 
@@ -1333,6 +1332,11 @@ int main(int argc, char* argv[])
 
 	if (!instance)
 		return -1;
+
+	if (!info.cert)
+		info.cert = "server.crt";
+	if (!info.key)
+		info.key = "server.key";
 
 	instance->info = (void*)&info;
 	instance->PeerAccepted = test_peer_accepted;
