@@ -103,7 +103,6 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_FrameMarkerCommandEnabled, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_FrameMarkerCommandEnabled" },
 	{ FreeRDP_Fullscreen, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_Fullscreen" },
-	{ FreeRDP_GatewayAutoConsent, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GatewayAutoConsent" },
 	{ FreeRDP_GatewayBypassLocal, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GatewayBypassLocal" },
 	{ FreeRDP_GatewayEnabled, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GatewayEnabled" },
 	{ FreeRDP_GatewayHttpExtAuthSspiNtlm, FREERDP_SETTINGS_TYPE_BOOL,
