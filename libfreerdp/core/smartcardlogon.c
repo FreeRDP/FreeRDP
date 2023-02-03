@@ -29,6 +29,7 @@
 #include <winpr/print.h>
 
 #include <freerdp/utils/smartcardlogon.h>
+#include <freerdp/crypto/crypto.h>
 
 #include <openssl/obj_mac.h>
 
@@ -525,20 +526,6 @@ out:
 	return ret;
 }
 
-static BOOL write_pem(const char* file, const char* pem)
-{
-	WINPR_ASSERT(file);
-	WINPR_ASSERT(pem);
-
-	size_t rc, size = strlen(pem) + 1;
-	FILE* fp = winpr_fopen(file, "w");
-	if (!fp)
-		return FALSE;
-	rc = fwrite(pem, 1, size, fp);
-	fclose(fp);
-	return rc == size;
-}
-
 static char* create_temporary_file(void)
 {
 	BYTE buffer[32];
@@ -593,12 +580,12 @@ static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const ch
 	 */
 	info->keyPath = create_temporary_file();
 	WLog_DBG(TAG, "writing PKINIT key to %s", info->keyPath);
-	if (!write_pem(info->keyPath, privKeyPEM))
+	if (!crypto_write_pem(info->keyPath, privKeyPEM, strlen(privKeyPEM)))
 		goto fail;
 
 	info->certPath = create_temporary_file();
 	WLog_DBG(TAG, "writing PKINIT cert to %s", info->certPath);
-	if (!write_pem(info->certPath, certPEM))
+	if (!crypto_write_pem(info->certPath, certPEM, strlen(certPEM)))
 		goto fail;
 
 	int res = allocating_sprintf(&cert->pkinitArgs, "FILE:%s,%s", info->certPath, info->keyPath);

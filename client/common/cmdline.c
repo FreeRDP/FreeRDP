@@ -777,41 +777,13 @@ fail:
 
 static BOOL read_pem_file(rdpSettings* settings, size_t id, const char* file)
 {
-	INT64 s;
-	int rs;
-	size_t fr;
-	char* ptr;
-	BOOL rc = FALSE;
-	FILE* fp = winpr_fopen(file, "r");
-	if (!fp)
-		goto fail;
-	rs = _fseeki64(fp, 0, SEEK_END);
-	if (rs < 0)
-		goto fail;
-	s = _ftelli64(fp);
-	if (s < 0)
-		goto fail;
-	rs = _fseeki64(fp, 0, SEEK_SET);
-	if (rs < 0)
-		goto fail;
+	size_t length = 0;
+	char* pem = crypto_read_pem(file, &length);
+	if (!pem || (length == 0))
+		return FALSE;
 
-	if (!freerdp_settings_set_string_len(settings, id, NULL, (size_t)s + 1ull))
-		goto fail;
-
-	ptr = freerdp_settings_get_string_writable(settings, id);
-	fr = fread(ptr, (size_t)s, 1, fp);
-	if (fr != 1)
-		goto fail;
-	rc = TRUE;
-fail:
-	if (!rc)
-	{
-		char buffer[8192] = { 0 };
-		WLog_WARN(TAG, "Failed to read file '%s' [%s]", file,
-		          winpr_strerror(errno, buffer, sizeof(buffer)));
-	}
-	if (fp)
-		fclose(fp);
+	BOOL rc = freerdp_settings_set_string_len(settings, id, pem, length);
+	free(pem);
 	return rc;
 }
 
