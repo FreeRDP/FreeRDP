@@ -1327,9 +1327,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 				                                 ENCRYPTION_LEVEL_NONE))
 					return FALSE;
 			}
-			else if (!freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey) &&
-			         !freerdp_settings_get_string(settings, FreeRDP_PrivateKeyFile) &&
-			         !freerdp_settings_get_string(settings, FreeRDP_PrivateKeyContent))
+			else if (!freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey))
 			{
 				WLog_ERR(TAG, "Missing server certificate");
 				return FALSE;
