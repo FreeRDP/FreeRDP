@@ -39,6 +39,9 @@
 #include <freerdp/cache/pointer.h>
 
 #include "../crypto/crypto.h"
+#include "../crypto/privatekey.h"
+#include "../crypto/certificate.h"
+
 #include "utils.h"
 
 #define TAG FREERDP_TAG("core.connection")
@@ -698,16 +701,15 @@ static const BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xE
 
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
-	BYTE* mod;
-	BYTE* exp;
-	wStream* s;
-	UINT32 length;
-	UINT32 key_len;
+	BYTE* mod = NULL;
+	BYTE* exp = NULL;
+	wStream* s = NULL;
+	UINT32 length = 0;
+	UINT32 key_len = 0;
 	int status = 0;
 	BOOL ret = FALSE;
-	rdpSettings* settings;
+	rdpSettings* settings = rdp->settings;
 	BYTE* crypt_client_random = NULL;
-	settings = rdp->settings;
 
 	if (!settings->UseRdpSecurityLayer)
 	{
@@ -724,8 +726,9 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		return FALSE;
 	winpr_RAND(settings->ClientRandom, settings->ClientRandomLength);
 
-	WINPR_ASSERT(settings->RdpServerCertificate);
-	const rdpCertInfo* info = &settings->RdpServerCertificate->cert_info;
+	const rdpCertInfo* info = freerdp_certificate_get_info(settings->RdpServerCertificate);
+	if (!info)
+		return FALSE;
 
 	/*
 	 * client random must be (bitlen / 8) + 8 - see [MS-RDPBCGR] 5.3.4.1
@@ -829,7 +832,7 @@ static BOOL rdp_update_client_random(rdpSettings* settings, const BYTE* crypt_ra
 	const rdpRsaKey* rsa = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey);
 	WINPR_ASSERT(rsa);
 
-	const rdpCertInfo* cinfo = &rsa->cert;
+	const rdpCertInfo* cinfo = freerdp_key_get_info(rsa);
 	WINPR_ASSERT(cinfo);
 
 	if (crypt_random_len != cinfo->ModulusLength + 8)
