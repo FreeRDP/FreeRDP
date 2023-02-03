@@ -299,3 +299,9 @@ RSA* freerdp_key_get_RSA(const rdpPrivateKey* key)
 
 	return evp_pkey_to_rsa(key->evp);
 }
+
+EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key)
+{
+	WINPR_ASSERT(key);
+	return key->evp;
+}

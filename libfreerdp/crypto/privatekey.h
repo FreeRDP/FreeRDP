@@ -36,6 +36,7 @@ extern "C"
 	FREERDP_LOCAL const BYTE* freerdp_key_get_exponent(const rdpPrivateKey* key, size_t* plength);
 
 	FREERDP_LOCAL RSA* freerdp_key_get_RSA(const rdpPrivateKey* key);
+	FREERDP_LOCAL EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key);
 
 	FREERDP_LOCAL extern const rdpPrivateKey* priv_key_tssk;
 
