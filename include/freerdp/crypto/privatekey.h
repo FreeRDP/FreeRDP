@@ -36,6 +36,8 @@ extern "C"
 	FREERDP_API rdpPrivateKey* freerdp_key_new_from_pem(const char* pem);
 	FREERDP_API void freerdp_key_free(rdpPrivateKey* key);
 
+	FREERDP_API BOOL freerdp_key_is_rsa(const rdpPrivateKey* key);
+
 #ifdef __cplusplus
 }
 #endif

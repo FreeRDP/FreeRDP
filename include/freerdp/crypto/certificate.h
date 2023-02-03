@@ -39,6 +39,8 @@ extern "C"
 
 	FREERDP_API void freerdp_certificate_free(rdpCertificate* certificate);
 
+	FREERDP_API BOOL freerdp_certificate_is_rsa(const rdpCertificate* certificate);
+
 	FREERDP_API char* freerdp_certificate_get_hash(const rdpCertificate* certificate,
 	                                               const char* hash, size_t* plength);
 

@@ -311,3 +311,9 @@ EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key)
 	EVP_PKEY_up_ref(evp);
 	return evp;
 }
+
+BOOL freerdp_key_is_rsa(const rdpPrivateKey* key)
+{
+	WINPR_ASSERT(key);
+	return key->isRSA;
+}
