@@ -165,7 +165,7 @@ static size_t drdynvc_cblen_to_bytes(UINT8 cbLen)
 
 static UINT32 drdynvc_read_variable_uint(wStream* s, UINT8 cbLen)
 {
-	UINT32 val;
+	UINT32 val = 0;
 
 	switch (cbLen)
 	{
@@ -259,7 +259,7 @@ static UINT8 drdynvc_value_to_cblen(UINT32 value)
 
 static BOOL drdynvc_write_variable_uint(wStream* s, UINT32 value, UINT8 cbLen)
 {
-	UINT32 val;
+	UINT32 val = 0;
 
 	switch (cbLen)
 	{
