@@ -30,8 +30,6 @@
 
 #include <freerdp/log.h>
 
-#include <openssl/bio.h>
-
 #ifdef FREERDP_HAVE_VALGRIND_MEMCHECK_H
 #include <valgrind/memcheck.h>
 #endif

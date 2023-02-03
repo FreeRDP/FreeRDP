@@ -26,11 +26,11 @@
 
 #include "info.h"
 #include "display.h"
-#include "certificate.h"
 
 #include <freerdp/log.h>
 #include <freerdp/streamdump.h>
 #include <freerdp/redirection.h>
+#include <freerdp/crypto/certificate.h>
 
 #include "rdp.h"
 #include "peer.h"
@@ -250,7 +250,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 
 	if (settings->PrivateKeyFile)
 	{
-		settings->RdpServerRsaKey = key_new(settings->PrivateKeyFile);
+		settings->RdpServerRsaKey = freerdp_key_new_from_file(settings->PrivateKeyFile);
 
 		if (!settings->RdpServerRsaKey)
 		{
@@ -260,7 +260,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 	}
 	else if (settings->PrivateKeyContent)
 	{
-		settings->RdpServerRsaKey = key_new_from_content(settings->PrivateKeyContent, NULL);
+		settings->RdpServerRsaKey = freerdp_key_new_from_pem(settings->PrivateKeyContent);
 
 		if (!settings->RdpServerRsaKey)
 		{

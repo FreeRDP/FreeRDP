@@ -27,10 +27,13 @@
 
 #include <freerdp/log.h>
 #include <freerdp/utils/string.h>
+#include <freerdp/crypto/certificate.h>
 
 #include "utils.h"
 #include "gcc.h"
-#include "certificate.h"
+#include "nego.h"
+
+#include "../crypto/certificate.h"
 
 #define TAG FREERDP_TAG("core.gcc")
 
@@ -1638,7 +1641,7 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 	data = settings->ServerCertificate;
 	length = settings->ServerCertificateLength;
 
-	if (!certificate_read_server_certificate(settings->RdpServerCertificate, data, length))
+	if (!freerdp_certificate_read_server_cert(settings->RdpServerCertificate, data, length))
 		goto fail;
 
 	return TRUE;
@@ -1822,7 +1825,7 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	Stream_Seek_UINT32(s); /* serverCertLen */
 	Stream_Write(s, settings->ServerRandom, settings->ServerRandomLength);
 
-	const SSIZE_T len = certificate_write_server_certificate(
+	const SSIZE_T len = freerdp_certificate_write_server_cert(
 	    settings->RdpServerCertificate, CERT_TEMPORARILY_ISSUED | CERT_CHAIN_VERSION_1, s);
 	if (len < 0)
 		return FALSE;
