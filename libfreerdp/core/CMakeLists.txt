@@ -89,8 +89,6 @@ set(${MODULE_PREFIX}_SRCS
 	metrics.c
 	capabilities.c
 	capabilities.h
-	certificate.c
-	certificate.h
 	connection.c
 	connection.h
 	redirection.c

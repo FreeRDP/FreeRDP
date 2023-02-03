@@ -54,8 +54,6 @@ static const struct settings_str_entry settings_map[] = {
 	  "FreeRDP_BitmapCompressionDisabled" },
 	{ FreeRDP_CertificateCallbackPreferPEM, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_CertificateCallbackPreferPEM" },
-	{ FreeRDP_CertificateUseKnownHosts, FREERDP_SETTINGS_TYPE_BOOL,
-	  "FreeRDP_CertificateUseKnownHosts" },
 	{ FreeRDP_CompressionEnabled, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_CompressionEnabled" },
 	{ FreeRDP_ConsoleSession, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_ConsoleSession" },
 	{ FreeRDP_CredentialsFromStdin, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_CredentialsFromStdin" },

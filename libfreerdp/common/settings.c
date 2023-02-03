@@ -29,8 +29,9 @@
 #include <winpr/assert.h>
 
 #include "../core/settings.h"
-#include "../core/certificate.h"
 #include "../core/capabilities.h"
+
+#include <freerdp/crypto/certificate.h>
 #include <freerdp/settings.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/log.h>
@@ -1301,7 +1302,7 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 	switch (id)
 	{
 		case FreeRDP_RdpServerCertificate:
-			certificate_free(settings->RdpServerCertificate);
+			freerdp_certificate_free(settings->RdpServerCertificate);
 
 			if (len > 1)
 			{
@@ -1311,19 +1312,25 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 			settings->RdpServerCertificate = cnv.v;
 			if (!settings->RdpServerCertificate && (len > 0))
 			{
-				settings->RdpServerCertificate = certificate_new();
+				settings->RdpServerCertificate = freerdp_certificate_new();
 				if (!settings->RdpServerCertificate)
 					return FALSE;
 			}
 			return TRUE;
 		case FreeRDP_RdpServerRsaKey:
-			key_free(settings->RdpServerRsaKey);
+			freerdp_key_free(settings->RdpServerRsaKey);
 			if (len > 1)
 			{
 				WLog_ERR(TAG, "FreeRDP_RdpServerRsaKey::len must be 0 or 1");
 				return FALSE;
 			}
 			settings->RdpServerRsaKey = (rdpRsaKey*)cnv.v;
+			if (!settings->RdpServerRsaKey && (len > 0))
+			{
+				settings->RdpServerRsaKey = freerdp_key_new();
+				if (!settings->RdpServerRsaKey)
+					return FALSE;
+			}
 			return TRUE;
 		case FreeRDP_RedirectionPassword:
 			return freerdp_settings_set_pointer_len_(

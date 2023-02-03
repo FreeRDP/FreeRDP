@@ -117,9 +117,6 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_CertificateCallbackPreferPEM:
 			return settings->CertificateCallbackPreferPEM;
 
-		case FreeRDP_CertificateUseKnownHosts:
-			return settings->CertificateUseKnownHosts;
-
 		case FreeRDP_CompressionEnabled:
 			return settings->CompressionEnabled;
 
@@ -692,10 +689,6 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_CertificateCallbackPreferPEM:
 			settings->CertificateCallbackPreferPEM = cnv.c;
-			break;
-
-		case FreeRDP_CertificateUseKnownHosts:
-			settings->CertificateUseKnownHosts = cnv.c;
 			break;
 
 		case FreeRDP_CompressionEnabled:
