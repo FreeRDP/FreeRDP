@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+#include <errno.h>
+
 #include <openssl/objects.h>
 
 #include <freerdp/config.h>
@@ -181,4 +183,75 @@ void crypto_reverse(BYTE* data, size_t length)
 		data[i] = data[j];
 		data[j] = temp;
 	}
+}
+
+char* crypto_read_pem(const char* filename, size_t* plength)
+{
+	char* pem = NULL;
+	FILE* fp = NULL;
+
+	WINPR_ASSERT(filename);
+
+	if (plength)
+		*plength = 0;
+
+	fp = winpr_fopen(filename, "r");
+	if (!fp)
+		goto fail;
+	const int rs = _fseeki64(fp, 0, SEEK_END);
+	if (rs < 0)
+		goto fail;
+	const SSIZE_T size = _ftelli64(fp);
+	if (size < 0)
+		goto fail;
+	const int rc = _fseeki64(fp, 0, SEEK_SET);
+	if (rc < 0)
+		goto fail;
+
+	pem = calloc(size + 1, sizeof(char));
+	if (!pem)
+		goto fail;
+
+	const size_t fr = fread(pem, (size_t)size, 1, fp);
+	if (fr != 1)
+		goto fail;
+
+	if (plength)
+		*plength = (size_t)size;
+	fclose(fp);
+	return pem;
+
+fail:
+{
+	char buffer[8192] = { 0 };
+	WLog_WARN(TAG, "Failed to read PEM from file '%s' [%s]", filename,
+	          winpr_strerror(errno, buffer, sizeof(buffer)));
+}
+	fclose(fp);
+	free(pem);
+	return NULL;
+}
+
+BOOL crypto_write_pem(const char* filename, const char* pem, size_t length)
+{
+	WINPR_ASSERT(filename);
+	WINPR_ASSERT(pem || (length == 0));
+
+	WINPR_ASSERT(filename);
+	WINPR_ASSERT(pem);
+
+	size_t rc = 0, size = strlen(pem) + 1;
+	FILE* fp = winpr_fopen(filename, "w");
+	if (!fp)
+		goto fail;
+	rc = fwrite(pem, 1, size, fp);
+	fclose(fp);
+fail:
+	if (rc == 0)
+	{
+		char buffer[8192] = { 0 };
+		WLog_WARN(TAG, "Failed to write PEM [%" PRIuz "] to file '%s' [%s]", length, filename,
+		          winpr_strerror(errno, buffer, sizeof(buffer)));
+	}
+	return rc == size;
 }

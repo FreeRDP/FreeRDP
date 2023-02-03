@@ -40,6 +40,9 @@ extern "C"
 	FREERDP_API void crypto_base64_decode(const char* enc_data, size_t length, BYTE** dec_data,
 	                                      size_t* res_length);
 
+	FREERDP_API char* crypto_read_pem(const char* filename, size_t* plength);
+	FREERDP_API BOOL crypto_write_pem(const char* filename, const char* pem, size_t length);
+
 #ifdef __cplusplus
 }
 #endif
