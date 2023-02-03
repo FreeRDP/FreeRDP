@@ -444,31 +444,38 @@ original_cb:
 
 static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 {
-	pServerContext* ps;
-	rdpSettings* settings;
-	proxyData* pdata;
-	const proxyConfig* config;
-	proxyServer* server;
-
 	WINPR_ASSERT(peer);
 
-	ps = (pServerContext*)peer->context;
+	pServerContext* ps = (pServerContext*)peer->context;
 	if (!ps)
 		return FALSE;
 
-	settings = peer->context->settings;
+	rdpSettings* settings = peer->context->settings;
 	WINPR_ASSERT(settings);
 
-	pdata = proxy_data_new();
+	proxyData* pdata = proxy_data_new();
 	if (!pdata)
 		return FALSE;
-	server = (proxyServer*)peer->ContextExtra;
+	proxyServer* server = (proxyServer*)peer->ContextExtra;
 	WINPR_ASSERT(server);
-
 	proxy_data_set_server_context(pdata, ps);
 
 	pdata->module = server->module;
-	config = pdata->config = server->config;
+	const proxyConfig* config = pdata->config = server->config;
+
+	rdpPrivateKey* key = freerdp_key_new_from_pem(config->PrivateKeyPEM);
+	if (!key)
+		return FALSE;
+
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
+		return FALSE;
+
+	rdpCertificate* cert = freerdp_certificate_new_from_pem(config->CertificatePEM);
+	if (!cert)
+		return FALSE;
+
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
+		return FALSE;
 
 	/* currently not supporting GDI orders */
 	ZeroMemory(settings->OrderSupport, 32);
@@ -485,17 +492,6 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeactivateClientDecoding, TRUE))
 			return FALSE;
-	}
-
-	if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, config->CertificateFile) ||
-	    !freerdp_settings_set_string(settings, FreeRDP_CertificateContent,
-	                                 config->CertificateContent) ||
-	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, config->PrivateKeyFile) ||
-	    !freerdp_settings_set_string(settings, FreeRDP_PrivateKeyContent,
-	                                 config->PrivateKeyContent))
-	{
-		PROXY_LOG_ERR(TAG, ps, "Memory allocation failed (strdup)");
-		return FALSE;
 	}
 
 	if (config->RemoteApp)
