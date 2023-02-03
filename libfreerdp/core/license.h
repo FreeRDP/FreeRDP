@@ -26,7 +26,6 @@
 #include "state.h"
 
 #include <freerdp/crypto/crypto.h>
-#include <freerdp/crypto/certificate.h>
 
 #include <freerdp/log.h>
 #include <freerdp/license.h>
