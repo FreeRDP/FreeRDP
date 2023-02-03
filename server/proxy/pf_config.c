@@ -33,6 +33,7 @@
 #include <freerdp/server/proxy/proxy_config.h>
 #include <freerdp/server/proxy/proxy_log.h>
 
+#include <freerdp/crypto/crypto.h>
 #include <freerdp/channels/cliprdr.h>
 #include <freerdp/channels/rdpsnd.h>
 #include <freerdp/channels/audin.h>
@@ -387,6 +388,25 @@ static BOOL pf_config_load_gfx_settings(wIniFile* ini, proxyConfig* config)
 	return TRUE;
 }
 
+static char* pf_config_decode_base64(const char* data, const char* name, size_t* pLength)
+{
+	size_t decoded_length = 0;
+	char* decoded = NULL;
+	if (!data)
+		return NULL;
+
+	WINPR_ASSERT(name);
+	WINPR_ASSERT(pLength);
+
+	const size_t length = strlen(data);
+	crypto_base64_decode(data, length, &decoded, &decoded_length);
+	if (!decoded || decoded_length == 0)
+		WLog_ERR(TAG, "Failed to decode base64 data from %s of length %" PRIuz, name, length);
+	WINPR_ASSERT(strnlen(decoded, decoded_length) == decoded_length - 1);
+	*pLength = decoded_length;
+	return decoded;
+}
+
 static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 {
 	const char* tmp1;
@@ -405,6 +425,10 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 			return FALSE;
 		}
 		config->CertificateFile = _strdup(tmp1);
+		config->CertificatePEM =
+		    crypto_read_pem(config->CertificateFile, &config->CertificatePEMLength);
+		if (!config->CertificatePEM)
+			return FALSE;
 	}
 	tmp2 = pf_config_get_str(ini, section_certificates, key_cert_content, FALSE);
 	if (tmp2)
@@ -415,6 +439,10 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 			return FALSE;
 		}
 		config->CertificateContent = _strdup(tmp2);
+		config->CertificatePEM = pf_config_decode_base64(
+		    config->CertificateContent, "CertificateContent", &config->CertificatePEMLength);
+		if (!config->CertificatePEM)
+			return FALSE;
 	}
 	if (tmp1 && tmp2)
 	{
@@ -443,6 +471,10 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 			return FALSE;
 		}
 		config->PrivateKeyFile = _strdup(tmp1);
+		config->PrivateKeyPEM =
+		    crypto_read_pem(config->PrivateKeyFile, &config->PrivateKeyPEMLength);
+		if (!config->PrivateKeyPEM)
+			return FALSE;
 	}
 	tmp2 = pf_config_get_str(ini, section_certificates, key_private_key_content, FALSE);
 	if (tmp2)
@@ -454,6 +486,10 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 			return FALSE;
 		}
 		config->PrivateKeyContent = _strdup(tmp2);
+		config->PrivateKeyPEM = pf_config_decode_base64(
+		    config->PrivateKeyContent, "PrivateKeyContent", &config->PrivateKeyPEMLength);
+		if (!config->PrivateKeyPEM)
+			return FALSE;
 	}
 
 	if (tmp1 && tmp2)
@@ -800,8 +836,14 @@ void pf_server_config_free(proxyConfig* config)
 	free(config->Host);
 	free(config->CertificateFile);
 	free(config->CertificateContent);
+	if (config->CertificatePEM)
+		memset(config->CertificatePEM, 0, config->CertificatePEMLength);
+	free(config->CertificatePEM);
 	free(config->PrivateKeyFile);
 	free(config->PrivateKeyContent);
+	if (config->PrivateKeyPEM)
+		memset(config->PrivateKeyPEM, 0, config->PrivateKeyPEMLength);
+	free(config->PrivateKeyPEM);
 	free(config);
 }
 
@@ -845,6 +887,22 @@ static BOOL pf_config_copy_string(char** dst, const char* src)
 	*dst = NULL;
 	if (src)
 		*dst = _strdup(src);
+	return TRUE;
+}
+
+static BOOL pf_config_copy_string_n(char** dst, const char* src, size_t size)
+{
+	*dst = NULL;
+
+	if (src && (size > 0))
+	{
+		WINPR_ASSERT(strnlen(src, size) == size - 1);
+		*dst = calloc(size, sizeof(char));
+		if (!*dst)
+			return FALSE;
+		memcpy(*dst, src, size);
+	}
+
 	return TRUE;
 }
 
@@ -900,9 +958,15 @@ BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config)
 		goto fail;
 	if (!pf_config_copy_string(&tmp->CertificateContent, config->CertificateContent))
 		goto fail;
+	if (!pf_config_copy_string_n(&tmp->CertificatePEM, config->CertificatePEM,
+	                             config->CertificatePEMLength))
+		goto fail;
 	if (!pf_config_copy_string(&tmp->PrivateKeyFile, config->PrivateKeyFile))
 		goto fail;
 	if (!pf_config_copy_string(&tmp->PrivateKeyContent, config->PrivateKeyContent))
+		goto fail;
+	if (!pf_config_copy_string_n(&tmp->PrivateKeyPEM, config->PrivateKeyPEM,
+	                             config->PrivateKeyPEMLength))
 		goto fail;
 
 	*dst = tmp;

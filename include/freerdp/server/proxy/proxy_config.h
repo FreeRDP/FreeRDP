@@ -94,6 +94,14 @@ struct proxy_config
 
 	char* PrivateKeyFile;
 	char* PrivateKeyContent;
+
+	/* Data extracted from CertificateContent or CertificateFile  (evaluation in this order) */
+	char* CertificatePEM;
+	size_t CertificatePEMLength;
+
+	/* Data extracted from PrivateKeyContent or PrivateKeyFile  (evaluation in this order) */
+	char* PrivateKeyPEM;
+	size_t PrivateKeyPEMLength;
 };
 
 #ifdef __cplusplus
