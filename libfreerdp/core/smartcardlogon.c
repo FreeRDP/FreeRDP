@@ -18,11 +18,6 @@
  */
 #include <string.h>
 
-#include <openssl/bio.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/objects.h>
-
 #include <winpr/error.h>
 #include <winpr/ncrypt.h>
 #include <winpr/string.h>
@@ -31,8 +26,11 @@
 #include <winpr/path.h>
 
 #include <freerdp/log.h>
+#include <winpr/print.h>
 
 #include <freerdp/utils/smartcardlogon.h>
+
+#include <openssl/obj_mac.h>
 
 #define TAG FREERDP_TAG("smartcardlogon")
 
@@ -61,7 +59,11 @@ static void delete_file(char* path)
 
 			for (INT64 x = 0; x < size; x += sizeof(buffer))
 			{
-				fwrite(buffer, MIN(sizeof(buffer), (size_t)size - x), 1, fp);
+				const size_t dnmemb = (size_t)(size - x);
+				const size_t nmemb = MIN(sizeof(buffer), dnmemb);
+				const size_t count = fwrite(buffer, nmemb, 1, fp);
+				if (count != 1)
+					break;
 			}
 
 			fclose(fp);
@@ -90,7 +92,7 @@ void smartcardCertInfo_Free(SmartcardCertInfo* scCert)
 
 	free(scCert->csp);
 	free(scCert->reader);
-	crypto_cert_free(scCert->certificate);
+	freerdp_certificate_free(scCert->certificate);
 	free(scCert->pkinitArgs);
 	free(scCert->keyName);
 	free(scCert->containerName);
@@ -104,12 +106,12 @@ void smartcardCertInfo_Free(SmartcardCertInfo* scCert)
 	free(scCert);
 }
 
-void smartcardCertList_Free(SmartcardCertInfo** cert_list, DWORD count)
+void smartcardCertList_Free(SmartcardCertInfo** cert_list, size_t count)
 {
 	if (!cert_list)
 		return;
 
-	for (DWORD i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		SmartcardCertInfo* cert = cert_list[i];
 		smartcardCertInfo_Free(cert);
@@ -122,11 +124,11 @@ static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 {
 	WINPR_ASSERT(scCert);
 
-	scCert->upn = crypto_cert_get_upn(scCert->certificate->px509);
+	scCert->upn = freerdp_certificate_get_upn(scCert->certificate);
 	if (!scCert->upn)
 	{
 		WLog_DBG(TAG, "%s has no UPN, trying emailAddress", scCert->keyName);
-		scCert->upn = crypto_cert_get_email(scCert->certificate->px509);
+		scCert->upn = freerdp_certificate_get_email(scCert->certificate);
 	}
 
 	if (scCert->upn)
@@ -154,8 +156,8 @@ static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 		scCert->userHint[userLen] = 0;
 	}
 
-	scCert->subject = crypto_cert_subject(scCert->certificate->px509);
-	scCert->issuer = crypto_cert_issuer(scCert->certificate->px509);
+	scCert->subject = freerdp_certificate_get_subject(scCert->certificate);
+	scCert->issuer = freerdp_certificate_get_issuer(scCert->certificate);
 	return TRUE;
 }
 
@@ -169,15 +171,17 @@ static int allocating_sprintf(char** dst, const char* fmt, ...)
 	va_start(ap, fmt);
 	rc = vsnprintf(NULL, 0, fmt, ap);
 	va_end(ap);
+	if (rc < 0)
+		return rc;
 
 	{
-		char* tmp = realloc(*dst, rc + 1);
+		char* tmp = realloc(*dst, (size_t)rc + 1);
 		if (!tmp)
 			return -1;
 		*dst = tmp;
 	}
 	va_start(ap, fmt);
-	rc = vsnprintf(*dst, rc + 1, fmt, ap);
+	rc = vsnprintf(*dst, (size_t)rc + 1, fmt, ap);
 	va_end(ap);
 	return rc;
 }
@@ -338,7 +342,7 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 			goto endofloop;
 		}
 
-		cert->certificate = crypto_cert_read(certBytes, cbOutput);
+		cert->certificate = freerdp_certificate_new_from_der(certBytes, cbOutput);
 
 		if (!cert->certificate)
 		{
@@ -346,7 +350,7 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 			goto endofloop;
 		}
 
-		if (!crypto_check_eku(cert->certificate->px509, NID_ms_smartcard_login))
+		if (!freerdp_certificate_check_eku(cert->certificate, NID_ms_smartcard_login))
 		{
 			WLog_DBG(TAG, "discarding certificate without Smartcard Login EKU for key %s",
 			         cert->keyName);
@@ -416,7 +420,7 @@ out:
 static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp,
                                         const char* reader, const char* userFilter,
                                         const char* domainFilter, SmartcardCertInfo*** scCerts,
-                                        DWORD* retCount)
+                                        size_t* retCount)
 {
 	BOOL ret = FALSE;
 	LPWSTR scope = NULL;
@@ -511,7 +515,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 	}
 
 	*scCerts = cert_list;
-	*retCount = (DWORD)count;
+	*retCount = count;
 	ret = TRUE;
 
 out:
@@ -561,7 +565,7 @@ static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const ch
 	if (!info)
 		goto fail;
 
-	cert->certificate = crypto_cert_pem_read(certPEM);
+	cert->certificate = freerdp_certificate_new_from_pem(certPEM);
 	if (!cert->certificate)
 	{
 		WLog_ERR(TAG, "unable to read smartcard certificate");
@@ -608,7 +612,7 @@ fail:
 }
 
 static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCertInfo*** scCerts,
-                                        DWORD* retCount)
+                                        size_t* retCount)
 {
 	BOOL rc = FALSE;
 	SmartcardCertInfo** cert_list = NULL;
@@ -652,7 +656,7 @@ out_error:
 }
 
 BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCertInfo*** scCerts,
-                              DWORD* retCount, BOOL gateway)
+                              size_t* retCount, BOOL gateway)
 {
 	BOOL ret;
 	LPWSTR csp = NULL;
@@ -712,9 +716,9 @@ BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert, BOOL
 	const freerdp* instance = context->instance;
 	rdpSettings* settings = context->settings;
 	SmartcardCertInfo** cert_list;
-	DWORD count;
-	size_t username_setting;
-	size_t domain_setting;
+	size_t count = 0;
+	size_t username_setting = 0;
+	size_t domain_setting = 0;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(settings);
