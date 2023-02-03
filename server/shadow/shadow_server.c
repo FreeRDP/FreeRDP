@@ -751,11 +751,13 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 
 static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 {
-	char* filepath;
+	char* filepath = NULL;
 	MAKECERT_CONTEXT* makecert = NULL;
 	BOOL ret = FALSE;
-	char* makecert_argv[6] = { "makecert", "-rdp", "-live", "-silent", "-y", "5" };
-	int makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
+	const char* makecert_argv[6] = { "makecert", "-rdp", "-live", "-silent", "-y", "5" };
+	const size_t makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
+
+	WINPR_ASSERT(server);
 
 	if (!winpr_PathFileExists(server->ConfigPath) && !winpr_PathMakePath(server->ConfigPath, 0))
 	{
@@ -808,6 +810,27 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 		}
 	}
 
+	rdpSettings* settings = server->settings;
+	WINPR_ASSERT(settings);
+
+	rdpPrivateKey* key = freerdp_key_new_from_file(server->PrivateKeyFile);
+	if (!key)
+		goto out_fail;
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
+		goto out_fail;
+
+	rdpCertificate* cert = freerdp_certificate_new_from_file(server->CertificateFile);
+	if (!cert)
+		goto out_fail;
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
+		goto out_fail;
+
+	const BOOL rdpSecurity = freerdp_certificate_is_rsa(cert);
+	if (!rdpSecurity)
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+			goto out_fail;
+	}
 	ret = TRUE;
 out_fail:
 	makecert_context_free(makecert);
