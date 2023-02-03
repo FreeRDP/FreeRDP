@@ -42,6 +42,7 @@
 
 #include "opensslcompat.h"
 #include "certificate.h"
+#include "privatekey.h"
 
 #ifdef WINPR_HAVE_POLL_H
 #include <poll.h>
@@ -999,8 +1000,6 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 	WINPR_ASSERT(tls);
 
 	long options = 0;
-	BIO* bio;
-	EVP_PKEY* privkey;
 	int status;
 
 	/**
@@ -1051,35 +1050,14 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 	if (!tls_prepare(tls, underlying, methods, options, FALSE))
 		return TLS_HANDSHAKE_ERROR;
 
-	if (settings->PrivateKeyFile)
+	rdpPrivateKey* key = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey);
+	if (!key)
 	{
-		bio = BIO_new_file(settings->PrivateKeyFile, "rb");
-
-		if (!bio)
-		{
-			WLog_ERR(TAG, "BIO_new_file failed for private key %s", settings->PrivateKeyFile);
-			return TLS_HANDSHAKE_ERROR;
-		}
-	}
-	else if (settings->PrivateKeyContent)
-	{
-		bio = BIO_new_mem_buf(settings->PrivateKeyContent, strlen(settings->PrivateKeyContent));
-
-		if (!bio)
-		{
-			WLog_ERR(TAG, "BIO_new_mem_buf failed for private key");
-			return TLS_HANDSHAKE_ERROR;
-		}
-	}
-	else
-	{
-		WLog_ERR(TAG, "no private key defined");
+		WLog_ERR(TAG, "invalid private key");
 		return TLS_HANDSHAKE_ERROR;
 	}
 
-	privkey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
-	BIO_free_all(bio);
-
+	EVP_PKEY* privkey = freerdp_key_get_evp_pkey(key);
 	if (!privkey)
 	{
 		WLog_ERR(TAG, "invalid private key");
@@ -1099,17 +1077,7 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 		return TLS_HANDSHAKE_ERROR;
 	}
 
-	rdpCertificate* cert = NULL;
-	if (settings->CertificateFile)
-		cert = freerdp_certificate_new_from_file(settings->CertificateFile);
-	else if (settings->CertificateContent)
-		cert = freerdp_certificate_new_from_pem(settings->CertificateContent);
-	else
-	{
-		WLog_ERR(TAG, "no certificate defined");
-		return TLS_HANDSHAKE_ERROR;
-	}
-
+	rdpCertificate* cert = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerCertificate);
 	if (!cert)
 	{
 		WLog_ERR(TAG, "invalid certificate");
@@ -1117,7 +1085,6 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 	}
 
 	status = SSL_use_certificate(tls->ssl, freerdp_certificate_get_x509(cert));
-	freerdp_certificate_free(cert);
 
 	if (status <= 0)
 	{
