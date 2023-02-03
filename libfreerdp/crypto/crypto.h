@@ -26,7 +26,7 @@
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/crypto/certificate.h>
+#include <freerdp/crypto/crypto.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -45,6 +45,7 @@ extern "C"
 	FREERDP_LOCAL SSIZE_T crypto_rsa_private_decrypt(const BYTE* input, size_t length,
 	                                                 const rdpRsaKey* key, BYTE* output,
 	                                                 size_t output_length);
+
 	FREERDP_LOCAL void crypto_reverse(BYTE* data, size_t length);
 
 #ifdef __cplusplus

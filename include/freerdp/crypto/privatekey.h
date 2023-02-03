@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Cryptographic Abstraction Layer
+ * Private key Handling
  *
- * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2023 Armin Novak <anovak@thincast.com>
+ * Copyright 2023 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,31 +18,26 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CRYPTO_H
-#define FREERDP_CRYPTO_H
+#ifndef FREERDP_CRYPTO_PRIVATEKEY_H
+#define FREERDP_CRYPTO_PRIVATEKEY_H
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/crypto/certificate_data.h>
+#include <freerdp/settings.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-	struct rdp_CertInfo
-	{
-		BYTE* Modulus;
-		DWORD ModulusLength;
-		BYTE exponent[4];
-	};
-	typedef struct rdp_CertInfo rdpCertInfo;
 
-	FREERDP_API char* crypto_base64_encode(const BYTE* data, size_t length);
-	FREERDP_API void crypto_base64_decode(const char* enc_data, size_t length, BYTE** dec_data,
-	                                      size_t* res_length);
+	typedef struct rdp_rsa_key rdpRsaKey;
+
+	FREERDP_API rdpRsaKey* freerdp_key_new(void);
+	FREERDP_API rdpRsaKey* freerdp_key_new_from_file(const char* keyfile);
+	FREERDP_API rdpRsaKey* freerdp_key_new_from_pem(const char* pem);
+	FREERDP_API void freerdp_key_free(rdpRsaKey* key);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FREERDP_CRYPTO_H */
+#endif /* FREERDP_CRYPTO_PRIVATEKEY_H */

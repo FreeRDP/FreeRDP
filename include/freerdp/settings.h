@@ -29,6 +29,9 @@
 #include <freerdp/types.h>
 #include <freerdp/redirection.h>
 
+#include <freerdp/crypto/certificate.h>
+#include <freerdp/crypto/privatekey.h>
+
 /** \file
  * \brief This is the FreeRDP settings module.
  *
@@ -331,44 +334,6 @@ typedef struct
 	UINT32 logonId;
 	BYTE arcRandomBits[16];
 } ARC_SC_PRIVATE_PACKET;
-
-/* Certificates */
-
-struct rdp_CertBlob
-{
-	UINT32 length;
-	BYTE* data;
-};
-typedef struct rdp_CertBlob rdpCertBlob;
-
-struct rdp_X509CertChain
-{
-	UINT32 count;
-	rdpCertBlob* array;
-};
-typedef struct rdp_X509CertChain rdpX509CertChain;
-
-struct rdp_CertInfo
-{
-	BYTE* Modulus;
-	DWORD ModulusLength;
-	BYTE exponent[4];
-};
-typedef struct rdp_CertInfo rdpCertInfo;
-
-struct rdp_certificate
-{
-	rdpCertInfo cert_info;
-	rdpX509CertChain x509_cert_chain;
-};
-typedef struct rdp_certificate rdpCertificate;
-
-typedef struct
-{
-	rdpCertInfo cert;
-	BYTE* PrivateExponent;
-	DWORD PrivateExponentLength;
-} rdpRsaKey;
 
 /* Channels */
 
@@ -726,7 +691,6 @@ typedef struct
 #define FreeRDP_AutoAcceptCertificate (1419)
 #define FreeRDP_AutoDenyCertificate (1420)
 #define FreeRDP_CertificateAcceptedFingerprints (1421)
-#define FreeRDP_CertificateUseKnownHosts (1422)
 #define FreeRDP_CertificateCallbackPreferPEM (1423)
 #define FreeRDP_Workarea (1536)
 #define FreeRDP_Fullscreen (1537)
@@ -1268,7 +1232,7 @@ struct rdp_settings
 	ALIGN64 BOOL AutoAcceptCertificate;            /* 1419 */
 	ALIGN64 BOOL AutoDenyCertificate;              /* 1420 */
 	ALIGN64 char* CertificateAcceptedFingerprints; /* 1421 */
-	ALIGN64 BOOL CertificateUseKnownHosts;         /* 1422 */
+	UINT64 padding1422[1423 - 1422];               /* 1422 */
 	ALIGN64 BOOL CertificateCallbackPreferPEM;     /* 1423 */
 	UINT64 padding1472[1472 - 1424];               /* 1424 */
 	UINT64 padding1536[1536 - 1472];               /* 1472 */

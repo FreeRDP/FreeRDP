@@ -20,6 +20,8 @@
 #include <ctype.h>
 #include <errno.h>
 
+#include <openssl/err.h>
+
 #include "proxy.h"
 #include <freerdp/settings.h>
 #include <freerdp/utils/proxy_utils.h>
