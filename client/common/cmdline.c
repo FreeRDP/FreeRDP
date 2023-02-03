@@ -55,6 +55,7 @@
 #include <freerdp/version.h>
 #include <freerdp/client/utils/smartcard_cli.h>
 
+#include <openssl/tls1.h>
 #include "cmdline.h"
 
 #include <freerdp/log.h>
