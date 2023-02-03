@@ -718,7 +718,7 @@ BOOL rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirec
 		if (!Stream_EnsureRemainingCapacity(s, 2 * sizeof(UINT32)))
 			goto fail;
 
-		const size_t start = Stream_GetPosition(s);
+		const size_t lstart = Stream_GetPosition(s);
 		Stream_Seek_UINT32(s); /* length of field */
 		Stream_Write_UINT32(s, redirection->TargetNetAddressesCount);
 		for (UINT32 i = 0; i < redirection->TargetNetAddressesCount; i++)
@@ -731,10 +731,10 @@ BOOL rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirec
 		}
 
 		/* Write length field */
-		const size_t end = Stream_GetPosition(s);
-		Stream_SetPosition(s, start);
+		const size_t lend = Stream_GetPosition(s);
+		Stream_SetPosition(s, lstart);
 		Stream_Write_UINT32(s, length);
-		Stream_SetPosition(s, end);
+		Stream_SetPosition(s, lend);
 	}
 
 	/* Padding 8 bytes */
