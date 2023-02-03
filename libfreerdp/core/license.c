@@ -34,11 +34,13 @@
 #include <freerdp/log.h>
 
 #include "redirection.h"
-#include "certificate.h"
+
+#include <freerdp/crypto/certificate.h>
 
 #include "license.h"
 
 #include "../crypto/crypto.h"
+#include "../crypto/certificate.h"
 
 #define TAG FREERDP_TAG("core.license")
 
@@ -1130,8 +1132,8 @@ static BOOL license_get_server_rsa_public_key(rdpLicense* license)
 
 	if (license->ServerCertificate->length < 1)
 	{
-		if (!certificate_read_server_certificate(license->certificate, settings->ServerCertificate,
-		                                         settings->ServerCertificateLength))
+		if (!freerdp_certificate_read_server_cert(license->certificate, settings->ServerCertificate,
+		                                          settings->ServerCertificateLength))
 			return FALSE;
 	}
 
@@ -1149,7 +1151,10 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 		return FALSE;
 
 	WINPR_ASSERT(license->EncryptedPremasterSecret);
-	const rdpCertInfo* info = &license->certificate->cert_info;
+
+	const rdpCertInfo* info = freerdp_certificate_get_info(license->certificate);
+	if (!info)
+		return FALSE;
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "Modulus (%" PRIu32 " bits):", info->ModulusLength * 8);
@@ -1689,7 +1694,7 @@ BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
 	WINPR_ASSERT(signature);
 	WINPR_ASSERT(license->certificate);
 
-	const rdpCertInfo* info = &license->certificate->cert_info;
+	const rdpCertInfo* info = freerdp_certificate_get_info(license->certificate);
 
 	if (!s)
 		return FALSE;
@@ -1754,7 +1759,9 @@ BOOL license_read_license_info(rdpLicense* license, wStream* s)
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->certificate);
 
-	const rdpCertInfo* info = &license->certificate->cert_info;
+	const rdpCertInfo* info = freerdp_certificate_get_info(license->certificate);
+	if (!info)
+		goto error;
 
 	/* ClientRandom (32 bytes) */
 	if (!license_check_stream_length(s, 8 + sizeof(license->ClientRandom), "license info"))
@@ -1769,10 +1776,19 @@ BOOL license_read_license_info(rdpLicense* license, wStream* s)
 	Stream_Read(s, license->ClientRandom, sizeof(license->ClientRandom));
 
 	/* Licensing Binary Blob with EncryptedPreMasterSecret: */
+	UINT32 ModulusLength = 0;
 	if (!license_read_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret,
-	                                                  &info->ModulusLength))
+	                                                  &ModulusLength))
 		goto error;
 
+	if (ModulusLength != info->ModulusLength)
+	{
+		WLog_WARN(TAG,
+		          "EncryptedPremasterSecret,::ModulusLength[%" PRIu32
+		          "] != rdpCertInfo::ModulusLength[%" PRIu32 "]",
+		          ModulusLength, info->ModulusLength);
+		goto error;
+	}
 	/* Licensing Binary Blob with LicenseInfo: */
 	if (!license_read_binary_blob(s, license->LicenseInfo))
 		goto error;
@@ -1826,8 +1842,9 @@ BOOL license_read_license_request_packet(rdpLicense* license, wStream* s)
 		return FALSE;
 
 	/* Parse Server Certificate */
-	if (!certificate_read_server_certificate(license->certificate, license->ServerCertificate->data,
-	                                         license->ServerCertificate->length))
+	if (!freerdp_certificate_read_server_cert(license->certificate,
+	                                          license->ServerCertificate->data,
+	                                          license->ServerCertificate->length))
 		return FALSE;
 
 	if (!license_generate_keys(license) || !license_generate_hwid(license) ||
@@ -2210,7 +2227,10 @@ BOOL license_read_error_alert_packet(rdpLicense* license, wStream* s)
 BOOL license_write_new_license_request_packet(const rdpLicense* license, wStream* s)
 {
 	WINPR_ASSERT(license);
-	WINPR_ASSERT(license->certificate);
+
+	const rdpCertInfo* info = freerdp_certificate_get_info(license->certificate);
+	if (!info)
+		return FALSE;
 
 	if (!license_check_stream_capacity(s, 8 + sizeof(license->ClientRandom), "License Request"))
 		return FALSE;
@@ -2222,8 +2242,8 @@ BOOL license_write_new_license_request_packet(const rdpLicense* license, wStream
 	             sizeof(license->ClientRandom)); /* ClientRandom (32 bytes) */
 
 	if (/* EncryptedPremasterSecret */
-	    !license_write_encrypted_premaster_secret_blob(
-	        s, license->EncryptedPremasterSecret, license->certificate->cert_info.ModulusLength) ||
+	    !license_write_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret,
+	                                                   info->ModulusLength) ||
 	    /* ClientUserName */
 	    !license_write_binary_blob(s, license->ClientUserName) ||
 	    /* ClientMachineName */
@@ -2252,7 +2272,10 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 	UINT32 PreferredKeyExchangeAlg;
 
 	WINPR_ASSERT(license);
-	WINPR_ASSERT(license->certificate);
+
+	const rdpCertInfo* info = freerdp_certificate_get_info(license->certificate);
+	if (!info)
+		return FALSE;
 
 	if (!license_check_stream_length(s, 8ull + sizeof(license->ClientRandom),
 	                                 "new license request"))
@@ -2267,9 +2290,19 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 	            sizeof(license->ClientRandom)); /* ClientRandom (32 bytes) */
 
 	/* EncryptedPremasterSecret */
-	if (!license_read_encrypted_premaster_secret_blob(
-	        s, license->EncryptedPremasterSecret, &license->certificate->cert_info.ModulusLength))
+	UINT32 ModulusLength = 0;
+	if (!license_read_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret,
+	                                                  &ModulusLength))
 		return FALSE;
+
+	if (ModulusLength != info->ModulusLength)
+	{
+		WLog_WARN(TAG,
+		          "EncryptedPremasterSecret expected to be %" PRIu32 " bytes, but read %" PRIu32
+		          " bytes",
+		          info->ModulusLength, ModulusLength);
+		return FALSE;
+	}
 
 	/* ClientUserName */
 	if (!license_read_binary_blob(s, license->ClientUserName))
@@ -2574,7 +2607,7 @@ rdpLicense* license_new(rdpRdp* rdp)
 	license->rdp = rdp;
 
 	license_set_state(license, LICENSE_STATE_INITIAL);
-	if (!(license->certificate = certificate_new()))
+	if (!(license->certificate = freerdp_certificate_new()))
 		goto out_error;
 	if (!(license->ProductInfo = license_new_product_info()))
 		goto out_error;
@@ -2624,7 +2657,7 @@ void license_free(rdpLicense* license)
 {
 	if (license)
 	{
-		certificate_free(license->certificate);
+		freerdp_certificate_free(license->certificate);
 		license_free_product_info(license->ProductInfo);
 		license_free_binary_blob(license->ErrorInfo);
 		license_free_binary_blob(license->LicenseInfo);
@@ -2755,8 +2788,8 @@ BOOL license_server_configure(rdpLicense* license)
 	                                   sizeof(algs)))
 		return FALSE;
 
-	if (!certificate_read_server_certificate(license->certificate, settings->ServerCertificate,
-	                                         settings->ServerCertificateLength))
+	if (!freerdp_certificate_read_server_cert(license->certificate, settings->ServerCertificate,
+	                                          settings->ServerCertificateLength))
 		return FALSE;
 
 	s = Stream_New(NULL, 1024);
@@ -2766,7 +2799,7 @@ BOOL license_server_configure(rdpLicense* license)
 	{
 		BOOL r = FALSE;
 		SSIZE_T res =
-		    certificate_write_server_certificate(license->certificate, CERT_CHAIN_VERSION_2, s);
+		    freerdp_certificate_write_server_cert(license->certificate, CERT_CHAIN_VERSION_2, s);
 		if (res >= 0)
 			r = license_read_binary_blob_data(license->ServerCertificate, BB_CERTIFICATE_BLOB,
 			                                  Stream_Buffer(s), Stream_GetPosition(s));
