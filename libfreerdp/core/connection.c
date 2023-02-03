@@ -829,7 +829,7 @@ static BOOL rdp_update_client_random(rdpSettings* settings, const BYTE* crypt_ra
 	const size_t length = 32;
 	WINPR_ASSERT(settings);
 
-	const rdpRsaKey* rsa = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey);
+	const rdpPrivateKey* rsa = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey);
 	WINPR_ASSERT(rsa);
 
 	const rdpCertInfo* cinfo = freerdp_key_get_info(rsa);

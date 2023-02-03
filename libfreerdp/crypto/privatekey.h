@@ -30,14 +30,14 @@ extern "C"
 {
 #endif
 
-	FREERDP_LOCAL rdpRsaKey* freerdp_key_clone(const rdpRsaKey* key);
+	FREERDP_LOCAL rdpPrivateKey* freerdp_key_clone(const rdpPrivateKey* key);
 
-	FREERDP_LOCAL const rdpCertInfo* freerdp_key_get_info(const rdpRsaKey* key);
-	FREERDP_LOCAL const BYTE* freerdp_key_get_exponent(const rdpRsaKey* key, size_t* plength);
+	FREERDP_LOCAL const rdpCertInfo* freerdp_key_get_info(const rdpPrivateKey* key);
+	FREERDP_LOCAL const BYTE* freerdp_key_get_exponent(const rdpPrivateKey* key, size_t* plength);
 
-	FREERDP_LOCAL RSA* freerdp_key_get_RSA(const rdpRsaKey* key);
+	FREERDP_LOCAL RSA* freerdp_key_get_RSA(const rdpPrivateKey* key);
 
-	FREERDP_LOCAL extern const rdpRsaKey* priv_key_tssk;
+	FREERDP_LOCAL extern const rdpPrivateKey* priv_key_tssk;
 
 #ifdef __cplusplus
 }

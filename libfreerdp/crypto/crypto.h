@@ -40,10 +40,10 @@ extern "C"
 	                                                const rdpCertInfo* cert, BYTE* output,
 	                                                size_t output_length);
 	FREERDP_LOCAL SSIZE_T crypto_rsa_private_encrypt(const BYTE* input, size_t length,
-	                                                 const rdpRsaKey* key, BYTE* output,
+	                                                 const rdpPrivateKey* key, BYTE* output,
 	                                                 size_t output_length);
 	FREERDP_LOCAL SSIZE_T crypto_rsa_private_decrypt(const BYTE* input, size_t length,
-	                                                 const rdpRsaKey* key, BYTE* output,
+	                                                 const rdpPrivateKey* key, BYTE* output,
 	                                                 size_t output_length);
 
 	FREERDP_LOCAL void crypto_reverse(BYTE* data, size_t length);
