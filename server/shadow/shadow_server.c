@@ -825,12 +825,6 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
 		goto out_fail;
 
-	const BOOL rdpSecurity = freerdp_certificate_is_rsa(cert);
-	if (!rdpSecurity)
-	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
-			goto out_fail;
-	}
 	ret = TRUE;
 out_fail:
 	makecert_context_free(makecert);

@@ -1038,8 +1038,7 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
 		goto fail;
 
-	settings->RdpSecurity =
-	    freerdp_certificate_is_rsa(cert); /* RDP security only works with legacy RSA certificates */
+	settings->RdpSecurity = TRUE;
 	settings->TlsSecurity = TRUE;
 	settings->NlaSecurity = FALSE;
 	settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
