@@ -1411,9 +1411,10 @@ BOOL freerdp_certificate_check_eku(const rdpCertificate* cert, int nid)
 BOOL freerdp_certificate_get_public_key(const rdpCertificate* cert, BYTE** PublicKey,
                                         DWORD* PublicKeyLength)
 {
-	BYTE* ptr;
+	BYTE* ptr = NULL;
+	BYTE* optr = NULL;
 	int length;
-	BOOL status = TRUE;
+	BOOL status = FALSE;
 	EVP_PKEY* pkey = NULL;
 
 	WINPR_ASSERT(cert);
@@ -1423,7 +1424,6 @@ BOOL freerdp_certificate_get_public_key(const rdpCertificate* cert, BYTE** Publi
 	if (!pkey)
 	{
 		WLog_ERR(TAG, "X509_get_pubkey() failed");
-		status = FALSE;
 		goto exit;
 	}
 
@@ -1432,22 +1432,23 @@ BOOL freerdp_certificate_get_public_key(const rdpCertificate* cert, BYTE** Publi
 	if (length < 1)
 	{
 		WLog_ERR(TAG, "i2d_PublicKey() failed");
-		status = FALSE;
 		goto exit;
 	}
 
-	*PublicKeyLength = (DWORD)length;
-	*PublicKey = (BYTE*)malloc(length);
-	ptr = (BYTE*)(*PublicKey);
+	*PublicKey = optr = ptr = (BYTE*)calloc(length, sizeof(BYTE));
 
 	if (!ptr)
-	{
-		status = FALSE;
 		goto exit;
-	}
 
-	i2d_PublicKey(pkey, &ptr);
+	const int length2 = i2d_PublicKey(pkey, &ptr);
+	if (length != length2)
+		goto exit;
+	*PublicKeyLength = (DWORD)length2;
+	status = TRUE;
 exit:
+
+	if (!status)
+		free(optr);
 
 	return status;
 }
