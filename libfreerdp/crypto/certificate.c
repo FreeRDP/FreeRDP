@@ -285,6 +285,7 @@ static BOOL is_rsa_key(const X509* x509)
 
 static BOOL blob_is_rsa_key(const rdpCertBlob* cert)
 {
+	WINPR_ASSERT(cert);
 	const BYTE* inData = cert->data;
 	X509* x509 = d2i_X509(NULL, &inData, cert->length);
 	if (!x509)
