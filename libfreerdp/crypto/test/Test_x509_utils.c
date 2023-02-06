@@ -1,4 +1,5 @@
 #include <winpr/file.h>
+#include <winpr/string.h>
 #include "../x509_utils.h"
 
 typedef char* (*get_field_pr)(const X509*);

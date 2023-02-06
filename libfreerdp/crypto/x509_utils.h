@@ -20,20 +20,11 @@
 #ifndef FREERDP_LIB_X509_UTILS_H
 #define FREERDP_LIB_X509_UTILS_H
 
-/* OpenSSL includes windows.h */
-#include <winpr/windows.h>
 #include <winpr/custom-crypto.h>
 
 #include <openssl/x509.h>
 
-#if OPENSSL_VERSION_NUMBER >= 0x0090800f
-#define D2I_X509_CONST const
-#else
-#define D2I_X509_CONST
-#endif
-
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
 
 #ifdef __cplusplus
 extern "C"
