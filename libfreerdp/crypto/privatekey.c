@@ -42,6 +42,8 @@
 
 #include <freerdp/crypto/privatekey.h>
 
+#include <openssl/evp.h>
+
 #include "x509_utils.h"
 #include "crypto.h"
 #include "opensslcompat.h"
@@ -233,9 +235,10 @@ rdpPrivateKey* freerdp_key_clone(const rdpPrivateKey* key)
 	_key->isRSA = key->isRSA;
 	if (key->evp)
 	{
-		_key->evp = EVP_PKEY_dup(key->evp);
+		_key->evp = key->evp;
 		if (!_key->evp)
 			goto out_fail;
+		EVP_PKEY_up_ref(_key->evp);
 	}
 
 	if (key->PrivateExponent)
@@ -303,5 +306,8 @@ RSA* freerdp_key_get_RSA(const rdpPrivateKey* key)
 EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key)
 {
 	WINPR_ASSERT(key);
-	return key->evp;
+
+	EVP_PKEY* evp = key->evp;
+	EVP_PKEY_up_ref(evp);
+	return evp;
 }

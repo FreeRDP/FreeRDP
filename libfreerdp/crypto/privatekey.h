@@ -35,7 +35,14 @@ extern "C"
 	FREERDP_LOCAL const rdpCertInfo* freerdp_key_get_info(const rdpPrivateKey* key);
 	FREERDP_LOCAL const BYTE* freerdp_key_get_exponent(const rdpPrivateKey* key, size_t* plength);
 
+	/** \brief returns a pointer to a RSA structure.
+	 *  Call RSA_free when done.
+	 */
 	FREERDP_LOCAL RSA* freerdp_key_get_RSA(const rdpPrivateKey* key);
+
+	/** \brief returns a pointer to a EVP_PKEY structure.
+	 *  Call EVP_PKEY_free when done.
+	 */
 	FREERDP_LOCAL EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key);
 
 	FREERDP_LOCAL extern const rdpPrivateKey* priv_key_tssk;
