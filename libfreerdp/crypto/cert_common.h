@@ -42,8 +42,6 @@ extern "C"
 
 	FREERDP_LOCAL BOOL read_bignum(BYTE** dst, UINT32* length, const BIGNUM* num, BOOL alloc);
 
-	FREERDP_LOCAL BIO* bio_from_pem(const char* pem);
-
 	FREERDP_LOCAL X509* x509_from_rsa(const RSA* rsa);
 
 #ifdef __cplusplus

@@ -81,14 +81,6 @@ BOOL read_bignum(BYTE** dst, UINT32* length, const BIGNUM* num, BOOL alloc)
 	return TRUE;
 }
 
-BIO* bio_from_pem(const char* pem)
-{
-	if (!pem)
-		return NULL;
-
-	return BIO_new_mem_buf((const void*)pem, strlen(pem));
-}
-
 BOOL cert_info_create(rdpCertInfo* dst, const BIGNUM* rsa, const BIGNUM* rsa_e)
 {
 	const rdpCertInfo empty = { 0 };
