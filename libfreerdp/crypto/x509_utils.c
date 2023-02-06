@@ -25,6 +25,7 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/assert.h>
 
 #include <freerdp/log.h>
