@@ -53,7 +53,6 @@
 struct rdp_private_key
 {
 	EVP_PKEY* evp;
-	BOOL isRSA;
 
 	rdpCertInfo cert;
 	BYTE* PrivateExponent;
@@ -85,11 +84,9 @@ static const rdpPrivateKey tssk = { .PrivateExponent = tssk_privateExponent,
 	                                          .ModulusLength = sizeof(tssk_modulus) } };
 const rdpPrivateKey* priv_key_tssk = &tssk;
 
-static RSA* evp_pkey_to_rsa(const EVP_PKEY* evp)
+static RSA* evp_pkey_to_rsa(const rdpPrivateKey* key)
 {
-	WINPR_ASSERT(evp);
-
-	if (EVP_PKEY_id(evp) != EVP_PKEY_RSA)
+	if (!freerdp_key_is_rsa(key))
 	{
 		WLog_WARN(TAG, "Key is no RSA key");
 		return NULL;
@@ -99,7 +96,7 @@ static RSA* evp_pkey_to_rsa(const EVP_PKEY* evp)
 	BIO* bio = BIO_new(BIO_s_secmem());
 	if (!bio)
 		return NULL;
-	const int rc = PEM_write_bio_PrivateKey(bio, evp, NULL, NULL, 0, NULL, NULL);
+	const int rc = PEM_write_bio_PrivateKey(bio, key->evp, NULL, NULL, 0, NULL, NULL);
 	if (rc != 1)
 		goto fail;
 	rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
@@ -136,13 +133,13 @@ static BOOL key_read_private(rdpPrivateKey* key)
 	BOOL rc = FALSE;
 
 	WINPR_ASSERT(key);
-	RSA* rsa = evp_pkey_to_rsa(key->evp);
+	WINPR_ASSERT(key->evp);
 
-	const BIGNUM* rsa_e = NULL;
-	const BIGNUM* rsa_n = NULL;
-	const BIGNUM* rsa_d = NULL;
+	/* The key is not an RSA key, that means we just return success. */
+	if (!freerdp_key_is_rsa(key))
+		return TRUE;
 
-	WINPR_ASSERT(key);
+	RSA* rsa = evp_pkey_to_rsa(key);
 	if (!rsa)
 	{
 		WLog_ERR(TAG, "unable to load RSA key: %s.", strerror(errno));
@@ -163,6 +160,10 @@ static BOOL key_read_private(rdpPrivateKey* key)
 			WLog_ERR(TAG, "unexpected error when checking RSA key: %s.", strerror(errno));
 			goto fail;
 	}
+
+	const BIGNUM* rsa_e = NULL;
+	const BIGNUM* rsa_n = NULL;
+	const BIGNUM* rsa_d = NULL;
 
 	RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
 
@@ -232,7 +233,6 @@ rdpPrivateKey* freerdp_key_clone(const rdpPrivateKey* key)
 	if (!_key)
 		return NULL;
 
-	_key->isRSA = key->isRSA;
 	if (key->evp)
 	{
 		_key->evp = key->evp;
@@ -274,7 +274,7 @@ void freerdp_key_free(rdpPrivateKey* key)
 const rdpCertInfo* freerdp_key_get_info(const rdpPrivateKey* key)
 {
 	WINPR_ASSERT(key);
-	if (!key->isRSA)
+	if (!freerdp_key_is_rsa(key))
 		return NULL;
 	return &key->cert;
 }
@@ -282,7 +282,7 @@ const rdpCertInfo* freerdp_key_get_info(const rdpPrivateKey* key)
 const BYTE* freerdp_key_get_exponent(const rdpPrivateKey* key, size_t* plength)
 {
 	WINPR_ASSERT(key);
-	if (!key->isRSA)
+	if (!freerdp_key_is_rsa(key))
 	{
 		if (plength)
 			*plength = 0;
@@ -297,10 +297,7 @@ const BYTE* freerdp_key_get_exponent(const rdpPrivateKey* key, size_t* plength)
 RSA* freerdp_key_get_RSA(const rdpPrivateKey* key)
 {
 	WINPR_ASSERT(key);
-	if (!key->isRSA)
-		return NULL;
-
-	return evp_pkey_to_rsa(key->evp);
+	return evp_pkey_to_rsa(key);
 }
 
 EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key)
@@ -315,5 +312,6 @@ EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key)
 BOOL freerdp_key_is_rsa(const rdpPrivateKey* key)
 {
 	WINPR_ASSERT(key);
-	return key->isRSA;
+	WINPR_ASSERT(key->evp);
+	return (EVP_PKEY_id(key->evp) == EVP_PKEY_RSA);
 }
