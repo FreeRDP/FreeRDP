@@ -334,8 +334,9 @@ static BOOL fastpath_recv_update_synchronize(rdpFastPath* fastpath, wStream* s)
 	WINPR_ASSERT(fastpath);
 	WINPR_ASSERT(s);
 
-	Stream_SafeSeek(s, 2); /* size (2 bytes), MUST be set to zero */
-	return TRUE;
+	const size_t len = Stream_GetRemainingLength(s);
+	const size_t skip = MIN(2, len);
+	return Stream_SafeSeek(s, skip); /* size (2 bytes), MUST be set to zero */
 }
 
 static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream* s)
