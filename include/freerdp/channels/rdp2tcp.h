@@ -27,4 +27,12 @@
 
 #define RDP2TCP_DVC_CHANNEL_NAME "rdp2tcp"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* FREERDP_CHANNEL_RDP2TCP_H */

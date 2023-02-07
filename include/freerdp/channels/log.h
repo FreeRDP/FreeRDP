@@ -25,4 +25,11 @@
 
 #define CHANNELS_TAG(tag) FREERDP_TAG("channels.") tag
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+#ifdef __cplusplus
+}
+#endif
 #endif /* FREERDP_UTILS_DEBUG_H */

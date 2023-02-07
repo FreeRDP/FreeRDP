@@ -26,23 +26,27 @@
 
 #define RDPGFX_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Graphics"
 
-/**
- * Common Data Types
- */
-
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	UINT16 x;
-	UINT16 y;
-} RDPGFX_POINT16;
+#endif
+	/**
+	 * Common Data Types
+	 */
 
-typedef struct
-{
-	BYTE B;
-	BYTE G;
-	BYTE R;
-	BYTE XA;
-} RDPGFX_COLOR32;
+	typedef struct
+	{
+		UINT16 x;
+		UINT16 y;
+	} RDPGFX_POINT16;
+
+	typedef struct
+	{
+		BYTE B;
+		BYTE G;
+		BYTE R;
+		BYTE XA;
+	} RDPGFX_COLOR32;
 
 #define GFX_PIXEL_FORMAT_XRGB_8888 0x20
 #define GFX_PIXEL_FORMAT_ARGB_8888 0x21
@@ -398,4 +402,7 @@ typedef struct
 	UINT16 timeDiffEDR;
 } RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU;
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* FREERDP_CHANNEL_RDPGFX_H */
