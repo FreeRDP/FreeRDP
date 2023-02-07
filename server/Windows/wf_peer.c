@@ -28,6 +28,7 @@
 #include <freerdp/listener.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/build-config.h>
+#include <freerdp/crypto/certificate.h>
 
 #include "wf_info.h"
 #include "wf_input.h"
@@ -235,19 +236,32 @@ static BOOL wf_peer_read_settings(freerdp_peer* client)
 	settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
+	char* CertificateFile = NULL;
 	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("CertificateFile"),
-	                                   &(settings->CertificateFile)))
-	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_CertificateFile, "server.crt"))
-			return FALSE;
-	}
+	                                   &(CertificateFile)))
+		CertificateFile = _strdup("server.crt");
 
+	rdpCertificate* cert = freerdp_certificate_new_from_file(CertificateFile);
+	free(CertificateFile);
+	if (!cert)
+		return FALSE;
+
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
+		return FALSE;
+
+	char* PrivateKeyFile = NULL;
 	if (!wf_settings_read_string_ascii(HKEY_LOCAL_MACHINE, SERVER_KEY, _T("PrivateKeyFile"),
-	                                   &(settings->PrivateKeyFile)))
-	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, "server.key"))
-			return FALSE;
-	}
+	                                   &(PrivateKeyFile)))
+		PrivateKeyFile = _strdup("server.key");
+
+	rdpPrivateKey* key = freerdp_key_new_from_file(PrivateKeyFile);
+	free(PrivateKeyFile);
+
+	if (!key)
+		return FALSE;
+
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
+		return FALSE;
 
 	return TRUE;
 }
