@@ -81,6 +81,8 @@ static void mf_server_main_loop(freerdp_listener* instance)
 
 int main(int argc, char* argv[])
 {
+	mf_server_info info = { .key = "server.key", .cert = "server.crt" };
+
 	freerdp_listener* instance;
 
 	signal(SIGPIPE, SIG_IGN);
@@ -90,6 +92,7 @@ int main(int argc, char* argv[])
 	if (!(instance = freerdp_listener_new()))
 		return 1;
 
+	instance->info = &info;
 	instance->PeerAccepted = mf_peer_accepted;
 
 	if (instance->Open(instance, NULL, 3389))
