@@ -27,33 +27,38 @@
 #define RDPECAM_DVC_CHANNEL_NAME "rdpecam"
 #define RDPECAM_CONTROL_DVC_CHANNEL_NAME "RDCamera_Device_Enumerator"
 
-typedef enum
+#ifdef __cplusplus
+extern "C"
 {
-	CAM_MSG_ID_SuccessResponse = 0x01,
-	CAM_MSG_ID_ErrorResponse = 0x02,
-	CAM_MSG_ID_SelectVersionRequest = 0x03,
-	CAM_MSG_ID_SelectVersionResponse = 0x04,
-	CAM_MSG_ID_DeviceAddedNotification = 0x05,
-	CAM_MSG_ID_DeviceRemovedNotification = 0x06,
-	CAM_MSG_ID_ActivateDeviceRequest = 0x07,
-	CAM_MSG_ID_DeactivateDeviceRequest = 0x08,
-	CAM_MSG_ID_StreamListRequest = 0x09,
-	CAM_MSG_ID_StreamListResponse = 0x0A,
-	CAM_MSG_ID_MediaTypeListRequest = 0x0B,
-	CAM_MSG_ID_MediaTypeListResponse = 0x0C,
-	CAM_MSG_ID_CurrentMediaTypeRequest = 0x0D,
-	CAM_MSG_ID_CurrentMediaTypeResponse = 0x0E,
-	CAM_MSG_ID_StartStreamsRequest = 0x0F,
-	CAM_MSG_ID_StopStreamsRequest = 0x10,
-	CAM_MSG_ID_SampleRequest = 0x11,
-	CAM_MSG_ID_SampleResponse = 0x12,
-	CAM_MSG_ID_SampleErrorResponse = 0x13,
-	CAM_MSG_ID_PropertyListRequest = 0x14,
-	CAM_MSG_ID_PropertyListResponse = 0x15,
-	CAM_MSG_ID_PropertyValueRequest = 0x16,
-	CAM_MSG_ID_PropertyValueResponse = 0x17,
-	CAM_MSG_ID_SetPropertyValueRequest = 0x18,
-} CAM_MSG_ID;
+#endif
+
+	typedef enum
+	{
+		CAM_MSG_ID_SuccessResponse = 0x01,
+		CAM_MSG_ID_ErrorResponse = 0x02,
+		CAM_MSG_ID_SelectVersionRequest = 0x03,
+		CAM_MSG_ID_SelectVersionResponse = 0x04,
+		CAM_MSG_ID_DeviceAddedNotification = 0x05,
+		CAM_MSG_ID_DeviceRemovedNotification = 0x06,
+		CAM_MSG_ID_ActivateDeviceRequest = 0x07,
+		CAM_MSG_ID_DeactivateDeviceRequest = 0x08,
+		CAM_MSG_ID_StreamListRequest = 0x09,
+		CAM_MSG_ID_StreamListResponse = 0x0A,
+		CAM_MSG_ID_MediaTypeListRequest = 0x0B,
+		CAM_MSG_ID_MediaTypeListResponse = 0x0C,
+		CAM_MSG_ID_CurrentMediaTypeRequest = 0x0D,
+		CAM_MSG_ID_CurrentMediaTypeResponse = 0x0E,
+		CAM_MSG_ID_StartStreamsRequest = 0x0F,
+		CAM_MSG_ID_StopStreamsRequest = 0x10,
+		CAM_MSG_ID_SampleRequest = 0x11,
+		CAM_MSG_ID_SampleResponse = 0x12,
+		CAM_MSG_ID_SampleErrorResponse = 0x13,
+		CAM_MSG_ID_PropertyListRequest = 0x14,
+		CAM_MSG_ID_PropertyListResponse = 0x15,
+		CAM_MSG_ID_PropertyValueRequest = 0x16,
+		CAM_MSG_ID_PropertyValueResponse = 0x17,
+		CAM_MSG_ID_SetPropertyValueRequest = 0x18,
+	} CAM_MSG_ID;
 
 #define CAM_HEADER_SIZE 2
 
@@ -333,4 +338,7 @@ typedef struct
 	CAM_PROPERTY_VALUE PropertyValue;
 } CAM_SET_PROPERTY_VALUE_REQUEST;
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* FREERDP_CHANNEL_RDPECAM_H */

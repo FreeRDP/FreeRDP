@@ -30,59 +30,67 @@
 #include <freerdp/api.h>
 #include <freerdp/channels/scard.h>
 
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	union
+#endif
+	typedef struct
 	{
-		Handles_Call handles;
-		Long_Call lng;
-		Context_Call context;
-		ContextAndStringA_Call contextAndStringA;
-		ContextAndStringW_Call contextAndStringW;
-		ContextAndTwoStringA_Call contextAndTwoStringA;
-		ContextAndTwoStringW_Call contextAndTwoStringW;
-		EstablishContext_Call establishContext;
-		ListReaderGroups_Call listReaderGroups;
-		ListReaders_Call listReaders;
-		GetStatusChangeA_Call getStatusChangeA;
-		LocateCardsA_Call locateCardsA;
-		LocateCardsW_Call locateCardsW;
-		LocateCards_ATRMask locateCardsATRMask;
-		LocateCardsByATRA_Call locateCardsByATRA;
-		LocateCardsByATRW_Call locateCardsByATRW;
-		GetStatusChangeW_Call getStatusChangeW;
-		GetReaderIcon_Call getReaderIcon;
-		GetDeviceTypeId_Call getDeviceTypeId;
-		Connect_Common_Call connect;
-		ConnectA_Call connectA;
-		ConnectW_Call connectW;
-		Reconnect_Call reconnect;
-		HCardAndDisposition_Call hCardAndDisposition;
-		State_Call state;
-		Status_Call status;
-		SCardIO_Request scardIO;
-		Transmit_Call transmit;
-		GetTransmitCount_Call getTransmitCount;
-		Control_Call control;
-		GetAttrib_Call getAttrib;
-		SetAttrib_Call setAttrib;
-		ReadCache_Common readCache;
-		ReadCacheA_Call readCacheA;
-		ReadCacheW_Call readCacheW;
-		WriteCache_Common writeCache;
-		WriteCacheA_Call writeCacheA;
-		WriteCacheW_Call writeCacheW;
-	} call;
-	UINT32 ioControlCode;
-	UINT32 completionID;
-	UINT32 deviceID;
-	SCARDCONTEXT hContext;
-	SCARDHANDLE hCard;
-	const char* ioControlCodeName;
-} SMARTCARD_OPERATION;
+		union
+		{
+			Handles_Call handles;
+			Long_Call lng;
+			Context_Call context;
+			ContextAndStringA_Call contextAndStringA;
+			ContextAndStringW_Call contextAndStringW;
+			ContextAndTwoStringA_Call contextAndTwoStringA;
+			ContextAndTwoStringW_Call contextAndTwoStringW;
+			EstablishContext_Call establishContext;
+			ListReaderGroups_Call listReaderGroups;
+			ListReaders_Call listReaders;
+			GetStatusChangeA_Call getStatusChangeA;
+			LocateCardsA_Call locateCardsA;
+			LocateCardsW_Call locateCardsW;
+			LocateCards_ATRMask locateCardsATRMask;
+			LocateCardsByATRA_Call locateCardsByATRA;
+			LocateCardsByATRW_Call locateCardsByATRW;
+			GetStatusChangeW_Call getStatusChangeW;
+			GetReaderIcon_Call getReaderIcon;
+			GetDeviceTypeId_Call getDeviceTypeId;
+			Connect_Common_Call connect;
+			ConnectA_Call connectA;
+			ConnectW_Call connectW;
+			Reconnect_Call reconnect;
+			HCardAndDisposition_Call hCardAndDisposition;
+			State_Call state;
+			Status_Call status;
+			SCardIO_Request scardIO;
+			Transmit_Call transmit;
+			GetTransmitCount_Call getTransmitCount;
+			Control_Call control;
+			GetAttrib_Call getAttrib;
+			SetAttrib_Call setAttrib;
+			ReadCache_Common readCache;
+			ReadCacheA_Call readCacheA;
+			ReadCacheW_Call readCacheW;
+			WriteCache_Common writeCache;
+			WriteCacheA_Call writeCacheA;
+			WriteCacheW_Call writeCacheW;
+		} call;
+		UINT32 ioControlCode;
+		UINT32 completionID;
+		UINT32 deviceID;
+		SCARDCONTEXT hContext;
+		SCARDHANDLE hCard;
+		const char* ioControlCodeName;
+	} SMARTCARD_OPERATION;
 
-FREERDP_API LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32 FileId,
-                                                     SMARTCARD_OPERATION* operation);
-FREERDP_API void smartcard_operation_free(SMARTCARD_OPERATION* op, BOOL allocated);
+	FREERDP_API LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId,
+	                                                     UINT32 FileId,
+	                                                     SMARTCARD_OPERATION* operation);
+	FREERDP_API void smartcard_operation_free(SMARTCARD_OPERATION* op, BOOL allocated);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* FREERDP_CHANNEL_SMARTCARD_CLIENT_OPERATIONS_H */

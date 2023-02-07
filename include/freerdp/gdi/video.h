@@ -24,18 +24,27 @@
 #include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
 
-typedef struct s_gdiVideoContext gdiVideoContext;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-FREERDP_API void gdi_video_geometry_init(rdpGdi* gdi, GeometryClientContext* geom);
-FREERDP_API void gdi_video_geometry_uninit(rdpGdi* gdi, GeometryClientContext* geom);
+	typedef struct s_gdiVideoContext gdiVideoContext;
 
-FREERDP_API void gdi_video_control_init(rdpGdi* gdi, VideoClientContext* video);
-FREERDP_API void gdi_video_control_uninit(rdpGdi* gdi, VideoClientContext* video);
+	FREERDP_API void gdi_video_geometry_init(rdpGdi* gdi, GeometryClientContext* geom);
+	FREERDP_API void gdi_video_geometry_uninit(rdpGdi* gdi, GeometryClientContext* geom);
 
-FREERDP_API void gdi_video_data_init(rdpGdi* gdi, VideoClientContext* video);
-FREERDP_API void gdi_video_data_uninit(rdpGdi* gdi, VideoClientContext* context);
+	FREERDP_API void gdi_video_control_init(rdpGdi* gdi, VideoClientContext* video);
+	FREERDP_API void gdi_video_control_uninit(rdpGdi* gdi, VideoClientContext* video);
 
-FREERDP_API gdiVideoContext* gdi_video_new(rdpGdi* gdi);
-FREERDP_API void gdi_video_free(gdiVideoContext* context);
+	FREERDP_API void gdi_video_data_init(rdpGdi* gdi, VideoClientContext* video);
+	FREERDP_API void gdi_video_data_uninit(rdpGdi* gdi, VideoClientContext* context);
+
+	FREERDP_API gdiVideoContext* gdi_video_new(rdpGdi* gdi);
+	FREERDP_API void gdi_video_free(gdiVideoContext* context);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_GDI_VIDEO_H_ */
