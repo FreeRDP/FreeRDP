@@ -28,7 +28,8 @@
 #include <freerdp/freerdp.h>
 #include <winpr/stream.h>
 
-#include <freerdp/cache/nine_grid.h>
+#include "nine_grid.h"
+#include "cache.h"
 
 #define TAG FREERDP_TAG("cache.nine_grid")
 

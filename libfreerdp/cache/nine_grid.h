@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Offscreen Bitmap Cache
+ * NineGrid Cache
  *
- * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,32 +17,32 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_OFFSCREEN_CACHE_H
-#define FREERDP_OFFSCREEN_CACHE_H
+#ifndef FREERDP_LIB_NINE_GRID_CACHE_H
+#define FREERDP_LIB_NINE_GRID_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/update.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/update.h>
 
 #include <winpr/stream.h>
 
-typedef struct rdp_offscreen_cache rdpOffscreenCache;
+typedef struct rdp_nine_grid_cache rdpNineGridCache;
+
+#include "nine_grid.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-	FREERDP_API rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, UINT32 index);
+	FREERDP_LOCAL void nine_grid_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_API void offscreen_cache_register_callbacks(rdpUpdate* update);
-
-	FREERDP_API rdpOffscreenCache* offscreen_cache_new(rdpContext* context);
-	FREERDP_API void offscreen_cache_free(rdpOffscreenCache* offscreen);
+	FREERDP_LOCAL rdpNineGridCache* nine_grid_cache_new(rdpContext* context);
+	FREERDP_LOCAL void nine_grid_cache_free(rdpNineGridCache* nine_grid);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FREERDP_OFFSCREEN_CACHE_H */
+#endif /* FREERDP_LIB_NINE_GRID_CACHE_H */

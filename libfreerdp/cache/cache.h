@@ -24,13 +24,44 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/pointer.h>
 
-FREERDP_LOCAL CACHE_COLOR_TABLE_ORDER*
-copy_cache_color_table_order(rdpContext* context, const CACHE_COLOR_TABLE_ORDER* order);
-FREERDP_LOCAL void free_cache_color_table_order(rdpContext* context,
-                                                CACHE_COLOR_TABLE_ORDER* order);
+#include "glyph.h"
+#include "brush.h"
+#include "pointer.h"
+#include "bitmap.h"
+#include "nine_grid.h"
+#include "offscreen.h"
+#include "palette.h"
 
-FREERDP_LOCAL SURFACE_BITS_COMMAND* copy_surface_bits_command(rdpContext* context,
-                                                              const SURFACE_BITS_COMMAND* order);
-FREERDP_LOCAL void free_surface_bits_command(rdpContext* context, SURFACE_BITS_COMMAND* order);
+struct rdp_cache
+{
+	rdpGlyphCache* glyph;         /* 0 */
+	rdpBrushCache* brush;         /* 1 */
+	rdpPointerCache* pointer;     /* 2 */
+	rdpBitmapCache* bitmap;       /* 3 */
+	rdpOffscreenCache* offscreen; /* 4 */
+	rdpPaletteCache* palette;     /* 5 */
+	rdpNineGridCache* nine_grid;  /* 6 */
+};
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	FREERDP_LOCAL rdpCache* cache_new(rdpContext* context);
+	FREERDP_LOCAL void cache_free(rdpCache* cache);
+
+	FREERDP_LOCAL CACHE_COLOR_TABLE_ORDER*
+	copy_cache_color_table_order(rdpContext* context, const CACHE_COLOR_TABLE_ORDER* order);
+	FREERDP_LOCAL void free_cache_color_table_order(rdpContext* context,
+	                                                CACHE_COLOR_TABLE_ORDER* order);
+
+	FREERDP_LOCAL SURFACE_BITS_COMMAND*
+	copy_surface_bits_command(rdpContext* context, const SURFACE_BITS_COMMAND* order);
+	FREERDP_LOCAL void free_surface_bits_command(rdpContext* context, SURFACE_BITS_COMMAND* order);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_LIB_CACHE_CACHE_H */

@@ -26,10 +26,11 @@
 #include <winpr/stream.h>
 
 #include <freerdp/log.h>
-#include <freerdp/cache/offscreen.h>
-#include <freerdp/cache/cache.h>
 
 #include "../core/graphics.h"
+
+#include "offscreen.h"
+#include "cache.h"
 
 #define TAG FREERDP_TAG("cache.offscreen")
 

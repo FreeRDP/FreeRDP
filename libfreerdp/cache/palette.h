@@ -23,8 +23,39 @@
 #include <freerdp/api.h>
 #include <freerdp/update.h>
 
-FREERDP_LOCAL PALETTE_UPDATE* copy_palette_update(rdpContext* context,
-                                                  const PALETTE_UPDATE* pointer);
-FREERDP_LOCAL void free_palette_update(rdpContext* context, PALETTE_UPDATE* pointer);
+typedef struct rdp_palette_cache rdpPaletteCache;
+
+typedef struct
+{
+	void* entry;
+} PALETTE_TABLE_ENTRY;
+
+struct rdp_palette_cache
+{
+	UINT32 maxEntries;            /* 0 */
+	PALETTE_TABLE_ENTRY* entries; /* 1 */
+
+	/* internal */
+
+	rdpContext* context;
+};
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	FREERDP_LOCAL void palette_cache_register_callbacks(rdpUpdate* update);
+
+	FREERDP_LOCAL rdpPaletteCache* palette_cache_new(rdpContext* context);
+	FREERDP_LOCAL void palette_cache_free(rdpPaletteCache* palette_cache);
+
+	FREERDP_LOCAL PALETTE_UPDATE* copy_palette_update(rdpContext* context,
+	                                                  const PALETTE_UPDATE* pointer);
+	FREERDP_LOCAL void free_palette_update(rdpContext* context, PALETTE_UPDATE* pointer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_LIB_CACHE_PALETTE_H */

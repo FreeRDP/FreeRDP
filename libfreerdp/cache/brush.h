@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
+ * Brush Cache
  *
- * Copyright 2018 Armin Novak <armin.novak@thincast.com>
- * Copyright 2018 Thincast Technologies GmbH
+ * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,37 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_LIB_CACHE_BRUSH_H
-#define FREERDP_LIB_CACHE_BRUSH_H
+#ifndef FREERDP_LIB_BRUSH_CACHE_H
+#define FREERDP_LIB_BRUSH_CACHE_H
 
 #include <freerdp/api.h>
+#include <freerdp/types.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/pointer.h>
+#include <freerdp/update.h>
 
-FREERDP_LOCAL CACHE_BRUSH_ORDER* copy_cache_brush_order(rdpContext* context,
-                                                        const CACHE_BRUSH_ORDER* order);
-FREERDP_LOCAL void free_cache_brush_order(rdpContext* context, CACHE_BRUSH_ORDER* order);
+#include <winpr/stream.h>
 
-#endif /* FREERDP_LIB_CACHE_BRUSH_H */
+typedef struct rdp_brush_cache rdpBrushCache;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	FREERDP_LOCAL void* brush_cache_get(rdpBrushCache* brush, UINT32 index, UINT32* bpp);
+	FREERDP_LOCAL void brush_cache_put(rdpBrushCache* brush, UINT32 index, void* entry, UINT32 bpp);
+
+	FREERDP_LOCAL void brush_cache_register_callbacks(rdpUpdate* update);
+
+	FREERDP_LOCAL rdpBrushCache* brush_cache_new(rdpContext* context);
+	FREERDP_LOCAL void brush_cache_free(rdpBrushCache* brush);
+
+	FREERDP_LOCAL CACHE_BRUSH_ORDER* copy_cache_brush_order(rdpContext* context,
+	                                                        const CACHE_BRUSH_ORDER* order);
+	FREERDP_LOCAL void free_cache_brush_order(rdpContext* context, CACHE_BRUSH_ORDER* order);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_LIB_BRUSH_CACHE_H */

@@ -24,29 +24,58 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/pointer.h>
 
-FREERDP_LOCAL POINTER_COLOR_UPDATE* copy_pointer_color_update(rdpContext* context,
-                                                              const POINTER_COLOR_UPDATE* pointer);
-FREERDP_LOCAL void free_pointer_color_update(rdpContext* context, POINTER_COLOR_UPDATE* pointer);
+typedef struct rdp_pointer_cache rdpPointerCache;
 
-FREERDP_LOCAL POINTER_LARGE_UPDATE* copy_pointer_large_update(rdpContext* context,
-                                                              const POINTER_LARGE_UPDATE* pointer);
-FREERDP_LOCAL void free_pointer_large_update(rdpContext* context, POINTER_LARGE_UPDATE* pointer);
+struct rdp_pointer_cache
+{
+	UINT32 cacheSize;     /* 0 */
+	rdpPointer** entries; /* 1 */
 
-FREERDP_LOCAL POINTER_NEW_UPDATE* copy_pointer_new_update(rdpContext* context,
-                                                          const POINTER_NEW_UPDATE* pointer);
-FREERDP_LOCAL void free_pointer_new_update(rdpContext* context, POINTER_NEW_UPDATE* pointer);
+	/* internal */
+	rdpContext* context;
+};
 
-FREERDP_LOCAL POINTER_CACHED_UPDATE*
-copy_pointer_cached_update(rdpContext* context, const POINTER_CACHED_UPDATE* pointer);
-FREERDP_LOCAL void free_pointer_cached_update(rdpContext* context, POINTER_CACHED_UPDATE* pointer);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-FREERDP_LOCAL POINTER_POSITION_UPDATE*
-copy_pointer_position_update(rdpContext* context, const POINTER_POSITION_UPDATE* pointer);
-FREERDP_LOCAL void free_pointer_position_update(rdpContext* context,
-                                                POINTER_POSITION_UPDATE* pointer);
+	FREERDP_LOCAL void pointer_cache_register_callbacks(rdpUpdate* update);
 
-FREERDP_LOCAL POINTER_SYSTEM_UPDATE*
-copy_pointer_system_update(rdpContext* context, const POINTER_SYSTEM_UPDATE* pointer);
-FREERDP_LOCAL void free_pointer_system_update(rdpContext* context, POINTER_SYSTEM_UPDATE* pointer);
+	FREERDP_LOCAL rdpPointerCache* pointer_cache_new(rdpContext* context);
+	FREERDP_LOCAL void pointer_cache_free(rdpPointerCache* pointer_cache);
+
+	FREERDP_LOCAL POINTER_COLOR_UPDATE*
+	copy_pointer_color_update(rdpContext* context, const POINTER_COLOR_UPDATE* pointer);
+	FREERDP_LOCAL void free_pointer_color_update(rdpContext* context,
+	                                             POINTER_COLOR_UPDATE* pointer);
+
+	FREERDP_LOCAL POINTER_LARGE_UPDATE*
+	copy_pointer_large_update(rdpContext* context, const POINTER_LARGE_UPDATE* pointer);
+	FREERDP_LOCAL void free_pointer_large_update(rdpContext* context,
+	                                             POINTER_LARGE_UPDATE* pointer);
+
+	FREERDP_LOCAL POINTER_NEW_UPDATE* copy_pointer_new_update(rdpContext* context,
+	                                                          const POINTER_NEW_UPDATE* pointer);
+	FREERDP_LOCAL void free_pointer_new_update(rdpContext* context, POINTER_NEW_UPDATE* pointer);
+
+	FREERDP_LOCAL POINTER_CACHED_UPDATE*
+	copy_pointer_cached_update(rdpContext* context, const POINTER_CACHED_UPDATE* pointer);
+	FREERDP_LOCAL void free_pointer_cached_update(rdpContext* context,
+	                                              POINTER_CACHED_UPDATE* pointer);
+
+	FREERDP_LOCAL POINTER_POSITION_UPDATE*
+	copy_pointer_position_update(rdpContext* context, const POINTER_POSITION_UPDATE* pointer);
+	FREERDP_LOCAL void free_pointer_position_update(rdpContext* context,
+	                                                POINTER_POSITION_UPDATE* pointer);
+
+	FREERDP_LOCAL POINTER_SYSTEM_UPDATE*
+	copy_pointer_system_update(rdpContext* context, const POINTER_SYSTEM_UPDATE* pointer);
+	FREERDP_LOCAL void free_pointer_system_update(rdpContext* context,
+	                                              POINTER_SYSTEM_UPDATE* pointer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_LIB_CACHE_POINTER_H */

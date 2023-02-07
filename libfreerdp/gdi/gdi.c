@@ -45,6 +45,7 @@
 #include "gdi.h"
 #include "../core/graphics.h"
 #include "../core/update.h"
+#include "../cache/cache.h"
 
 #define TAG FREERDP_TAG("gdi")
 

@@ -26,9 +26,9 @@
 #include <winpr/stream.h>
 
 #include <freerdp/log.h>
-#include <freerdp/cache/pointer.h>
 
 #include "pointer.h"
+#include "cache.h"
 
 #define TAG FREERDP_TAG("cache.pointer")
 

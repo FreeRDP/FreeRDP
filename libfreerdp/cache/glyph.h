@@ -24,12 +24,53 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/pointer.h>
 
-FREERDP_LOCAL CACHE_GLYPH_ORDER* copy_cache_glyph_order(rdpContext* context,
-                                                        const CACHE_GLYPH_ORDER* glyph);
-FREERDP_LOCAL void free_cache_glyph_order(rdpContext* context, CACHE_GLYPH_ORDER* glyph);
+typedef struct
+{
+	UINT32 number;
+	UINT32 maxCellSize;
+	rdpGlyph** entries;
+} GLYPH_CACHE;
 
-FREERDP_LOCAL CACHE_GLYPH_V2_ORDER* copy_cache_glyph_v2_order(rdpContext* context,
-                                                              const CACHE_GLYPH_V2_ORDER* glyph);
-FREERDP_LOCAL void free_cache_glyph_v2_order(rdpContext* context, CACHE_GLYPH_V2_ORDER* glyph);
+typedef struct
+{
+	void* fragment;
+	UINT32 size;
+} FRAGMENT_CACHE_ENTRY;
+
+typedef struct
+{
+	FRAGMENT_CACHE_ENTRY entries[256];
+} FRAGMENT_CACHE;
+
+typedef struct
+{
+	FRAGMENT_CACHE fragCache;
+	GLYPH_CACHE glyphCache[10];
+
+	wLog* log;
+	rdpContext* context;
+} rdpGlyphCache;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	FREERDP_LOCAL void glyph_cache_register_callbacks(rdpUpdate* update);
+
+	FREERDP_LOCAL rdpGlyphCache* glyph_cache_new(rdpContext* context);
+	FREERDP_LOCAL void glyph_cache_free(rdpGlyphCache* glyph);
+
+	FREERDP_LOCAL CACHE_GLYPH_ORDER* copy_cache_glyph_order(rdpContext* context,
+	                                                        const CACHE_GLYPH_ORDER* glyph);
+	FREERDP_LOCAL void free_cache_glyph_order(rdpContext* context, CACHE_GLYPH_ORDER* glyph);
+
+	FREERDP_LOCAL CACHE_GLYPH_V2_ORDER*
+	copy_cache_glyph_v2_order(rdpContext* context, const CACHE_GLYPH_V2_ORDER* glyph);
+	FREERDP_LOCAL void free_cache_glyph_v2_order(rdpContext* context, CACHE_GLYPH_V2_ORDER* glyph);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_LIB_CACHE_GLYPH_H */

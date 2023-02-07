@@ -38,8 +38,8 @@
 #include <freerdp/log.h>
 #include <freerdp/error.h>
 #include <freerdp/listener.h>
-#include <freerdp/cache/pointer.h>
 
+#include "../cache/pointer.h"
 #include "../crypto/crypto.h"
 #include "../crypto/privatekey.h"
 #include "../crypto/certificate.h"

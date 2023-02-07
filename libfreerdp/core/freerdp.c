@@ -51,9 +51,9 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/version.h>
 #include <freerdp/log.h>
-#include <freerdp/cache/pointer.h>
 #include <freerdp/utils/signal.h>
 
+#include "../cache/pointer.h"
 #include "settings.h"
 #include "utils.h"
 
