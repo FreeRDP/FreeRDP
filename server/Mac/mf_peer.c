@@ -360,10 +360,10 @@ static void* mf_peer_main_loop(void* arg)
 	freerdp_peer* client = (freerdp_peer*)arg;
 
 	if (!mf_peer_init(client))
-	{
-		freerdp_peer_free(client);
-		return NULL;
-	}
+		goto fail;
+
+	const mf_server_info* info = client->ContextExtra;
+	WINPR_ASSERT(info);
 
 	WINPR_ASSERT(client->context);
 
@@ -371,19 +371,22 @@ static void* mf_peer_main_loop(void* arg)
 	WINPR_ASSERT(settings);
 
 	/* Initialize the real server settings here */
-	freerdp_settings_set_string(settings, FreeRDP_CertificateFile, "server.crt");
-	freerdp_settings_set_string(settings, FreeRDP_PrivateKeyFile, "server.key");
-
-	if (!settings->CertificateFile || !settings->PrivateKeyFile)
-	{
-		freerdp_peer_free(client);
-		return NULL;
-	}
+	rdpPrivateKey* key = freerdp_key_new_from_file(info->key);
+	if (!key)
+		goto fail;
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
+		goto fail;
+	rdpCertificate* cert = freerdp_certificate_new_from_file(info->cert);
+	if (!cert)
+		goto fail;
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
+		goto fail;
 
 	settings->NlaSecurity = FALSE;
 	settings->RemoteFxCodec = TRUE;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32))
-		return FALSE;
+		goto fail;
+
 	settings->SuppressOutput = TRUE;
 	settings->RefreshRect = FALSE;
 
@@ -405,7 +408,10 @@ static void* mf_peer_main_loop(void* arg)
 	// update->RefreshRect = mf_peer_refresh_rect;
 	update->SuppressOutput = mf_peer_suppress_output;
 
-	client->Initialize(client);
+	WINPR_ASSERT(client->Initialize);
+	const BOOL rc = client->Initialize(client);
+	if (!rc)
+		goto fail;
 	context = (mfPeerContext*)client->context;
 
 	while (1)
@@ -447,6 +453,7 @@ static void* mf_peer_main_loop(void* arg)
 
 	client->Disconnect(client);
 	freerdp_peer_context_free(client);
+fail:
 	freerdp_peer_free(client);
 	return NULL;
 }
@@ -455,6 +462,10 @@ BOOL mf_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
 	pthread_t th;
 
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(client);
+
+	client->ContextExtra = instance->info;
 	if (pthread_create(&th, 0, mf_peer_main_loop, client) == 0)
 	{
 		pthread_detach(th);
