@@ -24,9 +24,9 @@
 #include <winpr/crt.h>
 
 #include <freerdp/log.h>
-#include <freerdp/cache/palette.h>
 
 #include "palette.h"
+#include "cache.h"
 
 #define TAG FREERDP_TAG("cache.palette")
 

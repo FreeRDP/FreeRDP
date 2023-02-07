@@ -29,13 +29,13 @@
 #include <winpr/stream.h>
 
 #include <freerdp/log.h>
-#include <freerdp/cache/bitmap.h>
 #include <freerdp/gdi/bitmap.h>
 
 #include "../gdi/gdi.h"
 #include "../core/graphics.h"
 
 #include "bitmap.h"
+#include "cache.h"
 
 #define TAG FREERDP_TAG("cache.bitmap")
 

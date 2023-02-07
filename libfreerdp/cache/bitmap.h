@@ -23,19 +23,63 @@
 #include <freerdp/api.h>
 #include <freerdp/update.h>
 
-FREERDP_LOCAL BITMAP_UPDATE* copy_bitmap_update(rdpContext* context, const BITMAP_UPDATE* pointer);
-FREERDP_LOCAL void free_bitmap_update(rdpContext* context, BITMAP_UPDATE* pointer);
+#include <freerdp/cache/persistent.h>
 
-FREERDP_LOCAL CACHE_BITMAP_ORDER* copy_cache_bitmap_order(rdpContext* context,
-                                                          const CACHE_BITMAP_ORDER* order);
-FREERDP_LOCAL void free_cache_bitmap_order(rdpContext* context, CACHE_BITMAP_ORDER* order);
+typedef struct
+{
+	UINT32 number;
+	rdpBitmap** entries;
+} BITMAP_V2_CELL;
 
-FREERDP_LOCAL CACHE_BITMAP_V2_ORDER* copy_cache_bitmap_v2_order(rdpContext* context,
-                                                                const CACHE_BITMAP_V2_ORDER* order);
-FREERDP_LOCAL void free_cache_bitmap_v2_order(rdpContext* context, CACHE_BITMAP_V2_ORDER* order);
+typedef struct
+{
+	pMemBlt MemBlt;               /* 0 */
+	pMem3Blt Mem3Blt;             /* 1 */
+	pCacheBitmap CacheBitmap;     /* 2 */
+	pCacheBitmapV2 CacheBitmapV2; /* 3 */
+	pCacheBitmapV3 CacheBitmapV3; /* 4 */
+	pBitmapUpdate BitmapUpdate;   /* 5 */
+	UINT32 paddingA[16 - 6];      /* 6 */
 
-FREERDP_LOCAL CACHE_BITMAP_V3_ORDER* copy_cache_bitmap_v3_order(rdpContext* context,
-                                                                const CACHE_BITMAP_V3_ORDER* order);
-FREERDP_LOCAL void free_cache_bitmap_v3_order(rdpContext* context, CACHE_BITMAP_V3_ORDER* order);
+	UINT32 maxCells;          /* 16 */
+	BITMAP_V2_CELL* cells;    /* 17 */
+	UINT32 paddingB[32 - 18]; /* 18 */
+
+	/* internal */
+	rdpContext* context;
+	rdpPersistentCache* persistent;
+} rdpBitmapCache;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	FREERDP_LOCAL void bitmap_cache_register_callbacks(rdpUpdate* update);
+
+	FREERDP_LOCAL rdpBitmapCache* bitmap_cache_new(rdpContext* context);
+	FREERDP_LOCAL void bitmap_cache_free(rdpBitmapCache* bitmap_cache);
+
+	FREERDP_LOCAL BITMAP_UPDATE* copy_bitmap_update(rdpContext* context,
+	                                                const BITMAP_UPDATE* pointer);
+	FREERDP_LOCAL void free_bitmap_update(rdpContext* context, BITMAP_UPDATE* pointer);
+
+	FREERDP_LOCAL CACHE_BITMAP_ORDER* copy_cache_bitmap_order(rdpContext* context,
+	                                                          const CACHE_BITMAP_ORDER* order);
+	FREERDP_LOCAL void free_cache_bitmap_order(rdpContext* context, CACHE_BITMAP_ORDER* order);
+
+	FREERDP_LOCAL CACHE_BITMAP_V2_ORDER*
+	copy_cache_bitmap_v2_order(rdpContext* context, const CACHE_BITMAP_V2_ORDER* order);
+	FREERDP_LOCAL void free_cache_bitmap_v2_order(rdpContext* context,
+	                                              CACHE_BITMAP_V2_ORDER* order);
+
+	FREERDP_LOCAL CACHE_BITMAP_V3_ORDER*
+	copy_cache_bitmap_v3_order(rdpContext* context, const CACHE_BITMAP_V3_ORDER* order);
+	FREERDP_LOCAL void free_cache_bitmap_v3_order(rdpContext* context,
+	                                              CACHE_BITMAP_V3_ORDER* order);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_LIB_CACHE_BITMAP_H */

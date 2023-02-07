@@ -28,10 +28,9 @@
 #include <winpr/stream.h>
 
 #include <freerdp/log.h>
-#include <freerdp/cache/cache.h>
-#include <freerdp/cache/glyph.h>
 
 #include "glyph.h"
+#include "cache.h"
 
 #define TAG FREERDP_TAG("cache.glyph")
 

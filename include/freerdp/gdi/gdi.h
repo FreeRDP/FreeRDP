@@ -27,7 +27,6 @@
 #include <freerdp/api.h>
 #include <freerdp/log.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/cache/cache.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
 

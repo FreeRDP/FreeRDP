@@ -35,7 +35,6 @@
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/region.h>
-#include <freerdp/cache/cache.h>
 #include <freerdp/codec/color.h>
 
 #include <freerdp/client/rail.h>

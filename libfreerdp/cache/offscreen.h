@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Pointer Cache
+ * Offscreen Bitmap Cache
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  *
@@ -17,42 +17,32 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_POINTER_CACHE_H
-#define FREERDP_POINTER_CACHE_H
+#ifndef FREERDP_LIB_OFFSCREEN_CACHE_H
+#define FREERDP_LIB_OFFSCREEN_CACHE_H
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/update.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/graphics.h>
 
 #include <winpr/stream.h>
 
-typedef struct rdp_pointer_cache rdpPointerCache;
-
-#include <freerdp/cache/cache.h>
-
-struct rdp_pointer_cache
-{
-	UINT32 cacheSize;     /* 0 */
-	rdpPointer** entries; /* 1 */
-
-	/* internal */
-	rdpContext* context;
-};
+typedef struct rdp_offscreen_cache rdpOffscreenCache;
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-	FREERDP_API void pointer_cache_register_callbacks(rdpUpdate* update);
+	FREERDP_LOCAL rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreen_cache, UINT32 index);
 
-	FREERDP_API rdpPointerCache* pointer_cache_new(rdpContext* context);
-	FREERDP_API void pointer_cache_free(rdpPointerCache* pointer_cache);
+	FREERDP_LOCAL void offscreen_cache_register_callbacks(rdpUpdate* update);
+
+	FREERDP_LOCAL rdpOffscreenCache* offscreen_cache_new(rdpContext* context);
+	FREERDP_LOCAL void offscreen_cache_free(rdpOffscreenCache* offscreen);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FREERDP_POINTER_CACHE_H */
+#endif /* FREERDP_LIB_OFFSCREEN_CACHE_H */

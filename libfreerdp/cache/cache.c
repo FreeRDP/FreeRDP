@@ -23,8 +23,6 @@
 
 #include <winpr/stream.h>
 
-#include <freerdp/cache/cache.h>
-
 #include "cache.h"
 
 rdpCache* cache_new(rdpContext* context)
