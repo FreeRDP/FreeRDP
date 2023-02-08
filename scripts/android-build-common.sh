@@ -8,11 +8,11 @@ case "$(uname -s)" in
 
    Darwin)
 		 FIND_ARGS="-perm +111 $FIND_ARGS"
-     ;;
+	 ;;
 
    *)
 		 FIND_ARGS="-executable $FIND_ARGS"
-     ;;
+	 ;;
 esac
 
 if [ -z $BUILD_ARCH ]; then
@@ -96,10 +96,10 @@ function common_parse_arguments {
 	do
 		key="$1"
 		case $key in
-		    --conf)
-            source "$2" || exit 1
-            shift
-            ;;
+			--conf)
+		        source "$2" || exit 1
+		        shift
+		        ;;
 
 			--target)
 			NDK_TARGET="$2"
@@ -217,12 +217,20 @@ function common_check_requirements {
 	else
 		echo "ndk-build not found in NDK directory $ANDROID_NDK"
 		echo "assuming ndk-build is in path..."
-		NDK_BUILD=ndk-build
+		NDK_BUILD=$(which ndk-build)
+		if [ -z $NDK_BUILD ]; then
+			echo "ndk-build not found in $ANDROID_NDK and not in PATH"
+			exit 1
+		fi
 	fi
 
-    if [ -z $CMAKE_PROGRAM ]; then
-			CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake $FIND_ARGS)
-    fi
+	if [ -z $CMAKE_PROGRAM ]; then
+		CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake $FIND_ARGS)
+		if [ -z $CMAKE_PROGRAM ]; then
+			echo "CMake not found in $ANDROID_SDK, install CMake from the android SDK!"
+			exit 1
+		fi
+	fi
 
 	for CMD in make git $CMAKE_PROGRAM $NDK_BUILD
 	do
