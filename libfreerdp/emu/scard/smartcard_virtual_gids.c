@@ -503,10 +503,14 @@ static BYTE vgids_get_algid(vgidsContext* p_Ctx)
 {
 	WINPR_ASSERT(p_Ctx);
 
-	const rdpCertInfo* info = freerdp_key_get_info(p_Ctx->privateKey);
-	WINPR_ASSERT(info);
+	RSA* rsa = freerdp_key_get_RSA(p_Ctx->privateKey);
+	if (!rsa)
+		return 0;
 
-	switch (info->ModulusLength)
+	const int size = RSA_size(rsa);
+	RSA_free(rsa);
+
+	switch (size)
 	{
 		case (1024 / 8):
 			return VGIDS_ALGID_RSA_1024;
@@ -790,6 +794,7 @@ static UINT16 vgids_handle_chained_response(vgidsContext* context, const BYTE** 
 
 static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 {
+	BOOL rc = FALSE;
 	BYTE* buf = NULL;
 	wStream* pubKey = NULL;
 	wStream* response = NULL;
@@ -797,11 +802,14 @@ static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 	WINPR_ASSERT(context);
 
 	/* Get key components */
-	const rdpCertInfo* info = freerdp_certificate_get_info(context->certificate);
-	WINPR_ASSERT(info);
+	RSA* rsa = freerdp_certificate_get_RSA(context->certificate);
+	if (!rsa)
+		return FALSE;
+	const BIGNUM *n, *e;
+	RSA_get0_key(rsa, &n, &e, NULL);
 
-	const size_t nSize = info->ModulusLength;
-	const size_t eSize = sizeof(info->exponent);
+	const size_t nSize = BN_num_bytes(n);
+	const size_t eSize = BN_num_bytes(e);
 
 	buf = malloc(nSize > eSize ? nSize : eSize);
 	if (!buf)
@@ -825,10 +833,12 @@ static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 	}
 
 	/* write modulus and exponent DOs */
-	if (!vgids_write_tlv(pubKey, 0x81, info->Modulus, nSize))
+	BN_bn2bin(n, buf);
+	if (!vgids_write_tlv(pubKey, 0x81, buf, nSize))
 		goto handle_error;
 
-	if (!vgids_write_tlv(pubKey, 0x82, info->exponent, eSize))
+	BN_bn2bin(e, buf);
+	if (!vgids_write_tlv(pubKey, 0x82, buf, eSize))
 		goto handle_error;
 
 	/* write ISO public key template */
@@ -839,15 +849,14 @@ static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 	Stream_SetPosition(response, 0);
 	context->responseData = response;
 
-	free(buf);
-	Stream_Free(pubKey, TRUE);
-	return TRUE;
-
+	rc = TRUE;
 handle_error:
 	free(buf);
+	RSA_free(rsa);
 	Stream_Free(pubKey, TRUE);
-	Stream_Free(response, TRUE);
-	return FALSE;
+	if (!rc)
+		Stream_Free(response, TRUE);
+	return rc;
 }
 
 static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response,
@@ -1141,6 +1150,7 @@ sign_failed:
 
 static BOOL vgids_perform_decrypt(vgidsContext* context)
 {
+	BOOL rc = FALSE;
 	int res;
 	int padding = RSA_NO_PADDING;
 
@@ -1153,10 +1163,11 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 		padding = RSA_PKCS1_OAEP_PADDING;
 
 	/* init response buffer */
-	const rdpCertInfo* info = freerdp_key_get_info(context->privateKey);
-	WINPR_ASSERT(info);
+	RSA* rsa = freerdp_key_get_RSA(context->privateKey);
+	if (!rsa)
+		goto decrypt_failed;
 
-	context->responseData = Stream_New(NULL, info->ModulusLength);
+	context->responseData = Stream_New(NULL, RSA_size(rsa));
 	if (!context->responseData)
 	{
 		WLog_ERR(TAG, "Failed to create decryption buffer");
@@ -1164,14 +1175,9 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 	}
 
 	/* Determine buffer length */
-	RSA* rsa = freerdp_key_get_RSA(context->privateKey);
-	if (!rsa)
-		goto decrypt_failed;
-
 	res = RSA_private_decrypt((int)Stream_Length(context->commandData),
 	                          Stream_Buffer(context->commandData),
 	                          Stream_Buffer(context->responseData), rsa, padding);
-	RSA_free(rsa);
 
 	if (res < 0)
 	{
@@ -1180,13 +1186,14 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 	}
 
 	Stream_SetLength(context->responseData, res);
-	vgids_reset_context_command_data(context);
-	return TRUE;
+	rc = TRUE;
 
 decrypt_failed:
+	RSA_free(rsa);
 	vgids_reset_context_command_data(context);
-	vgids_reset_context_response(context);
-	return FALSE;
+	if (!rc)
+		vgids_reset_context_response(context);
+	return rc;
 }
 
 static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream* s, BYTE** response,
@@ -1488,10 +1495,17 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 		goto init_failed;
 
 	/* write container map DO */
-	const rdpCertInfo* info = freerdp_key_get_info(ctx->privateKey);
-	if (!info)
+	RSA* rsa = freerdp_key_get_RSA(ctx->privateKey);
+	if (!rsa)
 		goto init_failed;
-	cmrec.wKeyExchangeKeySizeBits = (WORD)info->ModulusLength;
+
+	const int size = RSA_size(rsa);
+	RSA_free(rsa);
+
+	if (size <= 0)
+		goto init_failed;
+
+	cmrec.wKeyExchangeKeySizeBits = (WORD)size;
 	if (!vgids_ef_write_do(commonEF, VGIDS_DO_CMAPFILE, (BYTE*)&cmrec, sizeof(cmrec)))
 		goto init_failed;
 

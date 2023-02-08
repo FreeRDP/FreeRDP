@@ -240,7 +240,8 @@ BOOL crypto_write_pem(const char* filename, const char* pem, size_t length)
 	WINPR_ASSERT(filename);
 	WINPR_ASSERT(pem);
 
-	size_t rc = 0, size = strlen(pem) + 1;
+	const size_t size = strnlen(pem, length) + 1;
+	size_t rc = 0;
 	FILE* fp = winpr_fopen(filename, "w");
 	if (!fp)
 		goto fail;

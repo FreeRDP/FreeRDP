@@ -129,6 +129,7 @@ void cert_info_free(rdpCertInfo* info)
 	WINPR_ASSERT(info);
 	free(info->Modulus);
 	info->ModulusLength = 0;
+	info->Modulus = NULL;
 }
 
 BOOL cert_info_allocate(rdpCertInfo* info, size_t size)
