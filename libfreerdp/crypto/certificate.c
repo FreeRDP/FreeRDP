@@ -1491,6 +1491,20 @@ X509* freerdp_certificate_get_x509(rdpCertificate* cert)
 	return cert->x509;
 }
 
+RSA* freerdp_certificate_get_RSA(const rdpCertificate* cert)
+{
+	WINPR_ASSERT(cert);
+
+	if (!freerdp_certificate_is_rsa(cert))
+		return NULL;
+
+	EVP_PKEY* pubkey = X509_get0_pubkey(cert->x509);
+	if (!pubkey)
+		return NULL;
+
+	return EVP_PKEY_get1_RSA(pubkey);
+}
+
 BYTE* freerdp_certificate_get_der(const rdpCertificate* cert, size_t* pLength)
 {
 	WINPR_ASSERT(cert);

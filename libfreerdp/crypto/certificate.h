@@ -49,6 +49,15 @@ FREERDP_LOCAL SSIZE_T freerdp_certificate_write_server_cert(const rdpCertificate
 FREERDP_LOCAL rdpCertificate* freerdp_certificate_clone(const rdpCertificate* certificate);
 
 FREERDP_LOCAL const rdpCertInfo* freerdp_certificate_get_info(const rdpCertificate* certificate);
+
+/** \brief returns a pointer to a X509 structure.
+ *  Call X509_free when done.
+ */
 FREERDP_LOCAL X509* freerdp_certificate_get_x509(rdpCertificate* certificate);
+
+/** \brief returns a pointer to a RSA structure.
+ *  Call RSA_free when done.
+ */
+FREERDP_LOCAL RSA* freerdp_certificate_get_RSA(const rdpCertificate* key);
 
 #endif /* FREERDP_LIB_CORE_CERTIFICATE_H */
