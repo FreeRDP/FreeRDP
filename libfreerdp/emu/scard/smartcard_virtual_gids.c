@@ -1046,6 +1046,9 @@ static BOOL vgids_perform_digital_signature(vgidsContext* context)
 	}
 
 	RSA* rsa = freerdp_key_get_RSA(context->privateKey);
+	if (!rsa)
+		return FALSE;
+
 	EVP_PKEY_set1_RSA(pk, rsa);
 	vgids_reset_context_response(context);
 
@@ -1162,6 +1165,9 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 
 	/* Determine buffer length */
 	RSA* rsa = freerdp_key_get_RSA(context->privateKey);
+	if (!rsa)
+		goto decrypt_failed;
+
 	res = RSA_private_decrypt((int)Stream_Length(context->commandData),
 	                          Stream_Buffer(context->commandData),
 	                          Stream_Buffer(context->responseData), rsa, padding);
