@@ -1498,13 +1498,24 @@ BYTE* freerdp_certificate_get_der(const rdpCertificate* cert, size_t* pLength)
 	if (pLength)
 		*pLength = 0;
 
-	BYTE* ptr = NULL;
-	const int rc = i2d_X509(cert->x509, &ptr);
-	if (rc < 0)
+	const int rc = i2d_X509(cert->x509, NULL);
+	if (rc <= 0)
 		return NULL;
 
+	BYTE* ptr = calloc(rc + 1, sizeof(BYTE));
+	if (!ptr)
+		return NULL;
+	BYTE* i2d_ptr = ptr;
+
+	const int rc2 = i2d_X509(cert->x509, &i2d_ptr);
+	if (rc2 <= 0)
+	{
+		free(ptr);
+		return NULL;
+	}
+
 	if (pLength)
-		*pLength = (size_t)rc;
+		*pLength = (size_t)rc2;
 	return ptr;
 }
 
