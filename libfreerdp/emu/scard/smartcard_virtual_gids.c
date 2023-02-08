@@ -499,18 +499,23 @@ handle_error:
 	return FALSE;
 }
 
+static int get_rsa_key_size(const rdpPrivateKey* privateKey)
+{
+	WINPR_ASSERT(privateKey);
+	RSA* rsa = freerdp_key_get_RSA(privateKey);
+	if (!rsa)
+		return -1;
+
+	const int size = RSA_size(rsa);
+	RSA_free(rsa);
+	return size;
+}
+
 static BYTE vgids_get_algid(vgidsContext* p_Ctx)
 {
 	WINPR_ASSERT(p_Ctx);
 
-	RSA* rsa = freerdp_key_get_RSA(p_Ctx->privateKey);
-	if (!rsa)
-		return 0;
-
-	const int size = RSA_size(rsa);
-	RSA_free(rsa);
-
-	switch (size)
+	switch (get_rsa_key_size(p_Ctx->privateKey))
 	{
 		case (1024 / 8):
 			return VGIDS_ALGID_RSA_1024;
@@ -1145,6 +1150,7 @@ sign_failed:
 	vgids_reset_context_response(context);
 	EVP_PKEY_CTX_free(ctx);
 	EVP_PKEY_free(pk);
+	RSA_free(rsa);
 	return FALSE;
 }
 
@@ -1495,17 +1501,14 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 		goto init_failed;
 
 	/* write container map DO */
-	RSA* rsa = freerdp_key_get_RSA(ctx->privateKey);
-	if (!rsa)
+	const int size = get_rsa_key_size(ctx->privateKey);
+	if (size <= 0)
 		goto init_failed;
-
-	const int size = RSA_size(rsa);
-	RSA_free(rsa);
 
 	if (size <= 0)
 		goto init_failed;
 
-	cmrec.wKeyExchangeKeySizeBits = (WORD)size;
+	cmrec.wKeyExchangeKeySizeBits = (WORD)size * 8;
 	if (!vgids_ef_write_do(commonEF, VGIDS_DO_CMAPFILE, (BYTE*)&cmrec, sizeof(cmrec)))
 		goto init_failed;
 
