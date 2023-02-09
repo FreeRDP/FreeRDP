@@ -3,6 +3,8 @@
  * RDP Settings
  *
  * Copyright 2009-2011 Jay Sorg
+ * Copyright 2023 Armin Novak <anovak@thincast.com>
+ * Copyright 2023 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

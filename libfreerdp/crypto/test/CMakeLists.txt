@@ -6,8 +6,8 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 
 set(${MODULE_PREFIX}_TESTS
 	TestKnownHosts.c
-    TestBase64.c
-    Test_x509_utils.c)
+	TestBase64.c
+	Test_x509_utils.c)
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}

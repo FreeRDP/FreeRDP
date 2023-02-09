@@ -4,8 +4,8 @@
  *
  * Copyright 2019 Kobi Mizrachi <kmizrachi18@gmail.com>
  * Copyright 2019 Idan Freiberg <speidy@gmail.com>
- * Copyright 2021 Armin Novak <anovak@thincast.com>
- * Copyright 2021 Thincast Technologies GmbH
+ * Copyright 2021,2023 Armin Novak <anovak@thincast.com>
+ * Copyright 2021,2023 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

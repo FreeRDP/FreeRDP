@@ -24,14 +24,14 @@ freerdp_module_add(
 	ber.c
 	per.c
 	base64.c
-    x509_utils.c
-    x509_utils.h
-    cert_common.h
-    cert_common.c
-    privatekey.c
-    privatekey.h
-    certificate.c
-    certificate.h
+	x509_utils.c
+	x509_utils.h
+	cert_common.h
+	cert_common.c
+	privatekey.c
+	privatekey.h
+	certificate.c
+	certificate.h
 	certificate_data.c
 	certificate_store.c
 	crypto.c
