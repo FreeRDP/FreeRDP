@@ -5,8 +5,8 @@
  * Copyright 2011-2013 Marc-Andre Moreau <marcandre.moreau@gmail.com>
  * Copyright 2014 Norbert Federa <norbert.federa@thincast.com>
  * Copyright 2018 David Fort <contact@hardening-consulting.com>
- * Copyright 2022 Armin Novak <armin.novak@thincast.com>
- * Copyright 2022 Thincast Technologies GmbH
+ * Copyright 2022,2023 Armin Novak <armin.novak@thincast.com>
+ * Copyright 2022,2023 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

@@ -3,6 +3,8 @@
  * Cryptographic Abstraction Layer
  *
  * Copyright 2011-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2023 Armin Novak <anovak@thincast.com>
+ * Copyright 2023 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
