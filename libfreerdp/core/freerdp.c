@@ -780,6 +780,17 @@ fail:
 	return FALSE;
 }
 
+BOOL freerdp_context_reset(freerdp* instance)
+{
+	if (!instance)
+		return FALSE;
+
+	WINPR_ASSERT(instance->context);
+	rdpRdp* rdp = instance->context->rdp;
+
+	return rdp_reset_runtime_settings(rdp);
+}
+
 /** Deallocator function for a rdp context.
  *  The function will deallocate the resources from the 'instance' parameter that were allocated
  * from a call to freerdp_context_new(). If the ContextFree callback is set in the 'instance'
