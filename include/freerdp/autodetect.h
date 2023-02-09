@@ -66,7 +66,8 @@ extern "C"
 		ALIGN64 UINT32 netCharAverageRTT;     /* 7 */
 		ALIGN64 BOOL bandwidthMeasureStarted; /* 8 */
 		ALIGN64 INT32 state;                  /* 9 */
-		UINT64 paddingA[16 - 10];             /* 10 */
+		ALIGN64 void* custom;                 /* 10 */
+		UINT64 paddingA[16 - 11];             /* 11 */
 
 		ALIGN64 pRTTMeasureRequest RTTMeasureRequest;                       /* 16 */
 		ALIGN64 pRTTMeasureResponse RTTMeasureResponse;                     /* 17 */
