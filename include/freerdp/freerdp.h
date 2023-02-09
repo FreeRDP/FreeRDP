@@ -542,6 +542,7 @@ owned by rdpRdp */
 
 	FREERDP_API BOOL freerdp_context_new(freerdp* instance);
 	FREERDP_API BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings);
+	FREERDP_API BOOL freerdp_context_reset(freerdp* instance);
 	FREERDP_API void freerdp_context_free(freerdp* instance);
 
 	FREERDP_API BOOL freerdp_connect(freerdp* instance);
