@@ -32,15 +32,6 @@
 
 #include "state.h"
 
-typedef enum
-{
-	AUTODETECT_STATE_INITIAL,
-	AUTODETECT_STATE_REQUEST,
-	AUTODETECT_STATE_RESPONSE,
-	AUTODETECT_STATE_COMPLETE,
-	AUTODETECT_STATE_FAIL
-} AUTODETECT_STATE;
-
 FREERDP_LOCAL rdpAutoDetect* autodetect_new(rdpContext* context);
 FREERDP_LOCAL void autodetect_free(rdpAutoDetect* autodetect);
 FREERDP_LOCAL state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect,

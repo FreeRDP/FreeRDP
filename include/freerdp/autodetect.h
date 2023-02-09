@@ -28,6 +28,16 @@
 extern "C"
 {
 #endif
+
+	typedef enum
+	{
+		AUTODETECT_STATE_INITIAL,
+		AUTODETECT_STATE_REQUEST,
+		AUTODETECT_STATE_RESPONSE,
+		AUTODETECT_STATE_COMPLETE,
+		AUTODETECT_STATE_FAIL
+	} AUTODETECT_STATE;
+
 	typedef struct rdp_autodetect rdpAutoDetect;
 
 	typedef BOOL (*pRTTMeasureRequest)(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
@@ -65,7 +75,7 @@ extern "C"
 		ALIGN64 UINT32 netCharBaseRTT;        /* 6 */
 		ALIGN64 UINT32 netCharAverageRTT;     /* 7 */
 		ALIGN64 BOOL bandwidthMeasureStarted; /* 8 */
-		ALIGN64 INT32 state;                  /* 9 */
+		ALIGN64 AUTODETECT_STATE state;       /* 9 */
 		ALIGN64 void* custom;                 /* 10 */
 		UINT64 paddingA[16 - 11];             /* 11 */
 
