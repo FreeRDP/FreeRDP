@@ -1121,10 +1121,10 @@ static BOOL rdg_send_tunnel_authorization(rdpRdg* rdg)
 		return FALSE;
 	}
 
-	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_AUTH);      /* Type (2 bytes) */
-	Stream_Write_UINT16(s, 0);                         /* Reserved (2 bytes) */
-	Stream_Write_UINT32(s, packetSize);                /* PacketLength (4 bytes) */
-	Stream_Write_UINT16(s, 0);                         /* FieldsPresent (2 bytes) */
+	Stream_Write_UINT16(s, PKT_TYPE_TUNNEL_AUTH);                  /* Type (2 bytes) */
+	Stream_Write_UINT16(s, 0);                                     /* Reserved (2 bytes) */
+	Stream_Write_UINT32(s, packetSize);                            /* PacketLength (4 bytes) */
+	Stream_Write_UINT16(s, 0);                                     /* FieldsPresent (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)clientNameLen * sizeof(WCHAR)); /* Client name string length */
 	Stream_Write_UTF16_String(s, clientName, (size_t)clientNameLen);
 	Stream_SealLength(s);
@@ -1659,6 +1659,9 @@ static BOOL rdg_get_gateway_credentials(rdpContext* context, rdp_auth_reason rea
 		case AUTH_SUCCESS:
 		case AUTH_SKIP:
 			return TRUE;
+		case AUTH_CANCELLED:
+			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
+			return FALSE;
 		case AUTH_NO_CREDENTIALS:
 			freerdp_set_last_error_log(instance->context,
 			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);

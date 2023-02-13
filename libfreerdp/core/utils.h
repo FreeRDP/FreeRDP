@@ -29,6 +29,7 @@ typedef enum
 	AUTH_SUCCESS,
 	AUTH_SKIP,
 	AUTH_NO_CREDENTIALS,
+	AUTH_CANCELLED,
 	AUTH_FAILED
 } auth_status;
 

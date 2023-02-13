@@ -136,6 +136,9 @@ static int rpc_bind_setup(rdpRpc* rpc)
 		case AUTH_SUCCESS:
 		case AUTH_SKIP:
 			break;
+		case AUTH_CANCELLED:
+			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
+			return FALSE;
 		case AUTH_NO_CREDENTIALS:
 			freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
 			return 0;
