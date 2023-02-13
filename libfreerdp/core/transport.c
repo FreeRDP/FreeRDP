@@ -218,6 +218,10 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 		case AUTH_SUCCESS:
 		case AUTH_NO_CREDENTIALS:
 			return TRUE;
+		case AUTH_CANCELLED:
+			freerdp_set_last_error_if_not(transport_get_context(transport),
+			                              FREERDP_ERROR_CONNECT_CANCELLED);
+			return FALSE;
 		default:
 			return FALSE;
 	}
@@ -240,6 +244,9 @@ BOOL transport_connect_tls(rdpTransport* transport)
 			case AUTH_SUCCESS:
 			case AUTH_NO_CREDENTIALS:
 				break;
+			case AUTH_CANCELLED:
+				freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_CANCELLED);
+				return FALSE;
 			default:
 				return FALSE;
 		}
