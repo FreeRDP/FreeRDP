@@ -411,9 +411,12 @@ static BOOL xf_end_paint(rdpContext* context)
 	if (gdi->suppressOutput)
 		return TRUE;
 
+	const BOOL sw = freerdp_settings_get_bool(context->settings, FreeRDP_SoftwareGdi);
+	HGDI_DC hdc = sw ? gdi->primary->hdc : xfc->hdc;
+
 	if (!xfc->complex_regions)
 	{
-		const GDI_RGN* rgn = gdi->primary->hdc->hwnd->invalid;
+		const GDI_RGN* rgn = hdc->hwnd->invalid;
 		if (rgn->null)
 			return TRUE;
 		xf_lock_x11(xfc);
@@ -423,10 +426,10 @@ static BOOL xf_end_paint(rdpContext* context)
 	}
 	else
 	{
-		const INT32 ninvalid = gdi->primary->hdc->hwnd->ninvalid;
-		const GDI_RGN* cinvalid = gdi->primary->hdc->hwnd->cinvalid;
+		const INT32 ninvalid = hdc->hwnd->ninvalid;
+		const GDI_RGN* cinvalid = hdc->hwnd->cinvalid;
 
-		if (gdi->primary->hdc->hwnd->ninvalid < 1)
+		if (hdc->hwnd->ninvalid < 1)
 			return TRUE;
 
 		xf_lock_x11(xfc);
@@ -442,8 +445,8 @@ static BOOL xf_end_paint(rdpContext* context)
 		xf_unlock_x11(xfc);
 	}
 
-	gdi->primary->hdc->hwnd->invalid->null = TRUE;
-	gdi->primary->hdc->hwnd->ninvalid = 0;
+	hdc->hwnd->invalid->null = TRUE;
+	hdc->hwnd->ninvalid = 0;
 	return TRUE;
 }
 

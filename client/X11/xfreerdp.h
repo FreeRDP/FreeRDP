@@ -181,10 +181,6 @@ struct xf_context
 	BYTE* bitmap_buffer;
 
 	BOOL frame_begin;
-	UINT16 frame_x1;
-	UINT16 frame_y1;
-	UINT16 frame_x2;
-	UINT16 frame_y2;
 
 	int XInputOpcode;
 
