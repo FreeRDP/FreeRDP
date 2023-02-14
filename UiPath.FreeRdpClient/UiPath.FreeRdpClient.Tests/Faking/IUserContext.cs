@@ -9,7 +9,6 @@ namespace UiPath.FreeRdp.Tests.Faking;
 public class UserExistsDetail
 {
     private NetworkCredential _credentials = new NetworkCredential();
-    public string UserNameUPN { get => _credentials.UserName + "@" + _credentials.Domain; }
     public string UserName { get => _credentials.GetFullUserName(); set => _credentials.SetFullUserName(value); }
     public string Password { get => _credentials.Password; set => _credentials.Password = value; }
 
@@ -34,12 +33,12 @@ public class UserContextReal : UserContextBase
     protected override async Task<bool> DoCreateUser(UserExistsDetail userDetail)
     {
         var username = userDetail.UserName.ToLowerInvariant().Replace(UserNames.DefaultDomainName.ToLowerInvariant() + "\\", "");
-        var exitCode = await new ProcessStartInfo
+        var executeResult = await new ProcessStartInfo
         {
             Arguments = $"user {username} {userDetail.Password} /add",
             FileName = "net"
         }.ExecuteWithLogs(_log);
-        var newlyCreated = exitCode == 0;
+        var newlyCreated = executeResult.ExitCode == 0;
 
         await new ProcessStartInfo
         {

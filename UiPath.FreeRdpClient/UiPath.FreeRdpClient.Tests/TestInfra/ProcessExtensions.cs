@@ -5,7 +5,8 @@ namespace System.Diagnostics;
 
 public static partial class ProcessExtensions
 {
-    public const int MsExecuteWithLogsDefaultTimeout = 10 * 1000;
+    public const int MsExecuteWithLogsDefaultTimeout = 30 * 1000;
+    public record ExecuteResults(int ExitCode, string StandardOutput, string ErrorOutput);
 
     /// <summary>
     /// Executes the process and arguments provided through the <paramref name="psi"/> parameter, logging details at the start and at the end.
@@ -21,7 +22,7 @@ public static partial class ProcessExtensions
     /// <exception cref="TimeoutException">
     /// Thrown asynchronously when a non-infinite <paramref name="timeout"/> is reached.
     /// </exception>
-    public static async Task<int> ExecuteWithLogs(this ProcessStartInfo psi, ILogger log, TimeSpan timeout = default)
+    public static async Task<ExecuteResults> ExecuteWithLogs(this ProcessStartInfo psi, ILogger log, TimeSpan timeout = default)
     {
         if (timeout == default)
         {
@@ -46,14 +47,15 @@ public static partial class ProcessExtensions
 
         process.Start();
 
-        var stdout = process.StandardOutput.ReadToEndAsync();
-        var stderr = process.StandardError.ReadToEndAsync();
+        var stdoutTask = process.StandardOutput.ReadToEndAsync();
+        var stderrTask = process.StandardError.ReadToEndAsync();
         var exitcode = -12345;
+        var stdout = string.Empty;
+        var stderr = string.Empty;
         try
         {
             await process.WaitForExitAsync(timeoutToken);
             exitcode = process.ExitCode;
-            return exitcode;
         }
         catch (OperationCanceledException ex) when (ex.CancellationToken == timeoutToken)
         {
@@ -61,8 +63,12 @@ public static partial class ProcessExtensions
         }
         finally
         {
-            log.LogDidExecutedWithLogs(psi.FileName, psi.Arguments, exitcode, await stdout, await stderr);
+            stdout = await stdoutTask;
+            stderr = await stderrTask;
+
+            log.LogDidExecutedWithLogs(psi.FileName, psi.Arguments, exitcode, await stdoutTask, await stderrTask);
         }
+        return new(exitcode, stdout, stderr);
 
         static IDisposable? CreateTimeoutToken(in TimeSpan timeout, out CancellationToken token)
         {

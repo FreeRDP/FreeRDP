@@ -70,6 +70,10 @@ namespace FreeRdpClient
 		
 		context->settings->ServerHostname =
 		    _strdup(convToUTF8.to_bytes(rdpOptions->HostName).c_str());
+
+		if (rdpOptions->Port)
+			context->settings->ServerPort = rdpOptions->Port;
+
 		context->settings->Domain = _strdup(convToUTF8.to_bytes(rdpOptions->Domain).c_str());
 		context->settings->Username = _strdup(convToUTF8.to_bytes(rdpOptions->User).c_str());
 		context->settings->Password = _strdup(convToUTF8.to_bytes(rdpOptions->Pass).c_str());

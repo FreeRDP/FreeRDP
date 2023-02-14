@@ -35,6 +35,9 @@ internal partial class WtsApi
     public static string? GetSessionClientName(int sessionId)
         => GetSessionDetail(sessionId, WTS_INFO_CLASS.WTSClientName, WtsReadString);
 
+    public static WTS_CLIENT_DISPLAY GetSessionDisplayInfo(int sessionId)
+        => GetSessionDetail(sessionId, WTS_INFO_CLASS.WTSClientDisplay, (ptr, r) => Marshal.PtrToStructure<WTS_CLIENT_DISPLAY>(ptr));
+
     private static string? WtsReadString(IntPtr ptr, bool invokeResult)
         => invokeResult ? Marshal.PtrToStringAuto(ptr) : null;
 
