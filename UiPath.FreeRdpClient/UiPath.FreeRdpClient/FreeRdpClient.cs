@@ -2,8 +2,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nito.Disposables;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 
@@ -29,6 +27,7 @@ public static class FreeRdpClient
         public string ClientName;
         [MarshalAs(UnmanagedType.BStr)]
         public string HostName;
+        public int Port;
     }
 
     const string FreeRdpClientDll = "UiPath.FreeRdpWrapper.dll";
@@ -66,7 +65,8 @@ public static class FreeRdpClient
             Domain = connectionSettings.Domain,
             Password = connectionSettings.Password,
             ClientName = connectionSettings.ClientName,
-            HostName = connectionSettings.HostName
+            HostName = connectionSettings.HostName,
+            Port = connectionSettings.Port ?? default
         };
 
         return await Task.Run(() =>
@@ -115,32 +115,4 @@ public static class FreeRdpClient
             return Task.CompletedTask;
         }
     }
-}
-
-public class RdpConnectionSettings
-{
-    public string Username { get; init; }
-    public string Domain { get; init; }
-    public string Password { get; init; }
-
-    public RdpConnectionSettings(string username, string domain, string password)
-    {
-        Username = username;
-        Domain = domain;
-        Password = password;
-    }
-
-    private static volatile int ConnectionId = 0;
-    private static readonly string ClientNameBase = "RDP_" + Process.GetCurrentProcess().Id % 1e6 + "_";
-
-    public int DesktopWidth { get; set; } = 1024;
-
-    public int DesktopHeight { get; set; } = 768;
-
-    public int ColorDepth { get; set; } = 32;
-
-    [MaxLength(15, ErrorMessage = "Sometimes :) Windows returns only first 15 chars for a session ClientName")]
-    public string ClientName { get; set; } = ClientNameBase + Interlocked.Increment(ref ConnectionId) % 1e4;
-    public bool FontSmoothing { get; set; }
-    public string HostName { get; set; } = "localhost";
 }
