@@ -925,19 +925,10 @@ static BOOL xf_gdi_surface_frame_marker(rdpContext* context,
 	{
 		case SURFACECMD_FRAMEACTION_BEGIN:
 			xfc->frame_begin = TRUE;
-			xfc->frame_x1 = 0;
-			xfc->frame_y1 = 0;
-			xfc->frame_x2 = 0;
-			xfc->frame_y2 = 0;
 			break;
 
 		case SURFACECMD_FRAMEACTION_END:
 			xfc->frame_begin = FALSE;
-
-			if ((xfc->frame_x2 > xfc->frame_x1) && (xfc->frame_y2 > xfc->frame_y1))
-				ret = gdi_InvalidateRegion(xfc->hdc, xfc->frame_x1, xfc->frame_y1,
-				                           xfc->frame_x2 - xfc->frame_x1,
-				                           xfc->frame_y2 - xfc->frame_y1);
 
 			if (settings->FrameAcknowledge > 0)
 			{
@@ -956,38 +947,7 @@ static BOOL xf_gdi_surface_frame_marker(rdpContext* context,
 static BOOL xf_gdi_surface_update_frame(xfContext* xfc, UINT16 tx, UINT16 ty, UINT16 width,
                                         UINT16 height)
 {
-	BOOL ret = TRUE;
-
-	if (!xfc->remote_app)
-	{
-		if (xfc->frame_begin)
-		{
-			if (xfc->frame_x2 > xfc->frame_x1 && xfc->frame_y2 > xfc->frame_y1)
-			{
-				xfc->frame_x1 = MIN(xfc->frame_x1, tx);
-				xfc->frame_y1 = MIN(xfc->frame_y1, ty);
-				xfc->frame_x2 = MAX(xfc->frame_x2, tx + width);
-				xfc->frame_y2 = MAX(xfc->frame_y2, ty + height);
-			}
-			else
-			{
-				xfc->frame_x1 = tx;
-				xfc->frame_y1 = ty;
-				xfc->frame_x2 = tx + width;
-				xfc->frame_y2 = ty + height;
-			}
-		}
-		else
-		{
-			ret = gdi_InvalidateRegion(xfc->hdc, tx, ty, width, height);
-		}
-	}
-	else
-	{
-		ret = gdi_InvalidateRegion(xfc->hdc, tx, ty, width, height);
-	}
-
-	return ret;
+	return gdi_InvalidateRegion(xfc->hdc, tx, ty, width, height);
 }
 
 static BOOL xf_gdi_update_screen(xfContext* xfc, BYTE* pSrcData, UINT32 scanline,
