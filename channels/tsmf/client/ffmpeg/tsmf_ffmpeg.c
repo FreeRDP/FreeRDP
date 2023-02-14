@@ -235,8 +235,10 @@ static BOOL tsmf_ffmpeg_init_stream(ITSMFDecoder* decoder, const TS_AM_MEDIA_TYP
 		}
 	}
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(59, 18, 100)
 	if (mdecoder->codec->capabilities & AV_CODEC_CAP_TRUNCATED)
 		mdecoder->codec_context->flags |= AV_CODEC_FLAG_TRUNCATED;
+#endif
 
 	return TRUE;
 }
