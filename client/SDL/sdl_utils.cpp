@@ -95,6 +95,14 @@ const char* sdl_event_type_str(Uint32 type)
 		EV_CASE_STR(SDL_RENDER_DEVICE_RESET);
 		EV_CASE_STR(SDL_USEREVENT);
 
+		EV_CASE_STR(SDL_USEREVENT_CERT_DIALOG);
+		EV_CASE_STR(SDL_USEREVENT_CERT_RESULT);
+		EV_CASE_STR(SDL_USEREVENT_SHOW_DIALOG);
+		EV_CASE_STR(SDL_USEREVENT_SHOW_RESULT);
+		EV_CASE_STR(SDL_USEREVENT_AUTH_DIALOG);
+		EV_CASE_STR(SDL_USEREVENT_AUTH_RESULT);
+		EV_CASE_STR(SDL_USEREVENT_SCARD_DIALOG);
+		EV_CASE_STR(SDL_USEREVENT_SCARD_RESULT);
 		EV_CASE_STR(SDL_USEREVENT_UPDATE);
 		EV_CASE_STR(SDL_USEREVENT_CREATE_WINDOWS);
 		EV_CASE_STR(SDL_USEREVENT_WINDOW_RESIZEABLE);
@@ -104,6 +112,7 @@ const char* sdl_event_type_str(Uint32 type)
 		EV_CASE_STR(SDL_USEREVENT_POINTER_POSITION);
 		EV_CASE_STR(SDL_USEREVENT_POINTER_SET);
 		EV_CASE_STR(SDL_USEREVENT_QUIT);
+
 		EV_CASE_STR(SDL_LASTEVENT);
 		default:
 			return "SDL_UNKNOWNEVENT";
@@ -144,6 +153,48 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 	event->type = type;
 	switch (type)
 	{
+		case SDL_USEREVENT_AUTH_RESULT:
+		{
+			SDL_UserAuthArg* arg = (SDL_UserAuthArg*)ev.padding;
+			arg->user = va_arg(ap, char*);
+			arg->domain = va_arg(ap, char*);
+			arg->password = va_arg(ap, char*);
+			arg->result = va_arg(ap, Sint32);
+		}
+		break;
+		case SDL_USEREVENT_AUTH_DIALOG:
+		{
+			SDL_UserAuthArg* arg = (SDL_UserAuthArg*)ev.padding;
+
+			arg->title = va_arg(ap, char*);
+			arg->user = va_arg(ap, char*);
+			arg->domain = va_arg(ap, char*);
+			arg->password = va_arg(ap, char*);
+			arg->result = va_arg(ap, Sint32);
+		}
+		break;
+		case SDL_USEREVENT_SCARD_DIALOG:
+		{
+			event->data1 = va_arg(ap, char*);
+			event->data2 = va_arg(ap, char**);
+			event->code = va_arg(ap, Sint32);
+		}
+		break;
+		case SDL_USEREVENT_SCARD_RESULT:
+		case SDL_USEREVENT_SHOW_RESULT:
+		case SDL_USEREVENT_CERT_RESULT:
+			event->code = va_arg(ap, Sint32);
+			break;
+
+		case SDL_USEREVENT_SHOW_DIALOG:
+			event->data1 = va_arg(ap, char*);
+			event->data2 = va_arg(ap, char*);
+			event->code = va_arg(ap, Sint32);
+			break;
+		case SDL_USEREVENT_CERT_DIALOG:
+			event->data1 = va_arg(ap, char*);
+			event->data2 = va_arg(ap, char*);
+			break;
 		case SDL_USEREVENT_UPDATE:
 			event->data1 = va_arg(ap, void*);
 			break;
