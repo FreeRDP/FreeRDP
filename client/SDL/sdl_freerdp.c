@@ -678,8 +678,10 @@ static int sdl_run(sdlContext* sdl)
 		while (!freerdp_shall_disconnect_context(&sdl->common.context) &&
 		       SDL_PollEvent(&windowEvent))
 		{
+#if defined(WITH_DEBUG_SDL_EVENTS)
 			SDL_Log("got event %s [0x%08" PRIx32 "]", sdl_event_type_str(windowEvent.type),
 			        windowEvent.type);
+#endif
 			switch (windowEvent.type)
 			{
 				case SDL_QUIT:

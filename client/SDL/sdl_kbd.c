@@ -420,8 +420,10 @@ static UINT32 sdl_scancode_to_rdp(Uint32 scancode)
 		}
 	}
 
-	WLog_INFO(TAG, "got %s [%s] -> [%s]", SDL_GetScancodeName(scancode),
-	          sdl_scancode_name(scancode), sdl_rdp_scancode_name(rdp));
+#if defined(WITH_DEBUG_SDL_KBD_EVENTS)
+	WLog_DBG(TAG, "got %s [%s] -> [%s]", SDL_GetScancodeName(scancode), sdl_scancode_name(scancode),
+	         sdl_rdp_scancode_name(rdp));
+#endif
 	return rdp;
 }
 
