@@ -45,12 +45,13 @@ if (WITH_DEBUG_SDL_KBD_EVENTS)
 	add_definitions(-DWITH_DEBUG_SDL_KBD_EVENTS)
 endif()
 
-find_package(SDL2 REQUIRED)
+find_package(SDL2 REQUIRED COMPONENTS)
 include_directories(${SDL2_INCLUDE_DIR})
 include_directories(${SDL2_INCLUDE_DIRS})
 
 find_package(Threads REQUIRED)
 
+add_subdirectory(dialogs)
 set(SRCS
     sdl_types.hpp
     sdl_utils.cpp
@@ -76,6 +77,7 @@ set(LIBS
         freerdp
         freerdp-client
         Threads::Threads
+        dialogs
     )
 
 option(WITH_WEBVIEW "Build with QtWebEngine support for AAD login popup browser" OFF)

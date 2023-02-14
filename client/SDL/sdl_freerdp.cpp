@@ -54,6 +54,7 @@
 #include "sdl_kbd.hpp"
 #include "sdl_touch.hpp"
 #include "sdl_pointer.hpp"
+#include "dialogs/sdl_dialogs.hpp"
 
 #ifdef WITH_WEBVIEW
 #include "sdl_webview.hpp"
@@ -686,8 +687,19 @@ static int sdl_run(SdlContext* sdl)
 	while (!freerdp_shall_disconnect_context(sdl->context()))
 	{
 		SDL_Event windowEvent = { 0 };
-		while (!freerdp_shall_disconnect_context(sdl->context()) && SDL_WaitEvent(&windowEvent))
+		while (!freerdp_shall_disconnect_context(sdl->context()) && SDL_PollEvent(nullptr))
 		{
+			/* Only poll standard SDL events and SDL_USEREVENTS meant to create dialogs.
+			 * do not process the dialog return value events here.
+			 */
+			const int prc = SDL_PeepEvents(&windowEvent, 1, SDL_GETEVENT, SDL_FIRSTEVENT,
+			                               SDL_USEREVENT_SCARD_DIALOG);
+			if (prc < 0)
+			{
+				if (sdl_log_error(prc, sdl->log, "SDL_PeepEvents"))
+					continue;
+			}
+
 #if defined(WITH_DEBUG_SDL_EVENTS)
 			SDL_Log("got event %s [0x%08" PRIx32 "]", sdl_event_type_str(windowEvent.type),
 			        windowEvent.type);
@@ -769,6 +781,31 @@ static int sdl_run(SdlContext* sdl)
 					break;
 				case SDL_APP_WILLENTERFOREGROUND:
 					sdl_redraw(sdl);
+					break;
+				case SDL_USEREVENT_CERT_DIALOG:
+				{
+					auto title = static_cast<const char*>(windowEvent.user.data1);
+					auto msg = static_cast<const char*>(windowEvent.user.data2);
+					sdl_cert_dialog_show(title, msg);
+				}
+				break;
+				case SDL_USEREVENT_SHOW_DIALOG:
+				{
+					auto title = static_cast<const char*>(windowEvent.user.data1);
+					auto msg = static_cast<const char*>(windowEvent.user.data2);
+					sdl_message_dialog_show(title, msg, windowEvent.user.code);
+				}
+				break;
+				case SDL_USEREVENT_SCARD_DIALOG:
+				{
+					auto title = static_cast<const char*>(windowEvent.user.data1);
+					auto msg = static_cast<const char**>(windowEvent.user.data2);
+					sdl_scard_dialog_show(title, windowEvent.user.code, msg);
+				}
+				break;
+				case SDL_USEREVENT_AUTH_DIALOG:
+					sdl_auth_dialog_show(
+					    reinterpret_cast<const SDL_UserAuthArg*>(windowEvent.padding));
 					break;
 				case SDL_USEREVENT_UPDATE:
 				{
@@ -1105,20 +1142,6 @@ static void sdl_client_global_uninit(void)
 #endif
 }
 
-static int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
-{
-	const char* str_data = freerdp_get_logon_error_info_data(data);
-	const char* str_type = freerdp_get_logon_error_info_type(type);
-
-	if (!instance || !instance->context)
-		return -1;
-
-	auto sdl = get_context(instance->context);
-	WLog_Print(sdl->log, WLOG_INFO, "Logon Error Info %s [%s]", str_data, str_type);
-
-	return 1;
-}
-
 static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 {
 	auto sdl = reinterpret_cast<sdl_rdp_context*>(context);
@@ -1134,9 +1157,9 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 	instance->PostConnect = sdl_post_connect;
 	instance->PostDisconnect = sdl_post_disconnect;
 	instance->PostFinalDisconnect = sdl_post_final_disconnect;
-	instance->AuthenticateEx = client_cli_authenticate_ex;
-	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
-	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
+	instance->AuthenticateEx = sdl_authenticate_ex;
+	instance->VerifyCertificateEx = sdl_verify_certificate_ex;
+	instance->VerifyChangedCertificateEx = sdl_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = sdl_logon_error_info;
 #ifdef WITH_WEBVIEW
 	instance->GetAccessToken = sdl_webview_get_access_token;
