@@ -248,10 +248,6 @@ static const char* sdl_map_to_code_tag(int code)
 	return NULL;
 }
 
-static BOOL sdl_init_sdl(sdlContext* sdl);
-static DWORD WINAPI sdl_run(void* arg);
-static BOOL sdl_create_windows(sdlContext* sdl);
-
 /* This function is called whenever a new frame starts.
  * It can be used to reset invalidated areas. */
 static BOOL sdl_begin_paint(rdpContext* context)
@@ -269,7 +265,7 @@ static BOOL sdl_begin_paint(rdpContext* context)
 	WINPR_ASSERT(gdi->primary->hdc->hwnd->invalid);
 	gdi->primary->hdc->hwnd->invalid->null = TRUE;
 	gdi->primary->hdc->hwnd->ninvalid = 0;
-	SDL_LockSurface(sdl->primary);
+
 	return TRUE;
 }
 
@@ -281,11 +277,7 @@ static BOOL sdl_redraw(sdlContext* sdl)
 	return gdi_send_suppress_output(gdi, FALSE);
 }
 
-/* This function is called when the library completed composing a new
- * frame. Read out the changed areas and blit them to your output device.
- * The image buffer will have the format specified by gdi_init
- */
-static BOOL sdl_end_paint(rdpContext* context)
+static BOOL sdl_end_paint_process(rdpContext* context)
 {
 	rdpGdi* gdi;
 	sdlContext* sdl = (sdlContext*)context;
@@ -298,20 +290,14 @@ static BOOL sdl_end_paint(rdpContext* context)
 	WINPR_ASSERT(gdi->primary->hdc);
 	WINPR_ASSERT(gdi->primary->hdc->hwnd);
 	WINPR_ASSERT(gdi->primary->hdc->hwnd->invalid);
-
 	if (gdi->suppressOutput || gdi->primary->hdc->hwnd->invalid->null)
-	{
-		SDL_UnlockSurface(sdl->primary);
-		return TRUE;
-	}
-
-	SDL_UnlockSurface(sdl->primary);
+		goto out;
 
 	const INT32 ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 	const GDI_RGN* cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 
 	if (ninvalid < 1)
-		return TRUE;
+		goto out;
 
 	// TODO: Support multiple windows
 	for (size_t x = 0; x < sdl->windowCount; x++)
@@ -363,7 +349,33 @@ static BOOL sdl_end_paint(rdpContext* context)
 		SDL_UpdateWindowSurface(window->window);
 	}
 
-	return TRUE;
+out:
+	return SetEvent(sdl->update_complete);
+}
+
+/* This function is called when the library completed composing a new
+ * frame. Read out the changed areas and blit them to your output device.
+ * The image buffer will have the format specified by gdi_init
+ */
+static BOOL sdl_end_paint(rdpContext* context)
+{
+	sdlContext* sdl = (sdlContext*)context;
+	WINPR_ASSERT(sdl);
+
+	if (!ResetEvent(sdl->update_complete))
+		return FALSE;
+	if (!sdl_push_user_event(SDL_USEREVENT_UPDATE, context))
+		return FALSE;
+
+	HANDLE handles[] = { sdl->update_complete, freerdp_abort_event(context) };
+	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
+	switch (status)
+	{
+		case WAIT_OBJECT_0:
+			return TRUE;
+		default:
+			return FALSE;
+	}
 }
 
 /* Create a SDL surface from the GDI buffer */
@@ -409,6 +421,24 @@ static BOOL sdl_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE* play_so
 	return TRUE;
 }
 
+static BOOL sdl_wait_for_init(sdlContext* sdl)
+{
+	WINPR_ASSERT(sdl);
+	if (!SetEvent(sdl->initialize))
+		return FALSE;
+
+	HANDLE handles[] = { sdl->initialized, freerdp_abort_event(&sdl->common.context) };
+
+	const DWORD rc = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
+	switch (rc)
+	{
+		case WAIT_OBJECT_0:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
 /* Called before a connection is established.
  * Set all configuration options to support and load channels here. */
 static BOOL sdl_pre_connect(freerdp* instance)
@@ -442,7 +472,7 @@ static BOOL sdl_pre_connect(freerdp* instance)
 		UINT32 maxWidth = 0;
 		UINT32 maxHeight = 0;
 
-		if (!sdl_init_sdl(sdl))
+		if (!sdl_wait_for_init(sdl))
 			return FALSE;
 
 		if (!sdl_detect_monitors(sdl, &maxWidth, &maxHeight))
@@ -512,16 +542,6 @@ static void sdl_cleanup_sdl(sdlContext* sdl)
 	if (!sdl)
 		return;
 
-	if (sdl->thread)
-	{
-		int res = 0;
-		SDL_Event q = { 0 };
-		q.type = SDL_QUIT;
-		res = SDL_PushEvent(&q);
-
-		WaitForSingleObject(sdl->thread, INFINITE);
-		CloseHandle(sdl->thread);
-	}
 	for (size_t x = 0; x < sdl->windowCount; x++)
 	{
 		sdl_window_t* window = &sdl->windows[x];
@@ -536,22 +556,7 @@ static void sdl_cleanup_sdl(sdlContext* sdl)
 	SDL_Quit();
 }
 
-BOOL sdl_init_sdl(sdlContext* sdl)
-{
-	WINPR_ASSERT(sdl);
-
-	SDL_Init(SDL_INIT_VIDEO);
-
-	sdl->thread = CreateThread(NULL, 0, sdl_run, sdl, 0, NULL);
-	if (!sdl->thread)
-		goto fail;
-	return TRUE;
-fail:
-	sdl_cleanup_sdl(sdl);
-	return FALSE;
-}
-
-BOOL sdl_create_windows(sdlContext* sdl)
+static BOOL sdl_create_windows(sdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
 
@@ -591,10 +596,31 @@ BOOL sdl_create_windows(sdlContext* sdl)
 
 	rc = TRUE;
 fail:
+	if (!SetEvent(sdl->windows_created))
+		return FALSE;
 	return rc;
 }
 
-void update_resizeable(sdlContext* sdl, BOOL enable)
+static BOOL sdl_wait_create_windows(sdlContext* sdl)
+{
+	if (!ResetEvent(sdl->windows_created))
+		return FALSE;
+	if (!sdl_push_user_event(SDL_USEREVENT_CREATE_WINDOWS, sdl))
+		return FALSE;
+
+	HANDLE handles[] = { sdl->initialized, freerdp_abort_event(&sdl->common.context) };
+
+	const DWORD rc = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
+	switch (rc)
+	{
+		case WAIT_OBJECT_0:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+
+BOOL update_resizeable(sdlContext* sdl, BOOL enable)
 {
 	WINPR_ASSERT(sdl);
 
@@ -606,42 +632,54 @@ void update_resizeable(sdlContext* sdl, BOOL enable)
 	for (uint32_t x = 0; x < sdl->windowCount; x++)
 	{
 		sdl_window_t* window = &sdl->windows[x];
-		SDL_SetWindowResizable(window->window, use ? SDL_TRUE : SDL_FALSE);
+		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_RESIZEABLE, window->window, use))
+			return FALSE;
 	}
 	sdl->resizeable = use;
+	return TRUE;
 }
 
-void update_fullscreen(sdlContext* sdl, BOOL enter)
+BOOL update_fullscreen(sdlContext* sdl, BOOL enter)
 {
 	WINPR_ASSERT(sdl);
 
 	for (uint32_t x = 0; x < sdl->windowCount; x++)
 	{
 		sdl_window_t* window = &sdl->windows[x];
-		Uint32 curFlags = SDL_GetWindowFlags(window->window);
-		const BOOL isSet = (curFlags & SDL_WINDOW_FULLSCREEN);
-		if (enter)
-			curFlags |= SDL_WINDOW_FULLSCREEN;
-		else
-			curFlags &= ~SDL_WINDOW_FULLSCREEN;
-
-		if ((enter && !isSet) || (!enter && isSet))
-			SDL_SetWindowFullscreen(window->window, curFlags);
+		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_FULLSCREEN, window->window, enter))
+			return FALSE;
 	}
 	sdl->fullscreen = enter;
+	return TRUE;
 }
 
-static DWORD WINAPI sdl_run(void* arg)
+static int sdl_run(sdlContext* sdl)
 {
-	sdlContext* sdl = arg;
+	int rc = -1;
 	WINPR_ASSERT(sdl);
+
+	HANDLE handles[] = { sdl->initialize, freerdp_abort_event(&sdl->common.context) };
+	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
+	switch (status)
+	{
+		case WAIT_OBJECT_0:
+			break;
+		default:
+			return -1;
+	}
+
+	SDL_Init(SDL_INIT_VIDEO);
+	if (!SetEvent(sdl->initialized))
+		goto fail;
+
 	while (!freerdp_shall_disconnect_context(&sdl->common.context))
 	{
 		SDL_Event windowEvent = { 0 };
 		while (!freerdp_shall_disconnect_context(&sdl->common.context) &&
 		       SDL_PollEvent(&windowEvent))
 		{
-			// SDL_Log("got event %s", sdl_event_type_str(windowEvent.type));
+			SDL_Log("got event %s [0x%08" PRIx32 "]", sdl_event_type_str(windowEvent.type),
+			        windowEvent.type);
 			switch (windowEvent.type)
 			{
 				case SDL_QUIT:
@@ -719,12 +757,76 @@ static DWORD WINAPI sdl_run(void* arg)
 				case SDL_APP_WILLENTERFOREGROUND:
 					sdl_redraw(sdl);
 					break;
+				case SDL_USEREVENT_UPDATE:
+					sdl_end_paint_process(windowEvent.user.data1);
+					break;
+				case SDL_USEREVENT_CREATE_WINDOWS:
+					sdl_create_windows(windowEvent.user.data1);
+					break;
+				case SDL_USEREVENT_WINDOW_RESIZEABLE:
+				{
+					SDL_Window* window = windowEvent.user.data1;
+					const SDL_bool use = windowEvent.user.code != 0;
+					SDL_SetWindowResizable(window, use);
+				}
+				break;
+				case SDL_USEREVENT_WINDOW_FULLSCREEN:
+				{
+					SDL_Window* window = windowEvent.user.data1;
+					const SDL_bool enter = windowEvent.user.code != 0;
+
+					Uint32 curFlags = SDL_GetWindowFlags(window);
+					const BOOL isSet = (curFlags & SDL_WINDOW_FULLSCREEN);
+					if (enter)
+						curFlags |= SDL_WINDOW_FULLSCREEN;
+					else
+						curFlags &= ~SDL_WINDOW_FULLSCREEN;
+
+					if ((enter && !isSet) || (!enter && isSet))
+						SDL_SetWindowFullscreen(window, curFlags);
+				}
+				break;
+				case SDL_USEREVENT_POINTER_NULL:
+					SDL_ShowCursor(SDL_DISABLE);
+					break;
+				case SDL_USEREVENT_POINTER_DEFAULT:
+				{
+					SDL_Cursor* def = SDL_GetDefaultCursor();
+					SDL_SetCursor(def);
+					SDL_ShowCursor(SDL_ENABLE);
+				}
+				break;
+				case SDL_USEREVENT_POINTER_POSITION:
+				{
+					const INT32 x = (INT32)(uintptr_t)windowEvent.user.data1;
+					const INT32 y = (INT32)(uintptr_t)windowEvent.user.data2;
+
+					SDL_Window* window = SDL_GetMouseFocus();
+					if (window)
+					{
+						const Uint32 id = SDL_GetWindowID(window);
+
+						INT32 sx = x;
+						INT32 sy = y;
+						if (sdl_scale_coordinates(sdl, id, &sx, &sy, FALSE, FALSE))
+							SDL_WarpMouseInWindow(window, sx, sy);
+					}
+				}
+				break;
+				case SDL_USEREVENT_POINTER_SET:
+					sdl_Pointer_Set_Process(&windowEvent.user);
+					break;
 				default:
 					break;
 			}
 		}
 	}
-	return TRUE;
+
+	rc = 1;
+
+fail:
+	sdl_cleanup_sdl(sdl);
+	return rc;
 }
 
 /* Called after a RDP connection was successfully established.
@@ -760,7 +862,7 @@ static BOOL sdl_post_connect(freerdp* instance)
 		return TRUE;
 	}
 
-	if (!sdl_create_windows(sdl))
+	if (!sdl_wait_create_windows(sdl))
 		return FALSE;
 
 	update_resizeable(sdl, FALSE);
@@ -828,35 +930,40 @@ static void sdl_post_final_disconnect(freerdp* instance)
 
 	sdl_disp_free(context->disp);
 	context->disp = NULL;
-	sdl_cleanup_sdl(context);
 }
 
 /* RDP main loop.
  * Connects RDP, loops while running and handles event and dispatch, cleans up
  * after the connection ends. */
-static int WINAPI sdl_client_thread_proc(LPVOID arg)
+static DWORD WINAPI sdl_client_thread_proc(void* arg)
 {
-	freerdp* instance = (freerdp*)arg;
+	sdlContext* sdl = (sdlContext*)arg;
 	DWORD nCount;
 	DWORD status;
 	int exit_code = SDL_EXIT_SUCCESS;
 	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+
+	WINPR_ASSERT(sdl);
+
+	freerdp* instance = sdl->common.context.instance;
+	WINPR_ASSERT(instance);
+
 	BOOL rc = freerdp_connect(instance);
 
-	WINPR_ASSERT(instance->context);
-	WINPR_ASSERT(instance->context->settings);
+	rdpContext* context = &sdl->common.context;
+	rdpSettings* settings = context->settings;
+	WINPR_ASSERT(settings);
 
-	sdlContext* sdl = (sdlContext*)instance->context;
 	if (!rc)
 	{
-		UINT32 error = freerdp_get_last_error(instance->context);
+		UINT32 error = freerdp_get_last_error(context);
 		exit_code = sdl_map_error_to_exit_code(error);
 	}
 
-	if (freerdp_settings_get_bool(instance->context->settings, FreeRDP_AuthenticationOnly))
+	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 	{
-		DWORD code = freerdp_get_last_error(instance->context);
-		freerdp_abort_connect_context(instance->context);
+		DWORD code = freerdp_get_last_error(context);
+		freerdp_abort_connect_context(context);
 		WLog_Print(sdl->log, WLOG_ERROR,
 		           "Authentication only, freerdp_get_last_error() %s [0x%08" PRIx32 "] %s",
 		           freerdp_get_last_error_name(code), code, freerdp_get_last_error_string(code));
@@ -869,7 +976,7 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 		if (exit_code == SDL_EXIT_SUCCESS)
 			exit_code = sdl_map_error_to_exit_code(code);
 
-		if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_AUTHENTICATION_FAILED)
+		if (freerdp_get_last_error(context) == FREERDP_ERROR_AUTHENTICATION_FAILED)
 			exit_code = SDL_EXIT_AUTH_FAILURE;
 		else if (code == ERRINFO_SUCCESS)
 			exit_code = SDL_EXIT_CONN_FAILED;
@@ -877,7 +984,7 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 		goto terminate;
 	}
 
-	while (!freerdp_shall_disconnect_context(instance->context))
+	while (!freerdp_shall_disconnect_context(context))
 	{
 		/*
 		 * win8 and server 2k12 seem to have some timing issue/race condition
@@ -886,13 +993,13 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 		 */
 		if (freerdp_focus_required(instance))
 		{
-			if (!sdl_keyboard_focus_in(instance->context))
+			if (!sdl_keyboard_focus_in(context))
 				break;
-			if (!sdl_keyboard_focus_in(instance->context))
+			if (!sdl_keyboard_focus_in(context))
 				break;
 		}
 
-		nCount = freerdp_get_event_handles(instance->context, handles, ARRAYSIZE(handles));
+		nCount = freerdp_get_event_handles(context, handles, ARRAYSIZE(handles));
 
 		if (nCount == 0)
 		{
@@ -916,15 +1023,15 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 					exit_code = SDL_EXIT_CONN_FAILED;
 			}
 
-			if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_SUCCESS)
+			if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
 				WLog_Print(sdl->log, WLOG_ERROR, "WaitForMultipleObjects failed with %" PRIu32 "",
 				           status);
 			break;
 		}
 
-		if (!freerdp_check_event_handles(instance->context))
+		if (!freerdp_check_event_handles(context))
 		{
-			if (freerdp_get_last_error(instance->context) == FREERDP_ERROR_SUCCESS)
+			if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
 				WLog_Print(sdl->log, WLOG_ERROR, "Failed to check FreeRDP event handles");
 
 			break;
@@ -936,8 +1043,8 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 		DWORD code = freerdp_error_info(instance);
 		exit_code = sdl_map_error_to_exit_code(code);
 
-		if ((code == SDL_EXIT_DISCONNECT) && (freerdp_get_disconnect_ultimatum(instance->context) ==
-		                                      Disconnect_Ultimatum_user_requested))
+		if ((code == SDL_EXIT_DISCONNECT) &&
+		    (freerdp_get_disconnect_ultimatum(context) == Disconnect_Ultimatum_user_requested))
 		{
 			/* This situation might be limited to Windows XP. */
 			WLog_Print(sdl->log, WLOG_INFO,
@@ -950,11 +1057,12 @@ static int WINAPI sdl_client_thread_proc(LPVOID arg)
 	freerdp_disconnect(instance);
 
 terminate:
-	if (freerdp_settings_get_bool(instance->context->settings, FreeRDP_AuthenticationOnly))
+	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 		WLog_Print(sdl->log, WLOG_INFO, "Authentication only, exit status %s [%" PRId32 "]",
 		           sdl_map_to_code_tag(exit_code), exit_code);
 
-	return exit_code;
+	sdl->exit_code = exit_code;
+	return 0;
 }
 
 /* Optional global initializer.
@@ -1004,12 +1112,13 @@ static int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 
 static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 {
-	sdlContext* tf = (sdlContext*)context;
+	sdlContext* sdl = (sdlContext*)context;
 
 	if (!instance || !context)
 		return FALSE;
 
-	tf->log = WLog_Get(SDL_TAG);
+	sdl->log = WLog_Get(SDL_TAG);
+
 	instance->PreConnect = sdl_pre_connect;
 	instance->PostConnect = sdl_post_connect;
 	instance->PostDisconnect = sdl_post_disconnect;
@@ -1019,32 +1128,52 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = sdl_logon_error_info;
 	/* TODO: Client display set up */
-	WINPR_UNUSED(tf);
-	return TRUE;
+
+	sdl->initialize = CreateEventA(NULL, TRUE, FALSE, NULL);
+	sdl->initialized = CreateEventA(NULL, TRUE, FALSE, NULL);
+	sdl->update_complete = CreateEventA(NULL, TRUE, FALSE, NULL);
+	sdl->windows_created = CreateEventA(NULL, TRUE, FALSE, NULL);
+	return sdl->initialize && sdl->initialized && sdl->update_complete && sdl->windows_created;
 }
 
 static void sdl_client_free(freerdp* instance, rdpContext* context)
 {
-	sdlContext* tf = (sdlContext*)instance->context;
+	sdlContext* sdl = (sdlContext*)instance->context;
 
 	if (!context)
 		return;
 
-	/* TODO: Client display tear down */
-	WINPR_UNUSED(tf);
+	CloseHandle(sdl->thread);
+	CloseHandle(sdl->initialize);
+	CloseHandle(sdl->initialized);
+	CloseHandle(sdl->update_complete);
+	CloseHandle(sdl->windows_created);
+
+	sdl->thread = NULL;
+	sdl->initialize = NULL;
+	sdl->initialized = NULL;
+	sdl->update_complete = NULL;
+	sdl->windows_created = NULL;
 }
 
 static int sdl_client_start(rdpContext* context)
 {
-	/* TODO: Start client related stuff */
-	WINPR_UNUSED(context);
+	sdlContext* sdl = (sdlContext*)context;
+	WINPR_ASSERT(sdl);
+
+	sdl->thread = CreateThread(NULL, 0, sdl_client_thread_proc, sdl, 0, NULL);
+	if (!sdl->thread)
+		return -1;
 	return 0;
 }
 
 static int sdl_client_stop(rdpContext* context)
 {
-	/* TODO: Stop client related stuff */
-	WINPR_UNUSED(context);
+	sdlContext* sdl = (sdlContext*)context;
+	WINPR_ASSERT(sdl);
+
+	freerdp_abort_connect_context(context);
+	WaitForSingleObject(sdl->thread, INFINITE);
 	return 0;
 }
 
@@ -1069,8 +1198,7 @@ int main(int argc, char* argv[])
 {
 	int rc = -1;
 	int status;
-	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-	rdpContext* context;
+	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
 
 	WLog_WARN(SDL_TAG, "[experimental] The SDL client is currently experimental!");
 	WLog_WARN(SDL_TAG,
@@ -1082,20 +1210,25 @@ int main(int argc, char* argv[])
 	          "on your timezone)");
 
 	RdpClientEntry(&clientEntryPoints);
-	context = freerdp_client_context_new(&clientEntryPoints);
+	sdlContext* sdl = freerdp_client_context_new(&clientEntryPoints);
 
-	if (!context)
+	if (!sdl)
 		goto fail;
 
-	status = freerdp_client_settings_parse_command_line(context->settings, argc, argv, FALSE);
+	rdpSettings* settings = sdl->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	status = freerdp_client_settings_parse_command_line(settings, argc, argv, FALSE);
 	if (status)
 	{
-		rc = freerdp_client_settings_command_line_status_print(context->settings, status, argc,
-		                                                       argv);
-		if (context->settings->ListMonitors)
-			sdl_list_monitors((sdlContext*)context);
+		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
+		if (settings->ListMonitors)
+			sdl_list_monitors(sdl);
 		goto fail;
 	}
+
+	rdpContext* context = &sdl->common.context;
+	WINPR_ASSERT(context);
 
 	if (!stream_dump_register_handlers(context, CONNECTION_STATE_MCS_CREATE_REQUEST, FALSE))
 		goto fail;
@@ -1103,11 +1236,12 @@ int main(int argc, char* argv[])
 	if (freerdp_client_start(context) != 0)
 		goto fail;
 
-	rc = sdl_client_thread_proc(context->instance);
+	rc = sdl_run(sdl);
 
 	if (freerdp_client_stop(context) != 0)
 		rc = -1;
 
+	rc = sdl->exit_code;
 fail:
 	freerdp_client_context_free(context);
 	return rc;
