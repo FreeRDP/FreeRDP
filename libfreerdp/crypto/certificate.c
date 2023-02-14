@@ -283,19 +283,6 @@ static BOOL is_rsa_key(const X509* x509)
 	return (EVP_PKEY_id(evp) == EVP_PKEY_RSA);
 }
 
-static BOOL blob_is_rsa_key(const rdpCertBlob* cert)
-{
-	WINPR_ASSERT(cert);
-	const BYTE* inData = cert->data;
-	X509* x509 = d2i_X509(NULL, &inData, cert->length);
-	if (!x509)
-		return FALSE;
-
-	BOOL rc = is_rsa_key(x509);
-	X509_free(x509);
-	return rc;
-}
-
 static BOOL certificate_read_x509_certificate(const rdpCertBlob* cert, rdpCertInfo* info)
 {
 	wStream sbuffer = { 0 };
@@ -311,12 +298,6 @@ static BOOL certificate_read_x509_certificate(const rdpCertBlob* cert, rdpCertIn
 		return FALSE;
 
 	cert_info_free(info);
-
-	if (!blob_is_rsa_key(cert))
-	{
-		WLog_ERR(TAG, "Certificate is not of RSA type");
-		return FALSE;
-	}
 
 	s = Stream_StaticConstInit(&sbuffer, cert->data, cert->length);
 
