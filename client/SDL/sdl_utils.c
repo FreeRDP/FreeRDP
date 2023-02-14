@@ -92,6 +92,16 @@ const char* sdl_event_type_str(Uint32 type)
 		EV_CASE_STR(SDL_RENDER_TARGETS_RESET);
 		EV_CASE_STR(SDL_RENDER_DEVICE_RESET);
 		EV_CASE_STR(SDL_USEREVENT);
+
+		EV_CASE_STR(SDL_USEREVENT_UPDATE);
+		EV_CASE_STR(SDL_USEREVENT_CREATE_WINDOWS);
+		EV_CASE_STR(SDL_USEREVENT_WINDOW_RESIZEABLE);
+		EV_CASE_STR(SDL_USEREVENT_WINDOW_FULLSCREEN);
+		EV_CASE_STR(SDL_USEREVENT_POINTER_NULL);
+		EV_CASE_STR(SDL_USEREVENT_POINTER_DEFAULT);
+		EV_CASE_STR(SDL_USEREVENT_POINTER_POSITION);
+		EV_CASE_STR(SDL_USEREVENT_POINTER_SET);
+
 		EV_CASE_STR(SDL_LASTEVENT);
 		default:
 			return "SDL_UNKNOWNEVENT";
@@ -120,4 +130,43 @@ BOOL sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file,
 
 	WLog_Print(log, WLOG_ERROR, "[%s:%" PRIuz "][%s]: %s", fkt, line, what, msg);
 	return TRUE;
+}
+
+BOOL sdl_push_user_event(Uint32 type, ...)
+{
+	SDL_Event ev = { 0 };
+	SDL_UserEvent* event = &ev.user;
+
+	va_list ap;
+	va_start(ap, type);
+	event->type = type;
+	switch (type)
+	{
+		case SDL_USEREVENT_UPDATE:
+			event->data1 = va_arg(ap, void*);
+			break;
+		case SDL_USEREVENT_POINTER_POSITION:
+			event->data1 = (void*)va_arg(ap, UINT32);
+			event->data2 = (void*)va_arg(ap, UINT32);
+			break;
+		case SDL_USEREVENT_POINTER_SET:
+			event->data1 = va_arg(ap, void*);
+			event->data2 = va_arg(ap, void*);
+			break;
+		case SDL_USEREVENT_CREATE_WINDOWS:
+			event->data1 = (void*)va_arg(ap, void*);
+			break;
+		case SDL_USEREVENT_WINDOW_FULLSCREEN:
+		case SDL_USEREVENT_WINDOW_RESIZEABLE:
+			event->data1 = va_arg(ap, void*);
+			event->code = (va_arg(ap, BOOL) == TRUE) ? 1 : 0;
+			break;
+		case SDL_USEREVENT_POINTER_NULL:
+		case SDL_USEREVENT_POINTER_DEFAULT:
+			break;
+		default:
+			return FALSE;
+	}
+	va_end(ap);
+	return SDL_PushEvent(&ev) == 1;
 }

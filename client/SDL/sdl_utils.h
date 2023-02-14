@@ -25,6 +25,20 @@
 #include <stdbool.h>
 #include <SDL.h>
 
+enum
+{
+	SDL_USEREVENT_UPDATE = SDL_USEREVENT + 1,
+	SDL_USEREVENT_CREATE_WINDOWS,
+	SDL_USEREVENT_WINDOW_RESIZEABLE,
+	SDL_USEREVENT_WINDOW_FULLSCREEN,
+	SDL_USEREVENT_POINTER_NULL,
+	SDL_USEREVENT_POINTER_DEFAULT,
+	SDL_USEREVENT_POINTER_POSITION,
+	SDL_USEREVENT_POINTER_SET
+};
+
+BOOL sdl_push_user_event(Uint32 type, ...);
+
 const char* sdl_event_type_str(Uint32 type);
 const char* sdl_error_string(Uint32 res);
 

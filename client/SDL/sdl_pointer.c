@@ -24,6 +24,7 @@
 #include "sdl_pointer.h"
 #include "sdl_freerdp.h"
 #include "sdl_touch.h"
+#include "sdl_utils.h"
 
 #include <SDL_mouse.h>
 
@@ -93,20 +94,30 @@ static BOOL sdl_Pointer_SetDefault(rdpContext* context)
 {
 	WINPR_UNUSED(context);
 
-	SDL_Cursor* def = SDL_GetDefaultCursor();
-	SDL_SetCursor(def);
-	SDL_ShowCursor(SDL_ENABLE);
-	return TRUE;
+	return sdl_push_user_event(SDL_USEREVENT_POINTER_DEFAULT);
 }
 
 static BOOL sdl_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	sdlContext* sdl = (sdlContext*)context;
-	sdlPointer* ptr = (sdlPointer*)pointer;
+
+	return sdl_push_user_event(SDL_USEREVENT_POINTER_SET, pointer, sdl);
+}
+
+BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
+{
 	INT32 w, h, x, y, sw, sh;
 
+	WINPR_ASSERT(uptr);
+
+	sdlContext* sdl = uptr->data2;
 	WINPR_ASSERT(sdl);
+
+	rdpContext* context = &sdl->common.context;
+	sdlPointer* ptr = uptr->data1;
 	WINPR_ASSERT(ptr);
+
+	rdpPointer* pointer = &ptr->pointer;
 
 	rdpGdi* gdi = context->gdi;
 	WINPR_ASSERT(gdi);
@@ -154,28 +165,15 @@ static BOOL sdl_Pointer_SetNull(rdpContext* context)
 {
 	WINPR_UNUSED(context);
 
-	SDL_ShowCursor(SDL_DISABLE);
-
-	return TRUE;
+	return sdl_push_user_event(SDL_USEREVENT_POINTER_NULL);
 }
 
 static BOOL sdl_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
 	sdlContext* sdl = (sdlContext*)context;
 	WINPR_ASSERT(sdl);
-	SDL_Window* window = SDL_GetMouseFocus();
-	if (!window)
-		return TRUE;
 
-	const Uint32 id = SDL_GetWindowID(window);
-
-	INT32 sx = (INT32)x;
-	INT32 sy = (INT32)y;
-	if (!sdl_scale_coordinates(sdl, id, &sx, &sy, FALSE, FALSE))
-		return FALSE;
-	SDL_WarpMouseInWindow(window, sx, sy);
-
-	return TRUE;
+	return sdl_push_user_event(SDL_USEREVENT_POINTER_POSITION, x, y);
 }
 
 BOOL sdl_register_pointer(rdpGraphics* graphics)

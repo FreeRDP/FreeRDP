@@ -52,6 +52,11 @@ typedef struct
 	sdl_window_t windows[16];
 
 	HANDLE thread;
+	HANDLE initialize;
+	HANDLE initialized;
+	HANDLE update_complete;
+	HANDLE windows_created;
+	int exit_code;
 
 	SDL_Surface* primary;
 
@@ -61,7 +66,7 @@ typedef struct
 	wLog* log;
 } sdlContext;
 
-void update_resizeable(sdlContext* sdl, BOOL enable);
-void update_fullscreen(sdlContext* sdl, BOOL enter);
+BOOL update_resizeable(sdlContext* sdl, BOOL enable);
+BOOL update_fullscreen(sdlContext* sdl, BOOL enter);
 
 #endif /* FREERDP_CLIENT_SDL_H */
