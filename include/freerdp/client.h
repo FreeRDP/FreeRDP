@@ -150,8 +150,8 @@ extern "C"
 	FREERDP_API BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** password,
 	                                            char** domain, rdp_auth_reason reason);
 
-	FREERDP_API BOOL client_cli_choose_smartcard(SmartcardCertInfo** cert_list, DWORD count,
-	                                             DWORD* choice, BOOL gateway);
+	FREERDP_API BOOL client_cli_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list,
+	                                             DWORD count, DWORD* choice, BOOL gateway);
 
 	FREERDP_API int client_cli_logon_error_info(freerdp* instance, UINT32 data, UINT32 type);
 

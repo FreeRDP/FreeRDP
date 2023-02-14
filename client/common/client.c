@@ -530,8 +530,8 @@ BOOL client_cli_authenticate_ex(freerdp* instance, char** username, char** passw
 	return client_cli_authenticate_raw(instance, reason, username, password, domain);
 }
 
-BOOL client_cli_choose_smartcard(SmartcardCertInfo** cert_list, DWORD count, DWORD* choice,
-                                 BOOL gateway)
+BOOL client_cli_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWORD count,
+                                 DWORD* choice, BOOL gateway)
 {
 	unsigned long answer;
 	char* p = NULL;
