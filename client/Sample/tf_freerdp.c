@@ -323,9 +323,6 @@ static BOOL tf_client_new(freerdp* instance, rdpContext* context)
 	instance->PreConnect = tf_pre_connect;
 	instance->PostConnect = tf_post_connect;
 	instance->PostDisconnect = tf_post_disconnect;
-	instance->AuthenticateEx = client_cli_authenticate_ex;
-	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
-	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = tf_logon_error_info;
 	/* TODO: Client display set up */
 	WINPR_UNUSED(tf);
