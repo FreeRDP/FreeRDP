@@ -255,7 +255,19 @@ static BOOL sdl_begin_paint(rdpContext* context)
 	rdpGdi* gdi;
 	sdlContext* sdl = (sdlContext*)context;
 
-	WINPR_ASSERT(context);
+	WINPR_ASSERT(sdl);
+
+	HANDLE handles[] = { sdl->update_complete, freerdp_abort_event(context) };
+	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
+	switch (status)
+	{
+		case WAIT_OBJECT_0:
+			break;
+		default:
+			return FALSE;
+	}
+	if (!ResetEvent(sdl->update_complete))
+		return FALSE;
 
 	gdi = context->gdi;
 	WINPR_ASSERT(gdi);
@@ -362,20 +374,9 @@ static BOOL sdl_end_paint(rdpContext* context)
 	sdlContext* sdl = (sdlContext*)context;
 	WINPR_ASSERT(sdl);
 
-	if (!ResetEvent(sdl->update_complete))
-		return FALSE;
 	if (!sdl_push_user_event(SDL_USEREVENT_UPDATE, context))
 		return FALSE;
-
-	HANDLE handles[] = { sdl->update_complete, freerdp_abort_event(context) };
-	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
-	switch (status)
-	{
-		case WAIT_OBJECT_0:
-			return TRUE;
-		default:
-			return FALSE;
-	}
+	return TRUE;
 }
 
 /* Create a SDL surface from the GDI buffer */
@@ -1133,7 +1134,7 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 
 	sdl->initialize = CreateEventA(NULL, TRUE, FALSE, NULL);
 	sdl->initialized = CreateEventA(NULL, TRUE, FALSE, NULL);
-	sdl->update_complete = CreateEventA(NULL, TRUE, FALSE, NULL);
+	sdl->update_complete = CreateEventA(NULL, TRUE, TRUE, NULL);
 	sdl->windows_created = CreateEventA(NULL, TRUE, FALSE, NULL);
 	return sdl->initialize && sdl->initialized && sdl->update_complete && sdl->windows_created;
 }
