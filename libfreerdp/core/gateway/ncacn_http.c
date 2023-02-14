@@ -180,13 +180,14 @@ BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel)
 	                          settings->GatewayPassword) < 0)
 		return FALSE;
 
-	credssp_auth_setup_client(auth, "HTTP", settings->GatewayHostname, &identity, NULL);
+	const BOOL res =
+	    credssp_auth_setup_client(auth, "HTTP", settings->GatewayHostname, &identity, NULL);
 
 	sspi_FreeAuthIdentity(&identity);
 
 	credssp_auth_set_flags(auth, ISC_REQ_CONFIDENTIALITY);
 
-	return TRUE;
+	return res;
 }
 
 void rpc_ncacn_http_auth_uninit(RpcChannel* channel)
