@@ -144,7 +144,7 @@ static const struct sdl_exit_code_map_t sdl_exit_code_map[] = {
 	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_CONN_DENIED_FIPS),
 	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_USER_PRIVILEGES),
 	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_FRESH_CREDENTIALS_REQUIRED),
-	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_DISCONNECT_BY_USER),
+	ENTRY(ERRINFO_LOGOFF_BY_USER, SDL_EXIT_DISCONNECT_BY_USER),
 	ENTRY(FREERDP_ERROR_NONE, SDL_EXIT_UNKNOWN),
 
 	/* section 16-31: license error set */
@@ -246,6 +246,20 @@ static const char* sdl_map_to_code_tag(int code)
 	if (entry)
 		return entry->code_tag;
 	return NULL;
+}
+
+static int error_info_to_error(freerdp* instance, DWORD* pcode)
+{
+	const DWORD code = freerdp_error_info(instance);
+	const char* name = freerdp_get_error_info_name(code);
+	const char* str = freerdp_get_error_info_string(code);
+	const int exit_code = sdl_map_error_to_exit_code(code);
+
+	WLog_DBG(SDL_TAG, "Terminate with %s due to ERROR_INFO %s [0x%08" PRIx32 "]: %s",
+	         sdl_map_error_to_code_tag(exit_code), name, code, str);
+	if (pcode)
+		*pcode = code;
+	return exit_code;
 }
 
 /* This function is called whenever a new frame starts.
@@ -977,7 +991,7 @@ static DWORD WINAPI sdl_client_thread_proc(void* arg)
 	{
 		DWORD code = freerdp_error_info(instance);
 		if (exit_code == SDL_EXIT_SUCCESS)
-			exit_code = sdl_map_error_to_exit_code(code);
+			exit_code = error_info_to_error(instance, &code);
 
 		if (freerdp_get_last_error(context) == FREERDP_ERROR_AUTHENTICATION_FAILED)
 			exit_code = SDL_EXIT_AUTH_FAILURE;
@@ -1043,10 +1057,10 @@ static DWORD WINAPI sdl_client_thread_proc(void* arg)
 
 	if (exit_code == SDL_EXIT_SUCCESS)
 	{
-		DWORD code = freerdp_error_info(instance);
-		exit_code = sdl_map_error_to_exit_code(code);
+		DWORD code = 0;
+		exit_code = error_info_to_error(instance, &code);
 
-		if ((code == SDL_EXIT_DISCONNECT) &&
+		if ((code == ERRINFO_LOGOFF_BY_USER) &&
 		    (freerdp_get_disconnect_ultimatum(context) == Disconnect_Ultimatum_user_requested))
 		{
 			/* This situation might be limited to Windows XP. */
@@ -1175,9 +1189,14 @@ static int sdl_client_stop(rdpContext* context)
 	sdlContext* sdl = (sdlContext*)context;
 	WINPR_ASSERT(sdl);
 
-	freerdp_abort_connect_context(context);
-	WaitForSingleObject(sdl->thread, INFINITE);
-	return 0;
+	/* We do not want to use freerdp_abort_connect_context here.
+	 * It would change the exit code and we do not want that. */
+	HANDLE event = freerdp_abort_event(context);
+	if (!SetEvent(event))
+		return -1;
+
+	const DWORD status = WaitForSingleObject(sdl->thread, INFINITE);
+	return (status == WAIT_OBJECT_0) ? 0 : -2;
 }
 
 static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
