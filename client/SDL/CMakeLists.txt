@@ -18,6 +18,17 @@
 set(MODULE_NAME "sdl-client")
 set(MODULE_PREFIX "FREERDP_CLIENT_X11_CONTROL")
 
+include(ConfigOptions)
+option(WITH_DEBUG_SDL_EVENTS "[dangerous, not for release builds!] Debug SDL events" OFF)
+option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL keyboard events" OFF)
+
+if (WITH_DEBUG_SDL_EVENTS)
+	add_definitions(-DWITH_DEBUG_SDL_EVENTS)
+endif()
+if (WITH_DEBUG_SDL_KBD_EVENTS)
+	add_definitions(-DWITH_DEBUG_SDL_KBD_EVENTS)
+endif()
+
 include_directories(${SDL2_INCLUDE_DIRS})
 set(SRCS
     sdl_utils.c
