@@ -1312,13 +1312,7 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	freerdp_settings_set_bool(context->settings, FreeRDP_CertificateCallbackPreferPEM, TRUE);
 #endif
 
-	if (wfc->isConsole)
-	{
-		instance->VerifyCertificateEx = wf_cli_verify_certificate_ex;
-		instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
-		instance->PresentGatewayMessage = client_cli_present_gateway_message;
-	}
-	else
+	if (!wfc->isConsole)
 	{
 		instance->VerifyCertificateEx = wf_verify_certificate_ex;
 		instance->VerifyChangedCertificateEx = wf_verify_changed_certificate_ex;
