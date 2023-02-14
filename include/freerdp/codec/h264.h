@@ -77,7 +77,11 @@ extern "C"
 
 	static INLINE void free_h264_metablock(RDPGFX_H264_METABLOCK* meta)
 	{
-		RDPGFX_H264_METABLOCK m = { 0 };
+		RDPGFX_H264_METABLOCK m = {
+#ifndef __cplusplus
+			0
+#endif
+		};
 		if (!meta)
 			return;
 		free(meta->quantQualityVals);

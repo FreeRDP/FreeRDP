@@ -249,7 +249,11 @@ extern "C"
 
 	static INLINE VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
 	{
-		const TP_CALLBACK_ENVIRON empty = { 0 };
+		const TP_CALLBACK_ENVIRON empty = {
+#ifndef __cplusplus
+			0
+#endif
+		};
 		*pcbe = empty;
 		pcbe->Version = 1;
 	}
@@ -257,6 +261,7 @@ extern "C"
 	static INLINE VOID DestroyThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
 	{
 		/* no actions, this may change in a future release. */
+		(void)pcbe;
 	}
 
 	static INLINE VOID SetThreadpoolCallbackPool(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp)
