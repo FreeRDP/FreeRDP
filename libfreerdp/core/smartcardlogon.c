@@ -724,7 +724,7 @@ BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert, BOOL
 		DWORD index;
 
 		if (!instance->ChooseSmartcard ||
-		    !instance->ChooseSmartcard(cert_list, count, &index, gateway))
+		    !instance->ChooseSmartcard(context->instance, cert_list, count, &index, gateway))
 		{
 			WLog_ERR(TAG, "more than one suitable smartcard certificate was found");
 			smartcardCertList_Free(cert_list, count);
