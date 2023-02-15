@@ -26,6 +26,13 @@ static int runInstance(int argc, char* argv[], freerdp** inst, DWORD timeout)
 	if (inst)
 		*inst = context->instance;
 
+	context->instance->ChooseSmartcard = NULL;
+	context->instance->PresentGatewayMessage = NULL;
+	context->instance->LogonErrorInfo = NULL;
+	context->instance->AuthenticateEx = NULL;
+	context->instance->VerifyCertificateEx = NULL;
+	context->instance->VerifyChangedCertificateEx = NULL;
+
 	if (!freerdp_settings_set_bool(context->settings, FreeRDP_DeactivateClientDecoding, TRUE))
 		return FALSE;
 
