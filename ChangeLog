@@ -1,7 +1,25 @@
-# 20xx-xx-xx Version 2.x.x
+# 2023-02-16 Version 2.10.0
+
+Notewhorth changes:
+* Fix android build scripts, use CMake from SDK
+* Fix connection negotiation with mstsc/msrdc #8426
+* [ntlm]: use rfc5929 binding hash algorithm #8430
+* [channels,printer] Fixed reference counting #8433
+* Fix uwac pixman #8439
+* Fix Rdp security #8457
+* [client,x11] Detect key autorepeat #8522
+* [build] add channel path to RPATH #8551
+* Fix build with BUILTIN_CHANNELS=OFF #8560
+* revert changes so that the osmajortype/osminortype is not overwritten #8571
+* [uwac] do not use iso C functions #8604
+* [winpr,sam] fix inalid NULL arguments #8605
+* Fix incompatible function pointer types #8625
 
 Fixed issues:
 * Backported #8581: Ignore data PDUs for DVCs that were not opened successfully
+* Backported #8498: [channel,urbdrc] fix type of usb hotplug callback
+* Backported #8537: Extended info enforce limits
+* Backported #8611: [core] add missing redirection fields
 
 # 2022-11-16 Version 2.9.0
 
