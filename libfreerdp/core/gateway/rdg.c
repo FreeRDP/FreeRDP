@@ -1686,51 +1686,57 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls, TCHAR* authPkg)
 	if (!credssp_auth_init(rdg->auth, authPkg, tls->Bindings))
 		return FALSE;
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon))
+	bool doSCLogon = freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon);
+	if (doSCLogon)
 	{
 		if (!smartcard_getCert(context, &rdg->smartcard, TRUE))
 			return FALSE;
 
 		if (!rdg_get_gateway_credentials(context, AUTH_SMARTCARD_PIN))
 			return FALSE;
-#ifdef _WIN32
-		{
-			CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
-			LPSTR marshalledCredentials;
-
-			memcpy(certInfo.rgbHashOfCert, rdg->smartcard->sha1Hash,
-			       sizeof(certInfo.rgbHashOfCert));
-
-			if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
-			{
-				WLog_ERR(TAG, "error marshalling cert credentials");
-				return FALSE;
-			}
-
-			if (sspi_SetAuthIdentityA(&identity, marshalledCredentials, NULL,
-			                          settings->GatewayPassword) < 0)
-				return FALSE;
-
-			CredFree(marshalledCredentials);
-		}
-#else
-		if (sspi_SetAuthIdentityA(&identity, settings->GatewayUsername, settings->GatewayDomain,
-		                          settings->GatewayPassword) < 0)
-			return FALSE;
-#endif
 	}
 	else
 	{
 		if (!rdg_get_gateway_credentials(context, GW_AUTH_RDG))
 			return FALSE;
 
+		/* Auth callback might changed logon to smartcard so check again */
+		doSCLogon = freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon);
+		if (doSCLogon && !smartcard_getCert(context, &rdg->smartcard, TRUE))
+			return FALSE;
+	}
+
+#ifdef _WIN32
+	if (doSCLogon)
+	{
+		CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
+		LPSTR marshalledCredentials;
+
+		memcpy(certInfo.rgbHashOfCert, rdg->smartcard->sha1Hash, sizeof(certInfo.rgbHashOfCert));
+
+		if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
+		{
+			WLog_ERR(TAG, "error marshaling cert credentials");
+			return FALSE;
+		}
+
+		if (sspi_SetAuthIdentityA(&identity, marshalledCredentials, NULL,
+		                          settings->GatewayPassword) < 0)
+			return FALSE;
+
+		CredFree(marshalledCredentials);
+	}
+	else
+#else
+	{
 		if (sspi_SetAuthIdentityA(&identity, settings->GatewayUsername, settings->GatewayDomain,
 		                          settings->GatewayPassword) < 0)
 			return FALSE;
 	}
+#endif
 
-	if (!credssp_auth_setup_client(rdg->auth, "HTTP", settings->GatewayHostname, &identity,
-	                               rdg->smartcard ? rdg->smartcard->pkinitArgs : NULL))
+	    if (!credssp_auth_setup_client(rdg->auth, "HTTP", settings->GatewayHostname, &identity,
+	                                   rdg->smartcard ? rdg->smartcard->pkinitArgs : NULL))
 	{
 		sspi_FreeAuthIdentity(&identity);
 		return FALSE;
