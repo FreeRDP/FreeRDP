@@ -323,6 +323,7 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	}
 #endif
 
+	BOOL smartCardLogonWasDisabled = !settings->SmartcardLogon;
 	if (PromptPassword)
 	{
 		switch (utils_authenticate(instance, AUTH_NLA, TRUE))
@@ -350,24 +351,28 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	else if (settings->SmartcardLogon)
 	{
 #ifdef _WIN32
+		CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
+		LPSTR marshalledCredentials;
+
+		if (smartCardLogonWasDisabled)
 		{
-			CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
-			LPSTR marshalledCredentials;
-
-			memcpy(certInfo.rgbHashOfCert, nla->certSha1, sizeof(certInfo.rgbHashOfCert));
-
-			if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
-			{
-				WLog_ERR(TAG, "error marshalling cert credentials");
+			if (!nla_adjust_settings_from_smartcard(nla))
 				return FALSE;
-			}
-
-			if (sspi_SetAuthIdentityA(nla->identity, marshalledCredentials, NULL,
-			                          settings->Password) < 0)
-				return FALSE;
-
-			CredFree(marshalledCredentials);
 		}
+
+		memcpy(certInfo.rgbHashOfCert, nla->certSha1, sizeof(certInfo.rgbHashOfCert));
+
+		if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
+		{
+			WLog_ERR(TAG, "error marshalling cert credentials");
+			return FALSE;
+		}
+
+		if (sspi_SetAuthIdentityA(nla->identity, marshalledCredentials, NULL, settings->Password) <
+		    0)
+			return FALSE;
+
+		CredFree(marshalledCredentials);
 #else
 		if (sspi_SetAuthIdentityA(nla->identity, settings->Username, settings->Domain,
 		                          settings->Password) < 0)
