@@ -21,6 +21,7 @@
 
 #include <freerdp/config.h>
 
+#include <string.h>
 #include <stdarg.h>
 
 #include "rdp.h"
@@ -714,6 +715,8 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 	BOOL ret = TRUE;
 
 	WINPR_ASSERT(instance);
+
+	rdp_log_build_warnings();
 
 	instance->context = context = (rdpContext*)calloc(1, instance->ContextSize);
 

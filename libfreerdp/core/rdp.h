@@ -289,4 +289,6 @@ const char* rdp_security_flag_string(UINT32 securityFlags, char* buffer, size_t 
 BOOL rdp_set_backup_settings(rdpRdp* rdp);
 BOOL rdp_reset_runtime_settings(rdpRdp* rdp);
 
+void rdp_log_build_warnings(void);
+
 #endif /* FREERDP_LIB_CORE_RDP_H */

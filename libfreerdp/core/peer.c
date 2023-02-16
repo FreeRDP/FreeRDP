@@ -1504,6 +1504,8 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 	rdpContext* context;
 	BOOL ret = TRUE;
 
+	rdp_log_build_warnings();
+
 	if (!client)
 		return FALSE;
 
