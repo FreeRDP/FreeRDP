@@ -748,7 +748,7 @@ WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
 			return WINPR_MD_SHA512;
 		case NID_ripemd160:
 			return WINPR_MD_RIPEMD160;
-#if (OPENSSL_VERSION_NUMBER >= 0x1010101fL) || defined(LIBRESSL_VERSION_NUMBER)
+#if (OPENSSL_VERSION_NUMBER >= 0x1010101fL) && !defined(LIBRESSL_VERSION_NUMBER)
 		case NID_sha3_224:
 			return WINPR_MD_SHA3_224;
 		case NID_sha3_256:
@@ -757,11 +757,11 @@ WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
 			return WINPR_MD_SHA3_384;
 		case NID_sha3_512:
 			return WINPR_MD_SHA3_512;
-#endif
 		case NID_shake128:
 			return WINPR_MD_SHAKE128;
 		case NID_shake256:
 			return WINPR_MD_SHAKE256;
+#endif
 		case NID_undef:
 		default:
 			return WINPR_MD_NONE;
