@@ -21,6 +21,5 @@ set(SRCS
         rdpsnd_common.c)
 
 # Library currently header only
-add_library(rdpsnd-common OBJECT ${SRCS})
-set_property(TARGET rdpsnd-common PROPERTY POSITION_INDEPENDENT_CODE ON)
+add_library(rdpsnd-common STATIC ${SRCS})
 

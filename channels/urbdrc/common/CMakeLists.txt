@@ -23,6 +23,5 @@ set(SRCS
     msusb.h
     msusb.c)
 
-add_library(urbdrc-common OBJECT ${SRCS})
-set_property(TARGET urbdrc-common PROPERTY POSITION_INDEPENDENT_CODE ON)
+add_library(urbdrc-common STATIC ${SRCS})
 

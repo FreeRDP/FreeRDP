@@ -14,4 +14,4 @@ if (WITH_PROXY_EMULATE_SMARTCARD)
 	)
 endif()
 
-add_library(${MODULE_NAME} OBJECT ${SOURCES})
+add_library(${MODULE_NAME} STATIC ${SOURCES})
