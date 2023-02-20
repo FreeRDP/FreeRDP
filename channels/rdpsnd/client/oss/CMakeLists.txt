@@ -18,19 +18,16 @@
 define_channel_client_subsystem("rdpsnd" "oss" "")
 
 set(${MODULE_PREFIX}_SRCS
-	rdpsnd_oss.c)
+	rdpsnd_oss.c
+)
+
+set(${MODULE_PREFIX}_LIBS
+	winpr
+    freerdp
+    ${OSS_LIBRARIES}
+)
 
 include_directories(..)
 include_directories(${OSS_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
-
-
-
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
-	
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${OSS_LIBRARIES})
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client/OSS")

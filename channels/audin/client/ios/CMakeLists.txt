@@ -22,13 +22,18 @@
  FIND_LIBRARY(AUDIO_TOOL AudioToolbox)
 
  set(${MODULE_PREFIX}_SRCS
- 	audin_ios.m)
+ 	audin_ios.m
+)
 
- include_directories(..)
- include_directories(${MAC_INCLUDE_DIRS})
+set(${MODULE_PREFIX}_LIBS
+    winpr
+    freerdp
+     ${AVFOUNDATION}
+     ${CORE_AUDIO}
+     ${AUDIO_TOOL}
+)
 
- add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
+include_directories(..)
+include_directories(${MAC_INCLUDE_DIRS})
 
- set(${MODULE_PREFIX}_LIBS freerdp ${AVFOUNDATION} ${CORE_AUDIO} ${AUDIO_TOOL} winpr)
-
- target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")

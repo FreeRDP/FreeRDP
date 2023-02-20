@@ -18,16 +18,17 @@
 define_channel_client_subsystem("audin" "oss" "")
 
 set(${MODULE_PREFIX}_SRCS
-	audin_oss.c)
+	audin_oss.c
+)
+
+set(${MODULE_PREFIX}_LIBS
+    winpr
+    freerdp
+    ${OSS_LIBRARIES}
+)
 
 include_directories(..)
 include_directories(${OSS_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
-
-
-
-set(${MODULE_PREFIX}_LIBS freerdp winpr ${OSS_LIBRARIES})
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 

@@ -20,14 +20,12 @@ define_channel_client_subsystem("audin" "winmm" "")
 set(${MODULE_PREFIX}_SRCS
 	audin_winmm.c)
 
+set(${MODULE_PREFIX}_LIBS
+    winpr
+    freerdp
+    winmm.lib
+)
+
 include_directories(..)
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
-
-
-
-set(${MODULE_PREFIX}_LIBS freerdp winpr winmm.lib)
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client/winmm")

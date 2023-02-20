@@ -18,10 +18,15 @@
 define_channel_client_subsystem("tsmf" "pulse" "audio")
 
 set(${MODULE_PREFIX}_SRCS
-	tsmf_pulse.c)
+	tsmf_pulse.c
+)
+
+set(${MODULE_PREFIX}_LIBS
+    winpr
+    ${PULSE_LIBRARY}
+)
 
 include_directories(..)
 include_directories(${PULSE_INCLUDE_DIR})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
-target_link_libraries(${MODULE_NAME} winpr ${PULSE_LIBRARY})

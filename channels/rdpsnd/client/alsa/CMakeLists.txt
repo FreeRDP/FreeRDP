@@ -20,17 +20,13 @@ define_channel_client_subsystem("rdpsnd" "alsa" "")
 set(${MODULE_PREFIX}_SRCS
 	rdpsnd_alsa.c)
 
+set(${MODULE_PREFIX}_LIBS
+    winpr
+    freerdp
+    ${ALSA_LIBRARIES}
+)
+
 include_directories(..)
 include_directories(${ALSA_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
-
-
-
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
-	
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${ALSA_LIBRARIES})
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client/ALSA")

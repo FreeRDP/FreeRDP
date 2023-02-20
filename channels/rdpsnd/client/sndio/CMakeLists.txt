@@ -19,19 +19,16 @@
 define_channel_client_subsystem("rdpsnd" "sndio" "")
 
 set(${MODULE_PREFIX}_SRCS
-	rdpsnd_sndio.c)
+	rdpsnd_sndio.c
+)
+
+set(${MODULE_PREFIX}_LIBS
+    winpr
+    freerdp
+    ${SNDIO_LIBRARIES}
+)
 
 include_directories(..)
 include_directories(${SNDIO_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
-
-
-
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
-
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${SNDIO_LIBRARIES})
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client/SNDIO")

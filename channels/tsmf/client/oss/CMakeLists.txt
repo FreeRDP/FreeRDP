@@ -18,11 +18,15 @@
 define_channel_client_subsystem("tsmf" "oss" "audio")
 
 set(${MODULE_PREFIX}_SRCS
-	tsmf_oss.c)
+	tsmf_oss.c
+)
+
+set(${MODULE_PREFIX}_LIBS
+    winpr
+)
 
 include_directories(..)
 include_directories(${OSS_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
-target_link_libraries(${MODULE_NAME} winpr)
 

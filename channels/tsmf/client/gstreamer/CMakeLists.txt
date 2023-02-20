@@ -57,9 +57,15 @@ else()
 
 endif()
 
-set(${MODULE_PREFIX}_SRCS "${SRC}")
+set(${MODULE_PREFIX}_SRCS
+    "${SRC}"
+)
+
+set(${MODULE_PREFIX}_LIBS
+    ${LIBS}
+    winpr
+)
 
 include_directories(..)
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
-target_link_libraries(${MODULE_NAME} ${LIBS} winpr)
