@@ -20,11 +20,13 @@ define_channel_client("ainput")
 
 set(${MODULE_PREFIX}_SRCS
 	ainput_main.c
-	ainput_main.h)
+	ainput_main.h
+)
+
+set(${MODULE_PREFIX}_LIBS
+	winpr
+)
 
 include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
-
-target_link_libraries(${MODULE_NAME} winpr)
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")

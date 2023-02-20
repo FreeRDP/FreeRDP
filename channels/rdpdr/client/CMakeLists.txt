@@ -27,17 +27,16 @@ set(${MODULE_PREFIX}_SRCS
 	rdpdr_main.c
 	rdpdr_main.h
 	rdpdr_capabilities.c
-	rdpdr_capabilities.h)
+	rdpdr_capabilities.h
+)
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntryEx")
-
-
-
-target_link_libraries(${MODULE_NAME} winpr freerdp)
+set(${MODULE_PREFIX}_LIBS
+	winpr freerdp
+)
 if(APPLE AND (NOT IOS))
 	find_library(CORESERVICES_LIBRARY CoreServices)
-	target_link_libraries(${MODULE_NAME} ${CORESERVICES_LIBRARY})
+	list(APPEND ${MODULE_PREFIX}_LIBS
+		${CORESERVICES_LIBRARY}
+	)
 endif()
-
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} FALSE "VirtualChannelEntryEx")
