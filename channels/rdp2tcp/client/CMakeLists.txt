@@ -18,10 +18,10 @@
 define_channel_client("rdp2tcp")
 
 set(${MODULE_PREFIX}_SRCS
-	rdp2tcp_main.c)
+	rdp2tcp_main.c
+)
 
+set(${MODULE_PREFIX}_LIBS
+	freerdp
+)
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "VirtualChannelEntryEx")
-
-target_link_libraries(${MODULE_NAME} freerdp)
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")

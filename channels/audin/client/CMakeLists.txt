@@ -19,15 +19,16 @@ define_channel_client("audin")
 
 set(${MODULE_PREFIX}_SRCS
 	audin_main.c
-	audin_main.h)
+	audin_main.h
+)
+
+set(${MODULE_PREFIX}_LIBS
+	freerdp winpr
+)
 
 include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
-
-target_link_libraries(${MODULE_NAME} freerdp winpr)
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
 
 if(WITH_OSS)
 	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "oss" "")

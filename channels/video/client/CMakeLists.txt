@@ -19,14 +19,12 @@ define_channel_client("video")
 
 set(${MODULE_PREFIX}_SRCS
 	video_main.c
-	video_main.h)
+	video_main.h
+)
 
+set(${MODULE_PREFIX}_LIBS
+	winpr
+)
 include_directories(..)
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
-
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr)
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")

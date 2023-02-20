@@ -23,21 +23,17 @@ set(${MODULE_PREFIX}_SRCS
 	data_transfer.h
 	urbdrc_main.c
 	urbdrc_main.h
-        $<TARGET_OBJECTS:urbdrc-common>
-	)
+)
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
-
-set(${MODULE_PREFIX}_LIBS)
+set(${MODULE_PREFIX}_LIBS
+	winpr freerdp
+	$<TARGET_OBJECTS:urbdrc-common>
+)
 if (UDEV_FOUND AND UDEV_LIBRARIES)
-	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${UDEV_LIBRARIES})
+	list(APPEND ${MODULE_PREFIX}_LIBS ${UDEV_LIBRARIES})
 endif()
 
-set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} winpr freerdp)
-
-target_link_libraries(${MODULE_NAME} ${PRIVATE_KEYWOARD} ${${MODULE_PREFIX}_LIBS})
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
 
 # libusb subsystem
 add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "libusb" "")
