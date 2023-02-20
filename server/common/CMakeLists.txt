@@ -74,4 +74,3 @@ if (WITH_DEBUG_SYMBOLS AND MSVC AND BUILD_SHARED_LIBS)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/Common")
-export_complex_library(LIBNAME ${MODULE_NAME})

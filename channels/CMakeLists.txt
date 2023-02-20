@@ -162,16 +162,6 @@ macro(add_channel_client_subsystem _channel_prefix _channel_name _subsystem _typ
   endif()
 endmacro(add_channel_client_subsystem)
 
-macro(channel_install _targets _destination _export_target)
-    if (NOT BUILD_SHARED_LIBS)
-        install(TARGETS ${_targets} DESTINATION ${_destination} EXPORT ${_export_target})
-    endif()
-endmacro(channel_install)
-
-macro(client_channel_install _targets _destination)
-  channel_install(${_targets} ${_destination} "FreeRDP-ClientTargets")
-endmacro(client_channel_install)
-
 macro(add_channel_client_library _module_prefix _module_name _channel_name _dynamic _entry)
   set(_lnk_dir ${${_module_prefix}_LINK_DIRS})
   if (NOT "${_lnk_dir}" STREQUAL "")
@@ -204,13 +194,11 @@ macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_
 
 	add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
 	set_property(TARGET ${_module_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
-	set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${_channel_name}/Client/Subsystem/${_module_name}")
+	set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${_channel_name}/Client/Subsystem/${CHANNEL_SUBSYSTEM}")
 
 	if (${_module_prefix}_LIBS)
 		target_link_libraries(${_module_name} PRIVATE ${${_module_prefix}_LIBS})
 	endif()
-
-    client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
 endmacro(add_channel_client_subsystem_library)
 
 macro(add_channel_server_library _module_prefix _module_name _channel_name _dynamic _entry)
@@ -228,7 +216,7 @@ macro(add_channel_server_library _module_prefix _module_name _channel_name _dyna
 	set_property(TARGET ${_module_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
 	set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Server")
 
-	if (${_module_prefix}_LIBS/su)
+	if (${_module_prefix}_LIBS)
 		target_link_libraries(${_module_name} PRIVATE ${${_module_prefix}_LIBS})
 	endif()
 endmacro(add_channel_server_library)
