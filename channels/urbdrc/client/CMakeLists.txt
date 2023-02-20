@@ -27,7 +27,7 @@ set(${MODULE_PREFIX}_SRCS
 
 set(${MODULE_PREFIX}_LIBS
 	winpr freerdp
-	$<TARGET_OBJECTS:urbdrc-common>
+	urbdrc-common
 )
 if (UDEV_FOUND AND UDEV_LIBRARIES)
 	list(APPEND ${MODULE_PREFIX}_LIBS ${UDEV_LIBRARIES})
