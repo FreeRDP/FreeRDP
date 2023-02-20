@@ -375,8 +375,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_bool(settings, FreeRDP_ServerMode,
 	                               (flags & FREERDP_SETTINGS_SERVER_MODE) ? TRUE : FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_WaitForOutputBufferFlush, TRUE) ||
-	    !freerdp_settings_set_uint32(settings, FreeRDP_ClusterInfoFlags,
-	                                 REDIRECTION_SUPPORTED | (REDIRECTION_VERSION5 << 2)) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_ClusterInfoFlags, REDIRECTION_SUPPORTED) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 1024) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, 768) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_Workarea, FALSE) ||
@@ -458,6 +457,13 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		goto out_fail;
 
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, NULL, 0))
+		goto out_fail;
+
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags,
+	                                 (TRANSPORT_TYPE_UDP_FECR | TRANSPORT_TYPE_UDP_FECL |
+	                                  TRANSPORT_TYPE_UDP_PREFERRED | SOFTSYNC_TCP_TO_UDP)))
+		goto out_fail;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransport, TRUE))
 		goto out_fail;
 
 	if (!settings_get_computer_name(settings))
