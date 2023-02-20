@@ -25,7 +25,7 @@ if(POLICY CMP0022)
   cmake_policy(SET CMP0022 NEW)
 endif()
 
-set(${MODULE_PREFIX}_SRCS
+set(SRCS
 	client.c
 	client_rails.c
 	cmdline.c
@@ -36,7 +36,7 @@ set(${MODULE_PREFIX}_SRCS
 foreach(FREERDP_CHANNELS_CLIENT_SRC ${FREERDP_CHANNELS_CLIENT_SRCS})
 	get_filename_component(NINC ${FREERDP_CHANNELS_CLIENT_SRC} PATH)
 	include_directories(${NINC})
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} "${FREERDP_CHANNELS_CLIENT_SRC}")
+    list(APPEND SRCS "${FREERDP_CHANNELS_CLIENT_SRC}")
 endforeach()
 
 
@@ -53,26 +53,22 @@ if (WIN32 AND BUILD_SHARED_LIBS)
     ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     @ONLY)
 
-  set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+list (APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+include_directories(${OPENSSL_INCLUDE_DIR})
+
+add_library(${MODULE_NAME} ${SRCS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${FREERDP_API_VERSION})
-include_directories(${OPENSSL_INCLUDE_DIR})
 if (WITH_LIBRARY_VERSIONING)
   set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
 endif()
 
-list(APPEND ${MODULE_PREFIX}_LIBS freerdp winpr)
+set(LIBS freerdp winpr)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${FREERDP_CHANNELS_CLIENT_LIBS})
-if(OPENBSD)
-	target_link_libraries(${MODULE_NAME} PUBLIC ${${MODULE_PREFIX}_LIBS} sndio)
-else()
-	target_link_libraries(${MODULE_NAME} PUBLIC ${${MODULE_PREFIX}_LIBS})
-endif()
-
+target_link_libraries(${MODULE_NAME} PUBLIC ${LIBS})
 
 install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT FreeRDP-ClientTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -89,5 +85,3 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Common")
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
-
-export_complex_library(LIBNAME ${MODULE_NAME})
