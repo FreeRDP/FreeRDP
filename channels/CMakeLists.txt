@@ -187,7 +187,10 @@ macro(add_channel_client_library _module_prefix _module_name _channel_name _dyna
 	set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
 	set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
 	add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
-	target_link_libraries(${_module_name} ${${_module_prefix}_LIBS})
+
+	if (${${_module_prefix}_LIBS})
+		target_link_libraries(${_module_name} PRIVATE ${${_module_prefix}_LIBS})
+	endif()
 
 	if (NOT BUILD_SHARED_LIBS)
 			client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
@@ -222,6 +225,10 @@ macro(add_channel_server_library _module_prefix _module_name _channel_name _dyna
 	set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
 	set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
 	add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
+
+	if (${${_module_prefix}_LIBS})
+		target_link_libraries(${_module_name} PRIVATE ${${_module_prefix}_LIBS})
+	endif()
 	if (NOT BUILD_SHARED_LIBS)
 			server_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
   endif()
