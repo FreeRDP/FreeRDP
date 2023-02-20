@@ -223,14 +223,14 @@ macro(add_channel_server_library _module_prefix _module_name _channel_name _dyna
 	set(${_module_prefix}_NAME ${_module_name} PARENT_SCOPE)
 	set(${_module_prefix}_CHANNEL ${_channel_name} PARENT_SCOPE)
 	set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
-	add_library(${_module_name} STATIC ${${_module_prefix}_SRCS})
+
+	add_library(${_module_name} OBJECT ${${_module_prefix}_SRCS})
+	set_property(TARGET ${_module_name} PROPERTY POSITION_INDEPENDENT_CODE ON)
+	set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Server")
 
 	if (${${_module_prefix}_LIBS})
 		target_link_libraries(${_module_name} PRIVATE ${${_module_prefix}_LIBS})
 	endif()
-	if (NOT BUILD_SHARED_LIBS)
-			server_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
-  endif()
 endmacro(add_channel_server_library)
 
 set(FILENAME "ChannelOptions.cmake")
