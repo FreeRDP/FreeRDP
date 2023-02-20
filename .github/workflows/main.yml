@@ -71,6 +71,5 @@ jobs:
        cd ci-build
        cmake -GNinja ../ci/cmake-preloads/config-linux-all.txt ..
        cmake --build .
-
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
