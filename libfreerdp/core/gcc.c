@@ -2071,6 +2071,16 @@ BOOL gcc_write_client_cluster_data(wStream* s, const rdpMcs* mcs)
 	if (settings->RedirectSmartCards && settings->SmartcardLogon)
 		flags |= REDIRECTED_SMARTCARD;
 
+	if (flags & REDIRECTION_SUPPORTED)
+	{
+		/* REDIRECTION_VERSION6 requires multitransport enabled.
+		 * if we run without that use REDIRECTION_VERSION5 */
+		if (freerdp_settings_get_bool(settings, FreeRDP_SupportMultitransport))
+			flags |= (REDIRECTION_VERSION6 << 4);
+		else
+			flags |= (REDIRECTION_VERSION5 << 4);
+	}
+
 	WLog_VRB(TAG, "write ClusterInfoFlags=%s, RedirectedSessionId=0x%08" PRIx32,
 	         rdp_cluster_info_flags_to_string(flags, buffer, sizeof(buffer)),
 	         settings->RedirectedSessionId);
