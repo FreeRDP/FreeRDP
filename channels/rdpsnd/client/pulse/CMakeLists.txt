@@ -18,17 +18,16 @@
 define_channel_client_subsystem("rdpsnd" "pulse" "")
 
 set(${MODULE_PREFIX}_SRCS
-	rdpsnd_pulse.c)
+	rdpsnd_pulse.c
+)
+
+set(${MODULE_PREFIX}_LIBS
+    winpr
+    freerdp
+    ${PULSE_LIBRARY}
+)
 
 include_directories(..)
 include_directories(${PULSE_INCLUDE_DIR})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
-
-list(APPEND ${MODULE_PREFIX}_LIBS ${PULSE_LIBRARY})
-list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
-list(APPEND ${MODULE_PREFIX}_LIBS winpr)
-
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
-
-set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client/Pulse")
