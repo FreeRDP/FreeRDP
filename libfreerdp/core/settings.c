@@ -460,8 +460,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		goto out_fail;
 
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags,
-	                                 (TRANSPORT_TYPE_UDP_FECR | TRANSPORT_TYPE_UDP_FECL |
-	                                  TRANSPORT_TYPE_UDP_PREFERRED | SOFTSYNC_TCP_TO_UDP)))
+	                                 TRANSPORT_TYPE_UDP_FECR))
 		goto out_fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransport, TRUE))
 		goto out_fail;
