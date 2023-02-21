@@ -25,7 +25,6 @@
 
 #include "clipboard.h"
 
-static const char* mime_text_plain = "text/plain";
 /**
  * Standard Clipboard Formats:
  * http://msdn.microsoft.com/en-us/library/windows/desktop/ff729168/
