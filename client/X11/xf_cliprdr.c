@@ -3114,6 +3114,8 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 		{
 			fuse_session_add_chan(clipboard->fuse_sess, ch);
 			const int err = fuse_session_loop(clipboard->fuse_sess);
+			if (err != 0)
+				WLog_WARN(TAG, "fuse_session_loop failed with %d", err);
 			fuse_session_remove_chan(ch);
 			fuse_session_destroy(clipboard->fuse_sess);
 		}
