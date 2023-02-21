@@ -917,9 +917,16 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 		const size_t endlen = strlen(lineending);
 		if (alloc > endlen)
 		{
-			if (memcmp(&dst[alloc - endlen - 1], lineending, endlen) == 0)
+			const size_t len = strnlen(dst, alloc);
+			if (len < endlen)
 			{
-				memset(&dst[alloc - endlen - 1], 0, endlen);
+				free(dst);
+				return NULL;
+			}
+
+			if (memcmp(&dst[len - endlen], lineending, endlen) == 0)
+			{
+				memset(&dst[len - endlen], 0, endlen);
 				alloc -= endlen;
 			}
 		}
@@ -939,8 +946,8 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 static void* convert_filedescriptors_to_uri_list(wClipboard* clipboard, UINT32 formatId,
                                                  const void* data, UINT32* pSize)
 {
-	return convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize, "",
-	                                            "file:", "\r\n", FALSE);
+	return convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize, "", "file://",
+	                                            "\r\n", FALSE);
 }
 
 /* Prepend header of common gnome format to file list*/
