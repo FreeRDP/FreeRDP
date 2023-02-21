@@ -1258,7 +1258,7 @@ static UINT file_get_range(struct synthetic_file* file, UINT64 offset, UINT32 si
 	{
 		free(buffer);
 	}
-	synthetic_file_read_close(file, (error != NO_ERROR) && (size > 0));
+	synthetic_file_read_close(file, TRUE /* (error != NO_ERROR) && (size > 0) */);
 	return error;
 }
 
