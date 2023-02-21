@@ -32,6 +32,8 @@
 #include "../log.h"
 #define TAG WINPR_TAG("clipboard")
 
+const char* mime_text_plain = "text/plain";
+
 /**
  * Clipboard (Windows):
  * msdn.microsoft.com/en-us/library/windows/desktop/ms648709/
@@ -115,18 +117,12 @@ static wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 forma
 
 static wClipboardSynthesizer* ClipboardFindSynthesizer(wClipboardFormat* format, UINT32 formatId)
 {
-	UINT32 index;
-	wClipboardSynthesizer* synthesizer;
-
 	if (!format)
 		return NULL;
 
-	if (format->numSynthesizers < 1)
-		return NULL;
-
-	for (index = 0; index < format->numSynthesizers; index++)
+	for (UINT32 index = 0; index < format->numSynthesizers; index++)
 	{
-		synthesizer = &(format->synthesizers[index]);
+		wClipboardSynthesizer* synthesizer = &(format->synthesizers[index]);
 
 		if (formatId == synthesizer->syntheticId)
 			return synthesizer;
@@ -287,7 +283,6 @@ BOOL ClipboardRegisterSynthesizer(wClipboard* clipboard, UINT32 formatId, UINT32
 		synthesizer = &(format->synthesizers[index]);
 	}
 
-	ZeroMemory(synthesizer, sizeof(wClipboardSynthesizer));
 	synthesizer->syntheticId = syntheticId;
 	synthesizer->pfnSynthesize = pfnSynthesize;
 	return TRUE;
