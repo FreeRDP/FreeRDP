@@ -118,6 +118,7 @@ static void xf_cliprdr_fuse_inode_free(void* obj)
 	inode->child_inos = NULL;
 	free(inode);
 }
+
 static inline xfCliprdrFuseInode* xf_cliprdr_fuse_util_get_inode(wArrayList* ino_list,
                                                                  fuse_ino_t ino);
 #endif
@@ -193,6 +194,12 @@ struct xf_clipboard
 	wArrayList* ino_list;
 #endif
 };
+
+static const char* mime_uri_list = "text/uri-list";
+static const char* mime_FileGroupDescriptorW = "FileGroupDescriptorW";
+static const char* mime_nautilus_clipboard = "x-special/nautilus-clipboard";
+static const char* mime_gnome_copied_files = "x-special/gnome-copied-files";
+static const char* mime_mate_copied_files = "x-special/mate-copied-files";
 
 static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL force);
 static void xf_cliprdr_set_selection_owner(xfContext* xfc, xfClipboard* clipboard, Time timestamp);
@@ -838,15 +845,15 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 			break;
 
 		case CB_FORMAT_TEXTURILIST:
-			srcFormatId = ClipboardGetFormatId(clipboard->system, "text/uri-list");
+			srcFormatId = ClipboardGetFormatId(clipboard->system, mime_uri_list);
 			break;
 
 		case CB_FORMAT_GNOMECOPIEDFILES:
-			srcFormatId = ClipboardGetFormatId(clipboard->system, "x-special/gnome-copied-files");
+			srcFormatId = ClipboardGetFormatId(clipboard->system, mime_gnome_copied_files);
 			break;
 
 		case CB_FORMAT_MATECOPIEDFILES:
-			srcFormatId = ClipboardGetFormatId(clipboard->system, "x-special/mate-copied-files");
+			srcFormatId = ClipboardGetFormatId(clipboard->system, mime_mate_copied_files);
 			break;
 
 		default:
@@ -882,7 +889,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	 * to not process CF_RAW as a file list in case WinPR does not support file transfers.
 	 */
 	if (dstFormatId &&
-	    (dstFormatId == ClipboardGetFormatId(clipboard->system, "FileGroupDescriptorW")))
+	    (dstFormatId == ClipboardGetFormatId(clipboard->system, mime_FileGroupDescriptorW)))
 	{
 		UINT error = NO_ERROR;
 		FILEDESCRIPTORW* file_array = (FILEDESCRIPTORW*)pDstData;
@@ -1097,6 +1104,44 @@ static BOOL xf_cliprdr_process_selection_notify(xfClipboard* clipboard,
 	}
 }
 
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+static xfCliprdrFuseInode* xf_cliprdr_fuse_create_root_node(void)
+{
+	xfCliprdrFuseInode* rootNode = (xfCliprdrFuseInode*)calloc(1, sizeof(xfCliprdrFuseInode));
+	if (!rootNode)
+		return NULL;
+
+	rootNode->ino = 1;
+	rootNode->parent_ino = 1;
+	rootNode->st_mode = S_IFDIR | 0755;
+	rootNode->name = _strdup("/");
+	rootNode->child_inos = ArrayList_New(TRUE);
+	rootNode->st_mtim.tv_sec = time(NULL);
+	rootNode->st_size = 0;
+	rootNode->size_set = TRUE;
+
+	if (!rootNode->child_inos || !rootNode->name)
+	{
+		xf_cliprdr_fuse_inode_free(rootNode);
+		WLog_ERR(TAG, "fail to alloc rootNode's member");
+		return NULL;
+	}
+	return rootNode;
+}
+
+static BOOL xf_fuse_repopulate(wArrayList* list)
+{
+	if (!list)
+		return FALSE;
+
+	ArrayList_Lock(list);
+	ArrayList_Clear(list);
+	ArrayList_Append(list, xf_cliprdr_fuse_create_root_node());
+	ArrayList_Unlock(list);
+	return TRUE;
+}
+#endif
+
 static void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
 {
 	WINPR_ASSERT(clipboard);
@@ -1135,10 +1180,8 @@ static void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
 
 		ArrayList_Clear(clipboard->stream_list);
 	}
-	if (clipboard->ino_list)
-	{
-		ArrayList_Clear(clipboard->ino_list);
-	}
+
+	xf_fuse_repopulate(clipboard->ino_list);
 #endif
 }
 
@@ -1955,30 +1998,6 @@ static const char* xf_cliprdr_fuse_split_basename(const char* name, size_t len)
 	return NULL;
 }
 
-static xfCliprdrFuseInode* xf_cliprdr_fuse_create_root_node(void)
-{
-	xfCliprdrFuseInode* rootNode = (xfCliprdrFuseInode*)calloc(1, sizeof(xfCliprdrFuseInode));
-	if (!rootNode)
-		return NULL;
-
-	rootNode->ino = 1;
-	rootNode->parent_ino = 1;
-	rootNode->st_mode = S_IFDIR | 0755;
-	rootNode->name = _strdup("/");
-	rootNode->child_inos = ArrayList_New(TRUE);
-	rootNode->st_mtim.tv_sec = time(NULL);
-	rootNode->st_size = 0;
-	rootNode->size_set = TRUE;
-
-	if (!rootNode->child_inos || !rootNode->name)
-	{
-		xf_cliprdr_fuse_inode_free(rootNode);
-		WLog_ERR(TAG, "fail to alloc rootNode's member");
-		return NULL;
-	}
-	return rootNode;
-}
-
 static BOOL xf_cliprdr_fuse_check_stream(wStream* s, size_t count)
 {
 	UINT32 nrDescriptors;
@@ -2136,7 +2155,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 	{
 		/* baseName is freed in xf_cliprdr_fuse_inode_free*/
 		xf_cliprdr_fuse_inode_free(inode);
-		ArrayList_Clear(clipboard->ino_list);
+		xf_fuse_repopulate(clipboard->ino_list);
 	}
 	else
 	{
@@ -2183,9 +2202,9 @@ static BOOL xf_cliprdr_fuse_generate_list(xfClipboard* clipboard, const BYTE* da
 
 	/* prevent conflict between fuse_thread and this */
 	ArrayList_Lock(clipboard->ino_list);
-	xfCliprdrFuseInode* rootNode = xf_cliprdr_fuse_create_root_node();
+	xfCliprdrFuseInode* rootNode = xf_cliprdr_fuse_util_get_inode(clipboard->ino_list, 1);
 
-	if (!rootNode || !ArrayList_Append(clipboard->ino_list, rootNode))
+	if (!rootNode)
 	{
 		xf_cliprdr_fuse_inode_free(rootNode);
 		WLog_ERR(TAG, "fail to alloc rootNode to ino_list");
@@ -2266,7 +2285,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 			nullTerminated = TRUE;
 		}
 
-		if (strcmp(clipboard->data_format_name, "FileGroupDescriptorW") == 0)
+		if (strcmp(clipboard->data_format_name, mime_FileGroupDescriptorW) == 0)
 		{
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 			/* Build inode table for FILEDESCRIPTORW*/
@@ -2277,12 +2296,12 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 			}
 #endif
 
-			srcFormatId = ClipboardGetFormatId(clipboard->system, "FileGroupDescriptorW");
+			srcFormatId = ClipboardGetFormatId(clipboard->system, mime_FileGroupDescriptorW);
 			dstTargetFormat =
 			    xf_cliprdr_get_client_format_by_atom(clipboard, clipboard->respond->target);
 			if (!dstTargetFormat)
 			{
-				dstFormatId = ClipboardGetFormatId(clipboard->system, "text/uri-list");
+				dstFormatId = ClipboardGetFormatId(clipboard->system, mime_uri_list);
 			}
 			else
 			{
@@ -2292,15 +2311,15 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 						dstFormatId = ClipboardGetFormatId(clipboard->system, "UTF8_STRING");
 						break;
 					case CB_FORMAT_TEXTURILIST:
-						dstFormatId = ClipboardGetFormatId(clipboard->system, "text/uri-list");
+						dstFormatId = ClipboardGetFormatId(clipboard->system, mime_uri_list);
 						break;
 					case CB_FORMAT_GNOMECOPIEDFILES:
 						dstFormatId =
-						    ClipboardGetFormatId(clipboard->system, "x-special/gnome-copied-files");
+						    ClipboardGetFormatId(clipboard->system, mime_gnome_copied_files);
 						break;
 					case CB_FORMAT_MATECOPIEDFILES:
 						dstFormatId =
-						    ClipboardGetFormatId(clipboard->system, "x-special/mate-copied-files");
+						    ClipboardGetFormatId(clipboard->system, mime_mate_copied_files);
 						break;
 					default:
 						break;
@@ -2998,7 +3017,6 @@ static void xf_cliprdr_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char
 	e.attr.st_size = st_size;
 	e.attr.st_mtime = tv_sec;
 	fuse_reply_entry(req, &e);
-	return;
 }
 
 static void xf_cliprdr_fuse_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi)
@@ -3223,36 +3241,36 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	 * registration). However, they are definitely not supported if there are no registered
 	 * formats. In this case we should not list file formats in TARGETS.
 	 */
-	if (ClipboardGetFormatId(clipboard->system, "text/uri-list"))
+	if (ClipboardGetFormatId(clipboard->system, mime_uri_list))
 	{
 		clipboard->file_formats_registered = TRUE;
-		clientFormat->atom = XInternAtom(xfc->display, "text/uri-list", False);
+		clientFormat->atom = XInternAtom(xfc->display, mime_uri_list, False);
 		clientFormat->formatId = CB_FORMAT_TEXTURILIST;
-		clientFormat->formatName = _strdup("FileGroupDescriptorW");
+		clientFormat->formatName = _strdup(mime_FileGroupDescriptorW);
 
 		if (!clientFormat->formatName)
 			goto error;
 
 		clientFormat = &clipboard->clientFormats[n++];
 	}
-	if (ClipboardGetFormatId(clipboard->system, "x-special/gnome-copied-files"))
+	if (ClipboardGetFormatId(clipboard->system, mime_gnome_copied_files))
 	{
 		clipboard->file_formats_registered = TRUE;
-		clientFormat->atom = XInternAtom(xfc->display, "x-special/gnome-copied-files", False);
+		clientFormat->atom = XInternAtom(xfc->display, mime_gnome_copied_files, False);
 		clientFormat->formatId = CB_FORMAT_GNOMECOPIEDFILES;
-		clientFormat->formatName = _strdup("FileGroupDescriptorW");
+		clientFormat->formatName = _strdup(mime_FileGroupDescriptorW);
 
 		if (!clientFormat->formatName)
 			goto error;
 
 		clientFormat = &clipboard->clientFormats[n++];
 	}
-	if (ClipboardGetFormatId(clipboard->system, "x-special/mate-copied-files"))
+	if (ClipboardGetFormatId(clipboard->system, mime_mate_copied_files))
 	{
 		clipboard->file_formats_registered = TRUE;
-		clientFormat->atom = XInternAtom(xfc->display, "x-special/mate-copied-files", False);
+		clientFormat->atom = XInternAtom(xfc->display, mime_mate_copied_files, False);
 		clientFormat->formatId = CB_FORMAT_MATECOPIEDFILES;
-		clientFormat->formatName = _strdup("FileGroupDescriptorW");
+		clientFormat->formatName = _strdup(mime_FileGroupDescriptorW);
 
 		if (!clientFormat->formatName)
 			goto error;
@@ -3285,6 +3303,9 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	}
 	obj = ArrayList_Object(clipboard->ino_list);
 	obj->fnObjectFree = xf_cliprdr_fuse_inode_free;
+
+	if (!xf_fuse_repopulate(clipboard->ino_list))
+		goto error3;
 
 	if (!(clipboard->fuse_thread =
 	          CreateThread(NULL, 0, xf_cliprdr_fuse_thread, clipboard, 0, NULL)))
