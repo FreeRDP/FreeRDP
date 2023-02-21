@@ -65,6 +65,15 @@
 #define MAX_CLIPBOARD_FORMATS 255
 #define WIN32_FILETIME_TO_UNIX_EPOCH_USEC UINT64_C(116444736000000000)
 
+#ifdef WITH_DEBUG_CLIPRDR
+#define DEBUG_CLIPRDR(...) WLog_DBG(TAG, __VA_ARGS__)
+#else
+#define DEBUG_CLIPRDR(...) \
+	do                     \
+	{                      \
+	} while (0)
+#endif
+
 typedef struct
 {
 	Atom atom;
@@ -3058,6 +3067,8 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 	}
 	clipboard->delegate->basePath = basePath;
 
+	DEBUG_CLIPRDR("Starting fuse with mountpoint '%s'", basePath);
+
 	struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
 #if FUSE_USE_VERSION >= 30
 	fuse_opt_add_arg(&args, clipboard->delegate->basePath);
@@ -3089,6 +3100,7 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 #endif
 	fuse_opt_free_args(&args);
 
+	DEBUG_CLIPRDR("Quitting fuse with mountpoint '%s'", basePath);
 	winpr_RemoveDirectory(clipboard->delegate->basePath);
 
 	ExitThread(0);
@@ -3317,14 +3329,12 @@ error:
 
 void xf_clipboard_free(xfClipboard* clipboard)
 {
-	int i;
-
 	if (!clipboard)
 		return;
 
 	if (clipboard->serverFormats)
 	{
-		for (i = 0; i < clipboard->numServerFormats; i++)
+		for (int i = 0; i < clipboard->numServerFormats; i++)
 		{
 			CLIPRDR_FORMAT* format = &clipboard->serverFormats[i];
 			free(format->formatName);
@@ -3336,7 +3346,7 @@ void xf_clipboard_free(xfClipboard* clipboard)
 
 	if (clipboard->numClientFormats)
 	{
-		for (i = 0; i < clipboard->numClientFormats; i++)
+		for (int i = 0; i < clipboard->numClientFormats; i++)
 		{
 			xfCliprdrFormat* format = &clipboard->clientFormats[i];
 			free(format->formatName);
@@ -3347,13 +3357,13 @@ void xf_clipboard_free(xfClipboard* clipboard)
 	if (clipboard->fuse_thread)
 	{
 		if (clipboard->fuse_sess)
-		{
 			fuse_session_exit(clipboard->fuse_sess);
-			/* 	not elegant but works for umounting FUSE
-			    fuse_chan must receieve a oper buf to unblock fuse_session_receive_buf function.
-			*/
-			winpr_PathFileExists(clipboard->delegate->basePath);
-		}
+
+		/* 	not elegant but works for umounting FUSE
+		    fuse_chan must receieve a oper buf to unblock fuse_session_receive_buf function.
+		*/
+		winpr_PathFileExists(clipboard->delegate->basePath);
+
 		WaitForSingleObject(clipboard->fuse_thread, INFINITE);
 		CloseHandle(clipboard->fuse_thread);
 	}
