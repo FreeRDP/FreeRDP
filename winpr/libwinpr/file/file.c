@@ -761,6 +761,10 @@ UINT32 map_posix_err(int fs_errno)
 			rc = STATUS_DIRECTORY_NOT_EMPTY;
 			break;
 
+		case EMFILE:
+			rc = STATUS_TOO_MANY_OPENED_FILES;
+			break;
+
 		default:
 			WLog_ERR(TAG, "Missing ERRNO mapping %s [%d]", strerror(fs_errno), fs_errno);
 			rc = STATUS_UNSUCCESSFUL;
