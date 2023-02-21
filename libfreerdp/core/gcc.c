@@ -2076,9 +2076,9 @@ BOOL gcc_write_client_cluster_data(wStream* s, const rdpMcs* mcs)
 		/* REDIRECTION_VERSION6 requires multitransport enabled.
 		 * if we run without that use REDIRECTION_VERSION5 */
 		if (freerdp_settings_get_bool(settings, FreeRDP_SupportMultitransport))
-			flags |= (REDIRECTION_VERSION6 << 4);
+			flags |= (REDIRECTION_VERSION6 << 2);
 		else
-			flags |= (REDIRECTION_VERSION5 << 4);
+			flags |= (REDIRECTION_VERSION5 << 2);
 	}
 
 	WLog_VRB(TAG, "write ClusterInfoFlags=%s, RedirectedSessionId=0x%08" PRIx32,
