@@ -1111,8 +1111,8 @@ static xfCliprdrFuseInode* xf_cliprdr_fuse_create_root_node(void)
 	if (!rootNode)
 		return NULL;
 
-	rootNode->ino = 1;
-	rootNode->parent_ino = 1;
+	rootNode->ino = FUSE_ROOT_ID;
+	rootNode->parent_ino = FUSE_ROOT_ID;
 	rootNode->st_mode = S_IFDIR | 0755;
 	rootNode->name = _strdup("/");
 	rootNode->child_inos = ArrayList_New(TRUE);
@@ -2072,7 +2072,7 @@ static BOOL xf_cliprdr_fuse_create_nodes(xfClipboard* clipboard, wStream* s, siz
 			char* baseName = _strdup(curName);
 			if (!baseName)
 				break;
-			inode->parent_ino = 1;
+			inode->parent_ino = FUSE_ROOT_ID;
 			inode->name = baseName;
 			if (!ArrayList_Append(rootNode->child_inos, (void*)inode->ino))
 				break;
@@ -2202,7 +2202,8 @@ static BOOL xf_cliprdr_fuse_generate_list(xfClipboard* clipboard, const BYTE* da
 
 	/* prevent conflict between fuse_thread and this */
 	ArrayList_Lock(clipboard->ino_list);
-	xfCliprdrFuseInode* rootNode = xf_cliprdr_fuse_util_get_inode(clipboard->ino_list, 1);
+	xfCliprdrFuseInode* rootNode =
+	    xf_cliprdr_fuse_util_get_inode(clipboard->ino_list, FUSE_ROOT_ID);
 
 	if (!rootNode)
 	{
