@@ -62,9 +62,6 @@
 
 #define TAG CLIENT_TAG("x11")
 
-#define CB_FORMAT_GNOMECOPIEDFILES 0xD015
-#define CB_FORMAT_MATECOPIEDFILES 0xD016
-
 #define MAX_CLIPBOARD_FORMATS 255
 #define WIN32_FILETIME_TO_UNIX_EPOCH_USEC UINT64_C(116444736000000000)
 
@@ -198,6 +195,7 @@ struct xf_clipboard
 #endif
 };
 
+static const char* mime_text_plain = "text/plain";
 static const char* mime_uri_list = "text/uri-list";
 static const char* mime_FileGroupDescriptorW = "FileGroupDescriptorW";
 static const char* mime_nautilus_clipboard = "x-special/nautilus-clipboard";
@@ -836,7 +834,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 		case CF_OEMTEXT:
 		case CF_UNICODETEXT:
 			size = strlen((char*)data) + 1;
-			srcFormatId = ClipboardGetFormatId(clipboard->system, "UTF8_STRING");
+			srcFormatId = ClipboardGetFormatId(clipboard->system, mime_text_plain);
 			break;
 
 		case CF_DIB:
@@ -849,14 +847,6 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 
 		case CB_FORMAT_TEXTURILIST:
 			srcFormatId = ClipboardGetFormatId(clipboard->system, mime_uri_list);
-			break;
-
-		case CB_FORMAT_GNOMECOPIEDFILES:
-			srcFormatId = ClipboardGetFormatId(clipboard->system, mime_gnome_copied_files);
-			break;
-
-		case CB_FORMAT_MATECOPIEDFILES:
-			srcFormatId = ClipboardGetFormatId(clipboard->system, mime_mate_copied_files);
 			break;
 
 		default:
@@ -2312,18 +2302,10 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 				switch (dstTargetFormat->formatId)
 				{
 					case CF_UNICODETEXT:
-						dstFormatId = ClipboardGetFormatId(clipboard->system, "UTF8_STRING");
+						dstFormatId = ClipboardGetFormatId(clipboard->system, mime_text_plain);
 						break;
 					case CB_FORMAT_TEXTURILIST:
 						dstFormatId = ClipboardGetFormatId(clipboard->system, mime_uri_list);
-						break;
-					case CB_FORMAT_GNOMECOPIEDFILES:
-						dstFormatId =
-						    ClipboardGetFormatId(clipboard->system, mime_gnome_copied_files);
-						break;
-					case CB_FORMAT_MATECOPIEDFILES:
-						dstFormatId =
-						    ClipboardGetFormatId(clipboard->system, mime_mate_copied_files);
 						break;
 					default:
 						break;
@@ -2339,19 +2321,19 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 		{
 			case CF_TEXT:
 				srcFormatId = CF_TEXT;
-				dstFormatId = ClipboardGetFormatId(clipboard->system, "UTF8_STRING");
+				dstFormatId = ClipboardGetFormatId(clipboard->system, mime_text_plain);
 				nullTerminated = TRUE;
 				break;
 
 			case CF_OEMTEXT:
 				srcFormatId = CF_OEMTEXT;
-				dstFormatId = ClipboardGetFormatId(clipboard->system, "UTF8_STRING");
+				dstFormatId = ClipboardGetFormatId(clipboard->system, mime_text_plain);
 				nullTerminated = TRUE;
 				break;
 
 			case CF_UNICODETEXT:
 				srcFormatId = CF_UNICODETEXT;
-				dstFormatId = ClipboardGetFormatId(clipboard->system, "UTF8_STRING");
+				dstFormatId = ClipboardGetFormatId(clipboard->system, mime_text_plain);
 				nullTerminated = TRUE;
 				break;
 
@@ -3258,28 +3240,6 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 			goto error;
 
 		clientFormat = &clipboard->clientFormats[n++];
-	}
-	if (ClipboardGetFormatId(clipboard->system, mime_gnome_copied_files))
-	{
-		clipboard->file_formats_registered = TRUE;
-		clientFormat->atom = XInternAtom(xfc->display, mime_gnome_copied_files, False);
-		clientFormat->formatId = CB_FORMAT_GNOMECOPIEDFILES;
-		clientFormat->formatName = _strdup(mime_FileGroupDescriptorW);
-
-		if (!clientFormat->formatName)
-			goto error;
-
-		clientFormat = &clipboard->clientFormats[n++];
-	}
-	if (ClipboardGetFormatId(clipboard->system, mime_mate_copied_files))
-	{
-		clipboard->file_formats_registered = TRUE;
-		clientFormat->atom = XInternAtom(xfc->display, mime_mate_copied_files, False);
-		clientFormat->formatId = CB_FORMAT_MATECOPIEDFILES;
-		clientFormat->formatName = _strdup(mime_FileGroupDescriptorW);
-
-		if (!clientFormat->formatName)
-			goto error;
 	}
 
 	clipboard->numClientFormats = n;

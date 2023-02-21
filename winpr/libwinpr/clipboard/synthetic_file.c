@@ -49,11 +49,8 @@
 #include "../log.h"
 #define TAG WINPR_TAG("clipboard.synthetic.file")
 
-const char* mime_uri_list = "text/uri-list";
-const char* mime_FileGroupDescriptorW = "FileGroupDescriptorW";
-const char* mime_nautilus_clipboard = "x-special/nautilus-clipboard";
-const char* mime_gnome_copied_files = "x-special/gnome-copied-files";
-const char* mime_mate_copied_files = "x-special/mate-copied-files";
+static const char* mime_uri_list = "text/uri-list";
+static const char* mime_FileGroupDescriptorW = "FileGroupDescriptorW";
 
 struct synthetic_file
 {
@@ -698,48 +695,6 @@ static BOOL process_mate_copied_files(wClipboard* clipboard, const char* data, U
 	return process_files(clipboard, data, pSize, "copy\n");
 }
 
-static BOOL process_nautilus_clipboard(wClipboard* clipboard, const char* data, UINT32 pSize)
-{
-	return process_files(clipboard, data, pSize, "x-special/nautilus-clipboard\ncopy\n");
-}
-
-static void* convert_gnome_copied_files_to_filedescriptors(wClipboard* clipboard, UINT32 formatId,
-                                                           const void* data, UINT32* pSize)
-{
-	const UINT32 expected = ClipboardGetFormatId(clipboard, mime_gnome_copied_files);
-	if (formatId != expected)
-		return NULL;
-	if (!process_gnome_copied_files(clipboard, (const char*)data, *pSize))
-		return NULL;
-	return convert_any_uri_list_to_filedescriptors(clipboard, formatId, pSize);
-}
-
-static void* convert_mate_copied_files_to_filedescriptors(wClipboard* clipboard, UINT32 formatId,
-                                                          const void* data, UINT32* pSize)
-{
-	const UINT32 expected = ClipboardGetFormatId(clipboard, mime_mate_copied_files);
-	if (formatId != expected)
-		return NULL;
-
-	if (!process_mate_copied_files(clipboard, (const char*)data, *pSize))
-		return NULL;
-
-	return convert_any_uri_list_to_filedescriptors(clipboard, formatId, pSize);
-}
-
-static void* convert_nautilus_clipboard_to_filedescriptors(wClipboard* clipboard, UINT32 formatId,
-                                                           const void* data, UINT32* pSize)
-{
-	const UINT32 expected = ClipboardGetFormatId(clipboard, mime_nautilus_clipboard);
-	if (formatId != expected)
-		return NULL;
-
-	if (!process_nautilus_clipboard(clipboard, (const char*)data, *pSize))
-		return NULL;
-
-	return convert_any_uri_list_to_filedescriptors(clipboard, formatId, pSize);
-}
-
 static size_t count_special_chars(const WCHAR* str)
 {
 	size_t count = 0;
@@ -1013,39 +968,11 @@ static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 	wObject* obj;
 	UINT32 file_group_format_id;
 	UINT32 local_file_format_id;
-	UINT32 local_gnome_file_format_id;
-	UINT32 local_mate_file_format_id;
-	UINT32 local_nautilus_file_format_id;
 
-	/*
-	    1. Gnome Nautilus based file manager (Nautilus only with version >= 3.30 AND < 40):
-	        TARGET: UTF8_STRING
-	        format: x-special/nautilus-clipboard\copy\n\file://path\n\0
-	    2. Kde Dolpin and Qt:
-	        TARGET: text/uri-list
-	        format: file:path\r\n\0
-	        See:
-	          GTK: https://docs.gtk.org/glib/struct.Uri.html
-	          uri syntax: https://www.rfc-editor.org/rfc/rfc3986#section-3
-	          uri-lists fomat: https://www.rfc-editor.org/rfc/rfc2483#section-5
-	    3. Gnome and others (Unity/XFCE/Nautilus < 3.30/Nautilus >= 40):
-	        TARGET: x-special/gnome-copied-files
-	        format: copy\nfile://path\n\0
-	    4. Mate Caja:
-	        TARGET: x-special/mate-copied-files
-	        format: copy\nfile://path\n
-
-	    TODO: other file managers do not use previous targets and formats.
-	*/
-
-	local_gnome_file_format_id = ClipboardRegisterFormat(clipboard, mime_gnome_copied_files);
-	local_mate_file_format_id = ClipboardRegisterFormat(clipboard, mime_mate_copied_files);
-	local_nautilus_file_format_id = ClipboardRegisterFormat(clipboard, mime_utf8_string);
 	file_group_format_id = ClipboardRegisterFormat(clipboard, mime_FileGroupDescriptorW);
 	local_file_format_id = ClipboardRegisterFormat(clipboard, mime_uri_list);
 
-	if (!file_group_format_id || !local_file_format_id || !local_gnome_file_format_id ||
-	    !local_mate_file_format_id || !local_nautilus_file_format_id)
+	if (!file_group_format_id || !local_file_format_id)
 		goto error;
 
 	clipboard->localFiles = ArrayList_New(FALSE);
@@ -1062,32 +989,6 @@ static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 
 	if (!ClipboardRegisterSynthesizer(clipboard, file_group_format_id, local_file_format_id,
 	                                  convert_filedescriptors_to_uri_list))
-		goto error_free_local_files;
-
-	if (!ClipboardRegisterSynthesizer(clipboard, local_gnome_file_format_id, file_group_format_id,
-	                                  convert_gnome_copied_files_to_filedescriptors))
-		goto error_free_local_files;
-
-	if (!ClipboardRegisterSynthesizer(clipboard, file_group_format_id, local_gnome_file_format_id,
-	                                  convert_filedescriptors_to_gnome_copied_files))
-		goto error_free_local_files;
-
-	if (!ClipboardRegisterSynthesizer(clipboard, local_mate_file_format_id, file_group_format_id,
-	                                  convert_mate_copied_files_to_filedescriptors))
-		goto error_free_local_files;
-
-	if (!ClipboardRegisterSynthesizer(clipboard, file_group_format_id, local_mate_file_format_id,
-	                                  convert_filedescriptors_to_mate_copied_files))
-		goto error_free_local_files;
-
-	if (!ClipboardRegisterSynthesizer(clipboard, local_nautilus_file_format_id,
-	                                  file_group_format_id,
-	                                  convert_nautilus_clipboard_to_filedescriptors))
-		goto error_free_local_files;
-
-	if (!ClipboardRegisterSynthesizer(clipboard, file_group_format_id,
-	                                  local_nautilus_file_format_id,
-	                                  convert_filedescriptors_to_nautilus_clipboard))
 		goto error_free_local_files;
 
 	return TRUE;
