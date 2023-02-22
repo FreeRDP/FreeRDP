@@ -1349,29 +1349,27 @@ static BOOL is_accepted_fingerprint(const rdpCertificate* cert,
 
 static BOOL accept_cert(rdpTls* tls, const BYTE* pem, UINT32 length)
 {
-	rdpSettings* settings = tls->settings;
-	char* dupPem = _strdup((const char*)pem);
+	WINPR_ASSERT(tls);
+	size_t id = FreeRDP_AcceptedCert;
+	size_t lid = FreeRDP_AcceptedCertLength;
 
-	if (!dupPem)
-		return FALSE;
+	rdpSettings* settings = tls->settings;
 
 	if (tls->isGatewayTransport)
 	{
-		settings->GatewayAcceptedCert = dupPem;
-		settings->GatewayAcceptedCertLength = length;
+		id = FreeRDP_GatewayAcceptedCert;
+		lid = FreeRDP_GatewayAcceptedCertLength;
 	}
 	else if (is_redirected(tls))
 	{
-		settings->RedirectionAcceptedCert = dupPem;
-		settings->RedirectionAcceptedCertLength = length;
-	}
-	else
-	{
-		settings->AcceptedCert = dupPem;
-		settings->AcceptedCertLength = length;
+		id = FreeRDP_RedirectionAcceptedCert;
+		lid = FreeRDP_RedirectionAcceptedCertLength;
 	}
 
-	return TRUE;
+	if (!freerdp_settings_set_string_len(settings, id, pem, length))
+		return FALSE;
+
+	return freerdp_settings_set_uint32(settings, lid, length);
 }
 
 static BOOL tls_extract_pem(const rdpCertificate* cert, BYTE** PublicKey, size_t* PublicKeyLength)

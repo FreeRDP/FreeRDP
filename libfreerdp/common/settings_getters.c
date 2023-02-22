@@ -1758,9 +1758,6 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_RedirectionPreferType:
 			return settings->RedirectionPreferType;
 
-		case FreeRDP_RedirectionTargetCertificateLength:
-			return settings->RedirectionTargetCertificateLength;
-
 		case FreeRDP_RedirectionTsvUrlLength:
 			return settings->RedirectionTsvUrlLength;
 
@@ -2233,10 +2230,6 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 
 		case FreeRDP_RedirectionPreferType:
 			settings->RedirectionPreferType = cnv.c;
-			break;
-
-		case FreeRDP_RedirectionTargetCertificateLength:
-			settings->RedirectionTargetCertificateLength = cnv.c;
 			break;
 
 		case FreeRDP_RedirectionTsvUrlLength:

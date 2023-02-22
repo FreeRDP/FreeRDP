@@ -288,7 +288,6 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_RedirectionGuidLength,
 	FreeRDP_RedirectionPasswordLength,
 	FreeRDP_RedirectionPreferType,
-	FreeRDP_RedirectionTargetCertificateLength,
 	FreeRDP_RedirectionTsvUrlLength,
 	FreeRDP_RemoteAppNumIconCacheEntries,
 	FreeRDP_RemoteAppNumIconCaches,

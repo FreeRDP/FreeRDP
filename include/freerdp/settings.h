@@ -657,7 +657,6 @@ typedef struct
 #define FreeRDP_RedirectionGuid (1234)
 #define FreeRDP_RedirectionGuidLength (1235)
 #define FreeRDP_RedirectionTargetCertificate (1236)
-#define FreeRDP_RedirectionTargetCertificateLength (1237)
 #define FreeRDP_Password51 (1280)
 #define FreeRDP_Password51Length (1281)
 #define FreeRDP_SmartcardLogon (1282)
@@ -1174,9 +1173,8 @@ struct rdp_settings
 	ALIGN64 UINT32 RedirectionPreferType;         /* 1233 */
 	ALIGN64 BYTE* RedirectionGuid;                /* 1234 */
 	ALIGN64 UINT32 RedirectionGuidLength;         /* 1235 */
-	ALIGN64 BYTE* RedirectionTargetCertificate;   /* 1236 */
-	ALIGN64 UINT32 RedirectionTargetCertificateLength; /* 1237 */
-	UINT64 padding1280[1280 - 1238];                   /* 1238 */
+	ALIGN64 rdpCertificate* RedirectionTargetCertificate; /* 1236 */
+	UINT64 padding1280[1280 - 1237];                      /* 1237 */
 
 	/**
 	 * Security

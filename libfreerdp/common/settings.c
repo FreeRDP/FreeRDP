@@ -1341,8 +1341,21 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, const vo
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_RedirectionTsvUrlLength,
 			                                         data, len, sizeof(char));
 		case FreeRDP_RedirectionTargetCertificate:
-			return freerdp_settings_set_pointer_len_(
-			    settings, id, FreeRDP_RedirectionTargetCertificateLength, data, len, sizeof(BYTE));
+			freerdp_certificate_free(settings->RedirectionTargetCertificate);
+
+			if (len > 1)
+			{
+				WLog_ERR(TAG, "FreeRDP_RedirectionTargetCertificate::len must be 0 or 1");
+				return FALSE;
+			}
+			settings->RedirectionTargetCertificate = cnv.v;
+			if (!settings->RedirectionTargetCertificate && (len > 0))
+			{
+				settings->RedirectionTargetCertificate = freerdp_certificate_new();
+				if (!settings->RedirectionTargetCertificate)
+					return FALSE;
+			}
+			return TRUE;
 		case FreeRDP_RedirectionGuid:
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_RedirectionGuidLength,
 			                                         data, len, sizeof(BYTE));
