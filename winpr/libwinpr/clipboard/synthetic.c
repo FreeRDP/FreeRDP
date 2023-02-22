@@ -136,7 +136,7 @@ static void* clipboard_synthesize_cf_unicodetext(wClipboard* clipboard, UINT32 f
 			return NULL;
 		}
 
-		*pSize = len * sizeof(WCHAR);
+		*pSize = (len + 1) * sizeof(WCHAR);
 	}
 
 	return (void*)pDstData;
