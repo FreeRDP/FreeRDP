@@ -42,7 +42,7 @@ const char* mime_text_plain = "text/plain";
  * http://www.w3.org/TR/clipboard-apis/
  */
 
-static const char* CF_STANDARD_STRINGS[CF_MAX] = {
+static const char* CF_STANDARD_STRINGS[] = {
 	"CF_RAW",          /* 0 */
 	"CF_TEXT",         /* 1 */
 	"CF_BITMAP",       /* 2 */
@@ -62,6 +62,13 @@ static const char* CF_STANDARD_STRINGS[CF_MAX] = {
 	"CF_LOCALE",       /* 16 */
 	"CF_DIBV5"         /* 17 */
 };
+
+const char* ClipboardGetFormatIdString(UINT32 formatId)
+{
+	if (formatId < ARRAYSIZE(CF_STANDARD_STRINGS))
+		return CF_STANDARD_STRINGS[formatId];
+	return "CF_REGISTERED_FORMAT";
+}
 
 static wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 formatId,
                                              const char* name)
@@ -349,6 +356,19 @@ UINT32 ClipboardGetFormatIds(wClipboard* clipboard, UINT32** ppFormatIds)
 	return count;
 }
 
+static void ClipboardUninitFormats(wClipboard* clipboard)
+{
+	WINPR_ASSERT(clipboard);
+	for (UINT32 formatId = 0; formatId < clipboard->numFormats; formatId++)
+	{
+		wClipboardFormat* format = &clipboard->formats[formatId];
+		free(format->formatName);
+		free(format->synthesizers);
+		format->formatName = NULL;
+		format->synthesizers = NULL;
+	}
+}
+
 static BOOL ClipboardInitFormats(wClipboard* clipboard)
 {
 	UINT32 formatId = 0;
@@ -374,12 +394,7 @@ static BOOL ClipboardInitFormats(wClipboard* clipboard)
 	return TRUE;
 error:
 
-	for (formatId = 0; formatId < clipboard->numFormats; formatId++)
-	{
-		free(clipboard->formats[formatId].formatName);
-		free(clipboard->formats[formatId].synthesizers);
-	}
-
+	ClipboardUninitFormats(clipboard);
 	return FALSE;
 }
 
@@ -534,8 +549,7 @@ static void ClipboardInitLocalFileSubsystem(wClipboard* clipboard)
 
 wClipboard* ClipboardCreate(void)
 {
-	wClipboard* clipboard;
-	clipboard = (wClipboard*)calloc(1, sizeof(wClipboard));
+	wClipboard* clipboard = (wClipboard*)calloc(1, sizeof(wClipboard));
 
 	if (!clipboard)
 		return NULL;
@@ -544,53 +558,35 @@ wClipboard* ClipboardCreate(void)
 	clipboard->sequenceNumber = 0;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(clipboard->lock), 4000))
-		goto error_free_clipboard;
+		goto fail;
 
 	clipboard->numFormats = 0;
 	clipboard->maxFormats = 64;
 	clipboard->formats = (wClipboardFormat*)calloc(clipboard->maxFormats, sizeof(wClipboardFormat));
 
 	if (!clipboard->formats)
-		goto error_free_lock;
+		goto fail;
 
 	if (!ClipboardInitFormats(clipboard))
-		goto error_free_formats;
+		goto fail;
 
 	clipboard->delegate.clipboard = clipboard;
 	ClipboardInitLocalFileSubsystem(clipboard);
 	return clipboard;
-error_free_formats:
-	free(clipboard->formats);
-error_free_lock:
-	DeleteCriticalSection(&(clipboard->lock));
-error_free_clipboard:
-	free(clipboard);
+fail:
+	ClipboardDestroy(clipboard);
 	return NULL;
 }
 
 void ClipboardDestroy(wClipboard* clipboard)
 {
-	UINT32 index;
-	wClipboardFormat* format;
-
 	if (!clipboard)
 		return;
 
 	ArrayList_Free(clipboard->localFiles);
 	clipboard->localFiles = NULL;
 
-	for (index = 0; index < clipboard->numFormats; index++)
-	{
-		format = &(clipboard->formats[index]);
-		free((void*)format->formatName);
-
-		if (format->synthesizers)
-		{
-			free(format->synthesizers);
-			format->synthesizers = NULL;
-			format->numSynthesizers = 0;
-		}
-	}
+	ClipboardUninitFormats(clipboard);
 
 	free((void*)clipboard->data);
 	clipboard->data = NULL;

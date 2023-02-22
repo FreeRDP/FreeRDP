@@ -100,6 +100,8 @@ extern "C"
 	WINPR_API wClipboard* ClipboardCreate(void);
 	WINPR_API void ClipboardDestroy(wClipboard* clipboard);
 
+	WINPR_API const char* ClipboardGetFormatIdString(UINT32 formatId);
+
 #ifdef __cplusplus
 }
 #endif
