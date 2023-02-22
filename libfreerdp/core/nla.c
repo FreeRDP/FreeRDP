@@ -225,7 +225,8 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 			WLog_ERR(TAG, "unable to set CSP name");
 			goto out;
 		}
-		else if (!freerdp_settings_set_string(settings, FreeRDP_CspName, MS_SCARD_PROV_A))
+		if (!settings->CspName &&
+		    !freerdp_settings_set_string(settings, FreeRDP_CspName, MS_SCARD_PROV_A))
 		{
 			WLog_ERR(TAG, "unable to set CSP name");
 			goto out;
