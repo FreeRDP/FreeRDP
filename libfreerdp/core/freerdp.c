@@ -51,11 +51,21 @@
 #include <freerdp/version.h>
 #include <freerdp/log.h>
 #include <freerdp/cache/pointer.h>
+#include <freerdp/utils/signal.h>
 
 #include "settings.h"
 #include "utils.h"
 
 #define TAG FREERDP_TAG("core")
+
+static void sig_abort_connect(int signum, const char* signame, void* ctx)
+{
+	rdpContext* context = (rdpContext*)ctx;
+
+	WLog_INFO(TAG, "Signal %s [%d], terminating session %p", signame, signum, context);
+	if (context)
+		freerdp_abort_connect_context(context);
+}
 
 /** Creates a new connection based on the settings found in the "instance" parameter
  *  It will use the callbacks registered on the structure to process the pre/post connect operations
@@ -99,6 +109,8 @@ static int freerdp_connect_begin(freerdp* instance)
 
 	if (!freerdp_settings_set_default_order_support(settings))
 		return -1;
+
+	freerdp_add_signal_cleanup_handler(instance->context, sig_abort_connect);
 
 	IFCALLRET(instance->PreConnect, status, instance);
 	instance->ConnectionCallbackState = CLIENT_STATE_PRECONNECT_PASSED;
@@ -550,6 +562,7 @@ BOOL freerdp_disconnect(freerdp* instance)
 
 	IFCALL(instance->PostFinalDisconnect, instance);
 
+	freerdp_del_signal_cleanup_handler(instance->context, sig_abort_connect);
 	return rc;
 }
 

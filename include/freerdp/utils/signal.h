@@ -26,11 +26,6 @@
 #ifndef _WIN32
 #include <signal.h>
 #include <termios.h>
-
-FREERDP_API extern volatile sig_atomic_t terminal_needs_reset;
-FREERDP_API extern int terminal_fildes;
-FREERDP_API extern struct termios orig_flags;
-FREERDP_API extern struct termios new_flags;
 #endif
 
 #ifdef __cplusplus
@@ -38,7 +33,40 @@ extern "C"
 {
 #endif
 
+	typedef void (*freerdp_signal_handler_t)(int signum, const char* signame, void* context);
+
+#ifndef _WIN32
+	FREERDP_API extern volatile sig_atomic_t terminal_needs_reset;
+	FREERDP_API extern int terminal_fildes;
+	FREERDP_API extern struct termios orig_flags;
+	FREERDP_API extern struct termios new_flags;
+#endif
+
 	FREERDP_API int freerdp_handle_signals(void);
+
+	/** \brief registers a cleanup handler for non fatal signals.
+	 *
+	 *  This allows cleaning up resources like with \b atexit but for signals.
+	 *
+	 *  \param context a context for the clenaup handler.
+	 *  \param handler the function to call on cleanup. Must not be \b NULL
+	 *
+	 *  \return \b TRUE if registered successfully, \b FALSE otherwise.
+	 */
+	FREERDP_API BOOL freerdp_add_signal_cleanup_handler(void* context,
+	                                                    freerdp_signal_handler_t handler);
+
+	/** \brief unregisters a cleanup handler for non fatal signals.
+	 *
+	 *  This allows removal of a cleanup handler for signals.
+	 *
+	 *  \param context a context for the clenaup handler.
+	 *  \param handler the function to call on cleanup. Must not be \b NULL
+	 *
+	 *  \return \b TRUE if unregistered successfully, \b FALSE otherwise.
+	 */
+	FREERDP_API BOOL freerdp_del_signal_cleanup_handler(void* context,
+	                                                    freerdp_signal_handler_t handler);
 
 #ifdef __cplusplus
 }

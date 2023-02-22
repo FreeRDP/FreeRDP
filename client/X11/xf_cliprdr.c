@@ -53,6 +53,7 @@
 #include <winpr/clipboard.h>
 #include <winpr/path.h>
 
+#include <freerdp/utils/signal.h>
 #include <freerdp/log.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/channels/channels.h>
@@ -3067,6 +3068,29 @@ static struct fuse_lowlevel_ops xf_cliprdr_fuse_oper = {
 	.opendir = xf_cliprdr_fuse_opendir,
 };
 
+static void fuse_session_terminate(xfClipboard* clipboard)
+{
+	if (!clipboard)
+		return;
+
+	if (clipboard->fuse_sess)
+		fuse_session_exit(clipboard->fuse_sess);
+
+	/* 	not elegant but works for umounting FUSE
+	    fuse_chan must receieve a oper buf to unblock fuse_session_receive_buf function.
+	*/
+	WINPR_ASSERT(clipboard->delegate);
+	winpr_PathFileExists(clipboard->delegate->basePath);
+}
+
+static void fuse_abort(int sig, const char* signame, void* context)
+{
+	xfClipboard* clipboard = (xfClipboard*)context;
+
+	WLog_INFO(TAG, "signal %s [%d] aborting session", signame, sig);
+	fuse_session_terminate(clipboard);
+}
+
 static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 {
 	xfClipboard* clipboard = (xfClipboard*)arg;
@@ -3108,11 +3132,13 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 	if ((clipboard->fuse_sess = fuse_session_new(
 	         &args, &xf_cliprdr_fuse_oper, sizeof(xf_cliprdr_fuse_oper), (void*)clipboard)) != NULL)
 	{
+		freerdp_add_signal_cleanup_handler(clipboard, fuse_abort);
 		if (0 == fuse_session_mount(clipboard->fuse_sess, clipboard->delegate->basePath))
 		{
 			fuse_session_loop(clipboard->fuse_sess);
 			fuse_session_unmount(clipboard->fuse_sess);
 		}
+		freerdp_del_signal_cleanup_handler(clipboard, fuse_abort);
 		fuse_session_destroy(clipboard->fuse_sess);
 	}
 #else
@@ -3123,11 +3149,13 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 		                                         sizeof(xf_cliprdr_fuse_oper), (void*)clipboard);
 		if (clipboard->fuse_sess != NULL)
 		{
+			freerdp_add_signal_cleanup_handler(clipboard, fuse_abort);
 			fuse_session_add_chan(clipboard->fuse_sess, ch);
 			const int err = fuse_session_loop(clipboard->fuse_sess);
 			if (err != 0)
 				WLog_WARN(TAG, "fuse_session_loop failed with %d", err);
 			fuse_session_remove_chan(ch);
+			freerdp_del_signal_cleanup_handler(clipboard, fuse_abort);
 			fuse_session_destroy(clipboard->fuse_sess);
 		}
 		fuse_unmount(clipboard->delegate->basePath, ch);
@@ -3145,7 +3173,7 @@ static DWORD WINAPI xf_cliprdr_fuse_thread(LPVOID arg)
 
 xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 {
-	int i, n = 0;
+	int n = 0;
 	rdpChannels* channels;
 	xfClipboard* clipboard;
 	const char* selectionAtom;
@@ -3374,7 +3402,7 @@ void xf_clipboard_free(xfClipboard* clipboard)
 
 	if (clipboard->numClientFormats)
 	{
-		for (int i = 0; i < clipboard->numClientFormats; i++)
+		for (UINT32 i = 0; i < clipboard->numClientFormats; i++)
 		{
 			xfCliprdrFormat* format = &clipboard->clientFormats[i];
 			free(format->formatName);
@@ -3384,14 +3412,7 @@ void xf_clipboard_free(xfClipboard* clipboard)
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 	if (clipboard->fuse_thread)
 	{
-		if (clipboard->fuse_sess)
-			fuse_session_exit(clipboard->fuse_sess);
-
-		/* 	not elegant but works for umounting FUSE
-		    fuse_chan must receieve a oper buf to unblock fuse_session_receive_buf function.
-		*/
-		winpr_PathFileExists(clipboard->delegate->basePath);
-
+		fuse_session_terminate(clipboard);
 		WaitForSingleObject(clipboard->fuse_thread, INFINITE);
 		CloseHandle(clipboard->fuse_thread);
 	}
