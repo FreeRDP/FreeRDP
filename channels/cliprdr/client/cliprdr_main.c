@@ -100,9 +100,6 @@ static UINT cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 	Stream_SetPosition(s, pos);
 
 	WLog_DBG(TAG, "Cliprdr Sending (%" PRIu32 " bytes)", dataLen + 8);
-#if defined(WITH_DEBUG_CLIPRDR)
-	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), dataLen + 8);
-#endif
 
 	if (!cliprdr)
 	{
@@ -458,9 +455,6 @@ static UINT cliprdr_order_recv(LPVOID userdata, wStream* s)
 
 	WLog_DBG(TAG, "msgType: %s (%" PRIu16 "), msgFlags: %" PRIu16 " dataLen: %" PRIu32 "",
 	         CB_MSG_TYPE_STRINGS(msgType), msgType, msgFlags, dataLen);
-#if defined(WITH_DEBUG_CLIPRDR)
-	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Buffer(s), dataLen + 8);
-#endif
 
 	switch (msgType)
 	{
