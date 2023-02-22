@@ -368,8 +368,6 @@ static const struct settings_str_entry settings_map[] = {
 	  "FreeRDP_RedirectionPasswordLength" },
 	{ FreeRDP_RedirectionPreferType, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_RedirectionPreferType" },
-	{ FreeRDP_RedirectionTargetCertificateLength, FREERDP_SETTINGS_TYPE_UINT32,
-	  "FreeRDP_RedirectionTargetCertificateLength" },
 	{ FreeRDP_RedirectionTsvUrlLength, FREERDP_SETTINGS_TYPE_UINT32,
 	  "FreeRDP_RedirectionTsvUrlLength" },
 	{ FreeRDP_RemoteAppNumIconCacheEntries, FREERDP_SETTINGS_TYPE_UINT32,

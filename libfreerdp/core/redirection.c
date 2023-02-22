@@ -23,10 +23,11 @@
 
 #include <winpr/crt.h>
 #include <freerdp/log.h>
+#include <freerdp/crypto/certificate.h>
 #include <freerdp/redirection.h>
 #include <freerdp/utils/string.h>
 
-#include "connection.h"
+#include "../crypto/certificate.h"
 #include "redirection.h"
 #include "utils.h"
 
@@ -51,8 +52,8 @@ struct rdp_redirection
 	char** TargetNetAddresses;
 	UINT32 RedirectionGuidLength;
 	BYTE* RedirectionGuid;
-	UINT32 TargetCertificateLength;
-	BYTE* TargetCertificate;
+
+	rdpCertificate* TargetCertificate;
 };
 
 static void redirection_free_array(char*** what, UINT32* count)
@@ -141,29 +142,37 @@ static BOOL redirection_copy_array(char*** dst, UINT32* plen, const char** str, 
 	return *dst != NULL;
 }
 
+static BOOL rdp_redirection_get_data(wStream* s, UINT32* pLength, const BYTE** pData)
+{
+	WINPR_ASSERT(pLength);
+	WINPR_ASSERT(pData);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		return FALSE;
+
+	Stream_Read_UINT32(s, *pLength);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, *pLength))
+		return FALSE;
+
+	*pData = Stream_Pointer(s);
+	Stream_Seek(s, *pLength);
+	return TRUE;
+}
+
 static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t maxLength)
 {
 	UINT32 length = 0;
 	const WCHAR* wstr = NULL;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!rdp_redirection_get_data(s, &length, &wstr))
 		return FALSE;
-
-	Stream_Read_UINT32(s, length);
 
 	if ((length % 2) || length < 2 || length > maxLength)
 	{
 		WLog_ERR(TAG, "failure: invalid unicode string length: %" PRIu32 "", length);
 		return FALSE;
 	}
-
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
-	{
-		WLog_ERR(TAG, "failure: insufficient stream length (%" PRIu32 " bytes required)", length);
-		return FALSE;
-	}
-
-	wstr = (const WCHAR*)Stream_Pointer(s);
 
 	if (wstr[length / 2 - 1])
 	{
@@ -179,8 +188,169 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 		return FALSE;
 	}
 
-	Stream_Seek(s, length);
 	return TRUE;
+}
+
+static BOOL replace_char(char* utf8, size_t length, char what, char with)
+{
+	for (size_t x = 0; x < length; x++)
+	{
+		char* cur = &utf8[x];
+		if (*cur == what)
+			*cur = with;
+	}
+	return TRUE;
+}
+
+static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* pLength,
+                                              BYTE** pData)
+{
+	BOOL rc = FALSE;
+	char buffer[64] = { 0 };
+	const BYTE* ptr = NULL;
+
+	if (!rdp_redirection_get_data(s, pLength, &ptr))
+		return FALSE;
+	const WCHAR* wchar = ptr;
+
+	size_t utf8_len = 0;
+	char* utf8 = ConvertWCharNToUtf8Alloc(wchar, *pLength, &utf8_len);
+	if (!utf8)
+		return FALSE;
+
+	redirection_free_data(pData, NULL);
+
+	utf8_len = strnlen(utf8, utf8_len);
+	*pData = calloc(utf8_len, sizeof(BYTE));
+	if (!*pData)
+		goto fail;
+
+	size_t rlen = utf8_len;
+	size_t wpos = 0;
+	char* tok = strtok(utf8, "\r\n");
+	while (tok)
+	{
+		const size_t len = strnlen(tok, rlen);
+		rlen -= len;
+
+		size_t plen = 0;
+		BYTE* ptr = NULL;
+		crypto_base64_decode(tok, len, &ptr, &plen);
+		if (!ptr)
+			goto fail;
+		memcpy(&(*pData)[wpos], ptr, plen);
+		wpos += plen;
+
+		tok = strtok(NULL, "\r\n");
+	}
+	*pLength = wpos;
+
+	WLog_DBG(TAG, "%s:", rdp_redirection_flags_to_string(flag, buffer, sizeof(buffer)));
+
+	rc = TRUE;
+fail:
+	free(utf8);
+	return rc;
+}
+
+static BOOL rdp_target_cert_get_element(wStream* s, UINT32* pType, UINT32* pEncoding,
+                                        const BYTE** ptr, size_t* pLength)
+{
+	WINPR_ASSERT(pType);
+	WINPR_ASSERT(pEncoding);
+	WINPR_ASSERT(ptr);
+	WINPR_ASSERT(pLength);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
+		return FALSE;
+
+	UINT32 type = 0;
+	UINT32 encoding = 0;
+	UINT32 elementSize = 0;
+
+	Stream_Read_UINT32(s, type);
+	Stream_Read_UINT32(s, encoding);
+	Stream_Read_UINT32(s, elementSize);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, elementSize))
+		return FALSE;
+
+	*ptr = Stream_Pointer(s);
+	*pLength = elementSize;
+	Stream_Seek(s, elementSize);
+
+	*pType = type;
+	*pEncoding = encoding;
+	return TRUE;
+}
+
+static BOOL rdp_redirection_read_target_cert(rdpRedirection* redirection, const BYTE* data,
+                                             size_t length)
+{
+	wStream sbuffer = { 0 };
+	wStream* s = Stream_StaticConstInit(&sbuffer, data, length);
+
+	freerdp_certificate_free(redirection->TargetCertificate);
+	redirection->TargetCertificate = NULL;
+
+	size_t plength = 0;
+	BYTE* ptr = NULL;
+	while (Stream_GetRemainingLength(s) > 0)
+	{
+		UINT32 type = 0;
+		UINT32 encoding = 0;
+		if (!rdp_target_cert_get_element(s, &type, &encoding, &ptr, &plength))
+			return FALSE;
+
+		switch (type)
+		{
+			case 32: /* ELEMENT_TYPE_CERTIFICATE */
+				if (encoding == 1 /* ENCODING_TYPE_ASN1_DER */)
+				{
+					if (redirection->TargetCertificate)
+						WLog_WARN(TAG, "Duplicate TargetCertificate in data detected!");
+					else
+						redirection->TargetCertificate =
+						    freerdp_certificate_new_from_der(ptr, plength);
+				}
+				break;
+			default: /* ignore unknown fields */
+				WLog_WARN(TAG,
+				          "Unknown TargetCertificate field type %" PRIu32 ", encoding %" PRIu32
+				          " of length %" PRIu32,
+				          type, encoding, plength);
+				break;
+		}
+	}
+
+	return redirection->TargetCertificate != NULL;
+}
+
+static BOOL rdp_redireciton_write_target_cert_stream(wStream* s, const rdpCertificate* cert)
+{
+#if 0
+	if (!Stream_EnsureRemainingCapacity(s, 4ull + length))
+		return FALSE;
+
+	Stream_Write_UINT32(s, length);
+	Stream_Write(s, data, length);
+#endif
+	return FALSE;
+}
+
+static BOOL rdp_redirection_read_target_cert_stream(wStream* s, rdpRedirection* redirection)
+{
+	UINT32 length = 0;
+	BYTE* ptr = NULL;
+
+	WINPR_ASSERT(redirection);
+
+	if (!rdp_redirection_read_base64_wchar(LB_TARGET_CERTIFICATE, s, &length, &ptr))
+		return FALSE;
+
+	const BOOL rc = rdp_redirection_read_target_cert(redirection, ptr, length);
+	free(ptr);
+	return rc;
 }
 
 int rdp_redirection_apply_settings(rdpRdp* rdp)
@@ -310,9 +480,23 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 
 	if (settings->RedirectionFlags & LB_TARGET_CERTIFICATE)
 	{
-		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionTargetCertificate,
-		                                      redirection->TargetCertificate,
-		                                      redirection->TargetCertificateLength))
+		rdpCertificate* cert = freerdp_certificate_clone(redirection->TargetCertificate);
+		if (!freerdp_settings_set_pointer(settings, FreeRDP_RedirectionTargetCertificate, cert))
+			return -1;
+
+		BOOL pres = FALSE;
+		size_t length = 0;
+		char* pem = freerdp_certificate_get_pem(cert, &length);
+		if (pem)
+		{
+			pres = freerdp_settings_set_string_len(settings, FreeRDP_RedirectionAcceptedCert, pem,
+			                                       length);
+			if (pres)
+				pres = freerdp_settings_set_uint32(settings, FreeRDP_RedirectionAcceptedCertLength,
+				                                   length);
+		}
+		free(pem);
+		if (!pres)
 			return -1;
 	}
 
@@ -322,16 +506,9 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 static BOOL rdp_redirection_read_data(UINT32 flag, wStream* s, UINT32* pLength, BYTE** pData)
 {
 	char buffer[64] = { 0 };
+	const BYTE* ptr = NULL;
 
-	WINPR_ASSERT(pLength);
-	WINPR_ASSERT(pData);
-
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
-		return FALSE;
-
-	Stream_Read_UINT32(s, *pLength);
-
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, *pLength))
+	if (!rdp_redirection_get_data(s, pLength, &ptr))
 		return FALSE;
 
 	redirection_free_data(pData, NULL);
@@ -339,10 +516,10 @@ static BOOL rdp_redirection_read_data(UINT32 flag, wStream* s, UINT32* pLength, 
 
 	if (!*pData)
 		return FALSE;
+	memcpy(*pData, ptr, *pLength);
 
-	Stream_Read(s, *pData, *pLength);
 	WLog_DBG(TAG, "%s:", rdp_redirection_flags_to_string(flag, buffer, sizeof(buffer)));
-	winpr_HexDump(TAG, WLOG_DEBUG, *pData, *pLength);
+
 	return TRUE;
 }
 
@@ -490,16 +667,15 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_REDIRECTION_GUID)
 	{
-		if (!rdp_redirection_read_data(LB_REDIRECTION_GUID, s, &redirection->RedirectionGuidLength,
-		                               &redirection->RedirectionGuid))
+		if (!rdp_redirection_read_base64_wchar(LB_REDIRECTION_GUID, s,
+		                                       &redirection->RedirectionGuidLength,
+		                                       &redirection->RedirectionGuid))
 			return STATE_RUN_FAILED;
 	}
 
 	if (redirection->flags & LB_TARGET_CERTIFICATE)
 	{
-		if (!rdp_redirection_read_data(LB_TARGET_CERTIFICATE, s,
-		                               &redirection->TargetCertificateLength,
-		                               &redirection->TargetCertificate))
+		if (!rdp_redirection_read_target_cert_stream(s, redirection))
 			return STATE_RUN_FAILED;
 	}
 
@@ -588,8 +764,7 @@ void redirection_free(rdpRedirection* redirection)
 		redirection_free_data(&redirection->LoadBalanceInfo, &redirection->LoadBalanceInfoLength);
 		redirection_free_data(&redirection->Password, &redirection->PasswordLength);
 		redirection_free_data(&redirection->RedirectionGuid, &redirection->RedirectionGuidLength);
-		redirection_free_data(&redirection->TargetCertificate,
-		                      &redirection->TargetCertificateLength);
+		freerdp_certificate_free(redirection->TargetCertificate);
 		redirection_free_array(&redirection->TargetNetAddresses,
 		                       &redirection->TargetNetAddressesCount);
 
@@ -708,8 +883,7 @@ BOOL rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirec
 
 	if (redirection->flags & LB_TARGET_CERTIFICATE)
 	{
-		if (!redir_write_data(LB_REDIRECTION_GUID, s, redirection->TargetCertificateLength,
-		                      redirection->TargetCertificate))
+		if (!rdp_redireciton_write_target_cert_stream(s, redirection->TargetCertificate))
 			goto fail;
 	}
 
@@ -836,7 +1010,7 @@ BOOL redirection_settings_are_valid(rdpRedirection* redirection, UINT32* pFlags)
 
 	if (redirection->flags & LB_TARGET_CERTIFICATE)
 	{
-		if (!redirection->TargetCertificate || (redirection->TargetCertificateLength == 0))
+		if (!redirection->TargetCertificate)
 			flags |= LB_TARGET_CERTIFICATE;
 	}
 
@@ -888,8 +1062,8 @@ BOOL redirection_set_byte_option(rdpRedirection* redirection, UINT32 flag, const
 			return redirection_copy_data(&redirection->RedirectionGuid,
 			                             &redirection->RedirectionGuidLength, data, length);
 		case LB_TARGET_CERTIFICATE:
-			return redirection_copy_data(&redirection->TargetCertificate,
-			                             &redirection->TargetCertificateLength, data, length);
+			freerdp_certificate_free(redirection->TargetCertificate);
+			return FALSE; // TODO rdp_redireciton_read_target_cert(redirection, data, length);
 		default:
 			return redirection_unsupported(__FUNCTION__, flag,
 			                               LB_CLIENT_TSV_URL | LB_PASSWORD | LB_LOAD_BALANCE_INFO |
