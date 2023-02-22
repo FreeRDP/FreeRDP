@@ -181,7 +181,7 @@ X509* x509_from_rsa(const RSA* rsa)
 	if (!bio)
 		return NULL;
 
-	const int rc = PEM_write_bio_RSA_PUBKEY(bio, rsa);
+	const int rc = PEM_write_bio_RSA_PUBKEY(bio, (RSA*)rsa);
 	if (rc != 1)
 		goto fail;
 

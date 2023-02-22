@@ -399,7 +399,7 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 	WINPR_ASSERT(pLength);
 
 	const size_t length = strlen(data);
-	crypto_base64_decode(data, length, &decoded, &decoded_length);
+	crypto_base64_decode(data, length, (BYTE**)&decoded, &decoded_length);
 	if (!decoded || decoded_length == 0)
 		WLog_ERR(TAG, "Failed to decode base64 data from %s of length %" PRIuz, name, length);
 	WINPR_ASSERT(strnlen(decoded, decoded_length) == decoded_length - 1);
