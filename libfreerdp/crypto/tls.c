@@ -1050,7 +1050,7 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 	if (!tls_prepare(tls, underlying, methods, options, FALSE))
 		return TLS_HANDSHAKE_ERROR;
 
-	rdpPrivateKey* key = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey);
+	const rdpPrivateKey* key = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey);
 	if (!key)
 	{
 		WLog_ERR(TAG, "invalid private key");
@@ -1077,7 +1077,8 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 		return TLS_HANDSHAKE_ERROR;
 	}
 
-	rdpCertificate* cert = freerdp_settings_get_pointer(settings, FreeRDP_RdpServerCertificate);
+	rdpCertificate* cert =
+	    freerdp_settings_get_pointer_writable(settings, FreeRDP_RdpServerCertificate);
 	if (!cert)
 	{
 		WLog_ERR(TAG, "invalid certificate");
@@ -1377,7 +1378,7 @@ static BOOL tls_extract_pem(const rdpCertificate* cert, BYTE** PublicKey, size_t
 {
 	if (!cert || !PublicKey)
 		return FALSE;
-	*PublicKey = freerdp_certificate_get_pem(cert, PublicKeyLength);
+	*PublicKey = (BYTE*)freerdp_certificate_get_pem(cert, PublicKeyLength);
 	return *PublicKey != NULL;
 }
 

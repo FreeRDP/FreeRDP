@@ -559,7 +559,7 @@ void x509_utils_print_info(const X509* xcert)
 	char* subject;
 	subject = x509_utils_get_subject(xcert);
 	issuer = x509_utils_get_issuer(xcert);
-	fp = x509_utils_get_hash(xcert, "sha256", NULL);
+	fp = (char*)x509_utils_get_hash(xcert, "sha256", NULL);
 
 	if (!fp)
 	{
@@ -605,7 +605,7 @@ BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain, size_t
 		return NULL;
 	}
 
-	status = PEM_write_bio_X509(bio, xcert);
+	status = PEM_write_bio_X509(bio, (X509*)xcert);
 
 	if (status < 0)
 	{
@@ -774,7 +774,7 @@ char* x509_utils_get_common_name(const X509* xcert, size_t* plength)
 	if (subject_name == NULL)
 		return NULL;
 
-	const int index = X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
+	const int index = X509_NAME_get_index_by_NID((X509_NAME*)subject_name, NID_commonName, -1);
 	if (index < 0)
 		return NULL;
 
