@@ -917,7 +917,8 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 			}
 		}
 	}
-	winpr_HexDump(TAG, WLOG_DEBUG, (const BYTE*)dst, alloc);
+
+	alloc = strnlen(dst, alloc) + 1;
 	*pSize = (UINT32)alloc;
 	clipboard->fileListSequenceNumber = clipboard->sequenceNumber;
 	return dst;
