@@ -1727,16 +1727,15 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls, TCHAR* authPkg)
 		CredFree(marshalledCredentials);
 	}
 	else
-#else
+#endif
 	{
 		if (sspi_SetAuthIdentityA(&identity, settings->GatewayUsername, settings->GatewayDomain,
 		                          settings->GatewayPassword) < 0)
 			return FALSE;
 	}
-#endif
 
-	    if (!credssp_auth_setup_client(rdg->auth, "HTTP", settings->GatewayHostname, &identity,
-	                                   rdg->smartcard ? rdg->smartcard->pkinitArgs : NULL))
+	if (!credssp_auth_setup_client(rdg->auth, "HTTP", settings->GatewayHostname, &identity,
+	                               rdg->smartcard ? rdg->smartcard->pkinitArgs : NULL))
 	{
 		sspi_FreeAuthIdentity(&identity);
 		return FALSE;
