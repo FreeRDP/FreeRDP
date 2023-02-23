@@ -351,15 +351,15 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 	}
 	else if (settings->SmartcardLogon)
 	{
-#ifdef _WIN32
-		CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
-		LPSTR marshalledCredentials;
-
 		if (smartCardLogonWasDisabled)
 		{
 			if (!nla_adjust_settings_from_smartcard(nla))
 				return FALSE;
 		}
+
+#ifdef _WIN32
+		CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
+		LPSTR marshalledCredentials;
 
 		memcpy(certInfo.rgbHashOfCert, nla->certSha1, sizeof(certInfo.rgbHashOfCert));
 
