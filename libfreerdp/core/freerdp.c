@@ -1131,6 +1131,19 @@ BOOL freerdp_nla_revert_to_self(rdpContext* context)
 	return nla_revert_to_self(nla);
 }
 
+UINT32 freerdp_get_nla_sspi_error(rdpContext* context)
+{
+	rdpNla* nla;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->rdp);
+	WINPR_ASSERT(context->rdp->transport);
+
+	nla = transport_get_nla(context->rdp->transport);
+
+	return nla_get_sspi_error(nla);
+}
+
 HANDLE getChannelErrorEventHandle(rdpContext* context)
 {
 	WINPR_ASSERT(context);

@@ -65,6 +65,7 @@ struct rdp_credssp_auth
 	SecBuffer output_buffer;
 	ULONG flags;
 	SecPkgContext_Sizes sizes;
+	SECURITY_STATUS sspi_error;
 	enum AUTH_STATE state;
 #ifdef UNICODE
 	char* pkgNameA;
@@ -441,6 +442,7 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 		WLog_ERR(TAG, "%s failed with %s [0x%08X]",
 		         auth->server ? "AcceptSecurityContext" : "InitializeSecurityContext",
 		         GetSecurityStatusString(status), status);
+		auth->sspi_error = status;
 		return -1;
 	}
 }
@@ -651,6 +653,12 @@ const char* credssp_auth_pkg_name(rdpCredsspAuth* auth)
 #else
 	return auth->info->Name;
 #endif
+}
+
+UINT32 credssp_auth_sspi_error(rdpCredsspAuth* auth)
+{
+	WINPR_ASSERT(auth);
+	return (UINT32)auth->sspi_error;
 }
 
 void credssp_auth_free(rdpCredsspAuth* auth)
