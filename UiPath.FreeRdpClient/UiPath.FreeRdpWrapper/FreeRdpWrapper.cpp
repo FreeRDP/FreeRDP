@@ -36,12 +36,12 @@ namespace FreeRdpClient
 		auto rdpError = freerdp_get_last_error(context);
 		const char* rdpErrorString = freerdp_get_last_error_string(rdpError);
 
-		DT_ERROR(L"Connection failed: %x, Message: '%s'", rdpError, rdpErrorString);
 
 		WCHAR szMsgBuff[MAX_TRACE_MSG];
 		swprintf_s(szMsgBuff, _countof(szMsgBuff),
 		           L"Rdp connection failed: Message: %S, Last error: %d", rdpErrorString, rdpError);
 		SetErrorInfo(szMsgBuff);		
+		DT_ERROR(szMsgBuff);
 	}
 
 	freerdp* CreateFreeRdpInstance()
