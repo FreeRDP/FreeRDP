@@ -60,6 +60,7 @@
 #include <freerdp/channels/cliprdr.h>
 
 #include "xf_cliprdr.h"
+#include "xf_event.h"
 
 #define TAG CLIENT_TAG("x11.cliprdr")
 
@@ -159,7 +160,7 @@ struct xf_clipboard
 	BYTE* data_raw;
 	BOOL data_raw_format;
 
-	xfCliprdrFormat* requestedFormat;
+	const xfCliprdrFormat* requestedFormat;
 
 	int data_length;
 	int data_raw_length;
@@ -1115,6 +1116,69 @@ static void xf_cliprdr_provide_data(xfClipboard* clipboard, const XSelectionEven
 	}
 }
 
+static void log_selection_event(xfContext* xfc, const XEvent* event)
+{
+	const DWORD level = WLOG_TRACE;
+	static wLog* _log_cached_ptr = NULL;
+	if (!_log_cached_ptr)
+		_log_cached_ptr = WLog_Get(TAG);
+	if (WLog_IsLevelActive(_log_cached_ptr, level))
+	{
+
+		switch (event->type)
+		{
+			case SelectionClear:
+			{
+				const XSelectionClearEvent* xevent = &event->xselectionclear;
+				char* selection = XGetAtomName(xfc->display, xevent->selection);
+				WLog_Print(_log_cached_ptr, level, "got event %s [selection %s]",
+				           x11_event_string(event->type), selection);
+				XFree(selection);
+			}
+			break;
+			case SelectionNotify:
+			{
+				const XSelectionEvent* xevent = &event->xselection;
+				char* selection = XGetAtomName(xfc->display, xevent->selection);
+				char* target = XGetAtomName(xfc->display, xevent->target);
+				char* property = XGetAtomName(xfc->display, xevent->property);
+				WLog_Print(_log_cached_ptr, level,
+				           "got event %s [selection %s, target %s, property %s]",
+				           x11_event_string(event->type), selection, target, property);
+				XFree(selection);
+				XFree(target);
+				XFree(property);
+			}
+			break;
+			case SelectionRequest:
+			{
+				const XSelectionRequestEvent* xevent = &event->xselectionrequest;
+				char* selection = XGetAtomName(xfc->display, xevent->selection);
+				char* target = XGetAtomName(xfc->display, xevent->target);
+				char* property = XGetAtomName(xfc->display, xevent->property);
+				WLog_Print(_log_cached_ptr, level,
+				           "got event %s [selection %s, target %s, property %s]",
+				           x11_event_string(event->type), selection, target, property);
+				XFree(selection);
+				XFree(target);
+				XFree(property);
+			}
+			break;
+			case PropertyNotify:
+			{
+				const XPropertyEvent* xevent = &event->xproperty;
+				char* atom = XGetAtomName(xfc->display, xevent->atom);
+				WLog_Print(_log_cached_ptr, level, "got event %s [atom %s]",
+				           x11_event_string(event->type), atom);
+				XFree(atom);
+			}
+			break;
+			default:
+				break;
+		}
+	}
+}
+
 static BOOL xf_cliprdr_process_selection_notify(xfClipboard* clipboard,
                                                 const XSelectionEvent* xevent)
 {
@@ -1463,18 +1527,22 @@ void xf_cliprdr_handle_xevent(xfContext* xfc, const XEvent* event)
 	switch (event->type)
 	{
 		case SelectionNotify:
+			log_selection_event(xfc, event);
 			xf_cliprdr_process_selection_notify(clipboard, &event->xselection);
 			break;
 
 		case SelectionRequest:
+			log_selection_event(xfc, event);
 			xf_cliprdr_process_selection_request(clipboard, &event->xselectionrequest);
 			break;
 
 		case SelectionClear:
+			log_selection_event(xfc, event);
 			xf_cliprdr_process_selection_clear(clipboard, &event->xselectionclear);
 			break;
 
 		case PropertyNotify:
+			log_selection_event(xfc, event);
 			xf_cliprdr_process_property_notify(clipboard, &event->xproperty);
 			break;
 
@@ -1484,6 +1552,8 @@ void xf_cliprdr_handle_xevent(xfContext* xfc, const XEvent* event)
 				xf_cliprdr_check_owner(clipboard);
 			}
 
+			break;
+		default:
 			break;
 	}
 }
@@ -1526,7 +1596,7 @@ static UINT xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
  */
 static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL force)
 {
-	UINT32 i, numFormats;
+	UINT32 numFormats;
 	CLIPRDR_FORMAT* formats = NULL;
 	UINT ret;
 	xfContext* xfc;
@@ -2268,7 +2338,6 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	UINT32 SrcSize;
 	UINT32 srcFormatId;
 	UINT32 dstFormatId;
-	const xfCliprdrFormat* dstTargetFormat;
 	BOOL nullTerminated = FALSE;
 	UINT32 size;
 	const BYTE* data;
@@ -2321,19 +2390,18 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 			nullTerminated = TRUE;
 		}
 
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 		if (strcmp(clipboard->requestedFormat->formatName, type_FileGroupDescriptorW) == 0)
 		{
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 			/* Build inode table for FILEDESCRIPTORW*/
 			if (!xf_cliprdr_fuse_generate_list(clipboard, data, size))
 			{
 				/* just continue */
 				WLog_WARN(TAG, "fail to generate list for FILEDESCRIPTOR");
 			}
-#endif
 
 			srcFormatId = ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
-			dstTargetFormat =
+			const xfCliprdrFormat* dstTargetFormat =
 			    xf_cliprdr_get_client_format_by_atom(clipboard, clipboard->respond->target);
 			if (!dstTargetFormat)
 			{
@@ -2346,6 +2414,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 			nullTerminated = TRUE;
 		}
+#endif
 	}
 	else
 	{
