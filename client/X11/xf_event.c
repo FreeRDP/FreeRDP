@@ -46,7 +46,7 @@
 	if (y < 0)                  \
 	y = 0
 
-static const char* x11_event_string(int event)
+const char* x11_event_string(int event)
 {
 	switch (event)
 	{
