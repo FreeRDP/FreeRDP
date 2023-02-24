@@ -32,13 +32,6 @@ set(${MODULE_PREFIX}_KERBEROS_SRCS
 	Kerberos/kerberos.c
 	Kerberos/kerberos.h)
 
-if(KRB5_FOUND)
-	list(APPEND ${MODULE_PREFIX}_KERBEROS_SRCS
-		Kerberos/krb5glue_mit.c
-		Kerberos/krb5glue_heimdal.c
-		Kerberos/krb5glue.h)
-endif()
-
 set(${MODULE_PREFIX}_NEGOTIATE_SRCS
 	Negotiate/negotiate.c
 	Negotiate/negotiate.h)
@@ -62,6 +55,45 @@ set(${MODULE_PREFIX}_SRCS
 	sspi.c
 	sspi.h)
 
+set(KRB5_DEFAULT OFF)
+if (NOT WIN32 AND NOT ANDROID AND NOT IOS AND NOT APPLE)
+	set(KRB5_DEFAULT ON)
+endif()
+
+option(WITH_KRB5 "Compile support for kerberos authentication." ${KRB5_DEFAULT})
+if (WITH_KRB5)
+	find_package(KRB5 REQUIRED)
+
+	list(APPEND ${MODULE_PREFIX}_KERBEROS_SRCS
+	    Kerberos/krb5glue_mit.c
+	    Kerberos/krb5glue_heimdal.c
+	    Kerberos/krb5glue.h)
+
+	winpr_include_directory_add(${KRB5_INCLUDEDIR})
+	winpr_include_directory_add(${KRB5_INCLUDE_DIRS})
+	winpr_library_add_private(${KRB5_LIBRARIES})
+	winpr_library_add_private(${KRB5_LIBRARY})
+	winpr_library_add_compile_options(${KRB5_CFLAGS})
+	winpr_library_add_link_options(${KRB5_LDFLAGS})
+	winpr_library_add_link_directory(${KRB5_LIBRARY_DIRS})
+
+	winpr_definition_add("-DWITH_KRB5")
+
+	if(KRB5_FLAVOUR STREQUAL "MIT")
+		winpr_definition_add("-DWITH_KRB5_MIT")
+	elseif(KRB5_FLAVOUR STREQUAL "Heimdal")
+		winpr_definition_add("-DWITH_KRB5_HEIMDAL")
+	else()
+		message(WARNING "Kerberos version not detected")
+	endif()
+
+	include(CMakeDependentOption)
+	CMAKE_DEPENDENT_OPTION(WITH_KRB5_NO_NTLM_FALLBACK "Do not fall back to NTLM if no kerberos ticket available" OFF "WITH_KRB5" OFF)
+	if (WITH_KRB5_NO_NTLM_FALLBACK)
+	    add_definitions("-DWITH_KRB5_NO_NTLM_FALLBACK")
+	endif()
+endif()
+
 winpr_module_add(${${MODULE_PREFIX}_CREDSSP_SRCS}
 	${${MODULE_PREFIX}_NTLM_SRCS}
 	${${MODULE_PREFIX}_KERBEROS_SRCS}
@@ -77,11 +109,6 @@ endif()
 if(MBEDTLS_FOUND)
 	winpr_include_directory_add(${MBEDTLS_INCLUDE_DIR})
 	winpr_library_add_private(${MBEDTLS_LIBRARIES})
-endif()
-
-if(KRB5_FOUND)
-	winpr_include_directory_add(${KRB5_INCLUDE_DIR})
-	winpr_library_add_private(${KRB5_LIBRARIES})
 endif()
 
 if(WIN32)

@@ -26,7 +26,7 @@
 #include <winpr/asn1.h>
 
 #ifdef WITH_KRB5_MIT
-#include <krb5/krb5.h>
+#include <krb5.h>
 typedef krb5_data sspi_gss_data;
 #elif defined(WITH_KRB5_HEIMDAL)
 #include <krb5.h>

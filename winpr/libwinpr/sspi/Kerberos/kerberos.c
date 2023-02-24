@@ -41,13 +41,14 @@
 #include <winpr/path.h>
 
 #include "kerberos.h"
-#include "krb5glue.h"
 
 #ifdef WITH_KRB5_MIT
+#include "krb5glue.h"
 #include <profile.h>
 #endif
 
 #ifdef WITH_KRB5_HEIMDAL
+#include "krb5glue.h"
 #include <krb5-protos.h>
 #endif
 

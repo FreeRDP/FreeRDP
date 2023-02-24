@@ -20,13 +20,12 @@
 #ifndef WINPR_SSPI_KERBEROS_GLUE_PRIVATE_H
 #define WINPR_SSPI_KERBEROS_GLUE_PRIVATE_H
 
-#ifdef WITH_KRB5
-
 #include <winpr/winpr.h>
 #include <winpr/sspi.h>
 
-#ifdef WITH_KRB5_MIT
-#include <krb5/krb5.h>
+#include <krb5.h>
+
+#if defined(WITH_KRB5_MIT)
 typedef krb5_key krb5glue_key;
 typedef krb5_authenticator* krb5glue_authenticator;
 
@@ -54,8 +53,7 @@ krb5_prompt_type krb5glue_get_prompt_type(krb5_context ctx, krb5_prompt prompts[
 
 #define krb5glue_creds_getkey(creds) creds.keyblock
 
-#else
-#include <krb5.h>
+#elif defined(WITH_KRB5_HEIMDAL)
 typedef krb5_crypto krb5glue_key;
 typedef krb5_authenticator krb5glue_authenticator;
 
@@ -82,7 +80,8 @@ krb5_error_code krb5glue_verify_checksum_iov(krb5_context ctx, krb5glue_key key,
 #define krb5glue_get_prompt_type(ctx, prompts, index) prompts[index].type
 
 #define krb5glue_creds_getkey(creds) creds.session
-
+#else
+#error "Missing implementation for KRB5 provider"
 #endif
 
 struct krb5glue_keyset
@@ -101,7 +100,5 @@ BOOL krb5glue_authenticator_validate_chksum(krb5glue_authenticator authenticator
 krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, krb5_ccache ccache,
                                         krb5_prompter_fct prompter, char* password,
                                         SEC_WINPR_KERBEROS_SETTINGS* krb_settings);
-
-#endif /* WITH_KRB5 */
 
 #endif /* WINPR_SSPI_KERBEROS_GLUE_PRIVATE_H */
