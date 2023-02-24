@@ -198,9 +198,7 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 
 cleanup:
 	krb5_init_creds_free(ctx, creds_ctx);
-#ifdef WINPR_HAVE_AT_LEAST_KRB_V1_13
 	krb5_get_init_creds_opt_free(ctx, gic_opt);
-#endif
 	winpr_DeleteFile(tmp_profile_path);
 	free(tmp_profile_path);
 

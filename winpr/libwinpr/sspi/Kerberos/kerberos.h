@@ -27,12 +27,6 @@
 #include "../sspi.h"
 #include "../../log.h"
 
-#ifdef WITH_KRB5_MIT
-#include <krb5/krb5.h>
-#elif defined(WITH_KRB5_HEIMDAL)
-#include <krb5.h>
-#endif
-
 typedef struct s_KRB_CONTEXT KRB_CONTEXT;
 
 extern const SecPkgInfoA KERBEROS_SecPkgInfoA;
