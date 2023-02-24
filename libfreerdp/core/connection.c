@@ -618,16 +618,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 	settings = rdp->settings;
 	WINPR_ASSERT(settings);
 
-	if (settings->RedirectionFlags & LB_LOAD_BALANCE_INFO)
-	{
-		if (settings->LoadBalanceInfo && (settings->LoadBalanceInfoLength > 0))
-		{
-			if (!nego_set_routing_token(rdp->nego, settings->LoadBalanceInfo,
-			                            settings->LoadBalanceInfoLength))
-				return FALSE;
-		}
-	}
-	else
+	if ((settings->RedirectionFlags & LB_LOAD_BALANCE_INFO) == 0)
 	{
 		BOOL haveRedirectAddress = FALSE;
 		UINT32 redirectionMask = settings->RedirectionPreferType;
