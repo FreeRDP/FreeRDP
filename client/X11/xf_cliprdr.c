@@ -1395,11 +1395,11 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 			else
 			{
 				WINPR_ASSERT(cformat);
+
 				/**
 				 * Send clipboard data request to the server.
 				 * Response will be postponed after receiving the data
 				 */
-				xf_cliprdr_clear_cached_data(clipboard);
 				respond->property = xevent->property;
 				clipboard->respond = respond;
 				clipboard->requestedFormat = cformat;
@@ -2367,7 +2367,6 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	if (!clipboard->respond)
 		return CHANNEL_RC_OK;
 
-	xf_cliprdr_clear_cached_data(clipboard);
 	pDstData = NULL;
 	DstSize = 0;
 	srcFormatId = 0;
@@ -2478,6 +2477,9 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 	/* Cache converted and original data to avoid doing a possibly costly
 	 * conversion again on subsequent requests */
+	free(clipboard->data);
+	free(clipboard->data_raw);
+
 	clipboard->data = pDstData;
 	clipboard->data_length = DstSize;
 	/* We have to copy the original data again, as pSrcData is now owned
