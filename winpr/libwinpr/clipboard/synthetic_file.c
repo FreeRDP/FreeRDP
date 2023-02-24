@@ -702,6 +702,17 @@ static BOOL process_nautilus_clipboard(wClipboard* clipboard, const char* data, 
 	return process_files(clipboard, data, pSize, "x-special/nautilus-clipboard\ncopy\n");
 }
 
+static void* convert_nautilus_clipboard_to_filedescriptors(wClipboard* clipboard, UINT32 formatId,
+                                                           const void* data, UINT32* pSize)
+{
+	const UINT32 expected = ClipboardGetFormatId(clipboard, mime_gnome_copied_files);
+	if (formatId != expected)
+		return NULL;
+	if (!process_nautilus_clipboard(clipboard, (const char*)data, *pSize))
+		return NULL;
+	return convert_any_uri_list_to_filedescriptors(clipboard, formatId, pSize);
+}
+
 static void* convert_gnome_copied_files_to_filedescriptors(wClipboard* clipboard, UINT32 formatId,
                                                            const void* data, UINT32* pSize)
 {
@@ -974,7 +985,7 @@ static void* convert_filedescriptors_to_mate_copied_files(wClipboard* clipboard,
 {
 
 	char* pDstData = convert_filedescriptors_to_file_list(clipboard, formatId, data, pSize,
-	                                                      "copy\n", "file://", "\n", FALSE);
+	                                                      "copy\n", "file://", "\n", TRUE);
 	if (!pDstData)
 	{
 		return pDstData;
@@ -998,10 +1009,6 @@ static void array_free_synthetic_file(void* the_file)
 static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 {
 	wObject* obj;
-	UINT32 file_group_format_id;
-	UINT32 local_file_format_id;
-	UINT32 local_gnome_file_format_id;
-	UINT32 local_mate_file_format_id;
 
 	/*
 	    1. Gnome Nautilus based file manager (Nautilus only with version >= 3.30 AND < 40):
@@ -1024,10 +1031,13 @@ static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 	    TODO: other file managers do not use previous targets and formats.
 	*/
 
-	local_gnome_file_format_id = ClipboardRegisterFormat(clipboard, mime_gnome_copied_files);
-	local_mate_file_format_id = ClipboardRegisterFormat(clipboard, mime_mate_copied_files);
-	file_group_format_id = ClipboardRegisterFormat(clipboard, mime_FileGroupDescriptorW);
-	local_file_format_id = ClipboardRegisterFormat(clipboard, mime_uri_list);
+	const UINT32 local_gnome_file_format_id =
+	    ClipboardRegisterFormat(clipboard, mime_gnome_copied_files);
+	const UINT32 local_mate_file_format_id =
+	    ClipboardRegisterFormat(clipboard, mime_mate_copied_files);
+	const UINT32 file_group_format_id =
+	    ClipboardRegisterFormat(clipboard, mime_FileGroupDescriptorW);
+	const UINT32 local_file_format_id = ClipboardRegisterFormat(clipboard, mime_uri_list);
 
 	if (!file_group_format_id || !local_file_format_id || !local_gnome_file_format_id ||
 	    !local_mate_file_format_id)
