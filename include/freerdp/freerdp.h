@@ -631,6 +631,8 @@ owned by rdpRdp */
 	FREERDP_API BOOL freerdp_nla_impersonate(rdpContext* context);
 	FREERDP_API BOOL freerdp_nla_revert_to_self(rdpContext* context);
 
+	FREERDP_API UINT32 freerdp_get_nla_sspi_error(rdpContext* context);
+
 	FREERDP_API void clearChannelError(rdpContext* context);
 	FREERDP_API HANDLE getChannelErrorEventHandle(rdpContext* context);
 	FREERDP_API UINT getChannelError(rdpContext* context);

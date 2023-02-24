@@ -1790,3 +1790,9 @@ DWORD nla_get_error(rdpNla* nla)
 		return ERROR_INTERNAL_ERROR;
 	return nla->errorCode;
 }
+
+UINT32 nla_get_sspi_error(rdpNla* nla)
+{
+	WINPR_ASSERT(nla);
+	return credssp_auth_sspi_error(nla->auth);
+}

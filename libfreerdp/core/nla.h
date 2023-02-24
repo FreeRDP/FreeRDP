@@ -57,6 +57,7 @@ FREERDP_LOCAL BOOL nla_set_state(rdpNla* nla, NLA_STATE state);
 FREERDP_LOCAL const char* nla_get_state_str(NLA_STATE state);
 
 FREERDP_LOCAL DWORD nla_get_error(rdpNla* nla);
+FREERDP_LOCAL UINT32 nla_get_sspi_error(rdpNla* nla);
 
 FREERDP_LOCAL BOOL nla_set_service_principal(rdpNla* nla, const char* service,
                                              const char* hostname);
