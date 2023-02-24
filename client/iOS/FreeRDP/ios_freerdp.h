@@ -2,6 +2,7 @@
  RDP run-loop
 
  Copyright 2013 Thincast Technologies GmbH, Authors: Martin Fleisz, Dorian Johnson
+ Copyright 2023 Iordan Iordanov
 
  This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
  If a copy of the MPL was not distributed with this file, You can obtain one at
@@ -13,8 +14,12 @@
 #import <freerdp/freerdp.h>
 #import <freerdp/channels/channels.h>
 #import "TSXTypes.h"
+#import <winpr/clipboard.h>
+#import <freerdp/client/cliprdr.h>
 
 @class RDPSession, RDPSessionView;
+
+typedef BOOL (*pServerCutText)(rdpContext *context, UINT8 *data, UINT32 size);
 
 // FreeRDP extended structs
 typedef struct mf_info mfInfo;
@@ -25,6 +30,16 @@ typedef struct mf_context
 
 	mfInfo *mfi;
 	rdpSettings *settings;
+
+	BOOL clipboardSync;
+	wClipboard *clipboard;
+	UINT32 numServerFormats;
+	UINT32 requestedFormatId;
+	HANDLE clipboardRequestEvent;
+	CLIPRDR_FORMAT *serverFormats;
+	CliprdrClientContext *cliprdr;
+	UINT32 clipboardCapabilities;
+	pServerCutText ServerCutText;
 } mfContext;
 
 struct mf_info
@@ -69,3 +84,4 @@ void ios_uninit_freerdp(void);
 freerdp *ios_freerdp_new(void);
 int ios_run_freerdp(freerdp *instance);
 void ios_freerdp_free(freerdp *instance);
+void ios_send_clipboard_data(void *context, const void *data, UINT32 size);
