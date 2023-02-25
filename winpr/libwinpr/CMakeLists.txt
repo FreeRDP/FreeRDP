@@ -23,6 +23,9 @@ set(WINPR_LIBS_PRIVATE "")
 set(WINPR_LIBS_PUBLIC "")
 set(WINPR_INCLUDES "")
 set(WINPR_DEFINITIONS "")
+set(WINPR_COMPILE_OPTIONS "")
+set(WINPR_LINK_OPTIONS "")
+set(WINPR_LINK_DIRS "")
 
 macro (winpr_module_add)
     file (RELATIVE_PATH _relPath "${WINPR_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -77,6 +80,27 @@ macro (winpr_definition_add)
      set (WINPR_DEFINITIONS ${WINPR_DEFINITIONS} PARENT_SCOPE)
 endmacro()
 
+macro (winpr_library_add_compile_options)
+    foreach (_define ${ARGN})
+	    list (APPEND WINPR_COMPILE_OPTIONS "${_define}")
+    endforeach()
+    set (WINPR_COMPILE_OPTIONS ${WINPR_COMPILE_OPTIONS} PARENT_SCOPE)
+endmacro()
+
+macro (winpr_library_add_link_options)
+    foreach (_define ${ARGN})
+	    list (APPEND WINPR_LINK_OPTIONS "${_define}")
+    endforeach()
+    set (WINPR_LINK_OPTIONS ${WINPR_LINK_OPTIONS} PARENT_SCOPE)
+endmacro()
+
+macro (winpr_library_add_link_directory)
+    foreach (_define ${ARGN})
+	    list (APPEND WINPR_LINK_DIRS "${_define}")
+    endforeach()
+    set (WINPR_LINK_DIRS ${WINPR_LINK_DIRS} PARENT_SCOPE)
+endmacro()
+
 set(CMAKE_REQUIRED_LIBRARIES rt)
 
 if(NOT IOS)
@@ -114,10 +138,12 @@ endforeach()
 
 set(MODULE_NAME winpr)
 list(REMOVE_DUPLICATES WINPR_DEFINITIONS)
+list(REMOVE_DUPLICATES WINPR_COMPILE_OPTIONS)
+list(REMOVE_DUPLICATES WINPR_LINK_OPTIONS)
+list(REMOVE_DUPLICATES WINPR_LINK_DIRS)
 list(REMOVE_DUPLICATES WINPR_LIBS_PRIVATE)
 list(REMOVE_DUPLICATES WINPR_LIBS_PUBLIC)
 list(REMOVE_DUPLICATES WINPR_INCLUDES)
-include_directories(${WINPR_INCLUDES})
 
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
@@ -146,7 +172,12 @@ if (WITH_LIBRARY_VERSIONING)
     set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${WINPR_VERSION} SOVERSION ${WINPR_API_VERSION})
 endif()
 
-add_definitions(${WINPR_DEFINITIONS})
+target_link_options(${MODULE_NAME} PRIVATE ${WINPR_LINK_OPTIONS})
+target_include_directories(${MODULE_NAME} PRIVATE ${WINPR_INCLUDES})
+target_link_directories(${MODULE_NAME} PRIVATE ${WINPR_LINK_DIRS})
+target_compile_options(${MODULE_NAME} PRIVATE ${WINPR_COMPILE_OPTIONS})
+target_compile_definitions(${MODULE_NAME} PRIVATE ${WINPR_DEFINITIONS})
+
 target_link_libraries(${MODULE_NAME} PRIVATE ${WINPR_LIBS_PRIVATE} PUBLIC ${WINPR_LIBS_PUBLIC})
 install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT WinPRTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
