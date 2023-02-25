@@ -4297,7 +4297,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!settings->Password)
 				return COMMAND_LINE_ERROR;
 
-			if (!freerdp_passphrase_read("Password: ", settings->Password, size, 1))
+			freerdp* instance = settings->instance;
+			if (!freerdp_passphrase_read(instance->context, "Password: ", settings->Password, size,
+			                             1))
 				return COMMAND_LINE_ERROR;
 		}
 
@@ -4310,8 +4312,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				if (!settings->GatewayPassword)
 					return COMMAND_LINE_ERROR;
 
-				if (!freerdp_passphrase_read("Gateway Password: ", settings->GatewayPassword, size,
-				                             1))
+				freerdp* instance = settings->instance;
+				if (!freerdp_passphrase_read(instance->context, "Gateway Password: ",
+				                             settings->GatewayPassword, size, 1))
 					return COMMAND_LINE_ERROR;
 			}
 		}

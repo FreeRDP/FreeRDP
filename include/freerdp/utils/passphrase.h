@@ -21,15 +21,21 @@
 #define FREERDP_UTILS_PASSPHRASE_H
 
 #include <stdlib.h>
+#include <stdio.h>
+
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-	FREERDP_API char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz,
-	                                          int from_stdin);
+	FREERDP_API int freerdp_interruptible_getc(rdpContext* context, FILE* file);
+	FREERDP_API SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** lineptr,
+	                                                   size_t* size, FILE* stream);
+	FREERDP_API char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf,
+	                                          size_t bufsiz, int from_stdin);
 
 #ifdef __cplusplus
 }
