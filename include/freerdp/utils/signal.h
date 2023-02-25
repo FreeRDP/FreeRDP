@@ -35,13 +35,6 @@ extern "C"
 
 	typedef void (*freerdp_signal_handler_t)(int signum, const char* signame, void* context);
 
-#ifndef _WIN32
-	FREERDP_API extern volatile sig_atomic_t terminal_needs_reset;
-	FREERDP_API extern int terminal_fildes;
-	FREERDP_API extern struct termios orig_flags;
-	FREERDP_API extern struct termios new_flags;
-#endif
-
 	FREERDP_API int freerdp_handle_signals(void);
 
 	/** \brief registers a cleanup handler for non fatal signals.
