@@ -16,7 +16,7 @@
 # limitations under the License.
 
 if (NOT FREERDP_UNIFIED_BUILD)
-	cmake_minimum_required(VERSION 3.9)
+	cmake_minimum_required(VERSION 3.13)
 	project(WinPR LANGUAGES C)
 
 	set(CMAKE_C_STANDARD 11)
