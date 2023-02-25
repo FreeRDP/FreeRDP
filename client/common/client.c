@@ -441,10 +441,12 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 	{
 		size_t username_size = 0;
 		printf("%s", prompt[0]);
+		fflush(stdout);
 
-		if (GetLine(username, &username_size, stdin) < 0)
+		if (freerdp_interruptible_get_line(instance->context, username, &username_size, stdin) < 0)
 		{
-			WLog_ERR(TAG, "GetLine returned %s [%d]", strerror(errno), errno);
+			WLog_ERR(TAG, "freerdp_interruptible_get_line returned %s [%d]", strerror(errno),
+			         errno);
 			goto fail;
 		}
 
@@ -459,10 +461,12 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 	{
 		size_t domain_size = 0;
 		printf("%s", prompt[1]);
+		fflush(stdout);
 
-		if (GetLine(domain, &domain_size, stdin) < 0)
+		if (freerdp_interruptible_get_line(instance->context, domain, &domain_size, stdin) < 0)
 		{
-			WLog_ERR(TAG, "GetLine returned %s [%d]", strerror(errno), errno);
+			WLog_ERR(TAG, "freerdp_interruptible_get_line returned %s [%d]", strerror(errno),
+			         errno);
 			goto fail;
 		}
 
@@ -480,7 +484,7 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 		if (!*password)
 			goto fail;
 
-		if (freerdp_passphrase_read(prompt[2], *password, password_size,
+		if (freerdp_passphrase_read(instance->context, prompt[2], *password, password_size,
 		                            instance->context->settings->CredentialsFromStdin) == NULL)
 			goto fail;
 	}
@@ -588,9 +592,15 @@ BOOL client_cli_gw_authenticate(freerdp* instance, char** username, char** passw
 }
 #endif
 
-static DWORD client_cli_accept_certificate(rdpSettings* settings)
+static DWORD client_cli_accept_certificate(freerdp* instance)
 {
 	int answer;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+
+	const rdpSettings* settings = instance->context->settings;
+	WINPR_ASSERT(settings);
 
 	if (settings->CredentialsFromStdin)
 		return 0;
@@ -599,9 +609,9 @@ static DWORD client_cli_accept_certificate(rdpSettings* settings)
 	{
 		printf("Do you trust the above certificate? (Y/T/N) ");
 		fflush(stdout);
-		answer = fgetc(stdin);
+		answer = freerdp_interruptible_getc(instance->context, stdin);
 
-		if (feof(stdin))
+		if ((answer == EOF) || feof(stdin))
 		{
 			printf("\nError: Could not read answer from stdin.");
 
@@ -616,17 +626,23 @@ static DWORD client_cli_accept_certificate(rdpSettings* settings)
 		{
 			case 'y':
 			case 'Y':
-				fgetc(stdin);
+				answer = freerdp_interruptible_getc(instance->context, stdin);
+				if (answer == EOF)
+					return 0;
 				return 1;
 
 			case 't':
 			case 'T':
-				fgetc(stdin);
+				answer = freerdp_interruptible_getc(instance->context, stdin);
+				if (answer == EOF)
+					return 0;
 				return 2;
 
 			case 'n':
 			case 'N':
-				fgetc(stdin);
+				answer = freerdp_interruptible_getc(instance->context, stdin);
+				if (answer == EOF)
+					return 0;
 				return 0;
 
 			default:
@@ -665,7 +681,7 @@ DWORD client_cli_verify_certificate(freerdp* instance, const char* common_name, 
 	printf("The above X.509 certificate could not be verified, possibly because you do not have\n"
 	       "the CA certificate in your certificate store, or the certificate has expired.\n"
 	       "Please look at the OpenSSL documentation on how to add a private CA to the store.\n");
-	return client_cli_accept_certificate(instance->settings);
+	return client_cli_accept_certificate(instance);
 }
 #endif
 
@@ -719,7 +735,7 @@ DWORD client_cli_verify_certificate_ex(freerdp* instance, const char* host, UINT
 	printf("The above X.509 certificate could not be verified, possibly because you do not have\n"
 	       "the CA certificate in your certificate store, or the certificate has expired.\n"
 	       "Please look at the OpenSSL documentation on how to add a private CA to the store.\n");
-	return client_cli_accept_certificate(instance->context->settings);
+	return client_cli_accept_certificate(instance);
 }
 
 /** Callback set in the rdp_freerdp structure, and used to make a certificate validation
@@ -763,7 +779,7 @@ DWORD client_cli_verify_changed_certificate(freerdp* instance, const char* commo
 	       "connections.\n"
 	       "This may indicate that the certificate has been tampered with.\n"
 	       "Please contact the administrator of the RDP server and clarify.\n");
-	return client_cli_accept_certificate(instance->settings);
+	return client_cli_accept_certificate(instance);
 }
 #endif
 
@@ -849,7 +865,7 @@ DWORD client_cli_verify_changed_certificate_ex(freerdp* instance, const char* ho
 	       "connections.\n"
 	       "This may indicate that the certificate has been tampered with.\n"
 	       "Please contact the administrator of the RDP server and clarify.\n");
-	return client_cli_accept_certificate(instance->context->settings);
+	return client_cli_accept_certificate(instance);
 }
 
 BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
@@ -886,9 +902,9 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 	{
 		printf("I understand and agree to the terms of this policy (Y/N) \n");
 		fflush(stdout);
-		answer = fgetc(stdin);
+		answer = freerdp_interruptible_getc(instance->context, stdin);
 
-		if (feof(stdin))
+		if ((answer == EOF) || feof(stdin))
 		{
 			printf("\nError: Could not read answer from stdin.\n");
 			return FALSE;
@@ -898,12 +914,14 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 		{
 			case 'y':
 			case 'Y':
-				fgetc(stdin);
+				answer = freerdp_interruptible_getc(instance->context, stdin);
+				if (answer == EOF)
+					return FALSE;
 				return TRUE;
 
 			case 'n':
 			case 'N':
-				fgetc(stdin);
+				freerdp_interruptible_getc(instance->context, stdin);
 				return FALSE;
 
 			default:
