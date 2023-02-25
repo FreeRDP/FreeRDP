@@ -77,7 +77,6 @@ struct xf_clipboard
 	CliprdrClientContext* context;
 
 	wClipboard* system;
-	wClipboardDelegate* delegate;
 
 	Window root_window;
 	Atom clipboard_atom;
@@ -1998,48 +1997,6 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-static UINT
-xf_cliprdr_server_file_size_request(xfClipboard* clipboard,
-                                    const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
-{
-	wClipboardFileSizeRequest request = { 0 };
-
-	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(fileContentsRequest);
-
-	request.streamId = fileContentsRequest->streamId;
-	request.listIndex = fileContentsRequest->listIndex;
-
-	if (fileContentsRequest->cbRequested != sizeof(UINT64))
-	{
-		WLog_WARN(TAG, "unexpected FILECONTENTS_SIZE request: %" PRIu32 " bytes",
-		          fileContentsRequest->cbRequested);
-	}
-
-	WINPR_ASSERT(clipboard->delegate);
-	WINPR_ASSERT(clipboard->delegate->ClientRequestFileSize);
-	return clipboard->delegate->ClientRequestFileSize(clipboard->delegate, &request);
-}
-
-static UINT
-xf_cliprdr_server_file_range_request(xfClipboard* clipboard,
-                                     const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
-{
-	wClipboardFileRangeRequest request = { 0 };
-
-	WINPR_ASSERT(fileContentsRequest);
-
-	request.streamId = fileContentsRequest->streamId;
-	request.listIndex = fileContentsRequest->listIndex;
-	request.nPositionLow = fileContentsRequest->nPositionLow;
-	request.nPositionHigh = fileContentsRequest->nPositionHigh;
-	request.cbRequested = fileContentsRequest->cbRequested;
-
-	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->delegate);
-	WINPR_ASSERT(clipboard->delegate->ClientRequestFileRange);
-	return clipboard->delegate->ClientRequestFileRange(clipboard->delegate, &request);
-}
 
 static UINT
 xf_cliprdr_send_file_contents_failure(CliprdrClientContext* context,
@@ -2094,92 +2051,6 @@ xf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
 	}
 
 	return CHANNEL_RC_OK;
-}
-
-static UINT xf_cliprdr_clipboard_file_size_success(wClipboardDelegate* delegate,
-                                                   const wClipboardFileSizeRequest* request,
-                                                   UINT64 fileSize)
-{
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	xfClipboard* clipboard;
-
-	WINPR_ASSERT(delegate);
-	WINPR_ASSERT(request);
-
-	response.common.msgFlags = CB_RESPONSE_OK;
-	response.streamId = request->streamId;
-	response.cbRequested = sizeof(UINT64);
-	response.requestedData = (BYTE*)&fileSize;
-
-	clipboard = delegate->custom;
-	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->context);
-	WINPR_ASSERT(clipboard->context->ClientFileContentsResponse);
-	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
-}
-
-static UINT xf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate,
-                                                   const wClipboardFileSizeRequest* request,
-                                                   UINT errorCode)
-{
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	xfClipboard* clipboard;
-
-	WINPR_ASSERT(delegate);
-	WINPR_ASSERT(request);
-	WINPR_UNUSED(errorCode);
-
-	response.common.msgFlags = CB_RESPONSE_FAIL;
-	response.streamId = request->streamId;
-
-	clipboard = delegate->custom;
-	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->context);
-	WINPR_ASSERT(clipboard->context->ClientFileContentsResponse);
-	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
-}
-
-static UINT xf_cliprdr_clipboard_file_range_success(wClipboardDelegate* delegate,
-                                                    const wClipboardFileRangeRequest* request,
-                                                    const BYTE* data, UINT32 size)
-{
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	xfClipboard* clipboard;
-
-	WINPR_ASSERT(delegate);
-	WINPR_ASSERT(request);
-
-	response.common.msgFlags = CB_RESPONSE_OK;
-	response.streamId = request->streamId;
-	response.cbRequested = size;
-	response.requestedData = (const BYTE*)data;
-
-	clipboard = delegate->custom;
-	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->context);
-	WINPR_ASSERT(clipboard->context->ClientFileContentsResponse);
-	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
-}
-
-static UINT xf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegate,
-                                                    const wClipboardFileRangeRequest* request,
-                                                    UINT errorCode)
-{
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	xfClipboard* clipboard;
-
-	WINPR_ASSERT(delegate);
-	WINPR_ASSERT(request);
-	WINPR_UNUSED(errorCode);
-
-	response.common.msgFlags = CB_RESPONSE_FAIL;
-	response.streamId = request->streamId;
-
-	clipboard = delegate->custom;
-	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->context);
-	WINPR_ASSERT(clipboard->context->ClientFileContentsResponse);
-	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
 }
 
 static BOOL xf_cliprdr_clipboard_is_valid_unix_filename(LPCWSTR filename)
@@ -2372,24 +2243,11 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	clipboard->targets[0] = XInternAtom(xfc->display, "TIMESTAMP", FALSE);
 	clipboard->targets[1] = XInternAtom(xfc->display, "TARGETS", FALSE);
 	clipboard->numTargets = 2;
-	clipboard->incr_atom = XInternAtom(xfc->display, "INCR", FALSE);
-	clipboard->delegate = ClipboardGetDelegate(clipboard->system);
-	clipboard->delegate->custom = clipboard;
+    clipboard->incr_atom = XInternAtom(xfc->display, "INCR", FALSE);
 
 	clipboard->file = cliprdr_file_context_new(clipboard);
 	if (!clipboard->file)
-		goto fail;
-	clipboard->delegate->basePath = cliprdr_file_context_base_path(clipboard->file);
-	clipboard->delegate->ClipboardFileSizeSuccess = xf_cliprdr_clipboard_file_size_success;
-	clipboard->delegate->ClipboardFileSizeFailure = xf_cliprdr_clipboard_file_size_failure;
-	clipboard->delegate->ClipboardFileRangeSuccess = xf_cliprdr_clipboard_file_range_success;
-	clipboard->delegate->ClipboardFileRangeFailure = xf_cliprdr_clipboard_file_range_failure;
-
-	if (relieveFilenameRestriction)
-	{
-		WLog_DBG(TAG, "Relieving CLIPRDR filename restriction");
-		clipboard->delegate->IsFileNameComponentValid = xf_cliprdr_clipboard_is_valid_unix_filename;
-	}
+        goto fail;
 
 	return clipboard;
 

@@ -621,136 +621,7 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 	ExitThread(0);
 	return 0;
 }
-#endif
 
-void cliprdr_file_session_terminate(CliprdrFileContext* file)
-{
-	if (!file)
-		return;
-
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
-	if (file->fuse_sess)
-		fuse_session_exit(file->fuse_sess);
-#endif
-	/* 	not elegant but works for umounting FUSE
-	    fuse_chan must receieve a oper buf to unblock fuse_session_receive_buf function.
-	*/
-	winpr_PathFileExists(file->path);
-}
-
-void cliprdr_file_context_free(CliprdrFileContext* file)
-{
-	if (!file)
-		return;
-
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
-	if (file->fuse_thread)
-	{
-		cliprdr_file_session_terminate(file);
-		WaitForSingleObject(file->fuse_thread, INFINITE);
-		CloseHandle(file->fuse_thread);
-	}
-
-	// fuse related
-	ArrayList_Free(file->stream_list);
-	ArrayList_Free(file->ino_list);
-#endif
-	winpr_RemoveDirectory(file->path);
-	free(file->path);
-	free(file);
-}
-
-static BOOL create_base_path(CliprdrFileContext* file)
-{
-	WINPR_ASSERT(file);
-
-	char base[64] = { 0 };
-	_snprintf(base, sizeof(base), "/.xfreerdp.cliprdr.%" PRIu32, GetCurrentProcessId());
-
-	file->path = GetKnownSubPath(KNOWN_PATH_TEMP, base);
-	if (!file->path)
-		return FALSE;
-
-	if (!winpr_PathFileExists(file->path) && !winpr_PathMakePath(file->path, 0))
-	{
-		WLog_ERR(TAG, "Failed to create directory '%s'", file->path);
-		return FALSE;
-	}
-	return TRUE;
-}
-
-CliprdrFileContext* cliprdr_file_context_new(void* context)
-{
-	CliprdrFileContext* file = calloc(1, sizeof(CliprdrFileContext));
-	if (!file)
-		return NULL;
-
-	file->clipboard = context;
-	if (!create_base_path(file))
-		goto fail;
-
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
-	file->current_stream_id = 0;
-	file->stream_list = ArrayList_New(TRUE);
-	if (!file->stream_list)
-	{
-		WLog_ERR(TAG, "failed to allocate stream_list");
-		goto fail;
-	}
-	wObject* obj = ArrayList_Object(file->stream_list);
-	obj->fnObjectFree = free;
-
-	file->ino_list = ArrayList_New(TRUE);
-	if (!file->ino_list)
-	{
-		WLog_ERR(TAG, "failed to allocate stream_list");
-		goto fail;
-	}
-	obj = ArrayList_Object(file->ino_list);
-	obj->fnObjectFree = cliprdr_file_fuse_inode_free;
-
-	if (!xf_fuse_repopulate(file->ino_list))
-		goto fail;
-
-	if (!(file->fuse_thread = CreateThread(NULL, 0, cliprdr_file_fuse_thread, file, 0, NULL)))
-	{
-		goto fail;
-	}
-#endif
-	return file;
-
-fail:
-	cliprdr_file_context_free(file);
-	return NULL;
-}
-
-BOOL cliprdr_file_context_clear(CliprdrFileContext* file)
-{
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
-	if (file->stream_list)
-	{
-		size_t index;
-		size_t count;
-		CliprdrFuseStream* stream;
-		ArrayList_Lock(file->stream_list);
-		file->current_stream_id = 0;
-		/* reply error to all req first don't care request type*/
-		count = ArrayList_Count(file->stream_list);
-		for (index = 0; index < count; index++)
-		{
-			stream = (CliprdrFuseStream*)ArrayList_GetItem(file->stream_list, index);
-			fuse_reply_err(stream->req, EIO);
-		}
-		ArrayList_Unlock(file->stream_list);
-
-		ArrayList_Clear(file->stream_list);
-	}
-
-	xf_fuse_repopulate(file->ino_list);
-#endif
-}
-
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 static CliprdrFuseInode* cliprdr_file_fuse_create_root_node(void)
 {
 	CliprdrFuseInode* rootNode = (CliprdrFuseInode*)calloc(1, sizeof(CliprdrFuseInode));
@@ -1234,4 +1105,131 @@ const char* cliprdr_file_context_base_path(CliprdrFileContext* file)
 {
 	WINPR_ASSERT(file);
 	return file->path;
+}
+
+void cliprdr_file_session_terminate(CliprdrFileContext* file)
+{
+    if (!file)
+        return;
+
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+    if (file->fuse_sess)
+        fuse_session_exit(file->fuse_sess);
+#endif
+    /* 	not elegant but works for umounting FUSE
+        fuse_chan must receieve a oper buf to unblock fuse_session_receive_buf function.
+    */
+    winpr_PathFileExists(file->path);
+}
+
+void cliprdr_file_context_free(CliprdrFileContext* file)
+{
+    if (!file)
+        return;
+
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+    if (file->fuse_thread)
+    {
+        cliprdr_file_session_terminate(file);
+        WaitForSingleObject(file->fuse_thread, INFINITE);
+        CloseHandle(file->fuse_thread);
+    }
+
+    // fuse related
+    ArrayList_Free(file->stream_list);
+    ArrayList_Free(file->ino_list);
+#endif
+    winpr_RemoveDirectory(file->path);
+    free(file->path);
+    free(file);
+}
+
+static BOOL create_base_path(CliprdrFileContext* file)
+{
+    WINPR_ASSERT(file);
+
+    char base[64] = { 0 };
+    _snprintf(base, sizeof(base), "/.xfreerdp.cliprdr.%" PRIu32, GetCurrentProcessId());
+
+    file->path = GetKnownSubPath(KNOWN_PATH_TEMP, base);
+    if (!file->path)
+        return FALSE;
+
+    if (!winpr_PathFileExists(file->path) && !winpr_PathMakePath(file->path, 0))
+    {
+        WLog_ERR(TAG, "Failed to create directory '%s'", file->path);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+CliprdrFileContext* cliprdr_file_context_new(void* context)
+{
+    CliprdrFileContext* file = calloc(1, sizeof(CliprdrFileContext));
+    if (!file)
+        return NULL;
+
+    file->clipboard = context;
+    if (!create_base_path(file))
+        goto fail;
+
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+    file->current_stream_id = 0;
+    file->stream_list = ArrayList_New(TRUE);
+    if (!file->stream_list)
+    {
+        WLog_ERR(TAG, "failed to allocate stream_list");
+        goto fail;
+    }
+    wObject* obj = ArrayList_Object(file->stream_list);
+    obj->fnObjectFree = free;
+
+    file->ino_list = ArrayList_New(TRUE);
+    if (!file->ino_list)
+    {
+        WLog_ERR(TAG, "failed to allocate stream_list");
+        goto fail;
+    }
+    obj = ArrayList_Object(file->ino_list);
+    obj->fnObjectFree = cliprdr_file_fuse_inode_free;
+
+    if (!xf_fuse_repopulate(file->ino_list))
+        goto fail;
+
+    if (!(file->fuse_thread = CreateThread(NULL, 0, cliprdr_file_fuse_thread, file, 0, NULL)))
+    {
+        goto fail;
+    }
+#endif
+    return file;
+
+fail:
+    cliprdr_file_context_free(file);
+    return NULL;
+}
+
+BOOL cliprdr_file_context_clear(CliprdrFileContext* file)
+{
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+    if (file->stream_list)
+    {
+        size_t index;
+        size_t count;
+        CliprdrFuseStream* stream;
+        ArrayList_Lock(file->stream_list);
+        file->current_stream_id = 0;
+        /* reply error to all req first don't care request type*/
+        count = ArrayList_Count(file->stream_list);
+        for (index = 0; index < count; index++)
+        {
+            stream = (CliprdrFuseStream*)ArrayList_GetItem(file->stream_list, index);
+            fuse_reply_err(stream->req, EIO);
+        }
+        ArrayList_Unlock(file->stream_list);
+
+        ArrayList_Clear(file->stream_list);
+    }
+
+    xf_fuse_repopulate(file->ino_list);
+#endif
 }

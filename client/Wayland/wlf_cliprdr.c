@@ -60,7 +60,6 @@ struct wlf_clipboard
 
 	UwacSeat* seat;
 	wClipboard* system;
-	wClipboardDelegate* delegate;
 
 	size_t numClientFormats;
 	CLIPRDR_FORMAT* clientFormats;
@@ -767,193 +766,6 @@ wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	return rc;
 }
 
-static UINT
-wlf_cliprdr_server_file_size_request(wfClipboard* clipboard,
-                                     const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
-{
-	wClipboardFileSizeRequest request = { 0 };
-
-	WINPR_ASSERT(fileContentsRequest);
-
-	request.streamId = fileContentsRequest->streamId;
-	request.listIndex = fileContentsRequest->listIndex;
-
-	if (fileContentsRequest->cbRequested != sizeof(UINT64))
-	{
-		WLog_Print(clipboard->log, WLOG_WARN,
-		           "unexpected FILECONTENTS_SIZE request: %" PRIu32 " bytes",
-		           fileContentsRequest->cbRequested);
-	}
-
-	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->delegate);
-	WINPR_ASSERT(clipboard->delegate->ClientRequestFileSize);
-	return clipboard->delegate->ClientRequestFileSize(clipboard->delegate, &request);
-}
-
-static UINT
-wlf_cliprdr_server_file_range_request(wfClipboard* clipboard,
-                                      const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
-{
-	wClipboardFileRangeRequest request = { 0 };
-
-	WINPR_ASSERT(fileContentsRequest);
-
-	request.streamId = fileContentsRequest->streamId;
-	request.listIndex = fileContentsRequest->listIndex;
-	request.nPositionLow = fileContentsRequest->nPositionLow;
-	request.nPositionHigh = fileContentsRequest->nPositionHigh;
-	request.cbRequested = fileContentsRequest->cbRequested;
-
-	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->delegate);
-	WINPR_ASSERT(clipboard->delegate->ClientRequestFileRange);
-	return clipboard->delegate->ClientRequestFileRange(clipboard->delegate, &request);
-}
-
-static UINT
-wlf_cliprdr_send_file_contents_failure(CliprdrClientContext* context,
-                                       const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
-{
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-
-	WINPR_ASSERT(fileContentsRequest);
-
-	response.common.msgFlags = CB_RESPONSE_FAIL;
-	response.streamId = fileContentsRequest->streamId;
-
-	WINPR_ASSERT(context);
-	WINPR_ASSERT(context->ClientFileContentsResponse);
-	return context->ClientFileContentsResponse(context, &response);
-}
-
-static UINT
-wlf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
-                                         const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
-{
-	UINT error = NO_ERROR;
-	wfClipboard* clipboard;
-
-	WINPR_ASSERT(context);
-	WINPR_ASSERT(fileContentsRequest);
-
-	clipboard = context->custom;
-	WINPR_ASSERT(clipboard);
-
-	/*
-	 * MS-RDPECLIP 2.2.5.3 File Contents Request PDU (CLIPRDR_FILECONTENTS_REQUEST):
-	 * The FILECONTENTS_SIZE and FILECONTENTS_RANGE flags MUST NOT be set at the same time.
-	 */
-	if ((fileContentsRequest->dwFlags & (FILECONTENTS_SIZE | FILECONTENTS_RANGE)) ==
-	    (FILECONTENTS_SIZE | FILECONTENTS_RANGE))
-	{
-		WLog_Print(clipboard->log, WLOG_ERROR, "invalid CLIPRDR_FILECONTENTS_REQUEST.dwFlags");
-		return wlf_cliprdr_send_file_contents_failure(context, fileContentsRequest);
-	}
-
-	if (fileContentsRequest->dwFlags & FILECONTENTS_SIZE)
-		error = wlf_cliprdr_server_file_size_request(clipboard, fileContentsRequest);
-
-	if (fileContentsRequest->dwFlags & FILECONTENTS_RANGE)
-		error = wlf_cliprdr_server_file_range_request(clipboard, fileContentsRequest);
-
-	if (error)
-	{
-		WLog_Print(clipboard->log, WLOG_ERROR,
-		           "failed to handle CLIPRDR_FILECONTENTS_REQUEST: 0x%08X", error);
-		return wlf_cliprdr_send_file_contents_failure(context, fileContentsRequest);
-	}
-
-	return CHANNEL_RC_OK;
-}
-
-static UINT wlf_cliprdr_clipboard_file_size_success(wClipboardDelegate* delegate,
-                                                    const wClipboardFileSizeRequest* request,
-                                                    UINT64 fileSize)
-{
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	wfClipboard* clipboard;
-
-	WINPR_ASSERT(delegate);
-	WINPR_ASSERT(request);
-
-	response.common.msgFlags = CB_RESPONSE_OK;
-	response.streamId = request->streamId;
-	response.cbRequested = sizeof(UINT64);
-	response.requestedData = (BYTE*)&fileSize;
-
-	clipboard = delegate->custom;
-	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->context);
-	WINPR_ASSERT(clipboard->context->ClientFileContentsResponse);
-	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
-}
-
-static UINT wlf_cliprdr_clipboard_file_size_failure(wClipboardDelegate* delegate,
-                                                    const wClipboardFileSizeRequest* request,
-                                                    UINT errorCode)
-{
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	wfClipboard* clipboard;
-
-	WINPR_ASSERT(delegate);
-	WINPR_ASSERT(request);
-	WINPR_UNUSED(errorCode);
-
-	response.common.msgFlags = CB_RESPONSE_FAIL;
-	response.streamId = request->streamId;
-
-	clipboard = delegate->custom;
-	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->context);
-	WINPR_ASSERT(clipboard->context->ClientFileContentsResponse);
-	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
-}
-
-static UINT wlf_cliprdr_clipboard_file_range_success(wClipboardDelegate* delegate,
-                                                     const wClipboardFileRangeRequest* request,
-                                                     const BYTE* data, UINT32 size)
-{
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	wfClipboard* clipboard;
-
-	WINPR_ASSERT(delegate);
-	WINPR_ASSERT(request);
-	WINPR_ASSERT(data || (size == 0));
-
-	response.common.msgFlags = CB_RESPONSE_OK;
-	response.streamId = request->streamId;
-	response.cbRequested = size;
-	response.requestedData = (const BYTE*)data;
-
-	clipboard = delegate->custom;
-	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->context);
-	WINPR_ASSERT(clipboard->context->ClientFileContentsResponse);
-	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
-}
-
-static UINT wlf_cliprdr_clipboard_file_range_failure(wClipboardDelegate* delegate,
-                                                     const wClipboardFileRangeRequest* request,
-                                                     UINT errorCode)
-{
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-	wfClipboard* clipboard;
-
-	WINPR_ASSERT(delegate);
-	WINPR_ASSERT(request);
-	WINPR_UNUSED(errorCode);
-
-	response.common.msgFlags = CB_RESPONSE_FAIL;
-	response.streamId = request->streamId;
-
-	clipboard = delegate->custom;
-	WINPR_ASSERT(clipboard);
-	WINPR_ASSERT(clipboard->context);
-	WINPR_ASSERT(clipboard->context->ClientFileContentsResponse);
-	return clipboard->context->ClientFileContentsResponse(clipboard->context, &response);
-}
-
 wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 {
 	rdpChannels* channels;
@@ -974,18 +786,6 @@ wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 	clipboard->system = ClipboardCreate();
 	if (!clipboard->system)
 		goto fail;
-
-	clipboard->delegate = ClipboardGetDelegate(clipboard->system);
-	if (!clipboard->delegate)
-		goto fail;
-
-	clipboard->delegate->custom = clipboard;
-	/* TODO: set up a filesystem base path for local URI */
-	/* clipboard->delegate->basePath = "file:///tmp/foo/bar/gaga"; */
-	clipboard->delegate->ClipboardFileSizeSuccess = wlf_cliprdr_clipboard_file_size_success;
-	clipboard->delegate->ClipboardFileSizeFailure = wlf_cliprdr_clipboard_file_size_failure;
-	clipboard->delegate->ClipboardFileRangeSuccess = wlf_cliprdr_clipboard_file_range_success;
-	clipboard->delegate->ClipboardFileRangeFailure = wlf_cliprdr_clipboard_file_range_failure;
 	return clipboard;
 
 fail:
@@ -1022,8 +822,8 @@ BOOL wlf_cliprdr_init(wfClipboard* clipboard, CliprdrClientContext* cliprdr)
 	cliprdr->ServerFormatList = wlf_cliprdr_server_format_list;
 	cliprdr->ServerFormatListResponse = wlf_cliprdr_server_format_list_response;
 	cliprdr->ServerFormatDataRequest = wlf_cliprdr_server_format_data_request;
-	cliprdr->ServerFormatDataResponse = wlf_cliprdr_server_format_data_response;
-	cliprdr->ServerFileContentsRequest = wlf_cliprdr_server_file_contents_request;
+    cliprdr->ServerFormatDataResponse = wlf_cliprdr_server_format_data_response;
+
 	return TRUE;
 }
 
