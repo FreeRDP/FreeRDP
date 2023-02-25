@@ -24,7 +24,7 @@ set(UWAC_VERSION_FULL "${UWAC_VERSION}")
 set(UWAC_API_VERSION "${UWAC_VERSION_MAJOR}")
 
 if (NOT FREERDP_UNIFIED_BUILD)
-	cmake_minimum_required(VERSION 3.9)
+	cmake_minimum_required(VERSION 3.13)
 	project(uwac VERSION ${UWAC_VERSION} LANGUAGES C)
 
 	set(CMAKE_C_STANDARD 11)

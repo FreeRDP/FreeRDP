@@ -24,7 +24,7 @@ set(RDTK_VERSION_FULL "${RDTK_VERSION}")
 set(RDTK_API_VERSION "${RDTK_VERSION_MAJOR}")
 
 if (NOT FREERDP_UNIFIED_BUILD)
-	cmake_minimum_required(VERSION 3.9)
+	cmake_minimum_required(VERSION 3.13)
 	project(RdTk VERSION ${RDTK_VERSION} LANGUAGES C)
 
 	set(CMAKE_C_STANDARD 11)
