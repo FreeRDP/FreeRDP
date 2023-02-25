@@ -30,6 +30,7 @@ set(SRCS
 	client_rails.c
 	cmdline.c
 	file.c
+	client_cliprdr_file.c
 	geometry.c
 	smartcard_cli.c)
 
@@ -39,6 +40,35 @@ foreach(FREERDP_CHANNELS_CLIENT_SRC ${FREERDP_CHANNELS_CLIENT_SRCS})
     list(APPEND SRCS "${FREERDP_CHANNELS_CLIENT_SRC}")
 endforeach()
 
+if (NOT APPLE AND NOT WIN32 AND NOT ANDROID)
+	set(OPT_FUSE_DEFAULT ON)
+else()
+	set(OPT_FUSE_DEFAULT OFF)
+endif()
+
+option(WITH_FUSE "Build clipboard with FUSE file copy support" ${OPT_FUSE_DEFAULT})
+if(WITH_FUSE)
+	include(FindPkgConfig)
+	find_package(PkgConfig REQUIRED)
+
+	pkg_check_modules(FUSE3 fuse3)
+	if (FUSE3_FOUND)
+		message("[FUSE3] using ${FUSE3_LIBRARIES}")
+
+		include_directories(${FUSE3_INCLUDE_DIRS})
+		add_definitions(-DWITH_FUSE3)
+		list(APPEND ${MODULE_PREFIX}_LIBS ${FUSE3_LIBRARIES})
+	else()
+		pkg_check_modules(FUSE2 REQUIRED fuse)
+
+		message("[FUSE2] using ${FUSE2_LIBRARIES}")
+		add_definitions(-DWITH_FUSE2)
+		include_directories(${FUSE2_INCLUDE_DIRS})
+		list(APPEND ${MODULE_PREFIX}_LIBS ${FUSE2_LIBRARIES})
+	endif()
+
+	add_definitions(-D_FILE_OFFSET_BITS=64)
+endif()
 
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt

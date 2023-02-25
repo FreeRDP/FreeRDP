@@ -41,9 +41,7 @@ set(${MODULE_PREFIX}_SRCS
 	xf_channels.c
 	xf_channels.h
 	xf_cliprdr.c
-	xf_cliprdr.h
-	xf_cliprdr_file.c
-	xf_cliprdr_file.h
+        xf_cliprdr.h
 	xf_monitor.c
 	xf_monitor.h
 	xf_disp.c
@@ -224,36 +222,6 @@ if(WITH_XFIXES)
 	add_definitions(-DWITH_XFIXES)
 	include_directories(${XFIXES_INCLUDE_DIRS})
 	set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} ${XFIXES_LIBRARIES})
-endif()
-
-if (NOT APPLE AND NOT WIN32 AND NOT ANDROID)
-	set(OPT_FUSE_DEFAULT ON)
-else()
-	set(OPT_FUSE_DEFAULT OFF)
-endif()
-
-option(WITH_FUSE "Build clipboard with FUSE file copy support" ${OPT_FUSE_DEFAULT})
-if(WITH_FUSE)
-	include(FindPkgConfig)
-	find_package(PkgConfig REQUIRED)
-
-	pkg_check_modules(FUSE3 fuse3)
-	if (FUSE3_FOUND)
-		message("[FUSE3] using ${FUSE3_LIBRARIES}")
-
-		include_directories(${FUSE3_INCLUDE_DIRS})
-		add_definitions(-DWITH_FUSE3)
-		list(APPEND ${MODULE_PREFIX}_LIBS ${FUSE3_LIBRARIES})
-	else()
-		pkg_check_modules(FUSE2 REQUIRED fuse)
-
-		message("[FUSE2] using ${FUSE2_LIBRARIES}")
-		add_definitions(-DWITH_FUSE2)
-		include_directories(${FUSE2_INCLUDE_DIRS})
-		list(APPEND ${MODULE_PREFIX}_LIBS ${FUSE2_LIBRARIES})
-	endif()
-
-	add_definitions(-D_FILE_OFFSET_BITS=64)
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/resources)

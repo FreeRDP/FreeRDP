@@ -44,8 +44,9 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/channels/cliprdr.h>
 
+#include <freerdp/client/client_cliprdr_file.h>
+
 #include "xf_cliprdr.h"
-#include "xf_cliprdr_file.h"
 #include "xf_event.h"
 
 #define TAG CLIENT_TAG("x11.cliprdr")
@@ -123,10 +124,6 @@ struct xf_clipboard
 	int xfixes_error_base;
 	BOOL xfixes_supported;
 
-	/* File clipping */
-	BOOL streams_supported;
-	BOOL file_formats_registered;
-	UINT32 file_capability_flags;
 	/* last sent data */
 	CLIPRDR_FORMAT* lastSentFormats;
 	UINT32 lastSentNumFormats;
@@ -773,6 +770,7 @@ static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FO
 	xf_clipboard_copy_formats(clipboard, formats, numFormats);
 	/* Ensure all pending requests are answered. */
 	xf_cliprdr_send_data_response(clipboard, NULL, NULL, 0);
+	cliprdr_file_context_clear(clipboard->file);
 
 	WINPR_ASSERT(clipboard->context);
 	WINPR_ASSERT(clipboard->context->ClientFormatList);
@@ -867,11 +865,18 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 		UINT32 file_count = DstSize / sizeof(FILEDESCRIPTORW);
 		pDstData = NULL;
 		DstSize = 0;
-		error = cliprdr_serialize_file_list_ex(clipboard->file_capability_flags, file_array,
-		                                       file_count, &pDstData, &DstSize);
+
+		const UINT32 flags = cliprdr_file_context_remote_get_flags(clipboard->file);
+		error = cliprdr_serialize_file_list_ex(flags, file_array, file_count, &pDstData, &DstSize);
 
 		if (error)
 			WLog_ERR(TAG, "failed to serialize CLIPRDR_FILELIST: 0x%08X", error);
+
+		UINT32 formatId = ClipboardGetFormatId(clipboard->system, mime_uri_list);
+		UINT32 url_size = 0;
+		char* url = ClipboardGetData(clipboard->system, formatId, &url_size);
+		cliprdr_file_context_update_client_data(clipboard->file, url, url_size);
+		free(url);
 
 		free(file_array);
 	}
@@ -1453,11 +1458,7 @@ static UINT xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
 	generalCapabilitySet.generalFlags = CB_USE_LONG_FORMAT_NAMES;
 
 	WINPR_ASSERT(clipboard);
-	if (clipboard->streams_supported && clipboard->file_formats_registered)
-		generalCapabilitySet.generalFlags |=
-		    CB_STREAM_FILECLIP_ENABLED | CB_FILECLIP_NO_FILE_PATHS | CB_HUGE_FILE_SUPPORT_ENABLED;
-
-	clipboard->file_capability_flags = generalCapabilitySet.generalFlags;
+	generalCapabilitySet.generalFlags |= cliprdr_file_context_current_flags(clipboard->file);
 
 	WINPR_ASSERT(clipboard->context);
 	WINPR_ASSERT(clipboard->context->ClientCapabilities);
@@ -1584,7 +1585,7 @@ static UINT xf_cliprdr_server_capabilities(CliprdrClientContext* context,
 	capsPtr = (const BYTE*)capabilities->capabilitySets;
 	WINPR_ASSERT(capsPtr);
 
-	clipboard->streams_supported = FALSE;
+	cliprdr_file_context_remote_set_flags(clipboard->file, 0);
 
 	for (i = 0; i < capabilities->cCapabilitiesSets; i++)
 	{
@@ -1594,10 +1595,7 @@ static UINT xf_cliprdr_server_capabilities(CliprdrClientContext* context,
 		{
 			generalCaps = (const CLIPRDR_GENERAL_CAPABILITY_SET*)caps;
 
-			if (generalCaps->generalFlags & CB_STREAM_FILECLIP_ENABLED)
-			{
-				clipboard->streams_supported = TRUE;
-			}
+			cliprdr_file_context_remote_set_flags(clipboard->file, generalCaps->generalFlags);
 		}
 
 		capsPtr += caps->capabilitySetLength;
@@ -1878,7 +1876,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 		if (strcmp(clipboard->requestedFormat->formatName, type_FileGroupDescriptorW) == 0)
 		{
-			if (!cliprdr_file_context_update_data(clipboard->file, data, size))
+			if (!cliprdr_file_context_update_server_data(clipboard->file, data, size))
 				WLog_WARN(TAG, "failed to update file descriptors");
 
 			srcFormatId = ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
@@ -1997,82 +1995,6 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
-
-static UINT
-xf_cliprdr_send_file_contents_failure(CliprdrClientContext* context,
-                                      const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
-{
-	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
-
-	WINPR_ASSERT(fileContentsRequest);
-
-	response.common.msgFlags = CB_RESPONSE_FAIL;
-	response.streamId = fileContentsRequest->streamId;
-
-	WINPR_ASSERT(context);
-	WINPR_ASSERT(context->ClientFileContentsResponse);
-	return context->ClientFileContentsResponse(context, &response);
-}
-
-static UINT
-xf_cliprdr_server_file_contents_request(CliprdrClientContext* context,
-                                        const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
-{
-	UINT error = NO_ERROR;
-	xfClipboard* clipboard;
-
-	WINPR_ASSERT(context);
-	WINPR_ASSERT(fileContentsRequest);
-
-	clipboard = cliprdr_file_context_get_context(context->custom);
-	WINPR_ASSERT(clipboard);
-
-	/*
-	 * MS-RDPECLIP 2.2.5.3 File Contents Request PDU (CLIPRDR_FILECONTENTS_REQUEST):
-	 * The FILECONTENTS_SIZE and FILECONTENTS_RANGE flags MUST NOT be set at the same time.
-	 */
-	if ((fileContentsRequest->dwFlags & (FILECONTENTS_SIZE | FILECONTENTS_RANGE)) ==
-	    (FILECONTENTS_SIZE | FILECONTENTS_RANGE))
-	{
-		WLog_ERR(TAG, "invalid CLIPRDR_FILECONTENTS_REQUEST.dwFlags");
-		return xf_cliprdr_send_file_contents_failure(context, fileContentsRequest);
-	}
-
-	if (fileContentsRequest->dwFlags & FILECONTENTS_SIZE)
-		error = xf_cliprdr_server_file_size_request(clipboard, fileContentsRequest);
-
-	if (fileContentsRequest->dwFlags & FILECONTENTS_RANGE)
-		error = xf_cliprdr_server_file_range_request(clipboard, fileContentsRequest);
-
-	if (error)
-	{
-		WLog_ERR(TAG, "failed to handle CLIPRDR_FILECONTENTS_REQUEST: 0x%08X", error);
-		return xf_cliprdr_send_file_contents_failure(context, fileContentsRequest);
-	}
-
-	return CHANNEL_RC_OK;
-}
-
-static BOOL xf_cliprdr_clipboard_is_valid_unix_filename(LPCWSTR filename)
-{
-	LPCWSTR c;
-
-	if (!filename)
-		return FALSE;
-
-	if (filename[0] == L'\0')
-		return FALSE;
-
-	/* Reserved characters */
-	for (c = filename; *c; ++c)
-	{
-		if (*c == L'/')
-			return FALSE;
-	}
-
-	return TRUE;
-}
-
 xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 {
 	int n = 0;
@@ -2089,6 +2011,10 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 		WLog_ERR(TAG, "failed to allocate xfClipboard data");
 		return NULL;
 	}
+
+	clipboard->file = cliprdr_file_context_new(clipboard);
+	if (!clipboard->file)
+		goto fail;
 
 	xfc->clipboard = clipboard;
 	clipboard->xfc = xfc;
@@ -2199,7 +2125,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	const UINT32 uid = ClipboardGetFormatId(clipboard->system, mime_uri_list);
 	if (uid)
 	{
-		clipboard->file_formats_registered = TRUE;
+		cliprdr_file_context_set_locally_available(clipboard->file, TRUE);
 		clientFormat->atom = XInternAtom(xfc->display, mime_uri_list, False);
 		clientFormat->localFormat = uid;
 		clientFormat->formatToRequest = fgid;
@@ -2214,7 +2140,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	const UINT32 gid = ClipboardGetFormatId(clipboard->system, mime_gnome_copied_files);
 	if (gid != 0)
 	{
-		clipboard->file_formats_registered = TRUE;
+		cliprdr_file_context_set_locally_available(clipboard->file, TRUE);
 		clientFormat->atom = XInternAtom(xfc->display, mime_gnome_copied_files, False);
 		clientFormat->localFormat = gid;
 		clientFormat->formatToRequest = fgid;
@@ -2229,7 +2155,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	const UINT32 mid = ClipboardGetFormatId(clipboard->system, mime_mate_copied_files);
 	if (mid != 0)
 	{
-		clipboard->file_formats_registered = TRUE;
+		cliprdr_file_context_set_locally_available(clipboard->file, TRUE);
 		clientFormat->atom = XInternAtom(xfc->display, mime_mate_copied_files, False);
 		clientFormat->localFormat = mid;
 		clientFormat->formatToRequest = fgid;
@@ -2244,10 +2170,6 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	clipboard->targets[1] = XInternAtom(xfc->display, "TARGETS", FALSE);
 	clipboard->numTargets = 2;
     clipboard->incr_atom = XInternAtom(xfc->display, "INCR", FALSE);
-
-	clipboard->file = cliprdr_file_context_new(clipboard);
-	if (!clipboard->file)
-        goto fail;
 
 	return clipboard;
 
@@ -2297,7 +2219,6 @@ void xf_cliprdr_init(xfContext* xfc, CliprdrClientContext* cliprdr)
 	cliprdr->ServerFormatListResponse = xf_cliprdr_server_format_list_response;
 	cliprdr->ServerFormatDataRequest = xf_cliprdr_server_format_data_request;
 	cliprdr->ServerFormatDataResponse = xf_cliprdr_server_format_data_response;
-	cliprdr->ServerFileContentsRequest = xf_cliprdr_server_file_contents_request;
 
 	cliprdr_file_context_init(xfc->clipboard->file, cliprdr);
 }

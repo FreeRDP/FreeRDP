@@ -33,6 +33,13 @@ extern "C"
 	FREERDP_API CliprdrFileContext* cliprdr_file_context_new(void* context);
 	FREERDP_API void cliprdr_file_context_free(CliprdrFileContext* file);
 
+	FREERDP_API BOOL cliprdr_file_context_set_locally_available(CliprdrFileContext* file,
+	                                                            BOOL available);
+	FREERDP_API BOOL cliprdr_file_context_remote_set_flags(CliprdrFileContext* file, UINT32 flags);
+	FREERDP_API UINT32 cliprdr_file_context_remote_get_flags(CliprdrFileContext* file);
+
+	FREERDP_API UINT32 cliprdr_file_context_current_flags(CliprdrFileContext* file);
+
 	FREERDP_API void* cliprdr_file_context_get_context(CliprdrFileContext* file);
 	FREERDP_API const char* cliprdr_file_context_base_path(CliprdrFileContext* file);
 
@@ -43,8 +50,11 @@ extern "C"
 
 	FREERDP_API BOOL cliprdr_file_context_clear(CliprdrFileContext* file);
 
-	FREERDP_API BOOL cliprdr_file_context_update_data(CliprdrFileContext* file, const void* data,
-	                                                  size_t size);
+	FREERDP_API BOOL cliprdr_file_context_update_client_data(CliprdrFileContext* file,
+	                                                         const char* data, size_t count);
+
+	FREERDP_API BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file,
+	                                                         const void* data, size_t size);
 
 #ifdef __cplusplus
 }
