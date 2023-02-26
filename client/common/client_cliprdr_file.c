@@ -115,7 +115,7 @@ struct cliprdr_file_context
 	struct fuse_session* fuse_sess;
 
 	/* fuse reset per copy*/
-	wArrayList* stream_list;
+	wHashTable* remote_streams;
 	UINT32 current_stream_id;
 	wArrayList* ino_list;
 #endif
@@ -163,6 +163,24 @@ static const struct fuse_lowlevel_ops cliprdr_file_fuse_oper = {
 	.read = cliprdr_file_fuse_read,
 	.opendir = cliprdr_file_fuse_opendir,
 };
+
+static void cliprdr_fuse_stream_free(void* stream)
+{
+	free(stream);
+}
+
+static CliprdrFuseStream* cliprdr_fuse_stream_new(UINT32 streamID, fuse_req_t req, size_t ino,
+                                                  UINT32 req_type)
+{
+	CliprdrFuseStream* stream = (CliprdrFuseStream*)calloc(1, sizeof(CliprdrFuseStream));
+	if (!stream)
+		return NULL;
+	stream->req = req;
+	stream->req_type = req_type;
+	stream->stream_id = streamID;
+	stream->req_ino = ino;
+	return stream;
+}
 
 static void cliprdr_file_fuse_inode_free(void* obj)
 {
@@ -269,31 +287,26 @@ static int cliprdr_file_fuse_util_add_stream_list(CliprdrFileContext* file, fuse
                                                   UINT32* stream_id)
 {
 	int err = 0;
-	CliprdrFuseStream* stream;
 
 	WINPR_ASSERT(file);
 	WINPR_ASSERT(stream_id);
 
-	stream = (CliprdrFuseStream*)calloc(1, sizeof(CliprdrFuseStream));
+	CliprdrFuseStream* stream =
+	    cliprdr_fuse_stream_new(file->current_stream_id++, req, 0, FILECONTENTS_RANGE);
 	if (!stream)
 	{
 		err = ENOMEM;
 		return err;
 	}
-	ArrayList_Lock(file->stream_list);
-	stream->req = req;
-	stream->req_type = FILECONTENTS_RANGE;
-	stream->stream_id = file->current_stream_id;
-	*stream_id = stream->stream_id;
-	stream->req_ino = 0;
-	file->current_stream_id++;
-	if (!ArrayList_Append(file->stream_list, stream))
+
+	const BOOL res =
+	    HashTable_Insert(file->remote_streams, (void*)(uintptr_t)stream->stream_id, stream);
+	if (res)
 	{
 		err = ENOMEM;
 		goto error;
 	}
 error:
-	ArrayList_Unlock(file->stream_list);
 	return err;
 }
 
@@ -516,7 +529,6 @@ void cliprdr_file_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char* nam
 	}
 
 	BOOL res;
-	UINT32 stream_id;
 	BOOL size_set = child_node->size_set;
 	size_t lindex = child_node->lindex;
 	size_t ino = child_node->ino;
@@ -527,27 +539,23 @@ void cliprdr_file_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char* nam
 
 	if (!size_set)
 	{
-		CliprdrFuseStream* stream = (CliprdrFuseStream*)calloc(1, sizeof(CliprdrFuseStream));
+		CliprdrFuseStream* stream =
+		    cliprdr_fuse_stream_new(file->current_stream_id++, req, ino, FILECONTENTS_SIZE);
 		if (!stream)
 		{
 			fuse_reply_err(req, ENOMEM);
 			return;
 		}
-		ArrayList_Lock(file->stream_list);
-		stream->req = req;
-		stream->req_type = FILECONTENTS_SIZE;
-		stream->stream_id = file->current_stream_id;
-		stream_id = stream->stream_id;
-		stream->req_ino = ino;
 		file->current_stream_id++;
-		res = ArrayList_Append(file->stream_list, stream);
-		ArrayList_Unlock(file->stream_list);
+
+		res = HashTable_Insert(file->remote_streams, (void*)(uintptr_t)stream->stream_id, stream);
 		if (!res)
 		{
 			fuse_reply_err(req, ENOMEM);
 			return;
 		}
-		xf_cliprdr_send_client_file_contents(file, stream_id, lindex, FILECONTENTS_SIZE, 0, 0, 0);
+		xf_cliprdr_send_client_file_contents(file, stream->stream_id, lindex, FILECONTENTS_SIZE, 0,
+		                                     0, 0);
 		return;
 	}
 	e.ino = ino;
@@ -736,10 +744,7 @@ static UINT xf_cliprdr_send_client_file_contents(CliprdrFileContext* file, UINT3
 static UINT cliprdr_file_context_server_file_contents_response(
     CliprdrClientContext* context, const CLIPRDR_FILE_CONTENTS_RESPONSE* fileContentsResponse)
 {
-	size_t count;
-	size_t index;
 	BOOL found = FALSE;
-	CliprdrFuseStream* stream = NULL;
 	CliprdrFuseInode* ino;
 	UINT32 stream_id;
 	const BYTE* data;
@@ -756,39 +761,29 @@ static UINT cliprdr_file_context_server_file_contents_response(
 	data = fileContentsResponse->requestedData;
 	data_len = fileContentsResponse->cbRequested;
 
-	ArrayList_Lock(file->stream_list);
-	count = ArrayList_Count(file->stream_list);
-
-	for (index = 0; index < count; index++)
+	CliprdrFuseStream fstream = { 0 };
+	HashTable_Lock(file->remote_streams);
 	{
-		stream = (CliprdrFuseStream*)ArrayList_GetItem(file->stream_list, index);
-
-		if (stream->stream_id == stream_id)
+		const CliprdrFuseStream* stream =
+		    HashTable_GetItemValue(file->remote_streams, (void*)(uintptr_t)stream_id);
+		if (stream)
 		{
 			found = TRUE;
-			break;
+			fstream = *stream;
 		}
+		HashTable_Remove(file->remote_streams, (void*)(uintptr_t)stream_id);
 	}
-	if (!found || !stream)
-	{
-		ArrayList_Unlock(file->stream_list);
+	HashTable_Unlock(file->remote_streams);
+	if (!found)
 		return CHANNEL_RC_OK;
-	}
 
-	fuse_req_t req = stream->req;
-	UINT32 req_type = stream->req_type;
-	size_t req_ino = stream->req_ino;
-
-	ArrayList_RemoveAt(file->stream_list, index);
-	ArrayList_Unlock(file->stream_list);
-
-	switch (req_type)
+	switch (fstream.req_type)
 	{
 		case FILECONTENTS_SIZE:
 			/* fileContentsResponse->cbRequested should be 64bit*/
 			if (data_len != sizeof(UINT64))
 			{
-				fuse_reply_err(req, EIO);
+				fuse_reply_err(fstream.req, EIO);
 				break;
 			}
 			UINT64 size;
@@ -796,18 +791,18 @@ static UINT cliprdr_file_context_server_file_contents_response(
 			wStream* s = Stream_StaticConstInit(&sbuffer, data, data_len);
 			if (!s)
 			{
-				fuse_reply_err(req, ENOMEM);
+				fuse_reply_err(fstream.req, ENOMEM);
 				break;
 			}
 			Stream_Read_UINT64(s, size);
 
 			ArrayList_Lock(file->ino_list);
-			ino = cliprdr_file_fuse_util_get_inode(file->ino_list, req_ino);
+			ino = cliprdr_file_fuse_util_get_inode(file->ino_list, fstream.req_ino);
 			/* ino must be exists and  */
 			if (!ino)
 			{
 				ArrayList_Unlock(file->ino_list);
-				fuse_reply_err(req, EIO);
+				fuse_reply_err(fstream.req, EIO);
 				break;
 			}
 
@@ -823,10 +818,10 @@ static UINT cliprdr_file_context_server_file_contents_response(
 			e.attr.st_size = ino->st_size;
 			e.attr.st_mtime = ino->st_mtim.tv_sec;
 			ArrayList_Unlock(file->ino_list);
-			fuse_reply_entry(req, &e);
+			fuse_reply_entry(fstream.req, &e);
 			break;
 		case FILECONTENTS_RANGE:
-			fuse_reply_buf(req, (const char*)data, data_len);
+			fuse_reply_buf(fstream.req, (const char*)data, data_len);
 			break;
 	}
 	return CHANNEL_RC_OK;
@@ -1396,7 +1391,7 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 	}
 
 	// fuse related
-	ArrayList_Free(file->stream_list);
+	HashTable_Free(file->remote_streams);
 	ArrayList_Free(file->ino_list);
 #endif
 	HashTable_Free(file->local_streams);
@@ -1507,14 +1502,14 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 	file->current_stream_id = 0;
-	file->stream_list = ArrayList_New(TRUE);
-	if (!file->stream_list)
+	file->remote_streams = HashTable_New(TRUE);
+	if (!file->remote_streams)
 	{
 		WLog_Print(file->log, WLOG_ERROR, "failed to allocate stream_list");
 		goto fail;
 	}
-	wObject* obj = ArrayList_Object(file->stream_list);
-	obj->fnObjectFree = free;
+	wObject* obj = HashTable_ValueObject(file->remote_streams);
+	obj->fnObjectFree = cliprdr_fuse_stream_free;
 
 	file->ino_list = ArrayList_New(TRUE);
 	if (!file->ino_list)
@@ -1552,29 +1547,23 @@ BOOL local_stream_discard(const void* key, void* value, void* arg)
 	return TRUE;
 }
 
+static BOOL remote_stream_discard(const void* key, void* value, void* arg)
+{
+	CliprdrFuseStream* stream = (CliprdrFuseStream*)value;
+	CliprdrFileContext* file = arg;
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(value);
+	WINPR_ASSERT(arg);
+	fuse_reply_err(stream->req, EIO);
+	return HashTable_Remove(file->remote_streams, key);
+}
+
 BOOL cliprdr_file_context_clear(CliprdrFileContext* file)
 {
 	HashTable_Foreach(file->local_streams, local_stream_discard, file);
 
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
-	if (file->stream_list)
-	{
-		size_t index;
-		size_t count;
-		CliprdrFuseStream* stream;
-		ArrayList_Lock(file->stream_list);
-		file->current_stream_id = 0;
-		/* reply error to all req first don't care request type*/
-		count = ArrayList_Count(file->stream_list);
-		for (index = 0; index < count; index++)
-		{
-			stream = (CliprdrFuseStream*)ArrayList_GetItem(file->stream_list, index);
-			fuse_reply_err(stream->req, EIO);
-		}
-		ArrayList_Unlock(file->stream_list);
-
-		ArrayList_Clear(file->stream_list);
-	}
+	HashTable_Foreach(file->remote_streams, remote_stream_discard, file);
 
 	xf_fuse_repopulate(file, file->ino_list);
 #endif
