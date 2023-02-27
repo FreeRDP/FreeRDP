@@ -28,66 +28,89 @@
 #include <io.h>
 #include <conio.h>
 
-char read_chr(int isTty)
+static char read_chr(FILE* f)
 {
 	char chr;
+	const BOOL isTty = _isatty(_fileno(f));
 	if (isTty)
-		return _getch();
-	if (scanf_s("%c", &chr, (UINT32)sizeof(char)) && !feof(stdin))
+		return fgetc(f);
+	if (fscanf_s(f, "%c", &chr, (UINT32)sizeof(char)) && !feof(f))
 		return chr;
 	return 0;
 }
 
-char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int from_stdin)
+int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 {
-	const char CTRLC = 3;
-	const char BACKSPACE = '\b';
-	const char NEWLINE = '\n';
-	const char CARRIAGERETURN = '\r';
-	const char SHOW_ASTERISK = TRUE;
+	HANDLE handles[] = { (HANDLE)_get_osfhandle(_fileno(f)), freerdp_abort_event(context) };
+
+	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
+	switch (status)
+	{
+		case WAIT_OBJECT_0:
+			return read_chr(f);
+		default:
+			return EOF;
+	}
+}
+
+char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
+                              int from_stdin)
+{
+#define CTRLC 3
+#define BACKSPACE '\b'
+#define NEWLINE '\n'
+#define CARRIAGERETURN '\r'
+#define SHOW_ASTERISK TRUE
 
 	size_t read_cnt = 0, chr;
-	char isTty;
 
 	if (from_stdin)
 	{
 		printf("%s ", prompt);
 		fflush(stdout);
-		isTty = _isatty(_fileno(stdin));
-		while (read_cnt < bufsiz - 1 && (chr = read_chr(isTty)) && chr != NEWLINE &&
-		       chr != CARRIAGERETURN)
+		while (read_cnt < bufsiz - 1 && (chr = freerdp_interruptible_getc(context, stdin)) &&
+		       chr != NEWLINE && chr != CARRIAGERETURN)
 		{
-			if (chr == BACKSPACE)
+			switch (chr)
 			{
-				if (read_cnt > 0)
+				case EOF:
+					goto end;
+				case BACKSPACE:
 				{
-					if (SHOW_ASTERISK)
-						printf("\b \b");
-					read_cnt--;
-				}
-			}
-			else if (chr == CTRLC)
-			{
-				if (read_cnt != 0)
-				{
-					while (read_cnt > 0)
+					if (read_cnt > 0)
 					{
 						if (SHOW_ASTERISK)
 							printf("\b \b");
 						read_cnt--;
 					}
 				}
-				else
-					goto fail;
-			}
-			else
-			{
-				*(buf + read_cnt) = chr;
-				read_cnt++;
-				if (SHOW_ASTERISK)
-					printf("*");
+				break;
+				case CTRLC:
+				{
+					if (read_cnt != 0)
+					{
+						while (read_cnt > 0)
+						{
+							if (SHOW_ASTERISK)
+								printf("\b \b");
+							read_cnt--;
+						}
+					}
+					else
+						goto fail;
+				}
+				break;
+				default:
+				{
+					*(buf + read_cnt) = chr;
+					read_cnt++;
+					if (SHOW_ASTERISK)
+						printf("*");
+				}
+				break;
 			}
 		}
+	end:
 		*(buf + read_cnt) = '\0';
 		printf("\n");
 		fflush(stdout);
@@ -259,11 +282,11 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 		const int res = wait_for_fd(fd, 10);
 		if (res != 0)
 		{
-				char c = 0;
-			    const ssize_t rd = read(fd, &c, 1);
-			    if (rd == 1)
-				    rc = c;
-			    break;
+			char c = 0;
+			const ssize_t rd = read(fd, &c, 1);
+			if (rd == 1)
+				rc = c;
+			break;
 		}
 	} while (!freerdp_shall_disconnect_context(context));
 
@@ -273,7 +296,8 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 
 #else
 
-char* freerdp_passphrase_read(const char* prompt, char* buf, size_t bufsiz, int from_stdin)
+char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
+                              int from_stdin)
 {
 	return NULL;
 }
