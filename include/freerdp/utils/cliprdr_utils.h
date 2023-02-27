@@ -30,6 +30,9 @@ extern "C"
 {
 #endif
 
+	FREERDP_API BOOL cliprdr_read_filedescriptor(wStream* s, FILEDESCRIPTORW* descriptor);
+	FREERDP_API BOOL cliprdr_write_filedescriptor(wStream* s, const FILEDESCRIPTORW* descriptor);
+
 	FREERDP_API UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 	                                         FILEDESCRIPTORW** file_descriptor_array,
 	                                         UINT32* file_descriptor_count);
