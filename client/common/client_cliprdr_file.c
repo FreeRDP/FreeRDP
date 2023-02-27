@@ -76,6 +76,7 @@ typedef struct
 	fuse_req_t req;
 	/*for FILECONTENTS_SIZE must be ino number* */
 	size_t req_ino;
+	UINT32 lockId;
 } CliprdrFuseStream;
 
 typedef struct
@@ -89,7 +90,7 @@ typedef struct
 	struct timespec st_mtim;
 	char* name;
 	wArrayList* child_inos;
-	UINT32 streamID;
+	INT64 lockID;
 } CliprdrFuseInode;
 #endif
 
@@ -97,12 +98,12 @@ typedef struct
 {
 	char* name;
 	FILE* fp;
+	INT64 size;
 } CliprdrLocalFile;
 
 typedef struct
 {
-	UINT32 streamID;
-
+	UINT32 lockId;
 	BOOL locked;
 	size_t count;
 	CliprdrLocalFile* files;
@@ -126,14 +127,15 @@ struct cliprdr_file_context
 	BOOL file_formats_registered;
 	UINT32 file_capability_flags;
 
-	UINT32 local_stream_id;
-	UINT32 remote_stream_id;
+	UINT32 local_lock_id;
+	UINT32 remote_lock_id;
 
 	wHashTable* local_streams;
 	wLog* log;
 	void* clipboard;
 	CliprdrClientContext* context;
 	char* path;
+	char* current_path;
 	BYTE hash[WINPR_SHA256_DIGEST_LENGTH];
 };
 
@@ -144,7 +146,7 @@ static BOOL local_stream_discard(const void* key, void* value, void* arg);
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 static BOOL cliprdr_fuse_repopulate(CliprdrFileContext* file, wArrayList* list);
 static UINT cliprdr_file_send_client_file_contents(CliprdrFileContext* file, UINT32 streamId,
-                                                   UINT32 listIndex, UINT32 dwFlags,
+                                                   UINT32 lockId, UINT32 listIndex, UINT32 dwFlags,
                                                    UINT32 nPositionLow, UINT32 nPositionHigh,
                                                    UINT32 cbRequested);
 
@@ -195,14 +197,14 @@ static void cliprdr_file_fuse_node_free(void* obj)
 	free(inode);
 }
 
-static CliprdrFuseInode* cliprdr_file_fuse_node_new(UINT32 streamID, size_t lindex, size_t ino,
+static CliprdrFuseInode* cliprdr_file_fuse_node_new(UINT32 lockID, size_t lindex, size_t ino,
                                                     size_t parent, const char* path, mode_t mode)
 {
 	CliprdrFuseInode* node = (CliprdrFuseInode*)calloc(1, sizeof(CliprdrFuseInode));
 	if (!node)
 		goto fail;
 
-	node->streamID = streamID;
+	node->lockID = lockID;
 	node->ino = ino;
 	node->parent_ino = parent;
 	node->lindex = lindex;
@@ -327,7 +329,8 @@ error:
 
 static int cliprdr_file_fuse_util_get_and_update_stream_list(CliprdrFileContext* file,
                                                              fuse_req_t req, size_t ino,
-                                                             UINT32 type, UINT32* stream_id)
+                                                             UINT32 type, UINT32* stream_id,
+                                                             UINT32* lockId)
 {
 	int rc = ENOMEM;
 
@@ -339,16 +342,17 @@ static int cliprdr_file_fuse_util_get_and_update_stream_list(CliprdrFileContext*
 	CliprdrFuseInode* node = cliprdr_file_fuse_util_get_inode(file->ino_list, ino);
 	if (node)
 	{
-		CliprdrFuseStream* stream = HashTable_GetItemValue(file->remote_streams, &node->streamID);
+		CliprdrFuseStream* stream = HashTable_GetItemValue(file->remote_streams, &node->lockID);
 		if (stream)
 		{
 			CliprdrFuseStream* request =
-			    cliprdr_fuse_stream_new(node->streamID, req, stream->req_ino, type);
+			    cliprdr_fuse_stream_new(node->lockID, req, stream->req_ino, type);
 			if (request)
 			{
 				if (Queue_Enqueue(file->requests_in_flight, stream))
 				{
-					*stream_id = node->streamID;
+					*stream_id = node->lockID;
+					*lockId = node->lockID;
 					rc = 0;
 				}
 			}
@@ -369,7 +373,7 @@ static int cliprdr_file_fuse_util_add_stream_list(CliprdrFileContext* file)
 	if (!stream)
 		return err;
 
-	const BOOL res = HashTable_Insert(file->remote_streams, &stream->stream_id, stream);
+	const BOOL res = HashTable_Insert(file->remote_streams, &stream->lockId, stream);
 	if (!res)
 	{
 		cliprdr_fuse_stream_free(stream);
@@ -533,8 +537,9 @@ void cliprdr_file_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t o
 {
 	int err;
 	CliprdrFileContext* file = (CliprdrFileContext*)fuse_req_userdata(req);
-	UINT32 lindex;
-	UINT32 stream_id;
+	UINT32 lindex = 0;
+	UINT32 stream_id = 0;
+	UINT32 lock_id = 0;
 
 	WINPR_ASSERT(file);
 
@@ -546,7 +551,7 @@ void cliprdr_file_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t o
 	}
 
 	err = cliprdr_file_fuse_util_get_and_update_stream_list(file, req, ino, FILECONTENTS_RANGE,
-	                                                        &stream_id);
+	                                                        &stream_id, &lock_id);
 	if (err)
 	{
 		fuse_reply_err(req, err);
@@ -556,7 +561,7 @@ void cliprdr_file_fuse_read(fuse_req_t req, fuse_ino_t ino, size_t size, off_t o
 	UINT32 nPositionLow = (off >> 0) & 0xFFFFFFFF;
 	UINT32 nPositionHigh = (off >> 32) & 0xFFFFFFFF;
 
-	cliprdr_file_send_client_file_contents(file, stream_id, lindex, FILECONTENTS_RANGE,
+	cliprdr_file_send_client_file_contents(file, stream_id, lock_id, lindex, FILECONTENTS_RANGE,
 	                                       nPositionLow, nPositionHigh, size);
 }
 
@@ -612,14 +617,16 @@ void cliprdr_file_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char* nam
 	if (!size_set)
 	{
 		UINT32 streamID = 0;
+		UINT32 lockId = 0;
 		const int err = cliprdr_file_fuse_util_get_and_update_stream_list(
-		    file, req, ino, FILECONTENTS_SIZE, &streamID);
+		    file, req, ino, FILECONTENTS_SIZE, &streamID, &lockId);
 		if (err != 0)
 		{
 			fuse_reply_err(req, err);
 			return;
 		}
-		cliprdr_file_send_client_file_contents(file, streamID, lindex, FILECONTENTS_SIZE, 0, 0, 0);
+		cliprdr_file_send_client_file_contents(file, streamID, lockId, lindex, FILECONTENTS_SIZE, 0,
+		                                       0, 0);
 		return;
 	}
 	e.ino = ino;
@@ -748,12 +755,11 @@ static BOOL add_stream_node(const void* key, void* value, void* arg)
 	WINPR_ASSERT(node_arg->root);
 
 	char name[10] = { 0 };
-	_snprintf(name, sizeof(name), "%08" PRIx32, stream->stream_id);
+	_snprintf(name, sizeof(name), "%08" PRIx32, stream->lockId);
 
 	const size_t idx = ArrayList_Count(node_arg->list);
-	CliprdrFuseInode* node =
-	    cliprdr_file_fuse_node_new(stream->stream_id, idx, FUSE_ROOT_ID + 1 + stream->stream_id,
-	                               FUSE_ROOT_ID, name, S_IFDIR | 0700);
+	CliprdrFuseInode* node = cliprdr_file_fuse_node_new(
+	    stream->lockId, idx, FUSE_ROOT_ID + 1 + stream->lockId, FUSE_ROOT_ID, name, S_IFDIR | 0700);
 	if (!node)
 		return FALSE;
 	node->size_set = TRUE;
@@ -799,14 +805,17 @@ fail:
  * @return 0 on success, otherwise a Win32 error code
  */
 static UINT cliprdr_file_send_client_file_contents(CliprdrFileContext* file, UINT32 streamId,
-                                                   UINT32 listIndex, UINT32 dwFlags,
+                                                   UINT32 lockId, UINT32 listIndex, UINT32 dwFlags,
                                                    UINT32 nPositionLow, UINT32 nPositionHigh,
                                                    UINT32 cbRequested)
 {
-	CLIPRDR_FILE_CONTENTS_REQUEST formatFileContentsRequest = { 0 };
-	formatFileContentsRequest.streamId = streamId;
-	formatFileContentsRequest.listIndex = listIndex;
-	formatFileContentsRequest.dwFlags = dwFlags;
+	CLIPRDR_FILE_CONTENTS_REQUEST formatFileContentsRequest = {
+		.streamId = streamId,
+		.clipDataId = lockId,
+		.haveClipDataId = cliprdr_file_context_current_flags(file) & CB_CAN_LOCK_CLIPDATA,
+		.listIndex = listIndex,
+		.dwFlags = dwFlags
+	};
 
 	WINPR_ASSERT(file);
 	switch (dwFlags)
@@ -1001,7 +1010,8 @@ static BOOL cliprdr_file_fuse_create_nodes(CliprdrFileContext* file, wStream* s,
 		char curName[ARRAYSIZE(descriptor.cFileName)] = { 0 };
 		char dirName[ARRAYSIZE(descriptor.cFileName)] = { 0 };
 
-		Stream_Read(s, &descriptor, sizeof(FILEDESCRIPTORW));
+		if (!cliprdr_read_filedescriptor(s, &descriptor))
+			goto fail;
 
 		ConvertWCharNToUtf8(descriptor.cFileName, ARRAYSIZE(descriptor.cFileName), curName,
 		                    ARRAYSIZE(curName));
@@ -1015,7 +1025,7 @@ static BOOL cliprdr_file_fuse_create_nodes(CliprdrFileContext* file, wStream* s,
 		CliprdrFuseInode* inode = NULL;
 		if (split_point == NULL)
 		{
-			inode = cliprdr_file_fuse_node_new(rootNode->streamID, lindex, nextIno++, rootNode->ino,
+			inode = cliprdr_file_fuse_node_new(rootNode->lockID, lindex, nextIno++, rootNode->ino,
 			                                   curName, 0700);
 			if (!ArrayList_Append(file->ino_list, inode))
 				goto fail;
@@ -1032,7 +1042,7 @@ static BOOL cliprdr_file_fuse_create_nodes(CliprdrFileContext* file, wStream* s,
 			parent = (CliprdrFuseInode*)HashTable_GetItemValue(mapDir, dirName);
 			if (!parent)
 				goto fail;
-			inode = cliprdr_file_fuse_node_new(rootNode->streamID, lindex, nextIno++, parent->ino,
+			inode = cliprdr_file_fuse_node_new(rootNode->lockID, lindex, nextIno++, parent->ino,
 			                                   baseName, 0700);
 			if (!inode)
 				goto fail;
@@ -1172,33 +1182,52 @@ static UINT cliprdr_file_context_send_contents(CliprdrClientContext* context,
 	return context->ClientFileContentsResponse(context, &response);
 }
 
-static FILE* file_for_request(CliprdrFileContext* file, UINT32 streamId, UINT32 listIndex)
+static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 lockId,
+                                               UINT32 listIndex)
 {
-	FILE* fp = NULL;
-	HashTable_Lock(file->local_streams);
+	WINPR_ASSERT(file);
 
-	CliprdrLocalStream* cur = HashTable_GetItemValue(file->local_streams, &streamId);
+	CliprdrLocalStream* cur = HashTable_GetItemValue(file->local_streams, &lockId);
 	if (cur)
 	{
 		if (listIndex < cur->count)
 		{
 			CliprdrLocalFile* f = &cur->files[listIndex];
-			if (f->fp)
-				fp = f->fp;
-			else
-			{
-				if (strncmp("file://", f->name, 7) == 0)
-					fp = fopen(&f->name[7], "rb");
-				else
-					fp = fopen(f->name, "rb");
-				f->fp = fp;
-			}
+			WLog_INFO("xxxx", "got %s [%" PRIu32 "]", f->name, listIndex);
+			return f;
 		}
 	}
 
-	HashTable_Unlock(file->local_streams);
+	return NULL;
+}
 
-	return fp;
+static CliprdrLocalFile* file_for_request(CliprdrFileContext* file, UINT32 lockId, UINT32 listIndex)
+{
+	CliprdrLocalFile* f = file_info_for_request(file, lockId, listIndex);
+	if (f)
+	{
+		if (!f->fp)
+		{
+			const char* name = f->name;
+			f->fp = winpr_fopen(name, "rb");
+		}
+		if (!f->fp)
+			return NULL;
+	}
+
+	return f;
+}
+
+static void cliprdr_local_file_try_close(CliprdrLocalFile* file, UINT res, UINT64 offset,
+                                         UINT64 size)
+{
+	WINPR_ASSERT(file);
+
+	if ((res != 0) || ((file->size > 0) && (offset + size >= file->size)))
+	{
+		fclose(file->fp);
+		file->fp = NULL;
+	}
 }
 
 static UINT cliprdr_file_context_server_file_size_request(
@@ -1217,15 +1246,23 @@ static UINT cliprdr_file_context_server_file_size_request(
 		           fileContentsRequest->cbRequested);
 	}
 
-	FILE* fp =
-	    file_for_request(file, fileContentsRequest->streamId, fileContentsRequest->listIndex);
-	if (!fp)
-		return cliprdr_file_context_send_file_contents_failure(file->context, fileContentsRequest);
+	HashTable_Lock(file->local_streams);
 
-	if (_fseeki64(fp, 0, SEEK_END) < 0)
-		return cliprdr_file_context_send_file_contents_failure(file->context, fileContentsRequest);
+	UINT res = CHANNEL_RC_OK;
+	CliprdrLocalFile* rfile =
+	    file_for_request(file, fileContentsRequest->clipDataId, fileContentsRequest->listIndex);
+	if (!rfile)
+		res = cliprdr_file_context_send_file_contents_failure(file->context, fileContentsRequest);
 
-	const INT64 size = _ftelli64(fp);
+	if (_fseeki64(rfile->fp, 0, SEEK_END) < 0)
+		res = cliprdr_file_context_send_file_contents_failure(file->context, fileContentsRequest);
+
+	const INT64 size = _ftelli64(rfile->fp);
+	rfile->size = size;
+	cliprdr_local_file_try_close(rfile, res, 0, 0);
+	HashTable_Unlock(file->local_streams);
+	if (res != CHANNEL_RC_OK)
+		return res;
 	return cliprdr_file_context_send_contents(file->context, fileContentsRequest, &size,
 	                                          sizeof(size));
 }
@@ -1234,52 +1271,71 @@ static UINT cliprdr_file_context_server_file_range_request(
     CliprdrFileContext* file, const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	BYTE* data = NULL;
-	wClipboardFileRangeRequest request = { 0 };
 
 	WINPR_ASSERT(fileContentsRequest);
 
-	request.streamId = fileContentsRequest->streamId;
-	request.listIndex = fileContentsRequest->listIndex;
-	request.nPositionLow = fileContentsRequest->nPositionLow;
-	request.nPositionHigh = fileContentsRequest->nPositionHigh;
-	request.cbRequested = fileContentsRequest->cbRequested;
-	FILE* fp =
-	    file_for_request(file, fileContentsRequest->streamId, fileContentsRequest->listIndex);
-	if (!fp)
-		goto fail;
-
+	HashTable_Lock(file->local_streams);
 	const UINT64 offset = (((UINT64)fileContentsRequest->nPositionHigh) << 32) |
 	                      ((UINT64)fileContentsRequest->nPositionLow);
-	if (_fseeki64(fp, offset, SEEK_SET) < 0)
+
+	CliprdrLocalFile* rfile =
+	    file_for_request(file, fileContentsRequest->clipDataId, fileContentsRequest->listIndex);
+	if (!rfile)
+		goto fail;
+
+	if (_fseeki64(rfile->fp, offset, SEEK_SET) < 0)
 		goto fail;
 
 	data = malloc(fileContentsRequest->cbRequested);
 	if (!data)
 		goto fail;
 
-	const size_t r = fread(data, 1, fileContentsRequest->cbRequested, fp);
+	const size_t r = fread(data, 1, fileContentsRequest->cbRequested, rfile->fp);
 	const UINT rc = cliprdr_file_context_send_contents(file->context, fileContentsRequest, data, r);
 	free(data);
+
+	cliprdr_local_file_try_close(rfile, rc, offset, fileContentsRequest->cbRequested);
+	HashTable_Unlock(file->local_streams);
 	return rc;
 fail:
+	cliprdr_local_file_try_close(rfile, ERROR_INTERNAL_ERROR, offset,
+	                             fileContentsRequest->cbRequested);
 	free(data);
+	HashTable_Unlock(file->local_streams);
 	return cliprdr_file_context_send_file_contents_failure(file->context, fileContentsRequest);
 }
 
-static UINT change_lock(CliprdrFileContext* file, UINT32 streamID, BOOL lock)
+static BOOL update_sub_path(CliprdrFileContext* file, UINT32 lockID)
+{
+	WINPR_ASSERT(file);
+	WINPR_ASSERT(file->path);
+
+	char lockstr[32] = { 0 };
+	_snprintf(lockstr, sizeof(lockstr), "%08" PRIx32, lockID);
+
+	free(file->current_path);
+	file->current_path = GetCombinedPath(file->path, lockstr);
+	return file->current_path != NULL;
+}
+
+static UINT change_lock(CliprdrFileContext* file, UINT32 lockId, BOOL lock)
 {
 	WINPR_ASSERT(file);
 
 	HashTable_Lock(file->local_streams);
-	CliprdrLocalStream* stream = HashTable_GetItemValue(file->local_streams, &streamID);
+	CliprdrLocalStream* stream = HashTable_GetItemValue(file->local_streams, &lockId);
 	if (lock && !stream)
 	{
-		stream = cliprdr_local_stream_new(streamID, NULL, 0);
-		HashTable_Insert(file->local_streams, &streamID, stream);
-		file->local_stream_id = streamID;
+		stream = cliprdr_local_stream_new(lockId, NULL, 0);
+		HashTable_Insert(file->local_streams, &lockId, stream);
+		file->local_lock_id = lockId;
 	}
 	if (stream)
+	{
 		stream->locked = lock;
+		stream->lockId = lockId;
+		update_sub_path(file, lockId);
+	}
 
 	if (!lock)
 		HashTable_Foreach(file->local_streams, local_stream_discard, file);
@@ -1432,7 +1488,7 @@ void* cliprdr_file_context_get_context(CliprdrFileContext* file)
 	return file->clipboard;
 }
 
-const char* cliprdr_file_context_base_path(CliprdrFileContext* file)
+static const char* cliprdr_file_context_base_path(CliprdrFileContext* file)
 {
 	WINPR_ASSERT(file);
 	return file->path;
@@ -1474,6 +1530,7 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 	HashTable_Free(file->local_streams);
 	winpr_RemoveDirectory(file->path);
 	free(file->path);
+	free(file->current_path);
 	free(file);
 }
 
@@ -1482,10 +1539,13 @@ static BOOL create_base_path(CliprdrFileContext* file)
 	WINPR_ASSERT(file);
 
 	char base[64] = { 0 };
-	_snprintf(base, sizeof(base), "/.xfreerdp.cliprdr.%" PRIu32, GetCurrentProcessId());
+	_snprintf(base, sizeof(base), "com.freerdp.client.cliprdr.%" PRIu32, GetCurrentProcessId());
 
 	file->path = GetKnownSubPath(KNOWN_PATH_TEMP, base);
 	if (!file->path)
+		return FALSE;
+
+	if (!update_sub_path(file, 0))
 		return FALSE;
 
 	if (!winpr_PathFileExists(file->path) && !winpr_PathMakePath(file->path, 0))
@@ -1498,32 +1558,150 @@ static BOOL create_base_path(CliprdrFileContext* file)
 
 static void cliprdr_local_file_free(CliprdrLocalFile* file)
 {
+	const CliprdrLocalFile empty = { 0 };
 	if (!file)
 		return;
 	if (file->fp)
 		fclose(file->fp);
 	free(file->name);
+	*file = empty;
+}
+
+static BOOL cliprdr_local_file_new(CliprdrLocalFile* f, const char* path)
+{
+	const CliprdrLocalFile empty = { 0 };
+	WINPR_ASSERT(f);
+	WINPR_ASSERT(path);
+
+	*f = empty;
+	f->name = _strdup(path);
+	if (!f->name)
+		goto fail;
+
+	return TRUE;
+fail:
+	cliprdr_local_file_free(f);
+	return FALSE;
+}
+
+static void cliprdr_local_files_free(CliprdrLocalStream* stream)
+{
+	WINPR_ASSERT(stream);
+
+	for (size_t x = 0; x < stream->count; x++)
+		cliprdr_local_file_free(&stream->files[x]);
+	free(stream->files);
+
+	stream->files = NULL;
+	stream->count = 0;
 }
 
 static void cliprdr_local_stream_free(void* obj)
 {
 	CliprdrLocalStream* stream = (CliprdrLocalStream*)obj;
 	if (stream)
-	{
-		for (size_t x = 0; x < stream->count; x++)
-			cliprdr_local_file_free(&stream->files[x]);
-		free(stream->files);
-	}
+		cliprdr_local_files_free(stream);
+
 	free(stream);
+}
+
+static BOOL append_entry(CliprdrLocalStream* stream, const char* path)
+{
+	CliprdrLocalFile* tmp = realloc(stream->files, sizeof(CliprdrLocalFile) * (stream->count + 1));
+	if (!tmp)
+		return FALSE;
+	stream->files = tmp;
+	CliprdrLocalFile* f = &stream->files[stream->count++];
+
+	return cliprdr_local_file_new(f, path);
+}
+
+static BOOL is_directory(const char* path)
+{
+	WCHAR* wpath = ConvertUtf8ToWCharAlloc(path, NULL);
+	if (!wpath)
+		return FALSE;
+
+	HANDLE hFile =
+	    CreateFileW(wpath, 0, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	free(wpath);
+
+	if (hFile == INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	BY_HANDLE_FILE_INFORMATION fileInformation = { 0 };
+	const BOOL status = GetFileInformationByHandle(hFile, &fileInformation);
+	CloseHandle(hFile);
+	if (!status)
+		return FALSE;
+
+	return fileInformation.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+}
+
+static BOOL add_directory(CliprdrLocalStream* stream, const char* path)
+{
+	char* wildcardpath = GetCombinedPath(path, "*");
+	if (!wildcardpath)
+		return FALSE;
+	WCHAR* wpath = ConvertUtf8ToWCharAlloc(wildcardpath, NULL);
+	free(wildcardpath);
+	if (!wpath)
+		return FALSE;
+
+	WIN32_FIND_DATAW FindFileData = { 0 };
+	HANDLE hFind = FindFirstFileW(wpath, &FindFileData);
+	free(wpath);
+
+	if (hFind == INVALID_HANDLE_VALUE)
+		return FALSE;
+
+	BOOL rc = FALSE;
+	char* next = NULL;
+	do
+	{
+		const WCHAR dot[] = { '.', '\0' };
+		const WCHAR dotdot[] = { '.', '.', '\0' };
+
+		if (_wcscmp(FindFileData.cFileName, dot) == 0)
+			continue;
+		if (_wcscmp(FindFileData.cFileName, dotdot) == 0)
+			continue;
+
+		char cFileName[MAX_PATH] = { 0 };
+		ConvertWCharNToUtf8(FindFileData.cFileName, ARRAYSIZE(FindFileData.cFileName), cFileName,
+		                    ARRAYSIZE(cFileName));
+
+		free(next);
+		next = GetCombinedPath(path, cFileName);
+		if (!next)
+			goto fail;
+
+		if (!append_entry(stream, next))
+			goto fail;
+		if (is_directory(next))
+		{
+			if (!add_directory(stream, next))
+				goto fail;
+		}
+	} while (FindNextFileW(hFind, &FindFileData));
+
+	rc = TRUE;
+fail:
+	free(next);
+	FindClose(hFind);
+
+	return rc;
 }
 
 static BOOL cliprdr_local_stream_update(CliprdrLocalStream* stream, const char* data, size_t size)
 {
+	BOOL rc = FALSE;
 	WINPR_ASSERT(stream);
 	if (size == 0)
 		return TRUE;
 
-	free(stream->files);
+	cliprdr_local_files_free(stream);
+
 	stream->files = calloc(size, sizeof(CliprdrLocalFile));
 	if (!stream->files)
 		return FALSE;
@@ -1534,14 +1712,31 @@ static BOOL cliprdr_local_stream_update(CliprdrLocalStream* stream, const char* 
 	char* ptr = strtok(copy, "\r\n");
 	while (ptr)
 	{
-		stream->files[stream->count++].name = _strdup(ptr);
+		const char* name = ptr;
+		if (strncmp("file:///", ptr, 8) == 0)
+			name = &ptr[7];
+		else if (strncmp("file:/", ptr, 6) == 0)
+			name = &ptr[5];
+
+		if (!append_entry(stream, name))
+			goto fail;
+
+		if (is_directory(name))
+		{
+			const BOOL res = add_directory(stream, name);
+			if (!res)
+				goto fail;
+		}
 		ptr = strtok(NULL, "\r\n");
 	}
+
+	rc = TRUE;
+fail:
 	free(copy);
-	return TRUE;
+	return rc;
 }
 
-CliprdrLocalStream* cliprdr_local_stream_new(UINT32 streamID, const char* data, size_t size)
+CliprdrLocalStream* cliprdr_local_stream_new(UINT32 lockId, const char* data, size_t size)
 {
 	CliprdrLocalStream* stream = calloc(1, sizeof(CliprdrLocalStream));
 	if (!stream)
@@ -1550,7 +1745,7 @@ CliprdrLocalStream* cliprdr_local_stream_new(UINT32 streamID, const char* data, 
 	if (!cliprdr_local_stream_update(stream, data, size))
 		goto fail;
 
-	stream->streamID = streamID;
+	stream->lockId = lockId;
 	return stream;
 
 fail:
@@ -1587,6 +1782,7 @@ static void* UINTPointerClone(const void* other)
 	*copy = *src;
 	return copy;
 }
+
 CliprdrFileContext* cliprdr_file_context_new(void* context)
 {
 	CliprdrFileContext* file = calloc(1, sizeof(CliprdrFileContext));
@@ -1680,6 +1876,7 @@ BOOL local_stream_discard(const void* key, void* value, void* arg)
 	return TRUE;
 }
 
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 static BOOL remote_stream_discard(const void* key, void* value, void* arg)
 {
 	CliprdrFuseStream* stream = (CliprdrFuseStream*)value;
@@ -1691,6 +1888,7 @@ static BOOL remote_stream_discard(const void* key, void* value, void* arg)
 		fuse_reply_err(stream->req, EIO);
 	return HashTable_Remove(file->remote_streams, key);
 }
+#endif
 
 BOOL cliprdr_file_context_clear(CliprdrFileContext* file)
 {
@@ -1706,17 +1904,17 @@ BOOL cliprdr_file_context_update_client_data(CliprdrFileContext* file, const cha
                                              size_t size)
 {
 	BOOL rc = FALSE;
-	UINT32 streamID = file->local_stream_id++;
+	UINT32 lockId = file->local_lock_id;
 
 	HashTable_Lock(file->local_streams);
-	CliprdrLocalStream* stream = HashTable_GetItemValue(file->local_streams, &streamID);
+	CliprdrLocalStream* stream = HashTable_GetItemValue(file->local_streams, &lockId);
 
 	if (stream)
 		rc = cliprdr_local_stream_update(stream, data, size);
 	else
 	{
-		stream = cliprdr_local_stream_new(streamID, data, size);
-		rc = HashTable_Insert(file->local_streams, &streamID, stream);
+		stream = cliprdr_local_stream_new(lockId, data, size);
+		rc = HashTable_Insert(file->local_streams, &stream->lockId, stream);
 	}
 	HashTable_Unlock(file->local_streams);
 	return rc;
@@ -1754,4 +1952,13 @@ UINT32 cliprdr_file_context_remote_get_flags(CliprdrFileContext* file)
 {
 	WINPR_ASSERT(file);
 	return file->file_capability_flags;
+}
+
+BOOL cliprdr_file_context_update_base(CliprdrFileContext* file, wClipboard* clip)
+{
+	wClipboardDelegate* delegate = ClipboardGetDelegate(clip);
+	if (!delegate)
+		return FALSE;
+	delegate->basePath = file->current_path;
+	return TRUE;
 }

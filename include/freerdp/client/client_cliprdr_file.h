@@ -41,7 +41,8 @@ extern "C"
 	FREERDP_API UINT32 cliprdr_file_context_current_flags(CliprdrFileContext* file);
 
 	FREERDP_API void* cliprdr_file_context_get_context(CliprdrFileContext* file);
-	FREERDP_API const char* cliprdr_file_context_base_path(CliprdrFileContext* file);
+
+	FREERDP_API BOOL cliprdr_file_context_update_base(CliprdrFileContext* file, wClipboard* clip);
 
 	FREERDP_API BOOL cliprdr_file_context_init(CliprdrFileContext* file,
 	                                           CliprdrClientContext* cliprdr);
