@@ -70,7 +70,6 @@ typedef struct
 	char* formatName;
 } xfCliprdrFormat;
 
-
 struct xf_clipboard
 {
 	xfContext* xfc;

@@ -595,23 +595,23 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 		fuse_session_destroy(file->fuse_sess);
 	}
 #else
-	struct fuse_chan* ch = fuse_mount(clipboard->delegate->basePath, &args);
+	struct fuse_chan* ch = fuse_mount(file->path, &args);
 	if (ch != NULL)
 	{
 		file->fuse_sess = fuse_lowlevel_new(&args, &cliprdr_file_fuse_oper,
-		                                    sizeof(cliprdr_file_fuse_oper), (void*)clipboard);
+		                                    sizeof(cliprdr_file_fuse_oper), (void*)file);
 		if (file->fuse_sess != NULL)
 		{
-			freerdp_add_signal_cleanup_handler(clipboard, fuse_abort);
+			freerdp_add_signal_cleanup_handler(file, fuse_abort);
 			fuse_session_add_chan(file->fuse_sess, ch);
 			const int err = fuse_session_loop(file->fuse_sess);
 			if (err != 0)
 				WLog_WARN(TAG, "fuse_session_loop failed with %d", err);
 			fuse_session_remove_chan(ch);
-			freerdp_del_signal_cleanup_handler(clipboard, fuse_abort);
+			freerdp_del_signal_cleanup_handler(file, fuse_abort);
 			fuse_session_destroy(file->fuse_sess);
 		}
-		fuse_unmount(clipboard->delegate->basePath, ch);
+		fuse_unmount(file->path, ch);
 	}
 #endif
 	fuse_opt_free_args(&args);
