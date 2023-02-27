@@ -1876,7 +1876,10 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 		if (strcmp(clipboard->requestedFormat->formatName, type_FileGroupDescriptorW) == 0)
 		{
-			if (!cliprdr_file_context_update_server_data(clipboard->file, data, size))
+			if (!cliprdr_file_context_update_base(clipboard->file, clipboard->system))
+			{
+			}
+			else if (!cliprdr_file_context_update_server_data(clipboard->file, data, size))
 				WLog_WARN(TAG, "failed to update file descriptors");
 
 			srcFormatId = ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
@@ -2169,7 +2172,7 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	clipboard->targets[0] = XInternAtom(xfc->display, "TIMESTAMP", FALSE);
 	clipboard->targets[1] = XInternAtom(xfc->display, "TARGETS", FALSE);
 	clipboard->numTargets = 2;
-    clipboard->incr_atom = XInternAtom(xfc->display, "INCR", FALSE);
+	clipboard->incr_atom = XInternAtom(xfc->display, "INCR", FALSE);
 
 	return clipboard;
 
