@@ -543,7 +543,11 @@ static BOOL process_uri_list(wClipboard* clipboard, const char* data, size_t len
 		}
 
 		if (stop == lim)
+		{
+			if (strnlen(start, stop - start) < 1)
+				return TRUE;
 			cur = lim;
+		}
 
 		if (comment)
 			continue;
