@@ -662,7 +662,7 @@ static UINT wlf_cliprdr_server_format_list(CliprdrClientContext* context,
 		UwacClipboardOfferCreate(clipboard->seat, mime_html);
 	}
 
-	if (file)
+	if (file && cliprdr_file_context_has_local_support(clipboard->file))
 	{
 		UwacClipboardOfferCreate(clipboard->seat, mime_uri_list);
 		UwacClipboardOfferCreate(clipboard->seat, mime_gnome_copied_files);

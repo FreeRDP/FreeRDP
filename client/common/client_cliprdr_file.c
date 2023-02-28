@@ -156,6 +156,17 @@ static CliprdrLocalStream* cliprdr_local_stream_new(CliprdrFileContext* context,
 static void cliprdr_file_session_terminate(CliprdrFileContext* file);
 static BOOL local_stream_discard(const void* key, void* value, void* arg);
 
+static void log(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line, ...)
+{
+	if (!WLog_IsLevelActive(log, level))
+		return;
+
+	va_list ap;
+	va_start(ap, line);
+	WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, fname, fkt, ap);
+	va_end(ap);
+}
+
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 static BOOL cliprdr_file_fuse_remote_try_unlock(CliprdrFuseStreamLock* stream);
 static BOOL cliprdr_fuse_repopulate(CliprdrFileContext* file, wArrayList* list);
@@ -183,18 +194,6 @@ static void fuse_log_and_reply_err_(CliprdrFileContext* file, fuse_req_t req, in
 	fuse_reply_err(req, err);
 }
 
-static void log(wLog* log, DWORD level, const char* fmt, const char* fname, const char* fkt,
-                size_t line, ...)
-{
-	if (!WLog_IsLevelActive(log, level))
-		return;
-
-	va_list ap;
-	va_start(ap, line);
-	WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, fname, fkt, ap);
-	va_end(ap);
-}
-
 #define fuse_log_and_reply_open(file, req, fi) \
 	fuse_log_and_reply_open_((file), (req), (fi), __FILE__, __FUNCTION__, __LINE__)
 static int fuse_log_and_reply_open_(CliprdrFileContext* file, fuse_req_t req,
@@ -205,7 +204,7 @@ static int fuse_log_and_reply_open_(CliprdrFileContext* file, fuse_req_t req,
 
 	const int res = fuse_reply_open(req, fi);
 	if (res != 0)
-		log(file->log, WLOG_WARN, "[%s:%" PRIuz "] fuse_reply_open %s [%d]", fname, fkt, line,
+		log(file->log, WLOG_WARN, fname, fkt, line, "[%s:%" PRIuz "] fuse_reply_open %s [%d]",
 		    strerror(res), res);
 
 	return res;
@@ -221,7 +220,7 @@ static int fuse_log_and_reply_entry_(CliprdrFileContext* file, fuse_req_t req,
 
 	const int res = fuse_reply_entry(req, fi);
 	if (res != 0)
-		log(file->log, WLOG_WARN, "[%s:%" PRIuz "] fuse_reply_entry %s [%d]", fname, fkt, line,
+		log(file->log, WLOG_WARN, fname, fkt, line, "[%s:%" PRIuz "] fuse_reply_entry %s [%d]",
 		    strerror(res), res);
 	return res;
 }
@@ -235,7 +234,7 @@ static int fuse_log_and_reply_buf_(CliprdrFileContext* file, fuse_req_t req, con
 
 	const int res = fuse_reply_buf(req, buf, size);
 	if (res != 0)
-		log(file->log, WLOG_WARN, "[%s:%" PRIuz "] fuse_reply_buf %s [%d]", fname, fkt, line,
+		log(file->log, WLOG_WARN, fname, fkt, line, "[%s:%" PRIuz "] fuse_reply_buf %s [%d]",
 		    strerror(res), res);
 	return res;
 }
@@ -1401,6 +1400,11 @@ static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 
 			return f;
 		}
 	}
+	else
+	{
+		log(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+		    "missing entry for lockID %" PRIu32 ", index %" PRIu32, lockId, listIndex);
+	}
 
 	return NULL;
 }
@@ -1467,18 +1471,24 @@ static UINT cliprdr_file_context_server_file_size_request(
 	    file_for_request(file, fileContentsRequest->clipDataId, fileContentsRequest->listIndex);
 	if (!rfile)
 		res = cliprdr_file_context_send_file_contents_failure(file->context, fileContentsRequest);
+	else
+	{
+		if (_fseeki64(rfile->fp, 0, SEEK_END) < 0)
+			res =
+			    cliprdr_file_context_send_file_contents_failure(file->context, fileContentsRequest);
+		else
+		{
+			const INT64 size = _ftelli64(rfile->fp);
+			rfile->size = size;
+			cliprdr_local_file_try_close(rfile, res, 0, 0);
 
-	if (_fseeki64(rfile->fp, 0, SEEK_END) < 0)
-		res = cliprdr_file_context_send_file_contents_failure(file->context, fileContentsRequest);
+			res = cliprdr_file_context_send_contents_response(file, fileContentsRequest, &size,
+			                                                  sizeof(size));
+		}
+	}
 
-	const INT64 size = _ftelli64(rfile->fp);
-	rfile->size = size;
-	cliprdr_local_file_try_close(rfile, res, 0, 0);
 	HashTable_Unlock(file->local_streams);
-	if (res != CHANNEL_RC_OK)
-		return res;
-	return cliprdr_file_context_send_contents_response(file, fileContentsRequest, &size,
-	                                                   sizeof(size));
+	return res;
 }
 
 static UINT cliprdr_file_context_server_file_range_request(
@@ -2222,4 +2232,15 @@ BOOL cliprdr_file_context_update_base(CliprdrFileContext* file, wClipboard* clip
 		return FALSE;
 	delegate->basePath = file->current_path;
 	return TRUE;
+}
+
+BOOL cliprdr_file_context_has_local_support(CliprdrFileContext* file)
+{
+	WINPR_UNUSED(file);
+
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+	return TRUE;
+#else
+	return FALSE;
+#endif
 }
