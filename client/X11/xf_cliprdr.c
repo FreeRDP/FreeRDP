@@ -834,6 +834,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 		return;
 	}
 
+	ClipboardLock(clipboard->system);
 	SrcSize = (UINT32)size;
 	bSuccess = ClipboardSetData(clipboard->system, srcFormatId, data, SrcSize);
 
@@ -842,6 +843,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 		DstSize = 0;
 		pDstData = (BYTE*)ClipboardGetData(clipboard->system, format->formatToRequest, &DstSize);
 	}
+	ClipboardUnlock(clipboard->system);
 
 	if (!pDstData)
 	{
@@ -874,7 +876,9 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 
 		UINT32 formatId = ClipboardGetFormatId(clipboard->system, mime_uri_list);
 		UINT32 url_size = 0;
+		ClipboardLock(clipboard->system);
 		char* url = ClipboardGetData(clipboard->system, formatId, &url_size);
+		ClipboardUnlock(clipboard->system);
 		cliprdr_file_context_update_client_data(clipboard->file, url, url_size);
 		free(url);
 
@@ -1257,7 +1261,10 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 
 				/* Cached converted clipboard data available. Send it now */
 				respond->property = xevent->property;
+				ClipboardLock(clipboard->system);
 				void* data = ClipboardGetData(clipboard->system, cformat->localFormat, &DstSize);
+				ClipboardUnlock(clipboard->system);
+
 				xf_cliprdr_provide_data(clipboard, respond, data, DstSize);
 				free(data);
 			}
@@ -1881,11 +1888,11 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 		if (strcmp(clipboard->requestedFormat->formatName, type_FileGroupDescriptorW) == 0)
 		{
-			if (!cliprdr_file_context_update_base(clipboard->file, clipboard->system))
+			if (!cliprdr_file_context_update_server_data(clipboard->file, data, size))
+				WLog_WARN(TAG, "failed to update file descriptors");
+			else if (!cliprdr_file_context_update_base(clipboard->file, clipboard->system))
 			{
 			}
-			else if (!cliprdr_file_context_update_server_data(clipboard->file, data, size))
-				WLog_WARN(TAG, "failed to update file descriptors");
 
 			srcFormatId = ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
 			const xfCliprdrFormat* dstTargetFormat =
@@ -1933,8 +1940,11 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	              format->formatToRequest, ClipboardGetFormatIdString(format->formatToRequest),
 	              format->localFormat, format->formatName);
 	SrcSize = (UINT32)size;
+
+	ClipboardLock(clipboard->system);
 	bSuccess = ClipboardSetData(clipboard->system, srcFormatId, data, SrcSize);
 
+	BOOL willQuit = FALSE;
 	if (bSuccess)
 	{
 		if (SrcSize == 0)
@@ -1942,25 +1952,30 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 			WLog_DBG(TAG, "skipping, empty data detected!");
 			free(clipboard->respond);
 			clipboard->respond = NULL;
-			return CHANNEL_RC_OK;
+			willQuit = TRUE;
 		}
-
-		pDstData = (BYTE*)ClipboardGetData(clipboard->system, dstFormatId, &DstSize);
-
-		if (!pDstData)
+		else
 		{
-			WLog_WARN(TAG, "failed to get clipboard data in format %s [source format %s]",
-			          ClipboardGetFormatName(clipboard->system, dstFormatId),
-			          ClipboardGetFormatName(clipboard->system, srcFormatId));
-		}
+			pDstData = (BYTE*)ClipboardGetData(clipboard->system, dstFormatId, &DstSize);
 
-		if (nullTerminated && pDstData)
-		{
-			BYTE* nullTerminator = memchr(pDstData, '\0', DstSize);
-			if (nullTerminator)
-				DstSize = nullTerminator - pDstData;
+			if (!pDstData)
+			{
+				WLog_WARN(TAG, "failed to get clipboard data in format %s [source format %s]",
+				          ClipboardGetFormatName(clipboard->system, dstFormatId),
+				          ClipboardGetFormatName(clipboard->system, srcFormatId));
+			}
+
+			if (nullTerminated && pDstData)
+			{
+				BYTE* nullTerminator = memchr(pDstData, '\0', DstSize);
+				if (nullTerminator)
+					DstSize = nullTerminator - pDstData;
+			}
 		}
 	}
+	ClipboardUnlock(clipboard->system);
+	if (willQuit)
+		return CHANNEL_RC_OK;
 
 	/* Cache converted and original data to avoid doing a possibly costly
 	 * conversion again on subsequent requests */

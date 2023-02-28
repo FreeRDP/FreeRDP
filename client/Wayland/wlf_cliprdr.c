@@ -778,15 +778,17 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 			goto fail;
 	}
 
+	ClipboardLock(clipboard->system);
 	const BOOL res = ClipboardSetData(clipboard->system, localFormatId, data, size);
 	free(data);
-	data = NULL;
-	if (!res)
-		goto fail;
 
 	UINT32 len = 0;
-	data = ClipboardGetData(clipboard->system, formatId, &len);
-	if (!data)
+	data = NULL;
+	if (res)
+		data = ClipboardGetData(clipboard->system, formatId, &len);
+
+	ClipboardUnlock(clipboard->system);
+	if (!res || !data)
 		goto fail;
 
 	if (fileFormatId == formatId)
@@ -867,9 +869,9 @@ wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 					    ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
 					dstFormatId = ClipboardGetFormatId(clipboard->system, request->responseMime);
 
-					if (!cliprdr_file_context_update_base(clipboard->file, clipboard->system))
+					if (!cliprdr_file_context_update_server_data(clipboard->file, data, size))
 						goto unlock;
-					else if (!cliprdr_file_context_update_server_data(clipboard->file, data, size))
+					else if (!cliprdr_file_context_update_base(clipboard->file, clipboard->system))
 						goto unlock;
 				}
 				else if (strcmp(type_HtmlFormat, name) == 0)
@@ -882,12 +884,15 @@ wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 		break;
 	}
 
-	if (!ClipboardSetData(clipboard->system, srcFormatId, data, size))
-		goto unlock;
-
+	ClipboardLock(clipboard->system);
 	UINT32 len = 0;
-	data = ClipboardGetData(clipboard->system, dstFormatId, &len);
-	if (!data)
+
+	const BOOL sres = ClipboardSetData(clipboard->system, srcFormatId, data, size);
+	if (sres)
+		data = ClipboardGetData(clipboard->system, dstFormatId, &len);
+	ClipboardUnlock(clipboard->system);
+
+	if (!sres || !data)
 		goto unlock;
 
 	if (request->responseFile)
