@@ -467,24 +467,6 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 			return -1;
 	}
 
-	if (settings->RedirectionFlags & LB_LOAD_BALANCE_INFO)
-	{
-		/* LoadBalanceInfo may not contain a null terminator */
-		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo,
-		                                      redirection->LoadBalanceInfo,
-		                                      redirection->LoadBalanceInfoLength))
-			return -1;
-	}
-	else
-	{
-		/**
-		 * Free previous LoadBalanceInfo, if any, otherwise it may end up
-		 * being reused for the redirected session, which is not what we want.
-		 */
-		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo, NULL, 0))
-			return -1;
-	}
-
 	if (settings->RedirectionFlags & LB_USERNAME)
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RedirectionUsername,
@@ -548,11 +530,58 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionTsvUrl,
 		                                      redirection->TsvUrl, redirection->TsvUrlLength))
 			return -1;
+
+		const size_t lblen = freerdp_settings_get_uint32(settings, FreeRDP_LoadBalanceInfoLength);
+		const char* lb = freerdp_settings_get_pointer(settings, FreeRDP_LoadBalanceInfo);
+		if (lblen > 0)
+		{
+			BOOL valid = TRUE;
+			size_t tsvlen = 0;
+
+			char* tsv = ConvertWCharNToUtf8Alloc(
+			    redirection->TsvUrl, redirection->TsvUrlLength / sizeof(WCHAR), &tsvlen);
+			if (!tsv || !lb)
+				valid = FALSE;
+			else if (tsvlen != lblen)
+				valid = FALSE;
+			else if (memcmp(tsv, lb, lblen) != 0)
+				valid = FALSE;
+
+			if (!valid)
+			{
+				WLog_ERR(TAG,
+				         "[redirection] Expected TsvUrl '%s' [%" PRIuz "], but got '%s' [%" PRIuz
+				         "]",
+				         lb, lblen, tsv, tsvlen);
+			}
+			free(tsv);
+
+			if (!valid)
+				return -2;
+		}
 	}
 
 	if (settings->RedirectionFlags & LB_SERVER_TSV_CAPABLE)
 	{
 		// TODO
+	}
+
+	if (settings->RedirectionFlags & LB_LOAD_BALANCE_INFO)
+	{
+		/* LoadBalanceInfo may not contain a null terminator */
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo,
+		                                      redirection->LoadBalanceInfo,
+		                                      redirection->LoadBalanceInfoLength))
+			return -1;
+	}
+	else
+	{
+		/**
+		 * Free previous LoadBalanceInfo, if any, otherwise it may end up
+		 * being reused for the redirected session, which is not what we want.
+		 */
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo, NULL, 0))
+			return -1;
 	}
 
 	if (settings->RedirectionFlags & LB_PASSWORD_IS_PK_ENCRYPTED)
