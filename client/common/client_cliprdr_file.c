@@ -1352,18 +1352,27 @@ error:
 #endif
 
 static UINT cliprdr_file_context_send_file_contents_failure(
-    CliprdrClientContext* context, const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
+    CliprdrFileContext* file, const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
 	CLIPRDR_FILE_CONTENTS_RESPONSE response = { 0 };
 
+	WINPR_ASSERT(file);
 	WINPR_ASSERT(fileContentsRequest);
+
+	const UINT64 offset = (((UINT64)fileContentsRequest->nPositionHigh) << 32) |
+	                      ((UINT64)fileContentsRequest->nPositionLow);
+	log(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+	    "server file contents request [lockID %" PRIu32 ", streamID %" PRIu32 ", index %" PRIu32
+	    "] offset %" PRIu64 ", size %" PRIu32 " failed",
+	    fileContentsRequest->clipDataId, fileContentsRequest->streamId,
+	    fileContentsRequest->listIndex, offset, fileContentsRequest->cbRequested);
 
 	response.common.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = fileContentsRequest->streamId;
 
-	WINPR_ASSERT(context);
-	WINPR_ASSERT(context->ClientFileContentsResponse);
-	return context->ClientFileContentsResponse(context, &response);
+	WINPR_ASSERT(file->context);
+	WINPR_ASSERT(file->context->ClientFileContentsResponse);
+	return file->context->ClientFileContentsResponse(file->context, &response);
 }
 
 static UINT
@@ -1386,6 +1395,22 @@ cliprdr_file_context_send_contents_response(CliprdrFileContext* file,
 	return file->context->ClientFileContentsResponse(file->context, &response);
 }
 
+static BOOL dump_streams(const void* key, void* value, void* arg)
+{
+	const UINT32* ukey = key;
+	CliprdrLocalStream* cur = value;
+
+	log(cur->context->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+	    "[key %" PRIu32 "] lockID %" PRIu32 ", count %" PRIuz ", locked %d", *ukey, cur->lockId,
+	    cur->count, cur->locked);
+	for (size_t x = 0; x < cur->count; x++)
+	{
+		const CliprdrLocalFile* file = &cur->files[x];
+		log(cur->context->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__, "file [%" PRIuz "] ", x,
+		    file->name, file->size);
+	}
+}
+
 static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 lockId,
                                                UINT32 listIndex)
 {
@@ -1399,11 +1424,19 @@ static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 
 			CliprdrLocalFile* f = &cur->files[listIndex];
 			return f;
 		}
+		else
+		{
+			log(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+			    "invalid entry index for lockID %" PRIu32 ", index %" PRIu32 " [count %" PRIu32
+			    "] [locked %d]",
+			    lockId, listIndex, cur->count, cur->locked);
+		}
 	}
 	else
 	{
 		log(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
 		    "missing entry for lockID %" PRIu32 ", index %" PRIu32, lockId, listIndex);
+		HashTable_Foreach(file->local_streams, dump_streams, file);
 	}
 
 	return NULL;
@@ -1420,7 +1453,13 @@ static CliprdrLocalFile* file_for_request(CliprdrFileContext* file, UINT32 lockI
 			f->fp = winpr_fopen(name, "rb");
 		}
 		if (!f->fp)
+		{
+			log(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+			    "[lockID %" PRIu32 ", index %" PRIu32 "] failed to open file '%s' [size %" PRId64
+			    "] %s [%d]",
+			    lockId, listIndex, f->name, f->size, strerror(errno), errno);
 			return NULL;
+		}
 	}
 
 	return f;
@@ -1443,6 +1482,13 @@ static void cliprdr_local_file_try_close(CliprdrLocalFile* file, UINT res, UINT6
 	{
 		WINPR_ASSERT(file->context);
 		WLog_Print(file->context->log, WLOG_DEBUG, "closing file %s after read", file->name);
+		fclose(file->fp);
+		file->fp = NULL;
+	}
+	else
+	{
+		// TODO: we need to keep track of open files to avoid running out of file descriptors
+		// TODO: for the time being just close again.
 		fclose(file->fp);
 		file->fp = NULL;
 	}
@@ -1470,12 +1516,11 @@ static UINT cliprdr_file_context_server_file_size_request(
 	CliprdrLocalFile* rfile =
 	    file_for_request(file, fileContentsRequest->clipDataId, fileContentsRequest->listIndex);
 	if (!rfile)
-		res = cliprdr_file_context_send_file_contents_failure(file->context, fileContentsRequest);
+		res = cliprdr_file_context_send_file_contents_failure(file, fileContentsRequest);
 	else
 	{
 		if (_fseeki64(rfile->fp, 0, SEEK_END) < 0)
-			res =
-			    cliprdr_file_context_send_file_contents_failure(file->context, fileContentsRequest);
+			res = cliprdr_file_context_send_file_contents_failure(file, fileContentsRequest);
 		else
 		{
 			const INT64 size = _ftelli64(rfile->fp);
@@ -1527,7 +1572,7 @@ fail:
 		                             fileContentsRequest->cbRequested);
 	free(data);
 	HashTable_Unlock(file->local_streams);
-	return cliprdr_file_context_send_file_contents_failure(file->context, fileContentsRequest);
+	return cliprdr_file_context_send_file_contents_failure(file, fileContentsRequest);
 }
 
 static BOOL update_sub_path(CliprdrFileContext* file, UINT32 lockID)
@@ -1605,7 +1650,7 @@ static UINT cliprdr_file_context_server_file_contents_request(
 	    (FILECONTENTS_SIZE | FILECONTENTS_RANGE))
 	{
 		WLog_Print(file->log, WLOG_ERROR, "invalid CLIPRDR_FILECONTENTS_REQUEST.dwFlags");
-		return cliprdr_file_context_send_file_contents_failure(context, fileContentsRequest);
+		return cliprdr_file_context_send_file_contents_failure(file, fileContentsRequest);
 	}
 
 	if (fileContentsRequest->dwFlags & FILECONTENTS_SIZE)
@@ -1618,7 +1663,7 @@ static UINT cliprdr_file_context_server_file_contents_request(
 	{
 		WLog_Print(file->log, WLOG_ERROR, "failed to handle CLIPRDR_FILECONTENTS_REQUEST: 0x%08X",
 		           error);
-		return cliprdr_file_context_send_file_contents_failure(context, fileContentsRequest);
+		return cliprdr_file_context_send_file_contents_failure(file, fileContentsRequest);
 	}
 
 	return CHANNEL_RC_OK;
