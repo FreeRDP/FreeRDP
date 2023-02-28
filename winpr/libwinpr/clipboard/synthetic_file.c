@@ -791,7 +791,6 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	const FILEDESCRIPTORW* descriptors = NULL;
 	UINT32 nrDescriptors = 0;
 	size_t count, x, alloc, pos, baseLength = 0;
-	const char* src = (const char*)data;
 	char* dst;
 	size_t header_len = strlen(header);
 	size_t lineprefix_len = strlen(lineprefix);
@@ -810,16 +809,19 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	if (baseLength < 1)
 		return NULL;
 
-	if (clipboard->delegate.ClientRequestFileSize)
-		nrDescriptors = (UINT32)(src[3] << 24) | (UINT32)(src[2] << 16) | (UINT32)(src[1] << 8) |
-		                (src[0] & 0xFF);
+	wStream sbuffer = { 0 };
+	wStream* s = Stream_StaticConstInit(&sbuffer, data, *pSize);
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		return NULL;
+
+	Stream_Read_UINT32(s, nrDescriptors);
 
 	count = (*pSize - 4) / sizeof(FILEDESCRIPTORW);
 
 	if ((count < 1) || (count != nrDescriptors))
 		return NULL;
 
-	descriptors = (const FILEDESCRIPTORW*)&src[4];
+	descriptors = (const FILEDESCRIPTORW*)Stream_Pointer(s);
 
 	if (formatId != ClipboardGetFormatId(clipboard, mime_FileGroupDescriptorW))
 		return NULL;
