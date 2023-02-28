@@ -147,6 +147,7 @@ struct cliprdr_file_context
 	CliprdrClientContext* context;
 	char* path;
 	char* current_path;
+	char* exposed_path;
 	BYTE server_data_hash[WINPR_SHA256_DIGEST_LENGTH];
 	BYTE client_data_hash[WINPR_SHA256_DIGEST_LENGTH];
 };
@@ -922,6 +923,8 @@ struct stream_node_arg
 	CliprdrFuseInode* root;
 };
 
+static BOOL update_sub_path(CliprdrFileContext* file, UINT32 lockID);
+
 static BOOL add_stream_node(const void* key, void* value, void* arg)
 {
 	const CliprdrFuseStreamLock* stream = value;
@@ -932,6 +935,12 @@ static BOOL add_stream_node(const void* key, void* value, void* arg)
 
 	char name[10] = { 0 };
 	_snprintf(name, sizeof(name), "%08" PRIx32, stream->lockId);
+
+	if ((cliprdr_file_context_current_flags(stream->context) & CB_CAN_LOCK_CLIPDATA) == 0)
+	{
+		if (!update_sub_path(stream->context, stream->lockId))
+			return FALSE;
+	}
 
 	const size_t idx = ArrayList_Count(node_arg->list);
 	CliprdrFuseInode* node = cliprdr_file_fuse_node_new(
@@ -1583,9 +1592,12 @@ static BOOL update_sub_path(CliprdrFileContext* file, UINT32 lockID)
 	char lockstr[32] = { 0 };
 	_snprintf(lockstr, sizeof(lockstr), "%08" PRIx32, lockID);
 
+	HashTable_Lock(file->remote_streams);
 	free(file->current_path);
 	file->current_path = GetCombinedPath(file->path, lockstr);
-	return file->current_path != NULL;
+	const BOOL res = file->current_path != NULL;
+	HashTable_Unlock(file->remote_streams);
+	return res;
 }
 
 static UINT change_lock(CliprdrFileContext* file, UINT32 lockId, BOOL lock)
@@ -1823,6 +1835,7 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 	winpr_RemoveDirectory(file->path);
 	free(file->path);
 	free(file->current_path);
+	free(file->exposed_path);
 	free(file);
 }
 
@@ -2092,8 +2105,6 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 
 	file->log = WLog_Get(CLIENT_TAG("common.cliprdr.file"));
 	file->clipboard = context;
-	if (!create_base_path(file))
-		goto fail;
 
 	file->local_streams = HashTable_New(FALSE);
 	if (!file->local_streams)
@@ -2150,7 +2161,12 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 	}
 	obj = ArrayList_Object(file->ino_list);
 	obj->fnObjectFree = cliprdr_file_fuse_node_free;
+#endif
 
+	if (!create_base_path(file))
+		goto fail;
+
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 	if (!cliprdr_fuse_repopulate(file, file->ino_list))
 		goto fail;
 
@@ -2275,8 +2291,15 @@ BOOL cliprdr_file_context_update_base(CliprdrFileContext* file, wClipboard* clip
 	wClipboardDelegate* delegate = ClipboardGetDelegate(clip);
 	if (!delegate)
 		return FALSE;
-	delegate->basePath = file->current_path;
-	return TRUE;
+	ClipboardLock(clip);
+	HashTable_Lock(file->remote_streams);
+	free(file->exposed_path);
+	file->exposed_path = _strdup(file->current_path);
+	HashTable_Unlock(file->remote_streams);
+
+	delegate->basePath = (file->exposed_path);
+	ClipboardUnlock(clip);
+	return delegate->basePath != NULL;
 }
 
 BOOL cliprdr_file_context_has_local_support(CliprdrFileContext* file)
