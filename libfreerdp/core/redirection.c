@@ -56,6 +56,9 @@ struct rdp_redirection
 	rdpCertificate* TargetCertificate;
 };
 
+#define ELEMENT_TYPE_CERTIFICATE 32
+#define ENCODING_TYPE_ASN1_DER 1
+
 static void redirection_free_array(char*** what, UINT32* count)
 {
 	WINPR_ASSERT(what);
@@ -202,6 +205,44 @@ static BOOL replace_char(char* utf8, size_t length, char what, char with)
 	return TRUE;
 }
 
+static BOOL rdp_redirection_write_data(wStream* s, size_t length, const void* data)
+{
+	WINPR_ASSERT(data || (length == 0));
+
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 4))
+		return FALSE;
+
+	Stream_Write_UINT32(s, length);
+
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, length))
+		return FALSE;
+
+	Stream_Write(s, data, length);
+	return TRUE;
+}
+
+static BOOL rdp_redirection_write_base64_wchar(UINT32 flag, wStream* s, size_t length,
+                                               const void* data)
+{
+	BOOL rc = FALSE;
+	char buffer[64] = { 0 };
+	const BYTE* ptr = NULL;
+
+	char* base64 = crypto_base64_encode(data, length);
+	if (!base64)
+		return FALSE;
+
+	size_t wbase64len = 0;
+	WCHAR* wbase64 = ConvertUtf8ToWCharAlloc(base64, &wbase64len);
+	free(base64);
+	if (!wbase64)
+		return FALSE;
+
+	rc = rdp_redirection_write_data(s, wbase64len * sizeof(WCHAR), wbase64);
+	free(wbase64);
+	return rc;
+}
+
 static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* pLength,
                                               BYTE** pData)
 {
@@ -284,6 +325,25 @@ static BOOL rdp_target_cert_get_element(wStream* s, UINT32* pType, UINT32* pEnco
 	return TRUE;
 }
 
+static BOOL rdp_target_cert_write_element(wStream* s, UINT32 Type, UINT32 Encoding,
+                                          const BYTE* data, size_t length)
+{
+	WINPR_ASSERT(data || (length == 0));
+
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, 12))
+		return FALSE;
+
+	Stream_Write_UINT32(s, Type);
+	Stream_Write_UINT32(s, Encoding);
+	Stream_Write_UINT32(s, length);
+
+	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, length))
+		return FALSE;
+
+	Stream_Write(s, data, length);
+	return TRUE;
+}
+
 static BOOL rdp_redirection_read_target_cert(rdpRedirection* redirection, const BYTE* data,
                                              size_t length)
 {
@@ -304,8 +364,8 @@ static BOOL rdp_redirection_read_target_cert(rdpRedirection* redirection, const 
 
 		switch (type)
 		{
-			case 32: /* ELEMENT_TYPE_CERTIFICATE */
-				if (encoding == 1 /* ENCODING_TYPE_ASN1_DER */)
+			case ELEMENT_TYPE_CERTIFICATE:
+				if (encoding == ENCODING_TYPE_ASN1_DER)
 				{
 					if (redirection->TargetCertificate)
 						WLog_WARN(TAG, "Duplicate TargetCertificate in data detected!");
@@ -326,16 +386,46 @@ static BOOL rdp_redirection_read_target_cert(rdpRedirection* redirection, const 
 	return redirection->TargetCertificate != NULL;
 }
 
-static BOOL rdp_redireciton_write_target_cert_stream(wStream* s, const rdpCertificate* cert)
+static BOOL rdp_redirection_write_target_cert(wStream* s, const rdpRedirection* redirection)
 {
-#if 0
-	if (!Stream_EnsureRemainingCapacity(s, 4ull + length))
+	BOOL rc = FALSE;
+	WINPR_ASSERT(redirection);
+
+	const rdpCertificate* cert = redirection->TargetCertificate;
+	if (!cert)
 		return FALSE;
 
-	Stream_Write_UINT32(s, length);
-	Stream_Write(s, data, length);
-#endif
-	return FALSE;
+	size_t derlen = 0;
+
+	BYTE* der = freerdp_certificate_get_der(cert, &derlen);
+	if (!rdp_target_cert_write_element(s, ELEMENT_TYPE_CERTIFICATE, ENCODING_TYPE_ASN1_DER, der,
+	                                   derlen))
+		goto fail;
+
+	rc = TRUE;
+
+fail:
+	free(der);
+	return rc;
+}
+
+static BOOL rdp_redireciton_write_target_cert_stream(wStream* s, const rdpRedirection* redirection)
+{
+	BOOL rc = FALSE;
+	wStream* serialized = Stream_New(NULL, 1024);
+	if (!serialized)
+		goto fail;
+
+	if (!rdp_redirection_write_target_cert(serialized, redirection))
+		goto fail;
+
+	if (!rdp_redirection_write_base64_wchar(
+	        LB_TARGET_CERTIFICATE, s, Stream_GetPosition(serialized), Stream_Buffer(serialized)))
+		return FALSE;
+
+fail:
+	Stream_Free(serialized, TRUE);
+	return rc;
 }
 
 static BOOL rdp_redirection_read_target_cert_stream(wStream* s, rdpRedirection* redirection)
@@ -883,7 +973,7 @@ BOOL rdp_write_enhanced_security_redirection_packet(wStream* s, const rdpRedirec
 
 	if (redirection->flags & LB_TARGET_CERTIFICATE)
 	{
-		if (!rdp_redireciton_write_target_cert_stream(s, redirection->TargetCertificate))
+		if (!rdp_redireciton_write_target_cert_stream(s, redirection))
 			goto fail;
 	}
 
