@@ -67,14 +67,14 @@
 	} while (0)
 #endif
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 typedef struct
 {
 	UINT32 lockId;
 	BOOL locked;
 	CliprdrFileContext* context;
-} CliprdrFuseStreamLock;
+} CliprdrFileStreamLock;
 
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 typedef struct
 {
 	/* must be one of FILECONTENTS_SIZE or FILECONTENTS_RANGE*/
@@ -127,7 +127,6 @@ struct cliprdr_file_context
 	struct fuse_session* fuse_sess;
 
 	/* fuse reset per copy*/
-	wHashTable* remote_streams;
 	wQueue* requests_in_flight;
 	wArrayList* ino_list;
 	fuse_ino_t current_inode_id;
@@ -141,6 +140,7 @@ struct cliprdr_file_context
 	UINT32 local_lock_id;
 	UINT32 remote_lock_id;
 
+	wHashTable* remote_streams;
 	wHashTable* local_streams;
 	wLog* log;
 	void* clipboard;
@@ -169,7 +169,34 @@ static void log(wLog* log, DWORD level, const char* fname, const char* fkt, size
 }
 
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
-static BOOL cliprdr_file_fuse_remote_try_unlock(CliprdrFuseStreamLock* stream);
+static BOOL cliprdr_file_fuse_remote_try_unlock(CliprdrFileStreamLock* stream);
+#endif
+
+static void cliprdr_file_stream_lock_free(void* arg)
+{
+	CliprdrFileStreamLock* stream = arg;
+	if (!stream)
+		return;
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+	cliprdr_file_fuse_remote_try_unlock(stream);
+#endif
+	free(arg);
+}
+
+static CliprdrFileStreamLock* cliprdr_fuse_stream_lock_new(CliprdrFileContext* context,
+                                                           UINT32 lockID)
+{
+	WINPR_ASSERT(context);
+	CliprdrFileStreamLock* stream =
+	    (CliprdrFileStreamLock*)calloc(1, sizeof(CliprdrFileStreamLock));
+	if (!stream)
+		return NULL;
+	stream->context = context;
+	stream->lockId = lockID;
+	return stream;
+}
+
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 static BOOL cliprdr_fuse_repopulate(CliprdrFileContext* file, wArrayList* list);
 static UINT cliprdr_file_send_client_file_contents_request(
     CliprdrFileContext* file, UINT32 streamId, UINT32 lockId, UINT32 listIndex, UINT32 dwFlags,
@@ -248,28 +275,6 @@ static const struct fuse_lowlevel_ops cliprdr_file_fuse_oper = {
 	.read = cliprdr_file_fuse_read,
 	.opendir = cliprdr_file_fuse_opendir,
 };
-
-static void cliprdr_fuse_stream_lock_free(void* arg)
-{
-	CliprdrFuseStreamLock* stream = arg;
-	if (!stream)
-		return;
-	cliprdr_file_fuse_remote_try_unlock(stream);
-	free(stream);
-}
-
-static CliprdrFuseStreamLock* cliprdr_fuse_stream_lock_new(CliprdrFileContext* context,
-                                                           UINT32 lockID)
-{
-	WINPR_ASSERT(context);
-	CliprdrFuseStreamLock* stream =
-	    (CliprdrFuseStreamLock*)calloc(1, sizeof(CliprdrFuseStreamLock));
-	if (!stream)
-		return NULL;
-	stream->context = context;
-	stream->lockId = lockID;
-	return stream;
-}
 
 static void cliprdr_fuse_request_free(void* arg)
 {
@@ -440,7 +445,7 @@ error:
 	return err;
 }
 
-static BOOL cliprdr_file_fuse_remote_try_lock(CliprdrFuseStreamLock* stream)
+static BOOL cliprdr_file_fuse_remote_try_lock(CliprdrFileStreamLock* stream)
 {
 	UINT res = CHANNEL_RC_OK;
 
@@ -464,7 +469,7 @@ static BOOL cliprdr_file_fuse_remote_try_lock(CliprdrFuseStreamLock* stream)
 	return res == CHANNEL_RC_OK;
 }
 
-static BOOL cliprdr_file_fuse_remote_try_unlock(CliprdrFuseStreamLock* stream)
+static BOOL cliprdr_file_fuse_remote_try_unlock(CliprdrFileStreamLock* stream)
 {
 	UINT res = CHANNEL_RC_OK;
 
@@ -505,7 +510,7 @@ static int cliprdr_file_fuse_util_get_and_update_stream_list(CliprdrFileContext*
 	if (node)
 	{
 		HashTable_Lock(file->remote_streams);
-		CliprdrFuseStreamLock* stream = HashTable_GetItemValue(file->remote_streams, &node->lockID);
+		CliprdrFileStreamLock* stream = HashTable_GetItemValue(file->remote_streams, &node->lockID);
 		if (stream)
 		{
 			if (cliprdr_file_fuse_remote_try_lock(stream))
@@ -535,14 +540,14 @@ static int cliprdr_file_fuse_util_add_stream_list(CliprdrFileContext* file)
 
 	WINPR_ASSERT(file);
 
-	CliprdrFuseStreamLock* stream = cliprdr_fuse_stream_lock_new(file, file->remote_lock_id++);
+	CliprdrFileStreamLock* stream = cliprdr_fuse_stream_lock_new(file, file->remote_lock_id++);
 	if (!stream)
 		return err;
 
 	const BOOL res = HashTable_Insert(file->remote_streams, &stream->lockId, stream);
 	if (!res)
 	{
-		cliprdr_fuse_stream_lock_free(stream);
+		cliprdr_file_stream_lock_free(stream);
 		goto error;
 	}
 
@@ -927,7 +932,7 @@ static BOOL update_sub_path(CliprdrFileContext* file, UINT32 lockID);
 
 static BOOL add_stream_node(const void* key, void* value, void* arg)
 {
-	const CliprdrFuseStreamLock* stream = value;
+	const CliprdrFileStreamLock* stream = value;
 	struct stream_node_arg* node_arg = arg;
 	WINPR_ASSERT(stream);
 	WINPR_ASSERT(node_arg);
@@ -1727,10 +1732,11 @@ BOOL cliprdr_file_context_uninit(CliprdrFileContext* file, CliprdrClientContext*
 	// Clear all data before the channel is closed
 	// the cleanup handlers are dependent on a working channel.
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
-	HashTable_Clear(file->remote_streams);
 	ArrayList_Clear(file->ino_list);
 	Queue_Clear(file->requests_in_flight);
 #endif
+
+	HashTable_Clear(file->remote_streams);
 	HashTable_Clear(file->local_streams);
 
 	file->context = NULL;
@@ -1827,10 +1833,10 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 	}
 
 	// fuse related
-	HashTable_Free(file->remote_streams);
 	ArrayList_Free(file->ino_list);
 	Queue_Free(file->requests_in_flight);
 #endif
+	HashTable_Free(file->remote_streams);
 	HashTable_Free(file->local_streams);
 	winpr_RemoveDirectory(file->path);
 	free(file->path);
@@ -2133,6 +2139,17 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 	qobj->fnObjectFree = cliprdr_fuse_request_free;
 
 	file->current_inode_id = 0;
+
+	file->ino_list = ArrayList_New(TRUE);
+	if (!file->ino_list)
+	{
+		WLog_Print(file->log, WLOG_ERROR, "failed to allocate stream_list");
+		goto fail;
+	}
+	wObject* aobj = ArrayList_Object(file->ino_list);
+	aobj->fnObjectFree = cliprdr_file_fuse_node_free;
+#endif
+
 	file->remote_streams = HashTable_New(TRUE);
 	if (!file->remote_streams)
 	{
@@ -2151,17 +2168,7 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 
 	wObject* obj = HashTable_ValueObject(file->remote_streams);
 	WINPR_ASSERT(kobj);
-	obj->fnObjectFree = cliprdr_fuse_stream_lock_free;
-
-	file->ino_list = ArrayList_New(TRUE);
-	if (!file->ino_list)
-	{
-		WLog_Print(file->log, WLOG_ERROR, "failed to allocate stream_list");
-		goto fail;
-	}
-	obj = ArrayList_Object(file->ino_list);
-	obj->fnObjectFree = cliprdr_file_fuse_node_free;
-#endif
+	obj->fnObjectFree = cliprdr_file_stream_lock_free;
 
 	if (!create_base_path(file))
 		goto fail;
@@ -2193,21 +2200,21 @@ BOOL local_stream_discard(const void* key, void* value, void* arg)
 	return TRUE;
 }
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 static BOOL remote_stream_discard(const void* key, void* value, void* arg)
 {
-	CliprdrFuseStreamLock* stream = (CliprdrFuseStreamLock*)value;
 	CliprdrFileContext* file = arg;
 	WINPR_ASSERT(file);
 	WINPR_ASSERT(value);
 	WINPR_ASSERT(arg);
 
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+	CliprdrFileStreamLock* stream = (CliprdrFileStreamLock*)value;
 	// TODO: Only unlock streams that are no longer in use
 	cliprdr_file_fuse_remote_try_unlock(stream);
 	// TODO: Only remove streams that are not locked anymore.
+#endif
 	return HashTable_Remove(file->remote_streams, key);
 }
-#endif
 
 BOOL cliprdr_file_context_clear(CliprdrFileContext* file)
 {
@@ -2216,10 +2223,7 @@ BOOL cliprdr_file_context_clear(CliprdrFileContext* file)
 	WLog_Print(file->log, WLOG_DEBUG, "clear file clipbaord...");
 
 	HashTable_Foreach(file->local_streams, local_stream_discard, file);
-
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 	HashTable_Foreach(file->remote_streams, remote_stream_discard, file);
-#endif
 
 	memset(file->server_data_hash, 0, sizeof(file->server_data_hash));
 	memset(file->client_data_hash, 0, sizeof(file->client_data_hash));
