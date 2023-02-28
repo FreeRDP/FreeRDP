@@ -33,6 +33,22 @@ extern "C"
 	FREERDP_API CliprdrFileContext* cliprdr_file_context_new(void* context);
 	FREERDP_API void cliprdr_file_context_free(CliprdrFileContext* file);
 
+	/**! \brief returns if the implementation supports pasting files in a client file browser.
+	 *
+	 * \param file the file context to query
+	 *
+	 * \return \b TRUE if files can be pasted locally, \b FALSE if not (e.g. no FUSE, ...)
+	 */
+	FREERDP_API BOOL cliprdr_file_context_has_local_support(CliprdrFileContext* file);
+
+	/**! \brief sets state of local file paste support
+	 *
+	 * \param file the file context to update
+	 * \param available \b TRUE if the client supports pasting files to local file browsers, \b
+	 * FALSE otherwise
+	 *
+	 * \return \b TRUE for success, \b FALSE otherwise
+	 */
 	FREERDP_API BOOL cliprdr_file_context_set_locally_available(CliprdrFileContext* file,
 	                                                            BOOL available);
 	FREERDP_API BOOL cliprdr_file_context_remote_set_flags(CliprdrFileContext* file, UINT32 flags);
