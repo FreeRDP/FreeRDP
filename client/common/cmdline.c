@@ -4673,3 +4673,27 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 
 	return TRUE;
 }
+
+void freerdp_client_warn_experimental(int argc, char* argv[])
+{
+	const char* app = (argc > 0) ? argv[0] : "INVALID_ARGV";
+	WLog_WARN(TAG, "[experimental] %s client is currently experimental!", app);
+	WLog_WARN(TAG, " If problems occur please check https://github.com/FreeRDP/FreeRDP/issues for "
+	               "know issues or create a new one!");
+	WLog_WARN(TAG, " Developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
+	               "- dont hesitate to ask some questions. (replies might take some time depending "
+	               "on your timezone)");
+}
+
+void freerdp_client_warn_deprecated(int argc, char* argv[])
+{
+	const char* app = (argc > 0) ? argv[0] : "INVALID_ARGV";
+	WLog_WARN(TAG, "[deprecated] %s client has been deprecated", app);
+	WLog_WARN(TAG, "As replacement there is a SDL based client available.");
+	WLog_WARN(TAG, "If you are interested in keeping %s alive get in touch with the developers",
+	          app);
+	WLog_WARN(TAG, "The project is hosted at https://github.com/freerdp/freerdp and "
+	               " developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
+	               "- dont hesitate to ask some questions. (replies might take some time depending "
+	               "on your timezone)");
+}

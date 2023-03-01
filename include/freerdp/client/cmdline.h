@@ -42,6 +42,9 @@ extern "C"
 	                                                     const COMMAND_LINE_ARGUMENT_A* custom);
 	FREERDP_API BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings);
 
+	FREERDP_API void freerdp_client_warn_experimental(int argc, char* argv[]);
+	FREERDP_API void freerdp_client_warn_deprecated(int argc, char* argv[]);
+
 	FREERDP_API BOOL freerdp_client_print_version(void);
 	FREERDP_API BOOL freerdp_client_print_buildconfig(void);
 	FREERDP_API BOOL freerdp_client_print_command_line_help(int argc, char** argv);
