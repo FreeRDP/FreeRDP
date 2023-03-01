@@ -145,6 +145,7 @@ static const char* mime_mate_copied_files = "x-special/mate-copied-files";
 static const char* type_FileGroupDescriptorW = "FileGroupDescriptorW";
 static const char* type_HtmlFormat = "HTML Format";
 
+static void xf_cliprdr_clear_cached_data(xfClipboard* clipboard);
 static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL force);
 static void xf_cliprdr_set_selection_owner(xfContext* xfc, xfClipboard* clipboard, Time timestamp);
 
@@ -770,7 +771,8 @@ static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FO
 	xf_clipboard_copy_formats(clipboard, formats, numFormats);
 	/* Ensure all pending requests are answered. */
 	xf_cliprdr_send_data_response(clipboard, NULL, NULL, 0);
-	cliprdr_file_context_clear(clipboard->file);
+
+	xf_cliprdr_clear_cached_data(clipboard);
 
 	WINPR_ASSERT(clipboard->context);
 	WINPR_ASSERT(clipboard->context->ClientFormatList);
@@ -1147,9 +1149,13 @@ static BOOL xf_cliprdr_process_selection_notify(xfClipboard* clipboard,
 	}
 }
 
-static void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
+void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
 {
 	WINPR_ASSERT(clipboard);
+
+	ClipboardLock(clipboard->system);
+	ClipboardEmpty(clipboard->system);
+	cliprdr_file_context_clear(clipboard->file);
 
 	if (clipboard->data)
 	{
@@ -1167,6 +1173,7 @@ static void xf_cliprdr_clear_cached_data(xfClipboard* clipboard)
 
 	clipboard->data_raw_length = 0;
 	cliprdr_file_context_clear(clipboard->file);
+	ClipboardUnlock(clipboard->system);
 }
 
 static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
@@ -1251,7 +1258,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 
 			/* We can compare format names by pointer value here as they are both
 			 * taken from the same clipboard->serverFormats array */
-			matchingFormat = cformat && (formatId == cformat->formatToRequest);
+			matchingFormat = format && (formatId == format->formatId);
 
 			if (matchingFormat && (clipboard->data != 0) && !rawTransfer)
 			{
