@@ -61,7 +61,7 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common.cmdline")
 
-static BOOL option_starts_with(const char* what, const char* val);
+static const char* option_starts_with(const char* what, const char* val);
 static BOOL option_ends_with(const char* str, const char* ext);
 static BOOL option_equals(const char* what, const char* val);
 
@@ -1699,13 +1699,15 @@ static BOOL setSmartcardEmulation(const char* value, rdpSettings* settings)
 	return TRUE;
 }
 
-BOOL option_starts_with(const char* what, const char* val)
+const char* option_starts_with(const char* what, const char* val)
 {
 	WINPR_ASSERT(what);
 	WINPR_ASSERT(val);
 	const size_t wlen = strlen(what);
 
-	return _strnicmp(what, val, wlen) == 0;
+	if (_strnicmp(what, val, wlen) != 0)
+		return NULL;
+	return &val[wlen];
 }
 
 BOOL option_ends_with(const char* str, const char* ext)
@@ -2465,65 +2467,58 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 
 		WINPR_ASSERT(argval);
 
-		const char g[] = "g:";
-		if (option_starts_with(g, argval))
+		const char* gw = option_starts_with("g:", argval);
+		if (gw)
 		{
-			const char* val = &argval[sizeof(g)];
-			if (!parse_gateway_host_option(settings, val))
+			if (!parse_gateway_host_option(settings, gw))
 				goto fail;
 			validOption = TRUE;
 		}
 
-		const char u[] = "u:";
-		if (option_starts_with(u, argval))
+		const char* gu = option_starts_with("u:", argval);
+		if (gu)
 		{
-			const char* val = &argval[sizeof(u)];
-			if (!parse_gateway_cred_option(settings, val, FreeRDP_GatewayUsername))
+			if (!parse_gateway_cred_option(settings, gu, FreeRDP_GatewayUsername))
 				goto fail;
 			validOption = TRUE;
 		}
 
-		const char d[] = "d:";
-		if (option_starts_with(d, argval))
+		const char* gd = option_starts_with("d:", argval);
+		if (gd)
 		{
-			const char* val = &argval[sizeof(d)];
-			if (!parse_gateway_cred_option(settings, val, FreeRDP_GatewayDomain))
+			if (!parse_gateway_cred_option(settings, gd, FreeRDP_GatewayDomain))
 				goto fail;
 			validOption = TRUE;
 		}
 
-		const char p[] = "p:";
-		if (option_starts_with(p, argval))
+		const char* gp = option_starts_with("p:", argval);
+		if (gp)
 		{
-			const char* val = &argval[sizeof(p)];
-			if (!parse_gateway_cred_option(settings, val, FreeRDP_GatewayPassword))
+			if (!parse_gateway_cred_option(settings, gp, FreeRDP_GatewayPassword))
 				goto fail;
 			validOption = TRUE;
 		}
 
-		const char type[] = "type:";
-		if (option_starts_with(type, argval))
+		const char* gt = option_starts_with("type:", argval);
+		if (gt)
 		{
-			const char* val = &argval[sizeof(type)];
-			if (!parse_gateway_type_option(settings, val))
+			if (!parse_gateway_type_option(settings, gt))
 				goto fail;
 			validOption = TRUE;
 		}
 
-		const char gat[] = "access-token:";
-		if (option_starts_with(gat, argval))
+		const char* gat = option_starts_with("access-token:", argval);
+		if (gat)
 		{
-			const char* val = &argval[sizeof(gat)];
-			if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAccessToken, val))
+			if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAccessToken, gat))
 				goto fail;
 			validOption = TRUE;
 		}
 
-		const char method[] = "usage-method:";
-		if (option_starts_with(method, argval))
+		const char* um = option_starts_with("usage-method:", argval);
+		if (um)
 		{
-			const char* val = &argval[sizeof(method)];
-			if (!parse_gateway_usage_option(settings, val))
+			if (!parse_gateway_usage_option(settings, um))
 				goto fail;
 			validOption = TRUE;
 		}
