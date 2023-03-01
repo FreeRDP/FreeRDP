@@ -869,9 +869,8 @@ wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 					    ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
 					dstFormatId = ClipboardGetFormatId(clipboard->system, request->responseMime);
 
-					if (!cliprdr_file_context_update_server_data(clipboard->file, data, size))
-						goto unlock;
-					else if (!cliprdr_file_context_update_base(clipboard->file, clipboard->system))
+					if (!cliprdr_file_context_update_server_data(clipboard->file, clipboard->system,
+					                                             data, size))
 						goto unlock;
 				}
 				else if (strcmp(type_HtmlFormat, name) == 0)

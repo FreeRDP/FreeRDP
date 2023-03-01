@@ -1781,21 +1781,37 @@ static BOOL cliprdr_file_client_content_changed_and_update(CliprdrFileContext* f
 	                                               sizeof(file->client_data_hash), data, size);
 }
 
-BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file, const void* data,
-                                             size_t size)
+static BOOL cliprdr_file_context_update_base(CliprdrFileContext* file, wClipboard* clip)
+{
+	wClipboardDelegate* delegate = ClipboardGetDelegate(clip);
+	if (!delegate)
+		return FALSE;
+	ClipboardLock(clip);
+	HashTable_Lock(file->remote_streams);
+	free(file->exposed_path);
+	file->exposed_path = _strdup(file->current_path);
+	HashTable_Unlock(file->remote_streams);
+
+	delegate->basePath = (file->exposed_path);
+	ClipboardUnlock(clip);
+	return delegate->basePath != NULL;
+}
+
+BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file, wClipboard* clip,
+                                             const void* data, size_t size)
 {
 	WINPR_ASSERT(file);
 
-	if (cliprdr_file_server_content_changed_and_update(file, data, size))
-	{
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
-		/* Build inode table for FILEDESCRIPTORW*/
-		if (!cliprdr_file_fuse_generate_list(file, data, size, 0))
-			return FALSE;
-#endif
-	}
+	if (!cliprdr_file_server_content_changed_and_update(file, data, size))
+		return TRUE;
 
-	return TRUE;
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+	/* Build inode table for FILEDESCRIPTORW*/
+	if (!cliprdr_file_fuse_generate_list(file, data, size, 0))
+		return FALSE;
+#endif
+
+	return cliprdr_file_context_update_base(file, clip);
 }
 
 void* cliprdr_file_context_get_context(CliprdrFileContext* file)
@@ -2288,22 +2304,6 @@ UINT32 cliprdr_file_context_remote_get_flags(CliprdrFileContext* file)
 {
 	WINPR_ASSERT(file);
 	return file->file_capability_flags;
-}
-
-BOOL cliprdr_file_context_update_base(CliprdrFileContext* file, wClipboard* clip)
-{
-	wClipboardDelegate* delegate = ClipboardGetDelegate(clip);
-	if (!delegate)
-		return FALSE;
-	ClipboardLock(clip);
-	HashTable_Lock(file->remote_streams);
-	free(file->exposed_path);
-	file->exposed_path = _strdup(file->current_path);
-	HashTable_Unlock(file->remote_streams);
-
-	delegate->basePath = (file->exposed_path);
-	ClipboardUnlock(clip);
-	return delegate->basePath != NULL;
 }
 
 BOOL cliprdr_file_context_has_local_support(CliprdrFileContext* file)
