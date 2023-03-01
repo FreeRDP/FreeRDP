@@ -58,8 +58,6 @@ extern "C"
 
 	FREERDP_API void* cliprdr_file_context_get_context(CliprdrFileContext* file);
 
-	FREERDP_API BOOL cliprdr_file_context_update_base(CliprdrFileContext* file, wClipboard* clip);
-
 	FREERDP_API BOOL cliprdr_file_context_init(CliprdrFileContext* file,
 	                                           CliprdrClientContext* cliprdr);
 	FREERDP_API BOOL cliprdr_file_context_uninit(CliprdrFileContext* file,
@@ -67,11 +65,27 @@ extern "C"
 
 	FREERDP_API BOOL cliprdr_file_context_clear(CliprdrFileContext* file);
 
+	/** \brief updates the files the client announces to the server
+	 *
+	 * \param file the file context to update
+	 * \param data the file list
+	 * \param count the length of the file list
+	 *
+	 * \return \b TRUE for success, \b FALSE otherwise
+	 */
 	FREERDP_API BOOL cliprdr_file_context_update_client_data(CliprdrFileContext* file,
 	                                                         const char* data, size_t count);
-
+	/** \brief updates the files the server announces to the client
+	 *
+	 * \param file the file context to update
+	 * \param data the file list [MS-RDPECLIP] 2.2.5.2.3 Packed File List (CLIPRDR_FILELIST)
+	 * \param count the length of the file list
+	 *
+	 * \return \b TRUE for success, \b FALSE otherwise
+	 */
 	FREERDP_API BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file,
-	                                                         const void* data, size_t size);
+	                                                         wClipboard* clip, const void* data,
+	                                                         size_t size);
 
 #ifdef __cplusplus
 }

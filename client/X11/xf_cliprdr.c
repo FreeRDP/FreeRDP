@@ -1888,11 +1888,9 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 		if (strcmp(clipboard->requestedFormat->formatName, type_FileGroupDescriptorW) == 0)
 		{
-			if (!cliprdr_file_context_update_server_data(clipboard->file, data, size))
+			if (!cliprdr_file_context_update_server_data(clipboard->file, clipboard->system, data,
+			                                             size))
 				WLog_WARN(TAG, "failed to update file descriptors");
-			else if (!cliprdr_file_context_update_base(clipboard->file, clipboard->system))
-			{
-			}
 
 			srcFormatId = ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
 			const xfCliprdrFormat* dstTargetFormat =
