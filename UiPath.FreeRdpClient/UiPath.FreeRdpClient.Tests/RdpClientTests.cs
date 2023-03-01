@@ -57,7 +57,7 @@ public class RdpClientTests : TestsBase
             DesktopHeight = 3*4*71,
             ColorDepth = colorDepthInput
         };
-
+        Host.GetRequiredService<ILogger<TestHost>>().BeginScope("{RunId}", "runId_someAmbientRunId");
         await using var sut = await FreeRdpClient.Connect(connectionSettings);
         var sessionId = WtsApi.FindFirstSessionByClientName(connectionSettings.ClientName);
         sessionId.HasValue.ShouldBeTrue();
@@ -66,6 +66,7 @@ public class RdpClientTests : TestsBase
         ((int)displayInfo.HorizontalResolution).ShouldBe(connectionSettings.DesktopWidth);
         ((int)displayInfo.VerticalResolution).ShouldBe(connectionSettings.DesktopHeight);
         //((int)displayInfo.ColorDepth).ShouldBe(expectedWtsApiValue);
+        await Task.Delay(5000);
 
         await sut.DisposeAsync();
         await WaitFor.Predicate(() => WtsApi.FindFirstSessionByClientName(connectionSettings.ClientName) == null);

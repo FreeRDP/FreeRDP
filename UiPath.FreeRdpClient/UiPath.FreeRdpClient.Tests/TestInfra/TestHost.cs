@@ -75,8 +75,14 @@ public class TestHost : IServiceProvider, IHost, IAsyncDisposable
         .ConfigureServices(AddFakes)
         .ConfigureLogging((l) =>
         {
-            l.AddSimpleConsole(o => o.UseUtcTimestamp = true);
-            Action<MartinCostello.Logging.XUnit.XUnitLoggerOptions> configure = o => o.TimestampFormat = "dd.HH:mm:ss.fffff";
+            l.AddSimpleConsole(o => {
+                o.IncludeScopes = true;
+                o.UseUtcTimestamp = true; });
+            Action<MartinCostello.Logging.XUnit.XUnitLoggerOptions> configure = o =>
+            {
+                o.IncludeScopes = true;
+                o.TimestampFormat = "dd.HH:mm:ss.fffff";
+            };
             if (_output != null)
             {
                 l.AddXUnit(_output, configure);

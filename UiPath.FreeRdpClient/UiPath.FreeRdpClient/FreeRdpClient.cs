@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Nito.Disposables;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 
@@ -31,15 +32,21 @@ public static class FreeRdpClient
     }
 
     const string FreeRdpClientDll = "UiPath.FreeRdpWrapper.dll";
+    private static string ScopeName = "RunId";
 
     [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-    private delegate void LogCallback([MarshalAs(UnmanagedType.I4)] LogLevel logLevel, [MarshalAs(UnmanagedType.LPWStr)] string message);
+    private delegate void LogCallback([MarshalAs(UnmanagedType.LPStr)] string category, [MarshalAs(UnmanagedType.I4)] LogLevel logLevel, [MarshalAs(UnmanagedType.LPWStr)] string message);
+
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+    private delegate void RegisterThreadScopeCallback([MarshalAs(UnmanagedType.LPStr)] string category);
 
     private static LogCallback LogCallbackDelegate = Log;
-    private static ILogger? Logger { get; set; }
+    private static RegisterThreadScopeCallback RegisterThreadScopeCallbackDelegate = RegisterThreadScope;
+
+    private static ILoggerFactory? LoggerFactory { get; set; }
 
     [DllImport(FreeRdpClientDll, PreserveSig = false, CharSet = CharSet.Unicode)]
-    private extern static uint InitializeLogging([MarshalAs(UnmanagedType.FunctionPtr)] LogCallback logCallback);
+    private extern static uint InitializeLogging([MarshalAs(UnmanagedType.FunctionPtr)] LogCallback logCallback, [MarshalAs(UnmanagedType.FunctionPtr)]  RegisterThreadScopeCallback registerThreadScopeCallback);
 
     [DllImport(FreeRdpClientDll, PreserveSig = false, CharSet = CharSet.Unicode)]
     private extern static uint RdpLogon([In] ConnectOptions rdpOptions,  [MarshalAs(UnmanagedType.BStr)]out string releaseObjectName);
@@ -69,20 +76,42 @@ public static class FreeRdpClient
             Port = connectionSettings.Port ?? default
         };
 
+        Activity currentActivity;
+
         return await Task.Run(() =>
         {
             RdpLogon(connectOptions, out var releaseObjectName);
-            return new AsyncDisposable(() => { Disconnect(releaseObjectName); return ValueTask.CompletedTask; });
+            return new AsyncDisposable(() =>
+            {
+                var someLogger = LoggerFactory.CreateLogger("s");
+                using var scope = BeginScope(someLogger, connectionSettings.ClientName);
+                Disconnect(releaseObjectName); 
+                return ValueTask.CompletedTask;
+            });
         });
     }
 
-    private static void Log(LogLevel loglevel, string message)
-    => Logger?.Log(loglevel, message);
+    private static IDisposable BeginScope(ILogger logger, string scope)
+    => logger.BeginScope("{RdpScope}", scope);
 
-    public static void SetupLogging(ILogger? logger)
+    private static void RegisterThreadScope(string scope)
     {
-        Logger = logger;
-        InitializeLogging(LogCallbackDelegate);
+        LoggerFactory.CreateLogger(nameof(RegisterThreadScope)).BeginScope($"{{{ScopeName}}}", scope);
+    }
+
+    private static void Log(string category, LogLevel loglevel, string message)
+    {
+        if (LoggerFactory is null)
+            return;
+
+        var log = LoggerFactory.CreateLogger(category);
+        log.Log(loglevel, message);
+    }
+
+    public static void SetupLogging(ILoggerFactory? loggerFactory)
+    {
+        LoggerFactory = loggerFactory;
+        InitializeLogging(logCallback: LogCallbackDelegate, registerThreadScopeCallback: RegisterThreadScopeCallbackDelegate);
     }
 
     private static void Disconnect(string releaseObjectName)
@@ -91,21 +120,24 @@ public static class FreeRdpClient
             RdpRelease(releaseObjectName);
     }
 
-    public static IServiceCollection AddFreeRdp(this IServiceCollection services)
-        => services.AddHostedService<FreeRdpInitilizer>();
-
-    private class FreeRdpInitilizer : IHostedService
+    public static IServiceCollection AddFreeRdp(this IServiceCollection services, string scopeName = "RunId")
     {
-        private readonly ILogger _logger;
+        ScopeName = scopeName;
+        return services.AddHostedService<FreeRdpInitilizer>();
+    }
+
+    private sealed class FreeRdpInitilizer : IHostedService
+    {
+        private readonly ILoggerFactory _loggerFactory;
 
         public FreeRdpInitilizer(ILoggerFactory loggerFactory)
         {
-            _logger = loggerFactory.CreateLogger(nameof(FreeRdpClient));
+            _loggerFactory = loggerFactory;
         }
 
         Task IHostedService.StartAsync(CancellationToken cancellationToken)
         {
-            SetupLogging(_logger);
+            SetupLogging(_loggerFactory);
             return Task.CompletedTask;
         }
 

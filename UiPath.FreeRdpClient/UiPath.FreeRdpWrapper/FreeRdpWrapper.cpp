@@ -16,6 +16,7 @@ namespace FreeRdpClient
 	{
 		rdpContext* context;
 		HANDLE transportStopEvent;
+		LPWSTR loggingScope;
 	};
 
 	inline HRESULT SetErrorInfo(LPCWSTR szError)
@@ -154,6 +155,9 @@ namespace FreeRdpClient
 		}
 
 		rdpContext* context = instanceData->context;
+
+		Logging::RegisterCurrentThreadScope(context->instance->settings->ClientHostname);
+
 		context->cache = cache_new(context->instance->settings);
 
 		HANDLE handles[64]{};
