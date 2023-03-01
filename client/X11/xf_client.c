@@ -1755,6 +1755,12 @@ BOOL xf_setup_x11(xfContext* xfc)
 		WLog_ERR(TAG, "Please check that the $DISPLAY environment variable is properly set.");
 		goto fail;
 	}
+	if (xfc->debug)
+	{
+		WLog_INFO(TAG, "Enabling X11 debug mode.");
+		XSynchronize(xfc->display, TRUE);
+		_def_error_handler = XSetErrorHandler(_xf_error_handler);
+	}
 
 	xfc->mutex = CreateMutex(NULL, FALSE, NULL);
 
@@ -1837,13 +1843,6 @@ BOOL xf_setup_x11(xfContext* xfc)
 	{
 		WLog_ERR(TAG, "Could not create xfds event");
 		goto fail;
-	}
-
-	if (xfc->debug)
-	{
-		WLog_INFO(TAG, "Enabling X11 debug mode.");
-		XSynchronize(xfc->display, TRUE);
-		_def_error_handler = XSetErrorHandler(_xf_error_handler);
 	}
 
 	xf_check_extensions(xfc);
