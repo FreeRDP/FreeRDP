@@ -48,6 +48,7 @@
 
 #include "xf_cliprdr.h"
 #include "xf_event.h"
+#include "xf_utils.h"
 
 #define TAG CLIENT_TAG("x11.cliprdr")
 
@@ -207,8 +208,8 @@ static void xf_cliprdr_set_raw_transfer_enabled(xfClipboard* clipboard, BOOL ena
 
 	xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
-	XChangeProperty(xfc->display, xfc->drawable, clipboard->raw_transfer_atom, XA_INTEGER, 32,
-	                PropModeReplace, (BYTE*)&data, 1);
+	LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->raw_transfer_atom,
+	                         XA_INTEGER, 32, PropModeReplace, (BYTE*)&data, 1);
 }
 
 static BOOL xf_cliprdr_is_raw_transfer_available(xfClipboard* clipboard)
@@ -653,9 +654,9 @@ static void xf_cliprdr_provide_server_format_list(xfClipboard* clipboard)
 
 	if (formats)
 	{
-		XChangeProperty(xfc->display, xfc->drawable, clipboard->raw_format_list_atom,
-		                clipboard->raw_format_list_atom, 8, PropModeReplace, Stream_Buffer(formats),
-		                Stream_Length(formats));
+		LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->raw_format_list_atom,
+		                         clipboard->raw_format_list_atom, 8, PropModeReplace,
+		                         Stream_Buffer(formats), Stream_Length(formats));
 	}
 	else
 	{
@@ -1023,8 +1024,9 @@ static void xf_cliprdr_provide_targets(xfClipboard* clipboard, const XSelectionE
 
 	if (respond->property != None)
 	{
-		XChangeProperty(xfc->display, respond->requestor, respond->property, XA_ATOM, 32,
-		                PropModeReplace, (BYTE*)clipboard->targets, clipboard->numTargets);
+		LogTagAndXChangeProperty(TAG, xfc->display, respond->requestor, respond->property, XA_ATOM,
+		                         32, PropModeReplace, (BYTE*)clipboard->targets,
+		                         clipboard->numTargets);
 	}
 }
 
@@ -1039,8 +1041,9 @@ static void xf_cliprdr_provide_timestamp(xfClipboard* clipboard, const XSelectio
 
 	if (respond->property != None)
 	{
-		XChangeProperty(xfc->display, respond->requestor, respond->property, XA_INTEGER, 32,
-		                PropModeReplace, (BYTE*)&clipboard->selection_ownership_timestamp, 1);
+		LogTagAndXChangeProperty(TAG, xfc->display, respond->requestor, respond->property,
+		                         XA_INTEGER, 32, PropModeReplace,
+		                         (BYTE*)&clipboard->selection_ownership_timestamp, 1);
 	}
 }
 
@@ -1056,8 +1059,8 @@ static void xf_cliprdr_provide_data(xfClipboard* clipboard, const XSelectionEven
 
 	if (respond->property != None)
 	{
-		XChangeProperty(xfc->display, respond->requestor, respond->property, respond->target, 8,
-		                PropModeReplace, data, size);
+		LogTagAndXChangeProperty(TAG, xfc->display, respond->requestor, respond->property,
+		                         respond->target, 8, PropModeReplace, data, size);
 	}
 }
 
@@ -1640,8 +1643,8 @@ static void xf_cliprdr_prepare_to_set_selection_owner(xfContext* xfc, xfClipboar
 	 * anyway! */
 	Atom value = clipboard->timestamp_property_atom;
 
-	XChangeProperty(xfc->display, xfc->drawable, clipboard->timestamp_property_atom, XA_ATOM, 32,
-	                PropModeReplace, (BYTE*)&value, 1);
+	LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->timestamp_property_atom,
+	                         XA_ATOM, 32, PropModeReplace, (BYTE*)&value, 1);
 	XFlush(xfc->display);
 }
 
@@ -1808,8 +1811,8 @@ xf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	if (rawTransfer)
 	{
 		format = xf_cliprdr_get_client_format_by_id(clipboard, CF_RAW);
-		XChangeProperty(xfc->display, xfc->drawable, clipboard->property_atom, XA_INTEGER, 32,
-		                PropModeReplace, (BYTE*)&formatId, 1);
+		LogTagAndXChangeProperty(TAG, xfc->display, xfc->drawable, clipboard->property_atom,
+		                         XA_INTEGER, 32, PropModeReplace, (BYTE*)&formatId, 1);
 	}
 	else
 		format = xf_cliprdr_get_client_format_by_id(clipboard, formatId);

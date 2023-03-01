@@ -31,6 +31,7 @@
 
 #include "xf_window.h"
 #include "xf_rail.h"
+#include "xf_utils.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
@@ -683,9 +684,11 @@ error:
 static void xf_rail_set_window_icon(xfContext* xfc, xfAppWindow* railWindow, xfRailIcon* icon,
                                     BOOL replace)
 {
-	XChangeProperty(xfc->display, railWindow->handle, xfc->_NET_WM_ICON, XA_CARDINAL, 32,
-	                replace ? PropModeReplace : PropModeAppend, (unsigned char*)icon->data,
-	                icon->length);
+	WINPR_ASSERT(xfc);
+
+	LogTagAndXChangeProperty(TAG, xfc->display, railWindow->handle, xfc->_NET_WM_ICON, XA_CARDINAL,
+	                         32, replace ? PropModeReplace : PropModeAppend,
+	                         (unsigned char*)icon->data, icon->length);
 	XFlush(xfc->display);
 }
 

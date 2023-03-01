@@ -24,6 +24,8 @@ include_directories(${X11_INCLUDE_DIRS})
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 set(${MODULE_PREFIX}_SRCS
+	xf_utils.h
+	xf_utils.c
 	xf_gdi.c
 	xf_gdi.h
 	xf_gfx.c
