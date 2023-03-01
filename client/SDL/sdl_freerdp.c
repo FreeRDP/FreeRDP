@@ -1220,6 +1220,7 @@ int main(int argc, char* argv[])
 {
 	int rc = -1;
 	int status;
+	rdpContext* context = NULL;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
 
 	freerdp_client_warn_experimental(argc, argv);
@@ -1242,7 +1243,7 @@ int main(int argc, char* argv[])
 		goto fail;
 	}
 
-	rdpContext* context = &sdl->common.context;
+	context = &sdl->common.context;
 	WINPR_ASSERT(context);
 
 	if (!stream_dump_register_handlers(context, CONNECTION_STATE_MCS_CREATE_REQUEST, FALSE))
