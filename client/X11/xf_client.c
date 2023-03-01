@@ -104,6 +104,7 @@
 #include "xf_input.h"
 #include "xf_channels.h"
 #include "xfreerdp.h"
+#include "xf_utils.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
@@ -1778,9 +1779,9 @@ BOOL xf_setup_x11(xfContext* xfc)
 		int actual_format = 0;
 		unsigned long nitems = 0, after = 0;
 		unsigned char* data = NULL;
-		int status = XGetWindowProperty(xfc->display, RootWindowOfScreen(xfc->screen),
-		                                xfc->_NET_SUPPORTED, 0, 1024, False, XA_ATOM, &actual_type,
-		                                &actual_format, &nitems, &after, &data);
+		int status = LogTagAndXGetWindowProperty(
+		    TAG, xfc->display, RootWindowOfScreen(xfc->screen), xfc->_NET_SUPPORTED, 0, 1024, False,
+		    XA_ATOM, &actual_type, &actual_format, &nitems, &after, &data);
 
 		if ((status == Success) && (actual_type == XA_ATOM) && (actual_format == 32))
 		{

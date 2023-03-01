@@ -233,9 +233,9 @@ static BOOL xf_cliprdr_is_raw_transfer_available(xfClipboard* clipboard)
 
 	if (owner != None)
 	{
-		result =
-		    XGetWindowProperty(xfc->display, owner, clipboard->raw_transfer_atom, 0, 4, 0,
-		                       XA_INTEGER, &type, &format, &length, &bytes_left, (BYTE**)&data);
+		result = LogTagAndXGetWindowProperty(TAG, xfc->display, owner, clipboard->raw_transfer_atom,
+		                                     0, 4, 0, XA_INTEGER, &type, &format, &length,
+		                                     &bytes_left, (BYTE**)&data);
 	}
 
 	if (data)
@@ -536,9 +536,9 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_raw_server_formats(xfClipboard* clipboard,
 	WINPR_ASSERT(xfc);
 
 	*numFormats = 0;
-	XGetWindowProperty(xfc->display, clipboard->owner, clipboard->raw_format_list_atom, 0, 4096,
-	                   False, clipboard->raw_format_list_atom, &type, &format, &length, &remaining,
-	                   &data);
+	LogTagAndXGetWindowProperty(
+	    TAG, xfc->display, clipboard->owner, clipboard->raw_format_list_atom, 0, 4096, False,
+	    clipboard->raw_format_list_atom, &type, &format, &length, &remaining, &data);
 
 	if (data && length > 0 && format == 8 && type == clipboard->raw_format_list_atom)
 	{
@@ -578,8 +578,8 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboar
 	WINPR_ASSERT(xfc);
 
 	*numFormats = 0;
-	XGetWindowProperty(xfc->display, xfc->drawable, clipboard->property_atom, 0, 200, 0, XA_ATOM,
-	                   &atom, &format_property, &length, &bytes_left, &data);
+	LogTagAndXGetWindowProperty(TAG, xfc->display, xfc->drawable, clipboard->property_atom, 0, 200,
+	                            0, XA_ATOM, &atom, &format_property, &length, &bytes_left, &data);
 
 	if (length > 0)
 	{
@@ -917,8 +917,8 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 		return FALSE;
 	}
 
-	XGetWindowProperty(xfc->display, xfc->drawable, clipboard->property_atom, 0, 0, 0, target,
-	                   &type, &format_property, &length, &bytes_left, &data);
+	LogTagAndXGetWindowProperty(TAG, xfc->display, xfc->drawable, clipboard->property_atom, 0, 0, 0,
+	                            target, &type, &format_property, &length, &bytes_left, &data);
 
 	if (data)
 	{
@@ -954,9 +954,9 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 			clipboard->incr_starts = 0;
 			has_data = TRUE;
 		}
-		else if (XGetWindowProperty(xfc->display, xfc->drawable, clipboard->property_atom, 0,
-		                            bytes_left, 0, target, &type, &format_property, &length, &dummy,
-		                            &data) == Success)
+		else if (LogTagAndXGetWindowProperty(
+		             TAG, xfc->display, xfc->drawable, clipboard->property_atom, 0, bytes_left, 0,
+		             target, &type, &format_property, &length, &dummy, &data) == Success)
 		{
 			if (clipboard->incr_starts)
 			{
@@ -1245,9 +1245,9 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 
 			if (formatId == CF_RAW)
 			{
-				if (XGetWindowProperty(xfc->display, xevent->requestor, clipboard->property_atom, 0,
-				                       4, 0, XA_INTEGER, &type, &fmt, &length, &bytes_left,
-				                       &data) != Success)
+				if (LogTagAndXGetWindowProperty(
+				        TAG, xfc->display, xevent->requestor, clipboard->property_atom, 0, 4, 0,
+				        XA_INTEGER, &type, &fmt, &length, &bytes_left, &data) != Success)
 				{
 				}
 

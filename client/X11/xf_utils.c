@@ -63,3 +63,38 @@ int LogDynAndXDeleteProperty(wLog* log, Display* display, Window w, Atom propert
 	}
 	return XDeleteProperty(display, w, property);
 }
+
+int LogTagAndXGetWindowProperty(const char* tag, Display* display, Window w, Atom property,
+                                long long_offset, long long_length, int delete, Atom req_type,
+                                Atom* actual_type_return, int* actual_format_return,
+                                unsigned long* nitems_return, unsigned long* bytes_after_return,
+                                unsigned char** prop_return)
+{
+	wLog* log = WLog_Get(tag);
+	return LogDynAndXGetWindowProperty(log, display, w, property, long_offset, long_length, delete,
+	                                   req_type, actual_type_return, actual_format_return,
+	                                   nitems_return, bytes_after_return, prop_return);
+}
+
+int LogDynAndXGetWindowProperty(wLog* log, Display* display, Window w, Atom property,
+                                long long_offset, long long_length, int delete, Atom req_type,
+                                Atom* actual_type_return, int* actual_format_return,
+                                unsigned long* nitems_return, unsigned long* bytes_after_return,
+                                unsigned char** prop_return)
+{
+	if (WLog_IsLevelActive(log, level))
+	{
+		char* propstr = XGetAtomName(display, property);
+		char* req_type_str = XGetAtomName(display, req_type);
+		WLog_Print(log, WLOG_DEBUG,
+		           "XGetWindowProperty(%p, %d, %s [%d], %ld, %ld, %d, %s [%d], %p, %p, %p, %p, %p)",
+		           display, w, propstr, property, long_offset, long_length, delete, req_type_str,
+		           req_type, actual_type_return, actual_format_return, nitems_return,
+		           bytes_after_return, prop_return);
+		XFree(propstr);
+		XFree(req_type_str);
+	}
+	return XGetWindowProperty(display, w, property, long_offset, long_length, delete, req_type,
+	                          actual_type_return, actual_format_return, nitems_return,
+	                          bytes_after_return, prop_return);
+}
