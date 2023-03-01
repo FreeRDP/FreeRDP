@@ -362,8 +362,9 @@ BOOL xf_GetWindowProperty(xfContext* xfc, Window window, Atom property, int leng
 	if (property == None)
 		return FALSE;
 
-	status = XGetWindowProperty(xfc->display, window, property, 0, length, False, AnyPropertyType,
-	                            &actual_type, &actual_format, nitems, bytes, prop);
+	status = LogTagAndXGetWindowProperty(TAG, xfc->display, window, property, 0, length, False,
+	                                     AnyPropertyType, &actual_type, &actual_format, nitems,
+	                                     bytes, prop);
 
 	if (status != Success)
 		return FALSE;
