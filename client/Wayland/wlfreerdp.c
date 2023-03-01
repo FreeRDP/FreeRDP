@@ -679,6 +679,8 @@ int main(int argc, char* argv[])
 	rdpSettings* settings;
 	wlfContext* wlc;
 
+	freerdp_client_warn_deprecated(argc, argv);
+
 	RdpClientEntry(&clientEntryPoints);
 	context = freerdp_client_context_new(&clientEntryPoints);
 	if (!context)

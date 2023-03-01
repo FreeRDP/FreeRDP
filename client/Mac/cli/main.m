@@ -7,10 +7,13 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#include <freerdp/client/cmdline.h>
 
 int main(int argc, const char *argv[])
 {
 	const char *ctemp;
+
+	freerdp_client_warn_deprecated(argc, argv);
 	for (int i = 0; i < argc; i++)
 	{
 		ctemp = argv[i];

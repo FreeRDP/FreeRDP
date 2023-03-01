@@ -95,6 +95,8 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			goto out;
 	}
 
+	freerdp_client_warn_deprecated(argc, argv);
+
 	settings = context->settings;
 	wfc = (wfContext*)context;
 
