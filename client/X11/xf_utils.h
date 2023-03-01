@@ -27,3 +27,6 @@ int LogTagAndXChangeProperty(const char* tag, Display* display, Window w, Atom p
                              int format, int mode, _Xconst unsigned char* data, int nelements);
 int LogDynAndXChangeProperty(wLog* log, Display* display, Window w, Atom property, Atom type,
                              int format, int mode, _Xconst unsigned char* data, int nelements);
+
+int LogTagAndXDeleteProperty(const char* tag, Display* display, Window w, Atom property);
+int LogDynAndXDeleteProperty(wLog* log, Display* display, Window w, Atom property);
