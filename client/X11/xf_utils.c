@@ -24,73 +24,89 @@
 
 static const DWORD level = WLOG_TRACE;
 
-int LogTagAndXChangeProperty(const char* tag, Display* display, Window w, Atom property, Atom type,
-                             int format, int mode, const unsigned char* data, int nelements)
+static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line, ...)
 {
-	wLog* log = WLog_Get(tag);
-	return LogDynAndXChangeProperty(log, display, w, property, type, format, mode, data, nelements);
+	va_list ap;
+	va_start(ap, line);
+	WLog_PrintMessageVA(log, WLOG_MESSAGE_TEXT, level, line, fname, fkt, ap);
+	va_end(ap);
 }
 
-int LogDynAndXChangeProperty(wLog* log, Display* display, Window w, Atom property, Atom type,
-                             int format, int mode, const unsigned char* data, int nelements)
+int LogTagAndXChangeProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
+                                Display* display, Window w, Atom property, Atom type, int format,
+                                int mode, const unsigned char* data, int nelements)
+{
+	wLog* log = WLog_Get(tag);
+	return LogDynAndXChangeProperty_ex(log, file, fkt, line, display, w, property, type, format,
+	                                   mode, data, nelements);
+}
+
+int LogDynAndXChangeProperty_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                Display* display, Window w, Atom property, Atom type, int format,
+                                int mode, const unsigned char* data, int nelements)
 {
 	if (WLog_IsLevelActive(log, level))
 	{
 		char* propstr = XGetAtomName(display, property);
 		char* typestr = XGetAtomName(display, type);
-		WLog_Print(log, WLOG_DEBUG, "XChangeProperty(%p, %d, %s [%d], %s [%d], %d, %d, %p, %d)",
-		           display, w, propstr, property, typestr, type, format, mode, data, nelements);
+		write_log(log, level, file, fkt, line,
+		          "XChangeProperty(%p, %d, %s [%d], %s [%d], %d, %d, %p, %d)", display, w, propstr,
+		          property, typestr, type, format, mode, data, nelements);
 		XFree(propstr);
 		XFree(typestr);
 	}
 	return XChangeProperty(display, w, property, type, format, mode, data, nelements);
 }
 
-int LogTagAndXDeleteProperty(const char* tag, Display* display, Window w, Atom property)
+int LogTagAndXDeleteProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
+                                Display* display, Window w, Atom property)
 {
 	wLog* log = WLog_Get(tag);
-	return LogDynAndXDeleteProperty(log, display, w, property);
+	return LogDynAndXDeleteProperty_ex(log, file, fkt, line, display, w, property);
 }
 
-int LogDynAndXDeleteProperty(wLog* log, Display* display, Window w, Atom property)
+int LogDynAndXDeleteProperty_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                Display* display, Window w, Atom property)
 {
 	if (WLog_IsLevelActive(log, level))
 	{
 		char* propstr = XGetAtomName(display, property);
-		WLog_Print(log, WLOG_DEBUG, "XDeleteProperty(%p, %d, %s [%d])", display, w, propstr,
-		           property);
+		write_log(log, level, file, fkt, line, "XDeleteProperty(%p, %d, %s [%d])", display, w,
+		          propstr, property);
 		XFree(propstr);
 	}
 	return XDeleteProperty(display, w, property);
 }
 
-int LogTagAndXGetWindowProperty(const char* tag, Display* display, Window w, Atom property,
-                                long long_offset, long long_length, int delete, Atom req_type,
-                                Atom* actual_type_return, int* actual_format_return,
-                                unsigned long* nitems_return, unsigned long* bytes_after_return,
-                                unsigned char** prop_return)
+int LogTagAndXGetWindowProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
+                                   Display* display, Window w, Atom property, long long_offset,
+                                   long long_length, int delete, Atom req_type,
+                                   Atom* actual_type_return, int* actual_format_return,
+                                   unsigned long* nitems_return, unsigned long* bytes_after_return,
+                                   unsigned char** prop_return)
 {
 	wLog* log = WLog_Get(tag);
-	return LogDynAndXGetWindowProperty(log, display, w, property, long_offset, long_length, delete,
-	                                   req_type, actual_type_return, actual_format_return,
-	                                   nitems_return, bytes_after_return, prop_return);
+	return LogDynAndXGetWindowProperty_ex(
+	    log, file, fkt, line, display, w, property, long_offset, long_length, delete, req_type,
+	    actual_type_return, actual_format_return, nitems_return, bytes_after_return, prop_return);
 }
 
-int LogDynAndXGetWindowProperty(wLog* log, Display* display, Window w, Atom property,
-                                long long_offset, long long_length, int delete, Atom req_type,
-                                Atom* actual_type_return, int* actual_format_return,
-                                unsigned long* nitems_return, unsigned long* bytes_after_return,
-                                unsigned char** prop_return)
+int LogDynAndXGetWindowProperty_ex(wLog* log, const char* file, const char* fkt, size_t line,
+                                   Display* display, Window w, Atom property, long long_offset,
+                                   long long_length, int delete, Atom req_type,
+                                   Atom* actual_type_return, int* actual_format_return,
+                                   unsigned long* nitems_return, unsigned long* bytes_after_return,
+                                   unsigned char** prop_return)
 {
 	if (WLog_IsLevelActive(log, level))
 	{
 		char* propstr = XGetAtomName(display, property);
 		char* req_type_str = XGetAtomName(display, req_type);
-		WLog_Print(log, WLOG_DEBUG,
-		           "XGetWindowProperty(%p, %d, %s [%d], %ld, %ld, %d, %s [%d], %p, %p, %p, %p, %p)",
-		           display, w, propstr, property, long_offset, long_length, delete, req_type_str,
-		           req_type, actual_type_return, actual_format_return, nitems_return,
-		           bytes_after_return, prop_return);
+		write_log(log, level, file, fkt, line,
+		          "XGetWindowProperty(%p, %d, %s [%d], %ld, %ld, %d, %s [%d], %p, %p, %p, %p, %p)",
+		          display, w, propstr, property, long_offset, long_length, delete, req_type_str,
+		          req_type, actual_type_return, actual_format_return, nitems_return,
+		          bytes_after_return, prop_return);
 		XFree(propstr);
 		XFree(req_type_str);
 	}
