@@ -1743,7 +1743,8 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 			const xfCliprdrFormat* clientFormat = &clipboard->clientFormats[j];
 			if (xf_cliprdr_formats_equal(format, clientFormat))
 			{
-				if (strcmp(type_FileGroupDescriptorW, clientFormat->formatName) == 0)
+				if ((clientFormat->formatName != NULL) &&
+				    (strcmp(type_FileGroupDescriptorW, clientFormat->formatName) == 0))
 				{
 					if (!cliprdr_file_context_has_local_support(clipboard->file))
 						continue;
