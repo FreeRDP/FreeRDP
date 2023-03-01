@@ -162,8 +162,8 @@ static int xf_map_error_to_exit_code(DWORD error)
 
 	return XF_EXIT_CONN_FAILED;
 }
-static int (*_def_error_handler)(Display*, XErrorEvent*);
-static int _xf_error_handler(Display* d, XErrorEvent* ev);
+static int (*def_error_handler)(Display*, XErrorEvent*);
+static int xf_error_handler_ex(Display* d, XErrorEvent* ev);
 static void xf_check_extensions(xfContext* context);
 static void xf_window_free(xfContext* xfc);
 static BOOL xf_get_pixmap_info(xfContext* xfc);
@@ -869,19 +869,24 @@ static BOOL xf_get_pixmap_info(xfContext* xfc)
 
 static int xf_error_handler(Display* d, XErrorEvent* ev)
 {
-	char buf[256];
-	int do_abort = TRUE;
+	char buf[256] = { 0 };
 	XGetErrorText(d, ev->error_code, buf, sizeof(buf));
 	WLog_ERR(TAG, "%s", buf);
+	winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 
+#if 0
+	const BOOL do_abort = TRUE;
 	if (do_abort)
 		abort();
+#endif
 
-	_def_error_handler(d, ev);
-	return FALSE;
+	if (def_error_handler)
+		return def_error_handler(d, ev);
+
+	return 0;
 }
 
-static int _xf_error_handler(Display* d, XErrorEvent* ev)
+static int xf_error_handler_ex(Display* d, XErrorEvent* ev)
 {
 	/*
 	 * ungrab the keyboard, in case a debugger is running in
@@ -1759,8 +1764,8 @@ BOOL xf_setup_x11(xfContext* xfc)
 	{
 		WLog_INFO(TAG, "Enabling X11 debug mode.");
 		XSynchronize(xfc->display, TRUE);
-		_def_error_handler = XSetErrorHandler(_xf_error_handler);
 	}
+	def_error_handler = XSetErrorHandler(xf_error_handler_ex);
 
 	xfc->mutex = CreateMutex(NULL, FALSE, NULL);
 
