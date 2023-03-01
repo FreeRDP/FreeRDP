@@ -32,6 +32,13 @@ static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt
 	va_end(ap);
 }
 
+char* Safe_XGetAtomName(Display* display, Atom atom)
+{
+	if (atom == None)
+		return strdup("Atom_None");
+	return XGetAtomName(display, atom);
+}
+
 int LogTagAndXChangeProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
                                 Display* display, Window w, Atom property, Atom type, int format,
                                 int mode, const unsigned char* data, int nelements)
@@ -47,8 +54,8 @@ int LogDynAndXChangeProperty_ex(wLog* log, const char* file, const char* fkt, si
 {
 	if (WLog_IsLevelActive(log, level))
 	{
-		char* propstr = XGetAtomName(display, property);
-		char* typestr = XGetAtomName(display, type);
+		char* propstr = Safe_XGetAtomName(display, property);
+		char* typestr = Safe_XGetAtomName(display, type);
 		write_log(log, level, file, fkt, line,
 		          "XChangeProperty(%p, %d, %s [%d], %s [%d], %d, %d, %p, %d)", display, w, propstr,
 		          property, typestr, type, format, mode, data, nelements);
@@ -70,7 +77,7 @@ int LogDynAndXDeleteProperty_ex(wLog* log, const char* file, const char* fkt, si
 {
 	if (WLog_IsLevelActive(log, level))
 	{
-		char* propstr = XGetAtomName(display, property);
+		char* propstr = Safe_XGetAtomName(display, property);
 		write_log(log, level, file, fkt, line, "XDeleteProperty(%p, %d, %s [%d])", display, w,
 		          propstr, property);
 		XFree(propstr);
@@ -100,8 +107,8 @@ int LogDynAndXGetWindowProperty_ex(wLog* log, const char* file, const char* fkt,
 {
 	if (WLog_IsLevelActive(log, level))
 	{
-		char* propstr = XGetAtomName(display, property);
-		char* req_type_str = XGetAtomName(display, req_type);
+		char* propstr = Safe_XGetAtomName(display, property);
+		char* req_type_str = Safe_XGetAtomName(display, req_type);
 		write_log(log, level, file, fkt, line,
 		          "XGetWindowProperty(%p, %d, %s [%d], %ld, %ld, %d, %s [%d], %p, %p, %p, %p, %p)",
 		          display, w, propstr, property, long_offset, long_length, delete, req_type_str,

@@ -1078,7 +1078,7 @@ static void log_selection_event(xfContext* xfc, const XEvent* event)
 			case SelectionClear:
 			{
 				const XSelectionClearEvent* xevent = &event->xselectionclear;
-				char* selection = XGetAtomName(xfc->display, xevent->selection);
+				char* selection = Safe_XGetAtomName(xfc->display, xevent->selection);
 				WLog_Print(_log_cached_ptr, level, "got event %s [selection %s]",
 				           x11_event_string(event->type), selection);
 				XFree(selection);
@@ -1087,9 +1087,9 @@ static void log_selection_event(xfContext* xfc, const XEvent* event)
 			case SelectionNotify:
 			{
 				const XSelectionEvent* xevent = &event->xselection;
-				char* selection = XGetAtomName(xfc->display, xevent->selection);
-				char* target = XGetAtomName(xfc->display, xevent->target);
-				char* property = XGetAtomName(xfc->display, xevent->property);
+				char* selection = Safe_XGetAtomName(xfc->display, xevent->selection);
+				char* target = Safe_XGetAtomName(xfc->display, xevent->target);
+				char* property = Safe_XGetAtomName(xfc->display, xevent->property);
 				WLog_Print(_log_cached_ptr, level,
 				           "got event %s [selection %s, target %s, property %s]",
 				           x11_event_string(event->type), selection, target, property);
@@ -1101,9 +1101,9 @@ static void log_selection_event(xfContext* xfc, const XEvent* event)
 			case SelectionRequest:
 			{
 				const XSelectionRequestEvent* xevent = &event->xselectionrequest;
-				char* selection = XGetAtomName(xfc->display, xevent->selection);
-				char* target = XGetAtomName(xfc->display, xevent->target);
-				char* property = XGetAtomName(xfc->display, xevent->property);
+				char* selection = Safe_XGetAtomName(xfc->display, xevent->selection);
+				char* target = Safe_XGetAtomName(xfc->display, xevent->target);
+				char* property = Safe_XGetAtomName(xfc->display, xevent->property);
 				WLog_Print(_log_cached_ptr, level,
 				           "got event %s [selection %s, target %s, property %s]",
 				           x11_event_string(event->type), selection, target, property);
@@ -1115,7 +1115,7 @@ static void log_selection_event(xfContext* xfc, const XEvent* event)
 			case PropertyNotify:
 			{
 				const XPropertyEvent* xevent = &event->xproperty;
-				char* atom = XGetAtomName(xfc->display, xevent->atom);
+				char* atom = Safe_XGetAtomName(xfc->display, xevent->atom);
 				WLog_Print(_log_cached_ptr, level, "got event %s [atom %s]",
 				           x11_event_string(event->type), atom);
 				XFree(atom);
