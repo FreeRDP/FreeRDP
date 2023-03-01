@@ -18,7 +18,11 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
+
 #include "xf_utils.h"
+
+static const DWORD level = WLOG_TRACE;
 
 int LogTagAndXChangeProperty(const char* tag, Display* display, Window w, Atom property, Atom type,
                              int format, int mode, const unsigned char* data, int nelements)
@@ -30,8 +34,6 @@ int LogTagAndXChangeProperty(const char* tag, Display* display, Window w, Atom p
 int LogDynAndXChangeProperty(wLog* log, Display* display, Window w, Atom property, Atom type,
                              int format, int mode, const unsigned char* data, int nelements)
 {
-	const DWORD level = WLOG_TRACE;
-
 	if (WLog_IsLevelActive(log, level))
 	{
 		char* propstr = XGetAtomName(display, property);
@@ -42,4 +44,22 @@ int LogDynAndXChangeProperty(wLog* log, Display* display, Window w, Atom propert
 		XFree(typestr);
 	}
 	return XChangeProperty(display, w, property, type, format, mode, data, nelements);
+}
+
+int LogTagAndXDeleteProperty(const char* tag, Display* display, Window w, Atom property)
+{
+	wLog* log = WLog_Get(tag);
+	return LogDynAndXDeleteProperty(log, display, w, property);
+}
+
+int LogDynAndXDeleteProperty(wLog* log, Display* display, Window w, Atom property)
+{
+	if (WLog_IsLevelActive(log, level))
+	{
+		char* propstr = XGetAtomName(display, property);
+		WLog_Print(log, WLOG_DEBUG, "XDeleteProperty(%p, %d, %s [%d])", display, w, propstr,
+		           property);
+		XFree(propstr);
+	}
+	return XDeleteProperty(display, w, property);
 }

@@ -660,7 +660,7 @@ static void xf_cliprdr_provide_server_format_list(xfClipboard* clipboard)
 	}
 	else
 	{
-		XDeleteProperty(xfc->display, xfc->drawable, clipboard->raw_format_list_atom);
+		LogTagAndXDeleteProperty(TAG, xfc->display, xfc->drawable, clipboard->raw_format_list_atom);
 	}
 
 	Stream_Free(formats, TRUE);
@@ -984,7 +984,7 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 		}
 	}
 
-	XDeleteProperty(xfc->display, xfc->drawable, clipboard->property_atom);
+	LogTagAndXDeleteProperty(TAG, xfc->display, xfc->drawable, clipboard->property_atom);
 	xf_cliprdr_process_requested_data(clipboard, has_data, data, bytes_left);
 
 	if (data)
@@ -1340,7 +1340,7 @@ static BOOL xf_cliprdr_process_selection_clear(xfClipboard* clipboard,
 	if (xf_cliprdr_is_self_owned(clipboard))
 		return FALSE;
 
-	XDeleteProperty(xfc->display, clipboard->root_window, clipboard->property_atom);
+	LogTagAndXDeleteProperty(TAG, xfc->display, clipboard->root_window, clipboard->property_atom);
 	return TRUE;
 }
 
