@@ -46,6 +46,9 @@
 #include "hmac_md5.h"
 #endif
 
+#include "../log.h"
+#define TAG WINPR_TAG("crypto.hash")
+
 /**
  * HMAC
  */
@@ -452,7 +455,10 @@ static BOOL winpr_Digest_Init_Internal(WINPR_DIGEST_CTX* ctx, const EVP_MD* evp)
 		return FALSE;
 
 	if (EVP_DigestInit_ex(mdctx, evp, NULL) != 1)
+	{
+		WLog_ERR(TAG, "Failed to initialize digest %s", winpr_md_type_to_string(ctx->md));
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -492,7 +498,10 @@ BOOL winpr_Digest_Init_Allow_FIPS(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 
 	/* Only MD5 is supported for FIPS allow override */
 	if (md != WINPR_MD_MD5)
+	{
+		WLog_ERR(TAG, "Invalid FIPS digest %s requested", winpr_md_type_to_string(md));
 		return FALSE;
+	}
 
 	EVP_MD_CTX_set_flags(ctx->mdctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	return winpr_Digest_Init_Internal(ctx, evp);
