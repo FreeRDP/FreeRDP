@@ -1219,8 +1219,7 @@ BOOL mcs_send_channel_join_request(rdpMcs* mcs, UINT16 channelId)
 	int status;
 	UINT16 length = 12;
 
-	if (!mcs)
-		return FALSE;
+	WINPR_ASSERT(mcs);
 
 	s = Stream_New(NULL, length);
 
@@ -1252,8 +1251,8 @@ BOOL mcs_recv_channel_join_confirm(rdpMcs* mcs, wStream* s, UINT16* channelId)
 	UINT16 initiator;
 	UINT16 requested;
 
-	if (!mcs || !s || !channelId)
-		return FALSE;
+	WINPR_ASSERT(mcs);
+	WINPR_ASSERT(channelId);
 
 	if (!mcs_read_domain_mcspdu_header(s, DomainMCSPDU_ChannelJoinConfirm, &length, NULL))
 		return FALSE;
