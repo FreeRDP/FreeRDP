@@ -482,7 +482,10 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	WCHAR* clientAddress = ConvertUtf8ToWCharAlloc(settings->ClientAddress, &cbClientAddress);
 
 	if (cbClientAddress > (UINT16_MAX / sizeof(WCHAR)))
+	{
+		WLog_ERR(TAG, "cbClientAddress > UINT16_MAX");
 		goto fail;
+	}
 
 	if (cbClientAddress > 0)
 	{
@@ -501,7 +504,10 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	clientDir = ConvertUtf8ToWCharAlloc(settings->ClientDir, &cbClientDir);
 	if (cbClientDir > (UINT16_MAX / sizeof(WCHAR)))
+	{
+		WLog_ERR(TAG, "cbClientDir > UINT16_MAX");
 		goto fail;
+	}
 
 	if (cbClientDir > 0)
 	{
@@ -518,7 +524,11 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	}
 
 	if (settings->ServerAutoReconnectCookie->cbLen > UINT16_MAX)
+	{
+		WLog_ERR(TAG, "ServerAutoreconnectCookie::cbLen > UINT16_MAX");
 		goto fail;
+	}
+
 	cbAutoReconnectCookie = (UINT16)settings->ServerAutoReconnectCookie->cbLen;
 
 	if (!Stream_EnsureRemainingCapacity(s, 4ull + cbClientAddress + 2ull + cbClientDir))
@@ -749,9 +759,7 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	BOOL usedPasswordCookie = FALSE;
 	rdpSettings* settings;
 
-	if (!rdp || !s || !rdp->settings)
-		return FALSE;
-
+	WINPR_ASSERT(rdp);
 	settings = rdp->settings;
 	WINPR_ASSERT(settings);
 
@@ -812,13 +820,19 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	domainW = freerdp_settings_get_string_as_utf16(settings, FreeRDP_Domain, &cbDomain);
 	if (cbDomain > UINT16_MAX / sizeof(WCHAR))
+	{
+		WLog_ERR(TAG, "cbDomain > UINT16_MAX");
 		goto fail;
+	}
 	cbDomain *= sizeof(WCHAR);
 
 	/* user name provided by the expert for connecting to the novice computer */
 	userNameW = freerdp_settings_get_string_as_utf16(settings, FreeRDP_Username, &cbUserName);
 	if (cbUserName > UINT16_MAX / sizeof(WCHAR))
+	{
+		WLog_ERR(TAG, "cbUserName > UINT16_MAX");
 		goto fail;
+	}
 	cbUserName *= sizeof(WCHAR);
 
 	const char* pin = "*";
@@ -835,7 +849,10 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 			} ptrconv;
 
 			if (settings->RedirectionPasswordLength > UINT16_MAX)
+			{
+				WLog_ERR(TAG, "RedirectionPasswordLength > UINT16_MAX");
 				goto fail;
+			}
 			usedPasswordCookie = TRUE;
 
 			ptrconv.bp = settings->RedirectionPassword;
@@ -850,7 +867,10 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	{
 		passwordW = ConvertUtf8ToWCharAlloc(pin, &cbPassword);
 		if (cbPassword > UINT16_MAX / sizeof(WCHAR))
+		{
+			WLog_ERR(TAG, "cbPassword > UINT16_MAX");
 			goto fail;
+		}
 		cbPassword = (UINT16)cbPassword * sizeof(WCHAR);
 	}
 
@@ -865,8 +885,16 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	if (altShell && strlen(altShell) > 0)
 	{
 		alternateShellW = ConvertUtf8ToWCharAlloc(altShell, &cbAlternateShell);
-		if (!alternateShellW || (cbAlternateShell > (UINT16_MAX / sizeof(WCHAR))))
+		if (!alternateShellW)
+		{
+			WLog_ERR(TAG, "alternateShellW == NULL");
 			goto fail;
+		}
+		if (cbAlternateShell > (UINT16_MAX / sizeof(WCHAR)))
+		{
+			WLog_ERR(TAG, "cbAlternateShell > UINT16_MAX");
+			goto fail;
+		}
 		cbAlternateShell = (UINT16)cbAlternateShell * sizeof(WCHAR);
 	}
 
@@ -876,7 +904,10 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	workingDirW = freerdp_settings_get_string_as_utf16(settings, inputId, &cbWorkingDir);
 	if (cbWorkingDir > (UINT16_MAX / sizeof(WCHAR)))
+	{
+		WLog_ERR(TAG, "cbWorkingDir > UINT16_MAX");
 		goto fail;
+	}
 	cbWorkingDir = (UINT16)cbWorkingDir * sizeof(WCHAR);
 
 	if (!Stream_EnsureRemainingCapacity(s, 18ull + cbDomain + cbUserName + cbPassword +

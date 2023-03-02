@@ -730,7 +730,10 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	const rdpCertInfo* info = freerdp_certificate_get_info(settings->RdpServerCertificate);
 	if (!info)
+	{
+		WLog_ERR(TAG, "Failed to get rdpCertInfo from RdpServerCertificate");
 		return FALSE;
+	}
 
 	/*
 	 * client random must be (bitlen / 8) + 8 - see [MS-RDPBCGR] 5.3.4.1
@@ -1004,6 +1007,8 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 	UINT32 i;
 	UINT16 channelId;
 	BOOL allJoined = TRUE;
+
+	WINPR_ASSERT(rdp);
 	rdpMcs* mcs = rdp->mcs;
 
 	if (!mcs_recv_channel_join_confirm(mcs, s, &channelId))
@@ -1012,7 +1017,11 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 	if (!mcs->userChannelJoined)
 	{
 		if (channelId != mcs->userId)
+		{
+			WLog_ERR(TAG, "expected user channel id %" PRIu16 ", but received %" PRIu16,
+			         mcs->userId, channelId);
 			return FALSE;
+		}
 
 		mcs->userChannelJoined = TRUE;
 		if (!rdp_client_join_channel(rdp, MCS_GLOBAL_CHANNEL_ID))
@@ -1021,8 +1030,11 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 	else if (!mcs->globalChannelJoined)
 	{
 		if (channelId != MCS_GLOBAL_CHANNEL_ID)
+		{
+			WLog_ERR(TAG, "expected uglobalser channel id %" PRIu16 ", but received %" PRIu16,
+			         MCS_GLOBAL_CHANNEL_ID, channelId);
 			return FALSE;
-
+		}
 		mcs->globalChannelJoined = TRUE;
 
 		if (mcs->messageChannelId != 0)
@@ -1070,8 +1082,11 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 				continue;
 
 			if (cur->ChannelId != channelId)
+			{
+				WLog_ERR(TAG, "expected channel id %" PRIu16 ", but received %" PRIu16,
+				         MCS_GLOBAL_CHANNEL_ID, channelId);
 				return FALSE;
-
+			}
 			cur->joined = TRUE;
 			break;
 		}
