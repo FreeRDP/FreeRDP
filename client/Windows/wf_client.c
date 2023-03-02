@@ -429,17 +429,6 @@ static BOOL wf_post_connect(freerdp* instance)
 	context->update->EndPaint = wf_end_paint;
 	wf_register_pointer(context->graphics);
 
-	if (!settings->SoftwareGdi)
-	{
-		wf_register_graphics(context->graphics);
-		wf_gdi_register_update_callbacks(context->update);
-		brush_cache_register_callbacks(context->update);
-		glyph_cache_register_callbacks(context->update);
-		bitmap_cache_register_callbacks(context->update);
-		offscreen_cache_register_callbacks(context->update);
-		palette_cache_register_callbacks(context->update);
-	}
-
 	wfc->floatbar = wf_floatbar_new(wfc, wfc->hInstance, settings->Floatbar);
 	return TRUE;
 }
