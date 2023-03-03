@@ -263,18 +263,20 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 		if (bAlertable)
 		{
 			thread = (WINPR_THREAD*)_GetCurrentThread();
-			if (!thread)
+			if (thread)
 			{
-				WLog_ERR(TAG, "failed to retrieve currentThread");
-				return WAIT_FAILED;
+				/* treat reentrancy, we can't switch to alertable state when we're already
+				   treating completions */
+				if (thread->apc.treatingCompletions)
+					bAlertable = FALSE;
+				else
+					extraFds = thread->apc.length;
 			}
-
-			/* treat reentrancy, we can't switch to alertable state when we're already
-			   treating completions */
-			if (thread->apc.treatingCompletions)
-				bAlertable = FALSE;
 			else
-				extraFds = thread->apc.length;
+			{
+				/* called from a non WinPR thread */
+				bAlertable = FALSE;
+			}
 		}
 
 		int fd = winpr_Handle_getFd(Object);
@@ -365,15 +367,20 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 	if (bAlertable)
 	{
 		thread = winpr_GetCurrentThread();
-		if (!thread)
-			return WAIT_FAILED;
-
-		/* treat reentrancy, we can't switch to alertable state when we're already
-		   treating completions */
-		if (thread->apc.treatingCompletions)
-			bAlertable = FALSE;
+		if (thread)
+		{
+			/* treat reentrancy, we can't switch to alertable state when we're already
+			   treating completions */
+			if (thread->apc.treatingCompletions)
+				bAlertable = FALSE;
+			else
+				extraFds = thread->apc.length;
+		}
 		else
-			extraFds = thread->apc.length;
+		{
+			/* most probably we're not called from WinPR thread, so we can't have any APC */
+			bAlertable = FALSE;
+		}
 	}
 
 	if (!pollset_init(&pollset, nCount + extraFds))

@@ -63,15 +63,17 @@ DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
 	DWORD ret = WAIT_FAILED;
 	BOOL autoSignalled;
 
-	if (!thread)
+	if (thread)
 	{
-		WLog_ERR(TAG, "unable to retrieve currentThread");
-		return WAIT_FAILED;
+		/* treat re-entrancy if a completion is calling us */
+		if (thread->apc.treatingCompletions)
+			bAlertable = FALSE;
 	}
-
-	/* treat re-entrancy if a completion is calling us */
-	if (thread->apc.treatingCompletions)
+	else
+	{
+		/* called from a non WinPR thread */
 		bAlertable = FALSE;
+	}
 
 	if (!bAlertable || !thread->apc.length)
 	{
