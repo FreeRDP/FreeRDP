@@ -154,7 +154,6 @@ BOOL cliprdr_write_filedescriptor(wStream* s, const FILEDESCRIPTORW* file)
 	Stream_Write_UINT32(s, file->clsid.Data1);
 	Stream_Write_UINT16(s, file->clsid.Data2);
 	Stream_Write_UINT16(s, file->clsid.Data3);
-	WINPR_ASSERT(sizeof(file->clsid.Data4) == 8);
 	Stream_Write(s, &file->clsid.Data4, sizeof(file->clsid.Data4));
 	Stream_Write_INT32(s, file->sizel.cx);
 	Stream_Write_INT32(s, file->sizel.cy);
