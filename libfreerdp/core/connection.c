@@ -703,11 +703,7 @@ static const BYTE fips_ivec[8] = { 0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xE
 
 static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 {
-	BYTE* mod = NULL;
-	BYTE* exp = NULL;
 	wStream* s = NULL;
-	UINT32 length = 0;
-	UINT32 key_len = 0;
 	int status = 0;
 	BOOL ret = FALSE;
 	rdpSettings* settings = rdp->settings;
@@ -739,15 +735,16 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	 * client random must be (bitlen / 8) + 8 - see [MS-RDPBCGR] 5.3.4.1
 	 * for details
 	 */
-	crypt_client_random = calloc(info->ModulusLength + 8, 1);
+	crypt_client_random = calloc(info->ModulusLength, 1);
 
 	if (!crypt_client_random)
 		return FALSE;
 
 	crypto_rsa_public_encrypt(settings->ClientRandom, settings->ClientRandomLength, info,
-	                          crypt_client_random, info->ModulusLength + 8);
+	                          crypt_client_random, info->ModulusLength);
 	/* send crypt client random to server */
-	length = RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + key_len + 8;
+	const size_t length =
+	    RDP_PACKET_HEADER_MAX_LENGTH + RDP_SECURITY_HEADER_LENGTH + 4 + info->ModulusLength + 8;
 	s = Stream_New(NULL, length);
 
 	if (!s)
@@ -760,9 +757,10 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 		goto end;
 	if (!rdp_write_security_header(s, SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC))
 		goto end;
-	length = key_len + 8;
-	Stream_Write_UINT32(s, length);
-	Stream_Write(s, crypt_client_random, length);
+
+	Stream_Write_UINT32(s, info->ModulusLength + 8);
+	Stream_Write(s, crypt_client_random, info->ModulusLength);
+	Stream_Zero(s, 8);
 	Stream_SealLength(s);
 	status = transport_write(rdp->mcs->transport, s);
 	Stream_Free(s, TRUE);
