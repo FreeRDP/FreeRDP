@@ -306,7 +306,7 @@ BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t length)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(dst);
 
-	if (Stream_GetRemainingLength(s) / sizeof(WCHAR) < length)
+	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(STREAM_TAG, s, length, sizeof(WCHAR)))
 		return FALSE;
 
 	for (x = 0; x < length; x++)
