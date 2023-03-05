@@ -1409,9 +1409,19 @@ static BOOL rdp_read_input_capability_set(wStream* s, rdpSettings* settings)
 	Stream_Read_UINT32(s, settings->KeyboardFunctionKey); /* keyboardFunctionKeys (4 bytes) */
 
 	{
+		WCHAR wstr[32] = { 0 };
 		char str[65] = { 0 };
-		if (Stream_Read_UTF16_String_As_UTF8_Buffer(s, 64 / sizeof(WCHAR), str, ARRAYSIZE(str)) < 0)
+
+		/* Older windows versions report invalid UTF16
+		 * [MS-RDPBCGR] <29> Section 2.2.7.1.6: Microsoft RDP 4.0, 5.0, 5.1, and 5.2 servers do not
+		 * explicitly fill the imeFileName field with zeros.
+		 */
+		if (!Stream_Read_UTF16_String(s, wstr, ARRAYSIZE(wstr)))
 			return FALSE;
+
+		if (ConvertWCharNToUtf8(wstr, ARRAYSIZE(wstr), str, ARRAYSIZE(str)) < 0)
+			memset(str, 0, sizeof(str));
+
 		if (!freerdp_settings_set_string(settings, FreeRDP_ImeFileName, str))
 			return FALSE;
 	}
