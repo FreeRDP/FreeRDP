@@ -1470,6 +1470,7 @@ static BOOL dump_streams(const void* key, void* value, void* arg)
 		log(cur->context->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__, "file [%" PRIuz "] ", x,
 		    file->name, file->size);
 	}
+	return TRUE;
 }
 
 static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 lockId,
