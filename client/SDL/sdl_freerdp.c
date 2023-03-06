@@ -388,9 +388,10 @@ static BOOL sdl_end_paint(rdpContext* context)
 	sdlContext* sdl = (sdlContext*)context;
 	WINPR_ASSERT(sdl);
 
-	if (!sdl_push_user_event(SDL_USEREVENT_UPDATE, context))
-		return FALSE;
-	return TRUE;
+	EnterCriticalSection(&sdl->critical);
+	const BOOL rc = sdl_push_user_event(SDL_USEREVENT_UPDATE, context);
+	LeaveCriticalSection(&sdl->critical);
+	return rc;
 }
 
 /* Create a SDL surface from the GDI buffer */
@@ -611,16 +612,25 @@ static BOOL sdl_create_windows(sdlContext* sdl)
 
 	rc = TRUE;
 fail:
+
 	if (!SetEvent(sdl->windows_created))
-		return FALSE;
+		rc = FALSE;
 	return rc;
 }
 
 static BOOL sdl_wait_create_windows(sdlContext* sdl)
 {
-	if (!ResetEvent(sdl->windows_created))
-		return FALSE;
-	if (!sdl_push_user_event(SDL_USEREVENT_CREATE_WINDOWS, sdl))
+	BOOL res = FALSE;
+	EnterCriticalSection(&sdl->critical);
+	res = ResetEvent(sdl->windows_created);
+	if (!res)
+		goto unlock;
+	res = sdl_push_user_event(SDL_USEREVENT_CREATE_WINDOWS, sdl);
+	if (!res)
+		goto unlock;
+unlock:
+	LeaveCriticalSection(&sdl->critical);
+	if (!res)
 		return FALSE;
 
 	HANDLE handles[] = { sdl->initialized, freerdp_abort_event(&sdl->common.context) };
@@ -639,6 +649,8 @@ BOOL update_resizeable(sdlContext* sdl, BOOL enable)
 {
 	WINPR_ASSERT(sdl);
 
+	EnterCriticalSection(&sdl->critical);
+
 	const rdpSettings* settings = sdl->common.context.settings;
 	const BOOL dyn = freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
 	const BOOL smart = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing);
@@ -651,6 +663,8 @@ BOOL update_resizeable(sdlContext* sdl, BOOL enable)
 			return FALSE;
 	}
 	sdl->resizeable = use;
+
+	LeaveCriticalSection(&sdl->critical);
 	return TRUE;
 }
 
@@ -658,6 +672,7 @@ BOOL update_fullscreen(sdlContext* sdl, BOOL enter)
 {
 	WINPR_ASSERT(sdl);
 
+	EnterCriticalSection(&sdl->critical);
 	for (uint32_t x = 0; x < sdl->windowCount; x++)
 	{
 		sdl_window_t* window = &sdl->windows[x];
@@ -665,6 +680,7 @@ BOOL update_fullscreen(sdlContext* sdl, BOOL enter)
 			return FALSE;
 	}
 	sdl->fullscreen = enter;
+	LeaveCriticalSection(&sdl->critical);
 	return TRUE;
 }
 
@@ -697,6 +713,7 @@ static int sdl_run(sdlContext* sdl)
 			SDL_Log("got event %s [0x%08" PRIx32 "]", sdl_event_type_str(windowEvent.type),
 			        windowEvent.type);
 #endif
+			EnterCriticalSection(&sdl->critical);
 			switch (windowEvent.type)
 			{
 				case SDL_QUIT:
@@ -836,6 +853,7 @@ static int sdl_run(sdlContext* sdl)
 				default:
 					break;
 			}
+			LeaveCriticalSection(&sdl->critical);
 		}
 	}
 
@@ -882,9 +900,6 @@ static BOOL sdl_post_connect(freerdp* instance)
 	if (!sdl_wait_create_windows(sdl))
 		return FALSE;
 
-	update_resizeable(sdl, FALSE);
-	update_fullscreen(sdl, context->settings->Fullscreen || context->settings->UseMultimon);
-
 	sdl->sdl_pixel_format = SDL_PIXELFORMAT_BGRA32;
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
 		return FALSE;
@@ -907,6 +922,9 @@ static BOOL sdl_post_connect(freerdp* instance)
 	context->update->DesktopResize = sdl_desktop_resize;
 	context->update->SetKeyboardIndicators = sdl_keyboard_set_indicators;
 	context->update->SetKeyboardImeStatus = sdl_keyboard_set_ime_status;
+
+	update_resizeable(sdl, FALSE);
+	update_fullscreen(sdl, context->settings->Fullscreen || context->settings->UseMultimon);
 	return TRUE;
 }
 
@@ -1136,6 +1154,7 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 
 	sdl->log = WLog_Get(SDL_TAG);
 
+	InitializeCriticalSection(&sdl->critical);
 	instance->PreConnect = sdl_pre_connect;
 	instance->PostConnect = sdl_post_connect;
 	instance->PostDisconnect = sdl_post_disconnect;
@@ -1160,6 +1179,7 @@ static void sdl_client_free(freerdp* instance, rdpContext* context)
 	if (!context)
 		return;
 
+	DeleteCriticalSection(&sdl->critical);
 	CloseHandle(sdl->thread);
 	CloseHandle(sdl->initialize);
 	CloseHandle(sdl->initialized);
