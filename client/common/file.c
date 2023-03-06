@@ -1399,7 +1399,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		if (!freerdp_settings_set_string(settings, FreeRDP_Username, user))
 			return FALSE;
 
-		if (domain)
+		if (!(~((size_t)file->Domain)) && domain)
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_Domain, domain))
 				return FALSE;
