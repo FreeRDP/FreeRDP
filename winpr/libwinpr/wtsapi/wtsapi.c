@@ -712,7 +712,7 @@ static BOOL LoadAndInitialize(char* library)
 	return TRUE;
 }
 
-static void InitializeWtsApiStubs_Env()
+static void InitializeWtsApiStubs_Env(void)
 {
 	DWORD nSize;
 	char* env = NULL;
@@ -737,7 +737,7 @@ static void InitializeWtsApiStubs_Env()
 
 #define FREERDS_LIBRARY_NAME "libfreerds-fdsapi.so"
 
-static void InitializeWtsApiStubs_FreeRDS()
+static void InitializeWtsApiStubs_FreeRDS(void)
 {
 	wIniFile* ini;
 	const char* prefix;

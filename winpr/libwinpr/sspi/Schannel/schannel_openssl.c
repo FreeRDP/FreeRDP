@@ -555,7 +555,7 @@ SECURITY_STATUS schannel_openssl_decrypt_message(SCHANNEL_OPENSSL* context, PSec
 	return SEC_E_OK;
 }
 
-SCHANNEL_OPENSSL* schannel_openssl_new()
+SCHANNEL_OPENSSL* schannel_openssl_new(void)
 {
 	SCHANNEL_OPENSSL* context;
 	context = (SCHANNEL_OPENSSL*)calloc(1, sizeof(SCHANNEL_OPENSSL));

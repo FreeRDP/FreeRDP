@@ -402,7 +402,7 @@ RPC_STATUS RpcServerUseProtseqIfExW(RPC_WSTR Protseq, unsigned int MaxCalls, RPC
 	return 0;
 }
 
-void RpcServerYield()
+void RpcServerYield(void)
 {
 	WLog_ERR(TAG, "Not implemented");
 }
@@ -524,7 +524,7 @@ RPC_STATUS RpcRevertToSelfEx(RPC_BINDING_HANDLE BindingHandle)
 	return 0;
 }
 
-RPC_STATUS RpcRevertToSelf()
+RPC_STATUS RpcRevertToSelf(void)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;
@@ -659,7 +659,7 @@ void RpcRaiseException(RPC_STATUS exception)
 	exit((int)exception);
 }
 
-RPC_STATUS RpcTestCancel()
+RPC_STATUS RpcTestCancel(void)
 {
 	WLog_ERR(TAG, "Not implemented");
 	return 0;

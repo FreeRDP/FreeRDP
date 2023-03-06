@@ -1315,7 +1315,6 @@ char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
 
 	BIO* bio;
 	int status;
-	BOOL rc = FALSE;
 
 	/**
 	 * Don't manage certificates internally, leave it up entirely to the external client

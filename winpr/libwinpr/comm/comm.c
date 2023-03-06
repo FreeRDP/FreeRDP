@@ -112,7 +112,7 @@ static void _CommInit(void)
  * Returns TRUE when the comm module is correctly intialized, FALSE otherwise
  * with ERROR_DLL_INIT_FAILED set as the last error.
  */
-static BOOL CommInitialized()
+static BOOL CommInitialized(void)
 {
 	if (pthread_once(&_CommInitialized, _CommInit) != 0)
 	{

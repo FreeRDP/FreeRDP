@@ -25,7 +25,7 @@
 
 #include "rdtk_engine.h"
 
-rdtkEngine* rdtk_engine_new()
+rdtkEngine* rdtk_engine_new(void)
 {
 	rdtkEngine* engine;
 

@@ -87,7 +87,7 @@ static BOOL TestStream_New(void)
 	return TRUE;
 }
 
-static BOOL TestStream_Static()
+static BOOL TestStream_Static(void)
 {
 	BYTE buffer[20];
 	wStream staticStream, *s = &staticStream;

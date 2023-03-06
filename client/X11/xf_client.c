@@ -1647,7 +1647,7 @@ static void xf_PanningChangeEventHandler(void* context, const PanningChangeEvent
  * Client Interface
  */
 
-static BOOL xfreerdp_client_global_init()
+static BOOL xfreerdp_client_global_init(void)
 {
 	setlocale(LC_ALL, "");
 
@@ -1657,7 +1657,7 @@ static BOOL xfreerdp_client_global_init()
 	return TRUE;
 }
 
-static void xfreerdp_client_global_uninit()
+static void xfreerdp_client_global_uninit(void)
 {
 }
 
