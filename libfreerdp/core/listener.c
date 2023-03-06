@@ -330,6 +330,9 @@ BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
 		client->local = TRUE;
 #endif
 
+	if (client->local)
+		WLog_INFO(TAG, "Accepting client from localhost");
+
 	if (sin_addr)
 		inet_ntop(peer_addr->ss_family, sin_addr, client->hostname, sizeof(client->hostname));
 
