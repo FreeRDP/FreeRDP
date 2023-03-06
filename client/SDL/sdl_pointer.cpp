@@ -41,7 +41,7 @@ typedef struct
 
 static BOOL sdl_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
-	sdlPointer* ptr = (sdlPointer*)pointer;
+	auto ptr = reinterpret_cast<sdlPointer*>(pointer);
 
 	WINPR_ASSERT(context);
 	if (!ptr)
@@ -56,10 +56,11 @@ static BOOL sdl_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	if (!ptr->data)
 		return FALSE;
 
+	auto data = static_cast<BYTE*>(ptr->data);
 	if (!freerdp_image_copy_from_pointer_data(
-	        ptr->data, gdi->dstFormat, 0, 0, 0, pointer->width, pointer->height,
-	        pointer->xorMaskData, pointer->lengthXorMask, pointer->andMaskData,
-	        pointer->lengthAndMask, pointer->xorBpp, &context->gdi->palette))
+	        data, gdi->dstFormat, 0, 0, 0, pointer->width, pointer->height, pointer->xorMaskData,
+	        pointer->lengthXorMask, pointer->andMaskData, pointer->lengthAndMask, pointer->xorBpp,
+	        &context->gdi->palette))
 	{
 		winpr_aligned_free(ptr->data);
 		return FALSE;
@@ -73,8 +74,8 @@ static void sdl_Pointer_Clear(sdlPointer* ptr)
 	WINPR_ASSERT(ptr);
 	SDL_FreeCursor(ptr->cursor);
 	SDL_FreeSurface(ptr->image);
-	ptr->cursor = NULL;
-	ptr->image = NULL;
+	ptr->cursor = nullptr;
+	ptr->image = nullptr;
 }
 
 static void sdl_Pointer_Free(rdpContext* context, rdpPointer* pointer)
@@ -86,7 +87,7 @@ static void sdl_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	{
 		sdl_Pointer_Clear(ptr);
 		winpr_aligned_free(ptr->data);
-		ptr->data = NULL;
+		ptr->data = nullptr;
 	}
 }
 
@@ -110,11 +111,11 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 
 	WINPR_ASSERT(uptr);
 
-	sdlContext* sdl = uptr->data2;
+	auto sdl = static_cast<sdlContext*>(uptr->data2);
 	WINPR_ASSERT(sdl);
 
 	rdpContext* context = &sdl->common.context;
-	sdlPointer* ptr = uptr->data1;
+	auto ptr = static_cast<sdlPointer*>(uptr->data1);
 	WINPR_ASSERT(ptr);
 
 	rdpPointer* pointer = &ptr->pointer;
@@ -145,9 +146,11 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 		return FALSE;
 
 	SDL_LockSurface(ptr->image);
+	auto pixels = static_cast<BYTE*>(ptr->image->pixels);
+	auto data = static_cast<const BYTE*>(ptr->data);
 	const BOOL rc =
-	    freerdp_image_scale(ptr->image->pixels, gdi->dstFormat, ptr->image->pitch, 0, 0,
-	                        ptr->image->w, ptr->image->h, ptr->data, gdi->dstFormat, 0, 0, 0, w, h);
+	    freerdp_image_scale(pixels, gdi->dstFormat, ptr->image->pitch, 0, 0, ptr->image->w,
+	                        ptr->image->h, data, gdi->dstFormat, 0, 0, 0, w, h);
 	SDL_UnlockSurface(ptr->image);
 	if (!rc)
 		return FALSE;
@@ -170,7 +173,7 @@ static BOOL sdl_Pointer_SetNull(rdpContext* context)
 
 static BOOL sdl_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
-	sdlContext* sdl = (sdlContext*)context;
+	auto sdl = reinterpret_cast<sdlContext*>(context);
 	WINPR_ASSERT(sdl);
 
 	return sdl_push_user_event(SDL_USEREVENT_POINTER_POSITION, x, y);
@@ -178,7 +181,7 @@ static BOOL sdl_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 
 BOOL sdl_register_pointer(rdpGraphics* graphics)
 {
-	rdpPointer* pointer = NULL;
+	rdpPointer* pointer = nullptr;
 
 	if (!(pointer = (rdpPointer*)calloc(1, sizeof(rdpPointer))))
 		return FALSE;

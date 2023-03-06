@@ -20,6 +20,7 @@
 #include "sdl_kbd.h"
 #include "sdl_disp.h"
 #include "sdl_freerdp.h"
+#include "sdl_utils.h"
 
 #include <freerdp/scancode.h>
 
@@ -350,7 +351,7 @@ BOOL sdl_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 {
 	WINPR_UNUSED(context);
 
-	SDL_Keymod state = KMOD_NONE;
+	int state = KMOD_NONE;
 
 	if ((led_flags & KBD_SYNC_NUM_LOCK) != 0)
 		state |= KMOD_NUM;
@@ -363,7 +364,7 @@ BOOL sdl_keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 
 	// TODO: KBD_SYNC_KANA_LOCK
 
-	SDL_SetModState(state);
+	SDL_SetModState(static_cast<SDL_Keymod>(state));
 
 	return TRUE;
 }
@@ -421,7 +422,8 @@ static UINT32 sdl_scancode_to_rdp(Uint32 scancode)
 	}
 
 #if defined(WITH_DEBUG_SDL_KBD_EVENTS)
-	WLog_DBG(TAG, "got %s [%s] -> [%s]", SDL_GetScancodeName(scancode), sdl_scancode_name(scancode),
+	auto code = static_cast<SDL_Scancode>(scancode);
+	WLog_DBG(TAG, "got %s [%s] -> [%s]", SDL_GetScancodeName(code), sdl_scancode_name(scancode),
 	         sdl_rdp_scancode_name(rdp));
 #endif
 	return rdp;
@@ -453,7 +455,7 @@ BOOL sdl_handle_keyboard_event(sdlContext* sdl, const SDL_KeyboardEvent* ev)
 			case SDL_SCANCODE_G:
 				if (ev->type == SDL_KEYDOWN)
 				{
-					sdl_grab_keyboard(sdl, ev->windowID, !sdl->grab_kbd);
+					sdl_grab_keyboard(sdl, ev->windowID, sdl->grab_kbd ? SDL_FALSE : SDL_TRUE);
 				}
 				return TRUE;
 			default:

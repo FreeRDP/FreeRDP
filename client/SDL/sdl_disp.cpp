@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <vector>
 #include <winpr/sysinfo.h>
 #include <winpr/assert.h>
 
@@ -26,6 +27,7 @@
 
 #include "sdl_disp.h"
 #include "sdl_kbd.h"
+#include "sdl_utils.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("sdl.disp")
@@ -248,14 +250,14 @@ sdlDispContext* sdl_disp_new(sdlContext* sdl)
 	rdpSettings* settings;
 
 	if (!sdl || !sdl->common.context.settings || !sdl->common.context.pubSub)
-		return NULL;
+		return nullptr;
 
 	settings = sdl->common.context.settings;
 	pubSub = sdl->common.context.pubSub;
-	ret = calloc(1, sizeof(sdlDispContext));
+	ret = new (sdlDispContext);
 
 	if (!ret)
-		return NULL;
+		return nullptr;
 
 	ret->sdl = sdl;
 	ret->lastSentWidth = ret->targetWidth = settings->DesktopWidth;
@@ -279,14 +281,13 @@ void sdl_disp_free(sdlDispContext* disp)
 		PubSub_UnsubscribeTimer(pubSub, sdl_disp_OnTimer);
 	}
 
-	free(disp);
+	delete (disp);
 }
 
 static UINT sdl_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors,
                                 size_t nmonitors)
 {
 	UINT ret = CHANNEL_RC_OK;
-	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts;
 	size_t i;
 	sdlDispContext* sdlDisp;
 	rdpSettings* settings;
@@ -302,15 +303,13 @@ static UINT sdl_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monit
 	settings = sdlDisp->sdl->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	layouts = calloc(nmonitors, sizeof(DISPLAY_CONTROL_MONITOR_LAYOUT));
-
-	if (!layouts)
-		return CHANNEL_RC_NO_MEMORY;
+	std::vector<DISPLAY_CONTROL_MONITOR_LAYOUT> layouts;
+	layouts.resize(nmonitors);
 
 	for (i = 0; i < nmonitors; i++)
 	{
-		const rdpMonitor* monitor = &monitors[i];
-		DISPLAY_CONTROL_MONITOR_LAYOUT* layout = &layouts[i];
+		auto monitor = &monitors[i];
+		auto layout = &layouts[i];
 
 		layout->Flags = (monitor->is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
 		layout->Left = monitor->x;
@@ -352,8 +351,8 @@ static UINT sdl_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monit
 		layout->DeviceScaleFactor = settings->DeviceScaleFactor;
 	}
 
-	ret = IFCALLRESULT(CHANNEL_RC_OK, disp->SendMonitorLayout, disp, nmonitors, layouts);
-	free(layouts);
+	ret =
+	    IFCALLRESULT(CHANNEL_RC_OK, disp->SendMonitorLayout, disp, layouts.size(), layouts.data());
 	return ret;
 }
 
@@ -530,7 +529,7 @@ BOOL sdl_disp_uninit(sdlDispContext* sdlDisp, DispClientContext* disp)
 	if (!sdlDisp || !disp)
 		return FALSE;
 
-	sdlDisp->disp = NULL;
+	sdlDisp->disp = nullptr;
 	update_resizeable(sdlDisp->sdl, FALSE);
 	return TRUE;
 }

@@ -17,8 +17,7 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CLIENT_SDL_MONITOR_H
-#define FREERDP_CLIENT_SDL_MONITOR_H
+#pragma once
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
@@ -27,5 +26,3 @@
 
 int sdl_list_monitors(sdlContext* sdl);
 BOOL sdl_detect_monitors(sdlContext* sdl, UINT32* pWidth, UINT32* pHeight);
-
-#endif /* FREERDP_CLIENT_SDL_MONITOR_H */

@@ -17,8 +17,7 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CLIENT_SDL_KBD_H
-#define FREERDP_CLIENT_SDL_KBD_H
+#pragma once
 
 #include <winpr/wtypes.h>
 #include <freerdp/freerdp.h>
@@ -34,5 +33,3 @@ BOOL sdl_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeSt
                                  UINT32 imeConvMode);
 
 BOOL sdl_handle_keyboard_event(sdlContext* sdl, const SDL_KeyboardEvent* ev);
-
-#endif /* FREERDP_CLIENT_SDL_KBD_H */

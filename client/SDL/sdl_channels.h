@@ -17,8 +17,7 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CLIENT_SDL_CHANNELS_H
-#define FREERDP_CLIENT_SDL_CHANNELS_H
+#pragma once
 
 #include <freerdp/freerdp.h>
 #include <freerdp/client/channels.h>
@@ -28,5 +27,3 @@ int sdl_on_channel_disconnected(freerdp* instance, const char* name, void* pInte
 
 void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e);
 void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e);
-
-#endif /* FREERDP_CLIENT_SDL_CHANNELS_H */

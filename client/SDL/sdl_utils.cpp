@@ -20,6 +20,8 @@
 #include <assert.h>
 #include "sdl_utils.h"
 
+#include "sdl_freerdp.h"
+
 #include <SDL.h>
 
 const char* sdl_event_type_str(Uint32 type)
@@ -113,7 +115,7 @@ const char* sdl_event_type_str(Uint32 type)
 const char* sdl_error_string(Uint32 res)
 {
 	if (res == 0)
-		return NULL;
+		return nullptr;
 
 	return SDL_GetError();
 }
@@ -165,8 +167,48 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 		case SDL_USEREVENT_POINTER_DEFAULT:
 			break;
 		default:
+			va_end(ap);
 			return FALSE;
 	}
 	va_end(ap);
 	return SDL_PushEvent(&ev) == 1;
+}
+
+BOOL update_fullscreen(sdlContext* sdl, BOOL enter)
+{
+	WINPR_ASSERT(sdl);
+
+	EnterCriticalSection(&sdl->critical);
+	for (uint32_t x = 0; x < sdl->windowCount; x++)
+	{
+		sdl_window_t* window = &sdl->windows[x];
+		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_FULLSCREEN, window->window, enter))
+			return FALSE;
+	}
+	sdl->fullscreen = enter;
+	LeaveCriticalSection(&sdl->critical);
+	return TRUE;
+}
+
+BOOL update_resizeable(sdlContext* sdl, BOOL enable)
+{
+	WINPR_ASSERT(sdl);
+
+	EnterCriticalSection(&sdl->critical);
+
+	const rdpSettings* settings = sdl->common.context.settings;
+	const BOOL dyn = freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
+	const BOOL smart = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing);
+	BOOL use = (dyn && enable) || smart;
+
+	for (uint32_t x = 0; x < sdl->windowCount; x++)
+	{
+		sdl_window_t* window = &sdl->windows[x];
+		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_RESIZEABLE, window->window, use))
+			return FALSE;
+	}
+	sdl->resizeable = use;
+
+	LeaveCriticalSection(&sdl->critical);
+	return TRUE;
 }
