@@ -22,7 +22,7 @@
 
 #include "xf_utils.h"
 
-static const DWORD level = WLOG_TRACE;
+static const DWORD log_level = WLOG_TRACE;
 
 static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line, ...)
 {
@@ -52,11 +52,11 @@ int LogDynAndXChangeProperty_ex(wLog* log, const char* file, const char* fkt, si
                                 Display* display, Window w, Atom property, Atom type, int format,
                                 int mode, const unsigned char* data, int nelements)
 {
-	if (WLog_IsLevelActive(log, level))
+	if (WLog_IsLevelActive(log, log_level))
 	{
 		char* propstr = Safe_XGetAtomName(display, property);
 		char* typestr = Safe_XGetAtomName(display, type);
-		write_log(log, level, file, fkt, line,
+		write_log(log, log_level, file, fkt, line,
 		          "XChangeProperty(%p, %d, %s [%d], %s [%d], %d, %d, %p, %d)", display, w, propstr,
 		          property, typestr, type, format, mode, data, nelements);
 		XFree(propstr);
@@ -75,10 +75,10 @@ int LogTagAndXDeleteProperty_ex(const char* tag, const char* file, const char* f
 int LogDynAndXDeleteProperty_ex(wLog* log, const char* file, const char* fkt, size_t line,
                                 Display* display, Window w, Atom property)
 {
-	if (WLog_IsLevelActive(log, level))
+	if (WLog_IsLevelActive(log, log_level))
 	{
 		char* propstr = Safe_XGetAtomName(display, property);
-		write_log(log, level, file, fkt, line, "XDeleteProperty(%p, %d, %s [%d])", display, w,
+		write_log(log, log_level, file, fkt, line, "XDeleteProperty(%p, %d, %s [%d])", display, w,
 		          propstr, property);
 		XFree(propstr);
 	}
@@ -105,11 +105,11 @@ int LogDynAndXGetWindowProperty_ex(wLog* log, const char* file, const char* fkt,
                                    unsigned long* nitems_return, unsigned long* bytes_after_return,
                                    unsigned char** prop_return)
 {
-	if (WLog_IsLevelActive(log, level))
+	if (WLog_IsLevelActive(log, log_level))
 	{
 		char* propstr = Safe_XGetAtomName(display, property);
 		char* req_type_str = Safe_XGetAtomName(display, req_type);
-		write_log(log, level, file, fkt, line,
+		write_log(log, log_level, file, fkt, line,
 		          "XGetWindowProperty(%p, %d, %s [%d], %ld, %ld, %d, %s [%d], %p, %p, %p, %p, %p)",
 		          display, w, propstr, property, long_offset, long_length, delete, req_type_str,
 		          req_type, actual_type_return, actual_format_return, nitems_return,
