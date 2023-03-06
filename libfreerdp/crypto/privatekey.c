@@ -252,6 +252,9 @@ rdpPrivateKey* freerdp_key_clone(const rdpPrivateKey* key)
 		_key->PrivateExponentLength = key->PrivateExponentLength;
 	}
 
+	if (!cert_info_clone(&_key->cert, &key->cert))
+		goto out_fail;
+
 	return _key;
 out_fail:
 	freerdp_key_free(_key);
@@ -305,6 +308,7 @@ EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key)
 	WINPR_ASSERT(key);
 
 	EVP_PKEY* evp = key->evp;
+	WINPR_ASSERT(evp);
 	EVP_PKEY_up_ref(evp);
 	return evp;
 }
@@ -312,6 +316,9 @@ EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key)
 BOOL freerdp_key_is_rsa(const rdpPrivateKey* key)
 {
 	WINPR_ASSERT(key);
+	if (key == priv_key_tssk)
+		return TRUE;
+
 	WINPR_ASSERT(key->evp);
 	return (EVP_PKEY_id(key->evp) == EVP_PKEY_RSA);
 }
