@@ -53,15 +53,15 @@ static const char* mime_image[] = {
 	"image/gif",       "image/tiff"
 };
 
-static const char* mime_uri_list = "text/uri-list";
-static const char* mime_html = "text/html";
-static const char* mime_bmp = "image/bmp";
+static const char mime_uri_list[] = "text/uri-list";
+static const char mime_html[] = "text/html";
+static const char mime_bmp[] = "image/bmp";
 
-static const char* mime_gnome_copied_files = "x-special/gnome-copied-files";
-static const char* mime_mate_copied_files = "x-special/mate-copied-files";
+static const char mime_gnome_copied_files[] = "x-special/gnome-copied-files";
+static const char mime_mate_copied_files[] = "x-special/mate-copied-files";
 
-static const char* type_FileGroupDescriptorW = "FileGroupDescriptorW";
-static const char* type_HtmlFormat = "HTML Format";
+static const char type_FileGroupDescriptorW[] = "FileGroupDescriptorW";
+static const char type_HtmlFormat[] = "HTML Format";
 
 typedef struct
 {
