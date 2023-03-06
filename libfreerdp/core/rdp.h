@@ -162,11 +162,11 @@ struct rdp_rdp
 	rdpHeartbeat* heartbeat;
 	rdpMultitransport* multitransport;
 	WINPR_RC4_CTX* rc4_decrypt_key;
-	int decrypt_use_count;
-	int decrypt_checksum_use_count;
+	UINT32 decrypt_use_count;
+	UINT32 decrypt_checksum_use_count;
 	WINPR_RC4_CTX* rc4_encrypt_key;
-	int encrypt_use_count;
-	int encrypt_checksum_use_count;
+	UINT32 encrypt_use_count;
+	UINT32 encrypt_checksum_use_count;
 	WINPR_CIPHER_CTX* fips_encrypt;
 	WINPR_CIPHER_CTX* fips_decrypt;
 	UINT32 sec_flags;
