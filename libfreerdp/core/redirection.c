@@ -272,13 +272,14 @@ static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* p
 		const size_t len = strnlen(tok, rlen);
 		rlen -= len;
 
-		size_t plen = 0;
-		BYTE* ptr = NULL;
-		crypto_base64_decode(tok, len, &ptr, &plen);
-		if (!ptr)
+		size_t bplen = 0;
+		BYTE* bptr = NULL;
+		crypto_base64_decode(tok, len, &bptr, &bplen);
+		if (!bptr)
 			goto fail;
-		memcpy(&(*pData)[wpos], ptr, plen);
-		wpos += plen;
+		memcpy(&(*pData)[wpos], bptr, bplen);
+		wpos += bplen;
+		free(bptr);
 
 		tok = strtok(NULL, "\r\n");
 	}

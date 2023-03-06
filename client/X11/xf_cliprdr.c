@@ -1269,11 +1269,11 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				/* Cached converted clipboard data available. Send it now */
 				respond->property = xevent->property;
 				ClipboardLock(clipboard->system);
-				void* data = ClipboardGetData(clipboard->system, cformat->localFormat, &DstSize);
+				void* cdata = ClipboardGetData(clipboard->system, cformat->localFormat, &DstSize);
 				ClipboardUnlock(clipboard->system);
 
-				xf_cliprdr_provide_data(clipboard, respond, data, DstSize);
-				free(data);
+				xf_cliprdr_provide_data(clipboard, respond, cdata, DstSize);
+				free(cdata);
 			}
 			else if (matchingFormat && (clipboard->data_raw != 0) && rawTransfer)
 			{
