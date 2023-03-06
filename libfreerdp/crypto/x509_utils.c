@@ -581,7 +581,7 @@ out_free_issuer:
 	free(subject);
 }
 
-BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain, size_t* plength)
+static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain, size_t* plength)
 {
 	BIO* bio;
 	int status, count, x;

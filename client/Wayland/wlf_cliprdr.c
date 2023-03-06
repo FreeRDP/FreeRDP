@@ -94,7 +94,7 @@ struct wlf_clipboard
 	wQueue* request_queue;
 };
 
-void wlf_request_free(void* rq)
+static void wlf_request_free(void* rq)
 {
 	wlf_request* request = rq;
 	if (request)
@@ -106,12 +106,12 @@ void wlf_request_free(void* rq)
 	free(request);
 }
 
-wlf_request* wlf_request_new(void)
+static wlf_request* wlf_request_new(void)
 {
 	return calloc(1, sizeof(wlf_request));
 }
 
-wlf_request* wlf_request_clone(const wlf_request* other)
+static wlf_request* wlf_request_clone(const wlf_request* other)
 {
 	wlf_request* copy = wlf_request_new();
 	if (!copy)
