@@ -26,6 +26,10 @@
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpsnd.h>
 
+#if !defined(CHANNEL_AUDIN_SERVER)
+#error "This header must not be included if CHANNEL_AUDIN_SERVER is not defined"
+#endif
+
 typedef struct s_audin_server_context audin_server_context;
 
 typedef BOOL (*psAudinServerChannelIdAssigned)(audin_server_context* context, UINT32 channelId);

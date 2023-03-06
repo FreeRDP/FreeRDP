@@ -22,7 +22,6 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
-#include <freerdp/server/audin.h>
 
 #include "sfreerdp.h"
 

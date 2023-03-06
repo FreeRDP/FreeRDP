@@ -2223,6 +2223,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 					break;
 
 				case DRDYNVC_STATE_READY:
+#if defined(CHANNEL_AUDIN_SERVER)
 					if (client->audin && !IFCALLRESULT(TRUE, client->audin->IsOpen, client->audin))
 					{
 						if (!IFCALLRESULT(FALSE, client->audin->Open, client->audin))
@@ -2231,6 +2232,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 							goto fail;
 						}
 					}
+#endif
 
 					/* Init RDPGFX dynamic channel */
 					if (settings->SupportGraphicsPipeline && client->rdpgfx && !gfxstatus.gfxOpened)
@@ -2341,6 +2343,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 fail:
 
 	/* Free channels early because we establish channels in post connect */
+#if defined(CHANNEL_AUDIN_SERVER)
 	if (client->audin && !IFCALLRESULT(TRUE, client->audin->IsOpen, client->audin))
 	{
 		if (!IFCALLRESULT(FALSE, client->audin->Close, client->audin))
@@ -2348,6 +2351,7 @@ fail:
 			WLog_WARN(TAG, "AUDIN shutdown failure!");
 		}
 	}
+#endif
 
 	if (gfxstatus.gfxOpened)
 	{

@@ -25,8 +25,13 @@
 #include "shadow_audin.h"
 #include <freerdp/server/server-common.h>
 
+#if defined(CHANNEL_AUDIN_SERVER)
+#include <freerdp/server/audin.h>
+#endif
+
 #define TAG SERVER_TAG("shadow")
 
+#if defined(CHANNEL_AUDIN_SERVER)
 /**
  * Function description
  *
@@ -92,9 +97,11 @@ static UINT AudinServerReceiveSamples(audin_server_context* context, const AUDIO
 
 	return CHANNEL_RC_OK;
 }
+#endif
 
 BOOL shadow_client_audin_init(rdpShadowClient* client)
 {
+#if defined(CHANNEL_AUDIN_SERVER)
 	audin_server_context* audin;
 	audin = client->audin = audin_server_context_new(client->vcm);
 
@@ -135,14 +142,17 @@ BOOL shadow_client_audin_init(rdpShadowClient* client)
 fail:
 	audin_server_context_free(audin);
 	client->audin = NULL;
+#endif
 	return FALSE;
 }
 
 void shadow_client_audin_uninit(rdpShadowClient* client)
 {
+#if defined(CHANNEL_AUDIN_SERVER)
 	if (client->audin)
 	{
 		audin_server_context_free(client->audin);
 		client->audin = NULL;
 	}
+#endif
 }

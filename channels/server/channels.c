@@ -38,7 +38,9 @@
  * will need to fix that later on cleanly
  */
 
+#if defined(CHANNEL_AUDIN_SERVER)
 #include <freerdp/server/audin.h>
+#endif
 #include <freerdp/server/rdpsnd.h>
 #include <freerdp/server/cliprdr.h>
 #include <freerdp/server/echo.h>
@@ -69,7 +71,9 @@ extern void freerdp_channels_dummy(void);
 
 void freerdp_channels_dummy(void)
 {
+#if defined(CHANNEL_AUDIN_SERVER)
 	audin_server_context* audin;
+#endif
 	RdpsndServerContext* rdpsnd;
 	CliprdrServerContext* cliprdr;
 	echo_server_context* echo;
@@ -89,8 +93,12 @@ void freerdp_channels_dummy(void)
 #ifdef WITH_CHANNEL_GFXREDIR
 	GfxRedirServerContext* gfxredir;
 #endif // WITH_CHANNEL_GFXREDIR
+#if defined(CHANNEL_AUDIN_SERVER)
 	audin = audin_server_context_new(NULL);
+#endif
+#if defined(CHANNEL_AUDIN_SERVER)
 	audin_server_context_free(audin);
+#endif
 	rdpsnd = rdpsnd_server_context_new(NULL);
 	rdpsnd_server_context_free(rdpsnd);
 	cliprdr = cliprdr_server_context_new(NULL);
