@@ -327,7 +327,11 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	}
 
 	const char* hostname = freerdp_settings_get_server_name(settings);
-
+	if (!hostname)
+	{
+		WLog_ERR(TAG, "Missing hostname, can not connect to NULL target");
+		return FALSE;
+	}
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, hostname, settings->ServerPort);
 
