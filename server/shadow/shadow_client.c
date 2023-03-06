@@ -1056,6 +1056,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	cmd.height = nHeight;
 
 	id = freerdp_settings_get_uint32(settings, FreeRDP_RemoteFxCodecId);
+#ifdef WITH_GFX_H264
 	if (settings->GfxAVC444 || settings->GfxAVC444v2)
 	{
 		INT32 rc;
@@ -1151,7 +1152,9 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 			return FALSE;
 		}
 	}
-	else if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) && (id != 0))
+	else
+#endif
+	    if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) && (id != 0))
 	{
 		BOOL rc;
 		wStream* s;
