@@ -225,8 +225,6 @@ static BOOL rdp_redirection_write_base64_wchar(UINT32 flag, wStream* s, size_t l
                                                const void* data)
 {
 	BOOL rc = FALSE;
-	char buffer[64] = { 0 };
-	const BYTE* ptr = NULL;
 
 	char* base64 = crypto_base64_encode(data, length);
 	if (!base64)
