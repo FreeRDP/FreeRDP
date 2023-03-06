@@ -51,6 +51,7 @@ typedef struct
 	size_t windowCount;
 	sdl_window_t windows[16];
 
+	CRITICAL_SECTION critical;
 	HANDLE thread;
 	HANDLE initialize;
 	HANDLE initialized;
