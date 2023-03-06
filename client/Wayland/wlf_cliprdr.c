@@ -551,7 +551,6 @@ static void wlf_cliprdr_transfer_data(UwacSeat* seat, void* context, const char*
 			           request.responseMime);
 	}
 
-unlock:
 	LeaveCriticalSection(&clipboard->lock);
 }
 
