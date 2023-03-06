@@ -261,7 +261,7 @@ char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
 	return lpFileName;
 }
 
-char* GetNamedPipeUnixDomainSocketBaseFilePathA()
+char* GetNamedPipeUnixDomainSocketBaseFilePathA(void)
 {
 	char* lpTempPath;
 	char* lpPipePath;

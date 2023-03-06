@@ -1411,7 +1411,7 @@ create_response:
 	return vgids_create_response(status, NULL, 0, response, responseSize);
 }
 
-vgidsContext* vgids_new()
+vgidsContext* vgids_new(void)
 {
 	wObject* obj;
 	vgidsContext* ctx = calloc(1, sizeof(vgidsContext));

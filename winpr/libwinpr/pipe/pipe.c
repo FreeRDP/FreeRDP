@@ -456,7 +456,7 @@ static HANDLE_OPS namedOps = { NamedPipeIsHandled,
 	                           NULL,
 	                           NULL };
 
-static BOOL InitWinPRPipeModule()
+static BOOL InitWinPRPipeModule(void)
 {
 	if (g_NamedPipeServerSockets)
 		return TRUE;

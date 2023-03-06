@@ -184,7 +184,7 @@ extern HANDLE_CREATOR* GetNamedPipeClientHandleCreator(void);
 #include "../comm/comm.h"
 #endif /* __linux__ && !defined ANDROID */
 
-static void _HandleCreatorsInit()
+static void _HandleCreatorsInit(void)
 {
 	WINPR_ASSERT(_HandleCreators == NULL);
 	_HandleCreators = ArrayList_New(TRUE);

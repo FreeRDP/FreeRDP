@@ -4,7 +4,7 @@
 #include <winpr/crypto.h>
 #include <winpr/ssl.h>
 
-static BOOL test_crypto_cipher_aes_128_cbc()
+static BOOL test_crypto_cipher_aes_128_cbc(void)
 {
 	WINPR_CIPHER_CTX* ctx;
 	BOOL result = FALSE;
@@ -110,7 +110,7 @@ static const BYTE* TEST_RC4_KEY = (BYTE*)"Key";
 static const char* TEST_RC4_PLAINTEXT = "Plaintext";
 static const BYTE* TEST_RC4_CIPHERTEXT = (BYTE*)"\xBB\xF3\x16\xE8\xD9\x40\xAF\x0A\xD3";
 
-static BOOL test_crypto_cipher_rc4()
+static BOOL test_crypto_cipher_rc4(void)
 {
 	size_t len;
 	BOOL rc = FALSE;
@@ -175,7 +175,7 @@ static const BYTE* TEST_CIPHER_KEY =
 static const BYTE* TEST_CIPHER_IV =
     (BYTE*)"\xFE\xE3\x9F\xF0\xD1\x5E\x37\x0C\xAB\xAB\x9B\x04\xF3\xDB\x99\x15";
 
-static BOOL test_crypto_cipher_key()
+static BOOL test_crypto_cipher_key(void)
 {
 	int status;
 	BYTE key[32] = { 0 };

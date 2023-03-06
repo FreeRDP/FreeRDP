@@ -42,7 +42,7 @@ void MessagePipe_PostQuit(wMessagePipe* pipe, int nExitCode)
  * Construction, Destruction
  */
 
-wMessagePipe* MessagePipe_New()
+wMessagePipe* MessagePipe_New(void)
 {
 	wMessagePipe* pipe = NULL;
 

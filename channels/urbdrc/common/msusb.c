@@ -27,7 +27,7 @@
 
 #define TAG FREERDP_TAG("utils")
 
-static MSUSB_PIPE_DESCRIPTOR* msusb_mspipe_new()
+static MSUSB_PIPE_DESCRIPTOR* msusb_mspipe_new(void)
 {
 	return (MSUSB_PIPE_DESCRIPTOR*)calloc(1, sizeof(MSUSB_PIPE_DESCRIPTOR));
 }
