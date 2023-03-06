@@ -949,7 +949,8 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			break;
 
 		case CONNECTION_STATE_MULTITRANSPORT_BOOTSTRAPPING_REQUEST:
-			if (settings->SupportMultitransport)
+			if (settings->SupportMultitransport &&
+			    ((settings->MultitransportFlags & INITIATE_REQUEST_PROTOCOL_UDPFECR) != 0))
 			{
 				/* only UDP reliable for now, nobody does lossy UDP (MS-RDPUDP only) these days */
 				ret = multitransport_server_request(rdp->multitransport,
