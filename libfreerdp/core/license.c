@@ -33,8 +33,6 @@
 
 #include <freerdp/log.h>
 
-#include "redirection.h"
-
 #include <freerdp/crypto/certificate.h>
 
 #include "license.h"
@@ -2152,7 +2150,6 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	license->type = LICENSE_TYPE_ISSUED;
 	ret = license_set_state(license, LICENSE_STATE_COMPLETED);
 
-	ret = TRUE;
 	if (!license->rdp->settings->OldLicenseBehaviour)
 		ret = saveCal(license->rdp->settings, Stream_Pointer(licenseStream), cbLicenseInfo,
 		              license->rdp->settings->ClientHostname);
@@ -2414,7 +2411,6 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 {
 	wStream* s = license_send_stream_init(license);
 	wStream* challengeRespData;
-	int length;
 	BYTE* buffer;
 	BOOL status;
 
@@ -2441,7 +2437,7 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	Stream_SealLength(challengeRespData);
 
 	/* compute MAC of PLATFORM_CHALLENGE_RESPONSE_DATA + HWID */
-	length = Stream_Length(challengeRespData) + sizeof(license->HardwareId);
+	const size_t length = Stream_Length(challengeRespData) + sizeof(license->HardwareId);
 	buffer = (BYTE*)malloc(length);
 	if (!buffer)
 	{
