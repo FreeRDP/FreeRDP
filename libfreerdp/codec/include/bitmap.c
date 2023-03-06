@@ -94,7 +94,9 @@ static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd,
 static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BYTE* pbDestBuffer,
                                  UINT32 rowDelta, UINT32 width, UINT32 height)
 {
+#if defined(WITH_DEBUG_CODECS)
 	char sbuffer[128] = { 0 };
+#endif
 	const BYTE* pbSrc = pbSrcBuffer;
 	const BYTE* pbEnd;
 	const BYTE* pbDestEnd;

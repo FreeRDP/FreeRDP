@@ -2630,7 +2630,6 @@ fail:
 static BOOL progressive_rfx_write_message_progressive_simple(PROGRESSIVE_CONTEXT* progressive,
                                                              wStream* s, const RFX_MESSAGE* msg)
 {
-	UINT32 i;
 	RFX_CONTEXT* context;
 
 	WINPR_ASSERT(progressive);

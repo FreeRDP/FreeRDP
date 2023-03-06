@@ -80,8 +80,6 @@ static void unlock(void)
 
 static void term_handler(int signum)
 {
-	struct sigaction default_sigaction;
-	sigset_t this_mask;
 	static BOOL recursive = FALSE;
 
 	if (!recursive)
