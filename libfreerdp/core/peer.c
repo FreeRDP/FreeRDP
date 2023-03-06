@@ -1320,6 +1320,8 @@ void freerdp_peer_context_free(freerdp_peer* client)
 	{
 		rdpContext* ctx = client->context;
 
+		CloseHandle(ctx->channelErrorEvent);
+		ctx->channelErrorEvent = NULL;
 		free(ctx->errorDescription);
 		ctx->errorDescription = NULL;
 		rdp_free(ctx->rdp);
@@ -1545,6 +1547,12 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 	context->autodetect = rdp->autodetect;
 	update_register_server_callbacks(rdp->update);
 	autodetect_register_server_callbacks(rdp->autodetect);
+
+	if (!(context->channelErrorEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
+		WLog_ERR(TAG, "CreateEvent failed!");
+		goto fail;
+	}
 
 	if (!(context->errorDescription = calloc(1, 500)))
 	{
