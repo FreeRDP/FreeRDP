@@ -32,7 +32,9 @@
 #include <freerdp/server/encomsp.h>
 #include <freerdp/server/remdesk.h>
 #include <freerdp/server/rdpsnd.h>
+#if defined(CHANNEL_AUDIN_SERVER)
 #include <freerdp/server/audin.h>
+#endif
 #include <freerdp/server/rdpgfx.h>
 
 #include <freerdp/codec/color.h>
@@ -114,7 +116,9 @@ struct rdp_shadow_client
 	EncomspServerContext* encomsp;
 	RemdeskServerContext* remdesk;
 	RdpsndServerContext* rdpsnd;
+#if defined(CHANNEL_AUDIN_SERVER)
 	audin_server_context* audin;
+#endif
 	RdpgfxServerContext* rdpgfx;
 
 	BOOL resizeRequested;

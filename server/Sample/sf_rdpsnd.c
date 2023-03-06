@@ -23,8 +23,6 @@
 
 #include <winpr/assert.h>
 
-#include <freerdp/server/audin.h>
-
 #include "sf_rdpsnd.h"
 
 #include <freerdp/server/server-common.h>
