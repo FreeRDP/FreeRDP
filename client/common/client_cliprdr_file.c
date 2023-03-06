@@ -157,7 +157,7 @@ static CliprdrLocalStream* cliprdr_local_stream_new(CliprdrFileContext* context,
 static void cliprdr_file_session_terminate(CliprdrFileContext* file);
 static BOOL local_stream_discard(const void* key, void* value, void* arg);
 
-static void log(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line, ...)
+static void writelog(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line, ...)
 {
 	if (!WLog_IsLevelActive(log, level))
 		return;
@@ -232,8 +232,8 @@ static int fuse_log_and_reply_open_(CliprdrFileContext* file, fuse_req_t req,
 
 	const int res = fuse_reply_open(req, fi);
 	if (res != 0)
-		log(file->log, WLOG_WARN, fname, fkt, line, "[%s:%" PRIuz "] fuse_reply_open %s [%d]",
-		    strerror(res), res);
+		writelog(file->log, WLOG_WARN, fname, fkt, line, "[%s:%" PRIuz "] fuse_reply_open %s [%d]",
+		         strerror(res), res);
 
 	return res;
 }
@@ -248,8 +248,8 @@ static int fuse_log_and_reply_entry_(CliprdrFileContext* file, fuse_req_t req,
 
 	const int res = fuse_reply_entry(req, fi);
 	if (res != 0)
-		log(file->log, WLOG_WARN, fname, fkt, line, "[%s:%" PRIuz "] fuse_reply_entry %s [%d]",
-		    strerror(res), res);
+		writelog(file->log, WLOG_WARN, fname, fkt, line, "[%s:%" PRIuz "] fuse_reply_entry %s [%d]",
+		         strerror(res), res);
 	return res;
 }
 
@@ -262,8 +262,8 @@ static int fuse_log_and_reply_buf_(CliprdrFileContext* file, fuse_req_t req, con
 
 	const int res = fuse_reply_buf(req, buf, size);
 	if (res != 0)
-		log(file->log, WLOG_WARN, fname, fkt, line, "[%s:%" PRIuz "] fuse_reply_buf %s [%d]",
-		    strerror(res), res);
+		writelog(file->log, WLOG_WARN, fname, fkt, line, "[%s:%" PRIuz "] fuse_reply_buf %s [%d]",
+		         strerror(res), res);
 	return res;
 }
 
@@ -357,12 +357,12 @@ static inline CliprdrFuseInode* cliprdr_file_fuse_util_get_inode_(CliprdrFileCon
 
 	CliprdrFuseInode* node = (CliprdrFuseInode*)ArrayList_GetItem(file->ino_list, list_index);
 	if (!node)
-		log(file->log, WLOG_WARN, fname, fkt, line,
-		    "inode [0x%08" PRIx64 "][index %" PRIuz "] not found", ino, list_index);
+		writelog(file->log, WLOG_WARN, fname, fkt, line,
+		         "inode [0x%08" PRIx64 "][index %" PRIuz "] not found", ino, list_index);
 	else
-		log(file->log, WLOG_TRACE, fname, fkt, line,
-		    "node %s [0x%09" PRIx64 "][index %" PRIuz "][parent 0x%08" PRIx64 "]", node->name,
-		    node->ino, list_index, node->parent_ino);
+		writelog(file->log, WLOG_TRACE, fname, fkt, line,
+		         "node %s [0x%09" PRIx64 "][index %" PRIuz "][parent 0x%08" PRIx64 "]", node->name,
+		         node->ino, list_index, node->parent_ino);
 	return node;
 }
 
@@ -375,9 +375,9 @@ static BOOL dump_ino(void* data, size_t index, va_list ap)
 	const char* fkt = va_arg(ap, const char*);
 	const size_t line = va_arg(ap, size_t);
 
-	log(file->log, WLOG_TRACE, fname, fkt, line,
-	    "node %s [0x%09" PRIx64 "][index %" PRIuz "][parent 0x%08" PRIx64 "]", node->name,
-	    node->ino, index, node->parent_ino);
+	writelog(file->log, WLOG_TRACE, fname, fkt, line,
+	         "node %s [0x%09" PRIx64 "][index %" PRIuz "][parent 0x%08" PRIx64 "]", node->name,
+	         node->ino, index, node->parent_ino);
 	return TRUE;
 }
 
@@ -1422,11 +1422,11 @@ static UINT cliprdr_file_context_send_file_contents_failure(
 
 	const UINT64 offset = (((UINT64)fileContentsRequest->nPositionHigh) << 32) |
 	                      ((UINT64)fileContentsRequest->nPositionLow);
-	log(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
-	    "server file contents request [lockID %" PRIu32 ", streamID %" PRIu32 ", index %" PRIu32
-	    "] offset %" PRIu64 ", size %" PRIu32 " failed",
-	    fileContentsRequest->clipDataId, fileContentsRequest->streamId,
-	    fileContentsRequest->listIndex, offset, fileContentsRequest->cbRequested);
+	writelog(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+	         "server file contents request [lockID %" PRIu32 ", streamID %" PRIu32
+	         ", index %" PRIu32 "] offset %" PRIu64 ", size %" PRIu32 " failed",
+	         fileContentsRequest->clipDataId, fileContentsRequest->streamId,
+	         fileContentsRequest->listIndex, offset, fileContentsRequest->cbRequested);
 
 	response.common.msgFlags = CB_RESPONSE_FAIL;
 	response.streamId = fileContentsRequest->streamId;
@@ -1461,14 +1461,14 @@ static BOOL dump_streams(const void* key, void* value, void* arg)
 	const UINT32* ukey = key;
 	CliprdrLocalStream* cur = value;
 
-	log(cur->context->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
-	    "[key %" PRIu32 "] lockID %" PRIu32 ", count %" PRIuz ", locked %d", *ukey, cur->lockId,
-	    cur->count, cur->locked);
+	writelog(cur->context->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+	         "[key %" PRIu32 "] lockID %" PRIu32 ", count %" PRIuz ", locked %d", *ukey,
+	         cur->lockId, cur->count, cur->locked);
 	for (size_t x = 0; x < cur->count; x++)
 	{
 		const CliprdrLocalFile* file = &cur->files[x];
-		log(cur->context->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__, "file [%" PRIuz "] ", x,
-		    file->name, file->size);
+		writelog(cur->context->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+		         "file [%" PRIuz "] ", x, file->name, file->size);
 	}
 	return TRUE;
 }
@@ -1488,16 +1488,16 @@ static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 
 		}
 		else
 		{
-			log(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
-			    "invalid entry index for lockID %" PRIu32 ", index %" PRIu32 " [count %" PRIu32
-			    "] [locked %d]",
-			    lockId, listIndex, cur->count, cur->locked);
+			writelog(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+			         "invalid entry index for lockID %" PRIu32 ", index %" PRIu32 " [count %" PRIu32
+			         "] [locked %d]",
+			         lockId, listIndex, cur->count, cur->locked);
 		}
 	}
 	else
 	{
-		log(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
-		    "missing entry for lockID %" PRIu32 ", index %" PRIu32, lockId, listIndex);
+		writelog(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+		         "missing entry for lockID %" PRIu32 ", index %" PRIu32, lockId, listIndex);
 		HashTable_Foreach(file->local_streams, dump_streams, file);
 	}
 
@@ -1516,10 +1516,10 @@ static CliprdrLocalFile* file_for_request(CliprdrFileContext* file, UINT32 lockI
 		}
 		if (!f->fp)
 		{
-			log(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
-			    "[lockID %" PRIu32 ", index %" PRIu32 "] failed to open file '%s' [size %" PRId64
-			    "] %s [%d]",
-			    lockId, listIndex, f->name, f->size, strerror(errno), errno);
+			writelog(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+			         "[lockID %" PRIu32 ", index %" PRIu32
+			         "] failed to open file '%s' [size %" PRId64 "] %s [%d]",
+			         lockId, listIndex, f->name, f->size, strerror(errno), errno);
 			return NULL;
 		}
 	}
