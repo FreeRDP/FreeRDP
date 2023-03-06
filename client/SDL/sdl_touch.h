@@ -17,8 +17,7 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CLIENT_SDL_TOUCH_H
-#define FREERDP_CLIENT_SDL_TOUCH_H
+#pragma once
 
 #include "sdl_freerdp.h"
 
@@ -32,5 +31,3 @@ BOOL sdl_handle_mouse_button(sdlContext* sdl, const SDL_MouseButtonEvent* ev);
 BOOL sdl_handle_touch_down(sdlContext* sdl, const SDL_TouchFingerEvent* ev);
 BOOL sdl_handle_touch_up(sdlContext* sdl, const SDL_TouchFingerEvent* ev);
 BOOL sdl_handle_touch_motion(sdlContext* sdl, const SDL_TouchFingerEvent* ev);
-
-#endif /* FREERDP_CLIENT_SDL_TOUCH_H */

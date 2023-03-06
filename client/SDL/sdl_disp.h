@@ -16,8 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef FREERDP_CLIENT_SDL_DISP_H
-#define FREERDP_CLIENT_SDL_DISP_H
+#pragma once
 
 #include <freerdp/types.h>
 #include <freerdp/client/disp.h>
@@ -38,5 +37,3 @@ BOOL sdl_disp_handle_window_event(sdlDispContext* disp, const SDL_WindowEvent* e
 
 BOOL sdl_grab_keyboard(sdlContext* sdl, Uint32 windowID, SDL_bool enable);
 BOOL sdl_grab_mouse(sdlContext* sdl, Uint32 windowID, SDL_bool enable);
-
-#endif /* FREERDP_CLIENT_SDL_DISP_H */

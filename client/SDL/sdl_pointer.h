@@ -17,8 +17,7 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CLIENT_SDL_POINTER_H
-#define FREERDP_CLIENT_SDL_POINTER_H
+#pragma once
 
 #include <freerdp/graphics.h>
 #include "sdl_freerdp.h"
@@ -26,5 +25,3 @@
 BOOL sdl_register_pointer(rdpGraphics* graphics);
 
 BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr);
-
-#endif /* FREERDP_CLIENT_SDL_POINTER_H */

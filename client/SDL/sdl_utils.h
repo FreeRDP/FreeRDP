@@ -17,13 +17,14 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CLIENT_SDL_UTILS_H
-#define FREERDP_CLIENT_SDL_UTILS_H
+#pragma once
 
 #include <winpr/wlog.h>
 
 #include <stdbool.h>
 #include <SDL.h>
+
+#include "sdl_freerdp.h"
 
 enum
 {
@@ -37,6 +38,9 @@ enum
 	SDL_USEREVENT_POINTER_SET
 };
 
+BOOL update_resizeable(sdlContext* sdl, BOOL enable);
+BOOL update_fullscreen(sdlContext* sdl, BOOL enter);
+
 BOOL sdl_push_user_event(Uint32 type, ...);
 
 const char* sdl_event_type_str(Uint32 type);
@@ -46,5 +50,3 @@ const char* sdl_error_string(Uint32 res);
 	sdl_log_error_ex(res, log, what, __FILE__, __LINE__, __FUNCTION__)
 BOOL sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file, size_t line,
                       const char* fkt);
-
-#endif /* FREERDP_CLIENT_SDL_UTILS_H */
