@@ -852,9 +852,7 @@ int shadow_server_init(rdpShadowServer* server)
 	if (status < 0)
 		goto fail;
 
-	status = shadow_server_init_certificate(server);
-
-	if (status < 0)
+	if (!shadow_server_init_certificate(server))
 		goto fail;
 
 	server->listener = freerdp_listener_new();
