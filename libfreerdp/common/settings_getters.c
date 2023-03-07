@@ -399,6 +399,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_RdpSecurity:
 			return settings->RdpSecurity;
 
+		case FreeRDP_RdstlsSecurity:
+			return settings->RdstlsSecurity;
+
 		case FreeRDP_RedirectClipboard:
 			return settings->RedirectClipboard;
 
@@ -1065,6 +1068,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_RdpSecurity:
 			settings->RdpSecurity = cnv.c;
+			break;
+
+		case FreeRDP_RdstlsSecurity:
+			settings->RdstlsSecurity = cnv.c;
 			break;
 
 		case FreeRDP_RedirectClipboard:

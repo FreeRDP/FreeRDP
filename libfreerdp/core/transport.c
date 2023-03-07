@@ -73,6 +73,7 @@ struct rdp_transport
 	wStreamPool* ReceivePool;
 	HANDLE connectedEvent;
 	BOOL NlaMode;
+	BOOL RdstlsMode;
 	BOOL blocking;
 	BOOL GatewayEnabled;
 	CRITICAL_SECTION ReadLock;
@@ -367,6 +368,37 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	return rdp_client_transition_to_state(rdp, CONNECTION_STATE_NLA);
 }
 
+BOOL transport_connect_rdstls(rdpTransport* transport)
+{
+	BOOL rc = FALSE;
+	rdpRdstls* rdstls = NULL;
+	rdpContext* context = NULL;
+
+	WINPR_ASSERT(transport);
+
+	context = transport_get_context(transport);
+	WINPR_ASSERT(context);
+
+	if (!transport_connect_tls(transport))
+		goto fail;
+
+	rdstls = rdstls_new(context, transport);
+	transport_set_rdstls_mode(transport, TRUE);
+
+	if (rdstls_authenticate(rdstls) < 0)
+	{
+		WLog_Print(transport->log, WLOG_ERROR, "RDSTLS authentication failed");
+		freerdp_set_last_error_if_not(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+		goto fail;
+	}
+
+	transport_set_rdstls_mode(transport, FALSE);
+	rc = TRUE;
+fail:
+	rdstls_free(rdstls);
+	return rc;
+}
+
 BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, DWORD timeout)
 {
 	int sockfd;
@@ -540,6 +572,39 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	/* don't free nla module yet, we need to copy the credentials from it first */
 	transport_set_nla_mode(transport, FALSE);
 	return TRUE;
+}
+
+BOOL transport_accept_rdstls(rdpTransport* transport)
+{
+	BOOL rc = FALSE;
+	rdpRdstls* rdstls = NULL;
+	rdpContext* context = NULL;
+
+	WINPR_ASSERT(transport);
+
+	context = transport_get_context(transport);
+	WINPR_ASSERT(context);
+
+	if (!IFCALLRESULT(FALSE, transport->io.TLSAccept, transport))
+		goto fail;
+
+	rdstls = rdstls_new(context, transport);
+	transport_set_rdstls_mode(transport, TRUE);
+
+	if (rdstls_authenticate(rdstls) < 0)
+	{
+		WLog_Print(transport->log, WLOG_ERROR, "client authentication failure");
+		freerdp_tls_set_alert_code(transport->tls, TLS_ALERT_LEVEL_FATAL,
+		                           TLS_ALERT_DESCRIPTION_ACCESS_DENIED);
+		freerdp_tls_send_alert(transport->tls);
+		goto fail;
+	}
+
+	transport_set_rdstls_mode(transport, FALSE);
+	rc = TRUE;
+fail:
+	rdstls_free(rdstls);
+	return rc;
 }
 
 #define WLog_ERR_BIO(transport, biofunc, bio) \
@@ -771,6 +836,82 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 				pduLength = header[1];
 				pduLength += 2;
 			}
+		}
+	}
+	else if (transport->RdstlsMode)
+	{
+		UINT16 version = (header[1] << 8) | header[0];
+		UINT16 pduType;
+		UINT16 dataType;
+
+		if (version != RDSTLS_VERSION_1)
+		{
+			WLog_Print(transport->log, WLOG_ERROR, "invalid RDSTLS version");
+			return -1;
+		}
+
+		if (position < 4)
+			return 0;
+
+		pduType = (header[3] << 8) | header[2];
+		switch (pduType)
+		{
+			case RDSTLS_TYPE_CAPABILITIES:
+				pduLength = 8;
+				break;
+			case RDSTLS_TYPE_AUTHREQ:
+				if (position < 6)
+					return 0;
+
+				dataType = (header[5] << 8 | header[4]);
+				if (dataType == RDSTLS_DATA_PASSWORD_CREDS)
+				{
+					if (position < 8)
+						return 0;
+
+					UINT16 redirGuidLength = (header[7] << 8 | header[6]);
+					size_t usernamePos = 8 + redirGuidLength;
+
+					if (position < usernamePos + 2)
+						return 0;
+
+					UINT16 usernameLength = (header[usernamePos + 1] << 8) | header[usernamePos];
+					size_t domainPos = 8 + redirGuidLength + 2 + usernameLength;
+
+					if (position < domainPos + 2)
+						return 0;
+
+					UINT16 domainLength = (header[domainPos + 1] << 8) | header[domainPos];
+					size_t passwordPos =
+					    8 + redirGuidLength + 2 + usernameLength + 2 + domainLength;
+
+					if (position < passwordPos + 2)
+						return 0;
+
+					UINT16 passwordLength = (header[passwordPos + 1] << 8) | header[passwordPos];
+
+					pduLength = 8 + redirGuidLength + 2 + usernameLength + 2 + domainLength + 2 +
+					            passwordLength;
+				}
+				else if (dataType == RDSTLS_DATA_AUTORECONNECT_COOKIE)
+				{
+					if (position < 12)
+						return 0;
+
+					pduLength = 12 + ((header[11] << 8) | header[10]);
+				}
+				else
+				{
+					WLog_Print(transport->log, WLOG_ERROR, "invalid RDSLTS dataType");
+					return -1;
+				}
+				break;
+			case RDSTLS_TYPE_AUTHRSP:
+				pduLength = 10;
+				break;
+			default:
+				WLog_Print(transport->log, WLOG_ERROR, "invalid RDSTLS PDU type");
+				return -1;
 		}
 	}
 	else
@@ -1216,6 +1357,12 @@ void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode)
 {
 	WINPR_ASSERT(transport);
 	transport->NlaMode = NlaMode;
+}
+
+void transport_set_rdstls_mode(rdpTransport* transport, BOOL RdstlsMode)
+{
+	WINPR_ASSERT(transport);
+	transport->RdstlsMode = RdstlsMode;
 }
 
 BOOL transport_disconnect(rdpTransport* transport)

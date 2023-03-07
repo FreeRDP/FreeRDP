@@ -822,6 +822,7 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 			else
 			{
 				SelectedProtocol = nego_get_selected_protocol(rdp->nego);
+				settings->RdstlsSecurity = (SelectedProtocol & PROTOCOL_RDSTLS) ? TRUE : FALSE;
 				settings->NlaSecurity = (SelectedProtocol & PROTOCOL_HYBRID) ? TRUE : FALSE;
 				settings->TlsSecurity = (SelectedProtocol & PROTOCOL_SSL) ? TRUE : FALSE;
 				settings->RdpSecurity = (SelectedProtocol == PROTOCOL_RDP) ? TRUE : FALSE;
