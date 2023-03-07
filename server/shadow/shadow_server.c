@@ -749,13 +749,45 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 	return 1;
 }
 
+static BOOL shadow_server_create_certificate(rdpShadowServer* server, const char* filepath)
+{
+	BOOL rc = FALSE;
+	char* makecert_argv[6] = { "makecert", "-rdp", "-live", "-silent", "-y", "5" };
+	const size_t makecert_argc = ARRAYSIZE(makecert_argv);
+
+	MAKECERT_CONTEXT* makecert = makecert_context_new();
+
+	if (!makecert)
+		goto out_fail;
+
+	if (makecert_context_process(makecert, makecert_argc, makecert_argv) < 0)
+		goto out_fail;
+
+	if (makecert_context_set_output_file_name(makecert, "shadow") != 1)
+		goto out_fail;
+
+	WINPR_ASSERT(server);
+	WINPR_ASSERT(filepath);
+	if (!winpr_PathFileExists(server->CertificateFile))
+	{
+		if (makecert_context_output_certificate_file(makecert, filepath) != 1)
+			goto out_fail;
+	}
+
+	if (!winpr_PathFileExists(server->PrivateKeyFile))
+	{
+		if (makecert_context_output_private_key_file(makecert, filepath) != 1)
+			goto out_fail;
+	}
+	rc = TRUE;
+out_fail:
+	makecert_context_free(makecert);
+	return rc;
+}
 static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 {
 	char* filepath = NULL;
-	MAKECERT_CONTEXT* makecert = NULL;
 	BOOL ret = FALSE;
-	const char* makecert_argv[6] = { "makecert", "-rdp", "-live", "-silent", "-y", "5" };
-	const size_t makecert_argc = (sizeof(makecert_argv) / sizeof(char*));
 
 	WINPR_ASSERT(server);
 
@@ -786,28 +818,8 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	if ((!winpr_PathFileExists(server->CertificateFile)) ||
 	    (!winpr_PathFileExists(server->PrivateKeyFile)))
 	{
-		makecert = makecert_context_new();
-
-		if (!makecert)
+		if (!shadow_server_create_certificate(server, filepath))
 			goto out_fail;
-
-		if (makecert_context_process(makecert, makecert_argc, makecert_argv) < 0)
-			goto out_fail;
-
-		if (makecert_context_set_output_file_name(makecert, "shadow") != 1)
-			goto out_fail;
-
-		if (!winpr_PathFileExists(server->CertificateFile))
-		{
-			if (makecert_context_output_certificate_file(makecert, filepath) != 1)
-				goto out_fail;
-		}
-
-		if (!winpr_PathFileExists(server->PrivateKeyFile))
-		{
-			if (makecert_context_output_private_key_file(makecert, filepath) != 1)
-				goto out_fail;
-		}
 	}
 
 	rdpSettings* settings = server->settings;
@@ -827,7 +839,6 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 
 	ret = TRUE;
 out_fail:
-	makecert_context_free(makecert);
 	free(filepath);
 	return ret;
 }
