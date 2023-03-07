@@ -1067,7 +1067,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->BandwidthAutoDetect =
 	    (freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType) >= 7) ? TRUE : FALSE;
 	file->NetworkAutoDetect =
-	    freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect) ? 0 : 1;
+	    freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect) ? 1 : 0;
 	file->AutoReconnectionEnabled =
 	    freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
 	file->RedirectSmartCards = freerdp_settings_get_bool(settings, FreeRDP_RedirectSmartCards);
@@ -1926,14 +1926,14 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	{
 		if (file->BandwidthAutoDetect != 0)
 		{
-			if ((~file->NetworkAutoDetect) && (file->NetworkAutoDetect != 0))
+			if ((~file->NetworkAutoDetect) && (file->NetworkAutoDetect == 0))
 			{
 				WLog_WARN(TAG,
 				          "Got networkautodetect:i:%" PRIu32 " and bandwidthautodetect:i:%" PRIu32
-				          ". Correcting to networkautodetect:i:0",
+				          ". Correcting to networkautodetect:i:1",
 				          file->NetworkAutoDetect, file->BandwidthAutoDetect);
 				WLog_WARN(TAG,
-				          "Add networkautodetect:i:0 to your RDP file to eliminate this warning.");
+				          "Add networkautodetect:i:1 to your RDP file to eliminate this warning.");
 			}
 
 			if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
@@ -1942,13 +1942,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		}
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect,
 		                               (file->BandwidthAutoDetect != 0) ||
-		                                   (file->NetworkAutoDetect == 0)))
+		                                   (file->NetworkAutoDetect != 0)))
 			return FALSE;
 	}
 
 	if (~file->NetworkAutoDetect)
 	{
-		if (file->NetworkAutoDetect == 0)
+		if (file->NetworkAutoDetect != 0)
 		{
 			if ((~file->BandwidthAutoDetect) && (file->BandwidthAutoDetect == 0))
 			{
@@ -1967,7 +1967,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 		}
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect,
 		                               (file->BandwidthAutoDetect != 0) ||
-		                                   (file->NetworkAutoDetect == 0)))
+		                                   (file->NetworkAutoDetect != 0)))
 			return FALSE;
 	}
 
