@@ -419,7 +419,7 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context,
 	return 1;
 }
 
-int makecert_context_set_output_file_name(MAKECERT_CONTEXT* context, char* name)
+int makecert_context_set_output_file_name(MAKECERT_CONTEXT* context, const char* name)
 {
 	if (!context)
 		return -1;
@@ -436,7 +436,7 @@ int makecert_context_set_output_file_name(MAKECERT_CONTEXT* context, char* name)
 	return 1;
 }
 
-int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* path)
+int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, const char* path)
 {
 #ifdef WITH_OPENSSL
 	FILE* fp = NULL;
@@ -605,7 +605,7 @@ out_fail:
 #endif
 }
 
-int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* path)
+int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, const char* path)
 {
 #ifdef WITH_OPENSSL
 	FILE* fp = NULL;
