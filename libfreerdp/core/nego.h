@@ -58,11 +58,12 @@ enum RDP_NEG_FAILURE_FAILURECODES
 typedef enum
 {
 	NEGO_STATE_INITIAL,
-	NEGO_STATE_EXT,  /* Extended NLA (NLA + TLS implicit) */
-	NEGO_STATE_NLA,  /* Network Level Authentication (TLS implicit) */
-	NEGO_STATE_TLS,  /* TLS Encryption without NLA */
-	NEGO_STATE_RDP,  /* Standard Legacy RDP Encryption */
-	NEGO_STATE_FAIL, /* Negotiation failure */
+	NEGO_STATE_RDSTLS, /* RDSTLS (TLS implicit) */
+	NEGO_STATE_EXT,    /* Extended NLA (NLA + TLS implicit) */
+	NEGO_STATE_NLA,    /* Network Level Authentication (TLS implicit) */
+	NEGO_STATE_TLS,    /* TLS Encryption without NLA */
+	NEGO_STATE_RDP,    /* Standard Legacy RDP Encryption */
+	NEGO_STATE_FAIL,   /* Negotiation failure */
 	NEGO_STATE_FINAL
 } NEGO_STATE;
 
@@ -120,6 +121,7 @@ FREERDP_LOCAL void nego_set_gateway_bypass_local(rdpNego* nego, BOOL GatewayBypa
 FREERDP_LOCAL void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp);
 FREERDP_LOCAL void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
 FREERDP_LOCAL void nego_enable_nla(rdpNego* nego, BOOL enable_nla);
+FREERDP_LOCAL void nego_enable_rdstls(rdpNego* nego, BOOL enable_rdstls);
 FREERDP_LOCAL void nego_enable_ext(rdpNego* nego, BOOL enable_ext);
 FREERDP_LOCAL const BYTE* nego_get_routing_token(rdpNego* nego, DWORD* RoutingTokenLength);
 FREERDP_LOCAL BOOL nego_set_routing_token(rdpNego* nego, const BYTE* RoutingToken,

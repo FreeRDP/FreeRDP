@@ -67,10 +67,11 @@ struct rdp_nego
 
 static const char* nego_state_string(NEGO_STATE state)
 {
-	static const char* const NEGO_STATE_STRINGS[] = { "NEGO_STATE_INITIAL", "NEGO_STATE_EXT",
-		                                              "NEGO_STATE_NLA",     "NEGO_STATE_TLS",
-		                                              "NEGO_STATE_RDP",     "NEGO_STATE_FAIL",
-		                                              "NEGO_STATE_FINAL",   "NEGO_STATE_INVALID" };
+	static const char* const NEGO_STATE_STRINGS[] = { "NEGO_STATE_INITIAL", "NEGO_STATE_RDSTLS",
+		                                              "NEGO_STATE_EXT",     "NEGO_STATE_NLA",
+		                                              "NEGO_STATE_TLS",     "NEGO_STATE_RDP",
+		                                              "NEGO_STATE_FAIL",    "NEGO_STATE_FINAL",
+		                                              "NEGO_STATE_INVALID" };
 	if (state >= ARRAYSIZE(NEGO_STATE_STRINGS))
 		return NEGO_STATE_STRINGS[ARRAYSIZE(NEGO_STATE_STRINGS) - 1];
 	return NEGO_STATE_STRINGS[state];
@@ -78,7 +79,7 @@ static const char* nego_state_string(NEGO_STATE state)
 
 static const char* protocol_security_string(UINT32 security)
 {
-	static const char* PROTOCOL_SECURITY_STRINGS[] = { "RDP", "TLS", "NLA", "UNK", "UNK",
+	static const char* PROTOCOL_SECURITY_STRINGS[] = { "RDP", "TLS", "NLA", "UNK", "RDSTLS",
 		                                               "UNK", "UNK", "UNK", "EXT", "UNK" };
 	if (security >= ARRAYSIZE(PROTOCOL_SECURITY_STRINGS))
 		return PROTOCOL_SECURITY_STRINGS[ARRAYSIZE(PROTOCOL_SECURITY_STRINGS) - 1];
@@ -115,7 +116,11 @@ BOOL nego_connect(rdpNego* nego)
 
 	if (nego_get_state(nego) == NEGO_STATE_INITIAL)
 	{
-		if (nego->EnabledProtocols[PROTOCOL_HYBRID_EX])
+		if (nego->EnabledProtocols[PROTOCOL_RDSTLS])
+		{
+			nego_set_state(nego, NEGO_STATE_RDSTLS);
+		}
+		else if (nego->EnabledProtocols[PROTOCOL_HYBRID_EX])
 		{
 			nego_set_state(nego, NEGO_STATE_EXT);
 		}
@@ -146,9 +151,14 @@ BOOL nego_connect(rdpNego* nego)
 			nego->EnabledProtocols[PROTOCOL_SSL] = FALSE;
 			nego->EnabledProtocols[PROTOCOL_RDP] = FALSE;
 			nego->EnabledProtocols[PROTOCOL_HYBRID_EX] = FALSE;
+			nego->EnabledProtocols[PROTOCOL_RDSTLS] = FALSE;
 
 			switch (nego_get_state(nego))
 			{
+				case NEGO_STATE_RDSTLS:
+					nego->EnabledProtocols[PROTOCOL_RDSTLS] = TRUE;
+					nego->SelectedProtocol = PROTOCOL_RDSTLS;
+					break;
 				case NEGO_STATE_EXT:
 					nego->EnabledProtocols[PROTOCOL_HYBRID_EX] = TRUE;
 					nego->EnabledProtocols[PROTOCOL_HYBRID] = TRUE;
@@ -262,7 +272,12 @@ BOOL nego_security_connect(rdpNego* nego)
 	}
 	else if (!nego->SecurityConnected)
 	{
-		if (nego->SelectedProtocol == PROTOCOL_HYBRID)
+		if (nego->SelectedProtocol == PROTOCOL_RDSTLS)
+		{
+			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_RDSTLS");
+			nego->SecurityConnected = transport_connect_rdstls(nego->transport);
+		}
+		else if (nego->SelectedProtocol == PROTOCOL_HYBRID)
 		{
 			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_HYBRID");
 			nego->SecurityConnected = transport_connect_nla(nego->transport);
@@ -440,6 +455,49 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 
 	Stream_Free(s, TRUE);
 	return TRUE;
+}
+
+static void nego_attempt_rdstls(rdpNego* nego)
+{
+	WINPR_ASSERT(nego);
+	nego->RequestedProtocols = PROTOCOL_RDSTLS | PROTOCOL_SSL;
+	WLog_DBG(TAG, "Attempting RDSTLS security");
+
+	if (!nego_transport_connect(nego))
+	{
+		nego_set_state(nego, NEGO_STATE_FAIL);
+		return;
+	}
+
+	if (!nego_send_negotiation_request(nego))
+	{
+		nego_set_state(nego, NEGO_STATE_FAIL);
+		return;
+	}
+
+	if (!nego_recv_response(nego))
+	{
+		nego_set_state(nego, NEGO_STATE_FAIL);
+		return;
+	}
+
+	WLog_DBG(TAG, "state: %s", nego_state_string(nego_get_state(nego)));
+
+	if (nego_get_state(nego) != NEGO_STATE_FINAL)
+	{
+		nego_transport_disconnect(nego);
+
+		if (nego->EnabledProtocols[PROTOCOL_HYBRID_EX])
+			nego_set_state(nego, NEGO_STATE_EXT);
+		else if (nego->EnabledProtocols[PROTOCOL_HYBRID])
+			nego_set_state(nego, NEGO_STATE_NLA);
+		else if (nego->EnabledProtocols[PROTOCOL_SSL])
+			nego_set_state(nego, NEGO_STATE_TLS);
+		else if (nego->EnabledProtocols[PROTOCOL_RDP])
+			nego_set_state(nego, NEGO_STATE_RDP);
+		else
+			nego_set_state(nego, NEGO_STATE_FAIL);
+	}
 }
 
 static void nego_attempt_ext(rdpNego* nego)
@@ -863,6 +921,9 @@ void nego_send(rdpNego* nego)
 
 	switch (nego_get_state(nego))
 	{
+		case NEGO_STATE_RDSTLS:
+			nego_attempt_rdstls(nego);
+			break;
 		case NEGO_STATE_EXT:
 			nego_attempt_ext(nego);
 			break;
@@ -1258,7 +1319,7 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		if (freerdp_settings_get_bool(settings, FreeRDP_SupportGraphicsPipeline))
 			flags |= DYNVC_GFX_PROTOCOL_SUPPORTED;
 
-		/* RDP_NEG_DATA must be present for TLS, NLA, and RDP */
+		/* RDP_NEG_DATA must be present for TLS, NLA, RDP and RDSTLS */
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_RSP);
 		Stream_Write_UINT8(s, flags);                   /* flags */
 		Stream_Write_UINT16(s, 8);                      /* RDP_NEG_DATA length (8) */
@@ -1339,6 +1400,8 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 				return FALSE;
 			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
 				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, FALSE))
+				return FALSE;
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
 				return FALSE;
 			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
@@ -1353,6 +1416,25 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
 				return FALSE;
 			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, FALSE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+				return FALSE;
+
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
+			                                 ENCRYPTION_LEVEL_NONE))
+				return FALSE;
+		}
+		else if (nego->SelectedProtocol == PROTOCOL_RDSTLS)
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, TRUE))
 				return FALSE;
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
 				return FALSE;
@@ -1510,6 +1592,19 @@ void nego_enable_nla(rdpNego* nego, BOOL enable_nla)
 {
 	WLog_DBG(TAG, "Enabling NLA security: %s", enable_nla ? "TRUE" : "FALSE");
 	nego->EnabledProtocols[PROTOCOL_HYBRID] = enable_nla;
+}
+
+/**
+ * Enable RDSTLS security protocol.
+ * @param nego A pointer to the NEGO struct pointer to the negotiation structure
+ * @param enable_rdstls whether to enable RDSTLS protocol (TRUE for enabled,
+ * FALSE for disabled)
+ */
+
+void nego_enable_rdstls(rdpNego* nego, BOOL enable_rdstls)
+{
+	WLog_DBG(TAG, "Enabling RDSTLS security: %s", enable_rdstls ? "TRUE" : "FALSE");
+	nego->EnabledProtocols[PROTOCOL_RDSTLS] = enable_rdstls;
 }
 
 /**

@@ -168,6 +168,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_PrintReconnectCookie, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_PrintReconnectCookie" },
 	{ FreeRDP_PromptForCredentials, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_PromptForCredentials" },
 	{ FreeRDP_RdpSecurity, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RdpSecurity" },
+	{ FreeRDP_RdstlsSecurity, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RdstlsSecurity" },
 	{ FreeRDP_RedirectClipboard, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RedirectClipboard" },
 	{ FreeRDP_RedirectDrives, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RedirectDrives" },
 	{ FreeRDP_RedirectHomeDrive, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RedirectHomeDrive" },
