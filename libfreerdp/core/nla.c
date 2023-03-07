@@ -391,6 +391,8 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 			        (const WCHAR*)settings->RedirectionPassword,
 			        settings->RedirectionPasswordLength / sizeof(WCHAR) - 1) < 0)
 				return FALSE;
+
+			usePassword = FALSE;
 		}
 
 		if (settings->RestrictedAdminModeRequired)
