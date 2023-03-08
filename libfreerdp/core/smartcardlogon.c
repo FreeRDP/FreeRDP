@@ -130,7 +130,7 @@ static BOOL add_cert_to_list(SmartcardCertInfo*** certInfoList, size_t* count,
 	/* Check if the certificate is already in the list */
 	for (size_t i = 0; i < curCount; ++i)
 	{
-		if (wcscmp(curInfoList[i]->containerName, certInfo->containerName) == 0)
+		if (_wcscmp(curInfoList[i]->containerName, certInfo->containerName) == 0)
 			return TRUE;
 	}
 
