@@ -37,6 +37,7 @@
 #define PROTOCOL_HYBRID 0x00000002
 #define PROTOCOL_RDSTLS 0x00000004
 #define PROTOCOL_HYBRID_EX 0x00000008
+#define PROTOCOL_RDSAAD 0x00000010
 
 #define PROTOCOL_FAILED_NEGO 0x80000000 /* only used internally, not on the wire */
 
@@ -59,6 +60,7 @@ typedef enum
 {
 	NEGO_STATE_INITIAL,
 	NEGO_STATE_RDSTLS, /* RDSTLS (TLS implicit) */
+	NEGO_STATE_AAD,    /* Azure AD Authentication (TLS implicit) */
 	NEGO_STATE_EXT,    /* Extended NLA (NLA + TLS implicit) */
 	NEGO_STATE_NLA,    /* Network Level Authentication (TLS implicit) */
 	NEGO_STATE_TLS,    /* TLS Encryption without NLA */
@@ -122,6 +124,7 @@ FREERDP_LOCAL void nego_enable_rdp(rdpNego* nego, BOOL enable_rdp);
 FREERDP_LOCAL void nego_enable_tls(rdpNego* nego, BOOL enable_tls);
 FREERDP_LOCAL void nego_enable_nla(rdpNego* nego, BOOL enable_nla);
 FREERDP_LOCAL void nego_enable_rdstls(rdpNego* nego, BOOL enable_rdstls);
+FREERDP_LOCAL void nego_enable_aad(rdpNego* nego, BOOL enable_aad);
 FREERDP_LOCAL void nego_enable_ext(rdpNego* nego, BOOL enable_ext);
 FREERDP_LOCAL const BYTE* nego_get_routing_token(rdpNego* nego, DWORD* RoutingTokenLength);
 FREERDP_LOCAL BOOL nego_set_routing_token(rdpNego* nego, const BYTE* RoutingToken,

@@ -3,6 +3,7 @@
 
 #define have_bool_list_indices
 static const size_t bool_list_indices[] = {
+	FreeRDP_AadSecurity,
 	FreeRDP_AllowCacheWaitingList,
 	FreeRDP_AllowDesktopComposition,
 	FreeRDP_AllowFontSmoothing,
@@ -117,6 +118,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_PrintReconnectCookie,
 	FreeRDP_PromptForCredentials,
 	FreeRDP_RdpSecurity,
+	FreeRDP_RdstlsSecurity,
 	FreeRDP_RedirectClipboard,
 	FreeRDP_RedirectDrives,
 	FreeRDP_RedirectHomeDrive,

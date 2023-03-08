@@ -1783,6 +1783,25 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 			}
 			break;
 
+		case CONNECTION_STATE_AAD:
+			if (aad_recv(rdp->aad, s) < 1)
+			{
+				WLog_ERR(TAG, "%s - aad_recv() fail", rdp_get_state_string(rdp));
+				status = STATE_RUN_FAILED;
+			}
+			if (state_run_success(status))
+			{
+				if (aad_get_state(rdp->aad) == AAD_STATE_FINAL)
+				{
+					transport_set_aad_mode(rdp->transport, FALSE);
+					if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_MCS_CREATE_REQUEST))
+						status = STATE_RUN_FAILED;
+					else
+						status = STATE_RUN_CONTINUE;
+				}
+			}
+			break;
+
 		case CONNECTION_STATE_MCS_CREATE_REQUEST:
 			if (!mcs_client_begin(rdp->mcs))
 			{
@@ -2335,6 +2354,7 @@ void rdp_free(rdpRdp* rdp)
 		PubSub_Free(rdp->pubSub);
 		if (rdp->abortEvent)
 			CloseHandle(rdp->abortEvent);
+		aad_free(rdp->aad);
 		free(rdp);
 	}
 }
