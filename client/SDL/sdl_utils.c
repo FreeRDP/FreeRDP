@@ -146,8 +146,8 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 			event->data1 = va_arg(ap, void*);
 			break;
 		case SDL_USEREVENT_POINTER_POSITION:
-			event->data1 = (void*)va_arg(ap, UINT32);
-			event->data2 = (void*)va_arg(ap, UINT32);
+			event->data1 = (void*)(uintptr_t)va_arg(ap, UINT32);
+			event->data2 = (void*)(uintptr_t)va_arg(ap, UINT32);
 			break;
 		case SDL_USEREVENT_POINTER_SET:
 			event->data1 = va_arg(ap, void*);
