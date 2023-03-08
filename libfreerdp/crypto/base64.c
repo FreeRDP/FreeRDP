@@ -119,6 +119,9 @@ static void* base64_decode(const char* alphabet, const char* s, size_t length, s
 	if ((pad && remainder > 0) || (remainder == 1))
 		return NULL;
 
+	if (!pad && remainder)
+		length += 4 - remainder;
+
 	q = data = (BYTE*)malloc(length / 4 * 3 + 1);
 	if (!q)
 		return NULL;
