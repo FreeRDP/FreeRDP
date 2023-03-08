@@ -958,7 +958,7 @@ BOOL client_cli_get_aad_auth_code(freerdp* instance, const char* hostname, char*
 	    hostname);
 	printf("Paste authorization code here: ");
 
-	if (GetLine(code, &len, stdin) < 0)
+	if (freerdp_interruptible_get_line(instance->context, code, &len, stdin) < 0)
 		return FALSE;
 	p = strpbrk(*code, "\r\n");
 	if (p)
