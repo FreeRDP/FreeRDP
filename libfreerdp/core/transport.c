@@ -774,11 +774,130 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 	return IFCALLRESULT(-1, transport->io.ReadPdu, transport, s);
 }
 
+static SSIZE_T parse_nla_mode_pdu(rdpTransport* transport, wStream* stream)
+{
+	SSIZE_T pduLength = 0;
+	wStream sbuffer = { 0 };
+	wStream* s =
+	    Stream_StaticConstInit(&sbuffer, Stream_Pointer(stream), Stream_GetRemainingLength(stream));
+	/*
+	 * In case NlaMode is set TSRequest package(s) are expected
+	 * 0x30 = DER encoded data with these bits set:
+	 * bit 6 P/C constructed
+	 * bit 5 tag number - sequence
+	 */
+	UINT8 typeEncoding;
+	if (Stream_GetRemainingLength(s) < 1)
+		return 0;
+	Stream_Read_UINT8(s, typeEncoding);
+	if (typeEncoding == 0x30)
+	{
+		/* TSRequest (NLA) */
+		UINT8 lengthEncoding;
+		if (Stream_GetRemainingLength(s) < 1)
+			return 0;
+		Stream_Read_UINT8(s, lengthEncoding);
+		if (lengthEncoding & 0x80)
+		{
+			if ((lengthEncoding & ~(0x80)) == 1)
+			{
+				UINT8 length;
+				if (Stream_GetRemainingLength(s) < 1)
+					return 0;
+				Stream_Read_UINT8(s, length);
+				pduLength = length;
+				pduLength += 3;
+			}
+			else if ((lengthEncoding & ~(0x80)) == 2)
+			{
+				/* check for header bytes already was readed in previous calls */
+				UINT16 length;
+				if (Stream_GetRemainingLength(s) < 2)
+					return 0;
+				Stream_Read_UINT16_BE(s, length);
+				pduLength = length;
+				pduLength += 4;
+			}
+			else
+			{
+				WLog_Print(transport->log, WLOG_ERROR, "Error reading TSRequest!");
+				return -1;
+			}
+		}
+		else
+		{
+			pduLength = lengthEncoding;
+			pduLength += 2;
+		}
+	}
+
+	return pduLength;
+}
+
+static SSIZE_T parse_default_mode_pdu(rdpTransport* transport, wStream* stream)
+{
+	SSIZE_T pduLength = 0;
+	wStream sbuffer = { 0 };
+	wStream* s =
+	    Stream_StaticConstInit(&sbuffer, Stream_Pointer(stream), Stream_GetRemainingLength(stream));
+
+	UINT8 version;
+	if (Stream_GetRemainingLength(s) < 1)
+		return 0;
+	Stream_Read_UINT8(s, version);
+	if (version == 0x03)
+	{
+		/* TPKT header */
+		UINT16 length;
+		if (Stream_GetRemainingLength(s) < 3)
+			return 0;
+		Stream_Seek(s, 1);
+		Stream_Read_UINT16_BE(s, length);
+		pduLength = length;
+
+		/* min and max values according to ITU-T Rec. T.123 (01/2007) section 8 */
+		if ((pduLength < 7) || (pduLength > 0xFFFF))
+		{
+			WLog_Print(transport->log, WLOG_ERROR, "tpkt - invalid pduLength: %" PRIdz, pduLength);
+			return -1;
+		}
+	}
+	else
+	{
+		/* Fast-Path Header */
+		UINT8 length1;
+		if (Stream_GetRemainingLength(s) < 1)
+			return 0;
+		Stream_Read_UINT8(s, length1);
+		if (length1 & 0x80)
+		{
+			UINT8 length2;
+			if (Stream_GetRemainingLength(s) < 1)
+				return 0;
+			Stream_Read_UINT8(s, length2);
+			pduLength = ((length1 & 0x7F) << 8) | length2;
+		}
+		else
+			pduLength = length1;
+
+		/*
+		 * fast-path has 7 bits for length so the maximum size, including headers is 0x8000
+		 * The theoretical minimum fast-path PDU consists only of two header bytes plus one
+		 * byte for data (e.g. fast-path input synchronize pdu)
+		 */
+		if (pduLength < 3 || pduLength > 0x8000)
+		{
+			WLog_Print(transport->log, WLOG_ERROR, "fast path - invalid pduLength: %" PRIdz,
+			           pduLength);
+			return -1;
+		}
+	}
+
+	return pduLength;
+}
+
 SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplete)
 {
-	wStream sbuffer;
-	wStream* staticStream;
-	size_t position = 0;
 	size_t pduLength = 0;
 
 	if (!transport)
@@ -787,139 +906,25 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 	if (!s)
 		return -1;
 
-	position = Stream_GetPosition(s);
-
 	if (incomplete)
 		*incomplete = TRUE;
 
-	/* Make sure at least two bytes are read for further processing */
-	if (position < 2)
-	{
-		/* No data available at the moment */
-		return 0;
-	}
-
-	staticStream = Stream_StaticInit(&sbuffer, Stream_Buffer(s), position);
-
 	if (transport->NlaMode)
-	{
-		/*
-		 * In case NlaMode is set TSRequest package(s) are expected
-		 * 0x30 = DER encoded data with these bits set:
-		 * bit 6 P/C constructed
-		 * bit 5 tag number - sequence
-		 */
-		UINT8 typeEncoding;
-		Stream_Read_UINT8(staticStream, typeEncoding);
-		if (typeEncoding == 0x30)
-		{
-			/* TSRequest (NLA) */
-			UINT8 lengthEncoding;
-			Stream_Read_UINT8(staticStream, lengthEncoding);
-			if (lengthEncoding & 0x80)
-			{
-				if ((lengthEncoding & ~(0x80)) == 1)
-				{
-					/* check for header bytes already was readed in previous calls */
-					if (position < 3)
-						return 0;
-
-					UINT8 length;
-					Stream_Read_UINT8(staticStream, length);
-					pduLength = length;
-					pduLength += 3;
-				}
-				else if ((lengthEncoding & ~(0x80)) == 2)
-				{
-					/* check for header bytes already was readed in previous calls */
-					if (position < 4)
-						return 0;
-
-					UINT16 length;
-					Stream_Read_UINT16_BE(staticStream, length);
-					pduLength = length;
-					pduLength += 4;
-				}
-				else
-				{
-					WLog_Print(transport->log, WLOG_ERROR, "Error reading TSRequest!");
-					return -1;
-				}
-			}
-			else
-			{
-				pduLength = lengthEncoding;
-				pduLength += 2;
-			}
-		}
-	}
+		pduLength = parse_nla_mode_pdu(transport, s);
 	else if (transport->RdstlsMode)
-	{
 		pduLength = rdstls_parse_pdu(transport->log, s);
-		if (pduLength <= 0)
-			return pduLength;
-	}
 	else
-	{
-		UINT8 version;
-		Stream_Read_UINT8(staticStream, version);
-		if (version == 0x03)
-		{
-			/* TPKT header */
-			/* check for header bytes already was readed in previous calls */
-			if (position < 4)
-				return 0;
+		pduLength = parse_default_mode_pdu(transport, s);
 
-			UINT16 length;
-			Stream_Seek(staticStream, 1);
-			Stream_Read_UINT16_BE(staticStream, length);
-			pduLength = length;
+	if (pduLength == 0)
+		return pduLength;
 
-			/* min and max values according to ITU-T Rec. T.123 (01/2007) section 8 */
-			if ((pduLength < 7) || (pduLength > 0xFFFF))
-			{
-				WLog_Print(transport->log, WLOG_ERROR, "tpkt - invalid pduLength: %" PRIdz,
-				           pduLength);
-				return -1;
-			}
-		}
-		else
-		{
-			/* Fast-Path Header */
-			UINT8 length1;
-			Stream_Read_UINT8(staticStream, length1);
-			if (length1 & 0x80)
-			{
-				/* check for header bytes already was readed in previous calls */
-				if (position < 3)
-					return 0;
-
-				UINT8 length2;
-				Stream_Read_UINT8(staticStream, length2);
-				pduLength = ((length1 & 0x7F) << 8) | length2;
-			}
-			else
-				pduLength = length1;
-
-			/*
-			 * fast-path has 7 bits for length so the maximum size, including headers is 0x8000
-			 * The theoretical minimum fast-path PDU consists only of two header bytes plus one
-			 * byte for data (e.g. fast-path input synchronize pdu)
-			 */
-			if (pduLength < 3 || pduLength > 0x8000)
-			{
-				WLog_Print(transport->log, WLOG_ERROR, "fast path - invalid pduLength: %" PRIdz,
-				           pduLength);
-				return -1;
-			}
-		}
-	}
-
-	if (position > pduLength)
+	const size_t len = Stream_GetRemainingLength(s);
+	if (len > pduLength)
 		return -1;
 
 	if (incomplete)
-		*incomplete = position < pduLength;
+		*incomplete = len < pduLength;
 
 	return pduLength;
 }
