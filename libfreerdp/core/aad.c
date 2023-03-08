@@ -184,6 +184,7 @@ static BOOL json_get_object(wLog* wlog, cJSON* json, const char* key, cJSON** ob
 
 static BOOL json_get_number(wLog* wlog, cJSON* json, const char* key, double* result)
 {
+	BOOL rc = FALSE;
 	cJSON* prop = NULL;
 	if (!json_get_object(wlog, json, key, &prop))
 		return FALSE;
@@ -191,14 +192,18 @@ static BOOL json_get_number(wLog* wlog, cJSON* json, const char* key, double* re
 	if (!cJSON_IsNumber(prop))
 	{
 		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NOT a NUMBER", key);
-		return FALSE;
+		goto fail;
 	}
 	*result = cJSON_GetNumberValue(prop);
-	return TRUE;
+	rc = TRUE;
+fail:
+	cJSON_Delete(prop);
+	return rc;
 }
 
 static BOOL json_get_const_string(wLog* wlog, cJSON* json, const char* key, const char** result)
 {
+	BOOL rc = FALSE;
 	WINPR_ASSERT(result);
 
 	*result = NULL;
@@ -210,14 +215,18 @@ static BOOL json_get_const_string(wLog* wlog, cJSON* json, const char* key, cons
 	if (!cJSON_IsString(prop))
 	{
 		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NOT a STRING", key);
-		return FALSE;
+		goto fail;
 	}
 
 	const char* str = cJSON_GetStringValue(prop);
 	if (!str)
 		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NULL", key);
 	*result = str;
-	return *result != NULL;
+	rc = str != NULL;
+
+fail:
+	cJSON_Delete(prop);
+	return rc;
 }
 
 static BOOL json_get_string_alloc(wLog* wlog, cJSON* json, const char* key, char** result)
