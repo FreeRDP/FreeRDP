@@ -111,8 +111,9 @@ static wlf_request* wlf_request_new(void)
 	return calloc(1, sizeof(wlf_request));
 }
 
-static wlf_request* wlf_request_clone(const wlf_request* other)
+static void* wlf_request_clone(const void* oth)
 {
+	const wlf_request* other = (const wlf_request*)oth;
 	wlf_request* copy = wlf_request_new();
 	if (!copy)
 		return NULL;
