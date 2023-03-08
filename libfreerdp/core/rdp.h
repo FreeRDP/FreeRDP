@@ -24,6 +24,7 @@
 #include <freerdp/config.h>
 
 #include "nla.h"
+#include "aad.h"
 #include "mcs.h"
 #include "tpkt.h"
 #include "../codec/bulk.h"
@@ -146,6 +147,7 @@ struct rdp_rdp
 	CONNECTION_STATE state;
 	rdpContext* context;
 	rdpNla* nla;
+	rdpAad* aad;
 	rdpMcs* mcs;
 	rdpNego* nego;
 	rdpBulk* bulk;

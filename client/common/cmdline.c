@@ -3588,6 +3588,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			BOOL TlsSecurity = FALSE;
 			BOOL NlaSecurity = FALSE;
 			BOOL ExtSecurity = FALSE;
+			BOOL AadSecurity = FALSE;
 			size_t count = 0, x;
 			char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 			if (count == 0)
@@ -3610,6 +3611,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					NlaSecurity = bval > 0;
 				else if (option_equals("ext", cur)) /* NLA Extended */
 					ExtSecurity = bval > 0;
+				else if (option_equals("aad", cur)) /* RDSAAD */
+					AadSecurity = bval > 0;
 				else
 				{
 					WLog_ERR(TAG, "unknown protocol security: %s", arg->Value);
@@ -3628,6 +3631,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, NlaSecurity))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, ExtSecurity))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_AadSecurity, AadSecurity))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 		CommandLineSwitchCase(arg, "encryption-methods")

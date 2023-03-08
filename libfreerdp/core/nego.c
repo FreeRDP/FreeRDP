@@ -57,7 +57,7 @@ struct rdp_nego
 	UINT32 SelectedProtocol;
 	UINT32 RequestedProtocols;
 	BOOL NegotiateSecurityLayer;
-	BOOL EnabledProtocols[16];
+	BOOL EnabledProtocols[32];
 	BOOL RestrictedAdminModeRequired;
 	BOOL GatewayEnabled;
 	BOOL GatewayBypassLocal;
@@ -67,10 +67,11 @@ struct rdp_nego
 
 static const char* nego_state_string(NEGO_STATE state)
 {
-	static const char* const NEGO_STATE_STRINGS[] = { "NEGO_STATE_INITIAL", "NEGO_STATE_EXT",
-		                                              "NEGO_STATE_NLA",     "NEGO_STATE_TLS",
-		                                              "NEGO_STATE_RDP",     "NEGO_STATE_FAIL",
-		                                              "NEGO_STATE_FINAL",   "NEGO_STATE_INVALID" };
+	static const char* const NEGO_STATE_STRINGS[] = { "NEGO_STATE_INITIAL", "NEGO_STATE_AAD",
+		                                              "NEGO_STATE_EXT",     "NEGO_STATE_NLA",
+		                                              "NEGO_STATE_TLS",     "NEGO_STATE_RDP",
+		                                              "NEGO_STATE_FAIL",    "NEGO_STATE_FINAL",
+		                                              "NEGO_STATE_INVALID" };
 	if (state >= ARRAYSIZE(NEGO_STATE_STRINGS))
 		return NEGO_STATE_STRINGS[ARRAYSIZE(NEGO_STATE_STRINGS) - 1];
 	return NEGO_STATE_STRINGS[state];
@@ -79,7 +80,9 @@ static const char* nego_state_string(NEGO_STATE state)
 static const char* protocol_security_string(UINT32 security)
 {
 	static const char* PROTOCOL_SECURITY_STRINGS[] = { "RDP", "TLS", "NLA", "UNK", "UNK",
-		                                               "UNK", "UNK", "UNK", "EXT", "UNK" };
+		                                               "UNK", "UNK", "UNK", "EXT", "UNK",
+		                                               "UNK", "UNK", "UNK", "UNK", "UNK",
+		                                               "UNK", "AAD", "UNK", "UNK", "UNK" };
 	if (security >= ARRAYSIZE(PROTOCOL_SECURITY_STRINGS))
 		return PROTOCOL_SECURITY_STRINGS[ARRAYSIZE(PROTOCOL_SECURITY_STRINGS) - 1];
 	return PROTOCOL_SECURITY_STRINGS[security];
@@ -115,7 +118,11 @@ BOOL nego_connect(rdpNego* nego)
 
 	if (nego_get_state(nego) == NEGO_STATE_INITIAL)
 	{
-		if (nego->EnabledProtocols[PROTOCOL_HYBRID_EX])
+		if (nego->EnabledProtocols[PROTOCOL_RDSAAD])
+		{
+			nego_set_state(nego, NEGO_STATE_AAD);
+		}
+		else if (nego->EnabledProtocols[PROTOCOL_HYBRID_EX])
 		{
 			nego_set_state(nego, NEGO_STATE_EXT);
 		}
@@ -142,6 +149,7 @@ BOOL nego_connect(rdpNego* nego)
 		{
 			WLog_DBG(TAG, "Security Layer Negotiation is disabled");
 			/* attempt only the highest enabled protocol (see nego_attempt_*) */
+			nego->EnabledProtocols[PROTOCOL_RDSAAD] = FALSE;
 			nego->EnabledProtocols[PROTOCOL_HYBRID] = FALSE;
 			nego->EnabledProtocols[PROTOCOL_SSL] = FALSE;
 			nego->EnabledProtocols[PROTOCOL_RDP] = FALSE;
@@ -149,6 +157,10 @@ BOOL nego_connect(rdpNego* nego)
 
 			switch (nego_get_state(nego))
 			{
+				case NEGO_STATE_AAD:
+					nego->EnabledProtocols[PROTOCOL_RDSAAD] = TRUE;
+					nego->SelectedProtocol = PROTOCOL_RDSAAD;
+					break;
 				case NEGO_STATE_EXT:
 					nego->EnabledProtocols[PROTOCOL_HYBRID_EX] = TRUE;
 					nego->EnabledProtocols[PROTOCOL_HYBRID] = TRUE;
@@ -262,7 +274,12 @@ BOOL nego_security_connect(rdpNego* nego)
 	}
 	else if (!nego->SecurityConnected)
 	{
-		if (nego->SelectedProtocol == PROTOCOL_HYBRID)
+		if (nego->SelectedProtocol == PROTOCOL_RDSAAD)
+		{
+			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_RDSAAD");
+			nego->SecurityConnected = transport_connect_aad(nego->transport);
+		}
+		else if (nego->SelectedProtocol == PROTOCOL_HYBRID)
 		{
 			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_HYBRID");
 			nego->SecurityConnected = transport_connect_nla(nego->transport);
@@ -440,6 +457,49 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 
 	Stream_Free(s, TRUE);
 	return TRUE;
+}
+
+static void nego_attempt_rdsaad(rdpNego* nego)
+{
+	WINPR_ASSERT(nego);
+	nego->RequestedProtocols = PROTOCOL_RDSAAD;
+	WLog_DBG(TAG, "Attempting RDS AAD Auth security");
+
+	if (!nego_transport_connect(nego))
+	{
+		nego_set_state(nego, NEGO_STATE_FAIL);
+		return;
+	}
+
+	if (!nego_send_negotiation_request(nego))
+	{
+		nego_set_state(nego, NEGO_STATE_FAIL);
+		return;
+	}
+
+	if (!nego_recv_response(nego))
+	{
+		nego_set_state(nego, NEGO_STATE_FAIL);
+		return;
+	}
+
+	WLog_DBG(TAG, "state: %s", nego_state_string(nego_get_state(nego)));
+
+	if (nego_get_state(nego) != NEGO_STATE_FINAL)
+	{
+		nego_transport_disconnect(nego);
+
+		if (nego->EnabledProtocols[PROTOCOL_HYBRID_EX])
+			nego_set_state(nego, NEGO_STATE_EXT);
+		else if (nego->EnabledProtocols[PROTOCOL_HYBRID])
+			nego_set_state(nego, NEGO_STATE_NLA);
+		else if (nego->EnabledProtocols[PROTOCOL_SSL])
+			nego_set_state(nego, NEGO_STATE_TLS);
+		else if (nego->EnabledProtocols[PROTOCOL_RDP])
+			nego_set_state(nego, NEGO_STATE_RDP);
+		else
+			nego_set_state(nego, NEGO_STATE_FAIL);
+	}
 }
 
 static void nego_attempt_ext(rdpNego* nego)
@@ -662,6 +722,11 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 
 				if (nego->SelectedProtocol)
 				{
+					if ((nego->SelectedProtocol == PROTOCOL_RDSAAD) &&
+					    (!nego->EnabledProtocols[PROTOCOL_RDSAAD]))
+					{
+						nego_set_state(nego, NEGO_STATE_FAIL);
+					}
 					if ((nego->SelectedProtocol == PROTOCOL_HYBRID) &&
 					    (!nego->EnabledProtocols[PROTOCOL_HYBRID]))
 					{
@@ -863,6 +928,9 @@ void nego_send(rdpNego* nego)
 
 	switch (nego_get_state(nego))
 	{
+		case NEGO_STATE_AAD:
+			nego_attempt_rdsaad(nego);
+			break;
 		case NEGO_STATE_EXT:
 			nego_attempt_ext(nego);
 			break;
@@ -1523,6 +1591,19 @@ void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
 {
 	WLog_DBG(TAG, "Enabling NLA extended security: %s", enable_ext ? "TRUE" : "FALSE");
 	nego->EnabledProtocols[PROTOCOL_HYBRID_EX] = enable_ext;
+}
+
+/**
+ * Enable RDS AAD security protocol.
+ * @param nego A pointer to the NEGO struct pointer to the negotiation structure
+ * @param enable_ext whether to enable RDS AAD Auth protocol (TRUE for
+ * enabled, FALSE for disabled)
+ */
+
+void nego_enable_aad(rdpNego* nego, BOOL enable_aad)
+{
+	WLog_DBG(TAG, "Enabling RDS AAD security: %s", enable_aad ? "TRUE" : "FALSE");
+	nego->EnabledProtocols[PROTOCOL_RDSAAD] = enable_aad;
 }
 
 /**

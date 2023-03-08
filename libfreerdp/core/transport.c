@@ -73,6 +73,7 @@ struct rdp_transport
 	wStreamPool* ReceivePool;
 	HANDLE connectedEvent;
 	BOOL NlaMode;
+	BOOL AadMode;
 	BOOL blocking;
 	BOOL GatewayEnabled;
 	CRITICAL_SECTION ReadLock;
@@ -365,6 +366,50 @@ BOOL transport_connect_nla(rdpTransport* transport)
 	}
 
 	return rdp_client_transition_to_state(rdp, CONNECTION_STATE_NLA);
+}
+
+BOOL transport_connect_aad(rdpTransport* transport)
+{
+	rdpContext* context = NULL;
+	rdpSettings* settings = NULL;
+	rdpRdp* rdp = NULL;
+	if (!transport)
+		return FALSE;
+
+	context = transport_get_context(transport);
+	WINPR_ASSERT(context);
+
+	settings = context->settings;
+	WINPR_ASSERT(settings);
+
+	rdp = context->rdp;
+	WINPR_ASSERT(rdp);
+
+	if (!transport_connect_tls(transport))
+		return FALSE;
+
+	if (!settings->Authentication)
+		return TRUE;
+
+	aad_free(rdp->aad);
+	rdp->aad = aad_new(context, transport);
+
+	if (!rdp->aad)
+		return FALSE;
+
+	transport_set_aad_mode(transport, TRUE);
+
+	if (aad_client_begin(rdp->aad) < 0)
+	{
+		WLog_Print(transport->log, WLOG_ERROR, "AAD begin failed");
+
+		freerdp_set_last_error_if_not(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+
+		transport_set_aad_mode(transport, FALSE);
+		return FALSE;
+	}
+
+	return rdp_client_transition_to_state(rdp, CONNECTION_STATE_AAD);
 }
 
 BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, DWORD timeout)
@@ -839,39 +884,61 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(s);
 
-	/* Read in pdu length */
-	status = transport_parse_pdu(transport, s, &incomplete);
-	while ((status == 0) && incomplete)
+	/* RDS AAD Auth PDUs have no length indicator. We need to determine the end of the PDU by
+	 * reading in one byte at a time until we encounter the terminating null byte */
+	if (transport->AadMode)
 	{
+		BYTE c;
 		int rc;
-		if (!Stream_EnsureRemainingCapacity(s, 1))
-			return -1;
-		rc = transport_read_layer_bytes(transport, s, 1);
-		if (rc != 1)
-			return rc;
-		status = transport_parse_pdu(transport, s, &incomplete);
+		while (1)
+		{
+			rc = transport_read_layer(transport, &c, 1);
+			if (rc != 1)
+				return rc;
+			if (!Stream_EnsureRemainingCapacity(s, 1))
+				return -1;
+			Stream_Write(s, &c, 1);
+			if (c == 0)
+				break;
+		}
 	}
+	else
+	{
+		/* Read in pdu length */
+		status = transport_parse_pdu(transport, s, &incomplete);
+		while ((status == 0) && incomplete)
+		{
+			int rc;
+			if (!Stream_EnsureRemainingCapacity(s, 1))
+				return -1;
+			rc = transport_read_layer_bytes(transport, s, 1);
+			if (rc != 1)
+				return rc;
+			status = transport_parse_pdu(transport, s, &incomplete);
+		}
 
-	if (status < 0)
-		return -1;
+		if (status < 0)
+			return -1;
 
-	pduLength = (size_t)status;
+		pduLength = (size_t)status;
 
-	/* Read in rest of the PDU */
-	if (!Stream_EnsureCapacity(s, pduLength))
-		return -1;
+		/* Read in rest of the PDU */
+		if (!Stream_EnsureCapacity(s, pduLength))
+			return -1;
 
-	position = Stream_GetPosition(s);
-	if (position > pduLength)
-		return -1;
+		position = Stream_GetPosition(s);
+		if (position > pduLength)
+			return -1;
 
-	status = transport_read_layer_bytes(transport, s, pduLength - Stream_GetPosition(s));
+		status = transport_read_layer_bytes(transport, s, pduLength - Stream_GetPosition(s));
 
-	if (status != 1)
-		return status;
+		if (status != 1)
+			return status;
 
-	if (Stream_GetPosition(s) >= pduLength)
-		WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength, WLOG_PACKET_INBOUND);
+		if (Stream_GetPosition(s) >= pduLength)
+			WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength,
+			            WLOG_PACKET_INBOUND);
+	}
 
 	Stream_SealLength(s);
 	Stream_SetPosition(s, 0);
@@ -1216,6 +1283,12 @@ void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode)
 {
 	WINPR_ASSERT(transport);
 	transport->NlaMode = NlaMode;
+}
+
+void transport_set_aad_mode(rdpTransport* transport, BOOL AadMode)
+{
+	WINPR_ASSERT(transport);
+	transport->AadMode = AadMode;
 }
 
 BOOL transport_disconnect(rdpTransport* transport)

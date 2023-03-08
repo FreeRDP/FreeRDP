@@ -57,6 +57,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 
 	switch (id)
 	{
+		case FreeRDP_AadSecurity:
+			return settings->AadSecurity;
+
 		case FreeRDP_AllowCacheWaitingList:
 			return settings->AllowCacheWaitingList;
 
@@ -611,6 +614,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 	switch (id)
 	{
+		case FreeRDP_AadSecurity:
+			settings->AadSecurity = cnv.c;
+			break;
+
 		case FreeRDP_AllowCacheWaitingList:
 			settings->AllowCacheWaitingList = cnv.c;
 			break;

@@ -392,6 +392,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_enable_tls(rdp->nego, settings->TlsSecurity);
 	nego_enable_nla(rdp->nego, settings->NlaSecurity);
 	nego_enable_ext(rdp->nego, settings->ExtSecurity);
+	nego_enable_aad(rdp->nego, settings->AadSecurity);
 
 	if (settings->MstscCookieMode)
 		settings->CookieMaxLength = MSTSC_COOKIE_MAX_LENGTH;
@@ -1761,6 +1762,8 @@ const char* rdp_state_string(CONNECTION_STATE state)
 			return "CONNECTION_STATE_NEGO";
 		case CONNECTION_STATE_NLA:
 			return "CONNECTION_STATE_NLA";
+		case CONNECTION_STATE_AAD:
+			return "CONNECTION_STATE_AAD";
 		case CONNECTION_STATE_MCS_CREATE_REQUEST:
 			return "CONNECTION_STATE_MCS_CREATE_REQUEST";
 		case CONNECTION_STATE_MCS_CREATE_RESPONSE:

@@ -61,6 +61,7 @@ FREERDP_LOCAL BOOL transport_disconnect(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_connect_rdp(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_connect_tls(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_connect_nla(rdpTransport* transport);
+FREERDP_LOCAL BOOL transport_connect_aad(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_accept_rdp(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_accept_tls(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_accept_nla(rdpTransport* transport);
@@ -80,6 +81,7 @@ FREERDP_LOCAL HANDLE transport_get_front_bio(rdpTransport* transport);
 FREERDP_LOCAL BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking);
 FREERDP_LOCAL void transport_set_gateway_enabled(rdpTransport* transport, BOOL GatewayEnabled);
 FREERDP_LOCAL void transport_set_nla_mode(rdpTransport* transport, BOOL NlaMode);
+FREERDP_LOCAL void transport_set_aad_mode(rdpTransport* transport, BOOL AadMode);
 FREERDP_LOCAL BOOL transport_is_write_blocked(rdpTransport* transport);
 FREERDP_LOCAL int transport_drain_output_buffer(rdpTransport* transport);
 
