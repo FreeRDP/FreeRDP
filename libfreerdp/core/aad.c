@@ -28,8 +28,11 @@
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>
-#include <openssl/core_names.h>
 #include <openssl/err.h>
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#include <openssl/core_names.h>
+#endif
 
 #include "transport.h"
 
