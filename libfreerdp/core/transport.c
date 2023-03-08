@@ -383,6 +383,9 @@ BOOL transport_connect_rdstls(rdpTransport* transport)
 		goto fail;
 
 	rdstls = rdstls_new(context, transport);
+	if (!rdstls)
+		goto fail;
+
 	transport_set_rdstls_mode(transport, TRUE);
 
 	if (rdstls_authenticate(rdstls) < 0)
