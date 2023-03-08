@@ -520,7 +520,7 @@ static BOOL cliprdr_file_fuse_remote_try_unlock(CliprdrFileStreamLock* stream)
 	{
 		if (stream->locked)
 		{
-			const CLIPRDR_LOCK_CLIPBOARD_DATA clip = { .clipDataId = stream->lockId };
+			const CLIPRDR_UNLOCK_CLIPBOARD_DATA clip = { .clipDataId = stream->lockId };
 
 			WINPR_ASSERT(stream->context->context);
 			WINPR_ASSERT(stream->context->context->ClientUnlockClipboardData);
@@ -1172,7 +1172,7 @@ static UINT cliprdr_file_context_server_file_contents_response(
 			wStream* s = Stream_StaticConstInit(&sbuffer, data, data_len);
 			if (!s)
 			{
-				fuse_log_and_reply_err(request, request->req, ENOMEM);
+				fuse_log_and_reply_err(file, request->req, ENOMEM);
 				request->req = NULL; // reply handled, do not reply EIO on free
 				break;
 			}
