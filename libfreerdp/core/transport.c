@@ -770,10 +770,10 @@ int transport_read_pdu(rdpTransport* transport, wStream* s)
 
 SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplete)
 {
-	size_t position;
-	size_t pduLength;
-	BYTE* header;
-	pduLength = 0;
+	wStream sbuffer;
+	wStream* staticStream;
+	size_t position = 0;
+	size_t pduLength = 0;
 
 	if (!transport)
 		return -1;
@@ -781,7 +781,6 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 	if (!s)
 		return -1;
 
-	header = Stream_Buffer(s);
 	position = Stream_GetPosition(s);
 
 	if (incomplete)
@@ -794,6 +793,8 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 		return 0;
 	}
 
+	staticStream = Stream_StaticInit(&sbuffer, Stream_Buffer(s), position);
+
 	if (transport->NlaMode)
 	{
 		/*
@@ -802,27 +803,35 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 		 * bit 6 P/C constructed
 		 * bit 5 tag number - sequence
 		 */
-		if (header[0] == 0x30)
+		UINT8 typeEncoding;
+		Stream_Read_UINT8(staticStream, typeEncoding);
+		if (typeEncoding == 0x30)
 		{
 			/* TSRequest (NLA) */
-			if (header[1] & 0x80)
+			UINT8 lengthEncoding;
+			Stream_Read_UINT8(staticStream, lengthEncoding);
+			if (lengthEncoding & 0x80)
 			{
-				if ((header[1] & ~(0x80)) == 1)
+				if ((lengthEncoding & ~(0x80)) == 1)
 				{
 					/* check for header bytes already was readed in previous calls */
 					if (position < 3)
 						return 0;
 
-					pduLength = header[2];
+					UINT8 length;
+					Stream_Read_UINT8(staticStream, length);
+					pduLength = length;
 					pduLength += 3;
 				}
-				else if ((header[1] & ~(0x80)) == 2)
+				else if ((lengthEncoding & ~(0x80)) == 2)
 				{
 					/* check for header bytes already was readed in previous calls */
 					if (position < 4)
 						return 0;
 
-					pduLength = (header[2] << 8) | header[3];
+					UINT16 length;
+					Stream_Read_UINT16_BE(staticStream, length);
+					pduLength = length;
 					pduLength += 4;
 				}
 				else
@@ -833,17 +842,18 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 			}
 			else
 			{
-				pduLength = header[1];
+				pduLength = lengthEncoding;
 				pduLength += 2;
 			}
 		}
 	}
 	else if (transport->RdstlsMode)
 	{
-		UINT16 version = (header[1] << 8) | header[0];
+		UINT16 version;
 		UINT16 pduType;
 		UINT16 dataType;
 
+		Stream_Read_UINT16(staticStream, version);
 		if (version != RDSTLS_VERSION_1)
 		{
 			WLog_Print(transport->log, WLOG_ERROR, "invalid RDSTLS version");
@@ -853,7 +863,7 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 		if (position < 4)
 			return 0;
 
-		pduType = (header[3] << 8) | header[2];
+		Stream_Read_UINT16(staticStream, pduType);
 		switch (pduType)
 		{
 			case RDSTLS_TYPE_CAPABILITIES:
@@ -863,42 +873,51 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 				if (position < 6)
 					return 0;
 
-				dataType = (header[5] << 8 | header[4]);
+				Stream_Read_UINT16(staticStream, dataType);
 				if (dataType == RDSTLS_DATA_PASSWORD_CREDS)
 				{
+					UINT16 redirGuidLength;
+					UINT16 usernameLength;
+					UINT16 domainLength;
+					UINT16 passwordLength;
+
 					if (position < 8)
 						return 0;
 
-					UINT16 redirGuidLength = (header[7] << 8 | header[6]);
-					size_t usernamePos = 8 + redirGuidLength;
+					Stream_Read_UINT16(staticStream, redirGuidLength);
 
-					if (position < usernamePos + 2)
+					if (position < 8 + redirGuidLength + 2)
 						return 0;
 
-					UINT16 usernameLength = (header[usernamePos + 1] << 8) | header[usernamePos];
-					size_t domainPos = 8 + redirGuidLength + 2 + usernameLength;
+					Stream_Seek(staticStream, redirGuidLength);
+					Stream_Read_UINT16(staticStream, usernameLength);
 
-					if (position < domainPos + 2)
+					if (position < 8 + redirGuidLength + 2 + usernameLength + 2)
 						return 0;
 
-					UINT16 domainLength = (header[domainPos + 1] << 8) | header[domainPos];
-					size_t passwordPos =
-					    8 + redirGuidLength + 2 + usernameLength + 2 + domainLength;
+					Stream_Seek(staticStream, usernameLength);
+					Stream_Read_UINT16(staticStream, domainLength);
 
-					if (position < passwordPos + 2)
+					if (position < 8 + redirGuidLength + 2 + usernameLength + 2 + domainLength + 2)
 						return 0;
 
-					UINT16 passwordLength = (header[passwordPos + 1] << 8) | header[passwordPos];
+					Stream_Seek(staticStream, domainLength);
+					Stream_Read_UINT16(staticStream, passwordLength);
 
 					pduLength = 8 + redirGuidLength + 2 + usernameLength + 2 + domainLength + 2 +
 					            passwordLength;
 				}
 				else if (dataType == RDSTLS_DATA_AUTORECONNECT_COOKIE)
 				{
+					UINT16 cookieLength;
+
 					if (position < 12)
 						return 0;
 
-					pduLength = 12 + ((header[11] << 8) | header[10]);
+					Stream_Seek(staticStream, 4);
+					Stream_Read_UINT16(staticStream, cookieLength);
+
+					pduLength = 12 + cookieLength;
 				}
 				else
 				{
@@ -916,14 +935,19 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 	}
 	else
 	{
-		if (header[0] == 0x03)
+		UINT8 version;
+		Stream_Read_UINT8(staticStream, version);
+		if (version == 0x03)
 		{
 			/* TPKT header */
 			/* check for header bytes already was readed in previous calls */
 			if (position < 4)
 				return 0;
 
-			pduLength = (header[2] << 8) | header[3];
+			UINT16 length;
+			Stream_Seek(staticStream, 1);
+			Stream_Read_UINT16_BE(staticStream, length);
+			pduLength = length;
 
 			/* min and max values according to ITU-T Rec. T.123 (01/2007) section 8 */
 			if ((pduLength < 7) || (pduLength > 0xFFFF))
@@ -936,16 +960,20 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 		else
 		{
 			/* Fast-Path Header */
-			if (header[1] & 0x80)
+			UINT8 length1;
+			Stream_Read_UINT8(staticStream, length1);
+			if (length1 & 0x80)
 			{
 				/* check for header bytes already was readed in previous calls */
 				if (position < 3)
 					return 0;
 
-				pduLength = ((header[1] & 0x7F) << 8) | header[2];
+				UINT8 length2;
+				Stream_Read_UINT8(staticStream, length2);
+				pduLength = ((length1 & 0x7F) << 8) | length2;
 			}
 			else
-				pduLength = header[1];
+				pduLength = length1;
 
 			/*
 			 * fast-path has 7 bits for length so the maximum size, including headers is 0x8000
