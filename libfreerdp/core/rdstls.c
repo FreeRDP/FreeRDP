@@ -283,13 +283,15 @@ static BOOL rdstls_read_unicode_string(wStream* s, char** str)
 	return TRUE;
 }
 
-static BOOL rdstls_read_data(wStream* s, UINT16* pLength, BYTE** pData)
+static BOOL rdstls_read_data(wStream* s, UINT16* pLength, const BYTE** pData)
 {
 	UINT16 length = 0;
 
 	WINPR_ASSERT(pLength);
 	WINPR_ASSERT(pData);
 
+	*pData = NULL;
+	*pLength = 0;
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
 
@@ -304,15 +306,9 @@ static BOOL rdstls_read_data(wStream* s, UINT16* pLength, BYTE** pData)
 		return TRUE;
 	}
 
-	free(*pData);
-	*pData = (BYTE*)malloc(length);
-	if (!*pData)
-		return FALSE;
-
-	Stream_Read(s, *pData, length);
+	*pData = Stream_Pointer(s);
 	*pLength = length;
-
-	return TRUE;
+	return Stream_SafeSeek(s, length);
 }
 
 static BOOL rdstls_cmp_data(const char* field, const BYTE* serverData,
@@ -362,7 +358,7 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 {
 	BOOL rc = FALSE;
 
-	BYTE* clientRedirectionGuid = NULL;
+	const BYTE* clientRedirectionGuid = NULL;
 	UINT16 clientRedirectionGuidLength = 0;
 	char* clientPassword = NULL;
 	char* clientUsername = NULL;
@@ -413,7 +409,6 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 
 	rc = TRUE;
 fail:
-	free(clientRedirectionGuid);
 	return rc;
 }
 
