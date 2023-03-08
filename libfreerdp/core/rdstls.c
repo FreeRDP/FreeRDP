@@ -908,18 +908,19 @@ static SSIZE_T rdstls_parse_pdu_data_type(wLog* log, UINT16 dataType, wStream* s
 				return 0;
 			Stream_Read_UINT16(s, passwordLength);
 
-			if (!Stream_SafeSeek(s, passwordLength))
-				return 0;
-
-			return Stream_GetPosition(s) + 2ull;
+			return Stream_GetPosition(s) + passwordLength;
 		}
 		case RDSTLS_DATA_AUTORECONNECT_COOKIE:
 		{
-			SSIZE_T pduLength;
+			if (!Stream_SafeSeek(s, 4))
+				return 0;
+
+			UINT16 cookieLength;
 			if (Stream_GetRemainingLength(s) < 2)
 				return 0;
-			Stream_Read_UINT16(s, pduLength);
-			return pduLength + 12u;
+			Stream_Read_UINT16(s, cookieLength);
+
+			return 12u + cookieLength;
 		}
 		default:
 			WLog_Print(log, WLOG_ERROR, "invalid RDSLTS dataType");
