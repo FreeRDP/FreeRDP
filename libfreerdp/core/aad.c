@@ -87,7 +87,7 @@ static const char token_http_request_body[] =
 
 struct rdp_aad
 {
-	enum AAD_STATE state;
+	AAD_STATE state;
 	rdpContext* rdpcontext;
 	rdpTransport* transport;
 	char* access_token;
@@ -412,7 +412,7 @@ int aad_recv(rdpAad* aad, wStream* s)
 		LOG_ERROR_AND_RETURN(-1, "Invalid state");
 }
 
-enum AAD_STATE aad_get_state(rdpAad* aad)
+AAD_STATE aad_get_state(rdpAad* aad)
 {
 	if (!aad)
 		return AAD_STATE_FINAL;
@@ -612,7 +612,7 @@ static int alloc_sprintf(char** s, const char* template, ...)
 	length = vsnprintf(NULL, 0, template, ap);
 	va_end(ap);
 
-	if (!(*s = malloc(length + 1)))
+	if (!(*s = calloc(length + 1, sizeof(char))))
 		return -1;
 
 	va_start(ap, template);

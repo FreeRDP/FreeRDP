@@ -22,12 +22,12 @@
 
 typedef struct rdp_aad rdpAad;
 
-enum AAD_STATE
+typedef enum
 {
 	AAD_STATE_INITIAL,
 	AAD_STATE_AUTH,
 	AAD_STATE_FINAL
-};
+} AAD_STATE;
 
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
@@ -35,7 +35,7 @@ enum AAD_STATE
 FREERDP_LOCAL int aad_client_begin(rdpAad* aad);
 FREERDP_LOCAL int aad_recv(rdpAad* aad, wStream* s);
 
-FREERDP_LOCAL enum AAD_STATE aad_get_state(rdpAad* aad);
+FREERDP_LOCAL AAD_STATE aad_get_state(rdpAad* aad);
 
 FREERDP_LOCAL rdpAad* aad_new(rdpContext* context, rdpTransport* transport);
 FREERDP_LOCAL void aad_free(rdpAad* aad);
