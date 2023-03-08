@@ -932,8 +932,7 @@ SSIZE_T rdstls_parse_pdu(wLog* log, wStream* stream)
 {
 	SSIZE_T pduLength = -1;
 	wStream sbuffer = { 0 };
-	wStream* s =
-	    Stream_StaticConstInit(&sbuffer, Stream_Pointer(stream), Stream_GetRemainingLength(stream));
+	wStream* s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(stream), Stream_Length(stream));
 
 	UINT16 version;
 	if (Stream_GetRemainingLength(s) < 2)

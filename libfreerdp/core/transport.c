@@ -778,8 +778,7 @@ static SSIZE_T parse_nla_mode_pdu(rdpTransport* transport, wStream* stream)
 {
 	SSIZE_T pduLength = 0;
 	wStream sbuffer = { 0 };
-	wStream* s =
-	    Stream_StaticConstInit(&sbuffer, Stream_Pointer(stream), Stream_GetRemainingLength(stream));
+	wStream* s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(stream), Stream_Length(stream));
 	/*
 	 * In case NlaMode is set TSRequest package(s) are expected
 	 * 0x30 = DER encoded data with these bits set:
@@ -838,8 +837,7 @@ static SSIZE_T parse_default_mode_pdu(rdpTransport* transport, wStream* stream)
 {
 	SSIZE_T pduLength = 0;
 	wStream sbuffer = { 0 };
-	wStream* s =
-	    Stream_StaticConstInit(&sbuffer, Stream_Pointer(stream), Stream_GetRemainingLength(stream));
+	wStream* s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(stream), Stream_Length(stream));
 
 	UINT8 version;
 	if (Stream_GetRemainingLength(s) < 1)
@@ -909,6 +907,7 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 	if (incomplete)
 		*incomplete = TRUE;
 
+	Stream_SealLength(s);
 	if (transport->NlaMode)
 		pduLength = parse_nla_mode_pdu(transport, s);
 	else if (transport->RdstlsMode)
@@ -919,7 +918,7 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 	if (pduLength == 0)
 		return pduLength;
 
-	const size_t len = Stream_GetRemainingLength(s);
+	const size_t len = Stream_Length(s);
 	if (len > pduLength)
 		return -1;
 
