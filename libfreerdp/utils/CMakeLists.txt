@@ -33,7 +33,7 @@ set(${MODULE_PREFIX}_SRCS
 	smartcard_pack.c
 	smartcard_call.c
 	stopwatch.c
-	json.c)
+)
 
 freerdp_module_add(${${MODULE_PREFIX}_SRCS})
 
