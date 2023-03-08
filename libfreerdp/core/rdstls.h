@@ -24,29 +24,11 @@ typedef struct rdp_rdstls rdpRdstls;
 
 #include <freerdp/freerdp.h>
 
-#define RDSTLS_VERSION_1 0x01
-
-#define RDSTLS_TYPE_CAPABILITIES 0x01
-#define RDSTLS_TYPE_AUTHREQ 0x02
-#define RDSTLS_TYPE_AUTHRSP 0x04
-
-#define RDSTLS_DATA_CAPABILITIES 0x01
-#define RDSTLS_DATA_PASSWORD_CREDS 0x01
-#define RDSTLS_DATA_AUTORECONNECT_COOKIE 0x02
-#define RDSTLS_DATA_RESULT_CODE 0x01
-
-typedef enum
-{
-	RDSTLS_STATE_INITIAL,
-	RDSTLS_STATE_CAPABILITIES,
-	RDSTLS_STATE_AUTH_REQ,
-	RDSTLS_STATE_AUTH_RSP,
-	RDSTLS_STATE_FINAL,
-} RDSTLS_STATE;
-
-FREERDP_LOCAL int rdstls_authenticate(rdpRdstls* rdstls);
+FREERDP_LOCAL SSIZE_T rdstls_parse_pdu(wLog* log, wStream* s);
 
 FREERDP_LOCAL rdpRdstls* rdstls_new(rdpContext* context, rdpTransport* transport);
 FREERDP_LOCAL void rdstls_free(rdpRdstls* rdstls);
+
+FREERDP_LOCAL int rdstls_authenticate(rdpRdstls* rdstls);
 
 #endif /* FREERDP_LIB_CORE_RDSTLS_H */

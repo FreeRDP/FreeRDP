@@ -33,6 +33,26 @@
 
 #define TAG FREERDP_TAG("core.rdstls")
 
+#define RDSTLS_VERSION_1 0x01
+
+#define RDSTLS_TYPE_CAPABILITIES 0x01
+#define RDSTLS_TYPE_AUTHREQ 0x02
+#define RDSTLS_TYPE_AUTHRSP 0x04
+
+#define RDSTLS_DATA_CAPABILITIES 0x01
+#define RDSTLS_DATA_PASSWORD_CREDS 0x01
+#define RDSTLS_DATA_AUTORECONNECT_COOKIE 0x02
+#define RDSTLS_DATA_RESULT_CODE 0x01
+
+typedef enum
+{
+	RDSTLS_STATE_INITIAL,
+	RDSTLS_STATE_CAPABILITIES,
+	RDSTLS_STATE_AUTH_REQ,
+	RDSTLS_STATE_AUTH_RSP,
+	RDSTLS_STATE_FINAL,
+} RDSTLS_STATE;
+
 struct rdp_rdstls
 {
 	BOOL server;
@@ -808,4 +828,103 @@ int rdstls_authenticate(rdpRdstls* rdstls)
 		return rdstls_server_authenticate(rdstls);
 	else
 		return rdstls_client_authenticate(rdstls);
+}
+
+static SSIZE_T rdstls_parse_pdu_data_type(wLog* log, UINT16 dataType, wStream* s)
+{
+	switch (dataType)
+	{
+		case RDSTLS_DATA_PASSWORD_CREDS:
+		{
+			UINT16 redirGuidLength;
+			if (Stream_GetRemainingLength(s) < 2)
+				return 0;
+			Stream_Read_UINT16(s, redirGuidLength);
+
+			if (!Stream_SafeSeek(s, redirGuidLength))
+				return 0;
+
+			UINT16 usernameLength;
+			if (Stream_GetRemainingLength(s) < 2)
+				return 0;
+			Stream_Read_UINT16(s, usernameLength);
+
+			if (!Stream_SafeSeek(s, usernameLength))
+				return 0;
+
+			UINT16 domainLength;
+			if (Stream_GetRemainingLength(s) < 2)
+				return 0;
+			Stream_Read_UINT16(s, domainLength);
+
+			if (!Stream_SafeSeek(s, domainLength))
+				return 0;
+
+			UINT16 passwordLength;
+			if (Stream_GetRemainingLength(s) < 2)
+				return 0;
+			Stream_Read_UINT16(s, passwordLength);
+
+			if (!Stream_SafeSeek(s, passwordLength))
+				return 0;
+
+			return Stream_GetPosition(s) + 2ull;
+		}
+		case RDSTLS_DATA_AUTORECONNECT_COOKIE:
+		{
+			SSIZE_T pduLength;
+			if (Stream_GetRemainingLength(s) < 2)
+				return 0;
+			Stream_Read_UINT16(s, pduLength);
+			return pduLength + 12u;
+		}
+		default:
+			WLog_Print(log, WLOG_ERROR, "invalid RDSLTS dataType");
+			return -1;
+	}
+}
+
+SSIZE_T rdstls_parse_pdu(wLog* log, wStream* stream)
+{
+	SSIZE_T pduLength = -1;
+	wStream sbuffer = { 0 };
+	wStream* s =
+	    Stream_StaticConstInit(&sbuffer, Stream_Pointer(stream), Stream_GetRemainingLength(stream));
+
+	UINT16 version;
+	if (Stream_GetRemainingLength(s) < 2)
+		return 0;
+	Stream_Read_UINT16(s, version);
+	if (version != RDSTLS_VERSION_1)
+	{
+		WLog_Print(log, WLOG_ERROR, "invalid RDSTLS version");
+		return -1;
+	}
+
+	UINT16 pduType;
+	if (Stream_GetRemainingLength(s) < 2)
+		return 0;
+	Stream_Read_UINT16(s, pduType);
+	switch (pduType)
+	{
+		case RDSTLS_TYPE_CAPABILITIES:
+			pduLength = 8;
+			break;
+		case RDSTLS_TYPE_AUTHREQ:
+			if (Stream_GetRemainingLength(s) < 2)
+				return 0;
+			UINT16 dataType;
+			Stream_Read_UINT16(s, dataType);
+			pduLength = rdstls_parse_pdu_data_type(log, dataType, s);
+
+			break;
+		case RDSTLS_TYPE_AUTHRSP:
+			pduLength = 10;
+			break;
+		default:
+			WLog_Print(log, WLOG_ERROR, "invalid RDSTLS PDU type");
+			return -1;
+	}
+
+	return pduLength;
 }
