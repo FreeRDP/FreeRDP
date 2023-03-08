@@ -987,19 +987,16 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 	 * reading in one byte at a time until we encounter the terminating null byte */
 	if (transport->AadMode)
 	{
-		BYTE c;
-		int rc;
-		while (1)
+		do
 		{
-			rc = transport_read_layer(transport, &c, 1);
+			BYTE c = '\0';
+			const int rc = transport_read_layer(transport, &c, 1);
 			if (rc != 1)
 				return rc;
 			if (!Stream_EnsureRemainingCapacity(s, 1))
 				return -1;
-			Stream_Write(s, &c, 1);
-			if (c == 0)
-				break;
-		}
+			Stream_Write_UINT8(s, c);
+		} while (c != '\0');
 	}
 	else
 	{
