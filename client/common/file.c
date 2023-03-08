@@ -212,7 +212,8 @@ struct rdp_file
 };
 
 static SSIZE_T freerdp_client_rdp_file_add_line(rdpFile* file);
-static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(rdpFile* file, const char* name);
+static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(const rdpFile* file,
+                                                              const char* name);
 static void freerdp_client_file_string_check_free(LPSTR str);
 
 static BOOL freerdp_client_rdp_file_find_integer_entry(rdpFile* file, const char* name,
@@ -1460,7 +1461,7 @@ fail:
 	freerdp_addin_argv_free(args);
 	return NULL;
 }
-BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* settings)
+BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSettings* settings)
 {
 	BOOL setDefaultConnectionType = TRUE;
 
@@ -2244,7 +2245,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file, rdpSettings* 
 	return TRUE;
 }
 
-static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(rdpFile* file, const char* name)
+static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(const rdpFile* file, const char* name)
 {
 	size_t index;
 	BOOL bFound = FALSE;
@@ -2278,12 +2279,12 @@ int freerdp_client_rdp_file_set_string_option(rdpFile* file, const char* name, c
 	return freerdp_client_rdp_file_set_string(file, name, value);
 }
 
-const char* freerdp_client_rdp_file_get_string_option(rdpFile* file, const char* name)
+const char* freerdp_client_rdp_file_get_string_option(const rdpFile* file, const char* name)
 {
 	LPSTR* value = NULL;
 	rdpFileLine* line = NULL;
 
-	if (freerdp_client_rdp_file_find_string_entry(file, name, &value, &line))
+	if (freerdp_client_rdp_file_find_string_entry((rdpFile*)file, name, &value, &line))
 	{
 		if (value)
 			return *value;
@@ -2299,12 +2300,12 @@ int freerdp_client_rdp_file_set_integer_option(rdpFile* file, const char* name, 
 	return freerdp_client_rdp_file_set_integer(file, name, value);
 }
 
-int freerdp_client_rdp_file_get_integer_option(rdpFile* file, const char* name)
+int freerdp_client_rdp_file_get_integer_option(const rdpFile* file, const char* name)
 {
 	DWORD* value = NULL;
 	rdpFileLine* line = NULL;
 
-	if (freerdp_client_rdp_file_find_integer_entry(file, name, &value, &line))
+	if (freerdp_client_rdp_file_find_integer_entry((rdpFile*)file, name, &value, &line))
 	{
 		if (value)
 			return *value;

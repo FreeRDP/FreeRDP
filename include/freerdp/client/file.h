@@ -45,7 +45,7 @@ extern "C"
 	                                                      size_t size);
 	FREERDP_API BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer,
 	                                                         size_t size, rdp_file_fkt_parse parse);
-	FREERDP_API BOOL freerdp_client_populate_settings_from_rdp_file(rdpFile* file,
+	FREERDP_API BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file,
 	                                                                rdpSettings* settings);
 
 	FREERDP_API BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file,
@@ -57,12 +57,13 @@ extern "C"
 
 	FREERDP_API int freerdp_client_rdp_file_set_string_option(rdpFile* file, const char* name,
 	                                                          const char* value);
-	FREERDP_API const char* freerdp_client_rdp_file_get_string_option(rdpFile* file,
+	FREERDP_API const char* freerdp_client_rdp_file_get_string_option(const rdpFile* file,
 	                                                                  const char* name);
 
 	FREERDP_API int freerdp_client_rdp_file_set_integer_option(rdpFile* file, const char* name,
 	                                                           int value);
-	FREERDP_API int freerdp_client_rdp_file_get_integer_option(rdpFile* file, const char* name);
+	FREERDP_API int freerdp_client_rdp_file_get_integer_option(const rdpFile* file,
+	                                                           const char* name);
 
 	FREERDP_API rdpFile* freerdp_client_rdp_file_new(void);
 	FREERDP_API rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags);
