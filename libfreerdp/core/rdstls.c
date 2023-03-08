@@ -138,6 +138,9 @@ static SSIZE_T rdstls_write_string(wStream* s, const char* str)
 	{
 		/* Write unicode null */
 		Stream_Write_UINT16(s, 2);
+		if (!Stream_EnsureRemainingCapacity(s, 2))
+			return -1;
+
 		Stream_Write_UINT16(s, 0);
 		return (SSIZE_T)(Stream_GetPosition(s) - pos);
 	}
@@ -162,8 +165,12 @@ static BOOL rdstls_write_data(wStream* s, UINT32 length, const BYTE* data)
 
 	if (!data)
 	{
+		return -1;
 		/* Write unicode null */
 		Stream_Write_UINT16(s, 2);
+		if (!Stream_EnsureRemainingCapacity(s, 2))
+			return -1;
+
 		Stream_Write_UINT16(s, 0);
 		return TRUE;
 	}
