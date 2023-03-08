@@ -22,8 +22,8 @@
 #include <stdio.h>
 
 #include <freerdp/crypto/crypto.h>
-#include <freerdp/utils/json.h>
 #include <winpr/crypto.h>
+#include "../utils/cJSON/cJSON.h"
 
 #include <openssl/ssl.h>
 #include <openssl/bio.h>
@@ -134,10 +134,9 @@ int aad_client_begin(rdpAad* aad)
 	size_t length = 0;
 	const char* hostname = NULL;
 	char* p = NULL;
-	const char* token = NULL;
 	long status_code;
-	JSON* json = NULL;
-	JSON* prop = NULL;
+	cJSON* json = NULL;
+	cJSON* prop = NULL;
 
 	WINPR_ASSERT(aad);
 	WINPR_ASSERT(aad->rdpcontext);
@@ -205,15 +204,15 @@ int aad_client_begin(rdpAad* aad)
 		LOG_ERROR_AND_GOTO(fail, "Received status code: %li", status_code);
 
 	/* Extract the access token from the JSON response */
-	if (!(json = json_parse(buffer)))
+	if (!(json = cJSON_Parse(buffer)))
 		LOG_ERROR_AND_GOTO(fail, "Failed to parse JSON response");
-	if (!json_object_get_prop(json, "access_token", &prop) || !json_string_get(prop, &token))
+	if (!(prop = cJSON_GetObjectItem(json, "access_token")) || !cJSON_IsString(prop))
 		LOG_ERROR_AND_GOTO(fail, "Could not find \"access_token\" property in JSON response");
-	if (!(aad->access_token = _strdup(token)))
+	if (!(aad->access_token = _strdup(cJSON_GetStringValue(prop))))
 		goto fail;
 
 	XFREE(buffer);
-	json_free(json);
+	cJSON_Delete(json);
 	json = NULL;
 
 	/* Send the nonce request message */
@@ -235,17 +234,17 @@ int aad_client_begin(rdpAad* aad)
 		LOG_ERROR_AND_GOTO(fail, "Received status code: %li", status_code);
 
 	/* Extract the nonce from the response */
-	if (!(json = json_parse(buffer)))
+	if (!(json = cJSON_Parse(buffer)))
 		LOG_ERROR_AND_GOTO(fail, "Failed to parse JSON response");
-	if (!json_object_get_prop(json, "Nonce", &prop) || !json_string_get(prop, &token))
+	if (!(prop = cJSON_GetObjectItem(json, "Nonce")) || !cJSON_IsString(prop))
 		LOG_ERROR_AND_GOTO(fail, "Could not find \"Nonce\" property in JSON response");
-	if (!(aad->nonce = _strdup(token)))
+	if (!(aad->nonce = _strdup(cJSON_GetStringValue(prop))))
 		goto fail;
 
 	ret = 1;
 
 fail:
-	json_free(json);
+	cJSON_Delete(json);
 	free(buffer);
 	free(req_body);
 	free(req_header);
@@ -356,49 +355,48 @@ fail:
 
 int aad_recv(rdpAad* aad, wStream* s)
 {
-	JSON* json;
-	JSON* prop;
+	cJSON* json;
+	cJSON* prop;
 
 	WINPR_ASSERT(aad);
 	WINPR_ASSERT(s);
 
 	if (aad->state == AAD_STATE_INITIAL)
 	{
-		const char* ts_nonce = NULL;
 		int ret = 0;
 
-		if (!(json = json_parse(Stream_PointerAs(s, char))))
+		if (!(json = cJSON_Parse(Stream_PointerAs(s, char))))
 			LOG_ERROR_AND_RETURN(-1, "Failed to parse Server Nonce PDU");
 
-		if (!json_object_get_prop(json, "ts_nonce", &prop) || !json_string_get(prop, &ts_nonce))
+		if (!(prop = cJSON_GetObjectItem(json, "ts_nonce")) || !cJSON_IsString(prop))
 		{
-			json_free(json);
+			cJSON_Delete(json);
 			WLog_ERR(TAG, "Failed to find ts_nonce in PDU");
 			return -1;
 		}
 
 		Stream_Seek(s, Stream_Length(s));
 
-		ret = aad_send_auth_request(aad, ts_nonce);
-		json_free(json);
+		ret = aad_send_auth_request(aad, cJSON_GetStringValue(prop));
+		cJSON_Delete(json);
 		return ret;
 	}
 	else if (aad->state == AAD_STATE_AUTH)
 	{
 		double result = 0;
 
-		if (!(json = json_parse(Stream_PointerAs(s, char))))
+		if (!(json = cJSON_Parse(Stream_PointerAs(s, char))))
 			LOG_ERROR_AND_RETURN(-1, "Failed to parse Authentication Result PDU");
 
-		if (!json_object_get_prop(json, "authentication_result", &prop) ||
-		    !json_number_get(prop, &result))
+		if (!(prop = cJSON_GetObjectItem(json, "authentication_result")) || !cJSON_IsNumber(prop))
 		{
-			json_free(json);
+			cJSON_Delete(json);
 			WLog_ERR(TAG, "Failed to find authentication_result in PDU");
 			return -1;
 		}
+		result = cJSON_GetNumberValue(prop);
 
-		json_free(json);
+		cJSON_Delete(json);
 
 		Stream_Seek(s, Stream_Length(s));
 
