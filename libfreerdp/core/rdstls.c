@@ -670,7 +670,7 @@ static BOOL rdstls_check_state_requirements_(rdpRdstls* rdstls, RDSTLS_STATE exp
 static BOOL rdstls_send_capabilities(rdpRdstls* rdstls)
 {
 	BOOL rc = FALSE;
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_CAPABILITIES))
 		goto fail;
@@ -692,7 +692,7 @@ static BOOL rdstls_recv_authentication_request(rdpRdstls* rdstls)
 {
 	BOOL rc = FALSE;
 	int status;
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
 		goto fail;
@@ -720,7 +720,7 @@ fail:
 static BOOL rdstls_send_authentication_response(rdpRdstls* rdstls)
 {
 	BOOL rc = FALSE;
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_RSP))
 		goto fail;
@@ -742,7 +742,7 @@ static BOOL rdstls_recv_capabilities(rdpRdstls* rdstls)
 {
 	BOOL rc = FALSE;
 	int status;
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_CAPABILITIES))
 		goto fail;
@@ -770,7 +770,7 @@ fail:
 static BOOL rdstls_send_authentication_request(rdpRdstls* rdstls)
 {
 	BOOL rc = FALSE;
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!rdstls_check_state_requirements(rdstls, RDSTLS_STATE_AUTH_REQ))
 		goto fail;
@@ -792,7 +792,7 @@ static BOOL rdstls_recv_authentication_response(rdpRdstls* rdstls)
 {
 	BOOL rc = FALSE;
 	int status;
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(rdstls);
 
