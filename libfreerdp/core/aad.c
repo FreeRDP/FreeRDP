@@ -159,7 +159,7 @@ int aad_client_begin(rdpAad* aad)
 		LOG_ERROR_AND_GOTO(fail, "Unable to generate pop key");
 
 	/* Obtain an oauth authorization code */
-	if (!instance->GetAadAuthCode || !instance->GetAadAuthCode(aad->hostname, &auth_code))
+	if (!instance->GetAadAuthCode || !instance->GetAadAuthCode(instance, aad->hostname, &auth_code))
 		LOG_ERROR_AND_GOTO(fail, "Unable to obtain authorization code");
 
 	/* Set up an ssl connection to the authorization server */

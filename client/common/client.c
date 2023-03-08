@@ -937,11 +937,12 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 	return TRUE;
 }
 
-BOOL client_cli_get_aad_auth_code(const char* hostname, char** code)
+BOOL client_cli_get_aad_auth_code(freerdp* instance, const char* hostname, char** code)
 {
 	size_t len = 0;
 	char* p = NULL;
 
+	WINPR_ASSERT(instance);
 	WINPR_ASSERT(hostname);
 	WINPR_ASSERT(code);
 	*code = NULL;
