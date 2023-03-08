@@ -37,18 +37,17 @@
 
 #include "aad.h"
 
-#define TAG FREERDP_TAG("aad")
-#define LOG_ERROR_AND_GOTO(label, ...) \
-	do                                 \
-	{                                  \
-		WLog_ERR(TAG, __VA_ARGS__);    \
-		goto label;                    \
+#define LOG_ERROR_AND_GOTO(wlog, label, ...)       \
+	do                                             \
+	{                                              \
+		WLog_Print(wlog, WLOG_ERROR, __VA_ARGS__); \
+		goto label;                                \
 	} while (0);
-#define LOG_ERROR_AND_RETURN(ret, ...) \
-	do                                 \
-	{                                  \
-		WLog_ERR(TAG, __VA_ARGS__);    \
-		return ret;                    \
+#define LOG_ERROR_AND_RETURN(wlog, ret, ...)       \
+	do                                             \
+	{                                              \
+		WLog_Print(wlog, WLOG_ERROR, __VA_ARGS__); \
+		return ret;                                \
 	} while (0);
 #define XFREE(x)  \
 	do            \
@@ -97,16 +96,19 @@ struct rdp_aad
 	char* kid;
 	char* nonce;
 	char* hostname;
+	wLog* log;
 };
 
 static int alloc_sprintf(char** s, const char* template, ...);
 static BOOL get_encoded_rsa_params(EVP_PKEY* pkey, char** e, char** n);
 static BOOL generate_pop_key(rdpAad* aad);
-static BOOL read_http_message(BIO* bio, long* status_code, char** content, size_t* content_length);
+static BOOL read_http_message(rdpAad* aad, BIO* bio, long* status_code, char** content,
+                              size_t* content_length);
 
 static int print_error(const char* str, size_t len, void* u)
 {
-	WLog_ERR(TAG, "%s", str);
+	wLog* wlog = (wLog*)u;
+	WLog_Print(wlog, WLOG_ERROR, "%s [%" PRIuz "]", str, len);
 	return 1;
 }
 
@@ -120,58 +122,75 @@ rdpAad* aad_new(rdpContext* context, rdpTransport* transport)
 	if (!aad)
 		return NULL;
 
+	aad->log = WLog_Get(FREERDP_TAG("aad"));
 	aad->rdpcontext = context;
 	aad->transport = transport;
 
 	return aad;
 }
 
-static BOOL json_get_number(cJSON* json, const char* key, double* result)
+static BOOL json_get_object(wLog* wlog, cJSON* json, const char* key, cJSON** obj)
 {
 	WINPR_ASSERT(json);
 	WINPR_ASSERT(key);
-	WINPR_ASSERT(result);
 
 	if (!cJSON_HasObjectItem(json, key))
+	{
+		WLog_Print(wlog, WLOG_ERROR, "[json] does not contain a key '%s'", key);
 		return FALSE;
+	}
 
 	cJSON* prop = cJSON_GetObjectItem(json, key);
 	if (!prop)
+	{
+		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NULL", key);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL json_get_number(wLog* wlog, cJSON* json, const char* key, double* result)
+{
+	cJSON* prop = NULL;
+	if (!json_get_object(wlog, json, key, &prop))
 		return FALSE;
 
 	if (!cJSON_IsNumber(prop))
+	{
+		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NOT a NUMBER", key);
 		return FALSE;
+	}
 	*result = cJSON_GetNumberValue(prop);
 	return TRUE;
 }
 
-static BOOL json_get_const_string(cJSON* json, const char* key, const char** result)
+static BOOL json_get_const_string(wLog* wlog, cJSON* json, const char* key, const char** result)
 {
-	WINPR_ASSERT(json);
-	WINPR_ASSERT(key);
 	WINPR_ASSERT(result);
 
 	*result = NULL;
 
-	if (!cJSON_HasObjectItem(json, key))
-		return FALSE;
-
-	cJSON* prop = cJSON_GetObjectItem(json, key);
-	if (!prop)
+	cJSON* prop = NULL;
+	if (!json_get_object(wlog, json, key, &prop))
 		return FALSE;
 
 	if (!cJSON_IsString(prop))
+	{
+		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NOT a STRING", key);
 		return FALSE;
+	}
 
 	const char* str = cJSON_GetStringValue(prop);
+	if (!str)
+		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NULL", key);
 	*result = str;
 	return *result != NULL;
 }
 
-static BOOL json_get_string_alloc(cJSON* json, const char* key, char** result)
+static BOOL json_get_string_alloc(wLog* wlog, cJSON* json, const char* key, char** result)
 {
 	const char* str = NULL;
-	if (!json_get_const_string(json, key, &str))
+	if (!json_get_const_string(wlog, json, key, &str))
 		return FALSE;
 	free(*result);
 	*result = _strdup(str);
@@ -188,10 +207,8 @@ int aad_client_begin(rdpAad* aad)
 	size_t length = 0;
 	const char* hostname = NULL;
 	char* p = NULL;
-	const char* token = NULL;
 	long status_code;
 	cJSON* json = NULL;
-	cJSON* prop = NULL;
 
 	WINPR_ASSERT(aad);
 	WINPR_ASSERT(aad->rdpcontext);
@@ -205,25 +222,25 @@ int aad_client_begin(rdpAad* aad)
 	/* Get the host part of the hostname */
 	hostname = freerdp_settings_get_string(settings, FreeRDP_ServerHostname);
 	if (!hostname || !(aad->hostname = _strdup(hostname)))
-		LOG_ERROR_AND_GOTO(fail, "Unable to get hostname");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Unable to get hostname");
 	if ((p = strchr(aad->hostname, '.')))
 		*p = '\0';
 
 	if (!generate_pop_key(aad))
-		LOG_ERROR_AND_GOTO(fail, "Unable to generate pop key");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Unable to generate pop key");
 
 	/* Obtain an oauth authorization code */
 	if (!instance->GetAadAuthCode || !instance->GetAadAuthCode(instance, aad->hostname, &auth_code))
-		LOG_ERROR_AND_GOTO(fail, "Unable to obtain authorization code");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Unable to obtain authorization code");
 
 	/* Set up an ssl connection to the authorization server */
 	if (!(ssl_ctx = SSL_CTX_new(TLS_client_method())))
-		LOG_ERROR_AND_GOTO(fail, "Error setting up SSL context");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error setting up SSL context");
 	SSL_CTX_set_default_verify_paths(ssl_ctx);
 	SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
 
 	if (!(bio = BIO_new_ssl_connect(ssl_ctx)))
-		LOG_ERROR_AND_GOTO(fail, "Error setting up connection");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error setting up connection");
 	BIO_set_conn_hostname(bio, auth_server);
 	BIO_set_conn_port(bio, "https");
 
@@ -234,67 +251,68 @@ int aad_client_begin(rdpAad* aad)
 	if (alloc_sprintf(&req_header, token_http_request_header, length) < 0)
 		goto fail;
 
-	WLog_DBG(TAG, "HTTP access token request: %s%s", req_header, req_body);
+	WLog_Print(aad->log, WLOG_DEBUG, "HTTP access token request: %s%s", req_header, req_body);
 
 	ERR_clear_error();
 	if (BIO_write(bio, req_header, strlen(req_header)) < 0)
 	{
-		ERR_print_errors_cb(print_error, NULL);
+		ERR_print_errors_cb(print_error, aad->log);
 		goto fail;
 	}
 
 	ERR_clear_error();
 	if (BIO_write(bio, req_body, strlen(req_body)) < 0)
 	{
-		ERR_print_errors_cb(print_error, NULL);
+		ERR_print_errors_cb(print_error, aad->log);
 		goto fail;
 	}
 
 	/* Read in the response */
-	if (!read_http_message(bio, &status_code, &buffer, &length))
-		LOG_ERROR_AND_GOTO(fail, "Unable to read access token HTTP response");
-	WLog_DBG(TAG, "HTTP access token response: %s", buffer);
+	if (!read_http_message(aad, bio, &status_code, &buffer, &length))
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Unable to read access token HTTP response");
+	WLog_Print(aad->log, WLOG_DEBUG, "HTTP access token response: %s", buffer);
 
 	if (status_code != 200)
-		LOG_ERROR_AND_GOTO(fail, "Received status code: %li", status_code);
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Received status code: %li", status_code);
 
 	/* Extract the access token from the JSON response */
 	json = cJSON_ParseWithLength(buffer, length);
 	if (!json)
-		LOG_ERROR_AND_GOTO(fail, "Failed to parse JSON response");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Failed to parse JSON response");
 
-	if (!json_get_string_alloc(json, "access_token", &aad->access_token))
-		LOG_ERROR_AND_GOTO(fail, "Could not find \"access_token\" property in JSON response");
+	if (!json_get_string_alloc(aad->log, json, "access_token", &aad->access_token))
+		LOG_ERROR_AND_GOTO(aad->log, fail,
+		                   "Could not find \"access_token\" property in JSON response");
 
 	XFREE(buffer);
 	cJSON_free(json);
 	json = NULL;
 
 	/* Send the nonce request message */
-	WLog_DBG(TAG, "HTTP nonce request: %s", nonce_http_request);
+	WLog_Print(aad->log, WLOG_DEBUG, "HTTP nonce request: %s", nonce_http_request);
 
 	ERR_clear_error();
 	if (BIO_write(bio, nonce_http_request, strlen(nonce_http_request)) < 0)
 	{
-		ERR_print_errors_cb(print_error, NULL);
+		ERR_print_errors_cb(print_error, aad->log);
 		goto fail;
 	}
 
 	/* Read in the response */
-	if (!read_http_message(bio, &status_code, &buffer, &length))
-		LOG_ERROR_AND_GOTO(fail, "Unable to read HTTP response");
-	WLog_DBG(TAG, "HTTP nonce response: %s", buffer);
+	if (!read_http_message(aad, bio, &status_code, &buffer, &length))
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Unable to read HTTP response");
+	WLog_Print(aad->log, WLOG_DEBUG, "HTTP nonce response: %s", buffer);
 
 	if (status_code != 200)
-		LOG_ERROR_AND_GOTO(fail, "Received status code: %li", status_code);
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Received status code: %li", status_code);
 
 	/* Extract the nonce from the response */
 	json = cJSON_ParseWithLength(buffer, length);
 	if (!json)
-		LOG_ERROR_AND_GOTO(fail, "Failed to parse JSON response");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Failed to parse JSON response");
 
-	if (!json_get_string_alloc(json, "Nonce", &aad->nonce))
-		LOG_ERROR_AND_GOTO(fail, "Could not find \"Nonce\" property in JSON response");
+	if (!json_get_string_alloc(aad->log, json, "Nonce", &aad->nonce))
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Could not find \"Nonce\" property in JSON response");
 
 	ret = 1;
 
@@ -333,7 +351,7 @@ static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 	XFREE(buffer);
 
 	if (!get_encoded_rsa_params(aad->pop_key, &e, &n))
-		LOG_ERROR_AND_GOTO(fail, "Error getting RSA key params");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error getting RSA key params");
 
 	/* Construct the base64url encoded JWS payload */
 	length = alloc_sprintf(&buffer,
@@ -357,22 +375,22 @@ static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 		goto fail;
 
 	if (!(EVP_DigestSignInit(md_ctx, NULL, EVP_sha256(), NULL, aad->pop_key)))
-		LOG_ERROR_AND_GOTO(fail, "Error while initializing signature context");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error while initializing signature context");
 
 	if (!(EVP_DigestSignUpdate(md_ctx, jws_header, strlen(jws_header))))
-		LOG_ERROR_AND_GOTO(fail, "Error while signing data");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error while signing data");
 	if (!(EVP_DigestSignUpdate(md_ctx, ".", 1)))
-		LOG_ERROR_AND_GOTO(fail, "Error while signing data");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error while signing data");
 	if (!(EVP_DigestSignUpdate(md_ctx, jws_payload, strlen(jws_payload))))
-		LOG_ERROR_AND_GOTO(fail, "Error while signing data");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error while signing data");
 
 	if (!(EVP_DigestSignFinal(md_ctx, NULL, &length)))
-		LOG_ERROR_AND_GOTO(fail, "Error while signing data");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error while signing data");
 
 	if (!(buffer = malloc(length)))
 		goto fail;
 	if (!(EVP_DigestSignFinal(md_ctx, (BYTE*)buffer, &length)))
-		LOG_ERROR_AND_GOTO(fail, "Error while signing data");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error while signing data");
 
 	if (!(jws_signature = crypto_base64url_encode((BYTE*)buffer, length)))
 		goto fail;
@@ -391,7 +409,7 @@ static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 	Stream_Seek(s, length);
 
 	if (transport_write(aad->transport, s) < 0)
-		LOG_ERROR_AND_GOTO(fail, "Failed to send Authentication Request PDU");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Failed to send Authentication Request PDU");
 
 	ret = 1;
 	aad->state = AAD_STATE_AUTH;
@@ -423,7 +441,7 @@ static int aad_parse_state_initial(rdpAad* aad, wStream* s)
 	if (!json)
 		goto fail;
 
-	if (!json_get_const_string(json, "ts_nonce", &ts_nonce))
+	if (!json_get_const_string(aad->log, json, "ts_nonce", &ts_nonce))
 		goto fail;
 
 	ret = aad_send_auth_request(aad, ts_nonce);
@@ -447,7 +465,7 @@ static int aad_parse_state_auth(rdpAad* aad, wStream* s)
 	if (!json)
 		goto fail;
 
-	if (!json_get_number(json, "authentication_result", &result))
+	if (!json_get_number(aad->log, json, "authentication_result", &result))
 		goto fail;
 
 	rc = 1;
@@ -455,7 +473,7 @@ fail:
 	cJSON_free(json);
 
 	if (result != 0.0)
-		LOG_ERROR_AND_RETURN(-1, "Authentication result: %d", (int)result);
+		LOG_ERROR_AND_RETURN(aad->log, -1, "Authentication result: %d", (int)result);
 
 	aad->state = AAD_STATE_FINAL;
 	return rc;
@@ -473,7 +491,7 @@ int aad_recv(rdpAad* aad, wStream* s)
 	else if (aad->state == AAD_STATE_AUTH)
 		return aad_parse_state_auth(aad, s);
 	else
-		LOG_ERROR_AND_RETURN(-1, "Invalid state");
+		LOG_ERROR_AND_RETURN(aad->log, -1, "Invalid state");
 }
 
 AAD_STATE aad_get_state(rdpAad* aad)
@@ -497,19 +515,21 @@ void aad_free(rdpAad* aad)
 	free(aad);
 }
 
-static BOOL read_http_message(BIO* bio, long* status_code, char** content, size_t* content_length)
+static BOOL read_http_message(rdpAad* aad, BIO* bio, long* status_code, char** content,
+                              size_t* content_length)
 {
 	char buffer[1024] = { 0 };
 
+	WINPR_ASSERT(aad);
 	WINPR_ASSERT(status_code);
 	WINPR_ASSERT(content);
 	WINPR_ASSERT(content_length);
 
 	if (BIO_get_line(bio, buffer, sizeof(buffer)) <= 0)
-		LOG_ERROR_AND_RETURN(FALSE, "Error reading HTTP response");
+		LOG_ERROR_AND_RETURN(aad->log, FALSE, "Error reading HTTP response");
 
 	if (sscanf(buffer, "HTTP/%*u.%*u %li %*[^\r\n]\r\n", status_code) < 1)
-		LOG_ERROR_AND_RETURN(FALSE, "Invalid HTTP response status line");
+		LOG_ERROR_AND_RETURN(aad->log, FALSE, "Invalid HTTP response status line");
 
 	do
 	{
@@ -517,7 +537,7 @@ static BOOL read_http_message(BIO* bio, long* status_code, char** content, size_
 		char* val = NULL;
 
 		if (BIO_get_line(bio, buffer, sizeof(buffer)) <= 0)
-			LOG_ERROR_AND_RETURN(FALSE, "Error reading HTTP response");
+			LOG_ERROR_AND_RETURN(aad->log, FALSE, "Error reading HTTP response");
 
 		name = strtok_r(buffer, ":", &val);
 		if (name && _stricmp(name, "content-length") == 0)
@@ -534,7 +554,7 @@ static BOOL read_http_message(BIO* bio, long* status_code, char** content, size_
 	if (BIO_read(bio, *content, *content_length) < *content_length)
 	{
 		free(*content);
-		LOG_ERROR_AND_RETURN(FALSE, "Error reading HTTP response body");
+		LOG_ERROR_AND_RETURN(aad->log, FALSE, "Error reading HTTP response body");
 	}
 
 	return TRUE;
@@ -557,15 +577,15 @@ static BOOL generate_pop_key(rdpAad* aad)
 		return FALSE;
 
 	if (EVP_PKEY_keygen_init(ctx) <= 0)
-		LOG_ERROR_AND_GOTO(fail, "Error initializing keygen");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error initializing keygen");
 	if (EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 2048) <= 0)
-		LOG_ERROR_AND_GOTO(fail, "Error setting RSA keygen bits");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error setting RSA keygen bits");
 	if (EVP_PKEY_keygen(ctx, &aad->pop_key) <= 0)
-		LOG_ERROR_AND_GOTO(fail, "Error generating RSA pop token key");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error generating RSA pop token key");
 
 	/* Encode the public key as a JWK */
 	if (!get_encoded_rsa_params(aad->pop_key, &e, &n))
-		LOG_ERROR_AND_GOTO(fail, "Error getting RSA key params");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error getting RSA key params");
 
 	if ((length = alloc_sprintf(&buffer, "{\"e\":\"%s\",\"kty\":\"RSA\",\"n\":\"%s\"}", e, n)) < 0)
 		goto fail;
@@ -575,11 +595,11 @@ static BOOL generate_pop_key(rdpAad* aad)
 		goto fail;
 
 	if (!winpr_Digest_Init(digest, WINPR_MD_SHA256))
-		LOG_ERROR_AND_GOTO(fail, "Error initializing SHA256 digest");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error initializing SHA256 digest");
 	if (!winpr_Digest_Update(digest, (BYTE*)buffer, length))
-		LOG_ERROR_AND_GOTO(fail, "Unable to get hash of JWK");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Unable to get hash of JWK");
 	if (!winpr_Digest_Final(digest, hash, WINPR_SHA256_DIGEST_LENGTH))
-		LOG_ERROR_AND_GOTO(fail, "Unable to get hash of JWK");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Unable to get hash of JWK");
 
 	XFREE(buffer);
 
@@ -598,7 +618,7 @@ static BOOL generate_pop_key(rdpAad* aad)
 
 	/* Finally, base64url encode the JSON text to form the kid */
 	if (!(aad->kid = crypto_base64url_encode((BYTE*)buffer, length)))
-		LOG_ERROR_AND_GOTO(fail, "Error base64url encoding kid");
+		LOG_ERROR_AND_GOTO(aad->log, fail, "Error base64url encoding kid");
 
 	ret = TRUE;
 
@@ -614,8 +634,12 @@ fail:
 static BOOL get_encoded_rsa_params(EVP_PKEY* pkey, char** e, char** n)
 {
 	BIGNUM *bn_e = NULL, *bn_n = NULL;
-	BYTE buf[2048];
+	BYTE buf[2048] = { 0 };
 	size_t length = 0;
+
+	WINPR_ASSERT(pkey);
+	WINPR_ASSERT(e);
+	WINPR_ASSERT(n);
 
 	*e = NULL;
 	*n = NULL;
