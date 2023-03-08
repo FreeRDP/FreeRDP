@@ -37,9 +37,11 @@ typedef struct rdp_rdstls rdpRdstls;
 
 typedef enum
 {
+	RDSTLS_STATE_INITIAL,
 	RDSTLS_STATE_CAPABILITIES,
 	RDSTLS_STATE_AUTH_REQ,
 	RDSTLS_STATE_AUTH_RSP,
+	RDSTLS_STATE_FINAL,
 } RDSTLS_STATE;
 
 FREERDP_LOCAL int rdstls_authenticate(rdpRdstls* rdstls);
