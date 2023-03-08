@@ -535,7 +535,7 @@ owned by rdpRdp */
 		ALIGN64 pGetAadAuthCode GetAadAuthCode; /* (offset 71)
 		                                            Callback for obtaining an oauth2 authorization
 		                                           code for RDS AAD authentication */
-		UINT64 paddingE[80 - 72];               /* 71 */
+		UINT64 paddingE[80 - 72];               /* 72 */
 	};
 
 	struct rdp_channel_handles
