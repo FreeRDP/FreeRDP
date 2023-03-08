@@ -60,6 +60,8 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
 
+#define OAUTH2_CLIENT_ID "5177bc73-fd99-4c77-a90c-76844c9b6999"
+
 static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
 	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
@@ -74,6 +76,7 @@ static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->PresentGatewayMessage = client_cli_present_gateway_message;
 	instance->LogonErrorInfo = client_cli_logon_error_info;
+	instance->GetAadAuthCode = client_cli_get_aad_auth_code;
 
 	pEntryPoints = instance->pClientEntryPoints;
 	WINPR_ASSERT(pEntryPoints);
@@ -930,6 +933,35 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 
 		printf("\n");
 	}
+
+	return TRUE;
+}
+
+BOOL client_cli_get_aad_auth_code(const char* hostname, char** code)
+{
+	size_t len = 0;
+	char* p = NULL;
+
+	WINPR_ASSERT(hostname);
+	WINPR_ASSERT(code);
+	*code = NULL;
+
+	printf(
+	    "Browse to: "
+	    "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=" OAUTH2_CLIENT_ID
+	    "&response_type=code"
+	    "&scope=ms-device-service%%3A%%2F%%2Ftermsrv.wvd.microsoft.com%%2Fname%%2F%s%%2Fuser_"
+	    "impersonation"
+	    "&redirect_uri=ms-appx-web%%3a%%2f%%2fMicrosoft.AAD.BrokerPlugin%%2f5177bc73-fd99-4c77-"
+	    "a90c-76844c9b6999\n",
+	    hostname);
+	printf("Paste authorization code here: ");
+
+	if (GetLine(code, &len, stdin) < 0)
+		return FALSE;
+	p = strpbrk(*code, "\r\n");
+	if (p)
+		*p = 0;
 
 	return TRUE;
 }

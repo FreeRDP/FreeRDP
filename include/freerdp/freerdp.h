@@ -83,6 +83,7 @@ extern "C"
 		CONNECTION_STATE_INITIAL,
 		CONNECTION_STATE_NEGO,
 		CONNECTION_STATE_NLA,
+		CONNECTION_STATE_AAD,
 		CONNECTION_STATE_MCS_CREATE_REQUEST,
 		CONNECTION_STATE_MCS_CREATE_RESPONSE,
 		CONNECTION_STATE_MCS_ERECT_DOMAIN,
@@ -138,6 +139,7 @@ extern "C"
 	                                char** domain, rdp_auth_reason reason);
 	typedef BOOL (*pChooseSmartcard)(freerdp* instance, SmartcardCertInfo** cert_list, DWORD count,
 	                                 DWORD* choice, BOOL gateway);
+	typedef BOOL (*pGetAadAuthCode)(const char* hostname, char** code);
 
 	/** @brief Callback used if user interaction is required to accept
 	 *         an unknown certificate.
@@ -530,7 +532,10 @@ owned by rdpRdp */
 		                        Callback for choosing a smartcard for logon.
 		                        Used when multiple smartcards are available. Returns an index into a list
 		                        of SmartcardCertInfo pointers	*/
-		UINT64 paddingE[80 - 71]; /* 71 */
+		ALIGN64 pGetAadAuthCode GetAadAuthCode; /* (offset 71)
+		                                            Callback for obtaining an oauth2 authorization
+		                                           code for RDS AAD authentication */
+		UINT64 paddingE[80 - 72];               /* 71 */
 	};
 
 	struct rdp_channel_handles

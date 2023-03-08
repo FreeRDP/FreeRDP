@@ -3598,6 +3598,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "sec")
 		{
+			BOOL RdpSecurity = FALSE;
+			BOOL TlsSecurity = FALSE;
+			BOOL NlaSecurity = FALSE;
+			BOOL ExtSecurity = FALSE;
 			size_t count = 0, x;
 			char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 			if (count == 0)
@@ -3628,6 +3632,8 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					id = FreeRDP_NlaSecurity;
 				else if (option_starts_with("ext", cur)) /* NLA Extended */
 					id = FreeRDP_ExtSecurity;
+				else if (option_equals("aad", cur)) /* RDSAAD */
+					id = FreeRDP_AadSecurity;
 				else
 				{
 					WLog_ERR(TAG, "unknown protocol security: %s", arg->Value);
@@ -3643,8 +3649,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 
 			if (singleOptionWithoutOnOff != 0)
 			{
-				const size_t options[] = { FreeRDP_UseRdpSecurityLayer, FreeRDP_RdpSecurity,
-					                       FreeRDP_NlaSecurity, FreeRDP_TlsSecurity };
+				const size_t options[] = { FreeRDP_AadSecurity, FreeRDP_UseRdpSecurityLayer,
+					                       FreeRDP_RdpSecurity, FreeRDP_NlaSecurity,
+					                       FreeRDP_TlsSecurity };
 
 				for (size_t x = 0; x < ARRAYSIZE(options); x++)
 				{
