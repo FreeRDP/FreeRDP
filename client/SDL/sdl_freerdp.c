@@ -1246,7 +1246,7 @@ int main(int argc, char* argv[])
 	freerdp_client_warn_experimental(argc, argv);
 
 	RdpClientEntry(&clientEntryPoints);
-	sdlContext* sdl = freerdp_client_context_new(&clientEntryPoints);
+	sdlContext* sdl = (sdlContext*)freerdp_client_context_new(&clientEntryPoints);
 
 	if (!sdl)
 		goto fail;
