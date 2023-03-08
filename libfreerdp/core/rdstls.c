@@ -31,8 +31,6 @@
 #include "transport.h"
 #include "utils.h"
 
-#define TAG FREERDP_TAG("core.rdstls")
-
 #define RDSTLS_VERSION_1 0x01
 
 #define RDSTLS_TYPE_CAPABILITIES 0x01
@@ -61,6 +59,7 @@ struct rdp_rdstls
 	rdpTransport* transport;
 
 	UINT32 resultCode;
+	wLog* log;
 };
 
 /**
@@ -83,7 +82,7 @@ rdpRdstls* rdstls_new(rdpContext* context, rdpTransport* transport)
 
 	if (!rdstls)
 		return NULL;
-
+	rdstls->log = WLog_Get(FREERDP_TAG("core.rdstls"));
 	rdstls->context = context;
 	rdstls->transport = transport;
 	rdstls->server = settings->ServerMode;
@@ -125,11 +124,6 @@ static const char* rdstls_get_state_str(RDSTLS_STATE state)
 	}
 }
 
-static BOOL rdstls_valid_transition(RDSTLS_STATE originState, RDSTLS_STATE nextState)
-{
-	return originState + 1 == nextState;
-}
-
 static RDSTLS_STATE rdstls_get_state(rdpRdstls* rdstls)
 {
 	WINPR_ASSERT(rdstls);
@@ -140,15 +134,8 @@ static BOOL rdstls_set_state(rdpRdstls* rdstls, RDSTLS_STATE state)
 {
 	WINPR_ASSERT(rdstls);
 
-	WLog_DBG(TAG, "-- %s\t--> %s", rdstls_get_state_str(rdstls->state),
-	         rdstls_get_state_str(state));
-
-	if (!rdstls_valid_transition(rdstls->state, state))
-	{
-		WLog_ERR(TAG, "invalid state transition");
-		return FALSE;
-	}
-
+	WLog_Print(rdstls->log, WLOG_DEBUG, "-- %s\t--> %s", rdstls_get_state_str(rdstls->state),
+	           rdstls_get_state_str(state));
 	rdstls->state = state;
 	return TRUE;
 }
@@ -272,40 +259,42 @@ static BOOL rdstls_process_capabilities(rdpRdstls* rdstls, wStream* s)
 	UINT16 dataType;
 	UINT16 supportedVersions;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT16(s, dataType);
 	if (dataType != RDSTLS_DATA_CAPABILITIES)
 	{
-		WLog_ERR(TAG, "received invalid DataType=0x%04" PRIX16 ", expected 0x%04" PRIX16, dataType,
-		         RDSTLS_DATA_CAPABILITIES);
+		WLog_Print(rdstls->log, WLOG_ERROR,
+		           "received invalid DataType=0x%04" PRIX16 ", expected 0x%04" PRIX16, dataType,
+		           RDSTLS_DATA_CAPABILITIES);
 		return FALSE;
 	}
 
 	Stream_Read_UINT16(s, supportedVersions);
 	if ((supportedVersions & RDSTLS_VERSION_1) == 0)
 	{
-		WLog_ERR(TAG, "received invalid supportedVersions=0x%04" PRIX16 ", expected 0x%04" PRIX16,
-		         supportedVersions, RDSTLS_VERSION_1);
+		WLog_Print(rdstls->log, WLOG_ERROR,
+		           "received invalid supportedVersions=0x%04" PRIX16 ", expected 0x%04" PRIX16,
+		           supportedVersions, RDSTLS_VERSION_1);
 		return FALSE;
 	}
 
 	return TRUE;
 }
 
-static BOOL rdstls_read_unicode_string(wStream* s, char** str)
+static BOOL rdstls_read_unicode_string(wLog* log, wStream* s, char** str)
 {
 	UINT16 length = 0;
 
 	WINPR_ASSERT(str);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 2))
 		return FALSE;
 
 	Stream_Read_UINT16(s, length);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, length))
 		return FALSE;
 
 	if (length <= 2)
@@ -321,7 +310,7 @@ static BOOL rdstls_read_unicode_string(wStream* s, char** str)
 	return TRUE;
 }
 
-static BOOL rdstls_read_data(wStream* s, UINT16* pLength, const BYTE** pData)
+static BOOL rdstls_read_data(wLog* log, wStream* s, UINT16* pLength, const BYTE** pData)
 {
 	UINT16 length = 0;
 
@@ -330,12 +319,12 @@ static BOOL rdstls_read_data(wStream* s, UINT16* pLength, const BYTE** pData)
 
 	*pData = NULL;
 	*pLength = 0;
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 2))
 		return FALSE;
 
 	Stream_Read_UINT16(s, length);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, length))
 		return FALSE;
 
 	if (length <= 2)
@@ -349,7 +338,7 @@ static BOOL rdstls_read_data(wStream* s, UINT16* pLength, const BYTE** pData)
 	return Stream_SafeSeek(s, length);
 }
 
-static BOOL rdstls_cmp_data(const char* field, const BYTE* serverData,
+static BOOL rdstls_cmp_data(wLog* log, const char* field, const BYTE* serverData,
                             const UINT32 serverDataLength, const BYTE* clientData,
                             const UINT16 clientDataLength)
 {
@@ -357,14 +346,14 @@ static BOOL rdstls_cmp_data(const char* field, const BYTE* serverData,
 	{
 		if (clientDataLength == 0)
 		{
-			WLog_ERR(TAG, "expected %s", field);
+			WLog_Print(log, WLOG_ERROR, "expected %s", field);
 			return FALSE;
 		}
 
 		if (serverDataLength > UINT16_MAX || serverDataLength != clientDataLength ||
 		    memcmp(serverData, clientData, serverDataLength) != 0)
 		{
-			WLog_ERR(TAG, "%s verification failed", field);
+			WLog_Print(log, WLOG_ERROR, "%s verification failed", field);
 			return FALSE;
 		}
 	}
@@ -372,19 +361,20 @@ static BOOL rdstls_cmp_data(const char* field, const BYTE* serverData,
 	return TRUE;
 }
 
-static BOOL rdstls_cmp_str(const char* field, const char* serverStr, const char* clientStr)
+static BOOL rdstls_cmp_str(wLog* log, const char* field, const char* serverStr,
+                           const char* clientStr)
 {
 	if (!utils_str_is_empty(serverStr))
 	{
 		if (utils_str_is_empty(clientStr))
 		{
-			WLog_ERR(TAG, "expected %s", field);
+			WLog_Print(log, WLOG_ERROR, "expected %s", field);
 			return FALSE;
 		}
 
 		if (strcmp(serverStr, clientStr) != 0)
 		{
-			WLog_ERR(TAG, "%s verification failed", field);
+			WLog_Print(log, WLOG_ERROR, "%s verification failed", field);
 			return FALSE;
 		}
 	}
@@ -411,16 +401,16 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 	rdpSettings* settings = rdstls->context->settings;
 	WINPR_ASSERT(settings);
 
-	if (!rdstls_read_data(s, &clientRedirectionGuidLength, &clientRedirectionGuid))
+	if (!rdstls_read_data(rdstls->log, s, &clientRedirectionGuidLength, &clientRedirectionGuid))
 		goto fail;
 
-	if (!rdstls_read_unicode_string(s, &clientUsername))
+	if (!rdstls_read_unicode_string(rdstls->log, s, &clientUsername))
 		goto fail;
 
-	if (!rdstls_read_unicode_string(s, &clientDomain))
+	if (!rdstls_read_unicode_string(rdstls->log, s, &clientDomain))
 		goto fail;
 
-	if (!rdstls_read_unicode_string(s, &clientPassword))
+	if (!rdstls_read_unicode_string(rdstls->log, s, &clientPassword))
 		goto fail;
 
 	serverRedirectionGuid = freerdp_settings_get_pointer(settings, FreeRDP_RedirectionGuid);
@@ -432,17 +422,18 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 
 	rdstls->resultCode = ERROR_SUCCESS;
 
-	if (!rdstls_cmp_data("RedirectionGuid", serverRedirectionGuid, serverRedirectionGuidLength,
-	                     clientRedirectionGuid, clientRedirectionGuidLength))
+	if (!rdstls_cmp_data(rdstls->log, "RedirectionGuid", serverRedirectionGuid,
+	                     serverRedirectionGuidLength, clientRedirectionGuid,
+	                     clientRedirectionGuidLength))
 		rdstls->resultCode = ERROR_LOGON_FAILURE;
 
-	if (!rdstls_cmp_str("UserName", serverUsername, clientUsername))
+	if (!rdstls_cmp_str(rdstls->log, "UserName", serverUsername, clientUsername))
 		rdstls->resultCode = ERROR_LOGON_FAILURE;
 
-	if (!rdstls_cmp_str("Domain", serverDomain, clientDomain))
+	if (!rdstls_cmp_str(rdstls->log, "Domain", serverDomain, clientDomain))
 		rdstls->resultCode = ERROR_LOGON_FAILURE;
 
-	if (!rdstls_cmp_str("Password", serverPassword, clientPassword))
+	if (!rdstls_cmp_str(rdstls->log, "Password", serverPassword, clientPassword))
 		rdstls->resultCode = ERROR_LOGON_FAILURE;
 
 	rc = TRUE;
@@ -460,7 +451,7 @@ static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s)
 {
 	UINT16 dataType;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 2))
 		return FALSE;
 
 	Stream_Read_UINT16(s, dataType);
@@ -475,10 +466,10 @@ static BOOL rdstls_process_authentication_request(rdpRdstls* rdstls, wStream* s)
 				return FALSE;
 			break;
 		default:
-			WLog_ERR(TAG,
-			         "received invalid DataType=0x%04" PRIX16 ", expected 0x%04" PRIX16
-			         " or 0x%04" PRIX16,
-			         dataType, RDSTLS_DATA_PASSWORD_CREDS, RDSTLS_DATA_AUTORECONNECT_COOKIE);
+			WLog_Print(rdstls->log, WLOG_ERROR,
+			           "received invalid DataType=0x%04" PRIX16 ", expected 0x%04" PRIX16
+			           " or 0x%04" PRIX16,
+			           dataType, RDSTLS_DATA_PASSWORD_CREDS, RDSTLS_DATA_AUTORECONNECT_COOKIE);
 			return FALSE;
 	}
 
@@ -490,23 +481,24 @@ static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s
 	UINT16 dataType;
 	UINT32 resultCode;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 6))
 		return FALSE;
 
 	Stream_Read_UINT16(s, dataType);
 	if (dataType != RDSTLS_DATA_RESULT_CODE)
 	{
-		WLog_ERR(TAG, "received invalid DataType=0x%04" PRIX16 ", expected 0x%04" PRIX16, dataType,
-		         RDSTLS_DATA_RESULT_CODE);
+		WLog_Print(rdstls->log, WLOG_ERROR,
+		           "received invalid DataType=0x%04" PRIX16 ", expected 0x%04" PRIX16, dataType,
+		           RDSTLS_DATA_RESULT_CODE);
 		return FALSE;
 	}
 
 	Stream_Read_UINT32(s, resultCode);
 	if (resultCode != ERROR_SUCCESS)
 	{
-		WLog_ERR(TAG, "resultCode: %s [0x%08" PRIX32 "] %s",
-		         freerdp_get_last_error_name(resultCode), resultCode,
-		         freerdp_get_last_error_string(resultCode));
+		WLog_Print(rdstls->log, WLOG_ERROR, "resultCode: %s [0x%08" PRIX32 "] %s",
+		           freerdp_get_last_error_name(resultCode), resultCode,
+		           freerdp_get_last_error_string(resultCode));
 		return FALSE;
 	}
 
@@ -549,7 +541,8 @@ static BOOL rdstls_send(rdpTransport* transport, wStream* s, void* extra)
 			}
 			else
 			{
-				WLog_ERR(TAG, "cannot authenticate with password or auto-reconnect cookie");
+				WLog_Print(rdstls->log, WLOG_ERROR,
+				           "cannot authenticate with password or auto-reconnect cookie");
 				return FALSE;
 			}
 			break;
@@ -580,14 +573,15 @@ static int rdstls_recv(rdpTransport* transport, wStream* s, void* extra)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(rdstls);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdstls->log, s, 4))
 		return FALSE;
 
 	Stream_Read_UINT16(s, version);
 	if (version != RDSTLS_VERSION_1)
 	{
-		WLog_ERR(TAG, "received invalid RDSTLS Version=0x%04" PRIX16 ", expected 0x%04" PRIX16,
-		         version, RDSTLS_VERSION_1);
+		WLog_Print(rdstls->log, WLOG_ERROR,
+		           "received invalid RDSTLS Version=0x%04" PRIX16 ", expected 0x%04" PRIX16,
+		           version, RDSTLS_VERSION_1);
 		return -1;
 	}
 
@@ -607,7 +601,7 @@ static int rdstls_recv(rdpTransport* transport, wStream* s, void* extra)
 				return -1;
 			break;
 		default:
-			WLog_ERR(TAG, "unknown RDSTLS PDU type");
+			WLog_Print(rdstls->log, WLOG_ERROR, "unknown RDSTLS PDU type");
 			return -1;
 	}
 
