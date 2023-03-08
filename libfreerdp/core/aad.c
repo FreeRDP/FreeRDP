@@ -33,13 +33,38 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
-#include <openssl/core_names.h>
-#endif
-
 #include "transport.h"
 
 #include "aad.h"
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#include <openssl/core_names.h>
+#else
+static int BIO_get_line(BIO* bio, char* buf, int size)
+{
+	int pos = 0;
+
+	if (size <= 1)
+		return 0;
+
+	while (pos < size - 1)
+	{
+		char c = '\0';
+		const int rc = BIO_read(bio, &c, sizeof(c));
+		if (rc < 0)
+			return rc;
+		if (rc > 0)
+		{
+			buf[pos++] = c;
+			if (c == '\n')
+				break;
+		}
+	}
+
+	buf[pos] = '\0';
+	return pos;
+}
+#endif
 
 #define OAUTH2_CLIENT_ID "5177bc73-fd99-4c77-a90c-76844c9b6999"
 static const char* auth_server = "login.microsoftonline.com";
@@ -101,8 +126,10 @@ static int alloc_sprintf(char** s, size_t* slen, const char* template, ...)
 	va_start(ap, template);
 	const int length = vsnprintf(NULL, 0, template, ap);
 	va_end(ap);
+	if (length < 0)
+		return length;
 
-	char* str = calloc(length + 1, sizeof(char));
+	char* str = calloc((size_t)length + 1ul, sizeof(char));
 	if (!str)
 		return -1;
 
@@ -112,7 +139,7 @@ static int alloc_sprintf(char** s, size_t* slen, const char* template, ...)
 
 	WINPR_ASSERT(length == plen);
 	*s = str;
-	*slen = length;
+	*slen = (size_t)length;
 	return length;
 }
 
@@ -247,6 +274,11 @@ static BIO* aad_connect_https(rdpAad* aad, SSL_CTX* ssl_ctx)
 	WINPR_ASSERT(ssl_ctx);
 
 	const int vprc = SSL_CTX_set_default_verify_paths(ssl_ctx);
+	if (vprc != 1)
+	{
+		WLog_Print(aad->log, WLOG_ERROR, "Error setting verify paths");
+		return NULL;
+	}
 	const long mrc = SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
 
 	BIO* bio = BIO_new_ssl_connect(ssl_ctx);
@@ -256,7 +288,19 @@ static BIO* aad_connect_https(rdpAad* aad, SSL_CTX* ssl_ctx)
 		return NULL;
 	}
 	const long chrc = BIO_set_conn_hostname(bio, auth_server);
+	if (chrc != 1)
+	{
+		WLog_Print(aad->log, WLOG_ERROR, "Error setting BIO hostname");
+		BIO_free(bio);
+		return NULL;
+	}
 	const long cprc = BIO_set_conn_port(bio, "https");
+	if (cprc != 1)
+	{
+		WLog_Print(aad->log, WLOG_ERROR, "Error setting BIO port");
+		BIO_free(bio);
+		return NULL;
+	}
 	return bio;
 }
 
@@ -266,8 +310,11 @@ static BOOL aad_logging_bio_write(rdpAad* aad, BIO* bio, const char* str)
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(str);
 
+	const size_t size = strlen(str);
+	if (size > INT_MAX)
+		return FALSE;
 	ERR_clear_error();
-	if (BIO_write(bio, str, strlen(str)) < 0)
+	if (BIO_write(bio, str, (int)size) < 0)
 	{
 		ERR_print_errors_cb(print_error, aad->log);
 		return FALSE;
@@ -489,7 +536,7 @@ static char* aad_create_jws_header(rdpAad* aad)
 	if (length < 0)
 		return NULL;
 
-	char* jws_header = crypto_base64url_encode((BYTE*)buffer, bufferlen);
+	char* jws_header = crypto_base64url_encode((const BYTE*)buffer, bufferlen);
 	free(buffer);
 	return jws_header;
 }
@@ -582,7 +629,7 @@ static char* aad_final_digest(rdpAad* aad, EVP_MD_CTX* ctx)
 		           siglen, fsiglen);
 		goto fail;
 	}
-	jws_signature = crypto_base64url_encode((BYTE*)buffer, fsiglen);
+	jws_signature = crypto_base64url_encode((const BYTE*)buffer, fsiglen);
 fail:
 	free(buffer);
 	return jws_signature;
@@ -624,6 +671,7 @@ fail:
 static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 {
 	int ret = -1;
+	char* jws_header = NULL;
 	char* jws_payload = NULL;
 	char* jws_signature = NULL;
 
@@ -635,7 +683,7 @@ static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 		goto fail;
 
 	/* Construct the base64url encoded JWS header */
-	char* jws_header = aad_create_jws_header(aad);
+	jws_header = aad_create_jws_header(aad);
 	if (!jws_header)
 		goto fail;
 
@@ -739,6 +787,7 @@ int aad_recv(rdpAad* aad, wStream* s)
 			return aad_parse_state_initial(aad, s);
 		case AAD_STATE_AUTH:
 			return aad_parse_state_auth(aad, s);
+		case AAD_STATE_FINAL:
 		default:
 			WLog_Print(aad->log, WLOG_ERROR, "Invalid AAD_STATE %d", aad->state);
 			return -1;
@@ -775,10 +824,11 @@ static BOOL read_http_message(rdpAad* aad, BIO* bio, long* status_code, char** c
 	WINPR_ASSERT(content);
 	WINPR_ASSERT(content_length);
 
+	*content_length = 0;
 	const int rb = BIO_get_line(bio, buffer, sizeof(buffer));
 	if (rb <= 0)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "Error reading HTTP response");
+		WLog_Print(aad->log, WLOG_ERROR, "Error reading HTTP response [BIO_get_line %d]", rb);
 		return FALSE;
 	}
 
@@ -790,10 +840,10 @@ static BOOL read_http_message(rdpAad* aad, BIO* bio, long* status_code, char** c
 
 	do
 	{
-		const int rb = BIO_get_line(bio, buffer, sizeof(buffer));
-		if (rb <= 0)
+		const int rbb = BIO_get_line(bio, buffer, sizeof(buffer));
+		if (rbb <= 0)
 		{
-			WLog_Print(aad->log, WLOG_ERROR, "Error reading HTTP response");
+			WLog_Print(aad->log, WLOG_ERROR, "Error reading HTTP response [BIO_get_line %d]", rbb);
 			return FALSE;
 		}
 
@@ -822,13 +872,22 @@ static BOOL read_http_message(rdpAad* aad, BIO* bio, long* status_code, char** c
 	if (!*content)
 		return FALSE;
 
-	const int brc = BIO_read(bio, *content, *content_length);
-	if (brc < *content_length)
+	size_t offset = 0;
+	while (offset < *content_length)
 	{
-		free(*content);
-		WLog_Print(aad->log, WLOG_ERROR, "Error reading HTTP response body (BIO_read returned %d)",
-		           brc);
-		return FALSE;
+		const size_t diff = *content_length - offset;
+		int len = (int)diff;
+		if (diff > INT_MAX)
+			len = INT_MAX;
+		const int brc = BIO_read(bio, &(*content)[offset], len);
+		if (brc <= 0)
+		{
+			free(*content);
+			WLog_Print(aad->log, WLOG_ERROR,
+			           "Error reading HTTP response body (BIO_read returned %d)", brc);
+			return FALSE;
+		}
+		offset += (size_t)brc;
 	}
 
 	return TRUE;
@@ -925,7 +984,7 @@ static BOOL generate_json_base64_str(rdpAad* aad, const char* b64_hash)
 
 	/* Finally, base64url encode the JSON text to form the kid */
 	free(aad->kid);
-	aad->kid = crypto_base64url_encode((BYTE*)buffer, length);
+	aad->kid = crypto_base64url_encode((const BYTE*)buffer, (size_t)length);
 	free(buffer);
 
 	if (!aad->kid)
@@ -1000,7 +1059,7 @@ static char* bn_to_base64_url(wLog* wlog, BIGNUM* bn)
 		WLog_Print(wlog, WLOG_ERROR, "BN_bn2bin returned %d, expected result %d", bnlen, length);
 		return NULL;
 	}
-	char* b64 = crypto_base64url_encode(buf, length);
+	char* b64 = crypto_base64url_encode(buf, (size_t)length);
 	free(buf);
 
 	if (!b64)
