@@ -987,9 +987,9 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 	 * reading in one byte at a time until we encounter the terminating null byte */
 	if (transport->AadMode)
 	{
+		BYTE c = '\0';
 		do
 		{
-			BYTE c = '\0';
 			const int rc = transport_read_layer(transport, &c, 1);
 			if (rc != 1)
 				return rc;
