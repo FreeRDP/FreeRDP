@@ -854,7 +854,11 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 		}
 	}
 	else if (transport->RdstlsMode)
+	{
 		pduLength = rdstls_parse_pdu(transport->log, s);
+		if (pduLength <= 0)
+			return pduLength;
+	}
 	else
 	{
 		UINT8 version;
