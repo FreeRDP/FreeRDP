@@ -166,10 +166,12 @@ static BOOL rdp_redirection_get_data(wStream* s, UINT32* pLength, const BYTE** p
 static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t maxLength)
 {
 	UINT32 length = 0;
-	const WCHAR* wstr = NULL;
+	const BYTE* data = NULL;
 
-	if (!rdp_redirection_get_data(s, &length, &wstr))
+	if (!rdp_redirection_get_data(s, &length, &data))
 		return FALSE;
+
+	const WCHAR* wstr = (const WCHAR*)data;
 
 	if ((length % 2) || length < 2 || length > maxLength)
 	{
@@ -250,7 +252,7 @@ static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* p
 
 	if (!rdp_redirection_get_data(s, pLength, &ptr))
 		return FALSE;
-	const WCHAR* wchar = ptr;
+	const WCHAR* wchar = (const WCHAR*)ptr;
 
 	size_t utf8_len = 0;
 	char* utf8 = ConvertWCharNToUtf8Alloc(wchar, *pLength, &utf8_len);
@@ -353,7 +355,7 @@ static BOOL rdp_redirection_read_target_cert(rdpRedirection* redirection, const 
 	redirection->TargetCertificate = NULL;
 
 	size_t plength = 0;
-	BYTE* ptr = NULL;
+	const BYTE* ptr = NULL;
 	while (Stream_GetRemainingLength(s) > 0)
 	{
 		UINT32 type = 0;
@@ -537,8 +539,9 @@ int rdp_redirection_apply_settings(rdpRdp* rdp)
 			BOOL valid = TRUE;
 			size_t tsvlen = 0;
 
-			char* tsv = ConvertWCharNToUtf8Alloc(
-			    redirection->TsvUrl, redirection->TsvUrlLength / sizeof(WCHAR), &tsvlen);
+			char* tsv =
+			    ConvertWCharNToUtf8Alloc((const WCHAR*)redirection->TsvUrl,
+			                             redirection->TsvUrlLength / sizeof(WCHAR), &tsvlen);
 			if (!tsv || !lb)
 				valid = FALSE;
 			else if (tsvlen != lblen)
