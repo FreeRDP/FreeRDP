@@ -448,7 +448,7 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 	    freerdp_settings_get_uint32(settings, FreeRDP_RedirectionGuidLength);
 	serverUsername = freerdp_settings_get_string(settings, FreeRDP_Username);
 	serverDomain = freerdp_settings_get_string(settings, FreeRDP_Domain);
-	serverPassword = freerdp_settings_get_pointer(settings, FreeRDP_Password);
+	serverPassword = freerdp_settings_get_string(settings, FreeRDP_Password);
 
 	rdstls->resultCode = ERROR_SUCCESS;
 
