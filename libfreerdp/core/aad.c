@@ -337,11 +337,11 @@ static char* aad_read_response(rdpAad* aad, BIO* bio, size_t* plen, const char* 
 		WLog_Print(aad->log, WLOG_ERROR, "Unable to read %s HTTP response", what);
 		return NULL;
 	}
-	WLog_Print(aad->log, WLOG_DEBUG, "%s HTTP response: %s", buffer);
+	WLog_Print(aad->log, WLOG_DEBUG, "%s HTTP response: %s", what, buffer);
 
 	if (status_code != 200)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "%s HTTP status code: %li", status_code);
+		WLog_Print(aad->log, WLOG_ERROR, "%s HTTP status code: %li", what, status_code);
 		free(buffer);
 		return NULL;
 	}
@@ -849,7 +849,7 @@ static BOOL read_http_message(rdpAad* aad, BIO* bio, long* status_code, char** c
 		}
 
 		char* val = NULL;
-		char* name = strtok_r(buffer, ":", &val);
+		char* name = strtok_s(buffer, ":", &val);
 		if (name && (_stricmp(name, "content-length") == 0))
 		{
 			errno = 0;
