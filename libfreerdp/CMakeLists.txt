@@ -82,6 +82,10 @@ macro (freerdp_definition_add)
          set (LIBFREERDP_DEFINITIONS ${LIBFREERDP_DEFINITIONS} PARENT_SCOPE)
 endmacro()
 
+find_package(cJSON REQUIRED)
+freerdp_include_directory_add(${CJSON_INCLUDE_DIRS})
+freerdp_library_add(${CJSON_LIBRARIES})
+
 if (WITH_SWSCALE)
     find_package(SWScale REQUIRED)
 endif(WITH_SWSCALE)
