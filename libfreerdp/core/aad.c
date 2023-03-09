@@ -153,11 +153,13 @@ static SSIZE_T stream_sprintf(wStream* s, const char* fmt, ...)
 	if (rc < 0)
 		return rc;
 
-	if (!Stream_EnsureRemainingCapacity(s, (size_t)rc))
+	if (!Stream_EnsureRemainingCapacity(s, (size_t)rc + 1))
 		return -1;
 
 	char* ptr = Stream_PointerAs(s, char);
-	const int rc2 = vsnprintf(ptr, rc, fmt, ap);
+	va_start(ap, fmt);
+	const int rc2 = vsnprintf(ptr, rc + 1, fmt, ap);
+	va_end(ap);
 	if (rc != rc2)
 		return -23;
 	if (!Stream_SafeSeek(s, (size_t)rc2))
@@ -206,6 +208,7 @@ static BOOL json_get_object(wLog* wlog, cJSON* json, const char* key, cJSON** ob
 		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NULL", key);
 		return FALSE;
 	}
+	*obj = prop;
 	return TRUE;
 }
 
@@ -224,7 +227,6 @@ static BOOL json_get_number(wLog* wlog, cJSON* json, const char* key, double* re
 	*result = cJSON_GetNumberValue(prop);
 	rc = TRUE;
 fail:
-	cJSON_Delete(prop);
 	return rc;
 }
 
@@ -252,7 +254,6 @@ static BOOL json_get_const_string(wLog* wlog, cJSON* json, const char* key, cons
 	rc = str != NULL;
 
 fail:
-	cJSON_Delete(prop);
 	return rc;
 }
 
@@ -373,7 +374,7 @@ static BOOL aad_read_and_extract_token_from_json(rdpAad* aad, BIO* bio)
 	rc = TRUE;
 fail:
 	free(buffer);
-	cJSON_free(json);
+	cJSON_Delete(json);
 	return rc;
 }
 
@@ -401,7 +402,7 @@ static BOOL aad_read_and_extrace_nonce_from_json(rdpAad* aad, BIO* bio)
 	rc = TRUE;
 fail:
 	free(buffer);
-	cJSON_free(json);
+	cJSON_Delete(json);
 	return rc;
 }
 
@@ -459,7 +460,7 @@ int aad_client_begin(rdpAad* aad)
 	}
 
 	aad->hostname = _strdup(hostname);
-	if (aad->hostname)
+	if (!aad->hostname)
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "_strdup(FreeRDP_ServerHostname) == NULL");
 		return -1;
@@ -498,7 +499,7 @@ int aad_client_begin(rdpAad* aad)
 		goto fail;
 
 	/* Construct and send the token request message */
-	if (aad_send_token_request(aad, bio, auth_code))
+	if (!aad_send_token_request(aad, bio, auth_code))
 		goto fail;
 
 	/* Extract the access token from the JSON response */
@@ -614,7 +615,7 @@ static char* aad_final_digest(rdpAad* aad, EVP_MD_CTX* ctx)
 		goto fail;
 	}
 
-	size_t fsiglen = 0;
+	size_t fsiglen = siglen;
 	const int dsf2 = EVP_DigestSignFinal(ctx, (BYTE*)buffer, &fsiglen);
 	if (dsf2 <= 0)
 	{
@@ -742,7 +743,7 @@ static int aad_parse_state_initial(rdpAad* aad, wStream* s)
 
 	ret = aad_send_auth_request(aad, ts_nonce);
 fail:
-	cJSON_free(json);
+	cJSON_Delete(json);
 	return ret;
 }
 
@@ -772,7 +773,7 @@ static int aad_parse_state_auth(rdpAad* aad, wStream* s)
 	aad->state = AAD_STATE_FINAL;
 	rc = 1;
 fail:
-	cJSON_free(json);
+	cJSON_Delete(json);
 	return rc;
 }
 
