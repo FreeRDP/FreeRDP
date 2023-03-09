@@ -18,11 +18,6 @@
 set(MODULE_NAME "freerdp-core")
 set(MODULE_PREFIX "FREERDP_CORE")
 
-find_package(cJSON REQUIRED)
-
-freerdp_include_directory_add(${CJSON_INCLUDE_DIRS})
-freerdp_library_add(${CJSON_LIBRARIES})
-
 freerdp_definition_add(-DEXT_PATH="${FREERDP_EXTENSION_PATH}")
 
 freerdp_include_directory_add(${OPENSSL_INCLUDE_DIR})
