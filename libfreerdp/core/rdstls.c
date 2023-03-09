@@ -224,20 +224,11 @@ static SSIZE_T rdstls_write_string(wStream* s, const char* str)
 
 static BOOL rdstls_write_data(wStream* s, UINT32 length, const BYTE* data)
 {
-	if (!Stream_EnsureRemainingCapacity(s, 2))
-		return -1;
-
 	if (!data)
-	{
-		return -1;
-		/* Write unicode null */
-		Stream_Write_UINT16(s, 2);
-		if (!Stream_EnsureRemainingCapacity(s, 2))
-			return -1;
+		return FALSE;
 
-		Stream_Write_UINT16(s, 0);
-		return TRUE;
-	}
+	if (!Stream_EnsureRemainingCapacity(s, 2))
+		return FALSE;
 
 	Stream_Write_UINT16(s, length);
 
