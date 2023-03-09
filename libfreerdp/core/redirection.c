@@ -654,7 +654,7 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return STATE_RUN_FAILED;
 
-	Stream_Read_UINT16(s, flags);                  /* flags (2 bytes) */
+	Stream_Read_UINT16(s, flags); /* flags (2 bytes) */
 	if (flags != SEC_REDIRECTION_PKT)
 	{
 		char buffer1[1024] = { 0 };
@@ -789,9 +789,8 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_REDIRECTION_GUID)
 	{
-		if (!rdp_redirection_read_base64_wchar(LB_REDIRECTION_GUID, s,
-		                                       &redirection->RedirectionGuidLength,
-		                                       &redirection->RedirectionGuid))
+		if (!rdp_redirection_read_data(LB_REDIRECTION_GUID, s, &redirection->RedirectionGuidLength,
+		                               &redirection->RedirectionGuid))
 			return STATE_RUN_FAILED;
 	}
 
