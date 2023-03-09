@@ -6,10 +6,13 @@ OPENSSL_TAG=openssl-1.1.1s
 OPENSSL_HASH=c5ac01e760ee6ff0dab61d6b2bbd30146724d063eb322180c6f18a6f74e4b6aa
 FFMPEG_TAG=n4.4.1
 FFMPEG_HASH=82b43cc67296bcd01a59ae6b327cdb50121d3a9e35f41a30de1edd71bb4a6666
+CJSON_TAG=v1.7.15
+CJSON_HASH=d348621ca93571343a56862df7de4ff3bc9b5667
 
 WITH_OPENH264=0
 WITH_OPENSSL=0
 WITH_FFMPEG=0
+WITH_CJSON=0
 
 SRC_DIR=$(dirname "${BASH_SOURCE[0]}")
 SRC_DIR=$(realpath "$SRC_DIR")
@@ -44,6 +47,10 @@ do
 			;;
 		--ffmpeg)
 			WITH_FFMPEG=1
+			shift
+			;;
+		--cjson)
+			WITH_CJSON=1
 			shift
 			;;
 		--openssl)
@@ -155,6 +162,20 @@ do
 	else
 		CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_FFMPEG=OFF"
 	fi
+	if [ $WITH_CJSON -ne 0 ];
+	then
+		if [ $BUILD_DEPS -ne 0 ];
+		then
+			common_run bash $SCRIPT_PATH/android-build-cjson.sh \
+				--src $BUILD_SRC/cjson --dst $BUILD_DST \
+				--sdk "$ANDROID_SDK" \
+				--ndk "$ANDROID_NDK" \
+				--arch $ARCH \
+				--target $NDK_TARGET \
+				--tag $CJSON_TAG \
+				--hash $CJSON_HASH
+		fi
+	fi
 	if [ $WITH_OPENSSL -ne 0 ];
 	then
 		if [ $BUILD_DEPS -ne 0 ];
@@ -164,7 +185,7 @@ do
 				--sdk "$ANDROID_SDK" \
 				--ndk $ANDROID_NDK \
 				--arch $ARCH \
-								--target $NDK_TARGET \
+				--target $NDK_TARGET \
 				--tag $OPENSSL_TAG \
 				--hash $OPENSSL_HASH
 		fi
@@ -181,6 +202,9 @@ do
 			-DANDROID_ABI=$ARCH \
 			-DCMAKE_INSTALL_PREFIX=$BUILD_DST/$ARCH \
 			-DCMAKE_INSTALL_LIBDIR=. \
+			-DCMAKE_PREFIX_PATH=$BUILD_DST/$ARCH \
+			-DCMAKE_SHARED_LINKER_FLAGS="-L$BUILD_DST/$ARCH" \
+			-DcJSON_DIR=$BUILD_DST/$ARCH/cmake/cJSON \
 			$SRC_DIR
 		echo $(pwd)
 		common_run $CMAKE_PROGRAM --build . --target install
