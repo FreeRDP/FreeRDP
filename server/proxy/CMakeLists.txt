@@ -100,7 +100,7 @@ write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ProxyConfig
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ProxyConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ProxyConfigVersion.cmake
 	DESTINATION ${FREERDP_PROXY_CMAKE_INSTALL_DIR})
-if (CMAKE_BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
     install(EXPORT FreeRDP-ProxyTargets DESTINATION ${FREERDP_PROXY_CMAKE_INSTALL_DIR})
 endif()
 

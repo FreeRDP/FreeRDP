@@ -90,6 +90,6 @@ write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ServerConfi
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ServerConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ServerConfigVersion.cmake
 	DESTINATION ${FREERDP_SERVER_CMAKE_INSTALL_DIR})
 
-if (CMAKE_BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
     install(EXPORT FreeRDP-ServerTargets DESTINATION ${FREERDP_SERVER_CMAKE_INSTALL_DIR})
 endif()
