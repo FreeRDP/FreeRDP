@@ -87,11 +87,9 @@ find_package(cJSON)
 # some very enthusiastic packagers forgot to package the cJSONConfig.cmake
 # so try to find the paths manually
 if (NOT CJSON_FOUND)
-	message("falling back to manual cJSON detection")
 	find_file(CJSON_INCLUDE_HEADER
 		NAMES cJSON.h
 		PATH_SUFFIXES cjson
-		REQUIRED
 	)
 
 	# Extract the include base path from the header file path.
@@ -102,12 +100,20 @@ if (NOT CJSON_FOUND)
 
 	find_library(CJSON_LIBRARIES
 		NAMES cjson
-	       	REQUIRED
 	)
+
+	if (CJSON_INCLUDE_DIRS AND CJSON_LIBRARIES)
+		set(CJSON_FOUND ON)
+	endif()
 endif()
 
-freerdp_include_directory_add(${CJSON_INCLUDE_DIRS})
-freerdp_library_add(${CJSON_LIBRARIES})
+if (CJSON_FOUND)
+	freerdp_definition_add(-DCJSON_FOUND)
+	freerdp_include_directory_add(${CJSON_INCLUDE_DIRS})
+	freerdp_library_add(${CJSON_LIBRARIES})
+else()
+	message(WARNING "building without cJSON, AAD authentication disabled for this build")
+endif()
 
 if (WITH_SWSCALE)
     find_package(SWScale REQUIRED)
