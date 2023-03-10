@@ -373,8 +373,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Scaling factor for desktop applications (value between 100 and 500)" },
 	{ "scale-device", COMMAND_LINE_VALUE_REQUIRED, "100|140|180", "100", NULL, -1, NULL,
 	  "Scaling factor for app store applications" },
-	{ "sec", COMMAND_LINE_VALUE_REQUIRED, "[rdp|tls|nla|ext]", NULL, NULL, -1, NULL,
-	  "Force specific protocol security" },
+	{ "sec", COMMAND_LINE_VALUE_REQUIRED,
+	  "[rdp[:[on|off]]|tls[:[on|off]]|nla[:[on|off]]|ext[:[on|off]]]", NULL, NULL, -1, NULL,
+	  "Force specific protocol security. e.g. /sec:nla enables NLA and disables all others, while "
+	  "/sec:nla:[on|off] just toggles NLA" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "sec-ext", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "[DEPRECATED, use /sec:ext] NLA extended protocol security" },

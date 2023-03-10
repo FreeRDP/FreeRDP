@@ -1730,17 +1730,25 @@ BOOL option_equals(const char* what, const char* val)
 	return _stricmp(what, val) == 0;
 }
 
-static int parse_on_off_option(const char* value)
+typedef enum
+{
+	PARSE_ON,
+	PARSE_OFF,
+	PARSE_NONE,
+	PARSE_FAIL
+} PARSE_ON_OFF_RESULT;
+
+static PARSE_ON_OFF_RESULT parse_on_off_option(const char* value)
 {
 	WINPR_ASSERT(value);
 	const char* sep = strchr(value, ':');
 	if (!sep)
-		return 1;
+		return PARSE_NONE;
 	if (option_equals("on", &sep[1]))
-		return 1;
+		return PARSE_ON;
 	if (option_equals("off", &sep[1]))
-		return 0;
-	return -1;
+		return PARSE_OFF;
+	return PARSE_FAIL;
 }
 
 static int parse_tls_ciphers(rdpSettings* settings, const char* Value)
@@ -1901,40 +1909,40 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 #ifdef WITH_GFX_H264
 				if (option_starts_with("AVC444", val))
 				{
-					const int bval = parse_on_off_option(val);
-					if (bval < 0)
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					else
-						GfxAVC444 = bval > 0;
+						GfxAVC444 = bval != PARSE_OFF;
 					codecSelected = TRUE;
 				}
 				else if (option_starts_with("AVC420", val))
 				{
-					const int bval = parse_on_off_option(val);
-					if (bval < 0)
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					else
-						GfxH264 = bval > 0;
+						GfxH264 = bval != PARSE_OFF;
 					codecSelected = TRUE;
 				}
 				else
 #endif
 				    if (option_starts_with("RFX", val))
 				{
-					const int bval = parse_on_off_option(val);
-					if (bval < 0)
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					else
-						RemoteFxCodec = bval > 0;
+						RemoteFxCodec = bval != PARSE_OFF;
 					codecSelected = TRUE;
 				}
 				else if (option_starts_with("progressive", val))
 				{
-					const int bval = parse_on_off_option(val);
-					if (bval < 0)
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					else
-						GfxProgressive = bval > 0;
+						GfxProgressive = bval != PARSE_OFF;
 					codecSelected = TRUE;
 				}
 				else if (option_starts_with("mask:", val))
@@ -1948,22 +1956,25 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				}
 				else if (option_starts_with("small-cache", val))
 				{
-					const int bval = parse_on_off_option(val);
-					if (bval < 0)
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxSmallCache, bval > 0))
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxSmallCache,
+					                                    bval != PARSE_OFF))
 						rc = COMMAND_LINE_ERROR;
 				}
 				else if (option_starts_with("thin-client", val))
 				{
-					const int bval = parse_on_off_option(val);
-					if (bval < 0)
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxThinClient, bval > 0))
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxThinClient,
+					                                    bval != PARSE_OFF))
 						rc = COMMAND_LINE_ERROR;
 					if ((rc == CHANNEL_RC_OK) && (bval > 0))
 					{
-						if (!freerdp_settings_set_bool(settings, FreeRDP_GfxSmallCache, bval > 0))
+						if (!freerdp_settings_set_bool(settings, FreeRDP_GfxSmallCache,
+						                               bval != PARSE_OFF))
 							rc = COMMAND_LINE_ERROR;
 					}
 				}
@@ -2128,10 +2139,11 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			}
 			else if (option_starts_with("unicode", val))
 			{
-				const int bval = parse_on_off_option(val);
-				if (bval < 0)
+				const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+				if (bval == PARSE_FAIL)
 					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-				else if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, bval > 0))
+				else if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput,
+				                                    bval != PARSE_OFF))
 					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
@@ -2288,32 +2300,34 @@ static int parse_cache_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 		}
 		else
 		{
-			const int bval = parse_on_off_option(val);
-			if (bval < 0)
+			const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+			if (bval == PARSE_FAIL)
 				rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			else
 			{
 				if (option_starts_with("bitmap", val))
 				{
-					if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheEnabled, bval > 0))
+					if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheEnabled,
+					                               bval != PARSE_OFF))
 						rc = COMMAND_LINE_ERROR;
 				}
 				else if (option_starts_with("glyph", val))
 				{
 					if (!freerdp_settings_set_uint32(settings, FreeRDP_GlyphSupportLevel,
-					                                 bval > 0 ? GLYPH_SUPPORT_FULL
-					                                          : GLYPH_SUPPORT_NONE))
+					                                 bval != PARSE_OFF ? GLYPH_SUPPORT_FULL
+					                                                   : GLYPH_SUPPORT_NONE))
 						rc = COMMAND_LINE_ERROR;
 				}
 				else if (option_starts_with("persist", val))
 				{
 					if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled,
-					                               bval > 0))
+					                               bval != PARSE_OFF))
 						rc = COMMAND_LINE_ERROR;
 				}
 				else if (option_starts_with("offscreen", val))
 				{
-					if (!freerdp_settings_set_uint32(settings, FreeRDP_OffscreenSupportLevel, bval))
+					if (!freerdp_settings_set_uint32(settings, FreeRDP_OffscreenSupportLevel,
+					                                 bval != PARSE_OFF))
 						rc = COMMAND_LINE_ERROR;
 				}
 			}
@@ -3584,51 +3598,69 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "sec")
 		{
-			BOOL RdpSecurity = FALSE;
-			BOOL TlsSecurity = FALSE;
-			BOOL NlaSecurity = FALSE;
-			BOOL ExtSecurity = FALSE;
 			size_t count = 0, x;
 			char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 			if (count == 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
+			size_t singleOptionWithoutOnOff = 0;
 			for (x = 0; x < count; x++)
 			{
 				const char* cur = ptr[x];
-				const int bval = parse_on_off_option(cur);
-				if (bval < 0)
+				const PARSE_ON_OFF_RESULT bval = parse_on_off_option(cur);
+				if (bval == PARSE_FAIL)
 				{
 					free(ptr);
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
-				if (option_equals("rdp", cur)) /* Standard RDP */
-					RdpSecurity = bval > 0;
-				else if (option_equals("tls", cur)) /* TLS */
-					TlsSecurity = bval > 0;
-				else if (option_equals("nla", cur)) /* NLA */
-					NlaSecurity = bval > 0;
-				else if (option_equals("ext", cur)) /* NLA Extended */
-					ExtSecurity = bval > 0;
+
+				const BOOL val = bval != PARSE_OFF;
+				size_t id = 0;
+				if (option_starts_with("rdp", cur)) /* Standard RDP */
+				{
+					id = FreeRDP_RdpSecurity;
+					if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, val))
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				}
+				else if (option_starts_with("tls", cur)) /* TLS */
+					id = FreeRDP_TlsSecurity;
+				else if (option_starts_with("nla", cur)) /* NLA */
+					id = FreeRDP_NlaSecurity;
+				else if (option_starts_with("ext", cur)) /* NLA Extended */
+					id = FreeRDP_ExtSecurity;
 				else
 				{
 					WLog_ERR(TAG, "unknown protocol security: %s", arg->Value);
 					free(ptr);
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
+
+				if ((bval == PARSE_NONE) && (count == 1))
+					singleOptionWithoutOnOff = id;
+				if (!freerdp_settings_set_bool(settings, id, val))
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 
+			if (singleOptionWithoutOnOff != 0)
+			{
+				const size_t options[] = { FreeRDP_UseRdpSecurityLayer, FreeRDP_RdpSecurity,
+					                       FreeRDP_NlaSecurity, FreeRDP_TlsSecurity };
+
+				for (size_t x = 0; x < ARRAYSIZE(options); x++)
+				{
+					if (!freerdp_settings_set_bool(settings, options[x], FALSE))
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				}
+
+				if (!freerdp_settings_set_bool(settings, singleOptionWithoutOnOff, TRUE))
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				if (singleOptionWithoutOnOff == FreeRDP_RdpSecurity)
+				{
+					if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, TRUE))
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				}
+			}
 			free(ptr);
-			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, RdpSecurity))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, RdpSecurity))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TlsSecurity))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, NlaSecurity))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, ExtSecurity))
-				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 		CommandLineSwitchCase(arg, "encryption-methods")
 		{
@@ -3881,13 +3913,19 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					{
 						Floatbar &= ~0x02u;
 
-						const int bval = parse_on_off_option(cur);
-						if (bval > 0)
-							Floatbar |= 0x02u;
-						else if (bval == 0)
-							Floatbar &= ~0x02u;
-						else
-							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+						const PARSE_ON_OFF_RESULT bval = parse_on_off_option(cur);
+						switch (bval)
+						{
+							case PARSE_ON:
+							case PARSE_NONE:
+								Floatbar |= 0x02u;
+								break;
+							case PARSE_OFF:
+								Floatbar &= ~0x02u;
+								break;
+							default:
+								return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+						}
 					}
 					/* default:[visible|hidden] */
 					else if (option_starts_with("default:", cur))
