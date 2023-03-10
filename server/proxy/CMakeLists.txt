@@ -70,15 +70,18 @@ if (WITH_LIBRARY_VERSIONING)
   set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
 endif()
 
-set(${MODULE_PREFIX}_LIBS
-    winpr
-    freerdp
+set(PRIVATE_LIBS
     freerdp-client
     freerdp-server
     pf_channels
 )
 
-target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
+set(PUBLIC_LIBS
+	winpr
+	freerdp
+)
+
+target_link_libraries(${MODULE_NAME} PRIVATE ${PRIVATE_LIBS} PUBLIC ${PUBLIC_LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT server EXPORT FreeRDP-ProxyTargets)
 if (WITH_DEBUG_SYMBOLS AND MSVC)
     install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}${FREERDP_VERSION_MAJOR}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
