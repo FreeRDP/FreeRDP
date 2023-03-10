@@ -2552,7 +2552,7 @@ static void fill_credential_string(COMMAND_LINE_ARGUMENT_A* args, const char* va
 	WINPR_ASSERT(args);
 	WINPR_ASSERT(value);
 
-	COMMAND_LINE_ARGUMENT_A* arg = CommandLineFindArgumentA(args, value);
+	const COMMAND_LINE_ARGUMENT_A* arg = CommandLineFindArgumentA(args, value);
 	if (!arg)
 		return;
 
@@ -2580,7 +2580,7 @@ static void fill_credential_strings(COMMAND_LINE_ARGUMENT_A* args)
 		fill_credential_string(args, cred);
 	}
 
-	COMMAND_LINE_ARGUMENT_A* arg = CommandLineFindArgumentA(args, "gateway");
+	const COMMAND_LINE_ARGUMENT_A* arg = CommandLineFindArgumentA(args, "gateway");
 	if (arg && ((arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT) != 0))
 	{
 		const char* gwcreds[] = { "p:", "access-token:" };
@@ -3598,10 +3598,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		}
 		CommandLineSwitchCase(arg, "sec")
 		{
-			BOOL RdpSecurity = FALSE;
-			BOOL TlsSecurity = FALSE;
-			BOOL NlaSecurity = FALSE;
-			BOOL ExtSecurity = FALSE;
 			size_t count = 0, x;
 			char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 			if (count == 0)
@@ -3653,9 +3649,9 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 					                       FreeRDP_RdpSecurity, FreeRDP_NlaSecurity,
 					                       FreeRDP_TlsSecurity };
 
-				for (size_t x = 0; x < ARRAYSIZE(options); x++)
+				for (size_t i = 0; i < ARRAYSIZE(options); i++)
 				{
-					if (!freerdp_settings_set_bool(settings, options[x], FALSE))
+					if (!freerdp_settings_set_bool(settings, options[i], FALSE))
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				}
 
@@ -3930,6 +3926,7 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 							case PARSE_OFF:
 								Floatbar &= ~0x02u;
 								break;
+							case PARSE_FAIL:
 							default:
 								return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 						}
