@@ -82,7 +82,30 @@ macro (freerdp_definition_add)
          set (LIBFREERDP_DEFINITIONS ${LIBFREERDP_DEFINITIONS} PARENT_SCOPE)
 endmacro()
 
-find_package(cJSON REQUIRED)
+find_package(cJSON)
+
+# some very enthusiastic packagers forgot to package the cJSONConfig.cmake
+# so try to find the paths manually
+if (NOT CJSON_FOUND)
+	message("falling back to manual cJSON detection")
+	find_file(CJSON_INCLUDE_HEADER
+		NAMES cJSON.h
+		PATH_SUFFIXES cjson
+		REQUIRED
+	)
+
+	# Extract the include base path from the header file path.
+	# first remove the filename, and then the last directory component as we expect
+        # somepath/cjson/cJSON.h (#include <cjson/cJSON.h>)
+	get_filename_component(CJSON_INCLUDE_DIRS ${CJSON_INCLUDE_HEADER} DIRECTORY)
+	get_filename_component(CJSON_INCLUDE_DIRS ${CJSON_INCLUDE_DIRS} DIRECTORY)
+
+	find_library(CJSON_LIBRARIES
+		NAMES cjson
+	       	REQUIRED
+	)
+endif()
+
 freerdp_include_directory_add(${CJSON_INCLUDE_DIRS})
 freerdp_library_add(${CJSON_LIBRARIES})
 
