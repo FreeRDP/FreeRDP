@@ -82,39 +82,6 @@ macro (freerdp_definition_add)
          set (LIBFREERDP_DEFINITIONS ${LIBFREERDP_DEFINITIONS} PARENT_SCOPE)
 endmacro()
 
-find_package(cJSON)
-
-# some very enthusiastic packagers forgot to package the cJSONConfig.cmake
-# so try to find the paths manually
-if (NOT CJSON_FOUND)
-	find_file(CJSON_INCLUDE_HEADER
-		NAMES cJSON.h
-		PATH_SUFFIXES cjson
-	)
-
-	# Extract the include base path from the header file path.
-	# first remove the filename, and then the last directory component as we expect
-        # somepath/cjson/cJSON.h (#include <cjson/cJSON.h>)
-	get_filename_component(CJSON_INCLUDE_DIRS ${CJSON_INCLUDE_HEADER} DIRECTORY)
-	get_filename_component(CJSON_INCLUDE_DIRS ${CJSON_INCLUDE_DIRS} DIRECTORY)
-
-	find_library(CJSON_LIBRARIES
-		NAMES cjson
-	)
-
-	if (CJSON_INCLUDE_DIRS AND CJSON_LIBRARIES)
-		set(CJSON_FOUND ON)
-	endif()
-endif()
-
-if (CJSON_FOUND)
-	freerdp_definition_add(-DCJSON_FOUND)
-	freerdp_include_directory_add(${CJSON_INCLUDE_DIRS})
-	freerdp_library_add(${CJSON_LIBRARIES})
-else()
-	message(WARNING "building without cJSON, AAD authentication disabled for this build")
-endif()
-
 if (WITH_SWSCALE)
     find_package(SWScale REQUIRED)
 endif(WITH_SWSCALE)
@@ -250,6 +217,11 @@ endif()
 if(FAAC_FOUND)
     freerdp_library_add(${FAAC_LIBRARIES})
     include_directories(${FAAC_INCLUDE_DIRS})
+endif()
+
+if(WITH_CJSON)
+    freerdp_library_add(${CJSON_LIBRARIES})
+    include_directories(${CJSON_INCLUDE_DIRS})
 endif()
 
 if(WITH_NEON)

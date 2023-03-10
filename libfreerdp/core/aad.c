@@ -24,7 +24,7 @@
 
 #include <freerdp/crypto/crypto.h>
 
-#if defined(CJSON_FOUND)
+#ifdef WITH_CJSON
 #include <cjson/cJSON.h>
 #endif
 
@@ -39,7 +39,7 @@
 
 #include "aad.h"
 
-#if defined(CJSON_FOUND)
+#ifdef WITH_CJSON
 #if CJSON_VERSION_MAJOR == 1
 #if CJSON_VERSION_MINOR <= 7
 #if CJSON_VERSION_PATCH < 13
@@ -62,7 +62,7 @@ struct rdp_aad
 	wLog* log;
 };
 
-#if defined(CJSON_FOUND)
+#ifdef WITH_CJSON
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
 #include <openssl/core_names.h>
 #else
@@ -1208,7 +1208,7 @@ AAD_STATE aad_get_state(rdpAad* aad)
 
 BOOL aad_is_supported(void)
 {
-#if defined(CJSON_FOUND)
+#ifdef WITH_CJSON
 	return TRUE;
 #else
 	return FALSE;
