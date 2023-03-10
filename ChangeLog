@@ -1,6 +1,11 @@
+# 20XX-YY-ZZ Version 2.UU.V
+
+Fixed issues:
+* Backported #8690: Update h264 to use new FFMPEG API
+
 # 2023-02-16 Version 2.10.0
 
-Notewhorth changes:
+Noteworthy changes:
 * Fix android build scripts, use CMake from SDK
 * Fix connection negotiation with mstsc/msrdc #8426
 * [ntlm]: use rfc5929 binding hash algorithm #8430
@@ -23,7 +28,7 @@ Fixed issues:
 
 # 2022-11-16 Version 2.9.0
 
-Notewhorth changes:
+Noteworthy changes:
 * Backported #8252: Support sending server redirection PDU
 * Backported #8406: Ensure X11 client cursor is never smaller 1x1
 * Backported #8403: Fixed multiple client side input validation issues
@@ -49,7 +54,7 @@ git log 2.8.1..2.9.0
 
 # 2022-10-12 Version 2.8.1
 
-Notewhorth changes:
+Noteworthy changes:
 * Fixed CVE-2022-39282
 * Fixed CVE-2022-39283
 * Added missing commit for backported #8041: Remove ALAW/ULAW codecs from linux backends (unreliable)
