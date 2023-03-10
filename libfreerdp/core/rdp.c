@@ -2164,6 +2164,10 @@ rdpRdp* rdp_new(rdpContext* context)
 		*rdp->io = *io;
 	}
 
+	rdp->aad = aad_new(context, rdp->transport);
+	if (!rdp->aad)
+		goto fail;
+
 	rdp->license = license_new(rdp);
 
 	if (!rdp->license)
@@ -2299,6 +2303,11 @@ BOOL rdp_reset(rdpRdp* rdp)
 		if (!transport_set_io_callbacks(rdp->transport, rdp->io))
 			goto fail;
 	}
+
+	aad_free(rdp->aad);
+	rdp->aad = aad_new(context, rdp->transport);
+	if (!rdp->aad)
+		goto fail;
 
 	rdp->nego = nego_new(rdp->transport);
 	if (!rdp->nego)

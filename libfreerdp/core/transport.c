@@ -426,9 +426,6 @@ BOOL transport_connect_aad(rdpTransport* transport)
 	if (!settings->Authentication)
 		return TRUE;
 
-	aad_free(rdp->aad);
-	rdp->aad = aad_new(context, transport);
-
 	if (!rdp->aad)
 		return FALSE;
 

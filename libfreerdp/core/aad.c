@@ -24,7 +24,9 @@
 
 #include <freerdp/crypto/crypto.h>
 
+#if defined(CJSON_FOUND)
 #include <cjson/cJSON.h>
+#endif
 
 #include <winpr/crypto.h>
 
@@ -37,6 +39,7 @@
 
 #include "aad.h"
 
+#if defined(CJSON_FOUND)
 #if CJSON_VERSION_MAJOR == 1
 #if CJSON_VERSION_MINOR <= 7
 #if CJSON_VERSION_PATCH < 13
@@ -44,7 +47,22 @@
 #endif
 #endif
 #endif
+#endif
 
+struct rdp_aad
+{
+	AAD_STATE state;
+	rdpContext* rdpcontext;
+	rdpTransport* transport;
+	char* access_token;
+	EVP_PKEY* pop_key;
+	char* kid;
+	char* nonce;
+	char* hostname;
+	wLog* log;
+};
+
+#if defined(CJSON_FOUND)
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
 #include <openssl/core_names.h>
 #else
@@ -103,19 +121,6 @@ static const char token_http_request_body[] =
     "&redirect_uri=ms-appx-web%%3a%%2f%%2fMicrosoft.AAD.BrokerPlugin%%2f5177bc73-fd99-4c77-a90c-"
     "76844c9b6999"
     "\r\n\r\n";
-
-struct rdp_aad
-{
-	AAD_STATE state;
-	rdpContext* rdpcontext;
-	rdpTransport* transport;
-	char* access_token;
-	EVP_PKEY* pop_key;
-	char* kid;
-	char* nonce;
-	char* hostname;
-	wLog* log;
-};
 
 static BOOL get_encoded_rsa_params(wLog* wlog, EVP_PKEY* pkey, char** e, char** n);
 static BOOL generate_pop_key(rdpAad* aad);
@@ -180,23 +185,6 @@ static int print_error(const char* str, size_t len, void* u)
 	wLog* wlog = (wLog*)u;
 	WLog_Print(wlog, WLOG_ERROR, "%s [%" PRIuz "]", str, len);
 	return 1;
-}
-
-rdpAad* aad_new(rdpContext* context, rdpTransport* transport)
-{
-	WINPR_ASSERT(transport);
-	WINPR_ASSERT(context);
-
-	rdpAad* aad = (rdpAad*)calloc(1, sizeof(rdpAad));
-
-	if (!aad)
-		return NULL;
-
-	aad->log = WLog_Get(FREERDP_TAG("aad"));
-	aad->rdpcontext = context;
-	aad->transport = transport;
-
-	return aad;
 }
 
 static BOOL json_get_object(wLog* wlog, cJSON* json, const char* key, cJSON** obj)
@@ -834,26 +822,6 @@ int aad_recv(rdpAad* aad, wStream* s)
 	}
 }
 
-AAD_STATE aad_get_state(rdpAad* aad)
-{
-	WINPR_ASSERT(aad);
-	return aad->state;
-}
-
-void aad_free(rdpAad* aad)
-{
-	if (!aad)
-		return;
-
-	free(aad->hostname);
-	free(aad->nonce);
-	free(aad->access_token);
-	free(aad->kid);
-	EVP_PKEY_free(aad->pop_key);
-
-	free(aad);
-}
-
 static BOOL read_http_message(rdpAad* aad, BIO* bio, long* status_code, char** content,
                               size_t* content_length)
 {
@@ -1185,4 +1153,64 @@ fail:
 		*pn = n;
 	}
 	return rc;
+}
+#else
+int aad_client_begin(rdpAad* aad)
+{
+	WINPR_ASSERT(aad);
+	WLog_Print(aad->log, WLOG_ERROR, "AAD security not compiled in, aborting!");
+	return -1;
+}
+int aad_recv(rdpAad* aad, wStream* s)
+{
+	WINPR_ASSERT(aad);
+	WLog_Print(aad->log, WLOG_ERROR, "AAD security not compiled in, aborting!");
+	return -1;
+}
+#endif
+
+rdpAad* aad_new(rdpContext* context, rdpTransport* transport)
+{
+	WINPR_ASSERT(transport);
+	WINPR_ASSERT(context);
+
+	rdpAad* aad = (rdpAad*)calloc(1, sizeof(rdpAad));
+
+	if (!aad)
+		return NULL;
+
+	aad->log = WLog_Get(FREERDP_TAG("aad"));
+	aad->rdpcontext = context;
+	aad->transport = transport;
+
+	return aad;
+}
+
+void aad_free(rdpAad* aad)
+{
+	if (!aad)
+		return;
+
+	free(aad->hostname);
+	free(aad->nonce);
+	free(aad->access_token);
+	free(aad->kid);
+	EVP_PKEY_free(aad->pop_key);
+
+	free(aad);
+}
+
+AAD_STATE aad_get_state(rdpAad* aad)
+{
+	WINPR_ASSERT(aad);
+	return aad->state;
+}
+
+BOOL aad_is_supported(void)
+{
+#if defined(CJSON_FOUND)
+	return TRUE;
+#else
+	return FALSE;
+#endif
 }

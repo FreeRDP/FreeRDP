@@ -31,6 +31,7 @@
 #include "tpkt.h"
 
 #include "nego.h"
+#include "aad.h"
 
 #include "transport.h"
 
@@ -1696,8 +1697,15 @@ void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
 
 void nego_enable_aad(rdpNego* nego, BOOL enable_aad)
 {
-	WLog_DBG(TAG, "Enabling RDS AAD security: %s", enable_aad ? "TRUE" : "FALSE");
-	nego->EnabledProtocols[PROTOCOL_RDSAAD] = enable_aad;
+	if (aad_is_supported())
+	{
+		WLog_DBG(TAG, "Enabling RDS AAD security: %s", enable_aad ? "TRUE" : "FALSE");
+		nego->EnabledProtocols[PROTOCOL_RDSAAD] = enable_aad;
+	}
+	else
+	{
+		WLog_WARN(TAG, "This build does not support AAD security, disabling.");
+	}
 }
 
 /**
