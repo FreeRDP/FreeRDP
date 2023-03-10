@@ -37,6 +37,14 @@
 
 #include "aad.h"
 
+#if CJSON_VERSION_MAJOR == 1
+#if CJSON_VERSION_MINOR <= 7
+#if CJSON_VERSION_PATCH < 13
+#define USE_CJSON_COMPAT
+#endif
+#endif
+#endif
+
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
 #include <openssl/core_names.h>
 #else
@@ -224,7 +232,26 @@ static BOOL json_get_number(wLog* wlog, cJSON* json, const char* key, double* re
 		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NOT a NUMBER", key);
 		goto fail;
 	}
+#if defined(USE_CJSON_COMPAT)
+	if (!cJSON_IsNumber(prop))
+		goto fail;
+	char* val = cJSON_GetStringValue(prop);
+	if (!val)
+		goto fail;
+
+	errno = 0;
+	char* endptr = NULL;
+	double dval = strtod(val, &endptr);
+	if (val == endptr)
+		goto fail;
+	if (endptr != NULL)
+		goto fail;
+	if (errno != 0)
+		goto fail;
+	*result = dval;
+#else
 	*result = cJSON_GetNumberValue(prop);
+#endif
 	rc = TRUE;
 fail:
 	return rc;
@@ -349,6 +376,18 @@ static char* aad_read_response(rdpAad* aad, BIO* bio, size_t* plen, const char* 
 	return buffer;
 }
 
+static cJSON* compat_cJSON_ParseWithLength(const char* value, size_t buffer_length)
+{
+#if defined(USE_CJSON_COMPAT)
+	// Check for string '\0' termination.
+	const size_t slen = strnlen(value, buffer_length);
+	if (slen >= buffer_length)
+		return NULL;
+	return cJSON_Parse(value);
+#else
+	return cJSON_ParseWithLength(value, buffer_length);
+#endif
+}
 static BOOL aad_read_and_extract_token_from_json(rdpAad* aad, BIO* bio)
 {
 	BOOL rc = FALSE;
@@ -357,7 +396,7 @@ static BOOL aad_read_and_extract_token_from_json(rdpAad* aad, BIO* bio)
 	if (!buffer)
 		return FALSE;
 
-	cJSON* json = cJSON_ParseWithLength(buffer, blen);
+	cJSON* json = compat_cJSON_ParseWithLength(buffer, blen);
 	if (!json)
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "Failed to parse JSON response");
@@ -387,7 +426,7 @@ static BOOL aad_read_and_extrace_nonce_from_json(rdpAad* aad, BIO* bio)
 		return FALSE;
 
 	/* Extract the nonce from the response */
-	cJSON* json = cJSON_ParseWithLength(buffer, blen);
+	cJSON* json = compat_cJSON_ParseWithLength(buffer, blen);
 	if (!json)
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "Failed to parse JSON response");
@@ -734,7 +773,7 @@ static int aad_parse_state_initial(rdpAad* aad, wStream* s)
 	if (!Stream_SafeSeek(s, jlen))
 		goto fail;
 
-	json = cJSON_ParseWithLength(jstr, jlen);
+	json = compat_cJSON_ParseWithLength(jstr, jlen);
 	if (!json)
 		goto fail;
 
@@ -758,7 +797,7 @@ static int aad_parse_state_auth(rdpAad* aad, wStream* s)
 	if (!Stream_SafeSeek(s, jlength))
 		goto fail;
 
-	json = cJSON_ParseWithLength(jstr, jlength);
+	json = compat_cJSON_ParseWithLength(jstr, jlength);
 	if (!json)
 		goto fail;
 
