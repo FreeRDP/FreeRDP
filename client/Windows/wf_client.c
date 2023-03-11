@@ -650,7 +650,7 @@ static void wf_report_error(char* wszMessage, DWORD dwErrCode)
 static DWORD wf_is_x509_certificate_trusted(const char* common_name, const char* subject,
                                             const char* issuer, const char* fingerprint)
 {
-	size_t derPubKeyLen;
+	DWORD derPubKeyLen;
 	char* derPubKey;
 
 	HRESULT hr = CRYPT_E_NOT_FOUND;
