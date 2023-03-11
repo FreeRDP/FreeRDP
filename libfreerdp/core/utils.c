@@ -89,7 +89,7 @@ auth_status utils_authenticate_gateway(freerdp* instance, rdp_auth_reason reason
 	if (!instance->GatewayAuthenticate && !instance->AuthenticateEx)
 		return AUTH_NO_CREDENTIALS;
 
-	if (instance->AuthenticateEx)
+	if (!instance->GatewayAuthenticate)
 		proceed =
 		    instance->AuthenticateEx(instance, &settings->GatewayUsername,
 		                             &settings->GatewayPassword, &settings->GatewayDomain, reason);
@@ -177,7 +177,7 @@ auth_status utils_authenticate(freerdp* instance, rdp_auth_reason reason, BOOL o
 	if (!instance->Authenticate && !instance->AuthenticateEx)
 		return AUTH_NO_CREDENTIALS;
 
-	if (instance->AuthenticateEx)
+	if (!instance->Authenticate)
 		proceed = instance->AuthenticateEx(instance, &settings->Username, &settings->Password,
 		                                   &settings->Domain, reason);
 	else
