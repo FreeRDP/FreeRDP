@@ -99,6 +99,31 @@ static BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s);
 static BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s);
 static BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s);
 
+static UINT32 nego_get_next_selected_protocol(rdpNego* nego)
+{
+	WINPR_ASSERT(nego);
+
+	if (nego->EnabledProtocols[PROTOCOL_RDSAAD])
+		return PROTOCOL_RDSAAD;
+
+	if (nego->EnabledProtocols[PROTOCOL_RDSTLS])
+		return PROTOCOL_RDSTLS;
+
+	if (nego->EnabledProtocols[PROTOCOL_HYBRID_EX] || nego->EnabledProtocols[PROTOCOL_HYBRID])
+		return PROTOCOL_HYBRID_EX;
+
+	if (nego->EnabledProtocols[PROTOCOL_HYBRID])
+		return PROTOCOL_HYBRID;
+
+	if (nego->EnabledProtocols[PROTOCOL_SSL])
+		return PROTOCOL_SSL;
+
+	if (nego->EnabledProtocols[PROTOCOL_RDP])
+		return PROTOCOL_RDP;
+
+	WLog_ERR(TAG, "Invalid NEGO state 0x%08" PRIx32, nego_get_state(nego));
+	return 0;
+}
 /**
  * Negotiate protocol security and connect.
  *
@@ -161,37 +186,40 @@ BOOL nego_connect(rdpNego* nego)
 			nego->EnabledProtocols[PROTOCOL_HYBRID_EX] = FALSE;
 			nego->EnabledProtocols[PROTOCOL_RDSTLS] = FALSE;
 
+			UINT32 SelectedProtocol = 0;
 			switch (nego_get_state(nego))
 			{
 				case NEGO_STATE_AAD:
 					nego->EnabledProtocols[PROTOCOL_RDSAAD] = TRUE;
-					nego->SelectedProtocol = PROTOCOL_RDSAAD;
+					SelectedProtocol = PROTOCOL_RDSAAD;
 					break;
 				case NEGO_STATE_RDSTLS:
 					nego->EnabledProtocols[PROTOCOL_RDSTLS] = TRUE;
-					nego->SelectedProtocol = PROTOCOL_RDSTLS;
+					SelectedProtocol = PROTOCOL_RDSTLS;
 					break;
 				case NEGO_STATE_EXT:
 					nego->EnabledProtocols[PROTOCOL_HYBRID_EX] = TRUE;
 					nego->EnabledProtocols[PROTOCOL_HYBRID] = TRUE;
-					nego->SelectedProtocol = PROTOCOL_HYBRID_EX;
+					SelectedProtocol = PROTOCOL_HYBRID_EX;
 					break;
 				case NEGO_STATE_NLA:
 					nego->EnabledProtocols[PROTOCOL_HYBRID] = TRUE;
-					nego->SelectedProtocol = PROTOCOL_HYBRID;
+					SelectedProtocol = PROTOCOL_HYBRID;
 					break;
 				case NEGO_STATE_TLS:
 					nego->EnabledProtocols[PROTOCOL_SSL] = TRUE;
-					nego->SelectedProtocol = PROTOCOL_SSL;
+					SelectedProtocol = PROTOCOL_SSL;
 					break;
 				case NEGO_STATE_RDP:
 					nego->EnabledProtocols[PROTOCOL_RDP] = TRUE;
-					nego->SelectedProtocol = PROTOCOL_RDP;
+					SelectedProtocol = PROTOCOL_RDP;
 					break;
 				default:
 					WLog_ERR(TAG, "Invalid NEGO state 0x%08" PRIx32, nego_get_state(nego));
 					return FALSE;
 			}
+			if (!nego_set_selected_protocol(nego, SelectedProtocol))
+				return FALSE;
 		}
 
 		if (nego->SendPreconnectionPdu)
@@ -274,6 +302,40 @@ BOOL nego_disconnect(rdpNego* nego)
 	return nego_transport_disconnect(nego);
 }
 
+static BOOL nego_try_connect(rdpNego* nego)
+{
+	WINPR_ASSERT(nego);
+
+	switch (nego->SelectedProtocol)
+	{
+		case PROTOCOL_RDSAAD:
+			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_RDSAAD");
+			nego->SecurityConnected = transport_connect_aad(nego->transport);
+			break;
+		case PROTOCOL_RDSTLS:
+			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_RDSTLS");
+			nego->SecurityConnected = transport_connect_rdstls(nego->transport);
+			break;
+		case PROTOCOL_HYBRID:
+			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_HYBRID");
+			nego->SecurityConnected = transport_connect_nla(nego->transport);
+			break;
+		case PROTOCOL_SSL:
+			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_SSL");
+			nego->SecurityConnected = transport_connect_tls(nego->transport);
+			break;
+		case PROTOCOL_RDP:
+			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_RDP");
+			nego->SecurityConnected = transport_connect_rdp(nego->transport);
+			break;
+		default:
+			WLog_ERR(TAG,
+			         "cannot connect security layer because no protocol has been selected yet.");
+			return FALSE;
+	}
+	return nego->SecurityConnected;
+}
+
 /* connect to selected security layer */
 BOOL nego_security_connect(rdpNego* nego)
 {
@@ -284,36 +346,8 @@ BOOL nego_security_connect(rdpNego* nego)
 	}
 	else if (!nego->SecurityConnected)
 	{
-		if (nego->SelectedProtocol == PROTOCOL_RDSAAD)
-		{
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_RDSAAD");
-			nego->SecurityConnected = transport_connect_aad(nego->transport);
-		}
-		else if (nego->SelectedProtocol == PROTOCOL_RDSTLS)
-		{
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_RDSTLS");
-			nego->SecurityConnected = transport_connect_rdstls(nego->transport);
-		}
-		else if (nego->SelectedProtocol == PROTOCOL_HYBRID)
-		{
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_HYBRID");
-			nego->SecurityConnected = transport_connect_nla(nego->transport);
-		}
-		else if (nego->SelectedProtocol == PROTOCOL_SSL)
-		{
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_SSL");
-			nego->SecurityConnected = transport_connect_tls(nego->transport);
-		}
-		else if (nego->SelectedProtocol == PROTOCOL_RDP)
-		{
-			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_RDP");
-			nego->SecurityConnected = transport_connect_rdp(nego->transport);
-		}
-		else
-		{
-			WLog_ERR(TAG,
-			         "cannot connect security layer because no protocol has been selected yet.");
-		}
+		if (!nego_try_connect(nego))
+			return FALSE;
 	}
 
 	return nego->SecurityConnected;
@@ -1263,9 +1297,12 @@ BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 		nego_set_state(nego, NEGO_STATE_FAIL);
 		return FALSE;
 	}
-	Stream_Read_UINT32(s, nego->SelectedProtocol);
-	nego_set_state(nego, NEGO_STATE_FINAL);
-	return TRUE;
+	UINT32 SelectedProtocol;
+	Stream_Read_UINT32(s, SelectedProtocol);
+
+	if (!nego_set_selected_protocol(nego, SelectedProtocol))
+		return FALSE;
+	return nego_set_state(nego, NEGO_STATE_FINAL);
 }
 
 /**
@@ -1418,100 +1455,102 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		                                 nego->SelectedProtocol))
 			return FALSE;
 
-		if (nego->SelectedProtocol == PROTOCOL_RDP)
+		switch (nego->SelectedProtocol)
 		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, TRUE))
-				return FALSE;
-
-			if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionLevel) ==
-			    ENCRYPTION_LEVEL_NONE)
-			{
-				/**
-				 * If the server implementation did not explicitely set a
-				 * encryption level we default to client compatible
-				 */
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
-				                                 ENCRYPTION_LEVEL_CLIENT_COMPATIBLE))
+			case PROTOCOL_RDP:
+				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
 					return FALSE;
-			}
+				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, TRUE))
+					return FALSE;
 
-			if (freerdp_settings_get_bool(settings, FreeRDP_LocalConnection))
-			{
-				/**
-				 * Note: This hack was firstly introduced in commit 95f5e115 to
-				 * disable the unnecessary encryption with peers connecting to
-				 * 127.0.0.1 or local unix sockets.
-				 * This also affects connections via port tunnels! (e.g. ssh -L)
-				 */
-				WLog_INFO(TAG, "Turning off encryption for local peer with standard rdp security");
+				if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionLevel) ==
+				    ENCRYPTION_LEVEL_NONE)
+				{
+					/**
+					 * If the server implementation did not explicitely set a
+					 * encryption level we default to client compatible
+					 */
+					if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
+					                                 ENCRYPTION_LEVEL_CLIENT_COMPATIBLE))
+						return FALSE;
+				}
+
+				if (freerdp_settings_get_bool(settings, FreeRDP_LocalConnection))
+				{
+					/**
+					 * Note: This hack was firstly introduced in commit 95f5e115 to
+					 * disable the unnecessary encryption with peers connecting to
+					 * 127.0.0.1 or local unix sockets.
+					 * This also affects connections via port tunnels! (e.g. ssh -L)
+					 */
+					WLog_INFO(TAG,
+					          "Turning off encryption for local peer with standard rdp security");
+					if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+						return FALSE;
+					if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
+					                                 ENCRYPTION_LEVEL_NONE))
+						return FALSE;
+				}
+				else if (!freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey))
+				{
+					WLog_ERR(TAG, "Missing server certificate");
+					return FALSE;
+				}
+				break;
+			case PROTOCOL_SSL:
+				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, FALSE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+					return FALSE;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
 					return FALSE;
+
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
 				                                 ENCRYPTION_LEVEL_NONE))
 					return FALSE;
-			}
-			else if (!freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey))
-			{
-				WLog_ERR(TAG, "Missing server certificate");
-				return FALSE;
-			}
-		}
-		else if (nego->SelectedProtocol == PROTOCOL_SSL)
-		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, FALSE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
-				return FALSE;
+				break;
+			case PROTOCOL_HYBRID:
+				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, FALSE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+					return FALSE;
 
-			if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
-			                                 ENCRYPTION_LEVEL_NONE))
-				return FALSE;
-		}
-		else if (nego->SelectedProtocol == PROTOCOL_HYBRID)
-		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, FALSE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
-				return FALSE;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
+				                                 ENCRYPTION_LEVEL_NONE))
+					return FALSE;
+				break;
+			case PROTOCOL_RDSTLS:
+				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, TRUE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+					return FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+					return FALSE;
 
-			if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
-			                                 ENCRYPTION_LEVEL_NONE))
-				return FALSE;
-		}
-		else if (nego->SelectedProtocol == PROTOCOL_RDSTLS)
-		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, TRUE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
-				return FALSE;
-			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
-				return FALSE;
-
-			if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
-			                                 ENCRYPTION_LEVEL_NONE))
-				return FALSE;
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
+				                                 ENCRYPTION_LEVEL_NONE))
+					return FALSE;
+				break;
+			default:
+				break;
 		}
 	}
 
@@ -1814,9 +1853,7 @@ UINT32 nego_get_selected_protocol(rdpNego* nego)
 
 BOOL nego_set_selected_protocol(rdpNego* nego, UINT32 SelectedProtocol)
 {
-	if (!nego)
-		return FALSE;
-
+	WINPR_ASSERT(nego);
 	nego->SelectedProtocol = SelectedProtocol;
 	return TRUE;
 }
