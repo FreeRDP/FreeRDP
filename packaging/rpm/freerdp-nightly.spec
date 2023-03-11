@@ -46,6 +46,7 @@ BuildRequires: uuid-devel
 BuildRequires: libxml2-devel
 BuildRequires: zlib-devel
 BuildRequires: krb5-devel
+BuildRequires: cjson-devel
 
 # (Open)Suse
 %if %{defined suse_version}
