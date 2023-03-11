@@ -43,6 +43,7 @@ Build-Depends:
  libpam0g-dev,
  uuid-dev, 
  libxml2-dev,
+ libcjson-dev,
  libsdl2-2.0-0,
  libsdl2-dev,
 Standards-Version: 3.9.5
