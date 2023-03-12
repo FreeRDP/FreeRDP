@@ -617,8 +617,13 @@ BOOL security_establish_keys(rdpRdp* rdp)
 	const BYTE* client_random = freerdp_settings_get_pointer(settings, FreeRDP_ClientRandom);
 	WINPR_ASSERT(client_random);
 	WINPR_ASSERT(server_random);
-	WINPR_ASSERT(freerdp_settings_get_uint32(settings, FreeRDP_ClientRandomLength) == 32);
-	WINPR_ASSERT(freerdp_settings_get_uint32(settings, FreeRDP_ServerRandomLength) == 32);
+
+	const UINT32 ClientRandomLength =
+	    freerdp_settings_get_uint32(settings, FreeRDP_ClientRandomLength);
+	const UINT32 ServerRandomLength =
+	    freerdp_settings_get_uint32(settings, FreeRDP_ServerRandomLength);
+	WINPR_ASSERT(ClientRandomLength == 32);
+	WINPR_ASSERT(ServerRandomLength == 32);
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
@@ -680,12 +685,10 @@ BOOL security_establish_keys(rdpRdp* rdp)
 	memcpy(pre_master_secret, client_random, 24);
 	memcpy(pre_master_secret + 24, server_random, 24);
 
-	if (!security_A(pre_master_secret, sizeof(pre_master_secret), client_random,
-	                sizeof(client_random), server_random, sizeof(server_random), master_secret,
-	                sizeof(master_secret)) ||
-	    !security_X(master_secret, sizeof(master_secret), client_random, sizeof(client_random),
-	                server_random, sizeof(server_random), session_key_blob,
-	                sizeof(session_key_blob)))
+	if (!security_A(pre_master_secret, sizeof(pre_master_secret), client_random, ClientRandomLength,
+	                server_random, ServerRandomLength, master_secret, sizeof(master_secret)) ||
+	    !security_X(master_secret, sizeof(master_secret), client_random, ClientRandomLength,
+	                server_random, ServerRandomLength, session_key_blob, sizeof(session_key_blob)))
 	{
 		return FALSE;
 	}
