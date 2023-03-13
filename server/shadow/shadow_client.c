@@ -165,20 +165,17 @@ static void shadow_client_context_free(freerdp_peer* peer, rdpContext* context)
 	if (server && server->clients)
 		ArrayList_Remove(server->clients, (void*)client);
 
-	if (client->encoder)
-	{
-		shadow_encoder_free(client->encoder);
-		client->encoder = NULL;
-	}
+	shadow_encoder_free(client->encoder);
 
 	/* Clear queued messages and free resource */
-	WINPR_ASSERT(client->MsgQueue);
-	MessageQueue_Clear(client->MsgQueue);
 	MessageQueue_Free(client->MsgQueue);
 	WTSCloseServer((HANDLE)client->vcm);
-	client->vcm = NULL;
 	region16_uninit(&(client->invalidRegion));
 	DeleteCriticalSection(&(client->lock));
+
+	client->MsgQueue = NULL;
+	client->encoder = NULL;
+	client->vcm = NULL;
 }
 
 static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
