@@ -224,8 +224,7 @@ static SSIZE_T rdstls_write_string(wStream* s, const char* str)
 
 static BOOL rdstls_write_data(wStream* s, UINT32 length, const BYTE* data)
 {
-	if (!data)
-		return FALSE;
+	WINPR_ASSERT(data || (length == 0));
 
 	if (!Stream_EnsureRemainingCapacity(s, 2))
 		return FALSE;
