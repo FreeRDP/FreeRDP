@@ -296,6 +296,8 @@ static BIO* aad_connect_https(rdpAad* aad, SSL_CTX* ssl_ctx)
 		return NULL;
 	}
 	const long mrc = SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
+	if ((mrc & SSL_MODE_AUTO_RETRY) == 0)
+		WLog_Print(aad->log, WLOG_WARN, "Failed to set SSL_MODE_AUTO_RETRY");
 
 	BIO* bio = BIO_new_ssl_connect(ssl_ctx);
 	if (!bio)

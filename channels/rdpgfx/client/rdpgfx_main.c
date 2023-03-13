@@ -47,7 +47,7 @@
 
 static BOOL delete_surface(const void* key, void* value, void* arg)
 {
-	const UINT16 id = (UINT16)(key);
+	const UINT16 id = (UINT16)(uintptr_t)(key);
 	RdpgfxClientContext* context = arg;
 	RDPGFX_DELETE_SURFACE_PDU pdu = { 0 };
 

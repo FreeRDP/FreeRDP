@@ -139,7 +139,6 @@ static const char* mime_png = "image/png";
 static const char* mime_jpeg = "image/jpeg";
 static const char* mime_gif = "image/gif";
 
-static const char* mime_nautilus_clipboard = "x-special/nautilus-clipboard";
 static const char* mime_gnome_copied_files = "x-special/gnome-copied-files";
 static const char* mime_mate_copied_files = "x-special/mate-copied-files";
 
@@ -762,12 +761,14 @@ static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FO
 	if (!force && !xf_clipboard_changed(clipboard, formats, numFormats))
 		return CHANNEL_RC_OK;
 
+#if defined(WITH_DEBUG_CLIPRDR)
 	for (UINT32 x = 0; x < numFormats; x++)
 	{
 		const CLIPRDR_FORMAT* format = &formats[x];
 		DEBUG_CLIPRDR("announcing format 0x%08" PRIx32 " [%s] [%s]", format->formatId,
 		              ClipboardGetFormatIdString(format->formatId), format->formatName);
 	}
+#endif
 
 	xf_clipboard_copy_formats(clipboard, formats, numFormats);
 	/* Ensure all pending requests are answered. */
@@ -995,8 +996,6 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 
 static void xf_cliprdr_append_target(xfClipboard* clipboard, Atom target)
 {
-	int i;
-
 	WINPR_ASSERT(clipboard);
 	if (clipboard->numTargets < 0)
 		return;
@@ -1004,7 +1003,7 @@ static void xf_cliprdr_append_target(xfClipboard* clipboard, Atom target)
 	if ((size_t)clipboard->numTargets >= ARRAYSIZE(clipboard->targets))
 		return;
 
-	for (i = 0; i < clipboard->numTargets; i++)
+	for (int i = 0; i < clipboard->numTargets; i++)
 	{
 		if (clipboard->targets[i] == target)
 			return;
@@ -1886,18 +1885,18 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 		srcFormatId = CF_RAW;
 		dstFormatId = CF_RAW;
 	}
-	else if (!clipboard->requestedFormat)
+	else if (!format)
 		return ERROR_INTERNAL_ERROR;
-	else if (clipboard->requestedFormat->formatName)
+	else if (format->formatName)
 	{
-		if (strcmp(clipboard->requestedFormat->formatName, type_HtmlFormat) == 0)
+		if (strcmp(format->formatName, type_HtmlFormat) == 0)
 		{
 			srcFormatId = ClipboardGetFormatId(clipboard->system, type_HtmlFormat);
 			dstFormatId = ClipboardGetFormatId(clipboard->system, mime_html);
 			nullTerminated = TRUE;
 		}
 
-		if (strcmp(clipboard->requestedFormat->formatName, type_FileGroupDescriptorW) == 0)
+		if (strcmp(format->formatName, type_FileGroupDescriptorW) == 0)
 		{
 			if (!cliprdr_file_context_update_server_data(clipboard->file, clipboard->system, data,
 			                                             size))
@@ -1920,9 +1919,9 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	}
 	else
 	{
-		srcFormatId = clipboard->requestedFormat->formatToRequest;
-		dstFormatId = clipboard->requestedFormat->localFormat;
-		switch (clipboard->requestedFormat->formatToRequest)
+		srcFormatId = format->formatToRequest;
+		dstFormatId = format->localFormat;
+		switch (format->formatToRequest)
 		{
 			case CF_TEXT:
 				nullTerminated = TRUE;

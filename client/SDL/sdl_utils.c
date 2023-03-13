@@ -112,7 +112,7 @@ const char* sdl_event_type_str(Uint32 type)
 
 const char* sdl_error_string(Uint32 res)
 {
-	if (res >= 0)
+	if (res == 0)
 		return NULL;
 
 	return SDL_GetError();
