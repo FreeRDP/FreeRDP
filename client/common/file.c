@@ -1409,7 +1409,7 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	/* custom parameters */
 	for (size_t i = 0; i < file->lineCount; ++i)
 	{
-		SSIZE_T res;
+		SSIZE_T res = -1;
 		const rdpFileLine* curLine = &file->lines[i];
 
 		if (curLine->flags & RDP_FILE_LINE_FLAG_TYPE_INTEGER)

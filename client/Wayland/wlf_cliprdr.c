@@ -732,8 +732,6 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	clipboard = cliprdr_file_context_get_context(context->custom);
 	WINPR_ASSERT(clipboard);
 
-	const char* idstr = ClipboardGetFormatIdString(formatId);
-	const char* name = ClipboardGetFormatName(clipboard->system, formatId);
 	const UINT32 fileFormatId = ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
 	const UINT32 htmlFormatId = ClipboardGetFormatId(clipboard->system, type_HtmlFormat);
 
