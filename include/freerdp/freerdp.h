@@ -133,8 +133,37 @@ extern "C"
 
 	typedef BOOL (*pConnectCallback)(freerdp* instance);
 	typedef void (*pPostDisconnect)(freerdp* instance);
+
+	/** \brief Authentication callback function pointer definition
+	 *
+	 * \param freerdp A pointer to the instance to work on
+	 * \param username A pointer to the username string. On input the current username, on output
+	 * the username that should be used. Must not be NULL. \param password A pointer to the password
+	 * string. On input the current password, on output the password that sohould be used. Must not
+	 * be NULL. \param domain A pointer to the domain string. On input the current domain, on output
+	 * the domain that sohould be used. Must not be NULL.
+	 *
+	 * \return \b FALSE no valid credentials supplied, continue without \b TRUE valid credentials
+	 * should be available.
+	 */
+
 	typedef BOOL (*pAuthenticate)(freerdp* instance, char** username, char** password,
 	                              char** domain);
+
+	/** \brief Extended authentication callback function pointer definition
+	 *
+	 * \param freerdp A pointer to the instance to work on
+	 * \param username A pointer to the username string. On input the current username, on output
+	 * the username that should be used. Must not be NULL. \param password A pointer to the password
+	 * string. On input the current password, on output the password that sohould be used. Must not
+	 * be NULL. \param domain A pointer to the domain string. On input the current domain, on output
+	 * the domain that sohould be used. Must not be NULL. \param reason The reason the callback was
+	 * called. (e.g. NLA, TLS, RDP, GATEWAY, ...)
+	 *
+	 * \return \b FALSE to abort the connection, \b TRUE otherwise.
+	 * \note To not provide valid credentials and not abort the connection return \b TRUE and empty
+	 * (as in empty string) credentials
+	 */
 	typedef BOOL (*pAuthenticateEx)(freerdp* instance, char** username, char** password,
 	                                char** domain, rdp_auth_reason reason);
 	typedef BOOL (*pChooseSmartcard)(freerdp* instance, SmartcardCertInfo** cert_list, DWORD count,
