@@ -39,6 +39,7 @@
 #include <winpr/endian.h>
 #include <winpr/crypto.h>
 #include <winpr/path.h>
+#include <winpr/wtypes.h>
 
 #include "kerberos.h"
 
@@ -114,6 +115,7 @@ typedef struct KRB_CREDENTIALS_st
 	krb5_ccache ccache;
 	krb5_keytab keytab;
 	krb5_keytab client_keytab;
+	BOOL own_ccache; /**< Whether we created ccache, and must destroy it after use.  */
 } KRB_CREDENTIALS;
 
 static const WinPrAsn1_OID kerberos_OID = { 9, (void*)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x02" };
@@ -193,7 +195,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	char* domain = NULL;
 	char* username = NULL;
 	char* password = NULL;
-	const char* fallback_ccache = "MEMORY:";
+	BOOL own_ccache = FALSE;
+	const char* const default_ccache_type = "MEMORY";
 
 	if (pAuthData)
 	{
@@ -238,19 +241,31 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 	{
 		if ((rv = krb5_cc_set_default_name(ctx, krb_settings->cache)))
 			goto cleanup;
-		fallback_ccache = krb_settings->cache;
 	}
+	else
+		own_ccache = TRUE;
 
 	if (principal)
 	{
 		/* Use the default cache if it's initialized with the right principal */
 		if (krb5_cc_cache_match(ctx, principal, &ccache) == KRB5_CC_NOTFOUND)
 		{
-			if ((rv = krb5_cc_resolve(ctx, fallback_ccache, &ccache)))
-				goto cleanup;
+			if (own_ccache)
+			{
+				if ((rv = krb5_cc_new_unique(ctx, default_ccache_type, 0, &ccache)))
+					goto cleanup;
+			}
+			else
+			{
+				if ((rv = krb5_cc_resolve(ctx, krb_settings->cache, &ccache)))
+					goto cleanup;
+			}
+
 			if ((rv = krb5_cc_initialize(ctx, ccache, principal)))
 				goto cleanup;
 		}
+		else
+			own_ccache = FALSE;
 	}
 	else if (fCredentialUse & SECPKG_CRED_OUTBOUND)
 	{
@@ -259,11 +274,20 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 			goto cleanup;
 		if ((rv = krb5_cc_get_principal(ctx, ccache, &principal)))
 			goto cleanup;
+		own_ccache = FALSE;
 	}
 	else
 	{
-		if ((rv = krb5_cc_resolve(ctx, fallback_ccache, &ccache)))
-			goto cleanup;
+		if (own_ccache)
+		{
+			if ((rv = krb5_cc_new_unique(ctx, default_ccache_type, 0, &ccache)))
+				goto cleanup;
+		}
+		else
+		{
+			if ((rv = krb5_cc_resolve(ctx, krb_settings->cache, &ccache)))
+				goto cleanup;
+		}
 	}
 
 	if (krb_settings && krb_settings->keytab)
@@ -291,6 +315,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 		goto cleanup;
 	credentials->ccache = ccache;
 	credentials->keytab = keytab;
+	credentials->own_ccache = own_ccache;
 
 cleanup:
 
@@ -308,7 +333,12 @@ cleanup:
 		if (!credentials)
 		{
 			if (ccache)
-				krb5_cc_close(ctx, ccache);
+			{
+				if (own_ccache)
+					krb5_cc_destroy(ctx, ccache);
+				else
+					krb5_cc_close(ctx, ccache);
+			}
 			if (keytab)
 				krb5_kt_close(ctx, keytab);
 		}
@@ -379,7 +409,12 @@ static SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCr
 	free(credentials->kdc_url);
 
 	if (credentials->ccache)
-		krb5_cc_close(ctx, credentials->ccache);
+	{
+		if (credentials->own_ccache)
+			krb5_cc_destroy(ctx, credentials->ccache);
+		else
+			krb5_cc_close(ctx, credentials->ccache);
+	}
 	if (credentials->keytab)
 		krb5_kt_close(ctx, credentials->keytab);
 
