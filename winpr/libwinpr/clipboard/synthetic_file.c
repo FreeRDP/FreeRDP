@@ -1146,7 +1146,7 @@ UINT synthetic_file_read_close(struct synthetic_file* file, BOOL force)
 	if ((file->offset < 0) || ((UINT64)file->offset >= size) || force)
 	{
 		WLog_VRB(TAG, "close file %d", file->fd);
-		if (CloseHandle(file->fd) < 0)
+		if (!CloseHandle(file->fd))
 		{
 			WLog_WARN(TAG, "failed to close fd %d: %" PRIu32, file->fd, GetLastError());
 		}
