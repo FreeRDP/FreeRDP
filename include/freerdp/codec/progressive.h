@@ -20,8 +20,6 @@
 #ifndef FREERDP_CODEC_PROGRESSIVE_H
 #define FREERDP_CODEC_PROGRESSIVE_H
 
-typedef struct S_PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
-
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
@@ -36,6 +34,8 @@ typedef struct S_PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
 extern "C"
 {
 #endif
+
+	typedef struct S_PROGRESSIVE_CONTEXT PROGRESSIVE_CONTEXT;
 
 	FREERDP_API int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 	                                     UINT32 SrcSize, UINT32 SrcFormat, UINT32 Width,

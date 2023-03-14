@@ -45,23 +45,23 @@
 #define FREERDP_CODEC_AVC444 0x00000100
 #define FREERDP_CODEC_ALL 0xFFFFFFFF
 
-struct rdp_codecs
-{
-	rdpContext* context;
-
-	RFX_CONTEXT* rfx;
-	NSC_CONTEXT* nsc;
-	H264_CONTEXT* h264;
-	CLEAR_CONTEXT* clear;
-	PROGRESSIVE_CONTEXT* progressive;
-	BITMAP_PLANAR_CONTEXT* planar;
-	BITMAP_INTERLEAVED_CONTEXT* interleaved;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	struct rdp_codecs
+	{
+		rdpContext* context;
+
+		RFX_CONTEXT* rfx;
+		NSC_CONTEXT* nsc;
+		H264_CONTEXT* h264;
+		CLEAR_CONTEXT* clear;
+		PROGRESSIVE_CONTEXT* progressive;
+		BITMAP_PLANAR_CONTEXT* planar;
+		BITMAP_INTERLEAVED_CONTEXT* interleaved;
+	};
 
 	FREERDP_API BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width,
 	                                               UINT32 height);

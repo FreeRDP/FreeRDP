@@ -28,34 +28,43 @@
 #define AINPUT_CHANNEL_NAME "ainput"
 #define AINPUT_DVC_CHANNEL_NAME "FreeRDP::Advanced::Input"
 
-typedef enum
+#ifdef __cplusplus
+extern "C"
 {
-	MSG_AINPUT_VERSION = 0x01,
-	MSG_AINPUT_MOUSE = 0x02
-} eAInputMsgType;
+#endif
 
-typedef enum
-{
-	AINPUT_FLAGS_WHEEL = 0x0001,
-	AINPUT_FLAGS_MOVE = 0x0004,
-	AINPUT_FLAGS_DOWN = 0x0008,
+	typedef enum
+	{
+		MSG_AINPUT_VERSION = 0x01,
+		MSG_AINPUT_MOUSE = 0x02
+	} eAInputMsgType;
 
-	AINPUT_FLAGS_REL = 0x0010,
-	AINPUT_FLAGS_HAVE_REL = 0x0020,
+	typedef enum
+	{
+		AINPUT_FLAGS_WHEEL = 0x0001,
+		AINPUT_FLAGS_MOVE = 0x0004,
+		AINPUT_FLAGS_DOWN = 0x0008,
 
-	/* Pointer Flags */
-	AINPUT_FLAGS_BUTTON1 = 0x1000, /* left */
-	AINPUT_FLAGS_BUTTON2 = 0x2000, /* right */
-	AINPUT_FLAGS_BUTTON3 = 0x4000, /* middle */
+		AINPUT_FLAGS_REL = 0x0010,
+		AINPUT_FLAGS_HAVE_REL = 0x0020,
 
-	/* Extended Pointer Flags */
-	AINPUT_XFLAGS_BUTTON1 = 0x0100,
-	AINPUT_XFLAGS_BUTTON2 = 0x0200
-} AInputEventFlags;
+		/* Pointer Flags */
+		AINPUT_FLAGS_BUTTON1 = 0x1000, /* left */
+		AINPUT_FLAGS_BUTTON2 = 0x2000, /* right */
+		AINPUT_FLAGS_BUTTON3 = 0x4000, /* middle */
 
-typedef struct ainput_client_context AInputClientContext;
+		/* Extended Pointer Flags */
+		AINPUT_XFLAGS_BUTTON1 = 0x0100,
+		AINPUT_XFLAGS_BUTTON2 = 0x0200
+	} AInputEventFlags;
+
+	typedef struct ainput_client_context AInputClientContext;
 
 #define AINPUT_VERSION_MAJOR 1
 #define AINPUT_VERSION_MINOR 0
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_AINPUT_H */

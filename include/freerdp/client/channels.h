@@ -25,46 +25,46 @@
 #include <freerdp/addin.h>
 #include <freerdp/channels/channels.h>
 
-typedef struct
-{
-	IWTSVirtualChannelCallback iface;
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	IWTSVirtualChannel* channel;
-} GENERIC_CHANNEL_CALLBACK;
-
-typedef struct
-{
-	IWTSListenerCallback iface;
-	IWTSPlugin* plugin;
-	IWTSVirtualChannelManager* channel_mgr;
-	IWTSVirtualChannel* channel;
-	GENERIC_CHANNEL_CALLBACK* channel_callback;
-} GENERIC_LISTENER_CALLBACK;
-
-typedef struct GENERIC_DYNVC_PLUGIN GENERIC_DYNVC_PLUGIN;
-typedef UINT (*DYNVC_PLUGIN_INIT_FN)(GENERIC_DYNVC_PLUGIN* plugin, rdpContext* context,
-                                     rdpSettings* settings);
-typedef void (*DYNVC_PLUGIN_TERMINATE_FN)(GENERIC_DYNVC_PLUGIN* plugin);
-
-struct GENERIC_DYNVC_PLUGIN
-{
-	IWTSPlugin iface;
-	GENERIC_LISTENER_CALLBACK* listener_callback;
-	IWTSListener* listener;
-	BOOL attached;
-	BOOL initialized;
-	wLog* log;
-	char* dynvc_name;
-	size_t channelCallbackSize;
-	const IWTSVirtualChannelCallback* channel_callbacks;
-	DYNVC_PLUGIN_TERMINATE_FN terminatePluginFn;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct
+	{
+		IWTSVirtualChannelCallback iface;
+		IWTSPlugin* plugin;
+		IWTSVirtualChannelManager* channel_mgr;
+		IWTSVirtualChannel* channel;
+	} GENERIC_CHANNEL_CALLBACK;
+
+	typedef struct
+	{
+		IWTSListenerCallback iface;
+		IWTSPlugin* plugin;
+		IWTSVirtualChannelManager* channel_mgr;
+		IWTSVirtualChannel* channel;
+		GENERIC_CHANNEL_CALLBACK* channel_callback;
+	} GENERIC_LISTENER_CALLBACK;
+
+	typedef struct GENERIC_DYNVC_PLUGIN GENERIC_DYNVC_PLUGIN;
+	typedef UINT (*DYNVC_PLUGIN_INIT_FN)(GENERIC_DYNVC_PLUGIN* plugin, rdpContext* context,
+	                                     rdpSettings* settings);
+	typedef void (*DYNVC_PLUGIN_TERMINATE_FN)(GENERIC_DYNVC_PLUGIN* plugin);
+
+	struct GENERIC_DYNVC_PLUGIN
+	{
+		IWTSPlugin iface;
+		GENERIC_LISTENER_CALLBACK* listener_callback;
+		IWTSListener* listener;
+		BOOL attached;
+		BOOL initialized;
+		wLog* log;
+		char* dynvc_name;
+		size_t channelCallbackSize;
+		const IWTSVirtualChannelCallback* channel_callbacks;
+		DYNVC_PLUGIN_TERMINATE_FN terminatePluginFn;
+	};
 
 #if defined(WITH_CHANNELS)
 	FREERDP_API void* freerdp_channels_client_find_static_entry(const char* name,

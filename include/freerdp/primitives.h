@@ -26,7 +26,12 @@
 
 #include <winpr/platform.h>
 
-typedef INT32 pstatus_t;       /* match IppStatus. */
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	typedef INT32 pstatus_t;   /* match IppStatus. */
 #define PRIMITIVES_SUCCESS (0) /* match ippStsNoErr */
 
 /* Simple macro for address of an x,y location in 2d 4-byte memory block */
@@ -197,11 +202,6 @@ typedef enum
 	PRIMITIVES_ONLY_GPU,  /** use opencl optimized routines */
 	PRIMITIVES_AUTODETECT /** detect the best routines */
 } primitive_hints;
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 	FREERDP_API primitives_t* primitives_get(void);
 	FREERDP_API void primitives_set_hints(primitive_hints hints);

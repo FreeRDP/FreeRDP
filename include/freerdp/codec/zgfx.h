@@ -32,12 +32,12 @@
 
 #define ZGFX_SEGMENTED_MAXSIZE 65535
 
-typedef struct S_ZGFX_CONTEXT ZGFX_CONTEXT;
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct S_ZGFX_CONTEXT ZGFX_CONTEXT;
 
 	FREERDP_API int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize,
 	                                BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);

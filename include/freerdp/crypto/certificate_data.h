@@ -22,8 +22,6 @@
 #ifndef FREERDP_CRYPTO_CERTIFICATE_DATA_H
 #define FREERDP_CRYPTO_CERTIFICATE_DATA_H
 
-typedef struct rdp_certificate_data rdpCertificateData;
-
 #include <freerdp/api.h>
 #include <freerdp/settings.h>
 #include <freerdp/crypto/certificate.h>
@@ -32,6 +30,9 @@ typedef struct rdp_certificate_data rdpCertificateData;
 extern "C"
 {
 #endif
+
+	typedef struct rdp_certificate_data rdpCertificateData;
+
 	FREERDP_API char* freerdp_certificate_data_hash(const char* hostname, UINT16 port);
 
 	FREERDP_API rdpCertificateData* freerdp_certificate_data_new(const char* hostname, UINT16 port,

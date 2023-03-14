@@ -22,32 +22,41 @@
 #ifndef FREERDP_CHANNEL_DRDYNVC_CLIENT_DRDYNVC_H
 #define FREERDP_CHANNEL_DRDYNVC_CLIENT_DRDYNVC_H
 
-/**
- * Client Interface
- */
-
-typedef struct s_drdynvc_client_context DrdynvcClientContext;
-
-typedef int (*pcDrdynvcGetVersion)(DrdynvcClientContext* context);
-typedef UINT (*pcDrdynvcOnChannelConnected)(DrdynvcClientContext* context, const char* name,
-                                            void* pInterface);
-typedef UINT (*pcDrdynvcOnChannelDisconnected)(DrdynvcClientContext* context, const char* name,
-                                               void* pInterface);
-typedef UINT (*pcDrdynvcOnChannelAttached)(DrdynvcClientContext* context, const char* name,
-                                           void* pInterface);
-typedef UINT (*pcDrdynvcOnChannelDetached)(DrdynvcClientContext* context, const char* name,
-                                           void* pInterface);
-
-struct s_drdynvc_client_context
+#ifdef __cplusplus
+extern "C"
 {
-	void* handle;
-	void* custom;
+#endif
 
-	pcDrdynvcGetVersion GetVersion;
-	pcDrdynvcOnChannelConnected OnChannelConnected;
-	pcDrdynvcOnChannelDisconnected OnChannelDisconnected;
-	pcDrdynvcOnChannelAttached OnChannelAttached;
-	pcDrdynvcOnChannelDetached OnChannelDetached;
-};
+	/**
+	 * Client Interface
+	 */
+
+	typedef struct s_drdynvc_client_context DrdynvcClientContext;
+
+	typedef int (*pcDrdynvcGetVersion)(DrdynvcClientContext* context);
+	typedef UINT (*pcDrdynvcOnChannelConnected)(DrdynvcClientContext* context, const char* name,
+	                                            void* pInterface);
+	typedef UINT (*pcDrdynvcOnChannelDisconnected)(DrdynvcClientContext* context, const char* name,
+	                                               void* pInterface);
+	typedef UINT (*pcDrdynvcOnChannelAttached)(DrdynvcClientContext* context, const char* name,
+	                                           void* pInterface);
+	typedef UINT (*pcDrdynvcOnChannelDetached)(DrdynvcClientContext* context, const char* name,
+	                                           void* pInterface);
+
+	struct s_drdynvc_client_context
+	{
+		void* handle;
+		void* custom;
+
+		pcDrdynvcGetVersion GetVersion;
+		pcDrdynvcOnChannelConnected OnChannelConnected;
+		pcDrdynvcOnChannelDisconnected OnChannelDisconnected;
+		pcDrdynvcOnChannelAttached OnChannelAttached;
+		pcDrdynvcOnChannelDetached OnChannelDetached;
+	};
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_DRDYNVC_CLIENT_DRDYNVC_H */

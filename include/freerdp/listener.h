@@ -20,8 +20,6 @@
 #ifndef FREERDP_LISTENER_H
 #define FREERDP_LISTENER_H
 
-typedef struct rdp_freerdp_listener freerdp_listener;
-
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
@@ -31,6 +29,8 @@ typedef struct rdp_freerdp_listener freerdp_listener;
 extern "C"
 {
 #endif
+
+	typedef struct rdp_freerdp_listener freerdp_listener;
 
 	typedef BOOL (*psListenerOpen)(freerdp_listener* instance, const char* bind_address,
 	                               UINT16 port);

@@ -25,15 +25,24 @@
 #include <winpr/assert.h>
 #include <freerdp/channels/ainput.h>
 
-typedef UINT (*pcAInputSendInputEvent)(AInputClientContext* context, UINT64 flags, INT32 x,
-                                       INT32 y);
-
-struct ainput_client_context
+#ifdef __cplusplus
+extern "C"
 {
-	void* handle;
-	void* custom;
+#endif
 
-	pcAInputSendInputEvent AInputSendInputEvent;
-};
+	typedef UINT (*pcAInputSendInputEvent)(AInputClientContext* context, UINT64 flags, INT32 x,
+	                                       INT32 y);
+
+	struct ainput_client_context
+	{
+		void* handle;
+		void* custom;
+
+		pcAInputSendInputEvent AInputSendInputEvent;
+	};
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_AINPUT_CLIENT_AINPUT_H */

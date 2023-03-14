@@ -24,8 +24,6 @@
 
 #include <winpr/crt.h>
 
-typedef struct S_BITMAP_PLANAR_CONTEXT BITMAP_PLANAR_CONTEXT;
-
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 
@@ -40,69 +38,71 @@ typedef struct S_BITMAP_PLANAR_CONTEXT BITMAP_PLANAR_CONTEXT;
 #define PLANAR_CONTROL_BYTE_RUN_LENGTH(_controlByte) (_controlByte & 0x0F)
 #define PLANAR_CONTROL_BYTE_RAW_BYTES(_controlByte) ((_controlByte >> 4) & 0x0F)
 
-typedef struct
-{
-	/**
-	 * controlByte:
-	 * [0-3]: nRunLength
-	 * [4-7]: cRawBytes
-	 */
-	BYTE controlByte;
-	BYTE* rawValues;
-} RDP6_RLE_SEGMENT;
-
-typedef struct
-{
-	UINT32 cSegments;
-	RDP6_RLE_SEGMENT* segments;
-} RDP6_RLE_SEGMENTS;
-
-typedef struct
-{
-	/**
-	 * formatHeader:
-	 * [0-2]: Color Loss Level (CLL)
-	 *  [3] : Chroma Subsampling (CS)
-	 *  [4] : Run Length Encoding (RLE)
-	 *  [5] : No Alpha (NA)
-	 * [6-7]: Reserved
-	 */
-	BYTE formatHeader;
-} RDP6_BITMAP_STREAM;
-
-struct S_BITMAP_PLANAR_CONTEXT
-{
-	UINT32 maxWidth;
-	UINT32 maxHeight;
-	UINT32 maxPlaneSize;
-
-	BOOL AllowSkipAlpha;
-	BOOL AllowRunLengthEncoding;
-	BOOL AllowColorSubsampling;
-	BOOL AllowDynamicColorFidelity;
-
-	UINT32 ColorLossLevel;
-
-	BYTE* planes[4];
-	BYTE* planesBuffer;
-
-	BYTE* deltaPlanes[4];
-	BYTE* deltaPlanesBuffer;
-
-	BYTE* rlePlanes[4];
-	BYTE* rlePlanesBuffer;
-
-	BYTE* pTempData;
-	UINT32 nTempStep;
-
-	BOOL bgr;
-	BOOL topdown;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct S_BITMAP_PLANAR_CONTEXT BITMAP_PLANAR_CONTEXT;
+
+	typedef struct
+	{
+		/**
+		 * controlByte:
+		 * [0-3]: nRunLength
+		 * [4-7]: cRawBytes
+		 */
+		BYTE controlByte;
+		BYTE* rawValues;
+	} RDP6_RLE_SEGMENT;
+
+	typedef struct
+	{
+		UINT32 cSegments;
+		RDP6_RLE_SEGMENT* segments;
+	} RDP6_RLE_SEGMENTS;
+
+	typedef struct
+	{
+		/**
+		 * formatHeader:
+		 * [0-2]: Color Loss Level (CLL)
+		 *  [3] : Chroma Subsampling (CS)
+		 *  [4] : Run Length Encoding (RLE)
+		 *  [5] : No Alpha (NA)
+		 * [6-7]: Reserved
+		 */
+		BYTE formatHeader;
+	} RDP6_BITMAP_STREAM;
+
+	struct S_BITMAP_PLANAR_CONTEXT
+	{
+		UINT32 maxWidth;
+		UINT32 maxHeight;
+		UINT32 maxPlaneSize;
+
+		BOOL AllowSkipAlpha;
+		BOOL AllowRunLengthEncoding;
+		BOOL AllowColorSubsampling;
+		BOOL AllowDynamicColorFidelity;
+
+		UINT32 ColorLossLevel;
+
+		BYTE* planes[4];
+		BYTE* planesBuffer;
+
+		BYTE* deltaPlanes[4];
+		BYTE* deltaPlanesBuffer;
+
+		BYTE* rlePlanes[4];
+		BYTE* rlePlanesBuffer;
+
+		BYTE* pTempData;
+		UINT32 nTempStep;
+
+		BOOL bgr;
+		BOOL topdown;
+	};
 
 	FREERDP_API BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context,
 	                                                 const BYTE* data, UINT32 format, UINT32 width,

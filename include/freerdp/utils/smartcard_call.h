@@ -31,12 +31,13 @@
 #include <freerdp/channels/scard.h>
 #include <freerdp/utils/smartcard_operations.h>
 
-typedef struct s_scard_call_context scard_call_context;
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct s_scard_call_context scard_call_context;
+
 	FREERDP_API scard_call_context* smartcard_call_context_new(const rdpSettings* settings);
 	FREERDP_API void smartcard_call_context_free(scard_call_context* ctx);
 	FREERDP_API BOOL smartcard_call_context_signal_stop(scard_call_context* ctx, BOOL reset);

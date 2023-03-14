@@ -26,13 +26,14 @@
 /* Ignore invalid integer values */
 #define RDP_FILE_FLAG_PARSE_INT_RELAXED 1
 
-typedef struct rdp_file rdpFile;
-typedef BOOL (*rdp_file_fkt_parse)(void* context, const char* key, char type, const char* value);
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct rdp_file rdpFile;
+	typedef BOOL (*rdp_file_fkt_parse)(void* context, const char* key, char type,
+	                                   const char* value);
 
 	/* When using freerdp_client_parse_rdp_file_ex or freerdp_client_parse_rdp_file_buffer_ex
 	 * set the context for the callback with this function. */

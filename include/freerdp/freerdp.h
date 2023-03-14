@@ -22,24 +22,6 @@
 #ifndef FREERDP_H
 #define FREERDP_H
 
-typedef struct rdp_rdp rdpRdp;
-typedef struct rdp_gdi rdpGdi;
-typedef struct rdp_rail rdpRail;
-typedef struct rdp_cache rdpCache;
-typedef struct rdp_channels rdpChannels;
-typedef struct rdp_graphics rdpGraphics;
-typedef struct rdp_metrics rdpMetrics;
-typedef struct rdp_codecs rdpCodecs;
-typedef struct rdp_transport rdpTransport; /* Opaque */
-
-typedef struct rdp_freerdp freerdp;
-typedef struct rdp_context rdpContext;
-typedef struct rdp_freerdp_peer freerdp_peer;
-
-typedef struct rdp_client_context rdpClientContext;
-typedef struct rdp_client_entry_points_v1 RDP_CLIENT_ENTRY_POINTS_V1;
-typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
-
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/error.h>
@@ -57,13 +39,31 @@ typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 #include <freerdp/autodetect.h>
 #include <freerdp/heartbeat.h>
 
-typedef struct stream_dump_context rdpStreamDumpContext;
-typedef struct SmartcardCertInfo_st SmartcardCertInfo;
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct stream_dump_context rdpStreamDumpContext;
+	typedef struct SmartcardCertInfo_st SmartcardCertInfo;
+
+	typedef struct rdp_rdp rdpRdp;
+	typedef struct rdp_gdi rdpGdi;
+	typedef struct rdp_rail rdpRail;
+	typedef struct rdp_cache rdpCache;
+	typedef struct rdp_channels rdpChannels;
+	typedef struct rdp_graphics rdpGraphics;
+	typedef struct rdp_metrics rdpMetrics;
+	typedef struct rdp_codecs rdpCodecs;
+	typedef struct rdp_transport rdpTransport; /* Opaque */
+
+	typedef struct rdp_freerdp freerdp;
+	typedef struct rdp_context rdpContext;
+	typedef struct rdp_freerdp_peer freerdp_peer;
+
+	typedef struct rdp_client_context rdpClientContext;
+	typedef struct rdp_client_entry_points_v1 RDP_CLIENT_ENTRY_POINTS_V1;
+	typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 
 #define MCS_BASE_CHANNEL_ID 1001
 #define MCS_GLOBAL_CHANNEL_ID 1003

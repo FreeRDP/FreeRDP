@@ -24,6 +24,11 @@
 #include <winpr/crt.h>
 #include <winpr/smartcard.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define RDP_SCARD_CTL_CODE(code) \
 	CTL_CODE(FILE_DEVICE_FILE_SYSTEM, (code), METHOD_BUFFERED, FILE_ANY_ACCESS)
 
@@ -487,5 +492,9 @@ typedef struct
 	WriteCache_Common Common;
 	/* [string] */ WCHAR* szLookupName;
 } WriteCacheW_Call;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_SCARD_H */

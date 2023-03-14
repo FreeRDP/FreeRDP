@@ -24,71 +24,71 @@
 
 #include <freerdp/channels/wtsvc.h>
 
-typedef enum ECHO_SERVER_OPEN_RESULT
-{
-	ECHO_SERVER_OPEN_RESULT_OK = 0,
-	ECHO_SERVER_OPEN_RESULT_CLOSED = 1,
-	ECHO_SERVER_OPEN_RESULT_NOTSUPPORTED = 2,
-	ECHO_SERVER_OPEN_RESULT_ERROR = 3
-} ECHO_SERVER_OPEN_RESULT;
-
-typedef struct s_echo_server_context echo_server_context;
-
-typedef BOOL (*psEchoServerChannelIdAssigned)(echo_server_context* context, UINT32 channelId);
-
-typedef UINT (*psEchoServerOpen)(echo_server_context* context);
-typedef UINT (*psEchoServerClose)(echo_server_context* context);
-typedef BOOL (*psEchoServerRequest)(echo_server_context* context, const BYTE* buffer,
-                                    UINT32 length);
-
-typedef UINT (*psEchoServerOpenResult)(echo_server_context* context,
-                                       ECHO_SERVER_OPEN_RESULT result);
-typedef UINT (*psEchoServerResponse)(echo_server_context* context, const BYTE* buffer,
-                                     UINT32 length);
-
-struct s_echo_server_context
-{
-	HANDLE vcm;
-
-	/* Server self-defined pointer. */
-	void* data;
-
-	/*** APIs called by the server. ***/
-	/**
-	 * Open the echo channel.
-	 */
-	psEchoServerOpen Open;
-	/**
-	 * Close the echo channel.
-	 */
-	psEchoServerClose Close;
-	/**
-	 * Send echo request PDU.
-	 */
-	psEchoServerRequest Request;
-
-	/*** Callbacks registered by the server. ***/
-	/**
-	 * Indicate whether the channel is opened successfully.
-	 */
-	psEchoServerOpenResult OpenResult;
-	/**
-	 * Receive echo response PDU.
-	 */
-	psEchoServerResponse Response;
-
-	rdpContext* rdpcontext;
-
-	/**
-	 * Callback, when the channel got its id assigned.
-	 */
-	psEchoServerChannelIdAssigned ChannelIdAssigned;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef enum ECHO_SERVER_OPEN_RESULT
+	{
+		ECHO_SERVER_OPEN_RESULT_OK = 0,
+		ECHO_SERVER_OPEN_RESULT_CLOSED = 1,
+		ECHO_SERVER_OPEN_RESULT_NOTSUPPORTED = 2,
+		ECHO_SERVER_OPEN_RESULT_ERROR = 3
+	} ECHO_SERVER_OPEN_RESULT;
+
+	typedef struct s_echo_server_context echo_server_context;
+
+	typedef BOOL (*psEchoServerChannelIdAssigned)(echo_server_context* context, UINT32 channelId);
+
+	typedef UINT (*psEchoServerOpen)(echo_server_context* context);
+	typedef UINT (*psEchoServerClose)(echo_server_context* context);
+	typedef BOOL (*psEchoServerRequest)(echo_server_context* context, const BYTE* buffer,
+	                                    UINT32 length);
+
+	typedef UINT (*psEchoServerOpenResult)(echo_server_context* context,
+	                                       ECHO_SERVER_OPEN_RESULT result);
+	typedef UINT (*psEchoServerResponse)(echo_server_context* context, const BYTE* buffer,
+	                                     UINT32 length);
+
+	struct s_echo_server_context
+	{
+		HANDLE vcm;
+
+		/* Server self-defined pointer. */
+		void* data;
+
+		/*** APIs called by the server. ***/
+		/**
+		 * Open the echo channel.
+		 */
+		psEchoServerOpen Open;
+		/**
+		 * Close the echo channel.
+		 */
+		psEchoServerClose Close;
+		/**
+		 * Send echo request PDU.
+		 */
+		psEchoServerRequest Request;
+
+		/*** Callbacks registered by the server. ***/
+		/**
+		 * Indicate whether the channel is opened successfully.
+		 */
+		psEchoServerOpenResult OpenResult;
+		/**
+		 * Receive echo response PDU.
+		 */
+		psEchoServerResponse Response;
+
+		rdpContext* rdpcontext;
+
+		/**
+		 * Callback, when the channel got its id assigned.
+		 */
+		psEchoServerChannelIdAssigned ChannelIdAssigned;
+	};
 
 	FREERDP_API echo_server_context* echo_server_context_new(HANDLE vcm);
 	FREERDP_API void echo_server_context_free(echo_server_context* context);

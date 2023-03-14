@@ -32,76 +32,87 @@
 #define SYSPTR_NULL 0x00000000
 #define SYSPTR_DEFAULT 0x00007F00
 
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	UINT32 xPos;
-	UINT32 yPos;
-} POINTER_POSITION_UPDATE;
+#endif
 
-typedef struct
-{
-	UINT32 type;
-} POINTER_SYSTEM_UPDATE;
+	typedef struct
+	{
+		UINT32 xPos;
+		UINT32 yPos;
+	} POINTER_POSITION_UPDATE;
 
-typedef struct
-{
-	UINT32 cacheIndex;
-	UINT32 xPos;
-	UINT32 yPos;
-	UINT32 width;
-	UINT32 height;
-	UINT32 lengthAndMask;
-	UINT32 lengthXorMask;
-	BYTE* xorMaskData;
-	BYTE* andMaskData;
-} POINTER_COLOR_UPDATE;
+	typedef struct
+	{
+		UINT32 type;
+	} POINTER_SYSTEM_UPDATE;
 
-typedef struct
-{
-	UINT16 xorBpp;
-	UINT16 cacheIndex;
-	UINT16 hotSpotX;
-	UINT16 hotSpotY;
-	UINT16 width;
-	UINT16 height;
-	UINT32 lengthAndMask;
-	UINT32 lengthXorMask;
-	BYTE* xorMaskData;
-	BYTE* andMaskData;
-} POINTER_LARGE_UPDATE;
+	typedef struct
+	{
+		UINT32 cacheIndex;
+		UINT32 xPos;
+		UINT32 yPos;
+		UINT32 width;
+		UINT32 height;
+		UINT32 lengthAndMask;
+		UINT32 lengthXorMask;
+		BYTE* xorMaskData;
+		BYTE* andMaskData;
+	} POINTER_COLOR_UPDATE;
 
-typedef struct
-{
-	UINT32 xorBpp;
-	POINTER_COLOR_UPDATE colorPtrAttr;
-} POINTER_NEW_UPDATE;
+	typedef struct
+	{
+		UINT16 xorBpp;
+		UINT16 cacheIndex;
+		UINT16 hotSpotX;
+		UINT16 hotSpotY;
+		UINT16 width;
+		UINT16 height;
+		UINT32 lengthAndMask;
+		UINT32 lengthXorMask;
+		BYTE* xorMaskData;
+		BYTE* andMaskData;
+	} POINTER_LARGE_UPDATE;
 
-typedef struct
-{
-	UINT32 cacheIndex;
-} POINTER_CACHED_UPDATE;
+	typedef struct
+	{
+		UINT32 xorBpp;
+		POINTER_COLOR_UPDATE colorPtrAttr;
+	} POINTER_NEW_UPDATE;
 
-typedef BOOL (*pPointerPosition)(rdpContext* context,
-                                 const POINTER_POSITION_UPDATE* pointer_position);
-typedef BOOL (*pPointerSystem)(rdpContext* context, const POINTER_SYSTEM_UPDATE* pointer_system);
-typedef BOOL (*pPointerColor)(rdpContext* context, const POINTER_COLOR_UPDATE* pointer_color);
-typedef BOOL (*pPointerNew)(rdpContext* context, const POINTER_NEW_UPDATE* pointer_new);
-typedef BOOL (*pPointerCached)(rdpContext* context, const POINTER_CACHED_UPDATE* pointer_cached);
-typedef BOOL (*pPointerLarge)(rdpContext* context, const POINTER_LARGE_UPDATE* pointer_large);
+	typedef struct
+	{
+		UINT32 cacheIndex;
+	} POINTER_CACHED_UPDATE;
 
-struct rdp_pointer_update
-{
-	rdpContext* context;     /* 0 */
-	UINT32 paddingA[16 - 1]; /* 1 */
+	typedef BOOL (*pPointerPosition)(rdpContext* context,
+	                                 const POINTER_POSITION_UPDATE* pointer_position);
+	typedef BOOL (*pPointerSystem)(rdpContext* context,
+	                               const POINTER_SYSTEM_UPDATE* pointer_system);
+	typedef BOOL (*pPointerColor)(rdpContext* context, const POINTER_COLOR_UPDATE* pointer_color);
+	typedef BOOL (*pPointerNew)(rdpContext* context, const POINTER_NEW_UPDATE* pointer_new);
+	typedef BOOL (*pPointerCached)(rdpContext* context,
+	                               const POINTER_CACHED_UPDATE* pointer_cached);
+	typedef BOOL (*pPointerLarge)(rdpContext* context, const POINTER_LARGE_UPDATE* pointer_large);
 
-	pPointerPosition PointerPosition; /* 16 */
-	pPointerSystem PointerSystem;     /* 17 */
-	pPointerColor PointerColor;       /* 18 */
-	pPointerNew PointerNew;           /* 19 */
-	pPointerCached PointerCached;     /* 20 */
-	pPointerLarge PointerLarge;       /* 21 */
-	UINT32 paddingB[32 - 22];         /* 22 */
-};
-typedef struct rdp_pointer_update rdpPointerUpdate;
+	struct rdp_pointer_update
+	{
+		rdpContext* context;     /* 0 */
+		UINT32 paddingA[16 - 1]; /* 1 */
+
+		pPointerPosition PointerPosition; /* 16 */
+		pPointerSystem PointerSystem;     /* 17 */
+		pPointerColor PointerColor;       /* 18 */
+		pPointerNew PointerNew;           /* 19 */
+		pPointerCached PointerCached;     /* 20 */
+		pPointerLarge PointerLarge;       /* 21 */
+		UINT32 paddingB[32 - 22];         /* 22 */
+	};
+	typedef struct rdp_pointer_update rdpPointerUpdate;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UPDATE_POINTER_H */

@@ -26,54 +26,54 @@
 #include <freerdp/types.h>
 #include <freerdp/channels/rdpgfx.h>
 
-typedef struct S_H264_CONTEXT_SUBSYSTEM H264_CONTEXT_SUBSYSTEM;
-typedef struct S_YUV_CONTEXT YUV_CONTEXT;
-
-typedef enum
-{
-	H264_RATECONTROL_VBR = 0,
-	H264_RATECONTROL_CQP
-} H264_RATECONTROL_MODE;
-
-typedef struct
-{
-	BOOL Compressor;
-
-	UINT32 width;
-	UINT32 height;
-
-	H264_RATECONTROL_MODE RateControlMode;
-	UINT32 BitRate;
-	UINT32 FrameRate;
-	UINT32 QP;
-	UINT32 NumberOfThreads;
-
-	UINT32 iStride[3];
-	BYTE* pOldYUVData[3];
-	BYTE* pYUVData[3];
-
-	UINT32 iYUV444Size[3];
-	UINT32 iYUV444Stride[3];
-	BYTE* pOldYUV444Data[3];
-	BYTE* pYUV444Data[3];
-
-	UINT32 numSystemData;
-	void* pSystemData;
-	const H264_CONTEXT_SUBSYSTEM* subsystem;
-	YUV_CONTEXT* yuv;
-
-	BOOL encodingBuffer;
-	BOOL firstLumaFrameDone;
-	BOOL firstChromaFrameDone;
-
-	void* lumaData;
-	wLog* log;
-} H264_CONTEXT;
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct S_H264_CONTEXT_SUBSYSTEM H264_CONTEXT_SUBSYSTEM;
+	typedef struct S_YUV_CONTEXT YUV_CONTEXT;
+
+	typedef enum
+	{
+		H264_RATECONTROL_VBR = 0,
+		H264_RATECONTROL_CQP
+	} H264_RATECONTROL_MODE;
+
+	typedef struct
+	{
+		BOOL Compressor;
+
+		UINT32 width;
+		UINT32 height;
+
+		H264_RATECONTROL_MODE RateControlMode;
+		UINT32 BitRate;
+		UINT32 FrameRate;
+		UINT32 QP;
+		UINT32 NumberOfThreads;
+
+		UINT32 iStride[3];
+		BYTE* pOldYUVData[3];
+		BYTE* pYUVData[3];
+
+		UINT32 iYUV444Size[3];
+		UINT32 iYUV444Stride[3];
+		BYTE* pOldYUV444Data[3];
+		BYTE* pYUV444Data[3];
+
+		UINT32 numSystemData;
+		void* pSystemData;
+		const H264_CONTEXT_SUBSYSTEM* subsystem;
+		YUV_CONTEXT* yuv;
+
+		BOOL encodingBuffer;
+		BOOL firstLumaFrameDone;
+		BOOL firstChromaFrameDone;
+
+		void* lumaData;
+		wLog* log;
+	} H264_CONTEXT;
 
 	static INLINE void free_h264_metablock(RDPGFX_H264_METABLOCK* meta)
 	{

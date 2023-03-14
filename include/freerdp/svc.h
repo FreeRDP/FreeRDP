@@ -35,38 +35,47 @@
 
 #define FREERDP_CHANNEL_MAGIC_NUMBER 0x46524450
 
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	UINT32 cbSize;
-	UINT32 protocolVersion;
-	PVIRTUALCHANNELINIT pVirtualChannelInit;
-	PVIRTUALCHANNELOPEN pVirtualChannelOpen;
-	PVIRTUALCHANNELCLOSE pVirtualChannelClose;
-	PVIRTUALCHANNELWRITE pVirtualChannelWrite;
+#endif
 
-	/* Extended Fields */
-	UINT32 MagicNumber;  /* identifies FreeRDP */
-	void* pExtendedData; /* extended initial data */
-	void* pInterface;    /* channel callback interface, use after initialization */
-	rdpContext* context;
-} CHANNEL_ENTRY_POINTS_FREERDP;
-typedef CHANNEL_ENTRY_POINTS_FREERDP* PCHANNEL_ENTRY_POINTS_FREERDP;
+	typedef struct
+	{
+		UINT32 cbSize;
+		UINT32 protocolVersion;
+		PVIRTUALCHANNELINIT pVirtualChannelInit;
+		PVIRTUALCHANNELOPEN pVirtualChannelOpen;
+		PVIRTUALCHANNELCLOSE pVirtualChannelClose;
+		PVIRTUALCHANNELWRITE pVirtualChannelWrite;
 
-typedef struct
-{
-	UINT32 cbSize;
-	UINT32 protocolVersion;
-	PVIRTUALCHANNELINITEX pVirtualChannelInitEx;
-	PVIRTUALCHANNELOPENEX pVirtualChannelOpenEx;
-	PVIRTUALCHANNELCLOSEEX pVirtualChannelCloseEx;
-	PVIRTUALCHANNELWRITEEX pVirtualChannelWriteEx;
+		/* Extended Fields */
+		UINT32 MagicNumber;  /* identifies FreeRDP */
+		void* pExtendedData; /* extended initial data */
+		void* pInterface;    /* channel callback interface, use after initialization */
+		rdpContext* context;
+	} CHANNEL_ENTRY_POINTS_FREERDP;
+	typedef CHANNEL_ENTRY_POINTS_FREERDP* PCHANNEL_ENTRY_POINTS_FREERDP;
 
-	/* Extended Fields */
-	UINT32 MagicNumber;  /* identifies FreeRDP */
-	void* pExtendedData; /* extended initial data */
-	void* pInterface;    /* channel callback interface, use after initialization */
-	rdpContext* context;
-} CHANNEL_ENTRY_POINTS_FREERDP_EX;
-typedef CHANNEL_ENTRY_POINTS_FREERDP_EX* PCHANNEL_ENTRY_POINTS_FREERDP_EX;
+	typedef struct
+	{
+		UINT32 cbSize;
+		UINT32 protocolVersion;
+		PVIRTUALCHANNELINITEX pVirtualChannelInitEx;
+		PVIRTUALCHANNELOPENEX pVirtualChannelOpenEx;
+		PVIRTUALCHANNELCLOSEEX pVirtualChannelCloseEx;
+		PVIRTUALCHANNELWRITEEX pVirtualChannelWriteEx;
+
+		/* Extended Fields */
+		UINT32 MagicNumber;  /* identifies FreeRDP */
+		void* pExtendedData; /* extended initial data */
+		void* pInterface;    /* channel callback interface, use after initialization */
+		rdpContext* context;
+	} CHANNEL_ENTRY_POINTS_FREERDP_EX;
+	typedef CHANNEL_ENTRY_POINTS_FREERDP_EX* PCHANNEL_ENTRY_POINTS_FREERDP_EX;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_SVC_H */

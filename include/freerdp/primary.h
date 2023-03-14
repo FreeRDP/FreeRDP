@@ -22,27 +22,32 @@
 
 #include <freerdp/types.h>
 
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	UINT32 cacheIndex;
-	INT16 x;
-	INT16 y;
-	UINT32 cx;
-	UINT32 cy;
-	UINT32 cb;
-	BYTE* aj;
-} GLYPH_DATA;
+#endif
 
-typedef struct
-{
-	UINT32 cacheIndex;
-	INT32 x;
-	INT32 y;
-	UINT32 cx;
-	UINT32 cy;
-	UINT32 cb;
-	BYTE* aj;
-} GLYPH_DATA_V2;
+	typedef struct
+	{
+		UINT32 cacheIndex;
+		INT16 x;
+		INT16 y;
+		UINT32 cx;
+		UINT32 cy;
+		UINT32 cb;
+		BYTE* aj;
+	} GLYPH_DATA;
+
+	typedef struct
+	{
+		UINT32 cacheIndex;
+		INT32 x;
+		INT32 y;
+		UINT32 cx;
+		UINT32 cy;
+		UINT32 cb;
+		BYTE* aj;
+	} GLYPH_DATA_V2;
 
 #define BACKMODE_TRANSPARENT 0x0001
 #define BACKMODE_OPAQUE 0x0002
@@ -468,5 +473,9 @@ struct rdp_primary_update
 	UINT32 paddingB[48 - 39]; /* 39 */
 };
 typedef struct rdp_primary_update rdpPrimaryUpdate;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UPDATE_PRIMARY_H */

@@ -22,8 +22,6 @@
 #ifndef FREERDP_CRYPTO_CERTIFICATE_STORE_H
 #define FREERDP_CRYPTO_CERTIFICATE_STORE_H
 
-typedef struct rdp_certificate_store rdpCertificateStore;
-
 #include <freerdp/api.h>
 #include <freerdp/settings.h>
 #include <freerdp/crypto/certificate_data.h>
@@ -32,6 +30,8 @@ typedef struct rdp_certificate_store rdpCertificateStore;
 extern "C"
 {
 #endif
+
+	typedef struct rdp_certificate_store rdpCertificateStore;
 
 	typedef enum
 	{

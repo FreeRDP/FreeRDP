@@ -23,28 +23,28 @@
 #include <winpr/wtypes.h>
 #include <freerdp/api.h>
 
-/** @brief ring buffer meta data */
-typedef struct
-{
-	size_t initialSize;
-	size_t freeSize;
-	size_t size;
-	size_t readPtr;
-	size_t writePtr;
-	BYTE* buffer;
-} RingBuffer;
-
-/** @brief a piece of data in the ring buffer, exactly like a glibc iovec */
-typedef struct
-{
-	size_t size;
-	const BYTE* data;
-} DataChunk;
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	/** @brief ring buffer meta data */
+	typedef struct
+	{
+		size_t initialSize;
+		size_t freeSize;
+		size_t size;
+		size_t readPtr;
+		size_t writePtr;
+		BYTE* buffer;
+	} RingBuffer;
+
+	/** @brief a piece of data in the ring buffer, exactly like a glibc iovec */
+	typedef struct
+	{
+		size_t size;
+		const BYTE* data;
+	} DataChunk;
 
 	/**
 	 * initialise a ringbuffer

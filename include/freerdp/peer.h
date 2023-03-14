@@ -32,10 +32,15 @@
 #include <winpr/ntlm.h>
 #include <winpr/winsock.h>
 
-typedef BOOL (*psPeerContextNew)(freerdp_peer* peer, rdpContext* context);
-typedef void (*psPeerContextFree)(freerdp_peer* peer, rdpContext* context);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-typedef BOOL (*psPeerInitialize)(freerdp_peer* peer);
+	typedef BOOL (*psPeerContextNew)(freerdp_peer* peer, rdpContext* context);
+	typedef void (*psPeerContextFree)(freerdp_peer* peer, rdpContext* context);
+
+	typedef BOOL (*psPeerInitialize)(freerdp_peer* peer);
 #if defined(WITH_FREERDP_DEPRECATED)
 WINPR_DEPRECATED_VAR("Use psPeerGetEventHandle instead",
                      typedef BOOL (*psPeerGetFileDescriptor)(freerdp_peer* peer, void** rfds,
@@ -177,11 +182,6 @@ struct rdp_freerdp_peer
 	ALIGN64 psPeerReachedState ReachedState;
 	ALIGN64 psSspiNtlmHashCallback SspiNtlmHashCallback;
 };
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 	FREERDP_API BOOL freerdp_peer_context_new(freerdp_peer* client);
 	FREERDP_API BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settings);

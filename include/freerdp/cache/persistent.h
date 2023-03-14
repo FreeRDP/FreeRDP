@@ -28,7 +28,12 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
-typedef struct rdp_persistent_cache rdpPersistentCache;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	typedef struct rdp_persistent_cache rdpPersistentCache;
 
 #pragma pack(push, 1)
 
@@ -75,11 +80,6 @@ struct _PERSISTENT_CACHE_ENTRY
 	BYTE* data;
 };
 typedef struct _PERSISTENT_CACHE_ENTRY PERSISTENT_CACHE_ENTRY;
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 	FREERDP_API int persistent_cache_get_version(rdpPersistentCache* persistent);
 	FREERDP_API int persistent_cache_get_count(rdpPersistentCache* persistent);

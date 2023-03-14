@@ -145,140 +145,149 @@
 
 #define WS_EX_DECORATIONS 0x40000000
 
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	UINT32 windowId;
-	UINT32 fieldFlags;
-	UINT32 notifyIconId;
-} WINDOW_ORDER_INFO;
+#endif
 
-typedef struct
-{
-	UINT32 cacheEntry;
-	UINT32 cacheId;
-	UINT32 bpp;
-	UINT32 width;
-	UINT32 height;
-	UINT32 cbColorTable;
-	UINT32 cbBitsMask;
-	UINT32 cbBitsColor;
-	BYTE* bitsMask;
-	BYTE* colorTable;
-	BYTE* bitsColor;
-} ICON_INFO;
+	typedef struct
+	{
+		UINT32 windowId;
+		UINT32 fieldFlags;
+		UINT32 notifyIconId;
+	} WINDOW_ORDER_INFO;
 
-typedef struct
-{
-	UINT32 cacheEntry;
-	UINT32 cacheId;
-} CACHED_ICON_INFO;
+	typedef struct
+	{
+		UINT32 cacheEntry;
+		UINT32 cacheId;
+		UINT32 bpp;
+		UINT32 width;
+		UINT32 height;
+		UINT32 cbColorTable;
+		UINT32 cbBitsMask;
+		UINT32 cbBitsColor;
+		BYTE* bitsMask;
+		BYTE* colorTable;
+		BYTE* bitsColor;
+	} ICON_INFO;
 
-typedef struct
-{
-	UINT32 timeout;
-	UINT32 flags;
-	RAIL_UNICODE_STRING text;
-	RAIL_UNICODE_STRING title;
-} NOTIFY_ICON_INFOTIP;
+	typedef struct
+	{
+		UINT32 cacheEntry;
+		UINT32 cacheId;
+	} CACHED_ICON_INFO;
 
-typedef struct
-{
-	UINT32 ownerWindowId;
-	UINT32 style;
-	UINT32 extendedStyle;
-	UINT32 showState;
-	RAIL_UNICODE_STRING titleInfo;
-	INT32 clientOffsetX;
-	INT32 clientOffsetY;
-	UINT32 clientAreaWidth;
-	UINT32 clientAreaHeight;
-	UINT32 RPContent;
-	UINT32 rootParentHandle;
-	INT32 windowOffsetX;
-	INT32 windowOffsetY;
-	INT32 windowClientDeltaX;
-	INT32 windowClientDeltaY;
-	UINT32 windowWidth;
-	UINT32 windowHeight;
-	UINT32 numWindowRects;
-	RECTANGLE_16* windowRects;
-	INT32 visibleOffsetX;
-	INT32 visibleOffsetY;
-	UINT32 resizeMarginLeft;
-	UINT32 resizeMarginTop;
-	UINT32 resizeMarginRight;
-	UINT32 resizeMarginBottom;
-	UINT32 numVisibilityRects;
-	RECTANGLE_16* visibilityRects;
-	RAIL_UNICODE_STRING OverlayDescription;
-	BYTE TaskbarButton;
-	UINT8 EnforceServerZOrder;
-	UINT8 AppBarState;
-	UINT8 AppBarEdge;
-} WINDOW_STATE_ORDER;
+	typedef struct
+	{
+		UINT32 timeout;
+		UINT32 flags;
+		RAIL_UNICODE_STRING text;
+		RAIL_UNICODE_STRING title;
+	} NOTIFY_ICON_INFOTIP;
 
-typedef struct
-{
-	ICON_INFO* iconInfo;
-} WINDOW_ICON_ORDER;
+	typedef struct
+	{
+		UINT32 ownerWindowId;
+		UINT32 style;
+		UINT32 extendedStyle;
+		UINT32 showState;
+		RAIL_UNICODE_STRING titleInfo;
+		INT32 clientOffsetX;
+		INT32 clientOffsetY;
+		UINT32 clientAreaWidth;
+		UINT32 clientAreaHeight;
+		UINT32 RPContent;
+		UINT32 rootParentHandle;
+		INT32 windowOffsetX;
+		INT32 windowOffsetY;
+		INT32 windowClientDeltaX;
+		INT32 windowClientDeltaY;
+		UINT32 windowWidth;
+		UINT32 windowHeight;
+		UINT32 numWindowRects;
+		RECTANGLE_16* windowRects;
+		INT32 visibleOffsetX;
+		INT32 visibleOffsetY;
+		UINT32 resizeMarginLeft;
+		UINT32 resizeMarginTop;
+		UINT32 resizeMarginRight;
+		UINT32 resizeMarginBottom;
+		UINT32 numVisibilityRects;
+		RECTANGLE_16* visibilityRects;
+		RAIL_UNICODE_STRING OverlayDescription;
+		BYTE TaskbarButton;
+		UINT8 EnforceServerZOrder;
+		UINT8 AppBarState;
+		UINT8 AppBarEdge;
+	} WINDOW_STATE_ORDER;
 
-typedef struct
-{
-	CACHED_ICON_INFO cachedIcon;
-} WINDOW_CACHED_ICON_ORDER;
+	typedef struct
+	{
+		ICON_INFO* iconInfo;
+	} WINDOW_ICON_ORDER;
 
-typedef struct
-{
-	UINT32 version;
-	RAIL_UNICODE_STRING toolTip;
-	NOTIFY_ICON_INFOTIP infoTip;
-	UINT32 state;
-	ICON_INFO icon;
-	CACHED_ICON_INFO cachedIcon;
-} NOTIFY_ICON_STATE_ORDER;
+	typedef struct
+	{
+		CACHED_ICON_INFO cachedIcon;
+	} WINDOW_CACHED_ICON_ORDER;
 
-typedef struct
-{
-	UINT32 activeWindowId;
-	UINT32 numWindowIds;
-	UINT32* windowIds;
-} MONITORED_DESKTOP_ORDER;
+	typedef struct
+	{
+		UINT32 version;
+		RAIL_UNICODE_STRING toolTip;
+		NOTIFY_ICON_INFOTIP infoTip;
+		UINT32 state;
+		ICON_INFO icon;
+		CACHED_ICON_INFO cachedIcon;
+	} NOTIFY_ICON_STATE_ORDER;
 
-typedef BOOL (*pWindowCreate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                              const WINDOW_STATE_ORDER* window_state);
-typedef BOOL (*pWindowUpdate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                              const WINDOW_STATE_ORDER* window_state);
-typedef BOOL (*pWindowIcon)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                            const WINDOW_ICON_ORDER* window_icon);
-typedef BOOL (*pWindowCachedIcon)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                  const WINDOW_CACHED_ICON_ORDER* window_cached_icon);
-typedef BOOL (*pWindowDelete)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo);
-typedef BOOL (*pNotifyIconCreate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                  const NOTIFY_ICON_STATE_ORDER* notify_icon_state);
-typedef BOOL (*pNotifyIconUpdate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                  const NOTIFY_ICON_STATE_ORDER* notify_icon_state);
-typedef BOOL (*pNotifyIconDelete)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo);
-typedef BOOL (*pMonitoredDesktop)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
-                                  const MONITORED_DESKTOP_ORDER* monitored_desktop);
-typedef BOOL (*pNonMonitoredDesktop)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo);
+	typedef struct
+	{
+		UINT32 activeWindowId;
+		UINT32 numWindowIds;
+		UINT32* windowIds;
+	} MONITORED_DESKTOP_ORDER;
 
-struct rdp_window_update
-{
-	rdpContext* context;     /* 0 */
-	UINT32 paddingA[16 - 1]; /* 1 */
+	typedef BOOL (*pWindowCreate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+	                              const WINDOW_STATE_ORDER* window_state);
+	typedef BOOL (*pWindowUpdate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+	                              const WINDOW_STATE_ORDER* window_state);
+	typedef BOOL (*pWindowIcon)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+	                            const WINDOW_ICON_ORDER* window_icon);
+	typedef BOOL (*pWindowCachedIcon)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+	                                  const WINDOW_CACHED_ICON_ORDER* window_cached_icon);
+	typedef BOOL (*pWindowDelete)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo);
+	typedef BOOL (*pNotifyIconCreate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+	                                  const NOTIFY_ICON_STATE_ORDER* notify_icon_state);
+	typedef BOOL (*pNotifyIconUpdate)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+	                                  const NOTIFY_ICON_STATE_ORDER* notify_icon_state);
+	typedef BOOL (*pNotifyIconDelete)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo);
+	typedef BOOL (*pMonitoredDesktop)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
+	                                  const MONITORED_DESKTOP_ORDER* monitored_desktop);
+	typedef BOOL (*pNonMonitoredDesktop)(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo);
 
-	pWindowCreate WindowCreate;               /* 16 */
-	pWindowUpdate WindowUpdate;               /* 17 */
-	pWindowIcon WindowIcon;                   /* 18 */
-	pWindowCachedIcon WindowCachedIcon;       /* 19 */
-	pWindowDelete WindowDelete;               /* 20 */
-	pNotifyIconCreate NotifyIconCreate;       /* 21 */
-	pNotifyIconUpdate NotifyIconUpdate;       /* 22 */
-	pNotifyIconDelete NotifyIconDelete;       /* 23 */
-	pMonitoredDesktop MonitoredDesktop;       /* 24 */
-	pNonMonitoredDesktop NonMonitoredDesktop; /* 25 */
-	UINT32 paddingB[32 - 26];                 /* 26 */
-};
-typedef struct rdp_window_update rdpWindowUpdate;
+	struct rdp_window_update
+	{
+		rdpContext* context;     /* 0 */
+		UINT32 paddingA[16 - 1]; /* 1 */
+
+		pWindowCreate WindowCreate;               /* 16 */
+		pWindowUpdate WindowUpdate;               /* 17 */
+		pWindowIcon WindowIcon;                   /* 18 */
+		pWindowCachedIcon WindowCachedIcon;       /* 19 */
+		pWindowDelete WindowDelete;               /* 20 */
+		pNotifyIconCreate NotifyIconCreate;       /* 21 */
+		pNotifyIconUpdate NotifyIconUpdate;       /* 22 */
+		pNotifyIconDelete NotifyIconDelete;       /* 23 */
+		pMonitoredDesktop MonitoredDesktop;       /* 24 */
+		pNonMonitoredDesktop NonMonitoredDesktop; /* 25 */
+		UINT32 paddingB[32 - 26];                 /* 26 */
+	};
+	typedef struct rdp_window_update rdpWindowUpdate;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UPDATE_WINDOW_H */

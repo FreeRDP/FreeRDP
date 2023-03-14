@@ -29,8 +29,10 @@
 extern "C"
 {
 #endif
+
 	FREERDP_API size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats);
 	FREERDP_API size_t server_rdpsnd_get_formats(AUDIO_FORMAT** dst_formats);
+
 #ifdef __cplusplus
 }
 #endif

@@ -26,12 +26,12 @@
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/color.h>
 
-typedef struct S_CLEAR_CONTEXT CLEAR_CONTEXT;
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct S_CLEAR_CONTEXT CLEAR_CONTEXT;
 
 	FREERDP_API int clear_compress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSize,
 	                               BYTE** ppDstData, UINT32* pDstSize);

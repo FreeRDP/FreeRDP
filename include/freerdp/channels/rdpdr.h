@@ -35,6 +35,11 @@
 
 #include <freerdp/freerdp.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define RDPDR_SVC_CHANNEL_NAME "rdpdr"
 
 #define RDPDR_DEVICE_IO_REQUEST_LENGTH 24
@@ -376,5 +381,9 @@ typedef struct
 typedef DEVICE_SERVICE_ENTRY_POINTS* PDEVICE_SERVICE_ENTRY_POINTS;
 
 typedef UINT (*PDEVICE_SERVICE_ENTRY)(PDEVICE_SERVICE_ENTRY_POINTS);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_RDPDR_H */

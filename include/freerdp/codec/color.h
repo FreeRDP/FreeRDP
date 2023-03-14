@@ -24,6 +24,11 @@
 
 #include <freerdp/api.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define FREERDP_PIXEL_FORMAT_TYPE_A 0
 #define FREERDP_PIXEL_FORMAT_TYPE_ARGB 1
 #define FREERDP_PIXEL_FORMAT_TYPE_ABGR 2
@@ -101,11 +106,6 @@ struct gdi_palette
 	UINT32 palette[256];
 };
 typedef struct gdi_palette gdiPalette;
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 	/* Compare two color formats but ignore differences in alpha channel.
 	 */

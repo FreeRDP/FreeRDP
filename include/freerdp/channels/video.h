@@ -26,87 +26,96 @@
 #define VIDEO_CONTROL_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Video::Control::v08.01"
 #define VIDEO_DATA_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Video::Data::v08.01"
 
-/** @brief TSNM packet type */
-enum
+#ifdef __cplusplus
+extern "C"
 {
-	TSMM_PACKET_TYPE_PRESENTATION_REQUEST = 1,
-	TSMM_PACKET_TYPE_PRESENTATION_RESPONSE = 2,
-	TSMM_PACKET_TYPE_CLIENT_NOTIFICATION = 3,
-	TSMM_PACKET_TYPE_VIDEO_DATA = 4
-};
+#endif
 
-/** @brief TSMM_PRESENTATION_REQUEST commands */
-enum
-{
-	TSMM_START_PRESENTATION = 1,
-	TSMM_STOP_PRESENTATION = 2
-};
+	/** @brief TSNM packet type */
+	enum
+	{
+		TSMM_PACKET_TYPE_PRESENTATION_REQUEST = 1,
+		TSMM_PACKET_TYPE_PRESENTATION_RESPONSE = 2,
+		TSMM_PACKET_TYPE_CLIENT_NOTIFICATION = 3,
+		TSMM_PACKET_TYPE_VIDEO_DATA = 4
+	};
 
-/** @brief presentation request struct */
-typedef struct
-{
-	BYTE PresentationId;
-	BYTE Version;
-	BYTE Command;
-	BYTE FrameRate;
-	UINT32 SourceWidth, SourceHeight;
-	UINT32 ScaledWidth, ScaledHeight;
-	UINT64 hnsTimestampOffset;
-	UINT64 GeometryMappingId;
-	BYTE VideoSubtypeId[16];
-	UINT32 cbExtra;
-	BYTE* pExtraData;
-} TSMM_PRESENTATION_REQUEST;
+	/** @brief TSMM_PRESENTATION_REQUEST commands */
+	enum
+	{
+		TSMM_START_PRESENTATION = 1,
+		TSMM_STOP_PRESENTATION = 2
+	};
 
-/** @brief response to a TSMM_PRESENTATION_REQUEST */
-typedef struct
-{
-	BYTE PresentationId;
-} TSMM_PRESENTATION_RESPONSE;
+	/** @brief presentation request struct */
+	typedef struct
+	{
+		BYTE PresentationId;
+		BYTE Version;
+		BYTE Command;
+		BYTE FrameRate;
+		UINT32 SourceWidth, SourceHeight;
+		UINT32 ScaledWidth, ScaledHeight;
+		UINT64 hnsTimestampOffset;
+		UINT64 GeometryMappingId;
+		BYTE VideoSubtypeId[16];
+		UINT32 cbExtra;
+		BYTE* pExtraData;
+	} TSMM_PRESENTATION_REQUEST;
 
-/** @brief TSMM_VIDEO_DATA flags */
-enum
-{
-	TSMM_VIDEO_DATA_FLAG_HAS_TIMESTAMPS = 0x01,
-	TSMM_VIDEO_DATA_FLAG_KEYFRAME = 0x02,
-	TSMM_VIDEO_DATA_FLAG_NEW_FRAMERATE = 0x04
-};
+	/** @brief response to a TSMM_PRESENTATION_REQUEST */
+	typedef struct
+	{
+		BYTE PresentationId;
+	} TSMM_PRESENTATION_RESPONSE;
 
-/** @brief a video data packet */
-typedef struct
-{
-	BYTE PresentationId;
-	BYTE Version;
-	BYTE Flags;
-	UINT64 hnsTimestamp;
-	UINT64 hnsDuration;
-	UINT16 CurrentPacketIndex;
-	UINT16 PacketsInSample;
-	UINT32 SampleNumber;
-	UINT32 cbSample;
-	BYTE* pSample;
-} TSMM_VIDEO_DATA;
+	/** @brief TSMM_VIDEO_DATA flags */
+	enum
+	{
+		TSMM_VIDEO_DATA_FLAG_HAS_TIMESTAMPS = 0x01,
+		TSMM_VIDEO_DATA_FLAG_KEYFRAME = 0x02,
+		TSMM_VIDEO_DATA_FLAG_NEW_FRAMERATE = 0x04
+	};
 
-/** @brief values for NotificationType in TSMM_CLIENT_NOTIFICATION */
-enum
-{
-	TSMM_CLIENT_NOTIFICATION_TYPE_NETWORK_ERROR = 1,
-	TSMM_CLIENT_NOTIFICATION_TYPE_FRAMERATE_OVERRIDE = 2
-};
+	/** @brief a video data packet */
+	typedef struct
+	{
+		BYTE PresentationId;
+		BYTE Version;
+		BYTE Flags;
+		UINT64 hnsTimestamp;
+		UINT64 hnsDuration;
+		UINT16 CurrentPacketIndex;
+		UINT16 PacketsInSample;
+		UINT32 SampleNumber;
+		UINT32 cbSample;
+		BYTE* pSample;
+	} TSMM_VIDEO_DATA;
 
-/** @brief struct used when NotificationType is FRAMERATE_OVERRIDE */
-typedef struct
-{
-	UINT32 Flags;
-	UINT32 DesiredFrameRate;
-} TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE;
+	/** @brief values for NotificationType in TSMM_CLIENT_NOTIFICATION */
+	enum
+	{
+		TSMM_CLIENT_NOTIFICATION_TYPE_NETWORK_ERROR = 1,
+		TSMM_CLIENT_NOTIFICATION_TYPE_FRAMERATE_OVERRIDE = 2
+	};
 
-/** @brief a client to server notification struct */
-typedef struct
-{
-	BYTE PresentationId;
-	BYTE NotificationType;
-	TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE FramerateOverride;
-} TSMM_CLIENT_NOTIFICATION;
+	/** @brief struct used when NotificationType is FRAMERATE_OVERRIDE */
+	typedef struct
+	{
+		UINT32 Flags;
+		UINT32 DesiredFrameRate;
+	} TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE;
+
+	/** @brief a client to server notification struct */
+	typedef struct
+	{
+		BYTE PresentationId;
+		BYTE NotificationType;
+		TSMM_CLIENT_NOTIFICATION_FRAMERATE_OVERRIDE FramerateOverride;
+	} TSMM_CLIENT_NOTIFICATION;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_VIDEO_H */

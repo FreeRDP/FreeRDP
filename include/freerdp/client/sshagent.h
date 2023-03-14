@@ -26,61 +26,70 @@
 #include <freerdp/channels/cliprdr.h>
 #include <freerdp/freerdp.h>
 
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	int ProtocolVersion;
-	int MaxConnections;
-} SSHAgentClientContext;
+#endif
 
-/*
- * The channel is defined by the sshagent channel in xrdp as follows.
- *
- * Server to client commands
- * -------------------------
- *
- * Capabilities (at start of channel stream):
- *
- *    INT32  SA_TAG_CAPABILITY
- *    INT32  SSHAGENT_CHAN_PROT_VERSION := 1
- *    INT32  SSHAGENT_MAX_CONNECTIONS
- *
- * Open connection:
- *
- *    INT32  SA_TAG_OPEN
- *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
- *
- * Send data:
- *
- *    INT32  SA_TAG_WRITE
- *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
- *    INT32  Data length
- *    DATA   ...
- *
- * Close connection:
- *
- *    INT32  SA_TAG_CLOSE
- *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
- *
- * Client to server commands
- * -------------------------
- *
- * Capabilities (in reply to server capabilities):
- *
- *    INT32  SA_TAG_CAPABILITY
- *    INT32  SSHAGENT_CHAN_PROT_VERSION := 1
- *    INT32  SSHAGENT_MAX_CONNECTIONS
- *
- * Send data:
- *
- *    INT32  SA_TAG_WRITE
- *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
- *    INT32  Data length
- *    DATA   ...
- *
- * Close connection (abnormal):
- *
- *    INT32  SA_TAG_CLOSE
- *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
- */
+	typedef struct
+	{
+		int ProtocolVersion;
+		int MaxConnections;
+	} SSHAgentClientContext;
+
+	/*
+	 * The channel is defined by the sshagent channel in xrdp as follows.
+	 *
+	 * Server to client commands
+	 * -------------------------
+	 *
+	 * Capabilities (at start of channel stream):
+	 *
+	 *    INT32  SA_TAG_CAPABILITY
+	 *    INT32  SSHAGENT_CHAN_PROT_VERSION := 1
+	 *    INT32  SSHAGENT_MAX_CONNECTIONS
+	 *
+	 * Open connection:
+	 *
+	 *    INT32  SA_TAG_OPEN
+	 *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
+	 *
+	 * Send data:
+	 *
+	 *    INT32  SA_TAG_WRITE
+	 *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
+	 *    INT32  Data length
+	 *    DATA   ...
+	 *
+	 * Close connection:
+	 *
+	 *    INT32  SA_TAG_CLOSE
+	 *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
+	 *
+	 * Client to server commands
+	 * -------------------------
+	 *
+	 * Capabilities (in reply to server capabilities):
+	 *
+	 *    INT32  SA_TAG_CAPABILITY
+	 *    INT32  SSHAGENT_CHAN_PROT_VERSION := 1
+	 *    INT32  SSHAGENT_MAX_CONNECTIONS
+	 *
+	 * Send data:
+	 *
+	 *    INT32  SA_TAG_WRITE
+	 *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
+	 *    INT32  Data length
+	 *    DATA   ...
+	 *
+	 * Close connection (abnormal):
+	 *
+	 *    INT32  SA_TAG_CLOSE
+	 *    INT32  Connection id (0, ..., SSHAGENT_MAX_CONNECTIONS - 1)
+	 */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_CLIENT_SSHAGENT_H */

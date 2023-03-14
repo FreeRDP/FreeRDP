@@ -355,171 +355,171 @@
 #define COMPLEXREGION 0x03
 #endif
 
-typedef struct
-{
-	BYTE objectType;
-} GDIOBJECT;
-typedef GDIOBJECT* HGDIOBJECT;
-
-typedef struct
-{
-	BYTE objectType;
-	INT32 left;
-	INT32 top;
-	INT32 right;
-	INT32 bottom;
-} GDI_RECT;
-typedef GDI_RECT* HGDI_RECT;
-
-typedef struct
-{
-	BYTE objectType;
-	INT32 x;   /* left */
-	INT32 y;   /* top */
-	INT32 w;   /* width */
-	INT32 h;   /* height */
-	BOOL null; /* null region */
-} GDI_RGN;
-typedef GDI_RGN* HGDI_RGN;
-
-typedef struct
-{
-	BYTE objectType;
-	UINT32 format;
-	INT32 width;
-	INT32 height;
-	UINT32 scanline;
-	BYTE* data;
-	void (*free)(void*);
-} GDI_BITMAP;
-typedef GDI_BITMAP* HGDI_BITMAP;
-
-typedef struct
-{
-	BYTE objectType;
-	UINT32 style;
-	INT32 width;
-	INT32 posX;
-	INT32 posY;
-	UINT32 color;
-	UINT32 format;
-	const gdiPalette* palette;
-} GDI_PEN;
-typedef GDI_PEN* HGDI_PEN;
-
-typedef struct
-{
-	BYTE red;
-	BYTE green;
-	BYTE blue;
-} GDI_PALETTEENTRY;
-
-typedef struct
-{
-	UINT16 count;
-	GDI_PALETTEENTRY* entries;
-} GDI_PALETTE;
-typedef GDI_PALETTE* HGDI_PALETTE;
-
-typedef struct
-{
-	INT32 x;
-	INT32 y;
-} GDI_POINT;
-typedef GDI_POINT* HGDI_POINT;
-
-typedef struct
-{
-	BYTE objectType;
-	int style;
-	HGDI_BITMAP pattern;
-	UINT32 color;
-	INT32 nXOrg;
-	INT32 nYOrg;
-} GDI_BRUSH;
-typedef GDI_BRUSH* HGDI_BRUSH;
-
-typedef struct
-{
-	UINT32 count;
-	INT32 ninvalid;
-	HGDI_RGN invalid;
-	HGDI_RGN cinvalid;
-} GDI_WND;
-typedef GDI_WND* HGDI_WND;
-
-typedef struct
-{
-	HGDIOBJECT selectedObject;
-	UINT32 format;
-	UINT32 bkColor;
-	UINT32 textColor;
-	HGDI_BRUSH brush;
-	HGDI_RGN clip;
-	HGDI_PEN pen;
-	HGDI_WND hwnd;
-	INT32 drawMode;
-	INT32 bkMode;
-} GDI_DC;
-typedef GDI_DC* HGDI_DC;
-
-struct gdi_bitmap
-{
-	rdpBitmap _p;
-
-	HGDI_DC hdc;
-	HGDI_BITMAP bitmap;
-	HGDI_BITMAP org_bitmap;
-};
-typedef struct gdi_bitmap gdiBitmap;
-
-struct gdi_glyph
-{
-	rdpBitmap _p;
-
-	HGDI_DC hdc;
-	HGDI_BITMAP bitmap;
-	HGDI_BITMAP org_bitmap;
-};
-typedef struct gdi_glyph gdiGlyph;
-
-struct rdp_gdi
-{
-	rdpContext* context;
-
-	INT32 width;
-	INT32 height;
-	UINT32 stride;
-	UINT32 dstFormat;
-	UINT32 cursor_x;
-	UINT32 cursor_y;
-
-	HGDI_DC hdc;
-	gdiBitmap* primary;
-	gdiBitmap* drawing;
-	UINT32 bitmap_size;
-	UINT32 bitmap_stride;
-	BYTE* primary_buffer;
-	gdiPalette palette;
-	gdiBitmap* image;
-	void (*free)(void*);
-
-	BOOL inGfxFrame;
-	BOOL graphicsReset; /* deprecated, remove with FreeRDP v3 */
-	BOOL suppressOutput;
-	UINT16 outputSurfaceId;
-	UINT32 frameId;
-	RdpgfxClientContext* gfx;
-	VideoClientContext* video;
-	GeometryClientContext* geometry;
-
-	wLog* log;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct
+	{
+		BYTE objectType;
+	} GDIOBJECT;
+	typedef GDIOBJECT* HGDIOBJECT;
+
+	typedef struct
+	{
+		BYTE objectType;
+		INT32 left;
+		INT32 top;
+		INT32 right;
+		INT32 bottom;
+	} GDI_RECT;
+	typedef GDI_RECT* HGDI_RECT;
+
+	typedef struct
+	{
+		BYTE objectType;
+		INT32 x;   /* left */
+		INT32 y;   /* top */
+		INT32 w;   /* width */
+		INT32 h;   /* height */
+		BOOL null; /* null region */
+	} GDI_RGN;
+	typedef GDI_RGN* HGDI_RGN;
+
+	typedef struct
+	{
+		BYTE objectType;
+		UINT32 format;
+		INT32 width;
+		INT32 height;
+		UINT32 scanline;
+		BYTE* data;
+		void (*free)(void*);
+	} GDI_BITMAP;
+	typedef GDI_BITMAP* HGDI_BITMAP;
+
+	typedef struct
+	{
+		BYTE objectType;
+		UINT32 style;
+		INT32 width;
+		INT32 posX;
+		INT32 posY;
+		UINT32 color;
+		UINT32 format;
+		const gdiPalette* palette;
+	} GDI_PEN;
+	typedef GDI_PEN* HGDI_PEN;
+
+	typedef struct
+	{
+		BYTE red;
+		BYTE green;
+		BYTE blue;
+	} GDI_PALETTEENTRY;
+
+	typedef struct
+	{
+		UINT16 count;
+		GDI_PALETTEENTRY* entries;
+	} GDI_PALETTE;
+	typedef GDI_PALETTE* HGDI_PALETTE;
+
+	typedef struct
+	{
+		INT32 x;
+		INT32 y;
+	} GDI_POINT;
+	typedef GDI_POINT* HGDI_POINT;
+
+	typedef struct
+	{
+		BYTE objectType;
+		int style;
+		HGDI_BITMAP pattern;
+		UINT32 color;
+		INT32 nXOrg;
+		INT32 nYOrg;
+	} GDI_BRUSH;
+	typedef GDI_BRUSH* HGDI_BRUSH;
+
+	typedef struct
+	{
+		UINT32 count;
+		INT32 ninvalid;
+		HGDI_RGN invalid;
+		HGDI_RGN cinvalid;
+	} GDI_WND;
+	typedef GDI_WND* HGDI_WND;
+
+	typedef struct
+	{
+		HGDIOBJECT selectedObject;
+		UINT32 format;
+		UINT32 bkColor;
+		UINT32 textColor;
+		HGDI_BRUSH brush;
+		HGDI_RGN clip;
+		HGDI_PEN pen;
+		HGDI_WND hwnd;
+		INT32 drawMode;
+		INT32 bkMode;
+	} GDI_DC;
+	typedef GDI_DC* HGDI_DC;
+
+	struct gdi_bitmap
+	{
+		rdpBitmap _p;
+
+		HGDI_DC hdc;
+		HGDI_BITMAP bitmap;
+		HGDI_BITMAP org_bitmap;
+	};
+	typedef struct gdi_bitmap gdiBitmap;
+
+	struct gdi_glyph
+	{
+		rdpBitmap _p;
+
+		HGDI_DC hdc;
+		HGDI_BITMAP bitmap;
+		HGDI_BITMAP org_bitmap;
+	};
+	typedef struct gdi_glyph gdiGlyph;
+
+	struct rdp_gdi
+	{
+		rdpContext* context;
+
+		INT32 width;
+		INT32 height;
+		UINT32 stride;
+		UINT32 dstFormat;
+		UINT32 cursor_x;
+		UINT32 cursor_y;
+
+		HGDI_DC hdc;
+		gdiBitmap* primary;
+		gdiBitmap* drawing;
+		UINT32 bitmap_size;
+		UINT32 bitmap_stride;
+		BYTE* primary_buffer;
+		gdiPalette palette;
+		gdiBitmap* image;
+		void (*free)(void*);
+
+		BOOL inGfxFrame;
+		BOOL graphicsReset; /* deprecated, remove with FreeRDP v3 */
+		BOOL suppressOutput;
+		UINT16 outputSurfaceId;
+		UINT32 frameId;
+		RdpgfxClientContext* gfx;
+		VideoClientContext* video;
+		GeometryClientContext* geometry;
+
+		wLog* log;
+	};
 
 	FREERDP_API DWORD gdi_rop3_code(BYTE code);
 	FREERDP_API const char* gdi_rop3_code_string(BYTE code);

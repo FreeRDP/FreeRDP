@@ -22,14 +22,23 @@
 
 #include <freerdp/channels/remdesk.h>
 
-/**
- * Client Interface
- */
-
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	void* handle;
-	void* custom;
-} RemdeskClientContext;
+#endif
+
+	/**
+	 * Client Interface
+	 */
+
+	typedef struct
+	{
+		void* handle;
+		void* custom;
+	} RemdeskClientContext;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_REMDESK_CLIENT_REMDESK_H */

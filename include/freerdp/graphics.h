@@ -22,10 +22,6 @@
 #ifndef FREERDP_GRAPHICS_H
 #define FREERDP_GRAPHICS_H
 
-typedef struct rdp_bitmap rdpBitmap;
-typedef struct rdp_pointer rdpPointer;
-typedef struct rdp_glyph rdpGlyph;
-
 #include <stdlib.h>
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -35,6 +31,10 @@ typedef struct rdp_glyph rdpGlyph;
 extern "C"
 {
 #endif
+
+	typedef struct rdp_bitmap rdpBitmap;
+	typedef struct rdp_pointer rdpPointer;
+	typedef struct rdp_glyph rdpGlyph;
 
 	/* Bitmap Class */
 	typedef BOOL (*pBitmap_New)(rdpContext* context, rdpBitmap* bitmap);
