@@ -60,7 +60,12 @@ typedef long long LONG_PTR;
 #else
 typedef long LONG_PTR;
 #endif
+
+#if ssize_t
+typedef ssize_t SSIZE_T
+#else
 typedef LONG_PTR SSIZE_T;
+#endif
 
 #endif
 
