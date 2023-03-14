@@ -2445,7 +2445,7 @@ const char* rdp_finalize_flags_to_str(UINT32 flags, char* buffer, size_t size)
 		winpr_str_append("UNKNOWN_FLAG", buffer, size, "|");
 	if (flags == 0)
 		winpr_str_append("NO_FLAG_SET", buffer, size, "|");
-	_snprintf(number, sizeof(number), " [0x%04" PRIx16 "]", flags);
+	_snprintf(number, sizeof(number), " [0x%08" PRIx32 "]", flags);
 	winpr_str_append(number, buffer, size, "");
 	return buffer;
 }
