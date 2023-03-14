@@ -24,6 +24,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/log.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/shape.h>
 #include <freerdp/gdi/region.h>

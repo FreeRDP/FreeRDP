@@ -44,6 +44,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/codec/dsp.h>
 #include <freerdp/client/channels.h>
 

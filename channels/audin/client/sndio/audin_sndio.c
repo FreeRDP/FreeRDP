@@ -26,6 +26,7 @@
 
 #include <winpr/cmdline.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpsnd.h>
 
 #include "audin_main.h"

@@ -21,7 +21,7 @@
 #define FREERDP_UTILS_SIGNAL_H
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -19,7 +19,7 @@
 #ifndef FREERDP_UTILS_SMARTCARDLOGON_H
 #define FREERDP_UTILS_SMARTCARDLOGON_H
 
-#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/crypto/certificate.h>
 

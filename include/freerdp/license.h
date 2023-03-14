@@ -23,7 +23,7 @@
 #define FREERDP_LICENSE_H
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"

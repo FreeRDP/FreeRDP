@@ -25,6 +25,7 @@
 #include <winpr/path.h>
 #include <winpr/string.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/streamdump.h>
 #include <freerdp/transport_io.h>
 

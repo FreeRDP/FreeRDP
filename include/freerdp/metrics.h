@@ -35,6 +35,7 @@ extern "C"
 		UINT64 TotalUncompressedBytes;
 		double TotalCompressionRatio;
 	};
+	typedef struct rdp_metrics rdpMetrics;
 
 	FREERDP_API double metrics_write_bytes(rdpMetrics* metrics, UINT32 UncompressedBytes,
 	                                       UINT32 CompressedBytes);

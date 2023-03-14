@@ -22,6 +22,7 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/rdpdr_utils.h>
 
 #include <winpr/crt.h>

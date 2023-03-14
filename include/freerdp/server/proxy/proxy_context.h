@@ -22,6 +22,9 @@
 #ifndef FREERDP_SERVER_PROXY_PFCONTEXT_H
 #define FREERDP_SERVER_PROXY_PFCONTEXT_H
 
+#include <freerdp/api.h>
+#include <freerdp/types.h>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/wtsvc.h>
 

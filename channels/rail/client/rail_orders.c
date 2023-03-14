@@ -27,6 +27,7 @@
 #include <winpr/crt.h>
 
 #include <freerdp/channels/log.h>
+#include <freerdp/freerdp.h>
 
 #include "rail_orders.h"
 

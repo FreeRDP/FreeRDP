@@ -88,4 +88,14 @@
 #define IFCALLRESULT(_default_return, _cb, ...) \
 	((_cb != NULL) ? _cb(__VA_ARGS__) : (_default_return))
 
+#ifdef __GNUC__
+#define ALIGN64 __attribute__((aligned(8)))
+#else
+#ifdef _WIN32
+#define ALIGN64 __declspec(align(8))
+#else
+#define ALIGN64
+#endif
+#endif
+
 #endif /* FREERDP_API */

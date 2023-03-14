@@ -468,16 +468,6 @@ typedef struct
 #define THREADING_FLAGS_DISABLE_THREADS 0x00000001
 /* Settings */
 
-#ifdef __GNUC__
-#define ALIGN64 __attribute__((aligned(8)))
-#else
-#ifdef _WIN32
-#define ALIGN64 __declspec(align(8))
-#else
-#define ALIGN64
-#endif
-#endif
-
 /**
  * FreeRDP Settings Ids
  * This is generated with a script parsing the rdpSettings data structure

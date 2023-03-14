@@ -36,8 +36,10 @@
 #include <winpr/interlocked.h>
 #include <winpr/path.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/crypto/crypto.h>
+#include <freerdp/freerdp.h>
 
 #include "../printer.h"
 

@@ -18,6 +18,7 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/freerdp.h>
 
 #include <errno.h>
 #include <freerdp/utils/passphrase.h>

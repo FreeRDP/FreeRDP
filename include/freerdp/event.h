@@ -21,7 +21,6 @@
 #define FREERDP_EVENT_H
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
 
 #include <winpr/collections.h>
 

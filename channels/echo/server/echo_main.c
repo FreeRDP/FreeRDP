@@ -32,6 +32,7 @@
 #include <winpr/stream.h>
 #include <winpr/sysinfo.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/server/echo.h>
 #include <freerdp/channels/echo.h>
 #include <freerdp/channels/log.h>

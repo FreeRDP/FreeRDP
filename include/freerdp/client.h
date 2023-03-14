@@ -22,8 +22,9 @@
 
 #include <freerdp/config.h>
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 #include <freerdp/event.h>
+#include <freerdp/freerdp.h>
 
 #if defined(CHANNEL_AINPUT_CLIENT)
 #include <freerdp/client/ainput.h>

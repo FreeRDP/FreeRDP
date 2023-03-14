@@ -20,7 +20,8 @@
 #define FREERDP_GDI_VIDEO_H_
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
+#include <freerdp/gdi/gdi.h>
 #include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
 

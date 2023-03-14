@@ -30,6 +30,7 @@
 #include <winpr/library.h>
 #include <winpr/collections.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
 #include <freerdp/build-config.h>
 #include <freerdp/client/channels.h>

@@ -32,8 +32,9 @@
 #include <winpr/sysinfo.h>
 #include <winpr/stream.h>
 
-#include <freerdp/server/ainput.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/ainput.h>
+#include <freerdp/server/ainput.h>
 #include <freerdp/channels/log.h>
 
 #include "../common/ainput_common.h"

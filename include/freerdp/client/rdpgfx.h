@@ -22,7 +22,11 @@
 #ifndef FREERDP_CHANNEL_RDPGFX_CLIENT_RDPGFX_H
 #define FREERDP_CHANNEL_RDPGFX_CLIENT_RDPGFX_H
 
-#include <freerdp/freerdp.h>
+#include <freerdp/api.h>
+#include <freerdp/types.h>
+
+#include <freerdp/codecs.h>
+
 #include <freerdp/channels/rdpgfx.h>
 #include <freerdp/utils/profiler.h>
 

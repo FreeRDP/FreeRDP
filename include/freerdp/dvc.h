@@ -55,6 +55,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
+#include <freerdp/settings.h>
 
 #ifdef __cplusplus
 extern "C"

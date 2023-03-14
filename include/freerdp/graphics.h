@@ -25,7 +25,6 @@
 #include <stdlib.h>
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/freerdp.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -158,6 +157,7 @@ extern "C"
 		rdpGlyph* Glyph_Prototype;     /* 3 */
 		UINT32 paddingA[16 - 4];       /* 4 */
 	};
+	typedef struct rdp_graphics rdpGraphics;
 
 	FREERDP_API void graphics_register_bitmap(rdpGraphics* graphics, const rdpBitmap* bitmap);
 	FREERDP_API void graphics_register_pointer(rdpGraphics* graphics, const rdpPointer* pointer);

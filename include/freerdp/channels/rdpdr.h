@@ -33,7 +33,9 @@
 #include <winpr/interlocked.h>
 #include <winpr/collections.h>
 
-#include <freerdp/freerdp.h>
+#include <freerdp/api.h>
+#include <freerdp/types.h>
+#include <freerdp/settings.h>
 
 #ifdef __cplusplus
 extern "C"

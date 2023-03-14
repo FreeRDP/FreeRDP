@@ -26,6 +26,7 @@
 #include <winpr/path.h>
 
 #include <freerdp/log.h>
+#include <freerdp/freerdp.h>
 #include <winpr/print.h>
 
 #include <freerdp/utils/smartcardlogon.h>

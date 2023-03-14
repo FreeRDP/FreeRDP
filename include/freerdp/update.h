@@ -29,7 +29,7 @@
 
 #include <freerdp/rail.h>
 #include <freerdp/types.h>
-#include <freerdp/freerdp.h>
+#include <freerdp/settings.h>
 #include <freerdp/graphics.h>
 #include <freerdp/utils/pcap.h>
 

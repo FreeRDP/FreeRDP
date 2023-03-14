@@ -41,6 +41,7 @@
 #include <winpr/collections.h>
 #include <winpr/shell.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
 
 #include "drive_file.h"

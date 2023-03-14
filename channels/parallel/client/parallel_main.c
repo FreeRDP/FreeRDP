@@ -49,6 +49,7 @@
 #include <winpr/interlocked.h>
 
 #include <freerdp/types.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/log.h>

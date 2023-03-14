@@ -44,6 +44,7 @@
 #endif
 #include <sys/ioctl.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
 #include <freerdp/channels/rdpsnd.h>
 

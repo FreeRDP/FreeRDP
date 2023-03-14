@@ -22,7 +22,7 @@
 #define FREERDP_AUTODETECT_H
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"
