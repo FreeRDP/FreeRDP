@@ -24,93 +24,93 @@
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/ainput.h>
 
-typedef enum AINPUT_SERVER_OPEN_RESULT
-{
-	AINPUT_SERVER_OPEN_RESULT_OK = 0,
-	AINPUT_SERVER_OPEN_RESULT_CLOSED = 1,
-	AINPUT_SERVER_OPEN_RESULT_NOTSUPPORTED = 2,
-	AINPUT_SERVER_OPEN_RESULT_ERROR = 3
-} AINPUT_SERVER_OPEN_RESULT;
-
-typedef struct _ainput_server_context ainput_server_context;
-
-typedef BOOL (*psAInputChannelIdAssigned)(ainput_server_context* context, UINT32 channelId);
-
-typedef UINT (*psAInputServerInitialize)(ainput_server_context* context, BOOL externalThread);
-typedef UINT (*psAInputServerPoll)(ainput_server_context* context);
-typedef BOOL (*psAInputServerChannelHandle)(ainput_server_context* context, HANDLE* handle);
-
-typedef UINT (*psAInputServerOpen)(ainput_server_context* context);
-typedef UINT (*psAInputServerClose)(ainput_server_context* context);
-typedef BOOL (*psAInputServerIsOpen)(ainput_server_context* context);
-
-typedef UINT (*psAInputServerOpenResult)(ainput_server_context* context,
-                                         AINPUT_SERVER_OPEN_RESULT result);
-typedef UINT (*psAInputServerMouseEvent)(ainput_server_context* context, UINT64 timestamp,
-                                         UINT64 flags, INT32 x, INT32 y);
-
-struct _ainput_server_context
-{
-	HANDLE vcm;
-
-	/* Server self-defined pointer. */
-	void* data;
-
-	/*** APIs called by the server. ***/
-	/**
-	 * Open the ainput channel.
-	 */
-	psAInputServerOpen Open;
-
-	/**
-	 * Optional: Set thread handling.
-	 * When externalThread=TRUE the application is responsible to call
-	 * ainput_server_context_poll periodically to process input events.
-	 *
-	 * Defaults to externalThread=FALSE
-	 */
-	psAInputServerInitialize Initialize;
-
-	/**
-	 * @brief Poll When externalThread=TRUE call periodically from your main loop.
-	 * if externalThread=FALSE do not call.
-	 */
-	psAInputServerPoll Poll;
-
-	/**
-	 * @brief Poll When externalThread=TRUE call to get a handle to wait for events.
-	 * Will return FALSE until the handle is available.
-	 */
-	psAInputServerChannelHandle ChannelHandle;
-
-	/**
-	 * Close the ainput channel.
-	 */
-	psAInputServerClose Close;
-	/**
-	 * Status of the ainput channel.
-	 */
-	psAInputServerIsOpen IsOpen;
-
-	/*** Callbacks registered by the server. ***/
-
-	/**
-	 * Receive ainput mouse event PDU.
-	 */
-	psAInputServerMouseEvent MouseEvent;
-
-	rdpContext* rdpcontext;
-
-	/**
-	 * Callback, when the channel got its id assigned.
-	 */
-	psAInputChannelIdAssigned ChannelIdAssigned;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef enum AINPUT_SERVER_OPEN_RESULT
+	{
+		AINPUT_SERVER_OPEN_RESULT_OK = 0,
+		AINPUT_SERVER_OPEN_RESULT_CLOSED = 1,
+		AINPUT_SERVER_OPEN_RESULT_NOTSUPPORTED = 2,
+		AINPUT_SERVER_OPEN_RESULT_ERROR = 3
+	} AINPUT_SERVER_OPEN_RESULT;
+
+	typedef struct _ainput_server_context ainput_server_context;
+
+	typedef BOOL (*psAInputChannelIdAssigned)(ainput_server_context* context, UINT32 channelId);
+
+	typedef UINT (*psAInputServerInitialize)(ainput_server_context* context, BOOL externalThread);
+	typedef UINT (*psAInputServerPoll)(ainput_server_context* context);
+	typedef BOOL (*psAInputServerChannelHandle)(ainput_server_context* context, HANDLE* handle);
+
+	typedef UINT (*psAInputServerOpen)(ainput_server_context* context);
+	typedef UINT (*psAInputServerClose)(ainput_server_context* context);
+	typedef BOOL (*psAInputServerIsOpen)(ainput_server_context* context);
+
+	typedef UINT (*psAInputServerOpenResult)(ainput_server_context* context,
+	                                         AINPUT_SERVER_OPEN_RESULT result);
+	typedef UINT (*psAInputServerMouseEvent)(ainput_server_context* context, UINT64 timestamp,
+	                                         UINT64 flags, INT32 x, INT32 y);
+
+	struct _ainput_server_context
+	{
+		HANDLE vcm;
+
+		/* Server self-defined pointer. */
+		void* data;
+
+		/*** APIs called by the server. ***/
+		/**
+		 * Open the ainput channel.
+		 */
+		psAInputServerOpen Open;
+
+		/**
+		 * Optional: Set thread handling.
+		 * When externalThread=TRUE the application is responsible to call
+		 * ainput_server_context_poll periodically to process input events.
+		 *
+		 * Defaults to externalThread=FALSE
+		 */
+		psAInputServerInitialize Initialize;
+
+		/**
+		 * @brief Poll When externalThread=TRUE call periodically from your main loop.
+		 * if externalThread=FALSE do not call.
+		 */
+		psAInputServerPoll Poll;
+
+		/**
+		 * @brief Poll When externalThread=TRUE call to get a handle to wait for events.
+		 * Will return FALSE until the handle is available.
+		 */
+		psAInputServerChannelHandle ChannelHandle;
+
+		/**
+		 * Close the ainput channel.
+		 */
+		psAInputServerClose Close;
+		/**
+		 * Status of the ainput channel.
+		 */
+		psAInputServerIsOpen IsOpen;
+
+		/*** Callbacks registered by the server. ***/
+
+		/**
+		 * Receive ainput mouse event PDU.
+		 */
+		psAInputServerMouseEvent MouseEvent;
+
+		rdpContext* rdpcontext;
+
+		/**
+		 * Callback, when the channel got its id assigned.
+		 */
+		psAInputChannelIdAssigned ChannelIdAssigned;
+	};
 
 	FREERDP_API ainput_server_context* ainput_server_context_new(HANDLE vcm);
 	FREERDP_API void ainput_server_context_free(ainput_server_context* context);

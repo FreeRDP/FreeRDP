@@ -23,80 +23,81 @@
 #include <freerdp/channels/telemetry.h>
 #include <freerdp/channels/wtsvc.h>
 
-typedef struct _telemetry_server_context TelemetryServerContext;
-
-typedef UINT (*psTelemetryServerOpen)(TelemetryServerContext* context);
-typedef UINT (*psTelemetryServerClose)(TelemetryServerContext* context);
-
-typedef BOOL (*psTelemetryServerChannelIdAssigned)(TelemetryServerContext* context,
-                                                   UINT32 channelId);
-
-typedef UINT (*psTelemetryServerInitialize)(TelemetryServerContext* context, BOOL externalThread);
-typedef UINT (*psTelemetryServerPoll)(TelemetryServerContext* context);
-typedef BOOL (*psTelemetryServerChannelHandle)(TelemetryServerContext* context, HANDLE* handle);
-
-typedef UINT (*psTelemetryServerRdpTelemetry)(TelemetryServerContext* context,
-                                              const TELEMETRY_RDP_TELEMETRY_PDU* rdpTelemetry);
-
-struct _telemetry_server_context
-{
-	HANDLE vcm;
-
-	/* Server self-defined pointer. */
-	void* userdata;
-
-	/*** APIs called by the server. ***/
-
-	/**
-	 * Optional: Set thread handling.
-	 * When externalThread=TRUE, the application is responsible to call
-	 * Poll() periodically to process channel events.
-	 *
-	 * Defaults to externalThread=FALSE
-	 */
-	psTelemetryServerInitialize Initialize;
-
-	/**
-	 * Open the telemetry channel.
-	 */
-	psTelemetryServerOpen Open;
-
-	/**
-	 * Close the telemetry channel.
-	 */
-	psTelemetryServerClose Close;
-
-	/**
-	 * Poll
-	 * When externalThread=TRUE, call Poll() periodically from your main loop.
-	 * If externalThread=FALSE do not call.
-	 */
-	psTelemetryServerPoll Poll;
-
-	/**
-	 * Retrieve the channel handle for use in conjunction with Poll().
-	 * If externalThread=FALSE do not call.
-	 */
-	psTelemetryServerChannelHandle ChannelHandle;
-
-	/*** Callbacks registered by the server. ***/
-
-	/**
-	 * Callback, when the channel got its id assigned
-	 */
-	psTelemetryServerChannelIdAssigned ChannelIdAssigned;
-	/**
-	 * Callback for the RDP Telemetry PDU.
-	 */
-	psTelemetryServerRdpTelemetry RdpTelemetry;
-
-	rdpContext* rdpcontext;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct _telemetry_server_context TelemetryServerContext;
+
+	typedef UINT (*psTelemetryServerOpen)(TelemetryServerContext* context);
+	typedef UINT (*psTelemetryServerClose)(TelemetryServerContext* context);
+
+	typedef BOOL (*psTelemetryServerChannelIdAssigned)(TelemetryServerContext* context,
+	                                                   UINT32 channelId);
+
+	typedef UINT (*psTelemetryServerInitialize)(TelemetryServerContext* context,
+	                                            BOOL externalThread);
+	typedef UINT (*psTelemetryServerPoll)(TelemetryServerContext* context);
+	typedef BOOL (*psTelemetryServerChannelHandle)(TelemetryServerContext* context, HANDLE* handle);
+
+	typedef UINT (*psTelemetryServerRdpTelemetry)(TelemetryServerContext* context,
+	                                              const TELEMETRY_RDP_TELEMETRY_PDU* rdpTelemetry);
+
+	struct _telemetry_server_context
+	{
+		HANDLE vcm;
+
+		/* Server self-defined pointer. */
+		void* userdata;
+
+		/*** APIs called by the server. ***/
+
+		/**
+		 * Optional: Set thread handling.
+		 * When externalThread=TRUE, the application is responsible to call
+		 * Poll() periodically to process channel events.
+		 *
+		 * Defaults to externalThread=FALSE
+		 */
+		psTelemetryServerInitialize Initialize;
+
+		/**
+		 * Open the telemetry channel.
+		 */
+		psTelemetryServerOpen Open;
+
+		/**
+		 * Close the telemetry channel.
+		 */
+		psTelemetryServerClose Close;
+
+		/**
+		 * Poll
+		 * When externalThread=TRUE, call Poll() periodically from your main loop.
+		 * If externalThread=FALSE do not call.
+		 */
+		psTelemetryServerPoll Poll;
+
+		/**
+		 * Retrieve the channel handle for use in conjunction with Poll().
+		 * If externalThread=FALSE do not call.
+		 */
+		psTelemetryServerChannelHandle ChannelHandle;
+
+		/*** Callbacks registered by the server. ***/
+
+		/**
+		 * Callback, when the channel got its id assigned
+		 */
+		psTelemetryServerChannelIdAssigned ChannelIdAssigned;
+		/**
+		 * Callback for the RDP Telemetry PDU.
+		 */
+		psTelemetryServerRdpTelemetry RdpTelemetry;
+
+		rdpContext* rdpcontext;
+	};
 
 	FREERDP_API TelemetryServerContext* telemetry_server_context_new(HANDLE vcm);
 	FREERDP_API void telemetry_server_context_free(TelemetryServerContext* context);

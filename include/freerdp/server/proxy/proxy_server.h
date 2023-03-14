@@ -24,12 +24,12 @@
 #include <freerdp/server/proxy/proxy_config.h>
 #include <freerdp/server/proxy/proxy_modules_api.h>
 
-typedef struct proxy_server proxyServer;
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct proxy_server proxyServer;
 
 	/**
 	 * @brief pf_server_new Creates a new proxy server instance

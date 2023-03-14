@@ -56,110 +56,120 @@
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
 
-typedef struct s_IWTSVirtualChannelManager IWTSVirtualChannelManager;
-typedef struct s_IWTSListener IWTSListener;
-typedef struct s_IWTSVirtualChannel IWTSVirtualChannel;
-
-typedef struct s_IWTSPlugin IWTSPlugin;
-typedef struct s_IWTSListenerCallback IWTSListenerCallback;
-typedef struct s_IWTSVirtualChannelCallback IWTSVirtualChannelCallback;
-
-struct s_IWTSListener
+#ifdef __cplusplus
+extern "C"
 {
-	/* Retrieves the listener-specific configuration. */
-	UINT (*GetConfiguration)(IWTSListener* pListener, void** ppPropertyBag);
+#endif
 
-	void* pInterface;
-};
+	typedef struct s_IWTSVirtualChannelManager IWTSVirtualChannelManager;
+	typedef struct s_IWTSListener IWTSListener;
+	typedef struct s_IWTSVirtualChannel IWTSVirtualChannel;
 
-struct s_IWTSVirtualChannel
-{
-	/* Starts a write request on the channel. */
-	UINT (*Write)(IWTSVirtualChannel* pChannel, ULONG cbSize, const BYTE* pBuffer, void* pReserved);
-	/* Closes the channel. */
-	UINT (*Close)(IWTSVirtualChannel* pChannel);
-};
+	typedef struct s_IWTSPlugin IWTSPlugin;
+	typedef struct s_IWTSListenerCallback IWTSListenerCallback;
+	typedef struct s_IWTSVirtualChannelCallback IWTSVirtualChannelCallback;
 
-struct s_IWTSVirtualChannelManager
-{
-	/* Returns an instance of a listener object that listens on a specific
-	   endpoint, or creates a static channel. */
-	UINT(*CreateListener)
-	(IWTSVirtualChannelManager* pChannelMgr, const char* pszChannelName, ULONG ulFlags,
-	 IWTSListenerCallback* pListenerCallback, IWTSListener** ppListener);
-	/* Find the channel or ID to send data to a specific endpoint. */
-	UINT32 (*GetChannelId)(IWTSVirtualChannel* channel);
-	IWTSVirtualChannel* (*FindChannelById)(IWTSVirtualChannelManager* pChannelMgr,
-	                                       UINT32 ChannelId);
-	const char* (*GetChannelName)(IWTSVirtualChannel* channel);
-	UINT (*DestroyListener)(IWTSVirtualChannelManager* pChannelMgr, IWTSListener* ppListener);
-};
+	struct s_IWTSListener
+	{
+		/* Retrieves the listener-specific configuration. */
+		UINT (*GetConfiguration)(IWTSListener* pListener, void** ppPropertyBag);
 
-struct s_IWTSPlugin
-{
-	/* Used for the first call that is made from the client to the plug-in. */
-	UINT (*Initialize)(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr);
-	/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
-	   has successfully connected to the Remote Desktop Session Host (RD
-	   Session Host) server. */
-	UINT (*Connected)(IWTSPlugin* pPlugin);
-	/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
-	   has disconnected from the RD Session Host server. */
-	UINT (*Disconnected)(IWTSPlugin* pPlugin, DWORD dwDisconnectCode);
-	/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
-	   has terminated. */
-	UINT (*Terminated)(IWTSPlugin* pPlugin);
+		void* pInterface;
+	};
 
-	UINT (*Attached)(IWTSPlugin* pPlugin);
+	struct s_IWTSVirtualChannel
+	{
+		/* Starts a write request on the channel. */
+		UINT(*Write)
+		(IWTSVirtualChannel* pChannel, ULONG cbSize, const BYTE* pBuffer, void* pReserved);
+		/* Closes the channel. */
+		UINT (*Close)(IWTSVirtualChannel* pChannel);
+	};
 
-	UINT (*Detached)(IWTSPlugin* pPlugin);
+	struct s_IWTSVirtualChannelManager
+	{
+		/* Returns an instance of a listener object that listens on a specific
+		   endpoint, or creates a static channel. */
+		UINT(*CreateListener)
+		(IWTSVirtualChannelManager* pChannelMgr, const char* pszChannelName, ULONG ulFlags,
+		 IWTSListenerCallback* pListenerCallback, IWTSListener** ppListener);
+		/* Find the channel or ID to send data to a specific endpoint. */
+		UINT32 (*GetChannelId)(IWTSVirtualChannel* channel);
+		IWTSVirtualChannel* (*FindChannelById)(IWTSVirtualChannelManager* pChannelMgr,
+		                                       UINT32 ChannelId);
+		const char* (*GetChannelName)(IWTSVirtualChannel* channel);
+		UINT (*DestroyListener)(IWTSVirtualChannelManager* pChannelMgr, IWTSListener* ppListener);
+	};
 
-	/* Extended */
+	struct s_IWTSPlugin
+	{
+		/* Used for the first call that is made from the client to the plug-in. */
+		UINT (*Initialize)(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr);
+		/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
+		   has successfully connected to the Remote Desktop Session Host (RD
+		   Session Host) server. */
+		UINT (*Connected)(IWTSPlugin* pPlugin);
+		/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
+		   has disconnected from the RD Session Host server. */
+		UINT (*Disconnected)(IWTSPlugin* pPlugin, DWORD dwDisconnectCode);
+		/* Notifies the plug-in that the Remote Desktop Connection (RDC) client
+		   has terminated. */
+		UINT (*Terminated)(IWTSPlugin* pPlugin);
 
-	void* pInterface;
-};
+		UINT (*Attached)(IWTSPlugin* pPlugin);
 
-struct s_IWTSListenerCallback
-{
-	/* Accepts or denies a connection request for an incoming connection to
-	   the associated listener. */
-	UINT(*OnNewChannelConnection)
-	(IWTSListenerCallback* pListenerCallback, IWTSVirtualChannel* pChannel, BYTE* Data,
-	 BOOL* pbAccept, IWTSVirtualChannelCallback** ppCallback);
-};
+		UINT (*Detached)(IWTSPlugin* pPlugin);
 
-struct s_IWTSVirtualChannelCallback
-{
-	UINT(*OnDataReceived)
-	(IWTSVirtualChannelCallback* pChannelCallback,
-	 wStream* data); /**< Notifies the user about data that is being received. */
-	UINT(*OnOpen)
-	(IWTSVirtualChannelCallback*
-	     pChannelCallback); /**< Notifies the user that the channel has been opened. */
-	UINT(*OnClose)
-	(IWTSVirtualChannelCallback*
-	     pChannelCallback); /**< Notifies the user that the channel has been closed. */
-};
+		/* Extended */
 
-/* The DVC Plugin entry points */
-typedef struct rdp_context rdpContext; /* forward declaration, necessary to avoid
-                                        * circular includes */
+		void* pInterface;
+	};
 
-typedef struct S_IDRDYNVC_ENTRY_POINTS IDRDYNVC_ENTRY_POINTS;
-struct S_IDRDYNVC_ENTRY_POINTS
-{
-	UINT(*RegisterPlugin)
-	(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name, IWTSPlugin* pPlugin);
-	IWTSPlugin* (*GetPlugin)(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name);
-	const ADDIN_ARGV* (*GetPluginData)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
-	rdpSettings* (*GetRdpSettings)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
-	rdpContext* (*GetRdpContext)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
-};
+	struct s_IWTSListenerCallback
+	{
+		/* Accepts or denies a connection request for an incoming connection to
+		   the associated listener. */
+		UINT(*OnNewChannelConnection)
+		(IWTSListenerCallback* pListenerCallback, IWTSVirtualChannel* pChannel, BYTE* Data,
+		 BOOL* pbAccept, IWTSVirtualChannelCallback** ppCallback);
+	};
 
-typedef UINT (*PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS*);
+	struct s_IWTSVirtualChannelCallback
+	{
+		UINT(*OnDataReceived)
+		(IWTSVirtualChannelCallback* pChannelCallback,
+		 wStream* data); /**< Notifies the user about data that is being received. */
+		UINT(*OnOpen)
+		(IWTSVirtualChannelCallback*
+		     pChannelCallback); /**< Notifies the user that the channel has been opened. */
+		UINT(*OnClose)
+		(IWTSVirtualChannelCallback*
+		     pChannelCallback); /**< Notifies the user that the channel has been closed. */
+	};
 
-void* get_callback_by_name(const char* name, void** context);
-void add_callback_by_name(const char* name, void* fkt, void* context);
-void remove_callback_by_name(const char* name, void* context);
+	/* The DVC Plugin entry points */
+	typedef struct rdp_context rdpContext; /* forward declaration, necessary to avoid
+	                                        * circular includes */
+
+	typedef struct S_IDRDYNVC_ENTRY_POINTS IDRDYNVC_ENTRY_POINTS;
+	struct S_IDRDYNVC_ENTRY_POINTS
+	{
+		UINT(*RegisterPlugin)
+		(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name, IWTSPlugin* pPlugin);
+		IWTSPlugin* (*GetPlugin)(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name);
+		const ADDIN_ARGV* (*GetPluginData)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
+		rdpSettings* (*GetRdpSettings)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
+		rdpContext* (*GetRdpContext)(IDRDYNVC_ENTRY_POINTS* pEntryPoints);
+	};
+
+	typedef UINT (*PDVC_PLUGIN_ENTRY)(IDRDYNVC_ENTRY_POINTS*);
+
+	void* get_callback_by_name(const char* name, void** context);
+	void add_callback_by_name(const char* name, void* fkt, void* context);
+	void remove_callback_by_name(const char* name, void* context);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_DVC_H */

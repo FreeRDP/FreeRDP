@@ -32,18 +32,23 @@
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #endif
 
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	BYTE red;
-	BYTE green;
-	BYTE blue;
-} PALETTE_ENTRY;
+#endif
 
-typedef struct
-{
-	UINT32 count;
-	PALETTE_ENTRY entries[256];
-} rdpPalette;
+	typedef struct
+	{
+		BYTE red;
+		BYTE green;
+		BYTE blue;
+	} PALETTE_ENTRY;
+
+	typedef struct
+	{
+		UINT32 count;
+		PALETTE_ENTRY entries[256];
+	} rdpPalette;
 
 #include <freerdp/settings.h>
 
@@ -84,6 +89,10 @@ typedef enum
 	RDP_TRANSPORT_UDP_R,
 	RDP_TRANSPORT_UDP_L
 } RDP_TRANSPORT_TYPE;
+
+#ifdef __cplusplus
+}
+#endif
 
 /* Plugin events */
 

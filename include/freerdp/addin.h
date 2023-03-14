@@ -38,22 +38,23 @@
 #define FREERDP_ADDIN_CHANNEL_DEVICE 0x00004000
 #define FREERDP_ADDIN_CHANNEL_ENTRYEX 0x00008000
 
-typedef struct
-{
-	DWORD dwFlags;
-	CHAR cName[16];
-	CHAR cType[16];
-	CHAR cSubsystem[16];
-} FREERDP_ADDIN;
-
-typedef PVIRTUALCHANNELENTRY (*FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN)(LPCSTR pszName,
-                                                                    LPCSTR pszSubsystem,
-                                                                    LPCSTR pszType, DWORD dwFlags);
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct
+	{
+		DWORD dwFlags;
+		CHAR cName[16];
+		CHAR cType[16];
+		CHAR cSubsystem[16];
+	} FREERDP_ADDIN;
+
+	typedef PVIRTUALCHANNELENTRY (*FREERDP_LOAD_CHANNEL_ADDIN_ENTRY_FN)(LPCSTR pszName,
+	                                                                    LPCSTR pszSubsystem,
+	                                                                    LPCSTR pszType,
+	                                                                    DWORD dwFlags);
 
 	FREERDP_API LPSTR freerdp_get_library_install_path(void);
 	FREERDP_API LPSTR freerdp_get_dynamic_addin_install_path(void);

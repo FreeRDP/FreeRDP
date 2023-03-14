@@ -24,20 +24,29 @@
 
 #include <freerdp/channels/disp.h>
 
-typedef struct s_disp_client_context DispClientContext;
-
-typedef UINT (*pcDispCaps)(DispClientContext* context, UINT32 MaxNumMonitors,
-                           UINT32 MaxMonitorAreaFactorA, UINT32 MaxMonitorAreaFactorB);
-typedef UINT (*pcDispSendMonitorLayout)(DispClientContext* context, UINT32 NumMonitors,
-                                        DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors);
-
-struct s_disp_client_context
+#ifdef __cplusplus
+extern "C"
 {
-	void* handle;
-	void* custom;
+#endif
 
-	pcDispCaps DisplayControlCaps;
-	pcDispSendMonitorLayout SendMonitorLayout;
-};
+	typedef struct s_disp_client_context DispClientContext;
+
+	typedef UINT (*pcDispCaps)(DispClientContext* context, UINT32 MaxNumMonitors,
+	                           UINT32 MaxMonitorAreaFactorA, UINT32 MaxMonitorAreaFactorB);
+	typedef UINT (*pcDispSendMonitorLayout)(DispClientContext* context, UINT32 NumMonitors,
+	                                        DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors);
+
+	struct s_disp_client_context
+	{
+		void* handle;
+		void* custom;
+
+		pcDispCaps DisplayControlCaps;
+		pcDispSendMonitorLayout SendMonitorLayout;
+	};
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_DISP_CLIENT_DISP_H */

@@ -26,12 +26,12 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
 
-typedef struct S_BITMAP_INTERLEAVED_CONTEXT BITMAP_INTERLEAVED_CONTEXT;
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct S_BITMAP_INTERLEAVED_CONTEXT BITMAP_INTERLEAVED_CONTEXT;
 
 	FREERDP_API BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved,
 	                                        const BYTE* pSrcData, UINT32 SrcSize, UINT32 nSrcWidth,

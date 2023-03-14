@@ -26,6 +26,11 @@
 #include <freerdp/types.h>
 #include <freerdp/scancode.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define RDP_KEYBOARD_LAYOUT_TYPE_STANDARD 1
 #define RDP_KEYBOARD_LAYOUT_TYPE_VARIANT 2
 #define RDP_KEYBOARD_LAYOUT_TYPE_IME 4
@@ -218,11 +223,6 @@ typedef struct
 #define KBD_TYPE_NOKIA_1050 0x00000005   /* Nokia 1050 and similar keyboards */
 #define KBD_TYPE_NOKIA_9140 0x00000006   /* Nokia 9140 and similar keyboards */
 #define KBD_TYPE_JAPANESE 0x00000007     /* Japanese keyboard */
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 	FREERDP_API DWORD freerdp_keyboard_init(DWORD keyboardLayoutId);
 	FREERDP_API DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId,

@@ -36,35 +36,44 @@
 #define RDP_PIXFMT_I420 0x30323449
 #define RDP_PIXFMT_YV12 0x32315659
 
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	BYTE* frameData;
-	UINT32 frameSize;
-	UINT32 framePixFmt;
-	INT16 frameWidth;
-	INT16 frameHeight;
-	INT16 x;
-	INT16 y;
-	INT16 width;
-	INT16 height;
-	UINT16 numVisibleRects;
-	RECTANGLE_16* visibleRects;
-} TSMF_VIDEO_FRAME_EVENT;
+#endif
 
-/**
- * Client Interface
- */
+	typedef struct
+	{
+		BYTE* frameData;
+		UINT32 frameSize;
+		UINT32 framePixFmt;
+		INT16 frameWidth;
+		INT16 frameHeight;
+		INT16 x;
+		INT16 y;
+		INT16 width;
+		INT16 height;
+		UINT16 numVisibleRects;
+		RECTANGLE_16* visibleRects;
+	} TSMF_VIDEO_FRAME_EVENT;
 
-typedef struct s_tsmf_client_context TsmfClientContext;
+	/**
+	 * Client Interface
+	 */
 
-typedef int (*pcTsmfFrameEvent)(TsmfClientContext* context, TSMF_VIDEO_FRAME_EVENT* event);
+	typedef struct s_tsmf_client_context TsmfClientContext;
 
-struct s_tsmf_client_context
-{
-	void* handle;
-	void* custom;
+	typedef int (*pcTsmfFrameEvent)(TsmfClientContext* context, TSMF_VIDEO_FRAME_EVENT* event);
 
-	pcTsmfFrameEvent FrameEvent;
-};
+	struct s_tsmf_client_context
+	{
+		void* handle;
+		void* custom;
+
+		pcTsmfFrameEvent FrameEvent;
+	};
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_TSMF_CLIENT_TSMF_H */

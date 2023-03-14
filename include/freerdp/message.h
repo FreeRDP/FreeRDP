@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CORE_MESSAGE_H
-#define FREERDP_CORE_MESSAGE_H
+#ifndef FREERDP_MESSAGE_H
+#define FREERDP_MESSAGE_H
 
 #define GetMessageType(_id) (_id & 0xFF)
 #define GetMessageClass(_id) ((_id >> 16) & 0xFF)
@@ -373,4 +373,4 @@
 #define FREERDP_RDPEI_CHANNEL_DISMISS_HOVERING_CONTACT \
 	MakeMessageId(RdpeiChannel, DismissHoveringContact)
 
-#endif /* FREERDP_CORE_MESSAGE_H */
+#endif /* FREERDP_MESSAGE_H */

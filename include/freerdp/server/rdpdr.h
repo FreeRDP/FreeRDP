@@ -29,18 +29,23 @@
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/utils/rdpdr_utils.h>
 
-/**
- * Server Interface
- */
-
-typedef struct s_rdpdr_server_context RdpdrServerContext;
-typedef struct s_rdpdr_server_private RdpdrServerPrivate;
-
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	UINT16 Component;
-	UINT16 PacketId;
-} RDPDR_HEADER;
+#endif
+
+	/**
+	 * Server Interface
+	 */
+
+	typedef struct s_rdpdr_server_context RdpdrServerContext;
+	typedef struct s_rdpdr_server_private RdpdrServerPrivate;
+
+	typedef struct
+	{
+		UINT16 Component;
+		UINT16 PacketId;
+	} RDPDR_HEADER;
 
 #ifndef __MINGW32__
 typedef struct
@@ -209,11 +214,6 @@ struct s_rdpdr_server_context
 
 	rdpContext* rdpcontext;
 };
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 	FREERDP_API RdpdrServerContext* rdpdr_server_context_new(HANDLE vcm);
 	FREERDP_API void rdpdr_server_context_free(RdpdrServerContext* context);

@@ -50,31 +50,40 @@
 #define DISPLAY_CONTROL_MIN_PHYSICAL_MONITOR_HEIGHT 10
 #define DISPLAY_CONTROL_MAX_PHYSICAL_MONITOR_HEIGHT 10000
 
-typedef struct
+#ifdef __cplusplus
+extern "C"
 {
-	UINT32 type;
-	UINT32 length;
-} DISPLAY_CONTROL_HEADER;
+#endif
 
-typedef struct
-{
-	UINT32 Flags;
-	INT32 Left;
-	INT32 Top;
-	UINT32 Width;
-	UINT32 Height;
-	UINT32 PhysicalWidth;
-	UINT32 PhysicalHeight;
-	UINT32 Orientation;
-	UINT32 DesktopScaleFactor;
-	UINT32 DeviceScaleFactor;
-} DISPLAY_CONTROL_MONITOR_LAYOUT;
+	typedef struct
+	{
+		UINT32 type;
+		UINT32 length;
+	} DISPLAY_CONTROL_HEADER;
 
-typedef struct
-{
-	UINT32 MonitorLayoutSize;
-	UINT32 NumMonitors;
-	DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors;
-} DISPLAY_CONTROL_MONITOR_LAYOUT_PDU;
+	typedef struct
+	{
+		UINT32 Flags;
+		INT32 Left;
+		INT32 Top;
+		UINT32 Width;
+		UINT32 Height;
+		UINT32 PhysicalWidth;
+		UINT32 PhysicalHeight;
+		UINT32 Orientation;
+		UINT32 DesktopScaleFactor;
+		UINT32 DeviceScaleFactor;
+	} DISPLAY_CONTROL_MONITOR_LAYOUT;
+
+	typedef struct
+	{
+		UINT32 MonitorLayoutSize;
+		UINT32 NumMonitors;
+		DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors;
+	} DISPLAY_CONTROL_MONITOR_LAYOUT_PDU;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_DISP_H */

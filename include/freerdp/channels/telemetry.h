@@ -26,13 +26,22 @@
 
 #define TELEMETRY_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Telemetry"
 
-struct _TELEMETRY_RDP_TELEMETRY_PDU
+#ifdef __cplusplus
+extern "C"
 {
-	UINT32 PromptForCredentialsMillis;
-	UINT32 PromptForCredentialsDoneMillis;
-	UINT32 GraphicsChannelOpenedMillis;
-	UINT32 FirstGraphicsReceivedMillis;
-};
-typedef struct _TELEMETRY_RDP_TELEMETRY_PDU TELEMETRY_RDP_TELEMETRY_PDU;
+#endif
+
+	struct _TELEMETRY_RDP_TELEMETRY_PDU
+	{
+		UINT32 PromptForCredentialsMillis;
+		UINT32 PromptForCredentialsDoneMillis;
+		UINT32 GraphicsChannelOpenedMillis;
+		UINT32 FirstGraphicsReceivedMillis;
+	};
+	typedef struct _TELEMETRY_RDP_TELEMETRY_PDU TELEMETRY_RDP_TELEMETRY_PDU;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_TELEMETRY_H */

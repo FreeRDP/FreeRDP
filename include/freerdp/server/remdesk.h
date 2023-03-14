@@ -28,32 +28,32 @@
 
 #include <freerdp/client/remdesk.h>
 
-/**
- * Server Interface
- */
-
-typedef struct s_remdesk_server_context RemdeskServerContext;
-typedef struct s_remdesk_server_private RemdeskServerPrivate;
-
-typedef UINT (*psRemdeskStart)(RemdeskServerContext* context);
-typedef UINT (*psRemdeskStop)(RemdeskServerContext* context);
-
-struct s_remdesk_server_context
-{
-	HANDLE vcm;
-	void* custom;
-
-	psRemdeskStart Start;
-	psRemdeskStop Stop;
-
-	RemdeskServerPrivate* priv;
-	rdpContext* rdpcontext;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	/**
+	 * Server Interface
+	 */
+
+	typedef struct s_remdesk_server_context RemdeskServerContext;
+	typedef struct s_remdesk_server_private RemdeskServerPrivate;
+
+	typedef UINT (*psRemdeskStart)(RemdeskServerContext* context);
+	typedef UINT (*psRemdeskStop)(RemdeskServerContext* context);
+
+	struct s_remdesk_server_context
+	{
+		HANDLE vcm;
+		void* custom;
+
+		psRemdeskStart Start;
+		psRemdeskStop Stop;
+
+		RemdeskServerPrivate* priv;
+		rdpContext* rdpcontext;
+	};
 
 	FREERDP_API RemdeskServerContext* remdesk_server_context_new(HANDLE vcm);
 	FREERDP_API void remdesk_server_context_free(RemdeskServerContext* context);

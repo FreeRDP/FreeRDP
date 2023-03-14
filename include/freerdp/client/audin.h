@@ -26,22 +26,28 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/codec/audio.h>
 
-/**
- * Subsystem Interface
- */
-
-typedef UINT (*AudinReceive)(const AUDIO_FORMAT* format, const BYTE* data, size_t size,
-                             void* userData);
-
-typedef struct s_IAudinDevice IAudinDevice;
-struct s_IAudinDevice
+#ifdef __cplusplus
+extern "C"
 {
-	UINT (*Open)(IAudinDevice* devplugin, AudinReceive receive, void* userData);
-	BOOL (*FormatSupported)(IAudinDevice* devplugin, const AUDIO_FORMAT* format);
-	UINT (*SetFormat)(IAudinDevice* devplugin, const AUDIO_FORMAT* format, UINT32 FramesPerPacket);
-	UINT (*Close)(IAudinDevice* devplugin);
-	UINT (*Free)(IAudinDevice* devplugin);
-};
+#endif
+
+	/**
+	 * Subsystem Interface
+	 */
+
+	typedef UINT (*AudinReceive)(const AUDIO_FORMAT* format, const BYTE* data, size_t size,
+	                             void* userData);
+
+	typedef struct s_IAudinDevice IAudinDevice;
+	struct s_IAudinDevice
+	{
+		UINT (*Open)(IAudinDevice* devplugin, AudinReceive receive, void* userData);
+		BOOL (*FormatSupported)(IAudinDevice* devplugin, const AUDIO_FORMAT* format);
+		UINT(*SetFormat)
+		(IAudinDevice* devplugin, const AUDIO_FORMAT* format, UINT32 FramesPerPacket);
+		UINT (*Close)(IAudinDevice* devplugin);
+		UINT (*Free)(IAudinDevice* devplugin);
+	};
 
 #define AUDIN_DEVICE_EXPORT_FUNC_NAME "freerdp_audin_client_subsystem_entry"
 
@@ -57,5 +63,9 @@ typedef struct
 typedef FREERDP_AUDIN_DEVICE_ENTRY_POINTS* PFREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 
 typedef UINT (*PFREERDP_AUDIN_DEVICE_ENTRY)(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_AUDIN_CLIENT_AUDIN_H */

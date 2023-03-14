@@ -23,45 +23,45 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-typedef struct
-{
-	UINT32 magic_number;  /* magic number */
-	UINT16 version_major; /* major version number */
-	UINT16 version_minor; /* minor version number */
-	INT32 thiszone;       /* GMT to local correction */
-	UINT32 sigfigs;       /* accuracy of timestamps */
-	UINT32 snaplen;       /* max length of captured packets, in octets */
-	UINT32 network;       /* data link type */
-} pcap_header;
-
-typedef struct
-{
-	UINT32 ts_sec;   /* timestamp seconds */
-	UINT32 ts_usec;  /* timestamp microseconds */
-	UINT32 incl_len; /* number of octets of packet saved in file */
-	UINT32 orig_len; /* actual length of packet */
-} pcap_record_header;
-
-typedef struct s_pcap_record pcap_record;
-
-struct s_pcap_record
-{
-	pcap_record_header header;
-	union
-	{
-		void* data;
-		const void* cdata;
-	};
-	UINT32 length;
-	pcap_record* next;
-};
-
-typedef struct rdp_pcap rdpPcap;
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct
+	{
+		UINT32 magic_number;  /* magic number */
+		UINT16 version_major; /* major version number */
+		UINT16 version_minor; /* minor version number */
+		INT32 thiszone;       /* GMT to local correction */
+		UINT32 sigfigs;       /* accuracy of timestamps */
+		UINT32 snaplen;       /* max length of captured packets, in octets */
+		UINT32 network;       /* data link type */
+	} pcap_header;
+
+	typedef struct
+	{
+		UINT32 ts_sec;   /* timestamp seconds */
+		UINT32 ts_usec;  /* timestamp microseconds */
+		UINT32 incl_len; /* number of octets of packet saved in file */
+		UINT32 orig_len; /* actual length of packet */
+	} pcap_record_header;
+
+	typedef struct s_pcap_record pcap_record;
+
+	struct s_pcap_record
+	{
+		pcap_record_header header;
+		union
+		{
+			void* data;
+			const void* cdata;
+		};
+		UINT32 length;
+		pcap_record* next;
+	};
+
+	typedef struct rdp_pcap rdpPcap;
 
 	FREERDP_API rdpPcap* pcap_open(const char* name, BOOL write);
 	FREERDP_API void pcap_close(rdpPcap* pcap);

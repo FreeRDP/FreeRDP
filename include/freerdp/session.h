@@ -27,24 +27,33 @@
 #define INFO_TYPE_LOGON_PLAIN_NOTIFY 0x00000002
 #define INFO_TYPE_LOGON_EXTENDED_INF 0x00000003
 
-struct rdp_logon_info
+#ifdef __cplusplus
+extern "C"
 {
-	UINT32 sessionId;
-	char* username;
-	char* domain;
-};
-typedef struct rdp_logon_info logon_info;
+#endif
 
-struct rdp_logon_info_ex
-{
-	BOOL haveCookie;
-	UINT32 LogonId;
-	BYTE ArcRandomBits[16];
+	struct rdp_logon_info
+	{
+		UINT32 sessionId;
+		char* username;
+		char* domain;
+	};
+	typedef struct rdp_logon_info logon_info;
 
-	BOOL haveErrorInfo;
-	UINT32 ErrorNotificationType;
-	UINT32 ErrorNotificationData;
-};
-typedef struct rdp_logon_info_ex logon_info_ex;
+	struct rdp_logon_info_ex
+	{
+		BOOL haveCookie;
+		UINT32 LogonId;
+		BYTE ArcRandomBits[16];
+
+		BOOL haveErrorInfo;
+		UINT32 ErrorNotificationType;
+		UINT32 ErrorNotificationData;
+	};
+	typedef struct rdp_logon_info_ex logon_info_ex;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_SESSION_H */

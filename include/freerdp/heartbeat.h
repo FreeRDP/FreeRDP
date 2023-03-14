@@ -22,19 +22,19 @@
 
 #include <freerdp/types.h>
 
-typedef struct rdp_heartbeat rdpHeartbeat;
-
-typedef BOOL (*pServerHeartbeat)(freerdp* instance, BYTE period, BYTE count1, BYTE count2);
-
-struct rdp_heartbeat
-{
-	pServerHeartbeat ServerHeartbeat;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct rdp_heartbeat rdpHeartbeat;
+
+	typedef BOOL (*pServerHeartbeat)(freerdp* instance, BYTE period, BYTE count1, BYTE count2);
+
+	struct rdp_heartbeat
+	{
+		pServerHeartbeat ServerHeartbeat;
+	};
 
 	FREERDP_API BOOL freerdp_heartbeat_send_heartbeat_pdu(freerdp_peer* peer, BYTE period,
 	                                                      BYTE count1, BYTE count2);

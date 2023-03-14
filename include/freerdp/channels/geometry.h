@@ -25,35 +25,44 @@
 
 #define GEOMETRY_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Geometry::v08.01"
 
-enum
+#ifdef __cplusplus
+extern "C"
 {
-	GEOMETRY_UPDATE = 1,
-	GEOMETRY_CLEAR = 2
-};
+#endif
 
-enum
-{
-	RDH_RECTANGLE = 1
-};
+	enum
+	{
+		GEOMETRY_UPDATE = 1,
+		GEOMETRY_CLEAR = 2
+	};
 
-typedef struct
-{
-	RDP_RECT boundingRect;
-	UINT32 nRectCount;
-	RDP_RECT* rects;
-} FREERDP_RGNDATA;
+	enum
+	{
+		RDH_RECTANGLE = 1
+	};
 
-typedef struct
-{
-	UINT32 version;
-	UINT64 mappingId;
-	UINT32 updateType;
-	UINT64 topLevelId;
-	INT32 left, top, right, bottom;
-	INT32 topLevelLeft, topLevelTop, topLevelRight, topLevelBottom;
-	UINT32 geometryType;
+	typedef struct
+	{
+		RDP_RECT boundingRect;
+		UINT32 nRectCount;
+		RDP_RECT* rects;
+	} FREERDP_RGNDATA;
 
-	FREERDP_RGNDATA geometry;
-} MAPPED_GEOMETRY_PACKET;
+	typedef struct
+	{
+		UINT32 version;
+		UINT64 mappingId;
+		UINT32 updateType;
+		UINT64 topLevelId;
+		INT32 left, top, right, bottom;
+		INT32 topLevelLeft, topLevelTop, topLevelRight, topLevelBottom;
+		UINT32 geometryType;
+
+		FREERDP_RGNDATA geometry;
+	} MAPPED_GEOMETRY_PACKET;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_CHANNEL_GEOMETRY_H */

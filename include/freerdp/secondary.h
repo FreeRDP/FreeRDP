@@ -23,6 +23,11 @@
 #include <freerdp/types.h>
 #include <freerdp/primary.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #define GLYPH_FRAGMENT_NOP 0x00
 #define GLYPH_FRAGMENT_USE 0xFE
 #define GLYPH_FRAGMENT_ADD 0xFF
@@ -184,5 +189,9 @@ struct rdp_secondary_update
 	UINT32 paddingE[32 - 24];       /* 24 */
 };
 typedef struct rdp_secondary_update rdpSecondaryUpdate;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_UPDATE_SECONDARY_H */

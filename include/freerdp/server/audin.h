@@ -30,92 +30,92 @@
 #error "This header must not be included if CHANNEL_AUDIN_SERVER is not defined"
 #endif
 
-typedef struct s_audin_server_context audin_server_context;
-
-typedef BOOL (*psAudinServerChannelIdAssigned)(audin_server_context* context, UINT32 channelId);
-
-typedef UINT (*psAudinServerSelectFormat)(audin_server_context* context,
-                                          size_t client_format_index);
-typedef BOOL (*psAudinServerOpen)(audin_server_context* context);
-typedef BOOL (*psAudinServerIsOpen)(audin_server_context* context);
-typedef BOOL (*psAudinServerClose)(audin_server_context* context);
-
-typedef UINT (*psAudinServerOpening)(audin_server_context* context);
-typedef UINT (*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
-typedef UINT (*psAudinServerReceiveSamples)(audin_server_context* context,
-                                            const AUDIO_FORMAT* format, wStream* buf,
-                                            size_t nframes);
-
-struct s_audin_server_context
-{
-	HANDLE vcm;
-
-	/* Server self-defined pointer. */
-	void* data;
-
-	/* Server supported formats. Set by server. */
-	AUDIO_FORMAT* server_formats;
-	size_t num_server_formats;
-
-	/* Server destination PCM audio format. Set by server. */
-	AUDIO_FORMAT* dst_format;
-
-	/* Server preferred frames per packet. */
-	int frames_per_packet;
-
-	/* Client supported formats. */
-	AUDIO_FORMAT* client_formats;
-	size_t num_client_formats;
-	SSIZE_T selected_client_format;
-
-	/*** APIs called by the server. ***/
-	/**
-	 * Choose the audio format to be received. The index argument is an index into
-	 * the client_formats array and must be smaller than num_client_formats.
-	 */
-	psAudinServerSelectFormat SelectFormat;
-	/**
-	 * Open the audio input stream.
-	 */
-	psAudinServerOpen Open;
-
-	psAudinServerIsOpen IsOpen;
-
-	/**
-	 * Close the audio stream.
-	 */
-	psAudinServerClose Close;
-
-	/*** Callbacks registered by the server. ***/
-	/**
-	 * It's ready to open the audio input stream. The server should examine client
-	 * formats and call SelectFormat to choose the desired one in this callback.
-	 */
-	psAudinServerOpening Opening;
-	/**
-	 * Client replied HRESULT of the open operation.
-	 */
-	psAudinServerOpenResult OpenResult;
-	/**
-	 * Receive audio samples. Actual bytes in the buffer is:
-	 * nframes * dst_format.nBitsPerSample * dst_format.nChannels / 8
-	 * Note that this callback is called from a different thread context so the
-	 * server must be careful of thread synchronization.
-	 */
-	psAudinServerReceiveSamples ReceiveSamples;
-
-	rdpContext* rdpcontext;
-
-	/**
-	 * Callback, when the channel got its id assigned.
-	 */
-	psAudinServerChannelIdAssigned ChannelIdAssigned;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct s_audin_server_context audin_server_context;
+
+	typedef BOOL (*psAudinServerChannelIdAssigned)(audin_server_context* context, UINT32 channelId);
+
+	typedef UINT (*psAudinServerSelectFormat)(audin_server_context* context,
+	                                          size_t client_format_index);
+	typedef BOOL (*psAudinServerOpen)(audin_server_context* context);
+	typedef BOOL (*psAudinServerIsOpen)(audin_server_context* context);
+	typedef BOOL (*psAudinServerClose)(audin_server_context* context);
+
+	typedef UINT (*psAudinServerOpening)(audin_server_context* context);
+	typedef UINT (*psAudinServerOpenResult)(audin_server_context* context, UINT32 result);
+	typedef UINT (*psAudinServerReceiveSamples)(audin_server_context* context,
+	                                            const AUDIO_FORMAT* format, wStream* buf,
+	                                            size_t nframes);
+
+	struct s_audin_server_context
+	{
+		HANDLE vcm;
+
+		/* Server self-defined pointer. */
+		void* data;
+
+		/* Server supported formats. Set by server. */
+		AUDIO_FORMAT* server_formats;
+		size_t num_server_formats;
+
+		/* Server destination PCM audio format. Set by server. */
+		AUDIO_FORMAT* dst_format;
+
+		/* Server preferred frames per packet. */
+		int frames_per_packet;
+
+		/* Client supported formats. */
+		AUDIO_FORMAT* client_formats;
+		size_t num_client_formats;
+		SSIZE_T selected_client_format;
+
+		/*** APIs called by the server. ***/
+		/**
+		 * Choose the audio format to be received. The index argument is an index into
+		 * the client_formats array and must be smaller than num_client_formats.
+		 */
+		psAudinServerSelectFormat SelectFormat;
+		/**
+		 * Open the audio input stream.
+		 */
+		psAudinServerOpen Open;
+
+		psAudinServerIsOpen IsOpen;
+
+		/**
+		 * Close the audio stream.
+		 */
+		psAudinServerClose Close;
+
+		/*** Callbacks registered by the server. ***/
+		/**
+		 * It's ready to open the audio input stream. The server should examine client
+		 * formats and call SelectFormat to choose the desired one in this callback.
+		 */
+		psAudinServerOpening Opening;
+		/**
+		 * Client replied HRESULT of the open operation.
+		 */
+		psAudinServerOpenResult OpenResult;
+		/**
+		 * Receive audio samples. Actual bytes in the buffer is:
+		 * nframes * dst_format.nBitsPerSample * dst_format.nChannels / 8
+		 * Note that this callback is called from a different thread context so the
+		 * server must be careful of thread synchronization.
+		 */
+		psAudinServerReceiveSamples ReceiveSamples;
+
+		rdpContext* rdpcontext;
+
+		/**
+		 * Callback, when the channel got its id assigned.
+		 */
+		psAudinServerChannelIdAssigned ChannelIdAssigned;
+	};
 
 	FREERDP_API audin_server_context* audin_server_context_new(HANDLE vcm);
 	FREERDP_API void audin_server_context_free(audin_server_context* context);

@@ -25,12 +25,12 @@
 #include <freerdp/api.h>
 #include <freerdp/codec/audio.h>
 
-typedef struct S_FREERDP_DSP_CONTEXT FREERDP_DSP_CONTEXT;
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	typedef struct S_FREERDP_DSP_CONTEXT FREERDP_DSP_CONTEXT;
 
 	FREERDP_API FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder);
 	FREERDP_API BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode);

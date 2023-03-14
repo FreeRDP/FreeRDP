@@ -22,19 +22,19 @@
 
 #include <freerdp/api.h>
 
-struct rdp_metrics
-{
-	rdpContext* context;
-
-	UINT64 TotalCompressedBytes;
-	UINT64 TotalUncompressedBytes;
-	double TotalCompressionRatio;
-};
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+	struct rdp_metrics
+	{
+		rdpContext* context;
+
+		UINT64 TotalCompressedBytes;
+		UINT64 TotalUncompressedBytes;
+		double TotalCompressionRatio;
+	};
 
 	FREERDP_API double metrics_write_bytes(rdpMetrics* metrics, UINT32 UncompressedBytes,
 	                                       UINT32 CompressedBytes);

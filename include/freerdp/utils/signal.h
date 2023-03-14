@@ -23,11 +23,6 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
-#ifndef _WIN32
-#include <signal.h>
-#include <termios.h>
-#endif
-
 #ifdef __cplusplus
 extern "C"
 {

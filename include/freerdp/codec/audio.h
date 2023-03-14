@@ -25,8 +25,9 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-#ifdef _WIN32
-#include <mmreg.h>
+#ifdef __cplusplus
+extern "C"
+{
 #endif
 
 struct AUDIO_FORMAT
@@ -190,11 +191,6 @@ typedef struct AUDIO_FORMAT AUDIO_FORMAT;
 /**
  * Audio Format Functions
  */
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
 
 	FREERDP_API UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size);
 
