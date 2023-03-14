@@ -13,17 +13,19 @@ Build requirements
 For the Android port some additional dependencies need to be fulfilled:
 
 * for JNI
-- CMake >= 3.0 (install CMake from Android SDK. It is part of the SDK Tools)
+- CMake >= 3.13 (install CMake from Android SDK. It is part of the SDK Tools)
 - Android NDK (>= r15c)
 
 * for the Java GUI
 - Android SDK
 
-FreeRDP requires openssl libraries for building but they are not part of the
-Android NDK and therefore they need to be prebuild manually.
+* FreeRDP requires openssl libraries for building but they are not part of the
+  Android NDK and therefore they need to be prebuild manually.
 
-For jpeg support https://github.com/akallabeth/jpeg8d has been tested and used.
-However, any other static builds should work as well.
+* [optional] cJSON is required for logging in to Azure accounts
+* [optional] Kerberos authentication is supported by MIT or Heimdal kerberos libraries
+* [optional] For jpeg support https://github.com/akallabeth/jpeg8d has been tested and used.
+  However, any other static builds should work as well.
 
 Build native libraries:
 ======================
