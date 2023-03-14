@@ -1,0 +1,121 @@
+FreeRDP has a few dependencies that are required for proper operation:
+
+1. SSL
+
+RDP requires a secure tunnel and utilizes TLS for this. We do not implement this
+ourselves but reuse existing libraries:
+
+We support
+
+* OpenSSL our main development SSL library
+* LibreSSL (supported by community)
+* MBedTLS (supported by community)
+
+2. Kerberos
+
+Authentication to many services requires kerberos (especially if smartcards are in use)
+
+We support:
+
+* MIT
+* Heimdal
+
+3. JSON
+
+Azure logon requires HTTP/JSON messages to be parsed.
+
+We support:
+
+* cJSON
+
+4. H264
+
+RDP GFX modes (anything newer Windows 8.1 / Server 2012) supports a graphics mode based
+on the H264 codec
+
+We support
+
+* OpenH264
+* FFMPEG (x264 or OpenH264)
+
+There are some platform specific implementations too (e.g. mediacodec on android) but these
+two are the options that are always required.
+
+5. Graphics scaling support
+
+High DPI support and smart-sizing option require bitmaps to be scaled by the client. 
+
+We support
+
+* Swscale
+* Cairo
+
+6. Audio encoders/decoders
+
+Sound and Microphone options allow transmission of data in compressed formats.
+The most widely supported formats are uncompressed PCM (all systems support that)
+and compressed AAC (windows 8 or newer). Some other codecs are supported as well (GSM)
+but do not provide the same quality as the afore mentioned ones.
+
+We support
+
+* FAAC / FAAD2 / soxr (encoder/decoder/resampling)
+* FFMPEG
+* GSM (older low bandwidth codec)
+
+7. Smartcard
+
+To utilize smartcards for authentication/redirection 
+
+We support
+
+* PCSC
+* pkcs11
+
+PCSC is required for smartcard redirection, pkcs11 for NLA smartcard logon support
+
+8. Unicode
+
+Most of the protocol preferably uses UCS-2/UTF16 for strings. To convert to/from UTF-8 a
+unicode support library is required:
+
+* Windows natively supports these (well, it is a microsoft protocol after all ;))
+* ICU on linux/unix and android
+* On Apple (iOS/Mac) we use native NSString unicode conversion routines
+
+9. USB redirection
+
+The protocol has an extension (channel) to allow low level USB redirection
+
+We support
+
+* libusb 1
+
+10. Platform support (mainly linux, for others the platform SDK is usually enough)
+
+* SDL2 for the SDL client (all platforms)
+* CUPS (linux/apple) for printing support
+* libsystemd (linux) for journald logging support
+* PAM headers/libraries (server side authentication)
+* FUSE/FUSE3 for file clipboard support (linux/mac os)
+* Wayland for wlfreerdp
+* X11 development headers for X11 client
+* ALSA development headers/libraris
+* PULSE development headers/libraries
+* OSS development headers/libraries
+
+11. Building recommendations
+
+* Use Ninja to speed up your builds
+* For release builds add -DCMAKE_BUILD_TYPE=Release (or RelWithDebInfo for less optimized but with debug symbols)
+* -DWITH_VERBOSE_WINPR_ASSERT=OFF reduces the size of the build considerably but removes lots
+  of santity checks in code. Recommended for stable builds, for builds not from stable releases
+  it is recommended to keep -DWITH_VERBOSE_WINPR_ASSERT=ON to have useful information on crashes.
+
+12. Example build instructions:
+
+Assume we have the source checked out to /tmp/freerdp/src and we want to install to /tmp/freerdp/install:
+(on windows this needs to be called from a visual studio command prompt or a cmd that has run vcvarsall.bat, paths obviously need to be adjusted)
+
+cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DWITH_VERBOSE_WINPR_ASSERT=OFF -DCMAKE_PREFIX_PATH=/tmp/freerdp/install -B /tmp/freerdp/build -S /tmp/freerdp/src
+cmake --build /tmp/freerdp/build --target install

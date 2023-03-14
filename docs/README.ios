@@ -9,7 +9,7 @@ Build requirements
 
 The following prerequisites are required in order to build the iOS port:
 
-- cmake version >= 2.8.9
+- cmake version >= 3.13
 - latest Xcode installed (>= 4.6)
 - installed Provisioning Profile and iOS Developer Certificate for code signing
 	(not required for simulator builds)
@@ -44,6 +44,10 @@ directory.
 
 If you build OpenSSL youself or with an install directory specified you need to set FREERDP_IOS_EXTERNAL_SSL_PATH when running cmake.
 
+Additional (optional) libraries that are required:
+
+* cJSON for Azure logon support
+* MIT or Heimdal kerberos for kerberos support
 
 Building
 ========
