@@ -24,6 +24,7 @@
 #include <winpr/pipe.h>
 #include <winpr/thread.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/svc.h>
 #include <freerdp/channels/rdp2tcp.h>
 

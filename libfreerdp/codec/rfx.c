@@ -33,6 +33,7 @@
 #include <winpr/tchar.h>
 
 #include <freerdp/log.h>
+#include <freerdp/settings.h>
 #include <freerdp/codec/rfx.h>
 #include <freerdp/constants.h>
 #include <freerdp/primitives.h>

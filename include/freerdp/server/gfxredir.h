@@ -22,7 +22,6 @@
 
 #include <freerdp/channels/gfxredir.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 

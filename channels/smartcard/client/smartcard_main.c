@@ -28,6 +28,7 @@
 #include <winpr/smartcard.h>
 #include <winpr/environment.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/scard.h>
 #include <freerdp/utils/smartcard_call.h>

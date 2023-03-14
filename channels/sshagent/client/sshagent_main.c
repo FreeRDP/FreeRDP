@@ -52,6 +52,8 @@
 #include <winpr/stream.h>
 
 #include "sshagent_main.h"
+
+#include <freerdp/freerdp.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/log.h>
 

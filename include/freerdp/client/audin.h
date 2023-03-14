@@ -22,8 +22,10 @@
 #ifndef FREERDP_CHANNEL_AUDIN_CLIENT_AUDIN_H
 #define FREERDP_CHANNEL_AUDIN_CLIENT_AUDIN_H
 
+#include <freerdp/api.h>
+#include <freerdp/types.h>
+
 #include <freerdp/channels/audin.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/codec/audio.h>
 
 #ifdef __cplusplus

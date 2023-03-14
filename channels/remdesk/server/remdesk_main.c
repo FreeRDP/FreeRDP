@@ -25,6 +25,8 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
+#include <freerdp/freerdp.h>
+
 #include "remdesk_main.h"
 
 /**

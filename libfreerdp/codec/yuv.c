@@ -2,6 +2,8 @@
 #include <winpr/assert.h>
 #include <winpr/pool.h>
 
+#include <freerdp/settings.h>
+#include <freerdp/codec/region.h>
 #include <freerdp/primitives.h>
 #include <freerdp/log.h>
 #include <freerdp/codec/yuv.h>

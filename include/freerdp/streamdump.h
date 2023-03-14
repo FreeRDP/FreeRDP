@@ -25,7 +25,7 @@
 #include <winpr/wtypes.h>
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -23,7 +23,8 @@
 #include <winpr/cmdline.h>
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
+#include <freerdp/settings.h>
 
 #ifdef __cplusplus
 extern "C"

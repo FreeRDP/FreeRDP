@@ -22,7 +22,6 @@
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 
 #ifdef __cplusplus

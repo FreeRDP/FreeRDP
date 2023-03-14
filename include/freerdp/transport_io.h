@@ -22,11 +22,11 @@
 #ifndef FREERDP_TRANSPORT_IO_H
 #define FREERDP_TRANSPORT_IO_H
 
+#include <winpr/stream.h>
+
 #include <freerdp/api.h>
 #include <freerdp/types.h>
-
-#include <winpr/stream.h>
-#include <freerdp/freerdp.h>
+#include <freerdp/settings.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -41,6 +41,7 @@
 #include <freerdp/channels/channels.h>
 #include <freerdp/channels/drdynvc.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/server/rdpsnd.h>
 #include <freerdp/settings.h>

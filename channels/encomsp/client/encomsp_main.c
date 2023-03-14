@@ -25,6 +25,7 @@
 #include <winpr/assert.h>
 #include <winpr/print.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/client/encomsp.h>
 

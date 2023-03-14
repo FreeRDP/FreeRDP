@@ -30,8 +30,10 @@
 #include <winpr/path.h>
 #include <winpr/ncrypt.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
 #include <freerdp/settings.h>
+#include <freerdp/client.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/channels/drdynvc.h>
 #include <freerdp/channels/cliprdr.h>
@@ -2373,7 +2375,7 @@ static BOOL parse_gateway_cred_option(rdpSettings* settings, const char* value, 
 			break;
 		default:
 			if (!freerdp_settings_set_string(settings, what, value))
-				return COMMAND_LINE_ERROR_MEMORY;
+				return FALSE;
 			break;
 	}
 
@@ -2452,7 +2454,7 @@ static BOOL parse_gateway_usage_option(rdpSettings* settings, const char* value)
 		LONGLONG val = 0;
 
 		if (!value_to_int(value, &val, TSC_PROXY_MODE_NONE_DIRECT, TSC_PROXY_MODE_NONE_DETECT))
-			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			return FALSE;
 	}
 
 	return freerdp_set_gateway_usage_method(settings, type);

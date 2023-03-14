@@ -30,6 +30,7 @@
 
 #include <winpr/crt.h>
 #include <winpr/cmdline.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
 #include <freerdp/client/audin.h>
 

@@ -19,6 +19,7 @@
 
 #include <freerdp/config.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/server/telemetry.h>
 

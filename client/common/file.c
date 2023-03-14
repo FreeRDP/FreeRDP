@@ -26,6 +26,7 @@
 #include <winpr/string.h>
 #include <winpr/file.h>
 
+#include <freerdp/client.h>
 #include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
 

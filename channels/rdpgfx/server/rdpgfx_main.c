@@ -29,6 +29,9 @@
 #include <winpr/thread.h>
 #include <winpr/stream.h>
 
+#include <freerdp/freerdp.h>
+#include <freerdp/codec/color.h>
+
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/log.h>
 

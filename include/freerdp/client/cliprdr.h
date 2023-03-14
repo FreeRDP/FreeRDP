@@ -22,11 +22,11 @@
 #ifndef FREERDP_CHANNEL_CLIPRDR_CLIENT_CLIPRDR_H
 #define FREERDP_CHANNEL_CLIPRDR_CLIENT_CLIPRDR_H
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 
 #include <freerdp/message.h>
 #include <freerdp/channels/cliprdr.h>
-#include <freerdp/freerdp.h>
 
 #ifdef __cplusplus
 extern "C"

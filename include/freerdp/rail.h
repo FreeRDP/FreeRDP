@@ -23,6 +23,7 @@
 
 #include <winpr/windows.h>
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 
 #ifdef __cplusplus

@@ -29,6 +29,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/client/cliprdr.h>
 
 #include "../../../channels/client/addin.h"

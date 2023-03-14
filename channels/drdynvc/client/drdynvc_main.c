@@ -25,6 +25,7 @@
 #include <winpr/stream.h>
 #include <winpr/interlocked.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/drdynvc.h>
 #include <freerdp/utils/drdynvc.h>
 

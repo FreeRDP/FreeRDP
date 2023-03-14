@@ -21,6 +21,7 @@
 #include <freerdp/types.h>
 #include <freerdp/constants.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/log.h>
 
 #include <winpr/crt.h>

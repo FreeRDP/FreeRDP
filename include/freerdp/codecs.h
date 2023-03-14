@@ -21,8 +21,7 @@
 #define FREERDP_CODECS_H
 
 #include <freerdp/api.h>
-
-#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 
 #include <freerdp/codec/color.h>
 
@@ -62,6 +61,7 @@ extern "C"
 		BITMAP_PLANAR_CONTEXT* planar;
 		BITMAP_INTERLEAVED_CONTEXT* interleaved;
 	};
+	typedef struct rdp_codecs rdpCodecs;
 
 	FREERDP_API BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width,
 	                                               UINT32 height);

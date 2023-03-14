@@ -38,6 +38,7 @@
 #include <winpr/stream.h>
 #include <winpr/collections.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/client/tsmf.h>
 
 #include "tsmf_constants.h"

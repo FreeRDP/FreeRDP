@@ -33,6 +33,7 @@
 
 #include <freerdp/types.h>
 #include <freerdp/addin.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/codec/audio.h>
 #include <freerdp/client/audin.h>
 

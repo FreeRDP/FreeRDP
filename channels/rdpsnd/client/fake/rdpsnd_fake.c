@@ -29,6 +29,7 @@
 #include <winpr/cmdline.h>
 
 #include <freerdp/types.h>
+#include <freerdp/settings.h>
 
 #include "rdpsnd_main.h"
 

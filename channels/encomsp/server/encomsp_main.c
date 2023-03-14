@@ -25,6 +25,7 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/channels/log.h>
 
 #include "encomsp_main.h"

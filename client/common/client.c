@@ -26,6 +26,7 @@
 
 #include <freerdp/client.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
 #include <freerdp/assistance.h>
 #include <freerdp/client/file.h>

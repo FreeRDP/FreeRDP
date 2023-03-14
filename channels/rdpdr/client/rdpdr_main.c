@@ -37,6 +37,7 @@
 #include <winpr/sspicli.h>
 
 #include <freerdp/types.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/channels/rdpdr.h>

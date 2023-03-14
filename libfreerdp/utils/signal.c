@@ -28,6 +28,11 @@
 #include <freerdp/utils/signal.h>
 #include <freerdp/log.h>
 
+#ifndef _WIN32
+#include <signal.h>
+#include <termios.h>
+#endif
+
 #define TAG FREERDP_TAG("utils.signal")
 
 #ifdef _WIN32

@@ -22,6 +22,8 @@
 #define FREERDP_CHANNEL_RDPSND_CLIENT_RDPSND_H
 
 #include <freerdp/channels/rdpsnd.h>
+#include <freerdp/settings.h>
+
 #ifdef __cplusplus
 extern "C"
 {

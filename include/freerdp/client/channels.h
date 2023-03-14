@@ -21,6 +21,7 @@
 #define FREERDP_CHANNELS_CLIENT_H
 
 #include <freerdp/api.h>
+#include <freerdp/dvc.h>
 #include <freerdp/config.h>
 #include <freerdp/addin.h>
 #include <freerdp/channels/channels.h>

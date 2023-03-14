@@ -21,7 +21,7 @@
 #define FREERDP_CHANNEL_RDPGFX_SERVER_RDPGFX_H
 
 #include <freerdp/channels/rdpgfx.h>
-#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"
