@@ -454,10 +454,10 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 	BOOL fSave;
 	DWORD status;
 	DWORD dwFlags;
-	char UserName[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
-	char Password[CREDUI_MAX_PASSWORD_LENGTH + 1] = { 0 };
-	char User[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
-	char Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
+	WCHAR UserNameW[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+	WCHAR UserW[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+	WCHAR DomainW[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
+	WCHAR PasswordW[CREDUI_MAX_PASSWORD_LENGTH + 1] = { 0 };
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
@@ -470,50 +470,59 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 
 	if (username && *username)
 	{
-		strncpy(UserName, *username, CREDUI_MAX_USERNAME_LENGTH);
-		strncpy(User, UserName, CREDUI_MAX_USERNAME_LENGTH);
+		ConvertUtf8ToWChar(*username, UserNameW, ARRAYSIZE(UserNameW);
+		ConvertUtf8ToWChar(*username, UserW, ARRAYSIZE(UserW);
 	}
 
 	if (password && *password)
 	{
-		strncpy(Password, *password, CREDUI_MAX_PASSWORD_LENGTH);
+		ConvertUtf8ToWChar(*password, PasswordW, ARRAYSIZE(PasswordW);
 	}
 
 	if (domain && *domain)
 	{
+		ConvertUtf8ToWChar(*domain, DomainW, ARRAYSIZE(DomainW);
 		strncpy(Domain, *domain, CREDUI_MAX_DOMAIN_TARGET_LENGTH);
 	}
 
 	if (!(*UserName && *Password))
 	{
+		WCHAR* titleW = ConvertUtf8ToWCharAlloc(title, NULL);
 		if (!wfc->isConsole && wfc->common.context.settings->CredentialsFromStdin)
 			WLog_ERR(TAG, "Flag for stdin read present but stdin is redirected; using GUI");
 		if (wfc->isConsole && wfc->common.context.settings->CredentialsFromStdin)
-			status = CredUICmdLinePromptForCredentialsA(
-			    title, NULL, 0, UserName, CREDUI_MAX_USERNAME_LENGTH + 1, Password,
-			    CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
+			status = CredUICmdLinePromptForCredentialsW(titleW, NULL, 0, UserNameW,
+			                                            ARRAYSIZE(UserNameW), PasswordW,
+			                                            ARRAYSIZE(PasswordW), &fSave, dwFlags);
 		else
-			status = CredUIPromptForCredentialsA(&wfUiInfo, title, NULL, 0, UserName,
-			                                     CREDUI_MAX_USERNAME_LENGTH + 1, Password,
-			                                     CREDUI_MAX_PASSWORD_LENGTH + 1, &fSave, dwFlags);
-
+			status = CredUIPromptForCredentialsW(&wfUiInfo, titleW, NULL, 0, UserNameW,
+			                                     ARRAYSIZE(UserNameW), PasswordW,
+			                                     ARRAYSIZE(PasswordW), &fSave, dwFlags);
+		free(titleW);
 		if (status != NO_ERROR)
 		{
 			WLog_ERR(TAG, "CredUIPromptForCredentials unexpected status: 0x%08lX", status);
 			return FALSE;
 		}
 
-		status = CredUIParseUserNameA(UserName, User, CREDUI_MAX_USERNAME_LENGTH, Domain,
-		                              CREDUI_MAX_DOMAIN_TARGET_LENGTH);
+		status =
+		    CredUIParseUserNameW(UserNameW, UserW, ARRAYSIZE(UserW), DomainW, ARRAYSIZE(DomainW));
 		if (status != NO_ERROR)
 		{
+			CHAR UserW[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+			CHAR UserNameW[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+			CHAR DomainW[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
+
+			ConvertWCharNToUtf8(UserNameW, ARRAYSIZE(UserNameW), UserName, ARRAYSIZE(UserName));
+			ConvertWCharNToUtf8(UserW, ARRAYSIZE(UserW), User, ARRAYSIZE(User));
+			ConvertWCharNToUtf8(DomainW, ARRAYSIZE(DomainW), Domain, ARRAYSIZE(Domain));
 			WLog_ERR(TAG, "Failed to parse UserName: %s into User: %s Domain: %s", UserName, User,
 			         Domain);
 			return FALSE;
 		}
 	}
-	*username = _strdup(User);
 
+	*username = ConvertWCharNToUtf8Alloc(UserW, ARRAYSIZE(UserW), NULL);
 	if (!(*username))
 	{
 		WLog_ERR(TAG, "strdup failed", status);
@@ -521,7 +530,7 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 	}
 
 	if (strlen(Domain) > 0)
-		*domain = _strdup(Domain);
+		*domain = ConvertWCharNToUtf8Alloc(DomainW, ARRAYSIZE(DomainW), NULL);
 	else
 		*domain = _strdup("\0");
 
@@ -532,8 +541,7 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 		return FALSE;
 	}
 
-	*password = _strdup(Password);
-
+	*password = ConvertWCharNToUtf8Alloc(PasswordW, ARRAYSIZE(PasswordW), NULL);
 	if (!(*password))
 	{
 		free(*username);
