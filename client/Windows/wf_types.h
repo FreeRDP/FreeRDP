@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Windows GDI
+ * Windows Client
  *
  * Copyright 2009-2011 Jay Sorg
  * Copyright 2010-2011 Vic Lee
@@ -19,22 +19,36 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_CLIENT_WIN_GDI_H
-#define FREERDP_CLIENT_WIN_GDI_H
+#ifndef FREERDP_CLIENT_WIN_TYPES_H
+#define FREERDP_CLIENT_WIN_TYPES_H
 
-#include "wf_client.h"
-#include "wf_types.h"
+#include <freerdp/graphics.h>
+#include <winpr/windows.h>
 
-void wf_invalidate_region(wfContext* wfc, UINT32 x, UINT32 y, UINT32 width, UINT32 height);
-wfBitmap* wf_image_new(wfContext* wfc, UINT32 width, UINT32 height, UINT32 bpp, const BYTE* data);
-void wf_image_free(wfBitmap* image);
-void wf_update_offset(wfContext* wfc);
-void wf_resize_window(wfContext* wfc);
-void wf_toggle_fullscreen(wfContext* wfc);
-BOOL wf_scale_rect(wfContext* wfc, RECT* source);
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
-void wf_gdi_register_update_callbacks(rdpUpdate* update);
+	typedef struct wf_context wfContext;
 
-void wf_update_canvas_diff(wfContext* wfc);
+	typedef struct
+	{
+		rdpBitmap _bitmap;
+		HDC hdc;
+		HBITMAP bitmap;
+		HBITMAP org_bitmap;
+		BYTE* pdata;
+	} wfBitmap;
 
-#endif /* FREERDP_CLIENT_WIN_GDI_H */
+	typedef struct
+	{
+		rdpPointer pointer;
+		HCURSOR cursor;
+	} wfPointer;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FREERDP_CLIENT_WIN_TYPES_H */

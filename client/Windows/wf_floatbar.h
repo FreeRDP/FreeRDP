@@ -22,8 +22,9 @@
 
 #include <winpr/crt.h>
 
+#include "wf_types.h"
+
 typedef struct s_FloatBar wfFloatBar;
-typedef struct wf_context wfContext;
 
 wfFloatBar* wf_floatbar_new(wfContext* wfc, HINSTANCE window, DWORD flags);
 void wf_floatbar_free(wfFloatBar* floatbar);

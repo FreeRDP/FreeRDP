@@ -47,6 +47,7 @@
 #include "wf_cliprdr.h"
 #include "wf_event.h"
 #include "wf_floatbar.h"
+#include "wf_types.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -56,21 +57,6 @@ extern "C"
 // System menu constants
 #define SYSCOMMAND_ID_SMARTSIZING 1000
 #define SYSCOMMAND_ID_REQUEST_CONTROL 1001
-
-	typedef struct
-	{
-		rdpBitmap _bitmap;
-		HDC hdc;
-		HBITMAP bitmap;
-		HBITMAP org_bitmap;
-		BYTE* pdata;
-	} wfBitmap;
-
-	typedef struct
-	{
-		rdpPointer pointer;
-		HCURSOR cursor;
-	} wfPointer;
 
 	struct wf_context
 	{

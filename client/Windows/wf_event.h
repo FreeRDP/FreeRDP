@@ -23,6 +23,7 @@
 #define FREERDP_CLIENT_WIN_EVENT_H
 
 #include "wf_client.h"
+#include "wf_types.h"
 #include <freerdp/log.h>
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam);

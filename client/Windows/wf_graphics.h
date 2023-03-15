@@ -21,6 +21,7 @@
 #define FREERDP_CLIENT_WIN_GRAPHICS_H
 
 #include "wf_client.h"
+#include "wf_types.h"
 
 HBITMAP wf_create_dib(wfContext* wfc, UINT32 width, UINT32 height, UINT32 format, const BYTE* data,
                       BYTE** pdata);

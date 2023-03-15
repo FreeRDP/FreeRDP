@@ -20,6 +20,7 @@
 #define FREERDP_CLIENT_WIN_CLIPRDR_H
 
 #include "wf_client.h"
+#include "wf_types.h"
 
 BOOL wf_cliprdr_init(wfContext* wfc, CliprdrClientContext* cliprdr);
 BOOL wf_cliprdr_uninit(wfContext* wfc, CliprdrClientContext* cliprdr);

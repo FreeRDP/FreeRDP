@@ -19,11 +19,12 @@
 #ifndef FREERDP_CLIENT_WIN_RAIL_H
 #define FREERDP_CLIENT_WIN_RAIL_H
 
-typedef struct wf_rail_window wfRailWindow;
-
 #include "wf_client.h"
+#include "wf_types.h"
 
 #include <freerdp/client/rail.h>
+
+typedef struct wf_rail_window wfRailWindow;
 
 BOOL wf_rail_init(wfContext* wfc, RailClientContext* rail);
 void wf_rail_uninit(wfContext* wfc, RailClientContext* rail);
