@@ -20,12 +20,12 @@
 #ifndef WINPR_PATH_H
 #define WINPR_PATH_H
 
-#include <winpr/winpr.h>
-#include <winpr/tchar.h>
 #include <winpr/error.h>
+#include <winpr/tchar.h>
+#include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-//#define WINPR_HAVE_PATHCCH_H	1
+// #define WINPR_HAVE_PATHCCH_H	1
 
 #ifdef WINPR_HAVE_PATHCCH_H
 

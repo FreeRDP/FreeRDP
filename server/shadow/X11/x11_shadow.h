@@ -23,11 +23,11 @@
 
 typedef struct x11_shadow_subsystem x11ShadowSubsystem;
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/collections.h>
 
 #include <X11/Xlib.h>
 

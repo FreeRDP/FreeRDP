@@ -24,8 +24,8 @@
 #include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/gdi/video.h>
 #include <freerdp/gdi/region.h>
+#include <freerdp/gdi/video.h>
 
 #define TAG FREERDP_TAG("video")
 

@@ -20,11 +20,11 @@
 #ifndef FREERDP_CLIENT_SDL_H
 #define FREERDP_CLIENT_SDL_H
 
-#include <freerdp/freerdp.h>
-#include <freerdp/client/rdpei.h>
-#include <freerdp/client/rail.h>
 #include <freerdp/client/cliprdr.h>
+#include <freerdp/client/rail.h>
+#include <freerdp/client/rdpei.h>
 #include <freerdp/client/rdpgfx.h>
+#include <freerdp/freerdp.h>
 
 #include <SDL.h>
 #include <SDL_video.h>

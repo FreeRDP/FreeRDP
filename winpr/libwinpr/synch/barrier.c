@@ -20,8 +20,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/synch.h>
 #include <winpr/assert.h>
+#include <winpr/synch.h>
 
 #include "synch.h"
 
@@ -30,9 +30,9 @@
 #ifdef WINPR_SYNCHRONIZATION_BARRIER
 
 #include <winpr/assert.h>
-#include <winpr/sysinfo.h>
-#include <winpr/library.h>
 #include <winpr/interlocked.h>
+#include <winpr/library.h>
+#include <winpr/sysinfo.h>
 #include <winpr/thread.h>
 
 /**

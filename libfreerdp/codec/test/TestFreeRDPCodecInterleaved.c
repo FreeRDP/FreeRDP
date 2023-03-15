@@ -6,12 +6,12 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include <freerdp/freerdp.h>
-#include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/color.h>
 #include <freerdp/codec/interleaved.h>
-#include <winpr/crypto.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/profiler.h>
+#include <winpr/crypto.h>
 
 static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
                                      BITMAP_INTERLEAVED_CONTEXT* decoder

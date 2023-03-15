@@ -22,22 +22,22 @@
 #include "uwac-priv.h"
 #include "uwac-utils.h"
 
-#include <stdio.h>
-#include <inttypes.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
 #include <assert.h>
 #include <errno.h>
-#include <time.h>
-#include <unistd.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/epoll.h>
 #include <sys/mman.h>
 #include <sys/timerfd.h>
-#include <sys/epoll.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "uwac-os.h"
-#include "wayland-cursor.h"
 #include "wayland-client-protocol.h"
+#include "wayland-cursor.h"
 
 static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, size_t size)
 {

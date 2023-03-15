@@ -27,24 +27,24 @@
 #include <unistd.h>
 #endif
 
-#include <time.h>
+#include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h>
+#include <time.h>
 
 #include <fcntl.h>
-#include <sys/un.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
 
 #include "../handle/handle.h"
-#include "../pipe/pipe.h"
 #include "../log.h"
+#include "../pipe/pipe.h"
 
 #define TAG WINPR_TAG("io")
 

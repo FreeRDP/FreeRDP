@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#include <winpr/path.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
 #include <winpr/sysinfo.h>
 
 #include <freerdp/crypto/certificate_store.h>

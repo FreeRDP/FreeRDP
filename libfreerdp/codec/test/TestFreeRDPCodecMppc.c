@@ -1,6 +1,6 @@
+#include <winpr/bitstream.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
-#include <winpr/bitstream.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/log.h>

@@ -21,10 +21,10 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
-#include <winpr/assert.h>
-#include <winpr/stream.h>
 #include <freerdp/channels/log.h>
+#include <winpr/assert.h>
+#include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #define TAG CHANNELS_TAG("rdpgfx.common")
 

@@ -17,9 +17,9 @@
  * limitations under the License.
  */
 
-#include <winpr/environment.h>
-#include <freerdp/types.h>
 #include <errno.h>
+#include <freerdp/types.h>
+#include <winpr/environment.h>
 
 #include "cap_config.h"
 

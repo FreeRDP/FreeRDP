@@ -39,8 +39,8 @@
 #endif
 #include <sys/ioctl.h>
 
-#include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
+#include <freerdp/types.h>
 
 #include "tsmf_audio.h"
 

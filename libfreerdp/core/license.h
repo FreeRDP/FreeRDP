@@ -27,8 +27,8 @@
 
 #include <freerdp/crypto/crypto.h>
 
-#include <freerdp/log.h>
 #include <freerdp/license.h>
+#include <freerdp/log.h>
 
 #include <winpr/stream.h>
 

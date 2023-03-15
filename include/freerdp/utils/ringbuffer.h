@@ -20,8 +20,8 @@
 #ifndef FREERDP_UTILS_RINGBUFFER_H
 #define FREERDP_UTILS_RINGBUFFER_H
 
-#include <winpr/wtypes.h>
 #include <freerdp/api.h>
+#include <winpr/wtypes.h>
 
 #ifdef __cplusplus
 extern "C"

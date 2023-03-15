@@ -1,6 +1,6 @@
 #include "wf_directsound.h"
-#include "wf_interface.h"
 #include "wf_info.h"
+#include "wf_interface.h"
 #include "wf_rdpsnd.h"
 
 #include <winpr/windows.h>
@@ -10,8 +10,8 @@
 #include <objbase.h>
 
 #define CINTERFACE 1
-#include <mmsystem.h>
 #include <dsound.h>
+#include <mmsystem.h>
 
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")

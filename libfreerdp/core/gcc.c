@@ -23,17 +23,17 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
-#include <winpr/assert.h>
 
+#include <freerdp/crypto/certificate.h>
 #include <freerdp/log.h>
 #include <freerdp/utils/string.h>
-#include <freerdp/crypto/certificate.h>
 
-#include "utils.h"
 #include "gcc.h"
 #include "nego.h"
+#include "utils.h"
 
 #include "../crypto/certificate.h"
 

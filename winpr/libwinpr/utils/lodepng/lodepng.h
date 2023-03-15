@@ -29,8 +29,8 @@ freely, subject to the following restrictions:
 #include <string.h> /*for size_t*/
 
 #ifdef __cplusplus
-#include <vector>
 #include <string>
+#include <vector>
 #endif /*__cplusplus*/
 
 /*

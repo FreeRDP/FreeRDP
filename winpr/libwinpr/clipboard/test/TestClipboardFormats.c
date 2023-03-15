@@ -1,7 +1,7 @@
 
+#include <winpr/clipboard.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
-#include <winpr/clipboard.h>
 
 int TestClipboardFormats(int argc, char* argv[])
 {

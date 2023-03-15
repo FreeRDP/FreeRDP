@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#include <assert.h>
 #include "sdl_utils.h"
+#include <assert.h>
 
 #include <SDL.h>
 

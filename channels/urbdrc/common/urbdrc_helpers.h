@@ -28,8 +28,8 @@ extern "C"
 {
 #endif
 
-#include <winpr/wlog.h>
 #include <winpr/stream.h>
+#include <winpr/wlog.h>
 
 	const char* urb_function_string(UINT16 urb);
 	const char* mask_to_string(UINT32 mask);

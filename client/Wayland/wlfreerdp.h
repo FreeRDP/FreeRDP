@@ -21,11 +21,11 @@
 #define FREERDP_CLIENT_WAYLAND_FREERDP_H
 
 #include <freerdp/client/rdpei.h>
-#include <freerdp/gdi/gfx.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/gdi/gfx.h>
 #include <freerdp/log.h>
-#include <winpr/wtypes.h>
 #include <uwac/uwac.h>
+#include <winpr/wtypes.h>
 
 typedef struct wlf_clipboard wfClipboard;
 typedef struct s_wlfDispContext wlfDispContext;

@@ -1,17 +1,17 @@
 
 #include <freerdp/gdi/gdi.h>
 
+#include <freerdp/gdi/bitmap.h>
 #include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/pen.h>
 #include <freerdp/gdi/region.h>
-#include <freerdp/gdi/bitmap.h>
-#include <freerdp/gdi/gdi.h>
 
 #include <winpr/crt.h>
 
-#include "line.h"
 #include "brush.h"
 #include "drawing.h"
+#include "line.h"
 
 static const UINT32 colorFormatList[] = {
 	PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_BGR15,  PIXEL_FORMAT_RGB16,  PIXEL_FORMAT_BGR16,

@@ -24,11 +24,11 @@
  * limitations under the License.
  */
 
-#include <iostream>
-#include <string>
-#include <sstream>
-#include <locale>
 #include <codecvt>
+#include <iostream>
+#include <locale>
+#include <sstream>
+#include <string>
 
 #include <comdef.h>
 #include <winscard.h>

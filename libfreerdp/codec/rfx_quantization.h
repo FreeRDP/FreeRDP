@@ -20,8 +20,8 @@
 #ifndef FREERDP_LIB_CODEC_RFX_QUANTIZATION_H
 #define FREERDP_LIB_CODEC_RFX_QUANTIZATION_H
 
-#include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
+#include <freerdp/codec/rfx.h>
 
 FREERDP_LOCAL void rfx_quantization_decode(INT16* buffer, const UINT32* quantization_values);
 FREERDP_LOCAL void rfx_quantization_encode(INT16* buffer, const UINT32* quantization_values);

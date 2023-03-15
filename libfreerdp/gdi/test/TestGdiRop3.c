@@ -1,7 +1,7 @@
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/winpr.h>
-#include <winpr/collections.h>
 
 /**
  * Ternary Raster Operations:

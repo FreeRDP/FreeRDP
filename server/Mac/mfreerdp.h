@@ -21,8 +21,8 @@
 #ifndef FREERDP_SERVER_MAC_FREERDP_H
 #define FREERDP_SERVER_MAC_FREERDP_H
 
+#include <freerdp/codec/rfx.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
-#include <freerdp/codec/rfx.h>
 
 #endif /* FREERDP_SERVER_MAC_FREERDP_H */

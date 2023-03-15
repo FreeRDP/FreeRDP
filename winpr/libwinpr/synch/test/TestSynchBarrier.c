@@ -1,9 +1,9 @@
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
 #include <winpr/interlocked.h>
+#include <winpr/synch.h>
 #include <winpr/sysinfo.h>
+#include <winpr/thread.h>
 
 #include "../synch.h"
 

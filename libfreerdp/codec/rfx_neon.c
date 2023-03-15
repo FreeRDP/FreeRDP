@@ -21,14 +21,14 @@
 
 #if defined(WITH_NEON)
 
+#include <arm_neon.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <arm_neon.h>
 #include <winpr/sysinfo.h>
 
-#include "rfx_types.h"
 #include "rfx_neon.h"
+#include "rfx_types.h"
 
 /* rfx_decode_YCbCr_to_RGB_NEON code now resides in the primitives library. */
 

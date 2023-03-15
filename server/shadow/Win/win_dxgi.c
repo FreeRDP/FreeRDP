@@ -18,9 +18,9 @@
 
 #include <freerdp/config.h>
 
+#include <freerdp/log.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
-#include <freerdp/log.h>
 
 #include "win_dxgi.h"
 

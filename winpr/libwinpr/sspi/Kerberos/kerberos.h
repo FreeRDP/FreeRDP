@@ -24,8 +24,8 @@
 #include <winpr/sspi.h>
 #include <winpr/windows.h>
 
-#include "../sspi.h"
 #include "../../log.h"
+#include "../sspi.h"
 
 typedef struct s_KRB_CONTEXT KRB_CONTEXT;
 

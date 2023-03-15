@@ -23,8 +23,8 @@
 #include "tpdu.h"
 #include "transport.h"
 
-#include <winpr/stream.h>
 #include <freerdp/api.h>
+#include <winpr/stream.h>
 
 #define TPKT_HEADER_LENGTH 4
 

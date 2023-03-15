@@ -18,12 +18,12 @@
  * limitations under the License.
  */
 
-#include <pthread.h>
 #include <dlfcn.h>
+#include <pthread.h>
 #include <unistd.h>
 
-#include <stdio.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <winpr/string.h>
 
 #include <corkscrew/backtrace.h>

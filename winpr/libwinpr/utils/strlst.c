@@ -22,8 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/strlst.h>
 #include <winpr/string.h>
+#include <winpr/strlst.h>
 
 void string_list_free(char** string_list)
 {

@@ -13,8 +13,8 @@
 
 #include <stdio.h>
 
-#include "android_jni_callback.h"
 #include "android_freerdp_jni.h"
+#include "android_jni_callback.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("android.callback")

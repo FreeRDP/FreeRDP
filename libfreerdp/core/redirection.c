@@ -21,11 +21,11 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
-#include <freerdp/log.h>
 #include <freerdp/crypto/certificate.h>
+#include <freerdp/log.h>
 #include <freerdp/redirection.h>
 #include <freerdp/utils/string.h>
+#include <winpr/crt.h>
 
 #include "../crypto/certificate.h"
 #include "redirection.h"

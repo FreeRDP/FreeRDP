@@ -27,8 +27,8 @@
 #include <winpr/stream.h>
 
 #include <freerdp/api.h>
-#include <freerdp/settings.h>
 #include <freerdp/channels/scard.h>
+#include <freerdp/settings.h>
 #include <freerdp/utils/smartcard_operations.h>
 
 #ifdef __cplusplus

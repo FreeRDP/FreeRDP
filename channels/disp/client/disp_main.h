@@ -24,10 +24,10 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/dvc.h>
-#include <freerdp/types.h>
 #include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/dvc.h>
+#include <freerdp/types.h>
 
 #include <freerdp/client/disp.h>
 

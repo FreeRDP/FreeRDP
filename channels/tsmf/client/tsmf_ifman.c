@@ -30,10 +30,10 @@
 
 #include <winpr/stream.h>
 
-#include "tsmf_types.h"
+#include "tsmf_codec.h"
 #include "tsmf_constants.h"
 #include "tsmf_media.h"
-#include "tsmf_codec.h"
+#include "tsmf_types.h"
 
 #include "tsmf_ifman.h"
 

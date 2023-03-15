@@ -24,27 +24,27 @@
 
 #include <freerdp/config.h>
 
-#include <time.h>
 #include <ctype.h>
+#include <time.h>
 
-#include <freerdp/log.h>
 #include <freerdp/build-config.h>
+#include <freerdp/log.h>
 
-#include <winpr/crt.h>
+#include <winpr/asn1.h>
 #include <winpr/assert.h>
+#include <winpr/cred.h>
+#include <winpr/crt.h>
+#include <winpr/debug.h>
+#include <winpr/ncrypt.h>
+#include <winpr/print.h>
 #include <winpr/sam.h>
 #include <winpr/sspi.h>
-#include <winpr/print.h>
 #include <winpr/tchar.h>
-#include <winpr/ncrypt.h>
-#include <winpr/cred.h>
-#include <winpr/debug.h>
-#include <winpr/asn1.h>
 
 #include "../crypto/tls.h"
+#include "credssp_auth.h"
 #include "nla.h"
 #include "utils.h"
-#include "credssp_auth.h"
 #include <freerdp/utils/smartcardlogon.h>
 
 #define TAG FREERDP_TAG("core.nla")

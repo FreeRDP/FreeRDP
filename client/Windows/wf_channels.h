@@ -19,14 +19,14 @@
 #ifndef FREERDP_CLIENT_WIN_CHANNELS_H
 #define FREERDP_CLIENT_WIN_CHANNELS_H
 
-#include <freerdp/freerdp.h>
 #include <freerdp/client.h>
 #include <freerdp/client/channels.h>
-#include <freerdp/client/rdpei.h>
-#include <freerdp/client/rdpgfx.h>
-#include <freerdp/client/encomsp.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/disp.h>
+#include <freerdp/client/encomsp.h>
+#include <freerdp/client/rdpei.h>
+#include <freerdp/client/rdpgfx.h>
+#include <freerdp/freerdp.h>
 
 #include "wf_client.h"
 

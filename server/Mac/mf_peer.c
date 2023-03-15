@@ -19,25 +19,25 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/listener.h>
-#include <freerdp/codec/rfx.h>
-#include <winpr/stream.h>
-#include <freerdp/peer.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/codec/rfx.h>
+#include <freerdp/listener.h>
+#include <freerdp/peer.h>
+#include <winpr/stream.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 
-#include "mf_peer.h"
+#include "mf_audin.h"
+#include "mf_event.h"
 #include "mf_info.h"
 #include "mf_input.h"
-#include "mf_event.h"
+#include "mf_peer.h"
 #include "mf_rdpsnd.h"
-#include "mf_audin.h"
 
+#include <dispatch/dispatch.h>
 #include <mach/clock.h>
 #include <mach/mach.h>
-#include <dispatch/dispatch.h>
 
 #include "OpenGL/OpenGL.h"
 #include "OpenGL/gl.h"

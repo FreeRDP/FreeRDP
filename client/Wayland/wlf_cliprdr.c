@@ -22,15 +22,15 @@
 
 #include <stdlib.h>
 
+#include <winpr/clipboard.h>
 #include <winpr/crt.h>
 #include <winpr/image.h>
 #include <winpr/stream.h>
-#include <winpr/clipboard.h>
 
-#include <freerdp/log.h>
-#include <freerdp/client/cliprdr.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/channels/cliprdr.h>
+#include <freerdp/client/cliprdr.h>
+#include <freerdp/log.h>
 
 #include <freerdp/client/client_cliprdr_file.h>
 

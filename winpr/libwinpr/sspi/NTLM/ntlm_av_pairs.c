@@ -21,15 +21,15 @@
 
 #include <winpr/assert.h>
 
-#include "ntlm.h"
 #include "../sspi.h"
+#include "ntlm.h"
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
 #include <winpr/tchar.h>
-#include <winpr/crypto.h>
 
 #include "ntlm_compute.h"
 

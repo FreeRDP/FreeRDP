@@ -22,18 +22,18 @@
 
 #include <winpr/assert.h>
 
-#include <winpr/file.h>
-#include <winpr/wlog.h>
-#include <winpr/path.h>
-#include <winpr/library.h>
 #include <freerdp/api.h>
 #include <freerdp/build-config.h>
+#include <winpr/file.h>
+#include <winpr/library.h>
+#include <winpr/path.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/server/proxy/proxy_log.h>
 #include <freerdp/server/proxy/proxy_modules_api.h>
 
-#include <freerdp/server/proxy/proxy_context.h>
 #include "proxy_modules.h"
+#include <freerdp/server/proxy/proxy_context.h>
 
 #define TAG PROXY_TAG("modules")
 

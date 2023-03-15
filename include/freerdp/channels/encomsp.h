@@ -30,42 +30,42 @@ extern "C"
 
 #define ENCOMSP_SVC_CHANNEL_NAME "encomsp"
 
-typedef struct
-{
-	UINT16 cchString;
-	WCHAR wString[1024];
-} ENCOMSP_UNICODE_STRING;
+	typedef struct
+	{
+		UINT16 cchString;
+		WCHAR wString[1024];
+	} ENCOMSP_UNICODE_STRING;
 
-/* Filter Updated PDU Flags */
+	/* Filter Updated PDU Flags */
 
 #define ENCOMSP_FILTER_ENABLED 0x0001
 
-/* Application Created PDU Flags */
+	/* Application Created PDU Flags */
 
 #define ENCOMSP_APPLICATION_SHARED 0x0001
 
-/* Window Created PDU Flags */
+	/* Window Created PDU Flags */
 
 #define ENCOMSP_WINDOW_SHARED 0x0001
 
-/* Participant Created PDU Flags */
+	/* Participant Created PDU Flags */
 
 #define ENCOMSP_MAY_VIEW 0x0001
 #define ENCOMSP_MAY_INTERACT 0x0002
 #define ENCOMSP_IS_PARTICIPANT 0x0004
 
-/* Participant Removed PDU Disconnection Types */
+	/* Participant Removed PDU Disconnection Types */
 
 #define ENCOMSP_PARTICIPANT_DISCONNECTION_REASON_APP 0x00000000
 #define ENCOMSP_PARTICIPANT_DISCONNECTION_REASON_CLI 0x00000002
 
-/* Change Participant Control Level PDU Flags */
+	/* Change Participant Control Level PDU Flags */
 
 #define ENCOMSP_REQUEST_VIEW 0x0001
 #define ENCOMSP_REQUEST_INTERACT 0x0002
 #define ENCOMSP_ALLOW_CONTROL_REQUESTS 0x0008
 
-/* PDU Order Types */
+	/* PDU Order Types */
 
 #define ODTYPE_FILTER_STATE_UPDATED 0x0001
 #define ODTYPE_APP_REMOVED 0x0002
@@ -85,94 +85,94 @@ typedef struct
 
 #define ENCOMSP_ORDER_HEADER_SIZE 4
 
-typedef struct
-{
-	DEFINE_ENCOMSP_HEADER_COMMON();
-} ENCOMSP_ORDER_HEADER;
+	typedef struct
+	{
+		DEFINE_ENCOMSP_HEADER_COMMON();
+	} ENCOMSP_ORDER_HEADER;
 
-typedef struct
-{
-	DEFINE_ENCOMSP_HEADER_COMMON();
+	typedef struct
+	{
+		DEFINE_ENCOMSP_HEADER_COMMON();
 
-	BYTE Flags;
-} ENCOMSP_FILTER_UPDATED_PDU;
+		BYTE Flags;
+	} ENCOMSP_FILTER_UPDATED_PDU;
 
-typedef struct
-{
-	DEFINE_ENCOMSP_HEADER_COMMON();
+	typedef struct
+	{
+		DEFINE_ENCOMSP_HEADER_COMMON();
 
-	UINT16 Flags;
-	UINT32 AppId;
-	ENCOMSP_UNICODE_STRING Name;
-} ENCOMSP_APPLICATION_CREATED_PDU;
+		UINT16 Flags;
+		UINT32 AppId;
+		ENCOMSP_UNICODE_STRING Name;
+	} ENCOMSP_APPLICATION_CREATED_PDU;
 
-typedef struct
-{
-	DEFINE_ENCOMSP_HEADER_COMMON();
+	typedef struct
+	{
+		DEFINE_ENCOMSP_HEADER_COMMON();
 
-	UINT32 AppId;
-} ENCOMSP_APPLICATION_REMOVED_PDU;
+		UINT32 AppId;
+	} ENCOMSP_APPLICATION_REMOVED_PDU;
 
-typedef struct
-{
-	DEFINE_ENCOMSP_HEADER_COMMON();
+	typedef struct
+	{
+		DEFINE_ENCOMSP_HEADER_COMMON();
 
-	UINT16 Flags;
-	UINT32 AppId;
-	UINT32 WndId;
-	ENCOMSP_UNICODE_STRING Name;
-} ENCOMSP_WINDOW_CREATED_PDU;
+		UINT16 Flags;
+		UINT32 AppId;
+		UINT32 WndId;
+		ENCOMSP_UNICODE_STRING Name;
+	} ENCOMSP_WINDOW_CREATED_PDU;
 
-typedef struct
-{
-	DEFINE_ENCOMSP_HEADER_COMMON();
+	typedef struct
+	{
+		DEFINE_ENCOMSP_HEADER_COMMON();
 
-	UINT32 WndId;
-} ENCOMSP_WINDOW_REMOVED_PDU;
+		UINT32 WndId;
+	} ENCOMSP_WINDOW_REMOVED_PDU;
 
-typedef struct
-{
-	DEFINE_ENCOMSP_HEADER_COMMON();
+	typedef struct
+	{
+		DEFINE_ENCOMSP_HEADER_COMMON();
 
-	UINT32 WndId;
-} ENCOMSP_SHOW_WINDOW_PDU;
+		UINT32 WndId;
+	} ENCOMSP_SHOW_WINDOW_PDU;
 
-typedef struct
-{
-	DEFINE_ENCOMSP_HEADER_COMMON();
+	typedef struct
+	{
+		DEFINE_ENCOMSP_HEADER_COMMON();
 
-	UINT32 ParticipantId;
-	UINT32 GroupId;
-	UINT16 Flags;
-	ENCOMSP_UNICODE_STRING FriendlyName;
-} ENCOMSP_PARTICIPANT_CREATED_PDU;
+		UINT32 ParticipantId;
+		UINT32 GroupId;
+		UINT16 Flags;
+		ENCOMSP_UNICODE_STRING FriendlyName;
+	} ENCOMSP_PARTICIPANT_CREATED_PDU;
 
-typedef struct
-{
-	DEFINE_ENCOMSP_HEADER_COMMON();
+	typedef struct
+	{
+		DEFINE_ENCOMSP_HEADER_COMMON();
 
-	UINT32 ParticipantId;
-	UINT32 DiscType;
-	UINT32 DiscCode;
-} ENCOMSP_PARTICIPANT_REMOVED_PDU;
+		UINT32 ParticipantId;
+		UINT32 DiscType;
+		UINT32 DiscCode;
+	} ENCOMSP_PARTICIPANT_REMOVED_PDU;
 
-typedef struct
-{
-	DEFINE_ENCOMSP_HEADER_COMMON();
+	typedef struct
+	{
+		DEFINE_ENCOMSP_HEADER_COMMON();
 
-	UINT16 Flags;
-	UINT32 ParticipantId;
-} ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU;
+		UINT16 Flags;
+		UINT32 ParticipantId;
+	} ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU;
 
-typedef struct
-{
-	DEFINE_ENCOMSP_HEADER_COMMON();
-} ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU;
+	typedef struct
+	{
+		DEFINE_ENCOMSP_HEADER_COMMON();
+	} ENCOMSP_GRAPHICS_STREAM_PAUSED_PDU;
 
-typedef struct
-{
-	DEFINE_ENCOMSP_HEADER_COMMON();
-} ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU;
+	typedef struct
+	{
+		DEFINE_ENCOMSP_HEADER_COMMON();
+	} ENCOMSP_GRAPHICS_STREAM_RESUMED_PDU;
 
 #ifdef __cplusplus
 }

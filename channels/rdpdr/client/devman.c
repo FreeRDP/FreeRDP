@@ -30,10 +30,10 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
-#include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/client/channels.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/client/channels.h>
+#include <freerdp/types.h>
 
 #include "rdpdr_main.h"
 

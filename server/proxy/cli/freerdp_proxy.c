@@ -21,14 +21,14 @@
 
 #include <winpr/collections.h>
 
-#include <freerdp/version.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/version.h>
 
-#include <freerdp/server/proxy/proxy_server.h>
 #include <freerdp/server/proxy/proxy_log.h>
+#include <freerdp/server/proxy/proxy_server.h>
 
-#include <stdlib.h>
 #include <signal.h>
+#include <stdlib.h>
 
 #define TAG PROXY_TAG("server")
 

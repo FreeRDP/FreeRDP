@@ -19,21 +19,20 @@
 
 #include <errno.h>
 
-#include <winpr/crt.h>
-#include <winpr/path.h>
-#include <winpr/file.h>
 #include <winpr/cmdline.h>
-#include <winpr/sysinfo.h>
+#include <winpr/crt.h>
 #include <winpr/crypto.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
+#include <winpr/sysinfo.h>
 
 #ifdef WITH_OPENSSL
-#include <openssl/crypto.h>
 #include <openssl/conf.h>
-#include <openssl/pem.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/rsa.h>
+#include <openssl/pem.h>
 #include <openssl/pkcs12.h>
+#include <openssl/rsa.h>
 #include <openssl/x509v3.h>
 #endif
 

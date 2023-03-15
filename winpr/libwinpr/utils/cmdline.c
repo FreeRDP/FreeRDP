@@ -19,9 +19,9 @@
 
 #include <winpr/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
 #include <winpr/cmdline.h>
+#include <winpr/crt.h>
 
 #include "../log.h"
 

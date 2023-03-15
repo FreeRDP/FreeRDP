@@ -1,7 +1,7 @@
 #include <winpr/crt.h>
-#include <winpr/tchar.h>
-#include <winpr/path.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
+#include <winpr/tchar.h>
 #include <winpr/wlog.h>
 
 int TestWLog(int argc, char* argv[])

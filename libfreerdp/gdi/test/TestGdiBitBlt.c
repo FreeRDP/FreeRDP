@@ -1,16 +1,16 @@
 
 #include <freerdp/gdi/gdi.h>
 
+#include <freerdp/gdi/bitmap.h>
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/pen.h>
 #include <freerdp/gdi/region.h>
-#include <freerdp/gdi/bitmap.h>
 
 #include <winpr/crt.h>
 
-#include "line.h"
 #include "brush.h"
 #include "helpers.h"
+#include "line.h"
 
 /* BitBlt() Test Data */
 

@@ -24,15 +24,15 @@
 #include <freerdp/types.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/settings.h>
 #include <freerdp/listener.h>
+#include <freerdp/settings.h>
 
-#include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/channels/wtsvc.h>
 
 #include <freerdp/server/encomsp.h>
-#include <freerdp/server/remdesk.h>
 #include <freerdp/server/rdpsnd.h>
+#include <freerdp/server/remdesk.h>
 #if defined(CHANNEL_AUDIN_SERVER)
 #include <freerdp/server/audin.h>
 #endif
@@ -41,10 +41,10 @@
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
 
+#include <winpr/cmdline.h>
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/synch.h>
-#include <winpr/collections.h>
-#include <winpr/cmdline.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -128,173 +128,173 @@ extern "C"
 		RemdeskServerContext* remdesk;
 		RdpsndServerContext* rdpsnd;
 #if defined(CHANNEL_AUDIN_SERVER)
-	audin_server_context* audin;
+		audin_server_context* audin;
 #endif
-	RdpgfxServerContext* rdpgfx;
+		RdpgfxServerContext* rdpgfx;
 
-	BOOL resizeRequested;
-	UINT32 resizeWidth;
-	UINT32 resizeHeight;
+		BOOL resizeRequested;
+		UINT32 resizeWidth;
+		UINT32 resizeHeight;
 	};
 
-struct rdp_shadow_server
-{
-	void* ext;
-	HANDLE thread;
-	HANDLE StopEvent;
-	wArrayList* clients;
-	rdpSettings* settings;
-	rdpShadowScreen* screen;
-	rdpShadowSurface* surface;
-	rdpShadowSurface* lobby;
-	rdpShadowCapture* capture;
-	rdpShadowSubsystem* subsystem;
+	struct rdp_shadow_server
+	{
+		void* ext;
+		HANDLE thread;
+		HANDLE StopEvent;
+		wArrayList* clients;
+		rdpSettings* settings;
+		rdpShadowScreen* screen;
+		rdpShadowSurface* surface;
+		rdpShadowSurface* lobby;
+		rdpShadowCapture* capture;
+		rdpShadowSubsystem* subsystem;
 
-	DWORD port;
-	BOOL mayView;
-	BOOL mayInteract;
-	BOOL shareSubRect;
-	BOOL authentication;
-	UINT32 selectedMonitor;
-	RECTANGLE_16 subRect;
+		DWORD port;
+		BOOL mayView;
+		BOOL mayInteract;
+		BOOL shareSubRect;
+		BOOL authentication;
+		UINT32 selectedMonitor;
+		RECTANGLE_16 subRect;
 
-	/* Codec settings */
-	RLGR_MODE rfxMode;
-	H264_RATECONTROL_MODE h264RateControlMode;
-	UINT32 h264BitRate;
-	UINT32 h264FrameRate;
-	UINT32 h264QP;
+		/* Codec settings */
+		RLGR_MODE rfxMode;
+		H264_RATECONTROL_MODE h264RateControlMode;
+		UINT32 h264BitRate;
+		UINT32 h264FrameRate;
+		UINT32 h264QP;
 
-	char* ipcSocket;
-	char* ConfigPath;
-	char* CertificateFile;
-	char* PrivateKeyFile;
-	CRITICAL_SECTION lock;
-	freerdp_listener* listener;
-};
+		char* ipcSocket;
+		char* ConfigPath;
+		char* CertificateFile;
+		char* PrivateKeyFile;
+		CRITICAL_SECTION lock;
+		freerdp_listener* listener;
+	};
 
-struct rdp_shadow_surface
-{
-	rdpShadowServer* server;
+	struct rdp_shadow_surface
+	{
+		rdpShadowServer* server;
 
-	UINT16 x;
-	UINT16 y;
-	UINT32 width;
-	UINT32 height;
-	UINT32 scanline;
-	DWORD format;
-	BYTE* data;
+		UINT16 x;
+		UINT16 y;
+		UINT32 width;
+		UINT32 height;
+		UINT32 scanline;
+		DWORD format;
+		BYTE* data;
 
-	CRITICAL_SECTION lock;
-	REGION16 invalidRegion;
-};
+		CRITICAL_SECTION lock;
+		REGION16 invalidRegion;
+	};
 
-struct S_RDP_SHADOW_ENTRY_POINTS
-{
-	pfnShadowSubsystemNew New;
-	pfnShadowSubsystemFree Free;
+	struct S_RDP_SHADOW_ENTRY_POINTS
+	{
+		pfnShadowSubsystemNew New;
+		pfnShadowSubsystemFree Free;
 
-	pfnShadowSubsystemInit Init;
-	pfnShadowSubsystemUninit Uninit;
+		pfnShadowSubsystemInit Init;
+		pfnShadowSubsystemUninit Uninit;
 
-	pfnShadowSubsystemStart Start;
-	pfnShadowSubsystemStop Stop;
+		pfnShadowSubsystemStart Start;
+		pfnShadowSubsystemStop Stop;
 
-	pfnShadowEnumMonitors EnumMonitors;
-};
+		pfnShadowEnumMonitors EnumMonitors;
+	};
 
-struct rdp_shadow_subsystem
-{
-	RDP_SHADOW_ENTRY_POINTS ep;
-	HANDLE event;
-	UINT32 numMonitors;
-	UINT32 captureFrameRate;
-	UINT32 selectedMonitor;
-	MONITOR_DEF monitors[16];
-	MONITOR_DEF virtualScreen;
+	struct rdp_shadow_subsystem
+	{
+		RDP_SHADOW_ENTRY_POINTS ep;
+		HANDLE event;
+		UINT32 numMonitors;
+		UINT32 captureFrameRate;
+		UINT32 selectedMonitor;
+		MONITOR_DEF monitors[16];
+		MONITOR_DEF virtualScreen;
 
-	/* This event indicates that we have graphic change */
-	/* such as screen update and resize. It should not be */
-	/* used by subsystem implementation directly */
-	rdpShadowMultiClientEvent* updateEvent;
+		/* This event indicates that we have graphic change */
+		/* such as screen update and resize. It should not be */
+		/* used by subsystem implementation directly */
+		rdpShadowMultiClientEvent* updateEvent;
 
-	wMessagePipe* MsgPipe;
-	UINT32 pointerX;
-	UINT32 pointerY;
+		wMessagePipe* MsgPipe;
+		UINT32 pointerX;
+		UINT32 pointerY;
 
-	AUDIO_FORMAT* rdpsndFormats;
-	size_t nRdpsndFormats;
-	AUDIO_FORMAT* audinFormats;
-	size_t nAudinFormats;
+		AUDIO_FORMAT* rdpsndFormats;
+		size_t nRdpsndFormats;
+		AUDIO_FORMAT* audinFormats;
+		size_t nAudinFormats;
 
-	pfnShadowSynchronizeEvent SynchronizeEvent;
-	pfnShadowKeyboardEvent KeyboardEvent;
-	pfnShadowUnicodeKeyboardEvent UnicodeKeyboardEvent;
-	pfnShadowMouseEvent MouseEvent;
-	pfnShadowExtendedMouseEvent ExtendedMouseEvent;
-	pfnShadowChannelAudinServerReceiveSamples AudinServerReceiveSamples;
+		pfnShadowSynchronizeEvent SynchronizeEvent;
+		pfnShadowKeyboardEvent KeyboardEvent;
+		pfnShadowUnicodeKeyboardEvent UnicodeKeyboardEvent;
+		pfnShadowMouseEvent MouseEvent;
+		pfnShadowExtendedMouseEvent ExtendedMouseEvent;
+		pfnShadowChannelAudinServerReceiveSamples AudinServerReceiveSamples;
 
-	pfnShadowAuthenticate Authenticate;
-	pfnShadowClientConnect ClientConnect;
-	pfnShadowClientDisconnect ClientDisconnect;
-	pfnShadowClientCapabilities ClientCapabilities;
+		pfnShadowAuthenticate Authenticate;
+		pfnShadowClientConnect ClientConnect;
+		pfnShadowClientDisconnect ClientDisconnect;
+		pfnShadowClientCapabilities ClientCapabilities;
 
-	rdpShadowServer* server;
-};
+		rdpShadowServer* server;
+	};
 
 /* Definition of message between subsystem and clients */
 #define SHADOW_MSG_IN_REFRESH_REQUEST_ID 1001
 
-typedef struct S_SHADOW_MSG_OUT SHADOW_MSG_OUT;
-typedef void (*MSG_OUT_FREE_FN)(UINT32 id,
-                                SHADOW_MSG_OUT* msg); /* function to free SHADOW_MSG_OUT */
+	typedef struct S_SHADOW_MSG_OUT SHADOW_MSG_OUT;
+	typedef void (*MSG_OUT_FREE_FN)(UINT32 id,
+	                                SHADOW_MSG_OUT* msg); /* function to free SHADOW_MSG_OUT */
 
-struct S_SHADOW_MSG_OUT
-{
-	int refCount;
-	MSG_OUT_FREE_FN Free;
-};
+	struct S_SHADOW_MSG_OUT
+	{
+		int refCount;
+		MSG_OUT_FREE_FN Free;
+	};
 
 #define SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID 2001
 #define SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE_ID 2002
 #define SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES_ID 2003
 #define SHADOW_MSG_OUT_AUDIO_OUT_VOLUME_ID 2004
 
-typedef struct
-{
-	SHADOW_MSG_OUT common;
-	UINT32 xPos;
-	UINT32 yPos;
-} SHADOW_MSG_OUT_POINTER_POSITION_UPDATE;
+	typedef struct
+	{
+		SHADOW_MSG_OUT common;
+		UINT32 xPos;
+		UINT32 yPos;
+	} SHADOW_MSG_OUT_POINTER_POSITION_UPDATE;
 
-typedef struct
-{
-	SHADOW_MSG_OUT common;
-	UINT32 xHot;
-	UINT32 yHot;
-	UINT32 width;
-	UINT32 height;
-	UINT32 lengthAndMask;
-	UINT32 lengthXorMask;
-	BYTE* xorMaskData;
-	BYTE* andMaskData;
-} SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE;
+	typedef struct
+	{
+		SHADOW_MSG_OUT common;
+		UINT32 xHot;
+		UINT32 yHot;
+		UINT32 width;
+		UINT32 height;
+		UINT32 lengthAndMask;
+		UINT32 lengthXorMask;
+		BYTE* xorMaskData;
+		BYTE* andMaskData;
+	} SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE;
 
-typedef struct
-{
-	SHADOW_MSG_OUT common;
-	AUDIO_FORMAT* audio_format;
-	void* buf;
-	size_t nFrames;
-	UINT16 wTimestamp;
-} SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES;
+	typedef struct
+	{
+		SHADOW_MSG_OUT common;
+		AUDIO_FORMAT* audio_format;
+		void* buf;
+		size_t nFrames;
+		UINT16 wTimestamp;
+	} SHADOW_MSG_OUT_AUDIO_OUT_SAMPLES;
 
-typedef struct
-{
-	SHADOW_MSG_OUT common;
-	UINT16 left;
-	UINT16 right;
-} SHADOW_MSG_OUT_AUDIO_OUT_VOLUME;
+	typedef struct
+	{
+		SHADOW_MSG_OUT common;
+		UINT16 left;
+		UINT16 right;
+	} SHADOW_MSG_OUT_AUDIO_OUT_VOLUME;
 
 	FREERDP_API void shadow_subsystem_set_entry_builtin(const char* name);
 	FREERDP_API void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry);

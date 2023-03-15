@@ -22,17 +22,17 @@
 
 #if defined(_WIN32) && !defined(_UWP)
 
-#include <winpr/windows.h>
 #include <winpr/rpc.h>
+#include <winpr/windows.h>
 
 #include <ntdsapi.h>
 
 #else
 
 #include <winpr/crt.h>
+#include <winpr/error.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-#include <winpr/error.h>
 
 typedef enum
 {

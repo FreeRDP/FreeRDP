@@ -21,14 +21,14 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include <freerdp/primitives.h>
-#include <freerdp/log.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/planar.h>
+#include <freerdp/log.h>
+#include <freerdp/primitives.h>
 
 #define TAG FREERDP_TAG("codec")
 

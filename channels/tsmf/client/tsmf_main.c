@@ -21,16 +21,16 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/cmdline.h>
 #include <winpr/crt.h>
 #include <winpr/stream.h>
-#include <winpr/cmdline.h>
 
 #include <freerdp/client/tsmf.h>
 
-#include "tsmf_types.h"
 #include "tsmf_constants.h"
 #include "tsmf_ifman.h"
 #include "tsmf_media.h"
+#include "tsmf_types.h"
 
 #include "tsmf_main.h"
 

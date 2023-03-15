@@ -24,8 +24,8 @@
 
 #include "schannel.h"
 
-#include "../sspi.h"
 #include "../../log.h"
+#include "../sspi.h"
 
 static char* SCHANNEL_PACKAGE_NAME = "Schannel";
 

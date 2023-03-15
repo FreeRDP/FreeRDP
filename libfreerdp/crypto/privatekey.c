@@ -29,24 +29,24 @@
 #include <string.h>
 
 #include <winpr/assert.h>
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
-#include <winpr/file.h>
 #include <winpr/crypto.h>
+#include <winpr/file.h>
+#include <winpr/wtypes.h>
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
-#include "privatekey.h"
 #include "cert_common.h"
+#include "privatekey.h"
 
 #include <freerdp/crypto/privatekey.h>
 
 #include <openssl/evp.h>
 
-#include "x509_utils.h"
 #include "crypto.h"
 #include "opensslcompat.h"
+#include "x509_utils.h"
 
 #define TAG FREERDP_TAG("crypto")
 

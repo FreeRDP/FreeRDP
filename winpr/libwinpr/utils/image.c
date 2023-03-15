@@ -21,9 +21,9 @@
 
 #include <winpr/config.h>
 
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
+#include <winpr/wtypes.h>
 
 #include <winpr/image.h>
 

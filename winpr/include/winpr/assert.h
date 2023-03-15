@@ -22,10 +22,10 @@
 #define WINPR_ASSERT_H
 
 #include <stdlib.h>
-#include <winpr/winpr.h>
-#include <winpr/wtypes.h>
-#include <winpr/wlog.h>
 #include <winpr/debug.h>
+#include <winpr/winpr.h>
+#include <winpr/wlog.h>
+#include <winpr/wtypes.h>
 
 #if defined(WITH_VERBOSE_WINPR_ASSERT) && (WITH_VERBOSE_WINPR_ASSERT != 0)
 #define WINPR_ASSERT(cond)                                                                    \

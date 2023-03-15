@@ -20,21 +20,21 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
 #include <winpr/winsock.h>
-#include <winpr/assert.h>
 
+#include <freerdp/build-config.h>
+#include <freerdp/channels/channels.h>
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/constants.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
-#include <freerdp/constants.h>
-#include <freerdp/channels/wtsvc.h>
-#include <freerdp/channels/channels.h>
-#include <freerdp/build-config.h>
 
+#include "wf_info.h"
 #include "wf_peer.h"
 #include "wf_settings.h"
-#include "wf_info.h"
 
 #include "wf_interface.h"
 

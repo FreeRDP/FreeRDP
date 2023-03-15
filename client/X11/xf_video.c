@@ -17,10 +17,10 @@
  * limitations under the License.
  */
 
-#include <winpr/assert.h>
 #include <freerdp/client/geometry.h>
 #include <freerdp/client/video.h>
 #include <freerdp/gdi/video.h>
+#include <winpr/assert.h>
 
 #include "xf_video.h"
 

@@ -24,10 +24,10 @@ typedef struct mf_event mfEvent;
 typedef struct mf_event_queue mfEventQueue;
 typedef struct mf_event_region mfEventRegion;
 
-#include <pthread.h>
 #include "mfreerdp.h"
+#include <pthread.h>
 
-//#include "mf_peer.h"
+// #include "mf_peer.h"
 
 enum mf_event_type
 {

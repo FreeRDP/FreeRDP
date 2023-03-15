@@ -28,21 +28,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/path.h>
+#include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/environment.h>
 #include <winpr/file.h>
+#include <winpr/interlocked.h>
+#include <winpr/path.h>
+#include <winpr/shell.h>
+#include <winpr/stream.h>
 #include <winpr/string.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/environment.h>
-#include <winpr/interlocked.h>
-#include <winpr/collections.h>
-#include <winpr/shell.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/freerdp.h>
 
 #include "drive_file.h"
 

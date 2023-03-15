@@ -1,8 +1,8 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
-#include <winpr/tchar.h>
 #include <winpr/environment.h>
+#include <winpr/tchar.h>
 
 int TestEnvironmentGetSetEB(int argc, char* argv[])
 {

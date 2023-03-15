@@ -19,10 +19,10 @@
  * limitations under the License.
  */
 
+#include <stdio.h>
+#include <string.h>
 #include <winpr/file.h>
 #include <winpr/handle.h>
-#include <string.h>
-#include <stdio.h>
 
 int TestFileGetStdHandle(int argc, char* argv[])
 {

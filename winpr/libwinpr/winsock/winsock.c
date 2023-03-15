@@ -286,14 +286,14 @@ INT winpr_inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf)
 
 #else /* _WIN32 */
 
-#include <netdb.h>
 #include <errno.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
+#include <net/if.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <net/if.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #include <winpr/assert.h>
 

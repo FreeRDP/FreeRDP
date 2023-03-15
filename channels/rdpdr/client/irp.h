@@ -21,8 +21,8 @@
 #ifndef FREERDP_CHANNEL_RDPDR_CLIENT_IRP_H
 #define FREERDP_CHANNEL_RDPDR_CLIENT_IRP_H
 
-#include <winpr/wlog.h>
 #include "rdpdr_main.h"
+#include <winpr/wlog.h>
 
 IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* error);
 

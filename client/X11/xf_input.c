@@ -30,15 +30,15 @@
 #include <X11/extensions/XInput2.h>
 #endif
 
-#include <math.h>
 #include <float.h>
 #include <limits.h>
+#include <math.h>
 
 #include "xf_event.h"
 #include "xf_input.h"
 
-#include <winpr/assert.h>
 #include <freerdp/log.h>
+#include <winpr/assert.h>
 #define TAG CLIENT_TAG("x11")
 
 #ifdef WITH_XI

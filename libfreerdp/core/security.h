@@ -23,8 +23,8 @@
 #include "rdp.h"
 #include <freerdp/crypto/crypto.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
 
 #include <winpr/stream.h>
 

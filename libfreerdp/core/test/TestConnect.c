@@ -1,11 +1,11 @@
-#include <winpr/sysinfo.h>
-#include <winpr/path.h>
 #include <winpr/crypto.h>
+#include <winpr/path.h>
 #include <winpr/pipe.h>
+#include <winpr/sysinfo.h>
 
+#include <freerdp/client/cmdline.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/client/cmdline.h>
 
 static HANDLE s_sync = NULL;
 

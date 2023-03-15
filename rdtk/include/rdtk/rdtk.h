@@ -19,8 +19,8 @@
 #ifndef RDTK_H
 #define RDTK_H
 
-#include <stdint.h>
 #include <rdtk/api.h>
+#include <stdint.h>
 
 typedef struct rdtk_engine rdtkEngine;
 typedef struct rdtk_font rdtkFont;

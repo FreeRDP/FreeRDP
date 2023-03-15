@@ -32,8 +32,8 @@
     (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
 
 #include <openssl/bio.h>
-#include <openssl/rsa.h>
 #include <openssl/bn.h>
+#include <openssl/rsa.h>
 
 #define BIO_get_data(b) (b)->ptr
 #define BIO_set_data(b, v) (b)->ptr = v

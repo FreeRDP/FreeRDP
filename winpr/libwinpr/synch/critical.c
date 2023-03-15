@@ -21,10 +21,10 @@
 #include <winpr/config.h>
 
 #include <winpr/assert.h>
-#include <winpr/tchar.h>
+#include <winpr/interlocked.h>
 #include <winpr/synch.h>
 #include <winpr/sysinfo.h>
-#include <winpr/interlocked.h>
+#include <winpr/tchar.h>
 #include <winpr/thread.h>
 
 #include "synch.h"
@@ -34,9 +34,9 @@
 #endif
 
 #if defined(__APPLE__)
-#include <mach/task.h>
 #include <mach/mach.h>
 #include <mach/semaphore.h>
+#include <mach/task.h>
 #endif
 
 #ifndef _WIN32

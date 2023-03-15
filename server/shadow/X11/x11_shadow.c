@@ -25,23 +25,23 @@
 #include <unistd.h>
 
 #include <sys/ipc.h>
-#include <sys/shm.h>
 #include <sys/select.h>
+#include <sys/shm.h>
 #include <sys/signal.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
+#include <winpr/image.h>
 #include <winpr/path.h>
 #include <winpr/synch.h>
-#include <winpr/image.h>
 #include <winpr/sysinfo.h>
 
-#include <freerdp/log.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/log.h>
 
 #include "x11_shadow.h"
 

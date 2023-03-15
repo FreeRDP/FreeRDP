@@ -23,8 +23,8 @@
 #include <winpr/sspi.h>
 #include <winpr/windows.h>
 
-#include <winpr/nt.h>
 #include <winpr/crypto.h>
+#include <winpr/nt.h>
 
 #include "../sspi.h"
 

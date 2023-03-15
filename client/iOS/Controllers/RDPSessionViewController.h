@@ -8,12 +8,12 @@
  http://mozilla.org/MPL/2.0/.
  */
 
-#import <UIKit/UIKit.h>
-#import "RDPSession.h"
+#import "AdvancedKeyboardView.h"
 #import "RDPKeyboard.h"
+#import "RDPSession.h"
 #import "RDPSessionView.h"
 #import "TouchPointerView.h"
-#import "AdvancedKeyboardView.h"
+#import <UIKit/UIKit.h>
 
 @interface RDPSessionViewController
     : UIViewController <RDPSessionDelegate, TouchPointerDelegate, AdvancedKeyboardDelegate,

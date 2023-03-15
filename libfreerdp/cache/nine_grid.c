@@ -23,13 +23,13 @@
 
 #include <winpr/crt.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/log.h>
 #include <freerdp/update.h>
-#include <freerdp/freerdp.h>
 #include <winpr/stream.h>
 
-#include "nine_grid.h"
 #include "cache.h"
+#include "nine_grid.h"
 
 #define TAG FREERDP_TAG("cache.nine_grid")
 

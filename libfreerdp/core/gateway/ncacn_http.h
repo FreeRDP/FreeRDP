@@ -22,8 +22,8 @@
 
 #include <freerdp/api.h>
 
-#include "rpc.h"
 #include "http.h"
+#include "rpc.h"
 
 FREERDP_LOCAL BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel);
 FREERDP_LOCAL void rpc_ncacn_http_auth_uninit(RpcChannel* channel);

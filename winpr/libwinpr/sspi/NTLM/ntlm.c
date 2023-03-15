@@ -19,20 +19,20 @@
 
 #include <winpr/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/sspi.h>
-#include <winpr/print.h>
-#include <winpr/string.h>
-#include <winpr/tchar.h>
-#include <winpr/sysinfo.h>
-#include <winpr/registry.h>
-#include <winpr/endian.h>
 #include <winpr/build-config.h>
+#include <winpr/crt.h>
+#include <winpr/endian.h>
+#include <winpr/print.h>
+#include <winpr/registry.h>
+#include <winpr/sspi.h>
+#include <winpr/string.h>
+#include <winpr/sysinfo.h>
+#include <winpr/tchar.h>
 
+#include "../sspi.h"
 #include "ntlm.h"
 #include "ntlm_export.h"
-#include "../sspi.h"
 
 #include "ntlm_message.h"
 

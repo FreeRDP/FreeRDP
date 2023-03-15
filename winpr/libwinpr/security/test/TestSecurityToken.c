@@ -1,7 +1,7 @@
 
 #include <winpr/crt.h>
-#include <winpr/tchar.h>
 #include <winpr/security.h>
+#include <winpr/tchar.h>
 
 int TestSecurityToken(int argc, char* argv[])
 {

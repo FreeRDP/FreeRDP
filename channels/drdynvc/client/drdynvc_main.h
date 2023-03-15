@@ -22,18 +22,18 @@
 #ifndef FREERDP_CHANNEL_DRDYNVC_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_DRDYNVC_CLIENT_MAIN_H
 
-#include <winpr/wlog.h>
-#include <winpr/synch.h>
 #include <freerdp/settings.h>
 #include <winpr/collections.h>
+#include <winpr/synch.h>
+#include <winpr/wlog.h>
 
-#include <freerdp/api.h>
-#include <freerdp/svc.h>
-#include <freerdp/dvc.h>
 #include <freerdp/addin.h>
+#include <freerdp/api.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/client/drdynvc.h>
+#include <freerdp/dvc.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/svc.h>
 
 typedef struct drdynvc_plugin drdynvcPlugin;
 

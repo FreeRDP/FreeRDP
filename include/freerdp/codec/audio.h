@@ -30,18 +30,18 @@ extern "C"
 {
 #endif
 
-struct AUDIO_FORMAT
-{
-	UINT16 wFormatTag;
-	UINT16 nChannels;
-	UINT32 nSamplesPerSec;
-	UINT32 nAvgBytesPerSec;
-	UINT16 nBlockAlign;
-	UINT16 wBitsPerSample;
-	UINT16 cbSize;
-	BYTE* data;
-};
-typedef struct AUDIO_FORMAT AUDIO_FORMAT;
+	struct AUDIO_FORMAT
+	{
+		UINT16 wFormatTag;
+		UINT16 nChannels;
+		UINT32 nSamplesPerSec;
+		UINT32 nAvgBytesPerSec;
+		UINT16 nBlockAlign;
+		UINT16 wBitsPerSample;
+		UINT16 cbSize;
+		BYTE* data;
+	};
+	typedef struct AUDIO_FORMAT AUDIO_FORMAT;
 
 #define SNDC_CLOSE 1
 #define SNDC_WAVE 2
@@ -65,10 +65,10 @@ typedef struct AUDIO_FORMAT AUDIO_FORMAT;
 #define MEDIUM_QUALITY 0x0001
 #define HIGH_QUALITY 0x0002
 
-/*
- * Format Tags:
- * http://tools.ietf.org/html/rfc2361
- */
+	/*
+	 * Format Tags:
+	 * http://tools.ietf.org/html/rfc2361
+	 */
 
 #ifndef __MINGW32__
 #define WAVE_FORMAT_UNKNOWN 0x0000
@@ -188,9 +188,9 @@ typedef struct AUDIO_FORMAT AUDIO_FORMAT;
 #endif /* !__MINGW32__ */
 #define WAVE_FORMAT_AAC_MS 0xA106
 
-/**
- * Audio Format Functions
- */
+	/**
+	 * Audio Format Functions
+	 */
 
 	FREERDP_API UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size);
 

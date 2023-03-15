@@ -19,19 +19,19 @@
 
 #include <freerdp/config.h>
 
-#include <errno.h>
 #include <ctype.h>
+#include <errno.h>
 #include <stdlib.h>
 
-#include <winpr/string.h>
 #include <winpr/file.h>
+#include <winpr/string.h>
 
 #include <freerdp/client.h>
-#include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
+#include <freerdp/client/file.h>
 
-#include <freerdp/channels/urbdrc.h>
 #include <freerdp/channels/rdpecam.h>
+#include <freerdp/channels/urbdrc.h>
 
 /**
  * Remote Desktop Plus - Overview of .rdp file settings:
@@ -47,10 +47,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/wtypes.h>
+#include <freerdp/log.h>
 #include <winpr/crt.h>
 #include <winpr/path.h>
-#include <freerdp/log.h>
+#include <winpr/wtypes.h>
 #define TAG CLIENT_TAG("common")
 
 /*#define DEBUG_CLIENT_FILE	1*/

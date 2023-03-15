@@ -23,34 +23,34 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/streamdump.h>
 #include <freerdp/utils/signal.h>
 
-#include <freerdp/client/file.h>
-#include <freerdp/client/cmdline.h>
-#include <freerdp/client/cliprdr.h>
-#include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/client/channels.h>
+#include <freerdp/client/cliprdr.h>
+#include <freerdp/client/cmdline.h>
+#include <freerdp/client/file.h>
 
-#include <winpr/crt.h>
-#include <winpr/assert.h>
-#include <winpr/synch.h>
 #include <freerdp/log.h>
+#include <winpr/assert.h>
+#include <winpr/crt.h>
+#include <winpr/synch.h>
 
 #include <SDL.h>
 #include <SDL_video.h>
 
 #include "sdl_channels.h"
-#include "sdl_freerdp.h"
-#include "sdl_utils.h"
 #include "sdl_disp.h"
-#include "sdl_monitor.h"
+#include "sdl_freerdp.h"
 #include "sdl_kbd.h"
-#include "sdl_touch.h"
+#include "sdl_monitor.h"
 #include "sdl_pointer.h"
+#include "sdl_touch.h"
+#include "sdl_utils.h"
 
 #define SDL_TAG CLIENT_TAG("SDL")
 

@@ -20,8 +20,8 @@
 #ifndef FREERDP_LIB_CORE_ERRINFO_H
 #define FREERDP_LIB_CORE_ERRINFO_H
 
-#include <freerdp/freerdp.h>
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
 
 typedef struct
 {

@@ -26,13 +26,13 @@
 #include <string.h>
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
 #include <winpr/stream.h>
+#include <winpr/synch.h>
 
-#include <freerdp/log.h>
-#include <freerdp/constants.h>
-#include <freerdp/server/channels.h>
 #include <freerdp/channels/drdynvc.h>
+#include <freerdp/constants.h>
+#include <freerdp/log.h>
+#include <freerdp/server/channels.h>
 #include <freerdp/utils/drdynvc.h>
 
 #include "rdp.h"

@@ -23,8 +23,8 @@
 #define FREERDP_CHANNEL_ENCOMSP_SERVER_ENCOMSP_H
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/channels/wtsvc.h>
+#include <freerdp/types.h>
 
 #include <freerdp/channels/encomsp.h>
 

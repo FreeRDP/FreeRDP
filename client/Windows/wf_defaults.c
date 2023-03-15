@@ -16,11 +16,14 @@
  * limitations under the License.
  */
 
+// clang-format off
 #include <windows.h>
-#include <wincred.h>
-#include <stdio.h>
-#include <malloc.h>
+// clang-format on
+//
 #include <freerdp/settings.h>
+#include <malloc.h>
+#include <stdio.h>
+#include <wincred.h>
 
 static PCWSTR ValidateString(const BYTE* pb, ULONG cb)
 {

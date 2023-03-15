@@ -40,8 +40,8 @@ typedef struct rdp_fastpath rdpFastPath;
 
 #include "rdp.h"
 
-#include <winpr/stream.h>
 #include <freerdp/api.h>
+#include <winpr/stream.h>
 
 enum FASTPATH_INPUT_ACTION_TYPE
 {

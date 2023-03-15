@@ -35,12 +35,12 @@
 #define WINPR_PIPE_SEMAPHORE 1
 
 #if defined __APPLE__
-#include <pthread.h>
-#include <sys/time.h>
-#include <semaphore.h>
 #include <mach/mach.h>
 #include <mach/semaphore.h>
 #include <mach/task.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <sys/time.h>
 #define winpr_sem_t semaphore_t
 #else
 #include <pthread.h>
@@ -66,10 +66,10 @@ struct winpr_semaphore
 typedef struct winpr_semaphore WINPR_SEMAPHORE;
 
 #ifdef WINPR_HAVE_SYS_TIMERFD_H
-#include <stdio.h>
-#include <unistd.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <sys/timerfd.h>
+#include <unistd.h>
 #define TIMER_IMPL_TIMERFD
 
 #elif defined(WITH_POSIX_TIMER)

@@ -24,9 +24,9 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/types.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/locale/locale.h>
+#include <freerdp/types.h>
 
 #include <freerdp/log.h>
 

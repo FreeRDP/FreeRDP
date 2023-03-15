@@ -18,9 +18,9 @@
  */
 #include <winpr/error.h>
 #include <winpr/ncrypt.h>
+#include <winpr/smartcard.h>
 #include <winpr/string.h>
 #include <winpr/wlog.h>
-#include <winpr/smartcard.h>
 
 #include <openssl/bio.h>
 #include <openssl/x509.h>

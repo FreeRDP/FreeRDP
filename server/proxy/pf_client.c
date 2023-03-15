@@ -23,28 +23,28 @@
 
 #include <freerdp/config.h>
 
+#include <freerdp/client/cmdline.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/client/cmdline.h>
 
-#include <freerdp/server/proxy/proxy_log.h>
+#include <freerdp/channels/channels.h>
+#include <freerdp/channels/cliprdr.h>
 #include <freerdp/channels/drdynvc.h>
 #include <freerdp/channels/encomsp.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/rdpsnd.h>
-#include <freerdp/channels/cliprdr.h>
-#include <freerdp/channels/channels.h>
+#include <freerdp/server/proxy/proxy_log.h>
 
-#include "pf_client.h"
-#include "pf_channel.h"
-#include <freerdp/server/proxy/proxy_context.h>
-#include "pf_update.h"
-#include "pf_input.h"
-#include <freerdp/server/proxy/proxy_config.h>
-#include "proxy_modules.h"
-#include "pf_utils.h"
 #include "channels/pf_channel_rdpdr.h"
 #include "channels/pf_channel_smartcard.h"
+#include "pf_channel.h"
+#include "pf_client.h"
+#include "pf_input.h"
+#include "pf_update.h"
+#include "pf_utils.h"
+#include "proxy_modules.h"
+#include <freerdp/server/proxy/proxy_config.h>
+#include <freerdp/server/proxy/proxy_context.h>
 
 #define TAG PROXY_TAG("client")
 

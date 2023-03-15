@@ -3,8 +3,8 @@
 #include <winpr/crt.h>
 #include <winpr/windows.h>
 
-#include <freerdp/client/channels.h>
 #include <freerdp/channels/rdpsnd.h>
+#include <freerdp/client/channels.h>
 
 int TestClientChannels(int argc, char* argv[])
 {

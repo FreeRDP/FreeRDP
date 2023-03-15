@@ -1,8 +1,8 @@
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/sspi.h>
+#include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/sspi.h>
 #include <winpr/wlog.h>
 
 static BYTE TEST_NTLM_TIMESTAMP[8] = { 0x33, 0x57, 0xbd, 0xb1, 0x07, 0x8b, 0xcf, 0x01 };

@@ -25,13 +25,13 @@
 
 #include <freerdp/codec/color.h>
 
-#include <freerdp/codec/rfx.h>
-#include <freerdp/codec/nsc.h>
-#include <freerdp/codec/h264.h>
 #include <freerdp/codec/clear.h>
-#include <freerdp/codec/planar.h>
+#include <freerdp/codec/h264.h>
 #include <freerdp/codec/interleaved.h>
+#include <freerdp/codec/nsc.h>
+#include <freerdp/codec/planar.h>
 #include <freerdp/codec/progressive.h>
+#include <freerdp/codec/rfx.h>
 
 #define FREERDP_CODEC_INTERLEAVED 0x00000001
 #define FREERDP_CODEC_PLANAR 0x00000002

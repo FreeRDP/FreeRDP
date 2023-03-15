@@ -23,15 +23,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <xmmintrin.h>
 #include <emmintrin.h>
+#include <xmmintrin.h>
 
 #include <freerdp/codec/color.h>
 #include <winpr/crt.h>
 #include <winpr/sysinfo.h>
 
-#include "nsc_types.h"
 #include "nsc_sse2.h"
+#include "nsc_types.h"
 
 static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanline)
 {

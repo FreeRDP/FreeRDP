@@ -21,9 +21,9 @@
 #define FREERDP_LISTENER_H
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
-#include <freerdp/settings.h>
 #include <freerdp/peer.h>
+#include <freerdp/settings.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"

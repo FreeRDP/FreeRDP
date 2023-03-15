@@ -20,9 +20,9 @@
 #ifndef FREERDP_LIB_CORE_GATEWAY_RPC_CLIENT_H
 #define FREERDP_LIB_CORE_GATEWAY_RPC_CLIENT_H
 
-#include <winpr/wtypes.h>
-#include <winpr/stream.h>
 #include <freerdp/api.h>
+#include <winpr/stream.h>
+#include <winpr/wtypes.h>
 
 #include "rpc.h"
 

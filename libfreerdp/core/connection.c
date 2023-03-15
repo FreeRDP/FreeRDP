@@ -25,8 +25,8 @@
 
 #include "info.h"
 #include "input.h"
-#include "rdp.h"
 #include "peer.h"
+#include "rdp.h"
 
 #include "connection.h"
 #include "transport.h"
@@ -35,14 +35,14 @@
 #include <winpr/crypto.h>
 #include <winpr/ssl.h>
 
-#include <freerdp/log.h>
 #include <freerdp/error.h>
 #include <freerdp/listener.h>
+#include <freerdp/log.h>
 
 #include "../cache/pointer.h"
+#include "../crypto/certificate.h"
 #include "../crypto/crypto.h"
 #include "../crypto/privatekey.h"
-#include "../crypto/certificate.h"
 
 #include "utils.h"
 

@@ -23,13 +23,13 @@
 
 #include <winpr/wtypes.h>
 
-#include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
+#include <freerdp/types.h>
 
 #import <AudioToolbox/AudioToolbox.h>
 
-#include "rdpsnd_main.h"
 #include "TPCircularBuffer.h"
+#include "rdpsnd_main.h"
 
 #define INPUT_BUFFER_SIZE 32768
 #define CIRCULAR_BUFFER_SIZE (INPUT_BUFFER_SIZE * 4)

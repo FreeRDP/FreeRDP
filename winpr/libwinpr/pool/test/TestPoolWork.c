@@ -1,8 +1,8 @@
 
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
-#include <winpr/pool.h>
 #include <winpr/interlocked.h>
+#include <winpr/pool.h>
+#include <winpr/wtypes.h>
 
 static LONG count = 0;
 

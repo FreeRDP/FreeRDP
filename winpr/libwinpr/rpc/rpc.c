@@ -20,8 +20,8 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/rpc.h>
 #include <winpr/crypto.h>
+#include <winpr/rpc.h>
 
 #if !defined(_WIN32) || defined(_UWP)
 

@@ -25,19 +25,21 @@
 #define CINTERFACE
 #define COBJMACROS
 
+// clang-format off
+#include <windows.h>
 #include <ole2.h>
 #include <shlobj.h>
-#include <windows.h>
 #include <winuser.h>
+// clang-format on
 
 #include <winpr/assert.h>
 
 #include <winpr/crt.h>
-#include <winpr/tchar.h>
 #include <winpr/stream.h>
+#include <winpr/tchar.h>
 
-#include <freerdp/log.h>
 #include <freerdp/client/cliprdr.h>
+#include <freerdp/log.h>
 
 #include <strsafe.h>
 

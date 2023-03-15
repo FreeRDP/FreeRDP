@@ -20,8 +20,8 @@
 #ifndef FREERDP_CLIENT_SDL_CHANNELS_H
 #define FREERDP_CLIENT_SDL_CHANNELS_H
 
-#include <freerdp/freerdp.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/freerdp.h>
 
 int sdl_on_channel_connected(freerdp* instance, const char* name, void* pInterface);
 int sdl_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface);

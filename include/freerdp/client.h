@@ -20,11 +20,11 @@
 #ifndef FREERDP_CLIENT_H
 #define FREERDP_CLIENT_H
 
-#include <freerdp/config.h>
 #include <freerdp/api.h>
-#include <freerdp/types.h>
+#include <freerdp/config.h>
 #include <freerdp/event.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 
 #if defined(CHANNEL_AINPUT_CLIENT)
 #include <freerdp/client/ainput.h>

@@ -19,9 +19,9 @@
 
 #include <winpr/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/sysinfo.h>
-#include <winpr/assert.h>
 
 #include <winpr/collections.h>
 

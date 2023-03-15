@@ -20,8 +20,8 @@
 
 #include <winpr/config.h>
 
-#include <stdio.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 #include <winpr/crt.h>
 #include <winpr/string.h>
@@ -44,8 +44,8 @@
 #endif
 
 #include <winpr/crt.h>
-#include <winpr/wlog.h>
 #include <winpr/debug.h>
+#include <winpr/wlog.h>
 
 #ifndef MIN
 #define MIN(a, b) (a) < (b) ? (a) : (b)

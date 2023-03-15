@@ -20,8 +20,8 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/log.h>
 #include "shadow.h"
+#include <freerdp/log.h>
 
 #include "shadow_encomsp.h"
 

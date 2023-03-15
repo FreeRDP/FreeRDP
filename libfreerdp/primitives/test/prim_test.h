@@ -17,18 +17,18 @@
 #define FREERDP_LIB_PRIMTEST_H
 
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
+#include <winpr/platform.h>
 #include <winpr/spec.h>
 #include <winpr/wtypes.h>
-#include <winpr/platform.h>
-#include <winpr/crypto.h>
 
 #include <freerdp/primitives.h>
 
 #include "measure.h"
 
 #ifdef WITH_IPP
-#include <ipps.h>
 #include <ippi.h>
+#include <ipps.h>
 #endif
 
 #ifdef _WIN32

@@ -9,13 +9,13 @@
  */
 
 #import "ios_freerdp.h"
-#import "ios_freerdp_ui.h"
 #import "ios_freerdp_events.h"
+#import "ios_freerdp_ui.h"
 
-#import "RDPSession.h"
-#import "TSXTypes.h"
 #import "Bookmark.h"
 #import "ConnectionParams.h"
+#import "RDPSession.h"
+#import "TSXTypes.h"
 
 NSString *TSXSessionDidDisconnectNotification = @"TSXSessionDidDisconnect";
 NSString *TSXSessionDidFailToConnectNotification = @"TSXSessionDidFailToConnect";

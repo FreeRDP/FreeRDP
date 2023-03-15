@@ -20,8 +20,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/handle.h>
 #include "../handle/nonehandle.h"
+#include <winpr/handle.h>
 
 #include <winpr/thread.h>
 
@@ -53,8 +53,8 @@
 
 #include <winpr/assert.h>
 #include <winpr/crt.h>
-#include <winpr/path.h>
 #include <winpr/environment.h>
+#include <winpr/path.h>
 
 #include <grp.h>
 
@@ -63,9 +63,9 @@
 #include <sys/wait.h>
 
 #ifdef __linux__
-#include <sys/syscall.h>
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <sys/syscall.h>
 #endif /* __linux__ */
 
 #include "thread.h"

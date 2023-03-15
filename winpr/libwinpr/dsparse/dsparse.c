@@ -19,8 +19,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/dsparse.h>
 #include <winpr/assert.h>
+#include <winpr/dsparse.h>
 
 /**
  * dsparse.dll:

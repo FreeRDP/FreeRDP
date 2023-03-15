@@ -23,8 +23,8 @@
 #define FREERDP_SERVER_PROXY_PFUPDATE_H
 
 #include <freerdp/freerdp.h>
-#include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/bitmap.h>
+#include <freerdp/gdi/gdi.h>
 
 #include <freerdp/server/proxy/proxy_context.h>
 

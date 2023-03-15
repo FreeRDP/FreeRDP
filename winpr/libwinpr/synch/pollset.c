@@ -1,11 +1,11 @@
 #ifndef _WIN32
 #include <errno.h>
 
+#include "../log.h"
 #include "pollset.h"
+#include <winpr/assert.h>
 #include <winpr/handle.h>
 #include <winpr/sysinfo.h>
-#include <winpr/assert.h>
-#include "../log.h"
 
 #define TAG WINPR_TAG("sync.pollset")
 

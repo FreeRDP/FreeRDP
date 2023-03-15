@@ -23,8 +23,8 @@
 #include <winpr/wlog.h>
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/channels/rdpgfx.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"

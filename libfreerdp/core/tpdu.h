@@ -20,8 +20,8 @@
 #ifndef FREERDP_LIB_CORE_TPDU_H
 #define FREERDP_LIB_CORE_TPDU_H
 
-#include <winpr/stream.h>
 #include <freerdp/api.h>
+#include <winpr/stream.h>
 
 #include "tpkt.h"
 

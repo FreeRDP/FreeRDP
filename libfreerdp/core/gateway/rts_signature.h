@@ -22,8 +22,8 @@
 
 #include "rts.h"
 
-#include <winpr/wtypes.h>
 #include <freerdp/api.h>
+#include <winpr/wtypes.h>
 
 typedef struct
 {

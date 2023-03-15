@@ -21,36 +21,34 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
-#include <winpr/tchar.h>
-#include <winpr/sysinfo.h>
 #include <winpr/registry.h>
+#include <winpr/sysinfo.h>
 #include <winpr/tchar.h>
 
-#include <freerdp/log.h>
-#include <freerdp/settings.h>
-#include <freerdp/codec/rfx.h>
-#include <freerdp/constants.h>
-#include <freerdp/primitives.h>
-#include <freerdp/codec/region.h>
 #include <freerdp/build-config.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/codec/rfx.h>
+#include <freerdp/constants.h>
+#include <freerdp/log.h>
+#include <freerdp/primitives.h>
+#include <freerdp/settings.h>
 
 #include "rfx_constants.h"
-#include "rfx_types.h"
 #include "rfx_decode.h"
+#include "rfx_dwt.h"
 #include "rfx_encode.h"
 #include "rfx_quantization.h"
-#include "rfx_dwt.h"
 #include "rfx_rlgr.h"
+#include "rfx_types.h"
 
-#include "rfx_sse2.h"
 #include "rfx_neon.h"
+#include "rfx_sse2.h"
 
 #define TAG FREERDP_TAG("codec")
 

@@ -22,8 +22,8 @@
 
 #include "rdp.h"
 
-#include <winpr/stream.h>
 #include <freerdp/api.h>
+#include <winpr/stream.h>
 
 #define SURFCMD_SURFACE_BITS_HEADER_LENGTH 22
 #define SURFCMD_FRAME_MARKER_LENGTH 8

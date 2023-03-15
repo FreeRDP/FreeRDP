@@ -24,9 +24,9 @@
 
 #include <freerdp/crypto/per.h>
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/settings.h>
-#include <freerdp/api.h>
 
 #include <winpr/stream.h>
 

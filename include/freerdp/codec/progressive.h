@@ -23,12 +23,12 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-#include <winpr/wlog.h>
 #include <winpr/collections.h>
+#include <winpr/wlog.h>
 
-#include <freerdp/codec/rfx.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/codec/rfx.h>
 
 #ifdef __cplusplus
 extern "C"

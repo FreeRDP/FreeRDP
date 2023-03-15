@@ -12,9 +12,9 @@
 
 #include "android_jni_utils.h"
 
-#include <locale.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/log.h>
+#include <locale.h>
 
 #include "android_jni_callback.h"
 

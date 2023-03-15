@@ -26,8 +26,8 @@ freely, subject to the following restrictions:
  * Modifications fixing various errors. */
 
 #include "lodepng.h"
-#include <winpr/wtypes.h>
 #include <winpr/file.h>
+#include <winpr/wtypes.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -6137,8 +6137,8 @@ static unsigned getPaletteTranslucency(const unsigned char* palette, size_t pale
 			g = palette[4 * i + 1];
 			b = palette[4 * i + 2];
 			key = 1;
-			i = (size_t)(
-			    -1); /*restart from beginning, to detect earlier opaque colors with key's value*/
+			i = (size_t)(-1); /*restart from beginning, to detect earlier opaque colors with key's
+			                     value*/
 		}
 		else if (palette[4 * i + 3] != 255)
 			return 2;

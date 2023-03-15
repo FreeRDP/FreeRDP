@@ -28,8 +28,11 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 
-#include <winsock2.h>
+// clang-format off
 #include <windows.h>
+// clang-format on
+
+#include <winsock2.h>
 #include <ws2tcpip.h>
 
 #else

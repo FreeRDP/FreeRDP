@@ -19,8 +19,8 @@
 
 #include <freerdp/config.h>
 
-#include <stdlib.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "mf_info.h"
 #include "mf_mountain_lion.h"

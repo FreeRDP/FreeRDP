@@ -23,17 +23,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/print.h>
-#include <winpr/stream.h>
 #include <winpr/cmdline.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/print.h>
+#include <winpr/stream.h>
+#include <winpr/synch.h>
 
 #include <freerdp/addin.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/geometry.h>
-#include <freerdp/channels/log.h>
 
 #define TAG CHANNELS_TAG("geometry.client")
 

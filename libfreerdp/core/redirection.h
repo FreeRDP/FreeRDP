@@ -24,12 +24,12 @@ typedef struct rdp_redirection rdpRedirection;
 
 #include "rdp.h"
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/log.h>
-#include <freerdp/api.h>
 
-#include <winpr/wlog.h>
 #include <winpr/stream.h>
+#include <winpr/wlog.h>
 
 FREERDP_LOCAL int rdp_redirection_apply_settings(rdpRdp* rdp);
 

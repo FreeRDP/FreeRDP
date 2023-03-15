@@ -17,37 +17,37 @@
 
 #include <locale.h>
 
+#include <errno.h>
 #include <jni.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #include <winpr/assert.h>
 
-#include <freerdp/graphics.h>
-#include <freerdp/codec/rfx.h>
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/gdi/gfx.h>
-#include <freerdp/client/rdpei.h>
-#include <freerdp/client/rdpgfx.h>
-#include <freerdp/client/cliprdr.h>
-#include <freerdp/codec/h264.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/client/cliprdr.h>
 #include <freerdp/client/cmdline.h>
+#include <freerdp/client/rdpei.h>
+#include <freerdp/client/rdpgfx.h>
+#include <freerdp/codec/h264.h>
+#include <freerdp/codec/rfx.h>
 #include <freerdp/constants.h>
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/gfx.h>
+#include <freerdp/graphics.h>
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/primitives.h>
-#include <freerdp/version.h>
 #include <freerdp/settings.h>
 #include <freerdp/utils/signal.h>
+#include <freerdp/version.h>
 
 #include <android/bitmap.h>
 
-#include "android_jni_callback.h"
-#include "android_jni_utils.h"
 #include "android_cliprdr.h"
 #include "android_freerdp_jni.h"
+#include "android_jni_callback.h"
+#include "android_jni_utils.h"
 
 #if defined(WITH_GPROF)
 #include "jni/prof.h"

@@ -22,10 +22,10 @@
 #include "uwac-priv.h"
 #include "uwac-utils.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #define TARGET_OUTPUT_INTERFACE 2U
 

@@ -19,8 +19,8 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/log.h>
 #include <freerdp/error.h>
+#include <freerdp/log.h>
 #include <freerdp/settings.h>
 
 #include <winpr/assert.h>

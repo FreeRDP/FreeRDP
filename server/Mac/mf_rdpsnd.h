@@ -20,8 +20,8 @@
 #ifndef FREERDP_SERVER_MAC_RDPSND_H
 #define FREERDP_SERVER_MAC_RDPSND_H
 
-#include <CoreAudio/CoreAudio.h>
 #include <AudioToolbox/AudioToolbox.h>
+#include <CoreAudio/CoreAudio.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>

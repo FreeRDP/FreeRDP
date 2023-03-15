@@ -27,8 +27,8 @@
 
 #include "sf_audin.h"
 
-#include <freerdp/server/server-common.h>
 #include <freerdp/log.h>
+#include <freerdp/server/server-common.h>
 #define TAG SERVER_TAG("sample")
 
 #if defined(CHANNEL_AUDIN_SERVER)

@@ -20,8 +20,8 @@
 #ifndef FREERDP_CHANNEL_RDPGFX_SERVER_MAIN_H
 #define FREERDP_CHANNEL_RDPGFX_SERVER_MAIN_H
 
-#include <freerdp/server/rdpgfx.h>
 #include <freerdp/codec/zgfx.h>
+#include <freerdp/server/rdpgfx.h>
 
 struct s_rdpgfx_server_private
 {

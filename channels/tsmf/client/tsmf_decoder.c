@@ -26,9 +26,9 @@
 #include <freerdp/addin.h>
 #include <freerdp/client/channels.h>
 
-#include "tsmf_types.h"
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"
+#include "tsmf_types.h"
 
 static ITSMFDecoder* tsmf_load_decoder_by_name(const char* name)
 {

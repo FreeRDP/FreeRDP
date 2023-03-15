@@ -20,8 +20,8 @@
 #ifndef FREERDP_LIB_CORE_PEER_H
 #define FREERDP_LIB_CORE_PEER_H
 
-#include "rdp.h"
 #include "mcs.h"
+#include "rdp.h"
 #include "server.h"
 
 #include <freerdp/peer.h>

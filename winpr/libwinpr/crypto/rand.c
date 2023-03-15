@@ -28,10 +28,10 @@
 #endif
 
 #ifdef WITH_MBEDTLS
-#include <mbedtls/md.h>
 #include <mbedtls/entropy.h>
 #include <mbedtls/havege.h>
 #include <mbedtls/hmac_drbg.h>
+#include <mbedtls/md.h>
 #endif
 
 int winpr_RAND(void* output, size_t len)

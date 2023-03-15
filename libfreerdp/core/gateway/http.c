@@ -26,8 +26,8 @@
 #include <winpr/stream.h>
 #include <winpr/string.h>
 
-#include <freerdp/log.h>
 #include <freerdp/crypto/crypto.h>
+#include <freerdp/log.h>
 
 /* websocket need sha1 for Sec-Websocket-Accept */
 #include <winpr/crypto.h>

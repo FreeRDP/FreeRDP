@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#include <winpr/stream.h>
 #include <freerdp/settings.h>
+#include <winpr/stream.h>
 
 #include <freerdp/server/proxy/proxy_context.h>
 

@@ -8,8 +8,8 @@
 
 #import "BookmarkGatewaySettingsController.h"
 #import "Bookmark.h"
-#import "Utils.h"
 #import "EditorSelectionController.h"
+#import "Utils.h"
 
 #define SECTION_TSGATEWAY_SETTINGS 0
 #define SECTION_COUNT 1

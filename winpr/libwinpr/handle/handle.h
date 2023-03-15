@@ -20,8 +20,8 @@
 #ifndef WINPR_HANDLE_PRIVATE_H
 #define WINPR_HANDLE_PRIVATE_H
 
-#include <winpr/handle.h>
 #include <winpr/file.h>
+#include <winpr/handle.h>
 #include <winpr/synch.h>
 #include <winpr/winsock.h>
 

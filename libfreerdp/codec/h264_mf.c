@@ -17,16 +17,16 @@
  * limitations under the License.
  */
 
-#include <freerdp/log.h>
 #include <freerdp/codec/h264.h>
+#include <freerdp/log.h>
 
-#include <ks.h>
 #include <codecapi.h>
+#include <ks.h>
 
 #include <mfapi.h>
 #include <mferror.h>
-#include <wmcodecdsp.h>
 #include <mftransform.h>
+#include <wmcodecdsp.h>
 
 #include "h264.h"
 

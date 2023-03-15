@@ -15,16 +15,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// clang-format off
 #include <windows.h>
+// clang-format on
 
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/sysinfo.h>
 
-#include <freerdp/log.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/log.h>
 
 #include "win_shadow.h"
 

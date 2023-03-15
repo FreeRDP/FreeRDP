@@ -22,16 +22,16 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/stream.h>
 
 #include <freerdp/log.h>
 
 #include "tpkt.h"
 
-#include "nego.h"
 #include "aad.h"
+#include "nego.h"
 
 #include "transport.h"
 

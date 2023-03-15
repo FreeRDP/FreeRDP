@@ -40,8 +40,8 @@
 #pragma clang diagnostic pop
 #endif /* __clang__ */
 
-#include <gst/app/gstappsrc.h>
 #include <gst/app/gstappsink.h>
+#include <gst/app/gstappsrc.h>
 
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"

@@ -25,19 +25,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
 
-#include <freerdp/freerdp.h>
-#include <freerdp/codec/dsp.h>
-#include <freerdp/codec/audio.h>
-#include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/audin.h>
-#include <freerdp/server/audin.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/codec/audio.h>
+#include <freerdp/codec/dsp.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/server/audin.h>
 
 #define TAG CHANNELS_TAG("audin.server")
 #define MSG_SNDIN_VERSION 0x01

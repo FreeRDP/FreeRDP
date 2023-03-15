@@ -1,19 +1,19 @@
 
 #include <freerdp/gdi/gdi.h>
 
+#include <freerdp/gdi/bitmap.h>
 #include <freerdp/gdi/dc.h>
 #include <freerdp/gdi/pen.h>
-#include <freerdp/gdi/shape.h>
 #include <freerdp/gdi/region.h>
-#include <freerdp/gdi/bitmap.h>
+#include <freerdp/gdi/shape.h>
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include "line.h"
 #include "brush.h"
 #include "clipping.h"
 #include "helpers.h"
+#include "line.h"
 
 /* Ellipse() Test Data */
 

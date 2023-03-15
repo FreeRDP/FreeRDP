@@ -2,9 +2,9 @@
 #include <freerdp/client/cmdline.h>
 #include <freerdp/settings.h>
 #include <winpr/cmdline.h>
+#include <winpr/collections.h>
 #include <winpr/spec.h>
 #include <winpr/strlst.h>
-#include <winpr/collections.h>
 
 typedef BOOL (*validate_settings_pr)(rdpSettings* settings);
 

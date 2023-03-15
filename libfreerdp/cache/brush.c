@@ -20,12 +20,12 @@
 #include <freerdp/config.h>
 
 #include <stdio.h>
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 
+#include <freerdp/freerdp.h>
 #include <freerdp/log.h>
 #include <freerdp/update.h>
-#include <freerdp/freerdp.h>
 #include <winpr/stream.h>
 
 #include "brush.h"

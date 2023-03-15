@@ -26,10 +26,10 @@
 #include <sys/stat.h>
 
 #include <winpr/crt.h>
-#include <winpr/platform.h>
-#include <winpr/file.h>
-#include <winpr/tchar.h>
 #include <winpr/environment.h>
+#include <winpr/file.h>
+#include <winpr/platform.h>
+#include <winpr/tchar.h>
 
 #include <winpr/path.h>
 
@@ -40,8 +40,8 @@
 #if defined(WIN32)
 #include <shlobj.h>
 #else
-#include <errno.h>
 #include <dirent.h>
+#include <errno.h>
 #endif
 
 static char* GetPath_XDG_CONFIG_HOME(void);

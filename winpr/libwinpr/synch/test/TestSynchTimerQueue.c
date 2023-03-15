@@ -1,8 +1,8 @@
 
 #include <winpr/crt.h>
-#include <winpr/sysinfo.h>
 #include <winpr/file.h>
 #include <winpr/synch.h>
+#include <winpr/sysinfo.h>
 
 #define FIRE_COUNT 5
 #define TIMER_COUNT 5

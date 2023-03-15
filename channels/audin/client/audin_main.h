@@ -22,11 +22,11 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/dvc.h>
-#include <freerdp/types.h>
 #include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/client/audin.h>
+#include <freerdp/dvc.h>
+#include <freerdp/types.h>
 
 #define TAG CHANNELS_TAG("audin.client")
 

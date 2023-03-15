@@ -26,10 +26,10 @@
 #include <winpr/string.h>
 #include <winpr/windows.h>
 
-#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <winspool.h>
 
 #include <freerdp/client/printer.h>

@@ -22,8 +22,8 @@
 #include <freerdp/config.h>
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>

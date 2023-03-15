@@ -22,10 +22,10 @@
 
 #include <errno.h>
 
-#include <winpr/crt.h>
-#include <winpr/ssl.h>
-#include <winpr/path.h>
 #include <winpr/cmdline.h>
+#include <winpr/crt.h>
+#include <winpr/path.h>
+#include <winpr/ssl.h>
 #include <winpr/winsock.h>
 
 #include <freerdp/log.h>
@@ -34,8 +34,8 @@
 #include <winpr/tools/makecert.h>
 
 #ifndef _WIN32
-#include <sys/select.h>
 #include <signal.h>
+#include <sys/select.h>
 #endif
 
 #include "shadow.h"

@@ -1,10 +1,10 @@
 
-#include <stdio.h>
-#include <string.h>
-#include <memory.h>
-#include <stdlib.h>
-#include <winpr/winpr.h>
 #include "winpr/wlog.h"
+#include <memory.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <winpr/winpr.h>
 
 #include "../clipboard.h"
 

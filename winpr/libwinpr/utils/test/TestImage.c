@@ -1,10 +1,10 @@
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
-#include <winpr/path.h>
-#include <winpr/file.h>
-#include <winpr/print.h>
-#include <winpr/image.h>
 #include <winpr/environment.h>
+#include <winpr/file.h>
+#include <winpr/image.h>
+#include <winpr/path.h>
+#include <winpr/print.h>
+#include <winpr/wtypes.h>
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096

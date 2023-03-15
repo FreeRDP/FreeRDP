@@ -24,8 +24,8 @@
 #include <winpr/crt.h>
 #include <winpr/string.h>
 
-#include <freerdp/log.h>
 #include <freerdp/crypto/ber.h>
+#include <freerdp/log.h>
 
 #define TAG FREERDP_TAG("crypto")
 

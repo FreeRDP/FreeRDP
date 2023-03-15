@@ -28,8 +28,8 @@
 #ifndef CPU_FEATURES_H
 #define CPU_FEATURES_H
 
-#include <sys/cdefs.h>
 #include <stdint.h>
+#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 

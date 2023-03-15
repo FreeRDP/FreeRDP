@@ -25,17 +25,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
 #include <winpr/cmdline.h>
+#include <winpr/crt.h>
 #include <winpr/wlog.h>
 
 #include <pulse/pulseaudio.h>
 
-#include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/codec/audio.h>
 #include <freerdp/client/audin.h>
+#include <freerdp/codec/audio.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 
 #include "audin_main.h"
 

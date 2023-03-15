@@ -22,17 +22,17 @@
 #include <freerdp/config.h>
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <freerdp/freerdp.h>
+#include <freerdp/gdi/bitmap.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/pen.h>
-#include <freerdp/gdi/bitmap.h>
 #include <freerdp/gdi/region.h>
 
-#include "drawing.h"
 #include "clipping.h"
+#include "drawing.h"
 #include "line.h"
 
 static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)

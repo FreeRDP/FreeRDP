@@ -22,10 +22,10 @@
 #ifndef FREERDP_CHANNEL_RDPEI_SERVER_MAIN_H
 #define FREERDP_CHANNEL_RDPEI_SERVER_MAIN_H
 
+#include <freerdp/channels/log.h>
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <freerdp/channels/log.h>
 
 #define TAG CHANNELS_TAG("rdpei.server")
 

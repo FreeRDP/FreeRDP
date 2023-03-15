@@ -17,8 +17,8 @@
  */
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
 #include <winpr/input.h>
+#include <winpr/synch.h>
 #include <winpr/sysinfo.h>
 
 #include <freerdp/codec/color.h>

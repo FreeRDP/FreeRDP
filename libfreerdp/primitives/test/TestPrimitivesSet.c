@@ -14,8 +14,8 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/sysinfo.h>
 #include "prim_test.h"
+#include <winpr/sysinfo.h>
 
 /* ------------------------------------------------------------------------- */
 static BOOL check8(const BYTE* src, UINT32 length, UINT32 offset, BYTE value)

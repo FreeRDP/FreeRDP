@@ -26,17 +26,17 @@
 #include <winpr/crt.h>
 #include <winpr/winsock.h>
 
-#include "info.h"
 #include "display.h"
+#include "info.h"
 
-#include <freerdp/log.h>
-#include <freerdp/streamdump.h>
-#include <freerdp/redirection.h>
 #include <freerdp/crypto/certificate.h>
+#include <freerdp/log.h>
+#include <freerdp/redirection.h>
+#include <freerdp/streamdump.h>
 
-#include "rdp.h"
-#include "peer.h"
 #include "multitransport.h"
+#include "peer.h"
+#include "rdp.h"
 
 #define TAG FREERDP_TAG("core.peer")
 

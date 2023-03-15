@@ -20,9 +20,9 @@
 #define FREERDP_SERVER_SHADOW_WIN_RDP_H
 
 #include <freerdp/addin.h>
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/client/cmdline.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/client/cmdline.h>
+#include <freerdp/gdi/gdi.h>
 
 typedef struct shw_context shwContext;
 

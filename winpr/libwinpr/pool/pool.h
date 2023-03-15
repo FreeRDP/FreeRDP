@@ -20,11 +20,11 @@
 #ifndef WINPR_POOL_PRIVATE_H
 #define WINPR_POOL_PRIVATE_H
 
-#include <winpr/windows.h>
+#include <winpr/collections.h>
 #include <winpr/pool.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/collections.h>
+#include <winpr/windows.h>
 
 #if defined(_WIN32)
 #if (_WIN32_WINNT < _WIN32_WINNT_WIN6) || defined(__MINGW32__)

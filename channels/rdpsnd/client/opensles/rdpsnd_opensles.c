@@ -23,18 +23,18 @@
 
 #include <winpr/assert.h>
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 
-#include <winpr/crt.h>
 #include <winpr/cmdline.h>
-#include <winpr/sysinfo.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/sysinfo.h>
 
-#include <freerdp/types.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/types.h>
 
 #include "opensl_io.h"
 #include "rdpsnd_main.h"

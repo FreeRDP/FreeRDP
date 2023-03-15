@@ -24,8 +24,8 @@
 #define FREERDP_CODEC_NSCODEC_H
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/constants.h>
+#include <freerdp/types.h>
 
 #include <winpr/stream.h>
 

@@ -23,9 +23,9 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/bitstream.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
-#include <winpr/bitstream.h>
 
 #include <freerdp/log.h>
 #include <freerdp/types.h>

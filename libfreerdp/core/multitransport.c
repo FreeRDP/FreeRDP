@@ -17,12 +17,12 @@
  * limitations under the License.
  */
 
-#include <winpr/assert.h>
 #include <freerdp/config.h>
 #include <freerdp/log.h>
+#include <winpr/assert.h>
 
-#include "rdp.h"
 #include "multitransport.h"
+#include "rdp.h"
 
 struct rdp_multitransport
 {

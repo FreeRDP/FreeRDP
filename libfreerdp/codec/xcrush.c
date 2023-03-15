@@ -19,15 +19,15 @@
  * limitations under the License.
  */
 
-#include <winpr/assert.h>
 #include <freerdp/config.h>
+#include <winpr/assert.h>
 
+#include <winpr/bitstream.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
-#include <winpr/bitstream.h>
 
-#include <freerdp/log.h>
 #include "xcrush.h"
+#include <freerdp/log.h>
 
 #define TAG FREERDP_TAG("codec")
 
@@ -93,7 +93,7 @@ struct s_XCRUSH_CONTEXT
 	ALIGN64 XCRUSH_MATCH_INFO OptimizedMatches[1000];
 };
 
-//#define DEBUG_XCRUSH 1
+// #define DEBUG_XCRUSH 1
 #if defined(DEBUG_XCRUSH)
 static const char* xcrush_get_level_2_compression_flags_string(UINT32 flags)
 {

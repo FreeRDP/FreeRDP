@@ -26,33 +26,33 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #ifndef _WIN32
-#include <termios.h>
 #include <strings.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 #endif
 
 #ifdef __LINUX__
-#include <linux/ppdev.h>
 #include <linux/parport.h>
+#include <linux/ppdev.h>
 #endif
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/interlocked.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/collections.h>
-#include <winpr/interlocked.h>
 
-#include <freerdp/types.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/constants.h>
-#include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/channels/rdpdr.h>
+#include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 
 #define TAG CHANNELS_TAG("drive.client")
 

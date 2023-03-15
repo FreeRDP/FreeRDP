@@ -19,21 +19,21 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/freerdp.h>
 
-#include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/channels/wtsvc.h>
 
 #include "rdpgfx_common.h"
 #include "rdpgfx_main.h"

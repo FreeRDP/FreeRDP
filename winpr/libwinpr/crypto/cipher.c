@@ -27,17 +27,17 @@
 
 #ifdef WITH_OPENSSL
 #include <openssl/aes.h>
-#include <openssl/rc4.h>
 #include <openssl/des.h>
 #include <openssl/evp.h>
+#include <openssl/rc4.h>
 #endif
 
 #ifdef WITH_MBEDTLS
-#include <mbedtls/md.h>
 #include <mbedtls/aes.h>
 #include <mbedtls/arc4.h>
-#include <mbedtls/des.h>
 #include <mbedtls/cipher.h>
+#include <mbedtls/des.h>
+#include <mbedtls/md.h>
 #endif
 
 /**

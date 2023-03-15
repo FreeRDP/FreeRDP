@@ -22,8 +22,8 @@
 
 #include "rpc.h"
 
-#include <winpr/wtypes.h>
 #include <freerdp/api.h>
+#include <winpr/wtypes.h>
 
 FREERDP_LOCAL extern const p_uuid_t TSGU_UUID;
 #define TSGU_SYNTAX_IF_VERSION 0x00030001

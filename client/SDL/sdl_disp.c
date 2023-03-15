@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#include <winpr/sysinfo.h>
 #include <winpr/assert.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/gdi/gdi.h>
 

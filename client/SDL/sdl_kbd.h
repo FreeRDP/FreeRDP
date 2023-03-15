@@ -20,9 +20,9 @@
 #ifndef FREERDP_CLIENT_SDL_KBD_H
 #define FREERDP_CLIENT_SDL_KBD_H
 
-#include <winpr/wtypes.h>
-#include <freerdp/freerdp.h>
 #include <SDL.h>
+#include <freerdp/freerdp.h>
+#include <winpr/wtypes.h>
 
 #include "sdl_freerdp.h"
 

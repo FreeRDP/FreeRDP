@@ -21,11 +21,11 @@
 
 #include <freerdp/config.h>
 
+#include <freerdp/channels/drdynvc.h>
+#include <freerdp/channels/log.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
-#include <freerdp/channels/log.h>
-#include <freerdp/channels/drdynvc.h>
 
 #include "drdynvc_main.h"
 

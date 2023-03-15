@@ -20,8 +20,8 @@
 #ifndef FREERDP_CHANNELS_CLIENT_VIDEO_H
 #define FREERDP_CHANNELS_CLIENT_VIDEO_H
 
-#include <freerdp/client/geometry.h>
 #include <freerdp/channels/video.h>
+#include <freerdp/client/geometry.h>
 
 #ifdef __cplusplus
 extern "C"

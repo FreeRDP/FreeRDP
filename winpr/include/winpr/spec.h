@@ -837,7 +837,7 @@
 #define __deref_out_opt
 #define __ecount(size)
 #define __ecount_opt(size)
-//#define __in			/* Conflicts with libstdc++ header macros */
+// #define __in			/* Conflicts with libstdc++ header macros */
 #define __in_bcount(size)
 #define __in_bcount_opt(size)
 #define __in_ecount(size)
@@ -857,7 +857,7 @@
 #define __inout_ecount_part(size, length)
 #define __inout_ecount_part_opt(size, length)
 #define __inout_opt
-//#define __out			/* Conflicts with libstdc++ header macros */
+// #define __out			/* Conflicts with libstdc++ header macros */
 #define __out_bcount(size)
 #define __out_bcount_full(size)
 #define __out_bcount_full_opt(size)
@@ -881,7 +881,7 @@
 #define __nullterminated
 #define __out_awcount(expr, size)
 #define __override
-//#define __reserved			/* Conflicts with header included by CarbonCore.h on OS X */
+// #define __reserved			/* Conflicts with header included by CarbonCore.h on OS X */
 #define __success(expr)
 #define __typefix(ctype)
 

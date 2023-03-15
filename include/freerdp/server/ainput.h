@@ -21,8 +21,8 @@
 #ifndef FREERDP_CHANNEL_AINPUT_SERVER_H
 #define FREERDP_CHANNEL_AINPUT_SERVER_H
 
-#include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/ainput.h>
+#include <freerdp/channels/wtsvc.h>
 
 #ifdef __cplusplus
 extern "C"

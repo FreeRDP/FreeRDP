@@ -25,8 +25,8 @@ typedef struct rdp_multitransport rdpMultitransport;
 #include "rdp.h"
 #include "state.h"
 
-#include <freerdp/freerdp.h>
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
 
 #include <winpr/stream.h>
 

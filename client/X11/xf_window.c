@@ -23,38 +23,38 @@
 #include <freerdp/config.h>
 
 #include <stdarg.h>
-#include <unistd.h>
 #include <sys/types.h>
+#include <unistd.h>
 
+#include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xatom.h>
 
+#include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h>
 
 #include <winpr/assert.h>
-#include <winpr/thread.h>
 #include <winpr/crt.h>
 #include <winpr/string.h>
+#include <winpr/thread.h>
 
-#include <freerdp/rail.h>
 #include <freerdp/log.h>
+#include <freerdp/rail.h>
 
 #ifdef WITH_XEXT
 #include <X11/extensions/shape.h>
 #endif
 
 #ifdef WITH_XI
-#include <X11/extensions/XInput2.h>
 #include "xf_input.h"
+#include <X11/extensions/XInput2.h>
 #endif
 
 #include "xf_gfx.h"
-#include "xf_rail.h"
 #include "xf_input.h"
 #include "xf_keyboard.h"
+#include "xf_rail.h"
 #include "xf_utils.h"
 
 #define TAG CLIENT_TAG("x11")

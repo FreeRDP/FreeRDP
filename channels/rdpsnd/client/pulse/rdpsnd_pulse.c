@@ -25,15 +25,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/stream.h>
 #include <winpr/cmdline.h>
+#include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include <pulse/pulseaudio.h>
 
-#include <freerdp/types.h>
 #include <freerdp/codec/dsp.h>
+#include <freerdp/types.h>
 
 #include "rdpsnd_main.h"
 

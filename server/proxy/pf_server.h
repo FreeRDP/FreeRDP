@@ -24,11 +24,11 @@
 #ifndef INT_FREERDP_SERVER_PROXY_SERVER_H
 #define INT_FREERDP_SERVER_PROXY_SERVER_H
 
-#include <winpr/collections.h>
 #include <freerdp/listener.h>
+#include <winpr/collections.h>
 
-#include <freerdp/server/proxy/proxy_config.h>
 #include "proxy_modules.h"
+#include <freerdp/server/proxy/proxy_config.h>
 
 struct proxy_server
 {

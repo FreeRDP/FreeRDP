@@ -21,8 +21,8 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/log.h>
 #include <freerdp/codec/audio.h>
+#include <freerdp/log.h>
 
 #define TAG FREERDP_TAG("codec")
 

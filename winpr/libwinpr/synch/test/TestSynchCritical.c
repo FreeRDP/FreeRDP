@@ -1,11 +1,11 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
-#include <winpr/windows.h>
+#include <winpr/interlocked.h>
 #include <winpr/synch.h>
 #include <winpr/sysinfo.h>
 #include <winpr/thread.h>
-#include <winpr/interlocked.h>
+#include <winpr/windows.h>
 
 #define TEST_SYNC_CRITICAL_TEST1_RUNTIME_MS 50
 #define TEST_SYNC_CRITICAL_TEST1_RUNS 4

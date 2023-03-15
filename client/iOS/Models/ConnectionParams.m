@@ -9,10 +9,10 @@
  */
 
 #import "ConnectionParams.h"
-#import "GlobalDefaults.h"
 #import "EncryptionController.h"
-#import "Utils.h"
+#import "GlobalDefaults.h"
 #import "TSXAdditions.h"
+#import "Utils.h"
 
 @interface ConnectionParams (Private)
 - (id)initWithConnectionParams:(ConnectionParams *)params;

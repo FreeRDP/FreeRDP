@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#include <freerdp/utils/gfx.h>
 #include <freerdp/channels/rdpgfx.h>
+#include <freerdp/utils/gfx.h>
 
 static const char* RDPGFX_CMDID_STRINGS[] = { "RDPGFX_CMDID_UNUSED_0000",
 	                                          "RDPGFX_CMDID_WIRETOSURFACE_1",

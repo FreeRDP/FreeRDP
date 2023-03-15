@@ -20,8 +20,8 @@
 #ifndef WINPR_CLIPBOARD_PRIVATE_H
 #define WINPR_CLIPBOARD_PRIVATE_H
 
-#include <winpr/winpr.h>
 #include <winpr/clipboard.h>
+#include <winpr/winpr.h>
 
 #include <winpr/collections.h>
 

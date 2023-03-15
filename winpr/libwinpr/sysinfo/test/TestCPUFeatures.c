@@ -1,7 +1,7 @@
 
 #include <winpr/crt.h>
-#include <winpr/sysinfo.h>
 #include <winpr/platform.h>
+#include <winpr/sysinfo.h>
 
 #define TEST_FEATURE(feature) \
 	printf("\t" #feature ":  %s\n", IsProcessorFeaturePresent(feature) ? "yes" : "no")

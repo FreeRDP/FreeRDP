@@ -2,22 +2,22 @@
 #include "wf_wasapi.h"
 #include "wf_info.h"
 
+#include <audioclient.h>
+#include <functiondiscoverykeys_devpkey.h>
 #include <initguid.h>
 #include <mmdeviceapi.h>
-#include <functiondiscoverykeys_devpkey.h>
-#include <audioclient.h>
 
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")
 
-//#define REFTIMES_PER_SEC  10000000
-//#define REFTIMES_PER_MILLISEC  10000
+// #define REFTIMES_PER_SEC  10000000
+// #define REFTIMES_PER_MILLISEC  10000
 
 #define REFTIMES_PER_SEC 100000
 #define REFTIMES_PER_MILLISEC 100
 
-//#define REFTIMES_PER_SEC  50000
-//#define REFTIMES_PER_MILLISEC  50
+// #define REFTIMES_PER_SEC  50000
+// #define REFTIMES_PER_MILLISEC  50
 
 #ifndef __MINGW32__
 DEFINE_GUID(CLSID_MMDeviceEnumerator, 0xBCDE0395, 0xE52F, 0x467C, 0x8E, 0x3D, 0xC4, 0x57, 0x92,

@@ -22,9 +22,9 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/handle.h>
 #include <winpr/path.h>
 #include <winpr/synch.h>
-#include <winpr/handle.h>
 
 #include <winpr/pipe.h>
 
@@ -36,12 +36,12 @@
 
 #include "../handle/handle.h"
 
-#include <fcntl.h>
 #include <errno.h>
-#include <sys/un.h>
+#include <fcntl.h>
 #include <sys/socket.h>
-#include <winpr/assert.h>
+#include <sys/un.h>
 #include <unistd.h>
+#include <winpr/assert.h>
 
 #ifdef WINPR_HAVE_SYS_AIO_H
 #undef WINPR_HAVE_SYS_AIO_H /* disable for now, incomplete */

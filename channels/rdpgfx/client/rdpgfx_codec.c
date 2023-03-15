@@ -21,10 +21,10 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
-#include <winpr/stream.h>
 #include <freerdp/log.h>
 #include <freerdp/utils/profiler.h>
+#include <winpr/crt.h>
+#include <winpr/stream.h>
 
 #include "rdpgfx_common.h"
 

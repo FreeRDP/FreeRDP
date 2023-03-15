@@ -22,9 +22,9 @@
 
 #include <freerdp/config.h>
 
+#include <freerdp/channels/log.h>
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
-#include <freerdp/channels/log.h>
 
 #define TAG CHANNELS_TAG("tsmf.client")
 

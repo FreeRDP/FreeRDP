@@ -8,9 +8,9 @@
  http://mozilla.org/MPL/2.0/.
  */
 
-#import <Foundation/Foundation.h>
-#import <CoreGraphics/CoreGraphics.h>
 #import "TSXTypes.h"
+#import <CoreGraphics/CoreGraphics.h>
+#import <Foundation/Foundation.h>
 
 // helper macro to encode a table path into a tag value (used to identify controls in their delegate
 // handlers)

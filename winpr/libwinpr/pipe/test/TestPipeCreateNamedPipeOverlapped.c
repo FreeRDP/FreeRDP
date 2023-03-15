@@ -1,14 +1,14 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
-#include <winpr/pipe.h>
 #include <winpr/file.h>
-#include <winpr/tchar.h>
-#include <winpr/winpr.h>
-#include <winpr/wlog.h>
+#include <winpr/pipe.h>
 #include <winpr/print.h>
 #include <winpr/synch.h>
+#include <winpr/tchar.h>
 #include <winpr/thread.h>
+#include <winpr/winpr.h>
+#include <winpr/wlog.h>
 
 #define PIPE_BUFFER_SIZE 32
 #define PIPE_TIMEOUT_MS 20000 // 20 seconds

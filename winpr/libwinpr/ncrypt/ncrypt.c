@@ -22,8 +22,8 @@
 
 #ifndef _WIN32
 
-#include <winpr/print.h>
 #include "../log.h"
+#include <winpr/print.h>
 
 #include "ncrypt.h"
 

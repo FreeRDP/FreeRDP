@@ -23,8 +23,8 @@
 #define FREERDP_CHANNEL_REMDESK_SERVER_REMDESK_H
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/channels/wtsvc.h>
+#include <freerdp/types.h>
 
 #include <freerdp/client/remdesk.h>
 

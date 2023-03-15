@@ -21,8 +21,8 @@
 #ifndef FREERDP_SERVER_PROXY_SCARD_H
 #define FREERDP_SERVER_PROXY_SCARD_H
 
-#include <winpr/wlog.h>
 #include <freerdp/server/proxy/proxy_context.h>
+#include <winpr/wlog.h>
 
 typedef UINT (*pf_scard_send_fkt_t)(wLog* log, pClientContext*, wStream*);
 

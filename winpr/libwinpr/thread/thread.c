@@ -88,8 +88,8 @@
 
 #include <winpr/collections.h>
 
-#include "thread.h"
 #include "apc.h"
+#include "thread.h"
 
 #include "../handle/handle.h"
 #include "../log.h"

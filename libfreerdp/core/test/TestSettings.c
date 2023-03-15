@@ -2,8 +2,8 @@
 
 #include <winpr/crypto.h>
 
-#include <freerdp/settings.h>
 #include <freerdp/codecs.h>
+#include <freerdp/settings.h>
 
 #include "settings_property_lists.h"
 

@@ -20,9 +20,9 @@
 #ifndef FREERDP_LIB_CORE_MESSAGE_H
 #define FREERDP_LIB_CORE_MESSAGE_H
 
+#include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/message.h>
-#include <freerdp/api.h>
 
 /**
  * Update Message Queue

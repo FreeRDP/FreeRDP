@@ -19,8 +19,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/synch.h>
 #include <winpr/handle.h>
+#include <winpr/synch.h>
 
 #include <winpr/interlocked.h>
 

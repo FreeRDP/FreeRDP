@@ -27,15 +27,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+// clang-format off
 #include <windows.h>
 #include <mmsystem.h>
+// clang-format on
 
-#include <winpr/crt.h>
 #include <winpr/cmdline.h>
+#include <winpr/crt.h>
 #include <winpr/sysinfo.h>
 
-#include <freerdp/types.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/types.h>
 
 #include "rdpsnd_main.h"
 

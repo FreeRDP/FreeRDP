@@ -20,8 +20,8 @@
 #ifndef FREERDP_CLIENT_ANDROID_CLIPRDR_H
 #define FREERDP_CLIENT_ANDROID_CLIPRDR_H
 
-#include <freerdp/client/cliprdr.h>
 #include <freerdp/api.h>
+#include <freerdp/client/cliprdr.h>
 
 #include "android_freerdp.h"
 

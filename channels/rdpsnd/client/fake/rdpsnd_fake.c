@@ -24,12 +24,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/cmdline.h>
 #include <winpr/crt.h>
 #include <winpr/stream.h>
-#include <winpr/cmdline.h>
 
-#include <freerdp/types.h>
 #include <freerdp/settings.h>
+#include <freerdp/types.h>
 
 #include "rdpsnd_main.h"
 

@@ -14,8 +14,8 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/sysinfo.h>
 #include <freerdp/utils/profiler.h>
+#include <winpr/sysinfo.h>
 
 #include "prim_test.h"
 

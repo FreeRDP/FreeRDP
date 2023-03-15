@@ -21,9 +21,9 @@
 
 #include <freerdp/server/shadow.h>
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/synch.h>
-#include <winpr/collections.h>
 
 /*
  * This file implemented a model that an event is consumed

@@ -36,49 +36,49 @@ extern "C"
 
 #pragma pack(push, 1)
 
-/* 12 bytes */
+	/* 12 bytes */
 
-struct _PERSISTENT_CACHE_HEADER_V3
-{
-	BYTE sig[8];
-	UINT32 flags; /* 0x00000003, 0x00000006 */
-};
-typedef struct _PERSISTENT_CACHE_HEADER_V3 PERSISTENT_CACHE_HEADER_V3;
+	struct _PERSISTENT_CACHE_HEADER_V3
+	{
+		BYTE sig[8];
+		UINT32 flags; /* 0x00000003, 0x00000006 */
+	};
+	typedef struct _PERSISTENT_CACHE_HEADER_V3 PERSISTENT_CACHE_HEADER_V3;
 
-/* 12 bytes */
+	/* 12 bytes */
 
-struct _PERSISTENT_CACHE_ENTRY_V3
-{
-	UINT64 key64;
-	UINT16 width;
-	UINT16 height;
-};
-typedef struct _PERSISTENT_CACHE_ENTRY_V3 PERSISTENT_CACHE_ENTRY_V3;
+	struct _PERSISTENT_CACHE_ENTRY_V3
+	{
+		UINT64 key64;
+		UINT16 width;
+		UINT16 height;
+	};
+	typedef struct _PERSISTENT_CACHE_ENTRY_V3 PERSISTENT_CACHE_ENTRY_V3;
 
-/* 20 bytes */
+	/* 20 bytes */
 
-struct _PERSISTENT_CACHE_ENTRY_V2
-{
-	UINT64 key64;
-	UINT16 width;
-	UINT16 height;
-	UINT32 size;
-	UINT32 flags; /* 0x00000011 */
-};
-typedef struct _PERSISTENT_CACHE_ENTRY_V2 PERSISTENT_CACHE_ENTRY_V2;
+	struct _PERSISTENT_CACHE_ENTRY_V2
+	{
+		UINT64 key64;
+		UINT16 width;
+		UINT16 height;
+		UINT32 size;
+		UINT32 flags; /* 0x00000011 */
+	};
+	typedef struct _PERSISTENT_CACHE_ENTRY_V2 PERSISTENT_CACHE_ENTRY_V2;
 
 #pragma pack(pop)
 
-struct _PERSISTENT_CACHE_ENTRY
-{
-	UINT64 key64;
-	UINT16 width;
-	UINT16 height;
-	UINT32 size;
-	UINT32 flags;
-	BYTE* data;
-};
-typedef struct _PERSISTENT_CACHE_ENTRY PERSISTENT_CACHE_ENTRY;
+	struct _PERSISTENT_CACHE_ENTRY
+	{
+		UINT64 key64;
+		UINT16 width;
+		UINT16 height;
+		UINT32 size;
+		UINT32 flags;
+		BYTE* data;
+	};
+	typedef struct _PERSISTENT_CACHE_ENTRY PERSISTENT_CACHE_ENTRY;
 
 	FREERDP_API int persistent_cache_get_version(rdpPersistentCache* persistent);
 	FREERDP_API int persistent_cache_get_count(rdpPersistentCache* persistent);

@@ -31,9 +31,9 @@
 
 #include <freerdp/utils/rdpdr_utils.h>
 
-#include "rdpdr_main.h"
 #include "devman.h"
 #include "irp.h"
+#include "rdpdr_main.h"
 
 /**
  * Function description

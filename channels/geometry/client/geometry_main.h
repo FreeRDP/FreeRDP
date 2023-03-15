@@ -22,9 +22,9 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/dvc.h>
-#include <freerdp/types.h>
 #include <freerdp/addin.h>
 #include <freerdp/client/geometry.h>
+#include <freerdp/dvc.h>
+#include <freerdp/types.h>
 
 #endif /* FREERDP_CHANNEL_GEOMETRY_CLIENT_MAIN_H */

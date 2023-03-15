@@ -19,8 +19,8 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/timezone.h>
 
 #include "timezone.h"
@@ -114,12 +114,12 @@ BOOL rdp_read_client_time_zone(wStream* s, rdpSettings* settings)
 	Stream_Read(s, tz->StandardName, sizeof(tz->StandardName));
 	if (!rdp_read_system_time(s, &tz->StandardDate)) /* StandardDate */
 		return FALSE;
-	Stream_Read_UINT32(s, tz->StandardBias);    /* StandardBias */
+	Stream_Read_UINT32(s, tz->StandardBias); /* StandardBias */
 	/* daylightName (64 bytes) */
 	Stream_Read(s, tz->DaylightName, sizeof(tz->DaylightName));
 	if (!rdp_read_system_time(s, &tz->DaylightDate)) /* DaylightDate */
 		return FALSE;
-	Stream_Read_UINT32(s, tz->DaylightBias);    /* DaylightBias */
+	Stream_Read_UINT32(s, tz->DaylightBias); /* DaylightBias */
 	return TRUE;
 }
 

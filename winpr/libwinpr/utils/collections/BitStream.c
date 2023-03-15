@@ -20,8 +20,8 @@
 #include <winpr/assert.h>
 #include <winpr/config.h>
 
-#include <winpr/print.h>
 #include <winpr/bitstream.h>
+#include <winpr/print.h>
 
 static const char* BYTE_BIT_STRINGS_LSB[256] = {
 	"00000000", "00000001", "00000010", "00000011", "00000100", "00000101", "00000110", "00000111",

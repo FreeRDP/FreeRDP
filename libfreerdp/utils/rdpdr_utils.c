@@ -18,13 +18,13 @@
  * limitations under the License.
  */
 
-#include <winpr/wlog.h>
 #include <winpr/print.h>
 #include <winpr/smartcard.h>
+#include <winpr/wlog.h>
 
-#include <freerdp/utils/rdpdr_utils.h>
-#include <freerdp/channels/scard.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/channels/scard.h>
+#include <freerdp/utils/rdpdr_utils.h>
 
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("utils.scard")

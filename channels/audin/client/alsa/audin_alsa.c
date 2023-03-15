@@ -25,17 +25,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/cmdline.h>
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/cmdline.h>
 #include <winpr/wlog.h>
 
 #include <alsa/asoundlib.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
 #include <freerdp/channels/rdpsnd.h>
+#include <freerdp/freerdp.h>
 
 #include "audin_main.h"
 

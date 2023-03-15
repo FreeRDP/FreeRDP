@@ -20,18 +20,18 @@
 #ifndef FREERDP_CHANNEL_RDPGFX_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_RDPGFX_CLIENT_MAIN_H
 
+#include <freerdp/addin.h>
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
-#include <freerdp/addin.h>
 
-#include <winpr/wlog.h>
 #include <winpr/collections.h>
+#include <winpr/wlog.h>
 
+#include <freerdp/cache/persistent.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/rdpgfx.h>
-#include <freerdp/channels/log.h>
 #include <freerdp/codec/zgfx.h>
-#include <freerdp/cache/persistent.h>
 #include <freerdp/freerdp.h>
 
 typedef struct

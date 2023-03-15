@@ -25,28 +25,28 @@
 #include <freerdp/config.h>
 
 #ifndef _WIN32
-#include <sys/time.h>
 #include <signal.h>
+#include <sys/time.h>
 #endif
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/wlog.h>
-#include <winpr/stream.h>
 #include <winpr/cmdline.h>
-#include <winpr/sysinfo.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/stream.h>
+#include <winpr/sysinfo.h>
+#include <winpr/wlog.h>
 
-#include <freerdp/types.h>
 #include <freerdp/addin.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/codec/dsp.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/codec/dsp.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 
 #include "rdpsnd_common.h"
 #include "rdpsnd_main.h"

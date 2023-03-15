@@ -1,10 +1,10 @@
 
 #include "prim_test.h"
 
-#include <winpr/print.h>
 #include <freerdp/codec/color.h>
-#include <winpr/wlog.h>
 #include <freerdp/utils/profiler.h>
+#include <winpr/print.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/config.h>
 

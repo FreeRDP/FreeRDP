@@ -22,21 +22,21 @@
 
 #include <freerdp/config.h>
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 
-#include "../core/settings.h"
 #include "../core/capabilities.h"
+#include "../core/settings.h"
 
 #include <freerdp/crypto/certificate.h>
-#include <freerdp/settings.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/log.h>
+#include <freerdp/settings.h>
 
 #define TAG FREERDP_TAG("common")
 

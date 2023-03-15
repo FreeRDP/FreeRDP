@@ -26,9 +26,9 @@ extern "C"
 {
 #endif
 
-#include <winpr/wtypes.h>
 #include <winpr/winpr.h>
 #include <winpr/wlog.h>
+#include <winpr/wtypes.h>
 
 	void* winpr_unwind_backtrace(DWORD size);
 	void winpr_unwind_backtrace_free(void* buffer);

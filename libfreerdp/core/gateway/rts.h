@@ -25,8 +25,8 @@
 #include <winpr/stream.h>
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/log.h>
+#include <freerdp/types.h>
 
 #include "rpc.h"
 

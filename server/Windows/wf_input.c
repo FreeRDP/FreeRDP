@@ -21,8 +21,8 @@
 
 #include <winpr/windows.h>
 
-#include "wf_input.h"
 #include "wf_info.h"
+#include "wf_input.h"
 
 BOOL wf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {

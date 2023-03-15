@@ -18,18 +18,21 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <fcntl.h>
-
-#include <io.h>
+// clang-format off
 #include <windows.h>
-#include <dbghelp.h>
+// clang-format on
+
+#include <fcntl.h>
+#include <stdio.h>
 
 #include "debug.h"
 
 #ifndef MIN
 #define MIN(a, b) (a) < (b) ? (a) : (b)
 #endif
+
+#include <dbghelp.h>
+#include <io.h>
 
 typedef struct
 {

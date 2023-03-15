@@ -21,18 +21,18 @@
 
 #include <stdio.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
 #include <winpr/stream.h>
 
-#include <freerdp/log.h>
 #include <freerdp/gdi/bitmap.h>
+#include <freerdp/log.h>
 
-#include "../gdi/gdi.h"
 #include "../core/graphics.h"
+#include "../gdi/gdi.h"
 
 #include "bitmap.h"
 #include "cache.h"

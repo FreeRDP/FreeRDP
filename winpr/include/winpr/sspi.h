@@ -20,10 +20,10 @@
 #ifndef WINPR_SSPI_H
 #define WINPR_SSPI_H
 
+#include <winpr/security.h>
+#include <winpr/windows.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-#include <winpr/windows.h>
-#include <winpr/security.h>
 
 #ifdef _WIN32
 
@@ -31,8 +31,8 @@
 #include <winerror.h>
 
 #define SECURITY_WIN32
-#include <sspi.h>
 #include <security.h>
+#include <sspi.h>
 
 #endif /* _WIN32 */
 

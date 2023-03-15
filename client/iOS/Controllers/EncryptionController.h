@@ -8,8 +8,8 @@
  http://mozilla.org/MPL/2.0/.
  */
 
-#import <Foundation/Foundation.h>
 #import "Encryptor.h"
+#import <Foundation/Foundation.h>
 
 @interface EncryptionController : NSObject
 {

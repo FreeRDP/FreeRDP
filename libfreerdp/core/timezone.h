@@ -24,9 +24,9 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/log.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/log.h>
 
 #include <winpr/stream.h>
 

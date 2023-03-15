@@ -25,8 +25,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-#include <winpr/wtsapi.h>
 #include <freerdp/types.h>
+#include <winpr/wtsapi.h>
 
 #define CHANNEL_EVENT_USER 1000
 

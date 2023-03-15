@@ -25,14 +25,14 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-#include <winpr/nt.h>
-#include <winpr/io.h>
 #include <winpr/error.h>
+#include <winpr/io.h>
+#include <winpr/nt.h>
 
 #ifndef _WIN32
 
-#include <stdio.h>
 #include "../handle/handle.h"
+#include <stdio.h>
 
 #define EPOCH_DIFF 11644473600LL
 #define STAT_TIME_TO_FILETIME(_t) (((UINT64)(_t) + EPOCH_DIFF) * 10000000LL)

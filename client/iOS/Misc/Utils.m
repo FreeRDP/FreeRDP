@@ -12,15 +12,15 @@
 #import "OrderedDictionary.h"
 #import "TSXAdditions.h"
 
+#import <freerdp/config.h>
 #import <freerdp/input.h>
 #import <freerdp/version.h>
-#import <freerdp/config.h>
 
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include <sys/socket.h>
 #include <ifaddrs.h>
 #include <net/if_dl.h>
+#include <sys/socket.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
 
 BOOL ScanHostNameAndPort(NSString *address, NSString **host, unsigned short *port)
 {

@@ -1,10 +1,10 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
+#include <winpr/library.h>
 #include <winpr/path.h>
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
-#include <winpr/library.h>
 
 int TestLibraryLoadLibrary(int argc, char* argv[])
 {

@@ -26,12 +26,12 @@
 
 #include <winpr/assert.h>
 
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/codec/rfx.h>
-#include <freerdp/codec/nsc.h>
-#include <freerdp/constants.h>
-#include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/color.h>
+#include <freerdp/codec/nsc.h>
+#include <freerdp/codec/rfx.h>
+#include <freerdp/constants.h>
+#include <freerdp/gdi/gdi.h>
 
 #include "xf_gdi.h"
 #include "xf_graphics.h"

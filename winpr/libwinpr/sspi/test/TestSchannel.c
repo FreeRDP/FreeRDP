@@ -1,16 +1,16 @@
 
 #include <winpr/crt.h>
-#include <winpr/sspi.h>
-#include <winpr/file.h>
-#include <winpr/pipe.h>
-#include <winpr/path.h>
-#include <winpr/tchar.h>
-#include <winpr/print.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
 #include <winpr/crypto.h>
-#include <winpr/wlog.h>
+#include <winpr/file.h>
+#include <winpr/path.h>
+#include <winpr/pipe.h>
+#include <winpr/print.h>
 #include <winpr/schannel.h>
+#include <winpr/sspi.h>
+#include <winpr/synch.h>
+#include <winpr/tchar.h>
+#include <winpr/thread.h>
+#include <winpr/wlog.h>
 
 static BOOL g_ClientWait = FALSE;
 static BOOL g_ServerWait = FALSE;

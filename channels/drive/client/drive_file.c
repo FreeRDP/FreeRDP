@@ -33,11 +33,11 @@
 #include <string.h>
 #include <time.h>
 
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
-#include <winpr/path.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
 #include <winpr/stream.h>
+#include <winpr/wtypes.h>
 
 #include <freerdp/channels/rdpdr.h>
 

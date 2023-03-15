@@ -24,8 +24,8 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-#include <freerdp/settings.h>
 #include <freerdp/server/drdynvc.h>
+#include <freerdp/settings.h>
 
 struct s_drdynvc_server_private
 {

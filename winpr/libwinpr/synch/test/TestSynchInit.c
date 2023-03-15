@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <winpr/crt.h>
+#include <winpr/interlocked.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/interlocked.h>
 
 #define TEST_NUM_THREADS 100
 #define TEST_NUM_FAILURES 10

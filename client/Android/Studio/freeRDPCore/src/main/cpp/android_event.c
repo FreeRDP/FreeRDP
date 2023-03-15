@@ -19,8 +19,8 @@
 
 #define TAG CLIENT_TAG("android")
 
-#include "android_freerdp.h"
 #include "android_cliprdr.h"
+#include "android_freerdp.h"
 
 BOOL android_push_event(freerdp* inst, ANDROID_EVENT* event)
 {

@@ -17,9 +17,9 @@
  * limitations under the License.
  */
 
+#include <freerdp/client/channels.h>
 #include <freerdp/config.h>
 #include <freerdp/log.h>
-#include <freerdp/client/channels.h>
 
 #define TAG FREERDP_TAG("genericdynvc")
 

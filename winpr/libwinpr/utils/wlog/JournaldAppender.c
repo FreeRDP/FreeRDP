@@ -22,9 +22,9 @@
 
 #include "JournaldAppender.h"
 
-#include <unistd.h>
 #include <syslog.h>
 #include <systemd/sd-journal.h>
+#include <unistd.h>
 
 #include <winpr/crt.h>
 #include <winpr/environment.h>

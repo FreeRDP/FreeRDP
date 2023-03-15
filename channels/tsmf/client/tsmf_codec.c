@@ -21,11 +21,11 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/stream.h>
 #include <winpr/print.h>
+#include <winpr/stream.h>
 
-#include "tsmf_decoder.h"
 #include "tsmf_constants.h"
+#include "tsmf_decoder.h"
 #include "tsmf_types.h"
 
 #include "tsmf_codec.h"

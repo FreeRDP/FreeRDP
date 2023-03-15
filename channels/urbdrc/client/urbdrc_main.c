@@ -18,28 +18,28 @@
  * limitations under the License.
  */
 
-#include <winpr/assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+#include <winpr/assert.h>
 
 #include <winpr/pool.h>
 #include <winpr/print.h>
 
-#include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/string.h>
 #include <winpr/cmdline.h>
+#include <winpr/crt.h>
+#include <winpr/string.h>
+#include <winpr/synch.h>
 
-#include <freerdp/dvc.h>
 #include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/channels/urbdrc.h>
+#include <freerdp/dvc.h>
 
-#include "urbdrc_types.h"
-#include "urbdrc_main.h"
 #include "data_transfer.h"
+#include "urbdrc_main.h"
+#include "urbdrc_types.h"
 
 #include <urbdrc_helpers.h>
 

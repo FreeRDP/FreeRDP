@@ -18,13 +18,13 @@
 
 #ifndef _WIN32
 #include <fcntl.h>
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #endif
 
-#include <winpr/sysinfo.h>
-#include <winpr/platform.h>
 #include <winpr/crypto.h>
+#include <winpr/platform.h>
+#include <winpr/sysinfo.h>
 
 primitives_t* generic = NULL;
 primitives_t* optimized = NULL;

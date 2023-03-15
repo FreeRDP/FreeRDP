@@ -22,15 +22,15 @@
 #include "uwac-priv.h"
 #include "uwac-utils.h"
 
+#include <assert.h>
+#include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
-#include <assert.h>
-#include <errno.h>
+#include <sys/epoll.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/epoll.h>
 
 #include "uwac-os.h"
 #include "wayland-cursor.h"

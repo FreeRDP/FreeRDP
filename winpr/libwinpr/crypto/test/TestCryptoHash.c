@@ -1,7 +1,7 @@
 
 #include <winpr/crt.h>
-#include <winpr/print.h>
 #include <winpr/crypto.h>
+#include <winpr/print.h>
 #include <winpr/ssl.h>
 
 static const char TEST_MD5_DATA[] = "test";

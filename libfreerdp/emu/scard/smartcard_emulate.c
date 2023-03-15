@@ -20,17 +20,17 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
-#include <winpr/wlog.h>
-#include <winpr/file.h>
-#include <winpr/path.h>
-#include <winpr/library.h>
-#include <winpr/smartcard.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
 #include <winpr/crypto.h>
+#include <winpr/file.h>
+#include <winpr/library.h>
+#include <winpr/path.h>
+#include <winpr/smartcard.h>
+#include <winpr/wlog.h>
 
-#include <freerdp/emulate/scard/smartcard_emulate.h>
 #include "FreeRDP.ico.h"
+#include <freerdp/emulate/scard/smartcard_emulate.h>
 
 #include "smartcard_virtual_gids.h"
 

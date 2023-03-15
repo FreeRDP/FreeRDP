@@ -53,9 +53,9 @@
 #ifndef FREERDP_DVC_H
 #define FREERDP_DVC_H
 
-#include <freerdp/types.h>
 #include <freerdp/addin.h>
 #include <freerdp/settings.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"

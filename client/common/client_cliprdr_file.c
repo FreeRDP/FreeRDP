@@ -22,8 +22,8 @@
 
 #include <freerdp/config.h>
 
-#include <stdlib.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #ifdef WITH_FUSE3
 #define FUSE_USE_VERSION 30
@@ -34,24 +34,24 @@
 #endif
 
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#include <errno.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-#include <errno.h>
 #include <time.h>
 #endif
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/image.h>
-#include <winpr/stream.h>
 #include <winpr/clipboard.h>
+#include <winpr/crt.h>
+#include <winpr/image.h>
 #include <winpr/path.h>
+#include <winpr/stream.h>
 
-#include <freerdp/utils/signal.h>
-#include <freerdp/log.h>
-#include <freerdp/client/cliprdr.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/channels/cliprdr.h>
+#include <freerdp/client/cliprdr.h>
+#include <freerdp/log.h>
+#include <freerdp/utils/signal.h>
 
 #include <freerdp/client/client_cliprdr_file.h>
 

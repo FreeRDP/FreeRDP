@@ -22,8 +22,8 @@
 #include <winpr/config.h>
 
 #include "BinaryAppender.h"
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/stream.h>

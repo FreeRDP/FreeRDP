@@ -20,8 +20,8 @@
 #ifndef FREERDP_LIB_CODEC_RFX_DIFFERENTIAL_H
 #define FREERDP_LIB_CODEC_RFX_DIFFERENTIAL_H
 
-#include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
+#include <freerdp/codec/rfx.h>
 
 static INLINE void rfx_differential_decode(INT16* buffer, int size)
 {

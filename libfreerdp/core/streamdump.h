@@ -23,8 +23,8 @@
 #define FREERDP_STREAMDUMP_INTERNAL
 
 #include <freerdp/api.h>
-#include <winpr/wtypes.h>
 #include <winpr/stream.h>
+#include <winpr/wtypes.h>
 
 #if !defined(BUILD_TESTING)
 static

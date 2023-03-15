@@ -21,8 +21,8 @@
 #ifndef INTERNAL_CODEC_PROGRESSIVE_H
 #define INTERNAL_CODEC_PROGRESSIVE_H
 
-#include <winpr/wlog.h>
 #include <winpr/collections.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/codec/rfx.h>
 

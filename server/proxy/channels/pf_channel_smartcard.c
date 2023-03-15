@@ -21,20 +21,20 @@
 #include <winpr/assert.h>
 #include <winpr/string.h>
 
-#include <winpr/smartcard.h>
 #include <winpr/pool.h>
+#include <winpr/smartcard.h>
 
-#include <freerdp/server/proxy/proxy_log.h>
-#include <freerdp/emulate/scard/smartcard_emulate.h>
-#include <freerdp/channels/scard.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/channels/scard.h>
+#include <freerdp/emulate/scard/smartcard_emulate.h>
+#include <freerdp/server/proxy/proxy_log.h>
 #include <freerdp/utils/rdpdr_utils.h>
 
-#include <freerdp/utils/smartcard_operations.h>
 #include <freerdp/utils/smartcard_call.h>
+#include <freerdp/utils/smartcard_operations.h>
 
-#include "pf_channel_smartcard.h"
 #include "pf_channel_rdpdr.h"
+#include "pf_channel_smartcard.h"
 
 #define TAG PROXY_TAG("channel.scard")
 

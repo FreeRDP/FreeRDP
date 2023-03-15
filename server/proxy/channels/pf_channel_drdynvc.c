@@ -19,13 +19,13 @@
 #include <winpr/assert.h>
 
 #include <freerdp/channels/drdynvc.h>
-#include <freerdp/utils/drdynvc.h>
 #include <freerdp/server/proxy/proxy_log.h>
+#include <freerdp/utils/drdynvc.h>
 
-#include "pf_channel_drdynvc.h"
 #include "../pf_channel.h"
-#include "../proxy_modules.h"
 #include "../pf_utils.h"
+#include "../proxy_modules.h"
+#include "pf_channel_drdynvc.h"
 
 #define TAG PROXY_TAG("drdynvc")
 

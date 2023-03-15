@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#include <freerdp/utils/string.h>
 #include <freerdp/settings.h>
+#include <freerdp/utils/string.h>
 
 char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
 {

@@ -18,13 +18,13 @@
 
 #include <freerdp/config.h>
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include <freerdp/primitives.h>
+#include <winpr/crypto.h>
 #include <winpr/synch.h>
 #include <winpr/sysinfo.h>
-#include <winpr/crypto.h>
-#include <freerdp/primitives.h>
 
 #include "prim_internal.h"
 

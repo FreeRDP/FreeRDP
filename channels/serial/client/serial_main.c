@@ -21,12 +21,12 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
 #include <errno.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <winpr/assert.h>
 
 #include <winpr/collections.h>
 #include <winpr/comm.h>
@@ -36,9 +36,9 @@
 #include <winpr/thread.h>
 #include <winpr/wlog.h>
 
-#include <freerdp/freerdp.h>
-#include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/channels/rdpdr.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/rdpdr_utils.h>
 
 #define TAG CHANNELS_TAG("serial.client")

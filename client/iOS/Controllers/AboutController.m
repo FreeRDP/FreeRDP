@@ -9,8 +9,8 @@
  */
 
 #import "AboutController.h"
-#import "Utils.h"
 #import "BlockAlertView.h"
+#import "Utils.h"
 
 @implementation AboutController
 

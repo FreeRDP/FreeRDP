@@ -29,10 +29,10 @@
 #include <string.h>
 
 #include <winpr/assert.h>
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
-#include <winpr/file.h>
 #include <winpr/crypto.h>
+#include <winpr/file.h>
+#include <winpr/wtypes.h>
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>

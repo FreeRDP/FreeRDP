@@ -1,8 +1,8 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/codec/rfx.h>
+#include <freerdp/freerdp.h>
 
 static BYTE encodeHeaderSample[] = {
 	/* as in 4.2.2 */

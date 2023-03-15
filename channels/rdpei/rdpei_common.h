@@ -21,9 +21,9 @@
 #ifndef FREERDP_CHANNEL_RDPEI_COMMON_H
 #define FREERDP_CHANNEL_RDPEI_COMMON_H
 
+#include <freerdp/channels/rdpei.h>
 #include <winpr/crt.h>
 #include <winpr/stream.h>
-#include <freerdp/channels/rdpei.h>
 
 /** @brief input event ids */
 enum

@@ -19,8 +19,8 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/primitives.h>
 #include <freerdp/api.h>
+#include <freerdp/primitives.h>
 
 #ifdef __GNUC__
 #define PRIM_ALIGN_128 __attribute__((aligned(16)))

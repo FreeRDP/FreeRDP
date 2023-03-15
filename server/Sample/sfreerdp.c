@@ -24,32 +24,32 @@
 #include <errno.h>
 #include <signal.h>
 
-#include <winpr/winpr.h>
-#include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/ssl.h>
-#include <winpr/synch.h>
+#include <winpr/crt.h>
 #include <winpr/file.h>
-#include <winpr/string.h>
 #include <winpr/path.h>
+#include <winpr/ssl.h>
+#include <winpr/string.h>
+#include <winpr/synch.h>
+#include <winpr/winpr.h>
 #include <winpr/winsock.h>
 
 #include <freerdp/streamdump.h>
 #include <freerdp/transport_io.h>
 
-#include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/channels/drdynvc.h>
+#include <freerdp/channels/wtsvc.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/server/rdpsnd.h>
 #include <freerdp/settings.h>
 
 #include "sf_ainput.h"
 #include "sf_audin.h"
-#include "sf_rdpsnd.h"
 #include "sf_encomsp.h"
+#include "sf_rdpsnd.h"
 
 #include "sfreerdp.h"
 

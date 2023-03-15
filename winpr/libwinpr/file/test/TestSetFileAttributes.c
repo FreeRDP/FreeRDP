@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
-#include <winpr/path.h>
 #include <winpr/handle.h>
-#include <winpr/windows.h>
+#include <winpr/path.h>
 #include <winpr/sysinfo.h>
+#include <winpr/windows.h>
 
 static const DWORD allflags[] = {
 	0,

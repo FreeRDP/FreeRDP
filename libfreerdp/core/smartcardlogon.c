@@ -18,19 +18,19 @@
  */
 #include <string.h>
 
+#include <winpr/crypto.h>
 #include <winpr/error.h>
 #include <winpr/ncrypt.h>
+#include <winpr/path.h>
 #include <winpr/string.h>
 #include <winpr/wlog.h>
-#include <winpr/crypto.h>
-#include <winpr/path.h>
 
-#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/log.h>
 #include <winpr/print.h>
 
-#include <freerdp/utils/smartcardlogon.h>
 #include <freerdp/crypto/crypto.h>
+#include <freerdp/utils/smartcardlogon.h>
 
 #include <openssl/obj_mac.h>
 

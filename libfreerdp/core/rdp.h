@@ -23,35 +23,35 @@
 
 #include <freerdp/config.h>
 
-#include "nla.h"
-#include "aad.h"
-#include "mcs.h"
-#include "tpkt.h"
 #include "../codec/bulk.h"
-#include "fastpath.h"
-#include "tpdu.h"
-#include "nego.h"
-#include "input.h"
-#include "update.h"
-#include "license.h"
-#include "errinfo.h"
+#include "aad.h"
 #include "autodetect.h"
-#include "heartbeat.h"
-#include "multitransport.h"
-#include "security.h"
-#include "transport.h"
-#include "connection.h"
-#include "redirection.h"
 #include "capabilities.h"
 #include "channels.h"
+#include "connection.h"
+#include "errinfo.h"
+#include "fastpath.h"
+#include "heartbeat.h"
+#include "input.h"
+#include "license.h"
+#include "mcs.h"
+#include "multitransport.h"
+#include "nego.h"
+#include "nla.h"
+#include "redirection.h"
+#include "security.h"
+#include "tpdu.h"
+#include "tpkt.h"
+#include "transport.h"
+#include "update.h"
 
-#include <freerdp/freerdp.h>
-#include <freerdp/settings.h>
-#include <freerdp/log.h>
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/log.h>
+#include <freerdp/settings.h>
 
-#include <winpr/stream.h>
 #include <winpr/crypto.h>
+#include <winpr/stream.h>
 
 /* Security Header Flags */
 #define SEC_EXCHANGE_PKT 0x0001

@@ -20,8 +20,8 @@
 #ifndef FREERDP_LIB_GDI_CORE_H
 #define FREERDP_LIB_GDI_CORE_H
 
-#include "graphics.h"
 #include "brush.h"
+#include "graphics.h"
 
 #include <freerdp/api.h>
 

@@ -28,8 +28,8 @@
 typedef struct rdp_credssp_auth rdpCredsspAuth;
 
 #include <freerdp/freerdp.h>
-#include <winpr/tchar.h>
 #include <winpr/sspi.h>
+#include <winpr/tchar.h>
 
 FREERDP_LOCAL rdpCredsspAuth* credssp_auth_new(const rdpContext* context);
 FREERDP_LOCAL BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name,

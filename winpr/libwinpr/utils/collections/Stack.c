@@ -19,8 +19,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/collections.h>
 #include <winpr/assert.h>
+#include <winpr/collections.h>
 
 struct s_wStack
 {

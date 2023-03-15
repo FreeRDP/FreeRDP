@@ -20,13 +20,13 @@
 #ifndef FREERDP_LIB_CORE_INPUT_H
 #define FREERDP_LIB_CORE_INPUT_H
 
-#include "rdp.h"
 #include "fastpath.h"
 #include "message.h"
+#include "rdp.h"
 
-#include <freerdp/input.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/input.h>
 
 #include <winpr/stream.h>
 

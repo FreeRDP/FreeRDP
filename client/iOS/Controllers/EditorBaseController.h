@@ -8,13 +8,13 @@
  http://mozilla.org/MPL/2.0/.
  */
 
-#import <UIKit/UIKit.h>
-#import "EditTextTableViewCell.h"
+#import "EditButtonTableViewCell.h"
 #import "EditFlagTableViewCell.h"
+#import "EditSecretTextTableViewCell.h"
 #import "EditSelectionTableViewCell.h"
 #import "EditSubEditTableViewCell.h"
-#import "EditSecretTextTableViewCell.h"
-#import "EditButtonTableViewCell.h"
+#import "EditTextTableViewCell.h"
+#import <UIKit/UIKit.h>
 
 extern NSString *TableCellIdentifierText;
 extern NSString *TableCellIdentifierSecretText;

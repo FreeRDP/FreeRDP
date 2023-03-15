@@ -24,12 +24,12 @@
 #include <freerdp/config.h>
 #include <freerdp/license.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/crypto.h>
-#include <winpr/shell.h>
-#include <winpr/path.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
+#include <winpr/shell.h>
 
 #include <freerdp/log.h>
 
@@ -37,8 +37,8 @@
 
 #include "license.h"
 
-#include "../crypto/crypto.h"
 #include "../crypto/certificate.h"
+#include "../crypto/crypto.h"
 
 #define TAG FREERDP_TAG("core.license")
 
@@ -2282,7 +2282,7 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 	if (!license_check_preferred_alg(license, PreferredKeyExchangeAlg, "new license request"))
 		return FALSE;
 
-	Stream_Read_UINT32(s, license->PlatformId);                  /* PlatformId (4 bytes) */
+	Stream_Read_UINT32(s, license->PlatformId); /* PlatformId (4 bytes) */
 	Stream_Read(s, license->ClientRandom,
 	            sizeof(license->ClientRandom)); /* ClientRandom (32 bytes) */
 

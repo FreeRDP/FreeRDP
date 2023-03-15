@@ -24,9 +24,9 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-#include <freerdp/streamdump.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/client/cmdline.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/streamdump.h>
 
 #include "../xf_client.h"
 #include "../xfreerdp.h"

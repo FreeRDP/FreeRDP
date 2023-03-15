@@ -18,10 +18,10 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
-#include <freerdp/log.h>
 #include <freerdp/codec/dsp.h>
+#include <freerdp/log.h>
 #include <freerdp/server/server-common.h>
+#include <winpr/crt.h>
 
 #include "shadow.h"
 

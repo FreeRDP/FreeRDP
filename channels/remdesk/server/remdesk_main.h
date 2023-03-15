@@ -24,8 +24,8 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-#include <freerdp/server/remdesk.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/server/remdesk.h>
 
 #define TAG CHANNELS_TAG("remdesk.server")
 

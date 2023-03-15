@@ -19,20 +19,20 @@
 
 #include <winpr/config.h>
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/print.h>
+#include <winpr/crt.h>
 #include <winpr/debug.h>
 #include <winpr/environment.h>
+#include <winpr/print.h>
 #include <winpr/wlog.h>
 
 #if defined(ANDROID)
-#include <android/log.h>
 #include "../log.h"
+#include <android/log.h>
 #endif
 
 #include "wlog.h"

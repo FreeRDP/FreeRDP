@@ -36,23 +36,23 @@ typedef struct xf_context xfContext;
 
 #include <freerdp/api.h>
 
-#include "xf_window.h"
-#include "xf_monitor.h"
 #include "xf_channels.h"
+#include "xf_monitor.h"
+#include "xf_window.h"
 
 #if defined(CHANNEL_TSMF_CLIENT)
 #include <freerdp/client/tsmf.h>
 #endif
 
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/codec/rfx.h>
-#include <freerdp/codec/nsc.h>
+#include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/clear.h>
 #include <freerdp/codec/color.h>
-#include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/h264.h>
+#include <freerdp/codec/nsc.h>
 #include <freerdp/codec/progressive.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/codec/rfx.h>
+#include <freerdp/gdi/gdi.h>
 
 #if !defined(XcursorUInt)
 typedef unsigned int XcursorUInt;

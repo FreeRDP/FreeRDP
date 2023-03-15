@@ -23,8 +23,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-#include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/color.h>
 
 #ifdef __cplusplus
 extern "C"

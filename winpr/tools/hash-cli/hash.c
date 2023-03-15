@@ -17,14 +17,14 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include <winpr/assert.h>
 #include <winpr/ntlm.h>
 #include <winpr/ssl.h>
-#include <winpr/assert.h>
 
 /**
  * Define NTOWFv1(Password, User, Domain) as

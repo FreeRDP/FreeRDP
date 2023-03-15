@@ -19,10 +19,10 @@
 
 #include <winpr/config.h>
 
+#include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
-#include <errno.h>
 
 #include <winpr/crt.h>
 #include <winpr/print.h>

@@ -23,16 +23,16 @@
 #include "uwac-priv.h"
 #include "uwac-utils.h"
 
+#include <assert.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
-#include <time.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <sys/epoll.h>
 #include <sys/mman.h>
 #include <sys/timerfd.h>
-#include <sys/epoll.h>
+#include <time.h>
+#include <unistd.h>
 
 /* paste */
 static void data_offer_offer(void* data, struct wl_data_offer* data_offer,

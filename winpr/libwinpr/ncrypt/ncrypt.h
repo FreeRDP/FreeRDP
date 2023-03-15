@@ -24,8 +24,8 @@
 
 #include <winpr/bcrypt.h>
 #include <winpr/crypto.h>
-#include <winpr/ncrypt.h>
 #include <winpr/error.h>
+#include <winpr/ncrypt.h>
 #include <winpr/string.h>
 
 /** @brief type of ncrypt object */

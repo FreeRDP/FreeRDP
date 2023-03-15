@@ -20,11 +20,11 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/pool.h>
 #include <winpr/library.h>
+#include <winpr/pool.h>
 
-#include "pool.h"
 #include "../log.h"
+#include "pool.h"
 #define TAG WINPR_TAG("pool")
 
 #ifdef WINPR_THREAD_POOL

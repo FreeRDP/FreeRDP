@@ -25,15 +25,15 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/smartcard.h>
 #include <winpr/environment.h>
+#include <winpr/smartcard.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/scard.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/utils/rdpdr_utils.h>
 #include <freerdp/utils/smartcard_call.h>
 #include <freerdp/utils/smartcard_operations.h>
-#include <freerdp/utils/rdpdr_utils.h>
 
 #include "smartcard_main.h"
 

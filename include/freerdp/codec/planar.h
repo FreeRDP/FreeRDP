@@ -24,8 +24,8 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/color.h>
 
 #define PLANAR_FORMAT_HEADER_CS (1 << 3)
 #define PLANAR_FORMAT_HEADER_RLE (1 << 4)

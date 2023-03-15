@@ -26,10 +26,10 @@
 #include <winpr/tchar.h>
 #include <winpr/windows.h>
 
-#include "wf_info.h"
-#include "wf_update.h"
-#include "wf_mirage.h"
 #include "wf_dxgi.h"
+#include "wf_info.h"
+#include "wf_mirage.h"
+#include "wf_update.h"
 
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")

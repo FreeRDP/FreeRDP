@@ -25,8 +25,8 @@
 
 #include "sf_rdpsnd.h"
 
-#include <freerdp/server/server-common.h>
 #include <freerdp/log.h>
+#include <freerdp/server/server-common.h>
 #define TAG SERVER_TAG("sample")
 
 static void sf_peer_rdpsnd_activated(RdpsndServerContext* context)

@@ -19,8 +19,8 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crypto.h>
 #include <winpr/assert.h>
+#include <winpr/crypto.h>
 
 #include "autodetect.h"
 

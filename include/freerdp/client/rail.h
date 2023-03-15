@@ -23,9 +23,9 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-#include <freerdp/rail.h>
-#include <freerdp/message.h>
 #include <freerdp/channels/rail.h>
+#include <freerdp/message.h>
+#include <freerdp/rail.h>
 
 #ifdef __cplusplus
 extern "C"

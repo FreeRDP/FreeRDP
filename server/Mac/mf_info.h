@@ -23,8 +23,8 @@
 #define FREERDP_SERVER_MAC_INFO_DEFAULT_FPS 1
 #define FREERDP_SERVER_MAC_INFO_MAXPEERS 1
 
-#include <winpr/wtypes.h>
 #include <freerdp/codec/rfx.h>
+#include <winpr/wtypes.h>
 
 #include "mf_interface.h"
 

@@ -2,13 +2,13 @@
 #include <math.h>
 
 #include <winpr/crt.h>
-#include <winpr/print.h>
 #include <winpr/crypto.h>
+#include <winpr/print.h>
 
-#include <freerdp/freerdp.h>
-#include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/color.h>
 #include <freerdp/codec/planar.h>
+#include <freerdp/freerdp.h>
 
 /**
  * Experimental Case 01: 64x64 (32bpp)

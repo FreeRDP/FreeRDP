@@ -24,8 +24,8 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
-#include "stream.h"
 #include "../log.h"
+#include "stream.h"
 
 #define STREAM_TAG WINPR_TAG("wStream")
 

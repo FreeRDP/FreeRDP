@@ -20,9 +20,9 @@
 #ifndef FREERDP_LIB_LOCALE_KEYBOARD_XKB_H
 #define FREERDP_LIB_LOCALE_KEYBOARD_XKB_H
 
-#include <freerdp/types.h>
-#include <freerdp/locale/keyboard.h>
 #include <freerdp/api.h>
+#include <freerdp/locale/keyboard.h>
+#include <freerdp/types.h>
 
 FREERDP_LOCAL int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId,
                                                 DWORD x11_keycode_to_rdp_scancode[256]);

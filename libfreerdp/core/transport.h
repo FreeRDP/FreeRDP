@@ -29,26 +29,26 @@ typedef enum
 	TRANSPORT_LAYER_CLOSED
 } TRANSPORT_LAYER;
 
-#include "tcp.h"
 #include "nla.h"
 #include "rdstls.h"
+#include "tcp.h"
 
-#include "gateway/tsg.h"
 #include "gateway/rdg.h"
+#include "gateway/tsg.h"
 
+#include <winpr/collections.h>
 #include <winpr/sspi.h>
-#include <winpr/wlog.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/collections.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/api.h>
 
-#include <time.h>
-#include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/transport_io.h>
+#include <freerdp/types.h>
+#include <time.h>
 
 #include "state.h"
 

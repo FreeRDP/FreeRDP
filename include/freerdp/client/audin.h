@@ -53,18 +53,18 @@ extern "C"
 
 #define AUDIN_DEVICE_EXPORT_FUNC_NAME "freerdp_audin_client_subsystem_entry"
 
-typedef UINT (*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
+	typedef UINT (*PREGISTERAUDINDEVICE)(IWTSPlugin* plugin, IAudinDevice* device);
 
-typedef struct
-{
-	IWTSPlugin* plugin;
-	PREGISTERAUDINDEVICE pRegisterAudinDevice;
-	const ADDIN_ARGV* args;
-	rdpContext* rdpcontext;
-} FREERDP_AUDIN_DEVICE_ENTRY_POINTS;
-typedef FREERDP_AUDIN_DEVICE_ENTRY_POINTS* PFREERDP_AUDIN_DEVICE_ENTRY_POINTS;
+	typedef struct
+	{
+		IWTSPlugin* plugin;
+		PREGISTERAUDINDEVICE pRegisterAudinDevice;
+		const ADDIN_ARGV* args;
+		rdpContext* rdpcontext;
+	} FREERDP_AUDIN_DEVICE_ENTRY_POINTS;
+	typedef FREERDP_AUDIN_DEVICE_ENTRY_POINTS* PFREERDP_AUDIN_DEVICE_ENTRY_POINTS;
 
-typedef UINT (*PFREERDP_AUDIN_DEVICE_ENTRY)(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints);
+	typedef UINT (*PFREERDP_AUDIN_DEVICE_ENTRY)(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints);
 
 #ifdef __cplusplus
 }

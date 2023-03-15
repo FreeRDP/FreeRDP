@@ -26,11 +26,11 @@
 
 #include <pthread.h>
 
+#include "../comm/comm.h"
+#include "../pipe/pipe.h"
+#include "../security/security.h"
 #include "../synch/synch.h"
 #include "../thread/thread.h"
-#include "../pipe/pipe.h"
-#include "../comm/comm.h"
-#include "../security/security.h"
 
 #ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>

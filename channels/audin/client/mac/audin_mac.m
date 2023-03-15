@@ -24,12 +24,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/string.h>
-#include <winpr/thread.h>
-#include <winpr/debug.h>
 #include <winpr/cmdline.h>
+#include <winpr/crt.h>
+#include <winpr/debug.h>
+#include <winpr/string.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
 
 #import <AVFoundation/AVFoundation.h>
 
@@ -40,10 +40,10 @@
 	void *AddRef;         \
 	void *Release
 
-#include <CoreAudio/CoreAudioTypes.h>
-#include <CoreAudio/CoreAudio.h>
-#include <AudioToolbox/AudioToolbox.h>
 #include <AudioToolbox/AudioQueue.h>
+#include <AudioToolbox/AudioToolbox.h>
+#include <CoreAudio/CoreAudio.h>
+#include <CoreAudio/CoreAudioTypes.h>
 
 #include <freerdp/addin.h>
 #include <freerdp/channels/rdpsnd.h>

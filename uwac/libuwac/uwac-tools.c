@@ -20,9 +20,9 @@
  * OF THIS SOFTWARE.
  */
 
-#include <wayland-util.h>
 #include <string.h>
 #include <uwac/uwac-tools.h>
+#include <wayland-util.h>
 
 struct uwac_touch_automata
 {

@@ -20,8 +20,8 @@
 #ifndef WINPR_SSPI_KERBEROS_GLUE_PRIVATE_H
 #define WINPR_SSPI_KERBEROS_GLUE_PRIVATE_H
 
-#include <winpr/winpr.h>
 #include <winpr/sspi.h>
+#include <winpr/winpr.h>
 
 #include <krb5.h>
 

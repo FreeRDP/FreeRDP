@@ -23,11 +23,11 @@
 #ifndef WINPR_UTILS_STREAM_H
 #define WINPR_UTILS_STREAM_H
 
-#include <winpr/winpr.h>
-#include <winpr/wtypes.h>
+#include <winpr/assert.h>
 #include <winpr/endian.h>
 #include <winpr/synch.h>
-#include <winpr/assert.h>
+#include <winpr/winpr.h>
+#include <winpr/wtypes.h>
 
 #ifdef __cplusplus
 extern "C"

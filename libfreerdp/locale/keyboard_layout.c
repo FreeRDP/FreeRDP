@@ -27,9 +27,9 @@
 
 #include "liblocale.h"
 
-#include <freerdp/types.h>
-#include <freerdp/scancode.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/scancode.h>
+#include <freerdp/types.h>
 
 struct LanguageIdentifier
 {

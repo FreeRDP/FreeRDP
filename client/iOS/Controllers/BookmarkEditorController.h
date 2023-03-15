@@ -8,8 +8,8 @@
  http://mozilla.org/MPL/2.0/.
  */
 
-#import <UIKit/UIKit.h>
 #import "EditorBaseController.h"
+#import <UIKit/UIKit.h>
 
 @class ComputerBookmark;
 @class ConnectionParams;

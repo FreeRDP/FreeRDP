@@ -22,12 +22,12 @@
 
 #if defined __linux__ && !defined ANDROID
 
-#include <winpr/assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
+#include <winpr/assert.h>
 
 #include "comm_serial_sys.h"
 #ifdef __UCLIBC__

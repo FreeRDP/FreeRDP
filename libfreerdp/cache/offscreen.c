@@ -21,16 +21,16 @@
 
 #include <stdio.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/stream.h>
 
 #include <freerdp/log.h>
 
 #include "../core/graphics.h"
 
-#include "offscreen.h"
 #include "cache.h"
+#include "offscreen.h"
 
 #define TAG FREERDP_TAG("cache.offscreen")
 

@@ -19,19 +19,19 @@
 
 #include <freerdp/config.h>
 
-#include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
 #include <winpr/assert.h>
-#include <winpr/wlog.h>
 #include <winpr/print.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/client/rail.h>
 
-#include "xf_window.h"
 #include "xf_rail.h"
 #include "xf_utils.h"
+#include "xf_window.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")

@@ -23,17 +23,17 @@
 
 typedef struct mac_shadow_subsystem macShadowSubsystem;
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/collections.h>
 
-#include <dispatch/dispatch.h>
+#include <CoreGraphics/CoreGraphics.h>
+#include <CoreVideo/CoreVideo.h>
 #include <IOKit/IOKitLib.h>
 #include <IOSurface/IOSurface.h>
-#include <CoreVideo/CoreVideo.h>
-#include <CoreGraphics/CoreGraphics.h>
+#include <dispatch/dispatch.h>
 
 struct mac_shadow_subsystem
 {

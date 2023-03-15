@@ -21,17 +21,17 @@
 
 #include <errno.h>
 
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
-#include <winpr/print.h>
-#include <winpr/windows.h>
-#include <winpr/ssl.h>
 #include <winpr/file.h>
+#include <winpr/print.h>
+#include <winpr/ssl.h>
+#include <winpr/windows.h>
+#include <winpr/wtypes.h>
 
-#include <freerdp/log.h>
-#include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
+#include <freerdp/client/file.h>
+#include <freerdp/log.h>
 
 #include <freerdp/assistance.h>
 

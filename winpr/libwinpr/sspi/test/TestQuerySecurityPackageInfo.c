@@ -1,8 +1,8 @@
 
 #include <stdio.h>
 #include <winpr/sspi.h>
-#include <winpr/winpr.h>
 #include <winpr/tchar.h>
+#include <winpr/winpr.h>
 
 int TestQuerySecurityPackageInfo(int argc, char* argv[])
 {

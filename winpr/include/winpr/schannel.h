@@ -20,8 +20,8 @@
 #ifndef WINPR_SSPI_SCHANNEL_H
 #define WINPR_SSPI_SCHANNEL_H
 
-#include <winpr/sspi.h>
 #include <winpr/crypto.h>
+#include <winpr/sspi.h>
 
 #if defined(_WIN32) && !defined(_UWP)
 

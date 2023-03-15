@@ -25,8 +25,8 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-#include <winpr/io.h>
 #include <winpr/error.h>
+#include <winpr/io.h>
 
 #if defined(__clang__)
 #pragma clang diagnostic push

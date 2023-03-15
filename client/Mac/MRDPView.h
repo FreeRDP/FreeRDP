@@ -22,9 +22,9 @@
 
 #import <Cocoa/Cocoa.h>
 
-#import "mfreerdp.h"
-#import "mf_client.h"
 #import "Keyboard.h"
+#import "mf_client.h"
+#import "mfreerdp.h"
 
 #import <CoreGraphics/CoreGraphics.h>
 

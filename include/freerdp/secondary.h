@@ -20,8 +20,8 @@
 #ifndef FREERDP_UPDATE_SECONDARY_H
 #define FREERDP_UPDATE_SECONDARY_H
 
-#include <freerdp/types.h>
 #include <freerdp/primary.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -72,123 +72,125 @@ extern "C"
 #define SO_CHAR_INC_EQUAL_BM_BASE 0x20
 #define SO_MAXEXT_EQUAL_BM_SIDE 0x40
 
-typedef struct
-{
-	UINT32 cacheId;
-	UINT32 bitmapBpp;
-	UINT32 bitmapWidth;
-	UINT32 bitmapHeight;
-	UINT32 bitmapLength;
-	UINT32 cacheIndex;
-	BOOL compressed;
-	BYTE bitmapComprHdr[8];
-	BYTE* bitmapDataStream;
-} CACHE_BITMAP_ORDER;
+	typedef struct
+	{
+		UINT32 cacheId;
+		UINT32 bitmapBpp;
+		UINT32 bitmapWidth;
+		UINT32 bitmapHeight;
+		UINT32 bitmapLength;
+		UINT32 cacheIndex;
+		BOOL compressed;
+		BYTE bitmapComprHdr[8];
+		BYTE* bitmapDataStream;
+	} CACHE_BITMAP_ORDER;
 
-typedef struct
-{
-	UINT32 cacheId;
-	UINT32 flags;
-	UINT32 key1;
-	UINT32 key2;
-	UINT32 bitmapBpp;
-	UINT32 bitmapWidth;
-	UINT32 bitmapHeight;
-	UINT32 bitmapLength;
-	UINT32 cacheIndex;
-	BOOL compressed;
-	UINT32 cbCompFirstRowSize;
-	UINT32 cbCompMainBodySize;
-	UINT32 cbScanWidth;
-	UINT32 cbUncompressedSize;
-	BYTE* bitmapDataStream;
-} CACHE_BITMAP_V2_ORDER;
+	typedef struct
+	{
+		UINT32 cacheId;
+		UINT32 flags;
+		UINT32 key1;
+		UINT32 key2;
+		UINT32 bitmapBpp;
+		UINT32 bitmapWidth;
+		UINT32 bitmapHeight;
+		UINT32 bitmapLength;
+		UINT32 cacheIndex;
+		BOOL compressed;
+		UINT32 cbCompFirstRowSize;
+		UINT32 cbCompMainBodySize;
+		UINT32 cbScanWidth;
+		UINT32 cbUncompressedSize;
+		BYTE* bitmapDataStream;
+	} CACHE_BITMAP_V2_ORDER;
 
-typedef struct
-{
-	UINT32 bpp;
-	UINT32 codecID;
-	UINT32 width;
-	UINT32 height;
-	UINT32 length;
-	BYTE* data;
-} BITMAP_DATA_EX;
+	typedef struct
+	{
+		UINT32 bpp;
+		UINT32 codecID;
+		UINT32 width;
+		UINT32 height;
+		UINT32 length;
+		BYTE* data;
+	} BITMAP_DATA_EX;
 
-typedef struct
-{
-	UINT32 cacheId;
-	UINT32 bpp;
-	UINT32 flags;
-	UINT32 cacheIndex;
-	UINT32 key1;
-	UINT32 key2;
-	BITMAP_DATA_EX bitmapData;
-} CACHE_BITMAP_V3_ORDER;
+	typedef struct
+	{
+		UINT32 cacheId;
+		UINT32 bpp;
+		UINT32 flags;
+		UINT32 cacheIndex;
+		UINT32 key1;
+		UINT32 key2;
+		BITMAP_DATA_EX bitmapData;
+	} CACHE_BITMAP_V3_ORDER;
 
-typedef struct
-{
-	UINT32 cacheIndex;
-	UINT32 numberColors;
-	UINT32 colorTable[256];
-} CACHE_COLOR_TABLE_ORDER;
+	typedef struct
+	{
+		UINT32 cacheIndex;
+		UINT32 numberColors;
+		UINT32 colorTable[256];
+	} CACHE_COLOR_TABLE_ORDER;
 
-typedef struct
-{
-	UINT32 cacheId;
-	UINT32 cGlyphs;
-	GLYPH_DATA glyphData[256];
-	WCHAR* unicodeCharacters;
-} CACHE_GLYPH_ORDER;
+	typedef struct
+	{
+		UINT32 cacheId;
+		UINT32 cGlyphs;
+		GLYPH_DATA glyphData[256];
+		WCHAR* unicodeCharacters;
+	} CACHE_GLYPH_ORDER;
 
-typedef struct
-{
-	UINT32 cacheId;
-	UINT32 flags;
-	UINT32 cGlyphs;
-	GLYPH_DATA_V2 glyphData[256];
-	WCHAR* unicodeCharacters;
-} CACHE_GLYPH_V2_ORDER;
+	typedef struct
+	{
+		UINT32 cacheId;
+		UINT32 flags;
+		UINT32 cGlyphs;
+		GLYPH_DATA_V2 glyphData[256];
+		WCHAR* unicodeCharacters;
+	} CACHE_GLYPH_V2_ORDER;
 
-typedef struct
-{
-	UINT32 index;
-	UINT32 bpp;
-	UINT32 cx;
-	UINT32 cy;
-	UINT32 style;
-	UINT32 length;
-	BYTE data[256];
-} CACHE_BRUSH_ORDER;
+	typedef struct
+	{
+		UINT32 index;
+		UINT32 bpp;
+		UINT32 cx;
+		UINT32 cy;
+		UINT32 style;
+		UINT32 length;
+		BYTE data[256];
+	} CACHE_BRUSH_ORDER;
 
-typedef BOOL (*pCacheBitmap)(rdpContext* context, const CACHE_BITMAP_ORDER* cache_bitmap_order);
-typedef BOOL (*pCacheBitmapV2)(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order);
-typedef BOOL (*pCacheBitmapV3)(rdpContext* context, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order);
-typedef BOOL (*pCacheColorTable)(rdpContext* context,
-                                 const CACHE_COLOR_TABLE_ORDER* cache_color_table_order);
-typedef BOOL (*pCacheGlyph)(rdpContext* context, const CACHE_GLYPH_ORDER* cache_glyph_order);
-typedef BOOL (*pCacheGlyphV2)(rdpContext* context,
-                              const CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
-typedef BOOL (*pCacheBrush)(rdpContext* context, const CACHE_BRUSH_ORDER* cache_brush_order);
-typedef BOOL (*pCacheOrderInfo)(rdpContext* context, INT16 orderLength, UINT16 extraFlags,
-                                UINT8 orderType, const char* orderName);
+	typedef BOOL (*pCacheBitmap)(rdpContext* context, const CACHE_BITMAP_ORDER* cache_bitmap_order);
+	typedef BOOL (*pCacheBitmapV2)(rdpContext* context,
+	                               CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order);
+	typedef BOOL (*pCacheBitmapV3)(rdpContext* context,
+	                               CACHE_BITMAP_V3_ORDER* cache_bitmap_v3_order);
+	typedef BOOL (*pCacheColorTable)(rdpContext* context,
+	                                 const CACHE_COLOR_TABLE_ORDER* cache_color_table_order);
+	typedef BOOL (*pCacheGlyph)(rdpContext* context, const CACHE_GLYPH_ORDER* cache_glyph_order);
+	typedef BOOL (*pCacheGlyphV2)(rdpContext* context,
+	                              const CACHE_GLYPH_V2_ORDER* cache_glyph_v2_order);
+	typedef BOOL (*pCacheBrush)(rdpContext* context, const CACHE_BRUSH_ORDER* cache_brush_order);
+	typedef BOOL (*pCacheOrderInfo)(rdpContext* context, INT16 orderLength, UINT16 extraFlags,
+	                                UINT8 orderType, const char* orderName);
 
-struct rdp_secondary_update
-{
-	rdpContext* context;     /* 0 */
-	UINT32 paddingA[16 - 1]; /* 1 */
+	struct rdp_secondary_update
+	{
+		rdpContext* context;     /* 0 */
+		UINT32 paddingA[16 - 1]; /* 1 */
 
-	pCacheBitmap CacheBitmap;         /* 16 */
-	pCacheBitmapV2 CacheBitmapV2;     /* 17 */
-	pCacheBitmapV3 CacheBitmapV3;     /* 18 */
-	pCacheColorTable CacheColorTable; /* 19 */
-	pCacheGlyph CacheGlyph;           /* 20 */
-	pCacheGlyphV2 CacheGlyphV2;       /* 21 */
-	pCacheBrush CacheBrush;           /* 22 */
-	/* Statistics callback */
-	pCacheOrderInfo CacheOrderInfo; /* 23 */
-	UINT32 paddingE[32 - 24];       /* 24 */
-};
-typedef struct rdp_secondary_update rdpSecondaryUpdate;
+		pCacheBitmap CacheBitmap;         /* 16 */
+		pCacheBitmapV2 CacheBitmapV2;     /* 17 */
+		pCacheBitmapV3 CacheBitmapV3;     /* 18 */
+		pCacheColorTable CacheColorTable; /* 19 */
+		pCacheGlyph CacheGlyph;           /* 20 */
+		pCacheGlyphV2 CacheGlyphV2;       /* 21 */
+		pCacheBrush CacheBrush;           /* 22 */
+		/* Statistics callback */
+		pCacheOrderInfo CacheOrderInfo; /* 23 */
+		UINT32 paddingE[32 - 24];       /* 24 */
+	};
+	typedef struct rdp_secondary_update rdpSecondaryUpdate;
 
 #ifdef __cplusplus
 }

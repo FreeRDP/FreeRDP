@@ -22,8 +22,8 @@
 #ifndef WINPR_SSPI_GSS_PRIVATE_H
 #define WINPR_SSPI_GSS_PRIVATE_H
 
-#include <winpr/sspi.h>
 #include <winpr/asn1.h>
+#include <winpr/sspi.h>
 
 #ifdef WITH_KRB5_MIT
 #include <krb5.h>

@@ -18,11 +18,11 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
-#include <freerdp/log.h>
 #include <freerdp/client/rail.h>
-#include <winpr/tchar.h>
+#include <freerdp/log.h>
+#include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/tchar.h>
 
 #include "wf_rail.h"
 

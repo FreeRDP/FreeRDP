@@ -24,9 +24,9 @@
 #include <winpr/pipe.h>
 #include <winpr/thread.h>
 
+#include <freerdp/channels/rdp2tcp.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/svc.h>
-#include <freerdp/channels/rdp2tcp.h>
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG(RDP2TCP_DVC_CHANNEL_NAME)

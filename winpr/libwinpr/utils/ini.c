@@ -24,9 +24,9 @@
 #include <string.h>
 
 #include <errno.h>
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
+#include <winpr/wtypes.h>
 
 #include <winpr/ini.h>
 

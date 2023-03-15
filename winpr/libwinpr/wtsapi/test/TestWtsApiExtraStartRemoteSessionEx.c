@@ -1,9 +1,9 @@
 
 #include <winpr/crt.h>
-#include <winpr/error.h>
-#include <winpr/wtsapi.h>
-#include <winpr/input.h>
 #include <winpr/environment.h>
+#include <winpr/error.h>
+#include <winpr/input.h>
+#include <winpr/wtsapi.h>
 
 int TestWtsApiExtraStartRemoteSessionEx(int argc, char* argv[])
 {

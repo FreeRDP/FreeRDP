@@ -9,8 +9,8 @@
  */
 
 #import "AppSettingsController.h"
-#import "Utils.h"
 #import "Toast+UIView.h"
+#import "Utils.h"
 
 @implementation AppSettingsController
 

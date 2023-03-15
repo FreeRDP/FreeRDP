@@ -19,10 +19,10 @@
  * limitations under the License.
  */
 
-#include <winpr/crt.h>
-#include <winpr/assert.h>
-#include <winpr/endian.h>
 #include <winpr/asn1.h>
+#include <winpr/assert.h>
+#include <winpr/crt.h>
+#include <winpr/endian.h>
 #include <winpr/stream.h>
 
 #include "sspi_gss.h"

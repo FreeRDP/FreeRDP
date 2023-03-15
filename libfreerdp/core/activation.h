@@ -23,8 +23,8 @@
 #include "rdp.h"
 
 #include <freerdp/api.h>
-#include <freerdp/settings.h>
 #include <freerdp/cache/persistent.h>
+#include <freerdp/settings.h>
 
 #define SYNCMSGTYPE_SYNC 0x0001
 

@@ -18,16 +18,16 @@
  * limitations under the License.
  */
 
-#include <freerdp/types.h>
 #include <freerdp/constants.h>
+#include <freerdp/types.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/freerdp.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
 
 #include "rail_main.h"
 

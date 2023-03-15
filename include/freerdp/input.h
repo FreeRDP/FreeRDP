@@ -21,11 +21,11 @@
 #define FREERDP_INPUT_H
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/scancode.h>
+#include <freerdp/types.h>
 
-#include <winpr/crt.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
 
 /* keyboard Flags */
 #define KBD_FLAGS_EXTENDED 0x0100

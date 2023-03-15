@@ -25,9 +25,9 @@
 
 #ifdef _WIN32
 
-#include <stdio.h>
-#include <io.h>
 #include <conio.h>
+#include <io.h>
+#include <stdio.h>
 
 static char read_chr(FILE* f)
 {
@@ -125,19 +125,18 @@ fail:
 #elif !defined(ANDROID)
 
 #include <fcntl.h>
+#include <freerdp/utils/signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>
-#include <termios.h>
-#include <freerdp/utils/signal.h>
 
 #ifdef WINPR_HAVE_POLL_H
 #include <poll.h>
 #else
-#include <time.h>
 #include <sys/select.h>
+#include <time.h>
 #endif
 
 static int wait_for_fd(int fd, int timeout)

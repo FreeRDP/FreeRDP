@@ -21,9 +21,9 @@
 #define FREERDP_LIB_OFFSCREEN_CACHE_H
 
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/types.h>
 #include <freerdp/update.h>
-#include <freerdp/freerdp.h>
 
 #include <winpr/stream.h>
 

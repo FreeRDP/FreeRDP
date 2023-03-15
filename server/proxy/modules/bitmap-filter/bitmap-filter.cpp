@@ -21,16 +21,16 @@
  * limitations under the License.
  */
 
-#include <iostream>
-#include <vector>
-#include <string>
 #include <algorithm>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <mutex>
+#include <string>
+#include <vector>
 
-#include <freerdp/server/proxy/proxy_modules_api.h>
 #include <freerdp/server/proxy/proxy_context.h>
+#include <freerdp/server/proxy/proxy_modules_api.h>
 
 #include <freerdp/channels/drdynvc.h>
 #include <freerdp/channels/rdpgfx.h>

@@ -21,8 +21,8 @@
 #define FREERDP_LIB_BRUSH_CACHE_H
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 #include <freerdp/update.h>
 
 #include <winpr/stream.h>

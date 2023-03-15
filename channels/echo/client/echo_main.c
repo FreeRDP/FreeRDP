@@ -28,9 +28,9 @@
 #include <winpr/stream.h>
 
 #include "echo_main.h"
-#include <freerdp/client/channels.h>
-#include <freerdp/channels/log.h>
 #include <freerdp/channels/echo.h>
+#include <freerdp/channels/log.h>
+#include <freerdp/client/channels.h>
 
 #define TAG CHANNELS_TAG("echo.client")
 

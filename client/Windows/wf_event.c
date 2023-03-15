@@ -23,14 +23,14 @@
 
 #include <stdio.h>
 
+#include <freerdp/freerdp.h>
 #include <winpr/assert.h>
 #include <winpr/sysinfo.h>
-#include <freerdp/freerdp.h>
 
 #include "wf_client.h"
 
-#include "wf_gdi.h"
 #include "wf_event.h"
+#include "wf_gdi.h"
 
 #include <freerdp/event.h>
 

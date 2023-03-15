@@ -26,8 +26,8 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
-#include "rdpei_main.h"
 #include "../rdpei_common.h"
+#include "rdpei_main.h"
 #include <freerdp/channels/rdpei.h>
 #include <freerdp/server/rdpei.h>
 

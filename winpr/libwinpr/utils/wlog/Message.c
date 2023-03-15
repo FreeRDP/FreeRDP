@@ -20,8 +20,8 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/path.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
 
 #include "wlog.h"
 

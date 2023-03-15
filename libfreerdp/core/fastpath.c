@@ -26,23 +26,23 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/stream.h>
 
 #include <freerdp/api.h>
-#include <freerdp/log.h>
 #include <freerdp/crypto/per.h>
+#include <freerdp/log.h>
 
-#include "orders.h"
-#include "update.h"
-#include "surface.h"
 #include "fastpath.h"
+#include "orders.h"
 #include "rdp.h"
+#include "surface.h"
+#include "update.h"
 
-#include "../cache/pointer.h"
-#include "../cache/palette.h"
 #include "../cache/bitmap.h"
+#include "../cache/palette.h"
+#include "../cache/pointer.h"
 
 #define TAG FREERDP_TAG("core.fastpath")
 

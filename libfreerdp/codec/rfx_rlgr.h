@@ -20,8 +20,8 @@
 #ifndef FREERDP_LIB_CODEC_RFX_RLGR_H
 #define FREERDP_LIB_CODEC_RFX_RLGR_H
 
-#include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
+#include <freerdp/codec/rfx.h>
 
 FREERDP_LOCAL int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* buffer,
                                   UINT32 buffer_size);

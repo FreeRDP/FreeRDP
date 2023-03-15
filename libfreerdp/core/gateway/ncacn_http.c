@@ -22,9 +22,9 @@
 #include "ncacn_http.h"
 
 #include <winpr/crt.h>
-#include <winpr/tchar.h>
-#include <winpr/stream.h>
 #include <winpr/dsparse.h>
+#include <winpr/stream.h>
+#include <winpr/tchar.h>
 
 #include "../utils.h"
 

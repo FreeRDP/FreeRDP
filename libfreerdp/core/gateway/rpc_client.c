@@ -21,24 +21,24 @@
 
 #include <freerdp/log.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
 
 #include "http.h"
 #include "ncacn_http.h"
 
 #include "rpc_bind.h"
-#include "rpc_fault.h"
 #include "rpc_client.h"
+#include "rpc_fault.h"
 #include "rts_signature.h"
 
-#include "../utils.h"
-#include "../rdp.h"
 #include "../proxy.h"
+#include "../rdp.h"
+#include "../utils.h"
 
 #define TAG FREERDP_TAG("core.gateway.rpc")
 

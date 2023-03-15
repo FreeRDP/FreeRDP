@@ -23,10 +23,10 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/library.h>
-#include <winpr/wlog.h>
-#include <winpr/nt.h>
 #include <winpr/endian.h>
+#include <winpr/library.h>
+#include <winpr/nt.h>
+#include <winpr/wlog.h>
 
 #include "../log.h"
 #define TAG WINPR_TAG("nt")

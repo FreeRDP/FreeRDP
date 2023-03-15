@@ -24,9 +24,9 @@
 #include "../core/update.h"
 
 #include <freerdp/api.h>
-#include <freerdp/log.h>
 #include <freerdp/gdi/gfx.h>
 #include <freerdp/gdi/region.h>
+#include <freerdp/log.h>
 #include <freerdp/utils/gfx.h>
 
 #define TAG FREERDP_TAG("gdi")

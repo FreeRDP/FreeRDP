@@ -30,10 +30,10 @@
 
 #include <freerdp/log.h>
 
+#include "../../crypto/opensslcompat.h"
 #include "rpc_bind.h"
 #include "rpc_client.h"
 #include "tsg.h"
-#include "../../crypto/opensslcompat.h"
 
 #define TAG FREERDP_TAG("core.gateway.tsg")
 

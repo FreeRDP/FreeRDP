@@ -19,14 +19,14 @@
 
 #include <freerdp/config.h>
 
-#include <stddef.h>
 #include <errno.h>
+#include <stddef.h>
 #include <string.h>
 
 #include <winpr/crt.h>
 
-#include <freerdp/utils/signal.h>
 #include <freerdp/log.h>
+#include <freerdp/utils/signal.h>
 
 #ifndef _WIN32
 #include <signal.h>

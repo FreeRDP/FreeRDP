@@ -15,20 +15,20 @@
  * limitations under the License.
  */
 
+#include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xatom.h>
-#include <X11/extensions/shape.h>
 #include <X11/cursorfont.h>
+#include <X11/extensions/shape.h>
 
 #include <winpr/assert.h>
 
-#include "xf_floatbar.h"
 #include "resource/close.xbm"
 #include "resource/lock.xbm"
-#include "resource/unlock.xbm"
 #include "resource/minimize.xbm"
 #include "resource/restore.xbm"
+#include "resource/unlock.xbm"
+#include "xf_floatbar.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")

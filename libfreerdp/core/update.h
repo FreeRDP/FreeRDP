@@ -20,13 +20,13 @@
 #ifndef FREERDP_LIB_CORE_UPDATE_H
 #define FREERDP_LIB_CORE_UPDATE_H
 
-#include "rdp.h"
 #include "orders.h"
+#include "rdp.h"
 
+#include <freerdp/api.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/types.h>
 #include <freerdp/update.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/api.h>
 
 #include <winpr/stream.h>
 

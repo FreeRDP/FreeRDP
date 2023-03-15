@@ -21,15 +21,15 @@
 #include <freerdp/config.h>
 
 #include <winpr/assert.h>
-#include <winpr/string.h>
 #include <winpr/print.h>
+#include <winpr/string.h>
 
 #include "pf_channel_rdpdr.h"
 #include "pf_channel_smartcard.h"
 
-#include <freerdp/server/proxy/proxy_log.h>
-#include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/channels/rdpdr.h>
+#include <freerdp/server/proxy/proxy_log.h>
 #include <freerdp/utils/rdpdr_utils.h>
 
 #define TAG PROXY_TAG("channel.rdpdr")

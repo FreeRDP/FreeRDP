@@ -21,8 +21,8 @@
 #ifndef FREERDP_LIB_CORE_UTILS_H
 #define FREERDP_LIB_CORE_UTILS_H
 
-#include <winpr/winpr.h>
 #include <freerdp/freerdp.h>
+#include <winpr/winpr.h>
 
 typedef enum
 {

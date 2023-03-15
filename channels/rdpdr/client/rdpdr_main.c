@@ -28,36 +28,38 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
-#include <winpr/sysinfo.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/stream.h>
+#include <winpr/sysinfo.h>
 
 #include <winpr/print.h>
 #include <winpr/sspicli.h>
 
-#include <freerdp/types.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/constants.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 #include <freerdp/utils/rdpdr_utils.h>
 
 #ifdef _WIN32
+// clang-format off
 #include <windows.h>
 #include <dbt.h>
+// clang-format on
 #else
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #endif
 
 #ifdef __MACOSX__
 #include <CoreFoundation/CoreFoundation.h>
-#include <stdio.h>
 #include <dirent.h>
-#include <sys/types.h>
+#include <stdio.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 #endif
 

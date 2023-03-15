@@ -25,18 +25,18 @@
 #ifndef FREERDP_CHANNEL_RDPDR_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_RDPDR_CLIENT_MAIN_H
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/collections.h>
 
+#include <freerdp/addin.h>
 #include <freerdp/api.h>
 #include <freerdp/svc.h>
-#include <freerdp/addin.h>
 
-#include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/channels/rdpdr.h>
 
 #ifdef __MACOSX__
 #include <CoreServices/CoreServices.h>

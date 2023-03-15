@@ -18,23 +18,23 @@
 
 #include <winpr/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/crypto.h>
 
 #ifdef WITH_OPENSSL
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <openssl/md4.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
 #endif
 
 #ifdef WITH_MBEDTLS
+#include <mbedtls/md.h>
 #include <mbedtls/md4.h>
 #include <mbedtls/md5.h>
 #include <mbedtls/sha1.h>
-#include <mbedtls/md.h>
 #endif
 
 #if defined(WITH_INTERNAL_MD4)
@@ -42,8 +42,8 @@
 #endif
 
 #if defined(WITH_INTERNAL_MD5)
-#include "md5.h"
 #include "hmac_md5.h"
+#include "md5.h"
 #endif
 
 #include "../log.h"

@@ -19,8 +19,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/ntlm.h>
 #include <winpr/assert.h>
+#include <winpr/ntlm.h>
 
 #include <winpr/crt.h>
 #include <winpr/crypto.h>

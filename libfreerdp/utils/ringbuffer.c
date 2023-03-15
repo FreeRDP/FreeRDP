@@ -25,8 +25,8 @@
 #include <string.h>
 #include <winpr/assert.h>
 
-#include <winpr/crt.h>
 #include <freerdp/log.h>
+#include <winpr/crt.h>
 
 #define TAG FREERDP_TAG("utils.ringbuffer")
 

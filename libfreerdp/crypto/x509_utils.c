@@ -19,16 +19,16 @@
  * limitations under the License.
  */
 
-#include <openssl/objects.h>
-#include <openssl/x509v3.h>
-#include <openssl/pem.h>
 #include <openssl/err.h>
+#include <openssl/objects.h>
+#include <openssl/pem.h>
+#include <openssl/x509v3.h>
 
 #include <freerdp/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/string.h>
-#include <winpr/assert.h>
 
 #include <freerdp/log.h>
 

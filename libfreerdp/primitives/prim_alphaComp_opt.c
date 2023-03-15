@@ -22,8 +22,8 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <freerdp/types.h>
 #include <winpr/sysinfo.h>
 
 #ifdef WITH_SSE2

@@ -31,22 +31,22 @@
 #endif
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/gdi/dc.h>
-#include <freerdp/gdi/region.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/region.h>
 
-#include <freerdp/client/rail.h>
 #include <freerdp/channels/channels.h>
-#include <freerdp/codec/rfx.h>
-#include <freerdp/codec/nsc.h>
 #include <freerdp/client/file.h>
+#include <freerdp/client/rail.h>
+#include <freerdp/codec/nsc.h>
+#include <freerdp/codec/rfx.h>
 
 #include "wf_channels.h"
-#include "wf_floatbar.h"
-#include "wf_event.h"
 #include "wf_cliprdr.h"
+#include "wf_event.h"
+#include "wf_floatbar.h"
 
 #ifdef __cplusplus
 extern "C"

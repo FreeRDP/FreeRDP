@@ -21,16 +21,16 @@
 
 #include <stdio.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 
 #include <freerdp/freerdp.h>
 #include <winpr/stream.h>
 
 #include <freerdp/log.h>
 
-#include "glyph.h"
 #include "cache.h"
+#include "glyph.h"
 
 #define TAG FREERDP_TAG("cache.glyph")
 

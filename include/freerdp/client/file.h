@@ -21,8 +21,8 @@
 #define FREERDP_CLIENT_RDP_FILE_H
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/settings.h>
+#include <freerdp/types.h>
 
 /* Ignore invalid integer values */
 #define RDP_FILE_FLAG_PARSE_INT_RELAXED 1

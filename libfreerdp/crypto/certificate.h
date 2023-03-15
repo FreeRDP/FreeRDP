@@ -22,8 +22,8 @@
 #ifndef FREERDP_LIB_CORE_CERTIFICATE_H
 #define FREERDP_LIB_CORE_CERTIFICATE_H
 
-#include <freerdp/crypto/crypto.h>
 #include <freerdp/crypto/certificate.h>
+#include <freerdp/crypto/crypto.h>
 
 #include <openssl/x509.h>
 

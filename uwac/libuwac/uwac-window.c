@@ -19,18 +19,18 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
  * OF THIS SOFTWARE.
  */
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <assert.h>
 #include <sys/mman.h>
-#include <errno.h>
+#include <unistd.h>
 
+#include "uwac-os.h"
 #include "uwac-priv.h"
 #include "uwac-utils.h"
-#include "uwac-os.h"
 
 #include <uwac/config.h>
 

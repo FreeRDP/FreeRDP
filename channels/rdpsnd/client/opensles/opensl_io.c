@@ -29,8 +29,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <winpr/assert.h>
 
-#include "rdpsnd_main.h"
 #include "opensl_io.h"
+#include "rdpsnd_main.h"
 #define CONV16BIT 32768
 #define CONVMYFLT (1. / 32768.)
 

@@ -1,7 +1,7 @@
 
-#include <stdio.h>
-#include <stdint.h>
 #include <rdtk/rdtk.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <winpr/error.h>
 
 int TestRdTkNinePatch(int argc, char* argv[])

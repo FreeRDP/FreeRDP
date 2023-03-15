@@ -23,19 +23,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/wtypes.h>
-#include <winpr/assert.h>
-#include <winpr/file.h>
-#include <winpr/crt.h>
 #include <freerdp/log.h>
+#include <winpr/assert.h>
+#include <winpr/crt.h>
+#include <winpr/file.h>
+#include <winpr/wtypes.h>
 
 #define TAG FREERDP_TAG("utils")
 
 #ifndef _WIN32
 #include <sys/time.h>
 #else
-#include <time.h>
 #include <sys/timeb.h>
+#include <time.h>
 #include <winpr/windows.h>
 
 int gettimeofday(struct timeval* tp, void* tz)

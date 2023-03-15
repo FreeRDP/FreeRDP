@@ -22,10 +22,10 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <winpr/cmdline.h>
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/path.h>
-#include <winpr/collections.h>
-#include <winpr/cmdline.h>
 
 #include "pf_server.h"
 #include <freerdp/server/proxy/proxy_config.h>
@@ -33,17 +33,17 @@
 #include <freerdp/server/proxy/proxy_config.h>
 #include <freerdp/server/proxy/proxy_log.h>
 
-#include <freerdp/crypto/crypto.h>
-#include <freerdp/channels/cliprdr.h>
-#include <freerdp/channels/rdpsnd.h>
 #include <freerdp/channels/audin.h>
-#include <freerdp/channels/rdpdr.h>
+#include <freerdp/channels/cliprdr.h>
 #include <freerdp/channels/disp.h>
 #include <freerdp/channels/rail.h>
+#include <freerdp/channels/rdpdr.h>
+#include <freerdp/channels/rdpecam.h>
 #include <freerdp/channels/rdpei.h>
+#include <freerdp/channels/rdpsnd.h>
 #include <freerdp/channels/tsmf.h>
 #include <freerdp/channels/video.h>
-#include <freerdp/channels/rdpecam.h>
+#include <freerdp/crypto/crypto.h>
 
 #include "pf_utils.h"
 

@@ -18,10 +18,9 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
-#include <winpr/assert.h>
 #include <winpr/print.h>
-#include <winpr/assert.h>
 
 #include <freerdp/log.h>
 

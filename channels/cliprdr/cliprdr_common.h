@@ -26,8 +26,8 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
-#include <freerdp/channels/cliprdr.h>
 #include <freerdp/api.h>
+#include <freerdp/channels/cliprdr.h>
 
 FREERDP_LOCAL wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen);
 FREERDP_LOCAL wStream*

@@ -22,10 +22,10 @@
 
 #include "wlog.h"
 
-#include "FileAppender.h"
-#include "ConsoleAppender.h"
 #include "BinaryAppender.h"
 #include "CallbackAppender.h"
+#include "ConsoleAppender.h"
+#include "FileAppender.h"
 #ifdef WINPR_HAVE_JOURNALD_H
 #include "JournaldAppender.h"
 #endif

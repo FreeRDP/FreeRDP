@@ -23,16 +23,16 @@
 
 #include <winpr/windows.h>
 
-#include <freerdp/types.h>
-#include <freerdp/settings.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/settings.h>
+#include <freerdp/types.h>
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/stream.h>
-#include <winpr/winsock.h>
 #include <winpr/crypto.h>
+#include <winpr/stream.h>
+#include <winpr/synch.h>
+#include <winpr/winsock.h>
 
 #include <openssl/bio.h>
 

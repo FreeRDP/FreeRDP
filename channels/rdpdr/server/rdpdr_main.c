@@ -25,14 +25,14 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/utils/rdpdr_utils.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/nt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
-#include <freerdp/channels/log.h>
 #include "rdpdr_main.h"
+#include <freerdp/channels/log.h>
 
 #define RDPDR_ADD_PRINTER_EVENT 0x00000001
 #define RDPDR_UPDATE_PRINTER_EVENT 0x00000002

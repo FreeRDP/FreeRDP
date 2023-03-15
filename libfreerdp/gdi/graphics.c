@@ -23,16 +23,16 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/gdi/dc.h>
-#include <freerdp/gdi/shape.h>
-#include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
+#include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/region.h>
+#include <freerdp/gdi/shape.h>
+#include <freerdp/log.h>
 
+#include "brush.h"
 #include "clipping.h"
 #include "drawing.h"
-#include "brush.h"
 #include "graphics.h"
 
 #define TAG FREERDP_TAG("gdi")

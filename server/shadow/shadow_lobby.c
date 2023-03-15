@@ -18,8 +18,8 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
 #include <rdtk/rdtk.h>
+#include <winpr/assert.h>
 
 #include "shadow.h"
 

@@ -5,10 +5,10 @@
 
 #include "prim_test.h"
 
-#include <winpr/wlog.h>
-#include <winpr/crypto.h>
 #include <freerdp/primitives.h>
 #include <freerdp/utils/profiler.h>
+#include <winpr/crypto.h>
+#include <winpr/wlog.h>
 
 #define TAG __FILE__
 

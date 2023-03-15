@@ -19,10 +19,10 @@
 
 #include <winpr/config.h>
 
-#include <winpr/synch.h>
 #include <winpr/debug.h>
-#include <winpr/wlog.h>
 #include <winpr/string.h>
+#include <winpr/synch.h>
+#include <winpr/wlog.h>
 
 #include "synch.h"
 

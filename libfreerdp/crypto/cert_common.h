@@ -24,9 +24,9 @@
 #include <freerdp/crypto/ber.h>
 #include <freerdp/crypto/crypto.h>
 
-#include <freerdp/settings.h>
-#include <freerdp/log.h>
 #include <freerdp/api.h>
+#include <freerdp/log.h>
+#include <freerdp/settings.h>
 
 #ifdef __cplusplus
 extern "C"

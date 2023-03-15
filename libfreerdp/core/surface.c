@@ -21,8 +21,8 @@
 
 #include <winpr/assert.h>
 
-#include <freerdp/utils/pcap.h>
 #include <freerdp/log.h>
+#include <freerdp/utils/pcap.h>
 
 #include "../cache/cache.h"
 #include "surface.h"

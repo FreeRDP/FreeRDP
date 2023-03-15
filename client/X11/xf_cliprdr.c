@@ -21,28 +21,28 @@
 
 #include <freerdp/config.h>
 
-#include <stdlib.h>
 #include <errno.h>
+#include <stdlib.h>
 
-#include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/Xlib.h>
 
 #ifdef WITH_XFIXES
 #include <X11/extensions/Xfixes.h>
 #endif
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/image.h>
-#include <winpr/stream.h>
 #include <winpr/clipboard.h>
+#include <winpr/crt.h>
+#include <winpr/image.h>
 #include <winpr/path.h>
+#include <winpr/stream.h>
 
-#include <freerdp/utils/signal.h>
-#include <freerdp/log.h>
-#include <freerdp/client/cliprdr.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/channels/cliprdr.h>
+#include <freerdp/client/cliprdr.h>
+#include <freerdp/log.h>
+#include <freerdp/utils/signal.h>
 
 #include <freerdp/client/client_cliprdr_file.h>
 

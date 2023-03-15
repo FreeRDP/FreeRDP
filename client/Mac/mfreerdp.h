@@ -1,27 +1,26 @@
 #ifndef FREERDP_CLIENT_MAC_FREERDP_H
 #define FREERDP_CLIENT_MAC_FREERDP_H
 
-#include <freerdp/freerdp.h>
-#include <freerdp/client/file.h>
 #include <freerdp/api.h>
+#include <freerdp/client/file.h>
 #include <freerdp/freerdp.h>
 
-#include <freerdp/gdi/gdi.h>
+#include <freerdp/channels/channels.h>
 #include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/gfx.h>
 #include <freerdp/gdi/region.h>
-#include <freerdp/channels/channels.h>
 
 #include <freerdp/client/channels.h>
-#include <freerdp/client/rdpei.h>
-#include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/encomsp.h>
+#include <freerdp/client/rdpei.h>
+#include <freerdp/client/rdpgfx.h>
 
+#include <winpr/clipboard.h>
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/clipboard.h>
 
 #include "Keyboard.h"
 #include <CoreGraphics/CoreGraphics.h>

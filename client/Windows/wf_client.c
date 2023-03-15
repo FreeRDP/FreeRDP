@@ -23,17 +23,17 @@
 
 #include <winpr/windows.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 
 #include <errno.h>
+#include <io.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <tchar.h>
 #include <winpr/assert.h>
-#include <sys/types.h>
-#include <io.h>
 
 #ifdef WITH_PROGRESS_BAR
 #include <shobjidl.h>
@@ -43,20 +43,20 @@
 #include <wincrypt.h>
 #endif
 
-#include <freerdp/log.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/log.h>
 
-#include <freerdp/locale/keyboard.h>
-#include <freerdp/codec/region.h>
-#include <freerdp/client/cmdline.h>
-#include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/client/channels.h>
+#include <freerdp/client/cmdline.h>
+#include <freerdp/codec/region.h>
+#include <freerdp/locale/keyboard.h>
 
-#include "wf_gdi.h"
-#include "wf_rail.h"
 #include "wf_channels.h"
+#include "wf_gdi.h"
 #include "wf_graphics.h"
+#include "wf_rail.h"
 
 #include "resource/resource.h"
 

@@ -22,10 +22,10 @@
 
 #include "rdp.h"
 
-#include <freerdp/heartbeat.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/log.h>
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/heartbeat.h>
+#include <freerdp/log.h>
 
 #include <winpr/stream.h>
 

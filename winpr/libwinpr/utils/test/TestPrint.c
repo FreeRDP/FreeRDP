@@ -1,7 +1,7 @@
 
 #include <winpr/crt.h>
-#include <winpr/tchar.h>
 #include <winpr/print.h>
+#include <winpr/tchar.h>
 
 /**
  * C Programming/C Reference/stdio.h/printf:

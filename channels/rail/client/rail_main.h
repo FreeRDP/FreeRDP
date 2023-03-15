@@ -24,15 +24,15 @@
 #ifndef FREERDP_CHANNEL_RAIL_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_RAIL_CLIENT_MAIN_H
 
-#include <freerdp/rail.h>
-#include <freerdp/svc.h>
 #include <freerdp/addin.h>
-#include <freerdp/settings.h>
 #include <freerdp/client/rail.h>
+#include <freerdp/rail.h>
+#include <freerdp/settings.h>
+#include <freerdp/svc.h>
 
 #include <winpr/crt.h>
-#include <winpr/wlog.h>
 #include <winpr/stream.h>
+#include <winpr/wlog.h>
 
 #include "../rail_common.h"
 

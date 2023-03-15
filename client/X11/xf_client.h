@@ -20,17 +20,17 @@
 #ifndef FREERDP_CLIENT_X11_CLIENT_H
 #define FREERDP_CLIENT_X11_CLIENT_H
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/collections.h>
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/client.h>
+#include <freerdp/freerdp.h>
 
-#include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/gdi.h>
 #include <freerdp/gdi/region.h>
 
 #include <freerdp/channels/channels.h>

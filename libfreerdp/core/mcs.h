@@ -26,8 +26,8 @@ typedef struct rdp_mcs rdpMcs;
 
 #include "transport.h"
 
-#include <freerdp/crypto/ber.h>
 #include <freerdp/api.h>
+#include <freerdp/crypto/ber.h>
 #include <freerdp/types.h>
 
 #include <winpr/stream.h>

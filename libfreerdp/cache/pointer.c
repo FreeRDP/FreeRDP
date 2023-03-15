@@ -21,14 +21,14 @@
 
 #include <stdio.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/stream.h>
 
 #include <freerdp/log.h>
 
-#include "pointer.h"
 #include "cache.h"
+#include "pointer.h"
 
 #define TAG FREERDP_TAG("cache.pointer")
 

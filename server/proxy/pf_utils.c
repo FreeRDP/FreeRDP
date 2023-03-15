@@ -22,8 +22,8 @@
 #include <winpr/string.h>
 #include <winpr/wtsapi.h>
 
-#include <freerdp/server/proxy/proxy_log.h>
 #include "pf_utils.h"
+#include <freerdp/server/proxy/proxy_log.h>
 
 #define TAG PROXY_TAG("utils")
 

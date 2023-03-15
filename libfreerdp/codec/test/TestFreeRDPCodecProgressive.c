@@ -1,12 +1,11 @@
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
-#include <winpr/path.h>
-#include <winpr/image.h>
-#include <winpr/print.h>
-#include <winpr/wlog.h>
-#include <winpr/image.h>
-#include <winpr/sysinfo.h>
 #include <winpr/file.h>
+#include <winpr/image.h>
+#include <winpr/path.h>
+#include <winpr/print.h>
+#include <winpr/sysinfo.h>
+#include <winpr/wlog.h>
+#include <winpr/wtypes.h>
 
 #include <freerdp/codec/region.h>
 

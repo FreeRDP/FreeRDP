@@ -20,14 +20,14 @@
  */
 #include <freerdp/config.h>
 
-#include <winpr/library.h>
 #include <winpr/assert.h>
+#include <winpr/library.h>
 
-#include <freerdp/log.h>
 #include <freerdp/codec/h264.h>
+#include <freerdp/log.h>
 
-#include <wels/codec_def.h>
 #include <wels/codec_api.h>
+#include <wels/codec_def.h>
 #include <wels/codec_ver.h>
 
 #include "h264.h"

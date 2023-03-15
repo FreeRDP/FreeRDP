@@ -29,8 +29,8 @@
 
 #include <freerdp/settings.h>
 
-#include <freerdp/crypto/crypto.h>
 #include <freerdp/crypto/certificate_data.h>
+#include <freerdp/crypto/crypto.h>
 
 #include "certificate.h"
 

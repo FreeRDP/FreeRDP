@@ -21,23 +21,22 @@
 
 #include <freerdp/config.h>
 
+#include <conio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <conio.h>
 
-#include <freerdp/log.h>
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/constants.h>
-#include <freerdp/codec/color.h>
 #include <freerdp/codec/bitmap.h>
-#include <freerdp/codec/rfx.h>
+#include <freerdp/codec/color.h>
 #include <freerdp/codec/nsc.h>
+#include <freerdp/codec/rfx.h>
+#include <freerdp/constants.h>
 #include <freerdp/gdi/gdi.h>
+#include <freerdp/log.h>
 
 #include "wf_client.h"
-#include "wf_graphics.h"
 #include "wf_gdi.h"
+#include "wf_graphics.h"
 
 #define TAG CLIENT_TAG("windows.gdi")
 

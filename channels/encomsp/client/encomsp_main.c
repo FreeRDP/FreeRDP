@@ -21,13 +21,13 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/client/encomsp.h>
+#include <freerdp/freerdp.h>
 
 #include "encomsp_main.h"
 

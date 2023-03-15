@@ -31,11 +31,11 @@
 #include <freerdp/locale/keyboard.h>
 
 #include "keyboard_x11.h"
-#include "xkb_layout_ids.h"
 #include "liblocale.h"
+#include "xkb_layout_ids.h"
 
-#include <X11/Xlib.h>
 #include <X11/XKBlib.h>
+#include <X11/Xlib.h>
 #include <X11/extensions/XKBfile.h>
 #include <X11/extensions/XKBrules.h>
 

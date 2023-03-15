@@ -30,8 +30,8 @@
 #include <freerdp/client/cliprdr.h>
 
 #include "android_cliprdr.h"
-#include "android_jni_utils.h"
 #include "android_jni_callback.h"
+#include "android_jni_utils.h"
 
 UINT android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr)
 {

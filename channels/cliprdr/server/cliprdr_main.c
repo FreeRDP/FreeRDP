@@ -21,15 +21,15 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
 
-#include <freerdp/freerdp.h>
-#include <freerdp/channels/log.h>
-#include "cliprdr_main.h"
 #include "../cliprdr_common.h"
+#include "cliprdr_main.h"
+#include <freerdp/channels/log.h>
+#include <freerdp/freerdp.h>
 
 /**
  *                                    Initialization Sequence\n

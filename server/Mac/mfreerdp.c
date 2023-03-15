@@ -20,27 +20,27 @@
 
 #include <freerdp/config.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 
 #include <CoreGraphics/CGEvent.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/wtsapi.h>
-#include <winpr/assert.h>
 
-#include <freerdp/freerdp.h>
-#include <freerdp/constants.h>
-#include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
 
-#include "mfreerdp.h"
 #include "mf_peer.h"
+#include "mfreerdp.h"
 
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("mac")

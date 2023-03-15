@@ -7,12 +7,12 @@
 //
 
 #import "AppDelegate.h"
-#import "MacFreeRDP/mfreerdp.h"
-#import "MacFreeRDP/mf_client.h"
 #import "MacFreeRDP/MRDPView.h"
+#import "MacFreeRDP/mf_client.h"
+#import "MacFreeRDP/mfreerdp.h"
 
-#import <winpr/assert.h>
 #import <freerdp/client/cmdline.h>
+#import <winpr/assert.h>
 
 static AppDelegate *_singleDelegate = nil;
 void AppDelegate_ConnectionResultEventHandler(void *context, const ConnectionResultEventArgs *e);

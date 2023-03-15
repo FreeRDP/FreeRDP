@@ -1,5 +1,5 @@
-#include <freerdp/version.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/version.h>
 
 int TestVersion(int argc, char* argv[])
 {

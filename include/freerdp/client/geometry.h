@@ -20,9 +20,9 @@
 #ifndef FREERDP_CHANNELS_CLIENT_GEOMETRY_H
 #define FREERDP_CHANNELS_CLIENT_GEOMETRY_H
 
-#include <winpr/collections.h>
 #include <freerdp/api.h>
 #include <freerdp/channels/geometry.h>
+#include <winpr/collections.h>
 
 #ifdef __cplusplus
 extern "C"

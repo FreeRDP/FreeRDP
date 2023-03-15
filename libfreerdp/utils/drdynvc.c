@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#include <freerdp/utils/drdynvc.h>
 #include <freerdp/channels/drdynvc.h>
+#include <freerdp/utils/drdynvc.h>
 
 const char* drdynvc_get_packet_type(BYTE cmd)
 {

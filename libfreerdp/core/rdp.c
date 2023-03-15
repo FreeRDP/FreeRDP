@@ -20,23 +20,23 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/string.h>
 #include <winpr/synch.h>
-#include <winpr/assert.h>
 
 #include "rdp.h"
 
-#include "state.h"
 #include "info.h"
-#include "utils.h"
 #include "mcs.h"
 #include "redirection.h"
+#include "state.h"
+#include "utils.h"
 
+#include <freerdp/buildflags.h>
 #include <freerdp/codec/bulk.h>
 #include <freerdp/crypto/per.h>
 #include <freerdp/log.h>
-#include <freerdp/buildflags.h>
 
 #define TAG FREERDP_TAG("core.rdp")
 

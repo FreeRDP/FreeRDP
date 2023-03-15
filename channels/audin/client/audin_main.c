@@ -23,22 +23,22 @@
 #include <freerdp/config.h>
 
 #include <errno.h>
-#include <winpr/assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <winpr/assert.h>
 
-#include <winpr/crt.h>
 #include <winpr/cmdline.h>
+#include <winpr/crt.h>
 #include <winpr/wlog.h>
 
 #include <freerdp/addin.h>
 
-#include <winpr/stream.h>
-#include <freerdp/freerdp.h>
-#include <freerdp/codec/dsp.h>
-#include <freerdp/client/channels.h>
 #include <freerdp/channels/audin.h>
+#include <freerdp/client/channels.h>
+#include <freerdp/codec/dsp.h>
+#include <freerdp/freerdp.h>
+#include <winpr/stream.h>
 
 #include "audin_main.h"
 

@@ -17,12 +17,12 @@
  * limitations under the License.
  */
 
-#include <winpr/wlog.h>
 #include <winpr/assert.h>
 #include <winpr/library.h>
+#include <winpr/wlog.h>
 
-#include <freerdp/log.h>
 #include <freerdp/codec/h264.h>
+#include <freerdp/log.h>
 
 #include <media/NdkMediaCodec.h>
 #include <media/NdkMediaFormat.h>

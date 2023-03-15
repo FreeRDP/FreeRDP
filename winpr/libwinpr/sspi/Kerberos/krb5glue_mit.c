@@ -19,15 +19,15 @@
 
 #ifdef WITH_KRB5_MIT
 
-#include <winpr/path.h>
-#include <winpr/wlog.h>
-#include <winpr/endian.h>
-#include <winpr/crypto.h>
-#include <winpr/print.h>
-#include <winpr/assert.h>
-#include <errno.h>
 #include "krb5glue.h"
+#include <errno.h>
 #include <profile.h>
+#include <winpr/assert.h>
+#include <winpr/crypto.h>
+#include <winpr/endian.h>
+#include <winpr/path.h>
+#include <winpr/print.h>
+#include <winpr/wlog.h>
 
 static char* create_temporary_file(void)
 {

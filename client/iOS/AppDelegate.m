@@ -11,9 +11,9 @@
 #import "AppDelegate.h"
 
 #import "AboutController.h"
-#import "HelpController.h"
-#import "BookmarkListController.h"
 #import "AppSettingsController.h"
+#import "BookmarkListController.h"
+#import "HelpController.h"
 #import "MainTabBarController.h"
 #import "Utils.h"
 

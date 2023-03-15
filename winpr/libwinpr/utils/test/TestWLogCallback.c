@@ -1,6 +1,6 @@
 #include <winpr/crt.h>
-#include <winpr/tchar.h>
 #include <winpr/path.h>
+#include <winpr/tchar.h>
 #include <winpr/wlog.h>
 
 typedef struct

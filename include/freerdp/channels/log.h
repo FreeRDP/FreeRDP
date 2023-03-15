@@ -20,8 +20,8 @@
 #ifndef FREERDP_CHANNELS_LOG_H
 #define FREERDP_CHANNELS_LOG_H
 
-#include <winpr/wlog.h>
 #include <freerdp/log.h>
+#include <winpr/wlog.h>
 
 #define CHANNELS_TAG(tag) FREERDP_TAG("channels.") tag
 

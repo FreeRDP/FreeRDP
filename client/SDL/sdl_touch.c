@@ -19,11 +19,11 @@
 
 #include <freerdp/config.h>
 
-#include "sdl_touch.h"
 #include "sdl_freerdp.h"
+#include "sdl_touch.h"
 
-#include <winpr/wtypes.h>
 #include <winpr/assert.h>
+#include <winpr/wtypes.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>

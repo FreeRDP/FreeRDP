@@ -23,16 +23,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/stream.h>
 #include <winpr/sysinfo.h>
 
 #include "ainput_main.h"
-#include <freerdp/channels/log.h>
-#include <freerdp/client/channels.h>
-#include <freerdp/client/ainput.h>
 #include <freerdp/channels/ainput.h>
+#include <freerdp/channels/log.h>
+#include <freerdp/client/ainput.h>
+#include <freerdp/client/channels.h>
 
 #include "../common/ainput_common.h"
 

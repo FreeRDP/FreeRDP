@@ -21,8 +21,8 @@
 
 #include <rdtk/rdtk.h>
 
-#include "rdtk_surface.h"
 #include "rdtk_nine_patch.h"
+#include "rdtk_surface.h"
 
 #include "rdtk_engine.h"
 

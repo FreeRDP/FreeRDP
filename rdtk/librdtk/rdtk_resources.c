@@ -18,9 +18,9 @@
 
 #include <rdtk/config.h>
 
+#include "rdtk_resources.h"
 #include <stdint.h>
 #include <string.h>
-#include "rdtk_resources.h"
 
 /* Nine Patches */
 

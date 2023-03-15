@@ -25,13 +25,13 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 
-#include <freerdp/types.h>
-#include <freerdp/constants.h>
 #include <freerdp/client/cliprdr.h>
+#include <freerdp/constants.h>
+#include <freerdp/types.h>
 
-#include "cliprdr_main.h"
-#include "cliprdr_format.h"
 #include "../cliprdr_common.h"
+#include "cliprdr_format.h"
+#include "cliprdr_main.h"
 
 /**
  * Function description

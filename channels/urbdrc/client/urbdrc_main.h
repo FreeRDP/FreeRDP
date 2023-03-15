@@ -21,9 +21,11 @@
 #ifndef FREERDP_CHANNEL_URBDRC_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_URBDRC_CLIENT_MAIN_H
 
-#include <winpr/pool.h>
 #include <freerdp/channels/log.h>
 #include <freerdp/client/channels.h>
+#include <winpr/pool.h>
+
+#include "../common/msusb.h"
 
 #define DEVICE_HARDWARE_ID_SIZE 32
 #define DEVICE_COMPATIBILITY_ID_SIZE 36

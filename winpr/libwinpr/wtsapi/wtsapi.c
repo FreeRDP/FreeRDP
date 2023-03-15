@@ -22,11 +22,11 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/environment.h>
 #include <winpr/ini.h>
+#include <winpr/library.h>
 #include <winpr/path.h>
 #include <winpr/synch.h>
-#include <winpr/library.h>
-#include <winpr/environment.h>
 
 #include <winpr/wtsapi.h>
 

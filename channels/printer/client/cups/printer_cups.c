@@ -24,13 +24,13 @@
 
 #include <freerdp/config.h>
 
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 
-#include <time.h>
 #include <cups/cups.h>
+#include <time.h>
 
 #include <winpr/crt.h>
 #include <winpr/file.h>

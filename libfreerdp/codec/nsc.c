@@ -28,11 +28,11 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/codec/nsc.h>
 #include <freerdp/codec/color.h>
+#include <freerdp/codec/nsc.h>
 
-#include "nsc_types.h"
 #include "nsc_encode.h"
+#include "nsc_types.h"
 
 #include "nsc_sse2.h"
 

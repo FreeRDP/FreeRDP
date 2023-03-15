@@ -33,10 +33,10 @@
 #include <winpr/sspi.h>
 
 #include <winpr/crt.h>
+#include <winpr/environment.h>
+#include <winpr/library.h>
 #include <winpr/synch.h>
 #include <winpr/wlog.h>
-#include <winpr/library.h>
-#include <winpr/environment.h>
 
 #include "sspi.h"
 

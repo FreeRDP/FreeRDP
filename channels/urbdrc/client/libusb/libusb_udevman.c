@@ -18,19 +18,19 @@
  * limitations under the License.
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
-#include <winpr/crt.h>
 #include <winpr/cmdline.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
 
 #include <freerdp/addin.h>
 
-#include "urbdrc_types.h"
 #include "urbdrc_main.h"
+#include "urbdrc_types.h"
 
 #include "libusb_udevice.h"
 

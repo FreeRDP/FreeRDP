@@ -25,12 +25,12 @@
 
 #include <uwac/config.h>
 
+#include "keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h"
+#include "server-decoration-client-protocol.h"
+#include "xdg-decoration-unstable-v1-client-protocol.h"
+#include "xdg-shell-client-protocol.h"
 #include <stdbool.h>
 #include <wayland-client.h>
-#include "xdg-shell-client-protocol.h"
-#include "keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h"
-#include "xdg-decoration-unstable-v1-client-protocol.h"
-#include "server-decoration-client-protocol.h"
 
 #ifdef BUILD_IVI
 #include "ivi-application-client-protocol.h"

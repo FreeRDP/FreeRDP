@@ -29,12 +29,12 @@
 
 #include <winpr/crt.h>
 #include <winpr/print.h>
-#include <winpr/stream.h>
 #include <winpr/smartcard.h>
+#include <winpr/stream.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/channels/rdpdr.h>
 #include <freerdp/channels/scard.h>
+#include <freerdp/freerdp.h>
 
 #include <freerdp/utils/rdpdr_utils.h>
 

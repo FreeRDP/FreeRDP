@@ -19,9 +19,9 @@
 #ifndef _CORKSCREW_MAP_INFO_H
 #define _CORKSCREW_MAP_INFO_H
 
-#include <sys/types.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C"

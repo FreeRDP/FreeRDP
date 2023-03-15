@@ -19,32 +19,32 @@
 
 #include <winpr/windows.h>
 
+#import "CertificateDialog.h"
+#import "Clipboard.h"
+#import "MRDPCursor.h"
+#import "MRDPView.h"
+#import "PasswordDialog.h"
 #include "mf_client.h"
 #import "mfreerdp.h"
-#import "MRDPView.h"
-#import "MRDPCursor.h"
-#import "Clipboard.h"
-#import "PasswordDialog.h"
-#import "CertificateDialog.h"
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/input.h>
 #include <winpr/synch.h>
 #include <winpr/sysinfo.h>
 
 #include <freerdp/constants.h>
 
-#import "freerdp/freerdp.h"
-#import "freerdp/types.h"
 #import "freerdp/channels/channels.h"
-#import "freerdp/gdi/gdi.h"
+#import "freerdp/client/cmdline.h"
+#import "freerdp/client/file.h"
+#import "freerdp/freerdp.h"
 #import "freerdp/gdi/dc.h"
+#import "freerdp/gdi/gdi.h"
 #import "freerdp/gdi/region.h"
 #import "freerdp/graphics.h"
-#import "freerdp/client/file.h"
-#import "freerdp/client/cmdline.h"
 #import "freerdp/log.h"
+#import "freerdp/types.h"
 
 #import <CoreGraphics/CoreGraphics.h>
 

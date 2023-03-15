@@ -21,8 +21,8 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 
 #include <freerdp/crypto/crypto.h>
 #include <freerdp/log.h>

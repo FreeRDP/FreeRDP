@@ -33,6 +33,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 #include <stdlib.h>
+#include <winpr/collections.h>
 #include <winpr/synch.h>
 
 #include <freerdp/api.h>

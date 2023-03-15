@@ -23,21 +23,21 @@
 
 #include "window.h"
 
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
+#include <winpr/wtypes.h>
 
 #include <freerdp/api.h>
-#include <freerdp/log.h>
-#include <freerdp/graphics.h>
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/gdi/gdi.h>
+#include <freerdp/graphics.h>
+#include <freerdp/log.h>
 
 #include "orders.h"
 
-#include "../cache/glyph.h"
 #include "../cache/bitmap.h"
 #include "../cache/brush.h"
 #include "../cache/cache.h"
+#include "../cache/glyph.h"
 
 #define TAG FREERDP_TAG("core.orders")
 

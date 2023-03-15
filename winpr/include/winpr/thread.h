@@ -23,8 +23,8 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-#include <winpr/spec.h>
 #include <winpr/handle.h>
+#include <winpr/spec.h>
 
 #ifdef __cplusplus
 extern "C"

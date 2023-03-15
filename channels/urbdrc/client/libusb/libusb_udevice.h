@@ -21,11 +21,11 @@
 #ifndef FREERDP_CHANNEL_URBDRC_CLIENT_LIBUSB_UDEVICE_H
 #define FREERDP_CHANNEL_URBDRC_CLIENT_LIBUSB_UDEVICE_H
 
-#include <winpr/windows.h>
 #include <libusb.h>
+#include <winpr/windows.h>
 
-#include "urbdrc_types.h"
 #include "urbdrc_main.h"
+#include "urbdrc_types.h"
 
 typedef struct libusb_device LIBUSB_DEVICE;
 typedef struct libusb_device_handle LIBUSB_DEVICE_HANDLE;

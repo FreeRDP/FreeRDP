@@ -21,8 +21,8 @@
 #define FREERDP_CODEC_YUV_H
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/constants.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"

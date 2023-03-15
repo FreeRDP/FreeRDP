@@ -23,8 +23,8 @@
 #define FREERDP_CHANNEL_CLIPRDR_SERVER_CLIPRDR_H
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/channels/wtsvc.h>
+#include <freerdp/types.h>
 
 #include <freerdp/channels/cliprdr.h>
 #include <freerdp/client/cliprdr.h>

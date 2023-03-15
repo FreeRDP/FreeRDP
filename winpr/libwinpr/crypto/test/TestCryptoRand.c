@@ -1,7 +1,7 @@
 
 #include <winpr/crt.h>
-#include <winpr/print.h>
 #include <winpr/crypto.h>
+#include <winpr/print.h>
 
 int TestCryptoRand(int argc, char* argv[])
 {

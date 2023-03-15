@@ -19,9 +19,9 @@
 #ifndef RDTK_SURFACE_PRIVATE_H
 #define RDTK_SURFACE_PRIVATE_H
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <rdtk/rdtk.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #include "rdtk_engine.h"
 

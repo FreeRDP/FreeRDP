@@ -21,15 +21,15 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/ssl.h>
-#include <winpr/thread.h>
 #include <winpr/crypto.h>
+#include <winpr/ssl.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
 
 #ifdef WITH_OPENSSL
 
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
 #include <openssl/provider.h>

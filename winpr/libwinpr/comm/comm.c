@@ -24,7 +24,6 @@
 
 #if defined __linux__ && !defined ANDROID
 
-#include <winpr/assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pthread.h>
@@ -34,12 +33,13 @@
 #include <sys/types.h>
 #include <termios.h>
 #include <unistd.h>
+#include <winpr/assert.h>
 
-#include <winpr/crt.h>
 #include <winpr/comm.h>
+#include <winpr/crt.h>
+#include <winpr/handle.h>
 #include <winpr/tchar.h>
 #include <winpr/wlog.h>
-#include <winpr/handle.h>
 
 #include "comm_ioctl.h"
 

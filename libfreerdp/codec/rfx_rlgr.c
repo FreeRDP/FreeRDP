@@ -28,11 +28,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/bitstream.h>
 #include <winpr/crt.h>
+#include <winpr/intrin.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
-#include <winpr/bitstream.h>
-#include <winpr/intrin.h>
 
 #include "rfx_bitstream.h"
 

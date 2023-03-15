@@ -21,17 +21,17 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <winpr/assert.h>
 
-#include <winpr/crt.h>
 #include <winpr/cmdline.h>
+#include <winpr/crt.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
 #include <freerdp/channels/rdpsnd.h>
+#include <freerdp/freerdp.h>
 
 #include <SLES/OpenSLES.h>
 #include <freerdp/client/audin.h>

@@ -20,14 +20,14 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
 #include <freerdp/gdi/gfx.h>
+#include <winpr/assert.h>
 
-#include <freerdp/client/rdpei.h>
-#include <freerdp/client/rail.h>
 #include <freerdp/client/cliprdr.h>
-#include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/encomsp.h>
+#include <freerdp/client/rail.h>
+#include <freerdp/client/rdpei.h>
+#include <freerdp/client/rdpgfx.h>
 
 #include "tf_channels.h"
 #include "tf_freerdp.h"

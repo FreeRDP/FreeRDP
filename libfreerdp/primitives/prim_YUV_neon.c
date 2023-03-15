@@ -22,10 +22,10 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/sysinfo.h>
-#include <winpr/crt.h>
-#include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <freerdp/types.h>
+#include <winpr/crt.h>
+#include <winpr/sysinfo.h>
 
 #include "prim_internal.h"
 

@@ -26,16 +26,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
 #include <winpr/cmdline.h>
-#include <winpr/sysinfo.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/sysinfo.h>
 
 #include <alsa/asoundlib.h>
 
-#include <freerdp/types.h>
-#include <freerdp/codec/dsp.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/codec/dsp.h>
+#include <freerdp/types.h>
 
 #include "rdpsnd_main.h"
 

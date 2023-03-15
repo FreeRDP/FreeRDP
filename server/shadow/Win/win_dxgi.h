@@ -20,7 +20,7 @@
 #define FREERDP_SERVER_SHADOW_WIN_DXGI_H
 
 #if _WIN32_WINNT >= 0x0602
-//#define WITH_DXGI_1_2	1
+// #define WITH_DXGI_1_2	1
 #endif
 
 #ifdef WITH_DXGI_1_2

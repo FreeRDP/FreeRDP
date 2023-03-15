@@ -19,8 +19,8 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/server/telemetry.h>
 
 #define TAG CHANNELS_TAG("telemetry.server")

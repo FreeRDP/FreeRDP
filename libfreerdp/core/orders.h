@@ -24,9 +24,9 @@
 
 #include "rdp.h"
 
+#include <freerdp/api.h>
 #include <freerdp/types.h>
 #include <freerdp/update.h>
-#include <freerdp/api.h>
 
 #include <winpr/stream.h>
 

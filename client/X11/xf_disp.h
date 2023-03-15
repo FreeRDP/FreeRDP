@@ -19,8 +19,8 @@
 #ifndef FREERDP_CLIENT_X11_DISP_H
 #define FREERDP_CLIENT_X11_DISP_H
 
-#include <freerdp/types.h>
 #include <freerdp/client/disp.h>
+#include <freerdp/types.h>
 
 #include "xf_client.h"
 #include "xfreerdp.h"

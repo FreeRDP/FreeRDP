@@ -21,8 +21,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/synch.h>
 #include <winpr/interlocked.h>
+#include <winpr/synch.h>
 
 #include "../log.h"
 #define TAG WINPR_TAG("sync")

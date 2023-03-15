@@ -32,8 +32,8 @@ typedef struct rdp_tsg rdpTsg;
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-#include <freerdp/types.h>
 #include <freerdp/api.h>
+#include <freerdp/types.h>
 
 typedef enum
 {

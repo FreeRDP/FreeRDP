@@ -23,8 +23,8 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
-#include <freerdp/channels/gfxredir.h>
 #include <freerdp/api.h>
+#include <freerdp/channels/gfxredir.h>
 
 FREERDP_LOCAL UINT gfxredir_read_header(wStream* s, GFXREDIR_HEADER* header);
 FREERDP_LOCAL UINT gfxredir_write_header(wStream* s, const GFXREDIR_HEADER* header);

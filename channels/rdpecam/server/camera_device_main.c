@@ -19,8 +19,8 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/server/rdpecam.h>
 
 #define TAG CHANNELS_TAG("rdpecam.server")

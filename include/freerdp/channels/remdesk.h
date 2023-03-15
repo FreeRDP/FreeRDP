@@ -79,21 +79,21 @@ extern "C"
 #define REMDESK_ERROR_SHADOWEND_CONFIGCHANGE 301
 #define REMDESK_ERROR_SHADOWEND_UNKNOWN 302
 
-typedef struct
-{
-	UINT32 DataLength;
-	char ChannelName[32];
-} REMDESK_CHANNEL_HEADER;
+	typedef struct
+	{
+		UINT32 DataLength;
+		char ChannelName[32];
+	} REMDESK_CHANNEL_HEADER;
 
 #define REMDESK_CHANNEL_CTL_NAME "RC_CTL"
 #define REMDESK_CHANNEL_CTL_SIZE 22
 
-typedef struct
-{
-	REMDESK_CHANNEL_HEADER ch;
+	typedef struct
+	{
+		REMDESK_CHANNEL_HEADER ch;
 
-	UINT32 msgType;
-} REMDESK_CTL_HEADER;
+		UINT32 msgType;
+	} REMDESK_CTL_HEADER;
 
 #define REMDESK_CTL_REMOTE_CONTROL_DESKTOP 1
 #define REMDESK_CTL_RESULT 2
@@ -108,50 +108,50 @@ typedef struct
 #define REMDESK_CTL_RAEXPERT_NAME 11
 #define REMDESK_CTL_TOKEN 12
 
-typedef struct
-{
-	REMDESK_CTL_HEADER ctlHeader;
+	typedef struct
+	{
+		REMDESK_CTL_HEADER ctlHeader;
 
-	UINT32 result;
-} REMDESK_CTL_RESULT_PDU;
+		UINT32 result;
+	} REMDESK_CTL_RESULT_PDU;
 
-typedef struct
-{
-	REMDESK_CTL_HEADER ctlHeader;
+	typedef struct
+	{
+		REMDESK_CTL_HEADER ctlHeader;
 
-	UINT32 versionMajor;
-	UINT32 versionMinor;
-} REMDESK_CTL_VERSION_INFO_PDU;
+		UINT32 versionMajor;
+		UINT32 versionMinor;
+	} REMDESK_CTL_VERSION_INFO_PDU;
 
-typedef struct
-{
-	REMDESK_CTL_HEADER ctlHeader;
+	typedef struct
+	{
+		REMDESK_CTL_HEADER ctlHeader;
 
-	char* raConnectionString;
-	char* expertBlob;
-} REMDESK_CTL_AUTHENTICATE_PDU;
+		char* raConnectionString;
+		char* expertBlob;
+	} REMDESK_CTL_AUTHENTICATE_PDU;
 
-typedef struct
-{
-	REMDESK_CTL_HEADER ctlHeader;
+	typedef struct
+	{
+		REMDESK_CTL_HEADER ctlHeader;
 
-	char* raConnectionString;
-} REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU;
+		char* raConnectionString;
+	} REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU;
 
-typedef struct
-{
-	REMDESK_CTL_HEADER ctlHeader;
+	typedef struct
+	{
+		REMDESK_CTL_HEADER ctlHeader;
 
-	char* expertBlob;
-} REMDESK_CTL_VERIFY_PASSWORD_PDU;
+		char* expertBlob;
+	} REMDESK_CTL_VERIFY_PASSWORD_PDU;
 
-typedef struct
-{
-	REMDESK_CTL_HEADER ctlHeader;
+	typedef struct
+	{
+		REMDESK_CTL_HEADER ctlHeader;
 
-	BYTE* EncryptedPassword;
-	UINT32 EncryptedPasswordLength;
-} REMDESK_CTL_EXPERT_ON_VISTA_PDU;
+		BYTE* EncryptedPassword;
+		UINT32 EncryptedPasswordLength;
+	} REMDESK_CTL_EXPERT_ON_VISTA_PDU;
 
 #ifdef __cplusplus
 }

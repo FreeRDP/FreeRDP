@@ -24,18 +24,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
-#include <winpr/thread.h>
-#include <winpr/stream.h>
 #include <winpr/sysinfo.h>
-#include <winpr/stream.h>
+#include <winpr/thread.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/channels/ainput.h>
-#include <freerdp/server/ainput.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/server/ainput.h>
 
 #include "../common/ainput_common.h"
 

@@ -27,12 +27,12 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/types.h>
 #include <freerdp/constants.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/types.h>
 
-#include "rail_orders.h"
 #include "rail_main.h"
+#include "rail_orders.h"
 
 #include "../../../channels/client/addin.h"
 

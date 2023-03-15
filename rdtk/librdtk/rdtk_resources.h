@@ -19,8 +19,8 @@
 #ifndef RDTK_RESOURCES_PRIVATE_H
 #define RDTK_RESOURCES_PRIVATE_H
 
-#include <stdint.h>
 #include <rdtk/rdtk.h>
+#include <stdint.h>
 
 #include "rdtk_engine.h"
 

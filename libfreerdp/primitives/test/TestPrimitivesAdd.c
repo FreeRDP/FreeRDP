@@ -14,8 +14,8 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/sysinfo.h>
 #include "prim_test.h"
+#include <winpr/sysinfo.h>
 
 #define FUNC_TEST_SIZE 65536
 /* ========================================================================= */

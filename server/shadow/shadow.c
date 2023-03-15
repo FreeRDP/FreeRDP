@@ -18,10 +18,10 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
-#include <winpr/ssl.h>
-#include <winpr/path.h>
 #include <winpr/cmdline.h>
+#include <winpr/crt.h>
+#include <winpr/path.h>
+#include <winpr/ssl.h>
 #include <winpr/winsock.h>
 
 #include <winpr/tools/makecert.h>

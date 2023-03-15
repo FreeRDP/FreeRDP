@@ -19,10 +19,10 @@
 
 #ifdef WITH_KRB5_HEIMDAL
 
+#include "krb5glue.h"
+#include <winpr/assert.h>
 #include <winpr/endian.h>
 #include <winpr/wlog.h>
-#include <winpr/assert.h>
-#include "krb5glue.h"
 
 void krb5glue_keys_free(krb5_context ctx, struct krb5glue_keyset* keyset)
 {

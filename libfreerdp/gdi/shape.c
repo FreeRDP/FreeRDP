@@ -22,8 +22,8 @@
 #include <freerdp/config.h>
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
@@ -34,8 +34,8 @@
 
 #include <freerdp/log.h>
 
-#include "clipping.h"
 #include "../gdi/gdi.h"
+#include "clipping.h"
 
 #define TAG FREERDP_TAG("gdi.shape")
 

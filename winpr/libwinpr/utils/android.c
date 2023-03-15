@@ -20,8 +20,8 @@
 #include "android.h"
 #include <jni.h>
 
-#include <winpr/winpr.h>
 #include <winpr/assert.h>
+#include <winpr/winpr.h>
 
 #include "../log.h"
 

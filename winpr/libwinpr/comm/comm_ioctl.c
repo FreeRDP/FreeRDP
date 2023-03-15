@@ -24,16 +24,16 @@
 
 #if defined __linux__ && !defined ANDROID
 
-#include <winpr/assert.h>
 #include <errno.h>
+#include <winpr/assert.h>
 
 #include <winpr/wlog.h>
 
 #include "comm.h"
 #include "comm_ioctl.h"
-#include "comm_serial_sys.h"
-#include "comm_sercx_sys.h"
 #include "comm_sercx2_sys.h"
+#include "comm_sercx_sys.h"
+#include "comm_serial_sys.h"
 
 /* NB: MS-RDPESP's recommendation:
  *

@@ -10,8 +10,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import <freerdp/gdi/gdi.h>
 #import "ios_freerdp_ui.h"
+#import <freerdp/gdi/gdi.h>
 
 #import "RDPSession.h"
 

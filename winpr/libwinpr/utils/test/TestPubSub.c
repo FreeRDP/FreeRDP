@@ -1,7 +1,7 @@
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/thread.h>
-#include <winpr/collections.h>
 
 DEFINE_EVENT_BEGIN(MouseMotion)
 int x;

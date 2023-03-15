@@ -20,8 +20,8 @@
 #ifndef FREERDP_HEARTBEAT_H
 #define FREERDP_HEARTBEAT_H
 
-#include <freerdp/types.h>
 #include <freerdp/api.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -24,28 +24,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 
 #include <freerdp/api.h>
-#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/log.h>
 
-#include <freerdp/gdi/gdi.h>
-#include <freerdp/gdi/dc.h>
-#include <freerdp/gdi/pen.h>
-#include <freerdp/gdi/shape.h>
-#include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
+#include <freerdp/gdi/dc.h>
+#include <freerdp/gdi/gdi.h>
+#include <freerdp/gdi/pen.h>
+#include <freerdp/gdi/region.h>
+#include <freerdp/gdi/shape.h>
 
-#include "drawing.h"
-#include "clipping.h"
-#include "brush.h"
-#include "line.h"
-#include "gdi.h"
+#include "../cache/cache.h"
 #include "../core/graphics.h"
 #include "../core/update.h"
-#include "../cache/cache.h"
+#include "brush.h"
+#include "clipping.h"
+#include "drawing.h"
+#include "gdi.h"
+#include "line.h"
 
 #define TAG FREERDP_TAG("gdi")
 

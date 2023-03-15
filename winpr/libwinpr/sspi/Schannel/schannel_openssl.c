@@ -24,14 +24,14 @@
 #ifdef WITH_OPENSSL
 
 #include <winpr/crt.h>
-#include <winpr/sspi.h>
-#include <winpr/ssl.h>
-#include <winpr/print.h>
 #include <winpr/crypto.h>
+#include <winpr/print.h>
+#include <winpr/ssl.h>
+#include <winpr/sspi.h>
 
-#include <openssl/ssl.h>
-#include <openssl/err.h>
 #include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
 
 struct S_SCHANNEL_OPENSSL
 {

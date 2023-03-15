@@ -22,8 +22,8 @@
 
 #include <winpr/wlog.h>
 
-#include <stdbool.h>
 #include <SDL.h>
+#include <stdbool.h>
 
 enum
 {

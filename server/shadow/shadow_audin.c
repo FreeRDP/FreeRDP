@@ -18,9 +18,9 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/log.h>
-#include <freerdp/codec/dsp.h>
 #include "shadow.h"
+#include <freerdp/codec/dsp.h>
+#include <freerdp/log.h>
 
 #include "shadow_audin.h"
 #include <freerdp/server/server-common.h>

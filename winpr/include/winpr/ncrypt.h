@@ -21,12 +21,12 @@
 #define WINPR_INCLUDE_WINPR_NCRYPT_H_
 
 #ifdef _WIN32
-#include <wincrypt.h>
 #include <ncrypt.h>
+#include <wincrypt.h>
 #else
 
-#include <winpr/wtypes.h>
 #include <winpr/winpr.h>
+#include <winpr/wtypes.h>
 
 #ifndef __SECSTATUS_DEFINED__
 typedef LONG SECURITY_STATUS;

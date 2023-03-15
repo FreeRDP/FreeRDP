@@ -24,14 +24,14 @@
 #include <freerdp/config.h>
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
-#include <freerdp/gdi/dc.h>
 #include "drawing.h"
+#include <freerdp/gdi/dc.h>
 
 /**
  * @brief Set current foreground draw mode.

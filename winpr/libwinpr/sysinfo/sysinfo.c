@@ -20,17 +20,17 @@
 
 #include <winpr/config.h>
 
-#include <winpr/sysinfo.h>
 #include <winpr/platform.h>
+#include <winpr/sysinfo.h>
 
 #if defined(ANDROID)
 #include "cpufeatures/cpu-features.h"
 #endif
 
 #if defined(__linux__)
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #endif
 
 #include "../log.h"
@@ -58,8 +58,8 @@
 
 #ifndef _WIN32
 
-#include <time.h>
 #include <sys/time.h>
+#include <time.h>
 
 #ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>

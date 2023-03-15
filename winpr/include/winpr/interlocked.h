@@ -20,10 +20,10 @@
 #ifndef WINPR_INTERLOCKED_H
 #define WINPR_INTERLOCKED_H
 
+#include <winpr/platform.h>
 #include <winpr/spec.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-#include <winpr/platform.h>
 
 #ifdef __cplusplus
 extern "C"

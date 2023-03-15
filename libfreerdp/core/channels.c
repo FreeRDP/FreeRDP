@@ -24,27 +24,27 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/stream.h>
 #include <winpr/wtsapi.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
 
-#include <freerdp/log.h>
-#include <freerdp/svc.h>
-#include <freerdp/peer.h>
 #include <freerdp/addin.h>
+#include <freerdp/log.h>
+#include <freerdp/peer.h>
+#include <freerdp/svc.h>
 
+#include <freerdp/channels/channels.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/drdynvc.h>
-#include <freerdp/channels/channels.h>
 
-#include "rdp.h"
-#include "client.h"
-#include "server.h"
 #include "channels.h"
+#include "client.h"
+#include "rdp.h"
+#include "server.h"
 
 #define TAG FREERDP_TAG("core.channels")
 

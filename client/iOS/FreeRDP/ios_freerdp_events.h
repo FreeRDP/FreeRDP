@@ -11,8 +11,8 @@
 #ifndef IOS_RDP_EVENT_H
 #define IOS_RDP_EVENT_H
 
-#import <Foundation/Foundation.h>
 #import "ios_freerdp.h"
+#import <Foundation/Foundation.h>
 
 // For UI: use to send events
 BOOL ios_events_send(mfInfo *mfi, NSDictionary *event_description);

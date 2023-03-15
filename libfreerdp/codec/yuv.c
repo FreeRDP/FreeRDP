@@ -1,12 +1,12 @@
-#include <winpr/sysinfo.h>
 #include <winpr/assert.h>
 #include <winpr/pool.h>
+#include <winpr/sysinfo.h>
 
-#include <freerdp/settings.h>
 #include <freerdp/codec/region.h>
-#include <freerdp/primitives.h>
-#include <freerdp/log.h>
 #include <freerdp/codec/yuv.h>
+#include <freerdp/log.h>
+#include <freerdp/primitives.h>
+#include <freerdp/settings.h>
 
 #define TAG FREERDP_TAG("codec")
 

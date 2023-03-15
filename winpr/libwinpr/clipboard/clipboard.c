@@ -19,8 +19,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
 #include <winpr/wlog.h>
 
 #include <winpr/clipboard.h>

@@ -25,11 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/string.h>
-#include <winpr/thread.h>
 #include <winpr/cmdline.h>
+#include <winpr/crt.h>
+#include <winpr/string.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
 
 #include <err.h>
 #include <errno.h>
@@ -44,9 +44,9 @@
 #endif
 #include <sys/ioctl.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
 #include <freerdp/channels/rdpsnd.h>
+#include <freerdp/freerdp.h>
 
 #include "audin_main.h"
 

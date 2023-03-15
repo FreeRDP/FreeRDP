@@ -22,10 +22,10 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/dvc.h>
-#include <freerdp/types.h>
 #include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/dvc.h>
+#include <freerdp/types.h>
 
 #define DVC_TAG CHANNELS_TAG("echo.client")
 #ifdef WITH_DEBUG_DVC

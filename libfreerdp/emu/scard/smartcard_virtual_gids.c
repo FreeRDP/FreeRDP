@@ -21,9 +21,9 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/wlog.h>
-#include <winpr/stream.h>
 #include <winpr/collections.h>
+#include <winpr/stream.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/crypto/crypto.h>
 

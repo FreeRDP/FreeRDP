@@ -20,8 +20,8 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/server/proxy/proxy_log.h>
 
-#include "proxy_modules.h"
 #include "pf_channel.h"
+#include "proxy_modules.h"
 
 #define TAG PROXY_TAG("channel")
 

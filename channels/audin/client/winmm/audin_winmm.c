@@ -25,14 +25,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+// clang-format off
 #include <windows.h>
 #include <mmsystem.h>
+// clang-format on
 
-#include <winpr/crt.h>
-#include <winpr/cmdline.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
 #include <freerdp/client/audin.h>
+#include <freerdp/freerdp.h>
+#include <winpr/cmdline.h>
+#include <winpr/crt.h>
 
 #include "audin_main.h"
 

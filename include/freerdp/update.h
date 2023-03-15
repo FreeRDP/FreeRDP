@@ -20,24 +20,24 @@
 #ifndef FREERDP_UPDATE_H
 #define FREERDP_UPDATE_H
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
-#include <winpr/wlog.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/collections.h>
+#include <winpr/wlog.h>
 
-#include <freerdp/rail.h>
-#include <freerdp/types.h>
-#include <freerdp/settings.h>
 #include <freerdp/graphics.h>
+#include <freerdp/rail.h>
+#include <freerdp/settings.h>
+#include <freerdp/types.h>
 #include <freerdp/utils/pcap.h>
 
+#include <freerdp/altsec.h>
+#include <freerdp/pointer.h>
 #include <freerdp/primary.h>
 #include <freerdp/secondary.h>
-#include <freerdp/altsec.h>
 #include <freerdp/window.h>
-#include <freerdp/pointer.h>
 
 /* Bitmap Updates */
 #define EX_COMPRESSED_BITMAP_HEADER_PRESENT 0x01

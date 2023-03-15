@@ -24,16 +24,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
 
 #include <freerdp/primitives.h>
 
-#include "rfx_types.h"
-#include "rfx_rlgr.h"
 #include "rfx_differential.h"
-#include "rfx_quantization.h"
 #include "rfx_dwt.h"
+#include "rfx_quantization.h"
+#include "rfx_rlgr.h"
+#include "rfx_types.h"
 
 #include "rfx_encode.h"
 

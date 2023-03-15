@@ -1,7 +1,7 @@
 #include <winpr/crt.h>
+#include <winpr/environment.h>
 #include <winpr/error.h>
 #include <winpr/wtsapi.h>
-#include <winpr/environment.h>
 
 int TestWtsApiShutdownSystem(int argc, char* argv[])
 {

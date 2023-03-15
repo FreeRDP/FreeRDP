@@ -26,8 +26,8 @@
 #include <stdlib.h>
 #include <unwind.h>
 
-#include <winpr/string.h>
 #include "debug.h"
+#include <winpr/string.h>
 
 #include <dlfcn.h>
 

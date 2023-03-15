@@ -21,11 +21,11 @@
 #ifndef FREERDP_CHANNEL_AINPUT_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_AINPUT_CLIENT_MAIN_H
 
+#include <freerdp/addin.h>
+#include <freerdp/channels/log.h>
 #include <freerdp/config.h>
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
-#include <freerdp/addin.h>
-#include <freerdp/channels/log.h>
 
 #define DVC_TAG CHANNELS_TAG("ainput.client")
 #ifdef WITH_DEBUG_DVC

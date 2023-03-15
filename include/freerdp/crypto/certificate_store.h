@@ -23,8 +23,8 @@
 #define FREERDP_CRYPTO_CERTIFICATE_STORE_H
 
 #include <freerdp/api.h>
-#include <freerdp/settings.h>
 #include <freerdp/crypto/certificate_data.h>
+#include <freerdp/settings.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -8,12 +8,12 @@
  http://mozilla.org/MPL/2.0/.
  */
 
-#import <UIKit/UIKit.h>
 #import "Bookmark.h"
-#import "BookmarkTableCell.h"
-#import "SessionTableCell.h"
 #import "BookmarkEditorController.h"
+#import "BookmarkTableCell.h"
 #import "Reachability.h"
+#import "SessionTableCell.h"
+#import <UIKit/UIKit.h>
 
 @interface BookmarkListController : UIViewController <UISearchBarDelegate, UITableViewDelegate,
                                                       UITableViewDataSource, BookmarkEditorDelegate>

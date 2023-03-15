@@ -15,12 +15,12 @@
 
 #include <freerdp/config.h>
 
-#include <string.h>
-#include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <freerdp/types.h>
+#include <string.h>
 #ifdef WITH_IPP
-#include <ipps.h>
 #include <ippi.h>
+#include <ipps.h>
 #endif /* WITH_IPP */
 #include "prim_internal.h"
 

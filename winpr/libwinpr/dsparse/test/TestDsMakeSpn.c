@@ -1,9 +1,9 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
-#include <winpr/winpr.h>
-#include <winpr/tchar.h>
 #include <winpr/dsparse.h>
+#include <winpr/tchar.h>
+#include <winpr/winpr.h>
 
 static BOOL test_DsMakeSpnA(void)
 {

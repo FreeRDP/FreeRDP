@@ -1,7 +1,7 @@
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
-#include <winpr/collections.h>
 
 int TestQueue(int argc, char* argv[])
 {

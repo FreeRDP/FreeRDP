@@ -19,8 +19,8 @@
 #ifndef FREERDP_UTILS_POD_ARRAYS_H_
 #define FREERDP_UTILS_POD_ARRAYS_H_
 
-#include <winpr/wtypes.h>
 #include <winpr/assert.h>
+#include <winpr/wtypes.h>
 
 #ifdef __cplusplus
 extern "C"

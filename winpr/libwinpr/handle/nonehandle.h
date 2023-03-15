@@ -23,8 +23,8 @@
 
 #ifndef _WIN32
 
-#include <winpr/handle.h>
 #include "handle.h"
+#include <winpr/handle.h>
 
 struct winpr_none_handle
 {

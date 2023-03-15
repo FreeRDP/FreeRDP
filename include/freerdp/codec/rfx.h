@@ -23,9 +23,9 @@
 #define FREERDP_CODEC_REMOTEFX_H
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
-#include <freerdp/constants.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/constants.h>
+#include <freerdp/types.h>
 
 #include <winpr/stream.h>
 

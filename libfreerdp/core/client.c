@@ -23,8 +23,8 @@
 
 #include <winpr/assert.h>
 
-#include <freerdp/log.h>
 #include <freerdp/channels/drdynvc.h>
+#include <freerdp/log.h>
 
 #include "rdp.h"
 

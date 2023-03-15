@@ -23,8 +23,8 @@
 #include <winpr/input.h>
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/scancode.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -35,25 +35,25 @@ extern "C"
 #define RDP_KEYBOARD_LAYOUT_TYPE_VARIANT 2
 #define RDP_KEYBOARD_LAYOUT_TYPE_IME 4
 
-typedef struct
-{
-	UINT16 id;
-	UINT8 primaryId;
-	UINT8 subId;
-	char locale[512];
-	char primaryLanguage[512];
-	char primaryLanguageSymbol[512];
-	char subLanguage[512];
-	char subLanguageSymbol[512];
-} RDP_CODEPAGE;
+	typedef struct
+	{
+		UINT16 id;
+		UINT8 primaryId;
+		UINT8 subId;
+		char locale[512];
+		char primaryLanguage[512];
+		char primaryLanguageSymbol[512];
+		char subLanguage[512];
+		char subLanguageSymbol[512];
+	} RDP_CODEPAGE;
 
-typedef struct
-{
-	DWORD code; /* Keyboard layout code */
-	char* name; /* Keyboard layout name */
-} RDP_KEYBOARD_LAYOUT;
+	typedef struct
+	{
+		DWORD code; /* Keyboard layout code */
+		char* name; /* Keyboard layout name */
+	} RDP_KEYBOARD_LAYOUT;
 
-/* Keyboard layout IDs */
+	/* Keyboard layout IDs */
 
 #define KBD_ARABIC_101 0x00000401
 #define KBD_BULGARIAN 0x00000402
@@ -140,7 +140,7 @@ typedef struct
 #define KBD_IRISH 0x00001809
 #define KBD_BOSNIAN_CYRILLIC 0x0000201A
 
-/* Keyboard layout variant IDs */
+	/* Keyboard layout variant IDs */
 
 #define KBD_ARABIC_102 0x00010401
 #define KBD_BULGARIAN_LATIN 0x00010402
@@ -195,7 +195,7 @@ typedef struct
 #define KBD_FRENCH_BEPO 0xa000040c
 #define KBD_GERMAN_NEO 0xB0000407
 
-/* Global Input Method Editor (IME) IDs */
+	/* Global Input Method Editor (IME) IDs */
 
 #define KBD_CHINESE_TRADITIONAL_PHONETIC 0xE0010404
 #define KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002 0xE0010411

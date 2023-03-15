@@ -19,16 +19,16 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
 
-#include <freerdp/types.h>
-#include <freerdp/log.h>
 #include <freerdp/codec/dsp.h>
+#include <freerdp/log.h>
+#include <freerdp/types.h>
 
 #if !defined(WITH_DSP_FFMPEG)
 #if defined(WITH_GSM)

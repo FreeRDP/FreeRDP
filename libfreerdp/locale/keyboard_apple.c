@@ -25,8 +25,8 @@
 
 #include "liblocale.h"
 
-#include <freerdp/locale/locale.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/locale/locale.h>
 
 #include "keyboard_apple.h"
 

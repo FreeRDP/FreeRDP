@@ -22,9 +22,9 @@
 #ifndef FREERDP_CHANNEL_AUDIN_SERVER_H
 #define FREERDP_CHANNEL_AUDIN_SERVER_H
 
-#include <freerdp/codec/audio.h>
-#include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpsnd.h>
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/codec/audio.h>
 
 #if !defined(CHANNEL_AUDIN_SERVER)
 #error "This header must not be included if CHANNEL_AUDIN_SERVER is not defined"

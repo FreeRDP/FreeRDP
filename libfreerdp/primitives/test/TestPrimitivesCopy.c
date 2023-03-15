@@ -14,8 +14,8 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/sysinfo.h>
 #include "prim_test.h"
+#include <winpr/sysinfo.h>
 
 #define COPY_TESTSIZE (256 * 2 + 16 * 2 + 15 + 15)
 

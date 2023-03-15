@@ -22,8 +22,8 @@
 #include <winpr/config.h>
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <winpr/synch.h>
 
@@ -39,8 +39,8 @@
 #include <sys/eventfd.h>
 #endif
 
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #include "../handle/handle.h"
 #include "../pipe/pipe.h"
@@ -555,10 +555,10 @@ void* GetEventWaitObject(HANDLE hEvent)
 #endif
 }
 #if defined(WITH_DEBUG_EVENTS)
-#include <unistd.h>
 #include <fcntl.h>
-#include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 static BOOL dump_handle_list(void* data, size_t index, va_list ap)
 {

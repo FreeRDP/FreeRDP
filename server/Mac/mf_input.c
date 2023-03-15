@@ -24,8 +24,8 @@
 
 #include <winpr/windows.h>
 
-#include "mf_input.h"
 #include "mf_info.h"
+#include "mf_input.h"
 
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("mac")

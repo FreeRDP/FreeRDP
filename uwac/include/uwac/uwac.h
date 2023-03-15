@@ -23,8 +23,8 @@
 #ifndef UWAC_H_
 #define UWAC_H_
 
-#include <wayland-client.h>
 #include <stdbool.h>
+#include <wayland-client.h>
 
 #if __GNUC__ >= 4
 #define UWAC_API __attribute__((visibility("default")))

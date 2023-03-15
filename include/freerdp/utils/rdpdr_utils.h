@@ -21,8 +21,8 @@
 #ifndef FREERDP_UTILS_RDPDR_H
 #define FREERDP_UTILS_RDPDR_H
 
-#include <winpr/stream.h>
 #include <freerdp/api.h>
+#include <winpr/stream.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -22,9 +22,9 @@
 #include <corkscrew/map_info.h>
 #include <corkscrew/symbol_table.h>
 
-#include <sys/types.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C"

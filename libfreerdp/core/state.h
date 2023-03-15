@@ -22,8 +22,8 @@
 #ifndef FREERDP_LIB_CORE_STATE_H
 #define FREERDP_LIB_CORE_STATE_H
 
-#include <winpr/wtypes.h>
 #include <freerdp/api.h>
+#include <winpr/wtypes.h>
 
 typedef enum
 {

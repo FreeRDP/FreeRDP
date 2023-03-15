@@ -24,8 +24,8 @@
 
 #include <winpr/wlog.h>
 
-#include "comm_serial_sys.h"
 #include "comm_sercx_sys.h"
+#include "comm_serial_sys.h"
 
 #include "comm_sercx2_sys.h"
 

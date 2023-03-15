@@ -22,8 +22,8 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/codecs.h>
+#include <freerdp/freerdp.h>
 
 #include <freerdp/server/shadow.h>
 

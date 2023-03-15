@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <string.h>
-#include <winpr/wtypes.h>
-#include <winpr/sysinfo.h>
 #include <winpr/error.h>
+#include <winpr/sysinfo.h>
+#include <winpr/wtypes.h>
 
 static BOOL Test_GetComputerName(void)
 {

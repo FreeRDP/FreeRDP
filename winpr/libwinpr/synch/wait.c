@@ -24,19 +24,19 @@
 #include <unistd.h>
 #endif
 
-#include <winpr/assert.h>
 #include <errno.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
 #include <winpr/platform.h>
+#include <winpr/synch.h>
 #include <winpr/sysinfo.h>
 
-#include "synch.h"
-#include "pollset.h"
 #include "../thread/thread.h"
-#include <winpr/thread.h>
+#include "pollset.h"
+#include "synch.h"
 #include <winpr/debug.h>
+#include <winpr/thread.h>
 
 #include "../log.h"
 #define TAG WINPR_TAG("sync.wait")
@@ -51,9 +51,9 @@
 #ifndef _WIN32
 
 #include <stdlib.h>
-#include <time.h>
 #include <sys/time.h>
 #include <sys/wait.h>
+#include <time.h>
 
 #include "../handle/handle.h"
 

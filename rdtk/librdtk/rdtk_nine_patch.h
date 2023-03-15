@@ -19,8 +19,8 @@
 #ifndef RDTK_NINE_PATCH_PRIVATE_H
 #define RDTK_NINE_PATCH_PRIVATE_H
 
-#include <stdint.h>
 #include <rdtk/rdtk.h>
+#include <stdint.h>
 
 #include <winpr/image.h>
 

@@ -21,8 +21,8 @@
 #ifndef FREERDP_CLIENT_SAMPLE_CHANNELS_H
 #define FREERDP_CLIENT_SAMPLE_CHANNELS_H
 
-#include <freerdp/freerdp.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/freerdp.h>
 
 int tf_on_channel_connected(freerdp* instance, const char* name, void* pInterface);
 int tf_on_channel_disconnected(freerdp* instance, const char* name, void* pInterface);

@@ -21,8 +21,8 @@
 
 #include <winpr/crt.h>
 #include <winpr/io.h>
-#include <winpr/nt.h>
 #include <winpr/library.h>
+#include <winpr/nt.h>
 
 #include <winpr/wtsapi.h>
 

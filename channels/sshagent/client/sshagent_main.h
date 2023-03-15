@@ -25,9 +25,9 @@
 
 #include <winpr/stream.h>
 
-#include <freerdp/svc.h>
 #include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/svc.h>
 
 #define DVC_TAG CHANNELS_TAG("sshagent.client")
 #ifdef WITH_DEBUG_SSHAGENT

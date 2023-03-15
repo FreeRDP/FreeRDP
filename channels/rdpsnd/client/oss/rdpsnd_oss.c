@@ -25,11 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/cmdline.h>
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/string.h>
-#include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
-#include <winpr/collections.h>
 
 #include <err.h>
 #include <errno.h>
@@ -44,9 +44,9 @@
 #endif
 #include <sys/ioctl.h>
 
-#include <freerdp/types.h>
-#include <freerdp/settings.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/settings.h>
+#include <freerdp/types.h>
 
 #include "rdpsnd_main.h"
 

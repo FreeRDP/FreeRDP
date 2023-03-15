@@ -19,23 +19,23 @@
  * limitations under the License.
  */
 
-#include <winpr/assert.h>
 #include <freerdp/config.h>
+#include <winpr/assert.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
 #include <winpr/stream.h>
+#include <winpr/synch.h>
 #include <winpr/sysinfo.h>
+#include <winpr/thread.h>
 
-#include <freerdp/freerdp.h>
-#include <freerdp/server/echo.h>
 #include <freerdp/channels/echo.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/server/echo.h>
 
 #define TAG CHANNELS_TAG("echo.server")
 

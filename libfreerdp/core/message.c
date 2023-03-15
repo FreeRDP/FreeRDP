@@ -23,23 +23,23 @@
 
 #include <winpr/assert.h>
 
-#include "rdp.h"
 #include "message.h"
+#include "rdp.h"
 #include "transport.h"
 
-#include <freerdp/log.h>
 #include <freerdp/freerdp.h>
+#include <freerdp/log.h>
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/stream.h>
-#include <winpr/collections.h>
 
-#include "../cache/pointer.h"
 #include "../cache/bitmap.h"
-#include "../cache/palette.h"
-#include "../cache/glyph.h"
 #include "../cache/brush.h"
 #include "../cache/cache.h"
+#include "../cache/glyph.h"
+#include "../cache/palette.h"
+#include "../cache/pointer.h"
 
 #define TAG FREERDP_TAG("core.message")
 

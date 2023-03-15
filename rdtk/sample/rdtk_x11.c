@@ -20,8 +20,8 @@
 
 #include <stdint.h>
 
-#include <winpr/wlog.h>
 #include <rdtk/rdtk.h>
+#include <winpr/wlog.h>
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>

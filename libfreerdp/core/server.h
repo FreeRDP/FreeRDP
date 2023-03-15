@@ -21,19 +21,19 @@
 #ifndef FREERDP_LIB_CORE_SERVER_H
 #define FREERDP_LIB_CORE_SERVER_H
 
-#include <freerdp/freerdp.h>
 #include <freerdp/api.h>
 #include <freerdp/channels/wtsvc.h>
+#include <freerdp/freerdp.h>
 
-#include <winpr/synch.h>
-#include <winpr/stream.h>
 #include <winpr/collections.h>
+#include <winpr/stream.h>
+#include <winpr/synch.h>
 
 typedef struct rdp_peer_channel rdpPeerChannel;
 typedef struct WTSVirtualChannelManager WTSVirtualChannelManager;
 
-#include "rdp.h"
 #include "mcs.h"
+#include "rdp.h"
 
 enum
 {

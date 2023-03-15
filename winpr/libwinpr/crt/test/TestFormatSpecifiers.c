@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <winpr/wtypes.h>
 #include <winpr/string.h>
+#include <winpr/wtypes.h>
 
 int TestFormatSpecifiers(int argc, char* argv[])
 {

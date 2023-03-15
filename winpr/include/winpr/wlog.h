@@ -29,10 +29,10 @@ extern "C"
 #endif
 
 #include <stdarg.h>
-#include <winpr/wtypes.h>
-#include <winpr/winpr.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/winpr.h>
+#include <winpr/wtypes.h>
 
 /**
  * Log Levels

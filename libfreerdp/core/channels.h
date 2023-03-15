@@ -20,8 +20,8 @@
 #ifndef FREERDP_LIB_CORE_CHANNELS_H
 #define FREERDP_LIB_CORE_CHANNELS_H
 
-#include <freerdp/api.h>
 #include "client.h"
+#include <freerdp/api.h>
 
 FREERDP_LOCAL BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data,
                                         size_t size);

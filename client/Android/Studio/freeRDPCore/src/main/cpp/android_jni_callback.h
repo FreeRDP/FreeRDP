@@ -13,9 +13,9 @@
 #ifndef FREERDP_CLIENT_ANDROID_JNI_CALLBACK_H
 #define FREERDP_CLIENT_ANDROID_JNI_CALLBACK_H
 
+#include <freerdp/api.h>
 #include <jni.h>
 #include <stdarg.h>
-#include <freerdp/api.h>
 
 FREERDP_LOCAL jint init_callback_environment(JavaVM* vm, JNIEnv* env);
 FREERDP_LOCAL jboolean jni_attach_thread(JNIEnv** env);

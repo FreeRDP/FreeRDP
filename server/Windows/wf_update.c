@@ -27,9 +27,9 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
 
-#include "wf_peer.h"
 #include "wf_info.h"
 #include "wf_mirage.h"
+#include "wf_peer.h"
 
 #include "wf_update.h"
 

@@ -22,8 +22,8 @@
 #ifndef FREERDP_CHANNEL_RDPSND_SERVER_H
 #define FREERDP_CHANNEL_RDPSND_SERVER_H
 
-#include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpsnd.h>
+#include <freerdp/channels/wtsvc.h>
 
 #ifdef __cplusplus
 extern "C"

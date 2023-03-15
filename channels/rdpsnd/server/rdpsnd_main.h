@@ -25,9 +25,9 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-#include <freerdp/codec/dsp.h>
-#include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/codec/dsp.h>
 #include <freerdp/server/rdpsnd.h>
 
 #define TAG CHANNELS_TAG("rdpsnd.server")

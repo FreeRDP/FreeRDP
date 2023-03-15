@@ -23,12 +23,12 @@
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
 
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/crypto/certificate_store.h>
+#include <freerdp/types.h>
 
 #include <winpr/stream.h>
 

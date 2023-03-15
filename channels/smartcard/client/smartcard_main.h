@@ -26,14 +26,14 @@
 #include <freerdp/channels/log.h>
 #include <freerdp/channels/rdpdr.h>
 
-#include <winpr/crt.h>
-#include <winpr/wlog.h>
-#include <winpr/synch.h>
-#include <winpr/smartcard.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/smartcard.h>
+#include <winpr/synch.h>
+#include <winpr/wlog.h>
 
-#include <freerdp/utils/smartcard_operations.h>
 #include <freerdp/utils/smartcard_call.h>
+#include <freerdp/utils/smartcard_operations.h>
 
 #if defined(WITH_SMARTCARD_EMULATE)
 #include <freerdp/emulate/scard/smartcard_emulate.h>

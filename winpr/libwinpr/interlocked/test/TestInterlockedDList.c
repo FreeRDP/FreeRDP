@@ -1,8 +1,8 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
-#include <winpr/windows.h>
 #include <winpr/interlocked.h>
+#include <winpr/windows.h>
 
 typedef struct
 {

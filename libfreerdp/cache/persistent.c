@@ -19,15 +19,15 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/stream.h>
-#include <winpr/assert.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
 
-#include <freerdp/log.h>
 #include <freerdp/cache/persistent.h>
+#include <freerdp/log.h>
 
 #define TAG FREERDP_TAG("cache.persistent")
 

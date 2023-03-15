@@ -28,8 +28,8 @@
 #include <winpr/synch.h>
 #include <winpr/thread.h>
 
-#include <freerdp/settings.h>
 #include <freerdp/server/rdpdr.h>
+#include <freerdp/settings.h>
 
 typedef struct S_RDPDR_IRP
 {

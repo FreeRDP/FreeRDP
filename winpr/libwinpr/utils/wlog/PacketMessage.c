@@ -25,10 +25,10 @@
 
 #include "PacketMessage.h"
 
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
 #include <winpr/stream.h>
+#include <winpr/wtypes.h>
 
 #include "../../log.h"
 #define TAG WINPR_TAG("utils.wlog")
@@ -36,8 +36,8 @@
 #ifndef _WIN32
 #include <sys/time.h>
 #else
-#include <time.h>
 #include <sys/timeb.h>
+#include <time.h>
 #include <winpr/windows.h>
 
 static int gettimeofday(struct timeval* tp, void* tz)

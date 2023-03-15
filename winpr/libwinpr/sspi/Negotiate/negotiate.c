@@ -20,22 +20,21 @@
 
 #include <winpr/config.h>
 
-#include <winpr/crt.h>
+#include <winpr/asn1.h>
 #include <winpr/assert.h>
+#include <winpr/build-config.h>
+#include <winpr/crt.h>
+#include <winpr/registry.h>
 #include <winpr/sspi.h>
 #include <winpr/tchar.h>
-#include <winpr/assert.h>
-#include <winpr/registry.h>
-#include <winpr/build-config.h>
-#include <winpr/asn1.h>
 
 #include "negotiate.h"
 
+#include "../../log.h"
+#include "../Kerberos/kerberos.h"
 #include "../NTLM/ntlm.h"
 #include "../NTLM/ntlm_export.h"
-#include "../Kerberos/kerberos.h"
 #include "../sspi.h"
-#include "../../log.h"
 #define TAG WINPR_TAG("negotiate")
 
 static const char NEGO_REG_KEY[] =

@@ -1,9 +1,9 @@
 #include <errno.h>
-#include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/tchar.h>
 #include <winpr/cmdline.h>
+#include <winpr/crt.h>
 #include <winpr/strlst.h>
+#include <winpr/tchar.h>
 
 static const char* testArgv[] = { "mstsc.exe",
 	                              "+z",

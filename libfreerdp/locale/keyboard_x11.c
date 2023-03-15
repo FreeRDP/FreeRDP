@@ -28,8 +28,8 @@
 
 #include "liblocale.h"
 
-#include <freerdp/locale/locale.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/locale/locale.h>
 
 #include "keyboard_x11.h"
 #include "xkb_layout_ids.h"

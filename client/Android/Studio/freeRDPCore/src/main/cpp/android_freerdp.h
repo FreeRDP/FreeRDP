@@ -13,11 +13,11 @@
 
 #include <jni.h>
 
-#include <winpr/crt.h>
 #include <winpr/clipboard.h>
+#include <winpr/crt.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/client/cliprdr.h>
+#include <freerdp/freerdp.h>
 
 #include "android_event.h"
 

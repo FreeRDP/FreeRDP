@@ -20,16 +20,16 @@
  */
 
 #include <errno.h>
-#include <winpr/image.h>
 #include <freerdp/gdi/gdi.h>
+#include <winpr/image.h>
 #include <winpr/winsock.h>
 
-#include <freerdp/server/proxy/proxy_modules_api.h>
 #include <freerdp/server/proxy/proxy_log.h>
+#include <freerdp/server/proxy/proxy_modules_api.h>
 
-#include <freerdp/server/proxy/proxy_context.h>
 #include "cap_config.h"
 #include "cap_protocol.h"
+#include <freerdp/server/proxy/proxy_context.h>
 
 #define TAG MODULE_TAG("capture")
 

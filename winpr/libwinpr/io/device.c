@@ -25,21 +25,21 @@
 
 #include "io.h"
 
-#include <stdio.h>
-#include <fcntl.h>
-#include <stdlib.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 
 #include <winpr/crt.h>
-#include <winpr/path.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
 
 /**
  * I/O Manager Routines

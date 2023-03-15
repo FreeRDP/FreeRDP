@@ -17,9 +17,9 @@
  * limitations under the License.
  */
 
+#include <X11/Xutil.h>
 #include <winpr/assert.h>
 #include <winpr/sysinfo.h>
-#include <X11/Xutil.h>
 
 #ifdef WITH_XRANDR
 #include <X11/extensions/Xrandr.h>

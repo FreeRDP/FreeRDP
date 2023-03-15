@@ -17,11 +17,11 @@
  * limitations under the License.
  */
 
-#include <dispatch/dispatch.h>
 #include <CoreGraphics/CoreGraphics.h>
 #include <CoreVideo/CoreVideo.h>
 #include <IOKit/IOKitLib.h>
 #include <IOSurface/IOSurface.h>
+#include <dispatch/dispatch.h>
 
 #include "mf_mountain_lion.h"
 

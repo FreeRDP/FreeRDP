@@ -20,8 +20,8 @@
 #ifndef FREERDP_UPDATE_WINDOW_H
 #define FREERDP_UPDATE_WINDOW_H
 
-#include <freerdp/types.h>
 #include <freerdp/rail.h>
+#include <freerdp/types.h>
 
 /* Window Order Header Flags */
 #define WINDOW_ORDER_TYPE_WINDOW 0x01000000

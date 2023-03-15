@@ -1,8 +1,8 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
-#include <winpr/tchar.h>
 #include <winpr/environment.h>
+#include <winpr/tchar.h>
 
 int TestEnvironmentMergeEnvironmentStrings(int argc, char* argv[])
 {

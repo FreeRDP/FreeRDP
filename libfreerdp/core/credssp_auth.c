@@ -21,13 +21,13 @@
 
 #include <ctype.h>
 
-#include <freerdp/config.h>
 #include <freerdp/build-config.h>
-#include <freerdp/settings.h>
+#include <freerdp/config.h>
 #include <freerdp/peer.h>
+#include <freerdp/settings.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/library.h>
 #include <winpr/registry.h>
 

@@ -25,8 +25,8 @@
 #define FREERDP_CHANNEL_SMARTCARD_CLIENT_PACK_H
 
 #include <winpr/crt.h>
-#include <winpr/stream.h>
 #include <winpr/smartcard.h>
+#include <winpr/stream.h>
 
 #include <freerdp/api.h>
 #include <freerdp/channels/scard.h>

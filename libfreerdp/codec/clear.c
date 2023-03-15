@@ -21,12 +21,12 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/bitstream.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
-#include <winpr/bitstream.h>
 
-#include <freerdp/codec/color.h>
 #include <freerdp/codec/clear.h>
+#include <freerdp/codec/color.h>
 #include <freerdp/log.h>
 
 #define TAG FREERDP_TAG("codec.clear")

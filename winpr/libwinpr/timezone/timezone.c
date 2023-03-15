@@ -19,12 +19,12 @@
 
 #include <winpr/config.h>
 
-#include <winpr/environment.h>
-#include <winpr/wtypes.h>
-#include <winpr/timezone.h>
-#include <winpr/crt.h>
-#include <winpr/file.h>
 #include "../log.h"
+#include <winpr/crt.h>
+#include <winpr/environment.h>
+#include <winpr/file.h>
+#include <winpr/timezone.h>
+#include <winpr/wtypes.h>
 
 #define TAG WINPR_TAG("timezone")
 

@@ -25,8 +25,8 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/channels/wtsvc.h>
+#include <freerdp/freerdp.h>
 
 #include <freerdp/server/proxy/proxy_config.h>
 #include <freerdp/server/proxy/proxy_types.h>

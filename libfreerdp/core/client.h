@@ -24,17 +24,17 @@
 #include <winpr/stream.h>
 #include <winpr/wtsapi.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
 
-#include <freerdp/svc.h>
-#include <freerdp/peer.h>
 #include <freerdp/addin.h>
 #include <freerdp/api.h>
+#include <freerdp/peer.h>
+#include <freerdp/svc.h>
 
+#include <freerdp/channels/channels.h>
 #include <freerdp/client/channels.h>
 #include <freerdp/client/drdynvc.h>
-#include <freerdp/channels/channels.h>
 
 #ifndef CHANNEL_MAX_COUNT
 #define CHANNEL_MAX_COUNT 30

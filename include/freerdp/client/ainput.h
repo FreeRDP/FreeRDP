@@ -22,8 +22,8 @@
 #ifndef FREERDP_CHANNEL_AINPUT_CLIENT_AINPUT_H
 #define FREERDP_CHANNEL_AINPUT_CLIENT_AINPUT_H
 
-#include <winpr/assert.h>
 #include <freerdp/channels/ainput.h>
+#include <winpr/assert.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -19,25 +19,25 @@
 
 #include <freerdp/config.h>
 
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#include <errno.h>
 
+#include <freerdp/log.h>
 #include <winpr/crt.h>
 #include <winpr/windows.h>
-#include <freerdp/log.h>
 
 #ifndef _WIN32
+#include <arpa/inet.h>
+#include <net/if.h>
 #include <netdb.h>
-#include <unistd.h>
-#include <sys/un.h>
+#include <netinet/in.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <net/if.h>
+#include <sys/un.h>
+#include <unistd.h>
 #endif
 
 #include <winpr/handle.h>

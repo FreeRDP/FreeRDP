@@ -20,8 +20,8 @@
 #ifndef FREERDP_LIB_CODEC_RFX_DECODE_H
 #define FREERDP_LIB_CODEC_RFX_DECODE_H
 
-#include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
+#include <freerdp/codec/rfx.h>
 
 /* stride is bytes between rows in the output buffer. */
 FREERDP_LOCAL BOOL rfx_decode_rgb(RFX_CONTEXT* context, const RFX_TILE* tile, BYTE* rgb_buffer,

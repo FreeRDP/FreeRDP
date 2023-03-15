@@ -27,12 +27,12 @@
 #include <winpr/crt.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
-#include <winpr/sysinfo.h>
 #include <winpr/registry.h>
+#include <winpr/sysinfo.h>
 
-#include <freerdp/settings.h>
-#include <freerdp/build-config.h>
 #include <ctype.h>
+#include <freerdp/build-config.h>
+#include <freerdp/settings.h>
 
 #include "../crypto/certificate.h"
 #include "../crypto/privatekey.h"

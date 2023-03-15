@@ -22,8 +22,8 @@
 
 #include "shadow_surface.h"
 
-#include "shadow_screen.h"
 #include "shadow_lobby.h"
+#include "shadow_screen.h"
 
 rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 {

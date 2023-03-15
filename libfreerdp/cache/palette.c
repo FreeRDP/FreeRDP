@@ -25,8 +25,8 @@
 
 #include <freerdp/log.h>
 
-#include "palette.h"
 #include "cache.h"
+#include "palette.h"
 
 #define TAG FREERDP_TAG("cache.palette")
 

@@ -18,20 +18,20 @@
  * limitations under the License.
  */
 
-#include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #ifndef __CYGWIN__
 #include <sys/syscall.h>
 #endif
 
-#include <unistd.h>
-#include <fcntl.h>
-#include <string.h>
 #include <err.h>
 #include <errno.h>
-#include <winpr/thread.h>
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
 #include <winpr/string.h>
+#include <winpr/thread.h>
 
 #if __clang__
 #pragma clang diagnostic push
@@ -54,9 +54,9 @@
 
 #include <freerdp/channels/tsmf.h>
 
-#include "tsmf_platform.h"
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"
+#include "tsmf_platform.h"
 
 #if !defined(WITH_XEXT)
 #warning "Building TSMF without shape extension support"

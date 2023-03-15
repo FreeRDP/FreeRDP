@@ -19,11 +19,11 @@
 
 #include <winpr/config.h>
 
-#include "ntlm.h"
 #include "../sspi.h"
+#include "ntlm.h"
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
 #include <winpr/sysinfo.h>

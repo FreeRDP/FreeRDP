@@ -22,8 +22,8 @@
 
 #include "wf_channels.h"
 
-#include "wf_rail.h"
 #include "wf_cliprdr.h"
+#include "wf_rail.h"
 
 #include <freerdp/gdi/gfx.h>
 #include <freerdp/gdi/video.h>

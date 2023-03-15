@@ -20,18 +20,18 @@
 #ifndef FREERDP_LIB_CORE_GATEWAY_RDG_H
 #define FREERDP_LIB_CORE_GATEWAY_RDG_H
 
-#include <winpr/wtypes.h>
-#include <winpr/stream.h>
 #include <winpr/collections.h>
 #include <winpr/interlocked.h>
+#include <winpr/stream.h>
+#include <winpr/wtypes.h>
 
+#include <freerdp/api.h>
 #include <freerdp/log.h>
 #include <freerdp/utils/ringbuffer.h>
-#include <freerdp/api.h>
 
 #include <freerdp/freerdp.h>
-#include <freerdp/types.h>
 #include <freerdp/settings.h>
+#include <freerdp/types.h>
 
 typedef struct rdp_rdg rdpRdg;
 

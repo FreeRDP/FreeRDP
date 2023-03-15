@@ -19,8 +19,8 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/server/rdpecam-enumerator.h>
 
 #define TAG CHANNELS_TAG("rdpecam-enumerator.server")

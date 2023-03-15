@@ -22,9 +22,9 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/string.h>
-#include <winpr/path.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
+#include <winpr/string.h>
 
 #ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
@@ -41,15 +41,15 @@
 #include <io.h>
 #include <sys/stat.h>
 #else
-#include <winpr/assert.h>
-#include <pthread.h>
 #include <dirent.h>
-#include <libgen.h>
 #include <errno.h>
+#include <libgen.h>
+#include <pthread.h>
+#include <winpr/assert.h>
 
-#include <sys/un.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
 
 #ifdef WINPR_HAVE_AIO_H
 #undef WINPR_HAVE_AIO_H /* disable for now, incomplete */

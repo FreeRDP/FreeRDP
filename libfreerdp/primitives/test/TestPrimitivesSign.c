@@ -14,8 +14,8 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/sysinfo.h>
 #include "prim_test.h"
+#include <winpr/sysinfo.h>
 
 #define TEST_BUFFER_SIZE 65535
 

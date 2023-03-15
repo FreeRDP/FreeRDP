@@ -21,12 +21,12 @@
 #define FREERDP_LIB_CRYPTO_H
 
 /* OpenSSL includes windows.h */
-#include <winpr/windows.h>
 #include <winpr/custom-crypto.h>
+#include <winpr/windows.h>
 
 #include <freerdp/api.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/crypto/crypto.h>
+#include <freerdp/freerdp.h>
 
 #ifdef __cplusplus
 extern "C"

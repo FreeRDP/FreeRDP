@@ -25,19 +25,19 @@
 #include <winpr/stream.h>
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/error.h>
 #include <freerdp/event.h>
+#include <freerdp/types.h>
 
 #include <freerdp/settings.h>
 
-#include <freerdp/gdi/gdi.h>
+#include <freerdp/autodetect.h>
 #include <freerdp/codecs.h>
-#include <freerdp/metrics.h>
 #include <freerdp/extension.h>
+#include <freerdp/gdi/gdi.h>
 #include <freerdp/heartbeat.h>
 #include <freerdp/message.h>
-#include <freerdp/autodetect.h>
+#include <freerdp/metrics.h>
 #include <freerdp/streamdump.h>
 
 #ifdef __cplusplus
@@ -53,10 +53,10 @@ extern "C"
 	typedef struct rdp_client_entry_points_v1 RDP_CLIENT_ENTRY_POINTS_V1;
 	typedef RDP_CLIENT_ENTRY_POINTS_V1 RDP_CLIENT_ENTRY_POINTS;
 
-#include <freerdp/utils/smartcardlogon.h>
-#include <freerdp/update.h>
-#include <freerdp/input.h>
 #include <freerdp/graphics.h>
+#include <freerdp/input.h>
+#include <freerdp/update.h>
+#include <freerdp/utils/smartcardlogon.h>
 
 #define MCS_BASE_CHANNEL_ID 1001
 #define MCS_GLOBAL_CHANNEL_ID 1003
@@ -515,10 +515,10 @@ owned by rdpRdp */
 		                                 It is used to get the username/password. The reason
 		                                 argument tells why it was called.  */
 		ALIGN64 pChooseSmartcard
-		    ChooseSmartcard;      /* (offset 70)
-		                        Callback for choosing a smartcard for logon.
-		                        Used when multiple smartcards are available. Returns an index into a list
-		                        of SmartcardCertInfo pointers	*/
+		    ChooseSmartcard;                    /* (offset 70)
+		                                      Callback for choosing a smartcard for logon.
+		                                      Used when multiple smartcards are available. Returns an index into a list
+		                                      of SmartcardCertInfo pointers	*/
 		ALIGN64 pGetAadAuthCode GetAadAuthCode; /* (offset 71)
 		                                            Callback for obtaining an oauth2 authorization
 		                                           code for RDS AAD authentication */

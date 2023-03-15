@@ -23,17 +23,17 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
-#include <winpr/assert.h>
 #include <freerdp/log.h>
+#include <winpr/assert.h>
+#include <winpr/crt.h>
 
 #include "gcc.h"
 
+#include "client.h"
+#include "connection.h"
 #include "mcs.h"
 #include "tpdu.h"
 #include "tpkt.h"
-#include "client.h"
-#include "connection.h"
 
 #define TAG FREERDP_TAG("core")
 

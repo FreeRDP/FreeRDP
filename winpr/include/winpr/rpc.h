@@ -40,11 +40,11 @@ typedef PCONTEXT_HANDLE PCHANNEL_CONTEXT_HANDLE_SERIALIZE;
 
 #else
 
+#include <winpr/error.h>
+#include <winpr/spec.h>
+#include <winpr/sspi.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-#include <winpr/sspi.h>
-#include <winpr/spec.h>
-#include <winpr/error.h>
 
 #define RPC_S_OK ERROR_SUCCESS
 #define RPC_S_INVALID_ARG ERROR_INVALID_PARAMETER

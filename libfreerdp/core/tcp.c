@@ -20,9 +20,9 @@
 
 #include <freerdp/config.h>
 
-#include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <time.h>
 
 #include <winpr/crt.h>
 #include <winpr/platform.h>
@@ -33,21 +33,21 @@
 
 #if !defined(_WIN32)
 
+#include <arpa/inet.h>
+#include <net/if.h>
 #include <netdb.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <net/if.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
 #include <sys/types.h>
-#include <arpa/inet.h>
+#include <unistd.h>
 
 #ifdef WINPR_HAVE_POLL_H
 #include <poll.h>
 #else
-#include <time.h>
 #include <sys/select.h>
+#include <time.h>
 #endif
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
@@ -80,8 +80,8 @@
 
 #include <winpr/stream.h>
 
-#include "tcp.h"
 #include "../crypto/opensslcompat.h"
+#include "tcp.h"
 
 #define TAG FREERDP_TAG("core")
 

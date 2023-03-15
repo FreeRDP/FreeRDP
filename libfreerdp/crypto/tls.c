@@ -21,27 +21,27 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
-#include <string.h>
 #include <errno.h>
+#include <string.h>
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
-#include <winpr/string.h>
-#include <winpr/sspi.h>
 #include <winpr/ssl.h>
+#include <winpr/sspi.h>
+#include <winpr/string.h>
 
-#include <winpr/stream.h>
 #include <freerdp/utils/ringbuffer.h>
+#include <winpr/stream.h>
 
 #include <freerdp/crypto/certificate.h>
 #include <freerdp/crypto/certificate_data.h>
 
-#include <freerdp/log.h>
-#include "../crypto/tls.h"
 #include "../core/tcp.h"
+#include "../crypto/tls.h"
+#include <freerdp/log.h>
 
-#include "opensslcompat.h"
 #include "certificate.h"
+#include "opensslcompat.h"
 #include "privatekey.h"
 
 #ifdef WINPR_HAVE_POLL_H

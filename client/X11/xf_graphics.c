@@ -31,15 +31,15 @@
 #include <float.h>
 #include <math.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 
 #include <freerdp/codec/bitmap.h>
 #include <freerdp/codec/rfx.h>
 
-#include "xf_graphics.h"
-#include "xf_gdi.h"
 #include "xf_event.h"
+#include "xf_gdi.h"
+#include "xf_graphics.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")

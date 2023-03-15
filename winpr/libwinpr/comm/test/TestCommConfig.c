@@ -20,11 +20,11 @@
 
 #include <sys/stat.h>
 
-#include <winpr/crt.h>
 #include <winpr/comm.h>
+#include <winpr/crt.h>
 #include <winpr/file.h>
-#include <winpr/synch.h>
 #include <winpr/handle.h>
+#include <winpr/synch.h>
 
 int TestCommConfig(int argc, char* argv[])
 {

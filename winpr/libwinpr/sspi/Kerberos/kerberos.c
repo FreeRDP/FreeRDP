@@ -21,24 +21,23 @@
  */
 #include <winpr/config.h>
 
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <string.h>
-#include <ctype.h>
 
 #include <winpr/assert.h>
 #include <winpr/crt.h>
-#include <winpr/sspi.h>
-#include <winpr/print.h>
-#include <winpr/tchar.h>
-#include <winpr/sysinfo.h>
-#include <winpr/registry.h>
-#include <winpr/endian.h>
 #include <winpr/crypto.h>
+#include <winpr/endian.h>
 #include <winpr/path.h>
+#include <winpr/print.h>
+#include <winpr/registry.h>
+#include <winpr/sspi.h>
+#include <winpr/sysinfo.h>
+#include <winpr/tchar.h>
 
 #include "kerberos.h"
 
@@ -52,8 +51,8 @@
 #include <krb5-protos.h>
 #endif
 
-#include "../sspi.h"
 #include "../../log.h"
+#include "../sspi.h"
 #define TAG WINPR_TAG("sspi.Kerberos")
 
 #define KRB_TGT_REQ 16

@@ -11,8 +11,8 @@
 
 #ifndef FREERDP_CLIENT_ANDROID_EVENT_H
 #define FREERDP_CLIENT_ANDROID_EVENT_H
-#include <freerdp/freerdp.h>
 #include <freerdp/api.h>
+#include <freerdp/freerdp.h>
 
 #define EVENT_TYPE_KEY 1
 #define EVENT_TYPE_CURSOR 2

@@ -20,8 +20,8 @@
 #include <winpr/config.h>
 
 #include <winpr/asn1.h>
-#include <winpr/wlog.h>
 #include <winpr/crt.h>
+#include <winpr/wlog.h>
 
 #include "../../log.h"
 #define TAG WINPR_TAG("asn1")

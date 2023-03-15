@@ -23,10 +23,10 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/types.h>
-#include <freerdp/primitives.h>
-#include <freerdp/codec/color.h>
 #include "prim_internal.h"
+#include <freerdp/codec/color.h>
+#include <freerdp/primitives.h>
+#include <freerdp/types.h>
 
 static pstatus_t general_LumaToYUV444(const BYTE* const pSrcRaw[3], const UINT32 srcStep[3],
                                       BYTE* pDstRaw[3], const UINT32 dstStep[3],

@@ -20,11 +20,11 @@
  */
 #include <freerdp/config.h>
 
-#include <winpr/wlog.h>
-#include <freerdp/log.h>
 #include <freerdp/codec/h264.h>
+#include <freerdp/log.h>
 #include <libavcodec/avcodec.h>
 #include <libavutil/opt.h>
+#include <winpr/wlog.h>
 
 #include "h264.h"
 

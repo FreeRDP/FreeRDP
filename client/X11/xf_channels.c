@@ -19,9 +19,9 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
-#include <freerdp/gdi/video.h>
 #include "xf_channels.h"
+#include <freerdp/gdi/video.h>
+#include <winpr/assert.h>
 
 #include "xf_client.h"
 #include "xfreerdp.h"
@@ -30,9 +30,9 @@
 #if defined(CHANNEL_TSMF_CLIENT)
 #include "xf_tsmf.h"
 #endif
-#include "xf_rail.h"
 #include "xf_cliprdr.h"
 #include "xf_disp.h"
+#include "xf_rail.h"
 #include "xf_video.h"
 
 void xf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e)

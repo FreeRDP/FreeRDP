@@ -21,37 +21,37 @@
 
 #include <freerdp/config.h>
 
-#include <string.h>
 #include <stdarg.h>
+#include <string.h>
 
-#include "rdp.h"
+#include "connection.h"
+#include "gateway/rpc_fault.h"
 #include "input.h"
-#include "update.h"
+#include "message.h"
+#include "rdp.h"
 #include "surface.h"
 #include "transport.h"
-#include "connection.h"
-#include "message.h"
+#include "update.h"
 #include <freerdp/buildflags.h>
-#include "gateway/rpc_fault.h"
 
 #include <winpr/assert.h>
 
 #include <winpr/crt.h>
-#include <winpr/string.h>
-#include <winpr/stream.h>
-#include <winpr/wtsapi.h>
-#include <winpr/ssl.h>
 #include <winpr/debug.h>
+#include <winpr/ssl.h>
+#include <winpr/stream.h>
+#include <winpr/string.h>
+#include <winpr/wtsapi.h>
 
-#include <freerdp/freerdp.h>
-#include <freerdp/streamdump.h>
+#include <freerdp/channels/channels.h>
 #include <freerdp/error.h>
 #include <freerdp/event.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/locale/keyboard.h>
-#include <freerdp/channels/channels.h>
-#include <freerdp/version.h>
 #include <freerdp/log.h>
+#include <freerdp/streamdump.h>
 #include <freerdp/utils/signal.h>
+#include <freerdp/version.h>
 
 #include "../cache/pointer.h"
 #include "settings.h"

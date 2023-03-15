@@ -22,8 +22,8 @@
 #define FREERDP_LIB_CODEC_H264_H
 
 #include <freerdp/api.h>
-#include <freerdp/config.h>
 #include <freerdp/codec/h264.h>
+#include <freerdp/config.h>
 
 #ifdef __cplusplus
 extern "C"

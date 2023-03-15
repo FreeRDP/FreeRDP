@@ -23,17 +23,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
-#include <winpr/path.h>
 #include <winpr/assert.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/path.h>
 
 #include <freerdp/utils/string.h>
 
+#include <X11/XKBlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
-#include <X11/XKBlib.h>
 
 #include <freerdp/locale/keyboard.h>
 

@@ -22,11 +22,11 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/wlog.h>
 #include <winpr/file.h>
-#include <winpr/path.h>
 #include <winpr/library.h>
+#include <winpr/path.h>
 #include <winpr/smartcard.h>
+#include <winpr/wlog.h>
 
 #include "smartcard_inspect.h"
 

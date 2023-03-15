@@ -17,20 +17,20 @@
  * limitations under the License.
  */
 
-#include <winpr/assert.h>
 #include <freerdp/config.h>
+#include <winpr/assert.h>
 
+#include <winpr/bitstream.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
-#include <winpr/bitstream.h>
 
-#include <freerdp/log.h>
 #include "mppc.h"
+#include <freerdp/log.h>
 
 #define TAG FREERDP_TAG("codec.mppc")
 
-//#define DEBUG_MPPC	1
+// #define DEBUG_MPPC	1
 
 #define MPPC_MATCH_INDEX(_sym1, _sym2, _sym3)                             \
 	((((MPPC_MATCH_TABLE[_sym3] << 16) + (MPPC_MATCH_TABLE[_sym2] << 8) + \

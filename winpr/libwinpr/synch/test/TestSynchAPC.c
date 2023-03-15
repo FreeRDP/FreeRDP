@@ -16,9 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <winpr/wtypes.h>
-#include <winpr/thread.h>
 #include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/wtypes.h>
 
 typedef struct
 {

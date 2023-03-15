@@ -21,12 +21,12 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/tchar.h>
-#include <winpr/synch.h>
-#include <winpr/dsparse.h>
+#include <winpr/crt.h>
 #include <winpr/crypto.h>
+#include <winpr/dsparse.h>
+#include <winpr/synch.h>
+#include <winpr/tchar.h>
 
 #include <freerdp/log.h>
 
@@ -34,13 +34,13 @@
 #include <valgrind/memcheck.h>
 #endif
 
+#include "../credssp_auth.h"
 #include "../proxy.h"
 #include "http.h"
-#include "../credssp_auth.h"
 #include "ncacn_http.h"
 #include "rpc_bind.h"
-#include "rpc_fault.h"
 #include "rpc_client.h"
+#include "rpc_fault.h"
 
 #include "rpc.h"
 #include "rts.h"

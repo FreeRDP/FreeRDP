@@ -25,22 +25,22 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 #include <freerdp/streamdump.h>
 #include <freerdp/utils/signal.h>
 
-#include <freerdp/client/file.h>
-#include <freerdp/client/cmdline.h>
-#include <freerdp/client/cliprdr.h>
-#include <freerdp/client/channels.h>
 #include <freerdp/channels/channels.h>
+#include <freerdp/client/channels.h>
+#include <freerdp/client/cliprdr.h>
+#include <freerdp/client/cmdline.h>
+#include <freerdp/client/file.h>
 
-#include <winpr/crt.h>
-#include <winpr/assert.h>
-#include <winpr/synch.h>
 #include <freerdp/log.h>
+#include <winpr/assert.h>
+#include <winpr/crt.h>
+#include <winpr/synch.h>
 
 #include "tf_channels.h"
 #include "tf_freerdp.h"

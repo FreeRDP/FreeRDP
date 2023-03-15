@@ -1,9 +1,9 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
-#include <winpr/tchar.h>
 #include <winpr/environment.h>
 #include <winpr/error.h>
+#include <winpr/tchar.h>
 
 #define TEST_NAME "WINPR_TEST_VARIABLE"
 #define TEST_VALUE "WINPR_TEST_VALUE"

@@ -23,8 +23,8 @@
 #define FREERDP_CHANNEL_DRDYNVC_SERVER_DRDYNVC_H
 
 #include <freerdp/api.h>
-#include <freerdp/types.h>
 #include <freerdp/channels/wtsvc.h>
+#include <freerdp/types.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -19,8 +19,8 @@
 #ifndef WINPR_LIBWINPR_SYNCH_POLLSET_H_
 #define WINPR_LIBWINPR_SYNCH_POLLSET_H_
 
-#include <winpr/wtypes.h>
 #include <winpr/synch.h>
+#include <winpr/wtypes.h>
 
 #include <winpr/config.h>
 

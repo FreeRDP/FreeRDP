@@ -24,8 +24,8 @@
 #include <freerdp/server/rail.h>
 
 #include <winpr/crt.h>
-#include <winpr/wlog.h>
 #include <winpr/stream.h>
+#include <winpr/wlog.h>
 
 #include "../rail_common.h"
 

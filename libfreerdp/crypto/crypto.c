@@ -25,11 +25,11 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 
-#include <freerdp/log.h>
 #include <freerdp/crypto/crypto.h>
+#include <freerdp/log.h>
 
 #include "crypto.h"
 #include "privatekey.h"

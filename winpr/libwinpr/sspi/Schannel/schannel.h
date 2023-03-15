@@ -20,8 +20,8 @@
 #ifndef WINPR_SSPI_SCHANNEL_PRIVATE_H
 #define WINPR_SSPI_SCHANNEL_PRIVATE_H
 
-#include <winpr/sspi.h>
 #include <winpr/schannel.h>
+#include <winpr/sspi.h>
 
 #include "../sspi.h"
 

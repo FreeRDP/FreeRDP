@@ -24,16 +24,16 @@
 
 #include <winpr/assert.h>
 
-#include <freerdp/log.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/log.h>
 
-#include "xf_rail.h"
-#include "xf_window.h"
 #include "xf_cliprdr.h"
 #include "xf_disp.h"
-#include "xf_input.h"
 #include "xf_gfx.h"
 #include "xf_graphics.h"
+#include "xf_input.h"
+#include "xf_rail.h"
+#include "xf_window.h"
 
 #include "xf_event.h"
 #include "xf_input.h"

@@ -20,8 +20,8 @@
 #ifndef FREERDP_CLIENT_SDL_POINTER_H
 #define FREERDP_CLIENT_SDL_POINTER_H
 
-#include <freerdp/graphics.h>
 #include "sdl_freerdp.h"
+#include <freerdp/graphics.h>
 
 BOOL sdl_register_pointer(rdpGraphics* graphics);
 

@@ -47,18 +47,18 @@
 #define O_TMPFILE (020000000 | O_DIRECTORY)
 #endif
 
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #ifdef USE_SHM
 #include <sys/mman.h>
 #endif
-#include <unistd.h>
-#include <fcntl.h>
 #include <errno.h>
-#include <stdlib.h>
+#include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/epoll.h>
+#include <unistd.h>
 
 #include <uwac/config.h>
 

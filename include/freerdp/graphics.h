@@ -22,9 +22,9 @@
 #ifndef FREERDP_GRAPHICS_H
 #define FREERDP_GRAPHICS_H
 
-#include <stdlib.h>
 #include <freerdp/api.h>
 #include <freerdp/types.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -1,8 +1,8 @@
 #include <stdio.h>
 
-#include <winpr/stream.h>
-#include <winpr/path.h>
 #include <winpr/crypto.h>
+#include <winpr/path.h>
+#include <winpr/stream.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/streamdump.h>

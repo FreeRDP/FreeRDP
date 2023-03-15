@@ -22,16 +22,16 @@
 #include <freerdp/config.h>
 
 #if defined(__APPLE__)
-#include <CoreFoundation/CFString.h>
 #include <CoreFoundation/CFLocale.h>
+#include <CoreFoundation/CFString.h>
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/environment.h>
 
 #include "liblocale.h"

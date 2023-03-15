@@ -21,9 +21,9 @@
 #ifndef FREERDP_SERVER_COMMON_SERVER_H
 #define FREERDP_SERVER_COMMON_SERVER_H
 
-#include <winpr/wtypes.h>
 #include <freerdp/api.h>
 #include <freerdp/codec/audio.h>
+#include <winpr/wtypes.h>
 
 #ifdef __cplusplus
 extern "C"

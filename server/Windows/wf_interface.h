@@ -27,8 +27,8 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/codec/rfx.h>
+#include <freerdp/freerdp.h>
 
 #include <freerdp/server/rdpsnd.h>
 

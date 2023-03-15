@@ -21,19 +21,19 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/file.h>
+#include <winpr/library.h>
 #include <winpr/path.h>
 #include <winpr/string.h>
-#include <winpr/file.h>
 #include <winpr/synch.h>
-#include <winpr/library.h>
-#include <winpr/collections.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
 #include <freerdp/build-config.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/freerdp.h>
 
 #include "tables.h"
 

@@ -20,9 +20,9 @@
 #ifndef WINPR_ASN1_H_
 #define WINPR_ASN1_H_
 
+#include <winpr/stream.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-#include <winpr/stream.h>
 
 #define ER_TAG_MASK 0x1F
 

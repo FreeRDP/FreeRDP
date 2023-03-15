@@ -22,8 +22,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <freerdp/utils/profiler.h>
 #include <freerdp/log.h>
+#include <freerdp/utils/profiler.h>
 
 #define TAG FREERDP_TAG("utils")
 

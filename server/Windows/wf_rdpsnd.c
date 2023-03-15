@@ -23,11 +23,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <winpr/windows.h>
 #include <freerdp/server/server-common.h>
+#include <winpr/windows.h>
 
-#include "wf_rdpsnd.h"
 #include "wf_info.h"
+#include "wf_rdpsnd.h"
 
 #ifdef WITH_RDPSND_DSOUND
 

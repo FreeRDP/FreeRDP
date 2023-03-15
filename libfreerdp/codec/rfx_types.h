@@ -22,10 +22,10 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/pool.h>
 #include <winpr/wlog.h>
-#include <winpr/collections.h>
 
 #include <freerdp/log.h>
 #include <freerdp/utils/profiler.h>

@@ -17,14 +17,14 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
 #include <pkcs11-helper-1.0/pkcs11.h>
+#include <stdlib.h>
 
-#include <winpr/library.h>
-#include <winpr/assert.h>
-#include <winpr/spec.h>
-#include <winpr/smartcard.h>
 #include <winpr/asn1.h>
+#include <winpr/assert.h>
+#include <winpr/library.h>
+#include <winpr/smartcard.h>
+#include <winpr/spec.h>
 
 #include "../log.h"
 #include "ncrypt.h"

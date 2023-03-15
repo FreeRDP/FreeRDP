@@ -18,9 +18,9 @@
 
 #include <rdtk/config.h>
 
+#include "rdtk_button.h"
 #include "rdtk_font.h"
 #include "rdtk_nine_patch.h"
-#include "rdtk_button.h"
 #include "rdtk_text_field.h"
 
 #include "rdtk_engine.h"

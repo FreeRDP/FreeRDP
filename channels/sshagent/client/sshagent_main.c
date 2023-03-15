@@ -37,25 +37,25 @@
 
 #include <freerdp/config.h>
 
+#include <errno.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
 #include <sys/un.h>
-#include <pwd.h>
 #include <unistd.h>
-#include <errno.h>
 
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
 
 #include "sshagent_main.h"
 
-#include <freerdp/freerdp.h>
-#include <freerdp/client/channels.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/client/channels.h>
+#include <freerdp/freerdp.h>
 
 #define TAG CHANNELS_TAG("sshagent.client")
 

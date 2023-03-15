@@ -24,8 +24,8 @@
 #ifndef FREERDP_SERVER_PROXY_LOG_H
 #define FREERDP_SERVER_PROXY_LOG_H
 
-#include <winpr/wlog.h>
 #include <freerdp/log.h>
+#include <winpr/wlog.h>
 
 #define PROXY_TAG(tag) FREERDP_TAG("proxy." tag)
 

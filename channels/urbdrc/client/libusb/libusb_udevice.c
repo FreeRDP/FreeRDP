@@ -22,13 +22,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/sysinfo.h>
 #include <winpr/collections.h>
+#include <winpr/sysinfo.h>
 
 #include <errno.h>
 
-#include "libusb_udevice.h"
 #include "../common/urbdrc_types.h"
+#include "libusb_udevice.h"
 
 #define BASIC_STATE_FUNC_DEFINED(_arg, _type)             \
 	static _type udev_get_##_arg(IUDEVICE* idev)          \

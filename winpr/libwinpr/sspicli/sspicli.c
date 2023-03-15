@@ -60,15 +60,15 @@
 #endif
 
 #if defined(WINPR_HAVE_GETPWUID_R)
-#include <sys/types.h>
 #include <pwd.h>
+#include <sys/types.h>
 #include <unistd.h>
 #endif
 
 #include <pthread.h>
 
-#include <pwd.h>
 #include <grp.h>
+#include <pwd.h>
 
 #include "../handle/handle.h"
 

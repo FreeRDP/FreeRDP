@@ -22,10 +22,10 @@
 #ifndef FREERDP_LIB_CORE_GATEWAY_RPC_H
 #define FREERDP_LIB_CORE_GATEWAY_RPC_H
 
-#include <winpr/wtypes.h>
-#include <winpr/stream.h>
 #include <winpr/collections.h>
 #include <winpr/interlocked.h>
+#include <winpr/stream.h>
+#include <winpr/wtypes.h>
 
 #include <freerdp/log.h>
 #include <freerdp/utils/ringbuffer.h>
@@ -75,18 +75,18 @@ typedef struct
 #include "../tcp.h"
 #include "../transport.h"
 
-#include "http.h"
 #include "../credssp_auth.h"
+#include "http.h"
 
 #include <time.h>
 
-#include <winpr/sspi.h>
 #include <winpr/interlocked.h>
+#include <winpr/sspi.h>
 
-#include <freerdp/types.h>
-#include <freerdp/settings.h>
-#include <freerdp/crypto/crypto.h>
 #include <freerdp/api.h>
+#include <freerdp/crypto/crypto.h>
+#include <freerdp/settings.h>
+#include <freerdp/types.h>
 
 #include <winpr/print.h>
 

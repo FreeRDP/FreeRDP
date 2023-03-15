@@ -20,19 +20,19 @@
 #ifndef FREERDP_SERVER_SAMPLE_SFREERDP_SERVER_H
 #define FREERDP_SERVER_SAMPLE_SFREERDP_SERVER_H
 
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/codec/nsc.h>
+#include <freerdp/codec/rfx.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/listener.h>
-#include <freerdp/codec/rfx.h>
-#include <freerdp/codec/nsc.h>
-#include <freerdp/channels/wtsvc.h>
 #if defined(CHANNEL_AINPUT_SERVER)
 #include <freerdp/server/ainput.h>
 #endif
 #if defined(CHANNEL_AUDIN_SERVER)
 #include <freerdp/server/audin.h>
 #endif
-#include <freerdp/server/rdpsnd.h>
 #include <freerdp/server/encomsp.h>
+#include <freerdp/server/rdpsnd.h>
 #include <freerdp/transport_io.h>
 
 #include <winpr/crt.h>

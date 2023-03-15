@@ -20,8 +20,8 @@
 #ifndef FREERDP_UTILS_PASSPHRASE_H
 #define FREERDP_UTILS_PASSPHRASE_H
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>

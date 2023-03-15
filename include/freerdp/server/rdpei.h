@@ -23,8 +23,8 @@
 #ifndef FREERDP_CHANNEL_RDPEI_SERVER_H
 #define FREERDP_CHANNEL_RDPEI_SERVER_H
 
-#include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpei.h>
+#include <freerdp/channels/wtsvc.h>
 
 #ifdef __cplusplus
 extern "C"

@@ -24,16 +24,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/sysinfo.h>
-#include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/channels/wtsvc.h>
+#include <winpr/crt.h>
+#include <winpr/stream.h>
+#include <winpr/synch.h>
+#include <winpr/sysinfo.h>
+#include <winpr/thread.h>
 
-#include <freerdp/server/gfxredir.h>
 #include "../gfxredir_common.h"
+#include <freerdp/server/gfxredir.h>
 
 #define TAG CHANNELS_TAG("gfxredir.server")
 

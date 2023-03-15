@@ -22,8 +22,8 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/path.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
 
 #ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>

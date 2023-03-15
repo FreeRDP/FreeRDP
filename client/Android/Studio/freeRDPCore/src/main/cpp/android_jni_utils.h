@@ -12,8 +12,8 @@
 #ifndef FREERDP_CLIENT_ANDROID_JNI_UTILS_H
 #define FREERDP_CLIENT_ANDROID_JNI_UTILS_H
 
-#include <jni.h>
 #include <freerdp/api.h>
+#include <jni.h>
 
 #ifdef __cplusplus
 extern "C"

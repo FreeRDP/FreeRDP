@@ -24,13 +24,13 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
+#include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xatom.h>
 #include <X11/extensions/XShm.h>
 
-#include <freerdp/log.h>
 #include <freerdp/client/tsmf.h>
+#include <freerdp/log.h>
 
 #include "xf_tsmf.h"
 

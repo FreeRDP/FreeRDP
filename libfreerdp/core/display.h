@@ -20,8 +20,8 @@
 #ifndef FREERDP_LIB_CORE_DISPLAY_H
 #define FREERDP_LIB_CORE_DISPLAY_H
 
-#include <freerdp/display.h>
 #include "rdp.h"
+#include <freerdp/display.h>
 
 FREERDP_LOCAL BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
                                                               const rdpMonitor* monitorDefArray,

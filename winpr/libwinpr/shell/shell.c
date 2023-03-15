@@ -36,8 +36,8 @@
 #include <unistd.h>
 #endif
 
-#include <pwd.h>
 #include <grp.h>
+#include <pwd.h>
 
 #include "../handle/handle.h"
 

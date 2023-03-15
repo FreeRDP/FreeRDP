@@ -25,8 +25,8 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
-#include <freerdp/channels/rdpgfx.h>
 #include <freerdp/api.h>
+#include <freerdp/channels/rdpgfx.h>
 
 #include "rdpgfx_main.h"
 

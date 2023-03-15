@@ -25,8 +25,8 @@
 
 #if !defined(_WIN32) || (defined(__MINGW32__) && !defined(_UCRT))
 
-#include <stdint.h>
 #include <limits.h>
+#include <stdint.h>
 
 #define WINPR_ALIGNED_MEM_SIGNATURE 0x0BA0BAB
 

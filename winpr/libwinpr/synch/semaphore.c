@@ -29,9 +29,9 @@
 
 #ifndef _WIN32
 
-#include <errno.h>
 #include "../handle/handle.h"
 #include "../log.h"
+#include <errno.h>
 #define TAG WINPR_TAG("synch.semaphore")
 
 static BOOL SemaphoreCloseHandle(HANDLE handle);

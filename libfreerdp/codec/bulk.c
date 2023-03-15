@@ -21,15 +21,15 @@
 
 #include <freerdp/config.h>
 
-#include "bulk.h"
 #include "../codec/mppc.h"
 #include "../codec/ncrush.h"
 #include "../codec/xcrush.h"
+#include "bulk.h"
 
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("core")
 
-//#define WITH_BULK_DEBUG 1
+// #define WITH_BULK_DEBUG 1
 
 struct rdp_bulk
 {

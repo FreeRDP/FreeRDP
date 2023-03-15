@@ -34,14 +34,14 @@
 
 #include <winpr/wtypes.h>
 
-#include <winpr/crt.h>
 #include <winpr/clipboard.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
 #include <winpr/file.h>
+#include <winpr/print.h>
 #include <winpr/shell.h>
 #include <winpr/string.h>
 #include <winpr/wlog.h>
-#include <winpr/print.h>
 
 #include "clipboard.h"
 #include "synthetic_file.h"

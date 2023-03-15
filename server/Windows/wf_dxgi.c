@@ -28,8 +28,8 @@
 #include <D3D11.h>
 #include <dxgi1_2.h>
 
-#include <tchar.h>
 #include "wf_dxgi.h"
+#include <tchar.h>
 
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")

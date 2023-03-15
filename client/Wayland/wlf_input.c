@@ -18,8 +18,8 @@
  * limitations under the License.
  */
 
-#include <stdlib.h>
 #include <float.h>
+#include <stdlib.h>
 
 #include <linux/input.h>
 
@@ -32,8 +32,8 @@
 #endif
 #include <uwac/uwac.h>
 
-#include "wlfreerdp.h"
 #include "wlf_input.h"
+#include "wlfreerdp.h"
 
 #define TAG CLIENT_TAG("wayland.input")
 

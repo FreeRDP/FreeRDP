@@ -19,9 +19,9 @@
 
 #include <freerdp/config.h>
 
+#include <freerdp/channels/log.h>
 #include <winpr/crt.h>
 #include <winpr/stream.h>
-#include <freerdp/channels/log.h>
 
 #define TAG CHANNELS_TAG("disp.common")
 

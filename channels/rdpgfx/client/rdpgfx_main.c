@@ -25,21 +25,21 @@
 
 #include <winpr/assert.h>
 
-#include <winpr/crt.h>
-#include <winpr/wlog.h>
-#include <winpr/print.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/sysinfo.h>
 #include <winpr/cmdline.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/print.h>
+#include <winpr/stream.h>
+#include <winpr/synch.h>
+#include <winpr/sysinfo.h>
+#include <winpr/thread.h>
+#include <winpr/wlog.h>
 
 #include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
 
-#include "rdpgfx_common.h"
 #include "rdpgfx_codec.h"
+#include "rdpgfx_common.h"
 
 #include "rdpgfx_main.h"
 

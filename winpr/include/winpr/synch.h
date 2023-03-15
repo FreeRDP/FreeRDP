@@ -26,10 +26,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/winpr.h>
-#include <winpr/wtypes.h>
 #include <winpr/error.h>
 #include <winpr/handle.h>
+#include <winpr/winpr.h>
+#include <winpr/wtypes.h>
 
 #include <winpr/nt.h>
 

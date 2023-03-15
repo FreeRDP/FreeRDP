@@ -24,9 +24,9 @@
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
-#include <winpr/nt.h>
-#include <winpr/io.h>
 #include <winpr/error.h>
+#include <winpr/io.h>
+#include <winpr/nt.h>
 
 #ifndef _WIN32
 

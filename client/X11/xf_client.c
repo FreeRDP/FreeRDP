@@ -29,9 +29,9 @@
 
 #include <float.h>
 
+#include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xatom.h>
 
 #ifdef WITH_XRENDER
 #include <X11/extensions/Xrender.h>
@@ -54,57 +54,56 @@
 #include <X11/XKBlib.h>
 
 #include <errno.h>
+#include <locale.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <locale.h>
-#include <unistd.h>
 #include <string.h>
-#include <termios.h>
-#include <pthread.h>
-#include <sys/wait.h>
-#include <sys/types.h>
 #include <sys/select.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <termios.h>
+#include <unistd.h>
 
-#include <freerdp/freerdp.h>
-#include <freerdp/constants.h>
+#include <freerdp/codec/bitmap.h>
+#include <freerdp/codec/color.h>
 #include <freerdp/codec/nsc.h>
 #include <freerdp/codec/rfx.h>
-#include <freerdp/codec/color.h>
-#include <freerdp/codec/bitmap.h>
+#include <freerdp/constants.h>
+#include <freerdp/freerdp.h>
 
-#include <freerdp/utils/signal.h>
-#include <freerdp/utils/passphrase.h>
-#include <freerdp/client/cliprdr.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/client/cliprdr.h>
+#include <freerdp/utils/passphrase.h>
+#include <freerdp/utils/signal.h>
 
-#include <freerdp/client/file.h>
 #include <freerdp/client/cmdline.h>
+#include <freerdp/client/file.h>
 
-#include <winpr/crt.h>
+#include <X11/XKBlib.h>
 #include <winpr/assert.h>
-#include <winpr/synch.h>
+#include <winpr/crt.h>
 #include <winpr/file.h>
 #include <winpr/print.h>
+#include <winpr/synch.h>
 #include <winpr/sysinfo.h>
-#include <X11/XKBlib.h>
 
 #include "xf_gdi.h"
 #include "xf_rail.h"
 #if defined(CHANNEL_TSMF_CLIENT)
 #include "xf_tsmf.h"
 #endif
-#include "xf_event.h"
-#include "xf_input.h"
+#include "xf_channels.h"
 #include "xf_cliprdr.h"
 #include "xf_disp.h"
-#include "xf_video.h"
-#include "xf_monitor.h"
+#include "xf_event.h"
 #include "xf_graphics.h"
-#include "xf_keyboard.h"
 #include "xf_input.h"
-#include "xf_channels.h"
-#include "xfreerdp.h"
+#include "xf_keyboard.h"
+#include "xf_monitor.h"
 #include "xf_utils.h"
+#include "xf_video.h"
+#include "xfreerdp.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")

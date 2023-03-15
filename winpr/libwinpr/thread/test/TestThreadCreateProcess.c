@@ -1,11 +1,11 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
-#include <winpr/tchar.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
 #include <winpr/environment.h>
 #include <winpr/pipe.h>
+#include <winpr/synch.h>
+#include <winpr/tchar.h>
+#include <winpr/thread.h>
 
 #define TESTENV_A "HELLO=WORLD"
 #define TESTENV_T _T(TESTENV_A)

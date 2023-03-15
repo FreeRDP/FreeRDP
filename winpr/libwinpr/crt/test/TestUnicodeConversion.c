@@ -1,7 +1,7 @@
 
 #include <stdio.h>
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/error.h>
 #include <winpr/print.h>
 #include <winpr/windows.h>

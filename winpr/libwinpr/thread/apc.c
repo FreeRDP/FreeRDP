@@ -19,9 +19,9 @@
 #ifndef _WIN32
 
 #include "apc.h"
-#include "thread.h"
 #include "../log.h"
 #include "../synch/pollset.h"
+#include "thread.h"
 #include <winpr/assert.h>
 
 #define TAG WINPR_TAG("apc")

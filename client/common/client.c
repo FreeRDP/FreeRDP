@@ -19,42 +19,42 @@
 
 #include <freerdp/config.h>
 
-#include <string.h>
 #include <errno.h>
-#include <limits.h>
 #include <float.h>
+#include <limits.h>
+#include <string.h>
 
 #include <freerdp/client.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
 #include <freerdp/assistance.h>
-#include <freerdp/client/file.h>
-#include <freerdp/utils/passphrase.h>
-#include <freerdp/client/cmdline.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/client/cmdline.h>
+#include <freerdp/client/file.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/utils/passphrase.h>
 #include <freerdp/utils/smartcardlogon.h>
 
 #if defined(CHANNEL_AINPUT_CLIENT)
-#include <freerdp/client/ainput.h>
 #include <freerdp/channels/ainput.h>
+#include <freerdp/client/ainput.h>
 #endif
 
 #if defined(CHANNEL_VIDEO_CLIENT)
-#include <freerdp/client/video.h>
 #include <freerdp/channels/video.h>
+#include <freerdp/client/video.h>
 #include <freerdp/gdi/video.h>
 #endif
 
 #if defined(CHANNEL_RDPGFX_CLIENT)
-#include <freerdp/client/rdpgfx.h>
 #include <freerdp/channels/rdpgfx.h>
+#include <freerdp/client/rdpgfx.h>
 #include <freerdp/gdi/gfx.h>
 #endif
 
 #if defined(CHANNEL_GEOMETRY_CLIENT)
-#include <freerdp/client/geometry.h>
 #include <freerdp/channels/geometry.h>
+#include <freerdp/client/geometry.h>
 #include <freerdp/gdi/video.h>
 #endif
 

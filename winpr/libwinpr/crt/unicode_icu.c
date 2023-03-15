@@ -19,8 +19,8 @@
  * limitations under the License.
  */
 
-#include <winpr/config.h>
 #include <winpr/assert.h>
+#include <winpr/config.h>
 
 #include <errno.h>
 #include <wctype.h>

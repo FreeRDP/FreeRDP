@@ -21,25 +21,25 @@
 
 #include <winpr/assert.h>
 
+#include <winpr/cred.h>
 #include <winpr/crt.h>
-#include <winpr/synch.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
+#include <winpr/synch.h>
 #include <winpr/winsock.h>
-#include <winpr/cred.h>
 
-#include <freerdp/log.h>
 #include <freerdp/error.h>
+#include <freerdp/log.h>
 #include <freerdp/utils/ringbuffer.h>
 #include <freerdp/utils/smartcardlogon.h>
 
-#include "rdg.h"
+#include "../../crypto/opensslcompat.h"
 #include "../credssp_auth.h"
 #include "../proxy.h"
 #include "../rdp.h"
-#include "../../crypto/opensslcompat.h"
-#include "rpc_fault.h"
 #include "../utils.h"
+#include "rdg.h"
+#include "rpc_fault.h"
 
 #define TAG FREERDP_TAG("core.gateway.rdg")
 

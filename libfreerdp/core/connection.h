@@ -20,16 +20,16 @@
 #ifndef FREERDP_LIB_CORE_CONNECTION_H
 #define FREERDP_LIB_CORE_CONNECTION_H
 
-#include "rdp.h"
-#include "tpkt.h"
-#include "tpdu.h"
-#include "nego.h"
-#include "mcs.h"
 #include "activation.h"
+#include "mcs.h"
+#include "nego.h"
+#include "rdp.h"
 #include "state.h"
+#include "tpdu.h"
+#include "tpkt.h"
 
-#include <freerdp/settings.h>
 #include <freerdp/api.h>
+#include <freerdp/settings.h>
 
 enum CLIENT_CONNECTION_STATE
 {

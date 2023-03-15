@@ -20,9 +20,9 @@
 #ifndef WINPR_WINSOCK_H
 #define WINPR_WINSOCK_H
 
+#include <winpr/windows.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-#include <winpr/windows.h>
 
 #ifdef _WIN32
 
@@ -74,18 +74,18 @@ WINPR_API INT winpr_inet_pton(INT Family, PCSTR pszAddrString, PVOID pAddrBuf);
 
 #else /* _WIN32 */
 
-#include <netdb.h>
-#include <unistd.h>
-#include <sys/un.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
+#include <net/if.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include <net/if.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <unistd.h>
 
-#include <winpr/io.h>
 #include <winpr/error.h>
+#include <winpr/io.h>
 #include <winpr/platform.h>
 
 #define WSAEVENT HANDLE

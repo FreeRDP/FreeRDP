@@ -21,13 +21,13 @@
 
 #include <winpr/assert.h>
 
-#include <freerdp/client/rail.h>
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/disp.h>
+#include <freerdp/client/rail.h>
 
 #include "sdl_channels.h"
-#include "sdl_freerdp.h"
 #include "sdl_disp.h"
+#include "sdl_freerdp.h"
 
 void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e)
 {

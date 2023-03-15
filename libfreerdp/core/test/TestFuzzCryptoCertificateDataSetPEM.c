@@ -1,6 +1,6 @@
+#include <freerdp/crypto/certificate.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <freerdp/crypto/certificate.h>
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {

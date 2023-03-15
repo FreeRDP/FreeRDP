@@ -24,10 +24,10 @@ extern "C"
 {
 #endif
 
-#include <sys/types.h>
-#include <corkscrew/ptrace.h>
 #include <corkscrew/map_info.h>
+#include <corkscrew/ptrace.h>
 #include <corkscrew/symbol_table.h>
+#include <sys/types.h>
 
 	/*
 	 * Describes a single frame of a backtrace.

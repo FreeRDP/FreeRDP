@@ -23,9 +23,9 @@
 
 #include <winpr/assert.h>
 
+#include <freerdp/client/cmdline.h>
 #include <freerdp/constants.h>
 #include <freerdp/utils/signal.h>
-#include <freerdp/client/cmdline.h>
 
 #include "MRDPView.h"
 

@@ -21,9 +21,9 @@
 #ifndef WINPR_SMARTCARD_VIRTUAL_GIDS_H
 #define WINPR_SMARTCARD_VIRTUAL_GIDS_H
 
+#include <freerdp/channels/log.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-#include <freerdp/channels/log.h>
 
 /* Virtual GIDS context */
 typedef struct vgids_context vgidsContext;

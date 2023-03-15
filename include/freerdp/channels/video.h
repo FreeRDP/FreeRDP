@@ -20,8 +20,8 @@
 #ifndef FREERDP_CHANNEL_VIDEO_H
 #define FREERDP_CHANNEL_VIDEO_H
 
-#include <winpr/wtypes.h>
 #include <freerdp/types.h>
+#include <winpr/wtypes.h>
 
 #define VIDEO_CONTROL_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Video::Control::v08.01"
 #define VIDEO_DATA_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Video::Data::v08.01"

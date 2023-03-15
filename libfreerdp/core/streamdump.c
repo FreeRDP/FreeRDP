@@ -21,9 +21,9 @@
 
 #include <time.h>
 
-#include <winpr/sysinfo.h>
 #include <winpr/path.h>
 #include <winpr/string.h>
+#include <winpr/sysinfo.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/streamdump.h>

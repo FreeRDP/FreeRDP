@@ -22,20 +22,20 @@
 #include <winpr/assert.h>
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
+#include <winpr/crypto.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
+#include <winpr/synch.h>
 #include <winpr/winsock.h>
-#include <winpr/crypto.h>
 
-#include <freerdp/log.h>
 #include <freerdp/error.h>
+#include <freerdp/log.h>
 #include <freerdp/utils/ringbuffer.h>
 
-#include <openssl/bio.h>
-#include <time.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <openssl/bio.h>
+#include <time.h>
 
 #ifndef _WIN32
 #include <netdb.h>
@@ -46,13 +46,13 @@
 #include <valgrind/memcheck.h>
 #endif
 
-#include "tpkt.h"
 #include "fastpath.h"
-#include "transport.h"
-#include "rdp.h"
 #include "proxy.h"
-#include "utils.h"
+#include "rdp.h"
 #include "state.h"
+#include "tpkt.h"
+#include "transport.h"
+#include "utils.h"
 
 #define TAG FREERDP_TAG("core.transport")
 

@@ -21,10 +21,10 @@
 
 #if defined __linux__ && !defined ANDROID
 
-#include <winpr/assert.h>
 #include <errno.h>
 #include <termios.h>
 #include <unistd.h>
+#include <winpr/assert.h>
 
 #include <winpr/io.h>
 #include <winpr/wlog.h>

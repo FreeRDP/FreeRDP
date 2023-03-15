@@ -12,11 +12,11 @@
  * OpenSSL only as a fallback to do PBKDF2 on pre iOS 5 systems. */
 
 #import "Encryptor.h"
-#import <CommonCrypto/CommonKeyDerivation.h>
 #import <CommonCrypto/CommonCryptor.h>
 #import <CommonCrypto/CommonDigest.h>
-#import <openssl/evp.h> // For PBKDF2 on < 5.0
+#import <CommonCrypto/CommonKeyDerivation.h>
 #include <fcntl.h>
+#import <openssl/evp.h> // For PBKDF2 on < 5.0
 
 #pragma mark -
 

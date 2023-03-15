@@ -20,16 +20,16 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
-#include <winpr/print.h>
-#include <winpr/library.h>
 #include <winpr/bitstream.h>
+#include <winpr/crt.h>
+#include <winpr/library.h>
+#include <winpr/print.h>
 #include <winpr/synch.h>
 
-#include <freerdp/primitives.h>
 #include <freerdp/codec/h264.h>
 #include <freerdp/codec/yuv.h>
 #include <freerdp/log.h>
+#include <freerdp/primitives.h>
 
 #include "h264.h"
 

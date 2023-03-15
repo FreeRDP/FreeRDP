@@ -23,37 +23,37 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
-#include <winpr/ssl.h>
-#include <winpr/path.h>
-#include <winpr/synch.h>
-#include <winpr/string.h>
-#include <winpr/winsock.h>
-#include <winpr/thread.h>
 #include <errno.h>
+#include <winpr/crt.h>
+#include <winpr/path.h>
+#include <winpr/ssl.h>
+#include <winpr/string.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
+#include <winpr/winsock.h>
 
-#include <freerdp/freerdp.h>
-#include <freerdp/streamdump.h>
-#include <freerdp/channels/wtsvc.h>
+#include <freerdp/build-config.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/channels/drdynvc.h>
-#include <freerdp/build-config.h>
+#include <freerdp/channels/wtsvc.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/streamdump.h>
 
 #include <freerdp/channels/rdpdr.h>
 
-#include <freerdp/server/proxy/proxy_server.h>
 #include <freerdp/server/proxy/proxy_log.h>
+#include <freerdp/server/proxy/proxy_server.h>
 
-#include "pf_server.h"
-#include "pf_channel.h"
-#include <freerdp/server/proxy/proxy_config.h>
-#include "pf_client.h"
-#include <freerdp/server/proxy/proxy_context.h>
-#include "pf_update.h"
-#include "proxy_modules.h"
-#include "pf_utils.h"
 #include "channels/pf_channel_drdynvc.h"
 #include "channels/pf_channel_rdpdr.h"
+#include "pf_channel.h"
+#include "pf_client.h"
+#include "pf_server.h"
+#include "pf_update.h"
+#include "pf_utils.h"
+#include "proxy_modules.h"
+#include <freerdp/server/proxy/proxy_config.h>
+#include <freerdp/server/proxy/proxy_context.h>
 
 #define TAG PROXY_TAG("server")
 

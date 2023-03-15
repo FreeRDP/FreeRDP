@@ -20,9 +20,9 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/types.h>
-#include <freerdp/primitives.h>
 #include "prim_internal.h"
+#include <freerdp/primitives.h>
+#include <freerdp/types.h>
 
 #if defined(WITH_OPENCL)
 #ifdef __APPLE__

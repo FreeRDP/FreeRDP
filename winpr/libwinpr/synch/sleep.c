@@ -24,9 +24,9 @@
 #include <winpr/synch.h>
 
 #include "../log.h"
+#include "../synch/pollset.h"
 #include "../thread/apc.h"
 #include "../thread/thread.h"
-#include "../synch/pollset.h"
 
 #define TAG WINPR_TAG("synch.sleep")
 

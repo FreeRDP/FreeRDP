@@ -22,21 +22,21 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
+#include <winpr/assert.h>
 
-#include <winpr/crypto.h>
 #include <winpr/crt.h>
+#include <winpr/crypto.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
 
 #include <freerdp/settings.h>
 
-#include <freerdp/crypto/crypto.h>
 #include <freerdp/crypto/certificate_store.h>
+#include <freerdp/crypto/crypto.h>
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("crypto")
 

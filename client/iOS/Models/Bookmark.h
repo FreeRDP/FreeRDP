@@ -8,9 +8,9 @@
  http://mozilla.org/MPL/2.0/.
  */
 
+#import "ConnectionParams.h"
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import "ConnectionParams.h"
 
 @interface ComputerBookmark : NSObject <NSCoding>
 {

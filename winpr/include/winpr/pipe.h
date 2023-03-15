@@ -20,10 +20,10 @@
 #ifndef WINPR_PIPE_H
 #define WINPR_PIPE_H
 
-#include <winpr/file.h>
-#include <winpr/winpr.h>
 #include <winpr/error.h>
+#include <winpr/file.h>
 #include <winpr/handle.h>
+#include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
 #ifndef _WIN32

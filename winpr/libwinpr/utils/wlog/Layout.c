@@ -19,23 +19,23 @@
 
 #include <winpr/config.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
+#include <winpr/environment.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
-#include <winpr/environment.h>
 
 #include "wlog.h"
 
 #include "Layout.h"
 
 #if defined __linux__ && !defined ANDROID
-#include <unistd.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 #endif
 
 /**

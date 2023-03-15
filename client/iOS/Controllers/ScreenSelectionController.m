@@ -9,9 +9,9 @@
  */
 
 #import "ScreenSelectionController.h"
-#import "Utils.h"
-#import "OrderedDictionary.h"
 #import "ConnectionParams.h"
+#import "OrderedDictionary.h"
+#import "Utils.h"
 
 @interface ScreenSelectionController (Private)
 - (NSString *)keyPathForKey:(NSString *)key;

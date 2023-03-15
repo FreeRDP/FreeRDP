@@ -26,9 +26,9 @@
 #include "mf_info.h"
 #include "mf_rdpsnd.h"
 
-#include <winpr/sysinfo.h>
-#include <freerdp/server/server-common.h>
 #include <freerdp/log.h>
+#include <freerdp/server/server-common.h>
+#include <winpr/sysinfo.h>
 #define TAG SERVER_TAG("mac")
 
 AQRecorderState recorderState;

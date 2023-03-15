@@ -20,8 +20,8 @@
 #ifndef FREERDP_LIB_CODEC_NSC_SSE2_H
 #define FREERDP_LIB_CODEC_NSC_SSE2_H
 
-#include <freerdp/codec/nsc.h>
 #include <freerdp/api.h>
+#include <freerdp/codec/nsc.h>
 
 FREERDP_LOCAL void nsc_init_sse2(NSC_CONTEXT* context);
 

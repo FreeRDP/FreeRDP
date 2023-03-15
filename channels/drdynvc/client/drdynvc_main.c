@@ -22,11 +22,11 @@
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/stream.h>
 #include <winpr/interlocked.h>
+#include <winpr/stream.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/channels/drdynvc.h>
+#include <freerdp/freerdp.h>
 #include <freerdp/utils/drdynvc.h>
 
 #include "drdynvc_main.h"

@@ -21,8 +21,8 @@
 
 #include <freerdp/gdi/gdi.h>
 
-#include "sdl_pointer.h"
 #include "sdl_freerdp.h"
+#include "sdl_pointer.h"
 #include "sdl_touch.h"
 #include "sdl_utils.h"
 

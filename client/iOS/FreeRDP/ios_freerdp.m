@@ -10,16 +10,16 @@
 
 #include <winpr/assert.h>
 
-#import <freerdp/gdi/gdi.h>
 #import <freerdp/channels/channels.h>
 #import <freerdp/client/channels.h>
 #import <freerdp/client/cmdline.h>
 #import <freerdp/freerdp.h>
+#import <freerdp/gdi/gdi.h>
 #import <freerdp/gdi/gfx.h>
 
 #import "ios_freerdp.h"
-#import "ios_freerdp_ui.h"
 #import "ios_freerdp_events.h"
+#import "ios_freerdp_ui.h"
 
 #import "RDPSession.h"
 #import "Utils.h"

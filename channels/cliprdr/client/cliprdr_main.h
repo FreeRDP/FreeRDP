@@ -24,9 +24,10 @@
 
 #include <winpr/stream.h>
 
-#include <freerdp/svc.h>
 #include <freerdp/addin.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/client/cliprdr.h>
+#include <freerdp/svc.h>
 
 #define TAG CHANNELS_TAG("cliprdr.client")
 

@@ -22,32 +22,32 @@
 
 #include <freerdp/config.h>
 
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 
 #ifndef _WIN32
 #include <sys/time.h>
 #endif
 
-#include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/string.h>
-#include <winpr/thread.h>
-#include <winpr/stream.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/stream.h>
+#include <winpr/string.h>
+#include <winpr/synch.h>
+#include <winpr/thread.h>
 
-#include <freerdp/freerdp.h>
 #include <freerdp/client/tsmf.h>
+#include <freerdp/freerdp.h>
 
-#include "tsmf_constants.h"
-#include "tsmf_types.h"
-#include "tsmf_decoder.h"
 #include "tsmf_audio.h"
-#include "tsmf_main.h"
 #include "tsmf_codec.h"
+#include "tsmf_constants.h"
+#include "tsmf_decoder.h"
+#include "tsmf_main.h"
 #include "tsmf_media.h"
+#include "tsmf_types.h"
 
 #define AUDIO_TOLERANCE 10000000LL
 

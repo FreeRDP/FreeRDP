@@ -21,8 +21,8 @@
 #ifndef FREERDP_UTILS_MSCONFIG_H
 #define FREERDP_UTILS_MSCONFIG_H
 
-#include <winpr/stream.h>
 #include <freerdp/api.h>
+#include <winpr/stream.h>
 
 typedef struct
 {

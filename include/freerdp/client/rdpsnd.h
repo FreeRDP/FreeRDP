@@ -70,19 +70,19 @@ extern "C"
 
 #define RDPSND_DEVICE_EXPORT_FUNC_NAME "freerdp_rdpsnd_client_subsystem_entry"
 
-typedef void (*PREGISTERRDPSNDDEVICE)(rdpsndPlugin* rdpsnd, rdpsndDevicePlugin* device);
+	typedef void (*PREGISTERRDPSNDDEVICE)(rdpsndPlugin* rdpsnd, rdpsndDevicePlugin* device);
 
-typedef struct
-{
-	rdpsndPlugin* rdpsnd;
-	PREGISTERRDPSNDDEVICE pRegisterRdpsndDevice;
-	const ADDIN_ARGV* args;
-} FREERDP_RDPSND_DEVICE_ENTRY_POINTS;
-typedef FREERDP_RDPSND_DEVICE_ENTRY_POINTS* PFREERDP_RDPSND_DEVICE_ENTRY_POINTS;
+	typedef struct
+	{
+		rdpsndPlugin* rdpsnd;
+		PREGISTERRDPSNDDEVICE pRegisterRdpsndDevice;
+		const ADDIN_ARGV* args;
+	} FREERDP_RDPSND_DEVICE_ENTRY_POINTS;
+	typedef FREERDP_RDPSND_DEVICE_ENTRY_POINTS* PFREERDP_RDPSND_DEVICE_ENTRY_POINTS;
 
-typedef UINT (*PFREERDP_RDPSND_DEVICE_ENTRY)(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints);
+	typedef UINT (*PFREERDP_RDPSND_DEVICE_ENTRY)(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints);
 
-FREERDP_API rdpContext* freerdp_rdpsnd_get_context(rdpsndPlugin* plugin);
+	FREERDP_API rdpContext* freerdp_rdpsnd_get_context(rdpsndPlugin* plugin);
 
 #ifdef __cplusplus
 }

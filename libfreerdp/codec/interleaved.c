@@ -21,8 +21,8 @@
  * limitations under the License.
  */
 
-#include <winpr/assert.h>
 #include <freerdp/config.h>
+#include <winpr/assert.h>
 
 #include <freerdp/codec/interleaved.h>
 #include <freerdp/log.h>

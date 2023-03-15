@@ -2,12 +2,12 @@
 
 #include <stdio.h>
 #include <winpr/crt.h>
-#include <winpr/windows.h>
-#include <winpr/path.h>
 #include <winpr/crypto.h>
+#include <winpr/path.h>
+#include <winpr/windows.h>
 
-#include <freerdp/client/file.h>
 #include <freerdp/channels/rdpecam.h>
+#include <freerdp/client/file.h>
 
 static const BYTE testRdpFileUTF16[] = {
 	0xff, 0xfe, 0x73, 0x00, 0x63, 0x00, 0x72, 0x00, 0x65, 0x00, 0x65, 0x00, 0x6e, 0x00, 0x20, 0x00,

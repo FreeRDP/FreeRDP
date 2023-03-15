@@ -19,30 +19,30 @@
  * limitations under the License.
  */
 
-#include <stdio.h>
 #include <errno.h>
-#include <locale.h>
 #include <float.h>
+#include <locale.h>
+#include <stdio.h>
 
 #include <winpr/sysinfo.h>
 
-#include <freerdp/client/cmdline.h>
 #include <freerdp/channels/channels.h>
-#include <freerdp/gdi/gdi.h>
 #include <freerdp/client.h>
-#include <freerdp/utils/signal.h>
+#include <freerdp/client/cmdline.h>
+#include <freerdp/gdi/gdi.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/utils/signal.h>
 
 #include <linux/input.h>
 
 #include <uwac/uwac.h>
 
-#include "wlfreerdp.h"
-#include "wlf_input.h"
+#include "wlf_channels.h"
 #include "wlf_cliprdr.h"
 #include "wlf_disp.h"
-#include "wlf_channels.h"
+#include "wlf_input.h"
 #include "wlf_pointer.h"
+#include "wlfreerdp.h"
 
 #define TAG CLIENT_TAG("wayland")
 

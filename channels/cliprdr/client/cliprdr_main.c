@@ -22,21 +22,21 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/wtypes.h>
 #include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/wtypes.h>
 
-#include <freerdp/types.h>
+#include <freerdp/client/cliprdr.h>
 #include <freerdp/constants.h>
 #include <freerdp/freerdp.h>
-#include <freerdp/client/cliprdr.h>
+#include <freerdp/types.h>
 
 #include "../../../channels/client/addin.h"
 
-#include "cliprdr_main.h"
-#include "cliprdr_format.h"
 #include "../cliprdr_common.h"
+#include "cliprdr_format.h"
+#include "cliprdr_main.h"
 
 static const char* CB_MSG_TYPE_STRINGS(UINT32 type)
 {

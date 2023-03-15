@@ -21,11 +21,11 @@
 #ifndef FREERDP_CHANNEL_RDPSND_CLIENT_MAIN_H
 #define FREERDP_CHANNEL_RDPSND_CLIENT_MAIN_H
 
-#include <freerdp/api.h>
-#include <freerdp/svc.h>
 #include <freerdp/addin.h>
-#include <freerdp/client/rdpsnd.h>
+#include <freerdp/api.h>
 #include <freerdp/channels/log.h>
+#include <freerdp/client/rdpsnd.h>
+#include <freerdp/svc.h>
 
 #define TAG CHANNELS_TAG("rdpsnd.client")
 

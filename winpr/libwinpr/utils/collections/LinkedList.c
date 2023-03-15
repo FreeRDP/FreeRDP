@@ -19,8 +19,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/collections.h>
 #include <winpr/assert.h>
+#include <winpr/collections.h>
 
 typedef struct s_wLinkedListItem wLinkedListNode;
 

@@ -19,9 +19,9 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/wtypes.h>
 #include <freerdp/codec/audio.h>
 #include <freerdp/codec/dsp.h>
+#include <winpr/wtypes.h>
 
 #include <freerdp/server/server-common.h>
 

@@ -20,13 +20,13 @@
 #ifndef WINPR_UTILS_PRINT_H
 #define WINPR_UTILS_PRINT_H
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 
 #include <winpr/winpr.h>
-#include <winpr/wtypes.h>
 #include <winpr/wlog.h>
+#include <winpr/wtypes.h>
 
 #define WINPR_HEXDUMP_LINE_LENGTH 16
 

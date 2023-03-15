@@ -1,7 +1,7 @@
 
 #include <winpr/crt.h>
-#include <winpr/print.h>
 #include <winpr/crypto.h>
+#include <winpr/print.h>
 #include <winpr/ssl.h>
 
 static BOOL test_crypto_cipher_aes_128_cbc(void)

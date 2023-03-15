@@ -19,8 +19,8 @@
 
 #include <freerdp/config.h>
 
-#include <freerdp/types.h>
 #include <freerdp/primitives.h>
+#include <freerdp/types.h>
 
 #include "prim_internal.h"
 

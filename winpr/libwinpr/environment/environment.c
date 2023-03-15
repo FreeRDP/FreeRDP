@@ -22,8 +22,8 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/platform.h>
 #include <winpr/error.h>
+#include <winpr/platform.h>
 #include <winpr/string.h>
 
 #include <winpr/environment.h>

@@ -25,15 +25,15 @@
 
 typedef struct win_shadow_subsystem winShadowSubsystem;
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
+#include <winpr/stream.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/collections.h>
 
+#include "win_dxgi.h"
 #include "win_rdp.h"
 #include "win_wds.h"
-#include "win_dxgi.h"
 
 struct win_shadow_subsystem
 {

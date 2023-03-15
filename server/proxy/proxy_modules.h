@@ -21,8 +21,8 @@
 #ifndef FREERDP_SERVER_PROXY_MODULES_H
 #define FREERDP_SERVER_PROXY_MODULES_H
 
-#include <winpr/wtypes.h>
 #include <winpr/collections.h>
+#include <winpr/wtypes.h>
 
 #include <freerdp/server/proxy/proxy_modules_api.h>
 

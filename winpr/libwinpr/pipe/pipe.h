@@ -22,8 +22,8 @@
 
 #ifndef _WIN32
 
-#include <winpr/pipe.h>
 #include <winpr/collections.h>
+#include <winpr/pipe.h>
 
 #include "../handle/handle.h"
 

@@ -25,17 +25,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/crt.h>
-#include <winpr/synch.h>
-#include <winpr/thread.h>
-#include <winpr/stream.h>
-#include <winpr/sysinfo.h>
 #include <winpr/cmdline.h>
 #include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/stream.h>
+#include <winpr/synch.h>
+#include <winpr/sysinfo.h>
+#include <winpr/thread.h>
 
 #include <freerdp/addin.h>
-#include <freerdp/freerdp.h>
 #include <freerdp/client/channels.h>
+#include <freerdp/freerdp.h>
 
 #include "rdpei_common.h"
 

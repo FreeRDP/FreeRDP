@@ -27,8 +27,8 @@
 
 #include "sf_ainput.h"
 
-#include <freerdp/server/server-common.h>
 #include <freerdp/server/ainput.h>
+#include <freerdp/server/server-common.h>
 
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("sample.ainput")

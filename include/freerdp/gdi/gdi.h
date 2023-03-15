@@ -27,13 +27,13 @@
 #include <freerdp/api.h>
 #include <freerdp/types.h>
 
-#include <freerdp/log.h>
-#include <freerdp/types.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
+#include <freerdp/log.h>
+#include <freerdp/types.h>
 
-#include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/geometry.h>
+#include <freerdp/client/rdpgfx.h>
 #include <freerdp/client/video.h>
 
 /* For more information, see [MS-RDPEGDI] */

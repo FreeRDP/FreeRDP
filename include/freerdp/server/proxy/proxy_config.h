@@ -20,8 +20,8 @@
 #ifndef FREERDP_SERVER_PROXY_CONFIG_H
 #define FREERDP_SERVER_PROXY_CONFIG_H
 
-#include <winpr/wtypes.h>
 #include <winpr/ini.h>
+#include <winpr/wtypes.h>
 
 #include <freerdp/api.h>
 #include <freerdp/server/proxy/proxy_modules_api.h>

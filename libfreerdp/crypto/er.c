@@ -22,9 +22,9 @@
 
 #include <winpr/crt.h>
 
-#include <freerdp/crypto/er.h>
 #include <freerdp/crypto/ber.h>
 #include <freerdp/crypto/der.h>
+#include <freerdp/crypto/er.h>
 
 void er_read_length(wStream* s, int* length)
 {

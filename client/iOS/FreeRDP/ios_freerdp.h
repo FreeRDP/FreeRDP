@@ -10,9 +10,9 @@
 
 #import <CoreGraphics/CoreGraphics.h>
 
-#import <freerdp/freerdp.h>
-#import <freerdp/channels/channels.h>
 #import "TSXTypes.h"
+#import <freerdp/channels/channels.h>
+#import <freerdp/freerdp.h>
 
 @class RDPSession, RDPSessionView;
 

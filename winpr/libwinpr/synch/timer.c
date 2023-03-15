@@ -20,18 +20,18 @@
 
 #include <winpr/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
-#include <winpr/assert.h>
 #include <winpr/sysinfo.h>
 
 #include <winpr/synch.h>
 
 #ifndef _WIN32
-#include <unistd.h>
 #include <errno.h>
-#include <sys/time.h>
 #include <signal.h>
+#include <sys/time.h>
+#include <unistd.h>
 #endif
 
 #include "event.h"

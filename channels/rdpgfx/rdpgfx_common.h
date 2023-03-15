@@ -25,9 +25,9 @@
 #include <winpr/crt.h>
 #include <winpr/stream.h>
 
-#include <freerdp/config.h>
-#include <freerdp/channels/rdpgfx.h>
 #include <freerdp/api.h>
+#include <freerdp/channels/rdpgfx.h>
+#include <freerdp/config.h>
 #include <freerdp/utils/gfx.h>
 
 FREERDP_LOCAL UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header);

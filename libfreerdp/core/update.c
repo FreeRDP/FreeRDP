@@ -21,25 +21,25 @@
 
 #include <freerdp/config.h>
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
-#include <winpr/collections.h>
 
-#include "update.h"
-#include "surface.h"
-#include "message.h"
 #include "info.h"
+#include "message.h"
+#include "surface.h"
+#include "update.h"
 #include "window.h"
 
+#include <freerdp/codec/bitmap.h>
 #include <freerdp/log.h>
 #include <freerdp/peer.h>
-#include <freerdp/codec/bitmap.h>
 
-#include "../cache/pointer.h"
-#include "../cache/palette.h"
 #include "../cache/bitmap.h"
+#include "../cache/palette.h"
+#include "../cache/pointer.h"
 
 #define TAG FREERDP_TAG("core.update")
 

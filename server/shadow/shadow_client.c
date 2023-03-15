@@ -20,17 +20,17 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/file.h>
+#include <winpr/interlocked.h>
 #include <winpr/path.h>
 #include <winpr/synch.h>
-#include <winpr/thread.h>
 #include <winpr/sysinfo.h>
-#include <winpr/interlocked.h>
+#include <winpr/thread.h>
 
-#include <freerdp/log.h>
 #include <freerdp/channels/drdynvc.h>
+#include <freerdp/log.h>
 
 #include "shadow.h"
 

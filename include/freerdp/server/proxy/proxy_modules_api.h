@@ -25,9 +25,9 @@
 #ifndef FREERDP_SERVER_PROXY_MODULES_API_H
 #define FREERDP_SERVER_PROXY_MODULES_API_H
 
-#include <winpr/winpr.h>
-#include <winpr/stream.h>
 #include <winpr/sspi.h>
+#include <winpr/stream.h>
+#include <winpr/winpr.h>
 
 #include <freerdp/server/proxy/proxy_types.h>
 
@@ -153,83 +153,83 @@ extern "C"
 /* filter events parameters */
 #define WINPR_PACK_PUSH
 #include <winpr/pack.h>
-typedef struct proxy_keyboard_event_info
-{
-	UINT16 flags;
-	UINT16 rdp_scan_code;
-} proxyKeyboardEventInfo;
+	typedef struct proxy_keyboard_event_info
+	{
+		UINT16 flags;
+		UINT16 rdp_scan_code;
+	} proxyKeyboardEventInfo;
 
-typedef struct proxy_unicode_event_info
-{
-	UINT16 flags;
-	UINT16 code;
-} proxyUnicodeEventInfo;
+	typedef struct proxy_unicode_event_info
+	{
+		UINT16 flags;
+		UINT16 code;
+	} proxyUnicodeEventInfo;
 
-typedef struct proxy_mouse_event_info
-{
-	UINT16 flags;
-	UINT16 x;
-	UINT16 y;
-} proxyMouseEventInfo;
+	typedef struct proxy_mouse_event_info
+	{
+		UINT16 flags;
+		UINT16 x;
+		UINT16 y;
+	} proxyMouseEventInfo;
 
-typedef struct proxy_mouse_ex_event_info
-{
-	UINT16 flags;
-	UINT16 x;
-	UINT16 y;
-} proxyMouseExEventInfo;
+	typedef struct proxy_mouse_ex_event_info
+	{
+		UINT16 flags;
+		UINT16 x;
+		UINT16 y;
+	} proxyMouseExEventInfo;
 
-typedef struct
-{
-	/* channel metadata */
-	const char* channel_name;
-	UINT16 channel_id;
+	typedef struct
+	{
+		/* channel metadata */
+		const char* channel_name;
+		UINT16 channel_id;
 
-	/* actual data */
-	const BYTE* data;
-	size_t data_len;
-	size_t total_size;
-	UINT32 flags;
-} proxyChannelDataEventInfo;
+		/* actual data */
+		const BYTE* data;
+		size_t data_len;
+		size_t total_size;
+		UINT32 flags;
+	} proxyChannelDataEventInfo;
 
-typedef struct
-{
-	/* out values */
-	char* target_address;
-	UINT16 target_port;
+	typedef struct
+	{
+		/* out values */
+		char* target_address;
+		UINT16 target_port;
 
-	/*
-	 * If this value is set to true by a plugin, target info will be fetched from config and proxy
-	 * will connect any client to the same remote server.
-	 */
-	ProxyFetchTargetMethod fetch_method;
-} proxyFetchTargetEventInfo;
+		/*
+		 * If this value is set to true by a plugin, target info will be fetched from config and
+		 * proxy will connect any client to the same remote server.
+		 */
+		ProxyFetchTargetMethod fetch_method;
+	} proxyFetchTargetEventInfo;
 
-typedef struct server_peer_logon
-{
-	const SEC_WINNT_AUTH_IDENTITY* identity;
-	BOOL automatic;
-} proxyServerPeerLogon;
+	typedef struct server_peer_logon
+	{
+		const SEC_WINNT_AUTH_IDENTITY* identity;
+		BOOL automatic;
+	} proxyServerPeerLogon;
 
-typedef struct dyn_channel_intercept_data
-{
-	const char* name;
-	UINT32 channelId;
-	wStream* data;
-	BOOL isBackData;
-	BOOL first;
-	BOOL last;
-	BOOL rewritten;
-	size_t packetSize;
-	PfChannelResult result;
-} proxyDynChannelInterceptData;
+	typedef struct dyn_channel_intercept_data
+	{
+		const char* name;
+		UINT32 channelId;
+		wStream* data;
+		BOOL isBackData;
+		BOOL first;
+		BOOL last;
+		BOOL rewritten;
+		size_t packetSize;
+		PfChannelResult result;
+	} proxyDynChannelInterceptData;
 
-typedef struct dyn_channel_to_intercept_data
-{
-	const char* name;
-	UINT32 channelId;
-	BOOL intercept;
-} proxyChannelToInterceptData;
+	typedef struct dyn_channel_to_intercept_data
+	{
+		const char* name;
+		UINT32 channelId;
+		BOOL intercept;
+	} proxyChannelToInterceptData;
 
 #define WINPR_PACK_POP
 #include <winpr/pack.h>

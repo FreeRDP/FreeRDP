@@ -21,9 +21,9 @@
 #ifndef FREERDP_UTILS_CLIPRDR_H
 #define FREERDP_UTILS_CLIPRDR_H
 
-#include <winpr/wtypes.h>
-#include <winpr/shell.h>
 #include <freerdp/api.h>
+#include <winpr/shell.h>
+#include <winpr/wtypes.h>
 
 #ifdef __cplusplus
 extern "C"

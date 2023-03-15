@@ -1,8 +1,8 @@
 
 #include <winpr/crt.h>
 #include <winpr/error.h>
-#include <winpr/wtsapi.h>
 #include <winpr/user.h>
+#include <winpr/wtsapi.h>
 
 #define TITLE "thats the title"
 #define MESSAGE "thats the message"

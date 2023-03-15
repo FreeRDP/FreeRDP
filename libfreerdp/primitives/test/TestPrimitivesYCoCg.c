@@ -18,9 +18,9 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/sysinfo.h>
 #include "prim_test.h"
 #include <freerdp/utils/profiler.h>
+#include <winpr/sysinfo.h>
 
 /* ------------------------------------------------------------------------- */
 static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)

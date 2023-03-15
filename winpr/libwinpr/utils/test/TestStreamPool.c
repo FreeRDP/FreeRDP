@@ -1,7 +1,7 @@
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/stream.h>
-#include <winpr/collections.h>
 
 #define BUFFER_SIZE 16384
 

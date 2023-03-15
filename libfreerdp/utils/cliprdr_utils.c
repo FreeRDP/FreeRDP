@@ -19,9 +19,9 @@
  * limitations under the License.
  */
 
-#include <winpr/stream.h>
-#include <freerdp/utils/cliprdr_utils.h>
 #include <freerdp/channels/cliprdr.h>
+#include <freerdp/utils/cliprdr_utils.h>
+#include <winpr/stream.h>
 
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("utils." CLIPRDR_SVC_CHANNEL_NAME)

@@ -21,21 +21,21 @@
 #include <freerdp/config.h>
 
 #include <winpr/assert.h>
-#include <winpr/tchar.h>
 #include <winpr/stream.h>
+#include <winpr/tchar.h>
 #include <winpr/windows.h>
 
-#include <freerdp/listener.h>
-#include <freerdp/codec/rfx.h>
 #include <freerdp/build-config.h>
+#include <freerdp/codec/rfx.h>
 #include <freerdp/crypto/certificate.h>
+#include <freerdp/listener.h>
 
 #include "wf_info.h"
 #include "wf_input.h"
 #include "wf_mirage.h"
-#include "wf_update.h"
-#include "wf_settings.h"
 #include "wf_rdpsnd.h"
+#include "wf_settings.h"
+#include "wf_update.h"
 
 #include "wf_peer.h"
 #include <freerdp/peer.h>

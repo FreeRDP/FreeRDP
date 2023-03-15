@@ -1,7 +1,7 @@
 
+#include <winpr/collections.h>
 #include <winpr/crt.h>
 #include <winpr/thread.h>
-#include <winpr/collections.h>
 
 static DWORD WINAPI message_echo_pipe_client_thread(LPVOID arg)
 {

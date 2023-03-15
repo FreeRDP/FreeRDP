@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include <winpr/crt.h>
 #include <winpr/sspi.h>
-#include <winpr/winpr.h>
 #include <winpr/tchar.h>
+#include <winpr/winpr.h>
 
 int TestEnumerateSecurityPackages(int argc, char* argv[])
 {

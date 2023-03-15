@@ -1,8 +1,8 @@
 
+#include <winpr/bitstream.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
-#include <winpr/bitstream.h>
 
 static void BitStrGen(void)
 {

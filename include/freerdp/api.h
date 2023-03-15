@@ -20,8 +20,8 @@
 #ifndef FREERDP_API_H
 #define FREERDP_API_H
 
-#include <winpr/winpr.h>
 #include <winpr/platform.h>
+#include <winpr/winpr.h>
 
 #ifdef _WIN32
 #define FREERDP_CC __cdecl

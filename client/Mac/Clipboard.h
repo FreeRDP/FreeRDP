@@ -18,12 +18,12 @@
  * limitations under the License.
  */
 
-#import "mfreerdp.h"
 #import "mf_client.h"
+#import "mfreerdp.h"
 
-#import "freerdp/freerdp.h"
 #import "freerdp/channels/channels.h"
 #import "freerdp/client/cliprdr.h"
+#import "freerdp/freerdp.h"
 
 int mac_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr);
 

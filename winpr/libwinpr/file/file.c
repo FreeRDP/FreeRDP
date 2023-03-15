@@ -26,9 +26,9 @@
 #define KFREEBSD
 #endif
 
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
+#include <winpr/wtypes.h>
 
 #ifdef _WIN32
 
@@ -39,8 +39,8 @@
 #include "../log.h"
 #define TAG WINPR_TAG("file")
 
-#include <winpr/wlog.h>
 #include <winpr/string.h>
+#include <winpr/wlog.h>
 
 #include "file.h"
 #include <errno.h>

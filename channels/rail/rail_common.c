@@ -22,8 +22,8 @@
  */
 #include "rail_common.h"
 
-#include <winpr/crt.h>
 #include <freerdp/channels/log.h>
+#include <winpr/crt.h>
 
 #define TAG CHANNELS_TAG("rail.common")
 

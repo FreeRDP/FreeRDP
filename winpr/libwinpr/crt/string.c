@@ -17,17 +17,17 @@
  * limitations under the License.
  */
 
-#include <winpr/config.h>
 #include <winpr/assert.h>
+#include <winpr/config.h>
 
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
-#include <ctype.h>
-#include <wctype.h>
 #include <wchar.h>
+#include <wctype.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 #include <winpr/endian.h>
 
 /* String Manipulation (CRT): http://msdn.microsoft.com/en-us/library/f0151s4x.aspx */

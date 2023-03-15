@@ -19,10 +19,10 @@
  * limitations under the License.
  */
 
+#include <freerdp/codec/region.h>
+#include <freerdp/log.h>
 #include <winpr/assert.h>
 #include <winpr/memory.h>
-#include <freerdp/log.h>
-#include <freerdp/codec/region.h>
 
 #define TAG FREERDP_TAG("codec")
 

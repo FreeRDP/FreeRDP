@@ -24,24 +24,24 @@
 #ifndef _WIN32
 
 #ifdef __APPLE__
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/sysctl.h>
-#include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <string.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
-#include <winpr/synch.h>
+#include <winpr/collections.h>
+#include <winpr/crt.h>
+#include <winpr/environment.h>
 #include <winpr/library.h>
 #include <winpr/smartcard.h>
-#include <winpr/collections.h>
-#include <winpr/environment.h>
+#include <winpr/synch.h>
 
 #include "smartcard_pcsc.h"
 
@@ -110,7 +110,7 @@
  * any operation using hCtx2 (and hCard2) will also be blocked.
  */
 
-//#define DISABLE_PCSC_SCARD_AUTOALLOCATE
+// #define DISABLE_PCSC_SCARD_AUTOALLOCATE
 #include "smartcard_pcsc.h"
 
 #define PCSC_SCARD_PCI_T0 (&g_PCSC_rgSCardT0Pci)

@@ -22,12 +22,12 @@
 
 #include <winpr/buildflags.h>
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <winpr/crt.h>
 #include <winpr/string.h>
-#include <winpr/winpr.h>
 #include <winpr/version.h>
+#include <winpr/winpr.h>
 #include <winpr/wlog.h>
 
 #if !defined(WIN32)

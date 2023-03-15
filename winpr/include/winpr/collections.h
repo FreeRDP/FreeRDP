@@ -20,18 +20,18 @@
 #ifndef WINPR_COLLECTIONS_H
 #define WINPR_COLLECTIONS_H
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
+#include <winpr/assert.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-#include <winpr/assert.h>
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
 #include <winpr/stream.h>
+#include <winpr/synch.h>
 
 #ifdef __cplusplus
 extern "C"

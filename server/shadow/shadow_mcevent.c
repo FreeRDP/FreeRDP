@@ -18,9 +18,9 @@
 
 #include <freerdp/config.h>
 
-#include <winpr/assert.h>
-#include <freerdp/log.h>
 #include "shadow.h"
+#include <freerdp/log.h>
+#include <winpr/assert.h>
 
 #define TAG SERVER_TAG("shadow.mcevent")
 

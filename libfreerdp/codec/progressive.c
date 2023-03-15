@@ -22,22 +22,22 @@
 #include <freerdp/config.h>
 
 #include <winpr/assert.h>
+#include <winpr/bitstream.h>
 #include <winpr/crt.h>
 #include <winpr/print.h>
-#include <winpr/bitstream.h>
 
-#include <freerdp/primitives.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/progressive.h>
 #include <freerdp/codec/region.h>
 #include <freerdp/log.h>
+#include <freerdp/primitives.h>
 
+#include "progressive.h"
 #include "rfx_differential.h"
-#include "rfx_quantization.h"
 #include "rfx_dwt.h"
+#include "rfx_quantization.h"
 #include "rfx_rlgr.h"
 #include "rfx_types.h"
-#include "progressive.h"
 
 #define TAG FREERDP_TAG("codec.progressive")
 

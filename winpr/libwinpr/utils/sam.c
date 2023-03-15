@@ -23,11 +23,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
-#include <winpr/sam.h>
-#include <winpr/print.h>
 #include <winpr/file.h>
+#include <winpr/print.h>
+#include <winpr/sam.h>
+#include <winpr/wtypes.h>
 
 #include "../log.h"
 

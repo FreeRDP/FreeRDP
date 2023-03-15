@@ -23,9 +23,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <winpr/sspi.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
-#include <winpr/sspi.h>
 
 #ifdef __cplusplus
 extern "C"

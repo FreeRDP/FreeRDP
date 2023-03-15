@@ -22,22 +22,22 @@
 #include <freerdp/config.h>
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <freerdp/api.h>
+#include <freerdp/codec/color.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
-#include <freerdp/codec/color.h>
 
-#include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
-#include <freerdp/log.h>
+#include <freerdp/gdi/region.h>
 #include <freerdp/gdi/shape.h>
+#include <freerdp/log.h>
 
+#include "../gdi/gdi.h"
 #include "brush.h"
 #include "clipping.h"
-#include "../gdi/gdi.h"
 
 #define TAG FREERDP_TAG("gdi.bitmap")
 

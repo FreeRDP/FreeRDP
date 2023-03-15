@@ -18,14 +18,14 @@
  * limitations under the License.
  */
 
-#include <winpr/config.h>
 #include <winpr/assert.h>
+#include <winpr/config.h>
 #include <winpr/windows.h>
 
 #include <winpr/crt.h>
-#include <winpr/sspi.h>
-#include <winpr/ssl.h>
 #include <winpr/print.h>
+#include <winpr/ssl.h>
+#include <winpr/sspi.h>
 
 #include "sspi.h"
 
@@ -36,9 +36,9 @@
 
 /* Authentication Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374731/ */
 
-#include "NTLM/ntlm_export.h"
 #include "CredSSP/credssp.h"
 #include "Kerberos/kerberos.h"
+#include "NTLM/ntlm_export.h"
 #include "Negotiate/negotiate.h"
 #include "Schannel/schannel.h"
 

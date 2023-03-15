@@ -20,11 +20,11 @@
 
 #include <errno.h>
 
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
-#include <winpr/path.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
 #include <winpr/print.h>
+#include <winpr/wtypes.h>
 
 #include "rdtk_engine.h"
 #include "rdtk_resources.h"

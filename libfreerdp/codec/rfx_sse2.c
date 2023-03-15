@@ -25,11 +25,11 @@
 #include <string.h>
 #include <winpr/sysinfo.h>
 
-#include <xmmintrin.h>
 #include <emmintrin.h>
+#include <xmmintrin.h>
 
-#include "rfx_types.h"
 #include "rfx_sse2.h"
+#include "rfx_types.h"
 
 #ifdef _MSC_VER
 #define __attribute__(...)
