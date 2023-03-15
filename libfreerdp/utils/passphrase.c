@@ -42,16 +42,7 @@ static char read_chr(FILE* f)
 
 int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 {
-	HANDLE handles[] = { (HANDLE)_get_osfhandle(_fileno(f)), freerdp_abort_event(context) };
-
-	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
-	switch (status)
-	{
-		case WAIT_OBJECT_0:
-			return read_chr(f);
-		default:
-			return EOF;
-	}
+	return read_chr(f);
 }
 
 char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
@@ -65,52 +56,50 @@ char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf
 
 	size_t read_cnt = 0, chr;
 
-	if (from_stdin)
+	printf("%s ", prompt);
+	fflush(stdout);
+	while (read_cnt < bufsiz - 1 && (chr = freerdp_interruptible_getc(context, stdin)) &&
+	       chr != NEWLINE && chr != CARRIAGERETURN)
 	{
-		printf("%s ", prompt);
-		fflush(stdout);
-		while (read_cnt < bufsiz - 1 && (chr = freerdp_interruptible_getc(context, stdin)) &&
-		       chr != NEWLINE && chr != CARRIAGERETURN)
+		switch (chr)
 		{
-			switch (chr)
+			case EOF:
+				goto end;
+			case BACKSPACE:
 			{
-				case EOF:
-					goto end;
-				case BACKSPACE:
+				if (read_cnt > 0)
 				{
-					if (read_cnt > 0)
+					if (SHOW_ASTERISK)
+						printf("\b \b");
+					read_cnt--;
+				}
+			}
+			break;
+			case CTRLC:
+			{
+				if (read_cnt != 0)
+				{
+					while (read_cnt > 0)
 					{
 						if (SHOW_ASTERISK)
 							printf("\b \b");
 						read_cnt--;
 					}
 				}
-				break;
-				case CTRLC:
-				{
-					if (read_cnt != 0)
-					{
-						while (read_cnt > 0)
-						{
-							if (SHOW_ASTERISK)
-								printf("\b \b");
-							read_cnt--;
-						}
-					}
-					else
-						goto fail;
-				}
-				break;
-				default:
-				{
-					*(buf + read_cnt) = chr;
-					read_cnt++;
-					if (SHOW_ASTERISK)
-						printf("*");
-				}
-				break;
+				else
+					goto fail;
 			}
+			break;
+			default:
+			{
+				*(buf + read_cnt) = chr;
+				read_cnt++;
+				if (SHOW_ASTERISK)
+					printf("*");
+			}
+			break;
 		}
+
 	end:
 		*(buf + read_cnt) = '\0';
 		printf("\n");
