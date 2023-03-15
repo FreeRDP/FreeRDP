@@ -2,11 +2,14 @@
 #include "wf_wasapi.h"
 #include "wf_info.h"
 
+// clang-format off
+#include <windows.h>
 #include <audioclient.h>
-#include <functiondiscoverykeys_devpkey.h>
 #include <initguid.h>
 #include <mmdeviceapi.h>
-
+#include <functiondiscoverykeys_devpkey.h>
+// clang-format on
+//
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")
 
