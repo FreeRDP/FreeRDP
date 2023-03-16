@@ -86,6 +86,10 @@ BuildRequires: libjpeg-turbo-devel
 BuildRequires: libwayland-client-devel
 %endif
 
+%if 0%{?fedora} >= 36 || 0%{?rhel} >= 9
+BuildRequires: ffmpeg-free-devel
+%endif
+
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 %description
@@ -116,7 +120,7 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
         -DWITH_CUPS=ON \
         -DWITH_PCSC=ON \
         -DWITH_JPEG=ON \
-%if %{defined suse_version}
+%if 0%{?fedora} >= 36 || 0%{?rhel} >= 9 || 0%{?suse_version}
         -DWITH_FFMPEG=ON \
         -DWITH_DSP_FFMPEG=ON \
 %endif
