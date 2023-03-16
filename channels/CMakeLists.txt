@@ -177,7 +177,7 @@ macro(add_channel_client_library _module_prefix _module_name _channel_name _dyna
     set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
 
 	if (${_module_prefix}_LIBS)
-		target_link_libraries(${_module_name} PRIVATE ${${_module_prefix}_LIBS})
+		target_link_libraries(${_module_name} PUBLIC ${${_module_prefix}_LIBS})
 	endif()
 endmacro(add_channel_client_library)
 
@@ -195,7 +195,7 @@ macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_
 	set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${_channel_name}/Client/Subsystem/${CHANNEL_SUBSYSTEM}")
 
 	if (${_module_prefix}_LIBS)
-		target_link_libraries(${_module_name} PRIVATE ${${_module_prefix}_LIBS})
+		target_link_libraries(${_module_name} PUBLIC ${${_module_prefix}_LIBS})
 	endif()
 endmacro(add_channel_client_subsystem_library)
 
@@ -214,7 +214,7 @@ macro(add_channel_server_library _module_prefix _module_name _channel_name _dyna
 	set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Server")
 
 	if (${_module_prefix}_LIBS)
-		target_link_libraries(${_module_name} PRIVATE ${${_module_prefix}_LIBS})
+		target_link_libraries(${_module_name} PUBLIC ${${_module_prefix}_LIBS})
 	endif()
 endmacro(add_channel_server_library)
 
