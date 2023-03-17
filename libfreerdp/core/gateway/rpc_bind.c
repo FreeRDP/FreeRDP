@@ -345,8 +345,11 @@ BOOL rpc_recv_bind_ack_pdu(rdpRpc* rpc, wStream* s)
 	auth_data = Stream_Pointer(s);
 	Stream_SetPosition(s, end);
 
-	buffer.pvBuffer = auth_data;
 	buffer.cbBuffer = header.common.auth_length;
+	buffer.pvBuffer = malloc(buffer.cbBuffer);
+	if (!buffer.pvBuffer)
+		goto fail;
+	memcpy(buffer.pvBuffer, auth_data, buffer.cbBuffer);
 	credssp_auth_take_input_buffer(rpc->auth, &buffer);
 
 	if (credssp_auth_authenticate(rpc->auth) < 0)
