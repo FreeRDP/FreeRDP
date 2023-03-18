@@ -444,8 +444,8 @@ static void wf_post_disconnect(freerdp* instance)
 	free(wfc->window_title);
 }
 
-static CREDUI_INFOA wfUiInfo = { sizeof(CREDUI_INFOA), NULL, "Enter your credentials",
-	                             "Remote Desktop Security", NULL };
+static CREDUI_INFOW wfUiInfo = { sizeof(CREDUI_INFOW), NULL, L"Enter your credentials",
+	                             L"Remote Desktop Security", NULL };
 
 static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** username,
                                 char** password, char** domain)
@@ -470,22 +470,18 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 
 	if (username && *username)
 	{
-		ConvertUtf8ToWChar(*username, UserNameW, ARRAYSIZE(UserNameW);
-		ConvertUtf8ToWChar(*username, UserW, ARRAYSIZE(UserW);
+		ConvertUtf8ToWChar(*username, UserNameW, ARRAYSIZE(UserNameW));
+		ConvertUtf8ToWChar(*username, UserW, ARRAYSIZE(UserW));
 	}
 
 	if (password && *password)
-	{
-		ConvertUtf8ToWChar(*password, PasswordW, ARRAYSIZE(PasswordW);
-	}
+		ConvertUtf8ToWChar(*password, PasswordW, ARRAYSIZE(PasswordW));
 
 	if (domain && *domain)
-	{
-		ConvertUtf8ToWChar(*domain, DomainW, ARRAYSIZE(DomainW);
-		strncpy(Domain, *domain, CREDUI_MAX_DOMAIN_TARGET_LENGTH);
-	}
+		ConvertUtf8ToWChar(*domain, DomainW, ARRAYSIZE(DomainW));
 
-	if (!(*UserName && *Password))
+	if ((_wcsnlen(UserNameW, ARRAYSIZE(UserNameW)) == 0) &&
+	    (_wcsnlen(PasswordW, ARRAYSIZE(PasswordW)) == 0))
 	{
 		WCHAR* titleW = ConvertUtf8ToWCharAlloc(title, NULL);
 		if (!wfc->isConsole && wfc->common.context.settings->CredentialsFromStdin)
@@ -509,9 +505,9 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 		    CredUIParseUserNameW(UserNameW, UserW, ARRAYSIZE(UserW), DomainW, ARRAYSIZE(DomainW));
 		if (status != NO_ERROR)
 		{
-			CHAR UserW[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
-			CHAR UserNameW[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
-			CHAR DomainW[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
+			CHAR User[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+			CHAR UserName[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+			CHAR Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
 
 			ConvertWCharNToUtf8(UserNameW, ARRAYSIZE(UserNameW), UserName, ARRAYSIZE(UserName));
 			ConvertWCharNToUtf8(UserW, ARRAYSIZE(UserW), User, ARRAYSIZE(User));
@@ -529,7 +525,7 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 		return FALSE;
 	}
 
-	if (strlen(Domain) > 0)
+	if (_wcsnlen(DomainW, ARRAYSIZE(DomainW)) > 0)
 		*domain = ConvertWCharNToUtf8Alloc(DomainW, ARRAYSIZE(DomainW), NULL);
 	else
 		*domain = _strdup("\0");
