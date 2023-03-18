@@ -41,6 +41,7 @@ freerdp_library_add(${CMAKE_THREAD_LIBS_INIT})
 
 if(WIN32)
 	freerdp_library_add(ws2_32)
+	freerdp_library_add(Credui)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
