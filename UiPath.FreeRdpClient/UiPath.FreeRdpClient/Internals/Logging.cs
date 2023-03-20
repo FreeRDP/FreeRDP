@@ -20,6 +20,7 @@ internal class Logging : IHostedService
         "transport_check_fds: transport->ReceiveCallback() - -4",
         "fastpath_recv_update_data() fail",
         "Stream_GetRemainingLength() < size",//20000+ in 50 sec
+        "fastpath_recv_update_data: fastpath_recv_update() -",
         "Fastpath update Orders [0] failed, status 0",//??
         "Total size (", // 21234214) exceeds MultifragMaxRequestSize (65535) // 2000+ in 50 secs
         "Unexpected FASTPATH_FRAGMENT_SINGLE",//800+ in 50 sec
