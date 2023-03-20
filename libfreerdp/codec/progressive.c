@@ -536,17 +536,20 @@ static BOOL progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* surfac
 
 	t = &surface->tiles[zIdx];
 
+	t->blockType = tile->blockType;
+	t->blockLen = tile->blockLen;
+	t->quantIdxY = tile->quantIdxY;
+	t->quantIdxCb = tile->quantIdxCb;
+	t->quantIdxCr = tile->quantIdxCr;
+	t->xIdx = tile->xIdx;
+	t->yIdx = tile->yIdx;
+	t->flags = tile->flags;
+	t->quality = tile->quality;
+	t->x = tile->xIdx * t->width;
+	t->y = tile->yIdx * t->height;
+
 	if (upgrade)
 	{
-		t->blockType = tile->blockType;
-		t->blockLen = tile->blockLen;
-		t->quantIdxY = tile->quantIdxY;
-		t->quantIdxCb = tile->quantIdxCb;
-		t->quantIdxCr = tile->quantIdxCr;
-		t->xIdx = tile->xIdx;
-		t->yIdx = tile->yIdx;
-		t->flags = tile->flags;
-		t->quality = tile->quality;
 		t->ySrlLen = tile->ySrlLen;
 		t->yRawLen = tile->yRawLen;
 		t->cbSrlLen = tile->cbSrlLen;
@@ -559,20 +562,9 @@ static BOOL progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* surfac
 		t->cbRawData = tile->cbRawData;
 		t->crSrlData = tile->crSrlData;
 		t->crRawData = tile->crRawData;
-		t->x = tile->xIdx * t->width;
-		t->y = tile->yIdx * t->height;
 	}
 	else
 	{
-		t->blockType = tile->blockType;
-		t->blockLen = tile->blockLen;
-		t->quantIdxY = tile->quantIdxY;
-		t->quantIdxCb = tile->quantIdxCb;
-		t->quantIdxCr = tile->quantIdxCr;
-		t->xIdx = tile->xIdx;
-		t->yIdx = tile->yIdx;
-		t->flags = tile->flags;
-		t->quality = tile->quality;
 		t->yLen = tile->yLen;
 		t->cbLen = tile->cbLen;
 		t->crLen = tile->crLen;
@@ -581,8 +573,6 @@ static BOOL progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* surfac
 		t->cbData = tile->cbData;
 		t->crData = tile->crData;
 		t->tailData = tile->tailData;
-		t->x = tile->xIdx * t->width;
-		t->y = tile->yIdx * t->height;
 	}
 
 	if (region->usedTiles >= region->numTiles)
@@ -2793,6 +2783,11 @@ BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive)
 
 PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 {
+	return progressive_context_new_ex(Compressor, 0);
+}
+
+PROGRESSIVE_CONTEXT* progressive_context_new_ex(BOOL Compressor, UINT32 ThreadingFlags)
+{
 	PROGRESSIVE_CONTEXT* progressive = (PROGRESSIVE_CONTEXT*)calloc(1, sizeof(PROGRESSIVE_CONTEXT));
 
 	if (!progressive)
@@ -2803,7 +2798,7 @@ PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor)
 	progressive->log = WLog_Get(TAG);
 	if (!progressive->log)
 		goto fail;
-	progressive->rfx_context = rfx_context_new(Compressor);
+	progressive->rfx_context = rfx_context_new_ex(Compressor, ThreadingFlags);
 	if (!progressive->rfx_context)
 		goto fail;
 	progressive->buffer = Stream_New(NULL, 1024);
