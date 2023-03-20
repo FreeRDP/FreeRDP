@@ -126,11 +126,11 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 		}
 	}
 
+	UINT32 threadingFlags =
+	    freerdp_settings_get_uint32(codecs->context->settings, FreeRDP_ThreadingFlags);
 	if ((flags & FREERDP_CODEC_REMOTEFX))
 	{
-		const UINT32 ThreadingFlags =
-		    freerdp_settings_get_uint32(codecs->context->settings, FreeRDP_ThreadingFlags);
-		if (!(codecs->rfx = rfx_context_new_ex(FALSE, ThreadingFlags)))
+		if (!(codecs->rfx = rfx_context_new_ex(FALSE, threadingFlags)))
 		{
 			WLog_ERR(TAG, "Failed to create rfx codec context");
 			return FALSE;
@@ -152,7 +152,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 
 	if ((flags & FREERDP_CODEC_PROGRESSIVE))
 	{
-		if (!(codecs->progressive = progressive_context_new(FALSE)))
+		if (!(codecs->progressive = progressive_context_new_ex(FALSE, threadingFlags)))
 		{
 			WLog_ERR(TAG, "Failed to create progressive codec context");
 			return FALSE;
