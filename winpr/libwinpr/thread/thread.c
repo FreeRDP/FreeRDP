@@ -815,13 +815,6 @@ WINPR_THREAD* winpr_GetCurrentThread(VOID)
 		return (HANDLE)&mainThread;
 
 	ret = TlsGetValue(currentThreadTlsIndex);
-	if (!ret)
-	{
-		WLog_ERR(TAG, "function called, but no matching entry in thread list!");
-#if defined(WITH_DEBUG_THREADS)
-		DumpThreadHandles();
-#endif
-	}
 	return ret;
 }
 
