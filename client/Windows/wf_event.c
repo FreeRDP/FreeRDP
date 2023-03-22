@@ -130,15 +130,17 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				DEBUG_KBD("keydown %d scanCode 0x%08lX flags 0x%08lX vkCode 0x%08lX",
 				          (wParam == WM_KEYDOWN), p->scanCode, p->flags, p->vkCode);
 
-				if (wfc->fullscreen_toggle &&
-				    ((p->vkCode == VK_RETURN) || (p->vkCode == VK_CANCEL)) &&
-				    (GetAsyncKeyState(VK_CONTROL) & 0x8000) &&
-				    (GetAsyncKeyState(VK_MENU) & 0x8000)) /* could also use flags & LLKHF_ALTDOWN */
+
+				//if (wfc->fullscreen_toggle && p->vkCode == VK_SCROLL)
+				if (wfc->fullscreen_toggle && p->vkCode == VK_RETURN)
 				{
-					if (wParam == WM_KEYDOWN)
+					if (keystates[0x38] && keystates[0x1D]) // left ALT, left CTRL
 					{
-						wf_toggle_fullscreen(wfc);
-						return 1;
+						if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
+						{
+							wf_toggle_fullscreen(wfc);
+							return 1;
+						}
 					}
 				}
 
