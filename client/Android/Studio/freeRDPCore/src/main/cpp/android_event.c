@@ -132,7 +132,7 @@ static BOOL android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 				else
 					ClipboardEmpty(afc->clipboard);
 
-				android_cliprdr_send_client_format_list(afc->cliprdr);
+				rc = (android_cliprdr_send_client_format_list(afc->cliprdr) == CHANNEL_RC_OK);
 			}
 			break;
 

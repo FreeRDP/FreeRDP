@@ -18,7 +18,10 @@
         android:smallScreens="true"
         android:xlargeScreens="true" />
 
-    <application android:theme="@style/Theme.Main"  android:resizeableActivity="true" >
+    <application
+        android:theme="@style/Theme.Main"
+        android:resizeableActivity="true"
+        >
         <meta-data android:name="com.samsung.android.keepalive.density" android:value="true"/>
         <!-- Activity to create shortcuts -->
         <activity
@@ -37,6 +40,7 @@
         <!-- intent-filter.  This gives you a way to set the text (and optionally the -->
         <!-- icon) that will be seen in the launcher's create-shortcut user interface. -->
         <activity-alias
+            android:exported="true"
             android:name=".presentation.CreateShortcuts"
             android:label="@string/title_create_shortcut"
             android:targetActivity=".presentation.ShortcutsActivity">

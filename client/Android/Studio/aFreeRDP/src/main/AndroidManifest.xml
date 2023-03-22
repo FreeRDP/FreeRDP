@@ -10,8 +10,6 @@
         android:label="aFreeRDP"
         android:resizeableActivity="true">
 
-
-
         <!-- Main activity -->
         <activity
             android:exported="true"
@@ -86,6 +84,7 @@
         </activity>
 
         <activity-alias
+            android:exported="true"
             android:name=".services.SessionRequestHandlerActivity"
             android:targetActivity="com.freerdp.freerdpcore.services.SessionRequestHandlerActivity">
             <intent-filter>
