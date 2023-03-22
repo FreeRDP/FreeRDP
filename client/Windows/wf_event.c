@@ -131,12 +131,11 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 				          (wParam == WM_KEYDOWN), p->scanCode, p->flags, p->vkCode);
 
 
-				//if (wfc->fullscreen_toggle && p->vkCode == VK_SCROLL)
-				if (wfc->fullscreen_toggle && p->vkCode == VK_RETURN)
+				if (wfc->fullscreen_toggle && (p->vkCode == VK_RETURN || p->vkCode == VK_CANCEL))
 				{
 					if (keystates[0x38] && keystates[0x1D]) // left ALT, left CTRL
 					{
-						if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
+						if (wParam == WM_KEYDOWN)
 						{
 							wf_toggle_fullscreen(wfc);
 							return 1;
