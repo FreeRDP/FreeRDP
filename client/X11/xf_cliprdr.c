@@ -862,6 +862,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 	 * We check for "FileGroupDescriptorW" format being registered (i.e., nonzero) in order
 	 * to not process CF_RAW as a file list in case WinPR does not support file transfers.
 	 */
+	ClipboardLock(clipboard->system);
 	if (format->formatToRequest &&
 	    (format->formatToRequest ==
 	     ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW)))
@@ -888,6 +889,7 @@ static void xf_cliprdr_process_requested_data(xfClipboard* clipboard, BOOL hasDa
 
 		free(file_array);
 	}
+	ClipboardUnlock(clipboard->system);
 
 	xf_cliprdr_send_data_response(clipboard, format, pDstData, DstSize);
 	free(pDstData);
@@ -1889,6 +1891,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 		return ERROR_INTERNAL_ERROR;
 	else if (format->formatName)
 	{
+		ClipboardLock(clipboard->system);
 		if (strcmp(format->formatName, type_HtmlFormat) == 0)
 		{
 			srcFormatId = ClipboardGetFormatId(clipboard->system, type_HtmlFormat);
@@ -1916,6 +1919,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 			nullTerminated = TRUE;
 		}
+		ClipboardUnlock(clipboard->system);
 	}
 	else
 	{
