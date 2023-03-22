@@ -273,6 +273,7 @@ static void wfl_cliprdr_add_client_format_id(wfClipboard* clipboard, UINT32 form
 static BOOL wlf_cliprdr_add_client_format(wfClipboard* clipboard, const char* mime)
 {
 	WINPR_ASSERT(mime);
+	ClipboardLock(clipboard->system);
 	if (wlf_mime_is_html(mime))
 	{
 		UINT32 formatId = ClipboardGetFormatId(clipboard->system, type_HtmlFormat);
@@ -297,6 +298,7 @@ static BOOL wlf_cliprdr_add_client_format(wfClipboard* clipboard, const char* mi
 		wfl_cliprdr_add_client_format_id(clipboard, fileFormatId);
 	}
 
+	ClipboardUnlock(clipboard->system);
 	if (wlf_cliprdr_send_client_format_list(clipboard) != CHANNEL_RC_OK)
 		return FALSE;
 	return TRUE;
@@ -732,6 +734,7 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	clipboard = cliprdr_file_context_get_context(context->custom);
 	WINPR_ASSERT(clipboard);
 
+	ClipboardLock(clipboard->system);
 	const UINT32 fileFormatId = ClipboardGetFormatId(clipboard->system, type_FileGroupDescriptorW);
 	const UINT32 htmlFormatId = ClipboardGetFormatId(clipboard->system, type_HtmlFormat);
 
@@ -776,7 +779,6 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 			goto fail;
 	}
 
-	ClipboardLock(clipboard->system);
 	const BOOL res = ClipboardSetData(clipboard->system, localFormatId, data, size);
 	free(data);
 
@@ -785,7 +787,6 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 	if (res)
 		data = ClipboardGetData(clipboard->system, formatId, &len);
 
-	ClipboardUnlock(clipboard->system);
 	if (!res || !data)
 		goto fail;
 
@@ -798,6 +799,7 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 			goto fail;
 	}
 fail:
+	ClipboardUnlock(clipboard->system);
 	rc = wlf_cliprdr_send_data_response(clipboard, ddata, dsize);
 	free(data);
 	return rc;
@@ -837,6 +839,7 @@ wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	}
 	rc = ERROR_INTERNAL_ERROR;
 
+	ClipboardLock(clipboard->system);
 	EnterCriticalSection(&clipboard->lock);
 
 	UINT32 srcFormatId = 0;
@@ -881,13 +884,11 @@ wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 		break;
 	}
 
-	ClipboardLock(clipboard->system);
 	UINT32 len = 0;
 
 	const BOOL sres = ClipboardSetData(clipboard->system, srcFormatId, data, size);
 	if (sres)
 		data = ClipboardGetData(clipboard->system, dstFormatId, &len);
-	ClipboardUnlock(clipboard->system);
 
 	if (!sres || !data)
 		goto unlock;
@@ -902,6 +903,7 @@ wlf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 		rc = CHANNEL_RC_OK;
 
 unlock:
+	ClipboardUnlock(clipboard->system);
 	LeaveCriticalSection(&clipboard->lock);
 fail:
 	wlf_request_free(request);
