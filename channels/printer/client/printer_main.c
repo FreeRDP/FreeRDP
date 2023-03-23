@@ -1105,17 +1105,22 @@ UINT printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 	{
 		WINPR_ASSERT(driver->EnumPrinters);
 		rdpPrinter** printers = driver->EnumPrinters(driver);
-		rdpPrinter** current = printers;
-
-		for (i = 0; current[i]; i++)
+		if (printers)
 		{
-			rdpPrinter* printer = current[i];
-
-			if ((error = printer_register(pEntryPoints, printer)))
+			for (rdpPrinter** current = printers; *current; ++current)
 			{
-				WLog_ERR(TAG, "printer_register failed with error %" PRIu32 "!", error);
-				break;
+				error = printer_register(pEntryPoints, *current);
+				if (error)
+				{
+					WLog_ERR(TAG, "printer_register failed with error %" PRIu32 "!", error);
+					break;
+				}
 			}
+		}
+		else
+		{
+			WLog_ERR(TAG, "Failed to enumerate printers!");
+			error = CHANNEL_RC_INITIALIZATION_ERROR;
 		}
 
 		WINPR_ASSERT(driver->ReleaseEnumPrinters);
