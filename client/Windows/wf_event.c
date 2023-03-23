@@ -53,9 +53,21 @@ static BOOL wf_scale_mouse_event_ex(wfContext* wfc, UINT16 flags, UINT16 buttonM
 static BOOL g_flipping_in = FALSE;
 static BOOL g_flipping_out = FALSE;
 
+static BOOL g_keystates[256] = { 0 };
+
+static BOOL ctrl_down(void)
+{
+	WINPR_ASSERT(g_keystates && (ARRAYSIZE(g_keystates) >= 0xFF));
+
+	return g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
+}
+
 static BOOL alt_ctrl_down(void)
 {
-	return ((GetAsyncKeyState(VK_CONTROL) & 0x8000) || (GetAsyncKeyState(VK_MENU) & 0x8000));
+	WINPR_ASSERT(g_keystates && (ARRAYSIZE(g_keystates) >= 0xFF));
+
+	const BOOL altDown = g_keystates[VK_MENU] || g_keystates[VK_LMENU] || g_keystates[VK_RMENU];
+	return altDown && ctrl_down();
 }
 
 LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -68,7 +80,6 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	rdpInput* input;
 	PKBDLLHOOKSTRUCT p;
 
-	static BOOL keystates[256] = { 0 };
 	DEBUG_KBD("Low-level keyboard hook, hWnd %X nCode %X wParam %X", g_focus_hWnd, nCode, wParam);
 
 	if (g_flipping_in)
@@ -113,27 +124,26 @@ LRESULT CALLBACK wf_ll_kbd_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
 				input = wfc->common.context.input;
 				rdp_scancode = MAKE_RDP_SCANCODE((BYTE)p->scanCode, p->flags & LLKHF_EXTENDED);
-				keystate = keystates[p->scanCode & 0xFF];
+				keystate = g_keystates[p->scanCode & 0xFF];
 
 				switch (wParam)
 				{
 					case WM_KEYDOWN:
 					case WM_SYSKEYDOWN:
-						keystates[p->scanCode & 0xFF] = TRUE;
+						g_keystates[p->scanCode & 0xFF] = TRUE;
 						break;
 					case WM_KEYUP:
 					case WM_SYSKEYUP:
 					default:
-						keystates[p->scanCode & 0xFF] = FALSE;
+						g_keystates[p->scanCode & 0xFF] = FALSE;
 						break;
 				}
 				DEBUG_KBD("keydown %d scanCode 0x%08lX flags 0x%08lX vkCode 0x%08lX",
 				          (wParam == WM_KEYDOWN), p->scanCode, p->flags, p->vkCode);
 
-
 				if (wfc->fullscreen_toggle && (p->vkCode == VK_RETURN || p->vkCode == VK_CANCEL))
 				{
-					if (keystates[0x38] && keystates[0x1D]) // left ALT, left CTRL
+					if (alt_ctrl_down())
 					{
 						if (wParam == WM_KEYDOWN)
 						{
@@ -274,8 +284,7 @@ static void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 	// Holding the CTRL key down while resizing the window will force the desktop aspect ratio.
 	LPRECT rect;
 
-	if ((settings->SmartSizing || settings->DynamicResolutionUpdate) &&
-	    (GetAsyncKeyState(VK_CONTROL) & 0x8000))
+	if ((settings->SmartSizing || settings->DynamicResolutionUpdate) && ctrl_down())
 	{
 		rect = (LPRECT)wParam;
 
