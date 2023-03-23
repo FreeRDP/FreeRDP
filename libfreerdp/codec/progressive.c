@@ -382,6 +382,7 @@ static void progressive_tile_free(RFX_PROGRESSIVE_TILE* tile)
 		winpr_aligned_free(tile->sign);
 		winpr_aligned_free(tile->current);
 		winpr_aligned_free(tile->data);
+		free(tile);
 	}
 }
 
@@ -397,7 +398,7 @@ static void progressive_surface_context_free(void* ptr)
 	{
 		for (index = 0; index < surface->tilesSize; index++)
 		{
-			RFX_PROGRESSIVE_TILE* tile = &(surface->tiles[index]);
+			RFX_PROGRESSIVE_TILE* tile = surface->tiles[index];
 			progressive_tile_free(tile);
 		}
 	}
@@ -458,27 +459,32 @@ static BOOL progressive_allocate_tile_cache(PROGRESSIVE_SURFACE_CONTEXT* surface
 		surface->gridSize *= 2;
 	}
 
+	void* tmp = realloc(surface->tiles, surface->gridSize * sizeof(RFX_PROGRESSIVE_TILE*));
+	if (!tmp)
+		return FALSE;
+	surface->tilesSize = surface->gridSize;
+	surface->tiles = tmp;
+
+	BOOL allocFailed = FALSE;
+	for (x = oldIndex; x < surface->tilesSize; x++)
 	{
-		const RFX_PROGRESSIVE_TILE empty = { 0 };
-
-		void* tmp = realloc(surface->tiles, surface->gridSize * sizeof(RFX_PROGRESSIVE_TILE));
-		if (!tmp)
-			return FALSE;
-		surface->tilesSize = surface->gridSize;
-		surface->tiles = tmp;
-
-		for (x = oldIndex; x < surface->tilesSize; x++)
-			surface->tiles[x] = empty;
+		surface->tiles[x] = calloc(1, sizeof(RFX_PROGRESSIVE_TILE));
+		if (!surface->tiles[x])
+			/* do not break the loop so that we have all new items initialized (even to NULL) */
+			allocFailed = TRUE;
 	}
-	{
-		void* tmp = realloc(surface->updatedTileIndices, surface->gridSize * sizeof(UINT32));
-		if (!tmp)
-			return FALSE;
 
-		surface->updatedTileIndices = tmp;
-		for (x = oldIndex; x < surface->gridSize; x++)
-			surface->updatedTileIndices[x] = 0;
-	}
+	if (allocFailed)
+		return FALSE;
+
+	tmp = realloc(surface->updatedTileIndices, surface->gridSize * sizeof(UINT32));
+	if (!tmp)
+		return FALSE;
+
+	surface->updatedTileIndices = tmp;
+	for (x = oldIndex; x < surface->gridSize; x++)
+		surface->updatedTileIndices[x] = 0;
+
 	return TRUE;
 }
 
@@ -506,7 +512,7 @@ static PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfa
 	}
 	for (x = 0; x < surface->tilesSize; x++)
 	{
-		if (!progressive_tile_allocate(&surface->tiles[x]))
+		if (!progressive_tile_allocate(surface->tiles[x]))
 		{
 			progressive_surface_context_free(surface);
 			return NULL;
@@ -534,7 +540,7 @@ static BOOL progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* surfac
 		return FALSE;
 	}
 
-	t = &surface->tiles[zIdx];
+	t = surface->tiles[zIdx];
 
 	t->blockType = tile->blockType;
 	t->blockLen = tile->blockLen;
@@ -2578,7 +2584,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 		UINT32 nbUpdateRects, j;
 		const RECTANGLE_16* updateRects;
 		RECTANGLE_16 updateRect;
-		RFX_PROGRESSIVE_TILE* tile = &surface->tiles[surface->updatedTileIndices[i]];
+		RFX_PROGRESSIVE_TILE* tile = surface->tiles[surface->updatedTileIndices[i]];
 
 		updateRect.left = nXDst + tile->x;
 		updateRect.top = nYDst + tile->y;
