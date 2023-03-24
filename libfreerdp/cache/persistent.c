@@ -154,15 +154,11 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 	if (entry->size > persistent->bmpSize)
 	{
 		persistent->bmpSize = entry->size;
-		BYTE* bmpData = (BYTE*)realloc(persistent->bmpData, persistent->bmpSize);
+		BYTE* bmpData = (BYTE*)winpr_aligned_recalloc(persistent->bmpData, persistent->bmpSize,
+		                                              sizeof(BYTE), 32);
 
 		if (!bmpData)
-		{
-			free(persistent->bmpData);
-			persistent->bmpData = NULL;
-			persistent->bmpSize = 0;
 			return -1;
-		}
 
 		persistent->bmpData = bmpData;
 	}
@@ -369,7 +365,7 @@ void persistent_cache_free(rdpPersistentCache* persistent)
 
 	free(persistent->filename);
 
-	free(persistent->bmpData);
+	winpr_aligned_free(persistent->bmpData);
 
 	free(persistent);
 }
