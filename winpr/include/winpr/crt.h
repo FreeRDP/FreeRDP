@@ -189,6 +189,8 @@ extern "C"
 
 	WINPR_API void* winpr_aligned_malloc(size_t size, size_t alignment);
 
+	WINPR_API void* winpr_aligned_calloc(size_t count, size_t size, size_t alignment);
+
 	WINPR_API void* winpr_aligned_realloc(void* memblock, size_t size, size_t alignment);
 
 	WINPR_API void* winpr_aligned_recalloc(void* memblock, size_t num, size_t size,
