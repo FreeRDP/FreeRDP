@@ -71,7 +71,8 @@ static BOOL nsc_context_initialize_encode(NSC_CONTEXT* context)
 	{
 		for (i = 0; i < 5; i++)
 		{
-			BYTE* tmp = (BYTE*)realloc(context->priv->PlaneBuffers[i], length);
+			BYTE* tmp = (BYTE*)winpr_aligned_recalloc(context->priv->PlaneBuffers[i], length,
+			                                          sizeof(BYTE), 32);
 
 			if (!tmp)
 				goto fail;
@@ -103,7 +104,7 @@ fail:
 	if (length > context->priv->PlaneBuffersLength)
 	{
 		for (i = 0; i < 5; i++)
-			free(context->priv->PlaneBuffers[i]);
+			winpr_aligned_free(context->priv->PlaneBuffers[i]);
 	}
 
 	return FALSE;

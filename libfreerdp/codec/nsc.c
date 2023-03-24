@@ -247,19 +247,9 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
 
 	length = context->width * context->height * 4;
 
-	if (!context->BitmapData)
+	if (!context->BitmapData || (length > context->BitmapDataLength))
 	{
-		context->BitmapData = calloc(1, length + 16);
-
-		if (!context->BitmapData)
-			return FALSE;
-
-		context->BitmapDataLength = length;
-	}
-	else if (length > context->BitmapDataLength)
-	{
-		void* tmp;
-		tmp = realloc(context->BitmapData, length + 16);
+		void* tmp = winpr_aligned_recalloc(context->BitmapData, length + 16, sizeof(BYTE), 32);
 
 		if (!tmp)
 			return FALSE;
@@ -277,7 +267,8 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
 	{
 		for (i = 0; i < 4; i++)
 		{
-			void* tmp = (BYTE*)realloc(context->priv->PlaneBuffers[i], length);
+			void* tmp = (BYTE*)winpr_aligned_recalloc(context->priv->PlaneBuffers[i], length,
+			                                          sizeof(BYTE), 32);
 
 			if (!tmp)
 				return FALSE;
@@ -330,13 +321,12 @@ BOOL nsc_context_reset(NSC_CONTEXT* context, UINT32 width, UINT32 height)
 
 NSC_CONTEXT* nsc_context_new(void)
 {
-	NSC_CONTEXT* context;
-	context = (NSC_CONTEXT*)calloc(1, sizeof(NSC_CONTEXT));
+	NSC_CONTEXT* context = (NSC_CONTEXT*)winpr_aligned_calloc(1, sizeof(NSC_CONTEXT), 32);
 
 	if (!context)
 		return NULL;
 
-	context->priv = (NSC_CONTEXT_PRIV*)calloc(1, sizeof(NSC_CONTEXT_PRIV));
+	context->priv = (NSC_CONTEXT_PRIV*)winpr_aligned_calloc(1, sizeof(NSC_CONTEXT_PRIV), 32);
 
 	if (!context->priv)
 		goto error;
@@ -364,26 +354,24 @@ error:
 
 void nsc_context_free(NSC_CONTEXT* context)
 {
-	size_t i;
-
 	if (!context)
 		return;
 
 	if (context->priv)
 	{
-		for (i = 0; i < 5; i++)
-			free(context->priv->PlaneBuffers[i]);
+		for (size_t i = 0; i < 5; i++)
+			winpr_aligned_free(context->priv->PlaneBuffers[i]);
 
 		nsc_profiler_print(context->priv);
 		PROFILER_FREE(context->priv->prof_nsc_rle_decompress_data)
 		PROFILER_FREE(context->priv->prof_nsc_decode)
 		PROFILER_FREE(context->priv->prof_nsc_rle_compress_data)
 		PROFILER_FREE(context->priv->prof_nsc_encode)
-		free(context->priv);
+		winpr_aligned_free(context->priv);
 	}
 
-	free(context->BitmapData);
-	free(context);
+	winpr_aligned_free(context->BitmapData);
+	winpr_aligned_free(context);
 }
 
 #if defined(WITH_FREERDP_DEPRECATED)
