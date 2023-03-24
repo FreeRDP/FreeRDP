@@ -1057,3 +1057,24 @@ PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
 
 	return NULL;
 }
+
+const char* GetKnownPathIdString(int id)
+{
+	switch (id)
+	{
+		case KNOWN_PATH_HOME:
+			return "KNOWN_PATH_HOME";
+		case KNOWN_PATH_TEMP:
+			return "KNOWN_PATH_TEMP";
+		case KNOWN_PATH_XDG_DATA_HOME:
+			return "KNOWN_PATH_XDG_DATA_HOME";
+		case KNOWN_PATH_XDG_CONFIG_HOME:
+			return "KNOWN_PATH_XDG_CONFIG_HOME";
+		case KNOWN_PATH_XDG_CACHE_HOME:
+			return "KNOWN_PATH_XDG_CACHE_HOME";
+		case KNOWN_PATH_XDG_RUNTIME_DIR:
+			return "KNOWN_PATH_XDG_RUNTIME_DIR";
+		default:
+			return "KNOWN_PATH_UNKNOWN_ID";
+	}
+}

@@ -305,6 +305,7 @@ extern "C"
 {
 #endif
 
+	WINPR_API const char* GetKnownPathIdString(int id);
 	WINPR_API char* GetKnownPath(int id);
 	WINPR_API char* GetKnownSubPath(int id, const char* path);
 	WINPR_API char* GetEnvironmentPath(char* name);

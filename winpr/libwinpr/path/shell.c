@@ -32,6 +32,10 @@
 #include <winpr/environment.h>
 
 #include <winpr/path.h>
+#include <winpr/wlog.h>
+
+#include "../log.h"
+#define TAG WINPR_TAG("path.shell")
 
 #if defined(__IOS__)
 #include "shell_ios.h"
@@ -357,6 +361,8 @@ char* GetKnownPath(int id)
 			break;
 	}
 
+	if (!path)
+		WLog_WARN(TAG, "Path %s is %p", GetKnownPathIdString(id), path);
 	return path;
 }
 
