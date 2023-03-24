@@ -87,7 +87,7 @@ static void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
 	if (zero)
 	{
 		for (size_t i = 0; i < ARRAYSIZE(clear->VBarStorage); i++)
-			free(clear->VBarStorage[i].pixels);
+			winpr_aligned_free(clear->VBarStorage[i].pixels);
 
 		ZeroMemory(clear->VBarStorage, sizeof(clear->VBarStorage));
 	}
@@ -97,7 +97,7 @@ static void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
 	if (zero)
 	{
 		for (size_t i = 0; i < ARRAYSIZE(clear->ShortVBarStorage); i++)
-			free(clear->ShortVBarStorage[i].pixels);
+			winpr_aligned_free(clear->ShortVBarStorage[i].pixels);
 
 		ZeroMemory(clear->ShortVBarStorage, sizeof(clear->ShortVBarStorage));
 	}
@@ -108,7 +108,7 @@ static void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
 static void clear_reset_glyph_cache(CLEAR_CONTEXT* clear)
 {
 	for (size_t i = 0; i < ARRAYSIZE(clear->GlyphCache); i++)
-		free(clear->GlyphCache[i].pixels);
+		winpr_aligned_free(clear->GlyphCache[i].pixels);
 
 	ZeroMemory(clear->GlyphCache, sizeof(clear->GlyphCache));
 }
@@ -331,11 +331,12 @@ static BOOL clear_resize_buffer(CLEAR_CONTEXT* clear, UINT32 width, UINT32 heigh
 
 	if (size > clear->TempSize)
 	{
-		BYTE* tmp = (BYTE*)realloc(clear->TempBuffer, size);
+		BYTE* tmp = (BYTE*)winpr_aligned_recalloc(clear->TempBuffer, size, sizeof(BYTE), 32);
 
 		if (!tmp)
 		{
-			WLog_ERR(TAG, "clear->TempBuffer realloc failed for %" PRIu32 " bytes", size);
+			WLog_ERR(TAG, "clear->TempBuffer winpr_aligned_recalloc failed for %" PRIu32 " bytes",
+			         size);
 			return FALSE;
 		}
 
@@ -550,11 +551,12 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* clear, CLEAR_VBAR_ENTRY* vBarEntry)
 		const UINT32 diffSize = (vBarEntry->count - vBarEntry->size) * bpp;
 		BYTE* tmp;
 		vBarEntry->size = vBarEntry->count;
-		tmp = (BYTE*)realloc(vBarEntry->pixels, vBarEntry->count * bpp * 1ULL);
+		tmp = (BYTE*)winpr_aligned_recalloc(vBarEntry->pixels, vBarEntry->count, bpp * 1ULL, 32);
 
 		if (!tmp)
 		{
-			WLog_ERR(TAG, "vBarEntry->pixels realloc %" PRIu32 " failed", vBarEntry->count * bpp);
+			WLog_ERR(TAG, "vBarEntry->pixels winpr_aligned_recalloc %" PRIu32 " failed",
+			         vBarEntry->count * bpp);
 			return FALSE;
 		}
 
@@ -947,11 +949,11 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 		if (glyphEntry->count > glyphEntry->size)
 		{
 			BYTE* tmp;
-			tmp = realloc(glyphEntry->pixels, glyphEntry->count * bpp * 1ULL);
+			tmp = winpr_aligned_recalloc(glyphEntry->pixels, glyphEntry->count, bpp * 1ULL, 32);
 
 			if (!tmp)
 			{
-				WLog_ERR(TAG, "glyphEntry->pixels realloc %" PRIu32 " failed!",
+				WLog_ERR(TAG, "glyphEntry->pixels winpr_aligned_recalloc %" PRIu32 " failed!",
 				         glyphEntry->count * bpp);
 				return FALSE;
 			}
@@ -1135,8 +1137,7 @@ BOOL clear_context_reset(CLEAR_CONTEXT* clear)
 
 CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 {
-	CLEAR_CONTEXT* clear;
-	clear = (CLEAR_CONTEXT*)calloc(1, sizeof(CLEAR_CONTEXT));
+	CLEAR_CONTEXT* clear = (CLEAR_CONTEXT*)winpr_aligned_calloc(1, sizeof(CLEAR_CONTEXT), 32);
 
 	if (!clear)
 		return NULL;
@@ -1171,10 +1172,10 @@ void clear_context_free(CLEAR_CONTEXT* clear)
 		return;
 
 	nsc_context_free(clear->nsc);
-	free(clear->TempBuffer);
+	winpr_aligned_free(clear->TempBuffer);
 
 	clear_reset_vbar_storage(clear, TRUE);
 	clear_reset_glyph_cache(clear);
 
-	free(clear);
+	winpr_aligned_free(clear);
 }
