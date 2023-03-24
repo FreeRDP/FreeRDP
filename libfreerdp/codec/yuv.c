@@ -177,29 +177,33 @@ BOOL yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height)
 		context->work_object_count = 0;
 		if (context->encoder)
 		{
-			free(context->work_enc_params);
-			context->work_enc_params = calloc(count, sizeof(YUV_ENCODE_WORK_PARAM));
-			if (!context->work_enc_params)
+			void* tmp = winpr_aligned_recalloc(context->work_enc_params, count,
+			                                   sizeof(YUV_ENCODE_WORK_PARAM), 32);
+			if (!tmp)
 				return FALSE;
+			context->work_enc_params = tmp;
 		}
 		else
 		{
-			free(context->work_dec_params);
-			context->work_dec_params = calloc(count, sizeof(YUV_PROCESS_WORK_PARAM));
-			if (!context->work_dec_params)
+			void* tmp = winpr_aligned_recalloc(context->work_dec_params, count,
+			                                   sizeof(YUV_PROCESS_WORK_PARAM), 32);
+			if (!tmp)
 				return FALSE;
 
-			free(context->work_combined_params);
-			context->work_combined_params = calloc(count, sizeof(YUV_COMBINE_WORK_PARAM));
-			if (!context->work_combined_params)
+			context->work_dec_params = tmp;
+
+			void* ctmp = winpr_aligned_recalloc(context->work_combined_params, count,
+			                                    sizeof(YUV_COMBINE_WORK_PARAM), 32);
+			if (!ctmp)
 				return FALSE;
+			context->work_combined_params = ctmp;
 		}
 
-		free(context->work_objects);
-		context->work_objects = calloc(count, sizeof(PTP_WORK));
-		if (!context->work_objects)
+		void* wtmp = winpr_aligned_recalloc(context->work_objects, count, sizeof(PTP_WORK), 32);
+		if (!wtmp)
 			return FALSE;
 
+		context->work_objects = wtmp;
 		context->work_object_count = count;
 	}
 	return TRUE;
@@ -208,7 +212,7 @@ BOOL yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height)
 YUV_CONTEXT* yuv_context_new(BOOL encoder, UINT32 ThreadingFlags)
 {
 	SYSTEM_INFO sysInfos;
-	YUV_CONTEXT* ret = calloc(1, sizeof(*ret));
+	YUV_CONTEXT* ret = winpr_aligned_calloc(1, sizeof(*ret), 32);
 	if (!ret)
 		return NULL;
 
@@ -251,12 +255,12 @@ void yuv_context_free(YUV_CONTEXT* context)
 		if (context->threadPool)
 			CloseThreadpool(context->threadPool);
 		DestroyThreadpoolEnvironment(&context->ThreadPoolEnv);
-		free(context->work_objects);
-		free(context->work_combined_params);
-		free(context->work_enc_params);
-		free(context->work_dec_params);
+		winpr_aligned_free(context->work_objects);
+		winpr_aligned_free(context->work_combined_params);
+		winpr_aligned_free(context->work_enc_params);
+		winpr_aligned_free(context->work_dec_params);
 	}
-	free(context);
+	winpr_aligned_free(context);
 }
 
 static INLINE YUV_PROCESS_WORK_PARAM pool_decode_param(const RECTANGLE_16* rect,
