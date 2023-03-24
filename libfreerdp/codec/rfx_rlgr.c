@@ -627,7 +627,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* b
 	RFX_BITSTREAM* bs;
 	int processed_size;
 
-	if (!(bs = (RFX_BITSTREAM*)calloc(1, sizeof(RFX_BITSTREAM))))
+	if (!(bs = (RFX_BITSTREAM*)winpr_aligned_calloc(1, sizeof(RFX_BITSTREAM), 32)))
 		return 0;
 
 	rfx_bitstream_attach(bs, buffer, buffer_size);
@@ -755,7 +755,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* b
 
 	rfx_bitstream_flush(bs);
 	processed_size = rfx_bitstream_get_processed_bytes(bs);
-	free(bs);
+	winpr_aligned_free(bs);
 
 	return processed_size;
 }
