@@ -792,8 +792,9 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 		case WM_ACTIVATE:
 		{
 			int activate = (int)(short)LOWORD(wParam);
+			BOOL minimized_flag = (BOOL)HIWORD(wParam);
 
-			if (activate != WA_INACTIVE)
+			if (activate != WA_INACTIVE && !minimized_flag)
 			{
 				if (alt_ctrl_down())
 					g_flipping_in = TRUE;
