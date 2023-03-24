@@ -451,7 +451,7 @@ static BOOL progressive_allocate_tile_cache(PROGRESSIVE_SURFACE_CONTEXT* surface
 	if (surface->tiles)
 	{
 		oldIndex = surface->gridSize;
-		surface->gridSize *= 2;
+		surface->gridSize += 1024;
 	}
 
 	void* tmp = winpr_aligned_recalloc(surface->tiles, surface->gridSize,
