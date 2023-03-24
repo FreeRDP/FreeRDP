@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <stdlib.h>
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
@@ -59,6 +60,11 @@ void* winpr_aligned_malloc(size_t size, size_t alignment)
 	return winpr_aligned_offset_malloc(size, alignment, 0);
 }
 
+void* winpr_aligned_calloc(size_t count, size_t size, size_t alignment)
+{
+	return winpr_aligned_recalloc(NULL, count, size, alignment);
+}
+
 void* winpr_aligned_realloc(void* memblock, size_t size, size_t alignment)
 {
 	return winpr_aligned_offset_realloc(memblock, size, alignment, 0);
@@ -99,8 +105,14 @@ void* winpr_aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 
 	alignsize = size + header;
 	/* malloc size + alignment to make sure we can align afterwards */
+#if defined(_ISOC11_SOURCE)
+	base = aligned_alloc(alignment, alignsize);
+#elif _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600
+	if (posix_memalign(&base, alignment, alignsize) != 0)
+		return NULL;
+#else
 	base = malloc(alignsize);
-
+#endif
 	if (!base)
 		return NULL;
 
@@ -196,6 +208,9 @@ void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, siz
 
 	if (size == 0)
 		goto fail;
+
+	if (pMem->size > (1ull * num * size) + alignment)
+		return memblock;
 
 	newMemblock = winpr_aligned_offset_malloc(size * num, alignment, offset);
 
