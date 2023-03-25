@@ -78,6 +78,8 @@ extern "C"
 	FREERDP_API BOOL freerdp_certificate_verify(const rdpCertificate* cert,
 	                                            const char* certificate_store_path);
 
+	FREERDP_API BOOL freerdp_certificate_is_rdp_security_compatible(const rdpCertificate* cert);
+
 #ifdef __cplusplus
 }
 #endif

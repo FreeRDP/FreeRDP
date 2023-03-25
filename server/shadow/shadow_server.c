@@ -463,10 +463,10 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 
 	while (running)
 	{
-		HANDLE events[32];
+		HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
 		DWORD nCount = 0;
 		events[nCount++] = server->StopEvent;
-		nCount += listener->GetEventHandles(listener, &events[nCount], 32 - nCount);
+		nCount += listener->GetEventHandles(listener, &events[nCount], ARRAYSIZE(events) - nCount);
 
 		if (nCount <= 1)
 		{
@@ -834,9 +834,17 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	rdpCertificate* cert = freerdp_certificate_new_from_file(server->CertificateFile);
 	if (!cert)
 		goto out_fail;
+
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
 		goto out_fail;
 
+	if (!freerdp_certificate_is_rdp_security_compatible(cert))
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+			goto out_fail;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+			goto out_fail;
+	}
 	ret = TRUE;
 out_fail:
 	free(filepath);
