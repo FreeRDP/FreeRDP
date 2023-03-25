@@ -1525,3 +1525,14 @@ BOOL freerdp_certificate_is_rsa(const rdpCertificate* cert)
 	WINPR_ASSERT(cert->x509);
 	return is_rsa_key(cert->x509);
 }
+
+BOOL freerdp_certificate_is_rdp_security_compatible(const rdpCertificate* cert)
+{
+	const rdpCertInfo* info = freerdp_certificate_get_info(cert);
+	if (!freerdp_certificate_is_rsa(cert) || !info || (info->ModulusLength != 2048 / 8))
+	{
+		WLog_INFO(TAG, "certificate is not RSA 2048, RDP security not supported.");
+		return FALSE;
+	}
+	return TRUE;
+}

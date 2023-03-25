@@ -256,13 +256,8 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 		return FALSE;
 	}
 
-	if (!freerdp_certificate_is_rsa(cert))
+	if (!freerdp_certificate_is_rdp_security_compatible(cert))
 	{
-		if (freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity))
-			WLog_WARN(TAG, "certificate is not of RSA type, deactivating RDP security for good.");
-		else
-			WLog_INFO(TAG, "certificate is not of RSA type, RDP security not supported.");
-
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
 			return FALSE;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
