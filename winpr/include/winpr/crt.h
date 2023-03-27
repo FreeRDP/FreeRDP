@@ -163,6 +163,8 @@ extern "C"
 }
 #endif
 
+#else
+#define winpr_aligned_calloc(count, size, alignment) _aligned_recalloc(NULL, count, size, alignment)
 #endif /* _WIN32 */
 
 #if !defined(_WIN32) || (defined(__MINGW32__) && !defined(_UCRT))
