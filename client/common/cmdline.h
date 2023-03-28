@@ -169,7 +169,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "gateway", COMMAND_LINE_VALUE_REQUIRED,
 	  "g:<gateway>[:<port>],u:<user>,d:<domain>,p:<password>,usage-method:["
 	  "direct|detect],access-token:<"
-	  "token>,type:[rpc|http[,no-websockets][,extauth-sspi-ntlm]|auto[,no-websockets][,extauth-"
+	  "token>,type:[rpc|http[:no-websockets][:extauth-sspi-ntlm]|auto[:no-websockets][:extauth-"
 	  "sspi-ntlm]],",
 	  NULL, NULL, -1, "gw", "Gateway Hostname" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)

@@ -2396,10 +2396,10 @@ static BOOL parse_gateway_type_option(rdpSettings* settings, const char* value)
 	}
 	else
 	{
-		char* c = strchr(value, ',');
+		char* c = strchr(value, ':');
 		while (c)
 		{
-			char* next = strchr(c + 1, ',');
+			char* next = strchr(c + 1, ':');
 			if (next)
 				*next = '\0';
 			*c++ = '\0';
@@ -2430,6 +2430,8 @@ static BOOL parse_gateway_type_option(rdpSettings* settings, const char* value)
 			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, TRUE))
 				return FALSE;
 		}
+		else
+			return FALSE;
 	}
 	return TRUE;
 }
