@@ -2396,28 +2396,6 @@ static BOOL parse_gateway_type_option(rdpSettings* settings, const char* value)
 	}
 	else
 	{
-		char* c = strchr(value, ',');
-		while (c)
-		{
-			char* next = strchr(c + 1, ',');
-			if (next)
-				*next = '\0';
-			*c++ = '\0';
-			if (option_equals(c, "no-websockets"))
-			{
-				if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets, FALSE))
-					return FALSE;
-			}
-			else if (option_equals(c, "extauth-sspi-ntlm"))
-			{
-				if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpExtAuthSspiNtlm, TRUE))
-					return FALSE;
-			}
-			else
-				return FALSE;
-			c = next;
-		}
-
 		if (option_equals(value, "http"))
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, FALSE) ||
@@ -2476,6 +2454,7 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 	if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayEnabled, TRUE))
 		goto fail;
 
+	BOOL allowHttpOpts = FALSE;
 	for (size_t x = 0; x < count; x++)
 	{
 		BOOL validOption = FALSE;
@@ -2489,6 +2468,7 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 			if (!parse_gateway_host_option(settings, gw))
 				goto fail;
 			validOption = TRUE;
+			allowHttpOpts = FALSE;
 		}
 
 		const char* gu = option_starts_with("u:", argval);
@@ -2497,6 +2477,7 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 			if (!parse_gateway_cred_option(settings, gu, FreeRDP_GatewayUsername))
 				goto fail;
 			validOption = TRUE;
+			allowHttpOpts = FALSE;
 		}
 
 		const char* gd = option_starts_with("d:", argval);
@@ -2505,6 +2486,7 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 			if (!parse_gateway_cred_option(settings, gd, FreeRDP_GatewayDomain))
 				goto fail;
 			validOption = TRUE;
+			allowHttpOpts = FALSE;
 		}
 
 		const char* gp = option_starts_with("p:", argval);
@@ -2513,6 +2495,7 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 			if (!parse_gateway_cred_option(settings, gp, FreeRDP_GatewayPassword))
 				goto fail;
 			validOption = TRUE;
+			allowHttpOpts = FALSE;
 		}
 
 		const char* gt = option_starts_with("type:", argval);
@@ -2521,6 +2504,7 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 			if (!parse_gateway_type_option(settings, gt))
 				goto fail;
 			validOption = TRUE;
+			allowHttpOpts = freerdp_settings_get_bool(settings, FreeRDP_GatewayHttpTransport);
 		}
 
 		const char* gat = option_starts_with("access-token:", argval);
@@ -2529,6 +2513,7 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 			if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAccessToken, gat))
 				goto fail;
 			validOption = TRUE;
+			allowHttpOpts = FALSE;
 		}
 
 		const char* um = option_starts_with("usage-method:", argval);
@@ -2537,6 +2522,23 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 			if (!parse_gateway_usage_option(settings, um))
 				goto fail;
 			validOption = TRUE;
+			allowHttpOpts = FALSE;
+		}
+
+		if (allowHttpOpts)
+		{
+			if (option_equals(argval, "no-websockets"))
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets, FALSE))
+					goto fail;
+				validOption = TRUE;
+			}
+			else if (option_equals(argval, "extauth-sspi-ntlm"))
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpExtAuthSspiNtlm, TRUE))
+					goto fail;
+				validOption = TRUE;
+			}
 		}
 
 		if (!validOption)
