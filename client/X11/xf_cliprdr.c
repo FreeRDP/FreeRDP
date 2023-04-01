@@ -2030,6 +2030,26 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	return CHANNEL_RC_OK;
 }
 
+static BOOL xf_cliprdr_is_valid_unix_filename(LPCWSTR filename)
+{
+	LPCWSTR c;
+
+	if (!filename)
+		return FALSE;
+
+	if (filename[0] == L'\0')
+		return FALSE;
+
+	/* Reserved characters */
+	for (c = filename; *c; ++c)
+	{
+		if (*c == L'/')
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 {
 	int n = 0;
@@ -2205,6 +2225,13 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	clipboard->targets[1] = XInternAtom(xfc->display, "TARGETS", FALSE);
 	clipboard->numTargets = 2;
 	clipboard->incr_atom = XInternAtom(xfc->display, "INCR", FALSE);
+
+	if (relieveFilenameRestriction)
+	{
+		WLog_DBG(TAG, "Relieving CLIPRDR filename restriction");
+		ClipboardGetDelegate(clipboard->system)->IsFileNameComponentValid =
+		    xf_cliprdr_is_valid_unix_filename;
+	}
 
 	return clipboard;
 
