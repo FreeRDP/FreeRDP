@@ -2287,7 +2287,7 @@ BOOL cliprdr_file_context_clear(CliprdrFileContext* file)
 {
 	WINPR_ASSERT(file);
 
-	WLog_Print(file->log, WLOG_DEBUG, "clear file clipbaord...");
+	WLog_Print(file->log, WLOG_DEBUG, "clear file clipboard...");
 
 	HashTable_Foreach(file->local_streams, local_stream_discard, file);
 	HashTable_Foreach(file->remote_streams, remote_stream_discard, file);
