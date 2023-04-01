@@ -102,6 +102,7 @@ struct xf_clipboard
 	int requestedFormatId;
 
 	BYTE* data;
+	UINT32 data_format;
 	BYTE* data_raw;
 	BOOL data_raw_format;
 
@@ -1260,10 +1261,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				}
 			}
 
-			/* We can compare format names by pointer value here as they are both
-			 * taken from the same clipboard->serverFormats array */
-			matchingFormat = format && (formatId == format->formatId);
-
+			matchingFormat = formatId == clipboard->data_format;
 			if (matchingFormat && (clipboard->data != 0) && !rawTransfer)
 			{
 				UINT32 DstSize = 0;
@@ -1996,6 +1994,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 	clipboard->data = pDstData;
 	clipboard->data_length = DstSize;
+	clipboard->data_format = dstFormatId;
 	/* We have to copy the original data again, as pSrcData is now owned
 	 * by clipboard->system. Memory allocation failure is not fatal here
 	 * as this is only a cached value. */
