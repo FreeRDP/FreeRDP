@@ -26,7 +26,7 @@ static int start_threads(DWORD count, HANDLE* threads)
 
 		if (!threads[i])
 		{
-			fprintf(stderr, "%s: CreateThread [%" PRIu32 "] failure\n", __FUNCTION__, i);
+			fprintf(stderr, "%s: CreateThread [%" PRIu32 "] failure\n", __func__, i);
 			return -1;
 		}
 	}
@@ -48,7 +48,7 @@ static int close_threads(DWORD count, HANDLE* threads)
 
 		if (!CloseHandle(threads[i]))
 		{
-			fprintf(stderr, "%s: CloseHandle [%" PRIu32 "] failure\n", __FUNCTION__, i);
+			fprintf(stderr, "%s: CloseHandle [%" PRIu32 "] failure\n", __func__, i);
 			rc = -1;
 		}
 		threads[i] = NULL;
@@ -65,7 +65,7 @@ static BOOL TestWaitForAll(void)
 	/* WaitForAll, timeout */
 	if (start_threads(THREADS, threads))
 	{
-		fprintf(stderr, "%s: start_threads failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: start_threads failed\n", __func__);
 		goto fail;
 	}
 
@@ -73,13 +73,13 @@ static BOOL TestWaitForAll(void)
 	if (ret != WAIT_TIMEOUT)
 	{
 		fprintf(stderr, "%s: WaitForMultipleObjects bWaitAll, timeout 50 failed, ret=%d\n",
-		        __FUNCTION__, ret);
+		        __func__, ret);
 		goto fail;
 	}
 
 	if (WaitForMultipleObjects(THREADS, threads, TRUE, INFINITE) != WAIT_OBJECT_0)
 	{
-		fprintf(stderr, "%s: WaitForMultipleObjects bWaitAll, INFINITE failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: WaitForMultipleObjects bWaitAll, INFINITE failed\n", __func__);
 		goto fail;
 	}
 
@@ -87,7 +87,7 @@ static BOOL TestWaitForAll(void)
 fail:
 	if (close_threads(THREADS, threads))
 	{
-		fprintf(stderr, "%s: close_threads failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: close_threads failed\n", __func__);
 		return FALSE;
 	}
 
@@ -102,20 +102,20 @@ static BOOL TestWaitOne(void)
 	/* WaitForAll, timeout */
 	if (start_threads(THREADS, threads))
 	{
-		fprintf(stderr, "%s: start_threads failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: start_threads failed\n", __func__);
 		goto fail;
 	}
 
 	ret = WaitForMultipleObjects(THREADS, threads, FALSE, INFINITE);
 	if (ret > (WAIT_OBJECT_0 + THREADS))
 	{
-		fprintf(stderr, "%s: WaitForMultipleObjects INFINITE failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: WaitForMultipleObjects INFINITE failed\n", __func__);
 		goto fail;
 	}
 
 	if (WaitForMultipleObjects(THREADS, threads, TRUE, INFINITE) != WAIT_OBJECT_0)
 	{
-		fprintf(stderr, "%s: WaitForMultipleObjects bWaitAll, INFINITE failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: WaitForMultipleObjects bWaitAll, INFINITE failed\n", __func__);
 		goto fail;
 	}
 
@@ -123,7 +123,7 @@ static BOOL TestWaitOne(void)
 fail:
 	if (close_threads(THREADS, threads))
 	{
-		fprintf(stderr, "%s: close_threads failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: close_threads failed\n", __func__);
 		return FALSE;
 	}
 
@@ -138,28 +138,28 @@ static BOOL TestWaitOneTimeout(void)
 	/* WaitForAll, timeout */
 	if (start_threads(THREADS, threads))
 	{
-		fprintf(stderr, "%s: start_threads failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: start_threads failed\n", __func__);
 		goto fail;
 	}
 
 	ret = WaitForMultipleObjects(THREADS, threads, FALSE, 1);
 	if (ret != WAIT_TIMEOUT)
 	{
-		fprintf(stderr, "%s: WaitForMultipleObjects timeout 50 failed, ret=%d\n", __FUNCTION__,
+		fprintf(stderr, "%s: WaitForMultipleObjects timeout 50 failed, ret=%d\n", __func__,
 		        ret);
 		goto fail;
 	}
 
 	if (WaitForMultipleObjects(THREADS, threads, TRUE, INFINITE) != WAIT_OBJECT_0)
 	{
-		fprintf(stderr, "%s: WaitForMultipleObjects bWaitAll, INFINITE failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: WaitForMultipleObjects bWaitAll, INFINITE failed\n", __func__);
 		goto fail;
 	}
 	rc = TRUE;
 fail:
 	if (close_threads(THREADS, threads))
 	{
-		fprintf(stderr, "%s: close_threads failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: close_threads failed\n", __func__);
 		return FALSE;
 	}
 
@@ -174,7 +174,7 @@ static BOOL TestWaitOneTimeoutMultijoin(void)
 	/* WaitForAll, timeout */
 	if (start_threads(THREADS, threads))
 	{
-		fprintf(stderr, "%s: start_threads failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: start_threads failed\n", __func__);
 		goto fail;
 	}
 
@@ -183,7 +183,7 @@ static BOOL TestWaitOneTimeoutMultijoin(void)
 		ret = WaitForMultipleObjects(THREADS, threads, FALSE, 0);
 		if (ret != WAIT_TIMEOUT)
 		{
-			fprintf(stderr, "%s: WaitForMultipleObjects timeout 0 failed, ret=%d\n", __FUNCTION__,
+			fprintf(stderr, "%s: WaitForMultipleObjects timeout 0 failed, ret=%d\n", __func__,
 			        ret);
 			goto fail;
 		}
@@ -191,7 +191,7 @@ static BOOL TestWaitOneTimeoutMultijoin(void)
 
 	if (WaitForMultipleObjects(THREADS, threads, TRUE, INFINITE) != WAIT_OBJECT_0)
 	{
-		fprintf(stderr, "%s: WaitForMultipleObjects bWaitAll, INFINITE failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: WaitForMultipleObjects bWaitAll, INFINITE failed\n", __func__);
 		goto fail;
 	}
 
@@ -199,7 +199,7 @@ static BOOL TestWaitOneTimeoutMultijoin(void)
 fail:
 	if (close_threads(THREADS, threads))
 	{
-		fprintf(stderr, "%s: close_threads failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: close_threads failed\n", __func__);
 		return FALSE;
 	}
 
@@ -213,7 +213,7 @@ static BOOL TestDetach(void)
 	/* WaitForAll, timeout */
 	if (start_threads(THREADS, threads))
 	{
-		fprintf(stderr, "%s: start_threads failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: start_threads failed\n", __func__);
 		goto fail;
 	}
 
@@ -221,7 +221,7 @@ static BOOL TestDetach(void)
 fail:
 	if (close_threads(THREADS, threads))
 	{
-		fprintf(stderr, "%s: close_threads failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: close_threads failed\n", __func__);
 		return FALSE;
 	}
 

@@ -21,7 +21,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 
 		if (strcmp(fmt, chk))
 		{
-			fprintf(stderr, "%s failed size_t test: got [%s] instead of [%s]\n", __FUNCTION__, fmt,
+			fprintf(stderr, "%s failed size_t test: got [%s] instead of [%s]\n", __func__, fmt,
 			        chk);
 			errors++;
 		}
@@ -37,7 +37,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 
 		if (strcmp(fmt, chk))
 		{
-			fprintf(stderr, "%s failed INT8 test: got [%s] instead of [%s]\n", __FUNCTION__, fmt,
+			fprintf(stderr, "%s failed INT8 test: got [%s] instead of [%s]\n", __func__, fmt,
 			        chk);
 			errors++;
 		}
@@ -53,7 +53,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 
 		if (strcmp(fmt, chk))
 		{
-			fprintf(stderr, "%s failed UINT8 test: got [%s] instead of [%s]\n", __FUNCTION__, fmt,
+			fprintf(stderr, "%s failed UINT8 test: got [%s] instead of [%s]\n", __func__, fmt,
 			        chk);
 			errors++;
 		}
@@ -69,7 +69,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 
 		if (strcmp(fmt, chk))
 		{
-			fprintf(stderr, "%s failed INT16 test: got [%s] instead of [%s]\n", __FUNCTION__, fmt,
+			fprintf(stderr, "%s failed INT16 test: got [%s] instead of [%s]\n", __func__, fmt,
 			        chk);
 			errors++;
 		}
@@ -86,7 +86,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 
 		if (strcmp(fmt, chk))
 		{
-			fprintf(stderr, "%s failed UINT16 test: got [%s] instead of [%s]\n", __FUNCTION__, fmt,
+			fprintf(stderr, "%s failed UINT16 test: got [%s] instead of [%s]\n", __func__, fmt,
 			        chk);
 			errors++;
 		}
@@ -102,7 +102,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 
 		if (strcmp(fmt, chk))
 		{
-			fprintf(stderr, "%s failed INT32 test: got [%s] instead of [%s]\n", __FUNCTION__, fmt,
+			fprintf(stderr, "%s failed INT32 test: got [%s] instead of [%s]\n", __func__, fmt,
 			        chk);
 			errors++;
 		}
@@ -119,7 +119,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 
 		if (strcmp(fmt, chk))
 		{
-			fprintf(stderr, "%s failed UINT16 test: got [%s] instead of [%s]\n", __FUNCTION__, fmt,
+			fprintf(stderr, "%s failed UINT16 test: got [%s] instead of [%s]\n", __func__, fmt,
 			        chk);
 			errors++;
 		}
@@ -135,7 +135,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 
 		if (strcmp(fmt, chk))
 		{
-			fprintf(stderr, "%s failed INT64 test: got [%s] instead of [%s]\n", __FUNCTION__, fmt,
+			fprintf(stderr, "%s failed INT64 test: got [%s] instead of [%s]\n", __func__, fmt,
 			        chk);
 			errors++;
 		}
@@ -153,7 +153,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 
 		if (strcmp(fmt, chk))
 		{
-			fprintf(stderr, "%s failed UINT64 test: got [%s] instead of [%s]\n", __FUNCTION__, fmt,
+			fprintf(stderr, "%s failed UINT64 test: got [%s] instead of [%s]\n", __func__, fmt,
 			        chk);
 			errors++;
 		}
@@ -161,7 +161,7 @@ int TestFormatSpecifiers(int argc, char* argv[])
 
 	if (errors)
 	{
-		fprintf(stderr, "%s produced %u errors\n", __FUNCTION__, errors);
+		fprintf(stderr, "%s produced %u errors\n", __func__, errors);
 		return -1;
 	}
 

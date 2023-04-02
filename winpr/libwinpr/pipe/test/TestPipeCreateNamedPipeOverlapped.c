@@ -358,12 +358,12 @@ int TestPipeCreateNamedPipeOverlapped(int argc, char* argv[])
 
 	if (WAIT_OBJECT_0 != WaitForSingleObject(ClientThread, INFINITE))
 	{
-		printf("%s: Failed to wait for client thread: %" PRIu32 "\n", __FUNCTION__, GetLastError());
+		printf("%s: Failed to wait for client thread: %" PRIu32 "\n", __func__, GetLastError());
 		goto out;
 	}
 	if (WAIT_OBJECT_0 != WaitForSingleObject(ServerThread, INFINITE))
 	{
-		printf("%s: Failed to wait for server thread: %" PRIu32 "\n", __FUNCTION__, GetLastError());
+		printf("%s: Failed to wait for server thread: %" PRIu32 "\n", __func__, GetLastError());
 		goto out;
 	}
 
@@ -383,12 +383,12 @@ out:
 	if (result == 0)
 	{
 		printf("%s: Error, this test is currently expected not to succeed on this platform.\n",
-		       __FUNCTION__);
+		       __func__);
 		result = -1;
 	}
 	else
 	{
-		printf("%s: This test is currently expected to fail on this platform.\n", __FUNCTION__);
+		printf("%s: This test is currently expected to fail on this platform.\n", __func__);
 		result = 0;
 	}
 #endif

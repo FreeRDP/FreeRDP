@@ -39,19 +39,19 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
-		printf("%s: Named Pipe CreateFile failure: INVALID_HANDLE_VALUE\n", __FUNCTION__);
+		printf("%s: Named Pipe CreateFile failure: INVALID_HANDLE_VALUE\n", __func__);
 		goto out;
 	}
 
 	if (!(lpReadBuffer = (BYTE*)malloc(PIPE_BUFFER_SIZE)))
 	{
-		printf("%s: Error allocating read buffer\n", __FUNCTION__);
+		printf("%s: Error allocating read buffer\n", __func__);
 		goto out;
 	}
 
 	if (!(lpWriteBuffer = (BYTE*)malloc(PIPE_BUFFER_SIZE)))
 	{
-		printf("%s: Error allocating write buffer\n", __FUNCTION__);
+		printf("%s: Error allocating write buffer\n", __func__);
 		goto out;
 	}
 
@@ -63,7 +63,7 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 	               NULL) ||
 	    lpNumberOfBytesWritten != nNumberOfBytesToWrite)
 	{
-		printf("%s: Client NamedPipe WriteFile failure\n", __FUNCTION__);
+		printf("%s: Client NamedPipe WriteFile failure\n", __func__);
 		goto out;
 	}
 
@@ -74,7 +74,7 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 	if (!ReadFile(hNamedPipe, lpReadBuffer, nNumberOfBytesToRead, &lpNumberOfBytesRead, NULL) ||
 	    lpNumberOfBytesRead != nNumberOfBytesToRead)
 	{
-		printf("%s: Client NamedPipe ReadFile failure\n", __FUNCTION__);
+		printf("%s: Client NamedPipe ReadFile failure\n", __func__);
 		goto out;
 	}
 
@@ -110,13 +110,13 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 
 	if (!hNamedPipe)
 	{
-		printf("%s: CreateNamedPipe failure: NULL handle\n", __FUNCTION__);
+		printf("%s: CreateNamedPipe failure: NULL handle\n", __func__);
 		goto out;
 	}
 
 	if (hNamedPipe == INVALID_HANDLE_VALUE)
 	{
-		printf("%s: CreateNamedPipe failure: INVALID_HANDLE_VALUE\n", __FUNCTION__);
+		printf("%s: CreateNamedPipe failure: INVALID_HANDLE_VALUE\n", __func__);
 		goto out;
 	}
 
@@ -135,19 +135,19 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 
 	if (!fConnected)
 	{
-		printf("%s: ConnectNamedPipe failure\n", __FUNCTION__);
+		printf("%s: ConnectNamedPipe failure\n", __func__);
 		goto out;
 	}
 
 	if (!(lpReadBuffer = (BYTE*)calloc(1, PIPE_BUFFER_SIZE)))
 	{
-		printf("%s: Error allocating read buffer\n", __FUNCTION__);
+		printf("%s: Error allocating read buffer\n", __func__);
 		goto out;
 	}
 
 	if (!(lpWriteBuffer = (BYTE*)malloc(PIPE_BUFFER_SIZE)))
 	{
-		printf("%s: Error allocating write buffer\n", __FUNCTION__);
+		printf("%s: Error allocating write buffer\n", __func__);
 		goto out;
 	}
 
@@ -157,7 +157,7 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 	if (!ReadFile(hNamedPipe, lpReadBuffer, nNumberOfBytesToRead, &lpNumberOfBytesRead, NULL) ||
 	    lpNumberOfBytesRead != nNumberOfBytesToRead)
 	{
-		printf("%s: Server NamedPipe ReadFile failure\n", __FUNCTION__);
+		printf("%s: Server NamedPipe ReadFile failure\n", __func__);
 		goto out;
 	}
 
@@ -171,7 +171,7 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 	               NULL) ||
 	    lpNumberOfBytesWritten != nNumberOfBytesToWrite)
 	{
-		printf("%s: Server NamedPipe WriteFile failure\n", __FUNCTION__);
+		printf("%s: Server NamedPipe WriteFile failure\n", __func__);
 		goto out;
 	}
 
@@ -208,7 +208,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 		                                   PIPE_UNLIMITED_INSTANCES, PIPE_BUFFER_SIZE,
 		                                   PIPE_BUFFER_SIZE, 0, NULL)))
 		{
-			printf("%s: CreateNamedPipe #%d failed\n", __FUNCTION__, i);
+			printf("%s: CreateNamedPipe #%d failed\n", __func__, i);
 			goto out;
 		}
 	}
@@ -221,28 +221,28 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 
 		if (strcmp(lpszPipeNameSt, p->name))
 		{
-			printf("%s: Pipe name mismatch for pipe #%d ([%s] instead of [%s])\n", __FUNCTION__, i,
+			printf("%s: Pipe name mismatch for pipe #%d ([%s] instead of [%s])\n", __func__, i,
 			       p->name, lpszPipeNameSt);
 			goto out;
 		}
 
 		if (p->clientfd != -1)
 		{
-			printf("%s: Unexpected client fd value for pipe #%d (%d instead of -1)\n", __FUNCTION__,
+			printf("%s: Unexpected client fd value for pipe #%d (%d instead of -1)\n", __func__,
 			       i, p->clientfd);
 			goto out;
 		}
 
 		if (p->serverfd < 1)
 		{
-			printf("%s: Unexpected server fd value for pipe #%d (%d is not > 0)\n", __FUNCTION__, i,
+			printf("%s: Unexpected server fd value for pipe #%d (%d is not > 0)\n", __func__, i,
 			       p->serverfd);
 			goto out;
 		}
 
 		if (p->ServerMode == FALSE)
 		{
-			printf("%s: Unexpected ServerMode value for pipe #%d (0 instead of 1)\n", __FUNCTION__,
+			printf("%s: Unexpected ServerMode value for pipe #%d (0 instead of 1)\n", __func__,
 			       i);
 			goto out;
 		}
@@ -256,7 +256,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 		if ((clients[i] = CreateFile(lpszPipeNameSt, GENERIC_READ | GENERIC_WRITE, 0, NULL,
 		                             OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
 		{
-			printf("%s: CreateFile #%d failed\n", __FUNCTION__, i);
+			printf("%s: CreateFile #%d failed\n", __func__, i);
 			goto out;
 		}
 
@@ -273,7 +273,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 
 		if (!fConnected)
 		{
-			printf("%s: ConnectNamedPipe #%d failed. (%" PRIu32 ")\n", __FUNCTION__, i,
+			printf("%s: ConnectNamedPipe #%d failed. (%" PRIu32 ")\n", __func__, i,
 			       GetLastError());
 			goto out;
 		}
@@ -287,14 +287,14 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 
 		if (p->clientfd < 1)
 		{
-			printf("%s: Unexpected client fd value for pipe #%d (%d is not > 0)\n", __FUNCTION__, i,
+			printf("%s: Unexpected client fd value for pipe #%d (%d is not > 0)\n", __func__, i,
 			       p->clientfd);
 			goto out;
 		}
 
 		if (p->ServerMode)
 		{
-			printf("%s: Unexpected ServerMode value for pipe #%d (1 instead of 0)\n", __FUNCTION__,
+			printf("%s: Unexpected ServerMode value for pipe #%d (1 instead of 0)\n", __func__,
 			       i);
 			goto out;
 		}
@@ -311,19 +311,19 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 			if (!WriteFile(clients[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
 			    dwWritten != sizeof(sndbuf))
 			{
-				printf("%s: Error writing to client end of pipe #%d\n", __FUNCTION__, i);
+				printf("%s: Error writing to client end of pipe #%d\n", __func__, i);
 				goto out;
 			}
 
 			if (!ReadFile(servers[i], rcvbuf, dwWritten, &dwRead, NULL) || dwRead != dwWritten)
 			{
-				printf("%s: Error reading on server end of pipe #%d\n", __FUNCTION__, i);
+				printf("%s: Error reading on server end of pipe #%d\n", __func__, i);
 				goto out;
 			}
 
 			if (memcmp(sndbuf, rcvbuf, sizeof(sndbuf)))
 			{
-				printf("%s: Error data read on server end of pipe #%d is corrupted\n", __FUNCTION__,
+				printf("%s: Error data read on server end of pipe #%d is corrupted\n", __func__,
 				       i);
 				goto out;
 			}
@@ -339,19 +339,19 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 			if (!WriteFile(servers[i], sndbuf, sizeof(sndbuf), &dwWritten, NULL) ||
 			    dwWritten != sizeof(sndbuf))
 			{
-				printf("%s: Error writing to server end of pipe #%d\n", __FUNCTION__, i);
+				printf("%s: Error writing to server end of pipe #%d\n", __func__, i);
 				goto out;
 			}
 
 			if (!ReadFile(clients[i], rcvbuf, dwWritten, &dwRead, NULL) || dwRead != dwWritten)
 			{
-				printf("%s: Error reading on client end of pipe #%d\n", __FUNCTION__, i);
+				printf("%s: Error reading on client end of pipe #%d\n", __func__, i);
 				goto out;
 			}
 
 			if (memcmp(sndbuf, rcvbuf, sizeof(sndbuf)))
 			{
-				printf("%s: Error data read on client end of pipe #%d is corrupted\n", __FUNCTION__,
+				printf("%s: Error data read on client end of pipe #%d is corrupted\n", __func__,
 				       i);
 				goto out;
 			}
@@ -372,7 +372,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 		{
 			printf("%s: Error ReadFile on client should have failed after DisconnectNamedPipe on "
 			       "server\n",
-			       __FUNCTION__);
+			       __func__);
 			goto out;
 		}
 
@@ -381,7 +381,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 			printf(
 			    "%s: Error WriteFile on client end should have failed after DisconnectNamedPipe on "
 			    "server\n",
-			    __FUNCTION__);
+			    __func__);
 			goto out;
 		}
 	}
@@ -403,7 +403,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 		{
 			printf(
 			    "%s: Error ReadFile on client end should have failed after CloseHandle on server\n",
-			    __FUNCTION__);
+			    __func__);
 			goto out;
 		}
 
@@ -411,7 +411,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 		{
 			printf("%s: Error WriteFile on client end should have failed after CloseHandle on "
 			       "server\n",
-			       __FUNCTION__);
+			       __func__);
 			goto out;
 		}
 	}
@@ -432,7 +432,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 		{
 			printf(
 			    "%s: Error ReadFile on server end should have failed after CloseHandle on client\n",
-			    __FUNCTION__);
+			    __func__);
 			goto out;
 		}
 
@@ -440,7 +440,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 		{
 			printf("%s: Error WriteFile on server end should have failed after CloseHandle on "
 			       "client\n",
-			       __FUNCTION__);
+			       __func__);
 			goto out;
 		}
 	}

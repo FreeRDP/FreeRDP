@@ -142,14 +142,14 @@ static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 		{
 			if (!(buffer = malloc(cap)))
 			{
-				printf("%s: failed to allocate buffer of size %" PRIuz "\n", __FUNCTION__, cap);
+				printf("%s: failed to allocate buffer of size %" PRIuz "\n", __func__, cap);
 				goto fail;
 			}
 		}
 
 		if (!(s = Stream_New(selfAlloc ? buffer : NULL, len)))
 		{
-			printf("%s: Stream_New failed for stream #%" PRIuz "\n", __FUNCTION__, i);
+			printf("%s: Stream_New failed for stream #%" PRIuz "\n", __func__, i);
 			goto fail;
 		}
 
@@ -175,7 +175,7 @@ static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 
 			if (memcmp(buffer, Stream_Buffer(s), cap))
 			{
-				printf("%s: buffer memory corruption\n", __FUNCTION__);
+				printf("%s: buffer memory corruption\n", __func__);
 				goto fail;
 			}
 		}
@@ -204,7 +204,7 @@ static BOOL TestStream_Extent(UINT32 maxSize)
 
 	if (!(s = Stream_New(NULL, 1)))
 	{
-		printf("%s: Stream_New failed\n", __FUNCTION__);
+		printf("%s: Stream_New failed\n", __func__);
 		return FALSE;
 	}
 
@@ -226,7 +226,7 @@ static BOOL TestStream_Extent(UINT32 maxSize)
 
 		if (!TestStream_Verify(s, i, i, i))
 		{
-			printf("%s: failed to verify stream in iteration %" PRIu32 "\n", __FUNCTION__, i);
+			printf("%s: failed to verify stream in iteration %" PRIu32 "\n", __func__, i);
 			goto fail;
 		}
 	}
@@ -258,14 +258,14 @@ fail:
 		Stream_Read_##_t(_s, _b);                                      \
 		if (_a != _b)                                                  \
 		{                                                              \
-			printf("%s: test1 " #_t "_LE failed\n", __FUNCTION__);     \
+			printf("%s: test1 " #_t "_LE failed\n", __func__);     \
 			_r = FALSE;                                                \
 		}                                                              \
 		for (_i = 0; _i < sizeof(_t); _i++)                            \
 		{                                                              \
 			if (((_a >> (_i * 8)) & 0xFF) != _p[_i])                   \
 			{                                                          \
-				printf("%s: test2 " #_t "_LE failed\n", __FUNCTION__); \
+				printf("%s: test2 " #_t "_LE failed\n", __func__); \
 				_r = FALSE;                                            \
 				break;                                                 \
 			}                                                          \
@@ -276,14 +276,14 @@ fail:
 		Stream_Read_##_t##_BE(_s, _b);                                 \
 		if (_a != _b)                                                  \
 		{                                                              \
-			printf("%s: test1 " #_t "_BE failed\n", __FUNCTION__);     \
+			printf("%s: test1 " #_t "_BE failed\n", __func__);     \
 			_r = FALSE;                                                \
 		}                                                              \
 		for (_i = 0; _i < sizeof(_t); _i++)                            \
 		{                                                              \
 			if (((_a >> (_i * 8)) & 0xFF) != _p[sizeof(_t) - _i - 1])  \
 			{                                                          \
-				printf("%s: test2 " #_t "_BE failed\n", __FUNCTION__); \
+				printf("%s: test2 " #_t "_BE failed\n", __func__); \
 				_r = FALSE;                                            \
 				break;                                                 \
 			}                                                          \
@@ -299,7 +299,7 @@ static BOOL TestStream_Reading(void)
 
 	if (!(s = Stream_New(src, sizeof(src))))
 	{
-		printf("%s: Stream_New failed\n", __FUNCTION__);
+		printf("%s: Stream_New failed\n", __func__);
 		return FALSE;
 	}
 

@@ -7,6 +7,6 @@
 
 int TestPathCchRemoveExtension(int argc, char* argv[])
 {
-	printf("Warning: %s is not implemented!\n", __FUNCTION__);
+	printf("Warning: %s is not implemented!\n", __func__);
 	return 0;
 }

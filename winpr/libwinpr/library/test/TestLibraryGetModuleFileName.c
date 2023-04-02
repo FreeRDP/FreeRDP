@@ -18,14 +18,14 @@ int TestLibraryGetModuleFileName(int argc, char* argv[])
 	if (len != 2)
 	{
 		printf("%s: GetModuleFileNameA unexpectedly returned %" PRIu32 " instead of 2\n",
-		       __FUNCTION__, len);
+		       __func__, len);
 		return -1;
 	}
 	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 	{
 		printf("%s: Invalid last error value: 0x%08" PRIX32
 		       ". Expected 0x%08X (ERROR_INSUFFICIENT_BUFFER)\n",
-		       __FUNCTION__, GetLastError(), ERROR_INSUFFICIENT_BUFFER);
+		       __func__, GetLastError(), ERROR_INSUFFICIENT_BUFFER);
 		return -1;
 	}
 
@@ -34,19 +34,19 @@ int TestLibraryGetModuleFileName(int argc, char* argv[])
 	len = GetModuleFileNameA(NULL, ModuleFileName, sizeof(ModuleFileName));
 	if (len == 0)
 	{
-		printf("%s: GetModuleFileNameA failed with error 0x%08" PRIX32 "\n", __FUNCTION__,
+		printf("%s: GetModuleFileNameA failed with error 0x%08" PRIX32 "\n", __func__,
 		       GetLastError());
 		return -1;
 	}
 	if (len == sizeof(ModuleFileName))
 	{
-		printf("%s: GetModuleFileNameA unexpectedly returned nSize\n", __FUNCTION__);
+		printf("%s: GetModuleFileNameA unexpectedly returned nSize\n", __func__);
 		return -1;
 	}
 	if (GetLastError() != ERROR_SUCCESS)
 	{
 		printf("%s: Invalid last error value: 0x%08" PRIX32 ". Expected 0x%08X (ERROR_SUCCESS)\n",
-		       __FUNCTION__, GetLastError(), ERROR_SUCCESS);
+		       __func__, GetLastError(), ERROR_SUCCESS);
 		return -1;
 	}
 
