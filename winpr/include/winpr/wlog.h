@@ -78,7 +78,7 @@ extern "C"
 
 		size_t LineNumber;   /* __LINE__ */
 		LPCSTR FileName;     /* __FILE__ */
-		LPCSTR FunctionName; /* __FUNCTION__ */
+		LPCSTR FunctionName; /* __func__ */
 
 		/* Data Message */
 
@@ -121,7 +121,7 @@ extern "C"
 		if (WLog_IsLevelActive(_log, _log_level))                                      \
 		{                                                                              \
 			WLog_PrintMessage(_log, WLOG_MESSAGE_TEXT, _log_level, __LINE__, __FILE__, \
-			                  __FUNCTION__, __VA_ARGS__);                              \
+			                  __func__, __VA_ARGS__);                                  \
 		}                                                                              \
 	} while (0)
 
@@ -140,7 +140,7 @@ extern "C"
 		if (WLog_IsLevelActive(_log, _log_level))                                        \
 		{                                                                                \
 			WLog_PrintMessageVA(_log, WLOG_MESSAGE_TEXT, _log_level, __LINE__, __FILE__, \
-			                    __FUNCTION__, _args);                                    \
+			                    __func__, _args);                                        \
 		}                                                                                \
 	} while (0)
 
@@ -150,7 +150,7 @@ extern "C"
 		if (WLog_IsLevelActive(_log, _log_level))                                      \
 		{                                                                              \
 			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, __LINE__, __FILE__, \
-			                  __FUNCTION__, __VA_ARGS__);                              \
+			                  __func__, __VA_ARGS__);                                  \
 		}                                                                              \
 	} while (0)
 
@@ -160,7 +160,7 @@ extern "C"
 		if (WLog_IsLevelActive(_log, _log_level))                                      \
 		{                                                                              \
 			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, __LINE__, __FILE__, \
-			                  __FUNCTION__, __VA_ARGS__);                              \
+			                  __func__, __VA_ARGS__);                                  \
 		}                                                                              \
 	} while (0)
 
@@ -170,7 +170,7 @@ extern "C"
 		if (WLog_IsLevelActive(_log, _log_level))                                        \
 		{                                                                                \
 			WLog_PrintMessage(_log, WLOG_MESSAGE_PACKET, _log_level, __LINE__, __FILE__, \
-			                  __FUNCTION__, __VA_ARGS__);                                \
+			                  __func__, __VA_ARGS__);                                    \
 		}                                                                                \
 	} while (0)
 
