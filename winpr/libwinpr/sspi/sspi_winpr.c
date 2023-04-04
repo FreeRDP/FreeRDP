@@ -372,58 +372,31 @@ int sspi_SetAuthIdentityWithLengthW(SEC_WINNT_AUTH_IDENTITY* identity, const WCH
 	return 1;
 }
 
+static void zfree(WCHAR* str, size_t len)
+{
+	if (str)
+		memset(str, 0, len * sizeof(WCHAR));
+	free(str);
+}
+
 int sspi_SetAuthIdentityA(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, const char* domain,
                           const char* password)
 {
 	int rc;
+	size_t unicodeUserLenW = 0;
+	size_t unicodeDomainLenW = 0;
 	size_t unicodePasswordLenW = 0;
+	LPWSTR unicodeUser = ConvertUtf8ToWCharAlloc(user, &unicodeUserLenW);
+	LPWSTR unicodeDomain = ConvertUtf8ToWCharAlloc(domain, &unicodeDomainLenW);
 	LPWSTR unicodePassword = ConvertUtf8ToWCharAlloc(password, &unicodePasswordLenW);
 
-	if (!unicodePassword || (unicodePasswordLenW == 0))
-		return -1;
+	rc = sspi_SetAuthIdentityWithLengthW(identity, unicodeUser, unicodeUserLenW, unicodeDomain,
+	                                     unicodeDomainLenW, unicodePassword, unicodePasswordLenW);
 
-	rc = sspi_SetAuthIdentityWithUnicodePassword(identity, user, domain, unicodePassword,
-	                                             (ULONG)(unicodePasswordLenW));
-	free(unicodePassword);
+	zfree(unicodeUser, unicodeUserLenW);
+	zfree(unicodeDomain, unicodeDomainLenW);
+	zfree(unicodePassword, unicodePasswordLenW);
 	return rc;
-}
-
-int sspi_SetAuthIdentityWithUnicodePassword(SEC_WINNT_AUTH_IDENTITY* identity, const char* user,
-                                            const char* domain, LPCWSTR password,
-                                            ULONG passwordLength)
-{
-	sspi_FreeAuthIdentity(identity);
-	identity->Flags &= ~SEC_WINNT_AUTH_IDENTITY_ANSI;
-	identity->Flags |= SEC_WINNT_AUTH_IDENTITY_UNICODE;
-
-	if (user && (strlen(user) > 0))
-	{
-		size_t len = 0;
-		identity->User = ConvertUtf8ToWCharAlloc(user, &len);
-		if (!identity->User || (len == 0) || (len > ULONG_MAX))
-			return -1;
-
-		identity->UserLength = (ULONG)len;
-	}
-
-	if (domain && (strlen(domain) > 0))
-	{
-		size_t len = 0;
-		identity->Domain = ConvertUtf8ToWCharAlloc(domain, &len);
-		if (!identity->Domain || (len == 0) || (len > ULONG_MAX))
-			return -1;
-
-		identity->DomainLength = len;
-	}
-
-	identity->Password = (UINT16*)calloc(1, (passwordLength + 1) * sizeof(WCHAR));
-
-	if (!identity->Password)
-		return -1;
-
-	CopyMemory(identity->Password, password, passwordLength * sizeof(WCHAR));
-	identity->PasswordLength = passwordLength;
-	return 1;
 }
 
 UINT32 sspi_GetAuthIdentityVersion(const void* identity)
