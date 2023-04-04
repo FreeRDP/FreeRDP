@@ -466,7 +466,8 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 	wfc = (wfContext*)instance->context;
 
 	fSave = FALSE;
-	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES;
+	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES |
+	          CREDUI_FLAGS_USERNAME_TARGET_CREDENTIALS;
 
 	if (username && *username)
 	{
