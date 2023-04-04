@@ -111,6 +111,13 @@ BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bind
 	const rdpSettings* settings = auth->rdp_ctx->settings;
 	WINPR_ASSERT(settings);
 
+	char name[64] = { 0 };
+#if defined(UNICODE)
+	ConvertWCharToUtf8(pkg_name, name, ARRAYSIZE(name) - 1);
+#else
+	strncpy(name, pkg_name, ARRAYSIZE(name) - 1);
+#endif
+
 	auth->table = auth_resolve_sspi_table(settings);
 	if (!auth->table)
 	{
@@ -123,12 +130,12 @@ BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bind
 	const SECURITY_STATUS status = auth->table->QuerySecurityPackageInfo(pkg_name, &auth->info);
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "QuerySecurityPackageInfo (%s) failed with %s [0x%08X]", pkg_name,
+		WLog_ERR(TAG, "QuerySecurityPackageInfo (%s) failed with %s [0x%08X]", name,
 		         GetSecurityStatusString(status), status);
 		return FALSE;
 	}
 
-	WLog_DBG(TAG, "Using package: %s (cbMaxToken: %u bytes)", pkg_name, auth->info->cbMaxToken);
+	WLog_DBG(TAG, "Using package: %s (cbMaxToken: %u bytes)", name, auth->info->cbMaxToken);
 
 	/* Setup common identity settings */
 	if (!credssp_auth_setup_identity(auth))
@@ -416,7 +423,7 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 
 	if (status == SEC_E_OK)
 	{
-		WLog_DBG(TAG, "Authentication complete (output token size: %lu bytes)",
+		WLog_DBG(TAG, "Authentication complete (output token size: %" PRIu32 " bytes)",
 		         auth->output_buffer.cbBuffer);
 		auth->state = AUTH_STATE_FINAL;
 
@@ -432,7 +439,7 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 	}
 	else if (status == SEC_I_CONTINUE_NEEDED)
 	{
-		WLog_DBG(TAG, "Authentication in progress... (output token size: %lu)",
+		WLog_DBG(TAG, "Authentication in progress... (output token size: %" PRIu32 ")",
 		         auth->output_buffer.cbBuffer);
 		auth->state = AUTH_STATE_IN_PROGRESS;
 		return 0;
