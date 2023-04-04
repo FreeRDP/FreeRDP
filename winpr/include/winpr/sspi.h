@@ -678,22 +678,22 @@ typedef struct
 typedef struct
 {
 	UINT16* User;
-	UINT32 UserLength;
+	ULONG UserLength;
 	UINT16* Domain;
-	UINT32 DomainLength;
+	ULONG DomainLength;
 	UINT16* Password;
-	UINT32 PasswordLength;
+	ULONG PasswordLength;
 	UINT32 Flags;
 } SEC_WINNT_AUTH_IDENTITY_W, *PSEC_WINNT_AUTH_IDENTITY_W;
 
 typedef struct
 {
 	BYTE* User;
-	UINT32 UserLength;
+	ULONG UserLength;
 	BYTE* Domain;
-	UINT32 DomainLength;
+	ULONG DomainLength;
 	BYTE* Password;
-	UINT32 PasswordLength;
+	ULONG PasswordLength;
 	UINT32 Flags;
 } SEC_WINNT_AUTH_IDENTITY_A, *PSEC_WINNT_AUTH_IDENTITY_A;
 
