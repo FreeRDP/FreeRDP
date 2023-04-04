@@ -277,28 +277,42 @@ static void zfree(WCHAR* str, size_t len)
 	free(str);
 }
 
-static BOOL nla_set_identity_from_settings(rdpNla* nla, const rdpSettings* settings, size_t UserId,
-                                           size_t DomainId, size_t PwdId)
+static BOOL nla_set_identity_from_settings_with_pwd(rdpNla* nla, const rdpSettings* settings,
+                                                    size_t UserId, size_t DomainId,
+                                                    const WCHAR* Password, size_t pwdLen)
 {
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(settings);
 
 	size_t UserLen = 0;
 	size_t DomainLen = 0;
-	size_t PwdLen = 0;
 
 	WCHAR* Username = freerdp_settings_get_string_as_utf16(settings, UserId, &UserLen);
 	WCHAR* Domain = freerdp_settings_get_string_as_utf16(settings, DomainId, &DomainLen);
-	WCHAR* Password = freerdp_settings_get_string_as_utf16(settings, PwdId, &PwdLen);
 
 	sspi_FreeAuthIdentity(nla->identity);
 	const int rc = sspi_SetAuthIdentityW(nla->identity, Username, Domain, Password);
 	zfree(Username, UserLen);
 	zfree(Domain, DomainLen);
-	zfree(Password, PwdLen);
 	if (rc < 0)
 		return FALSE;
 	return TRUE;
+}
+
+static BOOL nla_set_identity_from_settings(rdpNla* nla, const rdpSettings* settings, size_t UserId,
+                                           size_t DomainId, size_t PwdId)
+{
+	WINPR_ASSERT(nla);
+	WINPR_ASSERT(settings);
+
+	size_t PwdLen = 0;
+
+	WCHAR* Password = freerdp_settings_get_string_as_utf16(settings, PwdId, &PwdLen);
+
+	const BOOL rc =
+	    nla_set_identity_from_settings_with_pwd(nla, settings, UserId, DomainId, Password, PwdLen);
+	zfree(Password, PwdLen);
+	return rc;
 }
 
 static BOOL nla_client_setup_identity(rdpNla* nla)
@@ -419,10 +433,10 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 
 		if (settings->RedirectionPassword && (settings->RedirectionPasswordLength > 0))
 		{
-			if (sspi_SetAuthIdentityWithUnicodePassword(
-			        nla->identity, settings->Username, settings->Domain,
+			if (!nla_set_identity_from_settings_with_pwd(
+			        nla, settings, FreeRDP_Username, FreeRDP_Domain,
 			        (const WCHAR*)settings->RedirectionPassword,
-			        settings->RedirectionPasswordLength / sizeof(WCHAR) - 1) < 0)
+			        settings->RedirectionPasswordLength / sizeof(WCHAR)))
 				return FALSE;
 
 			usePassword = FALSE;
