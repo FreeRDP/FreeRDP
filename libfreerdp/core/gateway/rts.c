@@ -243,7 +243,7 @@ static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* aut
 		const size_t expected = header->frag_length - header->auth_length - 8;
 
 		Stream_SetPosition(s, expected);
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(auth_verifier_co_t)))
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 			return FALSE;
 
 		Stream_Read_UINT8(s, auth->auth_type);
