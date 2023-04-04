@@ -329,7 +329,7 @@ int sspi_SetAuthIdentityW(SEC_WINNT_AUTH_IDENTITY* identity, const WCHAR* user, 
 	                                       password ? _wcslen(password) : 0);
 }
 
-static BOOL copy(WCHAR** dst, UINT32* dstLen, const WCHAR* what, size_t len)
+static BOOL copy(WCHAR** dst, ULONG* dstLen, const WCHAR* what, size_t len)
 {
 	WINPR_ASSERT(dst);
 	WINPR_ASSERT(dstLen);
