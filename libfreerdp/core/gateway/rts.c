@@ -920,8 +920,7 @@ static BOOL rts_read_pdu_fault(wStream* s, rpcconn_fault_hdr_t* ctx)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
 
-	if (!Stream_CheckAndLogRequiredLength(
-	        TAG, s, sizeof(rpcconn_fault_hdr_t) - sizeof(rpcconn_common_hdr_t)))
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return FALSE;
 	Stream_Read_UINT32(s, ctx->alloc_hint);
 	Stream_Read_UINT16(s, ctx->p_cont_id);
