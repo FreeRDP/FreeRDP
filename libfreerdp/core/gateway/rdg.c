@@ -40,6 +40,7 @@
 #include "../../crypto/opensslcompat.h"
 #include "rpc_fault.h"
 #include "../utils.h"
+#include "../settings.h"
 
 #define TAG FREERDP_TAG("core.gateway.rdg")
 
@@ -1706,31 +1707,18 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls, TCHAR* authPkg)
 			return FALSE;
 	}
 
-#ifdef _WIN32
 	if (doSCLogon)
 	{
-		CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
-		LPSTR marshalledCredentials;
-
-		memcpy(certInfo.rgbHashOfCert, rdg->smartcard->sha1Hash, sizeof(certInfo.rgbHashOfCert));
-
-		if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
-		{
-			WLog_ERR(TAG, "error marshaling cert credentials");
+		if (!identity_set_from_smartcard_hash(&identity, settings, FreeRDP_GatewayUsername,
+		                                      FreeRDP_GatewayDomain, FreeRDP_GatewayPassword,
+		                                      rdg->smartcard->sha1Hash,
+		                                      sizeof(rdg->smartcard->sha1Hash)))
 			return FALSE;
-		}
-
-		if (sspi_SetAuthIdentityA(&identity, marshalledCredentials, NULL,
-		                          settings->GatewayPassword) < 0)
-			return FALSE;
-
-		CredFree(marshalledCredentials);
 	}
 	else
-#endif
 	{
-		if (sspi_SetAuthIdentityA(&identity, settings->GatewayUsername, settings->GatewayDomain,
-		                          settings->GatewayPassword) < 0)
+		if (!identity_set_from_settings(&identity, settings, FreeRDP_GatewayUsername,
+		                                FreeRDP_GatewayDomain, FreeRDP_GatewayPassword))
 			return FALSE;
 	}
 

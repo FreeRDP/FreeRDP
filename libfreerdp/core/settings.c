@@ -1140,3 +1140,79 @@ out_fail:
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
+
+static void zfree(WCHAR* str, size_t len)
+{
+	if (str)
+		memset(str, 0, len * sizeof(WCHAR));
+	free(str);
+}
+
+BOOL identity_set_from_settings_with_pwd(SEC_WINNT_AUTH_IDENTITY* identity,
+                                         const rdpSettings* settings, size_t UserId,
+                                         size_t DomainId, const WCHAR* Password, size_t pwdLen)
+{
+	WINPR_ASSERT(identity);
+	WINPR_ASSERT(settings);
+
+	size_t UserLen = 0;
+	size_t DomainLen = 0;
+
+	WCHAR* Username = freerdp_settings_get_string_as_utf16(settings, UserId, &UserLen);
+	WCHAR* Domain = freerdp_settings_get_string_as_utf16(settings, DomainId, &DomainLen);
+
+	const int rc = sspi_SetAuthIdentityWithLengthW(identity, Username, UserLen, Domain, DomainLen,
+	                                               Password, pwdLen);
+	zfree(Username, UserLen);
+	zfree(Domain, DomainLen);
+	if (rc < 0)
+		return FALSE;
+	return TRUE;
+}
+
+BOOL identity_set_from_settings(SEC_WINNT_AUTH_IDENTITY_W* identity, const rdpSettings* settings,
+                                size_t UserId, size_t DomainId, size_t PwdId)
+{
+	WINPR_ASSERT(identity);
+	WINPR_ASSERT(settings);
+
+	size_t PwdLen = 0;
+
+	WCHAR* Password = freerdp_settings_get_string_as_utf16(settings, PwdId, &PwdLen);
+
+	const BOOL rc =
+	    identity_set_from_settings_with_pwd(identity, settings, UserId, DomainId, Password, PwdLen);
+	zfree(Password, PwdLen);
+	return rc;
+}
+
+BOOL identity_set_from_smartcard_hash(SEC_WINNT_AUTH_IDENTITY_W* identity,
+                                      const rdpSettings* settings, size_t userId, size_t domainId,
+                                      size_t pwdId, const BYTE* certSha1, size_t sha1len)
+{
+#ifdef _WIN32
+	CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
+	LPWSTR marshalledCredentials = NULL;
+
+	memcpy(certInfo.rgbHashOfCert, certSha1, MIN(sha1len, sizeof(certInfo.rgbHashOfCert)));
+
+	if (!CredMarshalCredentialW(CertCredential, &certInfo, &marshalledCredentials))
+	{
+		WLog_ERR(TAG, "error marshalling cert credentials");
+		return FALSE;
+	}
+
+	size_t pwdLen = 0;
+	WCHAR* Password = freerdp_settings_get_string_as_utf16(settings, pwdId, &pwdLen);
+	const int rc = sspi_SetAuthIdentityWithLengthW(
+	    identity, marshalledCredentials, _wcslen(marshalledCredentials), NULL, 0, Password, pwdLen);
+	zfree(Password, pwdLen);
+	CredFree(marshalledCredentials);
+	if (rc < 0)
+		return FALSE;
+
+#else
+	if (!identity_set_from_settings(identity, settings, userId, domainId, pwdId))
+		return FALSE;
+#endif /* _WIN32 */
+}
