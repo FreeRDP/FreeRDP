@@ -270,6 +270,37 @@ out:
 	return ret;
 }
 
+static void zfree(WCHAR* str, size_t len)
+{
+	if (str)
+		memset(str, 0, len * sizeof(WCHAR));
+	free(str);
+}
+
+static BOOL nla_set_identity_from_settings(rdpNla* nla, const rdpSettings* settings, size_t UserId,
+                                           size_t DomainId, size_t PwdId)
+{
+	WINPR_ASSERT(nla);
+	WINPR_ASSERT(settings);
+
+	size_t UserLen = 0;
+	size_t DomainLen = 0;
+	size_t PwdLen = 0;
+
+	WCHAR* Username = freerdp_settings_get_string_as_utf16(settings, UserId, &UserLen);
+	WCHAR* Domain = freerdp_settings_get_string_as_utf16(settings, DomainId, &DomainLen);
+	WCHAR* Password = freerdp_settings_get_string_as_utf16(settings, PwdId, &PwdLen);
+
+	sspi_FreeAuthIdentity(nla->identity);
+	const int rc = sspi_SetAuthIdentityW(nla->identity, Username, Domain, Password);
+	zfree(Username, UserLen);
+	zfree(Domain, DomainLen);
+	zfree(Password, PwdLen);
+	if (rc < 0)
+		return FALSE;
+	return TRUE;
+}
+
 static BOOL nla_client_setup_identity(rdpNla* nla)
 {
 	BOOL PromptPassword = FALSE;
@@ -358,24 +389,27 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 
 #ifdef _WIN32
 		CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
-		LPSTR marshalledCredentials;
+		LPWSTR marshalledCredentials = NULL;
 
 		memcpy(certInfo.rgbHashOfCert, nla->certSha1, sizeof(certInfo.rgbHashOfCert));
 
-		if (!CredMarshalCredentialA(CertCredential, &certInfo, &marshalledCredentials))
+		if (!CredMarshalCredentialW(CertCredential, &certInfo, &marshalledCredentials))
 		{
 			WLog_ERR(TAG, "error marshalling cert credentials");
 			return FALSE;
 		}
 
-		if (sspi_SetAuthIdentityA(nla->identity, marshalledCredentials, NULL, settings->Password) <
-		    0)
+		size_t pwdLen = 0;
+		WCHAR* Password = freerdp_settings_get_string_as_utf16(settings, FreeRDP_Password, &pwdLen);
+		const int rc = sspi_SetAuthIdentityA(nla->identity, marshalledCredentials, NULL, Password);
+		zfree(Password, pwdLen);
+		CredFree(marshalledCredentials);
+		if (rc < 0)
 			return FALSE;
 
-		CredFree(marshalledCredentials);
 #else
-		if (sspi_SetAuthIdentityA(nla->identity, settings->Username, settings->Domain,
-		                          settings->Password) < 0)
+		if (!nla_set_identity_from_settings(nla, settings, FreeRDP_Username, FreeRDP_Domain,
+		                                    FreeRDP_Password))
 			return FALSE;
 #endif /* _WIN32 */
 	}
@@ -398,8 +432,8 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 		{
 			if (settings->PasswordHash && strlen(settings->PasswordHash) == 32)
 			{
-				if (sspi_SetAuthIdentityA(nla->identity, settings->Username, settings->Domain,
-				                          settings->PasswordHash) < 0)
+				if (!nla_set_identity_from_settings(nla, settings, FreeRDP_Username, FreeRDP_Domain,
+				                                    FreeRDP_PasswordHash))
 					return FALSE;
 
 				/**
@@ -414,8 +448,8 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 
 		if (usePassword)
 		{
-			if (sspi_SetAuthIdentityA(nla->identity, settings->Username, settings->Domain,
-			                          settings->Password) < 0)
+			if (!nla_set_identity_from_settings(nla, settings, FreeRDP_Username, FreeRDP_Domain,
+			                                    FreeRDP_Password))
 				return FALSE;
 		}
 	}
@@ -1241,13 +1275,13 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 
 		if (!settings->DisableCredentialsDelegation && nla->identity)
 		{
-			username.len = nla->identity->UserLength * 2;
+			username.len = nla->identity->UserLength * sizeof(WCHAR);
 			username.data = (BYTE*)nla->identity->User;
 
-			domain.len = nla->identity->DomainLength * 2;
+			domain.len = nla->identity->DomainLength * sizeof(WCHAR);
 			domain.data = (BYTE*)nla->identity->Domain;
 
-			password.len = nla->identity->PasswordLength * 2;
+			password.len = nla->identity->PasswordLength * sizeof(WCHAR);
 			password.data = (BYTE*)nla->identity->Password;
 		}
 
