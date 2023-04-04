@@ -516,9 +516,9 @@ fail:
 	return rc;
 }
 
-static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
+static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 {
-	int status = -1;
+	SSIZE_T status = -1;
 	UINT32 statusCode;
 	HttpResponse* response;
 	RpcInChannel* inChannel;
@@ -645,7 +645,7 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 			Stream_SetPosition(fragment, 0);
 
 			/* Ignore errors, the PDU might not be complete. */
-			rts_read_common_pdu_header(fragment, &header);
+			rts_read_common_pdu_header(fragment, &header, TRUE);
 			Stream_SetPosition(fragment, pos);
 
 			if (header.frag_length > rpc->max_recv_frag)
@@ -945,7 +945,7 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t 
 		return -1;
 
 	Stream_StaticConstInit(&s, buffer, length);
-	if (!rts_read_common_pdu_header(&s, &header))
+	if (!rts_read_common_pdu_header(&s, &header, FALSE))
 		return -1;
 
 	clientCall = rpc_client_call_find_by_id(inChannel->common.client, header.call_id);

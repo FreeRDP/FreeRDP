@@ -177,13 +177,22 @@ static BOOL rts_write_common_pdu_header(wStream* s, const rpcconn_common_hdr_t* 
 	return TRUE;
 }
 
-BOOL rts_read_common_pdu_header(wStream* s, rpcconn_common_hdr_t* header)
+BOOL rts_read_common_pdu_header(wStream* s, rpcconn_common_hdr_t* header, BOOL ignoreErrors)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(rpcconn_common_hdr_t)))
-		return FALSE;
+	if (!ignoreErrors)
+	{
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(rpcconn_common_hdr_t)))
+			return FALSE;
+	}
+	else
+	{
+		const size_t sz = Stream_GetRemainingLength(s);
+		if (sz < sizeof(rpcconn_common_hdr_t))
+			return FALSE;
+	}
 
 	Stream_Read_UINT8(s, header->rpc_vers);
 	Stream_Read_UINT8(s, header->rpc_vers_minor);
@@ -195,12 +204,25 @@ BOOL rts_read_common_pdu_header(wStream* s, rpcconn_common_hdr_t* header)
 	Stream_Read_UINT32(s, header->call_id);
 
 	if (header->frag_length < sizeof(rpcconn_common_hdr_t))
+	{
+		if (!ignoreErrors)
+			WLog_WARN(TAG, "Invalid header->frag_length of %" PRIu16 ", expected %" PRIuz,
+			          header->frag_length, sizeof(rpcconn_common_hdr_t));
 		return FALSE;
+	}
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s,
-	                                      header->frag_length - sizeof(rpcconn_common_hdr_t)))
-		return FALSE;
-
+	if (!ignoreErrors)
+	{
+		if (!Stream_CheckAndLogRequiredLength(TAG, s,
+		                                      header->frag_length - sizeof(rpcconn_common_hdr_t)))
+			return FALSE;
+	}
+	else
+	{
+		const size_t sz2 = Stream_GetRemainingLength(s);
+		if (sz2 < header->frag_length - sizeof(rpcconn_common_hdr_t))
+			return FALSE;
+	}
 	return TRUE;
 }
 
@@ -1093,7 +1115,7 @@ BOOL rts_read_pdu_header(wStream* s, rpcconn_hdr_t* header)
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	if (!rts_read_common_pdu_header(s, &header->common))
+	if (!rts_read_common_pdu_header(s, &header->common, FALSE))
 		return FALSE;
 
 	WLog_DBG(TAG, "Reading PDU type %s", rts_pdu_ptype_to_string(header->common.ptype));
