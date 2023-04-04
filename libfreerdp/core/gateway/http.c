@@ -519,7 +519,9 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 			goto fail;
 	}
 
-	Stream_Write(s, "\r\n", 2);
+	if (!http_encode_print(s, "\r\n"))
+		goto fail;
+
 	Stream_SealLength(s);
 	return s;
 fail:
