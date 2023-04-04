@@ -446,6 +446,7 @@ static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 	UINT32 magic;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
 	context->decodedHeaderBlocks &= ~RFX_DECODED_SYNC;
 
 	/* RFX_SYNC */
@@ -455,14 +456,15 @@ static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 	Stream_Read_UINT32(s, magic); /* magic (4 bytes), 0xCACCACCA */
 	if (magic != WF_MAGIC)
 	{
-		WLog_ERR(TAG, "invalid magic number 0x%08" PRIX32 "", magic);
+		WLog_Print(context->priv->log, WLOG_ERROR, "invalid magic number 0x%08" PRIX32 "", magic);
 		return FALSE;
 	}
 
 	Stream_Read_UINT16(s, context->version); /* version (2 bytes), WF_VERSION_1_0 (0x0100) */
 	if (context->version != WF_VERSION_1_0)
 	{
-		WLog_ERR(TAG, "invalid version number 0x%08" PRIX32 "", context->version);
+		WLog_Print(context->priv->log, WLOG_ERROR, "invalid version number 0x%08" PRIX32 "",
+		           context->version);
 		return FALSE;
 	}
 
@@ -476,6 +478,7 @@ static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 	BYTE numCodecs;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
 	context->decodedHeaderBlocks &= ~RFX_DECODED_VERSIONS;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 4))
@@ -488,19 +491,22 @@ static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 
 	if (numCodecs != 1)
 	{
-		WLog_ERR(TAG, "numCodes is 0x%02" PRIX8 " (must be 0x01)", numCodecs);
+		WLog_Print(context->priv->log, WLOG_ERROR, "numCodes is 0x%02" PRIX8 " (must be 0x01)",
+		           numCodecs);
 		return FALSE;
 	}
 
 	if (context->codec_id != 0x01)
 	{
-		WLog_ERR(TAG, "invalid codec id (0x%02" PRIX32 ")", context->codec_id);
+		WLog_Print(context->priv->log, WLOG_ERROR, "invalid codec id (0x%02" PRIX32 ")",
+		           context->codec_id);
 		return FALSE;
 	}
 
 	if (context->codec_version != WF_VERSION_1_0)
 	{
-		WLog_ERR(TAG, "invalid codec version (0x%08" PRIX32 ")", context->codec_version);
+		WLog_Print(context->priv->log, WLOG_ERROR, "invalid codec version (0x%08" PRIX32 ")",
+		           context->codec_version);
 		return FALSE;
 	}
 
@@ -516,6 +522,7 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 	BYTE numChannels;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
 	context->decodedHeaderBlocks &= ~RFX_DECODED_CHANNELS;
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 1))
@@ -528,11 +535,11 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 	 */
 	if (numChannels < 1)
 	{
-		WLog_ERR(TAG, "no channels announced");
+		WLog_Print(context->priv->log, WLOG_ERROR, "no channels announced");
 		return FALSE;
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, numChannels, 5ull))
+	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(context->priv->log, s, numChannels, 5ull))
 		return FALSE;
 
 	/* RFX_CHANNELT */
@@ -540,7 +547,8 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 
 	if (channelId != 0x00)
 	{
-		WLog_ERR(TAG, "channelId:0x%02" PRIX8 ", expected:0x00", channelId);
+		WLog_Print(context->priv->log, WLOG_ERROR, "channelId:0x%02" PRIX8 ", expected:0x00",
+		           channelId);
 		return FALSE;
 	}
 
@@ -549,8 +557,9 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 
 	if (!context->width || !context->height)
 	{
-		WLog_ERR(TAG, "invalid channel with/height: %" PRIu16 "x%" PRIu16 "", context->width,
-		         context->height);
+		WLog_Print(context->priv->log, WLOG_ERROR,
+		           "invalid channel with/height: %" PRIu16 "x%" PRIu16 "", context->width,
+		           context->height);
 		return FALSE;
 	}
 
@@ -607,7 +616,7 @@ static BOOL rfx_process_message_context(RFX_CONTEXT* context, wStream* s)
 			break;
 
 		default:
-			WLog_ERR(TAG, "unknown RLGR algorithm.");
+			WLog_Print(context->priv->log, WLOG_ERROR, "unknown RLGR algorithm.");
 			return FALSE;
 	}
 
@@ -628,7 +637,7 @@ static BOOL rfx_process_message_frame_begin(RFX_CONTEXT* context, RFX_MESSAGE* m
 
 	if (*pExpectedBlockType != WBT_FRAME_BEGIN)
 	{
-		WLog_ERR(TAG, "message unexpected wants WBT_FRAME_BEGIN");
+		WLog_Print(context->priv->log, WLOG_ERROR, "message unexpected wants WBT_FRAME_BEGIN");
 		return FALSE;
 	}
 
@@ -656,7 +665,7 @@ static BOOL rfx_process_message_frame_end(RFX_CONTEXT* context, RFX_MESSAGE* mes
 
 	if (*pExpectedBlockType != WBT_FRAME_END)
 	{
-		WLog_ERR(TAG, "message unexpected, wants WBT_FRAME_END");
+		WLog_Print(context->priv->log, WLOG_ERROR, "message unexpected, wants WBT_FRAME_END");
 		return FALSE;
 	}
 
@@ -686,12 +695,13 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 	RFX_RECT* tmpRects;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(message);
 	WINPR_ASSERT(pExpectedBlockType);
 
 	if (*pExpectedBlockType != WBT_REGION)
 	{
-		WLog_ERR(TAG, "message unexpected wants WBT_REGION");
+		WLog_Print(context->priv->log, WLOG_ERROR, "message unexpected wants WBT_REGION");
 		return FALSE;
 	}
 
@@ -722,7 +732,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 		return TRUE;
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, message->numRects, 8ull))
+	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(context->priv->log, s, message->numRects, 8ull))
 		return FALSE;
 
 	if (!rfx_resize_rects(message))
@@ -750,13 +760,15 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 
 	if (regionType != CBT_REGION)
 	{
-		WLog_ERR(TAG, "invalid region type 0x%04" PRIX16 "", regionType);
+		WLog_Print(context->priv->log, WLOG_ERROR, "invalid region type 0x%04" PRIX16 "",
+		           regionType);
 		return TRUE;
 	}
 
 	if (numTileSets != 0x0001)
 	{
-		WLog_ERR(TAG, "invalid number of tilesets (%" PRIu16 ")", numTileSets);
+		WLog_Print(context->priv->log, WLOG_ERROR, "invalid number of tilesets (%" PRIu16 ")",
+		           numTileSets);
 		return FALSE;
 	}
 
@@ -795,12 +807,13 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	void* pmem;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
 	WINPR_ASSERT(message);
 	WINPR_ASSERT(pExpectedBlockType);
 
 	if (*pExpectedBlockType != WBT_EXTENSION)
 	{
-		WLog_ERR(TAG, "message unexpected wants a tileset");
+		WLog_Print(context->priv->log, WLOG_ERROR, "message unexpected wants a tileset");
 		return FALSE;
 	}
 
@@ -812,7 +825,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	Stream_Read_UINT16(s, subtype); /* subtype (2 bytes) must be set to CBT_TILESET (0xCAC2) */
 	if (subtype != CBT_TILESET)
 	{
-		WLog_ERR(TAG, "invalid subtype, expected CBT_TILESET.");
+		WLog_Print(context->priv->log, WLOG_ERROR, "invalid subtype, expected CBT_TILESET.");
 		return FALSE;
 	}
 
@@ -823,7 +836,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 	if (context->numQuant < 1)
 	{
-		WLog_ERR(TAG, "no quantization value.");
+		WLog_Print(context->priv->log, WLOG_ERROR, "no quantization value.");
 		return FALSE;
 	}
 
@@ -843,7 +856,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	quants = context->quants = (UINT32*)pmem;
 
 	/* quantVals */
-	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, context->numQuant, 5ull))
+	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(context->priv->log, s, context->numQuant, 5ull))
 		return FALSE;
 
 	for (i = 0; i < context->numQuant; i++)
@@ -920,7 +933,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 
 			if (!(tile = (RFX_TILE*)ObjectPool_Take(context->priv->TilePool)))
 			{
-				WLog_ERR(TAG, "RfxMessageTileSet failed to get tile from object pool");
+				WLog_Print(context->priv->log, WLOG_ERROR,
+				           "RfxMessageTileSet failed to get tile from object pool");
 				rc = FALSE;
 				break;
 			}
@@ -930,8 +944,9 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			/* RFX_TILE */
 			if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 6))
 			{
-				WLog_ERR(TAG, "RfxMessageTileSet packet too small to read tile %d/%" PRIu16 "", i,
-				         message->numTiles);
+				WLog_Print(context->priv->log, WLOG_ERROR,
+				           "RfxMessageTileSet packet too small to read tile %d/%" PRIu16 "", i,
+				           message->numTiles);
 				rc = FALSE;
 				break;
 			}
@@ -949,18 +964,19 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 			if ((blockLen < 6 + 13) ||
 			    (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, sub, blockLen - 6)))
 			{
-				WLog_ERR(TAG,
-				         "RfxMessageTileSet not enough bytes to read tile %d/%" PRIu16
-				         " with blocklen=%" PRIu32 "",
-				         i, message->numTiles, blockLen);
+				WLog_Print(context->priv->log, WLOG_ERROR,
+				           "RfxMessageTileSet not enough bytes to read tile %d/%" PRIu16
+				           " with blocklen=%" PRIu32 "",
+				           i, message->numTiles, blockLen);
 				rc = FALSE;
 				break;
 			}
 
 			if (blockType != CBT_TILE)
 			{
-				WLog_ERR(TAG, "unknown block type 0x%" PRIX32 ", expected CBT_TILE (0xCAC3).",
-				         blockType);
+				WLog_Print(context->priv->log, WLOG_ERROR,
+				           "unknown block type 0x%" PRIX32 ", expected CBT_TILE (0xCAC3).",
+				           blockType);
 				rc = FALSE;
 				break;
 			}
@@ -1009,7 +1025,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 				          CreateThreadpoolWork(rfx_process_message_tile_work_callback,
 				                               (void*)&params[i], &context->priv->ThreadPoolEnv)))
 				{
-					WLog_ERR(TAG, "CreateThreadpoolWork failed.");
+					WLog_Print(context->priv->log, WLOG_ERROR, "CreateThreadpoolWork failed.");
 					rc = FALSE;
 					break;
 				}
@@ -1083,7 +1099,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 
 		if (blockLen < 6)
 		{
-			WLog_ERR(TAG, "blockLen too small(%" PRIu32 ")", blockLen);
+			WLog_Print(context->priv->log, WLOG_ERROR, "blockLen too small(%" PRIu32 ")", blockLen);
 			return FALSE;
 		}
 
@@ -1092,7 +1108,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 
 		if (blockType > WBT_CONTEXT && context->decodedHeaderBlocks != RFX_DECODED_HEADERS)
 		{
-			WLog_ERR(TAG, "incomplete header blocks processing");
+			WLog_Print(context->priv->log, WLOG_ERROR, "incomplete header blocks processing");
 			return FALSE;
 		}
 
@@ -1111,7 +1127,8 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 
 			if (codecId != 0x01)
 			{
-				WLog_ERR(TAG, "invalid codecId 0x%02" PRIX8 "", codecId);
+				WLog_Print(context->priv->log, WLOG_ERROR, "invalid codecId 0x%02" PRIX8 "",
+				           codecId);
 				return FALSE;
 			}
 
@@ -1120,8 +1137,9 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 				/* If the blockType is set to WBT_CONTEXT, then channelId MUST be set to 0xFF.*/
 				if (channelId != 0xFF)
 				{
-					WLog_ERR(TAG, "invalid channelId 0x%02" PRIX8 " for blockType 0x%08" PRIX32 "",
-					         channelId, blockType);
+					WLog_Print(context->priv->log, WLOG_ERROR,
+					           "invalid channelId 0x%02" PRIX8 " for blockType 0x%08" PRIX32 "",
+					           channelId, blockType);
 					return FALSE;
 				}
 			}
@@ -1130,8 +1148,9 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 				/* For all other values of blockType, channelId MUST be set to 0x00. */
 				if (channelId != 0x00)
 				{
-					WLog_ERR(TAG, "invalid channelId 0x%02" PRIX8 " for blockType WBT_CONTEXT",
-					         channelId);
+					WLog_Print(context->priv->log, WLOG_ERROR,
+					           "invalid channelId 0x%02" PRIX8 " for blockType WBT_CONTEXT",
+					           channelId);
 					return FALSE;
 				}
 			}
@@ -1191,7 +1210,8 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 				break;
 
 			default:
-				WLog_ERR(TAG, "unknown blockType 0x%" PRIX32 "", blockType);
+				WLog_Print(context->priv->log, WLOG_ERROR, "unknown blockType 0x%" PRIX32 "",
+				           blockType);
 				return FALSE;
 		}
 	}
@@ -1244,9 +1264,10 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 				                        NULL, FREERDP_FLIP_NONE))
 				{
 					region16_uninit(&updateRegion);
-					WLog_ERR(TAG,
-					         "nbUpdateRectx[% " PRIu32 " (%" PRIu32 ")] freerdp_image_copy failed",
-					         j, nbUpdateRects);
+					WLog_Print(context->priv->log, WLOG_ERROR,
+					           "nbUpdateRectx[% " PRIu32 " (%" PRIu32
+					           ")] freerdp_image_copy failed",
+					           j, nbUpdateRects);
 					return FALSE;
 				}
 
@@ -1261,7 +1282,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 		return TRUE;
 	}
 
-	WLog_ERR(TAG, "failed");
+	WLog_Print(context->priv->log, WLOG_ERROR, "failed");
 	return FALSE;
 }
 
@@ -1722,7 +1743,7 @@ skip_encoding_loop:
 		return message;
 	}
 
-	WLog_ERR(TAG, "failed");
+	WLog_Print(context->priv->log, WLOG_ERROR, "failed");
 	message->freeRects = TRUE;
 	rfx_message_free(context, message);
 	return NULL;
