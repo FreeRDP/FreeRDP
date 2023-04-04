@@ -111,6 +111,13 @@ BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bind
 	const rdpSettings* settings = auth->rdp_ctx->settings;
 	WINPR_ASSERT(settings);
 
+	char name[64] = { 0 };
+#if defined(UNICODE)
+	ConvertWCharToUtf8(pkg_name, name, ARRAYSIZE(name));
+#else
+	strncpy(name, pkg_name, ARRAYSIZE(name));
+#endif
+
 	auth->table = auth_resolve_sspi_table(settings);
 	if (!auth->table)
 	{
@@ -123,12 +130,12 @@ BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name, SecPkgContext_Bind
 	const SECURITY_STATUS status = auth->table->QuerySecurityPackageInfo(pkg_name, &auth->info);
 	if (status != SEC_E_OK)
 	{
-		WLog_ERR(TAG, "QuerySecurityPackageInfo (%s) failed with %s [0x%08X]", pkg_name,
+		WLog_ERR(TAG, "QuerySecurityPackageInfo (%s) failed with %s [0x%08X]", name,
 		         GetSecurityStatusString(status), status);
 		return FALSE;
 	}
 
-	WLog_DBG(TAG, "Using package: %s (cbMaxToken: %u bytes)", pkg_name, auth->info->cbMaxToken);
+	WLog_DBG(TAG, "Using package: %s (cbMaxToken: %u bytes)", name, auth->info->cbMaxToken);
 
 	/* Setup common identity settings */
 	if (!credssp_auth_setup_identity(auth))
