@@ -423,7 +423,7 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 
 	if (status == SEC_E_OK)
 	{
-		WLog_DBG(TAG, "Authentication complete (output token size: %lu bytes)",
+		WLog_DBG(TAG, "Authentication complete (output token size: %" PRIu32 " bytes)",
 		         auth->output_buffer.cbBuffer);
 		auth->state = AUTH_STATE_FINAL;
 
@@ -439,7 +439,7 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 	}
 	else if (status == SEC_I_CONTINUE_NEEDED)
 	{
-		WLog_DBG(TAG, "Authentication in progress... (output token size: %lu)",
+		WLog_DBG(TAG, "Authentication in progress... (output token size: %" PRIu32 ")",
 		         auth->output_buffer.cbBuffer);
 		auth->state = AUTH_STATE_IN_PROGRESS;
 		return 0;
