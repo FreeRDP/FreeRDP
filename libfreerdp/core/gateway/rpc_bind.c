@@ -394,6 +394,8 @@ int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 	if (!sbuffer)
 		return -1;
 
+	WLog_INFO(TAG, "xxxxxx %p [%" PRIu32 "]", sbuffer->pvBuffer, sbuffer->cbBuffer);
+
 	auth_3_pdu.header = rpc_pdu_header_init(rpc);
 	auth_3_pdu.header.auth_length = (UINT16)sbuffer->cbBuffer;
 	auth_3_pdu.auth_verifier.auth_value = sbuffer->pvBuffer;
