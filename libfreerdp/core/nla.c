@@ -385,10 +385,19 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 
 		if (settings->RedirectionPassword && (settings->RedirectionPasswordLength > 0))
 		{
-			if (sspi_SetAuthIdentityWithUnicodePassword(
-			        nla->identity, settings->Username, settings->Domain,
-			        (const WCHAR*)settings->RedirectionPassword,
-			        settings->RedirectionPasswordLength / sizeof(WCHAR) - 1) < 0)
+			size_t userLength = 0;
+			size_t domainLength = 0;
+			WCHAR* user =
+			    freerdp_settings_get_string_as_utf16(settings, FreeRDP_Username, &userLength);
+			WCHAR* domain =
+			    freerdp_settings_get_string_as_utf16(settings, FreeRDP_Domain, &domainLength);
+			const int rc = sspi_SetAuthIdentityWithLengthW(
+			    nla->identity, user, userLength, domain, domainLength,
+			    (const WCHAR*)settings->RedirectionPassword,
+			    settings->RedirectionPasswordLength / sizeof(WCHAR) - 1);
+			free(user);
+			free(domain);
+			if (rc < 0)
 				return FALSE;
 
 			usePassword = FALSE;
