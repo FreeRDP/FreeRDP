@@ -46,6 +46,7 @@
 #include "utils.h"
 #include "credssp_auth.h"
 #include <freerdp/utils/smartcardlogon.h>
+#include "settings.h"
 
 #define TAG FREERDP_TAG("core.nla")
 
@@ -270,52 +271,6 @@ out:
 	return ret;
 }
 
-static void zfree(WCHAR* str, size_t len)
-{
-	if (str)
-		memset(str, 0, len * sizeof(WCHAR));
-	free(str);
-}
-
-static BOOL nla_set_identity_from_settings_with_pwd(rdpNla* nla, const rdpSettings* settings,
-                                                    size_t UserId, size_t DomainId,
-                                                    const WCHAR* Password, size_t pwdLen)
-{
-	WINPR_ASSERT(nla);
-	WINPR_ASSERT(settings);
-
-	size_t UserLen = 0;
-	size_t DomainLen = 0;
-
-	WCHAR* Username = freerdp_settings_get_string_as_utf16(settings, UserId, &UserLen);
-	WCHAR* Domain = freerdp_settings_get_string_as_utf16(settings, DomainId, &DomainLen);
-
-	sspi_FreeAuthIdentity(nla->identity);
-	const int rc = sspi_SetAuthIdentityWithLengthW(nla->identity, Username, UserLen, Domain,
-	                                               DomainLen, Password, pwdLen);
-	zfree(Username, UserLen);
-	zfree(Domain, DomainLen);
-	if (rc < 0)
-		return FALSE;
-	return TRUE;
-}
-
-static BOOL nla_set_identity_from_settings(rdpNla* nla, const rdpSettings* settings, size_t UserId,
-                                           size_t DomainId, size_t PwdId)
-{
-	WINPR_ASSERT(nla);
-	WINPR_ASSERT(settings);
-
-	size_t PwdLen = 0;
-
-	WCHAR* Password = freerdp_settings_get_string_as_utf16(settings, PwdId, &PwdLen);
-
-	const BOOL rc =
-	    nla_set_identity_from_settings_with_pwd(nla, settings, UserId, DomainId, Password, PwdLen);
-	zfree(Password, PwdLen);
-	return rc;
-}
-
 static BOOL nla_client_setup_identity(rdpNla* nla)
 {
 	BOOL PromptPassword = FALSE;
@@ -402,33 +357,10 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 				return FALSE;
 		}
 
-#ifdef _WIN32
-		CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
-		LPWSTR marshalledCredentials = NULL;
-
-		memcpy(certInfo.rgbHashOfCert, nla->certSha1, sizeof(certInfo.rgbHashOfCert));
-
-		if (!CredMarshalCredentialW(CertCredential, &certInfo, &marshalledCredentials))
-		{
-			WLog_ERR(TAG, "error marshalling cert credentials");
+		if (!identity_set_from_smartcard_hash(nla->identity, settings, FreeRDP_Username,
+		                                      FreeRDP_Domain, FreeRDP_Password, nla->certSha1,
+		                                      sizeof(nla->certSha1)))
 			return FALSE;
-		}
-
-		size_t pwdLen = 0;
-		WCHAR* Password = freerdp_settings_get_string_as_utf16(settings, FreeRDP_Password, &pwdLen);
-		const int rc = sspi_SetAuthIdentityWithLengthW(nla->identity, marshalledCredentials,
-		                                               _wcslen(marshalledCredentials), NULL, 0,
-		                                               Password, pwdLen);
-		zfree(Password, pwdLen);
-		CredFree(marshalledCredentials);
-		if (rc < 0)
-			return FALSE;
-
-#else
-		if (!nla_set_identity_from_settings(nla, settings, FreeRDP_Username, FreeRDP_Domain,
-		                                    FreeRDP_Password))
-			return FALSE;
-#endif /* _WIN32 */
 	}
 	else
 	{
@@ -436,8 +368,8 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 
 		if (settings->RedirectionPassword && (settings->RedirectionPasswordLength > 0))
 		{
-			if (!nla_set_identity_from_settings_with_pwd(
-			        nla, settings, FreeRDP_Username, FreeRDP_Domain,
+			if (!identity_set_from_settings_with_pwd(
+			        nla->identity, settings, FreeRDP_Username, FreeRDP_Domain,
 			        (const WCHAR*)settings->RedirectionPassword,
 			        settings->RedirectionPasswordLength / sizeof(WCHAR)))
 				return FALSE;
@@ -449,8 +381,8 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 		{
 			if (settings->PasswordHash && strlen(settings->PasswordHash) == 32)
 			{
-				if (!nla_set_identity_from_settings(nla, settings, FreeRDP_Username, FreeRDP_Domain,
-				                                    FreeRDP_PasswordHash))
+				if (!identity_set_from_settings(nla->identity, settings, FreeRDP_Username,
+				                                FreeRDP_Domain, FreeRDP_PasswordHash))
 					return FALSE;
 
 				/**
@@ -465,8 +397,8 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 
 		if (usePassword)
 		{
-			if (!nla_set_identity_from_settings(nla, settings, FreeRDP_Username, FreeRDP_Domain,
-			                                    FreeRDP_Password))
+			if (!identity_set_from_settings(nla->identity, settings, FreeRDP_Username,
+			                                FreeRDP_Domain, FreeRDP_Password))
 				return FALSE;
 		}
 	}

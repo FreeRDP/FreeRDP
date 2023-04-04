@@ -22,6 +22,7 @@
 #define FREERDP_LIB_CORE_SETTINGS_H
 
 #include <winpr/string.h>
+#include <winpr/sspi.h>
 
 #include <freerdp/config.h>
 
@@ -39,5 +40,17 @@ FREERDP_LOCAL BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id
 FREERDP_LOCAL BOOL freerdp_settings_set_string_copy_(rdpSettings* settings, size_t id,
                                                      const char* val, size_t len, BOOL cleanup);
 FREERDP_LOCAL BOOL freerdp_capability_buffer_allocate(rdpSettings* settings, UINT32 count);
+
+FREERDP_LOCAL BOOL identity_set_from_settings_with_pwd(SEC_WINNT_AUTH_IDENTITY_W* identity,
+                                                       const rdpSettings* settings, size_t UserId,
+                                                       size_t DomainId, const WCHAR* Password,
+                                                       size_t pwdLen);
+FREERDP_LOCAL BOOL identity_set_from_settings(SEC_WINNT_AUTH_IDENTITY_W* identity,
+                                              const rdpSettings* settings, size_t UserId,
+                                              size_t DomainId, size_t PwdId);
+FREERDP_LOCAL BOOL identity_set_from_smartcard_hash(SEC_WINNT_AUTH_IDENTITY_W* identity,
+                                                    const rdpSettings* settings, size_t userId,
+                                                    size_t domainId, size_t pwdId,
+                                                    const BYTE* certSha1, size_t sha1len);
 
 #endif /* FREERDP_LIB_CORE_SETTINGS_H */

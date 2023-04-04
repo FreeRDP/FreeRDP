@@ -27,6 +27,7 @@
 #include <winpr/dsparse.h>
 
 #include "../utils.h"
+#include "../settings.h"
 
 #define TAG FREERDP_TAG("core.gateway.ntlm")
 
@@ -176,8 +177,8 @@ BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel)
 	if (!credssp_auth_init(auth, AUTH_PKG, tls->Bindings))
 		return FALSE;
 
-	if (sspi_SetAuthIdentityA(&identity, settings->GatewayUsername, settings->GatewayDomain,
-	                          settings->GatewayPassword) < 0)
+	if (!identity_set_from_settings(&identity, settings, FreeRDP_GatewayUsername,
+	                                FreeRDP_GatewayDomain, FreeRDP_GatewayPassword))
 		return FALSE;
 
 	const BOOL res =
