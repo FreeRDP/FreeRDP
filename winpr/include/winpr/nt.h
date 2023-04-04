@@ -1560,6 +1560,7 @@ extern "C"
 #endif
 
 	WINPR_API const char* NtStatus2Tag(DWORD ntstatus);
+	WINPR_API const char* Win32ErrorCode2Tag(UINT16 code);
 
 #ifdef __cplusplus
 }
