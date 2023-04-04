@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <io.h>
 #include <conio.h>
+#include <wincred.h>
 
 static char read_chr(FILE* f)
 {
@@ -42,84 +43,25 @@ static char read_chr(FILE* f)
 
 int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 {
-	HANDLE handles[] = { (HANDLE)_get_osfhandle(_fileno(f)), freerdp_abort_event(context) };
-
-	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
-	switch (status)
-	{
-		case WAIT_OBJECT_0:
-			return read_chr(f);
-		default:
-			return EOF;
-	}
+	return read_chr(f);
 }
 
 char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf, size_t bufsiz,
                               int from_stdin)
 {
-#define CTRLC 3
-#define BACKSPACE '\b'
-#define NEWLINE '\n'
-#define CARRIAGERETURN '\r'
-#define SHOW_ASTERISK TRUE
-
-	size_t read_cnt = 0, chr;
-
-	if (from_stdin)
-	{
-		printf("%s ", prompt);
-		fflush(stdout);
-		while (read_cnt < bufsiz - 1 && (chr = freerdp_interruptible_getc(context, stdin)) &&
-		       chr != NEWLINE && chr != CARRIAGERETURN)
-		{
-			switch (chr)
-			{
-				case EOF:
-					goto end;
-				case BACKSPACE:
-				{
-					if (read_cnt > 0)
-					{
-						if (SHOW_ASTERISK)
-							printf("\b \b");
-						read_cnt--;
-					}
-				}
-				break;
-				case CTRLC:
-				{
-					if (read_cnt != 0)
-					{
-						while (read_cnt > 0)
-						{
-							if (SHOW_ASTERISK)
-								printf("\b \b");
-							read_cnt--;
-						}
-					}
-					else
-						goto fail;
-				}
-				break;
-				default:
-				{
-					*(buf + read_cnt) = chr;
-					read_cnt++;
-					if (SHOW_ASTERISK)
-						printf("*");
-				}
-				break;
-			}
-		}
-	end:
-		*(buf + read_cnt) = '\0';
-		printf("\n");
-		fflush(stdout);
-		return buf;
-	}
-fail:
-	errno = ENOSYS;
-	return NULL;
+	WCHAR UserNameW[CREDUI_MAX_USERNAME_LENGTH + 1] = { 'p', 'r', 'e', 'f', 'i',
+		                                                'l', 'l', 'e', 'd', '\0' };
+	WCHAR PasswordW[CREDUI_MAX_PASSWORD_LENGTH + 1] = { 0 };
+	BOOL fSave = FALSE;
+	DWORD dwFlags = 0;
+	WCHAR* promptW = ConvertUtf8ToWCharAlloc(prompt, NULL);
+	const DWORD status =
+	    CredUICmdLinePromptForCredentialsW(promptW, NULL, 0, UserNameW, ARRAYSIZE(UserNameW),
+	                                       PasswordW, ARRAYSIZE(PasswordW), &fSave, dwFlags);
+	free(promptW);
+	if (ConvertWCharNToUtf8(PasswordW, ARRAYSIZE(PasswordW), buf, bufsiz) < 0)
+		return NULL;
+	return buf;
 }
 
 #elif !defined(ANDROID)
