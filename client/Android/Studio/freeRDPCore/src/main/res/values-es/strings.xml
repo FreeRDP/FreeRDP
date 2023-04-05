@@ -127,6 +127,7 @@
     <string name="settings_ui_invert_scrolling">invertir desplazamiento</string>
     <string name="settings_ui_auto_scroll_touchpointer">Puntero táctil de desplazamiento automático</string>
     <string name="settings_ui_ask_on_exit">Mostrar cuadro de diálogo en la salida</string>
+    <string name="settings_ui_use_back_as_altf4">Usar el botón "atrás" como Alt+F4</string>
     <string name="settings_cat_power">Ahorro de energía</string>
     <string name="settings_power_disconnect_timeout">Cerrar las conexiones inactivas</string>
     <string name="settings_cat_security">Seguridad</string>

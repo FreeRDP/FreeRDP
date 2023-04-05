@@ -27,4 +27,8 @@
         android:defaultValue="true"
         android:key="@string/preference_key_ui_hide_action_bar"
         android:title="@string/settings_ui_hide_action_bar" />
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="@string/preference_key_ui_use_back_as_altf4"
+        android:title="@string/settings_ui_use_back_as_altf4" />
 </PreferenceScreen>

@@ -126,6 +126,7 @@
     <string name="settings_ui_invert_scrolling">Invertiere Bildlauf</string>
     <string name="settings_ui_auto_scroll_touchpointer">Touch Zeiger automatischer Bildlauf</string>
     <string name="settings_ui_ask_on_exit">Zeige Dialog beim Beenden</string>
+    <string name="settings_ui_use_back_as_altf4">Verwenden Sie die "Zurück"-Taste als Alt+F4</string>
     <string name="settings_cat_power">Energiesparen</string>
     <string name="settings_power_disconnect_timeout">Schließe ungenutzte Verbindungen</string>
     <string name="settings_cat_security">Sicherheit</string>
