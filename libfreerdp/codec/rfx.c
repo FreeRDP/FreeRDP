@@ -1288,13 +1288,37 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 	return FALSE;
 }
 
-UINT16 rfx_message_get_tile_count(RFX_MESSAGE* message)
+const UINT32* rfx_message_get_quants(const RFX_MESSAGE* message, UINT16* numQuantVals)
+{
+	WINPR_ASSERT(message);
+	if (numQuantVals)
+		*numQuantVals = message->numQuant;
+	return message->quantVals;
+}
+
+const RFX_TILE** rfx_message_get_tiles(const RFX_MESSAGE* message, UINT16* numTiles)
+{
+	WINPR_ASSERT(message);
+	if (numTiles)
+		*numTiles = message->numTiles;
+	return message->tiles;
+}
+
+UINT16 rfx_message_get_tile_count(const RFX_MESSAGE* message)
 {
 	WINPR_ASSERT(message);
 	return message->numTiles;
 }
 
-UINT16 rfx_message_get_rect_count(RFX_MESSAGE* message)
+const RFX_RECT* rfx_message_get_rects(const RFX_MESSAGE* message, UINT16* numRects)
+{
+	WINPR_ASSERT(message);
+	if (numRects)
+		*numRects = message->numRects;
+	return message->rects;
+}
+
+UINT16 rfx_message_get_rect_count(const RFX_MESSAGE* message)
 {
 	WINPR_ASSERT(message);
 	return message->numRects;
@@ -1427,7 +1451,6 @@ static BOOL rfx_write_tile(RFX_CONTEXT* context, wStream* s, RFX_TILE* tile)
 	if (!Stream_EnsureRemainingCapacity(s, blockLen))
 		return FALSE;
 
-	WINPR_ASSERT(tile);
 	Stream_Write_UINT16(s, CBT_TILE);           /* BlockT.blockType (2 bytes) */
 	Stream_Write_UINT32(s, blockLen);           /* BlockT.blockLen (4 bytes) */
 	Stream_Write_UINT8(s, tile->quantIdxY);     /* quantIdxY (1 byte) */
@@ -1815,25 +1838,55 @@ free_messages:
 	return NULL;
 }
 
-RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, size_t numRects,
-                                 const BYTE* data, UINT32 width, UINT32 height, UINT32 scanline,
-                                 size_t* numMessages, size_t maxDataSize)
+const RFX_MESSAGE* rfx_message_list_get(const RFX_MESSAGE_LIST* messages, size_t idx)
 {
+	WINPR_ASSERT(messages);
+	if (idx >= messages->count)
+		return NULL;
+	WINPR_ASSERT(messages->list);
+	return &messages->list[idx];
+}
+
+void rfx_message_list_free(RFX_MESSAGE_LIST* messages)
+{
+	if (!messages)
+		return;
+	for (size_t x = 0; x < messages->count; x++)
+		rfx_message_free(messages->context, &messages->list[x]);
+	free(messages);
+}
+
+static RFX_MESSAGE_LIST* rfx_message_list_new(RFX_CONTEXT* context, RFX_MESSAGE* messages,
+                                              size_t count)
+{
+	WINPR_ASSERT(context);
+	RFX_MESSAGE_LIST* msg = calloc(1, sizeof(RFX_MESSAGE_LIST));
+	WINPR_ASSERT(msg);
+
+	msg->context = context;
+	msg->count = count;
+	msg->list = messages;
+	return msg;
+}
+
+RFX_MESSAGE_LIST* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, size_t numRects,
+                                      const BYTE* data, UINT32 width, UINT32 height,
+                                      UINT32 scanline, size_t* numMessages, size_t maxDataSize)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(numMessages);
 
 	RFX_MESSAGE* message =
 	    rfx_encode_message(context, rects, numRects, data, width, height, scanline);
 	if (!message)
 		return NULL;
 
-	RFX_MESSAGE* messageList = rfx_split_message(context, message, numMessages, maxDataSize);
-	if (!messageList)
-	{
-		rfx_message_free(context, message);
-		return NULL;
-	}
-
+	RFX_MESSAGE* list = rfx_split_message(context, message, numMessages, maxDataSize);
 	rfx_message_free(context, message);
-	return messageList;
+	if (!list)
+		return NULL;
+
+	return rfx_message_list_new(context, list, *numMessages);
 }
 
 static BOOL rfx_write_message_tileset(RFX_CONTEXT* context, wStream* s, const RFX_MESSAGE* message)
@@ -1988,4 +2041,23 @@ BOOL rfx_compose_message(RFX_CONTEXT* context, wStream* s, const RFX_RECT* rects
 	const BOOL ret = rfx_write_message(context, s, message);
 	rfx_message_free(context, message);
 	return ret;
+}
+
+BOOL rfx_context_set_mode(RFX_CONTEXT* context, RLGR_MODE mode)
+{
+	WINPR_ASSERT(context);
+	context->mode = mode;
+	return TRUE;
+}
+
+UINT32 rfx_context_get_frame_idx(const RFX_CONTEXT* context)
+{
+	WINPR_ASSERT(context);
+	return context->frameIdx;
+}
+
+UINT32 rfx_message_get_frame_idx(const RFX_MESSAGE* message)
+{
+	WINPR_ASSERT(message);
+	return message->frameIdx;
 }

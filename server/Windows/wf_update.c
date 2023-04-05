@@ -130,7 +130,7 @@ void wf_update_encode(wfInfo* wfi)
 		return;
 	}
 
-	wfi->frame_idx = wfi->rfx_context->frameIdx;
+	wfi->frame_idx = rfx_context_get_frame_idx(wfi->rfx_context);
 	cmd->destLeft = wfi->invalid.left;
 	cmd->destTop = wfi->invalid.top;
 	cmd->destRight = wfi->invalid.left + width;
@@ -199,9 +199,8 @@ void wf_update_encoder_reset(wfInfo* wfi)
 		{
 			/* TODO: pass ThreadingFlags somehow */
 			wfi->rfx_context = rfx_context_new(TRUE);
-			wfi->rfx_context->mode = RLGR3;
-			wfi->rfx_context->width = wfi->servscreen_width;
-			wfi->rfx_context->height = wfi->servscreen_height;
+			rfx_context_set_mode(wfi->rfx_context, RLGR3);
+			rfx_context_reset(wfi->rfx_context, wfi->servscreen_width, wfi->servscreen_height);
 			rfx_context_set_pixel_format(wfi->rfx_context, PIXEL_FORMAT_BGRA32);
 			wfi->s = Stream_New(NULL, 0xFFFF);
 		}

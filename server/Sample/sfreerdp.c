@@ -122,7 +122,7 @@ static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 	                       SAMPLE_SERVER_DEFAULT_HEIGHT))
 		goto fail;
 
-	context->rfx_context->mode = RLGR3;
+	rfx_context_set_mode(context->rfx_context, RLGR3);
 	rfx_context_set_pixel_format(context->rfx_context, PIXEL_FORMAT_RGB24);
 
 	if (!(context->nsc_context = nsc_context_new()))
