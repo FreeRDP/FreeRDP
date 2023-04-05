@@ -1511,10 +1511,9 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 	const UINT32 width = (UINT32)w;
 	const UINT32 height = (UINT32)h;
 	const UINT32 scanline = (UINT32)s;
-	UINT32 i, maxNbTiles = 0, maxTilesX, maxTilesY;
-	UINT32 xIdx, yIdx, regionNbRects;
-	UINT32 gridRelX, gridRelY, ax, ay, bytesPerPixel;
-	RFX_RECT* rfxRect;
+	UINT32 maxNbTiles = 0, maxTilesX, maxTilesY;
+	UINT32 regionNbRects;
+	UINT32 ax, ay, bytesPerPixel;
 	RFX_MESSAGE* message = NULL;
 	PTP_WORK* workObject = NULL;
 	RFX_TILE_COMPOSE_WORK_PARAM* workParam = NULL;
@@ -1583,13 +1582,15 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 
 	regionRect = region16_rects(&rectsRegion, &regionNbRects);
 
+	message->freeRects = TRUE;
 	if (!(message->rects = winpr_aligned_calloc(regionNbRects, sizeof(RFX_RECT), 32)))
 		goto skip_encoding_loop;
 
 	message->numRects = regionNbRects;
 
-	for (i = 0, rfxRect = message->rects; i < regionNbRects; i++, regionRect++, rfxRect++)
+	for (UINT32 i = 0; i < regionNbRects; i++, regionRect++)
 	{
+		RFX_RECT* rfxRect = &message->rects[i];
 		UINT32 startTileX = regionRect->left / 64;
 		UINT32 endTileX = (regionRect->right - 1) / 64;
 		UINT32 startTileY = regionRect->top / 64;
@@ -1599,7 +1600,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 		rfxRect->width = (regionRect->right - regionRect->left);
 		rfxRect->height = (regionRect->bottom - regionRect->top);
 
-		for (yIdx = startTileY, gridRelY = startTileY * 64; yIdx <= endTileY;
+		for (UINT32 yIdx = startTileY, gridRelY = startTileY * 64; yIdx <= endTileY;
 		     yIdx++, gridRelY += 64)
 		{
 			UINT32 tileHeight = 64;
@@ -1610,7 +1611,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 			currentTileRect.top = gridRelY;
 			currentTileRect.bottom = gridRelY + tileHeight;
 
-			for (xIdx = startTileX, gridRelX = startTileX * 64; xIdx <= endTileX;
+			for (UINT32 xIdx = startTileX, gridRelX = startTileX * 64; xIdx <= endTileX;
 			     xIdx++, gridRelX += 64)
 			{
 				union
@@ -1719,7 +1720,7 @@ skip_encoding_loop:
 		message->tilesDataSize = 0;
 		workObject = context->priv->workObjects;
 
-		for (i = 0; i < message->numTiles; i++)
+		for (UINT32 i = 0; i < message->numTiles; i++)
 		{
 			RFX_TILE* tile = message->tiles[i];
 
@@ -1820,7 +1821,6 @@ RFX_MESSAGE* rfx_encode_messages(RFX_CONTEXT* context, const RFX_RECT* rects, si
 	RFX_MESSAGE* messageList = rfx_split_message(context, message, numMessages, maxDataSize);
 	if (!messageList)
 	{
-		message->freeRects = TRUE;
 		rfx_message_free(context, message);
 		return NULL;
 	}
@@ -1971,8 +1971,7 @@ BOOL rfx_compose_message(RFX_CONTEXT* context, wStream* s, const RFX_RECT* rects
 	if (!message)
 		return FALSE;
 
-	BOOL ret = rfx_write_message(context, s, message);
-	message->freeRects = TRUE;
+	const BOOL ret = rfx_write_message(context, s, message);
 	rfx_message_free(context, message);
 	return ret;
 }
