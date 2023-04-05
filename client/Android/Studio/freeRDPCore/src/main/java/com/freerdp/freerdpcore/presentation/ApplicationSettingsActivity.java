@@ -250,6 +250,13 @@ public class ApplicationSettingsActivity extends AppCompatPreferenceActivity
 		                              false);
 	}
 
+	public static boolean getUseBackAsAltf4(Context context)
+	{
+		SharedPreferences preferences = get(context);
+		return preferences.getBoolean(
+		    context.getString(R.string.preference_key_ui_use_back_as_altf4), true);
+	}
+
 	public static boolean getAcceptAllCertificates(Context context)
 	{
 		SharedPreferences preferences = get(context);

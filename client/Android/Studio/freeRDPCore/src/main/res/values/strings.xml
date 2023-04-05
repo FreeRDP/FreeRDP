@@ -167,6 +167,7 @@
     <string name="settings_ui_invert_scrolling">Invert Scrolling</string>
     <string name="settings_ui_auto_scroll_touchpointer">Touch Pointer Auto Scroll</string>
     <string name="settings_ui_ask_on_exit">Show Dialog on Exit</string>
+    <string name="settings_ui_use_back_as_altf4">Use \"back\" button as Alt+F4</string>
     <string name="settings_cat_power">Power Saving</string>
     <string name="settings_cat_client">Client</string>
     <string name="settings_power_disconnect_timeout">Close idle Connections</string>
@@ -224,6 +225,7 @@
     <string name="preference_key_ui_swap_mouse_buttons" translatable="false">ui.swap_mouse_buttons</string>
     <string name="preference_key_ui_hide_zoom_controls" translatable="false">ui.hide_zoom_controls</string>
     <string name="preference_key_ui_hide_action_bar" translatable="false">ui.hide_action_bar</string>
+    <string name="preference_key_ui_use_back_as_altf4" translatable="false">ui.use_back_as_altf4</string>
     <string-array name="debug_array" translatable="false">
         <item>OFF</item>
         <item>FATAL</item>

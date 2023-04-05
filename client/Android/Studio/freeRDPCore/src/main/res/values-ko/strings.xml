@@ -167,6 +167,7 @@
     <string name="settings_ui_invert_scrolling">스크롤 뒤집기</string>
     <string name="settings_ui_auto_scroll_touchpointer">터치 포인터 자동 스크롤</string>
     <string name="settings_ui_ask_on_exit">종료할 때 다이얼로그 보이기</string>
+    <string name="settings_ui_use_back_as_altf4">뒤로 버튼을 Alt+F4로 사용</string>
     <string name="settings_cat_power">절전 기능</string>
     <string name="settings_cat_client">클라이언트</string>
     <string name="settings_power_disconnect_timeout">사용하지 않는 연결 종료</string>

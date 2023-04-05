@@ -704,8 +704,10 @@ public class SessionActivity extends AppCompatActivity
 		// hide keyboards (if any visible) or send alt+f4 to the session
 		if (sysKeyboardVisible || extKeyboardVisible)
 			showKeyboard(false, false);
-		else
+		else if (ApplicationSettingsActivity.getUseBackAsAltf4(this))
+		{
 			keyboardMapper.sendAltF4();
+		}
 	}
 
 	@Override public boolean onKeyLongPress(int keyCode, KeyEvent event)

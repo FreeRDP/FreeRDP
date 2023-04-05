@@ -167,6 +167,7 @@
     <string name="settings_ui_invert_scrolling">Inverter rulling</string>
     <string name="settings_ui_auto_scroll_touchpointer">Autorulling for trykkpeker</string>
     <string name="settings_ui_ask_on_exit">Vis dialogvindu ved avslutning</string>
+    <string name="settings_ui_use_back_as_altf4">Bruk "tilbake"-knappen som Alt+F4</string>
     <string name="settings_cat_power">Strømsparing</string>
     <string name="settings_cat_client">Klient</string>
     <string name="settings_power_disconnect_timeout">Lukk tilkoblinger ved lediggang</string>

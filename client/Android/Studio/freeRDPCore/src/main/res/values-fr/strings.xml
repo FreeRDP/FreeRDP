@@ -126,6 +126,7 @@
     <string name="settings_ui_invert_scrolling">"Inverser le défilement de la souris"</string>
     <string name="settings_ui_auto_scroll_touchpointer">"Défilement automatique du pointeur tactile"</string>
     <string name="settings_ui_ask_on_exit">"Confirmer au moment de quitter"</string>
+    <string name="settings_ui_use_back_as_altf4">Utiliser le bouton "retour" comme Alt+F4</string>
     <string name="settings_cat_power">"Economie d'énergie"</string>
     <string name="settings_power_disconnect_timeout">"Fermer les connexions inactives"</string>
     <string name="settings_cat_security">"Securité"</string>
