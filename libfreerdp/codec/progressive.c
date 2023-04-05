@@ -2747,8 +2747,6 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 		goto fail;
 	}
 
-	message->freeRects = TRUE;
-
 	rc = progressive_rfx_write_message_progressive_simple(progressive, s, message);
 	rfx_message_free(progressive->rfx_context, message);
 	if (!rc)
