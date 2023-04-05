@@ -90,6 +90,7 @@ extern "C"
 		 * contain arbitrary data.
 		 */
 		UINT16 numTiles;
+		size_t allocatedTiles;
 		RFX_TILE** tiles;
 
 		UINT16 numQuant;

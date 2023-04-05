@@ -1507,6 +1507,22 @@ static BOOL setupWorkers(RFX_CONTEXT* context, size_t nbTiles)
 	return TRUE;
 }
 
+static BOOL rfx_ensure_tiles(RFX_MESSAGE* message, size_t count)
+{
+	WINPR_ASSERT(message);
+
+	if (message->numTiles + count < message->allocatedTiles)
+		return TRUE;
+
+	const size_t alloc = message->allocatedTiles + 1024;
+	RFX_TILE** tiles = winpr_aligned_recalloc(message->tiles, alloc, sizeof(RFX_TILE*), 32);
+	if (!tiles)
+		return FALSE;
+	message->tiles = tiles;
+	message->allocatedTiles = alloc;
+	return TRUE;
+}
+
 RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, size_t numRects,
                                 const BYTE* data, UINT32 w, UINT32 h, size_t s)
 {
@@ -1570,7 +1586,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 	maxTilesY = 1 + TILE_NO(extents->bottom - 1) - TILE_NO(extents->top);
 	maxNbTiles = maxTilesX * maxTilesY;
 
-	if (!(message->tiles = winpr_aligned_calloc(maxNbTiles, sizeof(RFX_TILE*), 32)))
+	if (!rfx_ensure_tiles(message, maxNbTiles))
 		goto skip_encoding_loop;
 
 	if (!setupWorkers(context, maxNbTiles))
@@ -1667,8 +1683,10 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 				tile->YData = (BYTE*)&(tile->YCbCrData[((8192 + 32) * 0) + 16]);
 				tile->CbData = (BYTE*)&(tile->YCbCrData[((8192 + 32) * 1) + 16]);
 				tile->CrData = (BYTE*)&(tile->YCbCrData[((8192 + 32) * 2) + 16]);
-				message->tiles[message->numTiles] = tile;
-				message->numTiles++;
+
+				if (!rfx_ensure_tiles(message, 1))
+					goto skip_encoding_loop;
+				message->tiles[message->numTiles++] = tile;
 
 				if (context->priv->UseThreads)
 				{
@@ -1699,22 +1717,6 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 
 	success = TRUE;
 skip_encoding_loop:
-
-	if (success && message->numTiles != maxNbTiles)
-	{
-		if (message->numTiles > 0)
-		{
-			void* pmem =
-			    winpr_aligned_recalloc(message->tiles, message->numTiles, sizeof(RFX_TILE*), 32);
-
-			if (pmem)
-				message->tiles = (RFX_TILE**)pmem;
-			else
-				success = FALSE;
-		}
-		else
-			success = FALSE;
-	}
 
 	/* when using threads ensure all computations are done */
 	if (success)
