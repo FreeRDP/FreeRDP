@@ -315,8 +315,9 @@ extern "C"
 		UINT64 paddingC[64 - 46];          /* 46 */
 
 		ALIGN64 rdpStreamDumpContext* dump; /* 64 */
+		ALIGN64 wLog* log;                  /* 65 */
 
-		UINT64 paddingD[96 - 65];  /* 65 */
+		UINT64 paddingD[96 - 66];  /* 66 */
 		UINT64 paddingE[128 - 96]; /* 96 */
 	};
 

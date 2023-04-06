@@ -148,9 +148,11 @@ static int freerdp_connect_begin(freerdp* instance)
 
 	if (!status || (status2 != CHANNEL_RC_OK))
 	{
-		freerdp_set_last_error_if_not(instance->context, FREERDP_ERROR_PRE_CONNECT_FAILED);
+		rdpContext* context = instance->context;
+		WINPR_ASSERT(context);
+		freerdp_set_last_error_if_not(context, FREERDP_ERROR_PRE_CONNECT_FAILED);
 
-		WLog_ERR(TAG, "freerdp_pre_connect failed");
+		WLog_Print(context->log, WLOG_ERROR, "freerdp_pre_connect failed");
 		return 0;
 	}
 
@@ -159,7 +161,9 @@ static int freerdp_connect_begin(freerdp* instance)
 	/* --authonly tests the connection without a UI */
 	if (freerdp_settings_get_bool(rdp->settings, FreeRDP_AuthenticationOnly))
 	{
-		WLog_ERR(TAG, "Authentication only, exit status %" PRId32 "", rc);
+		rdpContext* context = rdp->context;
+		WINPR_ASSERT(context);
+		WLog_Print(context->log, WLOG_ERROR, "Authentication only, exit status %" PRId32 "", rc);
 		return 0;
 	}
 
@@ -221,9 +225,11 @@ BOOL freerdp_connect(freerdp* instance)
 
 	if (!status || (status2 != CHANNEL_RC_OK) || !update_post_connect(instance->context->update))
 	{
-		WLog_ERR(TAG, "freerdp_post_connect failed");
+		rdpContext* context = instance->context;
+		WINPR_ASSERT(context);
+		WLog_Print(context->log, WLOG_ERROR, "freerdp_post_connect failed");
 
-		freerdp_set_last_error_if_not(instance->context, FREERDP_ERROR_POST_CONNECT_FAILED);
+		freerdp_set_last_error_if_not(context, FREERDP_ERROR_POST_CONNECT_FAILED);
 
 		status = FALSE;
 		goto freerdp_connect_finally;
@@ -349,7 +355,9 @@ BOOL freerdp_check_fds(freerdp* instance)
 	{
 		TerminateEventArgs e;
 		rdpContext* context = instance->context;
-		WLog_DBG(TAG, "rdp_check_fds() - %i", status);
+		WINPR_ASSERT(context);
+
+		WLog_Print(context->log, WLOG_DEBUG, "rdp_check_fds() - %i", status);
 		EventArgsInit(&e, "freerdp");
 		e.code = 0;
 		PubSub_OnTerminate(rdp->pubSub, context, &e);
@@ -395,7 +403,8 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 	if (!status)
 	{
 		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-			WLog_ERR(TAG, "freerdp_check_fds() failed - %" PRIi32 "", status);
+			WLog_Print(context->log, WLOG_ERROR, "freerdp_check_fds() failed - %" PRIi32 "",
+			           status);
 
 		return FALSE;
 	}
@@ -405,7 +414,8 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 	if (!status)
 	{
 		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-			WLog_ERR(TAG, "freerdp_channels_check_fds() failed - %" PRIi32 "", status);
+			WLog_Print(context->log, WLOG_ERROR,
+			           "freerdp_channels_check_fds() failed - %" PRIi32 "", status);
 
 		return FALSE;
 	}
@@ -415,7 +425,8 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 	if (!status)
 	{
 		if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
-			WLog_ERR(TAG, "checkChannelErrorEvent() failed - %" PRIi32 "", status);
+			WLog_Print(context->log, WLOG_ERROR, "checkChannelErrorEvent() failed - %" PRIi32 "",
+			           status);
 
 		return FALSE;
 	}
@@ -723,6 +734,10 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 	if (!context)
 		return FALSE;
 
+	context->log = WLog_Get(TAG);
+	if (!context->log)
+		goto fail;
+
 	/* Set to external settings, prevents rdp_new from creating its own instance */
 	context->settings = settings;
 	context->instance = instance;
@@ -767,13 +782,13 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 
 	if (!(context->errorDescription = calloc(1, 500)))
 	{
-		WLog_ERR(TAG, "calloc failed!");
+		WLog_Print(context->log, WLOG_ERROR, "calloc failed!");
 		goto fail;
 	}
 
 	if (!(context->channelErrorEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
-		WLog_ERR(TAG, "CreateEvent failed!");
+		WLog_Print(context->log, WLOG_ERROR, "CreateEvent failed!");
 		goto fail;
 	}
 
@@ -993,17 +1008,13 @@ const char* freerdp_get_last_error_category(UINT32 code)
 void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char* fkt,
                                const char* file, int line)
 {
-	static wLog* _log = NULL;
-	if (_log)
-		_log = WLog_Get(TAG);
-
 	WINPR_ASSERT(context);
 
 	if (lastError)
 	{
-		if (WLog_IsLevelActive(_log, WLOG_ERROR))
+		if (WLog_IsLevelActive(context->log, WLOG_ERROR))
 		{
-			WLog_PrintMessage(_log, WLOG_MESSAGE_TEXT, WLOG_ERROR, line, file, fkt,
+			WLog_PrintMessage(context->log, WLOG_MESSAGE_TEXT, WLOG_ERROR, line, file, fkt,
 			                  "%s [0x%08" PRIX32 "]", freerdp_get_last_error_name(lastError),
 			                  lastError);
 		}
@@ -1011,15 +1022,15 @@ void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char
 
 	if (lastError == FREERDP_ERROR_SUCCESS)
 	{
-		if (WLog_IsLevelActive(_log, WLOG_DEBUG))
-			WLog_PrintMessage(_log, WLOG_MESSAGE_TEXT, WLOG_DEBUG, line, file, fkt,
+		if (WLog_IsLevelActive(context->log, WLOG_DEBUG))
+			WLog_PrintMessage(context->log, WLOG_MESSAGE_TEXT, WLOG_DEBUG, line, file, fkt,
 			                  "resetting error state");
 	}
 	else if (context->LastError != FREERDP_ERROR_SUCCESS)
 	{
-		if (WLog_IsLevelActive(_log, WLOG_ERROR))
+		if (WLog_IsLevelActive(context->log, WLOG_ERROR))
 		{
-			WLog_PrintMessage(_log, WLOG_MESSAGE_TEXT, WLOG_ERROR, line, file, fkt,
+			WLog_PrintMessage(context->log, WLOG_MESSAGE_TEXT, WLOG_ERROR, line, file, fkt,
 			                  "TODO: Trying to set error code %s, but %s already set!",
 			                  freerdp_get_last_error_name(lastError),
 			                  freerdp_get_last_error_name(context->LastError));
@@ -1169,8 +1180,8 @@ BOOL checkChannelErrorEvent(rdpContext* context)
 
 	if (WaitForSingleObject(context->channelErrorEvent, 0) == WAIT_OBJECT_0)
 	{
-		WLog_ERR(TAG, "%s. Error was %" PRIu32 "", context->errorDescription,
-		         context->channelErrorNum);
+		WLog_Print(context->log, WLOG_ERROR, "%s. Error was %" PRIu32 "", context->errorDescription,
+		           context->channelErrorNum);
 		return FALSE;
 	}
 

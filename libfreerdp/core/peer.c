@@ -1511,6 +1511,10 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 	if (!(context = (rdpContext*)calloc(1, client->ContextSize)))
 		goto fail;
 
+	context->log = WLog_Get(TAG);
+	if (!context->log)
+		goto fail;
+
 	client->context = context;
 	context->peer = client;
 	context->ServerMode = TRUE;
