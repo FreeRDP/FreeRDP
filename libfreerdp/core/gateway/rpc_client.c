@@ -602,7 +602,10 @@ static int rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 		if (statusCode != HTTP_STATUS_OK)
 		{
-			WLog_ERR(TAG, "error! Status Code: %" PRIu32 "", statusCode);
+			char buffer[64] = { 0 };
+
+			WLog_ERR(TAG, "error! Status Code: %s",
+			         http_status_string_format(statusCode, buffer, ARRAYSIZE(buffer)));
 			http_response_print(response);
 
 			if (statusCode == HTTP_STATUS_DENIED)

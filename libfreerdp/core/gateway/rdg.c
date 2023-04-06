@@ -1247,6 +1247,7 @@ out:
 
 static BOOL rdg_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 {
+	char buffer[64] = { 0 };
 	size_t len;
 	const char* token64 = NULL;
 	size_t authTokenLength = 0;
@@ -1265,7 +1266,8 @@ static BOOL rdg_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 		case HTTP_STATUS_OK:
 			break;
 		default:
-			WLog_DBG(TAG, "Unexpected HTTP status: %ld", StatusCode);
+			WLog_WARN(TAG, "Unexpected HTTP status: %s",
+			          http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
 			return FALSE;
 	}
 
@@ -1855,6 +1857,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* method,
                                           const char* peerAddress, int timeout, BOOL* rpcFallback)
 {
+	char buffer[64] = { 0 };
 	HttpResponse* response = NULL;
 	long statusCode;
 	SSIZE_T bodyLength;
@@ -1950,7 +1953,8 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 	encoding = http_response_get_transfer_encoding(response);
 	isWebsocket = http_response_is_websocket(rdg->http, response);
 	http_response_free(response);
-	WLog_DBG(TAG, "%s authorization result: %ld", method, statusCode);
+	WLog_DBG(TAG, "%s authorization result: %s", method,
+	         http_status_string_format(statusCode, buffer, ARRAYSIZE(buffer)));
 
 	switch (statusCode)
 	{
@@ -1992,6 +1996,8 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 			}
 			return TRUE;
 		default:
+			WLog_WARN(TAG, "Unexpected HTTP status %s",
+			          http_status_string_format(statusCode, buffer, ARRAYSIZE(buffer)));
 			return FALSE;
 	}
 
