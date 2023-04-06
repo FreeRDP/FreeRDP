@@ -56,9 +56,6 @@ struct rdp_redirection
 	rdpCertificate* TargetCertificate;
 };
 
-#define ELEMENT_TYPE_CERTIFICATE 32
-#define ENCODING_TYPE_ASN1_DER 1
-
 static void redirection_free_array(char*** what, UINT32* count)
 {
 	WINPR_ASSERT(what);
@@ -413,16 +410,15 @@ fail:
 static BOOL rdp_redireciton_write_target_cert_stream(wStream* s, const rdpRedirection* redirection)
 {
 	BOOL rc = FALSE;
-	wStream* serialized = Stream_New(NULL, 1024);
+	wStream* serialized = Stream_New(NULL, 2048);
 	if (!serialized)
 		goto fail;
 
 	if (!rdp_redirection_write_target_cert(serialized, redirection))
 		goto fail;
 
-	if (!rdp_redirection_write_base64_wchar(
-	        LB_TARGET_CERTIFICATE, s, Stream_GetPosition(serialized), Stream_Buffer(serialized)))
-		return FALSE;
+	rc = rdp_redirection_write_base64_wchar(
+	    LB_TARGET_CERTIFICATE, s, Stream_GetPosition(serialized), Stream_Buffer(serialized));
 
 fail:
 	Stream_Free(serialized, TRUE);
@@ -1183,8 +1179,7 @@ BOOL redirection_set_byte_option(rdpRedirection* redirection, UINT32 flag, const
 			return redirection_copy_data(&redirection->RedirectionGuid,
 			                             &redirection->RedirectionGuidLength, data, length);
 		case LB_TARGET_CERTIFICATE:
-			freerdp_certificate_free(redirection->TargetCertificate);
-			return FALSE; // TODO rdp_redireciton_read_target_cert(redirection, data, length);
+			return rdp_redirection_read_target_cert(redirection, data, length);
 		default:
 			return redirection_unsupported(__FUNCTION__, flag,
 			                               LB_CLIENT_TSV_URL | LB_PASSWORD | LB_LOAD_BALANCE_INFO |
