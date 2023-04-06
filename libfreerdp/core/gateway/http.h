@@ -142,5 +142,6 @@ FREERDP_LOCAL TRANSFER_ENCODING http_response_get_transfer_encoding(HttpResponse
 FREERDP_LOCAL BOOL http_response_is_websocket(HttpContext* http, HttpResponse* response);
 
 FREERDP_LOCAL const char* http_status_string(long status);
+FREERDP_LOCAL char* http_status_string_format(long status, char* buffer, size_t size);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_HTTP_H */

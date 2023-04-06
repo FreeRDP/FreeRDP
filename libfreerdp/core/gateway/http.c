@@ -1242,3 +1242,10 @@ const char* http_status_string(long status)
 			return "HTTP_STATUS_UNKNOWN";
 	}
 }
+
+char* http_status_string_format(long status, char* buffer, size_t size)
+{
+	const char* code = http_status_string(status);
+	_snprintf(buffer, size, "%s [%ld]", code, status);
+	return buffer;
+}
