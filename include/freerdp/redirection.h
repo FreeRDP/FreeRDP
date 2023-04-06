@@ -43,6 +43,9 @@
 
 #define LB_PASSWORD_MAX_LENGTH 512
 
+#define ELEMENT_TYPE_CERTIFICATE 32
+#define ENCODING_TYPE_ASN1_DER 1
+
 #ifdef __cplusplus
 extern "C"
 {
