@@ -301,17 +301,17 @@ BOOL rts_extract_pdu_signature(RtsPduSignature* signature, wStream* src,
 {
 	BOOL rc = FALSE;
 	UINT16 i;
-	wStream tmp;
+	wStream sbuffer = { 0 };
 	rpcconn_hdr_t rheader = { 0 };
 	const rpcconn_rts_hdr_t* rts;
 
 	WINPR_ASSERT(signature);
 	WINPR_ASSERT(src);
 
-	Stream_StaticInit(&tmp, Stream_Pointer(src), Stream_GetRemainingLength(src));
+	wStream* s = Stream_StaticInit(&sbuffer, Stream_Pointer(src), Stream_GetRemainingLength(src));
 	if (!header)
 	{
-		if (!rts_read_pdu_header(&tmp, &rheader))
+		if (!rts_read_pdu_header(s, &rheader))
 			goto fail;
 		header = &rheader;
 	}
@@ -327,25 +327,24 @@ BOOL rts_extract_pdu_signature(RtsPduSignature* signature, wStream* src,
 		UINT32 CommandType;
 		size_t CommandLength;
 
-		if (!Stream_CheckAndLogRequiredLength(TAG, &tmp, 4))
+		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			goto fail;
 
-		Stream_Read_UINT32(&tmp, CommandType); /* CommandType (4 bytes) */
+		Stream_Read_UINT32(s, CommandType); /* CommandType (4 bytes) */
 
 		/* We only need this for comparison against known command types */
 		if (i < ARRAYSIZE(signature->CommandTypes))
 			signature->CommandTypes[i] = CommandType;
 
-		if (!rts_command_length(CommandType, &tmp, &CommandLength))
+		if (!rts_command_length(CommandType, s, &CommandLength))
 			goto fail;
-		if (!Stream_SafeSeek(&tmp, CommandLength))
+		if (!Stream_SafeSeek(s, CommandLength))
 			goto fail;
 	}
 
 	rc = TRUE;
 fail:
 	rts_free_pdu_header(&rheader, FALSE);
-	Stream_Free(&tmp, FALSE);
 	return rc;
 }
 
