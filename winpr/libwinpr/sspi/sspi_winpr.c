@@ -375,15 +375,11 @@ int sspi_SetAuthIdentityWithLengthW(SEC_WINNT_AUTH_IDENTITY* identity, const WCH
 int sspi_SetAuthIdentityA(SEC_WINNT_AUTH_IDENTITY* identity, const char* user, const char* domain,
                           const char* password)
 {
-	int rc;
 	size_t unicodePasswordLenW = 0;
 	LPWSTR unicodePassword = ConvertUtf8ToWCharAlloc(password, &unicodePasswordLenW);
 
-	if (!unicodePassword || (unicodePasswordLenW == 0))
-		return -1;
-
-	rc = sspi_SetAuthIdentityWithUnicodePassword(identity, user, domain, unicodePassword,
-	                                             (ULONG)(unicodePasswordLenW));
+	const int rc = sspi_SetAuthIdentityWithUnicodePassword(identity, user, domain, unicodePassword,
+	                                                       (ULONG)(unicodePasswordLenW));
 	free(unicodePassword);
 	return rc;
 }
