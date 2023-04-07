@@ -41,15 +41,19 @@ extern "C"
 		H264_RATECONTROL_CQP
 	} H264_RATECONTROL_MODE;
 
-	static INLINE void free_h264_metablock(RDPGFX_H264_METABLOCK* meta)
+	typedef enum
 	{
-		RDPGFX_H264_METABLOCK m = { 0 };
-		if (!meta)
-			return;
-		free(meta->quantQualityVals);
-		free(meta->regionRects);
-		*meta = m;
-	}
+		H264_CONTEXT_OPTION_RATECONTROL,
+		H264_CONTEXT_OPTION_BITRATE,
+		H264_CONTEXT_OPTION_FRAMERATE,
+		H264_CONTEXT_OPTION_QP
+	} H264_CONTEXT_OPTION;
+
+	FREERDP_API void free_h264_metablock(RDPGFX_H264_METABLOCK* meta);
+
+	FREERDP_API BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option,
+	                                         UINT32 value);
+	FREERDP_API UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option);
 
 	FREERDP_API INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 	                                  UINT32 nSrcStep, UINT32 nSrcWidth, UINT32 nSrcHeight,

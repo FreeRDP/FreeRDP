@@ -709,3 +709,57 @@ void h264_context_free(H264_CONTEXT* h264)
 		free(h264);
 	}
 }
+
+void free_h264_metablock(RDPGFX_H264_METABLOCK* meta)
+{
+	RDPGFX_H264_METABLOCK m = { 0 };
+	if (!meta)
+		return;
+	free(meta->quantQualityVals);
+	free(meta->regionRects);
+	*meta = m;
+}
+
+BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UINT32 value)
+{
+	WINPR_ASSERT(h264);
+	switch (option)
+	{
+		case H264_CONTEXT_OPTION_BITRATE:
+			h264->BitRate = value;
+			return TRUE;
+		case H264_CONTEXT_OPTION_FRAMERATE:
+			h264->FrameRate = value;
+			return TRUE;
+		case H264_CONTEXT_OPTION_RATECONTROL:
+			h264->RateControlMode = value;
+			return TRUE;
+		case H264_CONTEXT_OPTION_QP:
+			h264->QP = value;
+			return TRUE;
+		default:
+			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
+			           option);
+			return FALSE;
+	}
+}
+
+UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option)
+{
+	WINPR_ASSERT(h264);
+	switch (option)
+	{
+		case H264_CONTEXT_OPTION_BITRATE:
+			return h264->BitRate;
+		case H264_CONTEXT_OPTION_FRAMERATE:
+			return h264->FrameRate;
+		case H264_CONTEXT_OPTION_RATECONTROL:
+			return h264->RateControlMode;
+		case H264_CONTEXT_OPTION_QP:
+			return h264->QP;
+		default:
+			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
+			           option);
+			return 0;
+	}
+}
