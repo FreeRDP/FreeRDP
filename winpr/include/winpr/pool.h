@@ -242,37 +242,17 @@ extern "C"
 #define WINPR_CALLBACK_ENVIRON 1
 #endif
 
-#ifdef WINPR_CALLBACK_ENVIRON
+#if defined(WINPR_CALLBACK_ENVIRON)
 	/* some version of mingw are missing Callback Environment functions */
 
 	/* Callback Environment */
 
-	static INLINE VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
-	{
-		const TP_CALLBACK_ENVIRON empty = { 0 };
-		*pcbe = empty;
-		pcbe->Version = 1;
-	}
+	WINPR_API VOID InitializeThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe);
+	WINPR_API VOID DestroyThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe);
+	WINPR_API VOID SetThreadpoolCallbackPool(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp);
+	WINPR_API VOID SetThreadpoolCallbackRunsLong(PTP_CALLBACK_ENVIRON pcbe);
+	WINPR_API VOID SetThreadpoolCallbackLibrary(PTP_CALLBACK_ENVIRON pcbe, PVOID mod);
 
-	static INLINE VOID DestroyThreadpoolEnvironment(PTP_CALLBACK_ENVIRON pcbe)
-	{
-		/* no actions, this may change in a future release. */
-	}
-
-	static INLINE VOID SetThreadpoolCallbackPool(PTP_CALLBACK_ENVIRON pcbe, PTP_POOL ptpp)
-	{
-		pcbe->Pool = ptpp;
-	}
-
-	static INLINE VOID SetThreadpoolCallbackRunsLong(PTP_CALLBACK_ENVIRON pcbe)
-	{
-		pcbe->u.s.LongFunction = 1;
-	}
-
-	static INLINE VOID SetThreadpoolCallbackLibrary(PTP_CALLBACK_ENVIRON pcbe, PVOID mod)
-	{
-		pcbe->RaceDll = mod;
-	}
 #endif
 
 #ifdef __cplusplus
