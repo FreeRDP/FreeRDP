@@ -377,6 +377,30 @@ static BOOL autodetect_send_netchar_result(rdpAutoDetect* autodetect, RDP_TRANSP
 	return rdp_send_message_channel_pdu(autodetect->context->rdp, s, SEC_AUTODETECT_REQ);
 }
 
+static FREERDP_AUTODETECT_STATE
+autodetect_on_connect_time_auto_detect_begin_default(rdpAutoDetect* autodetect)
+{
+	WINPR_ASSERT(autodetect);
+	WINPR_ASSERT(autodetect->RTTMeasureRequest);
+
+	if (!autodetect->RTTMeasureRequest(autodetect, RDP_TRANSPORT_TCP, 0x23))
+		return FREERDP_AUTODETECT_STATE_FAIL;
+
+	return FREERDP_AUTODETECT_STATE_REQUEST;
+}
+
+static FREERDP_AUTODETECT_STATE
+autodetect_on_connect_time_auto_detect_progress_default(rdpAutoDetect* autodetect)
+{
+	WINPR_ASSERT(autodetect);
+
+	if (autodetect->state == FREERDP_AUTODETECT_STATE_RESPONSE ||
+	    autodetect->state == FREERDP_AUTODETECT_STATE_COMPLETE)
+		return FREERDP_AUTODETECT_STATE_COMPLETE;
+
+	return autodetect->state;
+}
+
 static BOOL autodetect_send_netchar_sync(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
                                          UINT16 sequenceNumber)
 {
@@ -907,6 +931,22 @@ fail:
 	return success ? STATE_RUN_SUCCESS : STATE_RUN_FAILED;
 }
 
+void autodetect_on_connect_time_auto_detect_begin(rdpAutoDetect* autodetect)
+{
+	WINPR_ASSERT(autodetect);
+	WINPR_ASSERT(autodetect->OnConnectTimeAutoDetectBegin);
+
+	autodetect->state = autodetect->OnConnectTimeAutoDetectBegin(autodetect);
+}
+
+void autodetect_on_connect_time_auto_detect_progress(rdpAutoDetect* autodetect)
+{
+	WINPR_ASSERT(autodetect);
+	WINPR_ASSERT(autodetect->OnConnectTimeAutoDetectProgress);
+
+	autodetect->state = autodetect->OnConnectTimeAutoDetectProgress(autodetect);
+}
+
 rdpAutoDetect* autodetect_new(rdpContext* context)
 {
 	rdpAutoDetect* autoDetect = (rdpAutoDetect*)calloc(1, sizeof(rdpAutoDetect));
@@ -931,6 +971,14 @@ void autodetect_register_server_callbacks(rdpAutoDetect* autodetect)
 	autodetect->BandwidthMeasurePayload = autodetect_send_bandwidth_measure_payload;
 	autodetect->BandwidthMeasureStop = autodetect_send_bandwidth_measure_stop;
 	autodetect->NetworkCharacteristicsResult = autodetect_send_netchar_result;
+
+	/*
+	 * Default handlers for Connect-Time Auto-Detection
+	 * (MAY be overridden by the API user)
+	 */
+	autodetect->OnConnectTimeAutoDetectBegin = autodetect_on_connect_time_auto_detect_begin_default;
+	autodetect->OnConnectTimeAutoDetectProgress =
+	    autodetect_on_connect_time_auto_detect_progress_default;
 }
 
 FREERDP_AUTODETECT_STATE autodetect_get_state(rdpAutoDetect* autodetect)

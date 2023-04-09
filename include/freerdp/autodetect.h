@@ -85,6 +85,7 @@ extern "C"
 	                                            UINT32 bandwidth, UINT32 rtt);
 	typedef BOOL (*pRxTxReceived)(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
 	                              UINT16 requestType, UINT16 sequenceNumber);
+	typedef FREERDP_AUTODETECT_STATE (*pOnConnectTimeAutoDetect)(rdpAutoDetect* autodetect);
 
 	struct rdp_network_characteristics_result
 	{
@@ -128,7 +129,9 @@ extern "C"
 		ALIGN64 pNetworkCharacteristicsSync NetworkCharacteristicsSync;     /* 24 */
 		ALIGN64 pRxTxReceived RequestReceived;                              /* 25 */
 		ALIGN64 pRxTxReceived ResponseReceived;                             /* 26 */
-		UINT64 paddingB[32 - 27];                                           /* 27 */
+		ALIGN64 pOnConnectTimeAutoDetect OnConnectTimeAutoDetectBegin;      /* 27 */
+		ALIGN64 pOnConnectTimeAutoDetect OnConnectTimeAutoDetectProgress;   /* 28 */
+		UINT64 paddingB[32 - 29];                                           /* 29 */
 	};
 	FREERDP_API rdpAutoDetect* autodetect_get(rdpContext* context);
 

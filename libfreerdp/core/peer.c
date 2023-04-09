@@ -529,7 +529,6 @@ static state_run_t peer_recv_handle_auto_detect(freerdp_peer* client, wStream* s
 {
 	state_run_t ret = STATE_RUN_FAILED;
 	rdpRdp* rdp;
-	rdpSettings* settings;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(s);
@@ -538,56 +537,57 @@ static state_run_t peer_recv_handle_auto_detect(freerdp_peer* client, wStream* s
 	rdp = client->context->rdp;
 	WINPR_ASSERT(rdp);
 
-	settings = rdp->settings;
-	WINPR_ASSERT(settings);
-
-	if (freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
+	switch (rdp_get_state(rdp))
 	{
-		switch (rdp_get_state(rdp))
-		{
-			case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST:
+		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_BEGIN:
+			autodetect_on_connect_time_auto_detect_begin(rdp->autodetect);
+			switch (autodetect_get_state(rdp->autodetect))
 			{
-				if (rdp->autodetect->RTTMeasureRequest(rdp->autodetect, RDP_TRANSPORT_TCP, 0x23))
+				case FREERDP_AUTODETECT_STATE_REQUEST:
 					ret = STATE_RUN_SUCCESS;
-				if (!rdp_server_transition_to_state(
-				        rdp, CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE))
-					return STATE_RUN_FAILED;
+					if (!rdp_server_transition_to_state(
+					        rdp, CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_IN_PROGRESS))
+						return STATE_RUN_FAILED;
+					break;
+				case FREERDP_AUTODETECT_STATE_COMPLETE:
+					ret = STATE_RUN_CONTINUE; /* Rerun in next state */
+					if (!rdp_server_transition_to_state(
+					        rdp, CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_END))
+						return STATE_RUN_FAILED;
+					break;
+				default:
+					break;
 			}
 			break;
-			case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE:
+		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_IN_PROGRESS:
+			ret = peer_recv_pdu(client, s);
+			if (state_run_success(ret))
 			{
-				ret = peer_recv_pdu(client, s);
-				if (state_run_success(ret))
+				autodetect_on_connect_time_auto_detect_progress(rdp->autodetect);
+				switch (autodetect_get_state(rdp->autodetect))
 				{
-					switch (autodetect_get_state(rdp->autodetect))
-					{
-						case FREERDP_AUTODETECT_STATE_COMPLETE:
-							if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING))
-								return STATE_RUN_FAILED;
-							ret = STATE_RUN_CONTINUE; /* Rerun in next state */
-							break;
-						case FREERDP_AUTODETECT_STATE_RESPONSE:
-							if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING))
-								return STATE_RUN_FAILED;
-							ret = STATE_RUN_CONTINUE; /* Rerun in next state */
-							break;
-						default:
-							break;
-					}
+					case FREERDP_AUTODETECT_STATE_REQUEST:
+						ret = STATE_RUN_SUCCESS;
+						break;
+					case FREERDP_AUTODETECT_STATE_COMPLETE:
+						ret = STATE_RUN_CONTINUE; /* Rerun in next state */
+						if (!rdp_server_transition_to_state(
+						        rdp, CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_END))
+							return STATE_RUN_FAILED;
+						break;
+					default:
+						break;
 				}
 			}
 			break;
-			default:
-				WLog_ERR(TAG, "Invalid autodetect state %s", rdp_get_state_string(rdp));
-				break;
-		}
-	}
-	else
-	{
-		if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING))
-			return STATE_RUN_FAILED;
-
-		ret = STATE_RUN_CONTINUE; /* Rerun in next state */
+		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_END:
+			if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING))
+				return STATE_RUN_FAILED;
+			ret = STATE_RUN_CONTINUE; /* Rerun in next state */
+			break;
+		default:
+			WINPR_ASSERT(FALSE);
+			break;
 	}
 
 	return ret;
@@ -919,17 +919,23 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 		case CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE:
 			if (rdp_recv_client_info(rdp, s))
 			{
-				if (rdp_server_transition_to_state(
-				        rdp, CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST))
-					ret = STATE_RUN_CONTINUE;
+				if (freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
+				{
+					if (rdp_server_transition_to_state(
+					        rdp, CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_BEGIN))
+						ret = STATE_RUN_CONTINUE;
+				}
+				else
+				{
+					if (rdp_server_transition_to_state(rdp, CONNECTION_STATE_LICENSING))
+						ret = STATE_RUN_CONTINUE;
+				}
 			}
 			break;
 
-		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_REQUEST:
-			ret = peer_recv_handle_auto_detect(client, s);
-			break;
-
-		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_RESPONSE:
+		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_BEGIN:
+		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_IN_PROGRESS:
+		case CONNECTION_STATE_CONNECT_TIME_AUTO_DETECT_END:
 			ret = peer_recv_handle_auto_detect(client, s);
 			break;
 
