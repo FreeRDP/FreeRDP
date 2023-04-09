@@ -39,23 +39,9 @@ FREERDP_LOCAL state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodete
 FREERDP_LOCAL state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect,
                                                           RDP_TRANSPORT_TYPE transport, wStream* s);
 
-FREERDP_LOCAL AUTODETECT_STATE autodetect_get_state(rdpAutoDetect* autodetect);
+FREERDP_LOCAL FREERDP_AUTODETECT_STATE autodetect_get_state(rdpAutoDetect* autodetect);
 
 FREERDP_LOCAL void autodetect_register_server_callbacks(rdpAutoDetect* autodetect);
-FREERDP_LOCAL BOOL autodetect_send_connecttime_rtt_measure_request(rdpAutoDetect* autodetect,
-                                                                   RDP_TRANSPORT_TYPE transport,
-                                                                   UINT16 sequenceNumber);
-FREERDP_LOCAL BOOL autodetect_send_connecttime_bandwidth_measure_start(rdpAutoDetect* autodetect,
-                                                                       RDP_TRANSPORT_TYPE transport,
-                                                                       UINT16 sequenceNumber);
-FREERDP_LOCAL BOOL autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
-                                                             RDP_TRANSPORT_TYPE transport,
-                                                             UINT16 payloadLength,
-                                                             UINT16 sequenceNumber);
-FREERDP_LOCAL BOOL autodetect_send_connecttime_bandwidth_measure_stop(rdpAutoDetect* autodetect,
-                                                                      RDP_TRANSPORT_TYPE transport,
-                                                                      UINT16 payloadLength,
-                                                                      UINT16 sequenceNumber);
 
 #define AUTODETECT_TAG FREERDP_TAG("core.autodetect")
 
