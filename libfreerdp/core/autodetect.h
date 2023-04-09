@@ -42,6 +42,8 @@ FREERDP_LOCAL state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodet
 FREERDP_LOCAL FREERDP_AUTODETECT_STATE autodetect_get_state(rdpAutoDetect* autodetect);
 
 FREERDP_LOCAL void autodetect_register_server_callbacks(rdpAutoDetect* autodetect);
+FREERDP_LOCAL void autodetect_on_connect_time_auto_detect_begin(rdpAutoDetect* autodetect);
+FREERDP_LOCAL void autodetect_on_connect_time_auto_detect_progress(rdpAutoDetect* autodetect);
 
 #define AUTODETECT_TAG FREERDP_TAG("core.autodetect")
 
