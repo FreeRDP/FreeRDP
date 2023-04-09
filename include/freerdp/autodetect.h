@@ -31,14 +31,31 @@ extern "C"
 
 	typedef enum
 	{
-		AUTODETECT_STATE_INITIAL,
-		AUTODETECT_STATE_REQUEST,
-		AUTODETECT_STATE_RESPONSE,
-		AUTODETECT_STATE_COMPLETE,
-		AUTODETECT_STATE_FAIL
-	} AUTODETECT_STATE;
+		FREERDP_AUTODETECT_STATE_INITIAL,
+		FREERDP_AUTODETECT_STATE_REQUEST,
+		FREERDP_AUTODETECT_STATE_RESPONSE,
+		FREERDP_AUTODETECT_STATE_COMPLETE,
+		FREERDP_AUTODETECT_STATE_FAIL
+	} FREERDP_AUTODETECT_STATE;
+
+	typedef enum
+	{
+		/* The baseRTT and averageRTT fields are valid */
+		RDP_NETCHAR_RESULT_TYPE_BASE_RTT_AVG_RTT = 0x0840U,
+		/* The bandwidth and averageRTT fields are valid */
+		RDP_NETCHAR_RESULT_TYPE_BW_AVG_RTT = 0x0880U,
+		/* The baseRTT, bandwidth and averageRTT fields are valid */
+		RDP_NETCHAR_RESULT_TYPE_BASE_RTT_BW_AVG_RTT = 0x08C0U
+	} RDP_NETCHAR_RESULT_TYPE;
+
+	typedef enum
+	{
+		RDP_BW_RESULTS_RESPONSE_TYPE_CONNECTTIME = 0x0003,
+		RDP_BW_RESULTS_RESPONSE_TYPE_CONTINUOUS = 0x000B
+	} RDP_BW_RESULTS_RESPONSE_TYPE;
 
 	typedef struct rdp_autodetect rdpAutoDetect;
+	typedef struct rdp_network_characteristics_result rdpNetworkCharacteristicsResult;
 
 	typedef BOOL (*pRTTMeasureRequest)(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
 	                                   UINT16 sequenceNumber);
@@ -46,20 +63,41 @@ extern "C"
 	                                    UINT16 sequenceNumber);
 	typedef BOOL (*pBandwidthMeasureStart)(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
 	                                       UINT16 sequenceNumber);
+	typedef BOOL (*pBandwidthMeasurePayload)(rdpAutoDetect* autodetect,
+	                                         RDP_TRANSPORT_TYPE transport, UINT16 sequenceNumber,
+	                                         UINT16 payloadLength);
 	typedef BOOL (*pBandwidthMeasureStop)(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
-	                                      UINT16 sequenceNumber);
+	                                      UINT16 sequenceNumber, UINT16 payloadLength);
 	typedef BOOL (*pBandwidthMeasureResults)(rdpAutoDetect* autodetect,
-	                                         RDP_TRANSPORT_TYPE transport, UINT16 responseType,
-	                                         UINT16 sequenceNumber);
+	                                         RDP_TRANSPORT_TYPE transport, UINT16 sequenceNumber,
+	                                         UINT16 responseType, UINT32 timeDelta,
+	                                         UINT32 byteCount);
 	typedef BOOL (*pNetworkCharacteristicsResult)(rdpAutoDetect* autodetect,
 	                                              RDP_TRANSPORT_TYPE transport,
-	                                              UINT16 sequenceNumber);
+	                                              UINT16 sequenceNumber,
+	                                              const rdpNetworkCharacteristicsResult* result);
 	typedef BOOL (*pClientBandwidthMeasureResult)(rdpAutoDetect* autodetect,
 	                                              RDP_TRANSPORT_TYPE transport, UINT16 responseType,
 	                                              UINT16 sequenceNumber, UINT32 timeDelta,
 	                                              UINT32 byteCount);
+	typedef BOOL (*pNetworkCharacteristicsSync)(rdpAutoDetect* autodetect,
+	                                            RDP_TRANSPORT_TYPE transport, UINT16 sequenceNumber,
+	                                            UINT32 bandwidth, UINT32 rtt);
 	typedef BOOL (*pRxTxReceived)(rdpAutoDetect* autodetect, RDP_TRANSPORT_TYPE transport,
 	                              UINT16 requestType, UINT16 sequenceNumber);
+
+	struct rdp_network_characteristics_result
+	{
+		/* Specifies, which fields are valid */
+		RDP_NETCHAR_RESULT_TYPE type;
+
+		/* Lowest detected round-trip time in milliseconds. */
+		UINT32 baseRTT;
+		/* Current average round-trip time in milliseconds. */
+		UINT32 averageRTT;
+		/* Current bandwidth in kilobits per second. */
+		UINT32 bandwidth;
+	};
 
 	struct rdp_autodetect
 	{
@@ -71,24 +109,26 @@ extern "C"
 		ALIGN64 UINT64 bandwidthMeasureTimeDelta; /* 3 */
 		ALIGN64 UINT32 bandwidthMeasureByteCount; /* 4 */
 		/* Network characteristics (as reported by server) */
-		ALIGN64 UINT32 netCharBandwidth;      /* 5 */
-		ALIGN64 UINT32 netCharBaseRTT;        /* 6 */
-		ALIGN64 UINT32 netCharAverageRTT;     /* 7 */
-		ALIGN64 BOOL bandwidthMeasureStarted; /* 8 */
-		ALIGN64 AUTODETECT_STATE state;       /* 9 */
-		ALIGN64 void* custom;                 /* 10 */
-		UINT64 paddingA[16 - 11];             /* 11 */
+		ALIGN64 UINT32 netCharBandwidth;        /* 5 */
+		ALIGN64 UINT32 netCharBaseRTT;          /* 6 */
+		ALIGN64 UINT32 netCharAverageRTT;       /* 7 */
+		ALIGN64 BOOL bandwidthMeasureStarted;   /* 8 */
+		ALIGN64 FREERDP_AUTODETECT_STATE state; /* 9 */
+		ALIGN64 void* custom;                   /* 10 */
+		UINT64 paddingA[16 - 11];               /* 11 */
 
 		ALIGN64 pRTTMeasureRequest RTTMeasureRequest;                       /* 16 */
 		ALIGN64 pRTTMeasureResponse RTTMeasureResponse;                     /* 17 */
 		ALIGN64 pBandwidthMeasureStart BandwidthMeasureStart;               /* 18 */
-		ALIGN64 pBandwidthMeasureStop BandwidthMeasureStop;                 /* 19 */
-		ALIGN64 pBandwidthMeasureResults BandwidthMeasureResults;           /* 20 */
-		ALIGN64 pNetworkCharacteristicsResult NetworkCharacteristicsResult; /* 21 */
-		ALIGN64 pClientBandwidthMeasureResult ClientBandwidthMeasureResult; /* 22 */
-		ALIGN64 pRxTxReceived RequestReceived;                              /* 23 */
-		ALIGN64 pRxTxReceived ResponseReceived;                             /* 24 */
-		UINT64 paddingB[32 - 25];                                           /* 25 */
+		ALIGN64 pBandwidthMeasurePayload BandwidthMeasurePayload;           /* 19 */
+		ALIGN64 pBandwidthMeasureStop BandwidthMeasureStop;                 /* 20 */
+		ALIGN64 pBandwidthMeasureResults BandwidthMeasureResults;           /* 21 */
+		ALIGN64 pNetworkCharacteristicsResult NetworkCharacteristicsResult; /* 22 */
+		ALIGN64 pClientBandwidthMeasureResult ClientBandwidthMeasureResult; /* 23 */
+		ALIGN64 pNetworkCharacteristicsSync NetworkCharacteristicsSync;     /* 24 */
+		ALIGN64 pRxTxReceived RequestReceived;                              /* 25 */
+		ALIGN64 pRxTxReceived ResponseReceived;                             /* 26 */
+		UINT64 paddingB[32 - 27];                                           /* 27 */
 	};
 	FREERDP_API rdpAutoDetect* autodetect_get(rdpContext* context);
 
