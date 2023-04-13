@@ -1023,10 +1023,7 @@ static BOOL pf_channel_rdpdr_rewrite_device_list_to(wStream* s, UINT32 fromVersi
 {
 	BOOL rc = FALSE;
 	if (fromVersion == toVersion)
-	{
-		Stream_SealLength(s);
 		return TRUE;
-	}
 
 	const size_t cap = Stream_GetRemainingLength(s);
 	wStream* clone = Stream_New(NULL, cap);
@@ -1109,20 +1106,31 @@ static BOOL pf_channel_rdpdr_rewrite_device_list(pf_channel_client_context* rdpd
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(ps);
 
+	const size_t pos = Stream_GetPosition(s);
 	if (Stream_Length(s) < 4)
+	{
+		WLog_ERR(TAG, "Short stream, got %" PRIuz ", require at least 4", Stream_Length(s));
 		return FALSE;
+	}
 
 	UINT16 component, packetid;
 	Stream_SetPosition(s, 0);
 	Stream_Read_UINT16(s, component);
 	Stream_Read_UINT16(s, packetid);
 	if ((component != RDPDR_CTYP_CORE) || (packetid != PAKID_CORE_DEVICELIST_ANNOUNCE))
+	{
+		Stream_SetPosition(s, pos);
 		return TRUE;
+	}
 
 	const pf_channel_server_context* srv =
 	    HashTable_GetItemValue(ps->interceptContextMap, RDPDR_SVC_CHANNEL_NAME);
 	if (!srv)
+	{
+		WLog_ERR(TAG, "No channel %s in intercep map", RDPDR_SVC_CHANNEL_NAME);
 		return FALSE;
+	}
+
 	UINT32 from = srv->common.capabilityVersions[CAP_DRIVE_TYPE];
 	UINT32 to = rdpdr->common.capabilityVersions[CAP_DRIVE_TYPE];
 	if (toServer)
@@ -1130,7 +1138,11 @@ static BOOL pf_channel_rdpdr_rewrite_device_list(pf_channel_client_context* rdpd
 		from = rdpdr->common.capabilityVersions[CAP_DRIVE_TYPE];
 		to = srv->common.capabilityVersions[CAP_DRIVE_TYPE];
 	}
-	return pf_channel_rdpdr_rewrite_device_list_to(s, from, to);
+	if (!pf_channel_rdpdr_rewrite_device_list_to(s, from, to))
+		return FALSE;
+
+	Stream_SetPosition(s, pos);
+	return TRUE;
 }
 
 static BOOL pf_channel_rdpdr_client_send_to_server(pf_channel_client_context* rdpdr,
