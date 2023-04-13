@@ -4368,8 +4368,6 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	{
 		settings->FastPathOutput = TRUE;
 		settings->FrameMarkerCommandEnabled = TRUE;
-		if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32))
-			return COMMAND_LINE_ERROR;
 	}
 
 	arg = CommandLineFindArgumentA(largs, "port");
