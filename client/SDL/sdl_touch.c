@@ -215,8 +215,8 @@ BOOL sdl_handle_mouse_wheel(sdlContext* sdl, const SDL_MouseWheelEvent* ev)
 	WINPR_ASSERT(ev);
 
 	const BOOL flipped = (ev->direction == SDL_MOUSEWHEEL_FLIPPED);
-	const INT32 x = ev->x * (flipped ? -1 : 1);
-	const INT32 y = ev->y * (flipped ? -1 : 1);
+	const INT32 x = ev->x * (flipped ? -1 : 1) * 0x78;
+	const INT32 y = ev->y * (flipped ? -1 : 1) * 0x78;
 	UINT16 flags = 0;
 
 	if (y != 0)
