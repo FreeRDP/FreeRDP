@@ -2172,6 +2172,13 @@ enum rdp_settings_type
 	FREERDP_API const char* freerdp_encryption_methods_string(UINT32 EncryptionLevel, char* buffer,
 	                                                          size_t size);
 
+	/** \brief returns a string representation of \b RNS_UD_XXBPP_SUPPORT values
+	 *
+	 *  return A string reprenentation of the bitmask.
+	 */
+	FREERDP_API const char* freerdp_supported_color_depths_string(UINT16 mask, char* buffer,
+	                                                              size_t size);
+
 #ifdef __cplusplus
 }
 #endif

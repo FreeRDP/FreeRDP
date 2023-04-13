@@ -1332,6 +1332,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 {
 	char buffer[2048] = { 0 };
+	char dbuffer[2048] = { 0 };
 	WCHAR* clientName = NULL;
 	size_t clientNameLength;
 	BYTE connectionType;
@@ -1392,10 +1393,9 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 	if (!Stream_EnsureRemainingCapacity(s, 6))
 		return FALSE;
 
-	WLog_DBG(TAG,
-	         "Sending highColorDepth=%s, supportedColorDepths=0x%04" PRIx16
-	         ", earlyCapabilityFlags=%s",
-	         HighColorToString(highColorDepth), SupportedColorDepths,
+	WLog_DBG(TAG, "Sending highColorDepth=%s, supportedColorDepths=%s, earlyCapabilityFlags=%s",
+	         HighColorToString(highColorDepth),
+	         freerdp_supported_color_depths_string(SupportedColorDepths, dbuffer, sizeof(dbuffer)),
 	         rdp_early_client_caps_string(earlyCapabilityFlags, buffer, sizeof(buffer)));
 	Stream_Write_UINT16(s, highColorDepth);       /* highColorDepth */
 	Stream_Write_UINT16(s, SupportedColorDepths); /* supportedColorDepths */
