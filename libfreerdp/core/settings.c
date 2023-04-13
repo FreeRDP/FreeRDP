@@ -1220,4 +1220,5 @@ BOOL identity_set_from_smartcard_hash(SEC_WINNT_AUTH_IDENTITY_W* identity,
 	if (!identity_set_from_settings(identity, settings, userId, domainId, pwdId))
 		return FALSE;
 #endif /* _WIN32 */
+	return TRUE;
 }
