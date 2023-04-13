@@ -34,8 +34,9 @@
 		if (!(cond))                                                                          \
 		{                                                                                     \
 			wLog* _log_cached_ptr = WLog_Get("com.freerdp.winpr.assert");                     \
+			const size_t line = __LINE__;                                                     \
 			WLog_Print(_log_cached_ptr, WLOG_FATAL, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, \
-			           __FUNCTION__, (size_t)__LINE__);                                       \
+			           __FUNCTION__, line);                                                   \
 			winpr_log_backtrace_ex(_log_cached_ptr, WLOG_FATAL, 20);                          \
 			abort();                                                                          \
 		}                                                                                     \
