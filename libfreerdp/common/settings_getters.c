@@ -1375,6 +1375,9 @@ UINT16 freerdp_settings_get_uint16(const rdpSettings* settings, size_t id)
 		case FreeRDP_ProxyPort:
 			return settings->ProxyPort;
 
+		case FreeRDP_SupportedColorDepths:
+			return settings->SupportedColorDepths;
+
 		case FreeRDP_TLSMaxVersion:
 			return settings->TLSMaxVersion;
 
@@ -1441,6 +1444,10 @@ BOOL freerdp_settings_set_uint16(rdpSettings* settings, size_t id, UINT16 val)
 
 		case FreeRDP_ProxyPort:
 			settings->ProxyPort = cnv.c;
+			break;
+
+		case FreeRDP_SupportedColorDepths:
+			settings->SupportedColorDepths = cnv.c;
 			break;
 
 		case FreeRDP_TLSMaxVersion:

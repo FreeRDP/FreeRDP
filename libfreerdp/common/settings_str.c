@@ -259,6 +259,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_OrderSupportFlags, FREERDP_SETTINGS_TYPE_UINT16, "FreeRDP_OrderSupportFlags" },
 	{ FreeRDP_OrderSupportFlagsEx, FREERDP_SETTINGS_TYPE_UINT16, "FreeRDP_OrderSupportFlagsEx" },
 	{ FreeRDP_ProxyPort, FREERDP_SETTINGS_TYPE_UINT16, "FreeRDP_ProxyPort" },
+	{ FreeRDP_SupportedColorDepths, FREERDP_SETTINGS_TYPE_UINT16, "FreeRDP_SupportedColorDepths" },
 	{ FreeRDP_TLSMaxVersion, FREERDP_SETTINGS_TYPE_UINT16, "FreeRDP_TLSMaxVersion" },
 	{ FreeRDP_TLSMinVersion, FREERDP_SETTINGS_TYPE_UINT16, "FreeRDP_TLSMinVersion" },
 	{ FreeRDP_TextANSICodePage, FREERDP_SETTINGS_TYPE_UINT16, "FreeRDP_TextANSICodePage" },

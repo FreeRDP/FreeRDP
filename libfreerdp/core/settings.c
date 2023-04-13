@@ -356,6 +356,11 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!freerdp_server_license_issuers_copy(settings, issuers, ARRAYSIZE(issuers)))
 		goto out_fail;
 
+	if (!freerdp_settings_set_uint16(settings, FreeRDP_SupportedColorDepths,
+	                                 RNS_UD_32BPP_SUPPORT | RNS_UD_24BPP_SUPPORT |
+	                                     RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT))
+		goto out_fail;
+
 	if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_HasHorizontalWheel, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_HasExtendedMouseEvent, TRUE) ||

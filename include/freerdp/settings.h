@@ -513,6 +513,7 @@ typedef struct
 #define FreeRDP_SupportEdgeActionV1 (150)
 #define FreeRDP_SupportEdgeActionV2 (151)
 #define FreeRDP_SupportSkipChannelJoin (152)
+#define FreeRDP_SupportedColorDepths (153)
 #define FreeRDP_UseRdpSecurityLayer (192)
 #define FreeRDP_EncryptionMethods (193)
 #define FreeRDP_ExtEncryptionMethods (194)
@@ -974,8 +975,8 @@ struct rdp_settings
 	ALIGN64 BOOL SupportEdgeActionV1;     /* 150 */
 	ALIGN64 BOOL SupportEdgeActionV2;     /* 151 */
 	ALIGN64 BOOL SupportSkipChannelJoin;  /* 152 */
-
-	UINT64 padding0192[192 - 153]; /* 153 */
+	ALIGN64 UINT16 SupportedColorDepths;  /* 153 */
+	UINT64 padding0192[192 - 154];        /* 154 */
 
 	/* Client/Server Security Data */
 	ALIGN64 BOOL UseRdpSecurityLayer;                /* 192 */
