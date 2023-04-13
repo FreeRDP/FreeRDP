@@ -39,6 +39,51 @@
 
 #define TAG FREERDP_TAG("core.gcc")
 
+typedef enum
+{
+	HIGH_COLOR_4BPP = 0x04,
+	HIGH_COLOR_8BPP = 0x08,
+	HIGH_COLOR_15BPP = 0x0F,
+	HIGH_COLOR_16BPP = 0x10,
+	HIGH_COLOR_24BPP = 0x18,
+} HIGH_COLOR_DEPTH;
+
+static const char* HighColorToString(HIGH_COLOR_DEPTH color)
+{
+	switch (color)
+	{
+		case HIGH_COLOR_4BPP:
+			return "HIGH_COLOR_4BPP";
+		case HIGH_COLOR_8BPP:
+			return "HIGH_COLOR_8BPP";
+		case HIGH_COLOR_15BPP:
+			return "HIGH_COLOR_15BPP";
+		case HIGH_COLOR_16BPP:
+			return "HIGH_COLOR_16BPP";
+		case HIGH_COLOR_24BPP:
+			return "HIGH_COLOR_24BPP";
+		default:
+			return "HIGH_COLOR_UNKNOWN";
+	}
+}
+
+static HIGH_COLOR_DEPTH ColorDepthToHighColor(UINT32 bpp)
+{
+	switch (bpp)
+	{
+		case 4:
+			return HIGH_COLOR_4BPP;
+		case 8:
+			return HIGH_COLOR_8BPP;
+		case 15:
+			return HIGH_COLOR_15BPP;
+		case 16:
+			return HIGH_COLOR_16BPP;
+		default:
+			return HIGH_COLOR_24BPP;
+	}
+}
+
 static BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
 static BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength);
 static BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length);
@@ -1057,7 +1102,6 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 	UINT16 colorDepth = 0;
 	UINT16 postBeta2ColorDepth = 0;
 	UINT16 highColorDepth = 0;
-	UINT16 supportedColorDepths = 0;
 	UINT32 serverSelectedProtocol = 0;
 	rdpSettings* settings = mcs_get_settings(mcs);
 
@@ -1131,7 +1175,7 @@ BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs, UINT16 blockLength)
 		if (blockLength < 2)
 			break;
 
-		Stream_Read_UINT16(s, supportedColorDepths); /* supportedColorDepths (2 bytes) */
+		Stream_Read_UINT16(s, settings->SupportedColorDepths); /* supportedColorDepths (2 bytes) */
 		blockLength -= 2;
 
 		if (blockLength < 2)
@@ -1291,8 +1335,8 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 	WCHAR* clientName = NULL;
 	size_t clientNameLength;
 	BYTE connectionType;
-	UINT16 highColorDepth;
-	UINT16 supportedColorDepths;
+	HIGH_COLOR_DEPTH highColorDepth;
+
 	UINT16 earlyCapabilityFlags;
 	WCHAR* clientDigProductId = NULL;
 	size_t clientDigProductIdLength;
@@ -1300,6 +1344,10 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(settings);
+
+	const UINT16 SupportedColorDepths =
+	    freerdp_settings_get_uint16(settings, FreeRDP_SupportedColorDepths);
+	const UINT32 ColorDepth = freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth);
 
 	if (!gcc_write_user_data_header(s, CS_CORE, 234))
 		return FALSE;
@@ -1336,25 +1384,21 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 	Stream_Write_UINT16(s, RNS_UD_COLOR_8BPP);             /* postBeta2ColorDepth */
 	Stream_Write_UINT16(s, 1);                             /* clientProductID */
 	Stream_Write_UINT32(s, 0); /* serialNumber (should be initialized to 0) */
-	highColorDepth = MIN(freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth), 24);
-	supportedColorDepths = RNS_UD_24BPP_SUPPORT | RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT;
+	highColorDepth = ColorDepthToHighColor(ColorDepth);
 	earlyCapabilityFlags = earlyClientCapsFromSettings(settings);
 
 	connectionType = settings->ConnectionType;
-
-	if (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) == 32)
-		supportedColorDepths |= RNS_UD_32BPP_SUPPORT;
 
 	if (!Stream_EnsureRemainingCapacity(s, 6))
 		return FALSE;
 
 	WLog_DBG(TAG,
-	         "Sending highColorDepth=0x%04" PRIx16 ", supportedColorDepths=0x%04" PRIx16
+	         "Sending highColorDepth=%s, supportedColorDepths=0x%04" PRIx16
 	         ", earlyCapabilityFlags=%s",
-	         highColorDepth, supportedColorDepths,
+	         HighColorToString(highColorDepth), SupportedColorDepths,
 	         rdp_early_client_caps_string(earlyCapabilityFlags, buffer, sizeof(buffer)));
 	Stream_Write_UINT16(s, highColorDepth);       /* highColorDepth */
-	Stream_Write_UINT16(s, supportedColorDepths); /* supportedColorDepths */
+	Stream_Write_UINT16(s, SupportedColorDepths); /* supportedColorDepths */
 	Stream_Write_UINT16(s, earlyCapabilityFlags); /* earlyCapabilityFlags */
 
 	/* clientDigProductId (64 bytes, null-terminated unicode, truncated to 31 characters) */
