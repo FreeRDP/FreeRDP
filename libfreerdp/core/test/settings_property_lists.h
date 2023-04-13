@@ -195,6 +195,7 @@ static const size_t uint16_list_indices[] = {
 	FreeRDP_OrderSupportFlags,
 	FreeRDP_OrderSupportFlagsEx,
 	FreeRDP_ProxyPort,
+	FreeRDP_SupportedColorDepths,
 	FreeRDP_TLSMaxVersion,
 	FreeRDP_TLSMinVersion,
 	FreeRDP_TextANSICodePage,
