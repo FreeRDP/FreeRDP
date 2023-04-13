@@ -300,7 +300,7 @@ extern "C"
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 1);
-		*_s->pointer++ = (UINT8)(_v);
+		*_s->pointer++ = (_v);
 	}
 
 	static INLINE void Stream_Write_INT16(wStream* _s, INT16 _v)
