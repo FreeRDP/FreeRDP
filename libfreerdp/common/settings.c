@@ -2155,3 +2155,28 @@ const char* freerdp_encryption_methods_string(UINT32 EncryptionMethods, char* bu
 
 	return buffer;
 }
+
+const char* freerdp_supported_color_depths_string(UINT16 mask, char* buffer, size_t size)
+{
+	const UINT32 invalid = mask & ~(RNS_UD_32BPP_SUPPORT | RNS_UD_24BPP_SUPPORT |
+	                                RNS_UD_16BPP_SUPPORT | RNS_UD_15BPP_SUPPORT);
+
+	if (mask & RNS_UD_32BPP_SUPPORT)
+		winpr_str_append("RNS_UD_32BPP_SUPPORT", buffer, size, "|");
+	if (mask & RNS_UD_24BPP_SUPPORT)
+		winpr_str_append("RNS_UD_24BPP_SUPPORT", buffer, size, "|");
+	if (mask & RNS_UD_16BPP_SUPPORT)
+		winpr_str_append("RNS_UD_16BPP_SUPPORT", buffer, size, "|");
+	if (mask & RNS_UD_15BPP_SUPPORT)
+		winpr_str_append("RNS_UD_15BPP_SUPPORT", buffer, size, "|");
+
+	if (invalid != 0)
+	{
+		char str[32] = { 0 };
+		_snprintf(str, sizeof(str), "RNS_UD_INVALID[0x%04" PRIx16 "]", invalid);
+		winpr_str_append(str, buffer, size, "|");
+	}
+	char hex[32] = { 0 };
+	_snprintf(hex, sizeof(hex), "[0x%04" PRIx16 "]", mask);
+	return buffer;
+}
