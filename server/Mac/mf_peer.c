@@ -115,8 +115,8 @@ static void mf_peer_rfx_update(freerdp_peer* client)
 	rect.y = 0;
 	rect.width = width;
 	rect.height = height;
-	mfp->rfx_context->width = mfi->servscreen_width;
-	mfp->rfx_context->height = mfi->servscreen_height;
+
+	rfx_context_reset(mfp->rfx_context, mfi->servscreen_width, mfi->servscreen_height);
 
 	if (!(rfx_compose_message(mfp->rfx_context, s, &rect, 1, (BYTE*)dataBits, rect.width,
 	                          rect.height, pitch)))
@@ -183,9 +183,8 @@ static BOOL mf_peer_context_new(freerdp_peer* client, rdpContext* context)
 	if (!(peer->rfx_context = rfx_context_new_ex(TRUE, settings->ThreadingFlags)))
 		goto fail;
 
-	peer->rfx_context->mode = RLGR3;
-	peer->rfx_context->width = settings->DesktopWidth;
-	peer->rfx_context->height = settings->DesktopHeight;
+	rfx_context_reset(peer->rfx_context, settings->DesktopWidth, settings->DesktopHeight);
+	rfx_context_set_mode(peer->rfx_context, RLGR3);
 	rfx_context_set_pixel_format(peer->rfx_context, PIXEL_FORMAT_BGRA32);
 
 	if (!(peer->s = Stream_New(NULL, 0xFFFF)))
