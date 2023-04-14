@@ -393,7 +393,10 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 	size_t decoded_length = 0;
 	char* decoded = NULL;
 	if (!data)
+	{
+		WLog_ERR(TAG, "Invalid base64 data [%p] for %s", data, name);
 		return NULL;
+	}
 
 	WINPR_ASSERT(name);
 	WINPR_ASSERT(pLength);
@@ -401,7 +404,11 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 	const size_t length = strlen(data);
 	crypto_base64_decode(data, length, (BYTE**)&decoded, &decoded_length);
 	if (!decoded || decoded_length == 0)
-		WLog_ERR(TAG, "Failed to decode base64 data from %s of length %" PRIuz, name, length);
+	{
+		WLog_ERR(TAG, "Failed to decode base64 data of length %" PRIuz " for %s", length, name);
+		free(decoded);
+		return NULL;
+	}
 	WINPR_ASSERT(strnlen(decoded, decoded_length) == decoded_length - 1);
 	*pLength = decoded_length;
 	return decoded;
