@@ -1277,3 +1277,40 @@ int main(int argc, char* argv[])
 
 	return rc;
 }
+
+BOOL update_fullscreen(sdlContext* sdl, BOOL enter)
+{
+	WINPR_ASSERT(sdl);
+
+	CriticalSectionLock lock(sdl->critical);
+	for (uint32_t x = 0; x < sdl->windowCount; x++)
+	{
+		sdl_window_t* window = &sdl->windows[x];
+		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_FULLSCREEN, window->window, enter))
+			return FALSE;
+	}
+	sdl->fullscreen = enter;
+	return TRUE;
+}
+
+BOOL update_resizeable(sdlContext* sdl, BOOL enable)
+{
+	WINPR_ASSERT(sdl);
+
+	CriticalSectionLock lock(sdl->critical);
+
+	const rdpSettings* settings = sdl->common.context.settings;
+	const BOOL dyn = freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
+	const BOOL smart = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing);
+	BOOL use = (dyn && enable) || smart;
+
+	for (uint32_t x = 0; x < sdl->windowCount; x++)
+	{
+		sdl_window_t* window = &sdl->windows[x];
+		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_RESIZEABLE, window->window, use))
+			return FALSE;
+	}
+	sdl->resizeable = use;
+
+	return TRUE;
+}

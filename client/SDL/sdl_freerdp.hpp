@@ -69,3 +69,6 @@ struct sdl_context
 
 	wLog* log;
 };
+
+BOOL update_resizeable(sdlContext* sdl, BOOL enable);
+BOOL update_fullscreen(sdlContext* sdl, BOOL enter);
