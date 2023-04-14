@@ -65,4 +65,3 @@ typedef struct
 
 	wLog* log;
 } sdlContext;
-

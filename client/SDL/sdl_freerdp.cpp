@@ -45,14 +45,14 @@
 #include <SDL.h>
 #include <SDL_video.h>
 
-#include "sdl_channels.h"
-#include "sdl_freerdp.h"
-#include "sdl_utils.h"
-#include "sdl_disp.h"
-#include "sdl_monitor.h"
-#include "sdl_kbd.h"
-#include "sdl_touch.h"
-#include "sdl_pointer.h"
+#include "sdl_channels.hpp"
+#include "sdl_freerdp.hpp"
+#include "sdl_utils.hpp"
+#include "sdl_disp.hpp"
+#include "sdl_monitor.hpp"
+#include "sdl_kbd.hpp"
+#include "sdl_touch.hpp"
+#include "sdl_pointer.hpp"
 
 #define SDL_TAG CLIENT_TAG("SDL")
 

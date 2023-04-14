@@ -25,9 +25,9 @@
 
 #include <SDL.h>
 
-#include "sdl_disp.h"
-#include "sdl_kbd.h"
-#include "sdl_utils.h"
+#include "sdl_disp.hpp"
+#include "sdl_kbd.hpp"
+#include "sdl_utils.hpp"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("sdl.disp")

@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * SDL Client keyboard helper
+ * FreeRDP SDL touch/mouse input
  *
  * Copyright 2022 Armin Novak <armin.novak@thincast.com>
  *
@@ -19,17 +19,15 @@
 
 #pragma once
 
-#include <winpr/wtypes.h>
-#include <freerdp/freerdp.h>
-#include <SDL.h>
+#include "sdl_freerdp.hpp"
 
-#include "sdl_freerdp.h"
+BOOL sdl_scale_coordinates(sdlContext* sdl, Uint32 windowId, INT32* px, INT32* py,
+                           BOOL fromLocalToRDP, BOOL applyOffset);
 
-BOOL sdl_sync_kbd_state(rdpContext* context);
-BOOL sdl_keyboard_focus_in(rdpContext* context);
+BOOL sdl_handle_mouse_motion(sdlContext* sdl, const SDL_MouseMotionEvent* ev);
+BOOL sdl_handle_mouse_wheel(sdlContext* sdl, const SDL_MouseWheelEvent* ev);
+BOOL sdl_handle_mouse_button(sdlContext* sdl, const SDL_MouseButtonEvent* ev);
 
-BOOL sdl_keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
-BOOL sdl_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
-                                 UINT32 imeConvMode);
-
-BOOL sdl_handle_keyboard_event(sdlContext* sdl, const SDL_KeyboardEvent* ev);
+BOOL sdl_handle_touch_down(sdlContext* sdl, const SDL_TouchFingerEvent* ev);
+BOOL sdl_handle_touch_up(sdlContext* sdl, const SDL_TouchFingerEvent* ev);
+BOOL sdl_handle_touch_motion(sdlContext* sdl, const SDL_TouchFingerEvent* ev);

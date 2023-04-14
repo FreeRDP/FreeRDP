@@ -18,9 +18,9 @@
  */
 
 #include <assert.h>
-#include "sdl_utils.h"
+#include "sdl_utils.hpp"
 
-#include "sdl_freerdp.h"
+#include "sdl_freerdp.hpp"
 
 #include <SDL.h>
 

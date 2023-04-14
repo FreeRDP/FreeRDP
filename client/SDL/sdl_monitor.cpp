@@ -34,7 +34,7 @@
 
 #define TAG CLIENT_TAG("sdl")
 
-#include "sdl_monitor.h"
+#include "sdl_monitor.hpp"
 
 typedef struct
 {

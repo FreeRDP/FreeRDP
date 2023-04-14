@@ -24,7 +24,7 @@
 #include <stdbool.h>
 #include <SDL.h>
 
-#include "sdl_freerdp.h"
+#include "sdl_freerdp.hpp"
 
 enum
 {

@@ -74,20 +74,20 @@ endif()
 
 set(SRCS
     sdl_utils.cpp
-    sdl_utils.h
+    sdl_utils.hpp
     sdl_kbd.cpp
-    sdl_kbd.h
+    sdl_kbd.hpp
     sdl_touch.cpp
-    sdl_touch.h
+    sdl_touch.hpp
     sdl_pointer.cpp
-    sdl_pointer.h
+    sdl_pointer.hpp
     sdl_disp.cpp
-    sdl_disp.h
+    sdl_disp.hpp
     sdl_monitor.cpp
-    sdl_monitor.h
-    sdl_freerdp.h
+    sdl_monitor.hpp
+    sdl_freerdp.hpp
     sdl_freerdp.cpp
-    sdl_channels.h
+    sdl_channels.hpp
     sdl_channels.cpp)
 
 set(LIBS
