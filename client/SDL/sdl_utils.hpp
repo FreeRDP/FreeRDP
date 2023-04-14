@@ -25,8 +25,6 @@
 #include <stdbool.h>
 #include <SDL.h>
 
-#include "sdl_types.hpp"
-
 class CriticalSectionLock
 {
   public:
@@ -54,9 +52,6 @@ enum
 	SDL_USEREVENT_POINTER_POSITION,
 	SDL_USEREVENT_POINTER_SET
 };
-
-BOOL update_resizeable(sdlContext* sdl, BOOL enable);
-BOOL update_fullscreen(sdlContext* sdl, BOOL enter);
 
 BOOL sdl_push_user_event(Uint32 type, ...);
 
