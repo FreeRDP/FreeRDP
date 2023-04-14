@@ -409,7 +409,7 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 		free(decoded);
 		return NULL;
 	}
-	WINPR_ASSERT(strnlen(decoded, decoded_length) == decoded_length - 1);
+
 	*pLength = decoded_length;
 	return decoded;
 }
