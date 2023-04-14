@@ -48,8 +48,9 @@ void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
 		auto disp = reinterpret_cast<DispClientContext*>(e->pInterface);
+		WINPR_ASSERT(sdl->disp);
 		WINPR_ASSERT(disp);
-		sdl_disp_init(sdl->disp, disp);
+		sdl->disp->init(disp);
 	}
 	else
 		freerdp_client_OnChannelConnectedEventHandler(context, e);
@@ -76,7 +77,8 @@ void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	{
 		auto disp = reinterpret_cast<DispClientContext*>(e->pInterface);
 		WINPR_ASSERT(disp);
-		sdl_disp_uninit(sdl->disp, disp);
+		WINPR_ASSERT(sdl->disp);
+		sdl->disp->uninit(disp);
 	}
 	else
 		freerdp_client_OnChannelDisconnectedEventHandler(context, e);

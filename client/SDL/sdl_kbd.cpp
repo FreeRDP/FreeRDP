@@ -465,3 +465,45 @@ BOOL sdl_handle_keyboard_event(sdlContext* sdl, const SDL_KeyboardEvent* ev)
 	return freerdp_input_send_keyboard_event_ex(sdl->common.context.input, ev->type == SDL_KEYDOWN,
 	                                            ev->repeat, rdp_scancode);
 }
+
+#if !SDL_VERSION_ATLEAST(2, 0, 16)
+static BOOL sdl_grab(sdlContext* sdl, Uint32 windowID, SDL_bool enable)
+{
+	SDL_Window* window = SDL_GetWindowFromID(windowID);
+	if (!window)
+		return FALSE;
+
+	sdl->grab_mouse = enable;
+	SDL_SetWindowGrab(window, enable);
+	return TRUE;
+}
+#endif
+
+BOOL sdl_grab_keyboard(sdlContext* sdl, Uint32 windowID, SDL_bool enable)
+{
+	SDL_Window* window = SDL_GetWindowFromID(windowID);
+	if (!window)
+		return FALSE;
+#if SDL_VERSION_ATLEAST(2, 0, 16)
+	sdl->grab_kbd = enable;
+	SDL_SetWindowKeyboardGrab(window, enable);
+	return TRUE;
+#else
+	WLog_WARN(TAG, "Keyboard grabbing not supported by SDL2 < 2.0.16");
+	return FALSE;
+#endif
+}
+
+BOOL sdl_grab_mouse(sdlContext* sdl, Uint32 windowID, SDL_bool enable)
+{
+	SDL_Window* window = SDL_GetWindowFromID(windowID);
+	if (!window)
+		return FALSE;
+#if SDL_VERSION_ATLEAST(2, 0, 16)
+	sdl->grab_mouse = enable;
+	SDL_SetWindowMouseGrab(window, enable);
+	return TRUE;
+#else
+	return sdl_grab(sdl, windowID, enable);
+#endif
+}
