@@ -68,7 +68,7 @@ struct sdl_context
 	Uint32 sdl_pixel_format;
 
 	wLog* log;
-};
 
-BOOL update_resizeable(sdlContext* sdl, BOOL enable);
-BOOL update_fullscreen(sdlContext* sdl, BOOL enter);
+	BOOL update_resizeable(BOOL enable);
+	BOOL update_fullscreen(BOOL enter);
+};
