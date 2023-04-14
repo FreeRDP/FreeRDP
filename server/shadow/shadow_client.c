@@ -1987,8 +1987,8 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 			pointerNew.xorBpp = 24;
 			pointerColor = &(pointerNew.colorPtrAttr);
 			pointerColor->cacheIndex = 0;
-			pointerColor->xPos = msg->xHot;
-			pointerColor->yPos = msg->yHot;
+			pointerColor->hotSpotX = msg->xHot;
+			pointerColor->hotSpotY = msg->yHot;
 			pointerColor->width = msg->width;
 			pointerColor->height = msg->height;
 			pointerColor->lengthAndMask = msg->lengthAndMask;

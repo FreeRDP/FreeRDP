@@ -50,13 +50,13 @@ extern "C"
 
 	typedef struct
 	{
-		UINT32 cacheIndex;
-		UINT32 xPos;
-		UINT32 yPos;
-		UINT32 width;
-		UINT32 height;
-		UINT32 lengthAndMask;
-		UINT32 lengthXorMask;
+		UINT16 cacheIndex;
+		UINT16 hotSpotX;
+		UINT16 hotSpotY;
+		UINT16 width;
+		UINT16 height;
+		UINT16 lengthAndMask;
+		UINT16 lengthXorMask;
 		BYTE* xorMaskData;
 		BYTE* andMaskData;
 	} POINTER_COLOR_UPDATE;

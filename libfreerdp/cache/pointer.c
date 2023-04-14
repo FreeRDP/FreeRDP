@@ -148,8 +148,8 @@ static BOOL update_pointer_color(rdpContext* context, const POINTER_COLOR_UPDATE
 	if (pointer == NULL)
 		return FALSE;
 	pointer->xorBpp = 24;
-	pointer->xPos = pointer_color->xPos;
-	pointer->yPos = pointer_color->yPos;
+	pointer->xPos = pointer_color->hotSpotX;
+	pointer->yPos = pointer_color->hotSpotY;
 	pointer->width = pointer_color->width;
 	pointer->height = pointer_color->height;
 
@@ -224,8 +224,8 @@ static BOOL update_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* po
 		return FALSE;
 
 	pointer->xorBpp = pointer_new->xorBpp;
-	pointer->xPos = pointer_new->colorPtrAttr.xPos;
-	pointer->yPos = pointer_new->colorPtrAttr.yPos;
+	pointer->xPos = pointer_new->colorPtrAttr.hotSpotX;
+	pointer->yPos = pointer_new->colorPtrAttr.hotSpotY;
 	pointer->width = pointer_new->colorPtrAttr.width;
 	pointer->height = pointer_new->colorPtrAttr.height;
 	if (!upate_pointer_copy_andxor(
