@@ -384,8 +384,8 @@ static BOOL _update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer
 		goto fail;
 
 	Stream_Read_UINT16(s, pointer_color->cacheIndex); /* cacheIndex (2 bytes) */
-	Stream_Read_UINT16(s, pointer_color->xPos);       /* xPos (2 bytes) */
-	Stream_Read_UINT16(s, pointer_color->yPos);       /* yPos (2 bytes) */
+	Stream_Read_UINT16(s, pointer_color->hotSpotX);   /* hotSpot.xPos (2 bytes) */
+	Stream_Read_UINT16(s, pointer_color->hotSpotY);   /* hotSpot.yPos (2 bytes) */
 	/**
 	 *  As stated in 2.2.9.1.1.4.4 Color Pointer Update:
 	 *  The maximum allowed pointer width/height is 96 pixels if the client indicated support
@@ -406,15 +406,15 @@ static BOOL _update_read_pointer_color(wStream* s, POINTER_COLOR_UPDATE* pointer
 
 	/**
 	 * There does not seem to be any documentation on why
-	 * xPos / yPos can be larger than width / height
+	 * hotSpot.xPos / hotSpot.yPos can be larger than width / height
 	 * so it is missing in documentation or a bug in implementation
 	 * 2.2.9.1.1.4.4 Color Pointer Update (TS_COLORPOINTERATTRIBUTE)
 	 */
-	if (pointer_color->xPos >= pointer_color->width)
-		pointer_color->xPos = 0;
+	if (pointer_color->hotSpotX >= pointer_color->width)
+		pointer_color->hotSpotX = 0;
 
-	if (pointer_color->yPos >= pointer_color->height)
-		pointer_color->yPos = 0;
+	if (pointer_color->hotSpotY >= pointer_color->height)
+		pointer_color->hotSpotY = 0;
 
 	if (pointer_color->lengthXorMask > 0)
 	{
@@ -525,8 +525,8 @@ static BOOL _update_read_pointer_large(wStream* s, POINTER_LARGE_UPDATE* pointer
 
 	Stream_Read_UINT16(s, pointer->xorBpp);
 	Stream_Read_UINT16(s, pointer->cacheIndex); /* cacheIndex (2 bytes) */
-	Stream_Read_UINT16(s, pointer->hotSpotX);   /* xPos (2 bytes) */
-	Stream_Read_UINT16(s, pointer->hotSpotY);   /* yPos (2 bytes) */
+	Stream_Read_UINT16(s, pointer->hotSpotX);   /* hotSpot.xPos (2 bytes) */
+	Stream_Read_UINT16(s, pointer->hotSpotY);   /* hotSpot.yPos (2 bytes) */
 
 	Stream_Read_UINT16(s, pointer->width);  /* width (2 bytes) */
 	Stream_Read_UINT16(s, pointer->height); /* height (2 bytes) */
@@ -2195,8 +2195,8 @@ static BOOL update_write_pointer_color(wStream* s, const POINTER_COLOR_UPDATE* p
 		return FALSE;
 
 	Stream_Write_UINT16(s, pointer_color->cacheIndex);
-	Stream_Write_UINT16(s, pointer_color->xPos);
-	Stream_Write_UINT16(s, pointer_color->yPos);
+	Stream_Write_UINT16(s, pointer_color->hotSpotX);
+	Stream_Write_UINT16(s, pointer_color->hotSpotY);
 	Stream_Write_UINT16(s, pointer_color->width);
 	Stream_Write_UINT16(s, pointer_color->height);
 	Stream_Write_UINT16(s, pointer_color->lengthAndMask);
