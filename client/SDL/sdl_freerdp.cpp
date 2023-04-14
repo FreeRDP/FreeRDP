@@ -393,7 +393,6 @@ static BOOL sdl_end_paint_process(rdpContext* context)
 		SDL_UpdateWindowSurface(window->window);
 	}
 
-out:
 	return TRUE;
 }
 
@@ -695,7 +694,8 @@ static int sdl_run(sdlContext* sdl)
 				case SDL_KEYUP:
 				{
 					const SDL_KeyboardEvent* ev = &windowEvent.key;
-					sdl_handle_keyboard_event(sdl, ev);
+					WINPR_ASSERT(sdl->input);
+					sdl->input->keyboard_handle_event(ev);
 				}
 				break;
 				case SDL_KEYMAPCHANGED:
@@ -890,6 +890,10 @@ static BOOL sdl_post_connect(freerdp* instance)
 	if (!sdl->disp)
 		return FALSE;
 
+	sdl->input = new sdlInput(sdl);
+	if (!sdl->input)
+		return FALSE;
+
 	if (!sdl_register_pointer(instance->context->graphics))
 		return FALSE;
 
@@ -899,8 +903,8 @@ static BOOL sdl_post_connect(freerdp* instance)
 	context->update->EndPaint = sdl_end_paint;
 	context->update->PlaySound = sdl_play_sound;
 	context->update->DesktopResize = sdl_desktop_resize;
-	context->update->SetKeyboardIndicators = sdl_keyboard_set_indicators;
-	context->update->SetKeyboardImeStatus = sdl_keyboard_set_ime_status;
+	context->update->SetKeyboardIndicators = sdlInput::keyboard_set_indicators;
+	context->update->SetKeyboardImeStatus = sdlInput::keyboard_set_ime_status;
 
 	update_resizeable(sdl, FALSE);
 	update_fullscreen(sdl, context->settings->Fullscreen || context->settings->UseMultimon);
@@ -944,6 +948,9 @@ static void sdl_post_final_disconnect(freerdp* instance)
 
 	delete (context->disp);
 	context->disp = nullptr;
+
+	delete context->input;
+	context->input = nullptr;
 }
 
 /* RDP main loop.
@@ -1007,9 +1014,12 @@ static DWORD WINAPI sdl_client_thread_proc(void* arg)
 		 */
 		if (freerdp_focus_required(instance))
 		{
-			if (!sdl_keyboard_focus_in(context))
+			sdlContext* sdl = reinterpret_cast<sdlContext*>(context);
+			WINPR_ASSERT(sdl);
+			WINPR_ASSERT(sdl->input);
+			if (!sdl->input->keyboard_focus_in())
 				break;
-			if (!sdl_keyboard_focus_in(context))
+			if (!sdl->input->keyboard_focus_in())
 				break;
 		}
 

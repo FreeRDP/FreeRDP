@@ -25,14 +25,25 @@
 
 #include "sdl_types.hpp"
 
-BOOL sdl_sync_kbd_state(rdpContext* context);
-BOOL sdl_keyboard_focus_in(rdpContext* context);
+class sdlInput
+{
+  public:
+	sdlInput(sdlContext* sdl);
+	~sdlInput();
 
-BOOL sdl_keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
-BOOL sdl_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
-                                 UINT32 imeConvMode);
+	BOOL keyboard_sync_state();
+	BOOL keyboard_focus_in();
 
-BOOL sdl_handle_keyboard_event(sdlContext* sdl, const SDL_KeyboardEvent* ev);
+	BOOL keyboard_handle_event(const SDL_KeyboardEvent* ev);
 
-BOOL sdl_grab_keyboard(sdlContext* sdl, Uint32 windowID, SDL_bool enable);
-BOOL sdl_grab_mouse(sdlContext* sdl, Uint32 windowID, SDL_bool enable);
+	BOOL keyboard_grab(Uint32 windowID, SDL_bool enable);
+	BOOL mouse_grab(Uint32 windowID, SDL_bool enable);
+
+  public:
+	static BOOL keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
+	static BOOL keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
+	                                    UINT32 imeConvMode);
+
+  private:
+	sdlContext* _sdl;
+};
