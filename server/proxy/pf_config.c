@@ -410,7 +410,7 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 		return NULL;
 	}
 
-	*pLength = decoded_length;
+	*pLength = strnlen(decoded, decoded_length) + 1;
 	return decoded;
 }
 
