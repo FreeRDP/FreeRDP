@@ -35,6 +35,7 @@
 #define TAG CLIENT_TAG("sdl")
 
 #include "sdl_monitor.hpp"
+#include "sdl_freerdp.hpp"
 
 typedef struct
 {
@@ -62,7 +63,7 @@ int sdl_list_monitors(sdlContext* sdl)
 	printf("listing %d monitors:\n", nmonitors);
 	for (int i = 0; i < nmonitors; i++)
 	{
-		SDL_Rect rect = { 0 };
+		SDL_Rect rect = {};
 		const int brc = SDL_GetDisplayBounds(i, &rect);
 		const char* name = SDL_GetDisplayName(i);
 

@@ -28,7 +28,9 @@
 #include <SDL.h>
 #include <SDL_video.h>
 
-typedef struct s_sdlDispContext sdlDispContext;
+#include "sdl_types.hpp"
+#include "sdl_disp.hpp"
+
 typedef struct
 {
 	SDL_Window* window;
@@ -36,7 +38,7 @@ typedef struct
 	int offset_y;
 } sdl_window_t;
 
-typedef struct
+struct sdl_context
 {
 	rdpClientContext common;
 
@@ -64,4 +66,4 @@ typedef struct
 	Uint32 sdl_pixel_format;
 
 	wLog* log;
-} sdlContext;
+};

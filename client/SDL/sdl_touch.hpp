@@ -19,7 +19,10 @@
 
 #pragma once
 
-#include "sdl_freerdp.hpp"
+#include <winpr/wtypes.h>
+
+#include <SDL.h>
+#include "sdl_types.hpp"
 
 BOOL sdl_scale_coordinates(sdlContext* sdl, Uint32 windowId, INT32* px, INT32* py,
                            BOOL fromLocalToRDP, BOOL applyOffset);

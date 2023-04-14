@@ -19,12 +19,13 @@
 
 #pragma once
 
+#include <winpr/synch.h>
 #include <winpr/wlog.h>
 
 #include <stdbool.h>
 #include <SDL.h>
 
-#include "sdl_freerdp.hpp"
+#include "sdl_types.hpp"
 
 class CriticalSectionLock
 {
