@@ -21,7 +21,9 @@
 #include <freerdp/types.h>
 #include <freerdp/client/disp.h>
 
-#include "sdl_freerdp.hpp"
+#include "sdl_types.hpp"
+
+typedef struct s_sdlDispContext sdlDispContext;
 
 BOOL sdl_disp_init(sdlDispContext* xfDisp, DispClientContext* disp);
 BOOL sdl_disp_uninit(sdlDispContext* xfDisp, DispClientContext* disp);

@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * SDL Client keyboard helper
+ * SDL Client
  *
  * Copyright 2022 Armin Novak <armin.novak@thincast.com>
  *
@@ -19,17 +19,4 @@
 
 #pragma once
 
-#include <winpr/wtypes.h>
-#include <freerdp/freerdp.h>
-#include <SDL.h>
-
-#include "sdl_types.hpp"
-
-BOOL sdl_sync_kbd_state(rdpContext* context);
-BOOL sdl_keyboard_focus_in(rdpContext* context);
-
-BOOL sdl_keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
-BOOL sdl_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
-                                 UINT32 imeConvMode);
-
-BOOL sdl_handle_keyboard_event(sdlContext* sdl, const SDL_KeyboardEvent* ev);
+typedef struct sdl_context sdlContext;

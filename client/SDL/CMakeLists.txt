@@ -73,6 +73,7 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 set(SRCS
+    sdl_types.hpp
     sdl_utils.cpp
     sdl_utils.hpp
     sdl_kbd.cpp

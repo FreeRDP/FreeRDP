@@ -19,8 +19,9 @@
 
 #pragma once
 
+#include <SDL.h>
 #include <freerdp/graphics.h>
-#include "sdl_freerdp.hpp"
+#include "sdl_types.hpp"
 
 BOOL sdl_register_pointer(rdpGraphics* graphics);
 

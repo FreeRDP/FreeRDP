@@ -161,7 +161,7 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 		case SDL_USEREVENT_WINDOW_FULLSCREEN:
 		case SDL_USEREVENT_WINDOW_RESIZEABLE:
 			event->data1 = va_arg(ap, void*);
-			event->code = (va_arg(ap, BOOL) == TRUE) ? 1 : 0;
+			event->code = va_arg(ap, int);
 			break;
 		case SDL_USEREVENT_POINTER_NULL:
 		case SDL_USEREVENT_POINTER_DEFAULT:
