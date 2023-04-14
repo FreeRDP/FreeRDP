@@ -26,6 +26,22 @@
 
 #include "sdl_freerdp.hpp"
 
+class CriticalSectionLock
+{
+  public:
+	CriticalSectionLock(CRITICAL_SECTION& section) : _section(section)
+	{
+		EnterCriticalSection(&_section);
+	}
+	~CriticalSectionLock()
+	{
+		LeaveCriticalSection(&_section);
+	}
+
+  private:
+	CRITICAL_SECTION _section;
+};
+
 enum
 {
 	SDL_USEREVENT_UPDATE = SDL_USEREVENT + 1,

@@ -178,7 +178,7 @@ BOOL update_fullscreen(sdlContext* sdl, BOOL enter)
 {
 	WINPR_ASSERT(sdl);
 
-	EnterCriticalSection(&sdl->critical);
+	CriticalSectionLock lock(sdl->critical);
 	for (uint32_t x = 0; x < sdl->windowCount; x++)
 	{
 		sdl_window_t* window = &sdl->windows[x];
@@ -186,7 +186,6 @@ BOOL update_fullscreen(sdlContext* sdl, BOOL enter)
 			return FALSE;
 	}
 	sdl->fullscreen = enter;
-	LeaveCriticalSection(&sdl->critical);
 	return TRUE;
 }
 
@@ -194,7 +193,7 @@ BOOL update_resizeable(sdlContext* sdl, BOOL enable)
 {
 	WINPR_ASSERT(sdl);
 
-	EnterCriticalSection(&sdl->critical);
+	CriticalSectionLock lock(sdl->critical);
 
 	const rdpSettings* settings = sdl->common.context.settings;
 	const BOOL dyn = freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
@@ -209,6 +208,5 @@ BOOL update_resizeable(sdlContext* sdl, BOOL enable)
 	}
 	sdl->resizeable = use;
 
-	LeaveCriticalSection(&sdl->critical);
 	return TRUE;
 }
