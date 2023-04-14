@@ -22,7 +22,7 @@
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
-#include "sdl_freerdp.h"
+#include "sdl_freerdp.hpp"
 
 int sdl_list_monitors(sdlContext* sdl);
 BOOL sdl_detect_monitors(sdlContext* sdl, UINT32* pWidth, UINT32* pHeight);

@@ -19,8 +19,8 @@
 
 #include <freerdp/config.h>
 
-#include "sdl_touch.h"
-#include "sdl_freerdp.h"
+#include "sdl_touch.hpp"
+#include "sdl_freerdp.hpp"
 
 #include <winpr/wtypes.h>
 #include <winpr/assert.h>

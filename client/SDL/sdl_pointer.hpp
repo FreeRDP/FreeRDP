@@ -20,7 +20,7 @@
 #pragma once
 
 #include <freerdp/graphics.h>
-#include "sdl_freerdp.h"
+#include "sdl_freerdp.hpp"
 
 BOOL sdl_register_pointer(rdpGraphics* graphics);
 

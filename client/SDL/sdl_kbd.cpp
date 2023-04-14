@@ -17,10 +17,10 @@
  * limitations under the License.
  */
 
-#include "sdl_kbd.h"
-#include "sdl_disp.h"
-#include "sdl_freerdp.h"
-#include "sdl_utils.h"
+#include "sdl_kbd.hpp"
+#include "sdl_disp.hpp"
+#include "sdl_freerdp.hpp"
+#include "sdl_utils.hpp"
 
 #include <freerdp/scancode.h>
 

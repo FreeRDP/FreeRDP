@@ -25,9 +25,9 @@
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/disp.h>
 
-#include "sdl_channels.h"
-#include "sdl_freerdp.h"
-#include "sdl_disp.h"
+#include "sdl_channels.hpp"
+#include "sdl_freerdp.hpp"
+#include "sdl_disp.hpp"
 
 void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEventArgs* e)
 {
