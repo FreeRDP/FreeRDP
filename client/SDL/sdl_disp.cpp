@@ -126,7 +126,7 @@ BOOL sdlDispContext::sendResize()
 
 BOOL sdlDispContext::set_window_resizable()
 {
-	update_resizeable(_sdl, TRUE);
+	_sdl->update_resizeable(TRUE);
 	return TRUE;
 }
 
@@ -389,7 +389,7 @@ BOOL sdlDispContext::init(DispClientContext* disp)
 		disp->DisplayControlCaps = sdlDispContext::DisplayControlCaps;
 	}
 
-	update_resizeable(_sdl, TRUE);
+	_sdl->update_resizeable(TRUE);
 	return TRUE;
 }
 
@@ -399,7 +399,7 @@ BOOL sdlDispContext::uninit(DispClientContext* disp)
 		return FALSE;
 
 	_disp = nullptr;
-	update_resizeable(_sdl, FALSE);
+	_sdl->update_resizeable(FALSE);
 	return TRUE;
 }
 

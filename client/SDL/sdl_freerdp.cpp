@@ -906,8 +906,8 @@ static BOOL sdl_post_connect(freerdp* instance)
 	context->update->SetKeyboardIndicators = sdlInput::keyboard_set_indicators;
 	context->update->SetKeyboardImeStatus = sdlInput::keyboard_set_ime_status;
 
-	update_resizeable(sdl, FALSE);
-	update_fullscreen(sdl, context->settings->Fullscreen || context->settings->UseMultimon);
+	sdl->update_resizeable(FALSE);
+	sdl->update_fullscreen(context->settings->Fullscreen || context->settings->UseMultimon);
 	return TRUE;
 }
 
@@ -1278,39 +1278,35 @@ int main(int argc, char* argv[])
 	return rc;
 }
 
-BOOL update_fullscreen(sdlContext* sdl, BOOL enter)
+BOOL sdl_context::update_fullscreen(BOOL enter)
 {
-	WINPR_ASSERT(sdl);
-
-	CriticalSectionLock lock(sdl->critical);
-	for (uint32_t x = 0; x < sdl->windowCount; x++)
+	CriticalSectionLock lock(critical);
+	for (uint32_t x = 0; x < windowCount; x++)
 	{
-		sdl_window_t* window = &sdl->windows[x];
+		sdl_window_t* window = &windows[x];
 		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_FULLSCREEN, window->window, enter))
 			return FALSE;
 	}
-	sdl->fullscreen = enter;
+	fullscreen = enter;
 	return TRUE;
 }
 
-BOOL update_resizeable(sdlContext* sdl, BOOL enable)
+BOOL sdl_context::update_resizeable(BOOL enable)
 {
-	WINPR_ASSERT(sdl);
+	CriticalSectionLock lock(critical);
 
-	CriticalSectionLock lock(sdl->critical);
-
-	const rdpSettings* settings = sdl->common.context.settings;
+	const rdpSettings* settings = common.context.settings;
 	const BOOL dyn = freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
 	const BOOL smart = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing);
 	BOOL use = (dyn && enable) || smart;
 
-	for (uint32_t x = 0; x < sdl->windowCount; x++)
+	for (uint32_t x = 0; x < windowCount; x++)
 	{
-		sdl_window_t* window = &sdl->windows[x];
+		sdl_window_t* window = &windows[x];
 		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_RESIZEABLE, window->window, use))
 			return FALSE;
 	}
-	sdl->resizeable = use;
+	resizeable = use;
 
 	return TRUE;
 }

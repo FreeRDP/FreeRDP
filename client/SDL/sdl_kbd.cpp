@@ -435,13 +435,13 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 			case SDL_SCANCODE_RETURN:
 				if (ev->type == SDL_KEYDOWN)
 				{
-					update_fullscreen(_sdl, !_sdl->fullscreen);
+					_sdl->update_fullscreen(!_sdl->fullscreen);
 				}
 				return TRUE;
 			case SDL_SCANCODE_R:
 				if (ev->type == SDL_KEYDOWN)
 				{
-					update_resizeable(_sdl, !_sdl->resizeable);
+					_sdl->update_resizeable(!_sdl->resizeable);
 				}
 				return TRUE;
 			case SDL_SCANCODE_G:
