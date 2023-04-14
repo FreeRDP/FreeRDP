@@ -406,9 +406,9 @@ static BOOL sdl_end_paint(rdpContext* context)
 	auto sdl = reinterpret_cast<sdlContext*>(context);
 	WINPR_ASSERT(sdl);
 
-	EnterCriticalSection(&sdl->critical);
+	CriticalSectionLock lock(sdl->critical);
 	const BOOL rc = sdl_push_user_event(SDL_USEREVENT_UPDATE, context);
-	LeaveCriticalSection(&sdl->critical);
+
 	return rc;
 }
 
@@ -638,17 +638,10 @@ fail:
 
 static BOOL sdl_wait_create_windows(sdlContext* sdl)
 {
-	BOOL res = FALSE;
-	EnterCriticalSection(&sdl->critical);
-	res = ResetEvent(sdl->windows_created);
-	if (!res)
-		goto unlock;
-	res = sdl_push_user_event(SDL_USEREVENT_CREATE_WINDOWS, sdl);
-	if (!res)
-		goto unlock;
-unlock:
-	LeaveCriticalSection(&sdl->critical);
-	if (!res)
+	CriticalSectionLock lock(sdl->critical);
+	if (!ResetEvent(sdl->windows_created))
+		return FALSE;
+	if (!sdl_push_user_event(SDL_USEREVENT_CREATE_WINDOWS, sdl))
 		return FALSE;
 
 	HANDLE handles[] = { sdl->initialized, freerdp_abort_event(&sdl->common.context) };
@@ -692,7 +685,7 @@ static int sdl_run(sdlContext* sdl)
 			SDL_Log("got event %s [0x%08" PRIx32 "]", sdl_event_type_str(windowEvent.type),
 			        windowEvent.type);
 #endif
-			EnterCriticalSection(&sdl->critical);
+			CriticalSectionLock lock(sdl->critical);
 			switch (windowEvent.type)
 			{
 				case SDL_QUIT:
@@ -838,7 +831,6 @@ static int sdl_run(sdlContext* sdl)
 				default:
 					break;
 			}
-			LeaveCriticalSection(&sdl->critical);
 		}
 	}
 
