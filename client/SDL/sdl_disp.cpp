@@ -322,14 +322,19 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 			return sendResize();
 
 		case SDL_WINDOWEVENT_LEAVE:
-			sdl_grab_keyboard(_sdl, ev->windowID, SDL_FALSE);
+			WINPR_ASSERT(_sdl);
+			WINPR_ASSERT(_sdl->input);
+			_sdl->input->keyboard_grab(ev->windowID, SDL_FALSE);
 			return TRUE;
 		case SDL_WINDOWEVENT_ENTER:
-			sdl_grab_keyboard(_sdl, ev->windowID, SDL_TRUE);
-			return sdl_keyboard_focus_in(&_sdl->common.context);
+			WINPR_ASSERT(_sdl);
+			WINPR_ASSERT(_sdl->input);
+			_sdl->input->keyboard_grab(ev->windowID, SDL_TRUE);
+			return _sdl->input->keyboard_focus_in();
 		case SDL_WINDOWEVENT_FOCUS_GAINED:
 		case SDL_WINDOWEVENT_TAKE_FOCUS:
-			return sdl_keyboard_focus_in(&_sdl->common.context);
+			WINPR_ASSERT(_sdl->input);
+			return _sdl->input->keyboard_focus_in();
 
 		default:
 			return TRUE;

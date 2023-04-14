@@ -30,6 +30,7 @@
 
 #include "sdl_types.hpp"
 #include "sdl_disp.hpp"
+#include "sdl_kbd.hpp"
 
 typedef struct
 {
@@ -63,6 +64,7 @@ struct sdl_context
 	SDL_Surface* primary;
 
 	sdlDispContext* disp;
+	sdlInput* input;
 	Uint32 sdl_pixel_format;
 
 	wLog* log;
