@@ -35,133 +35,98 @@
 
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
 
-struct s_sdlDispContext
+BOOL sdlDispContext::settings_changed()
 {
-	sdlContext* sdl;
-	DispClientContext* disp;
-	int eventBase, errorBase;
-	int lastSentWidth, lastSentHeight;
-	UINT64 lastSentDate;
-	int targetWidth, targetHeight;
-	BOOL activated;
-	BOOL waitingResize;
-	BOOL fullscreen;
-	UINT16 lastSentDesktopOrientation;
-	UINT32 lastSentDesktopScaleFactor;
-	UINT32 lastSentDeviceScaleFactor;
-};
-
-static UINT sdl_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors,
-                                size_t nmonitors);
-
-static BOOL sdl_disp_settings_changed(sdlDispContext* sdlDisp)
-{
-	rdpSettings* settings;
-
-	WINPR_ASSERT(sdlDisp);
-	WINPR_ASSERT(sdlDisp->sdl);
-
-	settings = sdlDisp->sdl->common.context.settings;
+	auto settings = _sdl->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	if (sdlDisp->lastSentWidth != sdlDisp->targetWidth)
+	if (_lastSentWidth != _targetWidth)
 		return TRUE;
 
-	if (sdlDisp->lastSentHeight != sdlDisp->targetHeight)
+	if (_lastSentHeight != _targetHeight)
 		return TRUE;
 
-	if (sdlDisp->lastSentDesktopOrientation != settings->DesktopOrientation)
+	if (_lastSentDesktopOrientation != settings->DesktopOrientation)
 		return TRUE;
 
-	if (sdlDisp->lastSentDesktopScaleFactor != settings->DesktopScaleFactor)
+	if (_lastSentDesktopScaleFactor != settings->DesktopScaleFactor)
 		return TRUE;
 
-	if (sdlDisp->lastSentDeviceScaleFactor != settings->DeviceScaleFactor)
+	if (_lastSentDeviceScaleFactor != settings->DeviceScaleFactor)
 		return TRUE;
-	/* TODFO
-	    if (sdlDisp->fullscreen != sdlDisp->sdl->fullscreen)
+	/* TODO
+	    if (_fullscreen != _sdl->fullscreen)
 	        return TRUE;
 	*/
 	return FALSE;
 }
 
-static BOOL sdl_update_last_sent(sdlDispContext* sdlDisp)
+BOOL sdlDispContext::update_last_sent()
 {
-	rdpSettings* settings;
+	WINPR_ASSERT(_sdl);
 
-	WINPR_ASSERT(sdlDisp);
-	WINPR_ASSERT(sdlDisp->sdl);
-
-	settings = sdlDisp->sdl->common.context.settings;
+	auto settings = _sdl->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	sdlDisp->lastSentWidth = sdlDisp->targetWidth;
-	sdlDisp->lastSentHeight = sdlDisp->targetHeight;
-	sdlDisp->lastSentDesktopOrientation = settings->DesktopOrientation;
-	sdlDisp->lastSentDesktopScaleFactor = settings->DesktopScaleFactor;
-	sdlDisp->lastSentDeviceScaleFactor = settings->DeviceScaleFactor;
-	// TODO sdlDisp->fullscreen = sdlDisp->sdl->fullscreen;
+	_lastSentWidth = _targetWidth;
+	_lastSentHeight = _targetHeight;
+	_lastSentDesktopOrientation = settings->DesktopOrientation;
+	_lastSentDesktopScaleFactor = settings->DesktopScaleFactor;
+	_lastSentDeviceScaleFactor = settings->DeviceScaleFactor;
+	// TODO _fullscreen = _sdl->fullscreen;
 	return TRUE;
 }
 
-static BOOL sdl_disp_sendResize(sdlDispContext* sdlDisp)
+BOOL sdlDispContext::sendResize()
 {
-	DISPLAY_CONTROL_MONITOR_LAYOUT layout;
-	sdlContext* sdl;
-	rdpSettings* settings;
-
-	if (!sdlDisp || !sdlDisp->sdl)
-		return FALSE;
-
-	sdl = sdlDisp->sdl;
-	settings = sdl->common.context.settings;
+	DISPLAY_CONTROL_MONITOR_LAYOUT layout = {};
+	auto settings = _sdl->common.context.settings;
 
 	if (!settings)
 		return FALSE;
 
-	if (!sdlDisp->activated || !sdlDisp->disp)
+	if (!_activated || !_disp)
 		return TRUE;
 
-	if (GetTickCount64() - sdlDisp->lastSentDate < RESIZE_MIN_DELAY)
+	if (GetTickCount64() - _lastSentDate < RESIZE_MIN_DELAY)
 		return TRUE;
 
-	sdlDisp->lastSentDate = GetTickCount64();
+	_lastSentDate = GetTickCount64();
 
-	if (!sdl_disp_settings_changed(sdlDisp))
+	if (!settings_changed())
 		return TRUE;
 
 	/* TODO: Multimonitor support for wayland
 	if (sdl->fullscreen && (settings->MonitorCount > 0))
 	{
-	    if (sdl_disp_sendLayout(sdlDisp->disp, settings->MonitorDefArray,
+	    if (sdlDisp->sendLayout(settings->MonitorDefArray,
 	                           settings->MonitorCount) != CHANNEL_RC_OK)
 	        return FALSE;
 	}
 	else
 	*/
 	{
-		sdlDisp->waitingResize = TRUE;
+		_waitingResize = TRUE;
 		layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
 		layout.Top = layout.Left = 0;
-		layout.Width = sdlDisp->targetWidth;
-		layout.Height = sdlDisp->targetHeight;
+		layout.Width = _targetWidth;
+		layout.Height = _targetHeight;
 		layout.Orientation = settings->DesktopOrientation;
 		layout.DesktopScaleFactor = settings->DesktopScaleFactor;
 		layout.DeviceScaleFactor = settings->DeviceScaleFactor;
-		layout.PhysicalWidth = sdlDisp->targetWidth;
-		layout.PhysicalHeight = sdlDisp->targetHeight;
+		layout.PhysicalWidth = _targetWidth;
+		layout.PhysicalHeight = _targetHeight;
 
-		if (IFCALLRESULT(CHANNEL_RC_OK, sdlDisp->disp->SendMonitorLayout, sdlDisp->disp, 1,
-		                 &layout) != CHANNEL_RC_OK)
+		if (IFCALLRESULT(CHANNEL_RC_OK, _disp->SendMonitorLayout, _disp, 1, &layout) !=
+		    CHANNEL_RC_OK)
 			return FALSE;
 	}
-	return sdl_update_last_sent(sdlDisp);
+	return update_last_sent();
 }
 
-static BOOL sdl_disp_set_window_resizable(sdlDispContext* sdlDisp)
+BOOL sdlDispContext::set_window_resizable()
 {
-	WINPR_ASSERT(sdlDisp);
-	update_resizeable(sdlDisp->sdl, TRUE);
+	update_resizeable(_sdl, TRUE);
 	return TRUE;
 }
 
@@ -187,127 +152,77 @@ static BOOL sdl_disp_check_context(void* context, sdlContext** ppsdl, sdlDispCon
 	return TRUE;
 }
 
-static void sdl_disp_OnActivated(void* context, const ActivatedEventArgs* e)
+void sdlDispContext::OnActivated(void* context, const ActivatedEventArgs* e)
 {
-	sdlContext* sdl;
-	sdlDispContext* sdlDisp;
-	rdpSettings* settings;
+	sdlContext* sdl = nullptr;
+	sdlDispContext* sdlDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	if (!sdl_disp_check_context(context, &sdl, &sdlDisp, &settings))
 		return;
 
-	sdlDisp->waitingResize = FALSE;
+	sdlDisp->_waitingResize = FALSE;
 
-	if (sdlDisp->activated && !settings->Fullscreen)
+	if (sdlDisp->_activated && !settings->Fullscreen)
 	{
-		sdl_disp_set_window_resizable(sdlDisp);
+		sdlDisp->set_window_resizable();
 
 		if (e->firstActivation)
 			return;
 
-		sdl_disp_sendResize(sdlDisp);
+		sdlDisp->sendResize();
 	}
 }
 
-static void sdl_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs* e)
+void sdlDispContext::OnGraphicsReset(void* context, const GraphicsResetEventArgs* e)
 {
-	sdlContext* sdl;
-	sdlDispContext* sdlDisp;
-	rdpSettings* settings;
+	sdlContext* sdl = nullptr;
+	sdlDispContext* sdlDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_UNUSED(e);
 	if (!sdl_disp_check_context(context, &sdl, &sdlDisp, &settings))
 		return;
 
-	sdlDisp->waitingResize = FALSE;
+	sdlDisp->_waitingResize = FALSE;
 
-	if (sdlDisp->activated && !settings->Fullscreen)
+	if (sdlDisp->_activated && !settings->Fullscreen)
 	{
-		sdl_disp_set_window_resizable(sdlDisp);
-		sdl_disp_sendResize(sdlDisp);
+		sdlDisp->set_window_resizable();
+		sdlDisp->sendResize();
 	}
 }
 
-static void sdl_disp_OnTimer(void* context, const TimerEventArgs* e)
+void sdlDispContext::OnTimer(void* context, const TimerEventArgs* e)
 {
-	sdlContext* sdl;
-	sdlDispContext* sdlDisp;
-	rdpSettings* settings;
+	sdlContext* sdl = nullptr;
+	sdlDispContext* sdlDisp = nullptr;
+	rdpSettings* settings = nullptr;
 
 	WINPR_UNUSED(e);
 	if (!sdl_disp_check_context(context, &sdl, &sdlDisp, &settings))
 		return;
 
-	if (!sdlDisp->activated || settings->Fullscreen)
+	if (!sdlDisp->_activated || settings->Fullscreen)
 		return;
 
-	sdl_disp_sendResize(sdlDisp);
+	sdlDisp->sendResize();
 }
 
-sdlDispContext* sdl_disp_new(sdlContext* sdl)
-{
-	sdlDispContext* ret;
-	wPubSub* pubSub;
-	rdpSettings* settings;
-
-	if (!sdl || !sdl->common.context.settings || !sdl->common.context.pubSub)
-		return nullptr;
-
-	settings = sdl->common.context.settings;
-	pubSub = sdl->common.context.pubSub;
-	ret = new (sdlDispContext);
-
-	if (!ret)
-		return nullptr;
-
-	ret->sdl = sdl;
-	ret->lastSentWidth = ret->targetWidth = settings->DesktopWidth;
-	ret->lastSentHeight = ret->targetHeight = settings->DesktopHeight;
-	PubSub_SubscribeActivated(pubSub, sdl_disp_OnActivated);
-	PubSub_SubscribeGraphicsReset(pubSub, sdl_disp_OnGraphicsReset);
-	PubSub_SubscribeTimer(pubSub, sdl_disp_OnTimer);
-	return ret;
-}
-
-void sdl_disp_free(sdlDispContext* disp)
-{
-	if (!disp)
-		return;
-
-	if (disp->sdl)
-	{
-		wPubSub* pubSub = disp->sdl->common.context.pubSub;
-		PubSub_UnsubscribeActivated(pubSub, sdl_disp_OnActivated);
-		PubSub_UnsubscribeGraphicsReset(pubSub, sdl_disp_OnGraphicsReset);
-		PubSub_UnsubscribeTimer(pubSub, sdl_disp_OnTimer);
-	}
-
-	delete (disp);
-}
-
-static UINT sdl_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors,
-                                size_t nmonitors)
+UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 {
 	UINT ret = CHANNEL_RC_OK;
-	size_t i;
-	sdlDispContext* sdlDisp;
-	rdpSettings* settings;
 
-	WINPR_ASSERT(disp);
 	WINPR_ASSERT(monitors);
 	WINPR_ASSERT(nmonitors > 0);
 
-	sdlDisp = (sdlDispContext*)disp->custom;
-	WINPR_ASSERT(sdlDisp);
-	WINPR_ASSERT(sdlDisp->sdl);
-
-	settings = sdlDisp->sdl->common.context.settings;
+	auto settings = _sdl->common.context.settings;
 	WINPR_ASSERT(settings);
 
 	std::vector<DISPLAY_CONTROL_MONITOR_LAYOUT> layouts;
 	layouts.resize(nmonitors);
 
-	for (i = 0; i < nmonitors; i++)
+	for (size_t i = 0; i < nmonitors; i++)
 	{
 		auto monitor = &monitors[i];
 		auto layout = &layouts[i];
@@ -352,20 +267,16 @@ static UINT sdl_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monit
 		layout->DeviceScaleFactor = settings->DeviceScaleFactor;
 	}
 
-	ret =
-	    IFCALLRESULT(CHANNEL_RC_OK, disp->SendMonitorLayout, disp, layouts.size(), layouts.data());
+	WINPR_ASSERT(_disp);
+	ret = IFCALLRESULT(CHANNEL_RC_OK, _disp->SendMonitorLayout, _disp, layouts.size(),
+	                   layouts.data());
 	return ret;
 }
 
 #if SDL_VERSION_ATLEAST(2, 0, 10)
-BOOL sdl_disp_handle_display_event(sdlDispContext* disp, const SDL_DisplayEvent* ev)
+BOOL sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
 {
 	WINPR_ASSERT(ev);
-
-	if (!disp)
-		return FALSE;
-	sdlContext* sdl = disp->sdl;
-	WINPR_ASSERT(sdl);
 
 	switch (ev->event)
 	{
@@ -386,151 +297,129 @@ BOOL sdl_disp_handle_display_event(sdlDispContext* disp, const SDL_DisplayEvent*
 }
 #endif
 
-#if !SDL_VERSION_ATLEAST(2, 0, 16)
-static BOOL sdl_grab(sdlContext* sdl, Uint32 windowID, SDL_bool enable)
-{
-	SDL_Window* window = SDL_GetWindowFromID(windowID);
-	if (!window)
-		return FALSE;
-
-	sdl->grab_mouse = enable;
-	SDL_SetWindowGrab(window, enable);
-	return TRUE;
-}
-#endif
-
-BOOL sdl_grab_keyboard(sdlContext* sdl, Uint32 windowID, SDL_bool enable)
-{
-	SDL_Window* window = SDL_GetWindowFromID(windowID);
-	if (!window)
-		return FALSE;
-#if SDL_VERSION_ATLEAST(2, 0, 16)
-	sdl->grab_kbd = enable;
-	SDL_SetWindowKeyboardGrab(window, enable);
-	return TRUE;
-#else
-	WLog_WARN(TAG, "Keyboard grabbing not supported by SDL2 < 2.0.16");
-	return FALSE;
-#endif
-}
-
-BOOL sdl_grab_mouse(sdlContext* sdl, Uint32 windowID, SDL_bool enable)
-{
-	SDL_Window* window = SDL_GetWindowFromID(windowID);
-	if (!window)
-		return FALSE;
-#if SDL_VERSION_ATLEAST(2, 0, 16)
-	sdl->grab_mouse = enable;
-	SDL_SetWindowMouseGrab(window, enable);
-	return TRUE;
-#else
-	return sdl_grab(sdl, windowID, enable);
-#endif
-}
-
-BOOL sdl_disp_handle_window_event(sdlDispContext* disp, const SDL_WindowEvent* ev)
+BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 {
 	WINPR_ASSERT(ev);
-
-	if (!disp)
-		return FALSE;
-	sdlContext* sdl = disp->sdl;
-	WINPR_ASSERT(sdl);
 
 	switch (ev->event)
 	{
 		case SDL_WINDOWEVENT_HIDDEN:
 		case SDL_WINDOWEVENT_MINIMIZED:
-			gdi_send_suppress_output(sdl->common.context.gdi, TRUE);
+			gdi_send_suppress_output(_sdl->common.context.gdi, TRUE);
 			return TRUE;
 
 		case SDL_WINDOWEVENT_EXPOSED:
 		case SDL_WINDOWEVENT_SHOWN:
 		case SDL_WINDOWEVENT_MAXIMIZED:
 		case SDL_WINDOWEVENT_RESTORED:
-			gdi_send_suppress_output(sdl->common.context.gdi, FALSE);
+			gdi_send_suppress_output(_sdl->common.context.gdi, FALSE);
 			return TRUE;
 
 		case SDL_WINDOWEVENT_RESIZED:
 		case SDL_WINDOWEVENT_SIZE_CHANGED:
-			disp->targetWidth = ev->data1;
-			disp->targetHeight = ev->data2;
-			return sdl_disp_sendResize(disp);
+			_targetWidth = ev->data1;
+			_targetHeight = ev->data2;
+			return sendResize();
 
 		case SDL_WINDOWEVENT_LEAVE:
-			sdl_grab_keyboard(sdl, ev->windowID, SDL_FALSE);
+			sdl_grab_keyboard(_sdl, ev->windowID, SDL_FALSE);
 			return TRUE;
 		case SDL_WINDOWEVENT_ENTER:
-			sdl_grab_keyboard(sdl, ev->windowID, SDL_TRUE);
-			return sdl_keyboard_focus_in(&sdl->common.context);
+			sdl_grab_keyboard(_sdl, ev->windowID, SDL_TRUE);
+			return sdl_keyboard_focus_in(&_sdl->common.context);
 		case SDL_WINDOWEVENT_FOCUS_GAINED:
 		case SDL_WINDOWEVENT_TAKE_FOCUS:
-			return sdl_keyboard_focus_in(&sdl->common.context);
+			return sdl_keyboard_focus_in(&_sdl->common.context);
 
 		default:
 			return TRUE;
 	}
 }
 
-static UINT sdl_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
-                                   UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB)
+UINT sdlDispContext::DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
+                                        UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB)
 {
 	/* we're called only if dynamic resolution update is activated */
-	sdlDispContext* sdlDisp;
-	rdpSettings* settings;
-
 	WINPR_ASSERT(disp);
 
-	sdlDisp = (sdlDispContext*)disp->custom;
-	WINPR_ASSERT(sdlDisp);
-	WINPR_ASSERT(sdlDisp->sdl);
+	auto sdlDisp = reinterpret_cast<sdlDispContext*>(disp->custom);
+	return sdlDisp->DisplayControlCaps(maxNumMonitors, maxMonitorAreaFactorA,
+	                                   maxMonitorAreaFactorB);
+}
 
-	settings = sdlDisp->sdl->common.context.settings;
+UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
+                                        UINT32 maxMonitorAreaFactorB)
+{
+	auto settings = _sdl->common.context.settings;
 	WINPR_ASSERT(settings);
 
 	WLog_DBG(TAG,
 	         "DisplayControlCapsPdu: MaxNumMonitors: %" PRIu32 " MaxMonitorAreaFactorA: %" PRIu32
 	         " MaxMonitorAreaFactorB: %" PRIu32 "",
 	         maxNumMonitors, maxMonitorAreaFactorA, maxMonitorAreaFactorB);
-	sdlDisp->activated = TRUE;
+	_activated = TRUE;
 
 	if (settings->Fullscreen)
 		return CHANNEL_RC_OK;
 
 	WLog_DBG(TAG, "DisplayControlCapsPdu: setting the window as resizable");
-	return sdl_disp_set_window_resizable(sdlDisp) ? CHANNEL_RC_OK : CHANNEL_RC_NO_MEMORY;
+	return set_window_resizable() ? CHANNEL_RC_OK : CHANNEL_RC_NO_MEMORY;
 }
 
-BOOL sdl_disp_init(sdlDispContext* sdlDisp, DispClientContext* disp)
+BOOL sdlDispContext::init(DispClientContext* disp)
 {
-	rdpSettings* settings;
-
-	if (!sdlDisp || !sdlDisp->sdl || !disp)
+	if (!disp)
 		return FALSE;
 
-	settings = sdlDisp->sdl->common.context.settings;
+	auto settings = _sdl->common.context.settings;
 
 	if (!settings)
 		return FALSE;
 
-	sdlDisp->disp = disp;
-	disp->custom = (void*)sdlDisp;
+	_disp = disp;
+	disp->custom = this;
 
 	if (settings->DynamicResolutionUpdate)
 	{
-		disp->DisplayControlCaps = sdl_DisplayControlCaps;
+		disp->DisplayControlCaps = sdlDispContext::DisplayControlCaps;
 	}
 
-	update_resizeable(sdlDisp->sdl, TRUE);
+	update_resizeable(_sdl, TRUE);
 	return TRUE;
 }
 
-BOOL sdl_disp_uninit(sdlDispContext* sdlDisp, DispClientContext* disp)
+BOOL sdlDispContext::uninit(DispClientContext* disp)
 {
-	if (!sdlDisp || !disp)
+	if (!disp)
 		return FALSE;
 
-	sdlDisp->disp = nullptr;
-	update_resizeable(sdlDisp->sdl, FALSE);
+	_disp = nullptr;
+	update_resizeable(_sdl, FALSE);
 	return TRUE;
+}
+
+sdlDispContext::sdlDispContext(sdlContext* sdl) : _sdl(sdl)
+{
+	WINPR_ASSERT(_sdl);
+	WINPR_ASSERT(_sdl->common.context.settings);
+	WINPR_ASSERT(_sdl->common.context.pubSub);
+
+	auto settings = _sdl->common.context.settings;
+	auto pubSub = _sdl->common.context.pubSub;
+
+	_lastSentWidth = _targetWidth = settings->DesktopWidth;
+	_lastSentHeight = _targetHeight = settings->DesktopHeight;
+	PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated);
+	PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
+	PubSub_SubscribeTimer(pubSub, sdlDispContext::OnTimer);
+}
+
+sdlDispContext::~sdlDispContext()
+{
+	wPubSub* pubSub = _sdl->common.context.pubSub;
+	WINPR_ASSERT(pubSub);
+
+	PubSub_UnsubscribeActivated(pubSub, sdlDispContext::OnActivated);
+	PubSub_UnsubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
+	PubSub_UnsubscribeTimer(pubSub, sdlDispContext::OnTimer);
 }

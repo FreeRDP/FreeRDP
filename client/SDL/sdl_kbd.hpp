@@ -33,3 +33,6 @@ BOOL sdl_keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeSt
                                  UINT32 imeConvMode);
 
 BOOL sdl_handle_keyboard_event(sdlContext* sdl, const SDL_KeyboardEvent* ev);
+
+BOOL sdl_grab_keyboard(sdlContext* sdl, Uint32 windowID, SDL_bool enable);
+BOOL sdl_grab_mouse(sdlContext* sdl, Uint32 windowID, SDL_bool enable);

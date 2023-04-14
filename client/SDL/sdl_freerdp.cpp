@@ -743,14 +743,16 @@ static int sdl_run(sdlContext* sdl)
 				case SDL_DISPLAYEVENT:
 				{
 					const SDL_DisplayEvent* ev = &windowEvent.display;
-					sdl_disp_handle_display_event(sdl->disp, ev);
+					if (sdl->disp)
+						sdl->disp->handle_display_event(ev);
 				}
 				break;
 #endif
 				case SDL_WINDOWEVENT:
 				{
 					const SDL_WindowEvent* ev = &windowEvent.window;
-					sdl_disp_handle_window_event(sdl->disp, ev);
+					if (sdl->disp)
+						sdl->disp->handle_window_event(ev);
 				}
 				break;
 
@@ -884,7 +886,7 @@ static BOOL sdl_post_connect(freerdp* instance)
 	if (!sdl_create_primary(sdl))
 		return FALSE;
 
-	sdl->disp = sdl_disp_new(sdl);
+	sdl->disp = new sdlDispContext(sdl);
 	if (!sdl->disp)
 		return FALSE;
 
@@ -940,7 +942,7 @@ static void sdl_post_final_disconnect(freerdp* instance)
 
 	context = (sdlContext*)instance->context;
 
-	sdl_disp_free(context->disp);
+	delete (context->disp);
 	context->disp = nullptr;
 }
 
