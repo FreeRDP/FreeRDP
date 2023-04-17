@@ -879,6 +879,7 @@ extern "C"
 
 #define KEYCODE_TYPE_APPLE 0x00000001
 #define KEYCODE_TYPE_EVDEV 0x00000002
+#define KEYCODE_TYPE_XKB 0x00000003
 
 	WINPR_API DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags);
 	WINPR_API DWORD GetKeycodeFromVirtualKeyCode(DWORD keycode, DWORD dwFlags);
