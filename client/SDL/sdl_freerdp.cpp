@@ -305,16 +305,16 @@ static BOOL sdl_redraw(sdlContext* sdl)
 	return gdi_send_suppress_output(gdi, FALSE);
 }
 
-class EventGuard
+class SdlEventUpdateTriggerGuard
 {
   private:
 	sdlContext* _sdl;
 
   public:
-	EventGuard(sdlContext* sdl) : _sdl(sdl)
+	SdlEventUpdateTriggerGuard(sdlContext* sdl) : _sdl(sdl)
 	{
 	}
-	~EventGuard()
+	~SdlEventUpdateTriggerGuard()
 	{
 		SetEvent(_sdl->update_complete);
 	}
@@ -326,7 +326,7 @@ static BOOL sdl_end_paint_process(rdpContext* context)
 
 	WINPR_ASSERT(context);
 
-	EventGuard guard(sdl);
+	SdlEventUpdateTriggerGuard guard(sdl);
 
 	gdi = context->gdi;
 	WINPR_ASSERT(gdi);
