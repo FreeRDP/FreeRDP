@@ -21,6 +21,8 @@
 #ifndef FREERDP_CLIENT_X11_CLIPRDR_FILE_H
 #define FREERDP_CLIENT_X11_CLIPRDR_FILE_H
 
+#include <winpr/clipboard.h>
+
 #include <freerdp/client/cliprdr.h>
 
 #ifdef __cplusplus
