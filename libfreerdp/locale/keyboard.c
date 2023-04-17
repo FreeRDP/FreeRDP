@@ -286,7 +286,7 @@ static int freerdp_keyboard_init_x11_evdev(DWORD* keyboardLayoutId,
 	for (keycode = 0; keycode < 256; keycode++)
 	{
 		vkcode = keycode_to_vkcode[keycode] =
-		    GetVirtualKeyCodeFromKeycode(keycode, KEYCODE_TYPE_EVDEV);
+		    GetVirtualKeyCodeFromKeycode(keycode, KEYCODE_TYPE_XKB);
 		x11_keycode_to_rdp_scancode[keycode] = GetVirtualScanCodeFromVirtualKeyCode(vkcode, 4);
 	}
 

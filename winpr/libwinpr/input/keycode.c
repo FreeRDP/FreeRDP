@@ -293,13 +293,287 @@ static DWORD KEYCODE_TO_VKCODE_APPLE[256] = {
 /**
  * evdev (Linux)
  *
+ * Refer to linux/input-event-codes.h
+ */
+
+static DWORD KEYCODE_TO_VKCODE_EVDEV[256] = {
+	0,                             /* KEY_RESERVED (0) */
+	VK_ESCAPE,                     /* KEY_ESC (1) */
+	VK_KEY_1,                      /* KEY_1 (2) */
+	VK_KEY_2,                      /* KEY_2 (3) */
+	VK_KEY_3,                      /* KEY_3 (4) */
+	VK_KEY_4,                      /* KEY_4 (5) */
+	VK_KEY_5,                      /* KEY_5 (6) */
+	VK_KEY_6,                      /* KEY_6 (7) */
+	VK_KEY_7,                      /* KEY_7 (8) */
+	VK_KEY_8,                      /* KEY_8 (9) */
+	VK_KEY_9,                      /* KEY_9 (10) */
+	VK_KEY_0,                      /* KEY_0 (11) */
+	VK_OEM_MINUS,                  /* KEY_MINUS (12) */
+	VK_OEM_PLUS,                   /* KEY_EQUAL (13) */
+	VK_BACK,                       /* KEY_BACKSPACE (14) */
+	VK_TAB,                        /* KEY_TAB (15) */
+	VK_KEY_Q,                      /* KEY_Q (16) */
+	VK_KEY_W,                      /* KEY_W (17) */
+	VK_KEY_E,                      /* KEY_E (18) */
+	VK_KEY_R,                      /* KEY_R (19) */
+	VK_KEY_T,                      /* KEY_T (20) */
+	VK_KEY_Y,                      /* KEY_Y (21) */
+	VK_KEY_U,                      /* KEY_U (22) */
+	VK_KEY_I,                      /* KEY_I (23) */
+	VK_KEY_O,                      /* KEY_O (24) */
+	VK_KEY_P,                      /* KEY_P (25) */
+	VK_OEM_4,                      /* KEY_LEFTBRACE (26) */
+	VK_OEM_6,                      /* KEY_RIGHTBRACE (27) */
+	VK_RETURN,                     /* KEY_ENTER (28) */
+	VK_LCONTROL,                   /* KEY_LEFTCTRL (29) */
+	VK_KEY_A,                      /* KEY_A (30) */
+	VK_KEY_S,                      /* KEY_S (31) */
+	VK_KEY_D,                      /* KEY_D (32) */
+	VK_KEY_F,                      /* KEY_F (33) */
+	VK_KEY_G,                      /* KEY_G (34) */
+	VK_KEY_H,                      /* KEY_H (35) */
+	VK_KEY_J,                      /* KEY_J (36) */
+	VK_KEY_K,                      /* KEY_K (37) */
+	VK_KEY_L,                      /* KEY_L (38) */
+	VK_OEM_1,                      /* KEY_SEMICOLON (39) */
+	VK_OEM_7,                      /* KEY_APOSTROPHE (40) */
+	VK_OEM_3,                      /* KEY_GRAVE (41) */
+	VK_LSHIFT,                     /* KEY_LEFTSHIFT (42) */
+	VK_OEM_5,                      /* KEY_BACKSLASH (43) */
+	VK_KEY_Z,                      /* KEY_Z (44) */
+	VK_KEY_X,                      /* KEY_X (45) */
+	VK_KEY_C,                      /* KEY_C (46) */
+	VK_KEY_V,                      /* KEY_V (47) */
+	VK_KEY_B,                      /* KEY_B (48) */
+	VK_KEY_N,                      /* KEY_N (49) */
+	VK_KEY_M,                      /* KEY_M (50) */
+	VK_OEM_COMMA,                  /* KEY_COMMA (51) */
+	VK_OEM_PERIOD,                 /* KEY_DOT (52) */
+	VK_OEM_2,                      /* KEY_SLASH (53) */
+	VK_RSHIFT,                     /* KEY_RIGHTSHIFT (54) */
+	VK_MULTIPLY,                   /* KEY_KPASTERISK (55) */
+	VK_LMENU,                      /* KEY_LEFTALT (56) */
+	VK_SPACE,                      /* KEY_SPACE (57) */
+	VK_CAPITAL,                    /* KEY_CAPSLOCK (58) */
+	VK_F1,                         /* KEY_F1 (59) */
+	VK_F2,                         /* KEY_F2 (60) */
+	VK_F3,                         /* KEY_F3 (61) */
+	VK_F4,                         /* KEY_F4 (62) */
+	VK_F5,                         /* KEY_F5 (63) */
+	VK_F6,                         /* KEY_F6 (64) */
+	VK_F7,                         /* KEY_F7 (65) */
+	VK_F8,                         /* KEY_F8 (66) */
+	VK_F9,                         /* KEY_F9 (67) */
+	VK_F10,                        /* KEY_F10 (68) */
+	VK_NUMLOCK,                    /* KEY_NUMLOCK (69) */
+	VK_SCROLL,                     /* KEY_SCROLLLOCK (70) */
+	VK_NUMPAD7,                    /* KEY_KP7 (71) */
+	VK_NUMPAD8,                    /* KEY_KP8 (72) */
+	VK_NUMPAD9,                    /* KEY_KP9 (73) */
+	VK_SUBTRACT,                   /* KEY_KPMINUS (74) */
+	VK_NUMPAD4,                    /* KEY_KP4 (75) */
+	VK_NUMPAD5,                    /* KEY_KP5 (76) */
+	VK_NUMPAD6,                    /* KEY_KP6 (77) */
+	VK_ADD,                        /* KEY_KPPLUS (78) */
+	VK_NUMPAD1,                    /* KEY_KP1 (79) */
+	VK_NUMPAD2,                    /* KEY_KP2 (80) */
+	VK_NUMPAD3,                    /* KEY_KP3 (81) */
+	VK_NUMPAD0,                    /* KEY_KP0 (82) */
+	VK_DECIMAL,                    /* KEY_KPDOT (83) */
+	0,                             /* (84) */
+	0,                             /* KEY_ZENKAKUHANKAKU (85) */
+	VK_OEM_102,                    /* KEY_102ND (86) */
+	VK_F11,                        /* KEY_F11 (87) */
+	VK_F12,                        /* KEY_F12 (88) */
+	VK_ABNT_C1,                    /* KEY_RO (89) */
+	VK_DBE_KATAKANA,               /* KEY_KATAKANA (90) */
+	VK_DBE_HIRAGANA,               /* KEY_HIRAGANA (91) */
+	VK_CONVERT,                    /* KEY_HENKAN (92) */
+	VK_HKTG,                       /* KEY_KATAKANAHIRAGANA (93) */
+	VK_NONCONVERT,                 /* KEY_MUHENKAN (94) */
+	0,                             /* KEY_KPJPCOMMA (95) */
+	VK_RETURN | KBDEXT,            /* KEY_KPENTER (96) */
+	VK_RCONTROL | KBDEXT,          /* KEY_RIGHTCTRL (97) */
+	VK_DIVIDE | KBDEXT,            /* KEY_KPSLASH (98) */
+	VK_SNAPSHOT | KBDEXT,          /* KEY_SYSRQ (99) */
+	VK_RMENU | KBDEXT,             /* KEY_RIGHTALT (100) */
+	0,                             /* KEY_LINEFEED (101) */
+	VK_HOME | KBDEXT,              /* KEY_HOME (102) */
+	VK_UP | KBDEXT,                /* KEY_UP (103) */
+	VK_PRIOR | KBDEXT,             /* KEY_PAGEUP (104) */
+	VK_LEFT | KBDEXT,              /* KEY_LEFT (105) */
+	VK_RIGHT | KBDEXT,             /* KEY_RIGHT (106) */
+	VK_END | KBDEXT,               /* KEY_END (107) */
+	VK_DOWN | KBDEXT,              /* KEY_DOWN (108) */
+	VK_NEXT | KBDEXT,              /* KEY_PAGEDOWN (109) */
+	VK_INSERT | KBDEXT,            /* KEY_INSERT (110) */
+	VK_DELETE | KBDEXT,            /* KEY_DELETE (111) */
+	0,                             /* KEY_MACRO (112) */
+	VK_VOLUME_MUTE | KBDEXT,       /* KEY_MUTE (113) */
+	VK_VOLUME_DOWN | KBDEXT,       /* KEY_VOLUMEDOWN (114) */
+	VK_VOLUME_UP | KBDEXT,         /* KEY_VOLUMEUP (115) */
+	0,                             /* KEY_POWER (SC System Power Down) (116) */
+	0,                             /* KEY_KPEQUAL (117) */
+	0,                             /* KEY_KPPLUSMINUS (118) */
+	VK_PAUSE | KBDEXT,             /* KEY_PAUSE (119) */
+	0,                             /* KEY_SCALE (AL Compiz Scale (Expose)) (120) */
+	VK_ABNT_C2,                    /* KEY_KPCOMMA (121) */
+	VK_HANGUL,                     /* KEY_HANGEUL, KEY_HANGUEL (122) */
+	VK_HANJA,                      /* KEY_HANJA (123) */
+	VK_OEM_8,                      /* KEY_YEN (124) */
+	VK_LWIN | KBDEXT,              /* KEY_LEFTMETA (125) */
+	VK_RWIN | KBDEXT,              /* KEY_RIGHTMETA (126) */
+	0,                             /* KEY_COMPOSE (127) */
+	0,                             /* KEY_STOP (AC Stop) (128) */
+	0,                             /* KEY_AGAIN (AC Properties) (129) */
+	0,                             /* KEY_PROPS (AC Undo) (130) */
+	0,                             /* KEY_UNDO (131) */
+	0,                             /* KEY_FRONT (132) */
+	0,                             /* KEY_COPY (AC Copy) (133) */
+	0,                             /* KEY_OPEN (AC Open) (134) */
+	0,                             /* KEY_PASTE (AC Paste) (135) */
+	0,                             /* KEY_FIND (AC Search) (136) */
+	0,                             /* KEY_CUT (AC Cut) (137) */
+	VK_HELP,                       /* KEY_HELP (AL Integrated Help Center) (138) */
+	VK_APPS | KBDEXT,              /* KEY_MENU (Menu (show menu)) (139) */
+	0,                             /* KEY_CALC (AL Calculator) (140) */
+	0,                             /* KEY_SETUP (141) */
+	VK_SLEEP,                      /* KEY_SLEEP (SC System Sleep) (142) */
+	0,                             /* KEY_WAKEUP (System Wake Up) (143) */
+	0,                             /* KEY_FILE (AL Local Machine Browser) (144) */
+	0,                             /* KEY_SENDFILE (145) */
+	0,                             /* KEY_DELETEFILE (146) */
+	VK_CONVERT,                    /* KEY_XFER (147) */
+	VK_LAUNCH_APP1,                /* KEY_PROG1 (148) */
+	VK_LAUNCH_APP2,                /* KEY_PROG2 (149) */
+	0,                             /* KEY_WWW (AL Internet Browser) (150) */
+	0,                             /* KEY_MSDOS (151) */
+	0,                             /* KEY_COFFEE, KEY_SCREENLOCK
+	                                * (AL Terminal Lock/Screensaver) (152) */
+	0,                             /* KEY_ROTATE_DISPLAY, KEY_DIRECTION
+	                                * (Display orientation for e.g. tablets) (153) */
+	0,                             /* KEY_CYCLEWINDOWS (154) */
+	VK_LAUNCH_MAIL | KBDEXT,       /* KEY_MAIL (155) */
+	VK_BROWSER_FAVORITES | KBDEXT, /* KEY_BOOKMARKS (AC Bookmarks) (156) */
+	0,                             /* KEY_COMPUTER (157) */
+	VK_BROWSER_BACK | KBDEXT,      /* KEY_BACK (AC Back) (158) */
+	VK_BROWSER_FORWARD | KBDEXT,   /* KEY_FORWARD (AC Forward) (159) */
+	0,                             /* KEY_CLOSECD (160) */
+	0,                             /* KEY_EJECTCD (161) */
+	0,                             /* KEY_EJECTCLOSECD (162) */
+	VK_MEDIA_NEXT_TRACK | KBDEXT,  /* KEY_NEXTSONG (163) */
+	VK_MEDIA_PLAY_PAUSE | KBDEXT,  /* KEY_PLAYPAUSE (164) */
+	VK_MEDIA_PREV_TRACK | KBDEXT,  /* KEY_PREVIOUSSONG (165) */
+	VK_MEDIA_STOP | KBDEXT,        /* KEY_STOPCD (166) */
+	0,                             /* KEY_RECORD (167) */
+	0,                             /* KEY_REWIND (168) */
+	0,                             /* KEY_PHONE (Media Select Telephone) (169) */
+	0,                             /* KEY_ISO (170) */
+	0,                             /* KEY_CONFIG (AL Consumer Control Configuration) (171) */
+	VK_BROWSER_HOME | KBDEXT,      /* KEY_HOMEPAGE (AC Home) (172) */
+	VK_BROWSER_REFRESH | KBDEXT,   /* KEY_REFRESH (AC Refresh) (173) */
+	0,                             /* KEY_EXIT (AC Exit) (174) */
+	0,                             /* KEY_MOVE (175) */
+	0,                             /* KEY_EDIT (176) */
+	0,                             /* KEY_SCROLLUP (177) */
+	0,                             /* KEY_SCROLLDOWN (178) */
+	0,                             /* KEY_KPLEFTPAREN (179) */
+	0,                             /* KEY_KPRIGHTPAREN (180) */
+	0,                             /* KEY_NEW (AC New) (181) */
+	0,                             /* KEY_REDO (AC Redo/Repeat) (182) */
+	VK_F13,                        /* KEY_F13 (183) */
+	VK_F14,                        /* KEY_F14 (184) */
+	VK_F15,                        /* KEY_F15 (185) */
+	VK_F16,                        /* KEY_F16 (186) */
+	VK_F17,                        /* KEY_F17 (187) */
+	VK_F18,                        /* KEY_F18 (188) */
+	VK_F19,                        /* KEY_F19 (189) */
+	VK_F20,                        /* KEY_F20 (190) */
+	VK_F21,                        /* KEY_F21 (191) */
+	VK_F22,                        /* KEY_F22 (192) */
+	VK_F23,                        /* KEY_F23 (193) */
+	VK_F24,                        /* KEY_F24 (194) */
+	0,                             /* (195) */
+	0,                             /* (196) */
+	0,                             /* (197) */
+	0,                             /* (198) */
+	0,                             /* (199) */
+	VK_PLAY,                       /* KEY_PLAYCD (200) */
+	0,                             /* KEY_PAUSECD (201) */
+	0,                             /* KEY_PROG3 (202) */
+	0,                             /* KEY_PROG4 (203) */
+	0,                             /* KEY_ALL_APPLICATIONS, KEY_DASHBOARD
+	                                * (AC Desktop Show All Applications) (204) */
+	0,                             /* KEY_SUSPEND (205) */
+	0,                             /* KEY_CLOSE (AC Close) (206) */
+	VK_PLAY,                       /* KEY_PLAY (207) */
+	0,                             /* KEY_FASTFORWARD (208) */
+	0,                             /* KEY_BASSBOOST (209) */
+	VK_PRINT | KBDEXT,             /* KEY_PRINT (AC Print) (210) */
+	0,                             /* KEY_HP (211) */
+	0,                             /* KEY_CAMERA (212) */
+	0,                             /* KEY_SOUND (213) */
+	0,                             /* KEY_QUESTION (214) */
+	0,                             /* KEY_EMAIL (215) */
+	0,                             /* KEY_CHAT (216) */
+	VK_BROWSER_SEARCH | KBDEXT,    /* KEY_SEARCH (217) */
+	0,                             /* KEY_CONNECT (218) */
+	0,                             /* KEY_FINANCE (AL Checkbook/Finance) (219) */
+	0,                             /* KEY_SPORT (220) */
+	0,                             /* KEY_SHOP (221) */
+	0,                             /* KEY_ALTERASE (222) */
+	0,                             /* KEY_CANCEL (AC Cancel) (223) */
+	0,                             /* KEY_BRIGHTNESSDOWN (224) */
+	0,                             /* KEY_BRIGHTNESSUP (225) */
+	0,                             /* KEY_MEDIA (226) */
+	0,                             /* KEY_SWITCHVIDEOMODE
+	                                * (Cycle between available video outputs
+	                                *  (Monitor/LCD/TV-out/etc)) (227) */
+	0,                             /* KEY_KBDILLUMTOGGLE (228) */
+	0,                             /* KEY_KBDILLUMDOWN (229) */
+	0,                             /* KEY_KBDILLUMUP (230) */
+	0,                             /* KEY_SEND (AC Send) (231) */
+	0,                             /* KEY_REPLY (AC Reply) (232) */
+	0,                             /* KEY_FORWARDMAIL (AC Forward Msg) (233) */
+	0,                             /* KEY_SAVE (AC Save) (234) */
+	0,                             /* KEY_DOCUMENTS (235) */
+	0,                             /* KEY_BATTERY (236) */
+	0,                             /* KEY_BLUETOOTH (237) */
+	0,                             /* KEY_WLAN (238) */
+	0,                             /* KEY_UWB (239) */
+	0,                             /* KEY_UNKNOWN (240) */
+	0,                             /* KEY_VIDEO_NEXT (drive next video source) (241) */
+	0,                             /* KEY_VIDEO_PREV (drive previous video source) (242) */
+	0,                             /* KEY_BRIGHTNESS_CYCLE
+	                                * (brightness up, after max is min) (243) */
+	0,                             /* KEY_BRIGHTNESS_AUTO, KEY_BRIGHTNESS_ZERO
+	                                * (Set Auto Brightness: manual brightness control is off,
+	                                *  rely on ambient) (244) */
+	0,                             /* KEY_DISPLAY_OFF (display device to off state) (245) */
+	0,                             /* KEY_WWAN, KEY_WIMAX
+	                                * (Wireless WAN (LTE, UMTS, GSM, etc.)) (246) */
+	0,                             /* KEY_RFKILL (Key that controls all radios) (247) */
+	0,                             /* KEY_MICMUTE (Mute / unmute the microphone) (248) */
+	0,                             /* (249) */
+	0,                             /* (250) */
+	0,                             /* (251) */
+	0,                             /* (252) */
+	0,                             /* (253) */
+	0,                             /* (254) */
+	0,                             /* (255) */
+};
+
+/**
+ * XKB
+ *
  * Refer to X Keyboard Configuration Database:
  * http://www.freedesktop.org/wiki/Software/XKeyboardConfig
  */
 
 /* TODO: Finish Japanese Keyboard */
 
-static DWORD KEYCODE_TO_VKCODE_EVDEV[256] = {
+static DWORD KEYCODE_TO_VKCODE_XKB[256] = {
 	0,             /* 0 */
 	0,             /* 1 */
 	0,             /* 2 */
@@ -589,6 +863,11 @@ DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags)
 		if (keycode < 0xFF)
 			vkcode = KEYCODE_TO_VKCODE_EVDEV[keycode & 0xFF];
 	}
+	else if (dwFlags & KEYCODE_TYPE_XKB)
+	{
+		if (keycode < 0xFF)
+			vkcode = KEYCODE_TO_VKCODE_XKB[keycode & 0xFF];
+	}
 
 	if (!vkcode)
 		vkcode = VK_NONE;
@@ -603,7 +882,7 @@ DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, DWORD dwFlags)
 
 	if (dwFlags & KEYCODE_TYPE_APPLE)
 	{
-		for (index = 0; index < 256; index++)
+		for (index = 0; index < ARRAYSIZE(KEYCODE_TO_VKCODE_APPLE); index++)
 		{
 			if (vkcode == KEYCODE_TO_VKCODE_APPLE[index])
 			{
@@ -614,9 +893,20 @@ DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, DWORD dwFlags)
 	}
 	else if (dwFlags & KEYCODE_TYPE_EVDEV)
 	{
-		for (index = 0; index < 256; index++)
+		for (index = 0; index < ARRAYSIZE(KEYCODE_TO_VKCODE_EVDEV); index++)
 		{
 			if (vkcode == KEYCODE_TO_VKCODE_EVDEV[index])
+			{
+				keycode = index;
+				break;
+			}
+		}
+	}
+	else if (dwFlags & KEYCODE_TYPE_XKB)
+	{
+		for (index = 0; index < ARRAYSIZE(KEYCODE_TO_VKCODE_XKB); index++)
+		{
+			if (vkcode == KEYCODE_TO_VKCODE_XKB[index])
 			{
 				keycode = index;
 				break;

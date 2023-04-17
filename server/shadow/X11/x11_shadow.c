@@ -230,7 +230,7 @@ static BOOL x11_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 	if (extended)
 		vkcode |= KBDEXT;
 
-	keycode = GetKeycodeFromVirtualKeyCode(vkcode, KEYCODE_TYPE_EVDEV);
+	keycode = GetKeycodeFromVirtualKeyCode(vkcode, KEYCODE_TYPE_XKB);
 
 	if (keycode != 0)
 	{
