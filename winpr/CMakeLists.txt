@@ -66,6 +66,7 @@ option(WITH_SMARTCARD_INSPECT "Enable SmartCard API Inspector" OFF)
 option(WITH_DEBUG_MUTEX "Print mutex debug messages" ${DEFAULT_DEBUG_OPTION})
 option(WITH_INTERNAL_MD4 "Use compiled in md4 hash functions instead of OpenSSL/MBedTLS" OFF)
 option(WITH_INTERNAL_MD5 "Use compiled in md5 hash functions instead of OpenSSL/MBedTLS" OFF)
+option(WITH_UNICODE_BUILTIN  "Use built-in Unicode conversion (don't use system-provided libraries)" OFF)
 
 # This option MUST be off to avoid symbol conflicts when loading an external SSPI module library
 option(SSPI_DLL "Define and export SSPI API symbols for usage as a Windows SSPI DLL replacement" OFF)
