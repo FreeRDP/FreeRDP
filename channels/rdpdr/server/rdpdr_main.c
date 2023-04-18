@@ -3156,6 +3156,13 @@ static UINT rdpdr_server_drive_close_file_callback(RdpdrServerContext* context, 
 	           "RdpdrServerDriveCloseFileCallback: deviceId=%" PRIu32 ", completionId=%" PRIu32
 	           ", ioStatus=0x%" PRIx32 "",
 	           deviceId, completionId, ioStatus);
+
+	// padding 5 bytes
+	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 5))
+		return ERROR_INVALID_DATA;
+
+	Stream_Seek(s, 5);
+
 	/* Invoke the close file completion routine. */
 	context->OnDriveCloseFileComplete(context, irp->CallbackData, ioStatus);
 	/* Destroy the IRP. */
