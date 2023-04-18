@@ -874,24 +874,27 @@ static SSIZE_T rdstls_parse_pdu_data_type(wLog* log, UINT16 dataType, wStream* s
 				return 0;
 			Stream_Read_UINT16(s, redirGuidLength);
 
-			if (!Stream_SafeSeek(s, redirGuidLength))
+			if (Stream_GetRemainingLength(s) < redirGuidLength)
 				return 0;
+			Stream_Seek(s, redirGuidLength);
 
 			UINT16 usernameLength;
 			if (Stream_GetRemainingLength(s) < 2)
 				return 0;
 			Stream_Read_UINT16(s, usernameLength);
 
-			if (!Stream_SafeSeek(s, usernameLength))
+			if (Stream_GetRemainingLength(s) < usernameLength)
 				return 0;
+			Stream_Seek(s, usernameLength);
 
 			UINT16 domainLength;
 			if (Stream_GetRemainingLength(s) < 2)
 				return 0;
 			Stream_Read_UINT16(s, domainLength);
 
-			if (!Stream_SafeSeek(s, domainLength))
+			if (Stream_GetRemainingLength(s) < domainLength)
 				return 0;
+			Stream_Seek(s, domainLength);
 
 			UINT16 passwordLength;
 			if (Stream_GetRemainingLength(s) < 2)
@@ -902,8 +905,9 @@ static SSIZE_T rdstls_parse_pdu_data_type(wLog* log, UINT16 dataType, wStream* s
 		}
 		case RDSTLS_DATA_AUTORECONNECT_COOKIE:
 		{
-			if (!Stream_SafeSeek(s, 4))
+			if (Stream_GetRemainingLength(s) < 4)
 				return 0;
+			Stream_Seek(s, 4);
 
 			UINT16 cookieLength;
 			if (Stream_GetRemainingLength(s) < 2)
