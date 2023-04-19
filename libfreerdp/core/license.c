@@ -2093,7 +2093,7 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	if (!licenseStream)
 		goto fail;
 
-	if (!license_check_stream_length(s, 8, "license new/upgrade::blob::version"))
+	if (!license_check_stream_length(licenseStream, 8, "license new/upgrade::blob::version"))
 		goto fail;
 
 	Stream_Read_UINT16(licenseStream, os_minor);
@@ -2101,7 +2101,7 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 
 	/* Scope */
 	Stream_Read_UINT32(licenseStream, cbScope);
-	if (!license_check_stream_length(s, cbScope, "license new/upgrade::blob::scope"))
+	if (!license_check_stream_length(licenseStream, cbScope, "license new/upgrade::blob::scope"))
 		goto fail;
 
 #ifdef WITH_DEBUG_LICENSE
@@ -2111,11 +2111,12 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	Stream_Seek(licenseStream, cbScope);
 
 	/* CompanyName */
-	if (!license_check_stream_length(s, 4, "license new/upgrade::blob::cbCompanyName"))
+	if (!license_check_stream_length(licenseStream, 4, "license new/upgrade::blob::cbCompanyName"))
 		goto fail;
 
 	Stream_Read_UINT32(licenseStream, cbCompanyName);
-	if (!license_check_stream_length(s, cbCompanyName, "license new/upgrade::blob::CompanyName"))
+	if (!license_check_stream_length(licenseStream, cbCompanyName,
+	                                 "license new/upgrade::blob::CompanyName"))
 		goto fail;
 
 #ifdef WITH_DEBUG_LICENSE
@@ -2125,12 +2126,13 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	Stream_Seek(licenseStream, cbCompanyName);
 
 	/* productId */
-	if (!license_check_stream_length(s, 4, "license new/upgrade::blob::cbProductId"))
+	if (!license_check_stream_length(licenseStream, 4, "license new/upgrade::blob::cbProductId"))
 		goto fail;
 
 	Stream_Read_UINT32(licenseStream, cbProductId);
 
-	if (!license_check_stream_length(s, cbProductId, "license new/upgrade::blob::ProductId"))
+	if (!license_check_stream_length(licenseStream, cbProductId,
+	                                 "license new/upgrade::blob::ProductId"))
 		goto fail;
 
 #ifdef WITH_DEBUG_LICENSE
@@ -2140,11 +2142,12 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	Stream_Seek(licenseStream, cbProductId);
 
 	/* licenseInfo */
-	if (!license_check_stream_length(s, 4, "license new/upgrade::blob::cbLicenseInfo"))
+	if (!license_check_stream_length(licenseStream, 4, "license new/upgrade::blob::cbLicenseInfo"))
 		goto fail;
 
 	Stream_Read_UINT32(licenseStream, cbLicenseInfo);
-	if (!license_check_stream_length(s, cbLicenseInfo, "license new/upgrade::blob::LicenseInfo"))
+	if (!license_check_stream_length(licenseStream, cbLicenseInfo,
+	                                 "license new/upgrade::blob::LicenseInfo"))
 		goto fail;
 
 	license->type = LICENSE_TYPE_ISSUED;
