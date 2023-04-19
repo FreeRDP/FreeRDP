@@ -686,8 +686,6 @@ static wStream* device_server_packet_new(size_t size, BYTE version, BYTE message
 {
 	wStream* s;
 
-	WINPR_ASSERT(size > 0);
-
 	/* Allocate what we need plus header bytes */
 	s = Stream_New(NULL, size + CAM_HEADER_SIZE);
 	if (!s)
