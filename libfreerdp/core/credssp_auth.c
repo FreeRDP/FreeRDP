@@ -498,6 +498,8 @@ BOOL credssp_auth_encrypt(rdpCredsspAuth* auth, const SecBuffer* plaintext, SecB
 	buffers[0].pvBuffer = buf;
 
 	buffers[1].BufferType = SECBUFFER_DATA;
+	if (plaintext->BufferType & SECBUFFER_READONLY)
+		buffers[1].BufferType |= SECBUFFER_READONLY;
 	buffers[1].pvBuffer = buf + auth->sizes.cbSecurityTrailer;
 	buffers[1].cbBuffer = plaintext->cbBuffer;
 	CopyMemory(buffers[1].pvBuffer, plaintext->pvBuffer, plaintext->cbBuffer);
