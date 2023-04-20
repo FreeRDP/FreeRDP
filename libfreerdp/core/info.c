@@ -1034,18 +1034,67 @@ BOOL rdp_send_client_info(rdpRdp* rdp)
 	return rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
 }
 
+static void rdp_free_logon_info(logon_info* info)
+{
+	if (!info)
+		return;
+	free(info->domain);
+	free(info->username);
+
+	const logon_info empty = { 0 };
+	*info = empty;
+}
+
+static BOOL rdp_info_read_string(const char* what, wStream* s, size_t size, size_t max,
+                                 BOOL skipMax, char** dst)
+{
+	WINPR_ASSERT(dst);
+	*dst = NULL;
+
+	if (size == 0)
+	{
+		if (skipMax)
+			return Stream_SafeSeek(s, max);
+		return TRUE;
+	}
+
+	if (((size % sizeof(WCHAR)) != 0) || (size > max))
+	{
+		WLog_ERR(TAG, "protocol error: invalid %s value: %" PRIu32 "", what, size);
+		return FALSE;
+	}
+
+	const WCHAR* str = Stream_Pointer(s);
+	if (str[size / sizeof(WCHAR) - 1])
+	{
+		WLog_ERR(TAG, "protocol error: %s must be null terminated", what);
+		return FALSE;
+	}
+
+	if (!Stream_SafeSeek(s, skipMax ? max : size))
+		return FALSE;
+
+	size_t len = 0;
+	char* rc = ConvertWCharNToUtf8Alloc(str, size / sizeof(WCHAR), &len);
+	if (!rc || (len == 0))
+	{
+		WLog_ERR(TAG, "failed to convert the %s string", what);
+		free(rc);
+		return FALSE;
+	}
+
+	*dst = rc;
+	return TRUE;
+}
+
 static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 {
 	UINT32 cbDomain;
 	UINT32 cbUserName;
-	union
-	{
-		BYTE* bp;
-		WCHAR* wp;
-	} ptrconv;
 
 	WINPR_UNUSED(rdp);
-	ZeroMemory(info, sizeof(*info));
+	WINPR_ASSERT(info);
+	rdp_free_logon_info(info);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 576))
 		return FALSE;
@@ -1055,72 +1104,23 @@ static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 	/* cbDomain is the size of the Unicode character data (including the mandatory
 	 * null terminator) in bytes present in the fixed-length (52 bytes) Domain field
 	 */
-	if (cbDomain)
-	{
-		if ((cbDomain % 2) || cbDomain > 52)
-		{
-			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %" PRIu32 "", cbDomain);
-			goto fail;
-		}
+	if (!rdp_info_read_string("Domain", s, cbDomain, 52, TRUE, &info->domain))
+		goto fail;
 
-		ptrconv.bp = Stream_Pointer(s);
-
-		if (ptrconv.wp[cbDomain / 2 - 1])
-		{
-			WLog_ERR(TAG, "protocol error: Domain must be null terminated");
-			goto fail;
-		}
-
-		size_t len = 0;
-		info->domain = ConvertWCharNToUtf8Alloc(ptrconv.wp, cbDomain / sizeof(WCHAR), &len);
-		if (!info->domain || (len == 0))
-		{
-			WLog_ERR(TAG, "failed to convert the Domain string");
-			goto fail;
-		}
-	}
-
-	Stream_Seek(s, 52);                /* domain (52 bytes) */
 	Stream_Read_UINT32(s, cbUserName); /* cbUserName (4 bytes) */
 
 	/* cbUserName is the size of the Unicode character data (including the mandatory
 	 * null terminator) in bytes present in the fixed-length (512 bytes) UserName field.
 	 */
-	if (cbUserName)
-	{
-		if ((cbUserName % 2) || cbUserName > 512)
-		{
-			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %" PRIu32 "", cbUserName);
-			goto fail;
-		}
+	if (!rdp_info_read_string("UserName", s, cbUserName, 512, TRUE, &info->username))
+		goto fail;
 
-		ptrconv.bp = Stream_Pointer(s);
-
-		if (ptrconv.wp[cbUserName / 2 - 1])
-		{
-			WLog_ERR(TAG, "protocol error: UserName must be null terminated");
-			goto fail;
-		}
-
-		size_t len = 0;
-		info->username = ConvertWCharNToUtf8Alloc(ptrconv.wp, cbUserName / sizeof(WCHAR), &len);
-		if (!info->username || (len == 0))
-		{
-			WLog_ERR(TAG, "failed to convert the UserName string");
-			goto fail;
-		}
-	}
-
-	Stream_Seek(s, 512);                    /* userName (512 bytes) */
 	Stream_Read_UINT32(s, info->sessionId); /* SessionId (4 bytes) */
 	WLog_DBG(TAG, "LogonInfoV1: SessionId: 0x%08" PRIX32 " UserName: [%s] Domain: [%s]",
 	         info->sessionId, info->username, info->domain);
 	return TRUE;
 fail:
-	free(info->username);
-	info->username = NULL;
-	free(info->domain);
-	info->domain = NULL;
+	rdp_free_logon_info(info);
 	return FALSE;
 }
 
@@ -1136,7 +1136,7 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	WINPR_ASSERT(info);
 
 	WINPR_UNUSED(rdp);
-	ZeroMemory(info, sizeof(*info));
+	rdp_free_logon_info(info);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, logonInfoV2TotalSize))
 		return FALSE;
@@ -1176,35 +1176,8 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	 *       that the maximum value is 52 bytes, according to the fixed size of the
 	 *       Domain field in the Logon Info Version 1 (TS_LOGON_INFO) structure.
 	 */
-	if (cbDomain)
-	{
-		WCHAR domain[26] = { 0 };
-		if ((cbDomain % 2) || (cbDomain > 52))
-		{
-			WLog_ERR(TAG, "protocol error: invalid cbDomain value: %" PRIu32 "", cbDomain);
-			goto fail;
-		}
-
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)cbDomain))
-			goto fail;
-
-		memcpy(domain, Stream_Pointer(s), cbDomain);
-		Stream_Seek(s, cbDomain); /* domain */
-
-		if (domain[cbDomain / sizeof(WCHAR) - 1])
-		{
-			WLog_ERR(TAG, "protocol error: Domain field must be null terminated");
-			goto fail;
-		}
-
-		size_t len = 0;
-		info->domain = ConvertWCharNToUtf8Alloc(domain, cbDomain / sizeof(WCHAR), &len);
-		if (!info->domain || (len == 0))
-		{
-			WLog_ERR(TAG, "failed to convert the Domain string");
-			goto fail;
-		}
-	}
+	if (!rdp_info_read_string("Domain", s, cbDomain, 52, FALSE, &info->domain))
+		goto fail;
 
 	/* cbUserName is the size in bytes of the Unicode character data in the UserName field.
 	 * The size of the mandatory null terminator is include in this value.
@@ -1212,45 +1185,38 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	 *       that the maximum value is 512 bytes, according to the fixed size of the
 	 *       Username field in the Logon Info Version 1 (TS_LOGON_INFO) structure.
 	 */
-	if (cbUserName)
+	if (!rdp_info_read_string("UserName", s, cbUserName, 512, FALSE, &info->username))
+		goto fail;
+
+	/* We´ve seen undocumented padding with windows 11 here.
+	 * unless it has actual data in it ignore it.
+	 * if there is unexpected data, print a warning and dump the contents
+	 */
+	const size_t rem = Stream_GetRemainingLength(s);
+	if (rem > 0)
 	{
-		WCHAR user[256] = { 0 };
-
-		if ((cbUserName % 2) || cbUserName < 2 || cbUserName > 512)
+		BOOL warn = FALSE;
+		const char* str = Stream_Pointer(s);
+		for (size_t x = 0; x < rem; x++)
 		{
-			WLog_ERR(TAG, "protocol error: invalid cbUserName value: %" PRIu32 "", cbUserName);
-			goto fail;
+			if (str[x] != '\0')
+				warn = TRUE;
+		}
+		if (warn)
+		{
+			WLog_WARN(TAG, "unexpected padding of %" PRIuz " bytes, data not '\0'", rem);
+			winpr_HexDump(TAG, WLOG_TRACE, str, rem);
 		}
 
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)cbUserName))
+		if (!Stream_SafeSeek(s, rem))
 			goto fail;
-
-		memcpy(user, Stream_Pointer(s), cbUserName);
-		Stream_Seek(s, cbUserName); /* userName */
-
-		if (user[cbUserName / sizeof(WCHAR) - 1])
-		{
-			WLog_ERR(TAG, "protocol error: UserName field must be null terminated");
-			goto fail;
-		}
-
-		size_t len = 0;
-		info->username = ConvertWCharNToUtf8Alloc(user, cbUserName / sizeof(WCHAR), &len);
-		if (!info->username || (len == 0))
-		{
-			WLog_ERR(TAG, "failed to convert the UserName string");
-			goto fail;
-		}
 	}
 
 	WLog_DBG(TAG, "LogonInfoV2: SessionId: 0x%08" PRIX32 " UserName: [%s] Domain: [%s]",
 	         info->sessionId, info->username, info->domain);
 	return TRUE;
 fail:
-	free(info->username);
-	info->username = NULL;
-	free(info->domain);
-	info->domain = NULL;
+	rdp_free_logon_info(info);
 	return FALSE;
 }
 
@@ -1394,8 +1360,7 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 			if (status && update->SaveSessionInfo)
 				status = update->SaveSessionInfo(context, infoType, &logonInfo);
 
-			free(logonInfo.domain);
-			free(logonInfo.username);
+			rdp_free_logon_info(&logonInfo);
 			break;
 
 		case INFO_TYPE_LOGON_PLAIN_NOTIFY:
