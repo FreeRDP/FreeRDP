@@ -1064,6 +1064,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 
 	plaintext.pvBuffer = buffer;
 	plaintext.cbBuffer = offset;
+	plaintext.BufferType = SECBUFFER_READONLY;
 	if (!credssp_auth_encrypt(auth, &plaintext, &ciphertext, &size, rpc->SendSeqNum++))
 		goto fail;
 
