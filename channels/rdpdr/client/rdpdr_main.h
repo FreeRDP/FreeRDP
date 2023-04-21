@@ -54,6 +54,7 @@ typedef struct
 	wMessageQueue* queue;
 
 	DEVMAN* devman;
+	BOOL ignoreInvalidDevices;
 
 	UINT16 serverVersionMajor;
 	UINT16 serverVersionMinor;

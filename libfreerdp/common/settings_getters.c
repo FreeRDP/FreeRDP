@@ -306,6 +306,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_IgnoreCertificate:
 			return settings->IgnoreCertificate;
 
+		case FreeRDP_IgnoreInvalidDevices:
+			return settings->IgnoreInvalidDevices;
+
 		case FreeRDP_JpegCodec:
 			return settings->JpegCodec;
 
@@ -947,6 +950,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_IgnoreCertificate:
 			settings->IgnoreCertificate = cnv.c;
+			break;
+
+		case FreeRDP_IgnoreInvalidDevices:
+			settings->IgnoreInvalidDevices = cnv.c;
 			break;
 
 		case FreeRDP_JpegCodec:

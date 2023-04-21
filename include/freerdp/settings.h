@@ -875,6 +875,7 @@ typedef struct
 #define FreeRDP_DeviceCount (4161)
 #define FreeRDP_DeviceArraySize (4162)
 #define FreeRDP_DeviceArray (4163)
+#define FreeRDP_IgnoreInvalidDevices (4164)
 #define FreeRDP_RedirectDrives (4288)
 #define FreeRDP_RedirectHomeDrive (4289)
 #define FreeRDP_DrivesToRedirect (4290)
@@ -1569,7 +1570,8 @@ struct rdp_settings
 	ALIGN64 UINT32 DeviceCount;         /* 4161 */
 	ALIGN64 UINT32 DeviceArraySize;     /* 4162 */
 	ALIGN64 RDPDR_DEVICE** DeviceArray; /* 4163 */
-	UINT64 padding4288[4288 - 4164];    /* 4164 */
+	ALIGN64 BOOL IgnoreInvalidDevices;  /* 4164 */
+	UINT64 padding4288[4288 - 4165];    /* 4165 */
 
 	/* Drive Redirection */
 	ALIGN64 BOOL RedirectDrives;     /* 4288 */
