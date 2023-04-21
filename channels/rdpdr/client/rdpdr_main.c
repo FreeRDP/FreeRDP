@@ -1067,6 +1067,8 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	settings = rdpdr->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
+	rdpdr->ignoreInvalidDevices = settings->IgnoreInvalidDevices;
+
 	if (settings->ClientHostname)
 		strncpy(rdpdr->computerName, settings->ClientHostname, sizeof(rdpdr->computerName) - 1);
 	else
@@ -1411,7 +1413,7 @@ static UINT rdpdr_process_irp(rdpdrPlugin* rdpdr, wStream* s)
 	{
 		WLog_Print(rdpdr->log, WLOG_ERROR, "irp_new failed with %" PRIu32 "!", error);
 
-		if (error == CHANNEL_RC_OK)
+		if (error == CHANNEL_RC_OK || (error == ERROR_DEV_NOT_EXIST && rdpdr->ignoreInvalidDevices))
 		{
 			return dummy_irp_response(rdpdr, s);
 		}

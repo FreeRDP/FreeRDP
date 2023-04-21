@@ -107,7 +107,7 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 	if (!device)
 	{
 		if (error)
-			*error = ERROR_INVALID_PARAMETER;
+			*error = ERROR_DEV_NOT_EXIST;
 
 		return NULL;
 	}
