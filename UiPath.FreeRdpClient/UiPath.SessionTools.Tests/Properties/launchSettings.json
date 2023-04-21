@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "UiPath.SessionTools.Tests": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

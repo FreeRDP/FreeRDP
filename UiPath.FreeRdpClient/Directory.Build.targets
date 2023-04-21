@@ -1,0 +1,37 @@
+<Project TreatAsLocalProperty="MicrosoftExtensionsVersion">
+	<ItemGroup Condition="'$(IsUiPathTestProject)' == 'true'">
+		<PackageReference Include="coverlet.collector">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="Moq" />
+		<PackageReference Include="Shouldly" />
+		<PackageReference Include="xunit" />
+		<PackageReference Include="xunit.runner.visualstudio">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<PropertyGroup>
+		<MicrosoftExtensionsVersion>6.0.0</MicrosoftExtensionsVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Update="coverlet.collector" Version="3.1.2" />
+		<PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.1.0" />
+		<PackageReference Update="Moq" Version="4.18.4" />
+		<PackageReference Update="Shouldly" Version="4.1.0" />
+		<PackageReference Update="xunit" Version="2.4.1" />
+		<PackageReference Update="xunit.runner.visualstudio" Version="2.4.3" />
+		
+		<PackageReference Update="Nito.AsyncEx" Version="5.1.2" />
+		<PackageReference Update="Nito.Disposables" Version="2.2.1" />
+
+		<PackageReference Version="$(MicrosoftExtensionsVersion)" Update="Microsoft.Extensions.Configuration.UserSecrets" />
+		<PackageReference Version="$(MicrosoftExtensionsVersion)" Update="Microsoft.Extensions.Logging.Abstractions" />
+		<PackageReference Version="$(MicrosoftExtensionsVersion)" Update="Microsoft.Extensions.Hosting.Abstractions" />
+		<PackageReference Version="$(MicrosoftExtensionsVersion)" Update="Microsoft.Extensions.Hosting" />
+	</ItemGroup>
+</Project>

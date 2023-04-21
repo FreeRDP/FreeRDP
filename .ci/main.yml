@@ -53,7 +53,7 @@ steps:
     command: 'test'
     configuration: 'Release'
     arguments: '--no-build --configuration Release'
-    projects: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.Tests\UiPath.FreeRdp.Tests.csproj'
+    projects: 'UiPath.FreeRdpClient\**\*.Tests.csproj'
 
 - task: MSBuild@1
   displayName: restore (UseNugetRef)
@@ -79,13 +79,13 @@ steps:
     command: 'test'
     configuration: 'Release'
     arguments: '--no-build --configuration Release /p:UseNugetRef=true'
-    projects: 'UiPath.FreeRdpClient\UiPath.FreeRdpClient.Tests\UiPath.FreeRdp.Tests.csproj'
+    projects: 'UiPath.FreeRdpClient\**\*.Tests.csproj'
 
 - task: NuGetCommand@2
   displayName: 'NuGet Push to UiPath-Internal'
   inputs:
     command: push
-    packagesToPush: 'Output\nugets\UiPath.FreeRdpClient.*.nupkg'
+    packagesToPush: 'Output\nugets\UiPath.FreeRdpClient.*.nupkg;Output\nugets\UiPath.SessionTools.*.nupkg'
     publishVstsFeed: '5b98d55c-1b14-4a03-893f-7a59746f1246/788028a9-5a01-48ee-b925-3af51ae46294'
 
 - task: PublishPipelineArtifact@1

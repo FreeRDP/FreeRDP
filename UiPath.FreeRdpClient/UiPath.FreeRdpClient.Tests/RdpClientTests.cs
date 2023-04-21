@@ -1,13 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Nito.Disposables;
-using Shouldly;
 using System.Diagnostics;
-using System.Globalization;
 using System.Runtime.InteropServices;
 using UiPath.Rdp;
-using Windows.Win32;
+using UiPath.SessionTools;
 
 namespace UiPath.FreeRdp.Tests;
 
@@ -17,6 +14,7 @@ public class RdpClientTests : TestsBase
     private const string StateListening = "LISTENING";
     private readonly ITestOutputHelper _output;
 
+    private readonly Wts _wts;
     private IFreeRdpClient FreeRdpClient => Host.GetRequiredService<IFreeRdpClient>();
     private ILogger Log => Host.GetRequiredService<ILogger<RdpClientTests>>();
 
@@ -29,6 +27,7 @@ public class RdpClientTests : TestsBase
     public RdpClientTests(ITestOutputHelper output) : base(output)
     {
         _output = output;
+        _wts = Host.GetWts();
     }
 
     [Fact]
@@ -72,16 +71,17 @@ public class RdpClientTests : TestsBase
         };
 
         await using var sut = await Connect(connectionSettings);
-        var sessionId = WtsApi.FindFirstSessionByClientName(connectionSettings.ClientName);
-        sessionId.HasValue.ShouldBeTrue();
-        var displayInfo = WtsApi.GetSessionDisplayInfo(sessionId.Value);
+
+        var sessionId = _wts.FindFirstSessionByClientName(connectionSettings.ClientName);
+        sessionId.ShouldNotBeNull();
+        var displayInfo = _wts.QuerySessionInformation(sessionId.Value).ClientDisplay();
 
         ((int)displayInfo.HorizontalResolution).ShouldBe(connectionSettings.DesktopWidth);
         ((int)displayInfo.VerticalResolution).ShouldBe(connectionSettings.DesktopHeight);
         //((int)displayInfo.ColorDepth).ShouldBe(expectedWtsApiValue);
 
         await sut.DisposeAsync();
-        await WaitFor.Predicate(() => WtsApi.FindFirstSessionByClientName(connectionSettings.ClientName) == null);
+        await WaitFor.Predicate(() => _wts.FindFirstSessionByClientName(connectionSettings.ClientName) == null);
     }
 
     [Fact]
@@ -126,8 +126,8 @@ public class RdpClientTests : TestsBase
             await using var d = new CollectionAsyncDisposable(await Task.WhenAll(connect1Task, connect2Task));
 
             await d.DisposeAsync();
-            await WaitFor.Predicate(() => WtsApi.FindFirstSessionByClientName(connectionSettings1.ClientName) == null);
-            await WaitFor.Predicate(() => WtsApi.FindFirstSessionByClientName(connectionSettings2.ClientName) == null);
+            await WaitFor.Predicate(() => _wts.FindFirstSessionByClientName(connectionSettings1.ClientName) == null);
+            await WaitFor.Predicate(() => _wts.FindFirstSessionByClientName(connectionSettings2.ClientName) == null);
         }
     }
 
@@ -152,48 +152,44 @@ public class RdpClientTests : TestsBase
         await ShouldNotHavePortWithState(port, StateEstablished);
 
         await using var sut = await Connect(connectionSettings);
-        var sessionId = WtsApi.FindFirstSessionByClientName(connectionSettings.ClientName);
+        var sessionId = _wts.FindFirstSessionByClientName(connectionSettings.ClientName);
         sessionId.HasValue.ShouldBeTrue();
 
         await ShouldHavePortWithState(port, StateEstablished, Environment.ProcessId);
 
         await sut.DisposeAsync();
         await ShouldNotHavePortWithState(port, StateEstablished);
-        await WaitFor.Predicate(() => WtsApi.FindFirstSessionByClientName(connectionSettings.ClientName) == null);
+        await WaitFor.Predicate(() => _wts.FindFirstSessionByClientName(connectionSettings.ClientName) == null);
     }
 
     private async Task WithPortRedirectToDefaultRdp(int port)
     {
         var log = Host.GetRequiredService<ILogger<TestHost>>();
-        await new ProcessStartInfo
-        {
-            FileName = "cmd",
-            Arguments = $"/c netsh interface portproxy add v4tov4 listenaddress=127.0.0.1 listenport={port} connectaddress=127.0.0.1 connectport=3389"
-        }.ExecuteWithLogs(log);
+
+        using var _ = ProcessRunner.TimeoutToken(GlobalSettings.DefaultTimeout, out var ct);
+
+        await new ProcessRunner(log).CreateRDPRedirect(port, ct);
+
         await ShouldHavePortWithState(port, StateListening);
     }
 
     private async Task ShouldHavePortWithState(int port, string state, int? processId = null)
     {
         var log = Host.GetRequiredService<ILogger<TestHost>>();
-        var result = await new ProcessStartInfo
-        {
-            FileName = "cmd",
-            Arguments = $"/c netstat -ona|find \":{port}\"|find \"{state}\"" 
-                + (processId.HasValue ? $"|find \"{processId}\"" : string.Empty)
-        }.ExecuteWithLogs(log);
-        result.StandardOutput.ShouldContain(port.ToString(CultureInfo.InvariantCulture));
+
+        using var _ = ProcessRunner.TimeoutToken(GlobalSettings.DefaultTimeout, out var ct);
+
+        (await new ProcessRunner(log).PortWithStateExists(port, state, processId, ct)).ShouldBeTrue();
     }
+
 
     private async Task ShouldNotHavePortWithState(int port, string state)
     {
         var log = Host.GetRequiredService<ILogger<TestHost>>();
-        var result = await new ProcessStartInfo
-        {
-            FileName = "cmd",
-            Arguments = $"/c netstat -ona|find \":{port}\"|find \"{state}\""
-        }.ExecuteWithLogs(log);
-        result.StandardOutput.ShouldNotContain(port.ToString(CultureInfo.InvariantCulture));
+
+        using var _ = ProcessRunner.TimeoutToken(GlobalSettings.DefaultTimeout, out var ct);
+
+        (await new ProcessRunner(log).PortWithStateExists(port, state, ct)).ShouldBeFalse();
     }
 
     [Fact]

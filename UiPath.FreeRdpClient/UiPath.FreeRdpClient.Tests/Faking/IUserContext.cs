@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
+using UiPath.SessionTools;
 
 namespace UiPath.FreeRdp.Tests.Faking;
 
@@ -12,14 +13,15 @@ public class UserExistsDetail
     public string UserName { get => _credentials.GetFullUserName(); set => _credentials.SetFullUserName(value); }
     public string Password { get => _credentials.Password; set => _credentials.Password = value; }
 
+    internal string GetLocalUserName() => UserName.ToLowerInvariant().Replace(UserNames.DefaultDomainName.ToLowerInvariant() + "\\", "");
+
     public List<string> Groups { get; } = new() { "Remote Desktop Users", "Administrators" };
 }
 
 public interface IUserContext
 {
-    Task<bool> EnsureUserExists(UserExistsDetail userDetail);
+    Task EnsureUserExists(UserExistsDetail userDetail);
 }
-
 
 public class UserContextReal : UserContextBase
 {
@@ -30,57 +32,14 @@ public class UserContextReal : UserContextBase
         _log = log;
     }
 
-    protected override async Task<bool> DoCreateUser(UserExistsDetail userDetail)
+    protected override async Task DoCreateUser(UserExistsDetail userDetail)
     {
-        var username = userDetail.UserName.ToLowerInvariant().Replace(UserNames.DefaultDomainName.ToLowerInvariant() + "\\", "");
-        var executeResult = await new ProcessStartInfo
-        {
-            Arguments = $"user {username} {userDetail.Password} /add",
-            FileName = "net"
-        }.ExecuteWithLogs(_log);
-        var newlyCreated = executeResult.ExitCode == 0;
+        using var _ = ProcessRunner.TimeoutToken(GlobalSettings.DefaultTimeout, out var ct);
 
-        await new ProcessStartInfo
-        {
-            Arguments = $"user {username} /active /expires:never",
-            FileName = "net"
-        }.ExecuteWithLogs(_log);
-        await new ProcessStartInfo
-        {
-            Arguments = $"user {username} /passwordchg:no",
-            FileName = "net"
-        }.ExecuteWithLogs(_log);
-        await new ProcessStartInfo
-        {
-            Arguments = $"useraccount WHERE Name='{username}' set PasswordExpires=false",
-            FileName = "wmic"
-        }.ExecuteWithLogs(_log);
-        await new ProcessStartInfo
-        {
-            Arguments = $"user {username}",
-            FileName = "net"
-        }.ExecuteWithLogs(_log);
-
-        foreach (var g in userDetail.Groups)
-        {
-            await new ProcessStartInfo
-            {
-                Arguments = $"localgroup \"{g}\" {username} /add",
-                FileName = "net"
-            }.ExecuteWithLogs(_log);
-        }
-        await new ProcessStartInfo
-        {
-            Arguments = $"localgroup \"Remote Desktop Users\"",
-            FileName = "net"
-        }.ExecuteWithLogs(_log);
-        await new ProcessStartInfo
-        {
-            Arguments = $"localgroup \"Administrators\"",
-            FileName = "net"
-        }.ExecuteWithLogs(_log);
-
-        return newlyCreated;
+        await new ProcessRunner(_log).EnsureUserIsSetUp(
+            userDetail.GetLocalUserName(),
+            userDetail.Password,
+            ct);
     }
 
 }
@@ -88,26 +47,30 @@ public abstract class UserContextBase : IUserContext
 {
     protected static readonly ConcurrentDictionary<string, string> CreatedUsersByName = new();
 
-    public async Task<bool> EnsureUserExists(UserExistsDetail userDetail)
+    public async Task EnsureUserExists(UserExistsDetail userDetail)
     {
         var userDetailAsJson = JsonConvert.SerializeObject(userDetail);
-        CreatedUsersByName.TryGetValue(userDetail.UserName, out var user);
+        _ = CreatedUsersByName.TryGetValue(userDetail.UserName, out var user);
         if (user == userDetailAsJson)
-            return false;
-        var newlyCreated = await DoCreateUser(userDetail);
-        CreatedUsersByName.TryAdd(userDetail.UserName, userDetailAsJson);
-        return newlyCreated;
+        {
+            return;
+        }
+
+        await DoCreateUser(userDetail);
+        _ = CreatedUsersByName.TryAdd(userDetail.UserName, userDetailAsJson);
     }
 
     public UserExistsDetail? GetUser(string userName)
     {
         if (CreatedUsersByName.TryGetValue(userName, out var user))
+        {
             return JsonConvert.DeserializeObject<UserExistsDetail>(user);
+        }
 
         return null;
     }
 
-    protected abstract Task<bool> DoCreateUser(UserExistsDetail userDetail);
+    protected abstract Task DoCreateUser(UserExistsDetail userDetail);
 }
 
 public class UserContextFake : UserContextBase

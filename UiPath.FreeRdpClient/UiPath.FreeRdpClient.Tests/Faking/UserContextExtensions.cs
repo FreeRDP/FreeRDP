@@ -92,7 +92,7 @@ public static class UserContextExtensions
     public static async Task<UserExistsDetail> EnsureUserExists(this TestHost host, UserExistsDetail user)
     {
         var uc = host.GetRequiredService<IUserContext>();
-        var created = await uc.EnsureUserExists(user);
+        await uc.EnsureUserExists(user);
 
         return user;
     }

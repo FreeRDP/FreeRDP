@@ -8,11 +8,12 @@
 		<IsPackable>true</IsPackable>
 		<PackageOutputPath>$(NugetsOutDir)</PackageOutputPath>
 		<VersionPrefix>$(AppVersion)</VersionPrefix>
+		<RootNamespace>UiPath.Rdp</RootNamespace>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
-		<PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+		<PackageReference Include="Nito.AsyncEx" />
 	</ItemGroup>
 	<ItemGroup>
 		<Content Include="$(CppOutDir)\$(Configuration)\x64\UiPath.FreeRdpWrapper.dll" Pack="True" PackagePath="runtimes\win\native\%(Filename)%(Extension)">

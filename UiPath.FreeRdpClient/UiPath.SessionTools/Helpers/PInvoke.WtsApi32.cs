@@ -3,7 +3,7 @@ using System.Runtime.Versioning;
 
 namespace Windows.Win32;
 
-internal partial class PInvoke//WtsApi32
+partial class PInvoke//WtsApi32
 {
     /// <summary>Connects a Remote Desktop Services session to an existing session on the local computer.</summary>
     /// <param name="LogonId">
