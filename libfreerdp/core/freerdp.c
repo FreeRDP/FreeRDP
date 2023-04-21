@@ -134,7 +134,8 @@ static int freerdp_connect_begin(freerdp* instance)
 		case KBD_JAPANESE:
 		case KBD_JAPANESE_INPUT_SYSTEM_MS_IME2002:
 		{
-			if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardType, KBD_TYPE_JAPANESE))
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardType,
+			                                 WINPR_KBD_TYPE_JAPANESE))
 				return -1;
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardSubType, 2))
 				return -1;

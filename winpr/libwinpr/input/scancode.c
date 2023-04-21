@@ -109,45 +109,37 @@ static DWORD KBD7X[128] = {
 
 DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 {
-	DWORD codeIndex;
-
-	codeIndex = scancode & 0xFF;
+	const DWORD codeIndex = scancode & 0xFF;
 
 	if (codeIndex > 127)
 		return VK_NONE;
 
-	if ((dwKeyboardType != 4) && (dwKeyboardType != 7))
-		dwKeyboardType = 4;
+	if ((dwKeyboardType != WINPR_KBD_TYPE_IBM_ENHANCED) &&
+	    (dwKeyboardType != WINPR_KBD_TYPE_JAPANESE))
+		dwKeyboardType = WINPR_KBD_TYPE_IBM_ENHANCED;
 
-	if (dwKeyboardType == 4)
-	{
+	if (dwKeyboardType == WINPR_KBD_TYPE_IBM_ENHANCED)
 		return (scancode & KBDEXT) ? KBD4X[codeIndex] : KBD4T[codeIndex];
-	}
-	else if (dwKeyboardType == 7)
-	{
+	else if (dwKeyboardType == WINPR_KBD_TYPE_JAPANESE)
 		return (scancode & KBDEXT) ? KBD7X[codeIndex] : KBD7T[codeIndex];
-	}
 
 	return VK_NONE;
 }
 
 DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 {
-	DWORD i;
-	DWORD scancode;
-	DWORD codeIndex;
+	DWORD scancode = 0;
+	DWORD codeIndex = vkcode & 0xFF;
 
-	scancode = 0;
-	codeIndex = vkcode & 0xFF;
+	if ((dwKeyboardType != WINPR_KBD_TYPE_IBM_ENHANCED) &&
+	    (dwKeyboardType != WINPR_KBD_TYPE_JAPANESE))
+		dwKeyboardType = WINPR_KBD_TYPE_IBM_ENHANCED;
 
-	if ((dwKeyboardType != 4) && (dwKeyboardType != 7))
-		dwKeyboardType = 4;
-
-	if (dwKeyboardType == 4)
+	if (dwKeyboardType == WINPR_KBD_TYPE_IBM_ENHANCED)
 	{
 		if (vkcode & KBDEXT)
 		{
-			for (i = 0; i < 128; i++)
+			for (size_t i = 0; i < ARRAYSIZE(KBD4X); i++)
 			{
 				if (KBD4X[i] == codeIndex)
 				{
@@ -158,7 +150,7 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 		}
 		else
 		{
-			for (i = 0; i < 128; i++)
+			for (size_t i = 0; i < ARRAYSIZE(KBD4T); i++)
 			{
 				if (KBD4T[i] == codeIndex)
 				{
@@ -168,11 +160,11 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 			}
 		}
 	}
-	else if (dwKeyboardType == 7)
+	else if (dwKeyboardType == WINPR_KBD_TYPE_JAPANESE)
 	{
 		if (vkcode & KBDEXT)
 		{
-			for (i = 0; i < 128; i++)
+			for (size_t i = 0; i < ARRAYSIZE(KBD7X); i++)
 			{
 				if (KBD7X[i] == codeIndex)
 				{
@@ -183,7 +175,7 @@ DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode, DWORD dwKeyboardType)
 		}
 		else
 		{
-			for (i = 0; i < 128; i++)
+			for (size_t i = 0; i < ARRAYSIZE(KBD7T); i++)
 			{
 				if (KBD7T[i] == codeIndex)
 				{

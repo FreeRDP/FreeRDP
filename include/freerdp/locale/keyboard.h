@@ -215,15 +215,6 @@ typedef struct
 #define KBD_CHINESE_TRADITIONAL_MICROSOFT_PINYIN_IME_3 0xE00E0804
 #define KBD_CHINESE_TRADITIONAL_ALPHANUMERIC 0xE00F0404
 
-/* Keyboard Types */
-#define KBD_TYPE_IBM_PC_XT 0x00000001    /* IBM PC/XT or compatible (83-key) keyboard */
-#define KBD_TYPE_OLIVETTI_ICO 0x00000002 /* Olivetti "ICO" (102-key) keyboard */
-#define KBD_TYPE_IBM_PC_AT 0x00000003    /* IBM PC/AT (84-key) and similar keyboards */
-#define KBD_TYPE_IBM_ENHANCED 0x00000004 /* IBM enhanced (101-key or 102-key) keyboard */
-#define KBD_TYPE_NOKIA_1050 0x00000005   /* Nokia 1050 and similar keyboards */
-#define KBD_TYPE_NOKIA_9140 0x00000006   /* Nokia 9140 and similar keyboards */
-#define KBD_TYPE_JAPANESE 0x00000007     /* Japanese keyboard */
-
 	FREERDP_API DWORD freerdp_keyboard_init(DWORD keyboardLayoutId);
 	FREERDP_API DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId,
 	                                           const char* keyboardRemappingList);
