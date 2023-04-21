@@ -32,14 +32,6 @@
  */
 
 static DWORD KEYCODE_TO_VKCODE_APPLE[256] = {
-	0,                    /* 0 */
-	0,                    /* 1 */
-	0,                    /* 2 */
-	0,                    /* 3 */
-	0,                    /* 4 */
-	0,                    /* 5 */
-	0,                    /* 6 */
-	0,                    /* 7 */
 	VK_KEY_A,             /* APPLE_VK_ANSI_A (0x00) */
 	VK_KEY_S,             /* APPLE_VK_ANSI_S (0x01) */
 	VK_KEY_D,             /* APPLE_VK_ANSI_D (0x02) */
@@ -167,6 +159,14 @@ static DWORD KEYCODE_TO_VKCODE_APPLE[256] = {
 	VK_RIGHT | KBDEXT,    /* APPLE_VK_RightArrow (0x7C) */
 	VK_DOWN | KBDEXT,     /* APPLE_VK_DownArrow (0x7D) */
 	VK_UP | KBDEXT,       /* APPLE_VK_UpArrow (0x7E) */
+	0,                    /* 127 */
+	0,                    /* 128 */
+	0,                    /* 129 */
+	0,                    /* 130 */
+	0,                    /* 131 */
+	0,                    /* 132 */
+	0,                    /* 133 */
+	0,                    /* 134 */
 	0,                    /* 135 */
 	0,                    /* 136 */
 	0,                    /* 137 */
