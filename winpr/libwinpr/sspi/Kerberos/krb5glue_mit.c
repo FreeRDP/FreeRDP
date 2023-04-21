@@ -153,6 +153,9 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 		{
 			const char* names[4] = { 0 };
 			char* realm = NULL;
+			char* host_start = NULL;
+			char* host_end = NULL;
+			char tmp = '\0';
 
 			if ((rv = krb5_get_profile(ctx, &profile)))
 				goto cleanup;
@@ -170,6 +173,25 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 
 			profile_clear_relation(profile, names);
 			profile_add_relation(profile, names, krb_settings->kdcUrl);
+
+			/* Since we know who the KDC is, tell krb5 that its certificate is valid for pkinit */
+			names[2] = "pkinit_kdc_hostname";
+
+			/* If kdcUrl is in URL form, get the hostname portion */
+			host_start = strstr(krb_settings->kdcUrl, "://");
+			if (host_start)
+				host_start += 3;
+			else
+				host_start = krb_settings->kdcUrl;
+
+			host_end = strchr(host_start, '/');
+			if (!host_end)
+				host_end = strchr(host_start, '\0');
+
+			tmp = *host_end;
+			*host_end = '\0';
+			profile_add_relation(profile, names, krb_settings->kdcUrl);
+			*host_end = tmp;
 
 			free(realm);
 
