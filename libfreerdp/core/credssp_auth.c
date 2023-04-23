@@ -199,36 +199,53 @@ static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 	if (auth->kerberosSettings.kdcUrl)
 	{
 		SECURITY_STATUS status = ERROR_INTERNAL_ERROR;
+		SecPkgCredentials_KdcProxySettingsW* secAttr = NULL;
+		SSIZE_T str_size = 0;
+		ULONG buffer_size = 0;
 
-#ifdef UNICODE
-		SecPkgCredentials_KdcUrlW secAttr = { NULL };
-		secAttr.KdcUrl = ConvertUtf8ToWCharAlloc(auth->kerberosSettings.kdcUrl, NULL);
+		str_size = ConvertUtf8ToWChar(auth->kerberosSettings.kdcUrl, NULL, 0);
+		if (str_size <= 0)
+			return FALSE;
+		str_size++;
 
-		if (!secAttr.KdcUrl)
+		buffer_size = sizeof(SecPkgCredentials_KdcProxySettingsW) + str_size * sizeof(WCHAR);
+		secAttr = calloc(1, buffer_size);
+		if (!secAttr)
 			return FALSE;
 
+		secAttr->Version = KDC_PROXY_SETTINGS_V1;
+		secAttr->ProxyServerLength = str_size * sizeof(WCHAR);
+		secAttr->ProxyServerOffset = sizeof(SecPkgCredentials_KdcProxySettingsW);
+
+		if (ConvertUtf8ToWChar(auth->kerberosSettings.kdcUrl, (WCHAR*)(secAttr + 1), str_size) <= 0)
+		{
+			free(secAttr);
+			return FALSE;
+		}
+
+#ifdef UNICODE
 		if (auth->table->SetCredentialsAttributesW)
-			status = auth->table->SetCredentialsAttributesW(
-			    &auth->credentials, SECPKG_CRED_ATTR_KDC_URL, (void*)&secAttr, sizeof(secAttr));
+			status = auth->table->SetCredentialsAttributesW(&auth->credentials,
+			                                                SECPKG_CRED_ATTR_KDC_PROXY_SETTINGS,
+			                                                (void*)secAttr, buffer_size);
 		else
 			status = SEC_E_UNSUPPORTED_FUNCTION;
-
-		free(secAttr.KdcUrl);
 #else
-		SecPkgCredentials_KdcUrlA secAttr = { NULL };
-		secAttr.KdcUrl = auth->kerberosSettings.kdcUrl;
-
 		if (auth->table->SetCredentialsAttributesA)
-			status = auth->table->SetCredentialsAttributesA(
-			    &auth->credentials, SECPKG_CRED_ATTR_KDC_URL, (void*)&secAttr, sizeof(secAttr));
+			status = auth->table->SetCredentialsAttributesA(&auth->credentials,
+			                                                SECPKG_CRED_ATTR_KDC_PROXY_SETTINGS,
+			                                                (void*)secAttr, buffer_size);
 		else
 			status = SEC_E_UNSUPPORTED_FUNCTION;
 #endif
+
 		if (status != SEC_E_OK)
 		{
 			WLog_WARN(TAG, "Explicit Kerberos KDC URL (%s) injection is not supported",
 			          auth->kerberosSettings.kdcUrl);
 		}
+
+		free(secAttr);
 	}
 
 	return TRUE;
