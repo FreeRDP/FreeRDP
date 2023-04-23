@@ -1360,39 +1360,35 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(PCredHandle 
 	if (!pBuffer)
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	if (ulAttribute == SECPKG_CRED_ATTR_KDC_URL)
+	if (ulAttribute == SECPKG_CRED_ATTR_KDC_PROXY_SETTINGS)
 	{
+		SecPkgCredentials_KdcProxySettingsW* kdc_settings = pBuffer;
+
+		/* Sanity checks */
+		if (cbBuffer < sizeof(SecPkgCredentials_KdcProxySettingsW) ||
+		    kdc_settings->Version != KDC_PROXY_SETTINGS_V1 ||
+		    kdc_settings->ProxyServerOffset < sizeof(SecPkgCredentials_KdcProxySettingsW) ||
+		    cbBuffer < sizeof(SecPkgCredentials_KdcProxySettingsW) +
+		                   kdc_settings->ProxyServerOffset + kdc_settings->ProxyServerLength)
+			return SEC_E_INVALID_TOKEN;
+
 		if (credentials->kdc_url)
 		{
 			free(credentials->kdc_url);
 			credentials->kdc_url = NULL;
 		}
 
-		if (unicode)
+		if (kdc_settings->ProxyServerLength > 0)
 		{
-			SEC_WCHAR* KdcUrl = ((SecPkgCredentials_KdcUrlW*)pBuffer)->KdcUrl;
+			WCHAR* proxy = (WCHAR*)((BYTE*)pBuffer + kdc_settings->ProxyServerOffset);
 
-			if (KdcUrl)
-			{
-				credentials->kdc_url = ConvertWCharToUtf8Alloc(KdcUrl, NULL);
-				if (!credentials->kdc_url)
-					return SEC_E_INSUFFICIENT_MEMORY;
-			}
-		}
-		else
-		{
-			SEC_CHAR* KdcUrl = ((SecPkgCredentials_KdcUrlA*)pBuffer)->KdcUrl;
-
-			if (KdcUrl)
-			{
-				credentials->kdc_url = _strdup(KdcUrl);
-
-				if (!credentials->kdc_url)
-					return SEC_E_INSUFFICIENT_MEMORY;
-			}
+			credentials->kdc_url = ConvertWCharNToUtf8Alloc(
+			    proxy, kdc_settings->ProxyServerLength / sizeof(WCHAR), NULL);
+			if (!credentials->kdc_url)
+				return SEC_E_INSUFFICIENT_MEMORY;
 		}
 
-		return SEC_E_UNSUPPORTED_FUNCTION;
+		return SEC_E_OK;
 	}
 
 	return SEC_E_UNSUPPORTED_FUNCTION;
