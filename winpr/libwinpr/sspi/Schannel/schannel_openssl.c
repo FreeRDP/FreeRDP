@@ -194,7 +194,7 @@ out_ssl_new_failed:
 int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 {
 	int status;
-	long options = 0;
+	unsigned long options = 0;
 	context->ctx = SSL_CTX_new(SSLv23_server_method());
 
 	if (!context->ctx)
@@ -238,11 +238,13 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 	options |= SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS;
 	SSL_CTX_set_options(context->ctx, options);
 
+#if defined(WITH_DEBUG_SCHANNEL)
 	if (SSL_CTX_use_RSAPrivateKey_file(context->ctx, "/tmp/localhost.key", SSL_FILETYPE_PEM) <= 0)
 	{
 		WLog_ERR(TAG, "SSL_CTX_use_RSAPrivateKey_file failed");
 		goto out_rsa_key;
 	}
+#endif
 
 	context->ssl = SSL_new(context->ctx);
 
