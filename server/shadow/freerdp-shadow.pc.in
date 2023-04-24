@@ -1,6 +1,6 @@
 prefix=@CMAKE_INSTALL_PREFIX@
 exec_prefix=@CMAKE_INSTALL_PREFIX@
-libdir=@CMAKE_INSTALL_FULL_LIBDIR@
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
 includedir=${prefix}/@FREERDP_INCLUDE_DIR@
 libs=-lfreerdp-shadow@FREERDP_API_VERSION@ -lfreerdp-shadow-subsystem@FREERDP_API_VERSION@
 
