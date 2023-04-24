@@ -1,5 +1,5 @@
 prefix=@CMAKE_INSTALL_PREFIX@
-exec_prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
 libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
 includedir=${prefix}/@RDTK_INCLUDE_DIR@
 libs=-lrdtk@RDTK_VERSION_MAJOR@
