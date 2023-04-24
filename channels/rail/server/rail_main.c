@@ -1295,6 +1295,46 @@ static UINT rail_recv_client_cloak_order(RailServerContext* context, RAIL_CLOAK*
 	return error;
 }
 
+static UINT rail_recv_client_text_scale_order(RailServerContext* context, wStream* s)
+{
+	UINT error;
+	UINT32 TextScaleFactor;
+
+	if (!context || !s)
+		return ERROR_INVALID_PARAMETER;
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, TextScaleFactor);
+	IFCALLRET(context->ClientTextScale, error, context, TextScaleFactor);
+
+	if (error)
+		WLog_ERR(TAG, "context.TextScale failed with error %" PRIu32 "", error);
+
+	return error;
+}
+
+static UINT rail_recv_client_caret_blink(RailServerContext* context, wStream* s)
+{
+	UINT error;
+	UINT32 CaretBlinkRate;
+
+	if (!context || !s)
+		return ERROR_INVALID_PARAMETER;
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, CaretBlinkRate);
+	IFCALLRET(context->ClientCaretBlinkRate, error, context, CaretBlinkRate);
+
+	if (error)
+		WLog_ERR(TAG, "context.CaretBlinkRate failed with error %" PRIu32 "", error);
+
+	return error;
+}
+
 static DWORD WINAPI rail_server_thread(LPVOID arg)
 {
 	RailServerContext* context = (RailServerContext*)arg;
@@ -1667,6 +1707,16 @@ UINT rail_server_handle_messages(RailServerContext* context)
 		{
 			RAIL_CLOAK cloak;
 			return rail_recv_client_cloak_order(context, &cloak, s);
+		}
+
+		case TS_RAIL_ORDER_TEXTSCALEINFO:
+		{
+			return rail_recv_client_text_scale_order(context, s);
+		}
+
+		case TS_RAIL_ORDER_CARETBLINKINFO:
+		{
+			return rail_recv_client_caret_blink(context, s);
 		}
 
 		default:
