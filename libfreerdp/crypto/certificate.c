@@ -795,7 +795,7 @@ static BOOL cert_write_server_certificate_v2(wStream* s, const rdpCertificate* c
 	const rdpX509CertChain* chain = &certificate->x509_cert_chain;
 	const size_t padding = 8ull + 4ull * chain->count;
 
-	if (Stream_EnsureRemainingCapacity(s, sizeof(UINT32)))
+	if (!Stream_EnsureRemainingCapacity(s, sizeof(UINT32)))
 		return FALSE;
 
 	Stream_Write_UINT32(s, chain->count);
@@ -806,10 +806,10 @@ static BOOL cert_write_server_certificate_v2(wStream* s, const rdpCertificate* c
 			return FALSE;
 	}
 
-	if (Stream_EnsureRemainingCapacity(s, padding))
+	if (!Stream_EnsureRemainingCapacity(s, padding))
 		return FALSE;
 	Stream_Zero(s, padding);
-	return FALSE;
+	return TRUE;
 }
 
 SSIZE_T freerdp_certificate_write_server_cert(const rdpCertificate* certificate, UINT32 dwVersion,
