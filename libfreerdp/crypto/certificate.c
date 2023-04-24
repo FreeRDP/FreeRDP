@@ -1522,7 +1522,6 @@ BYTE* freerdp_certificate_get_der(const rdpCertificate* cert, size_t* pLength)
 BOOL freerdp_certificate_is_rsa(const rdpCertificate* cert)
 {
 	WINPR_ASSERT(cert);
-	WINPR_ASSERT(cert->x509);
 	return is_rsa_key(cert->x509);
 }
 
