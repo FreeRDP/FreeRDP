@@ -66,6 +66,8 @@ extern "C"
 	typedef UINT (*psRailClientCompartmentInfo)(RailServerContext* context,
 	                                            const RAIL_COMPARTMENT_INFO_ORDER* compartmentInfo);
 	typedef UINT (*psRailClientCloak)(RailServerContext* context, const RAIL_CLOAK* cloak);
+	typedef UINT (*psRailClientTextScale)(RailServerContext* context, UINT32 TextScale);
+	typedef UINT (*psRailClientCaretBlinkRate)(RailServerContext* context, UINT32 CaretBlinkRate);
 
 	/* Server side messages sending methods */
 	typedef UINT (*psRailServerHandshake)(RailServerContext* context,
@@ -118,6 +120,8 @@ extern "C"
 		psRailClientLanguageImeInfo ClientLanguageImeInfo;
 		psRailClientCompartmentInfo ClientCompartmentInfo;
 		psRailClientCloak ClientCloak;
+		psRailClientTextScale ClientTextScale;
+		psRailClientCaretBlinkRate ClientCaretBlinkRate;
 
 		/* Methods for sending server side messages */
 		psRailServerHandshake ServerHandshake;
