@@ -28,6 +28,9 @@
 #include <openssl/sha.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#include <openssl/core_names.h>
+#endif
 #endif
 
 #ifdef WITH_MBEDTLS
@@ -168,7 +171,11 @@ struct winpr_hmac_ctx_private_st
 	WINPR_HMAC_MD5_CTX hmac_md5;
 #endif
 #if defined(WITH_OPENSSL)
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	EVP_MAC_CTX* xhmac;
+#else
 	HMAC_CTX* hmac;
+#endif
 #endif
 #if defined(WITH_MBEDTLS)
 	mbedtls_md_context_t hmac;
@@ -188,11 +195,17 @@ WINPR_HMAC_CTX* winpr_HMAC_New(void)
 		goto fail;
 
 	HMAC_CTX_init(ctx->hmac);
-#else
-
+#elif OPENSSL_VERSION_NUMBER < 0x30000000L
 	if (!(ctx->hmac = HMAC_CTX_new()))
 		goto fail;
-
+#else
+	EVP_MAC* emac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+	if (!emac)
+		goto fail;
+	ctx->xhmac = EVP_MAC_CTX_new(emac);
+	EVP_MAC_free(emac);
+	if (!ctx->xhmac)
+		goto fail;
 #endif
 #elif defined(WITH_MBEDTLS)
 	mbedtls_md_init(&ctx->hmac);
@@ -221,6 +234,19 @@ BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, siz
 	}
 
 #if defined(WITH_OPENSSL)
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	const char* hash = winpr_md_type_to_string(md);
+
+	if (!ctx->xhmac)
+		return FALSE;
+
+	const char* param_name = OSSL_MAC_PARAM_DIGEST;
+	OSSL_PARAM param[] = { OSSL_PARAM_construct_utf8_string(param_name, hash, 0),
+		                   OSSL_PARAM_construct_end() };
+
+	if (EVP_MAC_init(ctx->xhmac, key, keylen, param) == 1)
+		return TRUE;
+#else
 	HMAC_CTX* hmac = ctx->hmac;
 	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
 
@@ -238,6 +264,7 @@ BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, siz
 	if (HMAC_Init_ex(hmac, key, (int)keylen, evp, NULL) == 1)
 		return TRUE;
 
+#endif
 #endif
 #elif defined(WITH_MBEDTLS)
 	mbedtls_md_context_t* hmac = &ctx->hmac;
@@ -278,6 +305,10 @@ BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen)
 	}
 
 #if defined(WITH_OPENSSL)
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	if (EVP_MAC_update(ctx->xhmac, input, ilen) == 1)
+		return TRUE;
+#else
 	HMAC_CTX* hmac = ctx->hmac;
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L) || \
     (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
@@ -287,7 +318,7 @@ BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen)
 
 	if (HMAC_Update(hmac, input, ilen) == 1)
 		return TRUE;
-
+#endif
 #endif
 #elif defined(WITH_MBEDTLS)
 	mbedtls_md_context_t* mdctx = &ctx->hmac;
@@ -317,6 +348,11 @@ BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output, size_t olen)
 	}
 
 #if defined(WITH_OPENSSL)
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	const int rc = EVP_MAC_final(ctx->xhmac, output, NULL, olen);
+	if (rc == 1)
+		return TRUE;
+#else
 	HMAC_CTX* hmac = ctx->hmac;
 #if (OPENSSL_VERSION_NUMBER < 0x10000000L) || \
     (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x2070000fL)
@@ -327,6 +363,7 @@ BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output, size_t olen)
 	if (HMAC_Final(hmac, output, NULL) == 1)
 		return TRUE;
 
+#endif
 #endif
 #elif defined(WITH_MBEDTLS)
 	mbedtls_md_context_t* mdctx = &ctx->hmac;
@@ -344,6 +381,9 @@ void winpr_HMAC_Free(WINPR_HMAC_CTX* ctx)
 		return;
 
 #if defined(WITH_OPENSSL)
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	EVP_MAC_CTX_free(ctx->xhmac);
+#else
 	HMAC_CTX* hmac = ctx->hmac;
 
 	if (hmac)
@@ -356,7 +396,7 @@ void winpr_HMAC_Free(WINPR_HMAC_CTX* ctx)
 		HMAC_CTX_free(hmac);
 #endif
 	}
-
+#endif
 #elif defined(WITH_MBEDTLS)
 	mbedtls_md_context_t* hmac = &ctx->hmac;
 
