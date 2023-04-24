@@ -1966,8 +1966,11 @@ BOOL license_send_error_alert(rdpLicense* license, UINT32 dwErrorCode, UINT32 dw
 	Stream_Write_UINT32(s, dwErrorCode);
 	Stream_Write_UINT32(s, dwStateTransition);
 
-	if (!license_write_binary_blob(s, info))
-		goto fail;
+	if (info)
+	{
+		if (!license_write_binary_blob(s, info))
+			goto fail;
+	}
 
 	return license_send(license, s, ERROR_ALERT);
 fail:
@@ -2273,10 +2276,6 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 
 	WINPR_ASSERT(license);
 
-	const rdpCertInfo* info = freerdp_certificate_get_info(license->certificate);
-	if (!info)
-		return FALSE;
-
 	if (!license_check_stream_length(s, 8ull + sizeof(license->ClientRandom),
 	                                 "new license request"))
 		return FALSE;
@@ -2295,7 +2294,10 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 	                                                  &ModulusLength))
 		return FALSE;
 
-	if (ModulusLength != info->ModulusLength)
+	const rdpCertInfo* info = freerdp_certificate_get_info(license->certificate);
+	if (!info)
+		WLog_WARN(TAG, "Missing license certificate, skipping ModulusLength checks");
+	else if (ModulusLength != info->ModulusLength)
 	{
 		WLog_WARN(TAG,
 		          "EncryptedPremasterSecret expected to be %" PRIu32 " bytes, but read %" PRIu32
