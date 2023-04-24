@@ -390,6 +390,9 @@ static BOOL pf_config_load_gfx_settings(wIniFile* ini, proxyConfig* config)
 
 static char* pf_config_decode_base64(const char* data, const char* name, size_t* pLength)
 {
+	const char cert_header[27] = "-----BEGIN CERTIFICATE-----";
+	const char key_header[27] = "-----BEGIN PRIVATE KEY-----";
+
 	size_t decoded_length = 0;
 	char* decoded = NULL;
 	if (!data)
@@ -402,6 +405,13 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 	WINPR_ASSERT(pLength);
 
 	const size_t length = strlen(data);
+	if ((strncmp(data, cert_header, ARRAYSIZE(cert_header)) == 0) ||
+	    (strncmp(data, key_header, ARRAYSIZE(key_header)) == 0))
+	{
+		*pLength = length + 1;
+		return _strdup(data);
+	}
+
 	crypto_base64_decode(data, length, (BYTE**)&decoded, &decoded_length);
 	if (!decoded || decoded_length == 0)
 	{
