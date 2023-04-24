@@ -22,12 +22,12 @@ partial class Wts
             return Marshal.PtrToStringAuto(pInfo);
         }
 
-        public virtual T QueryStructure<T>(WTS_INFO_CLASS infoClass)
+        public virtual unsafe T QueryStructure<T>(WTS_INFO_CLASS infoClass)
         where T : unmanaged
         {
             using var _ = Query(infoClass, out var pInfo);
 
-            return Marshal.PtrToStructure<T>(pInfo);
+            return *(T*)pInfo.ToPointer();
         }
 
         private IDisposable? Query(WTS_INFO_CLASS infoClass, out IntPtr pInfo)
