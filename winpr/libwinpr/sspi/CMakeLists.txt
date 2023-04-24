@@ -60,6 +60,11 @@ if (NOT WIN32 AND NOT ANDROID AND NOT IOS AND NOT APPLE)
 	set(KRB5_DEFAULT ON)
 endif()
 
+option(WITH_DEBUG_SCHANNEL "Compile support for SCHANNEL debug" OFF)
+if (WITH_DEBUG_SCHANNEL)
+	winpr_definition_add("-DWITH_DEBUG_SCHANNEL")
+endif()
+
 option(WITH_KRB5 "Compile support for kerberos authentication." ${KRB5_DEFAULT})
 if (WITH_KRB5)
 	find_package(KRB5 REQUIRED)
