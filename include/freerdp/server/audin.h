@@ -22,6 +22,7 @@
 #ifndef FREERDP_CHANNEL_AUDIN_SERVER_H
 #define FREERDP_CHANNEL_AUDIN_SERVER_H
 
+#include <freerdp/config.h>
 #include <freerdp/codec/audio.h>
 #include <freerdp/channels/wtsvc.h>
 #include <freerdp/channels/rdpsnd.h>
