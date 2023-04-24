@@ -394,12 +394,12 @@ static BOOL printer_save_default_config(const rdpSettings* settings, rdpPrinter*
 
 	wname = ConvertUtf8ToWCharAlloc(printer->name, NULL);
 
-	if (wname)
+	if (!wname)
 		goto fail;
 
 	driver = ConvertUtf8ToWCharAlloc(printer->driver, NULL);
 
-	if (driver)
+	if (!driver)
 		goto fail;
 
 	wlen = _wcslen(wname) + 1;
