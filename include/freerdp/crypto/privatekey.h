@@ -38,6 +38,8 @@ extern "C"
 
 	FREERDP_API BOOL freerdp_key_is_rsa(const rdpPrivateKey* key);
 
+	FREERDP_API size_t freerdp_key_get_bits(const rdpPrivateKey* key);
+
 #ifdef __cplusplus
 }
 #endif
