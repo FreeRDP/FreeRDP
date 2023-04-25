@@ -337,6 +337,7 @@ extern "C"
 #define PF_EX_ARM_IDIVA 13
 #define PF_EX_ARM_IDIVT 14
 #define PF_EX_AVX_PCLMULQDQ 15
+#define PF_EX_AVX512F 16
 
 /*
  * some "aliases" for the standard defines
