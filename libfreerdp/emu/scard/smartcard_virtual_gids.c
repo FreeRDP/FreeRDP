@@ -292,7 +292,7 @@ create_failed:
 	return NULL;
 }
 
-static BOOL vgids_write_tlv(wStream* s, UINT16 tag, const BYTE* data, DWORD dataSize)
+static BOOL vgids_write_tlv(wStream* s, UINT16 tag, const char* data, DWORD dataSize)
 {
 	/* A maximum of 5 additional bytes is needed */
 	if (!Stream_EnsureRemainingCapacity(s, dataSize + 5))
@@ -326,7 +326,7 @@ static BOOL vgids_write_tlv(wStream* s, UINT16 tag, const BYTE* data, DWORD data
 	return TRUE;
 }
 
-static BOOL vgids_ef_write_do(vgidsEF* ef, UINT16 doID, const BYTE* data, DWORD dataSize)
+static BOOL vgids_ef_write_do(vgidsEF* ef, UINT16 doID, const char* data, DWORD dataSize)
 {
 	/* Write DO to end of file: 2-Byte ID, 1-Byte Len, Data */
 	return vgids_write_tlv(ef->data, doID, data, dataSize);

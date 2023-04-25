@@ -57,9 +57,4 @@ FREERDP_LOCAL const rdpCertInfo* freerdp_certificate_get_info(const rdpCertifica
  */
 FREERDP_LOCAL X509* freerdp_certificate_get_x509(rdpCertificate* certificate);
 
-/** \brief returns a pointer to a RSA structure.
- *  Call RSA_free when done.
- */
-FREERDP_LOCAL RSA* freerdp_certificate_get_RSA(const rdpCertificate* key);
-
 #endif /* FREERDP_LIB_CORE_CERTIFICATE_H */

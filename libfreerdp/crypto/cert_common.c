@@ -173,6 +173,7 @@ BOOL cert_info_read_exponent(rdpCertInfo* info, size_t size, wStream* s)
 	return TRUE;
 }
 
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 X509* x509_from_rsa(const RSA* rsa)
 {
 	EVP_PKEY* pubkey = NULL;
@@ -205,3 +206,4 @@ fail:
 	EVP_PKEY_free(pubkey);
 	return x509;
 }
+#endif
