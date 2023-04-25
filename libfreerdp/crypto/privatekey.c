@@ -44,6 +44,10 @@
 
 #include <openssl/evp.h>
 
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+#include <openssl/core_names.h>
+#endif
+
 #include "x509_utils.h"
 #include "crypto.h"
 #include "opensslcompat.h"
@@ -84,6 +88,7 @@ static const rdpPrivateKey tssk = { .PrivateExponent = tssk_privateExponent,
 	                                          .ModulusLength = sizeof(tssk_modulus) } };
 const rdpPrivateKey* priv_key_tssk = &tssk;
 
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 static RSA* evp_pkey_to_rsa(const rdpPrivateKey* key)
 {
 	if (!freerdp_key_is_rsa(key))
@@ -104,6 +109,7 @@ fail:
 	BIO_free_all(bio);
 	return rsa;
 }
+#endif
 
 static EVP_PKEY* evp_pkey_utils_from_pem(const char* data, size_t len, BOOL fromFile)
 {
@@ -139,6 +145,7 @@ static BOOL key_read_private(rdpPrivateKey* key)
 	if (!freerdp_key_is_rsa(key))
 		return TRUE;
 
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	RSA* rsa = evp_pkey_to_rsa(key);
 	if (!rsa)
 	{
@@ -166,7 +173,18 @@ static BOOL key_read_private(rdpPrivateKey* key)
 	const BIGNUM* rsa_d = NULL;
 
 	RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
+#else
+	BIGNUM* rsa_e = NULL;
+	BIGNUM* rsa_n = NULL;
+	BIGNUM* rsa_d = NULL;
 
+	if (!EVP_PKEY_get_bn_param(key->evp, OSSL_PKEY_PARAM_RSA_N, &rsa_n))
+		goto fail;
+	if (!EVP_PKEY_get_bn_param(key->evp, OSSL_PKEY_PARAM_RSA_E, &rsa_e))
+		goto fail;
+	if (!EVP_PKEY_get_bn_param(key->evp, OSSL_PKEY_PARAM_RSA_D, &rsa_d))
+		goto fail;
+#endif
 	if (BN_num_bytes(rsa_e) > 4)
 	{
 		WLog_ERR(TAG, "RSA public exponent too large");
@@ -180,7 +198,13 @@ static BOOL key_read_private(rdpPrivateKey* key)
 		goto fail;
 	rc = TRUE;
 fail:
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	RSA_free(rsa);
+#else
+	BN_free(rsa_d);
+	BN_free(rsa_e);
+	BN_free(rsa_n);
+#endif
 	return rc;
 }
 
@@ -297,11 +321,13 @@ const BYTE* freerdp_key_get_exponent(const rdpPrivateKey* key, size_t* plength)
 	return key->PrivateExponent;
 }
 
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 RSA* freerdp_key_get_RSA(const rdpPrivateKey* key)
 {
 	WINPR_ASSERT(key);
 	return evp_pkey_to_rsa(key);
 }
+#endif
 
 EVP_PKEY* freerdp_key_get_evp_pkey(const rdpPrivateKey* key)
 {
@@ -321,4 +347,19 @@ BOOL freerdp_key_is_rsa(const rdpPrivateKey* key)
 
 	WINPR_ASSERT(key->evp);
 	return (EVP_PKEY_id(key->evp) == EVP_PKEY_RSA);
+}
+
+size_t freerdp_key_get_bits(const rdpPrivateKey* key)
+{
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
+	RSA* rsa = freerdp_key_get_RSA(key);
+	if (!rsa)
+		return -1;
+
+	const int size = RSA_size(rsa);
+	RSA_free(rsa);
+	return size;
+#else
+	return EVP_PKEY_get_bits(key->evp);
+#endif
 }
