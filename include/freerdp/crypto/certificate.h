@@ -30,6 +30,12 @@ extern "C"
 {
 #endif
 
+	enum FREERDP_CERT_PARAM
+	{
+		FREERDP_CERT_RSA_E,
+		FREERDP_CERT_RSA_N
+	};
+
 	typedef struct rdp_certificate rdpCertificate;
 
 	FREERDP_API rdpCertificate* freerdp_certificate_new(void);
@@ -79,6 +85,9 @@ extern "C"
 	                                            const char* certificate_store_path);
 
 	FREERDP_API BOOL freerdp_certificate_is_rdp_security_compatible(const rdpCertificate* cert);
+
+	FREERDP_API char* freerdp_certificate_get_param(const rdpCertificate* cert,
+	                                                enum FREERDP_CERT_PARAM what, size_t* psize);
 
 #ifdef __cplusplus
 }

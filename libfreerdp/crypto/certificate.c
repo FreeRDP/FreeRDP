@@ -41,6 +41,10 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+#include <openssl/core_names.h>
+#endif
+
 #include "certificate.h"
 #include "cert_common.h"
 #include "crypto.h"
@@ -476,30 +480,59 @@ static BOOL update_x509_from_info(rdpCertificate* cert)
 
 	rdpCertInfo* info = &cert->cert_info;
 
-	RSA* rsa = RSA_new();
 	BIGNUM* e = BN_new();
 	BIGNUM* mod = BN_new();
-	if (!mod || !e || !rsa)
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
+	RSA* rsa = RSA_new();
+	if (!rsa)
+		goto fail;
+#endif
+
+	if (!mod || !e)
 		goto fail;
 	if (!BN_bin2bn(info->Modulus, info->ModulusLength, mod))
 		goto fail;
 	if (!BN_bin2bn(info->exponent, sizeof(info->exponent), e))
 		goto fail;
 
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	const int rec = RSA_set0_key(rsa, mod, e, NULL);
 	if (rec != 1)
 		goto fail;
 
 	cert->x509 = x509_from_rsa(rsa);
+#else
+	EVP_PKEY* pkey = EVP_PKEY_new();
+	if (!pkey)
+		goto fail2;
+
+	if (!EVP_PKEY_set_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, e))
+		goto fail2;
+	if (!EVP_PKEY_set_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, mod))
+		goto fail2;
+
+	cert->x509 = X509_new();
+	if (!cert->x509)
+		goto fail2;
+	if (X509_set_pubkey(cert->x509, pkey) != 1)
+	{
+		X509_free(cert->x509);
+		cert->x509 = NULL;
+	}
+fail2:
+	EVP_PKEY_free(pkey);
+#endif
 	if (!cert->x509)
 		goto fail;
 
 	rc = TRUE;
 
 fail:
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	if (rsa)
 		RSA_free(rsa);
 	else
+#endif
 	{
 		BN_free(mod);
 		BN_free(e);
@@ -1103,6 +1136,8 @@ static BOOL freerdp_rsa_from_x509(rdpCertificate* cert)
 	EVP_PKEY* pubkey = X509_get0_pubkey(cert->x509);
 	if (!pubkey)
 		goto fail;
+
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	rsa = EVP_PKEY_get1_RSA(pubkey);
 
 	/* If this is not a RSA key return success */
@@ -1116,13 +1151,26 @@ static BOOL freerdp_rsa_from_x509(rdpCertificate* cert)
 	const BIGNUM* rsa_n = NULL;
 	const BIGNUM* rsa_e = NULL;
 	RSA_get0_key(rsa, &rsa_n, &rsa_e, NULL);
+#else
+	BIGNUM* rsa_n = NULL;
+	BIGNUM* rsa_e = NULL;
+	if (!EVP_PKEY_get_bn_param(pubkey, OSSL_PKEY_PARAM_RSA_E, &rsa_e))
+		goto fail;
+	if (!EVP_PKEY_get_bn_param(pubkey, OSSL_PKEY_PARAM_RSA_N, &rsa_n))
+		goto fail;
+#endif
 	if (!rsa_n || !rsa_e)
 		goto fail;
 	if (!cert_info_create(&cert->cert_info, rsa_n, rsa_e))
 		goto fail;
 	rc = TRUE;
 fail:
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	RSA_free(rsa);
+#else
+	BN_free(rsa_n);
+	BN_free(rsa_e);
+#endif
 	return rc;
 }
 
@@ -1132,7 +1180,7 @@ rdpCertificate* freerdp_certificate_new_from_der(const BYTE* data, size_t length
 
 	if (!cert || !data || (length == 0))
 		goto fail;
-	char* ptr = data;
+	const BYTE* ptr = data;
 	cert->x509 = d2i_X509(NULL, &ptr, length);
 	if (!cert->x509)
 		goto fail;
@@ -1477,7 +1525,8 @@ X509* freerdp_certificate_get_x509(rdpCertificate* cert)
 	return cert->x509;
 }
 
-RSA* freerdp_certificate_get_RSA(const rdpCertificate* cert)
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
+static RSA* freerdp_certificate_get_RSA(const rdpCertificate* cert)
 {
 	WINPR_ASSERT(cert);
 
@@ -1490,6 +1539,7 @@ RSA* freerdp_certificate_get_RSA(const rdpCertificate* cert)
 
 	return EVP_PKEY_get1_RSA(pubkey);
 }
+#endif
 
 BYTE* freerdp_certificate_get_der(const rdpCertificate* cert, size_t* pLength)
 {
@@ -1534,4 +1584,63 @@ BOOL freerdp_certificate_is_rdp_security_compatible(const rdpCertificate* cert)
 		return FALSE;
 	}
 	return TRUE;
+}
+
+char* freerdp_certificate_get_param(const rdpCertificate* cert, enum FREERDP_CERT_PARAM what,
+                                    size_t* psize)
+{
+	WINPR_ASSERT(cert);
+	WINPR_ASSERT(psize);
+
+	*psize = 0;
+
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
+	const BIGNUM* bn = NULL;
+	RSA* rsa = freerdp_certificate_get_RSA(cert);
+	switch (what)
+	{
+		case FREERDP_CERT_RSA_E:
+			RSA_get0_key(rsa, NULL, &bn, NULL);
+			break;
+		case FREERDP_CERT_RSA_N:
+			RSA_get0_key(rsa, &bn, NULL, NULL);
+			break;
+		default:
+			RSA_free(rsa);
+			return NULL;
+	}
+	RSA_free(rsa);
+#else
+	EVP_PKEY* pkey = X509_get0_pubkey(cert->x509);
+	if (!pkey)
+		return NULL;
+
+	BIGNUM* bn = NULL;
+	switch (what)
+	{
+		case FREERDP_CERT_RSA_E:
+			if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &bn))
+				return NULL;
+			break;
+		case FREERDP_CERT_RSA_N:
+			if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, &bn))
+				return NULL;
+			break;
+		default:
+			return NULL;
+	}
+#endif
+
+	const size_t bnsize = BN_num_bytes(bn);
+	char* rc = calloc(bnsize + 1, sizeof(char));
+	if (!rc)
+		goto fail;
+	BN_bn2bin(bn, rc);
+	*psize = bnsize;
+
+fail:
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR < 3)
+	BN_free(bn);
+#endif
+	return rc;
 }

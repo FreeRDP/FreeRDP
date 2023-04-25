@@ -42,7 +42,9 @@ extern "C"
 
 	FREERDP_LOCAL BOOL read_bignum(BYTE** dst, UINT32* length, const BIGNUM* num, BOOL alloc);
 
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	FREERDP_LOCAL X509* x509_from_rsa(const RSA* rsa);
+#endif
 
 #ifdef __cplusplus
 }
