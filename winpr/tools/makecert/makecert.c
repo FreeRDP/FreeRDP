@@ -19,6 +19,7 @@
 
 #include <errno.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/path.h>
 #include <winpr/file.h>
@@ -45,7 +46,6 @@ struct S_MAKECERT_CONTEXT
 	char** argv;
 
 #ifdef WITH_OPENSSL
-	RSA* rsa;
 	X509* x509;
 	EVP_PKEY* pkey;
 	PKCS12* pkcs12;
@@ -686,6 +686,72 @@ out_fail:
 #endif
 }
 
+#ifdef WITH_OPENSSL
+static BOOL makecert_create_rsa(EVP_PKEY** ppkey, size_t key_length)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(ppkey);
+
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
+	RSA* rsa = NULL;
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
+	rsa = RSA_generate_key(key_length, RSA_F4, NULL, NULL);
+#else
+	{
+		BIGNUM* bn = BN_secure_new();
+
+		if (!bn)
+			return FALSE;
+
+		rsa = RSA_new();
+
+		if (!rsa)
+		{
+			BN_clear_free(bn);
+			return FALSE;
+		}
+
+		BN_set_word(bn, RSA_F4);
+		const int rc = RSA_generate_key_ex(rsa, key_length, bn, NULL);
+		BN_clear_free(bn);
+
+		if (rc != 1)
+			return FALSE;
+	}
+#endif
+
+	if (!EVP_PKEY_assign_RSA(*ppkey, rsa))
+	{
+		RSA_free(rsa);
+		return FALSE;
+	}
+	rc = TRUE;
+#else
+	EVP_PKEY_CTX* pctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+	if (!pctx)
+		return FALSE;
+
+	if (EVP_PKEY_keygen_init(pctx) != 1)
+		goto fail;
+
+	const unsigned int keylen = key_length;
+	const OSSL_PARAM params[] = { OSSL_PARAM_construct_uint("bits", &keylen),
+		                          OSSL_PARAM_construct_end() };
+	if (EVP_PKEY_CTX_set_params(pctx, params) != 1)
+		goto fail;
+
+	if (EVP_PKEY_generate(pctx, ppkey) != 1)
+		goto fail;
+
+	rc = TRUE;
+fail:
+	EVP_PKEY_CTX_free(pctx);
+#endif
+	return rc;
+}
+#endif
+
 int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 {
 	COMMAND_LINE_ARGUMENT_A args[] = {
@@ -901,37 +967,9 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		key_length = (int)val;
 	}
 
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
-	context->rsa = RSA_generate_key(key_length, RSA_F4, NULL, NULL);
-#else
-	{
-		BIGNUM* rsa = BN_secure_new();
-		int rc;
-
-		if (!rsa)
-			return -1;
-
-		context->rsa = RSA_new();
-
-		if (!context->rsa)
-		{
-			BN_clear_free(rsa);
-			return -1;
-		}
-
-		BN_set_word(rsa, RSA_F4);
-		rc = RSA_generate_key_ex(context->rsa, key_length, rsa, NULL);
-		BN_clear_free(rsa);
-
-		if (rc != 1)
-			return -1;
-	}
-#endif
-
-	if (!EVP_PKEY_assign_RSA(context->pkey, context->rsa))
+	if (!makecert_create_rsa(&context->pkey, key_length))
 		return -1;
 
-	context->rsa = NULL;
 	X509_set_version(context->x509, 2);
 	arg = CommandLineFindArgumentA(args, "#");
 
