@@ -23,6 +23,8 @@
 #include <string.h>
 
 #include <freerdp/crypto/crypto.h>
+#include <freerdp/crypto/privatekey.h>
+#include "../crypto/privatekey.h"
 
 #ifdef WITH_CJSON
 #include <cjson/cJSON.h>
@@ -55,7 +57,7 @@ struct rdp_aad
 	rdpContext* rdpcontext;
 	rdpTransport* transport;
 	char* access_token;
-	EVP_PKEY* pop_key;
+	rdpPrivateKey* key;
 	char* kid;
 	char* nonce;
 	char* hostname;
@@ -122,7 +124,7 @@ static const char token_http_request_body[] =
     "76844c9b6999"
     "\r\n\r\n";
 
-static BOOL get_encoded_rsa_params(wLog* wlog, EVP_PKEY* pkey, char** e, char** n);
+static BOOL get_encoded_rsa_params(wLog* wlog, rdpPrivateKey* key, char** e, char** n);
 static BOOL generate_pop_key(rdpAad* aad);
 static BOOL read_http_message(rdpAad* aad, BIO* bio, long* status_code, char** content,
                               size_t* content_length);
@@ -579,7 +581,7 @@ static char* aad_create_jws_payload(rdpAad* aad, const char* ts_nonce)
 
 	char* e = NULL;
 	char* n = NULL;
-	if (!get_encoded_rsa_params(aad->log, aad->pop_key, &e, &n))
+	if (!get_encoded_rsa_params(aad->log, aad->key, &e, &n))
 		return NULL;
 
 	/* Construct the base64url encoded JWS payload */
@@ -607,22 +609,22 @@ static char* aad_create_jws_payload(rdpAad* aad, const char* ts_nonce)
 	return jws_payload;
 }
 
-static BOOL aad_update_digest(rdpAad* aad, EVP_MD_CTX* ctx, const char* what)
+static BOOL aad_update_digest(rdpAad* aad, WINPR_DIGEST_CTX* ctx, const char* what)
 {
 	WINPR_ASSERT(aad);
 	WINPR_ASSERT(ctx);
 	WINPR_ASSERT(what);
 
-	const int dsu1 = EVP_DigestSignUpdate(ctx, what, strlen(what));
-	if (dsu1 <= 0)
+	const BOOL dsu1 = winpr_DigestSign_Update(ctx, what, strlen(what));
+	if (!dsu1)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "EVP_DigestSignUpdate [%s] failed with %d", what, dsu1);
+		WLog_Print(aad->log, WLOG_ERROR, "winpr_DigestSign_Update [%s] failed", what);
 		return FALSE;
 	}
 	return TRUE;
 }
 
-static char* aad_final_digest(rdpAad* aad, EVP_MD_CTX* ctx)
+static char* aad_final_digest(rdpAad* aad, WINPR_DIGEST_CTX* ctx)
 {
 	char* jws_signature = NULL;
 
@@ -630,10 +632,10 @@ static char* aad_final_digest(rdpAad* aad, EVP_MD_CTX* ctx)
 	WINPR_ASSERT(ctx);
 
 	size_t siglen = 0;
-	const int dsf = EVP_DigestSignFinal(ctx, NULL, &siglen);
+	const int dsf = winpr_DigestSign_Final(ctx, NULL, &siglen);
 	if (dsf <= 0)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "EVP_DigestSignFinal failed with %d", dsf);
+		WLog_Print(aad->log, WLOG_ERROR, "winpr_DigestSign_Final failed with %d", dsf);
 		return FALSE;
 	}
 
@@ -645,17 +647,17 @@ static char* aad_final_digest(rdpAad* aad, EVP_MD_CTX* ctx)
 	}
 
 	size_t fsiglen = siglen;
-	const int dsf2 = EVP_DigestSignFinal(ctx, (BYTE*)buffer, &fsiglen);
+	const int dsf2 = winpr_DigestSign_Final(ctx, (BYTE*)buffer, &fsiglen);
 	if (dsf2 <= 0)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "EVP_DigestSignFinal failed with %d", dsf2);
+		WLog_Print(aad->log, WLOG_ERROR, "winpr_DigestSign_Final failed with %d", dsf2);
 		goto fail;
 	}
 
 	if (siglen != fsiglen)
 	{
 		WLog_Print(aad->log, WLOG_ERROR,
-		           "EVP_DigestSignFinal returned different sizes, first %" PRIuz " then %" PRIuz,
+		           "winpr_DigestSignFinal returned different sizes, first %" PRIuz " then %" PRIuz,
 		           siglen, fsiglen);
 		goto fail;
 	}
@@ -671,17 +673,10 @@ static char* aad_create_jws_signature(rdpAad* aad, const char* jws_header, const
 
 	WINPR_ASSERT(aad);
 
-	EVP_MD_CTX* md_ctx = EVP_MD_CTX_new();
+	WINPR_DIGEST_CTX* md_ctx = freerdp_key_digest_sign(aad->key, WINPR_MD_SHA256);
 	if (!md_ctx)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "EVP_MD_CTX_new failed");
-		goto fail;
-	}
-
-	const int rdsi = EVP_DigestSignInit(md_ctx, NULL, EVP_sha256(), NULL, aad->pop_key);
-	if (rdsi <= 0)
-	{
-		WLog_Print(aad->log, WLOG_ERROR, "EVP_DigestSignInit failed with %d", rdsi);
+		WLog_Print(aad->log, WLOG_ERROR, "winpr_Digest_New failed");
 		goto fail;
 	}
 
@@ -694,7 +689,7 @@ static char* aad_create_jws_signature(rdpAad* aad, const char* jws_header, const
 
 	jws_signature = aad_final_digest(aad, md_ctx);
 fail:
-	EVP_MD_CTX_free(md_ctx);
+	winpr_Digest_Free(md_ctx);
 	return jws_signature;
 }
 
@@ -905,44 +900,8 @@ static BOOL read_http_message(rdpAad* aad, BIO* bio, long* status_code, char** c
 
 static BOOL generate_rsa_2048(rdpAad* aad)
 {
-	BOOL rc = FALSE;
 	WINPR_ASSERT(aad);
-
-	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
-	if (!aad)
-	{
-		WLog_Print(aad->log, WLOG_ERROR, "EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL) failed");
-		goto fail;
-	}
-
-	const int rki = EVP_PKEY_keygen_init(ctx);
-	if (rki <= 0)
-	{
-		WLog_Print(aad->log, WLOG_ERROR, "EVP_PKEY_keygen_init failed with %d", rki);
-		goto fail;
-	}
-
-	const int key_bits = 2048;
-	const int rkb = EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, key_bits);
-	if (rkb <= 0)
-	{
-		WLog_Print(aad->log, WLOG_ERROR, "EVP_PKEY_CTX_set_rsa_keygen_bits(%d) failed with %d",
-		           key_bits, rkb);
-		goto fail;
-	}
-
-	const int rkg = EVP_PKEY_keygen(ctx, &aad->pop_key);
-	if (rkg <= 0)
-	{
-		WLog_Print(aad->log, WLOG_ERROR, "EVP_PKEY_keygen failed with %d", rkg);
-		goto fail;
-	}
-
-	rc = TRUE;
-fail:
-
-	EVP_PKEY_CTX_free(ctx);
-	return rc;
+	return freerdp_key_generate(aad->key, 2048);
 }
 
 static char* generate_rsa_digest_base64_str(rdpAad* aad, const char* input, size_t ilen)
@@ -1018,7 +977,7 @@ BOOL generate_pop_key(rdpAad* aad)
 		goto fail;
 
 	/* Encode the public key as a JWK */
-	if (!get_encoded_rsa_params(aad->log, aad->pop_key, &e, &n))
+	if (!get_encoded_rsa_params(aad->log, aad->key, &e, &n))
 		goto fail;
 
 	size_t blen = 0;
@@ -1043,34 +1002,18 @@ fail:
 	return ret;
 }
 
-static char* bn_to_base64_url(wLog* wlog, BIGNUM* bn)
+static char* bn_to_base64_url(wLog* wlog, rdpPrivateKey* key, enum FREERDP_KEY_PARAM param)
 {
 	WINPR_ASSERT(wlog);
-	WINPR_ASSERT(bn);
+	WINPR_ASSERT(key);
 
-	const int length = BN_num_bytes(bn);
-	if (length < 0)
-	{
-		WLog_Print(wlog, WLOG_ERROR, "BN_num_bytes failed with %d", length);
+	size_t len = 0;
+	char* bn = freerdp_key_get_param(key, param, &len);
+	if (!bn)
 		return NULL;
-	}
 
-	const size_t alloc_size = (size_t)length + 1ull;
-	BYTE* buf = calloc(alloc_size, sizeof(BYTE));
-	if (!buf)
-	{
-		return NULL;
-	}
-
-	const int bnlen = BN_bn2bin(bn, buf);
-	if (bnlen != length)
-	{
-		free(buf);
-		WLog_Print(wlog, WLOG_ERROR, "BN_bn2bin returned %d, expected result %d", bnlen, length);
-		return NULL;
-	}
-	char* b64 = crypto_base64url_encode(buf, (size_t)length);
-	free(buf);
+	char* b64 = crypto_base64url_encode(bn, len);
+	free(bn);
 
 	if (!b64)
 		WLog_Print(wlog, WLOG_ERROR, "failed  base64 url encode BIGNUM");
@@ -1078,62 +1021,28 @@ static char* bn_to_base64_url(wLog* wlog, BIGNUM* bn)
 	return b64;
 }
 
-BOOL get_encoded_rsa_params(wLog* wlog, EVP_PKEY* pkey, char** pe, char** pn)
+BOOL get_encoded_rsa_params(wLog* wlog, rdpPrivateKey* key, char** pe, char** pn)
 {
 	BOOL rc = FALSE;
-	BIGNUM *bn_e = NULL, *bn_n = NULL;
 	char* e = NULL;
 	char* n = NULL;
 
 	WINPR_ASSERT(wlog);
-	WINPR_ASSERT(pkey);
+	WINPR_ASSERT(key);
 	WINPR_ASSERT(pe);
 	WINPR_ASSERT(pn);
 
 	*pe = NULL;
 	*pn = NULL;
 
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
-	if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &bn_e))
-	{
-		WLog_Print(wlog, WLOG_ERROR, "failed to get RSA E");
-		goto fail;
-	}
-	if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, &bn_n))
-	{
-		WLog_Print(wlog, WLOG_ERROR, "failed to get RSA N");
-		goto fail;
-	}
-#else
-	{
-		const RSA* rsa = NULL;
-
-		if (!(rsa = EVP_PKEY_get0_RSA(pkey)))
-		{
-			WLog_Print(wlog, WLOG_ERROR, "failed to get RSA");
-			goto fail;
-		}
-		if (!(bn_e = BN_dup(RSA_get0_e(rsa))))
-		{
-			WLog_Print(wlog, WLOG_ERROR, "failed to get RSA E");
-			goto fail;
-		}
-		if (!(bn_n = BN_dup(RSA_get0_n(rsa))))
-		{
-			WLog_Print(wlog, WLOG_ERROR, "failed to get RSA N");
-			goto fail;
-		}
-	}
-#endif
-
-	e = bn_to_base64_url(wlog, bn_e);
+	e = bn_to_base64_url(wlog, key, FREERDP_KEY_PARAM_RSA_E);
 	if (!e)
 	{
 		WLog_Print(wlog, WLOG_ERROR, "failed  base64 url encode RSA E");
 		goto fail;
 	}
 
-	n = bn_to_base64_url(wlog, bn_n);
+	n = bn_to_base64_url(wlog, key, FREERDP_KEY_PARAM_RSA_N);
 	if (!n)
 	{
 		WLog_Print(wlog, WLOG_ERROR, "failed  base64 url encode RSA N");
@@ -1142,8 +1051,6 @@ BOOL get_encoded_rsa_params(wLog* wlog, EVP_PKEY* pkey, char** pe, char** pn)
 
 	rc = TRUE;
 fail:
-	BN_free(bn_e);
-	BN_free(bn_n);
 	if (!rc)
 	{
 		free(e);
@@ -1182,10 +1089,16 @@ rdpAad* aad_new(rdpContext* context, rdpTransport* transport)
 		return NULL;
 
 	aad->log = WLog_Get(FREERDP_TAG("aad"));
+	aad->key = freerdp_key_new();
+	if (!aad->key)
+		goto fail;
 	aad->rdpcontext = context;
 	aad->transport = transport;
 
 	return aad;
+fail:
+	aad_free(aad);
+	return NULL;
 }
 
 void aad_free(rdpAad* aad)
@@ -1197,7 +1110,7 @@ void aad_free(rdpAad* aad)
 	free(aad->nonce);
 	free(aad->access_token);
 	free(aad->kid);
-	EVP_PKEY_free(aad->pop_key);
+	freerdp_key_free(aad->key);
 
 	free(aad);
 }
