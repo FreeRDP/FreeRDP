@@ -357,3 +357,154 @@ size_t freerdp_key_get_bits(const rdpPrivateKey* key)
 
 	return rc;
 }
+
+BOOL freerdp_key_generate(rdpPrivateKey* key, size_t key_length)
+{
+	BOOL rc = FALSE;
+
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
+	RSA* rsa = NULL;
+#if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
+	rsa = RSA_generate_key(key_length, RSA_F4, NULL, NULL);
+#else
+	{
+		BIGNUM* bn = BN_secure_new();
+
+		if (!bn)
+			return FALSE;
+
+		rsa = RSA_new();
+
+		if (!rsa)
+		{
+			BN_clear_free(bn);
+			return FALSE;
+		}
+
+		BN_set_word(bn, RSA_F4);
+		const int rc = RSA_generate_key_ex(rsa, key_length, bn, NULL);
+		BN_clear_free(bn);
+
+		if (rc != 1)
+			return FALSE;
+	}
+#endif
+
+	if (!EVP_PKEY_assign_RSA(key->evp, rsa))
+	{
+		RSA_free(rsa);
+		return FALSE;
+	}
+	rc = TRUE;
+#else
+	EVP_PKEY_CTX* pctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+	if (!pctx)
+		return FALSE;
+
+	if (EVP_PKEY_keygen_init(pctx) != 1)
+		goto fail;
+
+	if (EVP_PKEY_CTX_set_rsa_keygen_bits(pctx, key_length) != 1)
+		goto fail;
+
+	EVP_PKEY_free(key->evp);
+	key->evp = NULL;
+
+	if (EVP_PKEY_generate(pctx, &key->evp) != 1)
+		goto fail;
+
+	rc = TRUE;
+fail:
+	EVP_PKEY_CTX_free(pctx);
+#endif
+	return rc;
+}
+
+char* freerdp_key_get_param(const rdpPrivateKey* key, enum FREERDP_KEY_PARAM param, size_t* plength)
+{
+	WINPR_ASSERT(key);
+	WINPR_ASSERT(plength);
+
+	*plength = 0;
+
+	BIGNUM* bn = NULL;
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+
+	const char* pk = NULL;
+	switch (param)
+	{
+		case FREERDP_KEY_PARAM_RSA_D:
+			pk = OSSL_PKEY_PARAM_RSA_D;
+			break;
+		case FREERDP_KEY_PARAM_RSA_E:
+			pk = OSSL_PKEY_PARAM_RSA_E;
+			break;
+		case FREERDP_KEY_PARAM_RSA_N:
+			pk = OSSL_PKEY_PARAM_RSA_N;
+			break;
+		default:
+			return NULL;
+	}
+
+	if (!EVP_PKEY_get_bn_param(key->evp, pk, &bn))
+		return NULL;
+#else
+	{
+		const RSA* rsa = EVP_PKEY_get0_RSA(key->evp);
+		if (!rsa)
+			return NULL;
+
+		switch (param)
+		{
+			case FREERDP_KEY_PARAM_RSA_D:
+				bn = RSA_get0_d(rsa);
+				break;
+			case FREERDP_KEY_PARAM_RSA_E:
+				bn = RSA_get0_e(rsa);
+				break;
+			case FREERDP_KEY_PARAM_RSA_N:
+				bn = RSA_get0_n(rsa);
+				break;
+			default:
+				return NULL;
+		}
+		if (!bn)
+			return NULL;
+		bn = BN_dup(bn);
+		if (!bn)
+			return NULL;
+	}
+#endif
+
+	const int length = BN_num_bytes(bn);
+	if (length < 0)
+		goto fail;
+
+	const size_t alloc_size = (size_t)length + 1ull;
+	BYTE* buf = calloc(alloc_size, sizeof(BYTE));
+	if (!buf)
+		goto fail;
+
+	const int bnlen = BN_bn2bin(bn, buf);
+	if (bnlen != length)
+		goto fail;
+	*plength = length;
+
+fail:
+	BN_free(bn);
+	return buf;
+}
+
+WINPR_DIGEST_CTX* freerdp_key_digest_sign(rdpPrivateKey* key, WINPR_MD_TYPE digest)
+{
+	WINPR_DIGEST_CTX* md_ctx = winpr_Digest_New();
+	if (!md_ctx)
+		return NULL;
+
+	if (!winpr_DigestSign_Init(md_ctx, digest, key->evp))
+	{
+		winpr_Digest_Free(md_ctx);
+		return NULL;
+	}
+	return md_ctx;
+}
