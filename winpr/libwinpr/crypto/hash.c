@@ -661,6 +661,55 @@ BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output, size_t olen)
 	return FALSE;
 }
 
+BOOL winpr_DigestSign_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE digest, void* key)
+{
+	WINPR_ASSERT(ctx);
+
+	const char* hash = winpr_md_type_to_string(digest);
+	WINPR_ASSERT(hash);
+
+#if defined(WITH_OPENSSL)
+	const EVP_MD* evp = EVP_get_digestbyname(hash);
+	if (!evp)
+		return FALSE;
+
+	const int rdsi = EVP_DigestSignInit(ctx->mdctx, NULL, evp, NULL, key);
+	if (rdsi <= 0)
+		return FALSE;
+	return TRUE;
+#else
+	return FALSE;
+#endif
+}
+
+BOOL winpr_DigestSign_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen)
+{
+	WINPR_ASSERT(ctx);
+
+#if defined(WITH_OPENSSL)
+	EVP_MD_CTX* mdctx = ctx->mdctx;
+
+	if (EVP_DigestSignUpdate(mdctx, input, ilen) != 1)
+		return FALSE;
+	return TRUE;
+#else
+	return FALSE;
+#endif
+}
+
+BOOL winpr_DigestSign_Final(WINPR_DIGEST_CTX* ctx, BYTE* output, size_t* piolen)
+{
+	WINPR_ASSERT(ctx);
+
+#if defined(WITH_OPENSSL)
+	EVP_MD_CTX* mdctx = ctx->mdctx;
+
+	return EVP_DigestSignFinal(mdctx, output, piolen) == 1;
+#else
+	return FALSE;
+#endif
+}
+
 void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx)
 {
 	if (!ctx)

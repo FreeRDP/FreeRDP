@@ -112,6 +112,10 @@ extern "C"
 	WINPR_API BOOL winpr_Digest(WINPR_MD_TYPE md, const BYTE* input, size_t ilen, BYTE* output,
 	                            size_t olen);
 
+	WINPR_API BOOL winpr_DigestSign_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md, void* key);
+	WINPR_API BOOL winpr_DigestSign_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen);
+	WINPR_API BOOL winpr_DigestSign_Final(WINPR_DIGEST_CTX* ctx, BYTE* output, size_t* piolen);
+
 #ifdef __cplusplus
 }
 #endif
