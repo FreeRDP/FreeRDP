@@ -504,7 +504,7 @@ static int get_rsa_key_size(const rdpPrivateKey* privateKey)
 {
 	WINPR_ASSERT(privateKey);
 
-	return freerdp_key_get_bits(privateKey);
+	return freerdp_key_get_bits(privateKey) / 8;
 }
 
 static BYTE vgids_get_algid(vgidsContext* p_Ctx)
@@ -1135,6 +1135,7 @@ sign_failed:
 
 static BOOL vgids_perform_decrypt(vgidsContext* context)
 {
+	EVP_PKEY_CTX* ctx = NULL;
 	BOOL rc = FALSE;
 	int res;
 	int padding = RSA_NO_PADDING;
@@ -1151,24 +1152,24 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 	EVP_PKEY* pkey = freerdp_key_get_evp_pkey(context->privateKey);
 	if (!pkey)
 		goto decrypt_failed;
-	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(pkey, NULL);
+	ctx = EVP_PKEY_CTX_new(pkey, NULL);
 	if (!ctx)
 		goto decrypt_failed;
 	if (EVP_PKEY_decrypt_init(ctx) <= 0)
 		goto decrypt_failed;
-	if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0)
+	if (EVP_PKEY_CTX_set_rsa_padding(ctx, padding) <= 0)
 		goto decrypt_failed;
 
-	context->responseData = Stream_New(NULL, freerdp_key_get_bits(context->privateKey));
+	/* Determine buffer length */
+	const size_t inlen = Stream_Length(context->commandData);
+	size_t outlen = inlen * 2;
+	context->responseData = Stream_New(NULL, outlen);
 	if (!context->responseData)
 	{
 		WLog_ERR(TAG, "Failed to create decryption buffer");
 		goto decrypt_failed;
 	}
 
-	/* Determine buffer length */
-	size_t outlen = Stream_Capacity(context->responseData);
-	const size_t inlen = Stream_Length(context->commandData);
 	res = EVP_PKEY_decrypt(ctx, Stream_Buffer(context->responseData), &outlen,
 	                       Stream_Buffer(context->commandData), inlen);
 

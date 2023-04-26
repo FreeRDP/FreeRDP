@@ -35,13 +35,6 @@ extern "C"
 	FREERDP_LOCAL const rdpCertInfo* freerdp_key_get_info(const rdpPrivateKey* key);
 	FREERDP_LOCAL const BYTE* freerdp_key_get_exponent(const rdpPrivateKey* key, size_t* plength);
 
-#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
-	/** \brief returns a pointer to a RSA structure.
-	 *  Call RSA_free when done.
-	 */
-	FREERDP_LOCAL RSA* freerdp_key_get_RSA(const rdpPrivateKey* key);
-#endif
-
 	/** \brief returns a pointer to a EVP_PKEY structure.
 	 *  Call EVP_PKEY_free when done.
 	 */
