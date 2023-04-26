@@ -29,6 +29,35 @@
 #include "krb5glue.h"
 #include <profile.h>
 
+static int alloc_sprintf(char** s, size_t* slen, const char* template, ...)
+{
+	va_list ap;
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(slen);
+	*s = NULL;
+	*slen = 0;
+
+	va_start(ap, template);
+	const int length = vsnprintf(NULL, 0, template, ap);
+	va_end(ap);
+	if (length < 0)
+		return length;
+
+	char* str = calloc((size_t)length + 1ul, sizeof(char));
+	if (!str)
+		return -1;
+
+	va_start(ap, template);
+	const int plen = vsprintf(str, template, ap);
+	va_end(ap);
+
+	WINPR_ASSERT(length == plen);
+	*s = str;
+	*slen = (size_t)length;
+	return length;
+}
+
 static char* create_temporary_file(void)
 {
 	BYTE buffer[32];
@@ -154,46 +183,36 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 		{
 			const char* names[4] = { 0 };
 			char* realm = NULL;
-			char* host_start = NULL;
-			char* host_end = NULL;
-			char tmp = '\0';
+			char* kdc_url = NULL;
+			size_t size = 0;
 
 			if ((rv = krb5_get_profile(ctx, &profile)))
 				goto cleanup;
 
-			names[0] = "realms";
+			rv = ENOMEM;
+			if (alloc_sprintf(&kdc_url, &size, "https://%s/KdcProxy", krb_settings->kdcUrl) <= 0)
+				goto cleanup;
+
 			realm = calloc(princ->realm.length + 1, 1);
 			if (!realm)
 			{
-				rv = ENOMEM;
+				free(kdc_url);
 				goto cleanup;
 			}
 			CopyMemory(realm, princ->realm.data, princ->realm.length);
+
+			names[0] = "realms";
 			names[1] = realm;
 			names[2] = "kdc";
 
 			profile_clear_relation(profile, names);
-			profile_add_relation(profile, names, krb_settings->kdcUrl);
+			profile_add_relation(profile, names, kdc_url);
 
 			/* Since we know who the KDC is, tell krb5 that its certificate is valid for pkinit */
 			names[2] = "pkinit_kdc_hostname";
-
-			/* If kdcUrl is in URL form, get the hostname portion */
-			host_start = strstr(krb_settings->kdcUrl, "://");
-			if (host_start)
-				host_start += 3;
-			else
-				host_start = krb_settings->kdcUrl;
-
-			host_end = strchr(host_start, '/');
-			if (!host_end)
-				host_end = strchr(host_start, '\0');
-
-			tmp = *host_end;
-			*host_end = '\0';
 			profile_add_relation(profile, names, krb_settings->kdcUrl);
-			*host_end = tmp;
 
+			free(kdc_url);
 			free(realm);
 
 			if ((rv = profile_flush_to_file(profile, tmp_profile_path)))
