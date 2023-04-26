@@ -123,6 +123,7 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 	krb5_init_creds_context creds_ctx = NULL;
 	char* tmp_profile_path = create_temporary_file();
 	profile_t profile = NULL;
+	BOOL is_temp_ctx = FALSE;
 
 	WINPR_ASSERT(ctx);
 
@@ -205,22 +206,29 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 
 			if ((rv = krb5_init_context_profile(profile, 0, &ctx)))
 				goto cleanup;
+			is_temp_ctx = TRUE;
 		}
 	}
 
-	if (rv == 0)
-		rv = krb5_get_init_creds_opt_set_in_ccache(ctx, gic_opt, ccache);
-	if (rv == 0)
-		rv = krb5_get_init_creds_opt_set_out_ccache(ctx, gic_opt, ccache);
+	if ((rv = krb5_get_init_creds_opt_set_in_ccache(ctx, gic_opt, ccache)))
+		goto cleanup;
 
-	if (rv == 0)
-		rv = krb5_init_creds_init(ctx, princ, prompter, password, start_time, gic_opt, &creds_ctx);
-	if (rv == 0)
-		rv = krb5_init_creds_get(ctx, creds_ctx);
+	if ((rv = krb5_get_init_creds_opt_set_out_ccache(ctx, gic_opt, ccache)))
+		goto cleanup;
+
+	if ((rv =
+	         krb5_init_creds_init(ctx, princ, prompter, password, start_time, gic_opt, &creds_ctx)))
+		goto cleanup;
+
+	if ((rv = krb5_init_creds_get(ctx, creds_ctx)))
+		goto cleanup;
 
 cleanup:
 	krb5_init_creds_free(ctx, creds_ctx);
 	krb5_get_init_creds_opt_free(ctx, gic_opt);
+	if (is_temp_ctx)
+		krb5_free_context(ctx);
+	profile_release(profile);
 	winpr_DeleteFile(tmp_profile_path);
 	free(tmp_profile_path);
 
