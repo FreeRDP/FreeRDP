@@ -1858,7 +1858,7 @@ BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp)
 	WINPR_ASSERT(mcs);
 
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ChannelDefArray, NULL,
-	                                      mcs->channelCount))
+	                                      CHANNEL_MAX_COUNT))
 		return FALSE;
 
 	for (x = 0; x < mcs->channelCount; x++)
@@ -1872,7 +1872,7 @@ BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp)
 			return FALSE;
 	}
 
-	return TRUE;
+	return freerdp_settings_set_uint32(settings, FreeRDP_ChannelCount, mcs->channelCount);
 }
 
 /* Here we are in client state CONFIRM_ACTIVE.
