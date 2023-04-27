@@ -1537,23 +1537,20 @@ static void cliprdr_local_file_try_close(CliprdrLocalFile* file, UINT res, UINT6
 		WINPR_ASSERT(file->context);
 		WLog_Print(file->context->log, WLOG_DEBUG, "closing file %s after error %" PRIu32,
 		           file->name, res);
-		fclose(file->fp);
-		file->fp = NULL;
 	}
 	else if (((file->size > 0) && (offset + size >= file->size)))
 	{
 		WINPR_ASSERT(file->context);
 		WLog_Print(file->context->log, WLOG_DEBUG, "closing file %s after read", file->name);
-		fclose(file->fp);
-		file->fp = NULL;
 	}
 	else
 	{
 		// TODO: we need to keep track of open files to avoid running out of file descriptors
 		// TODO: for the time being just close again.
+	}
+	if (file->fp)
 		fclose(file->fp);
 		file->fp = NULL;
-	}
 }
 
 static UINT cliprdr_file_context_server_file_size_request(

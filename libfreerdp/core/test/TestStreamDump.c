@@ -83,7 +83,8 @@ static BOOL test_entry_read_write(void)
 fail:
 	Stream_Free(sr, TRUE);
 	Stream_Free(sw, TRUE);
-	fclose(fp);
+	if (fp)
+		fclose(fp);
 	if (name)
 		DeleteFileA(name);
 	free(name);

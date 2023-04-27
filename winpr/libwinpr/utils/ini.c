@@ -157,7 +157,8 @@ static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 	if (fread(ini->buffer, (size_t)fileSize, 1, ini->fp) != 1)
 		goto out_buffer;
 
-	fclose(ini->fp);
+	if (ini->fp)
+		fclose(ini->fp);
 	ini->fp = NULL;
 	ini->buffer[fileSize] = '\n';
 	ini->buffer[fileSize + 1] = '\0';
@@ -167,7 +168,8 @@ out_buffer:
 	free(ini->buffer);
 	ini->buffer = NULL;
 out_file:
-	fclose(ini->fp);
+	if (ini->fp)
+		fclose(ini->fp);
 	ini->fp = NULL;
 	return FALSE;
 }
@@ -778,7 +780,8 @@ int IniFile_WriteFile(wIniFile* ini, const char* filename)
 	if (fwrite((void*)buffer, length, 1, ini->fp) != 1)
 		ret = -1;
 
-	fclose(ini->fp);
+	if (ini->fp)
+		fclose(ini->fp);
 	free(buffer);
 	return ret;
 }

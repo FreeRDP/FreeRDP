@@ -680,9 +680,12 @@ static void SSLCTX_keylog_cb(const SSL* ssl, const char* line)
 	if (dfile)
 	{
 		FILE* f = winpr_fopen(dfile, "a+");
-		fwrite(line, strlen(line), 1, f);
-		fwrite("\n", 1, 1, f);
-		fclose(f);
+		if (f)
+		{
+			fwrite(line, strlen(line), 1, f);
+			fwrite("\n", 1, 1, f);
+			fclose(f);
+		}
 	}
 }
 

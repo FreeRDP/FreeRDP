@@ -90,21 +90,15 @@ static UINT printer_cups_write_printjob(rdpPrintJob* printjob, const BYTE* data,
 #ifndef _CUPS_API_1_4
 
 	{
-		FILE* fp;
-
-		fp = winpr_fopen((const char*)cups_printjob->printjob_object, "a+b");
+		FILE* fp = winpr_fopen((const char*)cups_printjob->printjob_object, "a+b");
 
 		if (!fp)
 			return ERROR_INTERNAL_ERROR;
 
-		if (fwrite(data, 1, size, fp) < size)
-		{
-			fclose(fp);
-			return ERROR_INTERNAL_ERROR;
-			// FIXME once this function doesn't return void anymore!
-		}
-
+		const size_t r = fwrite(data, 1, size, fp);
 		fclose(fp);
+		if (r < size)
+			return ERROR_INTERNAL_ERROR;
 	}
 
 #else

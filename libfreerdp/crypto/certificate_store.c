@@ -124,7 +124,8 @@ BOOL freerdp_certificate_store_save_data(rdpCertificateStore* store, const rdpCe
 
 	rc = TRUE;
 fail:
-	fclose(fp);
+	if (fp)
+		fclose(fp);
 	free(path);
 	return rc;
 }

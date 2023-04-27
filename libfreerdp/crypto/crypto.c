@@ -229,7 +229,8 @@ fail:
 	WLog_WARN(TAG, "Failed to read PEM from file '%s' [%s]", filename,
 	          winpr_strerror(errno, buffer, sizeof(buffer)));
 }
-	fclose(fp);
+	if (fp)
+		fclose(fp);
 	free(pem);
 	return NULL;
 }
