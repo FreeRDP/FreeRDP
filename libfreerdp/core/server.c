@@ -49,6 +49,8 @@
 	} while (0)
 #endif
 
+#define DVC_MAX_DATA_PDU_SIZE 1600
+
 typedef struct
 {
 	UINT16 channelId;
@@ -1578,12 +1580,9 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 		WINPR_ASSERT(channel->client);
 		context = channel->client->context;
 		WINPR_ASSERT(context);
-		WINPR_ASSERT(context->settings);
 		while (Length > 0)
 		{
-			const UINT32 VirtualChannelChunkSize =
-			    freerdp_settings_get_uint32(context->settings, FreeRDP_VirtualChannelChunkSize);
-			s = Stream_New(NULL, VirtualChannelChunkSize);
+			s = Stream_New(NULL, DVC_MAX_DATA_PDU_SIZE);
 
 			if (!s)
 			{
