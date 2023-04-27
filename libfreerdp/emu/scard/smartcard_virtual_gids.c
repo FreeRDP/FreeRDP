@@ -1162,7 +1162,15 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 
 	/* Determine buffer length */
 	const size_t inlen = Stream_Length(context->commandData);
-	size_t outlen = inlen * 2;
+	size_t outlen = 0;
+	res = EVP_PKEY_decrypt(ctx, NULL, &outlen, Stream_Buffer(context->commandData), inlen);
+	if (res < 0)
+	{
+		WLog_ERR(TAG, "Failed to decrypt data");
+		goto decrypt_failed;
+	}
+
+	/* Prepare output buffer */
 	context->responseData = Stream_New(NULL, outlen);
 	if (!context->responseData)
 	{
@@ -1170,6 +1178,7 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 		goto decrypt_failed;
 	}
 
+	/* Decrypt */
 	res = EVP_PKEY_decrypt(ctx, Stream_Buffer(context->responseData), &outlen,
 	                       Stream_Buffer(context->commandData), inlen);
 
