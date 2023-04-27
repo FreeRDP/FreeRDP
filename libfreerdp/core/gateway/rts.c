@@ -233,7 +233,7 @@ static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* aut
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(header);
 
-	WINPR_ASSERT(header->frag_length > header->auth_length);
+	WINPR_ASSERT(header->frag_length > header->auth_length + 8);
 
 	if (startPos)
 		*startPos = Stream_GetPosition(s);
@@ -324,10 +324,15 @@ static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* aut
 
 	if (alloc_hint > 0)
 	{
-		const size_t size =
-		    header->frag_length - header->auth_length - 8 - auth->auth_pad_length - pos;
+		const size_t off = header->auth_length + 8 + auth->auth_pad_length + pos;
+		const size_t size = header->frag_length - MIN(header->frag_length, off);
 		const void* src = Stream_Buffer(s) + pos;
 
+		if (off > size)
+			WLog_WARN(TAG,
+			          "Unexpected alloc_hint(%" PRIuz ") for PDU %s: size %" PRIuz
+			          ", offset %" PRIuz,
+			          alloc_hint, rts_pdu_ptype_to_string(header->ptype), size, off);
 		*ptr = (BYTE*)sdup(src, size);
 		if (!*ptr)
 			return FALSE;
