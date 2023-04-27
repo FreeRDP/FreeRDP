@@ -214,19 +214,20 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 			for (j = 0; options[j].Name != NULL; j++)
 			{
+				COMMAND_LINE_ARGUMENT_A* cur = &options[j];
 				BOOL match = FALSE;
 
-				if (strncmp(options[j].Name, keyword, keyword_length) == 0)
+				if (strncmp(cur->Name, keyword, keyword_length) == 0)
 				{
-					if (strlen(options[j].Name) == keyword_length)
+					if (strlen(cur->Name) == keyword_length)
 						match = TRUE;
 				}
 
-				if ((!match) && (options[j].Alias != NULL))
+				if ((!match) && (cur->Alias != NULL))
 				{
-					if (strncmp(options[j].Alias, keyword, keyword_length) == 0)
+					if (strncmp(cur->Alias, keyword, keyword_length) == 0)
 					{
-						if (strlen(options[j].Alias) == keyword_length)
+						if (strlen(cur->Alias) == keyword_length)
 							match = TRUE;
 					}
 				}
@@ -235,7 +236,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 					continue;
 
 				found = match;
-				options[j].Index = i;
+				cur->Index = i;
 
 				if ((flags & COMMAND_LINE_SEPARATOR_SPACE) && ((i + 1) < argc))
 				{
@@ -260,8 +261,8 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 							value_present = 0;
 					}
 
-					if ((options[j].Flags & COMMAND_LINE_VALUE_REQUIRED) ||
-					    (options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
+					if ((cur->Flags & COMMAND_LINE_VALUE_REQUIRED) ||
+					    (cur->Flags & COMMAND_LINE_VALUE_OPTIONAL))
 						argument = TRUE;
 					else
 						argument = FALSE;
@@ -271,7 +272,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 						i++;
 						value = argv[i];
 					}
-					else if (!value_present && (options[j].Flags & COMMAND_LINE_VALUE_OPTIONAL))
+					else if (!value_present && (cur->Flags & COMMAND_LINE_VALUE_OPTIONAL))
 					{
 						value = NULL;
 					}
@@ -284,7 +285,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 				if (!(flags & COMMAND_LINE_SEPARATOR_SPACE))
 				{
-					if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
+					if (value && (cur->Flags & COMMAND_LINE_VALUE_FLAG))
 					{
 						log_error(flags, "Failed at index %d [%s]: Unexpected value", i, argv[i]);
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -292,63 +293,62 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 				}
 				else
 				{
-					if (value && (options[j].Flags & COMMAND_LINE_VALUE_FLAG))
+					if (value && (cur->Flags & COMMAND_LINE_VALUE_FLAG))
 					{
 						i--;
 						value = NULL;
 					}
 				}
 
-				if (!value && (options[j].Flags & COMMAND_LINE_VALUE_REQUIRED))
+				if (!value && (cur->Flags & COMMAND_LINE_VALUE_REQUIRED))
 				{
 					log_error(flags, "Failed at index %d [%s]: Missing value", i, argv[i]);
 					status = COMMAND_LINE_ERROR_MISSING_VALUE;
 					return status;
 				}
 
-				options[j].Flags |= COMMAND_LINE_ARGUMENT_PRESENT;
+				cur->Flags |= COMMAND_LINE_ARGUMENT_PRESENT;
 
 				if (value)
 				{
-					if (!(options[j].Flags &
-					      (COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_VALUE_REQUIRED)))
+					if (!(cur->Flags & (COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_VALUE_REQUIRED)))
 					{
 						log_error(flags, "Failed at index %d [%s]: Unexpected value", i, argv[i]);
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 
-					options[j].Value = value;
-					options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
+					cur->Value = value;
+					cur->Flags |= COMMAND_LINE_VALUE_PRESENT;
 				}
 				else
 				{
-					if (options[j].Flags & COMMAND_LINE_VALUE_FLAG)
+					if (cur->Flags & COMMAND_LINE_VALUE_FLAG)
 					{
-						options[j].Value = (LPSTR)1;
-						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
+						cur->Value = (LPSTR)1;
+						cur->Flags |= COMMAND_LINE_VALUE_PRESENT;
 					}
-					else if (options[j].Flags & COMMAND_LINE_VALUE_BOOL)
+					else if (cur->Flags & COMMAND_LINE_VALUE_BOOL)
 					{
 						if (flags & COMMAND_LINE_SIGIL_ENABLE_DISABLE)
 						{
 							if (toggle == -1)
-								options[j].Value = BoolValueTrue;
+								cur->Value = BoolValueTrue;
 							else if (!toggle)
-								options[j].Value = BoolValueFalse;
+								cur->Value = BoolValueFalse;
 							else
-								options[j].Value = BoolValueTrue;
+								cur->Value = BoolValueTrue;
 						}
 						else
 						{
 							if (sigil[0] == '+')
-								options[j].Value = BoolValueTrue;
+								cur->Value = BoolValueTrue;
 							else if (sigil[0] == '-')
-								options[j].Value = BoolValueFalse;
+								cur->Value = BoolValueFalse;
 							else
-								options[j].Value = BoolValueTrue;
+								cur->Value = BoolValueTrue;
 						}
 
-						options[j].Flags |= COMMAND_LINE_VALUE_PRESENT;
+						cur->Flags |= COMMAND_LINE_VALUE_PRESENT;
 					}
 				}
 
@@ -366,13 +366,13 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 					}
 				}
 
-				if (options[j].Flags & COMMAND_LINE_PRINT)
+				if (cur->Flags & COMMAND_LINE_PRINT)
 					return COMMAND_LINE_STATUS_PRINT;
-				else if (options[j].Flags & COMMAND_LINE_PRINT_HELP)
+				else if (cur->Flags & COMMAND_LINE_PRINT_HELP)
 					return COMMAND_LINE_STATUS_PRINT_HELP;
-				else if (options[j].Flags & COMMAND_LINE_PRINT_VERSION)
+				else if (cur->Flags & COMMAND_LINE_PRINT_VERSION)
 					return COMMAND_LINE_STATUS_PRINT_VERSION;
-				else if (options[j].Flags & COMMAND_LINE_PRINT_BUILDCONFIG)
+				else if (cur->Flags & COMMAND_LINE_PRINT_BUILDCONFIG)
 					return COMMAND_LINE_STATUS_PRINT_BUILDCONFIG;
 			}
 
