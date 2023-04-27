@@ -298,7 +298,7 @@ out:
 static BOOL test_peer_load_icon(freerdp_peer* client)
 {
 	testPeerContext* context;
-	FILE* fp;
+	FILE* fp = NULL;
 	int i;
 	char line[50] = { 0 };
 	BYTE* rgb_data = NULL;
@@ -363,7 +363,8 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 out_fail:
 	free(rgb_data);
 	context->bg_data = NULL;
-	fclose(fp);
+	if (fp)
+		fclose(fp);
 	return FALSE;
 }
 

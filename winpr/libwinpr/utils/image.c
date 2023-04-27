@@ -158,7 +158,7 @@ int winpr_bitmap_write(const char* filename, const BYTE* data, size_t width, siz
 int winpr_bitmap_write_ex(const char* filename, const BYTE* data, size_t stride, size_t width,
                           size_t height, size_t bpp)
 {
-	FILE* fp;
+	FILE* fp = NULL;
 	BYTE* bmp_header = NULL;
 	const size_t bpp_stride = width * (bpp / 8);
 
@@ -190,7 +190,8 @@ int winpr_bitmap_write_ex(const char* filename, const BYTE* data, size_t stride,
 
 	ret = 1;
 fail:
-	fclose(fp);
+	if (fp)
+		fclose(fp);
 	free(bmp_header);
 	return ret;
 }

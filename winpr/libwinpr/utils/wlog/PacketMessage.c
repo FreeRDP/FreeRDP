@@ -232,7 +232,8 @@ wPcap* Pcap_Open(char* name, BOOL write)
 	return pcap;
 
 out_fail:
-	fclose(pcap_fp);
+	if (pcap_fp)
+		fclose(pcap_fp);
 	free(pcap);
 	return NULL;
 }

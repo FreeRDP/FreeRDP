@@ -94,7 +94,8 @@ static BOOL WLog_BinaryAppender_Close(wLog* log, wLogAppender* appender)
 	if (!binaryAppender->FileDescriptor)
 		return TRUE;
 
-	fclose(binaryAppender->FileDescriptor);
+	if (binaryAppender->FileDescriptor)
+		fclose(binaryAppender->FileDescriptor);
 
 	binaryAppender->FileDescriptor = NULL;
 

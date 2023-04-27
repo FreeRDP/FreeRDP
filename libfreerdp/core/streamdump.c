@@ -187,7 +187,7 @@ fail:
 SSIZE_T stream_dump_append(const rdpContext* context, UINT32 flags, wStream* s, size_t* offset)
 {
 	SSIZE_T rc = -1;
-	FILE* fp;
+	FILE* fp = NULL;
 	const UINT32 mask = STREAM_MSG_SRV_RX | STREAM_MSG_SRV_TX;
 	CONNECTION_STATE state = freerdp_get_state(context);
 	int r;
@@ -219,7 +219,8 @@ SSIZE_T stream_dump_append(const rdpContext* context, UINT32 flags, wStream* s, 
 		goto fail;
 	*offset = (size_t)rc;
 fail:
-	fclose(fp);
+	if (fp)
+		fclose(fp);
 	return rc;
 }
 
@@ -227,7 +228,7 @@ SSIZE_T stream_dump_get(const rdpContext* context, UINT32* flags, wStream* s, si
                         UINT64* pts)
 {
 	SSIZE_T rc = -1;
-	FILE* fp;
+	FILE* fp = NULL;
 	int r;
 
 	if (!context || !s || !offset)
@@ -244,7 +245,8 @@ SSIZE_T stream_dump_get(const rdpContext* context, UINT32* flags, wStream* s, si
 
 	rc = _ftelli64(fp);
 fail:
-	fclose(fp);
+	if (fp)
+		fclose(fp);
 	return rc;
 }
 

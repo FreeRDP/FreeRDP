@@ -206,7 +206,8 @@ error:
 		tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags);
 	if (terminal_fildes != STDIN_FILENO)
 	{
-		fclose(fp);
+		if (fp)
+			fclose(fp);
 	}
 	errno = saved_errno;
 	return NULL;

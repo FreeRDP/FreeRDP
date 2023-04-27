@@ -359,7 +359,8 @@ void SamClose(WINPR_SAM* sam)
 {
 	if (sam != NULL)
 	{
-		fclose(sam->fp);
+		if (sam->fp)
+			fclose(sam->fp);
 		free(sam);
 	}
 }

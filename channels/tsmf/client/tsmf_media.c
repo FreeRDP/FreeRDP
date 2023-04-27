@@ -480,12 +480,12 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 		   extract the Y values to create a grayscale image. */
 		static int frame_id = 0;
 		char buf[100];
-		FILE* fp;
 
 		if ((frame_id % 30) == 0)
 		{
 			sprintf_s(buf, sizeof(buf), "/tmp/FreeRDP_Frame_%d.ppm", frame_id);
-			fp = fopen(buf, "wb");
+			FILE* fp = fopen(buf, "wb");
+            if (fp) {
 			fwrite("P5\n", 1, 3, fp);
 			sprintf_s(buf, sizeof(buf), "%"PRIu32" %"PRIu32"\n", sample->stream->width,
 			          sample->stream->height);
@@ -494,6 +494,7 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 			fwrite(sample->data, 1, sample->stream->width * sample->stream->height, fp);
 			fflush(fp);
 			fclose(fp);
+		}
 		}
 
 		frame_id++;
