@@ -2560,7 +2560,7 @@ static void fill_credential_string(COMMAND_LINE_ARGUMENT_A* args, const char* va
 	if (!arg)
 		return;
 
-	if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
+	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 		FillMemory(arg->Value, strlen(arg->Value), '*');
 }
 

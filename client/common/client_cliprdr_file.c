@@ -1550,7 +1550,7 @@ static void cliprdr_local_file_try_close(CliprdrLocalFile* file, UINT res, UINT6
 	}
 	if (file->fp)
 		fclose(file->fp);
-		file->fp = NULL;
+	file->fp = NULL;
 }
 
 static UINT cliprdr_file_context_server_file_size_request(
