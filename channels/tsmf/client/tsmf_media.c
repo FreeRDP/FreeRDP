@@ -485,16 +485,17 @@ static BOOL tsmf_sample_playback_video(TSMF_SAMPLE* sample)
 		{
 			sprintf_s(buf, sizeof(buf), "/tmp/FreeRDP_Frame_%d.ppm", frame_id);
 			FILE* fp = fopen(buf, "wb");
-            if (fp) {
-			fwrite("P5\n", 1, 3, fp);
-			sprintf_s(buf, sizeof(buf), "%"PRIu32" %"PRIu32"\n", sample->stream->width,
-			          sample->stream->height);
-			fwrite(buf, 1, strnlen(buf, sizeof(buf)), fp);
-			fwrite("255\n", 1, 4, fp);
-			fwrite(sample->data, 1, sample->stream->width * sample->stream->height, fp);
-			fflush(fp);
-			fclose(fp);
-		}
+			if (fp)
+			{
+				fwrite("P5\n", 1, 3, fp);
+				sprintf_s(buf, sizeof(buf), "%"PRIu32" %"PRIu32"\n", sample->stream->width,
+				          sample->stream->height);
+				fwrite(buf, 1, strnlen(buf, sizeof(buf)), fp);
+				fwrite("255\n", 1, 4, fp);
+				fwrite(sample->data, 1, sample->stream->width * sample->stream->height, fp);
+				fflush(fp);
+				fclose(fp);
+			}
 		}
 
 		frame_id++;

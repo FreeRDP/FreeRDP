@@ -877,10 +877,10 @@ int TestFreeRDPCodecRemoteFX(int argc, char* argv[])
 
 #if 0
 	FILE *f = fopen("/tmp/windows.data", "w");
-    if (f) {
-	fwrite(dest, IMG_WIDTH * IMG_HEIGHT, FORMAT_SIZE, f);
-	fclose(f);
-    }
+	if (f) {
+		fwrite(dest, IMG_WIDTH * IMG_HEIGHT, FORMAT_SIZE, f);
+		fclose(f);
+	}
 #endif
 
 	if (!fuzzyCompareImage(srefImage, dest, IMG_WIDTH * IMG_HEIGHT))
