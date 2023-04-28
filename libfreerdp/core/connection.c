@@ -1109,10 +1109,6 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 {
-	size_t pos;
-	UINT16 length;
-	UINT16 channelId;
-
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->mcs);
 
@@ -1121,7 +1117,9 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 	if (messageChannelId != 0)
 	{
 		/* Process any MCS message channel PDUs. */
-		pos = Stream_GetPosition(s);
+		const size_t pos = Stream_GetPosition(s);
+		UINT16 length = 0;
+		UINT16 channelId = 0;
 
 		if (rdp_read_header(rdp, s, &length, &channelId))
 		{
@@ -1170,6 +1168,15 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	{
 		if (!rdp_decrypt(rdp, s, &length, securityFlags))
 			return STATE_RUN_FAILED;
+	}
+
+	/* there might be autodetect messages mixed in between licensing messages.
+	 * that has been observed with 2k12 R2 and 2k19
+	 */
+	const UINT16 messageChannelId = rdp->mcs->messageChannelId;
+	if (channelId == messageChannelId)
+	{
+		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 	}
 
 	if ((securityFlags & SEC_LICENSE_PKT) == 0)
