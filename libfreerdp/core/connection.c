@@ -1179,6 +1179,9 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 	}
 
+	if (channelId != 1003)
+		WLog_WARN(TAG, "unexpected message for channel %u, expected %u", channelId, 1003);
+
 	if ((securityFlags & SEC_LICENSE_PKT) == 0)
 	{
 		char buffer[512] = { 0 };
