@@ -699,6 +699,10 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 		CompressionLevel = ((flags & 0x00001E00) >> 9);
 		settings->CompressionLevel = CompressionLevel;
 	}
+	else
+	{
+		settings->CompressionLevel = 0;
+	}
 
 	/* RDP 4 and 5 have smaller credential limits */
 	if (settings->RdpVersion < RDP_VERSION_5_PLUS)
