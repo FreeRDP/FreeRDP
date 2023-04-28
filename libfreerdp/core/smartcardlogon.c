@@ -132,7 +132,10 @@ static BOOL add_cert_to_list(SmartcardCertInfo*** certInfoList, size_t* count,
 	for (size_t i = 0; i < curCount; ++i)
 	{
 		if (_wcscmp(curInfoList[i]->containerName, certInfo->containerName) == 0)
+		{
+			smartcardCertInfo_Free(certInfo);
 			return TRUE;
+		}
 	}
 
 	curInfoList = realloc(curInfoList, sizeof(SmartcardCertInfo*) * (curCount + 1));
