@@ -116,7 +116,8 @@ extern "C"
 		ALIGN64 BOOL bandwidthMeasureStarted;   /* 8 */
 		ALIGN64 FREERDP_AUTODETECT_STATE state; /* 9 */
 		ALIGN64 void* custom;                   /* 10 */
-		UINT64 paddingA[16 - 11];               /* 11 */
+		ALIGN64 wLog* log;                      /* 11 */
+		UINT64 paddingA[16 - 12];               /* 12 */
 
 		ALIGN64 pRTTMeasureRequest RTTMeasureRequest;                       /* 16 */
 		ALIGN64 pRTTMeasureResponse RTTMeasureResponse;                     /* 17 */
