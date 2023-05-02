@@ -30,6 +30,8 @@
 
 #include <libavcodec/avcodec.h>
 #include <libavutil/common.h>
+#include <libavutil/cpu.h>
+#include <libavutil/imgutils.h>
 
 #include "tsmf_constants.h"
 #include "tsmf_decoder.h"
@@ -397,9 +399,9 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UI
 		           mdecoder->frame->linesize[2], mdecoder->frame->linesize[3],
 		           mdecoder->codec_context->pix_fmt, mdecoder->codec_context->width,
 		           mdecoder->codec_context->height);
-		mdecoder->decoded_size =
-		    avpicture_get_size(mdecoder->codec_context->pix_fmt, mdecoder->codec_context->width,
-		                       mdecoder->codec_context->height);
+		mdecoder->decoded_size = av_image_get_buffer_size(mdecoder->codec_context->pix_fmt,
+		                                                  mdecoder->codec_context->width,
+		                                                  mdecoder->codec_context->height, 1);
 		mdecoder->decoded_data = calloc(1, mdecoder->decoded_size);
 
 		if (!mdecoder->decoded_data)
@@ -410,11 +412,12 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UI
 #else
 		frame = av_frame_alloc();
 #endif
-		avpicture_fill((AVPicture*)frame, mdecoder->decoded_data, mdecoder->codec_context->pix_fmt,
-		               mdecoder->codec_context->width, mdecoder->codec_context->height);
-		av_picture_copy((AVPicture*)frame, (AVPicture*)mdecoder->frame,
-		                mdecoder->codec_context->pix_fmt, mdecoder->codec_context->width,
-		                mdecoder->codec_context->height);
+		av_image_fill_arrays(frame->data, frame->linesize, mdecoder->decoded_data,
+		                     mdecoder->codec_context->pix_fmt, mdecoder->codec_context->width,
+		                     mdecoder->codec_context->height, 1);
+		av_image_copy(frame->data, frame->linesize, (const uint8_t**)mdecoder->frame->data,
+		              mdecoder->frame->linesize, mdecoder->codec_context->pix_fmt,
+		              mdecoder->codec_context->width, mdecoder->codec_context->height);
 		av_free(frame);
 	}
 
