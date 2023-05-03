@@ -1,0 +1,15 @@
+[binaries]
+c = 'aarch64-w64-mingw32-gcc'
+cpp = 'aarch64-w64-mingw32-g++'
+ar = 'aarch64-w64-mingw32-ar'
+ld = 'aarch64-w64-mingw32-ld'
+strip = 'aarch64-w64-mingw32-strip'
+
+[host_machine]
+system = 'windows'
+cpu_family = 'aarch64'
+cpu = 'native'
+endian = 'little'
+
+[properties]
+platform = 'generic_aarch64'
