@@ -43,12 +43,12 @@ int freerdp_handle_signals(void)
 	return -1;
 }
 
-BOOL freerdp_add_signal_cleanup_handler(void* context, void (*fkt)(void*))
+BOOL freerdp_add_signal_cleanup_handler(void* context, freerdp_signal_handler_t fkt)
 {
 	return FALSE;
 }
 
-BOOL freerdp_del_signal_cleanup_handler(void* context, void (*fkt)(void*))
+BOOL freerdp_del_signal_cleanup_handler(void* context, freerdp_signal_handler_t fkt)
 {
 	return FALSE;
 }
