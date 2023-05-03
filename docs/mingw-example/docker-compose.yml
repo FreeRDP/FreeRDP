@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  dist-builder:
+    image: win32-builder
+    volumes:
+     - ./build:/out
+    command: bash -c "rm -rf /out/*; cp -a /build/bin/. /out/;"
