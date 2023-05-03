@@ -163,8 +163,6 @@ extern "C"
 }
 #endif
 
-#else
-#define winpr_aligned_calloc(count, size, alignment) _aligned_recalloc(NULL, count, size, alignment)
 #endif /* _WIN32 */
 
 #if !defined(_WIN32) || (defined(__MINGW32__) && !defined(_UCRT))
@@ -224,5 +222,9 @@ extern "C"
 #define winpr_aligned_msize _aligned_msize
 #define winpr_aligned_free _aligned_free
 #endif /* !defined(_WIN32) || (defined(__MINGW32__) ... */
+
+#if defined(_WIN32) && (!defined(__MINGW32__) || defined(_UCRT))
+#define winpr_aligned_calloc(count, size, alignment) _aligned_recalloc(NULL, count, size, alignment)
+#endif /* defined(_WIN32) && (!defined(__MINGW32__) || defined(_UCRT)) */
 
 #endif /* WINPR_CRT_H */
