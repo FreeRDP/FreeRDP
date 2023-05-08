@@ -1468,6 +1468,9 @@ BOOL mcs_server_apply_to_settings(const rdpMcs* mcs, rdpSettings* settings)
 
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ChannelCount, mcs->channelCount))
 		goto fail;
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_ChannelDefArray, NULL,
+	                                      mcs->channelCount))
+		goto fail;
 
 	for (UINT32 x = 0; x < mcs->channelCount; x++)
 	{
