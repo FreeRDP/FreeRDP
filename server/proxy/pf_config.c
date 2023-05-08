@@ -480,6 +480,7 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 		    crypto_read_pem(config->CertificateFile, &config->CertificatePEMLength);
 		if (!config->CertificatePEM)
 			return FALSE;
+		config->CertificatePEMLength += 1;
 	}
 	tmp2 = pf_config_get_str(ini, section_certificates, key_cert_content, FALSE);
 	if (tmp2)
@@ -526,6 +527,7 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 		    crypto_read_pem(config->PrivateKeyFile, &config->PrivateKeyPEMLength);
 		if (!config->PrivateKeyPEM)
 			return FALSE;
+		config->PrivateKeyPEMLength += 1;
 	}
 	tmp2 = pf_config_get_str(ini, section_certificates, key_private_key_content, FALSE);
 	if (tmp2)
