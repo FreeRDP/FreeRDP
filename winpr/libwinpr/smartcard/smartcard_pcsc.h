@@ -22,6 +22,7 @@
 #ifndef WINPR_SMARTCARD_PCSC_PRIVATE_H
 #define WINPR_SMARTCARD_PCSC_PRIVATE_H
 
+#include "smartcard.h"
 #ifndef _WIN32
 
 #include <winpr/platform.h>

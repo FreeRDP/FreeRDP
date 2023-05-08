@@ -23,6 +23,7 @@
 #ifdef _WIN32
 
 #include <winpr/smartcard.h>
+#include "smartcard.h"
 
 #define WINSCARD_LOAD_PROC(_name, ...) \
 	WinSCard_SCardApiFunctionTable.pfn##_name = (fn##_name)GetProcAddress(g_WinSCardModule, #_name);

@@ -28,6 +28,7 @@
 
 #include "../log.h"
 #include "ncrypt.h"
+#include "../smartcard/smartcard.h"
 
 #define TAG WINPR_TAG("ncryptp11")
 
@@ -856,7 +857,7 @@ static SECURITY_STATUS get_piv_container_name(NCryptP11KeyHandle* key, const BYT
 	if (SCardConnectW(context, reader, SCARD_SHARE_SHARED, SCARD_PROTOCOL_Tx, &card, &proto) !=
 	    SCARD_S_SUCCESS)
 		goto out;
-	pci = (proto == SCARD_PROTOCOL_T0) ? SCARD_PCI_T0 : SCARD_PCI_T1;
+	pci = (proto == SCARD_PROTOCOL_T0) ? WINPR_SCARD_PCI_T0 : WINPR_SCARD_PCI_T1;
 
 	buf_len = sizeof(buf);
 	if (SCardTransmit(card, pci, APDU_PIV_SELECT_AID, sizeof(APDU_PIV_SELECT_AID), NULL, buf,

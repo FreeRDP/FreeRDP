@@ -30,6 +30,8 @@
 #include "../log.h"
 
 #include "smartcard.h"
+#include "smartcard_pcsc.h"
+#include "smartcard_winscard.h"
 
 #if defined(WITH_SMARTCARD_INSPECT)
 #include "smartcard_inspect.h"
@@ -77,9 +79,9 @@ static const SCardApiFunctionTable* g_SCardApi = NULL;
  * Standard Windows Smart Card API
  */
 
-const SCARD_IO_REQUEST g_rgSCardT0Pci = { SCARD_PROTOCOL_T0, 8 };
-const SCARD_IO_REQUEST g_rgSCardT1Pci = { SCARD_PROTOCOL_T1, 8 };
-const SCARD_IO_REQUEST g_rgSCardRawPci = { SCARD_PROTOCOL_RAW, 8 };
+const SCARD_IO_REQUEST winpr_g_rgSCardT0Pci = { SCARD_PROTOCOL_T0, 8 };
+const SCARD_IO_REQUEST winpr_g_rgSCardT1Pci = { SCARD_PROTOCOL_T1, 8 };
+const SCARD_IO_REQUEST winpr_g_rgSCardRawPci = { SCARD_PROTOCOL_RAW, 8 };
 
 static BOOL CALLBACK InitializeSCardApiStubs(PINIT_ONCE once, PVOID param, PVOID* context)
 {
