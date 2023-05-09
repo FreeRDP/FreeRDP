@@ -1558,6 +1558,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_ClientSessionId:
 			return settings->ClientSessionId;
 
+		case FreeRDP_ClipboardFeatureMask:
+			return settings->ClipboardFeatureMask;
+
 		case FreeRDP_ClusterInfoFlags:
 			return settings->ClusterInfoFlags;
 
@@ -1954,6 +1957,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 
 		case FreeRDP_ClientSessionId:
 			settings->ClientSessionId = cnv.c;
+			break;
+
+		case FreeRDP_ClipboardFeatureMask:
+			settings->ClipboardFeatureMask = cnv.c;
 			break;
 
 		case FreeRDP_ClusterInfoFlags:
