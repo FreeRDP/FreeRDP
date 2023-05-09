@@ -52,5 +52,8 @@ typedef struct
 } cliprdrPlugin;
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr);
+UINT cliprdr_send_error_response(cliprdrPlugin* cliprdr, UINT16 type);
+
+extern const char* type_FileGroupDescriptorW;
 
 #endif /* FREERDP_CHANNEL_CLIPRDR_CLIENT_MAIN_H */

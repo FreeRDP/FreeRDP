@@ -72,7 +72,7 @@ wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
 	Stream_Write_UINT16(s, msgType);
 	Stream_Write_UINT16(s, msgFlags);
 	/* Write actual length after the entire packet has been constructed. */
-	Stream_Seek(s, 4);
+	Stream_Write_UINT32(s, 0);
 	return s;
 }
 
