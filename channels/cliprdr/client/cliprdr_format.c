@@ -26,12 +26,78 @@
 #include <winpr/print.h>
 
 #include <freerdp/types.h>
+#include <freerdp/freerdp.h>
+#include <freerdp/settings.h>
 #include <freerdp/constants.h>
 #include <freerdp/client/cliprdr.h>
 
 #include "cliprdr_main.h"
 #include "cliprdr_format.h"
 #include "../cliprdr_common.h"
+
+static BOOL cliprdr_filter_server_format_list(CLIPRDR_FORMAT_LIST* list, const UINT32 mask)
+{
+	const UINT32 all = CLIPRDR_FLAG_REMOTE_TO_LOCAL | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES;
+	WINPR_ASSERT(list);
+
+	if ((mask & all) == all)
+		return TRUE;
+
+	if ((mask & CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES) != 0)
+	{
+		const CLIPRDR_FORMAT* files = NULL;
+		for (size_t x = 0; x < list->numFormats; x++)
+		{
+			CLIPRDR_FORMAT* format = &list->formats[x];
+
+			if (!format->formatName)
+				continue;
+			if (strcmp(format->formatName, type_FileGroupDescriptorW) == 0)
+				files = format;
+			else
+			{
+				free(format->formatName);
+				format->formatName = NULL;
+			}
+		}
+
+		if (!files)
+			list->numFormats = 0;
+		else
+		{
+			list->numFormats = 1;
+			list->formats[0] = *files;
+		}
+		return TRUE;
+	}
+
+	if ((mask & CLIPRDR_FLAG_REMOTE_TO_LOCAL) != 0)
+	{
+		BOOL move = FALSE;
+		for (size_t x = 0; x < list->numFormats; x++)
+		{
+			CLIPRDR_FORMAT* format = &list->formats[x];
+
+			if (move)
+			{
+				CLIPRDR_FORMAT* last = &list->formats[x - 1];
+				*last = *format;
+			}
+			else if (!format->formatName)
+				continue;
+			else if (strcmp(format->formatName, type_FileGroupDescriptorW) == 0)
+			{
+				move = TRUE;
+				free(format->formatName);
+				format->formatName = NULL;
+			}
+		}
+		if (move)
+			list->numFormats -= 1;
+		return TRUE;
+	}
+	return FALSE;
+}
 
 /**
  * Function description
@@ -50,6 +116,11 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	formatList.common.dataLen = dataLen;
 
 	if ((error = cliprdr_read_format_list(s, &formatList, cliprdr->useLongFormatNames)))
+		goto error_out;
+
+	const UINT32 mask =
+	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
+	if (!cliprdr_filter_server_format_list(&formatList, mask))
 		goto error_out;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatList: numFormats: %" PRIu32 "",
@@ -112,6 +183,13 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 	if ((error = cliprdr_read_format_data_request(s, &formatDataRequest)))
 		return error;
 
+	const UINT32 mask =
+	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
+	if ((mask & (CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES)) == 0)
+	{
+		return cliprdr_send_error_response(cliprdr, CB_FORMAT_DATA_RESPONSE);
+	}
+
 	context->lastRequestedFormatId = formatDataRequest.requestedFormatId;
 	IFCALLRET(context->ServerFormatDataRequest, error, context, &formatDataRequest);
 	if (error)
@@ -140,6 +218,15 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	if ((error = cliprdr_read_format_data_response(s, &formatDataResponse)))
 		return error;
+
+	const UINT32 mask =
+	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
+	if ((mask & (CLIPRDR_FLAG_REMOTE_TO_LOCAL | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES)) == 0)
+	{
+		WLog_WARN(TAG,
+		          "Received ServerFormatDataResponse but remote -> local clipboard is disabled");
+		return CHANNEL_RC_OK;
+	}
 
 	IFCALLRET(context->ServerFormatDataResponse, error, context, &formatDataResponse);
 	if (error)

@@ -38,6 +38,8 @@
 #include "cliprdr_format.h"
 #include "../cliprdr_common.h"
 
+const char* type_FileGroupDescriptorW = "FileGroupDescriptorW";
+
 static const char* CB_MSG_TYPE_STRINGS(UINT32 type)
 {
 	switch (type)
@@ -122,6 +124,18 @@ static UINT cliprdr_packet_send(cliprdrPlugin* cliprdr, wStream* s)
 	}
 
 	return status;
+}
+
+UINT cliprdr_send_error_response(cliprdrPlugin* cliprdr, UINT16 type)
+{
+	wStream* s = cliprdr_packet_new(type, CB_RESPONSE_FAIL, 0);
+	if (!s)
+	{
+		WLog_ERR(TAG, "cliprdr_packet_new failed!");
+		return ERROR_OUTOFMEMORY;
+	}
+
+	return cliprdr_packet_send(cliprdr, s);
 }
 
 static void cliprdr_print_general_capability_flags(UINT32 flags)
@@ -324,6 +338,13 @@ static UINT cliprdr_process_filecontents_request(cliprdrPlugin* cliprdr, wStream
 	if ((error = cliprdr_read_file_contents_request(s, &request)))
 		return error;
 
+	const UINT32 mask =
+	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
+	if ((mask & (CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES)) == 0)
+	{
+		WLog_WARN(TAG, "local -> remote file copy disabled, ignoring request");
+		return cliprdr_send_error_response(cliprdr, CB_FILECONTENTS_RESPONSE);
+	}
 	IFCALLRET(context->ServerFileContentsRequest, error, context, &request);
 
 	if (error)
@@ -639,6 +660,66 @@ static UINT cliprdr_temp_directory(CliprdrClientContext* context,
 	return cliprdr_packet_send(cliprdr, s);
 }
 
+static CLIPRDR_FORMAT_LIST cliprdr_filter_local_format_list(const CLIPRDR_FORMAT_LIST* list,
+                                                            const UINT32 mask)
+{
+	const UINT32 all = CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES;
+	WINPR_ASSERT(list);
+
+	CLIPRDR_FORMAT_LIST filtered = { 0 };
+	filtered.numFormats = list->numFormats;
+	filtered.formats = calloc(filtered.numFormats, sizeof(CLIPRDR_FORMAT_LIST));
+
+	size_t wpos = 0;
+	if ((mask & all) == all)
+	{
+		for (size_t x = 0; x < list->numFormats; x++)
+		{
+			const CLIPRDR_FORMAT* format = &list->formats[x];
+			CLIPRDR_FORMAT* cur = &filtered.formats[x];
+			cur->formatId = format->formatId;
+			if (format->formatName)
+				cur->formatName = _strdup(format->formatName);
+			wpos++;
+		}
+	}
+	else if ((mask & CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES) != 0)
+	{
+		for (size_t x = 0; x < list->numFormats; x++)
+		{
+			const CLIPRDR_FORMAT* format = &list->formats[x];
+			CLIPRDR_FORMAT* cur = &filtered.formats[wpos];
+
+			if (!format->formatName)
+				continue;
+			if (strcmp(format->formatName, type_FileGroupDescriptorW) == 0)
+			{
+				cur->formatId = format->formatId;
+				cur->formatName = _strdup(format->formatName);
+				wpos++;
+			}
+		}
+	}
+	else if ((mask & CLIPRDR_FLAG_LOCAL_TO_REMOTE) != 0)
+	{
+		for (size_t x = 0; x < list->numFormats; x++)
+		{
+			const CLIPRDR_FORMAT* format = &list->formats[x];
+			CLIPRDR_FORMAT* cur = &filtered.formats[wpos];
+
+			if (!format->formatName || (strcmp(format->formatName, type_FileGroupDescriptorW) != 0))
+			{
+				cur->formatId = format->formatId;
+				if (format->formatName)
+					cur->formatName = _strdup(format->formatName);
+				wpos++;
+			}
+		}
+	}
+	filtered.numFormats = wpos;
+	return filtered;
+}
+
 /**
  * Function description
  *
@@ -655,7 +736,15 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 	cliprdr = (cliprdrPlugin*)context->handle;
 	WINPR_ASSERT(cliprdr);
 
-	s = cliprdr_packet_format_list_new(formatList, cliprdr->useLongFormatNames);
+	const UINT32 mask =
+	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
+	CLIPRDR_FORMAT_LIST filterList = cliprdr_filter_local_format_list(formatList, mask);
+	if (filterList.numFormats == 0)
+		return CHANNEL_RC_OK;
+
+	s = cliprdr_packet_format_list_new(&filterList, cliprdr->useLongFormatNames);
+	cliprdr_free_format_list(&filterList);
+
 	if (!s)
 	{
 		WLog_ERR(TAG, "cliprdr_packet_format_list_new failed!");
@@ -775,6 +864,13 @@ static UINT cliprdr_client_format_data_request(CliprdrClientContext* context,
 	cliprdr = (cliprdrPlugin*)context->handle;
 	WINPR_ASSERT(cliprdr);
 
+	const UINT32 mask =
+	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
+	if ((mask & (CLIPRDR_FLAG_REMOTE_TO_LOCAL | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES)) == 0)
+	{
+		WLog_WARN(TAG, "remote -> local copy disabled, ignoring request");
+		return CHANNEL_RC_OK;
+	}
 	s = cliprdr_packet_new(CB_FORMAT_DATA_REQUEST, 0, 4);
 
 	if (!s)
@@ -806,6 +902,10 @@ cliprdr_client_format_data_response(CliprdrClientContext* context,
 	cliprdr = (cliprdrPlugin*)context->handle;
 	WINPR_ASSERT(cliprdr);
 
+	const UINT32 mask =
+	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
+	WINPR_ASSERT((mask & (CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES)) != 0);
+
 	s = cliprdr_packet_new(CB_FORMAT_DATA_RESPONSE, formatDataResponse->common.msgFlags,
 	                       formatDataResponse->common.dataLen);
 
@@ -834,6 +934,14 @@ cliprdr_client_file_contents_request(CliprdrClientContext* context,
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(fileContentsRequest);
+
+	const UINT32 mask =
+	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
+	if ((mask & CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES) == 0)
+	{
+		WLog_WARN(TAG, "remote -> local file copy disabled, ignoring request");
+		return CHANNEL_RC_OK;
+	}
 
 	cliprdr = (cliprdrPlugin*)context->handle;
 	if (!cliprdr)
@@ -878,6 +986,11 @@ cliprdr_client_file_contents_response(CliprdrClientContext* context,
 
 	cliprdr = (cliprdrPlugin*)context->handle;
 	WINPR_ASSERT(cliprdr);
+
+	const UINT32 mask =
+	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
+	if ((mask & CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES) == 0)
+		return cliprdr_send_error_response(cliprdr, CB_FILECONTENTS_RESPONSE);
 
 	s = cliprdr_packet_file_contents_response_new(fileContentsResponse);
 
