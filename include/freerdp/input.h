@@ -33,7 +33,7 @@
 #define KBD_FLAGS_DOWN \
 	0x4000 /**< Presence of this flag indicates the key was already down previously */
 #define KBD_FLAGS_RELEASE \
-	0x8000 /**< Presence of this flag inidcates a key was released. Absence a key press */
+	0x8000 /**< Presence of this flag indicates a key was released. Absence a key press */
 
 /* Pointer Flags */
 #define PTR_FLAGS_HWHEEL 0x0400
