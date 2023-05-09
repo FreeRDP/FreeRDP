@@ -216,6 +216,7 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_ClientBuild,
 	FreeRDP_ClientRandomLength,
 	FreeRDP_ClientSessionId,
+	FreeRDP_ClipboardFeatureMask,
 	FreeRDP_ClusterInfoFlags,
 	FreeRDP_ColorDepth,
 	FreeRDP_ColorPointerCacheSize,

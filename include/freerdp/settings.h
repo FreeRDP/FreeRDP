@@ -333,6 +333,16 @@ extern "C"
 #define ORIENTATION_LANDSCAPE_FLIPPED 180
 #define ORIENTATION_PORTRAIT_FLIPPED 270
 
+/* Clipboard feature mask */
+#define CLIPRDR_FLAG_LOCAL_TO_REMOTE 0x01
+#define CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES 0x02
+#define CLIPRDR_FLAG_REMOTE_TO_LOCAL 0x10
+#define CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES 0x20
+
+#define CLIPRDR_FLAG_DEFAULT_MASK                                        \
+	(CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES | \
+	 CLIPRDR_FLAG_REMOTE_TO_LOCAL | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES)
+
 	/* ARC_CS_PRIVATE_PACKET */
 	typedef struct
 	{
@@ -893,6 +903,7 @@ extern "C"
 #define FreeRDP_RedirectParallelPorts (4673)
 #define FreeRDP_PreferIPv6OverIPv4 (4674)
 #define FreeRDP_RedirectClipboard (4800)
+#define FreeRDP_ClipboardFeatureMask (4801)
 #define FreeRDP_StaticChannelCount (4928)
 #define FreeRDP_StaticChannelArraySize (4929)
 #define FreeRDP_StaticChannelArray (4930)
@@ -1606,7 +1617,8 @@ extern "C"
 		 */
 
 		ALIGN64 BOOL RedirectClipboard;  /* 4800 */
-		UINT64 padding4928[4928 - 4801]; /* 4801 */
+		ALIGN64 UINT32 ClipboardFeatureMask; /* 4801 */
+		UINT64 padding4928[4928 - 4802];     /* 4802 */
 
 		/**
 		 * Static Virtual Channels

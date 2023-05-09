@@ -346,6 +346,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings)
 		return NULL;
 
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_ClipboardFeatureMask,
+	                                 CLIPRDR_FLAG_DEFAULT_MASK))
+		goto out_fail;
 	if (!freerdp_settings_set_string(settings, FreeRDP_ServerLicenseCompanyName, "FreeRDP"))
 		goto out_fail;
 	if (!freerdp_settings_set_string(settings, FreeRDP_ServerLicenseProductName,
