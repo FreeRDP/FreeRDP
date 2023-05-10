@@ -30,6 +30,7 @@ BOOL freerdp_smartcard_list(const rdpSettings* settings)
 	if (!smartcard_enumerateCerts(settings, &certs, &count, FALSE))
 		return FALSE;
 
+	printf("smartcard reader detected, listing %" PRIuz " certificates:\n", count);
 	for (size_t i = 0; i < count; i++)
 	{
 		const SmartcardCertInfo* info = certs[i];
