@@ -3,6 +3,7 @@
  * X11 Keyboard Mapping
  *
  * Copyright 2009-2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2023 Bernhard Miklautz <bernhard.miklautz@thincast.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,196 +18,111 @@
  * limitations under the License.
  */
 
-#include <freerdp/config.h>
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-
-#include <winpr/crt.h>
-#include <winpr/input.h>
+#include <X11/Xatom.h>
+#include <X11/Xlib.h>
 
 #include "liblocale.h"
-
-#include <freerdp/locale/locale.h>
-#include <freerdp/locale/keyboard.h>
-
 #include "keyboard_x11.h"
 #include "xkb_layout_ids.h"
 
-int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
+static BOOL parse_xkb_rule_names(char* xkb_rule, unsigned long num_bytes, char** layout,
+                                 char** variant)
 {
-	char* pch;
-	char* beg;
-	char* end;
-	FILE* xprop;
-	char buffer[1024];
-	char* layout = NULL;
-	char* variant = NULL;
-
-	/* We start by looking for _XKB_RULES_NAMES_BACKUP which appears to be used by libxklavier */
-
-	if (!(xprop = popen("xprop -root _XKB_RULES_NAMES_BACKUP", "r")))
-		return 0;
-
+	size_t i, index;
 	/* Sample output for "Canadian Multilingual Standard"
 	 *
-	 * _XKB_RULES_NAMES_BACKUP(STRING) = "xorg", "pc105", "ca", "multix", ""
+	 * _XKB_RULES_NAMES_BACKUP(STRING) = "xorg", "pc105", "ca", "multi", "magic"
+	 *
+	 *  Format: "rules", "model", "layout", "variant", "options"
+	 *
 	 * Where "xorg" is the set of rules
-	 * "pc105" the keyboard type
-	 * "ca" the keyboard layout
-	 * "multi" the keyboard layout variant
+	 * "pc105" the keyboard model
+	 * "ca" the keyboard layout(s) (can also be something like 'us,uk')
+	 * "multi" the keyboard layout variant(s)  (in the examples, “,winkeys” - which means first
+	 *         layout uses some “default” variant and second uses “winkeys” variant)
+	 * "magic" - configuration option (in the examples,
+	 * “eurosign:e,lv3:ralt_switch,grp:rctrl_toggle”
+	 *         - three options)
 	 */
-
-	while (fgets(buffer, sizeof(buffer), xprop) != NULL)
+	for (i = 0, index = 0; i < num_bytes; i++, index++)
 	{
-		if (strstr(buffer, "_XKB_RULES_NAMES_BACKUP(STRING) = ") != NULL)
+		char* ptr = xkb_rule + i;
+
+		switch (index)
 		{
-			/* "rules" */
-			pch = strchr(&buffer[34], ','); /* We assume it is xorg */
-			pch += 1;
-
-			/* "type" */
-			pch = strchr(pch, ',');
-
-			/* "layout" */
-			beg = strchr(pch + 1, '"');
-			beg += 1;
-
-			end = strchr(beg, '"');
-			*end = '\0';
-
-			layout = beg;
-
-			/* if multiple languages are present we just take the first one */
-			pch = strchr(layout, ',');
-			if (pch)
-				*pch = '\0';
-
-			/* "variant" */
-			beg = strchr(end + 1, '"');
-			beg += 1;
-
-			end = strchr(beg, '"');
-			*end = '\0';
-
-			variant = beg;
+			case 0: // rules
+				break;
+			case 1: // model
+				break;
+			case 2: // layout
+				*layout = ptr;
+				break;
+			case 3: // variant
+				*variant = ptr;
+				break;
+			case 4: // option
+				break;
+			default:
+				break;
 		}
+		i += strlen(ptr);
 	}
-
-	pclose(xprop);
-
-	DEBUG_KBD("_XKB_RULES_NAMES_BACKUP layout: %s, variant: %s", layout, variant);
-	*keyboardLayoutId = find_keyboard_layout_in_xorg_rules(layout, variant);
-
-	if (*keyboardLayoutId > 0)
-		return 0;
-
-	/* Check _XKB_RULES_NAMES if _XKB_RULES_NAMES_BACKUP fails */
-
-	if (!(xprop = popen("xprop -root _XKB_RULES_NAMES", "r")))
-		return 0;
-
-	while (fgets(buffer, sizeof(buffer), xprop) != NULL)
-	{
-		if (strstr(buffer, "_XKB_RULES_NAMES(STRING) = ") != NULL)
-		{
-			/* "rules" */
-			pch = strchr(&buffer[27], ','); // We assume it is xorg
-			pch += 1;
-
-			/* "type" */
-			pch = strchr(pch, ',');
-
-			/* "layout" */
-			beg = strchr(pch + 1, '"');
-			beg += 1;
-
-			end = strchr(beg, '"');
-			*end = '\0';
-
-			layout = beg;
-
-			/* if multiple languages are present we just take the first one */
-			pch = strchr(layout, ',');
-			if (pch)
-				*pch = '\0';
-
-			/* "variant" */
-			beg = strchr(end + 1, '"');
-			beg += 1;
-
-			end = strchr(beg, '"');
-			*end = '\0';
-
-			variant = beg;
-		}
-	}
-
-	pclose(xprop);
-
-	DEBUG_KBD("_XKB_RULES_NAMES layout: %s, variant: %s", layout, variant);
-	*keyboardLayoutId = find_keyboard_layout_in_xorg_rules(layout, variant);
-
-	if (*keyboardLayoutId > 0)
-		return *keyboardLayoutId;
-
-	return 0;
+	return TRUE;
 }
 
-static char* freerdp_detect_keymap_from_xkb(void)
+static DWORD kbd_layout_id_from_x_property(Display* display, Window root, char* property_name)
 {
-	char* pch;
-	char* beg;
-	char* end;
-	int length;
-	FILE* setxkbmap;
-	char buffer[1024];
-	char* keymap = NULL;
+	char* layout = NULL;
+	char* variant = NULL;
+	char* rule;
+	Atom property = None;
+	Atom type = None;
+	int item_size = 0;
+	unsigned long items = 0;
+	unsigned long unread_items = 0;
+	DWORD layout_id = 0;
 
-	/* this tells us about the current XKB configuration, if XKB is available */
-	setxkbmap = popen("setxkbmap -print", "r");
+	property = XInternAtom(display, property_name, False);
 
-	if (!setxkbmap)
-		return NULL;
-
-	while (fgets(buffer, sizeof(buffer), setxkbmap) != NULL)
+	if (XGetWindowProperty(display, root, property, 0, 1024, False, XA_STRING, &type, &item_size,
+	                       &items, &unread_items, (unsigned char**)&rule) != Success)
 	{
-		/* the line with xkb_keycodes is what interests us */
-		pch = strstr(buffer, "xkb_keycodes");
-
-		if (pch != NULL)
-		{
-			pch = strstr(pch, "include");
-
-			if (pch != NULL)
-			{
-				/* check for " " delimiter presence */
-				if ((beg = strchr(pch, '"')) == NULL)
-					break;
-				else
-					beg++;
-
-				if (strchr(beg + 1, '"') == NULL)
-					break;
-
-				end = strcspn(beg + 1, "\"") + beg + 1;
-				*end = '\0';
-
-				length = (end - beg);
-				keymap = (char*)malloc(length + 1);
-				if (keymap)
-				{
-					strncpy(keymap, beg, length);
-					keymap[length] = '\0';
-				}
-
-				break;
-			}
-		}
+		return 0;
 	}
 
-	pclose(setxkbmap);
+	if (type != XA_STRING || item_size != 8 || unread_items != 0)
+	{
+		XFree(rule);
+		return 0;
+	}
 
-	return keymap;
+	parse_xkb_rule_names(rule, items, &layout, &variant);
+
+	DEBUG_KBD("%s layout: %s, variant: %s", property_name, layout, variant);
+	layout_id = find_keyboard_layout_in_xorg_rules(layout, variant);
+
+	XFree(rule);
+
+	return layout_id;
+}
+
+int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
+{
+	Window root;
+	Display* display = XOpenDisplay(NULL);
+
+	if (!display)
+		return 0;
+
+	root = DefaultRootWindow(display);
+
+	/* We start by looking for _XKB_RULES_NAMES_BACKUP which appears to be used by libxklavier */
+	*keyboardLayoutId = kbd_layout_id_from_x_property(display, root, "_XKB_RULES_NAMES_BACKUP");
+
+	if (0 == *keyboardLayoutId)
+		*keyboardLayoutId = kbd_layout_id_from_x_property(display, root, "_XKB_RULES_NAMES");
+
+	XCloseDisplay(display);
+	return (int)*keyboardLayoutId;
 }
