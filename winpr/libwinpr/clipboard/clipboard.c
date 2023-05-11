@@ -726,10 +726,9 @@ char* parse_uri_to_local_file(const char* uri, size_t uri_len)
 
 	} while (0);
 
-	buffer = calloc(localLen + 1, sizeof(char));
+	buffer = winpr_str_url_decode(localName, localLen);
 	if (buffer)
 	{
-		memcpy(buffer, localName, localLen);
 		if (buffer[1] == '|' &&
 		    ((buffer[0] >= 'A' && buffer[0] <= 'Z') || (buffer[0] >= 'a' && buffer[0] <= 'z')))
 			buffer[1] = ':';
