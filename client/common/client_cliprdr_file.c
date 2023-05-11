@@ -1955,7 +1955,7 @@ static BOOL cliprdr_local_file_new(CliprdrFileContext* context, CliprdrLocalFile
 
 	*f = empty;
 	f->context = context;
-	f->name = _strdup(path);
+	f->name = winpr_str_url_decode(path, strlen(path));
 	if (!f->name)
 		goto fail;
 

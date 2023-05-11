@@ -27,6 +27,56 @@ static WCHAR testDelimiter[] = { '\r', '\n', '\0' };
 
 #define testDelimiter_Length ((sizeof(testDelimiter) / sizeof(WCHAR)) - 1)
 
+struct url_test_pair
+{
+	const char* what;
+	const char* escaped;
+};
+
+static const struct url_test_pair url_tests[] = {
+	{ "xxx%bar ga<ka>ee#%%#%{h}g{f{e%d|c\\b^a~p[q]r`s;t/u?v:w@x=y&z$xxx",
+	  "xxx%25bar%20ga%3Cka%3Eee%23%25%25%23%25%7Bh%7Dg%7Bf%7Be%25d%7Cc%5Cb%5Ea~p%5Bq%5Dr%60s%3Bt%"
+	  "2Fu%3Fv%3Aw%40x%3Dy%26z%24xxx" },
+	{ "äöúëü", "%C3%A4%C3%B6%C3%BA%C3%AB%C3%BC" },
+	{ "🎅🏄🤘😈", "%F0%9F%8E%85%F0%9F%8F%84%F0%9F%A4%98%F0%9F%98%88" }
+};
+
+static BOOL test_url_escape(void)
+{
+	for (size_t x = 0; x < ARRAYSIZE(url_tests); x++)
+	{
+		const struct url_test_pair* cur = &url_tests[x];
+
+		char* escaped = winpr_str_url_encode(cur->what, strlen(cur->what) + 1);
+		char* what = winpr_str_url_decode(cur->escaped, strlen(cur->escaped) + 1);
+
+		const size_t elen = strlen(escaped);
+		const size_t wlen = strlen(what);
+		const size_t pelen = strlen(cur->escaped);
+		const size_t pwlen = strlen(cur->what);
+		BOOL rc = TRUE;
+		if (!escaped || (elen != pelen) || (strcmp(escaped, cur->escaped) != 0))
+		{
+			printf("expected: [%" PRIuz "] %s\n", pelen, cur->escaped);
+			printf("got     : [%" PRIuz "] %s\n", elen, escaped);
+			rc = FALSE;
+		}
+		else if (!what || (wlen != pwlen) || (strcmp(what, cur->what) != 0))
+		{
+			printf("expected: [%" PRIuz "] %s\n", pwlen, cur->what);
+			printf("got     : [%" PRIuz "] %s\n", wlen, what);
+			rc = FALSE;
+		}
+
+		free(escaped);
+		free(what);
+		if (!rc)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 int TestString(int argc, char* argv[])
 {
 	const WCHAR* p;
@@ -36,6 +86,9 @@ int TestString(int argc, char* argv[])
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+
+	if (!test_url_escape())
+		return -1;
 
 #ifdef __BIG_ENDIAN__
 	/* Be sure that we always use LE encoded string */
