@@ -17,9 +17,9 @@
 # limitations under the License.
 
 set(SRCS
-        rdpsnd_common.h
-        rdpsnd_common.c)
+	rdpsnd_common.h
+	rdpsnd_common.c)
 
 # Library currently header only
-add_library(rdpsnd-common STATIC ${SRCS})
+add_library(rdpsnd-common OBJECT ${SRCS})
 

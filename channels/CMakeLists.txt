@@ -162,6 +162,20 @@ macro(add_channel_client_subsystem _channel_prefix _channel_name _subsystem _typ
   endif()
 endmacro(add_channel_client_subsystem)
 
+macro(channel_install _targets _destination _export_target)
+	if (NOT BUILD_SHARED_LIBS)
+		install(TARGETS ${_targets} DESTINATION ${_destination} EXPORT ${_export_target})
+	endif()
+endmacro(channel_install)
+
+macro(server_channel_install _targets _destination)
+	channel_install(${_targets} ${_destination} "FreeRDP-ServerTargets")
+endmacro(server_channel_install)
+
+macro(client_channel_install _targets _destination)
+	channel_install(${_targets} ${_destination} "FreeRDP-ClientTargets")
+endmacro(client_channel_install)
+
 macro(add_channel_client_library _module_prefix _module_name _channel_name _dynamic _entry)
   set(_lnk_dir ${${_module_prefix}_LINK_DIRS})
   if (NOT "${_lnk_dir}" STREQUAL "")
@@ -174,11 +188,12 @@ macro(add_channel_client_library _module_prefix _module_name _channel_name _dyna
 	set(${_module_prefix}_ENTRY ${_entry} PARENT_SCOPE)
 
 	add_library(${_module_name} OBJECT ${${_module_prefix}_SRCS})
-    set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
+	set_property(TARGET ${_module_name} PROPERTY FOLDER "Channels/${CHANNEL_NAME}/Client")
 
 	if (${_module_prefix}_LIBS)
 		target_link_libraries(${_module_name} PUBLIC ${${_module_prefix}_LIBS})
 	endif()
+	client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
 endmacro(add_channel_client_library)
 
 macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_name _type _dynamic _entry)
@@ -197,6 +212,7 @@ macro(add_channel_client_subsystem_library _module_prefix _module_name _channel_
 	if (${_module_prefix}_LIBS)
 		target_link_libraries(${_module_name} PUBLIC ${${_module_prefix}_LIBS})
 	endif()
+	client_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
 endmacro(add_channel_client_subsystem_library)
 
 macro(add_channel_server_library _module_prefix _module_name _channel_name _dynamic _entry)
@@ -216,6 +232,7 @@ macro(add_channel_server_library _module_prefix _module_name _channel_name _dyna
 	if (${_module_prefix}_LIBS)
 		target_link_libraries(${_module_name} PUBLIC ${${_module_prefix}_LIBS})
 	endif()
+	server_channel_install(${_module_name}  ${FREERDP_ADDIN_PATH})
 endmacro(add_channel_server_library)
 
 set(FILENAME "ChannelOptions.cmake")
