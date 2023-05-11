@@ -25,3 +25,5 @@ set(SRCS
 
 add_library(urbdrc-common STATIC ${SRCS})
 
+channel_install(urbdrc-common  ${FREERDP_ADDIN_PATH} "FreeRDPTargets")
+
