@@ -26,7 +26,8 @@ set(${MODULE_PREFIX}_SRCS
 )
 
 set(${MODULE_PREFIX}_LIBS
-	winpr freerdp
+	winpr
+	freerdp
 	urbdrc-common
 )
 if (UDEV_FOUND AND UDEV_LIBRARIES)
