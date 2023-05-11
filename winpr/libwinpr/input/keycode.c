@@ -878,41 +878,32 @@ DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags)
 DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, DWORD dwFlags)
 {
 	DWORD index;
-	DWORD keycode = 0;
+	DWORD* targetArray;
+	size_t targetSize;
 
-	if (dwFlags & KEYCODE_TYPE_APPLE)
+	switch (dwFlags)
 	{
-		for (index = 0; index < ARRAYSIZE(KEYCODE_TO_VKCODE_APPLE); index++)
-		{
-			if (vkcode == KEYCODE_TO_VKCODE_APPLE[index])
-			{
-				keycode = index;
-				break;
-			}
-		}
-	}
-	else if (dwFlags & KEYCODE_TYPE_EVDEV)
-	{
-		for (index = 0; index < ARRAYSIZE(KEYCODE_TO_VKCODE_EVDEV); index++)
-		{
-			if (vkcode == KEYCODE_TO_VKCODE_EVDEV[index])
-			{
-				keycode = index;
-				break;
-			}
-		}
-	}
-	else if (dwFlags & KEYCODE_TYPE_XKB)
-	{
-		for (index = 0; index < ARRAYSIZE(KEYCODE_TO_VKCODE_XKB); index++)
-		{
-			if (vkcode == KEYCODE_TO_VKCODE_XKB[index])
-			{
-				keycode = index;
-				break;
-			}
-		}
+		case KEYCODE_TYPE_APPLE:
+			targetArray = KEYCODE_TO_VKCODE_APPLE;
+			targetSize = ARRAYSIZE(KEYCODE_TO_VKCODE_APPLE);
+			break;
+		case KEYCODE_TYPE_EVDEV:
+			targetArray = KEYCODE_TO_VKCODE_EVDEV;
+			targetSize = ARRAYSIZE(KEYCODE_TO_VKCODE_EVDEV);
+			break;
+		case KEYCODE_TYPE_XKB:
+			targetArray = KEYCODE_TO_VKCODE_XKB;
+			targetSize = ARRAYSIZE(KEYCODE_TO_VKCODE_XKB);
+			break;
+		default:
+			return 0;
 	}
 
-	return keycode;
+	for (index = 0; index < targetSize; index++)
+	{
+		if (vkcode == targetArray[index])
+			return index;
+	}
+
+	return 0;
 }
