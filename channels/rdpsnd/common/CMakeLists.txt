@@ -21,5 +21,7 @@ set(SRCS
 	rdpsnd_common.c)
 
 # Library currently header only
-add_library(rdpsnd-common OBJECT ${SRCS})
+add_library(rdpsnd-common STATIC ${SRCS})
+
+channel_install(rdpsnd-common  ${FREERDP_ADDIN_PATH} "FreeRDPTargets")
 
