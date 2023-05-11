@@ -603,6 +603,9 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		/* load a unique CSP by pkcs11 module path */
 		LPCSTR paths[] = { Pkcs11Module, NULL };
 
+		if (!csp)
+			csp = MS_SCARD_PROV;
+
 		status = winpr_NCryptOpenStorageProviderEx(&provider, csp, 0, paths);
 		if (status != ERROR_SUCCESS)
 		{
