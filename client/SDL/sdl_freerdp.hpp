@@ -62,6 +62,7 @@ struct sdl_context
 	int exit_code;
 
 	SDL_Surface* primary;
+	SDL_PixelFormat* primary_format;
 
 	sdlDispContext* disp;
 	sdlInput* input;

@@ -372,6 +372,7 @@ static BOOL sdl_end_paint_process(rdpContext* context)
 				SDL_Rect dstRect = { window->offset_x + rgn->x, window->offset_y + rgn->y, rgn->w,
 					                 rgn->h };
 				SDL_SetClipRect(sdl->primary, &srcRect);
+				SDL_SetClipRect(screen, &dstRect);
 				SDL_BlitSurface(sdl->primary, &srcRect, screen, &dstRect);
 			}
 		}
@@ -421,11 +422,20 @@ static BOOL sdl_create_primary(sdlContext* sdl)
 	gdi = sdl->common.context.gdi;
 	WINPR_ASSERT(gdi);
 
+	SDL_FreeFormat(sdl->primary_format);
 	SDL_FreeSurface(sdl->primary);
 	sdl->primary = SDL_CreateRGBSurfaceWithFormatFrom(
 	    gdi->primary_buffer, (int)gdi->width, (int)gdi->height,
 	    (int)FreeRDPGetBitsPerPixel(gdi->dstFormat), (int)gdi->stride, sdl->sdl_pixel_format);
-	return sdl->primary != nullptr;
+	sdl->primary_format = SDL_AllocFormat(sdl->sdl_pixel_format);
+
+	if (!sdl->primary || !sdl->primary_format)
+		return FALSE;
+
+	SDL_SetSurfaceBlendMode(sdl->primary, SDL_BLENDMODE_NONE);
+	SDL_FillRect(sdl->primary, nullptr, SDL_MapRGBA(sdl->primary_format, 0, 0, 0, 0xff));
+
+	return TRUE;
 }
 
 static BOOL sdl_desktop_resize(rdpContext* context)
@@ -582,6 +592,9 @@ static void sdl_cleanup_sdl(sdlContext* sdl)
 
 		*window = empty;
 	}
+	SDL_FreeFormat(sdl->primary_format);
+	sdl->primary_format = nullptr;
+
 	SDL_FreeSurface(sdl->primary);
 	sdl->primary = nullptr;
 
