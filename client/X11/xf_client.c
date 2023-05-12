@@ -1526,8 +1526,10 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 					 * Indicate an unsuccessful connection attempt if reconnect
 					 * did not succeed and no other error was specified.
 					 */
+					const UINT32 error = freerdp_get_last_error(instance->context);
+
 					if (freerdp_error_info(instance) == 0)
-						exit_code = XF_EXIT_CONN_FAILED;
+						exit_code = xf_map_error_to_exit_code(error);
 				}
 
 				if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
