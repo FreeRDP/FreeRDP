@@ -412,6 +412,17 @@ static BOOL sdl_end_paint(rdpContext* context)
 	return rc;
 }
 
+static void sdl_destroy_primary(sdlContext* sdl)
+{
+	if (!sdl)
+		return;
+
+	SDL_FreeFormat(sdl->primary_format);
+	SDL_FreeSurface(sdl->primary);
+	sdl->primary = nullptr;
+	sdl->primary_format = nullptr;
+}
+
 /* Create a SDL surface from the GDI buffer */
 static BOOL sdl_create_primary(sdlContext* sdl)
 {
@@ -422,8 +433,7 @@ static BOOL sdl_create_primary(sdlContext* sdl)
 	gdi = sdl->common.context.gdi;
 	WINPR_ASSERT(gdi);
 
-	SDL_FreeFormat(sdl->primary_format);
-	SDL_FreeSurface(sdl->primary);
+	sdl_destroy_primary(sdl);
 	sdl->primary = SDL_CreateRGBSurfaceWithFormatFrom(
 	    gdi->primary_buffer, (int)gdi->width, (int)gdi->height,
 	    (int)FreeRDPGetBitsPerPixel(gdi->dstFormat), (int)gdi->stride, sdl->sdl_pixel_format);
@@ -592,11 +602,8 @@ static void sdl_cleanup_sdl(sdlContext* sdl)
 
 		*window = empty;
 	}
-	SDL_FreeFormat(sdl->primary_format);
-	sdl->primary_format = nullptr;
 
-	SDL_FreeSurface(sdl->primary);
-	sdl->primary = nullptr;
+	sdl_destroy_primary(sdl);
 
 	sdl->windowCount = 0;
 	SDL_Quit();
