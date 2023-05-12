@@ -61,12 +61,8 @@ static BOOL mac_shadow_input_keyboard_event(rdpShadowSubsystem* subsystem, rdpSh
 	if (extended)
 		vkcode |= KBDEXT;
 
-	keycode = GetKeycodeFromVirtualKeyCode(vkcode, KEYCODE_TYPE_APPLE);
+	keycode = GetKeycodeFromVirtualKeyCode(vkcode, WINPR_KEYCODE_TYPE_APPLE);
 
-	if (keycode < 8)
-		return TRUE;
-
-	keycode -= 8;
 	source = CGEventSourceCreate(kCGEventSourceStateHIDSystemState);
 
 	if (flags & KBD_FLAGS_DOWN)
