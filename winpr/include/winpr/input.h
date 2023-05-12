@@ -891,12 +891,15 @@ extern "C"
 	WINPR_API DWORD GetVirtualScanCodeFromVirtualKeyCode(DWORD vkcode,
 	                                                     DWORD /* WINPR_KBD_TYPE */ dwKeyboardType);
 
-#define KEYCODE_TYPE_APPLE 0x00000001
-#define KEYCODE_TYPE_EVDEV 0x00000002
-#define KEYCODE_TYPE_XKB 0x00000003
+	typedef enum
+	{
+		WINPR_KEYCODE_TYPE_APPLE = 0x00000001,
+		WINPR_KEYCODE_TYPE_EVDEV = 0x00000002,
+		WINPR_KEYCODE_TYPE_XKB = 0x00000003
+	} WINPR_KEYCODE_TYPE;
 
-	WINPR_API DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags);
-	WINPR_API DWORD GetKeycodeFromVirtualKeyCode(DWORD keycode, DWORD dwFlags);
+	WINPR_API DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, WINPR_KEYCODE_TYPE type);
+	WINPR_API DWORD GetKeycodeFromVirtualKeyCode(DWORD keycode, WINPR_KEYCODE_TYPE type);
 
 #ifdef __cplusplus
 }
