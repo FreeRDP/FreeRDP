@@ -847,26 +847,28 @@ static DWORD KEYCODE_TO_VKCODE_XKB[256] = {
 	0                              /* 255 */
 };
 
-DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags)
+DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, WINPR_KEYCODE_TYPE type)
 {
 	DWORD vkcode;
 
 	vkcode = VK_NONE;
 
-	if (dwFlags & KEYCODE_TYPE_APPLE)
+	switch (type)
 	{
-		if (keycode < 0xFF)
-			vkcode = KEYCODE_TO_VKCODE_APPLE[keycode & 0xFF];
-	}
-	else if (dwFlags & KEYCODE_TYPE_EVDEV)
-	{
-		if (keycode < 0xFF)
-			vkcode = KEYCODE_TO_VKCODE_EVDEV[keycode & 0xFF];
-	}
-	else if (dwFlags & KEYCODE_TYPE_XKB)
-	{
-		if (keycode < 0xFF)
-			vkcode = KEYCODE_TO_VKCODE_XKB[keycode & 0xFF];
+		case WINPR_KEYCODE_TYPE_APPLE:
+			if (keycode < 0xFF)
+				vkcode = KEYCODE_TO_VKCODE_APPLE[keycode & 0xFF];
+			break;
+		case WINPR_KEYCODE_TYPE_EVDEV:
+			if (keycode < 0xFF)
+				vkcode = KEYCODE_TO_VKCODE_EVDEV[keycode & 0xFF];
+			break;
+		case WINPR_KEYCODE_TYPE_XKB:
+			if (keycode < 0xFF)
+				vkcode = KEYCODE_TO_VKCODE_XKB[keycode & 0xFF];
+			break;
+		default:
+			break;
 	}
 
 	if (!vkcode)
@@ -875,23 +877,23 @@ DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, DWORD dwFlags)
 	return vkcode;
 }
 
-DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, DWORD dwFlags)
+DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, WINPR_KEYCODE_TYPE type)
 {
 	DWORD index;
 	DWORD* targetArray;
 	size_t targetSize;
 
-	switch (dwFlags)
+	switch (type)
 	{
-		case KEYCODE_TYPE_APPLE:
+		case WINPR_KEYCODE_TYPE_APPLE:
 			targetArray = KEYCODE_TO_VKCODE_APPLE;
 			targetSize = ARRAYSIZE(KEYCODE_TO_VKCODE_APPLE);
 			break;
-		case KEYCODE_TYPE_EVDEV:
+		case WINPR_KEYCODE_TYPE_EVDEV:
 			targetArray = KEYCODE_TO_VKCODE_EVDEV;
 			targetSize = ARRAYSIZE(KEYCODE_TO_VKCODE_EVDEV);
 			break;
-		case KEYCODE_TYPE_XKB:
+		case WINPR_KEYCODE_TYPE_XKB:
 			targetArray = KEYCODE_TO_VKCODE_XKB;
 			targetSize = ARRAYSIZE(KEYCODE_TO_VKCODE_XKB);
 			break;
