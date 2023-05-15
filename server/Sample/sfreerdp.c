@@ -911,10 +911,10 @@ static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count, const RECTANGL
 static BOOL tf_peer_suppress_output(rdpContext* context, BYTE allow, const RECTANGLE_16* area)
 {
 	WINPR_UNUSED(context);
-	WINPR_ASSERT(area);
 
 	if (allow > 0)
 	{
+		WINPR_ASSERT(area);
 		WLog_DBG(TAG,
 		         "Client restore output (%" PRIu16 ", %" PRIu16 ") (%" PRIu16 ", %" PRIu16 ").",
 		         area->left, area->top, area->right, area->bottom);
