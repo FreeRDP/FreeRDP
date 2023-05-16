@@ -1516,7 +1516,7 @@ void freerdp_certificate_free_dns_names(size_t count, size_t* lengths, char** na
 char* freerdp_certificate_get_hash(const rdpCertificate* cert, const char* hash, size_t* plength)
 {
 	WINPR_ASSERT(cert);
-	return x509_utils_get_hash(cert->x509, hash, plength);
+	return (char*)x509_utils_get_hash(cert->x509, hash, plength);
 }
 
 X509* freerdp_certificate_get_x509(rdpCertificate* cert)
@@ -1635,7 +1635,7 @@ char* freerdp_certificate_get_param(const rdpCertificate* cert, enum FREERDP_CER
 	char* rc = calloc(bnsize + 1, sizeof(char));
 	if (!rc)
 		goto fail;
-	BN_bn2bin(bn, rc);
+	BN_bn2bin(bn, (BYTE*)rc);
 	*psize = bnsize;
 
 fail:
