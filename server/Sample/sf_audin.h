@@ -25,7 +25,7 @@
 
 #include "sfreerdp.h"
 
-void sf_peer_audin_init(testPeerContext* context);
+BOOL sf_peer_audin_init(testPeerContext* context);
 void sf_peer_audin_uninit(testPeerContext* context);
 
 BOOL sf_peer_audin_running(testPeerContext* context);
