@@ -2605,8 +2605,8 @@ static void fill_credential_strings(COMMAND_LINE_ARGUMENT_A* args)
 	}
 }
 
-int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int argc,
-                                                         char** argv, BOOL allowUnknown)
+int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings* settings, int argc,
+                                                             char* argv[], BOOL allowUnknown)
 {
 	char* user = NULL;
 	char* str;
@@ -3699,6 +3699,12 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 				free(ptr.p);
 			}
 		}
+		CommandLineSwitchCase(arg, "args-from")
+		{
+			WLog_ERR(TAG, "/args-from:%s can not be used in combination with other arguments!",
+			         arg->Value);
+			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+		}
 		CommandLineSwitchCase(arg, "from-stdin")
 		{
 			settings->CredentialsFromStdin = TRUE;
@@ -4384,6 +4390,123 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 	fill_credential_strings(largs);
 
 	return status;
+}
+
+static void argv_free(int argc, char* argv[])
+{
+	if (!argv)
+		return;
+	for (int x = 0; x < argc; x++)
+		free(argv[x]);
+	free(argv);
+}
+
+static BOOL argv_append(int* pargc, char** pargv[], char* what)
+{
+	WINPR_ASSERT(pargc);
+	WINPR_ASSERT(pargv);
+
+	if (*pargc < 0)
+		return FALSE;
+
+	if (!what)
+		return FALSE;
+
+	int nargc = *pargc + 1;
+	char** tmp = realloc(*pargv, nargc * sizeof(char*));
+	if (!tmp)
+		return FALSE;
+
+	tmp[*pargc] = what;
+	*pargv = tmp;
+	*pargc = nargc;
+	return TRUE;
+}
+
+int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int oargc,
+                                                         char* oargv[], BOOL allowUnknown)
+{
+	int argc = oargc;
+	char** argv = oargv;
+
+	int aargc = 0;
+	char** aargv = NULL;
+	if ((argc == 2) && option_starts_with("/args-from:", argv[1]))
+	{
+		BOOL success = FALSE;
+		const char* file = strchr(argv[1], ':') + 1;
+		FILE* fp = stdin;
+
+		if (option_starts_with("fd:", file))
+		{
+			ULONGLONG result = 0;
+			const char* val = strchr(file, ':') + 1;
+			if (!value_to_uint(val, &result, 0, INT_MAX))
+				return -1;
+			fp = fdopen((int)result, "r");
+		}
+		else if (strcmp(file, "stdin") != 0)
+			fp = winpr_fopen(file, "r");
+
+		if (!fp)
+		{
+			WLog_ERR(TAG, "Failed to read command line options from file '%s'", file);
+			return -1;
+		}
+
+		if (!argv_append(&aargc, &aargv, _strdup(oargv[0])))
+			goto fail;
+		while (!feof(fp))
+		{
+			char* line = NULL;
+			size_t size = 0;
+			INT64 rc = GetLine(&line, &size, fp);
+			if ((rc < 0) || !line)
+			{
+				/* abort if GetLine failed due to reaching EOF */
+				if (feof(fp))
+					break;
+				goto fail;
+			}
+
+			while (rc > 0)
+			{
+				const char cur = (line[rc - 1]);
+				if ((cur == '\n') || (cur == '\r'))
+				{
+					line[rc - 1] = '\0';
+					rc--;
+				}
+				else
+					break;
+			}
+			/* abort on empty lines */
+			if (rc == 0)
+			{
+				free(line);
+				break;
+			}
+			if (!argv_append(&aargc, &aargv, line))
+				goto fail;
+		}
+
+		success = TRUE;
+	fail:
+		fclose(fp);
+
+		if (!success)
+		{
+			argv_free(aargc, aargv);
+			return -1;
+		}
+		argc = aargc;
+		argv = aargv;
+	}
+
+	int res = freerdp_client_settings_parse_command_line_arguments_int(settings, argc, argv,
+	                                                                   allowUnknown);
+	argv_free(aargc, aargv);
+	return res;
 }
 
 static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpSettings* settings,
