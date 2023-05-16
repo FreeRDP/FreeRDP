@@ -160,6 +160,20 @@ extern "C"
 	FREERDP_API audin_server_context* audin_server_context_new(HANDLE vcm);
 	FREERDP_API void audin_server_context_free(audin_server_context* context);
 
+	/** \brief sets the supported audio formats for AUDIN server channel context.
+	 *
+	 *  \param context The context to set the formats for
+	 *  \param count The number of formats found in \formats. Use \b -1 to set to default formats
+	 * supported by FreeRDP \param formats An array of \b count elements
+	 *
+	 *  \return \b TRUE if successful and at least one format is supported, \b FALSE otherwise.
+	 */
+	FREERDP_API BOOL audin_server_set_formats(audin_server_context* context, SSIZE_T count,
+	                                          const AUDIO_FORMAT* formats);
+
+	FREERDP_API const AUDIO_FORMAT*
+	audin_server_get_negotiated_format(const audin_server_context* context);
+
 #ifdef __cplusplus
 }
 #endif
