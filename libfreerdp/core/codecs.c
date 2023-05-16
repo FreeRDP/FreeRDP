@@ -110,7 +110,7 @@ BOOL freerdp_client_codecs_prepare(rdpCodecs* codecs, UINT32 flags, UINT32 width
 
 	if ((flags & FREERDP_CODEC_PLANAR))
 	{
-		if (!(codecs->planar = freerdp_bitmap_planar_context_new(FALSE, 64, 64)))
+		if (!(codecs->planar = freerdp_bitmap_planar_context_new(0, 64, 64)))
 		{
 			WLog_ERR(TAG, "Failed to create planar bitmap codec context");
 			return FALSE;
