@@ -454,23 +454,24 @@ char* freerdp_key_get_param(const rdpPrivateKey* key, enum FREERDP_KEY_PARAM par
 		if (!rsa)
 			return NULL;
 
+		const BIGNUM* cbn = NULL;
 		switch (param)
 		{
 			case FREERDP_KEY_PARAM_RSA_D:
-				bn = RSA_get0_d(rsa);
+				cbn = RSA_get0_d(rsa);
 				break;
 			case FREERDP_KEY_PARAM_RSA_E:
-				bn = RSA_get0_e(rsa);
+				cbn = RSA_get0_e(rsa);
 				break;
 			case FREERDP_KEY_PARAM_RSA_N:
-				bn = RSA_get0_n(rsa);
+				cbn = RSA_get0_n(rsa);
 				break;
 			default:
 				return NULL;
 		}
-		if (!bn)
+		if (!cbn)
 			return NULL;
-		bn = BN_dup(bn);
+		bn = BN_dup(cbn);
 		if (!bn)
 			return NULL;
 	}
