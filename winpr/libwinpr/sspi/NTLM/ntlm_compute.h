@@ -57,7 +57,7 @@ BOOL ntlm_generate_client_signing_key(NTLM_CONTEXT* context);
 BOOL ntlm_generate_server_signing_key(NTLM_CONTEXT* context);
 BOOL ntlm_generate_client_sealing_key(NTLM_CONTEXT* context);
 BOOL ntlm_generate_server_sealing_key(NTLM_CONTEXT* context);
-void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context);
+BOOL ntlm_init_rc4_seal_states(NTLM_CONTEXT* context);
 
 BOOL ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT32 size);
 
