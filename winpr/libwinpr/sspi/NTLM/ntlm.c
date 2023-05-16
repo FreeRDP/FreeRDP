@@ -43,6 +43,68 @@
 
 static char* NTLM_PACKAGE_NAME = "NTLM";
 
+#define check_context(ctx) check_context_((ctx), __FILE__, __FUNCTION__, __LINE__)
+static BOOL check_context_(NTLM_CONTEXT* context, const char* file, const char* fkt, size_t line)
+{
+	BOOL rc = TRUE;
+	wLog* log = WLog_Get(TAG);
+	const DWORD log_level = WLOG_ERROR;
+
+	if (!context)
+	{
+		if (WLog_IsLevelActive(log, log_level))
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+			                  "invalid context");
+
+		rc = FALSE;
+	}
+
+	if (!context->RecvRc4Seal)
+	{
+		if (WLog_IsLevelActive(log, log_level))
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+			                  "invalid context->RecvRc4Seal");
+		rc = FALSE;
+	}
+	if (!context->SendRc4Seal)
+	{
+		if (WLog_IsLevelActive(log, log_level))
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+			                  "invalid context->SendRc4Seal");
+		rc = FALSE;
+	}
+
+	if (!context->SendSigningKey)
+	{
+		if (WLog_IsLevelActive(log, log_level))
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+			                  "invalid context->SendSigningKey");
+		rc = FALSE;
+	}
+	if (!context->RecvSigningKey)
+	{
+		if (WLog_IsLevelActive(log, log_level))
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+			                  "invalid context->RecvSigningKey");
+		rc = FALSE;
+	}
+	if (!context->SendSealingKey)
+	{
+		if (WLog_IsLevelActive(log, log_level))
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+			                  "invalid context->SendSealingKey");
+		rc = FALSE;
+	}
+	if (!context->RecvSealingKey)
+	{
+		if (WLog_IsLevelActive(log, log_level))
+			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+			                  "invalid context->RecvSealingKey");
+		rc = FALSE;
+	}
+	return rc;
+}
+
 static int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
 	char* ws = Workstation;
@@ -172,13 +234,12 @@ static int ntlm_SetContextTargetName(NTLM_CONTEXT* context, char* TargetName)
 
 static NTLM_CONTEXT* ntlm_ContextNew(void)
 {
-	HKEY hKey;
-	LONG status;
-	DWORD dwType;
-	DWORD dwSize;
-	DWORD dwValue;
-	NTLM_CONTEXT* context;
-	context = (NTLM_CONTEXT*)calloc(1, sizeof(NTLM_CONTEXT));
+	HKEY hKey = 0;
+	LONG status = 0;
+	DWORD dwType = 0;
+	DWORD dwSize = 0;
+	DWORD dwValue = 0;
+	NTLM_CONTEXT* context = (NTLM_CONTEXT*)calloc(1, sizeof(NTLM_CONTEXT));
 
 	if (!context)
 		return NULL;
@@ -296,7 +357,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	SSPI_CREDENTIALS* credentials;
 	SEC_WINPR_NTLM_SETTINGS* settings = NULL;
 
 	if ((fCredentialUse != SECPKG_CRED_OUTBOUND) && (fCredentialUse != SECPKG_CRED_INBOUND) &&
@@ -305,7 +365,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 		return SEC_E_INVALID_PARAMETER;
 	}
 
-	credentials = sspi_CredentialsNew();
+	SSPI_CREDENTIALS* credentials = sspi_CredentialsNew();
 
 	if (!credentials)
 		return SEC_E_INTERNAL_ERROR;
@@ -380,12 +440,11 @@ fail:
 
 static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(PCredHandle phCredential)
 {
-	SSPI_CREDENTIALS* credentials;
-
 	if (!phCredential)
 		return SEC_E_INVALID_HANDLE;
 
-	credentials = (SSPI_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
+	SSPI_CREDENTIALS* credentials =
+	    (SSPI_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
 
 	if (!credentials)
 		return SEC_E_INVALID_HANDLE;
@@ -420,7 +479,6 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
                            ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext,
                            PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsTimeStamp)
 {
-	NTLM_CONTEXT* context;
 	SECURITY_STATUS status;
 	SSPI_CREDENTIALS* credentials;
 	PSecBuffer input_buffer;
@@ -430,7 +488,7 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
 	if (phContext && !phContext->dwLower && !phContext->dwUpper)
 		return SEC_E_INVALID_HANDLE;
 
-	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (!context)
 	{
@@ -548,7 +606,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	NTLM_CONTEXT* context;
 	SECURITY_STATUS status;
 	SSPI_CREDENTIALS* credentials;
 	PSecBuffer input_buffer = NULL;
@@ -559,7 +616,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 	if (phContext && !phContext->dwLower && !phContext->dwUpper)
 		return SEC_E_INVALID_HANDLE;
 
-	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
 	if (pInput)
 	{
@@ -699,12 +756,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(
 
 static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
 {
-	NTLM_CONTEXT* context;
-	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
-
-	if (!context)
-		return SEC_E_INVALID_HANDLE;
-
+	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 	ntlm_ContextFree(context);
 	return SEC_E_OK;
 }
@@ -765,15 +817,15 @@ SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT* ntlm, SecBuffer* micvalue)
 static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext,
                                                               ULONG ulAttribute, void* pBuffer)
 {
-	NTLM_CONTEXT* context;
-
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
 
 	if (!pBuffer)
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	if (!check_context(context))
+		return SEC_E_INVALID_HANDLE;
 
 	if (ulAttribute == SECPKG_ATTR_SIZES)
 	{
@@ -861,15 +913,15 @@ static SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContex
                                                             ULONG ulAttribute, void* pBuffer,
                                                             ULONG cbBuffer)
 {
-	NTLM_CONTEXT* context;
-
 	if (!phContext)
 		return SEC_E_INVALID_HANDLE;
 
 	if (!pBuffer)
 		return SEC_E_INVALID_PARAMETER;
 
-	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	if (!context)
+		return SEC_E_INVALID_HANDLE;
 
 	if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_HASH)
 	{
@@ -996,23 +1048,18 @@ static SECURITY_STATUS SEC_ENTRY ntlm_RevertSecurityContext(PCtxtHandle phContex
 static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
                                                      PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-	ULONG index;
-	size_t length;
-	void* data;
-	UINT32 SeqNo;
-	UINT32 value;
+	const UINT32 SeqNo = MessageSeqNo;
+	UINT32 value = 0;
 	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
 	BYTE checksum[8] = { 0 };
-	BYTE* signature;
 	ULONG version = 1;
-	WINPR_HMAC_CTX* hmac;
-	NTLM_CONTEXT* context;
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer signature_buffer = NULL;
-	SeqNo = MessageSeqNo;
-	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	if (!check_context(context))
+		return SEC_E_INVALID_HANDLE;
 
-	for (index = 0; index < pMessage->cBuffers; index++)
+	for (ULONG index = 0; index < pMessage->cBuffers; index++)
 	{
 		SecBuffer* cur = &pMessage->pBuffers[index];
 
@@ -1029,15 +1076,15 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULON
 		return SEC_E_INVALID_TOKEN;
 
 	/* Copy original data buffer */
-	length = data_buffer->cbBuffer;
-	data = malloc(length);
+	ULONG length = data_buffer->cbBuffer;
+	void* data = malloc(length);
 
 	if (!data)
 		return SEC_E_INSUFFICIENT_MEMORY;
 
 	CopyMemory(data, data_buffer->pvBuffer, length);
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
-	hmac = winpr_HMAC_New();
+	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
 
 	if (hmac &&
 	    winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->SendSigningKey, WINPR_MD5_DIGEST_LENGTH))
@@ -1076,7 +1123,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULON
 	winpr_RC4_Update(context->SendRc4Seal, 8, digest, checksum);
 	if ((signature_buffer->BufferType & SECBUFFER_READONLY) == 0)
 	{
-		signature = (BYTE*)signature_buffer->pvBuffer;
+		BYTE* signature = signature_buffer->pvBuffer;
 		/* Concatenate version, ciphertext and sequence number to build signature */
 		Data_Write_UINT32(signature, version);
 		CopyMemory(&signature[4], (void*)checksum, 8);
@@ -1093,23 +1140,19 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext, ULON
 static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSecBufferDesc pMessage,
                                                      ULONG MessageSeqNo, PULONG pfQOP)
 {
-	ULONG index;
-	size_t length;
-	void* data;
-	UINT32 SeqNo;
-	UINT32 value;
+	const UINT32 SeqNo = (UINT32)MessageSeqNo;
+	UINT32 value = 0;
 	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
 	BYTE checksum[8] = { 0 };
 	UINT32 version = 1;
-	WINPR_HMAC_CTX* hmac;
-	NTLM_CONTEXT* context;
 	BYTE expected_signature[WINPR_MD5_DIGEST_LENGTH] = { 0 };
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer signature_buffer = NULL;
-	SeqNo = (UINT32)MessageSeqNo;
-	context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	NTLM_CONTEXT* context = (NTLM_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
+	if (!check_context(context))
+		return SEC_E_INVALID_HANDLE;
 
-	for (index = 0; index < pMessage->cBuffers; index++)
+	for (ULONG index = 0; index < pMessage->cBuffers; index++)
 	{
 		if (pMessage->pBuffers[index].BufferType == SECBUFFER_DATA)
 			data_buffer = &pMessage->pBuffers[index];
@@ -1124,8 +1167,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 		return SEC_E_INVALID_TOKEN;
 
 	/* Copy original data buffer */
-	length = data_buffer->cbBuffer;
-	data = malloc(length);
+	const ULONG length = data_buffer->cbBuffer;
+	void* data = malloc(length);
 
 	if (!data)
 		return SEC_E_INSUFFICIENT_MEMORY;
@@ -1140,7 +1183,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 		CopyMemory(data_buffer->pvBuffer, data, length);
 
 	/* Compute the HMAC-MD5 hash of ConcatenationOf(seq_num,data) using the client signing key */
-	hmac = winpr_HMAC_New();
+	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
 
 	if (hmac &&
 	    winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->RecvSigningKey, WINPR_MD5_DIGEST_LENGTH))
@@ -1192,66 +1235,14 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext, PSec
 static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
                                                     PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
-	NTLM_CONTEXT* context;
 	PSecBuffer data_buffer = NULL;
 	PSecBuffer sig_buffer = NULL;
-	WINPR_HMAC_CTX* hmac;
-	UINT32 seq_no;
+	UINT32 seq_no = 0;
 	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
 	BYTE checksum[8] = { 0 };
-	BYTE* signature;
 
-	context = sspi_SecureHandleGetLowerPointer(phContext);
-
-	for (ULONG i = 0; i < pMessage->cBuffers; i++)
-	{
-		if (pMessage->pBuffers[i].BufferType == SECBUFFER_DATA)
-			data_buffer = &pMessage->pBuffers[i];
-		else if (pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
-			sig_buffer = &pMessage->pBuffers[i];
-	}
-
-	if (!data_buffer || !sig_buffer)
-		return SEC_E_INVALID_TOKEN;
-
-	hmac = winpr_HMAC_New();
-
-	if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->SendSigningKey, WINPR_MD5_DIGEST_LENGTH))
-		return SEC_E_INTERNAL_ERROR;
-
-	Data_Write_UINT32(&seq_no, MessageSeqNo);
-	winpr_HMAC_Update(hmac, (BYTE*)&seq_no, 4);
-	winpr_HMAC_Update(hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
-	winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH);
-	winpr_HMAC_Free(hmac);
-
-	winpr_RC4_Update(context->SendRc4Seal, 8, digest, checksum);
-
-	signature = sig_buffer->pvBuffer;
-	Data_Write_UINT32(signature, 1L);
-	CopyMemory(&signature[4], checksum, 8);
-	Data_Write_UINT32(&signature[12], seq_no);
-	sig_buffer->cbBuffer = 16;
-
-	return SEC_E_OK;
-}
-
-static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
-                                                      PSecBufferDesc pMessage, ULONG MessageSeqNo,
-                                                      PULONG pfQOP)
-{
-	NTLM_CONTEXT* context;
-	PSecBuffer data_buffer = NULL;
-	PSecBuffer sig_buffer = NULL;
-	WINPR_HMAC_CTX* hmac;
-	UINT32 seq_no;
-	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
-	BYTE checksum[8] = { 0 };
-	BYTE signature[16] = { 0 };
-
-	context = sspi_SecureHandleGetLowerPointer(phContext);
-
-	if (!context)
+	NTLM_CONTEXT* context = sspi_SecureHandleGetLowerPointer(phContext);
+	if (!check_context(context))
 		return SEC_E_INVALID_HANDLE;
 
 	for (ULONG i = 0; i < pMessage->cBuffers; i++)
@@ -1265,7 +1256,55 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 	if (!data_buffer || !sig_buffer)
 		return SEC_E_INVALID_TOKEN;
 
-	hmac = winpr_HMAC_New();
+	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
+
+	if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->SendSigningKey, WINPR_MD5_DIGEST_LENGTH))
+		return SEC_E_INTERNAL_ERROR;
+
+	Data_Write_UINT32(&seq_no, MessageSeqNo);
+	winpr_HMAC_Update(hmac, (BYTE*)&seq_no, 4);
+	winpr_HMAC_Update(hmac, data_buffer->pvBuffer, data_buffer->cbBuffer);
+	winpr_HMAC_Final(hmac, digest, WINPR_MD5_DIGEST_LENGTH);
+	winpr_HMAC_Free(hmac);
+
+	winpr_RC4_Update(context->SendRc4Seal, 8, digest, checksum);
+
+	BYTE* signature = sig_buffer->pvBuffer;
+	Data_Write_UINT32(signature, 1L);
+	CopyMemory(&signature[4], checksum, 8);
+	Data_Write_UINT32(&signature[12], seq_no);
+	sig_buffer->cbBuffer = 16;
+
+	return SEC_E_OK;
+}
+
+static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
+                                                      PSecBufferDesc pMessage, ULONG MessageSeqNo,
+                                                      PULONG pfQOP)
+{
+	PSecBuffer data_buffer = NULL;
+	PSecBuffer sig_buffer = NULL;
+	UINT32 seq_no = 0;
+	BYTE digest[WINPR_MD5_DIGEST_LENGTH] = { 0 };
+	BYTE checksum[8] = { 0 };
+	BYTE signature[16] = { 0 };
+
+	NTLM_CONTEXT* context = sspi_SecureHandleGetLowerPointer(phContext);
+	if (!check_context(context))
+		return SEC_E_INVALID_HANDLE;
+
+	for (ULONG i = 0; i < pMessage->cBuffers; i++)
+	{
+		if (pMessage->pBuffers[i].BufferType == SECBUFFER_DATA)
+			data_buffer = &pMessage->pBuffers[i];
+		else if (pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
+			sig_buffer = &pMessage->pBuffers[i];
+	}
+
+	if (!data_buffer || !sig_buffer)
+		return SEC_E_INVALID_TOKEN;
+
+	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
 
 	if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->RecvSigningKey, WINPR_MD5_DIGEST_LENGTH))
 		return SEC_E_INTERNAL_ERROR;
@@ -1464,6 +1503,7 @@ BOOL ntlm_reset_cipher_state(PSecHandle phContext)
 
 	if (context)
 	{
+		check_context(context);
 		winpr_RC4_Free(context->SendRc4Seal);
 		winpr_RC4_Free(context->RecvRc4Seal);
 		context->SendRc4Seal = winpr_RC4_New(context->RecvSealingKey, 16);

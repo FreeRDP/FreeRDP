@@ -1679,15 +1679,12 @@ static SECURITY_STATUS SEC_ENTRY winpr_CompleteAuthToken(PCtxtHandle phContext,
 
 static SECURITY_STATUS SEC_ENTRY winpr_DeleteSecurityContext(PCtxtHandle phContext)
 {
-	char* Name = NULL;
-	SECURITY_STATUS status;
-	const SecurityFunctionTableA* table;
-	Name = (char*)sspi_SecureHandleGetUpperPointer(phContext);
+	const char* Name = (char*)sspi_SecureHandleGetUpperPointer(phContext);
 
 	if (!Name)
 		return SEC_E_SECPKG_NOT_FOUND;
 
-	table = sspi_GetSecurityFunctionTableAByNameA(Name);
+	const SecurityFunctionTableA* table = sspi_GetSecurityFunctionTableAByNameA(Name);
 
 	if (!table)
 		return SEC_E_SECPKG_NOT_FOUND;
@@ -1698,7 +1695,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_DeleteSecurityContext(PCtxtHandle phConte
 		return SEC_E_UNSUPPORTED_FUNCTION;
 	}
 
-	status = table->DeleteSecurityContext(phContext);
+	const UINT32 status = table->DeleteSecurityContext(phContext);
 
 	if (IsSecurityStatusError(status))
 	{
