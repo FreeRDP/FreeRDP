@@ -788,7 +788,7 @@ BOOL ntlm_generate_server_sealing_key(NTLM_CONTEXT* context)
  * @param context A pointer to the NTLM context
  */
 
-void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
+BOOL ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 {
 	WINPR_ASSERT(context);
 	if (context->server)
@@ -813,6 +813,17 @@ void ntlm_init_rc4_seal_states(NTLM_CONTEXT* context)
 		context->RecvRc4Seal =
 		    winpr_RC4_New(context->ServerSealingKey, sizeof(context->ServerSealingKey));
 	}
+	if (!context->SendRc4Seal)
+	{
+		WLog_ERR(TAG, "Failed to allocate context->SendRc4Seal");
+		return FALSE;
+	}
+	if (!context->RecvRc4Seal)
+	{
+		WLog_ERR(TAG, "Failed to allocate context->RecvRc4Seal");
+		return FALSE;
+	}
+	return TRUE;
 }
 
 BOOL ntlm_compute_message_integrity_check(NTLM_CONTEXT* context, BYTE* mic, UINT32 size)

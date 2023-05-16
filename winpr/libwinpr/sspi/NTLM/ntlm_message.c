@@ -789,7 +789,8 @@ SECURITY_STATUS ntlm_read_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	if (!ntlm_generate_server_sealing_key(context))
 		goto fail;
 	/* Initialize RC4 seal state using client sealing key */
-	ntlm_init_rc4_seal_states(context);
+	if (!ntlm_init_rc4_seal_states(context))
+		goto fail;
 #if defined(WITH_DEBUG_NTLM)
 	ntlm_print_authentication_complete(context);
 #endif
@@ -1172,7 +1173,8 @@ SECURITY_STATUS ntlm_read_AuthenticateMessage(NTLM_CONTEXT* context, PSecBuffer 
 	if (!ntlm_generate_server_sealing_key(context))
 		return SEC_E_INTERNAL_ERROR;
 	/* Initialize RC4 seal state */
-	ntlm_init_rc4_seal_states(context);
+	if (!ntlm_init_rc4_seal_states(context))
+		return SEC_E_INTERNAL_ERROR;
 #if defined(WITH_DEBUG_NTLM)
 	ntlm_print_authentication_complete(context);
 #endif

@@ -19,6 +19,7 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <winpr/crypto.h>
 
@@ -115,7 +116,9 @@ BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE
 	if (length > INT_MAX)
 		return FALSE;
 
-	EVP_CipherUpdate((EVP_CIPHER_CTX*)ctx, output, &outputLength, input, (int)length);
+	WINPR_ASSERT(ctx);
+	if (EVP_CipherUpdate((EVP_CIPHER_CTX*)ctx, output, &outputLength, input, (int)length) != 1)
+		return FALSE;
 	return TRUE;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 
@@ -641,6 +644,7 @@ BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, 
 		return FALSE;
 	}
 
+	WINPR_ASSERT(ctx);
 	if (EVP_CipherUpdate((EVP_CIPHER_CTX*)ctx, output, &outl, input, (int)ilen) == 1)
 	{
 		*olen = (size_t)outl;

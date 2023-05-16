@@ -1458,7 +1458,7 @@ NTLM_STATE ntlm_get_state(NTLM_CONTEXT* ntlm)
 	return ntlm->state;
 }
 
-void ntlm_reset_cipher_state(PSecHandle phContext)
+BOOL ntlm_reset_cipher_state(PSecHandle phContext)
 {
 	NTLM_CONTEXT* context = sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -1468,5 +1468,18 @@ void ntlm_reset_cipher_state(PSecHandle phContext)
 		winpr_RC4_Free(context->RecvRc4Seal);
 		context->SendRc4Seal = winpr_RC4_New(context->RecvSealingKey, 16);
 		context->RecvRc4Seal = winpr_RC4_New(context->SendSealingKey, 16);
+
+		if (!context->SendRc4Seal)
+		{
+			WLog_ERR(TAG, "Failed to allocate context->SendRc4Seal");
+			return FALSE;
+		}
+		if (!context->RecvRc4Seal)
+		{
+			WLog_ERR(TAG, "Failed to allocate context->RecvRc4Seal");
+			return FALSE;
+		}
 	}
+
+	return TRUE;
 }

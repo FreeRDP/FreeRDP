@@ -596,7 +596,10 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 
 	/* When using NTLM cipher states need to be reset after mic exchange */
 	if (_tcscmp(sspi_SecureHandleGetUpperPointer(&context->sub_context), NTLM_SSP_NAME) == 0)
-		ntlm_reset_cipher_state(&context->sub_context);
+	{
+		if (!ntlm_reset_cipher_state(&context->sub_context))
+			return SEC_E_INTERNAL_ERROR;
+	}
 
 	return SEC_E_OK;
 }
