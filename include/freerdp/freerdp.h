@@ -126,7 +126,8 @@ extern "C"
 	                                char** domain, rdp_auth_reason reason);
 	typedef BOOL (*pChooseSmartcard)(freerdp* instance, SmartcardCertInfo** cert_list, DWORD count,
 	                                 DWORD* choice, BOOL gateway);
-	typedef BOOL (*pGetAadAuthCode)(freerdp* instance, const char* hostname, char** code);
+	typedef BOOL (*pGetAadAuthCode)(freerdp* instance, const char* hostname, char** code,
+	                                const char** client_id, const char** redirect_uri);
 
 	/** @brief Callback used if user interaction is required to accept
 	 *         an unknown certificate.

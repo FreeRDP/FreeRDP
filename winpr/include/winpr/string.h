@@ -38,7 +38,7 @@ extern "C"
 
 	WINPR_API BOOL winpr_str_append(const char* what, char* buffer, size_t size,
 	                                const char* separator);
-	
+
 	WINPR_API int winpr_asprintf(char** s, size_t* slen, const char* templ, ...);
 
 #ifndef _WIN32

@@ -249,8 +249,8 @@ static BOOL build_pkinit_args(const rdpSettings* settings, SmartcardCertInfo* sc
 	const char* pkModule = Pkcs11Module ? Pkcs11Module : "opensc-pkcs11.so";
 	size_t size = 0;
 
-	if (winpr_asprintf(&scCert->pkinitArgs, &size, "PKCS11:module_name=%s:slotid=%" PRIu16, pkModule,
-	                       (UINT16)scCert->slotId) <= 0)
+	if (winpr_asprintf(&scCert->pkinitArgs, &size, "PKCS11:module_name=%s:slotid=%" PRIu16,
+	                   pkModule, (UINT16)scCert->slotId) <= 0)
 		return FALSE;
 	return TRUE;
 }

@@ -94,7 +94,6 @@ static int BIO_get_line(BIO* bio, char* buf, int size)
 }
 #endif
 
-#define OAUTH2_CLIENT_ID "5177bc73-fd99-4c77-a90c-76844c9b6999"
 static const char* auth_server = "login.microsoftonline.com";
 
 static const char nonce_http_request[] = ""
@@ -115,13 +114,13 @@ static const char token_http_request_header[] =
     "\r\n";
 static const char token_http_request_body[] =
     ""
-    "client_id=" OAUTH2_CLIENT_ID "&grant_type=authorization_code"
+    "client_id=%s&grant_type=authorization_code"
     "&code=%s"
-    "&scope=ms-device-service%%3A%%2F%%2Ftermsrv.wvd.microsoft.com%%2Fname%%2F%s%%2Fuser_"
+    "&scope=ms-device-service%%3A%%2F%%2Ftermsrv.wvd.microsoft.com%%2Fid%%2F23444de0-61b7-42a2-"
+    "bef2-5512675a5f4d%%2Fuser_"
     "impersonation"
     "&req_cnf=%s"
-    "&redirect_uri=ms-appx-web%%3a%%2f%%2fMicrosoft.AAD.BrokerPlugin%%2f5177bc73-fd99-4c77-a90c-"
-    "76844c9b6999"
+    "&redirect_uri=%s"
     "\r\n\r\n";
 
 static BOOL get_encoded_rsa_params(wLog* wlog, rdpPrivateKey* key, char** e, char** n);
@@ -408,7 +407,8 @@ fail:
 	return rc;
 }
 
-static BOOL aad_send_token_request(rdpAad* aad, BIO* bio, const char* auth_code)
+static BOOL aad_send_token_request(rdpAad* aad, BIO* bio, const char* auth_code,
+                                   const char* client_id, const char* redirect_uri)
 {
 	BOOL rc = FALSE;
 
@@ -416,8 +416,8 @@ static BOOL aad_send_token_request(rdpAad* aad, BIO* bio, const char* auth_code)
 	char* req_header = NULL;
 	size_t req_body_len = 0;
 	size_t req_header_len = 0;
-	const int trc = winpr_asprintf(&req_body, &req_body_len, token_http_request_body, auth_code,
-	                              aad->hostname, aad->kid);
+	const int trc = winpr_asprintf(&req_body, &req_body_len, token_http_request_body, client_id,
+	                               auth_code, aad->kid, redirect_uri);
 	if (trc < 0)
 		goto fail;
 	const int trh = winpr_asprintf(&req_header, &req_header_len, token_http_request_header, trc);
@@ -443,6 +443,8 @@ int aad_client_begin(rdpAad* aad)
 	SSL_CTX* ssl_ctx = NULL;
 	BIO* bio = NULL;
 	char* auth_code = NULL;
+	const char* client_id = NULL;
+	const char* redirect_uri = NULL;
 
 	WINPR_ASSERT(aad);
 	WINPR_ASSERT(aad->rdpcontext);
@@ -481,7 +483,8 @@ int aad_client_begin(rdpAad* aad)
 		WLog_Print(aad->log, WLOG_ERROR, "instance->GetAadAuthCode == NULL");
 		goto fail;
 	}
-	const BOOL arc = instance->GetAadAuthCode(instance, aad->hostname, &auth_code);
+	const BOOL arc =
+	    instance->GetAadAuthCode(instance, aad->hostname, &auth_code, &client_id, &redirect_uri);
 	if (!arc)
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "Unable to obtain authorization code");
@@ -501,7 +504,7 @@ int aad_client_begin(rdpAad* aad)
 		goto fail;
 
 	/* Construct and send the token request message */
-	if (!aad_send_token_request(aad, bio, auth_code))
+	if (!aad_send_token_request(aad, bio, auth_code, client_id, redirect_uri))
 		goto fail;
 
 	/* Extract the access token from the JSON response */
@@ -560,15 +563,15 @@ static char* aad_create_jws_payload(rdpAad* aad, const char* ts_nonce)
 	size_t bufferlen = 0;
 	const int length =
 	    winpr_asprintf(&buffer, &bufferlen,
-	                  "{"
-	                  "\"ts\":\"%li\","
-	                  "\"at\":\"%s\","
-	                  "\"u\":\"ms-device-service://termsrv.wvd.microsoft.com/name/%s\","
-	                  "\"nonce\":\"%s\","
-	                  "\"cnf\":{\"jwk\":{\"kty\":\"RSA\",\"e\":\"%s\",\"n\":\"%s\"}},"
-	                  "\"client_claims\":\"{\\\"aad_nonce\\\":\\\"%s\\\"}\""
-	                  "}",
-	                  ts, aad->access_token, aad->hostname, ts_nonce, e, n, aad->nonce);
+	                   "{"
+	                   "\"ts\":\"%li\","
+	                   "\"at\":\"%s\","
+	                   "\"u\":\"ms-device-service://termsrv.wvd.microsoft.com/name/%s\","
+	                   "\"nonce\":\"%s\","
+	                   "\"cnf\":{\"jwk\":{\"kty\":\"RSA\",\"e\":\"%s\",\"n\":\"%s\"}},"
+	                   "\"client_claims\":\"{\\\"aad_nonce\\\":\\\"%s\\\"}\""
+	                   "}",
+	                   ts, aad->access_token, aad->hostname, ts_nonce, e, n, aad->nonce);
 	free(e);
 	free(n);
 
