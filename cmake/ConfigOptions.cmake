@@ -199,6 +199,11 @@ if (BUILD_FUZZERS)
 
     set(BUILD_TESTING ON)
 
+    if (BUILD_SHARED_LIBS STREQUAL "OFF")
+        set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+        set(CMAKE_CXX_FLAGS "-static ${CMAKE_CXX_FLAGS}")
+    endif()
+
     # A special target with fuzzer and sanitizer flags.
     add_library(fuzzer_config INTERFACE)
 
