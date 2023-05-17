@@ -142,6 +142,35 @@ BOOL winpr_str_append(const char* what, char* buffer, size_t size, const char* s
 	return TRUE;
 }
 
+int winpr_asprintf(char** s, size_t* slen, const char* templ, ...)
+{
+	va_list ap;
+
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(slen);
+	*s = NULL;
+	*slen = 0;
+
+	va_start(ap, templ);
+	const int length = vsnprintf(NULL, 0, templ, ap);
+	va_end(ap);
+	if (length < 0)
+		return length;
+
+	char* str = calloc((size_t)length + 1ul, sizeof(char));
+	if (!str)
+		return -1;
+
+	va_start(ap, templ);
+	const int plen = vsprintf(str, templ, ap);
+	va_end(ap);
+
+	WINPR_ASSERT(length == plen);
+	*s = str;
+	*slen = (size_t)length;
+	return length;
+}
+
 #ifndef _WIN32
 
 char* _strdup(const char* strSource)
