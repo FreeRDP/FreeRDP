@@ -29,35 +29,6 @@
 #include "krb5glue.h"
 #include <profile.h>
 
-static int alloc_sprintf(char** s, size_t* slen, const char* template, ...)
-{
-	va_list ap;
-
-	WINPR_ASSERT(s);
-	WINPR_ASSERT(slen);
-	*s = NULL;
-	*slen = 0;
-
-	va_start(ap, template);
-	const int length = vsnprintf(NULL, 0, template, ap);
-	va_end(ap);
-	if (length < 0)
-		return length;
-
-	char* str = calloc((size_t)length + 1ul, sizeof(char));
-	if (!str)
-		return -1;
-
-	va_start(ap, template);
-	const int plen = vsprintf(str, template, ap);
-	va_end(ap);
-
-	WINPR_ASSERT(length == plen);
-	*s = str;
-	*slen = (size_t)length;
-	return length;
-}
-
 static char* create_temporary_file(void)
 {
 	BYTE buffer[32];
@@ -190,7 +161,7 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 				goto cleanup;
 
 			rv = ENOMEM;
-			if (alloc_sprintf(&kdc_url, &size, "https://%s/KdcProxy", krb_settings->kdcUrl) <= 0)
+			if (winpr_asprintf(&kdc_url, &size, "https://%s/KdcProxy", krb_settings->kdcUrl) <= 0)
 				goto cleanup;
 
 			realm = calloc(princ->realm.length + 1, 1);

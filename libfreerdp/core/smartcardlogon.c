@@ -239,31 +239,6 @@ static BOOL set_info_certificate(SmartcardCertInfo* cert, BYTE* certBytes, DWORD
 	return TRUE;
 }
 
-static int allocating_sprintf(char** dst, const char* fmt, ...)
-{
-	int rc;
-	va_list ap;
-
-	WINPR_ASSERT(dst);
-
-	va_start(ap, fmt);
-	rc = vsnprintf(NULL, 0, fmt, ap);
-	va_end(ap);
-	if (rc < 0)
-		return rc;
-
-	{
-		char* tmp = realloc(*dst, (size_t)rc + 1);
-		if (!tmp)
-			return -1;
-		*dst = tmp;
-	}
-	va_start(ap, fmt);
-	rc = vsnprintf(*dst, (size_t)rc + 1, fmt, ap);
-	va_end(ap);
-	return rc;
-}
-
 #ifndef _WIN32
 static BOOL build_pkinit_args(const rdpSettings* settings, SmartcardCertInfo* scCert)
 {
@@ -272,8 +247,9 @@ static BOOL build_pkinit_args(const rdpSettings* settings, SmartcardCertInfo* sc
 	 */
 	const char* Pkcs11Module = freerdp_settings_get_string(settings, FreeRDP_Pkcs11Module);
 	const char* pkModule = Pkcs11Module ? Pkcs11Module : "opensc-pkcs11.so";
+	size_t size = 0;
 
-	if (allocating_sprintf(&scCert->pkinitArgs, "PKCS11:module_name=%s:slotid=%" PRIu16, pkModule,
+	if (winpr_asprintf(&scCert->pkinitArgs, &size, "PKCS11:module_name=%s:slotid=%" PRIu16, pkModule,
 	                       (UINT16)scCert->slotId) <= 0)
 		return FALSE;
 	return TRUE;
@@ -729,6 +705,8 @@ static char* create_temporary_file(void)
 
 static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const char* certPEM)
 {
+	size_t size = 0;
+
 	WINPR_ASSERT(privKeyPEM);
 	WINPR_ASSERT(certPEM);
 
@@ -776,7 +754,7 @@ static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const ch
 	if (!crypto_write_pem(info->certPath, certPEM, strlen(certPEM)))
 		goto fail;
 
-	int res = allocating_sprintf(&cert->pkinitArgs, "FILE:%s,%s", info->certPath, info->keyPath);
+	int res = winpr_asprintf(&cert->pkinitArgs, &size, "FILE:%s,%s", info->certPath, info->keyPath);
 	if (res <= 0)
 		goto fail;
 

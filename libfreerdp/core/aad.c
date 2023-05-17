@@ -129,35 +129,6 @@ static BOOL generate_pop_key(rdpAad* aad);
 static BOOL read_http_message(rdpAad* aad, BIO* bio, long* status_code, char** content,
                               size_t* content_length);
 
-static int alloc_sprintf(char** s, size_t* slen, const char* template, ...)
-{
-	va_list ap;
-
-	WINPR_ASSERT(s);
-	WINPR_ASSERT(slen);
-	*s = NULL;
-	*slen = 0;
-
-	va_start(ap, template);
-	const int length = vsnprintf(NULL, 0, template, ap);
-	va_end(ap);
-	if (length < 0)
-		return length;
-
-	char* str = calloc((size_t)length + 1ul, sizeof(char));
-	if (!str)
-		return -1;
-
-	va_start(ap, template);
-	const int plen = vsprintf(str, template, ap);
-	va_end(ap);
-
-	WINPR_ASSERT(length == plen);
-	*s = str;
-	*slen = (size_t)length;
-	return length;
-}
-
 static SSIZE_T stream_sprintf(wStream* s, const char* fmt, ...)
 {
 	va_list ap;
@@ -445,11 +416,11 @@ static BOOL aad_send_token_request(rdpAad* aad, BIO* bio, const char* auth_code)
 	char* req_header = NULL;
 	size_t req_body_len = 0;
 	size_t req_header_len = 0;
-	const int trc = alloc_sprintf(&req_body, &req_body_len, token_http_request_body, auth_code,
+	const int trc = winpr_asprintf(&req_body, &req_body_len, token_http_request_body, auth_code,
 	                              aad->hostname, aad->kid);
 	if (trc < 0)
 		goto fail;
-	const int trh = alloc_sprintf(&req_header, &req_header_len, token_http_request_header, trc);
+	const int trh = winpr_asprintf(&req_header, &req_header_len, token_http_request_header, trc);
 	if (trh < 0)
 		goto fail;
 
@@ -564,7 +535,7 @@ static char* aad_create_jws_header(rdpAad* aad)
 	char* buffer = NULL;
 	size_t bufferlen = 0;
 	const int length =
-	    alloc_sprintf(&buffer, &bufferlen, "{\"alg\":\"RS256\",\"kid\":\"%s\"}", aad->kid);
+	    winpr_asprintf(&buffer, &bufferlen, "{\"alg\":\"RS256\",\"kid\":\"%s\"}", aad->kid);
 	if (length < 0)
 		return NULL;
 
@@ -588,7 +559,7 @@ static char* aad_create_jws_payload(rdpAad* aad, const char* ts_nonce)
 	char* buffer = NULL;
 	size_t bufferlen = 0;
 	const int length =
-	    alloc_sprintf(&buffer, &bufferlen,
+	    winpr_asprintf(&buffer, &bufferlen,
 	                  "{"
 	                  "\"ts\":\"%li\","
 	                  "\"at\":\"%s\","
@@ -947,7 +918,7 @@ static BOOL generate_json_base64_str(rdpAad* aad, const char* b64_hash)
 
 	char* buffer = NULL;
 	size_t blen = 0;
-	const int length = alloc_sprintf(&buffer, &blen, "{\"kid\":\"%s\"}", b64_hash);
+	const int length = winpr_asprintf(&buffer, &blen, "{\"kid\":\"%s\"}", b64_hash);
 	if (length < 0)
 		return FALSE;
 
@@ -982,7 +953,7 @@ BOOL generate_pop_key(rdpAad* aad)
 
 	size_t blen = 0;
 	const int alen =
-	    alloc_sprintf(&buffer, &blen, "{\"e\":\"%s\",\"kty\":\"RSA\",\"n\":\"%s\"}", e, n);
+	    winpr_asprintf(&buffer, &blen, "{\"e\":\"%s\",\"kty\":\"RSA\",\"n\":\"%s\"}", e, n);
 	if (alen < 0)
 		goto fail;
 
