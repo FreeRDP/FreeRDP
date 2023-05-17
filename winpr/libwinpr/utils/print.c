@@ -33,13 +33,13 @@
 #define MIN(a, b) (a) < (b) ? (a) : (b)
 #endif
 
-void winpr_HexDump(const char* tag, UINT32 level, const BYTE* data, size_t length)
+void winpr_HexDump(const char* tag, UINT32 level, const void* data, size_t length)
 {
 	wLog* log = WLog_Get(tag);
 	winpr_HexLogDump(log, level, data, length);
 }
 
-void winpr_HexLogDump(wLog* log, UINT32 lvl, const BYTE* data, size_t length)
+void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 {
 	const BYTE* p = data;
 	size_t i, line, offset = 0;
@@ -127,7 +127,7 @@ fail:
 	free(buffer);
 }
 
-void winpr_CArrayDump(const char* tag, UINT32 level, const BYTE* data, size_t length, size_t width)
+void winpr_CArrayDump(const char* tag, UINT32 level, const void* data, size_t length, size_t width)
 {
 	const BYTE* p = data;
 	size_t i, offset = 0;
