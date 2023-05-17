@@ -4,7 +4,7 @@ NULL =
 
 DEB_HOST_ARCH=$(shell dpkg-architecture -qDEB_HOST_ARCH)
 
-SANATIZE_ADDRESS = -DWITH_SANITIZE_ADDRESS=ON
+SANITIZE_ADDRESS = -DWITH_SANITIZE_ADDRESS=ON
 
 DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
                           -DCMAKE_SKIP_RPATH=FALSE \
@@ -29,7 +29,7 @@ DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
                           -DCMAKE_INSTALL_INCLUDEDIR=include \
                           -DCMAKE_INSTALL_LIBDIR=lib \
                           -DNO_CMAKE_PACKAGE_REGISTRY=ON \
-                          $(SANATIZE_ADDRESS) \
+                          $(SANITIZE_ADDRESS) \
                           $(NULL)
 
 %:
