@@ -23,6 +23,10 @@ set(SRCS
 	crypto.c
 	crypto.h
 )
+if (WITH_INTERNAL_RC4)
+    list(APPEND SRCS rc4.c rc4.h)
+endif()
+
 if (WITH_INTERNAL_MD4)
     list(APPEND SRCS md4.c md4.h)
 endif()
