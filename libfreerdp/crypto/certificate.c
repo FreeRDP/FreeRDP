@@ -43,6 +43,8 @@
 
 #if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
 #include <openssl/core_names.h>
+#include <openssl/param_build.h>
+#include <openssl/evp.h>
 #endif
 
 #include "certificate.h"
@@ -469,6 +471,38 @@ static void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_
 	free(x509_cert_chain->array);
 }
 
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+static OSSL_PARAM* get_params(const BIGNUM* e, const BIGNUM* mod)
+{
+	WINPR_ASSERT(e);
+	WINPR_ASSERT(mod);
+
+	OSSL_PARAM* parameters = NULL;
+	OSSL_PARAM_BLD* param = OSSL_PARAM_BLD_new();
+	if (!param)
+		return NULL;
+
+	const int bits = BN_num_bits(e);
+	if ((bits < 0) || (bits > 32))
+		goto fail;
+
+	UINT ie = 0;
+	const int ne = BN_bn2nativepad(e, (BYTE*)&ie, sizeof(ie));
+	if ((ne < 0) || (ne > 4))
+		goto fail;
+	if (OSSL_PARAM_BLD_push_BN(param, OSSL_PKEY_PARAM_RSA_N, mod) != 1)
+		goto fail;
+	if (OSSL_PARAM_BLD_push_uint(param, OSSL_PKEY_PARAM_RSA_E, ie) != 1)
+		goto fail;
+
+	parameters = OSSL_PARAM_BLD_to_param(param);
+fail:
+	OSSL_PARAM_BLD_free(param);
+
+	return parameters;
+}
+#endif
+
 static BOOL update_x509_from_info(rdpCertificate* cert)
 {
 	BOOL rc = FALSE;
@@ -502,13 +536,20 @@ static BOOL update_x509_from_info(rdpCertificate* cert)
 
 	cert->x509 = x509_from_rsa(rsa);
 #else
-	EVP_PKEY* pkey = EVP_PKEY_new();
-	if (!pkey)
+	EVP_PKEY* pkey = NULL;
+	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+	if (!ctx)
+		goto fail2;
+	const int xx = EVP_PKEY_fromdata_init(ctx);
+	if (xx != 1)
+		goto fail2;
+	OSSL_PARAM* parameters = get_params(e, mod);
+	if (!parameters)
 		goto fail2;
 
-	if (!EVP_PKEY_set_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, e))
-		goto fail2;
-	if (!EVP_PKEY_set_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, mod))
+	const int rc2 = EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, parameters);
+	OSSL_PARAM_free(parameters);
+	if (rc2 <= 0)
 		goto fail2;
 
 	cert->x509 = X509_new();
@@ -521,6 +562,7 @@ static BOOL update_x509_from_info(rdpCertificate* cert)
 	}
 fail2:
 	EVP_PKEY_free(pkey);
+	EVP_PKEY_CTX_free(ctx);
 #endif
 	if (!cert->x509)
 		goto fail;
