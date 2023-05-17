@@ -157,7 +157,8 @@ extern "C"
 	FREERDP_API int client_cli_logon_error_info(freerdp* instance, UINT32 data, UINT32 type);
 
 	FREERDP_API BOOL client_cli_get_aad_auth_code(freerdp* instance, const char* hostname,
-	                                              char** code);
+	                                              char** code, const char** client_id,
+	                                              const char** redirect_uri);
 
 	FREERDP_API void
 	freerdp_client_OnChannelConnectedEventHandler(void* context,

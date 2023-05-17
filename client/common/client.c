@@ -61,8 +61,6 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
 
-#define OAUTH2_CLIENT_ID "5177bc73-fd99-4c77-a90c-76844c9b6999"
-
 static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
 	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
@@ -77,7 +75,6 @@ static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->PresentGatewayMessage = client_cli_present_gateway_message;
 	instance->LogonErrorInfo = client_cli_logon_error_info;
-	instance->GetAadAuthCode = client_cli_get_aad_auth_code;
 
 	pEntryPoints = instance->pClientEntryPoints;
 	WINPR_ASSERT(pEntryPoints);
@@ -938,34 +935,57 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 	return TRUE;
 }
 
-BOOL client_cli_get_aad_auth_code(freerdp* instance, const char* hostname, char** code)
+BOOL client_cli_get_aad_auth_code(freerdp* instance, const char* hostname, char** code,
+                                  const char** client_id, const char** redirect_uri)
 {
-	size_t len = 0;
-	char* p = NULL;
+	size_t size = 0;
+	char* url = NULL;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(hostname);
 	WINPR_ASSERT(code);
+	WINPR_ASSERT(client_id);
+	WINPR_ASSERT(redirect_uri);
+
 	*code = NULL;
+	*client_id = "a85cf173-4192-42f8-81fa-777a763e6e2c";
+	*redirect_uri = "https%3A%2F%2Flogin.microsoftonline.com%2Fcommon%2Foauth2%2Fnativeclient";
 
-	printf(
-	    "Browse to: "
-	    "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=" OAUTH2_CLIENT_ID
-	    "&response_type=code"
-	    "&scope=ms-device-service%%3A%%2F%%2Ftermsrv.wvd.microsoft.com%%2Fname%%2F%s%%2Fuser_"
-	    "impersonation"
-	    "&redirect_uri=ms-appx-web%%3a%%2f%%2fMicrosoft.AAD.BrokerPlugin%%2f5177bc73-fd99-4c77-"
-	    "a90c-76844c9b6999\n",
-	    hostname);
-	printf("Paste authorization code here: ");
+	printf("Browse to: https://login.microsoftonline.com/common/oauth2/v2.0/"
+	       "authorize?client_id=%s&response_type="
+	       "code&scope=ms-device-service%%3A%%2F%%2Ftermsrv.wvd.microsoft.com%%2Fname%%"
+	       "2F%s%%2Fuser_impersonation&redirect_uri=%s"
+	       "\n",
+	       *client_id, hostname, *redirect_uri);
+	printf("Paste redirect URL here: \n");
 
-	if (freerdp_interruptible_get_line(instance->context, code, &len, stdin) < 0)
+	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
 		return FALSE;
-	p = strpbrk(*code, "\r\n");
-	if (p)
-		*p = 0;
 
-	return TRUE;
+	for (char* p = strchr(url, '?'); p++ != NULL; p = strchr(p, '&'))
+	{
+		if (strncmp(p, "code=", 5) == 0)
+		{
+			char* end = NULL;
+			p += 5;
+
+			end = strchr(p, '&');
+			if (end)
+				*end = 0;
+			else
+				end = strchr(p, '\0');
+
+			*code = calloc(1, end - p);
+			if (!(*code))
+				break;
+
+			strcpy(*code, p);
+			break;
+		}
+	}
+
+	free(url);
+	return (*code != NULL);
 }
 
 BOOL client_auto_reconnect(freerdp* instance)

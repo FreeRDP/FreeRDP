@@ -98,9 +98,24 @@ set(LIBS
         freerdp-client
     )
 
+option(WITH_WEBVIEW "Build with QtWebEngine support for AAD login popup browser" OFF)
+if (WITH_WEBVIEW)
+	include(FindPkgConfig)
+	pkg_check_modules(QT REQUIRED Qt5WebEngineWidgets)
+
+  list(APPEND SRCS sdl_webview.cpp)
+  add_definitions(-DWITH_WEBVIEW)
+  include_directories(${QT_INCLUDE_DIRS})
+  list(APPEND LIBS ${QT_LIBRARIES})
+endif()
+
 add_executable(${PROJECT_NAME}
 	${SRCS}
     )
+
+if (QT_FOUND)
+  target_compile_options(${PROJECT_NAME} PRIVATE -fPIC)
+endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "sdl-freerdp")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})

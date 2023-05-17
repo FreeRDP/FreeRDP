@@ -54,6 +54,10 @@
 #include "sdl_touch.hpp"
 #include "sdl_pointer.hpp"
 
+#ifdef WITH_WEBVIEW
+#include "sdl_webview.hpp"
+#endif
+
 #define SDL_TAG CLIENT_TAG("SDL")
 
 enum SDL_EXIT_CODE
@@ -1171,6 +1175,11 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
 	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = sdl_logon_error_info;
+#ifdef WITH_WEBVIEW
+	instance->GetAadAuthCode = sdl_webview_get_aad_auth_code;
+#else
+	instance->GetAadAuthCode = client_cli_get_aad_auth_code;
+#endif
 	/* TODO: Client display set up */
 
 	sdl->initialize = CreateEventA(nullptr, TRUE, FALSE, nullptr);
