@@ -27,6 +27,7 @@
 #cmakedefine WITH_EVENTFD_READ_WRITE
 
 #cmakedefine WITH_NATIVE_SSPI
+#cmakedefine WITH_INTERNAL_RC4
 #cmakedefine WITH_INTERNAL_MD4
 #cmakedefine WITH_INTERNAL_MD5
 
