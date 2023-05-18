@@ -105,10 +105,6 @@ extern "C"
 
 		/**
 		 * Send an Open PDU.
-		 *
-		 * In case of ExtraFormatData is not NULL, the SubFormat is always
-		 * KSDATAFORMAT_SUBTYPE_PCM, i.e. it is not required to be explicitly set by
-		 * the API user.
 		 */
 		psAudinServerOpen SendOpen;
 
