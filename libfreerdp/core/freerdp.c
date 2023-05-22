@@ -728,8 +728,6 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 
 	WINPR_ASSERT(instance);
 
-	rdp_log_build_warnings();
-
 	instance->context = context = (rdpContext*)calloc(1, instance->ContextSize);
 
 	if (!context)
@@ -755,6 +753,7 @@ BOOL freerdp_context_new_ex(freerdp* instance, rdpSettings* settings)
 	if (!rdp)
 		goto fail;
 
+	rdp_log_build_warnings(rdp);
 	context->rdp = rdp;
 	context->pubSub = rdp->pubSub;
 

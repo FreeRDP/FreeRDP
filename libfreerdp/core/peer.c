@@ -340,13 +340,14 @@ static state_run_t peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 t
 	update = client->context->update;
 	WINPR_ASSERT(update);
 
-	if (!rdp_read_share_data_header(s, &length, &type, &share_id, &compressed_type,
-	                                &compressed_len))
+	if (!rdp_read_share_data_header(client->context->rdp, s, &length, &type, &share_id,
+	                                &compressed_type, &compressed_len))
 		return STATE_RUN_FAILED;
 
 #ifdef WITH_DEBUG_RDP
-	WLog_DBG(TAG, "recv %s Data PDU (0x%02" PRIX8 "), length: %" PRIu16 "",
-	         data_pdu_type_to_string(type), type, length);
+	WLog_Print(client->context->rdp, WLOG_DEBUG,
+	           "recv %s Data PDU (0x%02" PRIX8 "), length: %" PRIu16 "",
+	           data_pdu_type_to_string(type), type, length);
 #endif
 
 	switch (type)
@@ -444,7 +445,7 @@ static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (rdp_get_state(rdp) <= CONNECTION_STATE_LICENSING)
 	{
-		if (!rdp_read_security_header(s, &securityFlags, &length))
+		if (!rdp_read_security_header(rdp, s, &securityFlags, &length))
 			return STATE_RUN_FAILED;
 		if (securityFlags & SEC_ENCRYPT)
 		{
@@ -456,7 +457,7 @@ static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 
 	if (settings->UseRdpSecurityLayer)
 	{
-		if (!rdp_read_security_header(s, &securityFlags, &length))
+		if (!rdp_read_security_header(rdp, s, &securityFlags, &length))
 			return STATE_RUN_FAILED;
 
 		if (securityFlags & SEC_ENCRYPT)
@@ -470,7 +471,7 @@ static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	{
 		char buffer[256] = { 0 };
 		UINT16 pduLength, remain;
-		if (!rdp_read_share_control_header(s, &pduLength, &remain, &pduType, &pduSource))
+		if (!rdp_read_share_control_header(rdp, s, &pduLength, &remain, &pduType, &pduSource))
 			return STATE_RUN_FAILED;
 
 		settings->PduSource = pduSource;
@@ -508,7 +509,7 @@ static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	{
 		if (!settings->UseRdpSecurityLayer)
 		{
-			if (!rdp_read_security_header(s, &securityFlags, NULL))
+			if (!rdp_read_security_header(rdp, s, &securityFlags, NULL))
 				return STATE_RUN_FAILED;
 		}
 
@@ -1505,8 +1506,6 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 	rdpContext* context;
 	BOOL ret = TRUE;
 
-	rdp_log_build_warnings();
-
 	if (!client)
 		return FALSE;
 
@@ -1536,6 +1535,8 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 
 	if (!(rdp = rdp_new(context)))
 		goto fail;
+
+	rdp_log_build_warnings(rdp);
 
 #if defined(WITH_FREERDP_DEPRECATED)
 	client->update = rdp->update;

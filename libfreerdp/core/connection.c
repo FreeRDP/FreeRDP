@@ -706,9 +706,12 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 	wStream* s = NULL;
 	int status = 0;
 	BOOL ret = FALSE;
+
+	WINPR_ASSERT(rdp);
 	rdpSettings* settings = rdp->settings;
 	BYTE* crypt_client_random = NULL;
 
+	WINPR_ASSERT(settings);
 	if (!settings->UseRdpSecurityLayer)
 	{
 		/* no RDP encryption */
@@ -755,7 +758,7 @@ static BOOL rdp_client_establish_keys(rdpRdp* rdp)
 
 	if (!rdp_write_header(rdp, s, length, MCS_GLOBAL_CHANNEL_ID))
 		goto end;
-	if (!rdp_write_security_header(s, SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC))
+	if (!rdp_write_security_header(rdp, s, SEC_EXCHANGE_PKT | SEC_LICENSE_ENCRYPT_SC))
 		goto end;
 
 	Stream_Write_UINT32(s, info->ModulusLength + 8);
@@ -860,6 +863,8 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	UINT16 sec_flags = 0;
 	BOOL ret = FALSE;
 
+	WINPR_ASSERT(rdp);
+
 	if (!rdp->settings->UseRdpSecurityLayer)
 	{
 		/* No RDP Security. */
@@ -869,7 +874,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (!rdp_read_header(rdp, s, &length, &channel_id))
 		return FALSE;
 
-	if (!rdp_read_security_header(s, &sec_flags, NULL))
+	if (!rdp_read_security_header(rdp, s, &sec_flags, NULL))
 	{
 		WLog_ERR(TAG, "invalid security header");
 		return FALSE;
@@ -1127,7 +1132,7 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 			{
 				UINT16 securityFlags = 0;
 
-				if (!rdp_read_security_header(s, &securityFlags, &length))
+				if (!rdp_read_security_header(rdp, s, &securityFlags, &length))
 					return FALSE;
 
 				if (securityFlags & SEC_ENCRYPT)
@@ -1158,10 +1163,11 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	LICENSE_STATE state;
 	UINT16 length, channelId, securityFlags;
 
+	WINPR_ASSERT(rdp);
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return STATE_RUN_FAILED;
 
-	if (!rdp_read_security_header(s, &securityFlags, &length))
+	if (!rdp_read_security_header(rdp, s, &securityFlags, &length))
 		return STATE_RUN_FAILED;
 
 	if (securityFlags & SEC_ENCRYPT)
