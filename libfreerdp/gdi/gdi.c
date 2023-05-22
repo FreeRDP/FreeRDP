@@ -997,16 +997,46 @@ static BOOL gdi_surface_frame_marker(rdpContext* context,
 	return TRUE;
 }
 
+static BOOL intersect_rect(const rdpGdi* gdi, const SURFACE_BITS_COMMAND* cmd, RECTANGLE_16* prect)
+{
+	const UINT32 w = (const UINT32)gdi->width;
+	const UINT32 h = (const UINT32)gdi->height;
+
+	if (cmd->destLeft > w)
+		return FALSE;
+	if (cmd->destRight > w)
+		return FALSE;
+	if (cmd->destLeft > cmd->destRight)
+		return FALSE;
+	if (cmd->destRight > UINT16_MAX)
+		return FALSE;
+
+	if (cmd->destTop > h)
+		return FALSE;
+	if (cmd->destBottom > h)
+		return FALSE;
+	if (cmd->destTop > cmd->destBottom)
+		return FALSE;
+	if (cmd->destBottom > UINT16_MAX)
+		return FALSE;
+
+	prect->left = (const UINT16)cmd->destLeft;
+	prect->top = (const UINT16)cmd->destTop;
+	prect->right = MIN((UINT16)cmd->destRight, prect->left + cmd->bmp.width);
+	prect->bottom = MIN((UINT16)cmd->destBottom, prect->top + cmd->bmp.height);
+	return TRUE;
+}
+
 static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cmd)
 {
 	BOOL result = FALSE;
 	DWORD format;
-	rdpGdi* gdi;
+	rdpGdi* gdi = NULL;
 	size_t size;
 	REGION16 region;
-	RECTANGLE_16 cmdRect;
-	UINT32 i, nbRects;
-	const RECTANGLE_16* rects;
+	RECTANGLE_16 cmdRect = { 0 };
+	UINT32 nbRects;
+	const RECTANGLE_16* rects = NULL;
 
 	if (!context || !cmd)
 		return FALSE;
@@ -1020,16 +1050,15 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 	    cmd->destLeft, cmd->destTop, cmd->destRight, cmd->destBottom, cmd->bmp.bpp, cmd->bmp.flags,
 	    cmd->bmp.codecID, cmd->bmp.width, cmd->bmp.height, cmd->bmp.bitmapDataLength);
 	region16_init(&region);
-	cmdRect.left = cmd->destLeft;
-	cmdRect.top = cmd->destTop;
-	cmdRect.right = cmdRect.left + cmd->bmp.width;
-	cmdRect.bottom = cmdRect.top + cmd->bmp.height;
+
+	if (!intersect_rect(gdi, cmd, &cmdRect))
+		goto out;
 
 	switch (cmd->bmp.codecID)
 	{
 		case RDP_CODEC_ID_REMOTEFX:
 			if (!rfx_process_message(context->codecs->rfx, cmd->bmp.bitmapData,
-			                         cmd->bmp.bitmapDataLength, cmd->destLeft, cmd->destTop,
+			                         cmd->bmp.bitmapDataLength, cmdRect.left, cmdRect.top,
 			                         gdi->primary_buffer, gdi->dstFormat, gdi->stride, gdi->height,
 			                         &region))
 			{
@@ -1042,11 +1071,11 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 		case RDP_CODEC_ID_NSCODEC:
 			format = gdi->dstFormat;
 
-			if (!nsc_process_message(context->codecs->nsc, cmd->bmp.bpp, cmd->bmp.width,
-			                         cmd->bmp.height, cmd->bmp.bitmapData,
-			                         cmd->bmp.bitmapDataLength, gdi->primary_buffer, format,
-			                         gdi->stride, cmd->destLeft, cmd->destTop, cmd->bmp.width,
-			                         cmd->bmp.height, FREERDP_FLIP_VERTICAL))
+			if (!nsc_process_message(
+			        context->codecs->nsc, cmd->bmp.bpp, cmd->bmp.width, cmd->bmp.height,
+			        cmd->bmp.bitmapData, cmd->bmp.bitmapDataLength, gdi->primary_buffer, format,
+			        gdi->stride, cmdRect.left, cmdRect.top, cmdRect.right - cmdRect.left,
+			        cmdRect.bottom - cmdRect.top, FREERDP_FLIP_VERTICAL))
 			{
 				WLog_ERR(TAG, "Failed to process NSCodec message");
 				goto out;
@@ -1064,10 +1093,11 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 				         cmd->bmp.bitmapDataLength, size);
 				goto out;
 			}
-			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride, cmd->destLeft,
-			                        cmd->destTop, cmd->bmp.width, cmd->bmp.height,
-			                        cmd->bmp.bitmapData, format, 0, 0, 0, &gdi->palette,
-			                        FREERDP_FLIP_VERTICAL))
+
+			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride, cmdRect.left,
+			                        cmdRect.top, cmdRect.right - cmdRect.left,
+			                        cmdRect.bottom - cmdRect.top, cmd->bmp.bitmapData, format, 0, 0,
+			                        0, &gdi->palette, FREERDP_FLIP_VERTICAL))
 			{
 				WLog_ERR(TAG, "Failed to process nocodec message");
 				goto out;
@@ -1084,7 +1114,7 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 	if (!(rects = region16_rects(&region, &nbRects)))
 		goto out;
 
-	for (i = 0; i < nbRects; i++)
+	for (UINT32 i = 0; i < nbRects; i++)
 	{
 		UINT32 left = rects[i].left;
 		UINT32 top = rects[i].top;
