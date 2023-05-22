@@ -1737,35 +1737,37 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 		/* TLS/NLA is used: disable rdp style encryption */
 		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
 	}
-
-	/* verify server encryption level value */
-	switch (settings->EncryptionLevel)
+	else
 	{
-		case ENCRYPTION_LEVEL_NONE:
-			WLog_INFO(TAG, "Active rdp encryption level: NONE");
-			break;
+		/* verify server encryption level value */
+		switch (settings->EncryptionLevel)
+		{
+			case ENCRYPTION_LEVEL_NONE:
+				WLog_INFO(TAG, "Active rdp encryption level: NONE");
+				break;
 
-		case ENCRYPTION_LEVEL_FIPS:
-			WLog_INFO(TAG, "Active rdp encryption level: FIPS Compliant");
-			break;
+			case ENCRYPTION_LEVEL_FIPS:
+				WLog_INFO(TAG, "Active rdp encryption level: FIPS Compliant");
+				break;
 
-		case ENCRYPTION_LEVEL_HIGH:
-			WLog_INFO(TAG, "Active rdp encryption level: HIGH");
-			break;
+			case ENCRYPTION_LEVEL_HIGH:
+				WLog_INFO(TAG, "Active rdp encryption level: HIGH");
+				break;
 
-		case ENCRYPTION_LEVEL_LOW:
-			WLog_INFO(TAG, "Active rdp encryption level: LOW");
-			break;
+			case ENCRYPTION_LEVEL_LOW:
+				WLog_INFO(TAG, "Active rdp encryption level: LOW");
+				break;
 
-		case ENCRYPTION_LEVEL_CLIENT_COMPATIBLE:
-			WLog_INFO(TAG, "Active rdp encryption level: CLIENT-COMPATIBLE");
-			break;
+			case ENCRYPTION_LEVEL_CLIENT_COMPATIBLE:
+				WLog_INFO(TAG, "Active rdp encryption level: CLIENT-COMPATIBLE");
+				break;
 
-		default:
-			WLog_ERR(TAG, "Invalid server encryption level 0x%08" PRIX32 "",
-			         settings->EncryptionLevel);
-			WLog_ERR(TAG, "Switching to encryption level CLIENT-COMPATIBLE");
-			settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+			default:
+				WLog_ERR(TAG, "Invalid server encryption level 0x%08" PRIX32 "",
+				         settings->EncryptionLevel);
+				WLog_ERR(TAG, "Switching to encryption level CLIENT-COMPATIBLE");
+				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+		}
 	}
 
 	/* choose rdp encryption method based on server level and client methods */
@@ -1825,31 +1827,34 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 	}
 
 	/* log selected encryption method */
-	switch (settings->EncryptionMethods)
+	if (settings->UseRdpSecurityLayer)
 	{
-		case ENCRYPTION_METHOD_NONE:
-			WLog_INFO(TAG, "Selected rdp encryption method: NONE");
-			break;
+		switch (settings->EncryptionMethods)
+		{
+			case ENCRYPTION_METHOD_NONE:
+				WLog_INFO(TAG, "Selected rdp encryption method: NONE");
+				break;
 
-		case ENCRYPTION_METHOD_40BIT:
-			WLog_INFO(TAG, "Selected rdp encryption method: 40BIT");
-			break;
+			case ENCRYPTION_METHOD_40BIT:
+				WLog_INFO(TAG, "Selected rdp encryption method: 40BIT");
+				break;
 
-		case ENCRYPTION_METHOD_56BIT:
-			WLog_INFO(TAG, "Selected rdp encryption method: 56BIT");
-			break;
+			case ENCRYPTION_METHOD_56BIT:
+				WLog_INFO(TAG, "Selected rdp encryption method: 56BIT");
+				break;
 
-		case ENCRYPTION_METHOD_128BIT:
-			WLog_INFO(TAG, "Selected rdp encryption method: 128BIT");
-			break;
+			case ENCRYPTION_METHOD_128BIT:
+				WLog_INFO(TAG, "Selected rdp encryption method: 128BIT");
+				break;
 
-		case ENCRYPTION_METHOD_FIPS:
-			WLog_INFO(TAG, "Selected rdp encryption method: FIPS");
-			break;
+			case ENCRYPTION_METHOD_FIPS:
+				WLog_INFO(TAG, "Selected rdp encryption method: FIPS");
+				break;
 
-		default:
-			WLog_ERR(TAG, "internal error: unknown encryption method");
-			return FALSE;
+			default:
+				WLog_ERR(TAG, "internal error: unknown encryption method");
+				return FALSE;
+		}
 	}
 
 	const size_t posHeader = Stream_GetPosition(s);

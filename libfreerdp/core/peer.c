@@ -256,13 +256,18 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 		return FALSE;
 	}
 
-	if (!freerdp_certificate_is_rdp_security_compatible(cert))
+	if (freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity))
 	{
-		if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
-			return FALSE;
-		if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
-			return FALSE;
+
+		if (!freerdp_certificate_is_rdp_security_compatible(cert))
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+				return FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+				return FALSE;
+		}
 	}
+
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
 		return FALSE;
 
