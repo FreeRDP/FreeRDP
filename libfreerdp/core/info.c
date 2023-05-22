@@ -987,7 +987,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 	if (!rdp_read_header(rdp, s, &length, &channelId))
 		return FALSE;
 
-	if (!rdp_read_security_header(s, &securityFlags, &length))
+	if (!rdp_read_security_header(rdp, s, &securityFlags, &length))
 		return FALSE;
 
 	if ((securityFlags & SEC_INFO_PKT) == 0)

@@ -202,16 +202,18 @@ struct rdp_rdp
 	BOOL was_deactivated;
 	UINT32 deactivated_width;
 	UINT32 deactivated_height;
+
+	wLog* log;
 };
 
-FREERDP_LOCAL BOOL rdp_read_security_header(wStream* s, UINT16* flags, UINT16* length);
-FREERDP_LOCAL BOOL rdp_write_security_header(wStream* s, UINT16 flags);
+FREERDP_LOCAL BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT16* flags, UINT16* length);
+FREERDP_LOCAL BOOL rdp_write_security_header(rdpRdp* rdp, wStream* s, UINT16 flags);
 
-FREERDP_LOCAL BOOL rdp_read_share_control_header(wStream* s, UINT16* tpktLength,
+FREERDP_LOCAL BOOL rdp_read_share_control_header(rdpRdp* rdp, wStream* s, UINT16* tpktLength,
                                                  UINT16* remainingLength, UINT16* type,
                                                  UINT16* channel_id);
 
-FREERDP_LOCAL BOOL rdp_read_share_data_header(wStream* s, UINT16* length, BYTE* type,
+FREERDP_LOCAL BOOL rdp_read_share_data_header(rdpRdp* rdp, wStream* s, UINT16* length, BYTE* type,
                                               UINT32* share_id, BYTE* compressed_type,
                                               UINT16* compressed_len);
 
@@ -259,11 +261,11 @@ FREERDP_LOCAL void* rdp_get_io_callback_context(rdpRdp* rdp);
 
 #define RDP_TAG FREERDP_TAG("core.rdp")
 #ifdef WITH_DEBUG_RDP
-#define DEBUG_RDP(...) WLog_DBG(RDP_TAG, __VA_ARGS__)
+#define DEBUG_RDP(rdp, ...) WLog_Print(rdp->log, WLOG_DEBUG, __VA_ARGS__)
 #else
-#define DEBUG_RDP(...) \
-	do                 \
-	{                  \
+#define DEBUG_RDP(rdp, ...) \
+	do                      \
+	{                       \
 	} while (0)
 #endif
 
@@ -291,6 +293,6 @@ const char* rdp_security_flag_string(UINT32 securityFlags, char* buffer, size_t 
 BOOL rdp_set_backup_settings(rdpRdp* rdp);
 BOOL rdp_reset_runtime_settings(rdpRdp* rdp);
 
-void rdp_log_build_warnings(void);
+void rdp_log_build_warnings(rdpRdp* rdp);
 
 #endif /* FREERDP_LIB_CORE_RDP_H */

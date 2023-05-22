@@ -366,7 +366,7 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 	WINPR_ASSERT(pointer);
 
 #ifdef WITH_DEBUG_RDP
-	DEBUG_RDP("recv Fast-Path %s Update (0x%02" PRIX8 "), length:%" PRIuz "",
+	DEBUG_RDP(fastpath->rdp, "recv Fast-Path %s Update (0x%02" PRIX8 "), length:%" PRIuz "",
 	          fastpath_update_to_string(updateCode), updateCode, Stream_GetRemainingLength(s));
 #endif
 
