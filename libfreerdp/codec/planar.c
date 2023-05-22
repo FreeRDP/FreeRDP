@@ -612,10 +612,19 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 	const UINT32 h = MIN(nSrcHeight, nDstHeight);
 	const primitives_t* prims = primitives_get();
 
+	WINPR_ASSERT(planar);
+	WINPR_ASSERT(prims);
+
 	if (nDstStep <= 0)
 		nDstStep = nDstWidth * GetBytesPerPixel(DstFormat);
 
 	srcp = pSrcData;
+
+	if (!pSrcData)
+	{
+		WLog_ERR(TAG, "Invalid argument pSrcData=NULL");
+		return FALSE;
+	}
 
 	if (!pDstData)
 	{
