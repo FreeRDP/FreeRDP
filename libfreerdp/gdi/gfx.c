@@ -1216,6 +1216,28 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 	return rc;
 }
 
+static BOOL intersect_rect(const RECTANGLE_16* rect, const gdiGfxSurface* surface,
+                           RECTANGLE_16* prect)
+{
+	WINPR_ASSERT(rect);
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(prect);
+
+	if (rect->left > rect->right)
+		return FALSE;
+	if (rect->left > surface->width)
+		return FALSE;
+	if (rect->top > rect->bottom)
+		return FALSE;
+	if (rect->top > surface->height)
+		return FALSE;
+	prect->left = rect->left;
+	prect->top = rect->top;
+	prect->right = MIN(rect->right, surface->width);
+	prect->bottom = MIN(rect->bottom, surface->height);
+	return TRUE;
+}
+
 /**
  * Function description
  *
@@ -1224,43 +1246,39 @@ static UINT gdi_DeleteSurface(RdpgfxClientContext* context,
 static UINT gdi_SolidFill(RdpgfxClientContext* context, const RDPGFX_SOLID_FILL_PDU* solidFill)
 {
 	UINT status = ERROR_INTERNAL_ERROR;
-	UINT16 index;
-	UINT32 color;
-	BYTE a, r, g, b;
-	UINT32 nWidth, nHeight;
-	RECTANGLE_16* rect;
-	gdiGfxSurface* surface;
-	RECTANGLE_16 invalidRect;
+	BYTE a = 0;
+	RECTANGLE_16 invalidRect = { 0 };
 	rdpGdi* gdi = (rdpGdi*)context->custom;
+
 	EnterCriticalSection(&context->mux);
 
 	WINPR_ASSERT(context->GetSurfaceData);
-	surface = (gdiGfxSurface*)context->GetSurfaceData(context, solidFill->surfaceId);
+	gdiGfxSurface* surface = (gdiGfxSurface*)context->GetSurfaceData(context, solidFill->surfaceId);
 
 	if (!surface)
 		goto fail;
 
-	b = solidFill->fillPixel.B;
-	g = solidFill->fillPixel.G;
-	r = solidFill->fillPixel.R;
+	const BYTE b = solidFill->fillPixel.B;
+	const BYTE g = solidFill->fillPixel.G;
+	const BYTE r = solidFill->fillPixel.R;
 	if (FreeRDPColorHasAlpha(surface->format))
 		a = solidFill->fillPixel.XA;
 	else
 		a = 0xFF;
-	color = FreeRDPGetColor(surface->format, r, g, b, a);
+	const UINT32 color = FreeRDPGetColor(surface->format, r, g, b, a);
 
-	for (index = 0; index < solidFill->fillRectCount; index++)
+	for (UINT16 index = 0; index < solidFill->fillRectCount; index++)
 	{
-		rect = &(solidFill->fillRects[index]);
-		nWidth = rect->right - rect->left;
-		nHeight = rect->bottom - rect->top;
-		invalidRect.left = rect->left;
-		invalidRect.top = rect->top;
-		invalidRect.right = rect->right;
-		invalidRect.bottom = rect->bottom;
+		const RECTANGLE_16* rect = &(solidFill->fillRects[index]);
 
-		if (!freerdp_image_fill(surface->data, surface->format, surface->scanline, rect->left,
-		                        rect->top, nWidth, nHeight, color))
+		if (!intersect_rect(rect, surface, &invalidRect))
+			goto fail;
+
+		const UINT32 nWidth = invalidRect.right - invalidRect.left;
+		const UINT32 nHeight = invalidRect.bottom - invalidRect.top;
+
+		if (!freerdp_image_fill(surface->data, surface->format, surface->scanline, invalidRect.left,
+		                        invalidRect.top, nWidth, nHeight, color))
 			goto fail;
 
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion), &invalidRect);
