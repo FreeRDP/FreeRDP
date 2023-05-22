@@ -159,6 +159,7 @@ static void CALLBACK yuv444_process_work_callback(PTP_CALLBACK_INSTANCE instance
 
 BOOL yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height)
 {
+	BOOL rc = FALSE;
 	WINPR_ASSERT(context);
 
 	context->width = width;
@@ -180,7 +181,9 @@ BOOL yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height)
 			void* tmp = winpr_aligned_recalloc(context->work_enc_params, count,
 			                                   sizeof(YUV_ENCODE_WORK_PARAM), 32);
 			if (!tmp)
-				return FALSE;
+				goto fail;
+			memset(tmp, 0, count * sizeof(YUV_ENCODE_WORK_PARAM));
+
 			context->work_enc_params = tmp;
 		}
 		else
@@ -188,25 +191,31 @@ BOOL yuv_context_reset(YUV_CONTEXT* context, UINT32 width, UINT32 height)
 			void* tmp = winpr_aligned_recalloc(context->work_dec_params, count,
 			                                   sizeof(YUV_PROCESS_WORK_PARAM), 32);
 			if (!tmp)
-				return FALSE;
+				goto fail;
+			memset(tmp, 0, count * sizeof(YUV_PROCESS_WORK_PARAM));
 
 			context->work_dec_params = tmp;
 
 			void* ctmp = winpr_aligned_recalloc(context->work_combined_params, count,
 			                                    sizeof(YUV_COMBINE_WORK_PARAM), 32);
 			if (!ctmp)
-				return FALSE;
+				goto fail;
+			memset(ctmp, 0, count * sizeof(YUV_COMBINE_WORK_PARAM));
+
 			context->work_combined_params = ctmp;
 		}
 
 		void* wtmp = winpr_aligned_recalloc(context->work_objects, count, sizeof(PTP_WORK), 32);
 		if (!wtmp)
-			return FALSE;
+			goto fail;
+		memset(wtmp, 0, count * sizeof(PTP_WORK));
 
 		context->work_objects = wtmp;
 		context->work_object_count = count;
 	}
-	return TRUE;
+	rc = TRUE;
+fail:
+	return rc;
 }
 
 YUV_CONTEXT* yuv_context_new(BOOL encoder, UINT32 ThreadingFlags)
@@ -302,7 +311,12 @@ static BOOL submit_object(PTP_WORK* work_object, PTP_WORK_CALLBACK cb, const voi
 
 	cnv.cpv = param;
 
-	if (!work_object || !param || !context)
+	if (!work_object)
+		return FALSE;
+
+	*work_object = NULL;
+
+	if (!param || !context)
 		return FALSE;
 
 	*work_object = CreateThreadpoolWork(cb, cnv.pv, &context->ThreadPoolEnv);
@@ -431,7 +445,7 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 	}
 	rc = TRUE;
 fail:
-	free_objects(context->work_objects, waitCount);
+	free_objects(context->work_objects, context->work_object_count);
 	return rc;
 }
 
@@ -571,7 +585,7 @@ static BOOL pool_decode_rect(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVDa
 
 	rc = TRUE;
 fail:
-	free_objects(context->work_objects, waitCount);
+	free_objects(context->work_objects, context->work_object_count);
 	return rc;
 }
 
@@ -831,7 +845,7 @@ static BOOL pool_encode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 
 	rc = TRUE;
 fail:
-	free_objects(context->work_objects, waitCount);
+	free_objects(context->work_objects, context->work_object_count);
 	return rc;
 }
 
