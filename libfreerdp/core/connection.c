@@ -1384,15 +1384,15 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 		return FALSE;
 
 	RequestedProtocols = nego_get_requested_protocols(nego);
-	WLog_INFO(TAG, "Client Security: RDSTLS:%d NLA:%d TLS:%d RDP:%d",
-	          (RequestedProtocols & PROTOCOL_RDSTLS) ? 1 : 0,
-	          (RequestedProtocols & PROTOCOL_HYBRID) ? 1 : 0,
-	          (RequestedProtocols & PROTOCOL_SSL) ? 1 : 0,
-	          (RequestedProtocols == PROTOCOL_RDP) ? 1 : 0);
-	WLog_INFO(TAG,
-	          "Server Security: RDSTLS:%" PRId32 " NLA:%" PRId32 " TLS:%" PRId32 " RDP:%" PRId32 "",
-	          settings->RdstlsSecurity, settings->NlaSecurity, settings->TlsSecurity,
-	          settings->RdpSecurity);
+	WLog_DBG(TAG, "Client Security: RDSTLS:%d NLA:%d TLS:%d RDP:%d",
+	         (RequestedProtocols & PROTOCOL_RDSTLS) ? 1 : 0,
+	         (RequestedProtocols & PROTOCOL_HYBRID) ? 1 : 0,
+	         (RequestedProtocols & PROTOCOL_SSL) ? 1 : 0,
+	         (RequestedProtocols == PROTOCOL_RDP) ? 1 : 0);
+	WLog_DBG(TAG,
+	         "Server Security: RDSTLS:%" PRId32 " NLA:%" PRId32 " TLS:%" PRId32 " RDP:%" PRId32 "",
+	         settings->RdstlsSecurity, settings->NlaSecurity, settings->TlsSecurity,
+	         settings->RdpSecurity);
 
 	if ((settings->RdstlsSecurity) && (RequestedProtocols & PROTOCOL_RDSTLS))
 	{
@@ -1442,11 +1442,11 @@ BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 
 	if (!(SelectedProtocol & PROTOCOL_FAILED_NEGO))
 	{
-		WLog_INFO(TAG, "Negotiated Security: RDSTLS:%d NLA:%d TLS:%d RDP:%d",
-		          (SelectedProtocol & PROTOCOL_RDSTLS) ? 1 : 0,
-		          (SelectedProtocol & PROTOCOL_HYBRID) ? 1 : 0,
-		          (SelectedProtocol & PROTOCOL_SSL) ? 1 : 0,
-		          (SelectedProtocol == PROTOCOL_RDP) ? 1 : 0);
+		WLog_DBG(TAG, "Negotiated Security: RDSTLS:%d NLA:%d TLS:%d RDP:%d",
+		         (SelectedProtocol & PROTOCOL_RDSTLS) ? 1 : 0,
+		         (SelectedProtocol & PROTOCOL_HYBRID) ? 1 : 0,
+		         (SelectedProtocol & PROTOCOL_SSL) ? 1 : 0,
+		         (SelectedProtocol == PROTOCOL_RDP) ? 1 : 0);
 	}
 
 	if (!nego_set_selected_protocol(nego, SelectedProtocol))
@@ -1491,8 +1491,8 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 	if (!mcs_server_apply_to_settings(mcs, rdp->settings))
 		return FALSE;
 
-	WLog_INFO(TAG, "Accepted client: %s", rdp->settings->ClientHostname);
-	WLog_INFO(TAG, "Accepted channels:");
+	WLog_DBG(TAG, "Accepted client: %s", rdp->settings->ClientHostname);
+	WLog_DBG(TAG, "Accepted channels:");
 
 	WINPR_ASSERT(mcs->channels || (mcs->channelCount == 0));
 	for (UINT32 i = 0; i < mcs->channelCount; i++)
@@ -1500,7 +1500,7 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 		ADDIN_ARGV* arg;
 		rdpMcsChannel* cur = &mcs->channels[i];
 		const char* params[1] = { cur->Name };
-		WLog_INFO(TAG, " %s [%" PRIu16 "]", cur->Name, cur->ChannelId);
+		WLog_DBG(TAG, " %s [%" PRIu16 "]", cur->Name, cur->ChannelId);
 		arg = freerdp_addin_argv_new(ARRAYSIZE(params), params);
 		if (!arg)
 			return FALSE;
