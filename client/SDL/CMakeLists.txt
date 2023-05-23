@@ -100,24 +100,30 @@ set(LIBS
 
 option(WITH_WEBVIEW "Build with QtWebEngine support for AAD login popup browser" OFF)
 if (WITH_WEBVIEW)
-	include(FindPkgConfig)
-	pkg_check_modules(QT REQUIRED Qt5WebEngineWidgets)
+  find_package(Qt5 COMPONENTS WebEngineWidgets REQUIRED)
 
-  list(APPEND SRCS sdl_webview.cpp)
-  add_definitions(-DWITH_WEBVIEW)
-  include_directories(${QT_INCLUDE_DIRS})
-  list(APPEND LIBS ${QT_LIBRARIES})
+  list(APPEND SRCS
+      sdl_webview.cpp
+      sdl_webview.hpp
+      )
+  list(APPEND LIBS Qt5::WebEngineWidgets)
 endif()
 
 add_executable(${PROJECT_NAME}
 	${SRCS}
     )
 
-if (QT_FOUND)
-  target_compile_options(${PROJECT_NAME} PRIVATE -fPIC)
+if (WITH_WEBVIEW)
+	target_compile_definitions(
+		${PROJECT_NAME} PRIVATE
+		-DWITH_WEBVIEW
+	)
 endif()
 
-set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "sdl-freerdp")
+set_target_properties(${PROJECT_NAME}
+    PROPERTIES
+    OUTPUT_NAME "sdl-freerdp"
+    )
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/SDL")
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
