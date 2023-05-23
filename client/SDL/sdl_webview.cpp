@@ -24,6 +24,7 @@
 #include <QWebEngineUrlSchemeHandler>
 #include <QWebEngineUrlRequestJob>
 
+#include <string>
 #include <stdlib.h>
 #include <winpr/string.h>
 
@@ -64,9 +65,11 @@ BOOL sdl_webview_get_aad_auth_code(freerdp* instance, const char* hostname, char
                                    const char** client_id, const char** redirect_uri)
 {
 	int argc = 1;
-	char* name = "FreeRDP WebView";
+	std::string name = "FreeRDP WebView";
 	size_t size = 0;
 	char* login_url = nullptr;
+
+	WINPR_UNUSED(instance);
 
 	*code = nullptr;
 	*client_id = "5177bc73-fd99-4c77-a90c-76844c9b6999";
@@ -82,7 +85,8 @@ BOOL sdl_webview_get_aad_auth_code(freerdp* instance, const char* hostname, char
 
 	QWebEngineUrlScheme::registerScheme(QWebEngineUrlScheme("ms-appx-web"));
 
-	QApplication app(argc, &name);
+	auto cname = name.data();
+	QApplication app(argc, &cname);
 
 	SchemeHandler handler(code);
 	QWebEngineProfile::defaultProfile()->installUrlSchemeHandler("ms-appx-web", &handler);
