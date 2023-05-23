@@ -1020,7 +1020,6 @@ static rdpPrinterDriver* printer_load_backend(const char* backend)
  */
 UINT printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
-	int i;
 	char* name;
 	char* driver_name;
 	BOOL default_backend = TRUE;
