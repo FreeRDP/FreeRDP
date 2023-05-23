@@ -239,7 +239,7 @@ BOOL cert_blob_read(rdpCertBlob* blob, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, certLength))
 		goto fail;
 
-	DEBUG_CERTIFICATE("X.509 Certificate #%" PRIu32 ", length:%" PRIu32 "", i + 1, certLength);
+	DEBUG_CERTIFICATE("X.509 Certificate length:%" PRIu32 "", certLength);
 	blob->data = (BYTE*)malloc(certLength);
 
 	if (!blob->data)
@@ -960,7 +960,7 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* cert,
 				return FALSE;
 			}
 
-			DEBUG_CERTIFICATE("modulus length:%" PRIu32 "", cert_info.ModulusLength);
+			DEBUG_CERTIFICATE("modulus length:%" PRIu32 "", cert->cert_info.ModulusLength);
 		}
 	}
 
