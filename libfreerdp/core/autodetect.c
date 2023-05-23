@@ -206,9 +206,9 @@ static BOOL autodetect_send_bandwidth_measure_start(rdpAutoDetect* autodetect,
 	return rdp_send_message_channel_pdu(autodetect->context->rdp, s, SEC_AUTODETECT_REQ);
 }
 
-BOOL autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
-                                               RDP_TRANSPORT_TYPE transport, UINT16 sequenceNumber,
-                                               UINT16 payloadLength)
+static BOOL autodetect_send_bandwidth_measure_payload(rdpAutoDetect* autodetect,
+                                                      RDP_TRANSPORT_TYPE transport,
+                                                      UINT16 sequenceNumber, UINT16 payloadLength)
 {
 	wStream* s;
 
