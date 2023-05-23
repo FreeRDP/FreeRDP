@@ -422,6 +422,8 @@ fail:
 
 char* freerdp_key_get_param(const rdpPrivateKey* key, enum FREERDP_KEY_PARAM param, size_t* plength)
 {
+	BYTE* buf = NULL;
+
 	WINPR_ASSERT(key);
 	WINPR_ASSERT(plength);
 
@@ -482,7 +484,7 @@ char* freerdp_key_get_param(const rdpPrivateKey* key, enum FREERDP_KEY_PARAM par
 		goto fail;
 
 	const size_t alloc_size = (size_t)length + 1ull;
-	BYTE* buf = calloc(alloc_size, sizeof(BYTE));
+	buf = calloc(alloc_size, sizeof(BYTE));
 	if (!buf)
 		goto fail;
 
