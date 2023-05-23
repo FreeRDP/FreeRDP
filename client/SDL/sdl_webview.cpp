@@ -50,7 +50,7 @@ class SchemeHandler : public QWebEngineUrlSchemeHandler
 				continue;
 
 			QByteArray code = pair[1].toUtf8();
-			*codeptr = (char*)calloc(1, code.size() + 1);
+			*codeptr = reinterpret_cast<char*>(calloc(1, code.size() + 1));
 			strcpy(*codeptr, code.constData());
 			break;
 		}

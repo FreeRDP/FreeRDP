@@ -65,8 +65,8 @@ BOOL sdl_scale_coordinates(sdlContext* sdl, Uint32 windowId, INT32* px, INT32* p
 		}
 		SDL_GetWindowSize(window->window, &w, &h);
 
-		sx = w / (double)gdi->width;
-		sy = h / (double)gdi->height;
+		sx = w / static_cast<double>(gdi->width);
+		sy = h / static_cast<double>(gdi->height);
 		offset_x = window->offset_x;
 		offset_y = window->offset_y;
 		break;
@@ -76,13 +76,13 @@ BOOL sdl_scale_coordinates(sdlContext* sdl, Uint32 windowId, INT32* px, INT32* p
 	{
 		if (!fromLocalToRDP)
 		{
-			*px = (INT32)(*px * sx);
-			*py = (INT32)(*py * sy);
+			*px = static_cast<INT32>(*px * sx);
+			*py = static_cast<INT32>(*py * sy);
 		}
 		else
 		{
-			*px = (INT32)(*px / sx);
-			*py = (INT32)(*py / sy);
+			*px = static_cast<INT32>(*px / sx);
+			*py = static_cast<INT32>(*py / sy);
 		}
 	}
 	else if (applyOffset)
@@ -119,8 +119,8 @@ static BOOL sdl_get_touch_scaled(sdlContext* sdl, const SDL_TouchFingerEvent* ev
 		return FALSE;
 
 	// TODO: Add the offset of the surface in the global coordinates
-	*px = (INT32)(ev->x * (float)surface->w);
-	*py = (INT32)(ev->y * (float)surface->h);
+	*px = static_cast<INT32>(ev->x * static_cast<float>(surface->w));
+	*py = static_cast<INT32>(ev->y * static_cast<float>(surface->h));
 	return sdl_scale_coordinates(sdl, windowID, px, py, local, TRUE);
 }
 
@@ -135,7 +135,7 @@ static BOOL send_mouse_wheel(sdlContext* sdl, UINT16 flags, INT32 avalue)
 
 	while (avalue > 0)
 	{
-		const UINT16 cval = (avalue > 0xFF) ? 0xFF : (UINT16)avalue;
+		const UINT16 cval = (avalue > 0xFF) ? 0xFF : static_cast<UINT16>(avalue);
 		UINT16 cflags = flags | cval;
 		/* Convert negative values to 9bit twos complement */
 		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
@@ -155,7 +155,7 @@ static UINT32 sdl_scale_pressure(const float pressure)
 		return 0;
 	if (val > 0x400)
 		return 0x400;
-	return (UINT32)val;
+	return static_cast<UINT32>(val);
 }
 
 BOOL sdl_handle_touch_up(sdlContext* sdl, const SDL_TouchFingerEvent* ev)
@@ -167,7 +167,8 @@ BOOL sdl_handle_touch_up(sdlContext* sdl, const SDL_TouchFingerEvent* ev)
 	if (!sdl_get_touch_scaled(sdl, ev, &x, &y, TRUE))
 		return FALSE;
 	return freerdp_client_handle_touch(&sdl->common, FREERDP_TOUCH_UP | FREERDP_TOUCH_HAS_PRESSURE,
-	                                   (INT32)ev->fingerId, sdl_scale_pressure(ev->pressure), x, y);
+	                                   static_cast<INT32>(ev->fingerId),
+	                                   sdl_scale_pressure(ev->pressure), x, y);
 }
 
 BOOL sdl_handle_touch_down(sdlContext* sdl, const SDL_TouchFingerEvent* ev)
@@ -178,9 +179,9 @@ BOOL sdl_handle_touch_down(sdlContext* sdl, const SDL_TouchFingerEvent* ev)
 	INT32 x, y;
 	if (!sdl_get_touch_scaled(sdl, ev, &x, &y, TRUE))
 		return FALSE;
-	return freerdp_client_handle_touch(&sdl->common,
-	                                   FREERDP_TOUCH_DOWN | FREERDP_TOUCH_HAS_PRESSURE,
-	                                   (INT32)ev->fingerId, sdl_scale_pressure(ev->pressure), x, y);
+	return freerdp_client_handle_touch(
+	    &sdl->common, FREERDP_TOUCH_DOWN | FREERDP_TOUCH_HAS_PRESSURE,
+	    static_cast<INT32>(ev->fingerId), sdl_scale_pressure(ev->pressure), x, y);
 }
 
 BOOL sdl_handle_touch_motion(sdlContext* sdl, const SDL_TouchFingerEvent* ev)
@@ -191,9 +192,9 @@ BOOL sdl_handle_touch_motion(sdlContext* sdl, const SDL_TouchFingerEvent* ev)
 	INT32 x, y;
 	if (!sdl_get_touch_scaled(sdl, ev, &x, &y, TRUE))
 		return FALSE;
-	return freerdp_client_handle_touch(&sdl->common,
-	                                   FREERDP_TOUCH_MOTION | FREERDP_TOUCH_HAS_PRESSURE,
-	                                   (INT32)ev->fingerId, sdl_scale_pressure(ev->pressure), x, y);
+	return freerdp_client_handle_touch(
+	    &sdl->common, FREERDP_TOUCH_MOTION | FREERDP_TOUCH_HAS_PRESSURE,
+	    static_cast<INT32>(ev->fingerId), sdl_scale_pressure(ev->pressure), x, y);
 }
 
 BOOL sdl_handle_mouse_motion(sdlContext* sdl, const SDL_MouseMotionEvent* ev)

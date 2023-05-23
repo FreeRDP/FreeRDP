@@ -439,8 +439,9 @@ static BOOL sdl_create_primary(sdlContext* sdl)
 
 	sdl_destroy_primary(sdl);
 	sdl->primary = SDL_CreateRGBSurfaceWithFormatFrom(
-	    gdi->primary_buffer, (int)gdi->width, (int)gdi->height,
-	    (int)FreeRDPGetBitsPerPixel(gdi->dstFormat), (int)gdi->stride, sdl->sdl_pixel_format);
+	    gdi->primary_buffer, static_cast<int>(gdi->width), static_cast<int>(gdi->height),
+	    static_cast<int>(FreeRDPGetBitsPerPixel(gdi->dstFormat)), static_cast<int>(gdi->stride),
+	    sdl->sdl_pixel_format);
 	sdl->primary_format = SDL_AllocFormat(sdl->sdl_pixel_format);
 
 	if (!sdl->primary || !sdl->primary_format)
@@ -500,16 +501,13 @@ static BOOL sdl_wait_for_init(sdlContext* sdl)
  * Set all configuration options to support and load channels here. */
 static BOOL sdl_pre_connect(freerdp* instance)
 {
-	rdpSettings* settings;
-	sdlContext* sdl;
-
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(instance->context);
 
-	sdl = (sdlContext*)instance->context;
+	auto sdl = reinterpret_cast<sdlContext*>(instance->context);
 	sdl->highDpi = TRUE; // If High DPI is available, we want unscaled data, RDP can scale itself.
 
-	settings = instance->context->settings;
+	auto settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
 	/* Optional OS identifier sent to server */
@@ -646,7 +644,7 @@ static BOOL sdl_create_windows(sdlContext* sdl)
 		window = &sdl->windows[x];
 
 		window->window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-		                                  (int)w, (int)h, flags);
+		                                  static_cast<int>(w), static_cast<int>(h), flags);
 		if (!window->window)
 			goto fail;
 	}
@@ -836,8 +834,10 @@ static int sdl_run(sdlContext* sdl)
 				break;
 				case SDL_USEREVENT_POINTER_POSITION:
 				{
-					const INT32 x = (INT32)(uintptr_t)windowEvent.user.data1;
-					const INT32 y = (INT32)(uintptr_t)windowEvent.user.data2;
+					const INT32 x =
+					    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data1));
+					const INT32 y =
+					    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data2));
 
 					SDL_Window* window = SDL_GetMouseFocus();
 					if (window)
@@ -877,15 +877,12 @@ fail:
  */
 static BOOL sdl_post_connect(freerdp* instance)
 {
-	sdlContext* sdl;
-	rdpContext* context;
-
 	WINPR_ASSERT(instance);
 
-	context = instance->context;
+	auto context = instance->context;
 	WINPR_ASSERT(context);
 
-	sdl = (sdlContext*)context;
+	auto sdl = reinterpret_cast<sdlContext*>(context);
 
 	if (freerdp_settings_get_bool(context->settings, FreeRDP_AuthenticationOnly))
 	{
@@ -940,15 +937,13 @@ static BOOL sdl_post_connect(freerdp* instance)
  */
 static void sdl_post_disconnect(freerdp* instance)
 {
-	sdlContext* context;
-
 	if (!instance)
 		return;
 
 	if (!instance->context)
 		return;
 
-	context = (sdlContext*)instance->context;
+	auto context = reinterpret_cast<sdlContext*>(instance->context);
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
 	                                   sdl_OnChannelConnectedEventHandler);
 	PubSub_UnsubscribeChannelDisconnected(instance->context->pubSub,
@@ -960,15 +955,13 @@ static void sdl_post_disconnect(freerdp* instance)
 
 static void sdl_post_final_disconnect(freerdp* instance)
 {
-	sdlContext* context;
-
 	if (!instance)
 		return;
 
 	if (!instance->context)
 		return;
 
-	context = (sdlContext*)instance->context;
+	auto context = reinterpret_cast<sdlContext*>(instance->context);
 
 	delete (context->disp);
 	context->disp = nullptr;
@@ -982,7 +975,7 @@ static void sdl_post_final_disconnect(freerdp* instance)
  * after the connection ends. */
 static DWORD WINAPI sdl_client_thread_proc(void* arg)
 {
-	sdlContext* sdl = (sdlContext*)arg;
+	auto sdl = reinterpret_cast<sdlContext*>(arg);
 	DWORD nCount;
 	DWORD status;
 	int exit_code = SDL_EXIT_SUCCESS;
