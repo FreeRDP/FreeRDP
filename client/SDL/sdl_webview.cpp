@@ -33,8 +33,7 @@
 class SchemeHandler : public QWebEngineUrlSchemeHandler
 {
   public:
-	SchemeHandler(char** code, QObject* parent = nullptr)
-	    : QWebEngineUrlSchemeHandler(parent), codeptr(code)
+	SchemeHandler(QObject* parent = nullptr) : QWebEngineUrlSchemeHandler(parent)
 	{
 	}
 
@@ -42,6 +41,7 @@ class SchemeHandler : public QWebEngineUrlSchemeHandler
 	{
 		QUrl url = request->requestUrl();
 
+		int rc = -1;
 		for (auto& param : url.query().split('&'))
 		{
 			QStringList pair = param.split('=');
@@ -49,16 +49,21 @@ class SchemeHandler : public QWebEngineUrlSchemeHandler
 			if (pair.size() != 2 || pair[0] != "code")
 				continue;
 
-			QByteArray code = pair[1].toUtf8();
-			*codeptr = reinterpret_cast<char*>(calloc(1, code.size() + 1));
-			strcpy(*codeptr, code.constData());
+			auto qc = pair[1];
+			m_code = qc.toStdString();
+			rc = 0;
 			break;
 		}
-		qApp->exit();
+		qApp->exit(rc);
+	}
+
+	const std::string code() const
+	{
+		m_code;
 	}
 
   private:
-	char** codeptr;
+	std::string m_code;
 };
 
 BOOL sdl_webview_get_aad_auth_code(freerdp* instance, const char* hostname, char** code,
@@ -66,8 +71,12 @@ BOOL sdl_webview_get_aad_auth_code(freerdp* instance, const char* hostname, char
 {
 	int argc = 1;
 	std::string name = "FreeRDP WebView";
-	size_t size = 0;
-	char* login_url = nullptr;
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(hostname);
+	WINPR_ASSERT(code);
+	WINPR_ASSERT(client_id);
+	WINPR_ASSERT(redirect_uri);
 
 	WINPR_UNUSED(instance);
 
@@ -76,27 +85,35 @@ BOOL sdl_webview_get_aad_auth_code(freerdp* instance, const char* hostname, char
 	*redirect_uri =
 	    "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f5177bc73-fd99-4c77-a90c-76844c9b6999";
 
-	winpr_asprintf(&login_url, &size,
-	               "https://login.microsoftonline.com/common/oauth2/v2.0/"
-	               "authorize?client_id=%s&response_type="
-	               "code&scope=ms-device-service%%3A%%2F%%2Ftermsrv.wvd.microsoft.com%%2Fname%%"
-	               "2F%s%%2Fuser_impersonation&redirect_uri=%s",
-	               *client_id, hostname, *redirect_uri);
+	auto url = QString("https://login.microsoftonline.com/common/oauth2/v2.0/"
+	                   "authorize?client_id=%1&response_type="
+	                   "code&scope=ms-device-service%%3A%%2F%%2Ftermsrv.wvd.microsoft.com%%2Fname%%"
+	                   "2F%2%%2Fuser_impersonation&redirect_uri=%3")
+	               .arg(*client_id)
+	               .arg(hostname)
+	               .arg(*redirect_uri);
 
 	QWebEngineUrlScheme::registerScheme(QWebEngineUrlScheme("ms-appx-web"));
 
-	auto cname = name.data();
-	QApplication app(argc, &cname);
+	char* argv[] = { name.data() };
+	QCoreApplication::setOrganizationName("QtExamples");
+	QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+	QApplication app(argc, argv);
 
-	SchemeHandler handler(code);
+	SchemeHandler handler;
 	QWebEngineProfile::defaultProfile()->installUrlSchemeHandler("ms-appx-web", &handler);
 
 	QWebEngineView webview;
-	webview.load(QUrl(login_url));
+	webview.load(QUrl(url));
 	webview.show();
 
-	app.exec();
+	if (app.exec() != 0)
+		return FALSE;
 
-	free(login_url);
-	return (*code != nullptr);
+	auto val = handler.code();
+	if (val.empty())
+		return FALSE;
+	*code = _strdup(val.c_str());
+
+	return (*code != nullptr) ? TRUE : FALSE;
 }
