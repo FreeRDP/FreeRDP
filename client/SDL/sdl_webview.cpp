@@ -33,7 +33,9 @@ class SchemeHandler : public QWebEngineUrlSchemeHandler
 {
   public:
 	SchemeHandler(char** code, QObject* parent = nullptr)
-	    : QWebEngineUrlSchemeHandler(parent), codeptr(code){};
+	    : QWebEngineUrlSchemeHandler(parent), codeptr(code)
+	{
+	}
 
 	void requestStarted(QWebEngineUrlRequestJob* request)
 	{
