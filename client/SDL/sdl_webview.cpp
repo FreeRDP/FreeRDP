@@ -37,7 +37,7 @@ class SchemeHandler : public QWebEngineUrlSchemeHandler
 	{
 	}
 
-	void requestStarted(QWebEngineUrlRequestJob* request)
+	void requestStarted(QWebEngineUrlRequestJob* request) override
 	{
 		QUrl url = request->requestUrl();
 
