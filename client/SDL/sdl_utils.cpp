@@ -136,7 +136,7 @@ BOOL sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file,
 
 BOOL sdl_push_user_event(Uint32 type, ...)
 {
-	SDL_Event ev = { 0 };
+	SDL_Event ev = {};
 	SDL_UserEvent* event = &ev.user;
 
 	va_list ap;
@@ -148,15 +148,15 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 			event->data1 = va_arg(ap, void*);
 			break;
 		case SDL_USEREVENT_POINTER_POSITION:
-			event->data1 = (void*)(uintptr_t)va_arg(ap, UINT32);
-			event->data2 = (void*)(uintptr_t)va_arg(ap, UINT32);
+			event->data1 = reinterpret_cast<void*>(static_cast<uintptr_t>(va_arg(ap, UINT32)));
+			event->data2 = reinterpret_cast<void*>(static_cast<uintptr_t>(va_arg(ap, UINT32)));
 			break;
 		case SDL_USEREVENT_POINTER_SET:
 			event->data1 = va_arg(ap, void*);
 			event->data2 = va_arg(ap, void*);
 			break;
 		case SDL_USEREVENT_CREATE_WINDOWS:
-			event->data1 = (void*)va_arg(ap, void*);
+			event->data1 = reinterpret_cast<void*>(va_arg(ap, void*));
 			break;
 		case SDL_USEREVENT_WINDOW_FULLSCREEN:
 		case SDL_USEREVENT_WINDOW_RESIZEABLE:

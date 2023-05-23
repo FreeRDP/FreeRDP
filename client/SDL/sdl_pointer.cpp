@@ -80,7 +80,7 @@ static void sdl_Pointer_Clear(sdlPointer* ptr)
 
 static void sdl_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
-	sdlPointer* ptr = (sdlPointer*)pointer;
+	auto ptr = reinterpret_cast<sdlPointer*>(pointer);
 	WINPR_UNUSED(context);
 
 	if (ptr)
@@ -100,7 +100,7 @@ static BOOL sdl_Pointer_SetDefault(rdpContext* context)
 
 static BOOL sdl_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
-	sdlContext* sdl = (sdlContext*)context;
+	auto sdl = reinterpret_cast<sdlContext*>(context);
 
 	return sdl_push_user_event(SDL_USEREVENT_POINTER_SET, pointer, sdl);
 }
@@ -123,10 +123,10 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 	rdpGdi* gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 
-	x = (INT32)pointer->xPos;
-	y = (INT32)pointer->yPos;
-	sw = w = (INT32)pointer->width;
-	sh = h = (INT32)pointer->height;
+	x = static_cast<INT32>(pointer->xPos);
+	y = static_cast<INT32>(pointer->yPos);
+	sw = w = static_cast<INT32>(pointer->width);
+	sh = h = static_cast<INT32>(pointer->height);
 
 	SDL_Window* window = SDL_GetMouseFocus();
 	if (!window)
@@ -141,16 +141,18 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 	sdl_Pointer_Clear(ptr);
 
 	const DWORD bpp = FreeRDPGetBitsPerPixel(gdi->dstFormat);
-	ptr->image = SDL_CreateRGBSurfaceWithFormat(0, sw, sh, (int)bpp, sdl->sdl_pixel_format);
+	ptr->image =
+	    SDL_CreateRGBSurfaceWithFormat(0, sw, sh, static_cast<int>(bpp), sdl->sdl_pixel_format);
 	if (!ptr->image)
 		return FALSE;
 
 	SDL_LockSurface(ptr->image);
 	auto pixels = static_cast<BYTE*>(ptr->image->pixels);
 	auto data = static_cast<const BYTE*>(ptr->data);
-	const BOOL rc =
-	    freerdp_image_scale(pixels, gdi->dstFormat, ptr->image->pitch, 0, 0, ptr->image->w,
-	                        ptr->image->h, data, gdi->dstFormat, 0, 0, 0, w, h);
+	const BOOL rc = freerdp_image_scale(
+	    pixels, gdi->dstFormat, static_cast<UINT32>(ptr->image->pitch), 0, 0,
+	    static_cast<UINT32>(ptr->image->w), static_cast<UINT32>(ptr->image->h), data,
+	    gdi->dstFormat, 0, 0, 0, static_cast<UINT32>(w), static_cast<UINT32>(h));
 	SDL_UnlockSurface(ptr->image);
 	if (!rc)
 		return FALSE;
@@ -181,19 +183,10 @@ static BOOL sdl_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 
 BOOL sdl_register_pointer(rdpGraphics* graphics)
 {
-	rdpPointer* pointer = nullptr;
-
-	if (!(pointer = (rdpPointer*)calloc(1, sizeof(rdpPointer))))
-		return FALSE;
-
-	pointer->size = sizeof(sdlPointer);
-	pointer->New = sdl_Pointer_New;
-	pointer->Free = sdl_Pointer_Free;
-	pointer->Set = sdl_Pointer_Set;
-	pointer->SetNull = sdl_Pointer_SetNull;
-	pointer->SetDefault = sdl_Pointer_SetDefault;
-	pointer->SetPosition = sdl_Pointer_SetPosition;
-	graphics_register_pointer(graphics, pointer);
-	free(pointer);
+	const rdpPointer pointer = { sizeof(sdlPointer),     sdl_Pointer_New,
+		                         sdl_Pointer_Free,       sdl_Pointer_Set,
+		                         sdl_Pointer_SetNull,    sdl_Pointer_SetDefault,
+		                         sdl_Pointer_SetPosition };
+	graphics_register_pointer(graphics, &pointer);
 	return TRUE;
 }

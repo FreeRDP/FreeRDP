@@ -138,7 +138,7 @@ static BOOL sdl_disp_check_context(void* context, sdlContext** ppsdl, sdlDispCon
 	if (!context)
 		return FALSE;
 
-	sdl = (sdlContext*)context;
+	sdl = reinterpret_cast<sdlContext*>(context);
 
 	if (!(sdl->disp))
 		return FALSE;
