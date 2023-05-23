@@ -70,8 +70,6 @@ if (WITH_KRB5)
 	find_package(KRB5 REQUIRED)
 
 	list(APPEND ${MODULE_PREFIX}_KERBEROS_SRCS
-	    Kerberos/krb5glue_mit.c
-	    Kerberos/krb5glue_heimdal.c
 	    Kerberos/krb5glue.h)
 
 	winpr_include_directory_add(${KRB5_INCLUDEDIR})
@@ -86,8 +84,14 @@ if (WITH_KRB5)
 
 	if(KRB5_FLAVOUR STREQUAL "MIT")
 		winpr_definition_add("-DWITH_KRB5_MIT")
+        list(APPEND ${MODULE_PREFIX}_KERBEROS_SRCS
+            Kerberos/krb5glue_mit.c
+        )
 	elseif(KRB5_FLAVOUR STREQUAL "Heimdal")
 		winpr_definition_add("-DWITH_KRB5_HEIMDAL")
+        list(APPEND ${MODULE_PREFIX}_KERBEROS_SRCS
+            Kerberos/krb5glue_heimdal.c
+        )
 	else()
 		message(WARNING "Kerberos version not detected")
 	endif()
