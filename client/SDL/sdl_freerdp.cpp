@@ -975,7 +975,7 @@ static void sdl_post_final_disconnect(freerdp* instance)
  * after the connection ends. */
 static DWORD WINAPI sdl_client_thread_proc(void* arg)
 {
-	auto sdl = reinterpret_cast<sdlContext*>(arg);
+	auto sdl = static_cast<sdlContext*>(arg);
 	DWORD nCount;
 	DWORD status;
 	int exit_code = SDL_EXIT_SUCCESS;

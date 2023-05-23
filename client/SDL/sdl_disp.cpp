@@ -133,12 +133,10 @@ BOOL sdlDispContext::set_window_resizable()
 static BOOL sdl_disp_check_context(void* context, sdlContext** ppsdl, sdlDispContext** ppsdlDisp,
                                    rdpSettings** ppSettings)
 {
-	sdlContext* sdl;
-
 	if (!context)
 		return FALSE;
 
-	sdl = reinterpret_cast<sdlContext*>(context);
+	auto sdl = static_cast<sdlContext*>(context);
 
 	if (!(sdl->disp))
 		return FALSE;
