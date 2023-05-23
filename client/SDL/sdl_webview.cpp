@@ -64,9 +64,9 @@ BOOL sdl_webview_get_aad_auth_code(freerdp* instance, const char* hostname, char
 	int argc = 1;
 	char* name = "FreeRDP WebView";
 	size_t size = 0;
-	char* login_url = NULL;
+	char* login_url = nullptr;
 
-	*code = NULL;
+	*code = nullptr;
 	*client_id = "5177bc73-fd99-4c77-a90c-76844c9b6999";
 	*redirect_uri =
 	    "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f5177bc73-fd99-4c77-a90c-76844c9b6999";
@@ -92,5 +92,5 @@ BOOL sdl_webview_get_aad_auth_code(freerdp* instance, const char* hostname, char
 	app.exec();
 
 	free(login_url);
-	return (*code != NULL);
+	return (*code != nullptr);
 }
