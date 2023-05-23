@@ -122,14 +122,14 @@ static BOOL sdl_apply_max_size(sdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxH
 		}
 		else if (settings->Workarea)
 		{
-			SDL_Rect rect = { 0 };
+			SDL_Rect rect = {};
 			SDL_GetDisplayUsableBounds(monitor->orig_screen, &rect);
 			*pMaxWidth = rect.w;
 			*pMaxHeight = rect.h;
 		}
 		else if (settings->PercentScreen)
 		{
-			SDL_Rect rect = { 0 };
+			SDL_Rect rect = {};
 			SDL_GetDisplayUsableBounds(monitor->orig_screen, &rect);
 
 			*pMaxWidth = rect.w;
@@ -189,7 +189,7 @@ static BOOL sdl_apply_display_properties(sdlContext* sdl)
 
 		float hdpi;
 		float vdpi;
-		SDL_Rect rect = { 0 };
+		SDL_Rect rect = {};
 
 		SDL_GetDisplayBounds(*id, &rect);
 		SDL_GetDisplayDPI(*id, nullptr, &hdpi, &vdpi);
@@ -201,7 +201,7 @@ static BOOL sdl_apply_display_properties(sdlContext* sdl)
 			const SDL_Rect scaleRect = rect;
 			for (int i = 0; i < SDL_GetNumDisplayModes(*id); i++)
 			{
-				SDL_DisplayMode mode = { 0 };
+				SDL_DisplayMode mode = {};
 				SDL_GetDisplayMode(x, i, &mode);
 
 				if (mode.w > rect.w)
