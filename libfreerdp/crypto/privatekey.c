@@ -490,8 +490,12 @@ char* freerdp_key_get_param(const rdpPrivateKey* key, enum FREERDP_KEY_PARAM par
 
 	const int bnlen = BN_bn2bin(bn, buf);
 	if (bnlen != length)
-		goto fail;
-	*plength = length;
+	{
+		free(buf);
+		buf = NULL;
+	}
+	else
+		*plength = length;
 
 fail:
 	BN_free(bn);
