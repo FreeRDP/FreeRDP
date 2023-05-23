@@ -38,8 +38,38 @@ find_path(X11_INCLUDE_DIR NAMES X11/Xlib.h
           PATHS /opt/X11/include
           DOC "The X11 include directory"
 )
+find_path(XAUTH_INCLUDE_DIR NAMES X11/Xauth.h
+          PATH_SUFFIXES X11
+          PATHS /opt/X11/include
+          DOC "The X11 include directory"
+)
+find_path(XCB_INCLUDE_DIR NAMES xcb/xcb.h
+          PATH_SUFFIXES X11
+          PATHS /opt/X11/include
+          DOC "The X11 include directory"
+)
+find_path(XDMCP_INCLUDE_DIR NAMES X11/Xdmcp.h
+          PATH_SUFFIXES X11
+          PATHS /opt/X11/include
+          DOC "The X11 include directory"
+)
 
 find_library(X11_LIBRARY NAMES X11
+          PATHS /opt/X11/lib
+          DOC "The X11 library"
+)
+
+find_library(XCB_LIBRARY NAMES xcb
+          PATHS /opt/X11/lib
+          DOC "The X11 library"
+)
+
+find_library(XAUTH_LIBRARY NAMES Xau
+          PATHS /opt/X11/lib
+          DOC "The X11 library"
+)
+
+find_library(XDMCP_LIBRARY NAMES Xdmcp
           PATHS /opt/X11/lib
           DOC "The X11 library"
 )
@@ -52,8 +82,8 @@ include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(X11 DEFAULT_MSG X11_LIBRARY X11_INCLUDE_DIR)
 
 if(X11_FOUND)
-  set( X11_LIBRARIES ${X11_LIBRARY} )
-  set( X11_INCLUDE_DIRS ${X11_INCLUDE_DIR} )
+    set( X11_LIBRARIES ${X11_LIBRARY} ${XCB_LIBRARY} ${XAUTH_LIBRARY} ${XDMCP_LIBRARY})
+    set( X11_INCLUDE_DIRS ${X11_INCLUDE_DIR} ${XCB_INCLUDE_DIR} ${XAUTH_INCLUDE_DIR} ${XDMCP_INCLUDE_DIR})
 endif()
 
 mark_as_advanced(X11_INCLUDE_DIR X11_LIBRARY)
