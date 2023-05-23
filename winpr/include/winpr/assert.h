@@ -28,31 +28,33 @@
 #include <winpr/debug.h>
 
 #if defined(WITH_VERBOSE_WINPR_ASSERT) && (WITH_VERBOSE_WINPR_ASSERT != 0)
-#define WINPR_ASSERT(cond)                                                                    \
-	do                                                                                        \
-	{                                                                                         \
-		if (!(cond))                                                                          \
-		{                                                                                     \
-			wLog* _log_cached_ptr = WLog_Get("com.freerdp.winpr.assert");                     \
-			const size_t line = __LINE__;                                                     \
-			WLog_Print(_log_cached_ptr, WLOG_FATAL, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, \
-			           __FUNCTION__, line);                                                   \
-			winpr_log_backtrace_ex(_log_cached_ptr, WLOG_FATAL, 20);                          \
-			abort();                                                                          \
-		}                                                                                     \
-	} while (0)
-#else
-#include <assert.h>
-#define WINPR_ASSERT(cond) assert(cond)
-#endif
-
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+#define WINPR_ASSERT(cond)                                             \
+	do                                                                 \
+	{                                                                  \
+		if (!(cond))                                                   \
+			winpr_int_assert(#cond, __FILE__, __FUNCTION__, __LINE__); \
+	} while (0)
+
+	static INLINE WINPR_NORETURN(void winpr_int_assert(const char* condstr, const char* file,
+	                                                   const char* fkt, size_t line))
+	{
+		wLog* _log_cached_ptr = WLog_Get("com.freerdp.winpr.assert");
+		WLog_Print(_log_cached_ptr, WLOG_FATAL, "%s [%s:%s:%" PRIuz "]", condstr, file, fkt, line);
+		winpr_log_backtrace_ex(_log_cached_ptr, WLOG_FATAL, 20);
+		abort();
+	}
 
 #ifdef __cplusplus
 }
+#endif
+
+#else
+#include <assert.h>
+#define WINPR_ASSERT(cond) assert(cond)
 #endif
 
 #endif /* WINPR_ERROR_H */

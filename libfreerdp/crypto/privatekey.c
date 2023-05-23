@@ -382,10 +382,10 @@ BOOL freerdp_key_generate(rdpPrivateKey* key, size_t key_length)
 		}
 
 		BN_set_word(bn, RSA_F4);
-		const int rc = RSA_generate_key_ex(rsa, key_length, bn, NULL);
+		const int res = RSA_generate_key_ex(rsa, key_length, bn, NULL);
 		BN_clear_free(bn);
 
-		if (rc != 1)
+		if (res != 1)
 			return FALSE;
 	}
 #endif

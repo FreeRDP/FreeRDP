@@ -797,8 +797,8 @@ static int sdl_run(sdlContext* sdl)
 				break;
 				case SDL_USEREVENT_CREATE_WINDOWS:
 				{
-					auto sdl = static_cast<sdlContext*>(windowEvent.user.data1);
-					sdl_create_windows(sdl);
+					auto ctx = static_cast<sdlContext*>(windowEvent.user.data1);
+					sdl_create_windows(ctx);
 				}
 				break;
 				case SDL_USEREVENT_WINDOW_RESIZEABLE:
@@ -1038,12 +1038,12 @@ static DWORD WINAPI sdl_client_thread_proc(void* arg)
 		 */
 		if (freerdp_focus_required(instance))
 		{
-			sdlContext* sdl = reinterpret_cast<sdlContext*>(context);
-			WINPR_ASSERT(sdl);
-			WINPR_ASSERT(sdl->input);
-			if (!sdl->input->keyboard_focus_in())
+			sdlContext* ctx = reinterpret_cast<sdlContext*>(context);
+			WINPR_ASSERT(ctx);
+			WINPR_ASSERT(ctx->input);
+			if (!ctx->input->keyboard_focus_in())
 				break;
-			if (!sdl->input->keyboard_focus_in())
+			if (!ctx->input->keyboard_focus_in())
 				break;
 		}
 
