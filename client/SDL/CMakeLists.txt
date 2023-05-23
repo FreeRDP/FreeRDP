@@ -23,8 +23,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
-set(CMAKE_COLOR_MAKEFILE ON)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
+option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
+option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
 list(APPEND CMAKE_MODULE_PATH ../../cmake/)
 
 include(GNUInstallDirsWrapper)
