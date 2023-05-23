@@ -163,7 +163,7 @@ static void xf_cached_data_free(xfCachedData* cached_data)
 	free(cached_data);
 }
 
-xfCachedData* xf_cached_data_new(BYTE* data, UINT32 data_length)
+static xfCachedData* xf_cached_data_new(BYTE* data, UINT32 data_length)
 {
 	xfCachedData* cached_data;
 
