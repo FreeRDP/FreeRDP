@@ -1297,7 +1297,7 @@ static UINT rail_recv_client_cloak_order(RailServerContext* context, RAIL_CLOAK*
 
 static UINT rail_recv_client_text_scale_order(RailServerContext* context, wStream* s)
 {
-	UINT error;
+	UINT error = CHANNEL_RC_OK;
 	UINT32 TextScaleFactor;
 
 	if (!context || !s)
@@ -1317,7 +1317,7 @@ static UINT rail_recv_client_text_scale_order(RailServerContext* context, wStrea
 
 static UINT rail_recv_client_caret_blink(RailServerContext* context, wStream* s)
 {
-	UINT error;
+	UINT error = CHANNEL_RC_OK;
 	UINT32 CaretBlinkRate;
 
 	if (!context || !s)
