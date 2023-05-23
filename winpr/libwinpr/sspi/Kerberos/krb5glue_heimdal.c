@@ -17,7 +17,9 @@
  * limitations under the License.
  */
 
-#ifdef WITH_KRB5_HEIMDAL
+#ifndef WITH_KRB5_HEIMDAL
+#error "This file must ony be included with HEIMDAL kerberos"
+#endif
 
 #include <winpr/endian.h>
 #include <winpr/wlog.h>
@@ -209,4 +211,3 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 	return rv;
 }
 
-#endif /* WITH_KRB5_HEIMDAL */

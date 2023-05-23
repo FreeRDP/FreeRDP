@@ -17,7 +17,9 @@
  * limitations under the License.
  */
 
-#ifdef WITH_KRB5_MIT
+#ifndef WITH_KRB5_MIT
+#error "This file must only be included with MIT kerberos"
+#endif
 
 #include <winpr/path.h>
 #include <winpr/wlog.h>
@@ -225,4 +227,3 @@ cleanup:
 	return rv;
 }
 
-#endif /* WITH_KRB5_MIT */
