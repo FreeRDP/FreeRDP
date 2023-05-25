@@ -26,25 +26,14 @@ set(CMAKE_CXX_EXTENSIONS ON)
 option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
 option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
 option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
-list(APPEND CMAKE_MODULE_PATH ../../cmake/)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/)
+
+include(ConfigureFreeRDP)
 
 include(GNUInstallDirsWrapper)
+
 # RPATH configuration
- set(CMAKE_SKIP_BUILD_RPATH FALSE)
- set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
- if (APPLE)
-   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
-   set(CMAKE_INSTALL_RPATH "@loader_path/../Frameworks")
- else (APPLE)
-   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-   if (NOT FREEBSD)
-     set(CMAKE_INSTALL_RPATH "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}:\$ORIGIN/..")
-     option(WITH_ADD_PLUGIN_TO_RPATH "Add extension and plugin path to RPATH" OFF)
-     if (WITH_ADD_PLUGIN_TO_RPATH)
-       set(CMAKE_INSTALL_RPATH "\$ORIGIN/../${FREERDP_EXTENSION_REL_PATH}:\$ORIGIN/../${FREERDP_PLUGIN_PATH}:${CMAKE_INSTALL_RPATH}")
-     endif()
-   endif()
- endif(APPLE)
+include(ConfigureRPATH)
 
 option(WITH_DEBUG_SDL_EVENTS "[dangerous, not for release builds!] Debug SDL events" OFF)
 option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL keyboard events" OFF)
@@ -59,19 +48,6 @@ endif()
 find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIR})
 include_directories(${SDL2_INCLUDE_DIRS})
-
-# Here we add dependencies for stand alone builds.
-# Only add these if not build within FreeRDP source tree
-if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-	find_package(WinPR 3 REQUIRED)
-	include_directories(${WinPR_INCLUDE_DIR})
-
-	find_package(FreeRDP 3 REQUIRED)
-	include_directories(${FreeRDP_INCLUDE_DIR})
-
-	find_package(FreeRDP-Client 3 REQUIRED)
-	include_directories(${FreeRDP-Client_INCLUDE_DIR})
-endif()
 
 set(SRCS
     sdl_types.hpp
