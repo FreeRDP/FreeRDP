@@ -68,7 +68,7 @@
 	} while (0)
 #endif
 
-#include "FreeRDP_Icon_256px.h"
+#include <FreeRDP_Icon_256px.h>
 #define xf_icon_prop FreeRDP_Icon_256px_prop
 
 #include "xf_window.h"
