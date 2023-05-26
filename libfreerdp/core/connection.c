@@ -1180,13 +1180,14 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 	 * that has been observed with 2k12 R2 and 2k19
 	 */
 	const UINT16 messageChannelId = rdp->mcs->messageChannelId;
-	if (channelId == messageChannelId)
+	if ((channelId == messageChannelId) || (securityFlags & SEC_AUTODETECT_REQ))
 	{
 		return rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 	}
 
-	if (channelId != 1003)
-		WLog_WARN(TAG, "unexpected message for channel %u, expected %u", channelId, 1003);
+	if (channelId != MCS_GLOBAL_CHANNEL_ID)
+		WLog_WARN(TAG, "unexpected message for channel %u, expected %u", channelId,
+		          MCS_GLOBAL_CHANNEL_ID);
 
 	if ((securityFlags & SEC_LICENSE_PKT) == 0)
 	{
