@@ -740,8 +740,16 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
 	CLIPRDR_FORMAT_LIST filterList = cliprdr_filter_local_format_list(formatList, mask);
 	if (filterList.numFormats == 0)
-		return CHANNEL_RC_OK;
-
+	{
+		if (filterList.formats)
+		{
+			free(filterList.formats);
+			filterList.formats = NULL;
+		}
+		
+		filterList.common.msgType = CB_FORMAT_LIST;
+	}
+		
 	s = cliprdr_packet_format_list_new(&filterList, cliprdr->useLongFormatNames);
 	cliprdr_free_format_list(&filterList);
 
