@@ -67,7 +67,8 @@ struct sdl_context
 	SDL_PixelFormat* primary_format;
 
 	std::unique_ptr<sdlDispContext> disp;
-	sdlInput* input;
+	std::unique_ptr<sdlInput> input;
+
 	Uint32 sdl_pixel_format;
 
 	wLog* log;
