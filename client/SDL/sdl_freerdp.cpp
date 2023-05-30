@@ -376,9 +376,9 @@ static BOOL sdl_end_paint_process(rdpContext* context)
 				const SDL_Rect srcRect = { rgn->x, rgn->y, rgn->w, rgn->h };
 				SDL_Rect dstRect = { window->offset_x + rgn->x, window->offset_y + rgn->y, rgn->w,
 					                 rgn->h };
-				SDL_SetClipRect(sdl->primary, &srcRect);
+				SDL_SetClipRect(sdl->primary.get(), &srcRect);
 				SDL_SetClipRect(screen, &dstRect);
-				SDL_BlitSurface(sdl->primary, &srcRect, screen, &dstRect);
+				SDL_BlitSurface(sdl->primary.get(), &srcRect, screen, &dstRect);
 			}
 		}
 		else
@@ -391,9 +391,9 @@ static BOOL sdl_end_paint_process(rdpContext* context)
 				SDL_Rect dstRect = srcRect;
 				sdl_scale_coordinates(sdl, id, &dstRect.x, &dstRect.y, FALSE, TRUE);
 				sdl_scale_coordinates(sdl, id, &dstRect.w, &dstRect.h, FALSE, TRUE);
-				SDL_SetClipRect(sdl->primary, &srcRect);
+				SDL_SetClipRect(sdl->primary.get(), &srcRect);
 				SDL_SetClipRect(screen, &dstRect);
-				SDL_BlitScaled(sdl->primary, &srcRect, screen, &dstRect);
+				SDL_BlitScaled(sdl->primary.get(), &srcRect, screen, &dstRect);
 			}
 		}
 		SDL_UpdateWindowSurface(window->window);
@@ -421,11 +421,8 @@ static void sdl_destroy_primary(sdlContext* sdl)
 {
 	if (!sdl)
 		return;
-
-	SDL_FreeFormat(sdl->primary_format);
-	SDL_FreeSurface(sdl->primary);
-	sdl->primary = nullptr;
-	sdl->primary_format = nullptr;
+	sdl->primary.reset();
+	sdl->primary_format.reset();
 }
 
 /* Create a SDL surface from the GDI buffer */
@@ -439,17 +436,20 @@ static BOOL sdl_create_primary(sdlContext* sdl)
 	WINPR_ASSERT(gdi);
 
 	sdl_destroy_primary(sdl);
-	sdl->primary = SDL_CreateRGBSurfaceWithFormatFrom(
-	    gdi->primary_buffer, static_cast<int>(gdi->width), static_cast<int>(gdi->height),
-	    static_cast<int>(FreeRDPGetBitsPerPixel(gdi->dstFormat)), static_cast<int>(gdi->stride),
-	    sdl->sdl_pixel_format);
-	sdl->primary_format = SDL_AllocFormat(sdl->sdl_pixel_format);
+	sdl->primary = SDLSurfacePtr(
+	    SDL_CreateRGBSurfaceWithFormatFrom(gdi->primary_buffer, static_cast<int>(gdi->width),
+	                                       static_cast<int>(gdi->height),
+	                                       static_cast<int>(FreeRDPGetBitsPerPixel(gdi->dstFormat)),
+	                                       static_cast<int>(gdi->stride), sdl->sdl_pixel_format),
+	    SDL_FreeSurface);
+	sdl->primary_format = SDLPixelFormatPtr(SDL_AllocFormat(sdl->sdl_pixel_format), SDL_FreeFormat);
 
 	if (!sdl->primary || !sdl->primary_format)
 		return FALSE;
 
-	SDL_SetSurfaceBlendMode(sdl->primary, SDL_BLENDMODE_NONE);
-	SDL_FillRect(sdl->primary, nullptr, SDL_MapRGBA(sdl->primary_format, 0, 0, 0, 0xff));
+	SDL_SetSurfaceBlendMode(sdl->primary.get(), SDL_BLENDMODE_NONE);
+	SDL_FillRect(sdl->primary.get(), nullptr,
+	             SDL_MapRGBA(sdl->primary_format.get(), 0, 0, 0, 0xff));
 
 	return TRUE;
 }
