@@ -278,7 +278,7 @@ static BOOL sdl_begin_paint(rdpContext* context)
 
 	WINPR_ASSERT(sdl);
 
-	HANDLE handles[] = { sdl->update_complete, freerdp_abort_event(context) };
+	HANDLE handles[] = { sdl->update_complete->handle(), freerdp_abort_event(context) };
 	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
 	switch (status)
 	{
@@ -287,8 +287,7 @@ static BOOL sdl_begin_paint(rdpContext* context)
 		default:
 			return FALSE;
 	}
-	if (!ResetEvent(sdl->update_complete))
-		return FALSE;
+	sdl->update_complete->clear();
 
 	gdi = context->gdi;
 	WINPR_ASSERT(gdi);
@@ -321,9 +320,10 @@ class SdlEventUpdateTriggerGuard
 	}
 	~SdlEventUpdateTriggerGuard()
 	{
-		SetEvent(_sdl->update_complete);
+		_sdl->update_complete->set();
 	}
 };
+
 static BOOL sdl_end_paint_process(rdpContext* context)
 {
 	rdpGdi* gdi;
@@ -483,10 +483,10 @@ static BOOL sdl_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE* play_so
 static BOOL sdl_wait_for_init(sdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
-	if (!SetEvent(sdl->initialize))
-		return FALSE;
+	WINPR_ASSERT(sdl->initialize);
+	sdl->initialize->set();
 
-	HANDLE handles[] = { sdl->initialized, freerdp_abort_event(&sdl->common.context) };
+	HANDLE handles[] = { sdl->initialized->handle(), freerdp_abort_event(&sdl->common.context) };
 
 	const DWORD rc = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
 	switch (rc)
@@ -653,20 +653,18 @@ static BOOL sdl_create_windows(sdlContext* sdl)
 	rc = TRUE;
 fail:
 
-	if (!SetEvent(sdl->windows_created))
-		rc = FALSE;
+	sdl->windows_created->set();
 	return rc;
 }
 
 static BOOL sdl_wait_create_windows(sdlContext* sdl)
 {
 	std::lock_guard<CriticalSection> lock(*sdl->critical);
-	if (!ResetEvent(sdl->windows_created))
-		return FALSE;
+	sdl->windows_created->clear();
 	if (!sdl_push_user_event(SDL_USEREVENT_CREATE_WINDOWS, sdl))
 		return FALSE;
 
-	HANDLE handles[] = { sdl->initialized, freerdp_abort_event(&sdl->common.context) };
+	HANDLE handles[] = { sdl->initialized->handle(), freerdp_abort_event(&sdl->common.context) };
 
 	const DWORD rc = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
 	switch (rc)
@@ -683,7 +681,7 @@ static int sdl_run(sdlContext* sdl)
 	int rc = -1;
 	WINPR_ASSERT(sdl);
 
-	HANDLE handles[] = { sdl->initialize, freerdp_abort_event(&sdl->common.context) };
+	HANDLE handles[] = { sdl->initialize->handle(), freerdp_abort_event(&sdl->common.context) };
 	const DWORD status = WaitForMultipleObjects(ARRAYSIZE(handles), handles, FALSE, INFINITE);
 	switch (status)
 	{
@@ -694,8 +692,7 @@ static int sdl_run(sdlContext* sdl)
 	}
 
 	SDL_Init(SDL_INIT_VIDEO);
-	if (!SetEvent(sdl->initialized))
-		goto fail;
+	sdl->initialized->set();
 
 	while (!freerdp_shall_disconnect_context(&sdl->common.context))
 	{
@@ -1176,11 +1173,11 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 #endif
 	/* TODO: Client display set up */
 
-	sdl->critical.reset(new CriticalSection);
-	sdl->initialize = CreateEventA(nullptr, TRUE, FALSE, nullptr);
-	sdl->initialized = CreateEventA(nullptr, TRUE, FALSE, nullptr);
-	sdl->update_complete = CreateEventA(nullptr, TRUE, TRUE, nullptr);
-	sdl->windows_created = CreateEventA(nullptr, TRUE, FALSE, nullptr);
+	sdl->critical = std::make_unique<CriticalSection>();
+	sdl->initialize = std::make_unique<WinPREvent>();
+	sdl->initialized = std::make_unique<WinPREvent>();
+	sdl->update_complete = std::make_unique<WinPREvent>(true);
+	sdl->windows_created = std::make_unique<WinPREvent>();
 	return sdl->initialize && sdl->initialized && sdl->update_complete && sdl->windows_created;
 }
 
@@ -1191,16 +1188,10 @@ static void sdl_client_free(freerdp* instance, rdpContext* context)
 	if (!context)
 		return;
 
-	CloseHandle(sdl->initialize);
-	CloseHandle(sdl->initialized);
-	CloseHandle(sdl->update_complete);
-	CloseHandle(sdl->windows_created);
-
-	sdl->initialize = nullptr;
-	sdl->initialized = nullptr;
-	sdl->update_complete = nullptr;
-	sdl->windows_created = nullptr;
-
+	sdl->initialize.reset();
+	sdl->initialized.reset();
+	sdl->update_complete.reset();
+	sdl->windows_created.reset();
 	sdl->critical.reset();
 }
 
