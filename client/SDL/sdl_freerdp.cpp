@@ -912,7 +912,7 @@ static BOOL sdl_post_connect(freerdp* instance)
 	if (!sdl->disp)
 		return FALSE;
 
-	sdl->input = new sdlInput(sdl);
+	sdl->input = std::make_unique<sdlInput>(sdl);
 	if (!sdl->input)
 		return FALSE;
 
@@ -964,9 +964,7 @@ static void sdl_post_final_disconnect(freerdp* instance)
 
 	auto context = reinterpret_cast<sdlContext*>(instance->context);
 	context->disp.reset();
-
-	delete context->input;
-	context->input = nullptr;
+	context->input.reset();
 }
 
 /* RDP main loop.
