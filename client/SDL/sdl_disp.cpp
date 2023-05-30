@@ -145,7 +145,7 @@ static BOOL sdl_disp_check_context(void* context, sdlContext** ppsdl, sdlDispCon
 		return FALSE;
 
 	*ppsdl = sdl;
-	*ppsdlDisp = sdl->disp;
+	*ppsdlDisp = sdl->disp.get();
 	*ppSettings = sdl->common.context.settings;
 	return TRUE;
 }
