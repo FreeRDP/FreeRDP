@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include <freerdp/freerdp.h>
 #include <freerdp/client/rdpei.h>
 #include <freerdp/client/rail.h>
@@ -64,7 +66,7 @@ struct sdl_context
 	SDL_Surface* primary;
 	SDL_PixelFormat* primary_format;
 
-	sdlDispContext* disp;
+	std::unique_ptr<sdlDispContext> disp;
 	sdlInput* input;
 	Uint32 sdl_pixel_format;
 

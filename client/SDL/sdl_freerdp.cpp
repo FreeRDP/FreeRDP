@@ -908,7 +908,7 @@ static BOOL sdl_post_connect(freerdp* instance)
 	if (!sdl_create_primary(sdl))
 		return FALSE;
 
-	sdl->disp = new sdlDispContext(sdl);
+	sdl->disp = std::make_unique<sdlDispContext>(sdl);
 	if (!sdl->disp)
 		return FALSE;
 
@@ -963,9 +963,7 @@ static void sdl_post_final_disconnect(freerdp* instance)
 		return;
 
 	auto context = reinterpret_cast<sdlContext*>(instance->context);
-
-	delete (context->disp);
-	context->disp = nullptr;
+	context->disp.reset();
 
 	delete context->input;
 	context->input = nullptr;
