@@ -59,10 +59,10 @@ struct sdl_context
 
 	std::unique_ptr<CriticalSection> critical;
 	std::thread thread;
-	HANDLE initialize;
-	HANDLE initialized;
-	HANDLE update_complete;
-	HANDLE windows_created;
+	std::unique_ptr<WinPREvent> initialize;
+	std::unique_ptr<WinPREvent> initialized;
+	std::unique_ptr<WinPREvent> update_complete;
+	std::unique_ptr<WinPREvent> windows_created;
 	int exit_code;
 
 	SDL_Surface* primary;

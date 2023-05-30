@@ -45,7 +45,7 @@ class WinPREvent
 	~WinPREvent();
 
 	void set();
-	void reset();
+	void clear();
 	bool isSet() const;
 
 	HANDLE handle() const;

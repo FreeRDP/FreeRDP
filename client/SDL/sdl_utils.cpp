@@ -194,3 +194,33 @@ void CriticalSection::unlock()
 {
 	LeaveCriticalSection(&_section);
 }
+
+WinPREvent::WinPREvent(bool initial)
+    : _handle(CreateEventA(nullptr, TRUE, initial ? TRUE : FALSE, nullptr))
+{
+}
+
+WinPREvent::~WinPREvent()
+{
+	CloseHandle(_handle);
+}
+
+void WinPREvent::set()
+{
+	SetEvent(_handle);
+}
+
+void WinPREvent::clear()
+{
+	ResetEvent(_handle);
+}
+
+bool WinPREvent::isSet() const
+{
+	return WaitForSingleObject(_handle, 0) == WAIT_OBJECT_0;
+}
+
+HANDLE WinPREvent::handle() const
+{
+	return _handle;
+}
