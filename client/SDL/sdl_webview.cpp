@@ -59,7 +59,7 @@ class SchemeHandler : public QWebEngineUrlSchemeHandler
 
 	const std::string code() const
 	{
-		m_code;
+		return m_code;
 	}
 
   private:
