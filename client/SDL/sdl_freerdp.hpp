@@ -43,6 +43,9 @@ typedef struct
 	int offset_y;
 } sdl_window_t;
 
+using SDLSurfacePtr = std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)>;
+using SDLPixelFormatPtr = std::unique_ptr<SDL_PixelFormat, decltype(&SDL_FreeFormat)>;
+
 struct sdl_context
 {
 	rdpClientContext common;
@@ -65,8 +68,8 @@ struct sdl_context
 	std::unique_ptr<WinPREvent> windows_created;
 	int exit_code;
 
-	SDL_Surface* primary;
-	SDL_PixelFormat* primary_format;
+	SDLSurfacePtr primary;
+	SDLPixelFormatPtr primary_format;
 
 	std::unique_ptr<sdlDispContext> disp;
 	std::unique_ptr<sdlInput> input;
