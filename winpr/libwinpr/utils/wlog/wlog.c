@@ -167,9 +167,8 @@ static BOOL CALLBACK WLog_InitializeRoot(PINIT_ONCE InitOnce, PVOID Parameter, P
 	if (!WLog_ParseFilters(g_RootLog))
 		goto fail;
 
-#if defined(_WIN32)
 	atexit(WLog_Uninit_);
-#endif
+
 	return TRUE;
 fail:
 	WLog_Uninit_();
