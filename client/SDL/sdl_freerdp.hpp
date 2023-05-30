@@ -20,6 +20,7 @@
 #pragma once
 
 #include <memory>
+#include <thread>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/client/rdpei.h>
@@ -56,7 +57,7 @@ struct sdl_context
 	sdl_window_t windows[16];
 
 	CRITICAL_SECTION critical;
-	HANDLE thread;
+	std::thread thread;
 	HANDLE initialize;
 	HANDLE initialized;
 	HANDLE update_complete;

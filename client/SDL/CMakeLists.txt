@@ -49,6 +49,8 @@ find_package(SDL2 REQUIRED)
 include_directories(${SDL2_INCLUDE_DIR})
 include_directories(${SDL2_INCLUDE_DIRS})
 
+find_package(Threads REQUIRED)
+
 set(SRCS
     sdl_types.hpp
     sdl_utils.cpp
@@ -73,6 +75,7 @@ set(LIBS
         winpr
         freerdp
         freerdp-client
+        Threads::Threads
     )
 
 option(WITH_WEBVIEW "Build with QtWebEngine support for AAD login popup browser" OFF)

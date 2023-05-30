@@ -1191,13 +1191,11 @@ static void sdl_client_free(freerdp* instance, rdpContext* context)
 		return;
 
 	DeleteCriticalSection(&sdl->critical);
-	CloseHandle(sdl->thread);
 	CloseHandle(sdl->initialize);
 	CloseHandle(sdl->initialized);
 	CloseHandle(sdl->update_complete);
 	CloseHandle(sdl->windows_created);
 
-	sdl->thread = nullptr;
 	sdl->initialize = nullptr;
 	sdl->initialized = nullptr;
 	sdl->update_complete = nullptr;
@@ -1209,9 +1207,7 @@ static int sdl_client_start(rdpContext* context)
 	auto sdl = reinterpret_cast<sdlContext*>(context);
 	WINPR_ASSERT(sdl);
 
-	sdl->thread = CreateThread(nullptr, 0, sdl_client_thread_proc, sdl, 0, nullptr);
-	if (!sdl->thread)
-		return -1;
+	sdl->thread = std::thread(sdl_client_thread_proc, sdl);
 	return 0;
 }
 
@@ -1226,8 +1222,8 @@ static int sdl_client_stop(rdpContext* context)
 	if (!SetEvent(event))
 		return -1;
 
-	const DWORD status = WaitForSingleObject(sdl->thread, INFINITE);
-	return (status == WAIT_OBJECT_0) ? 0 : -2;
+	sdl->thread.join();
+	return 0;
 }
 
 static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
