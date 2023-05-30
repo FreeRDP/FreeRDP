@@ -1642,8 +1642,6 @@ static UINT xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
  */
 static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL force)
 {
-	UINT32 numFormats;
-	CLIPRDR_FORMAT* formats = NULL;
 	UINT ret;
 	xfContext* xfc;
 
@@ -1651,27 +1649,11 @@ static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL forc
 
 	xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
-	numFormats = clipboard->numClientFormats;
 
-	if (numFormats)
-	{
-		if (!(formats = (CLIPRDR_FORMAT*)calloc(numFormats, sizeof(CLIPRDR_FORMAT))))
-		{
-			WLog_ERR(TAG, "failed to allocate %" PRIu32 " CLIPRDR_FORMAT structs", numFormats);
-			return CHANNEL_RC_NO_MEMORY;
-		}
-	}
-
-	for (size_t i = 0; i < numFormats; i++)
-	{
-		const xfCliprdrFormat* clientFormat = &clipboard->clientFormats[i];
-		CLIPRDR_FORMAT* format = &formats[i];
-		format->formatId = clientFormat->formatToRequest;
-		format->formatName = clientFormat->formatName;
-	}
+	UINT32 numFormats = 0;
+	CLIPRDR_FORMAT* formats = xf_cliprdr_get_client_formats(clipboard, &numFormats);
 
 	ret = xf_cliprdr_send_format_list(clipboard, formats, numFormats, force);
-	free(formats);
 
 	if (clipboard->owner && clipboard->owner != xfc->drawable)
 	{
@@ -1679,6 +1661,8 @@ static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL forc
 		XConvertSelection(xfc->display, clipboard->clipboard_atom, clipboard->targets[1],
 		                  clipboard->property_atom, xfc->drawable, CurrentTime);
 	}
+
+	xf_cliprdr_free_formats(formats, numFormats);
 
 	return ret;
 }
