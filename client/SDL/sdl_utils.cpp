@@ -174,3 +174,23 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 	va_end(ap);
 	return SDL_PushEvent(&ev) == 1;
 }
+
+CriticalSection::CriticalSection()
+{
+	InitializeCriticalSection(&_section);
+}
+
+CriticalSection::~CriticalSection()
+{
+	DeleteCriticalSection(&_section);
+}
+
+void CriticalSection::lock()
+{
+	EnterCriticalSection(&_section);
+}
+
+void CriticalSection::unlock()
+{
+	LeaveCriticalSection(&_section);
+}

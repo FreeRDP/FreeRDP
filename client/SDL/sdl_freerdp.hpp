@@ -34,6 +34,7 @@
 #include "sdl_types.hpp"
 #include "sdl_disp.hpp"
 #include "sdl_kbd.hpp"
+#include "sdl_utils.hpp"
 
 typedef struct
 {
@@ -56,7 +57,7 @@ struct sdl_context
 	size_t windowCount;
 	sdl_window_t windows[16];
 
-	CRITICAL_SECTION critical;
+	std::unique_ptr<CriticalSection> critical;
 	std::thread thread;
 	HANDLE initialize;
 	HANDLE initialized;

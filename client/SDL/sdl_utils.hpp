@@ -25,20 +25,33 @@
 #include <stdbool.h>
 #include <SDL.h>
 
-class CriticalSectionLock
+class CriticalSection
 {
   public:
-	CriticalSectionLock(CRITICAL_SECTION& section) : _section(section)
-	{
-		EnterCriticalSection(&_section);
-	}
-	~CriticalSectionLock()
-	{
-		LeaveCriticalSection(&_section);
-	}
+	CriticalSection();
+	~CriticalSection();
+
+	void lock();
+	void unlock();
 
   private:
 	CRITICAL_SECTION _section;
+};
+
+class WinPREvent
+{
+  public:
+	WinPREvent(bool initial = false);
+	~WinPREvent();
+
+	void set();
+	void reset();
+	bool isSet() const;
+
+	HANDLE handle() const;
+
+  private:
+	HANDLE _handle;
 };
 
 enum

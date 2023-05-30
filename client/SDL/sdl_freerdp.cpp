@@ -18,6 +18,7 @@
  */
 
 #include <memory>
+#include <mutex>
 
 #include <freerdp/config.h>
 
@@ -410,7 +411,7 @@ static BOOL sdl_end_paint(rdpContext* context)
 	auto sdl = reinterpret_cast<sdlContext*>(context);
 	WINPR_ASSERT(sdl);
 
-	CriticalSectionLock lock(sdl->critical);
+	std::lock_guard<CriticalSection> lock(*sdl->critical);
 	const BOOL rc = sdl_push_user_event(SDL_USEREVENT_UPDATE, context);
 
 	return rc;
@@ -659,7 +660,7 @@ fail:
 
 static BOOL sdl_wait_create_windows(sdlContext* sdl)
 {
-	CriticalSectionLock lock(sdl->critical);
+	std::lock_guard<CriticalSection> lock(*sdl->critical);
 	if (!ResetEvent(sdl->windows_created))
 		return FALSE;
 	if (!sdl_push_user_event(SDL_USEREVENT_CREATE_WINDOWS, sdl))
@@ -706,7 +707,7 @@ static int sdl_run(sdlContext* sdl)
 			SDL_Log("got event %s [0x%08" PRIx32 "]", sdl_event_type_str(windowEvent.type),
 			        windowEvent.type);
 #endif
-			CriticalSectionLock lock(sdl->critical);
+			std::lock_guard<CriticalSection> lock(*sdl->critical);
 			switch (windowEvent.type)
 			{
 				case SDL_QUIT:
@@ -1160,7 +1161,6 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 
 	sdl->log = WLog_Get(SDL_TAG);
 
-	InitializeCriticalSection(&sdl->critical);
 	instance->PreConnect = sdl_pre_connect;
 	instance->PostConnect = sdl_post_connect;
 	instance->PostDisconnect = sdl_post_disconnect;
@@ -1176,6 +1176,7 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 #endif
 	/* TODO: Client display set up */
 
+	sdl->critical.reset(new CriticalSection);
 	sdl->initialize = CreateEventA(nullptr, TRUE, FALSE, nullptr);
 	sdl->initialized = CreateEventA(nullptr, TRUE, FALSE, nullptr);
 	sdl->update_complete = CreateEventA(nullptr, TRUE, TRUE, nullptr);
@@ -1190,7 +1191,6 @@ static void sdl_client_free(freerdp* instance, rdpContext* context)
 	if (!context)
 		return;
 
-	DeleteCriticalSection(&sdl->critical);
 	CloseHandle(sdl->initialize);
 	CloseHandle(sdl->initialized);
 	CloseHandle(sdl->update_complete);
@@ -1200,6 +1200,8 @@ static void sdl_client_free(freerdp* instance, rdpContext* context)
 	sdl->initialized = nullptr;
 	sdl->update_complete = nullptr;
 	sdl->windows_created = nullptr;
+
+	sdl->critical.reset();
 }
 
 static int sdl_client_start(rdpContext* context)
@@ -1299,7 +1301,7 @@ int main(int argc, char* argv[])
 
 BOOL sdl_context::update_fullscreen(BOOL enter)
 {
-	CriticalSectionLock lock(critical);
+	std::lock_guard<CriticalSection> lock(*critical);
 	for (uint32_t x = 0; x < windowCount; x++)
 	{
 		sdl_window_t* window = &windows[x];
@@ -1312,7 +1314,7 @@ BOOL sdl_context::update_fullscreen(BOOL enter)
 
 BOOL sdl_context::update_resizeable(BOOL enable)
 {
-	CriticalSectionLock lock(critical);
+	std::lock_guard<CriticalSection> lock(*critical);
 
 	const rdpSettings* settings = common.context.settings;
 	const BOOL dyn = freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate);
