@@ -667,6 +667,7 @@ static CLIPRDR_FORMAT_LIST cliprdr_filter_local_format_list(const CLIPRDR_FORMAT
 	WINPR_ASSERT(list);
 
 	CLIPRDR_FORMAT_LIST filtered = { 0 };
+	filtered.common.msgType = CB_FORMAT_LIST;
 	filtered.numFormats = list->numFormats;
 	filtered.formats = calloc(filtered.numFormats, sizeof(CLIPRDR_FORMAT_LIST));
 
@@ -697,6 +698,7 @@ static CLIPRDR_FORMAT_LIST cliprdr_filter_local_format_list(const CLIPRDR_FORMAT
 				cur->formatId = format->formatId;
 				cur->formatName = _strdup(format->formatName);
 				wpos++;
+				break;
 			}
 		}
 	}
@@ -732,6 +734,7 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 	cliprdrPlugin* cliprdr;
 
 	WINPR_ASSERT(context);
+	WINPR_ASSERT(formatList);
 
 	cliprdr = (cliprdrPlugin*)context->handle;
 	WINPR_ASSERT(cliprdr);
@@ -739,8 +742,14 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 	const UINT32 mask =
 	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
 	CLIPRDR_FORMAT_LIST filterList = cliprdr_filter_local_format_list(formatList, mask);
-	if (filterList.numFormats == 0)
+
+	/* Allow initial format list from monitor ready, but ignore later attempts */
+	if ((filterList.numFormats == 0) && cliprdr->initialFormatListSent)
+	{
+		cliprdr_free_format_list(&filterList);
 		return CHANNEL_RC_OK;
+	}
+	cliprdr->initialFormatListSent = TRUE;
 
 	s = cliprdr_packet_format_list_new(&filterList, cliprdr->useLongFormatNames);
 	cliprdr_free_format_list(&filterList);
