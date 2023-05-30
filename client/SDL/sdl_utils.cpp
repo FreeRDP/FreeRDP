@@ -103,7 +103,7 @@ const char* sdl_event_type_str(Uint32 type)
 		EV_CASE_STR(SDL_USEREVENT_POINTER_DEFAULT);
 		EV_CASE_STR(SDL_USEREVENT_POINTER_POSITION);
 		EV_CASE_STR(SDL_USEREVENT_POINTER_SET);
-
+		EV_CASE_STR(SDL_USEREVENT_QUIT);
 		EV_CASE_STR(SDL_LASTEVENT);
 		default:
 			return "SDL_UNKNOWNEVENT";
@@ -163,6 +163,7 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 			event->data1 = va_arg(ap, void*);
 			event->code = va_arg(ap, int);
 			break;
+		case SDL_USEREVENT_QUIT:
 		case SDL_USEREVENT_POINTER_NULL:
 		case SDL_USEREVENT_POINTER_DEFAULT:
 			break;

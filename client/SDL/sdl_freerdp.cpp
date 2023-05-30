@@ -700,7 +700,7 @@ static int sdl_run(sdlContext* sdl)
 	{
 		SDL_Event windowEvent = { 0 };
 		while (!freerdp_shall_disconnect_context(&sdl->common.context) &&
-		       SDL_PollEvent(&windowEvent))
+		       SDL_WaitEvent(&windowEvent))
 		{
 #if defined(WITH_DEBUG_SDL_EVENTS)
 			SDL_Log("got event %s [0x%08" PRIx32 "]", sdl_event_type_str(windowEvent.type),
@@ -854,6 +854,7 @@ static int sdl_run(sdlContext* sdl)
 				case SDL_USEREVENT_POINTER_SET:
 					sdl_Pointer_Set_Process(&windowEvent.user);
 					break;
+				case SDL_USEREVENT_QUIT:
 				default:
 					break;
 			}
@@ -1103,6 +1104,10 @@ terminate:
 		           sdl_map_to_code_tag(exit_code), exit_code);
 
 	sdl->exit_code = exit_code;
+	sdl_push_user_event(SDL_USEREVENT_QUIT);
+#if SDL_VERSION_ATLEAST(2, 0, 16)
+	SDL_TLSCleanup();
+#endif
 	return 0;
 }
 
