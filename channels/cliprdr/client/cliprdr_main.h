@@ -49,6 +49,7 @@ typedef struct
 	BOOL fileClipNoFilePaths;
 	BOOL canLockClipData;
 	BOOL hasHugeFileSupport;
+	BOOL initialFormatListSent;
 } cliprdrPlugin;
 
 CliprdrClientContext* cliprdr_get_client_interface(cliprdrPlugin* cliprdr);
