@@ -4,13 +4,12 @@
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 {
+	rdpCertificateData* data = NULL;
 	char* pem = calloc(Size + 1, sizeof(char));
 	if (pem == NULL)
 		goto cleanup;
 	memcpy(pem, Data, Size);
-	pem[Size] = '\0';
 
-	rdpCertificateData* data = NULL;
 	data = freerdp_certificate_data_new_from_pem("somehost", 1234, pem, Size);
 	if (!data)
 		goto cleanup;
