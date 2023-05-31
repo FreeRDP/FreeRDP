@@ -1,0 +1,42 @@
+name: Fuzzing testing
+
+on:
+  push:
+    branches:
+      - 'master'
+  pull_request:
+    types: [opened, reopened, synchronize, labeled]
+
+jobs:
+  fuzzing:
+    if: github.repository == 'FreeRDP/FreeRDP'
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address]
+
+    steps:
+      - name: Build fuzzers (${{ matrix.sanitizer }})
+        id: build
+        uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
+        with:
+          oss-fuzz-project-name: 'freerdp'
+          dry-run: false
+          sanitizer: ${{ matrix.sanitizer }}
+      - name: Run fuzzers (${{ matrix.sanitizer }})
+        uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
+        with:
+          oss-fuzz-project-name: 'freerdp'
+          fuzz-seconds: 600
+          dry-run: false
+          sanitizer: ${{ matrix.sanitizer }}
+      - name: Upload crash
+        uses: actions/upload-artifact@v3
+        if: failure() && steps.build.outcome == 'success'
+        with:
+          name: ${{ matrix.sanitizer }}-artifacts
+          retention-days: 21
+          path: ./out/artifacts
