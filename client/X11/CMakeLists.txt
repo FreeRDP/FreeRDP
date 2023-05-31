@@ -155,108 +155,107 @@ if(WITH_MANPAGES)
 	install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/xfreerdp.1 1)
 endif(WITH_MANPAGES)
 
-find_package(XShm REQUIRED)
-if(XShm_FOUND)
+find_package(X11 REQUIRED)
+if(X11_XShm_FOUND)
 	add_definitions(-DWITH_XSHM)
-	include_directories(${XSHM_INCLUDE_DIRS})
+	include_directories(${X11_XShm_INCLUDE_PATH})
 	list(APPEND LIBS
-		${XSHM_LIBRARIES}
+		${X11_Xext_LIB}
 	)
 endif()
 
 
 option(WITH_XINERAMA "[X11] enable xinerama" ON)
 if (WITH_XINERAMA)
-	find_package(Xinerama REQUIRED)
-	if(Xinerama_FOUND)
+	find_package(X11 REQUIRED)
+	if(X11_Xinerama_FOUND)
 		add_definitions(-DWITH_XINERAMA)
-		include_directories(${XINERAMA_INCLUDE_DIRS})
+		include_directories(${X11_Xinerama_INCLUDE_PATH})
 		list(APPEND LIBS
-			${XINERAMA_LIBRARIES}
+			${X11_Xinerama_LIB}
 		)
 	endif()
 endif()
 
 option(WITH_XEXT "[X11] enable Xext" ON)
 if (WITH_XEXT)
-	find_package(Xext REQUIRED)
-	if(Xext_FOUND)
+	find_package(X11 REQUIRED)
+	if(X11_Xext_FOUND)
 		add_definitions(-DWITH_XEXT)
-		include_directories(${XEXT_INCLUDE_DIRS})
 		list(APPEND LIBS
-			${XEXT_LIBRARIES}
+			${X11_Xext_LIB}
 		)
 	endif()
 endif()
 
 option(WITH_XCURSOR "[X11] enalbe Xcursor" ON)
 if (WITH_XCURSOR)
-	find_package(Xcursor REQUIRED)
-	if(Xcursor_FOUND)
+	find_package(X11 REQUIRED)
+	if(X11_Xcursor_FOUND)
 		add_definitions(-DWITH_XCURSOR)
-		include_directories(${XCURSOR_INCLUDE_DIRS})
+		include_directories(${X11_Xcursor_INCLUDE_PATH})
 		list(APPEND LIBS
-			${XCURSOR_LIBRARIES}
+			${X11_Xcursor_LIB}
 		)
 	endif()
 endif()
 
 option(WITH_XV "[X11] enable Xv" ON)
 if (WITH_XV)
-	find_package(Xv REQUIRED)
-	if(Xv_FOUND)
+	find_package(X11 REQUIRED)
+	if(X11_Xv_FOUND)
 		add_definitions(-DWITH_XV)
-		include_directories(${XV_INCLUDE_DIRS})
+		include_directories(${X11_Xv_INCLUDE_PATH})
 		list(APPEND LIBS
-			${XV_LIBRARIES}
+			${X11_Xv_LIB}
 		)
 	endif()
 endif()
 
 option(WITH_XI "[X11] enalbe Xi" ON)
 if (WITH_XI)
-	find_package(Xi REQUIRED)
-	if(Xi_FOUND)
+	find_package(X11 REQUIRED)
+	if(X11_Xi_FOUND)
 		add_definitions(-DWITH_XI)
-		include_directories(${XI_INCLUDE_DIRS})
+		include_directories(${X11_Xi_INCLUDE_PATH})
 		list(APPEND LIBS
-			${XI_LIBRARIES}
+			${X11_Xi_LIB}
 		)
 	endif()
 endif()
 
 option(WITH_XRENDER "[X11] enable XRender" ON)
 if(WITH_XRENDER)
-	find_package(Xrender REQUIRED)
-	if(Xrender_FOUND)
+	find_package(X11 REQUIRED)
+	if(X11_Xrender_FOUND)
 		add_definitions(-DWITH_XRENDER)
-		include_directories(${XRENDER_INCLUDE_DIRS})
+		include_directories(${X11_Xrender_INCLUDE_PATH})
 		list(APPEND LIBS
-			${XRENDER_LIBRARIES}
+			${X11_Xrender_LIB}
 		)
 	endif()
 endif()
 
 option(WITH_XRANDR "[X11] enable XRandR" ON)
 if (WITH_XRANDR)
-	find_package(XRandR REQUIRED)
-	if(XRandR_FOUND)
+	find_package(X11 REQUIRED)
+	if(X11_Xrandr_FOUND)
 		add_definitions(-DWITH_XRANDR)
-		include_directories(${XRandR_INCLUDE_DIRS})
+		include_directories(${X11_Xrandr_INCLUDE_PATH})
 		list(APPEND LIBS
-			${XRandR_LIBRARIES}
+			${X11_Xrandr_LIB}
 		)
 	endif()
 endif()
 
 option(WITH_XFIXES "[X11] enable Xfixes" ON)
 if (WITH_XFIXES)
-	find_package(Xfixes REQUIRED)
-	if(Xfixes_FOUND)
+	find_package(X11 REQUIRED)
+	if(X11_Xfixes_FOUND)
 		add_definitions(-DWITH_XFIXES)
-		include_directories(${XFIXES_INCLUDE_DIRS})
+		include_directories(${X11_Xfixes_INCLUDE_PATH})
 		list(APPEND LIBS
-			${XFIXES_LIBRARIES}
+			${X11_Xfixes_LIB}
 		)
 	endif()
 endif()
