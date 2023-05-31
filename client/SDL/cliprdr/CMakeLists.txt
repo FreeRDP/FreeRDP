@@ -27,11 +27,19 @@ if (WITH_X11)
 endif()
 
 if (WITH_WAYLAND)
+    find_package(ECM REQUIRED NO_MODULE)
+    list(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_DIR})
+    list(APPEND CMAKE_MODULE_PATH ${ECM_FIND_MODULE_DIR})
+
+    find_package(Wayland REQUIRED)
+
     list(APPEND SRCS
         sdl_wayland_cliprdr_context.cpp
         sdl_wayland_cliprdr_context.hpp
     )
-    add_compile_definitions(WITH_WAYLAND)
+    list(APPEND LIBS
+        ${Wayland_LIBRARIES}
+    )
 endif()
 
 if (APPLE)
@@ -56,5 +64,10 @@ if (WIN32)
 endif()
 
 add_library(sdl-cliprdr STATIC ${SRCS})
+if (WITH_WAYLAND)
+    target_include_directories(sdl-cliprdr PRIVATE ${Wayland_INCLUDE_DIRS})
+    target_compile_options(sdl-cliprdr PRIVATE -DWITH_WAYLAND)
+    target_compile_options(sdl-cliprdr PRIVATE ${Wayland_DEFINITIONS})
+endif()
 target_link_libraries(sdl-cliprdr PRIVATE ${LIBS})
 

@@ -43,7 +43,7 @@ if(FREERDP_VENDOR AND WITH_CLIENT)
 		add_subdirectory(X11)
 	endif()
 
-	if(WITH_WAYLAND AND WAYLAND_FOUND)
+	if(WITH_WAYLAND AND Wayland_FOUND)
 		add_subdirectory(Wayland)
 	endif()
 
