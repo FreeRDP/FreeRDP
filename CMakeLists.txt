@@ -45,6 +45,15 @@ option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
 option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
 option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
 
+if (NOT WIN32 AND NOT ANDROID)
+	if (APPLE)
+		set(OPT_DEFAULT_VAL OFF)
+	else()
+		set(OPT_DEFAULT_VAL ON)
+	endif()
+	option(WITH_X11 "build X11 client/server" ${OPT_DEFAULT_VAL})
+endif()
+
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)
 
