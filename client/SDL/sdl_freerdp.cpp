@@ -699,6 +699,7 @@ static int sdl_run(SdlContext* sdl)
 	}
 
 	SDL_Init(SDL_INIT_VIDEO);
+	sdl->clip.reset(SdlCliprdrContext::instance(sdl));
 	sdl->initialized.set();
 
 	while (!freerdp_shall_disconnect_context(sdl->context()))
@@ -1498,7 +1499,7 @@ BOOL SdlContext::update_resizeable(BOOL enable)
 
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), log(WLog_Get(SDL_TAG)), update_complete(true), disp(this), input(this),
-      clip(SdlCliprdrContext::instance(this)), primary(nullptr, SDL_DestroySurface),
+      clip(nullptr), primary(nullptr, SDL_DestroySurface),
       primary_format(nullptr, SDL_DestroyPixelFormat)
 {
 }
