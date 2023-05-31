@@ -104,7 +104,6 @@ ForEachMacros:
 ...
 Language:        ObjC
 PointerBindsToType: false
-ObjCSpaceAfterProperty: true
 SortIncludes: false
 ObjCBlockIndentWidth: 4
 ObjCSpaceAfterProperty: false
