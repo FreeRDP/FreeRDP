@@ -311,12 +311,12 @@ static UINT32 sdl_get_kbd_flags(void)
 BOOL sdlInput::keyboard_sync_state()
 {
 	const UINT32 syncFlags = sdl_get_kbd_flags();
-	return freerdp_input_send_synchronize_event(_sdl->common.context.input, syncFlags);
+	return freerdp_input_send_synchronize_event(_sdl->context()->input, syncFlags);
 }
 
 BOOL sdlInput::keyboard_focus_in()
 {
-	auto input = _sdl->common.context.input;
+	auto input = _sdl->context()->input;
 	WINPR_ASSERT(input);
 
 	auto syncFlags = sdl_get_kbd_flags();
@@ -454,7 +454,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 				break;
 		}
 	}
-	return freerdp_input_send_keyboard_event_ex(_sdl->common.context.input, ev->type == SDL_KEYDOWN,
+	return freerdp_input_send_keyboard_event_ex(_sdl->context()->input, ev->type == SDL_KEYDOWN,
 	                                            ev->repeat, rdp_scancode);
 }
 
@@ -489,7 +489,7 @@ BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
 #endif
 }
 
-sdlInput::sdlInput(sdlContext* sdl) : _sdl(sdl)
+sdlInput::sdlInput(SdlContext* sdl) : _sdl(sdl)
 {
 	WINPR_ASSERT(_sdl);
 }

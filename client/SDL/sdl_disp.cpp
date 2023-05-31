@@ -37,7 +37,7 @@
 
 BOOL sdlDispContext::settings_changed()
 {
-	auto settings = _sdl->common.context.settings;
+	auto settings = _sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
 	if (_lastSentWidth != _targetWidth)
@@ -65,7 +65,7 @@ BOOL sdlDispContext::update_last_sent()
 {
 	WINPR_ASSERT(_sdl);
 
-	auto settings = _sdl->common.context.settings;
+	auto settings = _sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
 	_lastSentWidth = _targetWidth;
@@ -80,7 +80,7 @@ BOOL sdlDispContext::update_last_sent()
 BOOL sdlDispContext::sendResize()
 {
 	DISPLAY_CONTROL_MONITOR_LAYOUT layout = {};
-	auto settings = _sdl->common.context.settings;
+	auto settings = _sdl->context()->settings;
 
 	if (!settings)
 		return FALSE;
@@ -130,29 +130,26 @@ BOOL sdlDispContext::set_window_resizable()
 	return TRUE;
 }
 
-static BOOL sdl_disp_check_context(void* context, sdlContext** ppsdl, sdlDispContext** ppsdlDisp,
+static BOOL sdl_disp_check_context(void* context, SdlContext** ppsdl, sdlDispContext** ppsdlDisp,
                                    rdpSettings** ppSettings)
 {
 	if (!context)
 		return FALSE;
 
-	auto sdl = static_cast<sdlContext*>(context);
+	auto sdl = get_context(context);
 
-	if (!(sdl->disp))
-		return FALSE;
-
-	if (!sdl->common.context.settings)
+	if (!sdl->context()->settings)
 		return FALSE;
 
 	*ppsdl = sdl;
-	*ppsdlDisp = sdl->disp.get();
-	*ppSettings = sdl->common.context.settings;
+	*ppsdlDisp = &sdl->disp;
+	*ppSettings = sdl->context()->settings;
 	return TRUE;
 }
 
 void sdlDispContext::OnActivated(void* context, const ActivatedEventArgs* e)
 {
-	sdlContext* sdl = nullptr;
+	SdlContext* sdl = nullptr;
 	sdlDispContext* sdlDisp = nullptr;
 	rdpSettings* settings = nullptr;
 
@@ -174,7 +171,7 @@ void sdlDispContext::OnActivated(void* context, const ActivatedEventArgs* e)
 
 void sdlDispContext::OnGraphicsReset(void* context, const GraphicsResetEventArgs* e)
 {
-	sdlContext* sdl = nullptr;
+	SdlContext* sdl = nullptr;
 	sdlDispContext* sdlDisp = nullptr;
 	rdpSettings* settings = nullptr;
 
@@ -193,7 +190,7 @@ void sdlDispContext::OnGraphicsReset(void* context, const GraphicsResetEventArgs
 
 void sdlDispContext::OnTimer(void* context, const TimerEventArgs* e)
 {
-	sdlContext* sdl = nullptr;
+	SdlContext* sdl = nullptr;
 	sdlDispContext* sdlDisp = nullptr;
 	rdpSettings* settings = nullptr;
 
@@ -214,7 +211,7 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 	WINPR_ASSERT(monitors);
 	WINPR_ASSERT(nmonitors > 0);
 
-	auto settings = _sdl->common.context.settings;
+	auto settings = _sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
 	std::vector<DISPLAY_CONTROL_MONITOR_LAYOUT> layouts;
@@ -303,14 +300,14 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 	{
 		case SDL_WINDOWEVENT_HIDDEN:
 		case SDL_WINDOWEVENT_MINIMIZED:
-			gdi_send_suppress_output(_sdl->common.context.gdi, TRUE);
+			gdi_send_suppress_output(_sdl->context()->gdi, TRUE);
 			return TRUE;
 
 		case SDL_WINDOWEVENT_EXPOSED:
 		case SDL_WINDOWEVENT_SHOWN:
 		case SDL_WINDOWEVENT_MAXIMIZED:
 		case SDL_WINDOWEVENT_RESTORED:
-			gdi_send_suppress_output(_sdl->common.context.gdi, FALSE);
+			gdi_send_suppress_output(_sdl->context()->gdi, FALSE);
 			return TRUE;
 
 		case SDL_WINDOWEVENT_RESIZED:
@@ -321,18 +318,15 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 
 		case SDL_WINDOWEVENT_LEAVE:
 			WINPR_ASSERT(_sdl);
-			WINPR_ASSERT(_sdl->input);
-			_sdl->input->keyboard_grab(ev->windowID, SDL_FALSE);
+			_sdl->input.keyboard_grab(ev->windowID, SDL_FALSE);
 			return TRUE;
 		case SDL_WINDOWEVENT_ENTER:
 			WINPR_ASSERT(_sdl);
-			WINPR_ASSERT(_sdl->input);
-			_sdl->input->keyboard_grab(ev->windowID, SDL_TRUE);
-			return _sdl->input->keyboard_focus_in();
+			_sdl->input.keyboard_grab(ev->windowID, SDL_TRUE);
+			return _sdl->input.keyboard_focus_in();
 		case SDL_WINDOWEVENT_FOCUS_GAINED:
 		case SDL_WINDOWEVENT_TAKE_FOCUS:
-			WINPR_ASSERT(_sdl->input);
-			return _sdl->input->keyboard_focus_in();
+			return _sdl->input.keyboard_focus_in();
 
 		default:
 			return TRUE;
@@ -353,7 +347,7 @@ UINT sdlDispContext::DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMo
 UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
                                         UINT32 maxMonitorAreaFactorB)
 {
-	auto settings = _sdl->common.context.settings;
+	auto settings = _sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
 	WLog_DBG(TAG,
@@ -374,7 +368,7 @@ BOOL sdlDispContext::init(DispClientContext* disp)
 	if (!disp)
 		return FALSE;
 
-	auto settings = _sdl->common.context.settings;
+	auto settings = _sdl->context()->settings;
 
 	if (!settings)
 		return FALSE;
@@ -401,14 +395,14 @@ BOOL sdlDispContext::uninit(DispClientContext* disp)
 	return TRUE;
 }
 
-sdlDispContext::sdlDispContext(sdlContext* sdl) : _sdl(sdl)
+sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 {
 	WINPR_ASSERT(_sdl);
-	WINPR_ASSERT(_sdl->common.context.settings);
-	WINPR_ASSERT(_sdl->common.context.pubSub);
+	WINPR_ASSERT(_sdl->context()->settings);
+	WINPR_ASSERT(_sdl->context()->pubSub);
 
-	auto settings = _sdl->common.context.settings;
-	auto pubSub = _sdl->common.context.pubSub;
+	auto settings = _sdl->context()->settings;
+	auto pubSub = _sdl->context()->pubSub;
 
 	_lastSentWidth = _targetWidth = settings->DesktopWidth;
 	_lastSentHeight = _targetHeight = settings->DesktopHeight;
@@ -419,7 +413,7 @@ sdlDispContext::sdlDispContext(sdlContext* sdl) : _sdl(sdl)
 
 sdlDispContext::~sdlDispContext()
 {
-	wPubSub* pubSub = _sdl->common.context.pubSub;
+	wPubSub* pubSub = _sdl->context()->pubSub;
 	WINPR_ASSERT(pubSub);
 
 	PubSub_UnsubscribeActivated(pubSub, sdlDispContext::OnActivated);

@@ -28,7 +28,7 @@ class sdlDispContext
 {
 
   public:
-	sdlDispContext(sdlContext* sdl);
+	sdlDispContext(SdlContext* sdl);
 	~sdlDispContext();
 
 	BOOL init(DispClientContext* disp);
@@ -58,7 +58,7 @@ class sdlDispContext
 	static void OnTimer(void* context, const TimerEventArgs* e);
 
   private:
-	sdlContext* _sdl = nullptr;
+	SdlContext* _sdl = nullptr;
 	DispClientContext* _disp = nullptr;
 	int _eventBase = -1;
 	int _errorBase = -1;

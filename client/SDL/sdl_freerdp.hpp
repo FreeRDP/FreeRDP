@@ -21,6 +21,7 @@
 
 #include <memory>
 #include <thread>
+#include <vector>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/client/rdpei.h>
@@ -46,38 +47,46 @@ typedef struct
 using SDLSurfacePtr = std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)>;
 using SDLPixelFormatPtr = std::unique_ptr<SDL_PixelFormat, decltype(&SDL_FreeFormat)>;
 
-struct sdl_context
+class SdlContext
 {
-	rdpClientContext common;
+  public:
+	SdlContext(rdpContext* context);
+
+  private:
+	rdpContext* _context;
+
+  public:
+	wLog* log;
 
 	/* SDL */
-	BOOL fullscreen;
-	BOOL resizeable;
-	BOOL grab_mouse;
-	BOOL grab_kbd;
-	BOOL highDpi;
+	bool fullscreen = false;
+	bool resizeable = false;
+	bool grab_mouse = false;
+	bool grab_kbd = false;
+	bool highDpi = false;
 
-	size_t windowCount;
-	sdl_window_t windows[16];
+	std::vector<sdl_window_t> windows;
 
-	std::unique_ptr<CriticalSection> critical;
+	CriticalSection critical;
 	std::thread thread;
-	std::unique_ptr<WinPREvent> initialize;
-	std::unique_ptr<WinPREvent> initialized;
-	std::unique_ptr<WinPREvent> update_complete;
-	std::unique_ptr<WinPREvent> windows_created;
-	int exit_code;
+	WinPREvent initialize;
+	WinPREvent initialized;
+	WinPREvent update_complete;
+	WinPREvent windows_created;
+	int exit_code = -1;
+
+	sdlDispContext disp;
+	sdlInput input;
 
 	SDLSurfacePtr primary;
 	SDLPixelFormatPtr primary_format;
 
-	std::unique_ptr<sdlDispContext> disp;
-	std::unique_ptr<sdlInput> input;
+	Uint32 sdl_pixel_format = 0;
 
-	Uint32 sdl_pixel_format;
-
-	wLog* log;
-
+  public:
 	BOOL update_resizeable(BOOL enable);
 	BOOL update_fullscreen(BOOL enter);
+
+	rdpContext* context() const;
+	rdpClientContext* common() const;
 };

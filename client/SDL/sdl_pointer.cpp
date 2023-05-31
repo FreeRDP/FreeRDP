@@ -100,7 +100,7 @@ static BOOL sdl_Pointer_SetDefault(rdpContext* context)
 
 static BOOL sdl_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
-	auto sdl = reinterpret_cast<sdlContext*>(context);
+	auto sdl = get_context(context);
 
 	return sdl_push_user_event(SDL_USEREVENT_POINTER_SET, pointer, sdl);
 }
@@ -111,10 +111,10 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 
 	WINPR_ASSERT(uptr);
 
-	auto sdl = static_cast<sdlContext*>(uptr->data2);
+	auto sdl = static_cast<SdlContext*>(uptr->data2);
 	WINPR_ASSERT(sdl);
 
-	rdpContext* context = &sdl->common.context;
+	auto context = sdl->context();
 	auto ptr = static_cast<sdlPointer*>(uptr->data1);
 	WINPR_ASSERT(ptr);
 
@@ -175,7 +175,7 @@ static BOOL sdl_Pointer_SetNull(rdpContext* context)
 
 static BOOL sdl_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
-	auto sdl = reinterpret_cast<sdlContext*>(context);
+	auto sdl = get_context(context);
 	WINPR_ASSERT(sdl);
 
 	return sdl_push_user_event(SDL_USEREVENT_POINTER_POSITION, x, y);

@@ -55,7 +55,7 @@ typedef struct
 /* See MSDN Section on Multiple Display Monitors: http://msdn.microsoft.com/en-us/library/dd145071
  */
 
-int sdl_list_monitors(sdlContext* sdl)
+int sdl_list_monitors(SdlContext* sdl)
 {
 	SDL_Init(SDL_INIT_VIDEO);
 	const int nmonitors = SDL_GetNumVideoDisplays();
@@ -77,14 +77,14 @@ int sdl_list_monitors(sdlContext* sdl)
 	return 0;
 }
 
-static BOOL sdl_is_monitor_id_active(sdlContext* sdl, UINT32 id)
+static BOOL sdl_is_monitor_id_active(SdlContext* sdl, UINT32 id)
 {
 	UINT32 index;
 	const rdpSettings* settings;
 
 	WINPR_ASSERT(sdl);
 
-	settings = sdl->common.context.settings;
+	settings = sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
 	if (!settings->NumMonitorIds)
@@ -99,13 +99,13 @@ static BOOL sdl_is_monitor_id_active(sdlContext* sdl, UINT32 id)
 	return FALSE;
 }
 
-static BOOL sdl_apply_max_size(sdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
+static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 {
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(pMaxWidth);
 	WINPR_ASSERT(pMaxHeight);
 
-	rdpSettings* settings = sdl->common.context.settings;
+	auto settings = sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
 	*pMaxWidth = 0;
@@ -168,11 +168,11 @@ static UINT32 sdl_orientaion_to_rdp(SDL_DisplayOrientation orientation)
 }
 #endif
 
-static BOOL sdl_apply_display_properties(sdlContext* sdl)
+static BOOL sdl_apply_display_properties(SdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
 
-	rdpSettings* settings = sdl->common.context.settings;
+	rdpSettings* settings = sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
 	const UINT32 numIds = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
@@ -251,13 +251,13 @@ static BOOL sdl_apply_display_properties(sdlContext* sdl)
 	return TRUE;
 }
 
-static BOOL sdl_detect_single_window(sdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
+static BOOL sdl_detect_single_window(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 {
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(pMaxWidth);
 	WINPR_ASSERT(pMaxHeight);
 
-	rdpSettings* settings = sdl->common.context.settings;
+	rdpSettings* settings = sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
 	if ((!settings->UseMultimon && !settings->SpanMonitors) ||
@@ -268,7 +268,7 @@ static BOOL sdl_detect_single_window(sdlContext* sdl, UINT32* pMaxWidth, UINT32*
 		if (!settings->NumMonitorIds)
 		{
 			const size_t id =
-			    (sdl->windowCount > 0) ? SDL_GetWindowDisplayIndex(sdl->windows[0].window) : 0;
+			    (sdl->windows.size() > 0) ? SDL_GetWindowDisplayIndex(sdl->windows[0].window) : 0;
 			if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, &id, 1))
 				return FALSE;
 		}
@@ -290,13 +290,13 @@ static BOOL sdl_detect_single_window(sdlContext* sdl, UINT32* pMaxWidth, UINT32*
 	return TRUE;
 }
 
-BOOL sdl_detect_monitors(sdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
+BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 {
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(pMaxWidth);
 	WINPR_ASSERT(pMaxHeight);
 
-	rdpSettings* settings = sdl->common.context.settings;
+	rdpSettings* settings = sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
 	const int numDisplays = SDL_GetNumVideoDisplays();
