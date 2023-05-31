@@ -20,6 +20,12 @@
 
 #include "../sdl_freerdp.hpp"
 
-SdlWaylandCliprdrContext::SdlWaylandCliprdrContext(SdlContext* sdl) : SdlCliprdrContext(sdl)
+SdlWaylandCliprdrContext::SdlWaylandCliprdrContext(SdlContext* sdl)
+    : SdlCliprdrContext(sdl), _display(wl_display_connect(nullptr))
 {
+}
+
+SdlWaylandCliprdrContext::~SdlWaylandCliprdrContext()
+{
+	wl_display_disconnect(_display);
 }

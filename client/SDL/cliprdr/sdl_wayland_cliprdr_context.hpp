@@ -18,6 +18,8 @@
  */
 #pragma once
 
+#include <wayland-client-protocol.h>
+
 #include "sdl_cliprdr_context.hpp"
 
 class SdlWaylandCliprdrContext : public SdlCliprdrContext
@@ -26,4 +28,8 @@ class SdlWaylandCliprdrContext : public SdlCliprdrContext
 
   protected:
 	SdlWaylandCliprdrContext(SdlContext* sdl);
+	virtual ~SdlWaylandCliprdrContext();
+
+  private:
+	wl_display* _display;
 };
