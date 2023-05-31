@@ -237,7 +237,7 @@ static BOOL xf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL pr
 static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer* pointer,
                                                 Cursor* cursor)
 {
-#ifdef WITH_XCURSOR
+#if defined(WITH_XCURSOR) && defined(WITH_XRENDER)
 	UINT32 CursorFormat;
 	xfContext* xfc = (xfContext*)context;
 	xfPointer* xpointer = (xfPointer*)pointer;

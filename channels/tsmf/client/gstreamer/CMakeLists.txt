@@ -33,20 +33,18 @@ if(ANDROID)
 		tsmf_android.c)
 	set(LIBS ${LIBS})
 else()
-	set(XEXT_FEATURE_TYPE "RECOMMENDED")
-	set(XEXT_FEATURE_PURPOSE "X11 extension")
-	set(XEXT_FEATURE_DESCRIPTION "X11 core extensions")
+	find_package(X11 REQUIRED)
 
-	find_feature(Xext ${XEXT_FEATURE_TYPE} ${XEXT_FEATURE_PURPOSE} ${XEXT_FEATURE_DESCRIPTION})
-
-	set(SRC ${SRC}
+	list(APPENDSRC
 		tsmf_X11.c)
-	set(LIBS ${LIBS} ${X11_LIBRARIES} ${XEXT_LIBRARIES})
+	list(APPEND LIBS
+		${X11_LIBRARIES}
+		${X11_Xext_LIB})
 	if (NOT APPLE)
 		list(APPEND LIBS rt)
 	endif()
 
-	if(XEXT_FOUND)
+	if(X11_Xext_FOUND)
 		add_definitions(-DWITH_XEXT=1)
 	endif()
 

@@ -18,27 +18,27 @@
 set(MODULE_NAME "freerdp-locale")
 set(MODULE_PREFIX "FREERDP_LOCALE")
 
-set(${MODULE_PREFIX}_SRCS
+set(SRCS
 	keyboard_layout.c
 	keyboard.c
 	locale.c
 	liblocale.h)
 
-set(${MODULE_PREFIX}_X11_SRCS
+set(X11_SRCS
 	keyboard_x11.c
 	keyboard_x11.h
 	xkb_layout_ids.c
 	xkb_layout_ids.h)
 
-set(${MODULE_PREFIX}_XKBFILE_SRCS
+set(XKBFILE_SRCS
 	keyboard_xkbfile.c
 	keyboard_xkbfile.h)
 
-set(${MODULE_PREFIX}_SUN_SRCS
+set(SUN_SRCS
 	keyboard_sun.c
 	keyboard_sun.h)
 
-set(${MODULE_PREFIX}_APPLE_SRCS
+set(APPLE_SRCS
 	keyboard_apple.c
 	keyboard_apple.h)
 
@@ -47,40 +47,43 @@ if(CMAKE_SYSTEM_NAME MATCHES Solaris)
 endif()
 
 if(APPLE AND (NOT IOS))
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_APPLE_SRCS})
+	list(APPEND SRCS
+		${APPLE_SRCS})
 	find_library(CARBON Carbon)
 	freerdp_library_add(${CARBON})
 endif()
 
 if (APPLE)
-        FIND_LIBRARY(ç CoreFoundation REQUIRED)
-        freerdp_library_add(${CORE_FOUNDATION})
+	FIND_LIBRARY(CORE_FOUNDATION CoreFoundation REQUIRED)
+	freerdp_library_add(${CORE_FOUNDATION})
 endif()
 
 if(WITH_X11)
+	find_package(X11 REQUIRED)
+
 	freerdp_definition_add(-DWITH_X11)
-	freerdp_include_directory_add(${X11_INCLUDE_DIRS})
-	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_X11_SRCS})
+	freerdp_include_directory_add(${X11_INCLUDE_DIR})
+	list( APPEND SRCS
+		${X11_SRCS})
 	freerdp_library_add(${X11_LIBRARIES})
 
 	if(WITH_SUN)
 		freerdp_definition_add(-DWITH_SUN)
-		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_SUN_SRCS})
+		list(APPEND SRCS
+			${SUN_SRCS})
 	endif()
 
-	set(XKBFILE_FEATURE_TYPE "RECOMMENDED")
-	set(XKBFILE_FEATURE_PURPOSE "X11 keyboard")
-	set(XKBFILE_FEATURE_DESCRIPTION "X11 keyboard file extension")
-
-	find_feature(XKBFile ${XKBFILE_FEATURE_TYPE} ${XKBFILE_FEATURE_PURPOSE} ${XKBFILE_FEATURE_DESCRIPTION})
-
-	if(WITH_XKBFILE AND (NOT APPLE))
+	if( X11_Xkbfile_FOUND AND (NOT APPLE))
 		freerdp_definition_add(-DWITH_XKBFILE)
-		freerdp_include_directory_add(${XKBFILE_INCLUDE_DIRS})
-		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_XKBFILE_SRCS})
-		freerdp_library_add(${XKBFILE_LIBRARIES})
+		freerdp_include_directory_add(${X11_Xkbfile_INCLUDE_PATH})
+		list(APPEND SRCS
+			${XKBFILE_SRCS}
+		)
+		freerdp_library_add(${X11_Xkbfile_LIB})
 	else()
-		set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${${MODULE_PREFIX}_X11_KEYMAP_SRCS})
+		list(APPEND SRCS
+			${X11_KEYMAP_SRCS}
+		)
 	endif()
 endif()
 
@@ -88,4 +91,4 @@ if(WITH_WAYLAND)
 	freerdp_definition_add(-DWITH_WAYLAND)
 endif()
 
-freerdp_module_add(${${MODULE_PREFIX}_SRCS})
+freerdp_module_add(${SRCS})
