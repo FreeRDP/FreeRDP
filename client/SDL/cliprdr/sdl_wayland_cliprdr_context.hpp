@@ -31,5 +31,13 @@ class SdlWaylandCliprdrContext : public SdlCliprdrContext
 	virtual ~SdlWaylandCliprdrContext();
 
   private:
+	static void global_registry_add(void* data, struct wl_registry* wl_registry, uint32_t name,
+	                                const char* interface, uint32_t version);
+
+	static void global_registry_remove(void* data, struct wl_registry* wl_registry, uint32_t name);
+
+  private:
 	wl_display* _display;
+	wl_registry* _registry;
+	wl_data_device_manager* _data_device_manager;
 };

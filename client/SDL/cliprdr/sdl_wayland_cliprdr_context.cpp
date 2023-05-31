@@ -21,11 +21,33 @@
 #include "../sdl_freerdp.hpp"
 
 SdlWaylandCliprdrContext::SdlWaylandCliprdrContext(SdlContext* sdl)
-    : SdlCliprdrContext(sdl), _display(wl_display_connect(nullptr))
+    : SdlCliprdrContext(sdl), _display(wl_display_connect(nullptr)),
+      _registry(wl_display_get_registry(_display))
 {
+	const wl_registry_listener registry_listener = {
+		&SdlWaylandCliprdrContext::global_registry_add,
+		&SdlWaylandCliprdrContext::global_registry_remove
+	};
+	auto rc = wl_registry_add_listener(_registry, &registry_listener, this);
+	WLog_INFO("xxxx", "aaa '%d'", rc);
 }
 
 SdlWaylandCliprdrContext::~SdlWaylandCliprdrContext()
 {
+	wl_data_device_manager_destroy(_data_device_manager);
+	wl_registry_destroy(_registry);
 	wl_display_disconnect(_display);
+}
+
+void SdlWaylandCliprdrContext::global_registry_add(void* data, wl_registry* wl_registry,
+                                                   uint32_t name, const char* interface,
+                                                   uint32_t version)
+{
+	WLog_INFO("xxxx", "aaa '%s'", interface);
+}
+
+void SdlWaylandCliprdrContext::global_registry_remove(void* data, wl_registry* wl_registry,
+                                                      uint32_t name)
+{
+	WLog_INFO("xxxx", "aaa '%u'", name);
 }
