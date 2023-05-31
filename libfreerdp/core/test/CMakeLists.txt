@@ -38,6 +38,7 @@ if (BUILD_FUZZERS)
 		target_link_libraries(${TestName} freerdp winpr freerdp-client fuzzer_config)
 		add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
 		set_target_properties(${TestName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
+		add_dependencies(fuzzers ${TestName})
 	endforeach()
 endif (BUILD_FUZZERS)
 
