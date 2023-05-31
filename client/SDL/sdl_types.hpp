@@ -19,4 +19,28 @@
 
 #pragma once
 
-typedef struct sdl_context sdlContext;
+#include <freerdp/freerdp.h>
+
+class SdlContext;
+
+typedef struct
+{
+	rdpClientContext common;
+	SdlContext* sdl;
+} sdl_rdp_context;
+
+static inline SdlContext* get_context(void* ctx)
+{
+	if (!ctx)
+		return nullptr;
+	auto sdl = static_cast<sdl_rdp_context*>(ctx);
+	return sdl->sdl;
+}
+
+static inline SdlContext* get_context(rdpContext* ctx)
+{
+	if (!ctx)
+		return nullptr;
+	auto sdl = reinterpret_cast<sdl_rdp_context*>(ctx);
+	return sdl->sdl;
+}

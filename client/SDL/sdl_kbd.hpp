@@ -28,7 +28,7 @@
 class sdlInput
 {
   public:
-	sdlInput(sdlContext* sdl);
+	sdlInput(SdlContext* sdl);
 	~sdlInput();
 
 	BOOL keyboard_sync_state();
@@ -45,5 +45,5 @@ class sdlInput
 	                                    UINT32 imeConvMode);
 
   private:
-	sdlContext* _sdl;
+	SdlContext* _sdl;
 };

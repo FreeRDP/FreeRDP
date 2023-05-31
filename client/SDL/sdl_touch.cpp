@@ -32,20 +32,20 @@
 
 #define TAG CLIENT_TAG("SDL.touch")
 
-BOOL sdl_scale_coordinates(sdlContext* sdl, Uint32 windowId, INT32* px, INT32* py,
+BOOL sdl_scale_coordinates(SdlContext* sdl, Uint32 windowId, INT32* px, INT32* py,
                            BOOL fromLocalToRDP, BOOL applyOffset)
 {
 	rdpGdi* gdi;
 	double sx = 1.0;
 	double sy = 1.0;
 
-	if (!sdl || !px || !py || !sdl->common.context.gdi)
+	if (!sdl || !px || !py || !sdl->context()->gdi)
 		return FALSE;
 
-	WINPR_ASSERT(sdl->common.context.gdi);
-	WINPR_ASSERT(sdl->common.context.settings);
+	WINPR_ASSERT(sdl->context()->gdi);
+	WINPR_ASSERT(sdl->context()->settings);
 
-	gdi = sdl->common.context.gdi;
+	gdi = sdl->context()->gdi;
 
 	// TODO: Make this multimonitor ready!
 	// TODO: Need to find the primary monitor, get the scale
@@ -54,25 +54,24 @@ BOOL sdl_scale_coordinates(sdlContext* sdl, Uint32 windowId, INT32* px, INT32* p
 
 	int offset_x = 0;
 	int offset_y = 0;
-	for (size_t x = 0; x < sdl->windowCount; x++)
+	for (const auto& window : sdl->windows)
 	{
 		int w, h;
-		const sdl_window_t* window = &sdl->windows[x];
-		const Uint32 id = SDL_GetWindowID(window->window);
+		const Uint32 id = SDL_GetWindowID(window.window);
 		if (id != windowId)
 		{
 			continue;
 		}
-		SDL_GetWindowSize(window->window, &w, &h);
+		SDL_GetWindowSize(window.window, &w, &h);
 
 		sx = w / static_cast<double>(gdi->width);
 		sy = h / static_cast<double>(gdi->height);
-		offset_x = window->offset_x;
-		offset_y = window->offset_y;
+		offset_x = window.offset_x;
+		offset_y = window.offset_y;
 		break;
 	}
 
-	if (sdl->common.context.settings->SmartSizing)
+	if (sdl->context()->settings->SmartSizing)
 	{
 		if (!fromLocalToRDP)
 		{
@@ -94,7 +93,7 @@ BOOL sdl_scale_coordinates(sdlContext* sdl, Uint32 windowId, INT32* px, INT32* p
 	return TRUE;
 }
 
-static BOOL sdl_get_touch_scaled(sdlContext* sdl, const SDL_TouchFingerEvent* ev, INT32* px,
+static BOOL sdl_get_touch_scaled(SdlContext* sdl, const SDL_TouchFingerEvent* ev, INT32* px,
                                  INT32* py, BOOL local)
 {
 	Uint32 windowID;
@@ -124,7 +123,7 @@ static BOOL sdl_get_touch_scaled(sdlContext* sdl, const SDL_TouchFingerEvent* ev
 	return sdl_scale_coordinates(sdl, windowID, px, py, local, TRUE);
 }
 
-static BOOL send_mouse_wheel(sdlContext* sdl, UINT16 flags, INT32 avalue)
+static BOOL send_mouse_wheel(SdlContext* sdl, UINT16 flags, INT32 avalue)
 {
 	WINPR_ASSERT(sdl);
 	if (avalue < 0)
@@ -140,7 +139,7 @@ static BOOL send_mouse_wheel(sdlContext* sdl, UINT16 flags, INT32 avalue)
 		/* Convert negative values to 9bit twos complement */
 		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
 			cflags = (flags & 0xFF00) | (0x100 - cval);
-		if (!freerdp_client_send_wheel_event(&sdl->common, cflags))
+		if (!freerdp_client_send_wheel_event(sdl->common(), cflags))
 			return FALSE;
 
 		avalue -= cval;
@@ -158,7 +157,7 @@ static UINT32 sdl_scale_pressure(const float pressure)
 	return static_cast<UINT32>(val);
 }
 
-BOOL sdl_handle_touch_up(sdlContext* sdl, const SDL_TouchFingerEvent* ev)
+BOOL sdl_handle_touch_up(SdlContext* sdl, const SDL_TouchFingerEvent* ev)
 {
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(ev);
@@ -166,12 +165,12 @@ BOOL sdl_handle_touch_up(sdlContext* sdl, const SDL_TouchFingerEvent* ev)
 	INT32 x, y;
 	if (!sdl_get_touch_scaled(sdl, ev, &x, &y, TRUE))
 		return FALSE;
-	return freerdp_client_handle_touch(&sdl->common, FREERDP_TOUCH_UP | FREERDP_TOUCH_HAS_PRESSURE,
+	return freerdp_client_handle_touch(sdl->common(), FREERDP_TOUCH_UP | FREERDP_TOUCH_HAS_PRESSURE,
 	                                   static_cast<INT32>(ev->fingerId),
 	                                   sdl_scale_pressure(ev->pressure), x, y);
 }
 
-BOOL sdl_handle_touch_down(sdlContext* sdl, const SDL_TouchFingerEvent* ev)
+BOOL sdl_handle_touch_down(SdlContext* sdl, const SDL_TouchFingerEvent* ev)
 {
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(ev);
@@ -180,11 +179,11 @@ BOOL sdl_handle_touch_down(sdlContext* sdl, const SDL_TouchFingerEvent* ev)
 	if (!sdl_get_touch_scaled(sdl, ev, &x, &y, TRUE))
 		return FALSE;
 	return freerdp_client_handle_touch(
-	    &sdl->common, FREERDP_TOUCH_DOWN | FREERDP_TOUCH_HAS_PRESSURE,
+	    sdl->common(), FREERDP_TOUCH_DOWN | FREERDP_TOUCH_HAS_PRESSURE,
 	    static_cast<INT32>(ev->fingerId), sdl_scale_pressure(ev->pressure), x, y);
 }
 
-BOOL sdl_handle_touch_motion(sdlContext* sdl, const SDL_TouchFingerEvent* ev)
+BOOL sdl_handle_touch_motion(SdlContext* sdl, const SDL_TouchFingerEvent* ev)
 {
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(ev);
@@ -193,24 +192,24 @@ BOOL sdl_handle_touch_motion(sdlContext* sdl, const SDL_TouchFingerEvent* ev)
 	if (!sdl_get_touch_scaled(sdl, ev, &x, &y, TRUE))
 		return FALSE;
 	return freerdp_client_handle_touch(
-	    &sdl->common, FREERDP_TOUCH_MOTION | FREERDP_TOUCH_HAS_PRESSURE,
+	    sdl->common(), FREERDP_TOUCH_MOTION | FREERDP_TOUCH_HAS_PRESSURE,
 	    static_cast<INT32>(ev->fingerId), sdl_scale_pressure(ev->pressure), x, y);
 }
 
-BOOL sdl_handle_mouse_motion(sdlContext* sdl, const SDL_MouseMotionEvent* ev)
+BOOL sdl_handle_mouse_motion(SdlContext* sdl, const SDL_MouseMotionEvent* ev)
 {
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(ev);
 
 	const BOOL relative =
-	    freerdp_settings_get_bool(sdl->common.context.settings, FreeRDP_MouseUseRelativeMove);
+	    freerdp_settings_get_bool(sdl->context()->settings, FreeRDP_MouseUseRelativeMove);
 	INT32 x = relative ? ev->xrel : ev->x;
 	INT32 y = relative ? ev->yrel : ev->y;
 	sdl_scale_coordinates(sdl, ev->windowID, &x, &y, TRUE, TRUE);
-	return freerdp_client_send_button_event(&sdl->common, relative, PTR_FLAGS_MOVE, x, y);
+	return freerdp_client_send_button_event(sdl->common(), relative, PTR_FLAGS_MOVE, x, y);
 }
 
-BOOL sdl_handle_mouse_wheel(sdlContext* sdl, const SDL_MouseWheelEvent* ev)
+BOOL sdl_handle_mouse_wheel(SdlContext* sdl, const SDL_MouseWheelEvent* ev)
 {
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(ev);
@@ -234,7 +233,7 @@ BOOL sdl_handle_mouse_wheel(sdlContext* sdl, const SDL_MouseWheelEvent* ev)
 	return TRUE;
 }
 
-BOOL sdl_handle_mouse_button(sdlContext* sdl, const SDL_MouseButtonEvent* ev)
+BOOL sdl_handle_mouse_button(SdlContext* sdl, const SDL_MouseButtonEvent* ev)
 {
 	UINT16 flags = 0;
 	UINT16 xflags = 0;
@@ -273,9 +272,9 @@ BOOL sdl_handle_mouse_button(sdlContext* sdl, const SDL_MouseButtonEvent* ev)
 	INT32 y = ev->y;
 	sdl_scale_coordinates(sdl, ev->windowID, &x, &y, TRUE, TRUE);
 	if ((flags & (~PTR_FLAGS_DOWN)) != 0)
-		return freerdp_client_send_button_event(&sdl->common, FALSE, flags, x, y);
+		return freerdp_client_send_button_event(sdl->common(), FALSE, flags, x, y);
 	else if ((xflags & (~PTR_XFLAGS_DOWN)) != 0)
-		return freerdp_client_send_extended_button_event(&sdl->common, FALSE, xflags, x, y);
+		return freerdp_client_send_extended_button_event(sdl->common(), FALSE, xflags, x, y);
 	else
 		return FALSE;
 }
