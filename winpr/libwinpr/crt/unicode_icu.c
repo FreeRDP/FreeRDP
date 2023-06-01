@@ -45,7 +45,7 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
                             LPWSTR lpWideCharStr, int cchWideChar)
 {
 	const BOOL isNullTerminated = cbMultiByte < 0;
-	LPWSTR targetStart;
+	LPWSTR targetStart = NULL;
 
 	WINPR_UNUSED(dwFlags);
 
@@ -54,7 +54,7 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 	if ((cbMultiByte == 0) || (cbMultiByte < -1))
 		return 0;
 
-	size_t len;
+	size_t len = 0;
 	if (isNullTerminated)
 		len = strlen(lpMultiByteStr) + 1;
 	else
@@ -69,9 +69,9 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 	 * in characters for lpWideCharStr and makes no use of the output parameter itself.
 	 */
 	{
-		UErrorCode error;
-		int32_t targetLength;
-		int32_t targetCapacity;
+		UErrorCode error = U_ZERO_ERROR;
+		int32_t targetLength = -1;
+		int32_t targetCapacity = -1;
 
 		switch (CodePage)
 		{
@@ -86,7 +86,6 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 
 		targetStart = lpWideCharStr;
 		targetCapacity = cchWideChar;
-		error = U_ZERO_ERROR;
 
 		u_strFromUTF8(targetStart, targetCapacity, &targetLength, lpMultiByteStr, cbMultiByte,
 		              &error);
@@ -133,7 +132,7 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
                             LPSTR lpMultiByteStr, int cbMultiByte, LPCSTR lpDefaultChar,
                             LPBOOL lpUsedDefaultChar)
 {
-	char* targetStart;
+	char* targetStart = NULL;
 
 	/* If cchWideChar is 0, the function fails */
 
@@ -142,7 +141,7 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 
 	/* If cchWideChar is -1, the string is null-terminated */
 
-	size_t len;
+	size_t len = 0;
 	if (cchWideChar == -1)
 		len = _wcslen(lpWideCharStr) + 1;
 	else
@@ -157,9 +156,9 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 	 * in bytes for lpMultiByteStr and makes no use of the output parameter itself.
 	 */
 	{
-		UErrorCode error;
-		int32_t targetLength;
-		int32_t targetCapacity;
+		UErrorCode error = U_ZERO_ERROR;
+		int32_t targetLength = -1;
+		int32_t targetCapacity = -1;
 
 		switch (CodePage)
 		{
@@ -174,7 +173,6 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 
 		targetStart = lpMultiByteStr;
 		targetCapacity = cbMultiByte;
-		error = U_ZERO_ERROR;
 
 		u_strToUTF8(targetStart, targetCapacity, &targetLength, lpWideCharStr, cchWideChar, &error);
 		switch (error)

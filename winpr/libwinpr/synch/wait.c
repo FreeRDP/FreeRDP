@@ -77,10 +77,10 @@ int _mach_clock_gettime(int clk_id, struct timespec* t);
 
 int _mach_clock_gettime(int clk_id, struct timespec* t)
 {
-	UINT64 time;
-	double seconds;
-	double nseconds;
-	mach_timebase_info_data_t timebase;
+	UINT64 time = 0;
+	double seconds = 0.0;
+	double nseconds = 0.0;
+	mach_timebase_info_data_t timebase = { 0 };
 	mach_timebase_info(&timebase);
 	time = mach_absolute_time();
 	nseconds = ((double)time * (double)timebase.numer) / ((double)timebase.denom);
@@ -143,10 +143,10 @@ static long long ts_difftime(const struct timespec* o, const struct timespec* n)
 STATIC_NEEDED int pthread_mutex_timedlock(pthread_mutex_t* mutex,
                                           CONST_NEEDED struct timespec* timeout)
 {
-	struct timespec timenow;
-	struct timespec sleepytime;
-	unsigned long long diff;
-	int retcode;
+	struct timespec timenow = { 0 };
+	struct timespec sleepytime = { 0 };
+	unsigned long long diff = 0;
+	int retcode = -1;
 	/* This is just to avoid a completely busy wait */
 	clock_gettime(CLOCK_MONOTONIC, &timenow);
 	diff = ts_difftime(&timenow, timeout);
@@ -179,9 +179,9 @@ static void ts_add_ms(struct timespec* ts, DWORD dwMilliseconds)
 
 DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertable)
 {
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_POLL_SET pollset;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+	WINPR_POLL_SET pollset = { 0 };
 
 	if (!winpr_Handle_GetInfo(hHandle, &Type, &Object))
 	{
@@ -199,8 +199,8 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 
 		do
 		{
-			DWORD status;
-			DWORD waitDelay;
+			DWORD status = 0;
+			DWORD waitDelay = 0;
 			int ret = waitpid(process->pid, &(process->status), WNOHANG);
 			if (ret == process->pid)
 			{
@@ -230,13 +230,12 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 
 	if (Type == HANDLE_TYPE_MUTEX)
 	{
-		WINPR_MUTEX* mutex;
-		mutex = (WINPR_MUTEX*)Object;
+		WINPR_MUTEX* mutex = (WINPR_MUTEX*)Object;
 
 		if (dwMilliseconds != INFINITE)
 		{
-			int status;
-			struct timespec timeout;
+			int status = 0;
+			struct timespec timeout = { 0 };
 			clock_gettime(CLOCK_MONOTONIC, &timeout);
 			ts_add_ms(&timeout, dwMilliseconds);
 			status = pthread_mutex_timedlock(&mutex->mutex, &timeout);
@@ -253,11 +252,11 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 	}
 	else
 	{
-		int status;
+		int status = -1;
 		WINPR_THREAD* thread = NULL;
 		BOOL isSet = FALSE;
 		size_t extraFds = 0;
-		DWORD ret;
+		DWORD ret = 0;
 		BOOL autoSignaled = FALSE;
 
 		if (bAlertable)
@@ -343,20 +342,20 @@ DWORD WaitForSingleObject(HANDLE hHandle, DWORD dwMilliseconds)
 DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWaitAll,
                                DWORD dwMilliseconds, BOOL bAlertable)
 {
-	DWORD signalled;
-	DWORD polled;
+	DWORD signalled = 0;
+	DWORD polled = 0;
 	DWORD poll_map[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	BOOL signalled_handles[MAXIMUM_WAIT_OBJECTS] = { FALSE };
 	int fd = -1;
-	DWORD index;
-	int status;
-	ULONG Type;
-	WINPR_HANDLE* Object;
+	DWORD index = 0;
+	int status = -1;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
 	WINPR_THREAD* thread = NULL;
-	WINPR_POLL_SET pollset;
+	WINPR_POLL_SET pollset = { 0 };
 	DWORD ret = WAIT_FAILED;
 	size_t extraFds = 0;
-	UINT64 now, dueTime;
+	UINT64 now = 0, dueTime = 0;
 
 	if (!nCount || (nCount > MAXIMUM_WAIT_OBJECTS))
 	{
@@ -490,7 +489,7 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 		{
 			for (index = 0; index < polled; index++)
 			{
-				DWORD handlesIndex;
+				DWORD handlesIndex = 0;
 				BOOL signal_set = FALSE;
 
 				if (bWaitAll)
