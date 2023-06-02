@@ -76,6 +76,32 @@ typedef struct
 	BOOL automount;
 } DEVICE_DRIVE_EXT;
 
+static const char* rdpdr_state_str(enum RDPDR_CHANNEL_STATE state)
+{
+	switch (state)
+	{
+		case RDPDR_CHANNEL_STATE_INITIAL:
+			return "RDPDR_CHANNEL_STATE_INITIAL";
+		case RDPDR_CHANNEL_STATE_ANNOUNCE:
+			return "RDPDR_CHANNEL_STATE_ANNOUNCE";
+		case RDPDR_CHANNEL_STATE_ANNOUNCE_REPLY:
+			return "RDPDR_CHANNEL_STATE_ANNOUNCE_REPLY";
+		case RDPDR_CHANNEL_STATE_NAME_REQUEST:
+			return "RDPDR_CHANNEL_STATE_NAME_REQUEST";
+		case RDPDR_CHANNEL_STATE_SERVER_CAPS:
+			return "RDPDR_CHANNEL_STATE_SERVER_CAPS";
+		case RDPDR_CHANNEL_STATE_CLIENT_CAPS:
+			return "RDPDR_CHANNEL_STATE_CLIENT_CAPS";
+		case RDPDR_CHANNEL_STATE_CLIENTID_CONFIRM:
+			return "RDPDR_CHANNEL_STATE_CLIENTID_CONFIRM";
+		case RDPDR_CHANNEL_STATE_READY:
+			return "RDPDR_CHANNEL_STATE_READY";
+		case RDPDR_CHANNEL_STATE_USER_LOGGEDON:
+			return "RDPDR_CHANNEL_STATE_USER_LOGGEDON";
+		default:
+			return "RDPDR_CHANNEL_STATE_UNKNOWN";
+	}
+}
 static const char* rdpdr_device_type_string(UINT32 type)
 {
 	switch (type)
@@ -93,6 +119,17 @@ static const char* rdpdr_device_type_string(UINT32 type)
 		default:
 			return "UNKNOWN";
 	}
+}
+
+BOOL rdpdr_state_advance(rdpdrPlugin* rdpdr, enum RDPDR_CHANNEL_STATE next)
+{
+	WINPR_ASSERT(rdpdr);
+
+	if (next != rdpdr->state)
+		WLog_Print(rdpdr->log, WLOG_DEBUG, "[RDPDR] transition from %s to %s",
+		           rdpdr_state_str(rdpdr->state), rdpdr_state_str(next));
+	rdpdr->state = next;
+	return TRUE;
 }
 
 static BOOL device_foreach(rdpdrPlugin* rdpdr, BOOL abortOnFail,
@@ -124,7 +161,7 @@ static BOOL device_foreach(rdpdrPlugin* rdpdr, BOOL abortOnFail,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL userLoggedOn);
+static UINT rdpdr_try_send_device_list_announce_request(rdpdrPlugin* rdpdr);
 
 static BOOL rdpdr_load_drive(rdpdrPlugin* rdpdr, const char* name, const char* path, BOOL automount)
 {
@@ -268,7 +305,7 @@ static LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 								if (check_path(drive_path))
 								{
 									rdpdr_load_drive(rdpdr, drive_name, drive_path, TRUE);
-									rdpdr_send_device_list_announce_request(rdpdr, TRUE);
+									rdpdr_try_send_device_list_announce_request(rdpdr);
 								}
 							}
 
@@ -585,7 +622,7 @@ static void drive_hotplug_fsevent_callback(ConstFSEventStreamRef streamRef,
 				           error);
 			}
 			else
-				rdpdr_send_device_list_announce_request(rdpdr, TRUE);
+				rdpdr_try_send_device_list_announce_request(rdpdr);
 
 			return;
 		}
@@ -973,7 +1010,7 @@ static DWORD WINAPI drive_hotplug_thread_func(LPVOID arg)
 		switch (error)
 		{
 			case ERROR_DISK_CHANGE:
-				rdpdr_send_device_list_announce_request(rdpdr, TRUE);
+				rdpdr_try_send_device_list_announce_request(rdpdr);
 				break;
 			case CHANNEL_RC_OK:
 			case ERROR_OPEN_FAILED:
@@ -1152,6 +1189,8 @@ static UINT rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 	wStream* s;
 
 	WINPR_ASSERT(rdpdr);
+	WINPR_ASSERT(rdpdr->state == RDPDR_CHANNEL_STATE_ANNOUNCE);
+	rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_ANNOUNCE_REPLY);
 
 	s = StreamPool_Take(rdpdr->pool, 12);
 
@@ -1181,6 +1220,8 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	size_t computerNameLenW;
 
 	WINPR_ASSERT(rdpdr);
+	WINPR_ASSERT(rdpdr->state == RDPDR_CHANNEL_STATE_ANNOUNCE_REPLY);
+	rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_NAME_REQUEST);
 
 	if (!rdpdr->computerName[0])
 	{
@@ -1332,6 +1373,17 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(rdpdr->devman);
 
+	if (userLoggedOn)
+	{
+		WINPR_ASSERT(rdpdr->state >= RDPDR_CHANNEL_STATE_READY);
+		rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_USER_LOGGEDON);
+	}
+	else
+	{
+		WINPR_ASSERT(rdpdr->state >= RDPDR_CHANNEL_STATE_CLIENTID_CONFIRM);
+		rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_READY);
+	}
+
 	s = StreamPool_Take(rdpdr->pool, 256);
 
 	if (!s)
@@ -1362,6 +1414,19 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 	Stream_SetPosition(s, pos);
 	Stream_SealLength(s);
 	return rdpdr_send(rdpdr, s);
+}
+
+UINT rdpdr_try_send_device_list_announce_request(rdpdrPlugin* rdpdr)
+{
+	WINPR_ASSERT(rdpdr);
+	if (rdpdr->state != RDPDR_CHANNEL_STATE_USER_LOGGEDON)
+	{
+		WLog_Print(rdpdr->log, WLOG_DEBUG,
+		           "hotplug event received, but channel [RDPDR] is not ready (state %s), ignoring.",
+		           rdpdr_state_str(rdpdr->state));
+		return CHANNEL_RC_OK;
+	}
+	return rdpdr_send_device_list_announce_request(rdpdr, TRUE);
 }
 
 static UINT dummy_irp_response(rdpdrPlugin* rdpdr, wStream* s)
@@ -1498,6 +1563,57 @@ static UINT rdpdr_process_init(rdpdrPlugin* rdpdr)
 	return CHANNEL_RC_OK;
 }
 
+static BOOL rdpdr_state_check(rdpdrPlugin* rdpdr, UINT16 packetid,
+                              enum RDPDR_CHANNEL_STATE expected, enum RDPDR_CHANNEL_STATE next)
+{
+	WINPR_ASSERT(rdpdr);
+
+	const char* strstate = rdpdr_state_str(rdpdr->state);
+	if (rdpdr->state != expected)
+	{
+		WLog_Print(rdpdr->log, WLOG_ERROR,
+		           "channel [RDPDR] received %s, expected state %s but have state %s, aborting.",
+		           rdpdr_packetid_string(packetid), rdpdr_state_str(expected), strstate);
+
+		rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_INITIAL);
+		return FALSE;
+	}
+	return rdpdr_state_advance(rdpdr, next);
+}
+
+static BOOL rdpdr_check_channel_state(rdpdrPlugin* rdpdr, UINT16 packetid)
+{
+	WINPR_ASSERT(rdpdr);
+
+	switch (packetid)
+	{
+		case PAKID_CORE_SERVER_ANNOUNCE:
+			/* windows servers sometimes send this message.
+			 * it seems related to session login (e.g. first initialization for RDP/TLS style login,
+			 * then reinitialize the channel after login successful
+			 */
+			rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_INITIAL);
+			return rdpdr_state_check(rdpdr, packetid, RDPDR_CHANNEL_STATE_INITIAL,
+			                         RDPDR_CHANNEL_STATE_ANNOUNCE);
+		case PAKID_CORE_SERVER_CAPABILITY:
+			return rdpdr_state_check(rdpdr, packetid, RDPDR_CHANNEL_STATE_NAME_REQUEST,
+			                         RDPDR_CHANNEL_STATE_SERVER_CAPS);
+		case PAKID_CORE_CLIENTID_CONFIRM:
+			return rdpdr_state_check(rdpdr, packetid, RDPDR_CHANNEL_STATE_CLIENT_CAPS,
+			                         RDPDR_CHANNEL_STATE_CLIENTID_CONFIRM);
+		case PAKID_CORE_USER_LOGGEDON:
+			return rdpdr_state_check(rdpdr, packetid, RDPDR_CHANNEL_STATE_READY,
+			                         RDPDR_CHANNEL_STATE_USER_LOGGEDON);
+		default:
+		{
+			enum RDPDR_CHANNEL_STATE state = RDPDR_CHANNEL_STATE_READY;
+			if (rdpdr->state == RDPDR_CHANNEL_STATE_USER_LOGGEDON)
+				state = RDPDR_CHANNEL_STATE_USER_LOGGEDON;
+			return rdpdr_state_check(rdpdr, packetid, state, state);
+		}
+	}
+}
+
 /**
  * Function description
  *
@@ -1522,6 +1638,9 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 
 		if (component == RDPDR_CTYP_CORE)
 		{
+			if (!rdpdr_check_channel_state(rdpdr, packetId))
+				return CHANNEL_RC_OK;
+
 			switch (packetId)
 			{
 				case PAKID_CORE_SERVER_ANNOUNCE:
