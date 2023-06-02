@@ -5,6 +5,7 @@ Fixed issues:
 * Backported #7306: early bail from update_read_window_state_order breaks protocol
 * Backported #8903: rdpecam/server: Remove wrong assertion
 * Backported #8994: bounds checks for gdi/gfx rectangles
+* Backported #9023: enforce rdpdr client side state checks
 
 # 2023-02-16 Version 2.10.0
 
