@@ -571,6 +571,9 @@ static BOOL rdg_websocket_reply_close(BIO* bio, wStream* s)
 		closeDataLen = 2;
 
 	closeFrame = Stream_New(NULL, 6 + closeDataLen);
+	if (!closeFrame)
+		return FALSE;
+
 	Stream_Write_UINT8(closeFrame, WEBSOCKET_FIN_BIT | WebsocketPongOpcode);
 	Stream_Write_UINT8(closeFrame, closeDataLen | WEBSOCKET_MASK_BIT); /* no payload */
 	winpr_RAND((BYTE*)&maskingKey1, 2);
@@ -607,6 +610,9 @@ static BOOL rdg_websocket_reply_pong(BIO* bio, wStream* s)
 		return rdg_write_websocket(bio, s, WebsocketPongOpcode);
 
 	closeFrame = Stream_New(NULL, 6);
+	if (!closeFrame)
+		return FALSE;
+
 	Stream_Write_UINT8(closeFrame, WEBSOCKET_FIN_BIT | WebsocketPongOpcode);
 	Stream_Write_UINT8(closeFrame, 0 | WEBSOCKET_MASK_BIT); /* no payload */
 	winpr_RAND((BYTE*)&maskingKey, 4);
@@ -615,6 +621,7 @@ static BOOL rdg_websocket_reply_pong(BIO* bio, wStream* s)
 
 	ERR_clear_error();
 	status = BIO_write(bio, Stream_Buffer(closeFrame), Stream_Length(closeFrame));
+	Stream_Free(closeFrame, TRUE);
 
 	if (status < 0)
 		return FALSE;
@@ -977,9 +984,8 @@ static wStream* rdg_receive_packet(rdpRdg* rdg)
 
 static BOOL rdg_send_handshake(rdpRdg* rdg)
 {
-	wStream* s;
-	BOOL status;
-	s = Stream_New(NULL, 14);
+	BOOL status = FALSE;
+	wStream* s = Stream_New(NULL, 14);
 
 	if (!s)
 		return FALSE;
