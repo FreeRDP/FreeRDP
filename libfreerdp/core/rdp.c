@@ -211,6 +211,11 @@ BOOL rdp_read_share_control_header(rdpRdp* rdp, wStream* s, UINT16* tpktLength,
 			*tpktLength = 8; /* Flow control PDU is 8 bytes */
 		if (remainingLength)
 			*remainingLength = 0;
+
+		char buffer[128] = { 0 };
+		WLog_Print(rdp->log, WLOG_DEBUG,
+		           "[Flow control PDU] type=%s, tpktLength=%" PRIuz ", remainingLength=%" PRIuz,
+		           pdu_type_to_str(*type, buffer, sizeof(buffer)), *tpktLength, *remainingLength);
 		return TRUE;
 	}
 
@@ -221,27 +226,33 @@ BOOL rdp_read_share_control_header(rdpRdp* rdp, wStream* s, UINT16* tpktLength,
 		return FALSE;
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, len - 2))
-		return FALSE;
 	if (tpktLength)
 		*tpktLength = len;
 
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 2))
+		return FALSE;
+
 	Stream_Read_UINT16(s, tmp); /* pduType */
 	*type = tmp & 0x0F;         /* type is in the 4 least significant bits */
+
+	size_t remLen = len - 4;
 	if (len > 5)
 	{
+		if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 2))
+			return FALSE;
+
 		Stream_Read_UINT16(s, *channel_id); /* pduSource */
-		if (remainingLength)
-			*remainingLength = len - 6;
+		remLen = len - 6;
 	}
 	else
-	{
 		*channel_id = 0; /* Windows XP can send such short DEACTIVATE_ALL PDUs. */
-		if (remainingLength)
-			*remainingLength = len - 4;
-	}
 
-	return TRUE;
+	char buffer[128] = { 0 };
+	WLog_Print(rdp->log, WLOG_DEBUG, "type=%s, tpktLength=%" PRIuz ", remainingLength=%" PRIuz,
+	           pdu_type_to_str(*type, buffer, sizeof(buffer)), len, remLen);
+	if (remainingLength)
+		*remainingLength = remLen;
+	return Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, remLen);
 }
 
 BOOL rdp_write_share_control_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 type,
