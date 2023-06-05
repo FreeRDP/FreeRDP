@@ -29,6 +29,7 @@
 #include <winpr/wlog.h>
 #include <winpr/path.h>
 #include <winpr/ncrypt.h>
+#include <winpr/environment.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
@@ -4512,6 +4513,117 @@ static BOOL argv_append(int* pargc, char** pargv[], char* what)
 	return TRUE;
 }
 
+static BOOL args_from_fp(FILE* fp, int* aargc, char** aargv[], const char* file, const char* cmd)
+{
+	BOOL success = FALSE;
+
+	WINPR_ASSERT(aargc);
+	WINPR_ASSERT(aargv);
+	WINPR_ASSERT(cmd);
+
+	if (!fp)
+	{
+		WLog_ERR(TAG, "Failed to read command line options from file '%s'", file);
+		return FALSE;
+	}
+	if (!argv_append(aargc, aargv, _strdup(cmd)))
+		goto fail;
+	while (!feof(fp))
+	{
+		char* line = NULL;
+		size_t size = 0;
+		INT64 rc = GetLine(&line, &size, fp);
+		if ((rc < 0) || !line)
+		{
+			/* abort if GetLine failed due to reaching EOF */
+			if (feof(fp))
+				break;
+			goto fail;
+		}
+
+		while (rc > 0)
+		{
+			const char cur = (line[rc - 1]);
+			if ((cur == '\n') || (cur == '\r'))
+			{
+				line[rc - 1] = '\0';
+				rc--;
+			}
+			else
+				break;
+		}
+		/* abort on empty lines */
+		if (rc == 0)
+		{
+			free(line);
+			break;
+		}
+		if (!argv_append(aargc, aargv, line))
+			goto fail;
+	}
+
+	success = TRUE;
+fail:
+	fclose(fp);
+	if (!success)
+		argv_free(*aargc, *aargv);
+	return success;
+}
+
+static BOOL args_from_env(const char* name, int* aargc, char** aargv[], const char* arg,
+                          const char* cmd)
+{
+	BOOL success = FALSE;
+	char* env = NULL;
+
+	WINPR_ASSERT(aargc);
+	WINPR_ASSERT(aargv);
+	WINPR_ASSERT(cmd);
+
+	if (!name)
+	{
+		WLog_ERR(TAG, "%s - environment variable name empty", arg);
+		goto cleanup;
+	}
+
+	const DWORD size = GetEnvironmentVariableX(name, env, 0);
+	if (size == 0)
+	{
+		WLog_ERR(TAG, "%s - no environment variable '%s'", arg, name);
+		goto cleanup;
+	}
+	env = calloc(size + 1, sizeof(char));
+	if (!env)
+		goto cleanup;
+	const DWORD rc = GetEnvironmentVariableX(name, env, size);
+	if (rc != size - 1)
+		goto cleanup;
+	if (rc == 0)
+	{
+		WLog_ERR(TAG, "%s - environment variable '%s' is empty", arg);
+		goto cleanup;
+	}
+
+	if (!argv_append(aargc, aargv, _strdup(cmd)))
+		goto cleanup;
+
+	char* context = NULL;
+	char* tok = strtok_s(env, "\n", &context);
+	while (tok)
+	{
+		if (!argv_append(aargc, aargv, _strdup(tok)))
+			goto cleanup;
+		tok = strtok_s(NULL, "\n", &context);
+	}
+
+	success = TRUE;
+cleanup:
+	free(env);
+	if (!success)
+		argv_free(*aargc, *aargv);
+	return success;
+}
+
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int oargc,
                                                          char* oargv[], BOOL allowUnknown)
 {
@@ -4533,61 +4645,23 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (!value_to_uint(val, &result, 0, INT_MAX))
 				return -1;
 			fp = fdopen((int)result, "r");
+			success = args_from_fp(fp, &aargc, &aargv, file, oargv[0]);
+		}
+		else if (strncmp(file, "env:", 4) == 0)
+		{
+			const char* name = strchr(file, ':') + 1;
+			success = args_from_env(name, &aargc, &aargv, oargv[1], oargv[0]);
 		}
 		else if (strcmp(file, "stdin") != 0)
+		{
 			fp = winpr_fopen(file, "r");
-
-		if (!fp)
-		{
-			WLog_ERR(TAG, "Failed to read command line options from file '%s'", file);
-			return -1;
+			success = args_from_fp(fp, &aargc, &aargv, file, oargv[0]);
 		}
-
-		if (!argv_append(&aargc, &aargv, _strdup(oargv[0])))
-			goto fail;
-		while (!feof(fp))
-		{
-			char* line = NULL;
-			size_t size = 0;
-			INT64 rc = GetLine(&line, &size, fp);
-			if ((rc < 0) || !line)
-			{
-				/* abort if GetLine failed due to reaching EOF */
-				if (feof(fp))
-					break;
-				goto fail;
-			}
-
-			while (rc > 0)
-			{
-				const char cur = (line[rc - 1]);
-				if ((cur == '\n') || (cur == '\r'))
-				{
-					line[rc - 1] = '\0';
-					rc--;
-				}
-				else
-					break;
-			}
-			/* abort on empty lines */
-			if (rc == 0)
-			{
-				free(line);
-				break;
-			}
-			if (!argv_append(&aargc, &aargv, line))
-				goto fail;
-		}
-
-		success = TRUE;
-	fail:
-		fclose(fp);
+		else
+			success = args_from_fp(fp, &aargc, &aargv, file, oargv[0]);
 
 		if (!success)
-		{
-			argv_free(aargc, aargv);
 			return -1;
-		}
 		argc = aargc;
 		argv = aargv;
 	}
