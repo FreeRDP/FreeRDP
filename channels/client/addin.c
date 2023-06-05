@@ -530,8 +530,8 @@ typedef struct
 static DWORD WINAPI channel_client_thread_proc(LPVOID userdata)
 {
 	UINT error = CHANNEL_RC_OK;
-	wStream* data;
-	wMessage message;
+	wStream* data = NULL;
+	wMessage message = { 0 };
 	msg_proc_internals* internals = userdata;
 
 	WINPR_ASSERT(internals);

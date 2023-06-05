@@ -1387,19 +1387,16 @@ static UINT drdynvc_process_close_request(drdynvcPlugin* drdynvc, int Sp, int cb
  */
 static UINT drdynvc_order_recv(drdynvcPlugin* drdynvc, wStream* s, UINT32 ThreadingFlags)
 {
-	UINT8 value;
-	UINT8 Cmd;
-	UINT8 Sp;
-	UINT8 cbChId;
+	UINT8 value = 0;
 
 	WINPR_ASSERT(drdynvc);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return ERROR_INVALID_DATA;
 
 	Stream_Read_UINT8(s, value);
-	Cmd = (value & 0xf0) >> 4;
-	Sp = (value & 0x0c) >> 2;
-	cbChId = (value & 0x03) >> 0;
+	const UINT8 Cmd = (value & 0xf0) >> 4;
+	const UINT8 Sp = (value & 0x0c) >> 2;
+	const UINT8 cbChId = (value & 0x03) >> 0;
 	WLog_Print(drdynvc->log, WLOG_TRACE, "order_recv: Cmd=%s, Sp=%" PRIu8 " cbChId=%" PRIu8,
 	           drdynvc_get_packet_type(Cmd), Sp, cbChId);
 
@@ -1552,8 +1549,8 @@ static void VCAPITYPE drdynvc_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 static DWORD WINAPI drdynvc_virtual_channel_client_thread(LPVOID arg)
 {
 	/* TODO: rewrite this */
-	wStream* data;
-	wMessage message;
+	wStream* data = NULL;
+	wMessage message = { 0 };
 	UINT error = CHANNEL_RC_OK;
 	drdynvcPlugin* drdynvc = (drdynvcPlugin*)arg;
 

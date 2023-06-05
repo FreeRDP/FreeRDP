@@ -68,23 +68,20 @@ static const char* xf_input_get_class_string(int class)
 
 static BOOL register_input_events(xfContext* xfc, Window window)
 {
-	int i, ndevices;
+	int ndevices = 0;
 	int nmasks = 0;
-	XIDeviceInfo* info;
-	rdpSettings* settings;
 	XIEventMask evmasks[64] = { 0 };
 	BYTE masks[8][XIMaskLen(XI_LASTEVENT)] = { 0 };
 
 	WINPR_ASSERT(xfc);
 
-	settings = xfc->common.context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	info = XIQueryDevice(xfc->display, XIAllDevices, &ndevices);
+	XIDeviceInfo* info = XIQueryDevice(xfc->display, XIAllDevices, &ndevices);
 
-	for (i = 0; i < MIN(ndevices, 64); i++)
+	for (int i = 0; i < MIN(ndevices, 64); i++)
 	{
-		int j;
 		BOOL used = FALSE;
 		XIDeviceInfo* dev = &info[i];
 
@@ -96,7 +93,7 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 		if (strcmp(dev->name, "Virtual core pointer") == 0)
 			continue;
 
-		for (j = 0; j < dev->num_classes; j++)
+		for (int j = 0; j < dev->num_classes; j++)
 		{
 			const XIAnyClassInfo* class = dev->classes[j];
 
@@ -181,12 +178,11 @@ int xf_input_init(xfContext* xfc, Window window)
 {
 	int major = XI_2_Major;
 	int minor = XI_2_Minor;
-	int opcode, event, error;
-	rdpSettings* settings;
+	int opcode = 0, event = 0, error = 0;
 
 	WINPR_ASSERT(xfc);
 
-	settings = xfc->common.context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
 	xfc->firstDist = -1.0;

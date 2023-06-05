@@ -379,9 +379,8 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 
 		while ((offset + length + 8) > cchEnvironmentBlock)
 		{
-			LPCH tmp;
 			cchEnvironmentBlock *= 2;
-			tmp = (LPCH)realloc(lpszEnvironmentBlock, cchEnvironmentBlock * sizeof(CHAR));
+			LPCH tmp = (LPCH)realloc(lpszEnvironmentBlock, cchEnvironmentBlock * sizeof(CHAR));
 
 			if (!tmp)
 			{
@@ -419,9 +418,8 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 				{
 					while ((offset + mergeLength + 8) > cchEnvironmentBlock)
 					{
-						LPCH tmp;
 						cchEnvironmentBlock *= 2;
-						tmp =
+						LPCH tmp =
 						    (LPCH)realloc(lpszEnvironmentBlock, cchEnvironmentBlock * sizeof(CHAR));
 
 						if (!tmp)
@@ -463,9 +461,8 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 
 		while ((offset + mergeLength + 8) > cchEnvironmentBlock)
 		{
-			LPCH tmp;
 			cchEnvironmentBlock *= 2;
-			tmp = (LPCH)realloc(lpszEnvironmentBlock, cchEnvironmentBlock * sizeof(CHAR));
+			LPCH tmp = (LPCH)realloc(lpszEnvironmentBlock, cchEnvironmentBlock * sizeof(CHAR));
 
 			if (!tmp)
 			{

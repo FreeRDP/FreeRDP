@@ -194,9 +194,9 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 
 	while (bitmapDataOffset < bitmapDataByteCount)
 	{
-		UINT32 tmp;
-		UINT32 color;
-		UINT32 runLengthFactor;
+		UINT32 tmp = 0;
+		UINT32 color = 0;
+		UINT32 runLengthFactor = 0;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 			return FALSE;
@@ -549,9 +549,10 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* clear, CLEAR_VBAR_ENTRY* vBarEntry)
 		const UINT32 bpp = FreeRDPGetBytesPerPixel(clear->format);
 		const UINT32 oldPos = vBarEntry->size * bpp;
 		const UINT32 diffSize = (vBarEntry->count - vBarEntry->size) * bpp;
-		BYTE* tmp;
+
 		vBarEntry->size = vBarEntry->count;
-		tmp = (BYTE*)winpr_aligned_recalloc(vBarEntry->pixels, vBarEntry->count, bpp * 1ULL, 32);
+		BYTE* tmp =
+		    (BYTE*)winpr_aligned_recalloc(vBarEntry->pixels, vBarEntry->count, bpp * 1ULL, 32);
 
 		if (!tmp)
 		{
@@ -948,8 +949,8 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 		if (glyphEntry->count > glyphEntry->size)
 		{
-			BYTE* tmp;
-			tmp = winpr_aligned_recalloc(glyphEntry->pixels, glyphEntry->count, bpp * 1ULL, 32);
+			BYTE* tmp =
+			    winpr_aligned_recalloc(glyphEntry->pixels, glyphEntry->count, bpp * 1ULL, 32);
 
 			if (!tmp)
 			{

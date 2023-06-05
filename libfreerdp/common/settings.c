@@ -863,8 +863,6 @@ BOOL freerdp_capability_buffer_copy(rdpSettings* settings, const rdpSettings* sr
 
 	for (UINT32 x = 0; x < src->ReceivedCapabilitiesSize; x++)
 	{
-		void* tmp;
-
 		WINPR_ASSERT(settings->ReceivedCapabilities);
 		settings->ReceivedCapabilities[x] = src->ReceivedCapabilities[x];
 
@@ -874,8 +872,8 @@ BOOL freerdp_capability_buffer_copy(rdpSettings* settings, const rdpSettings* sr
 		WINPR_ASSERT(settings->ReceivedCapabilityData);
 		if (src->ReceivedCapabilityDataSizes[x] > 0)
 		{
-			tmp = realloc(settings->ReceivedCapabilityData[x],
-			              settings->ReceivedCapabilityDataSizes[x]);
+			void* tmp = realloc(settings->ReceivedCapabilityData[x],
+			                    settings->ReceivedCapabilityDataSizes[x]);
 			if (!tmp)
 				return FALSE;
 			memcpy(tmp, src->ReceivedCapabilityData[x], src->ReceivedCapabilityDataSizes[x]);

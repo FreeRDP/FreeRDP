@@ -213,10 +213,9 @@ BOOL gdi_CRectToRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, HGDI_RGN r
 BOOL gdi_RectToCRgn(const HGDI_RECT rect, INT32* x, INT32* y, INT32* w, INT32* h)
 {
 	BOOL rc = TRUE;
-	INT64 tmp;
 	*x = rect->left;
 	*y = rect->top;
-	tmp = rect->right - rect->left + 1;
+	INT64 tmp = rect->right - rect->left + 1;
 	if ((tmp < 0) || (tmp > INT32_MAX))
 	{
 		char buffer[256];

@@ -4003,7 +4003,6 @@ BOOL rdp_read_capability_set(wStream* sub, UINT16 type, rdpSettings* settings, B
 	if (type <= CAPSET_TYPE_FRAME_ACKNOWLEDGE)
 	{
 		size_t size = Stream_Length(sub);
-		void* tmp;
 
 		WINPR_ASSERT(settings->ReceivedCapabilities);
 		settings->ReceivedCapabilities[type] = TRUE;
@@ -4012,7 +4011,7 @@ BOOL rdp_read_capability_set(wStream* sub, UINT16 type, rdpSettings* settings, B
 		settings->ReceivedCapabilityDataSizes[type] = size;
 
 		WINPR_ASSERT(settings->ReceivedCapabilityData);
-		tmp = realloc(settings->ReceivedCapabilityData[type], size);
+		void* tmp = realloc(settings->ReceivedCapabilityData[type], size);
 		if (!tmp && (size > 0))
 			return FALSE;
 		memcpy(tmp, Stream_Buffer(sub), size);

@@ -512,11 +512,9 @@ out:
 
 static BOOL xf_process_x_events(freerdp* instance)
 {
-	BOOL status;
-	int pending_status;
+	BOOL status = TRUE;
+	int pending_status = 1;
 	xfContext* xfc = (xfContext*)instance->context;
-	status = TRUE;
-	pending_status = TRUE;
 
 	while (pending_status)
 	{
@@ -574,16 +572,14 @@ BOOL xf_create_window(xfContext* xfc)
 {
 	XGCValues gcv = { 0 };
 	XEvent xevent = { 0 };
-	int width, height;
-	char* windowTitle;
-	rdpSettings* settings;
+	char* windowTitle = NULL;
 
 	WINPR_ASSERT(xfc);
-	settings = xfc->common.context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	width = settings->DesktopWidth;
-	height = settings->DesktopHeight;
+	int width = settings->DesktopWidth;
+	int height = settings->DesktopHeight;
 
 	const XSetWindowAttributes empty = { 0 };
 	xfc->attribs = empty;
@@ -1221,22 +1217,17 @@ static BOOL xf_pre_connect(freerdp* instance)
  */
 static BOOL xf_post_connect(freerdp* instance)
 {
-	rdpUpdate* update;
-	rdpContext* context;
-	rdpSettings* settings;
-	ResizeWindowEventArgs e;
-	xfContext* xfc;
-	BOOL serverIsWindowsPlatform;
+	ResizeWindowEventArgs e = { 0 };
 
 	WINPR_ASSERT(instance);
-	xfc = (xfContext*)instance->context;
-	context = instance->context;
+	xfContext* xfc = (xfContext*)instance->context;
+	rdpContext* context = instance->context;
 	WINPR_ASSERT(context);
 
-	settings = context->settings;
+	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	update = context->update;
+	rdpUpdate* update = context->update;
 	WINPR_ASSERT(update);
 
 	if (settings->RemoteApplicationMode)
@@ -1300,7 +1291,7 @@ static BOOL xf_post_connect(freerdp* instance)
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
 	update->SetKeyboardImeStatus = xf_keyboard_set_ime_status;
 
-	serverIsWindowsPlatform = (settings->OsMajorType == OSMAJORTYPE_WINDOWS);
+	const BOOL serverIsWindowsPlatform = (settings->OsMajorType == OSMAJORTYPE_WINDOWS);
 	if (settings->RedirectClipboard &&
 	    !(xfc->clipboard = xf_clipboard_new(xfc, !serverIsWindowsPlatform)))
 		return FALSE;
@@ -1403,31 +1394,24 @@ static BOOL handle_window_events(freerdp* instance)
  */
 static DWORD WINAPI xf_client_thread(LPVOID param)
 {
-	BOOL status;
 	DWORD exit_code = 0;
-	DWORD nCount;
-	DWORD waitStatus;
-	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
-	xfContext* xfc;
-	freerdp* instance;
-	rdpContext* context;
+	DWORD waitStatus = 0;
 	HANDLE inputEvent = NULL;
 	HANDLE timer = NULL;
-	LARGE_INTEGER due;
-	rdpSettings* settings;
-	TimerEventArgs timerEvent;
+	LARGE_INTEGER due = { 0 };
+	TimerEventArgs timerEvent = { 0 };
 
 	EventArgsInit(&timerEvent, "xfreerdp");
-	instance = (freerdp*)param;
+	freerdp* instance = (freerdp*)param;
 	WINPR_ASSERT(instance);
 
-	status = freerdp_connect(instance);
-	context = instance->context;
+	const BOOL status = freerdp_connect(instance);
+	rdpContext* context = instance->context;
 	WINPR_ASSERT(context);
-	xfc = (xfContext*)instance->context;
+	xfContext* xfc = (xfContext*)instance->context;
 	WINPR_ASSERT(xfc);
 
-	settings = context->settings;
+	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
 	if (!status)
@@ -1479,7 +1463,8 @@ static DWORD WINAPI xf_client_thread(LPVOID param)
 
 	while (!freerdp_shall_disconnect_context(instance->context))
 	{
-		nCount = 0;
+		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		DWORD nCount = 0;
 		handles[nCount++] = timer;
 		handles[nCount++] = inputEvent;
 

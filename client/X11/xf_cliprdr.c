@@ -589,19 +589,17 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_raw_server_formats(xfClipboard* clipboard,
 static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboard,
                                                            UINT32* numFormats)
 {
-	unsigned long i;
-	Atom atom;
+	Atom atom = None;
 	BYTE* data = NULL;
-	int format_property;
-	unsigned long length;
-	unsigned long bytes_left;
+	int format_property = 0;
+	unsigned long length = 0;
+	unsigned long bytes_left = 0;
 	CLIPRDR_FORMAT* formats = NULL;
-	xfContext* xfc;
 
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(numFormats);
 
-	xfc = clipboard->xfc;
+	xfContext* xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
 
 	*numFormats = 0;
@@ -623,7 +621,7 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_formats_from_targets(xfClipboard* clipboar
 		}
 	}
 
-	for (i = 0; i < length; i++)
+	for (unsigned long i = 0; i < length; i++)
 	{
 		Atom tatom = ((Atom*)data)[i];
 		const xfCliprdrFormat* format = xf_cliprdr_get_client_format_by_atom(clipboard, tatom);
@@ -1642,18 +1640,15 @@ static UINT xf_cliprdr_send_client_capabilities(xfClipboard* clipboard)
  */
 static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL force)
 {
-	UINT ret;
-	xfContext* xfc;
-
 	WINPR_ASSERT(clipboard);
 
-	xfc = clipboard->xfc;
+	xfContext* xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
 
 	UINT32 numFormats = 0;
 	CLIPRDR_FORMAT* formats = xf_cliprdr_get_client_formats(clipboard, &numFormats);
 
-	ret = xf_cliprdr_send_format_list(clipboard, formats, numFormats, force);
+	const UINT ret = xf_cliprdr_send_format_list(clipboard, formats, numFormats, force);
 
 	if (clipboard->owner && clipboard->owner != xfc->drawable)
 	{

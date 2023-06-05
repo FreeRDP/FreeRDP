@@ -483,21 +483,18 @@ void xf_DestroyDummyWindow(xfContext* xfc, Window window)
 
 xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int height)
 {
-	XEvent xevent;
-	int input_mask;
-	xfWindow* window;
-	Window parentWindow;
-	XClassHint* classHints;
-	rdpSettings* settings;
-	window = (xfWindow*)calloc(1, sizeof(xfWindow));
+	XEvent xevent = { 0 };
+	int input_mask = 0;
+	XClassHint* classHints = NULL;
+	xfWindow* window = (xfWindow*)calloc(1, sizeof(xfWindow));
 
 	if (!window)
 		return NULL;
 
-	settings = xfc->common.context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	parentWindow = (Window)settings->ParentWindowId;
+	Window parentWindow = (Window)settings->ParentWindowId;
 	window->width = width;
 	window->height = height;
 	window->decorations = xfc->decorations;

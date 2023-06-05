@@ -306,7 +306,6 @@ BOOL freerdp_settings_set_default_order_support(rdpSettings* settings)
 
 BOOL freerdp_capability_buffer_allocate(rdpSettings* settings, UINT32 count)
 {
-	void* tmp;
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(count > 0);
 	WINPR_ASSERT(count == 32);
@@ -315,7 +314,7 @@ BOOL freerdp_capability_buffer_allocate(rdpSettings* settings, UINT32 count)
 	WINPR_ASSERT(settings->ReceivedCapabilitiesSize == 0);
 
 	settings->ReceivedCapabilitiesSize = count;
-	tmp = realloc(settings->ReceivedCapabilities, count * sizeof(BYTE));
+	void* tmp = realloc(settings->ReceivedCapabilities, count * sizeof(BYTE));
 	if (!tmp)
 		return FALSE;
 	memset(tmp, 0, count * sizeof(BYTE));

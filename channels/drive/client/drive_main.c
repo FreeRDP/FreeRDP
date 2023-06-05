@@ -739,8 +739,8 @@ static UINT drive_process_irp(DRIVE_DEVICE* drive, IRP* irp)
 
 static DWORD WINAPI drive_thread_func(LPVOID arg)
 {
-	IRP* irp;
-	wMessage message;
+	IRP* irp = NULL;
+	wMessage message = { 0 };
 	DRIVE_DEVICE* drive = (DRIVE_DEVICE*)arg;
 	UINT error = CHANNEL_RC_OK;
 

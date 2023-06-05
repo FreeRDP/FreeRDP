@@ -139,7 +139,7 @@ static BOOL rdpsnd_oss_format_supported(rdpsndDevicePlugin* device, const AUDIO_
 static BOOL rdpsnd_oss_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
                                   UINT32 latency)
 {
-	int tmp;
+	int tmp = 0;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->pcm_handle == -1 || format == NULL)

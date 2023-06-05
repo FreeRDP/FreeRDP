@@ -1384,10 +1384,10 @@ static DWORD WINAPI play_thread(LPVOID arg)
 
 	while (TRUE)
 	{
-		int rc;
-		wMessage message;
-		wStream* s;
-		DWORD status;
+		int rc = -1;
+		wMessage message = { 0 };
+		wStream* s = NULL;
+		DWORD status = 0;
 		DWORD nCount = 0;
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 

@@ -1661,10 +1661,10 @@ out:
 
 static state_run_t rdp_recv_fastpath_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT16 length;
-	rdpFastPath* fastpath;
+	UINT16 length = 0;
+
 	WINPR_ASSERT(rdp);
-	fastpath = rdp->fastpath;
+	rdpFastPath* fastpath = rdp->fastpath;
 
 	if (!fastpath_read_header_rdp(fastpath, s, &length))
 	{

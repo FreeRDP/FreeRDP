@@ -395,11 +395,9 @@ DWORD freerdp_get_event_handles(rdpContext* context, HANDLE* events, DWORD count
 
 BOOL freerdp_check_event_handles(rdpContext* context)
 {
-	BOOL status;
-
 	WINPR_ASSERT(context);
 
-	status = freerdp_check_fds(context->instance);
+	BOOL status = freerdp_check_fds(context->instance);
 
 	if (!status)
 	{
@@ -438,11 +436,10 @@ BOOL freerdp_check_event_handles(rdpContext* context)
 wMessageQueue* freerdp_get_message_queue(freerdp* instance, DWORD id)
 {
 	wMessageQueue* queue = NULL;
-	rdpContext* context;
 
 	WINPR_ASSERT(instance);
 
-	context = instance->context;
+	rdpContext* context = instance->context;
 	WINPR_ASSERT(context);
 
 	switch (id)

@@ -55,7 +55,7 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 {
 	const INT CHUNK_SIZE = 32;
 	INT64 rc, read = 0, length = CHUNK_SIZE;
-	char *tmp, *tzid = NULL;
+	char* tzid = NULL;
 
 	tzid = (char*)malloc(length);
 	if (!tzid)
@@ -71,7 +71,7 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 			break;
 
 		length += CHUNK_SIZE;
-		tmp = (char*)realloc(tzid, length);
+		char* tmp = (char*)realloc(tzid, length);
 		if (!tmp)
 		{
 			free(tzid);

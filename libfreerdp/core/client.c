@@ -665,7 +665,7 @@ fail:
 static int freerdp_channels_process_sync(rdpChannels* channels, freerdp* instance)
 {
 	int status = TRUE;
-	wMessage message;
+	wMessage message = { 0 };
 
 	while (MessageQueue_Peek(channels->queue, &message, TRUE))
 	{
@@ -1142,7 +1142,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWriteEx(LPVOID pInitHandle, DWORD op
 	CHANNEL_INIT_DATA* pChannelInitData = NULL;
 	CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
 	CHANNEL_OPEN_EVENT* pChannelOpenEvent = NULL;
-	wMessage message;
+	wMessage message = { 0 };
 
 	if (!pInitHandle)
 		return CHANNEL_RC_BAD_INIT_HANDLE;
@@ -1197,10 +1197,10 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWriteEx(LPVOID pInitHandle, DWORD op
 static UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle, LPVOID pData, ULONG dataLength,
                                                   LPVOID pUserData)
 {
-	wMessage message;
-	CHANNEL_OPEN_DATA* pChannelOpenData;
-	CHANNEL_OPEN_EVENT* pChannelOpenEvent;
-	rdpChannels* channels;
+	wMessage message = { 0 };
+	CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
+	CHANNEL_OPEN_EVENT* pChannelOpenEvent = NULL;
+	rdpChannels* channels = NULL;
 
 	pChannelOpenData = HashTable_GetItemValue(g_ChannelHandles, (void*)(UINT_PTR)openHandle);
 

@@ -1070,20 +1070,19 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
                          UINT32 top, BYTE* dst, UINT32 dstFormat, UINT32 dstStride,
                          UINT32 dstHeight, REGION16* invalidRegion)
 {
-	REGION16 updateRegion;
-	UINT32 blockLen;
-	UINT32 blockType;
-	wStream inStream, *s;
+	REGION16 updateRegion = { 0 };
+	UINT32 blockLen = 0;
+	UINT32 blockType = 0;
+	wStream inStream = { 0 };
 	BOOL ok = TRUE;
-	RFX_MESSAGE* message;
 
 	if (!context || !data || !length)
 		return FALSE;
 
 	WINPR_ASSERT(context->priv);
-	message = &context->currentMessage;
+	RFX_MESSAGE* message = &context->currentMessage;
 
-	s = Stream_StaticConstInit(&inStream, data, length);
+	wStream* s = Stream_StaticConstInit(&inStream, data, length);
 
 	message->freeRects = TRUE;
 

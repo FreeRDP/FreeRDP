@@ -335,18 +335,18 @@ int xf_keyboard_read_keyboard_state(xfContext* xfc)
 
 static int xf_keyboard_get_keymask(xfContext* xfc, int keysym)
 {
-	int modifierpos, key, keysymMask = 0;
+	int keysymMask = 0;
 	KeyCode keycode = XKeysymToKeycode(xfc->display, keysym);
 
 	if (keycode == NoSymbol)
 		return 0;
 
 	WINPR_ASSERT(xfc->modifierMap);
-	for (modifierpos = 0; modifierpos < 8; modifierpos++)
+	for (int modifierpos = 0; modifierpos < 8; modifierpos++)
 	{
 		int offset = xfc->modifierMap->max_keypermod * modifierpos;
 
-		for (key = 0; key < xfc->modifierMap->max_keypermod; key++)
+		for (int key = 0; key < xfc->modifierMap->max_keypermod; key++)
 		{
 			if (xfc->modifierMap->modifiermap[offset + key] == keycode)
 			{
@@ -370,12 +370,10 @@ BOOL xf_keyboard_get_key_state(xfContext* xfc, int state, int keysym)
 
 static BOOL xf_keyboard_set_key_state(xfContext* xfc, BOOL on, int keysym)
 {
-	int keysymMask;
-
 	if (!xfc->xkbAvailable)
 		return FALSE;
 
-	keysymMask = xf_keyboard_get_keymask(xfc, keysym);
+	const int keysymMask = xf_keyboard_get_keymask(xfc, keysym);
 
 	if (!keysymMask)
 	{
@@ -387,9 +385,8 @@ static BOOL xf_keyboard_set_key_state(xfContext* xfc, BOOL on, int keysym)
 
 UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc)
 {
-	int state;
 	UINT32 toggleKeysState = 0;
-	state = xf_keyboard_read_keyboard_state(xfc);
+	const int state = xf_keyboard_read_keyboard_state(xfc);
 
 	if (xf_keyboard_get_key_state(xfc, state, XK_Scroll_Lock))
 		toggleKeysState |= KBD_SYNC_SCROLL_LOCK;
@@ -408,21 +405,18 @@ UINT32 xf_keyboard_get_toggle_keys_state(xfContext* xfc)
 
 static void xk_keyboard_update_modifier_keys(xfContext* xfc)
 {
-	int state;
-	size_t i;
-	KeyCode keycode;
-	int keysyms[] = { XK_Shift_L,   XK_Shift_R,   XK_Alt_L,   XK_Alt_R,
-		              XK_Control_L, XK_Control_R, XK_Super_L, XK_Super_R };
+	const int keysyms[] = { XK_Shift_L,   XK_Shift_R,   XK_Alt_L,   XK_Alt_R,
+		                    XK_Control_L, XK_Control_R, XK_Super_L, XK_Super_R };
 
 	xf_keyboard_clear(xfc);
 
-	state = xf_keyboard_read_keyboard_state(xfc);
+	const int state = xf_keyboard_read_keyboard_state(xfc);
 
-	for (i = 0; i < ARRAYSIZE(keysyms); i++)
+	for (size_t i = 0; i < ARRAYSIZE(keysyms); i++)
 	{
 		if (xf_keyboard_get_key_state(xfc, state, keysyms[i]))
 		{
-			keycode = XKeysymToKeycode(xfc->display, keysyms[i]);
+			const KeyCode keycode = XKeysymToKeycode(xfc->display, keysyms[i]);
 			xfc->KeyboardState[keycode] = TRUE;
 		}
 	}
@@ -430,19 +424,18 @@ static void xk_keyboard_update_modifier_keys(xfContext* xfc)
 
 void xf_keyboard_focus_in(xfContext* xfc)
 {
-	rdpInput* input;
-	UINT32 syncFlags, state;
-	Window w;
-	int d, x, y;
+	UINT32 state = 0;
+	Window w = None;
+	int d = 0, x = 0, y = 0;
 
 	WINPR_ASSERT(xfc);
 	if (!xfc->display || !xfc->window)
 		return;
 
-	input = xfc->common.context.input;
+	rdpInput* input = xfc->common.context.input;
 	WINPR_ASSERT(input);
 
-	syncFlags = xf_keyboard_get_toggle_keys_state(xfc);
+	const UINT32 syncFlags = xf_keyboard_get_toggle_keys_state(xfc);
 	freerdp_input_send_focus_in_event(input, syncFlags);
 	xk_keyboard_update_modifier_keys(xfc);
 
@@ -463,17 +456,11 @@ void xf_keyboard_focus_in(xfContext* xfc)
 
 static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* mod, KeySym keysym)
 {
-	int index;
-	int count;
 	int status = 1;
-	FILE* keyScript;
-	const char* keyStr;
 	BOOL match = FALSE;
-	char* keyCombination;
 	char buffer[1024] = { 0 };
 	char command[2048] = { 0 };
 	char combination[1024] = { 0 };
-	const char* ActionScript;
 
 	if (!xfc->actionScriptExists)
 		return 1;
@@ -484,7 +471,7 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 		return 1;
 	}
 
-	keyStr = XKeysymToString(keysym);
+	const char* keyStr = XKeysymToString(keysym);
 
 	if (keyStr == 0)
 	{
@@ -505,11 +492,11 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 
 	winpr_str_append(keyStr, combination, sizeof(combination), NULL);
 
-	count = ArrayList_Count(xfc->keyCombinations);
+	const size_t count = ArrayList_Count(xfc->keyCombinations);
 
-	for (index = 0; index < count; index++)
+	for (size_t index = 0; index < count; index++)
 	{
-		keyCombination = (char*)ArrayList_GetItem(xfc->keyCombinations, index);
+		const char* keyCombination = (const char*)ArrayList_GetItem(xfc->keyCombinations, index);
 
 		if (_stricmp(keyCombination, combination) == 0)
 		{
@@ -521,9 +508,10 @@ static int xf_keyboard_execute_action_script(xfContext* xfc, XF_MODIFIER_KEYS* m
 	if (!match)
 		return 1;
 
-	ActionScript = freerdp_settings_get_string(xfc->common.context.settings, FreeRDP_ActionScript);
+	const char* ActionScript =
+	    freerdp_settings_get_string(xfc->common.context.settings, FreeRDP_ActionScript);
 	sprintf_s(command, sizeof(command), "%s key %s", ActionScript, combination);
-	keyScript = popen(command, "r");
+	FILE* keyScript = popen(command, "r");
 
 	if (!keyScript)
 		return -1;

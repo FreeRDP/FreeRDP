@@ -312,8 +312,8 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 
 static DWORD WINAPI parallel_thread_func(LPVOID arg)
 {
-	IRP* irp;
-	wMessage message;
+	IRP* irp = NULL;
+	wMessage message = { 0 };
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*)arg;
 	UINT error = CHANNEL_RC_OK;
 

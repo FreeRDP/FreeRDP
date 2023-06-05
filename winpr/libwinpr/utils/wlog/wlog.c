@@ -491,20 +491,14 @@ static BOOL WLog_reset_log_filters(wLog* log)
 
 static BOOL WLog_AddStringLogFilters_int(wLog* root, LPCSTR filter)
 {
-	DWORD pos;
-	DWORD size;
-	DWORD count;
-	LPCSTR cpp;
 	LPSTR p;
 	LPCSTR filterStr;
-	LPSTR cp;
-	wLogFilter* tmp;
 
 	if (!filter)
 		return FALSE;
 
-	count = 1;
-	cpp = filter;
+	DWORD count = 1;
+	LPCSTR cpp = filter;
 
 	while ((cpp = strchr(cpp, ',')) != NULL)
 	{
@@ -512,15 +506,15 @@ static BOOL WLog_AddStringLogFilters_int(wLog* root, LPCSTR filter)
 		cpp++;
 	}
 
-	pos = g_FilterCount;
-	size = g_FilterCount + count;
-	tmp = (wLogFilter*)realloc(g_Filters, size * sizeof(wLogFilter));
+	DWORD pos = g_FilterCount;
+	DWORD size = g_FilterCount + count;
+	wLogFilter* tmp = (wLogFilter*)realloc(g_Filters, size * sizeof(wLogFilter));
 
 	if (!tmp)
 		return FALSE;
 
 	g_Filters = tmp;
-	cp = (LPSTR)_strdup(filter);
+	LPSTR cp = (LPSTR)_strdup(filter);
 
 	if (!cp)
 		return FALSE;

@@ -443,9 +443,8 @@ static UINT rdpdr_send_client_announce_reply(pClientContext* pc, pf_channel_clie
 static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, wStream* s,
                                               pClientContext* pc)
 {
-	UINT32 unicodeFlag;
-	UINT32 codePage;
-	void* tmp;
+	UINT32 unicodeFlag = 0;
+	UINT32 codePage = 0;
 
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
@@ -469,7 +468,7 @@ static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, 
 		    Stream_GetRemainingLength(s), rdpdr->common.computerNameLen);
 		return ERROR_INVALID_DATA;
 	}
-	tmp = realloc(rdpdr->common.computerName.v, rdpdr->common.computerNameLen);
+	void* tmp = realloc(rdpdr->common.computerName.v, rdpdr->common.computerNameLen);
 	if (!tmp)
 		return CHANNEL_RC_NO_MEMORY;
 	rdpdr->common.computerName.v = tmp;

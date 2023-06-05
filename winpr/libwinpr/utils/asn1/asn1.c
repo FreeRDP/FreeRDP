@@ -901,7 +901,7 @@ static size_t readLen(wStream* s, size_t* len, BOOL derCheck)
 	ret++;
 	if (retLen & 0x80)
 	{
-		BYTE tmp;
+		BYTE tmp = 0;
 		size_t nBytes = (retLen & 0x7f);
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, nBytes))

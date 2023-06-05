@@ -846,8 +846,8 @@ static VOID VCAPITYPE remdesk_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 
 static DWORD WINAPI remdesk_virtual_channel_client_thread(LPVOID arg)
 {
-	wStream* data;
-	wMessage message;
+	wStream* data = NULL;
+	wMessage message = { 0 };
 	remdeskPlugin* remdesk = (remdeskPlugin*)arg;
 	UINT error = CHANNEL_RC_OK;
 

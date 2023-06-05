@@ -1920,7 +1920,7 @@ static const UINT32 LOMBaseLUT[30] = {
 
 static INLINE UINT16 get_word(const BYTE* data)
 {
-	UINT16 tmp;
+	UINT16 tmp = 0;
 
 	WINPR_ASSERT(data);
 	tmp = *data++;

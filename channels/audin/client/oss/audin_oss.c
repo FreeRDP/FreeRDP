@@ -146,8 +146,8 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 	char mixer_name[PATH_MAX] = "/dev/mixer";
 	int pcm_handle = -1, mixer_handle;
 	BYTE* buffer = NULL;
-	unsigned long tmp;
-	size_t buffer_size;
+	unsigned long tmp = 0;
+	size_t buffer_size = 0;
 	AudinOSSDevice* oss = (AudinOSSDevice*)arg;
 	UINT error = 0;
 	DWORD status;
@@ -240,7 +240,7 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 
 	while (1)
 	{
-		SSIZE_T stmp;
+		SSIZE_T stmp = -1;
 		status = WaitForSingleObject(oss->stopEvent, 0);
 
 		if (status == WAIT_FAILED)
