@@ -163,7 +163,7 @@ BOOL rectangles_equal(const RECTANGLE_16* r1, const RECTANGLE_16* r2)
 
 BOOL rectangles_intersects(const RECTANGLE_16* r1, const RECTANGLE_16* r2)
 {
-	RECTANGLE_16 tmp;
+	RECTANGLE_16 tmp = { 0 };
 	return rectangles_intersection(r1, r2, &tmp);
 }
 
@@ -356,7 +356,8 @@ static RECTANGLE_16* next_band(RECTANGLE_16* band1, RECTANGLE_16* endPtr, int* n
 	return band1;
 }
 
-static BOOL band_match(const RECTANGLE_16* band1, const RECTANGLE_16* band2, RECTANGLE_16* endPtr)
+static BOOL band_match(const RECTANGLE_16* band1, const RECTANGLE_16* band2,
+                       const RECTANGLE_16* endPtr)
 {
 	int refBand2 = band2->top;
 	const RECTANGLE_16* band2Start = band2;
@@ -417,7 +418,7 @@ static BOOL region16_simplify_bands(REGION16* region)
 	 *  ====================          ====================
 	 *
 	 */
-	RECTANGLE_16 *band1, *band2, *endPtr, *endBand, *tmp;
+	RECTANGLE_16* endBand;
 	int nbRects, finalNbRects;
 	int bandItems, toMove;
 	finalNbRects = nbRects = region16_n_rects(region);
@@ -425,12 +426,12 @@ static BOOL region16_simplify_bands(REGION16* region)
 	if (nbRects < 2)
 		return TRUE;
 
-	band1 = region16_rects_noconst(region);
-	endPtr = band1 + nbRects;
+	RECTANGLE_16* band1 = region16_rects_noconst(region);
+	const RECTANGLE_16* endPtr = band1 + nbRects;
 
 	do
 	{
-		band2 = next_band(band1, endPtr, &bandItems);
+		const RECTANGLE_16* band2 = next_band(band1, endPtr, &bandItems);
 
 		if (band2 == endPtr)
 			break;
@@ -438,7 +439,7 @@ static BOOL region16_simplify_bands(REGION16* region)
 		if ((band1->bottom == band2->top) && band_match(band1, band2, endPtr))
 		{
 			/* adjust the bottom of band1 items */
-			tmp = band1;
+			RECTANGLE_16* tmp = band1;
 
 			while (tmp < band2)
 			{
@@ -465,9 +466,8 @@ static BOOL region16_simplify_bands(REGION16* region)
 
 	if (finalNbRects != nbRects)
 	{
-		REGION16_DATA* data;
 		size_t allocSize = sizeof(REGION16_DATA) + (finalNbRects * sizeof(RECTANGLE_16));
-		data = realloc(region->data, allocSize);
+		REGION16_DATA* data = realloc(region->data, allocSize);
 		if (!data)
 			free(region->data);
 		region->data = data;

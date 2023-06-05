@@ -321,8 +321,6 @@ xfFloatbarButton* xf_floatbar_new_button(xfFloatbar* floatbar, int type)
 
 xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* name, DWORD flags)
 {
-	xfFloatbar* floatbar;
-
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xfc->display);
 	WINPR_ASSERT(name);
@@ -338,7 +336,7 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* name, DWO
 	if (xfc->remote_app)
 		return NULL;
 
-	floatbar = (xfFloatbar*)calloc(1, sizeof(xfFloatbar));
+	xfFloatbar* floatbar = (xfFloatbar*)calloc(1, sizeof(xfFloatbar));
 
 	if (!floatbar)
 		return NULL;

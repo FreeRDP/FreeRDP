@@ -1160,7 +1160,6 @@ fail:
 DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD count)
 {
 	DWORD nCount = 0; /* always the reread Event */
-	DWORD tmp;
 
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(events);
@@ -1212,7 +1211,8 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 	{
 		if (transport->rdg)
 		{
-			tmp = rdg_get_event_handles(transport->rdg, &events[nCount], count - nCount);
+			const DWORD tmp =
+			    rdg_get_event_handles(transport->rdg, &events[nCount], count - nCount);
 
 			if (tmp == 0)
 				return 0;
@@ -1221,7 +1221,8 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 		}
 		else if (transport->tsg)
 		{
-			tmp = tsg_get_event_handles(transport->tsg, &events[nCount], count - nCount);
+			const DWORD tmp =
+			    tsg_get_event_handles(transport->tsg, &events[nCount], count - nCount);
 
 			if (tmp == 0)
 				return 0;

@@ -443,7 +443,6 @@ fail:
 
 static BOOL progressive_allocate_tile_cache(PROGRESSIVE_SURFACE_CONTEXT* surface, size_t min)
 {
-	size_t x;
 	size_t oldIndex = 0;
 
 	WINPR_ASSERT(surface);
@@ -463,7 +462,7 @@ static BOOL progressive_allocate_tile_cache(PROGRESSIVE_SURFACE_CONTEXT* surface
 	surface->tilesSize = surface->gridSize;
 	surface->tiles = tmp;
 
-	for (x = oldIndex; x < surface->tilesSize; x++)
+	for (size_t x = oldIndex; x < surface->tilesSize; x++)
 	{
 		surface->tiles[x] = progressive_tile_new();
 		if (!surface->tiles[x])
@@ -2663,13 +2662,13 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
                          UINT32 SrcFormat, UINT32 Width, UINT32 Height, UINT32 ScanLine,
                          const REGION16* invalidRegion, BYTE** ppDstData, UINT32* pDstSize)
 {
-	BOOL rc;
+	BOOL rc = FALSE;
 	int res = -6;
-	wStream* s;
-	UINT32 i, numRects;
-	UINT32 x, y;
+	wStream* s = NULL;
+	UINT32 i = 0, numRects = 0;
+	UINT32 x = 0, y = 0;
 	RFX_RECT* rects = NULL;
-	RFX_MESSAGE* message;
+	RFX_MESSAGE* message = NULL;
 
 	if (!progressive || !pSrcData || !ppDstData || !pDstSize)
 	{

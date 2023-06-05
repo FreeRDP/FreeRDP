@@ -821,17 +821,15 @@ static int verify_cb(int ok, X509_STORE_CTX* csc)
 
 BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certificate_store_path)
 {
-	size_t i;
 	const int purposes[3] = { X509_PURPOSE_SSL_SERVER, X509_PURPOSE_SSL_CLIENT, X509_PURPOSE_ANY };
-	X509_STORE_CTX* csc;
+	X509_STORE_CTX* csc = NULL;
 	BOOL status = FALSE;
-	X509_STORE* cert_ctx = NULL;
 	X509_LOOKUP* lookup = NULL;
 
 	if (!xcert)
 		return FALSE;
 
-	cert_ctx = X509_STORE_new();
+	X509_STORE* cert_ctx = X509_STORE_new();
 
 	if (cert_ctx == NULL)
 		goto end;
@@ -861,7 +859,7 @@ BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certific
 
 	X509_STORE_set_flags(cert_ctx, 0);
 
-	for (i = 0; i < ARRAYSIZE(purposes); i++)
+	for (size_t i = 0; i < ARRAYSIZE(purposes); i++)
 	{
 		int err = -1, rc = -1;
 		int purpose = purposes[i];

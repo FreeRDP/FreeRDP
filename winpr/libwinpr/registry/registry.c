@@ -249,7 +249,6 @@ LONG RegOpenKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesir
 
 LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
 {
-	RegKey* pKey;
 	Reg* reg = RegGetInstance();
 
 	if (!reg)
@@ -262,7 +261,7 @@ LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesire
 	}
 
 	WINPR_ASSERT(reg->root_key);
-	pKey = reg->root_key->subkeys;
+	RegKey* pKey = reg->root_key->subkeys;
 
 	while (pKey != NULL)
 	{

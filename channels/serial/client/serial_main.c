@@ -692,8 +692,8 @@ static void terminate_pending_irp_threads(SERIAL_DEVICE* serial)
 
 static DWORD WINAPI serial_thread_func(LPVOID arg)
 {
-	IRP* irp;
-	wMessage message;
+	IRP* irp = NULL;
+	wMessage message = { 0 };
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*)arg;
 	UINT error = CHANNEL_RC_OK;
 

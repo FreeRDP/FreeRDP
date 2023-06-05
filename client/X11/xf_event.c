@@ -387,13 +387,12 @@ static BOOL xf_event_VisibilityNotify(xfContext* xfc, const XVisibilityEvent* ev
 
 BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window window, BOOL app)
 {
-	rdpInput* input;
-	Window childWindow;
+	Window childWindow = None;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xfc->common.context.settings);
 
-	input = xfc->common.context.input;
+	rdpInput* input = xfc->common.context.input;
 	WINPR_ASSERT(input);
 
 	if (!xfc->common.context.settings->MouseMotion)
@@ -455,12 +454,11 @@ BOOL xf_generic_ButtonEvent(xfContext* xfc, int x, int y, int button, Window win
                             BOOL down)
 {
 	UINT16 flags = 0;
-	Window childWindow;
-	size_t i;
+	Window childWindow = None;
 
 	WINPR_ASSERT(xfc);
 
-	for (i = 0; i < ARRAYSIZE(xfc->button_map); i++)
+	for (size_t i = 0; i < ARRAYSIZE(xfc->button_map); i++)
 	{
 		const button_map* cur = &xfc->button_map[i];
 
@@ -568,7 +566,7 @@ static BOOL xf_event_ButtonRelease(xfContext* xfc, const XButtonEvent* event, BO
 
 static BOOL xf_event_KeyPress(xfContext* xfc, const XKeyEvent* event, BOOL app)
 {
-	KeySym keysym;
+	KeySym keysym = 0;
 	char str[256] = { 0 };
 	union
 	{
@@ -584,7 +582,7 @@ static BOOL xf_event_KeyPress(xfContext* xfc, const XKeyEvent* event, BOOL app)
 
 static BOOL xf_event_KeyRelease(xfContext* xfc, const XKeyEvent* event, BOOL app)
 {
-	KeySym keysym;
+	KeySym keysym = 0;
 	char str[256] = { 0 };
 	union
 	{
@@ -754,14 +752,13 @@ static BOOL xf_event_LeaveNotify(xfContext* xfc, const XLeaveWindowEvent* event,
 
 static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* event, BOOL app)
 {
-	Window childWindow;
-	xfAppWindow* appWindow;
-	const rdpSettings* settings;
+	Window childWindow = None;
+	xfAppWindow* appWindow = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
 
-	settings = xfc->common.context.settings;
+	const rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
 	WLog_DBG(TAG, "x=%" PRId32 ", y=%" PRId32 ", w=%" PRId32 ", h=%" PRId32, event->x, event->y,
@@ -907,13 +904,13 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 	if ((((Atom)event->atom == xfc->_NET_WM_STATE) && (event->state != PropertyDelete)) ||
 	    (((Atom)event->atom == xfc->WM_STATE) && (event->state != PropertyDelete)))
 	{
-		unsigned long i;
-		BOOL status;
+		unsigned long i = 0;
+		BOOL status = FALSE;
 		BOOL minimized = FALSE;
 		BOOL minimizedChanged = FALSE;
-		unsigned long nitems;
-		unsigned long bytes;
-		unsigned char* prop;
+		unsigned long nitems = 0;
+		unsigned long bytes = 0;
+		unsigned char* prop = NULL;
 		xfAppWindow* appWindow = NULL;
 
 		if (app)
@@ -1110,16 +1107,14 @@ static BOOL xf_event_suppress_events(xfContext* xfc, xfAppWindow* appWindow, con
 BOOL xf_event_process(freerdp* instance, const XEvent* event)
 {
 	BOOL status = TRUE;
-	xfContext* xfc;
-	rdpSettings* settings;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(event);
 
-	xfc = (xfContext*)instance->context;
+	xfContext* xfc = (xfContext*)instance->context;
 	WINPR_ASSERT(xfc);
 
-	settings = xfc->common.context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
 	if (xfc->remote_app)

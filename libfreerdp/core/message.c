@@ -2663,13 +2663,11 @@ int update_message_queue_free_message(wMessage* message)
 
 int update_message_queue_process_pending_messages(rdpUpdate* update)
 {
-	int status;
-	wMessage message;
-	wMessageQueue* queue;
+	int status = 1;
+	wMessage message = { 0 };
 	rdp_update_internal* up = update_cast(update);
 
-	status = 1;
-	queue = up->queue;
+	wMessageQueue* queue = up->queue;
 
 	while (MessageQueue_Peek(queue, &message, TRUE))
 	{
@@ -2860,7 +2858,7 @@ static BOOL update_message_register_interface(rdpUpdateProxy* message, rdpUpdate
 static DWORD WINAPI update_message_proxy_thread(LPVOID arg)
 {
 	rdpUpdate* update = (rdpUpdate*)arg;
-	wMessage message;
+	wMessage message = { 0 };
 	rdp_update_internal* up = update_cast(update);
 
 	while (MessageQueue_Wait(up->queue))
@@ -2880,7 +2878,7 @@ static DWORD WINAPI update_message_proxy_thread(LPVOID arg)
 
 rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update)
 {
-	rdpUpdateProxy* message;
+	rdpUpdateProxy* message = NULL;
 
 	if (!update)
 		return NULL;
@@ -3104,17 +3102,15 @@ int input_message_queue_process_message(rdpInput* input, wMessage* message)
 
 int input_message_queue_process_pending_messages(rdpInput* input)
 {
-	int count;
-	int status;
-	wMessage message;
-	wMessageQueue* queue;
+	int count = 0;
+	int status = 1;
+	wMessage message = { 0 };
+	wMessageQueue* queue = NULL;
 	rdp_input_internal* in = input_cast(input);
 
 	if (!in->queue)
 		return -1;
 
-	count = 0;
-	status = 1;
 	queue = in->queue;
 
 	while (MessageQueue_Peek(queue, &message, TRUE))

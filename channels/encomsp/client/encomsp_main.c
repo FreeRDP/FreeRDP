@@ -1015,8 +1015,8 @@ static VOID VCAPITYPE encomsp_virtual_channel_open_event_ex(LPVOID lpUserParam, 
 
 static DWORD WINAPI encomsp_virtual_channel_client_thread(LPVOID arg)
 {
-	wStream* data;
-	wMessage message;
+	wStream* data = NULL;
+	wMessage message = { 0 };
 	encomspPlugin* encomsp = (encomspPlugin*)arg;
 	UINT error = CHANNEL_RC_OK;
 	encomsp_process_connect(encomsp);

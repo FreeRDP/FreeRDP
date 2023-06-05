@@ -602,7 +602,7 @@ static BOOL test_default(void)
 
 	if (!DynamicTest)
 	{
-		SecPkgContext_AuthNtlmMessage AuthNtlmMessage;
+		SecPkgContext_AuthNtlmMessage AuthNtlmMessage = { 0 };
 		pSecBuffer->cbBuffer = sizeof(TEST_NTLM_CHALLENGE) - 1;
 		pSecBuffer->pvBuffer = (void*)malloc(pSecBuffer->cbBuffer);
 

@@ -175,12 +175,10 @@ int winpr_asprintf(char** s, size_t* slen, const char* templ, ...)
 
 char* _strdup(const char* strSource)
 {
-	char* strDestination;
-
 	if (strSource == NULL)
 		return NULL;
 
-	strDestination = strdup(strSource);
+	char* strDestination = strdup(strSource);
 
 	if (strDestination == NULL)
 		WLog_ERR(TAG, "strdup");
@@ -190,10 +188,11 @@ char* _strdup(const char* strSource)
 
 WCHAR* _wcsdup(const WCHAR* strSource)
 {
-	size_t len = _wcslen(strSource);
-	WCHAR* strDestination;
+	if (!strSource)
+		return NULL;
 
-	strDestination = calloc(len + 1, sizeof(WCHAR));
+	size_t len = _wcslen(strSource);
+	WCHAR* strDestination = calloc(len + 1, sizeof(WCHAR));
 
 	if (strDestination != NULL)
 		memcpy(strDestination, strSource, len * sizeof(WCHAR));

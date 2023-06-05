@@ -343,10 +343,6 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 {
 	BOOL rc = FALSE;
 	int status = 0;
-	rdpUpdate* update;
-	rdpContext* context;
-	rdpPointerUpdate* pointer;
-	BOOL defaultReturn;
 
 	if (!fastpath || !fastpath->rdp || !s)
 		return -1;
@@ -354,15 +350,15 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 	Stream_SealLength(s);
 	Stream_SetPosition(s, 0);
 
-	update = fastpath->rdp->update;
+	rdpUpdate* update = fastpath->rdp->update;
 
 	if (!update || !update->pointer || !update->context)
 		return -1;
 
-	context = update->context;
+	rdpContext* context = update->context;
 	WINPR_ASSERT(context);
 
-	pointer = update->pointer;
+	rdpPointerUpdate* pointer = update->pointer;
 	WINPR_ASSERT(pointer);
 
 #ifdef WITH_DEBUG_RDP
@@ -370,7 +366,8 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 	          fastpath_update_to_string(updateCode), updateCode, Stream_GetRemainingLength(s));
 #endif
 
-	defaultReturn = freerdp_settings_get_bool(context->settings, FreeRDP_DeactivateClientDecoding);
+	const BOOL defaultReturn =
+	    freerdp_settings_get_bool(context->settings, FreeRDP_DeactivateClientDecoding);
 	switch (updateCode)
 	{
 		case FASTPATH_UPDATETYPE_ORDERS:
@@ -488,28 +485,24 @@ static int fastpath_recv_update(rdpFastPath* fastpath, BYTE updateCode, wStream*
 
 static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 {
-	int status;
-	UINT16 size;
-	rdpRdp* rdp;
-	int bulkStatus;
-	BYTE updateCode;
-	BYTE fragmentation;
-	BYTE compression;
-	BYTE compressionFlags;
+	int status = 0;
+	UINT16 size = 0;
+	BYTE updateCode = 0;
+	BYTE fragmentation = 0;
+	BYTE compression = 0;
+	BYTE compressionFlags = 0;
 	UINT32 DstSize = 0;
 	const BYTE* pDstData = NULL;
-	rdpTransport* transport;
 
 	if (!fastpath || !s)
 		return -1;
 
-	status = 0;
-	rdp = fastpath->rdp;
+	rdpRdp* rdp = fastpath->rdp;
 
 	if (!rdp)
 		return -1;
 
-	transport = rdp->transport;
+	rdpTransport* transport = rdp->transport;
 
 	if (!transport)
 		return -1;
@@ -535,7 +528,7 @@ static int fastpath_recv_update_data(rdpFastPath* fastpath, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, size))
 		return -1;
 
-	bulkStatus =
+	const int bulkStatus =
 	    bulk_decompress(rdp->bulk, Stream_Pointer(s), size, &pDstData, &DstSize, compressionFlags);
 	Stream_Seek(s, size);
 
@@ -631,12 +624,11 @@ out_fail:
 state_run_t fastpath_recv_updates(rdpFastPath* fastpath, wStream* s)
 {
 	state_run_t rc = STATE_RUN_FAILED;
-	rdpUpdate* update;
 
 	if (!fastpath || !fastpath->rdp || !fastpath->rdp->update || !s)
 		return STATE_RUN_FAILED;
 
-	update = fastpath->rdp->update;
+	rdpUpdate* update = fastpath->rdp->update;
 
 	if (!update_begin_paint(update))
 		goto fail;

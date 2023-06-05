@@ -2048,26 +2048,26 @@ static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMes
 static DWORD WINAPI shadow_client_thread(LPVOID arg)
 {
 	rdpShadowClient* client = (rdpShadowClient*)arg;
-	BOOL rc;
-	DWORD status;
-	DWORD nCount;
-	wMessage message;
-	wMessage pointerPositionMsg;
-	wMessage pointerAlphaMsg;
-	wMessage audioVolumeMsg;
+	BOOL rc = FALSE;
+	DWORD status = 0;
+	DWORD nCount = 0;
+	wMessage message = { 0 };
+	wMessage pointerPositionMsg = { 0 };
+	wMessage pointerAlphaMsg = { 0 };
+	wMessage audioVolumeMsg = { 0 };
 	HANDLE events[32] = { 0 };
-	HANDLE ChannelEvent;
-	void* UpdateSubscriber;
-	HANDLE UpdateEvent;
-	freerdp_peer* peer;
-	rdpContext* context;
-	rdpSettings* settings;
-	rdpShadowServer* server;
-	rdpShadowSubsystem* subsystem;
-	wMessageQueue* MsgQueue;
+	HANDLE ChannelEvent = 0;
+	void* UpdateSubscriber = NULL;
+	HANDLE UpdateEvent = 0;
+	freerdp_peer* peer = NULL;
+	rdpContext* context = NULL;
+	rdpSettings* settings = NULL;
+	rdpShadowServer* server = NULL;
+	rdpShadowSubsystem* subsystem = NULL;
+	wMessageQueue* MsgQueue = NULL;
 	/* This should only be visited in client thread */
 	SHADOW_GFX_STATUS gfxstatus = { 0 };
-	rdpUpdate* update;
+	rdpUpdate* update = NULL;
 
 	WINPR_ASSERT(client);
 

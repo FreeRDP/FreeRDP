@@ -48,20 +48,18 @@ static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
 
 BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 {
-	rdpGdi* gdi;
-	rdpSettings* settings;
-	UINT32 SrcFormat;
-	BYTE r, g, b, a;
+	UINT32 SrcFormat = 0;
+	BYTE r = 0, g = 0, b = 0, a = 0;
 
 	if (!xfc || !color)
 		return FALSE;
 
-	gdi = xfc->common.context.gdi;
+	rdpGdi* gdi = xfc->common.context.gdi;
 
 	if (!gdi)
 		return FALSE;
 
-	settings = xfc->common.context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 
 	if (!settings)
 		return FALSE;
@@ -238,36 +236,29 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
                                                 Cursor* cursor)
 {
 #if defined(WITH_XCURSOR) && defined(WITH_XRENDER)
-	UINT32 CursorFormat;
 	xfContext* xfc = (xfContext*)context;
 	xfPointer* xpointer = (xfPointer*)pointer;
 	XcursorImage ci = { 0 };
-	rdpSettings* settings;
-	UINT32 xTargetSize;
-	UINT32 yTargetSize;
-	double xscale;
-	double yscale;
-	size_t size;
 	int cursorIndex = -1;
-	UINT32 i;
-	void* tmp;
 
 	if (!context || !pointer || !context->gdi)
 		return FALSE;
 
-	settings = xfc->common.context.settings;
+	rdpSettings* settings = xfc->common.context.settings;
 
 	if (!settings)
 		return FALSE;
 
-	xscale = (settings->SmartSizing ? xfc->scaledWidth / (double)settings->DesktopWidth : 1);
-	yscale = (settings->SmartSizing ? xfc->scaledHeight / (double)settings->DesktopHeight : 1);
-	xTargetSize = MAX(1, pointer->width * xscale);
-	yTargetSize = MAX(1, pointer->height * yscale);
+	const double xscale =
+	    (settings->SmartSizing ? xfc->scaledWidth / (double)settings->DesktopWidth : 1);
+	const double yscale =
+	    (settings->SmartSizing ? xfc->scaledHeight / (double)settings->DesktopHeight : 1);
+	const UINT32 xTargetSize = MAX(1, pointer->width * xscale);
+	const UINT32 yTargetSize = MAX(1, pointer->height * yscale);
 
 	WLog_DBG(TAG, "scaled: %" PRIu32 "x%" PRIu32 ", desktop: %" PRIu32 "x%" PRIu32,
 	         xfc->scaledWidth, xfc->scaledHeight, settings->DesktopWidth, settings->DesktopHeight);
-	for (i = 0; i < xpointer->nCursors; i++)
+	for (UINT32 i = 0; i < xpointer->nCursors; i++)
 	{
 		if ((xpointer->cursorWidths[i] == xTargetSize) &&
 		    (xpointer->cursorHeights[i] == yTargetSize))
@@ -278,6 +269,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 
 	if (cursorIndex == -1)
 	{
+		UINT32 CursorFormat = 0;
 		xf_lock_x11(xfc);
 
 		if (!xfc->invert)
@@ -321,9 +313,9 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 		ci.height = yTargetSize;
 		ci.xhot = pointer->xPos * xscale;
 		ci.yhot = pointer->yPos * yscale;
-		size = ci.height * ci.width * FreeRDPGetBytesPerPixel(CursorFormat) * 1ULL;
+		const size_t size = ci.height * ci.width * FreeRDPGetBytesPerPixel(CursorFormat) * 1ULL;
 
-		tmp = winpr_aligned_malloc(size, 16);
+		void* tmp = winpr_aligned_malloc(size, 16);
 		if (!tmp)
 		{
 			xf_unlock_x11(xfc);
@@ -568,10 +560,10 @@ static BOOL xf_Pointer_SetDefault(rdpContext* context)
 static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 {
 	xfContext* xfc = (xfContext*)context;
-	XWindowAttributes current;
-	XSetWindowAttributes tmp;
+	XWindowAttributes current = { 0 };
+	XSetWindowAttributes tmp = { 0 };
 	BOOL ret = FALSE;
-	Status rc;
+	Status rc = 0;
 	Window handle = xf_Pointer_get_window(xfc);
 
 	if (!handle)

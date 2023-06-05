@@ -883,10 +883,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_MIC)
 	{
-		SecBuffer* mic;
-		NTLM_AUTHENTICATE_MESSAGE* message;
-		mic = (SecBuffer*)pBuffer;
-		message = &context->AUTHENTICATE_MESSAGE;
+		SecBuffer* mic = (SecBuffer*)pBuffer;
+		NTLM_AUTHENTICATE_MESSAGE* message = &context->AUTHENTICATE_MESSAGE;
 
 		if (!sspi_SecBufferAlloc(mic, 16))
 			return (SEC_E_INSUFFICIENT_MEMORY);

@@ -32,7 +32,6 @@ static pstatus_t general_LumaToYUV444(const BYTE* const pSrcRaw[3], const UINT32
                                       BYTE* pDstRaw[3], const UINT32 dstStep[3],
                                       const RECTANGLE_16* roi)
 {
-	UINT32 x, y;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
@@ -50,7 +49,7 @@ static pstatus_t general_LumaToYUV444(const BYTE* const pSrcRaw[3], const UINT32
 
 	/* Y data is already here... */
 	/* B1 */
-	for (y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		const BYTE* Ym = pSrc[0] + srcStep[0] * y;
 		BYTE* pY = pDst[0] + dstStep[0] * y;
@@ -59,7 +58,7 @@ static pstatus_t general_LumaToYUV444(const BYTE* const pSrcRaw[3], const UINT32
 
 	/* The first half of U, V are already here part of this frame. */
 	/* B2 and B3 */
-	for (y = 0; y < halfHeight; y++)
+	for (UINT32 y = 0; y < halfHeight; y++)
 	{
 		const UINT32 val2y = (2 * y + evenY);
 		const UINT32 val2y1 = val2y + oddY;
@@ -70,7 +69,7 @@ static pstatus_t general_LumaToYUV444(const BYTE* const pSrcRaw[3], const UINT32
 		BYTE* pU1 = pDst[1] + dstStep[1] * val2y1;
 		BYTE* pV1 = pDst[2] + dstStep[2] * val2y1;
 
-		for (x = 0; x < halfWidth; x++)
+		for (UINT32 x = 0; x < halfWidth; x++)
 		{
 			const UINT32 val2x = 2 * x + evenX;
 			const UINT32 val2x1 = val2x + oddX;

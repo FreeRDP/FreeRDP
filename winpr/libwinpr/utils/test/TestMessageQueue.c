@@ -5,10 +5,8 @@
 
 static DWORD WINAPI message_queue_consumer_thread(LPVOID arg)
 {
-	wMessage message;
-	wMessageQueue* queue;
-
-	queue = (wMessageQueue*)arg;
+	wMessage message = { 0 };
+	wMessageQueue* queue = (wMessageQueue*)arg;
 
 	while (MessageQueue_Wait(queue))
 	{

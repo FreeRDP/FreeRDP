@@ -90,12 +90,11 @@ static RdpdrDevice* rdpdr_device_new(void)
 static void* rdpdr_device_clone(const void* val)
 {
 	const RdpdrDevice* other = val;
-	RdpdrDevice* tmp;
 
 	if (!other)
 		return NULL;
 
-	tmp = rdpdr_device_new();
+	RdpdrDevice* tmp = rdpdr_device_new();
 	if (!tmp)
 		goto fail;
 

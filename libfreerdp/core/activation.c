@@ -444,7 +444,7 @@ BOOL rdp_recv_client_persistent_key_list_pdu(wStream* s)
 	/* Skip totalEntriesCacheX */
 	for (x = 0; x < 5; x++)
 	{
-		UINT16 tmp;
+		UINT16 tmp = 0;
 		Stream_Read_UINT16(s, tmp);
 		total += tmp;
 	}

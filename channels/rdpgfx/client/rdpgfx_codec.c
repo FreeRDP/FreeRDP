@@ -168,13 +168,13 @@ static UINT rdpgfx_decode_AVC420(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
  */
 static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd)
 {
-	UINT error;
-	UINT32 tmp;
-	size_t pos1, pos2;
-	wStream* s;
+	UINT error = 0;
+	UINT32 tmp = 0;
+	size_t pos1 = 0, pos2 = 0;
+
 	RDPGFX_AVC444_BITMAP_STREAM h264 = { 0 };
 	RdpgfxClientContext* context = gfx->context;
-	s = Stream_New(cmd->data, cmd->length);
+	wStream* s = Stream_New(cmd->data, cmd->length);
 
 	if (!s)
 	{

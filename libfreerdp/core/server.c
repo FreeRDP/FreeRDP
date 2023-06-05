@@ -586,9 +586,9 @@ BOOL WTSVirtualChannelManagerOpen(HANDLE hServer)
 
 BOOL WTSVirtualChannelManagerCheckFileDescriptorEx(HANDLE hServer, BOOL autoOpen)
 {
-	wMessage message;
+	wMessage message = { 0 };
 	BOOL status = TRUE;
-	WTSVirtualChannelManager* vcm;
+	WTSVirtualChannelManager* vcm = NULL;
 
 	if (!hServer || hServer == INVALID_HANDLE_VALUE)
 		return FALSE;
@@ -1492,9 +1492,9 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 BOOL WINAPI FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, PCHAR Buffer,
                                           ULONG BufferSize, PULONG pBytesRead)
 {
-	BYTE* buffer;
-	wMessage message;
-	wtsChannelMessage* messageCtx;
+	BYTE* buffer = NULL;
+	wMessage message = { 0 };
+	wtsChannelMessage* messageCtx = NULL;
 	rdpPeerChannel* channel = (rdpPeerChannel*)hChannelHandle;
 
 	WINPR_ASSERT(channel);

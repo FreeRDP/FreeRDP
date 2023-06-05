@@ -10,8 +10,8 @@ static DWORD WINAPI message_echo_pipe_client_thread(LPVOID arg)
 
 	while (index < 100)
 	{
-		wMessage message;
-		int count;
+		wMessage message = { 0 };
+		int count = -1;
 
 		if (!MessageQueue_Post(pipe->In, NULL, 0, (void*)(size_t)index, NULL))
 			break;
@@ -40,10 +40,8 @@ static DWORD WINAPI message_echo_pipe_client_thread(LPVOID arg)
 
 static DWORD WINAPI message_echo_pipe_server_thread(LPVOID arg)
 {
-	wMessage message;
-	wMessagePipe* pipe;
-
-	pipe = (wMessagePipe*)arg;
+	wMessage message = { 0 };
+	wMessagePipe* pipe = (wMessagePipe*)arg;
 
 	while (MessageQueue_Wait(pipe->In))
 	{

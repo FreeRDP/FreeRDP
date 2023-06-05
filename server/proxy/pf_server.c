@@ -551,24 +551,19 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 {
 	HANDLE eventHandles[MAXIMUM_WAIT_OBJECTS] = { 0 };
-	DWORD tmp;
-	DWORD status;
 	pServerContext* ps = NULL;
 	proxyData* pdata = NULL;
-	freerdp_peer* client;
-	proxyServer* server;
-	size_t count;
 	peer_thread_args* args = arg;
 
 	WINPR_ASSERT(args);
 
-	client = args->client;
+	freerdp_peer* client = args->client;
 	WINPR_ASSERT(client);
 
-	server = (proxyServer*)client->ContextExtra;
+	proxyServer* server = (proxyServer*)client->ContextExtra;
 	WINPR_ASSERT(server);
 
-	count = ArrayList_Count(server->peer_list);
+	size_t count = ArrayList_Count(server->peer_list);
 
 	if (!pf_context_init_server_context(client))
 		goto out_free_peer;
@@ -599,8 +594,8 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 		DWORD eventCount = 0;
 		{
 			WINPR_ASSERT(client->GetEventHandles);
-			tmp = client->GetEventHandles(client, &eventHandles[eventCount],
-			                              ARRAYSIZE(eventHandles) - eventCount);
+			const DWORD tmp = client->GetEventHandles(client, &eventHandles[eventCount],
+			                                          ARRAYSIZE(eventHandles) - eventCount);
 
 			if (tmp == 0)
 			{
@@ -619,8 +614,8 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 		eventHandles[eventCount++] = pdata->abort_event;
 		eventHandles[eventCount++] = server->stopEvent;
 
-		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE,
-		                                1000); /* Do periodic polling to avoid client hang */
+		const DWORD status = WaitForMultipleObjects(
+		    eventCount, eventHandles, FALSE, 1000); /* Do periodic polling to avoid client hang */
 
 		if (status == WAIT_FAILED)
 		{

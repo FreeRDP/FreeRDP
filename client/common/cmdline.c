@@ -229,18 +229,16 @@ static BOOL copy_value(const char* value, char** dst)
 
 static BOOL append_value(const char* value, char** dst)
 {
-	size_t x = 0, y;
-	size_t size;
-	char* tmp;
+	size_t x = 0;
 	if (!dst || !value)
 		return FALSE;
 
 	if (*dst)
 		x = strlen(*dst);
-	y = strlen(value);
+	const size_t y = strlen(value);
 
-	size = x + y + 2;
-	tmp = realloc(*dst, size);
+	const size_t size = x + y + 2;
+	char* tmp = realloc(*dst, size);
 	if (!tmp)
 		return FALSE;
 	if (x == 0)

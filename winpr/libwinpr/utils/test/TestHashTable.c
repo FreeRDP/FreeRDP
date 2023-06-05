@@ -322,6 +322,8 @@ static BOOL foreachFn3(const void* key, void* value, void* arg)
 	ForeachData d2;
 
 	WINPR_UNUSED(value);
+	WINPR_ASSERT(keyStr);
+
 	if (strcmp(keyStr, "key1") == 0)
 	{
 		/* when we pass on key1, let's remove key2 and check that the value is not

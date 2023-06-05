@@ -588,7 +588,6 @@ static BOOL certificate_process_server_public_key(rdpCertificate* cert, wStream*
 	UINT32 keylen = 0;
 	UINT32 bitlen = 0;
 	UINT32 datalen = 0;
-	BYTE* tmp = NULL;
 
 	WINPR_ASSERT(cert);
 	WINPR_ASSERT(s);
@@ -616,7 +615,7 @@ static BOOL certificate_process_server_public_key(rdpCertificate* cert, wStream*
 		return FALSE;
 
 	info->ModulusLength = keylen - 8;
-	tmp = realloc(info->Modulus, info->ModulusLength);
+	BYTE* tmp = realloc(info->Modulus, info->ModulusLength);
 
 	if (!tmp)
 		return FALSE;

@@ -470,12 +470,10 @@ static void reg_unload_key(Reg* reg, RegKey* key)
 
 static void reg_unload(Reg* reg)
 {
-	RegKey* pKey;
-
 	WINPR_ASSERT(reg);
 	if (reg->root_key)
 	{
-		pKey = reg->root_key->subkeys;
+		RegKey* pKey = reg->root_key->subkeys;
 
 		while (pKey != NULL)
 		{

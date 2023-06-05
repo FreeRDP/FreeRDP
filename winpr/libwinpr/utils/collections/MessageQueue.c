@@ -159,7 +159,7 @@ out:
 
 BOOL MessageQueue_Post(wMessageQueue* queue, void* context, UINT32 type, void* wParam, void* lParam)
 {
-	wMessage message;
+	wMessage message = { 0 };
 
 	message.context = context;
 	message.id = type;

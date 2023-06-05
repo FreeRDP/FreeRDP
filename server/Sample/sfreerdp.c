@@ -1101,10 +1101,8 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 	{
 		count = 0;
 		{
-			DWORD tmp;
-
 			WINPR_ASSERT(client->GetEventHandles);
-			tmp = client->GetEventHandles(client, &handles[count], 32 - count);
+			DWORD tmp = client->GetEventHandles(client, &handles[count], 32 - count);
 
 			if (tmp == 0)
 			{

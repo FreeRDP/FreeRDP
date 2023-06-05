@@ -853,7 +853,6 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 			case ChunkStateLenghHeader:
 			{
 				BOOL _haveNewLine = FALSE;
-				size_t tmp;
 				char* dst = &encodingContext->lenBuffer[encodingContext->headerFooterPos];
 				WINPR_ASSERT(encodingContext->nextOffset == 0);
 				while (encodingContext->headerFooterPos < 10 && !_haveNewLine)
@@ -874,7 +873,7 @@ static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 				/* strtoul is tricky, error are reported via errno, we also need
 				 * to ensure the result does not overflow */
 				errno = 0;
-				tmp = strtoul(encodingContext->lenBuffer, NULL, 16);
+				size_t tmp = strtoul(encodingContext->lenBuffer, NULL, 16);
 				if ((errno != 0) || (tmp > SIZE_MAX))
 					return -1;
 				encodingContext->nextOffset = tmp;

@@ -75,15 +75,15 @@ static SMARTCARD_DEVICE* cast_device_from(DEVICE* device, const char* fkt, const
 static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 {
 	SMARTCARD_CONTEXT* pContext = (SMARTCARD_CONTEXT*)arg;
-	DWORD nCount;
+	DWORD nCount = 0;
 	LONG status = 0;
-	DWORD waitStatus;
-	HANDLE hEvents[2];
-	wMessage message;
-	SMARTCARD_DEVICE* smartcard;
+	DWORD waitStatus = 0;
+	HANDLE hEvents[2] = { 0 };
+	wMessage message = { 0 };
+	SMARTCARD_DEVICE* smartcard = NULL;
 	UINT error = CHANNEL_RC_OK;
 	smartcard = pContext->smartcard;
-	nCount = 0;
+
 	hEvents[nCount++] = MessageQueue_Event(pContext->IrpQueue);
 
 	while (1)
@@ -520,18 +520,17 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 
 static DWORD WINAPI smartcard_thread_func(LPVOID arg)
 {
-	IRP* irp;
-	DWORD nCount;
-	DWORD status;
-	HANDLE hEvents[1];
-	wMessage message;
+	IRP* irp = NULL;
+	DWORD nCount = 0;
+	DWORD status = 0;
+	HANDLE hEvents[1] = { 0 };
+	wMessage message = { 0 };
 	UINT error = CHANNEL_RC_OK;
 	SMARTCARD_DEVICE* smartcard = CAST_FROM_DEVICE(arg);
 
 	if (!smartcard)
 		return ERROR_INVALID_PARAMETER;
 
-	nCount = 0;
 	hEvents[nCount++] = MessageQueue_Event(smartcard->IrpQueue);
 
 	while (1)
