@@ -704,15 +704,14 @@ fail:
 BYTE* freerdp_assistance_hex_string_to_bin(const void* raw, size_t* size)
 {
 	BYTE* buffer = NULL;
-	size_t length, rc;
 	if (!raw || !size)
 		return NULL;
 	*size = 0;
-	length = strlen(raw);
+	const size_t length = strlen(raw);
 	buffer = calloc(length, sizeof(BYTE));
 	if (!buffer)
 		return NULL;
-	rc = winpr_HexStringToBinBuffer(raw, length, buffer, length);
+	const size_t rc = winpr_HexStringToBinBuffer(raw, length, buffer, length);
 	if (rc == 0)
 	{
 		free(buffer);
