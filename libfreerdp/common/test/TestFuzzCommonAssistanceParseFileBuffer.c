@@ -7,9 +7,19 @@ static int parse_file_buffer(const uint8_t* Data, size_t Size)
 	rdpAssistanceFile* file = freerdp_assistance_file_new();
 	if (!file)
 		return -1;
-	status = freerdp_assistance_parse_file_buffer(file, (char*)Data, Size,
+
+	char* buf = calloc(Size + 1, sizeof(char));
+	if (buf == NULL)
+		goto err;
+	memcpy(buf, Data, Size);
+	buf[Size] = '\0';
+
+	status = freerdp_assistance_parse_file_buffer(file, (char*)buf, Size + 1,
 	                                              TEST_MSRC_INCIDENT_PASSWORD_TYPE2);
+
+err:
 	freerdp_assistance_file_free(file);
+	free(buf);
 
 	return status >= 0 ? TRUE : FALSE;
 }
