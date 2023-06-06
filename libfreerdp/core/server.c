@@ -1506,7 +1506,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelRead(HANDLE hChannelHandle, ULONG TimeOut, 
 		return FALSE;
 	}
 
-	messageCtx = (wtsChannelMessage*)(UINT_PTR)message.context;
+	messageCtx = message.context;
 
 	if (messageCtx == NULL)
 		return FALSE;
