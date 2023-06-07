@@ -537,6 +537,15 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 
 	ret = TRUE;
 out:
+	if (count == 0)
+	{
+		char cspa[128] = { 0 };
+
+		ConvertWCharToUtf8(csp, cspa, sizeof(cspa));
+		char scopea[128] = { 0 };
+		ConvertWCharToUtf8(scope, scopea, sizeof(scopea));
+		WLog_WARN(TAG, "%s [%s] no certificates found", cspa, scopea);
+	}
 	*pcount = count;
 	*pcerts = cert_list;
 	NCryptFreeBuffer(enumState);

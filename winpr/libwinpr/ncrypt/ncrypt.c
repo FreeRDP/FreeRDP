@@ -33,13 +33,24 @@ const static char NCRYPT_MAGIC[6] = { 'N', 'C', 'R', 'Y', 'P', 'T' };
 
 SECURITY_STATUS checkNCryptHandle(NCRYPT_HANDLE handle, NCryptHandleType matchType)
 {
-	NCryptBaseHandle* base;
 	if (!handle)
+	{
+		WLog_VRB(TAG, "invalid handle '%p'", handle);
 		return ERROR_INVALID_PARAMETER;
+	}
 
-	base = (NCryptBaseHandle*)handle;
-	if (memcmp(base->magic, NCRYPT_MAGIC, 6) != 0)
+	const NCryptBaseHandle* base = (NCryptBaseHandle*)handle;
+	if (memcmp(base->magic, NCRYPT_MAGIC, ARRAYSIZE(NCRYPT_MAGIC)) != 0)
+	{
+		char magic1[ARRAYSIZE(NCRYPT_MAGIC) + 1] = { 0 };
+		char magic2[ARRAYSIZE(NCRYPT_MAGIC) + 1] = { 0 };
+
+		memcpy(magic1, base->magic, ARRAYSIZE(NCRYPT_MAGIC));
+		memcpy(magic2, NCRYPT_MAGIC, ARRAYSIZE(NCRYPT_MAGIC));
+
+		WLog_VRB(TAG, "handle '%p' invalid magic '%s' instead of '%s'", base, magic1, magic2);
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	switch (base->type)
 	{
@@ -47,11 +58,15 @@ SECURITY_STATUS checkNCryptHandle(NCRYPT_HANDLE handle, NCryptHandleType matchTy
 		case WINPR_NCRYPT_KEY:
 			break;
 		default:
+			WLog_VRB(TAG, "handle '%p' invalid type %d", base, base->type);
 			return ERROR_INVALID_PARAMETER;
 	}
 
-	if (matchType != WINPR_NCRYPT_INVALID && base->type != matchType)
+	if ((matchType != WINPR_NCRYPT_INVALID) && (base->type != matchType))
+	{
+		WLog_VRB(TAG, "handle '%p' invalid type %d, expected %d", base, base->type, matchType);
 		return ERROR_INVALID_PARAMETER;
+	}
 	return ERROR_SUCCESS;
 }
 
@@ -129,30 +144,26 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
 SECURITY_STATUS NCryptOpenStorageProvider(NCRYPT_PROV_HANDLE* phProvider, LPCWSTR pszProviderName,
                                           DWORD dwFlags)
 {
-
-#ifdef WITH_PKCS11
-	if (pszProviderName && (_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0 ||
-	                        _wcscmp(pszProviderName, MS_SCARD_PROV) == 0))
-	{
-		return winpr_NCryptOpenStorageProviderEx(phProvider, pszProviderName, dwFlags, NULL);
-	}
-#endif
-
-	return ERROR_NOT_SUPPORTED;
+	return winpr_NCryptOpenStorageProviderEx(phProvider, pszProviderName, dwFlags, NULL);
 }
 
 SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
                                                   LPCWSTR pszProviderName, DWORD dwFlags,
                                                   LPCSTR* modulePaths)
 {
-#ifdef WITH_PKCS11
-	if (pszProviderName && (_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0 ||
-	                        _wcscmp(pszProviderName, MS_SCARD_PROV) == 0))
-	{
+#if defined(WITH_PKCS11)
+	if (pszProviderName && ((_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0) ||
+	                        (_wcscmp(pszProviderName, MS_SCARD_PROV) == 0)))
 		return NCryptOpenP11StorageProviderEx(phProvider, pszProviderName, dwFlags, modulePaths);
-	}
-#endif
+
+	char buffer[128] = { 0 };
+	ConvertWCharToUtf8(pszProviderName, buffer, sizeof(buffer));
+	WLog_WARN(TAG, "provider '%s' not supported", buffer);
 	return ERROR_NOT_SUPPORTED;
+#else
+	WLog_WARN(TAG, "rebuild with -DWITH_PKCS11=ON to enable smartcard logon support");
+	return ERROR_NOT_SUPPORTED;
+#endif
 }
 
 SECURITY_STATUS NCryptEnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR pszScope,

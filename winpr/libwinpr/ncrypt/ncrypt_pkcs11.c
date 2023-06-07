@@ -334,26 +334,24 @@ static const char* CK_RV_error_string(CK_RV rv)
 
 static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKeysState* state)
 {
-	CK_RV rv;
-	CK_ULONG i, j, nslotObjects;
 	CK_OBJECT_HANDLE slotObjects[MAX_KEYS_PER_SLOT] = { 0 };
 	const char* step = NULL;
-	CK_FUNCTION_LIST_PTR p11;
 
 	WINPR_ASSERT(provider);
 
-	p11 = provider->p11;
+	CK_FUNCTION_LIST_PTR p11 = provider->p11;
 	WINPR_ASSERT(p11);
 
+	WLog_DBG(TAG, "checking %" PRIu32 " slots for valid keys...", state->nslots);
 	state->nKeys = 0;
-	for (i = 0; i < state->nslots; i++)
+	for (CK_ULONG i = 0; i < state->nslots; i++)
 	{
 		CK_SESSION_HANDLE session = (CK_SESSION_HANDLE)NULL;
-		CK_SLOT_INFO slotInfo;
-		CK_TOKEN_INFO tokenInfo;
+		CK_SLOT_INFO slotInfo = { 0 };
+		CK_TOKEN_INFO tokenInfo = { 0 };
 
 		WINPR_ASSERT(p11->C_GetSlotInfo);
-		rv = p11->C_GetSlotInfo(state->slots[i], &slotInfo);
+		CK_RV rv = p11->C_GetSlotInfo(state->slots[i], &slotInfo);
 		if (rv != CKR_OK)
 		{
 			WLog_ERR(TAG, "unable to retrieve information for slot #%d(%d)", i, state->slots[i]);
@@ -404,6 +402,7 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 			goto cleanup_FindObjectsInit;
 		}
 
+		CK_ULONG nslotObjects = 0;
 		WINPR_ASSERT(p11->C_FindObjects);
 		rv = p11->C_FindObjects(session, &slotObjects[0], ARRAYSIZE(slotObjects), &nslotObjects);
 		if (rv != CKR_OK)
@@ -415,7 +414,7 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 		}
 
 		WLog_DBG(TAG, "slot has %d objects", nslotObjects);
-		for (j = 0; j < nslotObjects; j++)
+		for (CK_ULONG j = 0; j < nslotObjects; j++)
 		{
 			NCryptKeyEnum* key = &state->keys[state->nKeys];
 			CK_OBJECT_CLASS dataClass = CKO_PUBLIC_KEY;
@@ -638,7 +637,6 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
                                          NCryptKeyName** ppKeyName, PVOID* ppEnumState,
                                          DWORD dwFlags)
 {
-	SECURITY_STATUS ret;
 	NCryptP11ProviderHandle* provider = (NCryptP11ProviderHandle*)hProvider;
 	P11EnumKeysState* state = (P11EnumKeysState*)*ppEnumState;
 	CK_RV rv = { 0 };
@@ -648,7 +646,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 	char* slotFilter = NULL;
 	size_t slotFilterLen = 0;
 
-	ret = checkNCryptHandle((NCRYPT_HANDLE)hProvider, WINPR_NCRYPT_PROVIDER);
+	SECURITY_STATUS ret = checkNCryptHandle((NCRYPT_HANDLE)hProvider, WINPR_NCRYPT_PROVIDER);
 	if (ret != ERROR_SUCCESS)
 		return ret;
 
@@ -658,18 +656,27 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		 * check whether pszScope is of the form \\.\<reader name>\ for filtering by
 		 * card reader
 		 */
-		char asciiScope[128 + 6] = { 0 };
+		char asciiScope[128 + 6 + 1] = { 0 };
 		size_t asciiScopeLen;
 
-		if (ConvertWCharToUtf8(pszScope, asciiScope, ARRAYSIZE(asciiScope)) < 0)
+		if (ConvertWCharToUtf8(pszScope, asciiScope, ARRAYSIZE(asciiScope) - 1) < 0)
+		{
+			WLog_WARN(TAG, "Invalid scope");
 			return NTE_INVALID_PARAMETER;
+		}
 
 		if (strstr(asciiScope, "\\\\.\\") != asciiScope)
+		{
+			WLog_WARN(TAG, "Invalid scope '%s'", asciiScope);
 			return NTE_INVALID_PARAMETER;
+		}
 
-		asciiScopeLen = strnlen(asciiScope, sizeof(asciiScope));
-		if (asciiScope[asciiScopeLen - 1] != '\\')
+		asciiScopeLen = strnlen(asciiScope, ARRAYSIZE(asciiScope));
+		if ((asciiScopeLen < 1) || (asciiScope[asciiScopeLen - 1] != '\\'))
+		{
+			WLog_WARN(TAG, "Invalid scope '%s'", asciiScope);
 			return NTE_INVALID_PARAMETER;
+		}
 
 		asciiScope[asciiScopeLen - 1] = 0;
 
@@ -689,6 +696,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		if (rv != CKR_OK)
 		{
 			/* TODO: perhaps convert rv to NTE_*** errors */
+			WLog_WARN(TAG, "C_GetSlotList failed with %u", rv);
 			return NTE_FAIL;
 		}
 
@@ -700,6 +708,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		{
 			free(state);
 			/* TODO: perhaps convert rv to NTE_*** errors */
+			WLog_WARN(TAG, "C_GetSlotList failed with %u", rv);
 			return NTE_FAIL;
 		}
 
