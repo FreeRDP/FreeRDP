@@ -1085,7 +1085,7 @@ static int transport_default_write(rdpTransport* transport, wStream* s)
 	while (length > 0)
 	{
 		ERR_clear_error();
-		status = BIO_write(transport->frontBio, Stream_Pointer(s), length);
+		status = BIO_write(transport->frontBio, Stream_ConstPointer(s), length);
 
 		if (status <= 0)
 		{

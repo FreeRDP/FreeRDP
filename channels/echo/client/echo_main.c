@@ -47,7 +47,7 @@ typedef struct
 static UINT echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
-	BYTE* pBuffer = Stream_Pointer(data);
+	const BYTE* pBuffer = Stream_ConstPointer(data);
 	UINT32 cbSize = Stream_GetRemainingLength(data);
 
 	/* echo back what we have received. ECHO does not have any message IDs. */

@@ -882,25 +882,24 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	 * string terminated by a 0x0D0A two-byte sequence:
 	 * Cookie:[space]mstshash=[ANSISTRING][\x0D\x0A]
 	 */
-	BYTE* str = NULL;
 	UINT16 crlf = 0;
-	size_t pos, len;
+	size_t len;
 	BOOL result = FALSE;
 	BOOL isToken = FALSE;
 	size_t remain = Stream_GetRemainingLength(s);
 
 	WINPR_ASSERT(nego);
 
-	str = Stream_Pointer(s);
-	pos = Stream_GetPosition(s);
+	const char* str = Stream_ConstPointer(s);
+	const size_t pos = Stream_GetPosition(s);
 
 	/* minimum length for token is 15 */
 	if (remain < 15)
 		return TRUE;
 
-	if (memcmp(Stream_Pointer(s), "Cookie: mstshash=", 17) != 0)
+	if (memcmp(Stream_ConstPointer(s), "Cookie: mstshash=", 17) != 0)
 	{
-		if (memcmp(Stream_Pointer(s), "Cookie: msts=", 13) != 0)
+		if (memcmp(Stream_ConstPointer(s), "Cookie: msts=", 13) != 0)
 		{
 			/* remaining bytes are neither a token nor a cookie */
 			return TRUE;
@@ -932,12 +931,12 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 		len = Stream_GetPosition(s) - pos;
 		Stream_Write_UINT16(s, 0);
 
-		if (strnlen((char*)str, len) == len)
+		if (strnlen(str, len) == len)
 		{
 			if (isToken)
 				result = nego_set_routing_token(nego, str, len);
 			else
-				result = nego_set_cookie(nego, (char*)str);
+				result = nego_set_cookie(nego, str);
 		}
 	}
 

@@ -556,7 +556,7 @@ static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context, UINT16 wTi
 	Stream_Write_UINT32(s, 0); /* bPad */
 	Stream_SetPosition(s, start);
 
-	if (!WTSVirtualChannelWrite(context->priv->ChannelHandle, (PCHAR)Stream_Pointer(s), end - start,
+	if (!WTSVirtualChannelWrite(context->priv->ChannelHandle, Stream_Pointer(s), end - start,
 	                            &written))
 	{
 		WLog_ERR(TAG, "WTSVirtualChannelWrite failed!");
@@ -1144,8 +1144,8 @@ UINT rdpsnd_server_handle_messages(RdpsndServerContext* context)
 	priv = context->priv;
 	s = priv->input_stream;
 
-	if (!WTSVirtualChannelRead(priv->ChannelHandle, 0, (PCHAR)Stream_Pointer(s),
-	                           priv->expectedBytes, &bytesReturned))
+	if (!WTSVirtualChannelRead(priv->ChannelHandle, 0, Stream_Pointer(s), priv->expectedBytes,
+	                           &bytesReturned))
 	{
 		if (GetLastError() == ERROR_NO_DATA)
 			return ERROR_NO_DATA;

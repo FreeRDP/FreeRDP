@@ -809,7 +809,7 @@ LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32
 		          scard_get_ioctl_string(ioControlCode, TRUE),
 		          scard_get_ioctl_string(ioControlCode, FALSE), ioControlCode,
 		          Stream_GetPosition(s), Stream_Length(s), difference);
-		winpr_HexDump(TAG, WLOG_WARN, Stream_Pointer(s), difference);
+		winpr_HexDump(TAG, WLOG_WARN, Stream_ConstPointer(s), difference);
 	}
 
 	if (Stream_GetPosition(s) > Stream_Length(s))

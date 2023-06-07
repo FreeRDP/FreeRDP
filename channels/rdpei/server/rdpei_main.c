@@ -495,8 +495,8 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 	wStream* s = priv->inputStream;
 	UINT error = CHANNEL_RC_OK;
 
-	if (!WTSVirtualChannelRead(priv->channelHandle, 0, (PCHAR)Stream_Pointer(s),
-	                           priv->expectedBytes, &bytesReturned))
+	if (!WTSVirtualChannelRead(priv->channelHandle, 0, Stream_Pointer(s), priv->expectedBytes,
+	                           &bytesReturned))
 	{
 		if (GetLastError() == ERROR_NO_DATA)
 			return ERROR_READ_FAULT;

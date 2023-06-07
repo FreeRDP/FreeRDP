@@ -137,7 +137,7 @@ static BOOL update_read_bitmap_data(rdpUpdate* update, wStream* s, BITMAP_DATA* 
 		if (!bitmapData->bitmapDataStream)
 			return FALSE;
 
-		memcpy(bitmapData->bitmapDataStream, Stream_Pointer(s), bitmapData->bitmapLength);
+		memcpy(bitmapData->bitmapDataStream, Stream_ConstPointer(s), bitmapData->bitmapLength);
 		Stream_Seek(s, bitmapData->bitmapLength);
 	}
 

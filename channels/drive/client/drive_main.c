@@ -178,7 +178,7 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, PathLength))
 		return ERROR_INVALID_DATA;
 
-	path = (const WCHAR*)Stream_Pointer(irp->input);
+	path = Stream_ConstPointer(irp->input);
 	FileId = irp->devman->id_sequence++;
 	file = drive_file_new(drive->path, path, PathLength / sizeof(WCHAR), FileId, DesiredAccess,
 	                      CreateDisposition, CreateOptions, FileAttributes, SharedAccess);
@@ -300,7 +300,7 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 		Stream_Write_UINT32(irp->output, 0);
 	else
 	{
-		BYTE* buffer = Stream_Pointer(irp->output) + sizeof(UINT32);
+		BYTE* buffer = Stream_PointerAs(irp->output, BYTE) + sizeof(UINT32);
 
 		if (!drive_file_read(file, buffer, &Length))
 		{
@@ -327,7 +327,6 @@ static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 	DRIVE_FILE* file;
 	UINT32 Length;
 	UINT64 Offset;
-	void* ptr;
 
 	if (!drive || !irp || !irp->input || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
@@ -338,7 +337,7 @@ static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
 	Stream_Seek(irp->input, 20); /* Padding */
-	ptr = Stream_Pointer(irp->input);
+	const void* ptr = Stream_ConstPointer(irp->input);
 	if (!Stream_SafeSeek(irp->input, Length))
 		return ERROR_INVALID_DATA;
 	file = drive_get_file_by_id(drive, irp->FileId);
@@ -611,7 +610,7 @@ static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 	Stream_Read_UINT8(irp->input, InitialQuery);
 	Stream_Read_UINT32(irp->input, PathLength);
 	Stream_Seek(irp->input, 23); /* Padding */
-	path = (WCHAR*)Stream_Pointer(irp->input);
+	path = Stream_ConstPointer(irp->input);
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, PathLength))
 		return ERROR_INVALID_DATA;
 

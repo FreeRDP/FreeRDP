@@ -598,7 +598,6 @@ static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, const AUDIO_FORMAT* form
 
 static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 {
-	BYTE* data;
 	AUDIO_FORMAT* format;
 	UINT64 end;
 	UINT64 diffMS, ts;
@@ -620,7 +619,7 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 	if (error)
 		return error;
 
-	data = Stream_Pointer(s);
+	const BYTE* data = Stream_ConstPointer(s);
 	format = &rdpsnd->ClientFormats[rdpsnd->wCurrentFormatNo];
 	WLog_Print(rdpsnd->log, WLOG_DEBUG,
 	           "%s Wave: cBlockNo: %" PRIu8 " wTimeStamp: %" PRIu16 ", size: %" PRIdz,

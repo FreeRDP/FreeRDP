@@ -383,16 +383,16 @@ static UINT wlf_cliprdr_send_client_capabilities(wfClipboard* clipboard)
 {
 	WINPR_ASSERT(clipboard);
 
-	const CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet = {
+	CLIPRDR_GENERAL_CAPABILITY_SET generalCapabilitySet = {
 		.capabilitySetType = CB_CAPSTYPE_GENERAL,
 		.capabilitySetLength = 12,
 		.version = CB_CAPS_VERSION_2,
 		.generalFlags =
 		    CB_USE_LONG_FORMAT_NAMES | cliprdr_file_context_current_flags(clipboard->file)
 	};
-	const CLIPRDR_CAPABILITIES capabilities = {
-		.cCapabilitiesSets = 1, .capabilitySets = (CLIPRDR_CAPABILITY_SET*)&(generalCapabilitySet)
-	};
+	CLIPRDR_CAPABILITIES capabilities = { .cCapabilitiesSets = 1,
+		                                  .capabilitySets =
+		                                      (CLIPRDR_CAPABILITY_SET*)&(generalCapabilitySet) };
 
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(clipboard->context);

@@ -648,7 +648,6 @@ BOOL rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 sec_flags,
                                     UINT32* pad)
 {
-	BYTE* data;
 	BOOL status;
 	WINPR_ASSERT(rdp);
 	sec_flags |= rdp->sec_flags;
@@ -667,7 +666,7 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 
 			if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 			{
-				data = Stream_Pointer(s) + 12;
+				BYTE* data = Stream_PointerAs(s, BYTE) + 12;
 				length = length - (data - Stream_Buffer(s));
 				Stream_Write_UINT16(s, 0x10); /* length */
 				Stream_Write_UINT8(s, 0x1);   /* TSFIPS_VERSION 1*/
@@ -693,7 +692,7 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 			}
 			else
 			{
-				data = Stream_Pointer(s) + 8;
+				const BYTE* data = Stream_PointerAs(s, const BYTE) + 8;
 				length = length - (data - Stream_Buffer(s));
 
 				if (!Stream_CheckAndLogRequiredCapacityWLog(rdp->log, s, 8))
@@ -702,7 +701,8 @@ static BOOL rdp_security_stream_out(rdpRdp* rdp, wStream* s, int length, UINT32 
 					status = security_salted_mac_signature(rdp, data, length, TRUE,
 					                                       Stream_Pointer(s), 8);
 				else
-					status = security_mac_signature(rdp, data, length, Stream_Pointer(s), 8);
+					status =
+					    security_mac_signature(rdp, data, length, Stream_PointerAs(s, BYTE), 8);
 
 				if (!status)
 					goto unlock;
@@ -1054,7 +1054,7 @@ state_run_t rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
 			return STATE_RUN_FAILED;
 		}
 
-		if (bulk_decompress(rdp->bulk, Stream_Pointer(s), SrcSize, &pDstData, &DstSize,
+		if (bulk_decompress(rdp->bulk, Stream_ConstPointer(s), SrcSize, &pDstData, &DstSize,
 		                    compressedType))
 		{
 			cs = transport_take_from_pool(rdp->transport, DstSize);
@@ -1398,7 +1398,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 		Stream_Read_UINT16(s, len);    /* 0x10 */
 		Stream_Read_UINT8(s, version); /* 0x1 */
 		Stream_Read_UINT8(s, pad);
-		sig = Stream_Pointer(s);
+		sig = Stream_ConstPointer(s);
 		Stream_Seek(s, 8); /* signature */
 		length -= 12;
 		padLength = length - pad;
@@ -1412,7 +1412,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 		if (!security_fips_decrypt(Stream_Pointer(s), length, rdp))
 			goto unlock;
 
-		if (!security_fips_check_signature(Stream_Pointer(s), length - pad, sig, 8, rdp))
+		if (!security_fips_check_signature(Stream_ConstPointer(s), length - pad, sig, 8, rdp))
 			goto unlock;
 
 		Stream_SetLength(s, Stream_Length(s) - pad);
@@ -1432,14 +1432,15 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 			goto unlock;
 		}
 
-		if (!security_decrypt(Stream_Pointer(s), length, rdp))
+		if (!security_decrypt(Stream_PointerAs(s, BYTE), length, rdp))
 			goto unlock;
 
 		if (securityFlags & SEC_SECURE_CHECKSUM)
-			status = security_salted_mac_signature(rdp, Stream_Pointer(s), length, FALSE, cmac,
+			status = security_salted_mac_signature(rdp, Stream_ConstPointer(s), length, FALSE, cmac,
 			                                       sizeof(cmac));
 		else
-			status = security_mac_signature(rdp, Stream_Pointer(s), length, cmac, sizeof(cmac));
+			status =
+			    security_mac_signature(rdp, Stream_ConstPointer(s), length, cmac, sizeof(cmac));
 
 		if (!status)
 			goto unlock;

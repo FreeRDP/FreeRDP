@@ -1582,8 +1582,8 @@ UINT rail_server_handle_messages(RailServerContext* context)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	if (!WTSVirtualChannelRead(priv->rail_channel, 0, (PCHAR)Stream_Pointer(s),
-	                           RAIL_PDU_HEADER_LENGTH, &bytesReturned))
+	if (!WTSVirtualChannelRead(priv->rail_channel, 0, Stream_Pointer(s), RAIL_PDU_HEADER_LENGTH,
+	                           &bytesReturned))
 	{
 		if (GetLastError() == ERROR_NO_DATA)
 			return ERROR_NO_DATA;
@@ -1607,7 +1607,7 @@ UINT rail_server_handle_messages(RailServerContext* context)
 	}
 
 	/* Read body */
-	if (!WTSVirtualChannelRead(priv->rail_channel, 0, (PCHAR)Stream_Pointer(s),
+	if (!WTSVirtualChannelRead(priv->rail_channel, 0, Stream_Pointer(s),
 	                           orderLength - RAIL_PDU_HEADER_LENGTH, &bytesReturned))
 	{
 		if (GetLastError() == ERROR_NO_DATA)

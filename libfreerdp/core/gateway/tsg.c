@@ -1205,7 +1205,7 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 					goto fail;
 				}
 
-				packetStringMessage.msgBuffer = (WCHAR*)Stream_Pointer(pdu->s);
+				packetStringMessage.msgBuffer = Stream_Pointer(pdu->s);
 				if (!Stream_CheckAndLogRequiredLength(TAG, pdu->s, packetStringMessage.msgBytes))
 					goto fail;
 
@@ -1593,7 +1593,7 @@ static BOOL TsProxyReadPacketSTringMessage(rdpTsg* tsg, wStream* s, TSG_PACKET_S
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, msg->msgBytes))
 		return FALSE;
 
-	msg->msgBuffer = (WCHAR*)Stream_Pointer(s);
+	msg->msgBuffer = Stream_Pointer(s);
 	Stream_Seek(s, msg->msgBytes);
 
 	return TRUE;

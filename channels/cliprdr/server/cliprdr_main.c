@@ -596,7 +596,6 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
                                                        const CLIPRDR_HEADER* header)
 {
 	size_t length;
-	const WCHAR* wszTempDir;
 	CLIPRDR_TEMP_DIRECTORY tempDirectory = { 0 };
 	CliprdrServerPrivate* cliprdr;
 	UINT error = CHANNEL_RC_OK;
@@ -611,7 +610,7 @@ static UINT cliprdr_server_receive_temporary_directory(CliprdrServerContext* con
 	                                      ARRAYSIZE(cliprdr->temporaryDirectory) * sizeof(WCHAR)))
 		return CHANNEL_RC_NO_MEMORY;
 
-	wszTempDir = (WCHAR*)Stream_Pointer(s);
+	const WCHAR* wszTempDir = Stream_ConstPointer(s);
 
 	if (wszTempDir[ARRAYSIZE(cliprdr->temporaryDirectory) - 1] != 0)
 	{
@@ -1102,7 +1101,7 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 		if (status == WAIT_TIMEOUT)
 			return CHANNEL_RC_OK;
 
-		if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0, (PCHAR)Stream_Pointer(s), BytesToRead,
+		if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0, Stream_Pointer(s), BytesToRead,
 		                           &BytesReturned))
 		{
 			WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
@@ -1145,8 +1144,8 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 			if (status == WAIT_TIMEOUT)
 				return CHANNEL_RC_OK;
 
-			if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0, (PCHAR)Stream_Pointer(s),
-			                           BytesToRead, &BytesReturned))
+			if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0, Stream_Pointer(s), BytesToRead,
+			                           &BytesReturned))
 			{
 				WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 				return ERROR_INTERNAL_ERROR;
@@ -1185,8 +1184,8 @@ static UINT cliprdr_server_read(CliprdrServerContext* context)
 			BytesReturned = 0;
 			BytesToRead = 4;
 
-			if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0, (PCHAR)Stream_Pointer(s),
-			                           BytesToRead, &BytesReturned))
+			if (!WTSVirtualChannelRead(cliprdr->ChannelHandle, 0, Stream_Pointer(s), BytesToRead,
+			                           &BytesReturned))
 			{
 				WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 				return ERROR_INTERNAL_ERROR;

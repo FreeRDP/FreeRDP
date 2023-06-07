@@ -312,7 +312,6 @@ static const char* capabilities_enum_to_string(UINT32 capabilities)
 
 static BOOL rdg_read_http_unicode_string(wStream* s, const WCHAR** string, UINT16* lengthInBytes)
 {
-	WCHAR* str;
 	UINT16 strLenBytes;
 	size_t rem = Stream_GetRemainingLength(s);
 
@@ -325,7 +324,7 @@ static BOOL rdg_read_http_unicode_string(wStream* s, const WCHAR** string, UINT1
 	Stream_Read_UINT16(s, strLenBytes);
 
 	/* Remember position of our string */
-	str = (WCHAR*)Stream_Pointer(s);
+	const WCHAR* str = Stream_ConstPointer(s);
 
 	/* seek past the string - if this fails something is wrong */
 	if (!Stream_SafeSeek(s, strLenBytes))

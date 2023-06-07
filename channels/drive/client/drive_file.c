@@ -465,7 +465,7 @@ BOOL drive_file_read(DRIVE_FILE* file, BYTE* buffer, UINT32* Length)
 	return FALSE;
 }
 
-BOOL drive_file_write(DRIVE_FILE* file, BYTE* buffer, UINT32 Length)
+BOOL drive_file_write(DRIVE_FILE* file, const BYTE* buffer, UINT32 Length)
 {
 	DWORD written;
 
@@ -823,7 +823,7 @@ BOOL drive_file_set_information(DRIVE_FILE* file, UINT32 FsInformationClass, UIN
 			if (!Stream_CheckAndLogRequiredLength(TAG, input, FileNameLength))
 				return FALSE;
 
-			fullpath = drive_file_combine_fullpath(file->basepath, (WCHAR*)Stream_Pointer(input),
+			fullpath = drive_file_combine_fullpath(file->basepath, Stream_ConstPointer(input),
 			                                       FileNameLength / sizeof(WCHAR));
 
 			if (!fullpath)

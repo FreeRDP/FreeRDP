@@ -203,7 +203,7 @@ int update_recv_surfcmds(rdpUpdate* update, wStream* s)
 	while (Stream_GetRemainingLength(s) >= 2)
 	{
 		const size_t start = Stream_GetPosition(s);
-		const BYTE* mark = Stream_Pointer(s);
+		const BYTE* mark = Stream_ConstPointer(s);
 
 		Stream_Read_UINT16(s, cmdType);
 

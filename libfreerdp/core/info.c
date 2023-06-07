@@ -108,7 +108,7 @@ static BOOL rdp_read_info_null_string(const char* what, UINT32 flags, wStream* s
 		}
 		else
 		{
-			const char* domain = (const char*)Stream_Pointer(s);
+			const char* domain = Stream_ConstPointer(s);
 			if (!Stream_SafeSeek(s, cbLen))
 			{
 				WLog_ERR(TAG, "protocol error: no data to read for %s [expected %" PRIuz "]", what,
@@ -1068,7 +1068,7 @@ static BOOL rdp_info_read_string(const char* what, wStream* s, size_t size, size
 		return FALSE;
 	}
 
-	const WCHAR* str = Stream_Pointer(s);
+	const WCHAR* str = Stream_ConstPointer(s);
 	if (str[size / sizeof(WCHAR) - 1])
 	{
 		WLog_ERR(TAG, "protocol error: %s must be null terminated", what);
@@ -1200,7 +1200,7 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	if (rem > 0)
 	{
 		BOOL warn = FALSE;
-		const char* str = Stream_Pointer(s);
+		const char* str = Stream_ConstPointer(s);
 		for (size_t x = 0; x < rem; x++)
 		{
 			if (str[x] != '\0')

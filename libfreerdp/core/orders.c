@@ -1752,7 +1752,7 @@ static BOOL update_read_glyph_index_order(wStream* s, const ORDER_INFO* orderInf
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, glyph_index->cbData))
 			return FALSE;
 
-		CopyMemory(glyph_index->data, Stream_Pointer(s), glyph_index->cbData);
+		CopyMemory(glyph_index->data, Stream_ConstPointer(s), glyph_index->cbData);
 		Stream_Seek(s, glyph_index->cbData);
 	}
 
@@ -1849,7 +1849,7 @@ static BOOL update_read_fast_index_order(wStream* s, const ORDER_INFO* orderInfo
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, fast_index->cbData))
 			return FALSE;
 
-		CopyMemory(fast_index->data, Stream_Pointer(s), fast_index->cbData);
+		CopyMemory(fast_index->data, Stream_ConstPointer(s), fast_index->cbData);
 		Stream_Seek(s, fast_index->cbData);
 	}
 
@@ -1889,7 +1889,7 @@ static BOOL update_read_fast_glyph_order(wStream* s, const ORDER_INFO* orderInfo
 
 		Stream_Read_UINT8(s, fastGlyph->cbData);
 
-		src = Stream_Pointer(s);
+		src = Stream_ConstPointer(s);
 		if (!Stream_SafeSeek(s, fastGlyph->cbData) || (fastGlyph->cbData == 0))
 			return FALSE;
 
@@ -2727,7 +2727,7 @@ static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BY
 	size_t x, k;
 	INT8 y;
 	BYTE byte = 0;
-	const BYTE* palette = Stream_Pointer(s) + 16;
+	const BYTE* palette = Stream_PointerAs(s, const BYTE) + 16;
 	const size_t bytesPerPixel = ((bpp + 1) / 8);
 
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, 4ULL + bytesPerPixel, 4ULL))

@@ -417,7 +417,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 				goto fail;
 
 			Stream_SetPosition(fragment, StubOffset);
-			Stream_Write(pdu->s, Stream_Pointer(fragment), StubLength);
+			Stream_Write(pdu->s, Stream_ConstPointer(fragment), StubLength);
 			rpc->StubFragCount++;
 
 			if (response->alloc_hint == StubLength)
@@ -439,7 +439,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 			if (Stream_Length(fragment) < StubOffset + StubLength)
 				goto fail;
 			Stream_SetPosition(fragment, StubOffset);
-			rpc_client_receive_pipe_write(rpc->client, Stream_Pointer(fragment),
+			rpc_client_receive_pipe_write(rpc->client, Stream_ConstPointer(fragment),
 			                              (size_t)StubLength);
 			rpc->StubFragCount++;
 

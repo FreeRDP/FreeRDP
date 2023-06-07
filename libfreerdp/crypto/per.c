@@ -494,8 +494,7 @@ static void per_write_string(wStream* s, BYTE* str, int length)
 
 BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT16 min)
 {
-	UINT16 mlength;
-	BYTE* a_oct_str;
+	UINT16 mlength = 0;
 
 	if (!per_read_length(s, &mlength))
 		return FALSE;
@@ -509,7 +508,7 @@ BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT1
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
 		return FALSE;
 
-	a_oct_str = Stream_Pointer(s);
+	const BYTE* a_oct_str = Stream_ConstPointer(s);
 	Stream_Seek(s, length);
 
 	return per_check_oid_and_log_mismatch(a_oct_str, oct_str, length);

@@ -335,12 +335,11 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 
 			if (isBackData)
 			{
-				proxyChannelDataEventInfo dev;
-				size_t len;
-				const char* name = (const char*)Stream_Pointer(s);
-				size_t nameLen = Stream_GetRemainingLength(s);
+				proxyChannelDataEventInfo dev = { 0 };
+				const char* name = Stream_ConstPointer(s);
+				const size_t nameLen = Stream_GetRemainingLength(s);
 
-				len = strnlen(name, nameLen);
+				const size_t len = strnlen(name, nameLen);
 				if ((len == 0) || (len == nameLen))
 					return PF_CHANNEL_RESULT_ERROR;
 
@@ -488,7 +487,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 				return PF_CHANNEL_RESULT_ERROR;
 			}
 
-			Stream_Write(trackerState->currentPacket, Stream_Pointer(s), extraSize);
+			Stream_Write(trackerState->currentPacket, Stream_ConstPointer(s), extraSize);
 		}
 		WLog_DBG(TAG,
 		         "DynvcTracker(%s [%s]): %s frags=%" PRIu32 " received=%" PRIu32 "(%" PRIu32 ")",
