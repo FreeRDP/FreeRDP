@@ -320,7 +320,7 @@ fail:
 BOOL rpc_recv_bind_ack_pdu(rdpRpc* rpc, wStream* s)
 {
 	BOOL rc = FALSE;
-	BYTE* auth_data;
+	const BYTE* auth_data;
 	size_t pos, end;
 	rpcconn_hdr_t header = { 0 };
 	SecBuffer buffer = { 0 };
@@ -343,7 +343,7 @@ BOOL rpc_recv_bind_ack_pdu(rdpRpc* rpc, wStream* s)
 	 * rts_read_pdu_header did already do consistency checks */
 	end = Stream_GetPosition(s);
 	Stream_SetPosition(s, pos + header.common.frag_length - header.common.auth_length);
-	auth_data = Stream_Pointer(s);
+	auth_data = Stream_ConstPointer(s);
 	Stream_SetPosition(s, end);
 
 	buffer.cbBuffer = header.common.auth_length;

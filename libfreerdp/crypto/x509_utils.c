@@ -770,11 +770,11 @@ WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
 
 char* x509_utils_get_common_name(const X509* xcert, size_t* plength)
 {
-	const X509_NAME* subject_name = X509_get_subject_name(xcert);
+	X509_NAME* subject_name = X509_get_subject_name(xcert);
 	if (subject_name == NULL)
 		return NULL;
 
-	const int index = X509_NAME_get_index_by_NID((X509_NAME*)subject_name, NID_commonName, -1);
+	const int index = X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
 	if (index < 0)
 		return NULL;
 

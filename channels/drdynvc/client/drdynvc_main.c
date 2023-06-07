@@ -1146,13 +1146,9 @@ static UINT32 drdynvc_read_variable_uint(wStream* s, int cbLen)
  */
 static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int cbChId, wStream* s)
 {
-	size_t pos;
 	UINT status;
-	UINT32 ChannelId;
 	wStream* data_out;
 	UINT channel_status;
-	char* name;
-	size_t length;
 	DVCMAN* dvcman;
 	DVCMAN_CHANNEL* channel;
 	UINT32 retStatus;
@@ -1185,10 +1181,10 @@ static UINT drdynvc_process_create_request(drdynvcPlugin* drdynvc, int Sp, int c
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, drdynvc_cblen_to_bytes(cbChId)))
 		return ERROR_INVALID_DATA;
 
-	ChannelId = drdynvc_read_variable_uint(s, cbChId);
-	pos = Stream_GetPosition(s);
-	name = (char*)Stream_Pointer(s);
-	length = Stream_GetRemainingLength(s);
+	const UINT32 ChannelId = drdynvc_read_variable_uint(s, cbChId);
+	const size_t pos = Stream_GetPosition(s);
+	const char* name = Stream_ConstPointer(s);
+	const size_t length = Stream_GetRemainingLength(s);
 
 	if (strnlen(name, length) >= length)
 		return ERROR_INVALID_DATA;

@@ -154,7 +154,7 @@ static UINT32 g_ClientId = 0;
 static const WCHAR* rdpdr_read_ustring(wLog* log, wStream* s, size_t bytelen)
 {
 	const size_t charlen = (bytelen + 1) / sizeof(WCHAR);
-	const WCHAR* str = (const WCHAR*)Stream_Pointer(s);
+	const WCHAR* str = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, bytelen))
 		return NULL;
 	if (_wcsnlen(str, charlen) == charlen)
@@ -358,9 +358,8 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 		return ERROR_INVALID_DATA;
 
 	/* ComputerName must be null terminated, check if it really is */
-
-	if (Stream_Pointer(s)[ComputerNameLen - 1] ||
-	    (UnicodeFlag && Stream_Pointer(s)[ComputerNameLen - 2]))
+	const char* computerName = Stream_ConstPointer(s);
+	if (computerName[ComputerNameLen - 1] || (UnicodeFlag && computerName[ComputerNameLen - 2]))
 	{
 		WLog_Print(context->priv->log, WLOG_ERROR, "computer name must be null terminated");
 		return ERROR_INVALID_DATA;
@@ -384,7 +383,7 @@ static UINT rdpdr_server_receive_client_name_request(RdpdrServerContext* context
 	}
 	else
 	{
-		const char* name = (const char*)Stream_Pointer(s);
+		const char* name = Stream_ConstPointer(s);
 		context->priv->ClientComputerName = _strdup(name);
 		Stream_Seek(s, ComputerNameLen);
 
@@ -531,7 +530,7 @@ static UINT rdpdr_server_write_general_capability_set(RdpdrServerContext* contex
 	if (error != CHANNEL_RC_OK)
 		return error;
 
-	const BYTE* data = Stream_Pointer(s);
+	const BYTE* data = Stream_ConstPointer(s);
 	const size_t start = Stream_GetPosition(s);
 	Stream_Write_UINT32(s, 0); /* osType (4 bytes), ignored on receipt */
 	Stream_Write_UINT32(s, 0); /* osVersion (4 bytes), unused and must be set to zero */
@@ -823,7 +822,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 		}
 
 		status = IFCALLRESULT(CHANNEL_RC_OK, context->ReceiveCaps, context, &capabilityHeader,
-		                      Stream_GetRemainingLength(s), Stream_Pointer(s));
+		                      Stream_GetRemainingLength(s), Stream_ConstPointer(s));
 		if (status != CHANNEL_RC_OK)
 			return status;
 
@@ -1250,7 +1249,7 @@ static UINT rdpdr_server_receive_io_write_request(RdpdrServerContext* context, w
 	Stream_Read_UINT64(s, Offset);
 	Stream_Seek(s, 20); /* Padding */
 
-	data = Stream_Pointer(s);
+	data = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, Length);
@@ -1282,7 +1281,7 @@ static UINT rdpdr_server_receive_io_device_control_request(RdpdrServerContext* c
 	Stream_Read_UINT32(s, IoControlCode);
 	Stream_Seek(s, 20); /* Padding */
 
-	InputBuffer = Stream_Pointer(s);
+	InputBuffer = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, InputBufferLength))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, InputBufferLength);
@@ -1311,7 +1310,7 @@ static UINT rdpdr_server_receive_io_query_volume_information_request(RdpdrServer
 	Stream_Read_UINT32(s, Length);
 	Stream_Seek(s, 24); /* Padding */
 
-	QueryVolumeBuffer = Stream_Pointer(s);
+	QueryVolumeBuffer = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, Length);
@@ -1343,7 +1342,7 @@ static UINT rdpdr_server_receive_io_set_volume_information_request(RdpdrServerCo
 	Stream_Read_UINT32(s, Length);
 	Stream_Seek(s, 24); /* Padding */
 
-	SetVolumeBuffer = Stream_Pointer(s);
+	SetVolumeBuffer = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, Length);
@@ -1374,7 +1373,7 @@ static UINT rdpdr_server_receive_io_query_information_request(RdpdrServerContext
 	Stream_Read_UINT32(s, Length);
 	Stream_Seek(s, 24); /* Padding */
 
-	QueryBuffer = Stream_Pointer(s);
+	QueryBuffer = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, Length);
@@ -1405,7 +1404,7 @@ static UINT rdpdr_server_receive_io_set_information_request(RdpdrServerContext* 
 	Stream_Read_UINT32(s, Length);
 	Stream_Seek(s, 24); /* Padding */
 
-	SetBuffer = Stream_Pointer(s);
+	SetBuffer = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, Length))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, Length);
@@ -1721,7 +1720,7 @@ static UINT rdpdr_server_receive_prn_cache_add_printer(RdpdrServerContext* conte
 	if (!PrinterName && (PrinterNameLen > 0))
 		return ERROR_INVALID_DATA;
 
-	config = Stream_Pointer(s);
+	config = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, CachedFieldsLen))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, CachedFieldsLen);
@@ -1751,7 +1750,7 @@ static UINT rdpdr_server_receive_prn_cache_update_printer(RdpdrServerContext* co
 	if (!PrinterName && (PrinterNameLen > 0))
 		return ERROR_INVALID_DATA;
 
-	config = Stream_Pointer(s);
+	config = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, CachedFieldsLen))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, CachedFieldsLen);
@@ -3008,7 +3007,7 @@ static UINT rdpdr_server_drive_read_file_callback(RdpdrServerContext* context, w
 
 	if (length > 0)
 	{
-		buffer = (char*)Stream_Pointer(s);
+		buffer = Stream_Pointer(s);
 		Stream_Seek(s, length);
 	}
 

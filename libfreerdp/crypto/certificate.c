@@ -724,7 +724,6 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 	UINT16 wPublicKeyBlobLen = 0;
 	UINT16 wSignatureBlobType = 0;
 	UINT16 wSignatureBlobLen = 0;
-	BYTE* sigdata = NULL;
 	size_t sigdatalen = 0;
 
 	WINPR_ASSERT(certificate);
@@ -732,7 +731,7 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 		return FALSE;
 
 	/* -4, because we need to include dwVersion */
-	sigdata = Stream_Pointer(s) - 4;
+	const BYTE* sigdata = Stream_PointerAs(s, const BYTE) - 4;
 	Stream_Read_UINT32(s, dwSigAlgId);
 	Stream_Read_UINT32(s, dwKeyAlgId);
 
@@ -764,7 +763,7 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
-	sigdatalen = Stream_Pointer(s) - sigdata;
+	sigdatalen = Stream_PointerAs(s, const BYTE) - sigdata;
 	Stream_Read_UINT16(s, wSignatureBlobType);
 
 	if (wSignatureBlobType != BB_RSA_SIGNATURE_BLOB)
@@ -847,7 +846,7 @@ static BOOL cert_write_rsa_signature(wStream* s, const void* sigData, size_t sig
 static BOOL cert_write_server_certificate_v1(wStream* s, const rdpCertificate* certificate)
 {
 	const size_t start = Stream_GetPosition(s);
-	const BYTE* sigData = Stream_Pointer(s) - sizeof(UINT32);
+	const BYTE* sigData = Stream_PointerAs(s, const BYTE) - sizeof(UINT32);
 
 	WINPR_ASSERT(start >= 4);
 	if (!Stream_EnsureRemainingCapacity(s, 10))

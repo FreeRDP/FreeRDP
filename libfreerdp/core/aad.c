@@ -94,7 +94,7 @@ static int BIO_get_line(BIO* bio, char* buf, int size)
 }
 #endif
 
-static const char* auth_server = "login.microsoftonline.com";
+static char* auth_server = "login.microsoftonline.com";
 
 static const char nonce_http_request[] = ""
                                          "POST /common/oauth2/token HTTP/1.1\r\n"

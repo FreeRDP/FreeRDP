@@ -1182,7 +1182,7 @@ size_t WinPrAsn1DecReadUtcTime(WinPrAsn1Decoder* dec, WinPrAsn1_UTCTIME* target)
 	if (!Stream_CheckAndLogRequiredLength(TAG, &dec->source, len) || len < 12)
 		return 0;
 
-	Stream_StaticConstInit(s, Stream_Pointer(&dec->source), len);
+	Stream_StaticConstInit(s, Stream_ConstPointer(&dec->source), len);
 
 	v = read2digits(s);
 	if (v <= 0)
@@ -1251,7 +1251,7 @@ static size_t readConstructed(WinPrAsn1Decoder* dec, wStream* s, WinPrAsn1_tag* 
 		return 0;
 
 	target->encoding = dec->encoding;
-	Stream_StaticConstInit(&target->source, Stream_Pointer(s), len);
+	Stream_StaticConstInit(&target->source, Stream_ConstPointer(s), len);
 	Stream_Seek(s, len);
 	return ret + len;
 }
@@ -1335,7 +1335,7 @@ size_t WinPrAsn1DecPeekContextualTag(WinPrAsn1Decoder* dec, WinPrAsn1_tagId* tag
 	wStream staticS;
 	WINPR_ASSERT(dec);
 
-	Stream_StaticConstInit(&staticS, Stream_Pointer(&dec->source),
+	Stream_StaticConstInit(&staticS, Stream_ConstPointer(&dec->source),
 	                       Stream_GetRemainingLength(&dec->source));
 	return readContextualTag(dec, &staticS, tagId, ctxtDec);
 }
@@ -1476,7 +1476,7 @@ wStream WinPrAsn1DecGetStream(WinPrAsn1Decoder* dec)
 	wStream s = { 0 };
 	WINPR_ASSERT(dec);
 
-	Stream_StaticConstInit(&s, Stream_Pointer(&dec->source),
+	Stream_StaticConstInit(&s, Stream_ConstPointer(&dec->source),
 	                       Stream_GetRemainingLength(&dec->source));
 	return s;
 }

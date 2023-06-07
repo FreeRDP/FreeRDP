@@ -68,7 +68,7 @@ state_run_t multitransport_recv_request(rdpMultitransport* multi, wStream* s)
 	Stream_Read_UINT32(s, requestId);      /* requestId (4 bytes) */
 	Stream_Read_UINT16(s, requestedProto); /* requestedProtocol (2 bytes) */
 	Stream_Seek(s, 2);                     /* reserved (2 bytes) */
-	cookie = Stream_Pointer(s);
+	cookie = Stream_ConstPointer(s);
 	Stream_Seek(s, RDPUDP_COOKIE_LEN); /* securityCookie (16 bytes) */
 
 	WINPR_ASSERT(multi->MtRequest);

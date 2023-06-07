@@ -1335,7 +1335,7 @@ static BOOL device_announce(ULONG_PTR key, void* element, void* data)
 
 		Stream_Write_UINT32(arg->s, device->type); /* deviceType */
 		Stream_Write_UINT32(arg->s, device->id);   /* deviceID */
-		strncpy((char*)Stream_Pointer(arg->s), device->name, 8);
+		strncpy(Stream_Pointer(arg->s), device->name, 8);
 
 		for (i = 0; i < 8; i++)
 		{

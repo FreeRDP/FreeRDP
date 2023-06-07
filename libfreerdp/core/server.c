@@ -225,7 +225,7 @@ static BOOL wts_read_drdynvc_data_first(rdpPeerChannel* channel, wStream* s, int
 	if (!Stream_EnsureRemainingCapacity(channel->receiveData, channel->dvc_total_length))
 		return FALSE;
 
-	Stream_Write(channel->receiveData, Stream_Pointer(s), length);
+	Stream_Write(channel->receiveData, Stream_ConstPointer(s), length);
 	return TRUE;
 }
 
@@ -244,7 +244,7 @@ static BOOL wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s, UINT32 le
 			return FALSE;
 		}
 
-		Stream_Write(channel->receiveData, Stream_Pointer(s), length);
+		Stream_Write(channel->receiveData, Stream_ConstPointer(s), length);
 
 		if (Stream_GetPosition(channel->receiveData) >= channel->dvc_total_length)
 		{
@@ -257,7 +257,7 @@ static BOOL wts_read_drdynvc_data(rdpPeerChannel* channel, wStream* s, UINT32 le
 	}
 	else
 	{
-		ret = wts_queue_receive_data(channel, Stream_Pointer(s), length);
+		ret = wts_queue_receive_data(channel, Stream_ConstPointer(s), length);
 	}
 
 	return ret;

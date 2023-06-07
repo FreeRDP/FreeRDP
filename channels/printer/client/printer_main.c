@@ -497,7 +497,6 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 	UINT64 Offset;
 	rdpPrintJob* printjob = NULL;
 	UINT error = CHANNEL_RC_OK;
-	void* ptr;
 
 	WINPR_ASSERT(printer_dev);
 	WINPR_ASSERT(irp);
@@ -507,7 +506,7 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
 	Stream_Seek(irp->input, 20); /* Padding */
-	ptr = Stream_Pointer(irp->input);
+	const void* ptr = Stream_ConstPointer(irp->input);
 	if (!Stream_SafeSeek(irp->input, Length))
 		return ERROR_INVALID_DATA;
 	if (printer_dev->printer)
@@ -724,25 +723,25 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, PnPNameLen))
 						return ERROR_INVALID_DATA;
 
-					PnPName = (const WCHAR*)Stream_Pointer(s);
+					PnPName = Stream_ConstPointer(s);
 					Stream_Seek(s, PnPNameLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, DriverNameLen))
 						return ERROR_INVALID_DATA;
 
-					DriverName = (const WCHAR*)Stream_Pointer(s);
+					DriverName = Stream_ConstPointer(s);
 					Stream_Seek(s, DriverNameLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, PrintNameLen))
 						return ERROR_INVALID_DATA;
 
-					PrinterName = (const WCHAR*)Stream_Pointer(s);
+					PrinterName = Stream_ConstPointer(s);
 					Stream_Seek(s, PrintNameLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, CacheFieldsLen))
 						return ERROR_INVALID_DATA;
 
-					CachedPrinterConfigData = Stream_Pointer(s);
+					CachedPrinterConfigData = Stream_ConstPointer(s);
 					Stream_Seek(s, CacheFieldsLen);
 
 					if (!printer_save_to_config(settings, PortDosName, sizeof(PortDosName), PnPName,
@@ -768,13 +767,13 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, PrinterNameLen))
 						return ERROR_INVALID_DATA;
 
-					PrinterName = (const WCHAR*)Stream_Pointer(s);
+					PrinterName = Stream_ConstPointer(s);
 					Stream_Seek(s, PrinterNameLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, ConfigDataLen))
 						return ERROR_INVALID_DATA;
 
-					ConfigData = Stream_Pointer(s);
+					ConfigData = Stream_ConstPointer(s);
 					Stream_Seek(s, ConfigDataLen);
 
 					if (!printer_update_to_config(settings, PrinterName, PrinterNameLen, ConfigData,
@@ -796,7 +795,7 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, PrinterNameLen))
 						return ERROR_INVALID_DATA;
 
-					PrinterName = (const WCHAR*)Stream_Pointer(s);
+					PrinterName = Stream_ConstPointer(s);
 					Stream_Seek(s, PrinterNameLen);
 					printer_remove_config(settings, PrinterName, PrinterNameLen);
 				}
@@ -817,13 +816,13 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, OldPrinterNameLen))
 						return ERROR_INVALID_DATA;
 
-					OldPrinterName = (const WCHAR*)Stream_Pointer(s);
+					OldPrinterName = Stream_ConstPointer(s);
 					Stream_Seek(s, OldPrinterNameLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, NewPrinterNameLen))
 						return ERROR_INVALID_DATA;
 
-					NewPrinterName = (const WCHAR*)Stream_Pointer(s);
+					NewPrinterName = Stream_ConstPointer(s);
 					Stream_Seek(s, NewPrinterNameLen);
 
 					if (!printer_move_config(settings, OldPrinterName, OldPrinterNameLen,

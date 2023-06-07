@@ -10,15 +10,15 @@ static BOOL TestStream_Verify(wStream* s, size_t mincap, size_t len, size_t pos)
 		return FALSE;
 	}
 
-	if (Stream_Pointer(s) == NULL)
+	if (Stream_ConstPointer(s) == NULL)
 	{
 		printf("stream pointer is null\n");
 		return FALSE;
 	}
 
-	if (Stream_Pointer(s) < Stream_Buffer(s))
+	if (Stream_PointerAs(s, BYTE*) < Stream_Buffer(s))
 	{
-		printf("stream pointer (%p) or buffer (%p) is invalid\n", (void*)Stream_Pointer(s),
+		printf("stream pointer (%p) or buffer (%p) is invalid\n", Stream_ConstPointer(s),
 		       (void*)Stream_Buffer(s));
 		return FALSE;
 	}
@@ -523,7 +523,7 @@ static BOOL TestStream_Zero(void)
 	if (s->pointer != s->buffer + 5)
 		goto out;
 
-	if (memcmp(Stream_Pointer(s), data + 5, sizeof(data) - 5) != 0)
+	if (memcmp(Stream_ConstPointer(s), data + 5, sizeof(data) - 5) != 0)
 		goto out;
 
 	Stream_SetPosition(s, 0);
@@ -571,7 +571,7 @@ static BOOL TestStream_Fill(void)
 	if (s->pointer != s->buffer + sizeof(fill))
 		goto out;
 
-	if (memcmp(Stream_Pointer(s), data + sizeof(fill), sizeof(data) - sizeof(fill)) != 0)
+	if (memcmp(Stream_ConstPointer(s), data + sizeof(fill), sizeof(data) - sizeof(fill)) != 0)
 		goto out;
 
 	Stream_SetPosition(s, 0);
@@ -579,7 +579,7 @@ static BOOL TestStream_Fill(void)
 	if (s->pointer != s->buffer)
 		goto out;
 
-	if (memcmp(Stream_Pointer(s), fill, sizeof(fill)) != 0)
+	if (memcmp(Stream_ConstPointer(s), fill, sizeof(fill)) != 0)
 		goto out;
 
 	rc = TRUE;

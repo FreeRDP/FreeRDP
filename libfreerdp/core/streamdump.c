@@ -100,7 +100,7 @@ static
 	r = fread(Stream_Pointer(s), 1, size, fp);
 	if (r != size)
 		goto fail;
-	if (crc32 != crc32b(Stream_Pointer(s), size))
+	if (crc32 != crc32b(Stream_ConstPointer(s), size))
 		goto fail;
 	Stream_Seek(s, size);
 

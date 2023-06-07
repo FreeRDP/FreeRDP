@@ -446,8 +446,6 @@ static BOOL rts_read_supported_versions(wStream* s, p_rt_versions_supported_t* v
 
 static BOOL rts_read_port_any(wStream* s, port_any_t* port)
 {
-	const void* ptr;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(port);
 
@@ -458,7 +456,7 @@ static BOOL rts_read_port_any(wStream* s, port_any_t* port)
 	if (port->length == 0)
 		return TRUE;
 
-	ptr = Stream_Pointer(s);
+	const void* ptr = Stream_ConstPointer(s);
 	if (!Stream_SafeSeek(s, port->length))
 		return FALSE;
 	port->port_spec = sdup(ptr, port->length);

@@ -458,7 +458,7 @@ BOOL ber_read_unicode_octet_string(wStream* s, LPWSTR* str)
 	if (!ret)
 		return FALSE;
 
-	memcpy(ret, Stream_Pointer(s), length);
+	memcpy(ret, Stream_ConstPointer(s), length);
 	ret[length / 2] = 0;
 	Stream_Seek(s, length);
 	*str = ret;

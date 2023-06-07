@@ -112,7 +112,7 @@ BOOL sspi_gss_unwrap_token(const SecBuffer* buf, WinPrAsn1_OID* oid, uint16_t* t
 	if (tok_id)
 		Stream_Read_INT16_BE(s, *tok_id);
 
-	token->data = (char*)Stream_Pointer(s);
+	token->data = Stream_Pointer(s);
 	token->length = (UINT)Stream_GetRemainingLength(s);
 
 	return TRUE;

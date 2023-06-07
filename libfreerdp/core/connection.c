@@ -897,7 +897,7 @@ BOOL rdp_server_establish_keys(rdpRdp* rdp, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, rand_len))
 		return FALSE;
 
-	const BYTE* crypt_random = Stream_Pointer(s);
+	const BYTE* crypt_random = Stream_ConstPointer(s);
 	if (!Stream_SafeSeek(s, rand_len))
 		goto end;
 	if (!rdp_update_client_random(rdp->settings, crypt_random, rand_len))

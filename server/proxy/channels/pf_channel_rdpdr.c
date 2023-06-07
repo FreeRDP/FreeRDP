@@ -1553,7 +1553,7 @@ static BOOL filter_smartcard_device_list_remove(pf_channel_server_context* rdpdr
 				return TRUE;
 
 			/* Remove this device from the list */
-			memmove(dst, Stream_Pointer(s), (count - x - 1) * sizeof(UINT32));
+			memmove(dst, Stream_ConstPointer(s), (count - x - 1) * sizeof(UINT32));
 
 			count--;
 			Stream_SetPosition(s, pos);
@@ -1610,7 +1610,7 @@ static BOOL filter_smartcard_device_list_announce(pf_channel_server_context* rdp
 
 			WLog_INFO(TAG, "Filtering smartcard device 0x%08" PRIx32 "", DeviceId);
 
-			memmove(dst, Stream_Pointer(s), Stream_GetRemainingLength(s));
+			memmove(dst, Stream_ConstPointer(s), Stream_GetRemainingLength(s));
 			Stream_SetPosition(s, pos);
 			Stream_Write_UINT32(s, count - 1);
 			return FALSE;

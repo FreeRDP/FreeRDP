@@ -155,7 +155,7 @@ static BOOL rdp_redirection_get_data(wStream* s, UINT32* pLength, const BYTE** p
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, *pLength))
 		return FALSE;
 
-	*pData = Stream_Pointer(s);
+	*pData = Stream_ConstPointer(s);
 	Stream_Seek(s, *pLength);
 	return TRUE;
 }
@@ -314,7 +314,7 @@ static BOOL rdp_target_cert_get_element(wStream* s, UINT32* pType, UINT32* pEnco
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, elementSize))
 		return FALSE;
 
-	*ptr = Stream_Pointer(s);
+	*ptr = Stream_ConstPointer(s);
 	*pLength = elementSize;
 	Stream_Seek(s, elementSize);
 

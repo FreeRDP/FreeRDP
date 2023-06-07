@@ -2081,7 +2081,7 @@ static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(gfx);
-	status = zgfx_decompress(gfx->zgfx, Stream_Pointer(data),
+	status = zgfx_decompress(gfx->zgfx, Stream_ConstPointer(data),
 	                         (UINT32)Stream_GetRemainingLength(data), &pDstData, &DstSize, 0);
 
 	if (status < 0)

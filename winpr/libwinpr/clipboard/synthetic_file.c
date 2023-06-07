@@ -821,7 +821,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	if ((count < 1) || (count != nrDescriptors))
 		return NULL;
 
-	descriptors = (const FILEDESCRIPTORW*)Stream_Pointer(s);
+	descriptors = Stream_ConstPointer(s);
 
 	if (formatId != ClipboardGetFormatId(clipboard, mime_FileGroupDescriptorW))
 		return NULL;

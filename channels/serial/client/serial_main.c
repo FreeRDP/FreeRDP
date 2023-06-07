@@ -294,7 +294,6 @@ static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 {
 	UINT32 Length;
 	UINT64 Offset;
-	void* ptr;
 	DWORD nbWritten = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
@@ -314,7 +313,7 @@ static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 	WLog_Print(serial->log, WLOG_DEBUG, "writing %" PRIu32 " bytes to %s", Length,
 	           serial->device.name);
 
-	ptr = Stream_Pointer(irp->input);
+	const void* ptr = Stream_ConstPointer(irp->input);
 	if (!Stream_SafeSeek(irp->input, Length))
 		return ERROR_INVALID_DATA;
 	/* FIXME: CommWriteFile to be replaced by WriteFile */

@@ -443,9 +443,9 @@ void xf_SetWindowDecorations(xfContext* xfc, Window window, BOOL show)
 void xf_SetWindowUnlisted(xfContext* xfc, Window window)
 {
 	WINPR_ASSERT(xfc);
-	const Atom window_state[] = { xfc->_NET_WM_STATE_SKIP_PAGER, xfc->_NET_WM_STATE_SKIP_TASKBAR };
+	Atom window_state[] = { xfc->_NET_WM_STATE_SKIP_PAGER, xfc->_NET_WM_STATE_SKIP_TASKBAR };
 	LogTagAndXChangeProperty(TAG, xfc->display, window, xfc->_NET_WM_STATE, XA_ATOM, 32,
-	                         PropModeReplace, (BYTE*)&window_state, 2);
+	                         PropModeReplace, (BYTE*)window_state, 2);
 }
 
 static void xf_SetWindowPID(xfContext* xfc, Window window, pid_t pid)

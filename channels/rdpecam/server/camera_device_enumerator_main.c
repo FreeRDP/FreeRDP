@@ -164,10 +164,10 @@ static UINT enumerator_server_recv_device_added_notification(CamDevEnumServerCon
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return ERROR_NO_DATA;
 
-	pdu.DeviceName = (WCHAR*)Stream_Pointer(s);
+	pdu.DeviceName = Stream_Pointer(s);
 
 	remaining_length = Stream_GetRemainingLength(s);
-	channel_name_start = (WCHAR*)Stream_Pointer(s);
+	channel_name_start = Stream_Pointer(s);
 
 	/* Search for null terminator of DeviceName */
 	size_t i = 0;
@@ -230,10 +230,10 @@ static UINT enumerator_server_recv_device_removed_notification(CamDevEnumServerC
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return ERROR_NO_DATA;
 
-	pdu.VirtualChannelName = (char*)Stream_Pointer(s);
+	pdu.VirtualChannelName = Stream_Pointer(s);
 
 	remaining_length = Stream_GetRemainingLength(s);
-	char* tmp = (char*)(Stream_Pointer(s) + 1);
+	char* tmp = pdu.VirtualChannelName + 1;
 
 	for (size_t i = 1; i < remaining_length; ++i, ++tmp)
 	{
