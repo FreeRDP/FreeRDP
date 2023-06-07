@@ -27,7 +27,7 @@
 
 #define TAG FREERDP_TAG("core.gateway.rpc")
 
-static const RPC_FAULT_CODE RPC_FAULT_CODES[] = {
+static ALIGN64 const RPC_FAULT_CODE RPC_FAULT_CODES[] = {
 	DEFINE_RPC_FAULT_CODE(nca_s_fault_object_not_found, CAT_GATEWAY),
 	DEFINE_RPC_FAULT_CODE(nca_s_fault_cancel, CAT_GATEWAY),
 	DEFINE_RPC_FAULT_CODE(nca_s_fault_addr_error, CAT_GATEWAY),
