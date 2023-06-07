@@ -3384,18 +3384,18 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 						    freerdp_settings_get_uint32(settings, FreeRDP_ClipboardFeatureMask) &
 						    ~(CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_REMOTE_TO_LOCAL);
 						const PARSE_CLIP_DIR_RESULT bval = parse_clip_direciton_to_option(cur);
-						UINT32 flags = 0;
+						UINT32 bflags = 0;
 						switch (bval)
 						{
 							case CLIP_DIR_PARSE_ALL:
-								flags |=
+								bflags |=
 								    CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_REMOTE_TO_LOCAL;
 								break;
 							case CLIP_DIR_PARSE_LOCAL:
-								flags |= CLIPRDR_FLAG_REMOTE_TO_LOCAL;
+								bflags |= CLIPRDR_FLAG_REMOTE_TO_LOCAL;
 								break;
 							case CLIP_DIR_PARSE_REMOTE:
-								flags |= CLIPRDR_FLAG_LOCAL_TO_REMOTE;
+								bflags |= CLIPRDR_FLAG_LOCAL_TO_REMOTE;
 								break;
 							case CLIP_DIR_PARSE_OFF:
 								break;
@@ -3406,7 +3406,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 						}
 
 						if (!freerdp_settings_set_uint32(settings, FreeRDP_ClipboardFeatureMask,
-						                                 mask | flags))
+						                                 mask | bflags))
 							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 					else if (option_starts_with("files-to", cur))
@@ -3416,18 +3416,18 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 						    ~(CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES |
 						      CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES);
 						const PARSE_CLIP_DIR_RESULT bval = parse_clip_direciton_to_option(cur);
-						UINT32 flags = 0;
+						UINT32 bflags = 0;
 						switch (bval)
 						{
 							case CLIP_DIR_PARSE_ALL:
-								flags |= CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES |
-								         CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES;
+								bflags |= CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES |
+								          CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES;
 								break;
 							case CLIP_DIR_PARSE_LOCAL:
-								flags |= CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES;
+								bflags |= CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES;
 								break;
 							case CLIP_DIR_PARSE_REMOTE:
-								flags |= CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES;
+								bflags |= CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES;
 								break;
 							case CLIP_DIR_PARSE_OFF:
 								break;
@@ -3438,7 +3438,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 						}
 
 						if (!freerdp_settings_set_uint32(settings, FreeRDP_ClipboardFeatureMask,
-						                                 mask | flags))
+						                                 mask | bflags))
 							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					}
 					else

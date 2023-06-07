@@ -1172,7 +1172,14 @@ static BOOL freerdp_rsa_from_x509(rdpCertificate* cert)
 	if (!freerdp_certificate_is_rsa(cert))
 		return TRUE;
 
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	RSA* rsa = NULL;
+	const BIGNUM* rsa_n = NULL;
+	const BIGNUM* rsa_e = NULL;
+#else
+	BIGNUM* rsa_n = NULL;
+	BIGNUM* rsa_e = NULL;
+#endif
 	EVP_PKEY* pubkey = X509_get0_pubkey(cert->x509);
 	if (!pubkey)
 		goto fail;
@@ -1188,12 +1195,8 @@ static BOOL freerdp_rsa_from_x509(rdpCertificate* cert)
 	/* Now we return failure again if something is wrong. */
 	rc = FALSE;
 
-	const BIGNUM* rsa_n = NULL;
-	const BIGNUM* rsa_e = NULL;
 	RSA_get0_key(rsa, &rsa_n, &rsa_e, NULL);
 #else
-	BIGNUM* rsa_n = NULL;
-	BIGNUM* rsa_e = NULL;
 	if (!EVP_PKEY_get_bn_param(pubkey, OSSL_PKEY_PARAM_RSA_E, &rsa_e))
 		goto fail;
 	if (!EVP_PKEY_get_bn_param(pubkey, OSSL_PKEY_PARAM_RSA_N, &rsa_n))
