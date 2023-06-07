@@ -259,20 +259,18 @@ static UINT8 drdynvc_value_to_cblen(UINT32 value)
 
 static BOOL drdynvc_write_variable_uint(wStream* s, UINT32 value, UINT8 cbLen)
 {
-	UINT32 val = 0;
-
 	switch (cbLen)
 	{
 		case 0:
-			Stream_Write_UINT8(s, (UINT8)val);
+			Stream_Write_UINT8(s, (UINT8)value);
 			break;
 
 		case 1:
-			Stream_Write_UINT16(s, (UINT16)val);
+			Stream_Write_UINT16(s, (UINT16)value);
 			break;
 
 		default:
-			Stream_Write_UINT32(s, val);
+			Stream_Write_UINT32(s, value);
 			break;
 	}
 
