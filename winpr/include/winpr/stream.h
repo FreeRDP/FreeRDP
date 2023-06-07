@@ -441,13 +441,13 @@ extern "C"
 #define Stream_GetBuffer(_s, _b) _b = Stream_Buffer(_s)
 #define Stream_PointerAs(s, type) (type*)Stream_Pointer(s)
 
-	static INLINE BYTE* Stream_Pointer(wStream* _s)
+	static INLINE void* Stream_Pointer(wStream* _s)
 	{
 		WINPR_ASSERT(_s);
 		return _s->pointer;
 	}
 
-	static INLINE const BYTE* Stream_ConstPointer(const wStream* _s)
+	static INLINE const void* Stream_ConstPointer(const wStream* _s)
 	{
 		WINPR_ASSERT(_s);
 		return _s->pointer;
