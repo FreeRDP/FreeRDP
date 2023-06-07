@@ -94,12 +94,8 @@ static BOOL ffmpeg_codec_is_filtered(enum AVCodecID id, BOOL encoder)
 
 static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* format)
 {
-	const char* id;
-
 	if (!format)
 		return AV_CODEC_ID_NONE;
-
-	id = audio_format_get_tag_string(format->wFormatTag);
 
 	switch (format->wFormatTag)
 	{
