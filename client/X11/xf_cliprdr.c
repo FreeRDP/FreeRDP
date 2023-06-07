@@ -1025,13 +1025,11 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 static void xf_cliprdr_append_target(xfClipboard* clipboard, Atom target)
 {
 	WINPR_ASSERT(clipboard);
-	if (clipboard->numTargets < 0)
+
+	if (clipboard->numTargets >= ARRAYSIZE(clipboard->targets))
 		return;
 
-	if ((size_t)clipboard->numTargets >= ARRAYSIZE(clipboard->targets))
-		return;
-
-	for (int i = 0; i < clipboard->numTargets; i++)
+	for (size_t i = 0; i < clipboard->numTargets; i++)
 	{
 		if (clipboard->targets[i] == target)
 			return;
