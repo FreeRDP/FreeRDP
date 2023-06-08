@@ -1540,19 +1540,64 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 				freerdp_client_print_tune_list(settings);
 			else if (option_equals("kbd", arg->Value))
 				freerdp_client_print_keyboard_list();
-			else if (option_equals("kbd-lang", arg->Value))
+			else if (option_starts_with("kbd-lang", arg->Value))
 			{
 				const char* val = NULL;
 				if (option_starts_with("kbd-lang:", arg->Value))
 					val = &arg->Value[9];
+				else if (!option_equals("kbd-lang", arg->Value))
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				else if (strchr(val, ','))
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				freerdp_client_print_codepages(val);
 			}
 			else if (option_equals("kbd-scancode", arg->Value))
 				freerdp_client_print_scancodes();
 			else if (option_equals("monitor", arg->Value))
 				settings->ListMonitors = TRUE;
-			else if (option_equals("smartcard", arg->Value))
+			else if (option_starts_with("smartcard", arg->Value))
+			{
+				BOOL opts = FALSE;
+				if (option_starts_with("smartcard:", arg->Value))
+					opts = TRUE;
+				else if (!option_equals("smartcard", arg->Value))
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+				if (opts)
+				{
+					const char* sub = strchr(arg->Value, ':') + 1;
+					const CmdLineSubOptions options[] = {
+						{ "pkinit-anchors:", FreeRDP_PkinitAnchors, CMDLINE_SUBOPTION_STRING,
+						  NULL },
+						{ "pkcs11-module:", FreeRDP_Pkcs11Module, CMDLINE_SUBOPTION_STRING, NULL }
+					};
+
+					size_t count = 0;
+
+					char** ptr = CommandLineParseCommaSeparatedValuesEx("smartcard", sub, &count);
+					if (!ptr)
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					if (count < 2)
+					{
+						free(ptr);
+						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+
+					for (size_t x = 1; x < count; x++)
+					{
+						const char* cur = ptr[x];
+						if (!parseSubOptions(settings, options, ARRAYSIZE(options), cur))
+						{
+							free(ptr);
+							return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+						}
+					}
+
+					free(ptr);
+				}
+
 				freerdp_smartcard_list(settings);
+			}
 			else
 			{
 				freerdp_client_print_command_line_help_ex(argc, argv, custom);

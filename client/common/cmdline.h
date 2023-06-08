@@ -287,8 +287,11 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info-string>", NULL, NULL, -1, NULL,
 	  "Load balance info" },
 	{ "list", COMMAND_LINE_VALUE_REQUIRED | COMMAND_LINE_PRINT,
-	  "[kbd|kbd-scancode|kbd-lang|smartcard|monitor|tune]", "List available options for subcommand",
-	  NULL, -1, NULL, "List available options for subcommand" },
+	  "[kbd|kbd-scancode|kbd-lang[:<value>]|smartcard[:[pkinit-anchors:<path>][,pkcs11-module:<"
+	  "name>]]|"
+	  "monitor|tune]",
+	  "List available options for subcommand", NULL, -1, NULL,
+	  "List available options for subcommand" },
 	{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<tag>:<level>[,<tag>:<level>[,...]]", NULL, NULL,
 	  -1, NULL, "Set logger filters, see wLog(7) for details" },
 	{ "log-level", COMMAND_LINE_VALUE_REQUIRED, "[OFF|FATAL|ERROR|WARN|INFO|DEBUG|TRACE]", NULL,
