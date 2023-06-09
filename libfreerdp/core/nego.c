@@ -877,6 +877,7 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	 * token (used for load balancing) terminated by a 0x0D0A two-byte
 	 * sequence: (check [MSFT-SDLBTS] for details!)
 	 * Cookie:[space]msts=[ip address].[port].[reserved][\x0D\x0A]
+	 * tsv://MS Terminal Services Plugin.1.[\x0D\x0A]
 	 *
 	 * cookie (variable): An optional and variable-length ANSI character
 	 * string terminated by a 0x0D0A two-byte sequence:
@@ -901,8 +902,11 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	{
 		if (memcmp(Stream_ConstPointer(s), "Cookie: msts=", 13) != 0)
 		{
-			/* remaining bytes are neither a token nor a cookie */
-			return TRUE;
+			if (memcmp(Stream_ConstPointer(s), "tsv:", 4) != 0)
+			{
+				/* remaining bytes are neither a token nor a cookie */
+				return TRUE;
+			}
 		}
 		isToken = TRUE;
 	}
