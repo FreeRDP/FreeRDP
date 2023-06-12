@@ -326,7 +326,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
 	}
 
-	const char* hostname = freerdp_settings_get_server_name(settings);
+	const char* hostname = settings->ServerHostname;
 	if (!hostname)
 	{
 		WLog_ERR(TAG, "Missing hostname, can not connect to NULL target");

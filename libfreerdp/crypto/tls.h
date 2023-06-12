@@ -76,6 +76,7 @@ struct rdp_tls
 	rdpCertificateStore* certificate_store;
 	BIO* underlying;
 	const char* hostname;
+	const char* serverName;
 	int port;
 	int alertLevel;
 	int alertDescription;
