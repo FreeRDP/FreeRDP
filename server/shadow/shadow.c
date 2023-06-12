@@ -127,11 +127,7 @@ int main(int argc, char** argv)
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressiveV2, TRUE))
 		goto fail;
 
-#ifdef WITH_SHADOW_X11
 	server->authentication = TRUE;
-#else
-	server->authentication = FALSE;
-#endif
 
 	if ((status = shadow_server_parse_command_line(server, argc, argv, shadow_args)) < 0)
 	{
