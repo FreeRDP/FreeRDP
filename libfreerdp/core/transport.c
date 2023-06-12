@@ -283,6 +283,7 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 		transport->layer = TRANSPORT_LAYER_TLS;
 
 	tls->hostname = settings->ServerHostname;
+	tls->serverName = settings->UserSpecifiedServerName;
 	tls->port = settings->ServerPort;
 
 	if (tls->port == 0)

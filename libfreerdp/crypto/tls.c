@@ -599,6 +599,11 @@ static rdpCertificate* tls_get_certificate(rdpTls* tls, BOOL peer)
 	return cert;
 }
 
+static const char* tls_get_server_name(rdpTls* tls)
+{
+	return tls->serverName ? tls->serverName : tls->hostname;
+}
+
 #define TLS_SERVER_END_POINT "tls-server-end-point:"
 
 static SecPkgContext_Bindings* tls_get_channel_bindings(const rdpCertificate* cert)
@@ -832,7 +837,7 @@ TlsHandshakeResult freerdp_tls_connect_ex(rdpTls* tls, BIO* underlying, const SS
 		return 0;
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(LIBRESSL_VERSION_NUMBER)
-	SSL_set_tlsext_host_name(tls->ssl, tls->hostname);
+	SSL_set_tlsext_host_name(tls->ssl, tls_get_server_name(tls));
 #endif
 
 	return freerdp_tls_handshake(tls);
@@ -882,7 +887,7 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 
 		if (tls->isClientMode)
 		{
-			verify_status = tls_verify_certificate(tls, cert, tls->hostname, tls->port);
+			verify_status = tls_verify_certificate(tls, cert, tls_get_server_name(tls), tls->port);
 
 			if (verify_status < 1)
 			{
