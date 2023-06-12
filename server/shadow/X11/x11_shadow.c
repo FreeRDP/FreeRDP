@@ -1483,7 +1483,12 @@ static void x11_shadow_subsystem_free(rdpShadowSubsystem* subsystem)
 	free(subsystem);
 }
 
-FREERDP_API int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
+FREERDP_API const char* ShadowSubsystemName(void)
+{
+	return "X11";
+}
+
+FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
 	if (!pEntryPoints)
 		return -1;
