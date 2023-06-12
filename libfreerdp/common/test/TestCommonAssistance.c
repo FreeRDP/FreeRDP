@@ -80,6 +80,18 @@ static const char TEST_MSRC_INCIDENT_FILE_TYPE2[] =
  * </C>
  * </E>
  */
+static const char connectionstr2[] =
+    "<E>\n"
+    "<A KH=\"YiKwWUY8Ioq5NB3wAQHSbs5kwrM=\"\n"
+    "KH2=\"sha256:wKSAkAV3sBfa9WpuRFJcP9q1twJc6wOBuoJ9tsyXwpk=\"\n"
+    "ID=\"8rYm30RBW8/4dAWoUsWbFCF5jno/7jr5tNpHQc2goLbw4uuBBJvLsU02YYLlBMg5\"/>\n"
+    "<C>\n"
+    "<T ID=\"1\" SID=\"1440550163\">\n"
+    "<L P=\"49749\" N=\"2001:4898:1a:5:79e2:3356:9b22:3470\"/>\n"
+    "<L P=\"49751\" N=\"172.31.250.64\"/>\n"
+    "</T>\n"
+    "</C>\n"
+    "</E>";
 
 static BOOL test_msrsc_incident_file_type1(wLog* log)
 {
@@ -136,6 +148,13 @@ static BOOL test_msrsc_incident_file_type2(wLog* log)
 
 	if (!file)
 		return -1;
+
+	status = freerdp_assistance_parse_file_buffer(file, connectionstr2, sizeof(connectionstr2),
+	                                              TEST_MSRC_INCIDENT_PASSWORD_TYPE2);
+	printf("freerdp_assistance_parse_file_buffer: %d\n", status);
+
+	if (status < 0)
+		goto fail;
 
 	status = freerdp_assistance_parse_file_buffer(file, TEST_MSRC_INCIDENT_FILE_TYPE2,
 	                                              sizeof(TEST_MSRC_INCIDENT_FILE_TYPE2),
