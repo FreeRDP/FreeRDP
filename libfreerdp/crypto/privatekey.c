@@ -499,7 +499,7 @@ char* freerdp_key_get_param(const rdpPrivateKey* key, enum FREERDP_KEY_PARAM par
 
 fail:
 	BN_free(bn);
-	return buf;
+	return (char*)buf;
 }
 
 WINPR_DIGEST_CTX* freerdp_key_digest_sign(rdpPrivateKey* key, WINPR_MD_TYPE digest)

@@ -427,11 +427,11 @@ static BOOL region16_simplify_bands(REGION16* region)
 		return TRUE;
 
 	RECTANGLE_16* band1 = region16_rects_noconst(region);
-	const RECTANGLE_16* endPtr = band1 + nbRects;
+	RECTANGLE_16* endPtr = band1 + nbRects;
 
 	do
 	{
-		const RECTANGLE_16* band2 = next_band(band1, endPtr, &bandItems);
+		RECTANGLE_16* band2 = next_band(band1, endPtr, &bandItems);
 
 		if (band2 == endPtr)
 			break;
