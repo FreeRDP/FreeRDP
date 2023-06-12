@@ -18,9 +18,8 @@
 # freerdp-shadow  library
 
 set(MODULE_NAME "freerdp-shadow")
-set(MODULE_PREFIX "FREERDP_SERVER_SHADOW")
 
-set(${MODULE_PREFIX}_SRCS
+set(SRCS
 	shadow_client.c
 	shadow_client.h
 	shadow_lobby.c
@@ -79,18 +78,20 @@ if (WIN32)
 	${CMAKE_CURRENT_BINARY_DIR}/version.rc
 	@ONLY)
 
-  set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+list (APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+add_library(${MODULE_NAME} ${SRCS})
 
-list(APPEND ${MODULE_PREFIX}_LIBS freerdp)
-list(APPEND ${MODULE_PREFIX}_LIBS freerdp-server)
-list(APPEND ${MODULE_PREFIX}_LIBS winpr)
-list(APPEND ${MODULE_PREFIX}_LIBS winpr-tools)
-list(APPEND ${MODULE_PREFIX}_LIBS rdtk)
+list(APPEND LIBS
+	freerdp
+	freerdp-server
+	winpr
+	winpr-tools
+	rdtk
+)
 
-target_link_libraries(${MODULE_NAME} PRIVATE ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${FREERDP_VERSION_MAJOR})
 if (WITH_LIBRARY_VERSIONING)
@@ -112,17 +113,16 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 # subsystem library
 
 set(MODULE_NAME "freerdp-shadow-subsystem")
-set(MODULE_PREFIX "FREERDP_SERVER_SHADOW_SUBSYSTEM")
 
-set(${MODULE_PREFIX}_SRCS
+set(SRCS
 	shadow_subsystem_builtin.c)
 
 if(WIN32)
-	set(WITH_SHADOW_WIN 1)
-elseif(X11_FOUND AND NOT APPLE)
-	set(WITH_SHADOW_X11 1)
+	add_subdirectory(Win)
+elseif(NOT APPLE)
+	add_subdirectory(X11)
 elseif(APPLE AND NOT IOS)
-	set(WITH_SHADOW_MAC 1)
+	add_subdirectory(Mac)
 endif()
 
 if (WIN32)
@@ -136,132 +136,30 @@ if (WIN32)
 	${CMAKE_CURRENT_BINARY_DIR}/version.rc
 	@ONLY)
 
-  set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+  set ( SRCS ${SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
-# Authentication
+add_library(${MODULE_NAME} ${SRCS})
 
-if(WITH_SHADOW_X11 OR WITH_SHADOW_MAC)
-	set(PAM_FEATURE_TYPE "RECOMMENDED")
-	set(PAM_FEATURE_PURPOSE "authentication")
-	set(PAM_FEATURE_DESCRIPTION "user authentication")
+list(APPEND LIBS
+	freerdp-shadow-subsystem-impl
+	freerdp-shadow
+	freerdp
+	winpr
+)
 
-	find_feature(PAM ${PAM_FEATURE_TYPE} ${PAM_FEATURE_PURPOSE} ${PAM_FEATURE_DESCRIPTION})
-
-	if(PAM_FOUND)
-		add_definitions(-DWITH_PAM)
-		include_directories(${PAM_INCLUDE_DIR})
-		list(APPEND ${MODULE_PREFIX}_AUTH_LIBS ${PAM_LIBRARY})
-	endif()
-endif()
-
-if(WITH_SHADOW_X11)
-	find_package(X11 REQUIRED)
-	if(X11_FOUND)
-		add_definitions(-DWITH_X11)
-		include_directories(${X11_INCLUDE_DIR})
-		list(APPEND ${MODULE_PREFIX}_X11_LIBS ${X11_LIBRARIES})
-	endif()
-
-	if(X11_XShm_FOUND)
-		add_definitions(-DWITH_XSHM)
-		include_directories(${X11_XShm_INCLUDE_PATH})
-		list(APPEND ${MODULE_PREFIX}_X11_LIBS ${X11_Xext_LIB})
-	endif()
-
-	if(X11_Xext_FOUND)
-		add_definitions(-DWITH_XEXT)
-		list(APPEND ${MODULE_PREFIX}_X11_LIBS ${X11_Xext_LIB})
-	endif()
-
-	if(X11_Xinerama_FOUND)
-		add_definitions(-DWITH_XINERAMA)
-		include_directories(${X11_Xinerama_INCLUDE_PATH})
-		list(APPEND ${MODULE_PREFIX}_X11_LIBS ${X11_Xinerama_LIB})
-	endif()
-
-	if(X11_Xdamage_FOUND)
-		add_definitions(-DWITH_XDAMAGE)
-		include_directories(${X11_Xdamage_INCLUDE_PATH})
-		list(APPEND ${MODULE_PREFIX}_X11_LIBS ${X11_Xdamage_LIB})
-	endif()
-
-	if(X11_Xfixes_FOUND)
-		add_definitions(-DWITH_XFIXES)
-		include_directories(${X11_Xfixes_INCLUDE_PATH})
-		list(APPEND ${MODULE_PREFIX}_X11_LIBS ${X11_Xfixes_LIB})
-	endif()
-
-	if(X11_XTest_FOUND)
-		add_definitions(-DWITH_XTEST)
-		include_directories(${X11_XTest_INCLUDE_PATH})
-		list(APPEND ${MODULE_PREFIX}_X11_LIBS ${X11_XTest_LIB})
-	endif()
-
-	# XCursor and XRandr are currently not used so don't link them
-	#if(X11_Xcursor_FOUND)
-	#	add_definitions(-DWITH_XCURSOR)
-	#	include_directories(${X11_Xcursor_INCLUDE_PATH})
-	#	list(APPEND ${MODULE_PREFIX}_X11_LIBS ${X11_Xcursor_LIB})
-	#endif()
-
-	#if(X11_Xrandr_FOUND)
-	#	add_definitions(-DWITH_XRANDR)
-	#	include_directories(${X11_Xrandr_INCLUDE_PATH})
-	#	list(APPEND ${MODULE_PREFIX}_X11_LIBS ${X11_Xrandr_LIB})
-	#endif()
-elseif(WITH_SHADOW_MAC)
-	find_library(IOKIT IOKit)
-	find_library(IOSURFACE IOSurface)
-	find_library(CARBON Carbon)
-	list(APPEND ${MODULE_PREFIX}_MAC_LIBS ${IOKIT} ${IOSURFACE} ${CARBON})
-elseif(WITH_SHADOW_WIN)
-	list(APPEND ${MODULE_PREFIX}_WIN_LIBS freerdp-client freerdp)
-endif()
-
-set(${MODULE_PREFIX}_WIN_SRCS
-	Win/win_rdp.c
-	Win/win_rdp.h
-	Win/win_wds.c
-	Win/win_wds.h
-	Win/win_dxgi.c
-	Win/win_dxgi.h
-	Win/win_shadow.c
-	Win/win_shadow.h)
-
-set(${MODULE_PREFIX}_X11_SRCS
-	X11/x11_shadow.c
-	X11/x11_shadow.h)
-
-set(${MODULE_PREFIX}_MAC_SRCS
-	Mac/mac_shadow.c
-	Mac/mac_shadow.h)
-
-if(WITH_SHADOW_WIN)
-	add_definitions(-DWITH_SHADOW_WIN)
-	list(APPEND ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_WIN_SRCS})
-	list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_WIN_LIBS})
-elseif(WITH_SHADOW_X11)
-	add_definitions(-DWITH_SHADOW_X11)
-	list(APPEND ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_X11_SRCS})
-	list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_X11_LIBS})
-elseif(WITH_SHADOW_MAC)
-	add_definitions(-DWITH_SHADOW_MAC)
-	list(APPEND ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_MAC_SRCS})
-	list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_MAC_LIBS})
-endif()
-
-list(APPEND ${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_AUTH_LIBS})
-
-add_library(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
-
-list(APPEND ${MODULE_PREFIX}_LIBS freerdp-shadow freerdp winpr)
-
-target_link_libraries(${MODULE_NAME} PRIVATE ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${FREERDP_API_VERSION})
 if (WITH_LIBRARY_VERSIONING)
 	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
+endif()
+
+if (NOT BUILD_SHARED_LIBS)
+	install(TARGETS freerdp-shadow-subsystem-impl
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        EXPORT FreeRDP-ShadowTargets
+    )
 endif()
 
 install(TARGETS ${MODULE_NAME} COMPONENT server EXPORT FreeRDP-ShadowTargets
@@ -280,9 +178,8 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 # command-line executable
 
 set(MODULE_NAME "freerdp-shadow-cli")
-set(MODULE_PREFIX "FREERDP_SERVER_SHADOW_CLI")
 
-set(${MODULE_PREFIX}_SRCS
+set(SRCS
 	shadow.c)
 
 # On windows create dll version information.
@@ -298,14 +195,14 @@ if (WIN32)
 	${CMAKE_CURRENT_BINARY_DIR}/version.rc
 	@ONLY)
 
-  set ( ${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
+  set ( SRCS ${SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
-add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+add_executable(${MODULE_NAME} ${SRCS})
 
-list(APPEND ${MODULE_PREFIX}_LIBS freerdp-shadow-subsystem freerdp-shadow freerdp winpr)
+list(APPEND LIBS freerdp-shadow-subsystem freerdp-shadow freerdp winpr)
 
-target_link_libraries(${MODULE_NAME} PRIVATE ${${MODULE_PREFIX}_LIBS})
+target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
 if (WITH_DEBUG_SYMBOLS AND MSVC)
@@ -333,7 +230,7 @@ write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ShadowConfi
 	VERSION ${FREERDP_VERSION} COMPATIBILITY SameMajorVersion)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ShadowConfig.cmake
-    ${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ShadowConfigVersion.cmake
+	${CMAKE_CURRENT_BINARY_DIR}/FreeRDP-ShadowConfigVersion.cmake
 	DESTINATION ${FREERDP_SERVER_CMAKE_INSTALL_DIR})
 
 install(EXPORT FreeRDP-ShadowTargets DESTINATION ${FREERDP_SERVER_CMAKE_INSTALL_DIR})

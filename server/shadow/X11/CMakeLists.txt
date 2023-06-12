@@ -1,0 +1,72 @@
+find_package(X11 REQUIRED)
+if(X11_FOUND)
+	add_definitions(-DWITH_X11)
+	include_directories(${X11_INCLUDE_DIR})
+	list(APPEND LIBS ${X11_LIBRARIES})
+endif()
+
+if(X11_XShm_FOUND)
+	add_definitions(-DWITH_XSHM)
+	include_directories(${X11_XShm_INCLUDE_PATH})
+	list(APPEND LIBS ${X11_Xext_LIB})
+endif()
+
+if(X11_Xext_FOUND)
+	add_definitions(-DWITH_XEXT)
+	list(APPEND LIBS ${X11_Xext_LIB})
+endif()
+
+if(X11_Xinerama_FOUND)
+	add_definitions(-DWITH_XINERAMA)
+	include_directories(${X11_Xinerama_INCLUDE_PATH})
+	list(APPEND LIBS ${X11_Xinerama_LIB})
+endif()
+
+if(X11_Xdamage_FOUND)
+	add_definitions(-DWITH_XDAMAGE)
+	include_directories(${X11_Xdamage_INCLUDE_PATH})
+	list(APPEND LIBS ${X11_Xdamage_LIB})
+endif()
+
+if(X11_Xfixes_FOUND)
+	add_definitions(-DWITH_XFIXES)
+	include_directories(${X11_Xfixes_INCLUDE_PATH})
+	list(APPEND LIBS ${X11_Xfixes_LIB})
+endif()
+
+if(X11_XTest_FOUND)
+	add_definitions(-DWITH_XTEST)
+	include_directories(${X11_XTest_INCLUDE_PATH})
+	list(APPEND LIBS ${X11_XTest_LIB})
+endif()
+
+# XCursor and XRandr are currently not used so don't link them
+#if(X11_Xcursor_FOUND)
+#	add_definitions(-DWITH_XCURSOR)
+#	include_directories(${X11_Xcursor_INCLUDE_PATH})
+#	list(APPEND LIBS ${X11_Xcursor_LIB})
+#endif()
+
+#if(X11_Xrandr_FOUND)
+#	add_definitions(-DWITH_XRANDR)
+#	include_directories(${X11_Xrandr_INCLUDE_PATH})
+#	list(APPEND LIBS ${X11_Xrandr_LIB})
+#endif()
+
+find_package(PAM)
+if(PAM_FOUND)
+	add_definitions(-DWITH_PAM)
+	include_directories(${PAM_INCLUDE_DIR})
+	list(APPEND LIBS ${PAM_LIBRARY})
+else()
+	message("building without PAM authentication support")
+endif()
+
+add_definitions(-DWITH_SHADOW_X11)
+add_library(freerdp-shadow-subsystem-impl STATIC
+	x11_shadow.h
+	x11_shadow.c
+)
+target_link_libraries(freerdp-shadow-subsystem-impl PRIVATE
+	${LIBS}
+)
