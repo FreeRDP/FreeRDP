@@ -106,7 +106,6 @@ struct S_RFX_MESSAGE
 	 */
 	UINT16 numRects;
 	RFX_RECT* rects;
-	BOOL freeRects;
 
 	/**
 	 * The tiles array represents the actual frame data. Each tile is always
