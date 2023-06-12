@@ -206,7 +206,7 @@ void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, siz
 		goto fail;
 	}
 
-	if (size == 0)
+	if ((num == 0) || (size == 0))
 		goto fail;
 
 	if (pMem->size > (1ull * num * size) + alignment)
@@ -220,7 +220,7 @@ void* winpr_aligned_offset_recalloc(void* memblock, size_t num, size_t size, siz
 	pNewMem = WINPR_ALIGNED_MEM_STRUCT_FROM_PTR(newMemblock);
 	{
 		const size_t csize = cMIN(pMem->size, pNewMem->size);
-		memcpy(newMemblock, pMem->base_addr, csize);
+		memcpy(newMemblock, memblock, csize);
 		ZeroMemory(newMemblock + csize, pNewMem->size - csize);
 	}
 fail:
