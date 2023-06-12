@@ -1497,7 +1497,7 @@ const char* pdu_type_to_str(UINT16 pduType, char* buffer, size_t length)
 			str = "PDU_TYPE_FLOW_STOP";
 			break;
 		default:
-			str = "PRU_TYPE_UNKNOWN";
+			str = "PDU_TYPE_UNKNOWN";
 			break;
 	}
 
