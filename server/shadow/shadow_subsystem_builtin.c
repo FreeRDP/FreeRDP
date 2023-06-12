@@ -22,60 +22,43 @@
 
 typedef struct
 {
-	const char* name;
+	const char* (*name)(void);
 	pfnShadowSubsystemEntry entry;
 } RDP_SHADOW_SUBSYSTEM;
 
-#ifdef WITH_SHADOW_X11
-extern int X11_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
-#endif
-
-#ifdef WITH_SHADOW_MAC
-extern int Mac_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
-#endif
-
-#ifdef WITH_SHADOW_WIN
-extern int Win_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
-#endif
+extern int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
+extern const char* ShadowSubsystemName(void);
 
 static RDP_SHADOW_SUBSYSTEM g_Subsystems[] = {
 
-#ifdef WITH_SHADOW_X11
-	{ "X11", X11_ShadowSubsystemEntry },
-#endif
-
-#ifdef WITH_SHADOW_MAC
-	{ "Mac", Mac_ShadowSubsystemEntry },
-#endif
-
-#ifdef WITH_SHADOW_WIN
-	{ "Win", Win_ShadowSubsystemEntry },
-#endif
-
-	{ "", NULL }
+	{ ShadowSubsystemName, ShadowSubsystemEntry }
 };
 
-static int g_SubsystemCount = (sizeof(g_Subsystems) / sizeof(g_Subsystems[0]));
+static size_t g_SubsystemCount = ARRAYSIZE(g_Subsystems);
 
 static pfnShadowSubsystemEntry shadow_subsystem_load_static_entry(const char* name)
 {
-	int index;
-
 	if (!name)
 	{
-		for (index = 0; index < g_SubsystemCount; index++)
+		for (size_t index = 0; index < g_SubsystemCount; index++)
 		{
-			if (g_Subsystems[index].name)
-				return g_Subsystems[index].entry;
+			const RDP_SHADOW_SUBSYSTEM* cur = &g_Subsystems[index];
+			WINPR_ASSERT(cur->entry);
+
+			return cur->entry;
 		}
 
 		return NULL;
 	}
 
-	for (index = 0; index < g_SubsystemCount; index++)
+	for (size_t index = 0; index < g_SubsystemCount; index++)
 	{
-		if (strcmp(name, g_Subsystems[index].name) == 0)
-			return g_Subsystems[index].entry;
+		const RDP_SHADOW_SUBSYSTEM* cur = &g_Subsystems[index];
+		WINPR_ASSERT(cur->name);
+		WINPR_ASSERT(cur->entry);
+
+		if (strcmp(name, cur->name()) == 0)
+			return cur->entry;
 	}
 
 	return NULL;
@@ -83,9 +66,7 @@ static pfnShadowSubsystemEntry shadow_subsystem_load_static_entry(const char* na
 
 void shadow_subsystem_set_entry_builtin(const char* name)
 {
-	pfnShadowSubsystemEntry entry;
-
-	entry = shadow_subsystem_load_static_entry(name);
+	pfnShadowSubsystemEntry entry = shadow_subsystem_load_static_entry(name);
 
 	if (entry)
 		shadow_subsystem_set_entry(entry);

@@ -537,7 +537,12 @@ static rdpShadowSubsystem* win_shadow_subsystem_new(void)
 	return &subsystem->base;
 }
 
-FREERDP_API int Win_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
+FREERDP_API const char* ShadowSubsystemName(void)
+{
+	return "Win";
+}
+
+FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->New = win_shadow_subsystem_new;
 	pEntryPoints->Free = win_shadow_subsystem_free;

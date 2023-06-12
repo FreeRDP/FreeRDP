@@ -656,7 +656,12 @@ static macShadowSubsystem* mac_shadow_subsystem_new(void)
 	return subsystem;
 }
 
-FREERDP_API int Mac_ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
+FREERDP_API const char* ShadowSubsystemName(void)
+{
+	return "Mac";
+}
+
+FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
 	pEntryPoints->New = (pfnShadowSubsystemNew)mac_shadow_subsystem_new;
 	pEntryPoints->Free = (pfnShadowSubsystemFree)mac_shadow_subsystem_free;

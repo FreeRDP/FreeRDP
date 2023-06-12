@@ -11,6 +11,7 @@ add_library(freerdp-shadow-subsystem-impl STATIC
 	win_wds.h
 )
 target_link_libraries(freerdp-shadow-subsystem-impl PRIVATE
+	freerdp-client
 	freerdp
 	winpr
 )
