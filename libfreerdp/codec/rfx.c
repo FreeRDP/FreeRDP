@@ -1443,7 +1443,7 @@ static size_t rfx_tile_length(RFX_TILE* tile)
 	return 19ull + tile->YLen + tile->CbLen + tile->CrLen;
 }
 
-static BOOL rfx_write_tile(RFX_CONTEXT* context, wStream* s, RFX_TILE* tile)
+static BOOL rfx_write_tile(wStream* s, RFX_TILE* tile)
 {
 	const size_t blockLen = rfx_tile_length(tile);
 
@@ -1749,6 +1749,7 @@ skip_encoding_loop:
 		for (UINT32 i = 0; i < message->numTiles; i++)
 		{
 			RFX_TILE* tile = message->tiles[i];
+			WINPR_ASSERT(tile);
 
 			if (context->priv->UseThreads)
 			{
@@ -1800,7 +1801,7 @@ static RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message
 		WINPR_ASSERT(tile);
 		WINPR_ASSERT(msg);
 
-		size_t tileDataSize = rfx_tile_length(tile);
+		const size_t tileDataSize = rfx_tile_length(tile);
 
 		if ((msg->tilesDataSize + tileDataSize) > ((UINT32)maxDataSize))
 			j++;
@@ -1924,7 +1925,7 @@ static BOOL rfx_write_message_tileset(RFX_CONTEXT* context, wStream* s, const RF
 		if (!tile)
 			return FALSE;
 
-		if (!rfx_write_tile(context, s, tile))
+		if (!rfx_write_tile(s, tile))
 			return FALSE;
 	}
 
