@@ -450,6 +450,14 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 	}
 
+	/* If we want to disable authentication we need to ensure that NLA security
+	 * is not activated. Only TLS and RDP security allow anonymous login.
+	 */
+	if (!server->authentication)
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+			return COMMAND_LINE_ERROR;
+	}
 	return status;
 }
 
@@ -938,7 +946,7 @@ rdpShadowServer* shadow_server_new(void)
 	server->h264BitRate = 10000000;
 	server->h264FrameRate = 30;
 	server->h264QP = 0;
-	server->authentication = FALSE;
+	server->authentication = TRUE;
 	server->settings = freerdp_settings_new(FREERDP_SETTINGS_SERVER_MODE);
 	return server;
 }
