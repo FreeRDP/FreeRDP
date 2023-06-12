@@ -791,6 +791,25 @@ static void CALLBACK rfx_process_message_tile_work_callback(PTP_CALLBACK_INSTANC
 	rfx_decode_rgb(param->context, param->tile, param->tile->data, 64 * 4);
 }
 
+static BOOL rfx_allocate_tiles(RFX_MESSAGE* message, size_t count, BOOL allocOnly)
+{
+	WINPR_ASSERT(message);
+
+	RFX_TILE** tmpTiles = winpr_aligned_recalloc(message->tiles, count, sizeof(RFX_TILE*), 32);
+	if (!tmpTiles && (count != 0))
+		return FALSE;
+
+	message->tiles = tmpTiles;
+	if (!allocOnly)
+		message->numTiles = count;
+	else
+	{
+		WINPR_ASSERT(message->numTiles <= count);
+	}
+	message->allocatedTiles = count;
+
+	return TRUE;
+}
 static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* message, wStream* s,
                                         UINT16* pExpectedBlockType)
 {
@@ -798,7 +817,6 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	int close_cnt;
 	BYTE quant;
 	RFX_TILE* tile;
-	RFX_TILE** tmpTiles;
 	UINT32* quants;
 	UINT16 subtype, numTiles;
 	UINT32 blockLen;
@@ -895,12 +913,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		message->tiles[i] = NULL;
 	}
 
-	tmpTiles = (RFX_TILE**)winpr_aligned_recalloc(message->tiles, numTiles, sizeof(RFX_TILE*), 32);
-	if (!tmpTiles)
+	if (!rfx_allocate_tiles(message, numTiles, FALSE))
 		return FALSE;
-
-	message->tiles = tmpTiles;
-	message->numTiles = numTiles;
 
 	if (context->priv->UseThreads)
 	{
@@ -1083,8 +1097,6 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 	RFX_MESSAGE* message = &context->currentMessage;
 
 	wStream* s = Stream_StaticConstInit(&inStream, data, length);
-
-	message->freeRects = TRUE;
 
 	while (ok && Stream_GetRemainingLength(s) > 6)
 	{
@@ -1328,8 +1340,7 @@ void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 	if (!message)
 		return;
 
-	if ((message->rects) && (message->freeRects))
-		winpr_aligned_free(message->rects);
+	winpr_aligned_free(message->rects);
 
 	if (message->tiles)
 	{
@@ -1348,10 +1359,14 @@ void rfx_message_free(RFX_CONTEXT* context, RFX_MESSAGE* message)
 			ObjectPool_Return(context->priv->TilePool, (void*)tile);
 		}
 
-		winpr_aligned_free(message->tiles);
+		rfx_allocate_tiles(message, 0, FALSE);
 	}
 
-	if (!message->freeArray)
+	const BOOL freeArray = message->freeArray;
+	const RFX_MESSAGE empty = { 0 };
+	*message = empty;
+
+	if (!freeArray)
 		winpr_aligned_free(message);
 }
 
@@ -1370,7 +1385,7 @@ static void rfx_update_context_properties(RFX_CONTEXT* context)
 	context->properties = properties;
 }
 
-static void rfx_write_message_sync(RFX_CONTEXT* context, wStream* s)
+static void rfx_write_message_sync(const RFX_CONTEXT* context, wStream* s)
 {
 	WINPR_ASSERT(context);
 
@@ -1380,7 +1395,7 @@ static void rfx_write_message_sync(RFX_CONTEXT* context, wStream* s)
 	Stream_Write_UINT16(s, WF_VERSION_1_0); /* version (2 bytes) */
 }
 
-static void rfx_write_message_codec_versions(RFX_CONTEXT* context, wStream* s)
+static void rfx_write_message_codec_versions(const RFX_CONTEXT* context, wStream* s)
 {
 	WINPR_ASSERT(context);
 
@@ -1391,7 +1406,7 @@ static void rfx_write_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 	Stream_Write_UINT16(s, WF_VERSION_1_0);     /* codecs.version (2 bytes) */
 }
 
-static void rfx_write_message_channels(RFX_CONTEXT* context, wStream* s)
+static void rfx_write_message_channels(const RFX_CONTEXT* context, wStream* s)
 {
 	WINPR_ASSERT(context);
 
@@ -1437,13 +1452,13 @@ static BOOL rfx_compose_message_header(RFX_CONTEXT* context, wStream* s)
 	return TRUE;
 }
 
-static size_t rfx_tile_length(RFX_TILE* tile)
+static size_t rfx_tile_length(const RFX_TILE* tile)
 {
 	WINPR_ASSERT(tile);
 	return 19ull + tile->YLen + tile->CbLen + tile->CrLen;
 }
 
-static BOOL rfx_write_tile(wStream* s, RFX_TILE* tile)
+static BOOL rfx_write_tile(wStream* s, const RFX_TILE* tile)
 {
 	const size_t blockLen = rfx_tile_length(tile);
 
@@ -1533,16 +1548,11 @@ static BOOL rfx_ensure_tiles(RFX_MESSAGE* message, size_t count)
 {
 	WINPR_ASSERT(message);
 
-	if (message->numTiles + count < message->allocatedTiles)
+	if (message->numTiles + count <= message->allocatedTiles)
 		return TRUE;
 
-	const size_t alloc = message->allocatedTiles + 1024;
-	RFX_TILE** tiles = winpr_aligned_recalloc(message->tiles, alloc, sizeof(RFX_TILE*), 32);
-	if (!tiles)
-		return FALSE;
-	message->tiles = tiles;
-	message->allocatedTiles = alloc;
-	return TRUE;
+	const size_t alloc = MAX(message->allocatedTiles + 1024, message->numTiles + count);
+	return rfx_allocate_tiles(message, alloc, TRUE);
 }
 
 RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, size_t numRects,
@@ -1551,17 +1561,14 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 	const UINT32 width = (UINT32)w;
 	const UINT32 height = (UINT32)h;
 	const UINT32 scanline = (UINT32)s;
-	UINT32 maxNbTiles = 0, maxTilesX, maxTilesY;
-	UINT32 regionNbRects;
-	UINT32 ax, ay, bytesPerPixel;
 	RFX_MESSAGE* message = NULL;
 	PTP_WORK* workObject = NULL;
 	RFX_TILE_COMPOSE_WORK_PARAM* workParam = NULL;
 	BOOL success = FALSE;
-	REGION16 rectsRegion, tilesRegion;
-	RECTANGLE_16 currentTileRect;
-	const RECTANGLE_16* regionRect;
-	const RECTANGLE_16* extents;
+	REGION16 rectsRegion = { 0 }, tilesRegion = { 0 };
+	RECTANGLE_16 currentTileRect = { 0 };
+	const RECTANGLE_16* regionRect = NULL;
+
 	WINPR_ASSERT(data);
 	WINPR_ASSERT(rects);
 	WINPR_ASSERT(numRects > 0);
@@ -1582,6 +1589,7 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 
 	if (!context->numQuant)
 	{
+		WINPR_ASSERT(context->quants == NULL);
 		if (!(context->quants =
 		          (UINT32*)winpr_aligned_malloc(sizeof(rfx_default_quantization_values), 32)))
 			goto skip_encoding_loop;
@@ -1596,17 +1604,17 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 
 	message->numQuant = context->numQuant;
 	message->quantVals = context->quants;
-	bytesPerPixel = (context->bits_per_pixel / 8);
+	const UINT32 bytesPerPixel = (context->bits_per_pixel / 8);
 
 	if (!computeRegion(rects, numRects, &rectsRegion, width, height))
 		goto skip_encoding_loop;
 
-	extents = region16_extents(&rectsRegion);
-	WINPR_ASSERT(extents->right - extents->left > 0);
-	WINPR_ASSERT(extents->bottom - extents->top > 0);
-	maxTilesX = 1 + TILE_NO(extents->right - 1) - TILE_NO(extents->left);
-	maxTilesY = 1 + TILE_NO(extents->bottom - 1) - TILE_NO(extents->top);
-	maxNbTiles = maxTilesX * maxTilesY;
+	const RECTANGLE_16* extents = region16_extents(&rectsRegion);
+	WINPR_ASSERT((INT32)extents->right - extents->left > 0);
+	WINPR_ASSERT((INT32)extents->bottom - extents->top > 0);
+	const UINT32 maxTilesX = 1 + TILE_NO(extents->right - 1) - TILE_NO(extents->left);
+	const UINT32 maxTilesY = 1 + TILE_NO(extents->bottom - 1) - TILE_NO(extents->top);
+	const UINT32 maxNbTiles = maxTilesX * maxTilesY;
 
 	if (!rfx_ensure_tiles(message, maxNbTiles))
 		goto skip_encoding_loop;
@@ -1620,9 +1628,9 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 		workParam = context->priv->tileWorkParams;
 	}
 
+	UINT32 regionNbRects = 0;
 	regionRect = region16_rects(&rectsRegion, &regionNbRects);
 
-	message->freeRects = TRUE;
 	if (!(message->rects = winpr_aligned_calloc(regionNbRects, sizeof(RFX_RECT), 32)))
 		goto skip_encoding_loop;
 
@@ -1682,8 +1690,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 				tile->scanline = scanline;
 				tile->width = tileWidth;
 				tile->height = tileHeight;
-				ax = gridRelX;
-				ay = gridRelY;
+				const UINT32 ax = gridRelX;
+				const UINT32 ay = gridRelY;
 
 				if (tile->data && tile->allocated)
 				{
@@ -1748,9 +1756,6 @@ skip_encoding_loop:
 
 		for (UINT32 i = 0; i < message->numTiles; i++)
 		{
-			RFX_TILE* tile = message->tiles[i];
-			WINPR_ASSERT(tile);
-
 			if (context->priv->UseThreads)
 			{
 				if (*workObject)
@@ -1762,6 +1767,7 @@ skip_encoding_loop:
 				workObject++;
 			}
 
+			const RFX_TILE* tile = message->tiles[i];
 			message->tilesDataSize += rfx_tile_length(tile);
 		}
 
@@ -1772,9 +1778,49 @@ skip_encoding_loop:
 	}
 
 	WLog_Print(context->priv->log, WLOG_ERROR, "failed");
-	message->freeRects = TRUE;
+
 	rfx_message_free(context, message);
 	return NULL;
+}
+
+static BOOL rfx_clone_rects(RFX_MESSAGE* dst, const RFX_MESSAGE* src)
+{
+	WINPR_ASSERT(dst);
+	WINPR_ASSERT(src);
+
+	WINPR_ASSERT(dst->rects == NULL);
+	WINPR_ASSERT(dst->numRects == 0);
+
+	if (src->numRects == 0)
+		return TRUE;
+
+	dst->rects = winpr_aligned_calloc(src->numRects, sizeof(RECTANGLE_16), 32);
+	if (!dst->rects)
+		return FALSE;
+	dst->numRects = src->numRects;
+	for (size_t x = 0; x < src->numRects; x++)
+	{
+		dst->rects[x] = src->rects[x];
+	}
+	return TRUE;
+}
+
+static BOOL rfx_clone_quants(RFX_MESSAGE* dst, const RFX_MESSAGE* src)
+{
+	WINPR_ASSERT(dst);
+	WINPR_ASSERT(src);
+
+	WINPR_ASSERT(dst->quantVals == NULL);
+	WINPR_ASSERT(dst->numQuant == 0);
+
+	if (src->numQuant == 0)
+		return TRUE;
+
+	/* quantVals are part of context */
+	dst->quantVals = src->quantVals;
+	dst->numQuant = src->numQuant;
+
+	return TRUE;
 }
 
 static RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message,
@@ -1806,21 +1852,21 @@ static RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message
 		if ((msg->tilesDataSize + tileDataSize) > ((UINT32)maxDataSize))
 			j++;
 
-		if (!msg->numTiles)
+		if (msg->numTiles == 0)
 		{
 			msg->frameIdx = message->frameIdx + j;
-			msg->numQuant = message->numQuant;
-			msg->quantVals = message->quantVals;
-			msg->numRects = message->numRects;
-			msg->rects = message->rects;
-			msg->freeRects = FALSE;
+			if (!rfx_clone_quants(msg, message))
+				goto free_messages;
+			if (!rfx_clone_rects(msg, message))
+				goto free_messages;
 			msg->freeArray = TRUE;
-			msg->tiles = (RFX_TILE**)winpr_aligned_calloc(message->numTiles, sizeof(RFX_TILE*), 32);
-			if (!msg->tiles)
+			if (!rfx_allocate_tiles(msg, message->numTiles, TRUE))
 				goto free_messages;
 		}
 
 		msg->tilesDataSize += tileDataSize;
+
+		WINPR_ASSERT(msg->numTiles < msg->allocatedTiles);
 		msg->tiles[msg->numTiles++] = message->tiles[i];
 		message->tiles[i] = NULL;
 	}
@@ -1832,7 +1878,7 @@ static RFX_MESSAGE* rfx_split_message(RFX_CONTEXT* context, RFX_MESSAGE* message
 free_messages:
 
 	for (size_t i = 0; i < j; i++)
-		winpr_aligned_free(messages[i].tiles);
+		rfx_allocate_tiles(&messages[i], 0, FALSE);
 
 	winpr_aligned_free(messages);
 	return NULL;
