@@ -450,6 +450,12 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 					keyboard_grab(ev->windowID, _sdl->grab_kbd ? SDL_FALSE : SDL_TRUE);
 				}
 				return TRUE;
+			case SDL_SCANCODE_D:
+				if (ev->type == SDL_KEYDOWN)
+				{
+					freerdp_abort_connect_context(_sdl->context());
+				}
+				return true;
 			default:
 				break;
 		}
