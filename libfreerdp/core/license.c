@@ -773,7 +773,7 @@ static BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "Sending %s Packet, length %" PRIu16 "", license_request_type_string(type),
 	         wMsgSize);
-	winpr_HexDump(TAG, WLOG_DEBUG, Stream_Pointer(s) - LICENSE_PREAMBLE_LENGTH, wMsgSize);
+	winpr_HexDump(TAG, WLOG_DEBUG, Stream_PointerAs(s, char) - LICENSE_PREAMBLE_LENGTH, wMsgSize);
 #endif
 	Stream_SetPosition(s, length);
 	ret = rdp_send(rdp, s, MCS_GLOBAL_CHANNEL_ID);
