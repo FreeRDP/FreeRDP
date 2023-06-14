@@ -106,6 +106,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_GatewayEnabled, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GatewayEnabled" },
 	{ FreeRDP_GatewayHttpExtAuthSspiNtlm, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_GatewayHttpExtAuthSspiNtlm" },
+	{ FreeRDP_GatewayHttpExtAuthBearer, FREERDP_SETTINGS_TYPE_STRING,
+	  "FreeRDP_GatewayHttpExtAuthBearer" },
 	{ FreeRDP_GatewayHttpTransport, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GatewayHttpTransport" },
 	{ FreeRDP_GatewayHttpUseWebsockets, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_GatewayHttpUseWebsockets" },
