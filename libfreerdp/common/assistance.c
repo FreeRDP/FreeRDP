@@ -262,7 +262,7 @@ static BOOL append_address(rdpAssistanceFile* file, const char* host, const char
 
 	if (!ArrayList_Append(file->MachineAddresses, _strdup(host)))
 		return FALSE;
-	return ArrayList_Append(file->MachinePorts, p);
+	return ArrayList_Append(file->MachinePorts, (void*)(uintptr_t)p);
 }
 
 static BOOL freerdp_assistance_parse_address_list(rdpAssistanceFile* file, char* list)
@@ -1039,14 +1039,17 @@ static int freerdp_assistance_parse_uploadinfo(rdpAssistanceFile* file, char* up
 	if (!freerdp_assistance_parse_attr_str(&file->PassStub, "PassStub", uploaddata))
 		return -1;
 
-	const char* amp = "&amp;";
-	char* passtub = strstr(file->PassStub, amp);
-	while (passtub)
+	if (file->PassStub)
 	{
-		const char* end = passtub + 5;
-		const size_t len = strlen(end);
-		memmove(&passtub[1], end, len + 1);
-		passtub = strstr(passtub, amp);
+		const char* amp = "&amp;";
+		char* passtub = strstr(file->PassStub, amp);
+		while (passtub)
+		{
+			const char* end = passtub + 5;
+			const size_t len = strlen(end);
+			memmove(&passtub[1], end, len + 1);
+			passtub = strstr(passtub, amp);
+		}
 	}
 
 	/* Parse DtStart */
