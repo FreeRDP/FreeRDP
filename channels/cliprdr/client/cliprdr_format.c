@@ -35,68 +35,71 @@
 #include "cliprdr_format.h"
 #include "../cliprdr_common.h"
 
-static BOOL cliprdr_filter_server_format_list(CLIPRDR_FORMAT_LIST* list, const UINT32 mask)
+CLIPRDR_FORMAT_LIST cliprdr_filter_format_list(const CLIPRDR_FORMAT_LIST* list, const UINT32 mask,
+                                               const UINT32 checkMask)
 {
-	const UINT32 all = CLIPRDR_FLAG_REMOTE_TO_LOCAL | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES;
+	const UINT32 maskData =
+	    checkMask & (CLIPRDR_FLAG_LOCAL_TO_REMOTE | CLIPRDR_FLAG_REMOTE_TO_LOCAL);
+	const UINT32 maskFiles =
+	    checkMask & (CLIPRDR_FLAG_LOCAL_TO_REMOTE_FILES | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES);
 	WINPR_ASSERT(list);
 
-	if ((mask & all) == all)
-		return TRUE;
+	CLIPRDR_FORMAT_LIST filtered = { 0 };
+	filtered.common.msgType = CB_FORMAT_LIST;
+	filtered.numFormats = list->numFormats;
+	filtered.formats = calloc(filtered.numFormats, sizeof(CLIPRDR_FORMAT_LIST));
 
-	if ((mask & CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES) != 0)
+	size_t wpos = 0;
+	if ((mask & checkMask) == checkMask)
 	{
-		const CLIPRDR_FORMAT* files = NULL;
 		for (size_t x = 0; x < list->numFormats; x++)
 		{
-			CLIPRDR_FORMAT* format = &list->formats[x];
+			const CLIPRDR_FORMAT* format = &list->formats[x];
+			CLIPRDR_FORMAT* cur = &filtered.formats[x];
+			cur->formatId = format->formatId;
+			if (format->formatName)
+				cur->formatName = _strdup(format->formatName);
+			wpos++;
+		}
+	}
+	else if ((mask & maskFiles) != 0)
+	{
+		for (size_t x = 0; x < list->numFormats; x++)
+		{
+			const CLIPRDR_FORMAT* format = &list->formats[x];
+			CLIPRDR_FORMAT* cur = &filtered.formats[wpos];
 
 			if (!format->formatName)
 				continue;
-			if (strcmp(format->formatName, type_FileGroupDescriptorW) == 0)
-				files = format;
-			else
+			if (strcmp(format->formatName, type_FileGroupDescriptorW) == 0 ||
+			    strcmp(format->formatName, type_FileContents) == 0)
 			{
-				free(format->formatName);
-				format->formatName = NULL;
+				cur->formatId = format->formatId;
+				cur->formatName = _strdup(format->formatName);
+				wpos++;
 			}
 		}
-
-		if (!files)
-			list->numFormats = 0;
-		else
-		{
-			list->numFormats = 1;
-			list->formats[0] = *files;
-		}
-		return TRUE;
 	}
-
-	if ((mask & CLIPRDR_FLAG_REMOTE_TO_LOCAL) != 0)
+	else if ((mask & maskData) != 0)
 	{
-		BOOL move = FALSE;
 		for (size_t x = 0; x < list->numFormats; x++)
 		{
-			CLIPRDR_FORMAT* format = &list->formats[x];
+			const CLIPRDR_FORMAT* format = &list->formats[x];
+			CLIPRDR_FORMAT* cur = &filtered.formats[wpos];
 
-			if (move)
+			if (!format->formatName ||
+			    (strcmp(format->formatName, type_FileGroupDescriptorW) != 0 &&
+			     strcmp(format->formatName, type_FileContents) != 0))
 			{
-				CLIPRDR_FORMAT* last = &list->formats[x - 1];
-				*last = *format;
-			}
-			else if (!format->formatName)
-				continue;
-			else if (strcmp(format->formatName, type_FileGroupDescriptorW) == 0)
-			{
-				move = TRUE;
-				free(format->formatName);
-				format->formatName = NULL;
+				cur->formatId = format->formatId;
+				if (format->formatName)
+					cur->formatName = _strdup(format->formatName);
+				wpos++;
 			}
 		}
-		if (move)
-			list->numFormats -= 1;
-		return TRUE;
 	}
-	return FALSE;
+	filtered.numFormats = wpos;
+	return filtered;
 }
 
 /**
@@ -108,6 +111,7 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
                                  UINT16 msgFlags)
 {
 	CLIPRDR_FORMAT_LIST formatList = { 0 };
+	CLIPRDR_FORMAT_LIST filteredFormatList = { 0 };
 	CliprdrClientContext* context = cliprdr_get_client_interface(cliprdr);
 	UINT error = CHANNEL_RC_OK;
 
@@ -120,19 +124,22 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 
 	const UINT32 mask =
 	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
-	if (!cliprdr_filter_server_format_list(&formatList, mask))
+	filteredFormatList = cliprdr_filter_format_list(
+	    &formatList, mask, CLIPRDR_FLAG_REMOTE_TO_LOCAL | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES);
+	if (filteredFormatList.numFormats == 0)
 		goto error_out;
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatList: numFormats: %" PRIu32 "",
-	           formatList.numFormats);
+	           filteredFormatList.numFormats);
 
 	if (context->ServerFormatList)
 	{
-		if ((error = context->ServerFormatList(context, &formatList)))
+		if ((error = context->ServerFormatList(context, &filteredFormatList)))
 			WLog_ERR(TAG, "ServerFormatList failed with error %" PRIu32 "", error);
 	}
 
 error_out:
+	cliprdr_free_format_list(&filteredFormatList);
 	cliprdr_free_format_list(&formatList);
 	return error;
 }
