@@ -56,6 +56,7 @@
 #define HTTP_EXTENDED_AUTH_SC 0x1         /* Smart card authentication. */
 #define HTTP_EXTENDED_AUTH_PAA 0x02       /* Pluggable authentication. */
 #define HTTP_EXTENDED_AUTH_SSPI_NTLM 0x04 /* NTLM extended authentication. */
+#define HTTP_EXTENDED_AUTH_BEARER 0x08    /* HTTP Bearer authentication. */
 
 /* HTTP packet types. */
 #define PKT_TYPE_HANDSHAKE_REQUEST 0x1
@@ -1238,6 +1239,12 @@ static wStream* rdg_build_http_request(rdpRdg* rdg, const char* method,
 			goto out;
 	}
 
+	else if (rdg->extAuth == HTTP_EXTENDED_AUTH_BEARER)
+	{
+		http_request_set_auth_scheme(request, "Bearer");
+		http_request_set_auth_param(request, rdg->settings->GatewayHttpExtAuthBearer);
+	}
+
 	http_request_set_transfer_encoding(request, transferEncoding);
 
 	s = http_request_write(rdg->http, request);
@@ -1861,6 +1868,8 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 		return FALSE;
 
 	WINPR_ASSERT(rpcFallback);
+	if (rdg->settings->GatewayHttpExtAuthBearer && rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
+		rdg->extAuth = HTTP_EXTENDED_AUTH_BEARER;
 	if (rdg->extAuth == HTTP_EXTENDED_AUTH_NONE)
 	{
 		if (!rdg_auth_init(rdg, tls, AUTH_PKG))
