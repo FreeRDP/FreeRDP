@@ -171,6 +171,8 @@ extern "C"
 		char* PrivateKeyFile;
 		CRITICAL_SECTION lock;
 		freerdp_listener* listener;
+
+		size_t maxClientsConnected;
 	};
 
 	struct rdp_shadow_surface

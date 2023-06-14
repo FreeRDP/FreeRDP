@@ -214,6 +214,15 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			server->mayInteract = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "max-connections")
+		{
+			errno = 0;
+			unsigned long val = strtoul(arg->Value, NULL, 0);
+
+			if ((errno != 0) || (val > UINT32_MAX))
+				return -1;
+			server->maxClientsConnected = val;
+		}
 		CommandLineSwitchCase(arg, "rect")
 		{
 			char* p;
@@ -859,6 +868,26 @@ out_fail:
 	return ret;
 }
 
+static BOOL shadow_server_check_peer_restrictions(freerdp_listener* listener)
+{
+	WINPR_ASSERT(listener);
+
+	rdpShadowServer* server = (rdpShadowServer*)listener->info;
+	WINPR_ASSERT(server);
+
+	if (server->maxClientsConnected > 0)
+	{
+		const size_t count = ArrayList_Count(server->clients);
+		if (count >= server->maxClientsConnected)
+		{
+			WLog_WARN(TAG, "connection limit [%" PRIuz "] reached, discarding client",
+			          server->maxClientsConnected);
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
 int shadow_server_init(rdpShadowServer* server)
 {
 	int status;
@@ -888,6 +917,7 @@ int shadow_server_init(rdpShadowServer* server)
 		goto fail;
 
 	server->listener->info = (void*)server;
+	server->listener->CheckPeerAcceptRestrictions = shadow_server_check_peer_restrictions;
 	server->listener->PeerAccepted = shadow_client_accepted;
 	server->subsystem = shadow_subsystem_new();
 

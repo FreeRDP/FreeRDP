@@ -50,6 +50,8 @@ int main(int argc, char** argv)
 		  "localhost" },
 		{ "monitors", COMMAND_LINE_VALUE_OPTIONAL, "<0,1,2...>", NULL, NULL, -1, NULL,
 		  "Select or list monitors" },
+		{ "max-connections", COMMAND_LINE_VALUE_REQUIRED, "<number>", 0, NULL, -1, NULL,
+		  "maximum connections allowed to server, 0 to deactivate" },
 		{ "rect", COMMAND_LINE_VALUE_REQUIRED, "<x,y,w,h>", NULL, NULL, -1, NULL,
 		  "Select rectangle within monitor to share" },
 		{ "auth", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
