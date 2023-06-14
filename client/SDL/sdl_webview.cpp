@@ -85,13 +85,12 @@ BOOL sdl_webview_get_aad_auth_code(freerdp* instance, const char* hostname, char
 	*redirect_uri =
 	    "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f5177bc73-fd99-4c77-a90c-76844c9b6999";
 
-	auto url = QString("https://login.microsoftonline.com/common/oauth2/v2.0/"
-	                   "authorize?client_id=%1&response_type="
-	                   "code&scope=ms-device-service%%3A%%2F%%2Ftermsrv.wvd.microsoft.com%%2Fname%%"
-	                   "2F%2%%2Fuser_impersonation&redirect_uri=%3")
-	               .arg(*client_id)
-	               .arg(hostname)
-	               .arg(*redirect_uri);
+	auto url =
+	    QString("https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=") +
+	    QString(*client_id) +
+	    QString("&response_type=code&scope=ms-device-service%3A%2F%2Ftermsrv.wvd.microsoft.com%"
+	            "2Fname%2F") +
+	    QString(hostname) + QString("%2Fuser_impersonation&redirect_uri=") + QString(*redirect_uri);
 
 	QWebEngineUrlScheme::registerScheme(QWebEngineUrlScheme("ms-appx-web"));
 
