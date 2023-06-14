@@ -416,7 +416,7 @@ static BOOL aad_send_token_request(rdpAad* aad, BIO* bio, const char* auth_code,
 	size_t req_body_len = 0;
 	size_t req_header_len = 0;
 	const int trc = winpr_asprintf(&req_body, &req_body_len, token_http_request_body, client_id,
-	                               auth_code, aad->kid, redirect_uri);
+	                               auth_code, aad->hostname, aad->kid, redirect_uri);
 	if (trc < 0)
 		goto fail;
 	const int trh = winpr_asprintf(&req_header, &req_header_len, token_http_request_header, trc);
