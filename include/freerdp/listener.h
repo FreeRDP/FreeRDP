@@ -70,6 +70,8 @@ extern "C"
 
 		psPeerAccepted PeerAccepted;
 		psListenerOpenFromSocket OpenFromSocket;
+
+		psListenerCheckFileDescriptor CheckPeerAcceptRestrictions;
 	};
 
 	FREERDP_API freerdp_listener* freerdp_listener_new(void);

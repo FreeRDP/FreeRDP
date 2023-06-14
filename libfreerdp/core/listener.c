@@ -338,26 +338,59 @@ BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
 
 	return TRUE;
 }
+
+static BOOL freerdp_check_and_create_client(freerdp_listener* instance, int peer_sockfd,
+                                            const struct sockaddr_storage* peer_addr)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(peer_sockfd >= 0);
+	WINPR_ASSERT(peer_addr);
+
+	const BOOL check = IFCALLRESULT(TRUE, instance->CheckPeerAcceptRestrictions, instance);
+	if (!check)
+	{
+		closesocket((SOCKET)peer_sockfd);
+		return TRUE;
+	}
+
+	freerdp_peer* client = freerdp_peer_new(peer_sockfd);
+	if (!client)
+	{
+		closesocket((SOCKET)peer_sockfd);
+		return FALSE;
+	}
+
+	if (!freerdp_peer_set_local_and_hostname(client, peer_addr))
+	{
+		freerdp_peer_free(client);
+		return FALSE;
+	}
+
+	const BOOL peer_accepted = IFCALLRESULT(FALSE, instance->PeerAccepted, instance, client);
+	if (!peer_accepted)
+	{
+		WLog_ERR(TAG, "PeerAccepted callback failed");
+		freerdp_peer_free(client);
+	}
+
+	return TRUE;
+}
+
 static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 {
-	int i;
-	int peer_sockfd;
-	int peer_addr_size;
-	struct sockaddr_storage peer_addr;
 	rdpListener* listener = (rdpListener*)instance->listener;
-	BOOL peer_accepted;
 
 	if (listener->num_sockfds < 1)
 		return FALSE;
 
-	for (i = 0; i < listener->num_sockfds; i++)
+	for (int i = 0; i < listener->num_sockfds; i++)
 	{
-		freerdp_peer* client = NULL;
+		struct sockaddr_storage peer_addr = { 0 };
 
 		WSAResetEvent(listener->events[i]);
-		peer_addr_size = sizeof(peer_addr);
-		peer_sockfd = _accept(listener->sockfds[i], (struct sockaddr*)&peer_addr, &peer_addr_size);
-		peer_accepted = FALSE;
+		int peer_addr_size = sizeof(peer_addr);
+		int peer_sockfd =
+		    _accept(listener->sockfds[i], (struct sockaddr*)&peer_addr, &peer_addr_size);
 
 		if (peer_sockfd == -1)
 		{
@@ -376,31 +409,11 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 #endif
 			WLog_WARN(TAG, "accept failed with %s", winpr_strerror(errno, buffer, sizeof(buffer)));
-			freerdp_peer_free(client);
 			return FALSE;
 		}
 
-		client = freerdp_peer_new(peer_sockfd);
-
-		if (!client)
-		{
-			closesocket((SOCKET)peer_sockfd);
+		if (!freerdp_check_and_create_client(instance, peer_sockfd, &peer_addr))
 			return FALSE;
-		}
-
-		if (!freerdp_peer_set_local_and_hostname(client, &peer_addr))
-		{
-			freerdp_peer_free(client);
-			return FALSE;
-		}
-
-		IFCALLRET(instance->PeerAccepted, peer_accepted, instance, client);
-
-		if (!peer_accepted)
-		{
-			WLog_ERR(TAG, "PeerAccepted callback failed");
-			freerdp_peer_free(client);
-		}
 	}
 
 	return TRUE;
