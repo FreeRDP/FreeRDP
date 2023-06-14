@@ -31,5 +31,7 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
                                          UINT16 msgFlags);
 UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UINT32 dataLen,
                                           UINT16 msgFlags);
+CLIPRDR_FORMAT_LIST cliprdr_filter_format_list(const CLIPRDR_FORMAT_LIST* list, const UINT32 mask,
+                                               const UINT32 checkMask);
 
 #endif /* FREERDP_CHANNEL_CLIPRDR_CLIENT_FORMAT_H */
