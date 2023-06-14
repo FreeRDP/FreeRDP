@@ -100,7 +100,7 @@ static int wait_for_fd(int fd, int timeout)
 	fd_set rset = { 0 };
 	struct timeval tv = { 0 };
 	FD_ZERO(&rset);
-	FD_SET(sockfd, &rset);
+	FD_SET(fd, &rset);
 
 	if (timeout)
 	{
@@ -110,7 +110,7 @@ static int wait_for_fd(int fd, int timeout)
 
 	do
 	{
-		status = select(sockfd + 1, &rset, NULL, NULL, timeout ? &tv : NULL);
+		status = select(fd + 1, &rset, NULL, NULL, timeout ? &tv : NULL);
 	} while ((status < 0) && (errno == EINTR));
 
 #endif
