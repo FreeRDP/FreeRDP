@@ -93,6 +93,24 @@ static const char connectionstr2[] =
     "</C>\n"
     "</E>";
 
+static const char fail_uploadinfo_str[] =
+    "<UPLOADINFOTYPE=\"Escalated\"><UPLOADDATARCTICKET=\"65538,1, ,*,,*,*,\"/></UPLOADINFO>";
+
+static BOOL run_test_parse(wLog* log, const char* input, size_t len, const char* password,
+                           BOOL expect)
+{
+	rdpAssistanceFile* file = freerdp_assistance_file_new();
+	if (!file)
+		return FALSE;
+
+	const int status = freerdp_assistance_parse_file_buffer(file, input, len, password);
+	const BOOL success = status >= 0;
+
+	freerdp_assistance_print_file(file, log, WLOG_INFO);
+	freerdp_assistance_file_free(file);
+	return success == expect;
+}
+
 static BOOL test_msrsc_incident_file_type1(wLog* log)
 {
 	BOOL rc = FALSE;
@@ -194,6 +212,9 @@ int TestCommonAssistance(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 	log = WLog_Get(__FUNCTION__);
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
+
+	if (!run_test_parse(log, fail_uploadinfo_str, sizeof(fail_uploadinfo_str), NULL, FALSE))
+		return -1;
 
 	if (!test_msrsc_incident_file_type1(log))
 	{

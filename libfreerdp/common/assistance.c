@@ -511,6 +511,23 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 		return NULL;
 
 	char* data = tag + strnlen(bkey, sizeof(bkey));
+
+	/* Ensure there is a valid delimiter following our token */
+	switch (data[0])
+	{
+		case '>':
+		case '/':
+		case ' ':
+		case '\t':
+			break;
+		default:
+			WLog_ERR(TAG,
+			         "Failed to parse ASSISTANCE file: ConnectionString2 missing delimiter after "
+			         "field %s",
+			         bkey);
+			return NULL;
+	}
+
 	char* start = strstr(tag, ">");
 
 	if (!start || (start > input + ilen))
