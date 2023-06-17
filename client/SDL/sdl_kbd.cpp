@@ -339,7 +339,7 @@ BOOL sdlInput::keyboard_focus_in()
 	return TRUE;
 }
 
-/* This function is called to update the keyboard indocator LED */
+/* This function is called to update the keyboard indicator LED */
 BOOL sdlInput::keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 {
 	WINPR_UNUSED(context);
@@ -430,34 +430,25 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 	const SDL_Keymod mask = KMOD_RSHIFT;
 	if ((mods & mask) == mask)
 	{
-		switch (ev->keysym.scancode)
+		if (ev->type == SDL_KEYDOWN)
 		{
-			case SDL_SCANCODE_RETURN:
-				if (ev->type == SDL_KEYDOWN)
-				{
+			switch (ev->keysym.scancode)
+			{
+				case SDL_SCANCODE_RETURN:
 					_sdl->update_fullscreen(!_sdl->fullscreen);
-				}
-				return TRUE;
-			case SDL_SCANCODE_R:
-				if (ev->type == SDL_KEYDOWN)
-				{
+					return TRUE;
+				case SDL_SCANCODE_R:
 					_sdl->update_resizeable(!_sdl->resizeable);
-				}
-				return TRUE;
-			case SDL_SCANCODE_G:
-				if (ev->type == SDL_KEYDOWN)
-				{
+					return TRUE;
+				case SDL_SCANCODE_G:
 					keyboard_grab(ev->windowID, _sdl->grab_kbd ? SDL_FALSE : SDL_TRUE);
-				}
-				return TRUE;
-			case SDL_SCANCODE_D:
-				if (ev->type == SDL_KEYDOWN)
-				{
+					return TRUE;
+				case SDL_SCANCODE_D:
 					freerdp_abort_connect_context(_sdl->context());
-				}
-				return true;
-			default:
-				break;
+					return true;
+				default:
+					break;
+			}
 		}
 	}
 	return freerdp_input_send_keyboard_event_ex(_sdl->context()->input, ev->type == SDL_KEYDOWN,
@@ -477,6 +468,24 @@ BOOL sdlInput::keyboard_grab(Uint32 windowID, SDL_bool enable)
 	WLog_WARN(TAG, "Keyboard grabbing not supported by SDL2 < 2.0.16");
 	return FALSE;
 #endif
+}
+
+BOOL sdlInput::mouse_focus(Uint32 windowID)
+{
+	static Uint32 lastWindowID = -1;
+
+	if (lastWindowID != windowID)
+	{
+		lastWindowID = windowID;
+		SDL_Window* window = SDL_GetWindowFromID(windowID);
+		if (!window)
+			return FALSE;
+
+		SDL_RaiseWindow(window);
+		return TRUE;
+	}else{
+		return TRUE;
+	};
 }
 
 BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)

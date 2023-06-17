@@ -193,6 +193,9 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 
 		SDL_GetDisplayBounds(*id, &rect);
 		SDL_GetDisplayDPI(*id, nullptr, &hdpi, &vdpi);
+
+		sdl->highDpi = hdpi > 100;
+
 		if (sdl->highDpi)
 		{
 			// HighDPI is problematic with SDL: We can only get native resolution by creating a
