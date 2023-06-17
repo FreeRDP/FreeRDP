@@ -34,7 +34,6 @@ typedef enum
 #include "rdstls.h"
 
 #include "gateway/tsg.h"
-#include "gateway/rdg.h"
 
 #include <winpr/sspi.h>
 #include <winpr/wlog.h>

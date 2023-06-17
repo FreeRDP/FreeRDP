@@ -767,6 +767,7 @@ extern "C"
 #define FreeRDP_GatewayHttpUseWebsockets (2000)
 #define FreeRDP_GatewayHttpExtAuthSspiNtlm (2001)
 #define FreeRDP_GatewayHttpExtAuthBearer (2002)
+#define FreeRDP_GatewayUrl (2003)
 #define FreeRDP_ProxyType (2015)
 #define FreeRDP_ProxyHostname (2016)
 #define FreeRDP_ProxyPort (2017)
@@ -1342,7 +1343,8 @@ extern "C"
 		ALIGN64 BOOL GatewayHttpUseWebsockets;    /* 2000 */
 		ALIGN64 BOOL GatewayHttpExtAuthSspiNtlm;  /* 2001 */
 		ALIGN64 char* GatewayHttpExtAuthBearer;   /* 2002 */
-		UINT64 padding2015[2015 - 2003];          /* 2003 */
+		ALIGN64 char* GatewayUrl;                 /* 2003 */
+		UINT64 padding2015[2015 - 2004];          /* 2004 */
 
 		/* Proxy */
 		ALIGN64 UINT32 ProxyType;        /* 2015 */

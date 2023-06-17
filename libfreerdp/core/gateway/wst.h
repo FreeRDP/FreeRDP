@@ -1,8 +1,8 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * Remote Desktop Gateway (RDG)
+ * Websocket Transport
  *
- * Copyright 2015 Denis Vincent <dvincent@devolutions.net>
+ * Copyright 2023 Michael Saxl <mike@mwsys.mine.bz>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_LIB_CORE_GATEWAY_RDG_H
-#define FREERDP_LIB_CORE_GATEWAY_RDG_H
+#ifndef FREERDP_LIB_CORE_GATEWAY_WEBSOCKET_TRANSPORT_H
+#define FREERDP_LIB_CORE_GATEWAY_WEBSOCKET_TRANSPORT_H
 
 #include <winpr/wtypes.h>
 #include <winpr/stream.h>
@@ -26,14 +26,14 @@
 /* needed for BIO */
 #include <openssl/ssl.h>
 
-typedef struct rdp_rdg rdpRdg;
+typedef struct rdp_wst rdpWst;
 
-FREERDP_LOCAL rdpRdg* rdg_new(rdpContext* context);
-FREERDP_LOCAL void rdg_free(rdpRdg* rdg);
+FREERDP_LOCAL rdpWst* wst_new(rdpContext* context);
+FREERDP_LOCAL void wst_free(rdpWst* wst);
 
-FREERDP_LOCAL BIO* rdg_get_front_bio_and_take_ownership(rdpRdg* rdg);
+FREERDP_LOCAL BIO* wst_get_front_bio_and_take_ownership(rdpWst* wst);
 
-FREERDP_LOCAL BOOL rdg_connect(rdpRdg* rdg, DWORD timeout, BOOL* rpcFallback);
-FREERDP_LOCAL DWORD rdg_get_event_handles(rdpRdg* rdg, HANDLE* events, DWORD count);
+FREERDP_LOCAL BOOL wst_connect(rdpWst* wst, DWORD timeout);
+FREERDP_LOCAL DWORD wst_get_event_handles(rdpWst* wst, HANDLE* events, DWORD count);
 
-#endif /* FREERDP_LIB_CORE_GATEWAY_RDG_H */
+#endif /* FREERDP_LIB_CORE_GATEWAY_WEBSOCKET_TRANSPORT_H */

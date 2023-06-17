@@ -2636,14 +2636,17 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_GatewayHostname:
 			return settings->GatewayHostname;
 
+		case FreeRDP_GatewayHttpExtAuthBearer:
+			return settings->GatewayHttpExtAuthBearer;
+
 		case FreeRDP_GatewayPassword:
 			return settings->GatewayPassword;
 
+		case FreeRDP_GatewayUrl:
+			return settings->GatewayUrl;
+
 		case FreeRDP_GatewayUsername:
 			return settings->GatewayUsername;
-
-		case FreeRDP_GatewayHttpExtAuthBearer:
-			return settings->GatewayHttpExtAuthBearer;
 
 		case FreeRDP_HomePath:
 			return settings->HomePath;
@@ -2908,14 +2911,17 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 		case FreeRDP_GatewayHostname:
 			return settings->GatewayHostname;
 
+		case FreeRDP_GatewayHttpExtAuthBearer:
+			return settings->GatewayHttpExtAuthBearer;
+
 		case FreeRDP_GatewayPassword:
 			return settings->GatewayPassword;
 
+		case FreeRDP_GatewayUrl:
+			return settings->GatewayUrl;
+
 		case FreeRDP_GatewayUsername:
 			return settings->GatewayUsername;
-
-		case FreeRDP_GatewayHttpExtAuthBearer:
-			return settings->GatewayHttpExtAuthBearer;
 
 		case FreeRDP_HomePath:
 			return settings->HomePath;
@@ -3189,14 +3195,17 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, char* val, s
 		case FreeRDP_GatewayHostname:
 			return update_string_(&settings->GatewayHostname, cnv.c, len);
 
+		case FreeRDP_GatewayHttpExtAuthBearer:
+			return update_string_(&settings->GatewayHttpExtAuthBearer, cnv.c, len);
+
 		case FreeRDP_GatewayPassword:
 			return update_string_(&settings->GatewayPassword, cnv.c, len);
 
+		case FreeRDP_GatewayUrl:
+			return update_string_(&settings->GatewayUrl, cnv.c, len);
+
 		case FreeRDP_GatewayUsername:
 			return update_string_(&settings->GatewayUsername, cnv.c, len);
-
-		case FreeRDP_GatewayHttpExtAuthBearer:
-			return update_string_(&settings->GatewayHttpExtAuthBearer, cnv.c, len);
 
 		case FreeRDP_HomePath:
 			return update_string_(&settings->HomePath, cnv.c, len);
@@ -3486,14 +3495,17 @@ BOOL freerdp_settings_set_string_copy_(rdpSettings* settings, size_t id, const c
 		case FreeRDP_GatewayHostname:
 			return update_string_copy_(&settings->GatewayHostname, cnv.cc, len, cleanup);
 
+		case FreeRDP_GatewayHttpExtAuthBearer:
+			return update_string_copy_(&settings->GatewayHttpExtAuthBearer, cnv.cc, len, cleanup);
+
 		case FreeRDP_GatewayPassword:
 			return update_string_copy_(&settings->GatewayPassword, cnv.cc, len, cleanup);
 
+		case FreeRDP_GatewayUrl:
+			return update_string_copy_(&settings->GatewayUrl, cnv.cc, len, cleanup);
+
 		case FreeRDP_GatewayUsername:
 			return update_string_copy_(&settings->GatewayUsername, cnv.cc, len, cleanup);
-
-		case FreeRDP_GatewayHttpExtAuthBearer:
-			return update_string_copy_(&settings->GatewayHttpExtAuthBearer, cnv.cc, len, cleanup);
 
 		case FreeRDP_HomePath:
 			return update_string_copy_(&settings->HomePath, cnv.cc, len, cleanup);
