@@ -615,29 +615,21 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 	BOOL rc = FALSE;
 
 	// TODO: Multimonitor setup
+	const size_t windowCount = sdl->context()->settings->UseMultimon ? SDL_GetNumVideoDisplays() : 1;
 
-
-	UINT32 windowCount = freerdp_settings_get_uint32(sdl->context()->settings, FreeRDP_MonitorCount);
-
-	for (UINT32 x = 0; x < windowCount; x++)
+	for (size_t x = 0; x < windowCount; x++)
 	{
-		auto monitor = static_cast<rdpMonitor*>(
-		    freerdp_settings_get_pointer_array_writable(sdl->context()->settings, FreeRDP_MonitorDefArray, x));
-
-		Uint32 w = monitor->width;
-		Uint32 h = monitor->height;
-		if (!(sdl->context()->settings->UseMultimon || sdl->context()->settings->Fullscreen) ){
-			w = sdl->context()->settings->DesktopWidth;
-			h = sdl->context()->settings->DesktopHeight;
-		}
-
+		SDL_Rect displaySize;
+		SDL_GetDisplayBounds(x,&displaySize);
+		const UINT32 w = displaySize.w;
+		const UINT32 h = displaySize.h;
 
 		sdl_window_t window = {};
 		Uint32 flags = SDL_WINDOW_SHOWN;
 		Uint32 startupX = SDL_WINDOWPOS_UNDEFINED;
 		Uint32 startupY = SDL_WINDOWPOS_UNDEFINED;
 
-		if (monitor->highDpi)
+		if (sdl->highDpi)
 		{
 #if SDL_VERSION_ATLEAST(2, 0, 1)
 			flags |= SDL_WINDOW_ALLOW_HIGHDPI;
@@ -653,19 +645,15 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		if (sdl->context()->settings->UseMultimon)
 		{
 			flags |= SDL_WINDOW_BORDERLESS;
-			startupX = monitor->x;
-			startupY = monitor->y;
-			window.offset_x = 0-startupX;
-			window.offset_y = 0-startupY;
-		}else{
-			window.offset_x = 0;
-			window.offset_y = 0;
+			startupX = displaySize.x;
+			startupY = displaySize.y;
 		}
 
 
 		window.window = SDL_CreateWindow(title, startupX, startupY,
 		                                 static_cast<int>(w), static_cast<int>(h), flags);
-
+		window.offset_x = 0-startupX;
+		window.offset_y = 0-startupY;
 
 		if (!window.window)
 			goto fail;
