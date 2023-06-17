@@ -200,11 +200,12 @@ BOOL sdl_handle_mouse_motion(SdlContext* sdl, const SDL_MouseMotionEvent* ev)
 {
 	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(ev);
-
+	sdl->input.mouse_focus(ev->windowID);
 	const BOOL relative =
 	    freerdp_settings_get_bool(sdl->context()->settings, FreeRDP_MouseUseRelativeMove);
 	INT32 x = relative ? ev->xrel : ev->x;
 	INT32 y = relative ? ev->yrel : ev->y;
+
 	sdl_scale_coordinates(sdl, ev->windowID, &x, &y, TRUE, TRUE);
 	return freerdp_client_send_button_event(sdl->common(), relative, PTR_FLAGS_MOVE, x, y);
 }
