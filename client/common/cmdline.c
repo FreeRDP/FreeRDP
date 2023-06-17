@@ -2540,11 +2540,22 @@ static BOOL parse_gateway_options(rdpSettings* settings, const COMMAND_LINE_ARGU
 			validOption = TRUE;
 			allowHttpOpts = FALSE;
 		}
-		
+
 		const char* bearer = option_starts_with("bearer:", argval);
 		if (bearer)
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_GatewayHttpExtAuthBearer, bearer))
+				goto fail;
+			validOption = TRUE;
+			allowHttpOpts = FALSE;
+		}
+
+		const char* gwurl = option_starts_with("url:", argval);
+		if (gwurl)
+		{
+			if (!freerdp_settings_set_string(settings, FreeRDP_GatewayUrl, gwurl))
+				goto fail;
+			if (!freerdp_set_gateway_usage_method(settings, TSC_PROXY_MODE_DIRECT))
 				goto fail;
 			validOption = TRUE;
 			allowHttpOpts = FALSE;

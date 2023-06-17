@@ -54,6 +54,9 @@
 #include "utils.h"
 #include "state.h"
 
+#include "gateway/rdg.h"
+#include "gateway/wst.h"
+
 #define TAG FREERDP_TAG("core.transport")
 
 #define BUFFER_SIZE 16384
@@ -64,6 +67,7 @@ struct rdp_transport
 	BIO* frontBio;
 	rdpRdg* rdg;
 	rdpTsg* tsg;
+	rdpWst* wst;
 	rdpTls* tls;
 	rdpContext* context;
 	rdpNla* nla;
@@ -463,8 +467,33 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 	if (transport->GatewayEnabled)
 	{
+		if (settings->GatewayUrl)
+		{
+			WINPR_ASSERT(!transport->wst);
+			transport->wst = wst_new(context);
+
+			if (!transport->wst)
+				return FALSE;
+
+			status = wst_connect(transport->wst, timeout);
+
+			if (status)
+			{
+				transport->frontBio = wst_get_front_bio_and_take_ownership(transport->wst);
+				WINPR_ASSERT(transport->frontBio);
+				BIO_set_nonblock(transport->frontBio, 0);
+				transport->layer = TRANSPORT_LAYER_TSG;
+				status = TRUE;
+			}
+			else
+			{
+				wst_free(transport->wst);
+				transport->wst = NULL;
+			}
+		}
 		if (!status && settings->GatewayHttpTransport)
 		{
+			WINPR_ASSERT(!transport->rdg);
 			transport->rdg = rdg_new(context);
 
 			if (!transport->rdg)
@@ -489,6 +518,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 		if (!status && settings->GatewayRpcTransport && rpcFallback)
 		{
+			WINPR_ASSERT(!transport->tsg);
 			transport->tsg = tsg_new(transport);
 
 			if (!transport->tsg)
@@ -1224,6 +1254,16 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 		{
 			const DWORD tmp =
 			    tsg_get_event_handles(transport->tsg, &events[nCount], count - nCount);
+
+			if (tmp == 0)
+				return 0;
+
+			nCount += tmp;
+		}
+		else if (transport->wst)
+		{
+			const DWORD tmp =
+			    wst_get_event_handles(transport->wst, &events[nCount], count - nCount);
 
 			if (tmp == 0)
 				return 0;
