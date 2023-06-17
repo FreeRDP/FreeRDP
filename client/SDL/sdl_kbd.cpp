@@ -430,34 +430,25 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 	const SDL_Keymod mask = KMOD_RSHIFT;
 	if ((mods & mask) == mask)
 	{
-		switch (ev->keysym.scancode)
+		if (ev->type == SDL_KEYDOWN)
 		{
-			case SDL_SCANCODE_RETURN:
-				if (ev->type == SDL_KEYDOWN)
-				{
+			switch (ev->keysym.scancode)
+			{
+				case SDL_SCANCODE_RETURN:
 					_sdl->update_fullscreen(!_sdl->fullscreen);
-				}
-				return TRUE;
-			case SDL_SCANCODE_R:
-				if (ev->type == SDL_KEYDOWN)
-				{
+					return TRUE;
+				case SDL_SCANCODE_R:
 					_sdl->update_resizeable(!_sdl->resizeable);
-				}
-				return TRUE;
-			case SDL_SCANCODE_G:
-				if (ev->type == SDL_KEYDOWN)
-				{
+					return TRUE;
+				case SDL_SCANCODE_G:
 					keyboard_grab(ev->windowID, _sdl->grab_kbd ? SDL_FALSE : SDL_TRUE);
-				}
-				return TRUE;
-			case SDL_SCANCODE_D:
-				if (ev->type == SDL_KEYDOWN)
-				{
+					return TRUE;
+				case SDL_SCANCODE_D:
 					freerdp_abort_connect_context(_sdl->context());
-				}
-				return true;
-			default:
-				break;
+					return true;
+				default:
+					break;
+			}
 		}
 	}
 	return freerdp_input_send_keyboard_event_ex(_sdl->context()->input, ev->type == SDL_KEYDOWN,
