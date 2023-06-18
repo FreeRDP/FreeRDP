@@ -194,9 +194,9 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		SDL_GetDisplayBounds(*id, &rect);
 		SDL_GetDisplayDPI(*id, nullptr, &hdpi, &vdpi);
 
-		sdl->highDpi = hdpi > 100;
+		bool highDpi = hdpi > 100;
 
-		if (sdl->highDpi)
+		if (highDpi)
 		{
 			// HighDPI is problematic with SDL: We can only get native resolution by creating a
 			// window. Work around this by checking the supported resolutions (and keep maximum)
@@ -244,6 +244,7 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		monitor->y = rect.y;
 		monitor->width = rect.w;
 		monitor->height = rect.h;
+		monitor->highDpi = highDpi;
 		monitor->is_primary = (rect.x == 0) && (rect.y == 0);
 		monitor->attributes.desktopScaleFactor = 100;
 		monitor->attributes.deviceScaleFactor = 100;
