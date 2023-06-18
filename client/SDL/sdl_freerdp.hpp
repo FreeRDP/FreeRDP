@@ -63,7 +63,7 @@ class SdlContext
 	bool resizeable = false;
 	bool grab_mouse = false;
 	bool grab_kbd = false;
-	bool highDpi = false;
+	//bool highDpi = false;
 
 	std::vector<sdl_window_t> windows;
 
