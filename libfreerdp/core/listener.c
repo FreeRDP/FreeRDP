@@ -84,7 +84,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 
 		if (sockfd == -1)
 		{
-			WLog_ERR(TAG, "socket");
+			WLog_ERR(TAG, "socket call failed (%s [%d])", strerror(errno), errno);
 			continue;
 		}
 
@@ -97,14 +97,16 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 			sin_addr = &(((struct sockaddr_in6*)ai->ai_addr)->sin6_addr);
 			if (setsockopt(sockfd, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&option_value,
 			               sizeof(option_value)) == -1)
-				WLog_ERR(TAG, "setsockopt");
+				WLog_ERR(TAG, "setsockopt IPPROTO_IPV6, IPV6_V6ONLY failed for socket %d (%s [%d])",
+				         sockfd, strerror(errno), errno);
 		}
 
 		inet_ntop(ai->ai_family, sin_addr, addr, sizeof(addr));
 
 		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (void*)&option_value,
 		               sizeof(option_value)) == -1)
-			WLog_ERR(TAG, "setsockopt");
+			WLog_ERR(TAG, "setsockopt SOL_SOCKET, SO_REUSEADDR failed for socket %d (%s [%d])",
+			         sockfd, strerror(errno), errno);
 
 #ifndef _WIN32
 		fcntl(sockfd, F_SETFL, O_NONBLOCK);
@@ -116,6 +118,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 
 		if (status != 0)
 		{
+			WLog_ERR(TAG, "failed to bind socket %d (%s [%d])", sockfd, strerror(errno), errno);
 			closesocket((SOCKET)sockfd);
 			continue;
 		}
@@ -124,7 +127,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 
 		if (status != 0)
 		{
-			WLog_ERR(TAG, "listen");
+			WLog_ERR(TAG, "failed to listen socket %d (%s [%d])", sockfd, strerror(errno), errno);
 			closesocket((SOCKET)sockfd);
 			continue;
 		}
@@ -168,7 +171,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 
 	if (sockfd == -1)
 	{
-		WLog_ERR(TAG, "socket");
+		WLog_ERR(TAG, "socket call failed (%s [%d])", strerror(errno), errno);
 		return FALSE;
 	}
 
@@ -180,7 +183,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 
 	if (status != 0)
 	{
-		WLog_ERR(TAG, "bind");
+		WLog_ERR(TAG, "failed to bind socket %d (%s [%d])", sockfd, strerror(errno), errno);
 		closesocket((SOCKET)sockfd);
 		return FALSE;
 	}
@@ -189,7 +192,7 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 
 	if (status != 0)
 	{
-		WLog_ERR(TAG, "listen");
+		WLog_ERR(TAG, "failed to listen socket %d (%s [%d])", sockfd, strerror(errno), errno);
 		closesocket((SOCKET)sockfd);
 		return FALSE;
 	}
