@@ -1514,12 +1514,19 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 	if (!client)
 		return FALSE;
 
-	if (!(context = (rdpContext*)calloc(1, client->ContextSize)))
+	context = (rdpContext*)calloc(1, client->ContextSize);
+	if (!context)
+	{
+		WLog_ERR(TAG, "failed to allocate rdpContext %" PRIuz, client->ContextSize);
 		goto fail;
+	}
 
 	context->log = WLog_Get(TAG);
 	if (!context->log)
+	{
+		WLog_ERR(TAG, "WLog_Get(%s) failed", TAG);
 		goto fail;
+	}
 
 	client->context = context;
 	context->peer = client;
@@ -1529,17 +1536,29 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 	{
 		context->settings = freerdp_settings_clone(settings);
 		if (!context->settings)
+		{
+			WLog_ERR(TAG, "freerdp_settings_clone failed");
 			goto fail;
+		}
 	}
 
 	context->dump = stream_dump_new();
 	if (!context->dump)
+	{
+		WLog_ERR(TAG, "stream_dump_new failed");
 		goto fail;
+	}
 	if (!(context->metrics = metrics_new(context)))
+	{
+		WLog_ERR(TAG, "metrics_new failed");
 		goto fail;
+	}
 
 	if (!(rdp = rdp_new(context)))
+	{
+		WLog_ERR(TAG, "rdp_new failed");
 		goto fail;
+	}
 
 	rdp_log_build_warnings(rdp);
 
@@ -1569,7 +1588,10 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 	}
 
 	if (!frerdp_peer_transport_setup(client))
+	{
+		WLog_ERR(TAG, "frerdp_peer_transport_setup failed");
 		goto fail;
+	}
 
 	client->IsWriteBlocked = freerdp_peer_is_write_blocked;
 	client->DrainOutputBuffer = freerdp_peer_drain_output_buffer;
@@ -1578,11 +1600,13 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 	IFCALLRET(client->ContextNew, ret, client, client->context);
 
 	if (!ret)
+	{
+		WLog_ERR(TAG, "ContextNew failed");
 		goto fail;
+	}
 	return TRUE;
 
 fail:
-	WLog_ERR(TAG, "ContextNew callback failed");
 	freerdp_peer_context_free(client);
 	return FALSE;
 }
