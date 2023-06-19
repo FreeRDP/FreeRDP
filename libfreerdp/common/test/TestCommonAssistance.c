@@ -93,8 +93,12 @@ static const char connectionstr2[] =
     "</C>\n"
     "</E>";
 
-static const char fail_uploadinfo_str[] =
-    "<UPLOADINFOTYPE=\"Escalated\"><UPLOADDATARCTICKET=\"65538,1, ,*,,*,*,\"/></UPLOADINFO>";
+static const char* fail_tests[] = {
+	"<UPLOADINFOTYPE=\"Escalated\"><UPLOADDATARCTICKET=\"65538,1, ,*,,*,*,\"/></UPLOADINFO>",
+	"<UPLOADINFO>(E><UPLOADDATA  "
+	"FOTYPE=\"Escalated\"æÁATAPassStub=\"␕:&A&amp;␅RCTICKET=\"65538,1,ü,*,n,*,*,\"am␡/>␂</"
+	"UPLOADINFO>"
+};
 
 static BOOL run_test_parse(wLog* log, const char* input, size_t len, const char* password,
                            BOOL expect)
@@ -213,8 +217,14 @@ int TestCommonAssistance(int argc, char* argv[])
 	log = WLog_Get(__FUNCTION__);
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
-	if (!run_test_parse(log, fail_uploadinfo_str, sizeof(fail_uploadinfo_str), NULL, FALSE))
-		return -1;
+	for (size_t x = 0; x < ARRAYSIZE(fail_tests); x++)
+	{
+		const char* test = fail_tests[x];
+		const size_t len = strlen(test);
+
+		if (!run_test_parse(log, test, len + 1, NULL, FALSE))
+			return -1;
+	}
 
 	if (!test_msrsc_incident_file_type1(log))
 	{
