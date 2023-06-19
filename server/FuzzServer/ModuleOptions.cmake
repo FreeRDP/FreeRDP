@@ -1,0 +1,4 @@
+
+set(FREERDP_SERVER_NAME "fuzz-server")
+set(FREERDP_SERVER_PLATFORM "FuzzServer")
+set(FREERDP_SERVER_VENDOR "FreeRDP")
