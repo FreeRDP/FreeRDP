@@ -88,11 +88,12 @@ static BOOL mfreerdp_client_new(freerdp *instance, rdpContext *context)
 	WINPR_ASSERT(mfc);
 
 	mfc->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!mfc->stopEvent)
+		return FALSE;
 	context->instance->PreConnect = mac_pre_connect;
 	context->instance->PostConnect = mac_post_connect;
 	context->instance->PostDisconnect = mac_post_disconnect;
-	context->instance->Authenticate = mac_authenticate;
-	context->instance->GatewayAuthenticate = mac_gw_authenticate;
+	context->instance->AuthenticateEx = mac_authenticate_ex;
 	context->instance->VerifyCertificateEx = mac_verify_certificate_ex;
 	context->instance->VerifyChangedCertificateEx = mac_verify_changed_certificate_ex;
 	context->instance->LogonErrorInfo = mac_logon_error_info;

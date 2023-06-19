@@ -75,8 +75,8 @@
 BOOL mac_pre_connect(freerdp *instance);
 BOOL mac_post_connect(freerdp *instance);
 void mac_post_disconnect(freerdp *instance);
-BOOL mac_authenticate(freerdp *instance, char **username, char **password, char **domain);
-BOOL mac_gw_authenticate(freerdp *instance, char **username, char **password, char **domain);
+BOOL mac_authenticate_ex(freerdp *instance, char **username, char **password, char **domain,
+                         rdp_auth_reason reason);
 
 DWORD mac_verify_certificate_ex(freerdp *instance, const char *host, UINT16 port,
                                 const char *common_name, const char *subject, const char *issuer,
