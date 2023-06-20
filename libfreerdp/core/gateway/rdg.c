@@ -405,7 +405,7 @@ static BOOL rdg_write_websocket(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opc
 	if (!sWS)
 		return FALSE;
 
-	winpr_RAND((BYTE*)&maskingKey, 4);
+	winpr_RAND(&maskingKey, 4);
 
 	Stream_Write_UINT8(sWS, WEBSOCKET_FIN_BIT | opcode);
 	if (len < 126)
@@ -575,8 +575,8 @@ static BOOL rdg_websocket_reply_close(BIO* bio, wStream* s)
 
 	Stream_Write_UINT8(closeFrame, WEBSOCKET_FIN_BIT | WebsocketPongOpcode);
 	Stream_Write_UINT8(closeFrame, closeDataLen | WEBSOCKET_MASK_BIT); /* no payload */
-	winpr_RAND((BYTE*)&maskingKey1, 2);
-	winpr_RAND((BYTE*)&maskingKey2, 2);
+	winpr_RAND(&maskingKey1, 2);
+	winpr_RAND(&maskingKey2, 2);
 	Stream_Write_UINT16(closeFrame, maskingKey1);
 	Stream_Write_UINT16(closeFrame, maskingKey2); /* unused half, max 2 bytes of data */
 
@@ -614,7 +614,7 @@ static BOOL rdg_websocket_reply_pong(BIO* bio, wStream* s)
 
 	Stream_Write_UINT8(closeFrame, WEBSOCKET_FIN_BIT | WebsocketPongOpcode);
 	Stream_Write_UINT8(closeFrame, 0 | WEBSOCKET_MASK_BIT); /* no payload */
-	winpr_RAND((BYTE*)&maskingKey, 4);
+	winpr_RAND(&maskingKey, 4);
 	Stream_Write_UINT32(closeFrame, maskingKey); /* dummy masking key. */
 	Stream_SealLength(closeFrame);
 
@@ -2126,7 +2126,7 @@ static int rdg_write_websocket_data_packet(rdpRdg* rdg, const BYTE* buf, int isi
 
 	int streamPos;
 
-	winpr_RAND((BYTE*)&maskingKey, 4);
+	winpr_RAND(&maskingKey, 4);
 
 	payloadSize = isize + 10;
 	if ((isize < 0) || (isize > UINT16_MAX))

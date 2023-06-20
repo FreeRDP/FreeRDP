@@ -123,11 +123,11 @@ static BOOL test_alphaComp_func(void)
 	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT * 4]) = { 0 };
 	UINT32* ptr;
 	UINT32 i;
-	winpr_RAND((BYTE*)src1, sizeof(src1));
+	winpr_RAND(src1, sizeof(src1));
 	/* Special-case the first two values */
 	src1[0] &= 0x00FFFFFFU;
 	src1[1] |= 0xFF000000U;
-	winpr_RAND((BYTE*)src2, sizeof(src2));
+	winpr_RAND(src2, sizeof(src2));
 	/* Set the second operand to fully-opaque. */
 	ptr = (UINT32*)src2;
 
@@ -167,11 +167,11 @@ static int test_alphaComp_speed(void)
 	UINT32* ptr;
 	UINT32 i;
 	testStr[0] = '\0';
-	winpr_RAND((BYTE*)src1, sizeof(src1));
+	winpr_RAND(src1, sizeof(src1));
 	/* Special-case the first two values */
 	src1[0] &= 0x00FFFFFFU;
 	src1[1] |= 0xFF000000U;
-	winpr_RAND((BYTE*)src2, sizeof(src2));
+	winpr_RAND(src2, sizeof(src2));
 	/* Set the second operand to fully-opaque. */
 	ptr = (UINT32*)src2;
 

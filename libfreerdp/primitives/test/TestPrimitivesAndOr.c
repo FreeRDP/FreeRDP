@@ -52,7 +52,7 @@ static BOOL test_and_32u_func(void)
 	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]) = { 0 };
 	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = { 0 };
 
-	winpr_RAND((BYTE*)src, sizeof(src));
+	winpr_RAND(src, sizeof(src));
 
 	if (!test_and_32u_impl("generic->andC_32u aligned", generic->andC_32u, src + 1, VALUE, dst + 1,
 	                       FUNC_TEST_SIZE))
@@ -76,7 +76,7 @@ static BOOL test_and_32u_speed(void)
 	UINT32 ALIGN(src[MAX_TEST_SIZE + 3]) = { 0 };
 	UINT32 ALIGN(dst[MAX_TEST_SIZE + 3]) = { 0 };
 
-	winpr_RAND((BYTE*)src, sizeof(src));
+	winpr_RAND(src, sizeof(src));
 
 	if (!speed_test("andC_32u", "aligned", g_Iterations, (speed_test_fkt)generic->andC_32u,
 	                (speed_test_fkt)optimized->andC_32u, src + 1, VALUE, dst + 1, MAX_TEST_SIZE))
@@ -113,7 +113,7 @@ static BOOL test_or_32u_func(void)
 	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]) = { 0 };
 	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = { 0 };
 
-	winpr_RAND((BYTE*)src, sizeof(src));
+	winpr_RAND(src, sizeof(src));
 
 	status = generic->orC_32u(src + 1, VALUE, dst + 1, FUNC_TEST_SIZE);
 	if (status != PRIMITIVES_SUCCESS)
@@ -139,7 +139,7 @@ static BOOL test_or_32u_speed(void)
 	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = { 0 };
 	char testStr[256];
 	testStr[0] = '\0';
-	winpr_RAND((BYTE*)src, sizeof(src));
+	winpr_RAND(src, sizeof(src));
 
 	if (!speed_test("add16s", "aligned", g_Iterations, (speed_test_fkt)generic->orC_32u,
 	                (speed_test_fkt)optimized->orC_32u, src + 1, VALUE, dst + 1, FUNC_TEST_SIZE))

@@ -317,7 +317,7 @@ int TestConnect(int argc, char* argv[])
 	int random;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	winpr_RAND((BYTE*)&random, sizeof(random));
+	winpr_RAND(&random, sizeof(random));
 	randomPort = 3389 + (random % 200);
 
 	/* Test connect to not existing server,

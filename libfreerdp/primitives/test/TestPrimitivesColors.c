@@ -60,9 +60,9 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 		}
 	}
 #else
-	winpr_RAND((BYTE*)r, rgbStride * roi.height);
-	winpr_RAND((BYTE*)g, rgbStride * roi.height);
-	winpr_RAND((BYTE*)b, rgbStride * roi.height);
+	winpr_RAND(r, rgbStride * roi.height);
+	winpr_RAND(g, rgbStride * roi.height);
+	winpr_RAND(b, rgbStride * roi.height);
 #endif
 	ptrs[0] = r;
 	ptrs[1] = g;
@@ -129,9 +129,9 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 	UINT32 ALIGN(dst[4096 + 1]);
 	int i;
 	INT16* ptrs[3];
-	winpr_RAND((BYTE*)r, sizeof(r));
-	winpr_RAND((BYTE*)g, sizeof(g));
-	winpr_RAND((BYTE*)b, sizeof(b));
+	winpr_RAND(r, sizeof(r));
+	winpr_RAND(g, sizeof(g));
+	winpr_RAND(b, sizeof(b));
 
 	/* clear upper bytes */
 	for (i = 0; i < 4096; ++i)
@@ -171,9 +171,9 @@ static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 	INT16* out1[3];
 	INT16* out2[3];
 	prim_size_t roi = { 64, 64 };
-	winpr_RAND((BYTE*)y, sizeof(y));
-	winpr_RAND((BYTE*)cb, sizeof(cb));
-	winpr_RAND((BYTE*)cr, sizeof(cr));
+	winpr_RAND(y, sizeof(y));
+	winpr_RAND(cb, sizeof(cb));
+	winpr_RAND(cr, sizeof(cr));
 
 	/* Normalize to 11.5 fixed radix */
 	for (i = 0; i < 4096; ++i)
@@ -225,9 +225,9 @@ static int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 	int i;
 	const INT16* input[3];
 	INT16* output[3];
-	winpr_RAND((BYTE*)y, sizeof(y));
-	winpr_RAND((BYTE*)cb, sizeof(cb));
-	winpr_RAND((BYTE*)cr, sizeof(cr));
+	winpr_RAND(y, sizeof(y));
+	winpr_RAND(cb, sizeof(cb));
+	winpr_RAND(cr, sizeof(cr));
 
 	/* Normalize to 11.5 fixed radix */
 	for (i = 0; i < 4096; ++i)

@@ -19,7 +19,7 @@ static BOOL test_alloc(void)
 		goto fail;
 
 	/* Test allocation without initializing arguments of random size > 0 */
-	winpr_RAND((BYTE*)&rng, sizeof(rng));
+	winpr_RAND(&rng, sizeof(rng));
 	rng = abs(rng % 8192) + 1;
 
 	arg2 = freerdp_addin_argv_new(rng, NULL);

@@ -27,8 +27,8 @@ static BOOL test_add16s_func(void)
 	                                  ALIGN(d1[FUNC_TEST_SIZE + 3]) = { 0 },
 	                                  ALIGN(d2[FUNC_TEST_SIZE + 3]) = { 0 };
 
-	winpr_RAND((BYTE*)src1, sizeof(src1));
-	winpr_RAND((BYTE*)src2, sizeof(src2));
+	winpr_RAND(src1, sizeof(src1));
+	winpr_RAND(src2, sizeof(src2));
 	status = generic->add_16s(src1 + 1, src2 + 1, d1 + 1, FUNC_TEST_SIZE);
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;

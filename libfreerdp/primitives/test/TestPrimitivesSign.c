@@ -26,7 +26,7 @@ static BOOL test_sign16s_func(void)
 	INT16 ALIGN(src[TEST_BUFFER_SIZE + 16]) = { 0 };
 	INT16 ALIGN(d1[TEST_BUFFER_SIZE + 16]) = { 0 };
 	INT16 ALIGN(d2[TEST_BUFFER_SIZE + 16]) = { 0 };
-	winpr_RAND((BYTE*)src, sizeof(src));
+	winpr_RAND(src, sizeof(src));
 	status = generic->sign_16s(src + 1, d1 + 1, TEST_BUFFER_SIZE);
 
 	if (status != PRIMITIVES_SUCCESS)
@@ -60,7 +60,7 @@ static int test_sign16s_speed(void)
 {
 	INT16 ALIGN(src[MAX_TEST_SIZE + 3]) = { 0 };
 	INT16 ALIGN(dst[MAX_TEST_SIZE + 3]) = { 0 };
-	winpr_RAND((BYTE*)src, sizeof(src));
+	winpr_RAND(src, sizeof(src));
 
 	if (!speed_test("sign16s", "aligned", g_Iterations, (speed_test_fkt)generic->sign_16s,
 	                (speed_test_fkt)optimized->sign_16s, src + 1, dst + 1, MAX_TEST_SIZE))
