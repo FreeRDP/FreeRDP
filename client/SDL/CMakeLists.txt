@@ -79,6 +79,7 @@ set(SRCS
     sdl_channels.hpp
     sdl_channels.cpp)
 
+add_subdirectory(aad)
 set(LIBS
 	${SDL2_LIBRARIES}
         winpr
@@ -86,30 +87,13 @@ set(LIBS
         freerdp-client
         Threads::Threads
         dialogs
+				aad-view
     )
-
-option(WITH_WEBVIEW "Build with QtWebEngine support for AAD login popup browser" OFF)
-if (WITH_WEBVIEW)
-  find_package(Qt5 COMPONENTS WebEngineWidgets REQUIRED)
-
-  list(APPEND SRCS
-      sdl_webview.cpp
-      sdl_webview.hpp
-      )
-  list(APPEND LIBS Qt5::WebEngineWidgets)
-endif()
 
 add_executable(${PROJECT_NAME}
 	${WIN32_GUI_FLAG}
 	${SRCS}
     )
-
-if (WITH_WEBVIEW)
-	target_compile_definitions(
-		${PROJECT_NAME} PRIVATE
-		-DWITH_WEBVIEW
-	)
-endif()
 
 set_target_properties(${PROJECT_NAME}
     PROPERTIES
