@@ -400,7 +400,7 @@ LONG WINAPI Emulate_SCardEstablishContext(SmartcardEmulationContext* smartcard, 
 	{
 		SCARDCONTEXT context = { 0 };
 
-		winpr_RAND((BYTE*)&context, sizeof(SCARDCONTEXT));
+		winpr_RAND(&context, sizeof(SCARDCONTEXT));
 		if (HashTable_Insert(smartcard->contexts, (const void*)context, ctx))
 		{
 			*phContext = context;
@@ -1219,7 +1219,7 @@ HANDLE WINAPI Emulate_SCardAccessStartedEvent(SmartcardEmulationContext* smartca
 	WLog_Print(smartcard->log, smartcard->log_default_level, "SCardAccessStartedEvent {");
 
 	/* Not required, return random */
-	winpr_RAND((BYTE*)&hEvent, sizeof(hEvent));
+	winpr_RAND(&hEvent, sizeof(hEvent));
 
 	WLog_Print(smartcard->log, smartcard->log_default_level, "SCardAccessStartedEvent } hEvent: %p",
 	           hEvent);
@@ -1551,7 +1551,7 @@ static SCardHandle* reader2handle(SmartcardEmulationContext* smartcard, SCARDCON
 	hdl = scard_handle_new(smartcard, hContext, szReader, unicode);
 	if (hdl)
 	{
-		winpr_RAND((BYTE*)&hdl->card, sizeof(hdl->card));
+		winpr_RAND(&hdl->card, sizeof(hdl->card));
 		hdl->dwActiveProtocol = SCARD_PROTOCOL_T1;
 		hdl->dwShareMode = dwShareMode;
 

@@ -796,7 +796,7 @@ char* freerdp_assistance_generate_pass_stub(DWORD flags)
 	 *
 	 * Example: WB^6HsrIaFmEpi
 	 */
-	winpr_RAND((BYTE*)nums, sizeof(nums));
+	winpr_RAND(nums, sizeof(nums));
 	passStub[0] = set1[nums[0] % sizeof(set1)];   /* character 0 */
 	passStub[1] = set2[nums[1] % sizeof(set2)];   /* character 1 */
 	passStub[2] = set3[nums[2] % sizeof(set3)];   /* character 2 */

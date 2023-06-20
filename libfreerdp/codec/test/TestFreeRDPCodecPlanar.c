@@ -5656,7 +5656,7 @@ static UINT32 prand(UINT32 max)
 	UINT32 tmp;
 	if (max <= 1)
 		return 1;
-	winpr_RAND((BYTE*)&tmp, sizeof(tmp));
+	winpr_RAND(&tmp, sizeof(tmp));
 	return tmp % (max - 1) + 1;
 }
 

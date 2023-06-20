@@ -80,8 +80,8 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 static void get_size(BOOL large, UINT32* width, UINT32* height)
 {
 	UINT32 shift = large ? 8 : 1;
-	winpr_RAND((BYTE*)width, sizeof(*width));
-	winpr_RAND((BYTE*)height, sizeof(*height));
+	winpr_RAND(width, sizeof(*width));
+	winpr_RAND(height, sizeof(*height));
 	// TODO: Algorithm only works on even resolutions...
 	*width = (*width % 64 + 1) << shift;
 	*height = (*height % 64 + 1) << shift;

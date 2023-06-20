@@ -1604,9 +1604,9 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	if (!pYCbCr[0] || !pYCbCr[1] || !pYCbCr[2])
 		goto fail;
 
-	winpr_RAND((BYTE*)pYCbCr[0], srcSize);
-	winpr_RAND((BYTE*)pYCbCr[1], srcSize);
-	winpr_RAND((BYTE*)pYCbCr[2], srcSize);
+	winpr_RAND(pYCbCr[0], srcSize);
+	winpr_RAND(pYCbCr[1], srcSize);
+	winpr_RAND(pYCbCr[2], srcSize);
 
 	if (compare)
 	{
@@ -1763,13 +1763,13 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 
 			do
 			{
-				winpr_RAND((BYTE*)&roi.width, sizeof(roi.width));
+				winpr_RAND(&roi.width, sizeof(roi.width));
 				roi.width %= 2048 / 4;
 			} while (roi.width < 16);
 
 			do
 			{
-				winpr_RAND((BYTE*)&roi.height, sizeof(roi.height));
+				winpr_RAND(&roi.height, sizeof(roi.height));
 				roi.height %= 2048 / 4;
 			} while (roi.height < 16);
 
