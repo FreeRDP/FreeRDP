@@ -137,9 +137,7 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 					         dev->name, dev->deviceid, t->number, name ? name : "None", t->min,
 					         t->max);
 
-					// if (strstr(name, "Pressure"))
-					if (t->number ==
-					    2) // other implementations always go by index. would name be better?
+					if (t->number == 2)
 					{
 						double max_pressure = t->max;
 						if (strstr(dev->name, "Stylus Pen") || strstr(dev->name, "Pen Pen"))
@@ -662,7 +660,6 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 static int xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype, int pen_index)
 {
 	int x, y;
-	int contactId;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)
@@ -751,6 +748,7 @@ static int xf_input_pens_unhover(xfContext* xfc)
 			rdpei->PenHoverCancel(rdpei, i, 0, xfc->pens[i].last_x, xfc->pens[i].last_y);
 		}
 	}
+	return 0;
 }
 
 int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype)
