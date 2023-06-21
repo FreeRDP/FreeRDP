@@ -318,7 +318,7 @@ static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, UINT32 
 	{
 		if ((status = rdpei_write_pen_frame(s, &frames[x])))
 		{
-			WLog_ERR(TAG, "rdpei_write_touch_frame failed with error %" PRIu32 "!", status);
+			WLog_ERR(TAG, "rdpei_write_pen_frame failed with error %" PRIu32 "!", status);
 			Stream_Free(s, TRUE);
 			return status;
 		}
@@ -404,7 +404,7 @@ static UINT rdpei_add_pen_frame(RdpeiClientContext* context)
 
 			penContacts[penFrame.contactCount++] = contact->data;
 		}
-		if (contact->data.contactFlags & RDPINPUT_CONTACT_FLAG_UP)
+		if (contact->data.contactFlags & RDPINPUT_CONTACT_FLAG_CANCELED)
 		{
 			contact->externalId = 0;
 			contact->active = FALSE;
@@ -1177,18 +1177,16 @@ static UINT rdpei_add_pen(RdpeiClientContext* context, INT32 externalId,
 }
 
 static UINT rdpei_pen_process(RdpeiClientContext* context, INT32 externalId, UINT32 contactFlags,
-                              UINT32 fieldFlags, INT32 x, INT32 y, va_list ap)
+                              UINT32 fieldFlags, INT32 x, INT32 y, BOOL begin, va_list ap)
 {
 	RDPINPUT_PEN_CONTACT_POINT* contactPoint;
 	RDPEI_PLUGIN* rdpei;
-	BOOL begin;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!context || !context->handle)
 		return ERROR_INTERNAL_ERROR;
 
 	rdpei = (RDPEI_PLUGIN*)context->handle;
-	begin = contactFlags & RDPINPUT_CONTACT_FLAG_DOWN;
 
 	EnterCriticalSection(&rdpei->lock);
 	contactPoint = rdpei_pen_contact(rdpei, externalId, !begin);
@@ -1234,7 +1232,7 @@ static UINT rdpei_pen_begin(RdpeiClientContext* context, INT32 externalId, UINT3
 	error = rdpei_pen_process(context, externalId,
 	                          RDPINPUT_CONTACT_FLAG_DOWN | RDPINPUT_CONTACT_FLAG_INRANGE |
 	                              RDPINPUT_CONTACT_FLAG_INCONTACT,
-	                          fieldFlags, x, y, ap);
+	                          fieldFlags, x, y, FALSE, ap);
 	va_end(ap);
 
 	return error;
@@ -1255,7 +1253,7 @@ static UINT rdpei_pen_update(RdpeiClientContext* context, INT32 externalId, UINT
 	error = rdpei_pen_process(context, externalId,
 	                          RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
 	                              RDPINPUT_CONTACT_FLAG_INCONTACT,
-	                          fieldFlags, x, y, ap);
+	                          fieldFlags, x, y, FALSE, ap);
 	va_end(ap);
 	return error;
 }
@@ -1270,34 +1268,71 @@ static UINT rdpei_pen_end(RdpeiClientContext* context, INT32 externalId, UINT32 
 {
 	UINT error;
 	va_list ap;
-
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
-	                          RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
-	                              RDPINPUT_CONTACT_FLAG_INCONTACT,
-	                          fieldFlags, x, y, ap);
+	                          RDPINPUT_CONTACT_FLAG_UP | RDPINPUT_CONTACT_FLAG_INRANGE, fieldFlags,
+	                          x, y, FALSE, ap);
 	va_end(ap);
-	if (error == CHANNEL_RC_OK)
-	{
-		va_start(ap, y);
-		error =
-		    rdpei_pen_process(context, externalId, RDPINPUT_CONTACT_FLAG_UP, fieldFlags, x, y, ap);
-		va_end(ap);
-	}
 	return error;
 }
 
-static UINT rdpei_pen_cancel(RdpeiClientContext* context, INT32 externalId, UINT32 fieldFlags,
-                             INT32 x, INT32 y, ...)
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpei_pen_hover_begin(RdpeiClientContext* context, INT32 externalId, UINT32 fieldFlags,
+                                  INT32 x, INT32 y, ...)
 {
 	UINT error;
 	va_list ap;
 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
-	                          RDPINPUT_CONTACT_FLAG_UP | RDPINPUT_CONTACT_FLAG_CANCELED, fieldFlags,
-	                          x, y, ap);
+	                          RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE,
+	                          fieldFlags, x, y, TRUE, ap);
 	va_end(ap);
+
+	return error;
+}
+
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpei_pen_hover_update(RdpeiClientContext* context, INT32 externalId, UINT32 fieldFlags,
+                                   INT32 x, INT32 y, ...)
+{
+	UINT error;
+	va_list ap;
+
+	va_start(ap, y);
+	error = rdpei_pen_process(context, externalId,
+	                          RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE,
+	                          fieldFlags, x, y, FALSE, ap);
+	va_end(ap);
+
+	return error;
+}
+
+/**
+ * Function description
+ *
+ * @return 0 on success, otherwise a Win32 error code
+ */
+static UINT rdpei_pen_hover_cancel(RdpeiClientContext* context, INT32 externalId, UINT32 fieldFlags,
+                                   INT32 x, INT32 y, ...)
+{
+	UINT error;
+	va_list ap;
+
+	va_start(ap, y);
+	error = rdpei_pen_process(context, externalId,
+	                          RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_CANCELED,
+	                          fieldFlags, x, y, FALSE, ap);
+	va_end(ap);
+
 	return error;
 }
 
@@ -1308,7 +1343,7 @@ static UINT rdpei_pen_raw_event(RdpeiClientContext* context, INT32 externalId, U
 	va_list ap;
 
 	va_start(ap, y);
-	error = rdpei_pen_process(context, externalId, contactFlags, fieldFlags, x, y, ap);
+	error = rdpei_pen_process(context, externalId, contactFlags, fieldFlags, FALSE, x, y, ap);
 	va_end(ap);
 	return error;
 }
@@ -1357,7 +1392,9 @@ static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdp
 	context->PenBegin = rdpei_pen_begin;
 	context->PenUpdate = rdpei_pen_update;
 	context->PenEnd = rdpei_pen_end;
-	context->PenCancel = rdpei_pen_cancel;
+	context->PenHoverBegin = rdpei_pen_hover_begin;
+	context->PenHoverUpdate = rdpei_pen_hover_update;
+	context->PenHoverCancel = rdpei_pen_hover_cancel;
 	context->PenRawEvent = rdpei_pen_raw_event;
 
 	rdpei->context = context;
