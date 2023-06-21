@@ -713,7 +713,7 @@ static int xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype,
 				rdpei->PenHoverUpdate(rdpei, pen_index, RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT, x, y,
 				                      penFlags);
 			}
-			else if (xfc->pens[pen_index].last_x != x && xfc->pens[pen_index].last_y != y)
+			else
 			{
 				WLog_DBG(TAG, "Pen hover begin %d", pen_index);
 				xfc->pens[pen_index].hovering = TRUE;
@@ -724,10 +724,9 @@ static int xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype,
 		case XI_ButtonRelease:
 			WLog_DBG(TAG, "Pen release %d", pen_index);
 			xfc->pens[pen_index].pressed = FALSE;
+			xfc->pens[pen_index].hovering = TRUE;
 			rdpei->PenUpdate(rdpei, pen_index, fieldFlags, x, y, penFlags, penPressure);
 			rdpei->PenEnd(rdpei, pen_index, RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT, x, y, penFlags);
-			rdpei->PenHoverCancel(rdpei, pen_index, RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT, x, y,
-			                      penFlags);
 			break;
 		default:
 			break;
