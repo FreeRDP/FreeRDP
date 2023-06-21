@@ -68,9 +68,12 @@ static void fkt(const std::string& url, void* arg)
 bool webview_impl_run(const std::string& title, const std::string& url, std::string& code)
 {
 	webview::webview w(false, nullptr);
+
 	w.set_title(title);
 	w.set_size(640, 480, WEBVIEW_HINT_NONE);
 
+	std::string scheme;
+	w.add_scheme_handler("ms-appx-web", fkt, &scheme);
 	w.add_navigate_listener(fkt, &code);
 	w.navigate(url);
 	w.run();
