@@ -78,6 +78,9 @@ extern "C"
 		pcRdpeiPen PenBegin;
 		pcRdpeiPen PenUpdate;
 		pcRdpeiPen PenEnd;
+		pcRdpeiPen PenHoverBegin;
+		pcRdpeiPen PenHoverUpdate;
+		pcRdpeiPen PenHoverCancel;
 
 		pcRdpeiSuspendTouch SuspendTouch;
 		pcRdpeiResumeTouch ResumeTouch;

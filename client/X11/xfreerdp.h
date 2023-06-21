@@ -124,6 +124,7 @@ typedef struct
 
 #if defined(WITH_XI)
 #define MAX_CONTACTS 20
+#define MAX_PENS 4
 
 typedef struct touch_contact
 {
@@ -135,6 +136,18 @@ typedef struct touch_contact
 	double last_y;
 
 } touchContact;
+
+typedef struct pen_device
+{
+	int deviceid;
+	BOOL is_eraser;
+	double max_pressure;
+	int hovering;
+	int pressed;
+	int last_x;
+	int last_y;
+} penDevice;
+
 #endif
 
 struct xf_context
@@ -290,6 +303,8 @@ struct xf_context
 	double z_vector;
 	double px_vector;
 	double py_vector;
+	penDevice pens[MAX_PENS];
+	int num_pens;
 #endif
 	BOOL xi_rawevent;
 	BOOL xi_event;
