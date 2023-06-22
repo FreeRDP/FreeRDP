@@ -1664,3 +1664,218 @@ int client_cli_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	WLog_INFO(TAG, "Logon Error Info %s [%s]", str_data, str_type);
 	return 1;
 }
+
+static FreeRDP_PenDevice* freerdp_client_get_pen(rdpClientContext* cctx, INT32 deviceid,
+                                                 size_t* pos)
+{
+	WINPR_ASSERT(cctx);
+
+	for (size_t i = 0; i < ARRAYSIZE(cctx->contacts); i++)
+	{
+		FreeRDP_PenDevice* pen = &cctx->pens[i];
+		if (deviceid == pen->deviceid)
+		{
+			if (pos)
+				*pos = i;
+			return pen;
+		}
+	}
+	return NULL;
+}
+
+static BOOL freerdp_client_register_pen(rdpClientContext* cctx, UINT32 flags, INT32 deviceid,
+                                        double pressure)
+{
+	WINPR_ASSERT(cctx);
+	WINPR_ASSERT((flags & FREERDP_PEN_REGISTER) != 0);
+	if (freerdp_client_is_pen(cctx, deviceid))
+	{
+		WLog_WARN(TAG, "trying to double register pen device %" PRId32, deviceid);
+		return FALSE;
+	}
+
+	size_t pos = 0;
+	FreeRDP_PenDevice* pen = freerdp_client_get_pen(cctx, deviceid, &pos);
+	if (pen)
+	{
+		const FreeRDP_PenDevice empty = { 0 };
+		*pen = empty;
+
+		pen->deviceid = deviceid;
+		pen->max_pressure = pressure;
+		pen->flags = flags;
+
+		WLog_DBG(TAG, "registered pen at index %" PRIuz, pos);
+		return TRUE;
+	}
+
+	WLog_WARN(TAG, "No free slots for an additiona pen device, skipping");
+	return TRUE;
+}
+
+BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 deviceid, ...)
+{
+	if ((flags & FREERDP_PEN_REGISTER) != 0)
+	{
+		va_list args;
+
+		va_start(args, deviceid);
+		double pressure = va_arg(args, double);
+		va_end(args);
+		return freerdp_client_register_pen(cctx, flags, deviceid, pressure);
+	}
+	size_t pos = 0;
+	FreeRDP_PenDevice* pen = freerdp_client_get_pen(cctx, deviceid, &pos);
+	if (!pen)
+	{
+		WLog_WARN(TAG, "unregistered pen device %" PRId32 " event 0x%08" PRIx32, deviceid, flags);
+		return FALSE;
+	}
+
+	UINT32 fieldFlags = RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT;
+	UINT32 penFlags =
+	    ((pen->flags & FREERDP_PEN_IS_INVERTED) != 0) ? RDPINPUT_PEN_FLAG_INVERTED : 0;
+
+	RdpeiClientContext* rdpei = cctx->rdpei;
+	WINPR_ASSERT(rdpei);
+
+	UINT32 normalizedpressure = 1024;
+	INT32 x, y;
+	UINT16 rotation;
+	INT16 tiltX, tiltY;
+	va_list args;
+	va_start(args, deviceid);
+
+	x = va_arg(args, INT32);
+	y = va_arg(args, INT32);
+	if ((flags & FREERDP_PEN_HAS_PRESSURE) != 0)
+	{
+		const double pressure = va_arg(args, double);
+		normalizedpressure = (pressure * 1024) / pen->max_pressure;
+		WLog_DBG(TAG, "pen pressure %lf -> %" PRIu32, pressure, normalizedpressure);
+		fieldFlags |= RDPINPUT_PEN_CONTACT_PRESSURE_PRESENT;
+	}
+	if ((flags & FREERDP_PEN_HAS_ROTATION) != 0)
+	{
+		rotation = va_arg(args, unsigned);
+		fieldFlags |= RDPINPUT_PEN_CONTACT_ROTATION_PRESENT;
+	}
+	if ((flags & FREERDP_PEN_HAS_TILTX) != 0)
+	{
+		tiltX = va_arg(args, int);
+		fieldFlags |= RDPINPUT_PEN_CONTACT_TILTX_PRESENT;
+	}
+	if ((flags & FREERDP_PEN_HAS_TILTY) != 0)
+	{
+		tiltX = va_arg(args, int);
+		fieldFlags |= RDPINPUT_PEN_CONTACT_TILTY_PRESENT;
+	}
+	va_end(args);
+
+	if ((flags & FREERDP_PEN_ERASER_PRESSED) != 0)
+		penFlags |= RDPINPUT_PEN_FLAG_ERASER_PRESSED;
+	if ((flags & FREERDP_PEN_BARREL_PRESSED) != 0)
+		penFlags |= RDPINPUT_PEN_FLAG_BARREL_PRESSED;
+
+	pen->last_x = x;
+	pen->last_y = y;
+	if ((flags & FREERDP_PEN_PRESS) != 0)
+	{
+		WLog_DBG(TAG, "Pen press %d", deviceid);
+		pen->hovering = FALSE;
+		pen->pressed = TRUE;
+
+		WINPR_ASSERT(rdpei->PenBegin);
+		const UINT rc = rdpei->PenBegin(rdpei, deviceid, fieldFlags, x, y, penFlags,
+		                                normalizedpressure, rotation, tiltX, tiltY);
+		return rc == CHANNEL_RC_OK;
+	}
+	else if ((flags & FREERDP_PEN_MOTION) != 0)
+	{
+		UINT rc = ERROR_INTERNAL_ERROR;
+		if (pen->pressed)
+		{
+			WLog_DBG(TAG, "Pen update %" PRId32, deviceid);
+
+			// TODO: what if no rotation is supported but tilt is?
+			WINPR_ASSERT(rdpei->PenUpdate);
+			rc = rdpei->PenUpdate(rdpei, deviceid, fieldFlags, x, y, penFlags, normalizedpressure,
+			                      rotation, tiltX, tiltY);
+		}
+		else if (pen->hovering)
+		{
+			WLog_DBG(TAG, "Pen hover update %" PRId32, deviceid);
+
+			WINPR_ASSERT(rdpei->PenHoverUpdate);
+			rc = rdpei->PenHoverUpdate(rdpei, deviceid, RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT, x, y,
+			                           penFlags, normalizedpressure, rotation, tiltX, tiltY);
+		}
+		else
+		{
+			WLog_DBG(TAG, "Pen hover begin %" PRId32, deviceid);
+			pen->hovering = TRUE;
+
+			WINPR_ASSERT(rdpei->PenHoverBegin);
+			rc = rdpei->PenHoverBegin(rdpei, deviceid, RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT, x, y,
+			                          penFlags, normalizedpressure, rotation, tiltX, tiltY);
+		}
+		return rc == CHANNEL_RC_OK;
+	}
+	else if ((flags & FREERDP_PEN_RELEASE) != 0)
+	{
+		WLog_DBG(TAG, "Pen release %" PRId32, deviceid);
+		pen->pressed = FALSE;
+		pen->hovering = TRUE;
+
+		WINPR_ASSERT(rdpei->PenUpdate);
+		const UINT rc = rdpei->PenUpdate(rdpei, deviceid, fieldFlags, x, y, penFlags,
+		                                 normalizedpressure, rotation, tiltX, tiltY);
+		if (rc != CHANNEL_RC_OK)
+			return FALSE;
+		WINPR_ASSERT(rdpei->PenEnd);
+		const UINT re = rdpei->PenEnd(rdpei, deviceid, RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT, x, y,
+		                              penFlags, normalizedpressure, rotation, tiltX, tiltY);
+		return re == CHANNEL_RC_OK;
+	}
+
+	WLog_WARN(TAG, "Invalid pen %" PRId32 " flags 0x%08" PRIx32, deviceid, flags);
+	return FALSE;
+}
+
+BOOL freerdp_client_pen_cancel_all(rdpClientContext* cctx)
+{
+	WINPR_ASSERT(cctx);
+
+	RdpeiClientContext* rdpei = cctx->rdpei;
+
+	if (!rdpei)
+		return FALSE;
+
+	for (size_t i = 0; i < ARRAYSIZE(cctx->contacts); i++)
+	{
+		FreeRDP_PenDevice* pen = &cctx->pens[i];
+		if (pen->hovering)
+		{
+			WLog_DBG(TAG, "unhover pen %d", i);
+			pen->hovering = FALSE;
+			rdpei->PenHoverCancel(rdpei, i, 0, pen->last_x, pen->last_y);
+		}
+	}
+}
+
+BOOL freerdp_client_is_pen(rdpClientContext* cctx, INT32 deviceid)
+{
+	WINPR_ASSERT(cctx);
+
+	if (deviceid == 0)
+		return FALSE;
+
+	for (size_t x = 0; x < ARRAYSIZE(cctx->pens); x++)
+	{
+		const FreeRDP_PenDevice* pen = &cctx->pens[x];
+		if (pen->deviceid == deviceid)
+			return TRUE;
+	}
+
+	return FALSE;
+}

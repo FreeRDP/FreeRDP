@@ -79,7 +79,6 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 	WINPR_ASSERT(settings);
 
 	XIDeviceInfo* info = XIQueryDevice(xfc->display, XIAllDevices, &ndevices);
-	xfc->num_pens = 0;
 
 	for (int i = 0; i < MIN(ndevices, 64); i++)
 	{
@@ -140,25 +139,24 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 					if (t->number == 2)
 					{
 						double max_pressure = t->max;
+
 						if (strstr(dev->name, "Stylus Pen") || strstr(dev->name, "Pen Pen"))
 						{
-							xfc->pens[xfc->num_pens].deviceid = dev->deviceid;
-							xfc->pens[xfc->num_pens].is_eraser = FALSE;
-							xfc->pens[xfc->num_pens].max_pressure = max_pressure;
-							xfc->pens[xfc->num_pens].hovering = FALSE;
-							xfc->pens[xfc->num_pens].pressed = FALSE;
-							xfc->num_pens++;
+							if (!freerdp_client_handle_pen(
+							        &xfc->common, FREERDP_PEN_REGISTER | FREERDP_PEN_HAS_PRESSURE,
+							        dev->deviceid, max_pressure))
+								return FALSE;
 							WLog_DBG(TAG, "registered pen");
 						}
 						else if (strstr(dev->name, "Stylus Eraser") ||
 						         strstr(dev->name, "Pen Eraser"))
 						{
-							xfc->pens[xfc->num_pens].deviceid = dev->deviceid;
-							xfc->pens[xfc->num_pens].is_eraser = TRUE;
-							xfc->pens[xfc->num_pens].max_pressure = max_pressure;
-							xfc->pens[xfc->num_pens].hovering = FALSE;
-							xfc->pens[xfc->num_pens].pressed = FALSE;
-							xfc->num_pens++;
+							if (!freerdp_client_handle_pen(&xfc->common,
+							                               FREERDP_PEN_REGISTER |
+							                                   FREERDP_PEN_IS_INVERTED |
+							                                   FREERDP_PEN_HAS_PRESSURE,
+							                               dev->deviceid, max_pressure))
+								return FALSE;
 							WLog_DBG(TAG, "registered eraser");
 						}
 					}
@@ -682,7 +680,7 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 	return 0;
 }
 
-static int xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype, int pen_index)
+static int xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype, int deviceid)
 {
 	int x, y;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
@@ -706,73 +704,38 @@ static int xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype,
 				pressure = value;
 		}
 	}
-	WLog_DBG(TAG, "pen pressure %f", pressure);
-	// [MS-RDPEI] 2.2.3.7.1.1: This value MUST be normalized in the range 0x00000000 to 0x00000400
-	// (1024), inclusive
-	pressure = pressure / xfc->pens[pen_index].max_pressure * 1024;
 
-	const UINT32 fieldFlags =
-	    RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT | RDPINPUT_PEN_CONTACT_PRESSURE_PRESENT;
-	const UINT32 penFlags = xfc->pens[pen_index].is_eraser ? RDPINPUT_PEN_FLAG_INVERTED : 0;
-	const UINT32 penPressure = (UINT32)pressure;
 	switch (evtype)
 	{
 		case XI_ButtonPress:
-			WLog_DBG(TAG, "Pen press %d", pen_index);
-			xfc->pens[pen_index].hovering = FALSE;
-			xfc->pens[pen_index].pressed = TRUE;
-			rdpei->PenBegin(rdpei, pen_index, fieldFlags, x, y, penFlags, penPressure);
+			if (!freerdp_client_handle_pen(&xfc->common,
+			                               FREERDP_PEN_PRESS | FREERDP_PEN_HAS_PRESSURE, deviceid,
+			                               x, y, pressure))
+				return FALSE;
 			break;
 		case XI_Motion:
-			if (xfc->pens[pen_index].pressed)
-			{
-				WLog_DBG(TAG, "Pen update %d", pen_index);
-				rdpei->PenUpdate(rdpei, pen_index, fieldFlags, x, y, penFlags, penPressure);
-			}
-			else if (xfc->pens[pen_index].hovering)
-			{
-				WLog_DBG(TAG, "Pen hover update %d", pen_index);
-				rdpei->PenHoverUpdate(rdpei, pen_index, RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT, x, y,
-				                      penFlags);
-			}
-			else
-			{
-				WLog_DBG(TAG, "Pen hover begin %d", pen_index);
-				xfc->pens[pen_index].hovering = TRUE;
-				rdpei->PenHoverBegin(rdpei, pen_index, RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT, x, y,
-				                     penFlags);
-			}
+			if (!freerdp_client_handle_pen(&xfc->common,
+			                               FREERDP_PEN_MOTION | FREERDP_PEN_HAS_PRESSURE, deviceid,
+			                               x, y, pressure))
+				return FALSE;
 			break;
 		case XI_ButtonRelease:
-			WLog_DBG(TAG, "Pen release %d", pen_index);
-			xfc->pens[pen_index].pressed = FALSE;
-			xfc->pens[pen_index].hovering = TRUE;
-			rdpei->PenUpdate(rdpei, pen_index, fieldFlags, x, y, penFlags, penPressure);
-			rdpei->PenEnd(rdpei, pen_index, RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT, x, y, penFlags);
+			if (!freerdp_client_handle_pen(&xfc->common,
+			                               FREERDP_PEN_RELEASE | FREERDP_PEN_HAS_PRESSURE, deviceid,
+			                               x, y, pressure))
+				return FALSE;
 			break;
 		default:
 			break;
 	}
-	xfc->pens[pen_index].last_x = x;
-	xfc->pens[pen_index].last_y = y;
 	return 0;
 }
 
 static int xf_input_pens_unhover(xfContext* xfc)
 {
-	RdpeiClientContext* rdpei = xfc->common.rdpei;
-	if (!rdpei)
-		return 0;
+	WINPR_ASSERT(xfc);
 
-	for (int i = 0; i < xfc->num_pens; i++)
-	{
-		if (xfc->pens[i].hovering)
-		{
-			WLog_DBG(TAG, "unhover pen %d", i);
-			xfc->pens[i].hovering = FALSE;
-			rdpei->PenHoverCancel(rdpei, i, 0, xfc->pens[i].last_x, xfc->pens[i].last_y);
-		}
-	}
+	freerdp_client_pen_cancel_all(&xfc->common);
 	return 0;
 }
 
@@ -902,19 +865,12 @@ static int xf_input_handle_event_remote(xfContext* xfc, const XEvent* event)
 				WLog_DBG(TAG, "checking for pen");
 				XIDeviceEvent* deviceEvent = (XIDeviceEvent*)cookie.cc->data;
 				int deviceid = deviceEvent->deviceid;
-				bool used = FALSE;
-				for (int i = 0; i < xfc->num_pens; i++)
+
+				if (freerdp_client_is_pen(&xfc->common, deviceid))
 				{
-					if (xfc->pens[i].deviceid == deviceid)
-					{
-						WLog_DBG(TAG, "pen found, is_eraser=%d", xfc->pens[i].is_eraser);
-						xf_input_pen_remote(xfc, cookie.cc->data, cookie.cc->evtype, i);
-						used = TRUE;
-						break;
-					}
-				}
-				if (used)
+					xf_input_pen_remote(xfc, cookie.cc->data, cookie.cc->evtype, deviceid);
 					break;
+				}
 			}
 			default:
 				xf_input_pens_unhover(xfc);
