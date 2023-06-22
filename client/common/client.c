@@ -1582,23 +1582,32 @@ static BOOL freerdp_handle_touch_motion(rdpClientContext* cctx, const FreeRDP_To
 
 static BOOL freerdp_client_touch_update(rdpClientContext* cctx, UINT32 flags, INT32 touchId,
                                         UINT32 pressure, INT32 x, INT32 y,
-                                        const FreeRDP_TouchContact** ppcontact)
+                                        FreeRDP_TouchContact* pcontact)
 {
 	WINPR_ASSERT(cctx);
-	WINPR_ASSERT(ppcontact);
+	WINPR_ASSERT(pcontact);
 
 	for (size_t i = 0; i < ARRAYSIZE(cctx->contacts); i++)
 	{
 		FreeRDP_TouchContact* contact = &cctx->contacts[i];
 
-		if (contact->id == touchId)
+		const BOOL newcontact = ((contact->id == 0) && ((flags & FREERDP_TOUCH_DOWN) != 0));
+		if (newcontact || (contact->id == touchId))
 		{
-			*ppcontact = contact;
-
+			contact->id = touchId;
 			contact->flags = flags;
 			contact->pressure = pressure;
 			contact->x = x;
 			contact->y = y;
+
+			*pcontact = *contact;
+
+			const BOOL resetcontact = (flags & FREERDP_TOUCH_UP) != 0;
+			if (resetcontact)
+			{
+				FreeRDP_TouchContact empty = { 0 };
+				*contact = empty;
+			}
 			return TRUE;
 		}
 	}
@@ -1609,21 +1618,22 @@ static BOOL freerdp_client_touch_update(rdpClientContext* cctx, UINT32 flags, IN
 BOOL freerdp_client_handle_touch(rdpClientContext* cctx, UINT32 flags, INT32 finger,
                                  UINT32 pressure, INT32 x, INT32 y)
 {
+	const UINT32 mask = FREERDP_TOUCH_DOWN | FREERDP_TOUCH_UP | FREERDP_TOUCH_MOTION;
 	WINPR_ASSERT(cctx);
 
-	const FreeRDP_TouchContact* contact = NULL;
+	FreeRDP_TouchContact contact = { 0 };
 
 	if (!freerdp_client_touch_update(cctx, flags, finger, pressure, x, y, &contact))
 		return FALSE;
 
-	switch (flags)
+	switch (flags & mask)
 	{
 		case FREERDP_TOUCH_DOWN:
-			return freerdp_handle_touch_down(cctx, contact);
+			return freerdp_handle_touch_down(cctx, &contact);
 		case FREERDP_TOUCH_UP:
-			return freerdp_handle_touch_up(cctx, contact);
+			return freerdp_handle_touch_up(cctx, &contact);
 		case FREERDP_TOUCH_MOTION:
-			return freerdp_handle_touch_motion(cctx, contact);
+			return freerdp_handle_touch_motion(cctx, &contact);
 		default:
 			WLog_WARN(TAG, "Unhandled FreeRDPTouchEventType %d, ignoring", flags);
 			return FALSE;
