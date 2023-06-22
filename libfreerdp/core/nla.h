@@ -40,6 +40,7 @@ typedef enum
 	NLA_STATE_INITIAL,
 	NLA_STATE_NEGO_TOKEN,
 	NLA_STATE_PUB_KEY_AUTH,
+	NLA_STATE_EARLY_USER_AUTH,
 	NLA_STATE_AUTH_INFO,
 	NLA_STATE_POST_NEGO,
 	NLA_STATE_FINAL
@@ -70,5 +71,6 @@ FREERDP_LOCAL BOOL nla_revert_to_self(rdpNla* nla);
 
 FREERDP_LOCAL rdpNla* nla_new(rdpContext* context, rdpTransport* transport);
 FREERDP_LOCAL void nla_free(rdpNla* nla);
+FREERDP_LOCAL void nla_set_early_user_auth(rdpNla* nla, BOOL earlyUserAuth);
 
 #endif /* FREERDP_LIB_CORE_NLA_H */

@@ -318,7 +318,11 @@ static BOOL nego_try_connect(rdpNego* nego)
 			break;
 		case PROTOCOL_HYBRID:
 			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_HYBRID");
-			nego->SecurityConnected = transport_connect_nla(nego->transport);
+			nego->SecurityConnected = transport_connect_nla(nego->transport, FALSE);
+			break;
+		case PROTOCOL_HYBRID_EX:
+			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_HYBRID_EX");
+			nego->SecurityConnected = transport_connect_nla(nego->transport, TRUE);
 			break;
 		case PROTOCOL_SSL:
 			WLog_DBG(TAG, "nego_security_connect with PROTOCOL_SSL");

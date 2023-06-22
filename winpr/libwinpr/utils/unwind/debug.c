@@ -54,7 +54,7 @@ static _Unwind_Reason_Code unwind_backtrace_callback(struct _Unwind_Context* con
 	{
 		unwind_info_t* info = &ctx->info[ctx->pos++];
 		info->pc = _Unwind_GetIP(context);
-		info->langSpecificData = _Unwind_GetLanguageSpecificData(context);
+		info->langSpecificData = (void*)_Unwind_GetLanguageSpecificData(context);
 	}
 
 	return _URC_NO_REASON;

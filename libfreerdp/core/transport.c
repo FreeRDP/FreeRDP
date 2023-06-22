@@ -90,6 +90,7 @@ struct rdp_transport
 	rdpTransportIo io;
 	HANDLE ioEvent;
 	BOOL useIoEvent;
+	BOOL earlyUserAuth;
 };
 
 static void transport_ssl_cb(SSL* ssl, int where, int ret)
@@ -323,7 +324,7 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 	return TRUE;
 }
 
-BOOL transport_connect_nla(rdpTransport* transport)
+BOOL transport_connect_nla(rdpTransport* transport, BOOL earlyUserAuth)
 {
 	rdpContext* context = NULL;
 	rdpSettings* settings = NULL;
@@ -351,6 +352,8 @@ BOOL transport_connect_nla(rdpTransport* transport)
 
 	if (!rdp->nla)
 		return FALSE;
+
+	nla_set_early_user_auth(rdp->nla, earlyUserAuth);
 
 	transport_set_nla_mode(transport, TRUE);
 
@@ -1028,6 +1031,14 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 			Stream_Write_UINT8(s, c);
 		} while (c != '\0');
 	}
+	else if (transport->earlyUserAuth)
+	{
+		if (!Stream_EnsureCapacity(s, 4))
+			return -1;
+		const int rc = transport_read_layer_bytes(transport, s, 4);
+		if (rc != 1)
+			return rc;
+	}
 	else
 	{
 		/* Read in pdu length */
@@ -1473,6 +1484,7 @@ static BOOL transport_default_disconnect(rdpTransport* transport)
 
 	transport->frontBio = NULL;
 	transport->layer = TRANSPORT_LAYER_TCP;
+	transport->earlyUserAuth = FALSE;
 	return status;
 }
 
@@ -1722,4 +1734,11 @@ BOOL transport_io_callback_set_event(rdpTransport* transport, BOOL set)
 	if (!set)
 		return ResetEvent(transport->ioEvent);
 	return SetEvent(transport->ioEvent);
+}
+
+void transport_set_early_user_auth_mode(rdpTransport* transport, BOOL EUAMode)
+{
+	WINPR_ASSERT(transport);
+	transport->earlyUserAuth = EUAMode;
+	WLog_Print(transport->log, WLOG_DEBUG, "Early User Auth Mode: %s", EUAMode ? "on" : "off");
 }

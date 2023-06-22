@@ -54,6 +54,12 @@
 
 #define NLA_AUTH_PKG NEGO_SSP_NAME
 
+typedef enum
+{
+	AUTHZ_SUCCESS = 0x00000000,
+	AUTHZ_ACCESS_DENIED = 0x00000005,
+} AUTHZ_RESULT;
+
 /**
  * TSRequest ::= SEQUENCE {
  * 	version    [0] INTEGER,
@@ -127,6 +133,7 @@ struct rdp_nla
 	char* pkinitArgs;
 	SmartcardCertInfo* smartcardCert;
 	BYTE certSha1[20];
+	BOOL earlyUserAuth;
 };
 
 static BOOL nla_send(rdpNla* nla);
@@ -137,6 +144,13 @@ static BOOL nla_decrypt_public_key_echo(rdpNla* nla);
 static BOOL nla_decrypt_public_key_hash(rdpNla* nla);
 static BOOL nla_encrypt_ts_credentials(rdpNla* nla);
 static BOOL nla_decrypt_ts_credentials(rdpNla* nla);
+
+void nla_set_early_user_auth(rdpNla* nla, BOOL earlyUserAuth)
+{
+	WINPR_ASSERT(nla);
+	WLog_DBG(TAG, "Early User Auth active: %s", nla->earlyUserAuth ? "true" : "false");
+	nla->earlyUserAuth = earlyUserAuth;
+}
 
 static void nla_buffer_free(rdpNla* nla)
 {
@@ -551,6 +565,23 @@ static int nla_client_recv_pub_key_auth(rdpNla* nla)
 	if (!nla_send(nla))
 		return -1;
 
+	if (nla->earlyUserAuth)
+	{
+		transport_set_early_user_auth_mode(nla->transport, TRUE);
+		nla_set_state(nla, NLA_STATE_EARLY_USER_AUTH);
+	}
+	else
+		nla_set_state(nla, NLA_STATE_AUTH_INFO);
+	return 1;
+}
+
+static int nla_client_recv_early_user_auth(rdpNla* nla)
+{
+	BOOL rc = FALSE;
+
+	WINPR_ASSERT(nla);
+
+	transport_set_early_user_auth_mode(nla->transport, FALSE);
 	nla_set_state(nla, NLA_STATE_AUTH_INFO);
 	return 1;
 }
@@ -566,6 +597,9 @@ static int nla_client_recv(rdpNla* nla)
 
 		case NLA_STATE_PUB_KEY_AUTH:
 			return nla_client_recv_pub_key_auth(nla);
+
+		case NLA_STATE_EARLY_USER_AUTH:
+			return nla_client_recv_early_user_auth(nla);
 
 		case NLA_STATE_FINAL:
 		default:
@@ -1552,63 +1586,80 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(s);
 
-	if (nla_decode_ts_request(nla, s) < 1)
-		return -1;
-
-	if (nla->errorCode)
+	if (nla_get_state(nla) == NLA_STATE_EARLY_USER_AUTH)
 	{
 		UINT32 code;
-
-		switch (nla->errorCode)
+		Stream_Read_UINT32(s, code);
+		if (code != AUTHZ_SUCCESS)
 		{
-			case STATUS_PASSWORD_MUST_CHANGE:
-				code = FREERDP_ERROR_CONNECT_PASSWORD_MUST_CHANGE;
-				break;
-
-			case STATUS_PASSWORD_EXPIRED:
-				code = FREERDP_ERROR_CONNECT_PASSWORD_EXPIRED;
-				break;
-
-			case STATUS_ACCOUNT_DISABLED:
-				code = FREERDP_ERROR_CONNECT_ACCOUNT_DISABLED;
-				break;
-
-			case STATUS_LOGON_FAILURE:
-				code = FREERDP_ERROR_CONNECT_LOGON_FAILURE;
-				break;
-
-			case STATUS_WRONG_PASSWORD:
-				code = FREERDP_ERROR_CONNECT_WRONG_PASSWORD;
-				break;
-
-			case STATUS_ACCESS_DENIED:
-				code = FREERDP_ERROR_CONNECT_ACCESS_DENIED;
-				break;
-
-			case STATUS_ACCOUNT_RESTRICTION:
-				code = FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION;
-				break;
-
-			case STATUS_ACCOUNT_LOCKED_OUT:
-				code = FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT;
-				break;
-
-			case STATUS_ACCOUNT_EXPIRED:
-				code = FREERDP_ERROR_CONNECT_ACCOUNT_EXPIRED;
-				break;
-
-			case STATUS_LOGON_TYPE_NOT_GRANTED:
-				code = FREERDP_ERROR_CONNECT_LOGON_TYPE_NOT_GRANTED;
-				break;
-
-			default:
-				WLog_ERR(TAG, "SPNEGO failed with NTSTATUS: 0x%08" PRIX32 "", nla->errorCode);
-				code = FREERDP_ERROR_AUTHENTICATION_FAILED;
-				break;
+			WLog_DBG(TAG, "Early User Auth active: FAILURE code 0x%08" PRIX32 "", code);
+			code = FREERDP_ERROR_AUTHENTICATION_FAILED;
+			freerdp_set_last_error_log(nla->rdpcontext, code);
+			return -1;
 		}
+		else
+			WLog_DBG(TAG, "Early User Auth active: SUCCESS");
+	}
+	else
+	{
+		if (nla_decode_ts_request(nla, s) < 1)
+			return -1;
 
-		freerdp_set_last_error_log(nla->rdpcontext, code);
-		return -1;
+		if (nla->errorCode)
+		{
+			UINT32 code;
+
+			switch (nla->errorCode)
+			{
+				case STATUS_PASSWORD_MUST_CHANGE:
+					code = FREERDP_ERROR_CONNECT_PASSWORD_MUST_CHANGE;
+					break;
+
+				case STATUS_PASSWORD_EXPIRED:
+					code = FREERDP_ERROR_CONNECT_PASSWORD_EXPIRED;
+					break;
+
+				case STATUS_ACCOUNT_DISABLED:
+					code = FREERDP_ERROR_CONNECT_ACCOUNT_DISABLED;
+					break;
+
+				case STATUS_LOGON_FAILURE:
+					code = FREERDP_ERROR_CONNECT_LOGON_FAILURE;
+					break;
+
+				case STATUS_WRONG_PASSWORD:
+					code = FREERDP_ERROR_CONNECT_WRONG_PASSWORD;
+					break;
+
+				case STATUS_ACCESS_DENIED:
+					code = FREERDP_ERROR_CONNECT_ACCESS_DENIED;
+					break;
+
+				case STATUS_ACCOUNT_RESTRICTION:
+					code = FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION;
+					break;
+
+				case STATUS_ACCOUNT_LOCKED_OUT:
+					code = FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT;
+					break;
+
+				case STATUS_ACCOUNT_EXPIRED:
+					code = FREERDP_ERROR_CONNECT_ACCOUNT_EXPIRED;
+					break;
+
+				case STATUS_LOGON_TYPE_NOT_GRANTED:
+					code = FREERDP_ERROR_CONNECT_LOGON_TYPE_NOT_GRANTED;
+					break;
+
+				default:
+					WLog_ERR(TAG, "SPNEGO failed with NTSTATUS: 0x%08" PRIX32 "", nla->errorCode);
+					code = FREERDP_ERROR_AUTHENTICATION_FAILED;
+					break;
+			}
+
+			freerdp_set_last_error_log(nla->rdpcontext, code);
+			return -1;
+		}
 	}
 
 	return nla_client_recv(nla);
@@ -1658,6 +1709,7 @@ rdpNla* nla_new(rdpContext* context, rdpTransport* transport)
 	nla->sendSeqNum = 0;
 	nla->recvSeqNum = 0;
 	nla->version = 6;
+	nla->earlyUserAuth = FALSE;
 
 	nla->identity = calloc(1, sizeof(SEC_WINNT_AUTH_IDENTITY));
 	if (!nla->identity)
@@ -1761,6 +1813,8 @@ const char* nla_get_state_str(NLA_STATE state)
 			return "NLA_STATE_AUTH_INFO";
 		case NLA_STATE_POST_NEGO:
 			return "NLA_STATE_POST_NEGO";
+		case NLA_STATE_EARLY_USER_AUTH:
+			return "NLA_STATE_EARLY_USER_AUTH";
 		case NLA_STATE_FINAL:
 			return "NLA_STATE_FINAL";
 		default:
