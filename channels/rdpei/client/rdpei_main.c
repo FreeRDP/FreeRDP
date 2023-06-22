@@ -1121,6 +1121,13 @@ static UINT rdpei_touch_raw_event(RdpeiClientContext* context, INT32 externalId,
 	return rc;
 }
 
+static UINT rdpei_touch_raw_event_va(RdpeiClientContext* context, INT32 externalId, INT32 x,
+                                     INT32 y, INT32* contactId, UINT32 flags, UINT32 fieldFlags,
+                                     va_list args)
+{
+	return rdpei_touch_process(context, externalId, flags, x, y, contactId, fieldFlags, args);
+}
+
 static RDPINPUT_PEN_CONTACT_POINT* rdpei_pen_contact(RDPEI_PLUGIN* rdpei, INT32 externalId,
                                                      BOOL active)
 {
@@ -1232,7 +1239,7 @@ static UINT rdpei_pen_begin(RdpeiClientContext* context, INT32 externalId, UINT3
 	error = rdpei_pen_process(context, externalId,
 	                          RDPINPUT_CONTACT_FLAG_DOWN | RDPINPUT_CONTACT_FLAG_INRANGE |
 	                              RDPINPUT_CONTACT_FLAG_INCONTACT,
-	                          fieldFlags, x, y, FALSE, ap);
+	                          fieldFlags, x, y, TRUE, ap);
 	va_end(ap);
 
 	return error;
@@ -1343,9 +1350,18 @@ static UINT rdpei_pen_raw_event(RdpeiClientContext* context, INT32 externalId, U
 	va_list ap;
 
 	va_start(ap, y);
-	error = rdpei_pen_process(context, externalId, contactFlags, fieldFlags, FALSE, x, y, ap);
+	const BOOL begin = contactFlags & RDPINPUT_CONTACT_FLAG_DOWN;
+	error = rdpei_pen_process(context, externalId, contactFlags, fieldFlags, begin, x, y, ap);
 	va_end(ap);
 	return error;
+}
+
+static UINT rdpei_pen_raw_event_va(RdpeiClientContext* context, INT32 externalId,
+                                   UINT32 contactFlags, UINT32 fieldFlags, INT32 x, INT32 y,
+                                   va_list args)
+{
+	const BOOL begin = contactFlags & RDPINPUT_CONTACT_FLAG_DOWN;
+	return rdpei_pen_process(context, externalId, contactFlags, fieldFlags, begin, x, y, args);
 }
 
 static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdpSettings* settings)
@@ -1388,6 +1404,7 @@ static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdp
 	context->TouchEnd = rdpei_touch_end;
 	context->TouchCancel = rdpei_touch_cancel;
 	context->TouchRawEvent = rdpei_touch_raw_event;
+	context->TouchRawEventVA = rdpei_touch_raw_event_va;
 	context->AddPen = rdpei_add_pen;
 	context->PenBegin = rdpei_pen_begin;
 	context->PenUpdate = rdpei_pen_update;
@@ -1396,6 +1413,7 @@ static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdp
 	context->PenHoverUpdate = rdpei_pen_hover_update;
 	context->PenHoverCancel = rdpei_pen_hover_cancel;
 	context->PenRawEvent = rdpei_pen_raw_event;
+	context->PenRawEventVA = rdpei_pen_raw_event_va;
 
 	rdpei->context = context;
 	rdpei->base.iface.pInterface = (void*)context;
