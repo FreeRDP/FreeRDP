@@ -1184,7 +1184,7 @@ static UINT rdpei_add_pen(RdpeiClientContext* context, INT32 externalId,
 }
 
 static UINT rdpei_pen_process(RdpeiClientContext* context, INT32 externalId, UINT32 contactFlags,
-                              UINT32 fieldFlags, INT32 x, INT32 y, BOOL begin, va_list ap)
+                              UINT32 fieldFlags, INT32 x, INT32 y, va_list ap)
 {
 	RDPINPUT_PEN_CONTACT_POINT* contactPoint;
 	RDPEI_PLUGIN* rdpei;
@@ -1195,8 +1195,21 @@ static UINT rdpei_pen_process(RdpeiClientContext* context, INT32 externalId, UIN
 
 	rdpei = (RDPEI_PLUGIN*)context->handle;
 
+	const BOOL active = (contactFlags & RDPINPUT_CONTACT_FLAG_DOWN) == 0;
 	EnterCriticalSection(&rdpei->lock);
-	contactPoint = rdpei_pen_contact(rdpei, externalId, !begin);
+	/* If a normal down event is given, we start a new contact.
+	 * If that fails, check if we have a new hover event */
+	contactPoint = rdpei_pen_contact(rdpei, externalId, active);
+	if (!contactPoint)
+	{
+		const UINT32 mask = RDPINPUT_CONTACT_FLAG_INRANGE | RDPINPUT_CONTACT_FLAG_UPDATE;
+		const UINT32 negmask =
+		    RDPINPUT_CONTACT_FLAG_DOWN | RDPINPUT_CONTACT_FLAG_INCONTACT | RDPINPUT_CONTACT_FLAG_UP;
+		if (((contactFlags & mask) == mask) && ((contactFlags & negmask) == 0))
+		{
+			contactPoint = rdpei_pen_contact(rdpei, externalId, FALSE);
+		}
+	}
 	LeaveCriticalSection(&rdpei->lock);
 	if (contactPoint != NULL)
 	{
@@ -1239,7 +1252,7 @@ static UINT rdpei_pen_begin(RdpeiClientContext* context, INT32 externalId, UINT3
 	error = rdpei_pen_process(context, externalId,
 	                          RDPINPUT_CONTACT_FLAG_DOWN | RDPINPUT_CONTACT_FLAG_INRANGE |
 	                              RDPINPUT_CONTACT_FLAG_INCONTACT,
-	                          fieldFlags, x, y, TRUE, ap);
+	                          fieldFlags, x, y, ap);
 	va_end(ap);
 
 	return error;
@@ -1260,7 +1273,7 @@ static UINT rdpei_pen_update(RdpeiClientContext* context, INT32 externalId, UINT
 	error = rdpei_pen_process(context, externalId,
 	                          RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
 	                              RDPINPUT_CONTACT_FLAG_INCONTACT,
-	                          fieldFlags, x, y, FALSE, ap);
+	                          fieldFlags, x, y, ap);
 	va_end(ap);
 	return error;
 }
@@ -1278,7 +1291,7 @@ static UINT rdpei_pen_end(RdpeiClientContext* context, INT32 externalId, UINT32 
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
 	                          RDPINPUT_CONTACT_FLAG_UP | RDPINPUT_CONTACT_FLAG_INRANGE, fieldFlags,
-	                          x, y, FALSE, ap);
+	                          x, y, ap);
 	va_end(ap);
 	return error;
 }
@@ -1297,7 +1310,7 @@ static UINT rdpei_pen_hover_begin(RdpeiClientContext* context, INT32 externalId,
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
 	                          RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE,
-	                          fieldFlags, x, y, TRUE, ap);
+	                          fieldFlags, x, y, ap);
 	va_end(ap);
 
 	return error;
@@ -1317,7 +1330,7 @@ static UINT rdpei_pen_hover_update(RdpeiClientContext* context, INT32 externalId
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
 	                          RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE,
-	                          fieldFlags, x, y, FALSE, ap);
+	                          fieldFlags, x, y, ap);
 	va_end(ap);
 
 	return error;
@@ -1337,7 +1350,7 @@ static UINT rdpei_pen_hover_cancel(RdpeiClientContext* context, INT32 externalId
 	va_start(ap, y);
 	error = rdpei_pen_process(context, externalId,
 	                          RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_CANCELED,
-	                          fieldFlags, x, y, FALSE, ap);
+	                          fieldFlags, x, y, ap);
 	va_end(ap);
 
 	return error;
@@ -1350,8 +1363,7 @@ static UINT rdpei_pen_raw_event(RdpeiClientContext* context, INT32 externalId, U
 	va_list ap;
 
 	va_start(ap, y);
-	const BOOL begin = contactFlags & RDPINPUT_CONTACT_FLAG_DOWN;
-	error = rdpei_pen_process(context, externalId, contactFlags, fieldFlags, begin, x, y, ap);
+	error = rdpei_pen_process(context, externalId, contactFlags, fieldFlags, x, y, ap);
 	va_end(ap);
 	return error;
 }
@@ -1360,8 +1372,7 @@ static UINT rdpei_pen_raw_event_va(RdpeiClientContext* context, INT32 externalId
                                    UINT32 contactFlags, UINT32 fieldFlags, INT32 x, INT32 y,
                                    va_list args)
 {
-	const BOOL begin = contactFlags & RDPINPUT_CONTACT_FLAG_DOWN;
-	return rdpei_pen_process(context, externalId, contactFlags, fieldFlags, begin, x, y, args);
+	return rdpei_pen_process(context, externalId, contactFlags, fieldFlags, x, y, args);
 }
 
 static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdpSettings* settings)
