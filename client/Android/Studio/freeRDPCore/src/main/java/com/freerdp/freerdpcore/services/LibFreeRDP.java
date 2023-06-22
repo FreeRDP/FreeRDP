@@ -391,6 +391,7 @@ public class LibFreeRDP
 			args.add("/microphone");
 		}
 
+		args.add("/kbd:unicode:on");
 		args.add("/cert:ignore");
 		args.add("/log-level:" + debug.getDebugLevel());
 		String[] arrayArgs = args.toArray(new String[0]);
