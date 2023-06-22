@@ -46,15 +46,22 @@ extern "C"
 	typedef UINT (*pcRdpeiTouchRawEvent)(RdpeiClientContext* context, INT32 externalId, INT32 x,
 	                                     INT32 y, INT32* contactId, UINT32 contactFlags,
 	                                     UINT32 fieldFlags, ...);
+	typedef UINT (*pcRdpeiTouchRawEventVA)(RdpeiClientContext* context, INT32 externalId, INT32 x,
+	                                       INT32 y, INT32* contactId, UINT32 contactFlags,
+	                                       UINT32 fieldFlags, va_list args);
 
 	typedef UINT (*pcRdpeiAddPen)(RdpeiClientContext* context, INT32 externalId,
 	                              const RDPINPUT_PEN_CONTACT* contact);
 
 	typedef UINT (*pcRdpeiPen)(RdpeiClientContext* context, INT32 externalId, UINT32 fieldFlags,
 	                           INT32 x, INT32 y, ...);
+
 	typedef UINT (*pcRdpeiPenRawEvent)(RdpeiClientContext* context, INT32 externalId,
 	                                   UINT32 contactFlags, UINT32 fieldFlags, INT32 x, INT32 y,
 	                                   ...);
+	typedef UINT (*pcRdpeiPenRawEventVA)(RdpeiClientContext* context, INT32 externalId,
+	                                     UINT32 contactFlags, UINT32 fieldFlags, INT32 x, INT32 y,
+	                                     va_list args);
 
 	typedef UINT (*pcRdpeiSuspendTouch)(RdpeiClientContext* context);
 	typedef UINT (*pcRdpeiResumeTouch)(RdpeiClientContext* context);
@@ -87,9 +94,11 @@ extern "C"
 
 		pcRdpeiTouchEvent TouchCancel;
 		pcRdpeiTouchRawEvent TouchRawEvent;
+		pcRdpeiTouchRawEventVA TouchRawEventVA;
 
 		pcRdpeiPen PenCancel;
 		pcRdpeiPenRawEvent PenRawEvent;
+		pcRdpeiPenRawEventVA PenRawEventVA;
 
 		UINT32 clientFeaturesMask;
 	};
