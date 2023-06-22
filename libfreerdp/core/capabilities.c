@@ -1381,8 +1381,13 @@ static BOOL rdp_apply_input_capability_set(rdpSettings* settings, const rdpSetti
 		 */
 		if (settings->HasHorizontalWheel)
 			settings->HasHorizontalWheel = src->HasHorizontalWheel;
-		if (settings->UnicodeInput)
-			settings->UnicodeInput = src->UnicodeInput;
+		const BOOL UnicodeInput = freerdp_settings_get_bool(settings, FreeRDP_UnicodeInput);
+		if (UnicodeInput)
+		{
+			const BOOL srcVal = freerdp_settings_get_bool(settings, FreeRDP_UnicodeInput);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, srcVal))
+				return FALSE;
+		}
 		if (settings->HasExtendedMouseEvent)
 			settings->HasExtendedMouseEvent = src->HasExtendedMouseEvent;
 	}
@@ -1428,10 +1433,19 @@ static BOOL rdp_read_input_capability_set(wStream* s, rdpSettings* settings)
 			return FALSE;
 	}
 
-	settings->FastPathInput = inputFlags & (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2);
-	settings->HasHorizontalWheel = (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL) ? TRUE : FALSE;
-	settings->UnicodeInput = (inputFlags & INPUT_FLAG_UNICODE) ? TRUE : FALSE;
-	settings->HasExtendedMouseEvent = (inputFlags & INPUT_FLAG_MOUSEX) ? TRUE : FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_FastPathInput,
+	                               inputFlags &
+	                                   (INPUT_FLAG_FASTPATH_INPUT | INPUT_FLAG_FASTPATH_INPUT2)))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_HasHorizontalWheel,
+	                               (inputFlags & TS_INPUT_FLAG_MOUSE_HWHEEL) ? TRUE : FALSE))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput,
+	                               (inputFlags & INPUT_FLAG_UNICODE) ? TRUE : FALSE))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_HasExtendedMouseEvent,
+	                               (inputFlags & INPUT_FLAG_MOUSEX) ? TRUE : FALSE))
+		return FALSE;
 
 	return TRUE;
 }
@@ -1464,7 +1478,7 @@ static BOOL rdp_write_input_capability_set(wStream* s, const rdpSettings* settin
 	if (settings->HasHorizontalWheel)
 		inputFlags |= TS_INPUT_FLAG_MOUSE_HWHEEL;
 
-	if (settings->UnicodeInput)
+	if (freerdp_settings_get_bool(settings, FreeRDP_UnicodeInput))
 		inputFlags |= INPUT_FLAG_UNICODE;
 
 	if (settings->HasExtendedMouseEvent)
