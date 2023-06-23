@@ -211,6 +211,29 @@ static BOOL register_raw_events(xfContext* xfc, Window window)
 	return TRUE;
 }
 
+static BOOL register_device_events(xfContext* xfc, Window window)
+{
+	XIEventMask mask;
+	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
+	rdpSettings* settings;
+
+	WINPR_ASSERT(xfc);
+
+	settings = xfc->common.context.settings;
+	WINPR_ASSERT(settings);
+
+	XISetMask(mask_bytes, XI_DeviceChanged);
+	XISetMask(mask_bytes, XI_HierarchyChanged);
+
+	mask.deviceid = XIAllDevices;
+	mask.mask_len = sizeof(mask_bytes);
+	mask.mask = mask_bytes;
+
+	XISelectEvents(xfc->display, window, &mask, 1);
+
+	return TRUE;
+}
+
 int xf_input_init(xfContext* xfc, Window window)
 {
 	int major = XI_2_Major;
@@ -250,6 +273,8 @@ int xf_input_init(xfContext* xfc, Window window)
 		if (!register_raw_events(xfc, root))
 			return -1;
 		if (!register_input_events(xfc, window))
+			return -1;
+		if (!register_device_events(xfc, window))
 			return -1;
 	}
 
@@ -819,6 +844,29 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 				xf_generic_RawMotionNotify(xfc, (int)x, (int)y, event->event, xfc->remote_app);
 			}
 			break;
+		case XI_DeviceChanged:
+		{
+			const XIDeviceChangedEvent* ev = (const XIDeviceChangedEvent*)event;
+			if (ev->reason != XIDeviceChange)
+				break;
+
+			/*
+			 * TODO:
+			 * 1. Register only changed devices.
+			 * 2. Both `XIDeviceChangedEvent` and `XIHierarchyEvent` have no target
+			 *    `Window` which is used to register xinput events. So assume
+			 *    `xfc->window` created by `xf_CreateDesktopWindow` is the same
+			 *    `Window` we registered.
+			 */
+			if (xfc->window)
+				register_input_events(xfc, xfc->window->handle);
+		}
+		break;
+		case XI_HierarchyChanged:
+			if (xfc->window)
+				register_input_events(xfc, xfc->window->handle);
+			break;
+
 		default:
 			WLog_WARN(TAG, "Unhandled event %d: Event was registered but is not handled!", evtype);
 			break;
