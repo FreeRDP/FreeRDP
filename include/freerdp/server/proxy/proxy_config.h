@@ -107,6 +107,8 @@ extern "C"
 		/* Data extracted from PrivateKeyContent or PrivateKeyFile  (evaluation in this order) */
 		char* PrivateKeyPEM;
 		size_t PrivateKeyPEMLength;
+
+		wIniFile* ini;
 	};
 
 	/**
@@ -212,6 +214,17 @@ extern "C"
 	 * @return  TRUE for success, FALSE for failure
 	 */
 	FREERDP_API BOOL pf_config_plugin(proxyPluginsManager* plugins_manager, void* userdata);
+
+	/**
+	 * @brief pf_config_get get a value for a section/key
+	 * @param config A pointer to the proxyConfig. Must NOT be NULL.
+	 * @param section The name of the section the key is in, must not be \b NULL
+	 * @param key The name of the key to look for. Must not be \b NULL
+	 *
+	 * @return A pointer to the value for \b section/key or \b NULL if not found
+	 */
+	FREERDP_API const char* pf_config_get(const proxyConfig* config, const char* section,
+	                                      const char* key);
 
 #ifdef __cplusplus
 }

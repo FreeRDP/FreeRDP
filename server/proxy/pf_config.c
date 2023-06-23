@@ -602,6 +602,9 @@ proxyConfig* server_config_load_ini(wIniFile* ini)
 
 		if (!pf_config_load_certificates(ini, config))
 			goto out;
+		config->ini = IniFile_Clone(ini);
+		if (!config->ini)
+			goto out;
 	}
 	return config;
 out:
@@ -897,6 +900,7 @@ void pf_server_config_free(proxyConfig* config)
 	if (config->PrivateKeyPEM)
 		memset(config->PrivateKeyPEM, 0, config->PrivateKeyPEMLength);
 	free(config->PrivateKeyPEM);
+	IniFile_Free(config->ini);
 	free(config);
 }
 
@@ -1020,6 +1024,10 @@ BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config)
 		goto fail;
 	if (!pf_config_copy_string_n(&tmp->PrivateKeyPEM, config->PrivateKeyPEM,
 	                             config->PrivateKeyPEMLength))
+		goto fail;
+
+	tmp->ini = IniFile_Clone(config->ini);
+	if (!tmp->ini)
 		goto fail;
 
 	*dst = tmp;
@@ -1325,4 +1333,14 @@ BOOL pf_config_plugin(proxyPluginsManager* plugins_manager, void* userdata)
 	plugin.userdata = userdata;
 
 	return plugins_manager->RegisterPlugin(plugins_manager, &plugin);
+}
+
+const char* pf_config_get(const proxyConfig* config, const char* section, const char* key)
+{
+	WINPR_ASSERT(config);
+	WINPR_ASSERT(config->ini);
+	WINPR_ASSERT(section);
+	WINPR_ASSERT(key);
+
+	return IniFile_GetKeyValueString(config->ini, section, key);
 }
