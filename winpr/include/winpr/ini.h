@@ -51,6 +51,8 @@ extern "C"
 	WINPR_API wIniFile* IniFile_New(void);
 	WINPR_API void IniFile_Free(wIniFile* ini);
 
+	WINPR_API wIniFile* IniFile_Clone(const wIniFile* ini);
+
 #ifdef __cplusplus
 }
 #endif
