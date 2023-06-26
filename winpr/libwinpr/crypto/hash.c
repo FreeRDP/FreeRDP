@@ -217,7 +217,7 @@ fail:
 	return NULL;
 }
 
-BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, size_t keylen)
+BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const void* key, size_t keylen)
 {
 	WINPR_ASSERT(ctx);
 
@@ -241,8 +241,8 @@ BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, siz
 		return FALSE;
 
 	const char* param_name = OSSL_MAC_PARAM_DIGEST;
-	OSSL_PARAM param[] = { OSSL_PARAM_construct_utf8_string(param_name, hash, 0),
-		                   OSSL_PARAM_construct_end() };
+	const OSSL_PARAM param[] = { OSSL_PARAM_construct_utf8_string(param_name, hash, 0),
+		                         OSSL_PARAM_construct_end() };
 
 	if (EVP_MAC_init(ctx->xhmac, key, keylen, param) == 1)
 		return TRUE;
@@ -289,7 +289,7 @@ BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const BYTE* key, siz
 	return FALSE;
 }
 
-BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen)
+BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const void* input, size_t ilen)
 {
 	WINPR_ASSERT(ctx);
 
@@ -330,7 +330,7 @@ BOOL winpr_HMAC_Update(WINPR_HMAC_CTX* ctx, const BYTE* input, size_t ilen)
 	return FALSE;
 }
 
-BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, BYTE* output, size_t olen)
+BOOL winpr_HMAC_Final(WINPR_HMAC_CTX* ctx, void* output, size_t olen)
 {
 	WINPR_ASSERT(ctx);
 
@@ -408,8 +408,8 @@ void winpr_HMAC_Free(WINPR_HMAC_CTX* ctx)
 	free(ctx);
 }
 
-BOOL winpr_HMAC(WINPR_MD_TYPE md, const BYTE* key, size_t keylen, const BYTE* input, size_t ilen,
-                BYTE* output, size_t olen)
+BOOL winpr_HMAC(WINPR_MD_TYPE md, const void* key, size_t keylen, const void* input, size_t ilen,
+                void* output, size_t olen)
 {
 	BOOL result = FALSE;
 	WINPR_HMAC_CTX* ctx = winpr_HMAC_New();
@@ -584,7 +584,7 @@ BOOL winpr_Digest_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 #endif
 }
 
-BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen)
+BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const void* input, size_t ilen)
 {
 	WINPR_ASSERT(ctx);
 
@@ -620,7 +620,7 @@ BOOL winpr_Digest_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen)
 	return TRUE;
 }
 
-BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, BYTE* output, size_t olen)
+BOOL winpr_Digest_Final(WINPR_DIGEST_CTX* ctx, void* output, size_t olen)
 {
 	WINPR_ASSERT(ctx);
 
@@ -682,7 +682,7 @@ BOOL winpr_DigestSign_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE digest, void* ke
 #endif
 }
 
-BOOL winpr_DigestSign_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t ilen)
+BOOL winpr_DigestSign_Update(WINPR_DIGEST_CTX* ctx, const void* input, size_t ilen)
 {
 	WINPR_ASSERT(ctx);
 
@@ -697,7 +697,7 @@ BOOL winpr_DigestSign_Update(WINPR_DIGEST_CTX* ctx, const BYTE* input, size_t il
 #endif
 }
 
-BOOL winpr_DigestSign_Final(WINPR_DIGEST_CTX* ctx, BYTE* output, size_t* piolen)
+BOOL winpr_DigestSign_Final(WINPR_DIGEST_CTX* ctx, void* output, size_t* piolen)
 {
 	WINPR_ASSERT(ctx);
 
@@ -736,7 +736,7 @@ void winpr_Digest_Free(WINPR_DIGEST_CTX* ctx)
 	free(ctx);
 }
 
-BOOL winpr_Digest_Allow_FIPS(WINPR_MD_TYPE md, const BYTE* input, size_t ilen, BYTE* output,
+BOOL winpr_Digest_Allow_FIPS(WINPR_MD_TYPE md, const void* input, size_t ilen, void* output,
                              size_t olen)
 {
 	BOOL result = FALSE;
@@ -760,7 +760,7 @@ out:
 	return result;
 }
 
-BOOL winpr_Digest(WINPR_MD_TYPE md, const BYTE* input, size_t ilen, BYTE* output, size_t olen)
+BOOL winpr_Digest(WINPR_MD_TYPE md, const void* input, size_t ilen, void* output, size_t olen)
 {
 	BOOL result = FALSE;
 	WINPR_DIGEST_CTX* ctx = winpr_Digest_New();
