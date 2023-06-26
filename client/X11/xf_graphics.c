@@ -573,7 +573,7 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 	}
 
 	WLog_DBG(TAG, "%" PRIu32 "x%" PRIu32, x, y);
-	if (xfc->remote_app && !xfc->focused)
+	if (!xfc->focused)
 		return TRUE;
 
 	xf_adjust_coordinates_to_screen(xfc, &x, &y);
@@ -596,7 +596,7 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 		goto out;
 	}
 
-	rc = XWarpPointer(xfc->display, None, handle, 0, 0, 0, 0, x, y);
+	rc = XWarpPointer(xfc->display, handle, handle, 0, 0, 0, 0, x, y);
 	if (rc == 0)
 		WLog_WARN(TAG, "XWarpPointer==%d", rc);
 	tmp.event_mask = current.your_event_mask;
