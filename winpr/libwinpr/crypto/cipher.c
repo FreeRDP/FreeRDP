@@ -124,17 +124,17 @@ fail:
 	return NULL;
 }
 
-WINPR_RC4_CTX* winpr_RC4_New_Allow_FIPS(const BYTE* key, size_t keylen)
+WINPR_RC4_CTX* winpr_RC4_New_Allow_FIPS(const void* key, size_t keylen)
 {
 	return winpr_RC4_New_Internal(key, keylen, TRUE);
 }
 
-WINPR_RC4_CTX* winpr_RC4_New(const BYTE* key, size_t keylen)
+WINPR_RC4_CTX* winpr_RC4_New(const void* key, size_t keylen)
 {
 	return winpr_RC4_New_Internal(key, keylen, FALSE);
 }
 
-BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output)
+BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const void* input, void* output)
 {
 	WINPR_ASSERT(ctx);
 
@@ -598,7 +598,7 @@ mbedtls_cipher_type_t winpr_mbedtls_get_cipher_type(int cipher)
 }
 #endif
 
-WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BYTE* iv)
+WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const void* key, const void* iv)
 {
 	WINPR_CIPHER_CTX* ctx = NULL;
 #if defined(WITH_OPENSSL)
@@ -665,7 +665,7 @@ WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BY
 	return ctx;
 }
 
-BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, BYTE* output,
+BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const void* input, size_t ilen, void* output,
                          size_t* olen)
 {
 #if defined(WITH_OPENSSL)
@@ -695,7 +695,7 @@ BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, 
 	return FALSE;
 }
 
-BOOL winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen)
+BOOL winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, void* output, size_t* olen)
 {
 #if defined(WITH_OPENSSL)
 	int outl = (int)*olen;
@@ -732,8 +732,8 @@ void winpr_Cipher_Free(WINPR_CIPHER_CTX* ctx)
  * Key Generation
  */
 
-int winpr_Cipher_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* data, int datal,
-                            int count, BYTE* key, BYTE* iv)
+int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, const void* data,
+                            size_t datal, size_t count, void* key, void* iv)
 {
 	/**
 	 * Key and IV generation compatible with OpenSSL EVP_BytesToKey():
