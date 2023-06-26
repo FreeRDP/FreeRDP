@@ -1696,7 +1696,6 @@ static UINT rdpdr_server_receive_prn_cache_add_printer(RdpdrServerContext* conte
 	const WCHAR* PnPName;
 	const WCHAR* DriverName;
 	const WCHAR* PrinterName;
-	const BYTE* config;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -1720,7 +1719,6 @@ static UINT rdpdr_server_receive_prn_cache_add_printer(RdpdrServerContext* conte
 	if (!PrinterName && (PrinterNameLen > 0))
 		return ERROR_INVALID_DATA;
 
-	config = Stream_ConstPointer(s);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, CachedFieldsLen))
 		return ERROR_INVALID_DATA;
 	Stream_Seek(s, CachedFieldsLen);

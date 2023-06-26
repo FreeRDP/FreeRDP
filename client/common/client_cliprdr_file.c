@@ -1556,12 +1556,7 @@ static void cliprdr_local_file_try_close(CliprdrLocalFile* file, UINT res, UINT6
 static UINT cliprdr_file_context_server_file_size_request(
     CliprdrFileContext* file, const CLIPRDR_FILE_CONTENTS_REQUEST* fileContentsRequest)
 {
-	wClipboardFileSizeRequest request = { 0 };
-
 	WINPR_ASSERT(fileContentsRequest);
-
-	request.streamId = fileContentsRequest->streamId;
-	request.listIndex = fileContentsRequest->listIndex;
 
 	if (fileContentsRequest->cbRequested != sizeof(UINT64))
 	{
