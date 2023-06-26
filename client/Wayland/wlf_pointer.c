@@ -149,19 +149,15 @@ static BOOL wlf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 
 BOOL wlf_register_pointer(rdpGraphics* graphics)
 {
-	rdpPointer* pointer = NULL;
+	rdpPointer pointer = { 0 };
 
-	if (!(pointer = (rdpPointer*)calloc(1, sizeof(rdpPointer))))
-		return FALSE;
-
-	pointer->size = sizeof(wlfPointer);
-	pointer->New = wlf_Pointer_New;
-	pointer->Free = wlf_Pointer_Free;
-	pointer->Set = wlf_Pointer_Set;
-	pointer->SetNull = wlf_Pointer_SetNull;
-	pointer->SetDefault = wlf_Pointer_SetDefault;
-	pointer->SetPosition = wlf_Pointer_SetPosition;
-	graphics_register_pointer(graphics, pointer);
-	free(pointer);
+	pointer.size = sizeof(wlfPointer);
+	pointer.New = wlf_Pointer_New;
+	pointer.Free = wlf_Pointer_Free;
+	pointer.Set = wlf_Pointer_Set;
+	pointer.SetNull = wlf_Pointer_SetNull;
+	pointer.SetDefault = wlf_Pointer_SetDefault;
+	pointer.SetPosition = wlf_Pointer_SetPosition;
+	graphics_register_pointer(graphics, &pointer);
 	return TRUE;
 }

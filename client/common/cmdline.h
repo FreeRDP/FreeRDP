@@ -311,6 +311,11 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Send mouse motion" },
 	{ "mouse-relative", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Send mouse motion with relative addressing" },
+	{ "mouse", COMMAND_LINE_VALUE_REQUIRED, "[relative:[on|off],grab:[on|off]]", NULL, NULL, -1,
+	  NULL,
+	  "Mouse related options:"
+	  "* relative:   send relative mouse movements if supported by server"
+	  "* grab:       grab the mouse if within the window" },
 #if defined(CHANNEL_TSMF_CLIENT)
 	{ "multimedia", COMMAND_LINE_VALUE_OPTIONAL, "[sys:<sys>,][dev:<dev>,][decoder:<decoder>]",
 	  NULL, NULL, -1, "mmr", "[DEPRECATED], use /video] Redirect multimedia (video)" },

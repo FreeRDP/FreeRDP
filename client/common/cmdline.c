@@ -4012,6 +4012,42 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 		{
 			settings->MouseUseRelativeMove = enable;
 		}
+		CommandLineSwitchCase(arg, "mouse")
+		{
+			size_t count = 0;
+			char** ptr = CommandLineParseCommaSeparatedValuesEx("mouse", arg->Value, &count);
+			UINT rc = 0;
+			if (ptr)
+			{
+				for (size_t x = 1; x < count; x++)
+				{
+					const char* cur = ptr[x];
+
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(cur);
+					if (bval == PARSE_FAIL)
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					else
+					{
+						const BOOL val = bval != PARSE_OFF;
+						size_t key = 0;
+						if (option_starts_with("relative", cur))
+							key = FreeRDP_MouseUseRelativeMove;
+						else if (option_starts_with("grab", cur))
+							key = FreeRDP_GrabMouse;
+
+						if (!freerdp_settings_set_bool(settings, key, val))
+							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					}
+
+					if (rc != 0)
+						break;
+				}
+			}
+			free(ptr);
+
+			if (rc != 0)
+				return rc;
+		}
 		CommandLineSwitchCase(arg, "unmap-buttons")
 		{
 			settings->UnmapButtons = enable;

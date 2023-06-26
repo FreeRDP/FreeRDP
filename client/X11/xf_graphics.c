@@ -723,20 +723,16 @@ static BOOL xf_Glyph_EndDraw(rdpContext* context, INT32 x, INT32 y, INT32 width,
 /* Graphics Module */
 BOOL xf_register_pointer(rdpGraphics* graphics)
 {
-	rdpPointer* pointer = NULL;
+	rdpPointer pointer = { 0 };
 
-	if (!(pointer = (rdpPointer*)calloc(1, sizeof(rdpPointer))))
-		return FALSE;
-
-	pointer->size = sizeof(xfPointer);
-	pointer->New = xf_Pointer_New;
-	pointer->Free = xf_Pointer_Free;
-	pointer->Set = xf_Pointer_Set;
-	pointer->SetNull = xf_Pointer_SetNull;
-	pointer->SetDefault = xf_Pointer_SetDefault;
-	pointer->SetPosition = xf_Pointer_SetPosition;
-	graphics_register_pointer(graphics, pointer);
-	free(pointer);
+	pointer.size = sizeof(xfPointer);
+	pointer.New = xf_Pointer_New;
+	pointer.Free = xf_Pointer_Free;
+	pointer.Set = xf_Pointer_Set;
+	pointer.SetNull = xf_Pointer_SetNull;
+	pointer.SetDefault = xf_Pointer_SetDefault;
+	pointer.SetPosition = xf_Pointer_SetPosition;
+	graphics_register_pointer(graphics, &pointer);
 	return TRUE;
 }
 
