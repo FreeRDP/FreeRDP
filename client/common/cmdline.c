@@ -92,7 +92,7 @@ static BOOL freerdp_client_print_codepages(const char* arg)
 	for (size_t x = 0; x < count; x++)
 	{
 		const RDP_CODEPAGE* page = &pages[x];
-		char buffer[80] = { 0 };
+		char buffer[520] = { 0 };
 
 		if (strnlen(page->subLanguageSymbol, ARRAYSIZE(page->subLanguageSymbol)) > 0)
 			_snprintf(buffer, sizeof(buffer), "[%s|%s]", page->primaryLanguageSymbol,

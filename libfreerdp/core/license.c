@@ -2102,6 +2102,8 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	Stream_Read_UINT16(licenseStream, os_minor);
 	Stream_Read_UINT16(licenseStream, os_major);
 
+	WLog_DBG(TAG, "Version: %" PRIu16 ".%" PRIu16, os_major, os_minor);
+
 	/* Scope */
 	Stream_Read_UINT32(licenseStream, cbScope);
 	if (!license_check_stream_length(licenseStream, cbScope, "license new/upgrade::blob::scope"))
