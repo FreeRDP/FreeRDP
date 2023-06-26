@@ -63,18 +63,17 @@ static void pointer_free(rdpContext* context, rdpPointer* pointer)
 static BOOL update_pointer_position(rdpContext* context,
                                     const POINTER_POSITION_UPDATE* pointer_position)
 {
-	rdpPointer* pointer;
-	BOOL GrabMouse;
-
 	if (!context || !context->graphics || !context->graphics->Pointer_Prototype ||
 	    !pointer_position)
 		return FALSE;
 
-	GrabMouse = freerdp_settings_get_bool(context->settings, FreeRDP_GrabMouse);
+	const BOOL GrabMouse = freerdp_settings_get_bool(context->settings, FreeRDP_GrabMouse);
 	if (!GrabMouse)
 		return TRUE;
 
-	pointer = context->graphics->Pointer_Prototype;
+	const rdpPointer* pointer = context->graphics->Pointer_Prototype;
+	WINPR_ASSERT(pointer);
+
 	return IFCALLRESULT(TRUE, pointer->SetPosition, context, pointer_position->xPos,
 	                    pointer_position->yPos);
 }

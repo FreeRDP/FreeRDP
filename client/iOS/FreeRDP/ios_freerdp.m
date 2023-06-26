@@ -184,7 +184,7 @@ static BOOL ios_Pointer_SetDefault(rdpContext *context)
 
 static BOOL ios_register_pointer(rdpGraphics *graphics)
 {
-	rdpPointer pointer;
+	rdpPointer pointer = { 0 };
 
 	if (!graphics)
 		return FALSE;
