@@ -339,55 +339,55 @@ static state_run_t peer_recv_data_pdu(freerdp_peer* client, wStream* s, UINT16 t
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
-	WINPR_ASSERT(client->context->rdp);
-	WINPR_ASSERT(client->context->rdp->mcs);
+	rdpRdp* rdp = client->context->rdp;
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->mcs);
 
 	update = client->context->update;
 	WINPR_ASSERT(update);
 
-	if (!rdp_read_share_data_header(client->context->rdp, s, &length, &type, &share_id,
-	                                &compressed_type, &compressed_len))
+	if (!rdp_read_share_data_header(rdp, s, &length, &type, &share_id, &compressed_type,
+	                                &compressed_len))
 		return STATE_RUN_FAILED;
 
 #ifdef WITH_DEBUG_RDP
-	WLog_Print(client->context->rdp, WLOG_DEBUG,
-	           "recv %s Data PDU (0x%02" PRIX8 "), length: %" PRIu16 "",
+	WLog_Print(rdp->log, WLOG_DEBUG, "recv %s Data PDU (0x%02" PRIX8 "), length: %" PRIu16 "",
 	           data_pdu_type_to_string(type), type, length);
 #endif
 
 	switch (type)
 	{
 		case DATA_PDU_TYPE_SYNCHRONIZE:
-			if (!rdp_recv_client_synchronize_pdu(client->context->rdp, s))
+			if (!rdp_recv_client_synchronize_pdu(rdp, s))
 				return STATE_RUN_FAILED;
 
 			break;
 
 		case DATA_PDU_TYPE_CONTROL:
-			if (!rdp_server_accept_client_control_pdu(client->context->rdp, s))
+			if (!rdp_server_accept_client_control_pdu(rdp, s))
 				return STATE_RUN_FAILED;
 
 			break;
 
 		case DATA_PDU_TYPE_INPUT:
-			if (!input_recv(client->context->rdp->input, s))
+			if (!input_recv(rdp->input, s))
 				return STATE_RUN_FAILED;
 
 			break;
 
 		case DATA_PDU_TYPE_BITMAP_CACHE_PERSISTENT_LIST:
-			if (!rdp_server_accept_client_persistent_key_list_pdu(client->context->rdp, s))
+			if (!rdp_server_accept_client_persistent_key_list_pdu(rdp, s))
 				return STATE_RUN_FAILED;
 			break;
 
 		case DATA_PDU_TYPE_FONT_LIST:
-			if (!rdp_server_accept_client_font_list_pdu(client->context->rdp, s))
+			if (!rdp_server_accept_client_font_list_pdu(rdp, s))
 				return STATE_RUN_FAILED;
 
 			return STATE_RUN_CONTINUE; // State changed, trigger rerun
 
 		case DATA_PDU_TYPE_SHUTDOWN_REQUEST:
-			mcs_send_disconnect_provider_ultimatum(client->context->rdp->mcs);
+			mcs_send_disconnect_provider_ultimatum(rdp->mcs);
 			WLog_WARN(TAG, "disconnect provider ultimatum sent to peer, closing connection");
 			return STATE_RUN_QUIT_SESSION;
 
