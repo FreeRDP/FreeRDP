@@ -1742,7 +1742,10 @@ BOOL rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 	const CONNECTION_STATE cstate = rdp_get_state(rdp);
 
 	if (cstate >= CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT)
+	{
+		WINPR_ASSERT(rdp->context);
 		client = rdp->context->peer;
+	}
 
 	if (!rdp_is_active_peer_state(cstate))
 	{

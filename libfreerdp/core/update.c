@@ -3197,13 +3197,11 @@ void update_free_window_state(WINDOW_STATE_ORDER* window_state)
 rdpUpdate* update_new(rdpRdp* rdp)
 {
 	const wObject cb = { NULL, NULL, NULL, update_free_queued_message, NULL };
-	rdp_update_internal* update;
-	rdp_altsec_update_internal* altsec;
-	rdp_primary_update_internal* primary;
-	rdp_secondary_update_internal* secondary;
-	OFFSCREEN_DELETE_LIST* deleteList;
-	WINPR_UNUSED(rdp);
-	update = (rdp_update_internal*)calloc(1, sizeof(rdp_update_internal));
+
+	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->context);
+
+	rdp_update_internal* update = (rdp_update_internal*)calloc(1, sizeof(rdp_update_internal));
 
 	if (!update)
 		return NULL;
@@ -3216,19 +3214,22 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	if (!update->common.pointer)
 		goto fail;
 
-	primary = (rdp_primary_update_internal*)calloc(1, sizeof(rdp_primary_update_internal));
+	rdp_primary_update_internal* primary =
+	    (rdp_primary_update_internal*)calloc(1, sizeof(rdp_primary_update_internal));
 
 	if (!primary)
 		goto fail;
 	update->common.primary = &primary->common;
 
-	secondary = (rdp_secondary_update_internal*)calloc(1, sizeof(rdp_secondary_update_internal));
+	rdp_secondary_update_internal* secondary =
+	    (rdp_secondary_update_internal*)calloc(1, sizeof(rdp_secondary_update_internal));
 
 	if (!secondary)
 		goto fail;
 	update->common.secondary = &secondary->common;
 
-	altsec = (rdp_altsec_update_internal*)calloc(1, sizeof(rdp_altsec_update_internal));
+	rdp_altsec_update_internal* altsec =
+	    (rdp_altsec_update_internal*)calloc(1, sizeof(rdp_altsec_update_internal));
 
 	if (!altsec)
 		goto fail;
@@ -3239,7 +3240,7 @@ rdpUpdate* update_new(rdpRdp* rdp)
 	if (!update->common.window)
 		goto fail;
 
-	deleteList = &(altsec->create_offscreen_bitmap.deleteList);
+	OFFSCREEN_DELETE_LIST* deleteList = &(altsec->create_offscreen_bitmap.deleteList);
 	deleteList->sIndices = 64;
 	deleteList->indices = calloc(deleteList->sIndices, 2);
 
