@@ -627,6 +627,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 
 			default:
 				WLog_ERR(TAG, "Unknown GCC client data block: 0x%04" PRIX16 "", type);
+				winpr_HexDump(TAG, WLOG_TRACE, Stream_Pointer(s), blockLength - 4);
 				Stream_Seek(s, blockLength - 4);
 				break;
 		}
@@ -827,6 +828,7 @@ BOOL gcc_read_server_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 			default:
 				WLog_ERR(TAG, "gcc_read_server_data_blocks: ignoring type=%s",
 				         gcc_block_type_string(type, buffer, sizeof(buffer)));
+				winpr_HexDump(TAG, WLOG_TRACE, Stream_Pointer(sub), Stream_GetRemainingLength(sub));
 				break;
 		}
 
