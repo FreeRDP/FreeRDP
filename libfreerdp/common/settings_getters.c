@@ -231,6 +231,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_Fullscreen:
 			return settings->Fullscreen;
 
+		case FreeRDP_GatewayArmTransport:
+			return settings->GatewayArmTransport;
+
 		case FreeRDP_GatewayBypassLocal:
 			return settings->GatewayBypassLocal;
 
@@ -850,6 +853,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_Fullscreen:
 			settings->Fullscreen = cnv.c;
+			break;
+
+		case FreeRDP_GatewayArmTransport:
+			settings->GatewayArmTransport = cnv.c;
 			break;
 
 		case FreeRDP_GatewayBypassLocal:

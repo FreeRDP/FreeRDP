@@ -85,6 +85,22 @@ typedef enum
 	TransferEncodingChunked
 } TRANSFER_ENCODING;
 
+typedef enum
+{
+	ChunkStateLenghHeader,
+	ChunkStateData,
+	ChunkStateFooter,
+	ChunkStateEnd
+} CHUNK_STATE;
+
+typedef struct
+{
+	size_t nextOffset;
+	size_t headerFooterPos;
+	CHUNK_STATE state;
+	char lenBuffer[11];
+} http_encoding_chunked_context;
+
 /* HTTP context */
 typedef struct s_http_context HttpContext;
 
@@ -95,11 +111,14 @@ FREERDP_LOCAL BOOL http_context_set_method(HttpContext* context, const char* Met
 FREERDP_LOCAL const char* http_context_get_uri(HttpContext* context);
 FREERDP_LOCAL BOOL http_context_set_uri(HttpContext* context, const char* URI);
 FREERDP_LOCAL BOOL http_context_set_user_agent(HttpContext* context, const char* UserAgent);
+FREERDP_LOCAL BOOL http_context_set_x_ms_user_agent(HttpContext* context, const char* UserAgent);
 FREERDP_LOCAL BOOL http_context_set_host(HttpContext* context, const char* Host);
 FREERDP_LOCAL BOOL http_context_set_accept(HttpContext* context, const char* Accept);
 FREERDP_LOCAL BOOL http_context_set_cache_control(HttpContext* context, const char* CacheControl);
 FREERDP_LOCAL BOOL http_context_set_connection(HttpContext* context, const char* Connection);
 FREERDP_LOCAL BOOL http_context_set_pragma(HttpContext* context, const char* Pragma);
+FREERDP_LOCAL BOOL http_context_set_cookie(HttpContext* context, const char* CookieName,
+                                           const char* CookieValue);
 FREERDP_LOCAL BOOL http_context_set_rdg_connection_id(HttpContext* context,
                                                       const char* RdgConnectionId);
 FREERDP_LOCAL BOOL http_context_set_rdg_auth_scheme(HttpContext* context,
@@ -114,6 +133,7 @@ FREERDP_LOCAL HttpRequest* http_request_new(void);
 FREERDP_LOCAL void http_request_free(HttpRequest* request);
 
 FREERDP_LOCAL BOOL http_request_set_method(HttpRequest* request, const char* Method);
+FREERDP_LOCAL BOOL http_request_set_content_type(HttpRequest* request, const char* ContentType);
 FREERDP_LOCAL SSIZE_T http_request_get_content_length(HttpRequest* request);
 FREERDP_LOCAL BOOL http_request_set_content_length(HttpRequest* request, size_t length);
 
@@ -137,11 +157,17 @@ FREERDP_LOCAL HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLeng
 
 FREERDP_LOCAL long http_response_get_status_code(HttpResponse* response);
 FREERDP_LOCAL SSIZE_T http_response_get_body_length(HttpResponse* response);
+FREERDP_LOCAL const BYTE* http_response_get_body(HttpResponse* response);
 FREERDP_LOCAL const char* http_response_get_auth_token(HttpResponse* response, const char* method);
+FREERDP_LOCAL const char* http_response_get_setcookie(HttpResponse* response, const char* cookie);
 FREERDP_LOCAL TRANSFER_ENCODING http_response_get_transfer_encoding(HttpResponse* response);
 FREERDP_LOCAL BOOL http_response_is_websocket(HttpContext* http, HttpResponse* response);
 
 FREERDP_LOCAL const char* http_status_string(long status);
 FREERDP_LOCAL char* http_status_string_format(long status, char* buffer, size_t size);
+
+/* chunked read helper */
+FREERDP_LOCAL int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
+                                     http_encoding_chunked_context* encodingContext);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_HTTP_H */
