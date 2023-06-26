@@ -637,6 +637,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_bool(settings, FreeRDP_GatewayUdpTransport, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpExtAuthSspiNtlm, FALSE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_GatewayArmTransport, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_FastPathInput, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_FastPathOutput, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_LongCredentialsSupported, TRUE) ||

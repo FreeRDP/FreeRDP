@@ -111,28 +111,13 @@
 #define HTTP_CAPABILITY_REAUTH 0x10
 #define HTTP_CAPABILITY_UDP_TRANSPORT 0x20
 
-typedef enum
-{
-	ChunkStateLenghHeader,
-	ChunkStateData,
-	ChunkStateFooter
-} CHUNK_STATE;
-
-typedef struct
-{
-	size_t nextOffset;
-	size_t headerFooterPos;
-	CHUNK_STATE state;
-	char lenBuffer[11];
-} rdg_http_encoding_chunked_context;
-
 typedef struct
 {
 	TRANSFER_ENCODING httpTransferEncoding;
 	BOOL isWebsocketTransport;
 	union _context
 	{
-		rdg_http_encoding_chunked_context chunked;
+		http_encoding_chunked_context chunked;
 		websocket_context websocket;
 	} context;
 } rdg_http_encoding_context;
@@ -355,108 +340,6 @@ static BOOL rdg_write_packet(rdpRdg* rdg, wStream* sPacket)
 	return rdg_write_chunked(rdg->tlsIn->bio, sPacket);
 }
 
-static int rdg_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
-                             rdg_http_encoding_chunked_context* encodingContext)
-{
-	int status;
-	int effectiveDataLen = 0;
-	WINPR_ASSERT(encodingContext != NULL);
-	while (TRUE)
-	{
-		switch (encodingContext->state)
-		{
-			case ChunkStateData:
-			{
-				ERR_clear_error();
-				status = BIO_read(
-				    bio, pBuffer,
-				    (size > encodingContext->nextOffset ? encodingContext->nextOffset : size));
-				if (status <= 0)
-					return (effectiveDataLen > 0 ? effectiveDataLen : status);
-
-				encodingContext->nextOffset -= status;
-				if (encodingContext->nextOffset == 0)
-				{
-					encodingContext->state = ChunkStateFooter;
-					encodingContext->headerFooterPos = 0;
-				}
-				effectiveDataLen += status;
-
-				if ((size_t)status == size)
-					return effectiveDataLen;
-
-				pBuffer += status;
-				size -= status;
-			}
-			break;
-			case ChunkStateFooter:
-			{
-				char _dummy[2];
-				WINPR_ASSERT(encodingContext->nextOffset == 0);
-				WINPR_ASSERT(encodingContext->headerFooterPos < 2);
-				ERR_clear_error();
-				status = BIO_read(bio, _dummy, 2 - encodingContext->headerFooterPos);
-				if (status >= 0)
-				{
-					encodingContext->headerFooterPos += status;
-					if (encodingContext->headerFooterPos == 2)
-					{
-						encodingContext->state = ChunkStateLenghHeader;
-						encodingContext->headerFooterPos = 0;
-					}
-				}
-				else
-					return (effectiveDataLen > 0 ? effectiveDataLen : status);
-			}
-			break;
-			case ChunkStateLenghHeader:
-			{
-				BOOL _haveNewLine = FALSE;
-				char* dst = &encodingContext->lenBuffer[encodingContext->headerFooterPos];
-				WINPR_ASSERT(encodingContext->nextOffset == 0);
-				while (encodingContext->headerFooterPos < 10 && !_haveNewLine)
-				{
-					ERR_clear_error();
-					status = BIO_read(bio, dst, 1);
-					if (status >= 0)
-					{
-						if (*dst == '\n')
-							_haveNewLine = TRUE;
-						encodingContext->headerFooterPos += status;
-						dst += status;
-					}
-					else
-						return (effectiveDataLen > 0 ? effectiveDataLen : status);
-				}
-				*dst = '\0';
-				/* strtoul is tricky, error are reported via errno, we also need
-				 * to ensure the result does not overflow */
-				errno = 0;
-				size_t tmp = strtoul(encodingContext->lenBuffer, NULL, 16);
-				if ((errno != 0) || (tmp > SIZE_MAX))
-					return -1;
-				encodingContext->nextOffset = tmp;
-				encodingContext->state = ChunkStateData;
-
-				if (encodingContext->nextOffset == 0)
-				{ /* end of stream */
-					int fd = BIO_get_fd(bio, NULL);
-					if (fd >= 0)
-						closesocket((SOCKET)fd);
-
-					WLog_WARN(TAG, "cunked encoding end of stream received");
-					encodingContext->headerFooterPos = 0;
-					encodingContext->state = ChunkStateFooter;
-				}
-			}
-			break;
-			default:
-				/* invalid state */
-				return -1;
-		}
-	}
-}
-
 static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,
                            rdg_http_encoding_context* encodingContext)
 {
@@ -473,7 +356,7 @@ static int rdg_socket_read(BIO* bio, BYTE* pBuffer, size_t size,
 			ERR_clear_error();
 			return BIO_read(bio, pBuffer, size);
 		case TransferEncodingChunked:
-			return rdg_chuncked_read(bio, pBuffer, size, &encodingContext->context.chunked);
+			return http_chuncked_read(bio, pBuffer, size, &encodingContext->context.chunked);
 		default:
 			return -1;
 	}

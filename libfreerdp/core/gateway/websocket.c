@@ -19,6 +19,7 @@
 
 #include "websocket.h"
 #include <freerdp/log.h>
+#include "../tcp.h"
 
 #define TAG FREERDP_TAG("core.gateway.websocket")
 
@@ -99,6 +100,39 @@ BOOL websocket_write_wstream(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opcode
 	return TRUE;
 }
 
+static int websocket_write_all(BIO* bio, const BYTE* data, size_t length)
+{
+	WINPR_ASSERT(bio);
+	WINPR_ASSERT(data);
+	size_t offset = 0;
+
+	while (offset < length)
+	{
+		ERR_clear_error();
+		int status = BIO_write(bio, &data[offset], length - offset);
+
+		if (status > 0)
+			offset += status;
+		else
+		{
+			if (!BIO_should_retry(bio))
+				return -1;
+
+			if (BIO_write_blocked(bio))
+				status = BIO_wait_write(bio, 100);
+			else if (BIO_read_blocked(bio))
+				return -2; /* Abort write, there is data that must be read */
+			else
+				USleep(100);
+
+			if (status < 0)
+				return -1;
+		}
+	}
+
+	return length;
+}
+
 int websocket_write(BIO* bio, const BYTE* buf, int isize, WEBSOCKET_OPCODE opcode)
 {
 	size_t payloadSize;
@@ -164,7 +198,7 @@ int websocket_write(BIO* bio, const BYTE* buf, int isize, WEBSOCKET_OPCODE opcod
 
 	Stream_SealLength(sWS);
 
-	status = BIO_write(bio, Stream_Buffer(sWS), Stream_Length(sWS));
+	status = websocket_write_all(bio, Stream_Buffer(sWS), Stream_Length(sWS));
 	Stream_Free(sWS, TRUE);
 
 	if (status < 0)

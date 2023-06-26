@@ -2416,7 +2416,8 @@ static BOOL parse_gateway_type_option(rdpSettings* settings, const char* value)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, TRUE) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, FALSE) ||
-		    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets, FALSE))
+		    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets, FALSE) ||
+		    !freerdp_settings_set_bool(settings, FreeRDP_GatewayArmTransport, FALSE))
 			return FALSE;
 	}
 	else
@@ -2424,13 +2425,23 @@ static BOOL parse_gateway_type_option(rdpSettings* settings, const char* value)
 		if (option_equals(value, "http"))
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, FALSE) ||
-			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, TRUE))
+			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, TRUE) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayArmTransport, FALSE))
 				return FALSE;
 		}
 		else if (option_equals(value, "auto"))
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, TRUE) ||
-			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, TRUE))
+			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, TRUE) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayArmTransport, FALSE))
+				return FALSE;
+		}
+		else if (option_equals(value, "arm"))
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, FALSE) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpTransport, FALSE) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayHttpUseWebsockets, FALSE) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_GatewayArmTransport, TRUE))
 				return FALSE;
 		}
 	}
