@@ -276,11 +276,13 @@ extern "C"
 	 *
 	 *  @param listDictionary A dictionary to query, must not be \b NULL
 	 *  @param key The key identifying the entry, if set cloned with \b fnObjectNew
+	 *  @param value The value to store for the \b key. May be \b NULL. if set cloned with \b
+	 * fnObjectNew
 	 *
 	 *  @return \b TRUE for successfull addition, \b FALSE for failure
 	 */
 	WINPR_API BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key,
-	                                  void* value);
+	                                  const void* value);
 
 	/** @brief Remove an item from the dictionary and return the value. Cleanup is up to the caller.
 	 *
@@ -358,7 +360,7 @@ extern "C"
 	 *  @return \b TRUE for success, \b FALSE in case of failure
 	 */
 	WINPR_API BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* key,
-	                                           void* value);
+	                                           const void* value);
 
 	/** @brief allocate a new dictionary
 	 *
