@@ -139,8 +139,8 @@ HttpContext* http_context_new(void)
 		context->cookies = ListDictionary_New(FALSE);
 		ListDictionary_KeyObject(context->cookies)->fnObjectFree = free;
 		ListDictionary_ValueObject(context->cookies)->fnObjectFree = free;
-		ListDictionary_KeyObject(context->cookies)->fnObjectNew = (OBJECT_NEW_FN)_strdup;
-		ListDictionary_ValueObject(context->cookies)->fnObjectNew = (OBJECT_NEW_FN)_strdup;
+		ListDictionary_KeyObject(context->cookies)->fnObjectNew = _strdup;
+		ListDictionary_ValueObject(context->cookies)->fnObjectNew = _strdup;
 	}
 	return context;
 }
@@ -348,14 +348,12 @@ BOOL http_context_set_cookie(HttpContext* context, const char* CookieName, const
 		return FALSE;
 	if (ListDictionary_Contains(context->cookies, CookieName))
 	{
-		/* This list has fnObjectNew set, so the parameter is like it would be const, but casting is
-		 * needed to make the compiler happy */
-		if (!ListDictionary_SetItemValue(context->cookies, (char*)CookieName, (char*)CookieValue))
+		if (!ListDictionary_SetItemValue(context->cookies, CookieName, CookieValue))
 			return FALSE;
 	}
 	else
 	{
-		if (!ListDictionary_Add(context->cookies, (char*)CookieName, (char*)CookieValue))
+		if (!ListDictionary_Add(context->cookies, CookieName, CookieValue))
 			return FALSE;
 	}
 	return TRUE;
@@ -509,22 +507,23 @@ static BOOL http_encode_authorization_line(wStream* s, const char* AuthScheme,
 
 static BOOL http_encode_cookie_line(wStream* s, wListDictionary* cookies)
 {
-	ULONG_PTR* keys;
-	BOOL status;
+	ULONG_PTR* keys = NULL;
+	BOOL status = TRUE;
 
 	if (!s && !cookies)
 		return FALSE;
 
 	ListDictionary_Lock(cookies);
-	const int count = ListDictionary_GetKeys(cookies, &keys);
+	const size_t count = ListDictionary_GetKeys(cookies, &keys);
 
 	if (count == 0)
-		return TRUE;
+		goto unlock;
+
 	status = http_encode_print(s, "Cookie: ");
 	if (!status)
-		return status;
+		goto unlock;
 
-	for (int x = 0; status && x < count; x++)
+	for (size_t x = 0; status && x < count; x++)
 	{
 		char* cur = (char*)ListDictionary_GetItemValue(cookies, (void*)keys[x]);
 		if (!cur)
@@ -541,6 +540,7 @@ static BOOL http_encode_cookie_line(wStream* s, wListDictionary* cookies)
 		status = http_encode_print(s, "%s=%s", (char*)keys[x], cur);
 	}
 
+unlock:
 	free(keys);
 	ListDictionary_Unlock(cookies);
 	status = http_encode_print(s, "\r\n");
