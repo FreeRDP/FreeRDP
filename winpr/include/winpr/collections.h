@@ -227,7 +227,7 @@ extern "C"
 	WINPR_API void ListDictionary_Clear(wListDictionary* listDictionary);
 
 	WINPR_API BOOL ListDictionary_Contains(wListDictionary* listDictionary, const void* key);
-	WINPR_API int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys);
+	WINPR_API size_t ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys);
 
 	WINPR_API void* ListDictionary_GetItemValue(wListDictionary* listDictionary, const void* key);
 	WINPR_API BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* key,
