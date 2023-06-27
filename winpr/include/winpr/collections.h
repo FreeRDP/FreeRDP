@@ -267,26 +267,18 @@ extern "C"
 
 	/* Countdown Event */
 
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	typedef struct
-	{
-		DWORD count;
-		CRITICAL_SECTION lock;
-		HANDLE event;
-		DWORD initialCount;
-	} wCountdownEvent;
+	typedef struct CountdownEvent wCountdownEvent;
 
-	WINPR_API DWORD CountdownEvent_CurrentCount(wCountdownEvent* countdown);
-	WINPR_API DWORD CountdownEvent_InitialCount(wCountdownEvent* countdown);
+	WINPR_API size_t CountdownEvent_CurrentCount(wCountdownEvent* countdown);
+	WINPR_API size_t CountdownEvent_InitialCount(wCountdownEvent* countdown);
 	WINPR_API BOOL CountdownEvent_IsSet(wCountdownEvent* countdown);
 	WINPR_API HANDLE CountdownEvent_WaitHandle(wCountdownEvent* countdown);
 
-	WINPR_API void CountdownEvent_AddCount(wCountdownEvent* countdown, DWORD signalCount);
-	WINPR_API BOOL CountdownEvent_Signal(wCountdownEvent* countdown, DWORD signalCount);
-	WINPR_API void CountdownEvent_Reset(wCountdownEvent* countdown, DWORD count);
+	WINPR_API void CountdownEvent_AddCount(wCountdownEvent* countdown, size_t signalCount);
+	WINPR_API BOOL CountdownEvent_Signal(wCountdownEvent* countdown, size_t signalCount);
+	WINPR_API void CountdownEvent_Reset(wCountdownEvent* countdown, size_t count);
 
-	WINPR_API wCountdownEvent* CountdownEvent_New(DWORD initialCount);
+	WINPR_API wCountdownEvent* CountdownEvent_New(size_t initialCount);
 	WINPR_API void CountdownEvent_Free(wCountdownEvent* countdown);
 
 	/* Hash Table */
