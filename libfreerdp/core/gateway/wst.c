@@ -717,7 +717,7 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 	{
 		if (strncmp("https://", url, 8) != 0)
 		{
-			WLog_ERR(TAG, "Websocket URL is invalid. Only wss:// URLs are supported");
+			WLog_ERR(TAG, "Websocket URL is invalid. Only wss:// or https:// URLs are supported");
 			return FALSE;
 		}
 		else
