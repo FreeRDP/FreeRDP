@@ -18,10 +18,30 @@
  */
 
 #include <winpr/config.h>
-
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 
 #include <winpr/collections.h>
+
+typedef struct s_wListDictionaryItem wListDictionaryItem;
+
+struct s_wListDictionaryItem
+{
+	void* key;
+	void* value;
+
+	wListDictionaryItem* next;
+};
+
+struct s_wListDictionary
+{
+	BOOL synchronized;
+	CRITICAL_SECTION lock;
+
+	wListDictionaryItem* head;
+	wObject objectKey;
+	wObject objectValue;
+};
 
 /**
  * C equivalent of the C# ListDictionary Class:
@@ -29,6 +49,18 @@
  *
  * Internal implementation uses a singly-linked list
  */
+
+WINPR_API wObject* ListDictionary_KeyObject(wListDictionary* _dictionary)
+{
+	WINPR_ASSERT(_dictionary);
+	return &_dictionary->objectKey;
+}
+
+WINPR_API wObject* ListDictionary_ValueObject(wListDictionary* _dictionary)
+{
+	WINPR_ASSERT(_dictionary);
+	return &_dictionary->objectValue;
+}
 
 /**
  * Properties
@@ -70,8 +102,7 @@ size_t ListDictionary_Count(wListDictionary* listDictionary)
 
 void ListDictionary_Lock(wListDictionary* listDictionary)
 {
-	if (!listDictionary)
-		return;
+	WINPR_ASSERT(listDictionary);
 
 	EnterCriticalSection(&listDictionary->lock);
 }
@@ -82,8 +113,7 @@ void ListDictionary_Lock(wListDictionary* listDictionary)
 
 void ListDictionary_Unlock(wListDictionary* listDictionary)
 {
-	if (!listDictionary)
-		return;
+	WINPR_ASSERT(listDictionary);
 
 	LeaveCriticalSection(&listDictionary->lock);
 }
@@ -100,7 +130,8 @@ size_t ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKey
 {
 	ULONG_PTR* pKeys = NULL;
 
-	if (!ppKeys || !listDictionary)
+	WINPR_ASSERT(listDictionary);
+	if (!ppKeys)
 		return 0;
 
 	if (listDictionary->synchronized)
@@ -163,8 +194,7 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, void* 
 	wListDictionaryItem* lastItem;
 	BOOL ret = FALSE;
 
-	if (!listDictionary)
-		return FALSE;
+	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
@@ -218,8 +248,7 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 	wListDictionaryItem* item;
 	wListDictionaryItem* nextItem;
 
-	if (!listDictionary)
-		return;
+	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
@@ -258,8 +287,7 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, const void* key)
 	wListDictionaryItem* item;
 	OBJECT_EQUALS_FN keyEquals;
 
-	if (!listDictionary)
-		return FALSE;
+	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&(listDictionary->lock));
@@ -292,8 +320,7 @@ void* ListDictionary_Remove(wListDictionary* listDictionary, const void* key)
 	wListDictionaryItem* prevItem;
 	OBJECT_EQUALS_FN keyEquals;
 
-	if (!listDictionary)
-		return NULL;
+	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
@@ -335,8 +362,7 @@ void* ListDictionary_Remove_Head(wListDictionary* listDictionary)
 	wListDictionaryItem* item;
 	void* value = NULL;
 
-	if (!listDictionary)
-		return NULL;
+	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
@@ -365,8 +391,7 @@ void* ListDictionary_GetItemValue(wListDictionary* listDictionary, const void* k
 	wListDictionaryItem* item = NULL;
 	OBJECT_EQUALS_FN keyEquals;
 
-	if (!listDictionary)
-		return NULL;
+	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
@@ -404,8 +429,7 @@ BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* ke
 	wListDictionaryItem* item;
 	OBJECT_EQUALS_FN keyEquals;
 
-	if (!listDictionary)
-		return FALSE;
+	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
@@ -451,8 +475,7 @@ static BOOL default_equal_function(const void* obj1, const void* obj2)
 
 wListDictionary* ListDictionary_New(BOOL synchronized)
 {
-	wListDictionary* listDictionary = NULL;
-	listDictionary = (wListDictionary*)calloc(1, sizeof(wListDictionary));
+	wListDictionary* listDictionary = (wListDictionary*)calloc(1, sizeof(wListDictionary));
 
 	if (!listDictionary)
 		return NULL;
