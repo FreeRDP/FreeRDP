@@ -797,8 +797,7 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 			if (!authScheme)
 				return FALSE;
 
-			/* it is not possible to store NULL in a ListDirectory */
-			authValue = "";
+			authValue = NULL;
 		}
 
 		status = ListDictionary_Add(response->Authenticates, authScheme, authValue);
@@ -920,9 +919,7 @@ static BOOL http_response_parse_header(HttpResponse* response)
 		}
 
 		if (!http_response_parse_header_field(response, name, value))
-		{
 			goto fail;
-		}
 
 		*end_of_header = end_of_header_char;
 	}
