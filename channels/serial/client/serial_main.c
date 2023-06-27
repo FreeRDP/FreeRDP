@@ -617,7 +617,7 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 	if (ListDictionary_Count(serial->IrpThreads) >= MAX_IRP_THREADS)
 	{
 		WLog_Print(serial->log, WLOG_WARN,
-		           "Number of IRP threads threshold reached: %d, keep on anyway",
+		           "Number of IRP threads threshold reached: %" PRIuz ", keep on anyway",
 		           ListDictionary_Count(serial->IrpThreads));
 		WINPR_ASSERT(FALSE); /* unimplemented */
 		                     /* TODO: MAX_IRP_THREADS has been thought to avoid a

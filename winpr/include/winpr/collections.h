@@ -215,7 +215,7 @@ extern "C"
 #define ListDictionary_KeyObject(_dictionary) (&_dictionary->objectKey)
 #define ListDictionary_ValueObject(_dictionary) (&_dictionary->objectValue)
 
-	WINPR_API int ListDictionary_Count(wListDictionary* listDictionary);
+	WINPR_API size_t ListDictionary_Count(wListDictionary* listDictionary);
 
 	WINPR_API void ListDictionary_Lock(wListDictionary* listDictionary);
 	WINPR_API void ListDictionary_Unlock(wListDictionary* listDictionary);

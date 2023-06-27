@@ -38,20 +38,18 @@
  * Gets the number of key/value pairs contained in the ListDictionary.
  */
 
-int ListDictionary_Count(wListDictionary* listDictionary)
+size_t ListDictionary_Count(wListDictionary* listDictionary)
 {
-	int count = 0;
-	wListDictionaryItem* item;
+	size_t count = 0;
 
-	if (!listDictionary)
-		return -1;
+	WINPR_ASSERT(listDictionary);
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
 
 	if (listDictionary->head)
 	{
-		item = listDictionary->head;
+		wListDictionaryItem* item = listDictionary->head;
 
 		while (item)
 		{
