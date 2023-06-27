@@ -184,59 +184,6 @@ size_t ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKey
 	return count;
 }
 
-/**
- * Adds an entry with the specified key and value into the ListDictionary.
- */
-
-BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, void* value)
-{
-	BOOL ret = FALSE;
-
-	WINPR_ASSERT(listDictionary);
-
-	if (listDictionary->synchronized)
-		EnterCriticalSection(&listDictionary->lock);
-
-	wListDictionaryItem* item = (wListDictionaryItem*)calloc(1, sizeof(wListDictionaryItem));
-
-	if (!item)
-		goto out_error;
-
-	{
-		union
-		{
-			const void* cpv;
-			void* pv;
-		} cnv;
-		cnv.cpv = key;
-		item->key = cnv.pv;
-	}
-	item->value = value;
-	item->next = NULL;
-
-	if (!listDictionary->head)
-	{
-		listDictionary->head = item;
-	}
-	else
-	{
-		wListDictionaryItem* lastItem = listDictionary->head;
-
-		while (lastItem->next)
-			lastItem = lastItem->next;
-
-		lastItem->next = item;
-	}
-
-	ret = TRUE;
-out_error:
-
-	if (listDictionary->synchronized)
-		LeaveCriticalSection(&listDictionary->lock);
-
-	return ret;
-}
-
 static void item_free(wListDictionary* listDictionary, wListDictionaryItem* item)
 {
 	WINPR_ASSERT(listDictionary);
@@ -263,6 +210,71 @@ static void item_set(wListDictionary* listDictionary, wListDictionaryItem* item,
 		item->value = listDictionary->objectValue.fnObjectNew(value);
 	else
 		item->value = value;
+}
+
+static wListDictionaryItem* new_item(wListDictionary* listDictionary, const void* key, void* value)
+{
+	wListDictionaryItem* item = (wListDictionaryItem*)calloc(1, sizeof(wListDictionaryItem));
+	if (!item)
+		return NULL;
+
+	if (listDictionary->objectKey.fnObjectNew)
+		item->key = listDictionary->objectKey.fnObjectNew(key);
+	else
+		item->key = key;
+	if (!item->key)
+		goto fail;
+
+	item_set(listDictionary, item, value);
+	if (!item->value)
+		goto fail;
+
+	return item;
+
+fail:
+	item_free(listDictionary, item);
+	return NULL;
+}
+
+/**
+ * Adds an entry with the specified key and value into the ListDictionary.
+ */
+
+BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, void* value)
+{
+	BOOL ret = FALSE;
+
+	WINPR_ASSERT(listDictionary);
+
+	if (listDictionary->synchronized)
+		EnterCriticalSection(&listDictionary->lock);
+
+	wListDictionaryItem* item = new_item(listDictionary, key, value);
+
+	if (!item)
+		goto out_error;
+
+	if (!listDictionary->head)
+	{
+		listDictionary->head = item;
+	}
+	else
+	{
+		wListDictionaryItem* lastItem = listDictionary->head;
+
+		while (lastItem->next)
+			lastItem = lastItem->next;
+
+		lastItem->next = item;
+	}
+
+	ret = TRUE;
+out_error:
+
+	if (listDictionary->synchronized)
+		LeaveCriticalSection(&listDictionary->lock);
+
+	return ret;
 }
 
 /**
