@@ -136,12 +136,11 @@ static BOOL device_foreach(rdpdrPlugin* rdpdr, BOOL abortOnFail,
                            BOOL (*fkt)(ULONG_PTR key, void* element, void* data), void* data)
 {
 	BOOL rc = TRUE;
-	int count, x;
 	ULONG_PTR* keys = NULL;
 
 	ListDictionary_Lock(rdpdr->devman->devices);
-	count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
-	for (x = 0; x < count; x++)
+	const size_t count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
+	for (size_t x = 0; x < count; x++)
 	{
 		void* element = ListDictionary_GetItemValue(rdpdr->devman->devices, (void*)keys[x]);
 		if (!fkt(keys[x], element, data))

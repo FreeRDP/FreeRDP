@@ -96,24 +96,21 @@ void ListDictionary_Unlock(wListDictionary* listDictionary)
  * Gets the list of keys as an array
  */
 
-int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
+size_t ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
 {
-	int index;
-	int count;
 	ULONG_PTR* pKeys = NULL;
-	wListDictionaryItem* item;
 
 	if (!ppKeys || !listDictionary)
-		return -1;
+		return 0;
 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
 
-	count = 0;
+	size_t count = 0;
 
 	if (listDictionary->head)
 	{
-		item = listDictionary->head;
+		wListDictionaryItem* item = listDictionary->head;
 
 		while (item)
 		{
@@ -122,7 +119,7 @@ int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
 		}
 	}
 
-	if (count)
+	if (count > 0)
 	{
 		pKeys = (ULONG_PTR*)calloc(count, sizeof(ULONG_PTR));
 
@@ -135,11 +132,11 @@ int ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKeys)
 		}
 	}
 
-	index = 0;
+	size_t index = 0;
 
 	if (listDictionary->head)
 	{
-		item = listDictionary->head;
+		wListDictionaryItem* item = listDictionary->head;
 
 		while (item)
 		{
