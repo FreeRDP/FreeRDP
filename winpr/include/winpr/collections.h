@@ -265,37 +265,6 @@ extern "C"
 
 	/* System.Collections.Generic.KeyValuePair<TKey,TValue> */
 
-	/* Reference Table */
-
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	typedef struct
-	{
-		UINT32 Count;
-		void* Pointer;
-	} wReference;
-
-	typedef int (*REFERENCE_FREE)(void* context, void* ptr);
-
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	typedef struct
-	{
-		UINT32 size;
-		CRITICAL_SECTION lock;
-		void* context;
-		BOOL synchronized;
-		wReference* array;
-		REFERENCE_FREE ReferenceFree;
-	} wReferenceTable;
-
-	WINPR_API UINT32 ReferenceTable_Add(wReferenceTable* referenceTable, void* ptr);
-	WINPR_API UINT32 ReferenceTable_Release(wReferenceTable* referenceTable, void* ptr);
-
-	WINPR_API wReferenceTable* ReferenceTable_New(BOOL synchronized, void* context,
-	                                              REFERENCE_FREE ReferenceFree);
-	WINPR_API void ReferenceTable_Free(wReferenceTable* referenceTable);
-
 	/* Countdown Event */
 
 	/* WARNING: Do not access structs directly, the API will be reworked
