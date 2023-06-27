@@ -212,7 +212,8 @@ static void item_set(wListDictionary* listDictionary, wListDictionaryItem* item,
 		item->value = value;
 }
 
-static wListDictionaryItem* new_item(wListDictionary* listDictionary, const void* key, void* value)
+static wListDictionaryItem* new_item(wListDictionary* listDictionary, const void* key,
+                                     const void* value)
 {
 	wListDictionaryItem* item = (wListDictionaryItem*)calloc(1, sizeof(wListDictionaryItem));
 	if (!item)
@@ -226,7 +227,7 @@ static wListDictionaryItem* new_item(wListDictionary* listDictionary, const void
 		goto fail;
 
 	item_set(listDictionary, item, value);
-	if (!item->value)
+	if (value && !item->value)
 		goto fail;
 
 	return item;
@@ -240,7 +241,7 @@ fail:
  * Adds an entry with the specified key and value into the ListDictionary.
  */
 
-BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, void* value)
+BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, const void* value)
 {
 	BOOL ret = FALSE;
 
@@ -484,7 +485,8 @@ void* ListDictionary_GetItemValue(wListDictionary* listDictionary, const void* k
  * Set an item value using key
  */
 
-BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* key, void* value)
+BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* key,
+                                 const void* value)
 {
 	BOOL status = FALSE;
 	wListDictionaryItem* item;
