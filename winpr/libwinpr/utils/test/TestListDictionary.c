@@ -13,7 +13,7 @@ static char* val3 = "val3";
 
 int TestListDictionary(int argc, char* argv[])
 {
-	int count;
+	size_t count;
 	char* value;
 	wListDictionary* list;
 
