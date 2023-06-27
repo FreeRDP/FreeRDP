@@ -178,42 +178,11 @@ extern "C"
 
 	/* System.Collections.DictionaryBase */
 
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	typedef struct
-	{
-		BOOL synchronized;
-		CRITICAL_SECTION lock;
-	} wDictionary;
-
 	/* System.Collections.Specialized.ListDictionary */
+	typedef struct s_wListDictionary wListDictionary;
 
-	typedef struct s_wListDictionaryItem wListDictionaryItem;
-
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	struct s_wListDictionaryItem
-	{
-		void* key;
-		void* value;
-
-		wListDictionaryItem* next;
-	};
-
-	/* WARNING: Do not access structs directly, the API will be reworked
-	 * to make this opaque. */
-	typedef struct
-	{
-		BOOL synchronized;
-		CRITICAL_SECTION lock;
-
-		wListDictionaryItem* head;
-		wObject objectKey;
-		wObject objectValue;
-	} wListDictionary;
-
-#define ListDictionary_KeyObject(_dictionary) (&_dictionary->objectKey)
-#define ListDictionary_ValueObject(_dictionary) (&_dictionary->objectValue)
+	WINPR_API wObject* ListDictionary_KeyObject(wListDictionary* _dictionary);
+	WINPR_API wObject* ListDictionary_ValueObject(wListDictionary* _dictionary);
 
 	WINPR_API size_t ListDictionary_Count(wListDictionary* listDictionary);
 
