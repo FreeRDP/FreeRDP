@@ -1861,6 +1861,7 @@ BOOL freerdp_client_pen_cancel_all(rdpClientContext* cctx)
 			rdpei->PenHoverCancel(rdpei, i, 0, pen->last_x, pen->last_y);
 		}
 	}
+	return TRUE;
 }
 
 BOOL freerdp_client_is_pen(rdpClientContext* cctx, INT32 deviceid)
