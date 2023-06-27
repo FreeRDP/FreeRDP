@@ -33,7 +33,7 @@ struct s_wLinkedListItem
 
 struct s_wLinkedList
 {
-	int count;
+	size_t count;
 	int initial;
 	wLinkedListNode* head;
 	wLinkedListNode* tail;
@@ -56,7 +56,7 @@ struct s_wLinkedList
  * Gets the number of nodes actually contained in the LinkedList.
  */
 
-int LinkedList_Count(wLinkedList* list)
+size_t LinkedList_Count(wLinkedList* list)
 {
 	WINPR_ASSERT(list);
 	return list->count;

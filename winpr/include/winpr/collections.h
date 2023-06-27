@@ -240,7 +240,7 @@ extern "C"
 
 	typedef struct s_wLinkedList wLinkedList;
 
-	WINPR_API int LinkedList_Count(wLinkedList* list);
+	WINPR_API size_t LinkedList_Count(wLinkedList* list);
 	WINPR_API void* LinkedList_First(wLinkedList* list);
 	WINPR_API void* LinkedList_Last(wLinkedList* list);
 
