@@ -131,6 +131,14 @@ static BOOL strings_equals_nocase(const void* obj1, const void* obj2)
 	return _stricmp(obj1, obj2) == 0;
 }
 
+static void* copy_string(const void* ptr)
+{
+	const char* str = ptr;
+	if (!str)
+		return NULL;
+	return _strdup(ptr);
+}
+
 HttpContext* http_context_new(void)
 {
 	HttpContext* context = (HttpContext*)calloc(1, sizeof(HttpContext));
@@ -139,8 +147,8 @@ HttpContext* http_context_new(void)
 		context->cookies = ListDictionary_New(FALSE);
 		ListDictionary_KeyObject(context->cookies)->fnObjectFree = free;
 		ListDictionary_ValueObject(context->cookies)->fnObjectFree = free;
-		ListDictionary_KeyObject(context->cookies)->fnObjectNew = _strdup;
-		ListDictionary_ValueObject(context->cookies)->fnObjectNew = _strdup;
+		ListDictionary_KeyObject(context->cookies)->fnObjectNew = copy_string;
+		ListDictionary_ValueObject(context->cookies)->fnObjectNew = copy_string;
 	}
 	return context;
 }
