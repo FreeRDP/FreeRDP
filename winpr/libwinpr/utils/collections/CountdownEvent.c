@@ -18,14 +18,19 @@
  */
 
 #include <winpr/config.h>
-
-#ifdef WINPR_HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+#include <winpr/assert.h>
 
 #include <winpr/crt.h>
 
 #include <winpr/collections.h>
+
+struct CountdownEvent
+{
+	size_t count;
+	CRITICAL_SECTION lock;
+	HANDLE event;
+	size_t initialCount;
+};
 
 /**
  * C equivalent of the C# CountdownEvent Class
@@ -40,8 +45,9 @@
  * Gets the number of remaining signals required to set the event.
  */
 
-DWORD CountdownEvent_CurrentCount(wCountdownEvent* countdown)
+size_t CountdownEvent_CurrentCount(wCountdownEvent* countdown)
 {
+	WINPR_ASSERT(countdown);
 	return countdown->count;
 }
 
@@ -49,8 +55,9 @@ DWORD CountdownEvent_CurrentCount(wCountdownEvent* countdown)
  * Gets the numbers of signals initially required to set the event.
  */
 
-DWORD CountdownEvent_InitialCount(wCountdownEvent* countdown)
+size_t CountdownEvent_InitialCount(wCountdownEvent* countdown)
 {
+	WINPR_ASSERT(countdown);
 	return countdown->initialCount;
 }
 
@@ -62,6 +69,7 @@ BOOL CountdownEvent_IsSet(wCountdownEvent* countdown)
 {
 	BOOL status = FALSE;
 
+	WINPR_ASSERT(countdown);
 	if (WaitForSingleObject(countdown->event, 0) == WAIT_OBJECT_0)
 		status = TRUE;
 
@@ -74,6 +82,7 @@ BOOL CountdownEvent_IsSet(wCountdownEvent* countdown)
 
 HANDLE CountdownEvent_WaitHandle(wCountdownEvent* countdown)
 {
+	WINPR_ASSERT(countdown);
 	return countdown->event;
 }
 
@@ -85,8 +94,9 @@ HANDLE CountdownEvent_WaitHandle(wCountdownEvent* countdown)
  * Increments the CountdownEvent's current count by a specified value.
  */
 
-void CountdownEvent_AddCount(wCountdownEvent* countdown, DWORD signalCount)
+void CountdownEvent_AddCount(wCountdownEvent* countdown, size_t signalCount)
 {
+	WINPR_ASSERT(countdown);
 	EnterCriticalSection(&countdown->lock);
 
 	countdown->count += signalCount;
@@ -102,13 +112,13 @@ void CountdownEvent_AddCount(wCountdownEvent* countdown, DWORD signalCount)
  * specified amount.
  */
 
-BOOL CountdownEvent_Signal(wCountdownEvent* countdown, DWORD signalCount)
+BOOL CountdownEvent_Signal(wCountdownEvent* countdown, size_t signalCount)
 {
-	BOOL status;
-	BOOL newStatus;
-	BOOL oldStatus;
+	BOOL status = FALSE;
+	BOOL newStatus = FALSE;
+	BOOL oldStatus = FALSE;
 
-	status = newStatus = oldStatus = FALSE;
+	WINPR_ASSERT(countdown);
 
 	EnterCriticalSection(&countdown->lock);
 
@@ -138,8 +148,9 @@ BOOL CountdownEvent_Signal(wCountdownEvent* countdown, DWORD signalCount)
  * Resets the InitialCount property to a specified value.
  */
 
-void CountdownEvent_Reset(wCountdownEvent* countdown, DWORD count)
+void CountdownEvent_Reset(wCountdownEvent* countdown, size_t count)
 {
+	WINPR_ASSERT(countdown);
 	countdown->initialCount = count;
 }
 
@@ -147,35 +158,33 @@ void CountdownEvent_Reset(wCountdownEvent* countdown, DWORD count)
  * Construction, Destruction
  */
 
-wCountdownEvent* CountdownEvent_New(DWORD initialCount)
+wCountdownEvent* CountdownEvent_New(size_t initialCount)
 {
-	wCountdownEvent* countdown = NULL;
+	wCountdownEvent* countdown = (wCountdownEvent*)calloc(1, sizeof(wCountdownEvent));
 
-	if (!(countdown = (wCountdownEvent*)calloc(1, sizeof(wCountdownEvent))))
+	if (!countdown)
 		return NULL;
 
 	countdown->count = initialCount;
 	countdown->initialCount = initialCount;
 
 	if (!InitializeCriticalSectionAndSpinCount(&countdown->lock, 4000))
-		goto fail_critical_section;
+		goto fail;
 
-	if (!(countdown->event = CreateEvent(NULL, TRUE, FALSE, NULL)))
-		goto fail_create_event;
+	countdown->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!countdown->event)
+		goto fail;
 
 	if (countdown->count == 0)
+	{
 		if (!SetEvent(countdown->event))
-			goto fail_set_event;
+			goto fail;
+	}
 
 	return countdown;
 
-fail_set_event:
-	CloseHandle(countdown->event);
-fail_create_event:
-	DeleteCriticalSection(&countdown->lock);
-fail_critical_section:
-	free(countdown);
-
+fail:
+	CountdownEvent_Free(countdown);
 	return NULL;
 }
 
