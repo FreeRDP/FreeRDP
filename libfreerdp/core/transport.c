@@ -474,7 +474,7 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 		if (freerdp_settings_get_bool(settings, FreeRDP_GatewayArmTransport))
 		{
 			if (!arm_resolve_endpoint(context, timeout))
-				WLog_ERR(TAG, "ARM Endpoint resolve failed");
+				return FALSE;
 		}
 		if (settings->GatewayUrl)
 		{

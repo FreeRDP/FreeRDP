@@ -101,10 +101,6 @@ static BOOL wst_auth_init(rdpWst* wst, rdpTls* tls, TCHAR* authPkg)
 	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
 	int rc;
 
-	wst->auth = credssp_auth_new(context);
-	if (!wst->auth)
-		return FALSE;
-
 	if (!credssp_auth_init(wst->auth, authPkg, tls->Bindings))
 		return FALSE;
 
@@ -351,6 +347,102 @@ static BOOL wst_send_http_request(rdpWst* wst, rdpTls* tls)
 	return (status >= 0);
 }
 
+static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, DWORD timeout,
+                                       long* pStatusCode)
+{
+	WINPR_ASSERT(wst);
+	WINPR_ASSERT(ppresponse);
+	WINPR_ASSERT(*ppresponse);
+	WINPR_ASSERT(pStatusCode);
+
+	/* AVD returns a 403 response with a ARRAffinity cookie set. retry with that cookie */
+	const char* affinity = http_response_get_setcookie(*ppresponse, "ARRAffinity");
+	if (affinity && freerdp_settings_get_bool(wst->settings, FreeRDP_GatewayArmTransport))
+	{
+		WLog_DBG(TAG, "Got Affinity cookie %s", affinity);
+		http_context_set_cookie(wst->http, "ARRAffinity", affinity);
+		http_response_free(*ppresponse);
+		/* Terminate this connection and make a new one with the Loadbalancing Cookie */
+		int fd = BIO_get_fd(wst->tls->bio, NULL);
+		if (fd >= 0)
+			closesocket((SOCKET)fd);
+		freerdp_tls_free(wst->tls);
+
+		wst->tls = freerdp_tls_new(wst->settings);
+		if (!wst_tls_connect(wst, wst->tls, timeout))
+			return FALSE;
+
+		if (freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer) &&
+		    freerdp_settings_get_bool(wst->settings, FreeRDP_GatewayArmTransport))
+		{
+			char* urlWithAuth = NULL;
+			size_t urlLen = 0;
+			char firstParam = (strchr(wst->gwpath, '?') > 0 ? '&' : '?');
+			winpr_asprintf(
+			    &urlWithAuth, &urlLen, arm_query_param, wst->gwpath, firstParam,
+			    freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer));
+			if (!urlWithAuth)
+				return FALSE;
+			free(wst->gwpath);
+			wst->gwpath = urlWithAuth;
+			http_context_set_uri(wst->http, wst->gwpath);
+			http_context_enable_websocket_upgrade(wst->http, TRUE);
+		}
+
+		if (!wst_send_http_request(wst, wst->tls))
+			return FALSE;
+		*ppresponse = http_response_recv(wst->tls, TRUE);
+		if (!*ppresponse)
+			return FALSE;
+
+		*pStatusCode = http_response_get_status_code(*ppresponse);
+	}
+
+	return TRUE;
+}
+
+static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, long* pStatusCode)
+{
+	WINPR_ASSERT(wst);
+	WINPR_ASSERT(ppresponse);
+	WINPR_ASSERT(*ppresponse);
+	WINPR_ASSERT(pStatusCode);
+
+	BOOL success = FALSE;
+
+	if (freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer))
+		return FALSE;
+
+	if (!wst_auth_init(wst, wst->tls, AUTH_PKG))
+		return FALSE;
+	if (!wst_send_http_request(wst, wst->tls))
+		return FALSE;
+
+	http_response_free(*ppresponse);
+	*ppresponse = http_response_recv(wst->tls, TRUE);
+	if (!*ppresponse)
+		return FALSE;
+
+	while (!credssp_auth_is_complete(wst->auth))
+	{
+		if (!wst_recv_auth_token(wst->auth, *ppresponse))
+			return FALSE;
+
+		if (credssp_auth_have_output_token(wst->auth))
+		{
+			if (!wst_send_http_request(wst, wst->tls))
+				return FALSE;
+
+			http_response_free(*ppresponse);
+			*ppresponse = http_response_recv(wst->tls, TRUE);
+			if (!*ppresponse)
+				return FALSE;
+		}
+	}
+	*pStatusCode = http_response_get_status_code(*ppresponse);
+	return success;
+}
+
 BOOL wst_connect(rdpWst* wst, DWORD timeout)
 {
 	HttpResponse* response = NULL;
@@ -378,106 +470,22 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 	}
 
 	StatusCode = http_response_get_status_code(response);
-
+	BOOL success = TRUE;
 	switch (StatusCode)
 	{
 		case HTTP_STATUS_FORBIDDEN:
 		case HTTP_STATUS_OK:
-		{
-			/* AVD returns a 403 response with a ARRAffinity cookie set. retry with that cookie */
-			const char* affinity = http_response_get_setcookie(response, "ARRAffinity");
-			if (affinity && freerdp_settings_get_bool(wst->settings, FreeRDP_GatewayArmTransport))
-			{
-				WLog_DBG(TAG, "Got Affinity cookie %s", affinity);
-				http_context_set_cookie(wst->http, "ARRAffinity", affinity);
-				http_response_free(response);
-				/* Terminate this connection and make a new one with the Loadbalancing Cookie */
-				int fd = BIO_get_fd(wst->tls->bio, NULL);
-				if (fd >= 0)
-					closesocket((SOCKET)fd);
-				freerdp_tls_free(wst->tls);
-
-				wst->tls = freerdp_tls_new(wst->settings);
-				if (!wst_tls_connect(wst, wst->tls, timeout))
-					return FALSE;
-
-				if (freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer) &&
-				    freerdp_settings_get_bool(wst->settings, FreeRDP_GatewayArmTransport))
-				{
-					char* urlWithAuth = NULL;
-					size_t urlLen = 0;
-					char firstParam = (strchr(wst->gwpath, '?') > 0 ? '&' : '?');
-					winpr_asprintf(&urlWithAuth, &urlLen, arm_query_param, wst->gwpath, firstParam,
-					               freerdp_settings_get_string(wst->settings,
-					                                           FreeRDP_GatewayHttpExtAuthBearer));
-					if (!urlWithAuth)
-						return FALSE;
-					free(wst->gwpath);
-					wst->gwpath = urlWithAuth;
-					http_context_set_uri(wst->http, wst->gwpath);
-					http_context_enable_websocket_upgrade(wst->http, TRUE);
-				}
-
-				if (!wst_send_http_request(wst, wst->tls))
-					return FALSE;
-				response = http_response_recv(wst->tls, TRUE);
-				if (!response)
-				{
-					return FALSE;
-				}
-				StatusCode = http_response_get_status_code(response);
-			}
+			success = wst_handle_ok_or_forbidden(wst, &response, timeout, &StatusCode);
 			break;
-		}
+
 		case HTTP_STATUS_DENIED:
-		{
-			/* if the response is HTTP_STATUS_DENIED and no bearer authentication was used, try with
-			 * credssp */
-			http_response_free(response);
-			if (freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer))
-				return FALSE;
-
-			if (!wst_auth_init(wst, wst->tls, AUTH_PKG))
-				return FALSE;
-			if (!wst_send_http_request(wst, wst->tls))
-				return FALSE;
-
-			response = http_response_recv(wst->tls, TRUE);
-			if (!response)
-			{
-				return FALSE;
-			}
-			while (!credssp_auth_is_complete(wst->auth))
-			{
-				if (!wst_recv_auth_token(wst->auth, response))
-				{
-					http_response_free(response);
-					return FALSE;
-				}
-
-				if (credssp_auth_have_output_token(wst->auth))
-				{
-					http_response_free(response);
-
-					if (!wst_send_http_request(wst, wst->tls))
-						return FALSE;
-
-					response = http_response_recv(wst->tls, TRUE);
-					if (!response)
-					{
-						return FALSE;
-					}
-				}
-			}
-			StatusCode = http_response_get_status_code(response);
-			credssp_auth_free(wst->auth);
-			wst->auth = NULL;
-			break;
-		}
+			success = wst_handle_denied(wst, &response, &StatusCode);
 		default:
 			break;
 	}
 	http_response_free(response);
+	if (!success)
+		return FALSE;
 
 	if (StatusCode == HTTP_STATUS_SWITCH_PROTOCOLS)
 	{
@@ -815,7 +823,9 @@ rdpWst* wst_new(rdpContext* context)
 
 		BIO_set_data(wst->frontBio, wst);
 		InitializeCriticalSection(&wst->writeSection);
-		wst->auth = NULL;
+		wst->auth = credssp_auth_new(context);
+		if (!wst->auth)
+			goto wst_alloc_error;
 	}
 
 	return wst;

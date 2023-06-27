@@ -142,15 +142,28 @@ static void* copy_string(const void* ptr)
 HttpContext* http_context_new(void)
 {
 	HttpContext* context = (HttpContext*)calloc(1, sizeof(HttpContext));
-	if (context)
-	{
-		context->cookies = ListDictionary_New(FALSE);
-		ListDictionary_KeyObject(context->cookies)->fnObjectFree = free;
-		ListDictionary_ValueObject(context->cookies)->fnObjectFree = free;
-		ListDictionary_KeyObject(context->cookies)->fnObjectNew = copy_string;
-		ListDictionary_ValueObject(context->cookies)->fnObjectNew = copy_string;
-	}
+	if (!context)
+		return NULL;
+
+	context->cookies = ListDictionary_New(FALSE);
+	if (!context->cookies)
+		goto fail;
+
+	wObject* key = ListDictionary_KeyObject(context->cookies);
+	wObject* value = ListDictionary_ValueObject(context->cookies);
+	if (!key || !value)
+		goto fail;
+
+	key->fnObjectFree = free;
+	key->fnObjectNew = copy_string;
+	value->fnObjectFree = free;
+	value->fnObjectNew = copy_string;
+
 	return context;
+
+fail:
+	http_context_free(context);
+	return NULL;
 }
 
 BOOL http_context_set_method(HttpContext* context, const char* Method)
@@ -1037,7 +1050,7 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 			break;
 			case ChunkStateFooter:
 			{
-				char _dummy[2];
+				char _dummy[2] = { 0 };
 				WINPR_ASSERT(encodingContext->nextOffset == 0);
 				WINPR_ASSERT(encodingContext->headerFooterPos < 2);
 				ERR_clear_error();
@@ -1339,6 +1352,18 @@ const BYTE* http_response_get_body(HttpResponse* response)
 	return response->BodyContent;
 }
 
+static BOOL set_compare(wListDictionary* dict)
+{
+	WINPR_ASSERT(dict);
+	wObject* key = ListDictionary_KeyObject(dict);
+	wObject* value = ListDictionary_KeyObject(dict);
+	if (!key || !value)
+		return FALSE;
+	key->fnObjectEquals = strings_equals_nocase;
+	value->fnObjectEquals = strings_equals_nocase;
+	return TRUE;
+}
+
 HttpResponse* http_response_new(void)
 {
 	HttpResponse* response = (HttpResponse*)calloc(1, sizeof(HttpResponse));
@@ -1351,19 +1376,21 @@ HttpResponse* http_response_new(void)
 	if (!response->Authenticates)
 		goto fail;
 
+	if (!set_compare(response->Authenticates))
+		goto fail;
+
 	response->SetCookie = ListDictionary_New(FALSE);
 
 	if (!response->SetCookie)
+		goto fail;
+
+	if (!set_compare(response->SetCookie))
 		goto fail;
 
 	response->data = Stream_New(NULL, 2048);
 
 	if (!response->data)
 		goto fail;
-
-	ListDictionary_KeyObject(response->Authenticates)->fnObjectEquals = strings_equals_nocase;
-	ListDictionary_KeyObject(response->SetCookie)->fnObjectEquals = strings_equals_nocase;
-	ListDictionary_ValueObject(response->Authenticates)->fnObjectEquals = strings_equals_nocase;
 
 	response->TransferEncoding = TransferEncodingIdentity;
 	return response;
