@@ -430,6 +430,12 @@ void rfx_context_set_pixel_format(RFX_CONTEXT* context, UINT32 pixel_format)
 	context->bits_per_pixel = FreeRDPGetBitsPerPixel(pixel_format);
 }
 
+void rfx_context_set_palette(RFX_CONTEXT* context, const BYTE* palette)
+{
+	WINPR_ASSERT(context);
+	context->palette = palette;
+}
+
 BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height)
 {
 	if (!context)

@@ -120,6 +120,7 @@ extern "C"
 	FREERDP_API BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height);
 	FREERDP_API BOOL rfx_context_set_mode(RFX_CONTEXT* context, RLGR_MODE mode);
 	FREERDP_API void rfx_context_set_pixel_format(RFX_CONTEXT* context, UINT32 pixel_format);
+	FREERDP_API void rfx_context_set_palette(RFX_CONTEXT* context, const BYTE* palette);
 	FREERDP_API UINT32 rfx_context_get_frame_idx(const RFX_CONTEXT* context);
 
 #ifdef __cplusplus
