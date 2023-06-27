@@ -56,6 +56,7 @@ struct rdp_wst
 	BIO* frontBio;
 	rdpTls* tls;
 	rdpCredsspAuth* auth;
+	BOOL auth_required;
 	HttpContext* http;
 	CRITICAL_SECTION writeSection;
 	char* gwhostname;
@@ -101,6 +102,7 @@ static BOOL wst_auth_init(rdpWst* wst, rdpTls* tls, TCHAR* authPkg)
 	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
 	int rc;
 
+	wst->auth_required = TRUE;
 	if (!credssp_auth_init(wst->auth, authPkg, tls->Bindings))
 		return FALSE;
 
@@ -303,7 +305,7 @@ static wStream* wst_build_http_request(rdpWst* wst)
 	if (!http_request_set_method(request, "GET") || !http_request_set_uri(request, uri))
 		goto out;
 
-	if (wst->auth)
+	if (wst->auth_required)
 	{
 		if (!wst_set_auth_header(wst->auth, request))
 			goto out;
