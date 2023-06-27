@@ -189,7 +189,7 @@ static RDPDR_IRP* rdpdr_server_dequeue_irp(RdpdrServerContext* context, UINT32 c
 	RDPDR_IRP* irp;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	irp = (RDPDR_IRP*)ListDictionary_Remove(context->priv->IrpList, (void*)(size_t)completionId);
+	irp = (RDPDR_IRP*)ListDictionary_Take(context->priv->IrpList, (void*)(size_t)completionId);
 	return irp;
 }
 

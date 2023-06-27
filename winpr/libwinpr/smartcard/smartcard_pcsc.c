@@ -680,7 +680,7 @@ static void* PCSC_RemoveMemoryBlock(SCARDCONTEXT hContext, void* pvMem)
 	if (!g_MemoryBlocks)
 		return NULL;
 
-	return ListDictionary_Remove(g_MemoryBlocks, pvMem);
+	return ListDictionary_Take(g_MemoryBlocks, pvMem);
 }
 
 /**

@@ -191,8 +191,11 @@ extern "C"
 
 	WINPR_API BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key,
 	                                  void* value);
-	WINPR_API void* ListDictionary_Remove(wListDictionary* listDictionary, const void* key);
-	WINPR_API void* ListDictionary_Remove_Head(wListDictionary* listDictionary);
+	WINPR_API void* ListDictionary_Take(wListDictionary* listDictionary, const void* key);
+	WINPR_API void ListDictionary_Remove(wListDictionary* listDictionary, const void* key);
+
+	WINPR_API void* ListDictionary_Take_Head(wListDictionary* listDictionary);
+	WINPR_API void ListDictionary_Remove_Head(wListDictionary* listDictionary);
 	WINPR_API void ListDictionary_Clear(wListDictionary* listDictionary);
 
 	WINPR_API BOOL ListDictionary_Contains(wListDictionary* listDictionary, const void* key);
