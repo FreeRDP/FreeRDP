@@ -305,89 +305,81 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 	}
 
 	rdpArm* arm = (rdpArm*)calloc(1, sizeof(rdpArm));
-	char* message = NULL;
-
-	if (arm)
-	{
-		arm->context = context;
-		arm->settings = arm->context->settings;
-		if (!arm->settings)
-			goto arm_error;
-
-		arm->tls = freerdp_tls_new(arm->settings);
-		HttpResponse* response = NULL;
-		long StatusCode;
-
-		if (!arm->tls)
-			goto arm_error;
-
-		arm->http = http_context_new();
-
-		if (!arm->http)
-			goto arm_error;
-
-		if (!http_context_set_uri(arm->http, "/api/arm/v2/connections/") ||
-		    !http_context_set_accept(arm->http, "application/json") ||
-		    !http_context_set_cache_control(arm->http, "no-cache") ||
-		    !http_context_set_pragma(arm->http, "no-cache") ||
-		    !http_context_set_connection(arm->http, "Keep-Alive") ||
-		    !http_context_set_user_agent(arm->http, "FreeRDP/3.0") ||
-		    !http_context_set_x_ms_user_agent(arm->http, "FreeRDP/3.0") ||
-		    !http_context_set_host(
-		        arm->http, freerdp_settings_get_string(arm->settings, FreeRDP_GatewayHostname)))
-			goto arm_error;
-
-		if (!arm_tls_connect(arm, arm->tls, timeout))
-			goto arm_error;
-
-		message = arm_create_request_json(arm);
-		if (!message)
-			goto arm_error;
-
-		if (!arm_send_http_request(arm, arm->tls, "POST", "application/json", message,
-		                           strlen(message)))
-			goto arm_error;
-
-		free(message);
-		message = NULL;
-
-		response = http_response_recv(arm->tls, TRUE);
-		if (!response)
-			goto arm_error;
-
-		StatusCode = http_response_get_status_code(response);
-		if (StatusCode == HTTP_STATUS_OK)
-		{
-			message = calloc(http_response_get_body_length(response) + 1, sizeof(char));
-			if (!message)
-				goto arm_error;
-
-			strncpy(message, (const char*)http_response_get_body(response),
-			        http_response_get_body_length(response));
-
-			WLog_DBG(TAG, "Got HTTP Response data: %s", message);
-			if (!arm_fill_gateway_parameters(arm, message))
-				goto arm_error;
-
-			free(message);
-			message = NULL;
-		}
-		else
-		{
-			char buffer[64] = { 0 };
-			WLog_ERR(TAG, "Unexpected HTTP status: %s",
-			         http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
-			goto arm_error;
-		}
-	}
-	else
+	if (!arm)
 		return FALSE;
 
-	arm_free(arm);
-	return TRUE;
+	char* message = NULL;
+	BOOL rc = FALSE;
+
+	arm->context = context;
+	arm->settings = arm->context->settings;
+	if (!arm->settings)
+		goto arm_error;
+
+	arm->tls = freerdp_tls_new(arm->settings);
+	HttpResponse* response = NULL;
+	long StatusCode;
+
+	if (!arm->tls)
+		goto arm_error;
+
+	arm->http = http_context_new();
+
+	if (!arm->http)
+		goto arm_error;
+
+	if (!http_context_set_uri(arm->http, "/api/arm/v2/connections/") ||
+	    !http_context_set_accept(arm->http, "application/json") ||
+	    !http_context_set_cache_control(arm->http, "no-cache") ||
+	    !http_context_set_pragma(arm->http, "no-cache") ||
+	    !http_context_set_connection(arm->http, "Keep-Alive") ||
+	    !http_context_set_user_agent(arm->http, "FreeRDP/3.0") ||
+	    !http_context_set_x_ms_user_agent(arm->http, "FreeRDP/3.0") ||
+	    !http_context_set_host(arm->http,
+	                           freerdp_settings_get_string(arm->settings, FreeRDP_GatewayHostname)))
+		goto arm_error;
+
+	if (!arm_tls_connect(arm, arm->tls, timeout))
+		goto arm_error;
+
+	message = arm_create_request_json(arm);
+	if (!message)
+		goto arm_error;
+
+	if (!arm_send_http_request(arm, arm->tls, "POST", "application/json", message, strlen(message)))
+		goto arm_error;
+
+	response = http_response_recv(arm->tls, TRUE);
+	if (!response)
+		goto arm_error;
+
+	StatusCode = http_response_get_status_code(response);
+	if (StatusCode == HTTP_STATUS_OK)
+	{
+		char* msg = calloc(http_response_get_body_length(response) + 1, sizeof(char));
+		if (!msg)
+			goto arm_error;
+
+		memcpy(msg, http_response_get_body(response), http_response_get_body_length(response));
+
+		WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
+		const BOOL res = arm_fill_gateway_parameters(arm, msg);
+		free(msg);
+		if (!res)
+			goto arm_error;
+	}
+	else
+	{
+		char buffer[64] = { 0 };
+		WLog_ERR(TAG, "Unexpected HTTP status: %s",
+		         http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
+		goto arm_error;
+	}
+
+	rc = TRUE;
 arm_error:
 	arm_free(arm);
 	free(message);
-	return FALSE;
+	return rc;
 #endif
 }
