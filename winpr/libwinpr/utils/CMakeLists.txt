@@ -24,7 +24,6 @@ set(COLLECTIONS_SRCS
 	collections/Stack.c
 	collections/PubSub.c
         collections/BitStream.c
-	collections/Reference.c
 	collections/ArrayList.c
 	collections/LinkedList.c
 	collections/HashTable.c
