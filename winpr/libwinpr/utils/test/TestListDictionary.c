@@ -121,19 +121,19 @@ int TestListDictionary(int argc, char* argv[])
 		return -1;
 	}
 
-	if (!ListDictionary_Remove(list, key2))
+	if (!ListDictionary_Take(list, key2))
 	{
 		printf("ListDictionary_Remove: Expected : TRUE, Actual: FALSE\n");
 		return -1;
 	}
 
-	if (ListDictionary_Remove(list, key2))
+	if (ListDictionary_Take(list, key2))
 	{
 		printf("ListDictionary_Remove: Expected : FALSE, Actual: TRUE\n");
 		return -1;
 	}
 
-	value = ListDictionary_Remove_Head(list);
+	value = ListDictionary_Take_Head(list);
 	count = ListDictionary_Count(list);
 	if (strncmp(value, val1, 4) || count != 1)
 	{
@@ -142,7 +142,7 @@ int TestListDictionary(int argc, char* argv[])
 		return -1;
 	}
 
-	value = ListDictionary_Remove_Head(list);
+	value = ListDictionary_Take_Head(list);
 	count = ListDictionary_Count(list);
 	if (strncmp(value, val3, 4) || count != 0)
 	{
@@ -151,7 +151,7 @@ int TestListDictionary(int argc, char* argv[])
 		return -1;
 	}
 
-	value = ListDictionary_Remove_Head(list);
+	value = ListDictionary_Take_Head(list);
 	if (value)
 	{
 		printf("ListDictionary_Remove_Head: Expected : (null), Actual: %s\n", value);

@@ -190,8 +190,6 @@ size_t ListDictionary_GetKeys(wListDictionary* listDictionary, ULONG_PTR** ppKey
 
 BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, void* value)
 {
-	wListDictionaryItem* item;
-	wListDictionaryItem* lastItem;
 	BOOL ret = FALSE;
 
 	WINPR_ASSERT(listDictionary);
@@ -199,7 +197,7 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, void* 
 	if (listDictionary->synchronized)
 		EnterCriticalSection(&listDictionary->lock);
 
-	item = (wListDictionaryItem*)malloc(sizeof(wListDictionaryItem));
+	wListDictionaryItem* item = (wListDictionaryItem*)calloc(1, sizeof(wListDictionaryItem));
 
 	if (!item)
 		goto out_error;
@@ -222,7 +220,7 @@ BOOL ListDictionary_Add(wListDictionary* listDictionary, const void* key, void* 
 	}
 	else
 	{
-		lastItem = listDictionary->head;
+		wListDictionaryItem* lastItem = listDictionary->head;
 
 		while (lastItem->next)
 			lastItem = lastItem->next;
@@ -237,6 +235,34 @@ out_error:
 		LeaveCriticalSection(&listDictionary->lock);
 
 	return ret;
+}
+
+static void item_free(wListDictionary* listDictionary, wListDictionaryItem* item)
+{
+	WINPR_ASSERT(listDictionary);
+
+	if (item)
+	{
+		if (listDictionary->objectKey.fnObjectFree)
+			listDictionary->objectKey.fnObjectFree(item->key);
+		if (listDictionary->objectValue.fnObjectFree)
+			listDictionary->objectValue.fnObjectFree(item->value);
+	}
+	free(item);
+}
+
+static void item_set(wListDictionary* listDictionary, wListDictionaryItem* item, const void* value)
+{
+	WINPR_ASSERT(listDictionary);
+	WINPR_ASSERT(item);
+
+	if (listDictionary->objectValue.fnObjectFree)
+		listDictionary->objectValue.fnObjectFree(item->value);
+
+	if (listDictionary->objectValue.fnObjectNew)
+		item->value = listDictionary->objectValue.fnObjectNew(value);
+	else
+		item->value = value;
 }
 
 /**
@@ -261,13 +287,7 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 		{
 			nextItem = item->next;
 
-			if (listDictionary->objectKey.fnObjectFree)
-				listDictionary->objectKey.fnObjectFree(item->key);
-
-			if (listDictionary->objectValue.fnObjectFree)
-				listDictionary->objectValue.fnObjectFree(item->value);
-
-			free(item);
+			item_free(listDictionary, item);
 			item = nextItem;
 		}
 
@@ -313,7 +333,8 @@ BOOL ListDictionary_Contains(wListDictionary* listDictionary, const void* key)
  * Removes the entry with the specified key from the ListDictionary.
  */
 
-void* ListDictionary_Remove(wListDictionary* listDictionary, const void* key)
+static void* ListDictionary_RemoveOrTake(wListDictionary* listDictionary, const void* key,
+                                         BOOL take)
 {
 	void* value = NULL;
 	wListDictionaryItem* item;
@@ -338,8 +359,12 @@ void* ListDictionary_Remove(wListDictionary* listDictionary, const void* key)
 			else
 				prevItem->next = item->next;
 
-			value = item->value;
-			free(item);
+			if (take)
+			{
+				value = item->value;
+				item->value = NULL;
+			}
+			item_free(listDictionary, item);
 			break;
 		}
 
@@ -353,11 +378,21 @@ void* ListDictionary_Remove(wListDictionary* listDictionary, const void* key)
 	return value;
 }
 
+void ListDictionary_Remove(wListDictionary* listDictionary, const void* key)
+{
+	ListDictionary_RemoveOrTake(listDictionary, key, FALSE);
+}
+
+void* ListDictionary_Take(wListDictionary* listDictionary, const void* key)
+{
+	return ListDictionary_RemoveOrTake(listDictionary, key, TRUE);
+}
+
 /**
  * Removes the first (head) entry from the list
  */
 
-void* ListDictionary_Remove_Head(wListDictionary* listDictionary)
+static void* ListDictionary_Remove_Or_Take_Head(wListDictionary* listDictionary, BOOL take)
 {
 	wListDictionaryItem* item;
 	void* value = NULL;
@@ -371,14 +406,28 @@ void* ListDictionary_Remove_Head(wListDictionary* listDictionary)
 	{
 		item = listDictionary->head;
 		listDictionary->head = listDictionary->head->next;
-		value = item->value;
-		free(item);
+		if (take)
+		{
+			value = item->value;
+			item->value = NULL;
+		}
+		item_free(listDictionary, item);
 	}
 
 	if (listDictionary->synchronized)
 		LeaveCriticalSection(&listDictionary->lock);
 
 	return value;
+}
+
+void ListDictionary_Remove_Head(wListDictionary* listDictionary)
+{
+	ListDictionary_Remove_Or_Take_Head(listDictionary, FALSE);
+}
+
+void* ListDictionary_Take_Head(wListDictionary* listDictionary)
+{
+	return ListDictionary_Remove_Or_Take_Head(listDictionary, TRUE);
 }
 
 /**
@@ -449,12 +498,7 @@ BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* ke
 		}
 
 		if (item)
-		{
-			if (listDictionary->objectValue.fnObjectFree)
-				listDictionary->objectValue.fnObjectFree(item->value);
-
-			item->value = value;
-		}
+			item_set(listDictionary, item, value);
 
 		status = (item) ? TRUE : FALSE;
 	}

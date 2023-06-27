@@ -94,7 +94,7 @@ void devman_unregister_device(DEVMAN* devman, void* key)
 	if (!devman || !key)
 		return;
 
-	device = (DEVICE*)ListDictionary_Remove(devman->devices, key);
+	device = (DEVICE*)ListDictionary_Take(devman->devices, key);
 
 	if (device)
 		devman_device_free(device);
