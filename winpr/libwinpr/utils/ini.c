@@ -47,7 +47,6 @@ typedef struct
 
 struct s_wIniFile
 {
-	FILE* fp;
 	char* line;
 	char* nextLine;
 	size_t lineLength;
@@ -129,7 +128,13 @@ static BOOL IniFile_Load_String(wIniFile* ini, const char* iniString)
 	return TRUE;
 }
 
-static BOOL IniFile_Open_File(wIniFile* ini, const char* filename)
+static void IniFile_Close_File(FILE* fp)
+{
+	if (fp)
+		fclose(fp);
+}
+
+static FILE* IniFile_Open_File(wIniFile* ini, const char* filename)
 {
 	WINPR_ASSERT(ini);
 
@@ -137,34 +142,31 @@ static BOOL IniFile_Open_File(wIniFile* ini, const char* filename)
 		return FALSE;
 
 	if (ini->readOnly)
-		ini->fp = winpr_fopen(filename, "rb");
+		return winpr_fopen(filename, "rb");
 	else
-		ini->fp = winpr_fopen(filename, "w+b");
-
-	if (!ini->fp)
-		return FALSE;
-
-	return TRUE;
+		return winpr_fopen(filename, "w+b");
 }
 
 static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 {
+	BOOL rc = FALSE;
 	INT64 fileSize;
 
 	WINPR_ASSERT(ini);
 
-	if (!IniFile_Open_File(ini, filename))
+	FILE* fp = IniFile_Open_File(ini, filename);
+	if (!fp)
 		return FALSE;
 
-	if (_fseeki64(ini->fp, 0, SEEK_END) < 0)
+	if (_fseeki64(fp, 0, SEEK_END) < 0)
 		goto out_file;
 
-	fileSize = _ftelli64(ini->fp);
+	fileSize = _ftelli64(fp);
 
 	if (fileSize < 0)
 		goto out_file;
 
-	if (_fseeki64(ini->fp, 0, SEEK_SET) < 0)
+	if (_fseeki64(fp, 0, SEEK_SET) < 0)
 		goto out_file;
 
 	ini->line = NULL;
@@ -176,22 +178,16 @@ static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 	if (!IniFile_BufferResize(ini, fileSize + 2))
 		goto out_file;
 
-	if (fread(ini->buffer, fileSize, 1ul, ini->fp) != 1)
-		goto out_buffer;
+	if (fread(ini->buffer, fileSize, 1ul, fp) != 1)
+		goto out_file;
 
-	if (ini->fp)
-		fclose(ini->fp);
-	ini->fp = NULL;
 	ini->buffer[fileSize] = '\n';
 	IniFile_Load_NextLine(ini, ini->buffer);
-	return TRUE;
-out_buffer:
+	rc = TRUE;
 
 out_file:
-	if (ini->fp)
-		fclose(ini->fp);
-	ini->fp = NULL;
-	return FALSE;
+	IniFile_Close_File(fp);
+	return rc;
 }
 
 static BOOL IniFile_Load_HasNextLine(wIniFile* ini)
@@ -790,7 +786,7 @@ char* IniFile_WriteBuffer(wIniFile* ini)
 
 int IniFile_WriteFile(wIniFile* ini, const char* filename)
 {
-	int ret = 1;
+	int ret = -1;
 
 	WINPR_ASSERT(ini);
 
@@ -805,17 +801,17 @@ int IniFile_WriteFile(wIniFile* ini, const char* filename)
 	if (!filename)
 		filename = ini->filename;
 
-	if (!IniFile_Open_File(ini, filename))
-	{
-		free(buffer);
-		return -1;
-	}
+	FILE* fp = IniFile_Open_File(ini, filename);
+	if (!fp)
+		goto fail;
 
-	if (fwrite((void*)buffer, length, 1, ini->fp) != 1)
-		ret = -1;
+	if (fwrite((void*)buffer, length, 1, fp) != 1)
+		goto fail;
 
-	if (ini->fp)
-		fclose(ini->fp);
+	ret = 1;
+
+fail:
+	IniFile_Close_File(fp);
 	free(buffer);
 	return ret;
 }
@@ -832,8 +828,6 @@ void IniFile_Free(wIniFile* ini)
 
 	free(ini->sections);
 	free(ini->buffer);
-	if (ini->fp)
-		fclose(ini->fp);
 	free(ini);
 }
 
@@ -862,14 +856,6 @@ wIniFile* IniFile_Clone(const wIniFile* ini)
 	wIniFile* copy = IniFile_New();
 	if (!copy)
 		goto fail;
-
-	if (ini->fp)
-	{
-		const int fd = dup(fileno(ini->fp));
-		copy->fp = fdopen(fd, "r");
-		if (!copy->fp)
-			goto fail;
-	}
 
 	copy->lineLength = ini->lineLength;
 	if (!IniFile_SetFilename(copy, ini->filename))
