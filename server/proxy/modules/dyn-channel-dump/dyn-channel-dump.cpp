@@ -120,20 +120,8 @@ class ChannelData
 		return enabled;
 	}
 
-	std::filesystem::path filepath(const std::string& channel, bool back, uint64_t count) const
+	bool ensure_path_exists()
 	{
-		auto name = idstr(channel, back);
-		char cstr[32] = {};
-		_snprintf(cstr, sizeof(cstr), "%016" PRIx64 "-", count);
-		auto path = _base / cstr;
-		path += name;
-		path += ".dump";
-		return path;
-	}
-
-	bool create()
-	{
-
 		if (!std::filesystem::exists(_base))
 		{
 			if (!std::filesystem::create_directories(_base))
@@ -147,6 +135,13 @@ class ChannelData
 			WLog_ERR(TAG, "dump path %s is not a directory", _base.c_str());
 			return false;
 		}
+		return true;
+	}
+
+	bool create()
+	{
+		if (!ensure_path_exists())
+			return false;
 
 		if (_channels_to_dump.empty())
 		{
@@ -163,6 +158,17 @@ class ChannelData
 	}
 
   private:
+	std::filesystem::path filepath(const std::string& channel, bool back, uint64_t count) const
+	{
+		auto name = idstr(channel, back);
+		char cstr[32] = {};
+		_snprintf(cstr, sizeof(cstr), "%016" PRIx64 "-", count);
+		auto path = _base / cstr;
+		path += name;
+		path += ".dump";
+		return path;
+	}
+
 	std::string idstr(const std::string& name, bool back) const
 	{
 		std::stringstream ss;
@@ -301,6 +307,9 @@ static BOOL dump_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, vo
 			WLog_ERR(TAG, "Missing channel data");
 			return FALSE;
 		}
+
+		if (!cdata->ensure_path_exists())
+			return FALSE;
 
 		auto stream = cdata->stream(data->name, data->isBackData);
 		auto buffer = reinterpret_cast<const char*>(Stream_ConstBuffer(data->data));
