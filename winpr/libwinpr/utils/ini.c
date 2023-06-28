@@ -535,15 +535,8 @@ int IniFile_ReadFile(wIniFile* ini, const char* filename)
 	return IniFile_Load(ini);
 }
 
-char** IniFile_GetSectionNames(wIniFile* ini, int* count)
+char** IniFile_GetSectionNames(wIniFile* ini, size_t* count)
 {
-	char* p;
-	size_t index;
-	size_t length;
-	size_t nameLength;
-	char** sectionNames;
-	wIniFileSection* section = NULL;
-
 	WINPR_ASSERT(ini);
 
 	if (!count)
@@ -552,52 +545,44 @@ char** IniFile_GetSectionNames(wIniFile* ini, int* count)
 	if (ini->nSections > INT_MAX)
 		return NULL;
 
-	length = (sizeof(char*) * ini->nSections) + sizeof(char);
+	size_t length = (sizeof(char*) * ini->nSections) + sizeof(char);
 
-	for (index = 0; index < ini->nSections; index++)
+	for (size_t index = 0; index < ini->nSections; index++)
 	{
-		section = ini->sections[index];
-		nameLength = strlen(section->name);
+		wIniFileSection* section = ini->sections[index];
+		const size_t nameLength = strlen(section->name);
 		length += (nameLength + 1);
 	}
 
-	sectionNames = (char**)calloc(length, sizeof(char*));
+	char** sectionNames = (char**)calloc(length, sizeof(char*));
 
 	if (!sectionNames)
 		return NULL;
 
-	p = (char*)&((BYTE*)sectionNames)[sizeof(char*) * ini->nSections];
+	char* p = (char*)&((BYTE*)sectionNames)[sizeof(char*) * ini->nSections];
 
-	for (index = 0; index < ini->nSections; index++)
+	for (size_t index = 0; index < ini->nSections; index++)
 	{
 		sectionNames[index] = p;
-		section = ini->sections[index];
-		nameLength = strlen(section->name);
+		wIniFileSection* section = ini->sections[index];
+		const size_t nameLength = strlen(section->name);
 		CopyMemory(p, section->name, nameLength + 1);
 		p += (nameLength + 1);
 	}
 
 	*p = '\0';
-	*count = (int)ini->nSections;
+	*count = ini->nSections;
 	return sectionNames;
 }
 
-char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, int* count)
+char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, size_t* count)
 {
-	char* p;
-	size_t index;
-	size_t length;
-	size_t nameLength;
-	char** keyNames;
-	wIniFileKey* pKey = NULL;
-	wIniFileSection* pSection = NULL;
-
 	WINPR_ASSERT(ini);
 
 	if (!section || !count)
 		return NULL;
 
-	pSection = IniFile_GetSection(ini, section);
+	wIniFileSection* pSection = IniFile_GetSection(ini, section);
 
 	if (!pSection)
 		return NULL;
@@ -605,33 +590,33 @@ char** IniFile_GetSectionKeyNames(wIniFile* ini, const char* section, int* count
 	if (pSection->nKeys > INT_MAX)
 		return NULL;
 
-	length = (sizeof(char*) * pSection->nKeys) + sizeof(char);
+	size_t length = (sizeof(char*) * pSection->nKeys) + sizeof(char);
 
-	for (index = 0; index < pSection->nKeys; index++)
+	for (size_t index = 0; index < pSection->nKeys; index++)
 	{
-		pKey = pSection->keys[index];
-		nameLength = strlen(pKey->name);
+		wIniFileKey* pKey = pSection->keys[index];
+		const size_t nameLength = strlen(pKey->name);
 		length += (nameLength + 1);
 	}
 
-	keyNames = (char**)calloc(length, sizeof(char*));
+	char** keyNames = (char**)calloc(length, sizeof(char*));
 
 	if (!keyNames)
 		return NULL;
 
-	p = (char*)&((BYTE*)keyNames)[sizeof(char*) * pSection->nKeys];
+	char* p = (char*)&((BYTE*)keyNames)[sizeof(char*) * pSection->nKeys];
 
-	for (index = 0; index < pSection->nKeys; index++)
+	for (size_t index = 0; index < pSection->nKeys; index++)
 	{
 		keyNames[index] = p;
-		pKey = pSection->keys[index];
-		nameLength = strlen(pKey->name);
+		wIniFileKey* pKey = pSection->keys[index];
+		const size_t nameLength = strlen(pKey->name);
 		CopyMemory(p, pKey->name, nameLength + 1);
 		p += (nameLength + 1);
 	}
 
 	*p = '\0';
-	*count = (int)pSection->nKeys;
+	*count = pSection->nKeys;
 	return keyNames;
 }
 
