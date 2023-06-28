@@ -53,6 +53,7 @@ struct s_wIniFile
 	size_t lineLength;
 	char* tokctx;
 	char* buffer;
+	size_t buffersize;
 	char* filename;
 	BOOL readOnly;
 	size_t nSections;
@@ -86,6 +87,23 @@ static BOOL IniFile_Load_NextLine(wIniFile* ini, char* str)
 	return (ini->nextLine) ? TRUE : FALSE;
 }
 
+static BOOL IniFile_BufferResize(wIniFile* ini, size_t size)
+{
+	WINPR_ASSERT(ini);
+	if (size > ini->buffersize)
+	{
+		const size_t diff = size - ini->buffersize;
+		BYTE* tmp = realloc(ini->buffer, size);
+		if (!tmp)
+			return FALSE;
+
+		memset(&tmp[ini->buffersize], 0, diff * sizeof(BYTE));
+		ini->buffer = tmp;
+		ini->buffersize = size;
+	}
+	return TRUE;
+}
+
 static BOOL IniFile_Load_String(wIniFile* ini, const char* iniString)
 {
 	size_t fileSize;
@@ -97,15 +115,12 @@ static BOOL IniFile_Load_String(wIniFile* ini, const char* iniString)
 
 	ini->line = NULL;
 	ini->nextLine = NULL;
-	ini->buffer = NULL;
 	fileSize = strlen(iniString);
 
 	if (fileSize < 1)
 		return FALSE;
 
-	ini->buffer = (char*)calloc(fileSize + 2, sizeof(char));
-
-	if (!ini->buffer)
+	if (!IniFile_BufferResize(ini, fileSize + 2))
 		return FALSE;
 
 	CopyMemory(ini->buffer, iniString, fileSize);
@@ -154,14 +169,11 @@ static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 
 	ini->line = NULL;
 	ini->nextLine = NULL;
-	ini->buffer = NULL;
 
 	if (fileSize < 1)
 		goto out_file;
 
-	ini->buffer = (char*)calloc(fileSize + 2ul, sizeof(char));
-
-	if (!ini->buffer)
+	if (!IniFile_BufferResize(ini, fileSize + 2))
 		goto out_file;
 
 	if (fread(ini->buffer, fileSize, 1ul, ini->fp) != 1)
@@ -174,8 +186,7 @@ static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 	IniFile_Load_NextLine(ini, ini->buffer);
 	return TRUE;
 out_buffer:
-	free(ini->buffer);
-	ini->buffer = NULL;
+
 out_file:
 	if (ini->fp)
 		fclose(ini->fp);
@@ -864,11 +875,11 @@ wIniFile* IniFile_Clone(const wIniFile* ini)
 	if (!IniFile_SetFilename(copy, ini->filename))
 		goto fail;
 
-	if (ini->buffer)
+	if (ini->buffersize > 0)
 	{
-		copy->buffer = _strdup(ini->buffer);
-		if (!copy->buffer)
+		if (!IniFile_BufferResize(copy, ini->buffersize))
 			goto fail;
+		memcpy(copy->buffer, ini->buffer, copy->buffersize);
 	}
 
 	copy->readOnly = ini->readOnly;
