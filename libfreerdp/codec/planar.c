@@ -888,6 +888,8 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 		else
 			TempFormat = PIXEL_FORMAT_BGRX32;
 
+		TempFormat = planar_invert_format(planar, alpha, TempFormat);
+
 		if ((TempFormat != DstFormat) || (nSrcWidth != nDstWidth) || (nSrcHeight != nDstHeight))
 		{
 			pTempData = planar->pTempData;
