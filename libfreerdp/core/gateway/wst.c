@@ -410,8 +410,6 @@ static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, long* pSta
 	WINPR_ASSERT(*ppresponse);
 	WINPR_ASSERT(pStatusCode);
 
-	BOOL success = FALSE;
-
 	if (freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer))
 		return FALSE;
 
@@ -442,7 +440,7 @@ static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, long* pSta
 		}
 	}
 	*pStatusCode = http_response_get_status_code(*ppresponse);
-	return success;
+	return TRUE;
 }
 
 BOOL wst_connect(rdpWst* wst, DWORD timeout)
