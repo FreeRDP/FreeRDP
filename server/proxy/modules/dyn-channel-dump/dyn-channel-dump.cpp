@@ -31,6 +31,7 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <atomic>
 #include <filesystem>
 
 #include <freerdp/server/proxy/proxy_modules_api.h>
@@ -61,28 +62,19 @@ class ChannelData
 
 	bool add(const std::string& name, bool back)
 	{
-		auto id = idstr(name, back);
-		if (_map.find(id) != _map.end())
-		{
-			WLog_ERR(TAG, "Duplicate stream dump entry '%s'", id.c_str());
-			return false;
-		}
-
-		auto path = filepath(name, back);
-
-		auto s = std::ofstream(path);
-		if (!s.is_open() || !s.good())
-		{
-			WLog_ERR(TAG, "Failed to create stream dump entry '%s'", id.c_str());
-			return false;
-		}
-		_map.insert({ id, std::move(s) });
+		std::lock_guard guard(_mux);
+		if (_map.find(name) == _map.end())
+			_map.insert({ name, 0 });
 		return true;
 	}
 
-	std::ofstream& stream(const std::string& name, bool back)
+	std::ofstream stream(const std::string& name, bool back)
 	{
-		return _map[idstr(name, back)];
+		std::lock_guard guard(_mux);
+		auto& atom = _map[name];
+		auto count = atom++;
+		auto path = filepath(name, back, count);
+		return std::ofstream(path);
 	}
 
 	bool dump_enabled(const std::string& name) const
@@ -97,10 +89,13 @@ class ChannelData
 		       _channels_to_dump.end();
 	}
 
-	std::filesystem::path filepath(const std::string& channel, bool back) const
+	std::filesystem::path filepath(const std::string& channel, bool back, uint64_t count) const
 	{
 		auto name = idstr(channel, back);
-		auto path = _base / name;
+		char cstr[32] = {};
+		_snprintf(cstr, sizeof(cstr), "%016" PRIx64 "-", count);
+		auto path = _base / cstr;
+		path += name;
 		path += ".dump";
 		return path;
 	}
@@ -120,7 +115,9 @@ class ChannelData
   private:
 	std::filesystem::path _base;
 	std::vector<std::string> _channels_to_dump;
-	std::map<std::string, std::ofstream> _map;
+
+	std::mutex _mux;
+	std::map<std::string, uint64_t> _map;
 };
 
 static ChannelData* dump_get_plugin_data(proxyPlugin* plugin, proxyData* pdata)
@@ -172,19 +169,16 @@ static BOOL dump_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdat
 		auto cdata = dump_get_plugin_data(plugin, pdata);
 		if (!cdata)
 			return FALSE;
-		auto front = cdata->filepath(data->name, false);
-		auto back = cdata->filepath(data->name, true);
 
 		if (!cdata->add(data->name, false))
 		{
-			WLog_ERR(TAG, "failed to create file '%s'", front.c_str());
+			WLog_ERR(TAG, "failed to create files for '%s'", data->name);
 		}
 		if (!cdata->add(data->name, true))
 		{
-			WLog_ERR(TAG, "failed to create file '%s'", back.c_str());
+			WLog_ERR(TAG, "failed to create files for '%s'", data->name);
 		}
-		WLog_INFO(TAG, "Dumping channel '%s' to '%s' and '%s'", data->name, front.c_str(),
-		          back.c_str());
+		WLog_INFO(TAG, "Dumping channel '%s'", data->name);
 	}
 	return TRUE;
 }
@@ -219,7 +213,7 @@ static BOOL dump_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, vo
 		if (!cdata)
 			return FALSE;
 
-		auto& stream = cdata->stream(data->name, data->isBackData);
+		auto stream = cdata->stream(data->name, data->isBackData);
 		auto buffer = reinterpret_cast<const char*>(Stream_ConstBuffer(data->data));
 		if (!stream.is_open() || !stream.good())
 		{
@@ -232,6 +226,7 @@ static BOOL dump_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, vo
 			WLog_ERR(TAG, "Could not write to stream");
 			return FALSE;
 		}
+		stream.flush();
 	}
 
 	return TRUE;
