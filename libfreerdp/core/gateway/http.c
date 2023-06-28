@@ -561,10 +561,10 @@ static BOOL http_encode_cookie_line(wStream* s, wListDictionary* cookies)
 		status = http_encode_print(s, "%s=%s", (char*)keys[x], cur);
 	}
 
+	status = http_encode_print(s, "\r\n");
 unlock:
 	free(keys);
 	ListDictionary_Unlock(cookies);
-	status = http_encode_print(s, "\r\n");
 	return status;
 }
 
