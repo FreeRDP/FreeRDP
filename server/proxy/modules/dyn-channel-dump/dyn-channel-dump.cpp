@@ -153,7 +153,8 @@ static BOOL dump_set_plugin_data(proxyPlugin* plugin, proxyData* pdata, ChannelD
 static bool dump_channel_enabled(proxyPlugin* plugin, proxyData* pdata, const std::string& name)
 {
 	auto config = dump_get_plugin_data(plugin, pdata);
-	WINPR_ASSERT(config);
+	if (!config)
+		return false;
 	return config->dump_enabled(name);
 }
 
@@ -169,6 +170,8 @@ static BOOL dump_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdat
 	if (data->intercept)
 	{
 		auto cdata = dump_get_plugin_data(plugin, pdata);
+		if (!cdata)
+			return FALSE;
 		auto front = cdata->filepath(data->name, false);
 		auto back = cdata->filepath(data->name, true);
 
@@ -213,6 +216,9 @@ static BOOL dump_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, vo
 	if (dump_channel_enabled(plugin, pdata, data->name))
 	{
 		auto cdata = dump_get_plugin_data(plugin, pdata);
+		if (!cdata)
+			return FALSE;
+
 		auto& stream = cdata->stream(data->name, data->isBackData);
 		auto buffer = reinterpret_cast<const char*>(Stream_ConstBuffer(data->data));
 		if (!stream.is_open() || !stream.good())
