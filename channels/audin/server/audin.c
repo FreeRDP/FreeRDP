@@ -528,6 +528,8 @@ static BOOL audin_server_close(audin_server_context* context)
 		audin->audin_channel = NULL;
 	}
 
+	audin->audin_negotiated_format = NULL;
+
 	return TRUE;
 }
 
