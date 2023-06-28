@@ -578,7 +578,8 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 	pdata = ps->pdata;
 	WINPR_ASSERT(pdata);
 
-	pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_SESSION_INITIALIZE, pdata, client);
+	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_SESSION_INITIALIZE, pdata, client))
+		goto out_free_peer;
 
 	WINPR_ASSERT(client->Initialize);
 	client->Initialize(client);
@@ -586,7 +587,8 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 	PROXY_LOG_INFO(TAG, ps, "new connection: proxy address: %s, client address: %s",
 	               pdata->config->Host, client->hostname);
 
-	pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_SESSION_STARTED, pdata, client);
+	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_SESSION_STARTED, pdata, client))
+		goto out_free_peer;
 
 	while (1)
 	{
