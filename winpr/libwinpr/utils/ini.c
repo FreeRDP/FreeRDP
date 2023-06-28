@@ -482,6 +482,18 @@ static int IniFile_Load(wIniFile* ini)
 	return 1;
 }
 
+static BOOL IniFile_SetFilename(wIniFile* ini, const char* name)
+{
+	WINPR_ASSERT(ini);
+	free(ini->filename);
+	ini->filename = NULL;
+
+	if (!name)
+		return TRUE;
+	ini->filename = _strdup(name);
+	return ini->filename != NULL;
+}
+
 int IniFile_ReadBuffer(wIniFile* ini, const char* buffer)
 {
 	BOOL status;
@@ -492,7 +504,6 @@ int IniFile_ReadBuffer(wIniFile* ini, const char* buffer)
 		return -1;
 
 	ini->readOnly = TRUE;
-	ini->filename = NULL;
 	status = IniFile_Load_String(ini, buffer);
 
 	if (!status)
@@ -506,9 +517,8 @@ int IniFile_ReadFile(wIniFile* ini, const char* filename)
 	WINPR_ASSERT(ini);
 
 	ini->readOnly = TRUE;
-	free(ini->filename);
-	ini->filename = _strdup(filename);
-
+	if (!IniFile_SetFilename(ini, filename))
+		return -1;
 	if (!ini->filename)
 		return -1;
 
@@ -804,7 +814,7 @@ void IniFile_Free(wIniFile* ini)
 	if (!ini)
 		return;
 
-	free(ini->filename);
+	IniFile_SetFilename(ini, NULL);
 
 	for (size_t index = 0; index < ini->nSections; index++)
 		IniFile_Section_Free(ini->sections[index]);
@@ -851,12 +861,9 @@ wIniFile* IniFile_Clone(const wIniFile* ini)
 	}
 
 	copy->lineLength = ini->lineLength;
-	if (ini->filename)
-	{
-		copy->filename = _strdup(ini->filename);
-		if (!copy->filename)
-			goto fail;
-	}
+	if (!IniFile_SetFilename(copy, ini->filename))
+		goto fail;
+
 	if (ini->buffer)
 	{
 		copy->buffer = _strdup(ini->buffer);
