@@ -84,6 +84,7 @@ static HIGH_COLOR_DEPTH ColorDepthToHighColor(UINT32 bpp)
 	}
 }
 
+static char* gcc_block_type_string(UINT16 type, char* buffer, size_t size);
 static BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs);
 static BOOL gcc_read_client_core_data(wStream* s, rdpMcs* mcs);
 static BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length);
@@ -563,10 +564,8 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 	while (length > 0)
 	{
 		wStream sbuffer = { 0 };
-		UINT16 type;
-		UINT16 blockLength;
-		size_t endPos;
-		const size_t begPos = Stream_GetPosition(s);
+		UINT16 type = 0;
+		UINT16 blockLength = 0;
 
 		if (!gcc_read_user_data_header(s, &type, &blockLength))
 			return FALSE;
@@ -576,6 +575,8 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 
 		wStream* sub = Stream_StaticConstInit(&sbuffer, Stream_Pointer(s), blockLength - 4);
 		WINPR_ASSERT(sub);
+
+		Stream_Seek(s, blockLength - 4);
 
 		switch (type)
 		{
@@ -631,22 +632,31 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 			default:
 				WLog_ERR(TAG, "Unknown GCC client data block: 0x%04" PRIX16 "", type);
 				winpr_HexDump(TAG, WLOG_TRACE, Stream_Pointer(sub), Stream_GetRemainingLength(sub));
-				Stream_Seek(s, blockLength - 4);
 				break;
 		}
 
-		endPos = Stream_GetPosition(s);
-
-		if (endPos != (begPos + blockLength))
+		const size_t rem = Stream_GetRemainingLength(sub);
+		if (rem > 0)
 		{
+			char buffer[128] = { 0 };
+			const size_t total = Stream_Length(sub);
 			WLog_ERR(TAG,
-			         "Error parsing GCC client data block 0x%04" PRIX16 ": Actual Offset: %" PRIuz
+			         "Error parsing GCC client data block %s: Actual Offset: %" PRIuz
 			         " Expected Offset: %" PRIuz,
-			         type, endPos, begPos + blockLength);
+			         gcc_block_type_string(type, buffer, sizeof(buffer)), total - rem, total);
 		}
 
-		length -= blockLength;
-		Stream_SetPosition(s, begPos + blockLength);
+		if (blockLength > length)
+		{
+			char buffer[128] = { 0 };
+			WLog_ERR(TAG,
+			         "Error parsing GCC client data block %s: got blockLength 0x%04" PRIx16
+			         ", but only 0x%04" PRIx16 "remaining",
+			         gcc_block_type_string(type, buffer, sizeof(buffer)), blockLength, length);
+			length = 0;
+		}
+		else
+			length -= blockLength;
 	}
 
 	return TRUE;
@@ -700,7 +710,7 @@ BOOL gcc_write_client_data_blocks(wStream* s, const rdpMcs* mcs)
 	return TRUE;
 }
 
-static char* gcc_block_type_string(UINT16 type, char* buffer, size_t size)
+char* gcc_block_type_string(UINT16 type, char* buffer, size_t size)
 {
 	switch (type)
 	{
