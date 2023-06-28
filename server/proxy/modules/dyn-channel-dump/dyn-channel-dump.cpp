@@ -52,19 +52,47 @@ static const std::vector<std::string> plugin_static_intercept = { DRDYNVC_SVC_CH
 static constexpr char key_path[] = "path";
 static constexpr char key_channels[] = "channels";
 
+class PluginData
+{
+  public:
+	PluginData(proxyPluginsManager* mgr) : _mgr(mgr), _sessionid(0)
+	{
+	}
+
+	proxyPluginsManager* mgr() const
+	{
+		return _mgr;
+	}
+
+	uint64_t session()
+	{
+		return _sessionid++;
+	}
+
+  private:
+	proxyPluginsManager* _mgr;
+	uint64_t _sessionid;
+};
+
 class ChannelData
 {
   public:
-	ChannelData(const std::string& base, const std::vector<std::string>& list)
-	    : _base(base), _channels_to_dump(list)
+	ChannelData(const std::string& base, const std::vector<std::string>& list, uint64_t sessionid)
+	    : _base(base), _channels_to_dump(list), _session_id(sessionid)
 	{
+		char str[64] = {};
+		_snprintf(str, sizeof(str), "session-%016" PRIx64, _session_id);
+		_base /= str;
 	}
 
 	bool add(const std::string& name, bool back)
 	{
 		std::lock_guard guard(_mux);
 		if (_map.find(name) == _map.end())
+		{
+			WLog_INFO(TAG, "adding '%s' to dump list", name.c_str());
 			_map.insert({ name, 0 });
+		}
 		return true;
 	}
 
@@ -74,6 +102,7 @@ class ChannelData
 		auto& atom = _map[name];
 		auto count = atom++;
 		auto path = filepath(name, back, count);
+		WLog_DBG(TAG, "[%s] writing file '%s'", name.c_str(), path.c_str());
 		return std::ofstream(path);
 	}
 
@@ -85,8 +114,10 @@ class ChannelData
 			return false;
 		}
 
-		return std::find(_channels_to_dump.begin(), _channels_to_dump.end(), name) !=
-		       _channels_to_dump.end();
+		auto enabled = std::find(_channels_to_dump.begin(), _channels_to_dump.end(), name) !=
+		               _channels_to_dump.end();
+		WLog_DBG(TAG, "channel '%s' dumping %s", name.c_str(), enabled ? "enabled" : "disabled");
+		return enabled;
 	}
 
 	std::filesystem::path filepath(const std::string& channel, bool back, uint64_t count) const
@@ -98,6 +129,37 @@ class ChannelData
 		path += name;
 		path += ".dump";
 		return path;
+	}
+
+	bool create()
+	{
+
+		if (!std::filesystem::exists(_base))
+		{
+			if (!std::filesystem::create_directories(_base))
+			{
+				WLog_ERR(TAG, "Failed to create dump directory %s", _base.c_str());
+				return false;
+			}
+		}
+		else if (!std::filesystem::is_directory(_base))
+		{
+			WLog_ERR(TAG, "dump path %s is not a directory", _base.c_str());
+			return false;
+		}
+
+		if (_channels_to_dump.empty())
+		{
+			WLog_ERR(TAG, "Empty configuration entry [%s/%s], can not continue", plugin_name,
+			         key_channels);
+			return false;
+		}
+		return true;
+	}
+
+	uint64_t session() const
+	{
+		return _session_id;
 	}
 
   private:
@@ -118,14 +180,27 @@ class ChannelData
 
 	std::mutex _mux;
 	std::map<std::string, uint64_t> _map;
+	uint64_t _session_id;
 };
+
+static PluginData* dump_get_plugin_data(proxyPlugin* plugin)
+{
+	WINPR_ASSERT(plugin);
+
+	auto plugindata = static_cast<PluginData*>(plugin->custom);
+	WINPR_ASSERT(plugindata);
+	return plugindata;
+}
 
 static ChannelData* dump_get_plugin_data(proxyPlugin* plugin, proxyData* pdata)
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 
-	auto mgr = static_cast<proxyPluginsManager*>(plugin->custom);
+	auto plugindata = dump_get_plugin_data(plugin);
+	WINPR_ASSERT(plugindata);
+
+	auto mgr = plugindata->mgr();
 	WINPR_ASSERT(mgr);
 
 	WINPR_ASSERT(mgr->GetPluginData);
@@ -137,7 +212,10 @@ static BOOL dump_set_plugin_data(proxyPlugin* plugin, proxyData* pdata, ChannelD
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 
-	auto mgr = static_cast<proxyPluginsManager*>(plugin->custom);
+	auto plugindata = dump_get_plugin_data(plugin);
+	WINPR_ASSERT(plugindata);
+
+	auto mgr = plugindata->mgr();
 	WINPR_ASSERT(mgr);
 
 	auto cdata = dump_get_plugin_data(plugin, pdata);
@@ -151,7 +229,10 @@ static bool dump_channel_enabled(proxyPlugin* plugin, proxyData* pdata, const st
 {
 	auto config = dump_get_plugin_data(plugin, pdata);
 	if (!config)
+	{
+		WLog_ERR(TAG, "Missing channel data");
 		return false;
+	}
 	return config->dump_enabled(name);
 }
 
@@ -194,7 +275,11 @@ static BOOL dump_static_channel_intercept_list(proxyPlugin* plugin, proxyData* p
 	auto intercept = std::find(plugin_static_intercept.begin(), plugin_static_intercept.end(),
 	                           data->name) != plugin_static_intercept.end();
 	if (intercept)
+	{
+		WLog_INFO(TAG, "intercepting channel '%s'", data->name);
 		data->intercept = TRUE;
+	}
+
 	return TRUE;
 }
 
@@ -209,9 +294,13 @@ static BOOL dump_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, vo
 	data->result = PF_CHANNEL_RESULT_PASS;
 	if (dump_channel_enabled(plugin, pdata, data->name))
 	{
+		WLog_DBG(TAG, "intercepting channel '%s'", data->name);
 		auto cdata = dump_get_plugin_data(plugin, pdata);
 		if (!cdata)
+		{
+			WLog_ERR(TAG, "Missing channel data");
 			return FALSE;
+		}
 
 		auto stream = cdata->stream(data->name, data->isBackData);
 		auto buffer = reinterpret_cast<const char*>(Stream_ConstBuffer(data->data));
@@ -245,6 +334,9 @@ static BOOL dump_session_started(proxyPlugin* plugin, proxyData* pdata, void*)
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 
+	auto custom = dump_get_plugin_data(plugin);
+	WINPR_ASSERT(custom);
+
 	auto config = pdata->config;
 	WINPR_ASSERT(config);
 
@@ -266,29 +358,16 @@ static BOOL dump_session_started(proxyPlugin* plugin, proxyData* pdata, void*)
 	std::string path(cpath);
 	std::string channels(cchannels);
 	std::vector<std::string> list = split(channels, "[;,]");
-
-	if (!std::filesystem::exists(path))
+	auto cfg = new ChannelData(path, list, custom->session());
+	if (!cfg || !cfg->create())
 	{
-		if (!std::filesystem::create_directories(path))
-		{
-			WLog_ERR(TAG, "Failed to create dump directory %s", path.c_str());
-			return FALSE;
-		}
-	}
-	else if (!std::filesystem::is_directory(path))
-	{
-		WLog_ERR(TAG, "dump path %s is not a directory", path.c_str());
+		delete cfg;
 		return FALSE;
 	}
 
-	if (list.empty())
-	{
-		WLog_ERR(TAG, "Empty configuration entry [%s/%s], can not continue", plugin_name,
-		         key_channels);
-		return FALSE;
-	}
-	dump_set_plugin_data(plugin, pdata, new ChannelData(path, list));
+	dump_set_plugin_data(plugin, pdata, cfg);
 
+	WLog_DBG(TAG, "starting session dump %" PRIu64, cfg->session());
 	return TRUE;
 }
 
@@ -297,7 +376,18 @@ static BOOL dump_session_end(proxyPlugin* plugin, proxyData* pdata, void*)
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 
+	auto cfg = dump_get_plugin_data(plugin, pdata);
+	if (cfg)
+		WLog_DBG(TAG, "ending session dump %" PRIu64, cfg->session());
 	dump_set_plugin_data(plugin, pdata, nullptr);
+	return TRUE;
+}
+
+static BOOL dump_unload(proxyPlugin* plugin)
+{
+	if (!plugin)
+		return TRUE;
+	delete static_cast<PluginData*>(plugin->custom);
 	return TRUE;
 }
 
@@ -311,6 +401,7 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 	plugin.name = plugin_name;
 	plugin.description = plugin_desc;
 
+	plugin.PluginUnload = dump_unload;
 	plugin.ServerSessionStarted = dump_session_started;
 	plugin.ServerSessionEnd = dump_session_end;
 
@@ -318,7 +409,7 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 	plugin.DynChannelToIntercept = dump_dyn_channel_intercept_list;
 	plugin.DynChannelIntercept = dump_dyn_channel_intercept;
 
-	plugin.custom = plugins_manager;
+	plugin.custom = new PluginData(plugins_manager);
 	if (!plugin.custom)
 		return FALSE;
 	plugin.userdata = userdata;
