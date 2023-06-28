@@ -87,6 +87,21 @@ typedef enum
 	DYNCVC_READ_INCOMPLETE /*!< missing bytes to read the complete packet */
 } DynvcReadResult;
 
+static const char* openstatus2str(PfDynChannelOpenStatus status)
+{
+	switch (status)
+	{
+		case CHANNEL_OPENSTATE_WAITING_OPEN_STATUS:
+			return "CHANNEL_OPENSTATE_WAITING_OPEN_STATUS";
+		case CHANNEL_OPENSTATE_CLOSED:
+			return "CHANNEL_OPENSTATE_CLOSED";
+		case CHANNEL_OPENSTATE_OPENED:
+			return "CHANNEL_OPENSTATE_OPENED";
+		default:
+			return "CHANNEL_OPENSTATE_UNKNOWN";
+	}
+}
+
 static PfChannelResult data_cb(pServerContext* ps, pServerDynamicChannelContext* channel,
                                BOOL isBackData, ChannelStateTracker* tracker, BOOL firstPacket,
                                BOOL lastPacket)
@@ -351,28 +366,41 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 				dev.flags = flags;
 				dev.total_size = Stream_GetPosition(currentPacket);
 
+				if (dynChannel)
+				{
+					WLog_WARN(
+					    TAG,
+					    "Reusing channel id %" PRIu32 ", previously %s [state %s, mode %s], now %s",
+					    dynChannel->channelId, dynChannel->channelName,
+					    openstatus2str(dynChannel->openStatus),
+					    pf_utils_channel_mode_string(dynChannel->channelMode), dev.channel_name);
+
+					HashTable_Remove(dynChannelContext->channels, &dynChannel->channelId);
+					dynChannel = NULL;
+				}
+
 				if (!pf_modules_run_filter(pdata->module,
 				                           FILTER_TYPE_CLIENT_PASSTHROUGH_DYN_CHANNEL_CREATE, pdata,
 				                           &dev))
 					return PF_CHANNEL_RESULT_DROP; /* Silently drop */
 
+				dynChannel = DynamicChannelContext_new(pdata->ps, name, dynChannelId);
 				if (!dynChannel)
 				{
-					dynChannel = DynamicChannelContext_new(pdata->ps, name, dynChannelId);
-					if (!dynChannel)
-					{
-						WLog_ERR(TAG, "unable to create dynamic channel context data");
-						return PF_CHANNEL_RESULT_ERROR;
-					}
-
-					if (!HashTable_Insert(dynChannelContext->channels, &dynChannel->channelId,
-					                      dynChannel))
-					{
-						WLog_ERR(TAG, "unable register dynamic channel context data");
-						DynamicChannelContext_free(dynChannel);
-						return PF_CHANNEL_RESULT_ERROR;
-					}
+					WLog_ERR(TAG, "unable to create dynamic channel context data");
+					return PF_CHANNEL_RESULT_ERROR;
 				}
+
+				WLog_DBG(TAG, "Adding channel '%s'[%d]", dynChannel->channelName,
+				         dynChannel->channelId);
+				if (!HashTable_Insert(dynChannelContext->channels, &dynChannel->channelId,
+				                      dynChannel))
+				{
+					WLog_ERR(TAG, "unable register dynamic channel context data");
+					DynamicChannelContext_free(dynChannel);
+					return PF_CHANNEL_RESULT_ERROR;
+				}
+
 				dynChannel->openStatus = CHANNEL_OPENSTATE_WAITING_OPEN_STATUS;
 
 				return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, FALSE);
@@ -386,17 +414,8 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			WLog_DBG(TAG, "DynvcTracker(%" PRIu64 ",%s): %s CREATE_RESPONSE openStatus=%" PRIu32,
 			         dynChannelId, dynChannel->channelName, direction, creationStatus);
 
-			if (creationStatus != 0)
-			{
-				/* we remove it from the channels map, as it happens that server reused channel ids
-				 * when the channel can't be opened
-				 */
-				HashTable_Remove(dynChannelContext->channels, &dynChannel->channelId);
-			}
-			else
-			{
+			if (creationStatus == 0)
 				dynChannel->openStatus = CHANNEL_OPENSTATE_OPENED;
-			}
 
 			return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, TRUE);
 		}
@@ -408,6 +427,12 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			WLog_DBG(TAG, "DynvcTracker(%s): %s Close request on channel", dynChannel->channelName,
 			         direction);
 			channelTracker_setMode(tracker, CHANNEL_TRACKER_PASS);
+			if (dynChannel->openStatus != CHANNEL_OPENSTATE_OPENED)
+			{
+				WLog_WARN(TAG, "DynvcTracker(%s): %s is in state %s, expected %s",
+				          dynChannel->channelName, openstatus2str(dynChannel->openStatus),
+				          openstatus2str(CHANNEL_OPENSTATE_OPENED));
+			}
 			dynChannel->openStatus = CHANNEL_OPENSTATE_CLOSED;
 			return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, !isBackData);
 
