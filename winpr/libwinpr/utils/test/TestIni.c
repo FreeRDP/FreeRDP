@@ -39,9 +39,8 @@ static const char TEST_INI_03[] = "[FreeRDS]\n"
 int TestIni(int argc, char* argv[])
 {
 	int rc = -1;
-	int i, j;
-	int nKeys;
-	int nSections;
+	size_t nKeys;
+	size_t nSections;
 	UINT32 iValue;
 	wIniFile* ini = NULL;
 	const char* sValue;
@@ -64,14 +63,14 @@ int TestIni(int argc, char* argv[])
 	if (!sectionNames && (nSections > 0))
 		goto fail;
 
-	for (i = 0; i < nSections; i++)
+	for (size_t i = 0; i < nSections; i++)
 	{
 		free(keyNames);
 		keyNames = IniFile_GetSectionKeyNames(ini, sectionNames[i], &nKeys);
 		printf("[%s]\n", sectionNames[i]);
 		if (!keyNames && (nKeys > 0))
 			goto fail;
-		for (j = 0; j < nKeys; j++)
+		for (size_t j = 0; j < nKeys; j++)
 		{
 			sValue = IniFile_GetKeyValueString(ini, sectionNames[i], keyNames[j]);
 			printf("%s = %s\n", keyNames[j], sValue);
@@ -130,7 +129,7 @@ int TestIni(int argc, char* argv[])
 	if (!sectionNames && (nSections > 0))
 		goto fail;
 
-	for (i = 0; i < nSections; i++)
+	for (size_t i = 0; i < nSections; i++)
 	{
 		free(keyNames);
 		keyNames = IniFile_GetSectionKeyNames(ini, sectionNames[i], &nKeys);
@@ -138,7 +137,7 @@ int TestIni(int argc, char* argv[])
 
 		if (!keyNames && (nKeys > 0))
 			goto fail;
-		for (j = 0; j < nKeys; j++)
+		for (size_t j = 0; j < nKeys; j++)
 		{
 			sValue = IniFile_GetKeyValueString(ini, sectionNames[i], keyNames[j]);
 			printf("%s = %s\n", keyNames[j], sValue);
