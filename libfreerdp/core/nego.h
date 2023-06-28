@@ -127,7 +127,7 @@ FREERDP_LOCAL void nego_enable_rdstls(rdpNego* nego, BOOL enable_rdstls);
 FREERDP_LOCAL void nego_enable_aad(rdpNego* nego, BOOL enable_aad);
 FREERDP_LOCAL void nego_enable_ext(rdpNego* nego, BOOL enable_ext);
 FREERDP_LOCAL const BYTE* nego_get_routing_token(rdpNego* nego, DWORD* RoutingTokenLength);
-FREERDP_LOCAL BOOL nego_set_routing_token(rdpNego* nego, const BYTE* RoutingToken,
+FREERDP_LOCAL BOOL nego_set_routing_token(rdpNego* nego, const void* RoutingToken,
                                           DWORD RoutingTokenLength);
 FREERDP_LOCAL BOOL nego_set_cookie(rdpNego* nego, const char* cookie);
 FREERDP_LOCAL void nego_set_cookie_max_length(rdpNego* nego, UINT32 CookieMaxLength);

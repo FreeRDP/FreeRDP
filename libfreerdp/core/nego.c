@@ -1763,7 +1763,7 @@ void nego_enable_aad(rdpNego* nego, BOOL enable_aad)
  * @return \b TRUE for success, \b FALSE otherwise
  */
 
-BOOL nego_set_routing_token(rdpNego* nego, const BYTE* RoutingToken, DWORD RoutingTokenLength)
+BOOL nego_set_routing_token(rdpNego* nego, const void* RoutingToken, DWORD RoutingTokenLength)
 {
 	if (RoutingTokenLength == 0)
 		return FALSE;
