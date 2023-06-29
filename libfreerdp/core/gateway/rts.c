@@ -1196,8 +1196,8 @@ static BOOL rts_write_pdu_header(wStream* s, const rpcconn_rts_hdr_t* header)
 	return TRUE;
 }
 
-static int rts_receive_window_size_command_read(rdpRpc* rpc, wStream* buffer,
-                                                UINT32* ReceiveWindowSize)
+static BOOL rts_receive_window_size_command_read(rdpRpc* rpc, wStream* buffer,
+                                                 UINT32* ReceiveWindowSize)
 {
 	UINT32 val;
 
@@ -1205,12 +1205,12 @@ static int rts_receive_window_size_command_read(rdpRpc* rpc, wStream* buffer,
 	WINPR_ASSERT(buffer);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, buffer, 4))
-		return -1;
+		return FALSE;
 	Stream_Read_UINT32(buffer, val);
 	if (ReceiveWindowSize)
 		*ReceiveWindowSize = val; /* ReceiveWindowSize (4 bytes) */
 
-	return 4;
+	return TRUE;
 }
 
 static BOOL rts_receive_window_size_command_write(wStream* s, UINT32 ReceiveWindowSize)
@@ -1626,13 +1626,13 @@ BOOL rts_recv_CONN_C2_pdu(rdpRpc* rpc, wStream* buffer)
 		return FALSE;
 
 	rc = rts_version_command_read(rpc, buffer);
-	if (rc < 0)
+	if (!rc)
 		return rc;
 	rc = rts_receive_window_size_command_read(rpc, buffer, &ReceiveWindowSize);
-	if (rc < 0)
+	if (!rc)
 		return rc;
 	rc = rts_connection_timeout_command_read(rpc, buffer, &ConnectionTimeout);
-	if (rc < 0)
+	if (!rc)
 		return rc;
 	WLog_DBG(TAG,
 	         "Receiving CONN/C2 RTS PDU: ConnectionTimeout: %" PRIu32 " ReceiveWindowSize: %" PRIu32
