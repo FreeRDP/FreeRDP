@@ -22,7 +22,7 @@ int TestLinkedList(int argc, char* argv[])
 
 	if (count != 3)
 	{
-		printf("LinkedList_Count: expected 3, actual: %d\n", count);
+		printf("LinkedList_Count: expected 3, actual: %" PRIuz "\n", count);
 		return -1;
 	}
 
@@ -41,7 +41,7 @@ int TestLinkedList(int argc, char* argv[])
 
 	if (count != 1)
 	{
-		printf("LinkedList_Count: expected 1, actual: %d\n", count);
+		printf("LinkedList_Count: expected 1, actual: %" PRIuz "\n", count);
 		return -1;
 	}
 
@@ -60,7 +60,7 @@ int TestLinkedList(int argc, char* argv[])
 
 	if (count != 0)
 	{
-		printf("LinkedList_Count: expected 0, actual: %d\n", count);
+		printf("LinkedList_Count: expected 0, actual: %" PRIuz "\n", count);
 		return -1;
 	}
 
@@ -74,7 +74,7 @@ int TestLinkedList(int argc, char* argv[])
 
 	if (count != 3)
 	{
-		printf("LinkedList_Count: expected 3, actual: %d\n", count);
+		printf("LinkedList_Count: expected 3, actual: %" PRIuz "\n", count);
 		return -1;
 	}
 
