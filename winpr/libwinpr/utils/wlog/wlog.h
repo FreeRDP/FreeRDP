@@ -79,6 +79,8 @@ struct s_wLog
 	DWORD ChildrenCount;
 	DWORD ChildrenSize;
 	CRITICAL_SECTION lock;
+	const char* (*custom)(void*);
+	void* context;
 };
 
 extern const char* WLOG_LEVELS[7];

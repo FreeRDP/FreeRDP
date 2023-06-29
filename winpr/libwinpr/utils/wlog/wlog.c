@@ -367,7 +367,7 @@ BOOL WLog_PrintMessageVA(wLog* log, DWORD type, DWORD level, size_t line, const 
 
 			if (!strchr(message.FormatString, '%'))
 			{
-				message.TextString = (LPCSTR)message.FormatString;
+				message.TextString = message.FormatString;
 				status = WLog_Write(log, &message);
 			}
 			else
@@ -1069,3 +1069,12 @@ BOOL WLog_Uninit(void)
 	return TRUE;
 }
 #endif
+
+BOOL WLog_SetContext(wLog* log, const char* (*fkt)(void*), void* context)
+{
+	WINPR_ASSERT(log);
+
+	log->custom = fkt;
+	log->context = context;
+	return TRUE;
+}
