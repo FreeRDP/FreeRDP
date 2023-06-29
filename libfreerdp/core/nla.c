@@ -577,8 +577,6 @@ static int nla_client_recv_pub_key_auth(rdpNla* nla)
 
 static int nla_client_recv_early_user_auth(rdpNla* nla)
 {
-	BOOL rc = FALSE;
-
 	WINPR_ASSERT(nla);
 
 	transport_set_early_user_auth_mode(nla->transport, FALSE);
