@@ -675,7 +675,7 @@ static pstatus_t sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const pSrc[3], int src
 			 * values used in the multiplication by << 5+(16-n).
 			 */
 			__m128i r, g, b, y, cb, cr;
-			r = _mm_load_si128(y_buf + i);
+			r = _mm_load_si128(r_buf + i);
 			g = _mm_load_si128(g_buf + i);
 			b = _mm_load_si128(b_buf + i);
 			/* r<<6; g<<6; b<<6 */
