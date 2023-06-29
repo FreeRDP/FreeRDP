@@ -5,7 +5,7 @@ namespace UiPath.FreeRdp.Tests.TestInfra;
 public abstract class TestsBase : IAsyncLifetime
 {
     protected readonly TestHost Host;
-    public TestsBase(ITestOutputHelper output)
+    protected TestsBase(ITestOutputHelper output)
     {
         Host = new TestHost(output).AddFreeRdp()
             .AddRegistry(s => s.AddSingleton<IUserContext, UserContextReal>());
@@ -18,6 +18,7 @@ public abstract class TestsBase : IAsyncLifetime
 
     public virtual async Task DisposeAsync()
     {
+        await Host.StopAsync();
         await Host.DisposeAsync();
     }
 }

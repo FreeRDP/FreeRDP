@@ -20,7 +20,7 @@ public class RdpClientTests : TestsBase
 
     private async Task<IAsyncDisposable> Connect(RdpConnectionSettings connectionSettings)
     {
-        using var logScope = Log.BeginScope($"{Logging.ScopeName}", connectionSettings.ClientName);
+        using var logScope = Log.BeginScope($"{NativeLoggingForwarder.ScopeName}", connectionSettings.ClientName);
         return await FreeRdpClient.Connect(connectionSettings);
     }
 

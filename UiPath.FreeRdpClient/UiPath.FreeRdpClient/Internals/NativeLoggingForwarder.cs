@@ -1,18 +1,16 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 
 namespace UiPath.Rdp;
 
-internal class Logging : IHostedService
+internal sealed class NativeLoggingForwarder : IDisposable
 {
     public static string ScopeName { get; set; } = "RunId";
-    internal static Logging? Instance { get; private set; }
-    private readonly NativeInterface.LogCallback _logCallbackDelegate;
+    public readonly NativeInterface.LogCallback LogCallbackDelegate;
     private readonly NativeInterface.RegisterThreadScopeCallback _registerThreadScopeCallbackDelegate;
+    private volatile bool _disposed = false;
+    private readonly ILoggerFactory _loggerFactory;
 
-    private ILoggerFactory? LoggerFactory { get; set; }
-
-    public string[] FilterNotStartsWith { get; private set; } = new[]
+    public string[] FilterRemoveStartsWith { get; set; } = new[]
     {
         // ordered by frequency
         "freerdp_check_fds() failed - 0", //24000+ in 50 sec
@@ -29,61 +27,71 @@ internal class Logging : IHostedService
         "Decompression failure!",
         "Unknown bulk compression type 00000003",
         "Unsupported bulk compression type 00000003",
+        "order flags ",
         "history buffer index out of range",//10+
         "history buffer overflow",
         "fastpath_recv_update() - -1",
-        "order flags 03 failed",
-
-        "order flags 01 failed", //3+
     };
 
-    public Logging(ILoggerFactory loggerFactory)
+    public NativeLoggingForwarder(ILoggerFactory loggerFactory)
     {
-        LoggerFactory = loggerFactory;
-        _logCallbackDelegate = Log;
+        _loggerFactory = loggerFactory;
+        LogCallbackDelegate = Log;
         _registerThreadScopeCallbackDelegate = RegisterThreadScope;
-        Instance = this;
+        EnableNativeLogsForwarding();
     }
 
     private void Log(string category, LogLevel logLevel, string message)
     {
-        if (LoggerFactory is null)
+        if (_disposed)
             return;
 
         if (!FilterLogs(logLevel, message))
             return;
 
-        var log = LoggerFactory.CreateLogger(category);
+        if (logLevel is LogLevel.Error)
+        {
+            logLevel = LogLevel.Warning;
+        }
+
+        var log = _loggerFactory.CreateLogger(category);
         log.Log(logLevel, message);
     }
 
 
     private void RegisterThreadScope(string scope)
     {
-        _ = LoggerFactory?.CreateLogger(nameof(RegisterThreadScope)).BeginScope($"{{{ScopeName}}}", scope);
+        if (_disposed)
+            return;
+
+        _ = _loggerFactory.CreateLogger(nameof(RegisterThreadScope)).BeginScope($"{{{ScopeName}}}", scope);
     }
 
     private bool FilterLogs(LogLevel logLevel, string message)
     {
         if (logLevel is LogLevel.Error
-            && FilterNotStartsWith.Any(message.StartsWith))
+            && FilterRemoveStartsWith.Any(message.StartsWith))
             return false;
 
         return true;
     }
 
-    Task IHostedService.StartAsync(CancellationToken cancellationToken)
+    private void EnableNativeLogsForwarding()
     {
         var forwardFreeRdpLogs = Environment.GetEnvironmentVariable("WLOG_FILEAPPENDER_OUTPUT_FILE_PATH") is null;
-        NativeInterface.InitializeLogging(logCallback: _logCallbackDelegate,
+        NativeInterface.InitializeLogging(logCallback: LogCallbackDelegate,
                                           registerThreadScopeCallback: _registerThreadScopeCallbackDelegate,
                                           forwardFreeRdpLogs: forwardFreeRdpLogs);
-        return Task.CompletedTask;
     }
 
-    Task IHostedService.StopAsync(CancellationToken cancellationToken)
+    private void DisableNativeLogsForwarding()
     {
-        LoggerFactory = null;
-        return Task.CompletedTask;
+        NativeInterface.InitializeLogging(logCallback: null, registerThreadScopeCallback: null, forwardFreeRdpLogs: false);
+    }
+
+    public void Dispose()
+    {
+        _disposed = false;
+        DisableNativeLogsForwarding();
     }
 }

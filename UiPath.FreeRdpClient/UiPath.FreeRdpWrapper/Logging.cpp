@@ -4,8 +4,8 @@
 
 namespace Logging
 {
-	static pRegisterThreadScopeCallback _registerThreadScopeCallback;
-	static pLogCallback _clientLogCallback;
+	static pRegisterThreadScopeCallback _registerThreadScopeCallback = nullptr;
+	static pLogCallback _clientLogCallback = nullptr;
 	static wLogCallbacks _wlogCallbacks = { 0 };
 	static char _defaultCategory[] = "UiPath.FreeRdpWrapper";
 
@@ -21,7 +21,7 @@ namespace Logging
 	HRESULT STDAPICALLTYPE InitializeLogging(
 	    pLogCallback logCallback,
 		pRegisterThreadScopeCallback registerThreadScopeCallback,
-		bool forwardFreeRdpLogs
+	    BOOL forwardFreeRdpLogs
 	)
 	{
 		_clientLogCallback = logCallback;
@@ -47,12 +47,15 @@ namespace Logging
 
 		auto negoLog = WLog_Get("com.freerdp.core.nego");
 		WLog_SetLogLevel(negoLog, WLOG_TRACE);
-
+		DT_TRACE(L"Native logging forwarding initialized. (forwardFreeRdpLogs:%s)", forwardFreeRdpLogs ? L"true" : L"false");
 		return S_OK;
 	}
 
 	void Log(DWORD level, const wchar_t* fmt, ...)
 	{
+		if (!_clientLogCallback)
+			return;
+
 		va_list args;
 		va_start(args, fmt);
 		wchar_t wBuffer[MAX_TRACE_MSG];
@@ -63,6 +66,9 @@ namespace Logging
 	
 	void RegisterCurrentThreadScope(char* scope)
 	{
+		if (!_registerThreadScopeCallback)
+			return;
+		
 		_registerThreadScopeCallback(scope);
 	}
 }

@@ -1,0 +1,8 @@
+{
+  "diagnosticMessages": true,
+  "longRunningTestSeconds": 2,
+  "parallelizeAssembly": false,
+  "parallelizeTestCollections": false,
+  "maxParallelThreads": 1,
+  "shadowCopy":  false
+}

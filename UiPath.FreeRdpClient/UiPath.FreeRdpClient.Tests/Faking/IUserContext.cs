@@ -13,7 +13,9 @@ public class UserExistsDetail
     public string UserName { get => _credentials.GetFullUserName(); set => _credentials.SetFullUserName(value); }
     public string Password { get => _credentials.Password; set => _credentials.Password = value; }
 
-    internal string GetLocalUserName() => UserName.ToLowerInvariant().Replace(UserNames.DefaultDomainName.ToLowerInvariant() + "\\", "");
+    internal string GetLocalUserName() => UserName.ToLowerInvariant()
+        .Replace(".\\", "")
+        .Replace(UserNames.DefaultDomainName.ToLowerInvariant() + "\\", "");
 
     public List<string> Groups { get; } = new() { "Remote Desktop Users", "Administrators" };
 }

@@ -7,7 +7,11 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<UserSecretsId>57c50d74-20d6-40cc-b246-b316d10bf8c8</UserSecretsId>
 	</PropertyGroup>
-
+	<ItemGroup>
+		<Content Include="xunit.runner.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 	<ItemGroup>
 		<None Include="C:\UiPath\FreeRDP\libfreerdp\**\*.c">
 			<Link>FreeRdpSRC\libfreerdp\%(RecursiveDir)%(Filename)%(Extension)</Link>

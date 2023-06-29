@@ -27,7 +27,7 @@ namespace Logging
 	    InitializeLogging(
 			pLogCallback logCallback, 
 			pRegisterThreadScopeCallback registerThreadScopeCallback,
-	        bool forwardFreeRdpLogs
+	        BOOL forwardFreeRdpLogs
 		);
 
 	void Log(DWORD level, const wchar_t* fmt, ...);

@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Moq;
 using Microsoft.Extensions.Logging;
 using Nito.Disposables;
+using MartinCostello.Logging.XUnit;
 
 namespace UiPath.FreeRdp.Tests.TestInfra;
 
@@ -13,7 +14,7 @@ public static class TestContextExtensions
     => serviceProvider.GetRequiredService<IConfiguration>();
 }
 
-public class TestHost : IServiceProvider, IHost, IAsyncDisposable
+public sealed class TestHost : IServiceProvider, IHost, IAsyncDisposable
 {
     private readonly Lazy<IHost> _hostLazy;
     private readonly Dictionary<Type, object> _fakeObjectsByType = new();
@@ -23,14 +24,21 @@ public class TestHost : IServiceProvider, IHost, IAsyncDisposable
     private readonly IMessageSink? _messageSink;
     private readonly CollectionAsyncDisposable _disposables = new();
     private bool _hostStarted;
+    private static int HostCounter = 0;
+
+    public int HostId { get; } = Interlocked.Increment(ref HostCounter);
 
     private IHost _host => _hostLazy.Value;
 
     public TestHost(IMessageSink messageSink) : this()
     {
         _messageSink = messageSink;
-        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
-        TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+    }
+
+    public TestHost(ITestOutputHelper? output = null)
+    {
+        _hostLazy = new(CreateHost);
+        _output = output;
     }
 
     private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
@@ -42,12 +50,6 @@ public class TestHost : IServiceProvider, IHost, IAsyncDisposable
     private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
         this.GetRequiredService<ILogger<TestHost>>().LogError($"UnhandledException:{e.ExceptionObject}");
-    }
-
-    public TestHost(ITestOutputHelper? output = null)
-    {
-        _hostLazy = new(CreateHost);
-        _output = output;
     }
 
     public void AddDisposable(IDisposable disposable)
@@ -73,25 +75,31 @@ public class TestHost : IServiceProvider, IHost, IAsyncDisposable
         .ConfigureServices(s => s.AddSingleton(this))
         .ConfigureServices(services => _configureServices.ForEach(cs => cs(services)))
         .ConfigureServices(AddFakes)
-        .ConfigureLogging((l) =>
+        .ConfigureLogging(loggingBuilder =>
         {
-            l.AddSimpleConsole(o => {
-                o.IncludeScopes = true;
-                o.UseUtcTimestamp = true; });
-            Action<MartinCostello.Logging.XUnit.XUnitLoggerOptions> configure = o =>
+            loggingBuilder.AddSimpleConsole(o =>
             {
+                o.UseUtcTimestamp = true;
+                o.TimestampFormat = $"[C {HostId} dd.HH:mm:ss.fffff] ";
                 o.IncludeScopes = true;
-                o.TimestampFormat = "dd.HH:mm:ss.fffff";
-            };
+            });
+
             if (_output != null)
             {
-                l.AddXUnit(_output, configure);
+                loggingBuilder.AddXUnit(_output, ConfigureXUnit);
             }
 
             if (_messageSink != null)
-                l.AddXUnit(_messageSink, configure);
+            {
+                loggingBuilder.AddXUnit(_messageSink, ConfigureXUnit);
+            }
 
-            l.SetMinimumLevel(LogLevel.Trace);
+            loggingBuilder.SetMinimumLevel(LogLevel.Trace);
+            void ConfigureXUnit(XUnitLoggerOptions o)
+            {
+                o.TimestampFormat = $"X {HostId} dd.HH:mm:ss.fffff";
+                o.IncludeScopes = true;
+            }
         })
         .Build();
 
@@ -136,6 +144,8 @@ public class TestHost : IServiceProvider, IHost, IAsyncDisposable
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         await _host.StartAsync(cancellationToken);
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
         _hostStarted = true;
     }
 
@@ -151,6 +161,9 @@ public class TestHost : IServiceProvider, IHost, IAsyncDisposable
     {
         await _host.StopAsync();
         await _disposables.DisposeAsync();
+        AppDomain.CurrentDomain.UnhandledException -= CurrentDomain_UnhandledException;
+        TaskScheduler.UnobservedTaskException -= TaskScheduler_UnobservedTaskException;
+
         _host.Dispose();
     }
 
