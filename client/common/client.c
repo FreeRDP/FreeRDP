@@ -1740,9 +1740,11 @@ BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 devic
 	WINPR_ASSERT(rdpei);
 
 	UINT32 normalizedpressure = 1024;
-	INT32 x, y;
-	UINT16 rotation;
-	INT16 tiltX, tiltY;
+	INT32 x = 0;
+	INT32 y = 0;
+	UINT16 rotation = 0;
+	INT16 tiltX = 0;
+	INT16 tiltY = 0;
 	va_list args;
 	va_start(args, deviceid);
 
