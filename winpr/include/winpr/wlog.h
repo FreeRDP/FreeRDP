@@ -115,6 +115,18 @@ extern "C"
 	WINPR_API DWORD WLog_GetLogLevel(wLog* log);
 	WINPR_API BOOL WLog_IsLevelActive(wLog* _log, DWORD _log_level);
 
+	/** @brief Set a custom context for a dynamic logger.
+	 *  This can be used to print a customized prefix, e.g. some session id for a specific context
+	 *
+	 *  @param log The logger to ste the context for. Must not be \b NULL
+	 *  @param fkt A function pointer that is called to get the custimized string.
+	 *  @param context A context \b fkt is called with. Caller must ensure it is still allocated
+	 * when \b log is used
+	 *
+	 *  @return \b TRUE for success, \b FALSE otherwise.
+	 */
+	WINPR_API BOOL WLog_SetContext(wLog* log, const char* (*fkt)(void*), void* context);
+
 #define WLog_Print(_log, _log_level, ...)                                              \
 	do                                                                                 \
 	{                                                                                  \

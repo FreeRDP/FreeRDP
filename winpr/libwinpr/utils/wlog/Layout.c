@@ -38,6 +38,16 @@
 #include <sys/syscall.h>
 #endif
 
+struct format_option
+{
+	const char* fmt;
+	size_t fmtlen;
+	const char* replace;
+	size_t replacelen;
+	const char* (*fkt)(void*);
+	void* arg;
+};
+
 /**
  * Log Layout
  */
@@ -57,201 +67,134 @@ static void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message, const char*
 	va_end(args);
 }
 
+static const char* get_tid(void* arg)
+{
+	char* str = arg;
+	size_t tid;
+#if defined __linux__ && !defined ANDROID
+	/* On Linux we prefer to see the LWP id */
+	tid = (size_t)syscall(SYS_gettid);
+#else
+	tid = (size_t)GetCurrentThreadId();
+#endif
+	sprintf(str, "%08" PRIxz, tid);
+	return str;
+}
+
+static BOOL log_invalid_fmt(const char* what)
+{
+	fprintf(stderr, "Invalid format string '%s'\n", what);
+	return FALSE;
+}
+
+static BOOL check_and_log_format_size(char* format, size_t size, size_t index, size_t add)
+{
+	/* format string must be '\0' terminated, so abort at size - 1 */
+	if (index + add + 1 >= size)
+	{
+		fprintf(stderr,
+		        "Format string too long ['%s', max %" PRIuz ", used %" PRIuz ", adding %" PRIuz
+		        "]\n",
+		        format, size, index, add);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL check_and_log_format_args(size_t size, size_t index, size_t add)
+{
+	if (index + add > size)
+	{
+		fprintf(stderr,
+		        "Too many format string arguments [max %" PRIuz ", used %" PRIuz ", adding %" PRIuz
+		        "]\n",
+		        size, index, add);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static int opt_compare_fn(const void* a, const void* b)
+{
+	const char* what = a;
+	const struct format_option* opt = b;
+	if (!opt)
+		return -1;
+	return strncmp(what, opt->fmt, opt->fmtlen);
+}
+
 BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* message)
 {
-	char* p;
-	int index;
-	int argc = 0;
-	void* args[32] = { 0 };
-	char format[256] = { 0 };
-	SYSTEMTIME localTime;
+	size_t index = 0;
+	unsigned argc = 0;
+	const void* args[32] = { 0 };
+	char format[WLOG_MAX_PREFIX_SIZE] = { 0 };
+	char tid[32] = { 0 };
+	SYSTEMTIME localTime = { 0 };
 
 	WINPR_ASSERT(layout);
 	WINPR_ASSERT(message);
 
 	GetLocalTime(&localTime);
-	index = 0;
-	p = (char*)layout->FormatString;
+
+#define ENTRY(x) x, sizeof(x) - 1
+	const struct format_option options[] = {
+		{ ENTRY("%ctx"), ENTRY("%s"), log->custom, log->context },                /* log context */
+		{ ENTRY("%dw"), ENTRY("%u"), NULL, (void*)(size_t)localTime.wDayOfWeek }, /* day of week */
+		{ ENTRY("%dy"), ENTRY("%u"), NULL, (void*)(size_t)localTime.wDay },       /* day of year */
+		{ ENTRY("%fl"), ENTRY("%s"), NULL, (void*)message->FileName },            /* file */
+		{ ENTRY("%fn"), ENTRY("%s"), NULL, (void*)message->FunctionName },        /* function */
+		{ ENTRY("%hr"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wHour },    /* hours */
+		{ ENTRY("%ln"), ENTRY("%s"), NULL, (void*)(size_t)message->LineNumber },  /* line number */
+		{ ENTRY("%lv"), ENTRY("%s"), NULL, (void*)WLOG_LEVELS[message->Level] },  /* log level */
+		{ ENTRY("%mi"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wMinute },  /* minutes */
+		{ ENTRY("%ml"), ENTRY("%02u"), NULL,
+		  (void*)(size_t)localTime.wMilliseconds },                           /* milliseconds */
+		{ ENTRY("%mn"), ENTRY("%s"), NULL, log->Name },                       /* module name */
+		{ ENTRY("%mo"), ENTRY("%u"), NULL, (void*)(size_t)localTime.wMonth }, /* month */
+		{ ENTRY("%pid"), ENTRY("%u"), NULL, (void*)(size_t)GetCurrentProcessId() }, /* process id */
+		{ ENTRY("%se"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wSecond },    /* seconds */
+		{ ENTRY("%tid"), ENTRY("%s"), get_tid, tid },                               /* thread id */
+		{ ENTRY("%yr"), ENTRY("%u"), NULL, (void*)(size_t)localTime.wYear },        /* year */
+	};
+
+	const char* p = layout->FormatString;
 
 	while (*p)
 	{
-		if (*p == '%')
+		const struct format_option* opt =
+		    bsearch(p, options, ARRAYSIZE(options), sizeof(struct format_option), opt_compare_fn);
+		if (opt)
 		{
-			p++;
+			if (!check_and_log_format_size(format, ARRAYSIZE(format), index, opt->replacelen))
+				return FALSE;
 
-			if (*p)
-			{
-				if ((p[0] == 'l') && (p[1] == 'v')) /* log level */
-				{
-					union
-					{
-						const void* cpv;
-						void* pv;
-					} cnv;
-					cnv.cpv = WLOG_LEVELS[message->Level];
-					args[argc++] = cnv.pv;
-					format[index++] = '%';
-					format[index++] = 's';
-					p++;
-				}
-				else if ((p[0] == 'm') && (p[1] == 'n')) /* module name */
-				{
-					args[argc++] = (void*)log->Name;
-					format[index++] = '%';
-					format[index++] = 's';
-					p++;
-				}
-				else if ((p[0] == 'f') && (p[1] == 'l')) /* file */
-				{
-					const char* file;
-					file = strrchr(message->FileName, '/');
+			strncpy(&format[index], opt->replace, opt->replacelen);
+			index += opt->replacelen;
 
-					if (!file)
-						file = strrchr(message->FileName, '\\');
+			if (!check_and_log_format_args(ARRAYSIZE(args), argc, 1))
+				return FALSE;
+			if (opt->fkt)
+				args[argc++] = opt->fkt(opt->arg);
+			else
+				args[argc++] = opt->arg;
 
-					if (file)
-						file++;
-					else
-						file = (const char*)message->FileName;
-
-					{
-						union
-						{
-							const void* cpv;
-							void* pv;
-						} cnv;
-						cnv.cpv = file;
-						args[argc++] = cnv.pv;
-					}
-					format[index++] = '%';
-					format[index++] = 's';
-					p++;
-				}
-				else if ((p[0] == 'f') && (p[1] == 'n')) /* function */
-				{
-					union
-					{
-						const void* cpv;
-						void* pv;
-					} cnv;
-					cnv.cpv = message->FunctionName;
-					args[argc++] = cnv.pv;
-					format[index++] = '%';
-					format[index++] = 's';
-					p++;
-				}
-				else if ((p[0] == 'l') && (p[1] == 'n')) /* line number */
-				{
-					args[argc++] = (void*)(size_t)message->LineNumber;
-					format[index++] = '%';
-					format[index++] = 'u';
-					p++;
-				}
-				else if ((p[0] == 'p') && (p[1] == 'i') && (p[2] == 'd')) /* process id */
-				{
-					args[argc++] = (void*)(size_t)GetCurrentProcessId();
-					format[index++] = '%';
-					format[index++] = 'u';
-					p += 2;
-				}
-				else if ((p[0] == 't') && (p[1] == 'i') && (p[2] == 'd')) /* thread id */
-				{
-#if defined __linux__ && !defined ANDROID
-					/* On Linux we prefer to see the LWP id */
-					args[argc++] = (void*)(size_t)syscall(SYS_gettid);
-					format[index++] = '%';
-					format[index++] = 'l';
-					format[index++] = 'd';
-#else
-					args[argc++] = (void*)(size_t)GetCurrentThreadId();
-					format[index++] = '%';
-					format[index++] = '0';
-					format[index++] = '8';
-					format[index++] = 'x';
-#endif
-					p += 2;
-				}
-				else if ((p[0] == 'y') && (p[1] == 'r')) /* year */
-				{
-					args[argc++] = (void*)(size_t)localTime.wYear;
-					format[index++] = '%';
-					format[index++] = 'u';
-					p++;
-				}
-				else if ((p[0] == 'm') && (p[1] == 'o')) /* month */
-				{
-					args[argc++] = (void*)(size_t)localTime.wMonth;
-					format[index++] = '%';
-					format[index++] = '0';
-					format[index++] = '2';
-					format[index++] = 'u';
-					p++;
-				}
-				else if ((p[0] == 'd') && (p[1] == 'w')) /* day of week */
-				{
-					args[argc++] = (void*)(size_t)localTime.wDayOfWeek;
-					format[index++] = '%';
-					format[index++] = '0';
-					format[index++] = '2';
-					format[index++] = 'u';
-					p++;
-				}
-				else if ((p[0] == 'd') && (p[1] == 'y')) /* day */
-				{
-					args[argc++] = (void*)(size_t)localTime.wDay;
-					format[index++] = '%';
-					format[index++] = '0';
-					format[index++] = '2';
-					format[index++] = 'u';
-					p++;
-				}
-				else if ((p[0] == 'h') && (p[1] == 'r')) /* hours */
-				{
-					args[argc++] = (void*)(size_t)localTime.wHour;
-					format[index++] = '%';
-					format[index++] = '0';
-					format[index++] = '2';
-					format[index++] = 'u';
-					p++;
-				}
-				else if ((p[0] == 'm') && (p[1] == 'i')) /* minutes */
-				{
-					args[argc++] = (void*)(size_t)localTime.wMinute;
-					format[index++] = '%';
-					format[index++] = '0';
-					format[index++] = '2';
-					format[index++] = 'u';
-					p++;
-				}
-				else if ((p[0] == 's') && (p[1] == 'e')) /* seconds */
-				{
-					args[argc++] = (void*)(size_t)localTime.wSecond;
-					format[index++] = '%';
-					format[index++] = '0';
-					format[index++] = '2';
-					format[index++] = 'u';
-					p++;
-				}
-				else if ((p[0] == 'm') && (p[1] == 'l')) /* milliseconds */
-				{
-					args[argc++] = (void*)(size_t)localTime.wMilliseconds;
-					format[index++] = '%';
-					format[index++] = '0';
-					format[index++] = '3';
-					format[index++] = 'u';
-					p++;
-				}
-			}
+			p += opt->fmtlen;
 		}
 		else
 		{
-			format[index++] = *p;
-		}
+			/* Unknown format string */
+			if (*p == '%')
+				return log_invalid_fmt(p);
 
-		p++;
+			if (!check_and_log_format_size(format, ARRAYSIZE(format), index, 1))
+				return FALSE;
+			format[index++] = *p++;
+		}
 	}
 
-	format[index++] = '\0';
+	if (!check_and_log_format_size(format, ARRAYSIZE(format), index, 0))
+		return FALSE;
 
 	switch (argc)
 	{
@@ -403,9 +346,9 @@ wLogLayout* WLog_Layout_New(wLog* log)
 	else
 	{
 #ifdef ANDROID
-		layout->FormatString = _strdup("[pid=%pid:tid=%tid] - [%fn]: ");
+		layout->FormatString = _strdup("[pid=%pid:tid=%tid] - [%fn][%ctx]: ");
 #else
-		layout->FormatString = _strdup("[%hr:%mi:%se:%ml] [%pid:%tid] [%lv][%mn] - [%fn]: ");
+		layout->FormatString = _strdup("[%hr:%mi:%se:%ml] [%pid:%tid] [%lv][%mn] - [%fn][%ctx]: ");
 #endif
 
 		if (!layout->FormatString)
