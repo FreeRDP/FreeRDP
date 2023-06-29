@@ -1197,7 +1197,7 @@ static BOOL filter_smartcard_io_requests(pf_channel_client_context* rdpdr, wStre
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(pPacketid);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 4))
 		return FALSE;
 
 	pos = Stream_GetPosition(s);
@@ -1531,7 +1531,8 @@ static BOOL filter_smartcard_device_list_remove(pf_channel_server_context* rdpdr
 	size_t pos;
 	UINT32 x, count;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UINT32)))
+	WINPR_ASSERT(rdpdr);
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, sizeof(UINT32)))
 		return TRUE;
 	pos = Stream_GetPosition(s);
 	Stream_Read_UINT32(s, count);
@@ -1539,7 +1540,7 @@ static BOOL filter_smartcard_device_list_remove(pf_channel_server_context* rdpdr
 	if (count == 0)
 		return TRUE;
 
-	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, count, sizeof(UINT32)))
+	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(rdpdr->log, s, count, sizeof(UINT32)))
 		return TRUE;
 
 	for (x = 0; x < count; x++)
@@ -1579,25 +1580,25 @@ static BOOL filter_smartcard_device_io_request(pf_channel_server_context* rdpdr,
 
 static BOOL filter_smartcard_device_list_announce(pf_channel_server_context* rdpdr, wStream* s)
 {
-	size_t pos;
-	UINT32 x, count;
+	UINT32 count;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UINT32)))
+	WINPR_ASSERT(rdpdr);
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, sizeof(UINT32)))
 		return TRUE;
-	pos = Stream_GetPosition(s);
+	const size_t pos = Stream_GetPosition(s);
 	Stream_Read_UINT32(s, count);
 
 	if (count == 0)
 		return TRUE;
 
-	for (x = 0; x < count; x++)
+	for (UINT32 x = 0; x < count; x++)
 	{
 		UINT32 DeviceType;
 		UINT32 DeviceId;
 		char PreferredDosName[8];
 		UINT32 DeviceDataLength;
 		BYTE* dst = Stream_Pointer(s);
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
+		if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 20))
 			return TRUE;
 		Stream_Read_UINT32(s, DeviceType);
 		Stream_Read_UINT32(s, DeviceId);
@@ -1631,7 +1632,8 @@ static BOOL filter_smartcard_device_list_announce_request(pf_channel_server_cont
 	size_t pos;
 	UINT16 component, packetid;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	WINPR_ASSERT(rdpdr);
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 8))
 		return FALSE;
 
 	pos = Stream_GetPosition(s);
