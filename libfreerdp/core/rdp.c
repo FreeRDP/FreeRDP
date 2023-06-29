@@ -2171,8 +2171,6 @@ rdpRdp* rdp_new(rdpContext* context)
 	rdp->context = context;
 	WINPR_ASSERT(rdp->context);
 
-	flags = 0;
-
 	if (context->ServerMode)
 		flags |= FREERDP_SETTINGS_SERVER_MODE;
 	else

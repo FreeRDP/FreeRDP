@@ -570,7 +570,6 @@ static BOOL freerdp_dsp_decode_faad(FREERDP_DSP_CONTEXT* context, const BYTE* sr
                                     wStream* out)
 {
 	NeAACDecFrameInfo info;
-	void* output;
 	size_t offset = 0;
 
 	if (!context || !src || !out)
@@ -620,8 +619,8 @@ static BOOL freerdp_dsp_decode_faad(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 		sample_buffer = Stream_Pointer(out);
 
 		cnv.cpv = &src[offset];
-		output = NeAACDecDecode2(context->faad, &info, cnv.pv, size - offset, &sample_buffer,
-		                         Stream_GetRemainingCapacity(out));
+		NeAACDecDecode2(context->faad, &info, cnv.pv, size - offset, &sample_buffer,
+		                Stream_GetRemainingCapacity(out));
 
 		if (info.error != 0)
 			return FALSE;
