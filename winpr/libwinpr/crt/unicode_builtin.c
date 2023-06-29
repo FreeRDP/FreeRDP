@@ -41,6 +41,8 @@ See the header file "utf.h" for complete documentation.
 #include <winpr/string.h>
 #include <winpr/assert.h>
 
+#include "unicode.h"
+
 #include "../log.h"
 #define TAG WINPR_TAG("unicode")
 
