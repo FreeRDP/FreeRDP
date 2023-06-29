@@ -7,6 +7,7 @@ internal sealed class NativeLoggingForwarder : IDisposable
     public static string ScopeName { get; set; } = "RunId";
     public readonly NativeInterface.LogCallback LogCallbackDelegate;
     private readonly NativeInterface.RegisterThreadScopeCallback _registerThreadScopeCallbackDelegate;
+
     private volatile bool _disposed = false;
     private readonly ILoggerFactory _loggerFactory;
 
@@ -91,7 +92,7 @@ internal sealed class NativeLoggingForwarder : IDisposable
 
     public void Dispose()
     {
-        _disposed = false;
+        _disposed = true;
         DisableNativeLogsForwarding();
     }
 }
