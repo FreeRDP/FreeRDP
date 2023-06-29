@@ -1322,8 +1322,8 @@ BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile
 
 	for (size_t i = 0; i < ArrayList_Count(file->MachineAddresses); i++)
 	{
-		const char* addr = ArrayList_GetItem(file->MachineAddresses, i);
-		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses, i, addr))
+		const char* maddr = ArrayList_GetItem(file->MachineAddresses, i);
+		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses, i, maddr))
 			return FALSE;
 	}
 
