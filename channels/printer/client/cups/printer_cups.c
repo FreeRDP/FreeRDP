@@ -406,8 +406,9 @@ static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 		cups_driver->references--;
 }
 
-rdpPrinterDriver* cups_freerdp_printer_client_subsystem_entry(void)
+uintptr_t cups_freerdp_printer_client_subsystem_entry(void* arg)
 {
+	WINPR_UNUSED(arg);
 	if (!uniq_cups_driver)
 	{
 		uniq_cups_driver = (rdpCupsPrinterDriver*)calloc(1, sizeof(rdpCupsPrinterDriver));

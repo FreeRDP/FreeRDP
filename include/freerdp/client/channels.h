@@ -80,7 +80,7 @@ extern "C"
 	FREERDP_API void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins);
 
 	FREERDP_API BOOL freerdp_initialize_generic_dynvc_plugin(GENERIC_DYNVC_PLUGIN* plugin);
-	FREERDP_API UINT freerdp_generic_DVCPluginEntry(
+	FREERDP_API uintptr_t freerdp_generic_DVCPluginEntry(
 	    IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* logTag, const char* name,
 	    size_t pluginSize, size_t channelCallbackSize,
 	    const IWTSVirtualChannelCallback* channel_callbacks, DYNVC_PLUGIN_INIT_FN initPluginFn,

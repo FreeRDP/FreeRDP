@@ -315,7 +315,7 @@ static const IWTSVirtualChannelCallback disp_callbacks = { disp_on_data_received
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT disp_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+uintptr_t disp_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	return freerdp_generic_DVCPluginEntry(pEntryPoints, TAG, DISP_DVC_CHANNEL_NAME,
 	                                      sizeof(DISP_PLUGIN), sizeof(GENERIC_CHANNEL_CALLBACK),

@@ -313,7 +313,8 @@ static void rdpsnd_winmm_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT winmm_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+uintptr_t
+winmm_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	const ADDIN_ARGV* args;
 	rdpsndWinmmPlugin* winmm;

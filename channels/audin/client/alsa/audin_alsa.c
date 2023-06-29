@@ -390,8 +390,9 @@ static UINT audin_alsa_parse_addin_args(AudinALSADevice* device, const ADDIN_ARG
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT alsa_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+uintptr_t alsa_freerdp_audin_client_subsystem_entry(void* pvarg)
 {
+	PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints = pvarg;
 	const ADDIN_ARGV* args;
 	AudinALSADevice* alsa;
 	UINT error;

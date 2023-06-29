@@ -398,10 +398,9 @@ static void tsmf_pulse_free(ITSMFAudioDevice* audio)
 	free(pulse);
 }
 
-ITSMFAudioDevice* pulse_freerdp_tsmf_client_audio_subsystem_entry(void)
+uintptr_t pulse_freerdp_tsmf_client_audio_subsystem_entry(void*)
 {
-	TSMFPulseAudioDevice* pulse;
-	pulse = (TSMFPulseAudioDevice*)calloc(1, sizeof(TSMFPulseAudioDevice));
+	TSMFPulseAudioDevice* pulse = (TSMFPulseAudioDevice*)calloc(1, sizeof(TSMFPulseAudioDevice));
 
 	if (!pulse)
 		return NULL;
@@ -412,5 +411,5 @@ ITSMFAudioDevice* pulse_freerdp_tsmf_client_audio_subsystem_entry(void)
 	pulse->iface.GetLatency = tsmf_pulse_get_latency;
 	pulse->iface.Flush = tsmf_pulse_flush;
 	pulse->iface.Free = tsmf_pulse_free;
-	return (ITSMFAudioDevice*)pulse;
+	return pulse;
 }

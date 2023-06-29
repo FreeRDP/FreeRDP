@@ -296,7 +296,7 @@ static UINT audin_ios_free(IAudinDevice *device)
 	return CHANNEL_RC_OK;
 }
 
-UINT ios_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+uintptr_t ios_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	DWORD errCode;
 	char errString[1024];

@@ -28,7 +28,7 @@
 typedef struct
 {
 	const char* name;
-	UINT (*entry)();
+	uintptr_t (*entry)();
 } STATIC_ENTRY;
 
 typedef struct
@@ -41,14 +41,14 @@ typedef struct
 {
 	const char* name;
 	const char* type;
-	UINT (*entry)();
+	uintptr_t (*entry)();
 } STATIC_SUBSYSTEM_ENTRY;
 
 typedef struct
 {
 	const char* name;
 	const char* type;
-	UINT (*entry)();
+	uintptr_t (*entry)();
 	const STATIC_SUBSYSTEM_ENTRY* table;
 } STATIC_ADDIN_TABLE;
 

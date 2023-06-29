@@ -443,8 +443,9 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV*
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT oss_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+uintptr_t oss_freerdp_audin_client_subsystem_entry(void* pvarg)
 {
+	PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints = pvarg;
 	const ADDIN_ARGV* args;
 	AudinOSSDevice* oss;
 	UINT error;

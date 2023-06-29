@@ -382,7 +382,8 @@ static UINT rdpsnd_mac_play(rdpsndDevicePlugin *device, const BYTE *data, size_t
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT mac_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+uintptr_t
+mac_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
 {
 	rdpsndMacPlugin *mac;
 	mac = (rdpsndMacPlugin *)calloc(1, sizeof(rdpsndMacPlugin));

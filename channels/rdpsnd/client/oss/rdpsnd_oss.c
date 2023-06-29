@@ -441,8 +441,9 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_A
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT oss_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+uintptr_t oss_freerdp_rdpsnd_client_subsystem_entry(void* pvarg)
 {
+	PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints = pvarg;
 	const ADDIN_ARGV* args;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)calloc(1, sizeof(rdpsndOssPlugin));
 

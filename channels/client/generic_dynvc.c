@@ -149,11 +149,12 @@ static UINT generic_dynvc_plugin_detached(IWTSPlugin* pPlugin)
 	return error;
 }
 
-UINT freerdp_generic_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* logTag,
-                                    const char* name, size_t pluginSize, size_t channelCallbackSize,
-                                    const IWTSVirtualChannelCallback* channel_callbacks,
-                                    DYNVC_PLUGIN_INIT_FN initPluginFn,
-                                    DYNVC_PLUGIN_TERMINATE_FN terminatePluginFn)
+uintptr_t freerdp_generic_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* logTag,
+                                         const char* name, size_t pluginSize,
+                                         size_t channelCallbackSize,
+                                         const IWTSVirtualChannelCallback* channel_callbacks,
+                                         DYNVC_PLUGIN_INIT_FN initPluginFn,
+                                         DYNVC_PLUGIN_TERMINATE_FN terminatePluginFn)
 {
 	GENERIC_DYNVC_PLUGIN* plugin;
 	UINT error = CHANNEL_RC_INITIALIZATION_ERROR;

@@ -650,7 +650,7 @@ static BOOL CALLBACK InitializeAvCodecs(PINIT_ONCE once, PVOID param, PVOID* con
 	return TRUE;
 }
 
-ITSMFDecoder* ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry(void)
+uintptr_t ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry(void*)
 {
 	TSMFFFmpegDecoder* decoder;
 	InitOnceExecuteOnce(&g_Initialized, InitializeAvCodecs, NULL, NULL);
@@ -666,5 +666,5 @@ ITSMFDecoder* ffmpeg_freerdp_tsmf_client_decoder_subsystem_entry(void)
 	decoder->iface.GetDecodedFormat = tsmf_ffmpeg_get_decoded_format;
 	decoder->iface.GetDecodedDimension = tsmf_ffmpeg_get_decoded_dimension;
 	decoder->iface.Free = tsmf_ffmpeg_free;
-	return (ITSMFDecoder*)decoder;
+	return decoder;
 }

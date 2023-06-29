@@ -1165,7 +1165,7 @@ static UINT video_plugin_terminated(IWTSPlugin* pPlugin)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT video_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+uintptr_t video_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT error = CHANNEL_RC_OK;
 	VIDEO_PLUGIN* videoPlugin;

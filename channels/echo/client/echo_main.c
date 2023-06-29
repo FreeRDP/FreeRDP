@@ -76,7 +76,7 @@ static const IWTSVirtualChannelCallback echo_callbacks = { echo_on_data_received
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT echo_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+uintptr_t echo_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	return freerdp_generic_DVCPluginEntry(pEntryPoints, TAG, ECHO_DVC_CHANNEL_NAME,
 	                                      sizeof(ECHO_PLUGIN), sizeof(GENERIC_CHANNEL_CALLBACK),

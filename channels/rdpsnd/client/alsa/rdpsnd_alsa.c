@@ -515,8 +515,9 @@ static UINT rdpsnd_alsa_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT alsa_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+uintptr_t alsa_freerdp_rdpsnd_client_subsystem_entry(void* pvarg)
 {
+	PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints = pvarg;
 	const ADDIN_ARGV* args;
 	rdpsndAlsaPlugin* alsa;
 	UINT error;

@@ -946,7 +946,7 @@ BOOL del_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum, UINT1
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT urbdrc_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+uintptr_t urbdrc_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
 {
 	UINT status = 0;
 	const ADDIN_ARGV* args;
