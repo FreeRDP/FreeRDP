@@ -1250,7 +1250,6 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		/* Fetch remaining body! */
 		if ((response->TransferEncoding == TransferEncodingChunked) && readContentLength)
 		{
-			char buffer[2048] = { 0 };
 			http_encoding_chunked_context ctx = { 0 };
 			ctx.state = ChunkStateLenghHeader;
 			ctx.nextOffset = 0;
@@ -1258,7 +1257,11 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 			int full_len = 0;
 			do
 			{
-				int status = http_chuncked_read(tls->bio, (BYTE*)buffer, sizeof(buffer), &ctx);
+				if (!Stream_EnsureRemainingCapacity(response->data, 2048))
+					goto out_error;
+
+				int status = http_chuncked_read(tls->bio, Stream_Pointer(response->data),
+				                                Stream_GetRemainingCapacity(response->data), &ctx);
 				if (status <= 0)
 				{
 					if (!BIO_should_retry(tls->bio))
@@ -1272,14 +1275,9 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 				}
 				else
 				{
-					if (!Stream_EnsureRemainingCapacity(response->data, status))
-						goto out_error;
-
-					memcpy(Stream_Pointer(response->data), buffer, status);
 					Stream_Seek(response->data, (size_t)status);
 					full_len += status;
 				}
-
 			} while (ctx.state != ChunkStateEnd);
 			response->BodyLength = full_len;
 			if (response->BodyLength > 0)
