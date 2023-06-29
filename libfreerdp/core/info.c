@@ -441,8 +441,9 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 			return FALSE;
-		Stream_Read_UINT16(s, settings->DynamicDaylightTimeDisabled);
-		if (settings->DynamicDaylightTimeDisabled > 1)
+		UINT16 DynamicDaylightTimeDisabled = 0;
+		Stream_Read_UINT16(s, DynamicDaylightTimeDisabled);
+		if (DynamicDaylightTimeDisabled > 1)
 		{
 			WLog_WARN(TAG,
 			          "[MS-RDPBCGR] 2.2.1.11.1.1.1 Extended Info Packet "
@@ -451,6 +452,9 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 			          settings->DynamicDaylightTimeDisabled);
 			return FALSE;
 		}
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DynamicDaylightTimeDisabled,
+		                               DynamicDaylightTimeDisabled != 0))
+			return FALSE;
 	}
 
 end:
