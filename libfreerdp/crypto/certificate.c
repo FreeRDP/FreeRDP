@@ -1397,7 +1397,6 @@ fail:
 
 char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
 {
-	BOOL rc = FALSE;
 	char* pem = NULL;
 	WINPR_ASSERT(cert);
 
@@ -1445,7 +1444,6 @@ char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
 #endif
 	if (!bio_read_pem(bio, &pem, pLength))
 		goto fail;
-	rc = TRUE;
 fail:
 	BIO_free_all(bio);
 	return pem;
