@@ -248,12 +248,13 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 #endif
 	{ "kbd", COMMAND_LINE_VALUE_REQUIRED,
 	  "[layout:[0x<id>|<name>],lang:<0x<id>>,fn-key:<value>,type:<value>,subtype:<value>,unicode[:"
-	  "on|off],remap:<key1>=<value1>,remap:<key2>=<value2>]",
+	  "on|off],remap:<key1>=<value1>,remap:<key2>=<value2>,pipe:<filename>]",
 	  NULL, NULL, -1, NULL,
 	  "Keyboard related options:"
 	  "* layout: set the keybouard layout announced to the server"
 	  "* lang: set the keyboard language identifier sent to the server"
-	  "* fn-key: Function key value" },
+	  "* fn-key: Function key value"
+	  "* pipe: Name of a named pipe that can be used to type text into the RDP session" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "kbd-lang", COMMAND_LINE_VALUE_REQUIRED, "0x<id>", NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use / kbd:lang:<value>] Keyboard active language identifier" },

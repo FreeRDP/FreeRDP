@@ -2173,6 +2173,11 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				                                    bval != PARSE_OFF))
 					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
+			else if (option_starts_with("pipe:", val))
+			{
+				if (!freerdp_settings_set_string(settings, FreeRDP_KeyboardPipeName, &val[5]))
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+			}
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 			else if (count == 1)
 			{

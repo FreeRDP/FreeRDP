@@ -475,6 +475,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_KerberosRenewableLifeTime, FREERDP_SETTINGS_TYPE_STRING,
 	  "FreeRDP_KerberosRenewableLifeTime" },
 	{ FreeRDP_KerberosStartTime, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_KerberosStartTime" },
+	{ FreeRDP_KeyboardPipeName, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_KeyboardPipeName" },
 	{ FreeRDP_KeyboardRemappingList, FREERDP_SETTINGS_TYPE_STRING,
 	  "FreeRDP_KeyboardRemappingList" },
 	{ FreeRDP_NtlmSamFile, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_NtlmSamFile" },
