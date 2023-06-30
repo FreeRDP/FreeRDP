@@ -298,7 +298,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 					freerdp_input_send_keyboard_event_ex(input, down, repeat, rdp_scancode);
 			}
 			else
-				freerdp_input_send_unicode_keyboard_event(input, down ? KBD_FLAGS_RELEASE : 0,
+				freerdp_input_send_unicode_keyboard_event(input, down ? 0 : KBD_FLAGS_RELEASE,
 				                                          buffer[0]);
 		}
 		else if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
