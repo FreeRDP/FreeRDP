@@ -2175,7 +2175,9 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			}
 			else if (option_starts_with("pipe:", val))
 			{
-				if (!freerdp_settings_set_string(settings, FreeRDP_KeyboardPipeName, &val[5]))
+				if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput, TRUE))
+					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+				else if (!freerdp_settings_set_string(settings, FreeRDP_KeyboardPipeName, &val[5]))
 					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
@@ -2192,6 +2194,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				break;
 		}
 	}
+	free(ptr);
 	return rc;
 }
 
