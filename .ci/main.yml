@@ -3,6 +3,12 @@ name: $(Date:yyyyMMdd)$(Rev:-rr)
 trigger: 
   - uipath
 
+parameters:
+  - name: PublishNuGets
+    displayName: 'Publish the NuGet Packages'
+    type: boolean
+    default: false
+
 pool:
   vmImage: 'windows-2022'
   demands:
@@ -82,7 +88,12 @@ steps:
     projects: 'UiPath.FreeRdpClient\**\*.Tests.csproj'
 
 - task: NuGetCommand@2
-  displayName: 'NuGet Push to UiPath-Internal'
+  ${{ if eq(parameters.PublishNuGets, true) }}:
+    displayName: '(Enabled) NuGet Push to UiPath-Internal'
+    condition: succeeded()
+  ${{ if eq(parameters.PublishNuGets, false) }}:
+    displayName: '(Disabled) NuGet Push to UiPath-Internal'
+    condition: false
   inputs:
     command: push
     packagesToPush: 'Output\nugets\UiPath.FreeRdpClient.*.nupkg;Output\nugets\UiPath.SessionTools.*.nupkg'
