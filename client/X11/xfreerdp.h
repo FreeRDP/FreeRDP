@@ -294,6 +294,7 @@ struct xf_context
 #endif
 	BOOL xi_rawevent;
 	BOOL xi_event;
+	HANDLE pipethread;
 };
 
 BOOL xf_create_window(xfContext* xfc);
