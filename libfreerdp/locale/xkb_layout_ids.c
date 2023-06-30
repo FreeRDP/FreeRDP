@@ -806,7 +806,7 @@ static const XKB_LAYOUT xkbLayouts[] = {
 	{ "sk", KBD_SLOVAK, sk_variants },                           /* Slovakia */
 	{ "es", KBD_SPANISH, es_variants },                          /* Spain */
 	{ "se", KBD_SWEDISH, se_variants },                          /* Sweden */
-	{ "ch", KBD_SWISS_FRENCH, ch_variants },                     /* Switzerland */
+	{ "ch", KBD_SWISS_GERMAN, ch_variants },                     /* Switzerland */
 	{ "sy", KBD_SYRIAC, sy_variants },                           /* Syria */
 	{ "tj", 0, tj_variants },                                    /* Tajikistan */
 	{ "lk", 0, lk_variants },                                    /* Sri Lanka */
