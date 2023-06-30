@@ -2685,6 +2685,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_KerberosStartTime:
 			return settings->KerberosStartTime;
 
+		case FreeRDP_KeyboardPipeName:
+			return settings->KeyboardPipeName;
+
 		case FreeRDP_KeyboardRemappingList:
 			return settings->KeyboardRemappingList;
 
@@ -2959,6 +2962,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_KerberosStartTime:
 			return settings->KerberosStartTime;
+
+		case FreeRDP_KeyboardPipeName:
+			return settings->KeyboardPipeName;
 
 		case FreeRDP_KeyboardRemappingList:
 			return settings->KeyboardRemappingList;
@@ -3243,6 +3249,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, char* val, s
 
 		case FreeRDP_KerberosStartTime:
 			return update_string_(&settings->KerberosStartTime, cnv.c, len);
+
+		case FreeRDP_KeyboardPipeName:
+			return update_string_(&settings->KeyboardPipeName, cnv.c, len);
 
 		case FreeRDP_KeyboardRemappingList:
 			return update_string_(&settings->KeyboardRemappingList, cnv.c, len);
@@ -3543,6 +3552,9 @@ BOOL freerdp_settings_set_string_copy_(rdpSettings* settings, size_t id, const c
 
 		case FreeRDP_KerberosStartTime:
 			return update_string_copy_(&settings->KerberosStartTime, cnv.cc, len, cleanup);
+
+		case FreeRDP_KeyboardPipeName:
+			return update_string_copy_(&settings->KeyboardPipeName, cnv.cc, len, cleanup);
 
 		case FreeRDP_KeyboardRemappingList:
 			return update_string_copy_(&settings->KeyboardRemappingList, cnv.cc, len, cleanup);
