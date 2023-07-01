@@ -364,6 +364,7 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 		WLog_DBG(TAG, "Got Affinity cookie %s", affinity);
 		http_context_set_cookie(wst->http, "ARRAffinity", affinity);
 		http_response_free(*ppresponse);
+		*ppresponse = NULL;
 		/* Terminate this connection and make a new one with the Loadbalancing Cookie */
 		int fd = BIO_get_fd(wst->tls->bio, NULL);
 		if (fd >= 0)
@@ -483,14 +484,14 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 		default:
 			break;
 	}
+
+	const BOOL isWebsocket = http_response_is_websocket(wst->http, response);
 	http_response_free(response);
 	if (!success)
 		return FALSE;
 
-	if (StatusCode == HTTP_STATUS_SWITCH_PROTOCOLS)
+	if (isWebsocket)
 	{
-		if (!http_response_is_websocket(wst->http, response))
-			return FALSE;
 		wst->wscontext.state = WebsocketStateOpcodeAndFin;
 		wst->wscontext.responseStreamBuffer = NULL;
 		return TRUE;
