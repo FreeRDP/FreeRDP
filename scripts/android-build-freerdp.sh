@@ -12,7 +12,7 @@ CJSON_HASH=d348621ca93571343a56862df7de4ff3bc9b5667
 WITH_OPENH264=0
 WITH_OPENSSL=0
 WITH_FFMPEG=0
-WITH_CJSON=0
+WITH_AAD=0
 
 SRC_DIR=$(dirname "${BASH_SOURCE[0]}")
 SRC_DIR=$(realpath "$SRC_DIR")
@@ -50,7 +50,7 @@ do
 			shift
 			;;
 		--cjson)
-			WITH_CJSON=1
+			WITH_AAD=1
 			shift
 			;;
 		--openssl)
@@ -162,7 +162,7 @@ do
 	else
 		CMAKE_CMD_ARGS="$CMAKE_CMD_ARGS -DWITH_FFMPEG=OFF"
 	fi
-	if [ $WITH_CJSON -ne 0 ];
+	if [ $WITH_AAD -ne 0 ];
 	then
 		if [ $BUILD_DEPS -ne 0 ];
 		then

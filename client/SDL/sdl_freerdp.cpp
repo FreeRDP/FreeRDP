@@ -1139,9 +1139,11 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = sdl_logon_error_info;
 #ifdef WITH_WEBVIEW
-	instance->GetAadAuthCode = sdl_webview_get_aad_auth_code;
+	instance->GetRDSAADAccessToken = sdl_webview_get_rdsaad_access_token;
+	instance->GetAVDAccessToken = sdl_webview_get_avd_access_token;
 #else
-	instance->GetAadAuthCode = client_cli_get_aad_auth_code;
+	instance->GetRDSAADAccessToken = client_cli_get_rdsaad_access_token;
+	instance->GetAVDAccessToken = client_cli_get_avd_access_token;
 #endif
 	/* TODO: Client display set up */
 

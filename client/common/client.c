@@ -58,6 +58,11 @@
 #include <freerdp/gdi/video.h>
 #endif
 
+#ifdef WITH_AAD
+#include <cjson/cJSON.h>
+#include <freerdp/utils/http.h>
+#endif
+
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
 
@@ -935,49 +940,178 @@ BOOL client_cli_present_gateway_message(freerdp* instance, UINT32 type, BOOL isD
 	return TRUE;
 }
 
-BOOL client_cli_get_aad_auth_code(freerdp* instance, const char* hostname, char** code,
-                                  const char** client_id, const char** redirect_uri)
+static char* extract_authorization_code(char* url)
+{
+	WINPR_ASSERT(url);
+
+	for (char* p = strchr(url, '?'); p++ != NULL; p = strchr(p, '&'))
+	{
+		if (strncmp(p, "code=", 5) != 0)
+			continue;
+
+		char* end = NULL;
+		p += 5;
+
+		end = strchr(p, '&');
+		if (end)
+			*end = 0;
+		else
+			end = strchr(p, '\0');
+
+		return p;
+	}
+
+	return NULL;
+}
+
+BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* scope, const char* req_cnf,
+                                        char** token)
 {
 	size_t size = 0;
 	char* url = NULL;
+	char* token_request = NULL;
+	const char* client_id = "a85cf173-4192-42f8-81fa-777a763e6e2c";
+	const char* redirect_uri =
+	    "https%3A%2F%2Flogin.microsoftonline.com%2Fcommon%2Foauth2%2Fnativeclient";
 
 	WINPR_ASSERT(instance);
-	WINPR_ASSERT(hostname);
-	WINPR_ASSERT(code);
-	WINPR_ASSERT(client_id);
-	WINPR_ASSERT(redirect_uri);
+	WINPR_ASSERT(scope);
+	WINPR_ASSERT(req_cnf);
+	WINPR_ASSERT(token);
 
-	*code = NULL;
-	*client_id = "a85cf173-4192-42f8-81fa-777a763e6e2c";
-	*redirect_uri = "https%3A%2F%2Flogin.microsoftonline.com%2Fcommon%2Foauth2%2Fnativeclient";
+	*token = NULL;
 
 	printf("Browse to: https://login.microsoftonline.com/common/oauth2/v2.0/"
 	       "authorize?client_id=%s&response_type="
-	       "code&scope=ms-device-service%%3A%%2F%%2Ftermsrv.wvd.microsoft.com%%2Fname%%"
-	       "2F%s%%2Fuser_impersonation&redirect_uri=%s"
+	       "code&scope=%s&redirect_uri=%s"
 	       "\n",
-	       *client_id, hostname, *redirect_uri);
+	       client_id, scope, redirect_uri);
 	printf("Paste redirect URL here: \n");
 
 	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
 		return FALSE;
 
-	for (char* p = strchr(url, '?'); p++ != NULL; p = strchr(p, '&'))
-	{
-		if (strncmp(p, "code=", 5) == 0)
-		{
-			char* end = NULL;
-			p += 5;
+	char* code = extract_authorization_code(url);
+	if (!code)
+		goto cleanup;
 
-			end = strchr(p, '&');
-			if (end)
-				*end = 0;
-			*code = strdup(p);
-		}
+	if (winpr_asprintf(&token_request, &size,
+	                   "grant_type=authorization_code&code=%s&client_id=%s&scope=%s&redirect_uri=%"
+	                   "s&req_cnf=%s",
+	                   code, client_id, scope, redirect_uri, req_cnf) <= 0)
+		goto cleanup;
+
+	client_common_get_access_token(instance, token_request, token);
+
+cleanup:
+	free(token_request);
+	free(url);
+	return (*token != NULL);
+}
+
+BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
+{
+	size_t size = 0;
+	char* url = NULL;
+	char* token_request = NULL;
+	const char* client_id = "a85cf173-4192-42f8-81fa-777a763e6e2c";
+	const char* redirect_uri =
+	    "https%3A%2F%2Flogin.microsoftonline.com%2Fcommon%2Foauth2%2Fnativeclient";
+	const char* scope = "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default";
+
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(token);
+
+	*token = NULL;
+
+	printf("Browse to: https://login.microsoftonline.com/common/oauth2/v2.0/"
+	       "authorize?client_id=%s&response_type="
+	       "code&scope=%s&redirect_uri=%s"
+	       "\n",
+	       client_id, scope, redirect_uri);
+	printf("Paste redirect URL here: \n");
+
+	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
+		return FALSE;
+
+	char* code = extract_authorization_code(url);
+	if (!code)
+		goto cleanup;
+
+	if (winpr_asprintf(
+	        &token_request, &size,
+	        "grant_type=authorization_code&code=%s&client_id=%s&scope=%s&redirect_uri=%s", code,
+	        client_id, scope, redirect_uri) <= 0)
+		goto cleanup;
+
+	client_common_get_access_token(instance, token_request, token);
+
+cleanup:
+	free(token_request);
+	free(url);
+	return (*token != NULL);
+}
+
+BOOL client_common_get_access_token(freerdp* instance, const char* request, char** token)
+{
+#ifdef WITH_AAD
+	WINPR_ASSERT(request);
+	WINPR_ASSERT(token);
+
+	BOOL ret = FALSE;
+	long resp_code = 0;
+	BYTE* response = NULL;
+	size_t response_length = 0;
+	cJSON* json = NULL;
+	cJSON* access_token_prop = NULL;
+	const char* access_token_str = NULL;
+
+	if (!freerdp_http_request("https://login.microsoftonline.com/common/oauth2/v2.0/token", request,
+	                          &resp_code, &response, &response_length))
+	{
+		WLog_ERR(TAG, "access token request failed");
+		return FALSE;
 	}
 
-	free(url);
-	return (*code != NULL);
+	if (resp_code != 200)
+	{
+		WLog_ERR(TAG, "Server unwilling to provide access token; returned status code %li",
+		         resp_code);
+		goto cleanup;
+	}
+
+	json = cJSON_ParseWithLength((const char*)response, response_length);
+	if (!json)
+	{
+		WLog_ERR(TAG, "Failed to parse access token response");
+		goto cleanup;
+	}
+
+	access_token_prop = cJSON_GetObjectItem(json, "access_token");
+	if (!access_token_prop)
+	{
+		WLog_ERR(TAG, "Response has no \"access_token\" property");
+		goto cleanup;
+	}
+
+	access_token_str = cJSON_GetStringValue(access_token_prop);
+	if (!access_token_str)
+	{
+		WLog_ERR(TAG, "Invalid value for \"access_token\"");
+		goto cleanup;
+	}
+
+	*token = _strdup(access_token_str);
+	if (*token)
+		ret = TRUE;
+
+cleanup:
+	cJSON_Delete(json);
+	free(response);
+	return ret;
+#else
+	return FALSE;
+#endif
 }
 
 BOOL client_auto_reconnect(freerdp* instance)

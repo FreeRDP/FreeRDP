@@ -44,7 +44,7 @@
 #include "../utils.h"
 #include "../settings.h"
 
-#ifdef WITH_CJSON
+#ifdef WITH_AAD
 #include <cjson/cJSON.h>
 #endif
 
@@ -59,7 +59,7 @@ typedef struct rdp_arm rdpArm;
 
 #define TAG FREERDP_TAG("core.gateway.arm")
 
-#ifdef WITH_CJSON
+#ifdef WITH_AAD
 static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, int timeout)
 {
 	WINPR_ASSERT(arm);
@@ -152,8 +152,14 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 	HttpRequest* request = NULL;
 	const char* uri;
 
-	if (!arm || !method || !content_type)
-		return NULL;
+	WINPR_ASSERT(arm);
+	WINPR_ASSERT(method);
+	WINPR_ASSERT(content_type);
+
+	WINPR_ASSERT(arm->context);
+
+	freerdp* instance = arm->context->instance;
+	WINPR_ASSERT(instance);
 
 	uri = http_context_get_uri(arm->http);
 	request = http_request_new();
@@ -164,14 +170,36 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 	if (!http_request_set_method(request, method) || !http_request_set_uri(request, uri))
 		goto out;
 
-	else if (freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayHttpExtAuthBearer))
+	if (!freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayHttpExtAuthBearer))
 	{
-		if (!http_request_set_auth_scheme(request, "Bearer") ||
-		    !http_request_set_auth_param(
-		        request, freerdp_settings_get_string(arm->context->settings,
-		                                             FreeRDP_GatewayHttpExtAuthBearer)))
+		char* token = NULL;
+
+		if (!instance->GetAVDAccessToken)
+		{
+			WLog_ERR(TAG, "No authorization token provided");
 			goto out;
+		}
+
+		if (!instance->GetAVDAccessToken(instance, &token))
+		{
+			WLog_ERR(TAG, "Unable to obtain access token");
+			goto out;
+		}
+
+		if (!freerdp_settings_set_string(arm->context->settings, FreeRDP_GatewayHttpExtAuthBearer,
+		                                 token))
+		{
+			free(token);
+			goto out;
+		}
+		free(token);
 	}
+
+	if (!http_request_set_auth_scheme(request, "Bearer") ||
+	    !http_request_set_auth_param(
+	        request,
+	        freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayHttpExtAuthBearer)))
+		goto out;
 
 	if (!http_request_set_transfer_encoding(request, transferEncoding) ||
 	    !http_request_set_content_length(request, content_length) ||
@@ -304,6 +332,17 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message)
 			else
 				status = TRUE;
 		}
+
+		const cJSON* hostname = cJSON_GetObjectItem(json, "redirectedServerName");
+		if (cJSON_GetStringValue(hostname))
+		{
+			if (!freerdp_settings_set_string(arm->context->settings, FreeRDP_ServerHostname,
+			                                 cJSON_GetStringValue(hostname)))
+				status = FALSE;
+			else
+				status = TRUE;
+		}
+
 		cJSON_Delete(json);
 	}
 	return status;
@@ -313,7 +352,7 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message)
 
 BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 {
-#ifndef WITH_CJSON
+#ifndef WITH_AAD
 	WLog_ERR(TAG, "arm gateway support not compiled in");
 	return FALSE;
 #else
