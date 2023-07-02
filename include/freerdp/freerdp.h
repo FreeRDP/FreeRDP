@@ -126,8 +126,9 @@ extern "C"
 	                                char** domain, rdp_auth_reason reason);
 	typedef BOOL (*pChooseSmartcard)(freerdp* instance, SmartcardCertInfo** cert_list, DWORD count,
 	                                 DWORD* choice, BOOL gateway);
-	typedef BOOL (*pGetAadAuthCode)(freerdp* instance, const char* hostname, char** code,
-	                                const char** client_id, const char** redirect_uri);
+	typedef BOOL (*pGetRDSAADAccessToken)(freerdp* instance, const char* scope, const char* req_cnf,
+	                                      char** token);
+	typedef BOOL (*pGetAVDAccessToken)(freerdp* instance, char** token);
 
 	/** @brief Callback used if user interaction is required to accept
 	 *         an unknown certificate.
@@ -521,10 +522,13 @@ owned by rdpRdp */
 		                        Callback for choosing a smartcard for logon.
 		                        Used when multiple smartcards are available. Returns an index into a list
 		                        of SmartcardCertInfo pointers	*/
-		ALIGN64 pGetAadAuthCode GetAadAuthCode; /* (offset 71)
-		                                            Callback for obtaining an oauth2 authorization
-		                                           code for RDS AAD authentication */
-		UINT64 paddingE[80 - 72];               /* 72 */
+		ALIGN64 pGetRDSAADAccessToken GetRDSAADAccessToken; /* (offset 71)
+		                                            Callback for obtaining an oauth2 access token
+		                                            for RDS AAD authentication */
+		ALIGN64 pGetAVDAccessToken GetAVDAccessToken;       /* (offset 72)
+		                                                  Callback for obtaining an oauth2 access token
+		                                                  for Azure Virtual Desktop */
+		UINT64 paddingE[80 - 73];                           /* 73 */
 	};
 
 	struct rdp_channel_handles

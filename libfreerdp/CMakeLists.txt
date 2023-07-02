@@ -219,7 +219,7 @@ if(FAAC_FOUND)
     include_directories(${FAAC_INCLUDE_DIRS})
 endif()
 
-if(WITH_CJSON)
+if(WITH_AAD)
     freerdp_library_add(${CJSON_LIBRARIES})
     include_directories(${CJSON_INCLUDE_DIRS})
 endif()

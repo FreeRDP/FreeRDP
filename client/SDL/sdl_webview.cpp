@@ -66,35 +66,14 @@ class SchemeHandler : public QWebEngineUrlSchemeHandler
 	std::string m_code;
 };
 
-BOOL sdl_webview_get_aad_auth_code(freerdp* instance, const char* hostname, char** code,
-                                   const char** client_id, const char** redirect_uri)
+static std::string sdl_webview_get_auth_code(QString url)
 {
 	int argc = 1;
 	std::string name = "FreeRDP WebView";
-
-	WINPR_ASSERT(instance);
-	WINPR_ASSERT(hostname);
-	WINPR_ASSERT(code);
-	WINPR_ASSERT(client_id);
-	WINPR_ASSERT(redirect_uri);
-
-	WINPR_UNUSED(instance);
-
-	*code = nullptr;
-	*client_id = "5177bc73-fd99-4c77-a90c-76844c9b6999";
-	*redirect_uri =
-	    "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f5177bc73-fd99-4c77-a90c-76844c9b6999";
-
-	auto url =
-	    QString("https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=") +
-	    QString(*client_id) +
-	    QString("&response_type=code&scope=ms-device-service%3A%2F%2Ftermsrv.wvd.microsoft.com%"
-	            "2Fname%2F") +
-	    QString(hostname) + QString("%2Fuser_impersonation&redirect_uri=") + QString(*redirect_uri);
+	char* argv[] = { name.data() };
 
 	QWebEngineUrlScheme::registerScheme(QWebEngineUrlScheme("ms-appx-web"));
 
-	char* argv[] = { name.data() };
 	QCoreApplication::setOrganizationName("QtExamples");
 	QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 	QApplication app(argc, argv);
@@ -107,12 +86,60 @@ BOOL sdl_webview_get_aad_auth_code(freerdp* instance, const char* hostname, char
 	webview.show();
 
 	if (app.exec() != 0)
+		return "";
+
+	return handler.code();
+}
+
+BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* scope, const char* req_cnf,
+                                         char** token)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(scope);
+	WINPR_ASSERT(req_cnf);
+	WINPR_ASSERT(token);
+
+	WINPR_UNUSED(instance);
+
+	std::string client_id = "5177bc73-fd99-4c77-a90c-76844c9b6999";
+	std::string redirect_uri =
+	    "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f5177bc73-fd99-4c77-a90c-76844c9b6999";
+
+	*token = nullptr;
+
+	auto url = QString::fromStdString(
+	    "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=" + client_id +
+	    "&response_type=code&scope=" + scope + "&redirect_uri=" + redirect_uri);
+
+	auto code = sdl_webview_get_auth_code(url);
+	if (code.empty())
 		return FALSE;
 
-	auto val = handler.code();
-	if (val.empty())
-		return FALSE;
-	*code = _strdup(val.c_str());
+	auto token_request = "grant_type=authorization_code&code=" + code + "&client_id=" + client_id +
+	                     "&scope=" + scope + "&redirect_uri=" + redirect_uri +
+	                     "&req_cnf=" + req_cnf;
+	return client_common_get_access_token(instance, token_request.c_str(), token);
+}
 
-	return (*code != nullptr) ? TRUE : FALSE;
+BOOL sdl_webview_get_avd_access_token(freerdp* instance, char** token)
+{
+	WINPR_ASSERT(token);
+
+	std::string client_id = "a85cf173-4192-42f8-81fa-777a763e6e2c";
+	std::string redirect_uri =
+	    "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2fa85cf173-4192-42f8-81fa-777a763e6e2c";
+	std::string scope = "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default";
+
+	*token = nullptr;
+
+	auto url = QString::fromStdString(
+	    "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=" + client_id +
+	    "&response_type=code&scope=" + scope + "&redirect_uri=" + redirect_uri);
+	auto code = sdl_webview_get_auth_code(url);
+	if (code.empty())
+		return FALSE;
+
+	auto token_request = "grant_type=authorization_code&code=" + code + "&client_id=" + client_id +
+	                     "&scope=" + scope + "&redirect_uri=" + redirect_uri;
+	return client_common_get_access_token(instance, token_request.c_str(), token);
 }
