@@ -826,31 +826,38 @@ static const XKB_LAYOUT xkbLayouts[] = {
 	{ "tm", KBD_TURKISH_Q, tm_variants },                        /* Turkmenistan */
 };
 
-UINT32 find_keyboard_layout_in_xorg_rules(char* layout, char* variant)
+static UINT32 find_keyboard_layout_variant(const XKB_LAYOUT* layout, const char* variant)
 {
-	size_t i, j;
+	WINPR_ASSERT(layout);
+	WINPR_ASSERT(variant);
 
+	const XKB_VARIANT* variants = layout->variants;
+	if (variants)
+	{
+		const XKB_VARIANT* var = variants;
+		while (var->variant && (strlen(var->variant) != 0))
+		{
+			if (strcmp(var->variant, variant) == 0)
+				return var->keyboardLayoutID;
+			var++;
+		}
+	}
+
+	return layout->keyboardLayoutID;
+}
+
+UINT32 find_keyboard_layout_in_xorg_rules(const char* layout, const char* variant)
+{
 	if ((layout == NULL) || (variant == NULL))
 		return 0;
 
 	DEBUG_KBD("xkbLayout: %s\txkbVariant: %s", layout, variant);
 
-	for (i = 0; i < ARRAYSIZE(xkbLayouts); i++)
+	for (size_t i = 0; i < ARRAYSIZE(xkbLayouts); i++)
 	{
-		if (strcmp(xkbLayouts[i].layout, layout) == 0)
-		{
-			const XKB_VARIANT* variants = xkbLayouts[i].variants;
-			if (variants)
-			{
-				for (j = 0; variants[j].variant != NULL && strlen(variants[j].variant) > 0; j++)
-				{
-					if (strcmp(variants[j].variant, variant) == 0)
-						return variants[j].keyboardLayoutID;
-				}
-			}
-
-			return xkbLayouts[i].keyboardLayoutID;
-		}
+		const XKB_LAYOUT* cur = &xkbLayouts[i];
+		if (strcmp(cur->layout, layout) == 0)
+			return find_keyboard_layout_variant(cur, variant);
 	}
 
 	return 0;

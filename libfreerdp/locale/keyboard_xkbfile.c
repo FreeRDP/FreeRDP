@@ -359,7 +359,7 @@ int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD x11_keycode_to_
 }
 
 /* return substring starting after nth comma, ending at following comma */
-static char* comma_substring(char* s, int n)
+static char* comma_substring(char* s, size_t n)
 {
 	char* p;
 
@@ -382,8 +382,6 @@ static char* comma_substring(char* s, int n)
 
 int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 {
-	char* layout = NULL;
-	char* variant = NULL;
 	DWORD group = 0;
 	XkbStateRec state = { 0 };
 	XKeyboardState coreKbdState;
@@ -391,7 +389,8 @@ int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 
 	DEBUG_KBD("display: %p", display);
 
-	if (display && XkbRF_GetNamesProp(display, NULL, &rules_names))
+	char* rules = NULL;
+	if (display && XkbRF_GetNamesProp(display, &rules, &rules_names))
 	{
 		DEBUG_KBD("layouts: %s", rules_names.layout ? rules_names.layout : "");
 		DEBUG_KBD("variants: %s", rules_names.variant ? rules_names.variant : "");
@@ -403,8 +402,8 @@ int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 
 		DEBUG_KBD("group: %u", state.group);
 
-		layout = comma_substring(rules_names.layout, group);
-		variant = comma_substring(rules_names.variant, group);
+		const char* layout = comma_substring(rules_names.layout, group);
+		const char* variant = comma_substring(rules_names.variant, group);
 
 		DEBUG_KBD("layout: %s", layout ? layout : "");
 		DEBUG_KBD("variant: %s", variant ? variant : "");
@@ -416,6 +415,7 @@ int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 		free(rules_names.variant);
 		free(rules_names.options);
 	}
+	free(rules);
 
 	return 0;
 }
