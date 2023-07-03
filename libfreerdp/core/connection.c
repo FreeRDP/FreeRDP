@@ -661,7 +661,8 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 			return FALSE;
 	}
 
-	settings->RdstlsSecurity = settings->RedirectionFlags & LB_PASSWORD_IS_PK_ENCRYPTED;
+	settings->RdstlsSecurity =
+	    (settings->RedirectionFlags & LB_PASSWORD_IS_PK_ENCRYPTED) != 0 ? TRUE : FALSE;
 
 	WINPR_ASSERT(rdp->context);
 	WINPR_ASSERT(rdp->context->instance);
