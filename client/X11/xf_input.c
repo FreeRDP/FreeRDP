@@ -135,6 +135,7 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 					WLog_DBG(TAG, "%s device (id: %d) valuator %d label %s range %f - %f",
 					         dev->name, dev->deviceid, t->number, name ? name : "None", t->min,
 					         t->max);
+					free(name);
 
 					if (t->number == 2)
 					{
