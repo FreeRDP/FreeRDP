@@ -329,14 +329,12 @@ static UINT smartcard_init(DEVICE* device)
  */
 UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* handled)
 {
-	void* key;
-
 	WINPR_ASSERT(smartcard);
 	WINPR_ASSERT(irp);
 	WINPR_ASSERT(handled);
 
-	key = (void*)(size_t)irp->CompletionId;
-	ListDictionary_Remove(smartcard->rgOutstandingMessages, key);
+	uintptr_t key = (uintptr_t)irp->CompletionId + 1;
+	ListDictionary_Remove(smartcard->rgOutstandingMessages, (void*)key);
 
 	WINPR_ASSERT(irp->Complete);
 	*handled = TRUE;
@@ -355,7 +353,6 @@ UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* handled
  */
 static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* handled)
 {
-	void* key;
 	LONG status;
 	BOOL asyncIrp = FALSE;
 	SMARTCARD_CONTEXT* pContext = NULL;
@@ -365,9 +362,9 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 	WINPR_ASSERT(irp);
 	WINPR_ASSERT(irp->Complete);
 
-	key = (void*)(size_t)irp->CompletionId;
+	uintptr_t key = (uintptr_t)irp->CompletionId + 1;
 
-	if (!ListDictionary_Add(smartcard->rgOutstandingMessages, key, irp))
+	if (!ListDictionary_Add(smartcard->rgOutstandingMessages, (void*)key, irp))
 	{
 		WLog_ERR(TAG, "ListDictionary_Add failed!");
 		return ERROR_INTERNAL_ERROR;
