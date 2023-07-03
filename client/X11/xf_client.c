@@ -1272,6 +1272,14 @@ static BOOL xf_process_pipe(rdpContext* context, const char* pipe)
 	return TRUE;
 }
 
+static void cleanup_pipe(int signum, const char* signame, void* context)
+{
+	const char* pipe = context;
+	if (!pipe)
+		return;
+	unlink(pipe);
+}
+
 static DWORD WINAPI xf_handle_pipe(void* arg)
 {
 	xfContext* xfc = arg;
@@ -1292,9 +1300,11 @@ static DWORD WINAPI xf_handle_pipe(void* arg)
 		WLog_ERR(TAG, "Failed to create named pipe '%s': %s [%d]", pipe, strerror(errno), errno);
 		return 0;
 	}
+	freerdp_add_signal_cleanup_handler(pipe, cleanup_pipe);
 
 	xf_process_pipe(context, pipe);
 
+	freerdp_del_signal_cleanup_handler(pipe, cleanup_pipe);
 	unlink(pipe);
 	return 0;
 }
