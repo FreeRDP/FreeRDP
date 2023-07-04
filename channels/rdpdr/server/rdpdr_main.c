@@ -181,7 +181,8 @@ static BOOL rdpdr_server_enqueue_irp(RdpdrServerContext* context, RDPDR_IRP* irp
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	return ListDictionary_Add(context->priv->IrpList, (void*)(size_t)irp->CompletionId, irp);
+	const uintptr_t key = irp->CompletionId + 1ull;
+	return ListDictionary_Add(context->priv->IrpList, (void*)key, irp);
 }
 
 static RDPDR_IRP* rdpdr_server_dequeue_irp(RdpdrServerContext* context, UINT32 completionId)
@@ -189,7 +190,9 @@ static RDPDR_IRP* rdpdr_server_dequeue_irp(RdpdrServerContext* context, UINT32 c
 	RDPDR_IRP* irp;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
-	irp = (RDPDR_IRP*)ListDictionary_Take(context->priv->IrpList, (void*)(size_t)completionId);
+
+	const uintptr_t key = completionId + 1ull;
+	irp = (RDPDR_IRP*)ListDictionary_Take(context->priv->IrpList, (void*)key);
 	return irp;
 }
 
