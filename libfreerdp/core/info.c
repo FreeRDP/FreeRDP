@@ -78,7 +78,7 @@ static BOOL rdp_read_info_null_string(const char* what, UINT32 flags, wStream* s
 {
 	CHAR* ret = NULL;
 
-	const BOOL unicode = flags & INFO_UNICODE;
+	const BOOL unicode = (flags & INFO_UNICODE) ? TRUE : FALSE;
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(cbLen)))
@@ -608,7 +608,7 @@ static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, 
 	} terminator;
 	CHAR* ret = NULL;
 
-	const BOOL unicode = flags & INFO_UNICODE;
+	const BOOL unicode = (flags & INFO_UNICODE) ? TRUE : FALSE;
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(cbLenNonNull + nullSize)))

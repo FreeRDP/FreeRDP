@@ -181,8 +181,8 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 	if (remainingThreads > 0)
 	{
 		DWORD dwProcessors = lpBarrier->Reserved4;
-		BOOL spinOnly = dwFlags & SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY;
-		BOOL blockOnly = dwFlags & SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY;
+		BOOL spinOnly = (dwFlags & SYNCHRONIZATION_BARRIER_FLAGS_SPIN_ONLY) ? TRUE : FALSE;
+		BOOL blockOnly = (dwFlags & SYNCHRONIZATION_BARRIER_FLAGS_BLOCK_ONLY) ? TRUE : FALSE;
 		BOOL block = TRUE;
 
 		/**
