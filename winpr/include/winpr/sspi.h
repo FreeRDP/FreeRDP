@@ -486,14 +486,14 @@ typedef SecPkgCredentials_NamesW* PSecPkgCredentials_NamesW;
 #define PSecPkgCredentials_Names PSecPkgCredentials_NamesA
 #endif
 
-typedef struct _SecPkgCredentials_SSIProviderW
+typedef struct
 {
 	SEC_WCHAR* sProviderName;
 	unsigned long ProviderInfoLength;
 	char* ProviderInfo;
 } SecPkgCredentials_SSIProviderW, *PSecPkgCredentials_SSIProviderW;
 
-typedef struct _SecPkgCredentials_SSIProviderA
+typedef struct
 {
 	SEC_CHAR* sProviderName;
 	unsigned long ProviderInfoLength;
@@ -511,7 +511,7 @@ typedef struct _SecPkgCredentials_SSIProviderA
 #define KDC_PROXY_SETTINGS_V1 1
 #define KDC_PROXY_SETTINGS_FLAGS_FORCEPROXY 0x1
 
-typedef struct _SecPkgCredentials_KdcProxySettingsW
+typedef struct
 {
 	ULONG Version;
 	ULONG Flags;
@@ -521,7 +521,7 @@ typedef struct _SecPkgCredentials_KdcProxySettingsW
 	USHORT ClientTlsCredLength;
 } SecPkgCredentials_KdcProxySettingsW, *PSecPkgCredentials_KdcProxySettingsW;
 
-typedef struct _SecPkgCredentials_KdcProxySettingsA
+typedef struct
 {
 	ULONG Version;
 	ULONG Flags;
