@@ -27,7 +27,7 @@
 #include <freerdp/listener.h>
 #include <freerdp/server/rdpsnd.h>
 
-#include "mf_interface.h"
+#include "mf_types.h"
 #include "mfreerdp.h"
 
 void mf_rdpsnd_derive_buffer_size(AudioQueueRef audioQueue,

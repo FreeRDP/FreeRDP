@@ -45,8 +45,7 @@
 #include "mf_audin.h"
 #endif
 
-typedef struct mf_info mfInfo;
-typedef struct mf_peer_context mfPeerContext;
+#include "mf_types.h"
 
 struct mf_peer_context
 {
@@ -63,8 +62,10 @@ struct mf_peer_context
 #ifdef WITH_SERVER_CHANNELS
 	HANDLE vcm;
 #endif
+
 #ifdef CHANNEL_AUDIN_SERVER
 	audin_server_context* audin;
+#endif
 
 #ifdef CHANNEL_RDPSND_SERVER
 	RdpsndServerContext* rdpsnd;

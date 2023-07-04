@@ -25,6 +25,7 @@
 
 #include "mf_info.h"
 #include "mf_rdpsnd.h"
+#include "mf_interface.h"
 
 #include <winpr/sysinfo.h>
 #include <freerdp/server/server-common.h>
