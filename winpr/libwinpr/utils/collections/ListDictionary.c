@@ -209,7 +209,7 @@ static void item_set(wListDictionary* listDictionary, wListDictionaryItem* item,
 	if (listDictionary->objectValue.fnObjectNew)
 		item->value = listDictionary->objectValue.fnObjectNew(value);
 	else
-		item->value = value;
+		item->value = (void*)(uintptr_t)value;
 }
 
 static wListDictionaryItem* new_item(wListDictionary* listDictionary, const void* key,
@@ -222,7 +222,7 @@ static wListDictionaryItem* new_item(wListDictionary* listDictionary, const void
 	if (listDictionary->objectKey.fnObjectNew)
 		item->key = listDictionary->objectKey.fnObjectNew(key);
 	else
-		item->key = key;
+		item->key = (void*)(uintptr_t)key;
 	if (!item->key)
 		goto fail;
 
