@@ -211,7 +211,7 @@ static BOOL prepare_certificates(const char* path)
 		return FALSE;
 
 	exe = concatenate(5, TESTING_OUTPUT_DIRECTORY, "winpr", "tools", "makecert-cli",
-	                  "winpr-makecert");
+	                  "winpr-makecert" CMAKE_EXECUTABLE_SUFFIX);
 	if (!exe)
 		return FALSE;
 	_snprintf(commandLine, sizeof(commandLine), "%s -format crt -path . -n server", exe);
@@ -261,7 +261,7 @@ static int testSuccess(int port)
 	if (!path || !wpath)
 		goto fail;
 
-	exe = GetCombinedPath(path, "sfreerdp-server");
+	exe = GetCombinedPath(path, "sfreerdp-server" CMAKE_EXECUTABLE_SUFFIX);
 
 	if (!exe)
 		goto fail;
