@@ -408,6 +408,7 @@ int TestClientRdpFile(int argc, char* argv[])
 	}
 
 	/* Check [MS-RDPECAM] related options */
+#if defined(CHANNEL_RDPECAM_CLIENT)
 	{
 		int x;
 		ADDIN_ARGV* args;
@@ -447,6 +448,7 @@ int TestClientRdpFile(int argc, char* argv[])
 			}
 		}
 	}
+#endif
 
 	/* Check [URBDRC] related options */
 #if defined(CHANNEL_URBDRC_CLIENT)
