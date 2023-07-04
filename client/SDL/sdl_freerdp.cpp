@@ -795,7 +795,7 @@ static int sdl_run(SdlContext* sdl)
 					const SDL_bool enter = windowEvent.user.code != 0 ? SDL_TRUE : SDL_FALSE;
 
 					Uint32 curFlags = SDL_GetWindowFlags(window);
-					const BOOL isSet = (curFlags & SDL_WINDOW_FULLSCREEN);
+					const BOOL isSet = (curFlags & SDL_WINDOW_FULLSCREEN) ? TRUE : FALSE;
 					if (enter)
 						curFlags |= SDL_WINDOW_FULLSCREEN;
 					else

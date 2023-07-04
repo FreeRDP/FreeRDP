@@ -596,7 +596,7 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32
 	const UINT32 copyDstWidth = nWidth * dstByte;
 	const UINT32 xSrcOffset = nXSrc * srcByte;
 	const UINT32 xDstOffset = nXDst * dstByte;
-	const BOOL vSrcVFlip = flags & FREERDP_FLIP_VERTICAL;
+	const BOOL vSrcVFlip = (flags & FREERDP_FLIP_VERTICAL) ? TRUE : FALSE;
 	UINT32 srcVOffset = 0;
 	INT32 srcVMultiplier = 1;
 	UINT32 dstVOffset = 0;

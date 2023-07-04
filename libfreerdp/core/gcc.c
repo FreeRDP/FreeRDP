@@ -2097,8 +2097,10 @@ BOOL gcc_read_client_cluster_data(wStream* s, rdpMcs* mcs)
 	if (settings->ClusterInfoFlags & REDIRECTED_SESSIONID_FIELD_VALID)
 		settings->RedirectedSessionId = redirectedSessionId;
 
-	settings->ConsoleSession = (settings->ClusterInfoFlags & REDIRECTED_SESSIONID_FIELD_VALID);
-	settings->RedirectSmartCards = (settings->ClusterInfoFlags & REDIRECTED_SMARTCARD);
+	settings->ConsoleSession =
+	    (settings->ClusterInfoFlags & REDIRECTED_SESSIONID_FIELD_VALID) ? TRUE : FALSE;
+	settings->RedirectSmartCards =
+	    (settings->ClusterInfoFlags & REDIRECTED_SMARTCARD) ? TRUE : FALSE;
 
 	if (blockLength != 8)
 	{
@@ -2220,7 +2222,7 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 		current->y = top;
 		current->width = right - left + 1;
 		current->height = bottom - top + 1;
-		current->is_primary = (flags & MONITOR_PRIMARY);
+		current->is_primary = (flags & MONITOR_PRIMARY) ? TRUE : FALSE;
 	}
 
 	return TRUE;

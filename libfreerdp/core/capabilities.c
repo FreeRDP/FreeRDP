@@ -599,8 +599,10 @@ static BOOL rdp_read_order_capability_set(wStream* s, rdpSettings* settings)
 
 	if (settings->OrderSupportFlags & ORDER_FLAGS_EXTRA_SUPPORT)
 	{
-		BitmapCacheV3Enabled = settings->OrderSupportFlagsEx & CACHE_BITMAP_V3_SUPPORT;
-		FrameMarkerCommandEnabled = settings->OrderSupportFlagsEx & ALTSEC_FRAME_MARKER_SUPPORT;
+		BitmapCacheV3Enabled =
+		    (settings->OrderSupportFlagsEx & CACHE_BITMAP_V3_SUPPORT) ? TRUE : FALSE;
+		FrameMarkerCommandEnabled =
+		    (settings->OrderSupportFlagsEx & ALTSEC_FRAME_MARKER_SUPPORT) ? TRUE : FALSE;
 	}
 
 	settings->BitmapCacheV3Enabled = BitmapCacheV3Enabled;
@@ -2284,7 +2286,8 @@ static BOOL rdp_read_draw_nine_grid_cache_capability_set(wStream* s, rdpSettings
 	                   settings->DrawNineGridCacheEntries); /* drawNineGridCacheEntries (2 bytes) */
 
 	settings->DrawNineGridEnabled =
-	    drawNineGridSupportLevel & (DRAW_NINEGRID_SUPPORTED | DRAW_NINEGRID_SUPPORTED_V2);
+	    (drawNineGridSupportLevel & (DRAW_NINEGRID_SUPPORTED | DRAW_NINEGRID_SUPPORTED_V2)) ? TRUE
+	                                                                                        : FALSE;
 
 	return TRUE;
 }
@@ -2397,8 +2400,10 @@ static BOOL rdp_read_draw_gdiplus_cache_capability_set(wStream* s, rdpSettings* 
 	Stream_Seek(s, 8);                              /* GdipCacheChunkSize (8 bytes) */
 	Stream_Seek(s, 6);                              /* GdipImageCacheProperties (6 bytes) */
 
-	settings->DrawGdiPlusEnabled = drawGDIPlusSupportLevel & DRAW_GDIPLUS_SUPPORTED;
-	settings->DrawGdiPlusCacheEnabled = drawGdiplusCacheLevel & DRAW_GDIPLUS_CACHE_LEVEL_ONE;
+	settings->DrawGdiPlusEnabled =
+	    (drawGDIPlusSupportLevel & DRAW_GDIPLUS_SUPPORTED) ? TRUE : FALSE;
+	settings->DrawGdiPlusCacheEnabled =
+	    (drawGdiplusCacheLevel & DRAW_GDIPLUS_CACHE_LEVEL_ONE) ? TRUE : FALSE;
 
 	return TRUE;
 }
@@ -2492,7 +2497,7 @@ static BOOL rdp_read_remote_programs_capability_set(wStream* s, rdpSettings* set
 
 	Stream_Read_UINT32(s, railSupportLevel); /* railSupportLevel (4 bytes) */
 
-	settings->RemoteApplicationMode = railSupportLevel & RAIL_LEVEL_SUPPORTED;
+	settings->RemoteApplicationMode = (railSupportLevel & RAIL_LEVEL_SUPPORTED) ? TRUE : FALSE;
 	settings->RemoteApplicationSupportLevel = railSupportLevel;
 	return TRUE;
 }

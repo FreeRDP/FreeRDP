@@ -807,7 +807,7 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 
 			flags = pdu.capsSet->flags;
 
-			clientSettings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE);
+			clientSettings->GfxSmallCache = (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) ? TRUE : FALSE;
 
 			avc444v2 = avc444 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
 			if (!freerdp_settings_get_bool(srvSettings, FreeRDP_GfxAVC444v2) || !h264)
@@ -941,9 +941,9 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, FALSE);
 
 				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxThinClient,
-				                          (flags & RDPGFX_CAPS_FLAG_THINCLIENT));
+				                          (flags & RDPGFX_CAPS_FLAG_THINCLIENT) ? TRUE : FALSE);
 				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
-				                          (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE));
+				                          (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) ? TRUE : FALSE);
 
 #ifndef WITH_GFX_H264
 				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
@@ -952,7 +952,8 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 				if (h264)
 					freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264,
-					                          (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED));
+					                          (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED) ? TRUE
+					                                                                    : FALSE);
 				else
 					freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
 #endif
@@ -981,9 +982,9 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
 
 				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxThinClient,
-				                          (flags & RDPGFX_CAPS_FLAG_THINCLIENT));
+				                          (flags & RDPGFX_CAPS_FLAG_THINCLIENT) ? TRUE : FALSE);
 				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
-				                          (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE));
+				                          (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) ? TRUE : FALSE);
 
 				WINPR_ASSERT(context->CapsConfirm);
 				return context->CapsConfirm(context, &pdu);

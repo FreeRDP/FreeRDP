@@ -261,7 +261,7 @@ BOOL rdpei_read_4byte_signed(wStream* s, INT32* value)
 	Stream_Read_UINT8(s, byte);
 
 	count = (byte & 0xC0) >> 6;
-	negative = (byte & 0x20);
+	negative = (byte & 0x20) ? TRUE : FALSE;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, count))
 		return FALSE;
