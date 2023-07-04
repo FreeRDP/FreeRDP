@@ -586,7 +586,7 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 	 * FIXME: behavior documented somewhere? behavior not yet
 	 * observed with FreeRDP).
 	 */
-	key = irp->CompletionId;
+	key = irp->CompletionId + 1ull;
 	previousIrpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)key);
 
 	if (previousIrpThread)
@@ -646,7 +646,7 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 		goto error_handle;
 	}
 
-	key = irp->CompletionId;
+	key = irp->CompletionId + 1ull;
 
 	if (!ListDictionary_Add(serial->IrpThreads, (void*)key, irpThread))
 	{
