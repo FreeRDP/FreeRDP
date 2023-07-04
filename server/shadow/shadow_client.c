@@ -2123,7 +2123,8 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	WINPR_ASSERT(rc);
 	rc = freerdp_settings_set_bool(settings, FreeRDP_HasExtendedMouseEvent, TRUE);
 	WINPR_ASSERT(rc);
-
+	rc = freerdp_settings_set_bool(settings, FreeRDP_SupportMonitorLayoutPdu, TRUE);
+	WINPR_ASSERT(rc);
 	while (1)
 	{
 		nCount = 0;
