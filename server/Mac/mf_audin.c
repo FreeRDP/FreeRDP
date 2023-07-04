@@ -25,6 +25,7 @@
 #include "mfreerdp.h"
 
 #include "mf_audin.h"
+#include "mf_interface.h"
 
 #include <freerdp/server/server-common.h>
 #include <freerdp/log.h>

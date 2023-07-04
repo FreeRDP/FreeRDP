@@ -1,9 +1,9 @@
 /**
- * FreeRDP: A Remote Desktop Protocol Implementation
- * FreeRDP Mac OS X Server (Audio Input)
+ * FreeRDP: A Remote Desktop Protocol Client
+ * FreeRDP Mac OS X Server
  *
- * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
- * Copyright 2013 Corey Clayton <can.of.tuna@gmail.com>
+ * Copyright 2023 Armin Novak <anovak@thincst.com>
+ * Copyright 2023 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,16 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_SERVER_MAC_AUDIN_H
-#define FREERDP_SERVER_MAC_AUDIN_H
+#ifndef FREERDP_SERVER_MAC_TYPES_H
+#define FREERDP_SERVER_MAC_TYPES_H
 
-#include <freerdp/freerdp.h>
-#include <freerdp/listener.h>
+#include <pthread.h>
 
-#include "mf_types.h"
-#include "mfreerdp.h"
+#include <freerdp/config.h>
 
-BOOL mf_peer_audin_init(mfPeerContext* context);
-void mf_peer_audin_uninit(mfPeerContext* context);
+#include <winpr/crt.h>
 
-#endif /* FREERDP_SERVER_MAC_AUDIN_H */
+typedef struct mf_info mfInfo;
+typedef struct mf_peer_context mfPeerContext;
+
+#endif /* FREERDP_SERVER_MAC_TYPES_H */
