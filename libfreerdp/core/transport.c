@@ -1488,6 +1488,12 @@ static BOOL transport_default_disconnect(rdpTransport* transport)
 		transport->rdg = NULL;
 	}
 
+	if (transport->wst)
+	{
+		wst_free(transport->wst);
+		transport->wst = NULL;
+	}
+
 	transport->frontBio = NULL;
 	transport->layer = TRANSPORT_LAYER_TCP;
 	transport->earlyUserAuth = FALSE;
