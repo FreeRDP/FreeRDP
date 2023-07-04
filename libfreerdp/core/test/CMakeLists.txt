@@ -13,6 +13,7 @@ set(${MODULE_PREFIX}_FUZZERS
 	TestFuzzCryptoCertificateDataSetPEM.c)
 
 if(WITH_SAMPLE AND WITH_SERVER)
+	add_definitions(-DCMAKE_EXECUTABLE_SUFFIX="${CMAKE_EXECUTABLE_SUFFIX}")
 	set(${MODULE_PREFIX}_TESTS
 		${${MODULE_PREFIX}_TESTS}
 		TestConnect.c)
