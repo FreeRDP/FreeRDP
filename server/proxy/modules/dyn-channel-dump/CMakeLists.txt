@@ -35,7 +35,13 @@ add_library(${PROJECT_NAME} MODULE
 	dyn-channel-dump.cpp
 )
 
-target_link_libraries(${PROJECT_NAME} winpr freerdp)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+	winpr
+	freerdp
+	freerdp-client
+	freerdp-server
+	freerdp-server-proxy
+)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 set_target_properties(${PROJECT_NAME} PROPERTIES NO_SONAME 1)
