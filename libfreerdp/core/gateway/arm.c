@@ -51,7 +51,6 @@
 struct rdp_arm
 {
 	rdpContext* context;
-	rdpSettings* settings;
 	rdpTls* tls;
 	HttpContext* http;
 };
@@ -69,7 +68,7 @@ static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, int timeout)
 	long status = 0;
 	BIO* socketBio = NULL;
 	BIO* bufferedBio = NULL;
-	rdpSettings* settings = arm->settings;
+	rdpSettings* settings = arm->context->settings;
 	if (!settings)
 		return FALSE;
 
@@ -165,12 +164,12 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 	if (!http_request_set_method(request, method) || !http_request_set_uri(request, uri))
 		goto out;
 
-	else if (freerdp_settings_get_string(arm->settings, FreeRDP_GatewayHttpExtAuthBearer))
+	else if (freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayHttpExtAuthBearer))
 	{
 		if (!http_request_set_auth_scheme(request, "Bearer") ||
 		    !http_request_set_auth_param(
-		        request,
-		        freerdp_settings_get_string(arm->settings, FreeRDP_GatewayHttpExtAuthBearer)))
+		        request, freerdp_settings_get_string(arm->context->settings,
+		                                             FreeRDP_GatewayHttpExtAuthBearer)))
 			goto out;
 	}
 
@@ -222,30 +221,56 @@ static void arm_free(rdpArm* arm)
 	free(arm);
 }
 
+static rdpArm* arm_new(rdpContext* context)
+{
+	WINPR_ASSERT(context);
+
+	rdpArm* arm = (rdpArm*)calloc(1, sizeof(rdpArm));
+	if (!arm)
+		goto fail;
+
+	arm->context = context;
+	arm->tls = freerdp_tls_new(context->settings);
+	if (!arm->tls)
+		goto fail;
+
+	arm->http = http_context_new();
+
+	if (!arm->http)
+		goto fail;
+
+	return arm;
+
+fail:
+	arm_free(arm);
+	return NULL;
+}
+
 static char* arm_create_request_json(rdpArm* arm)
 {
 	char* lbi = NULL;
-	cJSON* json = NULL;
 	char* message = NULL;
-	json = cJSON_CreateObject();
+
+	WINPR_ASSERT(arm);
+
+	cJSON* json = cJSON_CreateObject();
 	if (!json)
 		goto arm_create_cleanup;
 	cJSON_AddStringToObject(
 	    json, "application",
-	    freerdp_settings_get_string(arm->settings, FreeRDP_RemoteApplicationProgram));
+	    freerdp_settings_get_string(arm->context->settings, FreeRDP_RemoteApplicationProgram));
 
-	lbi = calloc(freerdp_settings_get_uint32(arm->settings, FreeRDP_LoadBalanceInfoLength) + 1,
-	             sizeof(char));
+	lbi = calloc(
+	    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength) + 1,
+	    sizeof(char));
 	if (!lbi)
 		goto arm_create_cleanup;
 
-	memcpy(lbi, freerdp_settings_get_pointer(arm->settings, FreeRDP_LoadBalanceInfo),
-	       freerdp_settings_get_uint32(arm->settings, FreeRDP_LoadBalanceInfoLength));
+	const size_t len =
+	    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength);
+	memcpy(lbi, freerdp_settings_get_pointer(arm->context->settings, FreeRDP_LoadBalanceInfo), len);
 
 	cJSON_AddStringToObject(json, "loadBalanceInfo", lbi);
-	free(lbi);
-	lbi = NULL;
-
 	cJSON_AddNullToObject(json, "LogonToken");
 	cJSON_AddNullToObject(json, "gatewayLoadBalancerToken");
 
@@ -260,8 +285,9 @@ arm_create_cleanup:
 static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message)
 {
 	WINPR_ASSERT(arm);
-	WINPR_ASSERT(arm->settings);
+	WINPR_ASSERT(arm->context);
 	WINPR_ASSERT(message);
+
 	cJSON* json = cJSON_Parse(message);
 	BOOL status = FALSE;
 	if (!json)
@@ -272,7 +298,8 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message)
 		if (cJSON_IsString(gwurl) && (gwurl->valuestring != NULL))
 		{
 			WLog_DBG(TAG, "extracted target url %s", gwurl->valuestring);
-			if (!freerdp_settings_set_string(arm->settings, FreeRDP_GatewayUrl, gwurl->valuestring))
+			if (!freerdp_settings_set_string(arm->context->settings, FreeRDP_GatewayUrl,
+			                                 gwurl->valuestring))
 				status = FALSE;
 			else
 				status = TRUE;
@@ -304,29 +331,15 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 		return FALSE;
 	}
 
-	rdpArm* arm = (rdpArm*)calloc(1, sizeof(rdpArm));
+	rdpArm* arm = arm_new(context);
 	if (!arm)
 		return FALSE;
 
 	char* message = NULL;
 	BOOL rc = FALSE;
 
-	arm->context = context;
-	arm->settings = arm->context->settings;
-	if (!arm->settings)
-		goto arm_error;
-
-	arm->tls = freerdp_tls_new(arm->settings);
 	HttpResponse* response = NULL;
 	long StatusCode;
-
-	if (!arm->tls)
-		goto arm_error;
-
-	arm->http = http_context_new();
-
-	if (!arm->http)
-		goto arm_error;
 
 	if (!http_context_set_uri(arm->http, "/api/arm/v2/connections/") ||
 	    !http_context_set_accept(arm->http, "application/json") ||
@@ -335,8 +348,8 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 	    !http_context_set_connection(arm->http, "Keep-Alive") ||
 	    !http_context_set_user_agent(arm->http, "FreeRDP/3.0") ||
 	    !http_context_set_x_ms_user_agent(arm->http, "FreeRDP/3.0") ||
-	    !http_context_set_host(arm->http,
-	                           freerdp_settings_get_string(arm->settings, FreeRDP_GatewayHostname)))
+	    !http_context_set_host(arm->http, freerdp_settings_get_string(arm->context->settings,
+	                                                                  FreeRDP_GatewayHostname)))
 		goto arm_error;
 
 	if (!arm_tls_connect(arm, arm->tls, timeout))
