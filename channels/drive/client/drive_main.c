@@ -247,7 +247,7 @@ static UINT drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
 		irp->IoStatus = STATUS_UNSUCCESSFUL;
 	else
 	{
-		ListDictionary_Remove(drive->files, key);
+		ListDictionary_Take(drive->files, key);
 
 		if (drive_file_free(file))
 			irp->IoStatus = STATUS_SUCCESS;
