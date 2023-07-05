@@ -75,7 +75,7 @@ char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf
 #include <termios.h>
 #include <freerdp/utils/signal.h>
 
-#ifdef WINPR_HAVE_POLL_H
+#if defined(WINPR_HAVE_POLL_H) && !defined(__APPLE__)
 #include <poll.h>
 #else
 #include <time.h>
@@ -85,7 +85,7 @@ char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf
 static int wait_for_fd(int fd, int timeout)
 {
 	int status;
-#ifdef WINPR_HAVE_POLL_H
+#if defined(WINPR_HAVE_POLL_H) && !defined(__APPLE__)
 	struct pollfd pollset = { 0 };
 	pollset.fd = fd;
 	pollset.events = POLLIN;
