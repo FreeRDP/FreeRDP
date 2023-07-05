@@ -378,6 +378,7 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 
 	rc = TRUE;
 arm_error:
+	http_response_free(response);
 	arm_free(arm);
 	free(message);
 	return rc;

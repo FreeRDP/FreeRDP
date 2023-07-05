@@ -339,6 +339,7 @@ BOOL http_context_enable_websocket_upgrade(HttpContext* context, BOOL enable)
 		if (winpr_RAND(key, sizeof(key)) != 0)
 			return FALSE;
 
+		free(context->SecWebsocketKey);
 		context->SecWebsocketKey = crypto_base64_encode(key, sizeof(key));
 		if (!context->SecWebsocketKey)
 			return FALSE;
