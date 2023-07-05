@@ -320,30 +320,6 @@ if(WITH_IPP)
     endif()
 endif()
 
-if(WITH_SSE2)
-    if(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
-        set_source_files_properties(${PRIMITIVES_SSE2_SRCS}
-            PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -msse2")
-        set_source_files_properties(${PRIMITIVES_SSE3_SRCS}
-            PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -msse3")
-        set_source_files_properties(${PRIMITIVES_SSSE3_SRCS}
-            PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -mssse3")
-    endif()
-
-    if(MSVC)
-        set_source_files_properties(${PRIMITIVES_OPT_SRCS}
-            PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} /arch:SSE2")
-    endif()
-elseif(WITH_NEON)
-    if(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
-        if (NOT MSVC_ARM64 AND NOT ARCH_ARM64)
-            set_source_files_properties(${PRIMITIVES_OPT_SRCS}
-                PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -mfpu=neon")
-        endif()
-    endif()
-    # TODO: Add MSVC equivalent
-endif()
-
 set(PRIMITIVES_SRCS ${PRIMITIVES_SRCS} ${PRIMITIVES_OPT_SRCS})
 
 freerdp_module_add(${PRIMITIVES_SRCS})
