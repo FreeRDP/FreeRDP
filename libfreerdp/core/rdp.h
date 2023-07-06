@@ -204,6 +204,7 @@ struct rdp_rdp
 	UINT32 deactivated_height;
 
 	wLog* log;
+	char log_context[64];
 };
 
 FREERDP_LOCAL BOOL rdp_read_security_header(rdpRdp* rdp, wStream* s, UINT16* flags, UINT16* length);
