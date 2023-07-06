@@ -1012,9 +1012,9 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 
 		if (len < count)
 			goto out_fail;
-		if (!freerdp_settings_set_uint32(_settings, FreeRDP_DeviceCount, count))
-			goto out_fail;
 		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_DeviceArray, NULL, len))
+			goto out_fail;
+		if (!freerdp_settings_set_uint32(_settings, FreeRDP_DeviceCount, count))
 			goto out_fail;
 
 		for (index = 0; index < count; index++)
@@ -1031,9 +1031,9 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 
 		if (len < count)
 			goto out_fail;
-		if (!freerdp_settings_set_uint32(_settings, FreeRDP_StaticChannelCount, count))
-			goto out_fail;
 		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_StaticChannelArray, NULL, len))
+			goto out_fail;
+		if (!freerdp_settings_set_uint32(_settings, FreeRDP_StaticChannelCount, count))
 			goto out_fail;
 
 		for (index = 0; index < count; index++)
@@ -1051,11 +1051,9 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 
 		if (len < count)
 			goto out_fail;
-		if (!freerdp_settings_set_uint32(_settings, FreeRDP_DynamicChannelCount, count))
-			goto out_fail;
-		if (!freerdp_settings_set_uint32(_settings, FreeRDP_DynamicChannelCount, count))
-			goto out_fail;
 		if (!freerdp_settings_set_pointer_len(_settings, FreeRDP_DynamicChannelArray, NULL, len))
+			goto out_fail;
+		if (!freerdp_settings_set_uint32(_settings, FreeRDP_DynamicChannelCount, count))
 			goto out_fail;
 
 		for (index = 0; index < count; index++)
