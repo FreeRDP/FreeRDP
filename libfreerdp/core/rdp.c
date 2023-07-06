@@ -2167,6 +2167,9 @@ rdpRdp* rdp_new(rdpContext* context)
 	rdp->log = WLog_Get(RDP_TAG);
 	WINPR_ASSERT(rdp->log);
 
+	_snprintf(rdp->log_context, sizeof(rdp->log_context), "%p", context);
+	WLog_SetContext(rdp->log, NULL, rdp->log_context);
+
 	InitializeCriticalSection(&rdp->critical);
 	rdp->context = context;
 	WINPR_ASSERT(rdp->context);
