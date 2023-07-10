@@ -970,6 +970,7 @@ static BOOL xf_cliprdr_get_requested_data(xfClipboard* clipboard, Atom target)
 
 		clipboard->incr_data_length = 0;
 		has_data = TRUE; /* data will be followed in PropertyNotify event */
+		XSelectInput(xfc->display, xfc->drawable, PropertyChangeMask);
 	}
 	else
 	{
