@@ -146,6 +146,7 @@ struct rdp_file
 	DWORD RedirectPrinters;            /* redirectprinters */
 	DWORD RedirectComPorts;            /* redirectcomports */
 	DWORD RedirectSmartCards;          /* redirectsmartcards */
+	DWORD RedirectWebauthN;            /* redirectwebauthn */
 	LPSTR RedirectCameras;             /* camerastoredirect */
 	DWORD RedirectClipboard;           /* redirectclipboard */
 	DWORD RedirectPosDevices;          /* redirectposdevices */
@@ -307,6 +308,7 @@ static const char key_int_screen_mode_id[] = "screen mode id";
 static const char key_int_singlemoninwindowedmode[] = "singlemoninwindowedmode";
 static const char key_int_maximizetocurrentdisplays[] = "maximizetocurrentdisplays";
 static const char key_int_use_multimon[] = "use multimon";
+static const char key_int_redirectwebauthn[] = "redirectwebauthn";
 
 static SSIZE_T freerdp_client_rdp_file_add_line(rdpFile* file);
 static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(const rdpFile* file,
@@ -324,144 +326,146 @@ static BOOL freerdp_client_rdp_file_find_integer_entry(rdpFile* file, const char
 	*outValue = NULL;
 	*outLine = NULL;
 
-	if (_stricmp(name, "use multimon") == 0)
+	if (_stricmp(name, key_int_use_multimon) == 0)
 		*outValue = &file->UseMultiMon;
-	else if (_stricmp(name, "maximizetocurrentdisplays") == 0)
+	else if (_stricmp(name, key_int_maximizetocurrentdisplays) == 0)
 		*outValue = &file->MaximizeToCurrentDisplays;
-	else if (_stricmp(name, "singlemoninwindowedmode") == 0)
+	else if (_stricmp(name, key_int_singlemoninwindowedmode) == 0)
 		*outValue = &file->SingleMonInWindowedMode;
-	else if (_stricmp(name, "screen mode id") == 0)
+	else if (_stricmp(name, key_int_screen_mode_id) == 0)
 		*outValue = &file->ScreenModeId;
-	else if (_stricmp(name, "span monitors") == 0)
+	else if (_stricmp(name, key_int_span_monitors) == 0)
 		*outValue = &file->SpanMonitors;
-	else if (_stricmp(name, "smart sizing") == 0)
+	else if (_stricmp(name, key_int_smart_sizing) == 0)
 		*outValue = &file->SmartSizing;
-	else if (_stricmp(name, "dynamic resolution") == 0)
+	else if (_stricmp(name, key_int_dynamic_resolution) == 0)
 		*outValue = &file->DynamicResolution;
-	else if (_stricmp(name, "enablesuperpan") == 0)
+	else if (_stricmp(name, key_int_enablesuperpan) == 0)
 		*outValue = &file->EnableSuperSpan;
-	else if (_stricmp(name, "superpanaccelerationfactor") == 0)
+	else if (_stricmp(name, key_int_superpanaccelerationfactor) == 0)
 		*outValue = &file->SuperSpanAccelerationFactor;
-	else if (_stricmp(name, "desktopwidth") == 0)
+	else if (_stricmp(name, key_int_desktopwidth) == 0)
 		*outValue = &file->DesktopWidth;
-	else if (_stricmp(name, "desktopheight") == 0)
+	else if (_stricmp(name, key_int_desktopheight) == 0)
 		*outValue = &file->DesktopHeight;
-	else if (_stricmp(name, "desktop size id") == 0)
+	else if (_stricmp(name, key_int_desktop_size_id) == 0)
 		*outValue = &file->DesktopSizeId;
-	else if (_stricmp(name, "session bpp") == 0)
+	else if (_stricmp(name, key_int_session_bpp) == 0)
 		*outValue = &file->SessionBpp;
-	else if (_stricmp(name, "desktopscalefactor") == 0)
+	else if (_stricmp(name, key_int_desktopscalefactor) == 0)
 		*outValue = &file->DesktopScaleFactor;
-	else if (_stricmp(name, "compression") == 0)
+	else if (_stricmp(name, key_int_compression) == 0)
 		*outValue = &file->Compression;
-	else if (_stricmp(name, "keyboardhook") == 0)
+	else if (_stricmp(name, key_int_keyboardhook) == 0)
 		*outValue = &file->KeyboardHook;
-	else if (_stricmp(name, "disable ctrl+alt+del") == 0)
+	else if (_stricmp(name, key_int_disable_ctrl_alt_del) == 0)
 		*outValue = &file->DisableCtrlAltDel;
-	else if (_stricmp(name, "audiomode") == 0)
+	else if (_stricmp(name, key_int_audiomode) == 0)
 		*outValue = &file->AudioMode;
-	else if (_stricmp(name, "audioqualitymode") == 0)
+	else if (_stricmp(name, key_int_audioqualitymode) == 0)
 		*outValue = &file->AudioQualityMode;
-	else if (_stricmp(name, "audiocapturemode") == 0)
+	else if (_stricmp(name, key_int_audiocapturemode) == 0)
 		*outValue = &file->AudioCaptureMode;
-	else if (_stricmp(name, "encode redirected video capture") == 0)
+	else if (_stricmp(name, key_int_encode_redirected_video_capture) == 0)
 		*outValue = &file->EncodeRedirectedVideoCapture;
-	else if (_stricmp(name, "redirected video capture encoding quality") == 0)
+	else if (_stricmp(name, key_int_redirected_video_capture_encoding_quality) == 0)
 		*outValue = &file->RedirectedVideoCaptureEncodingQuality;
-	else if (_stricmp(name, "videoplaybackmode") == 0)
+	else if (_stricmp(name, key_int_videoplaybackmode) == 0)
 		*outValue = &file->VideoPlaybackMode;
-	else if (_stricmp(name, "connection type") == 0)
+	else if (_stricmp(name, key_int_connection_type) == 0)
 		*outValue = &file->ConnectionType;
-	else if (_stricmp(name, "networkautodetect") == 0)
+	else if (_stricmp(name, key_int_networkautodetect) == 0)
 		*outValue = &file->NetworkAutoDetect;
-	else if (_stricmp(name, "bandwidthautodetect") == 0)
+	else if (_stricmp(name, key_int_bandwidthautodetect) == 0)
 		*outValue = &file->BandwidthAutoDetect;
-	else if (_stricmp(name, "pinconnectionbar") == 0)
+	else if (_stricmp(name, key_int_pinconnectionbar) == 0)
 		*outValue = &file->PinConnectionBar;
-	else if (_stricmp(name, "displayconnectionbar") == 0)
+	else if (_stricmp(name, key_int_displayconnectionbar) == 0)
 		*outValue = &file->DisplayConnectionBar;
-	else if (_stricmp(name, "workspaceid") == 0)
+	else if (_stricmp(name, key_int_workspaceid) == 0)
 		*outValue = &file->WorkspaceId;
-	else if (_stricmp(name, "enableworkspacereconnect") == 0)
+	else if (_stricmp(name, key_int_enableworkspacereconnect) == 0)
 		*outValue = &file->EnableWorkspaceReconnect;
-	else if (_stricmp(name, "disable wallpaper") == 0)
+	else if (_stricmp(name, key_int_disable_wallpaper) == 0)
 		*outValue = &file->DisableWallpaper;
-	else if (_stricmp(name, "allow font smoothing") == 0)
+	else if (_stricmp(name, key_int_allow_font_smoothing) == 0)
 		*outValue = &file->AllowFontSmoothing;
-	else if (_stricmp(name, "allow desktop composition") == 0)
+	else if (_stricmp(name, key_int_allow_desktop_composition) == 0)
 		*outValue = &file->AllowDesktopComposition;
-	else if (_stricmp(name, "disable full window drag") == 0)
+	else if (_stricmp(name, key_int_disable_full_window_drag) == 0)
 		*outValue = &file->DisableFullWindowDrag;
-	else if (_stricmp(name, "disable menu anims") == 0)
+	else if (_stricmp(name, key_int_disable_menu_anims) == 0)
 		*outValue = &file->DisableMenuAnims;
-	else if (_stricmp(name, "disable themes") == 0)
+	else if (_stricmp(name, key_int_disable_themes) == 0)
 		*outValue = &file->DisableThemes;
-	else if (_stricmp(name, "disable cursor setting") == 0)
+	else if (_stricmp(name, key_int_disable_cursor_setting) == 0)
 		*outValue = &file->DisableCursorSetting;
-	else if (_stricmp(name, "bitmapcachesize") == 0)
+	else if (_stricmp(name, key_int_bitmapcachesize) == 0)
 		*outValue = &file->BitmapCacheSize;
-	else if (_stricmp(name, "bitmapcachepersistenable") == 0)
+	else if (_stricmp(name, key_int_bitmapcachepersistenable) == 0)
 		*outValue = &file->BitmapCachePersistEnable;
-	else if (_stricmp(name, "server port") == 0)
+	else if (_stricmp(name, key_int_server_port) == 0)
 		*outValue = &file->ServerPort;
-	else if (_stricmp(name, "redirectdrives") == 0)
+	else if (_stricmp(name, key_int_redirectdrives) == 0)
 		*outValue = &file->RedirectDrives;
-	else if (_stricmp(name, "redirectprinters") == 0)
+	else if (_stricmp(name, key_int_redirectprinters) == 0)
 		*outValue = &file->RedirectPrinters;
-	else if (_stricmp(name, "redirectcomports") == 0)
+	else if (_stricmp(name, key_int_redirectcomports) == 0)
 		*outValue = &file->RedirectComPorts;
-	else if (_stricmp(name, "redirectsmartcards") == 0)
+	else if (_stricmp(name, key_int_redirectsmartcards) == 0)
 		*outValue = &file->RedirectSmartCards;
-	else if (_stricmp(name, "redirectclipboard") == 0)
+	else if (_stricmp(name, key_int_redirectclipboard) == 0)
 		*outValue = &file->RedirectClipboard;
-	else if (_stricmp(name, "redirectposdevices") == 0)
+	else if (_stricmp(name, key_int_redirectposdevices) == 0)
 		*outValue = &file->RedirectPosDevices;
-	else if (_stricmp(name, "redirectdirectx") == 0)
+	else if (_stricmp(name, key_int_redirectdirectx) == 0)
 		*outValue = &file->RedirectDirectX;
-	else if (_stricmp(name, "disableprinterredirection") == 0)
+	else if (_stricmp(name, key_int_disableprinterredirection) == 0)
 		*outValue = &file->DisablePrinterRedirection;
-	else if (_stricmp(name, "disableclipboardredirection") == 0)
+	else if (_stricmp(name, key_int_disableclipboardredirection) == 0)
 		*outValue = &file->DisableClipboardRedirection;
-	else if (_stricmp(name, "connect to console") == 0)
+	else if (_stricmp(name, key_int_connect_to_console) == 0)
 		*outValue = &file->ConnectToConsole;
-	else if (_stricmp(name, "administrative session") == 0)
+	else if (_stricmp(name, key_int_administrative_session) == 0)
 		*outValue = &file->AdministrativeSession;
-	else if (_stricmp(name, "autoreconnection enabled") == 0)
+	else if (_stricmp(name, key_int_autoreconnection_enabled) == 0)
 		*outValue = &file->AutoReconnectionEnabled;
-	else if (_stricmp(name, "autoreconnect max retries") == 0)
+	else if (_stricmp(name, key_int_autoreconnect_max_retries) == 0)
 		*outValue = &file->AutoReconnectMaxRetries;
-	else if (_stricmp(name, "public mode") == 0)
+	else if (_stricmp(name, key_int_public_mode) == 0)
 		*outValue = &file->PublicMode;
-	else if (_stricmp(name, "authentication level") == 0)
+	else if (_stricmp(name, key_int_authentication_level) == 0)
 		*outValue = &file->AuthenticationLevel;
-	else if (_stricmp(name, "promptcredentialonce") == 0)
+	else if (_stricmp(name, key_int_promptcredentialonce) == 0)
 		*outValue = &file->PromptCredentialOnce;
-	else if ((_stricmp(name, "prompt for credentials") == 0))
+	else if ((_stricmp(name, key_int_prompt_for_credentials) == 0))
 		*outValue = &file->PromptForCredentials;
-	else if (_stricmp(name, "negotiate security layer") == 0)
+	else if (_stricmp(name, key_int_negotiate_security_layer) == 0)
 		*outValue = &file->NegotiateSecurityLayer;
-	else if (_stricmp(name, "enablecredsspsupport") == 0)
+	else if (_stricmp(name, key_int_enablecredsspsupport) == 0)
 		*outValue = &file->EnableCredSSPSupport;
-	else if (_stricmp(name, "remoteapplicationmode") == 0)
+	else if (_stricmp(name, key_int_remoteapplicationmode) == 0)
 		*outValue = &file->RemoteApplicationMode;
-	else if (_stricmp(name, "remoteapplicationexpandcmdline") == 0)
+	else if (_stricmp(name, key_int_remoteapplicationexpandcmdline) == 0)
 		*outValue = &file->RemoteApplicationExpandCmdLine;
-	else if (_stricmp(name, "remoteapplicationexpandworkingdir") == 0)
+	else if (_stricmp(name, key_int_remoteapplicationexpandworkingdir) == 0)
 		*outValue = &file->RemoteApplicationExpandWorkingDir;
-	else if (_stricmp(name, "disableconnectionsharing") == 0)
+	else if (_stricmp(name, key_int_disableconnectionsharing) == 0)
 		*outValue = &file->DisableConnectionSharing;
-	else if (_stricmp(name, "disableremoteappcapscheck") == 0)
+	else if (_stricmp(name, key_int_disableremoteappcapscheck) == 0)
 		*outValue = &file->DisableRemoteAppCapsCheck;
-	else if (_stricmp(name, "gatewayusagemethod") == 0)
+	else if (_stricmp(name, key_int_gatewayusagemethod) == 0)
 		*outValue = &file->GatewayUsageMethod;
-	else if (_stricmp(name, "gatewayprofileusagemethod") == 0)
+	else if (_stricmp(name, key_int_gatewayprofileusagemethod) == 0)
 		*outValue = &file->GatewayProfileUsageMethod;
-	else if (_stricmp(name, "gatewaycredentialssource") == 0)
+	else if (_stricmp(name, key_int_gatewaycredentialssource) == 0)
 		*outValue = &file->GatewayCredentialsSource;
-	else if (_stricmp(name, "use redirection server name") == 0)
+	else if (_stricmp(name, key_int_use_redirection_server_name) == 0)
 		*outValue = &file->UseRedirectionServerName;
-	else if (_stricmp(name, "rdgiskdcproxy") == 0)
+	else if (_stricmp(name, key_int_rdgiskdcproxy) == 0)
 		*outValue = &file->RdgIsKdcProxy;
+	else if (_stricmp(name, key_int_redirectwebauthn) == 0)
+		*outValue = &file->RedirectWebauthN;
 	else
 	{
 		rdpFileLine* line = freerdp_client_rdp_file_find_line_by_name(file, name);
@@ -1169,6 +1173,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->AutoReconnectionEnabled =
 	    freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
 	file->RedirectSmartCards = freerdp_settings_get_bool(settings, FreeRDP_RedirectSmartCards);
+	file->RedirectWebauthN = freerdp_settings_get_bool(settings, FreeRDP_RedirectWebAuthN);
 
 	redirectCameras =
 	    freerdp_client_channel_args_to_string(settings, RDPECAM_DVC_CHANNEL_NAME, "device:");
@@ -1474,6 +1479,7 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	WRITE_SETTING_INT(key_int_gatewaycredentialssource, file->GatewayCredentialsSource);
 	WRITE_SETTING_INT(key_int_use_redirection_server_name, file->UseRedirectionServerName);
 	WRITE_SETTING_INT(key_int_rdgiskdcproxy, file->RdgIsKdcProxy);
+	WRITE_SETTING_INT(key_int_redirectwebauthn, file->RedirectWebauthN);
 
 	/* string parameters */
 	WRITE_SETTING_STR(key_str_username, file->Username);
@@ -2085,6 +2091,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectSmartCards,
 		                               file->RedirectSmartCards != 0))
+			return FALSE;
+	}
+
+	if (~file->RedirectWebauthN)
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectWebAuthN,
+		                               file->RedirectWebauthN != 0))
 			return FALSE;
 	}
 

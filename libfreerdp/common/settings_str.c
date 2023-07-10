@@ -179,6 +179,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_RedirectPrinters, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RedirectPrinters" },
 	{ FreeRDP_RedirectSerialPorts, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RedirectSerialPorts" },
 	{ FreeRDP_RedirectSmartCards, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RedirectSmartCards" },
+	{ FreeRDP_RedirectWebAuthN, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RedirectWebAuthN" },
 	{ FreeRDP_RefreshRect, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RefreshRect" },
 	{ FreeRDP_RemdeskVirtualChannel, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RemdeskVirtualChannel" },
 	{ FreeRDP_RemoteAppLanguageBarSupported, FREERDP_SETTINGS_TYPE_BOOL,

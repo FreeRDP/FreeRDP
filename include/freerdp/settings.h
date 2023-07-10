@@ -902,6 +902,7 @@ extern "C"
 #define FreeRDP_RedirectHomeDrive (4289)
 #define FreeRDP_DrivesToRedirect (4290)
 #define FreeRDP_RedirectSmartCards (4416)
+#define FreeRDP_RedirectWebAuthN (4417)
 #define FreeRDP_RedirectPrinters (4544)
 #define FreeRDP_RedirectSerialPorts (4672)
 #define FreeRDP_RedirectParallelPorts (4673)
@@ -1608,7 +1609,9 @@ extern "C"
 
 		/* Smartcard Redirection */
 		ALIGN64 BOOL RedirectSmartCards; /* 4416 */
-		UINT64 padding4544[4544 - 4417]; /* 4417 */
+		/* WebAuthN Redirection */
+		ALIGN64 BOOL RedirectWebAuthN;   /* 4417 */
+		UINT64 padding4544[4544 - 4418]; /* 4418 */
 
 		/* Printer Redirection */
 		ALIGN64 BOOL RedirectPrinters;   /* 4544 */

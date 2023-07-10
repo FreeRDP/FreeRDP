@@ -432,6 +432,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_RedirectSmartCards:
 			return settings->RedirectSmartCards;
 
+		case FreeRDP_RedirectWebAuthN:
+			return settings->RedirectWebAuthN;
+
 		case FreeRDP_RefreshRect:
 			return settings->RefreshRect;
 
@@ -1121,6 +1124,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_RedirectSmartCards:
 			settings->RedirectSmartCards = cnv.c;
+			break;
+
+		case FreeRDP_RedirectWebAuthN:
+			settings->RedirectWebAuthN = cnv.c;
 			break;
 
 		case FreeRDP_RefreshRect:
