@@ -128,6 +128,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_RedirectPrinters,
 	FreeRDP_RedirectSerialPorts,
 	FreeRDP_RedirectSmartCards,
+	FreeRDP_RedirectWebAuthN,
 	FreeRDP_RefreshRect,
 	FreeRDP_RemdeskVirtualChannel,
 	FreeRDP_RemoteAppLanguageBarSupported,
