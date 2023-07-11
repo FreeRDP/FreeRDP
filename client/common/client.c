@@ -972,15 +972,7 @@ BOOL client_cli_get_aad_auth_code(freerdp* instance, const char* hostname, char*
 			end = strchr(p, '&');
 			if (end)
 				*end = 0;
-			else
-				end = strchr(p, '\0');
-
-			*code = calloc(1, end - p);
-			if (!(*code))
-				break;
-
-			strcpy(*code, p);
-			break;
+			*code = strdup(p);
 		}
 	}
 
