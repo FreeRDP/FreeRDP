@@ -447,8 +447,8 @@ static void wf_post_disconnect(freerdp* instance)
 static CREDUI_INFOW wfUiInfo = { sizeof(CREDUI_INFOW), NULL, L"Enter your credentials",
 	                             L"Remote Desktop Security", NULL };
 
-static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** username,
-                                char** password, char** domain)
+static BOOL wf_authenticate_ex(freerdp* instance, char** username, char** password, char** domain,
+                               rdp_auth_reason reason)
 {
 	wfContext* wfc;
 	BOOL fSave;
@@ -464,27 +464,61 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 	WINPR_ASSERT(instance->context->settings);
 
 	wfc = (wfContext*)instance->context;
+	WINPR_ASSERT(wfc);
+
+	WINPR_ASSERT(username);
+	WINPR_ASSERT(domain);
+	WINPR_ASSERT(password);
+
+	const WCHAR auth[] = L"Target credentials requested";
+	const WCHAR authPin[] = L"PIN requested";
+	const WCHAR gwAuth[] = L"Gateway credentials requested";
+	const WCHAR* titleW = auth;
 
 	fSave = FALSE;
 	dwFlags = CREDUI_FLAGS_DO_NOT_PERSIST | CREDUI_FLAGS_EXCLUDE_CERTIFICATES |
 	          CREDUI_FLAGS_USERNAME_TARGET_CREDENTIALS;
+	switch (reason)
+	{
+		case AUTH_NLA:
+			break;
+		case AUTH_TLS:
+		case AUTH_RDP:
+			if ((*username) && (*password))
+				return TRUE;
+			break;
+		case AUTH_SMARTCARD_PIN:
+			dwFlags &= ~CREDUI_FLAGS_USERNAME_TARGET_CREDENTIALS;
+			dwFlags |= CREDUI_FLAGS_PASSWORD_ONLY_OK | CREDUI_FLAGS_KEEP_USERNAME;
+			titleW = authPin;
+			if (*password)
+				return TRUE;
+			if (!(*username))
+				*username = _strdup("PIN");
+			break;
+		case GW_AUTH_HTTP:
+		case GW_AUTH_RDG:
+		case GW_AUTH_RPC:
+			titleW = gwAuth;
+			break;
+		default:
+			return FALSE;
+	}
 
-	if (username && *username)
+	if (*username)
 	{
 		ConvertUtf8ToWChar(*username, UserNameW, ARRAYSIZE(UserNameW));
 		ConvertUtf8ToWChar(*username, UserW, ARRAYSIZE(UserW));
 	}
 
-	if (password && *password)
+	if (*password)
 		ConvertUtf8ToWChar(*password, PasswordW, ARRAYSIZE(PasswordW));
 
-	if (domain && *domain)
+	if (*domain)
 		ConvertUtf8ToWChar(*domain, DomainW, ARRAYSIZE(DomainW));
 
-	if ((_wcsnlen(UserNameW, ARRAYSIZE(UserNameW)) == 0) &&
-	    (_wcsnlen(PasswordW, ARRAYSIZE(PasswordW)) == 0))
+	if (_wcsnlen(PasswordW, ARRAYSIZE(PasswordW)) == 0)
 	{
-		WCHAR* titleW = ConvertUtf8ToWCharAlloc(title, NULL);
 		if (!wfc->isConsole && wfc->common.context.settings->CredentialsFromStdin)
 			WLog_ERR(TAG, "Flag for stdin read present but stdin is redirected; using GUI");
 		if (wfc->isConsole && wfc->common.context.settings->CredentialsFromStdin)
@@ -495,34 +529,36 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 			status = CredUIPromptForCredentialsW(&wfUiInfo, titleW, NULL, 0, UserNameW,
 			                                     ARRAYSIZE(UserNameW), PasswordW,
 			                                     ARRAYSIZE(PasswordW), &fSave, dwFlags);
-		free(titleW);
 		if (status != NO_ERROR)
 		{
 			WLog_ERR(TAG, "CredUIPromptForCredentials unexpected status: 0x%08lX", status);
 			return FALSE;
 		}
 
-		status =
-		    CredUIParseUserNameW(UserNameW, UserW, ARRAYSIZE(UserW), DomainW, ARRAYSIZE(DomainW));
-		if (status != NO_ERROR)
+		if ((dwFlags & CREDUI_FLAGS_KEEP_USERNAME) == 0)
 		{
-			CHAR User[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
-			CHAR UserName[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
-			CHAR Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
+			status = CredUIParseUserNameW(UserNameW, UserW, ARRAYSIZE(UserW), DomainW,
+			                              ARRAYSIZE(DomainW));
+			if (status != NO_ERROR)
+			{
+				CHAR User[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+				CHAR UserName[CREDUI_MAX_USERNAME_LENGTH + 1] = { 0 };
+				CHAR Domain[CREDUI_MAX_DOMAIN_TARGET_LENGTH + 1] = { 0 };
 
-			ConvertWCharNToUtf8(UserNameW, ARRAYSIZE(UserNameW), UserName, ARRAYSIZE(UserName));
-			ConvertWCharNToUtf8(UserW, ARRAYSIZE(UserW), User, ARRAYSIZE(User));
-			ConvertWCharNToUtf8(DomainW, ARRAYSIZE(DomainW), Domain, ARRAYSIZE(Domain));
-			WLog_ERR(TAG, "Failed to parse UserName: %s into User: %s Domain: %s", UserName, User,
-			         Domain);
-			return FALSE;
+				ConvertWCharNToUtf8(UserNameW, ARRAYSIZE(UserNameW), UserName, ARRAYSIZE(UserName));
+				ConvertWCharNToUtf8(UserW, ARRAYSIZE(UserW), User, ARRAYSIZE(User));
+				ConvertWCharNToUtf8(DomainW, ARRAYSIZE(DomainW), Domain, ARRAYSIZE(Domain));
+				WLog_ERR(TAG, "Failed to parse UserName: %s into User: %s Domain: %s", UserName,
+				         User, Domain);
+				return FALSE;
+			}
 		}
 	}
 
 	*username = ConvertWCharNToUtf8Alloc(UserW, ARRAYSIZE(UserW), NULL);
 	if (!(*username))
 	{
-		WLog_ERR(TAG, "strdup failed", status);
+		WLog_ERR(TAG, "ConvertWCharNToUtf8Alloc failed", status);
 		return FALSE;
 	}
 
@@ -547,34 +583,6 @@ static BOOL wf_authenticate_raw(freerdp* instance, const char* title, char** use
 	}
 
 	return TRUE;
-}
-
-static BOOL wf_authenticate(freerdp* instance, char** username, char** password, char** domain)
-{
-	rdpSettings* settings;
-
-	WINPR_ASSERT(instance);
-	WINPR_ASSERT(instance->context);
-
-	settings = instance->context->settings;
-	WINPR_ASSERT(settings);
-
-	return wf_authenticate_raw(instance, settings->ServerHostname, username, password, domain);
-}
-
-static BOOL wf_gw_authenticate(freerdp* instance, char** username, char** password, char** domain)
-{
-	char tmp[MAX_PATH];
-	rdpSettings* settings;
-
-	WINPR_ASSERT(instance);
-	WINPR_ASSERT(instance->context);
-
-	settings = instance->context->settings;
-	WINPR_ASSERT(settings);
-
-	sprintf_s(tmp, sizeof(tmp), "Gateway %s", settings->GatewayHostname);
-	return wf_authenticate_raw(instance, tmp, username, password, domain);
 }
 
 static WCHAR* wf_format_text(const WCHAR* fmt, ...)
@@ -1312,8 +1320,7 @@ static BOOL wfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PreConnect = wf_pre_connect;
 	instance->PostConnect = wf_post_connect;
 	instance->PostDisconnect = wf_post_disconnect;
-	instance->Authenticate = wf_authenticate;
-	instance->GatewayAuthenticate = wf_gw_authenticate;
+	instance->AuthenticateEx = wf_authenticate_ex;
 
 #ifdef WITH_WINDOWS_CERT_STORE
 	freerdp_settings_set_bool(context->settings, FreeRDP_CertificateCallbackPreferPEM, TRUE);
