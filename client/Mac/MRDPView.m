@@ -679,8 +679,6 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 
 - (void)onPasteboardTimerFired:(NSTimer *)timer
 {
-	const void *data;
-	UINT32 size;
 	UINT32 formatId;
 	BOOL formatMatch;
 	int changeCount;
@@ -721,9 +719,9 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 
 			formatString = [[NSString alloc] initWithData:formatData encoding:NSUTF8StringEncoding];
 
-			size = strlen([formatString UTF8String]) + 1;
-			data = [formatString UTF8String];
-			formatId = ClipboardRegisterFormat(mfc->clipboard, "UTF8_STRING");
+			const char *data = [formatString UTF8String];
+			const size_t size = strlen(data) + 1;
+			formatId = ClipboardRegisterFormat(mfc->clipboard, "text/plain");
 			ClipboardSetData(mfc->clipboard, formatId, data, size);
 			[formatString release];
 

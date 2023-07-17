@@ -326,9 +326,6 @@ static UINT
 mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
                                         const CLIPRDR_FORMAT_DATA_RESPONSE *formatDataResponse)
 {
-	BYTE *data;
-	UINT32 size;
-	UINT32 index;
 	UINT32 formatId;
 	CLIPRDR_FORMAT *format = NULL;
 	mfContext *mfc = (mfContext *)cliprdr->custom;
@@ -340,7 +337,7 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	for (index = 0; index < mfc->numServerFormats; index++)
+	for (UINT32 index = 0; index < mfc->numServerFormats; index++)
 	{
 		if (mfc->requestedFormatId == mfc->serverFormats[index].formatId)
 			format = &(mfc->serverFormats[index]);
@@ -357,7 +354,7 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 	else
 		formatId = format->formatId;
 
-	size = formatDataResponse->common.dataLen;
+	const size_t size = formatDataResponse->common.dataLen;
 
 	ClipboardSetData(mfc->clipboard, formatId, formatDataResponse->requestedFormatData, size);
 
@@ -365,15 +362,15 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 
 	if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) || (formatId == CF_UNICODETEXT))
 	{
-		formatId = ClipboardRegisterFormat(mfc->clipboard, "UTF8_STRING");
+		formatId = ClipboardRegisterFormat(mfc->clipboard, "text/plain");
 
-		data = (void *)ClipboardGetData(mfc->clipboard, formatId, &size);
+		UINT32 dstSize = 0;
+		const char *data = ClipboardGetData(mfc->clipboard, formatId, &dstSize);
 
-		if (size > 1)
-			size--; /* we need the size without the null terminator */
+		dstSize = strnlen(data, dstSize); /* we need the size without the null terminator */
 
 		NSString *str = [[NSString alloc] initWithBytes:(void *)data
-		                                         length:size
+		                                         length:dstSize
 		                                       encoding:NSUTF8StringEncoding];
 		free(data);
 
