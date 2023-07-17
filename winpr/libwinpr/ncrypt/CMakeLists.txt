@@ -17,7 +17,6 @@
 
 if (PKCS11_FOUND)
 	winpr_include_directory_add(${PKCS11_INCLUDE_DIR})
-	winpr_library_add_public(${PKCS11_LIBRARY})
 
 	option(WITH_OPENSC_PKCS11_LINKED "Directly link opensc-pkcs11" OFF)
 	if (WITH_OPENSC_PKCS11_LINKED)
@@ -34,6 +33,7 @@ if (PKCS11_FOUND)
 
 		winpr_definition_add(-DWITH_OPENSC_PKCS11_LINKED)
 		winpr_library_add_private(${OPENSC_PKCS11})
+		winpr_library_add_private(${PKCS11_LIBRARY})
 	endif()
 endif()
 
