@@ -1386,7 +1386,7 @@ static int wfreerdp_client_start(rdpContext* context)
 	wfc->wndClass.lpfnWndProc = wf_event_proc;
 	wfc->wndClass.cbClsExtra = 0;
 	wfc->wndClass.cbWndExtra = 0;
-	wfc->wndClass.hCursor = wfc->cursor;
+	wfc->wndClass.hCursor = NULL;
 	wfc->wndClass.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
 	wfc->wndClass.lpszMenuName = NULL;
 	wfc->wndClass.lpszClassName = wfc->wndClassName;
