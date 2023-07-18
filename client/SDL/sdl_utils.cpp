@@ -113,6 +113,7 @@ const char* sdl_event_type_str(Uint32 type)
 		EV_CASE_STR(SDL_USEREVENT_POINTER_POSITION);
 		EV_CASE_STR(SDL_USEREVENT_POINTER_SET);
 		EV_CASE_STR(SDL_USEREVENT_QUIT);
+		EV_CASE_STR(SDL_USEREVENT_RAILS_APPLY_STYLE);
 
 		EV_CASE_STR(SDL_LASTEVENT);
 		default:
@@ -130,7 +131,7 @@ const char* sdl_error_string(Uint32 res)
 	return SDL_GetError();
 }
 
-BOOL sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file, size_t line,
+bool sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file, size_t line,
                       const char* fkt)
 {
 	const char* msg = sdl_error_string(res);
@@ -138,13 +139,13 @@ BOOL sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file,
 	WINPR_UNUSED(file);
 
 	if (!msg)
-		return FALSE;
+		return false;
 
 	WLog_Print(log, WLOG_ERROR, "[%s:%" PRIuz "][%s]: %s", fkt, line, what, msg);
-	return TRUE;
+	return true;
 }
 
-BOOL sdl_push_user_event(Uint32 type, ...)
+bool sdl_push_user_event(Uint32 type, ...)
 {
 	SDL_Event ev = {};
 	SDL_UserEvent* event = &ev.user;
@@ -187,6 +188,10 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 		case SDL_USEREVENT_SHOW_RESULT:
 		case SDL_USEREVENT_CERT_RESULT:
 			event->code = va_arg(ap, Sint32);
+			break;
+
+		case SDL_USEREVENT_RAILS_APPLY_STYLE:
+			event->data1 = va_arg(ap, void*);
 			break;
 
 		case SDL_USEREVENT_SHOW_DIALOG:

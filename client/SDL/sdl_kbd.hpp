@@ -46,6 +46,10 @@ class sdlInput
 	                                    UINT32 imeConvMode);
 
   private:
+	sdlInput(const sdlInput& other) = delete;
+	sdlInput(sdlInput&& other) = delete;
+
+  private:
 	SdlContext* _sdl;
 	Uint32 _lastWindowID;
 };

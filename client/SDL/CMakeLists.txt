@@ -64,6 +64,7 @@ include_directories(${SDL2_INCLUDE_DIRS})
 find_package(Threads REQUIRED)
 
 add_subdirectory(dialogs)
+add_subdirectory(rails)
 set(SRCS
     sdl_types.hpp
     sdl_utils.cpp
@@ -95,6 +96,7 @@ set(LIBS
         sdl_client_res
         dialogs
         aad-view
+        rails
     )
 
 if (NOT WITH_SDL_LINK_SHARED)

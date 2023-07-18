@@ -34,6 +34,7 @@
 
 #include "sdl_types.hpp"
 #include "sdl_disp.hpp"
+#include "rails/sdl_rail.hpp"
 #include "sdl_kbd.hpp"
 #include "sdl_utils.hpp"
 #include "sdl_window.hpp"
@@ -71,6 +72,7 @@ class SdlContext
 
 	sdlDispContext disp;
 	sdlInput input;
+	SdlRail rail;
 
 	SDLSurfacePtr primary;
 	SDLPixelFormatPtr primary_format;

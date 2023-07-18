@@ -1080,6 +1080,13 @@ static int sdl_run(SdlContext* sdl)
 				case SDL_USEREVENT_POINTER_SET:
 					sdl_Pointer_Set_Process(&windowEvent.user);
 					break;
+				case SDL_USEREVENT_RAILS_APPLY_STYLE:
+				{
+					auto window = static_cast<SdlRailWindow*>(windowEvent.user.data1);
+					if (window)
+						window->handleEvent(windowEvent);
+				}
+				break;
 				case SDL_USEREVENT_QUIT:
 				default:
 					break;
@@ -1678,7 +1685,7 @@ BOOL SdlContext::update_resizeable(BOOL enable)
 
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), log(WLog_Get(SDL_TAG)), update_complete(true), disp(this), input(this),
-      primary(nullptr, SDL_FreeSurface), primary_format(nullptr, SDL_FreeFormat)
+      rail(this), primary(nullptr, SDL_FreeSurface), primary_format(nullptr, SDL_FreeFormat)
 {
 }
 
