@@ -780,6 +780,7 @@ static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FO
 		                                     .numFormats = numFormats,
 		                                     .formats = cnv.pv,
 		                                     .common.msgType = CB_FORMAT_LIST };
+	UINT ret;
 
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(formats || (numFormats == 0));
@@ -801,6 +802,10 @@ static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FO
 	xf_cliprdr_send_data_response(clipboard, NULL, NULL, 0);
 
 	xf_cliprdr_clear_cached_data(clipboard);
+
+	ret = cliprdr_file_context_notify_new_client_format_list(clipboard->file);
+	if (ret)
+		return ret;
 
 	WINPR_ASSERT(clipboard->context);
 	WINPR_ASSERT(clipboard->context->ClientFormatList);
@@ -1858,6 +1863,10 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 			}
 		}
 	}
+
+	ret = cliprdr_file_context_notify_new_server_format_list(clipboard->file);
+	if (ret)
+		return ret;
 
 	/* CF_RAW is always implicitly supported by the server */
 	{
