@@ -4,7 +4,7 @@ set(MODULE_PREFIX "TEST_SDL")
 set(DRIVER ${MODULE_NAME}.c)
 
 set(TEST_SRCS
-	TestSDLDialogs.c
+	TestSDLDialogs.cpp
 )
 
 create_test_sourcelist(SRCS
@@ -13,7 +13,9 @@ create_test_sourcelist(SRCS
 
 add_executable(${MODULE_NAME} ${SRCS})
 
-set(LIBS ${LIBS} freerdp-client freerdp SDL_client)
+list(APPEND LIBS
+    dialogs
+)
 
 target_link_libraries(${MODULE_NAME} ${LIBS})
 

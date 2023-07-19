@@ -22,9 +22,12 @@ set(SRCS
 )
 
 set(LIBS
+    ${SDL2_LIBRARIES}
     ${SDL2TTF_LIBRARY}
     font
+    winpr
 )
+
 add_subdirectory(font)
 
 add_library(dialogs STATIC
@@ -32,3 +35,7 @@ add_library(dialogs STATIC
 )
 
 target_link_libraries(dialogs PRIVATE ${LIBS})
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()
