@@ -241,6 +241,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_TransportDumpReplay, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_TransportDumpReplay" },
 	{ FreeRDP_UnicodeInput, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_UnicodeInput" },
 	{ FreeRDP_UnmapButtons, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_UnmapButtons" },
+	{ FreeRDP_UseCommonStdioCallbacks, FREERDP_SETTINGS_TYPE_BOOL,
+	  "FreeRDP_UseCommonStdioCallbacks" },
 	{ FreeRDP_UseMultimon, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_UseMultimon" },
 	{ FreeRDP_UseRdpSecurityLayer, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_UseRdpSecurityLayer" },
 	{ FreeRDP_UsingSavedCredentials, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_UsingSavedCredentials" },

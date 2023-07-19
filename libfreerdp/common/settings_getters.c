@@ -582,6 +582,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_UnmapButtons:
 			return settings->UnmapButtons;
 
+		case FreeRDP_UseCommonStdioCallbacks:
+			return settings->UseCommonStdioCallbacks;
+
 		case FreeRDP_UseMultimon:
 			return settings->UseMultimon;
 
@@ -1324,6 +1327,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_UnmapButtons:
 			settings->UnmapButtons = cnv.c;
+			break;
+
+		case FreeRDP_UseCommonStdioCallbacks:
+			settings->UseCommonStdioCallbacks = cnv.c;
 			break;
 
 		case FreeRDP_UseMultimon:
