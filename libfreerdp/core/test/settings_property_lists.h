@@ -178,6 +178,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_TransportDumpReplay,
 	FreeRDP_UnicodeInput,
 	FreeRDP_UnmapButtons,
+	FreeRDP_UseCommonStdioCallbacks,
 	FreeRDP_UseMultimon,
 	FreeRDP_UseRdpSecurityLayer,
 	FreeRDP_UsingSavedCredentials,

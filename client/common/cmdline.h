@@ -163,6 +163,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "floatbar is disabled by default (when enabled defaults to sticky in fullscreen mode)" },
 	{ "fonts", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "smooth fonts (ClearType)" },
+	{ "force-console-callbacks", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+	  "Use default callbacks (console) for certificate/credential/..." },
 	{ "frame-ack", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL,
 	  "Number of frame acknowledgement" },
 	{ "args-from", COMMAND_LINE_VALUE_REQUIRED, "<file>|stdin|fd:<number>|env:<name>", NULL, NULL,

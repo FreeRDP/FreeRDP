@@ -66,6 +66,17 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
 
+static void set_default_callbacks(freerdp* instance)
+{
+	WINPR_ASSERT(instance);
+	instance->AuthenticateEx = client_cli_authenticate_ex;
+	instance->ChooseSmartcard = client_cli_choose_smartcard;
+	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
+	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
+	instance->PresentGatewayMessage = client_cli_present_gateway_message;
+	instance->LogonErrorInfo = client_cli_logon_error_info;
+}
+
 static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
 	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
@@ -74,12 +85,7 @@ static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 	WINPR_ASSERT(context);
 
 	instance->LoadChannels = freerdp_client_load_channels;
-	instance->AuthenticateEx = client_cli_authenticate_ex;
-	instance->ChooseSmartcard = client_cli_choose_smartcard;
-	instance->VerifyCertificateEx = client_cli_verify_certificate_ex;
-	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
-	instance->PresentGatewayMessage = client_cli_present_gateway_message;
-	instance->LogonErrorInfo = client_cli_logon_error_info;
+	set_default_callbacks(instance);
 
 	pEntryPoints = instance->pClientEntryPoints;
 	WINPR_ASSERT(pEntryPoints);
@@ -172,6 +178,9 @@ int freerdp_client_start(rdpContext* context)
 
 	if (!context || !context->instance || !context->instance->pClientEntryPoints)
 		return ERROR_BAD_ARGUMENTS;
+
+	if (freerdp_settings_get_bool(context->settings, FreeRDP_UseCommonStdioCallbacks))
+		set_default_callbacks(context->instance);
 
 	pEntryPoints = context->instance->pClientEntryPoints;
 	return IFCALLRESULT(CHANNEL_RC_OK, pEntryPoints->ClientStart, context);

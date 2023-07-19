@@ -29,6 +29,7 @@ set(SRCS
 	client.c
 	client_rails.c
 	cmdline.c
+	cmdline.h
 	file.c
 	client_cliprdr_file.c
 	geometry.c

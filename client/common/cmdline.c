@@ -4058,11 +4058,15 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 		}
 		CommandLineSwitchCase(arg, "unmap-buttons")
 		{
-			settings->UnmapButtons = enable;
+			freerdp_settings_set_bool(settings, FreeRDP_UnmapButtons, enable);
 		}
 		CommandLineSwitchCase(arg, "toggle-fullscreen")
 		{
-			settings->ToggleFullscreen = enable;
+			freerdp_settings_set_bool(settings, FreeRDP_ToggleFullscreen, enable);
+		}
+		CommandLineSwitchCase(arg, "force-console-callbacks")
+		{
+			freerdp_settings_set_bool(settings, FreeRDP_UseCommonStdioCallbacks, enable);
 		}
 		CommandLineSwitchCase(arg, "floatbar")
 		{

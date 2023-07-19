@@ -734,6 +734,7 @@ extern "C"
 #define FreeRDP_UnmapButtons (1605)
 #define FreeRDP_OldLicenseBehaviour (1606)
 #define FreeRDP_MouseUseRelativeMove (1607)
+#define FreeRDP_UseCommonStdioCallbacks (1608)
 #define FreeRDP_ComputerName (1664)
 #define FreeRDP_ConnectionFile (1728)
 #define FreeRDP_AssistanceFile (1729)
@@ -1293,7 +1294,8 @@ extern "C"
 		ALIGN64 BOOL UnmapButtons;         /* 1605 */
 		ALIGN64 BOOL OldLicenseBehaviour;  /* 1606 */
 		ALIGN64 BOOL MouseUseRelativeMove; /* 1607 */
-		UINT64 padding1664[1664 - 1608];   /* 1608 */
+		ALIGN64 BOOL UseCommonStdioCallbacks; /* 1608 */
+		UINT64 padding1664[1664 - 1609];      /* 1609 */
 
 		/* Names */
 		ALIGN64 char* ComputerName;      /* 1664 */
