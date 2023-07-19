@@ -37,6 +37,14 @@ include(ConfigureRPATH)
 
 option(WITH_DEBUG_SDL_EVENTS "[dangerous, not for release builds!] Debug SDL events" OFF)
 option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL keyboard events" OFF)
+option(WITH_WIN_CONSOLE "Build ${PROJECT_NAME} with console support" ON)
+
+if(WITH_WIN_CONSOLE)
+  set(WIN32_GUI_FLAG "")
+else()
+  set(WIN32_GUI_FLAG "WIN32")
+endif()
+
 
 if (WITH_DEBUG_SDL_EVENTS)
 	add_definitions(-DWITH_DEBUG_SDL_EVENTS)
@@ -92,6 +100,7 @@ if (WITH_WEBVIEW)
 endif()
 
 add_executable(${PROJECT_NAME}
+	${WIN32_GUI_FLAG}
 	${SRCS}
     )
 
