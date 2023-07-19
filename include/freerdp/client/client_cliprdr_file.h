@@ -67,6 +67,12 @@ extern "C"
 
 	FREERDP_API BOOL cliprdr_file_context_clear(CliprdrFileContext* file);
 
+	FREERDP_API UINT
+	cliprdr_file_context_notify_new_server_format_list(CliprdrFileContext* file_context);
+
+	FREERDP_API UINT
+	cliprdr_file_context_notify_new_client_format_list(CliprdrFileContext* file_context);
+
 	/** \brief updates the files the client announces to the server
 	 *
 	 * \param file the file context to update
