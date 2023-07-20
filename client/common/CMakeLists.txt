@@ -97,6 +97,10 @@ endif()
 
 list(APPEND LIBS freerdp winpr)
 
+if(WITH_AAD)
+    list(APPEND LIBS ${CJSON_LIBRARIES})
+endif()
+
 target_link_libraries(${MODULE_NAME} PRIVATE ${FREERDP_CHANNELS_CLIENT_LIBS})
 target_link_libraries(${MODULE_NAME} PUBLIC ${LIBS})
 
