@@ -47,6 +47,31 @@ static void log_errors(const char* msg)
 		WLog_ERR(TAG, "%s: %s", msg, ERR_error_string(ec, NULL));
 }
 
+static int get_line(BIO* bio, char* buffer, size_t size)
+{
+#if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
+	if (size <= 1)
+		return -1;
+
+	size_t pos = 0;
+	do
+	{
+		int rc = BIO_read(bio, &buffer[pos], 1);
+		if (rc <= 0)
+			return rc;
+		char cur = buffer[pos];
+		pos += rc;
+		if ((cur == '\n') || (pos >= size - 1))
+		{
+			buffer[pos] = '\0';
+			return (int)pos;
+		}
+	} while (1);
+#else
+	return BIO_get_line(bio, buffer, size);
+#endif
+}
+
 BOOL freerdp_http_request(const char* url, const char* body, long* status_code, BYTE** response,
                           size_t* response_length)
 {
@@ -150,7 +175,7 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 		}
 	}
 
-	status = BIO_get_line(bio, buffer, sizeof(buffer));
+	status = get_line(bio, buffer, sizeof(buffer));
 	if (status <= 0)
 	{
 		log_errors("could not read response");
@@ -165,7 +190,7 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 
 	do
 	{
-		status = BIO_get_line(bio, buffer, sizeof(buffer));
+		status = get_line(bio, buffer, sizeof(buffer));
 		if (status <= 0)
 		{
 			log_errors("could not read response");
