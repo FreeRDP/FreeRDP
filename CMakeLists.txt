@@ -623,10 +623,6 @@ set(PCSC_FEATURE_TYPE "RECOMMENDED")
 set(PCSC_FEATURE_PURPOSE "smart card")
 set(PCSC_FEATURE_DESCRIPTION "smart card device redirection")
 
-set(CJSON_FEATURE_TYPE "RECOMMENDED")
-set(CJSON_FEATURE_PURPOSE "JSON")
-set(CJSON_FEATURE_DESCRIPTION "Azure AD, RDS AAD authentication")
-
 set(FFMPEG_FEATURE_TYPE "RECOMMENDED")
 set(FFMPEG_FEATURE_PURPOSE "multimedia")
 set(FFMPEG_FEATURE_DESCRIPTION "multimedia redirection, audio and video playback")
