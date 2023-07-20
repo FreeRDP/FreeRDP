@@ -66,17 +66,17 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 
 	*response = NULL;
 
-	if (!url || strlen(url) < 8 || strncmp(url, "https://", 8) != 0 ||
+	if (!url || strnlen(url, 8) < 8 || strncmp(url, "https://", 8) != 0 ||
 	    !(path = strchr(url + 8, '/')))
 	{
 		WLog_ERR(TAG, "invalid url provided");
 		goto out;
 	}
 
-	hostname = calloc(1, path - (url + 8) + 1);
+	const size_t len = path - (url + 8);
+	hostname = strndup(&url[8], len);
 	if (!hostname)
 		return FALSE;
-	strncpy(hostname, url + 8, path - (url + 8));
 
 	if (body)
 	{
@@ -189,15 +189,15 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 
 	if (*response_length > 0)
 	{
-		*response = calloc(1, *response_length + 1);
-		if (!*response)
-			goto out;
-
 		if (*response_length > INT_MAX)
 		{
 			WLog_ERR(TAG, "response too long!");
 			goto out;
 		}
+
+		*response = calloc(1, *response_length + 1);
+		if (!*response)
+			goto out;
 
 		BYTE* p = *response;
 		int left = *response_length;
