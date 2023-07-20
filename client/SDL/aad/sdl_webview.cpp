@@ -21,42 +21,109 @@
 #include <sstream>
 #include <stdlib.h>
 #include <winpr/string.h>
+#include <freerdp/log.h>
 
-#include "sdl_webview.h"
-#include "webview_impl.h"
+#include "sdl_webview.hpp"
+#include "webview_impl.hpp"
 
-BOOL sdl_webview_get_aad_auth_code(freerdp* instance, const char* hostname, char** code,
-                                   const char** client_id, const char** redirect_uri)
+#define TAG CLIENT_TAG("SDL.webview")
+
+static BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* scope,
+                                                const char* req_cnf, char** token)
 {
-	int argc = 1;
-	std::string name = "FreeRDP WebView";
-
 	WINPR_ASSERT(instance);
-	WINPR_ASSERT(hostname);
-	WINPR_ASSERT(code);
-	WINPR_ASSERT(client_id);
-	WINPR_ASSERT(redirect_uri);
+	WINPR_ASSERT(scope);
+	WINPR_ASSERT(req_cnf);
+	WINPR_ASSERT(token);
 
 	WINPR_UNUSED(instance);
 
-	*code = nullptr;
-	*client_id = "5177bc73-fd99-4c77-a90c-76844c9b6999";
-	*redirect_uri =
+	std::string client_id = "5177bc73-fd99-4c77-a90c-76844c9b6999";
+	std::string redirect_uri =
 	    "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2f5177bc73-fd99-4c77-a90c-76844c9b6999";
 
-	std::stringstream url;
-	url << "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id="
-	    << std::string(*client_id)
-	    << "&response_type=code&scope=ms-device-service%3A%2F%2Ftermsrv.wvd.microsoft.com%"
-	       "2Fname%2F"
-	    << std::string(hostname)
-	    << "%2Fuser_impersonation&redirect_uri=" << std::string(*redirect_uri);
+	*token = nullptr;
 
-	auto urlstr = url.str();
-	const std::string title = "FreeRDP WebView";
-	std::string cxxcode;
-	if (!webview_impl_run(title, urlstr, cxxcode))
+	auto url =
+	    "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=" + client_id +
+	    "&response_type=code&scope=" + scope + "&redirect_uri=" + redirect_uri;
+
+	const std::string title = "FreeRDP WebView - AAD access token";
+	std::string code;
+	auto rc = webview_impl_run(title, url, code);
+	if (!rc || code.empty())
 		return FALSE;
-	*code = _strdup(cxxcode.c_str());
-	return TRUE;
+
+	auto token_request = "grant_type=authorization_code&code=" + code + "&client_id=" + client_id +
+	                     "&scope=" + scope + "&redirect_uri=" + redirect_uri +
+	                     "&req_cnf=" + req_cnf;
+	return client_common_get_access_token(instance, token_request.c_str(), token);
+}
+
+static BOOL sdl_webview_get_avd_access_token(freerdp* instance, char** token)
+{
+	WINPR_ASSERT(token);
+
+	std::string client_id = "a85cf173-4192-42f8-81fa-777a763e6e2c";
+	std::string redirect_uri =
+	    "ms-appx-web%3a%2f%2fMicrosoft.AAD.BrokerPlugin%2fa85cf173-4192-42f8-81fa-777a763e6e2c";
+	std::string scope = "https%3A%2F%2Fwww.wvd.microsoft.com%2F.default";
+
+	*token = nullptr;
+
+	auto url =
+	    "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=" + client_id +
+	    "&response_type=code&scope=" + scope + "&redirect_uri=" + redirect_uri;
+	const std::string title = "FreeRDP WebView - AVD access token";
+	std::string code;
+	auto rc = webview_impl_run(title, url, code);
+	if (!rc || code.empty())
+		return FALSE;
+
+	auto token_request = "grant_type=authorization_code&code=" + code + "&client_id=" + client_id +
+	                     "&scope=" + scope + "&redirect_uri=" + redirect_uri;
+	return client_common_get_access_token(instance, token_request.c_str(), token);
+}
+
+BOOL sdl_webview_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,
+                                  size_t count, ...)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(token);
+	switch (tokenType)
+	{
+		case ACCESS_TOKEN_TYPE_AAD:
+		{
+			if (count < 2)
+			{
+				WLog_ERR(TAG,
+				         "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
+				         ", aborting",
+				         count);
+				return FALSE;
+			}
+			else if (count > 2)
+				WLog_WARN(TAG,
+				          "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
+				          ", ignoring",
+				          count);
+			va_list ap;
+			va_start(ap, count);
+			const char* scope = va_arg(ap, const char*);
+			const char* req_cnf = va_arg(ap, const char*);
+			const BOOL rc = sdl_webview_get_rdsaad_access_token(instance, scope, req_cnf, token);
+			va_end(ap);
+			return rc;
+		}
+		case ACCESS_TOKEN_TYPE_AVD:
+			if (count != 0)
+				WLog_WARN(TAG,
+				          "ACCESS_TOKEN_TYPE_AVD expected 0 additional arguments, but got %" PRIuz
+				          ", ignoring",
+				          count);
+			return sdl_webview_get_avd_access_token(instance, token);
+		default:
+			WLog_ERR(TAG, "Unexpected value for AccessTokenType [%" PRIuz "], aborting", tokenType);
+			return FALSE;
+	}
 }
