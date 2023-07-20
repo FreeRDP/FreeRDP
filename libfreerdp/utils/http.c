@@ -84,6 +84,7 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 	char buffer[1024] = { 0 };
 	BIO* bio = NULL;
 	SSL_CTX* ssl_ctx = NULL;
+	SSL* ssl = NULL;
 
 	WINPR_ASSERT(status_code);
 	WINPR_ASSERT(response);
@@ -146,6 +147,19 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 	if (!BIO_set_conn_hostname(bio, hostname))
 	{
 		log_errors("could not set hostname");
+		goto out;
+	}
+
+	BIO_get_ssl(bio, &ssl);
+	if (!ssl)
+	{
+		log_errors("could not get ssl");
+		goto out;
+	}
+
+	if (!SSL_set_tlsext_host_name(ssl, hostname))
+	{
+		log_errors("could not set sni hostname");
 		goto out;
 	}
 
