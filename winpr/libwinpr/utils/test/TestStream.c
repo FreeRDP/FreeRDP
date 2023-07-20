@@ -16,7 +16,7 @@ static BOOL TestStream_Verify(wStream* s, size_t mincap, size_t len, size_t pos)
 		return FALSE;
 	}
 
-	if (Stream_Pointer(s) < Stream_Buffer(s))
+	if (Stream_PointerAs(s, BYTE) < Stream_Buffer(s))
 	{
 		printf("stream pointer (%p) or buffer (%p) is invalid\n", Stream_ConstPointer(s),
 		       (void*)Stream_Buffer(s));

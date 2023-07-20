@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/assert.h>
 #include <winpr/error.h>
