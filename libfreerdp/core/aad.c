@@ -111,6 +111,43 @@ static BOOL json_get_object(wLog* wlog, cJSON* json, const char* key, cJSON** ob
 	return TRUE;
 }
 
+#if defined(USE_CJSON_COMPAT)
+FREERDP_API double cJSON_GetNumberValue(const cJSON* const item);
+double cJSON_GetNumberValue(const cJSON* const prop)
+{
+#ifndef NAN
+#ifdef _WIN32
+#define NAN sqrt(-1.0)
+#define COMPAT_NAN_UNDEF
+#else
+#define NAN 0.0 / 0.0
+#define COMPAT_NAN_UNDEF
+#endif
+#endif
+
+	if (!cJSON_IsNumber(prop))
+		return NAN;
+	char* val = cJSON_GetStringValue(prop);
+	if (!val)
+		return NAN;
+
+	errno = 0;
+	char* endptr = NULL;
+	double dval = strtod(val, &endptr);
+	if (val == endptr)
+		return NAN;
+	if (endptr != NULL)
+		return NAN;
+	if (errno != 0)
+		return NAN;
+	return dval;
+
+#ifdef COMPAT_NAN_UNDEF
+#undef NAN
+#endif
+}
+#endif
+
 static BOOL json_get_number(wLog* wlog, cJSON* json, const char* key, double* result)
 {
 	BOOL rc = FALSE;
@@ -123,26 +160,9 @@ static BOOL json_get_number(wLog* wlog, cJSON* json, const char* key, double* re
 		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NOT a NUMBER", key);
 		goto fail;
 	}
-#if defined(USE_CJSON_COMPAT)
-	if (!cJSON_IsNumber(prop))
-		goto fail;
-	char* val = cJSON_GetStringValue(prop);
-	if (!val)
-		goto fail;
 
-	errno = 0;
-	char* endptr = NULL;
-	double dval = strtod(val, &endptr);
-	if (val == endptr)
-		goto fail;
-	if (endptr != NULL)
-		goto fail;
-	if (errno != 0)
-		goto fail;
-	*result = dval;
-#else
 	*result = cJSON_GetNumberValue(prop);
-#endif
+
 	rc = TRUE;
 fail:
 	return rc;
@@ -187,18 +207,18 @@ static BOOL json_get_string_alloc(wLog* wlog, cJSON* json, const char* key, char
 	return *result != NULL;
 }
 
-static cJSON* compat_cJSON_ParseWithLength(const char* value, size_t buffer_length)
-{
 #if defined(USE_CJSON_COMPAT)
+FREERDP_API cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length);
+
+cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length)
+{
 	// Check for string '\0' termination.
 	const size_t slen = strnlen(value, buffer_length);
 	if (slen >= buffer_length)
 		return NULL;
 	return cJSON_Parse(value);
-#else
-	return cJSON_ParseWithLength(value, buffer_length);
-#endif
 }
+#endif
 
 static BOOL aad_get_nonce(rdpAad* aad)
 {
@@ -507,7 +527,7 @@ static int aad_parse_state_initial(rdpAad* aad, wStream* s)
 	if (!Stream_SafeSeek(s, jlen))
 		goto fail;
 
-	json = compat_cJSON_ParseWithLength(jstr, jlen);
+	json = cJSON_ParseWithLength(jstr, jlen);
 	if (!json)
 		goto fail;
 
@@ -531,7 +551,7 @@ static int aad_parse_state_auth(rdpAad* aad, wStream* s)
 	if (!Stream_SafeSeek(s, jlength))
 		goto fail;
 
-	json = compat_cJSON_ParseWithLength(jstr, jlength);
+	json = cJSON_ParseWithLength(jstr, jlength);
 	if (!json)
 		goto fail;
 
