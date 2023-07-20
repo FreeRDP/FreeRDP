@@ -601,8 +601,9 @@ namespace webview
 					m_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 				}
 				g_signal_connect(G_OBJECT(m_window), "destroy",
-				                 G_CALLBACK(+[](GtkWidget*, gpointer arg)
-				                            { static_cast<gtk_webkit_engine*>(arg)->terminate(); }),
+				                 G_CALLBACK(+[](GtkWidget*, gpointer arg) {
+					                 static_cast<gtk_webkit_engine*>(arg)->terminate();
+				                 }),
 				                 this);
 				// Initialize webview widget
 				m_webview = webkit_web_view_new();
@@ -610,13 +611,12 @@ namespace webview
 				    webkit_web_view_get_user_content_manager(WEBKIT_WEB_VIEW(m_webview));
 				g_signal_connect(manager, "script-message-received::external",
 				                 G_CALLBACK(+[](WebKitUserContentManager*,
-				                                WebKitJavascriptResult* r, gpointer arg)
-				                            {
-					                            auto* w = static_cast<gtk_webkit_engine*>(arg);
-					                            char* s = get_string_from_js_result(r);
-					                            w->on_message(s);
-					                            g_free(s);
-				                            }),
+				                                WebKitJavascriptResult* r, gpointer arg) {
+					                 auto* w = static_cast<gtk_webkit_engine*>(arg);
+					                 char* s = get_string_from_js_result(r);
+					                 w->on_message(s);
+					                 g_free(s);
+				                 }),
 				                 this);
 				webkit_user_content_manager_register_script_message_handler(manager, "external");
 				init("window.external={invoke:function(s){window.webkit.messageHandlers."
@@ -650,12 +650,12 @@ namespace webview
 			}
 			void dispatch(std::function<void()> f)
 			{
-				g_idle_add_full(G_PRIORITY_HIGH_IDLE, (GSourceFunc)([](void *f) -> int {
-                      (*static_cast<dispatch_fn_t *>(f))();
-                      return G_SOURCE_REMOVE;
-                    }),
-                    new std::function<void()>(f),
-                    [](void *f) { delete static_cast<dispatch_fn_t *>(f); });
+				g_idle_add_full(G_PRIORITY_HIGH_IDLE, (GSourceFunc)([](void* f) -> int {
+					                (*static_cast<dispatch_fn_t*>(f))();
+					                return G_SOURCE_REMOVE;
+				                }),
+				                new std::function<void()>(f),
+				                [](void* f) { delete static_cast<dispatch_fn_t*>(f); });
 			}
 
 			void set_title(const std::string& title)
@@ -933,11 +933,11 @@ namespace webview
 			void dispatch(std::function<void()> f)
 			{
 				dispatch_async_f(dispatch_get_main_queue(), new dispatch_fn_t(f),
-                     (dispatch_function_t)([](void *arg) {
-                       auto f = static_cast<dispatch_fn_t *>(arg);
-                       (*f)();
-                       delete f;
-                     }));
+				                 (dispatch_function_t)([](void* arg) {
+					                 auto f = static_cast<dispatch_fn_t*>(arg);
+					                 (*f)();
+					                 delete f;
+				                 }));
 			}
 			void set_title(const std::string& title)
 			{
@@ -1039,13 +1039,11 @@ namespace webview
 				if (!m_parent_window)
 				{
 					class_addMethod(cls, "applicationDidFinishLaunching:"_sel,
-					                (IMP)(+[](id self, SEL, id notification)
-					                      {
-						                      auto app =
-						                          objc::msg_send<id>(notification, "object"_sel);
-						                      auto w = get_associated_webview(self);
-						                      w->on_application_did_finish_launching(self, app);
-					                      }),
+					                (IMP)(+[](id self, SEL, id notification) {
+						                auto app = objc::msg_send<id>(notification, "object"_sel);
+						                auto w = get_associated_webview(self);
+						                w->on_application_did_finish_launching(self, app);
+					                }),
 					                "v@:@");
 				}
 				objc_registerClassPair(cls);
@@ -1056,15 +1054,13 @@ namespace webview
 				auto cls = objc_allocateClassPair((Class) "NSResponder"_cls,
 				                                  "WebkitScriptMessageHandler", 0);
 				class_addProtocol(cls, objc_getProtocol("WKScriptMessageHandler"));
-				class_addMethod(
-				    cls, "userContentController:didReceiveScriptMessage:"_sel,
-				    (IMP)(+[](id self, SEL, id, id msg)
-				          {
-					          auto w = get_associated_webview(self);
-					          w->on_message(objc::msg_send<const char*>(
-					              objc::msg_send<id>(msg, "body"_sel), "UTF8String"_sel));
-				          }),
-				    "v@:@@");
+				class_addMethod(cls, "userContentController:didReceiveScriptMessage:"_sel,
+				                (IMP)(+[](id self, SEL, id, id msg) {
+					                auto w = get_associated_webview(self);
+					                w->on_message(objc::msg_send<const char*>(
+					                    objc::msg_send<id>(msg, "body"_sel), "UTF8String"_sel));
+				                }),
+				                "v@:@@");
 				objc_registerClassPair(cls);
 				auto instance = objc::msg_send<id>((id)cls, "new"_sel);
 				objc_setAssociatedObject(instance, "webview", (id)this, OBJC_ASSOCIATION_ASSIGN);
@@ -1077,41 +1073,38 @@ namespace webview
 				class_addMethod(
 				    cls,
 				    "webView:runOpenPanelWithParameters:initiatedByFrame:completionHandler:"_sel,
-				    (IMP)(+[](id, SEL, id, id parameters, id, id completion_handler)
-				          {
-					          auto allows_multiple_selection =
-					              objc::msg_send<BOOL>(parameters, "allowsMultipleSelection"_sel);
-					          auto allows_directories =
-					              objc::msg_send<BOOL>(parameters, "allowsDirectories"_sel);
+				    (IMP)(+[](id, SEL, id, id parameters, id, id completion_handler) {
+					    auto allows_multiple_selection =
+					        objc::msg_send<BOOL>(parameters, "allowsMultipleSelection"_sel);
+					    auto allows_directories =
+					        objc::msg_send<BOOL>(parameters, "allowsDirectories"_sel);
 
-					          // Show a panel for selecting files.
-					          auto panel = objc::msg_send<id>("NSOpenPanel"_cls, "openPanel"_sel);
-					          objc::msg_send<void>(panel, "setCanChooseFiles:"_sel, YES);
-					          objc::msg_send<void>(panel, "setCanChooseDirectories:"_sel,
-					                               allows_directories);
-					          objc::msg_send<void>(panel, "setAllowsMultipleSelection:"_sel,
-					                               allows_multiple_selection);
-					          auto modal_response =
-					              objc::msg_send<NSModalResponse>(panel, "runModal"_sel);
+					    // Show a panel for selecting files.
+					    auto panel = objc::msg_send<id>("NSOpenPanel"_cls, "openPanel"_sel);
+					    objc::msg_send<void>(panel, "setCanChooseFiles:"_sel, YES);
+					    objc::msg_send<void>(panel, "setCanChooseDirectories:"_sel,
+					                         allows_directories);
+					    objc::msg_send<void>(panel, "setAllowsMultipleSelection:"_sel,
+					                         allows_multiple_selection);
+					    auto modal_response =
+					        objc::msg_send<NSModalResponse>(panel, "runModal"_sel);
 
-					          // Get the URLs for the selected files. If the modal was canceled
-					          // then we pass null to the completion handler to signify
-					          // cancellation.
-					          id urls = modal_response == NSModalResponseOK
-					                        ? objc::msg_send<id>(panel, "URLs"_sel)
-					                        : nullptr;
+					    // Get the URLs for the selected files. If the modal was canceled
+					    // then we pass null to the completion handler to signify
+					    // cancellation.
+					    id urls = modal_response == NSModalResponseOK
+					                  ? objc::msg_send<id>(panel, "URLs"_sel)
+					                  : nullptr;
 
-					          // Invoke the completion handler block.
-					          auto sig = objc::msg_send<id>("NSMethodSignature"_cls,
-					                                        "signatureWithObjCTypes:"_sel, "v@?@");
-					          auto invocation = objc::msg_send<id>(
-					              "NSInvocation"_cls, "invocationWithMethodSignature:"_sel, sig);
-					          objc::msg_send<void>(invocation, "setTarget:"_sel,
-					                               completion_handler);
-					          objc::msg_send<void>(invocation, "setArgument:atIndex:"_sel, &urls,
-					                               1);
-					          objc::msg_send<void>(invocation, "invoke"_sel);
-				          }),
+					    // Invoke the completion handler block.
+					    auto sig = objc::msg_send<id>("NSMethodSignature"_cls,
+					                                  "signatureWithObjCTypes:"_sel, "v@?@");
+					    auto invocation = objc::msg_send<id>(
+					        "NSInvocation"_cls, "invocationWithMethodSignature:"_sel, sig);
+					    objc::msg_send<void>(invocation, "setTarget:"_sel, completion_handler);
+					    objc::msg_send<void>(invocation, "setArgument:atIndex:"_sel, &urls, 1);
+					    objc::msg_send<void>(invocation, "invoke"_sel);
+				    }),
 				    "v@:@@@@");
 				objc_registerClassPair(cls);
 				return objc::msg_send<id>((id)cls, "new"_sel);
@@ -1122,14 +1115,13 @@ namespace webview
 				    objc_allocateClassPair((Class) "NSObject"_cls, "WebkitNavigationDelegate", 0);
 				class_addProtocol(cls, objc_getProtocol("WKNavigationDelegate"));
 				class_addMethod(cls, "webView:didFinishNavigation:"_sel,
-				                (IMP)(+[](id delegate, SEL sel, id webview, id navigation)
-				                      {
-					                      auto w = get_associated_webview(delegate);
-					                      auto url = objc::msg_send<id>(webview, "URL"_sel);
-					                      auto nstr = objc::msg_send<id>(url, "absoluteString"_sel);
-					                      auto str = objc::msg_send<char*>(nstr, "UTF8String"_sel);
-					                      w->m_navigateCallback(str, w->m_navigateCallbackArg);
-				                      }),
+				                (IMP)(+[](id delegate, SEL sel, id webview, id navigation) {
+					                auto w = get_associated_webview(delegate);
+					                auto url = objc::msg_send<id>(webview, "URL"_sel);
+					                auto nstr = objc::msg_send<id>(url, "absoluteString"_sel);
+					                auto str = objc::msg_send<char*>(nstr, "UTF8String"_sel);
+					                w->m_navigateCallback(str, w->m_navigateCallbackArg);
+				                }),
 				                "v@:@");
 				objc_registerClassPair(cls);
 				auto instance = objc::msg_send<id>((id)cls, "new"_sel);
@@ -1368,8 +1360,7 @@ namespace webview
 		template <typename T>
 		std::array<unsigned int, 4> parse_version(const std::basic_string<T>& version) noexcept
 		{
-			auto parse_component = [](auto sb, auto se) -> unsigned int
-			{
+			auto parse_component = [](auto sb, auto se) -> unsigned int {
 				try
 				{
 					auto n = std::stol(std::basic_string<T>(sb, se));
@@ -2265,44 +2256,42 @@ namespace webview
 					wc.lpszClassName = L"webview";
 					wc.hIcon = icon;
 					wc.lpfnWndProc =
-					    (WNDPROC)(+[](HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) -> LRESULT
-					              {
-						              auto w =
-						                  (win32_edge_engine*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-						              switch (msg)
-						              {
-							              case WM_SIZE:
-								              w->resize(hwnd);
-								              break;
-							              case WM_CLOSE:
-								              DestroyWindow(hwnd);
-								              break;
-							              case WM_DESTROY:
-								              w->terminate();
-								              break;
-							              case WM_GETMINMAXINFO:
-							              {
-								              auto lpmmi = (LPMINMAXINFO)lp;
-								              if (w == nullptr)
-								              {
-									              return 0;
-								              }
-								              if (w->m_maxsz.x > 0 && w->m_maxsz.y > 0)
-								              {
-									              lpmmi->ptMaxSize = w->m_maxsz;
-									              lpmmi->ptMaxTrackSize = w->m_maxsz;
-								              }
-								              if (w->m_minsz.x > 0 && w->m_minsz.y > 0)
-								              {
-									              lpmmi->ptMinTrackSize = w->m_minsz;
-								              }
-							              }
-							              break;
-							              default:
-								              return DefWindowProcW(hwnd, msg, wp, lp);
-						              }
-						              return 0;
-					              });
+					    (WNDPROC)(+[](HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) -> LRESULT {
+						    auto w = (win32_edge_engine*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+						    switch (msg)
+						    {
+							    case WM_SIZE:
+								    w->resize(hwnd);
+								    break;
+							    case WM_CLOSE:
+								    DestroyWindow(hwnd);
+								    break;
+							    case WM_DESTROY:
+								    w->terminate();
+								    break;
+							    case WM_GETMINMAXINFO:
+							    {
+								    auto lpmmi = (LPMINMAXINFO)lp;
+								    if (w == nullptr)
+								    {
+									    return 0;
+								    }
+								    if (w->m_maxsz.x > 0 && w->m_maxsz.y > 0)
+								    {
+									    lpmmi->ptMaxSize = w->m_maxsz;
+									    lpmmi->ptMaxTrackSize = w->m_maxsz;
+								    }
+								    if (w->m_minsz.x > 0 && w->m_minsz.y > 0)
+								    {
+									    lpmmi->ptMinTrackSize = w->m_minsz;
+								    }
+							    }
+							    break;
+							    default:
+								    return DefWindowProcW(hwnd, msg, wp, lp);
+						    }
+						    return 0;
+					    });
 					RegisterClassExW(&wc);
 					m_window = CreateWindowW(L"webview", L"", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
 					                         CW_USEDEFAULT, 640, 480, nullptr, nullptr, hInstance,
@@ -2480,9 +2469,7 @@ namespace webview
 				PathCombineW(userDataFolder, dataPath, currentExeName);
 
 				m_com_handler = new webview2_com_handler(
-				    wnd, cb,
-				    [&](ICoreWebView2Controller* controller, ICoreWebView2* webview)
-				    {
+				    wnd, cb, [&](ICoreWebView2Controller* controller, ICoreWebView2* webview) {
 					    if (!controller || !webview)
 					    {
 						    flag.clear();
@@ -2495,12 +2482,10 @@ namespace webview
 					    flag.clear();
 				    });
 
-				m_com_handler->set_attempt_handler(
-				    [&]
-				    {
-					    return m_webview2_loader.create_environment_with_options(
-					        nullptr, userDataFolder, nullptr, m_com_handler);
-				    });
+				m_com_handler->set_attempt_handler([&] {
+					return m_webview2_loader.create_environment_with_options(
+					    nullptr, userDataFolder, nullptr, m_com_handler);
+				});
 				m_com_handler->try_create_environment();
 
 				MSG msg = {};
@@ -2617,8 +2602,8 @@ namespace webview
 		// Synchronous bind
 		void bind(const std::string& name, sync_binding_t fn)
 		{
-			auto wrapper = [this, fn](const std::string& seq, const std::string& req, void* /*arg*/)
-			{ resolve(seq, 0, fn(req)); };
+			auto wrapper = [this, fn](const std::string& seq, const std::string& req,
+			                          void* /*arg*/) { resolve(seq, 0, fn(req)); };
 			bind(name, wrapper, nullptr);
 		}
 
@@ -2666,20 +2651,18 @@ namespace webview
 
 		void resolve(const std::string& seq, int status, const std::string& result)
 		{
-			dispatch(
-			    [seq, status, result, this]()
-			    {
-				    if (status == 0)
-				    {
-					    eval("window._rpc[" + seq + "].resolve(" + result +
-					         "); delete window._rpc[" + seq + "]");
-				    }
-				    else
-				    {
-					    eval("window._rpc[" + seq + "].reject(" + result +
-					         "); delete window._rpc[" + seq + "]");
-				    }
-			    });
+			dispatch([seq, status, result, this]() {
+				if (status == 0)
+				{
+					eval("window._rpc[" + seq + "].resolve(" + result + "); delete window._rpc[" +
+					     seq + "]");
+				}
+				else
+				{
+					eval("window._rpc[" + seq + "].reject(" + result + "); delete window._rpc[" +
+					     seq + "]");
+				}
+			});
 		}
 
 	  private:
@@ -2772,8 +2755,9 @@ WEBVIEW_API void webview_bind(webview_t w, const char* name,
 {
 	static_cast<webview::webview*>(w)->bind(
 	    name,
-	    [=](const std::string& seq, const std::string& req, void* arg)
-	    { fn(seq.c_str(), req.c_str(), arg); },
+	    [=](const std::string& seq, const std::string& req, void* arg) {
+		    fn(seq.c_str(), req.c_str(), arg);
+	    },
 	    arg);
 }
 

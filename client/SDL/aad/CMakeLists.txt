@@ -6,8 +6,8 @@ if (WITH_WEBVIEW)
     -DWITH_WEBVIEW
   )
   set(SRCS
-    sdl_webview.h
-    webview_impl.h
+    sdl_webview.hpp
+    webview_impl.hpp
     sdl_webview.cpp
   )
   set(LIBS
