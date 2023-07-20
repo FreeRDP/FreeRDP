@@ -66,6 +66,16 @@
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("common")
 
+#ifdef WITH_AAD
+#if CJSON_VERSION_MAJOR == 1
+#if CJSON_VERSION_MINOR <= 7
+#if CJSON_VERSION_PATCH < 13
+#define USE_CJSON_COMPAT
+#endif
+#endif
+#endif
+#endif
+
 static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
 {
 	RDP_CLIENT_ENTRY_POINTS* pEntryPoints;
@@ -1095,6 +1105,19 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 	}
 }
 
+static cJSON* compat_cJSON_ParseWithLength(const char* value, size_t buffer_length)
+{
+#if defined(USE_CJSON_COMPAT)
+	// Check for string '\0' termination.
+	const size_t slen = strnlen(value, buffer_length);
+	if (slen >= buffer_length)
+		return NULL;
+	return cJSON_Parse(value);
+#else
+	return cJSON_ParseWithLength(value, buffer_length);
+#endif
+}
+
 BOOL client_common_get_access_token(freerdp* instance, const char* request, char** token)
 {
 #ifdef WITH_AAD
@@ -1123,7 +1146,7 @@ BOOL client_common_get_access_token(freerdp* instance, const char* request, char
 		goto cleanup;
 	}
 
-	json = cJSON_ParseWithLength((const char*)response, response_length);
+	json = compat_cJSON_ParseWithLength((const char*)response, response_length);
 	if (!json)
 	{
 		WLog_ERR(TAG, "Failed to parse access token response");
