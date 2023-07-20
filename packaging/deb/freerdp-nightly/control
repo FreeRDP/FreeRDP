@@ -46,6 +46,7 @@ Build-Depends:
  libcjson-dev,
  libsdl2-2.0-0,
  libsdl2-dev,
+ libsdl2-ttf-dev,
  libsystemd-dev,
  libpkcs11-helper1-dev
 Standards-Version: 3.9.5

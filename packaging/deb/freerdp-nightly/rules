@@ -11,6 +11,7 @@ DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
                           -DCMAKE_SKIP_INSTALL_RPATH=FALSE \
                           -DWITH_PULSE=ON \
                           -DWITH_CHANNELS=ON \
+                          -DWITH_AAD=ON \
                           -DWITH_CUPS=ON \
                           -DWITH_KRB5=ON \
                           -DWITH_PCSC=ON \
