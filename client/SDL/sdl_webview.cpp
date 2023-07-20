@@ -26,9 +26,13 @@
 
 #include <string>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <winpr/string.h>
+#include <freerdp/log.h>
 
 #include "sdl_webview.hpp"
+
+#define TAG CLIENT_TAG("sdl.webview")
 
 class SchemeHandler : public QWebEngineUrlSchemeHandler
 {
@@ -91,8 +95,8 @@ static std::string sdl_webview_get_auth_code(QString url)
 	return handler.code();
 }
 
-BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* scope, const char* req_cnf,
-                                         char** token)
+static BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* scope,
+                                                const char* req_cnf, char** token)
 {
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(scope);
@@ -121,7 +125,7 @@ BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* scope, c
 	return client_common_get_access_token(instance, token_request.c_str(), token);
 }
 
-BOOL sdl_webview_get_avd_access_token(freerdp* instance, char** token)
+static BOOL sdl_webview_get_avd_access_token(freerdp* instance, char** token)
 {
 	WINPR_ASSERT(token);
 
@@ -142,4 +146,47 @@ BOOL sdl_webview_get_avd_access_token(freerdp* instance, char** token)
 	auto token_request = "grant_type=authorization_code&code=" + code + "&client_id=" + client_id +
 	                     "&scope=" + scope + "&redirect_uri=" + redirect_uri;
 	return client_common_get_access_token(instance, token_request.c_str(), token);
+}
+
+BOOL sdl_webview_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,
+                                  size_t count, ...)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(token);
+	switch (tokenType)
+	{
+		case ACCESS_TOKEN_TYPE_AAD:
+		{
+			if (count < 2)
+			{
+				WLog_ERR(TAG,
+				         "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
+				         ", aborting",
+				         count);
+				return FALSE;
+			}
+			else if (count > 2)
+				WLog_WARN(TAG,
+				          "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
+				          ", ignoring",
+				          count);
+			va_list ap;
+			va_start(ap, count);
+			const char* scope = va_arg(ap, const char*);
+			const char* req_cnf = va_arg(ap, const char*);
+			const BOOL rc = sdl_webview_get_rdsaad_access_token(instance, scope, req_cnf, token);
+			va_end(ap);
+			return rc;
+		}
+		case ACCESS_TOKEN_TYPE_AVD:
+			if (count != 0)
+				WLog_WARN(TAG,
+				          "ACCESS_TOKEN_TYPE_AVD expected 0 additional arguments, but got %" PRIuz
+				          ", ignoring",
+				          count);
+			return sdl_webview_get_avd_access_token(instance, token);
+		default:
+			WLog_ERR(TAG, "Unexpected value for AccessTokenType [%" PRIuz "], aborting", tokenType);
+			return FALSE;
+	}
 }

@@ -964,8 +964,8 @@ static char* extract_authorization_code(char* url)
 	return NULL;
 }
 
-BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* scope, const char* req_cnf,
-                                        char** token)
+static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* scope,
+                                               const char* req_cnf, char** token)
 {
 	size_t size = 0;
 	char* url = NULL;
@@ -1009,7 +1009,7 @@ cleanup:
 	return (*token != NULL);
 }
 
-BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
+static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 {
 	size_t size = 0;
 	char* url = NULL;
@@ -1050,6 +1050,49 @@ cleanup:
 	free(token_request);
 	free(url);
 	return (*token != NULL);
+}
+
+BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,
+                                 size_t count, ...)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(token);
+	switch (tokenType)
+	{
+		case ACCESS_TOKEN_TYPE_AAD:
+		{
+			if (count < 2)
+			{
+				WLog_ERR(TAG,
+				         "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
+				         ", aborting",
+				         count);
+				return FALSE;
+			}
+			else if (count > 2)
+				WLog_WARN(TAG,
+				          "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
+				          ", ignoring",
+				          count);
+			va_list ap;
+			va_start(ap, count);
+			const char* scope = va_arg(ap, const char*);
+			const char* req_cnf = va_arg(ap, const char*);
+			const BOOL rc = client_cli_get_rdsaad_access_token(instance, scope, req_cnf, token);
+			va_end(ap);
+			return rc;
+		}
+		case ACCESS_TOKEN_TYPE_AVD:
+			if (count != 0)
+				WLog_WARN(TAG,
+				          "ACCESS_TOKEN_TYPE_AVD expected 0 additional arguments, but got %" PRIuz
+				          ", ignoring",
+				          count);
+			return client_cli_get_avd_access_token(instance, token);
+		default:
+			WLog_ERR(TAG, "Unexpected value for AccessTokenType [%" PRIuz "], aborting", tokenType);
+			return FALSE;
+	}
 }
 
 BOOL client_common_get_access_token(freerdp* instance, const char* request, char** token)

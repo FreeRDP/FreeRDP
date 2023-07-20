@@ -126,9 +126,15 @@ extern "C"
 	                                char** domain, rdp_auth_reason reason);
 	typedef BOOL (*pChooseSmartcard)(freerdp* instance, SmartcardCertInfo** cert_list, DWORD count,
 	                                 DWORD* choice, BOOL gateway);
-	typedef BOOL (*pGetRDSAADAccessToken)(freerdp* instance, const char* scope, const char* req_cnf,
-	                                      char** token);
-	typedef BOOL (*pGetAVDAccessToken)(freerdp* instance, char** token);
+
+	typedef enum
+	{
+		ACCESS_TOKEN_TYPE_AAD, /**!< oauth2 access token for RDS AAD authentication */
+		ACCESS_TOKEN_TYPE_AVD  /**!< oauth2 access token for Azure Virtual Desktop */
+	} AccessTokenType;
+
+	typedef BOOL (*pGetAccessToken)(freerdp* instance, AccessTokenType tokenType, char** token,
+	                                size_t count, ...);
 
 	/** @brief Callback used if user interaction is required to accept
 	 *         an unknown certificate.
@@ -522,13 +528,10 @@ owned by rdpRdp */
 		                        Callback for choosing a smartcard for logon.
 		                        Used when multiple smartcards are available. Returns an index into a list
 		                        of SmartcardCertInfo pointers	*/
-		ALIGN64 pGetRDSAADAccessToken GetRDSAADAccessToken; /* (offset 71)
-		                                            Callback for obtaining an oauth2 access token
-		                                            for RDS AAD authentication */
-		ALIGN64 pGetAVDAccessToken GetAVDAccessToken;       /* (offset 72)
-		                                                  Callback for obtaining an oauth2 access token
-		                                                  for Azure Virtual Desktop */
-		UINT64 paddingE[80 - 73];                           /* 73 */
+		ALIGN64 pGetAccessToken GetAccessToken; /* (offset 71)
+		                                            Callback for obtaining an access token
+		                                            for \b AccessTokenType authentication */
+		UINT64 paddingE[80 - 72];               /* 72 */
 	};
 
 	struct rdp_channel_handles
