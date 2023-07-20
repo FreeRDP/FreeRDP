@@ -26,9 +26,8 @@ extern "C"
 {
 #endif
 
-	BOOL sdl_webview_get_avd_access_token(freerdp* instance, char** token);
-	BOOL sdl_webview_get_rdsaad_access_token(freerdp* instance, const char* scope,
-	                                         const char* req_cnf, char** token);
+	BOOL sdl_webview_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,
+	                                  size_t count, ...);
 
 #ifdef __cplusplus
 }

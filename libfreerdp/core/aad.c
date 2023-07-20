@@ -282,13 +282,13 @@ int aad_client_begin(rdpAad* aad)
 		return -1;
 
 	/* Obtain an oauth authorization code */
-	if (!instance->GetRDSAADAccessToken)
+	if (!instance->GetAccessToken)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "instance->GetRDSAADAccessToken == NULL");
+		WLog_Print(aad->log, WLOG_ERROR, "instance->GetAccessToken == NULL");
 		return -1;
 	}
-	const BOOL arc =
-	    instance->GetRDSAADAccessToken(instance, aad->scope, aad->kid, &aad->access_token);
+	const BOOL arc = instance->GetAccessToken(instance, ACCESS_TOKEN_TYPE_AAD, &aad->access_token,
+	                                          2, aad->scope, aad->kid);
 	if (!arc)
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "Unable to obtain access token");

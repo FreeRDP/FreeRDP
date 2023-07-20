@@ -174,13 +174,13 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 	{
 		char* token = NULL;
 
-		if (!instance->GetAVDAccessToken)
+		if (!instance->GetAccessToken)
 		{
 			WLog_ERR(TAG, "No authorization token provided");
 			goto out;
 		}
 
-		if (!instance->GetAVDAccessToken(instance, &token))
+		if (!instance->GetAccessToken(instance, ACCESS_TOKEN_TYPE_AVD, &token, 0))
 		{
 			WLog_ERR(TAG, "Unable to obtain access token");
 			goto out;

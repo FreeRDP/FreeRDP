@@ -170,9 +170,8 @@ extern "C"
 
 	FREERDP_API int client_cli_logon_error_info(freerdp* instance, UINT32 data, UINT32 type);
 
-	FREERDP_API BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* scope,
-	                                                    const char* req_cnf, char** token);
-	FREERDP_API BOOL client_cli_get_avd_access_token(freerdp* instance, char** token);
+	FREERDP_API BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType,
+	                                             char** token, size_t count, ...);
 	FREERDP_API BOOL client_common_get_access_token(freerdp* instance, const char* request,
 	                                                char** token);
 

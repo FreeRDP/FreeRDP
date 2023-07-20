@@ -1976,8 +1976,7 @@ static BOOL xfreerdp_client_new(freerdp* instance, rdpContext* context)
 	instance->PostDisconnect = xf_post_disconnect;
 	instance->PostFinalDisconnect = xf_post_final_disconnect;
 	instance->LogonErrorInfo = xf_logon_error_info;
-	instance->GetRDSAADAccessToken = client_cli_get_rdsaad_access_token;
-	instance->GetAVDAccessToken = client_cli_get_avd_access_token;
+	instance->GetAccessToken = client_cli_get_access_token;
 	PubSub_SubscribeTerminate(context->pubSub, xf_TerminateEventHandler);
 #ifdef WITH_XRENDER
 	PubSub_SubscribeZoomingChange(context->pubSub, xf_ZoomingChangeEventHandler);
