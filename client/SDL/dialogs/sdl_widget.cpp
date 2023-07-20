@@ -27,7 +27,7 @@
 #include "sdl_widget.hpp"
 #include "../sdl_utils.hpp"
 
-#include "font/font_writer.hpp"
+#include "font/opensans_variable_font.hpp"
 
 #include <freerdp/log.h>
 
@@ -43,8 +43,9 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
 {
 	assert(renderer);
 
-	auto font = create_and_return_temorary_font();
-	_font = TTF_OpenFont(font.c_str(), 64);
+	auto ops = SDL_RWFromConstMem(font_buffer.data(), static_cast<int>(font_buffer.size()));
+	if (ops)
+		_font = TTF_OpenFontRW(ops, 0, 64);
 }
 
 SdlWidget::SdlWidget(SdlWidget&& other) noexcept
