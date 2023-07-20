@@ -68,11 +68,18 @@ macro (freerdp_include_directory_add)
         endif()
 endmacro()
 
+macro (freerdp_library_add_public)
+	foreach (_lib ${ARGN})
+		list (APPEND LIBFREERDP_PUB_LIBS "${_lib}")
+	endforeach()
+	set (LIBFREERDP_PUB_LIBS ${LIBFREERDP_PUB_LIBS} PARENT_SCOPE)
+endmacro()
+
 macro (freerdp_library_add)
-        foreach (_lib ${ARGN})
-                        list (APPEND LIBFREERDP_LIBS "${_lib}")
-        endforeach()
-         set (LIBFREERDP_LIBS ${LIBFREERDP_LIBS} PARENT_SCOPE)
+	foreach (_lib ${ARGN})
+		list (APPEND LIBFREERDP_LIBS "${_lib}")
+	endforeach()
+	set (LIBFREERDP_LIBS ${LIBFREERDP_LIBS} PARENT_SCOPE)
 endmacro()
 
 macro (freerdp_definition_add)
@@ -220,7 +227,7 @@ if(FAAC_FOUND)
 endif()
 
 if(WITH_AAD)
-    freerdp_library_add(${CJSON_LIBRARIES})
+	freerdp_library_add_public(${CJSON_LIBRARIES})
     include_directories(${CJSON_INCLUDE_DIRS})
 endif()
 
@@ -382,6 +389,7 @@ endif()
 
 list(REMOVE_DUPLICATES LIBFREERDP_DEFINITIONS)
 list(REMOVE_DUPLICATES LIBFREERDP_LIBS)
+list(REMOVE_DUPLICATES LIBFREERDP_PUB_LIBS)
 list(REMOVE_DUPLICATES LIBFREERDP_INCLUDES)
 include_directories(${LIBFREERDP_INCLUDES})
 
@@ -411,8 +419,10 @@ if (WITH_LIBRARY_VERSIONING)
     set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
 endif()
 
-target_link_libraries(${MODULE_NAME} PRIVATE ${LIBFREERDP_LIBS} winpr)
-
+target_link_libraries(${MODULE_NAME} PRIVATE ${LIBFREERDP_LIBS})
+if (LIBFREERDP_PUB_LIBS)
+	target_link_libraries(${MODULE_NAME} PUBLIC ${LIBFREERDP_PUB_LIBS} winpr)
+endif()
 install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT FreeRDPTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
