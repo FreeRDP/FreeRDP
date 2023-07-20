@@ -768,7 +768,7 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 	}
 	else
 		wst->gwport = 443;
-	wst->gwpath = strdup(pos);
+	wst->gwpath = _strdup(pos);
 	if (!wst->gwpath)
 		return FALSE;
 	return TRUE;
