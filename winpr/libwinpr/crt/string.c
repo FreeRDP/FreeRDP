@@ -106,7 +106,7 @@ static char* escape(char* dst, char what)
 		return dst + 1;
 	}
 
-	sprintf(dst, "%%%02" PRIX8, what & 0xff);
+	sprintf(dst, "%%%02" PRIX8, (BYTE)(what & 0xff));
 	return dst + 3;
 }
 

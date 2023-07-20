@@ -2171,7 +2171,7 @@ const char* freerdp_supported_color_depths_string(UINT16 mask, char* buffer, siz
 	if (invalid != 0)
 	{
 		char str[32] = { 0 };
-		_snprintf(str, sizeof(str), "RNS_UD_INVALID[0x%04" PRIx16 "]", invalid);
+		_snprintf(str, sizeof(str), "RNS_UD_INVALID[0x%04" PRIx32 "]", invalid);
 		winpr_str_append(str, buffer, size, "|");
 	}
 	char hex[32] = { 0 };
