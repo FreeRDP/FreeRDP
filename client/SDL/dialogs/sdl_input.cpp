@@ -167,7 +167,10 @@ bool SdlInputWidget::update_input(SDL_Renderer* renderer, SDL_Color fgcolor)
 	if (!text.empty())
 	{
 		if (_flags & SDL_INPUT_MASK)
-			memset(text.data(), '*', text.length());
+		{
+			for (size_t x = 0; x < text.length(); x++)
+				text[x] = '*';
+		}
 	}
 
 	return _input.update_text(renderer, text, fgcolor);
