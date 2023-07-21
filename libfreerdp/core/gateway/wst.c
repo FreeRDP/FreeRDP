@@ -180,7 +180,7 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 			break;
 		default:
 			WLog_WARN(TAG, "Unexpected HTTP status: %s",
-			          http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
+			          freerdp_http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
 			return FALSE;
 	}
 
@@ -500,7 +500,7 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 	{
 		char buffer[64] = { 0 };
 		WLog_ERR(TAG, "Unexpected HTTP status: %s",
-		         http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
+		         freerdp_http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
 	}
 	return FALSE;
 }

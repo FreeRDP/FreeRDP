@@ -721,7 +721,7 @@ static BOOL rdg_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 			break;
 		default:
 			WLog_WARN(TAG, "Unexpected HTTP status: %s",
-			          http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
+			          freerdp_http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
 			return FALSE;
 	}
 
@@ -1397,7 +1397,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 	isWebsocket = http_response_is_websocket(rdg->http, response);
 	http_response_free(response);
 	WLog_DBG(TAG, "%s authorization result: %s", method,
-	         http_status_string_format(statusCode, buffer, ARRAYSIZE(buffer)));
+	         freerdp_http_status_string_format(statusCode, buffer, ARRAYSIZE(buffer)));
 
 	switch (statusCode)
 	{
@@ -1440,7 +1440,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 			return TRUE;
 		default:
 			WLog_WARN(TAG, "Unexpected HTTP status %s",
-			          http_status_string_format(statusCode, buffer, ARRAYSIZE(buffer)));
+			          freerdp_http_status_string_format(statusCode, buffer, ARRAYSIZE(buffer)));
 			return FALSE;
 	}
 
