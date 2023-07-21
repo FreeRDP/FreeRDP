@@ -7,6 +7,7 @@ Fixed issues:
 * Backported #8994: bounds checks for gdi/gfx rectangles
 * Backported #9023: enforce rdpdr client side state checks
 * Backported #6331: deactivate mouse grabbing by default
+* Cherry-pick out of #9172: channels/cliprdr: Fix writing incorrect PDU type for unlock PDUs
 
 # 2023-02-16 Version 2.10.0
 
