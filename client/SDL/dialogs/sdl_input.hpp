@@ -47,6 +47,7 @@ class SdlInputWidget
 	bool update_input(SDL_Renderer* renderer);
 	bool resize_input(size_t size);
 
+	bool set_str(SDL_Renderer* renderer, const std::string& text);
 	bool remove_str(SDL_Renderer* renderer, size_t count);
 	bool append_str(SDL_Renderer* renderer, const std::string& text);
 

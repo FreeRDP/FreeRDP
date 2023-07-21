@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <algorithm>
 
 #include "sdl_input_widgets.hpp"
 
@@ -138,6 +139,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 	try
 	{
 		bool running = true;
+		std::vector<SDL_Keycode> pressed;
 		while (running)
 		{
 			if (!clear_window(_renderer))
@@ -153,7 +155,14 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 			SDL_WaitEvent(&event);
 			switch (event.type)
 			{
+				case SDL_KEYUP:
+				{
+					auto it = std::remove(pressed.begin(), pressed.end(), event.key.keysym.sym);
+					pressed.erase(it, pressed.end());
+				}
+				break;
 				case SDL_KEYDOWN:
+					pressed.push_back(event.key.keysym.sym);
 					switch (event.key.keysym.sym)
 					{
 						case SDLK_BACKSPACE:
@@ -178,6 +187,20 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 						case SDLK_ESCAPE:
 							running = false;
 							res = INPUT_BUTTON_CANCEL;
+							break;
+						case SDLK_v:
+							if (pressed.size() == 2)
+							{
+								if ((pressed[0] == SDLK_LCTRL) || (pressed[0] == SDLK_RCTRL))
+								{
+									auto cur = get(CurrentActiveTextInput);
+									if (cur)
+									{
+										auto text = SDL_GetClipboardText();
+										cur->set_str(_renderer, text);
+									}
+								}
+							}
 							break;
 						default:
 							break;

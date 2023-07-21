@@ -110,6 +110,16 @@ bool SdlInputWidget::resize_input(size_t size)
 	return true;
 }
 
+bool SdlInputWidget::set_str(SDL_Renderer* renderer, const std::string& text)
+{
+	if (readonly())
+		return true;
+	_text = text;
+	if (!resize_input(_text.size()))
+		return false;
+	return update_input(renderer);
+}
+
 bool SdlInputWidget::remove_str(SDL_Renderer* renderer, size_t count)
 {
 	if (readonly())
