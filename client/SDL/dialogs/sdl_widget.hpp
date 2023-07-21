@@ -32,6 +32,21 @@
 typedef SSIZE_T ssize_t;
 #endif
 
+#if !defined(HAS_NOEXCEPT)
+#if defined(__clang__)
+#if __has_feature(cxx_noexcept)
+#define HAS_NOEXCEPT
+#endif
+#elif defined(__GXX_EXPERIMENTAL_CXX0X__) && __GNUC__ * 10 + __GNUC_MINOR__ >= 46 || \
+    defined(_MSC_FULL_VER) && _MSC_FULL_VER >= 190023026
+#define HAS_NOEXCEPT
+#endif
+#endif
+
+#ifndef HAS_NOEXCEPT
+#define noexcept
+#endif
+
 class SdlWidget
 {
   public:
