@@ -1000,6 +1000,7 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
 		return FALSE;
 
+	BOOL rc = FALSE;
 	char* code = extract_authorization_code(url);
 	if (!code)
 		goto cleanup;
@@ -1010,12 +1011,12 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 	                   code, client_id, scope, redirect_uri, req_cnf) <= 0)
 		goto cleanup;
 
-	client_common_get_access_token(instance, token_request, token);
+	rc = client_common_get_access_token(instance, token_request, token);
 
 cleanup:
 	free(token_request);
 	free(url);
-	return (*token != NULL);
+	return rc && (*token != NULL);
 }
 
 static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
@@ -1043,6 +1044,7 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	if (freerdp_interruptible_get_line(instance->context, &url, &size, stdin) < 0)
 		return FALSE;
 
+	BOOL rc = FALSE;
 	char* code = extract_authorization_code(url);
 	if (!code)
 		goto cleanup;
@@ -1053,12 +1055,12 @@ static BOOL client_cli_get_avd_access_token(freerdp* instance, char** token)
 	        client_id, scope, redirect_uri) <= 0)
 		goto cleanup;
 
-	client_common_get_access_token(instance, token_request, token);
+	rc = client_common_get_access_token(instance, token_request, token);
 
 cleanup:
 	free(token_request);
 	free(url);
-	return (*token != NULL);
+	return rc && (*token != NULL);
 }
 
 BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, char** token,
@@ -1125,17 +1127,21 @@ BOOL client_common_get_access_token(freerdp* instance, const char* request, char
 		return FALSE;
 	}
 
-	if (resp_code != 200)
+	if (resp_code != HTTP_STATUS_OK)
 	{
-		WLog_ERR(TAG, "Server unwilling to provide access token; returned status code %li",
-		         resp_code);
+		char buffer[64] = { 0 };
+		WLog_ERR(TAG, "Server unwilling to provide access token; returned status code %s",
+		         freerdp_http_status_string_format(resp_code, buffer, sizeof(buffer)));
 		goto cleanup;
 	}
 
 	json = cJSON_ParseWithLength((const char*)response, response_length);
 	if (!json)
 	{
-		WLog_ERR(TAG, "Failed to parse access token response");
+		char buffer[64] = { 0 };
+		WLog_ERR(
+		    TAG, "Failed to parse access token response [got %" PRIuz " bytes, response code %s",
+		    response_length, freerdp_http_status_string_format(resp_code, buffer, sizeof(buffer)));
 		goto cleanup;
 	}
 
