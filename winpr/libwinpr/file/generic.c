@@ -955,7 +955,7 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 	if (isDir)
 	{
 		pFileSearch->lpPath = _strdup(lpFileName);
-		pFileSearch->lpPattern = _strdup(".");
+		pFileSearch->lpPattern = _strdup("*");
 	}
 	else
 	{
@@ -1034,7 +1034,6 @@ HANDLE FindFirstFileA(LPCSTR lpFileName, LPWIN32_FIND_DATAA lpFindFileData)
 			else
 				name++;
 
-			pFileSearch->lpPattern[0] = '*';
 			sprintf_s(lpFindFileData->cFileName, ARRAYSIZE(lpFindFileData->cFileName), "%s", name);
 		}
 
@@ -1125,30 +1124,26 @@ HANDLE FindFirstFileExW(LPCWSTR lpFileName, FINDEX_INFO_LEVELS fInfoLevelId, LPV
 
 BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 {
-	WIN32_FILE_SEARCH* pFileSearch;
-	struct stat fileStat;
-	char* fullpath;
-	size_t pathlen;
-	size_t namelen;
-
 	if (!hFindFile || !lpFindFileData)
 		return FALSE;
 
 	if (hFindFile == INVALID_HANDLE_VALUE)
 		return FALSE;
 
-	ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
-	pFileSearch = (WIN32_FILE_SEARCH*)hFindFile;
+	const WIN32_FIND_DATAA empty = { 0 };
+	*lpFindFileData = empty;
 
+	WIN32_FILE_SEARCH* pFileSearch = (WIN32_FILE_SEARCH*)hFindFile;
 	while ((pFileSearch->pDirent = readdir(pFileSearch->pDir)) != NULL)
 	{
 		if (FilePatternMatchA(pFileSearch->pDirent->d_name, pFileSearch->lpPattern))
 		{
-			BOOL success;
+			BOOL success = FALSE;
+
 			strncpy(lpFindFileData->cFileName, pFileSearch->pDirent->d_name, MAX_PATH);
-			namelen = strnlen(lpFindFileData->cFileName, MAX_PATH);
-			pathlen = strlen(pFileSearch->lpPath);
-			fullpath = (char*)malloc(pathlen + namelen + 2);
+			const size_t namelen = strnlen(lpFindFileData->cFileName, MAX_PATH);
+			size_t pathlen = strlen(pFileSearch->lpPath);
+			char* fullpath = (char*)malloc(pathlen + namelen + 2);
 
 			if (fullpath == NULL)
 			{
@@ -1164,6 +1159,7 @@ BOOL FindNextFileA(HANDLE hFindFile, LPWIN32_FIND_DATAA lpFindFileData)
 			memcpy(fullpath + pathlen, pFileSearch->pDirent->d_name, namelen);
 			fullpath[pathlen + namelen] = 0;
 
+			struct stat fileStat = { 0 };
 			if (stat(fullpath, &fileStat) != 0)
 			{
 				free(fullpath);

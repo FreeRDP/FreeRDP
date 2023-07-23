@@ -315,33 +315,39 @@ static BOOL add_directory_entry_to_list(wClipboard* clipboard, const WCHAR* loca
 }
 
 static BOOL do_add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* local_name,
-                                              const WCHAR* remote_name, HANDLE hFind,
+                                              const WCHAR* remote_name, WCHAR* namebuf,
                                               wArrayList* files)
 {
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(local_name);
 	WINPR_ASSERT(remote_name);
 	WINPR_ASSERT(files);
+	WINPR_ASSERT(namebuf);
 
+	WIN32_FIND_DATAW FindData = { 0 };
+	HANDLE hFind = FindFirstFileW(namebuf, &FindData);
 	if (INVALID_HANDLE_VALUE == hFind)
 	{
+		WLog_ERR(TAG, "FindFirstFile failed (%" PRIu32 ")", GetLastError());
 		return FALSE;
 	}
-
 	while (TRUE)
 	{
-		WIN32_FIND_DATAW FileData = { 0 };
-		BOOL bRet = FindNextFileW(hFind, &FileData);
+		if (!add_directory_entry_to_list(clipboard, local_name, remote_name, &FindData, files))
+		{
+			FindClose(hFind);
+			return FALSE;
+		}
+
+		BOOL bRet = FindNextFileW(hFind, &FindData);
 		if (!bRet)
 		{
+			FindClose(hFind);
 			if (ERROR_NO_MORE_FILES == GetLastError())
 				return TRUE;
 			WLog_WARN(TAG, "FindNextFile failed (%" PRIu32 ")", GetLastError());
 			return FALSE;
 		}
-
-		if (!add_directory_entry_to_list(clipboard, local_name, remote_name, &FileData, files))
-			return FALSE;
 	}
 
 	return TRUE;
@@ -351,8 +357,6 @@ static BOOL add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* l
                                            const WCHAR* remote_name, wArrayList* files)
 {
 	BOOL result = FALSE;
-	HANDLE hFind = NULL;
-	WIN32_FIND_DATAW FindData = { 0 };
 	const WCHAR wildcard[] = { '/', '*', '\0' };
 
 	WINPR_ASSERT(clipboard);
@@ -368,18 +372,9 @@ static BOOL add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* l
 	memcpy(namebuf, local_name, len * sizeof(WCHAR));
 	memcpy(&namebuf[len], wildcard, sizeof(wildcard));
 
-	hFind = FindFirstFileW(namebuf, &FindData);
+	result = do_add_directory_contents_to_list(clipboard, local_name, remote_name, namebuf, files);
+
 	free(namebuf);
-
-	if (hFind == INVALID_HANDLE_VALUE)
-	{
-		WLog_ERR(TAG, "FindFirstFile failed (%" PRIu32 ")", GetLastError());
-		return FALSE;
-	}
-
-	result = do_add_directory_contents_to_list(clipboard, local_name, remote_name, hFind, files);
-
-	FindClose(hFind);
 	return result;
 }
 
