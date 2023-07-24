@@ -310,13 +310,13 @@ arm_create_cleanup:
 	return message;
 }
 
-static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message)
+static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t len)
 {
 	WINPR_ASSERT(arm);
 	WINPR_ASSERT(arm->context);
 	WINPR_ASSERT(message);
 
-	cJSON* json = cJSON_Parse(message);
+	cJSON* json = cJSON_ParseWithLength(message, len);
 	BOOL status = FALSE;
 	if (!json)
 		return FALSE;
@@ -408,14 +408,15 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 	StatusCode = http_response_get_status_code(response);
 	if (StatusCode == HTTP_STATUS_OK)
 	{
-		char* msg = calloc(http_response_get_body_length(response) + 1, sizeof(char));
+		const size_t len = http_response_get_body_length(response);
+		char* msg = calloc(len + 1, sizeof(char));
 		if (!msg)
 			goto arm_error;
 
-		memcpy(msg, http_response_get_body(response), http_response_get_body_length(response));
+		memcpy(msg, http_response_get_body(response), len);
 
 		WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
-		const BOOL res = arm_fill_gateway_parameters(arm, msg);
+		const BOOL res = arm_fill_gateway_parameters(arm, msg, len);
 		free(msg);
 		if (!res)
 			goto arm_error;

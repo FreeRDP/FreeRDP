@@ -27,25 +27,11 @@
 #include "../crypto/privatekey.h"
 #include <freerdp/utils/http.h>
 
-#ifdef WITH_AAD
-#include <cjson/cJSON.h>
-#endif
-
 #include <winpr/crypto.h>
 
 #include "transport.h"
 
 #include "aad.h"
-
-#ifdef WITH_AAD
-#if CJSON_VERSION_MAJOR == 1
-#if CJSON_VERSION_MINOR <= 7
-#if CJSON_VERSION_PATCH < 13
-#define USE_CJSON_COMPAT
-#endif
-#endif
-#endif
-#endif
 
 struct rdp_aad
 {
@@ -112,8 +98,7 @@ static BOOL json_get_object(wLog* wlog, cJSON* json, const char* key, cJSON** ob
 }
 
 #if defined(USE_CJSON_COMPAT)
-FREERDP_API double cJSON_GetNumberValue(const cJSON* const item);
-double cJSON_GetNumberValue(const cJSON* const prop)
+static double cJSON_GetNumberValue(const cJSON* const prop)
 {
 #ifndef NAN
 #ifdef _WIN32
@@ -208,14 +193,15 @@ static BOOL json_get_string_alloc(wLog* wlog, cJSON* json, const char* key, char
 }
 
 #if defined(USE_CJSON_COMPAT)
-FREERDP_API cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length);
-
 cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length)
 {
 	// Check for string '\0' termination.
 	const size_t slen = strnlen(value, buffer_length);
 	if (slen >= buffer_length)
-		return NULL;
+	{
+		if (value[buffer_length] != '\0')
+			return NULL;
+	}
 	return cJSON_Parse(value);
 }
 #endif
@@ -235,7 +221,7 @@ static BOOL aad_get_nonce(rdpAad* aad)
 		goto fail;
 	}
 
-	if (resp_code != 200)
+	if (resp_code != HTTP_STATUS_OK)
 	{
 		WLog_Print(aad->log, WLOG_ERROR,
 		           "Server unwilling to provide nonce; returned status code %li", resp_code);
