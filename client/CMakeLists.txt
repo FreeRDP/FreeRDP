@@ -17,7 +17,9 @@
 
 # Clients
 
-add_subdirectory(common)
+if(WITH_CLIENT_COMMON)
+	add_subdirectory(common)
+endif()
 
 if(FREERDP_VENDOR AND WITH_CLIENT)
 	if(WIN32 AND NOT UWP)
