@@ -991,7 +991,7 @@ static BOOL client_cli_get_rdsaad_access_token(freerdp* instance, const char* sc
 	size_t size = 0;
 	char* url = NULL;
 	char* token_request = NULL;
-	const char* client_id = "a85cf173-4192-42f8-81fa-777a763e6e2c";
+	const char* client_id = "5177bc73-fd99-4c77-a90c-76844c9b6999";
 	const char* redirect_uri =
 	    "https%3A%2F%2Flogin.microsoftonline.com%2Fcommon%2Foauth2%2Fnativeclient";
 
