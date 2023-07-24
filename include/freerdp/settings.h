@@ -427,7 +427,6 @@ extern "C"
 		INT32 height;
 		UINT32 is_primary;
 		UINT32 orig_screen;
-		BOOL highDpi;
 		MONITOR_ATTRIBUTES attributes;
 	} rdpMonitor;
 

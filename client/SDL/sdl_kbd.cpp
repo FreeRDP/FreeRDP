@@ -483,7 +483,9 @@ BOOL sdlInput::mouse_focus(Uint32 windowID)
 
 		SDL_RaiseWindow(window);
 		return TRUE;
-	}else{
+	}
+	else
+	{
 		return TRUE;
 	};
 }

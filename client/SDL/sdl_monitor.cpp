@@ -187,12 +187,13 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, x));
 		WINPR_ASSERT(id);
 
-		float hdpi;
-		float vdpi;
+		float ddpi = 1.0f;
+		float hdpi = 1.0f;
+		float vdpi = 1.0f;
 		SDL_Rect rect = {};
 
 		SDL_GetDisplayBounds(*id, &rect);
-		SDL_GetDisplayDPI(*id, nullptr, &hdpi, &vdpi);
+		SDL_GetDisplayDPI(*id, &ddpi, &hdpi, &vdpi);
 
 		bool highDpi = hdpi > 100;
 
@@ -239,14 +240,15 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
 		WINPR_ASSERT(monitor);
 
+		/* windows uses 96 dpi as 'default' and the scale factors are in percent. */
+		const auto factor = ddpi / 96.0f * 100.0f;
 		monitor->orig_screen = x;
 		monitor->x = rect.x;
 		monitor->y = rect.y;
 		monitor->width = rect.w;
 		monitor->height = rect.h;
-		monitor->highDpi = highDpi;
 		monitor->is_primary = (rect.x == 0) && (rect.y == 0);
-		monitor->attributes.desktopScaleFactor = 100;
+		monitor->attributes.desktopScaleFactor = factor;
 		monitor->attributes.deviceScaleFactor = 100;
 		monitor->attributes.orientation = rdp_orientation;
 		monitor->attributes.physicalWidth = rect.w / hdpi;
