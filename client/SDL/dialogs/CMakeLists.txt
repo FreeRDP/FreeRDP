@@ -17,8 +17,8 @@ set(SRCS
     sdl_input_widgets.hpp
     sdl_select.hpp
     sdl_select.cpp
-	sdl_selectlist.hpp
-	sdl_selectlist.cpp
+    sdl_selectlist.hpp
+    sdl_selectlist.cpp
 )
 
 set(LIBS
