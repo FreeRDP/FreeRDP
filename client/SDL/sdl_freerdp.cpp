@@ -357,8 +357,6 @@ static BOOL sdl_end_paint_process(rdpContext* context)
 		int w, h;
 		SDL_GetWindowSize(window.window, &w, &h);
 
-		//window.offset_x = 0;
-		//window.offset_y = 0;
 		if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
 		{
 			if (gdi->width < w)
@@ -505,7 +503,6 @@ static BOOL sdl_pre_connect(freerdp* instance)
 	WINPR_ASSERT(instance->context);
 
 	auto sdl = get_context(instance->context);
-	//sdl->highDpi = TRUE; // If High DPI is available, we want unscaled data, RDP can scale itself.
 
 	auto settings = instance->context->settings;
 	WINPR_ASSERT(settings);
@@ -605,8 +602,6 @@ static void sdl_cleanup_sdl(SdlContext* sdl)
 	SDL_Quit();
 }
 
-
-
 static BOOL sdl_create_windows(SdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
@@ -614,30 +609,28 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 	auto title = sdl_window_get_title(sdl->context()->settings);
 	BOOL rc = FALSE;
 
-	// TODO: Multimonitor setup
-
-
-	UINT32 windowCount = freerdp_settings_get_uint32(sdl->context()->settings, FreeRDP_MonitorCount);
+	UINT32 windowCount =
+	    freerdp_settings_get_uint32(sdl->context()->settings, FreeRDP_MonitorCount);
 
 	for (UINT32 x = 0; x < windowCount; x++)
 	{
-		auto monitor = static_cast<rdpMonitor*>(
-		    freerdp_settings_get_pointer_array_writable(sdl->context()->settings, FreeRDP_MonitorDefArray, x));
+		auto monitor = static_cast<rdpMonitor*>(freerdp_settings_get_pointer_array_writable(
+		    sdl->context()->settings, FreeRDP_MonitorDefArray, x));
 
 		Uint32 w = monitor->width;
 		Uint32 h = monitor->height;
-		if (!(sdl->context()->settings->UseMultimon || sdl->context()->settings->Fullscreen) ){
+		if (!(sdl->context()->settings->UseMultimon || sdl->context()->settings->Fullscreen))
+		{
 			w = sdl->context()->settings->DesktopWidth;
 			h = sdl->context()->settings->DesktopHeight;
 		}
-
 
 		sdl_window_t window = {};
 		Uint32 flags = SDL_WINDOW_SHOWN;
 		Uint32 startupX = SDL_WINDOWPOS_UNDEFINED;
 		Uint32 startupY = SDL_WINDOWPOS_UNDEFINED;
 
-		if (monitor->highDpi)
+		if (monitor->attributes.desktopScaleFactor > 100)
 		{
 #if SDL_VERSION_ATLEAST(2, 0, 1)
 			flags |= SDL_WINDOW_ALLOW_HIGHDPI;
@@ -649,24 +642,22 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 			flags |= SDL_WINDOW_FULLSCREEN;
 		}
 
-
 		if (sdl->context()->settings->UseMultimon)
 		{
 			flags |= SDL_WINDOW_BORDERLESS;
 			startupX = monitor->x;
 			startupY = monitor->y;
-			window.offset_x = 0-startupX;
-			window.offset_y = 0-startupY;
-		}else{
+			window.offset_x = 0 - startupX;
+			window.offset_y = 0 - startupY;
+		}
+		else
+		{
 			window.offset_x = 0;
 			window.offset_y = 0;
 		}
 
-
-		window.window = SDL_CreateWindow(title, startupX, startupY,
-		                                 static_cast<int>(w), static_cast<int>(h), flags);
-
-
+		window.window = SDL_CreateWindow(title, startupX, startupY, static_cast<int>(w),
+		                                 static_cast<int>(h), flags);
 		if (!window.window)
 			goto fail;
 		sdl->windows.push_back(window);
@@ -700,7 +691,6 @@ static BOOL sdl_wait_create_windows(SdlContext* sdl)
 
 static int sdl_run(SdlContext* sdl)
 {
-
 	int rc = -1;
 	WINPR_ASSERT(sdl);
 
@@ -738,11 +728,6 @@ static int sdl_run(SdlContext* sdl)
 			        windowEvent.type);
 #endif
 			std::lock_guard<CriticalSection> lock(sdl->critical);
-
-
-
-
-
 			switch (windowEvent.type)
 			{
 				case SDL_QUIT:
@@ -875,48 +860,37 @@ static int sdl_run(SdlContext* sdl)
 					{
 						if (!(curFlags & SDL_WINDOW_BORDERLESS))
 						{
-							//need to do some resizing
-							UINT32 w = GetSystemMetrics(SM_CXSCREEN);
-							UINT32 h = GetSystemMetrics(SM_CYSCREEN);
-							if (sdl->context()->settings->UseMultimon)
-							{
-								w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-								h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-							}
+							auto idx = SDL_GetWindowDisplayIndex(window);
+							SDL_DisplayMode mode = {};
+							SDL_GetCurrentDisplayMode(idx, &mode);
 
-
-							SDL_RestoreWindow(window); //Maximize so we can see the caption and bits
-							SDL_SetWindowBordered(window, SDL_FALSE );
-							SDL_SetWindowPosition(window,0,0);
-							SDL_SetWindowAlwaysOnTop(window,SDL_TRUE);
+							SDL_RestoreWindow(window); // Maximize so we can see the caption and
+							                           // bits
+							SDL_SetWindowBordered(window, SDL_FALSE);
+							SDL_SetWindowPosition(window, 0, 0);
+#if SDL_VERSION_ATLEAST(2, 0, 16)
+							SDL_SetWindowAlwaysOnTop(window, SDL_TRUE);
+#endif
 							SDL_RaiseWindow(window);
-							SDL_SetWindowSize(window,static_cast<int>(w), static_cast<int>(h));
-
+							SDL_SetWindowSize(window, mode.w, mode.h);
 						}
-					}else
+					}
+					else
 					{
 						if (curFlags & SDL_WINDOW_BORDERLESS)
 						{
 
-							SDL_SetWindowBordered(window,  SDL_TRUE);
-							SDL_SetWindowAlwaysOnTop(window,SDL_FALSE);
+							SDL_SetWindowBordered(window, SDL_TRUE);
+#if SDL_VERSION_ATLEAST(2, 0, 16)
+							SDL_SetWindowAlwaysOnTop(window, SDL_FALSE);
+#endif
 							SDL_RaiseWindow(window);
-							SDL_MinimizeWindow(window); //Maximize so we can see the caption and bits
-							SDL_MaximizeWindow(window); //Maximize so we can see the caption and bits
-
+							SDL_MinimizeWindow(
+							    window); // Maximize so we can see the caption and bits
+							SDL_MaximizeWindow(
+							    window); // Maximize so we can see the caption and bits
 						}
 					}
-
-					/*
-					const BOOL isSet = (curFlags & SDL_WINDOW_FULLSCREEN) ? TRUE : FALSE;
-					if (enter)
-						curFlags |= SDL_WINDOW_FULLSCREEN;
-					else
-						curFlags &= ~SDL_WINDOW_FULLSCREEN;
-
-					if ((enter && !isSet) || (!enter && isSet))
-						SDL_SetWindowFullscreen(window, curFlags);
-					 */
 				}
 				break;
 				case SDL_USEREVENT_POINTER_NULL:
