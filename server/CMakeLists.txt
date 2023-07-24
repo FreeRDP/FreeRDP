@@ -30,6 +30,10 @@ if (WITH_PROXY)
 endif()
 
 if(FREERDP_VENDOR)
+	if (BUILD_FUZZERS)
+		add_subdirectory(FuzzServer)
+	endif()
+
 	if(WITH_SAMPLE)
 		add_subdirectory(Sample)
 	endif()
