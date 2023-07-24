@@ -4,6 +4,7 @@ static const Uint32 vpadding = 5;
 static const Uint32 hpadding = 10;
 
 SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::string>& labels)
+    : _window(nullptr), _renderer(nullptr)
 {
 	TTF_Init();
 
@@ -16,27 +17,30 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 	if (_window == nullptr)
 	{
 		widget_log_error(-1, "SDL_CreateWindow");
-		throw;
 	}
-
-	_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
-	if (_renderer == nullptr)
+	else
 	{
-		widget_log_error(-1, "SDL_CreateRenderer");
-		throw;
-	}
+		_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
+		if (_renderer == nullptr)
+		{
+			widget_log_error(-1, "SDL_CreateRenderer");
+		}
+		else
+		{
+			SDL_Rect rect = { 0, 0, widget_width, widget_height };
+			for (auto& label : labels)
+			{
+				_list.push_back({ _renderer, label, rect });
+				rect.y += widget_height + vpadding;
+			}
 
-	SDL_Rect rect = { 0, 0, widget_width, widget_height };
-	for (auto& label : labels)
-	{
-		_list.push_back({ _renderer, label, rect });
-		rect.y += widget_height + vpadding;
+			const std::vector<int> buttonids = { INPUT_BUTTON_ACCEPT, INPUT_BUTTON_CANCEL };
+			const std::vector<std::string> buttonlabels = { "accept", "cancel" };
+			_buttons.populate(_renderer, buttonlabels, buttonids, static_cast<Sint32>(total_height),
+			                  static_cast<Sint32>(widget_width / 2),
+			                  static_cast<Sint32>(widget_height));
+		}
 	}
-
-	const std::vector<int> buttonids = { INPUT_BUTTON_ACCEPT, INPUT_BUTTON_CANCEL };
-	const std::vector<std::string> buttonlabels = { "accept", "cancel" };
-	_buttons.populate(_renderer, buttonlabels, buttonids, static_cast<Sint32>(total_height),
-	                  static_cast<Sint32>(widget_width / 2), static_cast<Sint32>(widget_height));
 }
 
 SdlSelectList::~SdlSelectList()
@@ -54,6 +58,9 @@ int SdlSelectList::run()
 	int res = -2;
 	ssize_t CurrentActiveTextInput = 0;
 	bool running = true;
+
+	if (!_window || !_renderer)
+		return -2;
 	try
 	{
 		while (running)
