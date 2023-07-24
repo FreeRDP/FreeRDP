@@ -61,6 +61,18 @@
 #ifdef WITH_AAD
 #include <cjson/cJSON.h>
 #include <freerdp/utils/http.h>
+
+#if CJSON_VERSION_MAJOR == 1
+#if CJSON_VERSION_MINOR <= 7
+#if CJSON_VERSION_PATCH < 13
+#define USE_CJSON_COMPAT
+#endif
+#endif
+#endif
+
+#if defined(USE_CJSON_COMPAT)
+extern cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length);
+#endif
 #endif
 
 #include <freerdp/log.h>

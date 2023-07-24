@@ -121,9 +121,11 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 	if (!hostname)
 		return FALSE;
 
+	size_t blen = 0;
 	if (body)
 	{
-		if (winpr_asprintf(&headers, &size, post_header_fmt, path, hostname, strlen(body)) < 0)
+		blen = strlen(body);
+		if (winpr_asprintf(&headers, &size, post_header_fmt, path, hostname, blen) < 0)
 			return FALSE;
 	}
 	else
@@ -182,7 +184,7 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 
 	WLog_Print(log, WLOG_DEBUG, "headers:\n%s", headers);
 	ERR_clear_error();
-	if (BIO_write(bio, headers, strlen(headers)) < 0)
+	if (BIO_write(bio, headers, strnlen(headers, size)) < 0)
 	{
 		log_errors(log, "could not write headers");
 		goto out;
@@ -192,14 +194,14 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 	{
 		WLog_Print(log, WLOG_DEBUG, "body:\n%s", body);
 
-		if (strlen(body) > INT_MAX)
+		if (blen > INT_MAX)
 		{
 			WLog_Print(log, WLOG_ERROR, "body too long!");
 			goto out;
 		}
 
 		ERR_clear_error();
-		if (BIO_write(bio, body, strlen(body)) < 0)
+		if (BIO_write(bio, body, blen) < 0)
 		{
 			log_errors(log, "could not write body");
 			goto out;

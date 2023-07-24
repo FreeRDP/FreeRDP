@@ -32,6 +32,18 @@ typedef enum
 #include <freerdp/api.h>
 #include <freerdp/freerdp.h>
 
+#ifdef WITH_AAD
+#include <cjson/cJSON.h>
+
+#if CJSON_VERSION_MAJOR == 1
+#if CJSON_VERSION_MINOR <= 7
+#if CJSON_VERSION_PATCH < 13
+#define USE_CJSON_COMPAT
+#endif
+#endif
+#endif
+#endif
+
 FREERDP_LOCAL BOOL aad_is_supported(void);
 
 FREERDP_LOCAL int aad_client_begin(rdpAad* aad);
@@ -41,5 +53,9 @@ FREERDP_LOCAL AAD_STATE aad_get_state(rdpAad* aad);
 
 FREERDP_LOCAL rdpAad* aad_new(rdpContext* context, rdpTransport* transport);
 FREERDP_LOCAL void aad_free(rdpAad* aad);
+
+#if defined(USE_CJSON_COMPAT)
+FREERDP_API cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length);
+#endif
 
 #endif /* FREERDP_LIB_CORE_AAD_H */
