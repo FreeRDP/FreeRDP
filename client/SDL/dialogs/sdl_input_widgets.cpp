@@ -10,6 +10,7 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
                                        const std::vector<std::string>& labels,
                                        const std::vector<std::string>& initial,
                                        const std::vector<Uint32>& flags)
+    : _window(nullptr), _renderer(nullptr)
 {
 	assert(labels.size() == initial.size());
 	assert(labels.size() == flags.size());
@@ -29,22 +30,26 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 	if (_window == nullptr)
 	{
 		widget_log_error(-1, "SDL_CreateWindow");
-		throw;
 	}
-
-	_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
-	if (_renderer == nullptr)
+	else
 	{
-		widget_log_error(-1, "SDL_CreateRenderer");
-		throw;
+
+		_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
+		if (_renderer == nullptr)
+		{
+			widget_log_error(-1, "SDL_CreateRenderer");
+		}
+		else
+		{
+			for (size_t x = 0; x < labels.size(); x++)
+				_list.push_back(
+				    { _renderer, labels[x], initial[x], flags[x], x, widget_width, widget_heigth });
+
+			_buttons.populate(_renderer, buttonlabels, buttonids, static_cast<Sint32>(input_height),
+			                  static_cast<Sint32>(widget_width),
+			                  static_cast<Sint32>(widget_heigth));
+		}
 	}
-
-	for (size_t x = 0; x < labels.size(); x++)
-		_list.push_back(
-		    { _renderer, labels[x], initial[x], flags[x], x, widget_width, widget_heigth });
-
-	_buttons.populate(_renderer, buttonlabels, buttonids, static_cast<Sint32>(input_height),
-	                  static_cast<Sint32>(widget_width), static_cast<Sint32>(widget_heigth));
 }
 
 ssize_t SdlInputWidgetList::next(ssize_t current)
@@ -135,6 +140,9 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 	int res = -1;
 	ssize_t LastActiveTextInput = -1;
 	ssize_t CurrentActiveTextInput = next(-1);
+
+	if (!_window || !_renderer)
+		return -2;
 
 	try
 	{
