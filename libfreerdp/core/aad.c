@@ -206,6 +206,27 @@ cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length)
 }
 #endif
 
+static INLINE const char* aad_auth_result_to_string(DWORD code)
+{
+#define ERROR_CASE(x) \
+	case (x):         \
+		return #x;
+	switch (code)
+	{
+		ERROR_CASE(S_OK)
+		ERROR_CASE(SEC_E_INVALID_TOKEN)
+		ERROR_CASE(E_ACCESSDENIED)
+		ERROR_CASE(STATUS_LOGON_FAILURE)
+		ERROR_CASE(STATUS_NO_LOGON_SERVERS)
+		ERROR_CASE(STATUS_INVALID_LOGON_HOURS)
+		ERROR_CASE(STATUS_INVALID_WORKSTATION)
+		ERROR_CASE(STATUS_PASSWORD_EXPIRED)
+		ERROR_CASE(STATUS_ACCOUNT_DISABLED)
+		default:
+			return "Unknown error";
+	}
+}
+
 static BOOL aad_get_nonce(rdpAad* aad)
 {
 	BOOL ret = FALSE;
@@ -530,6 +551,7 @@ static int aad_parse_state_auth(rdpAad* aad, wStream* s)
 {
 	int rc = -1;
 	double result = 0;
+	DWORD error_code = 0;
 	cJSON* json = NULL;
 	const char* jstr = Stream_PointerAs(s, char);
 	const size_t jlength = Stream_GetRemainingLength(s);
@@ -543,10 +565,12 @@ static int aad_parse_state_auth(rdpAad* aad, wStream* s)
 
 	if (!json_get_number(aad->log, json, "authentication_result", &result))
 		goto fail;
+	error_code = (DWORD)result;
 
-	if (result != 0.0)
+	if (error_code != S_OK)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "Authentication result: %lf", result);
+		WLog_Print(aad->log, WLOG_ERROR, "Authentication result: %s (0x%08" PRIx32 ")",
+		           aad_auth_result_to_string(error_code), error_code);
 		goto fail;
 	}
 	aad->state = AAD_STATE_FINAL;
