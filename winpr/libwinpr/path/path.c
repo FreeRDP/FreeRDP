@@ -23,6 +23,7 @@
 #include <winpr/tchar.h>
 
 #include <winpr/path.h>
+#include <winpr/file.h>
 
 #define PATH_SLASH_CHR '/'
 #define PATH_SLASH_STR "/"
@@ -1077,4 +1078,90 @@ const char* GetKnownPathIdString(int id)
 		default:
 			return "KNOWN_PATH_UNKNOWN_ID";
 	}
+}
+
+static WCHAR* concat(const WCHAR* path, size_t pathlen, const WCHAR* name, size_t namelen)
+{
+	WCHAR* str = calloc(pathlen + namelen + 1, sizeof(WCHAR));
+	if (!str)
+		return NULL;
+
+	memcpy(str, path, pathlen * sizeof(WCHAR));
+	memcpy(&str[pathlen], name, namelen * sizeof(WCHAR));
+	return str;
+}
+
+BOOL winpr_RemoveDirectory_RecursiveA(LPCSTR lpPathName)
+{
+	WCHAR* name = ConvertUtf8ToWCharAlloc(lpPathName, NULL);
+	if (!name)
+		return FALSE;
+	const BOOL rc = winpr_RemoveDirectory_RecursiveW(name);
+	free(name);
+	return rc;
+}
+
+BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
+{
+	BOOL ret = FALSE;
+
+	if (!lpPathName)
+		return FALSE;
+
+	const size_t pathnamelen = _wcslen(lpPathName);
+	const size_t path_slash_len = pathnamelen + 2;
+	WCHAR* path_slash = calloc(pathnamelen + 3, sizeof(WCHAR));
+	if (!path_slash)
+		return FALSE;
+	memcpy(path_slash, lpPathName, pathnamelen * sizeof(WCHAR));
+
+	const WCHAR sep[] = { PathGetSeparatorW(PATH_STYLE_NATIVE), '\0' };
+	const WCHAR star[] = { '*', '\0' };
+	PathCchAppendW(path_slash, path_slash_len, sep);
+	PathCchAppendW(path_slash, path_slash_len, star);
+
+	WIN32_FIND_DATAW findFileData = { 0 };
+	HANDLE dir = FindFirstFileW(path_slash, &findFileData);
+
+	if (dir == INVALID_HANDLE_VALUE)
+		goto fail;
+
+	ret = TRUE;
+	path_slash[path_slash_len - 1] = '\0'; /* remove trailing '*' */
+	do
+	{
+		const size_t len = _wcsnlen(findFileData.cFileName, ARRAYSIZE(findFileData.cFileName));
+
+		if ((len == 1 && findFileData.cFileName[0] == L'.') ||
+		    (len == 2 && findFileData.cFileName[0] == L'.' && findFileData.cFileName[1] == L'.'))
+		{
+			continue;
+		}
+
+		WCHAR* fullpath = concat(path_slash, path_slash_len, findFileData.cFileName, len);
+		if (!fullpath)
+			goto fail;
+
+		if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+			ret = winpr_RemoveDirectory_RecursiveW(fullpath);
+		else
+			ret = DeleteFileW(fullpath);
+
+		free(fullpath);
+
+		if (!ret)
+			break;
+	} while (ret && FindNextFileW(dir, &findFileData) != 0);
+
+	FindClose(dir);
+
+	if (ret)
+	{
+		if (!RemoveDirectoryW(lpPathName))
+			ret = FALSE;
+	}
+
+fail:
+	free(path_slash);
+	return ret;
 }
