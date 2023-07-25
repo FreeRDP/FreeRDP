@@ -20,7 +20,9 @@ if (!hasProperty('RELEASE_KEY_PASSWORD')) {
 
 ext {
     compileApi = properties.get('COMPILE_API', 31)
-    targetApi = properties.get('TARGET_API', 31)
+    // Targeting S+ (version 31 and above) requires that an explicit value
+    // for android:exported be defined when intent filters are present
+    targetApi = properties.get('TARGET_API', 30)
     minApi = properties.get('MIN_API', 23)
     toolsVersion = properties.get('TOOLS_VERSION', '31.0.0')
 
