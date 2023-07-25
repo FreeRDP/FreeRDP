@@ -165,6 +165,7 @@ struct rdp_file
 	DWORD PromptForCredentials;   /* prompt for credentials */
 	DWORD NegotiateSecurityLayer; /* negotiate security layer */
 	DWORD EnableCredSSPSupport;   /* enablecredsspsupport */
+	DWORD EnableRdsAadAuth;       /* enablerdsaadauth */
 
 	DWORD RemoteApplicationMode; /* remoteapplicationmode */
 	LPSTR LoadBalanceInfo;       /* loadbalanceinfo */
@@ -187,6 +188,8 @@ struct rdp_file
 	DWORD GatewayUsageMethod;        /* gatewayusagemethod */
 	DWORD GatewayProfileUsageMethod; /* gatewayprofileusagemethod */
 	DWORD GatewayCredentialsSource;  /* gatewaycredentialssource */
+
+	LPCSTR ResourceProvider; /* resourceprovider */
 
 	DWORD UseRedirectionServerName; /* use redirection server name */
 
@@ -231,12 +234,15 @@ static const char key_str_alternate_shell[] = "alternate shell";
 static const char key_str_shell_working_directory[] = "shell working directory";
 static const char key_str_gatewayhostname[] = "gatewayhostname";
 static const char key_str_gatewayaccesstoken[] = "gatewayaccesstoken";
+static const char key_str_resourceprovider[] = "resourceprovider";
 static const char key_str_kdcproxyname[] = "kdcproxyname";
 static const char key_str_drivestoredirect[] = "drivestoredirect";
 static const char key_str_devicestoredirect[] = "devicestoredirect";
 static const char key_str_winposstr[] = "winposstr";
 static const char key_str_pcb[] = "pcb";
 static const char key_str_selectedmonitors[] = "selectedmonitors";
+
+static const char resource_provider_arm[] = "arm";
 
 static const char key_int_rdgiskdcproxy[] = "rdgiskdcproxy";
 static const char key_int_use_redirection_server_name[] = "use redirection server name";
@@ -249,6 +255,7 @@ static const char key_int_remoteapplicationexpandworkingdir[] = "remoteapplicati
 static const char key_int_remoteapplicationexpandcmdline[] = "remoteapplicationexpandcmdline";
 static const char key_int_remoteapplicationmode[] = "remoteapplicationmode";
 static const char key_int_enablecredsspsupport[] = "enablecredsspsupport";
+static const char key_int_enablerdsaadauth[] = "enablerdsaadauth";
 static const char key_int_negotiate_security_layer[] = "negotiate security layer";
 static const char key_int_prompt_for_credentials[] = "prompt for credentials";
 static const char key_int_promptcredentialonce[] = "promptcredentialonce";
@@ -444,6 +451,8 @@ static BOOL freerdp_client_rdp_file_find_integer_entry(rdpFile* file, const char
 		*outValue = &file->NegotiateSecurityLayer;
 	else if (_stricmp(name, key_int_enablecredsspsupport) == 0)
 		*outValue = &file->EnableCredSSPSupport;
+	else if (_stricmp(name, key_int_enablerdsaadauth) == 0)
+		*outValue = &file->EnableRdsAadAuth;
 	else if (_stricmp(name, key_int_remoteapplicationmode) == 0)
 		*outValue = &file->RemoteApplicationMode;
 	else if (_stricmp(name, key_int_remoteapplicationexpandcmdline) == 0)
@@ -525,6 +534,8 @@ static BOOL freerdp_client_rdp_file_find_string_entry(rdpFile* file, const char*
 		*outValue = &file->ShellWorkingDirectory;
 	else if (_stricmp(name, key_str_gatewayhostname) == 0)
 		*outValue = &file->GatewayHostname;
+	else if (_stricmp(name, key_str_resourceprovider) == 0)
+		*outValue = &file->ResourceProvider;
 	else if (_stricmp(name, key_str_gatewayaccesstoken) == 0)
 		*outValue = &file->GatewayAccessToken;
 	else if (_stricmp(name, key_str_kdcproxyname) == 0)
@@ -1075,6 +1086,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->NegotiateSecurityLayer =
 	    freerdp_settings_get_bool(settings, FreeRDP_NegotiateSecurityLayer);
 	file->EnableCredSSPSupport = freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity);
+	file->EnableRdsAadAuth = freerdp_settings_get_bool(settings, FreeRDP_AadSecurity);
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
 		index = FreeRDP_RemoteApplicationWorkingDir;
@@ -1130,6 +1142,9 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		if (!file->GatewayHostname)
 			return FALSE;
 	}
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayArmTransport))
+		file->ResourceProvider = resource_provider_arm;
 
 	file->AudioCaptureMode = freerdp_settings_get_bool(settings, FreeRDP_AudioCapture);
 	file->BitmapCachePersistEnable =
@@ -1468,6 +1483,7 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	WRITE_SETTING_INT(key_int_prompt_for_credentials, file->PromptForCredentials);
 	WRITE_SETTING_INT(key_int_negotiate_security_layer, file->NegotiateSecurityLayer);
 	WRITE_SETTING_INT(key_int_enablecredsspsupport, file->EnableCredSSPSupport);
+	WRITE_SETTING_INT(key_int_enablerdsaadauth, file->EnableRdsAadAuth);
 	WRITE_SETTING_INT(key_int_remoteapplicationmode, file->RemoteApplicationMode);
 	WRITE_SETTING_INT(key_int_remoteapplicationexpandcmdline, file->RemoteApplicationExpandCmdLine);
 	WRITE_SETTING_INT(key_int_remoteapplicationexpandworkingdir,
@@ -1499,6 +1515,7 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	WRITE_SETTING_STR(key_str_alternate_shell, file->AlternateShell);
 	WRITE_SETTING_STR(key_str_shell_working_directory, file->ShellWorkingDirectory);
 	WRITE_SETTING_STR(key_str_gatewayhostname, file->GatewayHostname);
+	WRITE_SETTING_STR(key_str_resourceprovider, file->ResourceProvider);
 	WRITE_SETTING_STR(key_str_gatewayaccesstoken, file->GatewayAccessToken);
 	WRITE_SETTING_STR(key_str_kdcproxyname, file->KdcProxyName);
 	WRITE_SETTING_STR(key_str_drivestoredirect, file->DrivesToRedirect);
@@ -1724,6 +1741,12 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 			return FALSE;
 	}
 
+	if (~file->EnableRdsAadAuth)
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_AadSecurity, file->EnableRdsAadAuth != 0))
+			return FALSE;
+	}
+
 	if (~((size_t)file->AlternateShell))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_AlternateShell, file->AlternateShell))
@@ -1877,6 +1900,15 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		if (port > 0)
 		{
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_GatewayPort, (UINT32)port))
+				return FALSE;
+		}
+	}
+
+	if (~((size_t)file->ResourceProvider))
+	{
+		if (_stricmp(file->ResourceProvider, resource_provider_arm) == 0)
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayArmTransport, TRUE))
 				return FALSE;
 		}
 	}
