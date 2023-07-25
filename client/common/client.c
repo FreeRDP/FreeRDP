@@ -87,6 +87,7 @@ static void set_default_callbacks(freerdp* instance)
 	instance->VerifyChangedCertificateEx = client_cli_verify_changed_certificate_ex;
 	instance->PresentGatewayMessage = client_cli_present_gateway_message;
 	instance->LogonErrorInfo = client_cli_logon_error_info;
+	instance->GetAccessToken = client_cli_get_access_token;
 }
 
 static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
