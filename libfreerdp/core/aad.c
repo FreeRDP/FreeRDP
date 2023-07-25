@@ -529,7 +529,7 @@ fail:
 static int aad_parse_state_auth(rdpAad* aad, wStream* s)
 {
 	int rc = -1;
-	double result = 0;
+	double jsonNumber = 0;
 	cJSON* json = NULL;
 	const char* jstr = Stream_PointerAs(s, char);
 	const size_t jlength = Stream_GetRemainingLength(s);
@@ -541,12 +541,13 @@ static int aad_parse_state_auth(rdpAad* aad, wStream* s)
 	if (!json)
 		goto fail;
 
-	if (!json_get_number(aad->log, json, "authentication_result", &result))
+	if (!json_get_number(aad->log, json, "authentication_result", &jsonNumber))
 		goto fail;
 
-	if (result != 0.0)
+	UINT32 result = (UINT32)jsonNumber;
+	if (result != 0)
 	{
-		WLog_Print(aad->log, WLOG_ERROR, "Authentication result: %lf", result);
+		WLog_Print(aad->log, WLOG_ERROR, "Authentication result: %08" PRIx32, result);
 		goto fail;
 	}
 	aad->state = AAD_STATE_FINAL;
