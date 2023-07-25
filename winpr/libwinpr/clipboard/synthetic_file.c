@@ -388,7 +388,6 @@ static BOOL add_file_to_list(wClipboard* clipboard, const WCHAR* local_name,
 	WINPR_ASSERT(remote_name);
 	WINPR_ASSERT(files);
 
-	WLog_VRB(TAG, "adding file: %s", local_name);
 	file = make_synthetic_file(local_name, remote_name);
 
 	if (!file)

@@ -35,8 +35,14 @@
 #define PATH_SLASH_STR_W L"/"
 #define PATH_BACKSLASH_STR_W L"\\"
 #else
-#define PATH_SLASH_STR_W "/"
-#define PATH_BACKSLASH_STR_W "\\"
+#define PATH_SLASH_STR_W \
+	{                    \
+		'/', '\0'        \
+	}
+#define PATH_BACKSLASH_STR_W \
+	{                        \
+		'\\', '\0'           \
+	}
 #endif
 
 #ifdef _WIN32
@@ -1109,15 +1115,13 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 		return FALSE;
 
 	const size_t pathnamelen = _wcslen(lpPathName);
-	const size_t path_slash_len = pathnamelen + 2;
-	WCHAR* path_slash = calloc(pathnamelen + 3, sizeof(WCHAR));
+	const size_t path_slash_len = pathnamelen + 3;
+	WCHAR* path_slash = calloc(pathnamelen + 4, sizeof(WCHAR));
 	if (!path_slash)
 		return FALSE;
 	memcpy(path_slash, lpPathName, pathnamelen * sizeof(WCHAR));
 
-	const WCHAR sep[] = { PathGetSeparatorW(PATH_STYLE_NATIVE), '\0' };
 	const WCHAR star[] = { '*', '\0' };
-	PathCchAppendW(path_slash, path_slash_len, sep);
 	PathCchAppendW(path_slash, path_slash_len, star);
 
 	WIN32_FIND_DATAW findFileData = { 0 };
