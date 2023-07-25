@@ -340,6 +340,8 @@ extern "C"
 	WINPR_API BOOL winpr_MoveFileEx(LPCSTR lpExistingFileName, LPCSTR lpNewFileName, DWORD dwFlags);
 	WINPR_API BOOL winpr_DeleteFile(const char* lpFileName);
 	WINPR_API BOOL winpr_RemoveDirectory(LPCSTR lpPathName);
+	WINPR_API BOOL winpr_RemoveDirectory_RecursiveA(LPCSTR lpPathName);
+	WINPR_API BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName);
 	WINPR_API BOOL winpr_PathFileExists(const char* pszPath);
 	WINPR_API BOOL winpr_PathMakePath(const char* path, LPSECURITY_ATTRIBUTES lpAttributes);
 
