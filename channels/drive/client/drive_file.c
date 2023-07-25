@@ -137,81 +137,6 @@ fail:
 	return fullpath;
 }
 
-static BOOL drive_file_remove_dir(const WCHAR* path)
-{
-	WIN32_FIND_DATAW findFileData = { 0 };
-	BOOL ret = TRUE;
-	HANDLE dir = INVALID_HANDLE_VALUE;
-	WCHAR* fullpath = NULL;
-	WCHAR* path_slash = NULL;
-	size_t base_path_length = 0;
-
-	if (!path)
-		return FALSE;
-
-	base_path_length = _wcslen(path);
-	path_slash = (WCHAR*)calloc(base_path_length + 3, sizeof(WCHAR));
-
-	if (!path_slash)
-	{
-		WLog_ERR(TAG, "malloc failed!");
-		return FALSE;
-	}
-
-	CopyMemory(path_slash, path, base_path_length * sizeof(WCHAR));
-	path_slash[base_path_length] = L'/';
-	path_slash[base_path_length + 1] = L'*';
-	DEBUG_WSTR("Search in %s", path_slash);
-	dir = FindFirstFileW(path_slash, &findFileData);
-
-	if (dir == INVALID_HANDLE_VALUE)
-	{
-		free(path_slash);
-		return FALSE;
-	}
-
-	do
-	{
-		const size_t len = _wcsnlen(findFileData.cFileName, ARRAYSIZE(findFileData.cFileName));
-
-		if ((len == 1 && findFileData.cFileName[0] == L'.') ||
-		    (len == 2 && findFileData.cFileName[0] == L'.' && findFileData.cFileName[1] == L'.'))
-		{
-			continue;
-		}
-
-		fullpath = drive_file_combine_fullpath(path_slash, findFileData.cFileName, len);
-		DEBUG_WSTR("Delete %s", fullpath);
-
-		if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-		{
-			ret = drive_file_remove_dir(fullpath);
-		}
-		else
-		{
-			ret = DeleteFileW(fullpath);
-		}
-
-		free(fullpath);
-
-		if (!ret)
-			break;
-	} while (ret && FindNextFileW(dir, &findFileData) != 0);
-
-	FindClose(dir);
-
-	if (ret)
-	{
-		if (!RemoveDirectoryW(path))
-		{
-			ret = FALSE;
-		}
-	}
-
-	free(path_slash);
-	return ret;
-}
-
 static BOOL drive_file_set_fullpath(DRIVE_FILE* file, WCHAR* fullpath)
 {
 	if (!file || !fullpath)
@@ -418,7 +343,7 @@ BOOL drive_file_free(DRIVE_FILE* file)
 	{
 		if (file->is_dir)
 		{
-			if (!drive_file_remove_dir(file->fullpath))
+			if (!winpr_RemoveDirectory_RecursiveW(file->fullpath))
 				goto fail;
 		}
 		else if (!DeleteFileW(file->fullpath))
