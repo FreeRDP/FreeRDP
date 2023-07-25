@@ -203,6 +203,19 @@ WCHAR* _wcsdup(const WCHAR* strSource)
 	return strDestination;
 }
 
+WCHAR* _wcsncat(WCHAR* dst, const WCHAR* src, size_t sz)
+{
+	WINPR_ASSERT(dst);
+	WINPR_ASSERT(src || (sz == 0));
+
+	const size_t dlen = _wcslen(dst);
+	const size_t slen = _wcsnlen(src, sz);
+	for (size_t x = 0; x < slen; x++)
+		dst[dlen + x] = src[x];
+	dst[dlen + slen] = '\0';
+	return dst;
+}
+
 int _stricmp(const char* string1, const char* string2)
 {
 	return strcasecmp(string1, string2);

@@ -80,6 +80,7 @@ extern "C"
 	WINPR_API char* strtok_s(char* strToken, const char* strDelimit, char** context);
 	WINPR_API WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context);
 
+	WINPR_API WCHAR* _wcsncat(WCHAR* dst, const WCHAR* src, size_t sz);
 #else
 
 #define _wcscmp wcscmp
@@ -89,6 +90,7 @@ extern "C"
 #define _wcsstr wcsstr
 #define _wcschr wcschr
 #define _wcsrchr wcsrchr
+#define _wcsncat wcsncat
 
 #endif /* _WIN32 */
 
