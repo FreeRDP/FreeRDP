@@ -1208,7 +1208,7 @@ static UINT cliprdr_file_context_server_file_contents_response(
 
 	if ((fuse_request->operation_type == FUSE_LL_OPERATION_LOOKUP ||
 	     fuse_request->operation_type == FUSE_LL_OPERATION_GETATTR) &&
-	    file_contents_response->cbRequested < sizeof(UINT64))
+	    file_contents_response->cbRequested != sizeof(UINT64))
 	{
 		WLog_Print(file_context->log, WLOG_WARN,
 		           "Received invalid file size for file \"%s\" from the client",
