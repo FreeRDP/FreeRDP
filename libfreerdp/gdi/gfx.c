@@ -54,8 +54,8 @@ static BOOL is_within_surface(const gdiGfxSurface* surface, const RDPGFX_SURFACE
 	if (!is_rect_valid(&rect, surface->width, surface->height))
 	{
 		WLog_ERR(TAG,
-		         "Command rect %" PRIu32 "x" PRIu32 "-" PRIu32 "x" PRIu32
-		         " not within bounds of " PRIu32 "x" PRIu32,
+		         "Command rect %" PRIu32 "x%" PRIu32 "-%" PRIu32 "x%" PRIu32
+		         " not within bounds of %" PRIu32 "x%" PRIu32,
 		         rect.left, rect.top, cmd->width, cmd->height, surface->width, surface->height);
 		return FALSE;
 	}
