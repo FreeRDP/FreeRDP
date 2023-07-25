@@ -346,8 +346,8 @@ static BOOL maybe_clear_fuse_request(const void* key, void* value, void* arg)
 	                             clear_context->has_clip_data_id, clear_context->clip_data_id))
 		return TRUE;
 
-	WLog_Print(file_context->log, WLOG_DEBUG, "Clearing FileContentsRequest for file \"%s\"",
-	           fuse_file->filename_with_root);
+	DEBUG_CLIPRDR(file_context->log, "Clearing FileContentsRequest for file \"%s\"",
+	              fuse_file->filename_with_root);
 
 	fuse_reply_err(fuse_request->fuse_req, EIO);
 	HashTable_Remove(file_context->request_table, key);
@@ -406,8 +406,8 @@ static BOOL invalidate_inode(void* data, size_t index, va_list ap)
 
 	ArrayList_ForEach(fuse_file->children, notify_delete_child, file_context, fuse_file);
 
-	WLog_Print(file_context->log, WLOG_DEBUG, "Invalidating inode %lu for file \"%s\"",
-	           fuse_file->ino, fuse_file->filename);
+	DEBUG_CLIPRDR(file_context->log, "Invalidating inode %lu for file \"%s\"", fuse_file->ino,
+	              fuse_file->filename);
 	fuse_lowlevel_notify_inval_inode(file_context->fuse_sess, fuse_file->ino, 0, 0);
 	WLog_Print(file_context->log, WLOG_DEBUG, "Inode %lu invalidated", fuse_file->ino);
 
@@ -663,8 +663,8 @@ static CliprdrFuseFile* get_fuse_file_by_name_from_parent(CliprdrFileContext* fi
 			return child;
 	}
 
-	WLog_Print(file_context->log, WLOG_DEBUG,
-	           "Requested file \"%s\" in directory \"%s\" does not exist", name, parent->filename);
+	DEBUG_CLIPRDR(file_context->log, "Requested file \"%s\" in directory \"%s\" does not exist",
+	              name, parent->filename);
 
 	return NULL;
 }
@@ -741,9 +741,8 @@ static BOOL request_file_size_async(CliprdrFileContext* file_context, CliprdrFus
 		free(fuse_request);
 		return FALSE;
 	}
-	WLog_Print(file_context->log, WLOG_DEBUG,
-	           "Requested file size for file \"%s\" with stream id %u", fuse_file->filename,
-	           fuse_request->stream_id);
+	DEBUG_CLIPRDR(file_context->log, "Requested file size for file \"%s\" with stream id %u",
+	              fuse_file->filename, fuse_request->stream_id);
 
 	return TRUE;
 }
@@ -795,9 +794,9 @@ static void cliprdr_file_fuse_lookup(fuse_req_t fuse_req, fuse_ino_t parent_ino,
 		return;
 	}
 
-	WLog_Print(file_context->log, WLOG_DEBUG, "lookup() has been called for \"%s\"", name);
-	WLog_Print(file_context->log, WLOG_DEBUG, "Parent is \"%s\", child is \"%s\"",
-	           parent->filename_with_root, fuse_file->filename_with_root);
+	DEBUG_CLIPRDR(file_context->log, "lookup() has been called for \"%s\"", name);
+	DEBUG_CLIPRDR(file_context->log, "Parent is \"%s\", child is \"%s\"",
+	              parent->filename_with_root, fuse_file->filename_with_root);
 
 	if (!fuse_file->is_directory && !fuse_file->has_size)
 	{
@@ -839,8 +838,8 @@ static void cliprdr_file_fuse_getattr(fuse_req_t fuse_req, fuse_ino_t fuse_ino,
 		return;
 	}
 
-	WLog_Print(file_context->log, WLOG_DEBUG, "getattr() has been called for file \"%s\"",
-	           fuse_file->filename_with_root);
+	DEBUG_CLIPRDR(file_context->log, "getattr() has been called for file \"%s\"",
+	              fuse_file->filename_with_root);
 
 	if (!fuse_file->is_directory && !fuse_file->has_size)
 	{
@@ -931,9 +930,10 @@ static BOOL request_file_range_async(CliprdrFileContext* file_context, CliprdrFu
 		free(fuse_request);
 		return FALSE;
 	}
-	WLog_Print(file_context->log, WLOG_DEBUG,
-	           "Requested file range (%zu Bytes at offset %lu) for file \"%s\" with stream id %u",
-	           requested_size, offset, fuse_file->filename, fuse_request->stream_id);
+	DEBUG_CLIPRDR(
+	    file_context->log,
+	    "Requested file range (%zu Bytes at offset %lu) for file \"%s\" with stream id %u",
+	    requested_size, offset, fuse_file->filename, fuse_request->stream_id);
 
 	return TRUE;
 }
@@ -1036,8 +1036,8 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 		return;
 	}
 
-	WLog_Print(file_context->log, WLOG_DEBUG, "Reading directory \"%s\" at offset %lu",
-	           fuse_file->filename_with_root, offset);
+	DEBUG_CLIPRDR(file_context->log, "Reading directory \"%s\" at offset %lu",
+	              fuse_file->filename_with_root, offset);
 
 	if (offset >= ArrayList_Count(fuse_file->children))
 	{
@@ -1223,9 +1223,8 @@ static UINT cliprdr_file_context_server_file_contents_response(
 	if (fuse_request->operation_type == FUSE_LL_OPERATION_LOOKUP ||
 	    fuse_request->operation_type == FUSE_LL_OPERATION_GETATTR)
 	{
-		WLog_Print(file_context->log, WLOG_DEBUG,
-		           "Received file size for file \"%s\" with stream id %u",
-		           fuse_request->fuse_file->filename, file_contents_response->streamId);
+		DEBUG_CLIPRDR(file_context->log, "Received file size for file \"%s\" with stream id %u",
+		              fuse_request->fuse_file->filename, file_contents_response->streamId);
 
 		fuse_request->fuse_file->size = *((UINT64*)file_contents_response->requestedData);
 		fuse_request->fuse_file->has_size = TRUE;
@@ -1237,9 +1236,8 @@ static UINT cliprdr_file_context_server_file_contents_response(
 	}
 	else if (fuse_request->operation_type == FUSE_LL_OPERATION_READ)
 	{
-		WLog_Print(file_context->log, WLOG_DEBUG,
-		           "Received file range for file \"%s\" with stream id %u",
-		           fuse_request->fuse_file->filename, file_contents_response->streamId);
+		DEBUG_CLIPRDR(file_context->log, "Received file range for file \"%s\" with stream id %u",
+		              fuse_request->fuse_file->filename, file_contents_response->streamId);
 	}
 	HashTable_Unlock(file_context->inode_table);
 
