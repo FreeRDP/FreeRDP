@@ -47,8 +47,8 @@ SdlSelectList::~SdlSelectList()
 {
 	_list.clear();
 	_buttons.clear();
-	SDL_DestroyWindow(_window);
 	SDL_DestroyRenderer(_renderer);
+	SDL_DestroyWindow(_window);
 
 	TTF_Quit();
 }
