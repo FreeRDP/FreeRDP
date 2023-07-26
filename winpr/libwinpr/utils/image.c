@@ -27,7 +27,9 @@
 
 #include <winpr/image.h>
 
-#include "lodepng/lodepng.h"
+#if defined(WITH_LODEPNG)
+#include <lodepng.h>
+#endif
 #include <winpr/stream.h>
 
 #include "../log.h"
@@ -205,16 +207,18 @@ int winpr_image_write(wImage* image, const char* filename)
 		status = winpr_bitmap_write(filename, image->data, image->width, image->height,
 		                            image->bitsPerPixel);
 	}
+#if defined(WITH_LODEPNG)
 	else
 	{
 		unsigned lodepng_status;
 		lodepng_status = lodepng_encode32_file(filename, image->data, image->width, image->height);
 		status = (lodepng_status) ? -1 : 1;
 	}
-
+#endif
 	return status;
 }
 
+#if defined(WITH_LODEPNG)
 static int winpr_image_png_read_fp(wImage* image, FILE* fp)
 {
 	INT64 size;
@@ -269,6 +273,7 @@ static int winpr_image_png_read_buffer(wImage* image, const BYTE* buffer, size_t
 	image->scanline = image->bytesPerPixel * image->width;
 	return 1;
 }
+#endif
 
 static int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 {
@@ -463,12 +468,14 @@ int winpr_image_read(wImage* image, const char* filename)
 		image->type = WINPR_IMAGE_BITMAP;
 		status = winpr_image_bitmap_read_fp(image, fp);
 	}
+#if defined(WITH_LODEPNG)
 	else if ((sig[0] == 0x89) && (sig[1] == 'P') && (sig[2] == 'N') && (sig[3] == 'G') &&
 	         (sig[4] == '\r') && (sig[5] == '\n') && (sig[6] == 0x1A) && (sig[7] == '\n'))
 	{
 		image->type = WINPR_IMAGE_PNG;
 		status = winpr_image_png_read_fp(image, fp);
 	}
+#endif
 
 	fclose(fp);
 	return status;
@@ -489,12 +496,14 @@ int winpr_image_read_buffer(wImage* image, const BYTE* buffer, size_t size)
 		image->type = WINPR_IMAGE_BITMAP;
 		status = winpr_image_bitmap_read_buffer(image, buffer, size);
 	}
+#if defined(WITH_LODEPNG)
 	else if ((sig[0] == 0x89) && (sig[1] == 'P') && (sig[2] == 'N') && (sig[3] == 'G') &&
 	         (sig[4] == '\r') && (sig[5] == '\n') && (sig[6] == 0x1A) && (sig[7] == '\n'))
 	{
 		image->type = WINPR_IMAGE_PNG;
 		status = winpr_image_png_read_buffer(image, buffer, size);
 	}
+#endif
 
 	return status;
 }

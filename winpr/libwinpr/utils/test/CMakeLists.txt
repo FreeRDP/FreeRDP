@@ -7,7 +7,6 @@ set(${MODULE_PREFIX}_DRIVER ${MODULE_NAME}.c)
 set(${MODULE_PREFIX}_TESTS
 	TestIni.c
 	TestVersion.c
-	TestImage.c
 	TestBacktrace.c
 	TestQueue.c
 	TestPrint.c
@@ -26,6 +25,12 @@ set(${MODULE_PREFIX}_TESTS
 	TestStreamPool.c
 	TestMessageQueue.c
 	TestMessagePipe.c)
+
+if (WITH_LODEPNG)
+	list(APPEND ${MODULES_PREFIX}_TESTS
+		TestImage.c
+	)
+endif()
 
 create_test_sourcelist(${MODULE_PREFIX}_SRCS
 	${${MODULE_PREFIX}_DRIVER}
