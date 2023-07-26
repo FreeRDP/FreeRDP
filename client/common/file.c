@@ -189,7 +189,7 @@ struct rdp_file
 	DWORD GatewayProfileUsageMethod; /* gatewayprofileusagemethod */
 	DWORD GatewayCredentialsSource;  /* gatewaycredentialssource */
 
-	LPCSTR ResourceProvider; /* resourceprovider */
+	LPSTR ResourceProvider; /* resourceprovider */
 
 	DWORD UseRedirectionServerName; /* use redirection server name */
 
@@ -1144,7 +1144,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayArmTransport))
-		file->ResourceProvider = resource_provider_arm;
+		file->ResourceProvider = _strdup(resource_provider_arm);
 
 	file->AudioCaptureMode = freerdp_settings_get_bool(settings, FreeRDP_AudioCapture);
 	file->BitmapCachePersistEnable =
@@ -2546,6 +2546,7 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 		freerdp_client_file_string_check_free(file->DrivesToRedirect);
 		freerdp_client_file_string_check_free(file->DevicesToRedirect);
 		freerdp_client_file_string_check_free(file->WinPosStr);
+		freerdp_client_file_string_check_free(file->ResourceProvider);
 		free(file);
 	}
 }
