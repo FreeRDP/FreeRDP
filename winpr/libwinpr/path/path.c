@@ -1092,8 +1092,8 @@ static WCHAR* concat(const WCHAR* path, size_t pathlen, const WCHAR* name, size_
 	if (!str)
 		return NULL;
 
-	memcpy(str, path, pathlen * sizeof(WCHAR));
-	memcpy(&str[pathlen], name, namelen * sizeof(WCHAR));
+	_wcsncat(str, path, pathlen);
+	_wcsncat(str, name, namelen);
 	return str;
 }
 
@@ -1119,10 +1119,12 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 	WCHAR* path_slash = calloc(pathnamelen + 4, sizeof(WCHAR));
 	if (!path_slash)
 		return FALSE;
-	memcpy(path_slash, lpPathName, pathnamelen * sizeof(WCHAR));
+	_wcsncat(path_slash, lpPathName, pathnamelen);
 
 	const WCHAR star[] = { '*', '\0' };
-	PathCchAppendW(path_slash, path_slash_len, star);
+	const HRESULT hr = NativePathCchAppendW(path_slash, path_slash_len, star);
+	if (FAILED(hr))
+		goto fail;
 
 	WIN32_FIND_DATAW findFileData = { 0 };
 	HANDLE dir = FindFirstFileW(path_slash, &findFileData);
@@ -1136,8 +1138,8 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 	{
 		const size_t len = _wcsnlen(findFileData.cFileName, ARRAYSIZE(findFileData.cFileName));
 
-		if ((len == 1 && findFileData.cFileName[0] == L'.') ||
-		    (len == 2 && findFileData.cFileName[0] == L'.' && findFileData.cFileName[1] == L'.'))
+		if ((len == 1 && findFileData.cFileName[0] == '.') ||
+		    (len == 2 && findFileData.cFileName[0] == '.' && findFileData.cFileName[1] == '.'))
 		{
 			continue;
 		}

@@ -214,7 +214,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 
 	cchPattern = strnlen(pszPattern, cchPattern);
 	cchSearchPath = cchInstallPrefix + cchAddinPath + cchPattern + 3;
-	pszSearchPath = (LPSTR)malloc(cchSearchPath + 1);
+	pszSearchPath = (LPSTR)calloc(cchSearchPath + 1, sizeof(char));
 
 	if (!pszSearchPath)
 	{
@@ -225,9 +225,15 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 
 	CopyMemory(pszSearchPath, pszInstallPrefix, cchInstallPrefix);
 	pszSearchPath[cchInstallPrefix] = '\0';
-	NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, pszAddinPath);
-	NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, pszPattern);
+	const HRESULT hr1 = NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, pszAddinPath);
+	const HRESULT hr2 = NativePathCchAppendA(pszSearchPath, cchSearchPath + 1, pszPattern);
 	free(pszPattern);
+
+	if (FAILED(hr1) || FAILED(hr2))
+	{
+		free(pszSearchPath);
+		return NULL;
+	}
 
 	hFind = FindFirstFileUTF8(pszSearchPath, &FindData);
 
