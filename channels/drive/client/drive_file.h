@@ -41,7 +41,6 @@ typedef struct
 	WIN32_FIND_DATAW find_data;
 	const WCHAR* basepath;
 	WCHAR* fullpath;
-	WCHAR* filename;
 	BOOL delete_pending;
 	UINT32 FileAttributes;
 	UINT32 SharedAccess;
