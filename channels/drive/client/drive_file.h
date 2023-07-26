@@ -27,6 +27,7 @@
 #define FREERDP_CHANNEL_DRIVE_CLIENT_FILE_H
 
 #include <winpr/stream.h>
+#include <winpr/file.h>
 #include <freerdp/channels/log.h>
 
 #define TAG CHANNELS_TAG("drive.client")
