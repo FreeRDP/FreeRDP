@@ -35,10 +35,6 @@ set(COLLECTIONS_SRCS
 	collections/MessageQueue.c
 	collections/MessagePipe.c)
 
-set(LODEPNG_SRCS
-	lodepng/lodepng.c
-	lodepng/lodepng.h)
-
 if (WINPR_HAVE_SYSLOG_H)
 	set(SYSLOG_SRCS
 		wlog/SyslogAppender.c
@@ -142,14 +138,22 @@ endif()
 
 winpr_module_add(${SRCS}
 	${COLLECTIONS_SRCS}
-	${LODEPNG_SRCS}
 	${WLOG_SRCS}
 	${ASN1_SRCS}
 )
 
 winpr_include_directory_add(
-	"lodepng"
-	".")
+	"."
+)
+
+option(WITH_LODEPNG "build WinPR with PNG support" OFF)
+if (WITH_LODEPNG)
+	find_package(lodepng REQUIRED)
+
+	winpr_definition_add(-DWITH_LODEPNG)
+	winpr_include_directory_add(${lodepng_INCLUDE_DIRS})
+	winpr_library_add_private(${lodepng_LIBRARIES})
+endif()
 
 if(OPENSSL_FOUND)
 	winpr_include_directory_add(${OPENSSL_INCLUDE_DIR})
