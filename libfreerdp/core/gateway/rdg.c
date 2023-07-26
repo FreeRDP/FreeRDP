@@ -1119,9 +1119,8 @@ static BOOL rdg_get_gateway_credentials(rdpContext* context, rdp_auth_reason rea
 			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
 			return FALSE;
 		case AUTH_NO_CREDENTIALS:
-			freerdp_set_last_error_log(instance->context,
-			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
-			return FALSE;
+			WLog_INFO(TAG, "No credentials provided - using NULL identity");
+			return TRUE;
 		case AUTH_FAILED:
 		default:
 			return FALSE;
@@ -1162,6 +1161,7 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls, TCHAR* authPkg)
 			return FALSE;
 	}
 
+	SEC_WINNT_AUTH_IDENTITY* identityArg = &identity;
 	if (doSCLogon)
 	{
 		if (!identity_set_from_smartcard_hash(&identity, settings, FreeRDP_GatewayUsername,
@@ -1175,9 +1175,12 @@ static BOOL rdg_auth_init(rdpRdg* rdg, rdpTls* tls, TCHAR* authPkg)
 		if (!identity_set_from_settings(&identity, settings, FreeRDP_GatewayUsername,
 		                                FreeRDP_GatewayDomain, FreeRDP_GatewayPassword))
 			return FALSE;
+
+		if (!settings->GatewayUsername)
+			identityArg = NULL;
 	}
 
-	if (!credssp_auth_setup_client(rdg->auth, "HTTP", settings->GatewayHostname, &identity,
+	if (!credssp_auth_setup_client(rdg->auth, "HTTP", settings->GatewayHostname, identityArg,
 	                               rdg->smartcard ? rdg->smartcard->pkinitArgs : NULL))
 	{
 		sspi_FreeAuthIdentity(&identity);

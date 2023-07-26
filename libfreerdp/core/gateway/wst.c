@@ -82,9 +82,8 @@ static BOOL wst_get_gateway_credentials(rdpContext* context, rdp_auth_reason rea
 			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
 			return FALSE;
 		case AUTH_NO_CREDENTIALS:
-			freerdp_set_last_error_log(instance->context,
-			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
-			return FALSE;
+			WLog_INFO(TAG, "No credentials provided - using NULL identity");
+			return TRUE;
 		case AUTH_FAILED:
 		default:
 			return FALSE;
@@ -113,7 +112,8 @@ static BOOL wst_auth_init(rdpWst* wst, rdpTls* tls, TCHAR* authPkg)
 	                                FreeRDP_GatewayDomain, FreeRDP_GatewayPassword))
 		return FALSE;
 
-	if (!credssp_auth_setup_client(wst->auth, "HTTP", wst->gwhostname, &identity, NULL))
+	SEC_WINNT_AUTH_IDENTITY* identityArg = (settings->GatewayUsername ? &identity : NULL);
+	if (!credssp_auth_setup_client(wst->auth, "HTTP", wst->gwhostname, identityArg, NULL))
 	{
 		sspi_FreeAuthIdentity(&identity);
 		return FALSE;

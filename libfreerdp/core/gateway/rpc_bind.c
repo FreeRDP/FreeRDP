@@ -141,8 +141,8 @@ static int rpc_bind_setup(rdpRpc* rpc)
 			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
 			return -1;
 		case AUTH_NO_CREDENTIALS:
-			freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
-			return 0;
+			WLog_INFO(TAG, "No credentials provided - using NULL identity");
+			break;
 		case AUTH_FAILED:
 		default:
 			return -1;
@@ -155,7 +155,8 @@ static int rpc_bind_setup(rdpRpc* rpc)
 	                                FreeRDP_GatewayDomain, FreeRDP_GatewayPassword))
 		return -1;
 
-	if (!credssp_auth_setup_client(rpc->auth, NULL, settings->GatewayHostname, &identity, NULL))
+	SEC_WINNT_AUTH_IDENTITY* identityArg = (settings->GatewayUsername ? &identity : NULL);
+	if (!credssp_auth_setup_client(rpc->auth, NULL, settings->GatewayHostname, identityArg, NULL))
 	{
 		sspi_FreeAuthIdentity(&identity);
 		return -1;

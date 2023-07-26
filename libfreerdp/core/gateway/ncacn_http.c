@@ -166,9 +166,8 @@ BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel)
 			freerdp_set_last_error_log(instance->context, FREERDP_ERROR_CONNECT_CANCELLED);
 			return FALSE;
 		case AUTH_NO_CREDENTIALS:
-			freerdp_set_last_error_log(instance->context,
-			                           FREERDP_ERROR_CONNECT_NO_OR_MISSING_CREDENTIALS);
-			return FALSE;
+			WLog_INFO(TAG, "No credentials provided - using NULL identity");
+			break;
 		case AUTH_FAILED:
 		default:
 			return FALSE;
@@ -181,8 +180,9 @@ BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel)
 	                                FreeRDP_GatewayDomain, FreeRDP_GatewayPassword))
 		return FALSE;
 
+	SEC_WINNT_AUTH_IDENTITY* identityArg = (settings->GatewayUsername ? &identity : NULL);
 	const BOOL res =
-	    credssp_auth_setup_client(auth, "HTTP", settings->GatewayHostname, &identity, NULL);
+	    credssp_auth_setup_client(auth, "HTTP", settings->GatewayHostname, identityArg, NULL);
 
 	sspi_FreeAuthIdentity(&identity);
 
