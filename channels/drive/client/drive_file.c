@@ -35,6 +35,7 @@
 
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
+#include <winpr/string.h>
 #include <winpr/path.h>
 #include <winpr/file.h>
 #include <winpr/stream.h>
@@ -142,15 +143,25 @@ static BOOL drive_file_set_fullpath(DRIVE_FILE* file, WCHAR* fullpath)
 	if (!file || !fullpath)
 		return FALSE;
 
+	const size_t len = _wcslen(fullpath);
 	free(file->fullpath);
+	free(file->filename);
+	file->fullpath = NULL;
+	file->filename = NULL;
+	if (len == 0)
+		return TRUE;
+
 	file->fullpath = fullpath;
-	file->filename = _wcsrchr(file->fullpath, L'/');
 
-	if (file->filename == NULL)
-		file->filename = file->fullpath;
+	const WCHAR sep[] = { PathGetSeparatorW(PATH_STYLE_NATIVE), '\0' };
+	WCHAR* filename = _wcsrchr(file->fullpath, *sep);
+	if (_wcsncmp(filename, sep, ARRAYSIZE(sep)) == 0)
+		*filename = '\0';
+
+	if (!filename || (_wcsnlen(filename, 2) <= 1))
+		file->filename = _wcsdup(file->fullpath);
 	else
-		file->filename += 1;
-
+		file->filename = _wcsdup(&filename[1]);
 	return TRUE;
 }
 
@@ -354,6 +365,7 @@ BOOL drive_file_free(DRIVE_FILE* file)
 fail:
 	DEBUG_WSTR("Free %s", file->fullpath);
 	free(file->fullpath);
+	free(file->filename);
 	free(file);
 	return rc;
 }
