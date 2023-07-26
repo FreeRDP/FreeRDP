@@ -41,12 +41,6 @@ macro(configure_msvc_runtime)
 			endif()
 		endforeach()
 
-		set(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
-		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-		set(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL}")
-		set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-
 		foreach(variable ${variables})
 			set(${variable} "${${variable}}" CACHE STRING "MSVC_${variable}" FORCE)
 		endforeach()
