@@ -1715,9 +1715,9 @@ static CliprdrFuseFile* clip_data_dir_new(CliprdrFileContext* file_context, BOOL
 	}
 
 	if (has_clip_data_id)
-		_snprintf(clip_data_dir->filename_with_root, path_length, "/%u", clip_data_id);
+		_snprintf(clip_data_dir->filename_with_root, path_length, "/%u", (unsigned)clip_data_id);
 	else
-		_snprintf(clip_data_dir->filename_with_root, path_length, "/%lu", NO_CLIP_DATA_ID);
+		_snprintf(clip_data_dir->filename_with_root, path_length, "/%" PRIu64, NO_CLIP_DATA_ID);
 
 	clip_data_dir->filename = strrchr(clip_data_dir->filename_with_root, '/') + 1;
 
