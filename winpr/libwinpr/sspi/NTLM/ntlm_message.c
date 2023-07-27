@@ -561,7 +561,7 @@ SECURITY_STATUS ntlm_read_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buf
 	return SEC_I_CONTINUE_NEEDED;
 }
 
-SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
+SECURITY_STATUS ntlm_write_NegotiateMessage(NTLM_CONTEXT* context, const PSecBuffer buffer)
 {
 	wStream sbuffer;
 	wStream* s;
@@ -801,7 +801,7 @@ fail:
 	return status;
 }
 
-SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, PSecBuffer buffer)
+SECURITY_STATUS ntlm_write_ChallengeMessage(NTLM_CONTEXT* context, const PSecBuffer buffer)
 {
 	wStream sbuffer;
 	wStream* s;
