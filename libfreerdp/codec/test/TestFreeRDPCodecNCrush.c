@@ -39,9 +39,9 @@ static BOOL test_NCrushCompressBells(void)
 		       "\n",
 		       DstSize, expectedSize);
 		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, TEST_BELLS_NCRUSH, expectedSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, TEST_BELLS_NCRUSH, expectedSize * 8, 0);
 		goto fail;
 	}
 
@@ -49,9 +49,9 @@ static BOOL test_NCrushCompressBells(void)
 	{
 		printf("NCrushCompressBells: output mismatch\n");
 		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, TEST_BELLS_NCRUSH, expectedSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, TEST_BELLS_NCRUSH, expectedSize * 8, 0);
 		goto fail;
 	}
 

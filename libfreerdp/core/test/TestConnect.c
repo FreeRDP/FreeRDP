@@ -93,7 +93,7 @@ static int testTimeout(int port)
 	if (diff < timeout)
 		return -1;
 
-	printf("%s: Success!\n", __FUNCTION__);
+	printf("%s: Success!\n", __func__);
 	return 0;
 }
 
@@ -168,14 +168,14 @@ static int testAbort(int port)
 
 	if (diff > 5000)
 	{
-		printf("%s required %" PRIu32 "ms for the test\n", __FUNCTION__, diff);
+		printf("%s required %" PRIu32 "ms for the test\n", __func__, diff);
 		return -1;
 	}
 
 	if (WAIT_OBJECT_0 != status)
 		return -1;
 
-	printf("%s: Success!\n", __FUNCTION__);
+	printf("%s: Success!\n", __func__);
 	return 0;
 }
 
@@ -297,11 +297,11 @@ static int testSuccess(int port)
 	WaitForSingleObject(process.hProcess, INFINITE);
 	CloseHandle(process.hProcess);
 	CloseHandle(process.hThread);
-	printf("%s: returned %d!\n", __FUNCTION__, r);
+	printf("%s: returned %d!\n", __func__, r);
 	rc = r;
 
 	if (rc == 0)
-		printf("%s: Success!\n", __FUNCTION__);
+		printf("%s: Success!\n", __func__);
 
 fail:
 	free(exe);

@@ -696,7 +696,7 @@ fail:
 }
 
 #define WLog_ERR_BIO(transport, biofunc, bio) \
-	transport_bio_error_log(transport, biofunc, bio, __FILE__, __FUNCTION__, __LINE__)
+	transport_bio_error_log(transport, biofunc, bio, __FILE__, __func__, __LINE__)
 
 static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO* bio, LPCSTR file,
                                     LPCSTR func, DWORD line)

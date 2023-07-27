@@ -43,7 +43,7 @@
 
 static char* NTLM_PACKAGE_NAME = "NTLM";
 
-#define check_context(ctx) check_context_((ctx), __FILE__, __FUNCTION__, __LINE__)
+#define check_context(ctx) check_context_((ctx), __FILE__, __func__, __LINE__)
 static BOOL check_context_(NTLM_CONTEXT* context, const char* file, const char* fkt, size_t line)
 {
 	BOOL rc = TRUE;

@@ -708,57 +708,57 @@ static int test_norbert2_case(void)
 
 	if (!region16_union_rect(&region, &region, &rect1))
 	{
-		fprintf(stderr, "%s: Error 1 - region16_union_rect failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: Error 1 - region16_union_rect failed\n", __func__);
 		goto out;
 	}
 
 	if (!(rects = region16_rects(&region, &nbRects)))
 	{
-		fprintf(stderr, "%s: Error 2 - region16_rects failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: Error 2 - region16_rects failed\n", __func__);
 		goto out;
 	}
 
 	if (nbRects != 1)
 	{
-		fprintf(stderr, "%s: Error 3 - expected nbRects == 1 but got %" PRIu32 "\n", __FUNCTION__,
+		fprintf(stderr, "%s: Error 3 - expected nbRects == 1 but got %" PRIu32 "\n", __func__,
 		        nbRects);
 		goto out;
 	}
 
 	if (!compareRectangles(&rects[0], &rect1, 1))
 	{
-		fprintf(stderr, "%s: Error 4 - compare failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: Error 4 - compare failed\n", __func__);
 		goto out;
 	}
 
 	if (!region16_union_rect(&region, &region, &rect2))
 	{
-		fprintf(stderr, "%s: Error 5 - region16_union_rect failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: Error 5 - region16_union_rect failed\n", __func__);
 		goto out;
 	}
 
 	if (!(rects = region16_rects(&region, &nbRects)))
 	{
-		fprintf(stderr, "%s: Error 6 - region16_rects failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: Error 6 - region16_rects failed\n", __func__);
 		goto out;
 	}
 
 	if (nbRects != 2)
 	{
-		fprintf(stderr, "%s: Error 7 - expected nbRects == 2 but got %" PRIu32 "\n", __FUNCTION__,
+		fprintf(stderr, "%s: Error 7 - expected nbRects == 2 but got %" PRIu32 "\n", __func__,
 		        nbRects);
 		goto out;
 	}
 
 	if (!compareRectangles(&rects[0], &rect2, 1))
 	{
-		fprintf(stderr, "%s: Error 8 - compare failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: Error 8 - compare failed\n", __func__);
 		goto out;
 	}
 
 	if (!compareRectangles(&rects[1], &rect1, 1))
 	{
-		fprintf(stderr, "%s: Error 9 - compare failed\n", __FUNCTION__);
+		fprintf(stderr, "%s: Error 9 - compare failed\n", __func__);
 		goto out;
 	}
 

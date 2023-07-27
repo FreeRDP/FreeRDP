@@ -16,7 +16,7 @@ int TestLibraryLoadLibrary(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 	if (!GetModuleFileNameA(NULL, LibraryPath, PATHCCH_MAX_CCH))
 	{
-		printf("%s: GetModuleFilenameA failed: 0x%08" PRIX32 "\n", __FUNCTION__, GetLastError());
+		printf("%s: GetModuleFilenameA failed: 0x%08" PRIX32 "\n", __func__, GetLastError());
 		return -1;
 	}
 
@@ -24,7 +24,7 @@ int TestLibraryLoadLibrary(int argc, char* argv[])
 
 	if (!(p = strrchr(LibraryPath, PathGetSeparatorA(PATH_STYLE_NATIVE))))
 	{
-		printf("%s: Error identifying module directory path\n", __FUNCTION__);
+		printf("%s: Error identifying module directory path\n", __func__);
 		return -1;
 	}
 	*p = 0;
@@ -33,17 +33,17 @@ int TestLibraryLoadLibrary(int argc, char* argv[])
 	SharedLibraryExtension = PathGetSharedLibraryExtensionA(PATH_SHARED_LIB_EXT_WITH_DOT);
 	NativePathCchAddExtensionA(LibraryPath, PATHCCH_MAX_CCH, SharedLibraryExtension);
 
-	printf("%s: Loading Library: '%s'\n", __FUNCTION__, LibraryPath);
+	printf("%s: Loading Library: '%s'\n", __func__, LibraryPath);
 
 	if (!(library = LoadLibraryA(LibraryPath)))
 	{
-		printf("%s: LoadLibraryA failure: 0x%08" PRIX32 "\n", __FUNCTION__, GetLastError());
+		printf("%s: LoadLibraryA failure: 0x%08" PRIX32 "\n", __func__, GetLastError());
 		return -1;
 	}
 
 	if (!FreeLibrary(library))
 	{
-		printf("%s: FreeLibrary failure: 0x%08" PRIX32 "\n", __FUNCTION__, GetLastError());
+		printf("%s: FreeLibrary failure: 0x%08" PRIX32 "\n", __func__, GetLastError());
 		return -1;
 	}
 

@@ -531,7 +531,7 @@ fail:
 	gdi_DeleteObject((HGDIOBJECT)hBmpDstOriginal);
 	gdi_DeleteDC(hdcSrc);
 	gdi_DeleteDC(hdcDst);
-	fprintf(stderr, "%s: TODO Test not implemented!!!\n", __FUNCTION__);
+	fprintf(stderr, "%s: TODO Test not implemented!!!\n", __func__);
 	return TRUE; // rc;
 }
 

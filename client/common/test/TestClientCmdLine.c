@@ -8,7 +8,7 @@
 
 typedef BOOL (*validate_settings_pr)(rdpSettings* settings);
 
-#define printref() printf("%s:%d: in function %-40s:", __FILE__, __LINE__, __FUNCTION__)
+#define printref() printf("%s:%d: in function %-40s:", __FILE__, __LINE__, __func__)
 
 #define TEST_ERROR(format, ...)                 \
 	do                                          \
@@ -244,8 +244,7 @@ int TestClientCmdLine(int argc, char* argv[])
 		int failure = 0;
 		char** command_line = string_list_copy(current->command_line);
 
-		if (!testcase(__FUNCTION__, command_line,
-		              string_list_length((const char* const*)command_line),
+		if (!testcase(__func__, command_line, string_list_length((const char* const*)command_line),
 		              current->expected_status, current->validate_settings))
 		{
 			TEST_FAILURE("parsing arguments.\n");

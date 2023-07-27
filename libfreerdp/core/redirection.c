@@ -1181,7 +1181,7 @@ BOOL redirection_set_byte_option(rdpRedirection* redirection, UINT32 flag, const
 		case LB_TARGET_CERTIFICATE:
 			return rdp_redirection_read_target_cert(redirection, data, length);
 		default:
-			return redirection_unsupported(__FUNCTION__, flag,
+			return redirection_unsupported(__func__, flag,
 			                               LB_CLIENT_TSV_URL | LB_PASSWORD | LB_LOAD_BALANCE_INFO |
 			                                   LB_REDIRECTION_GUID | LB_TARGET_CERTIFICATE);
 	}
@@ -1203,7 +1203,7 @@ BOOL redirection_set_string_option(rdpRedirection* redirection, UINT32 flag, con
 		case LB_TARGET_NET_ADDRESS:
 			return redirection_copy_string(&redirection->TargetNetAddress, str);
 		default:
-			return redirection_unsupported(__FUNCTION__, flag,
+			return redirection_unsupported(__func__, flag,
 			                               LB_USERNAME | LB_DOMAIN | LB_TARGET_FQDN |
 			                                   LB_TARGET_NETBIOS_NAME | LB_TARGET_NET_ADDRESS);
 	}
@@ -1219,6 +1219,6 @@ BOOL redirection_set_array_option(rdpRedirection* redirection, UINT32 flag, cons
 			return redirection_copy_array(&redirection->TargetNetAddresses,
 			                              &redirection->TargetNetAddressesCount, str, count);
 		default:
-			return redirection_unsupported(__FUNCTION__, flag, LB_TARGET_NET_ADDRESSES);
+			return redirection_unsupported(__func__, flag, LB_TARGET_NET_ADDRESSES);
 	}
 }

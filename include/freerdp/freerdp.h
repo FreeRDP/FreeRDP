@@ -611,7 +611,7 @@ owned by rdpRdp */
 	FREERDP_API const char* freerdp_get_last_error_category(UINT32 error);
 
 #define freerdp_set_last_error(context, lastError) \
-	freerdp_set_last_error_ex((context), (lastError), __FUNCTION__, __FILE__, __LINE__)
+	freerdp_set_last_error_ex((context), (lastError), __func__, __FILE__, __LINE__)
 
 #define freerdp_set_last_error_if_not(context, lastError)             \
 	do                                                                \
@@ -621,7 +621,7 @@ owned by rdpRdp */
 	} while (0)
 
 #define freerdp_set_last_error_log(context, lastError) \
-	freerdp_set_last_error_ex((context), (lastError), __FUNCTION__, __FILE__, __LINE__)
+	freerdp_set_last_error_ex((context), (lastError), __func__, __FILE__, __LINE__)
 	FREERDP_API void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError,
 	                                           const char* fkt, const char* file, int line);
 

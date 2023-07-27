@@ -19,7 +19,7 @@ int TestRdTkNinePatch(int argc, char* argv[])
 
 	if (!(engine = rdtk_engine_new()))
 	{
-		printf("%s: error creating rdtk engine (%" PRIu32 ")\n", __FUNCTION__, GetLastError());
+		printf("%s: error creating rdtk engine (%" PRIu32 ")\n", __func__, GetLastError());
 		goto out;
 	}
 
@@ -30,7 +30,7 @@ int TestRdTkNinePatch(int argc, char* argv[])
 	/* let rdtk allocate the surface buffer */
 	if (!(surface = rdtk_surface_new(engine, NULL, width, height, scanline)))
 	{
-		printf("%s: error creating auto-allocated surface (%" PRIu32 ")\n", __FUNCTION__,
+		printf("%s: error creating auto-allocated surface (%" PRIu32 ")\n", __func__,
 		       GetLastError());
 		goto out;
 	}
@@ -40,13 +40,13 @@ int TestRdTkNinePatch(int argc, char* argv[])
 	/* test self-allocated buffer */
 	if (!(data = calloc(height, scanline)))
 	{
-		printf("%s: error allocating surface buffer (%" PRIu32 ")\n", __FUNCTION__, GetLastError());
+		printf("%s: error allocating surface buffer (%" PRIu32 ")\n", __func__, GetLastError());
 		goto out;
 	}
 
 	if (!(surface = rdtk_surface_new(engine, data, width, height, scanline)))
 	{
-		printf("%s: error creating self-allocated surface (%" PRIu32 ")\n", __FUNCTION__,
+		printf("%s: error creating self-allocated surface (%" PRIu32 ")\n", __func__,
 		       GetLastError());
 		goto out;
 	}

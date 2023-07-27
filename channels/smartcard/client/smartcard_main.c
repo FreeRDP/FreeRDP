@@ -37,7 +37,7 @@
 
 #include "smartcard_main.h"
 
-#define CAST_FROM_DEVICE(device) cast_device_from(device, __FUNCTION__, __FILE__, __LINE__)
+#define CAST_FROM_DEVICE(device) cast_device_from(device, __func__, __FILE__, __LINE__)
 
 typedef struct
 {

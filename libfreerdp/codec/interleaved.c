@@ -153,7 +153,7 @@ static const char* rle_code_str_buffer(UINT32 code, char* buffer, size_t size)
 }
 
 #define buffer_within_range(pbSrc, pbEnd) \
-	buffer_within_range_((pbSrc), (pbEnd), __FUNCTION__, __FILE__, __LINE__)
+	buffer_within_range_((pbSrc), (pbEnd), __func__, __FILE__, __LINE__)
 static INLINE BOOL buffer_within_range_(const void* pbSrc, const void* pbEnd, const char* fkt,
                                         const char* file, size_t line)
 {
@@ -353,7 +353,7 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 }
 
 #define ensure_capacity(start, end, size, base) \
-	ensure_capacity_((start), (end), (size), (base), __FUNCTION__, __FILE__, __LINE__)
+	ensure_capacity_((start), (end), (size), (base), __func__, __FILE__, __LINE__)
 static INLINE BOOL ensure_capacity_(const BYTE* start, const BYTE* end, size_t size, size_t base,
                                     const char* fkt, const char* file, size_t line)
 {

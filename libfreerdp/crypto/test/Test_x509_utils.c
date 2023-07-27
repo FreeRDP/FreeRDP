@@ -94,7 +94,7 @@ static int TestCertificateFile(const char* certificate_path,
 
 	if (!certificate)
 	{
-		printf("%s: failure: cannot read certificate file '%s'\n", __FUNCTION__, certificate_path);
+		printf("%s: failure: cannot read certificate file '%s'\n", __func__, certificate_path);
 		success = -1;
 		goto fail;
 	}
@@ -113,12 +113,11 @@ static int TestCertificateFile(const char* certificate_path,
 
 		if (result)
 		{
-			printf("%s: crypto got %-40s -> \"%s\"\n", __FUNCTION__, test->field_description,
-			       result);
+			printf("%s: crypto got %-40s -> \"%s\"\n", __func__, test->field_description, result);
 
 			if (0 != strcmp(result, test->expected_result))
 			{
-				printf("%s: failure: for %s, actual: \"%s\", expected \"%s\"\n", __FUNCTION__,
+				printf("%s: failure: for %s, actual: \"%s\", expected \"%s\"\n", __func__,
 				       test->field_description, result, test->expected_result);
 				success = -1;
 			}
@@ -127,7 +126,7 @@ static int TestCertificateFile(const char* certificate_path,
 		}
 		else
 		{
-			printf("%s: failure: cannot get %s\n", __FUNCTION__, test->field_description);
+			printf("%s: failure: cannot get %s\n", __func__, test->field_description);
 		}
 	}
 

@@ -132,16 +132,16 @@ typedef struct
 		}                                                \
 	} while (0)
 
-#define Stream_CheckAndLogRequiredLengthSrv(log, s, len)                                       \
-	Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, len, 1,                          \
-	                                       proxy_client_rx " %s(%s:%" PRIuz ")", __FUNCTION__, \
+#define Stream_CheckAndLogRequiredLengthSrv(log, s, len)                                   \
+	Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, len, 1,                      \
+	                                       proxy_client_rx " %s(%s:%" PRIuz ")", __func__, \
 	                                       __FILE__, (size_t)__LINE__)
-#define Stream_CheckAndLogRequiredLengthClient(log, s, len)                                    \
-	Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, len, 1,                          \
-	                                       proxy_server_rx " %s(%s:%" PRIuz ")", __FUNCTION__, \
+#define Stream_CheckAndLogRequiredLengthClient(log, s, len)                                \
+	Stream_CheckAndLogRequiredLengthWLogEx(log, WLOG_WARN, s, len, 1,                      \
+	                                       proxy_server_rx " %s(%s:%" PRIuz ")", __func__, \
 	                                       __FILE__, (size_t)__LINE__)
 #define Stream_CheckAndLogRequiredLengthRx(srv, log, s, len) \
-	Stream_CheckAndLogRequiredLengthRx_(srv, log, s, len, 1, __FUNCTION__, __FILE__, __LINE__)
+	Stream_CheckAndLogRequiredLengthRx_(srv, log, s, len, 1, __func__, __FILE__, __LINE__)
 static BOOL Stream_CheckAndLogRequiredLengthRx_(BOOL srv, wLog* log, wStream* s, size_t nmemb,
                                                 size_t size, const char* fkt, const char* file,
                                                 size_t line)
@@ -517,7 +517,7 @@ static UINT rdpdr_send_client_name_request(pClientContext* pc, pf_channel_client
 }
 
 #define rdpdr_ignore_capset(srv, log, s, header) \
-	rdpdr_ignore_capset_((srv), (log), (s), header, __FUNCTION__)
+	rdpdr_ignore_capset_((srv), (log), (s), header, __func__)
 static UINT rdpdr_ignore_capset_(BOOL srv, wLog* log, wStream* s,
                                  const RDPDR_CAPABILITY_HEADER* header, const char* fkt)
 {

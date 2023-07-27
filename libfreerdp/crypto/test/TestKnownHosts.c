@@ -260,7 +260,7 @@ static BOOL test_certs_dir(void)
 	rdpCertificateData* data3 = NULL;
 	rdpCertificateData* data4 = NULL;
 
-	printf("%s\n", __FUNCTION__);
+	printf("%s\n", __func__);
 	if (!setup_config(&settings))
 		goto fail;
 

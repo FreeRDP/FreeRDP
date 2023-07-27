@@ -28,7 +28,7 @@ char* Safe_XGetAtomName(Display* display, Atom atom);
 #define LogTagAndXGetWindowProperty(tag, display, w, property, long_offset, long_length, delete,   \
                                     req_type, actual_type_return, actual_format_return,            \
                                     nitems_return, bytes_after_return, prop_return)                \
-	LogTagAndXGetWindowProperty_ex((tag), __FILE__, __FUNCTION__, __LINE__, (display), (w),        \
+	LogTagAndXGetWindowProperty_ex((tag), __FILE__, __func__, __LINE__, (display), (w),            \
 	                               (property), (long_offset), (long_length), (delete), (req_type), \
 	                               (actual_type_return), (actual_format_return), (nitems_return),  \
 	                               (bytes_after_return), (prop_return))
@@ -42,7 +42,7 @@ int LogTagAndXGetWindowProperty_ex(const char* tag, const char* file, const char
 #define LogDynAndXGetWindowProperty(log, display, w, property, long_offset, long_length, delete,   \
                                     req_type, actual_type_return, actual_format_return,            \
                                     nitems_return, bytes_after_return, prop_return)                \
-	LogDynAndXGetWindowProperty_ex((log), __FILE__, __FUNCTION__, __LINE__, (display), (w),        \
+	LogDynAndXGetWindowProperty_ex((log), __FILE__, __func__, __LINE__, (display), (w),            \
 	                               (property), (long_offset), (long_length), (delete), (req_type), \
 	                               (actual_type_return), (actual_format_return), (nitems_return),  \
 	                               (bytes_after_return), (prop_return))
@@ -54,25 +54,25 @@ int LogDynAndXGetWindowProperty_ex(wLog* log, const char* file, const char* fkt,
                                    unsigned char** prop_return);
 
 #define LogTagAndXChangeProperty(tag, display, w, property, type, format, mode, data, nelements) \
-	LogTagAndXChangeProperty_ex((tag), __FILE__, __FUNCTION__, __LINE__, (display), (w),         \
-	                            (property), (type), (format), (mode), (data), (nelements))
+	LogTagAndXChangeProperty_ex((tag), __FILE__, __func__, __LINE__, (display), (w), (property), \
+	                            (type), (format), (mode), (data), (nelements))
 int LogTagAndXChangeProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
                                 Display* display, Window w, Atom property, Atom type, int format,
                                 int mode, _Xconst unsigned char* data, int nelements);
 
 #define LogDynAndXChangeProperty(log, display, w, property, type, format, mode, data, nelements) \
-	LogDynAndXChangeProperty_ex((log), __FILE__, __FUNCTION__, __LINE__, (display), (w),         \
-	                            (property), (type), (format), (mode), (data), (nelements))
+	LogDynAndXChangeProperty_ex((log), __FILE__, __func__, __LINE__, (display), (w), (property), \
+	                            (type), (format), (mode), (data), (nelements))
 int LogDynAndXChangeProperty_ex(wLog* log, const char* file, const char* fkt, size_t line,
                                 Display* display, Window w, Atom property, Atom type, int format,
                                 int mode, _Xconst unsigned char* data, int nelements);
 
 #define LogTagAndXDeleteProperty(tag, display, w, property) \
-	LogTagAndXDeleteProperty_ex((tag), __FILE__, __FUNCTION__, __LINE__, (display), (w), (property))
+	LogTagAndXDeleteProperty_ex((tag), __FILE__, __func__, __LINE__, (display), (w), (property))
 int LogTagAndXDeleteProperty_ex(const char* tag, const char* file, const char* fkt, size_t line,
                                 Display* display, Window w, Atom property);
 
 #define LogDynAndXDeleteProperty(log, display, w, property) \
-	LogDynAndXDeleteProperty_ex((log), __FILE__, __FUNCTION__, __LINE__, (display), (w), (property))
+	LogDynAndXDeleteProperty_ex((log), __FILE__, __func__, __LINE__, (display), (w), (property))
 int LogDynAndXDeleteProperty_ex(wLog* log, const char* file, const char* fkt, size_t line,
                                 Display* display, Window w, Atom property);
