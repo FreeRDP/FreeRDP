@@ -60,7 +60,7 @@ typedef struct
 	DWORD SessionId;
 
 	AUDIO_FORMAT* audin_server_formats;
-	size_t audin_n_server_formats;
+	UINT32 audin_n_server_formats;
 	AUDIO_FORMAT* audin_negotiated_format;
 	UINT32 audin_client_format_idx;
 	wLog* log;
@@ -142,7 +142,15 @@ static UINT audin_server_recv_formats(audin_server_context* context, wStream* s,
 		WLog_Print(audin->log, WLOG_WARN,
 		           "cbSizeFormatsPacket is invalid! Expected: %u Got: %zu. Fixing size",
 		           pdu.cbSizeFormatsPacket, Stream_GetPosition(s));
-		pdu.cbSizeFormatsPacket = Stream_GetPosition(s);
+		const size_t pos = Stream_GetPosition(s);
+		if (pos > UINT32_MAX)
+		{
+			WLog_Print(audin->log, WLOG_ERROR, "Stream too long, %" PRIuz " exceeds UINT32_MAX",
+			           pos);
+			error = ERROR_INVALID_PARAMETER;
+			goto fail;
+		}
+		pdu.cbSizeFormatsPacket = (UINT32)pos;
 	}
 
 	pdu.ExtraDataSize = Stream_GetRemainingLength(s);
@@ -152,6 +160,7 @@ static UINT audin_server_recv_formats(audin_server_context* context, wStream* s,
 		WLog_Print(audin->log, WLOG_ERROR, "context->ReceiveFormats failed with error %" PRIu32 "",
 		           error);
 
+fail:
 	audio_formats_free(pdu.SoundFormats, pdu.NumFormats);
 
 	return error;
@@ -559,8 +568,12 @@ static UINT audin_server_packet_send(audin_server_context* context, wStream* s)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 
-	if (!WTSVirtualChannelWrite(audin->audin_channel, (PCHAR)Stream_Buffer(s),
-	                            Stream_GetPosition(s), &written))
+	const size_t pos = Stream_GetPosition(s);
+	if (pos > UINT32_MAX)
+		return ERROR_INVALID_PARAMETER;
+
+	if (!WTSVirtualChannelWrite(audin->audin_channel, (PCHAR)Stream_Buffer(s), (UINT32)pos,
+	                            &written))
 	{
 		WLog_Print(audin->log, WLOG_ERROR, "WTSVirtualChannelWrite failed!");
 		error = ERROR_INTERNAL_ERROR;
@@ -598,7 +611,7 @@ static UINT audin_server_send_formats(audin_server_context* context, const SNDIN
 {
 	audin_server* audin = (audin_server*)context;
 
-	WINPR_ASSERT(context);
+	WINPR_ASSERT(audin);
 	WINPR_ASSERT(formats);
 
 	wStream* s = audin_server_packet_new(audin->log, 4 + 4 + 18, MSG_SNDIN_FORMATS);
@@ -626,7 +639,7 @@ static UINT audin_server_send_formats(audin_server_context* context, const SNDIN
 static UINT audin_server_send_open(audin_server_context* context, const SNDIN_OPEN* open)
 {
 	audin_server* audin = (audin_server*)context;
-	WINPR_ASSERT(context);
+	WINPR_ASSERT(audin);
 	WINPR_ASSERT(open);
 
 	wStream* s = audin_server_packet_new(audin->log, 4 + 4 + 18 + 22, MSG_SNDIN_OPEN);
@@ -745,7 +758,7 @@ static UINT audin_server_receive_formats_default(audin_server_context* context,
 		return ERROR_INVALID_DATA;
 	}
 
-	for (size_t i = 0; i < audin->audin_n_server_formats; ++i)
+	for (UINT32 i = 0; i < audin->audin_n_server_formats; ++i)
 	{
 		for (UINT32 j = 0; j < formats->NumFormats; ++j)
 		{
@@ -863,14 +876,20 @@ BOOL audin_server_set_formats(audin_server_context* context, SSIZE_T count,
 	audin->audin_negotiated_format = NULL;
 
 	if (count < 0)
-		audin->audin_n_server_formats = server_audin_get_formats(&audin->audin_server_formats);
+	{
+		const size_t audin_n_server_formats =
+		    server_audin_get_formats(&audin->audin_server_formats);
+		WINPR_ASSERT(audin_n_server_formats <= UINT32_MAX);
+
+		audin->audin_n_server_formats = (UINT32)audin_n_server_formats;
+	}
 	else
 	{
 		AUDIO_FORMAT* audin_server_formats = audio_formats_new(count);
 		if (!audin_server_formats)
 			return count == 0;
 
-		for (size_t x = 0; x < count; x++)
+		for (SSIZE_T x = 0; x < count; x++)
 		{
 			if (!audio_format_copy(&formats[x], &audin_server_formats[x]))
 			{
@@ -879,8 +898,9 @@ BOOL audin_server_set_formats(audin_server_context* context, SSIZE_T count,
 			}
 		}
 
+		WINPR_ASSERT(count <= UINT32_MAX);
 		audin->audin_server_formats = audin_server_formats;
-		audin->audin_n_server_formats = count;
+		audin->audin_n_server_formats = (UINT32)count;
 	}
 	return audin->audin_n_server_formats > 0;
 }
