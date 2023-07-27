@@ -1392,7 +1392,6 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
                            UINT16 port)
 {
 	int match;
-	int index;
 	size_t length;
 	BOOL certificate_status;
 	char* common_name = NULL;
@@ -1493,7 +1492,7 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 
 		if (dns_names)
 		{
-			for (index = 0; index < dns_names_count; index++)
+			for (size_t index = 0; index < dns_names_count; index++)
 			{
 				if (tls_match_hostname(dns_names[index], dns_names_lengths[index], hostname))
 				{
@@ -1732,7 +1731,6 @@ void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port
                                                const char* common_name, char** alt_names,
                                                int alt_names_count)
 {
-	int index;
 	WINPR_ASSERT(NULL != hostname);
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	WLog_ERR(TAG, "@           WARNING: CERTIFICATE NAME MISMATCH!           @");
@@ -1748,7 +1746,7 @@ void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port
 		WINPR_ASSERT(NULL != alt_names);
 		WLog_ERR(TAG, "Alternative names:");
 
-		for (index = 0; index < alt_names_count; index++)
+		for (int index = 0; index < alt_names_count; index++)
 		{
 			WINPR_ASSERT(alt_names[index]);
 			WLog_ERR(TAG, "\t %s", alt_names[index]);
