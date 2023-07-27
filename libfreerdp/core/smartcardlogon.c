@@ -894,12 +894,19 @@ BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert, BOOL
 		return FALSE;
 	}
 
+	if (count > UINT32_MAX)
+	{
+		WLog_ERR(TAG, "smartcard certificate count %" PRIuz " exceeds UINT32_MAX", count);
+		return FALSE;
+	}
+
 	if (count > 1)
 	{
-		DWORD index;
+		DWORD index = 0;
 
 		if (!instance->ChooseSmartcard ||
-		    !instance->ChooseSmartcard(context->instance, cert_list, count, &index, gateway))
+		    !instance->ChooseSmartcard(context->instance, cert_list, (UINT32)count, &index,
+		                               gateway))
 		{
 			WLog_ERR(TAG, "more than one suitable smartcard certificate was found");
 			smartcardCertList_Free(cert_list, count);
