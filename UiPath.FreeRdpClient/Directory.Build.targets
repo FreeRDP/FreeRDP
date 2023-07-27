@@ -19,6 +19,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		
 		<PackageReference Update="coverlet.collector" Version="3.1.2" />
 		<PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.1.0" />
 		<PackageReference Update="Moq" Version="4.18.4" />
@@ -33,5 +38,5 @@
 		<PackageReference Version="$(MicrosoftExtensionsVersion)" Update="Microsoft.Extensions.Logging.Abstractions" />
 		<PackageReference Version="$(MicrosoftExtensionsVersion)" Update="Microsoft.Extensions.Hosting.Abstractions" />
 		<PackageReference Version="$(MicrosoftExtensionsVersion)" Update="Microsoft.Extensions.Hosting" />
-	</ItemGroup>
+	</ItemGroup>	
 </Project>

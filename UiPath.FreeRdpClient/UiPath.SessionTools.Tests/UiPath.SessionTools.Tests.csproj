@@ -11,7 +11,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="MartinCostello.Logging.XUnit" Version="0.3.0" />
+      <PackageReference Include="Microsoft.SourceLink.GitHub" />
+      <PackageReference Include="MartinCostello.Logging.XUnit" Version="0.3.0" />
 	  <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
 	  <PackageReference Include="System.DirectoryServices.AccountManagement" Version="7.0.0" />
 	</ItemGroup>

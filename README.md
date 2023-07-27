@@ -1,4 +1,14 @@
-## UiPath fork of FreeRDP
+﻿## UiPath fork of FreeRDP
+
+This repo forks the FreeRDP repo, thus allowing us to make changes that fit our needs and augment the codebase with other components.
+From time to time there is a need to merge the changes from the original repo into this one.
+
+### ❗When updating the FreeRDP library from the official repo, please update the following in this file (README.md):
+
+|**Original repository tag/branch used:**| `2.5.0` |
+| --- | --- |
+|**Original corresponding commit hash:**| `d50aef95520df4216c638495a6049125c00742cb` |
+
 
 ### Build instructions
 * Visual Studio 2022 installed in `C:\Program Files` required.  
@@ -36,3 +46,7 @@ cd .ci/Scripts
 * Open [UiPath.FreeRdpClient/UiPath.FreeRdpClient.sln](file://UiPath.FreeRdpClient/UiPath.FreeRdpClient.sln)
 * To test with a nugetRef instead of projectRef edit the [UiPath.FreeRdp.Tests.csproj](file://UiPath.FreeRdpClient/UiPath.FreeRdpClient.Tests/UiPath.FreeRdp.Tests.csproj)
 search for: `<When Condition="'$(UseNugetRef)'!=''">`
+
+### Our current baseline from the original FreeRDP repo
+
+Check this [wiki page](./UiPath.FreeRdpClient/README.md)
