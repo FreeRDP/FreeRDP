@@ -1392,7 +1392,7 @@ static void cliprdr_local_file_try_close(CliprdrLocalFile* file, UINT res, UINT6
 		WLog_Print(file->context->log, WLOG_DEBUG, "closing file %s after error %" PRIu32,
 		           file->name, res);
 	}
-	else if (((file->size > 0) && (offset + size >= file->size)))
+	else if (((file->size > 0) && (offset + size >= (UINT64)file->size)))
 	{
 		WINPR_ASSERT(file->context);
 		WLog_Print(file->context->log, WLOG_DEBUG, "closing file %s after read", file->name);
