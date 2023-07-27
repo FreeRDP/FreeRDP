@@ -266,7 +266,7 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE* const* pSrc, const UINT
                                              BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                              const prim_size_t* roi)
 {
-	if ((unsigned long)pSrc[0] % 16 || (unsigned long)pSrc[1] % 16 || (unsigned long)pSrc[2] % 16 ||
+	if ((uintptr_t)pSrc[0] % 16 || (uintptr_t)pSrc[1] % 16 || (uintptr_t)pSrc[2] % 16 ||
 	    srcStep[0] % 16 || srcStep[1] % 16 || srcStep[2] % 16)
 		return generic->YUV444ToRGB_8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
 
@@ -448,7 +448,7 @@ static pstatus_t ssse3_RGBToYUV420_BGRX(const BYTE* pSrc, UINT32 srcFormat, UINT
 		return !PRIMITIVES_SUCCESS;
 	}
 
-	if (roi->width % 16 || (unsigned long)pSrc % 16 || srcStep % 16)
+	if (roi->width % 16 || (uintptr_t)pSrc % 16 || srcStep % 16)
 	{
 		return generic->RGBToYUV420_8u_P3AC4R(pSrc, srcFormat, srcStep, pDst, dstStep, roi);
 	}
@@ -707,7 +707,7 @@ static pstatus_t ssse3_RGBToAVC444YUV_BGRX(const BYTE* pSrc, UINT32 srcFormat, U
 	if (roi->height < 1 || roi->width < 1)
 		return !PRIMITIVES_SUCCESS;
 
-	if (roi->width % 16 || (unsigned long)pSrc % 16 || srcStep % 16)
+	if (roi->width % 16 || (uintptr_t)pSrc % 16 || srcStep % 16)
 		return generic->RGBToAVC444YUV(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step,
 		                               roi);
 
@@ -1004,7 +1004,7 @@ static pstatus_t ssse3_RGBToAVC444YUVv2_BGRX(const BYTE* pSrc, UINT32 srcFormat,
 	if (roi->height < 1 || roi->width < 1)
 		return !PRIMITIVES_SUCCESS;
 
-	if (roi->width % 16 || (unsigned long)pSrc % 16 || srcStep % 16)
+	if (roi->width % 16 || (uintptr_t)pSrc % 16 || srcStep % 16)
 		return generic->RGBToAVC444YUVv2(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step,
 		                                 roi);
 
