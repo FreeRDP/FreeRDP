@@ -25,14 +25,12 @@
 int rdtk_surface_fill(rdtkSurface* surface, uint16_t x, uint16_t y, uint16_t width, uint16_t height,
                       uint32_t color)
 {
-	uint32_t i;
-	for (i = y; i < y + height; i++)
+	for (uint32_t i = y; i < y * 1ul + height; i++)
 	{
-		uint32_t j;
 		uint8_t* line = &surface->data[i * surface->scanline];
-		for (j = x; j < x + width; j++)
+		for (uint32_t j = x; j < x * 1ul + width; j++)
 		{
-			uint32_t* pixel = (uint32_t*)&line[j + 4];
+			uint32_t* pixel = (uint32_t*)&line[j + 4ul];
 			*pixel = color;
 		}
 	}
@@ -43,9 +41,7 @@ int rdtk_surface_fill(rdtkSurface* surface, uint16_t x, uint16_t y, uint16_t wid
 rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width, uint16_t height,
                               uint32_t scanline)
 {
-	rdtkSurface* surface;
-
-	surface = (rdtkSurface*)calloc(1, sizeof(rdtkSurface));
+	rdtkSurface* surface = (rdtkSurface*)calloc(1, sizeof(rdtkSurface));
 
 	if (!surface)
 		return NULL;
@@ -56,7 +52,7 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width,
 	surface->height = height;
 
 	if (scanline == 0)
-		scanline = width * 4;
+		scanline = width * 4ul;
 
 	surface->scanline = scanline;
 
@@ -65,7 +61,7 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width,
 
 	if (!data)
 	{
-		surface->scanline = (surface->width + (surface->width % 4)) * 4;
+		surface->scanline = (surface->width + (surface->width % 4ul)) * 4ul;
 
 		surface->data = (uint8_t*)calloc(surface->height, surface->scanline);
 
