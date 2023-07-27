@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/stream.h>
 
 #include "echo_main.h"
@@ -48,10 +49,17 @@ static UINT echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 {
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	const BYTE* pBuffer = Stream_ConstPointer(data);
-	UINT32 cbSize = Stream_GetRemainingLength(data);
+	const size_t cbSize = Stream_GetRemainingLength(data);
+
+	WINPR_ASSERT(callback);
+	WINPR_ASSERT(callback->channel);
+	WINPR_ASSERT(callback->channel->Write);
+
+	if (cbSize > UINT32_MAX)
+		return ERROR_INVALID_PARAMETER;
 
 	/* echo back what we have received. ECHO does not have any message IDs. */
-	return callback->channel->Write(callback->channel, cbSize, pBuffer, NULL);
+	return callback->channel->Write(callback->channel, (ULONG)cbSize, pBuffer, NULL);
 }
 
 /**
