@@ -92,34 +92,43 @@ static INLINE UINT32 lzcnt_s(UINT32 x)
 	if (!g_LZCNT)
 	{
 		UINT32 y;
-		int n = 32;
+		UINT32 n = 32;
 		y = x >> 16;
 		if (y != 0)
 		{
+			WINPR_ASSERT(n >= 16);
 			n = n - 16;
 			x = y;
 		}
 		y = x >> 8;
 		if (y != 0)
 		{
+			WINPR_ASSERT(n >= 8);
 			n = n - 8;
 			x = y;
 		}
 		y = x >> 4;
 		if (y != 0)
 		{
+			WINPR_ASSERT(n >= 4);
 			n = n - 4;
 			x = y;
 		}
 		y = x >> 2;
 		if (y != 0)
 		{
+			WINPR_ASSERT(n >= 2);
 			n = n - 2;
 			x = y;
 		}
 		y = x >> 1;
 		if (y != 0)
+		{
+			WINPR_ASSERT(n >= 2);
 			return n - 2;
+		}
+
+		WINPR_ASSERT(n >= x);
 		return n - x;
 	}
 
@@ -127,7 +136,7 @@ static INLINE UINT32 lzcnt_s(UINT32 x)
 }
 
 int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData,
-                    UINT32 DstSize)
+                    UINT32 rDstSize)
 {
 	int vk;
 	int run;
@@ -148,6 +157,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 	INT16* pOutput;
 	wBitStream* bs;
 	wBitStream s_bs;
+	const SSIZE_T DstSize = rDstSize;
 
 	InitOnceExecuteOnce(&rfx_rlgr_init_once, rfx_rlgr_init, NULL, NULL);
 
@@ -646,7 +656,6 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* b
 		{
 			int numZeros;
 			int runmax;
-			int mag;
 			int sign;
 
 			/* RUN-LENGTH MODE */
@@ -680,7 +689,8 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* b
 			   need to output the last two bits, otherwise mstsc will crash */
 
 			/* encode the nonzero value using GR coding */
-			mag = (input < 0 ? -input : input); /* absolute value of input coefficient */
+			const UINT32 mag =
+			    (UINT32)(input < 0 ? -input : input); /* absolute value of input coefficient */
 			sign = (input < 0 ? 1 : 0);         /* sign of input coefficient */
 
 			OutputBit(1, sign);              /* output the sign bit */

@@ -820,7 +820,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
                                         UINT16* pExpectedBlockType)
 {
 	BOOL rc;
-	int close_cnt;
+	size_t close_cnt = 0;
 	BYTE quant;
 	RFX_TILE* tile;
 	UINT32* quants;
@@ -1237,38 +1237,49 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 
 	if (ok)
 	{
-		UINT32 i, j;
-		UINT32 nbUpdateRects;
-		REGION16 clippingRects;
-		const RECTANGLE_16* updateRects;
+		UINT32 nbUpdateRects = 0;
+		REGION16 clippingRects = { 0 };
+		const RECTANGLE_16* updateRects = NULL;
 		const DWORD formatSize = FreeRDPGetBytesPerPixel(context->pixel_format);
 		const UINT32 dstWidth = dstStride / FreeRDPGetBytesPerPixel(dstFormat);
 		region16_init(&clippingRects);
 
-		for (i = 0; i < message->numRects; i++)
+		WINPR_ASSERT(dstWidth <= UINT16_MAX);
+		WINPR_ASSERT(dstHeight <= UINT16_MAX);
+		for (UINT32 i = 0; i < message->numRects; i++)
 		{
-			RECTANGLE_16 clippingRect;
+			RECTANGLE_16 clippingRect = { 0 };
 			const RFX_RECT* rect = &(message->rects[i]);
-			clippingRect.left = MIN(left + rect->x, dstWidth);
-			clippingRect.top = MIN(top + rect->y, dstHeight);
-			clippingRect.right = MIN(clippingRect.left + rect->width, dstWidth);
-			clippingRect.bottom = MIN(clippingRect.top + rect->height, dstHeight);
+
+			WINPR_ASSERT(left + rect->x <= UINT16_MAX);
+			WINPR_ASSERT(top + rect->y <= UINT16_MAX);
+			WINPR_ASSERT(clippingRect.left + rect->width <= UINT16_MAX);
+			WINPR_ASSERT(clippingRect.top + rect->height <= UINT16_MAX);
+
+			clippingRect.left = (UINT16)MIN(left + rect->x, dstWidth);
+			clippingRect.top = (UINT16)MIN(top + rect->y, dstHeight);
+			clippingRect.right = (UINT16)MIN(clippingRect.left + rect->width, dstWidth);
+			clippingRect.bottom = (UINT16)MIN(clippingRect.top + rect->height, dstHeight);
 			region16_union_rect(&clippingRects, &clippingRects, &clippingRect);
 		}
 
-		for (i = 0; i < message->numTiles; i++)
+		for (UINT32 i = 0; i < message->numTiles; i++)
 		{
-			RECTANGLE_16 updateRect;
+			RECTANGLE_16 updateRect = { 0 };
 			const RFX_TILE* tile = rfx_message_get_tile(message, i);
-			updateRect.left = left + tile->x;
-			updateRect.top = top + tile->y;
+
+			WINPR_ASSERT(left + tile->x <= UINT16_MAX);
+			WINPR_ASSERT(top + tile->y <= UINT16_MAX);
+
+			updateRect.left = (UINT16)left + tile->x;
+			updateRect.top = (UINT16)top + tile->y;
 			updateRect.right = updateRect.left + 64;
 			updateRect.bottom = updateRect.top + 64;
 			region16_init(&updateRegion);
 			region16_intersect_rect(&updateRegion, &clippingRects, &updateRect);
 			updateRects = region16_rects(&updateRegion, &nbUpdateRects);
 
-			for (j = 0; j < nbUpdateRects; j++)
+			for (UINT32 j = 0; j < nbUpdateRects; j++)
 			{
 				const UINT32 stride = 64 * formatSize;
 				const UINT32 nXDst = updateRects[j].left;
@@ -1964,7 +1975,7 @@ static BOOL rfx_write_message_tileset(RFX_CONTEXT* context, wStream* s, const RF
 	Stream_Write_UINT32(s, message->tilesDataSize); /* tilesDataSize (4 bytes) */
 
 	UINT32* quantVals = message->quantVals;
-	for (size_t i = 0; i < message->numQuant * 5; i++)
+	for (size_t i = 0; i < message->numQuant * 5ul; i++)
 	{
 		WINPR_ASSERT(quantVals);
 		Stream_Write_UINT8(s, quantVals[0] + (quantVals[1] << 4));
