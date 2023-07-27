@@ -28,8 +28,8 @@
 
 UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size)
 {
-	UINT32 mstime;
-	UINT32 wSamples;
+	UINT32 mstime = 0;
+	UINT32 wSamples = 0;
 
 	/**
 	 * [MSDN-AUDIOFORMAT]:
@@ -38,7 +38,9 @@ UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size)
 
 	if (format->wBitsPerSample)
 	{
-		wSamples = (size * 8) / format->wBitsPerSample;
+		const size_t samples = (size * 8) / format->wBitsPerSample;
+		WINPR_ASSERT(samples <= UINT32_MAX);
+		wSamples = (UINT32)samples;
 		mstime = (((wSamples * 1000) / format->nSamplesPerSec) / format->nChannels);
 	}
 	else
@@ -52,7 +54,9 @@ UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size)
 			if ((format->cbSize == 2) && (format->data))
 			{
 				nSamplesPerBlock = *((UINT16*)format->data);
-				wSamples = (size / format->nBlockAlign) * nSamplesPerBlock;
+				const size_t samples = (size / format->nBlockAlign) * nSamplesPerBlock;
+				WINPR_ASSERT(samples <= UINT32_MAX);
+				wSamples = (UINT32)samples;
 				mstime = (((wSamples * 1000) / format->nSamplesPerSec) / format->nChannels);
 			}
 			else
