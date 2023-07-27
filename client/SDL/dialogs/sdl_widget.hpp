@@ -63,7 +63,7 @@ class SdlWidget
 	const SDL_Rect& rect() const;
 
   public:
-#define widget_log_error(res, what) SdlWidget::error_ex(res, what, __FILE__, __LINE__, __FUNCTION__)
+#define widget_log_error(res, what) SdlWidget::error_ex(res, what, __FILE__, __LINE__, __func__)
 	static bool error_ex(Uint32 res, const char* what, const char* file, size_t line,
 	                     const char* fkt);
 

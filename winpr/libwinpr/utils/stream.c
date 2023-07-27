@@ -29,16 +29,16 @@
 
 #define STREAM_TAG WINPR_TAG("wStream")
 
-#define STREAM_ASSERT(cond)                                                                \
-	do                                                                                     \
-	{                                                                                      \
-		if (!(cond))                                                                       \
-		{                                                                                  \
-			WLog_FATAL(STREAM_TAG, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, __FUNCTION__, \
-			           (size_t)__LINE__);                                                  \
-			winpr_log_backtrace(STREAM_TAG, WLOG_FATAL, 20);                               \
-			abort();                                                                       \
-		}                                                                                  \
+#define STREAM_ASSERT(cond)                                                            \
+	do                                                                                 \
+	{                                                                                  \
+		if (!(cond))                                                                   \
+		{                                                                              \
+			WLog_FATAL(STREAM_TAG, "%s [%s:%s:%" PRIuz "]", #cond, __FILE__, __func__, \
+			           (size_t)__LINE__);                                              \
+			winpr_log_backtrace(STREAM_TAG, WLOG_FATAL, 20);                           \
+			abort();                                                                   \
+		}                                                                              \
 	} while (0)
 
 BOOL Stream_EnsureCapacity(wStream* s, size_t size)

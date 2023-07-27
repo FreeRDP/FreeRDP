@@ -235,7 +235,7 @@ fail:
 static BOOL test_copy(void)
 {
 	BOOL rc = FALSE;
-	wLog* log = WLog_Get(__FUNCTION__);
+	wLog* log = WLog_Get(__func__);
 	rdpSettings* settings = freerdp_settings_new(0);
 	rdpSettings* copy = freerdp_settings_clone(settings);
 	rdpSettings* modified = freerdp_settings_clone(settings);

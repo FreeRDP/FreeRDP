@@ -52,7 +52,7 @@ fail:
 	freerdp_addin_argv_free(arg2);
 	freerdp_addin_argv_free(arg3);
 	freerdp_addin_argv_free(arg4);
-	printf("%s: %d\n", __FUNCTION__, rc);
+	printf("%s: %d\n", __func__, rc);
 	return rc;
 }
 
@@ -88,7 +88,7 @@ fail:
 	freerdp_addin_argv_free(arg);
 	freerdp_addin_argv_free(clone);
 	freerdp_addin_argv_free(clone2);
-	printf("%s: %d\n", __FUNCTION__, rc);
+	printf("%s: %d\n", __func__, rc);
 	return rc;
 }
 
@@ -142,7 +142,7 @@ static BOOL test_add_remove(void)
 	rc = TRUE;
 fail:
 	freerdp_addin_argv_free(arg);
-	printf("%s: %d\n", __FUNCTION__, rc);
+	printf("%s: %d\n", __func__, rc);
 	return rc;
 }
 
@@ -180,7 +180,7 @@ static BOOL test_set_argument(void)
 	rc = TRUE;
 fail:
 	freerdp_addin_argv_free(arg);
-	printf("%s: %d\n", __FUNCTION__, rc);
+	printf("%s: %d\n", __func__, rc);
 	return rc;
 }
 
@@ -221,7 +221,7 @@ static BOOL test_replace_argument(void)
 	rc = TRUE;
 fail:
 	freerdp_addin_argv_free(arg);
-	printf("%s: %d\n", __FUNCTION__, rc);
+	printf("%s: %d\n", __func__, rc);
 	return rc;
 }
 
@@ -269,7 +269,7 @@ static BOOL test_set_argument_value(void)
 	rc = TRUE;
 fail:
 	freerdp_addin_argv_free(arg);
-	printf("%s: %d\n", __FUNCTION__, rc);
+	printf("%s: %d\n", __func__, rc);
 	return rc;
 }
 
@@ -320,7 +320,7 @@ static BOOL test_replace_argument_value(void)
 	rc = TRUE;
 fail:
 	freerdp_addin_argv_free(arg);
-	printf("%s: %d\n", __FUNCTION__, rc);
+	printf("%s: %d\n", __func__, rc);
 	return rc;
 }
 

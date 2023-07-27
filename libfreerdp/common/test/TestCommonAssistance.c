@@ -214,7 +214,7 @@ int TestCommonAssistance(int argc, char* argv[])
 	wLog* log;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	log = WLog_Get(__FUNCTION__);
+	log = WLog_Get(__func__);
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	for (size_t x = 0; x < ARRAYSIZE(fail_tests); x++)

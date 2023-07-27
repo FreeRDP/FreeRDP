@@ -109,7 +109,7 @@ extern "C"
 	WINPR_API BOOL ResetEvent(HANDLE hEvent);
 
 #if defined(WITH_DEBUG_EVENTS)
-#define DumpEventHandles() DumpEventHandles_(__FUNCTION__, __FILE__, __LINE__)
+#define DumpEventHandles() DumpEventHandles_(__func__, __FILE__, __LINE__)
 	WINPR_API void DumpEventHandles_(const char* fkt, const char* file, size_t line);
 #endif
 #ifdef UNICODE

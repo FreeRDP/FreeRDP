@@ -149,7 +149,7 @@ static BOOL log_libusb_result_(wLog* log, DWORD lvl, const char* fmt, const char
 }
 
 #define log_libusb_result(log, lvl, fmt, error, ...) \
-	log_libusb_result_((log), (lvl), (fmt), __FUNCTION__, __FILE__, __LINE__, error, ##__VA_ARGS__)
+	log_libusb_result_((log), (lvl), (fmt), __func__, __FILE__, __LINE__, error, ##__VA_ARGS__)
 
 const char* usb_interface_class_to_string(uint8_t class)
 {

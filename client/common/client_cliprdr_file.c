@@ -1276,7 +1276,7 @@ static UINT cliprdr_file_context_send_file_contents_failure(
 
 	const UINT64 offset = (((UINT64)fileContentsRequest->nPositionHigh) << 32) |
 	                      ((UINT64)fileContentsRequest->nPositionLow);
-	writelog(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+	writelog(file->log, WLOG_WARN, __FILE__, __func__, __LINE__,
 	         "server file contents request [lockID %" PRIu32 ", streamID %" PRIu32
 	         ", index %" PRIu32 "] offset %" PRIu64 ", size %" PRIu32 " failed",
 	         fileContentsRequest->clipDataId, fileContentsRequest->streamId,
@@ -1315,14 +1315,14 @@ static BOOL dump_streams(const void* key, void* value, void* arg)
 	const UINT32* ukey = key;
 	CliprdrLocalStream* cur = value;
 
-	writelog(cur->context->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+	writelog(cur->context->log, WLOG_WARN, __FILE__, __func__, __LINE__,
 	         "[key %" PRIu32 "] lockID %" PRIu32 ", count %" PRIuz ", locked %d", *ukey,
 	         cur->lockId, cur->count, cur->locked);
 	for (size_t x = 0; x < cur->count; x++)
 	{
 		const CliprdrLocalFile* file = &cur->files[x];
-		writelog(cur->context->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
-		         "file [%" PRIuz "] ", x, file->name, file->size);
+		writelog(cur->context->log, WLOG_WARN, __FILE__, __func__, __LINE__, "file [%" PRIuz "] ",
+		         x, file->name, file->size);
 	}
 	return TRUE;
 }
@@ -1342,7 +1342,7 @@ static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 
 		}
 		else
 		{
-			writelog(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+			writelog(file->log, WLOG_WARN, __FILE__, __func__, __LINE__,
 			         "invalid entry index for lockID %" PRIu32 ", index %" PRIu32 " [count %" PRIu32
 			         "] [locked %d]",
 			         lockId, listIndex, cur->count, cur->locked);
@@ -1350,7 +1350,7 @@ static CliprdrLocalFile* file_info_for_request(CliprdrFileContext* file, UINT32 
 	}
 	else
 	{
-		writelog(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+		writelog(file->log, WLOG_WARN, __FILE__, __func__, __LINE__,
 		         "missing entry for lockID %" PRIu32 ", index %" PRIu32, lockId, listIndex);
 		HashTable_Foreach(file->local_streams, dump_streams, file);
 	}
@@ -1370,7 +1370,7 @@ static CliprdrLocalFile* file_for_request(CliprdrFileContext* file, UINT32 lockI
 		}
 		if (!f->fp)
 		{
-			writelog(file->log, WLOG_WARN, __FILE__, __FUNCTION__, __LINE__,
+			writelog(file->log, WLOG_WARN, __FILE__, __func__, __LINE__,
 			         "[lockID %" PRIu32 ", index %" PRIu32
 			         "] failed to open file '%s' [size %" PRId64 "] %s [%d]",
 			         lockId, listIndex, f->name, f->size, strerror(errno), errno);

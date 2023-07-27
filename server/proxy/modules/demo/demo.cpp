@@ -333,7 +333,7 @@ static BOOL demo_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdat
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(data);
 
-	WLog_INFO(TAG, "%s", __FUNCTION__);
+	WLog_INFO(TAG, "%s", __func__);
 	return TRUE;
 }
 
@@ -345,7 +345,7 @@ static BOOL demo_static_channel_intercept_list(proxyPlugin* plugin, proxyData* p
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(data);
 
-	WLog_INFO(TAG, "%s", __FUNCTION__);
+	WLog_INFO(TAG, "%s", __func__);
 	return TRUE;
 }
 
@@ -357,7 +357,7 @@ static BOOL demo_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, vo
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(data);
 
-	WLog_INFO(TAG, "%s", __FUNCTION__);
+	WLog_INFO(TAG, "%s", __func__);
 	return TRUE;
 }
 

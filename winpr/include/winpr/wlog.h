@@ -78,7 +78,7 @@ extern "C"
 
 		size_t LineNumber;   /* __LINE__ */
 		LPCSTR FileName;     /* __FILE__ */
-		LPCSTR FunctionName; /* __FUNCTION__ */
+		LPCSTR FunctionName; /* __func__ */
 
 		/* Data Message */
 
@@ -127,14 +127,14 @@ extern "C"
 	 */
 	WINPR_API BOOL WLog_SetContext(wLog* log, const char* (*fkt)(void*), void* context);
 
-#define WLog_Print(_log, _log_level, ...)                                              \
-	do                                                                                 \
-	{                                                                                  \
-		if (WLog_IsLevelActive(_log, _log_level))                                      \
-		{                                                                              \
-			WLog_PrintMessage(_log, WLOG_MESSAGE_TEXT, _log_level, __LINE__, __FILE__, \
-			                  __FUNCTION__, __VA_ARGS__);                              \
-		}                                                                              \
+#define WLog_Print(_log, _log_level, ...)                                                        \
+	do                                                                                           \
+	{                                                                                            \
+		if (WLog_IsLevelActive(_log, _log_level))                                                \
+		{                                                                                        \
+			WLog_PrintMessage(_log, WLOG_MESSAGE_TEXT, _log_level, __LINE__, __FILE__, __func__, \
+			                  __VA_ARGS__);                                                      \
+		}                                                                                        \
 	} while (0)
 
 #define WLog_Print_tag(_tag, _log_level, ...)                 \
@@ -146,44 +146,44 @@ extern "C"
 		WLog_Print(_log_cached_ptr, _log_level, __VA_ARGS__); \
 	} while (0)
 
-#define WLog_PrintVA(_log, _log_level, _args)                                            \
-	do                                                                                   \
-	{                                                                                    \
-		if (WLog_IsLevelActive(_log, _log_level))                                        \
-		{                                                                                \
-			WLog_PrintMessageVA(_log, WLOG_MESSAGE_TEXT, _log_level, __LINE__, __FILE__, \
-			                    __FUNCTION__, _args);                                    \
-		}                                                                                \
+#define WLog_PrintVA(_log, _log_level, _args)                                                      \
+	do                                                                                             \
+	{                                                                                              \
+		if (WLog_IsLevelActive(_log, _log_level))                                                  \
+		{                                                                                          \
+			WLog_PrintMessageVA(_log, WLOG_MESSAGE_TEXT, _log_level, __LINE__, __FILE__, __func__, \
+			                    _args);                                                            \
+		}                                                                                          \
 	} while (0)
 
-#define WLog_Data(_log, _log_level, ...)                                               \
-	do                                                                                 \
-	{                                                                                  \
-		if (WLog_IsLevelActive(_log, _log_level))                                      \
-		{                                                                              \
-			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, __LINE__, __FILE__, \
-			                  __FUNCTION__, __VA_ARGS__);                              \
-		}                                                                              \
+#define WLog_Data(_log, _log_level, ...)                                                         \
+	do                                                                                           \
+	{                                                                                            \
+		if (WLog_IsLevelActive(_log, _log_level))                                                \
+		{                                                                                        \
+			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, __LINE__, __FILE__, __func__, \
+			                  __VA_ARGS__);                                                      \
+		}                                                                                        \
 	} while (0)
 
-#define WLog_Image(_log, _log_level, ...)                                              \
-	do                                                                                 \
-	{                                                                                  \
-		if (WLog_IsLevelActive(_log, _log_level))                                      \
-		{                                                                              \
-			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, __LINE__, __FILE__, \
-			                  __FUNCTION__, __VA_ARGS__);                              \
-		}                                                                              \
+#define WLog_Image(_log, _log_level, ...)                                                        \
+	do                                                                                           \
+	{                                                                                            \
+		if (WLog_IsLevelActive(_log, _log_level))                                                \
+		{                                                                                        \
+			WLog_PrintMessage(_log, WLOG_MESSAGE_DATA, _log_level, __LINE__, __FILE__, __func__, \
+			                  __VA_ARGS__);                                                      \
+		}                                                                                        \
 	} while (0)
 
-#define WLog_Packet(_log, _log_level, ...)                                               \
-	do                                                                                   \
-	{                                                                                    \
-		if (WLog_IsLevelActive(_log, _log_level))                                        \
-		{                                                                                \
-			WLog_PrintMessage(_log, WLOG_MESSAGE_PACKET, _log_level, __LINE__, __FILE__, \
-			                  __FUNCTION__, __VA_ARGS__);                                \
-		}                                                                                \
+#define WLog_Packet(_log, _log_level, ...)                                                         \
+	do                                                                                             \
+	{                                                                                              \
+		if (WLog_IsLevelActive(_log, _log_level))                                                  \
+		{                                                                                          \
+			WLog_PrintMessage(_log, WLOG_MESSAGE_PACKET, _log_level, __LINE__, __FILE__, __func__, \
+			                  __VA_ARGS__);                                                        \
+		}                                                                                          \
 	} while (0)
 
 #define WLog_LVL(tag, lvl, ...) WLog_Print_tag(tag, lvl, __VA_ARGS__)

@@ -79,6 +79,6 @@ int TestPathMakePath(int argc, char* argv[])
 	}
 
 	free(path);
-	printf("%s success!\n", __FUNCTION__);
+	printf("%s success!\n", __func__);
 	return 0;
 }

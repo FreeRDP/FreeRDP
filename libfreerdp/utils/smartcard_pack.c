@@ -35,9 +35,9 @@
 static const DWORD g_LogLevel = WLOG_DEBUG;
 
 #define smartcard_unpack_redir_scard_context(s, context, index) \
-	smartcard_unpack_redir_scard_context_((s), (context), (index), __FILE__, __FUNCTION__, __LINE__)
+	smartcard_unpack_redir_scard_context_((s), (context), (index), __FILE__, __func__, __LINE__)
 #define smartcard_unpack_redir_scard_handle(s, context, index) \
-	smartcard_unpack_redir_scard_handle_((s), (context), (index), __FILE__, __FUNCTION__, __LINE__)
+	smartcard_unpack_redir_scard_handle_((s), (context), (index), __FILE__, __func__, __LINE__)
 
 static LONG smartcard_unpack_redir_scard_context_(wStream* s, REDIR_SCARDCONTEXT* context,
                                                   UINT32* index, const char* file,
@@ -65,7 +65,7 @@ typedef enum
 /* Reads a NDR pointer and checks if the value read has the expected relative
  * addressing */
 #define smartcard_ndr_pointer_read(s, index, ptr) \
-	smartcard_ndr_pointer_read_((s), (index), (ptr), __FILE__, __FUNCTION__, __LINE__)
+	smartcard_ndr_pointer_read_((s), (index), (ptr), __FILE__, __func__, __LINE__)
 static BOOL smartcard_ndr_pointer_read_(wStream* s, UINT32* index, UINT32* ptr, const char* file,
                                         const char* fkt, size_t line)
 {
@@ -1440,7 +1440,7 @@ static LONG smartcard_unpack_common_context_and_string_a(wStream* s, REDIR_SCARD
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	smartcard_trace_context_and_string_call_a(__FUNCTION__, phContext, *pszReaderName);
+	smartcard_trace_context_and_string_call_a(__func__, phContext, *pszReaderName);
 	return SCARD_S_SUCCESS;
 }
 
@@ -1465,7 +1465,7 @@ static LONG smartcard_unpack_common_context_and_string_w(wStream* s, REDIR_SCARD
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	smartcard_trace_context_and_string_call_w(__FUNCTION__, phContext, *pszReaderName);
+	smartcard_trace_context_and_string_call_w(__func__, phContext, *pszReaderName);
 	return SCARD_S_SUCCESS;
 }
 

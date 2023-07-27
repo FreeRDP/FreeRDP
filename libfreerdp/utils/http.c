@@ -40,7 +40,7 @@ static const char post_header_fmt[] = "POST %s HTTP/1.1\r\n"
                                       "Content-Length: %lu\r\n"
                                       "\r\n";
 
-#define log_errors(log, msg) log_errors_(log, msg, __FILE__, __FUNCTION__, __LINE__)
+#define log_errors(log, msg) log_errors_(log, msg, __FILE__, __func__, __LINE__)
 static void log_errors_(wLog* log, const char* msg, const char* file, const char* fkt, size_t line)
 {
 	const DWORD level = WLOG_ERROR;

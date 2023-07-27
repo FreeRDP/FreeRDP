@@ -771,9 +771,9 @@ static int test_MppcCompressBellsRdp5(void)
 	{
 		printf("MppcCompressBellsRdp5: output mismatch\n");
 		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, TEST_MPPC_BELLS_RDP5, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, TEST_MPPC_BELLS_RDP5, DstSize * 8, 0);
 		goto fail;
 	}
 
@@ -818,9 +818,9 @@ static int test_MppcCompressBellsRdp4(void)
 	{
 		printf("MppcCompressBellsRdp4: output mismatch\n");
 		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, TEST_MPPC_BELLS_RDP4, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, TEST_MPPC_BELLS_RDP4, DstSize * 8, 0);
 		goto fail;
 	}
 
@@ -959,9 +959,9 @@ static int test_MppcCompressIslandRdp5(void)
 	{
 		printf("MppcCompressIslandRdp5: output mismatch\n");
 		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, TEST_ISLAND_DATA_RDP5, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, TEST_ISLAND_DATA_RDP5, DstSize * 8, 0);
 		goto fail;
 	}
 

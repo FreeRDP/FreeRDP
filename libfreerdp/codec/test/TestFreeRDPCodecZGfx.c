@@ -62,9 +62,9 @@ static int test_ZGfxCompressFox(void)
 	{
 		printf("test_ZGfxCompressFox: output mismatch\n");
 		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, TEST_FOX_DATA_SINGLE, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, TEST_FOX_DATA_SINGLE, DstSize * 8, 0);
 		goto fail;
 	}
 
@@ -114,9 +114,9 @@ static int test_ZGfxDecompressFoxSingle(void)
 	{
 		printf("test_ZGfxDecompressFoxSingle: output mismatch\n");
 		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, TEST_FOX_DATA, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, TEST_FOX_DATA, DstSize * 8, 0);
 		goto fail;
 	}
 
@@ -166,9 +166,9 @@ static int test_ZGfxDecompressFoxMultipart(void)
 	{
 		printf("test_ZGfxDecompressFoxSingle: output mismatch\n");
 		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, pDstData, DstSize * 8, 0);
 		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, TEST_FOX_DATA, DstSize * 8, 0);
+		BitDump(__func__, WLOG_INFO, TEST_FOX_DATA, DstSize * 8, 0);
 		goto fail;
 	}
 
@@ -231,17 +231,17 @@ static int test_ZGfxCompressConsistent(void)
 	{
 		printf("test_ZGfxDecompressFoxSingle: output mismatch\n");
 		printf("Actual\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData, 64 * 8, 0);
+		BitDump(__func__, WLOG_INFO, pDstData, 64 * 8, 0);
 		printf("...\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData + DstSize - 64, 64 * 8, 0);
+		BitDump(__func__, WLOG_INFO, pDstData + DstSize - 64, 64 * 8, 0);
 		printf("Expected\n");
-		BitDump(__FUNCTION__, WLOG_INFO, BigBuffer, 64 * 8, 0);
+		BitDump(__func__, WLOG_INFO, BigBuffer, 64 * 8, 0);
 		printf("...\n");
-		BitDump(__FUNCTION__, WLOG_INFO, BigBuffer + DstSize - 64, 64 * 8, 0);
+		BitDump(__func__, WLOG_INFO, BigBuffer + DstSize - 64, 64 * 8, 0);
 		printf("Middle Result\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData2, 64 * 8, 0);
+		BitDump(__func__, WLOG_INFO, pDstData2, 64 * 8, 0);
 		printf("...\n");
-		BitDump(__FUNCTION__, WLOG_INFO, pDstData2 + DstSize2 - 64, 64 * 8, 0);
+		BitDump(__func__, WLOG_INFO, pDstData2 + DstSize2 - 64, 64 * 8, 0);
 		goto fail;
 	}
 
