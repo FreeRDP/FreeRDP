@@ -431,6 +431,7 @@ if(MSVC)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Zi")
 	endif()
 
+	add_definitions(-D_CRT_NONSTDC_NO_DEPRECATE)
 endif()
 
 if(ANDROID)
