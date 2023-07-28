@@ -179,8 +179,7 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 		case HTTP_STATUS_OK:
 			break;
 		default:
-			WLog_WARN(TAG, "Unexpected HTTP status: %s",
-			          freerdp_http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
+			http_response_log_error_status(WLog_Get(TAG), WLOG_WARN, response);
 			return FALSE;
 	}
 
@@ -481,7 +480,9 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 
 		case HTTP_STATUS_DENIED:
 			success = wst_handle_denied(wst, &response, &StatusCode);
+			break;
 		default:
+			http_response_log_error_status(WLog_Get(TAG), WLOG_WARN, response);
 			break;
 	}
 

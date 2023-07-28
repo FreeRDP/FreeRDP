@@ -602,11 +602,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 		if (statusCode != HTTP_STATUS_OK)
 		{
-			char buffer[64] = { 0 };
-
-			WLog_ERR(TAG, "error! Status Code: %s",
-			         freerdp_http_status_string_format(statusCode, buffer, ARRAYSIZE(buffer)));
-			http_response_print(response);
+			http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
 
 			if (statusCode == HTTP_STATUS_DENIED)
 			{
