@@ -15,7 +15,7 @@ HRESULT PATH_CCH_ADD_SEPARATOR_EX(PWSTR pszPath, size_t cchPath, PWSTR* ppszEnd,
 	if (!pszPath)
 		return E_INVALIDARG;
 
-	pszPathLength = lstrlenW(pszPath);
+	pszPathLength = _wcslen(pszPath);
 
 	if (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR)
 		return S_FALSE;
@@ -41,7 +41,7 @@ HRESULT PATH_CCH_ADD_SEPARATOR_EX(PSTR pszPath, size_t cchPath, PSTR* ppszEnd,
 	if (!pszPath)
 		return E_INVALIDARG;
 
-	pszPathLength = lstrlenA(pszPath);
+	pszPathLength = strlen(pszPath);
 
 	if (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR)
 		return S_FALSE;

@@ -168,24 +168,6 @@ extern "C"
 #define IsCharLower IsCharLowerA
 #endif
 
-	WINPR_API int lstrlenA(LPCSTR lpString);
-	WINPR_API int lstrlenW(LPCWSTR lpString);
-
-#ifdef UNICODE
-#define lstrlen lstrlenW
-#else
-#define lstrlen lstrlenA
-#endif
-
-	WINPR_API int lstrcmpA(LPCSTR lpString1, LPCSTR lpString2);
-	WINPR_API int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2);
-
-#ifdef UNICODE
-#define lstrcmp lstrcmpW
-#else
-#define lstrcmp lstrcmpA
-#endif
-
 #endif
 
 #ifndef _WIN32

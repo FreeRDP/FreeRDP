@@ -24,8 +24,8 @@ HRESULT PATH_CCH_APPEND(PWSTR pszPath, size_t cchPath, PCWSTR pszMore)
 	if (cchPath == 0 || cchPath > PATHCCH_MAX_CCH)
 		return E_INVALIDARG;
 
-	pszMoreLength = lstrlenW(pszMore);
-	pszPathLength = lstrlenW(pszPath);
+	pszMoreLength = _wcslen(pszMore);
+	pszPathLength = _wcslen(pszPath);
 
 	pathBackslash = (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 	moreBackslash = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
@@ -84,11 +84,11 @@ HRESULT PATH_CCH_APPEND(PSTR pszPath, size_t cchPath, PCSTR pszMore)
 	if (cchPath == 0 || cchPath > PATHCCH_MAX_CCH)
 		return E_INVALIDARG;
 
-	pszPathLength = lstrlenA(pszPath);
+	pszPathLength = strlen(pszPath);
 	if (pszPathLength > 0)
 		pathBackslash = (pszPath[pszPathLength - 1] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 
-	pszMoreLength = lstrlenA(pszMore);
+	pszMoreLength = strlen(pszMore);
 	if (pszMoreLength > 0)
 		moreBackslash = (pszMore[0] == CUR_PATH_SEPARATOR_CHR) ? TRUE : FALSE;
 

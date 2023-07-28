@@ -640,46 +640,6 @@ BOOL IsCharLowerW(WCHAR ch)
 		return 0;
 }
 
-int lstrlenA(LPCSTR lpString)
-{
-	return (int)strlen(lpString);
-}
-
-int lstrlenW(LPCWSTR lpString)
-{
-	LPCWSTR p;
-
-	if (!lpString)
-		return 0;
-
-	p = (LPCWSTR)lpString;
-
-	while (*p)
-		p++;
-
-	return (int)(p - lpString);
-}
-
-int lstrcmpA(LPCSTR lpString1, LPCSTR lpString2)
-{
-	return strcmp(lpString1, lpString2);
-}
-
-int lstrcmpW(LPCWSTR lpString1, LPCWSTR lpString2)
-{
-	WCHAR value1, value2;
-
-	while (*lpString1 && (*lpString1 == *lpString2))
-	{
-		lpString1++;
-		lpString2++;
-	}
-
-	Data_Read_UINT16(lpString1, value1);
-	Data_Read_UINT16(lpString2, value2);
-	return value1 - value2;
-}
-
 #endif
 
 size_t ConvertLineEndingToLF(char* str, size_t size)
