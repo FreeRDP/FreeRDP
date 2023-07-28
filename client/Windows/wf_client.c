@@ -984,34 +984,29 @@ static BOOL wf_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDi
 
 static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 {
-	MSG msg;
-	int width;
-	int height;
-	BOOL msg_ret;
-	int quit_msg;
-	DWORD error;
-	wfContext* wfc;
-	freerdp* instance;
-	rdpContext* context;
-	rdpChannels* channels;
-	rdpSettings* settings;
+	MSG msg = { 0 };
+	int width = 0;
+	int height = 0;
+	BOOL msg_ret = FALSE;
+	int quit_msg = 0;
+	DWORD error = 0;
 
-	instance = (freerdp*)lpParam;
+	freerdp* instance = (freerdp*)lpParam;
 	WINPR_ASSERT(instance);
 
 	if (!freerdp_connect(instance))
 		goto end;
 
-	context = instance->context;
+	rdpContext* context = instance->context;
 	WINPR_ASSERT(context);
 
-	wfc = (wfContext*)instance->context;
+	wfContext* wfc = (wfContext*)instance->context;
 	WINPR_ASSERT(wfc);
 
-	channels = context->channels;
+	rdpChannels* channels = context->channels;
 	WINPR_ASSERT(channels);
 
-	settings = context->settings;
+	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
 	while (1)
@@ -1109,8 +1104,6 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	}
 
 	/* cleanup */
-
-disconnect:
 	freerdp_disconnect(instance);
 
 end:
