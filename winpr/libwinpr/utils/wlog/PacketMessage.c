@@ -469,8 +469,10 @@ BOOL WLog_PacketMessage_Write(wPcap* pcap, void* data, size_t length, DWORD flag
 	tcp.UrgentPointer = 0;
 	record.data = data;
 	record.length = length;
-	record.header.incl_len = record.length + 14 + 20 + 20;
-	record.header.orig_len = record.length + 14 + 20 + 20;
+	const size_t offset = 14 + 20 + 20;
+	WINPR_ASSERT(record.length <= UINT32_MAX - offset);
+	record.header.incl_len = (UINT32)record.length + offset;
+	record.header.orig_len = (UINT32)record.length + offset;
 	record.next = NULL;
 	gettimeofday(&tp, 0);
 	record.header.ts_sec = tp.tv_sec;

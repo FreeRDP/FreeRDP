@@ -141,8 +141,8 @@ char* winpr_win_strerror(DWORD dw, char* dmsg, size_t size)
 	alloc = TRUE;
 	dwFlags |= FORMAT_MESSAGE_ALLOCATE_BUFFER;
 #else
-	nSize = (DWORD)(size * 2);
-	msg = (LPTSTR)calloc(nSize, sizeof(TCHAR));
+	nSize = (DWORD)(size * sizeof(WCHAR));
+	msg = (LPTSTR)calloc(nSize, sizeof(WCHAR));
 #endif
 	rc = FormatMessage(dwFlags, NULL, dw, 0, alloc ? (LPTSTR)&msg : msg, nSize, NULL);
 

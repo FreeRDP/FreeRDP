@@ -735,7 +735,8 @@ static BOOL makecert_create_rsa(EVP_PKEY** ppkey, size_t key_length)
 	if (EVP_PKEY_keygen_init(pctx) != 1)
 		goto fail;
 
-	unsigned int keylen = key_length;
+	WINPR_ASSERT(key_length <= UINT_MAX);
+	unsigned int keylen = (unsigned int)key_length;
 	const OSSL_PARAM params[] = { OSSL_PARAM_construct_uint("bits", &keylen),
 		                          OSSL_PARAM_construct_end() };
 	if (EVP_PKEY_CTX_set_params(pctx, params) != 1)
