@@ -231,7 +231,11 @@ BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16* length)
 	if (!per_read_length(s, length))
 		return FALSE;
 
-	*length = *length - Stream_GetPosition(s);
+	const size_t pos = Stream_GetPosition(s);
+	if (pos > *length)
+		return FALSE;
+
+	*length = *length - (UINT16)pos;
 	return TRUE;
 }
 
@@ -921,11 +925,8 @@ wStream* fastpath_input_pdu_init(rdpFastPath* fastpath, BYTE eventFlags, BYTE ev
 
 BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t iNumEvents)
 {
-	CONNECTION_STATE state;
 	BOOL rc = FALSE;
-	rdpRdp* rdp;
-	size_t length;
-	BYTE eventHeader;
+	BYTE eventHeader = 0;
 
 	WINPR_ASSERT(iNumEvents > 0);
 	if (!s)
@@ -934,10 +935,10 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	if (!fastpath)
 		goto fail;
 
-	rdp = fastpath->rdp;
+	rdpRdp* rdp = fastpath->rdp;
 	WINPR_ASSERT(rdp);
 
-	state = rdp_get_state(rdp);
+	CONNECTION_STATE state = rdp_get_state(rdp);
 	if (!rdp_is_active_state(rdp))
 	{
 		WLog_WARN(TAG, "called before activation [%s]", rdp_state_string(state));
@@ -952,7 +953,7 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	if (iNumEvents > 15)
 		goto fail;
 
-	length = Stream_GetPosition(s);
+	size_t length = Stream_GetPosition(s);
 
 	if (length >= (2 << 14))
 	{
@@ -1042,8 +1043,9 @@ BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStream* s, size_t 
 	 * because we can leave room for fixed-length header, store all
 	 * the data first and then store the header.
 	 */
+	WINPR_ASSERT(length < UINT16_MAX);
 	Stream_SetPosition(s, 1);
-	Stream_Write_UINT16_BE(s, 0x8000 | length);
+	Stream_Write_UINT16_BE(s, 0x8000 | (UINT16)length);
 	Stream_SetPosition(s, length);
 	Stream_SealLength(s);
 
