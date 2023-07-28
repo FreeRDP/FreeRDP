@@ -138,25 +138,25 @@ static INLINE UINT32 lzcnt_s(UINT32 x)
 int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData,
                     UINT32 rDstSize)
 {
-	int vk;
-	int run;
-	int cnt;
-	int size;
-	int nbits;
-	size_t offset;
-	INT16 mag;
-	UINT32 k;
-	INT32 kp;
-	UINT32 kr;
-	INT32 krp;
-	UINT16 code;
-	UINT32 sign;
-	UINT32 nIdx;
-	UINT32 val1;
-	UINT32 val2;
-	INT16* pOutput;
-	wBitStream* bs;
-	wBitStream s_bs;
+	int vk = 0;
+	size_t run = 0;
+	int cnt = 0;
+	size_t size = 0;
+	int nbits = 0;
+	size_t offset = 0;
+	INT16 mag = 0;
+	UINT32 k = 0;
+	INT32 kp = 0;
+	UINT32 kr = 0;
+	INT32 krp = 0;
+	UINT16 code = 0;
+	UINT32 sign = 0;
+	UINT32 nIdx = 0;
+	UINT32 val1 = 0;
+	UINT32 val2 = 0;
+	INT16* pOutput = NULL;
+	wBitStream* bs = NULL;
+	wBitStream s_bs = { 0 };
 	const SSIZE_T DstSize = rDstSize;
 
 	InitOnceExecuteOnce(&rfx_rlgr_init_once, rfx_rlgr_init, NULL, NULL);
@@ -346,7 +346,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 			offset = (pOutput - pDstData);
 			size = run;
 
-			if ((offset + size) > DstSize)
+			if ((offset + size) > rDstSize)
 				size = DstSize - offset;
 
 			if (size)
@@ -551,7 +551,7 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 
 	offset = (pOutput - pDstData);
 
-	if (offset < DstSize)
+	if (offset < rDstSize)
 	{
 		size = DstSize - offset;
 		ZeroMemory(pOutput, size * 2);
