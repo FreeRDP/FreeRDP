@@ -1740,7 +1740,7 @@ static INLINE SSIZE_T progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive
 					return -1032;
 				break;
 			default:
-				WLog_ERR(TAG, "Invalid block type %04 (%s)" PRIx16, blockType,
+				WLog_ERR(TAG, "Invalid block type %04" PRIx16 " (%s)", blockType,
 				         progressive_get_block_type_string(blockType));
 				return -1039;
 		}

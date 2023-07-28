@@ -550,7 +550,7 @@ static int libusb_udev_select_interface(IUDEVICE* idev, BYTE InterfaceNumber, BY
 		{
 			WLog_Print(urbdrc->log, WLOG_INFO,
 			           "select Interface(%" PRIu8 ") curr AlternateSetting(%" PRIu8
-			           ") new AlternateSetting(" PRIu8 ")",
+			           ") new AlternateSetting(%" PRIu8 ")",
 			           InterfaceNumber, MsInterfaces[InterfaceNumber]->AlternateSetting,
 			           AlternateSetting);
 

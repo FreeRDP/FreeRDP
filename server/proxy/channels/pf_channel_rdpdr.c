@@ -463,7 +463,7 @@ static UINT rdpdr_process_client_name_request(pf_channel_server_context* rdpdr, 
 	if (!Stream_CheckAndLogRequiredLengthSrv(rdpdr->log, s, rdpdr->common.computerNameLen))
 	{
 		SERVER_RX_LOG(
-		    rdpdr->log, WLOG_WARN, "[%s | %s]: missing data, got " PRIu32 ", expected %" PRIu32,
+		    rdpdr->log, WLOG_WARN, "[%s | %s]: missing data, got %" PRIu32 ", expected %" PRIu32,
 		    rdpdr_component_string(RDPDR_CTYP_CORE), rdpdr_packetid_string(PAKID_CORE_CLIENT_NAME),
 		    Stream_GetRemainingLength(s), rdpdr->common.computerNameLen);
 		return ERROR_INVALID_DATA;
