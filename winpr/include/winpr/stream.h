@@ -540,6 +540,7 @@ extern "C"
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->pointer);
+		WINPR_ASSERT(_v <= 0x00FFFFFF);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(_s) >= 3);
 		*_s->pointer++ = ((_v) >> 16) & 0xFF;
 		*_s->pointer++ = ((_v) >> 8) & 0xFF;

@@ -303,27 +303,28 @@ static void asn1WriteLen(wStream* s, size_t len)
 {
 	if (len < 128)
 	{
-		Stream_Write_UINT8(s, len);
+		Stream_Write_UINT8(s, (UINT8)len);
 	}
 	else if (len < (1 << 8))
 	{
 		Stream_Write_UINT8(s, 0x81);
-		Stream_Write_UINT8(s, len);
+		Stream_Write_UINT8(s, (UINT8)len);
 	}
 	else if (len < (1 << 16))
 	{
 		Stream_Write_UINT8(s, 0x82);
-		Stream_Write_UINT16_BE(s, len);
+		Stream_Write_UINT16_BE(s, (UINT16)len);
 	}
 	else if (len < (1 << 24))
 	{
 		Stream_Write_UINT8(s, 0x83);
-		Stream_Write_UINT24_BE(s, len);
+		Stream_Write_UINT24_BE(s, (UINT32)len);
 	}
 	else
 	{
+		WINPR_ASSERT(len <= UINT32_MAX);
 		Stream_Write_UINT8(s, 0x84);
-		Stream_Write_UINT32_BE(s, len);
+		Stream_Write_UINT32_BE(s, (UINT32)len);
 	}
 }
 
