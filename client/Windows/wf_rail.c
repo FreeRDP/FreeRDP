@@ -179,8 +179,9 @@ static void PrintRailWindowState(const WINDOW_ORDER_INFO* orderInfo,
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
-		char* title = ConvertWCharNToUtf8Alloc(windowState->titleInfo.string,
-		                                       windowState->titleInfo.length / sizeof(WCHAR), NULL);
+		const WCHAR* str = (const WCHAR*)windowState->titleInfo.string;
+		char* title =
+		    ConvertWCharNToUtf8Alloc(str, windowState->titleInfo.length / sizeof(WCHAR), NULL);
 		WLog_INFO(TAG, "\tTitleInfo: %s (length = %hu)", title, windowState->titleInfo.length);
 		free(title);
 	}
@@ -451,6 +452,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 		if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 		{
+			const WCHAR* str = (const WCHAR*)windowState->titleInfo.string;
 			char* title = NULL;
 
 			if (windowState->titleInfo.length == 0)
@@ -462,8 +464,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 				}
 			}
 			else if (!(title = ConvertWCharNToUtf8Alloc(
-			               windowState->titleInfo.string,
-			               windowState->titleInfo.length / sizeof(WCHAR), NULL)))
+			               str, windowState->titleInfo.length / sizeof(WCHAR), NULL)))
 			{
 				WLog_ERR(TAG, "failed to convert window title");
 				/* error handled below */
@@ -577,6 +578,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_TITLE)
 	{
+		const WCHAR* str = (const WCHAR*)windowState->titleInfo.string;
 		char* title = NULL;
 
 		if (windowState->titleInfo.length == 0)
@@ -587,9 +589,8 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 				return FALSE;
 			}
 		}
-		else if (!(title = ConvertWCharNToUtf8Alloc(windowState->titleInfo.string,
-		                                            windowState->titleInfo.length / sizeof(WCHAR),
-		                                            NULL)))
+		else if (!(title = ConvertWCharNToUtf8Alloc(
+		               str, windowState->titleInfo.length / sizeof(WCHAR), NULL)))
 		{
 			WLog_ERR(TAG, "failed to convert window title");
 			return FALSE;
@@ -597,7 +598,7 @@ static BOOL wf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 
 		free(railWindow->title);
 		railWindow->title = title;
-		SetWindowTextW(railWindow->hWnd, windowState->titleInfo.string);
+		SetWindowTextW(railWindow->hWnd, str);
 	}
 
 	if (fieldFlags & WINDOW_ORDER_FIELD_CLIENT_AREA_OFFSET)
