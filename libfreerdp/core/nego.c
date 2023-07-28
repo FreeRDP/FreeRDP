@@ -1201,7 +1201,7 @@ static BOOL nego_process_correlation_info(rdpNego* nego, wStream* s)
 	Stream_Seek(s, 16); /* skip reserved bytes */
 
 	WLog_INFO(TAG,
-	          "RDP_NEG_CORRELATION_INFO::correlationId = { %02 " PRIx8 ", %02" PRIx8 ", %02" PRIx8
+	          "RDP_NEG_CORRELATION_INFO::correlationId = { %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8
 	          ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8
 	          ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8 ", %02" PRIx8
 	          ", %02" PRIx8 " }",

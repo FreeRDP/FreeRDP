@@ -2279,7 +2279,7 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 			const UINT32 flags = current->is_primary ? MONITOR_PRIMARY : 0;
 			WLog_DBG(TAG,
 			         "Monitor[%" PRIu32 "]: top=%" PRIu32 ", left=%" PRIu32 ", bottom=%" PRIu32
-			         ", right=%" PRIu32 ", flags" PRIu32,
+			         ", right=%" PRIu32 ", flags=%" PRIu32,
 			         i, top, left, bottom, right, flags);
 			Stream_Write_UINT32(s, left);   /* left */
 			Stream_Write_UINT32(s, top);    /* top */

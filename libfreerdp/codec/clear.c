@@ -1061,7 +1061,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 			goto finish;
 
 		WLog_ERR(TAG,
-		         "invalid glyphFlags, missing flags: 0x%0x" PRIx8 " & 0x%02" PRIx32
+		         "invalid glyphFlags, missing flags: 0x%02" PRIx8 " & 0x%02" PRIx32
 		         " == 0x%02" PRIx32,
 		         glyphFlags, mask, glyphFlags & mask);
 		goto fail;

@@ -104,7 +104,7 @@ static BOOL test_co_errors(void)
 		const LONG b = should[x];
 		if (a != b)
 		{
-			printf("mismatch[%" PRIuz "]: %0x" PRIx32 " vs %08" PRIx32 "\n", x, a, b);
+			printf("mismatch[%" PRIuz "]: %08" PRIx32 " vs %08" PRIx32 "\n", x, a, b);
 			return FALSE;
 		}
 	}

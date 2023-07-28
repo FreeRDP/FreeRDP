@@ -1295,8 +1295,7 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 				{
 					region16_uninit(&updateRegion);
 					WLog_Print(context->priv->log, WLOG_ERROR,
-					           "nbUpdateRectx[% " PRIu32 " (%" PRIu32
-					           ")] freerdp_image_copy failed",
+					           "nbUpdateRectx[%" PRIu32 " (%" PRIu32 ")] freerdp_image_copy failed",
 					           j, nbUpdateRects);
 					return FALSE;
 				}

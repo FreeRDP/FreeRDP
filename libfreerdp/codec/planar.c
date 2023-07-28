@@ -1520,7 +1520,7 @@ BYTE* freerdp_bitmap_compress_planar(BITMAP_PLANAR_CONTEXT* context, const BYTE*
 
 #if defined(WITH_DEBUG_CODECS)
 			WLog_DBG(TAG,
-			         "R: [%" PRIu32 "/%" PRIu32 "] G: [%" PRIu32 "/%" PRIu32 "] B: [% " PRIu32
+			         "R: [%" PRIu32 "/%" PRIu32 "] G: [%" PRIu32 "/%" PRIu32 "] B: [%" PRIu32
 			         " / %" PRIu32 "] ",
 			         dstSizes[1], planeSize, dstSizes[2], planeSize, dstSizes[3], planeSize);
 #endif

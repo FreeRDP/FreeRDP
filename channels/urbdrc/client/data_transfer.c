@@ -1534,7 +1534,7 @@ static UINT urbdrc_process_transfer_request(IUDEVICE* pdev, GENERIC_CHANNEL_CALL
 	Stream_Read_UINT16(s, Size);    /** size */
 	Stream_Read_UINT16(s, URB_Function);
 	Stream_Read_UINT32(s, RequestId);
-	WLog_Print(urbdrc->log, WLOG_DEBUG, "URB %s[" PRIu16 "]", urb_function_string(URB_Function),
+	WLog_Print(urbdrc->log, WLOG_DEBUG, "URB %s[%" PRIu16 "]", urb_function_string(URB_Function),
 	           URB_Function);
 
 	switch (URB_Function)

@@ -1147,7 +1147,7 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 			}
 		}
 		else
-			WLog_WARN(TAG, "expected messageChannelId=" PRIu16 ", got %" PRIu16, messageChannelId,
+			WLog_WARN(TAG, "expected messageChannelId=%" PRIu16 ", got %" PRIu16, messageChannelId,
 			          channelId);
 
 		Stream_SetPosition(s, pos);
