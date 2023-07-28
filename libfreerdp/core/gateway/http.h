@@ -101,16 +101,17 @@ typedef struct s_http_response HttpResponse;
 FREERDP_LOCAL HttpResponse* http_response_new(void);
 FREERDP_LOCAL void http_response_free(HttpResponse* response);
 
-FREERDP_LOCAL BOOL http_response_print(HttpResponse* response);
 FREERDP_LOCAL HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength);
 
 FREERDP_LOCAL long http_response_get_status_code(HttpResponse* response);
-FREERDP_LOCAL SSIZE_T http_response_get_body_length(HttpResponse* response);
+FREERDP_LOCAL size_t http_response_get_body_length(HttpResponse* response);
 FREERDP_LOCAL const BYTE* http_response_get_body(HttpResponse* response);
 FREERDP_LOCAL const char* http_response_get_auth_token(HttpResponse* response, const char* method);
 FREERDP_LOCAL const char* http_response_get_setcookie(HttpResponse* response, const char* cookie);
 FREERDP_LOCAL TRANSFER_ENCODING http_response_get_transfer_encoding(HttpResponse* response);
 FREERDP_LOCAL BOOL http_response_is_websocket(HttpContext* http, HttpResponse* response);
+
+FREERDP_LOCAL void http_response_log_error_status(wLog* log, DWORD level, HttpResponse* response);
 
 /* chunked read helper */
 FREERDP_LOCAL int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,

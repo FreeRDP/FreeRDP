@@ -423,9 +423,7 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 	}
 	else
 	{
-		char buffer[64] = { 0 };
-		WLog_ERR(TAG, "Unexpected HTTP status: %s",
-		         freerdp_http_status_string_format(StatusCode, buffer, ARRAYSIZE(buffer)));
+		http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
 		goto arm_error;
 	}
 

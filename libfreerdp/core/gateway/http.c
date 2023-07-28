@@ -955,17 +955,15 @@ fail:
 	return rc;
 }
 
-BOOL http_response_print(HttpResponse* response)
+static void http_response_print(wLog* log, DWORD level, HttpResponse* response)
 {
-	size_t i;
+	WINPR_ASSERT(log);
+	WINPR_ASSERT(response);
 
-	if (!response)
-		return FALSE;
-
-	for (i = 0; i < response->count; i++)
-		WLog_ERR(TAG, "%s", response->lines[i]);
-
-	return TRUE;
+	if (!WLog_IsLevelActive(log, level))
+		return;
+	for (size_t i = 0; i < response->count; i++)
+		WLog_Print(log, level, "[%" PRIuz "] %s", i, response->lines[i]);
 }
 
 static BOOL http_use_content_length(const char* cur)
@@ -1437,16 +1435,14 @@ BOOL http_request_set_content_length(HttpRequest* request, size_t length)
 
 long http_response_get_status_code(HttpResponse* response)
 {
-	if (!response)
-		return -1;
+	WINPR_ASSERT(response);
 
 	return response->StatusCode;
 }
 
-SSIZE_T http_response_get_body_length(HttpResponse* response)
+size_t http_response_get_body_length(HttpResponse* response)
 {
-	if (!response)
-		return -1;
+	WINPR_ASSERT(response);
 
 	return (SSIZE_T)response->BodyLength;
 }
@@ -1531,4 +1527,19 @@ out:
 	winpr_Digest_Free(sha1);
 	free(base64accept);
 	return isWebsocket;
+}
+
+void http_response_log_error_status(wLog* log, DWORD level, HttpResponse* response)
+{
+	WINPR_ASSERT(log);
+	WINPR_ASSERT(response);
+
+	if (!WLog_IsLevelActive(log, level))
+		return;
+
+	char buffer[64] = { 0 };
+	const long status = http_response_get_status_code(response);
+	WLog_Print(log, level, "Unexpected HTTP status: %s",
+	           freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
+	http_response_print(log, level, response);
 }
