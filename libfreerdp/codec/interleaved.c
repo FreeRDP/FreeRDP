@@ -587,7 +587,7 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstDat
 	BOOL status;
 	wStream* s;
 	UINT32 DstFormat = 0;
-	const size_t maxSize = 64 * 64 * 4;
+	const UINT32 maxSize = 64 * 64 * 4;
 
 	if (!interleaved || !pDstData || !pSrcData)
 		return FALSE;
