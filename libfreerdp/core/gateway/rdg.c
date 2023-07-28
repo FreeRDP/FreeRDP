@@ -701,7 +701,6 @@ out:
 
 static BOOL rdg_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 {
-	char buffer[64] = { 0 };
 	size_t len;
 	const char* token64 = NULL;
 	size_t authTokenLength = 0;

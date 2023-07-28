@@ -160,7 +160,6 @@ static BOOL wst_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 
 static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 {
-	char buffer[64] = { 0 };
 	size_t len;
 	const char* token64 = NULL;
 	size_t authTokenLength = 0;
