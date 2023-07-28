@@ -175,10 +175,13 @@ static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 	if (fileSize < 1)
 		goto out_file;
 
-	if (!IniFile_BufferResize(ini, fileSize + 2))
+	if (fileSize > SIZE_MAX)
 		goto out_file;
 
-	if (fread(ini->buffer, fileSize, 1ul, fp) != 1)
+	if (!IniFile_BufferResize(ini, (size_t)fileSize + 2))
+		goto out_file;
+
+	if (fread(ini->buffer, (size_t)fileSize, 1ul, fp) != 1)
 		goto out_file;
 
 	ini->buffer[fileSize] = '\n';
