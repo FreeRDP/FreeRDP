@@ -78,22 +78,24 @@ size_t ber_write_length(wStream* s, size_t length)
 
 	if (length > 0xFF)
 	{
+		WINPR_ASSERT(length <= UINT16_MAX);
 		WINPR_ASSERT(Stream_GetRemainingCapacity(s) >= 3);
 		Stream_Write_UINT8(s, 0x80 ^ 2);
-		Stream_Write_UINT16_BE(s, length);
+		Stream_Write_UINT16_BE(s, (UINT16)length);
 		return 3;
 	}
 
+	WINPR_ASSERT(length <= UINT8_MAX);
 	if (length > 0x7F)
 	{
 		WINPR_ASSERT(Stream_GetRemainingCapacity(s) >= 2);
 		Stream_Write_UINT8(s, 0x80 ^ 1);
-		Stream_Write_UINT8(s, length);
+		Stream_Write_UINT8(s, (UINT8)length);
 		return 2;
 	}
 
 	WINPR_ASSERT(Stream_GetRemainingCapacity(s) >= 1);
-	Stream_Write_UINT8(s, length);
+	Stream_Write_UINT8(s, (UINT8)length);
 	return 1;
 }
 

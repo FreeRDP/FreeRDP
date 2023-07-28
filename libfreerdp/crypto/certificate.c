@@ -807,10 +807,11 @@ static BOOL cert_write_rsa_public_key(wStream* s, const rdpCertificate* cert)
 	const BYTE* pubExp = info->exponent;
 	const BYTE* modulus = info->Modulus;
 
-	const UINT16 wPublicKeyBlobLen = 16 + pubExpLen + keyLen;
+	const size_t wPublicKeyBlobLen = 16 + pubExpLen + keyLen;
+	WINPR_ASSERT(wPublicKeyBlobLen <= UINT16_MAX);
 	if (!Stream_EnsureRemainingCapacity(s, 2 + wPublicKeyBlobLen))
 		return FALSE;
-	Stream_Write_UINT16(s, wPublicKeyBlobLen);
+	Stream_Write_UINT16(s, (UINT16)wPublicKeyBlobLen);
 	Stream_Write(s, rsa_magic, sizeof(rsa_magic));
 	Stream_Write_UINT32(s, keyLen);
 	Stream_Write_UINT32(s, bitLen);
