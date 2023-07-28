@@ -355,7 +355,15 @@ static int stream_dump_replay_transport_read(rdpTransport* transport, wStream* s
 	WLog_ERR("abc", "replay read %" PRIuz, size);
 
 	if (slp > 0)
-		Sleep(slp);
+	{
+		size_t duration = slp;
+		do
+		{
+			const DWORD actual = (DWORD)MIN(duration, UINT32_MAX);
+			Sleep(actual);
+			duration -= actual;
+		} while (duration > 0);
+	}
 
 	return 1;
 }
