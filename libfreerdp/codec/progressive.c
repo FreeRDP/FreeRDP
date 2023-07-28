@@ -1909,7 +1909,8 @@ static INLINE BOOL progressive_write_region(PROGRESSIVE_CONTEXT* progressive, wS
 	Stream_Write_UINT32(s, blockLen);               /* blockLen (4 bytes) */
 	Stream_Write_UINT8(s, 64);                      /* tileSize (1 byte) */
 	Stream_Write_UINT16(s, msg->numRects);          /* numRects (2 bytes) */
-	Stream_Write_UINT8(s, msg->numQuant);           /* numQuant (1 byte) */
+	WINPR_ASSERT(msg->numQuant <= UINT8_MAX);
+	Stream_Write_UINT8(s, (UINT8)msg->numQuant);    /* numQuant (1 byte) */
 	Stream_Write_UINT8(s, 0);                       /* numProgQuant (1 byte) */
 	Stream_Write_UINT8(s, 0);                       /* flags (1 byte) */
 	Stream_Write_UINT16(s, msg->numTiles);          /* numTiles (2 bytes) */
@@ -2307,10 +2308,10 @@ static INLINE SSIZE_T progressive_wb_skip_region(PROGRESSIVE_CONTEXT* progressiv
 	return rc;
 }
 
-static INLINE INT32 progressive_wb_region(PROGRESSIVE_CONTEXT* progressive, wStream* s,
-                                          UINT16 blockType, UINT32 blockLen,
-                                          PROGRESSIVE_SURFACE_CONTEXT* surface,
-                                          PROGRESSIVE_BLOCK_REGION* region)
+static INLINE SSIZE_T progressive_wb_region(PROGRESSIVE_CONTEXT* progressive, wStream* s,
+                                            UINT16 blockType, UINT32 blockLen,
+                                            PROGRESSIVE_SURFACE_CONTEXT* surface,
+                                            PROGRESSIVE_BLOCK_REGION* region)
 {
 	SSIZE_T rc = -1;
 	UINT16 boxLeft;
@@ -2424,7 +2425,7 @@ static INLINE INT32 progressive_wb_region(PROGRESSIVE_CONTEXT* progressive, wStr
 	const SSIZE_T res = progressive_process_tiles(progressive, s, region, surface, context);
 	if (res < 0)
 		return -1;
-	return rc;
+	return (size_t)rc;
 }
 
 static SSIZE_T progressive_parse_block(PROGRESSIVE_CONTEXT* progressive, wStream* s,
@@ -2771,7 +2772,9 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 	if (!rc)
 		goto fail;
 
-	*pDstSize = Stream_GetPosition(s);
+	const size_t pos = Stream_GetPosition(s);
+	WINPR_ASSERT(pos <= UINT32_MAX);
+	*pDstSize = (UINT32)pos;
 	*ppDstData = Stream_Buffer(s);
 	res = 1;
 fail:

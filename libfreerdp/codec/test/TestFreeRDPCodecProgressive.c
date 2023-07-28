@@ -270,24 +270,24 @@ static int test_image_fill_unused_quarters(BYTE* pDstData, int nDstStep, int nWi
 
 static BYTE* test_progressive_load_file(const char* path, const char* file, size_t* size)
 {
-	FILE* fp;
-	BYTE* buffer;
-	char* filename;
-	filename = GetCombinedPath(path, file);
+	char* filename = GetCombinedPath(path, file);
 
 	if (!filename)
 		return NULL;
 
-	fp = winpr_fopen(filename, "r");
+	FILE* fp = winpr_fopen(filename, "r");
 	free(filename);
 
 	if (!fp)
 		return NULL;
 
 	_fseeki64(fp, 0, SEEK_END);
-	*size = _ftelli64(fp);
+	const INT64 pos = _ftelli64(fp);
+	WINPR_ASSERT(pos >= 0);
+	WINPR_ASSERT(pos <= SIZE_MAX);
+	*size = (size_t)pos;
 	_fseeki64(fp, 0, SEEK_SET);
-	buffer = (BYTE*)malloc(*size);
+	BYTE* buffer = (BYTE*)malloc(*size);
 
 	if (!buffer)
 	{
@@ -793,17 +793,15 @@ static int test_progressive_load_bitmaps(char* ms_sample_path, EGFX_SAMPLE_FILE 
 	return 1;
 }
 
-static int test_memcmp_count(const BYTE* mem1, const BYTE* mem2, int size, int margin)
+static size_t test_memcmp_count(const BYTE* mem1, const BYTE* mem2, size_t size, int margin)
 {
-	int error;
-	int count = 0;
-	int index = 0;
+	size_t count = 0;
 
-	for (index = 0; index < size; index++)
+	for (size_t index = 0; index < size; index++)
 	{
 		if (*mem1 != *mem2)
 		{
-			error = (*mem1 > *mem2) ? *mem1 - *mem2 : *mem2 - *mem1;
+			const int error = (*mem1 > *mem2) ? *mem1 - *mem2 : *mem2 - *mem1;
 
 			if (error > margin)
 				count++;
@@ -819,31 +817,19 @@ static int test_memcmp_count(const BYTE* mem1, const BYTE* mem2, int size, int m
 static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE files[4],
                                    EGFX_SAMPLE_FILE bitmaps[4], int quarter, int count)
 {
-	int cnt;
-	int pass;
-	int size;
-	int index;
-	int status;
 	int nXSrc, nYSrc;
-	int nXDst, nYDst;
-	int nWidth, nHeight;
-	RECTANGLE_16 tileRect;
-	RECTANGLE_16 updateRect;
-	RECTANGLE_16 clippingRect;
-	RFX_PROGRESSIVE_TILE* tile;
-	PROGRESSIVE_BLOCK_REGION* region;
-	clippingRect.left = 0;
-	clippingRect.top = 0;
+
+	RECTANGLE_16 clippingRect = { 0 };
 	clippingRect.right = g_Width;
 	clippingRect.bottom = g_Height;
 
-	for (pass = 0; pass < count; pass++)
+	for (int pass = 0; pass < count; pass++)
 	{
-		status =
+		const int status =
 		    progressive_decompress(progressive, files[pass].buffer, files[pass].size, g_DstData,
 		                           PIXEL_FORMAT_XRGB32, g_DstStep, 0, 0, NULL, 0, 0);
 		printf("ProgressiveDecompress: status: %d pass: %d\n", status, pass + 1);
-		region = &(progressive->region);
+		PROGRESSIVE_BLOCK_REGION* region = &(progressive->region);
 
 		switch (quarter)
 		{
@@ -876,18 +862,18 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 				break;
 		}
 
-		for (index = 0; index < region->numTiles; index++)
+		for (UINT16 index = 0; index < region->numTiles; index++)
 		{
-			tile = region->tiles[index];
-			tileRect.left = tile->x;
-			tileRect.top = tile->y;
-			tileRect.right = tile->x + tile->width;
-			tileRect.bottom = tile->y + tile->height;
+			RFX_PROGRESSIVE_TILE* tile = region->tiles[index];
+
+			const RECTANGLE_16 tileRect = { tile->x, tile->y, tile->x + tile->width,
+				                            tile->y + tile->height };
+			RECTANGLE_16 updateRect = { 0 };
 			rectangles_intersection(&tileRect, &clippingRect, &updateRect);
-			nXDst = updateRect.left;
-			nYDst = updateRect.top;
-			nWidth = updateRect.right - updateRect.left;
-			nHeight = updateRect.bottom - updateRect.top;
+			const UINT16 nXDst = updateRect.left;
+			const UINT16 nYDst = updateRect.top;
+			const UINT16 nWidth = updateRect.right - updateRect.left;
+			const UINT16 nHeight = updateRect.bottom - updateRect.top;
 
 			if ((nWidth <= 0) || (nHeight <= 0))
 				continue;
@@ -899,8 +885,8 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 			                   FREERDP_FLIP_NONE);
 		}
 
-		size = bitmaps[pass].size;
-		cnt = test_memcmp_count(g_DstData, bitmaps[pass].buffer, size, 1);
+		const size_t size = bitmaps[pass].size;
+		const size_t cnt = test_memcmp_count(g_DstData, bitmaps[pass].buffer, size, 1);
 
 		if (cnt)
 		{
