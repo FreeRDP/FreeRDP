@@ -998,7 +998,7 @@ error_out:
 
 static rdpPrinterDriver* printer_load_backend(const char* backend)
 {
-	typedef rdpPrinterDriver* (*backend_load_t)(void);
+	typedef UINT (*backend_load_t)(rdpPrinterDriver**);
 	union
 	{
 		PVIRTUALCHANNELENTRY entry;
@@ -1009,7 +1009,12 @@ static rdpPrinterDriver* printer_load_backend(const char* backend)
 	if (!fktconv.entry)
 		return NULL;
 
-	return fktconv.backend();
+	rdpPrinterDriver* printer = NULL;
+	const UINT rc = fktconv.backend(&printer);
+	if (rc != CHANNEL_RC_OK)
+		return NULL;
+
+	return printer;
 }
 
 /**

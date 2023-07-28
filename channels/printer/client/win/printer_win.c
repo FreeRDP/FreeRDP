@@ -434,14 +434,18 @@ static void printer_win_release_ref_driver(rdpPrinterDriver* driver)
 		win->references--;
 }
 
-rdpPrinterDriver* win_freerdp_printer_client_subsystem_entry(void)
+UINT win_freerdp_printer_client_subsystem_entry(void* arg)
 {
+	rdpPrinterDriver** ppPrinter = (rdpPrinterDriver**)arg;
+	if (!ppPrinter)
+		return ERROR_INVALID_PARAMETER;
+
 	if (!win_driver)
 	{
 		win_driver = (rdpWinPrinterDriver*)calloc(1, sizeof(rdpWinPrinterDriver));
 
 		if (!win_driver)
-			return NULL;
+			return ERROR_OUTOFMEMORY;
 
 		win_driver->driver.EnumPrinters = printer_win_enum_printers;
 		win_driver->driver.ReleaseEnumPrinters = printer_win_release_enum_printers;
@@ -455,5 +459,6 @@ rdpPrinterDriver* win_freerdp_printer_client_subsystem_entry(void)
 
 	win_driver->driver.AddRef(&win_driver->driver);
 
-	return &win_driver->driver;
+	*ppPrinter = &win_driver->driver;
+	return CHANNEL_RC_OK;
 }
