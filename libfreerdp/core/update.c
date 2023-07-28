@@ -1723,32 +1723,24 @@ static BOOL update_send_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyp
 
 static BOOL update_send_cache_bitmap(rdpContext* context, const CACHE_BITMAP_ORDER* cache_bitmap)
 {
-	wStream* s;
-	size_t bm, em;
-	BYTE orderType;
-	int headerLength;
-	int inf;
-	UINT16 extraFlags;
-	INT16 orderLength;
-	rdp_update_internal* update;
+	const size_t headerLength = 6;
+	UINT16 extraFlags = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cache_bitmap);
-	update = update_cast(context->update);
+	rdp_update_internal* update = update_cast(context->update);
 
-	extraFlags = 0;
-	headerLength = 6;
-	orderType = cache_bitmap->compressed ? ORDER_TYPE_CACHE_BITMAP_COMPRESSED
-	                                     : ORDER_TYPE_BITMAP_UNCOMPRESSED;
-	inf =
+	const BYTE orderType = cache_bitmap->compressed ? ORDER_TYPE_CACHE_BITMAP_COMPRESSED
+	                                                : ORDER_TYPE_BITMAP_UNCOMPRESSED;
+	const size_t inf =
 	    update_approximate_cache_bitmap_order(cache_bitmap, cache_bitmap->compressed, &extraFlags);
 	update_check_flush(context, headerLength + inf);
-	s = update->us;
+	wStream* s = update->us;
 
 	if (!s)
 		return FALSE;
 
-	bm = Stream_GetPosition(s);
+	const size_t bm = Stream_GetPosition(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, headerLength))
 		return FALSE;
@@ -1758,11 +1750,14 @@ static BOOL update_send_cache_bitmap(rdpContext* context, const CACHE_BITMAP_ORD
 	if (!update_write_cache_bitmap_order(s, cache_bitmap, cache_bitmap->compressed, &extraFlags))
 		return FALSE;
 
-	em = Stream_GetPosition(s);
-	orderLength = (em - bm) - 13;
+	const size_t em = Stream_GetPosition(s);
+	WINPR_ASSERT(em >= bm + 13);
+	const size_t orderLength = (em - bm) - 13;
+	WINPR_ASSERT(orderLength <= UINT16_MAX);
+
 	Stream_SetPosition(s, bm);
 	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
-	Stream_Write_UINT16(s, orderLength);                     /* orderLength (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)orderLength);             /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, extraFlags);                      /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, orderType);                        /* orderType (1 byte) */
 	Stream_SetPosition(s, em);
@@ -1772,22 +1767,15 @@ static BOOL update_send_cache_bitmap(rdpContext* context, const CACHE_BITMAP_ORD
 
 static BOOL update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORDER* cache_bitmap_v2)
 {
-	wStream* s;
-	size_t bm, em;
-	BYTE orderType;
-	int headerLength;
-	UINT16 extraFlags;
-	INT16 orderLength;
-	rdp_update_internal* update;
+	const size_t headerLength = 6;
+	UINT16 extraFlags = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cache_bitmap_v2);
-	update = update_cast(context->update);
+	rdp_update_internal* update = update_cast(context->update);
 
-	extraFlags = 0;
-	headerLength = 6;
-	orderType = cache_bitmap_v2->compressed ? ORDER_TYPE_BITMAP_COMPRESSED_V2
-	                                        : ORDER_TYPE_BITMAP_UNCOMPRESSED_V2;
+	const BYTE orderType = cache_bitmap_v2->compressed ? ORDER_TYPE_BITMAP_COMPRESSED_V2
+	                                                   : ORDER_TYPE_BITMAP_UNCOMPRESSED_V2;
 
 	if (context->settings->NoBitmapCompressionHeader)
 		cache_bitmap_v2->flags |= CBR2_NO_BITMAP_COMPRESSION_HDR;
@@ -1795,12 +1783,12 @@ static BOOL update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	update_check_flush(context, headerLength +
 	                                update_approximate_cache_bitmap_v2_order(
 	                                    cache_bitmap_v2, cache_bitmap_v2->compressed, &extraFlags));
-	s = update->us;
+	wStream* s = update->us;
 
 	if (!s)
 		return FALSE;
 
-	bm = Stream_GetPosition(s);
+	const size_t bm = Stream_GetPosition(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, headerLength))
 		return FALSE;
@@ -1811,11 +1799,14 @@ static BOOL update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 	                                        &extraFlags))
 		return FALSE;
 
-	em = Stream_GetPosition(s);
-	orderLength = (em - bm) - 13;
+	const size_t em = Stream_GetPosition(s);
+	WINPR_ASSERT(em >= bm + 13);
+	const size_t orderLength = (em - bm) - 13;
+	WINPR_ASSERT(orderLength <= UINT16_MAX);
+
 	Stream_SetPosition(s, bm);
 	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
-	Stream_Write_UINT16(s, orderLength);                     /* orderLength (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)orderLength);             /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, extraFlags);                      /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, orderType);                        /* orderType (1 byte) */
 	Stream_SetPosition(s, em);
@@ -1825,29 +1816,22 @@ static BOOL update_send_cache_bitmap_v2(rdpContext* context, CACHE_BITMAP_V2_ORD
 
 static BOOL update_send_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORDER* cache_bitmap_v3)
 {
-	wStream* s;
-	size_t bm, em;
-	BYTE orderType;
-	int headerLength;
-	UINT16 extraFlags;
-	INT16 orderLength;
-	rdp_update_internal* update;
+	const size_t headerLength = 6;
+	UINT16 extraFlags = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cache_bitmap_v3);
-	update = update_cast(context->update);
+	rdp_update_internal* update = update_cast(context->update);
 
-	extraFlags = 0;
-	headerLength = 6;
-	orderType = ORDER_TYPE_BITMAP_COMPRESSED_V3;
+	const BYTE orderType = ORDER_TYPE_BITMAP_COMPRESSED_V3;
 	update_check_flush(context, headerLength + update_approximate_cache_bitmap_v3_order(
 	                                               cache_bitmap_v3, &extraFlags));
-	s = update->us;
+	wStream* s = update->us;
 
 	if (!s)
 		return FALSE;
 
-	bm = Stream_GetPosition(s);
+	const size_t bm = Stream_GetPosition(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, headerLength))
 		return FALSE;
@@ -1857,11 +1841,14 @@ static BOOL update_send_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORD
 	if (!update_write_cache_bitmap_v3_order(s, cache_bitmap_v3, &extraFlags))
 		return FALSE;
 
-	em = Stream_GetPosition(s);
-	orderLength = (em - bm) - 13;
+	const size_t em = Stream_GetPosition(s);
+	WINPR_ASSERT(em >= bm + 13);
+	const size_t orderLength = (em - bm) - 13;
+	WINPR_ASSERT(orderLength <= UINT16_MAX);
+
 	Stream_SetPosition(s, bm);
 	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
-	Stream_Write_UINT16(s, orderLength);                     /* orderLength (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)orderLength);             /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, extraFlags);                      /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, orderType);                        /* orderType (1 byte) */
 	Stream_SetPosition(s, em);
@@ -1872,27 +1859,21 @@ static BOOL update_send_cache_bitmap_v3(rdpContext* context, CACHE_BITMAP_V3_ORD
 static BOOL update_send_cache_color_table(rdpContext* context,
                                           const CACHE_COLOR_TABLE_ORDER* cache_color_table)
 {
-	wStream* s;
-	UINT16 flags;
-	size_t bm, em, inf;
-	size_t headerLength;
-	INT16 orderLength;
-	rdp_update_internal* update;
+	UINT16 flags = 0;
+	size_t headerLength = 6;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cache_color_table);
-	update = update_cast(context->update);
+	rdp_update_internal* update = update_cast(context->update);
 
-	flags = 0;
-	headerLength = 6;
-	inf = update_approximate_cache_color_table_order(cache_color_table, &flags);
+	const size_t inf = update_approximate_cache_color_table_order(cache_color_table, &flags);
 	update_check_flush(context, headerLength + inf);
-	s = update->us;
+	wStream* s = update->us;
 
 	if (!s)
 		return FALSE;
 
-	bm = Stream_GetPosition(s);
+	const size_t bm = Stream_GetPosition(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, headerLength))
 		return FALSE;
@@ -1902,11 +1883,13 @@ static BOOL update_send_cache_color_table(rdpContext* context,
 	if (!update_write_cache_color_table_order(s, cache_color_table, &flags))
 		return FALSE;
 
-	em = Stream_GetPosition(s);
-	orderLength = (em - bm) - 13;
+	const size_t em = Stream_GetPosition(s);
+	WINPR_ASSERT(em >= bm + 13);
+	const size_t orderLength = (em - bm) - 13;
+	WINPR_ASSERT(orderLength <= UINT16_MAX);
 	Stream_SetPosition(s, bm);
 	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
-	Stream_Write_UINT16(s, orderLength);                     /* orderLength (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)orderLength);             /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, flags);                           /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, ORDER_TYPE_CACHE_COLOR_TABLE);     /* orderType (1 byte) */
 	Stream_SetPosition(s, em);
@@ -1916,27 +1899,21 @@ static BOOL update_send_cache_color_table(rdpContext* context,
 
 static BOOL update_send_cache_glyph(rdpContext* context, const CACHE_GLYPH_ORDER* cache_glyph)
 {
-	wStream* s;
-	UINT16 flags;
-	size_t bm, em, inf;
-	int headerLength;
-	INT16 orderLength;
-	rdp_update_internal* update;
+	UINT16 flags = 0;
+	const size_t headerLength = 6;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cache_glyph);
-	update = update_cast(context->update);
+	rdp_update_internal* update = update_cast(context->update);
 
-	flags = 0;
-	headerLength = 6;
-	inf = update_approximate_cache_glyph_order(cache_glyph, &flags);
+	const size_t inf = update_approximate_cache_glyph_order(cache_glyph, &flags);
 	update_check_flush(context, headerLength + inf);
-	s = update->us;
+	wStream* s = update->us;
 
 	if (!s)
 		return FALSE;
 
-	bm = Stream_GetPosition(s);
+	const size_t bm = Stream_GetPosition(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, headerLength))
 		return FALSE;
@@ -1946,11 +1923,13 @@ static BOOL update_send_cache_glyph(rdpContext* context, const CACHE_GLYPH_ORDER
 	if (!update_write_cache_glyph_order(s, cache_glyph, &flags))
 		return FALSE;
 
-	em = Stream_GetPosition(s);
-	orderLength = (em - bm) - 13;
+	const size_t em = Stream_GetPosition(s);
+	WINPR_ASSERT(em >= bm + 13);
+	const size_t orderLength = (em - bm) - 13;
+	WINPR_ASSERT(orderLength <= UINT16_MAX);
 	Stream_SetPosition(s, bm);
 	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
-	Stream_Write_UINT16(s, orderLength);                     /* orderLength (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)orderLength);             /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, flags);                           /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, ORDER_TYPE_CACHE_GLYPH);           /* orderType (1 byte) */
 	Stream_SetPosition(s, em);
@@ -1961,27 +1940,21 @@ static BOOL update_send_cache_glyph(rdpContext* context, const CACHE_GLYPH_ORDER
 static BOOL update_send_cache_glyph_v2(rdpContext* context,
                                        const CACHE_GLYPH_V2_ORDER* cache_glyph_v2)
 {
-	wStream* s;
-	UINT16 flags;
-	size_t bm, em, inf;
-	int headerLength;
-	INT16 orderLength;
-	rdp_update_internal* update;
+	UINT16 flags = 0;
+	const size_t headerLength = 6;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cache_glyph_v2);
-	update = update_cast(context->update);
+	rdp_update_internal* update = update_cast(context->update);
 
-	flags = 0;
-	headerLength = 6;
-	inf = update_approximate_cache_glyph_v2_order(cache_glyph_v2, &flags);
+	const size_t inf = update_approximate_cache_glyph_v2_order(cache_glyph_v2, &flags);
 	update_check_flush(context, headerLength + inf);
-	s = update->us;
+	wStream* s = update->us;
 
 	if (!s)
 		return FALSE;
 
-	bm = Stream_GetPosition(s);
+	const size_t bm = Stream_GetPosition(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, headerLength))
 		return FALSE;
@@ -1991,11 +1964,13 @@ static BOOL update_send_cache_glyph_v2(rdpContext* context,
 	if (!update_write_cache_glyph_v2_order(s, cache_glyph_v2, &flags))
 		return FALSE;
 
-	em = Stream_GetPosition(s);
-	orderLength = (em - bm) - 13;
+	const size_t em = Stream_GetPosition(s);
+	WINPR_ASSERT(em >= bm + 13);
+	const size_t orderLength = (em - bm) - 13;
+	WINPR_ASSERT(orderLength <= UINT16_MAX);
 	Stream_SetPosition(s, bm);
 	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
-	Stream_Write_UINT16(s, orderLength);                     /* orderLength (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)orderLength);             /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, flags);                           /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, ORDER_TYPE_CACHE_GLYPH);           /* orderType (1 byte) */
 	Stream_SetPosition(s, em);
@@ -2005,27 +1980,21 @@ static BOOL update_send_cache_glyph_v2(rdpContext* context,
 
 static BOOL update_send_cache_brush(rdpContext* context, const CACHE_BRUSH_ORDER* cache_brush)
 {
-	wStream* s;
-	UINT16 flags;
-	size_t bm, em, inf;
-	int headerLength;
-	INT16 orderLength;
-	rdp_update_internal* update;
+	UINT16 flags = 0;
+	const size_t headerLength = 6;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cache_brush);
-	update = update_cast(context->update);
+	rdp_update_internal* update = update_cast(context->update);
 
-	flags = 0;
-	headerLength = 6;
-	inf = update_approximate_cache_brush_order(cache_brush, &flags);
+	const size_t inf = update_approximate_cache_brush_order(cache_brush, &flags);
 	update_check_flush(context, headerLength + inf);
-	s = update->us;
+	wStream* s = update->us;
 
 	if (!s)
 		return FALSE;
 
-	bm = Stream_GetPosition(s);
+	const size_t bm = Stream_GetPosition(s);
 
 	if (!Stream_EnsureRemainingCapacity(s, headerLength))
 		return FALSE;
@@ -2035,11 +2004,13 @@ static BOOL update_send_cache_brush(rdpContext* context, const CACHE_BRUSH_ORDER
 	if (!update_write_cache_brush_order(s, cache_brush, &flags))
 		return FALSE;
 
-	em = Stream_GetPosition(s);
-	orderLength = (em - bm) - 13;
+	const size_t em = Stream_GetPosition(s);
+	WINPR_ASSERT(em > bm + 13);
+	const size_t orderLength = (em - bm) - 13;
+	WINPR_ASSERT(orderLength <= UINT16_MAX);
 	Stream_SetPosition(s, bm);
 	Stream_Write_UINT8(s, ORDER_STANDARD | ORDER_SECONDARY); /* controlFlags (1 byte) */
-	Stream_Write_UINT16(s, orderLength);                     /* orderLength (2 bytes) */
+	Stream_Write_UINT16(s, (UINT16)orderLength);             /* orderLength (2 bytes) */
 	Stream_Write_UINT16(s, flags);                           /* extraFlags (2 bytes) */
 	Stream_Write_UINT8(s, ORDER_TYPE_CACHE_BRUSH);           /* orderType (1 byte) */
 	Stream_SetPosition(s, em);
