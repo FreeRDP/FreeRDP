@@ -348,7 +348,7 @@ WINPR_SAM_ENTRY* SamLookupUserW(WINPR_SAM* sam, LPCWSTR User, UINT32 UserLength,
 		if (!utfDomain)
 			goto fail;
 	}
-	entry = SamLookupUserA(sam, utfUser, userCharLen, utfDomain, domainCharLen);
+	entry = SamLookupUserA(sam, utfUser, (UINT32)userCharLen, utfDomain, (UINT32)domainCharLen);
 fail:
 	free(utfUser);
 	free(utfDomain);

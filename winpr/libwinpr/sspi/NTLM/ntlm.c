@@ -169,8 +169,8 @@ static int ntlm_SetContextServicePrincipalNameW(NTLM_CONTEXT* context, LPWSTR Se
 	if (!context->ServicePrincipalName.Buffer)
 		return -1;
 
-	CopyMemory(context->ServicePrincipalName.Buffer, ServicePrincipalName,
-	           context->ServicePrincipalName.Length + 2);
+	memcpy(context->ServicePrincipalName.Buffer, ServicePrincipalName,
+	       context->ServicePrincipalName.Length + 2);
 	return 1;
 }
 

@@ -56,7 +56,7 @@ BOOL NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 	if (!PasswordW)
 		return FALSE;
 
-	if (!NTOWFv1W(PasswordW, pwdCharLength * sizeof(WCHAR), NtHash))
+	if (!NTOWFv1W(PasswordW, (UINT32)pwdCharLength * sizeof(WCHAR), NtHash))
 		goto out_fail;
 
 	result = TRUE;
@@ -107,8 +107,9 @@ BOOL NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User, UINT32 UserLeng
 	if (!UserW || !DomainW || !PasswordW)
 		goto out_fail;
 
-	if (!NTOWFv2W(PasswordW, pwdCharLength * sizeof(WCHAR), UserW, userCharLength * sizeof(WCHAR),
-	              DomainW, domainCharLength * sizeof(WCHAR), NtHash))
+	if (!NTOWFv2W(PasswordW, (UINT32)pwdCharLength * sizeof(WCHAR), UserW,
+	              (UINT32)userCharLength * sizeof(WCHAR), DomainW,
+	              (UINT32)domainCharLength * sizeof(WCHAR), NtHash))
 		goto out_fail;
 
 	result = TRUE;
@@ -169,8 +170,8 @@ BOOL NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength, LPSTR Domai
 	if (!UserW || !DomainW)
 		goto out_fail;
 
-	if (!NTOWFv2FromHashW(NtHashV1, UserW, userCharLength * sizeof(WCHAR), DomainW,
-	                      domainCharLength * sizeof(WCHAR), NtHash))
+	if (!NTOWFv2FromHashW(NtHashV1, UserW, (UINT32)userCharLength * sizeof(WCHAR), DomainW,
+	                      (UINT32)domainCharLength * sizeof(WCHAR), NtHash))
 		goto out_fail;
 
 	result = TRUE;
