@@ -225,7 +225,8 @@ int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16*
 
 			while (vk--)
 			{
-				run += (1 << k); /* add (1 << k) to run length */
+				const UINT32 add = (1 << k); /* add (1 << k) to run length */
+				run += add;
 
 				/* update k, kp params */
 
