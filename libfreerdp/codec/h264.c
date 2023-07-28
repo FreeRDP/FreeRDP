@@ -157,9 +157,9 @@ static INLINE BOOL diff_tile(const RECTANGLE_16* regionRect, BYTE* pYUVData[3],
 	size = regionRect->right - regionRect->left;
 	if (regionRect->right > iStride[0])
 		return FALSE;
-	if (regionRect->right / 2 > iStride[1])
+	if (regionRect->right / 2u > iStride[1])
 		return FALSE;
-	if (regionRect->right / 2 > iStride[2])
+	if (regionRect->right / 2u > iStride[2])
 		return FALSE;
 
 	for (y = regionRect->top; y < regionRect->bottom; y++)
