@@ -994,7 +994,7 @@ static const SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameW(const
 
 	for (index = 0; index < (int)cPackages; index++)
 	{
-		if (lstrcmpW(Name, SecurityFunctionTableW_NAME_LIST[index].Name) == 0)
+		if (_wcscmp(Name, SecurityFunctionTableW_NAME_LIST[index].Name) == 0)
 		{
 			return (const SecurityFunctionTableW*)SecurityFunctionTableW_NAME_LIST[index]
 			    .SecurityFunctionTable;
@@ -1164,7 +1164,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityPackageInfoW(SEC_WCHAR* pszP
 
 	for (index = 0; index < (int)cPackages; index++)
 	{
-		if (lstrcmpW(pszPackageName, SecPkgInfoW_LIST[index]->Name) == 0)
+		if (_wcscmp(pszPackageName, SecPkgInfoW_LIST[index]->Name) == 0)
 		{
 			size = sizeof(SecPkgInfoW);
 			pPackageInfo =

@@ -21,8 +21,8 @@ HRESULT PATH_CCH_ADD_EXTENSION(PWSTR pszPath, size_t cchPath, PCWSTR pszExt)
 	if (!pszExt)
 		return E_INVALIDARG;
 
-	pszExtLength = lstrlenW(pszExt);
-	pszPathLength = lstrlenW(pszPath);
+	pszExtLength = _wcslen(pszExt);
+	pszPathLength = _wcslen(pszPath);
 	bExtDot = (pszExt[0] == '.') ? TRUE : FALSE;
 
 	pDot = _wcsrchr(pszPath, '.');
@@ -66,8 +66,8 @@ HRESULT PATH_CCH_ADD_EXTENSION(PSTR pszPath, size_t cchPath, PCSTR pszExt)
 	if (!pszExt)
 		return E_INVALIDARG;
 
-	pszExtLength = lstrlenA(pszExt);
-	pszPathLength = lstrlenA(pszPath);
+	pszExtLength = strlen(pszExt);
+	pszPathLength = strlen(pszPath);
 	bExtDot = (pszExt[0] == '.') ? TRUE : FALSE;
 
 	pDot = strrchr(pszPath, '.');
