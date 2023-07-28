@@ -2274,7 +2274,7 @@ static INLINE SSIZE_T progressive_wb_read_region_header(PROGRESSIVE_CONTEXT* pro
 	}
 	len -= region->numProgQuant * 16ULL;
 
-	if (len < region->tileDataSize)
+	if (len < region->tileDataSize * 1ll)
 	{
 		WLog_Print(progressive->log, WLOG_ERROR, "ProgressiveRegion data short for region->tiles");
 		return -1024;
