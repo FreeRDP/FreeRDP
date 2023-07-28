@@ -2267,7 +2267,10 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 		return -1007;
 	}
 
-	*pDstSize = HistoryPtr - ncrush->HistoryPtr;
+	const intptr_t hsize = HistoryPtr - ncrush->HistoryPtr;
+	WINPR_ASSERT(hsize >= 0);
+	WINPR_ASSERT(hsize <= UINT32_MAX);
+	*pDstSize = (UINT32)hsize;
 	*ppDstData = ncrush->HistoryPtr;
 	ncrush->HistoryPtr = HistoryPtr;
 	return 1;
@@ -2315,7 +2318,10 @@ static int ncrush_find_match_length(const BYTE* Ptr1, const BYTE* Ptr2, BYTE* Hi
 		val2 = *Ptr2++;
 	} while (val1 == val2);
 
-	return Ptr1 - (Ptr + 1);
+	const intptr_t psize = Ptr1 - (Ptr + 1);
+	WINPR_ASSERT(psize <= INT_MAX);
+	WINPR_ASSERT(psize >= -INT_MAX);
+	return (int)psize;
 }
 
 static int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT16 HistoryOffset,
@@ -2454,7 +2460,10 @@ static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 		return -1;
 
 	MoveMemory(ncrush->HistoryBuffer, HistoryPtr - 32768, 32768);
-	HistoryOffset = HistoryPtr - 32768 - ncrush->HistoryBuffer;
+	const intptr_t hsize = HistoryPtr - 32768 - ncrush->HistoryBuffer;
+	WINPR_ASSERT(hsize <= UINT32_MAX);
+	WINPR_ASSERT(hsize >= 0);
+	HistoryOffset = (UINT32)hsize;
 
 	for (i = 0; i < 65536; i += 4)
 	{
@@ -2579,14 +2588,20 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 	HistoryBufferSize = ncrush->HistoryBufferSize;
 	CopyOffset = 0;
 	MatchOffset = 0;
-	ncrush_hash_table_add(ncrush, pSrcData, SrcSize, HistoryPtr - HistoryBuffer);
+	const intptr_t thsize = HistoryPtr - HistoryBuffer;
+	WINPR_ASSERT(thsize >= 0);
+	WINPR_ASSERT(thsize <= UINT32_MAX);
+	ncrush_hash_table_add(ncrush, pSrcData, SrcSize, (UINT32)thsize);
 	CopyMemory(HistoryPtr, pSrcData, SrcSize);
 	ncrush->HistoryPtr = &HistoryPtr[SrcSize];
 
 	while (SrcPtr < (SrcEndPtr - 2))
 	{
 		MatchLength = 0;
-		HistoryOffset = HistoryPtr - HistoryBuffer;
+		const intptr_t hsize = HistoryPtr - HistoryBuffer;
+		WINPR_ASSERT(hsize <= UINT32_MAX);
+		WINPR_ASSERT(hsize >= 0);
+		HistoryOffset = (UINT32)hsize;
 
 		if (ncrush->HistoryPtr && (HistoryPtr > ncrush->HistoryPtr))
 			return -1;
@@ -2819,7 +2834,10 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 	bits = get_word(&HuffCodeLEC[IndexLEC * 2]);
 	NCrushWriteBits(&DstPtr, &accumulator, &offset, bits, BitLength);
 	NCrushWriteFinish(&DstPtr, accumulator);
-	*pDstSize = DstPtr - pDstData;
+	const intptr_t dsize = DstPtr - pDstData;
+	WINPR_ASSERT(dsize <= UINT32_MAX);
+	WINPR_ASSERT(dsize >= 0);
+	*pDstSize = (UINT32)dsize;
 
 	if (*pDstSize > SrcSize)
 		return -1016;
