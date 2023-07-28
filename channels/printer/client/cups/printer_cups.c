@@ -406,14 +406,18 @@ static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 		cups_driver->references--;
 }
 
-rdpPrinterDriver* cups_freerdp_printer_client_subsystem_entry(void)
+UINT cups_freerdp_printer_client_subsystem_entry(void* arg)
 {
+	rdpPrinterDriver** ppPrinter = (rdpPrinterDriver**)arg;
+	if (!ppPrinter)
+		return ERROR_INVALID_PARAMETER;
+
 	if (!uniq_cups_driver)
 	{
 		uniq_cups_driver = (rdpCupsPrinterDriver*)calloc(1, sizeof(rdpCupsPrinterDriver));
 
 		if (!uniq_cups_driver)
-			return NULL;
+			return ERROR_OUTOFMEMORY;
 
 		uniq_cups_driver->driver.EnumPrinters = printer_cups_enum_printers;
 		uniq_cups_driver->driver.ReleaseEnumPrinters = printer_cups_release_enum_printers;
@@ -428,5 +432,6 @@ rdpPrinterDriver* cups_freerdp_printer_client_subsystem_entry(void)
 	WINPR_ASSERT(uniq_cups_driver->driver.AddRef);
 	uniq_cups_driver->driver.AddRef(&uniq_cups_driver->driver);
 
-	return &uniq_cups_driver->driver;
+	*ppPrinter = &uniq_cups_driver->driver;
+	return CHANNEL_RC_OK;
 }
