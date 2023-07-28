@@ -41,13 +41,11 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 {
 	static const PSTR TERMSRV = "TERMSRV/%s";
 
-	PSTR TargetName = 0;
-	PSTR UserName = 0;
-	PSTR Password = 0;
-	PWSTR UserNameW = 0;
-	PWSTR PasswordW = 0;
-	PWSTR TargetNameW = 0;
-	PWSTR ServerHostnameW = 0;
+	PSTR TargetName = NULL;
+	PSTR UserName = NULL;
+	PSTR Password = NULL;
+	PWSTR TargetNameW = NULL;
+	PWSTR ServerHostnameW = NULL;
 	PCREDENTIALW Credential = { 0 };
 
 	PCSTR ServerHostname = freerdp_settings_get_string(settings, idHostname);
@@ -81,7 +79,8 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 
 	if (!bExistPassword)
 	{
-		PasswordW = ValidateString(Credential->CredentialBlob, Credential->CredentialBlobSize);
+		const WCHAR* PasswordW =
+		    ValidateString(Credential->CredentialBlob, Credential->CredentialBlobSize);
 
 		if (PasswordW)
 		{
@@ -92,7 +91,7 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 
 	if (!bExistUserName)
 	{
-		UserNameW = Credential->UserName;
+		const WCHAR* UserNameW = Credential->UserName;
 
 		if (UserNameW)
 		{
