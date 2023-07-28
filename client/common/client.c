@@ -1143,8 +1143,12 @@ BOOL client_common_get_access_token(freerdp* instance, const char* request, char
 	if (resp_code != HTTP_STATUS_OK)
 	{
 		char buffer[64] = { 0 };
-		WLog_ERR(TAG, "Server unwilling to provide access token; returned status code %s",
-		         freerdp_http_status_string_format(resp_code, buffer, sizeof(buffer)));
+		wLog* log = WLog_Get(TAG);
+		WLog_Print(log, WLOG_ERROR,
+		           "Server unwilling to provide access token; returned status code %s",
+		           freerdp_http_status_string_format(resp_code, buffer, sizeof(buffer)));
+		if (response_length > 0)
+			WLog_Print(log, WLOG_ERROR, "[status message] %s", response);
 		goto cleanup;
 	}
 

@@ -246,6 +246,8 @@ static BOOL aad_get_nonce(rdpAad* aad)
 	{
 		WLog_Print(aad->log, WLOG_ERROR,
 		           "Server unwilling to provide nonce; returned status code %li", resp_code);
+		if (response_length > 0)
+			WLog_Print(aad->log, WLOG_ERROR, "[status message] %s", response);
 		goto fail;
 	}
 
