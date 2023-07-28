@@ -240,7 +240,7 @@ static BOOL ArrayList_Shift(wArrayList* arrayList, size_t index, SSIZE_T count)
 
 		if (chunk > 0)
 			MoveMemory(&arrayList->array[index], &arrayList->array[index - count],
-			           chunk * sizeof(void*));
+			           (size_t)chunk * sizeof(void*));
 
 		arrayList->size += count;
 	}
