@@ -538,28 +538,27 @@ fail:
 int TestGdiBitBlt(int argc, char* argv[])
 {
 	int rc = 0;
-	UINT32 x, y;
 	const UINT32 formatList[] = { PIXEL_FORMAT_RGB8,   PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_ARGB15,
 		                          PIXEL_FORMAT_RGB16,  PIXEL_FORMAT_RGB24,  PIXEL_FORMAT_RGBA32,
 		                          PIXEL_FORMAT_RGBX32, PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_XRGB32,
 		                          PIXEL_FORMAT_BGR15,  PIXEL_FORMAT_ABGR15, PIXEL_FORMAT_BGR16,
 		                          PIXEL_FORMAT_BGR24,  PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32,
 		                          PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_XBGR32 };
-	const UINT32 listSize = sizeof(formatList) / sizeof(formatList[0]);
+	const size_t listSize = sizeof(formatList) / sizeof(formatList[0]);
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	for (x = 0; x < listSize; x++)
+	for (size_t x = 0; x < listSize; x++)
 	{
 		/* Skip 8bpp, only supported on remote end. */
-		for (y = 1; y < listSize; y++)
+		for (size_t y = 1; y < listSize; y++)
 		{
 			if (!test_gdi_BitBlt(formatList[x], formatList[y]))
 			{
 				fprintf(stderr, "test_gdi_BitBlt(SrcFormat=%s, DstFormat=%s) failed!\n",
 				        FreeRDPGetColorFormatName(formatList[x]),
 				        FreeRDPGetColorFormatName(formatList[y]));
-				rc = -y;
+				rc = -1;
 			}
 		}
 	}
