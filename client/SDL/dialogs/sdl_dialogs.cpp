@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <string>
+#include <assert.h>
 
 #include <freerdp/log.h>
 #include <freerdp/utils/smartcardlogon.h>
@@ -95,12 +96,14 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 	char* d = nullptr;
 	char* p = nullptr;
 
-	if (username)
-		u = *username;
-	if (domain)
-		d = *domain;
-	if (password)
-		p = *password;
+	assert(username);
+	assert(domain);
+	assert(password);
+
+	u = *username;
+	d = *domain;
+	p = *password;
+
 	if (!sdl_push_user_event(SDL_USEREVENT_AUTH_DIALOG, title, u, d, p, reason))
 		goto fail;
 
@@ -111,7 +114,7 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 		                              SDL_USEREVENT_AUTH_RESULT);
 		if (rc > 0)
 		{
-			SDL_UserAuthArg* arg = (SDL_UserAuthArg*)event.padding;
+			SDL_UserAuthArg* arg = reinterpret_cast<SDL_UserAuthArg*>(event.padding);
 
 			res = arg->result != 0 ? TRUE : FALSE;
 
@@ -174,7 +177,7 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 		if (rc > 0)
 		{
 			res = TRUE;
-			*choice = (DWORD)event.user.code;
+			*choice = static_cast<DWORD>(event.user.code);
 			break;
 		}
 		Sleep(1);
@@ -243,7 +246,7 @@ static DWORD sdl_show_ceritifcate_dialog(rdpContext* context, const char* title,
 		const int rc = SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_USEREVENT_CERT_RESULT,
 		                              SDL_USEREVENT_CERT_RESULT);
 		if (rc > 0)
-			return (DWORD)event.user.code;
+			return static_cast<DWORD>(event.user.code);
 		Sleep(1);
 	}
 	return 0;

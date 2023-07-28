@@ -51,14 +51,14 @@ SdlInputWidget::SdlInputWidget(SDL_Renderer* renderer, const std::string& label,
              { static_cast<int>(width + hpadding), static_cast<int>(offset * (height + vpadding)),
                static_cast<int>(width), static_cast<int>(height) },
              true),
-      _mouseover(false), _highlight(false)
+      _highlight(false), _mouseover(false)
 {
 }
 
 SdlInputWidget::SdlInputWidget(SdlInputWidget&& other) noexcept
     : _flags(std::move(other._flags)), _text(std::move(other._text)),
       _text_label(std::move(other._text_label)), _label(std::move(other._label)),
-      _input(std::move(other._input)), _mouseover(other._mouseover), _highlight(other._highlight)
+      _input(std::move(other._input)), _highlight(other._highlight), _mouseover(other._mouseover)
 {
 }
 

@@ -49,7 +49,7 @@ static int read(FILE* out, const char* font, const char* outname)
 	off_t size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	const int rc = write_header(out, outname, font, (size_t)size);
+	const int rc = write_header(out, outname, font, static_cast<size_t>(size));
 	if (rc != 0)
 	{
 		fclose(fp);
