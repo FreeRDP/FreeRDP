@@ -100,6 +100,7 @@ extern "C"
 	WINPR_API void GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
 	WINPR_API void GetNativeSystemInfo(LPSYSTEM_INFO lpSystemInfo);
 
+#if defined(WITH_WINPR_DEPRECATED)
 	typedef struct
 	{
 		DWORD dwOSVersionInfoSize;
@@ -181,6 +182,7 @@ extern "C"
 #define VER_SUITE_STORAGE_SERVER 0x00002000
 #define VER_SUITE_TERMINAL 0x00000010
 #define VER_SUITE_WH_SERVER 0x00008000
+#endif
 
 #define VER_NT_DOMAIN_CONTROLLER 0x0000002
 #define VER_NT_SERVER 0x0000003
@@ -262,6 +264,7 @@ extern "C"
 
 #if !defined(_WIN32) || defined(_UWP)
 
+#if defined(WITH_WINPR_DEPRECATED)
 	WINPR_API BOOL GetVersionExA(LPOSVERSIONINFOA lpVersionInformation);
 	WINPR_API BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation);
 
@@ -271,6 +274,7 @@ extern "C"
 #define GetVersionEx GetVersionExA
 #endif
 
+#endif
 #endif
 
 #if !defined(_WIN32) || defined(_UWP)

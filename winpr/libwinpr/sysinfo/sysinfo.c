@@ -316,6 +316,7 @@ DWORD GetTickCount(void)
 
 #if !defined(_WIN32) || defined(_UWP)
 
+#if defined(WITH_WINPR_DEPRECATED)
 /* OSVERSIONINFOEX Structure:
  * http://msdn.microsoft.com/en-us/library/windows/desktop/ms724833
  */
@@ -381,6 +382,8 @@ BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 	ZeroMemory(lpVersionInformation->szCSDVersion, sizeof(lpVersionInformation->szCSDVersion));
 	return GetVersionExA((LPOSVERSIONINFOA)lpVersionInformation);
 }
+
+#endif
 
 #endif
 

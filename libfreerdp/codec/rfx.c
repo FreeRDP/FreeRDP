@@ -271,20 +271,8 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 
 	if (!(ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
 	{
-#ifdef _WIN32
-		{
-			BOOL isVistaOrLater;
-			OSVERSIONINFOA verinfo = { 0 };
-
-			verinfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-			GetVersionExA(&verinfo);
-			isVistaOrLater =
-			    ((verinfo.dwMajorVersion >= 6) && (verinfo.dwMinorVersion >= 0)) ? TRUE : FALSE;
-			priv->UseThreads = isVistaOrLater;
-		}
-#else
 		priv->UseThreads = TRUE;
-#endif
+
 		GetNativeSystemInfo(&sysinfo);
 		priv->MinThreadCount = sysinfo.dwNumberOfProcessors;
 		priv->MaxThreadCount = 0;

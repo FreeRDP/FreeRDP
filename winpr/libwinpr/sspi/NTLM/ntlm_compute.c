@@ -57,16 +57,27 @@ static const BYTE NTLM_NULL_BUFFER[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0
 
 BOOL ntlm_get_version_info(NTLM_VERSION_INFO* versionInfo)
 {
-	OSVERSIONINFOA osVersionInfo = { 0 };
-
 	WINPR_ASSERT(versionInfo);
 
+#if defined(WITH_WINPR_DEPRECATED)
+	OSVERSIONINFOA osVersionInfo = { 0 };
 	osVersionInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
 	if (!GetVersionExA(&osVersionInfo))
 		return FALSE;
 	versionInfo->ProductMajorVersion = (UINT8)osVersionInfo.dwMajorVersion;
 	versionInfo->ProductMinorVersion = (UINT8)osVersionInfo.dwMinorVersion;
 	versionInfo->ProductBuild = (UINT16)osVersionInfo.dwBuildNumber;
+#else
+	/* Always return fixed version number.
+	 *
+	 * ProductVersion is fixed since windows 10 to Major 10, Minor 0
+	 * ProductBuild taken from https://en.wikipedia.org/wiki/Windows_11_version_history
+	 * with most recent (pre) release build number
+	 */
+	versionInfo->ProductMajorVersion = 10;
+	versionInfo->ProductMinorVersion = 0;
+	versionInfo->ProductBuild = 22631;
+#endif
 	ZeroMemory(versionInfo->Reserved, sizeof(versionInfo->Reserved));
 	versionInfo->NTLMRevisionCurrent = NTLMSSP_REVISION_W2K3;
 	return TRUE;
