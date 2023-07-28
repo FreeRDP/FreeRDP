@@ -53,7 +53,7 @@ static UINT32 crc32b(const BYTE* data, size_t length)
 		crc = crc ^ d;
 		for (int j = 7; j >= 0; j--)
 		{
-			UINT32 mask = -(crc & 1);
+			UINT32 mask = ~(crc & 1);
 			crc = (crc >> 1) ^ (0xEDB88320 & mask);
 		}
 	}
