@@ -1,6 +1,6 @@
 <Project>
 	<PropertyGroup>
-		<AppVersion>2.6.0</AppVersion>
+		<AppVersion>23.10.0</AppVersion>
 		<Product>UiPath</Product>
 		<Company>UiPath</Company>
 		<Authors>UiPath</Authors>
