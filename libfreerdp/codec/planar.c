@@ -257,7 +257,7 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* pSrcData, UINT3
 			controlByte = *srcp;
 			srcp++;
 
-			if ((srcp - pSrcData) > SrcSize)
+			if ((srcp - pSrcData) > SrcSize * 1ll)
 			{
 				WLog_ERR(TAG, "error reading input buffer");
 				return -1;
@@ -277,7 +277,7 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* pSrcData, UINT3
 				cRawBytes = 0;
 			}
 
-			if (((dstp + (cRawBytes + nRunLength)) - currentScanline) > nWidth)
+			if (((dstp + (cRawBytes + nRunLength)) - currentScanline) > nWidth * 1ll)
 			{
 				WLog_ERR(TAG, "too many pixels in scanline");
 				return -1;
@@ -394,7 +394,7 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 Src
 			controlByte = *srcp;
 			srcp++;
 
-			if ((srcp - pSrcData) > SrcSize)
+			if ((srcp - pSrcData) > SrcSize * 1ll)
 			{
 				WLog_ERR(TAG, "error reading input buffer");
 				return -1;
@@ -414,7 +414,7 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 Src
 				cRawBytes = 0;
 			}
 
-			if (((dstp + (cRawBytes + nRunLength)) - currentScanline) > nWidth * 4)
+			if (((dstp + (cRawBytes + nRunLength)) - currentScanline) > nWidth * 4ll)
 			{
 				WLog_ERR(TAG, "too many pixels in scanline");
 				return -1;
