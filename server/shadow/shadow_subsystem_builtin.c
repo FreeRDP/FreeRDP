@@ -40,9 +40,9 @@ static pfnShadowSubsystemEntry shadow_subsystem_load_static_entry(const char* na
 {
 	if (!name)
 	{
-		for (size_t index = 0; index < g_SubsystemCount; index++)
+		if (g_SubsystemCount > 0)
 		{
-			const RDP_SHADOW_SUBSYSTEM* cur = &g_Subsystems[index];
+			const RDP_SHADOW_SUBSYSTEM* cur = &g_Subsystems[0];
 			WINPR_ASSERT(cur->entry);
 
 			return cur->entry;
