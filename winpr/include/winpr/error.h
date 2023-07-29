@@ -144,12 +144,17 @@
 #pragma clang diagnostic ignored "-Wreserved-id-macro"
 #endif
 
+#ifdef __cplusplus
+#define ERROR_CAST(t, val) static_cast<t>(val)
+#else
+#define ERROR_CAST(t, val) (t)(val)
+#endif
 static INLINE HRESULT HRESULT_FROM_WIN32(unsigned long x)
 {
-	HRESULT hx = (HRESULT)x;
+	HRESULT hx = ERROR_CAST(HRESULT, x);
 	if (hx <= 0)
 		return hx;
-	return (HRESULT)((((x)&0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000));
+	return ERROR_CAST(HRESULT, (((x)&0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000));
 }
 
 #if defined(__clang__)
@@ -160,18 +165,19 @@ static INLINE HRESULT HRESULT_FROM_WIN32(unsigned long x)
 
 #define SUCCEEDED(hr) (((hr)) >= 0)
 #define FAILED(hr) (((hr)) < 0)
-#define IS_ERROR(Status) (((unsigned long)(Status)) >> 31 == SEVERITY_ERROR)
+#define IS_ERROR(Status) ((ERROR_CAST(unsigned long, Status)) >> 31 == SEVERITY_ERROR)
 
-#define MAKE_HRESULT(sev, fac, code)                                         \
-	((HRESULT)(((unsigned long)(sev) << 31) | ((unsigned long)(fac) << 16) | \
-	           ((unsigned long)(code))))
+#define MAKE_HRESULT(sev, fac, code)                                                             \
+	((HRESULT)((ERROR_CAST(unsigned long, sev) << 31) | (ERROR_CAST(unsigned long, fac) << 16) | \
+	           (ERROR_CAST(unsigned long, code))))
 
 #define SCODE_CODE(sc) ((sc)&0xFFFF)
 #define SCODE_FACILITY(sc) (((sc) >> 16) & 0x1FFF)
 #define SCODE_SEVERITY(sc) (((sc) >> 31) & 0x1)
 
-#define MAKE_SCODE(sev, fac, code) \
-	((SCODE)(((unsigned long)(sev) << 31) | ((unsigned long)(fac) << 16) | ((unsigned long)(code))))
+#define MAKE_SCODE(sev, fac, code)                                                             \
+	((SCODE)((ERROR_CAST(unsigned long, sev) << 31) | (ERROR_CAST(unsigned long, fac) << 16) | \
+	         (ERROR_CAST(unsigned long, code))))
 
 #define S_OK (0L)
 #define S_FALSE (1L)

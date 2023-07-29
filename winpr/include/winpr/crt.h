@@ -104,7 +104,13 @@ static INLINE UINT64 _byteswap_uint64(UINT64 _val)
 
 static INLINE UINT16 _byteswap_ushort(UINT16 _val)
 {
-	return (UINT16)(((_val) >> 8U) | ((_val) << 8U));
+#ifdef __cplusplus
+#define winpr_byteswap_cast(t, val) static_cast<t>(val)
+#else
+#define winpr_byteswap_cast(t, val) (t)(val)
+#endif
+	return winpr_byteswap_cast(UINT16, ((_val) >> 8U) | ((_val) << 8U));
+#undef winpr_byteswap_cast
 }
 
 #endif /* (__GNUC__ > 4) || ... */
