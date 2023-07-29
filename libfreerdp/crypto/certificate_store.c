@@ -49,7 +49,7 @@ struct rdp_certificate_store
 static const char certificate_store_dir[] = "certs";
 static const char certificate_server_dir[] = "server";
 
-static char* freerdp_certificate_store_file_path(rdpCertificateStore* store, const char* hash)
+static char* freerdp_certificate_store_file_path(const rdpCertificateStore* store, const char* hash)
 {
 	const char* hosts = freerdp_certificate_store_get_hosts_path(store);
 
@@ -57,15 +57,6 @@ static char* freerdp_certificate_store_file_path(rdpCertificateStore* store, con
 		return NULL;
 
 	return GetCombinedPath(hosts, hash);
-}
-
-static char* freerdp_certificate_store_file_path_raw(rdpCertificateStore* store, const char* host,
-                                                     UINT16 port)
-{
-	char* hash = freerdp_certificate_data_hash(host, port);
-	char* path = freerdp_certificate_store_file_path(store, hash);
-	free(hash);
-	return path;
 }
 
 freerdp_certificate_store_result
@@ -90,7 +81,12 @@ BOOL freerdp_certificate_store_remove_data(rdpCertificateStore* store,
                                            const rdpCertificateData* data)
 {
 	BOOL rc = TRUE;
+
+	WINPR_ASSERT(store);
+
 	const char* hash = freerdp_certificate_data_get_hash(data);
+	if (!hash)
+		return FALSE;
 	char* path = freerdp_certificate_store_file_path(store, hash);
 
 	if (!path)
@@ -138,7 +134,7 @@ rdpCertificateData* freerdp_certificate_store_load_data(rdpCertificateStore* sto
 
 	WINPR_ASSERT(store);
 
-	path = freerdp_certificate_store_file_path_raw(store, host, port);
+	path = freerdp_certificate_store_get_cert_path(store, host, port);
 	if (!path)
 		goto fail;
 
@@ -192,4 +188,17 @@ const char* freerdp_certificate_store_get_hosts_path(const rdpCertificateStore* 
 {
 	WINPR_ASSERT(store);
 	return store->server_path;
+}
+
+char* freerdp_certificate_store_get_cert_path(const rdpCertificateStore* store, const char* host,
+                                              UINT16 port)
+{
+	WINPR_ASSERT(store);
+
+	char* hash = freerdp_certificate_data_hash(host, port);
+	if (!hash)
+		return NULL;
+	char* path = freerdp_certificate_store_file_path(store, hash);
+	free(hash);
+	return path;
 }

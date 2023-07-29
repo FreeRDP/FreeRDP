@@ -86,9 +86,11 @@ static int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const
                                   UINT16 port);
 static void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port,
                                                       const char* common_name, char** alt_names,
-                                                      int alt_names_count);
-static void tls_print_certificate_error(const char* hostname, UINT16 port, const char* fingerprint,
-                                        const char* hosts_file);
+                                                      size_t alt_names_count);
+static void tls_print_new_certificate_warn(rdpCertificateStore* store, const char* hostname,
+                                           UINT16 port, const char* fingerprint);
+static void tls_print_certificate_error(rdpCertificateStore* store, rdpCertificateData* stored_data,
+                                        const char* hostname, UINT16 port, const char* fingerprint);
 
 static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
@@ -1374,7 +1376,7 @@ static BOOL accept_cert(rdpTls* tls, const BYTE* pem, UINT32 length)
 		lid = FreeRDP_RedirectionAcceptedCertLength;
 	}
 
-	if (!freerdp_settings_set_string_len(settings, id, pem, length))
+	if (!freerdp_settings_set_string_len(settings, id, (const char*)pem, length))
 		return FALSE;
 
 	return freerdp_settings_set_uint32(settings, lid, length);
@@ -1535,6 +1537,8 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 					tls_print_certificate_name_mismatch_error(hostname, port, common_name,
 					                                          dns_names, dns_names_count);
 
+				tls_print_new_certificate_warn(tls->certificate_store, hostname, port, pem);
+
 				/* Automatically accept certificate on first use */
 				if (tls->settings->AutoAcceptCertificate)
 				{
@@ -1595,8 +1599,8 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 				    freerdp_certificate_store_load_data(tls->certificate_store, hostname, port);
 				/* entry was found in known_hosts file, but fingerprint does not match. ask user
 				 * to use it */
-				tls_print_certificate_error(hostname, port, pem,
-				                            freerdp_certificate_data_get_hash(stored_data));
+				tls_print_certificate_error(tls->certificate_store, stored_data, hostname, port,
+				                            pem);
 
 				if (!stored_data)
 					WLog_WARN(TAG, "Failed to get certificate entry for %s:%" PRIu16 "", hostname,
@@ -1710,9 +1714,11 @@ end:
 	return verification_status;
 }
 
-void tls_print_certificate_error(const char* hostname, UINT16 port, const char* fingerprint,
-                                 const char* hosts_file)
+void tls_print_new_certificate_warn(rdpCertificateStore* store, const char* hostname, UINT16 port,
+                                    const char* fingerprint)
 {
+	char* path = freerdp_certificate_store_get_cert_path(store, hostname, port);
+
 	WLog_ERR(TAG, "The host key for %s:%" PRIu16 " has changed", hostname, port);
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 	WLog_ERR(TAG, "@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @");
@@ -1722,14 +1728,33 @@ void tls_print_certificate_error(const char* hostname, UINT16 port, const char* 
 	WLog_ERR(TAG, "It is also possible that a host key has just been changed.");
 	WLog_ERR(TAG, "The fingerprint for the host key sent by the remote host is %s", fingerprint);
 	WLog_ERR(TAG, "Please contact your system administrator.");
-	WLog_ERR(TAG, "Add correct host key in %s to get rid of this message.", hosts_file);
+	WLog_ERR(TAG, "Add correct host key in %s to get rid of this message.", path);
 	WLog_ERR(TAG, "Host key for %s has changed and you have requested strict checking.", hostname);
 	WLog_ERR(TAG, "Host key verification failed.");
+
+	free(path);
+}
+
+void tls_print_certificate_error(rdpCertificateStore* store, rdpCertificateData* stored_data,
+                                 const char* hostname, UINT16 port, const char* fingerprint)
+{
+	char* path = freerdp_certificate_store_get_cert_path(store, hostname, port);
+
+	WLog_ERR(TAG, "New host key for %s:%" PRIu16, hostname, port);
+	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+	WLog_ERR(TAG, "@    WARNING: NEW HOST IDENTIFICATION!     @");
+	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+
+	WLog_ERR(TAG, "The fingerprint for the host key sent by the remote host is %s", fingerprint);
+	WLog_ERR(TAG, "Please contact your system administrator.");
+	WLog_ERR(TAG, "Add correct host key in %s to get rid of this message.", path);
+
+	free(path);
 }
 
 void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port,
                                                const char* common_name, char** alt_names,
-                                               int alt_names_count)
+                                               size_t alt_names_count)
 {
 	WINPR_ASSERT(NULL != hostname);
 	WLog_ERR(TAG, "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
@@ -1746,7 +1771,7 @@ void tls_print_certificate_name_mismatch_error(const char* hostname, UINT16 port
 		WINPR_ASSERT(NULL != alt_names);
 		WLog_ERR(TAG, "Alternative names:");
 
-		for (int index = 0; index < alt_names_count; index++)
+		for (size_t index = 0; index < alt_names_count; index++)
 		{
 			WINPR_ASSERT(alt_names[index]);
 			WLog_ERR(TAG, "\t %s", alt_names[index]);
