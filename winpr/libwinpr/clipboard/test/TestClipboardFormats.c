@@ -41,7 +41,7 @@ int TestClipboardFormats(int argc, char* argv[])
 		BOOL bSuccess;
 		UINT32 SrcSize;
 		UINT32 DstSize;
-		const char* pSrcData = "this is a test string";
+		const char pSrcData[] = "this is a test string";
 		char* pDstData;
 
 		if (!pSrcData)
@@ -50,7 +50,7 @@ int TestClipboardFormats(int argc, char* argv[])
 			return -1;
 		}
 
-		SrcSize = (UINT32)(strnlen(pSrcData, UINT32_MAX - 1) + 1);
+		SrcSize = (UINT32)(strnlen(pSrcData, ARRAYSIZE(pSrcData)) + 1);
 		bSuccess = ClipboardSetData(clipboard, utf8StringFormatId, pSrcData, SrcSize);
 		fprintf(stderr, "ClipboardSetData: %" PRId32 "\n", bSuccess);
 		DstSize = 0;
