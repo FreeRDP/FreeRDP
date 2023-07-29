@@ -92,11 +92,11 @@ static BOOL IniFile_BufferResize(wIniFile* ini, size_t size)
 	if (size > ini->buffersize)
 	{
 		const size_t diff = size - ini->buffersize;
-		BYTE* tmp = realloc(ini->buffer, size);
+		char* tmp = realloc(ini->buffer, size);
 		if (!tmp)
 			return FALSE;
 
-		memset(&tmp[ini->buffersize], 0, diff * sizeof(BYTE));
+		memset(&tmp[ini->buffersize], 0, diff * sizeof(char));
 		ini->buffer = tmp;
 		ini->buffersize = size;
 	}

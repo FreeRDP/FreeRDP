@@ -190,6 +190,12 @@ static BOOL find_first_file_fail(const char* FilePath)
 	return FALSE;
 }
 
+static void* string_dup(const void* val)
+{
+	const char* str = (const char*)val;
+	return _strdup(str);
+}
+
 static int TestFileFindFirstFileA(const char* str)
 {
 	int rc = -1;
@@ -212,7 +218,7 @@ static int TestFileFindFirstFileA(const char* str)
 		return -3;
 	wObject* obj = ArrayList_Object(files);
 	obj->fnObjectFree = free;
-	obj->fnObjectNew = _strdup;
+	obj->fnObjectNew = string_dup;
 
 	if (!create_layout(BasePath, files))
 		return -1;
