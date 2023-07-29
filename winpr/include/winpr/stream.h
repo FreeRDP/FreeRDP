@@ -56,6 +56,12 @@ extern "C"
 	WINPR_API BOOL Stream_EnsureCapacity(wStream* s, size_t size);
 	WINPR_API BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size);
 
+#ifdef __cplusplus
+#define WINPR_STREAM_CAST(t, val) static_cast<t>(val)
+#else
+#define WINPR_STREAM_CAST(t, val) (t)(val)
+#endif
+
 #define Stream_CheckAndLogRequiredCapacityOfSize(tag, s, nmemb, size)                         \
 	Stream_CheckAndLogRequiredCapacityEx(tag, WLOG_WARN, s, nmemb, size, "%s(%s:%" PRIuz ")", \
 	                                     __func__, __FILE__, (size_t)__LINE__)
@@ -126,7 +132,7 @@ extern "C"
 		size_t cur;
 		WINPR_ASSERT(s);
 		WINPR_ASSERT(s->buffer <= s->pointer);
-		cur = (size_t)(s->pointer - s->buffer);
+		cur = WINPR_STREAM_CAST(size_t, s->pointer - s->buffer);
 		WINPR_ASSERT(cur >= _offset);
 		if (cur >= _offset)
 			s->pointer -= (_offset);
@@ -139,7 +145,7 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT8));
 
-		const UINT8 v = (UINT8)(*(_s)->pointer);
+		const UINT8 v = WINPR_STREAM_CAST(UINT8, *(_s)->pointer);
 		if (seek)
 			Stream_Seek(_s, sizeof(UINT8));
 		return v;
@@ -150,7 +156,7 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(INT8));
 
-		const INT8 v = (INT8)(*(_s)->pointer);
+		const INT8 v = WINPR_STREAM_CAST(INT8, *(_s)->pointer);
 		if (seek)
 			Stream_Seek(_s, sizeof(INT8));
 		return v;
@@ -161,7 +167,8 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT16));
 
-		const UINT16 v = (UINT16)((*(_s)->pointer) + (((UINT16)(*((_s)->pointer + 1))) << 8));
+		const UINT16 v = WINPR_STREAM_CAST(
+		    UINT16, (*(_s)->pointer) + ((WINPR_STREAM_CAST(UINT16, *((_s)->pointer + 1))) << 8));
 		if (seek)
 			Stream_Seek(_s, sizeof(UINT16));
 		return v;
@@ -172,7 +179,8 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT16));
 
-		const UINT16 v = (((UINT16)(*(_s)->pointer) << 8) + ((UINT16)(*((_s)->pointer + 1))));
+		const UINT16 v = ((WINPR_STREAM_CAST(UINT16, *(_s)->pointer) << 8) +
+		                  (WINPR_STREAM_CAST(UINT16, *((_s)->pointer + 1))));
 		if (seek)
 			Stream_Seek(_s, sizeof(UINT16));
 		return v;
@@ -183,7 +191,8 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(INT16));
 
-		const INT16 v = (INT16)((*(_s)->pointer) + (((INT16)(*((_s)->pointer + 1))) << 8));
+		const INT16 v = WINPR_STREAM_CAST(
+		    INT16, (*(_s)->pointer) + ((WINPR_STREAM_CAST(INT16, *((_s)->pointer + 1))) << 8));
 		if (seek)
 			Stream_Seek(_s, sizeof(INT16));
 		return v;
@@ -194,7 +203,8 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(INT16));
 
-		const INT16 v = (((INT16)(*(_s)->pointer) << 8) + ((INT16)(*((_s)->pointer + 1))));
+		const INT16 v = ((WINPR_STREAM_CAST(INT16, *(_s)->pointer) << 8) +
+		                 (WINPR_STREAM_CAST(INT16, *((_s)->pointer + 1))));
 		if (seek)
 			Stream_Seek(_s, sizeof(INT16));
 		return v;
@@ -205,9 +215,10 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT32));
 
-		const UINT32 v =
-		    (((UINT32)(*(_s)->pointer) << 0) + (((UINT32)(*((_s)->pointer + 1))) << 8) +
-		     (((UINT32)(*((_s)->pointer + 2))) << 16) + ((((UINT32) * ((_s)->pointer + 3))) << 24));
+		const UINT32 v = (WINPR_STREAM_CAST(UINT32, *(_s)->pointer) << 0) +
+		                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 1))) << 8) +
+		                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 2))) << 16) +
+		                 (((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 3))) << 24));
 		if (seek)
 			Stream_Seek(_s, sizeof(UINT32));
 		return v;
@@ -218,9 +229,10 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT32));
 
-		const UINT32 v =
-		    (((UINT32)(*(_s)->pointer) << 24) + (((UINT32)(*((_s)->pointer + 1))) << 16) +
-		     (((UINT32)(*((_s)->pointer + 2))) << 8) + ((((UINT32) * ((_s)->pointer + 3))) << 0));
+		const UINT32 v = (WINPR_STREAM_CAST(UINT32, *(_s)->pointer) << 24) +
+		                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 1))) << 16) +
+		                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 2))) << 8) +
+		                 (((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 3))) << 0));
 		if (seek)
 			Stream_Seek(_s, sizeof(UINT32));
 		return v;
@@ -231,9 +243,11 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT32));
 
-		const INT32 v = (INT32)(
-		    ((UINT32)(*(_s)->pointer) << 0) + (((UINT32)(*((_s)->pointer + 1))) << 8) +
-		    (((UINT32)(*((_s)->pointer + 2))) << 16) + ((((UINT32) * ((_s)->pointer + 3))) << 24));
+		const INT32 v =
+		    WINPR_STREAM_CAST(INT32, (WINPR_STREAM_CAST(UINT32, *(_s)->pointer) << 0) +
+		                                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 1))) << 8) +
+		                                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 2))) << 16) +
+		                                 ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 3))) << 24));
 		if (seek)
 			Stream_Seek(_s, sizeof(UINT32));
 		return v;
@@ -244,9 +258,11 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT32));
 
-		const INT32 v = (INT32)(
-		    ((UINT32)(*(_s)->pointer) << 24) + (((UINT32)(*((_s)->pointer + 1))) << 16) +
-		    (((UINT32)(*((_s)->pointer + 2))) << 8) + ((((UINT32) * ((_s)->pointer + 3))) << 0));
+		const INT32 v = WINPR_STREAM_CAST(
+		    INT32, (WINPR_STREAM_CAST(UINT32, *(_s)->pointer) << 24) +
+		               ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 1))) << 16) +
+		               ((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 2))) << 8) +
+		               (((WINPR_STREAM_CAST(UINT32, *((_s)->pointer + 3))) << 0)));
 		if (seek)
 			Stream_Seek(_s, sizeof(UINT32));
 		return v;
@@ -257,11 +273,14 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT64));
 
-		const UINT64 v =
-		    ((UINT64)(*(_s)->pointer) << 0) + (((UINT64)(*((_s)->pointer + 1))) << 8) +
-		    (((UINT64)(*((_s)->pointer + 2))) << 16) + (((UINT64)(*((_s)->pointer + 3))) << 24) +
-		    (((UINT64)(*((_s)->pointer + 4))) << 32) + (((UINT64)(*((_s)->pointer + 5))) << 40) +
-		    (((UINT64)(*((_s)->pointer + 6))) << 48) + (((UINT64)(*((_s)->pointer + 7))) << 56);
+		const UINT64 v = (WINPR_STREAM_CAST(UINT64, *(_s)->pointer) << 0) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 1))) << 8) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 2))) << 16) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 3))) << 24) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 4))) << 32) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 5))) << 40) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 6))) << 48) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 7))) << 56);
 
 		if (seek)
 			Stream_Seek(_s, sizeof(UINT64));
@@ -273,11 +292,14 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(UINT64));
 
-		const UINT64 v =
-		    ((UINT64)(*(_s)->pointer) << 56) + (((UINT64)(*((_s)->pointer + 1))) << 48) +
-		    (((UINT64)(*((_s)->pointer + 2))) << 40) + (((UINT64)(*((_s)->pointer + 3))) << 32) +
-		    (((UINT64)(*((_s)->pointer + 4))) << 24) + (((UINT64)(*((_s)->pointer + 5))) << 16) +
-		    (((UINT64)(*((_s)->pointer + 6))) << 8) + (((UINT64)(*((_s)->pointer + 7))) << 0);
+		const UINT64 v = (WINPR_STREAM_CAST(UINT64, *(_s)->pointer) << 56) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 1))) << 48) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 2))) << 40) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 3))) << 32) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 4))) << 24) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 5))) << 16) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 6))) << 8) +
+		                 ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 7))) << 0);
 
 		if (seek)
 			Stream_Seek(_s, sizeof(UINT64));
@@ -289,11 +311,15 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(INT64));
 
-		const INT64 v = (INT64)(
-		    ((UINT64)(*(_s)->pointer) << 0) + (((UINT64)(*((_s)->pointer + 1))) << 8) +
-		    (((UINT64)(*((_s)->pointer + 2))) << 16) + (((UINT64)(*((_s)->pointer + 3))) << 24) +
-		    (((UINT64)(*((_s)->pointer + 4))) << 32) + (((UINT64)(*((_s)->pointer + 5))) << 40) +
-		    (((UINT64)(*((_s)->pointer + 6))) << 48) + (((UINT64)(*((_s)->pointer + 7))) << 56));
+		const INT64 v =
+		    WINPR_STREAM_CAST(INT64, ((WINPR_STREAM_CAST(UINT64, *(_s)->pointer) << 0) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 1))) << 8) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 2))) << 16) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 3))) << 24) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 4))) << 32) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 5))) << 40) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 6))) << 48) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 7))) << 56)));
 
 		if (seek)
 			Stream_Seek(_s, sizeof(UINT64));
@@ -305,11 +331,15 @@ extern "C"
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(Stream_GetRemainingLength(_s) >= sizeof(INT64));
 
-		const INT64 v = (INT64)(
-		    ((UINT64)(*(_s)->pointer) << 56) + (((UINT64)(*((_s)->pointer + 1))) << 48) +
-		    (((UINT64)(*((_s)->pointer + 2))) << 40) + (((UINT64)(*((_s)->pointer + 3))) << 32) +
-		    (((UINT64)(*((_s)->pointer + 4))) << 24) + (((UINT64)(*((_s)->pointer + 5))) << 16) +
-		    (((UINT64)(*((_s)->pointer + 6))) << 8) + (((UINT64)(*((_s)->pointer + 7))) << 0));
+		const INT64 v =
+		    WINPR_STREAM_CAST(INT64, ((WINPR_STREAM_CAST(UINT64, *(_s)->pointer) << 56) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 1))) << 48) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 2))) << 40) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 3))) << 32) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 4))) << 24) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 5))) << 16) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 6))) << 8) +
+		                              ((WINPR_STREAM_CAST(UINT64, *((_s)->pointer + 7))) << 0)));
 
 		if (seek)
 			Stream_Seek(_s, sizeof(UINT64));
@@ -723,7 +753,7 @@ extern "C"
 	{
 		WINPR_ASSERT(_s);
 		WINPR_ASSERT(_s->buffer <= _s->pointer);
-		return (size_t)(_s->pointer - _s->buffer);
+		return WINPR_STREAM_CAST(size_t, (_s->pointer - _s->buffer));
 	}
 
 	WINPR_API BOOL Stream_SetPosition(wStream* _s, size_t _p);
