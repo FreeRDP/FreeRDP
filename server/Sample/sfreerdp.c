@@ -326,11 +326,19 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 	}
 
 	/* P3 */
-	fgets(line, sizeof(line), fp);
+	char* s = fgets(line, sizeof(line), fp);
+	if (!s)
+		goto out_fail;
+
 	/* Creater comment */
-	fgets(line, sizeof(line), fp);
+	s = fgets(line, sizeof(line), fp);
+	if (!s)
+		goto out_fail;
+
 	/* width height */
-	fgets(line, sizeof(line), fp);
+	s = fgets(line, sizeof(line), fp);
+	if (!s)
+		goto out_fail;
 
 	if (sscanf(line, "%hu %hu", &context->icon_width, &context->icon_height) < 2)
 	{
@@ -339,7 +347,9 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 	}
 
 	/* Max */
-	fgets(line, sizeof(line), fp);
+	s = fgets(line, sizeof(line), fp);
+	if (!s)
+		goto out_fail;
 
 	if (!(rgb_data = calloc(context->icon_height, context->icon_width * 3)))
 		goto out_fail;
