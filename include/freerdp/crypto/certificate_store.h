@@ -57,6 +57,9 @@ extern "C"
 	FREERDP_API const char*
 	freerdp_certificate_store_get_hosts_path(const rdpCertificateStore* store);
 
+	FREERDP_API char* freerdp_certificate_store_get_cert_path(const rdpCertificateStore* store,
+	                                                          const char* host, UINT16 port);
+
 #ifdef __cplusplus
 }
 #endif
