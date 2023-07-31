@@ -607,7 +607,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 			if (statusCode == HTTP_STATUS_DENIED)
 			{
 				rdpContext* context = transport_get_context(rpc->transport);
-				freerdp_set_last_error_if_not(context, FREERDP_ERROR_AUTHENTICATION_FAILED);
+				freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_ACCESS_DENIED);
 			}
 
 			http_response_free(response);
