@@ -119,6 +119,8 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UI
 	UINT16 rw;
 	BYTE ccl;
 	const BYTE* src;
+	const UINT32* src_32;
+	const UINT16* src_16;
 	BYTE* yplane = NULL;
 	BYTE* coplane = NULL;
 	BYTE* cgplane = NULL;
@@ -140,69 +142,85 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UI
 		coplane = context->priv->PlaneBuffers[1] + y * rw;
 		cgplane = context->priv->PlaneBuffers[2] + y * rw;
 		aplane = context->priv->PlaneBuffers[3] + y * context->width;
+		src_32 = (UINT32*)src;
+		src_16 = (UINT16*)src;
 
 		for (x = 0; x < context->width; x++)
 		{
 			switch (context->format)
 			{
 				case PIXEL_FORMAT_BGRX32:
-					b_val = *src++;
-					g_val = *src++;
-					r_val = *src++;
-					src++;
+					b_val = (INT16)(*src_32 & 0xFF);
+					g_val = (INT16)((*src_32 >> 8) & 0xFF);
+					r_val = (INT16)((*src_32 >> 16) & 0xFF);
 					a_val = 0xFF;
+					src_32++;
 					break;
 
 				case PIXEL_FORMAT_BGRA32:
-					b_val = *src++;
-					g_val = *src++;
-					r_val = *src++;
-					a_val = *src++;
+					b_val = (INT16)(*src_32 & 0xFF);
+					g_val = (INT16)((*src_32 >> 8) & 0xFF);
+					r_val = (INT16)((*src_32 >> 16) & 0xFF);
+					a_val = (INT16)((*src_32 >> 24) & 0xFF);
+					src_32++;
 					break;
 
 				case PIXEL_FORMAT_RGBX32:
-					r_val = *src++;
-					g_val = *src++;
-					b_val = *src++;
-					src++;
+					r_val = (INT16)(*src_32 & 0xFF);
+					g_val = (INT16)((*src_32 >> 8) & 0xFF);
+					b_val = (INT16)((*src_32 >> 16) & 0xFF);
 					a_val = 0xFF;
+					src_32++;
 					break;
 
 				case PIXEL_FORMAT_RGBA32:
-					r_val = *src++;
-					g_val = *src++;
-					b_val = *src++;
-					a_val = *src++;
+					r_val = (INT16)(*src_32 & 0xFF);
+					g_val = (INT16)((*src_32 >> 8) & 0xFF);
+					b_val = (INT16)((*src_32 >> 16) & 0xFF);
+					a_val = (INT16)((*src_32 >> 24) & 0xFF);
+					src_32++;
 					break;
 
 				case PIXEL_FORMAT_BGR24:
+#ifdef __LITTLE_ENDIAN__
 					b_val = *src++;
 					g_val = *src++;
 					r_val = *src++;
+#else
+					r_val = *src++;
+					g_val = *src++;
+					b_val = *src++;
+#endif
 					a_val = 0xFF;
 					break;
 
 				case PIXEL_FORMAT_RGB24:
+#ifdef __LITTLE_ENDIAN__
 					r_val = *src++;
 					g_val = *src++;
 					b_val = *src++;
+#else
+					b_val = *src++;
+					g_val = *src++;
+					r_val = *src++;
+#endif
 					a_val = 0xFF;
 					break;
 
 				case PIXEL_FORMAT_BGR16:
-					b_val = (INT16)(((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
-					g_val = (INT16)((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
-					r_val = (INT16)((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
+					b_val = (INT16)((*src_16) & 0x1F);
+					g_val = (INT16)((*src_16 >> 5) & 0x3F);
+					r_val = (INT16)((*src_16 >> 11) & 0x1F);
 					a_val = 0xFF;
-					src += 2;
+					src_16++;
 					break;
 
 				case PIXEL_FORMAT_RGB16:
-					r_val = (INT16)(((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
-					g_val = (INT16)((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
-					b_val = (INT16)((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
+					r_val = (INT16)((*src_16) & 0x1F);
+					g_val = (INT16)((*src_16 >> 5) & 0x3F);
+					b_val = (INT16)((*src_16 >> 11) & 0x1F);
 					a_val = 0xFF;
-					src += 2;
+					src_16++;
 					break;
 
 				case PIXEL_FORMAT_A4:
@@ -210,17 +228,17 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UI
 					int shift;
 					BYTE idx;
 					shift = (7 - (x % 8));
-					idx = ((*src) >> shift) & 1;
-					idx |= (((*(src + 1)) >> shift) & 1) << 1;
-					idx |= (((*(src + 2)) >> shift) & 1) << 2;
-					idx |= (((*(src + 3)) >> shift) & 1) << 3;
+					idx = (BYTE)(((*src_32 & 0xFF) >> shift) & 1);
+					idx |= (BYTE)(((((*src_32 >> 8) & 0xFF) >> shift) & 1) << 1);
+					idx |= (BYTE)(((((*src_32 >> 16) & 0xFF) >> shift) & 1) << 2);
+					idx |= (BYTE)(((((*src_32 >> 24) & 0xFF) >> shift) & 1) << 3);
 					idx *= 3;
 					r_val = (INT16)context->palette[idx];
 					g_val = (INT16)context->palette[idx + 1];
 					b_val = (INT16)context->palette[idx + 2];
 
 					if (shift == 0)
-						src += 4;
+						src_32++;
 				}
 
 					a_val = 0xFF;
