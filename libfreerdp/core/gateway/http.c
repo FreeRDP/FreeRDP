@@ -957,13 +957,23 @@ fail:
 
 static void http_response_print(wLog* log, DWORD level, HttpResponse* response)
 {
+	char buffer[64] = { 0 };
+
 	WINPR_ASSERT(log);
 	WINPR_ASSERT(response);
 
 	if (!WLog_IsLevelActive(log, level))
 		return;
+
+	const long status = http_response_get_status_code(response);
+	WLog_Print(log, level, "HTTP status: %s",
+	           freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
+
 	for (size_t i = 0; i < response->count; i++)
 		WLog_Print(log, level, "[%" PRIuz "] %s", i, response->lines[i]);
+
+	WLog_Print(log, level, "[reason] %s", response->ReasonPhrase);
+	WLog_Print(log, level, "[body][%" PRIuz "] %s", response->BodyLength, response->BodyContent);
 }
 
 static BOOL http_use_content_length(const char* cur)
