@@ -170,8 +170,21 @@ static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, co
 
 	if (name)
 	{
+		BOOL skip = FALSE;
+		if (path)
+		{
+			switch (path[0])
+			{
+				case '*':
+				case '%':
+					skip = TRUE;
+					break;
+				default:
+					break;
+			}
+		}
 		/* Path was entered as secondary argument, swap */
-		if (winpr_PathFileExists(name))
+		if (!skip && winpr_PathFileExists(name))
 		{
 			if (!winpr_PathFileExists(path) || (!PathIsRelativeA(name) && PathIsRelativeA(path)))
 			{
