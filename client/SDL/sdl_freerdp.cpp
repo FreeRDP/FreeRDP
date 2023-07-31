@@ -606,23 +606,23 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 {
 	WINPR_ASSERT(sdl);
 
-	auto title = sdl_window_get_title(sdl->context()->settings);
+	auto settings = sdl->context()->settings;
+	auto title = sdl_window_get_title(settings);
 	BOOL rc = FALSE;
 
-	UINT32 windowCount =
-	    freerdp_settings_get_uint32(sdl->context()->settings, FreeRDP_MonitorCount);
+	UINT32 windowCount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 
 	for (UINT32 x = 0; x < windowCount; x++)
 	{
-		auto monitor = static_cast<rdpMonitor*>(freerdp_settings_get_pointer_array_writable(
-		    sdl->context()->settings, FreeRDP_MonitorDefArray, x));
+		auto monitor = static_cast<rdpMonitor*>(
+		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
 
 		Uint32 w = monitor->width;
 		Uint32 h = monitor->height;
-		if (!(sdl->context()->settings->UseMultimon || sdl->context()->settings->Fullscreen))
+		if (!(settings->UseMultimon || settings->Fullscreen))
 		{
-			w = sdl->context()->settings->DesktopWidth;
-			h = sdl->context()->settings->DesktopHeight;
+			w = settings->DesktopWidth;
+			h = settings->DesktopHeight;
 		}
 
 		sdl_window_t window = {};
@@ -637,12 +637,12 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 #endif
 		}
 
-		if (sdl->context()->settings->Fullscreen && !sdl->context()->settings->UseMultimon)
+		if (settings->Fullscreen && !settings->UseMultimon)
 		{
 			flags |= SDL_WINDOW_FULLSCREEN;
 		}
 
-		if (sdl->context()->settings->UseMultimon)
+		if (settings->UseMultimon)
 		{
 			flags |= SDL_WINDOW_BORDERLESS;
 			window.offset_x = 0 - startupX;
