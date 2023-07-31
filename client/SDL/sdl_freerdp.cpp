@@ -627,8 +627,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 		sdl_window_t window = {};
 		Uint32 flags = SDL_WINDOW_SHOWN;
-		Uint32 startupX = SDL_WINDOWPOS_UNDEFINED;
-		Uint32 startupY = SDL_WINDOWPOS_UNDEFINED;
+		Uint32 startupX = SDL_WINDOWPOS_CENTERED_DISPLAY(x);
+		Uint32 startupY = SDL_WINDOWPOS_CENTERED_DISPLAY(x);
 
 		if (monitor->attributes.desktopScaleFactor > 100)
 		{
@@ -645,8 +645,6 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		if (sdl->context()->settings->UseMultimon)
 		{
 			flags |= SDL_WINDOW_BORDERLESS;
-			startupX = monitor->x;
-			startupY = monitor->y;
 			window.offset_x = 0 - startupX;
 			window.offset_y = 0 - startupY;
 		}
