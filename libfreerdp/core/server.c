@@ -493,7 +493,7 @@ BOOL WTSVirtualChannelManagerCheckFileDescriptor(HANDLE hServer)
 		{
 			ULONG written;
 			vcm->drdynvc_channel = channel;
-			dynvc_caps = 0x00010050; /* DYNVC_CAPS_VERSION1 (4 bytes) */
+			Data_Write_UINT32(&dynvc_caps, 0x00010050); /* DYNVC_CAPS_VERSION1 (4 bytes) */
 
 			if (!WTSVirtualChannelWrite(channel, (PCHAR)&dynvc_caps, sizeof(dynvc_caps), &written))
 				return FALSE;
