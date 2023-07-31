@@ -96,15 +96,12 @@ BOOL sdlDispContext::sendResize()
 	if (!settings_changed())
 		return TRUE;
 
-	/* TODO: Multimonitor support for wayland
-	if (sdl->fullscreen && (settings->MonitorCount > 0))
+	if (_sdl->fullscreen && (settings->MonitorCount > 0))
 	{
-	    if (sdlDisp->sendLayout(settings->MonitorDefArray,
-	                           settings->MonitorCount) != CHANNEL_RC_OK)
-	        return FALSE;
+		if (sendLayout(settings->MonitorDefArray, settings->MonitorCount) != CHANNEL_RC_OK)
+			return FALSE;
 	}
 	else
-	*/
 	{
 		_waitingResize = TRUE;
 		layout.Flags = DISPLAY_CONTROL_MONITOR_PRIMARY;
