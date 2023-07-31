@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
+
 #include <rdtk/config.h>
 
 #include "rdtk_font.h"
@@ -31,14 +33,14 @@ int rdtk_button_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint1
 	uint16_t textHeight;
 	uint16_t fillWidth;
 	uint16_t fillHeight;
-	rdtkFont* font;
-	rdtkEngine* engine;
-	rdtkNinePatch* ninePatch;
 
-	engine = surface->engine;
-	font = engine->font;
-	button = engine->button;
-	ninePatch = button->ninePatch;
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(button);
+	WINPR_ASSERT(text);
+
+	rdtkEngine* engine = surface->engine;
+	rdtkFont* font = engine->font;
+	rdtkNinePatch* ninePatch = button->ninePatch;
 
 	rdtk_font_text_draw_size(font, &textWidth, &textHeight, text);
 
@@ -70,9 +72,10 @@ int rdtk_button_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint1
 
 rdtkButton* rdtk_button_new(rdtkEngine* engine, rdtkNinePatch* ninePatch)
 {
-	rdtkButton* button;
+	WINPR_ASSERT(engine);
+	WINPR_ASSERT(ninePatch);
 
-	button = (rdtkButton*)calloc(1, sizeof(rdtkButton));
+	rdtkButton* button = (rdtkButton*)calloc(1, sizeof(rdtkButton));
 
 	if (!button)
 		return NULL;
@@ -90,6 +93,8 @@ void rdtk_button_free(rdtkButton* button)
 
 int rdtk_button_engine_init(rdtkEngine* engine)
 {
+	WINPR_ASSERT(engine);
+
 	if (!engine->button)
 	{
 		engine->button = rdtk_button_new(engine, engine->button9patch);
@@ -102,6 +107,8 @@ int rdtk_button_engine_init(rdtkEngine* engine)
 
 int rdtk_button_engine_uninit(rdtkEngine* engine)
 {
+	WINPR_ASSERT(engine);
+
 	if (engine->button)
 	{
 		rdtk_button_free(engine->button);
