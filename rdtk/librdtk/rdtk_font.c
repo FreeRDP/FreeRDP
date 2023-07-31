@@ -20,6 +20,7 @@
 
 #include <errno.h>
 
+#include <winpr/config.h>
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/assert.h>
@@ -32,6 +33,12 @@
 #include "rdtk_surface.h"
 
 #include "rdtk_font.h"
+
+#if defined(WINPR_WITH_PNG)
+#define FILE_EXT "png"
+#else
+#define FILE_EXT "bmp"
+#endif
 
 static int rdtk_font_draw_glyph(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* font,
                                 rdtkGlyph* glyph)
@@ -618,7 +625,8 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 	if (!fontImageFile)
 		goto cleanup;
 
-	sprintf_s(fontImageFile, length + 8, "%s.png", fontBaseFile);
+	sprintf_s(fontImageFile, length + 8, "%s." FILE_EXT, fontBaseFile);
+
 	fontDescriptorFile = (char*)malloc(length + 8);
 
 	if (!fontDescriptorFile)
@@ -750,7 +758,8 @@ int rdtk_font_engine_init(rdtkEngine* engine)
 		SSIZE_T descriptorSize;
 		const uint8_t* imageData = NULL;
 		const uint8_t* descriptorData = NULL;
-		imageSize = rdtk_get_embedded_resource_file("source_serif_pro_regular_12.png", &imageData);
+		imageSize =
+		    rdtk_get_embedded_resource_file("source_serif_pro_regular_12." FILE_EXT, &imageData);
 		descriptorSize =
 		    rdtk_get_embedded_resource_file("source_serif_pro_regular_12.xml", &descriptorData);
 

@@ -23,6 +23,7 @@
 #cmakedefine WINPR_HAVE_GETPWUID_R
 #cmakedefine WINPR_HAVE_STRNDUP
 #cmakedefine WINPR_HAVE_UNWIND_H
+#cmakedefine WINPR_WITH_PNG
 
 #cmakedefine WITH_EVENTFD_READ_WRITE
 

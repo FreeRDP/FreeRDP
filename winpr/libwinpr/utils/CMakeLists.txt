@@ -151,6 +151,8 @@ if (WITH_LODEPNG)
 	find_package(lodepng REQUIRED)
 
 	winpr_definition_add(-DWITH_LODEPNG)
+	set(WINPR_WITH_PNG ON CACHE BOOL "build cache")
+
 	winpr_include_directory_add(${lodepng_INCLUDE_DIRS})
 	winpr_library_add_private(${lodepng_LIBRARIES})
 endif()
