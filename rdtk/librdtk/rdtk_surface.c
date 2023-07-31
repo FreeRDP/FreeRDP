@@ -71,8 +71,6 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width,
 			return NULL;
 		}
 
-		memset(surface->data, 0, surface->scanline * surface->height);
-
 		surface->owner = true;
 	}
 

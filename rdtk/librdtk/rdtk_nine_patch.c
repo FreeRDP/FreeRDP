@@ -16,11 +16,19 @@
  * limitations under the License.
  */
 
+#include <winpr/config.h>
+
 #include <rdtk/config.h>
 
 #include "rdtk_resources.h"
 
 #include "rdtk_nine_patch.h"
+
+#if defined(WINPR_WITH_PNG)
+#define FILE_EXT "png"
+#else
+#define FILE_EXT "bmp"
+#endif
 
 static int rdtk_image_copy_alpha_blend(uint8_t* pDstData, int nDstStep, int nXDst, int nYDst,
                                        int nWidth, int nHeight, uint8_t* pSrcData, int nSrcStep,
@@ -373,7 +381,7 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 		SSIZE_T size;
 		const uint8_t* data;
 		status = -1;
-		size = rdtk_get_embedded_resource_file("btn_default_normal.9.png", &data);
+		size = rdtk_get_embedded_resource_file("btn_default_normal.9." FILE_EXT, &data);
 
 		if (size > 0)
 		{
@@ -401,7 +409,7 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 		SSIZE_T size;
 		const uint8_t* data;
 		status = -1;
-		size = rdtk_get_embedded_resource_file("textfield_default.9.png", &data);
+		size = rdtk_get_embedded_resource_file("textfield_default.9." FILE_EXT, &data);
 		image = NULL;
 
 		if (size > 0)
