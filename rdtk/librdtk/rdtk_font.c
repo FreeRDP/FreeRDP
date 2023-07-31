@@ -22,6 +22,7 @@
 
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/path.h>
 #include <winpr/file.h>
 #include <winpr/print.h>
@@ -35,40 +36,32 @@
 static int rdtk_font_draw_glyph(rdtkSurface* surface, int nXDst, int nYDst, rdtkFont* font,
                                 rdtkGlyph* glyph)
 {
-	int x, y;
-	int nXSrc;
-	int nYSrc;
-	int nWidth;
-	int nHeight;
-	int nSrcStep;
-	int nDstStep;
-	uint8_t* pSrcData;
-	uint8_t* pSrcPixel;
-	uint8_t* pDstData;
-	uint8_t* pDstPixel;
-	uint8_t A, R, G, B;
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(font);
+	WINPR_ASSERT(glyph);
+
 	nXDst += glyph->offsetX;
 	nYDst += glyph->offsetY;
-	nXSrc = glyph->rectX;
-	nYSrc = glyph->rectY;
-	nWidth = glyph->rectWidth;
-	nHeight = glyph->rectHeight;
-	nSrcStep = font->image->scanline;
-	pSrcData = font->image->data;
-	pDstData = surface->data;
-	nDstStep = surface->scanline;
+	const int nXSrc = glyph->rectX;
+	const int nYSrc = glyph->rectY;
+	const int nWidth = glyph->rectWidth;
+	const int nHeight = glyph->rectHeight;
+	const uint32_t nSrcStep = font->image->scanline;
+	const uint8_t* pSrcData = font->image->data;
+	uint8_t* pDstData = surface->data;
+	const uint32_t nDstStep = surface->scanline;
 
-	for (y = 0; y < nHeight; y++)
+	for (int y = 0; y < nHeight; y++)
 	{
-		pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
-		pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
+		const uint8_t* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
+		uint8_t* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
 
-		for (x = 0; x < nWidth; x++)
+		for (int x = 0; x < nWidth; x++)
 		{
-			B = pSrcPixel[0];
-			G = pSrcPixel[1];
-			R = pSrcPixel[2];
-			A = pSrcPixel[3];
+			uint8_t B = pSrcPixel[0];
+			uint8_t G = pSrcPixel[1];
+			uint8_t R = pSrcPixel[2];
+			uint8_t A = pSrcPixel[3];
 			pSrcPixel += 4;
 
 			if (1)
@@ -106,15 +99,14 @@ static int rdtk_font_draw_glyph(rdtkSurface* surface, int nXDst, int nYDst, rdtk
 int rdtk_font_draw_text(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, rdtkFont* font,
                         const char* text)
 {
-	size_t index;
-	size_t length;
-	rdtkGlyph* glyph;
-	font = surface->engine->font;
-	length = strlen(text);
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(font);
+	WINPR_ASSERT(text);
 
-	for (index = 0; index < length; index++)
+	const size_t length = strlen(text);
+	for (size_t index = 0; index < length; index++)
 	{
-		glyph = &font->glyphs[text[index] - 32];
+		rdtkGlyph* glyph = &font->glyphs[text[index] - 32];
 		rdtk_font_draw_glyph(surface, nXDst, nYDst, font, glyph);
 		nXDst += (glyph->width + 1);
 	}
@@ -128,6 +120,12 @@ int rdtk_font_text_draw_size(rdtkFont* font, uint16_t* width, uint16_t* height, 
 	size_t length;
 	size_t glyphIndex;
 	rdtkGlyph* glyph;
+
+	WINPR_ASSERT(font);
+	WINPR_ASSERT(width);
+	WINPR_ASSERT(height);
+	WINPR_ASSERT(text);
+
 	*width = 0;
 	*height = 0;
 	length = strlen(text);
@@ -149,6 +147,9 @@ int rdtk_font_text_draw_size(rdtkFont* font, uint16_t* width, uint16_t* height, 
 
 static char* rdtk_font_load_descriptor_file(const char* filename, size_t* pSize)
 {
+	WINPR_ASSERT(filename);
+	WINPR_ASSERT(pSize);
+
 	uint8_t* buffer;
 	FILE* fp = NULL;
 	size_t readSize;
@@ -204,6 +205,9 @@ static char* rdtk_font_load_descriptor_file(const char* filename, size_t* pSize)
 
 static int rdtk_font_convert_descriptor_code_to_utf8(const char* str, uint8_t* utf8)
 {
+	WINPR_ASSERT(str);
+	WINPR_ASSERT(utf8);
+
 	size_t len = strlen(str);
 	*((uint32_t*)utf8) = 0;
 
@@ -239,7 +243,6 @@ static int rdtk_font_convert_descriptor_code_to_utf8(const char* str, uint8_t* u
 
 static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, uint8_t* buffer, size_t size)
 {
-	char* p;
 	char* q;
 	char* r;
 	char* beg;
@@ -248,7 +251,10 @@ static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, uint8_t* buffer, si
 	int index;
 	int count;
 	rdtkGlyph* glyph;
-	p = strstr((char*)buffer, "<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+
+	WINPR_ASSERT(font);
+
+	char* p = strstr((char*)buffer, "<?xml version=\"1.0\" encoding=\"utf-8\"?>");
 
 	if (!p)
 		return -1;
@@ -578,9 +584,10 @@ static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, uint8_t* buffer, si
 
 static int rdtk_font_load_descriptor(rdtkFont* font, const char* filename)
 {
-	size_t size;
-	char* buffer;
-	buffer = rdtk_font_load_descriptor_file(filename, &size);
+	size_t size = 0;
+
+	WINPR_ASSERT(font);
+	char* buffer = rdtk_font_load_descriptor_file(filename, &size);
 
 	if (!buffer)
 		return -1;
@@ -593,10 +600,14 @@ rdtkFont* rdtk_font_new(rdtkEngine* engine, const char* path, const char* file)
 	int status;
 	size_t length;
 	rdtkFont* font = NULL;
-	char* fontBaseFile = NULL;
 	char* fontImageFile = NULL;
 	char* fontDescriptorFile = NULL;
-	fontBaseFile = GetCombinedPath(path, file);
+
+	WINPR_ASSERT(engine);
+	WINPR_ASSERT(path);
+	WINPR_ASSERT(file);
+
+	char* fontBaseFile = GetCombinedPath(path, file);
 
 	if (!fontBaseFile)
 		goto cleanup;
@@ -669,8 +680,10 @@ static rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, const uint8_t* image
 	size_t size;
 	int status;
 	uint8_t* buffer;
-	rdtkFont* font;
-	font = (rdtkFont*)calloc(1, sizeof(rdtkFont));
+
+	WINPR_ASSERT(engine);
+
+	rdtkFont* font = (rdtkFont*)calloc(1, sizeof(rdtkFont));
 
 	if (!font)
 		return NULL;
@@ -716,6 +729,7 @@ static rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, const uint8_t* image
 
 	return font;
 }
+
 void rdtk_font_free(rdtkFont* font)
 {
 	if (font)
@@ -729,6 +743,7 @@ void rdtk_font_free(rdtkFont* font)
 }
 int rdtk_font_engine_init(rdtkEngine* engine)
 {
+	WINPR_ASSERT(engine);
 	if (!engine->font)
 	{
 		SSIZE_T imageSize;
@@ -744,12 +759,15 @@ int rdtk_font_engine_init(rdtkEngine* engine)
 
 		engine->font = rdtk_embedded_font_new(engine, imageData, (size_t)imageSize, descriptorData,
 		                                      (size_t)descriptorSize);
+		if (!engine->font)
+			return -1;
 	}
 
 	return 1;
 }
 int rdtk_font_engine_uninit(rdtkEngine* engine)
 {
+	WINPR_ASSERT(engine);
 	if (engine->font)
 	{
 		rdtk_font_free(engine->font);

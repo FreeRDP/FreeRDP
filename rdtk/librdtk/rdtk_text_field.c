@@ -93,6 +93,8 @@ int rdtk_text_field_engine_init(rdtkEngine* engine)
 	if (!engine->textField)
 	{
 		engine->textField = rdtk_text_field_new(engine, engine->textField9patch);
+		if (!engine->textField)
+			return -1;
 	}
 
 	return 1;
