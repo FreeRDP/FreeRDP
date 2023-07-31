@@ -472,22 +472,16 @@ BOOL sdlInput::keyboard_grab(Uint32 windowID, SDL_bool enable)
 
 BOOL sdlInput::mouse_focus(Uint32 windowID)
 {
-	static Uint32 lastWindowID = -1;
-
-	if (lastWindowID != windowID)
+	if (_lastWindowID != windowID)
 	{
-		lastWindowID = windowID;
+		_lastWindowID = windowID;
 		SDL_Window* window = SDL_GetWindowFromID(windowID);
 		if (!window)
 			return FALSE;
 
 		SDL_RaiseWindow(window);
-		return TRUE;
 	}
-	else
-	{
-		return TRUE;
-	};
+	return TRUE;
 }
 
 BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
@@ -506,7 +500,7 @@ BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
 #endif
 }
 
-sdlInput::sdlInput(SdlContext* sdl) : _sdl(sdl)
+sdlInput::sdlInput(SdlContext* sdl) : _sdl(sdl), _lastWindowID(UINT32_MAX)
 {
 	WINPR_ASSERT(_sdl);
 }
