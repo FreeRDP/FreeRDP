@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
 #include <rdtk/config.h>
 
 #include "rdtk_surface.h"
@@ -25,6 +26,8 @@
 int rdtk_surface_fill(rdtkSurface* surface, uint16_t x, uint16_t y, uint16_t width, uint16_t height,
                       uint32_t color)
 {
+	WINPR_ASSERT(surface);
+
 	for (uint32_t i = y; i < y * 1ul + height; i++)
 	{
 		uint8_t* line = &surface->data[i * surface->scanline];
@@ -41,6 +44,8 @@ int rdtk_surface_fill(rdtkSurface* surface, uint16_t x, uint16_t y, uint16_t wid
 rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width, uint16_t height,
                               uint32_t scanline)
 {
+	WINPR_ASSERT(engine);
+
 	rdtkSurface* surface = (rdtkSurface*)calloc(1, sizeof(rdtkSurface));
 
 	if (!surface)

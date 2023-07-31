@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
+
 #include <rdtk/config.h>
 
 #include "rdtk_font.h"
@@ -27,9 +29,7 @@
 
 rdtkEngine* rdtk_engine_new(void)
 {
-	rdtkEngine* engine;
-
-	engine = (rdtkEngine*)calloc(1, sizeof(rdtkEngine));
+	rdtkEngine* engine = (rdtkEngine*)calloc(1, sizeof(rdtkEngine));
 
 	if (!engine)
 		return NULL;

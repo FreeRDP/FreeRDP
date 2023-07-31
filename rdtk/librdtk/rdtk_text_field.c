@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
+
 #include <rdtk/config.h>
 
 #include "rdtk_font.h"
@@ -34,6 +36,10 @@ int rdtk_text_field_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, u
 	rdtkFont* font;
 	rdtkEngine* engine;
 	rdtkNinePatch* ninePatch;
+
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(textField);
+	WINPR_ASSERT(text);
 
 	engine = surface->engine;
 	font = engine->font;
@@ -70,9 +76,10 @@ int rdtk_text_field_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, u
 
 rdtkTextField* rdtk_text_field_new(rdtkEngine* engine, rdtkNinePatch* ninePatch)
 {
-	rdtkTextField* textField;
+	WINPR_ASSERT(engine);
+	WINPR_ASSERT(ninePatch);
 
-	textField = (rdtkTextField*)calloc(1, sizeof(rdtkTextField));
+	rdtkTextField* textField = (rdtkTextField*)calloc(1, sizeof(rdtkTextField));
 
 	if (!textField)
 		return NULL;
@@ -90,6 +97,8 @@ void rdtk_text_field_free(rdtkTextField* textField)
 
 int rdtk_text_field_engine_init(rdtkEngine* engine)
 {
+	WINPR_ASSERT(engine);
+
 	if (!engine->textField)
 	{
 		engine->textField = rdtk_text_field_new(engine, engine->textField9patch);
@@ -102,6 +111,7 @@ int rdtk_text_field_engine_init(rdtkEngine* engine)
 
 int rdtk_text_field_engine_uninit(rdtkEngine* engine)
 {
+	WINPR_ASSERT(engine);
 	if (engine->textField)
 	{
 		rdtk_text_field_free(engine->textField);

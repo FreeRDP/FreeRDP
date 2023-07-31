@@ -17,6 +17,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/assert.h>
 
 #include <rdtk/config.h>
 
@@ -34,20 +35,20 @@ static int rdtk_image_copy_alpha_blend(uint8_t* pDstData, int nDstStep, int nXDs
                                        int nWidth, int nHeight, uint8_t* pSrcData, int nSrcStep,
                                        int nXSrc, int nYSrc)
 {
-	int x, y;
-	uint8_t A, R, G, B;
+	WINPR_ASSERT(pDstData);
+	WINPR_ASSERT(pSrcData);
 
-	for (y = 0; y < nHeight; y++)
+	for (int y = 0; y < nHeight; y++)
 	{
 		const uint8_t* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
 		uint8_t* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
 
-		for (x = 0; x < nWidth; x++)
+		for (int x = 0; x < nWidth; x++)
 		{
-			B = pSrcPixel[0];
-			G = pSrcPixel[1];
-			R = pSrcPixel[2];
-			A = pSrcPixel[3];
+			uint8_t B = pSrcPixel[0];
+			uint8_t G = pSrcPixel[1];
+			uint8_t R = pSrcPixel[2];
+			uint8_t A = pSrcPixel[3];
 			pSrcPixel += 4;
 
 			if (A == 255)
@@ -87,6 +88,9 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	uint8_t* pSrcData;
 	uint8_t* pDstData;
 	int scaleWidth;
+
+	WINPR_ASSERT(surface);
+	WINPR_ASSERT(ninePatch);
 
 	if (nWidth < ninePatch->width)
 		nWidth = ninePatch->width;
@@ -217,6 +221,10 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 	int scanline;
 	uint32_t* pixel;
 	int width, height;
+
+	WINPR_ASSERT(ninePatch);
+	WINPR_ASSERT(image);
+
 	ninePatch->image = image;
 	width = image->width;
 	height = image->height;
@@ -351,8 +359,8 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 
 rdtkNinePatch* rdtk_nine_patch_new(rdtkEngine* engine)
 {
-	rdtkNinePatch* ninePatch;
-	ninePatch = (rdtkNinePatch*)calloc(1, sizeof(rdtkNinePatch));
+	WINPR_ASSERT(engine);
+	rdtkNinePatch* ninePatch = (rdtkNinePatch*)calloc(1, sizeof(rdtkNinePatch));
 
 	if (!ninePatch)
 		return NULL;
@@ -375,6 +383,8 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 	int status;
 	wImage* image = NULL;
 	rdtkNinePatch* ninePatch;
+
+	WINPR_ASSERT(engine);
 
 	if (!engine->button9patch)
 	{
@@ -438,6 +448,7 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 
 int rdtk_nine_patch_engine_uninit(rdtkEngine* engine)
 {
+	WINPR_ASSERT(engine);
 	if (engine->button9patch)
 	{
 		rdtk_nine_patch_free(engine->button9patch);
