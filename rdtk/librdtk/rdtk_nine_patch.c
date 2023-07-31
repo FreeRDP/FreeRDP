@@ -213,147 +213,213 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 	return 1;
 }
 
+static BOOL rdtk_nine_patch_get_scale_lr(rdtkNinePatch* ninePatch, wImage* image)
+{
+	WINPR_ASSERT(image);
+	WINPR_ASSERT(ninePatch);
+
+	WINPR_ASSERT(image->data);
+	WINPR_ASSERT(image->width > 0);
+
+	int64_t beg = -1;
+	int64_t end = -1;
+
+	for (uint32_t x = 1; x < image->width - 1; x++)
+	{
+		const uint32_t* pixel = (const uint32_t*)&image->data[sizeof(uint32_t) * x]; /* (1, 0) */
+		if (beg < 0)
+		{
+			if (*pixel)
+				beg = x;
+		}
+		else if (end < 0)
+		{
+			if (!(*pixel))
+			{
+				end = x;
+				break;
+			}
+		}
+	}
+
+	if ((beg <= 0) || (end <= 0))
+		return FALSE;
+
+	WINPR_ASSERT(beg <= INT32_MAX);
+	WINPR_ASSERT(end <= INT32_MAX);
+	ninePatch->scaleLeft = (int32_t)beg - 1;
+	ninePatch->scaleRight = (int32_t)end - 1;
+	ninePatch->scaleWidth = ninePatch->scaleRight - ninePatch->scaleLeft;
+
+	return TRUE;
+}
+
+static BOOL rdtk_nine_patch_get_scale_ht(rdtkNinePatch* ninePatch, wImage* image)
+{
+	WINPR_ASSERT(image);
+	WINPR_ASSERT(ninePatch);
+
+	WINPR_ASSERT(image->data);
+	WINPR_ASSERT(image->height > 0);
+	WINPR_ASSERT(image->scanline > 0);
+
+	int64_t beg = -1;
+	int64_t end = -1;
+
+	for (uint32_t y = 1; y < image->height - 1; y++)
+	{
+		const uint32_t* pixel = (const uint32_t*)&image->data[image->scanline * y]; /* (1, 0) */
+		if (beg < 0)
+		{
+			if (*pixel)
+				beg = y;
+		}
+		else if (end < 0)
+		{
+			if (!(*pixel))
+			{
+				end = y;
+				break;
+			}
+		}
+	}
+
+	if ((beg <= 0) || (end <= 0))
+		return FALSE;
+
+	WINPR_ASSERT(beg <= INT32_MAX);
+	WINPR_ASSERT(end <= INT32_MAX);
+	ninePatch->scaleTop = (int32_t)beg - 1;
+	ninePatch->scaleBottom = (int32_t)end - 1;
+	ninePatch->scaleHeight = ninePatch->scaleBottom - ninePatch->scaleTop;
+
+	return TRUE;
+}
+
+static BOOL rdtk_nine_patch_get_fill_lr(rdtkNinePatch* ninePatch, wImage* image)
+{
+	WINPR_ASSERT(image);
+	WINPR_ASSERT(ninePatch);
+
+	WINPR_ASSERT(image->data);
+	WINPR_ASSERT(image->width > 0);
+	WINPR_ASSERT(image->height > 0);
+	WINPR_ASSERT(image->scanline > 0);
+
+	int64_t beg = -1;
+	int64_t end = -1;
+
+	for (uint32_t x = 1; x < image->width - 1; x++)
+	{
+		const uint32_t* pixel = (uint32_t*)&image->data[((image->height - 1) * image->scanline) +
+		                                                x * sizeof(uint32_t)]; /* (1, height - 1) */
+		if (beg < 0)
+		{
+			if (*pixel)
+				beg = x;
+		}
+		else if (end < 0)
+		{
+			if (!(*pixel))
+			{
+				end = x;
+				break;
+			}
+		}
+	}
+
+	if ((beg <= 0) || (end <= 0))
+		return FALSE;
+
+	WINPR_ASSERT(beg <= INT32_MAX);
+	WINPR_ASSERT(end <= INT32_MAX);
+
+	ninePatch->fillLeft = (int32_t)beg - 1;
+	ninePatch->fillRight = (int32_t)end - 1;
+	ninePatch->fillWidth = ninePatch->fillRight - ninePatch->fillLeft;
+
+	return TRUE;
+}
+
+static BOOL rdtk_nine_patch_get_fill_ht(rdtkNinePatch* ninePatch, wImage* image)
+{
+	WINPR_ASSERT(image);
+	WINPR_ASSERT(ninePatch);
+
+	WINPR_ASSERT(image->data);
+	WINPR_ASSERT(image->width > 0);
+	WINPR_ASSERT(image->height > 0);
+	WINPR_ASSERT(image->scanline > 0);
+
+	int64_t beg = -1;
+	int64_t end = -1;
+
+	for (uint32_t y = 1; y < image->height - 1; y++)
+	{
+		const uint32_t* pixel = (uint32_t*)&image->data[((image->width - 1) * sizeof(uint32_t)) +
+		                                                image->scanline * y]; /* (width - 1, 1) */
+		if (beg < 0)
+		{
+			if (*pixel)
+				beg = y;
+		}
+		else if (end < 0)
+		{
+			if (!(*pixel))
+			{
+				end = y;
+				break;
+			}
+		}
+	}
+
+	if ((beg <= 0) || (end <= 0))
+		return FALSE;
+
+	WINPR_ASSERT(beg <= INT32_MAX);
+	WINPR_ASSERT(end <= INT32_MAX);
+	ninePatch->scaleTop = (int32_t)beg - 1;
+	ninePatch->scaleBottom = (int32_t)end - 1;
+	ninePatch->scaleHeight = ninePatch->scaleBottom - ninePatch->scaleTop;
+
+	return TRUE;
+}
+
 int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 {
-	int x, y;
-	uint8_t* data;
-	int beg, end;
-	int scanline;
-	uint32_t* pixel;
-	int width, height;
-
-	WINPR_ASSERT(ninePatch);
 	WINPR_ASSERT(image);
+	WINPR_ASSERT(ninePatch);
 
 	ninePatch->image = image;
-	width = image->width;
-	height = image->height;
-	scanline = image->scanline;
-	data = image->data;
+
 	/* parse scalable area */
-	beg = end = -1;
-	pixel = (uint32_t*)&data[4]; /* (1, 0) */
+	if (!rdtk_nine_patch_get_scale_lr(ninePatch, image))
+		return -1;
 
-	for (x = 1; x < width - 1; x++)
-	{
-		if (beg < 0)
-		{
-			if (*pixel)
-			{
-				beg = x;
-			}
-		}
-		else if (end < 0)
-		{
-			if (!(*pixel))
-			{
-				end = x;
-				break;
-			}
-		}
+	if (!rdtk_nine_patch_get_scale_ht(ninePatch, image))
+		return -1;
 
-		pixel++;
-	}
-
-	ninePatch->scaleLeft = beg - 1;
-	ninePatch->scaleRight = end - 1;
-	ninePatch->scaleWidth = ninePatch->scaleRight - ninePatch->scaleLeft;
-	beg = end = -1;
-	pixel = (uint32_t*)&data[scanline]; /* (0, 1) */
-
-	for (y = 1; y < height - 1; y++)
-	{
-		if (beg < 0)
-		{
-			if (*pixel)
-			{
-				beg = y;
-			}
-		}
-		else if (end < 0)
-		{
-			if (!(*pixel))
-			{
-				end = y;
-				break;
-			}
-		}
-
-		pixel = (uint32_t*)&((uint8_t*)pixel)[scanline];
-	}
-
-	ninePatch->scaleTop = beg - 1;
-	ninePatch->scaleBottom = end - 1;
-	ninePatch->scaleHeight = ninePatch->scaleBottom - ninePatch->scaleTop;
 	/* parse fillable area */
-	beg = end = -1;
-	pixel = (uint32_t*)&data[((height - 1) * scanline) + 4]; /* (1, height - 1) */
+	if (!rdtk_nine_patch_get_fill_lr(ninePatch, image))
+		return -1;
 
-	for (x = 1; x < width - 1; x++)
-	{
-		if (beg < 0)
-		{
-			if (*pixel)
-			{
-				beg = x;
-			}
-		}
-		else if (end < 0)
-		{
-			if (!(*pixel))
-			{
-				end = x;
-				break;
-			}
-		}
+	if (!rdtk_nine_patch_get_fill_ht(ninePatch, image))
+		return -1;
 
-		pixel++;
-	}
-
-	ninePatch->fillLeft = beg - 1;
-	ninePatch->fillRight = end - 1;
-	ninePatch->fillWidth = ninePatch->fillRight - ninePatch->fillLeft;
-	beg = end = -1;
-	pixel = (uint32_t*)&data[((width - 1) * 4) + scanline]; /* (width - 1, 1) */
-
-	for (y = 1; y < height - 1; y++)
-	{
-		if (beg < 0)
-		{
-			if (*pixel)
-			{
-				beg = y;
-			}
-		}
-		else if (end < 0)
-		{
-			if (!(*pixel))
-			{
-				end = y;
-				break;
-			}
-		}
-
-		pixel = (uint32_t*)&((uint8_t*)pixel)[scanline];
-	}
-
-	ninePatch->fillTop = beg - 1;
-	ninePatch->fillBottom = end - 1;
-	ninePatch->fillHeight = ninePatch->fillBottom - ninePatch->fillTop;
 	/* cut out borders from image */
-	ninePatch->width = width - 2;
-	ninePatch->height = height - 2;
-	ninePatch->data = &data[scanline + 4]; /* (1, 1) */
-	ninePatch->scanline = scanline;
-#if 0
-	printf("width: %d height: %d\n", ninePatch->width, ninePatch->height);
-	printf("scale: left: %d right: %d top: %d bottom: %d\n",
-	       ninePatch->scaleLeft, ninePatch->scaleRight,
-	       ninePatch->scaleTop, ninePatch->scaleBottom);
-	printf("fill:  left: %d right: %d top: %d bottom: %d\n",
-	       ninePatch->fillLeft, ninePatch->fillRight,
-	       ninePatch->fillTop, ninePatch->fillBottom);
-#endif
+	WINPR_ASSERT(image->width >= 2);
+	WINPR_ASSERT(image->height >= 2);
+	WINPR_ASSERT(image->scanline > 0);
+	WINPR_ASSERT(image->width <= INT32_MAX);
+	WINPR_ASSERT(image->height <= INT32_MAX);
+	WINPR_ASSERT(image->scanline <= INT32_MAX);
+	WINPR_ASSERT(image->data);
+
+	ninePatch->width = (int32_t)image->width - 2;
+	ninePatch->height = (int32_t)image->height - 2;
+	ninePatch->data = &image->data[image->scanline + 4]; /* (1, 1) */
+	ninePatch->scanline = (int32_t)image->scanline;
+
 	return 1;
 }
 
