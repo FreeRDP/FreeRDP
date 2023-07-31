@@ -1361,16 +1361,28 @@ static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
 	return error;
 }
 
+static BOOL rdpgfx_server_close(RdpgfxServerContext* context);
+
 static DWORD WINAPI rdpgfx_server_thread_func(LPVOID arg)
 {
 	RdpgfxServerContext* context = (RdpgfxServerContext*)arg;
+	WINPR_ASSERT(context);
+
 	RdpgfxServerPrivate* priv = context->priv;
 	DWORD status;
 	DWORD nCount = 0;
 	HANDLE events[8] = { 0 };
 	UINT error = CHANNEL_RC_OK;
 
-	events[nCount++] = priv->stopEvent;
+	WINPR_ASSERT(priv);
+
+	if (priv->ownThread)
+	{
+		WINPR_ASSERT(priv->stopEvent);
+		events[nCount++] = priv->stopEvent;
+	}
+
+	WINPR_ASSERT(priv->channelEvent);
 	events[nCount++] = priv->channelEvent;
 
 	/* Main virtual channel loop. RDPGFX do not need version negotiation */
@@ -1405,8 +1417,11 @@ static DWORD WINAPI rdpgfx_server_thread_func(LPVOID arg)
 
 static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 {
+	WINPR_ASSERT(context);
 	RdpgfxServerPrivate* priv = (RdpgfxServerPrivate*)context->priv;
 	void* buffer = NULL;
+
+	WINPR_ASSERT(priv);
 
 	if (!priv->isOpened)
 	{
@@ -1440,7 +1455,7 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 		if (!status)
 		{
 			WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
-			goto out_close;
+			goto fail;
 		}
 
 		/* Query for channel event handle */
@@ -1456,7 +1471,7 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 			if (buffer)
 				WTSFreeMemory(buffer);
 
-			goto out_close;
+			goto fail;
 		}
 
 		CopyMemory(&priv->channelEvent, buffer, sizeof(HANDLE));
@@ -1465,7 +1480,7 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 		if (!(priv->zgfx = zgfx_context_new(TRUE)))
 		{
 			WLog_ERR(TAG, "Create zgfx context failed!");
-			goto out_close;
+			goto fail;
 		}
 
 		if (priv->ownThread)
@@ -1473,14 +1488,14 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 			if (!(priv->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 			{
 				WLog_ERR(TAG, "CreateEvent failed!");
-				goto out_zgfx;
+				goto fail;
 			}
 
 			if (!(priv->thread =
 			          CreateThread(NULL, 0, rdpgfx_server_thread_func, (void*)context, 0, NULL)))
 			{
 				WLog_ERR(TAG, "CreateThread failed!");
-				goto out_stopEvent;
+				goto fail;
 			}
 		}
 
@@ -1491,22 +1506,17 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 
 	WLog_ERR(TAG, "RDPGFX channel is already opened!");
 	return FALSE;
-out_stopEvent:
-	CloseHandle(priv->stopEvent);
-	priv->stopEvent = NULL;
-out_zgfx:
-	zgfx_context_free(priv->zgfx);
-	priv->zgfx = NULL;
-out_close:
-	WTSVirtualChannelClose(priv->rdpgfx_channel);
-	priv->rdpgfx_channel = NULL;
-	priv->channelEvent = NULL;
+fail:
+	rdpgfx_server_close(context);
 	return FALSE;
 }
 
-static BOOL rdpgfx_server_close(RdpgfxServerContext* context)
+BOOL rdpgfx_server_close(RdpgfxServerContext* context)
 {
+	WINPR_ASSERT(context);
+
 	RdpgfxServerPrivate* priv = (RdpgfxServerPrivate*)context->priv;
+	WINPR_ASSERT(priv);
 
 	if (priv->ownThread && priv->thread)
 	{
@@ -1539,11 +1549,25 @@ static BOOL rdpgfx_server_close(RdpgfxServerContext* context)
 	return TRUE;
 }
 
+static UINT rdpgfx_server_initialize(RdpgfxServerContext* context, BOOL externalThread)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+
+	if (context->priv->isOpened)
+	{
+		WLog_WARN(TAG, "Application error: RDPEGFX channel already initialized, "
+		               "calling in this state is not possible!");
+		return ERROR_INVALID_STATE;
+	}
+
+	context->priv->ownThread = !externalThread;
+	return CHANNEL_RC_OK;
+}
+
 RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 {
-	RdpgfxServerContext* context;
-	RdpgfxServerPrivate* priv;
-	context = (RdpgfxServerContext*)calloc(1, sizeof(RdpgfxServerContext));
+	RdpgfxServerContext* context = (RdpgfxServerContext*)calloc(1, sizeof(RdpgfxServerContext));
 
 	if (!context)
 	{
@@ -1552,6 +1576,7 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 	}
 
 	context->vcm = vcm;
+	context->Initialize = rdpgfx_server_initialize;
 	context->Open = rdpgfx_server_open;
 	context->Close = rdpgfx_server_close;
 	context->ResetGraphics = rdpgfx_send_reset_graphics_pdu;
@@ -1577,12 +1602,13 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 	context->CapsConfirm = rdpgfx_send_caps_confirm_pdu;
 	context->FrameAcknowledge = NULL;
 	context->QoeFrameAcknowledge = NULL;
-	context->priv = priv = (RdpgfxServerPrivate*)calloc(1, sizeof(RdpgfxServerPrivate));
+	RdpgfxServerPrivate* priv = context->priv =
+	    (RdpgfxServerPrivate*)calloc(1, sizeof(RdpgfxServerPrivate));
 
 	if (!priv)
 	{
 		WLog_ERR(TAG, "calloc failed!");
-		goto out_free;
+		goto fail;
 	}
 
 	/* Create shared input stream */
@@ -1591,22 +1617,23 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 	if (!priv->input_stream)
 	{
 		WLog_ERR(TAG, "Stream_New failed!");
-		goto out_free_priv;
+		goto fail;
 	}
 
 	priv->isOpened = FALSE;
 	priv->isReady = FALSE;
 	priv->ownThread = TRUE;
-	return (RdpgfxServerContext*)context;
-out_free_priv:
-	free(context->priv);
-out_free:
-	free(context);
+	return context;
+fail:
+	rdpgfx_server_context_free(context);
 	return NULL;
 }
 
 void rdpgfx_server_context_free(RdpgfxServerContext* context)
 {
+	if (!context)
+		return;
+
 	rdpgfx_server_close(context);
 
 	if (context->priv)
@@ -1618,6 +1645,10 @@ void rdpgfx_server_context_free(RdpgfxServerContext* context)
 
 HANDLE rdpgfx_server_get_event_handle(RdpgfxServerContext* context)
 {
+	if (!context)
+		return NULL;
+	if (!context->priv)
+		return NULL;
 	return context->priv->channelEvent;
 }
 
@@ -1635,6 +1666,10 @@ UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context)
 	DWORD BytesReturned;
 	void* buffer;
 	UINT ret = CHANNEL_RC_OK;
+
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(context->priv);
+
 	RdpgfxServerPrivate* priv = context->priv;
 	wStream* s = priv->input_stream;
 
