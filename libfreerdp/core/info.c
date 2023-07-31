@@ -1084,7 +1084,7 @@ static BOOL rdp_info_read_string(const char* what, wStream* s, size_t size, size
 
 	size_t len = 0;
 	char* rc = ConvertWCharNToUtf8Alloc(str, size / sizeof(WCHAR), &len);
-	if (!rc || (len == 0))
+	if (!rc)
 	{
 		WLog_ERR(TAG, "failed to convert the %s string", what);
 		free(rc);
