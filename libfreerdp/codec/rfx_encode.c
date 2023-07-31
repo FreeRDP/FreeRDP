@@ -47,6 +47,8 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 	int x_exceed;
 	int y_exceed;
 	const BYTE* src;
+	const UINT32* src_32;
+	const UINT16* src_16;
 	INT16 r, g, b;
 	INT16 *r_last, *g_last, *b_last;
 	x_exceed = 64 - width;
@@ -55,6 +57,8 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 	for (y = 0; y < height; y++)
 	{
 		src = rgb_data + y * rowstride;
+		src_32 = (UINT32*)src;
+		src_16 = (UINT16*)src;
 
 		switch (pixel_format)
 		{
@@ -62,10 +66,10 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 			case PIXEL_FORMAT_BGRA32:
 				for (x = 0; x < width; x++)
 				{
-					*b_buf++ = (INT16)(*src++);
-					*g_buf++ = (INT16)(*src++);
-					*r_buf++ = (INT16)(*src++);
-					src++;
+					*b_buf++ = (INT16)(*src_32 & 0xFF);
+					*g_buf++ = (INT16)((*src_32 >> 8) & 0xFF);
+					*r_buf++ = (INT16)((*src_32 >> 16) & 0xFF);
+					src_32++;
 				}
 
 				break;
@@ -74,10 +78,10 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 			case PIXEL_FORMAT_ABGR32:
 				for (x = 0; x < width; x++)
 				{
-					src++;
-					*b_buf++ = (INT16)(*src++);
-					*g_buf++ = (INT16)(*src++);
-					*r_buf++ = (INT16)(*src++);
+					*b_buf++ = (INT16)((*src_32 >> 8) & 0xFF);
+					*g_buf++ = (INT16)((*src_32 >> 16) & 0xFF);
+					*r_buf++ = (INT16)((*src_32 >> 24) & 0xFF);
+					src_32++;
 				}
 
 				break;
@@ -86,10 +90,10 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 			case PIXEL_FORMAT_RGBA32:
 				for (x = 0; x < width; x++)
 				{
-					*r_buf++ = (INT16)(*src++);
-					*g_buf++ = (INT16)(*src++);
-					*b_buf++ = (INT16)(*src++);
-					src++;
+					*r_buf++ = (INT16)(*src_32 & 0xFF);
+					*g_buf++ = (INT16)((*src_32 >> 8) & 0xFF);
+					*b_buf++ = (INT16)((*src_32 >> 16) & 0xFF);
+					src_32++;
 				}
 
 				break;
@@ -98,10 +102,10 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 			case PIXEL_FORMAT_ARGB32:
 				for (x = 0; x < width; x++)
 				{
-					src++;
-					*r_buf++ = (INT16)(*src++);
-					*g_buf++ = (INT16)(*src++);
-					*b_buf++ = (INT16)(*src++);
+					*r_buf++ = (INT16)((*src_32 >> 8) & 0xFF);
+					*g_buf++ = (INT16)((*src_32 >> 16) & 0xFF);
+					*b_buf++ = (INT16)((*src_32 >> 24) & 0xFF);
+					src_32++;
 				}
 
 				break;
@@ -109,9 +113,15 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 			case PIXEL_FORMAT_BGR24:
 				for (x = 0; x < width; x++)
 				{
+#ifdef __LITTLE_ENDIAN__
 					*b_buf++ = (INT16)(*src++);
 					*g_buf++ = (INT16)(*src++);
 					*r_buf++ = (INT16)(*src++);
+#else
+					*r_buf++ = (INT16)(*src++);
+					*g_buf++ = (INT16)(*src++);
+					*b_buf++ = (INT16)(*src++);
+#endif
 				}
 
 				break;
@@ -119,9 +129,15 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 			case PIXEL_FORMAT_RGB24:
 				for (x = 0; x < width; x++)
 				{
+#ifdef __LITTLE_ENDIAN__
 					*r_buf++ = (INT16)(*src++);
 					*g_buf++ = (INT16)(*src++);
 					*b_buf++ = (INT16)(*src++);
+#else
+					*b_buf++ = (INT16)(*src++);
+					*g_buf++ = (INT16)(*src++);
+					*r_buf++ = (INT16)(*src++);
+#endif
 				}
 
 				break;
@@ -129,10 +145,10 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 			case PIXEL_FORMAT_BGR16:
 				for (x = 0; x < width; x++)
 				{
-					*b_buf++ = (INT16)(((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
-					*g_buf++ = (INT16)((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
-					*r_buf++ = (INT16)((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
-					src += 2;
+					*b_buf++ = (INT16)((*src_16) & 0x1F);
+					*g_buf++ = (INT16)((*src_16 >> 5) & 0x3F);
+					*r_buf++ = (INT16)((*src_16 >> 11) & 0x1F);
+					src_16++;
 				}
 
 				break;
@@ -140,10 +156,10 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 			case PIXEL_FORMAT_RGB16:
 				for (x = 0; x < width; x++)
 				{
-					*r_buf++ = (INT16)(((*(src + 1)) & 0xF8) | ((*(src + 1)) >> 5));
-					*g_buf++ = (INT16)((((*(src + 1)) & 0x07) << 5) | (((*src) & 0xE0) >> 3));
-					*b_buf++ = (INT16)((((*src) & 0x1F) << 3) | (((*src) >> 2) & 0x07));
-					src += 2;
+					*r_buf++ = (INT16)((*src_16 & 0x1F));
+					*g_buf++ = (INT16)((*src_16 >> 5) & 0x3F);
+					*b_buf++ = (INT16)((*src_16 >> 11) & 0x1F);
+					src_16++;
 				}
 
 				break;
@@ -157,17 +173,17 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 					int shift;
 					BYTE idx;
 					shift = (7 - (x % 8));
-					idx = ((*src) >> shift) & 1;
-					idx |= (((*(src + 1)) >> shift) & 1) << 1;
-					idx |= (((*(src + 2)) >> shift) & 1) << 2;
-					idx |= (((*(src + 3)) >> shift) & 1) << 3;
+					idx = (BYTE)(((*src_32 & 0xFF) >> shift) & 1);
+					idx |= (BYTE)(((((*src_32 >> 8) & 0xFF) >> shift) & 1) << 1);
+					idx |= (BYTE)(((((*src_32 >> 16) & 0xFF) >> shift) & 1) << 2);
+					idx |= (BYTE)(((((*src_32 >> 24) & 0xFF) >> shift) & 1) << 3);
 					idx *= 3;
 					*r_buf++ = (INT16)palette[idx];
 					*g_buf++ = (INT16)palette[idx + 1];
 					*b_buf++ = (INT16)palette[idx + 2];
 
 					if (shift == 0)
-						src += 4;
+						src_32++;
 				}
 
 				break;
