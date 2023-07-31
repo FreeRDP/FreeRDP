@@ -36,6 +36,8 @@ extern "C"
 
 	typedef BOOL (*psRdpgfxServerChannelIdAssigned)(RdpgfxServerContext* context, UINT32 channelId);
 
+	typedef BOOL (*psRdpgfxServerInitialize)(RdpgfxServerContext* context, BOOL externalThread);
+
 	typedef UINT (*psRdpgfxResetGraphics)(RdpgfxServerContext* context,
 	                                      const RDPGFX_RESET_GRAPHICS_PDU* resetGraphics);
 	typedef UINT (*psRdpgfxStartFrame)(RdpgfxServerContext* context,
@@ -127,10 +129,20 @@ extern "C"
 		 * Callback, when the channel got its id assigned.
 		 */
 		psRdpgfxServerChannelIdAssigned ChannelIdAssigned;
+		/**
+		 * Optional: Set thread handling.
+		 * When externalThread=TRUE, the application is responsible to call
+		 * Poll() periodically to process channel events.
+		 *
+		 * Defaults to externalThread=FALSE
+		 */
+		psRdpgfxServerInitialize Initialize;
 	};
 
 	FREERDP_API RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm);
 	FREERDP_API void rdpgfx_server_context_free(RdpgfxServerContext* context);
+	FREERDP_API BOOL rdpgfx_server_set_own_thread(RdpgfxServerContext* context,
+	                                              BOOL internalThread);
 	FREERDP_API HANDLE rdpgfx_server_get_event_handle(RdpgfxServerContext* context);
 	FREERDP_API UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context);
 
