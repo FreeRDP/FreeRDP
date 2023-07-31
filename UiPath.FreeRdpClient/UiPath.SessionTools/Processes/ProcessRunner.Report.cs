@@ -19,5 +19,16 @@ partial class ProcessRunner
             0 => Logging.Formatting.FormatRunSucceeded(StartInfo.FileName, StartInfo.Arguments, Stdout, Stderr),
             _ => Logging.Formatting.FormatRunFailed(StartInfo.FileName, StartInfo.Arguments, $"{ExitCode}", Stdout, Stderr)
         };
+
+        public void TryKill(bool entireProcessTree = false)
+        {
+            using var process = Process.GetProcessById(ProcessId);
+            if (process is null || process.StartTime != ProcessStartTime)
+            {
+                return;
+            }
+
+            process.Kill(entireProcessTree);
+        }
     }
 }

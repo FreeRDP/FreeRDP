@@ -9,18 +9,19 @@ partial class ProcessRunner
         private readonly StreamReader _stream;
         private readonly Task _task;
 
-        public Pump(StreamReader stream)
+        public Pump(StreamReader stream, IProgress<string>? progress = null)
         {
             _stream = stream;
             _task = Task.Run(async () =>
                 {
                     try
                     {
-                        while (await stream.ReadLineAsync() is { } notNull)
+                        while (await stream.ReadLineAsync() is { } line)
                         {
                             lock (_lock)
                             {
-                                _inner.AppendLine(notNull);
+                                _inner.AppendLine(line);
+                                progress?.Report(line);
                             }
                         }
                     }

@@ -6,6 +6,44 @@ namespace UiPath.SessionTools.Tests;
 [Trait("Subject", nameof(Pump))]
 public class PumpTests
 {
+    [Fact(DisplayName = $"{nameof(Pump.ToString)} should return consistent lines after pump disposal.")]
+    public async Task ToString_ShouldReturnConsistentLines_AfterPumpDisposal()
+    {
+        const ulong First = 12345;
+        const int Count = 20;
+
+        using var _ = TimeoutToken(TimeSpan.FromMinutes(1), out var ct);
+
+        MockReader reader = new(First);
+        var monitor = new StdMonitor();
+        var pump = new Pump(reader, monitor);
+        await using (pump)
+        {
+            await monitor.WaitForLine($"{First + Count - 1}", ct);
+        }
+
+        ValidateAccumulatedConsecutiveNumbers(pump, First);
+    }
+
+    [Fact(DisplayName = $"{nameof(Pump.ToString)} should return consistent lines after the reader reaches the end-of-stream.")]
+    public async Task ToString_ShouldReturnConsistentLines_AfterReaderReachesEos()
+    {
+        const ulong First = 12345;
+        const int Take = 100;
+        const ulong ExclusiveLast = First + Take;
+
+        using var _ = TimeoutToken(TimeSpan.FromMinutes(1), out var ct);
+
+        MockReader reader = new(skip: First, take: Take);
+
+        var monitor = new StdMonitor();
+        await using var pump = new Pump(reader, monitor);
+
+        await monitor.WaitForLine($"{First + Take - 1}", ct);
+
+        ValidateAccumulatedConsecutiveNumbers(pump, First, ExclusiveLast);
+    }
+
     private void ValidateAccumulatedConsecutiveNumbers(Pump pump, ulong expectedFirst, ulong? expectedExclusiveLast = null)
     {
         var lines = pump.ToString().Split("\r\n");
@@ -21,49 +59,6 @@ public class PumpTests
         }
 
         ulong.Parse(lines[lines.Length - 2]).ShouldBe(expectedExclusiveLast.Value - 1);
-    }
-
-    [Fact(DisplayName = $"{nameof(Pump.DisposeAsync)} should not throw.")]
-    public async Task DisposeAsync_ShouldNotThrow()
-    {
-        MockReader reader = new();
-        Pump pump = new(reader);
-
-        await Task.Delay(200);
-
-        var act = () => pump.DisposeAsync().AsTask();
-        await act.ShouldNotThrowAsync();
-    }
-
-    [Fact(DisplayName = $"{nameof(Pump.ToString)} should return consistent lines after pump disposal.")]
-    public async Task ToString_ShouldReturnConsistentLines_AfterPumpDisposal()
-    {
-        const ulong First = 12345;
-
-        MockReader reader = new(First);
-        Pump pump = new(reader);
-        await using (pump)
-        {
-            await Task.Delay(200);
-        }
-
-        ValidateAccumulatedConsecutiveNumbers(pump, First);
-    }
-
-    [Fact(DisplayName = $"{nameof(Pump.ToString)} should return consistent lines after the reader reaches the end-of-stream.")]
-    public async Task ToString_ShouldReturnConsistentLines_AfterReaderReachesEos()
-    {
-        const ulong First = 12345;
-        const int Take = 100;
-        const ulong ExclusiveLast = First + Take;
-
-        MockReader reader = new(First, take: 100);
-
-        await using Pump pump = new(reader);
-
-        await Task.Delay(200);
-
-        ValidateAccumulatedConsecutiveNumbers(pump, First, ExclusiveLast);
     }
 
     private sealed class MockReader : StreamReader

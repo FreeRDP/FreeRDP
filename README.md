@@ -46,7 +46,3 @@ cd .ci/Scripts
 * Open [UiPath.FreeRdpClient/UiPath.FreeRdpClient.sln](file://UiPath.FreeRdpClient/UiPath.FreeRdpClient.sln)
 * To test with a nugetRef instead of projectRef edit the [UiPath.FreeRdp.Tests.csproj](file://UiPath.FreeRdpClient/UiPath.FreeRdpClient.Tests/UiPath.FreeRdp.Tests.csproj)
 search for: `<When Condition="'$(UseNugetRef)'!=''">`
-
-### Our current baseline from the original FreeRDP repo
-
-Check this [wiki page](./UiPath.FreeRdpClient/README.md)
