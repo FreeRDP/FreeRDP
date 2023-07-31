@@ -287,6 +287,7 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 						return -1;
 					}
 					/* FALLTHROUGH */
+					WINPR_FALLTHROUGH
 				case RPC_BIND_STATE_COMPLETE:
 					rpc_client_transition_to_state(rpc, RPC_CLIENT_STATE_CONTEXT_NEGOTIATED);
 

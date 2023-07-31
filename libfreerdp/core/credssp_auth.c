@@ -707,6 +707,7 @@ void credssp_auth_free(rdpCredsspAuth* auth)
 				WINPR_ASSERT(auth->table->DeleteSecurityContext);
 				auth->table->DeleteSecurityContext(&auth->context);
 				/* FALLTHROUGH */
+				WINPR_FALLTHROUGH
 			case AUTH_STATE_CREDS:
 				WINPR_ASSERT(auth->table->FreeCredentialsHandle);
 				auth->table->FreeCredentialsHandle(&auth->credentials);

@@ -855,12 +855,16 @@ static int xf_input_handle_event_remote(xfContext* xfc, const XEvent* event)
 		{
 			case XI_TouchBegin:
 				xf_input_pens_unhover(xfc);
+				WINPR_FALLTHROUGH
 			case XI_TouchUpdate:
+				WINPR_FALLTHROUGH
 			case XI_TouchEnd:
 				xf_input_touch_remote(xfc, cookie.cc->data, cookie.cc->evtype);
 				break;
 			case XI_ButtonPress:
+				WINPR_FALLTHROUGH
 			case XI_Motion:
+				WINPR_FALLTHROUGH
 			case XI_ButtonRelease:
 			{
 				WLog_DBG(TAG, "checking for pen");
@@ -873,6 +877,7 @@ static int xf_input_handle_event_remote(xfContext* xfc, const XEvent* event)
 					break;
 				}
 			}
+				WINPR_FALLTHROUGH
 			default:
 				xf_input_pens_unhover(xfc);
 				xf_input_event(xfc, event, cookie.cc->data, cookie.cc->evtype);

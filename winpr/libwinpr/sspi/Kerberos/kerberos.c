@@ -818,6 +818,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 				goto bad_token;
 
 			/* Continue to AP-REQ */
+			WINPR_FALLTHROUGH
 
 		case KERBEROS_STATE_AP_REQ:
 
