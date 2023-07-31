@@ -34,12 +34,20 @@ rdtkEngine* rdtk_engine_new(void)
 	if (!engine)
 		return NULL;
 
-	rdtk_font_engine_init(engine);
-	rdtk_nine_patch_engine_init(engine);
-	rdtk_button_engine_init(engine);
-	rdtk_text_field_engine_init(engine);
+	if (rdtk_font_engine_init(engine) < 0)
+		goto fail;
+	if (rdtk_nine_patch_engine_init(engine) < 0)
+		goto fail;
+	if (rdtk_button_engine_init(engine) < 0)
+		goto fail;
+	if (rdtk_text_field_engine_init(engine) < 0)
+		goto fail;
 
 	return engine;
+
+fail:
+	rdtk_engine_free(engine);
+	return NULL;
 }
 
 void rdtk_engine_free(rdtkEngine* engine)

@@ -93,6 +93,8 @@ int rdtk_button_engine_init(rdtkEngine* engine)
 	if (!engine->button)
 	{
 		engine->button = rdtk_button_new(engine, engine->button9patch);
+		if (!engine->button)
+			return -1;
 	}
 
 	return 1;
