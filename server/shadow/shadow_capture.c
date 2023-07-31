@@ -226,8 +226,9 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 
 rdpShadowCapture* shadow_capture_new(rdpShadowServer* server)
 {
-	rdpShadowCapture* capture;
-	capture = (rdpShadowCapture*)calloc(1, sizeof(rdpShadowCapture));
+	WINPR_ASSERT(server);
+
+	rdpShadowCapture* capture = (rdpShadowCapture*)calloc(1, sizeof(rdpShadowCapture));
 
 	if (!capture)
 		return NULL;
@@ -236,7 +237,7 @@ rdpShadowCapture* shadow_capture_new(rdpShadowServer* server)
 
 	if (!InitializeCriticalSectionAndSpinCount(&(capture->lock), 4000))
 	{
-		free(capture);
+		shadow_capture_free(capture);
 		return NULL;
 	}
 
