@@ -47,4 +47,5 @@ class sdlInput
 
   private:
 	SdlContext* _sdl;
+	Uint32 _lastWindowID;
 };
