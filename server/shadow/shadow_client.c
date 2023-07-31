@@ -2059,12 +2059,10 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	rdpShadowClient* client = (rdpShadowClient*)arg;
 	BOOL rc = FALSE;
 	DWORD status = 0;
-	DWORD nCount = 0;
 	wMessage message = { 0 };
 	wMessage pointerPositionMsg = { 0 };
 	wMessage pointerAlphaMsg = { 0 };
 	wMessage audioVolumeMsg = { 0 };
-	HANDLE events[32] = { 0 };
 	HANDLE ChannelEvent = 0;
 	void* UpdateSubscriber = NULL;
 	HANDLE UpdateEvent = 0;
@@ -2135,7 +2133,8 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	WINPR_ASSERT(rc);
 	while (1)
 	{
-		nCount = 0;
+		HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
+		DWORD nCount = 0;
 		events[nCount++] = UpdateEvent;
 		{
 			DWORD tmp = peer->GetEventHandles(peer, &events[nCount], 64 - nCount);
@@ -2150,6 +2149,12 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 		}
 		events[nCount++] = ChannelEvent;
 		events[nCount++] = MessageQueue_Event(MsgQueue);
+
+		HANDLE gfxevent = rdpgfx_server_get_event_handle(client->rdpgfx);
+
+		if (gfxevent)
+			events[nCount++] = gfxevent;
+
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
@@ -2272,6 +2277,14 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 			{
 				WLog_ERR(TAG, "WTSVirtualChannelManagerCheckFileDescriptor failure");
 				goto fail;
+			}
+		}
+
+		if (gfxevent)
+		{
+			if (WaitForSingleObject(gfxevent, 0) == WAIT_OBJECT_0)
+			{
+				rdpgfx_server_handle_messages(client->rdpgfx);
 			}
 		}
 

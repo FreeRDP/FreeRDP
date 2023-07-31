@@ -27,8 +27,9 @@
 
 int shadow_client_rdpgfx_init(rdpShadowClient* client)
 {
-	RdpgfxServerContext* rdpgfx;
-	rdpgfx = client->rdpgfx = rdpgfx_server_context_new(client->vcm);
+	WINPR_ASSERT(client);
+
+	RdpgfxServerContext* rdpgfx = client->rdpgfx = rdpgfx_server_context_new(client->vcm);
 	if (!rdpgfx)
 	{
 		return 0;
@@ -37,6 +38,9 @@ int shadow_client_rdpgfx_init(rdpShadowClient* client)
 	rdpgfx->rdpcontext = &client->context;
 
 	rdpgfx->custom = client;
+
+	if (!IFCALLRESULT(CHANNEL_RC_OK, rdpgfx->Initialize, rdpgfx, FALSE))
+		return -1;
 
 	return 1;
 }
