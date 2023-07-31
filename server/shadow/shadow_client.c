@@ -765,6 +765,17 @@ static BOOL shadow_are_caps_filtered(const rdpSettings* settings, UINT32 caps)
 	return TRUE;
 }
 
+static UINT shadow_client_send_caps_confirm(RdpgfxServerContext* context, rdpShadowClient* client,
+                                            const RDPGFX_CAPS_CONFIRM_PDU* pdu)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(client);
+	WINPR_ASSERT(pdu);
+
+	WINPR_ASSERT(context->CapsConfirm);
+	return context->CapsConfirm(context, pdu);
+}
+
 static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpShadowClient* client,
                                             BOOL h264, const RDPGFX_CAPSET* capsSets,
                                             UINT32 capsSetCount, UINT32 capsVersion, UINT* rc)
@@ -834,8 +845,7 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 			if (!avc444v2 && !avc444 && !avc420)
 				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
 
-			WINPR_ASSERT(context->CapsConfirm);
-			*rc = context->CapsConfirm(context, &pdu);
+			*rc = shadow_client_send_caps_confirm(context, client, &pdu);
 			return TRUE;
 		}
 	}
@@ -958,8 +968,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 					freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
 #endif
 
-				WINPR_ASSERT(context->CapsConfirm);
-				return context->CapsConfirm(context, &pdu);
+				return shadow_client_send_caps_confirm(context, client, &pdu);
 			}
 		}
 	}
@@ -986,8 +995,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 				freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
 				                          (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) ? TRUE : FALSE);
 
-				WINPR_ASSERT(context->CapsConfirm);
-				return context->CapsConfirm(context, &pdu);
+				return shadow_client_send_caps_confirm(context, client, &pdu);
 			}
 		}
 	}
