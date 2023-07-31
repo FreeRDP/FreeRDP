@@ -972,7 +972,9 @@ static void http_response_print(wLog* log, DWORD level, HttpResponse* response)
 	for (size_t i = 0; i < response->count; i++)
 		WLog_Print(log, level, "[%" PRIuz "] %s", i, response->lines[i]);
 
-	WLog_Print(log, level, "[reason] %s", response->ReasonPhrase);
+	if (response->ReasonPhrase)
+		WLog_Print(log, level, "[reason] %s", response->ReasonPhrase);
+
 	WLog_Print(log, level, "[body][%" PRIuz "] %s", response->BodyLength, response->BodyContent);
 }
 
@@ -1341,6 +1343,11 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 				if (bodyLength > 0)
 					response->BodyLength = MIN(bodyLength, response->BodyLength);
 			}
+
+			/* '\0' terminate the http body */
+			if (!Stream_EnsureRemainingCapacity(response->data, sizeof(UINT16)))
+				goto out_error;
+			Stream_Write_UINT16(response->data, 0);
 		}
 	}
 	Stream_SealLength(response->data);
