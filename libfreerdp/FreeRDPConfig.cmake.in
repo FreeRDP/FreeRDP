@@ -1,3 +1,5 @@
+include(CMakeFindDependencyMacro)
+find_dependency(WinPR @FREERDP_VERSION@)
 
 @PACKAGE_INIT@
 

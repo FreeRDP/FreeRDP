@@ -1,3 +1,7 @@
+include(CMakeFindDependencyMacro)
+find_dependency(WinPR @FREERDP_VERSION@)
+find_dependency(FreeRDP @FREERDP_VERSION@)
+find_dependency(FreeRDP-Server @FREERDP_VERSION@)
 
 @PACKAGE_INIT@
 
