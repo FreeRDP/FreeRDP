@@ -528,7 +528,7 @@ static void clear_cdi_entries(CliprdrFileContext* file_context)
 	HashTable_Unlock(file_context->inode_table);
 }
 
-UINT prepare_clip_data_entry_with_id(CliprdrFileContext* file_context)
+static UINT prepare_clip_data_entry_with_id(CliprdrFileContext* file_context)
 {
 	CliprdrFuseClipDataEntry* clip_data_entry;
 
@@ -556,7 +556,7 @@ UINT prepare_clip_data_entry_with_id(CliprdrFileContext* file_context)
 	return CHANNEL_RC_OK;
 }
 
-UINT prepare_clip_data_entry_without_id(CliprdrFileContext* file_context)
+static UINT prepare_clip_data_entry_without_id(CliprdrFileContext* file_context)
 {
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(!file_context->clip_data_entry_without_id);

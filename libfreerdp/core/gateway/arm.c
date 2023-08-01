@@ -33,6 +33,7 @@
 #include <freerdp/utils/ringbuffer.h>
 #include <freerdp/utils/smartcardlogon.h>
 
+#include "arm.h"
 #include "wst.h"
 #include "websocket.h"
 #include "http.h"
