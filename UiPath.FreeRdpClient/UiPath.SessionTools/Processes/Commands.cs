@@ -15,18 +15,17 @@ public static class Commands
     /// <param name="password">The account's password.</param>
     /// <param name="ct">The operation's <see cref="CancellationToken"/>.</param>
     /// <returns></returns>
-    public static async Task EnsureUserIsSetUp(this ProcessRunner processRunner, string userName, string password, CancellationToken ct = default)
+    public static async Task EnsureUserIsSetUp(this ProcessRunner processRunner, string userName, string password, bool admin = false, CancellationToken ct = default)
     {
-        const string RemoteDesktopUsers = "Remote Desktop Users";
-        const string Administrators = "Administrators";
-
         await processRunner.EnsureUserHasPassword(userName, password, ct);
         await processRunner.ActivateUserAndDisableExpiration(userName, ct);
         await processRunner.ProhibitPasswordChange(userName, ct);
         await processRunner.DisablePasswordExpiration(userName, ct);
 
-        await processRunner.EnsureUserIsInGroup(userName, RemoteDesktopUsers, ct);
-        await processRunner.EnsureUserIsInGroup(userName, Administrators, ct);
+        if (admin)
+        {
+            await processRunner.EnsureUserIsInGroup(userName, "Administrators", ct);
+        }
     }
 
     internal static async Task<bool> UserExists(this ProcessRunner processRunner, string userName, CancellationToken ct = default)

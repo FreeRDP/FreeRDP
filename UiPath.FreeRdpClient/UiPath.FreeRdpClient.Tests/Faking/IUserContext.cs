@@ -41,6 +41,7 @@ public class UserContextReal : UserContextBase
         await new ProcessRunner(_log).EnsureUserIsSetUp(
             userDetail.GetLocalUserName(),
             userDetail.Password,
+            admin: true,
             ct);
     }
 
