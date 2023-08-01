@@ -33,6 +33,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -359,6 +361,10 @@ public class SessionActivity extends AppCompatActivity
 
 	@Override protected void onDestroy()
 	{
+		if (connectThread != null)
+		{
+			connectThread.interrupt();
+		}
 		super.onDestroy();
 		Log.v(TAG, "Session.onDestroy");
 
@@ -490,6 +496,25 @@ public class SessionActivity extends AppCompatActivity
 		connectWithTitle(openUri.getAuthority());
 	}
 
+	static class ConnectThread extends Thread
+	{
+		private SessionState runnableSession;
+		private Context context;
+
+		public ConnectThread(@NonNull Context context, @NonNull SessionState session)
+		{
+			this.context = context;
+			runnableSession = session;
+		}
+
+		public void run()
+		{
+			runnableSession.connect(context.getApplicationContext());
+		}
+	}
+
+	private ConnectThread connectThread = null;
+
 	private void connectWithTitle(String title)
 	{
 		session.setUIEventListener(this);
@@ -508,13 +533,8 @@ public class SessionActivity extends AppCompatActivity
 		progressDialog.setCancelable(false);
 		progressDialog.show();
 
-		Thread thread = new Thread(new Runnable() {
-			public void run()
-			{
-				session.connect(getApplicationContext());
-			}
-		});
-		thread.start();
+		connectThread = new ConnectThread(getApplicationContext(), session);
+		connectThread.start();
 	}
 
 	// binds the current session to the activity by wiring it up with the
