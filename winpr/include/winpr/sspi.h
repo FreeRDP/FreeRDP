@@ -462,7 +462,6 @@ typedef struct
 
 #define SECPKG_CRED_ATTR_NAMES 1
 #define SECPKG_CRED_ATTR_SSI_PROVIDER 2
-#define SECPKG_CRED_ATTR_KDC_PROXY_SETTINGS 3
 #define SECPKG_CRED_ATTR_CERT 4
 #define SECPKG_CRED_ATTR_PAC_BYPASS 5
 
@@ -508,6 +507,18 @@ typedef struct
 #define PSecPkgCredentials_SSIProvider PSecPkgCredentials_SSIProviderA
 #endif
 
+typedef struct _SecPkgCredentials_Cert
+{
+	unsigned long EncodedCertSize;
+	unsigned char* EncodedCert;
+} SecPkgCredentials_Cert, *PSecPkgCredentials_Cert;
+
+#endif /* !defined(_WIN32) || defined(_UWP) */
+
+#if !defined(_WIN32) || defined(_UWP) || (defined(__MINGW32__) && (__MINGW64_VERSION_MAJOR <= 8))
+
+#define SECPKG_CRED_ATTR_KDC_PROXY_SETTINGS 3
+
 #define KDC_PROXY_SETTINGS_V1 1
 #define KDC_PROXY_SETTINGS_FLAGS_FORCEPROXY 0x1
 
@@ -539,15 +550,6 @@ typedef struct
 #define PSecPkgCredentials_KdcProxySettings SecPkgCredentials_KdcProxySettingsA
 #endif
 
-typedef struct _SecPkgCredentials_Cert
-{
-	unsigned long EncodedCertSize;
-	unsigned char* EncodedCert;
-} SecPkgCredentials_Cert, *PSecPkgCredentials_Cert;
-
-#endif /* !defined(_WIN32) || defined(_UWP) */
-
-#if !defined(_WIN32) || defined(_UWP) || (defined(__MINGW32__) && (__MINGW64_VERSION_MAJOR < 8))
 typedef struct
 {
 	UINT32 BindingsLength;
