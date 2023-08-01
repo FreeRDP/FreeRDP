@@ -148,7 +148,8 @@ winpr_include_directory_add(
 
 option(WITH_LODEPNG "build WinPR with PNG support" OFF)
 if (WITH_LODEPNG)
-	find_package(lodepng REQUIRED)
+	include(ExternalProjectLodepng)
+	winpr_dependencies_add(lodepngexternal)
 
 	winpr_definition_add(-DWITH_LODEPNG)
 	set(WINPR_WITH_PNG ON CACHE BOOL "build cache")
