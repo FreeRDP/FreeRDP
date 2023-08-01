@@ -822,7 +822,7 @@ int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, cons
 					break;
 
 				if (key)
-					*(key++) = md_buf[i];
+					*(BYTE*)(key++) = md_buf[i];
 
 				nkey--;
 				i++;
@@ -840,7 +840,7 @@ int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, cons
 					break;
 
 				if (iv)
-					*(iv++) = md_buf[i];
+					*(BYTE*)(iv++) = md_buf[i];
 
 				niv--;
 				i++;
