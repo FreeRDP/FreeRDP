@@ -110,6 +110,7 @@ if (WITH_LIBRARY_VERSIONING)
 endif()
 
 add_definitions(${WINPR_DEFINITIONS})
+target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include/winpr${WINPR_VERSION_MAJOR}>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${WINPR_TOOLS_LIBS})
 
 install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT WinPRTargets

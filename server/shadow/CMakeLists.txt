@@ -91,6 +91,7 @@ list(APPEND LIBS
 	rdtk
 )
 
+target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${FREERDP_VERSION_MAJOR})
@@ -148,6 +149,7 @@ list(APPEND LIBS
 	winpr
 )
 
+target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${FREERDP_API_VERSION})
