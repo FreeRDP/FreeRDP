@@ -94,6 +94,7 @@ if(WITH_CLIENT_INTERFACE)
 	else()
 		add_library(${PROJECT_NAME} ${SRCS})
 	endif()
+	target_include_directories(${PROJECT_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 
 else()
 	list(APPEND SRCS
