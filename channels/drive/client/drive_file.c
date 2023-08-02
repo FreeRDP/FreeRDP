@@ -154,7 +154,7 @@ static BOOL drive_file_set_fullpath(DRIVE_FILE* file, WCHAR* fullpath)
 
 	const WCHAR sep[] = { PathGetSeparatorW(PATH_STYLE_NATIVE), '\0' };
 	WCHAR* filename = _wcsrchr(file->fullpath, *sep);
-	if (_wcsncmp(filename, sep, ARRAYSIZE(sep)) == 0)
+	if (filename && _wcsncmp(filename, sep, ARRAYSIZE(sep)) == 0)
 		*filename = '\0';
 
 	return TRUE;
