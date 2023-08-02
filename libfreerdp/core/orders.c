@@ -3487,7 +3487,7 @@ static BOOL read_primary_order(wLog* log, const char* orderName, wStream* s,
 
 	if (!rc)
 	{
-		WLog_Print(log, WLOG_ERROR, "%s - update_read_dstblt_order() failed", orderName);
+		WLog_Print(log, WLOG_WARN, "Read Primary Drawing Order %s failed", orderName);
 		return FALSE;
 	}
 
