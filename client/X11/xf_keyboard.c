@@ -179,9 +179,7 @@ void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
-
-	if (event->keycode < 8)
-		return;
+	WINPR_ASSERT(event->keycode <= ARRAYSIZE(xfc->KeyboardState));
 
 	last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = TRUE;
@@ -196,9 +194,7 @@ void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keys
 {
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
-
-	if (event->keycode < 8)
-		return;
+	WINPR_ASSERT(event->keycode <= ARRAYSIZE(xfc->KeyboardState));
 
 	BOOL last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = FALSE;
@@ -208,16 +204,13 @@ void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keys
 
 void xf_keyboard_release_all_keypress(xfContext* xfc)
 {
-	size_t keycode;
-	DWORD rdp_scancode;
-
 	WINPR_ASSERT(xfc);
 
-	for (keycode = 0; keycode < ARRAYSIZE(xfc->KeyboardState); keycode++)
+	for (size_t keycode = 0; keycode < ARRAYSIZE(xfc->KeyboardState); keycode++)
 	{
 		if (xfc->KeyboardState[keycode])
 		{
-			rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
+			const DWORD rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(keycode);
 
 			// release tab before releasing the windows key.
 			// this stops the start menu from opening on unfocus event.
@@ -236,6 +229,7 @@ void xf_keyboard_release_all_keypress(xfContext* xfc)
 BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
 {
 	KeyCode keycode = XKeysymToKeycode(xfc->display, keysym);
+	WINPR_ASSERT(keycode <= ARRAYSIZE(xfc->KeyboardState));
 	return xfc->KeyboardState[keycode];
 }
 
@@ -417,6 +411,7 @@ static void xk_keyboard_update_modifier_keys(xfContext* xfc)
 		if (xf_keyboard_get_key_state(xfc, state, keysyms[i]))
 		{
 			const KeyCode keycode = XKeysymToKeycode(xfc->display, keysyms[i]);
+			WINPR_ASSERT(keycode <= ARRAYSIZE(xfc->KeyboardState));
 			xfc->KeyboardState[keycode] = TRUE;
 		}
 	}
