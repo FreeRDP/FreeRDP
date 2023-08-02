@@ -161,6 +161,7 @@ struct cliprdr_file_context
 {
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
 	/* FUSE related**/
+	HANDLE fuse_stop_sync;
 	HANDLE fuse_thread;
 	struct fuse_session* fuse_sess;
 
@@ -387,6 +388,7 @@ static BOOL notify_delete_child(void* data, size_t index, va_list ap)
 	CliprdrFuseFile* parent = va_arg(ap, CliprdrFuseFile*);
 
 	WINPR_ASSERT(file_context);
+	WINPR_ASSERT(file_context->fuse_sess);
 	WINPR_ASSERT(parent);
 
 	fuse_lowlevel_notify_delete(file_context->fuse_sess, parent->ino, child->ino, child->filename,
@@ -403,6 +405,7 @@ static BOOL invalidate_inode(void* data, size_t index, va_list ap)
 
 	CliprdrFileContext* file_context = va_arg(ap, CliprdrFileContext*);
 	WINPR_ASSERT(file_context);
+	WINPR_ASSERT(file_context->fuse_sess);
 
 	ArrayList_ForEach(fuse_file->children, notify_delete_child, file_context, fuse_file);
 
@@ -459,20 +462,22 @@ static void clear_selection(CliprdrFileContext* file_context, BOOL all_selection
 	HashTable_Foreach(file_context->inode_table, maybe_steal_inode, &clear_context);
 	HashTable_Unlock(file_context->inode_table);
 
-	/*
-	 * fuse_lowlevel_notify_inval_inode() is a blocking operation. If we receive a
-	 * FUSE request (e.g. read()), then FUSE would block in read(), since the
-	 * mutex of the inode_table would still be locked, if we wouldn't unlock it
-	 * here.
-	 * So, to avoid a deadlock here, unlock the mutex and reply all incoming
-	 * operations with -ENOENT until the invalidation process is complete.
-	 */
-	ArrayList_ForEach(clear_context.fuse_files, invalidate_inode, file_context);
-	if (clip_data_dir)
-		fuse_lowlevel_notify_delete(file_context->fuse_sess, file_context->root_dir->ino,
-		                            clip_data_dir->ino, clip_data_dir->filename,
-		                            strlen(clip_data_dir->filename));
-
+	if (file_context->fuse_sess)
+	{
+		/*
+		 * fuse_lowlevel_notify_inval_inode() is a blocking operation. If we receive a
+		 * FUSE request (e.g. read()), then FUSE would block in read(), since the
+		 * mutex of the inode_table would still be locked, if we wouldn't unlock it
+		 * here.
+		 * So, to avoid a deadlock here, unlock the mutex and reply all incoming
+		 * operations with -ENOENT until the invalidation process is complete.
+		 */
+		ArrayList_ForEach(clear_context.fuse_files, invalidate_inode, file_context);
+		if (clip_data_dir)
+			fuse_lowlevel_notify_delete(file_context->fuse_sess, file_context->root_dir->ino,
+			                            clip_data_dir->ino, clip_data_dir->filename,
+			                            strlen(clip_data_dir->filename));
+	}
 	ArrayList_Free(clear_context.fuse_files);
 
 	HashTable_Lock(file_context->inode_table);
@@ -1139,6 +1144,10 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 			fuse_session_unmount(file->fuse_sess);
 		}
 		freerdp_del_signal_cleanup_handler(file, fuse_abort);
+
+		WLog_Print(file->log, WLOG_DEBUG, "Waiting for FUSE stop sync");
+		if (WaitForSingleObject(file->fuse_stop_sync, INFINITE) == WAIT_FAILED)
+			WLog_Print(file->log, WLOG_ERROR, "Failed to wait for stop sync");
 		fuse_session_destroy(file->fuse_sess);
 	}
 #else
@@ -1154,10 +1163,20 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 			const int err = fuse_session_loop(file->fuse_sess);
 			if (err != 0)
 				WLog_Print(file->log, WLOG_WARN, "fuse_session_loop failed with %d", err);
+		}
+
+		WLog_Print(file->log, WLOG_DEBUG, "Waiting for FUSE stop sync");
+		if (WaitForSingleObject(file->fuse_stop_sync, INFINITE) == WAIT_FAILED)
+			WLog_Print(file->log, WLOG_ERROR, "Failed to wait for stop sync");
+
+		if (file->fuse_sess != NULL)
+		{
 			fuse_session_remove_chan(ch);
 			freerdp_del_signal_cleanup_handler(file, fuse_abort);
+
 			fuse_session_destroy(file->fuse_sess);
 		}
+
 		fuse_unmount(file->path, ch);
 	}
 #endif
@@ -2061,10 +2080,18 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 
 	if (file->fuse_thread)
 	{
+		WINPR_ASSERT(file->fuse_stop_sync);
+
+		WLog_Print(file->log, WLOG_DEBUG, "Stopping FUSE thread");
 		cliprdr_file_session_terminate(file);
+		SetEvent(file->fuse_stop_sync);
+
+		WLog_Print(file->log, WLOG_DEBUG, "Waiting on FUSE thread");
 		WaitForSingleObject(file->fuse_thread, INFINITE);
 		CloseHandle(file->fuse_thread);
 	}
+	if (file->fuse_stop_sync)
+		CloseHandle(file->fuse_stop_sync);
 
 	HashTable_Free(file->request_table);
 	HashTable_Free(file->clip_data_table);
@@ -2411,6 +2438,8 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 		goto fail;
 
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+	if (!(file->fuse_stop_sync = CreateEvent(NULL, TRUE, FALSE, NULL)))
+		goto fail;
 	if (!(file->fuse_thread = CreateThread(NULL, 0, cliprdr_file_fuse_thread, file, 0, NULL)))
 		goto fail;
 #endif
