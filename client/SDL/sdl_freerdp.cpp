@@ -1277,6 +1277,121 @@ static void context_free(sdl_rdp_context* sdl)
 		freerdp_client_context_free(&sdl->common.context);
 }
 
+static const char* category2str(int category)
+{
+	switch (category)
+	{
+		case SDL_LOG_CATEGORY_APPLICATION:
+			return "SDL_LOG_CATEGORY_APPLICATION";
+		case SDL_LOG_CATEGORY_ERROR:
+			return "SDL_LOG_CATEGORY_ERROR";
+		case SDL_LOG_CATEGORY_ASSERT:
+			return "SDL_LOG_CATEGORY_ASSERT";
+		case SDL_LOG_CATEGORY_SYSTEM:
+			return "SDL_LOG_CATEGORY_SYSTEM";
+		case SDL_LOG_CATEGORY_AUDIO:
+			return "SDL_LOG_CATEGORY_AUDIO";
+		case SDL_LOG_CATEGORY_VIDEO:
+			return "SDL_LOG_CATEGORY_VIDEO";
+		case SDL_LOG_CATEGORY_RENDER:
+			return "SDL_LOG_CATEGORY_RENDER";
+		case SDL_LOG_CATEGORY_INPUT:
+			return "SDL_LOG_CATEGORY_INPUT";
+		case SDL_LOG_CATEGORY_TEST:
+			return "SDL_LOG_CATEGORY_TEST";
+		case SDL_LOG_CATEGORY_RESERVED1:
+			return "SDL_LOG_CATEGORY_RESERVED1";
+		case SDL_LOG_CATEGORY_RESERVED2:
+			return "SDL_LOG_CATEGORY_RESERVED2";
+		case SDL_LOG_CATEGORY_RESERVED3:
+			return "SDL_LOG_CATEGORY_RESERVED3";
+		case SDL_LOG_CATEGORY_RESERVED4:
+			return "SDL_LOG_CATEGORY_RESERVED4";
+		case SDL_LOG_CATEGORY_RESERVED5:
+			return "SDL_LOG_CATEGORY_RESERVED5";
+		case SDL_LOG_CATEGORY_RESERVED6:
+			return "SDL_LOG_CATEGORY_RESERVED6";
+		case SDL_LOG_CATEGORY_RESERVED7:
+			return "SDL_LOG_CATEGORY_RESERVED7";
+		case SDL_LOG_CATEGORY_RESERVED8:
+			return "SDL_LOG_CATEGORY_RESERVED8";
+		case SDL_LOG_CATEGORY_RESERVED9:
+			return "SDL_LOG_CATEGORY_RESERVED9";
+		case SDL_LOG_CATEGORY_RESERVED10:
+			return "SDL_LOG_CATEGORY_RESERVED10";
+		case SDL_LOG_CATEGORY_CUSTOM:
+		default:
+			return "SDL_LOG_CATEGORY_CUSTOM";
+	}
+}
+
+static SDL_LogPriority wloglevel2dl(DWORD level)
+{
+	switch (level)
+	{
+		case WLOG_TRACE:
+			return SDL_LOG_PRIORITY_VERBOSE;
+		case WLOG_DEBUG:
+			return SDL_LOG_PRIORITY_DEBUG;
+		case WLOG_INFO:
+			return SDL_LOG_PRIORITY_INFO;
+		case WLOG_WARN:
+			return SDL_LOG_PRIORITY_WARN;
+		case WLOG_ERROR:
+			return SDL_LOG_PRIORITY_ERROR;
+		case WLOG_FATAL:
+			return SDL_LOG_PRIORITY_CRITICAL;
+		case WLOG_OFF:
+		default:
+			return SDL_LOG_PRIORITY_VERBOSE;
+	}
+}
+
+static DWORD sdlpriority2wlog(SDL_LogPriority priority)
+{
+	DWORD level = WLOG_OFF;
+	switch (priority)
+	{
+		case SDL_LOG_PRIORITY_VERBOSE:
+			level = WLOG_TRACE;
+			break;
+		case SDL_LOG_PRIORITY_DEBUG:
+			level = WLOG_DEBUG;
+			break;
+		case SDL_LOG_PRIORITY_INFO:
+			level = WLOG_INFO;
+			break;
+		case SDL_LOG_PRIORITY_WARN:
+			level = WLOG_WARN;
+			break;
+		case SDL_LOG_PRIORITY_ERROR:
+			level = WLOG_ERROR;
+			break;
+		case SDL_LOG_PRIORITY_CRITICAL:
+			level = WLOG_FATAL;
+			break;
+		default:
+			break;
+	}
+
+	return level;
+}
+
+static void SDLCALL winpr_LogOutputFunction(void* userdata, int category, SDL_LogPriority priority,
+                                            const char* message)
+{
+	auto sdl = static_cast<SdlContext*>(userdata);
+	WINPR_ASSERT(sdl);
+
+	const DWORD level = sdlpriority2wlog(priority);
+	auto log = sdl->log;
+	if (!WLog_IsLevelActive(log, level))
+		return;
+
+	WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, __LINE__, __FILE__, __func__, "[%s] %s",
+	                  category2str(category), message);
+}
+
 int main(int argc, char* argv[])
 {
 	int rc = -1;
@@ -1305,6 +1420,10 @@ int main(int argc, char* argv[])
 			sdl_list_monitors(sdl);
 		return rc;
 	}
+
+	SDL_LogSetOutputFunction(winpr_LogOutputFunction, sdl);
+	auto level = WLog_GetLogLevel(sdl->log);
+	SDL_LogSetAllPriority(wloglevel2dl(level));
 
 	auto context = sdl->context();
 	WINPR_ASSERT(context);
