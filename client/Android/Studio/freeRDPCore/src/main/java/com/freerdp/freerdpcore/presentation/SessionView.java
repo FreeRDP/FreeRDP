@@ -18,12 +18,15 @@ import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
+import android.text.InputType;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputConnection;
 
 import com.freerdp.freerdpcore.application.SessionState;
 import com.freerdp.freerdpcore.utils.DoubleGestureDetector;
@@ -407,5 +410,12 @@ public class SessionView extends View
 			                                            (int)mappedEvent.getY(), false);
 			return true;
 		}
+	}
+
+	@Override public InputConnection onCreateInputConnection(EditorInfo outAttrs)
+	{
+		super.onCreateInputConnection(outAttrs);
+		outAttrs.inputType = InputType.TYPE_CLASS_TEXT;
+		return null;
 	}
 }

@@ -36,6 +36,8 @@ import android.os.Message;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.text.InputType;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -47,6 +49,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.view.inputmethod.InputMethodSubtype;
 import android.widget.EditText;
 import android.widget.Toast;
 import android.widget.ZoomControls;
@@ -550,17 +553,17 @@ public class SessionActivity extends AppCompatActivity
 		                             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 	}
 
-	private void hideSoftInput()
+	private void setSoftInputState(boolean state)
 	{
 		InputMethodManager mgr = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 
-		if (mgr.isActive())
+		if (state)
 		{
-			mgr.toggleSoftInput(InputMethodManager.HIDE_NOT_ALWAYS, 0);
+			mgr.showSoftInput(sessionView, InputMethodManager.SHOW_FORCED);
 		}
 		else
 		{
-			mgr.toggleSoftInput(0, InputMethodManager.HIDE_NOT_ALWAYS);
+			mgr.hideSoftInputFromWindow(sessionView.getWindowToken(), 0);
 		}
 	}
 
@@ -568,11 +571,10 @@ public class SessionActivity extends AppCompatActivity
 	private void showKeyboard(final boolean showSystemKeyboard, final boolean showExtendedKeyboard)
 	{
 		// no matter what we are doing ... hide the zoom controls
-		// TODO: this is not working correctly as hiding the keyboard issues a
 		// onScrollChange notification showing the control again ...
-		uiHandler.removeMessages(UIHandler.HIDE_ZOOMCONTROLS);
-		if (zoomControls.getVisibility() == View.VISIBLE)
-			zoomControls.hide();
+		// i think check for "preference_key_ui_hide_zoom_controls" preference should be there
+		uiHandler.removeMessages(UIHandler.SHOW_ZOOMCONTROLS);
+		uiHandler.sendEmptyMessage(UIHandler.HIDE_ZOOMCONTROLS);
 
 		InputMethodManager mgr = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 
@@ -581,7 +583,7 @@ public class SessionActivity extends AppCompatActivity
 			// hide extended keyboard
 			keyboardView.setVisibility(View.GONE);
 			// show system keyboard
-			mgr.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
+			setSoftInputState(true);
 
 			// show modifiers keyboard
 			modifiersKeyboardView.setVisibility(View.VISIBLE);
@@ -589,7 +591,7 @@ public class SessionActivity extends AppCompatActivity
 		else if (showExtendedKeyboard)
 		{
 			// hide system keyboard
-			hideSoftInput();
+			setSoftInputState(false);
 
 			// show extended keyboard
 			keyboardView.setKeyboard(specialkeysKeyboard);
@@ -599,7 +601,7 @@ public class SessionActivity extends AppCompatActivity
 		else
 		{
 			// hide both
-			hideSoftInput();
+			setSoftInputState(false);
 			keyboardView.setVisibility(View.GONE);
 			modifiersKeyboardView.setVisibility(View.GONE);
 
@@ -1095,10 +1097,15 @@ public class SessionActivity extends AppCompatActivity
 	{
 		zoomControls.setIsZoomInEnabled(!sessionView.isAtMaxZoom());
 		zoomControls.setIsZoomOutEnabled(!sessionView.isAtMinZoom());
-		if (!ApplicationSettingsActivity.getHideZoomControls(this) &&
-		    zoomControls.getVisibility() != View.VISIBLE)
-			zoomControls.show();
-		resetZoomControlsAutoHideTimeout();
+
+		if (sysKeyboardVisible || extKeyboardVisible)
+			return;
+
+		if (!ApplicationSettingsActivity.getHideZoomControls(this))
+		{
+			uiHandler.sendEmptyMessage(UIHandler.SHOW_ZOOMCONTROLS);
+			resetZoomControlsAutoHideTimeout();
+		}
 	}
 
 	// ****************************************************************************
@@ -1249,6 +1256,7 @@ public class SessionActivity extends AppCompatActivity
 		public static final int SHOW_DIALOG = 5;
 		public static final int GRAPHICS_CHANGED = 6;
 		public static final int SCROLLING_REQUESTED = 7;
+		public static final int SHOW_ZOOMCONTROLS = 8;
 
 		UIHandler()
 		{
@@ -1279,7 +1287,15 @@ public class SessionActivity extends AppCompatActivity
 				}
 				case HIDE_ZOOMCONTROLS:
 				{
-					zoomControls.hide();
+					if (zoomControls.isShown())
+						zoomControls.hide();
+					break;
+				}
+				case SHOW_ZOOMCONTROLS:
+				{
+					if (!zoomControls.isShown())
+						zoomControls.show();
+
 					break;
 				}
 				case SEND_MOVE_EVENT:
