@@ -97,6 +97,9 @@ if (WITH_LIBRARY_VERSIONING)
 endif()
 
 list(APPEND LIBS freerdp winpr)
+if (WITH_AAD)
+  list(APPEND LIBS cjson)
+endif()
 
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${FREERDP_CHANNELS_CLIENT_LIBS})
