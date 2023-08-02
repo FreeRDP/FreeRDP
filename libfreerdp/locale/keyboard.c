@@ -39,7 +39,6 @@
 #define TAG FREERDP_TAG("locale.keyboard")
 
 #ifdef WITH_X11
-
 #include "keyboard_x11.h"
 
 #ifdef WITH_XKBFILE
@@ -48,6 +47,7 @@
 
 #endif
 
+static WINPR_KEYCODE_TYPE maptype = WINPR_KEYCODE_TYPE_NONE;
 static DWORD VIRTUAL_SCANCODE_TO_X11_KEYCODE[256][2] = { 0 };
 static DWORD X11_KEYCODE_TO_VIRTUAL_SCANCODE[256] = { 0 };
 static DWORD REMAPPING_TABLE[0x10000] = { 0 };
@@ -255,42 +255,35 @@ static int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 	return 0;
 }
 
-static int freerdp_keyboard_init_apple(DWORD* keyboardLayoutId,
-                                       DWORD x11_keycode_to_rdp_scancode[256])
+static int freerdp_keyboard_init_apple(DWORD* keyboardLayoutId, DWORD* x11_keycode_to_rdp_scancode,
+                                       size_t count)
 {
-	DWORD vkcode;
-	DWORD keycode;
-	DWORD keycode_to_vkcode[256] = { 0 };
-
 	WINPR_ASSERT(x11_keycode_to_rdp_scancode);
 	WINPR_ASSERT(keyboardLayoutId);
-	for (keycode = 0; keycode < 256; keycode++)
+
+	for (size_t keycode = 8; keycode < count; keycode++)
 	{
-		vkcode = keycode_to_vkcode[keycode] =
-		    GetVirtualKeyCodeFromKeycode(keycode, WINPR_KEYCODE_TYPE_APPLE);
+		const DWORD vkcode = GetVirtualKeyCodeFromKeycode(keycode - 8u, WINPR_KEYCODE_TYPE_APPLE);
 		x11_keycode_to_rdp_scancode[keycode] =
 		    GetVirtualScanCodeFromVirtualKeyCode(vkcode, WINPR_KBD_TYPE_IBM_ENHANCED);
 	}
 
+	maptype = WINPR_KEYCODE_TYPE_APPLE;
 	return 0;
 }
 
 static int freerdp_keyboard_init_x11_evdev(DWORD* keyboardLayoutId,
-                                           DWORD x11_keycode_to_rdp_scancode[256])
+                                           DWORD* x11_keycode_to_rdp_scancode, size_t count)
 {
-	DWORD vkcode;
-	DWORD keycode;
-	DWORD keycode_to_vkcode[256] = { 0 };
-
 	WINPR_ASSERT(keyboardLayoutId);
 	WINPR_ASSERT(x11_keycode_to_rdp_scancode);
-	for (keycode = 0; keycode < 256; keycode++)
+	for (size_t keycode = 0; keycode < count; keycode++)
 	{
-		vkcode = keycode_to_vkcode[keycode] =
-		    GetVirtualKeyCodeFromKeycode(keycode, WINPR_KEYCODE_TYPE_XKB);
+		const DWORD vkcode = GetVirtualKeyCodeFromKeycode(keycode, WINPR_KEYCODE_TYPE_EVDEV);
 		x11_keycode_to_rdp_scancode[keycode] =
 		    GetVirtualScanCodeFromVirtualKeyCode(vkcode, WINPR_KBD_TYPE_IBM_ENHANCED);
 	}
+	maptype = WINPR_KEYCODE_TYPE_EVDEV;
 
 	return 0;
 }
@@ -300,21 +293,27 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 	DWORD keycode;
 	int status = -1;
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 	if (status < 0)
-		status = freerdp_keyboard_init_apple(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE);
+		status = freerdp_keyboard_init_apple(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE,
+		                                     ARRAYSIZE(X11_KEYCODE_TO_VIRTUAL_SCANCODE));
 #endif
 
 #if defined(WITH_X11) || defined(WITH_WAYLAND)
 
 #ifdef WITH_XKBFILE
 	if (status < 0)
-		status = freerdp_keyboard_init_xkbfile(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE);
+	{
+		status = freerdp_keyboard_init_xkbfile(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE,
+		                                       ARRAYSIZE(X11_KEYCODE_TO_VIRTUAL_SCANCODE));
+		if (status >= 0)
+			maptype = WINPR_KEYCODE_TYPE_XKB;
+	}
 #endif
 
 	if (status < 0)
-		status =
-		    freerdp_keyboard_init_x11_evdev(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE);
+		status = freerdp_keyboard_init_x11_evdev(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE,
+		                                         ARRAYSIZE(X11_KEYCODE_TO_VIRTUAL_SCANCODE));
 
 #endif
 
@@ -327,9 +326,10 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 
 	for (keycode = 0; keycode < ARRAYSIZE(VIRTUAL_SCANCODE_TO_X11_KEYCODE); keycode++)
 	{
-		VIRTUAL_SCANCODE_TO_X11_KEYCODE
-		[RDP_SCANCODE_CODE(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode])]
-		    [RDP_SCANCODE_EXTENDED(X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode]) ? 1 : 0] = keycode;
+		const DWORD x11 = X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode];
+		const DWORD sc = RDP_SCANCODE_CODE(x11);
+		const BOOL ex = RDP_SCANCODE_EXTENDED(x11);
+		VIRTUAL_SCANCODE_TO_X11_KEYCODE[sc][ex ? 1 : 0] = keycode;
 	}
 
 	return keyboardLayoutId;
@@ -375,17 +375,24 @@ DWORD freerdp_keyboard_get_rdp_scancode_from_x11_keycode(DWORD keycode)
 {
 	const DWORD scancode = X11_KEYCODE_TO_VIRTUAL_SCANCODE[keycode];
 	const DWORD remapped = REMAPPING_TABLE[scancode];
+#if defined(WITH_DEBUG_KBD)
+	const BOOL ex = RDP_SCANCODE_EXTENDED(scancode);
+	const DWORD sc = RDP_SCANCODE_CODE(scancode);
+#endif
+
 	DEBUG_KBD("x11 keycode: %02" PRIX32 " -> rdp code: [%04" PRIx16 "] %02" PRIX8 "%s", keycode,
-	          scancode, RDP_SCANCODE_CODE(scancode),
-	          RDP_SCANCODE_EXTENDED(scancode) ? " extended" : "");
+	          scancode, sc, ex ? " extended" : "");
 
 	if (remapped != 0)
 	{
+#if defined(WITH_DEBUG_KBD)
+		const DWORD rsc = RDP_SCANCODE_CODE(remapped);
+		const BOOL rex = RDP_SCANCODE_EXTENDED(remapped);
+#endif
+
 		DEBUG_KBD("remapped scancode: [%04" PRIx16 "] %02" PRIX8 "[%s] -> [%04" PRIx16 "] %02" PRIX8
 		          "[%s]",
-		          scancode, RDP_SCANCODE_CODE(scancode),
-		          RDP_SCANCODE_EXTENDED(scancode) ? " extended" : "", remapped,
-		          RDP_SCANCODE_CODE(remapped), RDP_SCANCODE_EXTENDED(remapped) ? " extended" : "");
+		          scancode, sc, ex ? " extended" : "", remapped, rsc, rex ? " extended" : "");
 		return remapped;
 	}
 	return scancode;
@@ -393,10 +400,13 @@ DWORD freerdp_keyboard_get_rdp_scancode_from_x11_keycode(DWORD keycode)
 
 DWORD freerdp_keyboard_get_x11_keycode_from_rdp_scancode(DWORD scancode, BOOL extended)
 {
+	const DWORD* x11 = VIRTUAL_SCANCODE_TO_X11_KEYCODE[scancode];
+	WINPR_ASSERT(x11);
+
 	if (extended)
-		return VIRTUAL_SCANCODE_TO_X11_KEYCODE[scancode][1];
+		return x11[1];
 	else
-		return VIRTUAL_SCANCODE_TO_X11_KEYCODE[scancode][0];
+		return x11[0];
 }
 
 const char* freerdp_keyboard_scancode_name(DWORD scancode)

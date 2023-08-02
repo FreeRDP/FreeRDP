@@ -34,6 +34,7 @@
 #include "xkb_layout_ids.h"
 #include "liblocale.h"
 
+#include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 #include <X11/extensions/XKBfile.h>
@@ -308,8 +309,8 @@ static const XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] = {
 };
 
 static int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId);
-static int freerdp_keyboard_load_map_from_xkbfile(void* display,
-                                                  DWORD x11_keycode_to_rdp_scancode[256]);
+static int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD* x11_keycode_to_rdp_scancode,
+                                                  size_t count);
 
 static void* freerdp_keyboard_xkb_init(void)
 {
@@ -328,15 +329,14 @@ static void* freerdp_keyboard_xkb_init(void)
 	return (void*)display;
 }
 
-int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD x11_keycode_to_rdp_scancode[256])
+int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD* x11_keycode_to_rdp_scancode,
+                                  size_t count)
 {
-	void* display;
-
 	WINPR_ASSERT(keyboardLayoutId);
 	WINPR_ASSERT(x11_keycode_to_rdp_scancode);
-	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(DWORD) * 256);
+	ZeroMemory(x11_keycode_to_rdp_scancode, sizeof(DWORD) * count);
 
-	display = freerdp_keyboard_xkb_init();
+	void* display = freerdp_keyboard_xkb_init();
 
 	if (!display)
 	{
@@ -351,11 +351,12 @@ int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD x11_keycode_to_
 		          *keyboardLayoutId, *keyboardLayoutId);
 	}
 
-	freerdp_keyboard_load_map_from_xkbfile(display, x11_keycode_to_rdp_scancode);
+	const int rc =
+	    freerdp_keyboard_load_map_from_xkbfile(display, x11_keycode_to_rdp_scancode, count);
 
 	XCloseDisplay(display);
 
-	return 0;
+	return rc;
 }
 
 /* return substring starting after nth comma, ending at following comma */
@@ -382,19 +383,27 @@ static char* comma_substring(char* s, size_t n)
 
 int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 {
-	DWORD group = 0;
-	XkbStateRec state = { 0 };
-	XKeyboardState coreKbdState;
-	XkbRF_VarDefsRec rules_names = { 0 };
-
 	DEBUG_KBD("display: %p", display);
+	if (!display)
+		return -2;
 
 	char* rules = NULL;
-	if (display && XkbRF_GetNamesProp(display, &rules, &rules_names))
+	XkbRF_VarDefsRec rules_names = { 0 };
+	const Bool rc = XkbRF_GetNamesProp(display, &rules, &rules_names);
+	if (!rc)
 	{
+		DEBUG_KBD("XkbRF_GetNamesProp == False");
+	}
+	else
+	{
+		DEBUG_KBD("rules: %s", rules ? rules : "");
+		DEBUG_KBD("model: %s", rules_names.model ? rules_names.model : "");
 		DEBUG_KBD("layouts: %s", rules_names.layout ? rules_names.layout : "");
 		DEBUG_KBD("variants: %s", rules_names.variant ? rules_names.variant : "");
 
+		DWORD group = 0;
+		XkbStateRec state = { 0 };
+		XKeyboardState coreKbdState = { 0 };
 		XGetKeyboardControl(display, &coreKbdState);
 
 		if (XkbGetState(display, XkbUseCoreKbd, &state) == Success)
@@ -409,67 +418,78 @@ int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 		DEBUG_KBD("variant: %s", variant ? variant : "");
 
 		*keyboardLayoutId = find_keyboard_layout_in_xorg_rules(layout, variant);
-
-		free(rules_names.model);
-		free(rules_names.layout);
-		free(rules_names.variant);
-		free(rules_names.options);
 	}
+	free(rules_names.model);
+	free(rules_names.layout);
+	free(rules_names.variant);
+	free(rules_names.options);
 	free(rules);
 
 	return 0;
 }
 
-int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD x11_keycode_to_rdp_scancode[256])
+int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD* x11_keycode_to_rdp_scancode,
+                                           size_t count)
 {
-	size_t i, j;
-	BOOL found;
-	XkbDescPtr xkb;
-	BOOL status = FALSE;
+	int status = -1;
 
-	if (display && (xkb = XkbGetMap(display, 0, XkbUseCoreKbd)))
+	if (!display)
+		return -2;
+
+	XkbDescPtr xkb = XkbGetMap(display, 0, XkbUseCoreKbd);
+	if (!xkb)
 	{
-		if (XkbGetNames(display, XkbKeyNamesMask, xkb) == Success)
+		DEBUG_KBD("XkbGetMap() == NULL");
+		return -3;
+	}
+
+	if (XkbGetNames(display, XkbKeyNamesMask, xkb) != Success)
+	{
+		DEBUG_KBD("XkbGetNames() != Success");
+	}
+	else
+	{
+		char xkb_keyname[XkbKeyNameLength + 1] = { 42, 42, 42, 42,
+			                                       0 }; /* end-of-string at index 5 */
+
+		DEBUG_KBD("XkbGetNames() == Success, min=%" PRIu8 ", max=%" PRIu8, xkb->min_key_code,
+		          xkb->max_key_code);
+		for (size_t i = xkb->min_key_code; i <= MIN(xkb->max_key_code, count); i++)
 		{
-			char xkb_keyname[5] = { 42, 42, 42, 42, 0 }; /* end-of-string at index 5 */
+			BOOL found = FALSE;
+			strncpy(xkb_keyname, xkb->names->keys[i].name, XkbKeyNameLength);
 
-			for (i = xkb->min_key_code; i <= xkb->max_key_code; i++)
+			DEBUG_KBD("KeyCode %" PRIuz " -> %s", i, xkb_keyname);
+			if (strnlen(xkb_keyname, ARRAYSIZE(xkb_keyname)) < 1)
+				continue;
+
+			for (size_t j = 0; j < ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE); j++)
 			{
-				found = FALSE;
-				CopyMemory(xkb_keyname, xkb->names->keys[i].name, 4);
-
-				if (strnlen(xkb_keyname, sizeof(xkb_keyname)) < 1)
-					continue;
-
-				for (j = 0; j < ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE); j++)
+				if (!strcmp(xkb_keyname, XKB_KEY_NAME_SCANCODE_TABLE[j].xkb_keyname))
 				{
-					if (!strcmp(xkb_keyname, XKB_KEY_NAME_SCANCODE_TABLE[j].xkb_keyname))
+					DEBUG_KBD("%4s: keycode: 0x%02X -> rdp scancode: 0x%08" PRIX32 "", xkb_keyname,
+					          i, XKB_KEY_NAME_SCANCODE_TABLE[j].rdp_scancode);
+
+					if (found)
 					{
-						DEBUG_KBD("%4s: keycode: 0x%02X -> rdp scancode: 0x%08" PRIX32 "",
-						          xkb_keyname, i, XKB_KEY_NAME_SCANCODE_TABLE[j].rdp_scancode);
-
-						if (found)
-						{
-							DEBUG_KBD("Internal error! duplicate key %s!", xkb_keyname);
-						}
-
-						x11_keycode_to_rdp_scancode[i] =
-						    XKB_KEY_NAME_SCANCODE_TABLE[j].rdp_scancode;
-						found = TRUE;
+						DEBUG_KBD("Internal error! duplicate key %s!", xkb_keyname);
 					}
-				}
 
-				if (!found)
-				{
-					DEBUG_KBD("%4s: keycode: 0x%02X -> no RDP scancode found", xkb_keyname, i);
+					x11_keycode_to_rdp_scancode[i] = XKB_KEY_NAME_SCANCODE_TABLE[j].rdp_scancode;
+					found = TRUE;
 				}
 			}
 
-			status = TRUE;
+			if (!found)
+			{
+				DEBUG_KBD("%4s: keycode: 0x%02X -> no RDP scancode found", xkb_keyname, i);
+			}
+			else
+				status = 0;
 		}
-
-		XkbFreeKeyboard(xkb, 0, 1);
 	}
+
+	XkbFreeKeyboard(xkb, 0, 1);
 
 	return status;
 }

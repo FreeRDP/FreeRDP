@@ -19,6 +19,8 @@
  */
 
 #include <string.h>
+
+#include <X11/X.h>
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 
@@ -109,20 +111,24 @@ static DWORD kbd_layout_id_from_x_property(Display* display, Window root, char* 
 
 int freerdp_detect_keyboard_layout_from_xkb(DWORD* keyboardLayoutId)
 {
-	Window root;
 	Display* display = XOpenDisplay(NULL);
 
 	if (!display)
 		return 0;
 
-	root = DefaultRootWindow(display);
+	Window root = DefaultRootWindow(display);
+	if (!root)
+		return 0;
 
 	/* We start by looking for _XKB_RULES_NAMES_BACKUP which appears to be used by libxklavier */
-	*keyboardLayoutId = kbd_layout_id_from_x_property(display, root, "_XKB_RULES_NAMES_BACKUP");
+	DWORD id = kbd_layout_id_from_x_property(display, root, "_XKB_RULES_NAMES_BACKUP");
 
-	if (0 == *keyboardLayoutId)
-		*keyboardLayoutId = kbd_layout_id_from_x_property(display, root, "_XKB_RULES_NAMES");
+	if (0 == id)
+		id = kbd_layout_id_from_x_property(display, root, "_XKB_RULES_NAMES");
+
+	if (0 != id)
+		*keyboardLayoutId = id;
 
 	XCloseDisplay(display);
-	return (int)*keyboardLayoutId;
+	return (int)id;
 }
