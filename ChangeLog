@@ -3,8 +3,27 @@
 Noteworthy changes:
 
 For a complete and detailed change log since the last release run:
-git log 3.x.y..3.0.0-beta1
+git log 3.x.y..3.0.0-beta2
 
+# 2023-08-03 Version 3.0.0-beta2
+
+Noteworthy changes:
+* Update CMake defaults, now all features are enabled by default with a platform
+  independent option if multiple are available.
+* SDL client: (basic) multimonitor support
+* SDL client: fix dialog cleanup order (crash fix)
+* clipboard: fix FUSE shutdown crash
+* fixed drive redirection: FindNextFile did miss some files/directories
+* improved AAD support: honor rdp file options
+* improved (gateway) http failure logging
+* improved shadow server error handling
+* improved CMake configuration (using find_dependency)
+* updated timezone definitions
+* mbedTLS build fixed
+* improved MINGW build support
+
+For a complete and detailed change log since the last release run:
+git log 3.0.0-beta2..3.0.0-beta1
 
 # 2023-07-21 Version 3.0.0-beta1
 
