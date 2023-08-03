@@ -1,8 +1,8 @@
 #!/bin/bash
 
 SCM_URL=https://www.openssl.org/source
-SCM_TAG=openssl-1.1.1s
-SCM_HASH=c5ac01e760ee6ff0dab61d6b2bbd30146724d063eb322180c6f18a6f74e4b6aa
+SCM_TAG=openssl-1.1.1v
+SCM_HASH=d6697e2871e77238460402e9362d47d18382b15ef9f246aba6c7bd780d38a6b0
 
 COMPILER=4.9
 
