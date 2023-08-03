@@ -112,6 +112,7 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
 	if (len / (4 * 4) < rgndata->nRectCount)
 	{
 		WLog_Print(logger, WLOG_ERROR, "not enough data for region rectangles");
+		return ERROR_INVALID_DATA;
 	}
 
 	if (rgndata->nRectCount)
