@@ -1,10 +1,7 @@
-option(WITH_WEBVIEW "Build with WebView support for AAD login popup browser" OFF)
+option(WITH_WEBVIEW "Build with WebView support for AAD login popup browser" ON)
 if (WITH_WEBVIEW)
   option(WITH_WEBVIEW_QT "Build with QtWebEngine support for AAD login broweser popup" OFF)
 
-  set(DEFINITIONS
-    -DWITH_WEBVIEW
-  )
   set(SRCS
     sdl_webview.hpp
     webview_impl.hpp
@@ -56,9 +53,12 @@ else()
   )
 endif()
 
+configure_file(sdl_config.hpp.in sdl_config.hpp @ONLY)
+
 add_library(aad-view STATIC
   ${SRCS}
 )
+target_include_directories(aad-view PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(aad-view
   PRIVATE
   ${LIBS}
