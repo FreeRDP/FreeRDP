@@ -29,8 +29,9 @@ if (NOT FREERDP_UNIFIED_BUILD)
         set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
     endif()
 
-
-	set(CMAKE_COLOR_MAKEFILE ON)
+		option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
+		option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
+		option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
 	option(WITH_LIBRARY_VERSIONING "Use library version triplet" ON)
 
 	# Default to build shared libs
