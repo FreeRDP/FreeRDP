@@ -32,6 +32,8 @@
 
 #include <winternl.h>
 
+#pragma comment(lib, "ntdll.lib")
+
 #define WTSAPI_CHANNEL_MAGIC 0x44484356
 #define TAG WINPR_TAG("wtsapi")
 
