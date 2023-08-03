@@ -417,7 +417,7 @@ static BOOL check_primary_order_supported(wLog* log, rdpSettings* settings, UINT
 			break;
 
 		default:
-			WLog_Print(log, WLOG_WARN, "%s Primary Drawing Order not supported", orderName);
+			WLog_Print(log, WLOG_ERROR, "%s Primary Drawing Order not supported", orderName);
 			break;
 	}
 
@@ -3487,7 +3487,7 @@ static BOOL read_primary_order(wLog* log, const char* orderName, wStream* s,
 
 	if (!rc)
 	{
-		WLog_Print(log, WLOG_WARN, "Read Primary Drawing Order %s failed", orderName);
+		WLog_Print(log, WLOG_ERROR, "Read Primary Drawing Order %s failed", orderName);
 		return FALSE;
 	}
 
@@ -3761,7 +3761,7 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 	if (!rc)
 	{
-		WLog_Print(up->log, WLOG_WARN, "Primary Drawing Order %s failed", orderName);
+		WLog_Print(up->log, WLOG_ERROR, "Primary Drawing Order %s failed", orderName);
 		return FALSE;
 	}
 
@@ -3934,28 +3934,28 @@ static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s, BYTE flag
 			break;
 
 		default:
-			WLog_Print(up->log, WLOG_WARN, "SECONDARY ORDER %s not supported", name);
+			WLog_Print(up->log, WLOG_WARN, "Secondary Drawing Order %s not supported", name);
 			break;
 	}
 
 	if (!rc)
 	{
-		WLog_Print(up->log, WLOG_ERROR, "SECONDARY ORDER %s failed", name);
+		WLog_Print(up->log, WLOG_ERROR, "Secondary Drawing Order %s failed", name);
 	}
 
 	end = start + orderLengthFull;
 	pos = Stream_GetPosition(s);
 	if (pos > end)
 	{
-		WLog_Print(up->log, WLOG_WARN, "SECONDARY_ORDER %s: read %" PRIuz "bytes too much", name,
-		           pos - end);
+		WLog_Print(up->log, WLOG_WARN, "Secondary Drawing Order %s: read %" PRIuz "bytes too much",
+		           name, pos - end);
 		return FALSE;
 	}
 	diff = end - pos;
 	if (diff > 0)
 	{
-		WLog_Print(up->log, WLOG_DEBUG, "SECONDARY_ORDER %s: read %" PRIuz "bytes short, skipping",
-		           name, diff);
+		WLog_Print(up->log, WLOG_DEBUG,
+		           "Secondary Drawing Order %s: read %" PRIuz "bytes short, skipping", name, diff);
 		if (!Stream_SafeSeek(s, diff))
 			return FALSE;
 	}
@@ -4030,6 +4030,12 @@ static BOOL read_altsec_order(wStream* s, BYTE orderType, rdpAltSecUpdate* altse
 
 		default:
 			break;
+	}
+
+	if (!rc)
+	{
+		WLog_Print(up->log, WLOG_ERROR, "Read Alternate Secondary Drawing Order %s failed",
+		           altsec_order_string(orderType));
 	}
 
 	return rc;
@@ -4131,7 +4137,7 @@ static BOOL update_recv_altsec_order(rdpUpdate* update, wStream* s, BYTE flags)
 
 	if (!rc)
 	{
-		WLog_Print(up->log, WLOG_WARN, "Alternate Secondary Drawing Order %s failed", orderName);
+		WLog_Print(up->log, WLOG_ERROR, "Alternate Secondary Drawing Order %s failed", orderName);
 	}
 
 	return rc;
