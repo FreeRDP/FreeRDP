@@ -1871,7 +1871,7 @@ static FreeRDP_PenDevice* freerdp_client_get_pen(rdpClientContext* cctx, INT32 d
 {
 	WINPR_ASSERT(cctx);
 
-	for (size_t i = 0; i < ARRAYSIZE(cctx->contacts); i++)
+	for (size_t i = 0; i < ARRAYSIZE(cctx->pens); i++)
 	{
 		FreeRDP_PenDevice* pen = &cctx->pens[i];
 		if (deviceid == pen->deviceid)
@@ -2056,7 +2056,7 @@ BOOL freerdp_client_pen_cancel_all(rdpClientContext* cctx)
 	if (!rdpei)
 		return FALSE;
 
-	for (size_t i = 0; i < ARRAYSIZE(cctx->contacts); i++)
+	for (size_t i = 0; i < ARRAYSIZE(cctx->pens); i++)
 	{
 		FreeRDP_PenDevice* pen = &cctx->pens[i];
 		if (pen->hovering)
