@@ -642,7 +642,7 @@ UINT cliprdr_file_context_notify_new_client_format_list(CliprdrFileContext* file
 
 static CliprdrLocalStream* cliprdr_local_stream_new(CliprdrFileContext* context, UINT32 streamID,
                                                     const char* data, size_t size);
-static void cliprdr_file_session_terminate(CliprdrFileContext* file);
+static void cliprdr_file_session_terminate(CliprdrFileContext* file, BOOL stop_thread);
 static BOOL local_stream_discard(const void* key, void* value, void* arg);
 
 static void writelog(wLog* log, DWORD level, const char* fname, const char* fkt, size_t line, ...)
@@ -1149,7 +1149,7 @@ static void fuse_abort(int sig, const char* signame, void* context)
 	if (file)
 	{
 		WLog_Print(file->log, WLOG_INFO, "signal %s [%d] aborting session", signame, sig);
-		cliprdr_file_session_terminate(file);
+		cliprdr_file_session_terminate(file, FALSE);
 	}
 }
 
@@ -2086,18 +2086,30 @@ void* cliprdr_file_context_get_context(CliprdrFileContext* file)
 	return file->clipboard;
 }
 
-void cliprdr_file_session_terminate(CliprdrFileContext* file)
+void cliprdr_file_session_terminate(CliprdrFileContext* file, BOOL stop_thread)
 {
 	if (!file)
 		return;
 
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+	WINPR_ASSERT(file->fuse_stop_sync);
+
+	WLog_Print(file->log, WLOG_DEBUG, "Setting FUSE exit flag");
 	if (file->fuse_sess)
 		fuse_session_exit(file->fuse_sess);
+
+	if (stop_thread)
+	{
+		WLog_Print(file->log, WLOG_DEBUG, "Setting FUSE stop event");
+		SetEvent(file->fuse_stop_sync);
+	}
 #endif
 	/* 	not elegant but works for umounting FUSE
 	    fuse_chan must receive an oper buf to unblock fuse_session_receive_buf function.
 	*/
+#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+	WLog_Print(file->log, WLOG_DEBUG, "Forcing FUSE to check exit flag");
+#endif
 	winpr_PathFileExists(file->path);
 }
 
@@ -2118,8 +2130,7 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 		WINPR_ASSERT(file->fuse_stop_sync);
 
 		WLog_Print(file->log, WLOG_DEBUG, "Stopping FUSE thread");
-		cliprdr_file_session_terminate(file);
-		SetEvent(file->fuse_stop_sync);
+		cliprdr_file_session_terminate(file, TRUE);
 
 		WLog_Print(file->log, WLOG_DEBUG, "Waiting on FUSE thread");
 		WaitForSingleObject(file->fuse_thread, INFINITE);
