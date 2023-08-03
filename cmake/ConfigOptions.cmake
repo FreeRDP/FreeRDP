@@ -65,7 +65,7 @@ option(BUILD_TESTING "Build unit tests" OFF)
 CMAKE_DEPENDENT_OPTION(TESTS_WTSAPI_EXTRA "Build extra WTSAPI tests (interactive)" OFF "BUILD_TESTING" OFF)
 CMAKE_DEPENDENT_OPTION(BUILD_COMM_TESTS "Build comm related tests (require comm port)" OFF "BUILD_TESTING" OFF)
 
-option(WITH_SAMPLE "Build sample code" OFF)
+option(WITH_SAMPLE "Build sample code" ON)
 
 option(WITH_CLIENT_COMMON "Build client common library" ON)
 CMAKE_DEPENDENT_OPTION(WITH_CLIENT "Build client binaries" ON "WITH_CLIENT_COMMON" OFF)
