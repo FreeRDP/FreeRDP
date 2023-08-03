@@ -32,6 +32,7 @@ Build-Depends:
  libcairo2-dev,
  libpcsclite-dev,
  libasound2-dev,
+ libswscale-dev,
  libpulse-dev, 
  libavcodec-dev,
  libavutil-dev,
