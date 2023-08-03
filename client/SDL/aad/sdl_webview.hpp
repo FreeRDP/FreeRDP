@@ -21,6 +21,9 @@
 
 #include <freerdp/freerdp.h>
 
+#include <sdl_config.hpp>
+
+#if defined(WITH_WEBVIEW)
 #ifdef __cplusplus
 extern "C"
 {
@@ -31,4 +34,5 @@ extern "C"
 
 #ifdef __cplusplus
 }
+#endif
 #endif
