@@ -71,7 +71,7 @@ option(WITH_CLIENT_COMMON "Build client common library" ON)
 CMAKE_DEPENDENT_OPTION(WITH_CLIENT "Build client binaries" ON "WITH_CLIENT_COMMON" OFF)
 CMAKE_DEPENDENT_OPTION(WITH_CLIENT_SDL "[experimental] Build SDL client " ON "WITH_CLIENT" OFF)
 
-option(WITH_SERVER "Build server binaries" OFF)
+option(WITH_SERVER "Build server binaries" ON)
 
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
 
