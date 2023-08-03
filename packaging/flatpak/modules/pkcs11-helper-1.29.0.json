@@ -1,0 +1,22 @@
+{
+      "name": "pkcs11-helper",
+      "buildsystem": "autotools",
+      "cleanup": [
+      ],
+      "config-opts": [
+      ],
+      "sources": [
+        {
+          "type": "archive",
+          "url": "https://github.com/OpenSC/pkcs11-helper/archive/refs/tags/pkcs11-helper-1.29.0.tar.gz",
+          "sha256": "f87c4ce596ccf6211c0de34923e2977c8892bd773ace75d1261a1908979fc9e8"
+        },
+	{
+            "type": "script",
+            "dest-filename": "autogen.sh",
+            "commands": [
+                "autoreconf -vfi"
+            ]
+        }
+      ]
+}

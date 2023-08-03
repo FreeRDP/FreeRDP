@@ -41,99 +41,14 @@
     }
   },
   "modules": [
-    {
-      /**
-       * libfreerdp use xprop to try to detect keyboard layout
-       */
-      "name": "xprop",
-      "sources": [
-        {
-          "type": "archive",
-          "url": "https://xorg.freedesktop.org/releases/individual/app/xprop-1.2.5.tar.bz2",
-          "sha256": "9b92ed0316bf2486121d8bac88bd1878f16b43bd335f18009b1f941f1eca93a1"
-        }
-      ],
-      "cleanup": [
-        "/share/doc",
-        "/share/man"
-      ]
-    },
-    {
-      "name": "libusb",
-      "config-opts": ["--disable-static"],
-      "sources": [
-        {
-          "type": "git",
-          "url": "https://github.com/libusb/libusb.git",
-          "tag": "v1.0.26"
-        }
-      ],
-      "cleanup": [
-        "/share/doc",
-        "/share/man"
-      ]
-    },
-    {
-      "name": "pcsc",
-      "config-opts": [
-        "--disable-libsystemd",
-        "--enable-pic",
-        "--disable-libusb",
-        "--enable-shared",
-        "--with-systemdsystemunitdir=/app/lib/systemd/"
-      ],
-      "sources": [
-        {
-          "type": "git",
-          "url": "https://github.com/LudovicRousseau/PCSC.git",
-          "tag": "1.9.9"
-        }
-      ],
-      "cleanup": [
-        "/share/doc",
-        "/share/man"
-      ]
-    }, 
-    {
-      "name": "openssl111",
-      "buildsystem": "simple",
-      "build-commands": [
-        "./config --prefix=/app",
-        "make -j $FLATPAK_BUILDER_N_JOBS",
-        "make install_sw"
-      ],
-      "cleanup": [
-        "/share/doc",
-        "/share/man",
-        "/bin"
-      ],
-      "sources": [
-        {
-          "type": "archive",
-          "url": "https://www.openssl.org/source/openssl-1.1.1t.tar.gz",
-          "sha256": "8dee9b24bdb1dcbf0c3d1e9b02fb8f6bf22165e807f45adeb7c9677536859d3b"
-        }
-      ]
-    },
-    {
-      "name": "cjson",
-      "buildsystem": "cmake-ninja",
-      "cleanup": [
-      ],
-      "config-opts": [
-        "-DCMAKE_VERBOSE_MAKEFILE=ON",
-        "-DCMAKE_BUILD_TYPE:STRING=Release",
-        "-DCMAKE_INSTALL_LIBDIR:PATH=lib",
-        "-DWITH_PULSE:BOOL=ON"
-      ],
-      "sources": [
-        {
-          "type": "git",
-          "url": "https://github.com/DaveGamble/cJSON.git",
-          "tag": "v1.7.15"
-        }
-      ]
-    },
+    "modules/libusb.json",
+    "modules/SDL2-2.28.1-with-libdecor.json",
+    "modules/SDL2_ttf-2.20.2.json",
+    "modules/cJSON-1.7.16.json",
+    "modules/xprop-1.2.6.json",
+    "modules/pcsc-1.9.9.json",
+    "modules/pkcs11-helper-1.29.0.json",
+    "modules/krb5-1.21.1.json",
     {
       "name": "freerdp",
       "buildsystem": "cmake-ninja",
@@ -148,8 +63,11 @@
         "-DCHANNEL_URBDRC:BOOL=ON",
         "-DBUILD_TESTING:BOOL=OFF",
         "-DWITH_MANPAGES:BOOL=OFF",
-        "-DWITH_KRB5:BOOL=OFF",
+        "-DWITH_KRB5:BOOL=ON",
         "-DWITH_PCSC:BOOL=ON",
+        "-DWITH_INTERNAL_MD4:BOOL=ON",
+        "-DWITH_INTERNAL_MD5:BOOL=ON",
+        "-DWITH_INTERNAL_RC4:BOOL=ON",
         "-DWITH_PKCS11:BOOL=ON",
         "-DWITH_SWSCALE:BOOL=ON",
         "-DWITH_SERVER:BOOL=ON",
@@ -158,6 +76,7 @@
         "-DWITH_FFMPEG:BOOL=ON",
         "-DWITH_DSP_FFMPEG:BOOL=ON",
         "-DWITH_OSS:BOOL=OFF",
+        "-DWITH_WEBVIEW:BOOL=OFF",
         "-DWITH_PULSE:BOOL=ON"
       ],
       "sources": [
