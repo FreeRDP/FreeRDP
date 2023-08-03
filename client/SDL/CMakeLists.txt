@@ -39,6 +39,10 @@ option(WITH_DEBUG_SDL_EVENTS "[dangerous, not for release builds!] Debug SDL eve
 option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL keyboard events" OFF)
 option(WITH_WIN_CONSOLE "Build ${PROJECT_NAME} with console support" ON)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
+endif()
+
 # Configure MSVC Runtime
 if(MSVC)
 	include(MSVCRuntime)

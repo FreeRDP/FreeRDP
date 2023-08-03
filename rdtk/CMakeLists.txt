@@ -44,13 +44,13 @@ if (NOT FREERDP_UNIFIED_BUILD)
 
 	set(WINPR_VERSION_MAJOR 3)
 	option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-    option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
+  option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
 	option(BUILD_TESTING "Build library unit tests" ON)
 	option(WITH_LIBRARY_VERSIONING "Use library version triplet" ON)
 
     # Default to release build type
     if(NOT CMAKE_BUILD_TYPE)
-       set(CMAKE_BUILD_TYPE "Release")
+       set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
     endif()
 
     if(CMAKE_COMPILER_IS_GNUCC)
