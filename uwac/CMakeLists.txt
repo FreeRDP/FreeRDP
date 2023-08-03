@@ -65,8 +65,8 @@ include(SetFreeRDPCMakeInstallDir)
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirsWrapper)
 
-if (NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE Release)
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
 endif()
 
 if (NOT IOS)

@@ -16,6 +16,10 @@
 # limitations under the License.
 project(iFreeRDP)
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
+endif()
+
 set(MODULE_NAME "iFreeRDP")
 set(MODULE_PREFIX "IFREERDP_CLIENT")
 set(APP_TYPE MACOSX_BUNDLE)

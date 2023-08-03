@@ -5,6 +5,10 @@ project(MacFreeRDP-library)
 cmake_policy(SET CMP0026 OLD)
 cmake_policy(SET CMP0045 OLD)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
+endif()
+
 set(MODULE_NAME "MacFreeRDP-library")
 set(MODULE_OUTPUT_NAME "MacFreeRDP")
 set(MODULE_PREFIX "FREERDP_CLIENT_MAC_LIBRARY")
@@ -58,7 +62,7 @@ set(${MODULE_PREFIX}_HEADERS
 
 set(${MODULE_PREFIX}_RESOURCES "en.lproj/InfoPlist.strings")
 
-# Include XIB file in Xcode resources. 
+# Include XIB file in Xcode resources.
 if("${CMAKE_GENERATOR}" MATCHES "Xcode")
 	message(STATUS "Adding Xcode XIB resources for ${MODULE_NAME}")
 	set(${MODULE_PREFIX}_RESOURCES ${${MODULE_PREFIX}_RESOURCES} ${${MODULE_PREFIX}_XIBS})
@@ -75,12 +79,12 @@ set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_OUTPUT_NAM
 
 # configures the framework to always be looked for in the application bundle in the Frameworks sub-folder.
 set_target_properties(${MODULE_NAME} PROPERTIES XCODE_ATTRIBUTE_INSTALL_PATH @executable_path/../Frameworks/)
-          
+
 set_target_properties(${MODULE_NAME} PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY_DEBUG ${EXECUTABLE_OUTPUT_PATH} 
+	RUNTIME_OUTPUT_DIRECTORY_DEBUG ${EXECUTABLE_OUTPUT_PATH}
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE ${EXECUTABLE_OUTPUT_PATH})
 
-set_target_properties(${MODULE_NAME} PROPERTIES 
+set_target_properties(${MODULE_NAME} PROPERTIES
 	FRAMEWORK TRUE
 	MACOSX_FRAMEWORK_IDENTIFIER com.awakecoding.${MODULE_NAME}
 	FRAMEWORK_VERSION ${FREERDP_VERSION}
@@ -119,12 +123,12 @@ else()
 endif()
 
 if (${BUILD_SHARED_LIBS})
-	# Add a post-build event to copy the dependent libraries in the framework bundle 
+	# Add a post-build event to copy the dependent libraries in the framework bundle
 	# Call install_name_tool to reassign the library install name
 	foreach(LIB ${DEPENDENCIES})
 		# message("adding post-build dependency: ${LIB}")
-		add_custom_command(TARGET ${MODULE_NAME} POST_BUILD 
-			COMMAND "${CMAKE_COMMAND}" -E copy 
+		add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
+			COMMAND "${CMAKE_COMMAND}" -E copy
 					"$<TARGET_FILE:${LIB}>"
 					"${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.framework/Contents/$<TARGET_FILE_NAME:${LIB}>"
 			COMMENT "Copying ${LIB} to output directory"
@@ -159,7 +163,7 @@ endif()
 	# skip generation of this project
 	find_program(IBTOOL ibtool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin")
 	if (${IBTOOL} STREQUAL "IBTOOL-NOTFOUND")
-		message(SEND_ERROR "ibtool can not be found and is needed to compile the .xib files. It should have been installed with 
+		message(SEND_ERROR "ibtool can not be found and is needed to compile the .xib files. It should have been installed with
 				the Apple developer tools. The default system paths were searched in addition to ${OSX_DEVELOPER_ROOT}/usr/bin")
 	endif()
 
@@ -170,9 +174,9 @@ endif()
 	# Compile the .xib files using the 'ibtool' program with the destination being the app package
 	foreach(xib ${${MODULE_PREFIX}_XIBS})
 		get_filename_component(XIB_WE ${xib} NAME_WE)
-						 
-		add_custom_command (TARGET ${MODULE_NAME} POST_BUILD 
-			COMMAND ${IBTOOL} --errors --warnings --notices --output-format human-readable-text 
+
+		add_custom_command (TARGET ${MODULE_NAME} POST_BUILD
+			COMMAND ${IBTOOL} --errors --warnings --notices --output-format human-readable-text
 				--compile ${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.framework/Versions/${MACOSX_BUNDLE_SHORT_VERSION_STRING}/Resources/${XIB_WE}.nib ${CMAKE_CURRENT_SOURCE_DIR}/${xib}
 			COMMENT "Compiling ${xib}")
 	endforeach()

@@ -293,7 +293,7 @@ endif()
 
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
-   set(CMAKE_BUILD_TYPE "Release")
+   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
 endif()
 
 if(BUILD_SHARED_LIBS)
