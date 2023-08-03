@@ -33,6 +33,7 @@
 #include "android_jni_utils.h"
 #include "android_jni_callback.h"
 
+#define TAG CLIENT_TAG("android.cliprdr")
 UINT android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
@@ -252,26 +253,28 @@ static UINT android_cliprdr_server_format_list(CliprdrClientContext* cliprdr,
 		}
 	}
 
+	bool hasUnicodeText = false;
+	bool hasLocalText = false;
 	for (index = 0; index < afc->numServerFormats; index++)
 	{
 		format = &(afc->serverFormats[index]);
+		hasUnicodeText |= format->formatId == CF_UNICODETEXT;
+		hasLocalText |= format->formatId == CF_TEXT;
+	}
 
-		if (format->formatId == CF_UNICODETEXT)
-		{
-			if ((rc = android_cliprdr_send_client_format_data_request(cliprdr, CF_UNICODETEXT)) !=
-			    CHANNEL_RC_OK)
-				return rc;
-
-			break;
-		}
-		else if (format->formatId == CF_TEXT)
-		{
-			if ((rc = android_cliprdr_send_client_format_data_request(cliprdr, CF_TEXT)) !=
-			    CHANNEL_RC_OK)
-				return rc;
-
-			break;
-		}
+	if (hasUnicodeText)
+	{
+		WLog_DBG(TAG, "send_client_format_data_request CF_UNICODETEXT");
+		if ((rc = android_cliprdr_send_client_format_data_request(cliprdr, CF_UNICODETEXT)) !=
+		    CHANNEL_RC_OK)
+			return rc;
+	}
+	else if (hasLocalText)
+	{
+		WLog_DBG(TAG, "send_client_format_data_request CF_TEXT");
+		if ((rc = android_cliprdr_send_client_format_data_request(cliprdr, CF_TEXT)) !=
+		    CHANNEL_RC_OK)
+			return rc;
 	}
 
 	return CHANNEL_RC_OK;
@@ -422,11 +425,22 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 		JNIEnv* env;
 		jstring jdata;
 		jboolean attached;
-		formatId = ClipboardRegisterFormat(afc->clipboard, "UTF8_STRING");
 		data = (void*)ClipboardGetData(afc->clipboard, formatId, &size);
+
 		attached = jni_attach_thread(&env);
-		size = strnlen(data, size);
-		jdata = jniNewStringUTF(env, data, size);
+		if (formatId == CF_UNICODETEXT)
+		{
+			WLog_DBG(TAG, "Got UTF-16 buffer, size %d", size);
+			size_t length = utf16len(data, size / sizeof(uint16_t));
+			jdata = (*env)->NewString(env, data, length);
+		}
+		else
+		{
+			WLog_DBG(TAG, "Got CF_TEXT buffer, size %d", size);
+			// TODO CF_LOCALE + convert to locale?
+			jdata = jniNewStringUTF(env, data, strnlen(data, size));
+		}
+
 		freerdp_callback("OnRemoteClipboardChanged", "(JLjava/lang/String;)V", (jlong)instance,
 		                 jdata);
 		(*env)->DeleteLocalRef(env, jdata);

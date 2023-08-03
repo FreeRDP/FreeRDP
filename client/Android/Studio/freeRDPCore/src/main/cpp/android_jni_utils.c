@@ -107,6 +107,19 @@ char* get_string_from_string_builder(JNIEnv* env, jobject strBuilder)
 	return result;
 }
 
+/* Because wchar_t is 4-byte in android */
+size_t utf16len(const uint16_t* ptr, int size)
+{
+	for (int i = 0; i < size; i++)
+	{
+		if (ptr[i] == 0)
+		{
+			return i;
+		}
+	}
+	return size - 1;
+}
+
 jstring jniNewStringUTF(JNIEnv* env, const char* in, int len)
 {
 	jstring out = NULL;

@@ -26,7 +26,7 @@ extern "C"
 	FREERDP_LOCAL char* get_string_from_string_builder(JNIEnv* env, jobject strBuilder);
 	FREERDP_LOCAL jobject create_string_builder(JNIEnv* env, char* initialStr);
 	FREERDP_LOCAL jstring jniNewStringUTF(JNIEnv* env, const char* in, int len);
-
+	FREERDP_LOCAL size_t utf16len(const uint16_t* ptr, int size);
 	FREERDP_LOCAL extern JavaVM* g_JavaVm;
 
 #ifdef __cplusplus
