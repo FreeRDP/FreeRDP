@@ -38,7 +38,9 @@ if (NOT FREERDP_UNIFIED_BUILD)
     endif()
 
 
-	set(CMAKE_COLOR_MAKEFILE ON)
+		option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
+		option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
+		option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
 
 	set(WINPR_VERSION_MAJOR 3)
 	option(BUILD_SHARED_LIBS "Build shared libraries" ON)
