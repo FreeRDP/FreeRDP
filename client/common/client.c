@@ -1887,6 +1887,8 @@ static FreeRDP_PenDevice* freerdp_client_get_pen(rdpClientContext* cctx, INT32 d
 static BOOL freerdp_client_register_pen(rdpClientContext* cctx, UINT32 flags, INT32 deviceid,
                                         double pressure)
 {
+	static const INT32 null_deviceid = 0;
+
 	WINPR_ASSERT(cctx);
 	WINPR_ASSERT((flags & FREERDP_PEN_REGISTER) != 0);
 	if (freerdp_client_is_pen(cctx, deviceid))
@@ -1896,7 +1898,7 @@ static BOOL freerdp_client_register_pen(rdpClientContext* cctx, UINT32 flags, IN
 	}
 
 	size_t pos = 0;
-	FreeRDP_PenDevice* pen = freerdp_client_get_pen(cctx, deviceid, &pos);
+	FreeRDP_PenDevice* pen = freerdp_client_get_pen(cctx, null_deviceid, &pos);
 	if (pen)
 	{
 		const FreeRDP_PenDevice empty = { 0 };
