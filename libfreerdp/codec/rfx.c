@@ -1109,8 +1109,18 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 			}
 		}
 
-		Stream_StaticInit(&subStream, Stream_Pointer(s), blockLen - (6 + extraBlockLen));
-		Stream_Seek(s, blockLen - (6 + extraBlockLen));
+		const size_t blockLenNoHeader = blockLen - 6;
+		if (blockLenNoHeader < extraBlockLen)
+		{
+			WLog_Print(context->priv->log, WLOG_ERROR,
+			           "blockLen too small(%" PRIu32 "), must be >= 6 + %" PRIu16, blockLen,
+			           extraBlockLen);
+			return FALSE;
+		}
+
+		const size_t subStreamLen = blockLenNoHeader - extraBlockLen;
+		Stream_StaticInit(&subStream, Stream_Pointer(s), subStreamLen);
+		Stream_Seek(s, subStreamLen);
 
 		switch (blockType)
 		{
