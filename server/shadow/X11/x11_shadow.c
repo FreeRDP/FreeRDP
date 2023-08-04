@@ -1116,9 +1116,9 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 		return -1;
 	}
 
-	subsystem->fb_shm_info.shmid =
-	    shmget(IPC_PRIVATE, subsystem->fb_image->bytes_per_line * subsystem->fb_image->height,
-	           IPC_CREAT | 0600);
+	subsystem->fb_shm_info.shmid = shmget(
+	    IPC_PRIVATE, subsystem->fb_image->bytes_per_line * subsystem->fb_image->height * 1ull,
+	    IPC_CREAT | 0600);
 
 	if (subsystem->fb_shm_info.shmid == -1)
 	{
@@ -1333,7 +1333,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	subsystem->cursorMaxWidth = 256;
 	subsystem->cursorMaxHeight = 256;
 	subsystem->cursorPixels =
-	    winpr_aligned_malloc(subsystem->cursorMaxWidth * subsystem->cursorMaxHeight * 4, 16);
+	    winpr_aligned_malloc(subsystem->cursorMaxWidth * subsystem->cursorMaxHeight * 4ull, 16);
 
 	if (!subsystem->cursorPixels)
 		return -1;

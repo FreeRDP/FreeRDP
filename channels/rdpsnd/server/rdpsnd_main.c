@@ -55,8 +55,6 @@ static wStream* rdpsnd_server_get_buffer(RdpsndServerContext* context)
 static UINT rdpsnd_server_send_formats(RdpsndServerContext* context)
 {
 	wStream* s = rdpsnd_server_get_buffer(context);
-	size_t pos;
-	UINT16 i;
 	BOOL status = FALSE;
 	ULONG written;
 
@@ -75,7 +73,7 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context)
 	Stream_Write_UINT16(s, CHANNEL_VERSION_WIN_MAX);     /* wVersion */
 	Stream_Write_UINT8(s, 0);                            /* bPad */
 
-	for (i = 0; i < context->num_server_formats; i++)
+	for (size_t i = 0; i < context->num_server_formats; i++)
 	{
 		const AUDIO_FORMAT* format = &context->server_formats[i];
 
@@ -83,7 +81,7 @@ static UINT rdpsnd_server_send_formats(RdpsndServerContext* context)
 			goto fail;
 	}
 
-	pos = Stream_GetPosition(s);
+	const size_t pos = Stream_GetPosition(s);
 	Stream_SetPosition(s, 2);
 	Stream_Write_UINT16(s, pos - 4);
 	Stream_SetPosition(s, pos);

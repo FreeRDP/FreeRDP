@@ -356,8 +356,9 @@ static BOOL rdtk_nine_patch_get_fill_ht(rdtkNinePatch* ninePatch, wImage* image)
 
 	for (uint32_t y = 1; y < image->height - 1; y++)
 	{
-		const uint32_t* pixel = (uint32_t*)&image->data[((image->width - 1) * sizeof(uint32_t)) +
-		                                                image->scanline * y]; /* (width - 1, 1) */
+		const uint32_t* pixel =
+		    (uint32_t*)&image->data[((image->width - 1) * sizeof(uint32_t)) +
+		                            image->scanline * y * 1ull]; /* (width - 1, 1) */
 		if (beg < 0)
 		{
 			if (*pixel)
