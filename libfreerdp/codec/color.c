@@ -754,7 +754,8 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32
 BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst,
                         UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 color)
 {
-	UINT32 x, y;
+	if ((nWidth == 0) || (nHeight == 0))
+		return TRUE;
 	const UINT32 bpp = FreeRDPGetBytesPerPixel(DstFormat);
 	BYTE* pFirstDstLine;
 	BYTE* pFirstDstLineXOffset;
@@ -765,13 +766,13 @@ BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32
 	pFirstDstLine = &pDstData[nYDst * nDstStep];
 	pFirstDstLineXOffset = &pFirstDstLine[nXDst * bpp];
 
-	for (x = 0; x < nWidth; x++)
+	for (UINT32 x = 0; x < nWidth; x++)
 	{
 		BYTE* pDst = &pFirstDstLine[(x + nXDst) * bpp];
 		FreeRDPWriteColor(pDst, DstFormat, color);
 	}
 
-	for (y = 1; y < nHeight; y++)
+	for (UINT32 y = 1; y < nHeight; y++)
 	{
 		BYTE* pDstLine = &pDstData[(y + nYDst) * nDstStep + nXDst * bpp];
 		memcpy(pDstLine, pFirstDstLineXOffset, nWidth * bpp * 1ULL);
