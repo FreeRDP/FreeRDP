@@ -514,7 +514,6 @@ static UINT cliprdr_server_receive_general_capability(CliprdrServerContext* cont
 static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, wStream* s,
                                                 const CLIPRDR_HEADER* header)
 {
-	UINT16 index;
 	UINT16 capabilitySetType;
 	UINT16 capabilitySetLength;
 	UINT error = ERROR_INVALID_DATA;
@@ -532,7 +531,7 @@ static UINT cliprdr_server_receive_capabilities(CliprdrServerContext* context, w
 	Stream_Read_UINT16(s, capabilities.cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
 	Stream_Seek_UINT16(s);                                 /* pad1 (2 bytes) */
 
-	for (index = 0; index < capabilities.cCapabilitiesSets; index++)
+	for (size_t index = 0; index < capabilities.cCapabilitiesSets; index++)
 	{
 		void* tmp = NULL;
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))

@@ -202,7 +202,6 @@ static UINT device_server_recv_media_type_list_response(CameraDeviceServerContex
 {
 	CAM_MEDIA_TYPE_LIST_RESPONSE pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
-	BYTE i;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(header);
@@ -222,7 +221,7 @@ static UINT device_server_recv_media_type_list_response(CameraDeviceServerContex
 		return ERROR_NOT_ENOUGH_MEMORY;
 	}
 
-	for (i = 0; i < pdu.N_Descriptions; ++i)
+	for (size_t i = 0; i < pdu.N_Descriptions; ++i)
 	{
 		CAM_MEDIA_TYPE_DESCRIPTION* MediaTypeDescriptions = &pdu.MediaTypeDescriptions[i];
 

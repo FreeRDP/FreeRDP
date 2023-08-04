@@ -366,7 +366,7 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 	if (!(context->bg_data = calloc(context->icon_height, context->icon_width * 3)))
 		goto out_fail;
 
-	memset(context->bg_data, 0xA0, context->icon_width * context->icon_height * 3);
+	memset(context->bg_data, 0xA0, context->icon_width * context->icon_height * 3ull);
 	context->icon_data = rgb_data;
 	fclose(fp);
 	return TRUE;
