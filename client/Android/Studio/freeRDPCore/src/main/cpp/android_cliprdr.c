@@ -422,7 +422,7 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 		JNIEnv* env;
 		jstring jdata;
 		jboolean attached;
-		formatId = ClipboardRegisterFormat(afc->clipboard, "UTF8_STRING");
+		formatId = ClipboardRegisterFormat(afc->clipboard, "text/plain");
 		data = (void*)ClipboardGetData(afc->clipboard, formatId, &size);
 		attached = jni_attach_thread(&env);
 		size = strnlen(data, size);
