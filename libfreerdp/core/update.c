@@ -3286,10 +3286,7 @@ BOOL update_begin_paint(rdpUpdate* update)
 	WINPR_ASSERT(update);
 	rdp_update_lock(update);
 
-	if (!update->BeginPaint)
-		return TRUE;
-
-	return update->BeginPaint(update->context);
+	return IFCALLRESULT(TRUE, update->BeginPaint, update->context);
 }
 
 BOOL update_end_paint(rdpUpdate* update)
@@ -3299,8 +3296,7 @@ BOOL update_end_paint(rdpUpdate* update)
 	if (!update)
 		return FALSE;
 
-	if (update->EndPaint)
-		rc = update->EndPaint(update->context);
+	IFCALLRET(update->EndPaint, rc, update->context);
 
 	rdp_update_unlock(update);
 	return rc;

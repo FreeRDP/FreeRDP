@@ -21,6 +21,7 @@
 #define FREERDP_API_H
 
 #include <winpr/winpr.h>
+#include <winpr/wlog.h>
 #include <winpr/platform.h>
 
 #ifdef _WIN32
@@ -65,24 +66,34 @@
 #endif
 #endif
 
-#define IFCALL(_cb, ...)      \
-	do                        \
-	{                         \
-		if (_cb != NULL)      \
-		{                     \
-			_cb(__VA_ARGS__); \
-		}                     \
+#define IFCALL(_cb, ...)                                             \
+	do                                                               \
+	{                                                                \
+		if (_cb != NULL)                                             \
+			_cb(__VA_ARGS__);                                        \
+		else                                                         \
+			WLog_VRB("com.freerdp.api", "IFCALL(" #_cb ") == NULL"); \
 	} while (0)
-#define IFCALLRET(_cb, _ret, ...)    \
-	do                               \
-	{                                \
-		if (_cb != NULL)             \
-		{                            \
-			_ret = _cb(__VA_ARGS__); \
-		}                            \
+#define IFCALLRET(_cb, _ret, ...)                                       \
+	do                                                                  \
+	{                                                                   \
+		if (_cb != NULL)                                                \
+			_ret = _cb(__VA_ARGS__);                                    \
+		else                                                            \
+			WLog_VRB("com.freerdp.api", "IFCALLRET(" #_cb ") == NULL"); \
 	} while (0)
-#define IFCALLRESULT(_default_return, _cb, ...) \
-	((_cb != NULL) ? _cb(__VA_ARGS__) : (_default_return))
+
+#if __GNUC__
+#define IFCALLRESULT(_default_return, _cb, ...)                            \
+	({                                                                     \
+		(_cb != NULL) ? _cb(__VA_ARGS__) : ({                              \
+			WLog_VRB("com.freerdp.api", "IFCALLRESULT(" #_cb ") == NULL"); \
+			(_default_return);                                             \
+		});                                                                \
+	})
+#else
+#define IFCALLRESULT(_default_return, _cb, ...) (_cb != NULL) ? _cb(__VA_ARGS__) : (_default_return)
+#endif
 
 #ifdef __GNUC__
 #define ALIGN64 __attribute__((aligned(8)))
