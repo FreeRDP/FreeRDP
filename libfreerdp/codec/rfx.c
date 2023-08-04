@@ -1079,8 +1079,6 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
                          UINT32 dstHeight, REGION16* invalidRegion)
 {
 	REGION16 updateRegion = { 0 };
-	UINT32 blockLen = 0;
-	UINT32 blockType = 0;
 	wStream inStream = { 0 };
 	BOOL ok = TRUE;
 
@@ -1094,9 +1092,10 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 
 	while (ok && Stream_GetRemainingLength(s) > 6)
 	{
-		wStream subStreamBuffer;
-		wStream* subStream;
+		wStream subStreamBuffer = { 0 };
 		size_t extraBlockLen = 0;
+		UINT32 blockLen = 0;
+		UINT32 blockType = 0;
 
 		/* RFX_BLOCKT */
 		Stream_Read_UINT16(s, blockType); /* blockType (2 bytes) */
@@ -1122,8 +1121,8 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 		if (blockType >= WBT_CONTEXT && blockType <= WBT_EXTENSION)
 		{
 			/* RFX_CODEC_CHANNELT */
-			UINT8 codecId;
-			UINT8 channelId;
+			UINT8 codecId = 0;
+			UINT8 channelId = 0;
 
 			if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 2))
 				return FALSE;
@@ -1163,9 +1162,18 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 			}
 		}
 
-		subStream =
-		    Stream_StaticInit(&subStreamBuffer, Stream_Pointer(s), blockLen - (6 + extraBlockLen));
-		Stream_Seek(s, blockLen - (6 + extraBlockLen));
+		const size_t blockLenNoHeader = blockLen - 6;
+		if (blockLenNoHeader < extraBlockLen)
+		{
+			WLog_Print(context->priv->log, WLOG_ERROR,
+			           "blockLen too small(%" PRIu32 "), must be >= 6 + %" PRIu16, blockLen,
+			           extraBlockLen);
+			return FALSE;
+		}
+
+		const size_t subStreamLen = blockLenNoHeader - extraBlockLen;
+		wStream* subStream = Stream_StaticInit(&subStreamBuffer, Stream_Pointer(s), subStreamLen);
+		Stream_Seek(s, subStreamLen);
 
 		switch (blockType)
 		{
