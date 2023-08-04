@@ -124,7 +124,7 @@ static BOOL android_process_event(ANDROID_EVENT_QUEUE* queue, freerdp* inst)
 			case EVENT_TYPE_CLIPBOARD:
 			{
 				ANDROID_EVENT_CLIPBOARD* clipboard_event = (ANDROID_EVENT_CLIPBOARD*)event;
-				UINT32 formatId = ClipboardRegisterFormat(afc->clipboard, "UTF8_STRING");
+				UINT32 formatId = ClipboardRegisterFormat(afc->clipboard, "text/plain");
 				UINT32 size = clipboard_event->data_length;
 
 				if (size)
