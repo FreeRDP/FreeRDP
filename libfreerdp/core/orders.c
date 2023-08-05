@@ -27,6 +27,7 @@
 
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 
 #include <freerdp/api.h>
 #include <freerdp/log.h>
@@ -1390,7 +1391,7 @@ static BOOL update_read_multi_dstblt_order(wStream* s, const ORDER_INFO* orderIn
 		return update_read_delta_rects(s, multi_dstblt->rectangles, &multi_dstblt->numRectangles);
 	}
 
-	return TRUE;
+	return multi_dstblt->numRectangles == 0;
 }
 static BOOL update_read_multi_patblt_order(wStream* s, const ORDER_INFO* orderInfo,
                                            MULTI_PATBLT_ORDER* multi_patblt)
@@ -1420,12 +1421,18 @@ static BOOL update_read_multi_patblt_order(wStream* s, const ORDER_INFO* orderIn
 		if (!update_read_delta_rects(s, multi_patblt->rectangles, &multi_patblt->numRectangles))
 			return FALSE;
 	}
+	else if (multi_patblt->numRectangles != 0)
+		return FALSE;
 
 	return TRUE;
 }
 static BOOL update_read_multi_scrblt_order(wStream* s, const ORDER_INFO* orderInfo,
                                            MULTI_SCRBLT_ORDER* multi_scrblt)
 {
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(multi_scrblt);
+
+	multi_scrblt->numRectangles = 0;
 	if (!read_order_field_coord(orderInfo, s, 1, &multi_scrblt->nLeftRect, FALSE) ||
 	    !read_order_field_coord(orderInfo, s, 2, &multi_scrblt->nTopRect, FALSE) ||
 	    !read_order_field_coord(orderInfo, s, 3, &multi_scrblt->nWidth, FALSE) ||
@@ -1445,7 +1452,7 @@ static BOOL update_read_multi_scrblt_order(wStream* s, const ORDER_INFO* orderIn
 		return update_read_delta_rects(s, multi_scrblt->rectangles, &multi_scrblt->numRectangles);
 	}
 
-	return TRUE;
+	return multi_scrblt->numRectangles == 0;
 }
 static BOOL update_read_multi_opaque_rect_order(wStream* s, const ORDER_INFO* orderInfo,
                                                 MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
@@ -1497,7 +1504,7 @@ static BOOL update_read_multi_opaque_rect_order(wStream* s, const ORDER_INFO* or
 		                               &multi_opaque_rect->numRectangles);
 	}
 
-	return TRUE;
+	return multi_opaque_rect->numRectangles == 0;
 }
 static BOOL update_read_multi_draw_nine_grid_order(wStream* s, const ORDER_INFO* orderInfo,
                                                    MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid)
@@ -1520,7 +1527,7 @@ static BOOL update_read_multi_draw_nine_grid_order(wStream* s, const ORDER_INFO*
 		                               &multi_draw_nine_grid->nDeltaEntries);
 	}
 
-	return TRUE;
+	return multi_draw_nine_grid->nDeltaEntries == 0;
 }
 static BOOL update_read_line_to_order(wStream* s, const ORDER_INFO* orderInfo,
                                       LINE_TO_ORDER* line_to)
