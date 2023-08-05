@@ -936,6 +936,30 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		Stream_Read_UINT8(&sub, tile->quantIdxY);  /* quantIdxY (1 byte) */
 		Stream_Read_UINT8(&sub, tile->quantIdxCb); /* quantIdxCb (1 byte) */
 		Stream_Read_UINT8(&sub, tile->quantIdxCr); /* quantIdxCr (1 byte) */
+		if (tile->quantIdxY >= context->numQuant)
+			{
+				WLog_Print(context->priv->log, WLOG_ERROR,
+				           "quantIdxY %" PRIu8 " >= numQuant %" PRIu8, tile->quantIdxY,
+				           context->numQuant);
+				rc = FALSE;
+				break;
+			}
+			if (tile->quantIdxCb >= context->numQuant)
+			{
+				WLog_Print(context->priv->log, WLOG_ERROR,
+				           "quantIdxCb %" PRIu8 " >= numQuant %" PRIu8, tile->quantIdxCb,
+				           context->numQuant);
+				rc = FALSE;
+				break;
+			}
+			if (tile->quantIdxCr >= context->numQuant)
+			{
+				WLog_Print(context->priv->log, WLOG_ERROR,
+				           "quantIdxCr %" PRIu8 " >= numQuant %" PRIu8, tile->quantIdxCr,
+				           context->numQuant);
+				rc = FALSE;
+				break;
+
 		Stream_Read_UINT16(&sub, tile->xIdx);      /* xIdx (2 bytes) */
 		Stream_Read_UINT16(&sub, tile->yIdx);      /* yIdx (2 bytes) */
 		Stream_Read_UINT16(&sub, tile->YLen);      /* YLen (2 bytes) */
