@@ -1241,6 +1241,11 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 		region16_uninit(&clippingRects);
 		return TRUE;
 	}
+	else
+	{
+		rfx_message_free(context, message);
+		context->currentMessage.freeArray = TRUE;
+	}
 
 	WLog_ERR(TAG, "%s failed", __FUNCTION__);
 	return FALSE;
