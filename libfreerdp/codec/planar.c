@@ -977,13 +977,14 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 			TempFormat = PIXEL_FORMAT_BGRX32;
 
 		if (!pTempData)
-		{
 			return FALSE;
-		}
 
 		if (rle) /* RLE encoded data. Decode and handle it like raw data. */
 		{
 			BYTE* rleBuffer[4] = { 0 };
+
+			if (!planar->rlePlanesBuffer)
+				return FALSE;
 
 			rleBuffer[3] = planar->rlePlanesBuffer;  /* AlphaPlane */
 			rleBuffer[0] = rleBuffer[3] + planeSize; /* LumaOrRedPlane */
@@ -1657,34 +1658,41 @@ BOOL freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* context, UINT32 
 	context->maxPlaneSize = context->maxWidth * context->maxHeight;
 	context->nTempStep = context->maxWidth * 4;
 
-	void* tmp = winpr_aligned_recalloc(context->planesBuffer, context->maxPlaneSize, 4, 32);
-	if (!tmp)
-		return FALSE;
-	context->planesBuffer = tmp;
+	memset(context->planes, 0, sizeof(context->planes));
+	memset(context->rlePlanes, 0, sizeof(context->rlePlanes));
+	memset(context->deltaPlanes, 0, sizeof(context->deltaPlanes));
 
-	tmp = winpr_aligned_recalloc(context->pTempData, context->maxPlaneSize, 6, 32);
-	if (!tmp)
-		return FALSE;
-	context->pTempData = tmp;
+	if (context->maxPlaneSize > 0)
+	{
+		void* tmp = winpr_aligned_recalloc(context->planesBuffer, context->maxPlaneSize, 4, 32);
+		if (!tmp)
+			return FALSE;
+		context->planesBuffer = tmp;
 
-	tmp = winpr_aligned_recalloc(context->deltaPlanesBuffer, context->maxPlaneSize, 4, 32);
-	if (!tmp)
-		return FALSE;
-	context->deltaPlanesBuffer = tmp;
+		tmp = winpr_aligned_recalloc(context->pTempData, context->maxPlaneSize, 6, 32);
+		if (!tmp)
+			return FALSE;
+		context->pTempData = tmp;
 
-	tmp = winpr_aligned_recalloc(context->rlePlanesBuffer, context->maxPlaneSize, 4, 32);
-	if (!tmp)
-		return FALSE;
-	context->rlePlanesBuffer = tmp;
+		tmp = winpr_aligned_recalloc(context->deltaPlanesBuffer, context->maxPlaneSize, 4, 32);
+		if (!tmp)
+			return FALSE;
+		context->deltaPlanesBuffer = tmp;
 
-	context->planes[0] = &context->planesBuffer[context->maxPlaneSize * 0];
-	context->planes[1] = &context->planesBuffer[context->maxPlaneSize * 1];
-	context->planes[2] = &context->planesBuffer[context->maxPlaneSize * 2];
-	context->planes[3] = &context->planesBuffer[context->maxPlaneSize * 3];
-	context->deltaPlanes[0] = &context->deltaPlanesBuffer[context->maxPlaneSize * 0];
-	context->deltaPlanes[1] = &context->deltaPlanesBuffer[context->maxPlaneSize * 1];
-	context->deltaPlanes[2] = &context->deltaPlanesBuffer[context->maxPlaneSize * 2];
-	context->deltaPlanes[3] = &context->deltaPlanesBuffer[context->maxPlaneSize * 3];
+		tmp = winpr_aligned_recalloc(context->rlePlanesBuffer, context->maxPlaneSize, 4, 32);
+		if (!tmp)
+			return FALSE;
+		context->rlePlanesBuffer = tmp;
+
+		context->planes[0] = &context->planesBuffer[context->maxPlaneSize * 0];
+		context->planes[1] = &context->planesBuffer[context->maxPlaneSize * 1];
+		context->planes[2] = &context->planesBuffer[context->maxPlaneSize * 2];
+		context->planes[3] = &context->planesBuffer[context->maxPlaneSize * 3];
+		context->deltaPlanes[0] = &context->deltaPlanesBuffer[context->maxPlaneSize * 0];
+		context->deltaPlanes[1] = &context->deltaPlanesBuffer[context->maxPlaneSize * 1];
+		context->deltaPlanes[2] = &context->deltaPlanesBuffer[context->maxPlaneSize * 2];
+		context->deltaPlanes[3] = &context->deltaPlanesBuffer[context->maxPlaneSize * 3];
+	}
 	return TRUE;
 }
 
