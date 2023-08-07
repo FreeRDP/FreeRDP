@@ -103,7 +103,7 @@ char* x509_utils_get_subject(const X509* xcert)
 	}
 	subject = crypto_print_name(X509_get_subject_name(xcert));
 	if (!subject)
-		WLog_ERR(TAG, "certificate does not have a subject!");
+		WLog_WARN(TAG, "certificate does not have a subject!");
 	return subject;
 }
 
@@ -524,7 +524,7 @@ char* x509_utils_get_issuer(const X509* xcert)
 	}
 	issuer = crypto_print_name(X509_get_issuer_name(xcert));
 	if (!issuer)
-		WLog_ERR(TAG, "certificate does not have an issuer!");
+		WLog_WARN(TAG, "certificate does not have an issuer!");
 	return issuer;
 }
 
