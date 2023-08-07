@@ -70,7 +70,7 @@ static BOOL freerdp_certificate_data_load_cache(rdpCertificateData* data)
 
 	data->cached_subject = freerdp_certificate_get_subject(data->cert);
 	if (!data->cached_subject)
-		goto fail;
+		data->cached_subject = calloc(1, 1);
 
 	size_t pemlen = 0;
 	data->cached_pem = freerdp_certificate_get_pem(data->cert, &pemlen);
@@ -83,7 +83,7 @@ static BOOL freerdp_certificate_data_load_cache(rdpCertificateData* data)
 
 	data->cached_issuer = freerdp_certificate_get_issuer(data->cert);
 	if (!data->cached_issuer)
-		goto fail;
+		data->cached_issuer = calloc(1, 1);
 
 	rc = TRUE;
 fail:
