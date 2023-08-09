@@ -8,7 +8,7 @@
 set(REQUIRED_AVCODEC_VERSION 0.8)
 set(REQUIRED_AVCODEC_API_VERSION 53.25.0)
 
-include(FindPkgConfig)
+find_package(PkgConfig)
 
 if (PKG_CONFIG_FOUND)
 	pkg_check_modules(AVCODEC libavcodec)

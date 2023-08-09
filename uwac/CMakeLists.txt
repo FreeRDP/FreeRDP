@@ -79,7 +79,7 @@ endif()
 
 # Find required libraries
 if (UWAC_HAVE_PIXMAN_REGION)
-	include(FindPkgConfig)
+	find_package(PkgConfig REQUIRED)
 	pkg_check_modules(pixman REQUIRED pixman-1)
 	include_directories(${pixman_INCLUDE_DIRS})
 elseif (FREERDP_UNIFIED_BUILD)

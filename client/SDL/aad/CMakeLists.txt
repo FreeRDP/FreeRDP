@@ -38,7 +38,6 @@ if (WITH_WEBVIEW)
         ${WEBKIT}
       )
     else()
-      include(FindPkgConfig)
       find_package(PkgConfig REQUIRED)
       pkg_check_modules(WEBVIEW_GTK webkit2gtk-4.0 REQUIRED)
       include_directories(${WEBVIEW_GTK_INCLUDE_DIRS})

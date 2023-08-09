@@ -80,7 +80,6 @@ include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(CheckSymbolExists)
 include(CheckStructHasMember)
-include(FindPkgConfig)
 include(TestBigEndian)
 
 include(FindFeature)

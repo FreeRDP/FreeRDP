@@ -5,7 +5,7 @@
 #  PKCS11_INCLUDE_DIRS  - combined include directories
 #  PKCS11_LIBRARIES    - combined libraries to link
 
-include(FindPkgConfig)
+find_package(PkgConfig)
 
 if (PKG_CONFIG_FOUND)
 	pkg_check_modules(PKCS11 libpkcs11-helper-1)

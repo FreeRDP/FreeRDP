@@ -49,7 +49,6 @@ endif()
 
 option(WITH_FUSE "Build clipboard with FUSE file copy support" ${OPT_FUSE_DEFAULT})
 if(WITH_FUSE)
-	include(FindPkgConfig)
 	find_package(PkgConfig REQUIRED)
 
 	pkg_check_modules(FUSE3 fuse3)

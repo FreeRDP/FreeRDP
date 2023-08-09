@@ -25,7 +25,7 @@
 # limitations under the License.
 #=============================================================================
 
-include(FindPkgConfig)
+find_package(PkgConfig)
 
 if(PKG_CONFIG_FOUND)
     pkg_check_modules(WAYLAND_SCANNER_PC wayland-scanner)

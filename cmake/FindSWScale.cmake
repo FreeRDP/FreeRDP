@@ -1,5 +1,5 @@
 
-include(FindPkgConfig)
+find_package(PkgConfig)
 
 if (PKG_CONFIG_FOUND)
 	pkg_check_modules(SWScale libswscale)
