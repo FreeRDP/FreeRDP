@@ -101,7 +101,6 @@ include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(CheckSymbolExists)
 include(CheckStructHasMember)
-include(FindPkgConfig)
 include(TestBigEndian)
 
 # Include our extra modules

@@ -70,7 +70,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(CheckStructHasMember)
-include(FindPkgConfig)
 include(TestBigEndian)
 
 # Check for cmake compatibility (enable/disable features)

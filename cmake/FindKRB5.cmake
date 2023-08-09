@@ -167,7 +167,6 @@ endfunction()
 #
 # * First search with pkg-config (prefer MIT over Heimdal)
 # * Then try to find krb5-config (generic, krb5-config.mit and last krb5-config.heimdal)
-include(FindPkgConfig)
 find_package(PkgConfig REQUIRED)
 
 if (KRB5_ROOT_CONFIG)

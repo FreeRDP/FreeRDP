@@ -4,7 +4,7 @@
 #  PCSC_INCLUDE_DIRS - pcsc include directories
 #  PCSC_LIBRARIES - libraries needed for linking
 
-include(FindPkgConfig)
+find_package(PkgConfig)
 
 if(PKG_CONFIG_FOUND)
 	pkg_check_modules(PC_PCSC QUIET libpcsclite)
