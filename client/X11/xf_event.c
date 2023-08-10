@@ -3,6 +3,7 @@
  * X11 Event Handling
  *
  * Copyright 2011 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2023 HP Development Company, L.P.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -855,7 +856,7 @@ static BOOL xf_event_MapNotify(xfContext* xfc, const XMapEvent* event, BOOL app)
 	{
 		xfAppWindow* appWindow = xf_AppWindowFromX11Window(xfc, event->window);
 
-		if (appWindow && (appWindow->rail_state == WINDOW_SHOW))
+		if (appWindow)
 		{
 			/* local restore event */
 			/* This is now handled as part of the PropertyNotify
