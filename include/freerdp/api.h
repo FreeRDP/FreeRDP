@@ -92,7 +92,7 @@
 		});                                                                \
 	})
 #else
-#define IFCALLRESULT(_default_return, _cb, ...) (_cb != NULL) ? _cb(__VA_ARGS__) : (_default_return)
+#define IFCALLRESULT(_default_return, _cb, ...) ((_cb != NULL) ? _cb(__VA_ARGS__) : (_default_return))
 #endif
 
 #ifdef __GNUC__
