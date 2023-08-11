@@ -648,7 +648,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_bool(settings, FreeRDP_NSCodecAllowDynamicColorFidelity, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_AutoReconnectionEnabled, FALSE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_AutoReconnectMaxRetries, 20) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_GfxThinClient, TRUE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_GfxThinClient, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxSmallCache, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressiveV2, FALSE) ||
