@@ -47,15 +47,17 @@
 #include <freerdp/emulate/scard/smartcard_emulate.h>
 
 #define str(x) #x
-#define wrap(ctx, fkt, ...) Emulate_##fkt(ctx->emulation, ##__VA_ARGS__)
+#define wrap(ctx, fkt, ...) \
+	ctx->useEmulatedCard ? Emulate_##fkt(ctx->emulation, ##__VA_ARGS__) : fkt(__VA_ARGS__)
 #else
-#define wrap(ctx, fkt, ...) fkt(__VA_ARGS__)
+#define wrap(ctx, fkt, ...) ctx->useEmulatedCard ? SCARD_F_INTERNAL_ERROR : fkt(__VA_ARGS__)
 #endif
 
 #define SCARD_MAX_TIMEOUT 60000
 
 struct s_scard_call_context
 {
+	BOOL useEmulatedCard;
 	HANDLE StartedEvent;
 	wLinkedList* names;
 	wHashTable* rgSCardContextList;
@@ -1839,10 +1841,20 @@ scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 		goto fail;
 
 #if defined(WITH_SMARTCARD_EMULATE)
-	ctx->emulation = Emulate_New(settings);
-	if (!ctx->emulation)
+	ctx->useEmulatedCard = settings->SmartcardEmulation;
+#endif
+
+	if (ctx->useEmulatedCard)
+	{
+#if defined(WITH_SMARTCARD_EMULATE)
+		ctx->emulation = Emulate_New(settings);
+		if (!ctx->emulation)
+			goto fail;
+#else
+		WLog_ERR(TAG, "Smartcard emulation requested, but not supported!");
 		goto fail;
 #endif
+	}
 
 	ctx->rgSCardContextList = HashTable_New(FALSE);
 	if (!ctx->rgSCardContextList)
@@ -1870,9 +1882,17 @@ void smartcard_call_context_free(scard_call_context* ctx)
 	{
 		wrap(ctx, SCardReleaseStartedEvent);
 	}
-#if defined(WITH_SMARTCARD_EMULATE)
-	Emulate_Free(ctx->emulation);
+
+	if (ctx->useEmulatedCard)
+	{
+#ifdef WITH_SMARTCARD_EMULATE
+		if (ctx->emulation)
+		{
+			Emulate_Free(ctx->emulation);
+			ctx->emulation = NULL;
+		}
 #endif
+	}
 	HashTable_Free(ctx->rgSCardContextList);
 	CloseHandle(ctx->stopEvent);
 	free(ctx);
@@ -1936,10 +1956,11 @@ BOOL smartcard_call_is_configured(scard_call_context* ctx)
 	WINPR_ASSERT(ctx);
 
 #if defined(WITH_SMARTCARD_EMULATE)
-	return Emulate_IsConfigured(ctx->emulation);
-#else
-	return FALSE;
+	if (ctx->useEmulatedCard)
+		return Emulate_IsConfigured(ctx->emulation);
 #endif
+
+	return FALSE;
 }
 
 BOOL smartcard_call_context_signal_stop(scard_call_context* ctx, BOOL reset)

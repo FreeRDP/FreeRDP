@@ -35,10 +35,6 @@
 #include <freerdp/utils/smartcard_operations.h>
 #include <freerdp/utils/smartcard_call.h>
 
-#if defined(WITH_SMARTCARD_EMULATE)
-#include <freerdp/emulate/scard/smartcard_emulate.h>
-#endif
-
 #define TAG CHANNELS_TAG("smartcard.client")
 
 typedef struct
