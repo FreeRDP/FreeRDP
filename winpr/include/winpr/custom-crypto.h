@@ -227,6 +227,7 @@ extern "C"
 
 	WINPR_API WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const void* key,
 	                                             const void* iv);
+	WINPR_API BOOL winpr_Cipher_SetPadding(WINPR_CIPHER_CTX* ctx, BOOL enabled);
 	WINPR_API BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const void* input, size_t ilen,
 	                                   void* output, size_t* olen);
 	WINPR_API BOOL winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, void* output, size_t* olen);

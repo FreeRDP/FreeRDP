@@ -665,6 +665,22 @@ WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const void* key, const vo
 	return ctx;
 }
 
+BOOL winpr_Cipher_SetPadding(WINPR_CIPHER_CTX* ctx, BOOL enabled)
+{
+	WINPR_ASSERT(ctx);
+
+#if defined(WITH_OPENSSL)
+	EVP_CIPHER_CTX_set_padding((EVP_CIPHER_CTX*)ctx, enabled);
+#elif defined(WITH_MBEDTLS)
+	mbedtls_cipher_padding_t option = enabled ? MBEDTLS_PADDING_PKCS7 : MBEDTLS_PADDING_NONE;
+	if (mbedtls_cipher_set_padding_mode(ctx, option) != 0)
+		return FALSE;
+#else
+	return FALSE;
+#endif
+	return TRUE;
+}
+
 BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const void* input, size_t ilen, void* output,
                          size_t* olen)
 {
