@@ -25,5 +25,6 @@
 
 FREERDP_LOCAL void rfx_dwt_2d_decode(INT16* buffer, INT16* dwt_buffer);
 FREERDP_LOCAL void rfx_dwt_2d_encode(INT16* buffer, INT16* dwt_buffer);
+FREERDP_LOCAL void rfx_dwt_2d_extrapolate_decode(INT16* buffer, INT16* dwt_buffer);
 
 #endif /* FREERDP_LIB_CODEC_RFX_DWT_H */

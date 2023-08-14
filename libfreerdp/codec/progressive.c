@@ -835,6 +835,15 @@ static INLINE void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* tem
 	                       nBandL + nBandH);
 }
 
+void rfx_dwt_2d_extrapolate_decode(INT16* buffer, INT16* temp)
+{
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(temp);
+	progressive_rfx_dwt_2d_decode_block(&buffer[3807], temp, 3);
+	progressive_rfx_dwt_2d_decode_block(&buffer[3007], temp, 2);
+	progressive_rfx_dwt_2d_decode_block(&buffer[0], temp, 1);
+}
+
 static INLINE int progressive_rfx_dwt_2d_decode(PROGRESSIVE_CONTEXT* progressive, INT16* buffer,
                                                 INT16* current, BOOL coeffDiff, BOOL extrapolate,
                                                 BOOL reverse)
@@ -862,9 +871,8 @@ static INLINE int progressive_rfx_dwt_2d_decode(PROGRESSIVE_CONTEXT* progressive
 	}
 	else
 	{
-		progressive_rfx_dwt_2d_decode_block(&buffer[3807], temp, 3);
-		progressive_rfx_dwt_2d_decode_block(&buffer[3007], temp, 2);
-		progressive_rfx_dwt_2d_decode_block(&buffer[0], temp, 1);
+		WINPR_ASSERT(progressive->rfx_context->dwt_2d_extrapolate_decode);
+		progressive->rfx_context->dwt_2d_extrapolate_decode(buffer, temp);
 	}
 	BufferPool_Return(progressive->bufferPool, temp);
 	return 1;
@@ -1910,11 +1918,11 @@ static INLINE BOOL progressive_write_region(PROGRESSIVE_CONTEXT* progressive, wS
 	Stream_Write_UINT8(s, 64);                      /* tileSize (1 byte) */
 	Stream_Write_UINT16(s, msg->numRects);          /* numRects (2 bytes) */
 	WINPR_ASSERT(msg->numQuant <= UINT8_MAX);
-	Stream_Write_UINT8(s, (UINT8)msg->numQuant);    /* numQuant (1 byte) */
-	Stream_Write_UINT8(s, 0);                       /* numProgQuant (1 byte) */
-	Stream_Write_UINT8(s, 0);                       /* flags (1 byte) */
-	Stream_Write_UINT16(s, msg->numTiles);          /* numTiles (2 bytes) */
-	Stream_Write_UINT32(s, tilesDataSize);          /* tilesDataSize (4 bytes) */
+	Stream_Write_UINT8(s, (UINT8)msg->numQuant); /* numQuant (1 byte) */
+	Stream_Write_UINT8(s, 0);                    /* numProgQuant (1 byte) */
+	Stream_Write_UINT8(s, 0);                    /* flags (1 byte) */
+	Stream_Write_UINT16(s, msg->numTiles);       /* numTiles (2 bytes) */
+	Stream_Write_UINT32(s, tilesDataSize);       /* tilesDataSize (4 bytes) */
 
 	for (UINT16 i = 0; i < msg->numRects; i++)
 	{

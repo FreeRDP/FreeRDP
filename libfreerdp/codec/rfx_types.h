@@ -168,6 +168,7 @@ struct S_RFX_CONTEXT
 	void (*quantization_decode)(INT16* buffer, const UINT32* quantization_values);
 	void (*quantization_encode)(INT16* buffer, const UINT32* quantization_values);
 	void (*dwt_2d_decode)(INT16* buffer, INT16* dwt_buffer);
+	void (*dwt_2d_extrapolate_decode)(INT16* src, INT16* temp);
 	void (*dwt_2d_encode)(INT16* buffer, INT16* dwt_buffer);
 	int (*rlgr_decode)(RLGR_MODE mode, const BYTE* data, UINT32 data_size, INT16* buffer,
 	                   UINT32 buffer_size);
