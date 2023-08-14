@@ -332,6 +332,7 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 	context->quantization_decode = rfx_quantization_decode;
 	context->quantization_encode = rfx_quantization_encode;
 	context->dwt_2d_decode = rfx_dwt_2d_decode;
+	context->dwt_2d_extrapolate_decode = rfx_dwt_2d_extrapolate_decode;
 	context->dwt_2d_encode = rfx_dwt_2d_encode;
 	context->rlgr_decode = rfx_rlgr_decode;
 	context->rlgr_encode = rfx_rlgr_encode;
