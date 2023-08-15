@@ -1567,6 +1567,45 @@ X509* freerdp_certificate_get_x509(rdpCertificate* cert)
 	return cert->x509;
 }
 
+BOOL freerdp_certificate_publickey_encrypt(const rdpCertificate* cert, const BYTE* input,
+                                           size_t cbInput, BYTE** poutput, size_t* pcbOutput)
+{
+	WINPR_ASSERT(cert);
+	WINPR_ASSERT(input);
+	WINPR_ASSERT(poutput);
+	WINPR_ASSERT(pcbOutput);
+
+	BOOL ret = FALSE;
+	BYTE* output = NULL;
+	EVP_PKEY* pkey = X509_get0_pubkey(cert->x509);
+	if (!pkey)
+		return FALSE;
+
+	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(pkey, NULL);
+	if (!ctx)
+		return FALSE;
+
+	size_t outputSize = EVP_PKEY_size(pkey);
+	output = malloc(outputSize);
+	*pcbOutput = outputSize;
+
+	if (EVP_PKEY_encrypt_init(ctx) != 1 ||
+	    EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) != 1 ||
+	    EVP_PKEY_encrypt(ctx, output, pcbOutput, input, cbInput) != 1)
+	{
+		WLog_ERR(TAG, "error when setting up public key");
+		goto out;
+	}
+
+	*poutput = output;
+	output = NULL;
+	ret = TRUE;
+out:
+	EVP_PKEY_CTX_free(ctx);
+	free(output);
+	return ret;
+}
+
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 static RSA* freerdp_certificate_get_RSA(const rdpCertificate* cert)
 {
