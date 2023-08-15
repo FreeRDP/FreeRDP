@@ -344,14 +344,16 @@ static BOOL rdp_target_cert_write_element(wStream* s, UINT32 Type, UINT32 Encodi
 	return TRUE;
 }
 
-static BOOL rdp_redirection_read_target_cert(rdpRedirection* redirection, const BYTE* data,
-                                             size_t length)
+BOOL rdp_redirection_read_target_cert(rdpCertificate** ptargetCertificate, const BYTE* data,
+                                      size_t length)
 {
+	WINPR_ASSERT(ptargetCertificate);
+
 	wStream sbuffer = { 0 };
 	wStream* s = Stream_StaticConstInit(&sbuffer, data, length);
 
-	freerdp_certificate_free(redirection->TargetCertificate);
-	redirection->TargetCertificate = NULL;
+	freerdp_certificate_free(*ptargetCertificate);
+	*ptargetCertificate = NULL;
 
 	size_t plength = 0;
 	const BYTE* ptr = NULL;
@@ -364,16 +366,15 @@ static BOOL rdp_redirection_read_target_cert(rdpRedirection* redirection, const 
 
 		switch (type)
 		{
-			case ELEMENT_TYPE_CERTIFICATE:
+			case CERT_cert_file_element:
 				if (encoding == ENCODING_TYPE_ASN1_DER)
 				{
-					if (redirection->TargetCertificate)
+					if (*ptargetCertificate)
 						WLog_WARN(TAG, "Duplicate TargetCertificate in data detected!");
 					else
 					{
-						redirection->TargetCertificate =
-						    freerdp_certificate_new_from_der(ptr, plength);
-						if (!redirection->TargetCertificate)
+						*ptargetCertificate = freerdp_certificate_new_from_der(ptr, plength);
+						if (!*ptargetCertificate)
 							WLog_ERR(TAG, "TargetCertificate parsing DER data failed");
 					}
 				}
@@ -384,15 +385,15 @@ static BOOL rdp_redirection_read_target_cert(rdpRedirection* redirection, const 
 				}
 				break;
 			default: /* ignore unknown fields */
-				WLog_WARN(TAG,
-				          "Unknown TargetCertificate field type %" PRIu32 ", encoding %" PRIu32
-				          " of length %" PRIu32,
-				          type, encoding, plength);
+				WLog_VRB(TAG,
+				         "Unknown TargetCertificate field type %" PRIu32 ", encoding %" PRIu32
+				         " of length %" PRIu32,
+				         type, encoding, plength);
 				break;
 		}
 	}
 
-	return redirection->TargetCertificate != NULL;
+	return *ptargetCertificate != NULL;
 }
 
 static BOOL rdp_redirection_write_target_cert(wStream* s, const rdpRedirection* redirection)
@@ -407,7 +408,7 @@ static BOOL rdp_redirection_write_target_cert(wStream* s, const rdpRedirection* 
 	size_t derlen = 0;
 
 	BYTE* der = freerdp_certificate_get_der(cert, &derlen);
-	if (!rdp_target_cert_write_element(s, ELEMENT_TYPE_CERTIFICATE, ENCODING_TYPE_ASN1_DER, der,
+	if (!rdp_target_cert_write_element(s, CERT_cert_file_element, ENCODING_TYPE_ASN1_DER, der,
 	                                   derlen))
 		goto fail;
 
@@ -446,7 +447,7 @@ static BOOL rdp_redirection_read_target_cert_stream(wStream* s, rdpRedirection* 
 	if (!rdp_redirection_read_base64_wchar(LB_TARGET_CERTIFICATE, s, &length, &ptr))
 		return FALSE;
 
-	const BOOL rc = rdp_redirection_read_target_cert(redirection, ptr, length);
+	const BOOL rc = rdp_redirection_read_target_cert(&redirection->TargetCertificate, ptr, length);
 	free(ptr);
 	return rc;
 }
@@ -1203,7 +1204,7 @@ BOOL redirection_set_byte_option(rdpRedirection* redirection, UINT32 flag, const
 			return redirection_copy_data(&redirection->RedirectionGuid,
 			                             &redirection->RedirectionGuidLength, data, length);
 		case LB_TARGET_CERTIFICATE:
-			return rdp_redirection_read_target_cert(redirection, data, length);
+			return rdp_redirection_read_target_cert(&redirection->TargetCertificate, data, length);
 		default:
 			return redirection_unsupported(__func__, flag,
 			                               LB_CLIENT_TSV_URL | LB_PASSWORD | LB_LOAD_BALANCE_INFO |

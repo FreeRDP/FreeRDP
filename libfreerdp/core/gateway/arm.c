@@ -3,6 +3,7 @@
  * Azure Virtual Desktop Gateway / Azure Resource Manager
  *
  * Copyright 2023 Michael Saxl <mike@mwsys.mine.bz>
+ * Copyright 2023 David Fort <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +28,11 @@
 #include <winpr/stream.h>
 #include <winpr/winsock.h>
 #include <winpr/cred.h>
+#include <winpr/bcrypt.h>
 
 #include <freerdp/log.h>
 #include <freerdp/error.h>
+#include <freerdp/crypto/certificate.h>
 #include <freerdp/utils/ringbuffer.h>
 #include <freerdp/utils/smartcardlogon.h>
 
@@ -40,11 +43,15 @@
 #include "../credssp_auth.h"
 #include "../proxy.h"
 #include "../rdp.h"
+#include "../../crypto/crypto.h"
+#include "../../crypto/certificate.h"
 #include "../../crypto/opensslcompat.h"
 #include "rpc_fault.h"
 #include "../utils.h"
 #include "../settings.h"
+#include "../redirection.h"
 
+//#define WITH_AAD
 #ifdef WITH_AAD
 #include <cjson/cJSON.h>
 #endif
@@ -311,6 +318,343 @@ arm_create_cleanup:
 	return message;
 }
 
+/**
+ * treats the redirectedAuthBlob
+ *
+ * sample pbInput:
+ *  41004500530000004b44424d01000000200000006ee71b295810b3fd13799da3825d0efa3a628e8f4a6eda609ffa975408556546
+ *  'A\x00E\x00S\x00\x00\x00KDBM\x01\x00\x00\x00
+ * \x00\x00\x00n\xe7\x1b)X\x10\xb3\xfd\x13y\x9d\xa3\x82]\x0e\xfa:b\x8e\x8fJn\xda`\x9f\xfa\x97T\x08UeF'
+ *
+ * @param pbInput the raw auth blob (base64 and utf16 decoded)
+ * @param cbInput size of pbInput
+ * @return the corresponding WINPR_CIPHER_CTX if success, NULL otherwise
+ */
+static WINPR_CIPHER_CTX* treatAuthBlob(const BYTE* pbInput, size_t cbInput)
+{
+	WINPR_CIPHER_CTX* ret = NULL;
+	char algoName[100];
+
+	SSIZE_T algoSz =
+	    ConvertWCharNToUtf8((WCHAR*)pbInput, cbInput / sizeof(WCHAR), algoName, sizeof(algoName));
+	if (algoSz <= 0)
+	{
+		WLog_ERR(TAG, "invalid algoName");
+		return NULL;
+	}
+
+	algoName[algoSz] = 0;
+	if (strcmp(algoName, "AES") != 0)
+	{
+		WLog_ERR(TAG, "only AES is supported for now");
+		return NULL;
+	}
+
+	cbInput -= (algoSz + 1) * sizeof(WCHAR);
+
+	if (cbInput < 12)
+	{
+		WLog_ERR(TAG, "invalid AuthBlob size");
+		return NULL;
+	}
+
+	/* BCRYPT_KEY_DATA_BLOB_HEADER */
+	wStream staticStream;
+	wStream* s =
+	    Stream_StaticConstInit(&staticStream, pbInput + (algoSz + 1) * sizeof(WCHAR), cbInput);
+
+	UINT32 dwMagic;
+	Stream_Read_UINT32(s, dwMagic);
+
+	if (dwMagic != BCRYPT_KEY_DATA_BLOB_MAGIC)
+	{
+		WLog_ERR(TAG, "unsupported authBlob type");
+		return NULL;
+	}
+
+	UINT32 dwVersion;
+	Stream_Read_UINT32(s, dwVersion);
+	if (dwVersion != BCRYPT_KEY_DATA_BLOB_VERSION1)
+	{
+		WLog_ERR(TAG, "unsupported authBlob version %d, expecting %d", dwVersion,
+		         BCRYPT_KEY_DATA_BLOB_VERSION1);
+		return NULL;
+	}
+
+	UINT32 cbKeyData;
+	Stream_Read_UINT32(s, cbKeyData);
+	cbInput -= 12;
+
+	if (cbKeyData > cbInput)
+	{
+		WLog_ERR(TAG, "invalid authBlob size");
+		return NULL;
+	}
+
+	int cipherType;
+	switch (cbKeyData)
+	{
+		case 16:
+			cipherType = WINPR_CIPHER_AES_128_CBC;
+			break;
+		case 24:
+			cipherType = WINPR_CIPHER_AES_192_CBC;
+			break;
+		case 32:
+			cipherType = WINPR_CIPHER_AES_256_CBC;
+			break;
+		default:
+			WLog_ERR(TAG, "invalid authBlob cipher size");
+			return NULL;
+	}
+
+	ret = winpr_Cipher_New(cipherType, WINPR_ENCRYPT, Stream_Pointer(s), NULL);
+	if (!ret)
+	{
+		WLog_ERR(TAG, "error creating cipher");
+		return NULL;
+	}
+
+	if (!winpr_Cipher_SetPadding(ret, TRUE))
+	{
+		WLog_ERR(TAG, "unable to enable padding on cipher");
+		winpr_Cipher_Free(ret);
+		return NULL;
+	}
+
+	return ret;
+}
+
+static BOOL arm_stringEncodeW(const BYTE* pin, size_t cbIn, BYTE** ppOut, size_t* pcbOut)
+{
+	*ppOut = NULL;
+	*pcbOut = 0;
+
+	/* encode to base64 with crlf */
+	char* b64encoded = crypto_base64_encode_ex(pin, cbIn, TRUE);
+	if (!b64encoded)
+		return FALSE;
+
+	/* and then convert to Unicode */
+	size_t outSz;
+	*ppOut = (BYTE*)ConvertUtf8NToWCharAlloc(b64encoded, strlen(b64encoded), &outSz);
+	free(b64encoded);
+
+	if (!*ppOut)
+		return FALSE;
+
+	*pcbOut = (outSz + 1) * sizeof(WCHAR);
+	return TRUE;
+}
+
+BOOL arm_encodeRedirectPasswd(rdpSettings* settings, const rdpCertificate* cert,
+                              WINPR_CIPHER_CTX* cipher)
+{
+	BOOL ret = FALSE;
+	BYTE* output = NULL;
+	BYTE* finalOutput = NULL;
+
+	/* let's prepare the encrypted password, first we do a
+	 *    cipheredPass = AES(redirectedAuthBlob, toUtf16(passwd))
+	 */
+
+	size_t wpasswdLen = 0;
+	WCHAR* wpasswd = freerdp_settings_get_string_as_utf16(settings, FreeRDP_Password, &wpasswdLen);
+	if (!wpasswd)
+	{
+		WLog_ERR(TAG, "error when converting password to UTF16");
+		return FALSE;
+	}
+
+	size_t wpasswdBytes = (wpasswdLen + 1) * sizeof(WCHAR);
+	BYTE* encryptedPass = calloc(1, wpasswdBytes + 16); /* 16: block size of AES (padding) */
+	size_t encryptedPassLen = 0;
+	size_t finalLen = 0;
+	if (!encryptedPass ||
+	    !winpr_Cipher_Update(cipher, wpasswd, wpasswdBytes, encryptedPass, &encryptedPassLen) ||
+	    !winpr_Cipher_Final(cipher, encryptedPass + encryptedPassLen, &finalLen))
+	{
+		WLog_ERR(TAG, "error when ciphering password");
+		goto out;
+	}
+	encryptedPassLen += finalLen;
+
+	/* then encrypt(cipheredPass, publicKey(redirectedServerCert) */
+	size_t output_length = 0;
+
+	if (!freerdp_certificate_publickey_encrypt(cert, encryptedPass, encryptedPassLen, &output,
+	                                           &output_length))
+	{
+		WLog_ERR(TAG, "unable to encrypt with the server's public key");
+		goto out;
+	}
+
+	size_t finalOutputLen = 0;
+	if (!arm_stringEncodeW(output, output_length, &finalOutput, &finalOutputLen))
+	{
+		WLog_ERR(TAG, "unable to base64+utf16 final blob");
+		goto out;
+	}
+
+	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionPassword, finalOutput,
+	                                      finalOutputLen))
+	{
+		WLog_ERR(TAG, "unable to set the redirection password in settings");
+		goto out;
+	}
+
+	settings->RdstlsSecurity = TRUE;
+	settings->RedirectionFlags = LB_PASSWORD_IS_PK_ENCRYPTED;
+	ret = TRUE;
+out:
+	free(finalOutput);
+	free(output);
+	free(encryptedPass);
+	free(wpasswd);
+	return ret;
+}
+
+/** extract that stupidly over-encoded field that is the equivalent of
+ *       base64.b64decode( base64.b64decode(input).decode('utf-16') )
+ *  in python
+ */
+static BOOL arm_pick_base64Utf16Field(cJSON* json, const char* name, BYTE** poutput, size_t* plen)
+{
+	*poutput = NULL;
+	*plen = 0;
+
+	const cJSON* node = cJSON_GetObjectItemCaseSensitive(json, name);
+	if (!node || !cJSON_IsString(node))
+		return TRUE;
+
+	char* nodeValue = cJSON_GetStringValue(node);
+	if (!nodeValue)
+		return TRUE;
+
+	BYTE* output1 = NULL;
+	size_t len1 = 0;
+	crypto_base64_decode(nodeValue, strlen(nodeValue), &output1, &len1);
+	if (!output1 || !len1)
+	{
+		WLog_ERR(TAG, "error when first unbase64 for %s", name);
+		return FALSE;
+	}
+
+	size_t len2 = 0;
+	char* output2 = ConvertWCharNToUtf8Alloc((WCHAR*)output1, len1 / 2, &len2);
+	free(output1);
+	if (!output2 || !len2)
+	{
+		WLog_ERR(TAG, "error when decode('utf-16') for %s", name);
+		return FALSE;
+	}
+
+	BYTE* output = NULL;
+	crypto_base64_decode(output2, len2, &output, plen);
+	free(output2);
+	if (!output || !*plen)
+	{
+		WLog_ERR(TAG, "error when second unbase64 for %s", name);
+		return FALSE;
+	}
+
+	*poutput = output;
+	return TRUE;
+}
+
+/**
+ * treats the Azure network meta data that will typically look like:
+ *
+ *   {'interface': [
+ *      {'ipv4': {
+ *          'ipAddress': [
+ *              {'privateIpAddress': 'X.X.X.X',
+ *               'publicIpAddress': 'X.X.X.X'}
+ *           ],
+ *           'subnet': [
+ *              {'address': 'X.X.X.X', 'prefix': '24'}
+ *           ]
+ *      },
+ *      'ipv6': {'ipAddress': []},
+ *      'macAddress': 'YYYYYYY'}
+ *  ]
+ *  }
+ *
+ */
+
+static BOOL arm_treat_azureInstanceNetworkMetadata(const char* metadata, rdpSettings* settings)
+{
+	BOOL ret = FALSE;
+	cJSON* json = cJSON_Parse(metadata);
+	if (!json)
+	{
+		WLog_ERR(TAG, "invalid azureInstanceNetworkMetadata");
+		return FALSE;
+	}
+
+	const cJSON* interface = cJSON_GetObjectItem(json, "interface");
+	if (!interface)
+	{
+		ret = TRUE;
+		goto out;
+	}
+
+	if (!cJSON_IsArray(interface))
+	{
+		WLog_ERR(TAG, "expecting interface to be an Array");
+		goto out;
+	}
+
+	int interfaceSz = cJSON_GetArraySize(interface);
+	if (interfaceSz == 0)
+	{
+		WLog_WARN(TAG, "no addresses in azure instance metadata");
+		ret = TRUE;
+		goto out;
+	}
+
+	for (int i = 0; i < interfaceSz; i++)
+	{
+		const cJSON* interN = cJSON_GetArrayItem(interface, i);
+		if (!interN)
+			continue;
+
+		const cJSON* ipv4 = cJSON_GetObjectItem(interN, "ipv4");
+		if (!ipv4)
+			continue;
+
+		const cJSON* ipAddress = cJSON_GetObjectItem(ipv4, "ipAddress");
+		if (!ipAddress || !cJSON_IsArray(ipAddress))
+			continue;
+
+		int naddresses = cJSON_GetArraySize(ipAddress);
+		for (int j = 0; j < naddresses; j++)
+		{
+			const cJSON* adressN = cJSON_GetArrayItem(ipAddress, j);
+			if (!adressN)
+				continue;
+
+			const cJSON* publicIpNode = cJSON_GetObjectItem(adressN, "publicIpAddress");
+			if (!publicIpNode || !cJSON_IsString(publicIpNode))
+				continue;
+
+			char* publicIp = cJSON_GetStringValue(publicIpNode);
+			if (freerdp_settings_set_string(settings, FreeRDP_RedirectionTargetFQDN, publicIp))
+			{
+				WLog_INFO(TAG, "connecting to publicIp %s", publicIp);
+				ret = TRUE;
+				goto out;
+			}
+		}
+	}
+
+	ret = TRUE;
+
+out:
+	cJSON_Delete(json);
+	return ret;
+}
+
 static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t len)
 {
 	WINPR_ASSERT(arm);
@@ -321,31 +665,94 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 	BOOL status = FALSE;
 	if (!json)
 		return FALSE;
-	else
+
+	rdpSettings* settings = arm->context->settings;
+	const cJSON* gwurl = cJSON_GetObjectItemCaseSensitive(json, "gatewayLocation");
+	if (cJSON_IsString(gwurl) && (gwurl->valuestring != NULL))
 	{
-		const cJSON* gwurl = cJSON_GetObjectItemCaseSensitive(json, "gatewayLocation");
-		if (cJSON_IsString(gwurl) && (gwurl->valuestring != NULL))
-		{
-			WLog_DBG(TAG, "extracted target url %s", gwurl->valuestring);
-			if (!freerdp_settings_set_string(arm->context->settings, FreeRDP_GatewayUrl,
-			                                 gwurl->valuestring))
-				status = FALSE;
-			else
-				status = TRUE;
-		}
-
-		const cJSON* hostname = cJSON_GetObjectItem(json, "redirectedServerName");
-		if (cJSON_GetStringValue(hostname))
-		{
-			if (!freerdp_settings_set_string(arm->context->settings, FreeRDP_ServerHostname,
-			                                 cJSON_GetStringValue(hostname)))
-				status = FALSE;
-			else
-				status = TRUE;
-		}
-
-		cJSON_Delete(json);
+		WLog_DBG(TAG, "extracted target url %s", gwurl->valuestring);
+		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayUrl, gwurl->valuestring))
+			status = FALSE;
+		else
+			status = TRUE;
 	}
+
+	const cJSON* serverNameNode = cJSON_GetObjectItem(json, "redirectedServerName");
+	if (serverNameNode)
+	{
+		char* serverName = cJSON_GetStringValue(serverNameNode);
+		if (serverName)
+			status = freerdp_settings_set_string(settings, FreeRDP_ServerHostname, serverName);
+	}
+
+	const cJSON* azureMeta = cJSON_GetObjectItem(json, "azureInstanceNetworkMetadata");
+	if (azureMeta && cJSON_IsString(azureMeta))
+	{
+		if (!arm_treat_azureInstanceNetworkMetadata(cJSON_GetStringValue(azureMeta), settings))
+		{
+			WLog_ERR(TAG, "error when treating azureInstanceNetworkMetadata");
+		}
+	}
+
+	WCHAR* wGUID = NULL;
+	BYTE* cert = NULL;
+	BYTE* authBlob = NULL;
+	rdpCertificate* redirectedServerCert = NULL;
+
+	do
+	{
+		/* redirectedAuthGuid */
+		const cJSON* redirectedAuthGuidNode =
+		    cJSON_GetObjectItemCaseSensitive(json, "redirectedAuthGuid");
+		if (!redirectedAuthGuidNode || !cJSON_IsString(redirectedAuthGuidNode))
+			break;
+
+		char* redirectedAuthGuid = cJSON_GetStringValue(redirectedAuthGuidNode);
+		if (!redirectedAuthGuid)
+			break;
+
+		size_t wGUID_len = 0;
+		wGUID = ConvertUtf8ToWCharAlloc(redirectedAuthGuid, &wGUID_len);
+		if (!wGUID)
+		{
+			WLog_ERR(TAG, "unable to allocate space for redirectedAuthGuid");
+			status = FALSE;
+			goto endOfFunction;
+		}
+
+		status = freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionGuid, wGUID,
+		                                          (wGUID_len + 1) * sizeof(WCHAR));
+		if (!status)
+			goto endOfFunction;
+
+		/* redirectedServerCert */
+		size_t certLen = 0;
+		if (!arm_pick_base64Utf16Field(json, "redirectedServerCert", &cert, &certLen))
+			break;
+
+		rdpCertificate* redirectedServerCert = NULL;
+		if (!rdp_redirection_read_target_cert(&redirectedServerCert, cert, certLen))
+			break;
+
+		/* redirectedAuthBlob */
+		size_t authBlobLen = 0;
+		if (!arm_pick_base64Utf16Field(json, "redirectedAuthBlob", &authBlob, &authBlobLen))
+			break;
+
+		WINPR_CIPHER_CTX* cipher = treatAuthBlob(authBlob, authBlobLen);
+		if (!cipher)
+			break;
+
+		if (!arm_encodeRedirectPasswd(settings, redirectedServerCert, cipher))
+			break;
+
+	} while (FALSE);
+
+	free(cert);
+	freerdp_certificate_free(redirectedServerCert);
+	free(authBlob);
+endOfFunction:
+	cJSON_Delete(json);
 	return status;
 }
 

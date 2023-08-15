@@ -246,7 +246,7 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	/* Only prompt for password if we use TLS (NLA also calls this function) */
 	if (settings->SelectedProtocol == PROTOCOL_SSL)
 	{
-		switch (utils_authenticate(transport_get_context(transport)->instance, AUTH_TLS, FALSE))
+		switch (utils_authenticate(context->instance, AUTH_TLS, FALSE))
 		{
 			case AUTH_SKIP:
 			case AUTH_SUCCESS:
@@ -471,11 +471,6 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 
 	if (transport->GatewayEnabled)
 	{
-		if (freerdp_settings_get_bool(settings, FreeRDP_GatewayArmTransport))
-		{
-			if (!arm_resolve_endpoint(context, timeout))
-				return FALSE;
-		}
 		if (settings->GatewayUrl)
 		{
 			WINPR_ASSERT(!transport->wst);

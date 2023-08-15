@@ -45,7 +45,7 @@ static char* base64_encode_ex(const char* alphabet, const BYTE* data, size_t len
 	size_t outCounter = 0;
 
 	q = data;
-	p = ret = (char*)malloc(outLen + extra + 1);
+	p = ret = (char*)malloc(outLen + extra + 1ull);
 	if (!p)
 		return NULL;
 

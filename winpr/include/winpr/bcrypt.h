@@ -257,6 +257,27 @@ typedef PVOID BCRYPT_SECRET_HANDLE;
 	              "d\x00H\x00"      \
 	              "a\x00s\x00h\x00\x00"
 
+#define BCRYPT_KEY_DATA_BLOB        \
+	(const WCHAR*)"K\x00"           \
+	              "e\x00y\x00"      \
+	              "D\x00"           \
+	              "a\x00t\x00"      \
+	              "a\x00"           \
+	              "B\x00l\x00o\x00" \
+	              "b\x00\x00"
+
+#define BCRYPT_BLOCK_PADDING 0x00000001
+
+#define BCRYPT_KEY_DATA_BLOB_MAGIC 0x4d42444b
+#define BCRYPT_KEY_DATA_BLOB_VERSION1 0x1
+
+typedef struct _BCRYPT_KEY_DATA_BLOB_HEADER
+{
+	ULONG dwMagic;
+	ULONG dwVersion;
+	ULONG cbKeyData;
+} BCRYPT_KEY_DATA_BLOB_HEADER, *PBCRYPT_KEY_DATA_BLOB_HEADER;
+
 #ifdef __cplusplus
 extern "C"
 {

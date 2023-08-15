@@ -43,6 +43,7 @@
 #include "../crypto/crypto.h"
 #include "../crypto/privatekey.h"
 #include "../crypto/certificate.h"
+#include "gateway/arm.h"
 
 #include "utils.h"
 
@@ -326,12 +327,23 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 		settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
 	}
 
+	UINT32 TcpConnectTimeout = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
+	if (settings->GatewayArmTransport)
+	{
+		if (!arm_resolve_endpoint(rdp->context, TcpConnectTimeout))
+		{
+			WLog_ERR(TAG, "error retrieving ARM configuration");
+			return FALSE;
+		}
+	}
+
 	const char* hostname = settings->ServerHostname;
 	if (!hostname)
 	{
 		WLog_ERR(TAG, "Missing hostname, can not connect to NULL target");
 		return FALSE;
 	}
+
 	nego_init(rdp->nego);
 	nego_set_target(rdp->nego, hostname, settings->ServerPort);
 
@@ -409,6 +421,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_TransportDumpReplay))
 	{
+
 		if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_NEGO))
 			return FALSE;
 
