@@ -26,7 +26,8 @@
 static const char base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char base64url[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
-static char* base64_encode(const char* alphabet, const BYTE* data, size_t length, BOOL pad)
+static char* base64_encode_ex(const char* alphabet, const BYTE* data, size_t length, BOOL pad,
+                              BOOL crLf, size_t lineSize)
 {
 	int c;
 	const BYTE* q;
@@ -34,9 +35,17 @@ static char* base64_encode(const char* alphabet, const BYTE* data, size_t length
 	char* ret;
 	int i = 0;
 	int blocks;
+	size_t outLen = (length + 3) * 4 / 3;
+	size_t extra = 0;
+	if (crLf)
+	{
+		size_t nCrLf = (outLen + lineSize - 1) / lineSize;
+		extra = nCrLf * 2;
+	}
+	size_t outCounter = 0;
 
 	q = data;
-	p = ret = (char*)malloc((length + 3) * 4 / 3 + 1);
+	p = ret = (char*)malloc(outLen + extra + 1);
 	if (!p)
 		return NULL;
 
@@ -62,6 +71,13 @@ static char* base64_encode(const char* alphabet, const BYTE* data, size_t length
 		*p++ = alphabet[(c & 0x0003F000) >> 12];
 		*p++ = alphabet[(c & 0x00000FC0) >> 6];
 		*p++ = alphabet[c & 0x0000003F];
+
+		outCounter += 4;
+		if (crLf && (outCounter % lineSize == 0))
+		{
+			*p++ = '\r';
+			*p++ = '\n';
+		}
 	}
 
 	/* then remainder */
@@ -89,9 +105,19 @@ static char* base64_encode(const char* alphabet, const BYTE* data, size_t length
 			break;
 	}
 
+	if (crLf && length % 3)
+	{
+		*p++ = '\r';
+		*p++ = '\n';
+	}
 	*p = 0;
 
 	return ret;
+}
+
+static char* base64_encode(const char* alphabet, const BYTE* data, size_t length, BOOL pad)
+{
+	return base64_encode_ex(alphabet, data, length, pad, FALSE, 64);
 }
 
 static int base64_decode_char(const char* alphabet, char c)
@@ -195,6 +221,11 @@ static void* base64_decode(const char* alphabet, const char* s, size_t length, s
 out_free:
 	free(data);
 	return NULL;
+}
+
+char* crypto_base64_encode_ex(const BYTE* data, size_t length, BOOL withCrLf)
+{
+	return base64_encode_ex(base64, data, length, TRUE, withCrLf, 64);
 }
 
 char* crypto_base64_encode(const BYTE* data, size_t length)

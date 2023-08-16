@@ -156,7 +156,23 @@ int TestBase64(int argc, char* argv[])
 		fprintf(stderr, "ko, = in a wrong place\n");
 		return -1;
 	}
-
 	fprintf(stderr, "ok\n");
+	testNb++;
+
+	/* test the encode_ex version that will add \r\n */
+	fprintf(stderr, "%d:encode base64 with crLf...", testNb);
+	const char* longStr = "01234567890123456789012345678901234567890123456789";
+	const char* longStrExpected =
+	    "MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3\r\nODk=\r\n";
+
+	char* encoded = crypto_base64_encode_ex((const BYTE*)longStr, strlen(longStr), TRUE);
+	if (!encoded || strcmp(encoded, longStrExpected) != 0)
+	{
+		fprintf(stderr, "problem with encode with CRLF\n");
+		return -1;
+	}
+	free(encoded);
+	fprintf(stderr, "ok\n");
+
 	return 0;
 }

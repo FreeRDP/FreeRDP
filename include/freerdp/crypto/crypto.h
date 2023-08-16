@@ -39,6 +39,8 @@ extern "C"
 	typedef struct rdp_CertInfo rdpCertInfo;
 
 	FREERDP_API char* crypto_base64_encode(const BYTE* data, size_t length);
+	FREERDP_API char* crypto_base64_encode_ex(const BYTE* data, size_t length, BOOL withCrLf);
+
 	FREERDP_API void crypto_base64_decode(const char* enc_data, size_t length, BYTE** dec_data,
 	                                      size_t* res_length);
 
