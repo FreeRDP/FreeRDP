@@ -52,7 +52,10 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 	/* If cbMultiByte is 0, the function fails */
 
 	if ((cbMultiByte == 0) || (cbMultiByte < -1))
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
+	}
 
 	size_t len = 0;
 	if (isNullTerminated)
@@ -61,7 +64,10 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		len = cbMultiByte;
 
 	if (len >= INT_MAX)
-		return -1;
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
+		return 0;
+	}
 	cbMultiByte = (int)len;
 
 	/*
@@ -81,6 +87,7 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 
 			default:
 				WLog_ERR(TAG, "Unsupported encoding %u", CodePage);
+				SetLastError(ERROR_INVALID_PARAMETER);
 				return 0;
 		}
 
@@ -137,7 +144,10 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 	/* If cchWideChar is 0, the function fails */
 
 	if ((cchWideChar == 0) || (cchWideChar < -1))
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
+	}
 
 	/* If cchWideChar is -1, the string is null-terminated */
 
@@ -148,7 +158,10 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 		len = cchWideChar;
 
 	if (len >= INT32_MAX)
+	{
+		SetLastError(ERROR_INVALID_PARAMETER);
 		return 0;
+	}
 	cchWideChar = (int)len;
 
 	/*
@@ -168,6 +181,7 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 
 			default:
 				WLog_ERR(TAG, "Unsupported encoding %u", CodePage);
+				SetLastError(ERROR_INVALID_PARAMETER);
 				return 0;
 		}
 
