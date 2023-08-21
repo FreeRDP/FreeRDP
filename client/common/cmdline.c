@@ -5134,26 +5134,74 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	return TRUE;
 }
 
+void freerdp_client_warn_unmaintained(int argc, char* argv[])
+{
+	const char* app = (argc > 0) ? argv[0] : "INVALID_ARGV";
+	const DWORD log_level = WLOG_WARN;
+	wLog* log = WLog_Get(TAG);
+	WINPR_ASSERT(log);
+
+	if (!WLog_IsLevelActive(log, log_level))
+		return;
+
+	WLog_Print_unchecked(log, log_level, "[unmaintained] %s client is currently unmaintained!",
+	                     app);
+	WLog_Print_unchecked(
+	    log, log_level,
+	    " If problems occur please check https://github.com/FreeRDP/FreeRDP/issues for "
+	    "know issues!");
+	WLog_Print_unchecked(
+	    log, log_level,
+	    "Be prepared to fix issues yourself though as nobody is actively working on this.");
+	WLog_Print_unchecked(
+	    log, log_level,
+	    " Developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
+	    "- dont hesitate to ask some questions. (replies might take some time depending "
+	    "on your timezone) - if you intend using this component write us a message");
+}
+
 void freerdp_client_warn_experimental(int argc, char* argv[])
 {
 	const char* app = (argc > 0) ? argv[0] : "INVALID_ARGV";
-	WLog_WARN(TAG, "[experimental] %s client is currently experimental!", app);
-	WLog_WARN(TAG, " If problems occur please check https://github.com/FreeRDP/FreeRDP/issues for "
-	               "know issues or create a new one!");
-	WLog_WARN(TAG, " Developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
-	               "- dont hesitate to ask some questions. (replies might take some time depending "
-	               "on your timezone)");
+	const DWORD log_level = WLOG_WARN;
+	wLog* log = WLog_Get(TAG);
+	WINPR_ASSERT(log);
+
+	if (!WLog_IsLevelActive(log, log_level))
+		return;
+
+	WLog_Print_unchecked(log, log_level, "[experimental] %s client is currently experimental!",
+	                     app);
+	WLog_Print_unchecked(
+	    log, log_level,
+	    " If problems occur please check https://github.com/FreeRDP/FreeRDP/issues for "
+	    "know issues or create a new one!");
+	WLog_Print_unchecked(
+	    log, log_level,
+	    " Developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
+	    "- dont hesitate to ask some questions. (replies might take some time depending "
+	    "on your timezone)");
 }
 
 void freerdp_client_warn_deprecated(int argc, char* argv[])
 {
 	const char* app = (argc > 0) ? argv[0] : "INVALID_ARGV";
-	WLog_WARN(TAG, "[deprecated] %s client has been deprecated", app);
-	WLog_WARN(TAG, "As replacement there is a SDL based client available.");
-	WLog_WARN(TAG, "If you are interested in keeping %s alive get in touch with the developers",
-	          app);
-	WLog_WARN(TAG, "The project is hosted at https://github.com/freerdp/freerdp and "
-	               " developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
-	               "- dont hesitate to ask some questions. (replies might take some time depending "
-	               "on your timezone)");
+	const DWORD log_level = WLOG_WARN;
+	wLog* log = WLog_Get(TAG);
+	WINPR_ASSERT(log);
+
+	if (!WLog_IsLevelActive(log, log_level))
+		return;
+
+	WLog_Print_unchecked(log, log_level, "[deprecated] %s client has been deprecated", app);
+	WLog_Print_unchecked(log, log_level, "As replacement there is a SDL based client available.");
+	WLog_Print_unchecked(
+	    log, log_level,
+	    "If you are interested in keeping %s alive get in touch with the developers", app);
+	WLog_Print_unchecked(
+	    log, log_level,
+	    "The project is hosted at https://github.com/freerdp/freerdp and "
+	    " developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
+	    "- dont hesitate to ask some questions. (replies might take some time depending "
+	    "on your timezone)");
 }

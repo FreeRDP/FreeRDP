@@ -1,3 +1,7 @@
+
+include (WarnUnmaintained)
+warn_unmaintained("mac shadow server subsystem")
+
 find_library(IOKIT IOKit REQUIRED)
 find_library(IOSURFACE IOSurface REQUIRED)
 find_library(CARBON Carbon REQUIRED)

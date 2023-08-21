@@ -31,6 +31,7 @@
 
 #include "wfreerdp.h"
 
+#include <freerdp/server/server-common.h>
 #include <freerdp/log.h>
 #define TAG SERVER_TAG("windows")
 
@@ -46,6 +47,8 @@ BOOL CALLBACK moncb(HMONITOR hMonitor, HDC hdcMonitor, LPRECT lprcMonitor, LPARA
 
 int main(int argc, char* argv[])
 {
+	freerdp_server_warn_unmaintained(argc, argv);
+
 	BOOL screen_selected = FALSE;
 	int index;
 	wfServer* server;
