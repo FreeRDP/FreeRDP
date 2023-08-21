@@ -39,7 +39,7 @@ int shadow_client_rdpgfx_init(rdpShadowClient* client)
 
 	rdpgfx->custom = client;
 
-	if (!IFCALLRESULT(CHANNEL_RC_OK, rdpgfx->Initialize, rdpgfx, FALSE))
+	if (!IFCALLRESULT(CHANNEL_RC_OK, rdpgfx->Initialize, rdpgfx, TRUE))
 		return -1;
 
 	return 1;
