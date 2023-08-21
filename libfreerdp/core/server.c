@@ -1205,6 +1205,7 @@ static void peer_channel_queue_free_message(void* obj)
 		return;
 
 	free(msg->context);
+	msg->context = NULL;
 }
 
 void channel_free(rdpPeerChannel* channel)
