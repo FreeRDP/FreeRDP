@@ -540,6 +540,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_UserSpecifiedServerName, FREERDP_SETTINGS_TYPE_STRING,
 	  "FreeRDP_UserSpecifiedServerName" },
 	{ FreeRDP_Username, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_Username" },
+	{ FreeRDP_WinSCardModule, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_WinSCardModule" },
 	{ FreeRDP_WindowTitle, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_WindowTitle" },
 	{ FreeRDP_WmClass, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_WmClass" },
 	{ FreeRDP_BitmapCacheV2CellInfo, FREERDP_SETTINGS_TYPE_POINTER,
