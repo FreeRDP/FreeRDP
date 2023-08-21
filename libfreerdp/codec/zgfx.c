@@ -259,7 +259,11 @@ static BOOL zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, wStream* stream, size_t 
 	zgfx->pbInputCurrent = pbSegment;
 	zgfx->pbInputEnd = &pbSegment[cbSegment - 1];
 	/* NumberOfBitsToDecode = ((NumberOfBytesToDecode - 1) * 8) - ValueOfLastByte */
-	zgfx->cBitsRemaining = 8 * (cbSegment - 1) - *zgfx->pbInputEnd;
+	const UINT32 bits = 8u * (cbSegment - 1u);
+	if (bits < *zgfx->pbInputEnd)
+		return FALSE;
+
+	zgfx->cBitsRemaining = bits - *zgfx->pbInputEnd;
 	zgfx->cBitsCurrent = 0;
 	zgfx->BitsCurrent = 0;
 
