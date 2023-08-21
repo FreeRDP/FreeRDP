@@ -430,6 +430,7 @@ static const size_t string_list_indices[] = {
 	FreeRDP_TransportDumpFile,
 	FreeRDP_UserSpecifiedServerName,
 	FreeRDP_Username,
+	FreeRDP_WinSCardModule,
 	FreeRDP_WindowTitle,
 	FreeRDP_WmClass,
 };

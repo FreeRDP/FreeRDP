@@ -26,6 +26,7 @@
 #include <winpr/smartcard.h>
 #include <winpr/synch.h>
 #include <winpr/wlog.h>
+#include <winpr/assert.h>
 
 #include "../log.h"
 
@@ -83,19 +84,16 @@ const SCARD_IO_REQUEST g_rgSCardRawPci = { SCARD_PROTOCOL_RAW, 8 };
 
 static BOOL CALLBACK InitializeSCardApiStubs(PINIT_ONCE once, PVOID param, PVOID* context)
 {
+#ifdef _WIN32
+	if (Windows_InitializeSCardApi() >= 0)
+		g_SCardApi = Windows_GetSCardApiFunctionTable();
+#else
 #if defined(WITH_SMARTCARD_PCSC)
-#ifndef _WIN32
-
 	if (PCSC_InitializeSCardApi() >= 0)
 		g_SCardApi = PCSC_GetSCardApiFunctionTable();
-
-#else
-
-	if (WinSCard_InitializeSCardApi() >= 0)
-		g_SCardApi = WinSCard_GetSCardApiFunctionTable();
-
 #endif
 #endif
+
 #if defined(WITH_SMARTCARD_INSPECT)
 	g_SCardApi = Inspect_RegisterSCardApi(g_SCardApi);
 #endif
@@ -1100,4 +1098,182 @@ WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState)
 		winpr_str_append("SCARD_STATE_UNAWARE", buffer, size, "|");
 
 	return buffer;
+}
+
+#define WINSCARD_LOAD_PROC(_name, ...) \
+	pWinSCardApiTable->pfn##_name = (fn##_name)GetProcAddress(hWinSCardLibrary, #_name);
+
+bool WinSCard_LoadApiTableFunctions(PSCardApiFunctionTable pWinSCardApiTable,
+                                    HMODULE hWinSCardLibrary)
+{
+	WINPR_ASSERT(pWinSCardApiTable);
+	WINPR_ASSERT(hWinSCardLibrary);
+
+	WINSCARD_LOAD_PROC(SCardEstablishContext);
+	WINSCARD_LOAD_PROC(SCardReleaseContext);
+	WINSCARD_LOAD_PROC(SCardIsValidContext);
+	WINSCARD_LOAD_PROC(SCardListReaderGroupsA);
+	WINSCARD_LOAD_PROC(SCardListReaderGroupsW);
+	WINSCARD_LOAD_PROC(SCardListReadersA);
+	WINSCARD_LOAD_PROC(SCardListReadersW);
+	WINSCARD_LOAD_PROC(SCardListCardsA);
+	WINSCARD_LOAD_PROC(SCardListCardsW);
+	WINSCARD_LOAD_PROC(SCardListInterfacesA);
+	WINSCARD_LOAD_PROC(SCardListInterfacesW);
+	WINSCARD_LOAD_PROC(SCardGetProviderIdA);
+	WINSCARD_LOAD_PROC(SCardGetProviderIdW);
+	WINSCARD_LOAD_PROC(SCardGetCardTypeProviderNameA);
+	WINSCARD_LOAD_PROC(SCardGetCardTypeProviderNameW);
+	WINSCARD_LOAD_PROC(SCardIntroduceReaderGroupA);
+	WINSCARD_LOAD_PROC(SCardIntroduceReaderGroupW);
+	WINSCARD_LOAD_PROC(SCardForgetReaderGroupA);
+	WINSCARD_LOAD_PROC(SCardForgetReaderGroupW);
+	WINSCARD_LOAD_PROC(SCardIntroduceReaderA);
+	WINSCARD_LOAD_PROC(SCardIntroduceReaderW);
+	WINSCARD_LOAD_PROC(SCardForgetReaderA);
+	WINSCARD_LOAD_PROC(SCardForgetReaderW);
+	WINSCARD_LOAD_PROC(SCardAddReaderToGroupA);
+	WINSCARD_LOAD_PROC(SCardAddReaderToGroupW);
+	WINSCARD_LOAD_PROC(SCardRemoveReaderFromGroupA);
+	WINSCARD_LOAD_PROC(SCardRemoveReaderFromGroupW);
+	WINSCARD_LOAD_PROC(SCardIntroduceCardTypeA);
+	WINSCARD_LOAD_PROC(SCardIntroduceCardTypeW);
+	WINSCARD_LOAD_PROC(SCardSetCardTypeProviderNameA);
+	WINSCARD_LOAD_PROC(SCardSetCardTypeProviderNameW);
+	WINSCARD_LOAD_PROC(SCardForgetCardTypeA);
+	WINSCARD_LOAD_PROC(SCardForgetCardTypeW);
+	WINSCARD_LOAD_PROC(SCardFreeMemory);
+	WINSCARD_LOAD_PROC(SCardAccessStartedEvent);
+	WINSCARD_LOAD_PROC(SCardReleaseStartedEvent);
+	WINSCARD_LOAD_PROC(SCardLocateCardsA);
+	WINSCARD_LOAD_PROC(SCardLocateCardsW);
+	WINSCARD_LOAD_PROC(SCardLocateCardsByATRA);
+	WINSCARD_LOAD_PROC(SCardLocateCardsByATRW);
+	WINSCARD_LOAD_PROC(SCardGetStatusChangeA);
+	WINSCARD_LOAD_PROC(SCardGetStatusChangeW);
+	WINSCARD_LOAD_PROC(SCardCancel);
+	WINSCARD_LOAD_PROC(SCardConnectA);
+	WINSCARD_LOAD_PROC(SCardConnectW);
+	WINSCARD_LOAD_PROC(SCardReconnect);
+	WINSCARD_LOAD_PROC(SCardDisconnect);
+	WINSCARD_LOAD_PROC(SCardBeginTransaction);
+	WINSCARD_LOAD_PROC(SCardEndTransaction);
+	WINSCARD_LOAD_PROC(SCardCancelTransaction);
+	WINSCARD_LOAD_PROC(SCardState);
+	WINSCARD_LOAD_PROC(SCardStatusA);
+	WINSCARD_LOAD_PROC(SCardStatusW);
+	WINSCARD_LOAD_PROC(SCardTransmit);
+	WINSCARD_LOAD_PROC(SCardGetTransmitCount);
+	WINSCARD_LOAD_PROC(SCardControl);
+	WINSCARD_LOAD_PROC(SCardGetAttrib);
+	WINSCARD_LOAD_PROC(SCardSetAttrib);
+	WINSCARD_LOAD_PROC(SCardUIDlgSelectCardA);
+	WINSCARD_LOAD_PROC(SCardUIDlgSelectCardW);
+	WINSCARD_LOAD_PROC(GetOpenCardNameA);
+	WINSCARD_LOAD_PROC(GetOpenCardNameW);
+	WINSCARD_LOAD_PROC(SCardDlgExtendedError);
+	WINSCARD_LOAD_PROC(SCardReadCacheA);
+	WINSCARD_LOAD_PROC(SCardReadCacheW);
+	WINSCARD_LOAD_PROC(SCardWriteCacheA);
+	WINSCARD_LOAD_PROC(SCardWriteCacheW);
+	WINSCARD_LOAD_PROC(SCardGetReaderIconA);
+	WINSCARD_LOAD_PROC(SCardGetReaderIconW);
+	WINSCARD_LOAD_PROC(SCardGetDeviceTypeIdA);
+	WINSCARD_LOAD_PROC(SCardGetDeviceTypeIdW);
+	WINSCARD_LOAD_PROC(SCardGetReaderDeviceInstanceIdA);
+	WINSCARD_LOAD_PROC(SCardGetReaderDeviceInstanceIdW);
+	WINSCARD_LOAD_PROC(SCardListReadersWithDeviceInstanceIdA);
+	WINSCARD_LOAD_PROC(SCardListReadersWithDeviceInstanceIdW);
+	WINSCARD_LOAD_PROC(SCardAudit);
+
+	return true;
+}
+
+static const SCardApiFunctionTable WinPR_SCardApiFunctionTable = {
+	0, /* dwVersion */
+	0, /* dwFlags */
+
+	SCardEstablishContext,                 /* SCardEstablishContext */
+	SCardReleaseContext,                   /* SCardReleaseContext */
+	SCardIsValidContext,                   /* SCardIsValidContext */
+	SCardListReaderGroupsA,                /* SCardListReaderGroupsA */
+	SCardListReaderGroupsW,                /* SCardListReaderGroupsW */
+	SCardListReadersA,                     /* SCardListReadersA */
+	SCardListReadersW,                     /* SCardListReadersW */
+	SCardListCardsA,                       /* SCardListCardsA */
+	SCardListCardsW,                       /* SCardListCardsW */
+	SCardListInterfacesA,                  /* SCardListInterfacesA */
+	SCardListInterfacesW,                  /* SCardListInterfacesW */
+	SCardGetProviderIdA,                   /* SCardGetProviderIdA */
+	SCardGetProviderIdW,                   /* SCardGetProviderIdW */
+	SCardGetCardTypeProviderNameA,         /* SCardGetCardTypeProviderNameA */
+	SCardGetCardTypeProviderNameW,         /* SCardGetCardTypeProviderNameW */
+	SCardIntroduceReaderGroupA,            /* SCardIntroduceReaderGroupA */
+	SCardIntroduceReaderGroupW,            /* SCardIntroduceReaderGroupW */
+	SCardForgetReaderGroupA,               /* SCardForgetReaderGroupA */
+	SCardForgetReaderGroupW,               /* SCardForgetReaderGroupW */
+	SCardIntroduceReaderA,                 /* SCardIntroduceReaderA */
+	SCardIntroduceReaderW,                 /* SCardIntroduceReaderW */
+	SCardForgetReaderA,                    /* SCardForgetReaderA */
+	SCardForgetReaderW,                    /* SCardForgetReaderW */
+	SCardAddReaderToGroupA,                /* SCardAddReaderToGroupA */
+	SCardAddReaderToGroupW,                /* SCardAddReaderToGroupW */
+	SCardRemoveReaderFromGroupA,           /* SCardRemoveReaderFromGroupA */
+	SCardRemoveReaderFromGroupW,           /* SCardRemoveReaderFromGroupW */
+	SCardIntroduceCardTypeA,               /* SCardIntroduceCardTypeA */
+	SCardIntroduceCardTypeW,               /* SCardIntroduceCardTypeW */
+	SCardSetCardTypeProviderNameA,         /* SCardSetCardTypeProviderNameA */
+	SCardSetCardTypeProviderNameW,         /* SCardSetCardTypeProviderNameW */
+	SCardForgetCardTypeA,                  /* SCardForgetCardTypeA */
+	SCardForgetCardTypeW,                  /* SCardForgetCardTypeW */
+	SCardFreeMemory,                       /* SCardFreeMemory */
+	SCardAccessStartedEvent,               /* SCardAccessStartedEvent */
+	SCardReleaseStartedEvent,              /* SCardReleaseStartedEvent */
+	SCardLocateCardsA,                     /* SCardLocateCardsA */
+	SCardLocateCardsW,                     /* SCardLocateCardsW */
+	SCardLocateCardsByATRA,                /* SCardLocateCardsByATRA */
+	SCardLocateCardsByATRW,                /* SCardLocateCardsByATRW */
+	SCardGetStatusChangeA,                 /* SCardGetStatusChangeA */
+	SCardGetStatusChangeW,                 /* SCardGetStatusChangeW */
+	SCardCancel,                           /* SCardCancel */
+	SCardConnectA,                         /* SCardConnectA */
+	SCardConnectW,                         /* SCardConnectW */
+	SCardReconnect,                        /* SCardReconnect */
+	SCardDisconnect,                       /* SCardDisconnect */
+	SCardBeginTransaction,                 /* SCardBeginTransaction */
+	SCardEndTransaction,                   /* SCardEndTransaction */
+	SCardCancelTransaction,                /* SCardCancelTransaction */
+	SCardState,                            /* SCardState */
+	SCardStatusA,                          /* SCardStatusA */
+	SCardStatusW,                          /* SCardStatusW */
+	SCardTransmit,                         /* SCardTransmit */
+	SCardGetTransmitCount,                 /* SCardGetTransmitCount */
+	SCardControl,                          /* SCardControl */
+	SCardGetAttrib,                        /* SCardGetAttrib */
+	SCardSetAttrib,                        /* SCardSetAttrib */
+	SCardUIDlgSelectCardA,                 /* SCardUIDlgSelectCardA */
+	SCardUIDlgSelectCardW,                 /* SCardUIDlgSelectCardW */
+	GetOpenCardNameA,                      /* GetOpenCardNameA */
+	GetOpenCardNameW,                      /* GetOpenCardNameW */
+	SCardDlgExtendedError,                 /* SCardDlgExtendedError */
+	SCardReadCacheA,                       /* SCardReadCacheA */
+	SCardReadCacheW,                       /* SCardReadCacheW */
+	SCardWriteCacheA,                      /* SCardWriteCacheA */
+	SCardWriteCacheW,                      /* SCardWriteCacheW */
+	SCardGetReaderIconA,                   /* SCardGetReaderIconA */
+	SCardGetReaderIconW,                   /* SCardGetReaderIconW */
+	SCardGetDeviceTypeIdA,                 /* SCardGetDeviceTypeIdA */
+	SCardGetDeviceTypeIdW,                 /* SCardGetDeviceTypeIdW */
+	SCardGetReaderDeviceInstanceIdA,       /* SCardGetReaderDeviceInstanceIdA */
+	SCardGetReaderDeviceInstanceIdW,       /* SCardGetReaderDeviceInstanceIdW */
+	SCardListReadersWithDeviceInstanceIdA, /* SCardListReadersWithDeviceInstanceIdA */
+	SCardListReadersWithDeviceInstanceIdW, /* SCardListReadersWithDeviceInstanceIdW */
+	SCardAudit                             /* SCardAudit */
+};
+
+static SCardApiFunctionTable const* pWinPR_SCardApiFunctionTable = &WinPR_SCardApiFunctionTable;
+
+SCardApiFunctionTable const* WinPR_GetSCardApiFunctionTable(void)
+{
+	return pWinPR_SCardApiFunctionTable;
 }

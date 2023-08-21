@@ -44,8 +44,8 @@ endif()
 
 if(WIN32)
         list(APPEND ${MODULE_PREFIX}_SRCS
-                smartcard_winscard.c
-                smartcard_winscard.h)
+                smartcard_windows.c
+                smartcard_windows.h)
 endif()
 
 winpr_module_add(${${MODULE_PREFIX}_SRCS})

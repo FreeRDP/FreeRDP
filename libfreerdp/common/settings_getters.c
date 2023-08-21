@@ -2828,6 +2828,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_Username:
 			return settings->Username;
 
+		case FreeRDP_WinSCardModule:
+			return settings->WinSCardModule;
+
 		case FreeRDP_WindowTitle:
 			return settings->WindowTitle;
 
@@ -3105,6 +3108,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_Username:
 			return settings->Username;
+
+		case FreeRDP_WinSCardModule:
+			return settings->WinSCardModule;
 
 		case FreeRDP_WindowTitle:
 			return settings->WindowTitle;
@@ -3392,6 +3398,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, char* val, s
 
 		case FreeRDP_Username:
 			return update_string_(&settings->Username, cnv.c, len);
+
+		case FreeRDP_WinSCardModule:
+			return update_string_(&settings->WinSCardModule, cnv.c, len);
 
 		case FreeRDP_WindowTitle:
 			return update_string_(&settings->WindowTitle, cnv.c, len);
@@ -3697,6 +3706,9 @@ BOOL freerdp_settings_set_string_copy_(rdpSettings* settings, size_t id, const c
 
 		case FreeRDP_Username:
 			return update_string_copy_(&settings->Username, cnv.cc, len, cleanup);
+
+		case FreeRDP_WinSCardModule:
+			return update_string_copy_(&settings->WinSCardModule, cnv.cc, len, cleanup);
 
 		case FreeRDP_WindowTitle:
 			return update_string_copy_(&settings->WindowTitle, cnv.cc, len, cleanup);

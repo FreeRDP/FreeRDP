@@ -647,6 +647,7 @@ extern "C"
 #define FreeRDP_AuthenticationPackageList (1110)
 #define FreeRDP_RdstlsSecurity (1111)
 #define FreeRDP_AadSecurity (1112)
+#define FreeRDP_WinSCardModule (1113)
 #define FreeRDP_MstscCookieMode (1152)
 #define FreeRDP_CookieMaxLength (1153)
 #define FreeRDP_PreconnectionId (1154)
@@ -1168,7 +1169,8 @@ extern "C"
 		ALIGN64 char* AuthenticationPackageList;   /* 1110 */
 		ALIGN64 BOOL RdstlsSecurity;               /* 1111 */
 		ALIGN64 BOOL AadSecurity;                  /* 1112 */
-		UINT64 padding1152[1152 - 1113];           /* 1113 */
+		ALIGN64 char* WinSCardModule;              /* 1113 */
+		UINT64 padding1152[1152 - 1114];           /* 1114 */
 
 		/* Connection Cookie */
 		ALIGN64 BOOL MstscCookieMode;      /* 1152 */

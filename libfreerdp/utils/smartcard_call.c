@@ -30,6 +30,7 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
 #include <winpr/stream.h>
+#include <winpr/library.h>
 #include <winpr/smartcard.h>
 
 #include <freerdp/freerdp.h>
@@ -47,10 +48,12 @@
 #include <freerdp/emulate/scard/smartcard_emulate.h>
 
 #define str(x) #x
-#define wrap(ctx, fkt, ...) \
-	ctx->useEmulatedCard ? Emulate_##fkt(ctx->emulation, ##__VA_ARGS__) : fkt(__VA_ARGS__)
+#define wrap(ctx, fkt, ...)                                             \
+	ctx->useEmulatedCard ? Emulate_##fkt(ctx->emulation, ##__VA_ARGS__) \
+	                     : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)
 #else
-#define wrap(ctx, fkt, ...) ctx->useEmulatedCard ? SCARD_F_INTERNAL_ERROR : fkt(__VA_ARGS__)
+#define wrap(ctx, fkt, ...) \
+	ctx->useEmulatedCard ? SCARD_F_INTERNAL_ERROR : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)
 #endif
 
 #define SCARD_MAX_TIMEOUT 60000
@@ -64,6 +67,9 @@ struct s_scard_call_context
 #if defined(WITH_SMARTCARD_EMULATE)
 	SmartcardEmulationContext* emulation;
 #endif
+	HANDLE hWinSCardLibrary;
+	SCardApiFunctionTable WinSCardApi;
+	SCardApiFunctionTable const* pWinSCardApi;
 	HANDLE stopEvent;
 	void* userdata;
 
@@ -1855,6 +1861,32 @@ scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 		goto fail;
 #endif
 	}
+	else
+	{
+		if (settings->WinSCardModule)
+		{
+			ctx->hWinSCardLibrary = LoadLibraryX(settings->WinSCardModule);
+
+			if (!ctx->hWinSCardLibrary)
+			{
+				WLog_ERR(TAG, "Failed to load WinSCard library: '%s'", settings->WinSCardModule);
+				goto fail;
+			}
+
+			ctx->pWinSCardApi = &ctx->WinSCardApi;
+			WinSCard_LoadApiTableFunctions(ctx->pWinSCardApi, ctx->hWinSCardLibrary);
+		}
+		else
+		{
+			ctx->pWinSCardApi = WinPR_GetSCardApiFunctionTable();
+		}
+
+		if (!ctx->pWinSCardApi)
+		{
+			WLog_ERR(TAG, "Failed to load WinSCard API!");
+			goto fail;
+		}
+	}
 
 	ctx->rgSCardContextList = HashTable_New(FALSE);
 	if (!ctx->rgSCardContextList)
@@ -1893,6 +1925,16 @@ void smartcard_call_context_free(scard_call_context* ctx)
 		}
 #endif
 	}
+
+	if (ctx->hWinSCardLibrary)
+	{
+		ZeroMemory(&ctx->WinSCardApi, sizeof(SCardApiFunctionTable));
+		FreeLibrary(ctx->hWinSCardLibrary);
+		ctx->hWinSCardLibrary = NULL;
+	}
+
+	ctx->pWinSCardApi = NULL;
+
 	HashTable_Free(ctx->rgSCardContextList);
 	CloseHandle(ctx->stopEvent);
 	free(ctx);

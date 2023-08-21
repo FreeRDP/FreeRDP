@@ -19,17 +19,15 @@
 
 #include <winpr/config.h>
 
-#ifdef _WIN32
-
 #include <winpr/crt.h>
 #include <winpr/library.h>
 #include <winpr/smartcard.h>
 
-#include "smartcard_winscard.h"
+#include "smartcard_windows.h"
 
 static HMODULE g_WinSCardModule = NULL;
 
-SCardApiFunctionTable WinSCard_SCardApiFunctionTable = {
+static SCardApiFunctionTable Windows_SCardApiFunctionTable = {
 	0, /* dwVersion */
 	0, /* dwFlags */
 
@@ -111,95 +109,18 @@ SCardApiFunctionTable WinSCard_SCardApiFunctionTable = {
 	NULL  /* SCardAudit */
 };
 
-PSCardApiFunctionTable WinSCard_GetSCardApiFunctionTable(void)
+const SCardApiFunctionTable* Windows_GetSCardApiFunctionTable(void)
 {
-	return &WinSCard_SCardApiFunctionTable;
+	return &Windows_SCardApiFunctionTable;
 }
 
-int WinSCard_InitializeSCardApi(void)
+int Windows_InitializeSCardApi(void)
 {
 	g_WinSCardModule = LoadLibraryA("WinSCard.dll");
 
 	if (!g_WinSCardModule)
 		return -1;
 
-	WINSCARD_LOAD_PROC(SCardEstablishContext);
-	WINSCARD_LOAD_PROC(SCardReleaseContext);
-	WINSCARD_LOAD_PROC(SCardIsValidContext);
-	WINSCARD_LOAD_PROC(SCardListReaderGroupsA);
-	WINSCARD_LOAD_PROC(SCardListReaderGroupsW);
-	WINSCARD_LOAD_PROC(SCardListReadersA);
-	WINSCARD_LOAD_PROC(SCardListReadersW);
-	WINSCARD_LOAD_PROC(SCardListCardsA);
-	WINSCARD_LOAD_PROC(SCardListCardsW);
-	WINSCARD_LOAD_PROC(SCardListInterfacesA);
-	WINSCARD_LOAD_PROC(SCardListInterfacesW);
-	WINSCARD_LOAD_PROC(SCardGetProviderIdA);
-	WINSCARD_LOAD_PROC(SCardGetProviderIdW);
-	WINSCARD_LOAD_PROC(SCardGetCardTypeProviderNameA);
-	WINSCARD_LOAD_PROC(SCardGetCardTypeProviderNameW);
-	WINSCARD_LOAD_PROC(SCardIntroduceReaderGroupA);
-	WINSCARD_LOAD_PROC(SCardIntroduceReaderGroupW);
-	WINSCARD_LOAD_PROC(SCardForgetReaderGroupA);
-	WINSCARD_LOAD_PROC(SCardForgetReaderGroupW);
-	WINSCARD_LOAD_PROC(SCardIntroduceReaderA);
-	WINSCARD_LOAD_PROC(SCardIntroduceReaderW);
-	WINSCARD_LOAD_PROC(SCardForgetReaderA);
-	WINSCARD_LOAD_PROC(SCardForgetReaderW);
-	WINSCARD_LOAD_PROC(SCardAddReaderToGroupA);
-	WINSCARD_LOAD_PROC(SCardAddReaderToGroupW);
-	WINSCARD_LOAD_PROC(SCardRemoveReaderFromGroupA);
-	WINSCARD_LOAD_PROC(SCardRemoveReaderFromGroupW);
-	WINSCARD_LOAD_PROC(SCardIntroduceCardTypeA);
-	WINSCARD_LOAD_PROC(SCardIntroduceCardTypeW);
-	WINSCARD_LOAD_PROC(SCardSetCardTypeProviderNameA);
-	WINSCARD_LOAD_PROC(SCardSetCardTypeProviderNameW);
-	WINSCARD_LOAD_PROC(SCardForgetCardTypeA);
-	WINSCARD_LOAD_PROC(SCardForgetCardTypeW);
-	WINSCARD_LOAD_PROC(SCardFreeMemory);
-	WINSCARD_LOAD_PROC(SCardAccessStartedEvent);
-	WINSCARD_LOAD_PROC(SCardReleaseStartedEvent);
-	WINSCARD_LOAD_PROC(SCardLocateCardsA);
-	WINSCARD_LOAD_PROC(SCardLocateCardsW);
-	WINSCARD_LOAD_PROC(SCardLocateCardsByATRA);
-	WINSCARD_LOAD_PROC(SCardLocateCardsByATRW);
-	WINSCARD_LOAD_PROC(SCardGetStatusChangeA);
-	WINSCARD_LOAD_PROC(SCardGetStatusChangeW);
-	WINSCARD_LOAD_PROC(SCardCancel);
-	WINSCARD_LOAD_PROC(SCardConnectA);
-	WINSCARD_LOAD_PROC(SCardConnectW);
-	WINSCARD_LOAD_PROC(SCardReconnect);
-	WINSCARD_LOAD_PROC(SCardDisconnect);
-	WINSCARD_LOAD_PROC(SCardBeginTransaction);
-	WINSCARD_LOAD_PROC(SCardEndTransaction);
-	WINSCARD_LOAD_PROC(SCardCancelTransaction);
-	WINSCARD_LOAD_PROC(SCardState);
-	WINSCARD_LOAD_PROC(SCardStatusA);
-	WINSCARD_LOAD_PROC(SCardStatusW);
-	WINSCARD_LOAD_PROC(SCardTransmit);
-	WINSCARD_LOAD_PROC(SCardGetTransmitCount);
-	WINSCARD_LOAD_PROC(SCardControl);
-	WINSCARD_LOAD_PROC(SCardGetAttrib);
-	WINSCARD_LOAD_PROC(SCardSetAttrib);
-	WINSCARD_LOAD_PROC(SCardUIDlgSelectCardA);
-	WINSCARD_LOAD_PROC(SCardUIDlgSelectCardW);
-	WINSCARD_LOAD_PROC(GetOpenCardNameA);
-	WINSCARD_LOAD_PROC(GetOpenCardNameW);
-	WINSCARD_LOAD_PROC(SCardDlgExtendedError);
-	WINSCARD_LOAD_PROC(SCardReadCacheA);
-	WINSCARD_LOAD_PROC(SCardReadCacheW);
-	WINSCARD_LOAD_PROC(SCardWriteCacheA);
-	WINSCARD_LOAD_PROC(SCardWriteCacheW);
-	WINSCARD_LOAD_PROC(SCardGetReaderIconA);
-	WINSCARD_LOAD_PROC(SCardGetReaderIconW);
-	WINSCARD_LOAD_PROC(SCardGetDeviceTypeIdA);
-	WINSCARD_LOAD_PROC(SCardGetDeviceTypeIdW);
-	WINSCARD_LOAD_PROC(SCardGetReaderDeviceInstanceIdA);
-	WINSCARD_LOAD_PROC(SCardGetReaderDeviceInstanceIdW);
-	WINSCARD_LOAD_PROC(SCardListReadersWithDeviceInstanceIdA);
-	WINSCARD_LOAD_PROC(SCardListReadersWithDeviceInstanceIdW);
-	WINSCARD_LOAD_PROC(SCardAudit);
+	WinSCard_LoadApiTableFunctions(&Windows_SCardApiFunctionTable, g_WinSCardModule);
 	return 1;
 }
-
-#endif
