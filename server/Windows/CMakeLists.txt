@@ -18,6 +18,9 @@
 set(MODULE_NAME "wfreerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER_WINDOWS")
 
+include (WarnUnmaintained)
+warn_unmaintained(${MODULE_NAME})
+
 include_directories(.)
 
 set(${MODULE_PREFIX}_SRCS

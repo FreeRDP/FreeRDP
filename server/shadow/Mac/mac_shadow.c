@@ -21,6 +21,7 @@
 #include <winpr/input.h>
 #include <winpr/sysinfo.h>
 
+#include <freerdp/server/server-common.h>
 #include <freerdp/codec/color.h>
 #include <freerdp/codec/region.h>
 #include <freerdp/log.h>
@@ -663,6 +664,10 @@ FREERDP_API const char* ShadowSubsystemName(void)
 
 FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
+	const char name[] = "mac shadow subsystem";
+	const char* arg[] = { name };
+
+	freerdp_server_warn_unmaintained(ARRAYSIZE(arg), arg);
 	pEntryPoints->New = (pfnShadowSubsystemNew)mac_shadow_subsystem_new;
 	pEntryPoints->Free = (pfnShadowSubsystemFree)mac_shadow_subsystem_free;
 	pEntryPoints->Init = (pfnShadowSubsystemInit)mac_shadow_subsystem_init;
