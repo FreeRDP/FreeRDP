@@ -440,8 +440,8 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 			if (dynChannel->openStatus != CHANNEL_OPENSTATE_OPENED)
 			{
 				WLog_Print(dynChannelContext->log, WLOG_WARN,
-				           "DynvcTracker(%s): %s is in state %s, expected %s",
-				           dynChannel->channelName, openstatus2str(dynChannel->openStatus),
+				           "DynvcTracker(%s): is in state %s, expected %s", dynChannel->channelName,
+				           openstatus2str(dynChannel->openStatus),
 				           openstatus2str(CHANNEL_OPENSTATE_OPENED));
 			}
 			dynChannel->openStatus = CHANNEL_OPENSTATE_CLOSED;
