@@ -52,7 +52,7 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight, UINT32
 		return NULL;
 
 	nDstStep = nWidth * GetBytesPerPixel(gdi->dstFormat);
-	pDstData = _aligned_malloc(nHeight * nDstStep * 1ULL, 16);
+	pDstData = _aligned_malloc(1ull * nHeight * nDstStep, 16);
 
 	if (!pDstData)
 		return NULL;

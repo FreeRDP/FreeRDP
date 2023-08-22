@@ -63,9 +63,9 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 		_aligned_free(h264->pYUVData[0]);
 		_aligned_free(h264->pYUVData[1]);
 		_aligned_free(h264->pYUVData[2]);
-		h264->pYUVData[0] = _aligned_malloc(h264->iStride[0] * height * 1ULL, 16);
-		h264->pYUVData[1] = _aligned_malloc(h264->iStride[1] * height * 1ULL, 16);
-		h264->pYUVData[2] = _aligned_malloc(h264->iStride[2] * height * 1ULL, 16);
+		h264->pYUVData[0] = _aligned_malloc(1ull * h264->iStride[0] * height, 16);
+		h264->pYUVData[1] = _aligned_malloc(1ull * h264->iStride[1] * height, 16);
+		h264->pYUVData[2] = _aligned_malloc(1ull * h264->iStride[2] * height, 16);
 
 		if (!h264->pYUVData[0] || !h264->pYUVData[1] || !h264->pYUVData[2])
 			return FALSE;

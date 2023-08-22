@@ -158,7 +158,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 			for (y = 1; y < nHeight; y++)
 			{
 				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
-				memcpy(dstp, srcp, nWidth * formatSize * 1ULL);
+				memcpy(dstp, srcp, 1ull * nWidth * formatSize);
 			}
 
 			break;

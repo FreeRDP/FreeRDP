@@ -311,7 +311,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, const rdpPo
 		ci.height = yTargetSize;
 		ci.xhot = pointer->xPos * xscale;
 		ci.yhot = pointer->yPos * yscale;
-		size = ci.height * ci.width * GetBytesPerPixel(CursorFormat) * 1ULL;
+		size = 1ull * ci.height * ci.width * GetBytesPerPixel(CursorFormat);
 
 		if (!(ci.pixels = (XcursorPixel*)_aligned_malloc(size, 16)))
 		{
@@ -421,7 +421,7 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	xpointer->nCursors = 0;
 	xpointer->mCursors = 0;
 
-	size = pointer->height * pointer->width * GetBytesPerPixel(CursorFormat) * 1ULL;
+	size = 1ull * pointer->height * pointer->width * GetBytesPerPixel(CursorFormat);
 
 	if (!(xpointer->cursorPixels = (XcursorPixel*)_aligned_malloc(size, 16)))
 		goto fail;

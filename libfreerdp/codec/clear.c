@@ -566,7 +566,7 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* clear, CLEAR_VBAR_ENTRY* vBarEntry)
 		const UINT32 diffSize = (vBarEntry->count - vBarEntry->size) * bpp;
 		BYTE* tmp;
 		vBarEntry->size = vBarEntry->count;
-		tmp = (BYTE*)realloc(vBarEntry->pixels, vBarEntry->count * bpp * 1ULL);
+		tmp = (BYTE*)realloc(vBarEntry->pixels, 1ull * vBarEntry->count * bpp);
 
 		if (!tmp)
 		{
@@ -980,7 +980,7 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 		if (glyphEntry->count > glyphEntry->size)
 		{
 			BYTE* tmp;
-			tmp = realloc(glyphEntry->pixels, glyphEntry->count * bpp * 1ULL);
+			tmp = realloc(glyphEntry->pixels, 1ull * glyphEntry->count * bpp);
 
 			if (!tmp)
 			{

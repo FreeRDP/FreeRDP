@@ -726,7 +726,7 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 	{
 		UINT32 x, y;
 
-		if (Stream_GetRemainingLength(&s) < cmd->height * cmd->width * 1ULL)
+		if (Stream_GetRemainingLength(&s) < 1ull * cmd->height * cmd->width)
 			return ERROR_INVALID_DATA;
 
 		for (y = cmd->top; y < cmd->top + cmd->height; y++)
@@ -1025,7 +1025,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	surface->scanline = gfx_align_scanline(surface->width * 4UL, 16);
-	surface->data = (BYTE*)_aligned_malloc(surface->scanline * surface->height * 1ULL, 16);
+	surface->data = (BYTE*)_aligned_malloc(1ull * surface->scanline * surface->height, 16);
 
 	if (!surface->data)
 	{

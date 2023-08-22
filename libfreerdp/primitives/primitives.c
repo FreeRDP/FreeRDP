@@ -157,7 +157,7 @@ static primitives_YUV_benchmark* primitives_YUV_benchmark_init(primitives_YUV_be
 		if (!buf)
 			goto fail;
 
-		winpr_RAND(buf, roi->width * roi->height * 1ULL);
+		winpr_RAND(buf, 1ull * roi->width * roi->height);
 		ret->steps[i] = roi->width;
 	}
 

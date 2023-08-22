@@ -523,7 +523,7 @@ static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context, UINT16 wTi
 	Stream_Seek(s, 3);                                       /* bPad */
 	start = Stream_GetPosition(s);
 	src = context->priv->out_buffer;
-	length = context->priv->out_pending_frames * context->priv->src_bytes_per_frame * 1ULL;
+	length = 1ull * context->priv->out_pending_frames * context->priv->src_bytes_per_frame;
 
 	if (!freerdp_dsp_encode(context->priv->dsp_context, context->src_format, src, length, s))
 		return ERROR_INTERNAL_ERROR;

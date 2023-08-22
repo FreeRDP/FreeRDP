@@ -320,14 +320,14 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 
 	w->buffers = newBuffers;
 	memset(w->buffers + w->nbuffers, 0, sizeof(UwacBuffer) * nbuffers);
-	fd = uwac_create_anonymous_file(allocSize * nbuffers * 1ULL);
+	fd = uwac_create_anonymous_file(1ull * allocSize * nbuffers);
 
 	if (fd < 0)
 	{
 		return UWAC_ERROR_INTERNAL;
 	}
 
-	data = mmap(NULL, allocSize * nbuffers * 1ULL, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	data = mmap(NULL, 1ull * allocSize * nbuffers, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
 	if (data == MAP_FAILED)
 	{
@@ -339,7 +339,7 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 
 	if (!pool)
 	{
-		munmap(data, allocSize * nbuffers * 1ULL);
+		munmap(data, 1ull * allocSize * nbuffers);
 		ret = UWAC_ERROR_NOMEMORY;
 		goto error_mmap;
 	}
@@ -764,7 +764,7 @@ UwacReturnCode UwacWindowSubmitBuffer(UwacWindow* window, bool copyContentForNex
 
 	if (copyContentForNextFrame)
 		memcpy(nextDrawingBuffer->data, pendingBuffer->data,
-		       window->stride * window->height * 1ULL);
+		       1ull * window->stride * window->height);
 
 	UwacSubmitBufferPtr(window, pendingBuffer);
 	return UWAC_SUCCESS;

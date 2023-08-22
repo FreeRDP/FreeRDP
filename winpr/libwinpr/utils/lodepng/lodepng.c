@@ -3815,7 +3815,7 @@ unsigned lodepng_convert(unsigned char* out, const unsigned char* in, LodePNGCol
 {
 	size_t i;
 	ColorTree tree;
-	size_t numpixels = w * h * 1ULL;
+	size_t numpixels = 1ull * w * h;
 
 	if (lodepng_color_mode_equal(mode_out, mode_in))
 	{
@@ -3918,7 +3918,7 @@ unsigned get_color_profile(LodePNGColorProfile* profile, const unsigned char* in
 	unsigned error = 0;
 	size_t i;
 	ColorTree tree;
-	size_t numpixels = w * h * 1ULL;
+	size_t numpixels = 1ull * w * h;
 
 	unsigned colored_done = lodepng_is_greyscale_type(mode) ? 1 : 0;
 	unsigned alpha_done = lodepng_can_have_alpha(mode) ? 0 : 1;
@@ -4539,7 +4539,7 @@ static unsigned postProcessScanlines(unsigned char* out, unsigned char* in, unsi
 		if (bpp < 8 && w * bpp != ((w * bpp + 7) / 8) * 8)
 		{
 			CERROR_TRY_RETURN(unfilter(in, in, w, h, bpp));
-			removePaddingBits(out, in, w * bpp * 1ULL, ((w * bpp + 7ULL) / 8ULL) * 8ULL, h);
+			removePaddingBits(out, in, 1ull * w * bpp, ((w * bpp + 7ULL) / 8ULL) * 8ULL, h);
 		}
 		/*we can immediatly filter into the out buffer, no other steps needed*/
 		else
@@ -4565,7 +4565,7 @@ static unsigned postProcessScanlines(unsigned char* out, unsigned char* in, unsi
 				bits between the different reduced images: each reduced image still starts nicely at
 				a byte*/
 				removePaddingBits(&in[passstart[i]], &in[padded_passstart[i]],
-				                  passw[i] * bpp * 1ULL, ((passw[i] * bpp + 7ULL) / 8ULL) * 8ULL,
+				                  1ull * passw[i] * bpp, ((passw[i] * bpp + 7ULL) / 8ULL) * 8ULL,
 				                  passh[i]);
 			}
 		}
@@ -6056,7 +6056,7 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
 					error = 83; /*alloc fail*/
 				if (!error)
 				{
-					addPaddingBits(padded, in, ((w * bpp + 7ULL) / 8ULL) * 8ULL, w * bpp * 1ULL, h);
+					addPaddingBits(padded, in, ((w * bpp + 7ULL) / 8ULL) * 8ULL, 1ull * w * bpp, h);
 					error = filter(*out, padded, w, h, &info_png->color, settings);
 				}
 				free(padded);
@@ -6100,8 +6100,8 @@ static unsigned preProcessScanlines(unsigned char** out, size_t* outsize, const 
 					if (!padded)
 						ERROR_BREAK(83); /*alloc fail*/
 					addPaddingBits(padded, &adam7[passstart[i]],
-					               ((passw[i] * bpp + 7ULL) / 8ULL) * 8ULL, passw[i] * bpp * 1ULL,
-					               passh[i] * 1ULL);
+					               ((passw[i] * bpp + 7ULL) / 8ULL) * 8ULL, 1ull * passw[i] * bpp,
+					               1ull * passh[i]);
 					error = filter(&(*out)[filter_passstart[i]], padded, passw[i], passh[i],
 					               &info_png->color, settings);
 					free(padded);

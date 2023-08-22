@@ -66,7 +66,7 @@ static VideoSurface* gdiVideoCreateSurface(VideoClientContext* video, BYTE* data
 	ret->base.w = width;
 	ret->base.h = height;
 	ret->scanline = width * bpp;
-	ret->image = _aligned_malloc(ret->scanline * height * 1ULL, 16);
+	ret->image = _aligned_malloc(1ull * ret->scanline * height, 16);
 
 	if (!ret->image)
 	{

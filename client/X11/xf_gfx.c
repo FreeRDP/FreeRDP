@@ -288,7 +288,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 
 	surface->gdi.scanline = surface->gdi.width * GetBytesPerPixel(surface->gdi.format);
 	surface->gdi.scanline = x11_pad_scanline(surface->gdi.scanline, xfc->scanline_pad);
-	size = surface->gdi.scanline * surface->gdi.height * 1ULL;
+	size = 1ull * surface->gdi.scanline * surface->gdi.height;
 	surface->gdi.data = (BYTE*)_aligned_malloc(size, 16);
 
 	if (!surface->gdi.data)
@@ -312,7 +312,7 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
 		UINT32 bytes = GetBytesPerPixel(gdi->dstFormat);
 		surface->stageScanline = width * bytes;
 		surface->stageScanline = x11_pad_scanline(surface->stageScanline, xfc->scanline_pad);
-		size = surface->stageScanline * surface->gdi.height * 1ULL;
+		size = 1ull * surface->stageScanline * surface->gdi.height;
 		surface->stage = (BYTE*)_aligned_malloc(size, 16);
 
 		if (!surface->stage)
