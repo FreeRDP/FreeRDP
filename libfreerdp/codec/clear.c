@@ -578,18 +578,12 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* clear, CLEAR_VBAR_ENTRY* vBarEntry)
 static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32 bandsByteCount,
                                         UINT32 nWidth, UINT32 nHeight, BYTE* pDstData,
                                         UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
-                                        UINT32 nYDst)
+                                        UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight)
 {
-	UINT32 i, y;
-	UINT32 count;
-	UINT32 suboffset;
-	UINT32 nXDstRel;
-	UINT32 nYDstRel;
+	UINT32 suboffset = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, bandsByteCount))
 		return FALSE;
-
-	suboffset = 0;
 
 	while (suboffset < bandsByteCount)
 	{
@@ -633,7 +627,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 		vBarCount = (xEnd - xStart) + 1;
 
-		for (i = 0; i < vBarCount; i++)
+		for (UINT32 i = 0; i < vBarCount; i++)
 		{
 			UINT32 vBarHeight;
 			CLEAR_VBAR_ENTRY* vBarEntry = NULL;
@@ -710,12 +704,12 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				if (!resize_vbar_entry(clear, vBarShortEntry))
 					return FALSE;
 
-				for (y = 0; y < vBarShortPixelCount; y++)
+				for (UINT32 y = 0; y < vBarShortPixelCount; y++)
 				{
-					BYTE r, g, b;
+					BYTE r = 0, g = 0, b = 0;
 					BYTE* dstBuffer =
 					    &vBarShortEntry->pixels[y * FreeRDPGetBytesPerPixel(clear->format)];
-					UINT32 color;
+					UINT32 color = 0;
 					Stream_Read_UINT8(s, b);
 					Stream_Read_UINT8(s, g);
 					Stream_Read_UINT8(s, r);
@@ -775,8 +769,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 				dstBuffer = vBarEntry->pixels;
 				/* if (y < vBarYOn), use colorBkg */
-				y = 0;
-				count = vBarYOn;
+				UINT32 y = 0;
+				UINT32 count = vBarYOn;
 
 				if ((y + count) > vBarPixelCount)
 					count = (vBarPixelCount > y) ? (vBarPixelCount - y) : 0;
@@ -840,19 +834,25 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 					return FALSE;
 			}
 
-			nXDstRel = nXDst + xStart;
-			nYDstRel = nYDst + yStart;
+			const UINT32 nXDstRel = nXDst + xStart;
+			const UINT32 nYDstRel = nYDst + yStart;
 			cpSrcPixel = vBarEntry->pixels;
 
 			if (i < nWidth)
 			{
-				count = vBarEntry->count;
+				UINT32 count = vBarEntry->count;
 
 				if (count > nHeight)
 					count = nHeight;
 
-				for (y = 0; y < count; y++)
+				if (nXDstRel + i > nDstWidth)
+					return FALSE;
+
+				for (UINT32 y = 0; y < count; y++)
 				{
+					if (nYDstRel + y > nDstHeight)
+						return FALSE;
+
 					BYTE* pDstPixel8 =
 					    &pDstData[((nYDstRel + y) * nDstStep) +
 					              ((nXDstRel + i) * FreeRDPGetBytesPerPixel(DstFormat))];
@@ -1085,7 +1085,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 	if (bandsByteCount > 0)
 	{
 		if (!clear_decompress_bands_data(clear, s, bandsByteCount, nWidth, nHeight, pDstData,
-		                                 DstFormat, nDstStep, nXDst, nYDst))
+		                                 DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight))
 		{
 			WLog_ERR(TAG, "clear_decompress_bands_data failed!");
 			goto fail;
