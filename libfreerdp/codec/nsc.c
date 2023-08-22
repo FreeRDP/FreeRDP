@@ -240,7 +240,7 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
 	if (!nsc_stream_initialize(context, s))
 		return FALSE;
 
-	const size_t blength = context->width * context->height * 4;
+	const size_t blength = context->width * context->height * 4ull;
 
 	if (!context->BitmapData || (blength > context->BitmapDataLength))
 	{
@@ -256,7 +256,7 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
 	const UINT32 tempWidth = ROUND_UP_TO(context->width, 8);
 	const UINT32 tempHeight = ROUND_UP_TO(context->height, 2);
 	/* The maximum length a decoded plane can reach in all cases */
-	const size_t plength = tempWidth * tempHeight;
+	const size_t plength = 1ull * tempWidth * tempHeight;
 
 	if (plength > context->priv->PlaneBuffersLength)
 	{
