@@ -591,13 +591,9 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* clear, CLEAR_VBAR_ENTRY* vBarEntry)
 static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32 bandsByteCount,
                                         UINT32 nWidth, UINT32 nHeight, BYTE* pDstData,
                                         UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
-                                        UINT32 nYDst)
+                                        UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight)
 {
-	UINT32 i, y;
-	UINT32 count;
-	UINT32 suboffset;
-	UINT32 nXDstRel;
-	UINT32 nYDstRel;
+	UINT32 suboffset = 0;
 
 	if (Stream_GetRemainingLength(s) < bandsByteCount)
 	{
@@ -605,22 +601,20 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 		return FALSE;
 	}
 
-	suboffset = 0;
-
 	while (suboffset < bandsByteCount)
 	{
-		BYTE r, g, b;
+		BYTE cr, cg, cb;
 		UINT16 xStart;
 		UINT16 xEnd;
 		UINT16 yStart;
 		UINT16 yEnd;
 		UINT32 colorBkg;
 		UINT16 vBarHeader;
-		UINT16 vBarYOn;
+		UINT16 vBarYOn = 0;
 		UINT16 vBarYOff;
 		UINT32 vBarCount;
 		UINT32 vBarPixelCount;
-		UINT32 vBarShortPixelCount;
+		UINT32 vBarShortPixelCount = 0;
 
 		if (Stream_GetRemainingLength(s) < 11)
 		{
@@ -632,11 +626,11 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 		Stream_Read_UINT16(s, xEnd);
 		Stream_Read_UINT16(s, yStart);
 		Stream_Read_UINT16(s, yEnd);
-		Stream_Read_UINT8(s, b);
-		Stream_Read_UINT8(s, g);
-		Stream_Read_UINT8(s, r);
+		Stream_Read_UINT8(s, cb);
+		Stream_Read_UINT8(s, cg);
+		Stream_Read_UINT8(s, cr);
 		suboffset += 11;
-		colorBkg = FreeRDPGetColor(clear->format, r, g, b, 0xFF);
+		colorBkg = FreeRDPGetColor(clear->format, cr, cg, cb, 0xFF);
 
 		if (xEnd < xStart)
 		{
@@ -652,13 +646,13 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 		vBarCount = (xEnd - xStart) + 1;
 
-		for (i = 0; i < vBarCount; i++)
+		for (UINT32 i = 0; i < vBarCount; i++)
 		{
 			UINT32 vBarHeight;
 			CLEAR_VBAR_ENTRY* vBarEntry = NULL;
-			CLEAR_VBAR_ENTRY* vBarShortEntry;
+			CLEAR_VBAR_ENTRY* vBarShortEntry = NULL;
 			BOOL vBarUpdate = FALSE;
-			const BYTE* pSrcPixel;
+			const BYTE* cpSrcPixel;
 
 			if (Stream_GetRemainingLength(s) < 2)
 			{
@@ -740,11 +734,11 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				if (!resize_vbar_entry(clear, vBarShortEntry))
 					return FALSE;
 
-				for (y = 0; y < vBarShortPixelCount; y++)
+				for (UINT32 y = 0; y < vBarShortPixelCount; y++)
 				{
-					BYTE r, g, b;
+					BYTE r = 0, g = 0, b = 0;
 					BYTE* dstBuffer = &vBarShortEntry->pixels[y * GetBytesPerPixel(clear->format)];
-					UINT32 color;
+					UINT32 color = 0;
 					Stream_Read_UINT8(s, b);
 					Stream_Read_UINT8(s, g);
 					Stream_Read_UINT8(s, r);
@@ -804,8 +798,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 				dstBuffer = vBarEntry->pixels;
 				/* if (y < vBarYOn), use colorBkg */
-				y = 0;
-				count = vBarYOn;
+				UINT32 y = 0;
+				UINT32 count = vBarYOn;
 
 				if ((y + count) > vBarPixelCount)
 					count = (vBarPixelCount > y) ? (vBarPixelCount - y) : 0;
@@ -868,28 +862,31 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 					return FALSE;
 			}
 
-			nXDstRel = nXDst + xStart;
-			nYDstRel = nYDst + yStart;
-			pSrcPixel = vBarEntry->pixels;
+			const UINT32 nXDstRel = nXDst + xStart;
+			const UINT32 nYDstRel = nYDst + yStart;
+			cpSrcPixel = vBarEntry->pixels;
 
 			if (i < nWidth)
 			{
-				count = vBarEntry->count;
+				UINT32 count = vBarEntry->count;
 
 				if (count > nHeight)
 					count = nHeight;
 
-				for (y = 0; y < count; y++)
+				if (nXDstRel + i > nDstWidth)
+					return FALSE;
+
+				for (UINT32 y = 0; y < count; y++)
 				{
 					BYTE* pDstPixel8 = &pDstData[((nYDstRel + y) * nDstStep) +
 					                             ((nXDstRel + i) * GetBytesPerPixel(DstFormat))];
-					UINT32 color = ReadColor(pSrcPixel, clear->format);
+					UINT32 color = ReadColor(cpSrcPixel, clear->format);
 					color = FreeRDPConvertColor(color, clear->format, DstFormat, NULL);
 
 					if (!WriteColor(pDstPixel8, DstFormat, color))
 						return FALSE;
 
-					pSrcPixel += GetBytesPerPixel(clear->format);
+					cpSrcPixel += GetBytesPerPixel(clear->format);
 				}
 			}
 		}
@@ -1117,7 +1114,7 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 	if (bandsByteCount > 0)
 	{
 		if (!clear_decompress_bands_data(clear, s, bandsByteCount, nWidth, nHeight, pDstData,
-		                                 DstFormat, nDstStep, nXDst, nYDst))
+		                                 DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight))
 		{
 			WLog_ERR(TAG, "clear_decompress_bands_data failed!");
 			goto fail;
