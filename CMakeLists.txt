@@ -34,9 +34,9 @@ if(NOT DEFINED FREERDP_VENDOR)
 	set(FREERDP_VENDOR 1)
 endif()
 
-set(CMAKE_COLOR_MAKEFILE ON)
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
+option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
+option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
 
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/)
@@ -225,7 +225,7 @@ endif()
 if(MSVC)
 	include(MSVCRuntime)
 	if(NOT DEFINED MSVC_RUNTIME)
-		set(MSVC_RUNTIME "dynamic")
+		set(MSVC_RUNTIME "dynamic" CACHE STRING "MSVC runtime type [dynamic|static]")
 	endif()
 	if(MSVC_RUNTIME STREQUAL "static")
 		if(BUILD_SHARED_LIBS)
