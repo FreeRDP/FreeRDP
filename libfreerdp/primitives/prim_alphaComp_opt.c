@@ -43,8 +43,9 @@ static primitives_t* generic = NULL;
 #ifdef WITH_SSE2
 #if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 
-static pstatus_t sse2_alphaComp_argb(const BYTE* pSrc1, UINT32 src1Step, const BYTE* pSrc2,
-                                     UINT32 src2Step, BYTE* pDst, UINT32 dstStep, UINT32 width,
+static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 src1Step,
+                                     const BYTE* WINPR_RESTRICT pSrc2, UINT32 src2Step,
+                                     BYTE* WINPR_RESTRICT pDst, UINT32 dstStep, UINT32 width,
                                      UINT32 height)
 {
 	const UINT32* sptr1 = (const UINT32*)pSrc1;
@@ -218,7 +219,7 @@ static pstatus_t ipp_alphaComp_argb(const BYTE* pSrc1, INT32 src1Step, const BYT
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_alphaComp_opt(primitives_t* prims)
+void primitives_init_alphaComp_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	generic = primitives_get_generic();
 	primitives_init_alphaComp(prims);

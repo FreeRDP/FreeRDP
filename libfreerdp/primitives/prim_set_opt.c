@@ -35,7 +35,7 @@ static primitives_t* generic = NULL;
 /* ========================================================================= */
 #ifdef WITH_SSE2
 #if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
-static pstatus_t sse2_set_8u(BYTE val, BYTE* pDst, UINT32 len)
+static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
 {
 	BYTE byte, *dptr;
 	__m128i xmm0;
@@ -121,7 +121,7 @@ static pstatus_t sse2_set_8u(BYTE val, BYTE* pDst, UINT32 len)
 /* ------------------------------------------------------------------------- */
 #ifdef WITH_SSE2
 #if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
-static pstatus_t sse2_set_32u(UINT32 val, UINT32* pDst, UINT32 len)
+static pstatus_t sse2_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, UINT32 len)
 {
 	const primitives_t* prim = primitives_get_generic();
 	UINT32* dptr = (UINT32*)pDst;
@@ -213,7 +213,7 @@ static pstatus_t sse2_set_32u(UINT32 val, UINT32* pDst, UINT32 len)
 }
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t sse2_set_32s(INT32 val, INT32* pDst, UINT32 len)
+static pstatus_t sse2_set_32s(INT32 val, INT32* WINPR_RESTRICT pDst, UINT32 len)
 {
 	UINT32 uval = *((UINT32*)&val);
 	return sse2_set_32u(uval, (UINT32*)pDst, len);
@@ -223,7 +223,7 @@ static pstatus_t sse2_set_32s(INT32 val, INT32* pDst, UINT32 len)
 
 #ifdef WITH_IPP
 /* ------------------------------------------------------------------------- */
-static pstatus_t ipp_wrapper_set_32u(UINT32 val, UINT32* pDst, INT32 len)
+static pstatus_t ipp_wrapper_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, INT32 len)
 {
 	/* A little type conversion, then use the signed version. */
 	INT32 sval = *((INT32*)&val);
@@ -232,7 +232,7 @@ static pstatus_t ipp_wrapper_set_32u(UINT32 val, UINT32* pDst, INT32 len)
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_set_opt(primitives_t* prims)
+void primitives_init_set_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	generic = primitives_get_generic();
 	primitives_init_set(prims);

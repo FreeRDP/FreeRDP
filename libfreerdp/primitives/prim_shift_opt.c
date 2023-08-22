@@ -56,15 +56,15 @@ SSE3_SCD_ROUTINE(sse2_rShiftC_16u, UINT16, generic->rShiftC_16u, _mm_srli_epi16,
  */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_shift_opt(primitives_t* prims)
+void primitives_init_shift_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	generic = primitives_get_generic();
 	primitives_init_shift(prims);
 #if defined(WITH_IPP)
-	prims->lShiftC_16s = (__lShiftC_16s_t)ippsLShiftC_16s;
-	prims->rShiftC_16s = (__rShiftC_16s_t)ippsRShiftC_16s;
-	prims->lShiftC_16u = (__lShiftC_16u_t)ippsLShiftC_16u;
-	prims->rShiftC_16u = (__rShiftC_16u_t)ippsRShiftC_16u;
+	prims->lShiftC_16s = ippsLShiftC_16s;
+	prims->rShiftC_16s = ippsRShiftC_16s;
+	prims->lShiftC_16u = ippsLShiftC_16u;
+	prims->rShiftC_16u = ippsRShiftC_16u;
 #elif defined(WITH_SSE2)
 
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&

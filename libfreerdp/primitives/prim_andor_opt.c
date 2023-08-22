@@ -43,7 +43,7 @@ SSE3_SCD_PRE_ROUTINE(sse3_orC_32u, UINT32, generic->orC_32u, _mm_or_si128, *dptr
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_andor_opt(primitives_t* prims)
+void primitives_init_andor_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	generic = primitives_get_generic();
 	primitives_init_andor(prims);
