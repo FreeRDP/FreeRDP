@@ -55,7 +55,7 @@ FIND_PATH(OPENSSL_INCLUDE_DIR
   NAMES
     openssl/ssl.h
   PATH_SUFFIXES
-	"include"
+    "include"
   HINTS
     ${_OPENSSL_INCLUDEDIR}
   ${_OPENSSL_ROOT_HINTS_AND_PATHS}
@@ -172,8 +172,8 @@ ELSEIF(WIN32 AND NOT CYGWIN)
     )
 
     set( OPENSSL_DEBUG_LIBRARIES ${SSL_EAY_DEBUG} ${LIB_EAY_DEBUG} )
-	set( OPENSSL_RELEASE_LIBRARIES ${SSL_EAY_RELEASE} ${LIB_EAY_RELEASE} )
-	set( OPENSSL_LIBRARIES ${OPENSSL_RELEASE_LIBRARIES} )
+    set( OPENSSL_RELEASE_LIBRARIES ${SSL_EAY_RELEASE} ${LIB_EAY_RELEASE} )
+    set( OPENSSL_LIBRARIES ${OPENSSL_RELEASE_LIBRARIES} )
 
     MARK_AS_ADVANCED(SSL_EAY_DEBUG SSL_EAY_RELEASE)
     MARK_AS_ADVANCED(LIB_EAY_DEBUG LIB_EAY_RELEASE)
@@ -313,25 +313,50 @@ if (OPENSSL_INCLUDE_DIR)
 
     string(REGEX REPLACE "^.*OPENSSL_VERSION_NUMBER[\t ]+0x([0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F]).*$"
            "\\1;\\2;\\3;\\4;\\5" OPENSSL_VERSION_LIST "${openssl_version_str}")
-    list(GET OPENSSL_VERSION_LIST 0 OPENSSL_VERSION_MAJOR)
-    list(GET OPENSSL_VERSION_LIST 1 OPENSSL_VERSION_MINOR)
-    from_hex("${OPENSSL_VERSION_MINOR}" OPENSSL_VERSION_MINOR)
-    list(GET OPENSSL_VERSION_LIST 2 OPENSSL_VERSION_FIX)
-    from_hex("${OPENSSL_VERSION_FIX}" OPENSSL_VERSION_FIX)
-    list(GET OPENSSL_VERSION_LIST 3 OPENSSL_VERSION_PATCH)
+     if (OPENSSL_VERSION_LIST)
+        list(GET OPENSSL_VERSION_LIST 0 OPENSSL_VERSION_MAJOR)
+        list(GET OPENSSL_VERSION_LIST 1 OPENSSL_VERSION_MINOR)
+        from_hex("${OPENSSL_VERSION_MINOR}" OPENSSL_VERSION_MINOR)
+        list(GET OPENSSL_VERSION_LIST 2 OPENSSL_VERSION_FIX)
+        from_hex("${OPENSSL_VERSION_FIX}" OPENSSL_VERSION_FIX)
+        list(GET OPENSSL_VERSION_LIST 3 OPENSSL_VERSION_PATCH)
 
-    if (NOT OPENSSL_VERSION_PATCH STREQUAL "00")
-      from_hex("${OPENSSL_VERSION_PATCH}" _tmp)
-      # 96 is the ASCII code of 'a' minus 1
-      math(EXPR OPENSSL_VERSION_PATCH_ASCII "${_tmp} + 96")
-      unset(_tmp)
-      # Once anyone knows how OpenSSL would call the patch versions beyond 'z'
-      # this should be updated to handle that, too. This has not happened yet
-      # so it is simply ignored here for now.
-      string(ASCII "${OPENSSL_VERSION_PATCH_ASCII}" OPENSSL_VERSION_PATCH_STRING)
-    endif (NOT OPENSSL_VERSION_PATCH STREQUAL "00")
+        if (NOT OPENSSL_VERSION_PATCH STREQUAL "00")
+          from_hex("${OPENSSL_VERSION_PATCH}" _tmp)
+          # 96 is the ASCII code of 'a' minus 1
+          math(EXPR OPENSSL_VERSION_PATCH_ASCII "${_tmp} + 96")
+          unset(_tmp)
+          # Once anyone knows how OpenSSL would call the patch versions beyond 'z'
+          # this should be updated to handle that, too. This has not happened yet
+          # so it is simply ignored here for now.
+          string(ASCII "${OPENSSL_VERSION_PATCH_ASCII}" OPENSSL_VERSION_PATCH_STRING)
+        endif (NOT OPENSSL_VERSION_PATCH STREQUAL "00")
 
-    set(OPENSSL_VERSION "${OPENSSL_VERSION_MAJOR}.${OPENSSL_VERSION_MINOR}.${OPENSSL_VERSION_FIX}${OPENSSL_VERSION_PATCH_STRING}")
+        set(OPENSSL_VERSION "${OPENSSL_VERSION_MAJOR}.${OPENSSL_VERSION_MINOR}.${OPENSSL_VERSION_FIX}${OPENSSL_VERSION_PATCH_STRING}")
+    endif()
+
+    if (NOT OPENSSL_VERSION_LIST)
+      file(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" openssl_version_str_str
+        REGEX "^#[\t ]*define[\t ]+OPENSSL_VERSION_STR[\t ]\"([0-9a-fA-F]+)\\.([0-9a-fA-F]+)\\.([0-9a-fA-F]+).*\".*$")
+      string(REGEX REPLACE "^.*OPENSSL_VERSION_STR[\t ]+\"([0-9a-fA-F]+)\\.([0-9a-fA-F]+)\\.([0-9a-fA-F]+).*\".*$"
+        "\\1.\\2.\\3" OPENSSL_VERSION "${openssl_version_str_str}")
+    endif()
+
+    if (NOT OPENSSL_VERSION_LIST)
+      file(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" openssl_version_major_str
+        REGEX "^#[\t ]*define[\t ]+OPENSSL_VERSION_MAJOR[\t ]+([0-9a-fA-F]+).*$")
+      string(REGEX REPLACE "^#[\t ]*define[\t ]+OPENSSL_VERSION_MAJOR[\t ]+([0-9a-fA-F]+).*$"
+          "\\1" OPENSSL_VERSION_MAJOR "${openssl_version_major_str}")
+      file(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" openssl_version_minor_str
+        REGEX "^#[\t ]*define[\t ]+OPENSSL_VERSION_MINOR[\t ]+([0-9a-fA-F]+).*$")
+      string(REGEX REPLACE "^#[\t ]*define[\t ]+OPENSSL_VERSION_MINOR[\t ]+([0-9a-fA-F]+).*$"
+        "\\1" OPENSSL_VERSION_MINOR "${openssl_version_minor_str}")
+      file(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" openssl_version_patch_str
+        REGEX "^#[\t ]*define[\t ]+OPENSSL_VERSION_PATCH[\t ]+([0-9a-fA-F]+).*$")
+      string(REGEX REPLACE "^#[\t ]*define[\t ]+OPENSSL_VERSION_PATCH[\t ]+([0-9a-fA-F]+).*$"
+          "\\1" OPENSSL_VERSION_PATCH "${openssl_version_patch_str}")
+      set(OPENSSL_VERSION "${OPENSSL_VERSION_MAJOR}.${OPENSSL_VERSION_MINOR}.${OPENSSL_VERSION_PATCH}")
+    endif()
   endif (_OPENSSL_VERSION)
 endif (OPENSSL_INCLUDE_DIR)
 
