@@ -2606,11 +2606,17 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 		for (UINT32 j = 0; j < nbUpdateRects; j++)
 		{
 			const RECTANGLE_16* rect = &updateRects[j];
-			const UINT32 nXSrc = rect->left - (nXDst + tile->x);
-			const UINT32 nYSrc = rect->top - (nYDst + tile->y);
+			if (rect->left < updateRect.left)
+				goto fail;
+			const UINT32 nXSrc = rect->left - updateRect.left;
+			const UINT32 nYSrc = rect->top - updateRect.top;
 			const UINT32 width = rect->right - rect->left;
 			const UINT32 height = rect->bottom - rect->top;
 
+			if (rect->left + width > surface->width)
+				goto fail;
+			if (rect->top + height > surface->height)
+				goto fail;
 			if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, rect->left, rect->top, width,
 			                        height, tile->data, progressive->format, tile->stride, nXSrc,
 			                        nYSrc, NULL, FREERDP_KEEP_DST_ALPHA))
