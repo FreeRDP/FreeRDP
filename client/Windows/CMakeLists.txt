@@ -99,13 +99,10 @@ endif()
 list(APPEND LIBS freerdp-client)
 list(APPEND LIBS winpr freerdp)
 
-find_library(MSIMG32 NAME msimg32 REQUIRED)
-find_library(CREDUI NAME credui REQUIRED)
-list(APPEND LIBS ${MSIMG32} ${CREDUI})
+list(APPEND LIBS msimg32.lib credui.lib)
 
-find_library(NTDLL NAME ntdll) # optional, only required with MINGW
-if (NTDLL)
-    list(APPEND LIBS ${NTDLL})
+if (MINGW)
+	list(APPEND LIBS ntdll.lib) # only required with MINGW
 endif()
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
