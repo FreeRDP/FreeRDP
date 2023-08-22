@@ -20,6 +20,16 @@
 #ifndef WINPR_WTYPES_H
 #define WINPR_WTYPES_H
 
+// C99 related macros
+#if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
+#define WINPR_RESTRICT restrict
+#elif defined(_MSC_VER) && _MSC_VER >= 1900
+#define WINPR_RESTRICT __restrict
+#else
+#define WINPR_RESTRICT
+#endif
+
+// C17 related macros
 #if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201710L)
 #define WINPR_FALLTHROUGH [[fallthrough]]
 #else
