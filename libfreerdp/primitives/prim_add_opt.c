@@ -43,7 +43,7 @@ SSE3_SSD_ROUTINE(sse3_add_16s, INT16, generic->add_16s, _mm_adds_epi16,
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_add_opt(primitives_t* prims)
+void primitives_init_add_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	generic = primitives_get_generic();
 	primitives_init_add(prims);

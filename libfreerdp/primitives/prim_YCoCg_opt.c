@@ -37,9 +37,10 @@ static primitives_t* generic = NULL;
 
 #ifdef WITH_SSE2
 /* ------------------------------------------------------------------------- */
-static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* pSrc, UINT32 srcStep, BYTE* pDst,
-                                                  UINT32 DstFormat, UINT32 dstStep, UINT32 width,
-                                                  UINT32 height, UINT8 shift, BOOL withAlpha)
+static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSrc, UINT32 srcStep,
+                                                  BYTE* WINPR_RESTRICT pDst, UINT32 DstFormat,
+                                                  UINT32 dstStep, UINT32 width, UINT32 height,
+                                                  UINT8 shift, BOOL withAlpha)
 {
 	const BYTE* sptr = pSrc;
 	BYTE* dptr = (BYTE*)pDst;
@@ -216,7 +217,8 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* pSrc, UINT32 srcSt
 }
 
 /* ------------------------------------------------------------------------- */
-static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* pSrc, UINT32 srcStep, BYTE* pDst,
+static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT pSrc,
+                                                     UINT32 srcStep, BYTE* WINPR_RESTRICT pDst,
                                                      UINT32 DstFormat, UINT32 dstStep, UINT32 width,
                                                      UINT32 height, UINT8 shift, BOOL withAlpha)
 {
@@ -401,9 +403,10 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* pSrc, UINT32 sr
 
 #ifdef WITH_SSE2
 /* ------------------------------------------------------------------------- */
-static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYTE* pDst,
-                                           UINT32 DstFormat, INT32 dstStep, UINT32 width,
-                                           UINT32 height, UINT8 shift, BOOL withAlpha)
+static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R(const BYTE* WINPR_RESTRICT pSrc, INT32 srcStep,
+                                           BYTE* WINPR_RESTRICT pDst, UINT32 DstFormat,
+                                           INT32 dstStep, UINT32 width, UINT32 height, UINT8 shift,
+                                           BOOL withAlpha)
 {
 	switch (DstFormat)
 	{
@@ -424,9 +427,10 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYTE
 }
 #elif defined(WITH_NEON)
 
-static pstatus_t neon_YCoCgToRGB_8u_X(const BYTE* pSrc, INT32 srcStep, BYTE* pDst, UINT32 DstFormat,
-                                      INT32 dstStep, UINT32 width, UINT32 height, UINT8 shift,
-                                      BYTE bPos, BYTE gPos, BYTE rPos, BYTE aPos, BOOL alpha)
+static pstatus_t neon_YCoCgToRGB_8u_X(const BYTE* WINPR_RESTRICT pSrc, INT32 srcStep,
+                                      BYTE* WINPR_RESTRICT pDst, UINT32 DstFormat, INT32 dstStep,
+                                      UINT32 width, UINT32 height, UINT8 shift, BYTE bPos,
+                                      BYTE gPos, BYTE rPos, BYTE aPos, BOOL alpha)
 {
 	UINT32 y;
 	BYTE* dptr = pDst;
@@ -502,9 +506,10 @@ static pstatus_t neon_YCoCgToRGB_8u_X(const BYTE* pSrc, INT32 srcStep, BYTE* pDs
 
 	return PRIMITIVES_SUCCESS;
 }
-static pstatus_t neon_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYTE* pDst,
-                                         UINT32 DstFormat, INT32 dstStep, UINT32 width,
-                                         UINT32 height, UINT8 shift, BOOL withAlpha)
+
+static pstatus_t neon_YCoCgToRGB_8u_AC4R(const BYTE* WINPR_RESTRICT pSrc, INT32 srcStep,
+                                         BYTE* WINPR_RESTRICT pDst, UINT32 DstFormat, INT32 dstStep,
+                                         UINT32 width, UINT32 height, UINT8 shift, BOOL withAlpha)
 {
 	switch (DstFormat)
 	{
@@ -548,7 +553,7 @@ static pstatus_t neon_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYTE* 
 #endif /* WITH_SSE2 */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_YCoCg_opt(primitives_t* prims)
+void primitives_init_YCoCg_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	generic = primitives_get_generic();
 	primitives_init_YCoCg(prims);

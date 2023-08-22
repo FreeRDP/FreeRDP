@@ -30,7 +30,8 @@ static primitives_t* generic = NULL;
 
 #ifdef WITH_SSE2
 /* ------------------------------------------------------------------------- */
-static pstatus_t ssse3_sign_16s(const INT16* pSrc, INT16* pDst, UINT32 len)
+static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_RESTRICT pDst,
+                                UINT32 len)
 {
 	const INT16* sptr = (const INT16*)pSrc;
 	INT16* dptr = (INT16*)pDst;
@@ -152,7 +153,7 @@ static pstatus_t ssse3_sign_16s(const INT16* pSrc, INT16* pDst, UINT32 len)
 #endif /* WITH_SSE2 */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_sign_opt(primitives_t* prims)
+void primitives_init_sign_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	generic = primitives_get_generic();
 	primitives_init_sign(prims);
