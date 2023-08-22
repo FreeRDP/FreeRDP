@@ -87,7 +87,7 @@ BOOL shadow_surface_resize(rdpShadowSurface* surface, UINT16 x, UINT16 y, UINT32
 		return TRUE;
 	}
 
-	buffer = (BYTE*)realloc(surface->data, scanline * ALIGN_SCREEN_SIZE(height, 4) * 1ull);
+	buffer = (BYTE*)realloc(surface->data, 1ull * scanline * ALIGN_SCREEN_SIZE(height, 4ull));
 
 	if (buffer)
 	{

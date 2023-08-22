@@ -418,7 +418,7 @@ static INLINE RFX_PROGRESSIVE_TILE* progressive_tile_new(void)
 	tile->height = 64;
 	tile->stride = 4 * tile->width;
 
-	size_t dataLen = tile->stride * tile->height * 1ULL;
+	size_t dataLen = 1ull * tile->stride * tile->height;
 	tile->data = (BYTE*)winpr_aligned_malloc(dataLen, 16);
 	if (!tile->data)
 		goto fail;

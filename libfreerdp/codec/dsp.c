@@ -1327,7 +1327,7 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 	if (context->format.wFormatTag == WAVE_FORMAT_DVI_ADPCM)
 	{
 		size_t min_frame_data =
-		    context->format.wBitsPerSample * context->format.nChannels * FramesPerPacket * 1ULL;
+		    1ull * context->format.wBitsPerSample * context->format.nChannels * FramesPerPacket;
 		size_t data_per_block = (context->format.nBlockAlign - 4 * context->format.nChannels) * 8;
 		size_t nb_block_per_packet = min_frame_data / data_per_block;
 

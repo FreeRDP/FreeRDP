@@ -162,7 +162,7 @@ static BOOL capture_plugin_send_frame(pClientContext* pc, SOCKET socket, const B
 	settings = pc->context.settings;
 	WINPR_ASSERT(settings);
 
-	frame_size = settings->DesktopWidth * settings->DesktopHeight * 1ull *
+	frame_size = 1ull * settings->DesktopWidth * settings->DesktopHeight *
 	             (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) / 8ull);
 	bmp_header =
 	    winpr_bitmap_construct_header(settings->DesktopWidth, settings->DesktopHeight,

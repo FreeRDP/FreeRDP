@@ -355,7 +355,7 @@ static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* co
 		return ERROR_INVALID_DATA;
 
 	bpp = FreeRDPGetBytesPerPixel(cmd->format);
-	size = bpp * cmd->width * cmd->height * 1ULL;
+	size = 1ull * bpp * cmd->width * cmd->height;
 	if (cmd->length < size)
 	{
 		WLog_ERR(TAG, "Not enough data, got %" PRIu32 ", expected %" PRIuz, cmd->length, size);
@@ -1154,7 +1154,7 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
 	}
 
 	surface->scanline = gfx_align_scanline(surface->width * 4UL, 16);
-	surface->data = (BYTE*)winpr_aligned_malloc(surface->scanline * surface->height * 1ULL, 16);
+	surface->data = (BYTE*)winpr_aligned_malloc(1ull * surface->scanline * surface->height, 16);
 
 	if (!surface->data)
 	{

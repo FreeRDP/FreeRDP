@@ -194,7 +194,7 @@ VideoSurface* VideoClient_CreateCommonContext(size_t size, UINT32 x, UINT32 y, U
 	ret->alignedHeight = ret->h + 32 - ret->h % 16;
 
 	ret->scanline = ret->alignedWidth * FreeRDPGetBytesPerPixel(ret->format);
-	ret->data = winpr_aligned_malloc(ret->scanline * ret->alignedHeight * 1ULL, 64);
+	ret->data = winpr_aligned_malloc(1ull * ret->scanline * ret->alignedHeight, 64);
 	if (!ret->data)
 		goto fail;
 	return ret;

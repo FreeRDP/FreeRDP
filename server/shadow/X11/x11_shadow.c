@@ -1117,7 +1117,7 @@ static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 	}
 
 	subsystem->fb_shm_info.shmid = shmget(
-	    IPC_PRIVATE, subsystem->fb_image->bytes_per_line * subsystem->fb_image->height * 1ull,
+	    IPC_PRIVATE, 1ull * subsystem->fb_image->bytes_per_line * subsystem->fb_image->height,
 	    IPC_CREAT | 0600);
 
 	if (subsystem->fb_shm_info.shmid == -1)
