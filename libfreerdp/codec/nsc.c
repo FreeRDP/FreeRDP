@@ -119,12 +119,17 @@ static BOOL nsc_decode(NSC_CONTEXT* context)
 	return TRUE;
 }
 
-static BOOL nsc_rle_decode(BYTE* in, BYTE* out, UINT32 outSize, UINT32 originalSize)
+static BOOL nsc_rle_decode(const BYTE* in, size_t inSize, BYTE* out, UINT32 outSize,
+                           UINT32 originalSize)
 {
 	UINT32 left = originalSize;
 
 	while (left > 4)
 	{
+		if (inSize < 1)
+			return FALSE;
+		inSize--;
+
 		const BYTE value = *in++;
 		UINT32 len = 0;
 
@@ -137,17 +142,26 @@ static BOOL nsc_rle_decode(BYTE* in, BYTE* out, UINT32 outSize, UINT32 originalS
 			*out++ = value;
 			left--;
 		}
+		else if (inSize < 1)
+			return FALSE;
 		else if (value == *in)
 		{
+			inSize--;
 			in++;
 
-			if (*in < 0xFF)
+			if (inSize < 1)
+				return FALSE;
+			else if (*in < 0xFF)
 			{
+				inSize--;
 				len = (UINT32)*in++;
 				len += 2;
 			}
 			else
 			{
+				if (inSize < 5)
+					return FALSE;
+				inSize -= 5;
 				in++;
 				len = ((UINT32)(*in++));
 				len |= ((UINT32)(*in++)) << 8U;
@@ -177,6 +191,8 @@ static BOOL nsc_rle_decode(BYTE* in, BYTE* out, UINT32 outSize, UINT32 originalS
 	if ((outSize < 4) || (left < 4))
 		return FALSE;
 
+	if (inSize < 4)
+		return FALSE;
 	memcpy(out, in, 4);
 	return TRUE;
 }
@@ -186,13 +202,17 @@ static BOOL nsc_rle_decompress_data(NSC_CONTEXT* context)
 	if (!context)
 		return FALSE;
 
-	BYTE* rle = context->Planes;
+	const BYTE* rle = context->Planes;
+	size_t rleSize = context->PlanesSize;
 	WINPR_ASSERT(rle);
 
 	for (size_t i = 0; i < 4; i++)
 	{
 		const UINT32 originalSize = context->OrgByteCount[i];
 		const UINT32 planeSize = context->PlaneByteCount[i];
+
+		if (rleSize < planeSize)
+			return FALSE;
 
 		if (planeSize == 0)
 		{
@@ -203,13 +223,16 @@ static BOOL nsc_rle_decompress_data(NSC_CONTEXT* context)
 		}
 		else if (planeSize < originalSize)
 		{
-			if (!nsc_rle_decode(rle, context->priv->PlaneBuffers[i],
+			if (!nsc_rle_decode(rle, rleSize, context->priv->PlaneBuffers[i],
 			                    context->priv->PlaneBuffersLength, originalSize))
 				return FALSE;
 		}
 		else
 		{
 			if (context->priv->PlaneBuffersLength < originalSize)
+				return FALSE;
+
+			if (rleSize < originalSize)
 				return FALSE;
 
 			CopyMemory(context->priv->PlaneBuffers[i], rle, originalSize);
@@ -239,6 +262,7 @@ static BOOL nsc_stream_initialize(NSC_CONTEXT* context, wStream* s)
 	Stream_Read_UINT8(s, context->ChromaSubsamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
 	Stream_Seek(s, 2);                                     /* Reserved (2 bytes) */
 	context->Planes = Stream_Pointer(s);
+	context->PlanesSize = total;
 	return Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, total);
 }
 

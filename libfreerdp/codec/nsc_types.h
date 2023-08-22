@@ -61,6 +61,7 @@ struct _NSC_CONTEXT
 	UINT32 BitmapDataLength;
 
 	BYTE* Planes;
+	size_t PlanesSize;
 	UINT32 PlaneByteCount[4];
 	UINT32 ColorLossLevel;
 	UINT32 ChromaSubsamplingLevel;
