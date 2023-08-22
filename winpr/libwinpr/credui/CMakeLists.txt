@@ -19,8 +19,8 @@ winpr_module_add(credui.c)
 
 if(WIN32)
 	winpr_library_add_public(credui)
-endif()
-
-if(BUILD_TESTING)
-	add_subdirectory(test)
+else()
+    if(BUILD_TESTING)
+        add_subdirectory(test)
+    endif()
 endif()
