@@ -39,7 +39,6 @@ static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight);
 
 BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT32 height)
 {
-	size_t x;
 	BOOL isNull = FALSE;
 	UINT32 pheight = height;
 
@@ -55,11 +54,16 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 	if (pheight % 16 != 0)
 		pheight += 16 - pheight % 16;
 
-	for (x = 0; x < 3; x++)
+	for (size_t x = 0; x < 3; x++)
 	{
 		if (!h264->pYUVData[x] || !h264->pOldYUVData[x])
 			isNull = TRUE;
 	}
+
+	if (pheight == 0)
+		return FALSE;
+	if (stride == 0)
+		return FALSE;
 
 	if (isNull || (width != h264->width) || (height != h264->height) ||
 	    (stride != h264->iStride[0]))
@@ -70,7 +74,7 @@ BOOL avc420_ensure_buffer(H264_CONTEXT* h264, UINT32 stride, UINT32 width, UINT3
 		h264->width = width;
 		h264->height = height;
 
-		for (x = 0; x < 3; x++)
+		for (size_t x = 0; x < 3; x++)
 		{
 			BYTE* tmp1 = winpr_aligned_recalloc(h264->pYUVData[x], h264->iStride[x], pheight, 16);
 			BYTE* tmp2 =
@@ -416,18 +420,19 @@ static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight)
 	{
 		for (UINT32 x = 0; x < 3; x++)
 		{
-			BYTE* tmp1;
-			BYTE* tmp2;
+			if (piDstSize[x] == 0)
+				return FALSE;
+
 			piDstStride[x] = piMainStride[0];
 			piDstSize[x] = piDstStride[x] * padDstHeight;
-			tmp1 = winpr_aligned_recalloc(ppYUVDstData[x], piDstSize[x], 1, 16);
-			if (tmp1)
-				ppYUVDstData[x] = tmp1;
-			tmp2 = winpr_aligned_recalloc(ppOldYUVDstData[x], piDstSize[x], 1, 16);
-			if (tmp2)
-				ppOldYUVDstData[x] = tmp2;
-			if (!tmp1 || !tmp2)
-				goto fail;
+			BYTE* tmp1 = winpr_aligned_recalloc(ppYUVDstData[x], piDstSize[x], 1, 16);
+			if (!tmp1)
+				return FALSE;
+			ppYUVDstData[x] = tmp1;
+			BYTE* tmp2 = winpr_aligned_recalloc(ppOldYUVDstData[x], piDstSize[x], 1, 16);
+			if (!tmp2)
+				return FALSE;
+			ppOldYUVDstData[x] = tmp2;
 		}
 
 		{
