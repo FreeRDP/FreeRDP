@@ -255,7 +255,7 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, size_t* psize,
                                        FILE* stream)
 {
-	char c;
+	int c;
 	char* n;
 	size_t step = 32;
 	size_t used = 0;
@@ -285,7 +285,7 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
 
 		c = freerdp_interruptible_getc(context, stream);
 		if (c != EOF)
-			ptr[used++] = c;
+			ptr[used++] = (char)c;
 	} while ((c != '\n') && (c != '\r') && (c != EOF));
 
 	ptr[used] = '\0';
