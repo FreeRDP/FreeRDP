@@ -1103,7 +1103,7 @@ WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState)
 #define WINSCARD_LOAD_PROC(_name, ...) \
 	pWinSCardApiTable->pfn##_name = (fn##_name)GetProcAddress(hWinSCardLibrary, #_name);
 
-bool WinSCard_LoadApiTableFunctions(PSCardApiFunctionTable pWinSCardApiTable,
+BOOL WinSCard_LoadApiTableFunctions(PSCardApiFunctionTable pWinSCardApiTable,
                                     HMODULE hWinSCardLibrary)
 {
 	WINPR_ASSERT(pWinSCardApiTable);
@@ -1186,7 +1186,7 @@ bool WinSCard_LoadApiTableFunctions(PSCardApiFunctionTable pWinSCardApiTable,
 	WINSCARD_LOAD_PROC(SCardListReadersWithDeviceInstanceIdW);
 	WINSCARD_LOAD_PROC(SCardAudit);
 
-	return true;
+	return TRUE;
 }
 
 static const SCardApiFunctionTable WinPR_SCardApiFunctionTable = {
@@ -1271,9 +1271,7 @@ static const SCardApiFunctionTable WinPR_SCardApiFunctionTable = {
 	SCardAudit                             /* SCardAudit */
 };
 
-static SCardApiFunctionTable const* pWinPR_SCardApiFunctionTable = &WinPR_SCardApiFunctionTable;
-
-SCardApiFunctionTable const* WinPR_GetSCardApiFunctionTable(void)
+const SCardApiFunctionTable* WinPR_GetSCardApiFunctionTable(void)
 {
-	return pWinPR_SCardApiFunctionTable;
+	return &WinPR_SCardApiFunctionTable;
 }

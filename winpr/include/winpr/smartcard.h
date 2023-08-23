@@ -1209,9 +1209,9 @@ extern "C"
 	WINSCARDAPI const char* WINAPI SCardGetCardStateString(DWORD dwCardState);
 	WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState);
 
-	WINPR_API bool WinSCard_LoadApiTableFunctions(PSCardApiFunctionTable pWinSCardApiTable,
+	WINPR_API BOOL WinSCard_LoadApiTableFunctions(PSCardApiFunctionTable pWinSCardApiTable,
 	                                              HMODULE hWinSCardLibrary);
-	WINPR_API SCardApiFunctionTable const* WinPR_GetSCardApiFunctionTable(void);
+	WINPR_API const SCardApiFunctionTable* WinPR_GetSCardApiFunctionTable(void);
 
 #ifdef __cplusplus
 }

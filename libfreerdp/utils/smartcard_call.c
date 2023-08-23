@@ -51,9 +51,12 @@
 #define wrap(ctx, fkt, ...)                                             \
 	ctx->useEmulatedCard ? Emulate_##fkt(ctx->emulation, ##__VA_ARGS__) \
 	                     : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)
+#define wrap_ptr(ctx, fkt, ...) wrap(ctx, fkt, ##__VA_ARGS__)
 #else
 #define wrap(ctx, fkt, ...) \
 	ctx->useEmulatedCard ? SCARD_F_INTERNAL_ERROR : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)
+#define wrap_ptr(ctx, fkt, ...) \
+	ctx->useEmulatedCard ? NULL : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)
 #endif
 
 #define SCARD_MAX_TIMEOUT 60000
@@ -69,7 +72,7 @@ struct s_scard_call_context
 #endif
 	HANDLE hWinSCardLibrary;
 	SCardApiFunctionTable WinSCardApi;
-	SCardApiFunctionTable const* pWinSCardApi;
+	const SCardApiFunctionTable* pWinSCardApi;
 	HANDLE stopEvent;
 	void* userdata;
 
@@ -1446,7 +1449,7 @@ static LONG smartcard_AccessStartedEvent_Call(scard_call_context* smartcard, wSt
 	WINPR_UNUSED(operation);
 
 	if (!smartcard->StartedEvent)
-		smartcard->StartedEvent = wrap(smartcard, SCardAccessStartedEvent);
+		smartcard->StartedEvent = wrap_ptr(smartcard, SCardAccessStartedEvent);
 
 	if (!smartcard->StartedEvent)
 		status = SCARD_E_NO_SERVICE;
@@ -1873,8 +1876,9 @@ scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 				goto fail;
 			}
 
+			if (!WinSCard_LoadApiTableFunctions(&ctx->WinSCardApi, ctx->hWinSCardLibrary))
+				goto fail;
 			ctx->pWinSCardApi = &ctx->WinSCardApi;
-			WinSCard_LoadApiTableFunctions(ctx->pWinSCardApi, ctx->hWinSCardLibrary);
 		}
 		else
 		{
