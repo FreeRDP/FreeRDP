@@ -884,6 +884,8 @@ state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, RDP_TRANSP
 			break;
 
 		default:
+			WLog_Print(autodetect->log, WLOG_ERROR, "Unknown requestType=0x%04" PRIx16,
+			           autodetectReqPdu.requestType);
 			break;
 	}
 
@@ -972,6 +974,8 @@ state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANS
 			break;
 
 		default:
+			WLog_Print(autodetect->log, WLOG_ERROR, "Unknown responseType=0x%04" PRIx16,
+			           autodetectRspPdu.responseType);
 			break;
 	}
 
