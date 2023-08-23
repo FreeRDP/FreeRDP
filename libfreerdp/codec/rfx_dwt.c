@@ -25,11 +25,12 @@
 
 #include "rfx_dwt.h"
 
-static void rfx_dwt_2d_decode_block(INT16* buffer, INT16* idwt, int subband_width)
+static void rfx_dwt_2d_decode_block(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT idwt,
+                                    int subband_width)
 {
-	INT16 *dst, *l, *h;
-	INT16 *l_dst, *h_dst;
-	INT16 *hl, *lh, *hh, *ll;
+	INT16 *WINPR_RESTRICT dst, *WINPR_RESTRICT l, *WINPR_RESTRICT h;
+	INT16 *WINPR_RESTRICT l_dst, *WINPR_RESTRICT h_dst;
+	INT16 *WINPR_RESTRICT hl, *WINPR_RESTRICT lh, *WINPR_RESTRICT hh, *WINPR_RESTRICT ll;
 	int total_width;
 	int x, y;
 	int n;
@@ -109,30 +110,31 @@ static void rfx_dwt_2d_decode_block(INT16* buffer, INT16* idwt, int subband_widt
 	}
 }
 
-void rfx_dwt_2d_decode(INT16* buffer, INT16* dwt_buffer)
+void rfx_dwt_2d_decode(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt_buffer)
 {
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(dwt_buffer);
+
 	rfx_dwt_2d_decode_block(&buffer[3840], dwt_buffer, 8);
 	rfx_dwt_2d_decode_block(&buffer[3072], dwt_buffer, 16);
 	rfx_dwt_2d_decode_block(&buffer[0], dwt_buffer, 32);
 }
 
-static void rfx_dwt_2d_encode_block(INT16* buffer, INT16* dwt, int subband_width)
+static void rfx_dwt_2d_encode_block(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt,
+                                    UINT32 subband_width)
 {
 	INT16 *src, *l, *h;
 	INT16 *l_src, *h_src;
 	INT16 *hl, *lh, *hh, *ll;
-	int total_width;
-	int x, y;
-	int n;
 
-	total_width = subband_width << 1;
+	const UINT32 total_width = subband_width << 1;
 
 	/* DWT in vertical direction, results in 2 sub-bands in L, H order in tmp buffer dwt. */
-	for (x = 0; x < total_width; x++)
+	for (UINT32 x = 0; x < total_width; x++)
 	{
-		for (n = 0; n < subband_width; n++)
+		for (UINT32 n = 0; n < subband_width; n++)
 		{
-			y = n << 1;
+			UINT32 y = n << 1;
 			l = dwt + n * total_width + x;
 			h = l + subband_width * total_width;
 			src = buffer + y * total_width + x;
@@ -160,12 +162,12 @@ static void rfx_dwt_2d_encode_block(INT16* buffer, INT16* dwt, int subband_width
 	hh = buffer + subband_width * subband_width * 2;
 	h_src = dwt + subband_width * subband_width * 2;
 
-	for (y = 0; y < subband_width; y++)
+	for (UINT32 y = 0; y < subband_width; y++)
 	{
 		/* L */
-		for (n = 0; n < subband_width; n++)
+		for (UINT32 n = 0; n < subband_width; n++)
 		{
-			x = n << 1;
+			UINT32 x = n << 1;
 
 			/* HL */
 			hl[n] =
@@ -175,9 +177,9 @@ static void rfx_dwt_2d_encode_block(INT16* buffer, INT16* dwt, int subband_width
 		}
 
 		/* H */
-		for (n = 0; n < subband_width; n++)
+		for (UINT32 n = 0; n < subband_width; n++)
 		{
-			x = n << 1;
+			UINT32 x = n << 1;
 
 			/* HH */
 			hh[n] =
@@ -196,8 +198,11 @@ static void rfx_dwt_2d_encode_block(INT16* buffer, INT16* dwt, int subband_width
 	}
 }
 
-void rfx_dwt_2d_encode(INT16* buffer, INT16* dwt_buffer)
+void rfx_dwt_2d_encode(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt_buffer)
 {
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(dwt_buffer);
+
 	rfx_dwt_2d_encode_block(&buffer[0], dwt_buffer, 32);
 	rfx_dwt_2d_encode_block(&buffer[3072], dwt_buffer, 16);
 	rfx_dwt_2d_encode_block(&buffer[3840], dwt_buffer, 8);

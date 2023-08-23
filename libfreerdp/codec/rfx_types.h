@@ -165,15 +165,17 @@ struct S_RFX_CONTEXT
 	struct S_RFX_MESSAGE currentMessage;
 
 	/* routines */
-	void (*quantization_decode)(INT16* buffer, const UINT32* quantization_values);
-	void (*quantization_encode)(INT16* buffer, const UINT32* quantization_values);
-	void (*dwt_2d_decode)(INT16* buffer, INT16* dwt_buffer);
-	void (*dwt_2d_extrapolate_decode)(INT16* src, INT16* temp);
-	void (*dwt_2d_encode)(INT16* buffer, INT16* dwt_buffer);
-	int (*rlgr_decode)(RLGR_MODE mode, const BYTE* data, UINT32 data_size, INT16* buffer,
-	                   UINT32 buffer_size);
-	int (*rlgr_encode)(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* buffer,
-	                   UINT32 buffer_size);
+	void (*quantization_decode)(INT16* WINPR_RESTRICT buffer,
+	                            const UINT32* WINPR_RESTRICT quantization_values);
+	void (*quantization_encode)(INT16* WINPR_RESTRICT buffer,
+	                            const UINT32* WINPR_RESTRICT quantization_values);
+	void (*dwt_2d_decode)(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt_buffer);
+	void (*dwt_2d_extrapolate_decode)(INT16* WINPR_RESTRICT src, INT16* WINPR_RESTRICT temp);
+	void (*dwt_2d_encode)(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt_buffer);
+	int (*rlgr_decode)(RLGR_MODE mode, const BYTE* WINPR_RESTRICT data, UINT32 data_size,
+	                   INT16* WINPR_RESTRICT buffer, UINT32 buffer_size);
+	int (*rlgr_encode)(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 data_size,
+	                   BYTE* WINPR_RESTRICT buffer, UINT32 buffer_size);
 
 	/* private definitions */
 	RFX_CONTEXT_PRIV* priv;

@@ -135,8 +135,8 @@ static INLINE UINT32 lzcnt_s(UINT32 x)
 	return __lzcnt(x);
 }
 
-int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* pSrcData, UINT32 SrcSize, INT16* pDstData,
-                    UINT32 rDstSize)
+int rfx_rlgr_decode(RLGR_MODE mode, const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
+                    INT16* WINPR_RESTRICT pDstData, UINT32 rDstSize)
 {
 	int vk = 0;
 	size_t run = 0;
@@ -629,8 +629,8 @@ static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, UINT32 val)
 	}
 }
 
-int rfx_rlgr_encode(RLGR_MODE mode, const INT16* data, UINT32 data_size, BYTE* buffer,
-                    UINT32 buffer_size)
+int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 data_size,
+                    BYTE* WINPR_RESTRICT buffer, UINT32 buffer_size)
 {
 	int k;
 	int kp;

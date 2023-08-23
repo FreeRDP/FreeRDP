@@ -20,12 +20,17 @@
 #ifndef FREERDP_LIB_CODEC_RFX_DECODE_H
 #define FREERDP_LIB_CODEC_RFX_DECODE_H
 
+#include <winpr/wtypes.h>
+
 #include <freerdp/codec/rfx.h>
 #include <freerdp/api.h>
 
 /* stride is bytes between rows in the output buffer. */
-FREERDP_LOCAL BOOL rfx_decode_rgb(RFX_CONTEXT* context, const RFX_TILE* tile, BYTE* rgb_buffer,
-                                  UINT32 stride);
-FREERDP_LOCAL void rfx_decode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
-                                        const BYTE* data, int size, INT16* buffer);
+FREERDP_LOCAL BOOL rfx_decode_rgb(RFX_CONTEXT* WINPR_RESTRICT context,
+                                  const RFX_TILE* WINPR_RESTRICT tile,
+                                  BYTE* WINPR_RESTRICT rgb_buffer, UINT32 stride);
+FREERDP_LOCAL void rfx_decode_component(RFX_CONTEXT* WINPR_RESTRICT context,
+                                        const UINT32* WINPR_RESTRICT quantization_values,
+                                        const BYTE* WINPR_RESTRICT data, size_t size,
+                                        INT16* WINPR_RESTRICT buffer);
 #endif /* FREERDP_LIB_CODEC_RFX_DECODE_H */

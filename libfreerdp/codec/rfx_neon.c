@@ -33,7 +33,8 @@
 /* rfx_decode_YCbCr_to_RGB_NEON code now resides in the primitives library. */
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-rfx_quantization_decode_block_NEON(INT16* buffer, const int buffer_size, const UINT32 factor)
+rfx_quantization_decode_block_NEON(INT16* WINPR_RESTRICT buffer, const int buffer_size,
+                                   const UINT32 factor)
 {
 	int16x8_t quantFactors = vdupq_n_s16(factor);
 	int16x8_t* buf = (int16x8_t*)buffer;
@@ -48,8 +49,12 @@ rfx_quantization_decode_block_NEON(INT16* buffer, const int buffer_size, const U
 	} while (buf < buf_end);
 }
 
-static void rfx_quantization_decode_NEON(INT16* buffer, const UINT32* quantVals)
+static void rfx_quantization_decode_NEON(INT16* WINPR_RESTRICT buffer,
+                                         const UINT32* WINPR_RESTRICT quantVals)
 {
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(quantVals);
+
 	rfx_quantization_decode_block_NEON(&buffer[0], 1024, quantVals[8] - 1);    /* HL1 */
 	rfx_quantization_decode_block_NEON(&buffer[1024], 1024, quantVals[7] - 1); /* LH1 */
 	rfx_quantization_decode_block_NEON(&buffer[2048], 1024, quantVals[9] - 1); /* HH1 */
@@ -63,7 +68,8 @@ static void rfx_quantization_decode_NEON(INT16* buffer, const UINT32* quantVals)
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-rfx_dwt_2d_decode_block_horiz_NEON(INT16* l, INT16* h, INT16* dst, int subband_width)
+rfx_dwt_2d_decode_block_horiz_NEON(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT h,
+                                   INT16* WINPR_RESTRICT dst, int subband_width)
 {
 	int y, n;
 	INT16* l_ptr = l;
@@ -126,7 +132,8 @@ rfx_dwt_2d_decode_block_horiz_NEON(INT16* l, INT16* h, INT16* dst, int subband_w
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-rfx_dwt_2d_decode_block_vert_NEON(INT16* l, INT16* h, INT16* dst, int subband_width)
+rfx_dwt_2d_decode_block_vert_NEON(INT16* WINPR_RESTRICT l, INT16* WINPR_RESTRICT h,
+                                  INT16* WINPR_RESTRICT dst, int subband_width)
 {
 	int x, n;
 	INT16* l_ptr = l;
@@ -197,7 +204,8 @@ rfx_dwt_2d_decode_block_vert_NEON(INT16* l, INT16* h, INT16* dst, int subband_wi
 }
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-rfx_dwt_2d_decode_block_NEON(INT16* buffer, INT16* idwt, int subband_width)
+rfx_dwt_2d_decode_block_NEON(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT idwt,
+                             int subband_width)
 {
 	INT16 *hl, *lh, *hh, *ll;
 	INT16 *l_dst, *h_dst;
@@ -218,7 +226,7 @@ rfx_dwt_2d_decode_block_NEON(INT16* buffer, INT16* idwt, int subband_width)
 	rfx_dwt_2d_decode_block_vert_NEON(l_dst, h_dst, buffer, subband_width);
 }
 
-static void rfx_dwt_2d_decode_NEON(INT16* buffer, INT16* dwt_buffer)
+static void rfx_dwt_2d_decode_NEON(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RESTRICT dwt_buffer)
 {
 	rfx_dwt_2d_decode_block_NEON(buffer + 3840, dwt_buffer, 8);
 	rfx_dwt_2d_decode_block_NEON(buffer + 3072, dwt_buffer, 16);
@@ -462,7 +470,8 @@ static INLINE size_t prfx_get_band_h_count(size_t level)
 		return (64 + (1 << (level - 1))) >> level;
 }
 
-static INLINE void rfx_dwt_2d_decode_extrapolate_block_neon(INT16* buffer, INT16* temp,
+static INLINE void rfx_dwt_2d_decode_extrapolate_block_neon(INT16* WINPR_RESTRICT buffer,
+                                                            INT16* WINPR_RESTRICT temp,
                                                             size_t level)
 {
 	size_t nDstStepX;
@@ -504,7 +513,8 @@ static INLINE void rfx_dwt_2d_decode_extrapolate_block_neon(INT16* buffer, INT16
 	                               nBandL + nBandH);
 }
 
-static void rfx_dwt_2d_extrapolate_decode_neon(INT16* buffer, INT16* temp)
+static void rfx_dwt_2d_extrapolate_decode_neon(INT16* WINPR_RESTRICT buffer,
+                                               INT16* WINPR_RESTRICT temp)
 {
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(temp);
