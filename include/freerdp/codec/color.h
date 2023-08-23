@@ -209,7 +209,7 @@ typedef struct gdi_palette gdiPalette;
 #if defined(WITH_FREERDP_DEPRECATED)
 #define ReadColor(...) FreeRDPReadColor(__VA_ARGS__)
 #endif
-	FREERDP_API UINT32 FreeRDPReadColor(const BYTE* src, UINT32 format);
+	FREERDP_API UINT32 FreeRDPReadColor(const BYTE* WINPR_RESTRICT src, UINT32 format);
 
 	/***
 	 *
@@ -225,8 +225,9 @@ typedef struct gdi_palette gdiPalette;
 #define WriteColor(...) FreeRDPWriteColor(__VA_ARGS__)
 #define WriteColorIgnoreAlpha(...) FreeRDPWriteColorIgnoreAlpha(__VA_ARGS__)
 #endif
-	FREERDP_API BOOL FreeRDPWriteColor(BYTE* dst, UINT32 format, UINT32 color);
-	FREERDP_API BOOL FreeRDPWriteColorIgnoreAlpha(BYTE* dst, UINT32 format, UINT32 color);
+	FREERDP_API BOOL FreeRDPWriteColor(BYTE* WINPR_RESTRICT dst, UINT32 format, UINT32 color);
+	FREERDP_API BOOL FreeRDPWriteColorIgnoreAlpha(BYTE* WINPR_RESTRICT dst, UINT32 format,
+	                                              UINT32 color);
 
 	/***
 	 *
@@ -297,12 +298,10 @@ typedef struct gdi_palette gdiPalette;
 	 *
 	 * @return          TRUE if success, FALSE otherwise
 	 */
-	FREERDP_API BOOL freerdp_image_copy_from_monochrome(BYTE* pDstData, UINT32 DstFormat,
-	                                                    UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-	                                                    UINT32 nWidth, UINT32 nHeight,
-	                                                    const BYTE* pSrcData, UINT32 backColor,
-	                                                    UINT32 foreColor,
-	                                                    const gdiPalette* palette);
+	FREERDP_API BOOL freerdp_image_copy_from_monochrome(
+	    BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
+	    UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData,
+	    UINT32 backColor, UINT32 foreColor, const gdiPalette* WINPR_RESTRICT palette);
 
 	/***
 	 *
@@ -323,13 +322,11 @@ typedef struct gdi_palette gdiPalette;
 	 *
 	 * @return              TRUE if success, FALSE otherwise
 	 */
-	FREERDP_API BOOL freerdp_image_copy_from_icon_data(BYTE* pDstData, UINT32 DstFormat,
-	                                                   UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-	                                                   UINT16 nWidth, UINT16 nHeight,
-	                                                   const BYTE* bitsColor, UINT16 cbBitsColor,
-	                                                   const BYTE* bitsMask, UINT16 cbBitsMask,
-	                                                   const BYTE* colorTable, UINT16 cbColorTable,
-	                                                   UINT32 bpp);
+	FREERDP_API BOOL freerdp_image_copy_from_icon_data(
+	    BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
+	    UINT32 nYDst, UINT16 nWidth, UINT16 nHeight, const BYTE* WINPR_RESTRICT bitsColor,
+	    UINT16 cbBitsColor, const BYTE* WINPR_RESTRICT bitsMask, UINT16 cbBitsMask,
+	    const BYTE* WINPR_RESTRICT colorTable, UINT16 cbColorTable, UINT32 bpp);
 
 	/***
 	 *
@@ -350,9 +347,10 @@ typedef struct gdi_palette gdiPalette;
 	 * @return              TRUE if success, FALSE otherwise
 	 */
 	FREERDP_API BOOL freerdp_image_copy_from_pointer_data(
-	    BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-	    UINT32 nWidth, UINT32 nHeight, const BYTE* xorMask, UINT32 xorMaskLength,
-	    const BYTE* andMask, UINT32 andMaskLength, UINT32 xorBpp, const gdiPalette* palette);
+	    BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
+	    UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT xorMask,
+	    UINT32 xorMaskLength, const BYTE* WINPR_RESTRICT andMask, UINT32 andMaskLength,
+	    UINT32 xorBpp, const gdiPalette* WINPR_RESTRICT palette);
 
 	/***
 	 *
@@ -398,9 +396,10 @@ typedef struct gdi_palette gdiPalette;
 	 *
 	 * @return          TRUE if success, FALSE otherwise
 	 */
-	FREERDP_API BOOL freerdp_image_scale(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
-	                                     UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth,
-	                                     UINT32 nDstHeight, const BYTE* pSrcData, DWORD SrcFormat,
+	FREERDP_API BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat,
+	                                     UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+	                                     UINT32 nDstWidth, UINT32 nDstHeight,
+	                                     const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
 	                                     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
 	                                     UINT32 nSrcWidth, UINT32 nSrcHeight);
 
@@ -418,9 +417,9 @@ typedef struct gdi_palette gdiPalette;
 	 *
 	 * @return          TRUE if success, FALSE otherwise
 	 */
-	FREERDP_API BOOL freerdp_image_fill(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
-	                                    UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
-	                                    UINT32 color);
+	FREERDP_API BOOL freerdp_image_fill(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat,
+	                                    UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
+	                                    UINT32 nHeight, UINT32 color);
 
 #ifdef __cplusplus
 }
