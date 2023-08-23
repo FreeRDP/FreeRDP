@@ -3293,9 +3293,7 @@ BOOL update_end_paint(rdpUpdate* update)
 {
 	BOOL rc = TRUE;
 
-	if (!update)
-		return FALSE;
-
+	WINPR_ASSERT(update);
 	IFCALLRET(update->EndPaint, rc, update->context);
 
 	rdp_update_unlock(update);
