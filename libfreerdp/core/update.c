@@ -3286,7 +3286,10 @@ BOOL update_begin_paint(rdpUpdate* update)
 	WINPR_ASSERT(update);
 	rdp_update_lock(update);
 
-	return IFCALLRESULT(TRUE, update->BeginPaint, update->context);
+	BOOL rc = IFCALLRESULT(TRUE, update->BeginPaint, update->context);
+	if (!rc)
+		WLog_WARN(TAG, "BeginPaint call failed");
+	return rc;
 }
 
 BOOL update_end_paint(rdpUpdate* update)
@@ -3295,7 +3298,8 @@ BOOL update_end_paint(rdpUpdate* update)
 
 	WINPR_ASSERT(update);
 	IFCALLRET(update->EndPaint, rc, update->context);
-
+	if (!rc)
+		WLog_WARN(TAG, "EndPaint call failed");
 	rdp_update_unlock(update);
 	return rc;
 }
