@@ -41,7 +41,8 @@
  * LL3		4032		8x8		64
  */
 
-static void rfx_quantization_decode_block(const primitives_t* prims, INT16* buffer, int buffer_size,
+static void rfx_quantization_decode_block(const primitives_t* WINPR_RESTRICT prims,
+                                          INT16* WINPR_RESTRICT buffer, UINT32 buffer_size,
                                           UINT32 factor)
 {
 	if (factor == 0)
@@ -50,9 +51,11 @@ static void rfx_quantization_decode_block(const primitives_t* prims, INT16* buff
 	prims->lShiftC_16s(buffer, factor, buffer, buffer_size);
 }
 
-void rfx_quantization_decode(INT16* buffer, const UINT32* quantVals)
+void rfx_quantization_decode(INT16* WINPR_RESTRICT buffer, const UINT32* WINPR_RESTRICT quantVals)
 {
 	const primitives_t* prims = primitives_get();
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(quantVals);
 
 	rfx_quantization_decode_block(prims, &buffer[0], 1024, quantVals[8] - 1);    /* HL1 */
 	rfx_quantization_decode_block(prims, &buffer[1024], 1024, quantVals[7] - 1); /* LH1 */
@@ -66,7 +69,8 @@ void rfx_quantization_decode(INT16* buffer, const UINT32* quantVals)
 	rfx_quantization_decode_block(prims, &buffer[4032], 64, quantVals[0] - 1);   /* LL3 */
 }
 
-static void rfx_quantization_encode_block(INT16* buffer, int buffer_size, UINT32 factor)
+static void rfx_quantization_encode_block(INT16* WINPR_RESTRICT buffer, size_t buffer_size,
+                                          UINT32 factor)
 {
 	INT16* dst;
 	INT16 half;
@@ -82,8 +86,12 @@ static void rfx_quantization_encode_block(INT16* buffer, int buffer_size, UINT32
 	}
 }
 
-void rfx_quantization_encode(INT16* buffer, const UINT32* quantization_values)
+void rfx_quantization_encode(INT16* WINPR_RESTRICT buffer,
+                             const UINT32* WINPR_RESTRICT quantization_values)
 {
+	WINPR_ASSERT(buffer);
+	WINPR_ASSERT(quantization_values);
+
 	rfx_quantization_encode_block(buffer, 1024, quantization_values[8] - 6);        /* HL1 */
 	rfx_quantization_encode_block(buffer + 1024, 1024, quantization_values[7] - 6); /* LH1 */
 	rfx_quantization_encode_block(buffer + 2048, 1024, quantization_values[9] - 6); /* HH1 */
