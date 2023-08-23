@@ -392,21 +392,24 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R_general(const BYTE* const WINPR_R
                                                        UINT32 DstFormat,
                                                        const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 x, y;
-	UINT32 nWidth, nHeight;
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
-	nWidth = roi->width;
-	nHeight = roi->height;
 
-	for (y = 0; y < nHeight; y++)
+	WINPR_ASSERT(pSrc);
+	WINPR_ASSERT(pDst);
+	WINPR_ASSERT(roi);
+
+	const UINT32 nWidth = roi->width;
+	const UINT32 nHeight = roi->height;
+
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		const BYTE* pY = pSrc[0] + y * srcStep[0];
 		const BYTE* pU = pSrc[1] + y * srcStep[1];
 		const BYTE* pV = pSrc[2] + y * srcStep[2];
 		BYTE* pRGB = pDst + y * dstStep;
 
-		for (x = 0; x < nWidth; x++)
+		for (UINT32 x = 0; x < nWidth; x++)
 		{
 			const BYTE Y = pY[x];
 			const BYTE U = pU[x];
@@ -428,6 +431,11 @@ static pstatus_t general_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* const WINPR_REST
                                                     const prim_size_t* WINPR_RESTRICT roi)
 {
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
+
+	WINPR_ASSERT(pSrc);
+	WINPR_ASSERT(pDst);
+	WINPR_ASSERT(roi);
+
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
 
