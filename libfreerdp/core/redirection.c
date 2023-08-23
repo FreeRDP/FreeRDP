@@ -254,7 +254,7 @@ static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* p
 	size_t utf8_len = 0;
 	char* utf8 = ConvertWCharNToUtf8Alloc(wchar, *pLength, &utf8_len);
 	if (!utf8)
-		return FALSE;
+		goto fail;
 
 	redirection_free_data(pData, NULL);
 
@@ -288,6 +288,8 @@ static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* p
 
 	rc = TRUE;
 fail:
+	if (!rc)
+		WLog_ERR(TAG, "failed to read base64 data");
 	free(utf8);
 	return rc;
 }
@@ -368,8 +370,17 @@ static BOOL rdp_redirection_read_target_cert(rdpRedirection* redirection, const 
 					if (redirection->TargetCertificate)
 						WLog_WARN(TAG, "Duplicate TargetCertificate in data detected!");
 					else
+					{
 						redirection->TargetCertificate =
 						    freerdp_certificate_new_from_der(ptr, plength);
+						if (!redirection->TargetCertificate)
+							WLog_ERR(TAG, "TargetCertificate parsing DER data failed");
+					}
+				}
+				else
+				{
+					WLog_ERR(TAG,
+					         "TargetCertificate data in unknown encoding %" PRIu32 " detected!");
 				}
 				break;
 			default: /* ignore unknown fields */
@@ -752,11 +763,18 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		{
 			const size_t charLen = redirection->PasswordLength / sizeof(WCHAR);
 			if (redirection->PasswordLength > LB_PASSWORD_MAX_LENGTH)
+			{
+				WLog_ERR(TAG, "LB_PASSWORD: %" PRIuz " exceeds limit of %d", charLen,
+				         LB_PASSWORD_MAX_LENGTH);
 				return STATE_RUN_FAILED;
+			}
 
 			/* Ensure the text password is '\0' terminated */
 			if (_wcsnlen((const WCHAR*)redirection->Password, charLen) == charLen)
+			{
+				WLog_ERR(TAG, "LB_PASSWORD: missing '\0' termination");
 				return STATE_RUN_FAILED;
+			}
 		}
 	}
 
@@ -798,7 +816,6 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
 	{
-		UINT32 count = 0;
 		UINT32 targetNetAddressesLength = 0;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
@@ -806,11 +823,18 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 
 		Stream_Read_UINT32(s, targetNetAddressesLength);
 		Stream_Read_UINT32(s, redirection->TargetNetAddressesCount);
-		count = redirection->TargetNetAddressesCount;
-		redirection->TargetNetAddresses = (char**)calloc(count, sizeof(char*));
+		const UINT32 count = redirection->TargetNetAddressesCount;
+		redirection->TargetNetAddresses = NULL;
+		if (count > 0)
+		{
+			redirection->TargetNetAddresses = (char**)calloc(count, sizeof(char*));
 
-		if (!redirection->TargetNetAddresses)
-			return STATE_RUN_FAILED;
+			if (!redirection->TargetNetAddresses)
+			{
+				WLog_ERR(TAG, "TargetNetAddresses %" PRIu32 " failed to allocate", count);
+				return STATE_RUN_FAILED;
+			}
+		}
 
 		WLog_DBG(TAG, "TargetNetAddressesCount: %" PRIu32 "", count);
 
