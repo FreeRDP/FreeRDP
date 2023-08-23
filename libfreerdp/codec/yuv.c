@@ -367,6 +367,20 @@ static BOOL intersects(UINT32 pos, const RECTANGLE_16* regionRects, UINT32 numRe
 	return FALSE;
 }
 
+static RECTANGLE_16 clamp(YUV_CONTEXT* context, const RECTANGLE_16* rect, UINT32 srcHeight)
+{
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(rect);
+
+	RECTANGLE_16 c = *rect;
+	const UINT32 height = MIN(context->height, srcHeight);
+	if (c.top > height)
+		c.top = height;
+	if (c.bottom > height)
+		c.bottom = height;
+	return c;
+}
+
 static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* pYUVData[3],
                         const UINT32 iStride[3], UINT32 yuvHeight, UINT32 DstFormat, BYTE* dest,
                         UINT32 nDstStep, const RECTANGLE_16* regionRects, UINT32 numRegionRects)
@@ -393,9 +407,9 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 	{
 		for (UINT32 y = 0; y < numRegionRects; y++)
 		{
-			const RECTANGLE_16* rect = &regionRects[y];
+			const RECTANGLE_16 rect = clamp(context, &regionRects[y], yuvHeight);
 			YUV_PROCESS_WORK_PARAM current =
-			    pool_decode_param(rect, context, pYUVData, iStride, DstFormat, dest, nDstStep);
+			    pool_decode_param(&rect, context, pYUVData, iStride, DstFormat, dest, nDstStep);
 			cb(NULL, &current, NULL);
 		}
 		return TRUE;
@@ -404,8 +418,7 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 	/* case where we use threads */
 	for (x = 0; x < numRegionRects; x++)
 	{
-		const RECTANGLE_16* rect = &regionRects[x];
-		RECTANGLE_16 r = *rect;
+		RECTANGLE_16 r = clamp(context, &regionRects[x], yuvHeight);
 
 		if (intersects(x, regionRects, numRegionRects))
 			continue;
@@ -418,18 +431,17 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 			while (y.top < y.bottom)
 			{
 				RECTANGLE_16 z = y;
-				YUV_PROCESS_WORK_PARAM* cur;
 
 				if (context->work_object_count <= waitCount)
 				{
 					WLog_ERR(TAG,
-					         "YUV decoder: invalid number of tiles, only support %" PRIu32
+					         "YUV decoder: invalid number of tiles, only support less than %" PRIu32
 					         ", got %" PRIu32,
 					         context->work_object_count, waitCount);
 					goto fail;
 				}
 
-				cur = &context->work_dec_params[waitCount];
+				YUV_PROCESS_WORK_PARAM* cur = &context->work_dec_params[waitCount];
 				z.bottom = MIN(z.bottom, z.top + TILE_SIZE);
 				if (rectangle_is_empty(&z))
 					continue;
@@ -503,7 +515,7 @@ static void CALLBACK yuv444_combine_work_callback(PTP_CALLBACK_INSTANCE instance
 
 static INLINE YUV_COMBINE_WORK_PARAM pool_decode_rect_param(
     const RECTANGLE_16* rect, YUV_CONTEXT* context, BYTE type, const BYTE* pYUVData[3],
-    const UINT32 iStride[3], UINT32 yuvHeight, BYTE* pYUVDstData[3], const UINT32 iDstStride[3])
+    const UINT32 iStride[3], BYTE* pYUVDstData[3], const UINT32 iDstStride[3])
 {
 	YUV_COMBINE_WORK_PARAM current = { 0 };
 
@@ -533,7 +545,7 @@ static INLINE YUV_COMBINE_WORK_PARAM pool_decode_rect_param(
 }
 
 static BOOL pool_decode_rect(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVData[3],
-                             const UINT32 iStride[3], UINT32 yuvHeight, BYTE* pYUVDstData[3],
+                             const UINT32 iStride[3], BYTE* pYUVDstData[3],
                              const UINT32 iDstStride[3], const RECTANGLE_16* regionRects,
                              UINT32 numRegionRects)
 {
@@ -554,9 +566,8 @@ static BOOL pool_decode_rect(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVDa
 	{
 		for (y = 0; y < numRegionRects; y++)
 		{
-			YUV_COMBINE_WORK_PARAM current =
-			    pool_decode_rect_param(&regionRects[y], context, type, pYUVData, iStride, yuvHeight,
-			                           pYUVDstData, iDstStride);
+			YUV_COMBINE_WORK_PARAM current = pool_decode_rect_param(
+			    &regionRects[y], context, type, pYUVData, iStride, pYUVDstData, iDstStride);
 			cb(NULL, &current, NULL);
 		}
 		return TRUE;
@@ -570,14 +581,14 @@ static BOOL pool_decode_rect(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVDa
 		if (context->work_object_count <= waitCount)
 		{
 			WLog_ERR(TAG,
-			         "YUV rect decoder: invalid number of tiles, only support %" PRIu32
+			         "YUV rect decoder: invalid number of tiles, only support less than %" PRIu32
 			         ", got %" PRIu32,
 			         context->work_object_count, waitCount);
 			goto fail;
 		}
 		current = &context->work_combined_params[waitCount];
 		*current = pool_decode_rect_param(&regionRects[waitCount], context, type, pYUVData, iStride,
-		                                  yuvHeight, pYUVDstData, iDstStride);
+		                                  pYUVDstData, iDstStride);
 
 		if (!submit_object(&context->work_objects[waitCount], cb, current, context))
 			goto fail;
@@ -590,7 +601,7 @@ fail:
 }
 
 BOOL yuv444_context_decode(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVData[3],
-                           const UINT32 iStride[3], UINT32 yuvHeight, BYTE* pYUVDstData[3],
+                           const UINT32 iStride[3], UINT32 srcYuvHeight, BYTE* pYUVDstData[3],
                            const UINT32 iDstStride[3], DWORD DstFormat, BYTE* dest, UINT32 nDstStep,
                            const RECTANGLE_16* regionRects, UINT32 numRegionRects)
 {
@@ -609,15 +620,15 @@ BOOL yuv444_context_decode(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVData
 		WLog_ERR(TAG, "YUV context set up for encoding, can not decode with it, aborting");
 		return FALSE;
 	}
-	if (!pool_decode_rect(context, type, pYUVData, iStride, yuvHeight, pYUVDstData, iDstStride,
-	                      regionRects, numRegionRects))
+	if (!pool_decode_rect(context, type, pYUVData, iStride, pYUVDstData, iDstStride, regionRects,
+	                      numRegionRects))
 		return FALSE;
 
 	pYUVCDstData[0] = pYUVDstData[0];
 	pYUVCDstData[1] = pYUVDstData[1];
 	pYUVCDstData[2] = pYUVDstData[2];
-	return pool_decode(context, yuv444_process_work_callback, pYUVCDstData, iDstStride, yuvHeight,
-	                   DstFormat, dest, nDstStep, regionRects, numRegionRects);
+	return pool_decode(context, yuv444_process_work_callback, pYUVCDstData, iDstStride,
+	                   srcYuvHeight, DstFormat, dest, nDstStep, regionRects, numRegionRects);
 }
 
 BOOL yuv420_context_decode(YUV_CONTEXT* context, const BYTE* pYUVData[3], const UINT32 iStride[3],
@@ -827,7 +838,7 @@ static BOOL pool_encode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 			if (context->work_object_count <= waitCount)
 			{
 				WLog_ERR(TAG,
-				         "YUV encoder: invalid number of tiles, only support %" PRIu32
+				         "YUV encoder: invalid number of tiles, only support less than %" PRIu32
 				         ", got %" PRIu32,
 				         context->work_object_count, waitCount);
 				goto fail;

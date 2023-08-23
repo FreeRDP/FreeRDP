@@ -396,21 +396,25 @@ fail:
 
 static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight)
 {
-	UINT32 x;
+	WINPR_ASSERT(h264);
+
 	const UINT32* piMainStride = h264->iStride;
 	UINT32* piDstSize = h264->iYUV444Size;
 	UINT32* piDstStride = h264->iYUV444Stride;
 	BYTE** ppYUVDstData = h264->pYUV444Data;
 	BYTE** ppOldYUVDstData = h264->pOldYUV444Data;
+
+	nDstHeight = MAX(h264->height, nDstHeight);
 	const UINT32 pad = nDstHeight % 16;
 	UINT32 padDstHeight = nDstHeight; /* Need alignment to 16x16 blocks */
 
 	if (pad != 0)
 		padDstHeight += 16 - pad;
 
-	if ((piMainStride[0] != piDstStride[0]) || (piDstSize[0] != piMainStride[0] * padDstHeight))
+	if ((piMainStride[0] != piDstStride[0]) ||
+	    (piDstSize[0] != 1ull * piMainStride[0] * padDstHeight))
 	{
-		for (x = 0; x < 3; x++)
+		for (UINT32 x = 0; x < 3; x++)
 		{
 			BYTE* tmp1;
 			BYTE* tmp2;
@@ -434,7 +438,7 @@ static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight)
 		}
 	}
 
-	for (x = 0; x < 3; x++)
+	for (UINT32 x = 0; x < 3; x++)
 	{
 		if (!ppOldYUVDstData[x] || !ppYUVDstData[x] || (piDstSize[x] == 0) || (piDstStride[x] == 0))
 		{
