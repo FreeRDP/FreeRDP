@@ -896,7 +896,35 @@ static WIN32_FILE_SEARCH* file_search_new(const char* name, size_t namelen, cons
 
 	pFileSearch->pDir = opendir(pFileSearch->lpPath);
 	if (!pFileSearch->pDir)
+	{
+		/* Work around for android:
+		 * parent directories are not accessible, so if we have a directory without pattern
+		 * try to open it directly and set pattern to '*'
+		 */
+		struct stat fileStat = { 0 };
+		if (stat(name, &fileStat) == 0)
+		{
+			if (S_ISDIR(fileStat.st_mode))
+			{
+				pFileSearch->pDir = opendir(name);
+				if (pFileSearch->pDir)
+				{
+					free(pFileSearch->lpPath);
+					free(pFileSearch->lpPattern);
+					pFileSearch->lpPath = _strdup(name);
+					pFileSearch->lpPattern = _strdup("*");
+					if (!pFileSearch->lpPath || !pFileSearch->lpPattern)
+					{
+						closedir(pFileSearch->pDir);
+						pFileSearch->pDir = NULL;
+					}
+				}
+			}
+		}
+	}
+	if (!pFileSearch->pDir)
 		goto fail;
+
 	return pFileSearch;
 fail:
 	FindClose(pFileSearch);
