@@ -49,7 +49,6 @@ static INLINE BYTE* WRITEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd, UINT32 r
 			data = xorPixel;
 
 		DESTWRITEPIXEL(pbDest, data);
-		DESTNEXTPIXEL(pbDest);
 		mask = mask << 1;
 	});
 	return pbDest;
@@ -82,7 +81,6 @@ static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd,
 			data = BLACK_PIXEL;
 
 		DESTWRITEPIXEL(pbDest, data);
-		DESTNEXTPIXEL(pbDest);
 		mask = mask << 1;
 	});
 	return pbDest;
@@ -156,6 +154,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 		if ((code == REGULAR_BG_RUN) || (code == MEGA_MEGA_BG_RUN))
 		{
 			runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
+			if (advance == 0)
+				return FALSE;
 			pbSrc = pbSrc + advance;
 
 			if (fFirstLine)
@@ -166,17 +166,13 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 						return FALSE;
 
 					DESTWRITEPIXEL(pbDest, fgPel);
-					DESTNEXTPIXEL(pbDest);
 					runLength = runLength - 1;
 				}
 
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
 					return FALSE;
 
-				UNROLL(runLength, {
-					DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
-					DESTNEXTPIXEL(pbDest);
-				});
+				UNROLL(runLength, { DESTWRITEPIXEL(pbDest, BLACK_PIXEL); });
 			}
 			else
 			{
@@ -188,7 +184,6 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 						return FALSE;
 
 					DESTWRITEPIXEL(pbDest, temp ^ fgPel);
-					DESTNEXTPIXEL(pbDest);
 					runLength--;
 				}
 
@@ -198,7 +193,6 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 				UNROLL(runLength, {
 					DESTREADPIXEL(temp, pbDest - rowDelta);
 					DESTWRITEPIXEL(pbDest, temp);
-					DESTNEXTPIXEL(pbDest);
 				});
 			}
 
@@ -219,14 +213,15 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			case LITE_SET_FG_FG_RUN:
 			case MEGA_MEGA_SET_FG_RUN:
 				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
+				if (advance == 0)
+					return FALSE;
 				pbSrc = pbSrc + advance;
 
 				if (code == LITE_SET_FG_FG_RUN || code == MEGA_MEGA_SET_FG_RUN)
 				{
-					if (!buffer_within_range(pbSrc, pbEnd))
+					if (!buffer_within_range(pbSrc + sizeof(fgPel), pbEnd))
 						return FALSE;
 					SRCREADPIXEL(fgPel, pbSrc);
-					SRCNEXTPIXEL(pbSrc);
 				}
 
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
@@ -234,17 +229,13 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 
 				if (fFirstLine)
 				{
-					UNROLL(runLength, {
-						DESTWRITEPIXEL(pbDest, fgPel);
-						DESTNEXTPIXEL(pbDest);
-					});
+					UNROLL(runLength, { DESTWRITEPIXEL(pbDest, fgPel); });
 				}
 				else
 				{
 					UNROLL(runLength, {
 						DESTREADPIXEL(temp, pbDest - rowDelta);
 						DESTWRITEPIXEL(pbDest, temp ^ fgPel);
-						DESTNEXTPIXEL(pbDest);
 					});
 				}
 
@@ -254,24 +245,22 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			case LITE_DITHERED_RUN:
 			case MEGA_MEGA_DITHERED_RUN:
 				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
+				if (advance == 0)
+					return FALSE;
 				pbSrc = pbSrc + advance;
-				if (!buffer_within_range(pbSrc, pbEnd))
+				if (!buffer_within_range(pbSrc + sizeof(pixelA), pbEnd))
 					return FALSE;
 				SRCREADPIXEL(pixelA, pbSrc);
-				SRCNEXTPIXEL(pbSrc);
-				if (!buffer_within_range(pbSrc, pbEnd))
+				if (!buffer_within_range(pbSrc + sizeof(pixelB), pbEnd))
 					return FALSE;
 				SRCREADPIXEL(pixelB, pbSrc);
-				SRCNEXTPIXEL(pbSrc);
 
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength * 2))
 					return FALSE;
 
 				UNROLL(runLength, {
 					DESTWRITEPIXEL(pbDest, pixelA);
-					DESTNEXTPIXEL(pbDest);
 					DESTWRITEPIXEL(pbDest, pixelB);
-					DESTNEXTPIXEL(pbDest);
 				});
 				break;
 
@@ -279,19 +268,17 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			case REGULAR_COLOR_RUN:
 			case MEGA_MEGA_COLOR_RUN:
 				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
+				if (advance == 0)
+					return FALSE;
 				pbSrc = pbSrc + advance;
-				if (!buffer_within_range(pbSrc, pbEnd))
+				if (!buffer_within_range(pbSrc + sizeof(pixelA), pbEnd))
 					return FALSE;
 				SRCREADPIXEL(pixelA, pbSrc);
-				SRCNEXTPIXEL(pbSrc);
 
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
 					return FALSE;
 
-				UNROLL(runLength, {
-					DESTWRITEPIXEL(pbDest, pixelA);
-					DESTNEXTPIXEL(pbDest);
-				});
+				UNROLL(runLength, { DESTWRITEPIXEL(pbDest, pixelA); });
 				break;
 
 			/* Handle Foreground/Background Image Orders. */
@@ -300,14 +287,15 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			case LITE_SET_FG_FGBG_IMAGE:
 			case MEGA_MEGA_SET_FGBG_IMAGE:
 				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
+				if (advance == 0)
+					return FALSE;
 				pbSrc = pbSrc + advance;
 
-				if (!buffer_within_range(pbSrc, pbEnd))
+				if (!buffer_within_range(pbSrc + sizeof(fgPel), pbEnd))
 					return FALSE;
 				if (code == LITE_SET_FG_FGBG_IMAGE || code == MEGA_MEGA_SET_FGBG_IMAGE)
 				{
 					SRCREADPIXEL(fgPel, pbSrc);
-					SRCNEXTPIXEL(pbSrc);
 				}
 
 				if (fFirstLine)
@@ -365,6 +353,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 			case REGULAR_COLOR_IMAGE:
 			case MEGA_MEGA_COLOR_IMAGE:
 				runLength = ExtractRunLength(code, pbSrc, pbEnd, &advance);
+				if (advance == 0)
+					return FALSE;
 				pbSrc = pbSrc + advance;
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, runLength))
 					return FALSE;
@@ -373,9 +363,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 
 				UNROLL(runLength, {
 					SRCREADPIXEL(temp, pbSrc);
-					SRCNEXTPIXEL(pbSrc);
 					DESTWRITEPIXEL(pbDest, temp);
-					DESTNEXTPIXEL(pbDest);
 				});
 				break;
 
@@ -427,7 +415,6 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 					return FALSE;
 
 				DESTWRITEPIXEL(pbDest, WHITE_PIXEL);
-				DESTNEXTPIXEL(pbDest);
 				break;
 
 			/* Handle Black Order. */
@@ -438,7 +425,6 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 					return FALSE;
 
 				DESTWRITEPIXEL(pbDest, BLACK_PIXEL);
-				DESTNEXTPIXEL(pbDest);
 				break;
 
 			default:

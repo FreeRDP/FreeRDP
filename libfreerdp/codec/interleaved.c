@@ -208,7 +208,10 @@ static UINT ExtractRunLengthRegularFgBg(const BYTE* pbOrderHdr, const BYTE* pbEn
 	if (runLength == 0)
 	{
 		if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
+		{
+			*advance = 0;
 			return 0;
+		}
 		runLength = *(pbOrderHdr + 1) + 1;
 		(*advance)++;
 	}
@@ -230,7 +233,10 @@ static UINT ExtractRunLengthLiteFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, 
 	if (runLength == 0)
 	{
 		if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
+		{
+			*advance = 0;
 			return 0;
+		}
 		runLength = *(pbOrderHdr + 1) + 1;
 		(*advance)++;
 	}
@@ -252,7 +258,10 @@ static UINT ExtractRunLengthRegular(const BYTE* pbOrderHdr, const BYTE* pbEnd, U
 	if (runLength == 0)
 	{
 		if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
+		{
+			*advance = 0;
 			return 0;
+		}
 		runLength = *(pbOrderHdr + 1) + 32;
 		(*advance)++;
 	}
@@ -269,7 +278,10 @@ static UINT ExtractRunLengthMegaMega(const BYTE* pbOrderHdr, const BYTE* pbEnd, 
 	WINPR_ASSERT(advance);
 
 	if (!buffer_within_range(pbOrderHdr + 2, pbEnd))
+	{
+		*advance = 0;
 		return 0;
+	}
 
 	runLength = ((UINT16)pbOrderHdr[1]) | (((UINT16)pbOrderHdr[2]) << 8);
 	(*advance) += 2;
@@ -289,7 +301,10 @@ static UINT ExtractRunLengthLite(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT
 	if (runLength == 0)
 	{
 		if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
+		{
+			*advance = 0;
 			return 0;
+		}
 		runLength = *(pbOrderHdr + 1) + 16;
 		(*advance)++;
 	}
@@ -306,6 +321,7 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 	WINPR_ASSERT(pbEnd);
 	WINPR_ASSERT(advance);
 
+	*advance = 0;
 	if (!buffer_within_range(pbOrderHdr, pbEnd))
 		return 0;
 
@@ -393,19 +409,26 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
 #undef SRCREADPIXEL
-#undef DESTNEXTPIXEL
-#undef SRCNEXTPIXEL
 #undef WRITEFGBGIMAGE
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
 #undef WHITE_PIXEL
 #define WHITE_PIXEL 0xFF
-#define DESTWRITEPIXEL(_buf, _pix) write_pixel_8(_buf, _pix)
+#define DESTWRITEPIXEL(_buf, _pix) \
+	do                             \
+	{                              \
+		write_pixel_8(_buf, _pix); \
+		_buf += 1;                 \
+	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0]
-#define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0]
-#define DESTNEXTPIXEL(_buf) _buf += 1
-#define SRCNEXTPIXEL(_buf) _buf += 1
+#define SRCREADPIXEL(_pix, _buf) \
+	do                           \
+	{                            \
+		_pix = (_buf)[0];        \
+		_buf += 1;               \
+	} while (0)
+
 #define WRITEFGBGIMAGE WriteFgBgImage8to8
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage8to8
 #define RLEDECOMPRESS RleDecompress8to8
@@ -417,19 +440,25 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
 #undef SRCREADPIXEL
-#undef DESTNEXTPIXEL
-#undef SRCNEXTPIXEL
 #undef WRITEFGBGIMAGE
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
 #undef WHITE_PIXEL
 #define WHITE_PIXEL 0xFFFF
-#define DESTWRITEPIXEL(_buf, _pix) write_pixel_16(_buf, _pix)
+#define DESTWRITEPIXEL(_buf, _pix)  \
+	do                              \
+	{                               \
+		write_pixel_16(_buf, _pix); \
+		_buf += 2;                  \
+	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
-#define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8)
-#define DESTNEXTPIXEL(_buf) _buf += 2
-#define SRCNEXTPIXEL(_buf) _buf += 2
+#define SRCREADPIXEL(_pix, _buf)             \
+	do                                       \
+	{                                        \
+		_pix = (_buf)[0] | ((_buf)[1] << 8); \
+		_buf += 2;                           \
+	} while (0)
 #define WRITEFGBGIMAGE WriteFgBgImage16to16
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage16to16
 #define RLEDECOMPRESS RleDecompress16to16
@@ -441,19 +470,26 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
 #undef SRCREADPIXEL
-#undef DESTNEXTPIXEL
-#undef SRCNEXTPIXEL
 #undef WRITEFGBGIMAGE
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
 #undef WHITE_PIXEL
 #define WHITE_PIXEL 0xFFFFFF
-#define DESTWRITEPIXEL(_buf, _pix) write_pixel_24(_buf, _pix)
+#define DESTWRITEPIXEL(_buf, _pix)  \
+	do                              \
+	{                               \
+		write_pixel_24(_buf, _pix); \
+		_buf += 3;                  \
+	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16)
-#define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16)
-#define DESTNEXTPIXEL(_buf) _buf += 3
-#define SRCNEXTPIXEL(_buf) _buf += 3
+#define SRCREADPIXEL(_pix, _buf)                                 \
+	do                                                           \
+	{                                                            \
+		_pix = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16); \
+		_buf += 3;                                               \
+	} while (0)
+
 #define WRITEFGBGIMAGE WriteFgBgImage24to24
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage24to24
 #define RLEDECOMPRESS RleDecompress24to24
