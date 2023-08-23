@@ -629,10 +629,12 @@ state_run_t fastpath_recv_updates(rdpFastPath* fastpath, wStream* s)
 {
 	state_run_t rc = STATE_RUN_FAILED;
 
-	if (!fastpath || !fastpath->rdp || !fastpath->rdp->update || !s)
-		return STATE_RUN_FAILED;
+	WINPR_ASSERT(s);
+	WINPR_ASSERT(fastpath);
+	WINPR_ASSERT(fastpath->rdp);
 
 	rdpUpdate* update = fastpath->rdp->update;
+	WINPR_ASSERT(update);
 
 	if (!update_begin_paint(update))
 		goto fail;

@@ -957,7 +957,7 @@ BOOL security_fips_check_signature(const BYTE* data, size_t length, const BYTE* 
 	security_UINT32_le(use_count_le, sizeof(use_count_le), rdp->decrypt_use_count++);
 
 	if (!(hmac = winpr_HMAC_New()))
-		return FALSE;
+		goto out;
 
 	if (!winpr_HMAC_Init(hmac, WINPR_MD_SHA1, rdp->fips_sign_key, WINPR_SHA1_DIGEST_LENGTH))
 		goto out;
