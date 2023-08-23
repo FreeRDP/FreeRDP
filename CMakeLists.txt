@@ -200,12 +200,7 @@ endif(CMAKE_CROSSCOMPILING)
 # Turn on solution folders (2.8.4+)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-
-set(LIB_DEFAULT ON)
-if (IOS)
-	set(LIB_DEFAULT OFF)
-endif()
-option(BUILD_SHARED_LIBS "Build shared libraries" ${LIB_DEFAULT})
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
 
 if(BUILD_TESTING)

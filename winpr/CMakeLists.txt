@@ -35,7 +35,7 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	option(WITH_LIBRARY_VERSIONING "Use library version triplet" ON)
 
 	# Default to build shared libs
-	option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+	option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 	option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
 
 	if (EXPORT_ALL_SYMBOLS)
