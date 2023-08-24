@@ -17,6 +17,7 @@
 # limitations under the License.
 define_channel_client_subsystem("printer" "cups" "")
 
+find_package(Cups REQUIRED)
 set(${MODULE_PREFIX}_SRCS
 		printer_cups.c)
 
@@ -27,6 +28,6 @@ set(${MODULE_PREFIX}_LIBS
 )
 
 include_directories(..)
-include_directories(${CUPS_INCLUDE_DIR})
+include_directories(${CUPS_INCLUDE_DIRS})
 
 add_channel_client_subsystem_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} "" TRUE "")
