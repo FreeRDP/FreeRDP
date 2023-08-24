@@ -1,17 +1,22 @@
 FreeRDP has a few dependencies that are required for proper operation:
 
-1. SSL
+1. SSL (required)
 
 RDP requires a secure tunnel and utilizes TLS for this. We do not implement this
 ourselves but reuse existing libraries:
 
 We support
 
-* OpenSSL our main development SSL library
-* LibreSSL (supported by community)
-* MBedTLS (supported by community)
+* OpenSSL our main development SSL library (-DWITH_OPENSSL=ON, default)
+* LibreSSL (supported by community, -DWITH_OPENSSL=ON, drop in replacement)
+* MBedTLS (supported by community, -DWITH_OPENSSL=OFF -DWITH_MBEDTLS=ON)
 
-2. Kerberos
+optionally there are some algorithms that can be shipped with FreeRDP itself if the SSL library deprecated them:
+* -DWITH_INTERNAL_MD4=ON
+* -DWITH_INTERNAL_MD5=ON
+* -DWITH_INTERNAL_RC4=ON
+
+2. Kerberos (optional, disable with -DWITH_RB5=OFF)
 
 Authentication to many services requires kerberos (especially if smartcards are in use)
 
@@ -20,7 +25,7 @@ We support:
 * MIT
 * Heimdal
 
-3. JSON
+3. JSON (optional, disable with -DWITH_AAD=OFF)
 
 Azure logon requires HTTP/JSON messages to be parsed.
 
@@ -35,22 +40,22 @@ on the H264 codec
 
 We support
 
-* OpenH264
-* FFMPEG (x264 or OpenH264)
+* OpenH264 (enable with -DWITH_OPENH264=ON)
+* FFMPEG (x264 or OpenH264, enable with -DWITH_FFMPEG=ON)
 
 There are some platform specific implementations too (e.g. mediacodec on android) but these
 two are the options that are always required.
 
-5. Graphics scaling support
+5. Graphics scaling support (optional, required for HighDPI support)
 
 High DPI support and smart-sizing option require bitmaps to be scaled by the client. 
 
 We support
 
-* Swscale
-* Cairo
+* Swscale (enable with -DWITH_SWSCALE=ON)
+* Cairo (enable with -DWITH_CAIRO=ON)
 
-6. Audio encoders/decoders
+6. Audio encoders/decoders (optional, hightly recommended though)
 
 Sound and Microphone options allow transmission of data in compressed formats.
 The most widely supported formats are uncompressed PCM (all systems support that)
@@ -60,21 +65,24 @@ but do not provide the same quality as the afore mentioned ones.
 We support
 
 * FAAC / FAAD2 / soxr (encoder/decoder/resampling)
-* FFMPEG
-* GSM (older low bandwidth codec)
+* GSM (older low bandwidth codec, -DWITH_GSM=ON)
+* FFMPEG (-DWITH_DSP_FFMPEG)
+* SOXR (optional, resampling library, enable with -DWITH_SOX!=ON)
 
-7. Smartcard
+to enable some experimental codecs (mainly AAC encoding) add -DWITH_DSP_EXPERIMENTAL=ON
+
+7. Smartcard (optional)
 
 To utilize smartcards for authentication/redirection 
 
 We support
 
-* PCSC
-* pkcs11
+* PCSC (disable with -DWITH_PCSC=OFF)
+* pkcs11 (disable with -DWITH_PKCS11=OFF)
 
 PCSC is required for smartcard redirection, pkcs11 for NLA smartcard logon support
 
-8. Unicode
+8. Unicode (required, use -DWITH_UNICODE_BUILTIN=ON to utilize custom char16 <--> utf8 conversion routines)
 
 Most of the protocol preferably uses UCS-2/UTF16 for strings. To convert to/from UTF-8 a
 unicode support library is required:
@@ -83,7 +91,7 @@ unicode support library is required:
 * ICU on linux/unix and android
 * On Apple (iOS/Mac) we use native NSString unicode conversion routines
 
-9. USB redirection
+9. USB redirection (optional, disable with -DCHANNEL_URBDRC=OFF)
 
 The protocol has an extension (channel) to allow low level USB redirection
 
@@ -93,18 +101,34 @@ We support
 
 10. Platform support (mainly linux, for others the platform SDK is usually enough)
 
-* SDL2 for the SDL client (all platforms)
-* CUPS (linux/apple) for printing support
-* libsystemd (linux) for journald logging support
+* SDL2 for the SDL client (all platforms, disable with -DWITH_CLIENT_SDL=OFF)
+* CUPS (linux/apple) for printing support (disable with -DWITH_CUPS=OFF)
+* libsystemd (linux) for journald logging support (disable with -DWITH_LIBSYSTEMD=OFF)
 * PAM headers/libraries (server side authentication)
-* FUSE/FUSE3 for file clipboard support (linux/mac os)
-* Wayland for wlfreerdp
-* X11 development headers for X11 client
-* ALSA development headers/libraris
-* PULSE development headers/libraries
-* OSS development headers/libraries
+* FUSE/FUSE3 for file clipboard support (linux/mac os, disable with -DWITH_FUSE=OFF) 
+* Wayland for wlfreerdp (disable with -DWITH_WAYLAND=OFF)
+* X11 development headers for X11 client (disable with -DWITH_X11=OFF)
+* ALSA development headers/libraris (disable with -DWITH_ALSA=OFF)
+* PULSE development headers/libraries (disable with -DWITH_PULSE=OFF)
+* OSS development headers/libraries (disable with -DWITH_OSS=OFF)
 
-11. Building recommendations
+11. Server support
+
+FreeRDP does provide server side RDP protocol implementation as well.
+These are used by the RDP proxy (disable with -DWITH_PROXY=OFF) as well as shadow server (disable with -DWITH_SHADOW=OFF)
+
+there are some (incomplete) platform implementations (enable with -DWITH_PLATFORM_SERVER=ON) which compile but do not provide anything useful yet.
+
+12. Samples
+
+There are a client and server sample provided. (disable with -DWITH_SAMPLE=OFF)
+
+13. Tools (optional)
+
+a couple of helper utilities are build alongside the client and server executables and libraries. These are mostly for handling certificates and NTLM hashes.
+disable with -DWITH_WINPR_TOOLS=OFF
+
+14. Building recommendations
 
 * Use Ninja to speed up your builds
 * For release builds add -DCMAKE_BUILD_TYPE=Release (or RelWithDebInfo for less optimized but with debug symbols)
@@ -112,10 +136,15 @@ We support
   of santity checks in code. Recommended for stable builds, for builds not from stable releases
   it is recommended to keep -DWITH_VERBOSE_WINPR_ASSERT=ON to have useful information on crashes.
 
-12. Example build instructions:
+15. Example build instructions:
 
 Assume we have the source checked out to /tmp/freerdp/src and we want to install to /tmp/freerdp/install:
 (on windows this needs to be called from a visual studio command prompt or a cmd that has run vcvarsall.bat, paths obviously need to be adjusted)
 
 cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DWITH_VERBOSE_WINPR_ASSERT=OFF -DCMAKE_PREFIX_PATH=/tmp/freerdp/install -B /tmp/freerdp/build -S /tmp/freerdp/src
 cmake --build /tmp/freerdp/build --target install
+
+16. Useful tips:
+
+* there is ccmake (linux/mac os) that is a curses ui to show a current CMakeCache.txt build configuration. There it is easy to check/change variables
+* CMake supports preload files (see ci/ subfolder in repo) that allows creating a (custom) build configuration that can then be applied with cmake -C<preload file>
