@@ -346,6 +346,7 @@ BOOL Stream_CheckAndLogRequiredCapacityExVa(const char* tag, DWORD level, wStrea
 	return TRUE;
 }
 
+WINPR_ATTR_FORMAT_ARG(6, 0)
 BOOL Stream_CheckAndLogRequiredCapacityWLogExVa(wLog* log, DWORD level, wStream* s, size_t nmemb,
                                                 size_t size, const char* fmt, va_list args)
 {
@@ -369,6 +370,7 @@ BOOL Stream_CheckAndLogRequiredCapacityWLogExVa(wLog* log, DWORD level, wStream*
 	return TRUE;
 }
 
+WINPR_ATTR_FORMAT_ARG(6, 7)
 BOOL Stream_CheckAndLogRequiredCapacityWLogEx(wLog* log, DWORD level, wStream* s, size_t nmemb,
                                               size_t size, const char* fmt, ...)
 {
@@ -389,6 +391,7 @@ BOOL Stream_CheckAndLogRequiredCapacityWLogEx(wLog* log, DWORD level, wStream* s
 	return TRUE;
 }
 
+WINPR_ATTR_FORMAT_ARG(6, 7)
 BOOL Stream_CheckAndLogRequiredLengthEx(const char* tag, DWORD level, wStream* s, size_t nmemb,
                                         size_t size, const char* fmt, ...)
 {
@@ -439,6 +442,7 @@ BOOL Stream_CheckAndLogRequiredLengthWLogEx(wLog* log, DWORD level, wStream* s, 
 	return TRUE;
 }
 
+WINPR_ATTR_FORMAT_ARG(6, 0)
 BOOL Stream_CheckAndLogRequiredLengthWLogExVa(wLog* log, DWORD level, wStream* s, size_t nmemb,
                                               size_t size, const char* fmt, va_list args)
 {

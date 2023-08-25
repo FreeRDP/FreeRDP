@@ -129,6 +129,8 @@ static void set_stream_id_for_buffer(struct libusb_transfer* transfer, UINT32 st
 	user_data->streamID = streamID;
 #endif
 }
+
+WINPR_ATTR_FORMAT_ARG(3, 8)
 static BOOL log_libusb_result_(wLog* log, DWORD lvl, const char* fmt, const char* fkt,
                                const char* file, size_t line, int error, ...)
 {

@@ -142,6 +142,7 @@ BOOL winpr_str_append(const char* what, char* buffer, size_t size, const char* s
 	return TRUE;
 }
 
+WINPR_ATTR_FORMAT_ARG(3, 4)
 int winpr_asprintf(char** s, size_t* slen, const char* templ, ...)
 {
 	va_list ap;

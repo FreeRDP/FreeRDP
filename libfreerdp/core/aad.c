@@ -52,6 +52,7 @@ struct rdp_aad
 static BOOL get_encoded_rsa_params(wLog* wlog, rdpPrivateKey* key, char** e, char** n);
 static BOOL generate_pop_key(rdpAad* aad);
 
+WINPR_ATTR_FORMAT_ARG(2, 3)
 static SSIZE_T stream_sprintf(wStream* s, const char* fmt, ...)
 {
 	va_list ap;
