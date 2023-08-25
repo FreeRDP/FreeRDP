@@ -1387,21 +1387,27 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS)
 	{
-		UINT16 len;
-		BYTE version, pad;
-		const BYTE* sig;
-		INT64 padLength;
-
 		if (!Stream_CheckAndLogRequiredLengthWLog(rdp->log, s, 12))
 			goto unlock;
 
+		UINT16 len = 0;
 		Stream_Read_UINT16(s, len);    /* 0x10 */
+		if (len != 0x10)
+			WLog_Print(rdp->log, WLOG_WARN, "ENCRYPTION_METHOD_FIPS length %" PRIu16 " != 0x10",
+			           len);
+
+		UINT16 version = 0;
 		Stream_Read_UINT8(s, version); /* 0x1 */
+		if (version != 1)
+			WLog_Print(rdp->log, WLOG_WARN, "ENCRYPTION_METHOD_FIPS version %" PRIu16 " != 1",
+			           version);
+
+		BYTE pad = 0;
 		Stream_Read_UINT8(s, pad);
-		sig = Stream_ConstPointer(s);
+		const BYTE* sig = Stream_ConstPointer(s);
 		Stream_Seek(s, 8); /* signature */
 		length -= 12;
-		padLength = length - pad;
+		const INT32 padLength = length - pad;
 
 		if ((length <= 0) || (padLength <= 0) || (padLength > UINT16_MAX))
 		{
