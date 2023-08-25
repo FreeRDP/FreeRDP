@@ -1549,7 +1549,7 @@ BOOL rdpgfx_server_close(RdpgfxServerContext* context)
 	return TRUE;
 }
 
-static UINT rdpgfx_server_initialize(RdpgfxServerContext* context, BOOL externalThread)
+static BOOL rdpgfx_server_initialize(RdpgfxServerContext* context, BOOL externalThread)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -1558,11 +1558,11 @@ static UINT rdpgfx_server_initialize(RdpgfxServerContext* context, BOOL external
 	{
 		WLog_WARN(TAG, "Application error: RDPEGFX channel already initialized, "
 		               "calling in this state is not possible!");
-		return ERROR_INVALID_STATE;
+		return FALSE;
 	}
 
 	context->priv->ownThread = !externalThread;
-	return CHANNEL_RC_OK;
+	return TRUE;
 }
 
 RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
