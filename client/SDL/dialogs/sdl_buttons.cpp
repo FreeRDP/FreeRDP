@@ -2,7 +2,6 @@
 
 #include "sdl_buttons.hpp"
 
-static const Uint32 vpadding = 5;
 static const Uint32 hpadding = 10;
 
 SdlButtonList::SdlButtonList()

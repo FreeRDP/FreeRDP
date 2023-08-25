@@ -852,7 +852,7 @@ static int sdl_run(SdlContext* sdl)
 
 					Uint32 curFlags = SDL_GetWindowFlags(window);
 
-					if (windowEvent.user.code != 0 ? SDL_TRUE : SDL_FALSE)
+					if (enter)
 					{
 						if (!(curFlags & SDL_WINDOW_BORDERLESS))
 						{
