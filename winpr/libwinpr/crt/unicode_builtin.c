@@ -38,6 +38,7 @@ See the header file "utf.h" for complete documentation.
 
 ------------------------------------------------------------------------ */
 
+#include <winpr/wtypes.h>
 #include <winpr/string.h>
 #include <winpr/assert.h>
 
@@ -242,14 +243,19 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 				case 4:
 					*--target = (uint8_t)((ch | byteMark) & byteMask);
 					ch >>= 6;
-
+					/* fallthrough */
+					WINPR_FALLTHROUGH
 				case 3:
 					*--target = (uint8_t)((ch | byteMark) & byteMask);
 					ch >>= 6;
+					/* fallthrough */
+					WINPR_FALLTHROUGH
 
 				case 2:
 					*--target = (uint8_t)((ch | byteMark) & byteMask);
 					ch >>= 6;
+					/* fallthrough */
+					WINPR_FALLTHROUGH
 
 				case 1:
 					*--target = (uint8_t)(ch | firstByteMark[bytesToWrite]);
@@ -262,12 +268,18 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 					/* note: everything falls through. */
 				case 4:
 					--target;
+					/* fallthrough */
+					WINPR_FALLTHROUGH
 
 				case 3:
 					--target;
+					/* fallthrough */
+					WINPR_FALLTHROUGH
 
 				case 2:
 					--target;
+					/* fallthrough */
+					WINPR_FALLTHROUGH
 
 				case 1:
 					--target;
@@ -309,10 +321,14 @@ static bool isLegalUTF8(const uint8_t* source, int length)
 		case 4:
 			if ((a = (*--srcptr)) < 0x80 || a > 0xBF)
 				return false;
+			/* fallthrough */
+			WINPR_FALLTHROUGH
 
 		case 3:
 			if ((a = (*--srcptr)) < 0x80 || a > 0xBF)
 				return false;
+			/* fallthrough */
+			WINPR_FALLTHROUGH
 
 		case 2:
 			if ((a = (*--srcptr)) > 0xBF)
@@ -348,7 +364,10 @@ static bool isLegalUTF8(const uint8_t* source, int length)
 				default:
 					if (a < 0x80)
 						return false;
+					break;
 			}
+			/* fallthrough */
+			WINPR_FALLTHROUGH
 
 		case 1:
 			if (*source >= 0x80 && *source < 0xC2)
@@ -404,22 +423,32 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 			case 5:
 				ch += *source++;
 				ch <<= 6; /* remember, illegal UTF-8 */
+				          /* fallthrough */
+				WINPR_FALLTHROUGH
 
 			case 4:
 				ch += *source++;
 				ch <<= 6; /* remember, illegal UTF-8 */
+				          /* fallthrough */
+				WINPR_FALLTHROUGH
 
 			case 3:
 				ch += *source++;
 				ch <<= 6;
+				/* fallthrough */
+				WINPR_FALLTHROUGH
 
 			case 2:
 				ch += *source++;
 				ch <<= 6;
+				/* fallthrough */
+				WINPR_FALLTHROUGH
 
 			case 1:
 				ch += *source++;
 				ch <<= 6;
+				/* fallthrough */
+				WINPR_FALLTHROUGH
 
 			case 0:
 				ch += *source++;

@@ -27,6 +27,7 @@
 #include <freerdp/peer.h>
 
 #include <winpr/crt.h>
+#include <winpr/wtypes.h>
 #include <winpr/assert.h>
 #include <winpr/library.h>
 #include <winpr/registry.h>
@@ -706,7 +707,7 @@ void credssp_auth_free(rdpCredsspAuth* auth)
 			case AUTH_STATE_FINAL:
 				WINPR_ASSERT(auth->table->DeleteSecurityContext);
 				auth->table->DeleteSecurityContext(&auth->context);
-				/* FALLTHROUGH */
+				/* fallthrouth */
 				WINPR_FALLTHROUGH
 			case AUTH_STATE_CREDS:
 				WINPR_ASSERT(auth->table->FreeCredentialsHandle);

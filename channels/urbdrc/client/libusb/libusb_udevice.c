@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/wtypes.h>
 #include <winpr/sysinfo.h>
 #include <winpr/collections.h>
 
@@ -286,10 +287,12 @@ static void LIBUSB_CALL func_iso_callback(struct libusb_transfer* transfer)
 			}
 		}
 			/* fallthrough */
-
+			WINPR_FALLTHROUGH
 		case LIBUSB_TRANSFER_CANCELLED:
+			/* fallthrough */
 			WINPR_FALLTHROUGH
 		case LIBUSB_TRANSFER_TIMED_OUT:
+			/* fallthrough */
 			WINPR_FALLTHROUGH
 		case LIBUSB_TRANSFER_ERROR:
 		{
