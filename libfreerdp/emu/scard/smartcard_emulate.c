@@ -2252,7 +2252,7 @@ LONG WINAPI Emulate_SCardReadCacheW(SmartcardEmulationContext* smartcard, SCARDC
 	return status;
 }
 
-static BOOL insert_data(wHashTable* table, DWORD FreshnessCounter, const void* key,
+static LONG insert_data(wHashTable* table, DWORD FreshnessCounter, const void* key,
                         const PBYTE Data, DWORD DataLen)
 {
 	BOOL rc;
