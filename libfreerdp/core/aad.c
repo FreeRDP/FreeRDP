@@ -209,23 +209,20 @@ cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length)
 
 static INLINE const char* aad_auth_result_to_string(DWORD code)
 {
-#define ERROR_CASE(x) \
-	case (x):         \
+#define ERROR_CASE(cd, x) \
+	if (cd == (x))        \
 		return #x;
-	switch (code)
-	{
-		ERROR_CASE(S_OK)
-		ERROR_CASE(SEC_E_INVALID_TOKEN)
-		ERROR_CASE(E_ACCESSDENIED)
-		ERROR_CASE(STATUS_LOGON_FAILURE)
-		ERROR_CASE(STATUS_NO_LOGON_SERVERS)
-		ERROR_CASE(STATUS_INVALID_LOGON_HOURS)
-		ERROR_CASE(STATUS_INVALID_WORKSTATION)
-		ERROR_CASE(STATUS_PASSWORD_EXPIRED)
-		ERROR_CASE(STATUS_ACCOUNT_DISABLED)
-		default:
-			return "Unknown error";
-	}
+
+	ERROR_CASE(code, S_OK)
+	ERROR_CASE(code, SEC_E_INVALID_TOKEN)
+	ERROR_CASE(code, E_ACCESSDENIED)
+	ERROR_CASE(code, STATUS_LOGON_FAILURE)
+	ERROR_CASE(code, STATUS_NO_LOGON_SERVERS)
+	ERROR_CASE(code, STATUS_INVALID_LOGON_HOURS)
+	ERROR_CASE(code, STATUS_INVALID_WORKSTATION)
+	ERROR_CASE(code, STATUS_PASSWORD_EXPIRED)
+	ERROR_CASE(code, STATUS_ACCOUNT_DISABLED)
+	return "Unknown error";
 }
 
 static BOOL aad_get_nonce(rdpAad* aad)
