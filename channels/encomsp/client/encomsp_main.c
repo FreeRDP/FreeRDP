@@ -1230,7 +1230,8 @@ static VOID VCAPITYPE encomsp_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 /* encomsp is always built-in */
 #define VirtualChannelEntryEx encomsp_VirtualChannelEntryEx
 
-BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints, PVOID pInitHandle)
+FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_EX pEntryPoints,
+                                                         PVOID pInitHandle))
 {
 	BOOL isFreerdp = FALSE;
 	encomspPlugin* encomsp = (encomspPlugin*)calloc(1, sizeof(encomspPlugin));

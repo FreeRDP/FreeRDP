@@ -406,7 +406,7 @@ static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 		cups_driver->references--;
 }
 
-UINT cups_freerdp_printer_client_subsystem_entry(void* arg)
+FREERDP_ENTRY_POINT(UINT cups_freerdp_printer_client_subsystem_entry(void* arg))
 {
 	rdpPrinterDriver** ppPrinter = (rdpPrinterDriver**)arg;
 	if (!ppPrinter)

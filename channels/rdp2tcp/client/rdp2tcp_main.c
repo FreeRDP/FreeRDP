@@ -321,7 +321,8 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 #else
 #define VirtualChannelEntryEx FREERDP_API VirtualChannelEntryEx
 #endif
-BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID pInitHandle)
+FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
+                                                         PVOID pInitHandle))
 {
 	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
 	CHANNEL_DEF channelDef;

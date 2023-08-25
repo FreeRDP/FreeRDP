@@ -498,7 +498,8 @@ static UINT audin_pulse_parse_addin_args(AudinPulseDevice* device, const ADDIN_A
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT pulse_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+FREERDP_ENTRY_POINT(UINT pulse_freerdp_audin_client_subsystem_entry(
+    PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	const ADDIN_ARGV* args;
 	AudinPulseDevice* pulse;

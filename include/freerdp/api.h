@@ -24,6 +24,13 @@
 #include <winpr/wlog.h>
 #include <winpr/platform.h>
 
+/* To silence missing prototype warnings for library entry points use this macro.
+ * It first declares the function as prototype and then again as function implementation
+ */
+#define FREERDP_ENTRY_POINT(fkt) \
+	fkt;                         \
+	fkt
+
 #ifdef _WIN32
 #define FREERDP_CC __cdecl
 #else

@@ -224,7 +224,7 @@ static void tsmf_alsa_free(ITSMFAudioDevice* audio)
 	free(alsa);
 }
 
-ITSMFAudioDevice* alsa_freerdp_tsmf_client_audio_subsystem_entry(void)
+FREERDP_ENTRY_POINT(ITSMFAudioDevice* alsa_freerdp_tsmf_client_audio_subsystem_entry(void))
 {
 	TSMFAlsaAudioDevice* alsa = calloc(1, sizeof(TSMFAlsaAudioDevice));
 	if (!alsa)

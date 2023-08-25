@@ -2155,7 +2155,8 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event_ex(LPVOID lpUserParam, LP
 #define TAG CHANNELS_TAG("rdpdr.client")
 #define VirtualChannelEntryEx rdpdr_VirtualChannelEntryEx
 
-BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID pInitHandle)
+FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
+                                                         PVOID pInitHandle))
 {
 	UINT rc;
 	rdpdrPlugin* rdpdr;

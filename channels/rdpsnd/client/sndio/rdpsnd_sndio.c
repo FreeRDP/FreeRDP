@@ -179,7 +179,8 @@ static UINT rdpsnd_sndio_parse_addin_args(rdpsndDevicePlugin* device, ADDIN_ARGV
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT sndio_freerdp_rdpsnd_client_subsystem_entry(PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints)
+FREERDP_ENTRY_POINT(UINT sndio_freerdp_rdpsnd_client_subsystem_entry(
+    PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	ADDIN_ARGV* args;
 	rdpsndSndioPlugin* sndio;

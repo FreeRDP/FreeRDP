@@ -381,7 +381,8 @@ static UINT audin_mac_parse_addin_args(AudinMacDevice *device, const ADDIN_ARGV 
 	return CHANNEL_RC_OK;
 }
 
-UINT mac_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints)
+FREERDP_ENTRY_POINT(
+    UINT mac_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
 {
 	DWORD errCode;
 	char errString[1024];

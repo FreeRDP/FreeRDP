@@ -230,7 +230,7 @@ static void tsmf_oss_free(ITSMFAudioDevice* audio)
 	free(oss);
 }
 
-ITSMFAudioDevice* oss_freerdp_tsmf_client_audio_subsystem_entry(void)
+FREERDP_ENTRY_POINT(ITSMFAudioDevice* oss_freerdp_tsmf_client_audio_subsystem_entry(void))
 {
 	TSMFOssAudioDevice* oss = calloc(1, sizeof(TSMFOssAudioDevice));
 	if (!oss)

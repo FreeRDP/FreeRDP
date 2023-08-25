@@ -385,7 +385,7 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT geometry_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+FREERDP_ENTRY_POINT(UINT geometry_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	return freerdp_generic_DVCPluginEntry(pEntryPoints, TAG, GEOMETRY_DVC_CHANNEL_NAME,
 	                                      sizeof(GEOMETRY_PLUGIN), sizeof(GENERIC_CHANNEL_CALLBACK),
