@@ -378,7 +378,7 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 		{
 			char* urlWithAuth = NULL;
 			size_t urlLen = 0;
-			char firstParam = (strchr(wst->gwpath, '?') > 0 ? '&' : '?');
+			char firstParam = (strchr(wst->gwpath, '?') != NULL) ? '&' : '?';
 			winpr_asprintf(
 			    &urlWithAuth, &urlLen, arm_query_param, wst->gwpath, firstParam,
 			    freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer));

@@ -895,7 +895,8 @@ static DWORD WINAPI poll_thread(LPVOID lpThreadParameter)
 	return 0;
 }
 
-UINT libusb_freerdp_urbdrc_client_subsystem_entry(PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints)
+FREERDP_ENTRY_POINT(UINT libusb_freerdp_urbdrc_client_subsystem_entry(
+    PFREERDP_URBDRC_SERVICE_ENTRY_POINTS pEntryPoints))
 {
 	wObject* obj;
 	UINT rc;

@@ -1550,7 +1550,8 @@ fail:
 	return NULL;
 }
 /* rdpsnd is always built-in */
-BOOL VCAPITYPE rdpsnd_VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID pInitHandle)
+FREERDP_ENTRY_POINT(BOOL VCAPITYPE rdpsnd_VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
+                                                                PVOID pInitHandle))
 {
 	UINT rc;
 	rdpsndPlugin* rdpsnd;
@@ -1769,7 +1770,7 @@ static UINT rdpsnd_plugin_terminated(IWTSPlugin* pPlugin)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+FREERDP_ENTRY_POINT(UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	UINT error = CHANNEL_RC_OK;
 	rdpsndPlugin* rdpsnd;

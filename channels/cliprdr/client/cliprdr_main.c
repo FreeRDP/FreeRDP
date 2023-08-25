@@ -1117,7 +1117,8 @@ static VOID VCAPITYPE cliprdr_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 /* cliprdr is always built-in */
 #define VirtualChannelEntryEx cliprdr_VirtualChannelEntryEx
 
-BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID pInitHandle)
+FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
+                                                         PVOID pInitHandle))
 {
 	UINT rc;
 	cliprdrPlugin* cliprdr;

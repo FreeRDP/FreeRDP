@@ -27,7 +27,7 @@
 #include <sstream>
 #include "../webview_impl.hpp"
 
-std::vector<std::string> split(const std::string& input, const std::string& regex)
+static std::vector<std::string> split(const std::string& input, const std::string& regex)
 {
 	// passing -1 as the submatch index parameter performs splitting
 	std::regex re(regex);
@@ -35,7 +35,7 @@ std::vector<std::string> split(const std::string& input, const std::string& rege
 	return { first, last };
 }
 
-std::map<std::string, std::string> urlsplit(const std::string& url)
+static std::map<std::string, std::string> urlsplit(const std::string& url)
 {
 	auto pos = url.find("?");
 	if (pos == std::string::npos)

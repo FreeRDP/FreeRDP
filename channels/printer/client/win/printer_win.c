@@ -434,7 +434,7 @@ static void printer_win_release_ref_driver(rdpPrinterDriver* driver)
 		win->references--;
 }
 
-UINT win_freerdp_printer_client_subsystem_entry(void* arg)
+FREERDP_ENTRY_POINT(UINT win_freerdp_printer_client_subsystem_entry(void* arg))
 {
 	rdpPrinterDriver** ppPrinter = (rdpPrinterDriver**)arg;
 	if (!ppPrinter)

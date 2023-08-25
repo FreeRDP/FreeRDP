@@ -552,7 +552,7 @@ static UINT tsmf_process_addin_args(IWTSPlugin* pPlugin, const ADDIN_ARGV* args)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT tsmf_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints)
+FREERDP_ENTRY_POINT(UINT tsmf_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	UINT status = 0;
 	TSMF_PLUGIN* tsmf;

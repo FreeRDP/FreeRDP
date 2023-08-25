@@ -1004,7 +1004,7 @@ out_error:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT drive_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+FREERDP_ENTRY_POINT(UINT drive_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
 	RDPDR_DRIVE* drive;
 	UINT error;

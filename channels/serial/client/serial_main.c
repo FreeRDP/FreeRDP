@@ -813,7 +813,7 @@ static void serial_message_free(void* obj)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
+FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
 	char* name;
 	char* path;
