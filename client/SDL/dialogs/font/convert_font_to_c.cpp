@@ -66,7 +66,7 @@ static int read(FILE* out, const char* font, const char* outname)
 			if (!first)
 				fprintf(out, ",");
 			first = 0;
-			fprintf(out, "0x%02" PRIx8, buffer[x] & 0xFF);
+			fprintf(out, "0x%02x", buffer[x] & 0xFF);
 			if ((x % (LINEWIDTH / 5)) == 0)
 				fprintf(out, "\n");
 		}
