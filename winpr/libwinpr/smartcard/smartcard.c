@@ -1101,7 +1101,7 @@ WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState)
 }
 
 #define WINSCARD_LOAD_PROC(_name, ...) \
-	pWinSCardApiTable->pfn##_name = (fn##_name)GetProcAddress(hWinSCardLibrary, #_name);
+	pWinSCardApiTable->pfn##_name = (fn##_name)GetProcAddress(hWinSCardLibrary, #_name)
 
 BOOL WinSCard_LoadApiTableFunctions(PSCardApiFunctionTable pWinSCardApiTable,
                                     HMODULE hWinSCardLibrary)
