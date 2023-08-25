@@ -532,7 +532,7 @@ static int winpr_ConvertUTF8toUTF16(const uint8_t* src, int cchSrc, uint16_t* ds
 		result =
 		    winpr_ConvertUTF8toUTF16_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd, strictConversion);
 
-		length = dstBeg - ((uint16_t*)NULL);
+		length = (uintptr_t)dstBeg - ((uintptr_t)NULL);
 	}
 	else
 	{
@@ -574,7 +574,7 @@ static int winpr_ConvertUTF16toUTF8(const uint16_t* src, int cchSrc, uint8_t* ds
 		result =
 		    winpr_ConvertUTF16toUTF8_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd, strictConversion);
 
-		length = dstBeg - ((uint8_t*)NULL);
+		length = (uintptr_t)dstBeg - ((uintptr_t)NULL);
 	}
 	else
 	{
