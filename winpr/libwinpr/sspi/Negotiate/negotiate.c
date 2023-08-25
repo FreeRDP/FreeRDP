@@ -21,6 +21,7 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
+#include <winpr/wtypes.h>
 #include <winpr/assert.h>
 #include <winpr/sspi.h>
 #include <winpr/tchar.h>
@@ -798,7 +799,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 				case REJECT:
 					return SEC_E_LOGON_DENIED;
 				case REQUEST_MIC:
-					context->mic = TRUE; /* fallthrough */
+					context->mic = TRUE;
+					/* fallthrough */
+					WINPR_FALLTHROUGH
 				case ACCEPT_INCOMPLETE:
 					context->state = NEGOTIATE_STATE_NEGORESP;
 					break;

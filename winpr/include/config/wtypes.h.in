@@ -29,9 +29,13 @@
 #define WINPR_RESTRICT
 #endif
 
-// C17 related macros
-#if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201710L)
-#define WINPR_FALLTHROUGH [[fallthrough]]
+// C23 related macros
+#if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define WINPR_FALLTHROUGH [[fallthrough]];
+#elif defined(__clang__)
+#define WINPR_FALLTHROUGH __attribute__((fallthrough));
+#elif defined(__GNUC__) && (__GNUC__ >= 7)
+#define WINPR_FALLTHROUGH __attribute__((fallthrough));
 #else
 #define WINPR_FALLTHROUGH
 #endif

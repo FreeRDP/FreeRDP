@@ -38,6 +38,7 @@
 #include "xf_input.h"
 
 #include <winpr/assert.h>
+#include <winpr/wtypes.h>
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG("x11")
 
@@ -855,15 +856,19 @@ static int xf_input_handle_event_remote(xfContext* xfc, const XEvent* event)
 		{
 			case XI_TouchBegin:
 				xf_input_pens_unhover(xfc);
+				/* fallthrough */
 				WINPR_FALLTHROUGH
 			case XI_TouchUpdate:
+				/* fallthrough */
 				WINPR_FALLTHROUGH
 			case XI_TouchEnd:
 				xf_input_touch_remote(xfc, cookie.cc->data, cookie.cc->evtype);
 				break;
 			case XI_ButtonPress:
+				/* fallthrough */
 				WINPR_FALLTHROUGH
 			case XI_Motion:
+				/* fallthrough */
 				WINPR_FALLTHROUGH
 			case XI_ButtonRelease:
 			{
@@ -877,6 +882,7 @@ static int xf_input_handle_event_remote(xfContext* xfc, const XEvent* event)
 					break;
 				}
 			}
+				/* fallthrough */
 				WINPR_FALLTHROUGH
 			default:
 				xf_input_pens_unhover(xfc);

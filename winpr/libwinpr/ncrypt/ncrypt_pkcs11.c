@@ -208,9 +208,12 @@ static CK_RV object_load_attributes(NCryptP11ProviderHandle* provider, CK_SESSIO
 				return rv;
 			/* fallthrough */
 			WINPR_FALLTHROUGH
-
 		case CKR_ATTRIBUTE_SENSITIVE:
+			/* fallthrough */
+			WINPR_FALLTHROUGH
 		case CKR_ATTRIBUTE_TYPE_INVALID:
+			/* fallthrough */
+			WINPR_FALLTHROUGH
 		case CKR_BUFFER_TOO_SMALL:
 			/* attributes need some buffers for the result value */
 			if (!attributes_allocate_buffers(attributes, count))

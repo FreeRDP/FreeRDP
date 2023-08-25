@@ -22,6 +22,7 @@
 #include <freerdp/log.h>
 
 #include <winpr/crt.h>
+#include <winpr/wtypes.h>
 #include <winpr/assert.h>
 #include <winpr/print.h>
 #include <winpr/synch.h>
@@ -286,7 +287,7 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 						WLog_ERR(TAG, "rpc_secure_bind: error sending rpc_auth_3 pdu!");
 						return -1;
 					}
-					/* FALLTHROUGH */
+					/* fallthrough */
 					WINPR_FALLTHROUGH
 				case RPC_BIND_STATE_COMPLETE:
 					rpc_client_transition_to_state(rpc, RPC_CLIENT_STATE_CONTEXT_NEGOTIATED);
