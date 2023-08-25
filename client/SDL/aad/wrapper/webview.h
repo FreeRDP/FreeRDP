@@ -785,7 +785,7 @@ namespace webview
 			GtkWidget* m_webview;
 
 			void* navigateCallbackArg = nullptr;
-			std::function<void(const std::string&, void*)> navigateCallback = 0;
+			std::function<void(const std::string&, void*)> navigateCallback = nullptr;
 
 			static void on_load_changed(WebKitWebView* web_view, WebKitLoadEvent load_event,
 			                            gpointer arg)
@@ -2666,7 +2666,7 @@ namespace webview
 		}
 
 	  private:
-		void on_message(const std::string& msg)
+		void on_message(const std::string& msg) override
 		{
 			auto seq = detail::json_parse(msg, "id", 0);
 			auto name = detail::json_parse(msg, "method", 0);

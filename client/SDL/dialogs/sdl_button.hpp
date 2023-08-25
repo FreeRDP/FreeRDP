@@ -9,7 +9,7 @@ class SdlButton : public SdlWidget
   public:
 	SdlButton(SDL_Renderer* renderer, const std::string& label, int id, const SDL_Rect& rect);
 	SdlButton(SdlButton&& other) noexcept;
-	virtual ~SdlButton();
+	virtual ~SdlButton() override;
 
 	bool highlight(SDL_Renderer* renderer);
 	bool update(SDL_Renderer* renderer);

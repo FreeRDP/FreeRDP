@@ -1,7 +1,6 @@
 #include "sdl_selectlist.hpp"
 
 static const Uint32 vpadding = 5;
-static const Uint32 hpadding = 10;
 
 SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::string>& labels)
     : _window(nullptr), _renderer(nullptr)

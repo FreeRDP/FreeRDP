@@ -4,7 +4,6 @@
 #include "sdl_input_widgets.hpp"
 
 static const Uint32 vpadding = 5;
-static const Uint32 hpadding = 10;
 
 SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
                                        const std::vector<std::string>& labels,
