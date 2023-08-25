@@ -714,7 +714,7 @@ static char* bn_to_base64_url(wLog* wlog, rdpPrivateKey* key, enum FREERDP_KEY_P
 	if (!bn)
 		return NULL;
 
-	char* b64 = crypto_base64url_encode(bn, len);
+	char* b64 = (char*)crypto_base64url_encode(bn, len);
 	free(bn);
 
 	if (!b64)
