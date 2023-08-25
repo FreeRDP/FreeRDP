@@ -29,29 +29,35 @@
 
 #define TARGET_OUTPUT_INTERFACE 2U
 
+static bool dupstr(char** dst, const char* src)
+{
+	assert(dst);
+	free(*dst);
+	*dst = NULL;
+	if (!src)
+		return TRUE;
+	*dst = _strdup(src);
+	return *dst != NULL;
+}
+
 static void output_handle_geometry(void* data, struct wl_output* wl_output, int x, int y,
                                    int physical_width, int physical_height, int subpixel,
                                    const char* make, const char* model, int transform)
 {
 	UwacOutput* output = data;
+	assert(output);
 
 	output->position.x = x;
 	output->position.y = y;
 	output->transform = transform;
 
-	if (output->make)
-		free(output->make);
-	output->make = strdup(make);
-	if (!output->make)
+	if (!dupstr(&output->make, make))
 	{
 		assert(uwacErrorHandler(output->display, UWAC_ERROR_NOMEMORY, "%s: unable to strdup make\n",
 		                        __func__));
 	}
 
-	if (output->model)
-		free(output->model);
-	output->model = strdup(model);
-	if (!output->model)
+	if (!dupstr(&output->model, model))
 	{
 		assert(uwacErrorHandler(output->display, UWAC_ERROR_NOMEMORY,
 		                        "%s: unable to strdup model\n", __func__));
@@ -72,6 +78,7 @@ static void output_handle_geometry(void* data, struct wl_output* wl_output, int 
 static void output_handle_done(void* data, struct wl_output* wl_output)
 {
 	UwacOutput* output = data;
+	assert(output);
 
 	output->doneReceived = true;
 }
@@ -79,14 +86,41 @@ static void output_handle_done(void* data, struct wl_output* wl_output)
 static void output_handle_scale(void* data, struct wl_output* wl_output, int32_t scale)
 {
 	UwacOutput* output = data;
+	assert(output);
 
 	output->scale = scale;
+}
+
+static void output_handle_name(void* data, struct wl_output* wl_output, const char* name)
+{
+	UwacOutput* output = data;
+	assert(output);
+
+	if (!dupstr(&output->name, name))
+	{
+		assert(uwacErrorHandler(output->display, UWAC_ERROR_NOMEMORY, "%s: unable to strdup make\n",
+		                        __func__));
+	}
+}
+
+static void output_handle_description(void* data, struct wl_output* wl_output,
+                                      const char* description)
+{
+	UwacOutput* output = data;
+	assert(output);
+
+	if (!dupstr(&output->description, description))
+	{
+		assert(uwacErrorHandler(output->display, UWAC_ERROR_NOMEMORY, "%s: unable to strdup make\n",
+		                        __func__));
+	}
 }
 
 static void output_handle_mode(void* data, struct wl_output* wl_output, uint32_t flags, int width,
                                int height, int refresh)
 {
 	UwacOutput* output = data;
+	assert(output);
 	// UwacDisplay *display = output->display;
 
 	if (output->doneNeeded && output->doneReceived)
@@ -106,15 +140,14 @@ static void output_handle_mode(void* data, struct wl_output* wl_output, uint32_t
 	}
 }
 
-static const struct wl_output_listener output_listener = { output_handle_geometry,
-	                                                       output_handle_mode, output_handle_done,
-	                                                       output_handle_scale };
+static const struct wl_output_listener output_listener = {
+	output_handle_geometry, output_handle_mode, output_handle_done,
+	output_handle_scale,    output_handle_name, output_handle_description
+};
 
 UwacOutput* UwacCreateOutput(UwacDisplay* d, uint32_t id, uint32_t version)
 {
-	UwacOutput* o;
-
-	o = xzalloc(sizeof *o);
+	UwacOutput* o = xzalloc(sizeof *o);
 	if (!o)
 		return NULL;
 
@@ -132,8 +165,13 @@ UwacOutput* UwacCreateOutput(UwacDisplay* d, uint32_t id, uint32_t version)
 
 int UwacDestroyOutput(UwacOutput* output)
 {
+	if (!output)
+		return UWAC_SUCCESS;
+
 	free(output->make);
 	free(output->model);
+	free(output->name);
+	free(output->description);
 
 	wl_output_destroy(output->output);
 	wl_list_remove(&output->link);

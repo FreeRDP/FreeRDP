@@ -152,6 +152,8 @@ struct uwac_output
 	struct wl_output* output;
 
 	struct wl_list link;
+	char* name;
+	char* description;
 };
 
 /** @brief a seat attached to a wayland display */
