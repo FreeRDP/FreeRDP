@@ -47,6 +47,12 @@
 #define WINPR_API
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#define WINPR_ATTR_FORMAT_ARG(pos, args) __attribute__((__format__(__printf__, pos, args)))
+#else
+#define WINPR_ATTR_FORMAT_ARG(pos, args)
+#endif
+
 #if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
 #define WINPR_DEPRECATED(obj) [[deprecated]] obj
 #define WINPR_DEPRECATED_VAR(text, obj) [[deprecated(text)]] obj

@@ -290,6 +290,7 @@ static const char* tsg_state_to_string(TSG_STATE state)
 	}
 }
 
+WINPR_ATTR_FORMAT_ARG(3, 4)
 static BOOL tsg_print(char** buffer, size_t* len, const char* fmt, ...)
 {
 	int rc;
