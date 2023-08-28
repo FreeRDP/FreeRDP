@@ -543,7 +543,7 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 
 static int winpr_ConvertUTF8toUTF16(const uint8_t* src, int cchSrc, uint16_t* dst, int cchDst)
 {
-	int length;
+	size_t length;
 	uint16_t* dstBeg = NULL;
 	uint16_t* dstEnd = NULL;
 	const uint8_t* srcBeg;
@@ -561,7 +561,7 @@ static int winpr_ConvertUTF8toUTF16(const uint8_t* src, int cchSrc, uint16_t* ds
 		result =
 		    winpr_ConvertUTF8toUTF16_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd, strictConversion);
 
-		length = (uintptr_t)dstBeg - ((uintptr_t)NULL);
+		length = dstBeg - (uint16_t*)NULL;
 	}
 	else
 	{
@@ -585,7 +585,7 @@ static int winpr_ConvertUTF8toUTF16(const uint8_t* src, int cchSrc, uint16_t* ds
 
 static int winpr_ConvertUTF16toUTF8(const uint16_t* src, int cchSrc, uint8_t* dst, int cchDst)
 {
-	int length;
+	size_t length;
 	uint8_t* dstBeg = NULL;
 	uint8_t* dstEnd = NULL;
 	const uint16_t* srcBeg;
@@ -603,7 +603,7 @@ static int winpr_ConvertUTF16toUTF8(const uint16_t* src, int cchSrc, uint8_t* ds
 		result =
 		    winpr_ConvertUTF16toUTF8_Internal(&srcBeg, srcEnd, &dstBeg, dstEnd, strictConversion);
 
-		length = (uintptr_t)dstBeg - ((uintptr_t)NULL);
+		length = dstBeg - ((uint8_t*)NULL);
 	}
 	else
 	{
