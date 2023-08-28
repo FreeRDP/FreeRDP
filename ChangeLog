@@ -1,6 +1,13 @@
-# 20XX-YY-ZZ Version 2.UU.V
+# 2023-08-28 Version 2.11.0
+
+Noteworthy changes:
+* Various input validation fixes
+* Added various CMake options #9317
+* LibreSSL build fixes #8709
 
 Fixed issues:
+* Backported #9099: Mouse grabbing support
+* Backported #6851: wayland scrolling fix
 * Backported #8690: Update h264 to use new FFMPEG API
 * Backported #7306: early bail from update_read_window_state_order breaks protocol
 * Backported #8903: rdpecam/server: Remove wrong assertion
