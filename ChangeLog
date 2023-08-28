@@ -6,6 +6,7 @@ Noteworthy changes:
 * LibreSSL build fixes #8709
 
 Fixed issues:
+* Backported #9233: Big endian support
 * Backported #9099: Mouse grabbing support
 * Backported #6851: wayland scrolling fix
 * Backported #8690: Update h264 to use new FFMPEG API
