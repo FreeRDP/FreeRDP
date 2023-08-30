@@ -5,6 +5,24 @@ Noteworthy changes:
 For a complete and detailed change log since the last release run:
 git log 3.x.y..3.0.0-beta2
 
+# 2023-08-31 Version 3.0.0-beta3
+
+Noteworthy changes:
+* fix xfreerdp keyboard on mac os
+* Various crashes and input check fixes
+* Improved logging of autodetect, redirection and fastpath failures
+* Smartcard emulation now selectable at runtime
+* Allow certificates without a subject to pass client checks
+* Fix FindFirstFile issues on android
+* Add FREERDP_ENTRY_POINT to silence -Wmissing-prototypes warnings for
+  library entry points
+* Add WINPR_RESTRICT to enable restrict (C99) or __restring (MSVC)
+  keywords for compiler
+* Fix support for older OpenSSL versions
+
+For a complete and detailed change log since the last release run:
+git log 3.0.0-beta3..3.0.0-beta2
+
 # 2023-08-03 Version 3.0.0-beta2
 
 Noteworthy changes:
