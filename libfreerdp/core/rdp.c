@@ -108,6 +108,49 @@ static const char* DATA_PDU_TYPE_STRINGS[80] = {
 	"?" /* 0x41 - 0x46 */
 };
 
+#define rdp_check_monitor_layout_pdu_state(rdp, expected) \
+	rdp_check_monitor_layout_pdu_state_(rdp, expected, __FILE__, __func__, __LINE__)
+
+static BOOL rdp_check_monitor_layout_pdu_state_(const rdpRdp* rdp, BOOL expected, const char* file,
+                                                const char* fkt, size_t line)
+{
+	WINPR_ASSERT(rdp);
+	if (expected != rdp->monitor_layout_pdu)
+	{
+		const DWORD log_level = WLOG_ERROR;
+		if (WLog_IsLevelActive(rdp->log, log_level))
+		{
+			WLog_PrintMessage(rdp->log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+			                  "Expected rdp->monitor_layout_pdu == %s",
+			                  expected ? "TRUE" : "FALSE");
+		}
+		return FALSE;
+	}
+	return TRUE;
+}
+
+#define rdp_set_monitor_layout_pdu_state(rdp, expected) \
+	rdp_set_monitor_layout_pdu_state_(rdp, expected, __FILE__, __func__, __LINE__)
+static BOOL rdp_set_monitor_layout_pdu_state_(rdpRdp* rdp, BOOL value, const char* file,
+                                              const char* fkt, size_t line)
+{
+
+	WINPR_ASSERT(rdp);
+	if (value && (value == rdp->monitor_layout_pdu))
+	{
+		const DWORD log_level = WLOG_WARN;
+		if (WLog_IsLevelActive(rdp->log, log_level))
+		{
+			WLog_PrintMessage(rdp->log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
+			                  "rdp->monitor_layout_pdu == %s, expected FALSE",
+			                  value ? "TRUE" : "FALSE");
+		}
+		return FALSE;
+	}
+	rdp->monitor_layout_pdu = value;
+	return TRUE;
+}
+
 const char* data_pdu_type_to_string(UINT8 type)
 {
 	if (type >= ARRAYSIZE(DATA_PDU_TYPE_STRINGS))
@@ -1017,7 +1060,7 @@ static BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 
 	IFCALLRET(rdp->update->RemoteMonitors, ret, rdp->context, monitorCount, monitorDefArray);
 	free(monitorDefArray);
-	return ret;
+	return rdp_set_monitor_layout_pdu_state(rdp, TRUE);
 }
 
 state_run_t rdp_recv_data_pdu(rdpRdp* rdp, wStream* s)
@@ -1743,15 +1786,28 @@ static state_run_t rdp_client_exchange_monitor_layout(rdpRdp* rdp, wStream* s)
 {
 	WINPR_ASSERT(rdp);
 
+	if (!rdp_check_monitor_layout_pdu_state(rdp, FALSE))
+		return FALSE;
+
+	/* We might receive unrelated messages from the server (channel traffic),
+	 * so only proceed if some flag changed
+	 */
 	const UINT32 old = rdp->finalize_sc_pdus;
 	state_run_t status = rdp_recv_pdu(rdp, s);
+	const UINT32 now = rdp->finalize_sc_pdus;
+	const BOOL changed = (old != now) || rdp->monitor_layout_pdu;
 
 	/* This PDU is optional, so if we received a finalize PDU continue there */
-	if (state_run_success(status))
+	if (state_run_success(status) && changed)
 	{
-		const BOOL changed = old != rdp->finalize_sc_pdus;
+		if (!rdp->monitor_layout_pdu)
+		{
+			if (!rdp_finalize_is_flag_set(rdp, FINALIZE_SC_SYNCHRONIZE_PDU))
+				return STATE_RUN_FAILED;
+		}
+
 		status = rdp_client_connect_finalize(rdp);
-		if (changed && state_run_success(status))
+		if (state_run_success(status) && !rdp->monitor_layout_pdu)
 			status = STATE_RUN_TRY_AGAIN;
 	}
 	return status;
@@ -2522,7 +2578,8 @@ BOOL rdp_finalize_reset_flags(rdpRdp* rdp, BOOL clearAll)
 		rdp->finalize_sc_pdus = 0;
 	else
 		rdp->finalize_sc_pdus &= FINALIZE_DEACTIVATE_REACTIVATE;
-	return TRUE;
+
+	return rdp_set_monitor_layout_pdu_state(rdp, FALSE);
 }
 
 BOOL rdp_finalize_set_flag(rdpRdp* rdp, UINT32 flag)

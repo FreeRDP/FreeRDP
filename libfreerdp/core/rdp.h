@@ -199,6 +199,7 @@ struct rdp_rdp
 
 	wPubSub* pubSub;
 
+	BOOL monitor_layout_pdu;
 	BOOL was_deactivated;
 	UINT32 deactivated_width;
 	UINT32 deactivated_height;
