@@ -185,7 +185,7 @@ BOOL rdp_send_server_control_cooperate_pdu(rdpRdp* rdp)
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->userId);
 }
 
-static BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp)
+BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp)
 {
 	wStream* s = rdp_data_pdu_init(rdp);
 	if (!s)
@@ -748,24 +748,6 @@ BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 	if (!rdp_recv_client_font_list_pdu(s))
 		return FALSE;
 	rdp_finalize_set_flag(rdp, FINALIZE_CS_FONT_LIST_PDU);
-
-	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_SYNC))
-		return FALSE;
-
-	if (!rdp_send_server_synchronize_pdu(rdp))
-		return FALSE;
-
-	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_COOPERATE))
-		return FALSE;
-
-	if (!rdp_send_server_control_cooperate_pdu(rdp))
-		return FALSE;
-
-	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_GRANTED_CONTROL))
-		return FALSE;
-
-	if (!rdp_send_server_control_granted_pdu(rdp))
-		return FALSE;
 
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP))
 		return FALSE;
