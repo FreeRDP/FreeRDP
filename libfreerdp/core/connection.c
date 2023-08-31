@@ -1331,8 +1331,6 @@ BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 		case CONNECTION_STATE_FINALIZATION_PERSISTENT_KEY_LIST:
 		case CONNECTION_STATE_FINALIZATION_FONT_LIST:
 			update_reset_state(rdp->update);
-			if (!rdp_finalize_reset_flags(rdp, FALSE))
-				return FALSE;
 			break;
 
 		case CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE:
@@ -1624,6 +1622,23 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 	return rdp_server_transition_to_state(rdp, rc);
 }
 
+static BOOL rdp_server_send_sync(rdpRdp* rdp)
+{
+	WINPR_ASSERT(rdp);
+
+	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_SYNC))
+		return FALSE;
+	if (!rdp_send_server_synchronize_pdu(rdp))
+		return FALSE;
+	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_COOPERATE))
+		return FALSE;
+	if (!rdp_send_server_control_cooperate_pdu(rdp))
+		return FALSE;
+	if (!rdp_finalize_reset_flags(rdp, FALSE))
+		return FALSE;
+	return rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_SYNC);
+}
+
 BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 {
 	freerdp_peer* peer;
@@ -1657,7 +1672,7 @@ BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 	if (rdp->settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
 
-	return rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_SYNC);
+	return rdp_server_send_sync(rdp);
 }
 
 BOOL rdp_server_reactivate(rdpRdp* rdp)
@@ -1954,5 +1969,7 @@ state_run_t rdp_client_connect_confirm_active(rdpRdp* rdp, wStream* s)
 		                                    CONNECTION_STATE_CAPABILITIES_EXCHANGE_MONITOR_LAYOUT))
 			status = STATE_RUN_FAILED;
 	}
+	if (!rdp_finalize_reset_flags(rdp, FALSE))
+		status = STATE_RUN_FAILED;
 	return status;
 }
