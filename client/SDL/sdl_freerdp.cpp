@@ -706,7 +706,8 @@ static int sdl_run(SdlContext* sdl)
 	while (!freerdp_shall_disconnect_context(sdl->context()))
 	{
 		SDL_Event windowEvent = { 0 };
-		while (!freerdp_shall_disconnect_context(sdl->context()) && SDL_PollEvent(nullptr))
+		while (!freerdp_shall_disconnect_context(sdl->context()) &&
+		       SDL_WaitEventTimeout(nullptr, 1000))
 		{
 			/* Only poll standard SDL events and SDL_USEREVENTS meant to create dialogs.
 			 * do not process the dialog return value events here.
