@@ -1319,7 +1319,9 @@ BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 {
 	const char* name = rdp_state_string(state);
 
-	WLog_DBG(TAG, "%s --> %s", rdp_get_state_string(rdp), name);
+	WINPR_ASSERT(rdp);
+	WLog_Print(rdp->log, WLOG_DEBUG, "%s --> %s", rdp_get_state_string(rdp), name);
+
 	if (!rdp_set_state(rdp, state))
 		return FALSE;
 
@@ -1769,7 +1771,8 @@ BOOL rdp_server_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 			client->activated = FALSE;
 	}
 
-	WLog_DBG(TAG, "%s --> %s", rdp_get_state_string(rdp), rdp_state_string(state));
+	WLog_Print(rdp->log, WLOG_DEBUG, "%s --> %s", rdp_get_state_string(rdp),
+	           rdp_state_string(state));
 	if (!rdp_set_state(rdp, state))
 		goto fail;
 
