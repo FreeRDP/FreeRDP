@@ -73,13 +73,15 @@ static const struct info_flags_t info_flags[] = {
 	{ INFO_HIDEF_RAIL_SUPPORTED, "INFO_HIDEF_RAIL_SUPPORTED" },
 };
 
-static BOOL rdp_read_info_null_string(const char* what, UINT32 flags, wStream* s, size_t cbLen,
-                                      CHAR** dst, size_t max, BOOL isNullTerminated)
+static BOOL rdp_read_info_null_string(rdpSettings* settings, size_t id, const char* what,
+                                      UINT32 flags, wStream* s, size_t cbLen, size_t max,
+                                      BOOL isNullTerminated)
 {
-	CHAR* ret = NULL;
-
 	const BOOL unicode = (flags & INFO_UNICODE) ? TRUE : FALSE;
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
+
+	if (!freerdp_settings_set_string(settings, id, NULL))
+		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(cbLen)))
 		return FALSE;
@@ -97,9 +99,9 @@ static BOOL rdp_read_info_null_string(const char* what, UINT32 flags, wStream* s
 
 		if (unicode)
 		{
-			size_t len = 0;
-			ret = Stream_Read_UTF16_String_As_UTF8(s, cbLen / sizeof(WCHAR), &len);
-			if (!ret && (cbLen > 0))
+			const WCHAR* domain = Stream_PointerAs(s, WCHAR);
+			if (!freerdp_settings_set_string_from_utf16N(settings, id, domain,
+			                                             cbLen / sizeof(WCHAR)))
 			{
 				WLog_ERR(TAG, "protocol error: no data to read for %s [expected %" PRIuz "]", what,
 				         cbLen);
@@ -109,22 +111,12 @@ static BOOL rdp_read_info_null_string(const char* what, UINT32 flags, wStream* s
 		else
 		{
 			const char* domain = Stream_ConstPointer(s);
-			if (!Stream_SafeSeek(s, cbLen))
-			{
-				WLog_ERR(TAG, "protocol error: no data to read for %s [expected %" PRIuz "]", what,
-				         cbLen);
+			if (!freerdp_settings_set_string_len(settings, id, domain, cbLen))
 				return FALSE;
-			}
-
-			ret = calloc(cbLen + 1, nullSize);
-			if (!ret)
-				return FALSE;
-			memcpy(ret, domain, cbLen);
 		}
 	}
+	Stream_Seek(s, cbLen);
 
-	free(*dst);
-	*dst = ret;
 	return TRUE;
 }
 
@@ -339,9 +331,8 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	settings->IPv6Enabled = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? TRUE : FALSE);
 
-	if (!rdp_read_info_null_string("cbClientAddress", INFO_UNICODE, s, cbClientAddress,
-	                               &settings->ClientAddress, rdp_get_client_address_max_size(rdp),
-	                               TRUE))
+	if (!rdp_read_info_null_string(settings, FreeRDP_ClientAddress, "cbClientAddress", INFO_UNICODE,
+	                               s, cbClientAddress, rdp_get_client_address_max_size(rdp), TRUE))
 		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
@@ -357,8 +348,8 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	 * sets cbClientDir to 0.
 	 */
 
-	if (!rdp_read_info_null_string("cbClientDir", INFO_UNICODE, s, cbClientDir,
-	                               &settings->ClientDir, 512, TRUE))
+	if (!rdp_read_info_null_string(settings, FreeRDP_ClientDir, "cbClientDir", INFO_UNICODE, s,
+	                               cbClientDir, 512, TRUE))
 		return FALSE;
 
 	/**
@@ -431,9 +422,9 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 		Stream_Read_UINT16(s, cbDynamicDSTTimeZoneKeyName);
 
-		if (!rdp_read_info_null_string("cbDynamicDSTTimeZoneKeyName", INFO_UNICODE, s,
-		                               cbDynamicDSTTimeZoneKeyName,
-		                               &settings->DynamicDSTTimeZoneKeyName, 254, FALSE))
+		if (!rdp_read_info_null_string(settings, FreeRDP_DynamicDSTTimeZoneKeyName,
+		                               "cbDynamicDSTTimeZoneKeyName", INFO_UNICODE, s,
+		                               cbDynamicDSTTimeZoneKeyName, 254, FALSE))
 			return FALSE;
 
 		if (Stream_GetRemainingLength(s) == 0)
@@ -597,8 +588,8 @@ fail:
 	return ret;
 }
 
-static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, CHAR** dst,
-                                 size_t max)
+static BOOL rdp_read_info_string(rdpSettings* settings, size_t id, UINT32 flags, wStream* s,
+                                 size_t cbLenNonNull, size_t max)
 {
 	union
 	{
@@ -606,17 +597,18 @@ static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, 
 		WCHAR w;
 		BYTE b[2];
 	} terminator;
-	CHAR* ret = NULL;
 
 	const BOOL unicode = (flags & INFO_UNICODE) ? TRUE : FALSE;
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
+
+	if (!freerdp_settings_set_string(settings, id, NULL))
+		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(cbLenNonNull + nullSize)))
 		return FALSE;
 
 	if (cbLenNonNull > 0)
 	{
-		WCHAR domain[512 / sizeof(WCHAR) + sizeof(WCHAR)] = { 0 };
 		/* cbDomain is the size in bytes of the character data in the Domain field.
 		 * This size excludes (!) the length of the mandatory null terminator.
 		 * Maximum value including the mandatory null terminator: 512
@@ -627,27 +619,22 @@ static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, 
 			return FALSE;
 		}
 
-		Stream_Read(s, domain, cbLenNonNull);
-
 		if (unicode)
 		{
-			size_t len = 0;
-			ret = ConvertWCharNToUtf8Alloc(domain, ARRAYSIZE(domain), &len);
-			if (!ret || (len == 0))
-			{
-				free(ret);
-				WLog_ERR(TAG, "failed to convert Domain string");
+			const WCHAR* domain = Stream_PointerAs(s, WCHAR);
+			if (!freerdp_settings_set_string_from_utf16N(settings, id, domain,
+			                                             cbLenNonNull / sizeof(WCHAR)))
 				return FALSE;
-			}
 		}
 		else
 		{
-			ret = calloc(cbLenNonNull + 1, nullSize);
-			if (!ret)
+			const char* domain = Stream_PointerAs(s, char);
+			if (!freerdp_settings_set_string_len(settings, id, domain, cbLenNonNull))
 				return FALSE;
-			memcpy(ret, domain, cbLenNonNull);
 		}
 	}
+
+	Stream_Seek(s, cbLenNonNull);
 
 	terminator.w = L'\0';
 	Stream_Read(s, terminator.b, nullSize);
@@ -655,11 +642,10 @@ static BOOL rdp_read_info_string(UINT32 flags, wStream* s, size_t cbLenNonNull, 
 	if (terminator.w != L'\0')
 	{
 		WLog_ERR(TAG, "protocol error: Domain must be null terminated");
-		free(ret);
+		freerdp_settings_set_string(settings, id, NULL);
 		return FALSE;
 	}
 
-	*dst = ret;
 	return TRUE;
 }
 
@@ -718,19 +704,21 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 	Stream_Read_UINT16(s, cbAlternateShell); /* cbAlternateShell (2 bytes) */
 	Stream_Read_UINT16(s, cbWorkingDir);     /* cbWorkingDir (2 bytes) */
 
-	if (!rdp_read_info_string(flags, s, cbDomain, &settings->Domain, smallsize ? 52 : 512))
+	if (!rdp_read_info_string(settings, FreeRDP_Domain, flags, s, cbDomain, smallsize ? 52 : 512))
 		return FALSE;
 
-	if (!rdp_read_info_string(flags, s, cbUserName, &settings->Username, smallsize ? 44 : 512))
+	if (!rdp_read_info_string(settings, FreeRDP_Username, flags, s, cbUserName,
+	                          smallsize ? 44 : 512))
 		return FALSE;
 
-	if (!rdp_read_info_string(flags, s, cbPassword, &settings->Password, smallsize ? 32 : 512))
+	if (!rdp_read_info_string(settings, FreeRDP_Password, flags, s, cbPassword,
+	                          smallsize ? 32 : 512))
 		return FALSE;
 
-	if (!rdp_read_info_string(flags, s, cbAlternateShell, &settings->AlternateShell, 512))
+	if (!rdp_read_info_string(settings, FreeRDP_AlternateShell, flags, s, cbAlternateShell, 512))
 		return FALSE;
 
-	if (!rdp_read_info_string(flags, s, cbWorkingDir, &settings->ShellWorkingDirectory, 512))
+	if (!rdp_read_info_string(settings, FreeRDP_ShellWorkingDirectory, flags, s, cbWorkingDir, 512))
 		return FALSE;
 
 	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
