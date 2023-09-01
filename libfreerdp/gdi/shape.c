@@ -39,6 +39,42 @@
 
 #define TAG FREERDP_TAG("gdi.shape")
 
+double abs(double x){
+	return (x < 0) ? -x : x;
+}
+
+BOOL gdi_DrawLine(HGDI_DC hdc, INT32 x1, INT32 y1, INT32 x2, INT32 y2, UINT32 color)
+{
+	#ifndef FLOAT
+	#define FLOAT double
+    INT32 dx, dy, steps, k;
+    FLOAT xIncrement, yIncrement, x = x1, y = y1;
+
+    dx = x2 - x1;
+    dy = y2 - y1;
+
+    if (abs(dx) > abs(dy))
+        steps = abs(dx);
+    else
+        steps = abs(dy);
+
+    xIncrement = (FLOAT)dx / (FLOAT)steps;
+    yIncrement = (FLOAT)dy / (FLOAT)steps;
+
+    for (k = 0; k < steps; k++)
+    {
+        x += xIncrement;
+        y += yIncrement;
+        BYTE* dst = gdi_get_bitmap_pointer(hdc, (INT32)x, (INT32)y);
+        
+        if (dst)
+            FreeRDPWriteColor(dst, hdc->format, color);
+    }
+
+    return TRUE;
+	#endif
+}
+
 static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 {
 	INT32 e, e2;
@@ -224,8 +260,23 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
  */
 BOOL gdi_Polygon(HGDI_DC hdc, GDI_POINT* lpPoints, int nCount)
 {
-	WLog_ERR(TAG, "Not implemented!");
-	return FALSE;
+	if (!lpPoints || nCount < 3 || !hdc)
+        return FALSE;
+
+    if (!gdi_ClipCoords(hdc, &lpPoints[0].x, &lpPoints[0].y, 0, 0, NULL, NULL))
+        return TRUE;
+
+    UINT32 color = hdc->textColor;
+
+    for (int i = 0; i < nCount - 1; i++)
+    {
+        gdi_DrawLine(hdc, lpPoints[i].x, lpPoints[i].y, lpPoints[i + 1].x, lpPoints[i + 1].y, color);
+    }
+
+    // Connect the last point to the first point to close the polygon
+    gdi_DrawLine(hdc, lpPoints[nCount - 1].x, lpPoints[nCount - 1].y, lpPoints[0].x, lpPoints[0].y, color);
+
+    return TRUE;
 }
 
 /**
@@ -239,8 +290,44 @@ BOOL gdi_Polygon(HGDI_DC hdc, GDI_POINT* lpPoints, int nCount)
  */
 BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT* lpPoints, int* lpPolyCounts, int nCount)
 {
-	WLog_ERR(TAG, "Not implemented!");
-	return FALSE;
+	if (!lpPoints || !lpPolyCounts || nCount < 1 || !hdc)
+        return FALSE;
+
+    UINT32 color = hdc->textColor;
+
+    int pointIndex = 0;
+
+    for (int polyIndex = 0; polyIndex < nCount; polyIndex++)
+    {
+        int polyPointCount = lpPolyCounts[polyIndex];
+
+        if (polyPointCount < 3)
+        {
+            pointIndex += polyPointCount;
+            continue;
+        }
+
+        GDI_POINT* polyPoints = &lpPoints[pointIndex];
+        
+        if (!gdi_ClipCoords(hdc, &polyPoints[0].x, &polyPoints[0].y, 0, 0, NULL, NULL))
+        {
+            pointIndex += polyPointCount;
+            continue;
+        }
+
+        for (int i = 0; i < polyPointCount - 1; i++)
+        {
+            gdi_DrawLine(hdc, polyPoints[i].x, polyPoints[i].y, polyPoints[i + 1].x, polyPoints[i + 1].y, color);
+        }
+
+        // Draw last line
+        gdi_DrawLine(hdc, polyPoints[polyPointCount - 1].x, polyPoints[polyPointCount - 1].y, polyPoints[0].x, polyPoints[0].y, color);
+
+        
+        pointIndex += polyPointCount;
+    }
+
+    return TRUE;
 }
 
 BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nHeight)
@@ -277,5 +364,5 @@ BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nH
 			FreeRDPWriteColor(dstBottom, hdc->format, color);
 	}
 
-	return FALSE;
+	return TRUE;
 }
