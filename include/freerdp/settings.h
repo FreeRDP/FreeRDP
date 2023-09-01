@@ -2051,6 +2051,17 @@ extern "C"
 	FREERDP_API BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id,
 	                                             const char* param);
 
+	/** \brief Takes a string settings value. The \b param is assumed to be malloced (same runtime
+	 * as freerdp library!).
+	 *
+	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param id The key to query
+	 *  \param param The value to set. Old values are freed up, the value is set as the new one.
+	 *
+	 *  \return \b TRUE for success, \b FALSE for failure
+	 */
+	FREERDP_API BOOL freerdp_settings_take_string(rdpSettings* settings, size_t id, char* param);
+
 	/** \brief Sets a string settings value. The \b param is converted to UTF-8 and the copy stored.
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
