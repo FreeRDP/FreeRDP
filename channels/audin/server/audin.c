@@ -476,7 +476,7 @@ static BOOL audin_server_open(audin_server_context* context)
 		if (!status)
 		{
 			WLog_Print(audin->log, WLOG_ERROR, "context->ChannelIdAssigned failed!");
-			return ERROR_INTERNAL_ERROR;
+			return FALSE;
 		}
 
 		if (!(audin->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
