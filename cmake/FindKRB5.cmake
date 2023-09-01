@@ -215,7 +215,7 @@ find_package_handle_standard_args(KRB5
   VERSION_VAR
     KRB5_VERSION
   FAIL_MESSAGE
-    "Could NOT find Kerberos, try to set the path to Kerberos root folder in the system variable KRB_ROOT_DIR"
+    "Could NOT find Kerberos, try to set the CMake variable KRB5_ROOT_CONFIG to the full path of krb5-config"
 )
 
 mark_as_advanced(${_KRB5_REQUIRED_VARS})
