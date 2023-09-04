@@ -1560,7 +1560,8 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 					val = &arg->Value[9];
 				else if (!option_equals("kbd-lang", arg->Value))
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
-				else if (strchr(val, ','))
+
+				if (val && strchr(val, ','))
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				freerdp_client_print_codepages(val);
 			}
