@@ -1063,9 +1063,13 @@ static BOOL order_field_flag_is_set(const ORDER_INFO* orderInfo, BYTE number)
 	return set;
 }
 
-static INLINE BOOL read_order_field_byte(const ORDER_INFO* orderInfo, wStream* s, BYTE number,
-                                         UINT32* target, BOOL optional)
+static INLINE BOOL read_order_field_byte(const char* orderName, const ORDER_INFO* orderInfo,
+                                         wStream* s, BYTE number, UINT32* target, BOOL optional)
 {
+	WINPR_ASSERT(orderName);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(target);
+
 	if (!order_field_flag_is_set(orderInfo, number))
 		return TRUE;
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
@@ -1074,9 +1078,15 @@ static INLINE BOOL read_order_field_byte(const ORDER_INFO* orderInfo, wStream* s
 	return TRUE;
 }
 
-static INLINE BOOL read_order_field_2bytes(const ORDER_INFO* orderInfo, wStream* s, BYTE number,
-                                           UINT32* target1, UINT32* target2, BOOL optional)
+static INLINE BOOL read_order_field_2bytes(const char* orderName, const ORDER_INFO* orderInfo,
+                                           wStream* s, BYTE number, UINT32* target1,
+                                           UINT32* target2, BOOL optional)
 {
+	WINPR_ASSERT(orderName);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(target1);
+	WINPR_ASSERT(target2);
+
 	if (!order_field_flag_is_set(orderInfo, number))
 		return TRUE;
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
@@ -1086,9 +1096,13 @@ static INLINE BOOL read_order_field_2bytes(const ORDER_INFO* orderInfo, wStream*
 	return TRUE;
 }
 
-static INLINE BOOL read_order_field_uint16(const ORDER_INFO* orderInfo, wStream* s, BYTE number,
-                                           UINT32* target, BOOL optional)
+static INLINE BOOL read_order_field_uint16(const char* orderName, const ORDER_INFO* orderInfo,
+                                           wStream* s, BYTE number, UINT32* target, BOOL optional)
 {
+	WINPR_ASSERT(orderName);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(target);
+
 	if (!order_field_flag_is_set(orderInfo, number))
 		return TRUE;
 
@@ -1099,9 +1113,13 @@ static INLINE BOOL read_order_field_uint16(const ORDER_INFO* orderInfo, wStream*
 	return TRUE;
 }
 
-static INLINE BOOL read_order_field_int16(const ORDER_INFO* orderInfo, wStream* s, BYTE number,
-                                          INT32* target, BOOL optional)
+static INLINE BOOL read_order_field_int16(const char* orderName, const ORDER_INFO* orderInfo,
+                                          wStream* s, BYTE number, INT32* target, BOOL optional)
 {
+	WINPR_ASSERT(orderName);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(target);
+
 	if (!order_field_flag_is_set(orderInfo, number))
 		return TRUE;
 
@@ -1112,9 +1130,13 @@ static INLINE BOOL read_order_field_int16(const ORDER_INFO* orderInfo, wStream* 
 	return TRUE;
 }
 
-static INLINE BOOL read_order_field_uint32(const ORDER_INFO* orderInfo, wStream* s, BYTE number,
-                                           UINT32* target, BOOL optional)
+static INLINE BOOL read_order_field_uint32(const char* orderName, const ORDER_INFO* orderInfo,
+                                           wStream* s, BYTE number, UINT32* target, BOOL optional)
 {
+	WINPR_ASSERT(orderName);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(target);
+
 	if (!order_field_flag_is_set(orderInfo, number))
 		return TRUE;
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
@@ -1124,22 +1146,26 @@ static INLINE BOOL read_order_field_uint32(const ORDER_INFO* orderInfo, wStream*
 	return TRUE;
 }
 
-static INLINE BOOL read_order_field_coord(const ORDER_INFO* orderInfo, wStream* s, UINT32 NO,
-                                          INT32* TARGET, BOOL optional)
+static INLINE BOOL read_order_field_coord(const char* orderName, const ORDER_INFO* orderInfo,
+                                          wStream* s, UINT32 NO, INT32* TARGET, BOOL optional)
 {
-	if (!TARGET || !orderInfo)
-		return FALSE;
+	WINPR_ASSERT(orderName);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(TARGET);
+
 	if (!order_field_flag_is_set(orderInfo, NO))
 		return TRUE;
 
 	return update_read_coord(s, TARGET, orderInfo->deltaCoordinates);
 }
 
-static INLINE BOOL read_order_field_color(const ORDER_INFO* orderInfo, wStream* s, UINT32 NO,
-                                          UINT32* TARGET, BOOL optional)
+static INLINE BOOL read_order_field_color(const char* orderName, const ORDER_INFO* orderInfo,
+                                          wStream* s, UINT32 NO, UINT32* TARGET, BOOL optional)
 {
-	if (!TARGET || !orderInfo)
-		return FALSE;
+	WINPR_ASSERT(orderName);
+	WINPR_ASSERT(orderInfo);
+	WINPR_ASSERT(TARGET);
+
 	if (!order_field_flag_is_set(orderInfo, NO))
 		return TRUE;
 
@@ -1164,13 +1190,14 @@ static INLINE BOOL FIELD_SKIP_BUFFER16(wStream* s, UINT32 TARGET_LEN)
 	return TRUE;
 }
 /* Primary Drawing Orders */
-static BOOL update_read_dstblt_order(wStream* s, const ORDER_INFO* orderInfo, DSTBLT_ORDER* dstblt)
+static BOOL update_read_dstblt_order(const char* orderName, wStream* s, const ORDER_INFO* orderInfo,
+                                     DSTBLT_ORDER* dstblt)
 {
-	if (read_order_field_coord(orderInfo, s, 1, &dstblt->nLeftRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 2, &dstblt->nTopRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 3, &dstblt->nWidth, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 4, &dstblt->nHeight, FALSE) &&
-	    read_order_field_byte(orderInfo, s, 5, &dstblt->bRop, TRUE))
+	if (read_order_field_coord(orderName, orderInfo, s, 1, &dstblt->nLeftRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 2, &dstblt->nTopRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 3, &dstblt->nWidth, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 4, &dstblt->nHeight, FALSE) &&
+	    read_order_field_byte(orderName, orderInfo, s, 5, &dstblt->bRop, TRUE))
 		return TRUE;
 	return FALSE;
 }
@@ -1201,15 +1228,16 @@ BOOL update_write_dstblt_order(wStream* s, ORDER_INFO* orderInfo, const DSTBLT_O
 	return TRUE;
 }
 
-static BOOL update_read_patblt_order(wStream* s, const ORDER_INFO* orderInfo, PATBLT_ORDER* patblt)
+static BOOL update_read_patblt_order(const char* orderName, wStream* s, const ORDER_INFO* orderInfo,
+                                     PATBLT_ORDER* patblt)
 {
-	if (read_order_field_coord(orderInfo, s, 1, &patblt->nLeftRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 2, &patblt->nTopRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 3, &patblt->nWidth, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 4, &patblt->nHeight, FALSE) &&
-	    read_order_field_byte(orderInfo, s, 5, &patblt->bRop, TRUE) &&
-	    read_order_field_color(orderInfo, s, 6, &patblt->backColor, TRUE) &&
-	    read_order_field_color(orderInfo, s, 7, &patblt->foreColor, TRUE) &&
+	if (read_order_field_coord(orderName, orderInfo, s, 1, &patblt->nLeftRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 2, &patblt->nTopRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 3, &patblt->nWidth, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 4, &patblt->nHeight, FALSE) &&
+	    read_order_field_byte(orderName, orderInfo, s, 5, &patblt->bRop, TRUE) &&
+	    read_order_field_color(orderName, orderInfo, s, 6, &patblt->backColor, TRUE) &&
+	    read_order_field_color(orderName, orderInfo, s, 7, &patblt->foreColor, TRUE) &&
 	    update_read_brush(s, &patblt->brush, orderInfo->fieldFlags >> 7))
 		return TRUE;
 	return FALSE;
@@ -1251,15 +1279,16 @@ BOOL update_write_patblt_order(wStream* s, ORDER_INFO* orderInfo, PATBLT_ORDER* 
 	return TRUE;
 }
 
-static BOOL update_read_scrblt_order(wStream* s, const ORDER_INFO* orderInfo, SCRBLT_ORDER* scrblt)
+static BOOL update_read_scrblt_order(const char* orderName, wStream* s, const ORDER_INFO* orderInfo,
+                                     SCRBLT_ORDER* scrblt)
 {
-	if (read_order_field_coord(orderInfo, s, 1, &scrblt->nLeftRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 2, &scrblt->nTopRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 3, &scrblt->nWidth, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 4, &scrblt->nHeight, FALSE) &&
-	    read_order_field_byte(orderInfo, s, 5, &scrblt->bRop, TRUE) &&
-	    read_order_field_coord(orderInfo, s, 6, &scrblt->nXSrc, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 7, &scrblt->nYSrc, FALSE))
+	if (read_order_field_coord(orderName, orderInfo, s, 1, &scrblt->nLeftRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 2, &scrblt->nTopRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 3, &scrblt->nWidth, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 4, &scrblt->nHeight, FALSE) &&
+	    read_order_field_byte(orderName, orderInfo, s, 5, &scrblt->bRop, TRUE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 6, &scrblt->nXSrc, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 7, &scrblt->nYSrc, FALSE))
 		return TRUE;
 	return FALSE;
 }
@@ -1293,14 +1322,15 @@ BOOL update_write_scrblt_order(wStream* s, ORDER_INFO* orderInfo, const SCRBLT_O
 	update_write_coord(s, scrblt->nYSrc);
 	return TRUE;
 }
-static BOOL update_read_opaque_rect_order(wStream* s, const ORDER_INFO* orderInfo,
+static BOOL update_read_opaque_rect_order(const char* orderName, wStream* s,
+                                          const ORDER_INFO* orderInfo,
                                           OPAQUE_RECT_ORDER* opaque_rect)
 {
 	BYTE byte;
-	if (!read_order_field_coord(orderInfo, s, 1, &opaque_rect->nLeftRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 2, &opaque_rect->nTopRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 3, &opaque_rect->nWidth, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 4, &opaque_rect->nHeight, FALSE))
+	if (!read_order_field_coord(orderName, orderInfo, s, 1, &opaque_rect->nLeftRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 2, &opaque_rect->nTopRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 3, &opaque_rect->nWidth, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 4, &opaque_rect->nHeight, FALSE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_05) != 0)
@@ -1372,27 +1402,29 @@ BOOL update_write_opaque_rect_order(wStream* s, ORDER_INFO* orderInfo,
 	return TRUE;
 }
 
-static BOOL update_read_draw_nine_grid_order(wStream* s, const ORDER_INFO* orderInfo,
+static BOOL update_read_draw_nine_grid_order(const char* orderName, wStream* s,
+                                             const ORDER_INFO* orderInfo,
                                              DRAW_NINE_GRID_ORDER* draw_nine_grid)
 {
-	if (read_order_field_coord(orderInfo, s, 1, &draw_nine_grid->srcLeft, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 2, &draw_nine_grid->srcTop, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 3, &draw_nine_grid->srcRight, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 4, &draw_nine_grid->srcBottom, FALSE) &&
-	    read_order_field_uint16(orderInfo, s, 5, &draw_nine_grid->bitmapId, FALSE))
+	if (read_order_field_coord(orderName, orderInfo, s, 1, &draw_nine_grid->srcLeft, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 2, &draw_nine_grid->srcTop, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 3, &draw_nine_grid->srcRight, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 4, &draw_nine_grid->srcBottom, FALSE) &&
+	    read_order_field_uint16(orderName, orderInfo, s, 5, &draw_nine_grid->bitmapId, FALSE))
 		return TRUE;
 	return FALSE;
 }
 
-static BOOL update_read_multi_dstblt_order(wStream* s, const ORDER_INFO* orderInfo,
+static BOOL update_read_multi_dstblt_order(const char* orderName, wStream* s,
+                                           const ORDER_INFO* orderInfo,
                                            MULTI_DSTBLT_ORDER* multi_dstblt)
 {
-	if (!read_order_field_coord(orderInfo, s, 1, &multi_dstblt->nLeftRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 2, &multi_dstblt->nTopRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 3, &multi_dstblt->nWidth, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 4, &multi_dstblt->nHeight, FALSE) ||
-	    !read_order_field_byte(orderInfo, s, 5, &multi_dstblt->bRop, TRUE) ||
-	    !read_order_field_byte(orderInfo, s, 6, &multi_dstblt->numRectangles, TRUE))
+	if (!read_order_field_coord(orderName, orderInfo, s, 1, &multi_dstblt->nLeftRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 2, &multi_dstblt->nTopRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 3, &multi_dstblt->nWidth, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 4, &multi_dstblt->nHeight, FALSE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 5, &multi_dstblt->bRop, TRUE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 6, &multi_dstblt->numRectangles, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_07) != 0)
@@ -1407,22 +1439,23 @@ static BOOL update_read_multi_dstblt_order(wStream* s, const ORDER_INFO* orderIn
 	return multi_dstblt->numRectangles == 0;
 }
 
-static BOOL update_read_multi_patblt_order(wStream* s, const ORDER_INFO* orderInfo,
+static BOOL update_read_multi_patblt_order(const char* orderName, wStream* s,
+                                           const ORDER_INFO* orderInfo,
                                            MULTI_PATBLT_ORDER* multi_patblt)
 {
-	if (!read_order_field_coord(orderInfo, s, 1, &multi_patblt->nLeftRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 2, &multi_patblt->nTopRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 3, &multi_patblt->nWidth, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 4, &multi_patblt->nHeight, FALSE) ||
-	    !read_order_field_byte(orderInfo, s, 5, &multi_patblt->bRop, TRUE) ||
-	    !read_order_field_color(orderInfo, s, 6, &multi_patblt->backColor, TRUE) ||
-	    !read_order_field_color(orderInfo, s, 7, &multi_patblt->foreColor, TRUE))
+	if (!read_order_field_coord(orderName, orderInfo, s, 1, &multi_patblt->nLeftRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 2, &multi_patblt->nTopRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 3, &multi_patblt->nWidth, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 4, &multi_patblt->nHeight, FALSE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 5, &multi_patblt->bRop, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 6, &multi_patblt->backColor, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 7, &multi_patblt->foreColor, TRUE))
 		return FALSE;
 
 	if (!update_read_brush(s, &multi_patblt->brush, orderInfo->fieldFlags >> 7))
 		return FALSE;
 
-	if (!read_order_field_byte(orderInfo, s, 13, &multi_patblt->numRectangles, TRUE))
+	if (!read_order_field_byte(orderName, orderInfo, s, 13, &multi_patblt->numRectangles, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_14) != 0)
@@ -1441,21 +1474,22 @@ static BOOL update_read_multi_patblt_order(wStream* s, const ORDER_INFO* orderIn
 	return TRUE;
 }
 
-static BOOL update_read_multi_scrblt_order(wStream* s, const ORDER_INFO* orderInfo,
+static BOOL update_read_multi_scrblt_order(const char* orderName, wStream* s,
+                                           const ORDER_INFO* orderInfo,
                                            MULTI_SCRBLT_ORDER* multi_scrblt)
 {
 	WINPR_ASSERT(orderInfo);
 	WINPR_ASSERT(multi_scrblt);
 
 	multi_scrblt->numRectangles = 0;
-	if (!read_order_field_coord(orderInfo, s, 1, &multi_scrblt->nLeftRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 2, &multi_scrblt->nTopRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 3, &multi_scrblt->nWidth, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 4, &multi_scrblt->nHeight, FALSE) ||
-	    !read_order_field_byte(orderInfo, s, 5, &multi_scrblt->bRop, TRUE) ||
-	    !read_order_field_coord(orderInfo, s, 6, &multi_scrblt->nXSrc, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 7, &multi_scrblt->nYSrc, FALSE) ||
-	    !read_order_field_byte(orderInfo, s, 8, &multi_scrblt->numRectangles, TRUE))
+	if (!read_order_field_coord(orderName, orderInfo, s, 1, &multi_scrblt->nLeftRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 2, &multi_scrblt->nTopRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 3, &multi_scrblt->nWidth, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 4, &multi_scrblt->nHeight, FALSE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 5, &multi_scrblt->bRop, TRUE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 6, &multi_scrblt->nXSrc, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 7, &multi_scrblt->nYSrc, FALSE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 8, &multi_scrblt->numRectangles, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_09) != 0)
@@ -1470,14 +1504,15 @@ static BOOL update_read_multi_scrblt_order(wStream* s, const ORDER_INFO* orderIn
 	return multi_scrblt->numRectangles == 0;
 }
 
-static BOOL update_read_multi_opaque_rect_order(wStream* s, const ORDER_INFO* orderInfo,
+static BOOL update_read_multi_opaque_rect_order(const char* orderName, wStream* s,
+                                                const ORDER_INFO* orderInfo,
                                                 MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
 	BYTE byte;
-	if (!read_order_field_coord(orderInfo, s, 1, &multi_opaque_rect->nLeftRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 2, &multi_opaque_rect->nTopRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 3, &multi_opaque_rect->nWidth, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 4, &multi_opaque_rect->nHeight, FALSE))
+	if (!read_order_field_coord(orderName, orderInfo, s, 1, &multi_opaque_rect->nLeftRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 2, &multi_opaque_rect->nTopRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 3, &multi_opaque_rect->nWidth, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 4, &multi_opaque_rect->nHeight, FALSE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_05) != 0)
@@ -1507,7 +1542,7 @@ static BOOL update_read_multi_opaque_rect_order(wStream* s, const ORDER_INFO* or
 		multi_opaque_rect->color = (multi_opaque_rect->color & 0x0000FFFF) | ((UINT32)byte << 16);
 	}
 
-	if (!read_order_field_byte(orderInfo, s, 8, &multi_opaque_rect->numRectangles, TRUE))
+	if (!read_order_field_byte(orderName, orderInfo, s, 8, &multi_opaque_rect->numRectangles, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_09) != 0)
@@ -1523,15 +1558,21 @@ static BOOL update_read_multi_opaque_rect_order(wStream* s, const ORDER_INFO* or
 	return multi_opaque_rect->numRectangles == 0;
 }
 
-static BOOL update_read_multi_draw_nine_grid_order(wStream* s, const ORDER_INFO* orderInfo,
+static BOOL update_read_multi_draw_nine_grid_order(const char* orderName, wStream* s,
+                                                   const ORDER_INFO* orderInfo,
                                                    MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid)
 {
-	if (!read_order_field_coord(orderInfo, s, 1, &multi_draw_nine_grid->srcLeft, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 2, &multi_draw_nine_grid->srcTop, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 3, &multi_draw_nine_grid->srcRight, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 4, &multi_draw_nine_grid->srcBottom, FALSE) ||
-	    !read_order_field_uint16(orderInfo, s, 5, &multi_draw_nine_grid->bitmapId, TRUE) ||
-	    !read_order_field_byte(orderInfo, s, 6, &multi_draw_nine_grid->nDeltaEntries, TRUE))
+	if (!read_order_field_coord(orderName, orderInfo, s, 1, &multi_draw_nine_grid->srcLeft,
+	                            FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 2, &multi_draw_nine_grid->srcTop, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 3, &multi_draw_nine_grid->srcRight,
+	                            FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 4, &multi_draw_nine_grid->srcBottom,
+	                            FALSE) ||
+	    !read_order_field_uint16(orderName, orderInfo, s, 5, &multi_draw_nine_grid->bitmapId,
+	                             TRUE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 6, &multi_draw_nine_grid->nDeltaEntries,
+	                           TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_07) != 0)
@@ -1546,19 +1587,19 @@ static BOOL update_read_multi_draw_nine_grid_order(wStream* s, const ORDER_INFO*
 
 	return multi_draw_nine_grid->nDeltaEntries == 0;
 }
-static BOOL update_read_line_to_order(wStream* s, const ORDER_INFO* orderInfo,
-                                      LINE_TO_ORDER* line_to)
+static BOOL update_read_line_to_order(const char* orderName, wStream* s,
+                                      const ORDER_INFO* orderInfo, LINE_TO_ORDER* line_to)
 {
-	if (read_order_field_uint16(orderInfo, s, 1, &line_to->backMode, TRUE) &&
-	    read_order_field_coord(orderInfo, s, 2, &line_to->nXStart, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 3, &line_to->nYStart, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 4, &line_to->nXEnd, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 5, &line_to->nYEnd, FALSE) &&
-	    read_order_field_color(orderInfo, s, 6, &line_to->backColor, TRUE) &&
-	    read_order_field_byte(orderInfo, s, 7, &line_to->bRop2, TRUE) &&
-	    read_order_field_byte(orderInfo, s, 8, &line_to->penStyle, TRUE) &&
-	    read_order_field_byte(orderInfo, s, 9, &line_to->penWidth, TRUE) &&
-	    read_order_field_color(orderInfo, s, 10, &line_to->penColor, TRUE))
+	if (read_order_field_uint16(orderName, orderInfo, s, 1, &line_to->backMode, TRUE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 2, &line_to->nXStart, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 3, &line_to->nYStart, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 4, &line_to->nXEnd, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 5, &line_to->nYEnd, FALSE) &&
+	    read_order_field_color(orderName, orderInfo, s, 6, &line_to->backColor, TRUE) &&
+	    read_order_field_byte(orderName, orderInfo, s, 7, &line_to->bRop2, TRUE) &&
+	    read_order_field_byte(orderName, orderInfo, s, 8, &line_to->penStyle, TRUE) &&
+	    read_order_field_byte(orderName, orderInfo, s, 9, &line_to->penWidth, TRUE) &&
+	    read_order_field_color(orderName, orderInfo, s, 10, &line_to->penColor, TRUE))
 		return TRUE;
 	return FALSE;
 }
@@ -1599,17 +1640,17 @@ BOOL update_write_line_to_order(wStream* s, ORDER_INFO* orderInfo, const LINE_TO
 	return TRUE;
 }
 
-static BOOL update_read_polyline_order(wStream* s, const ORDER_INFO* orderInfo,
-                                       POLYLINE_ORDER* polyline)
+static BOOL update_read_polyline_order(const char* orderName, wStream* s,
+                                       const ORDER_INFO* orderInfo, POLYLINE_ORDER* polyline)
 {
 	UINT32 word;
 	UINT32 new_num = polyline->numDeltaEntries;
-	if (!read_order_field_coord(orderInfo, s, 1, &polyline->xStart, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 2, &polyline->yStart, FALSE) ||
-	    !read_order_field_byte(orderInfo, s, 3, &polyline->bRop2, TRUE) ||
-	    !read_order_field_uint16(orderInfo, s, 4, &word, TRUE) ||
-	    !read_order_field_color(orderInfo, s, 5, &polyline->penColor, TRUE) ||
-	    !read_order_field_byte(orderInfo, s, 6, &new_num, TRUE))
+	if (!read_order_field_coord(orderName, orderInfo, s, 1, &polyline->xStart, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 2, &polyline->yStart, FALSE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 3, &polyline->bRop2, TRUE) ||
+	    !read_order_field_uint16(orderName, orderInfo, s, 4, &word, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 5, &polyline->penColor, TRUE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 6, &new_num, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_07) != 0)
@@ -1640,20 +1681,21 @@ static BOOL update_read_polyline_order(wStream* s, const ORDER_INFO* orderInfo,
 	return TRUE;
 }
 
-static BOOL update_read_memblt_order(wStream* s, const ORDER_INFO* orderInfo, MEMBLT_ORDER* memblt)
+static BOOL update_read_memblt_order(const char* orderName, wStream* s, const ORDER_INFO* orderInfo,
+                                     MEMBLT_ORDER* memblt)
 {
 	if (!s || !orderInfo || !memblt)
 		return FALSE;
 
-	if (!read_order_field_uint16(orderInfo, s, 1, &memblt->cacheId, TRUE) ||
-	    !read_order_field_coord(orderInfo, s, 2, &memblt->nLeftRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 3, &memblt->nTopRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 4, &memblt->nWidth, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 5, &memblt->nHeight, FALSE) ||
-	    !read_order_field_byte(orderInfo, s, 6, &memblt->bRop, TRUE) ||
-	    !read_order_field_coord(orderInfo, s, 7, &memblt->nXSrc, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 8, &memblt->nYSrc, FALSE) ||
-	    !read_order_field_uint16(orderInfo, s, 9, &memblt->cacheIndex, TRUE))
+	if (!read_order_field_uint16(orderName, orderInfo, s, 1, &memblt->cacheId, TRUE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 2, &memblt->nLeftRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 3, &memblt->nTopRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 4, &memblt->nWidth, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 5, &memblt->nHeight, FALSE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 6, &memblt->bRop, TRUE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 7, &memblt->nXSrc, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 8, &memblt->nYSrc, FALSE) ||
+	    !read_order_field_uint16(orderName, orderInfo, s, 9, &memblt->cacheIndex, TRUE))
 		return FALSE;
 	memblt->colorIndex = (memblt->cacheId >> 8);
 	memblt->cacheId = (memblt->cacheId & 0xFF);
@@ -1696,61 +1738,64 @@ BOOL update_write_memblt_order(wStream* s, ORDER_INFO* orderInfo, const MEMBLT_O
 	Stream_Write_UINT16(s, memblt->cacheIndex);
 	return TRUE;
 }
-static BOOL update_read_mem3blt_order(wStream* s, const ORDER_INFO* orderInfo,
-                                      MEM3BLT_ORDER* mem3blt)
+static BOOL update_read_mem3blt_order(const char* orderName, wStream* s,
+                                      const ORDER_INFO* orderInfo, MEM3BLT_ORDER* mem3blt)
 {
-	if (!read_order_field_uint16(orderInfo, s, 1, &mem3blt->cacheId, TRUE) ||
-	    !read_order_field_coord(orderInfo, s, 2, &mem3blt->nLeftRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 3, &mem3blt->nTopRect, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 4, &mem3blt->nWidth, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 5, &mem3blt->nHeight, FALSE) ||
-	    !read_order_field_byte(orderInfo, s, 6, &mem3blt->bRop, TRUE) ||
-	    !read_order_field_coord(orderInfo, s, 7, &mem3blt->nXSrc, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 8, &mem3blt->nYSrc, FALSE) ||
-	    !read_order_field_color(orderInfo, s, 9, &mem3blt->backColor, TRUE) ||
-	    !read_order_field_color(orderInfo, s, 10, &mem3blt->foreColor, TRUE))
+	if (!read_order_field_uint16(orderName, orderInfo, s, 1, &mem3blt->cacheId, TRUE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 2, &mem3blt->nLeftRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 3, &mem3blt->nTopRect, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 4, &mem3blt->nWidth, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 5, &mem3blt->nHeight, FALSE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 6, &mem3blt->bRop, TRUE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 7, &mem3blt->nXSrc, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 8, &mem3blt->nYSrc, FALSE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 9, &mem3blt->backColor, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 10, &mem3blt->foreColor, TRUE))
 		return FALSE;
 
 	if (!update_read_brush(s, &mem3blt->brush, orderInfo->fieldFlags >> 10) ||
-	    !read_order_field_uint16(orderInfo, s, 16, &mem3blt->cacheIndex, TRUE))
+	    !read_order_field_uint16(orderName, orderInfo, s, 16, &mem3blt->cacheIndex, TRUE))
 		return FALSE;
 	mem3blt->colorIndex = (mem3blt->cacheId >> 8);
 	mem3blt->cacheId = (mem3blt->cacheId & 0xFF);
 	mem3blt->bitmap = NULL;
 	return TRUE;
 }
-static BOOL update_read_save_bitmap_order(wStream* s, const ORDER_INFO* orderInfo,
+static BOOL update_read_save_bitmap_order(const char* orderName, wStream* s,
+                                          const ORDER_INFO* orderInfo,
                                           SAVE_BITMAP_ORDER* save_bitmap)
 {
-	if (read_order_field_uint32(orderInfo, s, 1, &save_bitmap->savedBitmapPosition, TRUE) &&
-	    read_order_field_coord(orderInfo, s, 2, &save_bitmap->nLeftRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 3, &save_bitmap->nTopRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 4, &save_bitmap->nRightRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 5, &save_bitmap->nBottomRect, FALSE) &&
-	    read_order_field_byte(orderInfo, s, 6, &save_bitmap->operation, TRUE))
+	if (read_order_field_uint32(orderName, orderInfo, s, 1, &save_bitmap->savedBitmapPosition,
+	                            TRUE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 2, &save_bitmap->nLeftRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 3, &save_bitmap->nTopRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 4, &save_bitmap->nRightRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 5, &save_bitmap->nBottomRect, FALSE) &&
+	    read_order_field_byte(orderName, orderInfo, s, 6, &save_bitmap->operation, TRUE))
 		return TRUE;
 	return FALSE;
 }
-static BOOL update_read_glyph_index_order(wStream* s, const ORDER_INFO* orderInfo,
+static BOOL update_read_glyph_index_order(const char* orderName, wStream* s,
+                                          const ORDER_INFO* orderInfo,
                                           GLYPH_INDEX_ORDER* glyph_index)
 {
-	if (!read_order_field_byte(orderInfo, s, 1, &glyph_index->cacheId, TRUE) ||
-	    !read_order_field_byte(orderInfo, s, 2, &glyph_index->flAccel, TRUE) ||
-	    !read_order_field_byte(orderInfo, s, 3, &glyph_index->ulCharInc, TRUE) ||
-	    !read_order_field_byte(orderInfo, s, 4, &glyph_index->fOpRedundant, TRUE) ||
-	    !read_order_field_color(orderInfo, s, 5, &glyph_index->backColor, TRUE) ||
-	    !read_order_field_color(orderInfo, s, 6, &glyph_index->foreColor, TRUE) ||
-	    !read_order_field_int16(orderInfo, s, 7, &glyph_index->bkLeft, TRUE) ||
-	    !read_order_field_int16(orderInfo, s, 8, &glyph_index->bkTop, TRUE) ||
-	    !read_order_field_int16(orderInfo, s, 9, &glyph_index->bkRight, TRUE) ||
-	    !read_order_field_int16(orderInfo, s, 10, &glyph_index->bkBottom, TRUE) ||
-	    !read_order_field_int16(orderInfo, s, 11, &glyph_index->opLeft, TRUE) ||
-	    !read_order_field_int16(orderInfo, s, 12, &glyph_index->opTop, TRUE) ||
-	    !read_order_field_int16(orderInfo, s, 13, &glyph_index->opRight, TRUE) ||
-	    !read_order_field_int16(orderInfo, s, 14, &glyph_index->opBottom, TRUE) ||
+	if (!read_order_field_byte(orderName, orderInfo, s, 1, &glyph_index->cacheId, TRUE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 2, &glyph_index->flAccel, TRUE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 3, &glyph_index->ulCharInc, TRUE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 4, &glyph_index->fOpRedundant, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 5, &glyph_index->backColor, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 6, &glyph_index->foreColor, TRUE) ||
+	    !read_order_field_int16(orderName, orderInfo, s, 7, &glyph_index->bkLeft, TRUE) ||
+	    !read_order_field_int16(orderName, orderInfo, s, 8, &glyph_index->bkTop, TRUE) ||
+	    !read_order_field_int16(orderName, orderInfo, s, 9, &glyph_index->bkRight, TRUE) ||
+	    !read_order_field_int16(orderName, orderInfo, s, 10, &glyph_index->bkBottom, TRUE) ||
+	    !read_order_field_int16(orderName, orderInfo, s, 11, &glyph_index->opLeft, TRUE) ||
+	    !read_order_field_int16(orderName, orderInfo, s, 12, &glyph_index->opTop, TRUE) ||
+	    !read_order_field_int16(orderName, orderInfo, s, 13, &glyph_index->opRight, TRUE) ||
+	    !read_order_field_int16(orderName, orderInfo, s, 14, &glyph_index->opBottom, TRUE) ||
 	    !update_read_brush(s, &glyph_index->brush, orderInfo->fieldFlags >> 14) ||
-	    !read_order_field_int16(orderInfo, s, 20, &glyph_index->x, TRUE) ||
-	    !read_order_field_int16(orderInfo, s, 21, &glyph_index->y, TRUE))
+	    !read_order_field_int16(orderName, orderInfo, s, 20, &glyph_index->x, TRUE) ||
+	    !read_order_field_int16(orderName, orderInfo, s, 21, &glyph_index->y, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_22) != 0)
@@ -1830,24 +1875,24 @@ BOOL update_write_glyph_index_order(wStream* s, ORDER_INFO* orderInfo,
 	Stream_Write(s, glyph_index->data, glyph_index->cbData);
 	return TRUE;
 }
-static BOOL update_read_fast_index_order(wStream* s, const ORDER_INFO* orderInfo,
-                                         FAST_INDEX_ORDER* fast_index)
+static BOOL update_read_fast_index_order(const char* orderName, wStream* s,
+                                         const ORDER_INFO* orderInfo, FAST_INDEX_ORDER* fast_index)
 {
-	if (!read_order_field_byte(orderInfo, s, 1, &fast_index->cacheId, TRUE) ||
-	    !read_order_field_2bytes(orderInfo, s, 2, &fast_index->ulCharInc, &fast_index->flAccel,
-	                             TRUE) ||
-	    !read_order_field_color(orderInfo, s, 3, &fast_index->backColor, TRUE) ||
-	    !read_order_field_color(orderInfo, s, 4, &fast_index->foreColor, TRUE) ||
-	    !read_order_field_coord(orderInfo, s, 5, &fast_index->bkLeft, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 6, &fast_index->bkTop, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 7, &fast_index->bkRight, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 8, &fast_index->bkBottom, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 9, &fast_index->opLeft, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 10, &fast_index->opTop, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 11, &fast_index->opRight, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 12, &fast_index->opBottom, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 13, &fast_index->x, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 14, &fast_index->y, FALSE))
+	if (!read_order_field_byte(orderName, orderInfo, s, 1, &fast_index->cacheId, TRUE) ||
+	    !read_order_field_2bytes(orderName, orderInfo, s, 2, &fast_index->ulCharInc,
+	                             &fast_index->flAccel, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 3, &fast_index->backColor, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 4, &fast_index->foreColor, TRUE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 5, &fast_index->bkLeft, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 6, &fast_index->bkTop, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 7, &fast_index->bkRight, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 8, &fast_index->bkBottom, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 9, &fast_index->opLeft, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 10, &fast_index->opTop, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 11, &fast_index->opRight, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 12, &fast_index->opBottom, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 13, &fast_index->x, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 14, &fast_index->y, FALSE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_15) != 0)
@@ -1866,28 +1911,28 @@ static BOOL update_read_fast_index_order(wStream* s, const ORDER_INFO* orderInfo
 
 	return TRUE;
 }
-static BOOL update_read_fast_glyph_order(wStream* s, const ORDER_INFO* orderInfo,
-                                         FAST_GLYPH_ORDER* fastGlyph)
+static BOOL update_read_fast_glyph_order(const char* orderName, wStream* s,
+                                         const ORDER_INFO* orderInfo, FAST_GLYPH_ORDER* fastGlyph)
 {
 	GLYPH_DATA_V2* glyph = &fastGlyph->glyphData;
-	if (!read_order_field_byte(orderInfo, s, 1, &fastGlyph->cacheId, TRUE))
+	if (!read_order_field_byte(orderName, orderInfo, s, 1, &fastGlyph->cacheId, TRUE))
 		return FALSE;
 	if (fastGlyph->cacheId > 9)
 		return FALSE;
-	if (!read_order_field_2bytes(orderInfo, s, 2, &fastGlyph->ulCharInc, &fastGlyph->flAccel,
-	                             TRUE) ||
-	    !read_order_field_color(orderInfo, s, 3, &fastGlyph->backColor, TRUE) ||
-	    !read_order_field_color(orderInfo, s, 4, &fastGlyph->foreColor, TRUE) ||
-	    !read_order_field_coord(orderInfo, s, 5, &fastGlyph->bkLeft, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 6, &fastGlyph->bkTop, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 7, &fastGlyph->bkRight, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 8, &fastGlyph->bkBottom, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 9, &fastGlyph->opLeft, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 10, &fastGlyph->opTop, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 11, &fastGlyph->opRight, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 12, &fastGlyph->opBottom, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 13, &fastGlyph->x, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 14, &fastGlyph->y, FALSE))
+	if (!read_order_field_2bytes(orderName, orderInfo, s, 2, &fastGlyph->ulCharInc,
+	                             &fastGlyph->flAccel, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 3, &fastGlyph->backColor, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 4, &fastGlyph->foreColor, TRUE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 5, &fastGlyph->bkLeft, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 6, &fastGlyph->bkTop, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 7, &fastGlyph->bkRight, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 8, &fastGlyph->bkBottom, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 9, &fastGlyph->opLeft, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 10, &fastGlyph->opTop, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 11, &fastGlyph->opRight, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 12, &fastGlyph->opBottom, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 13, &fastGlyph->x, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 14, &fastGlyph->y, FALSE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_15) != 0)
@@ -1945,16 +1990,16 @@ static BOOL update_read_fast_glyph_order(wStream* s, const ORDER_INFO* orderInfo
 
 	return TRUE;
 }
-static BOOL update_read_polygon_sc_order(wStream* s, const ORDER_INFO* orderInfo,
-                                         POLYGON_SC_ORDER* polygon_sc)
+static BOOL update_read_polygon_sc_order(const char* orderName, wStream* s,
+                                         const ORDER_INFO* orderInfo, POLYGON_SC_ORDER* polygon_sc)
 {
 	UINT32 num = polygon_sc->numPoints;
-	if (!read_order_field_coord(orderInfo, s, 1, &polygon_sc->xStart, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 2, &polygon_sc->yStart, FALSE) ||
-	    !read_order_field_byte(orderInfo, s, 3, &polygon_sc->bRop2, TRUE) ||
-	    !read_order_field_byte(orderInfo, s, 4, &polygon_sc->fillMode, TRUE) ||
-	    !read_order_field_color(orderInfo, s, 5, &polygon_sc->brushColor, TRUE) ||
-	    !read_order_field_byte(orderInfo, s, 6, &num, TRUE))
+	if (!read_order_field_coord(orderName, orderInfo, s, 1, &polygon_sc->xStart, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 2, &polygon_sc->yStart, FALSE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 3, &polygon_sc->bRop2, TRUE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 4, &polygon_sc->fillMode, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 5, &polygon_sc->brushColor, TRUE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 6, &num, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_07) != 0)
@@ -1981,22 +2026,22 @@ static BOOL update_read_polygon_sc_order(wStream* s, const ORDER_INFO* orderInfo
 
 	return TRUE;
 }
-static BOOL update_read_polygon_cb_order(wStream* s, const ORDER_INFO* orderInfo,
-                                         POLYGON_CB_ORDER* polygon_cb)
+static BOOL update_read_polygon_cb_order(const char* orderName, wStream* s,
+                                         const ORDER_INFO* orderInfo, POLYGON_CB_ORDER* polygon_cb)
 {
 	UINT32 num = polygon_cb->numPoints;
-	if (!read_order_field_coord(orderInfo, s, 1, &polygon_cb->xStart, FALSE) ||
-	    !read_order_field_coord(orderInfo, s, 2, &polygon_cb->yStart, FALSE) ||
-	    !read_order_field_byte(orderInfo, s, 3, &polygon_cb->bRop2, TRUE) ||
-	    !read_order_field_byte(orderInfo, s, 4, &polygon_cb->fillMode, TRUE) ||
-	    !read_order_field_color(orderInfo, s, 5, &polygon_cb->backColor, TRUE) ||
-	    !read_order_field_color(orderInfo, s, 6, &polygon_cb->foreColor, TRUE))
+	if (!read_order_field_coord(orderName, orderInfo, s, 1, &polygon_cb->xStart, FALSE) ||
+	    !read_order_field_coord(orderName, orderInfo, s, 2, &polygon_cb->yStart, FALSE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 3, &polygon_cb->bRop2, TRUE) ||
+	    !read_order_field_byte(orderName, orderInfo, s, 4, &polygon_cb->fillMode, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 5, &polygon_cb->backColor, TRUE) ||
+	    !read_order_field_color(orderName, orderInfo, s, 6, &polygon_cb->foreColor, TRUE))
 		return FALSE;
 
 	if (!update_read_brush(s, &polygon_cb->brush, orderInfo->fieldFlags >> 6))
 		return FALSE;
 
-	if (!read_order_field_byte(orderInfo, s, 12, &num, TRUE))
+	if (!read_order_field_byte(orderName, orderInfo, s, 12, &num, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_13) != 0)
@@ -2027,30 +2072,30 @@ static BOOL update_read_polygon_cb_order(wStream* s, const ORDER_INFO* orderInfo
 	polygon_cb->bRop2 = (polygon_cb->bRop2 & 0x1F);
 	return TRUE;
 }
-static BOOL update_read_ellipse_sc_order(wStream* s, const ORDER_INFO* orderInfo,
-                                         ELLIPSE_SC_ORDER* ellipse_sc)
+static BOOL update_read_ellipse_sc_order(const char* orderName, wStream* s,
+                                         const ORDER_INFO* orderInfo, ELLIPSE_SC_ORDER* ellipse_sc)
 {
-	if (read_order_field_coord(orderInfo, s, 1, &ellipse_sc->leftRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 2, &ellipse_sc->topRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 3, &ellipse_sc->rightRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 4, &ellipse_sc->bottomRect, FALSE) &&
-	    read_order_field_byte(orderInfo, s, 5, &ellipse_sc->bRop2, TRUE) &&
-	    read_order_field_byte(orderInfo, s, 6, &ellipse_sc->fillMode, TRUE) &&
-	    read_order_field_color(orderInfo, s, 7, &ellipse_sc->color, TRUE))
+	if (read_order_field_coord(orderName, orderInfo, s, 1, &ellipse_sc->leftRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 2, &ellipse_sc->topRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 3, &ellipse_sc->rightRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 4, &ellipse_sc->bottomRect, FALSE) &&
+	    read_order_field_byte(orderName, orderInfo, s, 5, &ellipse_sc->bRop2, TRUE) &&
+	    read_order_field_byte(orderName, orderInfo, s, 6, &ellipse_sc->fillMode, TRUE) &&
+	    read_order_field_color(orderName, orderInfo, s, 7, &ellipse_sc->color, TRUE))
 		return TRUE;
 	return FALSE;
 }
-static BOOL update_read_ellipse_cb_order(wStream* s, const ORDER_INFO* orderInfo,
-                                         ELLIPSE_CB_ORDER* ellipse_cb)
+static BOOL update_read_ellipse_cb_order(const char* orderName, wStream* s,
+                                         const ORDER_INFO* orderInfo, ELLIPSE_CB_ORDER* ellipse_cb)
 {
-	if (read_order_field_coord(orderInfo, s, 1, &ellipse_cb->leftRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 2, &ellipse_cb->topRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 3, &ellipse_cb->rightRect, FALSE) &&
-	    read_order_field_coord(orderInfo, s, 4, &ellipse_cb->bottomRect, FALSE) &&
-	    read_order_field_byte(orderInfo, s, 5, &ellipse_cb->bRop2, TRUE) &&
-	    read_order_field_byte(orderInfo, s, 6, &ellipse_cb->fillMode, TRUE) &&
-	    read_order_field_color(orderInfo, s, 7, &ellipse_cb->backColor, TRUE) &&
-	    read_order_field_color(orderInfo, s, 8, &ellipse_cb->foreColor, TRUE) &&
+	if (read_order_field_coord(orderName, orderInfo, s, 1, &ellipse_cb->leftRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 2, &ellipse_cb->topRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 3, &ellipse_cb->rightRect, FALSE) &&
+	    read_order_field_coord(orderName, orderInfo, s, 4, &ellipse_cb->bottomRect, FALSE) &&
+	    read_order_field_byte(orderName, orderInfo, s, 5, &ellipse_cb->bRop2, TRUE) &&
+	    read_order_field_byte(orderName, orderInfo, s, 6, &ellipse_cb->fillMode, TRUE) &&
+	    read_order_field_color(orderName, orderInfo, s, 7, &ellipse_cb->backColor, TRUE) &&
+	    read_order_field_color(orderName, orderInfo, s, 8, &ellipse_cb->foreColor, TRUE) &&
 	    update_read_brush(s, &ellipse_cb->brush, orderInfo->fieldFlags >> 8))
 		return TRUE;
 	return FALSE;
@@ -3401,92 +3446,94 @@ static BOOL read_primary_order(wLog* log, const char* orderName, wStream* s,
 	switch (orderInfo->orderType)
 	{
 		case ORDER_TYPE_DSTBLT:
-			rc = update_read_dstblt_order(s, orderInfo, &(primary->dstblt));
+			rc = update_read_dstblt_order(orderName, s, orderInfo, &(primary->dstblt));
 			break;
 
 		case ORDER_TYPE_PATBLT:
-			rc = update_read_patblt_order(s, orderInfo, &(primary->patblt));
+			rc = update_read_patblt_order(orderName, s, orderInfo, &(primary->patblt));
 			break;
 
 		case ORDER_TYPE_SCRBLT:
-			rc = update_read_scrblt_order(s, orderInfo, &(primary->scrblt));
+			rc = update_read_scrblt_order(orderName, s, orderInfo, &(primary->scrblt));
 			break;
 
 		case ORDER_TYPE_OPAQUE_RECT:
-			rc = update_read_opaque_rect_order(s, orderInfo, &(primary->opaque_rect));
+			rc = update_read_opaque_rect_order(orderName, s, orderInfo, &(primary->opaque_rect));
 			break;
 
 		case ORDER_TYPE_DRAW_NINE_GRID:
-			rc = update_read_draw_nine_grid_order(s, orderInfo, &(primary->draw_nine_grid));
+			rc = update_read_draw_nine_grid_order(orderName, s, orderInfo,
+			                                      &(primary->draw_nine_grid));
 			break;
 
 		case ORDER_TYPE_MULTI_DSTBLT:
-			rc = update_read_multi_dstblt_order(s, orderInfo, &(primary->multi_dstblt));
+			rc = update_read_multi_dstblt_order(orderName, s, orderInfo, &(primary->multi_dstblt));
 			break;
 
 		case ORDER_TYPE_MULTI_PATBLT:
-			rc = update_read_multi_patblt_order(s, orderInfo, &(primary->multi_patblt));
+			rc = update_read_multi_patblt_order(orderName, s, orderInfo, &(primary->multi_patblt));
 			break;
 
 		case ORDER_TYPE_MULTI_SCRBLT:
-			rc = update_read_multi_scrblt_order(s, orderInfo, &(primary->multi_scrblt));
+			rc = update_read_multi_scrblt_order(orderName, s, orderInfo, &(primary->multi_scrblt));
 			break;
 
 		case ORDER_TYPE_MULTI_OPAQUE_RECT:
-			rc = update_read_multi_opaque_rect_order(s, orderInfo, &(primary->multi_opaque_rect));
+			rc = update_read_multi_opaque_rect_order(orderName, s, orderInfo,
+			                                         &(primary->multi_opaque_rect));
 			break;
 
 		case ORDER_TYPE_MULTI_DRAW_NINE_GRID:
-			rc = update_read_multi_draw_nine_grid_order(s, orderInfo,
+			rc = update_read_multi_draw_nine_grid_order(orderName, s, orderInfo,
 			                                            &(primary->multi_draw_nine_grid));
 			break;
 
 		case ORDER_TYPE_LINE_TO:
-			rc = update_read_line_to_order(s, orderInfo, &(primary->line_to));
+			rc = update_read_line_to_order(orderName, s, orderInfo, &(primary->line_to));
 			break;
 
 		case ORDER_TYPE_POLYLINE:
-			rc = update_read_polyline_order(s, orderInfo, &(primary->polyline));
+			rc = update_read_polyline_order(orderName, s, orderInfo, &(primary->polyline));
 			break;
 
 		case ORDER_TYPE_MEMBLT:
-			rc = update_read_memblt_order(s, orderInfo, &(primary->memblt));
+			rc = update_read_memblt_order(orderName, s, orderInfo, &(primary->memblt));
 			break;
 
 		case ORDER_TYPE_MEM3BLT:
-			rc = update_read_mem3blt_order(s, orderInfo, &(primary->mem3blt));
+			rc = update_read_mem3blt_order(orderName, s, orderInfo, &(primary->mem3blt));
 			break;
 
 		case ORDER_TYPE_SAVE_BITMAP:
-			rc = update_read_save_bitmap_order(s, orderInfo, &(primary->save_bitmap));
+			rc = update_read_save_bitmap_order(orderName, s, orderInfo, &(primary->save_bitmap));
 			break;
 
 		case ORDER_TYPE_GLYPH_INDEX:
-			rc = update_read_glyph_index_order(s, orderInfo, &(primary->glyph_index));
+			rc = update_read_glyph_index_order(orderName, s, orderInfo, &(primary->glyph_index));
 			break;
 
 		case ORDER_TYPE_FAST_INDEX:
-			rc = update_read_fast_index_order(s, orderInfo, &(primary->fast_index));
+			rc = update_read_fast_index_order(orderName, s, orderInfo, &(primary->fast_index));
 			break;
 
 		case ORDER_TYPE_FAST_GLYPH:
-			rc = update_read_fast_glyph_order(s, orderInfo, &(primary->fast_glyph));
+			rc = update_read_fast_glyph_order(orderName, s, orderInfo, &(primary->fast_glyph));
 			break;
 
 		case ORDER_TYPE_POLYGON_SC:
-			rc = update_read_polygon_sc_order(s, orderInfo, &(primary->polygon_sc));
+			rc = update_read_polygon_sc_order(orderName, s, orderInfo, &(primary->polygon_sc));
 			break;
 
 		case ORDER_TYPE_POLYGON_CB:
-			rc = update_read_polygon_cb_order(s, orderInfo, &(primary->polygon_cb));
+			rc = update_read_polygon_cb_order(orderName, s, orderInfo, &(primary->polygon_cb));
 			break;
 
 		case ORDER_TYPE_ELLIPSE_SC:
-			rc = update_read_ellipse_sc_order(s, orderInfo, &(primary->ellipse_sc));
+			rc = update_read_ellipse_sc_order(orderName, s, orderInfo, &(primary->ellipse_sc));
 			break;
 
 		case ORDER_TYPE_ELLIPSE_CB:
-			rc = update_read_ellipse_cb_order(s, orderInfo, &(primary->ellipse_cb));
+			rc = update_read_ellipse_cb_order(orderName, s, orderInfo, &(primary->ellipse_cb));
 			break;
 
 		default:
