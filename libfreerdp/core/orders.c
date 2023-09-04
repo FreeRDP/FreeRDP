@@ -226,7 +226,7 @@ static BOOL check_alt_order_supported(wLog* log, rdpSettings* settings, BYTE ord
 		case ORDER_TYPE_CREATE_OFFSCREEN_BITMAP:
 		case ORDER_TYPE_SWITCH_SURFACE:
 			condition = settings->OffscreenSupportLevel != 0;
-			extendedMessage = "Adding +offscreen-cache might mitigate";
+			extendedMessage = "Adding /cache:offscreen might mitigate";
 			break;
 
 		case ORDER_TYPE_CREATE_NINE_GRID_BITMAP:
@@ -276,18 +276,18 @@ static BOOL check_secondary_order_supported(wLog* log, rdpSettings* settings, BY
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED:
 		case ORDER_TYPE_CACHE_BITMAP_COMPRESSED:
 			condition = settings->BitmapCacheEnabled;
-			extendedMessage = "Adding +bitmap-cache might mitigate";
+			extendedMessage = "Adding /cache:bitmap might mitigate";
 			break;
 
 		case ORDER_TYPE_BITMAP_UNCOMPRESSED_V2:
 		case ORDER_TYPE_BITMAP_COMPRESSED_V2:
 			condition = settings->BitmapCacheEnabled;
-			extendedMessage = "Adding +bitmap-cache might mitigate";
+			extendedMessage = "Adding /cache:bitmap might mitigate";
 			break;
 
 		case ORDER_TYPE_BITMAP_COMPRESSED_V3:
 			condition = settings->BitmapCacheV3Enabled;
-			extendedMessage = "Adding +bitmap-cache might mitigate";
+			extendedMessage = "Adding /cache:bitmap might mitigate";
 			break;
 
 		case ORDER_TYPE_CACHE_COLOR_TABLE:
