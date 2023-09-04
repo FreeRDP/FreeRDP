@@ -1077,7 +1077,11 @@ static INLINE BOOL read_order_field_byte(const char* orderName, const ORDER_INFO
 	WINPR_ASSERT(target);
 
 	if (!order_field_flag_is_set(orderInfo, number))
+	{
+		WLog_DBG(TAG, "order %s field %" PRIu8 " not found [optional:%d]", orderName, number,
+		         optional);
 		return TRUE;
+	}
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
 	Stream_Read_UINT8(s, *target);
@@ -1094,7 +1098,11 @@ static INLINE BOOL read_order_field_2bytes(const char* orderName, const ORDER_IN
 	WINPR_ASSERT(target2);
 
 	if (!order_field_flag_is_set(orderInfo, number))
+	{
+		WLog_DBG(TAG, "order %s field %" PRIu8 " not found [optional:%d]", orderName, number,
+		         optional);
 		return TRUE;
+	}
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
 	Stream_Read_UINT8(s, *target1);
@@ -1110,7 +1118,11 @@ static INLINE BOOL read_order_field_uint16(const char* orderName, const ORDER_IN
 	WINPR_ASSERT(target);
 
 	if (!order_field_flag_is_set(orderInfo, number))
+	{
+		WLog_DBG(TAG, "order %s field %" PRIu8 " not found [optional:%d]", orderName, number,
+		         optional);
 		return TRUE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
@@ -1127,7 +1139,11 @@ static INLINE BOOL read_order_field_int16(const char* orderName, const ORDER_INF
 	WINPR_ASSERT(target);
 
 	if (!order_field_flag_is_set(orderInfo, number))
+	{
+		WLog_DBG(TAG, "order %s field %" PRIu8 " not found [optional:%d]", orderName, number,
+		         optional);
 		return TRUE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 		return FALSE;
@@ -1144,7 +1160,12 @@ static INLINE BOOL read_order_field_uint32(const char* orderName, const ORDER_IN
 	WINPR_ASSERT(target);
 
 	if (!order_field_flag_is_set(orderInfo, number))
+	{
+		WLog_DBG(TAG, "order %s field %" PRIu8 " not found [optional:%d]", orderName, number,
+		         optional);
 		return TRUE;
+	}
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 		return FALSE;
 
@@ -1160,7 +1181,10 @@ static INLINE BOOL read_order_field_coord(const char* orderName, const ORDER_INF
 	WINPR_ASSERT(TARGET);
 
 	if (!order_field_flag_is_set(orderInfo, NO))
+	{
+		WLog_DBG(TAG, "order %s field %" PRIu8 " not found [optional:%d]", orderName, NO, optional);
 		return TRUE;
+	}
 
 	return update_read_coord(s, TARGET, orderInfo->deltaCoordinates);
 }
@@ -1173,7 +1197,10 @@ static INLINE BOOL read_order_field_color(const char* orderName, const ORDER_INF
 	WINPR_ASSERT(TARGET);
 
 	if (!order_field_flag_is_set(orderInfo, NO))
+	{
+		WLog_DBG(TAG, "order %s field %" PRIu8 " not found [optional:%d]", orderName, NO, optional);
 		return TRUE;
+	}
 
 	if (!update_read_color(s, TARGET))
 		return FALSE;
