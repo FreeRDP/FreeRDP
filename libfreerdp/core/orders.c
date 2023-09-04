@@ -1018,13 +1018,19 @@ static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, U
 	return TRUE;
 }
 
-static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, UINT32 number, INT16 x,
-                                            INT16 y)
+static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT** points, UINT32 number,
+                                            INT16 x, INT16 y)
 {
-	UINT32 i;
 	BYTE flags = 0;
 	BYTE* zeroBits;
 	UINT32 zeroBitsSize = ((number + 3) / 4);
+
+	WINPR_ASSERT(points);
+	DELTA_POINT* newpoints = (DELTA_POINT*)realloc(*points, sizeof(DELTA_POINT) * number);
+
+	if (!newpoints)
+		return FALSE;
+	*points = newpoints;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, zeroBitsSize))
 		return FALSE;
@@ -1033,18 +1039,18 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, UIN
 	Stream_Seek(s, zeroBitsSize);
 	ZeroMemory(points, sizeof(DELTA_POINT) * number);
 
-	for (i = 0; i < number; i++)
+	for (UINT32 i = 0; i < number; i++)
 	{
 		if (i % 4 == 0)
 			flags = zeroBits[i / 4];
 
-		if ((~flags & 0x80) && !update_read_delta(s, &points[i].x))
+		if ((~flags & 0x80) && !update_read_delta(s, &newpoints[i].x))
 		{
 			WLog_ERR(TAG, "update_read_delta(x) failed");
 			return FALSE;
 		}
 
-		if ((~flags & 0x40) && !update_read_delta(s, &points[i].y))
+		if ((~flags & 0x40) && !update_read_delta(s, &newpoints[i].y))
 		{
 			WLog_ERR(TAG, "update_read_delta(y) failed");
 			return FALSE;
@@ -1655,8 +1661,6 @@ static BOOL update_read_polyline_order(const char* orderName, wStream* s,
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_07) != 0)
 	{
-		DELTA_POINT* new_points;
-
 		if (new_num == 0)
 			return FALSE;
 
@@ -1664,17 +1668,9 @@ static BOOL update_read_polyline_order(const char* orderName, wStream* s,
 			return FALSE;
 
 		Stream_Read_UINT8(s, polyline->cbData);
-		new_points = (DELTA_POINT*)realloc(polyline->points, sizeof(DELTA_POINT) * new_num);
 
-		if (!new_points)
-		{
-			WLog_ERR(TAG, "realloc(%" PRIu32 ") failed", new_num);
-			return FALSE;
-		}
-
-		polyline->points = new_points;
 		polyline->numDeltaEntries = new_num;
-		return update_read_delta_points(s, polyline->points, polyline->numDeltaEntries,
+		return update_read_delta_points(s, &polyline->points, polyline->numDeltaEntries,
 		                                polyline->xStart, polyline->yStart);
 	}
 
@@ -2004,8 +2000,6 @@ static BOOL update_read_polygon_sc_order(const char* orderName, wStream* s,
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_07) != 0)
 	{
-		DELTA_POINT* newpoints;
-
 		if (num == 0)
 			return FALSE;
 
@@ -2013,14 +2007,9 @@ static BOOL update_read_polygon_sc_order(const char* orderName, wStream* s,
 			return FALSE;
 
 		Stream_Read_UINT8(s, polygon_sc->cbData);
-		newpoints = (DELTA_POINT*)realloc(polygon_sc->points, sizeof(DELTA_POINT) * num);
 
-		if (!newpoints)
-			return FALSE;
-
-		polygon_sc->points = newpoints;
 		polygon_sc->numPoints = num;
-		return update_read_delta_points(s, polygon_sc->points, polygon_sc->numPoints,
+		return update_read_delta_points(s, &polygon_sc->points, polygon_sc->numPoints,
 		                                polygon_sc->xStart, polygon_sc->yStart);
 	}
 
@@ -2046,8 +2035,6 @@ static BOOL update_read_polygon_cb_order(const char* orderName, wStream* s,
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_13) != 0)
 	{
-		DELTA_POINT* newpoints;
-
 		if (num == 0)
 			return FALSE;
 
@@ -2055,15 +2042,9 @@ static BOOL update_read_polygon_cb_order(const char* orderName, wStream* s,
 			return FALSE;
 
 		Stream_Read_UINT8(s, polygon_cb->cbData);
-		newpoints = (DELTA_POINT*)realloc(polygon_cb->points, sizeof(DELTA_POINT) * num);
-
-		if (!newpoints)
-			return FALSE;
-
-		polygon_cb->points = newpoints;
 		polygon_cb->numPoints = num;
 
-		if (!update_read_delta_points(s, polygon_cb->points, polygon_cb->numPoints,
+		if (!update_read_delta_points(s, &polygon_cb->points, polygon_cb->numPoints,
 		                              polygon_cb->xStart, polygon_cb->yStart))
 			return FALSE;
 	}
