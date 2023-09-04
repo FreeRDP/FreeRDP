@@ -1452,12 +1452,13 @@ static BOOL update_read_multi_dstblt_order(const char* orderName, wStream* s,
                                            const ORDER_INFO* orderInfo,
                                            MULTI_DSTBLT_ORDER* multi_dstblt)
 {
+	UINT32 numRectangles = multi_dstblt->numRectangles;
 	if (!read_order_field_coord(orderName, orderInfo, s, 1, &multi_dstblt->nLeftRect, FALSE) ||
 	    !read_order_field_coord(orderName, orderInfo, s, 2, &multi_dstblt->nTopRect, FALSE) ||
 	    !read_order_field_coord(orderName, orderInfo, s, 3, &multi_dstblt->nWidth, FALSE) ||
 	    !read_order_field_coord(orderName, orderInfo, s, 4, &multi_dstblt->nHeight, FALSE) ||
 	    !read_order_field_byte(orderName, orderInfo, s, 5, &multi_dstblt->bRop, TRUE) ||
-	    !read_order_field_byte(orderName, orderInfo, s, 6, &multi_dstblt->numRectangles, TRUE))
+	    !read_order_field_byte(orderName, orderInfo, s, 6, &numRectangles, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_07) != 0)
@@ -1465,11 +1466,18 @@ static BOOL update_read_multi_dstblt_order(const char* orderName, wStream* s,
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 			return FALSE;
 
+		multi_dstblt->numRectangles = numRectangles;
 		Stream_Read_UINT16(s, multi_dstblt->cbData);
 		return update_read_delta_rects(s, multi_dstblt->rectangles, &multi_dstblt->numRectangles);
 	}
-
-	return multi_dstblt->numRectangles == 0;
+	if (numRectangles > multi_dstblt->numRectangles)
+	{
+		WLog_ERR(TAG, "%s numRectangles %" PRIu32 " > %" PRIu32, orderName, numRectangles,
+		         multi_dstblt->numRectangles);
+		return FALSE;
+	}
+	multi_dstblt->numRectangles = numRectangles;
+	return TRUE;
 }
 
 static BOOL update_read_multi_patblt_order(const char* orderName, wStream* s,
@@ -1488,7 +1496,8 @@ static BOOL update_read_multi_patblt_order(const char* orderName, wStream* s,
 	if (!update_read_brush(s, &multi_patblt->brush, orderInfo->fieldFlags >> 7))
 		return FALSE;
 
-	if (!read_order_field_byte(orderName, orderInfo, s, 13, &multi_patblt->numRectangles, TRUE))
+	UINT32 numRectangles = multi_patblt->numRectangles;
+	if (!read_order_field_byte(orderName, orderInfo, s, 13, &numRectangles, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_14) != 0)
@@ -1496,13 +1505,20 @@ static BOOL update_read_multi_patblt_order(const char* orderName, wStream* s,
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 			return FALSE;
 
+		multi_patblt->numRectangles = numRectangles;
 		Stream_Read_UINT16(s, multi_patblt->cbData);
 
 		if (!update_read_delta_rects(s, multi_patblt->rectangles, &multi_patblt->numRectangles))
 			return FALSE;
 	}
-	else if (multi_patblt->numRectangles != 0)
+
+	if (numRectangles > multi_patblt->numRectangles)
+	{
+		WLog_ERR(TAG, "%s numRectangles %" PRIu32 " > %" PRIu32, orderName, numRectangles,
+		         multi_patblt->numRectangles);
 		return FALSE;
+	}
+	multi_patblt->numRectangles = numRectangles;
 
 	return TRUE;
 }
@@ -1514,7 +1530,7 @@ static BOOL update_read_multi_scrblt_order(const char* orderName, wStream* s,
 	WINPR_ASSERT(orderInfo);
 	WINPR_ASSERT(multi_scrblt);
 
-	multi_scrblt->numRectangles = 0;
+	UINT32 numRectangles = multi_scrblt->numRectangles;
 	if (!read_order_field_coord(orderName, orderInfo, s, 1, &multi_scrblt->nLeftRect, FALSE) ||
 	    !read_order_field_coord(orderName, orderInfo, s, 2, &multi_scrblt->nTopRect, FALSE) ||
 	    !read_order_field_coord(orderName, orderInfo, s, 3, &multi_scrblt->nWidth, FALSE) ||
@@ -1522,7 +1538,7 @@ static BOOL update_read_multi_scrblt_order(const char* orderName, wStream* s,
 	    !read_order_field_byte(orderName, orderInfo, s, 5, &multi_scrblt->bRop, TRUE) ||
 	    !read_order_field_coord(orderName, orderInfo, s, 6, &multi_scrblt->nXSrc, FALSE) ||
 	    !read_order_field_coord(orderName, orderInfo, s, 7, &multi_scrblt->nYSrc, FALSE) ||
-	    !read_order_field_byte(orderName, orderInfo, s, 8, &multi_scrblt->numRectangles, TRUE))
+	    !read_order_field_byte(orderName, orderInfo, s, 8, &numRectangles, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_09) != 0)
@@ -1530,11 +1546,20 @@ static BOOL update_read_multi_scrblt_order(const char* orderName, wStream* s,
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 			return FALSE;
 
+		multi_scrblt->numRectangles = numRectangles;
 		Stream_Read_UINT16(s, multi_scrblt->cbData);
 		return update_read_delta_rects(s, multi_scrblt->rectangles, &multi_scrblt->numRectangles);
 	}
 
-	return multi_scrblt->numRectangles == 0;
+	if (numRectangles > multi_scrblt->numRectangles)
+	{
+		WLog_ERR(TAG, "%s numRectangles %" PRIu32 " > %" PRIu32, orderName, numRectangles,
+		         multi_scrblt->numRectangles);
+		return FALSE;
+	}
+	multi_scrblt->numRectangles = numRectangles;
+
+	return TRUE;
 }
 
 static BOOL update_read_multi_opaque_rect_order(const char* orderName, wStream* s,
@@ -1575,7 +1600,8 @@ static BOOL update_read_multi_opaque_rect_order(const char* orderName, wStream* 
 		multi_opaque_rect->color = (multi_opaque_rect->color & 0x0000FFFF) | ((UINT32)byte << 16);
 	}
 
-	if (!read_order_field_byte(orderName, orderInfo, s, 8, &multi_opaque_rect->numRectangles, TRUE))
+	UINT32 numRectangles = multi_opaque_rect->numRectangles;
+	if (!read_order_field_byte(orderName, orderInfo, s, 8, &numRectangles, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_09) != 0)
@@ -1583,18 +1609,27 @@ static BOOL update_read_multi_opaque_rect_order(const char* orderName, wStream* 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 			return FALSE;
 
+		multi_opaque_rect->numRectangles = numRectangles;
 		Stream_Read_UINT16(s, multi_opaque_rect->cbData);
 		return update_read_delta_rects(s, multi_opaque_rect->rectangles,
 		                               &multi_opaque_rect->numRectangles);
 	}
+	if (numRectangles > multi_opaque_rect->numRectangles)
+	{
+		WLog_ERR(TAG, "%s numRectangles %" PRIu32 " > %" PRIu32, orderName, numRectangles,
+		         multi_opaque_rect->numRectangles);
+		return FALSE;
+	}
+	multi_opaque_rect->numRectangles = numRectangles;
 
-	return multi_opaque_rect->numRectangles == 0;
+	return TRUE;
 }
 
 static BOOL update_read_multi_draw_nine_grid_order(const char* orderName, wStream* s,
                                                    const ORDER_INFO* orderInfo,
                                                    MULTI_DRAW_NINE_GRID_ORDER* multi_draw_nine_grid)
 {
+	UINT32 nDeltaEntries = multi_draw_nine_grid->nDeltaEntries;
 	if (!read_order_field_coord(orderName, orderInfo, s, 1, &multi_draw_nine_grid->srcLeft,
 	                            FALSE) ||
 	    !read_order_field_coord(orderName, orderInfo, s, 2, &multi_draw_nine_grid->srcTop, FALSE) ||
@@ -1604,8 +1639,7 @@ static BOOL update_read_multi_draw_nine_grid_order(const char* orderName, wStrea
 	                            FALSE) ||
 	    !read_order_field_uint16(orderName, orderInfo, s, 5, &multi_draw_nine_grid->bitmapId,
 	                             TRUE) ||
-	    !read_order_field_byte(orderName, orderInfo, s, 6, &multi_draw_nine_grid->nDeltaEntries,
-	                           TRUE))
+	    !read_order_field_byte(orderName, orderInfo, s, 6, &nDeltaEntries, TRUE))
 		return FALSE;
 
 	if ((orderInfo->fieldFlags & ORDER_FIELD_07) != 0)
@@ -1613,12 +1647,21 @@ static BOOL update_read_multi_draw_nine_grid_order(const char* orderName, wStrea
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 			return FALSE;
 
+		multi_draw_nine_grid->nDeltaEntries = nDeltaEntries;
 		Stream_Read_UINT16(s, multi_draw_nine_grid->cbData);
 		return update_read_delta_rects(s, multi_draw_nine_grid->rectangles,
 		                               &multi_draw_nine_grid->nDeltaEntries);
 	}
 
-	return multi_draw_nine_grid->nDeltaEntries == 0;
+	if (nDeltaEntries > multi_draw_nine_grid->nDeltaEntries)
+	{
+		WLog_ERR(TAG, "%s nDeltaEntries %" PRIu32 " > %" PRIu32, orderName, nDeltaEntries,
+		         multi_draw_nine_grid->nDeltaEntries);
+		return FALSE;
+	}
+	multi_draw_nine_grid->nDeltaEntries = nDeltaEntries;
+
+	return TRUE;
 }
 static BOOL update_read_line_to_order(const char* orderName, wStream* s,
                                       const ORDER_INFO* orderInfo, LINE_TO_ORDER* line_to)
@@ -1700,6 +1743,13 @@ static BOOL update_read_polyline_order(const char* orderName, wStream* s,
 		return update_read_delta_points(s, &polyline->points, polyline->numDeltaEntries,
 		                                polyline->xStart, polyline->yStart);
 	}
+	if (new_num > polyline->numDeltaEntries)
+	{
+		WLog_ERR(TAG, "%s numDeltaEntries %" PRIu32 " > %" PRIu32, orderName, new_num,
+		         polyline->numDeltaEntries);
+		return FALSE;
+	}
+	polyline->numDeltaEntries = new_num;
 
 	return TRUE;
 }
@@ -2039,6 +2089,12 @@ static BOOL update_read_polygon_sc_order(const char* orderName, wStream* s,
 		return update_read_delta_points(s, &polygon_sc->points, polygon_sc->numPoints,
 		                                polygon_sc->xStart, polygon_sc->yStart);
 	}
+	if (num > polygon_sc->numPoints)
+	{
+		WLog_ERR(TAG, "%s numPoints %" PRIu32 " > %" PRIu32, orderName, num, polygon_sc->numPoints);
+		return FALSE;
+	}
+	polygon_sc->numPoints = num;
 
 	return TRUE;
 }
@@ -2075,6 +2131,13 @@ static BOOL update_read_polygon_cb_order(const char* orderName, wStream* s,
 		                              polygon_cb->xStart, polygon_cb->yStart))
 			return FALSE;
 	}
+
+	if (num > polygon_cb->numPoints)
+	{
+		WLog_ERR(TAG, "%s numPoints %" PRIu32 " > %" PRIu32, orderName, num, polygon_cb->numPoints);
+		return FALSE;
+	}
+	polygon_cb->numPoints = num;
 
 	polygon_cb->backMode = (polygon_cb->bRop2 & 0x80) ? BACKMODE_TRANSPARENT : BACKMODE_OPAQUE;
 	polygon_cb->bRop2 = (polygon_cb->bRop2 & 0x1F);
