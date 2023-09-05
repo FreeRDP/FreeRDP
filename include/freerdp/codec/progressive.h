@@ -62,6 +62,9 @@ extern "C"
 	                                                            UINT32 ThreadingFlags);
 	FREERDP_API void progressive_context_free(PROGRESSIVE_CONTEXT* progressive);
 
+	FREERDP_API BOOL progressive_rfx_write_message_progressive_simple(
+	    PROGRESSIVE_CONTEXT* progressive, wStream* s, const RFX_MESSAGE* msg);
+
 #ifdef __cplusplus
 }
 #endif

@@ -2640,8 +2640,8 @@ fail:
 	return rc;
 }
 
-static BOOL progressive_rfx_write_message_progressive_simple(PROGRESSIVE_CONTEXT* progressive,
-                                                             wStream* s, const RFX_MESSAGE* msg)
+BOOL progressive_rfx_write_message_progressive_simple(PROGRESSIVE_CONTEXT* progressive, wStream* s,
+                                                      const RFX_MESSAGE* msg)
 {
 	RFX_CONTEXT* context;
 
