@@ -504,6 +504,10 @@ BOOL arm_encodeRedirectPasswd(rdpSettings* settings, const rdpCertificate* cert,
 	}
 
 	settings->RdstlsSecurity = TRUE;
+	settings->AadSecurity = FALSE;
+	settings->NlaSecurity = FALSE;
+	settings->RdpSecurity = FALSE;
+	settings->TlsSecurity = FALSE;
 	settings->RedirectionFlags = LB_PASSWORD_IS_PK_ENCRYPTED;
 	ret = TRUE;
 out:
@@ -518,7 +522,8 @@ out:
  *       base64.b64decode( base64.b64decode(input).decode('utf-16') )
  *  in python
  */
-static BOOL arm_pick_base64Utf16Field(cJSON* json, const char* name, BYTE** poutput, size_t* plen)
+static BOOL arm_pick_base64Utf16Field(const cJSON* json, const char* name, BYTE** poutput,
+                                      size_t* plen)
 {
 	*poutput = NULL;
 	*plen = 0;
@@ -639,7 +644,8 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(const char* metadata, rdpSett
 				continue;
 
 			char* publicIp = cJSON_GetStringValue(publicIpNode);
-			if (freerdp_settings_set_string(settings, FreeRDP_RedirectionTargetFQDN, publicIp))
+			if (publicIp && strlen(publicIp) &&
+			    freerdp_settings_set_string(settings, FreeRDP_RedirectionTargetFQDN, publicIp))
 			{
 				WLog_INFO(TAG, "connecting to publicIp %s", publicIp);
 				ret = TRUE;
@@ -652,6 +658,76 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(const char* metadata, rdpSett
 
 out:
 	cJSON_Delete(json);
+	return ret;
+}
+
+static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const cJSON* json)
+{
+	BOOL ret = TRUE;
+	WCHAR* wGUID = NULL;
+	BYTE* cert = NULL;
+	BYTE* authBlob = NULL;
+	rdpCertificate* redirectedServerCert = NULL;
+
+	do
+	{
+		/* redirectedAuthGuid */
+		const cJSON* redirectedAuthGuidNode =
+		    cJSON_GetObjectItemCaseSensitive(json, "redirectedAuthGuid");
+		if (!redirectedAuthGuidNode || !cJSON_IsString(redirectedAuthGuidNode))
+			break;
+
+		char* redirectedAuthGuid = cJSON_GetStringValue(redirectedAuthGuidNode);
+		if (!redirectedAuthGuid)
+			break;
+
+		size_t wGUID_len = 0;
+		wGUID = ConvertUtf8ToWCharAlloc(redirectedAuthGuid, &wGUID_len);
+		if (!wGUID)
+		{
+			WLog_ERR(TAG, "unable to allocate space for redirectedAuthGuid");
+			ret = FALSE;
+			goto endOfFunction;
+		}
+
+		BOOL status = freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionGuid, wGUID,
+		                                               (wGUID_len + 1) * sizeof(WCHAR));
+		if (!status)
+		{
+			WLog_ERR(TAG, "unable to set RedirectionGuid");
+			ret = FALSE;
+			goto endOfFunction;
+		}
+
+		/* redirectedServerCert */
+		size_t certLen = 0;
+		if (!arm_pick_base64Utf16Field(json, "redirectedServerCert", &cert, &certLen))
+			break;
+
+		rdpCertificate* redirectedServerCert = NULL;
+		if (!rdp_redirection_read_target_cert(&redirectedServerCert, cert, certLen))
+			break;
+
+		/* redirectedAuthBlob */
+		size_t authBlobLen = 0;
+		if (!arm_pick_base64Utf16Field(json, "redirectedAuthBlob", &authBlob, &authBlobLen))
+			break;
+
+		WINPR_CIPHER_CTX* cipher = treatAuthBlob(authBlob, authBlobLen);
+		if (!cipher)
+			break;
+
+		if (!arm_encodeRedirectPasswd(settings, redirectedServerCert, cipher))
+			break;
+
+		ret = TRUE;
+	} while (FALSE);
+
+	free(cert);
+	freerdp_certificate_free(redirectedServerCert);
+	free(authBlob);
+
+endOfFunction:
 	return ret;
 }
 
@@ -694,64 +770,14 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 		}
 	}
 
-	WCHAR* wGUID = NULL;
-	BYTE* cert = NULL;
-	BYTE* authBlob = NULL;
-	rdpCertificate* redirectedServerCert = NULL;
-
-	do
+	if (freerdp_settings_get_string(settings, FreeRDP_Password))
 	{
-		/* redirectedAuthGuid */
-		const cJSON* redirectedAuthGuidNode =
-		    cJSON_GetObjectItemCaseSensitive(json, "redirectedAuthGuid");
-		if (!redirectedAuthGuidNode || !cJSON_IsString(redirectedAuthGuidNode))
-			break;
+		/* note: we retrieve some more fields for RDSTLS only if we have a password provided by the
+		 * user, otherwise these are useless: we will not be able to do RDSTLS
+		 */
+		status = arm_fill_rdstls(arm, settings, json);
+	}
 
-		char* redirectedAuthGuid = cJSON_GetStringValue(redirectedAuthGuidNode);
-		if (!redirectedAuthGuid)
-			break;
-
-		size_t wGUID_len = 0;
-		wGUID = ConvertUtf8ToWCharAlloc(redirectedAuthGuid, &wGUID_len);
-		if (!wGUID)
-		{
-			WLog_ERR(TAG, "unable to allocate space for redirectedAuthGuid");
-			status = FALSE;
-			goto endOfFunction;
-		}
-
-		status = freerdp_settings_set_pointer_len(settings, FreeRDP_RedirectionGuid, wGUID,
-		                                          (wGUID_len + 1) * sizeof(WCHAR));
-		if (!status)
-			goto endOfFunction;
-
-		/* redirectedServerCert */
-		size_t certLen = 0;
-		if (!arm_pick_base64Utf16Field(json, "redirectedServerCert", &cert, &certLen))
-			break;
-
-		rdpCertificate* redirectedServerCert = NULL;
-		if (!rdp_redirection_read_target_cert(&redirectedServerCert, cert, certLen))
-			break;
-
-		/* redirectedAuthBlob */
-		size_t authBlobLen = 0;
-		if (!arm_pick_base64Utf16Field(json, "redirectedAuthBlob", &authBlob, &authBlobLen))
-			break;
-
-		WINPR_CIPHER_CTX* cipher = treatAuthBlob(authBlob, authBlobLen);
-		if (!cipher)
-			break;
-
-		if (!arm_encodeRedirectPasswd(settings, redirectedServerCert, cipher))
-			break;
-
-	} while (FALSE);
-
-	free(cert);
-	freerdp_certificate_free(redirectedServerCert);
-	free(authBlob);
-endOfFunction:
 	cJSON_Delete(json);
 	return status;
 }
