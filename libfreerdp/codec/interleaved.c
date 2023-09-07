@@ -36,7 +36,9 @@
 		for (x = 0; x < (_count); x++) \
 		{                              \
 			do                         \
-				_exp while (FALSE);    \
+			{                          \
+				_exp                   \
+			} while (FALSE);           \
 		}                              \
 	} while (FALSE)
 
@@ -152,15 +154,19 @@ static const char* rle_code_str_buffer(UINT32 code, char* buffer, size_t size)
 	return buffer;
 }
 
-#define buffer_within_range(pbSrc, pbEnd) \
-	buffer_within_range_((pbSrc), (pbEnd), __func__, __FILE__, __LINE__)
-static INLINE BOOL buffer_within_range_(const void* pbSrc, const void* pbEnd, const char* fkt,
-                                        const char* file, size_t line)
+#define buffer_within_range(pbSrc, size, pbEnd) \
+	buffer_within_range_((pbSrc), (size), (pbEnd), __func__, __FILE__, __LINE__)
+static INLINE BOOL buffer_within_range_(const void* pbSrc, size_t size, const void* pbEnd,
+                                        const char* fkt, const char* file, size_t line)
 {
 	WINPR_UNUSED(file);
-	if (pbSrc >= pbEnd)
+	WINPR_ASSERT(pbSrc);
+	WINPR_ASSERT(pbEnd);
+
+	if ((char*)pbSrc + size > pbEnd)
 	{
-		WLog_ERR(TAG, "[%s:%" PRIuz "] pbSrc=%p >= pbEnd=%p", fkt, line, pbSrc, pbEnd);
+		WLog_ERR(TAG, "[%s:%" PRIuz "] pbSrc=%p + %" PRIuz " > pbEnd=%p", fkt, line, pbSrc, size,
+		         pbEnd);
 		return FALSE;
 	}
 	return TRUE;
@@ -207,7 +213,7 @@ static UINT ExtractRunLengthRegularFgBg(const BYTE* pbOrderHdr, const BYTE* pbEn
 	runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
 	if (runLength == 0)
 	{
-		if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
+		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
 		{
 			*advance = 0;
 			return 0;
@@ -232,7 +238,7 @@ static UINT ExtractRunLengthLiteFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, 
 	runLength = *pbOrderHdr & g_MaskLiteRunLength;
 	if (runLength == 0)
 	{
-		if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
+		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
 		{
 			*advance = 0;
 			return 0;
@@ -257,7 +263,7 @@ static UINT ExtractRunLengthRegular(const BYTE* pbOrderHdr, const BYTE* pbEnd, U
 	runLength = *pbOrderHdr & g_MaskRegularRunLength;
 	if (runLength == 0)
 	{
-		if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
+		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
 		{
 			*advance = 0;
 			return 0;
@@ -277,7 +283,7 @@ static UINT ExtractRunLengthMegaMega(const BYTE* pbOrderHdr, const BYTE* pbEnd, 
 	WINPR_ASSERT(pbEnd);
 	WINPR_ASSERT(advance);
 
-	if (!buffer_within_range(pbOrderHdr + 2, pbEnd))
+	if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
 	{
 		*advance = 0;
 		return 0;
@@ -300,7 +306,7 @@ static UINT ExtractRunLengthLite(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT
 	runLength = *pbOrderHdr & g_MaskLiteRunLength;
 	if (runLength == 0)
 	{
-		if (!buffer_within_range(pbOrderHdr + 1, pbEnd))
+		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
 		{
 			*advance = 0;
 			return 0;
@@ -322,7 +328,7 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const
 	WINPR_ASSERT(advance);
 
 	*advance = 0;
-	if (!buffer_within_range(pbOrderHdr, pbEnd))
+	if (!buffer_within_range(pbOrderHdr, 0, pbEnd))
 		return 0;
 
 	switch (code)
@@ -414,6 +420,10 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
 #undef WHITE_PIXEL
+#undef PIXEL_SIZE
+#undef PIXEL
+#define PIXEL_SIZE 1
+#define PIXEL BYTE
 #define WHITE_PIXEL 0xFF
 #define DESTWRITEPIXEL(_buf, _pix) \
 	do                             \
@@ -445,6 +455,10 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
 #undef WHITE_PIXEL
+#undef PIXEL_SIZE
+#undef PIXEL
+#define PIXEL_SIZE 2
+#define PIXEL UINT16
 #define WHITE_PIXEL 0xFFFF
 #define DESTWRITEPIXEL(_buf, _pix)  \
 	do                              \
@@ -475,7 +489,11 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
 #undef WHITE_PIXEL
-#define WHITE_PIXEL 0xFFFFFF
+#undef PIXEL_SIZE
+#undef PIXEL
+#define PIXEL_SIZE 3
+#define PIXEL UINT32
+#define WHITE_PIXEL 0xffffff
 #define DESTWRITEPIXEL(_buf, _pix)  \
 	do                              \
 	{                               \

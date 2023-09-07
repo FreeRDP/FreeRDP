@@ -219,7 +219,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 
 				if (code == LITE_SET_FG_FG_RUN || code == MEGA_MEGA_SET_FG_RUN)
 				{
-					if (!buffer_within_range(pbSrc + sizeof(fgPel), pbEnd))
+					if (!buffer_within_range(pbSrc, PIXEL_SIZE, pbEnd))
 						return FALSE;
 					SRCREADPIXEL(fgPel, pbSrc);
 				}
@@ -248,10 +248,10 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 				if (advance == 0)
 					return FALSE;
 				pbSrc = pbSrc + advance;
-				if (!buffer_within_range(pbSrc + sizeof(pixelA), pbEnd))
+				if (!buffer_within_range(pbSrc, PIXEL_SIZE, pbEnd))
 					return FALSE;
 				SRCREADPIXEL(pixelA, pbSrc);
-				if (!buffer_within_range(pbSrc + sizeof(pixelB), pbEnd))
+				if (!buffer_within_range(pbSrc, PIXEL_SIZE, pbEnd))
 					return FALSE;
 				SRCREADPIXEL(pixelB, pbSrc);
 
@@ -271,7 +271,7 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 				if (advance == 0)
 					return FALSE;
 				pbSrc = pbSrc + advance;
-				if (!buffer_within_range(pbSrc + sizeof(pixelA), pbEnd))
+				if (!buffer_within_range(pbSrc, PIXEL_SIZE, pbEnd))
 					return FALSE;
 				SRCREADPIXEL(pixelA, pbSrc);
 
@@ -291,13 +291,15 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 					return FALSE;
 				pbSrc = pbSrc + advance;
 
-				if (!buffer_within_range(pbSrc + sizeof(fgPel), pbEnd))
-					return FALSE;
 				if (code == LITE_SET_FG_FGBG_IMAGE || code == MEGA_MEGA_SET_FGBG_IMAGE)
 				{
+					if (!buffer_within_range(pbSrc, PIXEL_SIZE, pbEnd))
+						return FALSE;
 					SRCREADPIXEL(fgPel, pbSrc);
 				}
 
+				if (!buffer_within_range(pbSrc, runLength / 8, pbEnd))
+					return FALSE;
 				if (fFirstLine)
 				{
 					while (runLength > 8)
@@ -316,8 +318,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 				{
 					while (runLength > 8)
 					{
-						bitmask = *pbSrc;
-						pbSrc = pbSrc + 1;
+						bitmask = *pbSrc++;
+
 						pbDest = WRITEFGBGIMAGE(pbDest, pbDestEnd, rowDelta, bitmask, fgPel, 8);
 
 						if (!pbDest)
@@ -329,8 +331,9 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 
 				if (runLength > 0)
 				{
-					bitmask = *pbSrc;
-					pbSrc = pbSrc + 1;
+					if (!buffer_within_range(pbSrc, 1, pbEnd))
+						return FALSE;
+					bitmask = *pbSrc++;
 
 					if (fFirstLine)
 					{
@@ -369,6 +372,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 
 			/* Handle Special Order 1. */
 			case SPECIAL_FGBG_1:
+				if (!buffer_within_range(pbSrc, 1, pbEnd))
+					return FALSE;
 				pbSrc = pbSrc + 1;
 
 				if (fFirstLine)
@@ -389,6 +394,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 
 			/* Handle Special Order 2. */
 			case SPECIAL_FGBG_2:
+				if (!buffer_within_range(pbSrc, 1, pbEnd))
+					return FALSE;
 				pbSrc = pbSrc + 1;
 
 				if (fFirstLine)
@@ -409,6 +416,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 
 			/* Handle White Order. */
 			case SPECIAL_WHITE:
+				if (!buffer_within_range(pbSrc, 1, pbEnd))
+					return FALSE;
 				pbSrc = pbSrc + 1;
 
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, 1))
@@ -419,6 +428,8 @@ static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BY
 
 			/* Handle Black Order. */
 			case SPECIAL_BLACK:
+				if (!buffer_within_range(pbSrc, 1, pbEnd))
+					return FALSE;
 				pbSrc = pbSrc + 1;
 
 				if (!ENSURE_CAPACITY(pbDest, pbDestEnd, 1))
