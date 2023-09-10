@@ -1195,17 +1195,13 @@ static UINT rdpei_pen_process(RdpeiClientContext* context, INT32 externalId, UIN
 
 	rdpei = (RDPEI_PLUGIN*)context->handle;
 
-	const BOOL active = (contactFlags & RDPINPUT_CONTACT_FLAG_DOWN) == 0;
 	EnterCriticalSection(&rdpei->lock);
-	/* If a normal down event is given, we start a new contact.
-	 * If that fails, check if we have a new hover event */
-	contactPoint = rdpei_pen_contact(rdpei, externalId, active);
+	// Start a new contact only when it is not active.
+	contactPoint = rdpei_pen_contact(rdpei, externalId, TRUE);
 	if (!contactPoint)
 	{
-		const UINT32 mask = RDPINPUT_CONTACT_FLAG_INRANGE | RDPINPUT_CONTACT_FLAG_UPDATE;
-		const UINT32 negmask =
-		    RDPINPUT_CONTACT_FLAG_DOWN | RDPINPUT_CONTACT_FLAG_INCONTACT | RDPINPUT_CONTACT_FLAG_UP;
-		if (((contactFlags & mask) == mask) && ((contactFlags & negmask) == 0))
+		const UINT32 mask = RDPINPUT_CONTACT_FLAG_INRANGE;
+		if ((contactFlags & mask) == mask)
 		{
 			contactPoint = rdpei_pen_contact(rdpei, externalId, FALSE);
 		}
