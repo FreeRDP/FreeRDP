@@ -30,6 +30,7 @@
 #include <X11/extensions/XInput2.h>
 #endif
 
+#include <ctype.h>
 #include <math.h>
 #include <float.h>
 #include <limits.h>
@@ -142,25 +143,30 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 					{
 						double max_pressure = t->max;
 
-						if (strstr(dev->name, "Stylus Pen") || strstr(dev->name, "Pen Pen"))
+						char* devName = _strdup(dev->name);
+						if (!devName)
+							break;
+						for (size_t k = 0; k < strlen(devName); k++)
+							devName[k] = (char)tolower(devName[k]);
+
+						if (strstr(devName, "eraser") != NULL)
 						{
-							if (!freerdp_client_handle_pen(
+							if (freerdp_client_handle_pen(&xfc->common,
+							                              FREERDP_PEN_REGISTER |
+							                                  FREERDP_PEN_IS_INVERTED |
+							                                  FREERDP_PEN_HAS_PRESSURE,
+							                              dev->deviceid, max_pressure))
+								WLog_DBG(TAG, "registered eraser");
+						}
+						else if (strstr(devName, "stylus") != NULL ||
+						         strstr(devName, "pen") != NULL)
+						{
+							if (freerdp_client_handle_pen(
 							        &xfc->common, FREERDP_PEN_REGISTER | FREERDP_PEN_HAS_PRESSURE,
 							        dev->deviceid, max_pressure))
-								return FALSE;
-							WLog_DBG(TAG, "registered pen");
+								WLog_DBG(TAG, "registered pen");
 						}
-						else if (strstr(dev->name, "Stylus Eraser") ||
-						         strstr(dev->name, "Pen Eraser"))
-						{
-							if (!freerdp_client_handle_pen(&xfc->common,
-							                               FREERDP_PEN_REGISTER |
-							                                   FREERDP_PEN_IS_INVERTED |
-							                                   FREERDP_PEN_HAS_PRESSURE,
-							                               dev->deviceid, max_pressure))
-								return FALSE;
-							WLog_DBG(TAG, "registered eraser");
-						}
+						free(devName);
 					}
 					break;
 				}
