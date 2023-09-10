@@ -2068,9 +2068,9 @@ BOOL freerdp_client_pen_cancel_all(rdpClientContext* cctx)
 		FreeRDP_PenDevice* pen = &cctx->pens[i];
 		if (pen->hovering)
 		{
-			WLog_DBG(TAG, "unhover pen %d", i);
+			WLog_DBG(TAG, "unhover pen %" PRId32, pen->deviceid);
 			pen->hovering = FALSE;
-			rdpei->PenHoverCancel(rdpei, i, 0, pen->last_x, pen->last_y);
+			rdpei->PenHoverCancel(rdpei, pen->deviceid, 0, pen->last_x, pen->last_y);
 		}
 	}
 	return TRUE;
