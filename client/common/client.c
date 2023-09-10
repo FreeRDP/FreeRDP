@@ -1673,6 +1673,11 @@ static BOOL freerdp_handle_touch_up(rdpClientContext* cctx, const FreeRDP_TouchC
 			const UINT32 contactFlags = ((contact->flags & FREERDP_TOUCH_HAS_PRESSURE) != 0)
 			                                ? CONTACT_DATA_PRESSURE_PRESENT
 			                                : 0;
+			// Ensure contact position is unchanged from "engaged" to "out of range" state
+			rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId,
+			                     RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
+			                         RDPINPUT_CONTACT_FLAG_INCONTACT,
+			                     contactFlags, contact->pressure);
 			rdpei->TouchRawEvent(rdpei, contact->id, contact->x, contact->y, &contactId, flags,
 			                     contactFlags, contact->pressure);
 		}
@@ -1716,7 +1721,8 @@ static BOOL freerdp_handle_touch_down(rdpClientContext* cctx, const FreeRDP_Touc
 
 		if (rdpei->TouchRawEvent)
 		{
-			const UINT32 flags = RDPINPUT_CONTACT_FLAG_DOWN;
+			const UINT32 flags = RDPINPUT_CONTACT_FLAG_DOWN | RDPINPUT_CONTACT_FLAG_INRANGE |
+			                     RDPINPUT_CONTACT_FLAG_INCONTACT;
 			const UINT32 contactFlags = ((contact->flags & FREERDP_TOUCH_HAS_PRESSURE) != 0)
 			                                ? CONTACT_DATA_PRESSURE_PRESENT
 			                                : 0;
@@ -1760,7 +1766,8 @@ static BOOL freerdp_handle_touch_motion(rdpClientContext* cctx, const FreeRDP_To
 
 		if (rdpei->TouchRawEvent)
 		{
-			const UINT32 flags = RDPINPUT_CONTACT_FLAG_UPDATE;
+			const UINT32 flags = RDPINPUT_CONTACT_FLAG_UPDATE | RDPINPUT_CONTACT_FLAG_INRANGE |
+			                     RDPINPUT_CONTACT_FLAG_INCONTACT;
 			const UINT32 contactFlags = ((contact->flags & FREERDP_TOUCH_HAS_PRESSURE) != 0)
 			                                ? CONTACT_DATA_PRESSURE_PRESENT
 			                                : 0;
