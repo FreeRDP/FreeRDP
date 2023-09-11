@@ -233,6 +233,18 @@ BOOL ArrayList_Contains(wArrayList* arrayList, void* obj)
  * Adds an object to the end of the ArrayList.
  */
 
+static int insert(wArrayList* arrayList, size_t index, void* obj)
+{
+	if (arrayList->object.fnObjectNew)
+	{
+		obj = arrayList->object.fnObjectNew(obj);
+		arrayList->array[index] = obj;
+	}
+	else
+		arrayList->array[index] = obj;
+	return index + 1;
+}
+
 int ArrayList_Add(wArrayList* arrayList, void* obj)
 {
 	int index = -1;
@@ -253,8 +265,7 @@ int ArrayList_Add(wArrayList* arrayList, void* obj)
 		arrayList->capacity = newCapacity;
 	}
 
-	arrayList->array[arrayList->size++] = obj;
-	index = arrayList->size;
+	index = arrayList->size = insert(arrayList, arrayList->size, obj);
 out:
 
 	if (arrayList->synchronized)
@@ -282,7 +293,7 @@ BOOL ArrayList_Insert(wArrayList* arrayList, int index, void* obj)
 		}
 		else
 		{
-			arrayList->array[index] = obj;
+			insert(arrayList, index, obj);
 		}
 	}
 
