@@ -483,16 +483,6 @@ HANDLE CreateWaitObjectEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManu
 int GetEventFileDescriptor(HANDLE hEvent)
 {
 #ifndef _WIN32
-	WINPR_HANDLE* hdl;
-	ULONG type;
-
-	if (!winpr_Handle_GetInfo(hEvent, &type, &hdl) || type != HANDLE_TYPE_EVENT)
-	{
-		WLog_ERR(TAG, "GetEventFileDescriptor: hEvent is not an event");
-		SetLastError(ERROR_INVALID_PARAMETER);
-		return -1;
-	}
-
 	return winpr_Handle_getFd(hEvent);
 #else
 	return -1;
