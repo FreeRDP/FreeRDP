@@ -163,7 +163,7 @@ static INLINE BOOL buffer_within_range_(const void* pbSrc, size_t size, const vo
 	WINPR_ASSERT(pbSrc);
 	WINPR_ASSERT(pbEnd);
 
-	if ((char*)pbSrc + size > pbEnd)
+	if ((const char*)pbSrc + size > (const char*)pbEnd)
 	{
 		WLog_ERR(TAG, "[%s:%" PRIuz "] pbSrc=%p + %" PRIuz " > pbEnd=%p", fkt, line, pbSrc, size,
 		         pbEnd);
