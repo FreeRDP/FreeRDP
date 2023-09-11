@@ -1984,6 +1984,26 @@ BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 devic
 	}
 	va_end(args);
 
+	if ((flags & FREERDP_PEN_PRESS) != 0)
+	{
+		// Ensure that only one button is pressed
+		if (pen->pressed)
+			flags = FREERDP_PEN_MOTION |
+			        (flags & (UINT32) ~(FREERDP_PEN_PRESS | FREERDP_PEN_BARREL_PRESSED));
+		else if ((flags & FREERDP_PEN_BARREL_PRESSED) != 0)
+			pen->flags |= FREERDP_PEN_BARREL_PRESSED;
+	}
+	else if ((flags & FREERDP_PEN_RELEASE) != 0)
+	{
+		if (!pen->pressed ||
+		    ((flags & FREERDP_PEN_BARREL_PRESSED) ^ (pen->flags & FREERDP_PEN_BARREL_PRESSED)))
+			flags = FREERDP_PEN_MOTION |
+			        (flags & (UINT32) ~(FREERDP_PEN_RELEASE | FREERDP_PEN_BARREL_PRESSED));
+		else
+			pen->flags &= (UINT32)~FREERDP_PEN_BARREL_PRESSED;
+	}
+
+	flags |= pen->flags;
 	if ((flags & FREERDP_PEN_ERASER_PRESSED) != 0)
 		penFlags |= RDPINPUT_PEN_FLAG_ERASER_PRESSED;
 	if ((flags & FREERDP_PEN_BARREL_PRESSED) != 0)
@@ -1993,7 +2013,7 @@ BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 devic
 	pen->last_y = y;
 	if ((flags & FREERDP_PEN_PRESS) != 0)
 	{
-		WLog_DBG(TAG, "Pen press %d", deviceid);
+		WLog_DBG(TAG, "Pen press %" PRId32, deviceid);
 		pen->hovering = FALSE;
 		pen->pressed = TRUE;
 
