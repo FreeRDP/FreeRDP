@@ -420,11 +420,12 @@ static BOOL avc444_ensure_buffer(H264_CONTEXT* h264, DWORD nDstHeight)
 	{
 		for (UINT32 x = 0; x < 3; x++)
 		{
+			piDstStride[x] = piMainStride[0];
+			piDstSize[x] = piDstStride[x] * padDstHeight;
+
 			if (piDstSize[x] == 0)
 				return FALSE;
 
-			piDstStride[x] = piMainStride[0];
-			piDstSize[x] = piDstStride[x] * padDstHeight;
 			BYTE* tmp1 = winpr_aligned_recalloc(ppYUVDstData[x], piDstSize[x], 1, 16);
 			if (!tmp1)
 				return FALSE;
