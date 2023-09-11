@@ -688,13 +688,13 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 	return 0;
 }
 
-static int xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype, int deviceid)
+static BOOL xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype, int deviceid)
 {
 	int x, y;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)
-		return 0;
+		return FALSE;
 
 	xf_input_hide_cursor(xfc);
 	x = (int)event->event_x;
@@ -713,30 +713,43 @@ static int xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype,
 		}
 	}
 
+	UINT32 flags = FREERDP_PEN_HAS_PRESSURE;
+	if ((evtype == XI_ButtonPress) || (evtype == XI_ButtonRelease))
+	{
+		WLog_DBG(TAG, "pen button %d", event->detail);
+		switch (event->detail)
+		{
+			case 1:
+				break;
+			case 3:
+				flags |= FREERDP_PEN_BARREL_PRESSED;
+				break;
+			default:
+				return FALSE;
+		}
+	}
+
 	switch (evtype)
 	{
 		case XI_ButtonPress:
-			if (!freerdp_client_handle_pen(&xfc->common,
-			                               FREERDP_PEN_PRESS | FREERDP_PEN_HAS_PRESSURE, deviceid,
-			                               x, y, pressure))
+			flags |= FREERDP_PEN_PRESS;
+			if (!freerdp_client_handle_pen(&xfc->common, flags, deviceid, x, y, pressure))
 				return FALSE;
 			break;
 		case XI_Motion:
-			if (!freerdp_client_handle_pen(&xfc->common,
-			                               FREERDP_PEN_MOTION | FREERDP_PEN_HAS_PRESSURE, deviceid,
-			                               x, y, pressure))
+			flags |= FREERDP_PEN_MOTION;
+			if (!freerdp_client_handle_pen(&xfc->common, flags, deviceid, x, y, pressure))
 				return FALSE;
 			break;
 		case XI_ButtonRelease:
-			if (!freerdp_client_handle_pen(&xfc->common,
-			                               FREERDP_PEN_RELEASE | FREERDP_PEN_HAS_PRESSURE, deviceid,
-			                               x, y, pressure))
+			flags |= FREERDP_PEN_RELEASE;
+			if (!freerdp_client_handle_pen(&xfc->common, flags, deviceid, x, y, pressure))
 				return FALSE;
 			break;
 		default:
 			break;
 	}
-	return 0;
+	return TRUE;
 }
 
 static int xf_input_pens_unhover(xfContext* xfc)
@@ -884,7 +897,11 @@ static int xf_input_handle_event_remote(xfContext* xfc, const XEvent* event)
 
 				if (freerdp_client_is_pen(&xfc->common, deviceid))
 				{
-					xf_input_pen_remote(xfc, cookie.cc->data, cookie.cc->evtype, deviceid);
+					if (!xf_input_pen_remote(xfc, cookie.cc->data, cookie.cc->evtype, deviceid))
+					{
+						// XXX: don't show cursor
+						xf_input_event(xfc, event, cookie.cc->data, cookie.cc->evtype);
+					}
 					break;
 				}
 			}
