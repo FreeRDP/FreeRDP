@@ -552,6 +552,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_SuppressOutput:
 			return settings->SuppressOutput;
 
+		case FreeRDP_SuppressWinKey:
+			return settings->SuppressWinKey;
+
 		case FreeRDP_SurfaceCommandsEnabled:
 			return settings->SurfaceCommandsEnabled;
 
@@ -1287,6 +1290,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_SuppressOutput:
 			settings->SuppressOutput = cnv.c;
+			break;
+
+		case FreeRDP_SuppressWinKey:
+			settings->SuppressWinKey = cnv.c;
 			break;
 
 		case FreeRDP_SurfaceCommandsEnabled:

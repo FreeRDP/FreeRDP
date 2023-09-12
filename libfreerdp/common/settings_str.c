@@ -229,6 +229,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_SupportStatusInfoPdu, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_SupportStatusInfoPdu" },
 	{ FreeRDP_SupportVideoOptimized, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_SupportVideoOptimized" },
 	{ FreeRDP_SuppressOutput, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_SuppressOutput" },
+	{ FreeRDP_SuppressWinKey, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_SuppressWinKey" },
 	{ FreeRDP_SurfaceCommandsEnabled, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_SurfaceCommandsEnabled" },
 	{ FreeRDP_SurfaceFrameMarkerEnabled, FREERDP_SETTINGS_TYPE_BOOL,

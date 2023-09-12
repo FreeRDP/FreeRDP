@@ -548,6 +548,12 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	XF_MODIFIER_KEYS mod = { 0 };
 	xk_keyboard_get_modifier_keys(xfc, &mod);
 
+	if ((keysym == XK_Super_L || keysym == XK_Super_R) &&
+		xfc->common.context.settings->SuppressWinKey)
+	{
+		return TRUE;
+	}
+
 	// remember state of RightCtrl to ungrab keyboard if next action is release of RightCtrl
 	// do not return anything such that the key could be used by client if ungrab is not the goal
 	if (keysym == XK_Control_R)

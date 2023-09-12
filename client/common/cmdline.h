@@ -435,6 +435,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "SSH Agent forwarding channel" },
 	{ "sspi-module", COMMAND_LINE_VALUE_REQUIRED, "<SSPI module path>", NULL, NULL, -1, NULL,
 	  "SSPI shared library module file path" },
+	{ "suppress-win-key", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL, "suppress win key" },
 	{ "winscard-module", COMMAND_LINE_VALUE_REQUIRED, "<WinSCard module path>", NULL, NULL, -1,
 	  NULL, "WinSCard shared library module file path" },
 	{ "disable-output", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,

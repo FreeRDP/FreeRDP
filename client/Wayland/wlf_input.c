@@ -340,6 +340,10 @@ BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev)
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
 		return TRUE;
 
+	if (( rdp_scancode == RDP_SCANCODE_LWIN || rdp_scancode == RDP_SCANCODE_RWIN ) &&
+		instance->context->settings->SuppressWinKey )
+		return TRUE;
+
 	return freerdp_input_send_keyboard_event_ex(input, ev->pressed, ev->repeated, rdp_scancode);
 }
 

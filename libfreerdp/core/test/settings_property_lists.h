@@ -168,6 +168,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_SupportStatusInfoPdu,
 	FreeRDP_SupportVideoOptimized,
 	FreeRDP_SuppressOutput,
+	FreeRDP_SuppressWinKey,
 	FreeRDP_SurfaceCommandsEnabled,
 	FreeRDP_SurfaceFrameMarkerEnabled,
 	FreeRDP_SuspendInput,

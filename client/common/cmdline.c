@@ -4083,6 +4083,10 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 		{
 			settings->GrabMouse = enable;
 		}
+		CommandLineSwitchCase(arg, "suppress-win-key")
+		{
+			settings->SuppressWinKey = enable;
+		}
 		CommandLineSwitchCase(arg, "mouse-relative")
 		{
 			settings->MouseUseRelativeMove = enable;
