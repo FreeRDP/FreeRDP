@@ -56,6 +56,9 @@
 #include <cjson/cJSON.h>
 #endif
 
+#include <time.h>
+#include <string.h>
+
 struct rdp_arm
 {
 	rdpContext* context;
@@ -64,6 +67,8 @@ struct rdp_arm
 };
 
 typedef struct rdp_arm rdpArm;
+
+short int gateway_retry = 0;
 
 #define TAG FREERDP_TAG("core.gateway.arm")
 
@@ -854,6 +859,69 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 		free(msg);
 		if (!res)
 			goto arm_error;
+	}
+	else if (StatusCode == HTTP_STATUS_BAD_REQUEST)
+	{
+		const size_t response_length = http_response_get_body_length(response);
+		char* msg = calloc(response_length + 1, sizeof(char));
+		if (!msg)
+			goto arm_error;
+
+		memcpy(msg, http_response_get_body(response), response_length);
+		WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
+
+		cJSON *json = cJSON_ParseWithLength((const char*)msg, response_length);
+		if (json == NULL)
+		{
+			const char *error_ptr = cJSON_GetErrorPtr();
+			if (error_ptr != NULL)
+			{
+				WLog_ERR(TAG, "NullPoException: %s", error_ptr);
+				free(msg);
+				goto arm_error;
+			}
+		}
+
+                const cJSON *gateway_code_str = NULL;
+                gateway_code_str = cJSON_GetObjectItemCaseSensitive(json, "Code");
+		if (!cJSON_IsString(gateway_code_str) || (gateway_code_str->valuestring == NULL))
+		{
+			WLog_ERR(TAG, "Response has no \"Code\" property");
+			http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
+			if (json) {
+				cJSON_Delete(json);
+			}
+			free(msg);
+			goto arm_error;
+		}
+
+		if (strcmp(gateway_code_str->valuestring, "E_PROXY_ORCHESTRATION_LB_SESSIONHOST_DEALLOCATED") == 0) {
+			int max_retries = 10;
+			int code_execution_interval = 60;
+
+			if (gateway_retry >= max_retries) {
+				WLog_ERR(TAG, "Timeout reached. Exiting loop.");
+				if (json) {
+					cJSON_Delete(json);
+				}
+				free(msg);
+				goto arm_error;
+			}
+			WLog_INFO(TAG, "Please wait... VM is starting running.");
+			if (json) {
+				cJSON_Delete(json);
+			}
+			free(msg);
+			sleep(code_execution_interval);
+			arm_resolve_endpoint(context, timeout);
+		}
+		else
+		{
+			cJSON_Delete(json);
+			free(msg);
+			http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
+			goto arm_error;
+		}
 	}
 	else
 	{
