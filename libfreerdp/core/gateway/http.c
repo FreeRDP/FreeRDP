@@ -1229,6 +1229,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 			goto out_error;
 
 		response->BodyLength = Stream_GetPosition(response->data) - payloadOffset;
+
 		WINPR_ASSERT(response->BodyLength == 0);
 		bodyLength = response->BodyLength; /* expected body length */
 
@@ -1352,6 +1353,11 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		}
 	}
 	Stream_SealLength(response->data);
+
+	/* Ensure '\0' terminated string */
+	if (!Stream_EnsureRemainingCapacity(response->data, 2))
+		goto out_error;
+	Stream_Write_UINT16(response->data, 0);
 
 	return response;
 out_error:
