@@ -90,8 +90,11 @@ static void AddDefaultSettings_I(rdpSettings* settings, size_t idHostname, size_
 
 		if (PasswordNullTerminatedW)
 		{
-			if (!freerdp_settings_set_string_from_utf16(settings, idPassword, PasswordNullTerminatedW))
+			if (!freerdp_settings_set_string_from_utf16(settings, idPassword,
+			                                            PasswordNullTerminatedW))
+			{
 				goto fail;
+			}
 		}
 	}
 
@@ -149,6 +152,8 @@ fail:
 
 void WINAPI AddDefaultSettings(rdpSettings* settings)
 {
-	AddDefaultSettings_I(settings, FreeRDP_ServerHostname, FreeRDP_Username, FreeRDP_Domain, FreeRDP_Password);
-	AddDefaultSettings_I(settings, FreeRDP_GatewayHostname, FreeRDP_GatewayUsername, FreeRDP_GatewayDomain, FreeRDP_GatewayPassword);
+	AddDefaultSettings_I(settings, FreeRDP_ServerHostname, FreeRDP_Username, FreeRDP_Domain,
+	                     FreeRDP_Password);
+	AddDefaultSettings_I(settings, FreeRDP_GatewayHostname, FreeRDP_GatewayUsername,
+	                     FreeRDP_GatewayDomain, FreeRDP_GatewayPassword);
 }
