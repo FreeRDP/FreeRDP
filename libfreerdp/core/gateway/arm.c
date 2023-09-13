@@ -904,7 +904,9 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 
 			if (gateway_retry >= max_retries)
 			{
-				WLog_ERR(TAG, "Timeout reached. Exiting loop.");
+				WLog_ERR(TAG,
+				         "We couldn’t connect because your VM failed to start. Try again later or "
+				         "contact your tech support for help if this keeps happening.");
 				if (json)
 				{
 					cJSON_Delete(json);
@@ -912,7 +914,14 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 				free(msg);
 				goto arm_error;
 			}
-			WLog_INFO(TAG, "Please wait... VM is starting running.");
+			if (gateway_retry == 0)
+			{
+				WLog_INFO(TAG, "Starting your VM. It may take up to 5 minutes");
+			}
+			else
+			{
+				WLog_INFO(TAG, "Waiting for remote PC");
+			}
 			if (json)
 			{
 				cJSON_Delete(json);
