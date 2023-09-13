@@ -30,7 +30,6 @@
 #include <X11/extensions/XInput2.h>
 #endif
 
-#include <ctype.h>
 #include <math.h>
 #include <float.h>
 #include <limits.h>
@@ -143,11 +142,10 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 					{
 						double max_pressure = t->max;
 
-						char* devName = _strdup(dev->name);
-						if (!devName)
-							break;
-						for (size_t k = 0; k < strlen(devName); k++)
-							devName[k] = (char)tolower(devName[k]);
+						char devName[200];
+						strncpy(devName, dev->name, 200);
+						devName[200 - 1] = '\0';
+						CharLowerBuffA(devName, (DWORD)strlen(devName));
 
 						if (strstr(devName, "eraser") != NULL)
 						{
@@ -166,7 +164,6 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 							        dev->deviceid, max_pressure))
 								WLog_DBG(TAG, "registered pen");
 						}
-						free(devName);
 					}
 					break;
 				}
