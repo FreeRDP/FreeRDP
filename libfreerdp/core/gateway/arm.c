@@ -64,15 +64,18 @@ struct rdp_arm
 	rdpContext* context;
 	rdpTls* tls;
 	HttpContext* http;
+
+	UINT32 gateway_retry;
 };
 
 typedef struct rdp_arm rdpArm;
 
-short int gateway_retry = 0;
-
 #define TAG FREERDP_TAG("core.gateway.arm")
 
 #ifdef WITH_AAD
+static const UINT32 max_retries = 60;
+static const UINT32 code_execution_interval = 10000;
+
 static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, int timeout)
 {
 	WINPR_ASSERT(arm);
@@ -787,31 +790,89 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 	return status;
 }
 
-#endif
-
-BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
+static BOOL arm_handle_request_ok(rdpArm* arm, const HttpResponse* response)
 {
-#ifndef WITH_AAD
-	WLog_ERR(TAG, "arm gateway support not compiled in");
-	return FALSE;
-#else
-
-	if (!context)
+	const size_t len = http_response_get_body_length(response);
+	const char* msg = http_response_get_body(response);
+	if (strnlen(msg, len) >= len)
 		return FALSE;
 
-	if (!context->settings)
+	WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
+	return arm_fill_gateway_parameters(arm, msg, len);
+}
+
+static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BOOL* retry)
+{
+	WINPR_ASSERT(response);
+	WINPR_ASSERT(retry);
+
+	*retry = FALSE;
+
+	BOOL rc = FALSE;
+
+	const size_t len = http_response_get_body_length(response);
+	const char* msg = http_response_get_body(response);
+	if (strnlen(msg, len) >= len)
 		return FALSE;
 
-	if ((freerdp_settings_get_uint32(context->settings, FreeRDP_LoadBalanceInfoLength) == 0) ||
-	    (freerdp_settings_get_string(context->settings, FreeRDP_RemoteApplicationProgram) == NULL))
+	WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
+
+	cJSON* json = cJSON_ParseWithLength(msg, len);
+	if (json == NULL)
 	{
-		WLog_ERR(TAG, "loadBalanceInfo and RemoteApplicationProgram needed");
-		return FALSE;
+		const char* error_ptr = cJSON_GetErrorPtr();
+		if (error_ptr != NULL)
+		{
+			WLog_ERR(TAG, "NullPoException: %s", error_ptr);
+			return FALSE;
+		}
 	}
 
-	rdpArm* arm = arm_new(context);
-	if (!arm)
-		return FALSE;
+	const cJSON* gateway_code_str = cJSON_GetObjectItemCaseSensitive(json, "Code");
+	if (!cJSON_IsString(gateway_code_str) || (gateway_code_str->valuestring == NULL))
+	{
+		WLog_ERR(TAG, "Response has no \"Code\" property");
+		http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
+		goto fail;
+	}
+
+	if (strcmp(gateway_code_str->valuestring, "E_PROXY_ORCHESTRATION_LB_SESSIONHOST_DEALLOCATED") ==
+	    0)
+	{
+		if (arm->gateway_retry >= max_retries)
+		{
+			WLog_ERR(TAG, "We couldn’t connect because your VM failed to start. Try again later or "
+			              "contact your tech support for help if this keeps happening.");
+			goto fail;
+		}
+		*retry = TRUE;
+
+		if (arm->gateway_retry == 0)
+		{
+			WLog_INFO(TAG, "Starting your VM. It may take up to 5 minutes");
+		}
+		else
+		{
+			WLog_INFO(TAG, "Waiting for remote PC");
+		}
+	}
+	else
+	{
+		http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
+		goto fail;
+	}
+
+	rc = TRUE;
+fail:
+	cJSON_Delete(json);
+	return rc;
+}
+
+static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
+{
+	WINPR_ASSERT(retry);
+
+	*retry = FALSE;
 
 	char* message = NULL;
 	BOOL rc = FALSE;
@@ -847,96 +908,13 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 	StatusCode = http_response_get_status_code(response);
 	if (StatusCode == HTTP_STATUS_OK)
 	{
-		const size_t len = http_response_get_body_length(response);
-		char* msg = calloc(len + 1, sizeof(char));
-		if (!msg)
-			goto arm_error;
-
-		memcpy(msg, http_response_get_body(response), len);
-
-		WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
-		const BOOL res = arm_fill_gateway_parameters(arm, msg, len);
-		free(msg);
-		if (!res)
+		if (!arm_handle_request_ok(arm, response))
 			goto arm_error;
 	}
 	else if (StatusCode == HTTP_STATUS_BAD_REQUEST)
 	{
-		const size_t response_length = http_response_get_body_length(response);
-		char* msg = calloc(response_length + 1, sizeof(char));
-		if (!msg)
+		if (!arm_handle_bad_request(arm, response, retry))
 			goto arm_error;
-
-		memcpy(msg, http_response_get_body(response), response_length);
-		WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
-
-		cJSON* json = cJSON_ParseWithLength((const char*)msg, response_length);
-		if (json == NULL)
-		{
-			const char* error_ptr = cJSON_GetErrorPtr();
-			if (error_ptr != NULL)
-			{
-				WLog_ERR(TAG, "NullPoException: %s", error_ptr);
-				free(msg);
-				goto arm_error;
-			}
-		}
-
-		const cJSON* gateway_code_str = NULL;
-		gateway_code_str = cJSON_GetObjectItemCaseSensitive(json, "Code");
-		if (!cJSON_IsString(gateway_code_str) || (gateway_code_str->valuestring == NULL))
-		{
-			WLog_ERR(TAG, "Response has no \"Code\" property");
-			http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
-			if (json)
-			{
-				cJSON_Delete(json);
-			}
-			free(msg);
-			goto arm_error;
-		}
-
-		if (strcmp(gateway_code_str->valuestring,
-		           "E_PROXY_ORCHESTRATION_LB_SESSIONHOST_DEALLOCATED") == 0)
-		{
-			int max_retries = 10;
-			int code_execution_interval = 60;
-
-			if (gateway_retry >= max_retries)
-			{
-				WLog_ERR(TAG,
-				         "We couldn’t connect because your VM failed to start. Try again later or "
-				         "contact your tech support for help if this keeps happening.");
-				if (json)
-				{
-					cJSON_Delete(json);
-				}
-				free(msg);
-				goto arm_error;
-			}
-			if (gateway_retry == 0)
-			{
-				WLog_INFO(TAG, "Starting your VM. It may take up to 5 minutes");
-			}
-			else
-			{
-				WLog_INFO(TAG, "Waiting for remote PC");
-			}
-			if (json)
-			{
-				cJSON_Delete(json);
-			}
-			free(msg);
-			sleep(code_execution_interval);
-			arm_resolve_endpoint(context, timeout);
-		}
-		else
-		{
-			cJSON_Delete(json);
-			free(msg);
-			http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
-			goto arm_error;
-		}
 	}
 	else
 	{
@@ -947,8 +925,49 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 	rc = TRUE;
 arm_error:
 	http_response_free(response);
-	arm_free(arm);
 	free(message);
+	return rc;
+}
+
+#endif
+
+BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
+{
+#ifndef WITH_AAD
+	WLog_ERR(TAG, "arm gateway support not compiled in");
+	return FALSE;
+#else
+
+	if (!context)
+		return FALSE;
+
+	if (!context->settings)
+		return FALSE;
+
+	if ((freerdp_settings_get_uint32(context->settings, FreeRDP_LoadBalanceInfoLength) == 0) ||
+	    (freerdp_settings_get_string(context->settings, FreeRDP_RemoteApplicationProgram) == NULL))
+	{
+		WLog_ERR(TAG, "loadBalanceInfo and RemoteApplicationProgram needed");
+		return FALSE;
+	}
+
+	rdpArm* arm = arm_new(context);
+	if (!arm)
+		return FALSE;
+
+	BOOL retry = FALSE;
+	BOOL rc = FALSE;
+	do
+	{
+		rc = arm_handle_request(arm, &retry, timeout);
+
+		if (retry)
+		{
+			WLog_INFO(TAG, "Delay for %" PRIu32 "ms before next attempt");
+			Sleep(code_execution_interval);
+		}
+	} while (retry && rc);
+	arm_free(arm);
 	return rc;
 #endif
 }
