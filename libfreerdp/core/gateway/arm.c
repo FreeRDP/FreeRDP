@@ -870,10 +870,10 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 		memcpy(msg, http_response_get_body(response), response_length);
 		WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
 
-		cJSON *json = cJSON_ParseWithLength((const char*)msg, response_length);
+		cJSON* json = cJSON_ParseWithLength((const char*)msg, response_length);
 		if (json == NULL)
 		{
-			const char *error_ptr = cJSON_GetErrorPtr();
+			const char* error_ptr = cJSON_GetErrorPtr();
 			if (error_ptr != NULL)
 			{
 				WLog_ERR(TAG, "NullPoException: %s", error_ptr);
@@ -882,33 +882,39 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 			}
 		}
 
-                const cJSON *gateway_code_str = NULL;
-                gateway_code_str = cJSON_GetObjectItemCaseSensitive(json, "Code");
+		const cJSON* gateway_code_str = NULL;
+		gateway_code_str = cJSON_GetObjectItemCaseSensitive(json, "Code");
 		if (!cJSON_IsString(gateway_code_str) || (gateway_code_str->valuestring == NULL))
 		{
 			WLog_ERR(TAG, "Response has no \"Code\" property");
 			http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
-			if (json) {
+			if (json)
+			{
 				cJSON_Delete(json);
 			}
 			free(msg);
 			goto arm_error;
 		}
 
-		if (strcmp(gateway_code_str->valuestring, "E_PROXY_ORCHESTRATION_LB_SESSIONHOST_DEALLOCATED") == 0) {
+		if (strcmp(gateway_code_str->valuestring,
+		           "E_PROXY_ORCHESTRATION_LB_SESSIONHOST_DEALLOCATED") == 0)
+		{
 			int max_retries = 10;
 			int code_execution_interval = 60;
 
-			if (gateway_retry >= max_retries) {
+			if (gateway_retry >= max_retries)
+			{
 				WLog_ERR(TAG, "Timeout reached. Exiting loop.");
-				if (json) {
+				if (json)
+				{
 					cJSON_Delete(json);
 				}
 				free(msg);
 				goto arm_error;
 			}
 			WLog_INFO(TAG, "Please wait... VM is starting running.");
-			if (json) {
+			if (json)
+			{
 				cJSON_Delete(json);
 			}
 			free(msg);
