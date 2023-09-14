@@ -699,7 +699,7 @@ static int sdl_run(SdlContext* sdl)
 	}
 
 	SDL_Init(SDL_INIT_VIDEO);
-	sdl->clip.reset(SdlCliprdrContext::instance(sdl));
+	sdl->clip = std::make_unique<SdlCliprdrContext>(sdl);
 	sdl->initialized.set();
 
 	while (!freerdp_shall_disconnect_context(sdl->context()))
