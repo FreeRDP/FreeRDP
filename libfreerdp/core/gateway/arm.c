@@ -56,7 +56,6 @@
 #include <cjson/cJSON.h>
 #endif
 
-#include <time.h>
 #include <string.h>
 
 struct rdp_arm
@@ -73,9 +72,6 @@ typedef struct rdp_arm rdpArm;
 #define TAG FREERDP_TAG("core.gateway.arm")
 
 #ifdef WITH_AAD
-static const UINT32 max_retries = 60;
-static const UINT32 code_execution_interval = 10000;
-
 static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, int timeout)
 {
 	WINPR_ASSERT(arm);
@@ -839,22 +835,8 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 	if (strcmp(gateway_code_str->valuestring, "E_PROXY_ORCHESTRATION_LB_SESSIONHOST_DEALLOCATED") ==
 	    0)
 	{
-		if (arm->gateway_retry >= max_retries)
-		{
-			WLog_ERR(TAG, "We couldn’t connect because your VM failed to start. Try again later or "
-			              "contact your tech support for help if this keeps happening.");
-			goto fail;
-		}
 		*retry = TRUE;
-
-		if (arm->gateway_retry == 0)
-		{
-			WLog_INFO(TAG, "Starting your VM. It may take up to 5 minutes");
-		}
-		else
-		{
-			WLog_INFO(TAG, "Waiting for remote PC");
-		}
+		WLog_DBG(TAG, "Starting your VM. It may take up to 5 minutes");
 	}
 	else
 	{
@@ -959,13 +941,21 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 	BOOL rc = FALSE;
 	do
 	{
+		if (retry && rc)
+		{
+			freerdp* instance = context->instance;
+			WINPR_ASSERT(instance);
+			const SSIZE_T delay = IFCALLRESULT(-1, instance->RetryDialog, instance, "arm-transport",
+			                                   arm->gateway_retry, arm);
+			arm->gateway_retry++;
+			if (delay > 0)
+			{
+				WLog_DBG(TAG, "Delay for %" PRIdz "ms before next attempt", delay);
+				Sleep(delay);
+			}
+		}
 		rc = arm_handle_request(arm, &retry, timeout);
 
-		if (retry)
-		{
-			WLog_INFO(TAG, "Delay for %" PRIu32 "ms before next attempt");
-			Sleep(code_execution_interval);
-		}
 	} while (retry && rc);
 	arm_free(arm);
 	return rc;
