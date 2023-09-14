@@ -819,8 +819,8 @@ static int sdl_run(SdlContext* sdl)
 				}
 				break;
 
-				case SDL_CLIPBOARDUPDATE:
-					WLog_INFO("xxx", "SDL_CLIPBOARDUPDATE");
+				case SDL_EVENT_CLIPBOARD_UPDATE:
+					WLog_INFO("xxx", "SDL_EVENT_CLIPBOARD_UPDATE");
 					break;
 
 				case SDL_EVENT_RENDER_TARGETS_RESET:
