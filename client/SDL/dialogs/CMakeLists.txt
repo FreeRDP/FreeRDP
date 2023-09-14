@@ -1,7 +1,9 @@
 
 
 find_package(SDL3_ttf REQUIRED)
-include_directories(${SDL3_ttf_INCLUDE_DIR})
+get_target_property(SDL3_TTF_INCLUDE_DIRS SDL3_ttf::SDL3_ttf INTERFACE_INCLUDE_DIRECTORIES)
+include_directories(${SDL3_TTF_INCLUDE_DIRS})
+
 set(SRCS
     sdl_button.hpp
     sdl_button.cpp
