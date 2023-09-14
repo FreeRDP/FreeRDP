@@ -15,42 +15,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Soname versioning
-set(UWAC_VERSION_MAJOR "0")
-set(UWAC_VERSION_MINOR "2")
-set(UWAC_VERSION_REVISION "0")
-set(UWAC_VERSION "${UWAC_VERSION_MAJOR}.${UWAC_VERSION_MINOR}.${UWAC_VERSION_REVISION}")
-set(UWAC_VERSION_FULL "${UWAC_VERSION}")
-set(UWAC_API_VERSION "${UWAC_VERSION_MAJOR}")
+cmake_minimum_required(VERSION 3.16)
+project(uwac
+	VERSION 0.2.0
+	LANGUAGES C
+	DESCRIPTION "wayland helper library"
+)
 
-if (NOT FREERDP_UNIFIED_BUILD)
-	cmake_minimum_required(VERSION 3.13)
-	project(uwac VERSION ${UWAC_VERSION} LANGUAGES C)
+set(UWAC_API_VERSION "${PROJECT_VERSION_MAJOR}")
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS ON)
 
-	set(CMAKE_C_STANDARD 11)
-	set(CMAKE_C_STANDARD_REQUIRED ON)
-	set(CMAKE_C_EXTENSIONS ON)
+include(CheckIPOSupported)
+check_ipo_supported(RESULT supported OUTPUT error)
+if (supported)
+	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
-	include(CheckIPOSupported)
-	check_ipo_supported(RESULT supported OUTPUT error)
-	if (supported)
-		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-	endif()
+option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
+option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
+option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
 
-		option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
-		option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
-		option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
+option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
+option(BUILD_TESTING "Build library unit tests" ON)
+option(WITH_LIBRARY_VERSIONING "Use library version triplet" ON)
 
-	option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-	option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
-	option(BUILD_TESTING "Build library unit tests" ON)
-	option(WITH_LIBRARY_VERSIONING "Use library version triplet" ON)
-
-	if(CMAKE_COMPILER_IS_GNUCC)
-		if(NOT EXPORT_ALL_SYMBOLS)
-			message(STATUS "GCC default symbol visibility: hidden")
-			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
-		endif()
+if(CMAKE_COMPILER_IS_GNUCC)
+	if(NOT EXPORT_ALL_SYMBOLS)
+		message(STATUS "GCC default symbol visibility: hidden")
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
 	endif()
 endif()
 

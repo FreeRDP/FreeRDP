@@ -1,8 +1,8 @@
-set(UWAC_INCLUDE_DIR "include/uwac${UWAC_VERSION_MAJOR}")
+set(UWAC_INCLUDE_DIR "include/uwac${PROJECT_VERSION_MAJOR}")
 # cmake package
 export(PACKAGE uwac)
 
-SetFreeRDPCMakeInstallDir(UWAC_CMAKE_INSTALL_DIR "uwac${UWAC_VERSION_MAJOR}")
+SetFreeRDPCMakeInstallDir(UWAC_CMAKE_INSTALL_DIR "uwac${PROJECT_VERSION_MAJOR}")
 
 configure_package_config_file(
 	${CMAKE_CURRENT_SOURCE_DIR}/uwacConfig.cmake.in
@@ -12,7 +12,7 @@ configure_package_config_file(
 
 write_basic_package_version_file(
 	${CMAKE_CURRENT_BINARY_DIR}/uwacConfigVersion.cmake
-	VERSION ${UWAC_VERSION}
+	VERSION ${PROJECT_VERSION}
 	COMPATIBILITY SameMajorVersion)
 
 install(FILES
@@ -35,7 +35,7 @@ configure_file(buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/uwac/build
 configure_file(build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/uwac/build-config.h)
 configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/uwac/config.h)
 
-configure_file(uwac.pc.in ${CMAKE_CURRENT_BINARY_DIR}/uwac${UWAC_VERSION_MAJOR}.pc @ONLY)
+configure_file(uwac.pc.in ${CMAKE_CURRENT_BINARY_DIR}/uwac${PROJECT_VERSION_MAJOR}.pc @ONLY)
 
 set(UWAC_INSTALL_INCLUDE_DIR ${UWAC_INCLUDE_DIR}/uwac)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/uwac${UWAC_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/uwac${PROJECT_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
