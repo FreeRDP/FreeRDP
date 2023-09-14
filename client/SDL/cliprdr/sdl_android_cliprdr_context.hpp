@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * SDL Client helper dialogs
+ * SDL Clipboard Channel
  *
  * Copyright 2023 Armin Novak <armin.novak@thincast.com>
  *
@@ -16,31 +16,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #pragma once
 
-#include <string>
-#include <vector>
+#include "sdl_cliprdr_context.hpp"
 
-#include <SDL.h>
-#include "sdl_widget.hpp"
-
-class SdlSelectWidget : public SdlWidget
+class SdlAndroidCliprdrContext : public SdlCliprdrContext
 {
-  public:
-	SdlSelectWidget(SDL_Renderer* renderer, const std::string& label, const SDL_FRect& rect);
-	SdlSelectWidget(SdlSelectWidget&& other) noexcept;
-	virtual ~SdlSelectWidget() override;
+	friend class SdlCliprdrContext;
 
-	bool set_mouseover(SDL_Renderer* renderer, bool mouseOver);
-	bool set_highlight(SDL_Renderer* renderer, bool highlight);
-	bool update_text(SDL_Renderer* renderer);
-
-  private:
-	SdlSelectWidget(const SdlSelectWidget& other) = delete;
-
-  private:
-	std::string _text;
-	bool _mouseover;
-	bool _highlight;
+  protected:
+	SdlAndroidCliprdrContext(SdlContext* sdl);
 };

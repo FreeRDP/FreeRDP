@@ -265,64 +265,60 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 	return ret;
 }
 
-#if SDL_VERSION_ATLEAST(2, 0, 10)
 BOOL sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
 {
 	WINPR_ASSERT(ev);
 
-	switch (ev->event)
+	switch (ev->type)
 	{
-#if SDL_VERSION_ATLEAST(2, 0, 14)
-		case SDL_DISPLAYEVENT_CONNECTED:
-			SDL_Log("A new display with id %d was connected", ev->display);
+		case SDL_EVENT_DISPLAY_CONNECTED:
+			SDL_Log("A new display with id %u was connected", ev->displayID);
 			return TRUE;
-		case SDL_DISPLAYEVENT_DISCONNECTED:
-			SDL_Log("The display with id %d was disconnected", ev->display);
+		case SDL_EVENT_DISPLAY_DISCONNECTED:
+			SDL_Log("The display with id %u was disconnected", ev->displayID);
 			return TRUE;
-#endif
-		case SDL_DISPLAYEVENT_ORIENTATION:
-			SDL_Log("The orientation of display with id %d was changed", ev->display);
+		case SDL_EVENT_DISPLAY_ORIENTATION:
+			SDL_Log("The orientation of display with id %u was changed", ev->displayID);
 			return TRUE;
 		default:
 			return TRUE;
 	}
 }
-#endif
 
 BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 {
 	WINPR_ASSERT(ev);
 
-	switch (ev->event)
+	switch (ev->type)
 	{
-		case SDL_WINDOWEVENT_HIDDEN:
-		case SDL_WINDOWEVENT_MINIMIZED:
+		case SDL_EVENT_WINDOW_HIDDEN:
+		case SDL_EVENT_WINDOW_MINIMIZED:
 			gdi_send_suppress_output(_sdl->context()->gdi, TRUE);
 			return TRUE;
 
-		case SDL_WINDOWEVENT_EXPOSED:
-		case SDL_WINDOWEVENT_SHOWN:
-		case SDL_WINDOWEVENT_MAXIMIZED:
-		case SDL_WINDOWEVENT_RESTORED:
+		case SDL_EVENT_WINDOW_EXPOSED:
+		case SDL_EVENT_WINDOW_SHOWN:
+		case SDL_EVENT_WINDOW_MAXIMIZED:
+		case SDL_EVENT_WINDOW_RESTORED:
 			gdi_send_suppress_output(_sdl->context()->gdi, FALSE);
 			return TRUE;
 
-		case SDL_WINDOWEVENT_RESIZED:
-		case SDL_WINDOWEVENT_SIZE_CHANGED:
+		case SDL_EVENT_WINDOW_RESIZED:
+		case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
 			_targetWidth = ev->data1;
 			_targetHeight = ev->data2;
 			return sendResize();
 
-		case SDL_WINDOWEVENT_LEAVE:
+		case SDL_EVENT_WINDOW_MOUSE_LEAVE:
 			WINPR_ASSERT(_sdl);
 			_sdl->input.keyboard_grab(ev->windowID, SDL_FALSE);
 			return TRUE;
-		case SDL_WINDOWEVENT_ENTER:
+		case SDL_EVENT_WINDOW_MOUSE_ENTER:
 			WINPR_ASSERT(_sdl);
 			_sdl->input.keyboard_grab(ev->windowID, SDL_TRUE);
 			return _sdl->input.keyboard_focus_in();
-		case SDL_WINDOWEVENT_FOCUS_GAINED:
-		case SDL_WINDOWEVENT_TAKE_FOCUS:
+		case SDL_EVENT_WINDOW_FOCUS_GAINED:
+		case SDL_EVENT_WINDOW_TAKE_FOCUS:
 			return _sdl->input.keyboard_focus_in();
 
 		default:

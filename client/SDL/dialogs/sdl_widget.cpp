@@ -37,14 +37,15 @@ static const SDL_Color backgroundcolor = { 0x38, 0x36, 0x35, 0xff };
 
 static const Uint32 hpadding = 10;
 
-SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
+SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_FRect& rect, bool input)
     : _font(nullptr), _rect(rect), _input(input)
 {
 	assert(renderer);
 
 	auto ops = SDL_RWFromConstMem(font_buffer.data(), static_cast<int>(font_buffer.size()));
 	if (ops)
-		_font = TTF_OpenFontRW(ops, 0, 64);
+		_font = TTF_OpenFontRW(ops, SDL_FALSE, 64);
+	SDL_RWclose(ops);
 }
 
 SdlWidget::SdlWidget(SdlWidget&& other) noexcept
@@ -67,7 +68,7 @@ bool SdlWidget::error_ex(Uint32 res, const char* what, const char* file, size_t 
 	return sdl_log_error_ex(res, log, what, file, line, fkt);
 }
 
-static bool draw_rect(SDL_Renderer* renderer, const SDL_Rect* rect, SDL_Color color)
+static bool draw_rect(SDL_Renderer* renderer, const SDL_FRect* rect, SDL_Color color)
 {
 	const int drc = SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 	if (widget_log_error(drc, "SDL_SetRenderDrawColor"))
@@ -108,7 +109,7 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 	return update_text(renderer, text, fgcolor);
 }
 
-const SDL_Rect& SdlWidget::rect() const
+const SDL_FRect& SdlWidget::rect() const
 {
 	return _rect;
 }
@@ -124,12 +125,15 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 		return !widget_log_error(-1, "TTF_RenderText_Blended");
 
 	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_FreeSurface(surface);
+	SDL_DestroySurface(surface);
 	if (!texture)
 		return !widget_log_error(-1, "SDL_CreateTextureFromSurface");
 
-	SDL_Rect src{};
-	TTF_SizeUTF8(_font, text.c_str(), &src.w, &src.h);
+	SDL_FRect src{};
+	int w, h;
+	TTF_SizeUTF8(_font, text.c_str(), &w, &h);
+	src.w = w;
+	src.h = h;
 
 	/* Do some magic:
 	 * - Add padding before and after text
@@ -149,10 +153,10 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 		src.x = src.w - static_cast<int>(dws);
 		src.w = static_cast<int>(dws);
 	}
-	const int rc = SDL_RenderCopy(renderer, texture, &src, &dst);
+	const int rc = SDL_RenderTexture(renderer, texture, &src, &dst);
 	SDL_DestroyTexture(texture);
 	if (rc < 0)
-		return !widget_log_error(rc, "SDL_RenderCopy");
+		return !widget_log_error(rc, "SDL_RenderTexture");
 	return true;
 }
 

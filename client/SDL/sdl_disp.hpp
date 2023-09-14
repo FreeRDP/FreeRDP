@@ -34,9 +34,7 @@ class sdlDispContext
 	BOOL init(DispClientContext* disp);
 	BOOL uninit(DispClientContext* disp);
 
-#if SDL_VERSION_ATLEAST(2, 0, 10)
 	BOOL handle_display_event(const SDL_DisplayEvent* ev);
-#endif
 
 	BOOL handle_window_event(const SDL_WindowEvent* ev);
 

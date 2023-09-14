@@ -50,7 +50,7 @@ typedef SSIZE_T ssize_t;
 class SdlWidget
 {
   public:
-	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input);
+	SdlWidget(SDL_Renderer* renderer, const SDL_FRect& rect, bool input);
 	SdlWidget(SdlWidget&& other) noexcept;
 	virtual ~SdlWidget();
 
@@ -60,7 +60,7 @@ class SdlWidget
 	bool update_text(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor,
 	                 SDL_Color bgcolor);
 
-	const SDL_Rect& rect() const;
+	const SDL_FRect& rect() const;
 
   public:
 #define widget_log_error(res, what) SdlWidget::error_ex(res, what, __FILE__, __LINE__, __func__)
@@ -72,7 +72,7 @@ class SdlWidget
 
   private:
 	TTF_Font* _font;
-	SDL_Rect _rect;
+	SDL_FRect _rect;
 	bool _input;
 };
 

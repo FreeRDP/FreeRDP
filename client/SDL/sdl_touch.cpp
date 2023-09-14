@@ -103,12 +103,7 @@ static BOOL sdl_get_touch_scaled(SdlContext* sdl, const SDL_TouchFingerEvent* ev
 	WINPR_ASSERT(px);
 	WINPR_ASSERT(py);
 
-#if SDL_VERSION_ATLEAST(2, 0, 12)
 	SDL_Window* window = SDL_GetWindowFromID(ev->windowID);
-#else
-	SDL_Window* window = SDL_GetMouseFocus();
-#endif
-
 	if (!window)
 		return FALSE;
 
