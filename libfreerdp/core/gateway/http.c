@@ -956,7 +956,7 @@ fail:
 	return rc;
 }
 
-static void http_response_print(wLog* log, DWORD level, HttpResponse* response)
+static void http_response_print(wLog* log, DWORD level, const HttpResponse* response)
 {
 	char buffer[64] = { 0 };
 
@@ -1365,7 +1365,7 @@ out_error:
 	return NULL;
 }
 
-const BYTE* http_response_get_body(HttpResponse* response)
+const BYTE* http_response_get_body(const HttpResponse* response)
 {
 	if (!response)
 		return NULL;
@@ -1457,21 +1457,21 @@ BOOL http_request_set_content_length(HttpRequest* request, size_t length)
 	return TRUE;
 }
 
-long http_response_get_status_code(HttpResponse* response)
+long http_response_get_status_code(const HttpResponse* response)
 {
 	WINPR_ASSERT(response);
 
 	return response->StatusCode;
 }
 
-size_t http_response_get_body_length(HttpResponse* response)
+size_t http_response_get_body_length(const HttpResponse* response)
 {
 	WINPR_ASSERT(response);
 
 	return (SSIZE_T)response->BodyLength;
 }
 
-const char* http_response_get_auth_token(HttpResponse* response, const char* method)
+const char* http_response_get_auth_token(const HttpResponse* response, const char* method)
 {
 	if (!response || !method)
 		return NULL;
@@ -1482,7 +1482,7 @@ const char* http_response_get_auth_token(HttpResponse* response, const char* met
 	return ListDictionary_GetItemValue(response->Authenticates, method);
 }
 
-const char* http_response_get_setcookie(HttpResponse* response, const char* cookie)
+const char* http_response_get_setcookie(const HttpResponse* response, const char* cookie)
 {
 	if (!response || !cookie)
 		return NULL;
@@ -1493,7 +1493,7 @@ const char* http_response_get_setcookie(HttpResponse* response, const char* cook
 	return ListDictionary_GetItemValue(response->SetCookie, cookie);
 }
 
-TRANSFER_ENCODING http_response_get_transfer_encoding(HttpResponse* response)
+TRANSFER_ENCODING http_response_get_transfer_encoding(const HttpResponse* response)
 {
 	if (!response)
 		return TransferEncodingUnknown;
@@ -1501,7 +1501,7 @@ TRANSFER_ENCODING http_response_get_transfer_encoding(HttpResponse* response)
 	return response->TransferEncoding;
 }
 
-BOOL http_response_is_websocket(HttpContext* http, HttpResponse* response)
+BOOL http_response_is_websocket(const HttpContext* http, const HttpResponse* response)
 {
 	BOOL isWebsocket = FALSE;
 	WINPR_DIGEST_CTX* sha1 = NULL;
@@ -1553,7 +1553,7 @@ out:
 	return isWebsocket;
 }
 
-void http_response_log_error_status(wLog* log, DWORD level, HttpResponse* response)
+void http_response_log_error_status(wLog* log, DWORD level, const HttpResponse* response)
 {
 	WINPR_ASSERT(log);
 	WINPR_ASSERT(response);
