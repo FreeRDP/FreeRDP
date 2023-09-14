@@ -45,6 +45,7 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
 	auto ops = SDL_RWFromConstMem(font_buffer.data(), static_cast<int>(font_buffer.size()));
 	if (ops)
 		_font = TTF_OpenFontRW(ops, 0, 64);
+	SDL_RWclose(ops);
 }
 
 SdlWidget::SdlWidget(SdlWidget&& other) noexcept
