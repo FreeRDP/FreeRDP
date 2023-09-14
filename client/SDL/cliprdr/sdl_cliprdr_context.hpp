@@ -30,16 +30,11 @@
 class SdlCliprdrContext
 {
   public:
-	static SdlCliprdrContext* instance(SdlContext* sdl);
-
-  public:
+    SdlCliprdrContext(SdlContext* sdl);
 	virtual ~SdlCliprdrContext();
 
 	virtual bool init(CliprdrClientContext* clip);
 	virtual bool uninit(CliprdrClientContext* clip);
-
-  protected:
-	SdlCliprdrContext(SdlContext* sdl);
 
   private:
 	virtual UINT MonitorReady(const CLIPRDR_MONITOR_READY* monitorReady);
