@@ -88,6 +88,7 @@ static void set_default_callbacks(freerdp* instance)
 	instance->PresentGatewayMessage = client_cli_present_gateway_message;
 	instance->LogonErrorInfo = client_cli_logon_error_info;
 	instance->GetAccessToken = client_cli_get_access_token;
+	instance->RetryDialog = client_common_retry_dialog;
 }
 
 static BOOL freerdp_client_common_new(freerdp* instance, rdpContext* context)
@@ -1187,6 +1188,48 @@ cleanup:
 #else
 	return FALSE;
 #endif
+}
+
+SSIZE_T client_common_retry_dialog(freerdp* instance, const char* what, size_t current,
+                                   void* userarg)
+{
+	WINPR_UNUSED(instance);
+	WINPR_ASSERT(instance->context);
+	WINPR_UNUSED(userarg);
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(what);
+
+	if (strcmp(what, "arm-transport") != 0)
+	{
+		WLog_ERR(TAG, "Unknown module %s, aborting", what);
+		return -1;
+	}
+
+	if (current == 0)
+		WLog_INFO(TAG, "[%s] Starting your VM. It may take up to 5 minutes", what);
+
+	const rdpSettings* settings = instance->context->settings;
+	const BOOL enabled = freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
+	if (!enabled)
+	{
+		WLog_WARN(TAG, "Automatic reconnection disabled, terminating. Try to connect again later");
+		return -1;
+	}
+
+	const size_t max = freerdp_settings_get_uint32(settings, FreeRDP_AutoReconnectMaxRetries);
+	const size_t delay = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
+	if (current >= max)
+	{
+		WLog_ERR(TAG,
+		         "[%s] retries exceeded. Your VM failed to start. Try again later or contact your "
+		         "tech support for help if this keeps happening.",
+		         what);
+		return -1;
+	}
+
+	WLog_INFO(TAG, "[%s] retry %" PRIuz "/%" PRIuz ", delaying %" PRIuz "ms before next attempt",
+	          what, current, max, delay);
+	return delay;
 }
 
 BOOL client_auto_reconnect(freerdp* instance)

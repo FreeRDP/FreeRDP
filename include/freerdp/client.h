@@ -175,6 +175,9 @@ extern "C"
 	FREERDP_API BOOL client_common_get_access_token(freerdp* instance, const char* request,
 	                                                char** token);
 
+	FREERDP_API SSIZE_T client_common_retry_dialog(freerdp* instance, const char* what,
+	                                               size_t current, void* userarg);
+
 	FREERDP_API void
 	freerdp_client_OnChannelConnectedEventHandler(void* context,
 	                                              const ChannelConnectedEventArgs* e);

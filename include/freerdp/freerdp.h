@@ -136,6 +136,20 @@ extern "C"
 	typedef BOOL (*pGetAccessToken)(freerdp* instance, AccessTokenType tokenType, char** token,
 	                                size_t count, ...);
 
+	/** @brief Callback used to inform about a reconnection attempt
+	 *
+	 *  @param instance The instance the information is for
+	 *  @param what A '\0' terminated string describing the module attempting to retry an operation
+	 *  @param current The current reconnection attempt, the first attempt will always have the
+	 * value \b 0
+	 *  @param userarg An optional custom argument
+	 *
+	 *  @return \b -1 in case of failure (attempts exceeded, ...) or a \b delay in [ms] to wait
+	 * before the next attempt
+	 */
+	typedef SSIZE_T (*pRetryDialog)(freerdp* instance, const char* what, size_t current,
+	                                void* userarg);
+
 	/** @brief Callback used if user interaction is required to accept
 	 *         an unknown certificate.
 	 *
@@ -531,7 +545,9 @@ owned by rdpRdp */
 		ALIGN64 pGetAccessToken GetAccessToken; /* (offset 71)
 		                                            Callback for obtaining an access token
 		                                            for \b AccessTokenType authentication */
-		UINT64 paddingE[80 - 72];               /* 72 */
+		ALIGN64 pRetryDialog RetryDialog; /* (offset 72) Callback for displaying a dialog in case of
+		                                     something needs a retry */
+		UINT64 paddingE[80 - 73];         /* 73 */
 	};
 
 	struct rdp_channel_handles
