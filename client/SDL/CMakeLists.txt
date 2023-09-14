@@ -62,9 +62,9 @@ if (WITH_DEBUG_SDL_KBD_EVENTS)
 	add_definitions(-DWITH_DEBUG_SDL_KBD_EVENTS)
 endif()
 
-find_package(SDL2 REQUIRED COMPONENTS)
-include_directories(${SDL2_INCLUDE_DIR})
-include_directories(${SDL2_INCLUDE_DIRS})
+find_package(SDL3 REQUIRED COMPONENTS)
+get_target_property(SDL3_INCLUDE_DIRS SDL3::Headers INTERFACE_INCLUDE_DIRECTORIES)
+include_directories(${SDL3_INCLUDE_DIRS})
 
 find_package(Threads REQUIRED)
 
@@ -90,7 +90,7 @@ set(SRCS
 
 add_subdirectory(aad)
 set(LIBS
-	${SDL2_LIBRARIES}
+	SDL3::SDL3
         winpr
         freerdp
         freerdp-client
