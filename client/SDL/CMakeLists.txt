@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.16)
 
 project(sdl-client CXX)
 
@@ -78,12 +78,13 @@ if (WITH_DEBUG_SDL_KBD_EVENTS)
 	add_definitions(-DWITH_DEBUG_SDL_KBD_EVENTS)
 endif()
 
-find_package(SDL2 REQUIRED COMPONENTS)
-include_directories(${SDL2_INCLUDE_DIR})
-include_directories(${SDL2_INCLUDE_DIRS})
+find_package(SDL3 REQUIRED COMPONENTS)
+get_target_property(SDL3_INCLUDE_DIRS SDL3::Headers INTERFACE_INCLUDE_DIRECTORIES)
+include_directories(${SDL3_INCLUDE_DIRS})
 
 find_package(Threads REQUIRED)
 
+add_subdirectory(cliprdr)
 add_subdirectory(dialogs)
 set(SRCS
     sdl_types.hpp
@@ -106,11 +107,12 @@ set(SRCS
 
 add_subdirectory(aad)
 set(LIBS
-	${SDL2_LIBRARIES}
+	SDL3::SDL3
         winpr
         freerdp
         freerdp-client
         Threads::Threads
+        sdl-cliprdr
         dialogs
 				aad-view
     )

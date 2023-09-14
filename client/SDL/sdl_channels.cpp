@@ -43,7 +43,8 @@ void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 	{
 		auto clip = reinterpret_cast<CliprdrClientContext*>(e->pInterface);
 		WINPR_ASSERT(clip);
-		clip->custom = context;
+		if (sdl->clip)
+			sdl->clip->init(clip);
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{
@@ -70,7 +71,8 @@ void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	{
 		auto clip = reinterpret_cast<CliprdrClientContext*>(e->pInterface);
 		WINPR_ASSERT(clip);
-		clip->custom = nullptr;
+		if (sdl->clip)
+			sdl->clip->uninit(clip);
 	}
 	else if (strcmp(e->name, DISP_DVC_CHANNEL_NAME) == 0)
 	{

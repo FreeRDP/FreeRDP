@@ -58,21 +58,23 @@ typedef struct
 int sdl_list_monitors(SdlContext* sdl)
 {
 	SDL_Init(SDL_INIT_VIDEO);
-	const int nmonitors = SDL_GetNumVideoDisplays();
+	int nmonitors = 0;
+	auto ids = SDL_GetDisplays(&nmonitors);
 
 	printf("listing %d monitors:\n", nmonitors);
 	for (int i = 0; i < nmonitors; i++)
 	{
+		auto id = ids[i];
 		SDL_Rect rect = {};
-		const int brc = SDL_GetDisplayBounds(i, &rect);
-		const char* name = SDL_GetDisplayName(i);
+		const int brc = SDL_GetDisplayBounds(id, &rect);
+		const char* name = SDL_GetDisplayName(id);
 
 		if (brc != 0)
 			continue;
-		printf("     %s [%d] [%s] %dx%d\t+%d+%d\n", (i == 0) ? "*" : " ", i, name, rect.w, rect.h,
+		printf("     %s [%d] [%s] %dx%d\t+%d+%d\n", (i == 0) ? "*" : " ", id, name, rect.w, rect.h,
 		       rect.x, rect.y);
 	}
-
+	SDL_free(ids);
 	SDL_Quit();
 	return 0;
 }
@@ -150,7 +152,6 @@ static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxH
 	return TRUE;
 }
 
-#if SDL_VERSION_ATLEAST(2, 0, 10)
 static UINT32 sdl_orientaion_to_rdp(SDL_DisplayOrientation orientation)
 {
 	switch (orientation)
@@ -166,7 +167,6 @@ static UINT32 sdl_orientaion_to_rdp(SDL_DisplayOrientation orientation)
 			return ORIENTATION_PORTRAIT;
 	}
 }
-#endif
 
 static BOOL sdl_apply_display_properties(SdlContext* sdl)
 {
@@ -183,7 +183,7 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 
 	for (UINT32 x = 0; x < numIds; x++)
 	{
-		auto id = static_cast<const UINT32*>(
+		auto id = static_cast<const SDL_DisplayID*>(
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, x));
 		WINPR_ASSERT(id);
 
@@ -193,7 +193,9 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		SDL_Rect rect = {};
 
 		SDL_GetDisplayBounds(*id, &rect);
-		SDL_GetDisplayDPI(*id, &ddpi, &hdpi, &vdpi);
+		auto mode = SDL_GetCurrentDisplayMode(*id);
+		if (mode)
+			ddpi = hdpi = vdpi = mode->pixel_density;
 
 		bool highDpi = hdpi > 100;
 
@@ -203,25 +205,28 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 			// window. Work around this by checking the supported resolutions (and keep maximum)
 			// Also scale the DPI
 			const SDL_Rect scaleRect = rect;
-			for (int i = 0; i < SDL_GetNumDisplayModes(*id); i++)
+			int modecount = 0;
+			auto modes = SDL_GetFullscreenDisplayModes(*id, &modecount);
+			for (int i = 0; i < modecount; i++)
 			{
-				SDL_DisplayMode mode = {};
-				SDL_GetDisplayMode(x, i, &mode);
+				const auto mode = modes[i];
+				WINPR_ASSERT(mode);
 
-				if (mode.w > rect.w)
+				if (mode->w > rect.w)
 				{
-					rect.w = mode.w;
-					rect.h = mode.h;
+					rect.w = mode->w;
+					rect.h = mode->h;
 				}
-				else if (mode.w == rect.w)
+				else if (mode->w == rect.w)
 				{
-					if (mode.h > rect.h)
+					if (mode->h > rect.h)
 					{
-						rect.w = mode.w;
-						rect.h = mode.h;
+						rect.w = mode->w;
+						rect.h = mode->h;
 					}
 				}
 			}
+			SDL_free(modes);
 
 			const float dw = rect.w / scaleRect.w;
 			const float dh = rect.h / scaleRect.h;
@@ -229,13 +234,8 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 			vdpi /= dh;
 		}
 
-#if SDL_VERSION_ATLEAST(2, 0, 10)
-		const SDL_DisplayOrientation orientation = SDL_GetDisplayOrientation(*id);
+		const SDL_DisplayOrientation orientation = SDL_GetCurrentDisplayOrientation(*id);
 		const UINT32 rdp_orientation = sdl_orientaion_to_rdp(orientation);
-#else
-		const UINT32 rdp_orientation = ORIENTATION_LANDSCAPE;
-#endif
-
 		auto monitor = static_cast<rdpMonitor*>(
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorDefArray, x));
 		WINPR_ASSERT(monitor);
@@ -274,7 +274,7 @@ static BOOL sdl_detect_single_window(SdlContext* sdl, UINT32* pMaxWidth, UINT32*
 		if (!settings->NumMonitorIds)
 		{
 			const size_t id =
-			    (sdl->windows.size() > 0) ? SDL_GetWindowDisplayIndex(sdl->windows[0].window) : 0;
+			    (sdl->windows.size() > 0) ? SDL_GetDisplayForWindow(sdl->windows[0].window) : 0;
 			if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, &id, 1))
 				return FALSE;
 		}
@@ -305,7 +305,9 @@ BOOL sdl_detect_monitors(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	rdpSettings* settings = sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
-	const int numDisplays = SDL_GetNumVideoDisplays();
+	int numDisplays = 0;
+	auto ids = SDL_GetDisplays(&numDisplays);
+	SDL_free(ids);
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, nullptr, numDisplays))
 		return FALSE;
 

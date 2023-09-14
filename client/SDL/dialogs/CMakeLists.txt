@@ -1,7 +1,9 @@
 
 
-find_package(SDL2TTF REQUIRED COMPONENTS)
-include_directories(${SDL2TTF_INCLUDE_DIR})
+find_package(SDL3_ttf REQUIRED)
+get_target_property(SDL3_TTF_INCLUDE_DIRS SDL3_ttf::SDL3_ttf INTERFACE_INCLUDE_DIRECTORIES)
+include_directories(${SDL3_TTF_INCLUDE_DIRS})
+
 set(SRCS
     sdl_button.hpp
     sdl_button.cpp
@@ -22,8 +24,8 @@ set(SRCS
 )
 
 set(LIBS
-    ${SDL2_LIBRARIES}
-    ${SDL2TTF_LIBRARY}
+	SDL3::SDL3
+	SDL3_ttf::SDL3_ttf
     font
     winpr
 )
