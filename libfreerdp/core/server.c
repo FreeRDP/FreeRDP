@@ -167,8 +167,20 @@ static BOOL wts_read_drdynvc_capabilities_response(rdpPeerChannel* channel, UINT
 	Stream_Seek_UINT8(channel->receiveData); /* Pad (1 byte) */
 	Stream_Read_UINT16(channel->receiveData, Version);
 	DEBUG_DVC("Version: %" PRIu16 "", Version);
-	channel->vcm->drdynvc_state = DRDYNVC_STATE_READY;
-	return TRUE;
+
+	if (Version < 1)
+	{
+		WLog_ERR(TAG, "invalid version %" PRIu16 " for DRDYNVC", Version);
+		return FALSE;
+	}
+
+	WTSVirtualChannelManager* vcm = channel->vcm;
+	vcm->drdynvc_state = DRDYNVC_STATE_READY;
+
+	/* we only support version 1 for now (no compression yet) */
+	vcm->dvc_spoken_version = MAX(Version, 1);
+
+	return SetEvent(MessageQueue_Event(vcm->queue));
 }
 
 static BOOL wts_read_drdynvc_create_response(rdpPeerChannel* channel, wStream* s, UINT32 length)
@@ -563,7 +575,6 @@ BOOL WTSVirtualChannelManagerOpen(HANDLE hServer)
 	if (vcm->drdynvc_state == DRDYNVC_STATE_NONE)
 	{
 		rdpPeerChannel* channel;
-		UINT32 dynvc_caps;
 
 		/* Initialize drdynvc channel once and only once. */
 		vcm->drdynvc_state = DRDYNVC_STATE_INITIALIZED;
@@ -572,11 +583,21 @@ BOOL WTSVirtualChannelManagerOpen(HANDLE hServer)
 
 		if (channel)
 		{
-			ULONG written;
-			vcm->drdynvc_channel = channel;
-			Data_Write_UINT32(&dynvc_caps, 0x00010050); /* DYNVC_CAPS_VERSION1 (4 bytes) */
+			BYTE capaBuffer[12];
+			wStream staticS;
+			wStream* s = Stream_StaticInit(&staticS, capaBuffer, sizeof(capaBuffer));
 
-			if (!WTSVirtualChannelWrite(channel, (PCHAR)&dynvc_caps, sizeof(dynvc_caps), &written))
+			vcm->drdynvc_channel = channel;
+			vcm->dvc_spoken_version = 1;
+			Stream_Write_UINT8(s, 0x50);    /* Cmd=5 sp=0 cbId=0 */
+			Stream_Write_UINT8(s, 0x00);    /* Pad */
+			Stream_Write_UINT16(s, 0x0001); /* Version */
+
+			/* TODO: shall implement version 2 and 3 */
+
+			ULONG written;
+			if (!WTSVirtualChannelWrite(channel, (PCHAR)capaBuffer, Stream_GetPosition(s),
+			                            &written))
 				return FALSE;
 		}
 	}
