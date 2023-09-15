@@ -790,7 +790,7 @@ static BOOL arm_handle_request_ok(rdpArm* arm, const HttpResponse* response)
 {
 	const size_t len = http_response_get_body_length(response);
 	const char* msg = http_response_get_body(response);
-	if (strnlen(msg, len) >= len)
+	if (strnlen(msg, len + 1) > len)
 		return FALSE;
 
 	WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
@@ -808,7 +808,7 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 
 	const size_t len = http_response_get_body_length(response);
 	const char* msg = http_response_get_body(response);
-	if (strnlen(msg, len) >= len)
+	if (strnlen(msg, len + 1) > len)
 		return FALSE;
 
 	WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
