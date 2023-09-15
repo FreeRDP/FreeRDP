@@ -850,19 +850,27 @@ static INLINE int progressive_rfx_dwt_2d_decode(PROGRESSIVE_CONTEXT* progressive
                                                 BOOL reverse)
 {
 	const primitives_t* prims = primitives_get();
-	INT16* temp;
 
 	if (!progressive || !buffer || !current)
 		return -1;
 
-	if (coeffDiff)
-		prims->add_16s(buffer, current, buffer, 4096);
-
+	INT16 dst[4096] = { 0 };
 	if (reverse)
-		CopyMemory(buffer, current, 4096 * 2);
+		memcpy(buffer, current, sizeof(dst));
 	else
-		CopyMemory(current, buffer, 4096 * 2);
-	temp = (INT16*)BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
+	{
+		if (coeffDiff)
+		{
+			prims->add_16s(buffer, current, dst, ARRAYSIZE(dst));
+			memcpy(current, dst, sizeof(dst));
+			memcpy(buffer, dst, sizeof(dst));
+		}
+		else
+			memcpy(current, buffer, sizeof(dst));
+	}
+
+	INT16* temp = (INT16*)BufferPool_Take(progressive->bufferPool, -1); /* DWT buffer */
+
 	if (!temp)
 		return -2;
 
@@ -885,7 +893,10 @@ static INLINE void progressive_rfx_decode_block(const primitives_t* prims, INT16
 	if (!shift)
 		return;
 
-	prims->lShiftC_16s(buffer, shift, buffer, length);
+	WINPR_ASSERT(length <= 1024);
+	INT16 dst[1024] = { 0 };
+	prims->lShiftC_16s(buffer, shift, dst, length);
+	memcpy(buffer, dst, length * sizeof(INT16));
 }
 
 static INLINE int progressive_rfx_decode_component(PROGRESSIVE_CONTEXT* progressive,
