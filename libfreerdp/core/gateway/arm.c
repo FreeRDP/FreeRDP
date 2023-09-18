@@ -337,7 +337,7 @@ arm_create_cleanup:
 static WINPR_CIPHER_CTX* treatAuthBlob(const BYTE* pbInput, size_t cbInput)
 {
 	WINPR_CIPHER_CTX* ret = NULL;
-	char algoName[100];
+	char algoName[100] = { 0 };
 
 	SSIZE_T algoSz =
 	    ConvertWCharNToUtf8((WCHAR*)pbInput, cbInput / sizeof(WCHAR), algoName, sizeof(algoName));
@@ -363,11 +363,11 @@ static WINPR_CIPHER_CTX* treatAuthBlob(const BYTE* pbInput, size_t cbInput)
 	}
 
 	/* BCRYPT_KEY_DATA_BLOB_HEADER */
-	wStream staticStream;
+	wStream staticStream = { 0 };
 	wStream* s =
 	    Stream_StaticConstInit(&staticStream, pbInput + (algoSz + 1) * sizeof(WCHAR), cbInput);
 
-	UINT32 dwMagic;
+	UINT32 dwMagic = 0;
 	Stream_Read_UINT32(s, dwMagic);
 
 	if (dwMagic != BCRYPT_KEY_DATA_BLOB_MAGIC)
@@ -376,7 +376,7 @@ static WINPR_CIPHER_CTX* treatAuthBlob(const BYTE* pbInput, size_t cbInput)
 		return NULL;
 	}
 
-	UINT32 dwVersion;
+	UINT32 dwVersion = 0;
 	Stream_Read_UINT32(s, dwVersion);
 	if (dwVersion != BCRYPT_KEY_DATA_BLOB_VERSION1)
 	{
@@ -385,7 +385,7 @@ static WINPR_CIPHER_CTX* treatAuthBlob(const BYTE* pbInput, size_t cbInput)
 		return NULL;
 	}
 
-	UINT32 cbKeyData;
+	UINT32 cbKeyData = 0;
 	Stream_Read_UINT32(s, cbKeyData);
 	cbInput -= 12;
 
@@ -395,7 +395,7 @@ static WINPR_CIPHER_CTX* treatAuthBlob(const BYTE* pbInput, size_t cbInput)
 		return NULL;
 	}
 
-	int cipherType;
+	int cipherType = 0;
 	switch (cbKeyData)
 	{
 		case 16:
@@ -550,7 +550,7 @@ static BOOL arm_pick_base64Utf16Field(const cJSON* json, const char* name, BYTE*
 	}
 
 	size_t len2 = 0;
-	char* output2 = ConvertWCharNToUtf8Alloc((WCHAR*)output1, len1 / 2, &len2);
+	char* output2 = ConvertWCharNToUtf8Alloc((WCHAR*)output1, len1 / sizeof(WCHAR), &len2);
 	free(output1);
 	if (!output2 || !len2)
 	{
@@ -668,7 +668,6 @@ out:
 static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const cJSON* json)
 {
 	BOOL ret = TRUE;
-	WCHAR* wGUID = NULL;
 	BYTE* cert = NULL;
 	BYTE* authBlob = NULL;
 	rdpCertificate* redirectedServerCert = NULL;
@@ -685,9 +684,12 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const cJSON* jso
 		if (!redirectedAuthGuid)
 			break;
 
-		size_t wGUID_len = 0;
-		wGUID = ConvertUtf8ToWCharAlloc(redirectedAuthGuid, &wGUID_len);
-		if (!wGUID)
+		WCHAR wGUID[72] = {
+			0
+		}; /* A GUID string is between 32 and 68 characters as string, depending on representation.
+		      Add a few extra bytes for braces et al */
+		const SSIZE_T wGUID_len = ConvertUtf8ToWChar(redirectedAuthGuid, wGUID, ARRAYSIZE(wGUID));
+		if (!wGUID || (wGUID_len < 0))
 		{
 			WLog_ERR(TAG, "unable to allocate space for redirectedAuthGuid");
 			ret = FALSE;
@@ -708,7 +710,6 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const cJSON* jso
 		if (!arm_pick_base64Utf16Field(json, "redirectedServerCert", &cert, &certLen))
 			break;
 
-		rdpCertificate* redirectedServerCert = NULL;
 		if (!rdp_redirection_read_target_cert(&redirectedServerCert, cert, certLen))
 			break;
 
@@ -721,7 +722,9 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const cJSON* jso
 		if (!cipher)
 			break;
 
-		if (!arm_encodeRedirectPasswd(settings, redirectedServerCert, cipher))
+		const BOOL rerp = arm_encodeRedirectPasswd(settings, redirectedServerCert, cipher);
+		winpr_Cipher_Free(cipher);
+		if (!rerp)
 			break;
 
 		ret = TRUE;
