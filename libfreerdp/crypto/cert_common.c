@@ -53,6 +53,7 @@ BOOL read_bignum(BYTE** dst, UINT32* length, const BIGNUM* num, BOOL alloc)
 
 	if (alloc)
 	{
+		free(*dst);
 		*dst = NULL;
 		*length = 0;
 	}
