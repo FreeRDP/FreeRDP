@@ -951,7 +951,9 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 			const SSIZE_T delay = IFCALLRESULT(-1, instance->RetryDialog, instance, "arm-transport",
 			                                   arm->gateway_retry, arm);
 			arm->gateway_retry++;
-			if (delay > 0)
+			if (delay <= 0)
+				break; /* error or no retry desired, abort loop */
+			else
 			{
 				WLog_DBG(TAG, "Delay for %" PRIdz "ms before next attempt", delay);
 				Sleep(delay);
