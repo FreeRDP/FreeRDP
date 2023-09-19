@@ -39,11 +39,7 @@ public class RdpClientTests : TestsBase
 
         while (count-- > 0)
         {
-            var connectionSettings = new RdpConnectionSettings(
-                username: user.UserName.Split("\\")[1],
-                password: user.Password,
-                domain: user.UserName.Split("\\")[0]
-            );
+            var connectionSettings = user.ToRdpConnectionSettings();
 
             clientNamesHistory.Add(connectionSettings.ClientName).ShouldBe(true);
         }
@@ -59,53 +55,53 @@ public class RdpClientTests : TestsBase
     public async Task ShouldConnect(int colorDepthInput, int expectedWtsApiValue)
     {
         var user = await Host.GivenUser();
-        var connectionSettings = new RdpConnectionSettings(
-            username: user.UserName.Split("\\")[1],
-            password: user.Password,
-            domain: user.UserName.Split("\\")[0]
-        )
+
+        var connectionSettings = user.ToRdpConnectionSettings();
+
+        connectionSettings.DesktopWidth = 3 * 4 * 101;
+        connectionSettings.DesktopHeight = 3 * 4 * 71;
+        connectionSettings.ColorDepth = colorDepthInput;
+
+        await using (var sut = await Connect(connectionSettings))
         {
-            DesktopWidth = 3 * 4 * 101,
-            DesktopHeight = 3 * 4 * 71,
-            ColorDepth = colorDepthInput
-        };
+            var sessionId = _wts.FindFirstSessionByClientName(connectionSettings.ClientName);
+            sessionId.ShouldNotBeNull();
+            var displayInfo = _wts.QuerySessionInformation(sessionId.Value).ClientDisplay();
+
+            ((int)displayInfo.HorizontalResolution).ShouldBe(connectionSettings.DesktopWidth);
+            ((int)displayInfo.VerticalResolution).ShouldBe(connectionSettings.DesktopHeight);
+            //((int)displayInfo.ColorDepth).ShouldBe(expectedWtsApiValue);
+        }
+
+        await WaitFor.Predicate(() => _wts.FindFirstSessionByClientName(connectionSettings.ClientName) == null);
+    }
+
+    [Fact]
+    public async Task HostDispose_ShouldNotTriggerCrash_WhenSessionIsStillActive()
+    {
+        var user = await Host.GivenUser();
+        var connectionSettings = user.ToRdpConnectionSettings();
 
         await using var sut = await Connect(connectionSettings);
 
-        var sessionId = _wts.FindFirstSessionByClientName(connectionSettings.ClientName);
-        sessionId.ShouldNotBeNull();
-        var displayInfo = _wts.QuerySessionInformation(sessionId.Value).ClientDisplay();
+        await Host.DisposeAsync();
+        await Task.Delay(1000);
 
-        ((int)displayInfo.HorizontalResolution).ShouldBe(connectionSettings.DesktopWidth);
-        ((int)displayInfo.VerticalResolution).ShouldBe(connectionSettings.DesktopHeight);
-        //((int)displayInfo.ColorDepth).ShouldBe(expectedWtsApiValue);
-
-        await sut.DisposeAsync();
-        await WaitFor.Predicate(() => _wts.FindFirstSessionByClientName(connectionSettings.ClientName) == null);
+        // The assertion is that this process hasn't crashed.
+        // To make it crash, comment out the following guard:
+        // https://github.com/UiPath/FreeRDP/blob/8da62c46223929d548fbd6984453d9ccf50a80af/UiPath.FreeRdpClient/UiPath.FreeRdpWrapper/Logging.cpp#L14-L15
     }
 
     [Fact]
     public async Task ParallelConnectWorksOnFirstUse()
     {
         var user = await Host.GivenUser();
-        var connectionSettings1 = new RdpConnectionSettings(
-            username: user.UserName.Split("\\")[1],
-            password: user.Password,
-            domain: user.UserName.Split("\\")[0]
-        )
-        {
-        };
+        var connectionSettings1 = user.ToRdpConnectionSettings();
 
         user = await Host.GivenUserOther();
-        var connectionSettings2 = new RdpConnectionSettings(
-            username: user.UserName.Split("\\")[1],
-            password: user.Password,
-            domain: user.UserName.Split("\\")[0]
-        )
-        {
-        };
-        var iterations = 10;
+        var connectionSettings2 = user.ToRdpConnectionSettings();
 
+        var iterations = 10;
         while (iterations-- > 0)
         {
             var host = new TestHost(_output).AddFreeRdp();
@@ -139,14 +135,12 @@ public class RdpClientTests : TestsBase
             port++;
         await WithPortRedirectToDefaultRdp(port);
         var user = await Host.GivenUser();
-        var connectionSettings = new RdpConnectionSettings(
-            username: user.UserName.Split("\\")[1],
-            password: user.Password,
-            domain: user.UserName.Split("\\")[0]
-        )
-        {
-            Port = port
-        };
+
+        var connectionSettings = user.ToRdpConnectionSettings();
+
+        connectionSettings.Port = port;
+
+
 
 
         await ShouldNotHavePortWithState(port, StateEstablished);
@@ -196,11 +190,10 @@ public class RdpClientTests : TestsBase
     public async Task WrongPassword_ShouldFail()
     {
         var user = await Host.GivenUser();
-        var connectionSettings = new RdpConnectionSettings(
-            username: user.UserName.Split("\\")[1],
-            password: user.Password + "_",
-            domain: user.UserName.Split("\\")[0]
-        );
+        user.Password += "_";
+
+        var connectionSettings = user.ToRdpConnectionSettings();
+
         var exception = await Connect(connectionSettings).ShouldThrowAsync<COMException>();
         exception.Message.Contains("Logon Failed", StringComparison.InvariantCultureIgnoreCase);
     }

@@ -60,13 +60,7 @@ public class LoggingTests : TestsBase
     public async Task ShouldProduceLogsFromFreerdp()
     {
         var user = await Host.GivenUser();
-        var connectionSettings = new RdpConnectionSettings(
-            username: user.UserName.Split("\\")[1],
-            password: user.Password,
-            domain: user.UserName.Split("\\")[0]
-        )
-        {
-        };
+        var connectionSettings = user.ToRdpConnectionSettings();
 
         await using var sut = await Connect(connectionSettings);
         var sessionId = WtsApi.FindFirstSessionByClientName(connectionSettings.ClientName)

@@ -3,13 +3,15 @@ using Newtonsoft.Json;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
+using UiPath.Rdp;
 using UiPath.SessionTools;
 
 namespace UiPath.FreeRdp.Tests.Faking;
 
 public class UserExistsDetail
 {
-    private NetworkCredential _credentials = new NetworkCredential();
+    private readonly NetworkCredential _credentials = new();
+
     public string UserName { get => _credentials.GetFullUserName(); set => _credentials.SetFullUserName(value); }
     public string Password { get => _credentials.Password; set => _credentials.Password = value; }
 
@@ -18,6 +20,12 @@ public class UserExistsDetail
         .Replace(UserNames.DefaultDomainName.ToLowerInvariant() + "\\", "");
 
     public List<string> Groups { get; } = new() { "Remote Desktop Users", "Administrators" };
+
+    public RdpConnectionSettings ToRdpConnectionSettings()
+    => new(
+        username: UserName.Split("\\")[1],
+        password: Password,
+        domain: UserName.Split("\\")[0]);
 }
 
 public interface IUserContext
