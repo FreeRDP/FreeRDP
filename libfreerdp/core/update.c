@@ -870,12 +870,6 @@ void update_reset_state(rdpUpdate* update)
 
 	WINPR_ASSERT(primary);
 
-	if (primary->fast_glyph.glyphData.aj)
-	{
-		free(primary->fast_glyph.glyphData.aj);
-		primary->fast_glyph.glyphData.aj = NULL;
-	}
-
 	ZeroMemory(&primary->order_info, sizeof(ORDER_INFO));
 	ZeroMemory(&primary->dstblt, sizeof(DSTBLT_ORDER));
 	ZeroMemory(&primary->patblt, sizeof(PATBLT_ORDER));
@@ -888,15 +882,25 @@ void update_reset_state(rdpUpdate* update)
 	ZeroMemory(&primary->multi_opaque_rect, sizeof(MULTI_OPAQUE_RECT_ORDER));
 	ZeroMemory(&primary->multi_draw_nine_grid, sizeof(MULTI_DRAW_NINE_GRID_ORDER));
 	ZeroMemory(&primary->line_to, sizeof(LINE_TO_ORDER));
+
+	free(primary->polyline.points);
 	ZeroMemory(&primary->polyline, sizeof(POLYLINE_ORDER));
+
 	ZeroMemory(&primary->memblt, sizeof(MEMBLT_ORDER));
 	ZeroMemory(&primary->mem3blt, sizeof(MEM3BLT_ORDER));
 	ZeroMemory(&primary->save_bitmap, sizeof(SAVE_BITMAP_ORDER));
 	ZeroMemory(&primary->glyph_index, sizeof(GLYPH_INDEX_ORDER));
 	ZeroMemory(&primary->fast_index, sizeof(FAST_INDEX_ORDER));
+
+	free(primary->fast_glyph.glyphData.aj);
 	ZeroMemory(&primary->fast_glyph, sizeof(FAST_GLYPH_ORDER));
+
+	free(primary->polygon_sc.points);
 	ZeroMemory(&primary->polygon_sc, sizeof(POLYGON_SC_ORDER));
+
+	free(primary->polygon_cb.points);
 	ZeroMemory(&primary->polygon_cb, sizeof(POLYGON_CB_ORDER));
+
 	ZeroMemory(&primary->ellipse_sc, sizeof(ELLIPSE_SC_ORDER));
 	ZeroMemory(&primary->ellipse_cb, sizeof(ELLIPSE_CB_ORDER));
 	primary->order_info.orderType = ORDER_TYPE_PATBLT;
@@ -3249,6 +3253,8 @@ void update_free(rdpUpdate* update)
 		if (update->primary)
 		{
 			rdp_primary_update_internal* primary = primary_update_cast(update->primary);
+
+			free(primary->polygon_cb.points);
 			free(primary->polyline.points);
 			free(primary->polygon_sc.points);
 			free(primary->fast_glyph.glyphData.aj);
