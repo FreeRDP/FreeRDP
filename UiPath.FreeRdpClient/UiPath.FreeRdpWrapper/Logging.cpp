@@ -11,6 +11,9 @@ namespace Logging
 
 	BOOL wLog_Message(const wLogMessage* msg)
 	{
+		if (!_clientLogCallback)
+			return FALSE;
+
 		wchar_t wbuffer[MAX_TRACE_MSG];
 		mbstowcs_s(nullptr, wbuffer, msg->TextString, MAX_TRACE_MSG);
 
