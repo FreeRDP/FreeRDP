@@ -665,6 +665,7 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 	char* unquoted = NULL;
 	BOOL fullquoted = FALSE;
 
+	BOOL success = FALSE;
 	if (count == NULL)
 		goto fail;
 
@@ -718,6 +719,7 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 				p[0] = dst;
 				sprintf_s(dst, clen + 1, "%s", name);
 				*count = 1;
+				success = TRUE;
 				goto fail;
 			}
 		}
@@ -768,8 +770,6 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 				if (lastQuote != quote)
 				{
 					WLog_ERR(TAG, "invalid argument (quote mismatch) '%s'", list);
-					free(p);
-					p = NULL;
 					goto fail;
 				}
 				else if (lastQuote != 0)
@@ -779,11 +779,25 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 
 			str = comma + 1;
 		}
+		else if (quote)
+		{
+			char* end = strrchr(ptr, '"');
+			if (!end)
+				goto fail;
+			*end = '\0';
+		}
 	}
 
 	*count = nArgs;
+	success = TRUE;
 fail:
 	free(copy);
+	if (!success)
+	{
+		*count = 0;
+		free(p);
+		return NULL;
+	}
 	return p;
 }
 
