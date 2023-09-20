@@ -28,7 +28,7 @@ file="${srcroot}/include/freerdp/settings.h"
 	(
 		set -eu
 		i=0
-		sed -e '1,/struct rdp_settings/d' -e '/^{/d' -e '/};/,$d' \
+		sed -e '1,/struct rdp_settings/d' -e '/{/d' -e '/};/,$d' \
 			| sed -e '/End of ABI stable zone/,$d' \
 			| sed -e '$a\
 x*/' \
