@@ -1535,6 +1535,8 @@ fail:
 	return cliprdr_file_context_send_file_contents_failure(file, fileContentsRequest);
 }
 
+static void cliprdr_local_stream_free(void* obj);
+
 static UINT change_lock(CliprdrFileContext* file, UINT32 lockId, BOOL lock)
 {
 	UINT rc = CHANNEL_RC_OK;

@@ -154,8 +154,9 @@ static void xf_cliprdr_clear_cached_data(xfClipboard* clipboard);
 static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL force);
 static void xf_cliprdr_set_selection_owner(xfContext* xfc, xfClipboard* clipboard, Time timestamp);
 
-static void xf_cached_data_free(xfCachedData* cached_data)
+static void xf_cached_data_free(void* ptr)
 {
+	xfCachedData* cached_data = ptr;
 	if (!cached_data)
 		return;
 
