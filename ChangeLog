@@ -1,3 +1,12 @@
+# 2023-09-20 Version 2.11.2
+
+Notworthy changes:
+* Backported #9378: backported wArrayList (optional) copy on insert
+* Backported #9360: backported certificate algorithm detection
+
+For a complete and detailed change log since the last release run:
+git log 2.11.2..2.11.1
+
 # 2023-09-04 Version 2.11.1
 
 Notworthy changes:
