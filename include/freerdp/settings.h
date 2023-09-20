@@ -491,6 +491,7 @@ extern "C"
  * FreeRDP Settings Ids
  * This is generated with a script parsing the rdpSettings data structure
  */
+
 #define FreeRDP_instance (0)
 #define FreeRDP_ServerMode (16)
 #define FreeRDP_ShareId (17)
@@ -771,6 +772,13 @@ extern "C"
 #define FreeRDP_GatewayHttpExtAuthBearer (2002)
 #define FreeRDP_GatewayUrl (2003)
 #define FreeRDP_GatewayArmTransport (2004)
+#define FreeRDP_GatewayAvdWvdEndpointPool (2005)
+#define FreeRDP_GatewayAvdGeo (2006)
+#define FreeRDP_GatewayAvdArmpath (2007)
+#define FreeRDP_GatewayAvdAadtenantid (2008)
+#define FreeRDP_GatewayAvdDiagnosticserviceurl (2009)
+#define FreeRDP_GatewayAvdHubdiscoverygeourl (2010)
+#define FreeRDP_GatewayAvdActivityhint (2011)
 #define FreeRDP_ProxyType (2015)
 #define FreeRDP_ProxyHostname (2016)
 #define FreeRDP_ProxyPort (2017)
@@ -933,9 +941,9 @@ extern "C"
 #define FreeRDP_Floatbar (5196)
 #define FreeRDP_TcpConnectTimeout (5197)
 
-	/**
-	 * FreeRDP Settings Data Structure
-	 */
+/**
+ * FreeRDP Settings Data Structure
+ */
 
 #define FreeRDP_Settings_StableAPI_MAX 5312
 	struct rdp_settings
@@ -1352,7 +1360,14 @@ extern "C"
 		ALIGN64 char* GatewayHttpExtAuthBearer;   /* 2002 */
 		ALIGN64 char* GatewayUrl;                 /* 2003 */
 		ALIGN64 BOOL GatewayArmTransport;         /* 2004 */
-		UINT64 padding2015[2015 - 2005];          /* 2005 */
+		ALIGN64 char* GatewayAvdWvdEndpointPool;  /* 2005 */
+		ALIGN64 char* GatewayAvdGeo;              /* 2006 */
+		ALIGN64 char* GatewayAvdArmpath;          /* 2007 */
+		ALIGN64 char* GatewayAvdAadtenantid;      /* 2008 */
+		ALIGN64 char* GatewayAvdDiagnosticserviceurl; /* 2009 */
+		ALIGN64 char* GatewayAvdHubdiscoverygeourl;   /* 2010 */
+		ALIGN64 char* GatewayAvdActivityhint;         /* 2011 */
+		UINT64 padding2015[2015 - 2012];              /* 2012 */
 
 		/* Proxy */
 		ALIGN64 UINT32 ProxyType;        /* 2015 */

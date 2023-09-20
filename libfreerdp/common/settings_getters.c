@@ -2651,6 +2651,27 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_GatewayAccessToken:
 			return settings->GatewayAccessToken;
 
+		case FreeRDP_GatewayAvdAadtenantid:
+			return settings->GatewayAvdAadtenantid;
+
+		case FreeRDP_GatewayAvdActivityhint:
+			return settings->GatewayAvdActivityhint;
+
+		case FreeRDP_GatewayAvdArmpath:
+			return settings->GatewayAvdArmpath;
+
+		case FreeRDP_GatewayAvdDiagnosticserviceurl:
+			return settings->GatewayAvdDiagnosticserviceurl;
+
+		case FreeRDP_GatewayAvdGeo:
+			return settings->GatewayAvdGeo;
+
+		case FreeRDP_GatewayAvdHubdiscoverygeourl:
+			return settings->GatewayAvdHubdiscoverygeourl;
+
+		case FreeRDP_GatewayAvdWvdEndpointPool:
+			return settings->GatewayAvdWvdEndpointPool;
+
 		case FreeRDP_GatewayDomain:
 			return settings->GatewayDomain;
 
@@ -2931,6 +2952,27 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_GatewayAccessToken:
 			return settings->GatewayAccessToken;
+
+		case FreeRDP_GatewayAvdAadtenantid:
+			return settings->GatewayAvdAadtenantid;
+
+		case FreeRDP_GatewayAvdActivityhint:
+			return settings->GatewayAvdActivityhint;
+
+		case FreeRDP_GatewayAvdArmpath:
+			return settings->GatewayAvdArmpath;
+
+		case FreeRDP_GatewayAvdDiagnosticserviceurl:
+			return settings->GatewayAvdDiagnosticserviceurl;
+
+		case FreeRDP_GatewayAvdGeo:
+			return settings->GatewayAvdGeo;
+
+		case FreeRDP_GatewayAvdHubdiscoverygeourl:
+			return settings->GatewayAvdHubdiscoverygeourl;
+
+		case FreeRDP_GatewayAvdWvdEndpointPool:
+			return settings->GatewayAvdWvdEndpointPool;
 
 		case FreeRDP_GatewayDomain:
 			return settings->GatewayDomain;
@@ -3221,6 +3263,27 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, char* val, s
 
 		case FreeRDP_GatewayAccessToken:
 			return update_string_(&settings->GatewayAccessToken, cnv.c, len);
+
+		case FreeRDP_GatewayAvdAadtenantid:
+			return update_string_(&settings->GatewayAvdAadtenantid, cnv.c, len);
+
+		case FreeRDP_GatewayAvdActivityhint:
+			return update_string_(&settings->GatewayAvdActivityhint, cnv.c, len);
+
+		case FreeRDP_GatewayAvdArmpath:
+			return update_string_(&settings->GatewayAvdArmpath, cnv.c, len);
+
+		case FreeRDP_GatewayAvdDiagnosticserviceurl:
+			return update_string_(&settings->GatewayAvdDiagnosticserviceurl, cnv.c, len);
+
+		case FreeRDP_GatewayAvdGeo:
+			return update_string_(&settings->GatewayAvdGeo, cnv.c, len);
+
+		case FreeRDP_GatewayAvdHubdiscoverygeourl:
+			return update_string_(&settings->GatewayAvdHubdiscoverygeourl, cnv.c, len);
+
+		case FreeRDP_GatewayAvdWvdEndpointPool:
+			return update_string_(&settings->GatewayAvdWvdEndpointPool, cnv.c, len);
 
 		case FreeRDP_GatewayDomain:
 			return update_string_(&settings->GatewayDomain, cnv.c, len);
@@ -3527,6 +3590,29 @@ BOOL freerdp_settings_set_string_copy_(rdpSettings* settings, size_t id, const c
 
 		case FreeRDP_GatewayAccessToken:
 			return update_string_copy_(&settings->GatewayAccessToken, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayAvdAadtenantid:
+			return update_string_copy_(&settings->GatewayAvdAadtenantid, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayAvdActivityhint:
+			return update_string_copy_(&settings->GatewayAvdActivityhint, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayAvdArmpath:
+			return update_string_copy_(&settings->GatewayAvdArmpath, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayAvdDiagnosticserviceurl:
+			return update_string_copy_(&settings->GatewayAvdDiagnosticserviceurl, cnv.cc, len,
+			                           cleanup);
+
+		case FreeRDP_GatewayAvdGeo:
+			return update_string_copy_(&settings->GatewayAvdGeo, cnv.cc, len, cleanup);
+
+		case FreeRDP_GatewayAvdHubdiscoverygeourl:
+			return update_string_copy_(&settings->GatewayAvdHubdiscoverygeourl, cnv.cc, len,
+			                           cleanup);
+
+		case FreeRDP_GatewayAvdWvdEndpointPool:
+			return update_string_copy_(&settings->GatewayAvdWvdEndpointPool, cnv.cc, len, cleanup);
 
 		case FreeRDP_GatewayDomain:
 			return update_string_copy_(&settings->GatewayDomain, cnv.cc, len, cleanup);
