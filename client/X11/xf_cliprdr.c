@@ -2171,6 +2171,7 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 			                      cached_raw_data))
 			{
 				WLog_WARN(TAG, "Failed to cache clipboard data");
+				xf_cached_data_free(cached_raw_data);
 				xf_cached_data_free(cached_data);
 			}
 		}
@@ -2408,14 +2409,14 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 		goto fail;
 
 	obj = HashTable_ValueObject(clipboard->cachedData);
-	obj->fnObjectFree = (OBJECT_FREE_FN)xf_cached_data_free;
+	obj->fnObjectFree = xf_cached_data_free;
 
 	clipboard->cachedRawData = HashTable_New(TRUE);
 	if (!clipboard->cachedRawData)
 		goto fail;
 
 	obj = HashTable_ValueObject(clipboard->cachedRawData);
-	obj->fnObjectFree = (OBJECT_FREE_FN)xf_cached_data_free;
+	obj->fnObjectFree = xf_cached_data_free;
 
 	return clipboard;
 
