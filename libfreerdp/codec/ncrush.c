@@ -2022,7 +2022,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 	UINT32 CopyOffset;
 	UINT32 CopyLength;
 	UINT32 OldCopyOffset;
-	BYTE* CopyOffsetPtr;
+	const BYTE* CopyOffsetPtr;
 	UINT32 LengthOfMatch;
 	UINT32 CopyOffsetIndex;
 	UINT32 OffsetCacheIndex;
