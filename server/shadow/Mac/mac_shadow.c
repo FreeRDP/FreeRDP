@@ -561,11 +561,11 @@ static DWORD WINAPI mac_shadow_subsystem_thread(LPVOID arg)
 	return 0;
 }
 
-static int mac_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
+static UINT32 mac_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 {
 	int index;
 	size_t wide, high;
-	int numMonitors = 0;
+	UINT32 numMonitors = 0;
 	MONITOR_DEF* monitor;
 	CGDirectDisplayID displayId;
 	displayId = CGMainDisplayID();
@@ -584,16 +584,19 @@ static int mac_shadow_enum_monitors(MONITOR_DEF* monitors, int maxMonitors)
 	return numMonitors;
 }
 
-static int mac_shadow_subsystem_init(macShadowSubsystem* subsystem)
+static int mac_shadow_subsystem_init(rdpShadowSubsystem* rdpsubsystem)
 {
+	macShadowSubsystem* subsystem = (macShadowSubsystem*)rdpsubsystem;
 	g_Subsystem = subsystem;
+
 	mac_shadow_detect_monitors(subsystem);
 	mac_shadow_capture_init(subsystem);
 	return 1;
 }
 
-static int mac_shadow_subsystem_uninit(macShadowSubsystem* subsystem)
+static int mac_shadow_subsystem_uninit(rdpShadowSubsystem* rdpsubsystem)
 {
+	macShadowSubsystem* subsystem = (macShadowSubsystem*)rdpsubsystem;
 	if (!subsystem)
 		return -1;
 
@@ -606,8 +609,9 @@ static int mac_shadow_subsystem_uninit(macShadowSubsystem* subsystem)
 	return 1;
 }
 
-static int mac_shadow_subsystem_start(macShadowSubsystem* subsystem)
+static int mac_shadow_subsystem_start(rdpShadowSubsystem* rdpsubsystem)
 {
+	macShadowSubsystem* subsystem = (macShadowSubsystem*)rdpsubsystem;
 	HANDLE thread;
 
 	if (!subsystem)
@@ -624,7 +628,7 @@ static int mac_shadow_subsystem_start(macShadowSubsystem* subsystem)
 	return 1;
 }
 
-static int mac_shadow_subsystem_stop(macShadowSubsystem* subsystem)
+static int mac_shadow_subsystem_stop(rdpShadowSubsystem* subsystem)
 {
 	if (!subsystem)
 		return -1;
@@ -632,7 +636,7 @@ static int mac_shadow_subsystem_stop(macShadowSubsystem* subsystem)
 	return 1;
 }
 
-static void mac_shadow_subsystem_free(macShadowSubsystem* subsystem)
+static void mac_shadow_subsystem_free(rdpShadowSubsystem* subsystem)
 {
 	if (!subsystem)
 		return;
@@ -641,10 +645,9 @@ static void mac_shadow_subsystem_free(macShadowSubsystem* subsystem)
 	free(subsystem);
 }
 
-static macShadowSubsystem* mac_shadow_subsystem_new(void)
+static rdpShadowSubsystem* mac_shadow_subsystem_new(void)
 {
-	macShadowSubsystem* subsystem;
-	subsystem = (macShadowSubsystem*)calloc(1, sizeof(macShadowSubsystem));
+	macShadowSubsystem* subsystem = calloc(1, sizeof(macShadowSubsystem));
 
 	if (!subsystem)
 		return NULL;
@@ -654,7 +657,7 @@ static macShadowSubsystem* mac_shadow_subsystem_new(void)
 	subsystem->common.UnicodeKeyboardEvent = mac_shadow_input_unicode_keyboard_event;
 	subsystem->common.MouseEvent = mac_shadow_input_mouse_event;
 	subsystem->common.ExtendedMouseEvent = mac_shadow_input_extended_mouse_event;
-	return subsystem;
+	return &subsystem->common;
 }
 
 FREERDP_API const char* ShadowSubsystemName(void)
@@ -664,16 +667,16 @@ FREERDP_API const char* ShadowSubsystemName(void)
 
 FREERDP_API int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints)
 {
-	const char name[] = "mac shadow subsystem";
-	const char* arg[] = { name };
+	char name[] = "mac shadow subsystem";
+	char* arg[] = { name };
 
 	freerdp_server_warn_unmaintained(ARRAYSIZE(arg), arg);
-	pEntryPoints->New = (pfnShadowSubsystemNew)mac_shadow_subsystem_new;
-	pEntryPoints->Free = (pfnShadowSubsystemFree)mac_shadow_subsystem_free;
-	pEntryPoints->Init = (pfnShadowSubsystemInit)mac_shadow_subsystem_init;
-	pEntryPoints->Uninit = (pfnShadowSubsystemInit)mac_shadow_subsystem_uninit;
-	pEntryPoints->Start = (pfnShadowSubsystemStart)mac_shadow_subsystem_start;
-	pEntryPoints->Stop = (pfnShadowSubsystemStop)mac_shadow_subsystem_stop;
-	pEntryPoints->EnumMonitors = (pfnShadowEnumMonitors)mac_shadow_enum_monitors;
+	pEntryPoints->New = mac_shadow_subsystem_new;
+	pEntryPoints->Free = mac_shadow_subsystem_free;
+	pEntryPoints->Init = mac_shadow_subsystem_init;
+	pEntryPoints->Uninit = mac_shadow_subsystem_uninit;
+	pEntryPoints->Start = mac_shadow_subsystem_start;
+	pEntryPoints->Stop = mac_shadow_subsystem_stop;
+	pEntryPoints->EnumMonitors = mac_shadow_enum_monitors;
 	return 1;
 }
