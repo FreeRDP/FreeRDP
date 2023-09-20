@@ -365,7 +365,7 @@ mac_cliprdr_server_format_data_response(CliprdrClientContext *cliprdr,
 		formatId = ClipboardRegisterFormat(mfc->clipboard, "text/plain");
 
 		UINT32 dstSize = 0;
-		const char *data = ClipboardGetData(mfc->clipboard, formatId, &dstSize);
+		char *data = ClipboardGetData(mfc->clipboard, formatId, &dstSize);
 
 		dstSize = strnlen(data, dstSize); /* we need the size without the null terminator */
 
