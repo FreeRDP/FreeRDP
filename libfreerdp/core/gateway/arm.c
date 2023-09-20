@@ -689,7 +689,7 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const cJSON* jso
 		}; /* A GUID string is between 32 and 68 characters as string, depending on representation.
 		      Add a few extra bytes for braces et al */
 		const SSIZE_T wGUID_len = ConvertUtf8ToWChar(redirectedAuthGuid, wGUID, ARRAYSIZE(wGUID));
-		if (!wGUID || (wGUID_len < 0))
+		if (wGUID_len < 0)
 		{
 			WLog_ERR(TAG, "unable to allocate space for redirectedAuthGuid");
 			ret = FALSE;
