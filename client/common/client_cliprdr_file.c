@@ -1537,6 +1537,8 @@ fail:
 
 static UINT change_lock(CliprdrFileContext* file, UINT32 lockId, BOOL lock)
 {
+	UINT rc = CHANNEL_RC_OK;
+
 	WINPR_ASSERT(file);
 
 	HashTable_Lock(file->local_streams);
@@ -1544,7 +1546,12 @@ static UINT change_lock(CliprdrFileContext* file, UINT32 lockId, BOOL lock)
 	if (lock && !stream)
 	{
 		stream = cliprdr_local_stream_new(file, lockId, NULL, 0);
-		HashTable_Insert(file->local_streams, &lockId, stream);
+		if (!HashTable_Insert(file->local_streams, &lockId, stream))
+		{
+			rc = ERROR_INTERNAL_ERROR;
+			cliprdr_local_stream_free(stream);
+			stream = NULL;
+		}
 		file->local_lock_id = lockId;
 	}
 	if (stream)
@@ -1554,9 +1561,12 @@ static UINT change_lock(CliprdrFileContext* file, UINT32 lockId, BOOL lock)
 	}
 
 	if (!lock)
-		HashTable_Foreach(file->local_streams, local_stream_discard, file);
+	{
+		if (!HashTable_Foreach(file->local_streams, local_stream_discard, file))
+			rc = ERROR_INTERNAL_ERROR;
+	}
 	HashTable_Unlock(file->local_streams);
-	return CHANNEL_RC_OK;
+	return rc;
 }
 
 static UINT cliprdr_file_context_lock(CliprdrClientContext* context,
