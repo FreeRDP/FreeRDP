@@ -126,10 +126,10 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 		goto error;
 
 	obj = HashTable_KeyObject(context->channelsByFrontId);
-	obj->fnObjectEquals = (OBJECT_EQUALS_FN)ChannelId_Compare;
+	obj->fnObjectEquals = ChannelId_Compare;
 
 	obj = HashTable_ValueObject(context->channelsByFrontId);
-	obj->fnObjectFree = (OBJECT_FREE_FN)StaticChannelContext_free;
+	obj->fnObjectFree = StaticChannelContext_free;
 
 	context->channelsByBackId = HashTable_New(FALSE);
 	if (!context->channelsByBackId)
@@ -138,7 +138,7 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 		goto error;
 
 	obj = HashTable_KeyObject(context->channelsByBackId);
-	obj->fnObjectEquals = (OBJECT_EQUALS_FN)ChannelId_Compare;
+	obj->fnObjectEquals = ChannelId_Compare;
 
 	return TRUE;
 
