@@ -715,6 +715,29 @@ static void SSLCTX_keylog_cb(const SSL* ssl, const char* line)
 	}
 }
 
+static void tls_reset(rdpTls* tls)
+{
+	WINPR_ASSERT(tls);
+
+	if (tls->ctx)
+	{
+		SSL_CTX_free(tls->ctx);
+		tls->ctx = NULL;
+	}
+
+	/* tls->underlying is a stacked BIO under tls->bio.
+	 * BIO_free_all will free recursivly. */
+	if (tls->bio)
+		BIO_free_all(tls->bio);
+	else if (tls->underlying)
+		BIO_free_all(tls->underlying);
+	tls->bio = NULL;
+	tls->underlying = NULL;
+
+	free_tls_public_key(tls);
+	free_tls_bindings(tls);
+}
+
 #if OPENSSL_VERSION_NUMBER >= 0x010000000L
 static BOOL tls_prepare(rdpTls* tls, BIO* underlying, const SSL_METHOD* method, int options,
                         BOOL clientMode)
@@ -723,7 +746,12 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method, int op
                         BOOL clientMode)
 #endif
 {
+	WINPR_ASSERT(tls);
+
 	rdpSettings* settings = tls->settings;
+	WINPR_ASSERT(settings);
+
+	tls_reset(tls);
 	tls->ctx = SSL_CTX_new(method);
 
 	tls->underlying = underlying;
@@ -1833,23 +1861,7 @@ void freerdp_tls_free(rdpTls* tls)
 	if (!tls)
 		return;
 
-	if (tls->ctx)
-	{
-		SSL_CTX_free(tls->ctx);
-		tls->ctx = NULL;
-	}
-
-	/* tls->underlying is a stacked BIO under tls->bio.
-	 * BIO_free_all will free recursivly. */
-	if (tls->bio)
-		BIO_free_all(tls->bio);
-	else if (tls->underlying)
-		BIO_free_all(tls->underlying);
-	tls->bio = NULL;
-	tls->underlying = NULL;
-
-	free_tls_public_key(tls);
-	free_tls_bindings(tls);
+	tls_reset(tls);
 
 	if (tls->certificate_store)
 	{
