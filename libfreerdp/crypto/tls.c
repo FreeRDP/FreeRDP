@@ -92,6 +92,14 @@ static void tls_print_new_certificate_warn(rdpCertificateStore* store, const cha
 static void tls_print_certificate_error(rdpCertificateStore* store, rdpCertificateData* stored_data,
                                         const char* hostname, UINT16 port, const char* fingerprint);
 
+static void free_tls_public_key(rdpTls* tls)
+{
+	WINPR_ASSERT(tls);
+	free(tls->PublicKey);
+	tls->PublicKey = NULL;
+	tls->PublicKeyLength = 0;
+}
+
 static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
 	int error;
@@ -877,6 +885,7 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 			break;
 		}
 
+		free_tls_public_key(tls);
 		if (!freerdp_certificate_get_public_key(cert, &tls->PublicKey, &tls->PublicKeyLength))
 		{
 			WLog_ERR(TAG,
@@ -1827,11 +1836,7 @@ void freerdp_tls_free(rdpTls* tls)
 	tls->bio = NULL;
 	tls->underlying = NULL;
 
-	if (tls->PublicKey)
-	{
-		free(tls->PublicKey);
-		tls->PublicKey = NULL;
-	}
+	free_tls_public_key(tls);
 
 	if (tls->Bindings)
 	{
