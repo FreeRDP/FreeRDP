@@ -100,6 +100,17 @@ static void free_tls_public_key(rdpTls* tls)
 	tls->PublicKeyLength = 0;
 }
 
+static void free_tls_bindings(rdpTls* tls)
+{
+	WINPR_ASSERT(tls);
+
+	if (tls->Bindings)
+		free(tls->Bindings->Bindings);
+
+	free(tls->Bindings);
+	tls->Bindings = NULL;
+}
+
 static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
 	int error;
@@ -878,6 +889,7 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 
 	do
 	{
+		free_tls_bindings(tls);
 		tls->Bindings = tls_get_channel_bindings(cert);
 		if (!tls->Bindings)
 		{
@@ -1837,13 +1849,7 @@ void freerdp_tls_free(rdpTls* tls)
 	tls->underlying = NULL;
 
 	free_tls_public_key(tls);
-
-	if (tls->Bindings)
-	{
-		free(tls->Bindings->Bindings);
-		free(tls->Bindings);
-		tls->Bindings = NULL;
-	}
+	free_tls_bindings(tls);
 
 	if (tls->certificate_store)
 	{
