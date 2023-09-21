@@ -120,7 +120,9 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 				{
 					if (!freerdp_get_last_error(transport_get_context(transport)))
 					{
-						UINT32 kret = nla_get_error(transport->nla);
+						UINT32 kret = 0;
+						if (transport->nla)
+							kret = nla_get_error(transport->nla);
 						if (kret == 0)
 							kret = FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
 						freerdp_set_last_error_log(transport_get_context(transport), kret);
