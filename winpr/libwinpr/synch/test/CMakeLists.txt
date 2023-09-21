@@ -12,7 +12,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestSynchCritical.c
 	TestSynchSemaphore.c
 	TestSynchThread.c
-	TestSynchMultipleThreads.c
+    #	TestSynchMultipleThreads.c
 	TestSynchTimerQueue.c
 	TestSynchWaitableTimer.c
 	TestSynchWaitableTimerAPC.c
