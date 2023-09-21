@@ -1038,7 +1038,7 @@ static INLINE BOOL update_read_delta_points(wStream* s, DELTA_POINT* points, int
 
 	Stream_GetPointer(s, zeroBits);
 	Stream_Seek(s, zeroBitsSize);
-	ZeroMemory(points, sizeof(DELTA_POINT) * number);
+	ZeroMemory(*points, sizeof(DELTA_POINT) * number);
 
 	for (i = 0; i < number; i++)
 	{
