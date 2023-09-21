@@ -3,7 +3,19 @@
 Noteworthy changes:
 
 For a complete and detailed change log since the last release run:
-git log 3.x.y..3.0.0-beta2
+git log 3.x.y..3.0.0-beta4
+
+# 2023-09-31 Version 3.0.0-beta4
+
+Noteworthy changes:
+* Improved and fixed AVD authentication, now allows retries for
+  machines just starting up
+* Improve RDP file parser, prepare new fields used by AVD
+* Fixed and improved pen support in multitouch implementation (xfreerdp)
+* Lots of smaller code and leak cleanups
+
+For a complete and detailed change log since the last release run:
+git log 3.0.0-beta4..3.0.0-beta3
 
 # 2023-08-31 Version 3.0.0-beta3
 
