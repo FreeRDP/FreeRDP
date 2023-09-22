@@ -148,7 +148,7 @@ static BOOL nla_decrypt_ts_credentials(rdpNla* nla);
 void nla_set_early_user_auth(rdpNla* nla, BOOL earlyUserAuth)
 {
 	WINPR_ASSERT(nla);
-	WLog_DBG(TAG, "Early User Auth active: %s", nla->earlyUserAuth ? "true" : "false");
+	WLog_DBG(TAG, "Early User Auth active: %s", earlyUserAuth ? "true" : "false");
 	nla->earlyUserAuth = earlyUserAuth;
 }
 
