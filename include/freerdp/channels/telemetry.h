@@ -31,14 +31,13 @@ extern "C"
 {
 #endif
 
-	struct _TELEMETRY_RDP_TELEMETRY_PDU
+	typedef struct
 	{
 		UINT32 PromptForCredentialsMillis;
 		UINT32 PromptForCredentialsDoneMillis;
 		UINT32 GraphicsChannelOpenedMillis;
 		UINT32 FirstGraphicsReceivedMillis;
-	};
-	typedef struct _TELEMETRY_RDP_TELEMETRY_PDU TELEMETRY_RDP_TELEMETRY_PDU;
+	} TELEMETRY_RDP_TELEMETRY_PDU;
 
 #ifdef __cplusplus
 }

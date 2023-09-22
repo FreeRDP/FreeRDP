@@ -36,7 +36,7 @@ typedef enum
 	CTRLACTION_COOPERATE = 0x0004
 } CTRLACTION;
 
-struct _RDP_BITMAP_PERSISTENT_INFO
+typedef struct
 {
 	UINT16 numEntriesCache0;
 	UINT16 numEntriesCache1;
@@ -50,8 +50,7 @@ struct _RDP_BITMAP_PERSISTENT_INFO
 	UINT16 totalEntriesCache4;
 	UINT32 keyCount;
 	UINT64* keyList;
-};
-typedef struct _RDP_BITMAP_PERSISTENT_INFO RDP_BITMAP_PERSISTENT_INFO;
+} RDP_BITMAP_PERSISTENT_INFO;
 
 #define PERSIST_FIRST_PDU 0x01
 #define PERSIST_LAST_PDU 0x02

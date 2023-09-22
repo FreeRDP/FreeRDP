@@ -28,7 +28,7 @@ extern "C"
 {
 #endif
 
-	typedef struct _cam_dev_enum_server_context CamDevEnumServerContext;
+	typedef struct s_cam_dev_enum_server_context CamDevEnumServerContext;
 
 	typedef UINT (*psCamDevEnumServerServerOpen)(CamDevEnumServerContext* context);
 	typedef UINT (*psCamDevEnumServerServerClose)(CamDevEnumServerContext* context);
@@ -54,7 +54,7 @@ extern "C"
 	    CamDevEnumServerContext* context,
 	    const CAM_DEVICE_REMOVED_NOTIFICATION* deviceRemovedNotification);
 
-	struct _cam_dev_enum_server_context
+	struct s_cam_dev_enum_server_context
 	{
 		HANDLE vcm;
 
