@@ -123,6 +123,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_CompressionEnabled:
 			return settings->CompressionEnabled;
 
+		case FreeRDP_ConnectChildSession:
+			return settings->ConnectChildSession;
+
 		case FreeRDP_ConsoleSession:
 			return settings->ConsoleSession;
 
@@ -715,6 +718,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_CompressionEnabled:
 			settings->CompressionEnabled = cnv.c;
+			break;
+
+		case FreeRDP_ConnectChildSession:
+			settings->ConnectChildSession = cnv.c;
 			break;
 
 		case FreeRDP_ConsoleSession:

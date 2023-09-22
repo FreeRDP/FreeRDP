@@ -393,6 +393,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	if (!status)
 		return FALSE;
 
+	nego_set_childsession_enabled(rdp->nego, settings->ConnectChildSession);
 	nego_set_send_preconnection_pdu(rdp->nego, settings->SendPreconnectionPdu);
 	nego_set_preconnection_id(rdp->nego, settings->PreconnectionId);
 	nego_set_preconnection_blob(rdp->nego, settings->PreconnectionBlob);
@@ -421,7 +422,6 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_TransportDumpReplay))
 	{
-
 		if (!rdp_client_transition_to_state(rdp, CONNECTION_STATE_NEGO))
 			return FALSE;
 

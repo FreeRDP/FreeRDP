@@ -53,6 +53,7 @@
 #include "proxy.h"
 #include "utils.h"
 #include "state.h"
+#include "childsession.h"
 
 #include "gateway/rdg.h"
 #include "gateway/wst.h"
@@ -576,6 +577,18 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	}
 
 	return status;
+}
+
+BOOL transport_connect_childsession(rdpTransport* transport)
+{
+	WINPR_ASSERT(transport);
+
+	transport->frontBio = createChildSessionBio();
+	if (!transport->frontBio)
+		return FALSE;
+
+	transport->layer = TRANSPORT_LAYER_TSG;
+	return TRUE;
 }
 
 BOOL transport_accept_rdp(rdpTransport* transport)
