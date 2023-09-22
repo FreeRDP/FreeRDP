@@ -71,7 +71,7 @@
 #endif
 
 #if defined(WITH_FUSE2) || defined(WITH_FUSE3)
-typedef enum _FuseLowlevelOperationType
+typedef enum eFuseLowlevelOperationType
 {
 	FUSE_LL_OPERATION_NONE,
 	FUSE_LL_OPERATION_LOOKUP,
@@ -79,9 +79,9 @@ typedef enum _FuseLowlevelOperationType
 	FUSE_LL_OPERATION_READ,
 } FuseLowlevelOperationType;
 
-typedef struct _CliprdrFuseFile CliprdrFuseFile;
+typedef struct sCliprdrFuseFile CliprdrFuseFile;
 
-struct _CliprdrFuseFile
+struct sCliprdrFuseFile
 {
 	CliprdrFuseFile* parent;
 	wArrayList* children;

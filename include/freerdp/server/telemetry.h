@@ -28,7 +28,7 @@ extern "C"
 {
 #endif
 
-	typedef struct _telemetry_server_context TelemetryServerContext;
+	typedef struct s_telemetry_server_context TelemetryServerContext;
 
 	typedef UINT (*psTelemetryServerOpen)(TelemetryServerContext* context);
 	typedef UINT (*psTelemetryServerClose)(TelemetryServerContext* context);
@@ -44,7 +44,7 @@ extern "C"
 	typedef UINT (*psTelemetryServerRdpTelemetry)(TelemetryServerContext* context,
 	                                              const TELEMETRY_RDP_TELEMETRY_PDU* rdpTelemetry);
 
-	struct _telemetry_server_context
+	struct s_telemetry_server_context
 	{
 		HANDLE vcm;
 

@@ -38,47 +38,43 @@ extern "C"
 
 /* 12 bytes */
 
-struct _PERSISTENT_CACHE_HEADER_V3
-{
-	BYTE sig[8];
-	UINT32 flags; /* 0x00000003, 0x00000006 */
-};
-typedef struct _PERSISTENT_CACHE_HEADER_V3 PERSISTENT_CACHE_HEADER_V3;
+	typedef struct
+	{
+		BYTE sig[8];
+		UINT32 flags; /* 0x00000003, 0x00000006 */
+	} PERSISTENT_CACHE_HEADER_V3;
 
 /* 12 bytes */
 
-struct _PERSISTENT_CACHE_ENTRY_V3
-{
-	UINT64 key64;
-	UINT16 width;
-	UINT16 height;
-};
-typedef struct _PERSISTENT_CACHE_ENTRY_V3 PERSISTENT_CACHE_ENTRY_V3;
+	typedef struct
+	{
+		UINT64 key64;
+		UINT16 width;
+		UINT16 height;
+	} PERSISTENT_CACHE_ENTRY_V3;
 
 /* 20 bytes */
 
-struct _PERSISTENT_CACHE_ENTRY_V2
-{
-	UINT64 key64;
-	UINT16 width;
-	UINT16 height;
-	UINT32 size;
-	UINT32 flags; /* 0x00000011 */
-};
-typedef struct _PERSISTENT_CACHE_ENTRY_V2 PERSISTENT_CACHE_ENTRY_V2;
+	typedef struct
+	{
+		UINT64 key64;
+		UINT16 width;
+		UINT16 height;
+		UINT32 size;
+		UINT32 flags; /* 0x00000011 */
+	} PERSISTENT_CACHE_ENTRY_V2;
 
 #pragma pack(pop)
 
-struct _PERSISTENT_CACHE_ENTRY
-{
-	UINT64 key64;
-	UINT16 width;
-	UINT16 height;
-	UINT32 size;
-	UINT32 flags;
-	BYTE* data;
-};
-typedef struct _PERSISTENT_CACHE_ENTRY PERSISTENT_CACHE_ENTRY;
+	typedef struct
+	{
+		UINT64 key64;
+		UINT16 width;
+		UINT16 height;
+		UINT32 size;
+		UINT32 flags;
+		BYTE* data;
+	} PERSISTENT_CACHE_ENTRY;
 
 	FREERDP_API int persistent_cache_get_version(rdpPersistentCache* persistent);
 	FREERDP_API int persistent_cache_get_count(rdpPersistentCache* persistent);

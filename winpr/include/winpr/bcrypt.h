@@ -271,7 +271,7 @@ typedef PVOID BCRYPT_SECRET_HANDLE;
 #define BCRYPT_KEY_DATA_BLOB_MAGIC 0x4d42444b
 #define BCRYPT_KEY_DATA_BLOB_VERSION1 0x1
 
-typedef struct _BCRYPT_KEY_DATA_BLOB_HEADER
+typedef struct
 {
 	ULONG dwMagic;
 	ULONG dwVersion;
