@@ -89,6 +89,12 @@ void StaticChannelContext_free(pServerStaticChannelContext* ctx)
 	free(ctx);
 }
 
+static void HashStaticChannelContext_free(void* ptr)
+{
+	pServerStaticChannelContext* ctx = (pServerStaticChannelContext*)ptr;
+	StaticChannelContext_free(ctx);
+}
+
 /* Proxy context initialization callback */
 static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx);
 static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
@@ -129,7 +135,7 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 	obj->fnObjectEquals = ChannelId_Compare;
 
 	obj = HashTable_ValueObject(context->channelsByFrontId);
-	obj->fnObjectFree = StaticChannelContext_free;
+	obj->fnObjectFree = HashStaticChannelContext_free;
 
 	context->channelsByBackId = HashTable_New(FALSE);
 	if (!context->channelsByBackId)
