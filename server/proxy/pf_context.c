@@ -43,8 +43,12 @@ static UINT32 ChannelId_Hash(const void* key)
 	return *v;
 }
 
-static BOOL ChannelId_Compare(const UINT32* v1, const UINT32* v2)
+static BOOL ChannelId_Compare(const void* pv1, const void* pv2)
 {
+	const UINT32* v1 = pv1;
+	const UINT32* v2 = pv2;
+	WINPR_ASSERT(v1);
+	WINPR_ASSERT(v2);
 	return (*v1 == *v2);
 }
 
