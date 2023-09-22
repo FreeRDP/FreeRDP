@@ -41,6 +41,7 @@
 #define BIO_TYPE_TSG 65
 #define BIO_TYPE_SIMPLE 66
 #define BIO_TYPE_BUFFERED 67
+#define BIO_TYPE_NAMEDPIPE 69
 
 #define BIO_C_SET_SOCKET 1101
 #define BIO_C_GET_SOCKET 1102
@@ -50,10 +51,12 @@
 #define BIO_C_WRITE_BLOCKED 1106
 #define BIO_C_WAIT_READ 1107
 #define BIO_C_WAIT_WRITE 1108
+#define BIO_C_SET_HANDLE 1109
 
 #define BIO_set_socket(b, s, c) BIO_ctrl(b, BIO_C_SET_SOCKET, c, s);
 #define BIO_get_socket(b, c) BIO_ctrl(b, BIO_C_GET_SOCKET, 0, (char*)c)
 #define BIO_get_event(b, c) BIO_ctrl(b, BIO_C_GET_EVENT, 0, (char*)c)
+#define BIO_set_handle(b, h) BIO_ctrl(b, BIO_C_SET_HANDLE, 0, h)
 #define BIO_set_nonblock(b, c) BIO_ctrl(b, BIO_C_SET_NONBLOCK, c, NULL)
 #define BIO_read_blocked(b) BIO_ctrl(b, BIO_C_READ_BLOCKED, 0, NULL)
 #define BIO_write_blocked(b) BIO_ctrl(b, BIO_C_WRITE_BLOCKED, 0, NULL)

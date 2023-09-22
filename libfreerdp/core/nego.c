@@ -62,6 +62,7 @@ struct rdp_nego
 	BOOL RestrictedAdminModeRequired;
 	BOOL GatewayEnabled;
 	BOOL GatewayBypassLocal;
+	BOOL ConnectChildSession;
 
 	rdpTransport* transport;
 };
@@ -89,6 +90,7 @@ static const char* protocol_security_string(UINT32 security)
 	return PROTOCOL_SECURITY_STRINGS[security];
 }
 
+static BOOL nego_tcp_connect(rdpNego* nego);
 static BOOL nego_transport_connect(rdpNego* nego);
 static BOOL nego_transport_disconnect(rdpNego* nego);
 static BOOL nego_security_connect(rdpNego* nego);
@@ -99,31 +101,6 @@ static BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s);
 static BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s);
 static BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s);
 
-static UINT32 nego_get_next_selected_protocol(rdpNego* nego)
-{
-	WINPR_ASSERT(nego);
-
-	if (nego->EnabledProtocols[PROTOCOL_RDSAAD])
-		return PROTOCOL_RDSAAD;
-
-	if (nego->EnabledProtocols[PROTOCOL_RDSTLS])
-		return PROTOCOL_RDSTLS;
-
-	if (nego->EnabledProtocols[PROTOCOL_HYBRID_EX] || nego->EnabledProtocols[PROTOCOL_HYBRID])
-		return PROTOCOL_HYBRID_EX;
-
-	if (nego->EnabledProtocols[PROTOCOL_HYBRID])
-		return PROTOCOL_HYBRID;
-
-	if (nego->EnabledProtocols[PROTOCOL_SSL])
-		return PROTOCOL_SSL;
-
-	if (nego->EnabledProtocols[PROTOCOL_RDP])
-		return PROTOCOL_RDP;
-
-	WLog_ERR(TAG, "Invalid NEGO state 0x%08" PRIx32, nego_get_state(nego));
-	return 0;
-}
 /**
  * Negotiate protocol security and connect.
  *
@@ -220,6 +197,12 @@ BOOL nego_connect(rdpNego* nego)
 			}
 			if (!nego_set_selected_protocol(nego, SelectedProtocol))
 				return FALSE;
+		}
+
+		if (!nego_tcp_connect(nego))
+		{
+			WLog_ERR(TAG, "Failed to connect");
+			return FALSE;
 		}
 
 		if (nego->SendPreconnectionPdu)
@@ -390,6 +373,10 @@ static BOOL nego_tcp_connect(rdpNego* nego)
 				nego->TcpConnected = transport_connect(nego->transport, nego->hostname, nego->port,
 				                                       TcpConnectTimeout);
 			}
+		}
+		else if (nego->ConnectChildSession)
+		{
+			nego->TcpConnected = transport_connect_childsession(nego->transport);
 		}
 		else
 		{
@@ -1659,6 +1646,12 @@ void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdmin
 	WLog_DBG(TAG, "Enabling restricted admin mode: %s",
 	         RestrictedAdminModeRequired ? "TRUE" : "FALSE");
 	nego->RestrictedAdminModeRequired = RestrictedAdminModeRequired;
+}
+
+void nego_set_childsession_enabled(rdpNego* nego, BOOL ChildSessionEnabled)
+{
+	WINPR_ASSERT(nego);
+	nego->ConnectChildSession = ChildSessionEnabled;
 }
 
 void nego_set_gateway_enabled(rdpNego* nego, BOOL GatewayEnabled)

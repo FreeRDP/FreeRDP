@@ -485,12 +485,12 @@ extern "C"
 /* ThreadingFlags */
 #define THREADING_FLAGS_DISABLE_THREADS 0x00000001
 
-/* Settings */
+	/* Settings */
 
-/**
- * FreeRDP Settings Ids
- * This is generated with a script parsing the rdpSettings data structure
- */
+	/**
+	 * FreeRDP Settings Ids
+	 * This is generated with a script parsing the rdpSettings data structure
+	 */
 
 #define FreeRDP_instance (0)
 #define FreeRDP_ServerMode (16)
@@ -737,6 +737,7 @@ extern "C"
 #define FreeRDP_OldLicenseBehaviour (1606)
 #define FreeRDP_MouseUseRelativeMove (1607)
 #define FreeRDP_UseCommonStdioCallbacks (1608)
+#define FreeRDP_ConnectChildSession (1609)
 #define FreeRDP_ComputerName (1664)
 #define FreeRDP_ConnectionFile (1728)
 #define FreeRDP_AssistanceFile (1729)
@@ -941,9 +942,9 @@ extern "C"
 #define FreeRDP_Floatbar (5196)
 #define FreeRDP_TcpConnectTimeout (5197)
 
-/**
- * FreeRDP Settings Data Structure
- */
+	/**
+	 * FreeRDP Settings Data Structure
+	 */
 
 #define FreeRDP_Settings_StableAPI_MAX 5312
 	struct rdp_settings
@@ -1297,15 +1298,16 @@ extern "C"
 		UINT64 padding1601[1601 - 1560];      /* 1560 */
 
 		/* Miscellaneous */
-		ALIGN64 BOOL SoftwareGdi;          /* 1601 */
-		ALIGN64 BOOL LocalConnection;      /* 1602 */
-		ALIGN64 BOOL AuthenticationOnly;   /* 1603 */
-		ALIGN64 BOOL CredentialsFromStdin; /* 1604 */
-		ALIGN64 BOOL UnmapButtons;         /* 1605 */
-		ALIGN64 BOOL OldLicenseBehaviour;  /* 1606 */
-		ALIGN64 BOOL MouseUseRelativeMove; /* 1607 */
+		ALIGN64 BOOL SoftwareGdi;             /* 1601 */
+		ALIGN64 BOOL LocalConnection;         /* 1602 */
+		ALIGN64 BOOL AuthenticationOnly;      /* 1603 */
+		ALIGN64 BOOL CredentialsFromStdin;    /* 1604 */
+		ALIGN64 BOOL UnmapButtons;            /* 1605 */
+		ALIGN64 BOOL OldLicenseBehaviour;     /* 1606 */
+		ALIGN64 BOOL MouseUseRelativeMove;    /* 1607 */
 		ALIGN64 BOOL UseCommonStdioCallbacks; /* 1608 */
-		UINT64 padding1664[1664 - 1609];      /* 1609 */
+		ALIGN64 BOOL ConnectChildSession;     /* 1609 */
+		UINT64 padding1664[1664 - 1610];      /* 1610 */
 
 		/* Names */
 		ALIGN64 char* ComputerName;      /* 1664 */
@@ -1339,31 +1341,31 @@ extern "C"
 		 */
 
 		/* Gateway */
-		ALIGN64 UINT32 GatewayUsageMethod;        /* 1984 */
-		ALIGN64 UINT32 GatewayPort;               /* 1985 */
-		ALIGN64 char* GatewayHostname;            /* 1986 */
-		ALIGN64 char* GatewayUsername;            /* 1987 */
-		ALIGN64 char* GatewayPassword;            /* 1988 */
-		ALIGN64 char* GatewayDomain;              /* 1989 */
-		ALIGN64 UINT32 GatewayCredentialsSource;  /* 1990 */
-		ALIGN64 BOOL GatewayUseSameCredentials;   /* 1991 */
-		ALIGN64 BOOL GatewayEnabled;              /* 1992 */
-		ALIGN64 BOOL GatewayBypassLocal;          /* 1993 */
-		ALIGN64 BOOL GatewayRpcTransport;         /* 1994 */
-		ALIGN64 BOOL GatewayHttpTransport;        /* 1995 */
-		ALIGN64 BOOL GatewayUdpTransport;         /* 1996 */
-		ALIGN64 char* GatewayAccessToken;         /* 1997 */
-		ALIGN64 char* GatewayAcceptedCert;        /* 1998 */
-		ALIGN64 UINT32 GatewayAcceptedCertLength; /* 1999 */
-		ALIGN64 BOOL GatewayHttpUseWebsockets;    /* 2000 */
-		ALIGN64 BOOL GatewayHttpExtAuthSspiNtlm;  /* 2001 */
-		ALIGN64 char* GatewayHttpExtAuthBearer;   /* 2002 */
-		ALIGN64 char* GatewayUrl;                 /* 2003 */
-		ALIGN64 BOOL GatewayArmTransport;         /* 2004 */
-		ALIGN64 char* GatewayAvdWvdEndpointPool;  /* 2005 */
-		ALIGN64 char* GatewayAvdGeo;              /* 2006 */
-		ALIGN64 char* GatewayAvdArmpath;          /* 2007 */
-		ALIGN64 char* GatewayAvdAadtenantid;      /* 2008 */
+		ALIGN64 UINT32 GatewayUsageMethod;            /* 1984 */
+		ALIGN64 UINT32 GatewayPort;                   /* 1985 */
+		ALIGN64 char* GatewayHostname;                /* 1986 */
+		ALIGN64 char* GatewayUsername;                /* 1987 */
+		ALIGN64 char* GatewayPassword;                /* 1988 */
+		ALIGN64 char* GatewayDomain;                  /* 1989 */
+		ALIGN64 UINT32 GatewayCredentialsSource;      /* 1990 */
+		ALIGN64 BOOL GatewayUseSameCredentials;       /* 1991 */
+		ALIGN64 BOOL GatewayEnabled;                  /* 1992 */
+		ALIGN64 BOOL GatewayBypassLocal;              /* 1993 */
+		ALIGN64 BOOL GatewayRpcTransport;             /* 1994 */
+		ALIGN64 BOOL GatewayHttpTransport;            /* 1995 */
+		ALIGN64 BOOL GatewayUdpTransport;             /* 1996 */
+		ALIGN64 char* GatewayAccessToken;             /* 1997 */
+		ALIGN64 char* GatewayAcceptedCert;            /* 1998 */
+		ALIGN64 UINT32 GatewayAcceptedCertLength;     /* 1999 */
+		ALIGN64 BOOL GatewayHttpUseWebsockets;        /* 2000 */
+		ALIGN64 BOOL GatewayHttpExtAuthSspiNtlm;      /* 2001 */
+		ALIGN64 char* GatewayHttpExtAuthBearer;       /* 2002 */
+		ALIGN64 char* GatewayUrl;                     /* 2003 */
+		ALIGN64 BOOL GatewayArmTransport;             /* 2004 */
+		ALIGN64 char* GatewayAvdWvdEndpointPool;      /* 2005 */
+		ALIGN64 char* GatewayAvdGeo;                  /* 2006 */
+		ALIGN64 char* GatewayAvdArmpath;              /* 2007 */
+		ALIGN64 char* GatewayAvdAadtenantid;          /* 2008 */
 		ALIGN64 char* GatewayAvdDiagnosticserviceurl; /* 2009 */
 		ALIGN64 char* GatewayAvdHubdiscoverygeourl;   /* 2010 */
 		ALIGN64 char* GatewayAvdActivityhint;         /* 2011 */
@@ -1646,7 +1648,7 @@ extern "C"
 		 * Other Redirection
 		 */
 
-		ALIGN64 BOOL RedirectClipboard;  /* 4800 */
+		ALIGN64 BOOL RedirectClipboard;      /* 4800 */
 		ALIGN64 UINT32 ClipboardFeatureMask; /* 4801 */
 		UINT64 padding4928[4928 - 4802];     /* 4802 */
 

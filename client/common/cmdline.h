@@ -112,6 +112,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "cert-tofu", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use /cert:tofu] Automatically accept certificate on first connect" },
 #endif
+#ifdef _WIN32
+	{ "connect-child-session", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, "",
+	  "connect to child session (win32)" },
+#endif
 	{ "client-build-number", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL,
 	  "Client Build Number sent to server (influences smartcard behaviour, see [MS-RDPESC])" },
 	{ "client-hostname", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,

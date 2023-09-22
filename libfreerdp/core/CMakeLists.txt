@@ -107,6 +107,7 @@ set(${MODULE_PREFIX}_SRCS
 	multitransport.h
 	timezone.c
 	timezone.h
+	childsession.c
 	rdp.c
 	rdp.h
 	tcp.c

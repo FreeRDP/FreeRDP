@@ -56,6 +56,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_CertificateCallbackPreferPEM, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_CertificateCallbackPreferPEM" },
 	{ FreeRDP_CompressionEnabled, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_CompressionEnabled" },
+	{ FreeRDP_ConnectChildSession, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_ConnectChildSession" },
 	{ FreeRDP_ConsoleSession, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_ConsoleSession" },
 	{ FreeRDP_CredentialsFromStdin, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_CredentialsFromStdin" },
 	{ FreeRDP_DeactivateClientDecoding, FREERDP_SETTINGS_TYPE_BOOL,
