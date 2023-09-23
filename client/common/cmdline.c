@@ -2728,7 +2728,10 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 			if (strcmp(arg->Value, "video") == 0)
 				settings->RemoteFxCodecMode = 0x00;
 			else if (strcmp(arg->Value, "image") == 0)
+			{
+				settings->RemoteFxImageCodec = TRUE;
 				settings->RemoteFxCodecMode = 0x02;
+			}
 		}
 		CommandLineSwitchCase(arg, "frame-ack")
 		{
