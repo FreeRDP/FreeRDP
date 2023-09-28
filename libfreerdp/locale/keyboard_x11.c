@@ -58,8 +58,14 @@ static BOOL parse_xkb_rule_names(char* xkb_rule, unsigned long num_bytes, char**
 			case 1: // model
 				break;
 			case 2: // layout
+			{
+				/* If multiple languages are present we just take the first one */
+				char* delimiter = strchr(ptr, ',');
+				if (delimiter)
+					*delimiter = '\0';
 				*layout = ptr;
 				break;
+			}
 			case 3: // variant
 				*variant = ptr;
 				break;
