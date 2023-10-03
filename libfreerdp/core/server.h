@@ -87,7 +87,7 @@ struct WTSVirtualChannelManager
 	psDVCCreationStatusCallback dvc_creation_status;
 	void* dvc_creation_status_userdata;
 
-	wArrayList* dynamicVirtualChannels;
+	wHashTable* dynamicVirtualChannels;
 };
 
 FREERDP_LOCAL BOOL WINAPI FreeRDP_WTSStartRemoteControlSessionW(LPWSTR pTargetServerName,

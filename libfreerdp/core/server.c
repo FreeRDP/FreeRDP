@@ -64,29 +64,8 @@ static wHashTable* g_ServerHandles = NULL;
 
 static rdpPeerChannel* wts_get_dvc_channel_by_id(WTSVirtualChannelManager* vcm, UINT32 ChannelId)
 {
-	int index;
-	int count;
-	BOOL found = FALSE;
-	rdpPeerChannel* channel = NULL;
-
 	WINPR_ASSERT(vcm);
-
-	ArrayList_Lock(vcm->dynamicVirtualChannels);
-	count = ArrayList_Count(vcm->dynamicVirtualChannels);
-
-	for (index = 0; index < count; index++)
-	{
-		channel = (rdpPeerChannel*)ArrayList_GetItem(vcm->dynamicVirtualChannels, index);
-		WINPR_ASSERT(channel);
-		if (channel->channelId == ChannelId)
-		{
-			found = TRUE;
-			break;
-		}
-	}
-
-	ArrayList_Unlock(vcm->dynamicVirtualChannels);
-	return found ? channel : NULL;
+	return HashTable_GetItemValue(vcm->dynamicVirtualChannels, &ChannelId);
 }
 
 static BOOL wts_queue_receive_data(rdpPeerChannel* channel, const BYTE* Buffer, UINT32 Length)
@@ -338,7 +317,7 @@ static BOOL wts_read_drdynvc_pdu(rdpPeerChannel* channel)
 			dvc = wts_get_dvc_channel_by_id(channel->vcm, ChannelId);
 			if (!dvc)
 			{
-				DEBUG_DVC("ChannelId %" PRIu32 " not exists.", ChannelId);
+				DEBUG_DVC("ChannelId %" PRIu32 " does not exist.", ChannelId);
 				return TRUE;
 			}
 		}
@@ -973,6 +952,19 @@ static void array_channel_free(void* ptr)
 	channel_free(channel);
 }
 
+static BOOL dynChannelMatch(const void* v1, const void* v2)
+{
+	const UINT32* p1 = (const UINT32*)v1;
+	const UINT32* p2 = (const UINT32*)v2;
+	return *p1 == *p2;
+}
+
+static UINT32 channelId_Hash(const void* key)
+{
+	const UINT32* v = (const UINT32*)key;
+	return *v;
+}
+
 HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 {
 	rdpContext* context;
@@ -1021,19 +1013,28 @@ HANDLE WINAPI FreeRDP_WTSOpenServerA(LPSTR pServerName)
 		goto error_queue;
 
 	vcm->dvc_channel_id_seq = 0;
-	vcm->dynamicVirtualChannels = ArrayList_New(TRUE);
+	vcm->dynamicVirtualChannels = HashTable_New(TRUE);
 
 	if (!vcm->dynamicVirtualChannels)
 		goto error_dynamicVirtualChannels;
 
+	if (!HashTable_SetHashFunction(vcm->dynamicVirtualChannels, channelId_Hash))
+		goto error_hashFunction;
+
 	{
-		wObject* obj = ArrayList_Object(vcm->dynamicVirtualChannels);
+		wObject* obj = HashTable_ValueObject(vcm->dynamicVirtualChannels);
 		WINPR_ASSERT(obj);
 		obj->fnObjectFree = array_channel_free;
+
+		obj = HashTable_KeyObject(vcm->dynamicVirtualChannels);
+		obj->fnObjectEquals = dynChannelMatch;
 	}
 	client->ReceiveChannelData = WTSReceiveChannelData;
 	hServer = (HANDLE)vcm;
 	return hServer;
+
+error_hashFunction:
+	HashTable_Free(vcm->dynamicVirtualChannels);
 error_dynamicVirtualChannels:
 	MessageQueue_Free(vcm->queue);
 error_queue:
@@ -1064,7 +1065,7 @@ VOID WINAPI FreeRDP_WTSCloseServer(HANDLE hServer)
 	{
 		HashTable_Remove(g_ServerHandles, (void*)(UINT_PTR)vcm->SessionId);
 
-		ArrayList_Free(vcm->dynamicVirtualChannels);
+		HashTable_Free(vcm->dynamicVirtualChannels);
 
 		if (vcm->drdynvc_channel)
 		{
@@ -1426,7 +1427,7 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 
 	channel->channelId = InterlockedIncrement(&vcm->dvc_channel_id_seq);
 
-	if (!ArrayList_Append(vcm->dynamicVirtualChannels, channel))
+	if (!HashTable_Insert(vcm->dynamicVirtualChannels, &channel->channelId, channel))
 	{
 		channel_free(channel);
 		channel = NULL;
@@ -1449,7 +1450,7 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 fail:
 	Stream_Free(s, TRUE);
 	if (channel)
-		ArrayList_Remove(vcm->dynamicVirtualChannels, channel);
+		HashTable_Remove(vcm->dynamicVirtualChannels, &channel->channelId);
 
 	SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 	return NULL;
@@ -1504,7 +1505,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 					Stream_Free(s, TRUE);
 				}
 			}
-			ArrayList_Remove(vcm->dynamicVirtualChannels, channel);
+			HashTable_Remove(vcm->dynamicVirtualChannels, &channel->channelId);
 		}
 	}
 
