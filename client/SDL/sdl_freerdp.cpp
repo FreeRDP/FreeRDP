@@ -44,6 +44,7 @@
 #include <freerdp/log.h>
 
 #include <SDL.h>
+#include <SDL_hints.h>
 #include <SDL_video.h>
 
 #include "sdl_channels.hpp"
@@ -701,6 +702,10 @@ static int sdl_run(SdlContext* sdl)
 	}
 
 	SDL_Init(SDL_INIT_VIDEO);
+#if SDL_VERSION_ATLEAST(2, 0, 16)
+	SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "0");
+#endif
+
 	sdl->initialized.set();
 
 	while (!freerdp_shall_disconnect_context(sdl->context()))
