@@ -15,6 +15,9 @@ gen/
 # Local configuration file (sdk path, etc)
 local.properties
 
+# Local release signing configuration file
+release.properties
+
 # Windows thumbnail db
 Thumbs.db
 
