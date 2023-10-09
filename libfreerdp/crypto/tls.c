@@ -833,18 +833,22 @@ const SSL_METHOD* freerdp_tls_get_ssl_method(BOOL isDtls, BOOL isClient)
 	if (isClient)
 	{
 		if (isDtls)
-			return (const SSL_METHOD*)DTLS_client_method();
+			return DTLS_client_method();
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-		return (const SSL_METHOD*)SSLv23_client_method();
+		return SSLv23_client_method();
 #else
-		return (const SSL_METHOD*)TLS_client_method();
+		return TLS_client_method();
 #endif
 	}
 
 	if (isDtls)
-		return (const SSL_METHOD*)DTLS_server_method();
+		return DTLS_server_method();
 
-	return (const SSL_METHOD*)SSLv23_server_method();
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+	return SSLv23_server_method();
+#else
+	return TLS_server_method();
+#endif
 }
 
 TlsHandshakeResult freerdp_tls_connect_ex(rdpTls* tls, BIO* underlying, const SSL_METHOD* methods)
