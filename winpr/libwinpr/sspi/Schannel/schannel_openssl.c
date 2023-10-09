@@ -94,11 +94,30 @@ static void schannel_context_cleanup(SCHANNEL_OPENSSL* context)
 	context->ctx = NULL;
 }
 
+static const SSL_METHOD* get_method(BOOL server)
+{
+	if (server)
+	{
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+		return SSLv23_server_method();
+#else
+		return TLS_server_method();
+#endif
+	}
+	else
+	{
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+		return SSLv23_client_method();
+#else
+		return TLS_client_method();
+#endif
+	}
+}
 int schannel_openssl_client_init(SCHANNEL_OPENSSL* context)
 {
 	int status;
 	long options = 0;
-	context->ctx = SSL_CTX_new(SSLv23_client_method());
+	context->ctx = SSL_CTX_new(get_method(FALSE));
 
 	if (!context->ctx)
 	{
@@ -208,7 +227,8 @@ int schannel_openssl_server_init(SCHANNEL_OPENSSL* context)
 {
 	int status;
 	unsigned long options = 0;
-	context->ctx = SSL_CTX_new(SSLv23_server_method());
+
+	context->ctx = SSL_CTX_new(get_method(TRUE));
 
 	if (!context->ctx)
 	{
