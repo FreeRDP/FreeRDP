@@ -59,15 +59,6 @@
         <item>Sann farge (24-biters)</item>
         <item>Høyeste kvalitet (32-biters)</item>
     </string-array>
-    <!-- This array is used as is in code,
-	do not translate! -->
-    <string-array name="colors_values_array" translatable="false">
-        <item>8</item>
-        <item>15</item>
-        <item>16</item>
-        <item>24</item>
-        <item>32</item>
-    </string-array>
     <string name="settings_resolution">Oppløsning</string>
     <string name="resolution_automatic">Automatisk</string>
     <string name="resolution_fit">Tilpass til skjerm</string>
@@ -85,28 +76,11 @@
         <item>1920x1080</item>
         <item>1920x1200</item>
     </string-array>
-    <!-- This array is used as is in code,
-	do not translate! -->
-    <string-array name="resolutions_values_array" translatable="false">
-        <item>automatic</item>
-        <item>fitscreen</item>
-        <item>custom</item>
-        <item>640x480</item>
-        <item>720x480</item>
-        <item>800x600</item>
-        <item>1024x768</item>
-        <item>1280x1024</item>
-        <item>1440x900</item>
-        <item>1920x1080</item>
-        <item>1920x1200</item>
-    </string-array>
     <string name="settings_width">Bredde</string>
     <string name="settings_height">Høyde</string>
     <string name="settings_performance">Ytelse</string>
     <string name="settings_cat_performance">Ytelsesinnstillinger</string>
     <string name="settings_perf_remotefx">RemoteFX</string>
-    <string name="settings_perf_gfx" translatable="false">GFX</string>
-    <string name="settings_perf_gfx_h264" translatable="false">H264</string>
     <string name="settings_perf_wallpaper">Skrivebordsbakgrunn</string>
     <string name="settings_perf_font_smoothing">Skriftglatting</string>
     <string name="settings_perf_desktop_composition">Skrivebordskomposisjon</string>
@@ -128,13 +102,6 @@
         <item>Spill på tjener</item>
         <item>Spill på enhet</item>
     </string-array>
-    <!-- This array is used as is in code,
-	do not translate! -->
-    <string-array name="redirect_sound_values_array" translatable="false">
-        <item>2</item>
-        <item>1</item>
-        <item>0</item>
-    </string-array>
     <string name="settings_redirect_microphone">Videresend mikrofon</string>
     <string name="settings_security">Sikkerhet</string>
     <string-array name="security_array">
@@ -142,14 +109,6 @@
         <item>RDP</item>
         <item>TLS</item>
         <item>NLA</item>
-    </string-array>
-    <!-- This array is used as is in code,
-	do not translate! -->
-    <string-array name="security_values_array" translatable="false">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
     </string-array>
     <string name="settings_remote_program">Fjernprogram</string>
     <string name="settings_work_dir">Arbeidsmappe</string>
@@ -212,40 +171,5 @@
     <string name="debug_level">Feilsøkingsnivå</string>
     <string name="settings_debug">Avlusingsinnstillinger</string>
     <string name="preference_title_client">Klient</string>
-    <string name="preference_key_client_name" translatable="false">preference_key_client_name</string>
     <string name="preference_title_client_name">Klientnavn</string>
-    <string name="preference_default_client_name" translatable="false">aFreeRDP</string>
-    <string name="preference_key_accept_certificates" translatable="false">security.accept_certificates</string>
-    <string name="preference_key_security_clear_certificate_cache" translatable="false">security.clear_certificate_cache</string>
-    <string name="preference_key_power_disconnect_timeout" translatable="false">power.disconnect_timeout</string>
-    <string name="preference_key_ui_hide_status_bar" translatable="false">ui.hide_status_bar</string>
-    <string name="preference_key_ui_ask_on_exit" translatable="false">ui.ask_on_exit</string>
-    <string name="preference_key_ui_auto_scroll_touchpointer" translatable="false">ui.auto_scroll_touchpointer</string>
-    <string name="preference_key_ui_invert_scrolling" translatable="false">ui.invert_scrolling</string>
-    <string name="preference_key_ui_swap_mouse_buttons" translatable="false">ui.swap_mouse_buttons</string>
-    <string name="preference_key_ui_hide_zoom_controls" translatable="false">ui.hide_zoom_controls</string>
-    <string name="preference_key_ui_hide_action_bar" translatable="false">ui.hide_action_bar</string>
-    <string-array name="debug_array" translatable="false">
-        <item>OFF</item>
-        <item>FATAL</item>
-        <item>ERROR</item>
-        <item>WARN</item>
-        <item>INFO</item>
-        <item>DEBUG</item>
-        <item>TRACE</item>
-    </string-array>
-    <!-- This array is used as is in code,
-	do not translate! -->
-    <string-array name="debug_values_array" translatable="false">
-        <item>OFF</item>
-        <item>FATAL</item>
-        <item>ERROR</item>
-        <item>WARN</item>
-        <item>INFO</item>
-        <item>DEBUG</item>
-        <item>TRACE</item>
-    </string-array>
-
-    <string name="preference_key_h264_3g" translatable="false">bookmark.perf_gfx_h264</string>
-    <string name="preference_key_h264" translatable="false">bookmark.perf_gfx_h264</string>
 </resources>
