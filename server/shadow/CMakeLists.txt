@@ -214,6 +214,7 @@ endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 
+include(pkg-config-install-prefix)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp-shadow.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow${FREERDP_VERSION_MAJOR}.pc @ONLY)
 configure_file(freerdp-shadow-cli.1.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow-cli.1)
 install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow-cli.1 1)
