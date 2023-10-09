@@ -83,8 +83,6 @@
     <string name="settings_performance">性能</string>
     <string name="settings_cat_performance">性能设置</string>
     <string name="settings_perf_remotefx">RemoteFX</string>
-    <string name="settings_perf_gfx" translatable="false">GFX</string>
-    <string name="settings_perf_gfx_h264" translatable="false">H264</string>
     <string name="settings_perf_wallpaper">桌面背景</string>
     <string name="settings_perf_font_smoothing">字体平滑</string>
     <string name="settings_perf_desktop_composition">桌面组成</string>
@@ -177,8 +175,4 @@
     <string name="debug_level">调试级别</string>
     <string name="settings_debug">调试设置</string>
     <string name="preference_title_client">客户端</string>
-
-
-    <string name="preference_key_h264_3g" translatable="false">bookmark.perf_gfx_h264</string>
-    <string name="preference_key_h264" translatable="false">bookmark.perf_gfx_h264</string>
 </resources>

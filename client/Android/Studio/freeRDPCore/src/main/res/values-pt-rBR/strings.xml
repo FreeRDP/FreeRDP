@@ -59,15 +59,6 @@
         <item>Definição real (24 Bit)</item>
         <item>Definição máxima (32 Bit)</item>
     </string-array>
-    <!-- This array is used as is in code,
-	do not translate! -->
-    <string-array name="colors_values_array" translatable="false">
-        <item>8</item>
-        <item>15</item>
-        <item>16</item>
-        <item>24</item>
-        <item>32</item>
-    </string-array>
     <string name="settings_resolution">Resolução</string>
     <string name="resolution_automatic">Automática</string>
     <string name="resolution_fit">Preencher a tela</string>
@@ -85,28 +76,11 @@
         <item>1920x1080</item>
         <item>1920x1200</item>
     </string-array>
-    <!-- This array is used as is in code,
-	do not translate! -->
-    <string-array name="resolutions_values_array" translatable="false">
-        <item>automatic</item>
-        <item>fitscreen</item>
-        <item>custom</item>
-        <item>640x480</item>
-        <item>720x480</item>
-        <item>800x600</item>
-        <item>1024x768</item>
-        <item>1280x1024</item>
-        <item>1440x900</item>
-        <item>1920x1080</item>
-        <item>1920x1200</item>
-    </string-array>
     <string name="settings_width">Largura</string>
     <string name="settings_height">Altura</string>
     <string name="settings_performance">Desempenho</string>
     <string name="settings_cat_performance">Configurações de desempenho</string>
     <string name="settings_perf_remotefx">RemoteFX</string>
-    <string name="settings_perf_gfx" translatable="false">GFX</string>
-    <string name="settings_perf_gfx_h264" translatable="false">H264</string>
     <string name="settings_perf_wallpaper">Fundo da área de trabalho</string>
     <string name="settings_perf_font_smoothing">Alisamento da fonte</string>
     <string name="settings_perf_desktop_composition">Composição da área de trabalho</string>
@@ -128,13 +102,6 @@
         <item>Reproduzir no servidor</item>
         <item>Reproduzir no dispositivo</item>
     </string-array>
-    <!-- This array is used as is in code,
-	do not translate! -->
-    <string-array name="redirect_sound_values_array" translatable="false">
-        <item>2</item>
-        <item>1</item>
-        <item>0</item>
-    </string-array>
     <string name="settings_redirect_microphone">Redirecionar microfone</string>
     <string name="settings_security">Segurança</string>
     <string-array name="security_array">
@@ -142,14 +109,6 @@
         <item>RDP</item>
         <item>TLS</item>
         <item>NLA</item>
-    </string-array>
-    <!-- This array is used as is in code,
-	do not translate! -->
-    <string-array name="security_values_array" translatable="false">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
     </string-array>
     <string name="settings_remote_program">Programa remoto</string>
     <string name="settings_work_dir">Pasta de trabalho</string>
@@ -212,6 +171,5 @@
     <string name="debug_level">Nível de depuração</string>
     <string name="settings_debug">Ajustes de depuração</string>
     <string name="preference_title_client">Cliente</string>
-    <string name="preference_key_client_name" translatable="false">preference_key_client_name</string>
     <string name="preference_title_client_name">Nome do cliente</string>        
 </resources>
