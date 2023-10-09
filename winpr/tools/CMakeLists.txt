@@ -113,7 +113,7 @@ add_definitions(${WINPR_DEFINITIONS})
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include/winpr${WINPR_VERSION_MAJOR}>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${WINPR_TOOLS_LIBS})
 
-install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT WinPRTargets
+install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT WinPR-toolsTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -130,3 +130,19 @@ add_subdirectory(hash-cli)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr-tools.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr-tools${WINPR_TOOLS_VERSION_MAJOR}.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr-tools${WINPR_TOOLS_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+
+export(PACKAGE ${MODULE_NAME})
+
+SetFreeRDPCMakeInstallDir(WINPR_CMAKE_INSTALL_DIR "WinPR-tools${WINPR_VERSION_MAJOR}")
+
+configure_package_config_file(WinPR-toolsConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/WinPR-toolsConfig.cmake
+	INSTALL_DESTINATION ${WINPR_CMAKE_INSTALL_DIR}
+	PATH_VARS WINPR_INCLUDE_DIR)
+
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/WinPR-toolsConfigVersion.cmake
+	VERSION ${WINPR_VERSION} COMPATIBILITY SameMajorVersion)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/WinPR-toolsConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/WinPR-toolsConfigVersion.cmake
+	DESTINATION ${WINPR_CMAKE_INSTALL_DIR})
+
+install(EXPORT WinPR-toolsTargets DESTINATION ${WINPR_CMAKE_INSTALL_DIR})

@@ -1,0 +1,12 @@
+include(CMakeFindDependencyMacro)
+find_dependency(WinPR @FREERDP_VERSION@)
+
+@PACKAGE_INIT@
+
+set(WinPR-tools_VERSION_MAJOR "@WINPR_VERSION_MAJOR@")
+set(WinPR-tools_VERSION_MINOR "@WINPR_VERSION_MINOR@")
+set(WinPR-tools_VERSION_REVISION "@WINPR_VERSION_REVISION@")
+
+set_and_check(WinPR-tools_INCLUDE_DIR "@PACKAGE_WINPR_INCLUDE_DIR@")
+
+include("${CMAKE_CURRENT_LIST_DIR}/WinPR-toolsTargets.cmake")
