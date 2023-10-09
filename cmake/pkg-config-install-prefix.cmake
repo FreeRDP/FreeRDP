@@ -1,0 +1,6 @@
+option(PKG_CONFIG_RELOCATABLE "Generate relocatable pkg-config files" ON)
+if (PKG_CONFIG_RELOCATABLE)
+    set(PKG_CONFIG_INSTALL_PREFIX "\${pcfiledir}/../..")
+else()
+    set(PKG_CONFIG_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+endif()

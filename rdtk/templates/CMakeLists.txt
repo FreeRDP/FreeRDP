@@ -23,6 +23,8 @@ FOREACH(var ${res})
 	ENDIF()
 ENDFOREACH()
 
+include(pkg-config-install-prefix)
+
 string(REPLACE ";" " " RDTK_BUILD_CONFIG "${RDTK_BUILD_CONFIG_LIST}")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/rdtk/version.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/rdtk/buildflags.h)

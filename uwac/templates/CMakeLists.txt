@@ -35,6 +35,7 @@ configure_file(buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/uwac/build
 configure_file(build-config.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/uwac/build-config.h)
 configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/../include/uwac/config.h)
 
+include(pkg-config-install-prefix)
 configure_file(uwac.pc.in ${CMAKE_CURRENT_BINARY_DIR}/uwac${UWAC_VERSION_MAJOR}.pc @ONLY)
 
 set(UWAC_INSTALL_INCLUDE_DIR ${UWAC_INCLUDE_DIR}/uwac)
