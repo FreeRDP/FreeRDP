@@ -17,6 +17,8 @@
 
 define_channel_client_subsystem("rdpsnd" "oss" "")
 
+find_package(OSS REQUIRED)
+
 set(${MODULE_PREFIX}_SRCS
 	rdpsnd_oss.c
 )
