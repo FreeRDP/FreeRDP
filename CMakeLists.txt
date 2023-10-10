@@ -641,7 +641,8 @@ find_feature(MbedTLS ${MBEDTLS_FEATURE_TYPE} ${MBEDTLS_FEATURE_PURPOSE} ${MBEDTL
 
 find_feature(PCSC ${PCSC_FEATURE_TYPE} ${PCSC_FEATURE_PURPOSE} ${PCSC_FEATURE_DESCRIPTION})
 
-option(WITH_AAD "Compile with support for Azure AD authentication" ON)
+find_package(cJSON)
+option(WITH_AAD "Compile with support for Azure AD authentication" ${cJSON_FOUND})
 if (WITH_AAD)
 	find_package(cJSON REQUIRED)
 	include_directories(${CJSON_INCLUDE_DIRS})
