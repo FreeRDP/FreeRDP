@@ -51,21 +51,10 @@ option(WITH_FUSE "Build clipboard with FUSE file copy support" ${OPT_FUSE_DEFAUL
 if(WITH_FUSE)
 	find_package(PkgConfig REQUIRED)
 
-	pkg_check_modules(FUSE3 fuse3)
-	if (FUSE3_FOUND)
-		message("[FUSE3] using ${FUSE3_LIBRARIES}")
-
-		include_directories(${FUSE3_INCLUDE_DIRS})
-		add_definitions(-DWITH_FUSE3)
-		list(APPEND LIBS ${FUSE3_LIBRARIES})
-	else()
-		pkg_check_modules(FUSE2 REQUIRED fuse)
-
-		message("[FUSE2] using ${FUSE2_LIBRARIES}")
-		add_definitions(-DWITH_FUSE2)
-		include_directories(${FUSE2_INCLUDE_DIRS})
-		list(APPEND LIBS ${FUSE2_LIBRARIES})
-	endif()
+    pkg_check_modules(FUSE3 REQUIRED fuse3)
+	include_directories(${FUSE3_INCLUDE_DIRS})
+	add_definitions(-DWITH_FUSE)
+	list(APPEND LIBS ${FUSE3_LIBRARIES})
 
 	add_definitions(-D_FILE_OFFSET_BITS=64)
 endif()
