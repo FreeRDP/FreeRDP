@@ -72,6 +72,7 @@ class SdlWidget
 
   private:
 	TTF_Font* _font;
+	SDL_RWops* _ops;
 	SDL_Rect _rect;
 	bool _input;
 };

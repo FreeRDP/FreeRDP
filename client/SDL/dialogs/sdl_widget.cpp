@@ -42,21 +42,23 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
 {
 	assert(renderer);
 
-	auto ops = SDL_RWFromConstMem(font_buffer.data(), static_cast<int>(font_buffer.size()));
-	if (ops)
-		_font = TTF_OpenFontRW(ops, 0, 64);
-	SDL_RWclose(ops);
+	_ops = SDL_RWFromConstMem(font_buffer.data(), static_cast<int>(font_buffer.size()));
+	if (_ops)
+		_font = TTF_OpenFontRW(_ops, 0, 64);
 }
 
 SdlWidget::SdlWidget(SdlWidget&& other) noexcept
-    : _font(std::move(other._font)), _rect(std::move(other._rect))
+    : _font(std::move(other._font)), _ops(other._ops), _rect(std::move(other._rect))
 {
 	other._font = nullptr;
+	other._ops = nullptr;
 }
 
 SdlWidget::~SdlWidget()
 {
 	TTF_CloseFont(_font);
+	if (_ops)
+		SDL_RWclose(_ops);
 }
 
 bool SdlWidget::error_ex(Uint32 res, const char* what, const char* file, size_t line,
