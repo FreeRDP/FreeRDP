@@ -18,6 +18,8 @@
 
 define_channel_client_subsystem("audin" "sndio" "")
 
+find_package(SNDIO REQUIRED)
+
 set(${MODULE_PREFIX}_SRCS
 	audin_sndio.c)
 

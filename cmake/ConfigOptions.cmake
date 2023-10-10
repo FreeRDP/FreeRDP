@@ -13,7 +13,10 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "sparc")
 	set(TARGET_ARCH "sparc")
 endif()
 
-option(WITH_MANPAGES "Generate manpages." ON)
+if (NOT OPENBSD)
+	set(MANPAGE_DEF ON)
+endif()
+option(WITH_MANPAGES "Generate manpages." ${MANPAGE_DEF})
 option(WITH_PROFILER "Compile profiler." OFF)
 option(WITH_GPROF "Compile with GProf profiler." OFF)
 
@@ -179,6 +182,14 @@ if (UNIX AND NOT APPLE)
     option(WITH_ALSA "use alsa for sound" ${ALSA_FOUND})
     option(WITH_PULSE "use alsa for sound" ${PULSE_FOUND})
     option(WITH_OSS "use alsa for sound" ${OSS_FOUND})
+endif()
+
+if (OPENBSD)
+    find_package(SNDIO)
+    option(WITH_SNDIO "use SNDIO for sound" ${SNDIO_FOUND# OpenBSD
+endif()
+
+})
 endif()
 
 option(BUILD_FUZZERS "Use BUILD_FUZZERS to build fuzzing tests" OFF)
