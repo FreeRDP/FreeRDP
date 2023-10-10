@@ -30,6 +30,10 @@
 #include <winpr/assert.h>
 #include <winpr/endian.h>
 
+#if defined(WITH_URIPARSER)
+#include <uriparser/Uri.h>
+#endif
+
 /* String Manipulation (CRT): http://msdn.microsoft.com/en-us/library/f0151s4x.aspx */
 
 #include "../log.h"
@@ -39,6 +43,37 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #endif
 
+#if defined(WITH_URIPARSER)
+char* winpr_str_url_decode(const char* str, size_t len)
+{
+	char* dst = strndup(str, len);
+	if (!dst)
+		return NULL;
+
+	if (!uriUnescapeInPlaceExA(dst, URI_FALSE, URI_FALSE))
+	{
+		free(dst);
+		return NULL;
+	}
+
+	return dst;
+}
+
+char* winpr_str_url_encode(const char* str, size_t len)
+{
+	char* dst = calloc(len + 1, sizeof(char) * 3);
+	if (!dst)
+		return NULL;
+
+	if (!uriEscapeA(str, dst, URI_FALSE, URI_FALSE))
+	{
+		free(dst);
+		return NULL;
+	}
+	return dst;
+}
+
+#else
 static const char rfc3986[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -76,9 +111,6 @@ static char unescape(const char* what, size_t* px)
 		*px += 2;
 		return 16 * hex2bin(what[1]) + hex2bin(what[2]);
 	}
-
-	if (*what == '+')
-		return ' ';
 
 	return *what;
 }
@@ -124,6 +156,7 @@ char* winpr_str_url_encode(const char* str, size_t len)
 	}
 	return dst;
 }
+#endif
 
 BOOL winpr_str_append(const char* what, char* buffer, size_t size, const char* separator)
 {

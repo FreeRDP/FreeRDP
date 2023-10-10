@@ -103,6 +103,13 @@ endmacro()
 
 set(CMAKE_REQUIRED_LIBRARIES rt)
 
+option(WITH_URIPARSER "use uriparser library to handle URIs" OFF)
+if (WITH_URIPARSER)
+	find_package(uriparser CONFIG REQUIRED char)
+	add_definitions("-DWITH_URIPARSER")
+	winpr_library_add_private(uriparser::uriparser)
+endif()
+
 if(NOT IOS)
     check_function_exists(timer_create TIMER_CREATE)
     check_function_exists(timer_delete TIMER_DELETE)
