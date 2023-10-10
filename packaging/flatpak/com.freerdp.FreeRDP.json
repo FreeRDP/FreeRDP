@@ -1,7 +1,7 @@
 {
   "app-id": "com.freerdp.FreeRDP",
   "runtime": "org.freedesktop.Platform",
-  "runtime-version": "22.08",
+  "runtime-version": "23.08",
   "sdk": "org.freedesktop.Sdk",
   "build-options" : {
     "cflags": "-O3",
@@ -31,12 +31,12 @@
   "add-build-extensions": {
     "org.freedesktop.Platform.ffmpeg-full": {
     "directory": "lib/ffmpeg",
-    "version": "22.08",
+    "version": "23.08",
     "add-ld-path": "."
     },
     "org.freedesktop.Platform.openh264": {
     "directory": "lib/openh264",
-    "version": "2.3.0",
+    "version": "2.3.1",
     "add-ld-path": "."
     }
   },
