@@ -1,7 +1,7 @@
 
 
-find_package(SDL2TTF REQUIRED COMPONENTS)
-include_directories(${SDL2TTF_INCLUDE_DIR})
+find_package(SDL2_ttf REQUIRED COMPONENTS)
+include_directories(${SDL2_ttf_INCLUDE_DIR})
 set(SRCS
     sdl_button.hpp
     sdl_button.cpp
@@ -23,10 +23,18 @@ set(SRCS
 
 set(LIBS
     ${SDL2_LIBRARIES}
-    ${SDL2TTF_LIBRARY}
     font
     winpr
 )
+if (BUILD_SHARED_LIBS)
+    list(APPEND LIBS
+        SDL2_ttf::SDL2_ttf
+    )
+else()
+    list(APPEND LIBS
+        SDL2_ttf::SDL2_ttf-static
+    )
+endif()
 
 add_subdirectory(font)
 

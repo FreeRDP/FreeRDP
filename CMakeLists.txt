@@ -675,7 +675,7 @@ find_feature(PCSC ${PCSC_FEATURE_TYPE} ${PCSC_FEATURE_PURPOSE} ${PCSC_FEATURE_DE
 
 option(WITH_AAD "Compile with support for Azure AD authentication" ON)
 if (WITH_AAD)
-	find_package(CJSON REQUIRED)
+	find_package(cJSON REQUIRED)
 	include_directories(${CJSON_INCLUDE_DIRS})
 endif()
 
