@@ -6,8 +6,7 @@
       "config-opts": [
         "-DCMAKE_VERBOSE_MAKEFILE=ON",
         "-DCMAKE_BUILD_TYPE:STRING=Release",
-        "-DCMAKE_INSTALL_LIBDIR:PATH=lib",
-        "-DWITH_PULSE:BOOL=ON"
+        "-DCMAKE_INSTALL_LIBDIR:PATH=lib"
       ],
       "sources": [
         {

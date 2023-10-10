@@ -42,8 +42,7 @@
   },
   "modules": [
     "modules/libusb.json",
-    "modules/SDL2-2.28.1-with-libdecor.json",
-    "modules/SDL2_ttf-2.20.2.json",
+    "modules/uriparser.json",
     "modules/cJSON-1.7.16.json",
     "modules/xprop-1.2.6.json",
     "modules/pcsc-1.9.9.json",
@@ -75,6 +74,7 @@
         "-DWITH_SAMPLE:BOOL=ON",
         "-DWITH_CUPS:BOOL=ON",
         "-DWITH_FFMPEG:BOOL=ON",
+        "-DWITH_URIPARSER:BOOL=ON",
         "-DWITH_DSP_FFMPEG:BOOL=ON",
         "-DWITH_OSS:BOOL=OFF",
         "-DWITH_WEBVIEW:BOOL=OFF",

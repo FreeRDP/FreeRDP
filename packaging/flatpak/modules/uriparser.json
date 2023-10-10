@@ -1,0 +1,23 @@
+{
+      "name": "uriparser",
+      "buildsystem": "cmake-ninja",
+      "cleanup": [
+      ],
+      "config-opts": [
+        "-DCMAKE_VERBOSE_MAKEFILE=ON",
+        "-DCMAKE_BUILD_TYPE:STRING=Release",
+        "-DCMAKE_INSTALL_LIBDIR:PATH=lib",
+        "-DURIPARSER_BUILD_TESTS:BOOL=OFF",
+        "-DURIPARSER_BUILD_DOCS:BOOL=OFF",
+        "-DURIPARSER_BUILD_TOOLS:BOOL=OFF",
+        "-DURIPARSER_BUILD_WCHAR_T:BOOL=OFF"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "url": "https://github.com/uriparser/uriparser.git",
+          "tag": "uriparser-0.9.7",
+          "commit": "634b678fa858abf1d1ebc0634e96e9e29596e92a"
+        }
+      ]
+}
