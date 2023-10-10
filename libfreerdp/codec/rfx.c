@@ -2166,6 +2166,12 @@ UINT32 rfx_context_get_frame_idx(const RFX_CONTEXT* context)
 	return context->frameIdx;
 }
 
+UINT32 rfx_message_get_frame_idx(const RFX_MESSAGE* message)
+{
+	WINPR_ASSERT(message);
+	return message->frameIdx;
+}
+
 static INLINE BOOL rfx_write_progressive_wb_sync(RFX_CONTEXT* rfx, wStream* s)
 {
 	const UINT32 blockLen = 12;
