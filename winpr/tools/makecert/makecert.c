@@ -601,7 +601,8 @@ out_fail:
 	free(fullpath);
 	return ret;
 #else
-	return 1;
+	WLog_ERR(TAG, "%s only supported with OpenSSL", __func__);
+	return -1;
 #endif
 }
 
@@ -682,7 +683,8 @@ out_fail:
 	free(fullpath);
 	return ret;
 #else
-	return 1;
+	WLog_ERR(TAG, "%s only supported with OpenSSL", __func__);
+	return -1;
 #endif
 }
 
@@ -1122,8 +1124,11 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		}
 	}
 
-#endif
 	return 0;
+#else
+	WLog_ERR(TAG, "%s only supported with OpenSSL", __func__);
+	return -1;
+#endif
 }
 
 MAKECERT_CONTEXT* makecert_context_new(void)
