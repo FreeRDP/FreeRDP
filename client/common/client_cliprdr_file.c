@@ -26,15 +26,12 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#ifdef WITH_FUSE3
+#ifdef WITH_FUSE
 #define FUSE_USE_VERSION 30
-#include <fuse_lowlevel.h>
-#elif WITH_FUSE2
-#define FUSE_USE_VERSION 26
 #include <fuse_lowlevel.h>
 #endif
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -70,7 +67,7 @@
 	} while (0)
 #endif
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 typedef enum eFuseLowlevelOperationType
 {
 	FUSE_LL_OPERATION_NONE,
@@ -159,7 +156,7 @@ typedef struct
 
 struct cliprdr_file_context
 {
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	/* FUSE related**/
 	HANDLE fuse_start_sync;
 	HANDLE fuse_stop_sync;
@@ -198,7 +195,7 @@ struct cliprdr_file_context
 	BYTE client_data_hash[WINPR_SHA256_DIGEST_LENGTH];
 };
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 static void fuse_file_free(void* data)
 {
 	CliprdrFuseFile* fuse_file = data;
@@ -394,15 +391,9 @@ static BOOL notify_delete_child(void* data, size_t index, va_list ap)
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(parent);
 
-#if FUSE_USE_VERSION >= 30
 	WINPR_ASSERT(file_context->fuse_sess);
 	fuse_lowlevel_notify_delete(file_context->fuse_sess, parent->ino, child->ino, child->filename,
 	                            strlen(child->filename));
-#else
-	WINPR_ASSERT(file_context->ch);
-	fuse_lowlevel_notify_delete(file_context->ch, parent->ino, child->ino, child->filename,
-	                            strlen(child->filename));
-#endif
 
 	return TRUE;
 }
@@ -415,21 +406,13 @@ static BOOL invalidate_inode(void* data, size_t index, va_list ap)
 
 	CliprdrFileContext* file_context = va_arg(ap, CliprdrFileContext*);
 	WINPR_ASSERT(file_context);
-#if FUSE_USE_VERSION >= 30
 	WINPR_ASSERT(file_context->fuse_sess);
-#else
-	WINPR_ASSERT(file_context->ch);
-#endif
 
 	ArrayList_ForEach(fuse_file->children, notify_delete_child, file_context, fuse_file);
 
 	DEBUG_CLIPRDR(file_context->log, "Invalidating inode %lu for file \"%s\"", fuse_file->ino,
 	              fuse_file->filename);
-#if FUSE_USE_VERSION >= 30
 	fuse_lowlevel_notify_inval_inode(file_context->fuse_sess, fuse_file->ino, 0, 0);
-#else
-	fuse_lowlevel_notify_inval_inode(file_context->ch, fuse_file->ino, 0, 0);
-#endif
 	WLog_Print(file_context->log, WLOG_DEBUG, "Inode %lu invalidated", fuse_file->ino);
 
 	return TRUE;
@@ -480,11 +463,7 @@ static void clear_selection(CliprdrFileContext* file_context, BOOL all_selection
 	HashTable_Foreach(file_context->inode_table, maybe_steal_inode, &clear_context);
 	HashTable_Unlock(file_context->inode_table);
 
-#if FUSE_USE_VERSION >= 30
 	if (file_context->fuse_sess)
-#else
-	if (file_context->ch)
-#endif
 	{
 		/*
 		 * fuse_lowlevel_notify_inval_inode() is a blocking operation. If we receive a
@@ -497,15 +476,9 @@ static void clear_selection(CliprdrFileContext* file_context, BOOL all_selection
 		ArrayList_ForEach(clear_context.fuse_files, invalidate_inode, file_context);
 		if (clip_data_dir)
 		{
-#if FUSE_USE_VERSION >= 30
 			fuse_lowlevel_notify_delete(file_context->fuse_sess, file_context->root_dir->ino,
 			                            clip_data_dir->ino, clip_data_dir->filename,
 			                            strlen(clip_data_dir->filename));
-#else
-			fuse_lowlevel_notify_delete(file_context->ch, file_context->root_dir->ino,
-			                            clip_data_dir->ino, clip_data_dir->filename,
-			                            strlen(clip_data_dir->filename));
-#endif
 		}
 	}
 	ArrayList_Free(clear_context.fuse_files);
@@ -612,7 +585,7 @@ UINT cliprdr_file_context_notify_new_server_format_list(CliprdrFileContext* file
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(file_context->context);
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	clear_no_cdi_entry(file_context);
 	/* TODO: assign timeouts to old locks instead */
 	clear_cdi_entries(file_context);
@@ -631,7 +604,7 @@ UINT cliprdr_file_context_notify_new_client_format_list(CliprdrFileContext* file
 	WINPR_ASSERT(file_context);
 	WINPR_ASSERT(file_context->context);
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	clear_no_cdi_entry(file_context);
 	/* TODO: assign timeouts to old locks instead */
 	clear_cdi_entries(file_context);
@@ -656,7 +629,7 @@ static void writelog(wLog* log, DWORD level, const char* fname, const char* fkt,
 	va_end(ap);
 }
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 static void cliprdr_file_fuse_lookup(fuse_req_t req, fuse_ino_t parent, const char* name);
 static void cliprdr_file_fuse_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info* fi);
 static void cliprdr_file_fuse_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
@@ -1162,7 +1135,6 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 	DEBUG_CLIPRDR(file->log, "Starting fuse with mountpoint '%s'", file->path);
 
 	struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
-#if FUSE_USE_VERSION >= 30
 	fuse_opt_add_arg(&args, file->path);
 	file->fuse_sess = fuse_session_new(&args, &cliprdr_file_fuse_oper,
 	                                   sizeof(cliprdr_file_fuse_oper), (void*)file);
@@ -1183,38 +1155,6 @@ static DWORD WINAPI cliprdr_file_fuse_thread(LPVOID arg)
 			WLog_Print(file->log, WLOG_ERROR, "Failed to wait for stop sync");
 		fuse_session_destroy(file->fuse_sess);
 	}
-#else
-	file->ch = fuse_mount(file->path, &args);
-	SetEvent(file->fuse_start_sync);
-
-	if (file->ch != NULL)
-	{
-		file->fuse_sess = fuse_lowlevel_new(&args, &cliprdr_file_fuse_oper,
-		                                    sizeof(cliprdr_file_fuse_oper), (void*)file);
-		if (file->fuse_sess != NULL)
-		{
-			freerdp_add_signal_cleanup_handler(file, fuse_abort);
-			fuse_session_add_chan(file->fuse_sess, file->ch);
-			const int err = fuse_session_loop(file->fuse_sess);
-			if (err != 0)
-				WLog_Print(file->log, WLOG_WARN, "fuse_session_loop failed with %d", err);
-		}
-
-		WLog_Print(file->log, WLOG_DEBUG, "Waiting for FUSE stop sync");
-		if (WaitForSingleObject(file->fuse_stop_sync, INFINITE) == WAIT_FAILED)
-			WLog_Print(file->log, WLOG_ERROR, "Failed to wait for stop sync");
-
-		if (file->fuse_sess != NULL)
-		{
-			fuse_session_remove_chan(file->ch);
-			freerdp_del_signal_cleanup_handler(file, fuse_abort);
-
-			fuse_session_destroy(file->fuse_sess);
-		}
-
-		fuse_unmount(file->path, file->ch);
-	}
-#endif
 	fuse_opt_free_args(&args);
 
 	DEBUG_CLIPRDR(file->log, "Quitting fuse with mountpoint '%s'", file->path);
@@ -1658,14 +1598,14 @@ BOOL cliprdr_file_context_init(CliprdrFileContext* file, CliprdrClientContext* c
 	cliprdr->ServerLockClipboardData = cliprdr_file_context_lock;
 	cliprdr->ServerUnlockClipboardData = cliprdr_file_context_unlock;
 	cliprdr->ServerFileContentsRequest = cliprdr_file_context_server_file_contents_request;
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	cliprdr->ServerFileContentsResponse = cliprdr_file_context_server_file_contents_response;
 #endif
 
 	return TRUE;
 }
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 static void clear_all_selections(CliprdrFileContext* file_context)
 {
 	WINPR_ASSERT(file_context);
@@ -1686,7 +1626,7 @@ BOOL cliprdr_file_context_uninit(CliprdrFileContext* file, CliprdrClientContext*
 
 	// Clear all data before the channel is closed
 	// the cleanup handlers are dependent on a working channel.
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	if (file->inode_table)
 	{
 		clear_no_cdi_entry(file);
@@ -1697,7 +1637,7 @@ BOOL cliprdr_file_context_uninit(CliprdrFileContext* file, CliprdrClientContext*
 	HashTable_Clear(file->local_streams);
 
 	file->context = NULL;
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	cliprdr->ServerFileContentsResponse = NULL;
 #endif
 
@@ -1738,7 +1678,7 @@ static BOOL cliprdr_file_client_content_changed_and_update(CliprdrFileContext* f
 	                                               sizeof(file->client_data_hash), data, size);
 }
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 static fuse_ino_t get_next_free_inode(CliprdrFileContext* file_context)
 {
 	fuse_ino_t ino;
@@ -2035,7 +1975,7 @@ static BOOL update_exposed_path(CliprdrFileContext* file_context, wClipboard* cl
 BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, wClipboard* clip,
                                              const void* data, size_t size)
 {
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	CliprdrFuseClipDataEntry* clip_data_entry;
 	FILEDESCRIPTORW* files = NULL;
 	UINT32 n_files = 0;
@@ -2103,7 +2043,7 @@ void cliprdr_file_session_terminate(CliprdrFileContext* file, BOOL stop_thread)
 	if (!file)
 		return;
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	WINPR_ASSERT(file->fuse_stop_sync);
 
 	WLog_Print(file->log, WLOG_DEBUG, "Setting FUSE exit flag");
@@ -2119,7 +2059,7 @@ void cliprdr_file_session_terminate(CliprdrFileContext* file, BOOL stop_thread)
 	/* 	not elegant but works for umounting FUSE
 	    fuse_chan must receive an oper buf to unblock fuse_session_receive_buf function.
 	*/
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	WLog_Print(file->log, WLOG_DEBUG, "Forcing FUSE to check exit flag");
 #endif
 	winpr_PathFileExists(file->path);
@@ -2130,7 +2070,7 @@ void cliprdr_file_context_free(CliprdrFileContext* file)
 	if (!file)
 		return;
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	if (file->inode_table)
 	{
 		clear_no_cdi_entry(file);
@@ -2419,7 +2359,7 @@ static void* UINTPointerClone(const void* other)
 	return copy;
 }
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 static CliprdrFuseFile* fuse_file_new_root(CliprdrFileContext* file_context)
 {
 	CliprdrFuseFile* root_dir;
@@ -2478,7 +2418,7 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 	WINPR_ASSERT(hobj);
 	hobj->fnObjectFree = cliprdr_local_stream_free;
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	file->inode_table = HashTable_New(FALSE);
 	file->clip_data_table = HashTable_New(FALSE);
 	file->request_table = HashTable_New(FALSE);
@@ -2497,7 +2437,7 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 	if (!create_base_path(file))
 		goto fail;
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	if (!(file->fuse_start_sync = CreateEvent(NULL, TRUE, FALSE, NULL)))
 		goto fail;
 	if (!(file->fuse_stop_sync = CreateEvent(NULL, TRUE, FALSE, NULL)))
@@ -2609,7 +2549,7 @@ BOOL cliprdr_file_context_has_local_support(CliprdrFileContext* file)
 {
 	WINPR_UNUSED(file);
 
-#if defined(WITH_FUSE2) || defined(WITH_FUSE3)
+#if defined(WITH_FUSE)
 	return TRUE;
 #else
 	return FALSE;

@@ -36,7 +36,7 @@ Build-Depends:
  libpulse-dev, 
  libavcodec-dev,
  libavutil-dev,
- libfuse-dev | libfuse3-dev,
+ libfuse3-dev,
  libswresample-dev | libavresample-dev,
  libusb-1.0-0-dev,
  libudev-dev,

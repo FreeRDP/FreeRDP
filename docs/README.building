@@ -105,7 +105,7 @@ We support
 * CUPS (linux/apple) for printing support (disable with -DWITH_CUPS=OFF)
 * libsystemd (linux) for journald logging support (disable with -DWITH_LIBSYSTEMD=OFF)
 * PAM headers/libraries (server side authentication)
-* FUSE/FUSE3 for file clipboard support (linux/mac os, disable with -DWITH_FUSE=OFF) 
+* FUSE for file clipboard support (linux/mac os, disable with -DWITH_FUSE=OFF) 
 * Wayland for wlfreerdp (disable with -DWITH_WAYLAND=OFF)
 * X11 development headers for X11 client (disable with -DWITH_X11=OFF)
 * ALSA development headers/libraris (disable with -DWITH_ALSA=OFF)
