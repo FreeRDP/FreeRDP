@@ -38,7 +38,8 @@ static const struct url_test_pair url_tests[] = {
 	  "xxx%25bar%20ga%3Cka%3Eee%23%25%25%23%25%7Bh%7Dg%7Bf%7Be%25d%7Cc%5Cb%5Ea~p%5Bq%5Dr%60s%3Bt%"
 	  "2Fu%3Fv%3Aw%40x%3Dy%26z%24xxx" },
 	{ "äöúëü", "%C3%A4%C3%B6%C3%BA%C3%AB%C3%BC" },
-	{ "🎅🏄🤘😈", "%F0%9F%8E%85%F0%9F%8F%84%F0%9F%A4%98%F0%9F%98%88" }
+	{ "🎅🏄🤘😈", "%F0%9F%8E%85%F0%9F%8F%84%F0%9F%A4%98%F0%9F%98%88" },
+	{ "foo$.%.^.&.\\.txt+", "foo%24.%25.%5E.%26.%5C.txt%2B" }
 };
 
 static BOOL test_url_escape(void)
