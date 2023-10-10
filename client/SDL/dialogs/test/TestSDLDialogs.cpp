@@ -1,6 +1,7 @@
 #include "../sdl_selectlist.hpp"
 #include "../sdl_input_widgets.hpp"
 
+#include <freerdp/api.h>
 #include <winpr/wlog.h>
 
 BOOL sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file, size_t line,
@@ -62,7 +63,12 @@ static bool test_select_dialog()
 	return true;
 }
 
-extern "C" int TestSDLDialogs(int argc, char* argv[])
+extern "C"
+{
+	FREERDP_API int TestSDLDialogs(int argc, char* argv[]);
+}
+
+int TestSDLDialogs(int argc, char* argv[])
 {
 	int rc = 0;
 

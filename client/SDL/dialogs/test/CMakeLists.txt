@@ -1,7 +1,7 @@
 set(MODULE_NAME "TestSDL")
 set(MODULE_PREFIX "TEST_SDL")
 
-set(DRIVER ${MODULE_NAME}.c)
+set(DRIVER ${MODULE_NAME}.cpp)
 
 set(TEST_SRCS
 	TestSDLDialogs.cpp
@@ -11,7 +11,7 @@ create_test_sourcelist(SRCS
 	${DRIVER}
 	${TEST_SRCS})
 
-add_executable(${MODULE_NAME} ${SRCS})
+add_library(${MODULE_NAME} ${SRCS})
 
 list(APPEND LIBS
     dialogs
