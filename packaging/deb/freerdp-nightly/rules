@@ -24,6 +24,7 @@ DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
                           -DWITH_WAYLAND=ON \
                           -DWITH_CAIRO=ON \
                           -DWITH_CCACHE=OFF \
+                          -DWITH_URIPARSER=ON \
                           -DBUILD_TESTING=OFF \
                           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
                           -DCMAKE_INSTALL_PREFIX=/opt/freerdp-nightly/ \
