@@ -103,7 +103,8 @@ endmacro()
 
 set(CMAKE_REQUIRED_LIBRARIES rt)
 
-option(WITH_URIPARSER "use uriparser library to handle URIs" OFF)
+find_package(uriparser)
+option(WITH_URIPARSER "use uriparser library to handle URIs" ${uriparser_FOUND})
 if (WITH_URIPARSER)
 	find_package(uriparser CONFIG REQUIRED char)
 	add_definitions("-DWITH_URIPARSER")
