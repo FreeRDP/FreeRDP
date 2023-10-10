@@ -172,6 +172,15 @@ if (IOS)
 	include(ConfigOptionsiOS)
 endif(IOS)
 
+if (UNIX AND NOT APPLE)
+    find_package(ALSA)
+    find_package(PulseAudio)
+    find_package(OSS)
+    option(WITH_ALSA "use alsa for sound" ${ALSA_FOUND})
+    option(WITH_PULSE "use alsa for sound" ${PULSE_FOUND})
+    option(WITH_OSS "use alsa for sound" ${OSS_FOUND})
+endif()
+
 option(BUILD_FUZZERS "Use BUILD_FUZZERS to build fuzzing tests" OFF)
 
 if (BUILD_FUZZERS)
