@@ -18,6 +18,8 @@
 
 define_channel_client_subsystem("rdpsnd" "sndio" "")
 
+find_package(SNDIO REQUIRED)
+
 set(${MODULE_PREFIX}_SRCS
 	rdpsnd_sndio.c
 )
