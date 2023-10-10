@@ -17,6 +17,8 @@
 
 define_channel_client_subsystem("rdpsnd" "alsa" "")
 
+find_package(ALSA REQUIRED)
+
 set(${MODULE_PREFIX}_SRCS
 	rdpsnd_alsa.c)
 
