@@ -17,6 +17,8 @@
 
 define_channel_client_subsystem("audin" "oss" "")
 
+find_package(OSS REQUIRED)
+
 set(${MODULE_PREFIX}_SRCS
 	audin_oss.c
 )

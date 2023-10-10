@@ -17,12 +17,15 @@
 
 define_channel_client_subsystem("tsmf" "oss" "audio")
 
+find_package(OSS REQUIRED)
+
 set(${MODULE_PREFIX}_SRCS
 	tsmf_oss.c
 )
 
 set(${MODULE_PREFIX}_LIBS
     winpr
+    ${OSS_LIBRARIES}
 )
 
 include_directories(..)
