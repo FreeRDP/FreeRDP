@@ -451,8 +451,8 @@ static BOOL arm_stringEncodeW(const BYTE* pin, size_t cbIn, BYTE** ppOut, size_t
 	return TRUE;
 }
 
-BOOL arm_encodeRedirectPasswd(rdpSettings* settings, const rdpCertificate* cert,
-                              WINPR_CIPHER_CTX* cipher)
+static BOOL arm_encodeRedirectPasswd(rdpSettings* settings, const rdpCertificate* cert,
+                                     WINPR_CIPHER_CTX* cipher)
 {
 	BOOL ret = FALSE;
 	BYTE* output = NULL;

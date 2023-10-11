@@ -57,8 +57,8 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 	for (y = 0; y < height; y++)
 	{
 		src = rgb_data + y * rowstride;
-		src_32 = (UINT32*)src;
-		src_16 = (UINT16*)src;
+		src_32 = (const UINT32*)src;
+		src_16 = (const UINT16*)src;
 
 		switch (pixel_format)
 		{
