@@ -71,15 +71,16 @@ struct format_option_recurse
  * Log Layout
  */
 WINPR_ATTR_FORMAT_ARG(3, 0)
-static void WLog_PrintMessagePrefixVA(wLog* log, wLogMessage* message, const char* format,
-                                      va_list args)
+static void WLog_PrintMessagePrefixVA(wLog* log, wLogMessage* message,
+                                      WINPR_FORMAT_ARG const char* format, va_list args)
 {
 	WINPR_ASSERT(message);
 	vsnprintf(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, format, args);
 }
 
 WINPR_ATTR_FORMAT_ARG(3, 4)
-static void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message, const char* format, ...)
+static void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message,
+                                    WINPR_FORMAT_ARG const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);

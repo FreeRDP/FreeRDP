@@ -1258,7 +1258,7 @@ static const struct
 } options = { "--pcap=", "--fast", "--port=", "--local-only", "--cert=", "--key=" };
 
 WINPR_ATTR_FORMAT_ARG(2, 0)
-static void print_entry(FILE* fp, const char* fmt, const char* what, size_t size)
+static void print_entry(FILE* fp, WINPR_FORMAT_ARG const char* fmt, const char* what, size_t size)
 {
 	char buffer[32] = { 0 };
 	strncpy(buffer, what, MIN(size, sizeof(buffer)));
