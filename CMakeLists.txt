@@ -28,11 +28,12 @@ set(CMAKE_C_EXTENSIONS ON)
 
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
+	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
 endif()
 
 add_custom_target(fuzzers
-                  COMMENT "Build fuzzers")
+	COMMENT "Build fuzzers"
+)
 
 if(NOT DEFINED VENDOR)
 	set(VENDOR "FreeRDP" CACHE STRING "FreeRDP package vendor")
@@ -170,7 +171,7 @@ endif()
 
 option(WITH_FREERDP_DEPRECATED_COMMANDLINE "Build FreeRDP deprecated command line options" OFF)
 if (WITH_FREERDP_DEPRECATED_COMMANDLINE)
-    add_definitions(-DWITH_FREERDP_DEPRECATED_COMMANDLINE)
+	add_definitions(-DWITH_FREERDP_DEPRECATED_COMMANDLINE)
 endif()
 
 # Make paths absolute
@@ -538,9 +539,9 @@ if(ANDROID)
 endif()
 
 if(WITH_VALGRIND_MEMCHECK)
-    check_include_files(valgrind/memcheck.h FREERDP_HAVE_VALGRIND_MEMCHECK_H)
+	check_include_files(valgrind/memcheck.h FREERDP_HAVE_VALGRIND_MEMCHECK_H)
 else()
-    unset(FREERDP_HAVE_VALGRIND_MEMCHECK_H CACHE)
+	unset(FREERDP_HAVE_VALGRIND_MEMCHECK_H CACHE)
 endif()
 
 if((UNIX OR CYGWIN) AND NOT BSD)
@@ -644,7 +645,10 @@ find_feature(PCSC ${PCSC_FEATURE_TYPE} ${PCSC_FEATURE_PURPOSE} ${PCSC_FEATURE_DE
 find_package(cJSON)
 option(WITH_AAD "Compile with support for Azure AD authentication" ${cJSON_FOUND})
 if (WITH_AAD)
-	find_package(cJSON REQUIRED)
+	if (NOT cJSON_FOUND)
+		find_package(PkgConfig REQUIRED)
+		pkg_check_modules(CJSON REQUIRED libcjson)
+	endif()
 	include_directories(${CJSON_INCLUDE_DIRS})
 endif()
 
@@ -872,9 +876,9 @@ endif()
 set(FREERDP_BUILD_CONFIG_LIST "")
 GET_CMAKE_PROPERTY(res VARIABLES)
 FOREACH(var ${res})
-    IF (var MATCHES "^WITH_*|^BUILD_TESTING|^WINPR_HAVE_*")
-				LIST(APPEND FREERDP_BUILD_CONFIG_LIST "${var}=${${var}}")
-		ENDIF()
+	IF (var MATCHES "^WITH_*|^BUILD_TESTING|^WINPR_HAVE_*")
+		LIST(APPEND FREERDP_BUILD_CONFIG_LIST "${var}=${${var}}")
+	ENDIF()
 ENDFOREACH()
 string(REPLACE ";" " " FREERDP_BUILD_CONFIG "${FREERDP_BUILD_CONFIG_LIST}")
 
