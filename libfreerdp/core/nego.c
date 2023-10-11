@@ -1730,7 +1730,7 @@ void nego_enable_ext(rdpNego* nego, BOOL enable_ext)
 /**
  * Enable RDS AAD security protocol.
  * @param nego A pointer to the NEGO struct pointer to the negotiation structure
- * @param enable_ext whether to enable RDS AAD Auth protocol (TRUE for
+ * @param enable_aad whether to enable RDS AAD Auth protocol (TRUE for
  * enabled, FALSE for disabled)
  */
 
