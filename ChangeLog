@@ -1,9 +1,41 @@
-# YYYY-MM-DD Version 3.x.y
+# 2023-11-27 Version 3.0.0-rc0
+
+Nearly 2 months of testing, bugfixing and API refinements later we´re
+happy to announce the first release candidate for FreeRDP 3.0
+The API should now be considered stable and only minor changes (if at all)
+will happen from this point on, so every project using FreeRDP can check
+compatibility with upcoming 3.0
 
 Noteworthy changes:
+* Updated rdpSettings API #9465:
+  * getter/setter now use enum types for keys (generates compiler warnings for mismatch)
+  * Refined functions (added missing, dropped problematic ones)
+  * prepared opaque settings (direct struct access now deprecated)
+* Server side [MS-RDPEL] channel #9471
+* Relative mouse movement support #9459
+* relocatable pkg-config files (enable with -DPKG_CONFIG_RELOCATABLE=ON, #9453)
+* cliprdr dropped support for fuse2 (#9453)
+* added support for uriparser for clipboard file:// parsing (#9455)
+* aFreeRDP translation for traditional chinese (zh-rTW) added (#9450)
+* fixed sdl-freerdp crash on credential dialog (#9455)
+* fixed sdl-freerdp alt+tab in fullscreen (#9442)
+* added /connect-child-session option (WIN32 only, #9427)
+* fix rfx-image codec setup (#9425)
+* added missing cmake configuration for winpr-tools (#9453)
+* cleaned up cmake configuration files, dropped no longer required ones (#9455)
+* fixed x11 keyboard layout detection (#9433)
+* add missing API calls for server implementation (tested against ogon, #9453)
+* keep dynamic channels in a hash table instead of a list (#9448)
+* keep TSCredentials in server peer instance (#9430)
+* fix FFMPEG/AAC encoding (#9576)
+* support remote credential guard (#9574)
+* fix printing on mac os 14 (#9569)
+* improve RPC gateway support (#9508)
+* add opus audio support for gnome-remote-desktop (#9575)
+* server side handling of mouse cursor channel [MS-RDPEMSC] (#9513)
 
 For a complete and detailed change log since the last release run:
-git log 3.x.y..3.0.0-beta4
+git log 3.0.0-rc0..3.0.0-beta4
 
 # 2023-09-31 Version 3.0.0-beta4
 
