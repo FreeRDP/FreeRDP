@@ -790,16 +790,14 @@ extern "C"
 #define DEFINE_EVENT_SUBSCRIBE(name)                                                              \
 	static INLINE int PubSub_Subscribe##name(wPubSub* pubSub, p##name##EventHandler EventHandler) \
 	{                                                                                             \
-		pEventHandler handler = WINPR_EVENT_CAST(pEventHandler, EventHandler);                    \
-		return PubSub_Subscribe(pubSub, #name, handler);                                          \
+		return PubSub_Subscribe(pubSub, #name, EventHandler);                                     \
 	}
 
 #define DEFINE_EVENT_UNSUBSCRIBE(name)                                             \
 	static INLINE int PubSub_Unsubscribe##name(wPubSub* pubSub,                    \
 	                                           p##name##EventHandler EventHandler) \
 	{                                                                              \
-		pEventHandler handler = WINPR_EVENT_CAST(pEventHandler, EventHandler);     \
-		return PubSub_Unsubscribe(pubSub, #name, handler);                         \
+		return PubSub_Unsubscribe(pubSub, #name, EventHandler);                    \
 	}
 
 #define DEFINE_EVENT_BEGIN(name) \
@@ -832,10 +830,8 @@ extern "C"
 	WINPR_API void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, size_t count);
 	WINPR_API wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName);
 
-	WINPR_API int PubSub_Subscribe(wPubSub* pubSub, const char* EventName,
-	                               pEventHandler EventHandler);
-	WINPR_API int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName,
-	                                 pEventHandler EventHandler);
+	WINPR_API int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, ...);
+	WINPR_API int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...);
 
 	WINPR_API int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context,
 	                             const wEventArgs* e);
