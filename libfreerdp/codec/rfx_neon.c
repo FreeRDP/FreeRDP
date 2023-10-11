@@ -33,8 +33,7 @@
 /* rfx_decode_YCbCr_to_RGB_NEON code now resides in the primitives library. */
 
 static __inline void __attribute__((__gnu_inline__, __always_inline__, __artificial__))
-rfx_quantization_decode_block_NEON(INT16* WINPR_RESTRICT buffer, const int buffer_size,
-                                   const UINT32 factor)
+rfx_quantization_decode_block_NEON(INT16* buffer, const size_t buffer_size, const UINT32 factor)
 {
 	int16x8_t quantFactors = vdupq_n_s16(factor);
 	int16x8_t* buf = (int16x8_t*)buffer;
@@ -49,8 +48,7 @@ rfx_quantization_decode_block_NEON(INT16* WINPR_RESTRICT buffer, const int buffe
 	} while (buf < buf_end);
 }
 
-static void rfx_quantization_decode_NEON(INT16* WINPR_RESTRICT buffer,
-                                         const UINT32* WINPR_RESTRICT quantVals)
+static void rfx_quantization_decode_NEON(INT16* buffer, const UINT32* WINPR_RESTRICT quantVals)
 {
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(quantVals);
