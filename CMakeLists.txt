@@ -77,6 +77,7 @@ if(WITH_CLANG_FORMAT)
 	include(ClangFormat)
 endif()
 
+include(CompilerFlags)
 include(DetectBSD)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
@@ -392,19 +393,7 @@ if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
 endif()
 
 if(MSVC)
-	# Remove previous warning definitions,
-	# NMake is otherwise complaining.
-	foreach (flags_var_to_scrub
-		CMAKE_C_FLAGS
-		CMAKE_C_FLAGS_RELEASE
-		CMAKE_C_FLAGS_RELWITHDEBINFO
-		CMAKE_C_FLAGS_MINSIZEREL)
-		string (REGEX REPLACE "(^| )[/-]W[ ]*[1-9]" " "
-		"${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
-	endforeach()
-
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Gd")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W3")
 
 	set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
 	set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
