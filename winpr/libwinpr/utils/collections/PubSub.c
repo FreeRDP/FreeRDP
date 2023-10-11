@@ -115,12 +115,15 @@ void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, size_t count)
 		PubSub_Unlock(pubSub);
 }
 
-int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler)
+int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, ...)
 {
 	wEventType* event;
 	int status = -1;
 	WINPR_ASSERT(pubSub);
-	WINPR_ASSERT(EventHandler);
+
+	va_list ap;
+	va_start(ap, EventName);
+	pEventHandler EventHandler = va_arg(ap, pEventHandler);
 
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
@@ -140,17 +143,21 @@ int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, pEventHandler Event
 	if (pubSub->synchronized)
 		PubSub_Unlock(pubSub);
 
+	va_end(ap);
 	return status;
 }
 
-int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler EventHandler)
+int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...)
 {
 	size_t index;
 	wEventType* event;
 	int status = -1;
 	WINPR_ASSERT(pubSub);
 	WINPR_ASSERT(EventName);
-	WINPR_ASSERT(EventHandler);
+
+	va_list ap;
+	va_start(ap, EventName);
+	pEventHandler EventHandler = va_arg(ap, pEventHandler);
 
 	if (pubSub->synchronized)
 		PubSub_Lock(pubSub);
@@ -177,6 +184,7 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, pEventHandler Eve
 	if (pubSub->synchronized)
 		PubSub_Unlock(pubSub);
 
+	va_end(ap);
 	return status;
 }
 
