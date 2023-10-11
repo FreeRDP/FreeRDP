@@ -19,6 +19,7 @@
 
 #include <winpr/config.h>
 
+#include <winpr/platform.h>
 #include <winpr/synch.h>
 #include <winpr/handle.h>
 
@@ -221,14 +222,10 @@ USHORT QueryDepthSList(WINPR_PSLIST_HEADER ListHead)
 LONG InterlockedIncrement(LONG volatile* Addend)
 {
 #if defined(__GNUC__) || defined(__clang__)
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Watomic-implicit-seq-cst"
-#endif
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 	return __sync_add_and_fetch(Addend, 1);
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+	WINPR_PRAGMA_DIAG_POP
 #else
 	return 0;
 #endif
@@ -237,14 +234,10 @@ LONG InterlockedIncrement(LONG volatile* Addend)
 LONG InterlockedDecrement(LONG volatile* Addend)
 {
 #if defined(__GNUC__) || defined(__clang__)
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Watomic-implicit-seq-cst"
-#endif
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 	return __sync_sub_and_fetch(Addend, 1);
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+	WINPR_PRAGMA_DIAG_POP
 #else
 	return 0;
 #endif
@@ -253,14 +246,10 @@ LONG InterlockedDecrement(LONG volatile* Addend)
 LONG InterlockedExchange(LONG volatile* Target, LONG Value)
 {
 #if defined(__GNUC__) || defined(__clang__)
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Watomic-implicit-seq-cst"
-#endif
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 	return __sync_val_compare_and_swap(Target, *Target, Value);
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+	WINPR_PRAGMA_DIAG_POP
 #else
 	return 0;
 #endif
@@ -269,14 +258,10 @@ LONG InterlockedExchange(LONG volatile* Target, LONG Value)
 LONG InterlockedExchangeAdd(LONG volatile* Addend, LONG Value)
 {
 #if defined(__GNUC__) || defined(__clang__)
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Watomic-implicit-seq-cst"
-#endif
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 	return __sync_fetch_and_add(Addend, Value);
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+	WINPR_PRAGMA_DIAG_POP
 #else
 	return 0;
 #endif
@@ -285,14 +270,10 @@ LONG InterlockedExchangeAdd(LONG volatile* Addend, LONG Value)
 LONG InterlockedCompareExchange(LONG volatile* Destination, LONG Exchange, LONG Comperand)
 {
 #if defined(__GNUC__) || defined(__clang__)
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Watomic-implicit-seq-cst"
-#endif
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+	WINPR_PRAGMA_DIAG_POP
 #else
 	return 0;
 #endif
@@ -302,14 +283,10 @@ PVOID InterlockedCompareExchangePointer(PVOID volatile* Destination, PVOID Excha
                                         PVOID Comperand)
 {
 #if defined(__GNUC__) || defined(__clang__)
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Watomic-implicit-seq-cst"
-#endif
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+	WINPR_PRAGMA_DIAG_POP
 #else
 	return 0;
 #endif
@@ -390,14 +367,10 @@ LONGLONG InterlockedCompareExchange64(LONGLONG volatile* Destination, LONGLONG E
                                       LONGLONG Comperand)
 {
 #if defined(__GNUC__) || defined(__clang__)
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Watomic-implicit-seq-cst"
-#endif
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 	return __sync_val_compare_and_swap(Destination, Comperand, Exchange);
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
+	WINPR_PRAGMA_DIAG_POP
 #else
 	return 0;
 #endif

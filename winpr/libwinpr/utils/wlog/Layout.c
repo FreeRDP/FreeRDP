@@ -289,7 +289,13 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 
 	if (!replace_format_string(layout->FormatString, &recurse, format, ARRAYSIZE(format)))
 		return FALSE;
+
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY
+
 	WLog_PrintMessagePrefix(log, message, format);
+
+	WINPR_PRAGMA_DIAG_POP
 
 	return TRUE;
 }

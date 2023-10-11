@@ -31,10 +31,8 @@
 
 #else
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreserved-id-macro"
-#endif
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #define DUMMYUNIONNAME u
 #define DUMMYUNIONNAME1 u1
@@ -960,7 +958,7 @@ extern "C++"
 	((type*)((PCHAR)(address) - (ULONG_PTR)(&((type*)0)->field)))
 
 #if defined(__clang__)
-#pragma clang diagnostic pop
+WINPR_PRAGMA_DIAG_POP
 #endif
 
 #endif

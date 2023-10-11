@@ -21,6 +21,7 @@
 #define WINPR_INTERLOCKED_H
 
 #include <winpr/spec.h>
+#include <winpr/platform.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/platform.h>
@@ -78,18 +79,14 @@ extern "C"
 
 #else /* _WIN64 */
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreserved-id-macro"
-#endif
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #define WINPR_SLIST_ENTRY WINPR_SINGLE_LIST_ENTRY
 #define _WINPR_SLIST_ENTRY _WINPR_SINGLE_LIST_ENTRY
 #define WINPR_PSLIST_ENTRY WINPR_PSINGLE_LIST_ENTRY
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+	WINPR_PRAGMA_DIAG_POP
 
 #endif /* _WIN64 */
 

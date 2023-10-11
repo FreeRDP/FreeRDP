@@ -17,13 +17,12 @@
  * limitations under the License.
  */
 
+#include <winpr/platform.h>
 #include <freerdp/svc.h>
 
 /* The 'entry' function pointers have variable arguments. */
-#if defined(__GNUC__)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wstrict-prototypes"
-#endif
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_STRICT_PROTOTYPES
 
 typedef struct
 {
@@ -52,6 +51,4 @@ typedef struct
 	const STATIC_SUBSYSTEM_ENTRY* table;
 } STATIC_ADDIN_TABLE;
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic pop
-#endif
+WINPR_PRAGMA_DIAG_POP

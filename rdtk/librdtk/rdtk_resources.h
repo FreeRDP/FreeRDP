@@ -20,6 +20,7 @@
 #define RDTK_RESOURCES_PRIVATE_H
 
 #include <stdint.h>
+#include <winpr/wtypes.h>
 #include <rdtk/rdtk.h>
 
 #include "rdtk_engine.h"

@@ -19,6 +19,7 @@
 
 #include <winpr/config.h>
 
+#include <winpr/platform.h>
 #include <winpr/windows.h>
 
 #include <winpr/synch.h>
@@ -34,10 +35,8 @@
 
 #include <time.h>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreserved-id-macro"
-#endif
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #ifdef WINPR_HAVE_UNISTD_H
 #ifndef _XOPEN_SOURCE
@@ -46,9 +45,7 @@
 #include <unistd.h>
 #endif
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+WINPR_PRAGMA_DIAG_POP
 
 VOID Sleep(DWORD dwMilliseconds)
 {
