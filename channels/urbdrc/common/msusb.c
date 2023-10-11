@@ -103,7 +103,7 @@ out_error:
 	return NULL;
 }
 
-static MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_new()
+static MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_new(void)
 {
 	return (MSUSB_INTERFACE_DESCRIPTOR*)calloc(1, sizeof(MSUSB_INTERFACE_DESCRIPTOR));
 }

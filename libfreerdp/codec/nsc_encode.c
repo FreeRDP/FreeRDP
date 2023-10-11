@@ -140,8 +140,8 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UI
 		coplane = context->priv->PlaneBuffers[1] + y * rw;
 		cgplane = context->priv->PlaneBuffers[2] + y * rw;
 		aplane = context->priv->PlaneBuffers[3] + y * context->width;
-		src_32 = (UINT32*)src;
-		src_16 = (UINT16*)src;
+		src_32 = (const UINT32*)src;
+		src_16 = (const UINT16*)src;
 
 		for (x = 0; x < context->width; x++)
 		{

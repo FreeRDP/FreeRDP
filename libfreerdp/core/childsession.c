@@ -137,13 +137,13 @@ static long transport_bio_named_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			int timeout = (int)arg1;
 			return 1;
 		}
-		break;
+
 		case BIO_C_WAIT_WRITE:
 		{
 			int timeout = (int)arg1;
 			return 1;
 		}
-		break;
+
 		default:
 			break;
 	}
@@ -224,7 +224,7 @@ static int transport_bio_named_free(BIO* bio)
 	return 1;
 }
 
-BIO_METHOD* BIO_s_namedpipe(void)
+static BIO_METHOD* BIO_s_namedpipe(void)
 {
 	static BIO_METHOD* bio_methods = NULL;
 
@@ -246,7 +246,7 @@ BIO_METHOD* BIO_s_namedpipe(void)
 }
 
 typedef NTSTATUS (*WinStationCreateChildSessionTransportFn)(WCHAR* path, DWORD len);
-BOOL createChildSessionTransport(HANDLE* pFile)
+static BOOL createChildSessionTransport(HANDLE* pFile)
 {
 	WINPR_ASSERT(pFile);
 
