@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <winpr/platform.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/error.h>
@@ -299,17 +300,13 @@ extern "C"
 	InitializeCriticalSectionAndSpinCount(lpCriticalSection, dwSpinCount)
 #endif
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreserved-id-macro"
-#endif
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #ifndef _RTL_RUN_ONCE_DEF
 #define _RTL_RUN_ONCE_DEF
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+	WINPR_PRAGMA_DIAG_POP
 
 #define RTL_RUN_ONCE_INIT \
 	{                     \

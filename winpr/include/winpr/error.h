@@ -20,6 +20,7 @@
 #ifndef WINPR_ERROR_H
 #define WINPR_ERROR_H
 
+#include <winpr/platform.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 
@@ -143,10 +144,8 @@
 
 #define HRESULT_FROM_NT(x) (((x) | FACILITY_NT_BIT))
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreserved-id-macro"
-#endif
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #ifdef __cplusplus
 #define ERROR_CAST(t, val) static_cast<t>(val)
@@ -161,9 +160,7 @@ static INLINE HRESULT HRESULT_FROM_WIN32(unsigned long x)
 	return ERROR_CAST(HRESULT, (((x)&0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000));
 }
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+WINPR_PRAGMA_DIAG_POP
 
 #define HRESULT_SEVERITY(hr) (((hr) >> 31) & 0x1)
 

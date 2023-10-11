@@ -1,18 +1,15 @@
 #include <winpr/crt.h>
 #include <winpr/print.h>
+#include <winpr/platform.h>
 
 #include <freerdp/codec/clear.h>
 
-#if __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-const-variable"
-#endif
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_UNUSED_CONST_VAR
 /* [MS-RDPEGFX] 4.1.1.1 Example 1 */
 static const BYTE PREPARE_CLEAR_EXAMPLE_1[] = "\x03\xc3\x11\x00";
 static const BYTE TEST_CLEAR_EXAMPLE_1[] = "\x03\xc3\x11\x00";
-#if __GNUC__
-#pragma GCC diagnostic pop
-#endif
+WINPR_PRAGMA_DIAG_POP
 
 /* [MS-RDPEGFX] 4.1.1.1 Example 2 */
 static const BYTE TEST_CLEAR_EXAMPLE_2[] =

@@ -20,6 +20,7 @@
 #ifndef WINPR_WINSOCK_H
 #define WINPR_WINSOCK_H
 
+#include <winpr/platform.h>
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
 #include <winpr/windows.h>
@@ -185,10 +186,8 @@ typedef union sockaddr_gen
 	struct sockaddr_in6_old AddressIn6;
 } sockaddr_gen;
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreserved-id-macro"
-#endif
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #define _IFF_UP 0x00000001
 #define _IFF_BROADCAST 0x00000002
@@ -196,9 +195,7 @@ typedef union sockaddr_gen
 #define _IFF_POINTTOPOINT 0x00000008
 #define _IFF_MULTICAST 0x00000010
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+WINPR_PRAGMA_DIAG_POP
 
 typedef struct
 {

@@ -2,6 +2,7 @@
 #include <winpr/print.h>
 #include <winpr/ssl.h>
 #include <winpr/wlog.h>
+#include <winpr/platform.h>
 
 #include <freerdp/assistance.h>
 
@@ -21,16 +22,12 @@ static const char TEST_MSRC_INCIDENT_FILE_TYPE1[] =
     "L=\"0\" />"
     "</UPLOADINFO>";
 
-#if __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-const-variable"
-#endif
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_UNUSED_CONST_VAR
 static const BYTE TEST_MSRC_INCIDENT_EXPERT_BLOB_TYPE1[32] =
     "\x3C\x9C\xAE\x0B\xCE\x7A\xB1\x5C\x8A\xAC\x01\xD6\x76\x04\x5E\xDF"
     "\x3F\xFA\xF0\x92\xE2\xDE\x36\x8A\x20\x17\xE6\x8A\x0D\xED\x7C\x90";
-#if __GNUC__
-#pragma GCC diagnostic pop
-#endif
+WINPR_PRAGMA_DIAG_POP
 
 static const char TEST_MSRC_INCIDENT_PASSWORD_TYPE2[] = "48BJQ853X3B4";
 

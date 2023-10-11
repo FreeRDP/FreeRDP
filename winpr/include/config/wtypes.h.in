@@ -20,6 +20,8 @@
 #ifndef WINPR_WTYPES_H
 #define WINPR_WTYPES_H
 
+#include <winpr/platform.h>
+
 // C99 related macros
 #if defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L)
 #define WINPR_RESTRICT restrict
@@ -101,10 +103,8 @@ typedef LONG_PTR SSIZE_T;
 #define VOID void
 #endif
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wreserved-id-macro"
-#endif
+WINPR_PRAGMA_DIAG_PUSH
+WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 
 #if !defined(_WIN32) && !defined(__MINGW32__)
 
@@ -601,8 +601,6 @@ typedef const BYTE* LPCBYTE;
 #define _ftelli64(fp) ftello(fp)
 #endif
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
+WINPR_PRAGMA_DIAG_POP
 
 #endif /* WINPR_WTYPES_H */
