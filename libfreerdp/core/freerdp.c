@@ -1211,7 +1211,7 @@ void clearChannelError(rdpContext* context)
 }
 
 WINPR_ATTR_FORMAT_ARG(3, 4)
-void setChannelError(rdpContext* context, UINT errorNum, const char* format, ...)
+void setChannelError(rdpContext* context, UINT errorNum, WINPR_FORMAT_ARG const char* format, ...)
 {
 	va_list ap;
 	va_start(ap, format);

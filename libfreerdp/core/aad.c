@@ -53,7 +53,7 @@ static BOOL get_encoded_rsa_params(wLog* wlog, rdpPrivateKey* key, char** e, cha
 static BOOL generate_pop_key(rdpAad* aad);
 
 WINPR_ATTR_FORMAT_ARG(2, 3)
-static SSIZE_T stream_sprintf(wStream* s, const char* fmt, ...)
+static SSIZE_T stream_sprintf(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);

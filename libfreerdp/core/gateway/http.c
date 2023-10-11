@@ -469,7 +469,7 @@ BOOL http_request_set_transfer_encoding(HttpRequest* request, TRANSFER_ENCODING 
 }
 
 WINPR_ATTR_FORMAT_ARG(2, 3)
-static BOOL http_encode_print(wStream* s, const char* fmt, ...)
+static BOOL http_encode_print(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	char* str;
 	va_list ap;

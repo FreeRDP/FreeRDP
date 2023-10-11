@@ -291,7 +291,7 @@ static const char* tsg_state_to_string(TSG_STATE state)
 }
 
 WINPR_ATTR_FORMAT_ARG(3, 4)
-static BOOL tsg_print(char** buffer, size_t* len, const char* fmt, ...)
+static BOOL tsg_print(char** buffer, size_t* len, WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	int rc;
 	va_list ap;
