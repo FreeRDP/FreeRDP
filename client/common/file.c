@@ -673,12 +673,11 @@ static BOOL freerdp_client_parse_rdp_file_integer(rdpFile* file, const char* nam
 	return freerdp_client_rdp_file_set_integer(file, name, ivalue);
 }
 
-/**
+/** set a string value in the provided rdp file context
  *
  * @param file rdpFile
  * @param name name of the string
  * @param value value of the string to set
- * @param index line index of the rdpFile
  * @return 0 on success, 1 if the key wasn't found (not a standard key), -1 on error
  */
 

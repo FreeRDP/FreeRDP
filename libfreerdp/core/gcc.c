@@ -1117,7 +1117,6 @@ static BOOL updateEarlyServerCaps(rdpSettings* settings, UINT32 earlyCapabilityF
  * msdn{cc240510}
  * @param s stream
  * @param mcs The MCS instance
- * @param blockLength the length of the block
  *
  * @return \b TRUE for success, \b FALSE otherwise
  */
@@ -1513,7 +1512,6 @@ BOOL gcc_write_server_core_data(wStream* s, rdpMcs* mcs)
  * msdn{cc240511}
  * @param s stream
  * @param mcs MCS instance
- * @param blockLength the length of the block
  *
  * @return \b TRUE for success, \b FALSE otherwise
  */
@@ -1929,7 +1927,6 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
  *
  * @param s stream
  * @param mcs The MCS instance
- * @param blockLength the length of the block
  *
  * @return \b TRUE for success, \b FALSE otherwise
  */
@@ -2085,7 +2082,6 @@ BOOL gcc_write_server_network_data(wStream* s, const rdpMcs* mcs)
  * msdn{cc240514}
  * @param s stream
  * @param mcs The MCS instance
- * @param blockLength the length of the block
  *
  * @return \b TRUE for success, \b FALSE otherwise
  */
@@ -2180,7 +2176,6 @@ BOOL gcc_write_client_cluster_data(wStream* s, const rdpMcs* mcs)
  * msdn{dd305336}
  * @param s stream
  * @param mcs The MCS instance
- * @param blockLength the lenght of the block
  *
  * @return \b TRUE for success, \b FALSE otherwise
  */
@@ -2462,7 +2457,6 @@ BOOL gcc_write_server_message_channel_data(wStream* s, const rdpMcs* mcs)
  * msdn{jj217498}
  * @param s stream
  * @param mcs The MCS instance
- * @param blockLength the length of the block
  *
  * @return \b TRUE for success, \b FALSE otherwise
  */
