@@ -111,6 +111,7 @@ extern "C"
 	                                                UINT16 y);
 	FREERDP_API BOOL freerdp_input_send_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xDelta,
 	                                                    INT16 yDelta);
+	FREERDP_API BOOL freerdp_input_send_qoe_timestamp(rdpInput* input, UINT32 timestampMS);
 	FREERDP_API BOOL freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags,
 	                                                         UINT16 x, UINT16 y);
 	FREERDP_API BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates);
