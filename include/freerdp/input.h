@@ -75,6 +75,8 @@ extern "C"
 	typedef BOOL (*pKeyboardEvent)(rdpInput* input, UINT16 flags, UINT8 code);
 	typedef BOOL (*pUnicodeKeyboardEvent)(rdpInput* input, UINT16 flags, UINT16 code);
 	typedef BOOL (*pMouseEvent)(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
+	typedef BOOL (*pRelMouseEvent)(rdpInput* input, UINT16 flags, INT16 xDelta, INT16 yDelta);
+	typedef BOOL (*pQoEEvent)(rdpInput* input, UINT32 timestampMS);
 	typedef BOOL (*pExtendedMouseEvent)(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y);
 	typedef BOOL (*pFocusInEvent)(rdpInput* input, UINT16 toggleStates);
 	typedef BOOL (*pKeyboardPauseEvent)(rdpInput* input);
@@ -92,8 +94,10 @@ extern "C"
 		pExtendedMouseEvent ExtendedMouseEvent;     /* 20 */
 		pFocusInEvent FocusInEvent;                 /*21 */
 		pKeyboardPauseEvent KeyboardPauseEvent;     /* 22 */
+		pRelMouseEvent RelMouseEvent;               /* 23 */
+		pQoEEvent QoEEvent;                         /* 24 */
 
-		UINT32 paddingB[32 - 23]; /* 23 */
+		UINT32 paddingB[32 - 25]; /* 25 */
 	};
 
 	FREERDP_API BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags);
@@ -105,6 +109,8 @@ extern "C"
 	                                                           UINT16 code);
 	FREERDP_API BOOL freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
 	                                                UINT16 y);
+	FREERDP_API BOOL freerdp_input_send_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xDelta,
+	                                                    INT16 yDelta);
 	FREERDP_API BOOL freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags,
 	                                                         UINT16 x, UINT16 y);
 	FREERDP_API BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates);
