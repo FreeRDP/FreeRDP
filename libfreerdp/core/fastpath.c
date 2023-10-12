@@ -760,6 +760,34 @@ static BOOL fastpath_recv_input_event_relmouse(rdpFastPath* fastpath, wStream* s
 	return IFCALLRESULT(TRUE, input->RelMouseEvent, input, pointerFlags, xDelta, yDelta);
 }
 
+static BOOL fastpath_recv_input_event_qoe(rdpFastPath* fastpath, wStream* s, BYTE eventFlags)
+{
+	WINPR_ASSERT(fastpath);
+	WINPR_ASSERT(fastpath->rdp);
+	WINPR_ASSERT(fastpath->rdp->context);
+	WINPR_ASSERT(fastpath->rdp->input);
+	WINPR_ASSERT(s);
+
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		return FALSE;
+
+	rdpInput* input = fastpath->rdp->input;
+
+	UINT32 timestampMS = 0;
+	Stream_Read_UINT32(s, timestampMS); /* timestamp (4 bytes) */
+
+	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasQoeEvent))
+	{
+		WLog_ERR(TAG,
+		         "Received qoe event(timestamp=%" PRIu32
+		         "ms), but we did not announce support for that",
+		         timestampMS);
+		return FALSE;
+	}
+
+	return IFCALLRESULT(TRUE, input->QoEEvent, input, timestampMS);
+}
+
 static BOOL fastpath_recv_input_event_mousex(rdpFastPath* fastpath, wStream* s, BYTE eventFlags)
 {
 	rdpInput* input;
@@ -878,6 +906,11 @@ static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, wStream* s)
 			if (!fastpath_recv_input_event_relmouse(fastpath, s, eventFlags))
 				return FALSE;
 
+			break;
+
+		case TS_FP_QOETIMESTAMP_EVENT:
+			if (!fastpath_recv_input_event_qoe(fastpath, s, eventFlags))
+				return FALSE;
 			break;
 
 		default:

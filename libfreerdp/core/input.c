@@ -519,6 +519,39 @@ static BOOL input_send_fastpath_relmouse_event(rdpInput* input, UINT16 flags, UI
 	return fastpath_send_input_pdu(rdp->fastpath, s);
 }
 
+static BOOL input_send_fastpath_qoe_event(rdpInput* input, UINT32 timestampMS)
+{
+	WINPR_ASSERT(input);
+	WINPR_ASSERT(input->context);
+	WINPR_ASSERT(input->context->settings);
+
+	rdpRdp* rdp = input->context->rdp;
+	WINPR_ASSERT(rdp);
+
+	if (!input_ensure_client_running(input))
+		return FALSE;
+
+	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasQoeEvent))
+	{
+		WLog_ERR(TAG, "Sending qoe event, but no support for that announced");
+		return FALSE;
+	}
+
+	wStream* s = fastpath_input_pdu_init(rdp->fastpath, 0, TS_FP_QOETIMESTAMP_EVENT);
+
+	if (!s)
+		return FALSE;
+
+	if (!Stream_EnsureRemainingCapacity(s, 4))
+	{
+		Stream_Free(s, TRUE);
+		return FALSE;
+	}
+
+	Stream_Write_UINT32(s, timestampMS);
+	return fastpath_send_input_pdu(rdp->fastpath, s);
+}
+
 static BOOL input_send_fastpath_focus_in_event(rdpInput* input, UINT16 toggleStates)
 {
 	wStream* s;
@@ -834,6 +867,7 @@ BOOL input_register_client_callbacks(rdpInput* input)
 		input->RelMouseEvent = input_send_fastpath_relmouse_event;
 		input->ExtendedMouseEvent = input_send_fastpath_extended_mouse_event;
 		input->FocusInEvent = input_send_fastpath_focus_in_event;
+		input->QoEEvent = input_send_fastpath_qoe_event;
 	}
 	else
 	{
@@ -915,6 +949,14 @@ BOOL freerdp_input_send_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xDe
 		return TRUE;
 
 	return IFCALLRESULT(TRUE, input->RelMouseEvent, input, flags, xDelta, yDelta);
+}
+
+BOOL freerdp_input_send_qoe_timestamp(rdpInput* input, UINT32 timestampMS)
+{
+	if (!input || !input->context)
+		return FALSE;
+
+	return IFCALLRESULT(TRUE, input->QoEEvent, input, timestampMS);
 }
 
 BOOL freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
