@@ -303,6 +303,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_HasMonitorAttributes:
 			return settings->HasMonitorAttributes;
 
+		case FreeRDP_HasRelativeMouseEvent:
+			return settings->HasRelativeMouseEvent;
+
 		case FreeRDP_HiDefRemoteApp:
 			return settings->HiDefRemoteApp;
 
@@ -958,6 +961,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_HasMonitorAttributes:
 			settings->HasMonitorAttributes = cnv.c;
+			break;
+
+		case FreeRDP_HasRelativeMouseEvent:
+			settings->HasRelativeMouseEvent = cnv.c;
 			break;
 
 		case FreeRDP_HiDefRemoteApp:

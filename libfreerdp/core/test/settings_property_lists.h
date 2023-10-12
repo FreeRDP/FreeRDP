@@ -85,6 +85,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_HasExtendedMouseEvent,
 	FreeRDP_HasHorizontalWheel,
 	FreeRDP_HasMonitorAttributes,
+	FreeRDP_HasRelativeMouseEvent,
 	FreeRDP_HiDefRemoteApp,
 	FreeRDP_IPv6Enabled,
 	FreeRDP_IgnoreCertificate,
