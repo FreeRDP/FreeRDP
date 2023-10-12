@@ -1351,6 +1351,10 @@ static BOOL rdp_apply_input_capability_set(rdpSettings* settings, const rdpSetti
 		}
 		if (settings->HasExtendedMouseEvent)
 			settings->HasExtendedMouseEvent = src->HasExtendedMouseEvent;
+		if (settings->HasRelativeMouseEvent)
+			settings->HasRelativeMouseEvent = src->HasRelativeMouseEvent;
+		if (freerdp_settings_get_bool(settings, FreeRDP_HasQoeEvent))
+			settings->HasQoeEvent = freerdp_settings_get_bool(settings, FreeRDP_HasQoeEvent);
 	}
 	return TRUE;
 }
@@ -1404,8 +1408,14 @@ static BOOL rdp_read_input_capability_set(wStream* s, rdpSettings* settings)
 	if (!freerdp_settings_set_bool(settings, FreeRDP_UnicodeInput,
 	                               (inputFlags & INPUT_FLAG_UNICODE) ? TRUE : FALSE))
 		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent,
+	                               (inputFlags & INPUT_FLAG_MOUSE_RELATIVE) ? TRUE : FALSE))
+		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_HasExtendedMouseEvent,
 	                               (inputFlags & INPUT_FLAG_MOUSEX) ? TRUE : FALSE))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_HasQoeEvent,
+	                               (inputFlags & TS_INPUT_FLAG_QOE_TIMESTAMPS) ? TRUE : FALSE))
 		return FALSE;
 
 	return TRUE;
@@ -1431,11 +1441,17 @@ static BOOL rdp_write_input_capability_set(wStream* s, const rdpSettings* settin
 		inputFlags |= INPUT_FLAG_FASTPATH_INPUT2;
 	}
 
-	if (settings->HasHorizontalWheel)
+	if (freerdp_settings_get_bool(settings, FreeRDP_HasRelativeMouseEvent))
+		inputFlags |= INPUT_FLAG_MOUSE_RELATIVE;
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_HasHorizontalWheel))
 		inputFlags |= TS_INPUT_FLAG_MOUSE_HWHEEL;
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_UnicodeInput))
 		inputFlags |= INPUT_FLAG_UNICODE;
+
+	if (freerdp_settings_get_bool(settings, FreeRDP_HasQoeEvent))
+		inputFlags |= TS_INPUT_FLAG_QOE_TIMESTAMPS;
 
 	if (settings->HasExtendedMouseEvent)
 		inputFlags |= INPUT_FLAG_MOUSEX;
