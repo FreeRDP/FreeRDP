@@ -319,7 +319,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Select monitors to use" },
 	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Send mouse motion" },
-	{ "mouse-relative", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+	{ "mouse-relative", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Send mouse motion with relative addressing" },
 	{ "mouse", COMMAND_LINE_VALUE_REQUIRED, "[relative:[on|off],grab:[on|off]]", NULL, NULL, -1,
 	  NULL,
