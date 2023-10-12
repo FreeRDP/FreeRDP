@@ -558,6 +558,11 @@ BOOL gcc_write_conference_create_response(wStream* s, wStream* userData)
 	                              0); /* array of server data blocks */
 }
 
+BOOL gcc_read_client_unused1_data(wStream* s)
+{
+	return Stream_SafeSeek(s, 2);
+}
+
 BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 {
 	WINPR_ASSERT(s);
@@ -619,6 +624,12 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 
 			case CS_MONITOR_EX:
 				if (!gcc_read_client_monitor_extended_data(sub, mcs))
+					return FALSE;
+
+				break;
+
+			case CS_UNUSED1:
+				if (!gcc_read_client_unused1_data(sub))
 					return FALSE;
 
 				break;
@@ -735,6 +746,9 @@ char* gcc_block_type_string(UINT16 type, char* buffer, size_t size)
 			break;
 		case CS_MONITOR_EX:
 			_snprintf(buffer, size, "CS_MONITOR_EX [0x%04" PRIx16 "]", type);
+			break;
+		case CS_UNUSED1:
+			_snprintf(buffer, size, "CS_UNUSED1 [0x%04" PRIx16 "]", type);
 			break;
 		case CS_MULTITRANSPORT:
 			_snprintf(buffer, size, "CS_MONITOR_EX [0x%04" PRIx16 "]", type);
