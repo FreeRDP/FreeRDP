@@ -100,6 +100,7 @@ extern "C"
 #define CS_MONITOR 0xC005
 #define CS_MCS_MSGCHANNEL 0xC006
 #define CS_MONITOR_EX 0xC008
+#define CS_UNUSED1 0xC00C
 #define CS_MULTITRANSPORT 0xC00A
 
 /* Server to Client (SC) data blocks */
