@@ -1538,6 +1538,8 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 
 	WINPR_ASSERT(cctx);
 
+	if (!freerdp_settings_get_bool(cctx->context.settings, FreeRDP_HasRelativeMouseEvent))
+	{
 #if defined(CHANNEL_AINPUT_CLIENT)
 	if (cctx->ainput)
 	{
@@ -1571,6 +1573,7 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 			handled = TRUE;
 	}
 #endif
+	}
 	if (!handled)
 		freerdp_input_send_mouse_event(cctx->context.input, mflags, 0, 0);
 
@@ -1598,6 +1601,11 @@ BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative, UIN
 	BOOL handled = FALSE;
 
 	WINPR_ASSERT(cctx);
+
+	if (freerdp_settings_get_bool(cctx->context.settings, FreeRDP_HasRelativeMouseEvent))
+	{
+		return freerdp_input_send_rel_mouse_event(cctx->context.input, mflags, x, y);
+	}
 
 #if defined(CHANNEL_AINPUT_CLIENT)
 	if (cctx->ainput)
@@ -1650,6 +1658,11 @@ BOOL freerdp_client_send_extended_button_event(rdpClientContext* cctx, BOOL rela
 {
 	BOOL handled = FALSE;
 	WINPR_ASSERT(cctx);
+
+	if (freerdp_settings_get_bool(cctx->context.settings, FreeRDP_HasRelativeMouseEvent))
+	{
+		return freerdp_input_send_rel_mouse_event(cctx->context.input, mflags, x, y);
+	}
 
 #if defined(CHANNEL_AINPUT_CLIENT)
 	if (cctx->ainput)
