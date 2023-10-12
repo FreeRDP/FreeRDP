@@ -227,6 +227,7 @@ static DWORD rdp_version_common(DWORD serverVersion, DWORD clientVersion)
 		case RDP_VERSION_10_9:
 		case RDP_VERSION_10_10:
 		case RDP_VERSION_10_11:
+		case RDP_VERSION_10_12:
 			return version;
 
 		default:
