@@ -129,6 +129,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_HasExtendedMouseEvent, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_HasExtendedMouseEvent" },
 	{ FreeRDP_HasHorizontalWheel, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_HasHorizontalWheel" },
 	{ FreeRDP_HasMonitorAttributes, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_HasMonitorAttributes" },
+	{ FreeRDP_HasQoeEvent, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_HasQoeEvent" },
 	{ FreeRDP_HasRelativeMouseEvent, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_HasRelativeMouseEvent" },
 	{ FreeRDP_HiDefRemoteApp, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_HiDefRemoteApp" },
 	{ FreeRDP_IPv6Enabled, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_IPv6Enabled" },

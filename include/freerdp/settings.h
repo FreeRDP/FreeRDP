@@ -859,6 +859,7 @@ extern "C"
 #define FreeRDP_SuspendInput (2636)
 #define FreeRDP_KeyboardPipeName (2637)
 #define FreeRDP_HasRelativeMouseEvent (2638)
+#define FreeRDP_HasQoeEvent (2639)
 #define FreeRDP_BrushSupportLevel (2688)
 #define FreeRDP_GlyphSupportLevel (2752)
 #define FreeRDP_GlyphCache (2753)
@@ -1490,7 +1491,8 @@ extern "C"
 		ALIGN64 BOOL SuspendInput;       /* 2636 */
 		ALIGN64 char* KeyboardPipeName;  /* 2637 */
 		ALIGN64 BOOL HasRelativeMouseEvent; /* 2638 */
-		UINT64 padding2688[2688 - 2639];    /* 2639 */
+		ALIGN64 BOOL HasQoeEvent;           /* 2639 */
+		UINT64 padding2688[2688 - 2640];    /* 2640 */
 
 		/* Brush Capabilities */
 		ALIGN64 UINT32 BrushSupportLevel; /* 2688 */
