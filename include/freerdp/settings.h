@@ -1755,6 +1755,20 @@ extern "C"
 	 */
 	FREERDP_API BOOL freerdp_settings_copy(rdpSettings* dst, const rdpSettings* src);
 
+	/** \brief copies one setting identified by \b id from \b src to \b dst
+	 *
+	 * The function frees up all allocated data in \b dst before copying the data from \b src
+	 *
+	 * \param dst A pointer for the settings to copy data to. May be NULL (fails copy)
+	 * \param src A pointer to the settings to copy. May be NULL (fails copy)
+	 * \param id The settings identifier to copy
+	 *
+	 *  \return \b TRUE for success, \b FALSE for failure.
+	 */
+
+	FREERDP_API BOOL freerdp_settings_copy_item(rdpSettings* dst, const rdpSettings* src,
+	                                            size_t id);
+
 	/** \brief Free a settings struct with all data in it
 	 *
 	 *  \param settings A pointer to the settings to free, May be NULL
