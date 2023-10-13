@@ -33,21 +33,25 @@ wStream* capture_plugin_packet_new(UINT32 payload_size, UINT16 type)
 
 wStream* capture_plugin_create_session_info_packet(pClientContext* pc)
 {
-	size_t username_length;
 	wStream* s = NULL;
-	rdpSettings* settings;
 
 	if (!pc)
 		return NULL;
 
-	settings = pc->context.settings;
-
-	if (!settings || !settings->Username)
+	rdpSettings* settings = pc->context.settings;
+	if (!settings)
 		return NULL;
 
-	username_length = strlen(settings->Username);
+	const char* Username = freerdp_settings_get_string(settings, FreeRDP_Username);
+	if (!Username)
+		return NULL;
+
+	const size_t username_length = strlen(Username);
 	if ((username_length == 0) || (username_length > UINT16_MAX))
 		return NULL;
+
+	const UINT32 DesktopWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	const UINT32 DesktopHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
 	s = capture_plugin_packet_new(SESSION_INFO_PDU_BASE_SIZE + (UINT32)username_length,
 	                              MESSAGE_TYPE_SESSION_INFO);
@@ -55,9 +59,9 @@ wStream* capture_plugin_create_session_info_packet(pClientContext* pc)
 		return NULL;
 
 	Stream_Write_UINT16(s, (UINT16)username_length);      /* username length (2 bytes) */
-	Stream_Write(s, settings->Username, username_length); /* username */
-	Stream_Write_UINT32(s, settings->DesktopWidth);       /* desktop width (4 bytes) */
-	Stream_Write_UINT32(s, settings->DesktopHeight);      /* desktop height (4 bytes) */
+	Stream_Write(s, Username, username_length);           /* username */
+	Stream_Write_UINT32(s, DesktopWidth);                 /* desktop width (4 bytes) */
+	Stream_Write_UINT32(s, DesktopHeight);                /* desktop height (4 bytes) */
 	Stream_Write_UINT32(
 	    s, freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth)); /* color depth (4 bytes) */
 	Stream_Write(s, pc->pdata->session_id, PROXY_SESSION_ID_LENGTH);   /* color depth (32 bytes) */

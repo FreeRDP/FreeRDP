@@ -311,32 +311,49 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			if (strcmp("rdp", arg->Value) == 0) /* Standard RDP */
 			{
-				settings->RdpSecurity = TRUE;
-				settings->TlsSecurity = FALSE;
-				settings->NlaSecurity = FALSE;
-				settings->ExtSecurity = FALSE;
-				settings->UseRdpSecurityLayer = TRUE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, TRUE))
+					return COMMAND_LINE_ERROR;
 			}
 			else if (strcmp("tls", arg->Value) == 0) /* TLS */
 			{
-				settings->RdpSecurity = FALSE;
-				settings->TlsSecurity = TRUE;
-				settings->NlaSecurity = FALSE;
-				settings->ExtSecurity = FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
+					return COMMAND_LINE_ERROR;
 			}
 			else if (strcmp("nla", arg->Value) == 0) /* NLA */
 			{
-				settings->RdpSecurity = FALSE;
-				settings->TlsSecurity = FALSE;
-				settings->NlaSecurity = TRUE;
-				settings->ExtSecurity = FALSE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
+					return COMMAND_LINE_ERROR;
 			}
 			else if (strcmp("ext", arg->Value) == 0) /* NLA Extended */
 			{
-				settings->RdpSecurity = FALSE;
-				settings->TlsSecurity = FALSE;
-				settings->NlaSecurity = FALSE;
-				settings->ExtSecurity = TRUE;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+					return COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, TRUE))
+					return COMMAND_LINE_ERROR;
 			}
 			else
 			{
@@ -345,19 +362,27 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "sec-rdp")
 		{
-			settings->RdpSecurity = arg->Value ? TRUE : FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity,
+			                               arg->Value ? TRUE : FALSE))
+				return COMMAND_LINE_ERROR;
 		}
 		CommandLineSwitchCase(arg, "sec-tls")
 		{
-			settings->TlsSecurity = arg->Value ? TRUE : FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity,
+			                               arg->Value ? TRUE : FALSE))
+				return COMMAND_LINE_ERROR;
 		}
 		CommandLineSwitchCase(arg, "sec-nla")
 		{
-			settings->NlaSecurity = arg->Value ? TRUE : FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity,
+			                               arg->Value ? TRUE : FALSE))
+				return COMMAND_LINE_ERROR;
 		}
 		CommandLineSwitchCase(arg, "sec-ext")
 		{
-			settings->ExtSecurity = arg->Value ? TRUE : FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity,
+			                               arg->Value ? TRUE : FALSE))
+				return COMMAND_LINE_ERROR;
 		}
 		CommandLineSwitchCase(arg, "sam-file")
 		{

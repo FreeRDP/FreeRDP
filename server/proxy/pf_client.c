@@ -159,16 +159,8 @@ static BOOL pf_client_use_peer_load_balance_info(pClientContext* pc)
 	if (!lb_info)
 		return TRUE;
 
-	free(settings->LoadBalanceInfo);
-
-	settings->LoadBalanceInfoLength = lb_info_len;
-	settings->LoadBalanceInfo = malloc(settings->LoadBalanceInfoLength);
-
-	if (!settings->LoadBalanceInfo)
-		return FALSE;
-
-	CopyMemory(settings->LoadBalanceInfo, lb_info, settings->LoadBalanceInfoLength);
-	return TRUE;
+	return freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo, lb_info,
+	                                        lb_info_len);
 }
 
 static BOOL str_is_empty(const char* str)
@@ -255,14 +247,21 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	 *
 	 * Also, OrderSupport need to be zeroed, because it is currently not supported.
 	 */
-	settings->GlyphSupportLevel = GLYPH_SUPPORT_NONE;
-	ZeroMemory(settings->OrderSupport, 32);
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_GlyphSupportLevel, GLYPH_SUPPORT_NONE))
+		return FALSE;
+
+	void* OrderSupport = freerdp_settings_get_pointer_writable(settings, FreeRDP_OrderSupport);
+	ZeroMemory(OrderSupport, 32);
 
 	if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, DRDYNVC_SVC_CHANNEL_NAME))
-		settings->SupportDynamicChannels = TRUE;
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_SupportDynamicChannels, TRUE))
+			return FALSE;
+	}
 
 	/* Multimon */
-	settings->UseMultimon = TRUE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, TRUE))
+		return FALSE;
 
 	/* Sound */
 	if (!freerdp_settings_set_bool(settings, FreeRDP_AudioCapture, config->AudioInput) ||
@@ -277,29 +276,45 @@ static BOOL pf_client_pre_connect(freerdp* instance)
 	if (config->RemoteApp)
 	{
 		if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RAIL_SVC_CHANNEL_NAME))
-			settings->RemoteApplicationMode = TRUE;
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteApplicationMode, TRUE))
+				return FALSE;
+		}
 	}
 
 	if (config->DeviceRedirection)
 	{
 		if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, RDPDR_SVC_CHANNEL_NAME))
-			settings->DeviceRedirection = TRUE;
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
+				return FALSE;
+		}
 	}
 
 	/* Display control */
-	settings->SupportDisplayControl = config->DisplayControl;
-	settings->DynamicResolutionUpdate = config->DisplayControl;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl, config->DisplayControl))
+		return FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_DynamicResolutionUpdate,
+	                               config->DisplayControl))
+		return FALSE;
 
 	if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, ENCOMSP_SVC_CHANNEL_NAME))
-		settings->EncomspVirtualChannel = TRUE;
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_EncomspVirtualChannel, TRUE))
+			return FALSE;
+	}
 
 	if (config->Clipboard)
 	{
 		if (WTSVirtualChannelManagerIsChannelJoined(ps->vcm, CLIPRDR_SVC_CHANNEL_NAME))
-			settings->RedirectClipboard = config->Clipboard;
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectClipboard, config->Clipboard))
+				return FALSE;
+		}
 	}
 
-	settings->AutoReconnectionEnabled = TRUE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_AutoReconnectionEnabled, TRUE))
+		return FALSE;
 
 	PubSub_SubscribeErrorInfo(instance->context->pubSub, pf_client_on_error_info);
 	PubSub_SubscribeActivated(instance->context->pubSub, pf_client_on_activated);
@@ -579,7 +594,7 @@ static BOOL pf_client_post_connect(freerdp* instance)
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
 		return FALSE;
 
-	WINPR_ASSERT(settings->SoftwareGdi);
+	WINPR_ASSERT(freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi));
 
 	pf_client_register_update_callbacks(update);
 
@@ -680,7 +695,8 @@ static BOOL pf_client_should_retry_without_nla(pClientContext* pc)
 	config = pc->pdata->config;
 	WINPR_ASSERT(config);
 
-	if (!config->ClientAllowFallbackToTls || !settings->NlaSecurity)
+	if (!config->ClientAllowFallbackToTls ||
+	    !freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity))
 		return FALSE;
 
 	return config->ClientTlsSecurity || config->ClientRdpSecurity;
@@ -729,11 +745,12 @@ static BOOL pf_client_connect_without_nla(pClientContext* pc)
 	WINPR_ASSERT(settings);
 
 	/* If already disabled abort early. */
-	if (!settings->NlaSecurity)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity))
 		return FALSE;
 
 	/* disable NLA */
-	settings->NlaSecurity = FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+		return FALSE;
 
 	/* do not allow next connection failure */
 	pc->allow_next_conn_failure = FALSE;
@@ -754,14 +771,17 @@ static BOOL pf_client_connect(freerdp* instance)
 	WINPR_ASSERT(settings);
 
 	PROXY_LOG_INFO(TAG, pc, "connecting using client info: Username: %s, Domain: %s",
-	               settings->Username, settings->Domain);
+	               freerdp_settings_get_string(settings, FreeRDP_Username),
+	               freerdp_settings_get_string(settings, FreeRDP_Domain));
 
 	pf_client_set_security_settings(pc);
 	if (pf_client_should_retry_without_nla(pc))
 		retry = pc->allow_next_conn_failure = TRUE;
 
 	PROXY_LOG_INFO(TAG, pc, "connecting using security settings: rdp=%d, tls=%d, nla=%d",
-	               settings->RdpSecurity, settings->TlsSecurity, settings->NlaSecurity);
+	               freerdp_settings_get_bool(settings, FreeRDP_RdpSecurity),
+	               freerdp_settings_get_bool(settings, FreeRDP_TlsSecurity),
+	               freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity));
 
 	if (!freerdp_connect(instance))
 	{

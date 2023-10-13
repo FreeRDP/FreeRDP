@@ -132,7 +132,8 @@ static int shadow_encoder_uninit_grid(rdpShadowEncoder* encoder)
 static int shadow_encoder_init_rfx(rdpShadowEncoder* encoder)
 {
 	if (!encoder->rfx)
-		encoder->rfx = rfx_context_new_ex(TRUE, encoder->server->settings->ThreadingFlags);
+		encoder->rfx = rfx_context_new_ex(
+		    TRUE, freerdp_settings_get_uint32(encoder->server->settings, FreeRDP_ThreadingFlags));
 
 	if (!encoder->rfx)
 		goto fail;
@@ -163,14 +164,17 @@ static int shadow_encoder_init_nsc(rdpShadowEncoder* encoder)
 	if (!nsc_context_reset(encoder->nsc, encoder->width, encoder->height))
 		goto fail;
 
-	if (!nsc_context_set_parameters(encoder->nsc, NSC_COLOR_LOSS_LEVEL,
-	                                settings->NSCodecColorLossLevel))
+	if (!nsc_context_set_parameters(
+	        encoder->nsc, NSC_COLOR_LOSS_LEVEL,
+	        freerdp_settings_get_uint32(settings, FreeRDP_NSCodecColorLossLevel)))
 		goto fail;
-	if (!nsc_context_set_parameters(encoder->nsc, NSC_ALLOW_SUBSAMPLING,
-	                                (UINT32)settings->NSCodecAllowSubsampling))
+	if (!nsc_context_set_parameters(
+	        encoder->nsc, NSC_ALLOW_SUBSAMPLING,
+	        freerdp_settings_get_bool(settings, FreeRDP_NSCodecAllowSubsampling)))
 		goto fail;
-	if (!nsc_context_set_parameters(encoder->nsc, NSC_DYNAMIC_COLOR_FIDELITY,
-	                                (UINT32)settings->NSCodecAllowDynamicColorFidelity))
+	if (!nsc_context_set_parameters(
+	        encoder->nsc, NSC_DYNAMIC_COLOR_FIDELITY,
+	        !freerdp_settings_get_bool(settings, FreeRDP_NSCodecAllowDynamicColorFidelity)))
 		goto fail;
 	if (!nsc_context_set_parameters(encoder->nsc, NSC_COLOR_FORMAT, PIXEL_FORMAT_BGRX32))
 		goto fail;
@@ -187,7 +191,7 @@ static int shadow_encoder_init_planar(rdpShadowEncoder* encoder)
 	rdpContext* context = (rdpContext*)encoder->client;
 	rdpSettings* settings = context->settings;
 
-	if (settings->DrawAllowSkipAlpha)
+	if (freerdp_settings_get_bool(settings, FreeRDP_DrawAllowSkipAlpha))
 		planarFlags |= PLANAR_FORMAT_HEADER_NA;
 
 	planarFlags |= PLANAR_FORMAT_HEADER_RLE;
@@ -418,7 +422,7 @@ int shadow_encoder_reset(rdpShadowEncoder* encoder)
 	encoder->maxFps = 32;
 	encoder->frameId = 0;
 	encoder->lastAckframeId = 0;
-	encoder->frameAck = settings->SurfaceFrameMarkerEnabled;
+	encoder->frameAck = freerdp_settings_get_bool(settings, FreeRDP_SurfaceFrameMarkerEnabled);
 	return 1;
 }
 

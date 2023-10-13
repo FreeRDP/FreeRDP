@@ -144,8 +144,10 @@ static BOOL pf_client_desktop_resize(rdpContext* context)
 	WINPR_ASSERT(context->settings);
 	WINPR_ASSERT(ps->settings);
 	WLog_DBG(TAG, "called");
-	ps->settings->DesktopWidth = context->settings->DesktopWidth;
-	ps->settings->DesktopHeight = context->settings->DesktopHeight;
+	if (!freerdp_settings_copy_item(ps->settings, context->settings, FreeRDP_DesktopWidth))
+		return FALSE;
+	if (!freerdp_settings_copy_item(ps->settings, context->settings, FreeRDP_DesktopHeight))
+		return FALSE;
 	return ps->update->DesktopResize(ps);
 }
 

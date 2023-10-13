@@ -180,7 +180,8 @@ void wf_update_peer_send(wfInfo* wfi, wfPeerContext* context)
 	WINPR_ASSERT(client->context->update);
 	WINPR_ASSERT(client->context->update->SurfaceBits);
 
-	wfi->cmd.bmp.codecID = client->context->settings->RemoteFxCodecId;
+	wfi->cmd.bmp.codecID =
+	    freerdp_settings_get_uint32(client->context->settings, FreeRDP_RemoteFxCodecId);
 	client->context->update->SurfaceBits(client->context, &wfi->cmd);
 	context->frame_idx++;
 }
