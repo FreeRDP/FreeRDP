@@ -83,9 +83,8 @@ static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 	if (remdesk->ExpertBlob)
 		return CHANNEL_RC_OK;
 
-	if (settings->RemoteAssistancePassword)
-		password = settings->RemoteAssistancePassword;
-	else
+	password = freerdp_settings_get_string(settings, FreeRDP_RemoteAssistancePassword);
+	if (!password)
 		password = freerdp_settings_get_string(settings, FreeRDP_Password);
 
 	if (!password)
@@ -94,13 +93,14 @@ static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	name = settings->Username;
+	name = freerdp_settings_get_string(settings, FreeRDP_Username);
 
 	if (!name)
 		name = "Expert";
 
-	remdesk->EncryptedPassStub = freerdp_assistance_encrypt_pass_stub(
-	    password, settings->RemoteAssistancePassStub, &(remdesk->EncryptedPassStubSize));
+	const char* stub = freerdp_settings_get_string(settings, FreeRDP_RemoteAssistancePassStub);
+	remdesk->EncryptedPassStub =
+	    freerdp_assistance_encrypt_pass_stub(password, stub, &(remdesk->EncryptedPassStubSize));
 
 	if (!remdesk->EncryptedPassStub)
 	{
@@ -369,7 +369,8 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	settings = remdesk->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
-	pdu.raConnectionString = settings->RemoteAssistanceRCTicket;
+	pdu.raConnectionString =
+	    freerdp_settings_get_string(settings, FreeRDP_RemoteAssistanceRCTicket);
 	raConnectionStringW = ConvertUtf8ToWCharAlloc(pdu.raConnectionString, &cbRaConnectionStringW);
 
 	if (!raConnectionStringW || (cbRaConnectionStringW > UINT32_MAX / sizeof(WCHAR)))
@@ -429,7 +430,8 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 	settings = remdesk->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
-	pdu.raConnectionString = settings->RemoteAssistanceRCTicket;
+	pdu.raConnectionString =
+	    freerdp_settings_get_string(settings, FreeRDP_RemoteAssistanceRCTicket);
 	raConnectionStringW = ConvertUtf8ToWCharAlloc(pdu.raConnectionString, &length);
 
 	if (!raConnectionStringW)

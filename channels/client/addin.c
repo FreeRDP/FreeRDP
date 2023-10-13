@@ -611,7 +611,8 @@ void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata, MsgHandler
 	WINPR_ASSERT(ctx);
 	WINPR_ASSERT(ctx->settings);
 	internals->ctx = ctx;
-	if (!(ctx->settings->ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
+	if ((freerdp_settings_get_uint32(ctx->settings, FreeRDP_ThreadingFlags) &
+	     THREADING_FLAGS_DISABLE_THREADS) == 0)
 	{
 		wObject obj = { 0 };
 		obj.fnObjectFree = free_msg;
@@ -687,7 +688,8 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		if (internals->ctx->settings->ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS)
+		if ((freerdp_settings_get_uint32(internals->ctx->settings, FreeRDP_ThreadingFlags) &
+		     THREADING_FLAGS_DISABLE_THREADS) != 0)
 		{
 			UINT error = CHANNEL_RC_OK;
 			if ((error = internals->msg_handler(internals->userdata, data_in)))
@@ -721,7 +723,8 @@ UINT channel_client_quit_handler(void* MsgsHandle)
 	WINPR_ASSERT(internals->ctx);
 	WINPR_ASSERT(internals->ctx->settings);
 
-	if (!(internals->ctx->settings->ThreadingFlags & THREADING_FLAGS_DISABLE_THREADS))
+	if ((freerdp_settings_get_uint32(internals->ctx->settings, FreeRDP_ThreadingFlags) &
+	     THREADING_FLAGS_DISABLE_THREADS) == 0)
 	{
 		if (internals->queue && internals->thread)
 		{

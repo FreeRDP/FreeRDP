@@ -1693,7 +1693,8 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	for (index = 0; index < freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount);
 	     index++)
 	{
-		const ADDIN_ARGV* args = settings->DynamicChannelArray[index];
+		const ADDIN_ARGV* args =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_DynamicChannelArray, index);
 		error = dvcman_load_addin(drdynvc, drdynvc->channel_mgr, args, drdynvc->rdpcontext);
 
 		if (CHANNEL_RC_OK != error)
