@@ -2083,6 +2083,19 @@ extern "C"
 	FREERDP_API BOOL freerdp_settings_set_string(rdpSettings* settings, size_t id,
 	                                             const char* param);
 
+	/** \brief appends a string to a settings value. The \b param is copied.
+	 * If the initial value of the setting was not empty, <old value><separator><param> is created
+	 *
+	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param id The key to query
+	 *  \param separator The separator string to use. May be NULL (no separator)
+	 *  \param param The value to append
+	 *
+	 *  \return \b TRUE for success, \b FALSE for failure
+	 */
+	FREERDP_API BOOL freerdp_settings_append_string(rdpSettings* settings, size_t id,
+	                                                const char* separator, const char* param);
+
 	/** \brief Sets a string settings value. The \b param is converted to UTF-8 and the copy stored.
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
