@@ -51,9 +51,12 @@ static int mfreerdp_client_start(rdpContext *context)
 	if (mfc->view == NULL)
 	{
 		// view not specified beforehand. Create view dynamically
-		mfc->view =
-		    [[MRDPView alloc] initWithFrame:NSMakeRect(0, 0, context->settings->DesktopWidth,
-		                                               context->settings->DesktopHeight)];
+		mfc->view = [[MRDPView alloc]
+		    initWithFrame:NSMakeRect(
+		                      0, 0,
+		                      freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth),
+		                      freerdp_settings_get_uint32(context->settings,
+		                                                  FreeRDP_DesktopHeight))];
 		mfc->view_ownership = TRUE;
 	}
 
@@ -117,10 +120,11 @@ static void mf_scale_mouse_coordinates(mfContext *mfc, UINT16 *px, UINT16 *py)
 	UINT16 y = *py;
 	UINT32 ww = mfc->client_width;
 	UINT32 wh = mfc->client_height;
-	UINT32 dw = mfc->common.context.settings->DesktopWidth;
-	UINT32 dh = mfc->common.context.settings->DesktopHeight;
+	UINT32 dw = freerdp_settings_get_uint32(mfc->common.context.settings, FreeRDP_DesktopWidth);
+	UINT32 dh = freerdp_settings_get_uint32(mfc->common.context.settings, FreeRDP_DesktopHeight);
 
-	if (!mfc->common.context.settings->SmartSizing || ((ww == dw) && (wh == dh)))
+	if (!freerdp_settings_get_bool(mfc->common.context.settings, FreeRDP_SmartSizing) ||
+	    ((ww == dw) && (wh == dh)))
 	{
 		y = y + mfc->yCurrentScroll;
 		x = x + mfc->xCurrentScroll;

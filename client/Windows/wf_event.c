@@ -284,7 +284,9 @@ static void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 	// Holding the CTRL key down while resizing the window will force the desktop aspect ratio.
 	LPRECT rect;
 
-	if ((settings->SmartSizing || settings->DynamicResolutionUpdate) && ctrl_down())
+	if ((freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ||
+	     freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate)) &&
+	    ctrl_down())
 	{
 		rect = (LPRECT)wParam;
 
@@ -294,23 +296,29 @@ static void wf_sizing(wfContext* wfc, WPARAM wParam, LPARAM lParam)
 			case WMSZ_RIGHT:
 			case WMSZ_BOTTOMRIGHT:
 				// Adjust height
-				rect->bottom = rect->top + settings->DesktopHeight * (rect->right - rect->left) /
-				                               settings->DesktopWidth;
+				rect->bottom =
+				    rect->top + freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) *
+				                    (rect->right - rect->left) /
+				                    freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 				break;
 
 			case WMSZ_TOP:
 			case WMSZ_BOTTOM:
 			case WMSZ_TOPRIGHT:
 				// Adjust width
-				rect->right = rect->left + settings->DesktopWidth * (rect->bottom - rect->top) /
-				                               settings->DesktopHeight;
+				rect->right =
+				    rect->left + freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) *
+				                     (rect->bottom - rect->top) /
+				                     freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 				break;
 
 			case WMSZ_BOTTOMLEFT:
 			case WMSZ_TOPLEFT:
 				// adjust width
-				rect->left = rect->right - (settings->DesktopWidth * (rect->bottom - rect->top) /
-				                            settings->DesktopHeight);
+				rect->left =
+				    rect->right - (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) *
+				                   (rect->bottom - rect->top) /
+				                   freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 				break;
 		}
 	}
@@ -323,7 +331,7 @@ static void wf_send_resize(wfContext* wfc)
 	int targetHeight = wfc->client_height;
 	rdpSettings* settings = wfc->common.context.settings;
 
-	if (settings->DynamicResolutionUpdate && wfc->disp != NULL)
+	if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate) && wfc->disp != NULL)
 	{
 		if (GetTickCount64() - wfc->lastSentDate > RESIZE_MIN_DELAY)
 		{
@@ -333,8 +341,8 @@ static void wf_send_resize(wfContext* wfc)
 				targetWidth = windowRect.right - windowRect.left;
 				targetHeight = windowRect.bottom - windowRect.top;
 			}
-			if (settings->SmartSizingWidth != targetWidth ||
-			    settings->SmartSizingHeight != targetHeight)
+			if (freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth) != targetWidth ||
+			    freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight) != targetHeight)
 			{
 				DISPLAY_CONTROL_MONITOR_LAYOUT layout = { 0 };
 
@@ -342,9 +350,12 @@ static void wf_send_resize(wfContext* wfc)
 				layout.Top = layout.Left = 0;
 				layout.Width = targetWidth;
 				layout.Height = targetHeight;
-				layout.Orientation = settings->DesktopOrientation;
-				layout.DesktopScaleFactor = settings->DesktopScaleFactor;
-				layout.DeviceScaleFactor = settings->DeviceScaleFactor;
+				layout.Orientation =
+				    freerdp_settings_get_uint32(settings, FreeRDP_DesktopOrientation);
+				layout.DesktopScaleFactor =
+				    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
+				layout.DeviceScaleFactor =
+				    freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
 				layout.PhysicalWidth = targetWidth;
 				layout.PhysicalHeight = targetHeight;
 
@@ -353,8 +364,8 @@ static void wf_send_resize(wfContext* wfc)
 				{
 					WLog_ERR("", "SendMonitorLayout failed.");
 				}
-				settings->SmartSizingWidth = targetWidth;
-				settings->SmartSizingHeight = targetHeight;
+				freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingWidth, targetWidth);
+				freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingHeight, targetHeight);
 			}
 			wfc->lastSentDate = GetTickCount64();
 		}
@@ -401,8 +412,9 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 				break;
 
 			case WM_GETMINMAXINFO:
-				if (wfc->common.context.settings->SmartSizing ||
-				    wfc->common.context.settings->DynamicResolutionUpdate)
+				if (freerdp_settings_get_bool(wfc->common.context.settings, FreeRDP_SmartSizing) ||
+				    (freerdp_settings_get_bool(wfc->common.context.settings,
+				                               FreeRDP_DynamicResolutionUpdate)))
 				{
 					processed = FALSE;
 				}
@@ -418,8 +430,12 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 					if (!wfc->fullscreen)
 					{
 						// add window decoration
-						minmax->ptMaxTrackSize.x = settings->DesktopWidth + wfc->diff.x;
-						minmax->ptMaxTrackSize.y = settings->DesktopHeight + wfc->diff.y;
+						minmax->ptMaxTrackSize.x =
+						    freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) +
+						    wfc->diff.x;
+						minmax->ptMaxTrackSize.y =
+						    freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) +
+						    wfc->diff.y;
 					}
 				}
 
@@ -713,17 +729,21 @@ LRESULT CALLBACK wf_event_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam
 			{
 				if (wParam == SYSCOMMAND_ID_SMARTSIZING)
 				{
+					rdpSettings* settings = wfc->common.context.settings;
 					HMENU hMenu = GetSystemMenu(wfc->hwnd, FALSE);
-					freerdp_settings_set_bool(wfc->common.context.settings, FreeRDP_SmartSizing,
-					                          !wfc->common.context.settings->SmartSizing);
+					const BOOL rc = freerdp_settings_get_bool(settings, FreeRDP_SmartSizing);
+					freerdp_settings_set_bool(settings, FreeRDP_SmartSizing, !rc);
 					CheckMenuItem(hMenu, SYSCOMMAND_ID_SMARTSIZING,
-					              wfc->common.context.settings->SmartSizing ? MF_CHECKED
-					                                                        : MF_UNCHECKED);
-					if (!wfc->common.context.settings->SmartSizing)
+					              freerdp_settings_get_bool(settings, FreeRDP_SmartSizing)
+					                  ? MF_CHECKED
+					                  : MF_UNCHECKED);
+					if (!freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 					{
 						SetWindowPos(wfc->hwnd, HWND_TOP, -1, -1,
-						             wfc->common.context.settings->DesktopWidth + wfc->diff.x,
-						             wfc->common.context.settings->DesktopHeight + wfc->diff.y,
+						             freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) +
+						                 wfc->diff.x,
+						             freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) +
+						                 wfc->diff.y,
 						             SWP_NOMOVE);
 					}
 					else
@@ -829,15 +849,15 @@ BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSr
 	WINPR_ASSERT(settings);
 
 	if (!wfc->client_width)
-		wfc->client_width = settings->DesktopWidth;
+		wfc->client_width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 
 	if (!wfc->client_height)
-		wfc->client_height = settings->DesktopHeight;
+		wfc->client_height = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
 	ww = wfc->client_width;
 	wh = wfc->client_height;
-	dw = settings->DesktopWidth;
-	dh = settings->DesktopHeight;
+	dw = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	dh = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
 	if (!ww)
 		ww = dw;
@@ -845,7 +865,8 @@ BOOL wf_scale_blt(wfContext* wfc, HDC hdc, int x, int y, int w, int h, HDC hdcSr
 	if (!wh)
 		wh = dh;
 
-	if (wfc->fullscreen || !settings->SmartSizing || (ww == dw && wh == dh))
+	if (wfc->fullscreen || !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ||
+	    (ww == dw && wh == dh))
 	{
 		return BitBlt(hdc, x, y, w, h, wfc->primary->hdc, x1, y1, SRCCOPY);
 	}
@@ -873,17 +894,17 @@ static BOOL wf_scale_mouse_pos(wfContext* wfc, INT32 x, INT32 y, UINT16* px, UIN
 		return FALSE;
 
 	if (!wfc->client_width)
-		wfc->client_width = settings->DesktopWidth;
+		wfc->client_width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 
 	if (!wfc->client_height)
-		wfc->client_height = settings->DesktopHeight;
+		wfc->client_height = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
 	ww = wfc->client_width;
 	wh = wfc->client_height;
-	dw = settings->DesktopWidth;
-	dh = settings->DesktopHeight;
+	dw = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	dh = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
-	if (!settings->SmartSizing || ((ww == dw) && (wh == dh)))
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) || ((ww == dw) && (wh == dh)))
 	{
 		x += wfc->xCurrentScroll;
 		y += wfc->yCurrentScroll;

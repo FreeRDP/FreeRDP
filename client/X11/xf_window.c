@@ -185,8 +185,12 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		xfc->savedPosX = xfc->window->left;
 		xfc->savedPosY = xfc->window->top;
 
-		startX = (settings->DesktopPosX != UINT32_MAX) ? settings->DesktopPosX : 0;
-		startY = (settings->DesktopPosY != UINT32_MAX) ? settings->DesktopPosY : 0;
+		startX = (freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX) != UINT32_MAX)
+		             ? freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX)
+		             : 0;
+		startY = (freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY) != UINT32_MAX)
+		             ? freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY)
+		             : 0;
 	}
 	else
 	{
@@ -199,22 +203,26 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	/* Determine the x,y starting location for the fullscreen window */
 	if (fullscreen)
 	{
+		const rdpMonitor* firstMonitor =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, 0);
 		/* Initialize startX and startY with reasonable values */
-		startX = settings->MonitorDefArray[0].x;
-		startY = settings->MonitorDefArray[0].y;
+		startX = firstMonitor->x;
+		startY = firstMonitor->y;
 
 		/* Search all monitors to find the lowest startX and startY values */
-		for (i = 0; i < settings->MonitorCount; i++)
+		for (i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); i++)
 		{
-			startX = MIN(startX, settings->MonitorDefArray[i].x);
-			startY = MIN(startY, settings->MonitorDefArray[i].y);
+			const rdpMonitor* monitor =
+			    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, i);
+			startX = MIN(startX, monitor->x);
+			startY = MIN(startY, monitor->y);
 		}
 
 		/* Lastly apply any monitor shift(translation from remote to local coordinate system)
 		 *  to startX and startY values
 		 */
-		startX += settings->MonitorLocalShiftX;
-		startY += settings->MonitorLocalShiftY;
+		startX += freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftX);
+		startY += freerdp_settings_get_uint32(settings, FreeRDP_MonitorLocalShiftY);
 	}
 
 	/*
@@ -223,7 +231,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	       - The window manager supports multiple monitor full screen
 	       - The user requested to use a single monitor to render the remote desktop
 	 */
-	if (xfc->_NET_WM_FULLSCREEN_MONITORS != None || settings->MonitorCount == 1)
+	if (xfc->_NET_WM_FULLSCREEN_MONITORS != None ||
+	    freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount) == 1)
 	{
 		xf_ResizeDesktopWindow(xfc, window, width, height);
 
@@ -249,7 +258,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		}
 
 		/* Set monitor bounds */
-		if (settings->MonitorCount > 1)
+		if (freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount) > 1)
 		{
 			xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_FULLSCREEN_MONITORS, 5,
 			                   xfc->fullscreenMonitors.top, xfc->fullscreenMonitors.bottom,
@@ -494,7 +503,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	rdpSettings* settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	Window parentWindow = (Window)settings->ParentWindowId;
+	Window parentWindow = (Window)freerdp_settings_get_uint64(settings, FreeRDP_ParentWindowId);
 	window->width = width;
 	window->height = height;
 	window->decorations = xfc->decorations;
@@ -544,8 +553,9 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	{
 		classHints->res_name = "xfreerdp";
 
-		if (settings->WmClass)
-			classHints->res_class = settings->WmClass;
+		const char* WmClass = freerdp_settings_get_string(settings, FreeRDP_WmClass);
+		if (WmClass)
+			classHints->res_class = WmClass;
 		else
 			classHints->res_class = "xfreerdp";
 
@@ -589,13 +599,16 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	 * monitor instead of the upper-left monitor for remote app mode (which uses all monitors).
 	 * This extra call after the window is mapped will position the login window correctly
 	 */
-	if (settings->RemoteApplicationMode)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
 	{
 		XMoveWindow(xfc->display, window->handle, 0, 0);
 	}
-	else if (settings->DesktopPosX != UINT32_MAX && settings->DesktopPosY != UINT32_MAX)
+	else if ((freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX) != UINT32_MAX) &&
+	         (freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY) != UINT32_MAX))
 	{
-		XMoveWindow(xfc->display, window->handle, settings->DesktopPosX, settings->DesktopPosY);
+		XMoveWindow(xfc->display, window->handle,
+		            freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX),
+		            freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY));
 	}
 
 	window->floatbar = xf_floatbar_new(xfc, window->handle, name,
@@ -628,7 +641,8 @@ void xf_ResizeDesktopWindow(xfContext* xfc, xfWindow* window, int width, int hei
 	XResizeWindow(xfc->display, window->handle, width, height);
 #ifdef WITH_XRENDER
 
-	if (!settings->SmartSizing && !settings->DynamicResolutionUpdate)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) &&
+	    !freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 #endif
 	{
 		if (!xfc->fullscreen)
@@ -836,10 +850,9 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 	{
 		char* class = NULL;
 
-		if (settings->WmClass)
-		{
-			class_hints->res_class = settings->WmClass;
-		}
+		const char* WmClass = freerdp_settings_get_string(settings, FreeRDP_WmClass);
+		if (WmClass)
+			class_hints->res_class = WmClass;
 		else
 		{
 			class = malloc(sizeof("RAIL:00000000"));
@@ -1121,7 +1134,7 @@ void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, i
 
 	xf_lock_x11(xfc);
 
-	if (settings->SoftwareGdi)
+	if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 	{
 		XPutImage(xfc->display, appWindow->pixmap, appWindow->gc, xfc->image, ax, ay, x, y, width,
 		          height);

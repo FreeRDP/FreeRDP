@@ -50,7 +50,7 @@ static void ios_OnChannelConnectedEventHandler(void *context, const ChannelConne
 
 	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
+		if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 		{
 			gdi_graphics_pipeline_init(afc->_p.gdi, (RdpgfxClientContext *)e->pInterface);
 		}
@@ -84,7 +84,7 @@ static void ios_OnChannelDisconnectedEventHandler(void *context,
 
 	if (strcmp(e->name, RDPGFX_DVC_CHANNEL_NAME) == 0)
 	{
-		if (settings->SoftwareGdi)
+		if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
 		{
 			gdi_graphics_pipeline_uninit(afc->_p.gdi, (RdpgfxClientContext *)e->pInterface);
 		}
@@ -111,14 +111,20 @@ static BOOL ios_pre_connect(freerdp *instance)
 	settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
-	settings->AutoLogonEnabled = settings->Password && (strlen(settings->Password) > 0);
+	const char *Password = freerdp_settings_get_string(settings, FreeRDP_Password);
+	if (!freerdp_settings_set_bool(settings, FreeRDP_AutoLogonEnabled,
+	                               Password && (Password && (strlen(Password) > 0))))
+		return FALSE;
 
 	// Verify screen width/height are sane
-	if ((settings->DesktopWidth < 64) || (settings->DesktopHeight < 64) ||
-	    (settings->DesktopWidth > 4096) || (settings->DesktopHeight > 4096))
+	if ((freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) < 64) ||
+	    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) < 64) ||
+	    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) > 4096) ||
+	    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) > 4096))
 	{
-		NSLog(@"%s: invalid dimensions %d %d", __func__, settings->DesktopWidth,
-		      settings->DesktopHeight);
+		NSLog(@"%s: invalid dimensions %d %d", __func__,
+		      freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		      freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 		return FALSE;
 	}
 

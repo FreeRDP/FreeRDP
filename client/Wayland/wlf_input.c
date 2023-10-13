@@ -331,7 +331,8 @@ BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev)
 		return FALSE;
 
 	WINPR_ASSERT(instance->context);
-	if (instance->context->settings->GrabKeyboard && ev->raw_key == KEY_RIGHTCTRL)
+	if (freerdp_settings_get_bool(instance->context->settings, FreeRDP_GrabKeyboard) &&
+	    ev->raw_key == KEY_RIGHTCTRL)
 		wlf_handle_ungrab_key(instance, ev);
 
 	input = instance->context->input;

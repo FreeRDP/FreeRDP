@@ -294,8 +294,10 @@ void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
 
 		if (xf_picture_transform_required(xfc))
 		{
-			double xScalingFactor = xfc->scaledWidth / (double)settings->DesktopWidth;
-			double yScalingFactor = xfc->scaledHeight / (double)settings->DesktopHeight;
+			double xScalingFactor = xfc->scaledWidth / (double)freerdp_settings_get_uint32(
+			                                               settings, FreeRDP_DesktopWidth);
+			double yScalingFactor = xfc->scaledHeight / (double)freerdp_settings_get_uint32(
+			                                                settings, FreeRDP_DesktopHeight);
 			tx = ((tx + xfc->offset_x) * xScalingFactor);
 			ty = ((ty + xfc->offset_y) * yScalingFactor);
 		}
@@ -319,8 +321,10 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 		rdpSettings* settings = xfc->common.context.settings;
 		if (xf_picture_transform_required(xfc))
 		{
-			double xScalingFactor = settings->DesktopWidth / (double)xfc->scaledWidth;
-			double yScalingFactor = settings->DesktopHeight / (double)xfc->scaledHeight;
+			double xScalingFactor = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) /
+			                        (double)xfc->scaledWidth;
+			double yScalingFactor = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) /
+			                        (double)xfc->scaledHeight;
 			*x = (int)((*x - xfc->offset_x) * xScalingFactor);
 			*y = (int)((*y - xfc->offset_y) * yScalingFactor);
 		}
@@ -343,12 +347,13 @@ static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	if (!app && (settings->SmartSizing || settings->MultiTouchGestures))
+	if (!app && (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ||
+	             freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures)))
 	{
 		x = 0;
 		y = 0;
-		w = settings->DesktopWidth;
-		h = settings->DesktopHeight;
+		w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+		h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 	}
 	else
 	{
@@ -396,7 +401,7 @@ BOOL xf_generic_MotionNotify(xfContext* xfc, int x, int y, int state, Window win
 	rdpInput* input = xfc->common.context.input;
 	WINPR_ASSERT(input);
 
-	if (!xfc->common.context.settings->MouseMotion)
+	if (!freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_MouseMotion))
 	{
 		if ((state & (Button1Mask | Button2Mask | Button3Mask)) == 0)
 			return TRUE;
@@ -784,22 +789,25 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 			xfc->offset_x = 0;
 			xfc->offset_y = 0;
 
-			if (settings->SmartSizing || settings->MultiTouchGestures)
+			if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) ||
+			    freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures))
 			{
 				xfc->scaledWidth = xfc->window->width;
 				xfc->scaledHeight = xfc->window->height;
-				xf_draw_screen(xfc, 0, 0, settings->DesktopWidth, settings->DesktopHeight);
+				xf_draw_screen(xfc, 0, 0,
+				               freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+				               freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 			}
 			else
 			{
-				xfc->scaledWidth = settings->DesktopWidth;
-				xfc->scaledHeight = settings->DesktopHeight;
+				xfc->scaledWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+				xfc->scaledHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 			}
 
 #endif
 		}
 
-		if (settings->DynamicResolutionUpdate)
+		if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 		{
 			int alignedWidth, alignedHeight;
 			alignedWidth = (xfc->window->width / 2) * 2;
@@ -1233,7 +1241,7 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 			break;
 
 		default:
-			if (settings->SupportDisplayControl)
+			if (freerdp_settings_get_bool(settings, FreeRDP_SupportDisplayControl))
 				xf_disp_handle_xevent(xfc, event);
 
 			break;

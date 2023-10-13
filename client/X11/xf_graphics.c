@@ -249,15 +249,21 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 	if (!settings)
 		return FALSE;
 
-	const double xscale =
-	    (settings->SmartSizing ? xfc->scaledWidth / (double)settings->DesktopWidth : 1);
-	const double yscale =
-	    (settings->SmartSizing ? xfc->scaledHeight / (double)settings->DesktopHeight : 1);
+	const double xscale = (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing)
+	                           ? xfc->scaledWidth / (double)freerdp_settings_get_uint32(
+	                                                    settings, FreeRDP_DesktopWidth)
+	                           : 1);
+	const double yscale = (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing)
+	                           ? xfc->scaledHeight / (double)freerdp_settings_get_uint32(
+	                                                     settings, FreeRDP_DesktopHeight)
+	                           : 1);
 	const UINT32 xTargetSize = MAX(1, pointer->width * xscale);
 	const UINT32 yTargetSize = MAX(1, pointer->height * yscale);
 
 	WLog_DBG(TAG, "scaled: %" PRIu32 "x%" PRIu32 ", desktop: %" PRIu32 "x%" PRIu32,
-	         xfc->scaledWidth, xfc->scaledHeight, settings->DesktopWidth, settings->DesktopHeight);
+	         xfc->scaledWidth, xfc->scaledHeight,
+	         freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	         freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 	for (UINT32 i = 0; i < xpointer->nCursors; i++)
 	{
 		if ((xpointer->cursorWidths[i] == xTargetSize) &&

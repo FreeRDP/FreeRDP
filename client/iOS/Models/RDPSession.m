@@ -299,7 +299,8 @@ out_free:
 	// Set Screen Size to automatic if widht or height are still 0
 	rdpSettings *settings = _freerdp->context->settings;
 
-	if (settings->DesktopWidth == 0 || settings->DesktopHeight == 0)
+	if (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) == 0 ||
+	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) == 0)
 	{
 		CGSize size = CGSizeZero;
 
@@ -310,8 +311,8 @@ out_free:
 		{
 			[_params setInt:size.width forKey:@"width"];
 			[_params setInt:size.height forKey:@"height"];
-			settings->DesktopWidth = size.width;
-			settings->DesktopHeight = size.height;
+			freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, size.width);
+			freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, size.height);
 		}
 	}
 
@@ -319,7 +320,10 @@ out_free:
 	// resolution width
 	//       Otherwise this could result in screen corruption ..
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) <= 16)
-		settings->DesktopWidth &= (~1);
+	{
+		const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) & (~1);
+		freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, w);
+	}
 
 	[self performSelectorInBackground:@selector(runSession) withObject:nil];
 }
@@ -360,8 +364,8 @@ out_free:
 		/*        RECTANGLE_16 rec;
 		        rec.left = 0;
 		        rec.top = 0;
-		        rec.right = instance->settings->width;
-		        rec.bottom = instance->settings->height;
+		        rec.right =  freerdp_settings_get_uint32(instance->settings, FreeRDP_DesktopWidth);
+		        rec.bottom = freerdp_settings_get_uint32(instance->settings, FreeRDP_DesktopHeight);
 		*/
 		_suspended = NO;
 		//        instance->update->SuppressOutput(instance->context, 1, &rec);

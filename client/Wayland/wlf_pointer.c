@@ -101,7 +101,8 @@ static BOOL wlf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	area.bottom = (UINT16)pointer->height;
 
 	if (!wlf_copy_image(ptr->data, pointer->width * 4, pointer->width, pointer->height, data, w * 4,
-	                    w, h, &area, context->settings->SmartSizing))
+	                    w, h, &area,
+	                    freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing)))
 		goto fail;
 
 	rc = UwacSeatSetMouseCursor(wlf->seat, data, size, w, h, x, y);

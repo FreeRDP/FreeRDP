@@ -530,7 +530,8 @@ static BOOL sdl_desktop_resize(rdpContext* context)
 	WINPR_ASSERT(settings);
 
 	gdi = context->gdi;
-	if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
+	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
 		return FALSE;
 	return sdl_create_primary(sdl);
 }
@@ -574,9 +575,11 @@ static BOOL sdl_pre_connect(freerdp* instance)
 	WINPR_ASSERT(settings);
 
 	/* Optional OS identifier sent to server */
-	settings->OsMajorType = OSMAJORTYPE_UNIX;
-	settings->OsMinorType = OSMINORTYPE_NATIVE_SDL;
-	/* settings->OrderSupport is initialized at this point.
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OSMAJORTYPE_UNIX))
+		return FALSE;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMinorType, OSMINORTYPE_NATIVE_SDL))
+		return FALSE;
+	/* OrderSupport is initialized at this point.
 	 * Only override it if you plan to implement custom order
 	 * callbacks or deactiveate certain features. */
 	/* Register the channel listeners.
@@ -600,8 +603,10 @@ static BOOL sdl_pre_connect(freerdp* instance)
 		    !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 		{
 			WLog_Print(sdl->log, WLOG_INFO, "Update size to %ux%u", maxWidth, maxHeight);
-			settings->DesktopWidth = maxWidth;
-			settings->DesktopHeight = maxHeight;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, maxWidth))
+				return FALSE;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, maxHeight))
+				return FALSE;
 		}
 	}
 	else
@@ -685,10 +690,11 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 		Uint32 w = monitor->width;
 		Uint32 h = monitor->height;
-		if (!(settings->UseMultimon || settings->Fullscreen))
+		if (!(freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) ||
+		      freerdp_settings_get_bool(settings, FreeRDP_Fullscreen)))
 		{
-			w = settings->DesktopWidth;
-			h = settings->DesktopHeight;
+			w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+			h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 		}
 
 		sdl_window_t window = {};
@@ -703,12 +709,13 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 #endif
 		}
 
-		if (settings->Fullscreen && !settings->UseMultimon)
+		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
+		    !freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
 			flags |= SDL_WINDOW_FULLSCREEN;
 		}
 
-		if (settings->UseMultimon)
+		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
 			flags |= SDL_WINDOW_BORDERLESS;
 		}
@@ -723,7 +730,7 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		if (!window.window)
 			goto fail;
 
-		if (settings->UseMultimon)
+		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
 			int win_x;
 			int win_y;
@@ -1093,7 +1100,8 @@ static BOOL sdl_post_connect(freerdp* instance)
 	context->update->SetKeyboardImeStatus = sdlInput::keyboard_set_ime_status;
 
 	sdl->update_resizeable(FALSE);
-	sdl->update_fullscreen(context->settings->Fullscreen || context->settings->UseMultimon);
+	sdl->update_fullscreen(freerdp_settings_get_bool(context->settings, FreeRDP_Fullscreen) ||
+	                       freerdp_settings_get_bool(context->settings, FreeRDP_UseMultimon));
 	return TRUE;
 }
 
@@ -1522,7 +1530,7 @@ int main(int argc, char* argv[])
 	if (status)
 	{
 		rc = freerdp_client_settings_command_line_status_print(settings, status, argc, argv);
-		if (settings->ListMonitors)
+		if (freerdp_settings_get_bool(settings, FreeRDP_ListMonitors))
 			sdl_list_monitors(sdl);
 		return rc;
 	}

@@ -22,7 +22,7 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 
 	clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
 
-	if (settings->AutoReconnectionEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled))
 		clientStatus.flags |= TS_RAIL_CLIENTSTATUS_AUTORECONNECT;
 
 	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_ZORDER_SYNC;
@@ -35,7 +35,7 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	if (status != CHANNEL_RC_OK)
 		return status;
 
-	if (settings->RemoteAppLanguageBarSupported)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteAppLanguageBarSupported))
 	{
 		RAIL_LANGBAR_INFO_ORDER langBarInfo;
 		langBarInfo.languageBarStatus = 0x00000008; /* TF_SFT_HIDDEN */
@@ -68,25 +68,31 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	sysparam.params |= SPI_MASK_SET_WORK_AREA;
 	sysparam.workArea.left = 0;
 	sysparam.workArea.top = 0;
-	sysparam.workArea.right = settings->DesktopWidth;
-	sysparam.workArea.bottom = settings->DesktopHeight;
+	sysparam.workArea.right = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	sysparam.workArea.bottom = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 	sysparam.dragFullWindows = FALSE;
 	status = context->ClientSystemParam(context, &sysparam);
 
 	if (status != CHANNEL_RC_OK)
 		return status;
 
-	if (settings->RemoteApplicationFile && settings->RemoteApplicationCmdLine)
+	const char* RemoteApplicationFile =
+	    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationFile);
+	const char* RemoteApplicationCmdLine =
+	    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationCmdLine);
+	if (RemoteApplicationFile && RemoteApplicationCmdLine)
 	{
-		_snprintf(argsAndFile, ARRAYSIZE(argsAndFile), "%s %s", settings->RemoteApplicationCmdLine,
-		          settings->RemoteApplicationFile);
+		_snprintf(argsAndFile, ARRAYSIZE(argsAndFile), "%s %s", RemoteApplicationCmdLine,
+		          RemoteApplicationFile);
 		exec.RemoteApplicationArguments = argsAndFile;
 	}
-	else if (settings->RemoteApplicationFile)
-		exec.RemoteApplicationArguments = settings->RemoteApplicationFile;
+	else if (RemoteApplicationFile)
+		exec.RemoteApplicationArguments = RemoteApplicationFile;
 	else
-		exec.RemoteApplicationArguments = settings->RemoteApplicationCmdLine;
-	exec.RemoteApplicationProgram = settings->RemoteApplicationProgram;
-	exec.RemoteApplicationWorkingDir = settings->ShellWorkingDirectory;
+		exec.RemoteApplicationArguments = RemoteApplicationCmdLine;
+	exec.RemoteApplicationProgram =
+	    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationProgram);
+	exec.RemoteApplicationWorkingDir =
+	    freerdp_settings_get_string(settings, FreeRDP_ShellWorkingDirectory);
 	return context->ClientExecute(context, &exec);
 }

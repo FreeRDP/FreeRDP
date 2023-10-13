@@ -573,8 +573,9 @@ static xfRailIconCache* RailIconCache_New(rdpSettings* settings)
 	if (!cache)
 		return NULL;
 
-	cache->numCaches = settings->RemoteAppNumIconCaches;
-	cache->numCacheEntries = settings->RemoteAppNumIconCacheEntries;
+	cache->numCaches = freerdp_settings_get_uint32(settings, FreeRDP_RemoteAppNumIconCaches);
+	cache->numCacheEntries =
+	    freerdp_settings_get_uint32(settings, FreeRDP_RemoteAppNumIconCacheEntries);
 	cache->entries = calloc(1ull * cache->numCaches * cache->numCacheEntries, sizeof(xfRailIcon));
 
 	if (!cache->entries)

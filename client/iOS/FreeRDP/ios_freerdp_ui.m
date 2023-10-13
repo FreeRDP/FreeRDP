@@ -30,8 +30,9 @@ static BOOL ios_ui_authenticate_raw(freerdp *instance, char **username, char **p
 	                                 @"password",
 	                                 (*domain) ? [NSString stringWithUTF8String:*domain] : @"",
 	                                 @"domain",
-	                                 [NSString stringWithUTF8String:instance->context->settings->
-	                                                                ServerHostname],
+	                                 [NSString stringWithUTF8String:freerdp_settings_get_string(
+	                                                                    instance->context->settings,
+	                                                                    FreeRDP_ServerHostname)],
 	                                 @"hostname", // used for the auth prompt message; not changed
 	                                 nil];
 	// request auth UI
@@ -160,7 +161,8 @@ BOOL ios_ui_resize_window(rdpContext *context)
 	settings = context->settings;
 	gdi = context->gdi;
 
-	if (!gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight))
+	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
 		return FALSE;
 
 	ios_resize_display_buffer(MFI_FROM_INSTANCE(context->instance));
