@@ -123,16 +123,17 @@ static BOOL wf_peer_post_connect(freerdp_peer* client)
 		return FALSE;
 	}
 
-	if ((settings->DesktopWidth != wfi->servscreen_width) ||
-	    (settings->DesktopHeight != wfi->servscreen_height))
+	if ((freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) != wfi->servscreen_width) ||
+	    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) != wfi->servscreen_height))
 	{
 		/*
 		WLog_DBG(TAG, "Client requested resolution %"PRIu32"x%"PRIu32", but will resize to %dx%d",
-		    settings->DesktopWidth, settings->DesktopHeight, wfi->servscreen_width,
+		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+		freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), wfi->servscreen_width,
 		wfi->servscreen_height);
 		    */
-		settings->DesktopWidth = wfi->servscreen_width;
-		settings->DesktopHeight = wfi->servscreen_height;
+		freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) = wfi->servscreen_width;
+		freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) = wfi->servscreen_height;
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, wfi->bitsPerPixel))
 			return FALSE;
 
@@ -284,11 +285,14 @@ DWORD WINAPI wf_peer_main_loop(LPVOID lpParam)
 	settings = client->context->settings;
 	WINPR_ASSERT(settings);
 
-	settings->RemoteFxCodec = TRUE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, TRUE))
+		goto fail_peer_init;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32))
 		goto fail_peer_init;
-	settings->NSCodec = FALSE;
-	settings->JpegCodec = FALSE;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, FALSE))
+		goto fail_peer_init;
+	if (!freerdp_settings_set_bool(settings, FreeRDP_JpegCodec, FALSE))
+		goto fail_peer_init;
 
 	if (!wf_peer_read_settings(client))
 		goto fail_peer_init;

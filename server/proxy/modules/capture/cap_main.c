@@ -162,11 +162,12 @@ static BOOL capture_plugin_send_frame(pClientContext* pc, SOCKET socket, const B
 	settings = pc->context.settings;
 	WINPR_ASSERT(settings);
 
-	frame_size = 1ull * settings->DesktopWidth * settings->DesktopHeight *
+	const size_t DesktopWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	const size_t DesktopHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+	frame_size = DesktopWidth * DesktopHeight *
 	             (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) / 8ull);
-	bmp_header =
-	    winpr_bitmap_construct_header(settings->DesktopWidth, settings->DesktopHeight,
-	                                  freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
+	bmp_header = winpr_bitmap_construct_header(
+	    DesktopWidth, DesktopHeight, freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
 
 	if (!bmp_header)
 		return FALSE;
@@ -282,7 +283,7 @@ static BOOL capture_plugin_server_post_connect(proxyPlugin* plugin, proxyData* p
 		return FALSE;
 	}
 
-	if (!settings->SupportGraphicsPipeline)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_SupportGraphicsPipeline))
 	{
 		WLog_ERR(TAG, "session capture is only supported for GFX clients, denying connection");
 		return FALSE;

@@ -63,8 +63,8 @@ typedef struct
 	freerdp_peer* client;
 } peer_thread_args;
 
-static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char** target,
-                                                      DWORD* port)
+static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, rdpSettings* settings,
+                                                      size_t targetID, size_t portID)
 {
 #define TARGET_MAX (100)
 #define ROUTING_TOKEN_PREFIX "Cookie: msts="
@@ -85,14 +85,12 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char*
 	}
 
 	len = routing_token_length - prefix_len;
-	*target = malloc(len + 1);
 
-	if (!(*target))
+	if (!freerdp_settings_set_string_len(settings, targetID, routing_token + prefix_len, len))
 		return FALSE;
 
-	CopyMemory(*target, routing_token + prefix_len, len);
-	*(*target + len) = '\0';
-	colon = strchr(*target, ':');
+	const char* target = freerdp_settings_get_string(settings, targetID);
+	colon = strchr(target, ':');
 
 	if (colon)
 	{
@@ -100,13 +98,10 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, char*
 		unsigned long p = strtoul(colon + 1, NULL, 10);
 
 		if (p > USHRT_MAX)
-		{
-			free(*target);
 			return FALSE;
-		}
 
-		*port = (DWORD)p;
-		*colon = '\0';
+		if (!freerdp_settings_set_uint32(settings, portID, p))
+			return FALSE;
 	}
 
 	return TRUE;
@@ -133,8 +128,8 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 	{
 		case PROXY_FETCH_TARGET_METHOD_DEFAULT:
 		case PROXY_FETCH_TARGET_METHOD_LOAD_BALANCE_INFO:
-			return pf_server_parse_target_from_routing_token(context, &settings->ServerHostname,
-			                                                 &settings->ServerPort);
+			return pf_server_parse_target_from_routing_token(
+			    context, settings, FreeRDP_ServerHostname, FreeRDP_ServerPort);
 
 		case PROXY_FETCH_TARGET_METHOD_CONFIG:
 		{
@@ -178,8 +173,7 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 			}
 
 			free(ev.target_address);
-			settings->ServerPort = ev.target_port;
-			return TRUE;
+			return freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, ev.target_port);
 		}
 		default:
 			PROXY_LOG_ERR(TAG, ps, "unknown target fetch method: %d", ev.fetch_method);
@@ -284,7 +278,8 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	pdata = ps->pdata;
 	WINPR_ASSERT(pdata);
 
-	PROXY_LOG_INFO(TAG, ps, "Accepted client: %s", frontSettings->ClientHostname);
+	const char* ClientHostname = freerdp_settings_get_string(frontSettings, FreeRDP_ClientHostname);
+	PROXY_LOG_INFO(TAG, ps, "Accepted client: %s", ClientHostname);
 	if (!pf_server_setup_channels(peer))
 	{
 		PROXY_LOG_ERR(TAG, ps, "error setting up channels");
@@ -309,8 +304,9 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 		return FALSE;
 	}
 
-	PROXY_LOG_INFO(TAG, ps, "remote target is %s:%" PRIu16 "", client_settings->ServerHostname,
-	               client_settings->ServerPort);
+	PROXY_LOG_INFO(TAG, ps, "remote target is %s:%" PRIu32 "",
+	               freerdp_settings_get_string(client_settings, FreeRDP_ServerHostname),
+	               freerdp_settings_get_uint32(client_settings, FreeRDP_ServerPort));
 
 	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_POST_CONNECT, pdata, peer))
 		return FALSE;
@@ -341,7 +337,8 @@ static BOOL pf_server_activate(freerdp_peer* peer)
 
 	settings = peer->context->settings;
 
-	settings->CompressionLevel = PACKET_COMPR_TYPE_RDP8;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_CompressionLevel, PACKET_COMPR_TYPE_RDP8))
+		return FALSE;
 	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_ACTIVATE, pdata, peer))
 		return FALSE;
 
@@ -478,7 +475,10 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 		return FALSE;
 
 	/* currently not supporting GDI orders */
-	ZeroMemory(settings->OrderSupport, 32);
+	{
+		void* OrderSupport = freerdp_settings_get_pointer_writable(settings, FreeRDP_OrderSupport);
+		ZeroMemory(OrderSupport, 32);
+	}
 
 	WINPR_ASSERT(peer->context->update);
 	peer->context->update->autoCalculateBitmapData = FALSE;
@@ -515,7 +515,9 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, config->ServerNlaSecurity))
 		return FALSE;
 
-	settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
+	                                 ENCRYPTION_LEVEL_CLIENT_COMPATIBLE))
+		return FALSE;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SuppressOutput, TRUE))
