@@ -1127,8 +1127,6 @@ static UINT drive_hotplug_thread_terminate(rdpdrPlugin* rdpdr)
  */
 static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 {
-	UINT32 index;
-	rdpSettings* settings;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(rdpdr);
@@ -1142,19 +1140,22 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 	}
 
 	WINPR_ASSERT(rdpdr->rdpcontext);
-	settings = rdpdr->rdpcontext->settings;
+
+	rdpSettings* settings = rdpdr->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
-	rdpdr->ignoreInvalidDevices = settings->IgnoreInvalidDevices;
+	rdpdr->ignoreInvalidDevices = freerdp_settings_get_bool(settings, FreeRDP_IgnoreInvalidDevices);
 
-	if (settings->ClientHostname)
-		strncpy(rdpdr->computerName, settings->ClientHostname, sizeof(rdpdr->computerName) - 1);
-	else
-		strncpy(rdpdr->computerName, settings->ComputerName, sizeof(rdpdr->computerName) - 1);
+	const char* name = freerdp_settings_get_string(settings, FreeRDP_ClientHostname);
+	if (!name)
+		name = freerdp_settings_get_string(settings, FreeRDP_ComputerName);
+	strncpy(rdpdr->computerName, name, sizeof(rdpdr->computerName) - 1);
 
-	for (index = 0; index < settings->DeviceCount; index++)
+	for (UINT32 index = 0; index < freerdp_settings_get_uint32(settings, FreeRDP_DeviceCount);
+	     index++)
 	{
-		const RDPDR_DEVICE* device = settings->DeviceArray[index];
+		const RDPDR_DEVICE* device =
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_DeviceArray, index);
 
 		if (device->Type == RDPDR_DTYP_FILESYSTEM)
 		{

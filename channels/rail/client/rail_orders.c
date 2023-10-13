@@ -421,8 +421,11 @@ BOOL rail_is_feature_supported(const rdpContext* context, UINT32 featureMask)
 	if (!context || !context->settings)
 		return FALSE;
 
-	supported = context->settings->RemoteApplicationSupportLevel &
-	            context->settings->RemoteApplicationSupportMask;
+	const UINT32 level =
+	    freerdp_settings_get_uint32(context->settings, FreeRDP_RemoteApplicationSupportLevel);
+	const UINT32 mask =
+	    freerdp_settings_get_uint32(context->settings, FreeRDP_RemoteApplicationSupportMask);
+	supported = level & mask;
 	masked = (supported & featureMask);
 
 	if (masked != featureMask)
