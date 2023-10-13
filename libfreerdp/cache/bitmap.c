@@ -284,14 +284,10 @@ void bitmap_cache_register_callbacks(rdpUpdate* update)
 
 static int bitmap_cache_save_persistent(rdpBitmapCache* bitmapCache)
 {
-	int status;
-	UINT32 i, j;
-	UINT32 version;
-	rdpPersistentCache* persistent;
 	rdpContext* context = bitmapCache->context;
 	rdpSettings* settings = context->settings;
 
-	version = settings->BitmapCacheVersion;
+	const UINT32 version = freerdp_settings_get_uint32(settings, FreeRDP_BitmapCacheVersion);
 
 	if (version != 2)
 		return 0; /* persistent bitmap cache already saved in egfx channel */
@@ -299,22 +295,24 @@ static int bitmap_cache_save_persistent(rdpBitmapCache* bitmapCache)
 	if (!freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
 		return 0;
 
-	if (!settings->BitmapCachePersistFile)
+	const char* BitmapCachePersistFile =
+	    freerdp_settings_get_string(settings, FreeRDP_BitmapCachePersistFile);
+	if (!BitmapCachePersistFile)
 		return 0;
 
-	persistent = persistent_cache_new();
+	rdpPersistentCache* persistent = persistent_cache_new();
 
 	if (!persistent)
 		return -1;
 
-	status = persistent_cache_open(persistent, settings->BitmapCachePersistFile, TRUE, version);
+	int status = persistent_cache_open(persistent, BitmapCachePersistFile, TRUE, version);
 
 	if (status < 1)
 		goto end;
 
-	for (i = 0; i < bitmapCache->maxCells; i++)
+	for (UINT32 i = 0; i < bitmapCache->maxCells; i++)
 	{
-		for (j = 0; j < bitmapCache->cells[i].number + 1; j++)
+		for (UINT32 j = 0; j < bitmapCache->cells[i].number + 1; j++)
 		{
 			PERSISTENT_CACHE_ENTRY cacheEntry;
 			rdpBitmap* bitmap = bitmapCache->cells[i].entries[j];
