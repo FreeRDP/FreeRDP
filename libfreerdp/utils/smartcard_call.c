@@ -1850,7 +1850,7 @@ scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 		goto fail;
 
 #if defined(WITH_SMARTCARD_EMULATE)
-	ctx->useEmulatedCard = settings->SmartcardEmulation;
+	ctx->useEmulatedCard = freerdp_settings_get_bool(settings, FreeRDP_SmartcardEmulation);
 #endif
 
 	if (ctx->useEmulatedCard)
@@ -1866,13 +1866,14 @@ scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 	}
 	else
 	{
-		if (settings->WinSCardModule)
+		const char* WinSCardModule = freerdp_settings_get_string(settings, FreeRDP_WinSCardModule);
+		if (WinSCardModule)
 		{
-			ctx->hWinSCardLibrary = LoadLibraryX(settings->WinSCardModule);
+			ctx->hWinSCardLibrary = LoadLibraryX(WinSCardModule);
 
 			if (!ctx->hWinSCardLibrary)
 			{
-				WLog_ERR(TAG, "Failed to load WinSCard library: '%s'", settings->WinSCardModule);
+				WLog_ERR(TAG, "Failed to load WinSCard library: '%s'", WinSCardModule);
 				goto fail;
 			}
 
