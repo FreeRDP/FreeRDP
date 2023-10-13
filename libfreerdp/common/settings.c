@@ -2040,14 +2040,6 @@ const char* freerdp_rdp_version_string(UINT32 version)
 	}
 }
 
-BOOL freerdp_settings_take_string(rdpSettings* settings, size_t id, char* param)
-{
-	size_t len = 0;
-	if (param)
-		len = strlen(param);
-	return freerdp_settings_set_string_(settings, id, param, len);
-}
-
 BOOL freerdp_settings_set_string_from_utf16(rdpSettings* settings, size_t id, const WCHAR* param)
 {
 	WINPR_ASSERT(settings);
