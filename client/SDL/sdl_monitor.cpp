@@ -247,7 +247,7 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		monitor->y = rect.y;
 		monitor->width = rect.w;
 		monitor->height = rect.h;
-		monitor->is_primary = (rect.x == 0) && (rect.y == 0);
+		monitor->is_primary = x == 0;
 		monitor->attributes.desktopScaleFactor = factor;
 		monitor->attributes.deviceScaleFactor = 100;
 		monitor->attributes.orientation = rdp_orientation;
