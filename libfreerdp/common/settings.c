@@ -2180,3 +2180,23 @@ const char* freerdp_supported_color_depths_string(UINT16 mask, char* buffer, siz
 	_snprintf(hex, sizeof(hex), "[0x%04" PRIx16 "]", mask);
 	return buffer;
 }
+
+BOOL freerdp_settings_append_string(rdpSettings* settings, size_t id, const char* separator,
+                                    const char* param)
+{
+	const char* old = freerdp_settings_get_string(settings, id);
+
+	size_t len = 0;
+	char* str = NULL;
+
+	if (!old)
+		winpr_asprintf(&str, &len, "%s", param);
+	else if (!separator)
+		winpr_asprintf(&str, &len, "%s%s", old, param);
+	else
+		winpr_asprintf(&str, &len, "%s%s%s", old, separator, param);
+
+	const BOOL rc = freerdp_settings_set_string_len(settings, id, str, len);
+	free(str);
+	return rc;
+}
