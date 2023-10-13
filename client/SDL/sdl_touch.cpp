@@ -71,7 +71,7 @@ BOOL sdl_scale_coordinates(SdlContext* sdl, Uint32 windowId, INT32* px, INT32* p
 		break;
 	}
 
-	if (sdl->context()->settings->SmartSizing)
+	if (freerdp_settings_get_bool(sdl->context()->settings, FreeRDP_SmartSizing))
 	{
 		if (!fromLocalToRDP)
 		{

@@ -176,7 +176,8 @@ static BOOL android_desktop_resize(rdpContext* context)
 	WINPR_ASSERT(context->instance);
 
 	freerdp_callback("OnGraphicsResize", "(JIII)V", (jlong)context->instance,
-	                 context->settings->DesktopWidth, context->settings->DesktopHeight,
+	                 freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopWidth),
+	                 freerdp_settings_get_uint32(context->settings, FreeRDP_DesktopHeight),
 	                 freerdp_settings_get_uint32(context->settings, FreeRDP_ColorDepth));
 	return TRUE;
 }
@@ -300,8 +301,9 @@ static BOOL android_post_connect(freerdp* instance)
 	update->BeginPaint = android_begin_paint;
 	update->EndPaint = android_end_paint;
 	update->DesktopResize = android_desktop_resize;
-	freerdp_callback("OnSettingsChanged", "(JIII)V", (jlong)instance, settings->DesktopWidth,
-	                 settings->DesktopHeight,
+	freerdp_callback("OnSettingsChanged", "(JIII)V", (jlong)instance,
+	                 freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	                 freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
 	                 freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
 	freerdp_callback("OnConnectionSuccess", "(J)V", (jlong)instance);
 	return TRUE;

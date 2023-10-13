@@ -99,7 +99,8 @@ static BOOL tf_desktop_resize(rdpContext* context)
 	WINPR_ASSERT(settings);
 
 	gdi = context->gdi;
-	return gdi_resize(gdi, settings->DesktopWidth, settings->DesktopHeight);
+	return gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+	                  freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight));
 }
 
 /* This function is called to output a System BEEP */
@@ -147,9 +148,11 @@ static BOOL tf_pre_connect(freerdp* instance)
 	WINPR_ASSERT(settings);
 
 	/* Optional OS identifier sent to server */
-	settings->OsMajorType = OSMAJORTYPE_UNIX;
-	settings->OsMinorType = OSMINORTYPE_NATIVE_XSERVER;
-	/* settings->OrderSupport is initialized at this point.
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMajorType, OSMAJORTYPE_UNIX))
+		return FALSE;
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_OsMinorType, OSMINORTYPE_NATIVE_XSERVER))
+		return FALSE;
+	/* OrderSupport is initialized at this point.
 	 * Only override it if you plan to implement custom order
 	 * callbacks or deactiveate certain features. */
 	/* Register the channel listeners.
@@ -234,7 +237,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 
 	WINPR_ASSERT(instance->context);
 	WINPR_ASSERT(instance->context->settings);
-	if (instance->context->settings->AuthenticationOnly)
+	if (freerdp_settings_get_bool(instance->context->settings, FreeRDP_AuthenticationOnly))
 	{
 		result = freerdp_get_last_error(instance->context);
 		freerdp_abort_connect_context(instance->context);

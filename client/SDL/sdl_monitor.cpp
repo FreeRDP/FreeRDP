@@ -87,12 +87,15 @@ static BOOL sdl_is_monitor_id_active(SdlContext* sdl, UINT32 id)
 	settings = sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
-	if (!settings->NumMonitorIds)
+	const UINT32 NumMonitorIds = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+	if (!NumMonitorIds)
 		return TRUE;
 
-	for (index = 0; index < settings->NumMonitorIds; index++)
+	for (index = 0; index < NumMonitorIds; index++)
 	{
-		if (settings->MonitorIds[index] == id)
+		auto cur = static_cast<const UINT32*>(
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, index));
+		if (cur && (*cur == id))
 			return TRUE;
 	}
 
@@ -111,23 +114,24 @@ static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxH
 	*pMaxWidth = 0;
 	*pMaxHeight = 0;
 
-	for (size_t x = 0; x < settings->MonitorCount; x++)
+	for (size_t x = 0; x < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); x++)
 	{
-		const rdpMonitor* monitor = &settings->MonitorDefArray[x];
+		auto monitor = static_cast<const rdpMonitor*>(
+		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
 
-		if (settings->Fullscreen)
+		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 		{
 			*pMaxWidth = monitor->width;
 			*pMaxHeight = monitor->height;
 		}
-		else if (settings->Workarea)
+		else if (freerdp_settings_get_bool(settings, FreeRDP_Workarea))
 		{
 			SDL_Rect rect = {};
 			SDL_GetDisplayUsableBounds(monitor->orig_screen, &rect);
 			*pMaxWidth = rect.w;
 			*pMaxHeight = rect.h;
 		}
-		else if (settings->PercentScreen)
+		else if (freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen) > 0)
 		{
 			SDL_Rect rect = {};
 			SDL_GetDisplayUsableBounds(monitor->orig_screen, &rect);
@@ -135,16 +139,19 @@ static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxH
 			*pMaxWidth = rect.w;
 			*pMaxHeight = rect.h;
 
-			if (settings->PercentScreenUseWidth)
-				*pMaxWidth = (rect.w * settings->PercentScreen) / 100;
+			if (freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseWidth))
+				*pMaxWidth =
+				    (rect.w * freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)) / 100;
 
-			if (settings->PercentScreenUseHeight)
-				*pMaxHeight = (rect.h * settings->PercentScreen) / 100;
+			if (freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseHeight))
+				*pMaxHeight =
+				    (rect.h * freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)) / 100;
 		}
-		else if (settings->DesktopWidth && settings->DesktopHeight)
+		else if (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) &&
+		         freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight))
 		{
-			*pMaxWidth = settings->DesktopWidth;
-			*pMaxHeight = settings->DesktopHeight;
+			*pMaxWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+			*pMaxHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 		}
 	}
 	return TRUE;
@@ -266,12 +273,14 @@ static BOOL sdl_detect_single_window(SdlContext* sdl, UINT32* pMaxWidth, UINT32*
 	rdpSettings* settings = sdl->context()->settings;
 	WINPR_ASSERT(settings);
 
-	if ((!settings->UseMultimon && !settings->SpanMonitors) ||
-	    (settings->Workarea && !settings->RemoteApplicationMode))
+	if ((!freerdp_settings_get_bool(settings, FreeRDP_UseMultimon) &&
+	     !freerdp_settings_get_bool(settings, FreeRDP_SpanMonitors)) ||
+	    (freerdp_settings_get_bool(settings, FreeRDP_Workarea) &&
+	     !freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode)))
 	{
 		/* If no monitors were specified on the command-line then set the current monitor as active
 		 */
-		if (!settings->NumMonitorIds)
+		if (freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds) == 0)
 		{
 			const size_t id =
 			    (sdl->windows.size() > 0) ? SDL_GetWindowDisplayIndex(sdl->windows[0].window) : 0;
@@ -285,7 +294,8 @@ static BOOL sdl_detect_single_window(SdlContext* sdl, UINT32* pMaxWidth, UINT32*
 			 * If the monitor is invalid then we will default back to current monitor
 			 * later as a fallback. So, there is no need to validate command-line entry here.
 			 */
-			settings->NumMonitorIds = 1;
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_NumMonitorIds, 1))
+				return FALSE;
 		}
 
 		// TODO: Fill monitor struct

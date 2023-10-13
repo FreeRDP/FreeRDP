@@ -930,7 +930,7 @@ static BOOL xf_gdi_surface_frame_marker(rdpContext* context,
 		case SURFACECMD_FRAMEACTION_END:
 			xfc->frame_begin = FALSE;
 
-			if (settings->FrameAcknowledge > 0)
+			if (freerdp_settings_get_uint32(settings, FreeRDP_FrameAcknowledge) > 0)
 			{
 				WINPR_ASSERT(xfc->common.context.update);
 				IFCALL(xfc->common.context.update->SurfaceFrameAcknowledge, context,

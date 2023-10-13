@@ -155,10 +155,11 @@ BOOL xf_keyboard_init(xfContext* xfc)
 	WINPR_ASSERT(settings);
 
 	xf_keyboard_clear(xfc);
-	xfc->KeyboardLayout = settings->KeyboardLayout;
-	xfc->KeyboardLayout =
-	    freerdp_keyboard_init_ex(xfc->KeyboardLayout, settings->KeyboardRemappingList);
-	settings->KeyboardLayout = xfc->KeyboardLayout;
+	xfc->KeyboardLayout = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout);
+	xfc->KeyboardLayout = freerdp_keyboard_init_ex(
+	    xfc->KeyboardLayout, freerdp_settings_get_string(settings, FreeRDP_KeyboardRemappingList));
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardLayout, xfc->KeyboardLayout))
+		return FALSE;
 
 	if (!xf_keyboard_update_modifier_map(xfc))
 		return FALSE;
@@ -597,7 +598,7 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 #if 0 /* set to 1 to enable multi touch gesture simulation via keyboard */
 #ifdef WITH_XRENDER
 
-	if (!xfc->remote_app && xfc->settings->MultiTouchGestures)
+    if (!xfc->remote_app && freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_MultiTouchGestures))
 	{
 		rdpContext* ctx = &xfc->common.context;
 
@@ -610,20 +611,24 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 
 			switch (keysym)
 			{
-				case XK_0:	/* Ctrl-Alt-0: Reset scaling and panning */
-					xfc->scaledWidth = xfc->sessionWidth;
-					xfc->scaledHeight = xfc->sessionHeight;
+                case XK_0:	/* Ctrl-Alt-0: Reset scaling and panning */{
+                const UINT32 sessionWidth = freerdp_settings_get_uint32(xfc->common.context.settings, FreeRDP_DesktopWidth);
+                const UINT32 sessionHeight = freerdp_settings_get_uint32(xfc->common.context.settings, FreeRDP_DesktopHeight);
+
+                    xfc->scaledWidth = sessionWidth;
+                    xfc->scaledHeight = sessionHeight;
 					xfc->offset_x = 0;
 					xfc->offset_y = 0;
 
-					if (!xfc->fullscreen && (xfc->sessionWidth != xfc->window->width ||
-					                         xfc->sessionHeight != xfc->window->height))
+                    if (!xfc->fullscreen && (sessionWidth != xfc->window->width ||
+                                             sessionHeight != xfc->window->height))
 					{
-						xf_ResizeDesktopWindow(xfc, xfc->window, xfc->sessionWidth, xfc->sessionHeight);
+                        xf_ResizeDesktopWindow(xfc, xfc->window, sessionWidth, sessionHeight);
 					}
 
-					xf_draw_screen(xfc, 0, 0, xfc->sessionWidth, xfc->sessionHeight);
+                    xf_draw_screen(xfc, 0, 0, sessionWidth, sessionHeight);
 					return TRUE;
+}
 
 				case XK_1:	/* Ctrl-Alt-1: Zoom in */
 					zdx = zdy = 10;

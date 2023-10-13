@@ -1645,6 +1645,7 @@ fail:
 	freerdp_addin_argv_free(args);
 	return NULL;
 }
+
 BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSettings* settings)
 {
 	BOOL setDefaultConnectionType = TRUE;
@@ -2489,14 +2490,20 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 
 	if (file->args->argc > 1)
 	{
-		const char* ConnectionFile = freerdp_settings_get_string(settings, FreeRDP_ConnectionFile);
-		settings->ConnectionFile = NULL;
+		WCHAR* ConnectionFile =
+		    freerdp_settings_get_string_as_utf16(settings, FreeRDP_ConnectionFile, NULL);
 
 		if (freerdp_client_settings_parse_command_line(settings, file->args->argc, file->args->argv,
 		                                               FALSE) < 0)
+		{
+			free(ConnectionFile);
 			return FALSE;
+		}
 
-		if (!freerdp_settings_set_string(settings, FreeRDP_ConnectionFile, ConnectionFile))
+		BOOL rc = freerdp_settings_set_string_from_utf16(settings, FreeRDP_ConnectionFile,
+		                                                 ConnectionFile);
+		free(ConnectionFile);
+		if (!rc)
 			return FALSE;
 	}
 

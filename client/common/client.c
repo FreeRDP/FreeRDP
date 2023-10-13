@@ -219,20 +219,21 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 {
 	/* Moved GatewayUseSameCredentials logic outside of cmdline.c, so
 	 * that the rdp file also triggers this functionality */
-	if (settings->GatewayEnabled)
+	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayEnabled))
 	{
-		if (settings->GatewayUseSameCredentials)
+		if (freerdp_settings_get_bool(settings, FreeRDP_GatewayUseSameCredentials))
 		{
-			if (settings->Username)
+			const char* Username = freerdp_settings_get_string(settings, FreeRDP_Username);
+			const char* Domain = freerdp_settings_get_string(settings, FreeRDP_Domain);
+			if (Username)
 			{
-				if (!freerdp_settings_set_string(settings, FreeRDP_GatewayUsername,
-				                                 settings->Username))
+				if (!freerdp_settings_set_string(settings, FreeRDP_GatewayUsername, Username))
 					goto out_error;
 			}
 
-			if (settings->Domain)
+			if (Domain)
 			{
-				if (!freerdp_settings_set_string(settings, FreeRDP_GatewayDomain, settings->Domain))
+				if (!freerdp_settings_set_string(settings, FreeRDP_GatewayDomain, Domain))
 					goto out_error;
 			}
 
@@ -248,30 +249,27 @@ static BOOL freerdp_client_settings_post_process(rdpSettings* settings)
 
 	/* Moved logic for Multimon and Span monitors to force fullscreen, so
 	 * that the rdp file also triggers this functionality */
-	if (settings->SpanMonitors)
+	if (freerdp_settings_get_bool(settings, FreeRDP_SpanMonitors))
 	{
-		settings->UseMultimon = TRUE;
-		settings->Fullscreen = TRUE;
+		freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, TRUE);
+		freerdp_settings_set_bool(settings, FreeRDP_Fullscreen, TRUE);
 	}
-	else if (settings->UseMultimon)
+	else if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 	{
-		settings->Fullscreen = TRUE;
+		freerdp_settings_set_bool(settings, FreeRDP_Fullscreen, TRUE);
 	}
 
 	/* deal with the smartcard / smartcard logon stuff */
-	if (settings->SmartcardLogon)
+	if (freerdp_settings_get_bool(settings, FreeRDP_SmartcardLogon))
 	{
-		settings->TlsSecurity = TRUE;
-		settings->RedirectSmartCards = TRUE;
-		settings->DeviceRedirection = TRUE;
+		freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE);
+		freerdp_settings_set_bool(settings, FreeRDP_RedirectSmartCards, TRUE);
+		freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE);
 		freerdp_settings_set_bool(settings, FreeRDP_PasswordIsSmartcardPin, TRUE);
 	}
 
 	return TRUE;
 out_error:
-	free(settings->GatewayUsername);
-	free(settings->GatewayDomain);
-	free(settings->GatewayPassword);
 	return FALSE;
 }
 
@@ -501,8 +499,10 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 		if (!*password)
 			goto fail;
 
+		const BOOL fromStdin =
+		    freerdp_settings_get_bool(instance->context->settings, FreeRDP_CredentialsFromStdin);
 		if (freerdp_passphrase_read(instance->context, prompt[2], *password, password_size,
-		                            instance->context->settings->CredentialsFromStdin) == NULL)
+		                            fromStdin) == NULL)
 			goto fail;
 	}
 
@@ -594,7 +594,7 @@ BOOL client_cli_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_lis
 #if defined(WITH_FREERDP_DEPRECATED)
 BOOL client_cli_authenticate(freerdp* instance, char** username, char** password, char** domain)
 {
-	if (instance->settings->SmartcardLogon)
+	if (freerdp_settings_get_bool(instance->settings, FreeRDP_SmartcardLogon))
 	{
 		WLog_INFO(TAG, "Authentication via smartcard");
 		return TRUE;
@@ -619,7 +619,9 @@ static DWORD client_cli_accept_certificate(freerdp* instance)
 	const rdpSettings* settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
-	if (settings->CredentialsFromStdin)
+	const BOOL fromStdin =
+	    freerdp_settings_get_bool(instance->context->settings, FreeRDP_CredentialsFromStdin);
+	if (fromStdin)
 		return 0;
 
 	while (1)
@@ -632,7 +634,7 @@ static DWORD client_cli_accept_certificate(freerdp* instance)
 		{
 			printf("\nError: Could not read answer from stdin.");
 
-			if (settings->CredentialsFromStdin)
+			if (fromStdin)
 				printf(" - Run without parameter \"--from-stdin\" to set trust.");
 
 			printf("\n");
@@ -1203,7 +1205,6 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 {
 	BOOL retry = TRUE;
 	UINT32 error;
-	UINT32 maxRetries;
 	UINT32 numRetries = 0;
 	rdpSettings* settings;
 
@@ -1215,7 +1216,8 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 	settings = instance->context->settings;
 	WINPR_ASSERT(settings);
 
-	maxRetries = settings->AutoReconnectMaxRetries;
+	const UINT32 maxRetries =
+	    freerdp_settings_get_uint32(settings, FreeRDP_AutoReconnectMaxRetries);
 
 	/* Only auto reconnect on network disconnects. */
 	error = freerdp_error_info(instance);
@@ -1234,7 +1236,7 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 			return FALSE;
 	}
 
-	if (!settings->AutoReconnectionEnabled)
+	if (!freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled))
 	{
 		/* No auto-reconnect - just quit */
 		return FALSE;

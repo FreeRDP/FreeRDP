@@ -90,7 +90,7 @@ static BOOL check_settings_smartcard_no_redirection(rdpSettings* settings)
 {
 	BOOL result = TRUE;
 
-	if (settings->RedirectSmartCards)
+	if (freerdp_settings_get_bool(settings, FreeRDP_RedirectSmartCards))
 	{
 		TEST_FAILURE("Expected RedirectSmartCards = FALSE,  but RedirectSmartCards = TRUE!\n");
 		result = FALSE;

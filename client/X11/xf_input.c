@@ -101,7 +101,7 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 			switch (class->type)
 			{
 				case XITouchClass:
-					if (settings->MultiTouchInput)
+					if (freerdp_settings_get_bool(settings, FreeRDP_MultiTouchInput))
 					{
 						const XITouchClassInfo* t = (const XITouchClassInfo*)class;
 						if (t->mode == XIDirectTouch)
@@ -933,11 +933,11 @@ int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	if (settings->MultiTouchInput)
+	if (freerdp_settings_get_bool(settings, FreeRDP_MultiTouchInput))
 	{
 		return xf_input_handle_event_remote(xfc, event);
 	}
-	else if (settings->MultiTouchGestures)
+	else if (freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures))
 	{
 		return xf_input_handle_event_local(xfc, event);
 	}

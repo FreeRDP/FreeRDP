@@ -222,8 +222,8 @@ BOOL wf_scale_rect(wfContext* wfc, RECT* source)
 	if (!settings)
 		return FALSE;
 
-	dw = settings->DesktopWidth;
-	dh = settings->DesktopHeight;
+	dw = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	dh = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
 	if (!wfc->client_width)
 		wfc->client_width = dw;
@@ -240,7 +240,8 @@ BOOL wf_scale_rect(wfContext* wfc, RECT* source)
 	if (!wh)
 		wh = dh;
 
-	if (wfc->common.context.settings->SmartSizing && (ww != dw || wh != dh))
+	if (freerdp_settings_get_bool(wfc->common.context.settings, FreeRDP_SmartSizing) &&
+	    (ww != dw || wh != dh))
 	{
 		source->bottom = source->bottom * wh / dh + 20;
 		source->top = source->top * wh / dh - 20;
@@ -280,30 +281,34 @@ void wf_update_offset(wfContext* wfc)
 
 	if (wfc->fullscreen)
 	{
-		if (wfc->common.context.settings->UseMultimon)
+		if (freerdp_settings_get_bool(wfc->common.context.settings, FreeRDP_UseMultimon))
 		{
 			int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
 			int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
 			int w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 			int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-			wfc->offset_x = (w - settings->DesktopWidth) / 2;
+			wfc->offset_x = (w - freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth)) / 2;
 
 			if (wfc->offset_x < x)
 				wfc->offset_x = x;
 
-			wfc->offset_y = (h - settings->DesktopHeight) / 2;
+			wfc->offset_y = (h - freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)) / 2;
 
 			if (wfc->offset_y < y)
 				wfc->offset_y = y;
 		}
 		else
 		{
-			wfc->offset_x = (GetSystemMetrics(SM_CXSCREEN) - settings->DesktopWidth) / 2;
+			wfc->offset_x = (GetSystemMetrics(SM_CXSCREEN) -
+			                 freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth)) /
+			                2;
 
 			if (wfc->offset_x < 0)
 				wfc->offset_x = 0;
 
-			wfc->offset_y = (GetSystemMetrics(SM_CYSCREEN) - settings->DesktopHeight) / 2;
+			wfc->offset_y = (GetSystemMetrics(SM_CYSCREEN) -
+			                 freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)) /
+			                2;
 
 			if (wfc->offset_y < 0)
 				wfc->offset_y = 0;
@@ -323,7 +328,7 @@ void wf_resize_window(wfContext* wfc)
 
 	if (wfc->fullscreen)
 	{
-		if (wfc->common.context.settings->UseMultimon)
+		if (freerdp_settings_get_bool(wfc->common.context.settings, FreeRDP_UseMultimon))
 		{
 			int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
 			int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
@@ -339,17 +344,17 @@ void wf_resize_window(wfContext* wfc)
 			             GetSystemMetrics(SM_CYSCREEN), SWP_FRAMECHANGED);
 		}
 	}
-	else if (!wfc->common.context.settings->Decorations)
+	else if (!freerdp_settings_get_bool(wfc->common.context.settings, FreeRDP_Decorations))
 	{
 		SetWindowLongPtr(wfc->hwnd, GWL_STYLE, WS_CHILD);
 
-		if (settings->EmbeddedWindow)
+		if (freerdp_settings_get_bool(settings, FreeRDP_EmbeddedWindow))
 		{
 			if (!wfc->client_height)
-				wfc->client_height = settings->DesktopHeight;
+				wfc->client_height = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
 			if (!wfc->client_width)
-				wfc->client_width = settings->DesktopWidth;
+				wfc->client_width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 
 			wf_update_canvas_diff(wfc);
 			/* Now resize to get full canvas size and room for caption and borders */
@@ -360,11 +365,15 @@ void wf_resize_window(wfContext* wfc)
 		else
 		{
 			/* Now resize to get full canvas size and room for caption and borders */
-			SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0, settings->DesktopWidth, settings->DesktopHeight,
+			SetWindowPos(wfc->hwnd, HWND_TOP, 0, 0,
+			             freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
+			             freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight),
 			             SWP_FRAMECHANGED);
 			wf_update_canvas_diff(wfc);
-			SetWindowPos(wfc->hwnd, HWND_TOP, -1, -1, settings->DesktopWidth + wfc->diff.x,
-			             settings->DesktopHeight + wfc->diff.y, SWP_NOMOVE | SWP_FRAMECHANGED);
+			SetWindowPos(wfc->hwnd, HWND_TOP, -1, -1,
+			             freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) + wfc->diff.x,
+			             freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) + wfc->diff.y,
+			             SWP_NOMOVE | SWP_FRAMECHANGED);
 		}
 	}
 	else
@@ -374,10 +383,10 @@ void wf_resize_window(wfContext* wfc)
 		                     WS_MAXIMIZEBOX);
 
 		if (!wfc->client_height)
-			wfc->client_height = settings->DesktopHeight;
+			wfc->client_height = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 
 		if (!wfc->client_width)
-			wfc->client_width = settings->DesktopWidth;
+			wfc->client_width = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 
 		if (!wfc->client_x)
 			wfc->client_x = 10;
@@ -388,10 +397,12 @@ void wf_resize_window(wfContext* wfc)
 		wf_update_canvas_diff(wfc);
 		/* Now resize to get full canvas size and room for caption and borders */
 		int width, height;
-		if (settings->SmartSizing && settings->SmartSizingWidth && settings->SmartSizingHeight)
+		if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) &&
+		    freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth) &&
+		    freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight))
 		{
-			width = settings->SmartSizingWidth;
-			height = settings->SmartSizingHeight;
+			width = freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingWidth);
+			height = freerdp_settings_get_uint32(settings, FreeRDP_SmartSizingHeight);
 		}
 		else
 		{
@@ -400,10 +411,11 @@ void wf_resize_window(wfContext* wfc)
 		}
 
 		int xpos, ypos;
-		if ((settings->DesktopPosX != UINT32_MAX) && (settings->DesktopPosY != UINT32_MAX))
+		if ((freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX) != UINT32_MAX) &&
+		    (freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY) != UINT32_MAX))
 		{
-			xpos = settings->DesktopPosX;
-			ypos = settings->DesktopPosY;
+			xpos = freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosX);
+			ypos = freerdp_settings_get_uint32(settings, FreeRDP_DesktopPosY);
 		}
 		else
 		{
@@ -804,7 +816,7 @@ static BOOL wf_gdi_surface_frame_marker(rdpContext* context,
 		return FALSE;
 
 	if (surface_frame_marker->frameAction == SURFACECMD_FRAMEACTION_END &&
-	    settings->FrameAcknowledge > 0)
+	    freerdp_settings_get_uint32(settings, FreeRDP_FrameAcknowledge) > 0)
 	{
 		IFCALL(context->update->SurfaceFrameAcknowledge, context, surface_frame_marker->frameId);
 	}
