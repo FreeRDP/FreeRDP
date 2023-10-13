@@ -997,3 +997,57 @@ const char* freerdp_settings_get_name_for_key(size_t key)
 	}
 	return NULL;
 }
+
+BOOL freerdp_settings_copy_item(rdpSettings* dst, const rdpSettings* src, size_t id)
+{
+	WINPR_ASSERT(dst);
+	WINPR_ASSERT(src);
+
+	const SSIZE_T key = freerdp_settings_get_type_for_key(id);
+	switch (key)
+	{
+		case FREERDP_SETTINGS_TYPE_BOOL:
+		{
+			const BOOL val = freerdp_settings_get_bool(src, id);
+			return freerdp_settings_set_bool(dst, id, val);
+		}
+		case FREERDP_SETTINGS_TYPE_INT16:
+		{
+			const INT16 val = freerdp_settings_get_int16(src, id);
+			return freerdp_settings_set_int16(dst, id, val);
+		}
+		case FREERDP_SETTINGS_TYPE_INT32:
+		{
+			const INT32 val = freerdp_settings_get_int32(src, id);
+			return freerdp_settings_set_int32(dst, id, val);
+		}
+		case FREERDP_SETTINGS_TYPE_INT64:
+		{
+			const INT64 val = freerdp_settings_get_int64(src, id);
+			return freerdp_settings_set_int64(dst, id, val);
+		}
+		case FREERDP_SETTINGS_TYPE_UINT16:
+		{
+			const UINT16 val = freerdp_settings_get_uint16(src, id);
+			return freerdp_settings_set_uint16(dst, id, val);
+		}
+		case FREERDP_SETTINGS_TYPE_UINT32:
+		{
+			const UINT32 val = freerdp_settings_get_uint32(src, id);
+			return freerdp_settings_set_uint32(dst, id, val);
+		}
+		case FREERDP_SETTINGS_TYPE_UINT64:
+		{
+			const UINT64 val = freerdp_settings_get_uint64(src, id);
+			return freerdp_settings_set_uint64(dst, id, val);
+		}
+		case FREERDP_SETTINGS_TYPE_STRING:
+		{
+			const char* val = freerdp_settings_get_string(src, id);
+			return freerdp_settings_set_string(dst, id, val);
+		}
+		case FREERDP_SETTINGS_TYPE_POINTER:
+		default:
+			return FALSE;
+	}
+}
