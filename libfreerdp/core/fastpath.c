@@ -39,6 +39,7 @@
 #include "surface.h"
 #include "fastpath.h"
 #include "rdp.h"
+#include "settings.h"
 
 #include "../cache/pointer.h"
 #include "../cache/palette.h"

@@ -43,6 +43,7 @@
 #include "opensslcompat.h"
 #include "certificate.h"
 #include "privatekey.h"
+#include "../core/settings.h"
 
 #ifdef WINPR_HAVE_POLL_H
 #include <poll.h>

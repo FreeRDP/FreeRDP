@@ -44,6 +44,7 @@
 
 #include "rpc.h"
 #include "rts.h"
+#include "../settings.h"
 
 #define TAG FREERDP_TAG("core.gateway.rpc")
 

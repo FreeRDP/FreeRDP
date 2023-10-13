@@ -26,6 +26,7 @@
 #include <freerdp/log.h>
 
 #include "window.h"
+#include "settings.h"
 
 #define TAG FREERDP_TAG("core.window")
 

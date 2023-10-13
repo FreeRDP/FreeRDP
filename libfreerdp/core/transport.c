@@ -54,6 +54,7 @@
 #include "utils.h"
 #include "state.h"
 #include "childsession.h"
+#include "settings.h"
 
 #include "gateway/rdg.h"
 #include "gateway/wst.h"

@@ -35,6 +35,7 @@
 #include <freerdp/log.h>
 
 #include "credssp_auth.h"
+#include "settings.h"
 
 #define TAG FREERDP_TAG("core.auth")
 

@@ -26,6 +26,7 @@
 #include <winpr/assert.h>
 
 #include "rdp.h"
+#include "settings.h"
 
 #include "state.h"
 #include "info.h"

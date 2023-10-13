@@ -32,6 +32,7 @@
 #include "timezone.h"
 
 #include "info.h"
+#include "settings.h"
 
 #define TAG FREERDP_TAG("core.info")
 

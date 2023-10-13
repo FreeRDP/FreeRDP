@@ -30,6 +30,7 @@
 
 #include "rdp.h"
 #include "utils.h"
+#include "settings.h"
 
 #if !defined(_WIN32)
 

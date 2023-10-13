@@ -27,8 +27,8 @@
 #include <freerdp/channels/drdynvc.h>
 
 #include "rdp.h"
-
 #include "client.h"
+#include "settings.h"
 
 #define TAG FREERDP_TAG("core.client")
 

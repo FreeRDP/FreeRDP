@@ -45,6 +45,7 @@
 #include "client.h"
 #include "server.h"
 #include "channels.h"
+#include "settings.h"
 
 #define TAG FREERDP_TAG("core.channels")
 

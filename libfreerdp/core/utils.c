@@ -28,6 +28,7 @@
 #define TAG FREERDP_TAG("core.gateway.utils")
 
 #include "utils.h"
+#include "settings.h"
 
 #include "../core/rdp.h"
 

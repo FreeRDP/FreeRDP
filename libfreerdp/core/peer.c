@@ -28,6 +28,7 @@
 
 #include "info.h"
 #include "display.h"
+#include "settings.h"
 
 #include <freerdp/log.h>
 #include <freerdp/streamdump.h>

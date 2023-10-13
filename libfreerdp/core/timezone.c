@@ -24,6 +24,7 @@
 #include <winpr/timezone.h>
 
 #include "timezone.h"
+#include "settings.h"
 
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("core.timezone")

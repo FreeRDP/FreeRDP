@@ -36,6 +36,7 @@
 #include <freerdp/crypto/certificate.h>
 
 #include "license.h"
+#include "settings.h"
 
 #include "../crypto/crypto.h"
 #include "../crypto/certificate.h"
