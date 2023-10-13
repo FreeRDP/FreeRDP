@@ -644,8 +644,6 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		if (settings->UseMultimon)
 		{
 			flags |= SDL_WINDOW_BORDERLESS;
-			window.offset_x = 0 - startupX;
-			window.offset_y = 0 - startupY;
 		}
 		else
 		{
@@ -657,6 +655,16 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		                                 static_cast<int>(h), flags);
 		if (!window.window)
 			goto fail;
+
+		if (settings->UseMultimon)
+		{
+			int win_x;
+			int win_y;
+			SDL_GetWindowPosition(window.window, &win_x, &win_y);
+			window.offset_x = 0 - win_x;
+			window.offset_y = 0 - win_y;
+		}
+
 		sdl->windows.push_back(window);
 	}
 
