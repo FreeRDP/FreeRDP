@@ -30,6 +30,7 @@
 #include "../crypto/certificate.h"
 #include "redirection.h"
 #include "utils.h"
+#include "settings.h"
 
 #define TAG FREERDP_TAG("core.redirection")
 

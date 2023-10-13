@@ -27,6 +27,7 @@
 #include <freerdp/utils/proxy_utils.h>
 #include <freerdp/crypto/crypto.h>
 #include "tcp.h"
+#include "settings.h"
 
 #include <winpr/assert.h>
 #include <winpr/environment.h> /* For GetEnvironmentVariableA */

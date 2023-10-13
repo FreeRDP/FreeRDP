@@ -21,6 +21,7 @@
 #include <freerdp/config.h>
 
 #include "security.h"
+#include "settings.h"
 
 #include <freerdp/log.h>
 #include <winpr/crypto.h>

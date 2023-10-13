@@ -34,6 +34,7 @@
 #include "utils.h"
 #include "gcc.h"
 #include "nego.h"
+#include "settings.h"
 
 #include "../crypto/certificate.h"
 

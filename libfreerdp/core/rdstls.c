@@ -30,6 +30,7 @@
 #include "rdstls.h"
 #include "transport.h"
 #include "utils.h"
+#include "settings.h"
 
 #define RDSTLS_VERSION_1 0x01
 
