@@ -11,6 +11,8 @@
 #cmakedefine AVRESAMPLE_FOUND
 
 /* Options */
+#cmakedefine WITH_OPAQUE_SETTINGS
+
 #cmakedefine WITH_ADD_PLUGIN_TO_RPATH
 #cmakedefine WITH_PROFILER
 #cmakedefine WITH_GPROF

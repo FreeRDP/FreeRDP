@@ -32,25 +32,33 @@
 
 #include <string.h>
 
+#include <freerdp/settings_types_private.h>
+
 FREERDP_LOCAL BOOL freerdp_settings_set_default_order_support(rdpSettings* settings);
 FREERDP_LOCAL BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src);
 FREERDP_LOCAL void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup);
-FREERDP_LOCAL BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, char* val,
+FREERDP_LOCAL BOOL freerdp_settings_set_string_(rdpSettings* settings,
+                                                FreeRDP_Settings_Keys_String id, char* val,
                                                 size_t len);
-FREERDP_LOCAL BOOL freerdp_settings_set_string_copy_(rdpSettings* settings, size_t id,
+FREERDP_LOCAL BOOL freerdp_settings_set_string_copy_(rdpSettings* settings,
+                                                     FreeRDP_Settings_Keys_String id,
                                                      const char* val, size_t len, BOOL cleanup);
 FREERDP_LOCAL BOOL freerdp_capability_buffer_allocate(rdpSettings* settings, UINT32 count);
 
 FREERDP_LOCAL BOOL identity_set_from_settings_with_pwd(SEC_WINNT_AUTH_IDENTITY_W* identity,
-                                                       const rdpSettings* settings, size_t UserId,
-                                                       size_t DomainId, const WCHAR* Password,
-                                                       size_t pwdLen);
+                                                       const rdpSettings* settings,
+                                                       FreeRDP_Settings_Keys_String UserId,
+                                                       FreeRDP_Settings_Keys_String DomainId,
+                                                       const WCHAR* Password, size_t pwdLen);
 FREERDP_LOCAL BOOL identity_set_from_settings(SEC_WINNT_AUTH_IDENTITY_W* identity,
-                                              const rdpSettings* settings, size_t UserId,
-                                              size_t DomainId, size_t PwdId);
+                                              const rdpSettings* settings,
+                                              FreeRDP_Settings_Keys_String UserId,
+                                              FreeRDP_Settings_Keys_String DomainId, size_t PwdId);
 FREERDP_LOCAL BOOL identity_set_from_smartcard_hash(SEC_WINNT_AUTH_IDENTITY_W* identity,
-                                                    const rdpSettings* settings, size_t userId,
-                                                    size_t domainId, size_t pwdId,
-                                                    const BYTE* certSha1, size_t sha1len);
+                                                    const rdpSettings* settings,
+                                                    FreeRDP_Settings_Keys_String userId,
+                                                    FreeRDP_Settings_Keys_String domainId,
+                                                    size_t pwdId, const BYTE* certSha1,
+                                                    size_t sha1len);
 
 #endif /* FREERDP_LIB_CORE_SETTINGS_H */
