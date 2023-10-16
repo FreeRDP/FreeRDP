@@ -1946,12 +1946,12 @@ static void rdp_write_bitmap_cache_cell_info(wStream* s, BITMAP_CACHE_V2_CELL_IN
 
 static BOOL rdp_apply_bitmap_cache_v2_capability_set(rdpSettings* settings, const rdpSettings* src)
 {
-	size_t x;
-	const size_t keys[] = { FreeRDP_BitmapCacheEnabled, FreeRDP_BitmapCachePersistEnabled };
+	const FreeRDP_Settings_Keys_Bool keys[] = { FreeRDP_BitmapCacheEnabled,
+		                                        FreeRDP_BitmapCachePersistEnabled };
 
-	for (x = 0; x < ARRAYSIZE(keys); x++)
+	for (size_t x = 0; x < ARRAYSIZE(keys); x++)
 	{
-		const size_t id = keys[x];
+		const FreeRDP_Settings_Keys_Bool id = keys[x];
 		const BOOL val = freerdp_settings_get_bool(src, id);
 		if (!freerdp_settings_set_bool(settings, id, val))
 			return FALSE;
@@ -1964,7 +1964,7 @@ static BOOL rdp_apply_bitmap_cache_v2_capability_set(rdpSettings* settings, cons
 		                                 BitmapCacheV2NumCells))
 			return FALSE;
 
-		for (x = 0; x < BitmapCacheV2NumCells; x++)
+		for (size_t x = 0; x < BitmapCacheV2NumCells; x++)
 		{
 			const BITMAP_CACHE_V2_CELL_INFO* cdata =
 			    freerdp_settings_get_pointer_array(src, FreeRDP_BitmapCacheV2CellInfo, x);

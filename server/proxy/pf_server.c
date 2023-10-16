@@ -64,7 +64,8 @@ typedef struct
 } peer_thread_args;
 
 static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, rdpSettings* settings,
-                                                      size_t targetID, size_t portID)
+                                                      FreeRDP_Settings_Keys_String targetID,
+                                                      FreeRDP_Settings_Keys_UInt32 portID)
 {
 #define TARGET_MAX (100)
 #define ROUTING_TOKEN_PREFIX "Cookie: msts="

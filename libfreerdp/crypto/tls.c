@@ -1415,8 +1415,8 @@ static BOOL is_accepted_fingerprint(const rdpCertificate* cert,
 static BOOL accept_cert(rdpTls* tls, const BYTE* pem, UINT32 length)
 {
 	WINPR_ASSERT(tls);
-	size_t id = FreeRDP_AcceptedCert;
-	size_t lid = FreeRDP_AcceptedCertLength;
+	FreeRDP_Settings_Keys_String id = FreeRDP_AcceptedCert;
+	FreeRDP_Settings_Keys_UInt32 lid = FreeRDP_AcceptedCertLength;
 
 	rdpSettings* settings = tls->settings;
 

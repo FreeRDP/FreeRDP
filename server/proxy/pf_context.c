@@ -195,16 +195,15 @@ BOOL pf_context_init_server_context(freerdp_peer* client)
 }
 
 static BOOL pf_context_revert_str_settings(rdpSettings* dst, const rdpSettings* before, size_t nr,
-                                           const size_t* ids)
+                                           const FreeRDP_Settings_Keys_String* ids)
 {
-	size_t x;
 	WINPR_ASSERT(dst);
 	WINPR_ASSERT(before);
 	WINPR_ASSERT(ids || (nr == 0));
 
-	for (x = 0; x < nr; x++)
+	for (size_t x = 0; x < nr; x++)
 	{
-		size_t id = ids[x];
+		FreeRDP_Settings_Keys_String id = ids[x];
 		const char* what = freerdp_settings_get_string(before, id);
 		if (!freerdp_settings_set_string(dst, id, what))
 			return FALSE;
@@ -227,7 +226,8 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 {
 	BOOL rc = FALSE;
 	rdpSettings* before_copy;
-	const size_t to_revert[] = { FreeRDP_ConfigPath, FreeRDP_CertificateName };
+	const FreeRDP_Settings_Keys_String to_revert[] = { FreeRDP_ConfigPath,
+		                                               FreeRDP_CertificateName };
 
 	if (!dst || !src)
 		return FALSE;

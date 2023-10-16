@@ -838,7 +838,7 @@ fail:
 	return FALSE;
 }
 
-static BOOL read_pem_file(rdpSettings* settings, size_t id, const char* file)
+static BOOL read_pem_file(rdpSettings* settings, FreeRDP_Settings_Keys_String id, const char* file)
 {
 	size_t length = 0;
 	char* pem = crypto_read_pem(file, &length);
@@ -861,7 +861,7 @@ typedef BOOL (*CmdLineSubOptionCb)(const char* value, rdpSettings* settings);
 typedef struct
 {
 	const char* optname;
-	size_t id;
+	FreeRDP_Settings_Keys_String id;
 	CmdLineSubOptionType opttype;
 	CmdLineSubOptionCb cb;
 } CmdLineSubOptions;
@@ -1150,7 +1150,8 @@ static BOOL freerdp_parse_username_ptr(const char* username, const char** user, 
 }
 
 static BOOL freerdp_parse_username_settings(const char* username, rdpSettings* settings,
-                                            size_t userID, size_t domainID)
+                                            FreeRDP_Settings_Keys_String userID,
+                                            FreeRDP_Settings_Keys_String domainID)
 {
 	const char* user = NULL;
 	const char* domain = NULL;
@@ -1239,7 +1240,7 @@ static BOOL freerdp_apply_connection_type(rdpSettings* settings, UINT32 type)
 {
 	struct network_settings
 	{
-		size_t id;
+		FreeRDP_Settings_Keys_Bool id;
 		BOOL value[7];
 	};
 	const struct network_settings config[] = {
@@ -1571,41 +1572,45 @@ static void freerdp_client_print_tune_list(const rdpSettings* settings)
 		{
 			case RDP_SETTINGS_TYPE_BOOL:
 				printf("%" PRIuz "\t%50s\tBOOL\t%s\n", x, name,
-				       freerdp_settings_get_bool(settings, x) ? "TRUE" : "FALSE");
+				       freerdp_settings_get_bool(settings, (FreeRDP_Settings_Keys_Bool)x)
+				           ? "TRUE"
+				           : "FALSE");
 				break;
 			case RDP_SETTINGS_TYPE_UINT16:
 				printf("%" PRIuz "\t%50s\tUINT16\t%" PRIu16 "\n", x, name,
-				       freerdp_settings_get_uint16(settings, x));
+				       freerdp_settings_get_uint16(settings, (FreeRDP_Settings_Keys_UInt16)x));
 				break;
 			case RDP_SETTINGS_TYPE_INT16:
 				printf("%" PRIuz "\t%50s\tINT16\t%" PRId16 "\n", x, name,
-				       freerdp_settings_get_int16(settings, x));
+				       freerdp_settings_get_int16(settings, (FreeRDP_Settings_Keys_Int16)x));
 				break;
 			case RDP_SETTINGS_TYPE_UINT32:
 				printf("%" PRIuz "\t%50s\tUINT32\t%" PRIu32 "\n", x, name,
-				       freerdp_settings_get_uint32(settings, x));
+				       freerdp_settings_get_uint32(settings, (FreeRDP_Settings_Keys_UInt32)x));
 				break;
 			case RDP_SETTINGS_TYPE_INT32:
 				printf("%" PRIuz "\t%50s\tINT32\t%" PRId32 "\n", x, name,
-				       freerdp_settings_get_int32(settings, x));
+				       freerdp_settings_get_int32(settings, (FreeRDP_Settings_Keys_Int32)x));
 				break;
 			case RDP_SETTINGS_TYPE_UINT64:
 				printf("%" PRIuz "\t%50s\tUINT64\t%" PRIu64 "\n", x, name,
-				       freerdp_settings_get_uint64(settings, x));
+				       freerdp_settings_get_uint64(settings, (FreeRDP_Settings_Keys_UInt64)x));
 				break;
 			case RDP_SETTINGS_TYPE_INT64:
 				printf("%" PRIuz "\t%50s\tINT64\t%" PRId64 "\n", x, name,
-				       freerdp_settings_get_int64(settings, x));
+				       freerdp_settings_get_int64(settings, (FreeRDP_Settings_Keys_Int64)x));
 				break;
 			case RDP_SETTINGS_TYPE_STRING:
 				printf("%" PRIuz "\t%50s\tSTRING\t%s"
 				       "\n",
-				       x, name, freerdp_settings_get_string(settings, x));
+				       x, name,
+				       freerdp_settings_get_string(settings, (FreeRDP_Settings_Keys_String)x));
 				break;
 			case RDP_SETTINGS_TYPE_POINTER:
 				printf("%" PRIuz "\t%50s\tPOINTER\t%p"
 				       "\n",
-				       x, name, freerdp_settings_get_pointer(settings, x));
+				       x, name,
+				       freerdp_settings_get_pointer(settings, (FreeRDP_Settings_Keys_Pointer)x));
 				break;
 			default:
 				break;
@@ -2358,9 +2363,10 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 
 static int parse_app_option_program(rdpSettings* settings, const char* cmd)
 {
-	const size_t ids[] = { FreeRDP_RemoteApplicationMode, FreeRDP_RemoteAppLanguageBarSupported,
-		                   FreeRDP_Workarea, FreeRDP_DisableWallpaper,
-		                   FreeRDP_DisableFullWindowDrag };
+	const FreeRDP_Settings_Keys_Bool ids[] = { FreeRDP_RemoteApplicationMode,
+		                                       FreeRDP_RemoteAppLanguageBarSupported,
+		                                       FreeRDP_Workarea, FreeRDP_DisableWallpaper,
+		                                       FreeRDP_DisableFullWindowDrag };
 
 	if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationProgram, cmd))
 		return COMMAND_LINE_ERROR_MEMORY;
@@ -2388,7 +2394,7 @@ static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		struct app_map
 		{
 			const char* name;
-			size_t id;
+			FreeRDP_Settings_Keys_String id;
 			int (*fkt)(rdpSettings* settings, const char* value);
 		};
 		const struct app_map amap[] = {
@@ -2555,7 +2561,8 @@ static BOOL parse_gateway_host_option(rdpSettings* settings, const char* host)
 	return TRUE;
 }
 
-static BOOL parse_gateway_cred_option(rdpSettings* settings, const char* value, size_t what)
+static BOOL parse_gateway_cred_option(rdpSettings* settings, const char* value,
+                                      FreeRDP_Settings_Keys_String what)
 {
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(value);
@@ -4040,7 +4047,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 				}
 
 				const BOOL val = bval != PARSE_OFF;
-				FreeRDP_Settings_Keys_Bool id = 0;
+				FreeRDP_Settings_Keys_Bool id;
 				if (option_starts_with("rdp", cur)) /* Standard RDP */
 				{
 					id = FreeRDP_RdpSecurity;
@@ -4070,9 +4077,10 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 
 			if (singleOptionWithoutOnOff != 0)
 			{
-				const size_t options[] = { FreeRDP_AadSecurity, FreeRDP_UseRdpSecurityLayer,
-					                       FreeRDP_RdpSecurity, FreeRDP_NlaSecurity,
-					                       FreeRDP_TlsSecurity };
+				const FreeRDP_Settings_Keys_Bool options[] = {
+					FreeRDP_AadSecurity, FreeRDP_UseRdpSecurityLayer, FreeRDP_RdpSecurity,
+					FreeRDP_NlaSecurity, FreeRDP_TlsSecurity
+				};
 
 				for (size_t i = 0; i < ARRAYSIZE(options); i++)
 				{
@@ -4357,14 +4365,18 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 					else
 					{
 						const BOOL val = bval != PARSE_OFF;
-						size_t key = 0;
-						if (option_starts_with("relative", cur))
-							key = FreeRDP_MouseUseRelativeMove;
-						else if (option_starts_with("grab", cur))
-							key = FreeRDP_GrabMouse;
 
-						if (!freerdp_settings_set_bool(settings, key, val))
-							rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+						if (option_starts_with("relative", cur))
+						{
+							if (!freerdp_settings_set_bool(settings, FreeRDP_MouseUseRelativeMove,
+							                               val))
+								rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+						}
+						else if (option_starts_with("grab", cur))
+						{
+							if (!freerdp_settings_set_bool(settings, FreeRDP_GrabMouse, val))
+								rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+						}
 					}
 
 					if (rc != 0)
@@ -5170,7 +5182,7 @@ static BOOL freerdp_client_load_static_channel_addin(rdpChannels* channels, rdpS
 
 typedef struct
 {
-	size_t settingId;
+	FreeRDP_Settings_Keys_Bool settingId;
 	const char* channelName;
 	void* args;
 } ChannelToLoad;

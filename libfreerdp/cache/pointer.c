@@ -283,7 +283,8 @@ BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer*
                        BOOL colorCache)
 {
 	rdpPointer* prevPointer;
-	const size_t id = colorCache ? FreeRDP_ColorPointerCacheSize : FreeRDP_PointerCacheSize;
+	const FreeRDP_Settings_Keys_UInt32 id =
+	    colorCache ? FreeRDP_ColorPointerCacheSize : FreeRDP_PointerCacheSize;
 
 	WINPR_ASSERT(pointer_cache);
 	WINPR_ASSERT(pointer_cache->context);

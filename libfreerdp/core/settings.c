@@ -95,7 +95,8 @@ static BOOL settings_reg_query_bool_val(HKEY hKey, const TCHAR* sub, BOOL* value
 	return TRUE;
 }
 
-static BOOL settings_reg_query_dword(rdpSettings* settings, size_t id, HKEY hKey, const TCHAR* sub)
+static BOOL settings_reg_query_dword(rdpSettings* settings, FreeRDP_Settings_Keys_UInt32 id,
+                                     HKEY hKey, const TCHAR* sub)
 {
 	DWORD dwValue;
 
@@ -105,7 +106,8 @@ static BOOL settings_reg_query_dword(rdpSettings* settings, size_t id, HKEY hKey
 	return freerdp_settings_set_uint32(settings, id, dwValue);
 }
 
-static BOOL settings_reg_query_bool(rdpSettings* settings, size_t id, HKEY hKey, const TCHAR* sub)
+static BOOL settings_reg_query_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool id, HKEY hKey,
+                                    const TCHAR* sub)
 {
 	DWORD dwValue;
 
@@ -139,8 +141,8 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		settings_reg_query_bool(settings, FreeRDP_MstscCookieMode, hKey, _T("MstscCookieMode"));
 		settings_reg_query_dword(settings, FreeRDP_CookieMaxLength, hKey, _T("CookieMaxLength"));
 		settings_reg_query_bool(settings, FreeRDP_BitmapCacheEnabled, hKey, _T("BitmapCache"));
-		settings_reg_query_bool(settings, FreeRDP_OffscreenSupportLevel, hKey,
-		                        _T("OffscreenBitmapCache"));
+		settings_reg_query_dword(settings, FreeRDP_OffscreenSupportLevel, hKey,
+		                         _T("OffscreenBitmapCache"));
 		settings_reg_query_dword(settings, FreeRDP_OffscreenCacheSize, hKey,
 		                         _T("OffscreenBitmapCacheSize"));
 		settings_reg_query_dword(settings, FreeRDP_OffscreenCacheEntries, hKey,
@@ -238,7 +240,8 @@ static void settings_server_load_hkey_local_machine(rdpSettings* settings)
 
 	settings_reg_query_bool(settings, FreeRDP_ExtSecurity, hKey, _T("ExtSecurity"));
 	settings_reg_query_bool(settings, FreeRDP_NlaSecurity, hKey, _T("NlaSecurity"));
-	settings_reg_query_bool(settings, FreeRDP_TlsSecLevel, hKey, _T("TlsSecurity"));
+	settings_reg_query_bool(settings, FreeRDP_TlsSecurity, hKey, _T("TlsSecurity"));
+	settings_reg_query_dword(settings, FreeRDP_TlsSecLevel, hKey, _T("TlsSecLevel"));
 	settings_reg_query_bool(settings, FreeRDP_RdpSecurity, hKey, _T("RdpSecurity"));
 
 	RegCloseKey(hKey);
@@ -766,9 +769,10 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	const BOOL enable = freerdp_settings_get_bool(settings, FreeRDP_ServerMode);
 
 	{
-		const size_t keys[] = { FreeRDP_SupportDynamicTimeZone, FreeRDP_SupportGraphicsPipeline,
-			                    FreeRDP_SupportStatusInfoPdu, FreeRDP_SupportErrorInfoPdu,
-			                    FreeRDP_SupportAsymetricKeys };
+		const FreeRDP_Settings_Keys_Bool keys[] = {
+			FreeRDP_SupportDynamicTimeZone, FreeRDP_SupportGraphicsPipeline,
+			FreeRDP_SupportStatusInfoPdu, FreeRDP_SupportErrorInfoPdu, FreeRDP_SupportAsymetricKeys
+		};
 
 		for (size_t x = 0; x < ARRAYSIZE(keys); x++)
 		{
@@ -1179,7 +1183,8 @@ BOOL identity_set_from_settings_with_pwd(SEC_WINNT_AUTH_IDENTITY* identity,
 
 BOOL identity_set_from_settings(SEC_WINNT_AUTH_IDENTITY_W* identity, const rdpSettings* settings,
                                 FreeRDP_Settings_Keys_String UserId,
-                                FreeRDP_Settings_Keys_String DomainId, size_t PwdId)
+                                FreeRDP_Settings_Keys_String DomainId,
+                                FreeRDP_Settings_Keys_String PwdId)
 {
 	WINPR_ASSERT(identity);
 	WINPR_ASSERT(settings);
@@ -1197,8 +1202,9 @@ BOOL identity_set_from_settings(SEC_WINNT_AUTH_IDENTITY_W* identity, const rdpSe
 BOOL identity_set_from_smartcard_hash(SEC_WINNT_AUTH_IDENTITY_W* identity,
                                       const rdpSettings* settings,
                                       FreeRDP_Settings_Keys_String userId,
-                                      FreeRDP_Settings_Keys_String domainId, size_t pwdId,
-                                      const BYTE* certSha1, size_t sha1len)
+                                      FreeRDP_Settings_Keys_String domainId,
+                                      FreeRDP_Settings_Keys_String pwdId, const BYTE* certSha1,
+                                      size_t sha1len)
 {
 #ifdef _WIN32
 	CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
