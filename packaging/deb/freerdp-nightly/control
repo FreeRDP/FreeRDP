@@ -13,7 +13,7 @@ Build-Depends:
  docbook-xsl,
  xsltproc,
  ninja-build,
- libkrb5-dev | libkrb5-multidev | heimdal-multidev,
+ libkrb5-dev | krb5-multidev | heimdal-multidev,
  libxkbcommon-dev,
  libxkbfile-dev,
  libx11-dev,
