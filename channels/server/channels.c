@@ -59,6 +59,10 @@
 #include <freerdp/server/rdpecam.h>
 #endif
 
+#if defined(CHANNEL_LOCATION_SERVER)
+#include <freerdp/server/location.h>
+#endif /* CHANNEL_LOCATION_SERVER */
+
 #ifdef WITH_CHANNEL_GFXREDIR
 #include <freerdp/server/gfxredir.h>
 #endif /* WITH_CHANNEL_GFXREDIR */
@@ -86,10 +90,13 @@ void freerdp_channels_dummy(void)
 	TelemetryServerContext* telemetry;
 	RdpgfxServerContext* rdpgfx;
 	DispServerContext* disp;
-#if defined (CHANNEL_RDPECAM_SERVER)
+#if defined(CHANNEL_RDPECAM_SERVER)
 	CamDevEnumServerContext* camera_enumerator;
 	CameraDeviceServerContext* camera_device;
 #endif
+#if defined(CHANNEL_LOCATION_SERVER)
+	LocationServerContext* location;
+#endif /* CHANNEL_LOCATION_SERVER */
 #ifdef WITH_CHANNEL_GFXREDIR
 	GfxRedirServerContext* gfxredir;
 #endif // WITH_CHANNEL_GFXREDIR
@@ -124,12 +131,17 @@ void freerdp_channels_dummy(void)
 	disp = disp_server_context_new(NULL);
 	disp_server_context_free(disp);
 
-#if defined (CHANNEL_RDPECAM_SERVER)
+#if defined(CHANNEL_RDPECAM_SERVER)
 	camera_enumerator = cam_dev_enum_server_context_new(NULL);
 	cam_dev_enum_server_context_free(camera_enumerator);
 	camera_device = camera_device_server_context_new(NULL);
 	camera_device_server_context_free(camera_device);
 #endif
+
+#if defined(CHANNEL_LOCATION_SERVER)
+	location = location_server_context_new(NULL);
+	location_server_context_free(location);
+#endif /* CHANNEL_LOCATION_SERVER */
 
 #ifdef WITH_CHANNEL_GFXREDIR
 	gfxredir = gfxredir_server_context_new(NULL);
