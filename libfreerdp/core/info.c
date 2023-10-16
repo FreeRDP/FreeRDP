@@ -74,8 +74,7 @@ static const struct info_flags_t info_flags[] = {
 };
 
 static BOOL rdp_read_info_null_string(rdpSettings* settings, size_t id, const char* what,
-                                      UINT32 flags, wStream* s, size_t cbLen, size_t max,
-                                      BOOL isNullTerminated)
+                                      UINT32 flags, wStream* s, size_t cbLen, size_t max)
 {
 	const BOOL unicode = (flags & INFO_UNICODE) ? TRUE : FALSE;
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
@@ -88,9 +87,6 @@ static BOOL rdp_read_info_null_string(rdpSettings* settings, size_t id, const ch
 
 	if (cbLen > 0)
 	{
-		if (isNullTerminated && (max > 0))
-			max -= nullSize;
-
 		if ((cbLen > max) || (unicode && ((cbLen % 2) != 0)))
 		{
 			WLog_ERR(TAG, "protocol error: %s has invalid value: %" PRIuz "", what, cbLen);
@@ -332,7 +328,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	settings->IPv6Enabled = (clientAddressFamily == ADDRESS_FAMILY_INET6 ? TRUE : FALSE);
 
 	if (!rdp_read_info_null_string(settings, FreeRDP_ClientAddress, "cbClientAddress", INFO_UNICODE,
-	                               s, cbClientAddress, rdp_get_client_address_max_size(rdp), TRUE))
+	                               s, cbClientAddress, rdp_get_client_address_max_size(rdp)))
 		return FALSE;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
@@ -349,7 +345,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	 */
 
 	if (!rdp_read_info_null_string(settings, FreeRDP_ClientDir, "cbClientDir", INFO_UNICODE, s,
-	                               cbClientDir, 512, TRUE))
+	                               cbClientDir, 512))
 		return FALSE;
 
 	/**
@@ -424,7 +420,7 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 		if (!rdp_read_info_null_string(settings, FreeRDP_DynamicDSTTimeZoneKeyName,
 		                               "cbDynamicDSTTimeZoneKeyName", INFO_UNICODE, s,
-		                               cbDynamicDSTTimeZoneKeyName, 254, FALSE))
+		                               cbDynamicDSTTimeZoneKeyName, 254))
 			return FALSE;
 
 		if (Stream_GetRemainingLength(s) == 0)
