@@ -14,6 +14,18 @@ option(ENABLE_WARNING_ERROR "enable -Werror for compile" OFF)
 
 if (ENABLE_WARNING_VERBOSE)
 	if (MSVC)
+		# Remove previous warning definitions,
+		# NMake is otherwise complaining.
+		foreach (flags_var_to_scrub
+			CMAKE_C_FLAGS
+			CMAKE_C_FLAGS_DEBUG
+			CMAKE_C_FLAGS_RELEASE
+			CMAKE_C_FLAGS_RELWITHDEBINFO
+			CMAKE_C_FLAGS_MINSIZEREL)
+			string (REGEX REPLACE "(^| )[/-]W[ ]*[1-9]" " "
+			"${flags_var_to_scrub}" "${${flags_var_to_scrub}}")
+		endforeach()
+
 		set(C_WARNING_FLAGS
 			/Wall
 		)
