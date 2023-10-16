@@ -3211,7 +3211,6 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		{
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
-				UINT32 i;
 				union
 				{
 					char** p;
@@ -3235,7 +3234,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 
 				MonitorIds =
 				    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorIds, 0);
-				for (i = 0; i < count; i++)
+				for (UINT32 i = 0; i < count; i++)
 				{
 					LONGLONG val;
 
@@ -4096,7 +4095,6 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		{
 			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 			{
-				UINT32 i;
 				union
 				{
 					char** p;
@@ -4106,7 +4104,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 				ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 
 				UINT32 EncryptionMethods = 0;
-				for (i = 0; i < count; i++)
+				for (UINT32 i = 0; i < count; i++)
 				{
 					if (option_equals(ptr.pc[i], "40"))
 						EncryptionMethods |= ENCRYPTION_METHOD_40BIT;
@@ -5206,12 +5204,11 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		{ FreeRDP_RemdeskVirtualChannel, REMDESK_SVC_CHANNEL_NAME, settings },
 		{ FreeRDP_RemoteApplicationMode, RAIL_SVC_CHANNEL_NAME, settings }
 	};
-	size_t i;
 
 	/**
 	 * Step 1: first load dynamic channels according to the settings
 	 */
-	for (i = 0; i < ARRAYSIZE(dynChannels); i++)
+	for (size_t i = 0; i < ARRAYSIZE(dynChannels); i++)
 	{
 		if ((dynChannels[i].settingId == 0) ||
 		    freerdp_settings_get_bool(settings, dynChannels[i].settingId))
@@ -5430,7 +5427,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	}
 
 	/* step 3: schedule some static channels to load depending on the settings */
-	for (i = 0; i < ARRAYSIZE(staticChannels); i++)
+	for (size_t i = 0; i < ARRAYSIZE(staticChannels); i++)
 	{
 		if ((staticChannels[i].settingId == 0) ||
 		    freerdp_settings_get_bool(settings, staticChannels[i].settingId))
