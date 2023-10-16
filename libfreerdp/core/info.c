@@ -75,8 +75,9 @@ static const struct info_flags_t info_flags[] = {
 	{ INFO_HIDEF_RAIL_SUPPORTED, "INFO_HIDEF_RAIL_SUPPORTED" },
 };
 
-static BOOL rdp_read_info_null_string(rdpSettings* settings, size_t id, const char* what,
-                                      UINT32 flags, wStream* s, size_t cbLen, size_t max)
+static BOOL rdp_read_info_null_string(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
+                                      const char* what, UINT32 flags, wStream* s, size_t cbLen,
+                                      size_t max)
 {
 	const BOOL unicode = (flags & INFO_UNICODE) ? TRUE : FALSE;
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
@@ -586,8 +587,8 @@ fail:
 	return ret;
 }
 
-static BOOL rdp_read_info_string(rdpSettings* settings, size_t id, UINT32 flags, wStream* s,
-                                 size_t cbLenNonNull, size_t max)
+static BOOL rdp_read_info_string(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
+                                 UINT32 flags, wStream* s, size_t cbLenNonNull, size_t max)
 {
 	union
 	{
@@ -892,7 +893,7 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		cbAlternateShell = (UINT16)cbAlternateShell * sizeof(WCHAR);
 	}
 
-	size_t inputId = FreeRDP_RemoteAssistanceSessionId;
+	FreeRDP_Settings_Keys_String inputId = FreeRDP_RemoteAssistanceSessionId;
 	if (!freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceMode))
 		inputId = FreeRDP_ShellWorkingDirectory;
 

@@ -1093,7 +1093,7 @@ fail:
 }
 
 static BOOL set_creds_octetstring_to_settings(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId,
-                                              BOOL optional, size_t settingId,
+                                              BOOL optional, FreeRDP_Settings_Keys_String settingId,
                                               rdpSettings* settings)
 {
 	if (optional)

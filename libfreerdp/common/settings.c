@@ -1062,52 +1062,52 @@ void freerdp_update_gateway_usage_method(rdpSettings* settings, UINT32 GatewayEn
 #if defined(WITH_FREERDP_DEPRECATED)
 BOOL freerdp_get_param_bool(const rdpSettings* settings, int id)
 {
-	return freerdp_settings_get_bool(settings, (size_t)id);
+	return freerdp_settings_get_bool(settings, (FreeRDP_Settings_Keys_Bool)id);
 }
 
 int freerdp_set_param_bool(rdpSettings* settings, int id, BOOL param)
 {
-	return freerdp_settings_set_bool(settings, (size_t)id, param) ? 0 : -1;
+	return freerdp_settings_set_bool(settings, (FreeRDP_Settings_Keys_Bool)id, param) ? 0 : -1;
 }
 
 int freerdp_get_param_int(const rdpSettings* settings, int id)
 {
-	return freerdp_settings_get_int32(settings, (size_t)id);
+	return freerdp_settings_get_int32(settings, (FreeRDP_Settings_Keys_Int32)id);
 }
 
 int freerdp_set_param_int(rdpSettings* settings, int id, int param)
 {
-	return freerdp_settings_set_int32(settings, (size_t)id, param) ? 0 : -1;
+	return freerdp_settings_set_int32(settings, (FreeRDP_Settings_Keys_Int32)id, param) ? 0 : -1;
 }
 
 UINT32 freerdp_get_param_uint32(const rdpSettings* settings, int id)
 {
-	return freerdp_settings_get_uint32(settings, (size_t)id);
+	return freerdp_settings_get_uint32(settings, (FreeRDP_Settings_Keys_UInt32)id);
 }
 
 int freerdp_set_param_uint32(rdpSettings* settings, int id, UINT32 param)
 {
-	return freerdp_settings_set_uint32(settings, (size_t)id, param) ? 0 : -1;
+	return freerdp_settings_set_uint32(settings, (FreeRDP_Settings_Keys_UInt32)id, param) ? 0 : -1;
 }
 
 UINT64 freerdp_get_param_uint64(const rdpSettings* settings, int id)
 {
-	return freerdp_settings_get_uint64(settings, (size_t)id);
+	return freerdp_settings_get_uint64(settings, (FreeRDP_Settings_Keys_UInt64)id);
 }
 
 int freerdp_set_param_uint64(rdpSettings* settings, int id, UINT64 param)
 {
-	return freerdp_settings_set_uint64(settings, (size_t)id, param) ? 0 : -1;
+	return freerdp_settings_set_uint64(settings, (FreeRDP_Settings_Keys_UInt64)id, param) ? 0 : -1;
 }
 
 char* freerdp_get_param_string(const rdpSettings* settings, int id)
 {
-	return (char*)freerdp_settings_get_string(settings, (size_t)id);
+	return (char*)freerdp_settings_get_string(settings, (FreeRDP_Settings_Keys_String)id);
 }
 
 int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 {
-	return freerdp_settings_set_string(settings, (size_t)id, param) ? 0 : -1;
+	return freerdp_settings_set_string(settings, (FreeRDP_Settings_Keys_String)id, param) ? 0 : -1;
 }
 #endif
 
@@ -1192,48 +1192,49 @@ BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name
 			BOOL val = _strnicmp(value, "TRUE", 5) == 0;
 			if (!val && _strnicmp(value, "FALSE", 6) != 0)
 				return parsing_fail(name, "BOOL", value);
-			return freerdp_settings_set_bool(settings, index, val);
+			return freerdp_settings_set_bool(settings, (FreeRDP_Settings_Keys_Bool)index, val);
 		}
 		case RDP_SETTINGS_TYPE_UINT16:
 			if (!value_to_uint(value, &uval, 0, UINT16_MAX))
 				return parsing_fail(name, "UINT16", value);
-			if (!freerdp_settings_set_uint16(settings, index, uval))
+			if (!freerdp_settings_set_uint16(settings, (FreeRDP_Settings_Keys_UInt16)index, uval))
 				return parsing_fail(name, "UINT16", value);
 			return TRUE;
 
 		case RDP_SETTINGS_TYPE_INT16:
 			if (!value_to_int(value, &ival, INT16_MIN, INT16_MAX))
 				return parsing_fail(name, "INT16", value);
-			if (!freerdp_settings_set_int16(settings, index, ival))
+			if (!freerdp_settings_set_int16(settings, (FreeRDP_Settings_Keys_Int16)index, ival))
 				return parsing_fail(name, "INT16", value);
 			return TRUE;
 		case RDP_SETTINGS_TYPE_UINT32:
 			if (!value_to_uint(value, &uval, 0, UINT32_MAX))
 				return parsing_fail(name, "UINT32", value);
-			if (!freerdp_settings_set_uint32(settings, index, uval))
+			if (!freerdp_settings_set_uint32(settings, (FreeRDP_Settings_Keys_UInt32)index, uval))
 				return parsing_fail(name, "UINT32", value);
 			return TRUE;
 		case RDP_SETTINGS_TYPE_INT32:
 			if (!value_to_int(value, &ival, INT32_MIN, INT32_MAX))
 				return parsing_fail(name, "INT32", value);
-			if (!freerdp_settings_set_int32(settings, index, ival))
+			if (!freerdp_settings_set_int32(settings, (FreeRDP_Settings_Keys_Int32)index, ival))
 				return parsing_fail(name, "INT32", value);
 			return TRUE;
 		case RDP_SETTINGS_TYPE_UINT64:
 			if (!value_to_uint(value, &uval, 0, UINT64_MAX))
 				return parsing_fail(name, "UINT64", value);
-			if (!freerdp_settings_set_uint64(settings, index, uval))
+			if (!freerdp_settings_set_uint64(settings, (FreeRDP_Settings_Keys_UInt64)index, uval))
 				return parsing_fail(name, "UINT64", value);
 			return TRUE;
 		case RDP_SETTINGS_TYPE_INT64:
 			if (!value_to_int(value, &ival, INT64_MIN, INT64_MAX))
 				return parsing_fail(name, "INT64", value);
-			if (!freerdp_settings_set_int64(settings, index, ival))
+			if (!freerdp_settings_set_int64(settings, (FreeRDP_Settings_Keys_Int64)index, ival))
 				return parsing_fail(name, "INT64", value);
 			return TRUE;
 
 		case RDP_SETTINGS_TYPE_STRING:
-			return freerdp_settings_set_string(settings, index, value);
+			return freerdp_settings_set_string(settings, (FreeRDP_Settings_Keys_String)index,
+			                                   value);
 		case RDP_SETTINGS_TYPE_POINTER:
 			return parsing_fail(name, "POINTER", value);
 		default:
@@ -1242,7 +1243,8 @@ BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name
 	return FALSE;
 }
 
-static BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, size_t id, SSIZE_T lenId,
+static BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings,
+                                              FreeRDP_Settings_Keys_Pointer id, SSIZE_T lenId,
                                               const void* data, size_t len, size_t size)
 {
 	BOOL rc = FALSE;
@@ -1253,7 +1255,7 @@ static BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, size_t id, 
 		return FALSE;
 	if (lenId >= 0)
 	{
-		if (!freerdp_settings_set_uint32(settings, (size_t)lenId, 0))
+		if (!freerdp_settings_set_uint32(settings, (FreeRDP_Settings_Keys_UInt32)lenId, 0))
 			return FALSE;
 	}
 
@@ -1272,7 +1274,7 @@ static BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, size_t id, 
 	}
 	if (lenId < 0)
 		return TRUE;
-	return freerdp_settings_set_uint32(settings, (size_t)lenId, len);
+	return freerdp_settings_set_uint32(settings, (FreeRDP_Settings_Keys_UInt32)lenId, len);
 }
 
 const void* freerdp_settings_get_pointer(const rdpSettings* settings,

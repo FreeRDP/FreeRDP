@@ -1050,7 +1050,7 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 }
 
 static INLINE BOOL FILE_POPULATE_STRING(char** _target, const rdpSettings* _settings,
-                                        size_t _option)
+                                        FreeRDP_Settings_Keys_String _option)
 {
 	WINPR_ASSERT(_target);
 	WINPR_ASSERT(_settings);
@@ -1079,7 +1079,8 @@ static char* freerdp_client_channel_args_to_string(const rdpSettings* settings, 
 	                                           ARRAYSIZE(filters));
 }
 
-static BOOL rdp_opt_duplicate(const rdpSettings* _settings, size_t _id, char** _key)
+static BOOL rdp_opt_duplicate(const rdpSettings* _settings, FreeRDP_Settings_Keys_String _id,
+                              char** _key)
 {
 	WINPR_ASSERT(_settings);
 	WINPR_ASSERT(_key);
@@ -1097,7 +1098,7 @@ static BOOL rdp_opt_duplicate(const rdpSettings* _settings, size_t _id, char** _
 
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSettings* settings)
 {
-	size_t index;
+	FreeRDP_Settings_Keys_String index;
 	UINT32 LoadBalanceInfoLength;
 	const char* GatewayHostname = NULL;
 	char* redirectCameras = NULL;
@@ -1823,9 +1824,10 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	if (~((size_t)file->ShellWorkingDirectory))
 	{
 		/* ShellWorkingDir is used for either, shell working dir or remote app working dir */
-		size_t targetId = (~file->RemoteApplicationMode && file->RemoteApplicationMode != 0)
-		                      ? FreeRDP_RemoteApplicationWorkingDir
-		                      : FreeRDP_ShellWorkingDirectory;
+		FreeRDP_Settings_Keys_String targetId =
+		    (~file->RemoteApplicationMode && file->RemoteApplicationMode != 0)
+		        ? FreeRDP_RemoteApplicationWorkingDir
+		        : FreeRDP_ShellWorkingDirectory;
 
 		if (!freerdp_settings_set_string(settings, targetId, file->ShellWorkingDirectory))
 			return FALSE;

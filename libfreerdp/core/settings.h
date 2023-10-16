@@ -54,12 +54,13 @@ FREERDP_LOCAL BOOL identity_set_from_settings_with_pwd(SEC_WINNT_AUTH_IDENTITY_W
 FREERDP_LOCAL BOOL identity_set_from_settings(SEC_WINNT_AUTH_IDENTITY_W* identity,
                                               const rdpSettings* settings,
                                               FreeRDP_Settings_Keys_String UserId,
-                                              FreeRDP_Settings_Keys_String DomainId, size_t PwdId);
+                                              FreeRDP_Settings_Keys_String DomainId,
+                                              FreeRDP_Settings_Keys_String PwdId);
 FREERDP_LOCAL BOOL identity_set_from_smartcard_hash(SEC_WINNT_AUTH_IDENTITY_W* identity,
                                                     const rdpSettings* settings,
                                                     FreeRDP_Settings_Keys_String userId,
                                                     FreeRDP_Settings_Keys_String domainId,
-                                                    size_t pwdId, const BYTE* certSha1,
-                                                    size_t sha1len);
+                                                    FreeRDP_Settings_Keys_String pwdId,
+                                                    const BYTE* certSha1, size_t sha1len);
 
 #endif /* FREERDP_LIB_CORE_SETTINGS_H */
