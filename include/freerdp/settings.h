@@ -118,7 +118,7 @@ typedef struct rdp_settings rdpSettings;
 	 */
 
 	FREERDP_API BOOL freerdp_settings_copy_item(rdpSettings* dst, const rdpSettings* src,
-	                                            size_t id);
+	                                            SSIZE_T id);
 
 	/** \brief Free a settings struct with all data in it
 	 *
@@ -564,11 +564,11 @@ typedef struct rdp_settings rdpSettings;
 	 *  \return The key type (e.g. FREERDP_SETTINGS_TYPE_BOOL) or -1 in case of an error (e.g. name
 	 * does not exist)
 	 */
-	FREERDP_API SSIZE_T freerdp_settings_get_type_for_key(size_t key);
-	FREERDP_API const char* freerdp_settings_get_type_name_for_key(size_t key);
+	FREERDP_API SSIZE_T freerdp_settings_get_type_for_key(SSIZE_T key);
+	FREERDP_API const char* freerdp_settings_get_type_name_for_key(SSIZE_T key);
 	FREERDP_API const char* freerdp_settings_get_type_name_for_type(SSIZE_T type);
 
-	FREERDP_API const char* freerdp_settings_get_name_for_key(size_t key);
+	FREERDP_API const char* freerdp_settings_get_name_for_key(SSIZE_T key);
 	FREERDP_API UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings);
 
 	/** \brief Parse capability data and apply to settings

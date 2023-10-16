@@ -363,7 +363,7 @@ SSIZE_T freerdp_settings_get_type_for_name(const char* value)
 	return -1;
 }
 
-const char* freerdp_settings_get_type_name_for_key(size_t key)
+const char* freerdp_settings_get_type_name_for_key(SSIZE_T key)
 {
 	const SSIZE_T type = freerdp_settings_get_type_for_key(key);
 	return freerdp_settings_get_type_name_for_type(type);
@@ -396,29 +396,29 @@ const char* freerdp_settings_get_type_name_for_type(SSIZE_T type)
 	}
 }
 
-SSIZE_T freerdp_settings_get_type_for_key(size_t key)
+SSIZE_T freerdp_settings_get_type_for_key(SSIZE_T key)
 {
 	for (size_t x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
-		if (cur->id == (SSIZE_T)key)
+		if (cur->id == key)
 			return cur->type;
 	}
 	return -1;
 }
 
-const char* freerdp_settings_get_name_for_key(size_t key)
+const char* freerdp_settings_get_name_for_key(SSIZE_T key)
 {
 	for (size_t x = 0; x < ARRAYSIZE(settings_map); x++)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
-		if (cur->id == (SSIZE_T)key)
+		if (cur->id == key)
 			return cur->str;
 	}
 	return NULL;
 }
 
-BOOL freerdp_settings_copy_item(rdpSettings* dst, const rdpSettings* src, size_t id)
+BOOL freerdp_settings_copy_item(rdpSettings* dst, const rdpSettings* src, SSIZE_T id)
 {
 	WINPR_ASSERT(dst);
 	WINPR_ASSERT(src);

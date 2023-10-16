@@ -4035,7 +4035,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			if (count == 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-			FreeRDP_Settings_Keys_Bool singleOptionWithoutOnOff = 0;
+			FreeRDP_Settings_Keys_Bool singleOptionWithoutOnOff = FreeRDP_BOOL_UNUSED;
 			for (x = 0; x < count; x++)
 			{
 				const char* cur = ptr[x];
@@ -4075,7 +4075,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
 
-			if (singleOptionWithoutOnOff != 0)
+			if (singleOptionWithoutOnOff != FreeRDP_BOOL_UNUSED)
 			{
 				const FreeRDP_Settings_Keys_Bool options[] = {
 					FreeRDP_AadSecurity, FreeRDP_UseRdpSecurityLayer, FreeRDP_RdpSecurity,
@@ -5191,7 +5191,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 {
 	ChannelToLoad dynChannels[] = {
 #if defined(CHANNEL_AINPUT_CLIENT)
-		{ 0, AINPUT_CHANNEL_NAME, NULL }, /* always loaded */
+		{ FreeRDP_BOOL_UNUSED, AINPUT_CHANNEL_NAME, NULL }, /* always loaded */
 #endif
 		{ FreeRDP_AudioCapture, AUDIN_CHANNEL_NAME, NULL },
 		{ FreeRDP_AudioPlayback, RDPSND_CHANNEL_NAME, NULL },
@@ -5221,7 +5221,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 	 */
 	for (size_t i = 0; i < ARRAYSIZE(dynChannels); i++)
 	{
-		if ((dynChannels[i].settingId == 0) ||
+		if ((dynChannels[i].settingId == FreeRDP_BOOL_UNUSED) ||
 		    freerdp_settings_get_bool(settings, dynChannels[i].settingId))
 		{
 			const char* p[] = { dynChannels[i].channelName };
