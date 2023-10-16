@@ -20,6 +20,8 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include <time.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -30,7 +32,6 @@
 
 #include "rdp.h"
 #include "utils.h"
-#include "settings.h"
 
 #if !defined(_WIN32)
 

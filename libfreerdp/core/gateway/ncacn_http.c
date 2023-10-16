@@ -19,6 +19,7 @@
 
 #include <freerdp/config.h>
 
+#include "../settings.h"
 #include "ncacn_http.h"
 
 #include <winpr/crt.h>
@@ -27,7 +28,6 @@
 #include <winpr/dsparse.h>
 
 #include "../utils.h"
-#include "../settings.h"
 
 #define TAG FREERDP_TAG("core.gateway.ntlm")
 

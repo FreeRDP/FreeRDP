@@ -19,6 +19,8 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include <winpr/assert.h>
 
 #include <freerdp/utils/pcap.h>
@@ -26,7 +28,6 @@
 
 #include "../cache/cache.h"
 #include "surface.h"
-#include "settings.h"
 
 #define TAG FREERDP_TAG("core.surface")
 

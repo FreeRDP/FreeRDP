@@ -22,7 +22,6 @@
 #define FREERDP_CRYPTO_PRIVATEKEY_H
 
 #include <freerdp/api.h>
-#include <freerdp/settings.h>
 
 #ifdef __cplusplus
 extern "C"

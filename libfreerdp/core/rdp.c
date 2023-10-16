@@ -20,13 +20,14 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include <winpr/crt.h>
 #include <winpr/string.h>
 #include <winpr/synch.h>
 #include <winpr/assert.h>
 
 #include "rdp.h"
-#include "settings.h"
 
 #include "state.h"
 #include "info.h"

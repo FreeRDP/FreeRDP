@@ -22,13 +22,14 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/winsock.h>
 
 #include "info.h"
 #include "display.h"
-#include "settings.h"
 
 #include <freerdp/log.h>
 #include <freerdp/streamdump.h>

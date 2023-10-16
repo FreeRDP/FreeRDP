@@ -20,6 +20,8 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include <winpr/assert.h>
 
 #include <freerdp/freerdp.h>
@@ -28,7 +30,6 @@
 #define TAG FREERDP_TAG("core.gateway.utils")
 
 #include "utils.h"
-#include "settings.h"
 
 #include "../core/rdp.h"
 

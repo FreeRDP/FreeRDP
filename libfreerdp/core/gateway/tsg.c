@@ -22,6 +22,8 @@
 
 #include <freerdp/config.h>
 
+#include "../settings.h"
+
 #include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/error.h>
@@ -33,7 +35,6 @@
 #include "rpc_bind.h"
 #include "rpc_client.h"
 #include "tsg.h"
-#include "../settings.h"
 #include "../../crypto/opensslcompat.h"
 
 #define TAG FREERDP_TAG("core.gateway.tsg")

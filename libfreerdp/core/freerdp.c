@@ -21,6 +21,8 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
@@ -55,7 +57,6 @@
 #include <freerdp/utils/signal.h>
 
 #include "../cache/pointer.h"
-#include "settings.h"
 #include "utils.h"
 
 #define TAG FREERDP_TAG("core")
