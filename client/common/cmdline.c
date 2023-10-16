@@ -1559,11 +1559,10 @@ static void freerdp_client_print_keyboard_list(void)
 
 static void freerdp_client_print_tune_list(const rdpSettings* settings)
 {
-	size_t x;
 	SSIZE_T type = 0;
 
 	printf("%s\t%50s\t%s\t%s", "<index>", "<key>", "<type>", "<default value>\n");
-	for (x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
+	for (size_t x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
 	{
 		const char* name = freerdp_settings_get_name_for_key(x);
 		type = freerdp_settings_get_type_for_key(x);
@@ -4029,7 +4028,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			if (count == 0)
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
-			size_t singleOptionWithoutOnOff = 0;
+			FreeRDP_Settings_Keys_Bool singleOptionWithoutOnOff = 0;
 			for (x = 0; x < count; x++)
 			{
 				const char* cur = ptr[x];
@@ -4041,7 +4040,7 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 				}
 
 				const BOOL val = bval != PARSE_OFF;
-				size_t id = 0;
+				FreeRDP_Settings_Keys_Bool id = 0;
 				if (option_starts_with("rdp", cur)) /* Standard RDP */
 				{
 					id = FreeRDP_RdpSecurity;
