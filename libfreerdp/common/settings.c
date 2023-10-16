@@ -1169,19 +1169,19 @@ BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name
 {
 	ULONGLONG uval;
 	LONGLONG ival;
-	SSIZE_T i, type;
-	size_t index;
+	SSIZE_T type;
+
 	if (!settings || !name)
 		return FALSE;
 
-	i = freerdp_settings_get_key_for_name(name);
+	const SSIZE_T i = freerdp_settings_get_key_for_name(name);
 	if (i < 0)
 	{
 		WLog_ERR(TAG, "Invalid settings key [%s]", name);
 		return FALSE;
 	}
 
-	index = (size_t)i;
+	const SSIZE_T index = i;
 
 	type = freerdp_settings_get_type_for_key(index);
 	switch (type)
