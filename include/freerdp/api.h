@@ -90,7 +90,7 @@
 			WLog_VRB("com.freerdp.api", "IFCALLRET(" #_cb ") == NULL"); \
 	} while (0)
 
-#if 0 //__GNUC__
+#if 0 // defined(__GNUC__)
 #define IFCALLRESULT(_default_return, _cb, ...)                            \
 	({                                                                     \
 		(_cb != NULL) ? _cb(__VA_ARGS__) : ({                              \
@@ -103,7 +103,7 @@
 	((_cb != NULL) ? _cb(__VA_ARGS__) : (_default_return))
 #endif
 
-#ifdef __GNUC__
+#if defined(__GNUC__)
 #define ALIGN64 __attribute__((aligned(8)))
 #else
 #ifdef _WIN32

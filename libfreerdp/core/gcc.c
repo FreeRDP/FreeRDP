@@ -560,7 +560,7 @@ BOOL gcc_write_conference_create_response(wStream* s, wStream* userData)
 	                              0); /* array of server data blocks */
 }
 
-BOOL gcc_read_client_unused1_data(wStream* s)
+static BOOL gcc_read_client_unused1_data(wStream* s)
 {
 	return Stream_SafeSeek(s, 2);
 }

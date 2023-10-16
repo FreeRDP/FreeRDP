@@ -430,12 +430,12 @@ BOOL rail_is_feature_supported(const rdpContext* context, UINT32 featureMask)
 
 	if (masked != featureMask)
 	{
-		char mask[256] = { 0 };
-		char actual[256] = { 0 };
+		char maskstr[256] = { 0 };
+		char actualstr[256] = { 0 };
 
 		WLog_WARN(TAG, "have %s, require %s",
-		          freerdp_rail_support_flags_to_string(supported, actual, sizeof(actual)),
-		          freerdp_rail_support_flags_to_string(featureMask, mask, sizeof(mask)));
+		          freerdp_rail_support_flags_to_string(supported, actualstr, sizeof(actualstr)),
+		          freerdp_rail_support_flags_to_string(featureMask, maskstr, sizeof(maskstr)));
 		return FALSE;
 	}
 
