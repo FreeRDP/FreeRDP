@@ -1152,8 +1152,10 @@ static void zfree(WCHAR* str, size_t len)
 }
 
 BOOL identity_set_from_settings_with_pwd(SEC_WINNT_AUTH_IDENTITY* identity,
-                                         const rdpSettings* settings, size_t UserId,
-                                         size_t DomainId, const WCHAR* Password, size_t pwdLen)
+                                         const rdpSettings* settings,
+                                         FreeRDP_Settings_Keys_String UserId,
+                                         FreeRDP_Settings_Keys_String DomainId,
+                                         const WCHAR* Password, size_t pwdLen)
 {
 	WINPR_ASSERT(identity);
 	WINPR_ASSERT(settings);
@@ -1174,7 +1176,8 @@ BOOL identity_set_from_settings_with_pwd(SEC_WINNT_AUTH_IDENTITY* identity,
 }
 
 BOOL identity_set_from_settings(SEC_WINNT_AUTH_IDENTITY_W* identity, const rdpSettings* settings,
-                                size_t UserId, size_t DomainId, size_t PwdId)
+                                FreeRDP_Settings_Keys_String UserId,
+                                FreeRDP_Settings_Keys_String DomainId, size_t PwdId)
 {
 	WINPR_ASSERT(identity);
 	WINPR_ASSERT(settings);
@@ -1190,8 +1193,10 @@ BOOL identity_set_from_settings(SEC_WINNT_AUTH_IDENTITY_W* identity, const rdpSe
 }
 
 BOOL identity_set_from_smartcard_hash(SEC_WINNT_AUTH_IDENTITY_W* identity,
-                                      const rdpSettings* settings, size_t userId, size_t domainId,
-                                      size_t pwdId, const BYTE* certSha1, size_t sha1len)
+                                      const rdpSettings* settings,
+                                      FreeRDP_Settings_Keys_String userId,
+                                      FreeRDP_Settings_Keys_String domainId, size_t pwdId,
+                                      const BYTE* certSha1, size_t sha1len)
 {
 #ifdef _WIN32
 	CERT_CREDENTIAL_INFO certInfo = { sizeof(CERT_CREDENTIAL_INFO), { 0 } };
