@@ -19,6 +19,7 @@ set(MODULE_NAME "freerdp-utils")
 set(MODULE_PREFIX "FREERDP_UTILS")
 
 set(${MODULE_PREFIX}_SRCS
+	encoded_types.c
 	passphrase.c
 	cliprdr_utils.c
 	rdpdr_utils.c
