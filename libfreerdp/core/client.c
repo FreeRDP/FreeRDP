@@ -21,6 +21,8 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include <winpr/assert.h>
 
 #include <freerdp/log.h>
@@ -28,7 +30,6 @@
 
 #include "rdp.h"
 #include "client.h"
-#include "settings.h"
 
 #define TAG FREERDP_TAG("core.client")
 

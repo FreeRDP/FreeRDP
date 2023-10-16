@@ -22,6 +22,8 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,7 +41,6 @@
 #include "surface.h"
 #include "fastpath.h"
 #include "rdp.h"
-#include "settings.h"
 
 #include "../cache/pointer.h"
 #include "../cache/palette.h"

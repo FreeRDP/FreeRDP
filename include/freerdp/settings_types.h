@@ -32,8 +32,6 @@
 #include <freerdp/types.h>
 #include <freerdp/redirection.h>
 
-#include <freerdp/settings_keys.h>
-
 #include <freerdp/crypto/certificate.h>
 #include <freerdp/crypto/privatekey.h>
 

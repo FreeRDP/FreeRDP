@@ -32,15 +32,15 @@
 #include <freerdp/types.h>
 #include <freerdp/redirection.h>
 
+#if !defined(WITH_OPAQUE_SETTINGS)
+#include <freerdp/settings_types_private.h>
+#endif
+
 #include <freerdp/settings_keys.h>
 #include <freerdp/settings_types.h>
 
 #include <freerdp/crypto/certificate.h>
 #include <freerdp/crypto/privatekey.h>
-
-#if !defined(WITH_OPAQUE_SETTINGS)
-#include <freerdp/settings_types_private.h>
-#endif
 
 #ifdef __cplusplus
 extern "C"

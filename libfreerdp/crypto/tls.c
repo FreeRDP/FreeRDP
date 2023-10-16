@@ -21,6 +21,8 @@
 
 #include <freerdp/config.h>
 
+#include "../core/settings.h"
+
 #include <winpr/assert.h>
 #include <string.h>
 #include <errno.h>
@@ -43,7 +45,6 @@
 #include "opensslcompat.h"
 #include "certificate.h"
 #include "privatekey.h"
-#include "../core/settings.h"
 
 #ifdef WINPR_HAVE_POLL_H
 #include <poll.h>

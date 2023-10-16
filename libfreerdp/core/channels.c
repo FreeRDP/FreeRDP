@@ -20,6 +20,8 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,7 +47,6 @@
 #include "client.h"
 #include "server.h"
 #include "channels.h"
-#include "settings.h"
 
 #define TAG FREERDP_TAG("core.channels")
 

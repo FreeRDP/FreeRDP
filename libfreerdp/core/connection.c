@@ -23,11 +23,12 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include "info.h"
 #include "input.h"
 #include "rdp.h"
 #include "peer.h"
-#include "settings.h"
 
 #include "connection.h"
 #include "transport.h"

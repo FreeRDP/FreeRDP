@@ -19,6 +19,8 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include <freerdp/log.h>
 #include <freerdp/error.h>
 #include <freerdp/settings.h>
@@ -30,7 +32,6 @@
 #include "rdstls.h"
 #include "transport.h"
 #include "utils.h"
-#include "settings.h"
 
 #define RDSTLS_VERSION_1 0x01
 

@@ -20,13 +20,14 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include <winpr/crt.h>
 #include <winpr/assert.h>
 
 #include <freerdp/log.h>
 
 #include "window.h"
-#include "settings.h"
 
 #define TAG FREERDP_TAG("core.window")
 

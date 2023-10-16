@@ -24,6 +24,8 @@
 
 #include <freerdp/config.h>
 
+#include "settings.h"
+
 #include <time.h>
 #include <ctype.h>
 
@@ -49,7 +51,6 @@
 #include "utils.h"
 #include "credssp_auth.h"
 #include <freerdp/utils/smartcardlogon.h>
-#include "settings.h"
 
 #define TAG FREERDP_TAG("core.nla")
 

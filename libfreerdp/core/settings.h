@@ -26,13 +26,14 @@
 
 #include <freerdp/config.h>
 
+#define FREERDP_SETTINGS_INTERNAL_USE
+#include <freerdp/settings_types_private.h>
+
 #include <freerdp/types.h>
 #include <freerdp/settings.h>
 #include <freerdp/api.h>
 
 #include <string.h>
-
-#include <freerdp/settings_types_private.h>
 
 FREERDP_LOCAL BOOL freerdp_settings_set_default_order_support(rdpSettings* settings);
 FREERDP_LOCAL BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src);

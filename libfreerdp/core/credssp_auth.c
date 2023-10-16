@@ -22,8 +22,8 @@
 #include <ctype.h>
 
 #include <freerdp/config.h>
+#include "settings.h"
 #include <freerdp/build-config.h>
-#include <freerdp/settings.h>
 #include <freerdp/peer.h>
 
 #include <winpr/crt.h>
@@ -35,7 +35,6 @@
 #include <freerdp/log.h>
 
 #include "credssp_auth.h"
-#include "settings.h"
 
 #define TAG FREERDP_TAG("core.auth")
 

@@ -22,6 +22,9 @@
  */
 
 #include <freerdp/config.h>
+
+#include "settings.h"
+
 #include <freerdp/license.h>
 
 #include <winpr/crt.h>
@@ -36,7 +39,6 @@
 #include <freerdp/crypto/certificate.h>
 
 #include "license.h"
-#include "settings.h"
 
 #include "../crypto/crypto.h"
 #include "../crypto/certificate.h"

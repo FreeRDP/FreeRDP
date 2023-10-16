@@ -19,6 +19,8 @@
 
 #include <freerdp/config.h>
 
+#include "../settings.h"
+
 #include <winpr/crt.h>
 #include <winpr/assert.h>
 
@@ -30,7 +32,6 @@
 
 #include "rpc_bind.h"
 #include "../utils.h"
-#include "../settings.h"
 
 #define TAG FREERDP_TAG("core.gateway.rpc")
 
