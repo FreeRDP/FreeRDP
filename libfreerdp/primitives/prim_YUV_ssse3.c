@@ -609,8 +609,9 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			}
 			else
 			{
-				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-				                                  14, 12, 10, 8, 6, 4, 2, 0);
+				const __m128i mask =
+				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+				                 (char)0x80, (char)0x80, (char)0x80, 14, 12, 10, 8, 6, 4, 2, 0);
 				const __m128i ud = _mm_shuffle_epi8(ue, mask);
 				_mm_storel_epi64((__m128i*)b2, ud);
 			}
@@ -625,8 +626,9 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 
 			{
 				/* b6 */
-				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-				                                  15, 13, 11, 9, 7, 5, 3, 1);
+				const __m128i mask =
+				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
 				const __m128i ude = _mm_shuffle_epi8(ue, mask);
 				_mm_storel_epi64((__m128i*)b6, ude);
 				b6 += 8;
@@ -684,8 +686,9 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			}
 			else
 			{
-				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-				                                  14, 12, 10, 8, 6, 4, 2, 0);
+				const __m128i mask =
+				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+				                 (char)0x80, (char)0x80, (char)0x80, 14, 12, 10, 8, 6, 4, 2, 0);
 				const __m128i vd = _mm_shuffle_epi8(ve, mask);
 				_mm_storel_epi64((__m128i*)b3, vd);
 			}
@@ -700,8 +703,9 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 
 			{
 				/* b7 */
-				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-				                                  15, 13, 11, 9, 7, 5, 3, 1);
+				const __m128i mask =
+				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
 				const __m128i vde = _mm_shuffle_epi8(ve, mask);
 				_mm_storel_epi64((__m128i*)b7, vde);
 				b7 += 8;
@@ -881,8 +885,9 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 			 * 4x   2y+1  -> uChromaDst1
 			 * 4x+2 2y+1  -> vChromaDst1 */
 			{
-				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-				                                  15, 13, 11, 9, 7, 5, 3, 1);
+				const __m128i mask =
+				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
 				const __m128i ude = _mm_shuffle_epi8(ue, mask);
 				_mm_storel_epi64((__m128i*)yEvenChromaDst1, ude);
 				yEvenChromaDst1 += 8;
@@ -890,8 +895,9 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 
 			if (yLumaDstOdd)
 			{
-				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-				                                  15, 13, 11, 9, 7, 5, 3, 1);
+				const __m128i mask =
+				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
 				const __m128i udo = _mm_shuffle_epi8(uo, mask);
 				_mm_storel_epi64((__m128i*)yOddChromaDst1, udo);
 				yOddChromaDst1 += 8;
@@ -899,8 +905,9 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 
 			if (yLumaDstOdd)
 			{
-				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-				                                  14, 10, 6, 2, 12, 8, 4, 0);
+				const __m128i mask =
+				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+				                 (char)0x80, (char)0x80, (char)0x80, 14, 10, 6, 2, 12, 8, 4, 0);
 				const __m128i ud = _mm_shuffle_epi8(uo, mask);
 				int* uDst1 = (int*)uChromaDst1;
 				int* vDst1 = (int*)vChromaDst1;
@@ -918,8 +925,9 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 			}
 			else
 			{
-				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-				                                  14, 12, 10, 8, 6, 4, 2, 0);
+				const __m128i mask =
+				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+				                 (char)0x80, (char)0x80, (char)0x80, 14, 12, 10, 8, 6, 4, 2, 0);
 				const __m128i ud = _mm_shuffle_epi8(ue, mask);
 				_mm_storel_epi64((__m128i*)uLumaDst, ud);
 				uLumaDst += 8;
@@ -966,8 +974,9 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 			 * 4x   2y+1  -> uChromaDst2
 			 * 4x+2 2y+1  -> vChromaDst2 */
 			{
-				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-				                                  15, 13, 11, 9, 7, 5, 3, 1);
+				const __m128i mask =
+				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
 				__m128i vde = _mm_shuffle_epi8(ve, mask);
 				_mm_storel_epi64((__m128i*)yEvenChromaDst2, vde);
 				yEvenChromaDst2 += 8;
@@ -975,8 +984,9 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 
 			if (yLumaDstOdd)
 			{
-				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-				                                  15, 13, 11, 9, 7, 5, 3, 1);
+				const __m128i mask =
+				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+				                 (char)0x80, (char)0x80, (char)0x80, 15, 13, 11, 9, 7, 5, 3, 1);
 				__m128i vdo = _mm_shuffle_epi8(vo, mask);
 				_mm_storel_epi64((__m128i*)yOddChromaDst2, vdo);
 				yOddChromaDst2 += 8;
@@ -984,8 +994,9 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 
 			if (yLumaDstOdd)
 			{
-				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-				                                  14, 10, 6, 2, 12, 8, 4, 0);
+				const __m128i mask =
+				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+				                 (char)0x80, (char)0x80, (char)0x80, 14, 10, 6, 2, 12, 8, 4, 0);
 				const __m128i vd = _mm_shuffle_epi8(vo, mask);
 				int* uDst2 = (int*)uChromaDst2;
 				int* vDst2 = (int*)vChromaDst2;
@@ -1003,8 +1014,9 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 			}
 			else
 			{
-				const __m128i mask = _mm_set_epi8(0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-				                                  14, 12, 10, 8, 6, 4, 2, 0);
+				const __m128i mask =
+				    _mm_set_epi8((char)0x80, (char)0x80, (char)0x80, (char)0x80, (char)0x80,
+				                 (char)0x80, (char)0x80, (char)0x80, 14, 12, 10, 8, 6, 4, 2, 0);
 				__m128i vd = _mm_shuffle_epi8(ve, mask);
 				_mm_storel_epi64((__m128i*)vLumaDst, vd);
 				vLumaDst += 8;
@@ -1158,10 +1170,10 @@ static pstatus_t ssse3_LumaToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[],
 
 static INLINE void ssse3_filter(BYTE* WINPR_RESTRICT pSrcDst, const BYTE* WINPR_RESTRICT pSrc2)
 {
-	const __m128i even =
-	    _mm_set_epi8(0x80, 14, 0x80, 12, 0x80, 10, 0x80, 8, 0x80, 6, 0x80, 4, 0x80, 2, 0x80, 0);
-	const __m128i odd =
-	    _mm_set_epi8(0x80, 15, 0x80, 13, 0x80, 11, 0x80, 9, 0x80, 7, 0x80, 5, 0x80, 3, 0x80, 1);
+	const __m128i even = _mm_set_epi8((char)0x80, 14, (char)0x80, 12, (char)0x80, 10, (char)0x80, 8,
+	                                  (char)0x80, 6, (char)0x80, 4, (char)0x80, 2, (char)0x80, 0);
+	const __m128i odd = _mm_set_epi8((char)0x80, 15, (char)0x80, 13, (char)0x80, 11, (char)0x80, 9,
+	                                 (char)0x80, 7, (char)0x80, 5, (char)0x80, 3, (char)0x80, 1);
 	const __m128i interleave = _mm_set_epi8(15, 7, 14, 6, 13, 5, 12, 4, 11, 3, 10, 2, 9, 1, 8, 0);
 	const __m128i u = _mm_loadu_si128((const __m128i*)pSrcDst);
 	const __m128i u1 = _mm_loadu_si128((const __m128i*)pSrc2);
@@ -1260,8 +1272,8 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw
 		              pDstRaw[1] + roi->top * dstStep[1] + roi->left,
 		              pDstRaw[2] + roi->top * dstStep[2] + roi->left };
 	const __m128i zero = _mm_setzero_si128();
-	const __m128i mask =
-	    _mm_set_epi8(0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80);
+	const __m128i mask = _mm_set_epi8(0, (char)0x80, 0, (char)0x80, 0, (char)0x80, 0, (char)0x80, 0,
+	                                  (char)0x80, 0, (char)0x80, 0, (char)0x80, 0, (char)0x80);
 
 	/* The second half of U and V is a bit more tricky... */
 	/* B4 and B5 */
@@ -1346,14 +1358,16 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[3]
 	const UINT32 quaterWidth = (nWidth + 3) / 4;
 	const UINT32 quaterPad = quaterWidth % 16;
 	const __m128i zero = _mm_setzero_si128();
-	const __m128i mask =
-	    _mm_set_epi8(0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0);
-	const __m128i mask2 =
-	    _mm_set_epi8(0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80, 0, 0x80);
+	const __m128i mask = _mm_set_epi8((char)0x80, 0, (char)0x80, 0, (char)0x80, 0, (char)0x80, 0,
+	                                  (char)0x80, 0, (char)0x80, 0, (char)0x80, 0, (char)0x80, 0);
+	const __m128i mask2 = _mm_set_epi8(0, (char)0x80, 0, (char)0x80, 0, (char)0x80, 0, (char)0x80,
+	                                   0, (char)0x80, 0, (char)0x80, 0, (char)0x80, 0, (char)0x80);
 	const __m128i shuffle1 =
-	    _mm_set_epi8(0x80, 15, 0x80, 14, 0x80, 13, 0x80, 12, 0x80, 11, 0x80, 10, 0x80, 9, 0x80, 8);
+	    _mm_set_epi8((char)0x80, 15, (char)0x80, 14, (char)0x80, 13, (char)0x80, 12, (char)0x80, 11,
+	                 (char)0x80, 10, (char)0x80, 9, (char)0x80, 8);
 	const __m128i shuffle2 =
-	    _mm_set_epi8(0x80, 7, 0x80, 6, 0x80, 5, 0x80, 4, 0x80, 3, 0x80, 2, 0x80, 1, 0x80, 0);
+	    _mm_set_epi8((char)0x80, 7, (char)0x80, 6, (char)0x80, 5, (char)0x80, 4, (char)0x80, 3,
+	                 (char)0x80, 2, (char)0x80, 1, (char)0x80, 0);
 
 	/* B4 and B5: odd UV values for width/2, height */
 	for (y = 0; y < nHeight; y++)
