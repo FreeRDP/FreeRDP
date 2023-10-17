@@ -237,27 +237,21 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 		return FALSE;
 
 	if (!freerdp_settings_copy(dst, src))
-	{
-		freerdp_settings_free(before_copy);
-		return FALSE;
-	}
+		goto out_fail;
 
 	/* keep original ServerMode value */
 	if (!freerdp_settings_copy_item(dst, before_copy, FreeRDP_ServerMode))
-	{
-		freerdp_settings_free(before_copy);
-		return FALSE;
-	}
+		goto out_fail;
 
 	/* revert some values that must not be changed */
 	if (!pf_context_revert_str_settings(dst, before_copy, ARRAYSIZE(to_revert), to_revert))
-		return FALSE;
+		goto out_fail;
 
 	if (!freerdp_settings_get_bool(dst, FreeRDP_ServerMode))
 	{
 		/* adjust instance pointer */
 		if (!freerdp_settings_copy_item(dst, before_copy, FreeRDP_instance))
-			return FALSE;
+			goto out_fail;
 
 		/*
 		 * RdpServerRsaKey must be set to NULL if `dst` is client's context
