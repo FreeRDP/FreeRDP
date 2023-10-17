@@ -4221,9 +4221,9 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 					else
 						return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				} while (start);
-				if (!freerdp_settings_set_uint32(settings, FreeRDP_Floatbar, Floatbar))
-					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			}
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_Floatbar, Floatbar))
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
 		CommandLineSwitchCase(arg, "mouse-motion")
 		{
