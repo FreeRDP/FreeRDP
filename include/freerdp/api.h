@@ -90,7 +90,7 @@
 			WLog_VRB("com.freerdp.api", "IFCALLRET(" #_cb ") == NULL"); \
 	} while (0)
 
-#if __GNUC__
+#if 0 //__GNUC__
 #define IFCALLRESULT(_default_return, _cb, ...)                            \
 	({                                                                     \
 		(_cb != NULL) ? _cb(__VA_ARGS__) : ({                              \
