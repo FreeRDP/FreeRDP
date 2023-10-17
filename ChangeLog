@@ -1,3 +1,8 @@
+# 20xx-xx-xx Version 2.xx.xx
+
+Notworthy changes:
+* Disabled windows MEDIA FOUNDATION h264 decoder due to reported issues (#9469)
+
 # 2023-09-20 Version 2.11.2
 
 Notworthy changes:
