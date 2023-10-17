@@ -24,6 +24,7 @@
 
 #if __clang__
 #define WINPR_PRAGMA_DIAG_PUSH _Pragma("clang diagnostic push")
+#define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC _Pragma("clang diagnostic ignored \"-Wpedantic\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_MISSING_PROTOTYPES \
 	_Pragma("clang diagnostic ignored \"-Wmissing-prototypes\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_STRICT_PROTOTYPES \
@@ -39,6 +40,7 @@
 #define WINPR_PRAGMA_DIAG_POP _Pragma("clang diagnostic pop")
 #elif __GNUC__
 #define WINPR_PRAGMA_DIAG_PUSH _Pragma("GCC diagnostic push")
+#define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC _Pragma("GCC diagnostic ignored \"-Wpedantic\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_MISSING_PROTOTYPES \
 	_Pragma("GCC diagnostic ignored \"-Wmissing-prototypes\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_STRICT_PROTOTYPES \
@@ -55,6 +57,7 @@
 #define WINPR_PRAGMA_DIAG_POP _Pragma("GCC diagnostic pop")
 #else
 #define WINPR_PRAGMA_DIAG_PUSH
+#define WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC
 #define WINPR_PRAGMA_DIAG_IGNORED_MISSING_PROTOTYPES
 #define WINPR_PRAGMA_DIAG_IGNORED_STRICT_PROTOTYPES
 #define WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
