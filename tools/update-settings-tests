@@ -78,6 +78,7 @@ def write_getter_body(f, values, ret):
             write_getter_case(f, val)
     f.write('\t\tdefault:\n')
     f.write('\t\t\tWLog_ERR(TAG, "Invalid key index %" PRIuz " [%s|%s]", id, freerdp_settings_get_name_for_key(id), freerdp_settings_get_type_name_for_key(id));\n')
+    f.write('\t\t\tWINPR_ASSERT(FALSE);\n')
     f.write('\t\t\treturn ' + ret + ';\n')
     f.write('\t}\n')
     f.write('}\n\n')
