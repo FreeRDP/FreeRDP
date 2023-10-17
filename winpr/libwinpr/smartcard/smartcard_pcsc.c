@@ -48,6 +48,18 @@
 #include "../log.h"
 #define TAG WINPR_TAG("smartcard")
 
+#define WINSCARD_LOAD_PROC_EX(module, pcsc, _fname, _name, ...)            \
+	do                                                                     \
+	{                                                                      \
+		WINPR_PRAGMA_DIAG_PUSH                                             \
+		WINPR_PRAGMA_DIAG_IGNORED_PEDANTIC                                 \
+		pcsc.pfn##_fname = (fnPCSC##_fname)GetProcAddress(module, #_name); \
+		WINPR_PRAGMA_DIAG_POP                                              \
+	} while (0)
+
+#define WINSCARD_LOAD_PROC(module, pcsc, _name, ...) \
+	WINSCARD_LOAD_PROC_EX(module, pcsc, _name, _name, ##__VA_ARGS__)
+
 /**
  * PC/SC transactions:
  * http://developersblog.wwpass.com/?p=180
@@ -3263,46 +3275,70 @@ int PCSC_InitializeSCardApi(void)
 	if (!g_PCSCModule)
 		return -1;
 
-	g_PCSC.pfnSCardEstablishContext =
-	    (fnPCSCSCardEstablishContext)GetProcAddress(g_PCSCModule, "SCardEstablishContext");
-	g_PCSC.pfnSCardReleaseContext =
-	    (fnPCSCSCardReleaseContext)GetProcAddress(g_PCSCModule, "SCardReleaseContext");
-	g_PCSC.pfnSCardIsValidContext =
-	    (fnPCSCSCardIsValidContext)GetProcAddress(g_PCSCModule, "SCardIsValidContext");
-	g_PCSC.pfnSCardConnect = (fnPCSCSCardConnect)GetProcAddress(g_PCSCModule, "SCardConnect");
-	g_PCSC.pfnSCardReconnect = (fnPCSCSCardReconnect)GetProcAddress(g_PCSCModule, "SCardReconnect");
-	g_PCSC.pfnSCardDisconnect =
-	    (fnPCSCSCardDisconnect)GetProcAddress(g_PCSCModule, "SCardDisconnect");
-	g_PCSC.pfnSCardBeginTransaction =
-	    (fnPCSCSCardBeginTransaction)GetProcAddress(g_PCSCModule, "SCardBeginTransaction");
-	g_PCSC.pfnSCardEndTransaction =
-	    (fnPCSCSCardEndTransaction)GetProcAddress(g_PCSCModule, "SCardEndTransaction");
-	g_PCSC.pfnSCardStatus = (fnPCSCSCardStatus)GetProcAddress(g_PCSCModule, "SCardStatus");
-	g_PCSC.pfnSCardGetStatusChange =
-	    (fnPCSCSCardGetStatusChange)GetProcAddress(g_PCSCModule, "SCardGetStatusChange");
+		/* symbols defined in winpr/smartcard.h, might pose an issue with the GetProcAddress macro
+		 * below. therefore undefine them here */
+#undef SCardListReaderGroups
+#undef SCardListReaders
+#undef SCardListCards
+#undef SCardListInterfaces
+#undef SCardGetProviderId
+#undef SCardGetCardTypeProviderName
+#undef SCardIntroduceReaderGroup
+#undef SCardForgetReaderGroup
+#undef SCardIntroduceReader
+#undef SCardForgetReader
+#undef SCardAddReaderToGroup
+#undef SCardRemoveReaderFromGroup
+#undef SCardIntroduceCardType
+#undef SCardSetCardTypeProviderName
+#undef SCardForgetCardType
+#undef SCardLocateCards
+#undef SCardLocateCardsByATR
+#undef SCardGetStatusChange
+#undef SCardConnect
+#undef SCardStatus
+#undef SCardUIDlgSelectCard
+#undef GetOpenCardName
+#undef SCardReadCache
+#undef SCardWriteCache
+#undef SCardGetReaderIcon
+#undef SCardGetDeviceTypeId
+#undef SCardGetReaderDeviceInstanceId
+#undef SCardListReadersWithDeviceInstanceId
+
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardEstablishContext);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardReleaseContext);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardIsValidContext);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardConnect);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardReconnect);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardDisconnect);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardBeginTransaction);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardEndTransaction);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardStatus);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardGetStatusChange);
+
 #ifdef __MACOSX__
 
 	if (OSXVersion >= 0x10050600)
-		g_PCSC.pfnSCardControl =
-		    (fnPCSCSCardControl)GetProcAddress(g_PCSCModule, "SCardControl132");
+	{
+		WINSCARD_LOAD_PROC_EX(g_PCSCModule, g_PCSC, SCardControl, SCardControl132);
+	}
 	else
-		g_PCSC.pfnSCardControl = (fnPCSCSCardControl)GetProcAddress(g_PCSCModule, "SCardControl");
-
+	{
+		WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardControl);
+	}
 #else
-	g_PCSC.pfnSCardControl = (fnPCSCSCardControl)GetProcAddress(g_PCSCModule, "SCardControl");
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardControl);
 #endif
-	g_PCSC.pfnSCardTransmit = (fnPCSCSCardTransmit)GetProcAddress(g_PCSCModule, "SCardTransmit");
-	g_PCSC.pfnSCardListReaderGroups =
-	    (fnPCSCSCardListReaderGroups)GetProcAddress(g_PCSCModule, "SCardListReaderGroups");
-	g_PCSC.pfnSCardListReaders =
-	    (fnPCSCSCardListReaders)GetProcAddress(g_PCSCModule, "SCardListReaders");
-	g_PCSC.pfnSCardCancel = (fnPCSCSCardCancel)GetProcAddress(g_PCSCModule, "SCardCancel");
-	g_PCSC.pfnSCardGetAttrib = (fnPCSCSCardGetAttrib)GetProcAddress(g_PCSCModule, "SCardGetAttrib");
-	g_PCSC.pfnSCardSetAttrib = (fnPCSCSCardSetAttrib)GetProcAddress(g_PCSCModule, "SCardSetAttrib");
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardTransmit);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardListReaderGroups);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardListReaders);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardCancel);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardGetAttrib);
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardSetAttrib);
 	g_PCSC.pfnSCardFreeMemory = NULL;
 #ifndef __APPLE__
-	g_PCSC.pfnSCardFreeMemory =
-	    (fnPCSCSCardFreeMemory)GetProcAddress(g_PCSCModule, "SCardFreeMemory");
+	WINSCARD_LOAD_PROC(g_PCSCModule, g_PCSC, SCardFreeMemory);
 #endif
 
 	if (g_PCSC.pfnSCardFreeMemory)
