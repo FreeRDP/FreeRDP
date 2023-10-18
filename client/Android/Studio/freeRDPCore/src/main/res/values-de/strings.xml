@@ -16,7 +16,7 @@
     <!-- Bookmark menu items -->
     <string name="menu_title_bookmark">Verbindung</string>
     <string name="menu_connect">Verbinden</string>
-    <string name="menu_edit">Edit</string>
+    <string name="menu_edit">Bearbeiten</string>
     <string name="menu_delete">Löschen</string>
     <!-- Session menu items -->
     <string name="menu_sys_keyboard">Tastatur</string>
