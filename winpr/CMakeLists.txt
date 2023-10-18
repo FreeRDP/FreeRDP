@@ -56,8 +56,15 @@ set(DEFAULT_DEBUG_OPTION OFF)
 if (WIN32 AND NOT UWP)
 	set(NATIVE_SSPI ON)
 endif()
+
+if(NOT ANDROID AND NOT IOS AND NOT UWP)
+	set(TOOLS_DEFAULT ON)
+else()
+	set(TOOLS_DEFAULT OFF)
+endif()
+
 option(WITH_VERBOSE_WINPR_ASSERT "Compile with verbose WINPR_ASSERT." ON)
-option(WITH_WINPR_TOOLS "Build WinPR helper binaries" ON)
+option(WITH_WINPR_TOOLS "Build WinPR helper binaries" ${TOOLS_DEFAULT})
 option(WITH_WINPR_DEPRECATED "Build WinPR deprecated symbols" OFF)
 option(WITH_DEBUG_THREADS "Print thread debug messages, enables handle dump" ${DEFAULT_DEBUG_OPTION})
 option(WITH_DEBUG_EVENTS "Print event debug messages, enables handle dump" ${DEFAULT_DEBUG_OPTION})
@@ -314,7 +321,7 @@ set(WINPR_INCLUDE_DIR "include/winpr${WINPR_VERSION_MAJOR}")
 
 add_subdirectory(libwinpr)
 
-if(NOT ANDROID AND NOT IOS AND NOT UWP AND WITH_WINPR_TOOLS)
+if(WITH_WINPR_TOOLS)
 	add_subdirectory(tools)
 endif()
 
