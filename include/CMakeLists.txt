@@ -22,6 +22,47 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config/build-config.h.in ${CMAKE_CURR
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config/buildflags.h.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp/buildflags.h)
 
+file(GLOB_RECURSE PUBLIC_COMMON_HEADERS
+	LIST_DIRECTORIES false
+	"freerdp/*.h"
+)
+file(GLOB_RECURSE PUBLIC_COMMON_BIN_HEADERS
+	LIST_DIRECTORIES false
+    "${CMAKE_CURRENT_BINARY_DIR}/freerdp/*.h"
+)
+list(SORT PUBLIC_COMMON_HEADERS)
+
+set(PUBLIC_SERVER_HEADERS ${PUBLIC_COMMON_HEADERS})
+list(FILTER PUBLIC_SERVER_HEADERS INCLUDE REGEX ".*freerdp/server.*")
+
+set(PUBLIC_PROXY_HEADERS ${PUBLIC_SERVER_HEADERS})
+list(FILTER PUBLIC_SERVER_HEADERS EXCLUDE REGEX ".*freerdp/server/proxy.*")
+list(FILTER PUBLIC_PROXY_HEADERS INCLUDE REGEX ".*freerdp/server/proxy.*")
+if (WITH_SERVER)
+    set_property(TARGET freerdp-server APPEND PROPERTY SOURCES
+        ${PUBLIC_SERVER_HEADERS}
+    )
+endif()
+if (WITH_PROXY)
+    set_property(TARGET freerdp-server-proxy APPEND PROPERTY SOURCES
+        ${PUBLIC_PROXY_HEADERS}
+    )
+endif()
+
+if (WITH_CLIENT_COMMON)
+    set(PUBLIC_CLIENT_HEADERS ${PUBLIC_COMMON_HEADERS})
+    list(FILTER PUBLIC_CLIENT_HEADERS INCLUDE REGEX ".*freerdp/client.*")
+    set_property( TARGET freerdp-client APPEND PROPERTY SOURCES
+        ${PUBLIC_CLIENT_HEADERS}
+    )
+endif()
+
+list(FILTER PUBLIC_COMMON_HEADERS EXCLUDE REGEX ".*freerdp/server.*")
+list(FILTER PUBLIC_COMMON_HEADERS EXCLUDE REGEX ".*freerdp/client.*")
+list(APPEND PUBLIC_COMMON_HEADERS ${PUBLIC_COMMON_BIN_HEADERS})
+set_property(TARGET freerdp APPEND PROPERTY SOURCES
+    ${PUBLIC_COMMON_HEADERS}
+)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/freerdp
         DESTINATION ${FREERDP_INCLUDE_DIR}
