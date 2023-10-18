@@ -2033,6 +2033,8 @@ const char* freerdp_rdp_version_string(UINT32 version)
 			return "RDP_VERSION_10_10";
 		case RDP_VERSION_10_11:
 			return "RDP_VERSION_10_11";
+		case RDP_VERSION_10_12:
+			return "RDP_VERSION_10_12";
 		default:
 			return "RDP_VERSION_UNKNOWN";
 	}
