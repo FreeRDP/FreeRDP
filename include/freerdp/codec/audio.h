@@ -192,6 +192,8 @@ extern "C"
 #endif /* !WAVE_FORMAT_LUCENT_G723 */
 #define WAVE_FORMAT_AAC_MS 0xA106
 
+#define WAVE_FORMAT_OPUS 0x704F
+
 #define WAVE_FORMAT_EXTENSIBLE 0xFFFE
 
 	/**
