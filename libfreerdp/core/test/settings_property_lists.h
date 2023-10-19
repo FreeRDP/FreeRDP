@@ -248,6 +248,7 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_EncryptionLevel,
 	FreeRDP_EncryptionMethods,
 	FreeRDP_ExtEncryptionMethods,
+	FreeRDP_FakeMouseMotionInterval,
 	FreeRDP_Floatbar,
 	FreeRDP_FrameAcknowledge,
 	FreeRDP_GatewayAcceptedCertLength,
