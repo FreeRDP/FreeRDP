@@ -554,6 +554,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		private int colors;
 		private int width;
 		private int height;
+		private int scale;
 
 		public ScreenSettings()
 		{
@@ -566,6 +567,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			colors = parcel.readInt();
 			width = parcel.readInt();
 			height = parcel.readInt();
+			scale = parcel.readInt();
 		}
 
 		private void validate()
@@ -612,6 +614,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 			colors = 16;
 			width = 0;
 			height = 0;
+			scale = 100;
 		}
 
 		public void setResolution(String resolution, int width, int height)
@@ -656,6 +659,12 @@ public class BookmarkBase implements Parcelable, Cloneable
 				height = 0;
 			}
 		}
+		
+		public void setScale(int scale) {
+			this.scale = scale;
+		}
+		
+		public int getScale() { return scale; }
 
 		public String getResolutionString()
 		{
