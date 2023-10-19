@@ -741,7 +741,6 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	settings_load_hkey_local_machine(settings);
 
-	settings->XSelectionAtom = NULL;
 	if (!freerdp_settings_set_string(settings, FreeRDP_ActionScript, "~/.config/freerdp/action.sh"))
 		goto out_fail;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SmartcardLogon, FALSE))
@@ -790,9 +789,6 @@ static void freerdp_settings_free_internal(rdpSettings* settings)
 	freerdp_dynamic_channel_collection_free(settings);
 
 	freerdp_capability_buffer_free(settings);
-	/* Extensions */
-	free(settings->XSelectionAtom);
-	settings->XSelectionAtom = NULL;
 
 	/* Free all strings, set other pointers NULL */
 	freerdp_settings_free_keys(settings, TRUE);
@@ -1071,9 +1067,6 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 	rc = freerdp_settings_set_string(_settings, FreeRDP_ActionScript,
 	                                 freerdp_settings_get_string(settings, FreeRDP_ActionScript));
 
-	if (settings->XSelectionAtom)
-		_settings->XSelectionAtom = _strdup(settings->XSelectionAtom);
-
 out_fail:
 	return rc;
 }
@@ -1120,7 +1113,6 @@ BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 	_settings->ServerLicenseProductIssuersCount = 0;
 	_settings->ServerLicenseProductIssuers = NULL;
 
-	_settings->XSelectionAtom = NULL;
 	if (!rc)
 		goto out_fail;
 
