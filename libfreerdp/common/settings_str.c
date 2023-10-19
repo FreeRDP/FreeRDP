@@ -450,6 +450,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_ClientDir, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ClientDir" },
 	{ FreeRDP_ClientHostname, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ClientHostname" },
 	{ FreeRDP_ClientProductId, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ClientProductId" },
+	{ FreeRDP_ClipboardUseSelection, FREERDP_SETTINGS_TYPE_STRING,
+	  "FreeRDP_ClipboardUseSelection" },
 	{ FreeRDP_ComputerName, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ComputerName" },
 	{ FreeRDP_ConfigPath, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ConfigPath" },
 	{ FreeRDP_ConnectionFile, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ConnectionFile" },
