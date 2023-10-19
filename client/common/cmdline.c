@@ -3477,7 +3477,8 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 					if (option_starts_with(usesel, cur))
 					{
 						const char* val = &cur[strlen(usesel)];
-						if (!copy_value(val, &settings->XSelectionAtom))
+						if (!freerdp_settings_set_string(settings, FreeRDP_ClipboardUseSelection,
+						                                 val))
 							rc = COMMAND_LINE_ERROR_MEMORY;
 						settings->RedirectClipboard = TRUE;
 					}
