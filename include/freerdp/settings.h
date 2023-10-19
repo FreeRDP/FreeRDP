@@ -1701,18 +1701,6 @@ extern "C"
 		 * The zone below this point is ABI unstable, and
 		 * is therefore potentially subject to ABI breakage.
 		 */
-
-		/*
-		 * Extensions
-		 */
-
-		/* Extensions */
-		ALIGN64 INT32 num_extensions;              /*  */
-		ALIGN64 struct rdp_ext_set extensions[16]; /*  */
-
-		ALIGN64 BYTE* SettingsModified; /* byte array marking fields that have been modified from
-		                                   their default value - currently UNUSED! */
-		ALIGN64 char* XSelectionAtom;
 	};
 	typedef struct rdp_settings rdpSettings;
 
