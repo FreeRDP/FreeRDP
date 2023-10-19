@@ -2250,9 +2250,12 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	clipboard->system = ClipboardCreate();
 	clipboard->requestedFormatId = -1;
 	clipboard->root_window = DefaultRootWindow(xfc->display);
-	selectionAtom = "CLIPBOARD";
-	if (xfc->common.context.settings->XSelectionAtom)
-		selectionAtom = xfc->common.context.settings->XSelectionAtom;
+
+	selectionAtom =
+	    freerdp_settings_get_string(xfc->common.context.settings, FreeRDP_ClipboardUseSelection);
+	if (!selectionAtom)
+		selectionAtom = "CLIPBOARD";
+
 	clipboard->clipboard_atom = XInternAtom(xfc->display, selectionAtom, FALSE);
 
 	if (clipboard->clipboard_atom == None)
