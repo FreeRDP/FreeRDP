@@ -90,7 +90,6 @@
 #include <winpr/sysinfo.h>
 #include <X11/XKBlib.h>
 
-#include "xf_gdi.h"
 #include "xf_rail.h"
 #if defined(CHANNEL_TSMF_CLIENT)
 #include "xf_tsmf.h"
@@ -1388,8 +1387,6 @@ static BOOL xf_post_connect(freerdp* instance)
 			WLog_ERR(TAG, "failed to register graphics");
 			return FALSE;
 		}
-
-		xf_gdi_register_update_callbacks(update);
 	}
 
 #ifdef WITH_XRENDER
