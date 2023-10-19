@@ -369,21 +369,6 @@ static BOOL gdi_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, 
 	return rc;
 }
 
-static BOOL gdi_Glyph_SetBounds(rdpContext* context, INT32 x, INT32 y, INT32 width, INT32 height)
-{
-	rdpGdi* gdi;
-
-	if (!context || !context->gdi)
-		return FALSE;
-
-	gdi = context->gdi;
-
-	if (!gdi->drawing || !gdi->drawing->hdc)
-		return FALSE;
-
-	return gdi_SetClipRgn(gdi->drawing->hdc, x, y, width, height);
-}
-
 static BOOL gdi_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y, INT32 width, INT32 height,
                                 UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
 {
@@ -458,8 +443,8 @@ static BOOL gdi_Glyph_EndDraw(rdpContext* context, INT32 x, INT32 y, INT32 width
 /* Graphics Module */
 BOOL gdi_register_graphics(rdpGraphics* graphics)
 {
-	rdpBitmap bitmap;
-	rdpGlyph glyph;
+	rdpBitmap bitmap = { 0 };
+	rdpGlyph glyph = { 0 };
 	bitmap.size = sizeof(gdiBitmap);
 	bitmap.New = gdi_Bitmap_New;
 	bitmap.Free = gdi_Bitmap_Free;
@@ -473,7 +458,6 @@ BOOL gdi_register_graphics(rdpGraphics* graphics)
 	glyph.Draw = gdi_Glyph_Draw;
 	glyph.BeginDraw = gdi_Glyph_BeginDraw;
 	glyph.EndDraw = gdi_Glyph_EndDraw;
-	glyph.SetBounds = gdi_Glyph_SetBounds;
 	graphics_register_glyph(graphics, &glyph);
 	return TRUE;
 }
