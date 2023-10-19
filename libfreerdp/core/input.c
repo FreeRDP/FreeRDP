@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <time.h>
 #include <freerdp/config.h>
 
 #include <winpr/crt.h>
@@ -881,6 +882,30 @@ BOOL input_register_client_callbacks(rdpInput* input)
 		input->FocusInEvent = input_send_focus_in_event;
 	}
 
+	return TRUE;
+}
+
+/* Save last input timestamp and/or mouse position in prevent-session-lock mode */
+static BOOL input_update_last_event(rdpInput* input, BOOL mouse, UINT16 x, UINT16 y)
+{
+	rdp_input_internal* in = input_cast(input);
+
+	WINPR_ASSERT(input);
+	WINPR_ASSERT(input->context);
+
+	if (freerdp_settings_get_uint32(input->context->settings, FreeRDP_FakeMouseMotionInterval) > 0)
+	{
+		struct timespec ts = { 0 };
+		if (timespec_get(&ts, TIME_UTC) == 0)
+			return FALSE;
+		in->lastInputTimestamp = ts.tv_sec;
+
+		if (mouse)
+		{
+			in->lastX = x;
+			in->lastY = y;
+		}
+	}
 	return TRUE;
 }
 

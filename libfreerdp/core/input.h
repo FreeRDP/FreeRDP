@@ -37,6 +37,10 @@ typedef struct
 
 	rdpInputProxy* proxy;
 	wMessageQueue* queue;
+
+	UINT32 lastInputTimestamp;
+	UINT16 lastX;
+	UINT16 lastY;
 } rdp_input_internal;
 
 static INLINE rdp_input_internal* input_cast(rdpInput* input)
