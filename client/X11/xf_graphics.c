@@ -38,7 +38,6 @@
 #include <freerdp/codec/rfx.h>
 
 #include "xf_graphics.h"
-#include "xf_gdi.h"
 #include "xf_event.h"
 
 #include <freerdp/log.h>
