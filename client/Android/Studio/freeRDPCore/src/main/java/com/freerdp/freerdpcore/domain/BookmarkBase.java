@@ -302,8 +302,8 @@ public class BookmarkBase implements Parcelable, Cloneable
 		                             sharedPrefs.getInt("bookmark.height", 600));
 
 		performanceFlags.setRemoteFX(sharedPrefs.getBoolean("bookmark.perf_remotefx", false));
-		performanceFlags.setGfx(sharedPrefs.getBoolean("bookmark.perf_gfx", false));
-		performanceFlags.setH264(sharedPrefs.getBoolean("bookmark.perf_gfx_h264", false));
+		performanceFlags.setGfx(sharedPrefs.getBoolean("bookmark.perf_gfx", true));
+		performanceFlags.setH264(sharedPrefs.getBoolean("bookmark.perf_gfx_h264", true));
 		performanceFlags.setWallpaper(sharedPrefs.getBoolean("bookmark.perf_wallpaper", false));
 		performanceFlags.setFontSmoothing(
 		    sharedPrefs.getBoolean("bookmark.perf_font_smoothing", false));
@@ -399,8 +399,8 @@ public class BookmarkBase implements Parcelable, Cloneable
 		public PerformanceFlags()
 		{
 			remotefx = false;
-			gfx = false;
-			h264 = false;
+			gfx = true;
+			h264 = true;
 			wallpaper = false;
 			theming = false;
 			fullWindowDrag = false;
