@@ -924,6 +924,7 @@ extern "C"
 #define FreeRDP_PreferIPv6OverIPv4 (4674)
 #define FreeRDP_RedirectClipboard (4800)
 #define FreeRDP_ClipboardFeatureMask (4801)
+#define FreeRDP_ClipboardUseSelection (4802)
 #define FreeRDP_StaticChannelCount (4928)
 #define FreeRDP_StaticChannelArraySize (4929)
 #define FreeRDP_StaticChannelArray (4930)
@@ -1656,7 +1657,8 @@ extern "C"
 
 		ALIGN64 BOOL RedirectClipboard;      /* 4800 */
 		ALIGN64 UINT32 ClipboardFeatureMask; /* 4801 */
-		UINT64 padding4928[4928 - 4802];     /* 4802 */
+		ALIGN64 char* ClipboardUseSelection; /* 4802 */
+		UINT64 padding4928[4928 - 4803];     /* 4803 */
 
 		/**
 		 * Static Virtual Channels

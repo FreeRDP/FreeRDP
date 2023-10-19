@@ -2636,6 +2636,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings, size_t id)
 		case FreeRDP_ClientProductId:
 			return settings->ClientProductId;
 
+		case FreeRDP_ClipboardUseSelection:
+			return settings->ClipboardUseSelection;
+
 		case FreeRDP_ComputerName:
 			return settings->ComputerName;
 
@@ -2937,6 +2940,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, size_t id)
 
 		case FreeRDP_ClientProductId:
 			return settings->ClientProductId;
+
+		case FreeRDP_ClipboardUseSelection:
+			return settings->ClipboardUseSelection;
 
 		case FreeRDP_ComputerName:
 			return settings->ComputerName;
@@ -3248,6 +3254,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, size_t id, char* val, s
 
 		case FreeRDP_ClientProductId:
 			return update_string_(&settings->ClientProductId, cnv.c, len);
+
+		case FreeRDP_ClipboardUseSelection:
+			return update_string_(&settings->ClipboardUseSelection, cnv.c, len);
 
 		case FreeRDP_ComputerName:
 			return update_string_(&settings->ComputerName, cnv.c, len);
@@ -3575,6 +3584,9 @@ BOOL freerdp_settings_set_string_copy_(rdpSettings* settings, size_t id, const c
 
 		case FreeRDP_ClientProductId:
 			return update_string_copy_(&settings->ClientProductId, cnv.cc, len, cleanup);
+
+		case FreeRDP_ClipboardUseSelection:
+			return update_string_copy_(&settings->ClipboardUseSelection, cnv.cc, len, cleanup);
 
 		case FreeRDP_ComputerName:
 			return update_string_copy_(&settings->ComputerName, cnv.cc, len, cleanup);

@@ -362,6 +362,7 @@ static const size_t string_list_indices[] = {
 	FreeRDP_ClientDir,
 	FreeRDP_ClientHostname,
 	FreeRDP_ClientProductId,
+	FreeRDP_ClipboardUseSelection,
 	FreeRDP_ComputerName,
 	FreeRDP_ConfigPath,
 	FreeRDP_ConnectionFile,
