@@ -406,10 +406,8 @@ static BOOL freerdp_prevent_session_lock(rdpContext* context)
 	    freerdp_settings_get_uint32(context->settings, FreeRDP_FakeMouseMotionInterval);
 	if (FakeMouseMotionInterval && in->lastInputTimestamp)
 	{
-		struct timespec ts = { 0 };
-		if (timespec_get(&ts, TIME_UTC) == 0)
-			return FALSE;
-		if (ts.tv_sec - in->lastInputTimestamp > FakeMouseMotionInterval)
+		const time_t now = time(NULL);
+		if (now - in->lastInputTimestamp > FakeMouseMotionInterval)
 		{
 			WLog_Print(context->log, WLOG_DEBUG,
 			           "fake mouse move: x=%d y=%d lastInputTimestamp=%d "

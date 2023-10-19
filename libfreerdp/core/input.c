@@ -895,10 +895,8 @@ static BOOL input_update_last_event(rdpInput* input, BOOL mouse, UINT16 x, UINT1
 
 	if (freerdp_settings_get_uint32(input->context->settings, FreeRDP_FakeMouseMotionInterval) > 0)
 	{
-		struct timespec ts = { 0 };
-		if (timespec_get(&ts, TIME_UTC) == 0)
-			return FALSE;
-		in->lastInputTimestamp = ts.tv_sec;
+		const time_t now = time(NULL);
+		in->lastInputTimestamp = now;
 
 		if (mouse)
 		{
