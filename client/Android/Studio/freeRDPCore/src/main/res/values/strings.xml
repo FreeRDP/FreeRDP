@@ -106,7 +106,7 @@
     <string name="settings_cat_performance">Performance Settings</string>
     <string name="settings_perf_remotefx">RemoteFX</string>
     <string name="settings_perf_gfx" translatable="false">GFX</string>
-    <string name="settings_perf_gfx_h264" translatable="false">H264</string>
+    <string name="settings_perf_gfx_h264" translatable="false">H264 (GFX required)</string>
     <string name="settings_perf_wallpaper">Desktop Background</string>
     <string name="settings_perf_font_smoothing">Font Smoothing</string>
     <string name="settings_perf_desktop_composition">Desktop Composition</string>
