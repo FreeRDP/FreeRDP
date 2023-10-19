@@ -37,6 +37,7 @@ public abstract class BookmarkBaseGateway
 	private static final String KEY_SCREEN_WIDTH_3G = "screenWidth3G";
 	private static final String KEY_SCREEN_HEIGHT = "screenHeight";
 	private static final String KEY_SCREEN_HEIGHT_3G = "screenHeight3G";
+	private static final String KEY_SCREEN_SCALE = "screenScale";
 
 	private static final String KEY_PERFORMANCE_RFX = "performanceRemoteFX";
 	private static final String KEY_PERFORMANCE_RFX_3G = "performanceRemoteFX3G";
@@ -337,6 +338,8 @@ public abstract class BookmarkBaseGateway
 		            BookmarkDB.DB_KEY_SCREEN_WIDTH + " as " + KEY_SCREEN_WIDTH);
 		columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS + "." +
 		            BookmarkDB.DB_KEY_SCREEN_HEIGHT + " as " + KEY_SCREEN_HEIGHT);
+		columns.add(JOIN_PREFIX + BookmarkDB.DB_KEY_SCREEN_SETTINGS + "." +
+				    BookmarkDB.DB_KEY_SCREEN_SCALE + " as " + KEY_SCREEN_SCALE);
 	}
 
 	private void addPerformanceFlagsColumns(ArrayList<String> columns)
@@ -454,6 +457,7 @@ public abstract class BookmarkBaseGateway
 		screenSettings.setResolution(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_RESOLUTION)));
 		screenSettings.setWidth(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_WIDTH)));
 		screenSettings.setHeight(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_HEIGHT)));
+		screenSettings.setScale(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_SCALE)));
 	}
 
 	private void readPerformanceFlags(BookmarkBase bookmark, Cursor cursor)
@@ -483,6 +487,7 @@ public abstract class BookmarkBaseGateway
 		    cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_RESOLUTION_3G)));
 		screenSettings.setWidth(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_WIDTH_3G)));
 		screenSettings.setHeight(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_HEIGHT_3G)));
+		screenSettings.setScale(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_SCALE)));
 	}
 
 	private void readPerformanceFlags3G(BookmarkBase bookmark, Cursor cursor)
@@ -511,6 +516,7 @@ public abstract class BookmarkBaseGateway
 		values.put(BookmarkDB.DB_KEY_SCREEN_RESOLUTION, settings.getResolution());
 		values.put(BookmarkDB.DB_KEY_SCREEN_WIDTH, settings.getWidth());
 		values.put(BookmarkDB.DB_KEY_SCREEN_HEIGHT, settings.getHeight());
+		values.put(BookmarkDB.DB_KEY_SCREEN_SCALE, settings.getScale());
 	}
 
 	private void fillPerformanceFlagsContentValues(BookmarkBase.PerformanceFlags perfFlags,
