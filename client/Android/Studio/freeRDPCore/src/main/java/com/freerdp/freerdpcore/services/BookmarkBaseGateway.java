@@ -487,7 +487,6 @@ public abstract class BookmarkBaseGateway
 		    cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_RESOLUTION_3G)));
 		screenSettings.setWidth(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_WIDTH_3G)));
 		screenSettings.setHeight(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_HEIGHT_3G)));
-		screenSettings.setScale(cursor.getInt(cursor.getColumnIndex(KEY_SCREEN_SCALE)));
 	}
 
 	private void readPerformanceFlags3G(BookmarkBase bookmark, Cursor cursor)
