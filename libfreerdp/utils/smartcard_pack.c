@@ -34,14 +34,15 @@
 
 static const DWORD g_LogLevel = WLOG_DEBUG;
 
-#define smartcard_unpack_redir_scard_context(s, context, index) \
-	smartcard_unpack_redir_scard_context_((s), (context), (index), __FILE__, __func__, __LINE__)
+#define smartcard_unpack_redir_scard_context(s, context, index, ndr)                          \
+	smartcard_unpack_redir_scard_context_((s), (context), (index), (ndr), __FILE__, __func__, \
+	                                      __LINE__)
 #define smartcard_unpack_redir_scard_handle(s, context, index) \
 	smartcard_unpack_redir_scard_handle_((s), (context), (index), __FILE__, __func__, __LINE__)
 
 static LONG smartcard_unpack_redir_scard_context_(wStream* s, REDIR_SCARDCONTEXT* context,
-                                                  UINT32* index, const char* file,
-                                                  const char* function, int line);
+                                                  UINT32* index, UINT32* ppbContextNdrPtr,
+                                                  const char* file, const char* function, int line);
 static LONG smartcard_pack_redir_scard_context(wStream* s, const REDIR_SCARDCONTEXT* context,
                                                DWORD* index);
 static LONG smartcard_unpack_redir_scard_handle_(wStream* s, REDIR_SCARDHANDLE* handle,
@@ -49,7 +50,8 @@ static LONG smartcard_unpack_redir_scard_handle_(wStream* s, REDIR_SCARDHANDLE* 
                                                  const char* function, int line);
 static LONG smartcard_pack_redir_scard_handle(wStream* s, const REDIR_SCARDHANDLE* handle,
                                               DWORD* index);
-static LONG smartcard_unpack_redir_scard_context_ref(wStream* s, REDIR_SCARDCONTEXT* context);
+static LONG smartcard_unpack_redir_scard_context_ref(wStream* s, UINT32 pbContextNdrPtr,
+                                                     REDIR_SCARDCONTEXT* context);
 static LONG smartcard_pack_redir_scard_context_ref(wStream* s, const REDIR_SCARDCONTEXT* context);
 
 static LONG smartcard_unpack_redir_scard_handle_ref(wStream* s, REDIR_SCARDHANDLE* handle);
@@ -1423,16 +1425,16 @@ static void smartcard_trace_device_type_id_return(const GetDeviceTypeId_Return* 
 static LONG smartcard_unpack_common_context_and_string_a(wStream* s, REDIR_SCARDCONTEXT* phContext,
                                                          CHAR** pszReaderName)
 {
-	LONG status;
 	UINT32 index = 0;
-	status = smartcard_unpack_redir_scard_context(s, phContext, &index);
+	UINT32 pbContextNdrPtr = 0;
+	LONG status = smartcard_unpack_redir_scard_context(s, phContext, &index, &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (!smartcard_ndr_pointer_read(s, &index, NULL))
 		return ERROR_INVALID_DATA;
 
-	status = smartcard_unpack_redir_scard_context_ref(s, phContext);
+	status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr, phContext);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -1447,17 +1449,17 @@ static LONG smartcard_unpack_common_context_and_string_a(wStream* s, REDIR_SCARD
 static LONG smartcard_unpack_common_context_and_string_w(wStream* s, REDIR_SCARDCONTEXT* phContext,
                                                          WCHAR** pszReaderName)
 {
-	LONG status;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
-	status = smartcard_unpack_redir_scard_context(s, phContext, &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, phContext, &index, &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
 	if (!smartcard_ndr_pointer_read(s, &index, NULL))
 		return ERROR_INVALID_DATA;
 
-	status = smartcard_unpack_redir_scard_context_ref(s, phContext);
+	status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr, phContext);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -1644,7 +1646,8 @@ void smartcard_scard_handle_native_to_redir(REDIR_SCARDHANDLE* handle, SCARDHAND
 }
 
 LONG smartcard_unpack_redir_scard_context_(wStream* s, REDIR_SCARDCONTEXT* context, UINT32* index,
-                                           const char* file, const char* function, int line)
+                                           UINT32* ppbContextNdrPtr, const char* file,
+                                           const char* function, int line)
 {
 	UINT32 pbContextNdrPtr;
 
@@ -1684,6 +1687,7 @@ LONG smartcard_unpack_redir_scard_context_(wStream* s, REDIR_SCARDCONTEXT* conte
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, context->cbContext))
 		return STATUS_INVALID_PARAMETER;
 
+	*ppbContextNdrPtr = pbContextNdrPtr;
 	return SCARD_S_SUCCESS;
 }
 
@@ -1703,7 +1707,8 @@ LONG smartcard_pack_redir_scard_context(wStream* s, const REDIR_SCARDCONTEXT* co
 	return SCARD_S_SUCCESS;
 }
 
-LONG smartcard_unpack_redir_scard_context_ref(wStream* s, REDIR_SCARDCONTEXT* context)
+LONG smartcard_unpack_redir_scard_context_ref(wStream* s, UINT32 pbContextNdrPtr,
+                                              REDIR_SCARDCONTEXT* context)
 {
 	UINT32 length;
 
@@ -1857,14 +1862,16 @@ LONG smartcard_pack_establish_context_return(wStream* s, const EstablishContext_
 
 LONG smartcard_unpack_context_call(wStream* s, Context_Call* call, const char* name)
 {
-	LONG status;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
 		         status);
 
@@ -1874,9 +1881,11 @@ LONG smartcard_unpack_context_call(wStream* s, Context_Call* call, const char* n
 
 LONG smartcard_unpack_list_reader_groups_call(wStream* s, ListReaderGroups_Call* call, BOOL unicode)
 {
-	LONG status;
 	UINT32 index = 0;
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	UINT32 pbContextNdrPtr = 0;
+
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 
 	if (status != SCARD_S_SUCCESS)
 		return status;
@@ -1886,7 +1895,8 @@ LONG smartcard_unpack_list_reader_groups_call(wStream* s, ListReaderGroups_Call*
 
 	Stream_Read_INT32(s, call->fmszGroupsIsNULL); /* fmszGroupsIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cchGroups);       /* cchGroups (4 bytes) */
-	status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext));
+	status =
+	    smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr, &(call->handles.hContext));
 
 	if (status != SCARD_S_SUCCESS)
 		return status;
@@ -1923,12 +1933,14 @@ LONG smartcard_pack_list_reader_groups_return(wStream* s, const ListReaderGroups
 
 LONG smartcard_unpack_list_readers_call(wStream* s, ListReaders_Call* call, BOOL unicode)
 {
-	LONG status;
 	UINT32 index = 0;
 	UINT32 mszGroupsNdrPtr;
+	UINT32 pbContextNdrPtr = 0;
+
 	call->mszGroups = NULL;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -1941,7 +1953,8 @@ LONG smartcard_unpack_list_readers_call(wStream* s, ListReaders_Call* call, BOOL
 	Stream_Read_INT32(s, call->fmszReadersIsNULL); /* fmszReadersIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cchReaders);       /* cchReaders (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		return status;
 
 	if (mszGroupsNdrPtr)
@@ -1981,11 +1994,11 @@ LONG smartcard_pack_list_readers_return(wStream* s, const ListReaders_Return* re
 	return ret->ReturnCode;
 }
 
-static LONG smartcard_unpack_connect_common(wStream* s, Connect_Common_Call* common, UINT32* index)
+static LONG smartcard_unpack_connect_common(wStream* s, Connect_Common_Call* common, UINT32* index,
+                                            UINT32* ppbContextNdrPtr)
 {
-	LONG status;
-
-	status = smartcard_unpack_redir_scard_context(s, &(common->handles.hContext), index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(common->handles.hContext), index,
+	                                                   ppbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -2001,12 +2014,13 @@ LONG smartcard_unpack_connect_a_call(wStream* s, ConnectA_Call* call)
 {
 	LONG status;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 	call->szReader = NULL;
 
 	if (!smartcard_ndr_pointer_read(s, &index, NULL))
 		return ERROR_INVALID_DATA;
 
-	if ((status = smartcard_unpack_connect_common(s, &(call->Common), &index)))
+	if ((status = smartcard_unpack_connect_common(s, &(call->Common), &index, &pbContextNdrPtr)))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_connect_common failed with error %" PRId32 "", status);
 		return status;
@@ -2016,7 +2030,8 @@ LONG smartcard_unpack_connect_a_call(wStream* s, ConnectA_Call* call)
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->Common.handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->Common.handles.hContext))))
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
 		         status);
 
@@ -2028,13 +2043,14 @@ LONG smartcard_unpack_connect_w_call(wStream* s, ConnectW_Call* call)
 {
 	LONG status;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
 	call->szReader = NULL;
 
 	if (!smartcard_ndr_pointer_read(s, &index, NULL))
 		return ERROR_INVALID_DATA;
 
-	if ((status = smartcard_unpack_connect_common(s, &(call->Common), &index)))
+	if ((status = smartcard_unpack_connect_common(s, &(call->Common), &index, &pbContextNdrPtr)))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_connect_common failed with error %" PRId32 "", status);
 		return status;
@@ -2044,7 +2060,8 @@ LONG smartcard_unpack_connect_w_call(wStream* s, ConnectW_Call* call)
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->Common.handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->Common.handles.hContext))))
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
 		         status);
 
@@ -2079,10 +2096,10 @@ LONG smartcard_pack_connect_return(wStream* s, const Connect_Return* ret)
 
 LONG smartcard_unpack_reconnect_call(wStream* s, Reconnect_Call* call)
 {
-	LONG status;
 	UINT32 index = 0;
-
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	UINT32 pbContextNdrPtr = 0;
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -2097,7 +2114,8 @@ LONG smartcard_unpack_reconnect_call(wStream* s, Reconnect_Call* call)
 	Stream_Read_UINT32(s, call->dwPreferredProtocols); /* dwPreferredProtocols (4 bytes) */
 	Stream_Read_UINT32(s, call->dwInitialization);     /* dwInitialization (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
 		         status);
@@ -2125,10 +2143,11 @@ LONG smartcard_pack_reconnect_return(wStream* s, const Reconnect_Return* ret)
 LONG smartcard_unpack_hcard_and_disposition_call(wStream* s, HCardAndDisposition_Call* call,
                                                  const char* name)
 {
-	LONG status;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -2141,7 +2160,8 @@ LONG smartcard_unpack_hcard_and_disposition_call(wStream* s, HCardAndDisposition
 
 	Stream_Read_UINT32(s, call->dwDisposition); /* dwDisposition (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		return status;
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(s, &(call->handles.hCard))))
@@ -2340,12 +2360,14 @@ fail:
 
 LONG smartcard_unpack_get_status_change_a_call(wStream* s, GetStatusChangeA_Call* call)
 {
-	LONG status;
 	UINT32 ndrPtr;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
+
 	call->rgReaderStates = NULL;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -2357,7 +2379,8 @@ LONG smartcard_unpack_get_status_change_a_call(wStream* s, GetStatusChangeA_Call
 	if (!smartcard_ndr_pointer_read(s, &index, &ndrPtr))
 		return ERROR_INVALID_DATA;
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		return status;
 
 	if (ndrPtr)
@@ -2374,12 +2397,13 @@ LONG smartcard_unpack_get_status_change_a_call(wStream* s, GetStatusChangeA_Call
 LONG smartcard_unpack_get_status_change_w_call(wStream* s, GetStatusChangeW_Call* call)
 {
 	UINT32 ndrPtr;
-	LONG status;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
 	call->rgReaderStates = NULL;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -2391,7 +2415,8 @@ LONG smartcard_unpack_get_status_change_w_call(wStream* s, GetStatusChangeW_Call
 	if (!smartcard_ndr_pointer_read(s, &index, &ndrPtr))
 		return ERROR_INVALID_DATA;
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		return status;
 
 	if (ndrPtr)
@@ -2432,10 +2457,10 @@ LONG smartcard_pack_get_status_change_return(wStream* s, const GetStatusChange_R
 
 LONG smartcard_unpack_state_call(wStream* s, State_Call* call)
 {
-	LONG status;
 	UINT32 index = 0;
-
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	UINT32 pbContextNdrPtr = 0;
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -2449,7 +2474,8 @@ LONG smartcard_unpack_state_call(wStream* s, State_Call* call)
 	Stream_Read_INT32(s, call->fpbAtrIsNULL); /* fpbAtrIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbAtrLen);    /* cbAtrLen (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		return status;
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(s, &(call->handles.hCard))))
@@ -2483,9 +2509,11 @@ LONG smartcard_pack_state_return(wStream* s, const State_Return* ret)
 
 LONG smartcard_unpack_status_call(wStream* s, Status_Call* call, BOOL unicode)
 {
-	LONG status;
 	UINT32 index = 0;
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	UINT32 pbContextNdrPtr = 0;
+
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -2500,7 +2528,8 @@ LONG smartcard_unpack_status_call(wStream* s, Status_Call* call, BOOL unicode)
 	Stream_Read_UINT32(s, call->cchReaderLen);         /* cchReaderLen (4 bytes) */
 	Stream_Read_UINT32(s, call->cbAtrLen);             /* cbAtrLen (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		return status;
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(s, &(call->handles.hCard))))
@@ -2544,10 +2573,11 @@ LONG smartcard_pack_status_return(wStream* s, const Status_Return* ret, BOOL uni
 
 LONG smartcard_unpack_get_attrib_call(wStream* s, GetAttrib_Call* call)
 {
-	LONG status;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -2562,7 +2592,8 @@ LONG smartcard_unpack_get_attrib_call(wStream* s, GetAttrib_Call* call)
 	Stream_Read_INT32(s, call->fpbAttrIsNULL); /* fpbAttrIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbAttrLen);    /* cbAttrLen (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		return status;
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(s, &(call->handles.hCard))))
@@ -2606,13 +2637,14 @@ LONG smartcard_pack_get_attrib_return(wStream* s, const GetAttrib_Return* ret, D
 
 LONG smartcard_unpack_control_call(wStream* s, Control_Call* call)
 {
-	LONG status;
 	UINT32 index = 0;
 	UINT32 pvInBufferNdrPtr;
+	UINT32 pbContextNdrPtr = 0;
 
 	call->pvInBuffer = NULL;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -2630,7 +2662,8 @@ LONG smartcard_unpack_control_call(wStream* s, Control_Call* call)
 	Stream_Read_INT32(s, call->fpvOutBufferIsNULL); /* fpvOutBufferIsNULL (4 bytes) */
 	Stream_Read_UINT32(s, call->cbOutBufferSize);   /* cbOutBufferSize (4 bytes) */
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		return status;
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(s, &(call->handles.hCard))))
@@ -2674,7 +2707,6 @@ LONG smartcard_pack_control_return(wStream* s, const Control_Return* ret)
 
 LONG smartcard_unpack_transmit_call(wStream* s, Transmit_Call* call)
 {
-	LONG status;
 	UINT32 length;
 	BYTE* pbExtraBytes;
 	UINT32 pbExtraBytesNdrPtr;
@@ -2683,11 +2715,14 @@ LONG smartcard_unpack_transmit_call(wStream* s, Transmit_Call* call)
 	SCardIO_Request ioSendPci;
 	SCardIO_Request ioRecvPci;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
+
 	call->pioSendPci = NULL;
 	call->pioRecvPci = NULL;
 	call->pbSendBuffer = NULL;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -2730,7 +2765,8 @@ LONG smartcard_unpack_transmit_call(wStream* s, Transmit_Call* call)
 		return STATUS_INVALID_PARAMETER;
 	}
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		return status;
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(s, &(call->handles.hCard))))
@@ -2924,13 +2960,15 @@ LONG smartcard_pack_transmit_return(wStream* s, const Transmit_Return* ret)
 
 LONG smartcard_unpack_locate_cards_by_atr_a_call(wStream* s, LocateCardsByATRA_Call* call)
 {
-	LONG status;
 	UINT32 rgReaderStatesNdrPtr;
 	UINT32 rgAtrMasksNdrPtr;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
+
 	call->rgReaderStates = NULL;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -2944,7 +2982,8 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(wStream* s, LocateCardsByATRA_C
 	if (!smartcard_ndr_pointer_read(s, &index, &rgReaderStatesNdrPtr))
 		return ERROR_INVALID_DATA;
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		return status;
 
 	if ((rgAtrMasksNdrPtr && !call->cAtrs) || (!rgAtrMasksNdrPtr && call->cAtrs))
@@ -2976,11 +3015,12 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(wStream* s, LocateCardsByATRA_C
 
 LONG smartcard_unpack_context_and_two_strings_a_call(wStream* s, ContextAndTwoStringA_Call* call)
 {
-	LONG status;
 	UINT32 sz1NdrPtr, sz2NdrPtr;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -2989,7 +3029,7 @@ LONG smartcard_unpack_context_and_two_strings_a_call(wStream* s, ContextAndTwoSt
 	if (!smartcard_ndr_pointer_read(s, &index, &sz2NdrPtr))
 		return ERROR_INVALID_DATA;
 
-	status = smartcard_unpack_redir_scard_context_ref(s, &call->handles.hContext);
+	status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr, &call->handles.hContext);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3011,10 +3051,12 @@ LONG smartcard_unpack_context_and_two_strings_a_call(wStream* s, ContextAndTwoSt
 
 LONG smartcard_unpack_context_and_two_strings_w_call(wStream* s, ContextAndTwoStringW_Call* call)
 {
-	LONG status;
 	UINT32 sz1NdrPtr, sz2NdrPtr;
 	UINT32 index = 0;
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	UINT32 pbContextNdrPtr = 0;
+
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3023,7 +3065,7 @@ LONG smartcard_unpack_context_and_two_strings_w_call(wStream* s, ContextAndTwoSt
 	if (!smartcard_ndr_pointer_read(s, &index, &sz2NdrPtr))
 		return ERROR_INVALID_DATA;
 
-	status = smartcard_unpack_redir_scard_context_ref(s, &call->handles.hContext);
+	status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr, &call->handles.hContext);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3045,10 +3087,12 @@ LONG smartcard_unpack_context_and_two_strings_w_call(wStream* s, ContextAndTwoSt
 
 LONG smartcard_unpack_locate_cards_a_call(wStream* s, LocateCardsA_Call* call)
 {
-	LONG status;
 	UINT32 sz1NdrPtr, sz2NdrPtr;
 	UINT32 index = 0;
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	UINT32 pbContextNdrPtr = 0;
+
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3062,6 +3106,10 @@ LONG smartcard_unpack_locate_cards_a_call(wStream* s, LocateCardsA_Call* call)
 	Stream_Read_UINT32(s, call->cReaders);
 	if (!smartcard_ndr_pointer_read(s, &index, &sz2NdrPtr))
 		return ERROR_INVALID_DATA;
+
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
+		return status;
 
 	if (sz1NdrPtr)
 	{
@@ -3082,11 +3130,12 @@ LONG smartcard_unpack_locate_cards_a_call(wStream* s, LocateCardsA_Call* call)
 
 LONG smartcard_unpack_locate_cards_w_call(wStream* s, LocateCardsW_Call* call)
 {
-	LONG status;
 	UINT32 sz1NdrPtr, sz2NdrPtr;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3100,6 +3149,10 @@ LONG smartcard_unpack_locate_cards_w_call(wStream* s, LocateCardsW_Call* call)
 	Stream_Read_UINT32(s, call->cReaders);
 	if (!smartcard_ndr_pointer_read(s, &index, &sz2NdrPtr))
 		return ERROR_INVALID_DATA;
+
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
+		return status;
 
 	if (sz1NdrPtr)
 	{
@@ -3120,11 +3173,12 @@ LONG smartcard_unpack_locate_cards_w_call(wStream* s, LocateCardsW_Call* call)
 
 LONG smartcard_unpack_set_attrib_call(wStream* s, SetAttrib_Call* call)
 {
-	LONG status;
 	UINT32 index = 0;
 	UINT32 ndrPtr;
+	UINT32 pbContextNdrPtr = 0;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 	status = smartcard_unpack_redir_scard_handle(s, &(call->handles.hCard), &index);
@@ -3139,7 +3193,8 @@ LONG smartcard_unpack_set_attrib_call(wStream* s, SetAttrib_Call* call)
 	if (!smartcard_ndr_pointer_read(s, &index, &ndrPtr))
 		return ERROR_INVALID_DATA;
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		return status;
 
 	if ((status = smartcard_unpack_redir_scard_handle_ref(s, &(call->handles.hCard))))
@@ -3159,13 +3214,15 @@ LONG smartcard_unpack_set_attrib_call(wStream* s, SetAttrib_Call* call)
 
 LONG smartcard_unpack_locate_cards_by_atr_w_call(wStream* s, LocateCardsByATRW_Call* call)
 {
-	LONG status;
 	UINT32 rgReaderStatesNdrPtr;
 	UINT32 rgAtrMasksNdrPtr;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
+
 	call->rgReaderStates = NULL;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3180,7 +3237,8 @@ LONG smartcard_unpack_locate_cards_by_atr_w_call(wStream* s, LocateCardsByATRW_C
 	if (!smartcard_ndr_pointer_read(s, &index, &rgReaderStatesNdrPtr))
 		return ERROR_INVALID_DATA;
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 		return status;
 
 	if ((rgAtrMasksNdrPtr && !call->cAtrs) || (!rgAtrMasksNdrPtr && call->cAtrs))
@@ -3212,15 +3270,16 @@ LONG smartcard_unpack_locate_cards_by_atr_w_call(wStream* s, LocateCardsByATRW_C
 
 LONG smartcard_unpack_read_cache_a_call(wStream* s, ReadCacheA_Call* call)
 {
-	LONG status;
 	UINT32 mszNdrPtr;
 	UINT32 contextNdrPtr;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
 	if (!smartcard_ndr_pointer_read(s, &index, &mszNdrPtr))
 		return ERROR_INVALID_DATA;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->Common.handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->Common.handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3241,7 +3300,8 @@ LONG smartcard_unpack_read_cache_a_call(wStream* s, ReadCacheA_Call* call)
 			return status;
 	}
 
-	status = smartcard_unpack_redir_scard_context_ref(s, &call->Common.handles.hContext);
+	status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                  &call->Common.handles.hContext);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3257,15 +3317,16 @@ LONG smartcard_unpack_read_cache_a_call(wStream* s, ReadCacheA_Call* call)
 
 LONG smartcard_unpack_read_cache_w_call(wStream* s, ReadCacheW_Call* call)
 {
-	LONG status;
 	UINT32 mszNdrPtr;
 	UINT32 contextNdrPtr;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
 	if (!smartcard_ndr_pointer_read(s, &index, &mszNdrPtr))
 		return ERROR_INVALID_DATA;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->Common.handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->Common.handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3286,7 +3347,8 @@ LONG smartcard_unpack_read_cache_w_call(wStream* s, ReadCacheW_Call* call)
 			return status;
 	}
 
-	status = smartcard_unpack_redir_scard_context_ref(s, &call->Common.handles.hContext);
+	status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                  &call->Common.handles.hContext);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3302,16 +3364,17 @@ LONG smartcard_unpack_read_cache_w_call(wStream* s, ReadCacheW_Call* call)
 
 LONG smartcard_unpack_write_cache_a_call(wStream* s, WriteCacheA_Call* call)
 {
-	LONG status;
 	UINT32 mszNdrPtr;
 	UINT32 contextNdrPtr;
 	UINT32 pbDataNdrPtr;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
 	if (!smartcard_ndr_pointer_read(s, &index, &mszNdrPtr))
 		return ERROR_INVALID_DATA;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->Common.handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->Common.handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3335,7 +3398,8 @@ LONG smartcard_unpack_write_cache_a_call(wStream* s, WriteCacheA_Call* call)
 			return status;
 	}
 
-	status = smartcard_unpack_redir_scard_context_ref(s, &call->Common.handles.hContext);
+	status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                  &call->Common.handles.hContext);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3361,16 +3425,17 @@ LONG smartcard_unpack_write_cache_a_call(wStream* s, WriteCacheA_Call* call)
 
 LONG smartcard_unpack_write_cache_w_call(wStream* s, WriteCacheW_Call* call)
 {
-	LONG status;
 	UINT32 mszNdrPtr;
 	UINT32 contextNdrPtr;
 	UINT32 pbDataNdrPtr;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
 	if (!smartcard_ndr_pointer_read(s, &index, &mszNdrPtr))
 		return ERROR_INVALID_DATA;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->Common.handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->Common.handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3393,7 +3458,8 @@ LONG smartcard_unpack_write_cache_w_call(wStream* s, WriteCacheW_Call* call)
 			return status;
 	}
 
-	status = smartcard_unpack_redir_scard_context_ref(s, &call->Common.handles.hContext);
+	status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                  &call->Common.handles.hContext);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3419,10 +3485,11 @@ LONG smartcard_unpack_write_cache_w_call(wStream* s, WriteCacheW_Call* call)
 
 LONG smartcard_unpack_get_transmit_count_call(wStream* s, GetTransmitCount_Call* call)
 {
-	LONG status;
 	UINT32 index = 0;
+	UINT32 pbContextNdrPtr = 0;
 
-	status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index);
+	LONG status = smartcard_unpack_redir_scard_context(s, &(call->handles.hContext), &index,
+	                                                   &pbContextNdrPtr);
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
@@ -3430,7 +3497,8 @@ LONG smartcard_unpack_get_transmit_count_call(wStream* s, GetTransmitCount_Call*
 	if (status != SCARD_S_SUCCESS)
 		return status;
 
-	if ((status = smartcard_unpack_redir_scard_context_ref(s, &(call->handles.hContext))))
+	if ((status = smartcard_unpack_redir_scard_context_ref(s, pbContextNdrPtr,
+	                                                       &(call->handles.hContext))))
 	{
 		WLog_ERR(TAG, "smartcard_unpack_redir_scard_context_ref failed with error %" PRId32 "",
 		         status);
