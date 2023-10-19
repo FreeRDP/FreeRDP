@@ -316,6 +316,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_EncryptionLevel, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_EncryptionLevel" },
 	{ FreeRDP_EncryptionMethods, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_EncryptionMethods" },
 	{ FreeRDP_ExtEncryptionMethods, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_ExtEncryptionMethods" },
+	{ FreeRDP_FakeMouseMotionInterval, FREERDP_SETTINGS_TYPE_UINT32,
+	  "FreeRDP_FakeMouseMotionInterval" },
 	{ FreeRDP_Floatbar, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_Floatbar" },
 	{ FreeRDP_FrameAcknowledge, FREERDP_SETTINGS_TYPE_UINT32, "FreeRDP_FrameAcknowledge" },
 	{ FreeRDP_GatewayAcceptedCertLength, FREERDP_SETTINGS_TYPE_UINT32,

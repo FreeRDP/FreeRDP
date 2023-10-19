@@ -1678,6 +1678,9 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, size_t id)
 		case FreeRDP_ExtEncryptionMethods:
 			return settings->ExtEncryptionMethods;
 
+		case FreeRDP_FakeMouseMotionInterval:
+			return settings->FakeMouseMotionInterval;
+
 		case FreeRDP_Floatbar:
 			return settings->Floatbar;
 
@@ -2103,6 +2106,10 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, size_t id, UINT32 val)
 
 		case FreeRDP_ExtEncryptionMethods:
 			settings->ExtEncryptionMethods = cnv.c;
+			break;
+
+		case FreeRDP_FakeMouseMotionInterval:
+			settings->FakeMouseMotionInterval = cnv.c;
 			break;
 
 		case FreeRDP_Floatbar:
