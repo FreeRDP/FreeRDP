@@ -928,6 +928,8 @@ BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code
 	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
 		return TRUE;
 
+	input_update_last_event(input, FALSE, 0, 0);
+
 	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, flags, code);
 }
 
@@ -951,6 +953,8 @@ BOOL freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UI
 	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
 		return TRUE;
 
+	input_update_last_event(input, FALSE, 0, 0);
+
 	return IFCALLRESULT(TRUE, input->UnicodeKeyboardEvent, input, flags, code);
 }
 
@@ -961,6 +965,10 @@ BOOL freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UIN
 
 	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
 		return TRUE;
+
+	input_update_last_event(
+	    input, flags & (PTR_FLAGS_MOVE | PTR_FLAGS_BUTTON1 | PTR_FLAGS_BUTTON2 | PTR_FLAGS_BUTTON3),
+	    x, y);
 
 	return IFCALLRESULT(TRUE, input->MouseEvent, input, flags, x, y);
 }
@@ -991,6 +999,8 @@ BOOL freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT
 
 	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
 		return TRUE;
+
+	input_update_last_event(input, TRUE, x, y);
 
 	return IFCALLRESULT(TRUE, input->ExtendedMouseEvent, input, flags, x, y);
 }
