@@ -614,117 +614,6 @@ out:
 	return ret;
 }
 
-/* Glyph Class */
-static BOOL xf_Glyph_New(rdpContext* context, rdpGlyph* glyph)
-{
-	int scanline;
-	XImage* image;
-	xfGlyph* xf_glyph = (xfGlyph*)glyph;
-
-	xfContext* xfc = (xfContext*)context;
-	xf_lock_x11(xfc);
-	scanline = (glyph->cx + 7) / 8;
-	xf_glyph->pixmap = XCreatePixmap(xfc->display, xfc->drawing, glyph->cx, glyph->cy, 1);
-	image = XCreateImage(xfc->display, xfc->visual, 1, ZPixmap, 0, (char*)glyph->aj, glyph->cx,
-	                     glyph->cy, 8, scanline);
-	image->byte_order = MSBFirst;
-	image->bitmap_bit_order = MSBFirst;
-	XInitImage(image);
-	XPutImage(xfc->display, xf_glyph->pixmap, xfc->gc_mono, image, 0, 0, 0, 0, glyph->cx,
-	          glyph->cy);
-	image->data = NULL;
-	XDestroyImage(image);
-	xf_unlock_x11(xfc);
-	return TRUE;
-}
-
-static void xf_Glyph_Free(rdpContext* context, rdpGlyph* glyph)
-{
-	xfContext* xfc = (xfContext*)context;
-	xf_lock_x11(xfc);
-
-	if (((xfGlyph*)glyph)->pixmap != 0)
-		XFreePixmap(xfc->display, ((xfGlyph*)glyph)->pixmap);
-
-	xf_unlock_x11(xfc);
-	free(glyph->aj);
-	free(glyph);
-}
-
-static BOOL xf_Glyph_Draw(rdpContext* context, const rdpGlyph* glyph, INT32 x, INT32 y, INT32 w,
-                          INT32 h, INT32 sx, INT32 sy, BOOL fOpRedundant)
-{
-	const xfGlyph* xf_glyph = (const xfGlyph*)glyph;
-	xfContext* xfc = (xfContext*)context;
-
-	xf_lock_x11(xfc);
-
-	if (!fOpRedundant)
-	{
-		XSetFillStyle(xfc->display, xfc->gc, FillOpaqueStippled);
-		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, x, y, w, h);
-	}
-
-	XSetFillStyle(xfc->display, xfc->gc, FillStippled);
-	XSetStipple(xfc->display, xfc->gc, xf_glyph->pixmap);
-
-	if (sx || sy)
-		WLog_ERR(TAG, "");
-
-	// XSetClipOrigin(xfc->display, xfc->gc, sx, sy);
-	XSetTSOrigin(xfc->display, xfc->gc, x, y);
-	XFillRectangle(xfc->display, xfc->drawing, xfc->gc, x, y, w, h);
-	xf_unlock_x11(xfc);
-	return TRUE;
-}
-
-static BOOL xf_Glyph_BeginDraw(rdpContext* context, INT32 x, INT32 y, INT32 width, INT32 height,
-                               UINT32 bgcolor, UINT32 fgcolor, BOOL fOpRedundant)
-{
-	xfContext* xfc = (xfContext*)context;
-	XColor xbgcolor, xfgcolor;
-
-	if (!xf_decode_color(xfc, bgcolor, &xbgcolor))
-		return FALSE;
-
-	if (!xf_decode_color(xfc, fgcolor, &xfgcolor))
-		return FALSE;
-
-	xf_lock_x11(xfc);
-
-	if (!fOpRedundant)
-	{
-		XSetForeground(xfc->display, xfc->gc, xfgcolor.pixel);
-		XSetBackground(xfc->display, xfc->gc, xfgcolor.pixel);
-		XSetFillStyle(xfc->display, xfc->gc, FillOpaqueStippled);
-		XFillRectangle(xfc->display, xfc->drawable, xfc->gc, x, y, width, height);
-	}
-
-	XSetForeground(xfc->display, xfc->gc, xbgcolor.pixel);
-	XSetBackground(xfc->display, xfc->gc, xfgcolor.pixel);
-	xf_unlock_x11(xfc);
-	return TRUE;
-}
-
-static BOOL xf_Glyph_EndDraw(rdpContext* context, INT32 x, INT32 y, INT32 width, INT32 height,
-                             UINT32 bgcolor, UINT32 fgcolor)
-{
-	xfContext* xfc = (xfContext*)context;
-	BOOL ret = TRUE;
-	XColor xfgcolor, xbgcolor;
-
-	if (!xf_decode_color(xfc, bgcolor, &xbgcolor))
-		return FALSE;
-
-	if (!xf_decode_color(xfc, fgcolor, &xfgcolor))
-		return FALSE;
-
-	if (xfc->drawing == xfc->primary)
-		ret = gdi_InvalidateRegion(xfc->hdc, x, y, width, height);
-
-	return ret;
-}
-
 /* Graphics Module */
 BOOL xf_register_pointer(rdpGraphics* graphics)
 {
@@ -744,26 +633,17 @@ BOOL xf_register_pointer(rdpGraphics* graphics)
 BOOL xf_register_graphics(rdpGraphics* graphics)
 {
 	rdpBitmap bitmap;
-	rdpGlyph glyph;
 
 	if (!graphics || !graphics->Bitmap_Prototype || !graphics->Glyph_Prototype)
 		return FALSE;
 
 	bitmap = *graphics->Bitmap_Prototype;
-	glyph = *graphics->Glyph_Prototype;
 	bitmap.size = sizeof(xfBitmap);
 	bitmap.New = xf_Bitmap_New;
 	bitmap.Free = xf_Bitmap_Free;
 	bitmap.Paint = xf_Bitmap_Paint;
 	bitmap.SetSurface = xf_Bitmap_SetSurface;
 	graphics_register_bitmap(graphics, &bitmap);
-	glyph.size = sizeof(xfGlyph);
-	glyph.New = xf_Glyph_New;
-	glyph.Free = xf_Glyph_Free;
-	glyph.Draw = xf_Glyph_Draw;
-	glyph.BeginDraw = xf_Glyph_BeginDraw;
-	glyph.EndDraw = xf_Glyph_EndDraw;
-	graphics_register_glyph(graphics, &glyph);
 	return TRUE;
 }
 
