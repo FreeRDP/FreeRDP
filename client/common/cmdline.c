@@ -2937,6 +2937,23 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 		{
 			settings->DisableCredentialsDelegation = !enable;
 		}
+		CommandLineSwitchCase(arg, "prevent-session-lock")
+		{
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_FakeMouseMotionInterval, 180))
+				return COMMAND_LINE_ERROR_MEMORY;
+
+			if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
+			{
+				LONGLONG val;
+
+				if (!value_to_int(arg->Value, &val, 1, UINT32_MAX))
+					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_FakeMouseMotionInterval,
+				                                 (UINT32)val))
+					return COMMAND_LINE_ERROR_MEMORY;
+			}
+		}
 		CommandLineSwitchCase(arg, "vmconnect")
 		{
 			settings->VmConnectMode = TRUE;

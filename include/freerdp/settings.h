@@ -945,6 +945,7 @@ extern "C"
 #define FreeRDP_ActionScript (5195)
 #define FreeRDP_Floatbar (5196)
 #define FreeRDP_TcpConnectTimeout (5197)
+#define FreeRDP_FakeMouseMotionInterval (5198)
 
 	/**
 	 * FreeRDP Settings Data Structure
@@ -1691,7 +1692,8 @@ extern "C"
 		ALIGN64 char* ActionScript;           /* 5195 */
 		ALIGN64 UINT32 Floatbar;              /* 5196 */
 		ALIGN64 UINT32 TcpConnectTimeout;     /* 5197 */
-		UINT64 padding5312[5312 - 5198];      /* 5198 */
+		ALIGN64 UINT32 FakeMouseMotionInterval; /* 5198 */
+		UINT64 padding5312[5312 - 5199];        /* 5199 */
 
 		/**
 		 * WARNING: End of ABI stable zone!
