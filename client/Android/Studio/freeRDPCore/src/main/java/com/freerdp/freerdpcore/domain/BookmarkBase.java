@@ -235,6 +235,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		                 screenSettings.getResolutionString().toLowerCase(locale));
 		editor.putInt("bookmark.width", screenSettings.getWidth());
 		editor.putInt("bookmark.height", screenSettings.getHeight());
+		editor.putInt("bookmark.scale", screenSettings.getScale());
 
 		editor.putBoolean("bookmark.perf_remotefx", performanceFlags.getRemoteFX());
 		editor.putBoolean("bookmark.perf_gfx", performanceFlags.getGfx());
@@ -300,6 +301,7 @@ public class BookmarkBase implements Parcelable, Cloneable
 		screenSettings.setResolution(sharedPrefs.getString("bookmark.resolution", "automatic"),
 		                             sharedPrefs.getInt("bookmark.width", 800),
 		                             sharedPrefs.getInt("bookmark.height", 600));
+		screenSettings.setScale(sharedPrefs.getInt("bookmark.scale", 100));
 
 		performanceFlags.setRemoteFX(sharedPrefs.getBoolean("bookmark.perf_remotefx", false));
 		performanceFlags.setGfx(sharedPrefs.getBoolean("bookmark.perf_gfx", false));
