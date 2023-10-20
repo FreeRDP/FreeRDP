@@ -26,6 +26,7 @@
 #include <freerdp/crypto/privatekey.h>
 #include "../crypto/privatekey.h"
 #include <freerdp/utils/http.h>
+#include <freerdp/utils/aad.h>
 
 #include <winpr/crypto.h>
 
@@ -830,3 +831,40 @@ BOOL aad_is_supported(void)
 	return FALSE;
 #endif
 }
+
+#ifdef WITH_AAD
+char* freerdp_utils_aad_get_access_token(wLog* log, const char* data, size_t length)
+{
+	char* token = NULL;
+	cJSON* access_token_prop = NULL;
+	const char* access_token_str = NULL;
+
+	cJSON* json = cJSON_ParseWithLength(data, length);
+	if (!json)
+	{
+		WLog_Print(log, WLOG_ERROR, "Failed to parse access token response [got %" PRIuz " bytes",
+		           length);
+		goto cleanup;
+	}
+
+	access_token_prop = cJSON_GetObjectItem(json, "access_token");
+	if (!access_token_prop)
+	{
+		WLog_Print(log, WLOG_ERROR, "Response has no \"access_token\" property");
+		goto cleanup;
+	}
+
+	access_token_str = cJSON_GetStringValue(access_token_prop);
+	if (!access_token_str)
+	{
+		WLog_Print(log, WLOG_ERROR, "Invalid value for \"access_token\"");
+		goto cleanup;
+	}
+
+	token = _strdup(access_token_str);
+
+cleanup:
+	cJSON_Delete(json);
+	return token;
+}
+#endif
