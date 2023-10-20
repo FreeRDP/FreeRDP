@@ -92,6 +92,16 @@ public class SessionView extends View
 		                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
 	}
 
+	/* External Mouse Hover */
+	@Override
+	public boolean onHoverEvent(MotionEvent event) {
+		if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE) {
+			MotionEvent mappedEvent = mapTouchEvent(event);
+			LibFreeRDP.sendCursorEvent(currentSession.getInstance(), (int)mappedEvent.getX(), (int)mappedEvent.getY(), Mouse.getMoveEvent());
+		}
+		return true;
+	}
+
 	public void setScaleGestureDetector(ScaleGestureDetector scaleGestureDetector)
 	{
 		doubleGestureDetector.setScaleGestureDetector(scaleGestureDetector);
