@@ -59,20 +59,8 @@
 #endif
 
 #ifdef WITH_AAD
-#include <cjson/cJSON.h>
 #include <freerdp/utils/http.h>
-
-#if CJSON_VERSION_MAJOR == 1
-#if CJSON_VERSION_MINOR <= 7
-#if CJSON_VERSION_PATCH < 13
-#define USE_CJSON_COMPAT
-#endif
-#endif
-#endif
-
-#if defined(USE_CJSON_COMPAT)
-extern cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length);
-#endif
+#include <freerdp/utils/aad.h>
 #endif
 
 #include <freerdp/log.h>
@@ -1130,9 +1118,8 @@ BOOL client_common_get_access_token(freerdp* instance, const char* request, char
 	long resp_code = 0;
 	BYTE* response = NULL;
 	size_t response_length = 0;
-	cJSON* json = NULL;
-	cJSON* access_token_prop = NULL;
-	const char* access_token_str = NULL;
+
+	wLog* log = WLog_Get(TAG);
 
 	if (!freerdp_http_request("https://login.microsoftonline.com/common/oauth2/v2.0/token", request,
 	                          &resp_code, &response, &response_length))
@@ -1144,7 +1131,7 @@ BOOL client_common_get_access_token(freerdp* instance, const char* request, char
 	if (resp_code != HTTP_STATUS_OK)
 	{
 		char buffer[64] = { 0 };
-		wLog* log = WLog_Get(TAG);
+
 		WLog_Print(log, WLOG_ERROR,
 		           "Server unwilling to provide access token; returned status code %s",
 		           freerdp_http_status_string_format(resp_code, buffer, sizeof(buffer)));
@@ -1153,36 +1140,11 @@ BOOL client_common_get_access_token(freerdp* instance, const char* request, char
 		goto cleanup;
 	}
 
-	json = cJSON_ParseWithLength((const char*)response, response_length);
-	if (!json)
-	{
-		char buffer[64] = { 0 };
-		WLog_ERR(
-		    TAG, "Failed to parse access token response [got %" PRIuz " bytes, response code %s",
-		    response_length, freerdp_http_status_string_format(resp_code, buffer, sizeof(buffer)));
-		goto cleanup;
-	}
-
-	access_token_prop = cJSON_GetObjectItem(json, "access_token");
-	if (!access_token_prop)
-	{
-		WLog_ERR(TAG, "Response has no \"access_token\" property");
-		goto cleanup;
-	}
-
-	access_token_str = cJSON_GetStringValue(access_token_prop);
-	if (!access_token_str)
-	{
-		WLog_ERR(TAG, "Invalid value for \"access_token\"");
-		goto cleanup;
-	}
-
-	*token = _strdup(access_token_str);
+	*token = freerdp_utils_aad_get_access_token(log, response, response_length);
 	if (*token)
 		ret = TRUE;
 
 cleanup:
-	cJSON_Delete(json);
 	free(response);
 	return ret;
 #else

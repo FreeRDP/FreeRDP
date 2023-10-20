@@ -226,8 +226,14 @@ if(FAAC_FOUND)
     include_directories(${FAAC_INCLUDE_DIRS})
 endif()
 
-if(WITH_AAD)
-	freerdp_library_add_public(${CJSON_LIBRARIES})
+if (WITH_AAD)
+	if (NOT cJSON_FOUND)
+		find_package(PkgConfig REQUIRED)
+		pkg_check_modules(CJSON REQUIRED libcjson)
+	endif()
+	include_directories(${CJSON_INCLUDE_DIRS})
+
+	freerdp_library_add(${CJSON_LIBRARIES})
     include_directories(${CJSON_INCLUDE_DIRS})
 endif()
 
