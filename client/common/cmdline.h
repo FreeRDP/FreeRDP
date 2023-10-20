@@ -50,10 +50,13 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "app-workdir", COMMAND_LINE_VALUE_REQUIRED, "<workspace path>", NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use /app:workdir:<directory>] Remote application workspace path" },
 #endif
+	{ "args-from", COMMAND_LINE_VALUE_REQUIRED, "<file>|stdin|fd:<number>|env:<name>", NULL, NULL,
+	  -1, NULL,
+	  "Read command line from a file, stdin or file descriptor. This argument can not be combined "
+	  "with any other. "
+	  "Provide one argument per line." },
 	{ "assistance", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL,
 	  "Remote assistance password" },
-	{ "auto-request-control", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL,
-	  "Automatically request remote assistance input control" },
 	{ "async-channels", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Asynchronous channels (experimental)" },
 	{ "async-update", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
@@ -70,13 +73,11 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Automatic reconnection" },
 	{ "auto-reconnect-max-retries", COMMAND_LINE_VALUE_REQUIRED, "<retries>", NULL, NULL, -1, NULL,
 	  "Automatic reconnection maximum retries, 0 for unlimited [0,1000]" },
+	{ "auto-request-control", COMMAND_LINE_VALUE_FLAG, "", NULL, NULL, -1, NULL,
+	  "Automatically request remote assistance input control" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "bitmap-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "[DEPRECATED, use /cache:bitmap[:on|off]] bitmap cache" },
-	{ "persist-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "[DEPRECATED, use /cache:persist[:on|off]] persistent bitmap cache" },
-	{ "persist-cache-file", COMMAND_LINE_VALUE_REQUIRED, "<filename>", NULL, NULL, -1, NULL,
-	  "[DEPRECATED, use /cache:persist-file:<filename>] persistent bitmap cache file" },
 #endif
 	{ "bpp", COMMAND_LINE_VALUE_REQUIRED, "<depth>", "16", NULL, -1, NULL,
 	  "Session bpp (color depth)" },
@@ -112,10 +113,6 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "cert-tofu", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use /cert:tofu] Automatically accept certificate on first connect" },
 #endif
-#ifdef _WIN32
-	{ "connect-child-session", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, "",
-	  "connect to child session (win32)" },
-#endif
 	{ "client-build-number", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL,
 	  "Client Build Number sent to server (influences smartcard behaviour, see [MS-RDPESC])" },
 	{ "client-hostname", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
@@ -135,11 +132,18 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "compression", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, "z", "compression" },
 	{ "compression-level", COMMAND_LINE_VALUE_REQUIRED, "<level>", NULL, NULL, -1, NULL,
 	  "Compression level (0,1,2)" },
+#ifdef _WIN32
+	{ "connect-child-session", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, "",
+	  "connect to child session (win32)" },
+#endif
 	{ "credentials-delegation", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "credentials delegation" },
 	{ "d", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL, "Domain" },
 	{ "decorations", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Window decorations" },
+	{ "disable-output", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
+	  "Deactivate all graphics decoding in the client session. Useful for load tests with many "
+	  "simultaneous connections" },
 	{ "disp", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Display control" },
 	{ "drive", COMMAND_LINE_VALUE_REQUIRED, "<name>,<path>", NULL, NULL, -1, NULL,
 	  "Redirect directory <path> as named share <name>. Hotplug support is enabled with "
@@ -158,6 +162,12 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Encryption (experimental)" },
 	{ "encryption-methods", COMMAND_LINE_VALUE_REQUIRED, "[40,][56,][128,][FIPS]", NULL, NULL, -1,
 	  NULL, "RDP standard security encryption methods" },
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
+	{ "enforce-tlsv1_2", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+	  "[DEPRECATED, use /tls:enforce:1.2] Force use of TLS1.2 for connection. Some "
+	  "servers have a buggy TLS version negotiation and "
+	  "might fail without this" },
+#endif
 	{ "f", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 	  "Fullscreen mode (<Ctrl>+<Alt>+<Enter> toggles fullscreen)" },
 	{ "fipsmode", COMMAND_LINE_VALUE_BOOL, NULL, NULL, NULL, -1, NULL, "FIPS mode" },
@@ -171,14 +181,15 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Use default callbacks (console) for certificate/credential/..." },
 	{ "frame-ack", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL,
 	  "Number of frame acknowledgement" },
-	{ "args-from", COMMAND_LINE_VALUE_REQUIRED, "<file>|stdin|fd:<number>|env:<name>", NULL, NULL,
-	  -1, NULL,
-	  "Read command line from a file, stdin or file descriptor. This argument can not be combined "
-	  "with any other. "
-	  "Provide one argument per line." },
 	{ "from-stdin", COMMAND_LINE_VALUE_OPTIONAL, "force", NULL, NULL, -1, NULL,
 	  "Read credentials from stdin. With <force> the prompt is done before connection, otherwise "
 	  "on server request." },
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
+	{ "g", COMMAND_LINE_VALUE_REQUIRED, "<gateway>[:<port>]", NULL, NULL, -1, NULL,
+	  "[DEPRECATED, use /gateway:g:<url>] Gateway Hostname" },
+	{ "gat", COMMAND_LINE_VALUE_REQUIRED, "<access token>", NULL, NULL, -1, NULL,
+	  "[DEPRECATED, use /gateway:access-token:<token>] Gateway Access Token" },
+#endif
 	{ "gateway", COMMAND_LINE_VALUE_REQUIRED,
 	  "g:<gateway>[:<port>],u:<user>,d:<domain>,p:<password>,usage-method:["
 	  "direct|detect],access-token:<"
@@ -186,8 +197,6 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "sspi-ntlm]]|arm,url:<wss://url>,bearer:<oauth2-bearer-token>",
 	  NULL, NULL, -1, "gw", "Gateway Hostname" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
-	{ "g", COMMAND_LINE_VALUE_REQUIRED, "<gateway>[:<port>]", NULL, NULL, -1, NULL,
-	  "[DEPRECATED, use /gateway:g:<url>] Gateway Hostname" },
 	{ "gateway-usage-method", COMMAND_LINE_VALUE_REQUIRED, "[direct|detect]", NULL, NULL, -1, "gum",
 	  "[DEPRECATED, use /gateway:usage-method:<method>] Gateway usage method" },
 	{ "gd", COMMAND_LINE_VALUE_REQUIRED, "<domain>", NULL, NULL, -1, NULL,
@@ -235,8 +244,6 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  NULL, NULL, -1, NULL, "[DEPRECATED, use /gateway:type:<type>] Gateway transport type" },
 	{ "gu", COMMAND_LINE_VALUE_REQUIRED, "[[<domain>\\]<user>|<user>[@<domain>]]", NULL, NULL, -1,
 	  NULL, "[DEPRECATED, use /gateway:u:<user>] Gateway username" },
-	{ "gat", COMMAND_LINE_VALUE_REQUIRED, "<access token>", NULL, NULL, -1, NULL,
-	  "[DEPRECATED, use /gateway:access-token:<token>] Gateway Access Token" },
 #endif
 	{ "h", COMMAND_LINE_VALUE_REQUIRED, "<height>", "768", NULL, -1, NULL, "Height" },
 	{ "heartbeat", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
@@ -262,19 +269,19 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "* fn-key: Function key value"
 	  "* pipe: Name of a named pipe that can be used to type text into the RDP session" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
-	{ "kbd-lang", COMMAND_LINE_VALUE_REQUIRED, "0x<id>", NULL, NULL, -1, NULL,
-	  "[DEPRECATED, use / kbd:lang:<value>] Keyboard active language identifier" },
 	{ "kbd-fn-key", COMMAND_LINE_VALUE_REQUIRED, "<value>", NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use /kbd:fn-key:<value>] Function key value" },
-	{ "kbd-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "[DEPRECATED, use /list:kbd] List keyboard layouts" },
-	{ "kbd-scancode-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "[DEPRECATED, use list:kbd-scancode] List keyboard RDP scancodes" },
+	{ "kbd-lang", COMMAND_LINE_VALUE_REQUIRED, "0x<id>", NULL, NULL, -1, NULL,
+	  "[DEPRECATED, use / kbd:lang:<value>] Keyboard active language identifier" },
 	{ "kbd-lang-list", COMMAND_LINE_VALUE_OPTIONAL | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use /list:kbd-lang] List keyboard languages" },
+	{ "kbd-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
+	  "[DEPRECATED, use /list:kbd] List keyboard layouts" },
 	{ "kbd-remap", COMMAND_LINE_VALUE_REQUIRED,
 	  "[DEPRECATED, use /kbd:remap] List of <key>=<value>,... pairs to remap scancodes", NULL, NULL,
 	  -1, NULL, "Keyboard scancode remapping" },
+	{ "kbd-scancode-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
+	  "[DEPRECATED, use list:kbd-scancode] List keyboard RDP scancodes" },
 	{ "kbd-subtype", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use /kbd:subtype]Keyboard subtype" },
 	{ "kbd-type", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL,
@@ -288,14 +295,14 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "[kdc-url:<url>,lifetime:<time>,start-time:<time>,renewable-lifetime:<time>,cache:<path>,"
 	  "armor:<path>,pkinit-anchors:<path>,pkcs11-module:<name>]",
 	  NULL, NULL, -1, NULL, "Kerberos options" },
-	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info-string>", NULL, NULL, -1, NULL,
-	  "Load balance info" },
 	{ "list", COMMAND_LINE_VALUE_REQUIRED | COMMAND_LINE_PRINT,
 	  "[kbd|kbd-scancode|kbd-lang[:<value>]|smartcard[:[pkinit-anchors:<path>][,pkcs11-module:<"
 	  "name>]]|"
 	  "monitor|tune]",
 	  "List available options for subcommand", NULL, -1, NULL,
 	  "List available options for subcommand" },
+	{ "load-balance-info", COMMAND_LINE_VALUE_REQUIRED, "<info-string>", NULL, NULL, -1, NULL,
+	  "Load balance info" },
 	{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<tag>:<level>[,<tag>:<level>[,...]]", NULL, NULL,
 	  -1, NULL, "Set logger filters, see wLog(7) for details" },
 	{ "log-level", COMMAND_LINE_VALUE_REQUIRED, "[OFF|FATAL|ERROR|WARN|INFO|DEBUG|TRACE]", NULL,
@@ -310,22 +317,20 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "[sys:<sys>,][dev:<dev>,][format:<format>,][rate:<rate>,][channel:<channel>]", NULL, NULL, -1,
 	  "mic", "Audio input (microphone)" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
-	{ "smartcard-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
-	  "[DEPRECATED, use /list:smartcard] List smartcard informations" },
 	{ "monitor-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use /list:monitor] List detected monitors" },
 #endif
 	{ "monitors", COMMAND_LINE_VALUE_REQUIRED, "<id>[,<id>[,...]]", NULL, NULL, -1, NULL,
 	  "Select monitors to use" },
-	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
-	  "Send mouse motion" },
-	{ "mouse-relative", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "Send mouse motion with relative addressing" },
 	{ "mouse", COMMAND_LINE_VALUE_REQUIRED, "[relative:[on|off],grab:[on|off]]", NULL, NULL, -1,
 	  NULL,
 	  "Mouse related options:"
 	  "* relative:   send relative mouse movements if supported by server"
 	  "* grab:       grab the mouse if within the window" },
+	{ "mouse-motion", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+	  "Send mouse motion" },
+	{ "mouse-relative", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+	  "Send mouse motion with relative addressing" },
 #if defined(CHANNEL_TSMF_CLIENT)
 	{ "multimedia", COMMAND_LINE_VALUE_OPTIONAL, "[sys:<sys>,][dev:<dev>,][decoder:<decoder>]",
 	  NULL, NULL, -1, "mmr", "[DEPRECATED], use /video] Redirect multimedia (video)" },
@@ -346,10 +351,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "offscreen-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "[DEPRECATED, use /cache:offscreen[:on|off]] offscreen bitmap cache" },
 #endif
-	{ "orientation", COMMAND_LINE_VALUE_REQUIRED, "[0|90|180|270]", NULL, NULL, -1, NULL,
-	  "Orientation of display in degrees" },
 	{ "old-license", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Use the old license workflow (no CAL and hwId set to 0)" },
+	{ "orientation", COMMAND_LINE_VALUE_REQUIRED, "[0|90|180|270]", NULL, NULL, -1, NULL,
+	  "Orientation of display in degrees" },
 	{ "p", COMMAND_LINE_VALUE_REQUIRED, "<password>", NULL, NULL, -1, NULL, "Password" },
 	{ "parallel", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<path>]", NULL, NULL, -1, NULL,
 	  "Redirect parallel device" },
@@ -357,13 +362,20 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Parent window id" },
 	{ "pcb", COMMAND_LINE_VALUE_REQUIRED, "<blob>", NULL, NULL, -1, NULL, "Preconnection Blob" },
 	{ "pcid", COMMAND_LINE_VALUE_REQUIRED, "<id>", NULL, NULL, -1, NULL, "Preconnection Id" },
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
+	{ "persist-cache", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
+	  "[DEPRECATED, use /cache:persist[:on|off]] persistent bitmap cache" },
+	{ "persist-cache-file", COMMAND_LINE_VALUE_REQUIRED, "<filename>", NULL, NULL, -1, NULL,
+	  "[DEPRECATED, use /cache:persist-file:<filename>] persistent bitmap cache file" },
+#endif
 	{ "pheight", COMMAND_LINE_VALUE_REQUIRED, "<height>", NULL, NULL, -1, NULL,
 	  "Physical height of display (in millimeters)" },
 	{ "play-rfx", COMMAND_LINE_VALUE_REQUIRED, "<pcap-file>", NULL, NULL, -1, NULL,
 	  "Replay rfx pcap file" },
 	{ "port", COMMAND_LINE_VALUE_REQUIRED, "<number>", NULL, NULL, -1, NULL, "Server port" },
-	{ "suppress-output", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
-	  "suppress output when minimized" },
+	{ "prevent-session-lock", COMMAND_LINE_VALUE_OPTIONAL, "<time in sec>", NULL, NULL, -1, NULL,
+	  "Prevent session locking by injecting fake mouse motion events to the server "
+	  "when the connection is idle (default interval: 180 seconds)" },
 	{ "print-reconnect-cookie", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
 	  "Print base64 reconnect cookie after connecting" },
 	{ "printer", COMMAND_LINE_VALUE_OPTIONAL, "<name>[,<driver>]", NULL, NULL, -1, NULL,
@@ -424,6 +436,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Scale remote desktop to window size" },
 	{ "smartcard", COMMAND_LINE_VALUE_OPTIONAL, "<str>[,<str>...]", NULL, NULL, -1, NULL,
 	  "Redirect the smartcard devices containing any of the <str> in their names." },
+#if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
+	{ "smartcard-list", COMMAND_LINE_VALUE_FLAG | COMMAND_LINE_PRINT, NULL, NULL, NULL, -1, NULL,
+	  "[DEPRECATED, use /list:smartcard] List smartcard informations" },
+#endif
 	{ "smartcard-logon", COMMAND_LINE_VALUE_OPTIONAL,
 	  "[cert:<path>,key:<key>,pin:<pin>,csp:<csp name>,reader:<reader>,card:<card>]", NULL, NULL,
 	  -1, NULL, "Activates Smartcard (optional certificate) Logon authentication." },
@@ -439,11 +455,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "SSH Agent forwarding channel" },
 	{ "sspi-module", COMMAND_LINE_VALUE_REQUIRED, "<SSPI module path>", NULL, NULL, -1, NULL,
 	  "SSPI shared library module file path" },
-	{ "winscard-module", COMMAND_LINE_VALUE_REQUIRED, "<WinSCard module path>", NULL, NULL, -1,
-	  NULL, "WinSCard shared library module file path" },
-	{ "disable-output", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
-	  "Deactivate all graphics decoding in the client session. Useful for load tests with many "
-	  "simultaneous connections" },
+	{ "suppress-output", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
+	  "suppress output when minimized" },
 	{ "t", COMMAND_LINE_VALUE_REQUIRED, "<title>", NULL, NULL, -1, "title", "Window title" },
 	{ "themes", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL, "themes" },
 	{ "timeout", COMMAND_LINE_VALUE_REQUIRED, "<time in ms>", "9000", NULL, -1, "timeout",
@@ -468,10 +481,6 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "tls-secrets-file", COMMAND_LINE_VALUE_REQUIRED, "<filename>", NULL, NULL, -1, NULL,
 	  "[DEPRECATED, use /tls:secrets:file] File were TLS secrets will be stored in the "
 	  "SSLKEYLOGFILE format" },
-	{ "enforce-tlsv1_2", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
-	  "[DEPRECATED, use /tls:enforce:1.2] Force use of TLS1.2 for connection. Some "
-	  "servers have a buggy TLS version negotiation and "
-	  "might fail without this" },
 #endif
 	{ "toggle-fullscreen", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "Alt+Ctrl+Enter to toggle fullscreen" },
@@ -498,9 +507,6 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Print version" },
 	{ "video", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL,
 	  "Video optimized remoting channel" },
-	{ "prevent-session-lock", COMMAND_LINE_VALUE_OPTIONAL, "<time in sec>", NULL, NULL, -1, NULL,
-	  "Prevent session locking by injecting fake mouse motion events to the server "
-	  "when the connection is idle (default interval: 180 seconds)" },
 	{ "vmconnect", COMMAND_LINE_VALUE_OPTIONAL, "<vmid>", NULL, NULL, -1, NULL,
 	  "Hyper-V console (use port 2179, disable negotiation)" },
 	{ "w", COMMAND_LINE_VALUE_REQUIRED, "<width>", "1024", NULL, -1, NULL, "Width" },
@@ -509,6 +515,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "full window drag" },
 	{ "window-position", COMMAND_LINE_VALUE_REQUIRED, "<xpos>x<ypos>", NULL, NULL, -1, NULL,
 	  "window position" },
+	{ "winscard-module", COMMAND_LINE_VALUE_REQUIRED, "<WinSCard module path>", NULL, NULL, -1,
+	  NULL, "WinSCard shared library module file path" },
 	{ "wm-class", COMMAND_LINE_VALUE_REQUIRED, "<class-name>", NULL, NULL, -1, NULL,
 	  "Set the WM_CLASS hint for the window instance" },
 	{ "workarea", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, NULL, "Use available work area" },
