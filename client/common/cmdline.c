@@ -506,36 +506,53 @@ BOOL freerdp_client_print_command_line_help(int argc, char** argv)
 	return freerdp_client_print_command_line_help_ex(argc, argv, NULL);
 }
 
+static COMMAND_LINE_ARGUMENT_A* create_merged_args(const COMMAND_LINE_ARGUMENT_A* custom,
+                                                   SSIZE_T count, size_t* pcount)
+{
+	WINPR_ASSERT(pcount);
+	if (count < 0)
+	{
+		const COMMAND_LINE_ARGUMENT_A* cur = custom;
+		count = 0;
+		while (cur && cur->Name)
+		{
+			count++;
+			cur++;
+		}
+	}
+
+	COMMAND_LINE_ARGUMENT_A* largs =
+	    calloc(count + ARRAYSIZE(global_cmd_args), sizeof(COMMAND_LINE_ARGUMENT_A));
+	*pcount = 0;
+	if (!largs)
+		NULL;
+
+	size_t lcount = 0;
+	const COMMAND_LINE_ARGUMENT_A* cur = custom;
+	while (cur && cur->Name)
+	{
+		largs[lcount++] = *cur++;
+	}
+
+	cur = global_cmd_args;
+	while (cur && cur->Name)
+	{
+		largs[lcount++] = *cur++;
+	}
+	*pcount = lcount;
+	return largs;
+}
+
 BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
                                                const COMMAND_LINE_ARGUMENT_A* custom)
 {
 	const char* name = "FreeRDP";
 
-	size_t count = 0;
-	const COMMAND_LINE_ARGUMENT_A* cur = custom;
-	while (cur && cur->Name)
-	{
-		count++;
-		cur++;
-	}
-
 	/* allocate a merged copy of implementation defined and default arguments */
-	COMMAND_LINE_ARGUMENT_A* largs =
-	    calloc(count + ARRAYSIZE(global_cmd_args), sizeof(COMMAND_LINE_ARGUMENT_A));
+	size_t lcount = 0;
+	COMMAND_LINE_ARGUMENT_A* largs = create_merged_args(custom, -1, &lcount);
 	if (!largs)
 		return FALSE;
-
-	count = 0;
-	cur = custom;
-	while (cur && cur->Name)
-	{
-		largs[count++] = *cur++;
-	}
-	cur = global_cmd_args;
-	while (cur && cur->Name)
-	{
-		largs[count++] = *cur++;
-	}
 
 	if (argc > 0)
 		name = argv[0];
@@ -552,7 +569,8 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')\n");
 	printf("\n");
 
-	freerdp_client_print_command_line_args(largs, count);
+	freerdp_client_print_command_line_args(largs, lcount);
+	free(largs);
 
 	printf("\n");
 	printf("Examples:\n");
@@ -2773,8 +2791,10 @@ static void fill_credential_strings(COMMAND_LINE_ARGUMENT_A* args)
 	}
 }
 
-static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings* settings, int argc,
-                                                                    char* argv[], BOOL allowUnknown)
+static int freerdp_client_settings_parse_command_line_arguments_int(
+    rdpSettings* settings, int argc, char* argv[], BOOL allowUnknown,
+    COMMAND_LINE_ARGUMENT_A* largs, size_t count,
+    int (*handle_option)(const COMMAND_LINE_ARGUMENT* arg, void* custom), void* handle_userdata)
 {
 	char* user = NULL;
 	char* str;
@@ -2785,8 +2805,6 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 	BOOL promptForPassword = FALSE;
 	BOOL compatibility = FALSE;
 	const COMMAND_LINE_ARGUMENT_A* arg;
-	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(global_cmd_args)];
-	memcpy(largs, global_cmd_args, sizeof(global_cmd_args));
 
 	/* Command line detection fails if only a .rdp or .msrcIncident file
 	 * is supplied. Check this case first, only then try to detect
@@ -4623,6 +4641,12 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 		}
 		CommandLineSwitchDefault(arg)
 		{
+			if (handle_option)
+			{
+				const int rc = handle_option(arg, handle_userdata);
+				if (rc != 0)
+					return rc;
+			}
 		}
 		CommandLineSwitchEnd(arg)
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
@@ -4849,9 +4873,18 @@ cleanup:
 int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, int oargc,
                                                          char* oargv[], BOOL allowUnknown)
 {
+	return freerdp_client_settings_parse_command_line_arguments_ex(
+	    settings, oargc, oargv, allowUnknown, NULL, 0, NULL, NULL);
+}
+
+int freerdp_client_settings_parse_command_line_arguments_ex(
+    rdpSettings* settings, int oargc, char** oargv, BOOL allowUnknown,
+    COMMAND_LINE_ARGUMENT_A* args, size_t count,
+    int (*handle_option)(const COMMAND_LINE_ARGUMENT* arg, void* custom), void* handle_userdata)
+{
 	int argc = oargc;
 	char** argv = oargv;
-
+	int res = -1;
 	int aargc = 0;
 	char** aargv = NULL;
 	if ((argc == 2) && option_starts_with("/args-from:", argv[1]))
@@ -4888,8 +4921,15 @@ int freerdp_client_settings_parse_command_line_arguments(rdpSettings* settings, 
 		argv = aargv;
 	}
 
-	int res = freerdp_client_settings_parse_command_line_arguments_int(settings, argc, argv,
-	                                                                   allowUnknown);
+	size_t lcount = 0;
+	COMMAND_LINE_ARGUMENT_A* largs = create_merged_args(args, count, &lcount);
+	if (!largs)
+		goto fail;
+
+	res = freerdp_client_settings_parse_command_line_arguments_int(
+	    settings, argc, argv, allowUnknown, largs, lcount, handle_option, handle_userdata);
+fail:
+	free(largs);
 	argv_free(aargc, aargv);
 	return res;
 }
