@@ -410,11 +410,28 @@ static size_t print_description(const char* text, size_t start_offset, size_t cu
 	return current;
 }
 
-static void freerdp_client_print_command_line_args(const COMMAND_LINE_ARGUMENT_A* arg)
+static int cmp_cmdline_args(const void* pva, const void* pvb)
 {
-	if (!arg)
+	const COMMAND_LINE_ARGUMENT_A* a = (const COMMAND_LINE_ARGUMENT_A*)pva;
+	const COMMAND_LINE_ARGUMENT_A* b = (const COMMAND_LINE_ARGUMENT_A*)pvb;
+
+	if (!a->Name && !b->Name)
+		return 0;
+	if (!a->Name)
+		return 1;
+	if (!b->Name)
+		return -1;
+	return strcmp(a->Name, b->Name);
+}
+
+static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* parg, size_t count)
+{
+	if (!parg)
 		return;
 
+	qsort(parg, count, sizeof(COMMAND_LINE_ARGUMENT_A), cmp_cmdline_args);
+
+	const COMMAND_LINE_ARGUMENT_A* arg = parg;
 	do
 	{
 		int rc;
@@ -490,8 +507,32 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
                                                const COMMAND_LINE_ARGUMENT_A* custom)
 {
 	const char* name = "FreeRDP";
-	COMMAND_LINE_ARGUMENT_A largs[ARRAYSIZE(global_cmd_args)];
-	memcpy(largs, global_cmd_args, sizeof(global_cmd_args));
+
+	size_t count = 0;
+	const COMMAND_LINE_ARGUMENT_A* cur = custom;
+	while (cur && cur->Name)
+	{
+		count++;
+		cur++;
+	}
+
+	/* allocate a merged copy of implementation defined and default arguments */
+	COMMAND_LINE_ARGUMENT_A* largs =
+	    calloc(count + ARRAYSIZE(global_cmd_args), sizeof(COMMAND_LINE_ARGUMENT_A));
+	if (!largs)
+		return FALSE;
+
+	count = 0;
+	cur = custom;
+	while (cur && cur->Name)
+	{
+		largs[count++] = *cur++;
+	}
+	cur = global_cmd_args;
+	while (cur && cur->Name)
+	{
+		largs[count++] = *cur++;
+	}
 
 	if (argc > 0)
 		name = argv[0];
@@ -507,8 +548,9 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("    /option:<value> (specifies option with value)\n");
 	printf("    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')\n");
 	printf("\n");
-	freerdp_client_print_command_line_args(custom);
-	freerdp_client_print_command_line_args(largs);
+
+	freerdp_client_print_command_line_args(largs, count);
+
 	printf("\n");
 	printf("Examples:\n");
 	printf("    %s connection.rdp /p:Pwd123! /f\n", name);
