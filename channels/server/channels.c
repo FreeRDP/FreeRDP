@@ -54,6 +54,10 @@
 #include <freerdp/server/rdpgfx.h>
 #include <freerdp/server/disp.h>
 
+#if defined(CHANNEL_RDPEMSC_SERVER)
+#include <freerdp/server/rdpemsc.h>
+#endif /* CHANNEL_RDPEMSC_SERVER */
+
 #if defined(CHANNEL_RDPECAM_SERVER)
 #include <freerdp/server/rdpecam-enumerator.h>
 #include <freerdp/server/rdpecam.h>
@@ -90,6 +94,9 @@ void freerdp_channels_dummy(void)
 	TelemetryServerContext* telemetry;
 	RdpgfxServerContext* rdpgfx;
 	DispServerContext* disp;
+#if defined(CHANNEL_RDPEMSC_SERVER)
+	MouseCursorServerContext* mouse_cursor;
+#endif /* CHANNEL_RDPEMSC_SERVER */
 #if defined(CHANNEL_RDPECAM_SERVER)
 	CamDevEnumServerContext* camera_enumerator;
 	CameraDeviceServerContext* camera_device;
@@ -130,6 +137,11 @@ void freerdp_channels_dummy(void)
 	rdpgfx_server_context_free(rdpgfx);
 	disp = disp_server_context_new(NULL);
 	disp_server_context_free(disp);
+
+#if defined(CHANNEL_RDPEMSC_SERVER)
+	mouse_cursor = mouse_cursor_server_context_new(NULL);
+	mouse_cursor_server_context_free(mouse_cursor);
+#endif /* CHANNEL_RDPEMSC_SERVER */
 
 #if defined(CHANNEL_RDPECAM_SERVER)
 	camera_enumerator = cam_dev_enum_server_context_new(NULL);
