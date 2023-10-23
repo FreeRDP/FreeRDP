@@ -221,19 +221,34 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
 
 	if (domain)
 	{
-		CharUpperA(domain);
+		char* udomain = _strdup(domain);
+		if (!udomain)
+			goto cleanup;
+
+		CharUpperA(udomain);
 		/* Will use domain if realm is not specified in username */
-		if ((rv = krb5_set_default_realm(ctx, domain)))
+		rv = krb5_set_default_realm(ctx, udomain);
+		free(udomain);
+
+		if (rv)
 			goto cleanup;
 	}
 
 	if (pszPrincipal)
 	{
-		/* Find realm component if included and convert to uppercase */
-		char* p = strchr(pszPrincipal, '@');
-		CharUpperA(p);
+		char* cpszPrincipal = _strdup(pszPrincipal);
+		if (!cpszPrincipal)
+			goto cleanup;
 
-		if ((rv = krb5_parse_name(ctx, pszPrincipal, &principal)))
+		/* Find realm component if included and convert to uppercase */
+		char* p = strchr(cpszPrincipal, '@');
+		if (p)
+			CharUpperA(p);
+
+		rv = krb5_parse_name(ctx, cpszPrincipal, &principal);
+		free(cpszPrincipal);
+
+		if (rv)
 			goto cleanup;
 	}
 
