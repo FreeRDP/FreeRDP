@@ -1,7 +1,8 @@
 
 #include <freerdp/freerdp.h>
-
 #include <freerdp/client/rail.h>
+
+#include "rail_main.h"
 
 UINT client_rail_server_start_cmd(RailClientContext* context)
 {
@@ -10,15 +11,13 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	RAIL_EXEC_ORDER exec = { 0 };
 	RAIL_SYSPARAM_ORDER sysparam = { 0 };
 	RAIL_CLIENT_STATUS_ORDER clientStatus = { 0 };
-	rdpClientContext* ctx;
-	rdpSettings* settings;
 
 	WINPR_ASSERT(context);
+	railPlugin* rail = context->handle;
+	WINPR_ASSERT(rail);
+	WINPR_ASSERT(rail->rdpcontext);
 
-	ctx = (rdpClientContext*)context->custom;
-	WINPR_ASSERT(ctx);
-
-	settings = ctx->context.settings;
+	const rdpSettings* settings = rail->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
 	clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
