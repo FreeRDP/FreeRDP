@@ -27,7 +27,6 @@ endif()
 
 set(SRCS
 	client.c
-	client_rails.c
 	cmdline.c
 	cmdline.h
 	file.c

@@ -20,6 +20,7 @@ define_channel_client("rail")
 set(${MODULE_PREFIX}_SRCS
 	../rail_common.h
 	../rail_common.c
+	client_rails.c
 	rail_main.c
 	rail_main.h
 	rail_orders.c
