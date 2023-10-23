@@ -93,12 +93,19 @@ public class SessionView extends View
 	}
 
 	/* External Mouse Hover */
-	@Override
-	public boolean onHoverEvent(MotionEvent event) {
-		if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE) {
+	@Override public boolean onHoverEvent(MotionEvent event)
+	{
+		if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE)
+		{
+			// Handle hover move event
+			float x = event.getX();
+			float y = event.getY();
+			// Perform actions based on the hover position (x, y)
 			MotionEvent mappedEvent = mapTouchEvent(event);
-			LibFreeRDP.sendCursorEvent(currentSession.getInstance(), (int)mappedEvent.getX(), (int)mappedEvent.getY(), Mouse.getMoveEvent());
+			LibFreeRDP.sendCursorEvent(currentSession.getInstance(), (int)mappedEvent.getX(),
+			                           (int)mappedEvent.getY(), Mouse.getMoveEvent());
 		}
+		// Return true to indicate that you've handled the event
 		return true;
 	}
 
