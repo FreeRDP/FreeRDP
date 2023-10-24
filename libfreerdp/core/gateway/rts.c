@@ -2182,8 +2182,10 @@ BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hd
 
 	if (!status)
 	{
-		WLog_ERR(TAG, "error parsing RTS PDU with signature id: 0x%08" PRIX32 "", SignatureId);
-		rts_print_pdu_signature(&signature);
+		wLog* log = WLog_Get(TAG);
+		WLog_Print(log, WLOG_ERROR, "error parsing RTS PDU with signature id: 0x%08" PRIX32 "",
+		           SignatureId);
+		rts_print_pdu_signature(log, WLOG_ERROR, &signature);
 	}
 
 	return status;

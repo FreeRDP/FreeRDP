@@ -191,6 +191,7 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 
 	if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 	{
+		RtsPduSignature found = { 0 };
 		switch (rpc->VirtualConnection->State)
 		{
 			case VIRTUAL_CONNECTION_STATE_INITIAL:
@@ -200,9 +201,11 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 				break;
 
 			case VIRTUAL_CONNECTION_STATE_WAIT_A3W:
-				if (!rts_match_pdu_signature(&RTS_PDU_CONN_A3_SIGNATURE, pdu->s, NULL))
+				if (!rts_match_pdu_signature_ex(&RTS_PDU_CONN_A3_SIGNATURE, pdu->s, NULL, &found))
 				{
-					WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/A3");
+					wLog* log = WLog_Get(TAG);
+					WLog_Print(log, WLOG_ERROR, "unexpected RTS PDU: Expected CONN/A3");
+					rts_print_pdu_signature(log, WLOG_ERROR, &found);
 					return -1;
 				}
 
@@ -218,9 +221,11 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 				break;
 
 			case VIRTUAL_CONNECTION_STATE_WAIT_C2:
-				if (!rts_match_pdu_signature(&RTS_PDU_CONN_C2_SIGNATURE, pdu->s, NULL))
+				if (!rts_match_pdu_signature_ex(&RTS_PDU_CONN_C2_SIGNATURE, pdu->s, NULL, &found))
 				{
-					WLog_ERR(TAG, "unexpected RTS PDU: Expected CONN/C2");
+					wLog* log = WLog_Get(TAG);
+					WLog_Print(log, WLOG_ERROR, "unexpected RTS PDU: Expected CONN/C2");
+					rts_print_pdu_signature(log, WLOG_ERROR, &found);
 					return -1;
 				}
 
