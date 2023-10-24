@@ -260,6 +260,17 @@ typedef struct rdp_settings rdpSettings;
 	                                                              const char* param));
 #endif
 
+	/** \brief Returns \b TRUE if settings are in a valid state, \b FALSE otherwise
+	 *
+	 *  This function is meant to replace tideous return checks for \b freerdp_settings_set_* with a
+	 * single check after these calls.
+	 *
+	 *  \param settings the settings instance to check
+	 *
+	 *  \return \b TRUE if valid, \b FALSE otherwise
+	 */
+	FREERDP_API BOOL freerdp_settings_are_valid(const rdpSettings* settings);
+
 	/** \brief Returns a boolean settings value
 	 *
 	 *  \param settings A pointer to the settings to query, must not be NULL.
@@ -520,9 +531,27 @@ typedef struct rdp_settings rdpSettings;
 	 */
 	FREERDP_API void* freerdp_settings_get_pointer_writable(rdpSettings* settings,
 	                                                        FreeRDP_Settings_Keys_Pointer id);
+
+	/** \brief Set a pointer to value \b data
+	 *
+	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param id The key to update
+	 *  \param data The data to set (direct update, no copy created, previous value overwritten)
+	 *
+	 *  \return \b TRUE for success, \b FALSE for failure
+	 */
 	FREERDP_API BOOL freerdp_settings_set_pointer(rdpSettings* settings,
 	                                              FreeRDP_Settings_Keys_Pointer id,
 	                                              const void* data);
+
+	/** \brief Set a pointer to value \b data
+	 *
+	 *  \param settings A pointer to the settings to query, must not be NULL.
+	 *  \param id The key to update
+	 *  \param data The data to set (copy created, previous value freed)
+	 *
+	 *  \return \b TRUE for success, \b FALSE for failure
+	 */
 	FREERDP_API BOOL freerdp_settings_set_pointer_len(rdpSettings* settings,
 	                                                  FreeRDP_Settings_Keys_Pointer id,
 	                                                  const void* data, size_t len);
@@ -565,10 +594,37 @@ typedef struct rdp_settings rdpSettings;
 	 * does not exist)
 	 */
 	FREERDP_API SSIZE_T freerdp_settings_get_type_for_key(SSIZE_T key);
+
+	/** \brief Returns the type name for a \b key
+	 *
+	 *  \param key the key number to stringify
+	 *  \return the type name of the key or \b FREERDP_SETTINGS_TYPE_UNKNOWN
+	 */
 	FREERDP_API const char* freerdp_settings_get_type_name_for_key(SSIZE_T key);
+
+	/** \brief Returns the type name for a \b type
+	 *
+	 *  \param type the type to stringify
+	 *  \return the name of the key or \b FREERDP_SETTINGS_TYPE_UNKNOWN
+	 */
 	FREERDP_API const char* freerdp_settings_get_type_name_for_type(SSIZE_T type);
 
+	/** \brief Returns the type name for a \b key
+	 *
+	 *  \param key the key number to stringify
+	 *  \return the name of the key or \b NULL
+	 */
 	FREERDP_API const char* freerdp_settings_get_name_for_key(SSIZE_T key);
+
+	/** \brief helper function to get a mask of supported codec flags.
+	 *
+	 *  This function checks various settings to create a mask of supported codecs
+	 *  \b FreeRDP_CodecFlags defines the codecs
+	 *
+	 *  \param settings the settings to check
+	 *
+	 *  \return a mask of supported codecs
+	 */
 	FREERDP_API UINT32 freerdp_settings_get_codecs_flags(const rdpSettings* settings);
 
 	/** \brief Parse capability data and apply to settings
