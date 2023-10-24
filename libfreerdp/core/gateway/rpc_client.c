@@ -49,6 +49,7 @@ static void rpc_pdu_reset(RPC_PDU* pdu)
 	pdu->Flags = 0;
 	pdu->CallId = 0;
 	Stream_SetPosition(pdu->s, 0);
+	Stream_SetLength(pdu->s, 0);
 }
 
 static RPC_PDU* rpc_pdu_new(void)
@@ -176,7 +177,7 @@ static int rpc_client_transition_to_state(rdpRpc* rpc, RPC_CLIENT_STATE state)
 	return status;
 }
 
-static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
+static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 {
 	int status = -1;
 	rdpTsg* tsg;
@@ -323,6 +324,18 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 	}
 
 	return status;
+}
+
+static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
+{
+	Stream_SealLength(pdu->s);
+	const int rc = rpc_client_recv_pdu_int(rpc, pdu);
+	const size_t size = Stream_GetRemainingLength(pdu->s);
+	if (size > 0)
+	{
+		WLog_WARN(TAG, "unused bytes in PDU: %" PRIuz, size);
+	}
+	return rc;
 }
 
 static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
