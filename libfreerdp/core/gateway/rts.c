@@ -1197,18 +1197,18 @@ static BOOL rts_write_pdu_header(wStream* s, const rpcconn_rts_hdr_t* header)
 }
 
 static BOOL rts_receive_window_size_command_read(rdpRpc* rpc, wStream* buffer,
-                                                 UINT32* ReceiveWindowSize)
+                                                 UINT64* ReceiveWindowSize)
 {
 	UINT32 val;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, buffer, 4))
+	if (!Stream_CheckAndLogRequiredLength(TAG, buffer, 8))
 		return FALSE;
-	Stream_Read_UINT32(buffer, val);
+	Stream_Read_UINT64(buffer, val);
 	if (ReceiveWindowSize)
-		*ReceiveWindowSize = val; /* ReceiveWindowSize (4 bytes) */
+		*ReceiveWindowSize = val; /* ReceiveWindowSize (8 bytes) */
 
 	return TRUE;
 }
@@ -1269,18 +1269,18 @@ static BOOL rts_flow_control_ack_command_write(wStream* s, UINT32 BytesReceived,
 }
 
 static BOOL rts_connection_timeout_command_read(rdpRpc* rpc, wStream* buffer,
-                                                UINT32* ConnectionTimeout)
+                                                UINT64* ConnectionTimeout)
 {
 	UINT32 val;
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, buffer, 4))
+	if (!Stream_CheckAndLogRequiredLength(TAG, buffer, 8))
 		return FALSE;
 
-	Stream_Read_UINT32(buffer, val);
+	Stream_Read_UINT64(buffer, val);
 	if (ConnectionTimeout)
-		*ConnectionTimeout = val; /* ConnectionTimeout (4 bytes) */
+		*ConnectionTimeout = val; /* ConnectionTimeout (8 bytes) */
 
 	return TRUE;
 }
@@ -1333,9 +1333,10 @@ static BOOL rts_version_command_read(rdpRpc* rpc, wStream* buffer)
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
 
-	if (!Stream_SafeSeek(buffer, 4))
+	if (!Stream_SafeSeek(buffer, 8))
 		return FALSE;
 
+	/* command (4 bytes) */
 	/* Version (4 bytes) */
 	return TRUE;
 }
@@ -1534,9 +1535,9 @@ fail:
 BOOL rts_recv_CONN_A3_pdu(rdpRpc* rpc, wStream* buffer)
 {
 	BOOL rc;
-	UINT32 ConnectionTimeout;
+	UINT64 ConnectionTimeout;
 
-	if (!Stream_SafeSeek(buffer, 24))
+	if (!Stream_SafeSeek(buffer, 20))
 		return FALSE;
 
 	rc = rts_connection_timeout_command_read(rpc, buffer, &ConnectionTimeout);
@@ -1616,13 +1617,13 @@ fail:
 BOOL rts_recv_CONN_C2_pdu(rdpRpc* rpc, wStream* buffer)
 {
 	BOOL rc = FALSE;
-	UINT32 ReceiveWindowSize = 0;
-	UINT32 ConnectionTimeout = 0;
+	UINT64 ReceiveWindowSize = 0;
+	UINT64 ConnectionTimeout = 0;
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
 
-	if (!Stream_SafeSeek(buffer, 24))
+	if (!Stream_SafeSeek(buffer, 20))
 		return FALSE;
 
 	rc = rts_version_command_read(rpc, buffer);

@@ -180,22 +180,18 @@ static int rpc_client_transition_to_state(rdpRpc* rpc, RPC_CLIENT_STATE state)
 static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 {
 	int status = -1;
-	rdpTsg* tsg;
+	RtsPduSignature found = { 0 };
 
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(pdu);
 
-	Stream_SealLength(pdu->s);
-	Stream_SetPosition(pdu->s, 0);
-
-	tsg = transport_get_tsg(rpc->transport);
-
-	if (rts_match_pdu_signature(&RTS_PDU_PING_SIGNATURE, pdu->s, NULL))
-		return 1;
+	rdpTsg* tsg = transport_get_tsg(rpc->transport);
 
 	if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 	{
-		RtsPduSignature found = { 0 };
+		if (rts_match_pdu_signature_ex(&RTS_PDU_PING_SIGNATURE, pdu->s, NULL, &found))
+			return 1;
+
 		switch (rpc->VirtualConnection->State)
 		{
 			case VIRTUAL_CONNECTION_STATE_INITIAL:
@@ -205,7 +201,7 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 				break;
 
 			case VIRTUAL_CONNECTION_STATE_WAIT_A3W:
-				if (!rts_match_pdu_signature_ex(&RTS_PDU_CONN_A3_SIGNATURE, pdu->s, NULL, &found))
+				if (memcmp(&found, &RTS_PDU_CONN_A3_SIGNATURE, sizeof(found)) != 0)
 				{
 					wLog* log = WLog_Get(TAG);
 					WLog_Print(log, WLOG_ERROR, "unexpected RTS PDU: Expected CONN/A3");
@@ -225,7 +221,7 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 				break;
 
 			case VIRTUAL_CONNECTION_STATE_WAIT_C2:
-				if (!rts_match_pdu_signature_ex(&RTS_PDU_CONN_C2_SIGNATURE, pdu->s, NULL, &found))
+				if (memcmp(&found, &RTS_PDU_CONN_C2_SIGNATURE, sizeof(found)) != 0)
 				{
 					wLog* log = WLog_Get(TAG);
 					WLog_Print(log, WLOG_ERROR, "unexpected RTS PDU: Expected CONN/C2");
@@ -328,13 +324,24 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 
 static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 {
+	WINPR_ASSERT(rpc);
+	WINPR_ASSERT(pdu);
+
 	Stream_SealLength(pdu->s);
+	Stream_SetPosition(pdu->s, 0);
+
+	const size_t before = Stream_GetRemainingLength(pdu->s);
+	WLog_VRB(TAG, "RPC PDU parsing %" PRIuz " bytes", before);
 	const int rc = rpc_client_recv_pdu_int(rpc, pdu);
-	const size_t size = Stream_GetRemainingLength(pdu->s);
-	if (size > 0)
+	if (rc < 0)
+		return rc;
+	const size_t after = Stream_GetRemainingLength(pdu->s);
+	if (after > 0)
 	{
-		WLog_WARN(TAG, "unused bytes in PDU: %" PRIuz, size);
+		WLog_ERR(TAG, "incompletely parsed RPC PDU, %" PRIuz " byte remain", before);
+		return -1;
 	}
+
 	return rc;
 }
 
@@ -483,10 +490,11 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 			pdu->Type = header.common.ptype;
 			pdu->CallId = header.common.call_id;
 
-			if (!Stream_EnsureCapacity(pdu->s, Stream_Length(fragment)))
+			const size_t len = Stream_Length(fragment);
+			if (!Stream_EnsureCapacity(pdu->s, len))
 				goto fail;
 
-			Stream_Write(pdu->s, Stream_Buffer(fragment), Stream_Length(fragment));
+			Stream_Write(pdu->s, Stream_Buffer(fragment), len);
 
 			if (rpc_client_recv_pdu(rpc, pdu) < 0)
 				goto fail;
@@ -508,10 +516,11 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 		pdu->Type = header.common.ptype;
 		pdu->CallId = header.common.call_id;
 
-		if (!Stream_EnsureCapacity(pdu->s, Stream_Length(fragment)))
+		const size_t len = Stream_Length(fragment);
+		if (!Stream_EnsureCapacity(pdu->s, len))
 			goto fail;
 
-		Stream_Write(pdu->s, Stream_Buffer(fragment), Stream_Length(fragment));
+		Stream_Write(pdu->s, Stream_Buffer(fragment), len);
 
 		if (rpc_client_recv_pdu(rpc, pdu) < 0)
 			goto fail;
