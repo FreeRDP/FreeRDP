@@ -2204,3 +2204,8 @@ BOOL freerdp_settings_append_string(rdpSettings* settings, FreeRDP_Settings_Keys
 	free(str);
 	return rc;
 }
+
+BOOL freerdp_settings_are_valid(const rdpSettings* settings)
+{
+	return settings != NULL;
+}
