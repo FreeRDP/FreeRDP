@@ -1077,6 +1077,13 @@ void freerdp_set_last_error_ex(rdpContext* context, UINT32 lastError, const char
 	context->LastError = lastError;
 }
 
+const char* freerdp_get_logon_error_info_type_ex(UINT32 type, char* buffer, size_t size)
+{
+	const char* str = freerdp_get_logon_error_info_type(type);
+	_snprintf(buffer, size, "%s(0x%04" PRIx32 ")", str, type);
+	return buffer;
+}
+
 const char* freerdp_get_logon_error_info_type(UINT32 type)
 {
 	switch (type)
@@ -1123,6 +1130,13 @@ const char* freerdp_get_logon_error_info_data(UINT32 data)
 		default:
 			return "SESSION_ID";
 	}
+}
+
+const char* freerdp_get_logon_error_info_data_ex(UINT32 data, char* buffer, size_t size)
+{
+	const char* str = freerdp_get_logon_error_info_data(data);
+	_snprintf(buffer, size, "%s(0x%04" PRIx32 ")", str, data);
+	return buffer;
 }
 
 /** Allocator function for the rdp_freerdp structure.
