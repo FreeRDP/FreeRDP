@@ -189,6 +189,9 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 
 	tsg = transport_get_tsg(rpc->transport);
 
+	if (rts_match_pdu_signature(&RTS_PDU_PING_SIGNATURE, pdu->s, NULL))
+		return 1;
+
 	if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 	{
 		RtsPduSignature found = { 0 };
@@ -308,7 +311,7 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 		}
 		else
 		{
-			WLog_ERR(TAG, "rpc_client_recv_pdu: invalid rpc->State: %d", rpc->State);
+			WLog_ERR(TAG, "invalid rpc->State: %d", rpc->State);
 		}
 	}
 	else if (rpc->State >= RPC_CLIENT_STATE_CONTEXT_NEGOTIATED)
