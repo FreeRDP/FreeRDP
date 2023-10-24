@@ -29,8 +29,10 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 
 import com.freerdp.freerdpcore.application.SessionState;
+import com.freerdp.freerdpcore.services.LibFreeRDP;
 import com.freerdp.freerdpcore.utils.DoubleGestureDetector;
 import com.freerdp.freerdpcore.utils.GestureDetector;
+import com.freerdp.freerdpcore.utils.Mouse;
 
 import java.util.Stack;
 
@@ -90,6 +92,23 @@ public class SessionView extends View
 
 		setSystemUiVisibility(View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
 		                      View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+	}
+
+	/* External Mouse Hover */
+	@Override public boolean onHoverEvent(MotionEvent event)
+	{
+		if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE)
+		{
+			// Handle hover move event
+			float x = event.getX();
+			float y = event.getY();
+			// Perform actions based on the hover position (x, y)
+			MotionEvent mappedEvent = mapTouchEvent(event);
+			LibFreeRDP.sendCursorEvent(currentSession.getInstance(), (int)mappedEvent.getX(),
+			                           (int)mappedEvent.getY(), Mouse.getMoveEvent());
+		}
+		// Return true to indicate that you've handled the event
+		return true;
 	}
 
 	public void setScaleGestureDetector(ScaleGestureDetector scaleGestureDetector)
