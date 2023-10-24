@@ -376,6 +376,7 @@ static UINT rdpgfx_recv_caps_confirm_pdu(GENERIC_CHANNEL_CALLBACK* callback, wSt
 	Stream_Read_UINT32(s, capsSet.version); /* version (4 bytes) */
 	Stream_Read_UINT32(s, capsSet.length);  /* capsDataLength (4 bytes) */
 	Stream_Read_UINT32(s, capsSet.flags);   /* capsData (4 bytes) */
+	gfx->TotalDecodedFrames = 0;
 	gfx->ConnectionCaps = capsSet;
 	DEBUG_RDPGFX(gfx->log, "RecvCapsConfirmPdu: version: 0x%08" PRIX32 " flags: 0x%08" PRIX32 "",
 	             capsSet.version, capsSet.flags);
