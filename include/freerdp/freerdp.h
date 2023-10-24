@@ -642,7 +642,12 @@ owned by rdpRdp */
 	                                           const char* fkt, const char* file, int line);
 
 	FREERDP_API const char* freerdp_get_logon_error_info_type(UINT32 type);
+	FREERDP_API const char* freerdp_get_logon_error_info_type_ex(UINT32 type, char* buffer,
+	                                                             size_t size);
+
 	FREERDP_API const char* freerdp_get_logon_error_info_data(UINT32 data);
+	FREERDP_API const char* freerdp_get_logon_error_info_data_ex(UINT32 data, char* buffer,
+	                                                             size_t size);
 
 	FREERDP_API ULONG freerdp_get_transport_sent(rdpContext* context, BOOL resetCount);
 
