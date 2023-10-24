@@ -571,7 +571,7 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 		const char* tz = freerdp_settings_get_string(settings, FreeRDP_DynamicDSTTimeZoneKeyName);
 		if (tz)
 			rlen = strnlen(tz, 254);
-		Stream_Write_UINT16(s, (UINT16)rlen);
+		Stream_Write_UINT16(s, (UINT16)rlen * sizeof(WCHAR));
 		if (Stream_Write_UTF16_String_From_UTF8(s, rlen, tz, rlen, FALSE) < 0)
 			goto fail;
 		Stream_Write_UINT16(s, settings->DynamicDaylightTimeDisabled ? 0x01 : 0x00);
