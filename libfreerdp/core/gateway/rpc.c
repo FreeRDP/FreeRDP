@@ -145,7 +145,7 @@ static const char* client_out_state_str(CLIENT_OUT_CHANNEL_STATE state)
 	return str;
 }
 
-static const char* vc_state_str(VIRTUAL_CONNECTION_STATE state)
+const char* rpc_vc_state_str(VIRTUAL_CONNECTION_STATE state)
 {
 	const char* str = "VIRTUAL_CONNECTION_STATE_UNKNOWN";
 
@@ -618,7 +618,7 @@ BOOL rpc_virtual_connection_transition_to_state(rdpRpc* rpc, RpcVirtualConnectio
 
 	WINPR_ASSERT(rpc);
 	connection->State = state;
-	WLog_Print(rpc->log, WLOG_DEBUG, "%s", vc_state_str(state));
+	WLog_Print(rpc->log, WLOG_DEBUG, "%s", rpc_vc_state_str(state));
 	return TRUE;
 }
 

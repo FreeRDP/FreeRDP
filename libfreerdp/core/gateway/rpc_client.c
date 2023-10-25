@@ -84,26 +84,6 @@ static const char* rpc_client_state_str(RPC_CLIENT_STATE state)
 	return str;
 }
 
-static const char* vc_state_str(VIRTUAL_CONNECTION_STATE state)
-{
-	switch (state)
-	{
-		case VIRTUAL_CONNECTION_STATE_INITIAL:
-			return "VIRTUAL_CONNECTION_STATE_INITIAL";
-		case VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT:
-			return "VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT";
-		case VIRTUAL_CONNECTION_STATE_WAIT_A3W:
-			return "VIRTUAL_CONNECTION_STATE_WAIT_A3W";
-		case VIRTUAL_CONNECTION_STATE_WAIT_C2:
-			return "VIRTUAL_CONNECTION_STATE_WAIT_C2";
-		case VIRTUAL_CONNECTION_STATE_OPENED:
-			return "VIRTUAL_CONNECTION_STATE_OPENED";
-		case VIRTUAL_CONNECTION_STATE_FINAL:
-			return "VIRTUAL_CONNECTION_STATE_FINAL";
-		default:
-			return "VIRTUAL_CONNECTION_STATE_UNKNOWN";
-	}
-}
 static void rpc_pdu_reset(RPC_PDU* pdu)
 {
 	pdu->Type = 0;
@@ -212,7 +192,7 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 
 	rdpTsg* tsg = transport_get_tsg(rpc->transport);
 
-	WLog_VRB(TAG, "state %s", vc_state_str(rpc->State));
+	WLog_VRB(TAG, "state %s", rpc_vc_state_str(rpc->State));
 	if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 	{
 		if (rts_match_pdu_signature_ex(&RTS_PDU_PING_SIGNATURE, pdu->s, NULL, &found))

@@ -753,6 +753,7 @@ struct rdp_rpc
 	wLog* log;
 };
 
+FREERDP_LOCAL const char* rpc_vc_state_str(VIRTUAL_CONNECTION_STATE state);
 FREERDP_LOCAL void rpc_pdu_header_print(wLog* log, const rpcconn_hdr_t* header);
 FREERDP_LOCAL rpcconn_common_hdr_t rpc_pdu_header_init(const rdpRpc* rpc);
 
