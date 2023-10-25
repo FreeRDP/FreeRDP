@@ -43,6 +43,67 @@
 
 #define TAG FREERDP_TAG("core.gateway.rpc")
 
+static const char* rpc_client_state_str(RPC_CLIENT_STATE state)
+{
+	const char* str = "RPC_CLIENT_STATE_UNKNOWN";
+
+	switch (state)
+	{
+		case RPC_CLIENT_STATE_INITIAL:
+			str = "RPC_CLIENT_STATE_INITIAL";
+			break;
+
+		case RPC_CLIENT_STATE_ESTABLISHED:
+			str = "RPC_CLIENT_STATE_ESTABLISHED";
+			break;
+
+		case RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK:
+			str = "RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK";
+			break;
+
+		case RPC_CLIENT_STATE_WAIT_UNSECURE_BIND_ACK:
+			str = "RPC_CLIENT_STATE_WAIT_UNSECURE_BIND_ACK";
+			break;
+
+		case RPC_CLIENT_STATE_WAIT_SECURE_ALTER_CONTEXT_RESPONSE:
+			str = "RPC_CLIENT_STATE_WAIT_SECURE_ALTER_CONTEXT_RESPONSE";
+			break;
+
+		case RPC_CLIENT_STATE_CONTEXT_NEGOTIATED:
+			str = "RPC_CLIENT_STATE_CONTEXT_NEGOTIATED";
+			break;
+
+		case RPC_CLIENT_STATE_WAIT_RESPONSE:
+			str = "RPC_CLIENT_STATE_WAIT_RESPONSE";
+			break;
+
+		case RPC_CLIENT_STATE_FINAL:
+			str = "RPC_CLIENT_STATE_FINAL";
+			break;
+	}
+	return str;
+}
+
+static const char* vc_state_str(VIRTUAL_CONNECTION_STATE state)
+{
+	switch (state)
+	{
+		case VIRTUAL_CONNECTION_STATE_INITIAL:
+			return "VIRTUAL_CONNECTION_STATE_INITIAL";
+		case VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT:
+			return "VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT";
+		case VIRTUAL_CONNECTION_STATE_WAIT_A3W:
+			return "VIRTUAL_CONNECTION_STATE_WAIT_A3W";
+		case VIRTUAL_CONNECTION_STATE_WAIT_C2:
+			return "VIRTUAL_CONNECTION_STATE_WAIT_C2";
+		case VIRTUAL_CONNECTION_STATE_OPENED:
+			return "VIRTUAL_CONNECTION_STATE_OPENED";
+		case VIRTUAL_CONNECTION_STATE_FINAL:
+			return "VIRTUAL_CONNECTION_STATE_FINAL";
+		default:
+			return "VIRTUAL_CONNECTION_STATE_UNKNOWN";
+	}
+}
 static void rpc_pdu_reset(RPC_PDU* pdu)
 {
 	pdu->Type = 0;
@@ -135,45 +196,9 @@ int rpc_client_receive_pipe_read(RpcClient* client, BYTE* buffer, size_t length)
 static int rpc_client_transition_to_state(rdpRpc* rpc, RPC_CLIENT_STATE state)
 {
 	int status = 1;
-	const char* str = "RPC_CLIENT_STATE_UNKNOWN";
-
-	switch (state)
-	{
-		case RPC_CLIENT_STATE_INITIAL:
-			str = "RPC_CLIENT_STATE_INITIAL";
-			break;
-
-		case RPC_CLIENT_STATE_ESTABLISHED:
-			str = "RPC_CLIENT_STATE_ESTABLISHED";
-			break;
-
-		case RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK:
-			str = "RPC_CLIENT_STATE_WAIT_SECURE_BIND_ACK";
-			break;
-
-		case RPC_CLIENT_STATE_WAIT_UNSECURE_BIND_ACK:
-			str = "RPC_CLIENT_STATE_WAIT_UNSECURE_BIND_ACK";
-			break;
-
-		case RPC_CLIENT_STATE_WAIT_SECURE_ALTER_CONTEXT_RESPONSE:
-			str = "RPC_CLIENT_STATE_WAIT_SECURE_ALTER_CONTEXT_RESPONSE";
-			break;
-
-		case RPC_CLIENT_STATE_CONTEXT_NEGOTIATED:
-			str = "RPC_CLIENT_STATE_CONTEXT_NEGOTIATED";
-			break;
-
-		case RPC_CLIENT_STATE_WAIT_RESPONSE:
-			str = "RPC_CLIENT_STATE_WAIT_RESPONSE";
-			break;
-
-		case RPC_CLIENT_STATE_FINAL:
-			str = "RPC_CLIENT_STATE_FINAL";
-			break;
-	}
 
 	rpc->State = state;
-	WLog_DBG(TAG, "%s", str);
+	WLog_DBG(TAG, "%s", rpc_client_state_str(state));
 	return status;
 }
 
@@ -187,6 +212,7 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 
 	rdpTsg* tsg = transport_get_tsg(rpc->transport);
 
+	WLog_VRB(TAG, "state %s", vc_state_str(rpc->State));
 	if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 	{
 		if (rts_match_pdu_signature_ex(&RTS_PDU_PING_SIGNATURE, pdu->s, NULL, &found))
