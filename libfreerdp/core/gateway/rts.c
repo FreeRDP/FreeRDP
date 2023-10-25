@@ -2120,7 +2120,7 @@ BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hd
 {
 	BOOL status = FALSE;
 	UINT32 SignatureId;
-	size_t length, total;
+	size_t length;
 	RtsPduSignature signature = { 0 };
 	RpcVirtualConnection* connection;
 
@@ -2128,15 +2128,21 @@ BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hd
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(header);
 
-	total = Stream_Length(buffer);
+	const size_t total = Stream_Length(buffer);
 	length = header->common.frag_length;
 	if (total < length)
+	{
+		WLog_ERR(TAG, "PDU length %" PRIuz " does not match available data %" PRIuz, length, total);
 		return FALSE;
+	}
 
 	connection = rpc->VirtualConnection;
 
 	if (!connection)
+	{
+		WLog_ERR(TAG, "not connected, aborting");
 		return FALSE;
+	}
 
 	if (!rts_extract_pdu_signature(&signature, buffer, header))
 		return FALSE;
@@ -2187,6 +2193,13 @@ BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hd
 		WLog_Print(log, WLOG_ERROR, "error parsing RTS PDU with signature id: 0x%08" PRIX32 "",
 		           SignatureId);
 		rts_print_pdu_signature(log, WLOG_ERROR, &signature);
+	}
+
+	const size_t rem = Stream_GetRemainingLength(buffer);
+	if (rem > 0)
+	{
+		WLog_ERR(TAG, "%" PRIuz " bytes or %" PRIuz " total not parsed, aborting", rem, total);
+		return FALSE;
 	}
 
 	return status;
