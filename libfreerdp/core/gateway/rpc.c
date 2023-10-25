@@ -177,6 +177,7 @@ static const char* vc_state_str(VIRTUAL_CONNECTION_STATE state)
 	}
 	return str;
 }
+
 /*
  * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
  * http://msdn.microsoft.com/en-us/library/cc243950/
