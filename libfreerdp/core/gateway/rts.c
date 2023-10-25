@@ -328,11 +328,11 @@ static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* aut
 		const size_t size = header->frag_length - MIN(header->frag_length, off);
 		const void* src = Stream_Buffer(s) + pos;
 
-		if (off > size)
+		if (off > header->frag_length)
 			WLog_WARN(TAG,
 			          "Unexpected alloc_hint(%" PRIuz ") for PDU %s: size %" PRIuz
 			          ", offset %" PRIuz,
-			          alloc_hint, rts_pdu_ptype_to_string(header->ptype), size, off);
+			          alloc_hint, rts_pdu_ptype_to_string(header->ptype), header->frag_length, off);
 		*ptr = (BYTE*)sdup(src, size);
 		if (!*ptr)
 			return FALSE;
