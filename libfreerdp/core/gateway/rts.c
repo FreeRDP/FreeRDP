@@ -1862,6 +1862,36 @@ static int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, wStream* 
 	return 1;
 }
 
+BOOL rts_recv_ping_pdu(rdpRpc* rpc, wStream* s)
+{
+	BOOL rc = FALSE;
+	rpcconn_hdr_t header = { 0 };
+
+	WINPR_ASSERT(rpc);
+	WINPR_ASSERT(rpc->auth);
+	WINPR_ASSERT(s);
+
+	if (!rts_read_pdu_header(s, &header))
+		goto fail;
+
+	rc = TRUE;
+	if (header.common.ptype != PTYPE_RTS)
+	{
+		WLog_Print(rpc->log, WLOG_ERROR, "received invalid ping PDU, type is 0x%" PRIx32,
+		           header.common.ptype);
+		rc = FALSE;
+	}
+	if (header.rts.Flags != RTS_FLAG_PING)
+	{
+		WLog_Print(rpc->log, WLOG_ERROR, "received unexpected ping PDU::Flags 0x%" PRIx32,
+		           header.rts.Flags);
+		rc = FALSE;
+	}
+fail:
+	rts_free_pdu_header(&header, FALSE);
+	return rc;
+}
+
 static int rts_send_ping_pdu(rdpRpc* rpc)
 {
 	BOOL status = FALSE;
