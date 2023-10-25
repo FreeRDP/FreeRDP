@@ -1122,7 +1122,7 @@ BOOL rts_read_pdu_header(wStream* s, rpcconn_hdr_t* header)
 		return FALSE;
 
 	WLog_DBG(TAG, "Reading PDU type %s", rts_pdu_ptype_to_string(header->common.ptype));
-	fflush(stdout);
+
 	switch (header->common.ptype)
 	{
 		case PTYPE_ALTER_CONTEXT:

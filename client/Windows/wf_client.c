@@ -139,7 +139,6 @@ static BOOL wf_end_paint(rdpContext* context)
 
 		PostMessage(wfc->hwnd, WM_FREERDP_SHOWWINDOW, 0, 0);
 		WLog_INFO(TAG, "Window is shown!");
-		fflush(stdout);
 	}
 	return TRUE;
 }
@@ -1045,7 +1044,6 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 					continue;
 
 				WLog_ERR(TAG, "Failed to check FreeRDP file descriptor");
-				fflush(stdout);
 				break;
 			}
 		}
