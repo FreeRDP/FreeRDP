@@ -66,6 +66,47 @@
  *
  */
 
+static int rts_destination_command_read(rdpRpc* rpc, wStream* buffer, UINT32* Destination);
+
+static const char* rts_command_to_string(UINT32 cmd, char* buffer, size_t len)
+{
+	const char* str = NULL;
+
+#undef ENTRY
+#define ENTRY(x)    \
+	case x:         \
+		str = "#x"; \
+		break
+
+	switch (cmd)
+	{
+		ENTRY(RTS_CMD_RECEIVE_WINDOW_SIZE);
+		ENTRY(RTS_CMD_FLOW_CONTROL_ACK);
+		ENTRY(RTS_CMD_CONNECTION_TIMEOUT);
+		ENTRY(RTS_CMD_COOKIE);
+		ENTRY(RTS_CMD_CHANNEL_LIFETIME);
+		ENTRY(RTS_CMD_CLIENT_KEEPALIVE);
+		ENTRY(RTS_CMD_VERSION);
+		ENTRY(RTS_CMD_EMPTY);
+		ENTRY(RTS_CMD_PADDING);
+		ENTRY(RTS_CMD_NEGATIVE_ANCE);
+		ENTRY(RTS_CMD_ANCE);
+		ENTRY(RTS_CMD_CLIENT_ADDRESS);
+		ENTRY(RTS_CMD_ASSOCIATION_GROUP_ID);
+		ENTRY(RTS_CMD_DESTINATION);
+		ENTRY(RTS_CMD_PING_TRAFFIC_SENT_NOTIFY);
+		ENTRY(RTS_CMD_LAST_ID);
+		default:
+			str = "RTS_CMD_UNKNOWN";
+			break;
+	}
+
+#undef ENTRY
+
+	_snprintf(buffer, len, "%s [0x%08" PRIx32 "]", str, cmd);
+	return buffer;
+}
+
 static const char* rts_pdu_ptype_to_string(UINT32 ptype)
 {
 	switch (ptype)
@@ -1229,9 +1270,25 @@ static BOOL rts_receive_window_size_command_write(wStream* s, UINT32 ReceiveWind
 static int rts_flow_control_ack_command_read(rdpRpc* rpc, wStream* buffer, UINT32* BytesReceived,
                                              UINT32* AvailableWindow, BYTE* ChannelCookie)
 {
-	UINT32 val;
+	UINT32 val = 0;
+	UINT32 Command = 0;
+
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(buffer);
+
+	int rc = rts_destination_command_read(rpc, buffer, &Command);
+	if (rc < 0)
+		return rc;
+
+	if (Command != RTS_CMD_FLOW_CONTROL_ACK)
+	{
+		char buffer1[64] = { 0 };
+		char buffer2[64] = { 0 };
+		WLog_Print(rpc->log, WLOG_ERROR, "got command %s, expected %s",
+		           rts_command_to_string(Command, buffer1, sizeof(buffer1)),
+		           rts_command_to_string(RTS_CMD_FLOW_CONTROL_ACK, buffer2, sizeof(buffer2)));
+		return -1;
+	}
 
 	/* Ack (24 bytes) */
 	if (!Stream_CheckAndLogRequiredLength(TAG, buffer, 24))
@@ -1730,10 +1787,10 @@ static int rts_recv_flow_control_ack_pdu(rdpRpc* rpc, wStream* buffer)
 
 static int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, wStream* buffer)
 {
-	int rc;
-	UINT32 Destination;
-	UINT32 BytesReceived;
-	UINT32 AvailableWindow;
+	UINT32 Command = 0;
+	UINT32 Destination = 0;
+	UINT32 BytesReceived = 0;
+	UINT32 AvailableWindow = 0;
 	BYTE ChannelCookie[16] = { 0 };
 	/**
 	 * When the sender receives a FlowControlAck RTS PDU, it MUST use the following formula to
@@ -1752,9 +1809,41 @@ static int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, wStream* 
 	 *
 	 */
 
+	int rc = rts_destination_command_read(rpc, buffer, &Command);
+	if (rc < 0)
+		return rc;
+
+	if (Command != RTS_CMD_DESTINATION)
+	{
+		char buffer1[64] = { 0 };
+		char buffer2[64] = { 0 };
+		WLog_Print(log, WLOG_ERROR, "got command %s, expected %s",
+		           rts_command_to_string(Command, buffer1, sizeof(buffer1)),
+		           rts_command_to_string(RTS_CMD_DESTINATION, buffer2, sizeof(buffer2)));
+		return -1;
+	}
+
 	rc = rts_destination_command_read(rpc, buffer, &Destination);
 	if (rc < 0)
 		return rc;
+
+	switch (Destination)
+	{
+		case FDClient:
+			break;
+		case FDInProxy:
+			break;
+		case FDServer:
+			break;
+		case FDOutProxy:
+			break;
+		default:
+			WLog_Print(log, WLOG_ERROR,
+			           "got destination %" PRIu32
+			           ", expected one of [FDClient[0]|FDInProxy[1]|FDServer[2]|FDOutProxy[3]",
+			           Destination);
+			return -1;
+	}
 
 	rc = rts_flow_control_ack_command_read(rpc, buffer, &BytesReceived, &AvailableWindow,
 	                                       ChannelCookie);
@@ -2128,11 +2217,14 @@ BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hd
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(header);
 
+	wLog* log = WLog_Get(TAG);
+
 	const size_t total = Stream_Length(buffer);
 	length = header->common.frag_length;
 	if (total < length)
 	{
-		WLog_ERR(TAG, "PDU length %" PRIuz " does not match available data %" PRIuz, length, total);
+		WLog_Print(log, WLOG_ERROR, "PDU length %" PRIuz " does not match available data %" PRIuz,
+		           length, total);
 		return FALSE;
 	}
 
@@ -2140,12 +2232,14 @@ BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hd
 
 	if (!connection)
 	{
-		WLog_ERR(TAG, "not connected, aborting");
+		WLog_Print(log, WLOG_ERROR, "not connected, aborting");
 		return FALSE;
 	}
 
 	if (!rts_extract_pdu_signature(&signature, buffer, header))
 		return FALSE;
+
+	rts_print_pdu_signature(log, WLOG_TRACE, &signature);
 
 	SignatureId = rts_identify_pdu_signature(&signature, NULL);
 
@@ -2189,7 +2283,6 @@ BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hd
 
 	if (!status)
 	{
-		wLog* log = WLog_Get(TAG);
 		WLog_Print(log, WLOG_ERROR, "error parsing RTS PDU with signature id: 0x%08" PRIX32 "",
 		           SignatureId);
 		rts_print_pdu_signature(log, WLOG_ERROR, &signature);
@@ -2198,7 +2291,9 @@ BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hd
 	const size_t rem = Stream_GetRemainingLength(buffer);
 	if (rem > 0)
 	{
-		WLog_ERR(TAG, "%" PRIuz " bytes or %" PRIuz " total not parsed, aborting", rem, total);
+		WLog_Print(log, WLOG_ERROR, "%" PRIuz " bytes or %" PRIuz " total not parsed, aborting",
+		           rem, total);
+		rts_print_pdu_signature(log, WLOG_ERROR, &signature);
 		return FALSE;
 	}
 
