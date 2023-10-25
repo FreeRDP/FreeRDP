@@ -1345,7 +1345,7 @@ static BOOL rts_version_command_write(wStream* buffer)
 {
 	WINPR_ASSERT(buffer);
 
-	if (!Stream_CheckAndLogRequiredCapacity(TAG, (buffer), 8))
+	if (!Stream_EnsureRemainingCapacity((buffer), 8))
 		return FALSE;
 
 	Stream_Write_UINT32(buffer, RTS_CMD_VERSION); /* CommandType (4 bytes) */
