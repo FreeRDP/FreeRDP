@@ -2208,7 +2208,6 @@ static int rts_recv_OUT_R2_B3_pdu(rdpRpc* rpc, wStream* buffer)
 BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hdr_t* header)
 {
 	BOOL status = FALSE;
-	UINT32 SignatureId;
 	size_t length;
 	RtsPduSignature signature = { 0 };
 	RpcVirtualConnection* connection;
@@ -2241,18 +2240,16 @@ BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hd
 
 	rts_print_pdu_signature(log, WLOG_TRACE, &signature);
 
-	SignatureId = rts_identify_pdu_signature(&signature, NULL);
-
-	if (rts_match_pdu_signature(&RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE, buffer, header))
+	if (memcmp(&signature, &RTS_PDU_FLOW_CONTROL_ACK_SIGNATURE, sizeof(signature)) == 0)
 	{
 		status = rts_recv_flow_control_ack_pdu(rpc, buffer);
 	}
-	else if (rts_match_pdu_signature(&RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE, buffer,
-	                                 header))
+	else if (memcmp(&signature, &RTS_PDU_FLOW_CONTROL_ACK_WITH_DESTINATION_SIGNATURE,
+	                sizeof(signature)) == 0)
 	{
 		status = rts_recv_flow_control_ack_with_destination_pdu(rpc, buffer);
 	}
-	else if (rts_match_pdu_signature(&RTS_PDU_PING_SIGNATURE, buffer, header))
+	else if (memcmp(&signature, &RTS_PDU_PING_SIGNATURE, sizeof(signature)) == 0)
 	{
 		status = rts_send_ping_pdu(rpc);
 	}
@@ -2260,21 +2257,21 @@ BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hd
 	{
 		if (connection->DefaultOutChannel->State == CLIENT_OUT_CHANNEL_STATE_OPENED)
 		{
-			if (rts_match_pdu_signature(&RTS_PDU_OUT_R1_A2_SIGNATURE, buffer, header))
+			if (memcmp(&signature, &RTS_PDU_OUT_R1_A2_SIGNATURE, sizeof(signature)) == 0)
 			{
 				status = rts_recv_OUT_R1_A2_pdu(rpc, buffer);
 			}
 		}
 		else if (connection->DefaultOutChannel->State == CLIENT_OUT_CHANNEL_STATE_OPENED_A6W)
 		{
-			if (rts_match_pdu_signature(&RTS_PDU_OUT_R2_A6_SIGNATURE, buffer, header))
+			if (memcmp(&signature, &RTS_PDU_OUT_R2_A6_SIGNATURE, sizeof(signature)) == 0)
 			{
 				status = rts_recv_OUT_R2_A6_pdu(rpc, buffer);
 			}
 		}
 		else if (connection->DefaultOutChannel->State == CLIENT_OUT_CHANNEL_STATE_OPENED_B3W)
 		{
-			if (rts_match_pdu_signature(&RTS_PDU_OUT_R2_B3_SIGNATURE, buffer, header))
+			if (memcmp(&signature, &RTS_PDU_OUT_R2_B3_SIGNATURE, sizeof(signature)) == 0)
 			{
 				status = rts_recv_OUT_R2_B3_pdu(rpc, buffer);
 			}
@@ -2283,6 +2280,7 @@ BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer, const rpcconn_hd
 
 	if (!status)
 	{
+		const UINT32 SignatureId = rts_identify_pdu_signature(&signature, NULL);
 		WLog_Print(log, WLOG_ERROR, "error parsing RTS PDU with signature id: 0x%08" PRIX32 "",
 		           SignatureId);
 		rts_print_pdu_signature(log, WLOG_ERROR, &signature);

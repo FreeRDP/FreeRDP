@@ -192,7 +192,13 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 
 	rdpTsg* tsg = transport_get_tsg(rpc->transport);
 
-	WLog_VRB(TAG, "state %s", rpc_vc_state_str(rpc->State));
+	WLog_VRB(TAG, "client state %s, vc state %s", rpc_client_state_str(rpc->State),
+	         rpc_vc_state_str(rpc->VirtualConnection->State));
+
+	if (!rts_extract_pdu_signature(&found, pdu->s, NULL))
+		return FALSE;
+	rts_print_pdu_signature(rpc->log, WLOG_TRACE, &found);
+
 	if (rpc->VirtualConnection->State < VIRTUAL_CONNECTION_STATE_OPENED)
 	{
 		if (rts_match_pdu_signature_ex(&RTS_PDU_PING_SIGNATURE, pdu->s, NULL, &found))
