@@ -603,6 +603,7 @@ typedef struct
 	rdpCredsspAuth* auth;
 	HttpContext* http;
 	BYTE Cookie[16];
+	rdpRpc* rpc;
 } RpcChannel;
 
 /* Ping Originator */
@@ -749,15 +750,16 @@ struct rdp_rpc
 	UINT32 CurrentKeepAliveInterval;
 
 	RpcVirtualConnection* VirtualConnection;
+	wLog* log;
 };
 
-FREERDP_LOCAL void rpc_pdu_header_print(const rpcconn_hdr_t* header);
+FREERDP_LOCAL void rpc_pdu_header_print(wLog* log, const rpcconn_hdr_t* header);
 FREERDP_LOCAL rpcconn_common_hdr_t rpc_pdu_header_init(const rdpRpc* rpc);
 
 FREERDP_LOCAL size_t rpc_offset_align(size_t* offset, size_t alignment);
 FREERDP_LOCAL size_t rpc_offset_pad(size_t* offset, size_t pad);
 
-FREERDP_LOCAL BOOL rpc_get_stub_data_info(const rpcconn_hdr_t* header, size_t* offset,
+FREERDP_LOCAL BOOL rpc_get_stub_data_info(rdpRpc* rpc, const rpcconn_hdr_t* header, size_t* offset,
                                           size_t* length);
 
 FREERDP_LOCAL SSIZE_T rpc_channel_write(RpcChannel* channel, const BYTE* data, size_t length);

@@ -406,7 +406,7 @@ static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 				goto fail;
 		}
 
-		if (!rpc_get_stub_data_info(&header, &StubOffset, &StubLength))
+		if (!rpc_get_stub_data_info(rpc, &header, &StubOffset, &StubLength))
 		{
 			WLog_ERR(TAG, "expected stub");
 			goto fail;

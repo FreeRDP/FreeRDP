@@ -1817,7 +1817,7 @@ static int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, wStream* 
 	{
 		char buffer1[64] = { 0 };
 		char buffer2[64] = { 0 };
-		WLog_Print(log, WLOG_ERROR, "got command %s, expected %s",
+		WLog_Print(rpc->log, WLOG_ERROR, "got command %s, expected %s",
 		           rts_command_to_string(Command, buffer1, sizeof(buffer1)),
 		           rts_command_to_string(RTS_CMD_DESTINATION, buffer2, sizeof(buffer2)));
 		return -1;
@@ -1838,7 +1838,7 @@ static int rts_recv_flow_control_ack_with_destination_pdu(rdpRpc* rpc, wStream* 
 		case FDOutProxy:
 			break;
 		default:
-			WLog_Print(log, WLOG_ERROR,
+			WLog_Print(rpc->log, WLOG_ERROR,
 			           "got destination %" PRIu32
 			           ", expected one of [FDClient[0]|FDInProxy[1]|FDServer[2]|FDOutProxy[3]",
 			           Destination);
