@@ -59,6 +59,124 @@ static const char* PTYPE_STRINGS[] = { "PTYPE_REQUEST",       "PTYPE_PING",
 	                                   "PTYPE_CO_CANCEL",     "PTYPE_ORPHANED",
 	                                   "PTYPE_RTS",           "" };
 
+static const char* client_in_state_str(CLIENT_IN_CHANNEL_STATE state)
+{
+	const char* str = "CLIENT_IN_CHANNEL_STATE_UNKNOWN";
+
+	switch (state)
+	{
+		case CLIENT_IN_CHANNEL_STATE_INITIAL:
+			str = "CLIENT_IN_CHANNEL_STATE_INITIAL";
+			break;
+
+		case CLIENT_IN_CHANNEL_STATE_CONNECTED:
+			str = "CLIENT_IN_CHANNEL_STATE_CONNECTED";
+			break;
+
+		case CLIENT_IN_CHANNEL_STATE_SECURITY:
+			str = "CLIENT_IN_CHANNEL_STATE_SECURITY";
+			break;
+
+		case CLIENT_IN_CHANNEL_STATE_NEGOTIATED:
+			str = "CLIENT_IN_CHANNEL_STATE_NEGOTIATED";
+			break;
+
+		case CLIENT_IN_CHANNEL_STATE_OPENED:
+			str = "CLIENT_IN_CHANNEL_STATE_OPENED";
+			break;
+
+		case CLIENT_IN_CHANNEL_STATE_OPENED_A4W:
+			str = "CLIENT_IN_CHANNEL_STATE_OPENED_A4W";
+			break;
+
+		case CLIENT_IN_CHANNEL_STATE_FINAL:
+			str = "CLIENT_IN_CHANNEL_STATE_FINAL";
+			break;
+	}
+	return str;
+}
+
+static const char* client_out_state_str(CLIENT_OUT_CHANNEL_STATE state)
+{
+	const char* str = "CLIENT_OUT_CHANNEL_STATE_UNKNOWN";
+
+	switch (state)
+	{
+		case CLIENT_OUT_CHANNEL_STATE_INITIAL:
+			str = "CLIENT_OUT_CHANNEL_STATE_INITIAL";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_CONNECTED:
+			str = "CLIENT_OUT_CHANNEL_STATE_CONNECTED";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_SECURITY:
+			str = "CLIENT_OUT_CHANNEL_STATE_SECURITY";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_NEGOTIATED:
+			str = "CLIENT_OUT_CHANNEL_STATE_NEGOTIATED";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_OPENED:
+			str = "CLIENT_OUT_CHANNEL_STATE_OPENED";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_OPENED_A6W:
+			str = "CLIENT_OUT_CHANNEL_STATE_OPENED_A6W";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_OPENED_A10W:
+			str = "CLIENT_OUT_CHANNEL_STATE_OPENED_A10W";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_OPENED_B3W:
+			str = "CLIENT_OUT_CHANNEL_STATE_OPENED_B3W";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_RECYCLED:
+			str = "CLIENT_OUT_CHANNEL_STATE_RECYCLED";
+			break;
+
+		case CLIENT_OUT_CHANNEL_STATE_FINAL:
+			str = "CLIENT_OUT_CHANNEL_STATE_FINAL";
+			break;
+	}
+	return str;
+}
+
+static const char* vc_state_str(VIRTUAL_CONNECTION_STATE state)
+{
+	const char* str = "VIRTUAL_CONNECTION_STATE_UNKNOWN";
+
+	switch (state)
+	{
+		case VIRTUAL_CONNECTION_STATE_INITIAL:
+			str = "VIRTUAL_CONNECTION_STATE_INITIAL";
+			break;
+
+		case VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT:
+			str = "VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT";
+			break;
+
+		case VIRTUAL_CONNECTION_STATE_WAIT_A3W:
+			str = "VIRTUAL_CONNECTION_STATE_WAIT_A3W";
+			break;
+
+		case VIRTUAL_CONNECTION_STATE_WAIT_C2:
+			str = "VIRTUAL_CONNECTION_STATE_WAIT_C2";
+			break;
+
+		case VIRTUAL_CONNECTION_STATE_OPENED:
+			str = "VIRTUAL_CONNECTION_STATE_OPENED";
+			break;
+
+		case VIRTUAL_CONNECTION_STATE_FINAL:
+			str = "VIRTUAL_CONNECTION_STATE_FINAL";
+			break;
+	}
+	return str;
+}
 /*
  * [MS-RPCH]: Remote Procedure Call over HTTP Protocol Specification:
  * http://msdn.microsoft.com/en-us/library/cc243950/
@@ -360,44 +478,12 @@ SSIZE_T rpc_channel_write(RpcChannel* channel, const BYTE* data, size_t length)
 
 BOOL rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANNEL_STATE state)
 {
-	const char* str = "CLIENT_IN_CHANNEL_STATE_UNKNOWN";
-
-	switch (state)
-	{
-		case CLIENT_IN_CHANNEL_STATE_INITIAL:
-			str = "CLIENT_IN_CHANNEL_STATE_INITIAL";
-			break;
-
-		case CLIENT_IN_CHANNEL_STATE_CONNECTED:
-			str = "CLIENT_IN_CHANNEL_STATE_CONNECTED";
-			break;
-
-		case CLIENT_IN_CHANNEL_STATE_SECURITY:
-			str = "CLIENT_IN_CHANNEL_STATE_SECURITY";
-			break;
-
-		case CLIENT_IN_CHANNEL_STATE_NEGOTIATED:
-			str = "CLIENT_IN_CHANNEL_STATE_NEGOTIATED";
-			break;
-
-		case CLIENT_IN_CHANNEL_STATE_OPENED:
-			str = "CLIENT_IN_CHANNEL_STATE_OPENED";
-			break;
-
-		case CLIENT_IN_CHANNEL_STATE_OPENED_A4W:
-			str = "CLIENT_IN_CHANNEL_STATE_OPENED_A4W";
-			break;
-
-		case CLIENT_IN_CHANNEL_STATE_FINAL:
-			str = "CLIENT_IN_CHANNEL_STATE_FINAL";
-			break;
-	}
 
 	if (!inChannel)
 		return FALSE;
 
 	inChannel->State = state;
-	WLog_DBG(TAG, "%s", str);
+	WLog_DBG(TAG, "%s", client_in_state_str(state));
 	return TRUE;
 }
 
@@ -478,56 +564,11 @@ void rpc_channel_free(RpcChannel* channel)
 
 BOOL rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_CHANNEL_STATE state)
 {
-	const char* str = "CLIENT_OUT_CHANNEL_STATE_UNKNOWN";
-
-	switch (state)
-	{
-		case CLIENT_OUT_CHANNEL_STATE_INITIAL:
-			str = "CLIENT_OUT_CHANNEL_STATE_INITIAL";
-			break;
-
-		case CLIENT_OUT_CHANNEL_STATE_CONNECTED:
-			str = "CLIENT_OUT_CHANNEL_STATE_CONNECTED";
-			break;
-
-		case CLIENT_OUT_CHANNEL_STATE_SECURITY:
-			str = "CLIENT_OUT_CHANNEL_STATE_SECURITY";
-			break;
-
-		case CLIENT_OUT_CHANNEL_STATE_NEGOTIATED:
-			str = "CLIENT_OUT_CHANNEL_STATE_NEGOTIATED";
-			break;
-
-		case CLIENT_OUT_CHANNEL_STATE_OPENED:
-			str = "CLIENT_OUT_CHANNEL_STATE_OPENED";
-			break;
-
-		case CLIENT_OUT_CHANNEL_STATE_OPENED_A6W:
-			str = "CLIENT_OUT_CHANNEL_STATE_OPENED_A6W";
-			break;
-
-		case CLIENT_OUT_CHANNEL_STATE_OPENED_A10W:
-			str = "CLIENT_OUT_CHANNEL_STATE_OPENED_A10W";
-			break;
-
-		case CLIENT_OUT_CHANNEL_STATE_OPENED_B3W:
-			str = "CLIENT_OUT_CHANNEL_STATE_OPENED_B3W";
-			break;
-
-		case CLIENT_OUT_CHANNEL_STATE_RECYCLED:
-			str = "CLIENT_OUT_CHANNEL_STATE_RECYCLED";
-			break;
-
-		case CLIENT_OUT_CHANNEL_STATE_FINAL:
-			str = "CLIENT_OUT_CHANNEL_STATE_FINAL";
-			break;
-	}
-
 	if (!outChannel)
 		return FALSE;
 
 	outChannel->State = state;
-	WLog_DBG(TAG, "%s", str);
+	WLog_DBG(TAG, "%s", client_out_state_str(state));
 	return TRUE;
 }
 
@@ -562,40 +603,11 @@ RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc)
 BOOL rpc_virtual_connection_transition_to_state(rdpRpc* rpc, RpcVirtualConnection* connection,
                                                 VIRTUAL_CONNECTION_STATE state)
 {
-	const char* str = "VIRTUAL_CONNECTION_STATE_UNKNOWN";
-
-	switch (state)
-	{
-		case VIRTUAL_CONNECTION_STATE_INITIAL:
-			str = "VIRTUAL_CONNECTION_STATE_INITIAL";
-			break;
-
-		case VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT:
-			str = "VIRTUAL_CONNECTION_STATE_OUT_CHANNEL_WAIT";
-			break;
-
-		case VIRTUAL_CONNECTION_STATE_WAIT_A3W:
-			str = "VIRTUAL_CONNECTION_STATE_WAIT_A3W";
-			break;
-
-		case VIRTUAL_CONNECTION_STATE_WAIT_C2:
-			str = "VIRTUAL_CONNECTION_STATE_WAIT_C2";
-			break;
-
-		case VIRTUAL_CONNECTION_STATE_OPENED:
-			str = "VIRTUAL_CONNECTION_STATE_OPENED";
-			break;
-
-		case VIRTUAL_CONNECTION_STATE_FINAL:
-			str = "VIRTUAL_CONNECTION_STATE_FINAL";
-			break;
-	}
-
 	if (!connection)
 		return FALSE;
 
 	connection->State = state;
-	WLog_DBG(TAG, "%s", str);
+	WLog_DBG(TAG, "%s", vc_state_str(state));
 	return TRUE;
 }
 
