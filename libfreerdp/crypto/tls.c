@@ -1590,7 +1590,11 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 					tls_print_certificate_name_mismatch_error(hostname, port, common_name,
 					                                          dns_names, dns_names_count);
 
-				tls_print_new_certificate_warn(tls->certificate_store, hostname, port, pem);
+				{
+					char* efp = freerdp_certificate_get_fingerprint(cert);
+					tls_print_new_certificate_warn(tls->certificate_store, hostname, port, efp);
+					free(efp);
+				}
 
 				/* Automatically accept certificate on first use */
 				if (tls->settings->AutoAcceptCertificate)
@@ -1652,8 +1656,12 @@ int tls_verify_certificate(rdpTls* tls, const rdpCertificate* cert, const char* 
 				    freerdp_certificate_store_load_data(tls->certificate_store, hostname, port);
 				/* entry was found in known_hosts file, but fingerprint does not match. ask user
 				 * to use it */
-				tls_print_certificate_error(tls->certificate_store, stored_data, hostname, port,
-				                            pem);
+				{
+					char* efp = freerdp_certificate_get_fingerprint(cert);
+					tls_print_certificate_error(tls->certificate_store, stored_data, hostname, port,
+					                            efp);
+					free(efp);
+				}
 
 				if (!stored_data)
 					WLog_WARN(TAG, "Failed to get certificate entry for %s:%" PRIu16 "", hostname,
