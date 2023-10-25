@@ -104,4 +104,6 @@ FREERDP_LOCAL BOOL rts_send_flow_control_ack_pdu(rdpRpc* rpc);
 FREERDP_LOCAL BOOL rts_recv_out_of_sequence_pdu(rdpRpc* rpc, wStream* buffer,
                                                 const rpcconn_hdr_t* header);
 
+FREERDP_LOCAL BOOL rts_recv_ping_pdu(rdpRpc* rpc, wStream* s);
+
 #endif /* FREERDP_LIB_CORE_GATEWAY_RTS_H */
