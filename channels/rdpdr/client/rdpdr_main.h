@@ -83,6 +83,7 @@ struct rdpdr_plugin
 	char computerName[256];
 
 	UINT32 sequenceId;
+	BOOL userLoggedOn;
 
 	/* hotplug support */
 	HANDLE hotplugThread;
