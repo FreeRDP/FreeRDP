@@ -375,7 +375,7 @@ static BOOL rdpsnd_pulse_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* fo
 
 	if (pulse->latency > 0)
 	{
-		buffer_attr.maxlength = pa_usec_to_bytes(pulse->latency * 2 * 1000, &pulse->sample_spec);
+		buffer_attr.maxlength = (UINT32)-1;
 		buffer_attr.tlength = pa_usec_to_bytes(pulse->latency * 1000, &pulse->sample_spec);
 		buffer_attr.prebuf = (UINT32)-1;
 		buffer_attr.minreq = (UINT32)-1;
@@ -551,6 +551,7 @@ static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size_t size)
 {
 	size_t length;
+	void* pa_data;
 	int status;
 	pa_usec_t latency;
 	int negative;
@@ -563,16 +564,16 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 
 	while (size > 0)
 	{
-		while ((length = pa_stream_writable_size(pulse->stream)) == 0)
-			pa_threaded_mainloop_wait(pulse->mainloop);
+		length = size;
 
-		if (length == (size_t)-1)
+		status = pa_stream_begin_write(pulse->stream, &pa_data, &length);
+
+		if (status < 0)
 			break;
 
-		if (length > size)
-			length = size;
+		memcpy(pa_data, data, length);
 
-		status = pa_stream_write(pulse->stream, data, length, NULL, 0LL, PA_SEEK_RELATIVE);
+		status = pa_stream_write(pulse->stream, pa_data, length, NULL, 0LL, PA_SEEK_RELATIVE);
 
 		if (status < 0)
 		{
