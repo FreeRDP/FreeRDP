@@ -24,6 +24,7 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+#define RDPGFX_CHANNEL_NAME "rdpgfx"
 #define RDPGFX_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Graphics"
 
 #ifdef __cplusplus

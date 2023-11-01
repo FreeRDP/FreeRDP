@@ -811,7 +811,8 @@ static UINT audin_load_device_plugin(AUDIN_PLUGIN* audin, const char* name, cons
 	FREERDP_AUDIN_DEVICE_ENTRY_POINTS entryPoints = { 0 };
 	UINT error = ERROR_INTERNAL_ERROR;
 	const PFREERDP_AUDIN_DEVICE_ENTRY entry =
-	    (const PFREERDP_AUDIN_DEVICE_ENTRY)freerdp_load_channel_addin_entry("audin", name, NULL, 0);
+	    (const PFREERDP_AUDIN_DEVICE_ENTRY)freerdp_load_channel_addin_entry(AUDIN_CHANNEL_NAME,
+	                                                                        name, NULL, 0);
 
 	if (entry == NULL)
 	{
@@ -1006,7 +1007,7 @@ FREERDP_ENTRY_POINT(UINT audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoint
 	struct SubsystemEntry* entry = &entries[0];
 	WINPR_ASSERT(pEntryPoints);
 	WINPR_ASSERT(pEntryPoints->GetPlugin);
-	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, "audin");
+	AUDIN_PLUGIN* audin = (AUDIN_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, AUDIN_CHANNEL_NAME);
 
 	if (audin != NULL)
 		return CHANNEL_RC_ALREADY_INITIALIZED;
@@ -1098,7 +1099,7 @@ FREERDP_ENTRY_POINT(UINT audin_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoint
 		goto out;
 	}
 
-	error = pEntryPoints->RegisterPlugin(pEntryPoints, "audin", &audin->iface);
+	error = pEntryPoints->RegisterPlugin(pEntryPoints, AUDIN_CHANNEL_NAME, &audin->iface);
 	if (error == CHANNEL_RC_OK)
 		return error;
 

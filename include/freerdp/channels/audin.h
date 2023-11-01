@@ -26,6 +26,7 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+#define AUDIN_CHANNEL_NAME "audin"
 #define AUDIN_DVC_CHANNEL_NAME "AUDIO_INPUT"
 
 typedef struct

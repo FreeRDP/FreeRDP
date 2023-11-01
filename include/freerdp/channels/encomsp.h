@@ -28,6 +28,7 @@ extern "C"
 {
 #endif
 
+#define ENCOMSP_CHANNEL_NAME "encomsp"
 #define ENCOMSP_SVC_CHANNEL_NAME "encomsp"
 
 typedef struct

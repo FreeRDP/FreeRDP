@@ -31,6 +31,7 @@ extern "C"
 
 #define RDPINPUT_HEADER_LENGTH 6
 
+#define RDPEI_CHANNEL_NAME "rdpei"
 #define RDPEI_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Input"
 
 /** @brief protocol version */

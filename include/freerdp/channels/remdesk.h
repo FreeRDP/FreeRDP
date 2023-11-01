@@ -28,6 +28,7 @@ extern "C"
 {
 #endif
 
+#define REMDESK_CHANNEL_NAME "remdesk"
 #define REMDESK_SVC_CHANNEL_NAME "remdesk"
 
 #define REMDESK_ERROR_NOERROR 0

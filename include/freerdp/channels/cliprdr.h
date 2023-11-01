@@ -26,6 +26,7 @@
 
 #include <winpr/shell.h>
 
+#define CLIPRDR_CHANNEL_NAME "cliprdr"
 #define CLIPRDR_SVC_CHANNEL_NAME "cliprdr"
 
 /* CLIPRDR_HEADER.msgType */

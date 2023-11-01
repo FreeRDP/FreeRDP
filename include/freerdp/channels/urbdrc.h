@@ -26,5 +26,6 @@
 #include <freerdp/types.h>
 
 #define URBDRC_CHANNEL_NAME "urbdrc"
+#define URBDRC_DVC_CHANNEL_NAME "urbdrc"
 
 #endif /* FREERDP_CHANNEL_URBDRC_H */
