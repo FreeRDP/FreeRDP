@@ -24,6 +24,7 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+#define RDPEMSC_CHANNEL_NAME "mousecursor"
 #define RDPEMSC_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::MouseCursor"
 
 #ifdef __cplusplus

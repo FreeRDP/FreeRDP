@@ -25,6 +25,7 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+#define RDPEWA_CHANNEL_NAME "rdpewa"
 #define RDPEWA_DVC_CHANNEL_NAME "rdpewa"
 
 #ifdef __cplusplus

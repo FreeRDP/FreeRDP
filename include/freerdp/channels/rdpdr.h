@@ -42,6 +42,7 @@ extern "C"
 {
 #endif
 
+#define RDPDR_CHANNEL_NAME "rdpdr"
 #define RDPDR_SVC_CHANNEL_NAME "rdpdr"
 
 #define RDPDR_DEVICE_IO_REQUEST_LENGTH 24

@@ -54,6 +54,9 @@
 #include <freerdp/channels/ainput.h>
 #endif
 
+#include <freerdp/channels/audin.h>
+#include <freerdp/channels/echo.h>
+
 #include <freerdp/client/cmdline.h>
 #include <freerdp/version.h>
 #include <freerdp/client/utils/smartcard_cli.h>
@@ -1018,7 +1021,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	CommandLineSwitchCase(arg, "microphone")
 	{
 		size_t count;
-		ptr.p = CommandLineParseCommaSeparatedValuesEx("audin", arg->Value, &count);
+		ptr.p = CommandLineParseCommaSeparatedValuesEx(AUDIN_CHANNEL_NAME, arg->Value, &count);
 		status = freerdp_client_add_dynamic_channel(settings, count, ptr.pc);
 		free(ptr.p);
 	}
@@ -4893,19 +4896,17 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 #if defined(CHANNEL_AINPUT_CLIENT)
 		{ 0, AINPUT_CHANNEL_NAME, NULL }, /* always loaded */
 #endif
-		{ FreeRDP_AudioCapture, "audin", NULL },
+		{ FreeRDP_AudioCapture, AUDIN_CHANNEL_NAME, NULL },
 		{ FreeRDP_AudioPlayback, RDPSND_CHANNEL_NAME, NULL },
 #ifdef CHANNEL_RDPEI_CLIENT
-		{ FreeRDP_MultiTouchInput, "rdpei", NULL },
+		{ FreeRDP_MultiTouchInput, RDPEI_CHANNEL_NAME, NULL },
 #endif
-		{ FreeRDP_SupportGraphicsPipeline, "rdpgfx", NULL },
-		{ FreeRDP_SupportEchoChannel, "echo", NULL },
+		{ FreeRDP_SupportGraphicsPipeline, RDPGFX_CHANNEL_NAME, NULL },
+		{ FreeRDP_SupportEchoChannel, ECHO_CHANNEL_NAME, NULL },
 		{ FreeRDP_SupportSSHAgentChannel, "sshagent", NULL },
 		{ FreeRDP_SupportDisplayControl, DISP_CHANNEL_NAME, NULL },
-		{ FreeRDP_SupportGeometryTracking, "geometry", NULL },
-		{ FreeRDP_SupportSSHAgentChannel, "sshagent", NULL },
-		{ FreeRDP_SupportSSHAgentChannel, "sshagent", NULL },
-		{ FreeRDP_SupportVideoOptimized, "video", NULL },
+		{ FreeRDP_SupportGeometryTracking, GEOMETRY_CHANNEL_NAME, NULL },
+		{ FreeRDP_SupportVideoOptimized, VIDEO_CHANNEL_NAME, NULL },
 	};
 
 	ChannelToLoad staticChannels[] = {
@@ -4948,7 +4949,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		settings->AudioPlayback = TRUE;     /* Both rdpsnd and tsmf require this flag to be set */
 	}
 
-	if (freerdp_dynamic_channel_collection_find(settings, "audin"))
+	if (freerdp_dynamic_channel_collection_find(settings, AUDIN_CHANNEL_NAME))
 	{
 		settings->AudioCapture = TRUE;
 	}

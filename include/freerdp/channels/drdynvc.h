@@ -25,6 +25,7 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+#define DRDYNVC_CHANNEL_NAME "drdynvc"
 #define DRDYNVC_SVC_CHANNEL_NAME "drdynvc"
 
 #ifdef __cplusplus

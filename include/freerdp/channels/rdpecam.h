@@ -24,6 +24,7 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+#define RDPECAM_CHANNEL_NAME "rdpecam"
 #define RDPECAM_DVC_CHANNEL_NAME "rdpecam"
 #define RDPECAM_CONTROL_DVC_CHANNEL_NAME "RDCamera_Device_Enumerator"
 

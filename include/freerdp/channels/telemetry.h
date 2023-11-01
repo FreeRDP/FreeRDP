@@ -24,6 +24,7 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+#define TELEMETRY_CHANNEL_NAME "telemetry"
 #define TELEMETRY_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Telemetry"
 
 #ifdef __cplusplus
