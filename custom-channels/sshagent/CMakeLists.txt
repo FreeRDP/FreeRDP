@@ -16,8 +16,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel("sshagent")
+include(CMakeDependentOption)
 
-if(WITH_CLIENT_CHANNELS)
-	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
+option(CHANNEL_SSHAGENT "build sshagent channel" ON)
+CMAKE_DEPENDENT_OPTION(CHANNEL_SSHAGENT_CLIENT "build sshagent client channel" ON
+	"CHANNEL_SSHAGENT" OFF)
+CMAKE_DEPENDENT_OPTION(CHANNEL_SSHAGENT_SERVER "build sshagent server channel" OFF
+	"CHANNEL_SSHAGENT" OFF)
+if (CHANNEL_SSHAGENT)
+	if (CHANNEL_SSHAGENT_CLIENT)
+		add_subdirectory(client)
+	endif()
+	if (CHANNEL_SSHAGENT_SERVER)
+		add_subdirectory(server)
+	endif()
 endif()

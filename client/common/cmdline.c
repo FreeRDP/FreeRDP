@@ -990,10 +990,6 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 	{
 		settings->SupportEchoChannel = enable;
 	}
-	CommandLineSwitchCase(arg, "ssh-agent")
-	{
-		settings->SupportSSHAgentChannel = enable;
-	}
 	CommandLineSwitchCase(arg, "disp")
 	{
 		settings->SupportDisplayControl = enable;

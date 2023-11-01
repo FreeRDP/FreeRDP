@@ -77,6 +77,7 @@ CMAKE_DEPENDENT_OPTION(WITH_CLIENT_SDL "[experimental] Build SDL client " ON "WI
 option(WITH_SERVER "Build server binaries" ON)
 
 option(WITH_CHANNELS "Build virtual channel plugins" ON)
+option(WITH_CUSTOM_CHANNELS "Build (loadable) custom virtual channel plugins" ON)
 
 option(FREERDP_UNIFIED_BUILD "Build WinPR, uwac, RdTk and FreeRDP in one go" ON)
 

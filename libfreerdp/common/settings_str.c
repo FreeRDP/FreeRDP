@@ -225,8 +225,6 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_SupportMonitorLayoutPdu, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_SupportMonitorLayoutPdu" },
 	{ FreeRDP_SupportMultitransport, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_SupportMultitransport" },
-	{ FreeRDP_SupportSSHAgentChannel, FREERDP_SETTINGS_TYPE_BOOL,
-	  "FreeRDP_SupportSSHAgentChannel" },
 	{ FreeRDP_SupportSkipChannelJoin, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_SupportSkipChannelJoin" },
 	{ FreeRDP_SupportStatusInfoPdu, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_SupportStatusInfoPdu" },

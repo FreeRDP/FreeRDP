@@ -935,7 +935,6 @@ extern "C"
 #define FreeRDP_SupportEchoChannel (5184)
 #define FreeRDP_SupportDisplayControl (5185)
 #define FreeRDP_SupportGeometryTracking (5186)
-#define FreeRDP_SupportSSHAgentChannel (5187)
 #define FreeRDP_SupportVideoOptimized (5188)
 #define FreeRDP_RDP2TCPArgs (5189)
 #define FreeRDP_TcpKeepAlive (5190)
@@ -1683,7 +1682,7 @@ extern "C"
 		ALIGN64 BOOL SupportEchoChannel;      /* 5184 */
 		ALIGN64 BOOL SupportDisplayControl;   /* 5185 */
 		ALIGN64 BOOL SupportGeometryTracking; /* 5186 */
-		ALIGN64 BOOL SupportSSHAgentChannel;  /* 5187 */
+		UINT64 padding5187[1];                /* 5187 */
 		ALIGN64 BOOL SupportVideoOptimized;   /* 5188 */
 		ALIGN64 char* RDP2TCPArgs;            /* 5189 */
 		ALIGN64 BOOL TcpKeepAlive;            /* 5190 */
