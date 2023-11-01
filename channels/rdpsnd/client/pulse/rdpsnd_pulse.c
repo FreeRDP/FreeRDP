@@ -21,6 +21,8 @@
 
 #include <freerdp/config.h>
 
+#include <errno.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,6 +50,8 @@ typedef struct
 	pa_stream* stream;
 	UINT32 latency;
 	UINT32 volume;
+	time_t reconnect_delay_seconds;
+	time_t reconnect_time;
 } rdpsndPulsePlugin;
 
 static BOOL rdpsnd_check_pulse(rdpsndPulsePlugin* pulse, BOOL haveStream)
@@ -135,6 +139,14 @@ static void rdpsnd_pulse_context_state_callback(pa_context* context, void* userd
 			break;
 
 		case PA_CONTEXT_FAILED:
+			// Destroy context now, create new one for next connection attempt
+			pa_context_unref(pulse->context);
+			pulse->context = NULL;
+			if (pulse->reconnect_delay_seconds >= 0)
+				pulse->reconnect_time = time(NULL) + pulse->reconnect_delay_seconds;
+			pa_threaded_mainloop_signal(pulse->mainloop, 0);
+			break;
+
 		case PA_CONTEXT_TERMINATED:
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
@@ -146,6 +158,7 @@ static void rdpsnd_pulse_context_state_callback(pa_context* context, void* userd
 
 static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 {
+	BOOL rc;
 	pa_operation* o;
 	pa_context_state_t state;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
@@ -153,14 +166,9 @@ static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 	if (!rdpsnd_check_pulse(pulse, FALSE))
 		return FALSE;
 
-	if (pa_context_connect(pulse->context, NULL, 0, NULL))
-	{
-		return FALSE;
-	}
-
 	pa_threaded_mainloop_lock(pulse->mainloop);
 
-	if (pa_threaded_mainloop_start(pulse->mainloop) < 0)
+	if (pa_context_connect(pulse->context, NULL, 0, NULL) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
 		return FALSE;
@@ -186,17 +194,18 @@ static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 	if (o)
 		pa_operation_unref(o);
 
-	pa_threaded_mainloop_unlock(pulse->mainloop);
-
 	if (state == PA_CONTEXT_READY)
 	{
-		return TRUE;
+		rc = TRUE;
 	}
 	else
 	{
 		pa_context_disconnect(pulse->context);
-		return FALSE;
+		rc = FALSE;
 	}
+
+	pa_threaded_mainloop_unlock(pulse->mainloop);
+	return rc;
 }
 
 static void rdpsnd_pulse_stream_success_callback(pa_stream* stream, int success, void* userdata)
@@ -244,6 +253,8 @@ static void rdpsnd_pulse_stream_state_callback(pa_stream* stream, void* userdata
 
 		case PA_STREAM_FAILED:
 		case PA_STREAM_TERMINATED:
+			// Stream object is about to be destroyed, clean up our pointer
+			pulse->stream = NULL;
 			pa_threaded_mainloop_signal(pulse->mainloop, 0);
 			break;
 
@@ -334,8 +345,24 @@ static BOOL rdpsnd_pulse_set_format_spec(rdpsndPulsePlugin* pulse, const AUDIO_F
 	return TRUE;
 }
 
-static BOOL rdpsnd_pulse_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
-                              UINT32 latency)
+static BOOL rdpsnd_pulse_context_connect(rdpsndDevicePlugin* device)
+{
+	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
+
+	pulse->context = pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop), "freerdp");
+
+	if (!pulse->context)
+		return FALSE;
+
+	pa_context_set_state_callback(pulse->context, rdpsnd_pulse_context_state_callback, pulse);
+
+	if (!rdpsnd_pulse_connect((rdpsndDevicePlugin*)pulse))
+		return FALSE;
+
+	return TRUE;
+}
+
+static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 {
 	pa_stream_state_t state;
 	pa_stream_flags_t flags;
@@ -343,23 +370,27 @@ static BOOL rdpsnd_pulse_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* fo
 	char ss[PA_SAMPLE_SPEC_SNPRINT_MAX] = { 0 };
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
-	WINPR_ASSERT(format);
-
-	if (!rdpsnd_check_pulse(pulse, FALSE))
-		return TRUE;
-
-	if (!rdpsnd_pulse_set_format_spec(pulse, format))
-		return FALSE;
-
-	pulse->latency = latency;
-
 	if (pa_sample_spec_valid(&pulse->sample_spec) == 0)
 	{
 		pa_sample_spec_snprint(ss, sizeof(ss), &pulse->sample_spec);
-		return TRUE;
+		return FALSE;
 	}
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
+	if (!pulse->context)
+	{
+		pa_threaded_mainloop_unlock(pulse->mainloop);
+		if (pulse->reconnect_delay_seconds >= 0 && time(NULL) - pulse->reconnect_time >= 0)
+			rdpsnd_pulse_context_connect(device);
+		pa_threaded_mainloop_lock(pulse->mainloop);
+	}
+
+	if (!rdpsnd_check_pulse(pulse, FALSE))
+	{
+		pa_threaded_mainloop_unlock(pulse->mainloop);
+		return FALSE;
+	}
+
 	pulse->stream = pa_stream_new(pulse->context, "freerdp", &pulse->sample_spec, NULL);
 
 	if (!pulse->stream)
@@ -386,8 +417,11 @@ static BOOL rdpsnd_pulse_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* fo
 	if (pa_stream_connect_playback(pulse->stream, pulse->device_name,
 	                               pulse->latency > 0 ? &buffer_attr : NULL, flags, NULL, NULL) < 0)
 	{
+		WLog_ERR(TAG, "error connecting playback stream");
+		pa_stream_unref(pulse->stream);
+		pulse->stream = NULL;
 		pa_threaded_mainloop_unlock(pulse->mainloop);
-		return TRUE;
+		return FALSE;
 	}
 
 	for (;;)
@@ -412,6 +446,24 @@ static BOOL rdpsnd_pulse_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* fo
 
 	rdpsnd_pulse_close(device);
 	return FALSE;
+}
+
+static BOOL rdpsnd_pulse_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
+                              UINT32 latency)
+{
+	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
+
+	WINPR_ASSERT(format);
+
+	if (!rdpsnd_check_pulse(pulse, FALSE))
+		return TRUE;
+
+	if (!rdpsnd_pulse_set_format_spec(pulse, format))
+		return FALSE;
+
+	pulse->latency = latency;
+
+	return rdpsnd_pulse_open_stream(device);
 }
 
 static void rdpsnd_pulse_free(rdpsndDevicePlugin* device)
@@ -501,7 +553,8 @@ static UINT32 rdpsnd_pulse_get_volume(rdpsndDevicePlugin* device)
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
 	o = pa_context_get_sink_info_by_index(pulse->context, 0, rdpsnd_pulse_get_sink_info, pulse);
-	pa_operation_unref(o);
+	if (o)
+		pa_operation_unref(o);
 	pa_threaded_mainloop_unlock(pulse->mainloop);
 	return pulse->volume;
 }
@@ -557,10 +610,19 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 	int negative;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
-	if (!rdpsnd_check_pulse(pulse, TRUE) || !data)
+	if (!data)
 		return 0;
 
 	pa_threaded_mainloop_lock(pulse->mainloop);
+
+	if (!rdpsnd_check_pulse(pulse, TRUE))
+	{
+		pa_threaded_mainloop_unlock(pulse->mainloop);
+		// Discard this playback request and just attempt to reconnect the stream
+		WLog_DBG(TAG, "reconnecting playback stream");
+		rdpsnd_pulse_open_stream(device);
+		return 0;
+	}
 
 	while (size > 0)
 	{
@@ -597,9 +659,12 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
 	DWORD flags;
 	const COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
-	COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED,
-		                                              "<device>", NULL, NULL, -1, NULL, "device" },
-		                                            { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
+	COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] = {
+		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
+		{ "reconnect_delay_seconds", COMMAND_LINE_VALUE_REQUIRED, "<reconnect_delay_seconds>", NULL,
+		  NULL, -1, NULL, "reconnect_delay_seconds" },
+		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
+	};
 	flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
 
@@ -625,6 +690,15 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
 
 			if (!pulse->device_name)
 				return ERROR_OUTOFMEMORY;
+		}
+		CommandLineSwitchCase(arg, "reconnect_delay_seconds")
+		{
+			unsigned long val = strtoul(arg->Value, NULL, 0);
+
+			if ((errno != 0) || (val > INT32_MAX))
+				return ERROR_INVALID_DATA;
+
+			pulse->reconnect_delay_seconds = val;
 		}
 		CommandLineSwitchEnd(arg)
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
@@ -666,6 +740,8 @@ FREERDP_ENTRY_POINT(UINT pulse_freerdp_rdpsnd_client_subsystem_entry(
 			goto error;
 		}
 	}
+	pulse->reconnect_delay_seconds = 5;
+	pulse->reconnect_time = time(NULL);
 
 	ret = CHANNEL_RC_NO_MEMORY;
 	pulse->mainloop = pa_threaded_mainloop_new();
@@ -673,15 +749,17 @@ FREERDP_ENTRY_POINT(UINT pulse_freerdp_rdpsnd_client_subsystem_entry(
 	if (!pulse->mainloop)
 		goto error;
 
-	pulse->context = pa_context_new(pa_threaded_mainloop_get_api(pulse->mainloop), "freerdp");
+	pa_threaded_mainloop_lock(pulse->mainloop);
 
-	if (!pulse->context)
-		goto error;
+	if (pa_threaded_mainloop_start(pulse->mainloop) < 0)
+	{
+		pa_threaded_mainloop_unlock(pulse->mainloop);
+		return FALSE;
+	}
 
-	pa_context_set_state_callback(pulse->context, rdpsnd_pulse_context_state_callback, pulse);
-	ret = ERROR_INVALID_OPERATION;
+	pa_threaded_mainloop_unlock(pulse->mainloop);
 
-	if (!rdpsnd_pulse_connect((rdpsndDevicePlugin*)pulse))
+	if (!rdpsnd_pulse_context_connect((rdpsndDevicePlugin*)pulse))
 		goto error;
 
 	pEntryPoints->pRegisterRdpsndDevice(pEntryPoints->rdpsnd, (rdpsndDevicePlugin*)pulse);
