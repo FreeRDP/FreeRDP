@@ -53,8 +53,11 @@ file(COPY test_icon.ppm DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(${MODULE_NAME} ${SRCS})
 
-list(APPEND LIBS freerdp-server)
-list(APPEND LIBS winpr freerdp)
+list(APPEND LIBS
+    freerdp-server
+    freerdp
+    winpr
+)
 
 target_link_libraries(${MODULE_NAME} ${LIBS})
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)

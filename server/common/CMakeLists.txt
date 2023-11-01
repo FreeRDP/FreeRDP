@@ -62,7 +62,20 @@ endif()
 
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${FREERDP_CHANNELS_SERVER_LIBS})
-target_link_libraries(${MODULE_NAME} PUBLIC winpr freerdp)
+
+set(PUB_LIBS
+    winpr
+    freerdp
+)
+if (CHANNEL_AINPUT AND CHANNEL_AINPUT_SERVER)
+    list(APPEND PUB_LIBS
+        ainput-server
+    )
+endif()
+
+target_link_libraries(${MODULE_NAME} PUBLIC
+    ${PUB_LIBS}
+)
 
 install(TARGETS ${MODULE_NAME} COMPONENT libraries EXPORT FreeRDP-ServerTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

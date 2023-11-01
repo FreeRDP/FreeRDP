@@ -16,12 +16,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel("ainput")
+include(CMakeDependentOption)
 
-if(WITH_CLIENT_CHANNELS)
-	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
-endif()
-
-if(WITH_SERVER_CHANNELS)
-	add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
+option(CHANNEL_AINPUT "build ainput channel" ON)
+CMAKE_DEPENDENT_OPTION(CHANNEL_AINPUT_CLIENT "build ainput client channel" ON
+	"CHANNEL_AINPUT" OFF)
+CMAKE_DEPENDENT_OPTION(CHANNEL_AINPUT_SERVER "build ainput server channel" ON
+	"CHANNEL_AINPUT" OFF)
+if (CHANNEL_AINPUT)
+	if (CHANNEL_AINPUT_CLIENT)
+		add_subdirectory(client)
+	endif()
+	if (CHANNEL_AINPUT_SERVER)
+		add_subdirectory(server)
+	endif()
 endif()

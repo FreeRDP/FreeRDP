@@ -16,17 +16,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel_client("ainput")
+set(MODULE_NAME "ainput-server")
 
-set(${MODULE_PREFIX}_SRCS
+set(SRCS
 	ainput_main.c
-	ainput_main.h
 )
 
-set(${MODULE_PREFIX}_LIBS
+set(LIBS
+	freerdp
 	winpr
 )
 
 include_directories(..)
 
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
+add_library(${MODULE_NAME}
+	SHARED
+ 		${SRCS}
+	)
+target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
+install(TARGETS ${MODULE_NAME} COMPONENT channels EXPORT FreeRDPTargets
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
