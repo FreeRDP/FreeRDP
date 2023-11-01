@@ -15,7 +15,7 @@
     <string name="menu_app_settings">설정</string>
     <!-- Bookmark menu items -->
     <string name="menu_title_bookmark">연결</string>
-    <string name="menu_connect">열결하기</string>
+    <string name="menu_connect">연결하기</string>
     <string name="menu_edit">수정</string>
     <string name="menu_delete">삭제</string>
     <!-- Session menu items -->
@@ -81,10 +81,10 @@
     <string name="settings_performance">성능</string>
     <string name="settings_cat_performance">성능 설정</string>
     <string name="settings_perf_remotefx">RemoteFX</string>
-    <string name="settings_perf_wallpaper">데스크탑 배경</string>
+    <string name="settings_perf_wallpaper">데스크톱 배경</string>
     <string name="settings_perf_font_smoothing">부드러운 폰트</string>
-    <string name="settings_perf_desktop_composition">Desktop Composition</string>
-    <string name="settings_perf_full_window_drag">Window contents while dragging</string>
+    <string name="settings_perf_desktop_composition">데스크톱 구성</string>
+    <string name="settings_perf_full_window_drag">윈도 끄는 동안 윈도 내용</string>
     <string name="settings_perf_menu_animation">메뉴 에니메이션</string>
     <string name="settings_perf_theming">테마 스타일</string>
     <string name="settings_advanced">고급</string>
@@ -102,7 +102,7 @@
         <item>서버에서 플레이</item>
         <item>기기에서 플레이</item>
     </string-array>
-    <string name="settings_redirect_microphone">마이크로폰 전달하기</string>
+    <string name="settings_redirect_microphone">마이크 리다이렉트</string>
     <string name="settings_security">보안</string>
     <string-array name="security_array">
         <item>자동</item>
@@ -110,7 +110,7 @@
         <item>TLS</item>
         <item>NLA</item>
     </string-array>
-    <string name="settings_remote_program">리모트 프로그램</string>
+    <string name="settings_remote_program">원격 프로그램</string>
     <string name="settings_work_dir">작업 디렉터리</string>
     <string name="settings_async_channel">비동기 채널</string>
     <string name="settings_async_update">비동기 갱신</string>
@@ -145,11 +145,11 @@
     <!-- Error message strings -->
     <string name="error_bookmark_incomplete_title">저장하지 않고 취소하기?</string>
     <string name="error_bookmark_incomplete">중단하려면 "취소"를 탭 하세요!\n필수 입력을 채우고 "계속"을 탭 하세요!</string>
-    <string name="error_connection_failure">서버에 연결하지 못 했습니다!</string>
+    <string name="error_connection_failure">서버에 연결할 수 없습니다!</string>
     <!-- Info message strings -->
-    <string name="info_capabilities_changed">서버가 설정을 지원하지 않아서 화면 설정이 변경되었습니다!</string>
-    <string name="info_reset_success">캐시된 인증서를 삭제했습니다!</string>
-    <string name="info_reset_failed">캐시된 인증서를 삭제하지 못 했습니다!</string>
+    <string name="info_capabilities_changed">화면 설정이 서버에서 지원하는 설정으로 변경되었습니다.</string>
+    <string name="info_reset_success">인증서 캐시가 삭제되었습니다.</string>
+    <string name="info_reset_failed">인증서 캐시를 삭제할 수 없습니다!</string>
     <!-- Dialog strings -->
     <string name="dlg_title_verify_certificate">인증서 검증하기</string>
     <string name="dlg_msg_verify_certificate">인증서를 검증하지 못했습니다. 그래도 연결하시겠습니까?</string>
@@ -160,7 +160,7 @@
     <string name="dlg_msg_logging_in">로그인중 &#8230;</string>
     <string name="dlg_title_about">aFreeRDP 정보</string>
     <string name="dlg_title_create_bookmark_after_qc">연결 설정 저장하기?</string>
-    <string name="dlg_msg_create_bookmark_after_qc">연결 설정이 저장되지 않았습니다! 저장하시겠습니까?</string>
+    <string name="dlg_msg_create_bookmark_after_qc">저장하지 않은 연결 설정을 저장하시겠습니까?</string>
     <string name="dlg_title_save_bookmark">연결 저장?</string>
     <string name="dlg_save_bookmark">연결 설정을 저장하시겠습니까?</string>
     <string name="dlg_dont_show_again">다시 물어보지 않기</string>
