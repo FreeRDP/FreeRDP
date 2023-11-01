@@ -26,7 +26,7 @@
 
 #include <freerdp/freerdp.h>
 #include <freerdp/svc.h>
-#include <freerdp/channels/rdp2tcp.h>
+#include "rdp2tcp.h"
 
 #include <freerdp/log.h>
 #define TAG CLIENT_TAG(RDP2TCP_DVC_CHANNEL_NAME)
@@ -316,13 +316,8 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 	}
 }
 
-#if 1
-#define VirtualChannelEntryEx rdp2tcp_VirtualChannelEntryEx
-#else
-#define VirtualChannelEntryEx FREERDP_API VirtualChannelEntryEx
-#endif
-FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
-                                                         PVOID pInitHandle))
+FREERDP_ENTRY_POINT(FREERDP_API BOOL VCAPITYPE VirtualChannelEntryEx(
+    PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID pInitHandle))
 {
 	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
 	CHANNEL_DEF channelDef;

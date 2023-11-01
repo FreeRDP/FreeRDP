@@ -39,7 +39,6 @@
 #include <freerdp/channels/drdynvc.h>
 #include <freerdp/channels/cliprdr.h>
 #include <freerdp/channels/encomsp.h>
-#include <freerdp/channels/rdp2tcp.h>
 #include <freerdp/channels/remdesk.h>
 #include <freerdp/channels/rdpsnd.h>
 #include <freerdp/channels/disp.h>
@@ -531,7 +530,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("Serial Port Redirection: /serial:COM1,/dev/ttyS0\n");
 	printf("Parallel Port Redirection: /parallel:<name>,<device>\n");
 	printf("Printer Redirection: /printer:<device>,<driver>,[default]\n");
-	printf("TCP redirection: /rdp2tcp:/usr/bin/rdp2tcp\n");
+	printf("TCP redirection: /vc:rdp2tcp:/usr/bin/rdp2tcp\n");
 	printf("\n");
 	printf("Audio Output Redirection: /sound:sys:oss,dev:1,format:1\n");
 	printf("Audio Output Redirection: /sound:sys:alsa\n");
@@ -4497,11 +4496,6 @@ static int freerdp_client_settings_parse_command_line_arguments_int(rdpSettings*
 			if (!freerdp_settings_set_string(settings, FreeRDP_ActionScript, arg->Value))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
-		CommandLineSwitchCase(arg, RDP2TCP_DVC_CHANNEL_NAME)
-		{
-			if (!freerdp_settings_set_string(settings, FreeRDP_RDP2TCPArgs, arg->Value))
-				return COMMAND_LINE_ERROR_MEMORY;
-		}
 		CommandLineSwitchCase(arg, "fipsmode")
 		{
 			settings->FIPSMode = enable;
@@ -5139,13 +5133,6 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 					return FALSE;
 			}
 		}
-	}
-
-	if (settings->RDP2TCPArgs)
-	{
-		if (!freerdp_client_load_static_channel_addin(channels, settings, RDP2TCP_DVC_CHANNEL_NAME,
-		                                              settings->RDP2TCPArgs))
-			return FALSE;
 	}
 
 	/* step 4: do the static channels loading and init */

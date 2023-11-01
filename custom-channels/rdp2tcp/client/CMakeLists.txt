@@ -15,8 +15,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel("rdp2tcp")
+set(MODULE_NAME "rdp2tcp-client")
 
-if(WITH_CLIENT_CHANNELS)
-	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
-endif()
+set(SRCS
+        rdp2tcp_main.c
+)
+
+set(LIBS
+        freerdp
+        winpr
+)
+
+include_directories(..)
+
+add_library(${MODULE_NAME}
+        SHARED
+                ${SRCS}
+        )
+target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
+install(TARGETS ${MODULE_NAME} COMPONENT channels EXPORT FreeRDPTargets
+        ARCHIVE DESTINATION ${FREERDP_PLUGIN_PATH}
+        LIBRARY DESTINATION ${FREERDP_PLUGIN_PATH}
+        RUNTIME DESTINATION ${FREERDP_PLUGIN_PATH}
+)

@@ -508,7 +508,6 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_ProxyHostname, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ProxyHostname" },
 	{ FreeRDP_ProxyPassword, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ProxyPassword" },
 	{ FreeRDP_ProxyUsername, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ProxyUsername" },
-	{ FreeRDP_RDP2TCPArgs, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_RDP2TCPArgs" },
 	{ FreeRDP_ReaderName, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ReaderName" },
 	{ FreeRDP_RedirectionAcceptedCert, FREERDP_SETTINGS_TYPE_STRING,
 	  "FreeRDP_RedirectionAcceptedCert" },

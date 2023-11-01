@@ -15,13 +15,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel_client("rdp2tcp")
+include(CMakeDependentOption)
 
-set(${MODULE_PREFIX}_SRCS
-	rdp2tcp_main.c
-)
-
-set(${MODULE_PREFIX}_LIBS
-	freerdp
-)
-add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "VirtualChannelEntryEx")
+option(CHANNEL_RDP2TCP "build rdp2tcp channel" ON)
+CMAKE_DEPENDENT_OPTION(CHANNEL_RDP2TCP_CLIENT "build rdp2tcp client channel" ON
+	"CHANNEL_RDP2TCP" OFF)
+CMAKE_DEPENDENT_OPTION(CHANNEL_RDP2TCP_SERVER "build rdp2tcp server channel" OFF
+	"CHANNEL_RDP2TCP" OFF)
+if (CHANNEL_RDP2TCP)
+	if (CHANNEL_RDP2TCP_CLIENT)
+		add_subdirectory(client)
+	endif()
+	if (CHANNEL_RDP2TCP_SERVER)
+		add_subdirectory(server)
+	endif()
+endif()
