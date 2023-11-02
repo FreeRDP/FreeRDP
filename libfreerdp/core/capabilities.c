@@ -2122,12 +2122,12 @@ static BOOL rdp_apply_virtual_channel_capability_set(rdpSettings* settings, cons
 	 */
 	if (!settings->ServerMode)
 	{
-		if ((src->VirtualChannelChunkSize > CHANNEL_CHUNK_MAX_LENGTH) ||
-		    (src->VirtualChannelChunkSize == 0))
-			settings->VirtualChannelChunkSize = CHANNEL_CHUNK_LENGTH;
+		if ((src->VCChunkSize > CHANNEL_CHUNK_MAX_LENGTH) ||
+		    (src->VCChunkSize == 0))
+			settings->VCChunkSize = CHANNEL_CHUNK_LENGTH;
 		else
 		{
-			settings->VirtualChannelChunkSize = src->VirtualChannelChunkSize;
+			settings->VCChunkSize = src->VCChunkSize;
 		}
 	}
 
@@ -2156,7 +2156,7 @@ static BOOL rdp_read_virtual_channel_capability_set(wStream* s, rdpSettings* set
 		VCChunkSize = UINT32_MAX; /* Use an invalid value to determine that value is not present */
 
 	settings->VirtualChannelCompressionFlags = flags;
-	settings->VirtualChannelChunkSize = VCChunkSize;
+	settings->VCChunkSize = VCChunkSize;
 
 	return TRUE;
 }
@@ -2174,7 +2174,7 @@ static BOOL rdp_write_virtual_channel_capability_set(wStream* s, const rdpSettin
 
 	const size_t header = rdp_capability_set_start(s);
 	Stream_Write_UINT32(s, settings->VirtualChannelCompressionFlags); /* flags (4 bytes) */
-	Stream_Write_UINT32(s, settings->VirtualChannelChunkSize);        /* VCChunkSize (4 bytes) */
+	Stream_Write_UINT32(s, settings->VCChunkSize);                    /* VCChunkSize (4 bytes) */
 	return rdp_capability_set_finish(s, header, CAPSET_TYPE_VIRTUAL_CHANNEL);
 }
 

@@ -1340,10 +1340,10 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpen(HANDLE hServer, DWORD SessionId, LPS
 
 	if (!channel)
 	{
-		const UINT32 VirtualChannelChunkSize =
-		    freerdp_settings_get_uint32(context->settings, FreeRDP_VirtualChannelChunkSize);
+		const UINT32 VCChunkSize =
+		    freerdp_settings_get_uint32(context->settings, FreeRDP_VCChunkSize);
 		channel = channel_new(vcm, client, joined_channel->ChannelId, index,
-		                      RDP_PEER_CHANNEL_TYPE_SVC, VirtualChannelChunkSize, pVirtualName);
+		                      RDP_PEER_CHANNEL_TYPE_SVC, VCChunkSize, pVirtualName);
 
 		if (!channel)
 			goto fail;
@@ -1414,10 +1414,9 @@ HANDLE WINAPI FreeRDP_WTSVirtualChannelOpenEx(DWORD SessionId, LPSTR pVirtualNam
 	WINPR_ASSERT(client->context);
 	WINPR_ASSERT(client->context->settings);
 
-	const UINT32 VirtualChannelChunkSize =
-	    freerdp_settings_get_uint32(client->context->settings, FreeRDP_VirtualChannelChunkSize);
-	channel = channel_new(vcm, client, 0, 0, RDP_PEER_CHANNEL_TYPE_DVC, VirtualChannelChunkSize,
-	                      pVirtualName);
+	const UINT32 VCChunkSize =
+	    freerdp_settings_get_uint32(client->context->settings, FreeRDP_VCChunkSize);
+	channel = channel_new(vcm, client, 0, 0, RDP_PEER_CHANNEL_TYPE_DVC, VCChunkSize, pVirtualName);
 
 	if (!channel)
 	{
