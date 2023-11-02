@@ -333,7 +333,7 @@ static const size_t uint32_list_indices[] = {
 	FreeRDP_ThreadingFlags,
 	FreeRDP_TlsSecLevel,
 	FreeRDP_VCChunkSize,
-	FreeRDP_VirtualChannelCompressionFlags,
+	FreeRDP_VCFlags,
 };
 
 #define have_int32_list_indices
