@@ -602,7 +602,7 @@ typedef struct
 	rdpTls* tls;
 	rdpCredsspAuth* auth;
 	HttpContext* http;
-	BYTE Cookie[16];
+	GUID Cookie;
 	rdpRpc* rpc;
 } RpcChannel;
 
@@ -692,8 +692,8 @@ typedef enum
 
 typedef struct
 {
-	BYTE Cookie[16];
-	BYTE AssociationGroupId[16];
+	GUID Cookie;
+	GUID AssociationGroupId;
 	VIRTUAL_CONNECTION_STATE State;
 	RpcInChannel* DefaultInChannel;
 	RpcInChannel* NonDefaultInChannel;
@@ -712,7 +712,7 @@ typedef struct
 
 typedef struct
 {
-	BYTE Cookie[16];
+	GUID Cookie;
 	UINT32 ReferenceCount;
 	RpcVirtualConnection* Reference;
 } RpcVirtualConnectionCookieEntry;

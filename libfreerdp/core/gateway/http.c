@@ -25,6 +25,7 @@
 #include <winpr/print.h>
 #include <winpr/stream.h>
 #include <winpr/string.h>
+#include <winpr/rpc.h>
 
 #include <freerdp/log.h>
 #include <freerdp/crypto/crypto.h>
@@ -315,13 +316,30 @@ BOOL http_context_set_pragma(HttpContext* context, const char* Pragma)
 	return TRUE;
 }
 
-BOOL http_context_set_rdg_connection_id(HttpContext* context, const char* RdgConnectionId)
+static char* guid2str(const GUID* guid)
+{
+	if (!guid)
+		return NULL;
+	char* strguid = NULL;
+	char bracedGuid[64] = { 0 };
+
+	RPC_STATUS rpcStatus = UuidToStringA(guid, &strguid);
+
+	if (rpcStatus == RPC_S_OUT_OF_MEMORY)
+		return NULL;
+
+	sprintf_s(bracedGuid, sizeof(bracedGuid), "{%s}", strguid);
+	RpcStringFreeA(&strguid);
+	return _strdup(bracedGuid);
+}
+
+BOOL http_context_set_rdg_connection_id(HttpContext* context, const GUID* RdgConnectionId)
 {
 	if (!context || !RdgConnectionId)
 		return FALSE;
 
 	free(context->RdgConnectionId);
-	context->RdgConnectionId = _strdup(RdgConnectionId);
+	context->RdgConnectionId = guid2str(RdgConnectionId);
 
 	if (!context->RdgConnectionId)
 		return FALSE;
@@ -329,13 +347,13 @@ BOOL http_context_set_rdg_connection_id(HttpContext* context, const char* RdgCon
 	return TRUE;
 }
 
-BOOL http_context_set_rdg_correlation_id(HttpContext* context, const char* RdgCorrelationId)
+BOOL http_context_set_rdg_correlation_id(HttpContext* context, const GUID* RdgCorrelationId)
 {
 	if (!context || !RdgCorrelationId)
 		return FALSE;
 
 	free(context->RdgCorrelationId);
-	context->RdgCorrelationId = _strdup(RdgCorrelationId);
+	context->RdgCorrelationId = guid2str(RdgCorrelationId);
 
 	if (!context->RdgCorrelationId)
 		return FALSE;
@@ -350,12 +368,12 @@ BOOL http_context_enable_websocket_upgrade(HttpContext* context, BOOL enable)
 
 	if (enable)
 	{
-		BYTE key[16];
-		if (winpr_RAND(key, sizeof(key)) != 0)
+		GUID key = { 0 };
+		if (RPC_S_OK != UuidCreate(&key))
 			return FALSE;
 
 		free(context->SecWebsocketKey);
-		context->SecWebsocketKey = crypto_base64_encode(key, sizeof(key));
+		context->SecWebsocketKey = crypto_base64_encode((BYTE*)&key, sizeof(key));
 		if (!context->SecWebsocketKey)
 			return FALSE;
 	}
