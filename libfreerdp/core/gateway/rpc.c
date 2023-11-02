@@ -491,10 +491,12 @@ BOOL rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANN
 	return TRUE;
 }
 
-static int rpc_channel_rpch_init(RpcClient* client, RpcChannel* channel, const char* inout)
+static int rpc_channel_rpch_init(RpcClient* client, RpcChannel* channel, const char* inout,
+                                 const GUID* guid)
 {
 	HttpContext* http;
 	rdpSettings* settings;
+	UINT32 timeout = 0;
 
 	if (!client || !channel || !inout || !client->context || !client->context->settings)
 		return -1;
@@ -514,21 +516,49 @@ static int rpc_channel_rpch_init(RpcClient* client, RpcChannel* channel, const c
 
 	http = channel->http;
 
+	{
+		if (!http_context_set_pragma(http, "ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729"))
+			return -1;
+
+		if (guid)
+		{
+			char bracedguid[64] = { 0 };
+			char* strguid = NULL;
+			RPC_STATUS rpcStatus = UuidToStringA(guid, &strguid);
+
+			if (rpcStatus != RPC_S_OK)
+				return -1;
+
+			const BOOL rc = http_context_append_pragma(http, "SessionId=%s", strguid);
+			RpcStringFreeA(&strguid);
+			if (!rc)
+				return -1;
+		}
+		if (timeout)
+		{
+			if (!http_context_append_pragma(http, "MinConnTimeout=%" PRIu32, timeout))
+				return -1;
+		}
+
+		if (!http_context_set_rdg_correlation_id(http, guid) ||
+		    !http_context_set_rdg_connection_id(http, guid))
+			return -1;
+	}
+
+	/* TODO: "/rpcwithcert/rpcproxy.dll". */
 	if (!http_context_set_method(http, inout) ||
 	    !http_context_set_uri(http, "/rpc/rpcproxy.dll?localhost:3388") ||
 	    !http_context_set_accept(http, "application/rpc") ||
 	    !http_context_set_cache_control(http, "no-cache") ||
 	    !http_context_set_connection(http, "Keep-Alive") ||
 	    !http_context_set_user_agent(http, "MSRPC") ||
-	    !http_context_set_host(http, settings->GatewayHostname) ||
-	    !http_context_set_pragma(http, "ResourceTypeUuid=44e265dd-7daf-42cd-8560-3cdb6e7a2729, "
-	                                   "SessionId=fbd9c34f-397d-471d-a109-1b08cc554624"))
+	    !http_context_set_host(http, settings->GatewayHostname))
 		return -1;
 
 	return 1;
 }
 
-static int rpc_in_channel_init(rdpRpc* rpc, RpcInChannel* inChannel)
+static int rpc_in_channel_init(rdpRpc* rpc, RpcInChannel* inChannel, const GUID* guid)
 {
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(inChannel);
@@ -540,19 +570,19 @@ static int rpc_in_channel_init(rdpRpc* rpc, RpcInChannel* inChannel)
 	inChannel->PingOriginator.ConnectionTimeout = 30;
 	inChannel->PingOriginator.KeepAliveInterval = 0;
 
-	if (rpc_channel_rpch_init(rpc->client, &inChannel->common, "RPC_IN_DATA") < 0)
+	if (rpc_channel_rpch_init(rpc->client, &inChannel->common, "RPC_IN_DATA", guid) < 0)
 		return -1;
 
 	return 1;
 }
 
-static RpcInChannel* rpc_in_channel_new(rdpRpc* rpc)
+static RpcInChannel* rpc_in_channel_new(rdpRpc* rpc, const GUID* guid)
 {
 	RpcInChannel* inChannel = (RpcInChannel*)calloc(1, sizeof(RpcInChannel));
 
 	if (inChannel)
 	{
-		rpc_in_channel_init(rpc, inChannel);
+		rpc_in_channel_init(rpc, inChannel, guid);
 	}
 
 	return inChannel;
@@ -579,7 +609,7 @@ BOOL rpc_out_channel_transition_to_state(RpcOutChannel* outChannel, CLIENT_OUT_C
 	return TRUE;
 }
 
-static int rpc_out_channel_init(rdpRpc* rpc, RpcOutChannel* outChannel)
+static int rpc_out_channel_init(rdpRpc* rpc, RpcOutChannel* outChannel, const GUID* guid)
 {
 	WINPR_ASSERT(rpc);
 	WINPR_ASSERT(outChannel);
@@ -592,19 +622,19 @@ static int rpc_out_channel_init(rdpRpc* rpc, RpcOutChannel* outChannel)
 	outChannel->ReceiveWindowSize = rpc->ReceiveWindow;
 	outChannel->AvailableWindowAdvertised = rpc->ReceiveWindow;
 
-	if (rpc_channel_rpch_init(rpc->client, &outChannel->common, "RPC_OUT_DATA") < 0)
+	if (rpc_channel_rpch_init(rpc->client, &outChannel->common, "RPC_OUT_DATA", guid) < 0)
 		return -1;
 
 	return 1;
 }
 
-RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc)
+RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc, const GUID* guid)
 {
 	RpcOutChannel* outChannel = (RpcOutChannel*)calloc(1, sizeof(RpcOutChannel));
 
 	if (outChannel)
 	{
-		rpc_out_channel_init(rpc, outChannel);
+		rpc_out_channel_init(rpc, outChannel, guid);
 	}
 
 	return outChannel;
@@ -622,6 +652,22 @@ BOOL rpc_virtual_connection_transition_to_state(rdpRpc* rpc, RpcVirtualConnectio
 	return TRUE;
 }
 
+static void rpc_virtual_connection_free(RpcVirtualConnection* connection)
+{
+	if (!connection)
+		return;
+
+	if (connection->DefaultInChannel)
+		rpc_channel_free(&connection->DefaultInChannel->common);
+	if (connection->NonDefaultInChannel)
+		rpc_channel_free(&connection->NonDefaultInChannel->common);
+	if (connection->DefaultOutChannel)
+		rpc_channel_free(&connection->DefaultOutChannel->common);
+	if (connection->NonDefaultOutChannel)
+		rpc_channel_free(&connection->NonDefaultOutChannel->common);
+	free(connection);
+}
+
 static RpcVirtualConnection* rpc_virtual_connection_new(rdpRpc* rpc)
 {
 	WINPR_ASSERT(rpc);
@@ -635,34 +681,21 @@ static RpcVirtualConnection* rpc_virtual_connection_new(rdpRpc* rpc)
 	rts_generate_cookie((BYTE*)&(connection->Cookie));
 	rts_generate_cookie((BYTE*)&(connection->AssociationGroupId));
 	connection->State = VIRTUAL_CONNECTION_STATE_INITIAL;
-	connection->DefaultInChannel = rpc_in_channel_new(rpc);
+
+	connection->DefaultInChannel = rpc_in_channel_new(rpc, &connection->Cookie);
 
 	if (!connection->DefaultInChannel)
-		goto out_free;
+		goto fail;
 
-	connection->DefaultOutChannel = rpc_out_channel_new(rpc);
+	connection->DefaultOutChannel = rpc_out_channel_new(rpc, &connection->Cookie);
 
 	if (!connection->DefaultOutChannel)
-		goto out_default_in;
+		goto fail;
 
 	return connection;
-out_default_in:
-	free(connection->DefaultInChannel);
-out_free:
-	free(connection);
+fail:
+	rpc_virtual_connection_free(connection);
 	return NULL;
-}
-
-static void rpc_virtual_connection_free(RpcVirtualConnection* connection)
-{
-	if (!connection)
-		return;
-
-	rpc_channel_free(&connection->DefaultInChannel->common);
-	rpc_channel_free(&connection->NonDefaultInChannel->common);
-	rpc_channel_free(&connection->DefaultOutChannel->common);
-	rpc_channel_free(&connection->NonDefaultOutChannel->common);
-	free(connection);
 }
 
 static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)

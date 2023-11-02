@@ -2176,7 +2176,7 @@ static int rts_recv_OUT_R1_A2_pdu(rdpRpc* rpc, wStream* buffer)
 	if (status < 0)
 		return status;
 
-	connection->NonDefaultOutChannel = rpc_out_channel_new(rpc);
+	connection->NonDefaultOutChannel = rpc_out_channel_new(rpc, &connection->Cookie);
 
 	if (!connection->NonDefaultOutChannel)
 		return -1;

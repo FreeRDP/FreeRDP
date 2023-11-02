@@ -769,7 +769,7 @@ FREERDP_LOCAL SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t l
 
 FREERDP_LOCAL void rpc_channel_free(RpcChannel* channel);
 
-FREERDP_LOCAL RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc);
+FREERDP_LOCAL RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc, const GUID* guid);
 FREERDP_LOCAL int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout);
 
 FREERDP_LOCAL BOOL rpc_in_channel_transition_to_state(RpcInChannel* inChannel,
