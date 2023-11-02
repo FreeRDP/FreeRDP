@@ -1723,6 +1723,7 @@ extern "C"
  * rdpSettings creation flags
  */
 #define FREERDP_SETTINGS_SERVER_MODE 0x00000001
+#define FREERDP_SETTINGS_REMOTE_MODE 0x00000002
 
 	/** \brief creates a new setting struct
 	 *

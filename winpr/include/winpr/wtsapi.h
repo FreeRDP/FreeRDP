@@ -27,6 +27,8 @@
 
 #include <winpr/file.h>
 
+#define CHANNEL_CHUNK_MAX_LENGTH 16256
+
 #ifdef _WIN32
 
 #define CurrentTime _CurrentTime /* Workaround for X11 "CurrentTime" header conflict */
