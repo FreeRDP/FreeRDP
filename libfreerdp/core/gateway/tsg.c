@@ -1008,7 +1008,7 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 		              " flags=0x%08" PRIx32 ", certChain[%" PRIu32 "]=%s, nonce=%s, versionCaps=%s",
 		              caps->flags, caps->certChainLen, strdata, uuid, tbuffer);
 	free(strdata);
-	free(uuid);
+	RpcStringFreeA(&uuid);
 	if (!rc)
 		return FALSE;
 

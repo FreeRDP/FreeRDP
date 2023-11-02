@@ -65,7 +65,10 @@ FREERDP_LOCAL BOOL http_context_set_host(HttpContext* context, const char* Host)
 FREERDP_LOCAL BOOL http_context_set_accept(HttpContext* context, const char* Accept);
 FREERDP_LOCAL BOOL http_context_set_cache_control(HttpContext* context, const char* CacheControl);
 FREERDP_LOCAL BOOL http_context_set_connection(HttpContext* context, const char* Connection);
-FREERDP_LOCAL BOOL http_context_set_pragma(HttpContext* context, const char* Pragma);
+FREERDP_LOCAL BOOL http_context_set_pragma(HttpContext* context,
+                                           WINPR_FORMAT_ARG const char* Pragma, ...);
+FREERDP_LOCAL BOOL http_context_append_pragma(HttpContext* context,
+                                              WINPR_FORMAT_ARG const char* Pragma, ...);
 FREERDP_LOCAL BOOL http_context_set_cookie(HttpContext* context, const char* CookieName,
                                            const char* CookieValue);
 FREERDP_LOCAL BOOL http_context_set_rdg_connection_id(HttpContext* context,

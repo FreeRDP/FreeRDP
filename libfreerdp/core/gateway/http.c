@@ -302,18 +302,64 @@ BOOL http_context_set_connection(HttpContext* context, const char* Connection)
 	return TRUE;
 }
 
-BOOL http_context_set_pragma(HttpContext* context, const char* Pragma)
+WINPR_ATTR_FORMAT_ARG(2, 0)
+static BOOL list_append(HttpContext* context, WINPR_FORMAT_ARG const char* str, va_list ap)
+{
+	BOOL rc = FALSE;
+	va_list vat;
+	char* Pragma = NULL;
+	size_t PragmaSize = 0;
+
+	va_copy(vat, ap);
+	const int size = winpr_vasprintf(&Pragma, &PragmaSize, str, ap);
+	va_end(vat);
+
+	if (size <= 0)
+		goto fail;
+
+	char* sstr = NULL;
+	size_t slen = 0;
+	if (context->Pragma)
+	{
+		winpr_asprintf(&sstr, &slen, "%s, %s", context->Pragma, Pragma);
+		free(Pragma);
+	}
+	else
+		sstr = Pragma;
+	free(context->Pragma);
+
+	context->Pragma = sstr;
+
+	rc = TRUE;
+
+fail:
+	va_end(ap);
+	return rc;
+}
+
+WINPR_ATTR_FORMAT_ARG(2, 3)
+BOOL http_context_set_pragma(HttpContext* context, WINPR_FORMAT_ARG const char* Pragma, ...)
 {
 	if (!context || !Pragma)
 		return FALSE;
 
 	free(context->Pragma);
-	context->Pragma = _strdup(Pragma);
+	context->Pragma = NULL;
 
-	if (!context->Pragma)
+	va_list ap;
+	va_start(ap, Pragma);
+	return list_append(context, Pragma, ap);
+}
+
+WINPR_ATTR_FORMAT_ARG(2, 3)
+BOOL http_context_append_pragma(HttpContext* context, const char* Pragma, ...)
+{
+	if (!context || !Pragma)
 		return FALSE;
 
-	return TRUE;
+	va_list ap;
+	va_start(ap, Pragma);
+	return list_append(context, Pragma, ap);
 }
 
 static char* guid2str(const GUID* guid)
@@ -325,7 +371,7 @@ static char* guid2str(const GUID* guid)
 
 	RPC_STATUS rpcStatus = UuidToStringA(guid, &strguid);
 
-	if (rpcStatus == RPC_S_OUT_OF_MEMORY)
+	if (rpcStatus != RPC_S_OK)
 		return NULL;
 
 	sprintf_s(bracedGuid, sizeof(bracedGuid), "{%s}", strguid);
