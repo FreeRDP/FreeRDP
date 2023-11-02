@@ -633,7 +633,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	                                 WINDOW_LEVEL_SUPPORTED | WINDOW_LEVEL_SUPPORTED_EX) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_RemoteAppNumIconCaches, 3) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_RemoteAppNumIconCacheEntries, 12) ||
-	    !freerdp_settings_set_uint32(settings, FreeRDP_VirtualChannelChunkSize,
+	    !freerdp_settings_set_uint32(settings, FreeRDP_VCChunkSize,
 	                                 (server && !remote) ? CHANNEL_CHUNK_MAX_LENGTH
 	                                                     : CHANNEL_CHUNK_LENGTH) ||
 	    /* [MS-RDPBCGR] 2.2.7.2.7 Large Pointer Capability Set (TS_LARGE_POINTER_CAPABILITYSET)

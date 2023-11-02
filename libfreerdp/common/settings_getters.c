@@ -1937,8 +1937,8 @@ UINT32 freerdp_settings_get_uint32(const rdpSettings* settings, FreeRDP_Settings
 		case FreeRDP_TlsSecLevel:
 			return settings->TlsSecLevel;
 
-		case FreeRDP_VirtualChannelChunkSize:
-			return settings->VirtualChannelChunkSize;
+		case FreeRDP_VCChunkSize:
+			return settings->VCChunkSize;
 
 		case FreeRDP_VirtualChannelCompressionFlags:
 			return settings->VirtualChannelCompressionFlags;
@@ -2451,8 +2451,8 @@ BOOL freerdp_settings_set_uint32(rdpSettings* settings, FreeRDP_Settings_Keys_UI
 			settings->TlsSecLevel = cnv.c;
 			break;
 
-		case FreeRDP_VirtualChannelChunkSize:
-			settings->VirtualChannelChunkSize = cnv.c;
+		case FreeRDP_VCChunkSize:
+			settings->VCChunkSize = cnv.c;
 			break;
 
 		case FreeRDP_VirtualChannelCompressionFlags:

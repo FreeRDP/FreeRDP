@@ -601,7 +601,7 @@ struct rdp_settings
 
 	/* Virtual Channel Capabilities */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 VirtualChannelCompressionFlags); /* 2880 */
-	SETTINGS_DEPRECATED(ALIGN64 UINT32 VirtualChannelChunkSize);        /* 2881 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 VCChunkSize);                    /* 2881 */
 	UINT64 padding2944[2944 - 2882];                                    /* 2882 */
 
 	/* Sound Capabilities */

@@ -85,9 +85,9 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_
 
 	while (left > 0)
 	{
-		if (left > rdp->settings->VirtualChannelChunkSize)
+		if (left > rdp->settings->VCChunkSize)
 		{
-			chunkSize = rdp->settings->VirtualChannelChunkSize;
+			chunkSize = rdp->settings->VCChunkSize;
 		}
 		else
 		{

@@ -155,7 +155,7 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 	if (peerChannel->channelFlags & WTS_CHANNEL_OPTION_DYNAMIC)
 		return -1; /* not yet supported */
 
-	maxChunkSize = rdp->settings->VirtualChannelChunkSize;
+	maxChunkSize = rdp->settings->VCChunkSize;
 	totalLength = length;
 	flags = CHANNEL_FLAG_FIRST;
 
@@ -168,7 +168,7 @@ static int freerdp_peer_virtual_channel_write(freerdp_peer* client, HANDLE hChan
 
 		if (length > maxChunkSize)
 		{
-			chunkSize = rdp->settings->VirtualChannelChunkSize;
+			chunkSize = rdp->settings->VCChunkSize;
 		}
 		else
 		{
