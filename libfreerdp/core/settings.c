@@ -29,6 +29,7 @@
 #include <winpr/path.h>
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
+#include <winpr/wtsapi.h>
 
 #include <freerdp/settings.h>
 #include <freerdp/build-config.h>
@@ -340,6 +341,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 {
 	char* base;
 	char* issuers[] = { "FreeRDP", "FreeRDP-licenser" };
+	const BOOL server = (flags & FREERDP_SETTINGS_SERVER_MODE) != 0 ? TRUE : FALSE;
+	const BOOL remote = (flags & FREERDP_SETTINGS_REMOTE_MODE) != 0 ? TRUE : FALSE;
 	rdpSettings* settings = (rdpSettings*)calloc(1, sizeof(rdpSettings));
 
 	if (!settings)
@@ -381,8 +384,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	                                 NEGOTIATE_ORDER_SUPPORT | ZERO_BOUNDS_DELTA_SUPPORT |
 	                                     COLOR_INDEX_SUPPORT) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_SupportHeartbeatPdu, TRUE) ||
-	    !freerdp_settings_set_bool(settings, FreeRDP_ServerMode,
-	                               (flags & FREERDP_SETTINGS_SERVER_MODE) ? TRUE : FALSE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_ServerMode, server) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_WaitForOutputBufferFlush, TRUE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_ClusterInfoFlags, REDIRECTION_SUPPORTED) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 1024) ||
@@ -627,11 +629,12 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_uint32(settings, FreeRDP_RemoteAppNumIconCaches, 3) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_RemoteAppNumIconCacheEntries, 12) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_VirtualChannelChunkSize,
-	                                 CHANNEL_CHUNK_LENGTH) ||
+	                                 (server && !remote) ? CHANNEL_CHUNK_MAX_LENGTH
+	                                                     : CHANNEL_CHUNK_LENGTH) ||
 	    /* [MS-RDPBCGR] 2.2.7.2.7 Large Pointer Capability Set (TS_LARGE_POINTER_CAPABILITYSET)
 	       requires at least this size */
 	    !freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
-	                                 (flags & FREERDP_SETTINGS_SERVER_MODE) ? 0 : 608299) ||
+	                                 server ? 0 : 608299) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GatewayUseSameCredentials, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GatewayBypassLocal, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GatewayRpcTransport, TRUE) ||

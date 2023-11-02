@@ -2220,7 +2220,6 @@ rdpRdp* rdp_new(rdpContext* context)
 {
 	rdpRdp* rdp;
 	DWORD flags = 0;
-	DWORD remoteFlags = 0;
 	rdp = (rdpRdp*)calloc(1, sizeof(rdpRdp));
 
 	if (!rdp)
@@ -2238,8 +2237,6 @@ rdpRdp* rdp_new(rdpContext* context)
 
 	if (context->ServerMode)
 		flags |= FREERDP_SETTINGS_SERVER_MODE;
-	else
-		remoteFlags |= FREERDP_SETTINGS_SERVER_MODE;
 
 	if (!context->settings)
 	{
@@ -2679,7 +2676,7 @@ const char* rdp_security_flag_string(UINT32 securityFlags, char* buffer, size_t 
 
 static BOOL rdp_reset_remote_settings(rdpRdp* rdp)
 {
-	UINT32 flags = 0;
+	UINT32 flags = FREERDP_SETTINGS_REMOTE_MODE;
 	WINPR_ASSERT(rdp);
 	freerdp_settings_free(rdp->remoteSettings);
 

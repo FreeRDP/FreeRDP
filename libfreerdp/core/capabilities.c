@@ -17,6 +17,7 @@
  * limitations under the License.
  */
 
+#include <winpr/wtsapi.h>
 #include <freerdp/config.h>
 
 #include "capabilities.h"
@@ -28,8 +29,6 @@
 #include <freerdp/log.h>
 
 #define TAG FREERDP_TAG("core.capabilities")
-
-#define CHANNEL_CHUNK_LENGTH 1600
 
 static const char* const CAPSET_TYPE_STRINGS[] = { "Unknown",
 	                                               "General",
@@ -2120,11 +2119,16 @@ static BOOL rdp_apply_virtual_channel_capability_set(rdpSettings* settings, cons
 	 * larger than CHANNEL_CHUNK_LENGTH (1600) bytes.
 	 * Also prevent an invalid 0 size.
 	 */
-	if (!settings->ServerMode &&
-	    ((src->VirtualChannelChunkSize > 16256) || (src->VirtualChannelChunkSize == 0)))
-		settings->VirtualChannelChunkSize = CHANNEL_CHUNK_LENGTH;
-	else if (!settings->ServerMode)
-		settings->VirtualChannelChunkSize = src->VirtualChannelChunkSize;
+	if (!settings->ServerMode)
+	{
+		if ((src->VirtualChannelChunkSize > CHANNEL_CHUNK_MAX_LENGTH) ||
+		    (src->VirtualChannelChunkSize == 0))
+			settings->VirtualChannelChunkSize = CHANNEL_CHUNK_LENGTH;
+		else
+		{
+			settings->VirtualChannelChunkSize = src->VirtualChannelChunkSize;
+		}
+	}
 
 	return TRUE;
 }
