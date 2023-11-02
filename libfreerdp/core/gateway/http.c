@@ -56,6 +56,7 @@ struct s_http_context
 	char* Connection;
 	char* Pragma;
 	char* RdgConnectionId;
+	char* RdgCorrelationId;
 	char* RdgAuthScheme;
 	BOOL websocketUpgrade;
 	char* SecWebsocketKey;
@@ -328,6 +329,20 @@ BOOL http_context_set_rdg_connection_id(HttpContext* context, const char* RdgCon
 	return TRUE;
 }
 
+BOOL http_context_set_rdg_correlation_id(HttpContext* context, const char* RdgCorrelationId)
+{
+	if (!context || !RdgCorrelationId)
+		return FALSE;
+
+	free(context->RdgCorrelationId);
+	context->RdgCorrelationId = _strdup(RdgCorrelationId);
+
+	if (!context->RdgCorrelationId)
+		return FALSE;
+
+	return TRUE;
+}
+
 BOOL http_context_enable_websocket_upgrade(HttpContext* context, BOOL enable)
 {
 	if (!context)
@@ -396,6 +411,7 @@ void http_context_free(HttpContext* context)
 		free(context->Connection);
 		free(context->Pragma);
 		free(context->RdgConnectionId);
+		free(context->RdgCorrelationId);
 		free(context->RdgAuthScheme);
 		ListDictionary_Free(context->cookies);
 		free(context);
@@ -607,6 +623,12 @@ wStream* http_request_write(HttpContext* context, HttpRequest* request)
 	if (context->RdgConnectionId)
 	{
 		if (!http_encode_body_line(s, "RDG-Connection-Id", context->RdgConnectionId))
+			goto fail;
+	}
+
+	if (context->RdgCorrelationId)
+	{
+		if (!http_encode_body_line(s, "RDG-Correlation-Id", context->RdgCorrelationId))
 			goto fail;
 	}
 
