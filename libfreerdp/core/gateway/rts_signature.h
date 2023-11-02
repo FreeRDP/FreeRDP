@@ -179,9 +179,11 @@ FREERDP_LOCAL BOOL rts_match_pdu_signature(const RtsPduSignature* signature, wSt
                                            const rpcconn_hdr_t* header);
 FREERDP_LOCAL BOOL rts_match_pdu_signature_ex(const RtsPduSignature* signature, wStream* s,
                                               const rpcconn_hdr_t* header,
-                                              RtsPduSignature* found_signature);
+                                              RtsPduSignature* found_signature, BOOL silent);
 FREERDP_LOCAL BOOL rts_extract_pdu_signature(RtsPduSignature* signature, wStream* s,
                                              const rpcconn_hdr_t* header);
+FREERDP_LOCAL BOOL rts_extract_pdu_signature_ex(RtsPduSignature* signature, wStream* s,
+                                                const rpcconn_hdr_t* header, BOOL silent);
 FREERDP_LOCAL UINT32 rts_identify_pdu_signature(const RtsPduSignature* signature,
                                                 const RTS_PDU_SIGNATURE_ENTRY** entry);
 FREERDP_LOCAL BOOL rts_print_pdu_signature(wLog* log, DWORD level,
