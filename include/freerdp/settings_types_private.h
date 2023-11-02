@@ -600,9 +600,9 @@ struct rdp_settings
 	UINT64 padding2880[2880 - 2819];                           /* 2819 */
 
 	/* Virtual Channel Capabilities */
-	SETTINGS_DEPRECATED(ALIGN64 UINT32 VirtualChannelCompressionFlags); /* 2880 */
-	SETTINGS_DEPRECATED(ALIGN64 UINT32 VCChunkSize);                    /* 2881 */
-	UINT64 padding2944[2944 - 2882];                                    /* 2882 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 VCFlags);     /* 2880 */
+	SETTINGS_DEPRECATED(ALIGN64 UINT32 VCChunkSize); /* 2881 */
+	UINT64 padding2944[2944 - 2882];                 /* 2882 */
 
 	/* Sound Capabilities */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL SoundBeepsEnabled); /* 2944 */

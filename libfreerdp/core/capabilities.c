@@ -2103,17 +2103,17 @@ static BOOL rdp_apply_virtual_channel_capability_set(rdpSettings* settings, cons
 	WINPR_ASSERT(src);
 
 	/* MS servers and clients disregard in advertising what is relevant for their own side */
-	if (settings->ServerMode && (settings->VirtualChannelCompressionFlags & VCCAPS_COMPR_SC) &&
-	    (src->VirtualChannelCompressionFlags & VCCAPS_COMPR_SC))
-		settings->VirtualChannelCompressionFlags |= VCCAPS_COMPR_SC;
+	if (settings->ServerMode && (settings->VCFlags & VCCAPS_COMPR_SC) &&
+	    (src->VCFlags & VCCAPS_COMPR_SC))
+		settings->VCFlags |= VCCAPS_COMPR_SC;
 	else
-		settings->VirtualChannelCompressionFlags &= ~VCCAPS_COMPR_SC;
+		settings->VCFlags &= ~VCCAPS_COMPR_SC;
 
-	if (!settings->ServerMode && (settings->VirtualChannelCompressionFlags & VCCAPS_COMPR_CS_8K) &&
-	    (src->VirtualChannelCompressionFlags & VCCAPS_COMPR_CS_8K))
-		settings->VirtualChannelCompressionFlags |= VCCAPS_COMPR_CS_8K;
+	if (!settings->ServerMode && (settings->VCFlags & VCCAPS_COMPR_CS_8K) &&
+	    (src->VCFlags & VCCAPS_COMPR_CS_8K))
+		settings->VCFlags |= VCCAPS_COMPR_CS_8K;
 	else
-		settings->VirtualChannelCompressionFlags &= ~VCCAPS_COMPR_CS_8K;
+		settings->VCFlags &= ~VCCAPS_COMPR_CS_8K;
 
 	/*
 	 * When one peer does not write the VCChunkSize, the VCChunkSize must not be
@@ -2122,8 +2122,7 @@ static BOOL rdp_apply_virtual_channel_capability_set(rdpSettings* settings, cons
 	 */
 	if (!settings->ServerMode)
 	{
-		if ((src->VCChunkSize > CHANNEL_CHUNK_MAX_LENGTH) ||
-		    (src->VCChunkSize == 0))
+		if ((src->VCChunkSize > CHANNEL_CHUNK_MAX_LENGTH) || (src->VCChunkSize == 0))
 			settings->VCChunkSize = CHANNEL_CHUNK_LENGTH;
 		else
 		{
@@ -2155,7 +2154,7 @@ static BOOL rdp_read_virtual_channel_capability_set(wStream* s, rdpSettings* set
 	else
 		VCChunkSize = UINT32_MAX; /* Use an invalid value to determine that value is not present */
 
-	settings->VirtualChannelCompressionFlags = flags;
+	settings->VCFlags = flags;
 	settings->VCChunkSize = VCChunkSize;
 
 	return TRUE;
@@ -2173,8 +2172,8 @@ static BOOL rdp_write_virtual_channel_capability_set(wStream* s, const rdpSettin
 		return FALSE;
 
 	const size_t header = rdp_capability_set_start(s);
-	Stream_Write_UINT32(s, settings->VirtualChannelCompressionFlags); /* flags (4 bytes) */
-	Stream_Write_UINT32(s, settings->VCChunkSize);                    /* VCChunkSize (4 bytes) */
+	Stream_Write_UINT32(s, settings->VCFlags);     /* flags (4 bytes) */
+	Stream_Write_UINT32(s, settings->VCChunkSize); /* VCChunkSize (4 bytes) */
 	return rdp_capability_set_finish(s, header, CAPSET_TYPE_VIRTUAL_CHANNEL);
 }
 
