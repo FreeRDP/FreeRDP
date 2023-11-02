@@ -219,6 +219,10 @@ int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	if (!instance || !instance->context)
 		return -1;
 
+	/* ignore LOGON_MSG_SESSION_CONTINUE message */
+	if (type == LOGON_MSG_SESSION_CONTINUE)
+		return 0;
+
 	char* title = nullptr;
 	size_t tlen = 0;
 	winpr_asprintf(&title, &tlen, "[%s] info",
