@@ -195,7 +195,7 @@ static int rpc_client_recv_pdu_int(rdpRpc* rpc, RPC_PDU* pdu)
 	WLog_VRB(TAG, "client state %s, vc state %s", rpc_client_state_str(rpc->State),
 	         rpc_vc_state_str(rpc->VirtualConnection->State));
 
-	const BOOL rc = rts_match_pdu_signature_ex(&RTS_PDU_PING_SIGNATURE, pdu->s, NULL, &found);
+	const BOOL rc = rts_match_pdu_signature_ex(&RTS_PDU_PING_SIGNATURE, pdu->s, NULL, &found, TRUE);
 	rts_print_pdu_signature(rpc->log, WLOG_TRACE, &found);
 	if (rc)
 		return rts_recv_ping_pdu(rpc, pdu->s);

@@ -157,6 +157,7 @@ static const char* rts_pdu_ptype_to_string(UINT32 ptype)
 			return "UNKNOWN";
 	}
 }
+
 static rpcconn_rts_hdr_t rts_pdu_header_init(void)
 {
 	rpcconn_rts_hdr_t header = { 0 };
@@ -174,7 +175,7 @@ static rpcconn_rts_hdr_t rts_pdu_header_init(void)
 	return header;
 }
 
-static BOOL rts_align_stream(wStream* s, size_t alignment)
+static BOOL rts_align_stream(wStream* s, size_t alignment, BOOL silent)
 {
 	size_t pos, pad;
 
@@ -183,7 +184,7 @@ static BOOL rts_align_stream(wStream* s, size_t alignment)
 
 	pos = Stream_GetPosition(s);
 	pad = rpc_offset_align(&pos, alignment);
-	return Stream_SafeSeek(s, pad);
+	return Stream_ConditionalSafeSeek(s, pad, silent);
 }
 
 static char* sdup(const void* src, size_t length)
@@ -268,7 +269,8 @@ BOOL rts_read_common_pdu_header(wStream* s, rpcconn_common_hdr_t* header, BOOL i
 }
 
 static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* auth,
-                                             const rpcconn_common_hdr_t* header, size_t* startPos)
+                                             const rpcconn_common_hdr_t* header, size_t* startPos,
+                                             BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(auth);
@@ -284,7 +286,7 @@ static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* aut
 		const size_t expected = header->frag_length - header->auth_length - 8;
 
 		Stream_SetPosition(s, expected);
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+		if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 8, silent))
 			return FALSE;
 
 		Stream_Read_UINT8(s, auth->auth_type);
@@ -297,7 +299,7 @@ static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* aut
 	if (header->auth_length != 0)
 	{
 		const void* ptr = Stream_Pointer(s);
-		if (!Stream_SafeSeek(s, header->auth_length))
+		if (!Stream_ConditionalSafeSeek(s, header->auth_length, silent))
 			return FALSE;
 		auth->auth_value = (BYTE*)sdup(ptr, header->auth_length);
 		if (auth->auth_value == NULL)
@@ -308,14 +310,14 @@ static BOOL rts_read_auth_verifier_no_checks(wStream* s, auth_verifier_co_t* aut
 }
 
 static BOOL rts_read_auth_verifier(wStream* s, auth_verifier_co_t* auth,
-                                   const rpcconn_common_hdr_t* header)
+                                   const rpcconn_common_hdr_t* header, BOOL silent)
 {
 	size_t pos;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(header);
 
-	if (!rts_read_auth_verifier_no_checks(s, auth, header, &pos))
+	if (!rts_read_auth_verifier_no_checks(s, auth, header, &pos, silent))
 		return FALSE;
 
 	{
@@ -327,13 +329,13 @@ static BOOL rts_read_auth_verifier(wStream* s, auth_verifier_co_t* auth,
 }
 
 static BOOL rts_read_auth_verifier_with_stub(wStream* s, auth_verifier_co_t* auth,
-                                             rpcconn_common_hdr_t* header)
+                                             rpcconn_common_hdr_t* header, BOOL silent)
 {
 	size_t pos;
 	size_t alloc_hint = 0;
 	BYTE** ptr = NULL;
 
-	if (!rts_read_auth_verifier_no_checks(s, auth, header, &pos))
+	if (!rts_read_auth_verifier_no_checks(s, auth, header, &pos, silent))
 		return FALSE;
 
 	switch (header->ptype)
@@ -434,12 +436,12 @@ static BOOL rts_write_auth_verifier(wStream* s, const auth_verifier_co_t* auth,
 	return TRUE;
 }
 
-static BOOL rts_read_version(wStream* s, p_rt_version_t* version)
+static BOOL rts_read_version(wStream* s, p_rt_version_t* version, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(version);
 
-	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, 2, sizeof(UINT8)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 2 * sizeof(UINT8), silent))
 		return FALSE;
 	Stream_Read_UINT8(s, version->major);
 	Stream_Read_UINT8(s, version->minor);
@@ -454,14 +456,15 @@ static void rts_free_supported_versions(p_rt_versions_supported_t* versions)
 	versions->p_protocols = NULL;
 }
 
-static BOOL rts_read_supported_versions(wStream* s, p_rt_versions_supported_t* versions)
+static BOOL rts_read_supported_versions(wStream* s, p_rt_versions_supported_t* versions,
+                                        BOOL silent)
 {
 	BYTE x;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(versions);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UINT8)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, sizeof(UINT8), silent))
 		return FALSE;
 
 	Stream_Read_UINT8(s, versions->n_protocols); /* count */
@@ -475,7 +478,7 @@ static BOOL rts_read_supported_versions(wStream* s, p_rt_versions_supported_t* v
 	for (x = 0; x < versions->n_protocols; x++)
 	{
 		p_rt_version_t* version = &versions->p_protocols[x];
-		if (!rts_read_version(s, version)) /* size_is(n_protocols) */
+		if (!rts_read_version(s, version, silent)) /* size_is(n_protocols) */
 		{
 			rts_free_supported_versions(versions);
 			return FALSE;
@@ -485,12 +488,12 @@ static BOOL rts_read_supported_versions(wStream* s, p_rt_versions_supported_t* v
 	return TRUE;
 }
 
-static BOOL rts_read_port_any(wStream* s, port_any_t* port)
+static BOOL rts_read_port_any(wStream* s, port_any_t* port, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(port);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(UINT16)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, sizeof(UINT16), silent))
 		return FALSE;
 
 	Stream_Read_UINT16(s, port->length);
@@ -498,7 +501,7 @@ static BOOL rts_read_port_any(wStream* s, port_any_t* port)
 		return TRUE;
 
 	const void* ptr = Stream_ConstPointer(s);
-	if (!Stream_SafeSeek(s, port->length))
+	if (!Stream_ConditionalSafeSeek(s, port->length, silent))
 		return FALSE;
 	port->port_spec = sdup(ptr, port->length);
 	return port->port_spec != NULL;
@@ -511,12 +514,12 @@ static void rts_free_port_any(port_any_t* port)
 	free(port->port_spec);
 }
 
-static BOOL rts_read_uuid(wStream* s, p_uuid_t* uuid)
+static BOOL rts_read_uuid(wStream* s, p_uuid_t* uuid, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(uuid);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(p_uuid_t)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, sizeof(p_uuid_t), silent))
 		return FALSE;
 
 	Stream_Read_UINT32(s, uuid->time_low);
@@ -555,15 +558,15 @@ static void rts_syntax_id_free(p_syntax_id_t* ptr)
 	free(ptr);
 }
 
-static BOOL rts_read_syntax_id(wStream* s, p_syntax_id_t* syntax_id)
+static BOOL rts_read_syntax_id(wStream* s, p_syntax_id_t* syntax_id, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(syntax_id);
 
-	if (!rts_read_uuid(s, &syntax_id->if_uuid))
+	if (!rts_read_uuid(s, &syntax_id->if_uuid, silent))
 		return FALSE;
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 4, silent))
 		return FALSE;
 
 	Stream_Read_UINT32(s, syntax_id->if_version);
@@ -599,20 +602,20 @@ static void rts_context_elem_free(p_cont_elem_t* ptr)
 	free(ptr);
 }
 
-static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element)
+static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element, BOOL silent)
 {
 	BYTE x;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(element);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 4, silent))
 		return FALSE;
 
 	Stream_Read_UINT16(s, element->p_cont_id);
 	Stream_Read_UINT8(s, element->n_transfer_syn); /* number of items */
 	Stream_Read_UINT8(s, element->reserved);       /* alignment pad, m.b.z. */
 
-	if (!rts_read_syntax_id(s, &element->abstract_syntax)) /* transfer syntax list */
+	if (!rts_read_syntax_id(s, &element->abstract_syntax, silent)) /* transfer syntax list */
 		return FALSE;
 
 	if (element->n_transfer_syn > 0)
@@ -623,7 +626,7 @@ static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element)
 		for (x = 0; x < element->n_transfer_syn; x++)
 		{
 			p_syntax_id_t* syn = &element->transfer_syntaxes[x];
-			if (!rts_read_syntax_id(s, syn)) /* size_is(n_transfer_syn) */
+			if (!rts_read_syntax_id(s, syn, silent)) /* size_is(n_transfer_syn) */
 				return FALSE;
 		}
 	}
@@ -655,14 +658,14 @@ static BOOL rts_write_context_elem(wStream* s, const p_cont_elem_t* element)
 	return TRUE;
 }
 
-static BOOL rts_read_context_list(wStream* s, p_cont_list_t* list)
+static BOOL rts_read_context_list(wStream* s, p_cont_list_t* list, BOOL silent)
 {
 	BYTE x;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(list);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 4, silent))
 		return FALSE;
 	Stream_Read_UINT8(s, list->n_context_elem); /* number of items */
 	Stream_Read_UINT8(s, list->reserved);       /* alignment pad, m.b.z. */
@@ -676,7 +679,7 @@ static BOOL rts_read_context_list(wStream* s, p_cont_list_t* list)
 		for (x = 0; x < list->n_context_elem; x++)
 		{
 			p_cont_elem_t* element = &list->p_cont_elem[x];
-			if (!rts_read_context_elem(s, element))
+			if (!rts_read_context_elem(s, element, silent))
 				return FALSE;
 		}
 	}
@@ -724,17 +727,17 @@ static void rts_result_free(p_result_t* results)
 	free(results);
 }
 
-static BOOL rts_read_result(wStream* s, p_result_t* result)
+static BOOL rts_read_result(wStream* s, p_result_t* result, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(result);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 2, silent))
 		return FALSE;
 	Stream_Read_UINT16(s, result->result);
 	Stream_Read_UINT16(s, result->reason);
 
-	return rts_read_syntax_id(s, &result->transfer_syntax);
+	return rts_read_syntax_id(s, &result->transfer_syntax, silent);
 }
 
 static void rts_free_result(p_result_t* result)
@@ -743,14 +746,14 @@ static void rts_free_result(p_result_t* result)
 		return;
 }
 
-static BOOL rts_read_result_list(wStream* s, p_result_list_t* list)
+static BOOL rts_read_result_list(wStream* s, p_result_list_t* list, BOOL silent)
 {
 	BYTE x;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(list);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 4, silent))
 		return FALSE;
 	Stream_Read_UINT8(s, list->n_results);  /* count */
 	Stream_Read_UINT8(s, list->reserved);   /* alignment pad, m.b.z. */
@@ -765,7 +768,7 @@ static BOOL rts_read_result_list(wStream* s, p_result_list_t* list)
 		for (x = 0; x < list->n_results; x++)
 		{
 			p_result_t* result = &list->p_results[x]; /* size_is(n_results) */
-			if (!rts_read_result(s, result))
+			if (!rts_read_result(s, result, silent))
 				return FALSE;
 		}
 	}
@@ -796,51 +799,53 @@ static void rts_free_pdu_alter_context(rpcconn_alter_context_hdr_t* ctx)
 	rts_free_auth_verifier(&ctx->auth_verifier);
 }
 
-static BOOL rts_read_pdu_alter_context(wStream* s, rpcconn_alter_context_hdr_t* ctx)
+static BOOL rts_read_pdu_alter_context(wStream* s, rpcconn_alter_context_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
 
-	if (!Stream_CheckAndLogRequiredLength(
-	        TAG, s, sizeof(rpcconn_alter_context_hdr_t) - sizeof(rpcconn_common_hdr_t)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(
+	        TAG, s, sizeof(rpcconn_alter_context_hdr_t) - sizeof(rpcconn_common_hdr_t), silent))
 		return FALSE;
 
 	Stream_Read_UINT16(s, ctx->max_xmit_frag);
 	Stream_Read_UINT16(s, ctx->max_recv_frag);
 	Stream_Read_UINT32(s, ctx->assoc_group_id);
 
-	if (!rts_read_context_list(s, &ctx->p_context_elem))
+	if (!rts_read_context_list(s, &ctx->p_context_elem, silent))
 		return FALSE;
 
-	if (!rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header))
+	if (!rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header, silent))
 		return FALSE;
 
 	return TRUE;
 }
 
 static BOOL rts_read_pdu_alter_context_response(wStream* s,
-                                                rpcconn_alter_context_response_hdr_t* ctx)
+                                                rpcconn_alter_context_response_hdr_t* ctx,
+                                                BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
 
-	if (!Stream_CheckAndLogRequiredLength(
-	        TAG, s, sizeof(rpcconn_alter_context_response_hdr_t) - sizeof(rpcconn_common_hdr_t)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(
+	        TAG, s, sizeof(rpcconn_alter_context_response_hdr_t) - sizeof(rpcconn_common_hdr_t),
+	        silent))
 		return FALSE;
 	Stream_Read_UINT16(s, ctx->max_xmit_frag);
 	Stream_Read_UINT16(s, ctx->max_recv_frag);
 	Stream_Read_UINT32(s, ctx->assoc_group_id);
 
-	if (!rts_read_port_any(s, &ctx->sec_addr))
+	if (!rts_read_port_any(s, &ctx->sec_addr, silent))
 		return FALSE;
 
-	if (!rts_align_stream(s, 4))
+	if (!rts_align_stream(s, 4, silent))
 		return FALSE;
 
-	if (!rts_read_result_list(s, &ctx->p_result_list))
+	if (!rts_read_result_list(s, &ctx->p_result_list, silent))
 		return FALSE;
 
-	if (!rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header))
+	if (!rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header, silent))
 		return FALSE;
 
 	return TRUE;
@@ -856,22 +861,22 @@ static void rts_free_pdu_alter_context_response(rpcconn_alter_context_response_h
 	rts_free_auth_verifier(&ctx->auth_verifier);
 }
 
-static BOOL rts_read_pdu_bind(wStream* s, rpcconn_bind_hdr_t* ctx)
+static BOOL rts_read_pdu_bind(wStream* s, rpcconn_bind_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
 
-	if (!Stream_CheckAndLogRequiredLength(
-	        TAG, s, sizeof(rpcconn_bind_hdr_t) - sizeof(rpcconn_common_hdr_t)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(
+	        TAG, s, sizeof(rpcconn_bind_hdr_t) - sizeof(rpcconn_common_hdr_t), silent))
 		return FALSE;
 	Stream_Read_UINT16(s, ctx->max_xmit_frag);
 	Stream_Read_UINT16(s, ctx->max_recv_frag);
 	Stream_Read_UINT32(s, ctx->assoc_group_id);
 
-	if (!rts_read_context_list(s, &ctx->p_context_elem))
+	if (!rts_read_context_list(s, &ctx->p_context_elem, silent))
 		return FALSE;
 
-	if (!rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header))
+	if (!rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header, silent))
 		return FALSE;
 
 	return TRUE;
@@ -885,7 +890,7 @@ static void rts_free_pdu_bind(rpcconn_bind_hdr_t* ctx)
 	rts_free_auth_verifier(&ctx->auth_verifier);
 }
 
-static BOOL rts_read_pdu_bind_ack(wStream* s, rpcconn_bind_ack_hdr_t* ctx)
+static BOOL rts_read_pdu_bind_ack(wStream* s, rpcconn_bind_ack_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
@@ -897,16 +902,16 @@ static BOOL rts_read_pdu_bind_ack(wStream* s, rpcconn_bind_ack_hdr_t* ctx)
 	Stream_Read_UINT16(s, ctx->max_recv_frag);
 	Stream_Read_UINT32(s, ctx->assoc_group_id);
 
-	if (!rts_read_port_any(s, &ctx->sec_addr))
+	if (!rts_read_port_any(s, &ctx->sec_addr, silent))
 		return FALSE;
 
-	if (!rts_align_stream(s, 4))
+	if (!rts_align_stream(s, 4, silent))
 		return FALSE;
 
-	if (!rts_read_result_list(s, &ctx->p_result_list))
+	if (!rts_read_result_list(s, &ctx->p_result_list, silent))
 		return FALSE;
 
-	return rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header);
+	return rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header, silent);
 }
 
 static void rts_free_pdu_bind_ack(rpcconn_bind_ack_hdr_t* ctx)
@@ -918,16 +923,16 @@ static void rts_free_pdu_bind_ack(rpcconn_bind_ack_hdr_t* ctx)
 	rts_free_auth_verifier(&ctx->auth_verifier);
 }
 
-static BOOL rts_read_pdu_bind_nak(wStream* s, rpcconn_bind_nak_hdr_t* ctx)
+static BOOL rts_read_pdu_bind_nak(wStream* s, rpcconn_bind_nak_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
 
-	if (!Stream_CheckAndLogRequiredLength(
-	        TAG, s, sizeof(rpcconn_bind_nak_hdr_t) - sizeof(rpcconn_common_hdr_t)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(
+	        TAG, s, sizeof(rpcconn_bind_nak_hdr_t) - sizeof(rpcconn_common_hdr_t), silent))
 		return FALSE;
 	Stream_Read_UINT16(s, ctx->provider_reject_reason);
-	return rts_read_supported_versions(s, &ctx->versions);
+	return rts_read_supported_versions(s, &ctx->versions, silent);
 }
 
 static void rts_free_pdu_bind_nak(rpcconn_bind_nak_hdr_t* ctx)
@@ -938,18 +943,18 @@ static void rts_free_pdu_bind_nak(rpcconn_bind_nak_hdr_t* ctx)
 	rts_free_supported_versions(&ctx->versions);
 }
 
-static BOOL rts_read_pdu_auth3(wStream* s, rpcconn_rpc_auth_3_hdr_t* ctx)
+static BOOL rts_read_pdu_auth3(wStream* s, rpcconn_rpc_auth_3_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
 
-	if (!Stream_CheckAndLogRequiredLength(
-	        TAG, s, sizeof(rpcconn_rpc_auth_3_hdr_t) - sizeof(rpcconn_common_hdr_t)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(
+	        TAG, s, sizeof(rpcconn_rpc_auth_3_hdr_t) - sizeof(rpcconn_common_hdr_t), silent))
 		return FALSE;
 	Stream_Read_UINT16(s, ctx->max_xmit_frag);
 	Stream_Read_UINT16(s, ctx->max_recv_frag);
 
-	return rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header);
+	return rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header, silent);
 }
 
 static void rts_free_pdu_auth3(rpcconn_rpc_auth_3_hdr_t* ctx)
@@ -959,12 +964,12 @@ static void rts_free_pdu_auth3(rpcconn_rpc_auth_3_hdr_t* ctx)
 	rts_free_auth_verifier(&ctx->auth_verifier);
 }
 
-static BOOL rts_read_pdu_fault(wStream* s, rpcconn_fault_hdr_t* ctx)
+static BOOL rts_read_pdu_fault(wStream* s, rpcconn_fault_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 12, silent))
 		return FALSE;
 	Stream_Read_UINT32(s, ctx->alloc_hint);
 	Stream_Read_UINT16(s, ctx->p_cont_id);
@@ -973,7 +978,7 @@ static BOOL rts_read_pdu_fault(wStream* s, rpcconn_fault_hdr_t* ctx)
 	Stream_Read_UINT32(s, ctx->status);
 
 	WLog_WARN(TAG, "status=%s", Win32ErrorCode2Tag(ctx->status));
-	return rts_read_auth_verifier_with_stub(s, &ctx->auth_verifier, &ctx->header);
+	return rts_read_auth_verifier_with_stub(s, &ctx->auth_verifier, &ctx->header, silent);
 }
 
 static void rts_free_pdu_fault(rpcconn_fault_hdr_t* ctx)
@@ -983,15 +988,15 @@ static void rts_free_pdu_fault(rpcconn_fault_hdr_t* ctx)
 	rts_free_auth_verifier(&ctx->auth_verifier);
 }
 
-static BOOL rts_read_pdu_cancel_ack(wStream* s, rpcconn_cancel_hdr_t* ctx)
+static BOOL rts_read_pdu_cancel_ack(wStream* s, rpcconn_cancel_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
 
-	if (!Stream_CheckAndLogRequiredLength(
-	        TAG, s, sizeof(rpcconn_cancel_hdr_t) - sizeof(rpcconn_common_hdr_t)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(
+	        TAG, s, sizeof(rpcconn_cancel_hdr_t) - sizeof(rpcconn_common_hdr_t), silent))
 		return FALSE;
-	return rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header);
+	return rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header, silent);
 }
 
 static void rts_free_pdu_cancel_ack(rpcconn_cancel_hdr_t* ctx)
@@ -1001,15 +1006,15 @@ static void rts_free_pdu_cancel_ack(rpcconn_cancel_hdr_t* ctx)
 	rts_free_auth_verifier(&ctx->auth_verifier);
 }
 
-static BOOL rts_read_pdu_orphaned(wStream* s, rpcconn_orphaned_hdr_t* ctx)
+static BOOL rts_read_pdu_orphaned(wStream* s, rpcconn_orphaned_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
 
-	if (!Stream_CheckAndLogRequiredLength(
-	        TAG, s, sizeof(rpcconn_orphaned_hdr_t) - sizeof(rpcconn_common_hdr_t)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(
+	        TAG, s, sizeof(rpcconn_orphaned_hdr_t) - sizeof(rpcconn_common_hdr_t), silent))
 		return FALSE;
-	return rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header);
+	return rts_read_auth_verifier(s, &ctx->auth_verifier, &ctx->header, silent);
 }
 
 static void rts_free_pdu_orphaned(rpcconn_orphaned_hdr_t* ctx)
@@ -1019,21 +1024,21 @@ static void rts_free_pdu_orphaned(rpcconn_orphaned_hdr_t* ctx)
 	rts_free_auth_verifier(&ctx->auth_verifier);
 }
 
-static BOOL rts_read_pdu_request(wStream* s, rpcconn_request_hdr_t* ctx)
+static BOOL rts_read_pdu_request(wStream* s, rpcconn_request_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
 
-	if (!Stream_CheckAndLogRequiredLength(
-	        TAG, s, sizeof(rpcconn_request_hdr_t) - sizeof(rpcconn_common_hdr_t)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(
+	        TAG, s, sizeof(rpcconn_request_hdr_t) - sizeof(rpcconn_common_hdr_t), silent))
 		return FALSE;
 	Stream_Read_UINT32(s, ctx->alloc_hint);
 	Stream_Read_UINT16(s, ctx->p_cont_id);
 	Stream_Read_UINT16(s, ctx->opnum);
-	if (!rts_read_uuid(s, &ctx->object))
+	if (!rts_read_uuid(s, &ctx->object, silent))
 		return FALSE;
 
-	return rts_read_auth_verifier_with_stub(s, &ctx->auth_verifier, &ctx->header);
+	return rts_read_auth_verifier_with_stub(s, &ctx->auth_verifier, &ctx->header, silent);
 }
 
 static void rts_free_pdu_request(rpcconn_request_hdr_t* ctx)
@@ -1043,23 +1048,23 @@ static void rts_free_pdu_request(rpcconn_request_hdr_t* ctx)
 	rts_free_auth_verifier(&ctx->auth_verifier);
 }
 
-static BOOL rts_read_pdu_response(wStream* s, rpcconn_response_hdr_t* ctx)
+static BOOL rts_read_pdu_response(wStream* s, rpcconn_response_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
 
-	if (!Stream_CheckAndLogRequiredLength(
-	        TAG, s, sizeof(rpcconn_response_hdr_t) - sizeof(rpcconn_common_hdr_t)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(
+	        TAG, s, sizeof(rpcconn_response_hdr_t) - sizeof(rpcconn_common_hdr_t), silent))
 		return FALSE;
 	Stream_Read_UINT32(s, ctx->alloc_hint);
 	Stream_Read_UINT16(s, ctx->p_cont_id);
 	Stream_Read_UINT8(s, ctx->cancel_count);
 	Stream_Read_UINT8(s, ctx->reserved);
 
-	if (!rts_align_stream(s, 8))
+	if (!rts_align_stream(s, 8, silent))
 		return FALSE;
 
-	return rts_read_auth_verifier_with_stub(s, &ctx->auth_verifier, &ctx->header);
+	return rts_read_auth_verifier_with_stub(s, &ctx->auth_verifier, &ctx->header, silent);
 }
 
 static void rts_free_pdu_response(rpcconn_response_hdr_t* ctx)
@@ -1070,13 +1075,13 @@ static void rts_free_pdu_response(rpcconn_response_hdr_t* ctx)
 	rts_free_auth_verifier(&ctx->auth_verifier);
 }
 
-static BOOL rts_read_pdu_rts(wStream* s, rpcconn_rts_hdr_t* ctx)
+static BOOL rts_read_pdu_rts(wStream* s, rpcconn_rts_hdr_t* ctx, BOOL silent)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(ctx);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s,
-	                                      sizeof(rpcconn_rts_hdr_t) - sizeof(rpcconn_common_hdr_t)))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(
+	        TAG, s, sizeof(rpcconn_rts_hdr_t) - sizeof(rpcconn_common_hdr_t), silent))
 		return FALSE;
 
 	Stream_Read_UINT16(s, ctx->Flags);
@@ -1155,11 +1160,16 @@ void rts_free_pdu_header(rpcconn_hdr_t* header, BOOL allocated)
 
 BOOL rts_read_pdu_header(wStream* s, rpcconn_hdr_t* header)
 {
+	return rts_read_pdu_header_ex(s, header, FALSE);
+}
+
+BOOL rts_read_pdu_header_ex(wStream* s, rpcconn_hdr_t* header, BOOL silent)
+{
 	BOOL rc = FALSE;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
 
-	if (!rts_read_common_pdu_header(s, &header->common, FALSE))
+	if (!rts_read_common_pdu_header(s, &header->common, silent))
 		return FALSE;
 
 	WLog_DBG(TAG, "Reading PDU type %s", rts_pdu_ptype_to_string(header->common.ptype));
@@ -1167,40 +1177,40 @@ BOOL rts_read_pdu_header(wStream* s, rpcconn_hdr_t* header)
 	switch (header->common.ptype)
 	{
 		case PTYPE_ALTER_CONTEXT:
-			rc = rts_read_pdu_alter_context(s, &header->alter_context);
+			rc = rts_read_pdu_alter_context(s, &header->alter_context, silent);
 			break;
 		case PTYPE_ALTER_CONTEXT_RESP:
-			rc = rts_read_pdu_alter_context_response(s, &header->alter_context_response);
+			rc = rts_read_pdu_alter_context_response(s, &header->alter_context_response, silent);
 			break;
 		case PTYPE_BIND:
-			rc = rts_read_pdu_bind(s, &header->bind);
+			rc = rts_read_pdu_bind(s, &header->bind, silent);
 			break;
 		case PTYPE_BIND_ACK:
-			rc = rts_read_pdu_bind_ack(s, &header->bind_ack);
+			rc = rts_read_pdu_bind_ack(s, &header->bind_ack, silent);
 			break;
 		case PTYPE_BIND_NAK:
-			rc = rts_read_pdu_bind_nak(s, &header->bind_nak);
+			rc = rts_read_pdu_bind_nak(s, &header->bind_nak, silent);
 			break;
 		case PTYPE_RPC_AUTH_3:
-			rc = rts_read_pdu_auth3(s, &header->rpc_auth_3);
+			rc = rts_read_pdu_auth3(s, &header->rpc_auth_3, silent);
 			break;
 		case PTYPE_CANCEL_ACK:
-			rc = rts_read_pdu_cancel_ack(s, &header->cancel);
+			rc = rts_read_pdu_cancel_ack(s, &header->cancel, silent);
 			break;
 		case PTYPE_FAULT:
-			rc = rts_read_pdu_fault(s, &header->fault);
+			rc = rts_read_pdu_fault(s, &header->fault, silent);
 			break;
 		case PTYPE_ORPHANED:
-			rc = rts_read_pdu_orphaned(s, &header->orphaned);
+			rc = rts_read_pdu_orphaned(s, &header->orphaned, silent);
 			break;
 		case PTYPE_REQUEST:
-			rc = rts_read_pdu_request(s, &header->request);
+			rc = rts_read_pdu_request(s, &header->request, silent);
 			break;
 		case PTYPE_RESPONSE:
-			rc = rts_read_pdu_response(s, &header->response);
+			rc = rts_read_pdu_response(s, &header->response, silent);
 			break;
 		case PTYPE_RTS:
-			rc = rts_read_pdu_rts(s, &header->rts);
+			rc = rts_read_pdu_rts(s, &header->rts, silent);
 			break;
 		case PTYPE_SHUTDOWN:
 			rc = TRUE; /* No extra fields */
@@ -1423,26 +1433,26 @@ static BOOL rts_empty_command_write(wStream* s)
 	return TRUE;
 }
 
-static BOOL rts_padding_command_read(wStream* s, size_t* length)
+static BOOL rts_padding_command_read(wStream* s, size_t* length, BOOL silent)
 {
 	UINT32 ConformanceCount;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(length);
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 4, silent))
 		return FALSE;
 	Stream_Read_UINT32(s, ConformanceCount); /* ConformanceCount (4 bytes) */
 	*length = ConformanceCount + 4;
 	return TRUE;
 }
 
-static BOOL rts_client_address_command_read(wStream* s, size_t* length)
+static BOOL rts_client_address_command_read(wStream* s, size_t* length, BOOL silent)
 {
 	UINT32 AddressType;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(length);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 4, silent))
 		return FALSE;
 	Stream_Read_UINT32(s, AddressType); /* AddressType (4 bytes) */
 
@@ -1923,7 +1933,7 @@ fail:
 	return (status) ? 1 : -1;
 }
 
-BOOL rts_command_length(UINT32 CommandType, wStream* s, size_t* length)
+BOOL rts_command_length(UINT32 CommandType, wStream* s, size_t* length, BOOL silent)
 {
 	size_t padding = 0;
 	size_t CommandLength = 0;
@@ -1965,7 +1975,7 @@ BOOL rts_command_length(UINT32 CommandType, wStream* s, size_t* length)
 			break;
 
 		case RTS_CMD_PADDING: /* variable-size */
-			if (!rts_padding_command_read(s, &padding))
+			if (!rts_padding_command_read(s, &padding, silent))
 				return FALSE;
 			break;
 
@@ -1978,7 +1988,7 @@ BOOL rts_command_length(UINT32 CommandType, wStream* s, size_t* length)
 			break;
 
 		case RTS_CMD_CLIENT_ADDRESS: /* variable-size */
-			if (!rts_client_address_command_read(s, &CommandLength))
+			if (!rts_client_address_command_read(s, &CommandLength, silent))
 				return FALSE;
 			break;
 
@@ -2000,7 +2010,7 @@ BOOL rts_command_length(UINT32 CommandType, wStream* s, size_t* length)
 	}
 
 	CommandLength += padding;
-	if (!Stream_CheckAndLogRequiredLength(TAG, s, CommandLength))
+	if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, CommandLength, silent))
 		return FALSE;
 
 	if (length)
@@ -2365,4 +2375,31 @@ BOOL rts_write_pdu_bind(wStream* s, const rpcconn_bind_hdr_t* bind)
 		return FALSE;
 
 	return rts_write_auth_verifier(s, &bind->auth_verifier, &bind->header);
+}
+
+BOOL rts_conditional_check_and_log(const char* tag, wStream* s, size_t size, BOOL silent,
+                                   const char* fkt, const char* file, size_t line)
+{
+	if (silent)
+	{
+		const size_t rem = Stream_GetRemainingLength(s);
+		if (rem < size)
+			return FALSE;
+		return TRUE;
+	}
+
+	return Stream_CheckAndLogRequiredLengthEx(tag, WLOG_WARN, s, size, 1, "%s(%s:%" PRIuz ")", fkt,
+	                                          file, line);
+}
+
+BOOL rts_conditional_safe_seek(wStream* s, size_t size, BOOL silent, const char* fkt,
+                               const char* file, size_t line)
+{
+	if (silent)
+	{
+		const size_t rem = Stream_GetRemainingLength(s);
+		if (rem < size)
+			return FALSE;
+	}
+	return Stream_SafeSeekEx(s, size, file, line, fkt);
 }

@@ -285,18 +285,19 @@ static const RTS_PDU_SIGNATURE_ENTRY RTS_PDU_SIGNATURE_TABLE[] = {
 BOOL rts_match_pdu_signature(const RtsPduSignature* signature, wStream* src,
                              const rpcconn_hdr_t* header)
 {
-	return rts_match_pdu_signature_ex(signature, src, header, NULL);
+	return rts_match_pdu_signature_ex(signature, src, header, NULL, FALSE);
 }
 
 BOOL rts_match_pdu_signature_ex(const RtsPduSignature* signature, wStream* src,
-                                const rpcconn_hdr_t* header, RtsPduSignature* found_signature)
+                                const rpcconn_hdr_t* header, RtsPduSignature* found_signature,
+                                BOOL silent)
 {
 	RtsPduSignature extracted = { 0 };
 
 	WINPR_ASSERT(signature);
 	WINPR_ASSERT(src);
 
-	if (!rts_extract_pdu_signature(&extracted, src, header))
+	if (!rts_extract_pdu_signature_ex(&extracted, src, header, silent))
 		return FALSE;
 
 	if (found_signature)
@@ -306,6 +307,12 @@ BOOL rts_match_pdu_signature_ex(const RtsPduSignature* signature, wStream* src,
 
 BOOL rts_extract_pdu_signature(RtsPduSignature* signature, wStream* src,
                                const rpcconn_hdr_t* header)
+{
+	return rts_extract_pdu_signature_ex(signature, src, header, FALSE);
+}
+
+BOOL rts_extract_pdu_signature_ex(RtsPduSignature* signature, wStream* src,
+                                  const rpcconn_hdr_t* header, BOOL silent)
 {
 	BOOL rc = FALSE;
 	UINT16 i;
@@ -319,7 +326,7 @@ BOOL rts_extract_pdu_signature(RtsPduSignature* signature, wStream* src,
 	wStream* s = Stream_StaticInit(&sbuffer, Stream_Pointer(src), Stream_GetRemainingLength(src));
 	if (!header)
 	{
-		if (!rts_read_pdu_header(s, &rheader))
+		if (!rts_read_pdu_header_ex(s, &rheader, silent))
 			goto fail;
 		header = &rheader;
 	}
@@ -335,7 +342,7 @@ BOOL rts_extract_pdu_signature(RtsPduSignature* signature, wStream* src,
 		UINT32 CommandType;
 		size_t CommandLength;
 
-		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 4, silent))
 			goto fail;
 
 		Stream_Read_UINT32(s, CommandType); /* CommandType (4 bytes) */
@@ -344,9 +351,9 @@ BOOL rts_extract_pdu_signature(RtsPduSignature* signature, wStream* src,
 		if (i < ARRAYSIZE(signature->CommandTypes))
 			signature->CommandTypes[i] = CommandType;
 
-		if (!rts_command_length(CommandType, s, &CommandLength))
+		if (!rts_command_length(CommandType, s, &CommandLength, silent))
 			goto fail;
-		if (!Stream_SafeSeek(s, CommandLength))
+		if (!Stream_ConditionalSafeSeek(s, CommandLength, silent))
 			goto fail;
 	}
 
