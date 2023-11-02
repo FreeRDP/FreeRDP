@@ -180,12 +180,21 @@ int winpr_asprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, .
 {
 	va_list ap;
 
-	WINPR_ASSERT(s);
-	WINPR_ASSERT(slen);
+	va_start(ap, templ);
+	int rc = winpr_vasprintf(s, slen, templ, ap);
+	va_end(ap);
+	return rc;
+}
+
+WINPR_ATTR_FORMAT_ARG(3, 0)
+int winpr_vasprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, va_list oap)
+{
+	va_list ap;
+
 	*s = NULL;
 	*slen = 0;
 
-	va_start(ap, templ);
+	va_copy(ap, oap);
 	const int length = vsnprintf(NULL, 0, templ, ap);
 	va_end(ap);
 	if (length < 0)
@@ -195,7 +204,7 @@ int winpr_asprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, .
 	if (!str)
 		return -1;
 
-	va_start(ap, templ);
+	va_copy(ap, oap);
 	const int plen = vsprintf(str, templ, ap);
 	va_end(ap);
 

@@ -40,6 +40,7 @@ extern "C"
 	                                const char* separator);
 
 	WINPR_API int winpr_asprintf(char** s, size_t* slen, const char* templ, ...);
+	WINPR_API int winpr_vasprintf(char** s, size_t* slen, const char* templ, va_list ap);
 
 #ifndef _WIN32
 
