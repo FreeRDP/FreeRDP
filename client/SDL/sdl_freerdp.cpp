@@ -324,6 +324,114 @@ class SdlEventUpdateTriggerGuard
 	}
 };
 
+static BOOL sdl_draw_to_window_rect(SdlContext* sdl, SDL_Surface* screen, SDL_Surface* surface,
+                                    SDL_Point offset, const SDL_Rect& srcRect)
+{
+	SDL_Rect dstRect = { offset.x + srcRect.x, offset.y + srcRect.y, srcRect.w, srcRect.h };
+	SDL_SetClipRect(surface, &srcRect);
+	SDL_SetClipRect(screen, &dstRect);
+	SDL_BlitSurface(surface, &srcRect, screen, &dstRect);
+	return TRUE;
+}
+
+static BOOL sdl_draw_to_window_rect(SdlContext* sdl, SDL_Surface* screen, SDL_Surface* surface,
+                                    SDL_Point offset, const std::vector<SDL_Rect>& rects = {})
+{
+	if (rects.empty())
+	{
+		return sdl_draw_to_window_rect(sdl, screen, surface, offset,
+		                               { 0, 0, surface->w, surface->h });
+	}
+	for (auto& srcRect : rects)
+	{
+		if (!sdl_draw_to_window_rect(sdl, screen, surface, offset, srcRect))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL sdl_draw_to_window_scaled_rect(SdlContext* sdl, Sint32 windowId, SDL_Surface* screen,
+                                           SDL_Surface* surface, const SDL_Rect& srcRect)
+{
+	SDL_Rect dstRect = srcRect;
+	sdl_scale_coordinates(sdl, windowId, &dstRect.x, &dstRect.y, FALSE, TRUE);
+	sdl_scale_coordinates(sdl, windowId, &dstRect.w, &dstRect.h, FALSE, TRUE);
+	SDL_SetClipRect(surface, &srcRect);
+	SDL_SetClipRect(screen, &dstRect);
+	SDL_BlitScaled(surface, &srcRect, screen, &dstRect);
+
+	return TRUE;
+}
+
+static BOOL sdl_draw_to_window_scaled_rect(SdlContext* sdl, Sint32 windowId, SDL_Surface* screen,
+                                           SDL_Surface* surface,
+                                           const std::vector<SDL_Rect>& rects = {})
+{
+	if (rects.empty())
+	{
+		return sdl_draw_to_window_scaled_rect(sdl, windowId, screen, surface,
+		                                      { 0, 0, surface->w, surface->h });
+	}
+	for (auto& srcRect : rects)
+	{
+		if (!sdl_draw_to_window_scaled_rect(sdl, windowId, screen, surface, srcRect))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL sdl_draw_to_window(SdlContext* sdl, sdl_window_t window,
+                               const std::vector<SDL_Rect>& rects = {})
+{
+	WINPR_ASSERT(sdl);
+
+	auto context = sdl->context();
+	auto gdi = context->gdi;
+
+	SDL_Surface* screen = SDL_GetWindowSurface(window.window);
+
+	int w, h;
+	SDL_GetWindowSize(window.window, &w, &h);
+
+	if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
+	{
+		if (gdi->width < w)
+		{
+			window.offset_x = (w - gdi->width) / 2;
+		}
+		if (gdi->height < h)
+		{
+			window.offset_y = (h - gdi->height) / 2;
+		}
+
+		auto surface = sdl->primary.get();
+		if (!sdl_draw_to_window_rect(sdl, screen, surface, { window.offset_x, window.offset_y },
+		                             rects))
+			return FALSE;
+	}
+	else
+	{
+		auto id = SDL_GetWindowID(window.window);
+
+		if (!sdl_draw_to_window_scaled_rect(sdl, id, screen, sdl->primary.get(), rects))
+			return FALSE;
+	}
+	SDL_UpdateWindowSurface(window.window);
+	return TRUE;
+}
+
+static BOOL sdl_draw_to_window(SdlContext* sdl, const std::vector<sdl_window_t>& window,
+                               const std::vector<SDL_Rect>& rects = {})
+{
+	for (auto& window : sdl->windows)
+	{
+		if (!sdl_draw_to_window(sdl, window, rects))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 static BOOL sdl_end_paint_process(rdpContext* context)
 {
 	rdpGdi* gdi;
@@ -348,55 +456,14 @@ static BOOL sdl_end_paint_process(rdpContext* context)
 	if (ninvalid < 1)
 		return TRUE;
 
-	// TODO: Support multiple windows
-	for (auto& window : sdl->windows)
+	std::vector<SDL_Rect> rects;
+	for (INT32 x = 0; x < ninvalid; x++)
 	{
-		SDL_Surface* screen = SDL_GetWindowSurface(window.window);
-
-		int w, h;
-		SDL_GetWindowSize(window.window, &w, &h);
-
-		if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
-		{
-			if (gdi->width < w)
-			{
-				window.offset_x = (w - gdi->width) / 2;
-			}
-			if (gdi->height < h)
-			{
-				window.offset_y = (h - gdi->height) / 2;
-			}
-
-			for (INT32 i = 0; i < ninvalid; i++)
-			{
-				const GDI_RGN* rgn = &cinvalid[i];
-				const SDL_Rect srcRect = { rgn->x, rgn->y, rgn->w, rgn->h };
-				SDL_Rect dstRect = { window.offset_x + rgn->x, window.offset_y + rgn->y, rgn->w,
-					                 rgn->h };
-				SDL_SetClipRect(sdl->primary.get(), &srcRect);
-				SDL_SetClipRect(screen, &dstRect);
-				SDL_BlitSurface(sdl->primary.get(), &srcRect, screen, &dstRect);
-			}
-		}
-		else
-		{
-			auto id = SDL_GetWindowID(window.window);
-			for (INT32 i = 0; i < ninvalid; i++)
-			{
-				const GDI_RGN* rgn = &cinvalid[i];
-				const SDL_Rect srcRect = { rgn->x, rgn->y, rgn->w, rgn->h };
-				SDL_Rect dstRect = srcRect;
-				sdl_scale_coordinates(sdl, id, &dstRect.x, &dstRect.y, FALSE, TRUE);
-				sdl_scale_coordinates(sdl, id, &dstRect.w, &dstRect.h, FALSE, TRUE);
-				SDL_SetClipRect(sdl->primary.get(), &srcRect);
-				SDL_SetClipRect(screen, &dstRect);
-				SDL_BlitScaled(sdl->primary.get(), &srcRect, screen, &dstRect);
-			}
-		}
-		SDL_UpdateWindowSurface(window.window);
+		auto& rgn = cinvalid[x];
+		rects.push_back({ rgn.x, rgn.y, rgn.w, rgn.h });
 	}
 
-	return TRUE;
+	return sdl_draw_to_window(sdl, sdl->windows, rects);
 }
 
 /* This function is called when the library completed composing a new
@@ -803,6 +870,31 @@ static int sdl_run(SdlContext* sdl)
 				{
 					const SDL_WindowEvent* ev = &windowEvent.window;
 					sdl->disp.handle_window_event(ev);
+
+					switch (ev->event)
+					{
+						case SDL_WINDOWEVENT_RESIZED:
+						case SDL_WINDOWEVENT_SIZE_CHANGED:
+						{
+							auto window = SDL_GetWindowFromID(ev->windowID);
+
+							if (window)
+							{
+								auto surface = SDL_GetWindowSurface(window);
+								if (surface)
+								{
+									SDL_Rect rect = { 0, 0, surface->w, surface->h };
+
+									auto color = SDL_MapRGBA(surface->format, 0, 0, 0, 0xff);
+									SDL_FillRect(surface, &rect, color);
+								}
+								sdl_draw_to_window(sdl, sdl->windows);
+							}
+						}
+						break;
+						default:
+							break;
+					}
 				}
 				break;
 
