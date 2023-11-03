@@ -43,28 +43,58 @@ static void rdpdr_write_general_capset(rdpdrPlugin* rdpdr, wStream* s)
 	WINPR_UNUSED(rdpdr);
 	const RDPDR_CAPABILITY_HEADER header = { CAP_GENERAL_TYPE, RDPDR_CAPABILITY_HEADER_LENGTH + 36,
 		                                     GENERAL_CAPABILITY_VERSION_02 };
+
+	const UINT32 ioCode1 = rdpdr->clientIOCode1 & rdpdr->serverIOCode1;
+	const UINT32 ioCode2 = rdpdr->clientIOCode2 & rdpdr->serverIOCode2;
+
 	rdpdr_write_capset_header(rdpdr->log, s, &header);
-	Stream_Write_UINT32(s, 0);                   /* osType, ignored on receipt */
-	Stream_Write_UINT32(s, 0);                   /* osVersion, unused and must be set to zero */
+	Stream_Write_UINT32(s, rdpdr->clientOsType);    /* osType, ignored on receipt */
+	Stream_Write_UINT32(s, rdpdr->clientOsVersion); /* osVersion, unused and must be set to zero */
 	Stream_Write_UINT16(s, rdpdr->clientVersionMajor); /* protocolMajorVersion, must be set to 1 */
 	Stream_Write_UINT16(s, rdpdr->clientVersionMinor); /* protocolMinorVersion */
-	Stream_Write_UINT32(s, 0x0000FFFF);          /* ioCode1 */
-	Stream_Write_UINT32(s, 0); /* ioCode2, must be set to zero, reserved for future use */
-	Stream_Write_UINT32(s, RDPDR_DEVICE_REMOVE_PDUS | RDPDR_CLIENT_DISPLAY_NAME_PDU |
-	                           RDPDR_USER_LOGGEDON_PDU); /* extendedPDU */
-	Stream_Write_UINT32(s, ENABLE_ASYNCIO);              /* extraFlags1 */
-	Stream_Write_UINT32(s, 0); /* extraFlags2, must be set to zero, reserved for future use */
+	Stream_Write_UINT32(s, ioCode1);                   /* ioCode1 */
+	Stream_Write_UINT32(s, ioCode2); /* ioCode2, must be set to zero, reserved for future use */
+	Stream_Write_UINT32(s, rdpdr->clientExtendedPDU); /* extendedPDU */
+	Stream_Write_UINT32(s, rdpdr->clientExtraFlags1); /* extraFlags1 */
 	Stream_Write_UINT32(
-	    s, 0); /* SpecialTypeDeviceCap, number of special devices to be redirected before logon */
+	    s,
+	    rdpdr->clientExtraFlags2); /* extraFlags2, must be set to zero, reserved for future use */
+	Stream_Write_UINT32(
+	    s, rdpdr->clientSpecialTypeDeviceCap); /* SpecialTypeDeviceCap, number of special devices to
+	                                              be redirected before logon */
 }
 
 /* Process device direction general capability set */
 static UINT rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* s,
                                          const RDPDR_CAPABILITY_HEADER* header)
 {
-
 	WINPR_ASSERT(header);
-	Stream_Seek(s, header->CapabilityLength);
+
+	if (header->CapabilityLength != 36)
+	{
+		WLog_Print(rdpdr->log, WLOG_ERROR,
+		           "CAP_GENERAL_TYPE::CapabilityLength expected 36, got %" PRIu32,
+		           header->CapabilityLength);
+		return ERROR_INVALID_DATA;
+	}
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 36))
+		return ERROR_INVALID_DATA;
+
+	Stream_Read_UINT32(s, rdpdr->serverOsType);    /* osType, ignored on receipt */
+	Stream_Read_UINT32(s, rdpdr->serverOsVersion); /* osVersion, unused and must be set to zero */
+	Stream_Read_UINT16(s, rdpdr->serverVersionMajor); /* protocolMajorVersion, must be set to 1 */
+	Stream_Read_UINT16(s, rdpdr->serverVersionMinor); /* protocolMinorVersion */
+	Stream_Read_UINT32(s, rdpdr->serverIOCode1);      /* ioCode1 */
+	Stream_Read_UINT32(
+	    s, rdpdr->serverIOCode2); /* ioCode2, must be set to zero, reserved for future use */
+	Stream_Read_UINT32(s, rdpdr->serverExtendedPDU); /* extendedPDU */
+	Stream_Read_UINT32(s, rdpdr->serverExtraFlags1); /* extraFlags1 */
+	Stream_Read_UINT32(
+	    s,
+	    rdpdr->serverExtraFlags2); /* extraFlags2, must be set to zero, reserved for future use */
+	Stream_Read_UINT32(
+	    s, rdpdr->serverSpecialTypeDeviceCap); /* SpecialTypeDeviceCap, number of special devices to
+	                                              be redirected before logon */
 	return CHANNEL_RC_OK;
 }
 
