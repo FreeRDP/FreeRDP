@@ -1668,8 +1668,9 @@ static BOOL rdpdr_check_channel_state(rdpdrPlugin* rdpdr, UINT16 packetid)
 			return rdpdr_state_check(rdpdr, packetid, RDPDR_CHANNEL_STATE_SERVER_CAPS, 1,
 			                         RDPDR_CHANNEL_STATE_NAME_REQUEST);
 		case PAKID_CORE_CLIENTID_CONFIRM:
-			return rdpdr_state_check(rdpdr, packetid, RDPDR_CHANNEL_STATE_CLIENTID_CONFIRM, 1,
-			                         RDPDR_CHANNEL_STATE_CLIENT_CAPS);
+			return rdpdr_state_check(rdpdr, packetid, RDPDR_CHANNEL_STATE_CLIENTID_CONFIRM, 3,
+			                         RDPDR_CHANNEL_STATE_CLIENT_CAPS, RDPDR_CHANNEL_STATE_READY,
+			                         RDPDR_CHANNEL_STATE_USER_LOGGEDON);
 		case PAKID_CORE_USER_LOGGEDON:
 			if (!rdpdr_check_extended_pdu_flag(rdpdr, RDPDR_USER_LOGGEDON_PDU))
 				return FALSE;
