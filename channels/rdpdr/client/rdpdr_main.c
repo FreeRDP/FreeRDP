@@ -141,6 +141,63 @@ static const char* rdpdr_state_str(enum RDPDR_CHANNEL_STATE state)
 	}
 }
 
+static const char* rdpdr_device_type_string(UINT32 type)
+{
+	switch (type)
+	{
+		case RDPDR_DTYP_SERIAL:
+			return "serial";
+		case RDPDR_DTYP_PRINT:
+			return "printer";
+		case RDPDR_DTYP_FILESYSTEM:
+			return "drive";
+		case RDPDR_DTYP_SMARTCARD:
+			return "smartcard";
+		case RDPDR_DTYP_PARALLEL:
+			return "parallel";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+static const char* support_str(BOOL val)
+{
+	if (val)
+		return "supported";
+	return "not found";
+}
+
+static const char* rdpdr_caps_pdu_str(UINT32 flag)
+{
+	switch (flag)
+	{
+		case RDPDR_DEVICE_REMOVE_PDUS:
+			return "RDPDR_USER_LOGGEDON_PDU";
+		case RDPDR_CLIENT_DISPLAY_NAME_PDU:
+			return "RDPDR_CLIENT_DISPLAY_NAME_PDU";
+		case RDPDR_USER_LOGGEDON_PDU:
+			return "RDPDR_USER_LOGGEDON_PDU";
+		default:
+			return "RDPDR_UNKNONW";
+	}
+}
+
+static BOOL rdpdr_check_extended_pdu_flag(rdpdrPlugin* rdpdr, UINT32 flag)
+{
+	WINPR_ASSERT(rdpdr);
+
+	const BOOL client = (rdpdr->clientExtendedPDU & flag) != 0;
+	const BOOL server = (rdpdr->serverExtendedPDU & flag) != 0;
+
+	if (!client || !server)
+	{
+		WLog_Print(rdpdr->log, WLOG_WARN, "Checking ExtendedPDU::%s, client %s, server %s",
+		           rdpdr_caps_pdu_str(flag), support_str(client), support_str(server));
+		return FALSE;
+	}
+	return TRUE;
+}
+
 BOOL rdpdr_state_advance(rdpdrPlugin* rdpdr, enum RDPDR_CHANNEL_STATE next)
 {
 	WINPR_ASSERT(rdpdr);
@@ -168,6 +225,16 @@ static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 cou
 {
 	UINT32 i;
 	wStream* s;
+
+	WINPR_ASSERT(rdpdr);
+	WINPR_ASSERT(ids || (count == 0));
+
+	if (count == 0)
+		return CHANNEL_RC_OK;
+
+	if (!rdpdr_check_extended_pdu_flag(rdpdr, RDPDR_DEVICE_REMOVE_PDUS))
+		return CHANNEL_RC_OK;
+
 	s = Stream_New(NULL, count * sizeof(UINT32) + 8);
 
 	if (!s)
@@ -1150,8 +1217,8 @@ static UINT rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s
 	if (Stream_GetRemainingLength(s) < 8)
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT16(s, rdpdr->versionMajor);
-	Stream_Read_UINT16(s, rdpdr->versionMinor);
+	Stream_Read_UINT16(s, rdpdr->serverVersionMajor);
+	Stream_Read_UINT16(s, rdpdr->serverVersionMinor);
 	Stream_Read_UINT32(s, rdpdr->clientID);
 	rdpdr->sequenceId++;
 	return CHANNEL_RC_OK;
@@ -1180,8 +1247,8 @@ static UINT rdpdr_send_client_announce_reply(rdpdrPlugin* rdpdr)
 
 	Stream_Write_UINT16(s, RDPDR_CTYP_CORE);             /* Component (2 bytes) */
 	Stream_Write_UINT16(s, PAKID_CORE_CLIENTID_CONFIRM); /* PacketId (2 bytes) */
-	Stream_Write_UINT16(s, rdpdr->versionMajor);
-	Stream_Write_UINT16(s, rdpdr->versionMinor);
+	Stream_Write_UINT16(s, rdpdr->clientVersionMajor);
+	Stream_Write_UINT16(s, rdpdr->clientVersionMinor);
 	Stream_Write_UINT32(s, (UINT32)rdpdr->clientID);
 	return rdpdr_send(rdpdr, s);
 }
@@ -1244,10 +1311,10 @@ static UINT rdpdr_process_server_clientid_confirm(rdpdrPlugin* rdpdr, wStream* s
 	Stream_Read_UINT16(s, versionMinor);
 	Stream_Read_UINT32(s, clientID);
 
-	if (versionMajor != rdpdr->versionMajor || versionMinor != rdpdr->versionMinor)
+	if (versionMajor != rdpdr->clientVersionMajor || versionMinor != rdpdr->clientVersionMinor)
 	{
-		rdpdr->versionMajor = versionMajor;
-		rdpdr->versionMinor = versionMinor;
+		rdpdr->clientVersionMajor = versionMajor;
+		rdpdr->clientVersionMinor = versionMinor;
 	}
 
 	if (clientID != rdpdr->clientID)
@@ -1305,7 +1372,7 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		 * 3. other devices are sent only after user_loggedon
 		 */
 
-		if ((rdpdr->versionMinor == 0x0005) || (device->type == RDPDR_DTYP_SMARTCARD) ||
+		if ((rdpdr->clientVersionMinor == 0x0005) || (device->type == RDPDR_DTYP_SMARTCARD) ||
 		    userLoggedOn)
 		{
 			data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));
@@ -1565,6 +1632,9 @@ static BOOL rdpdr_check_channel_state(rdpdrPlugin* rdpdr, UINT16 packetid)
 			return rdpdr_state_check(rdpdr, packetid, RDPDR_CHANNEL_STATE_CLIENTID_CONFIRM, 1,
 			                         RDPDR_CHANNEL_STATE_CLIENT_CAPS);
 		case PAKID_CORE_USER_LOGGEDON:
+			if (!rdpdr_check_extended_pdu_flag(rdpdr, RDPDR_USER_LOGGEDON_PDU))
+				return FALSE;
+
 			return rdpdr_state_check(
 			    rdpdr, packetid, RDPDR_CHANNEL_STATE_USER_LOGGEDON, 4,
 			    RDPDR_CHANNEL_STATE_NAME_REQUEST, RDPDR_CHANNEL_STATE_CLIENT_CAPS,
@@ -2103,6 +2173,10 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 	UINT rc;
 	rdpdrPlugin* rdpdr;
 	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
+
+	WINPR_ASSERT(pEntryPoints);
+	WINPR_ASSERT(pInitHandle);
+
 	rdpdr = (rdpdrPlugin*)calloc(1, sizeof(rdpdrPlugin));
 
 	if (!rdpdr)
@@ -2111,7 +2185,18 @@ BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints, PVOID p
 		return FALSE;
 	}
 	rdpdr->log = WLog_Get(TAG);
-	WINPR_ASSERT(rdpdr->log);
+
+	rdpdr->clientExtendedPDU =
+	    RDPDR_DEVICE_REMOVE_PDUS | RDPDR_CLIENT_DISPLAY_NAME_PDU | RDPDR_USER_LOGGEDON_PDU;
+	rdpdr->clientIOCode1 =
+	    RDPDR_IRP_MJ_CREATE | RDPDR_IRP_MJ_CLEANUP | RDPDR_IRP_MJ_CLOSE | RDPDR_IRP_MJ_READ |
+	    RDPDR_IRP_MJ_WRITE | RDPDR_IRP_MJ_FLUSH_BUFFERS | RDPDR_IRP_MJ_SHUTDOWN |
+	    RDPDR_IRP_MJ_DEVICE_CONTROL | RDPDR_IRP_MJ_QUERY_VOLUME_INFORMATION |
+	    RDPDR_IRP_MJ_SET_VOLUME_INFORMATION | RDPDR_IRP_MJ_QUERY_INFORMATION |
+	    RDPDR_IRP_MJ_SET_INFORMATION | RDPDR_IRP_MJ_DIRECTORY_CONTROL | RDPDR_IRP_MJ_LOCK_CONTROL |
+	    RDPDR_IRP_MJ_QUERY_SECURITY | RDPDR_IRP_MJ_SET_SECURITY;
+
+	rdpdr->clientExtraFlags1 = ENABLE_ASYNCIO;
 
 	rdpdr->channelDef.options =
 	    CHANNEL_OPTION_INITIALIZED | CHANNEL_OPTION_ENCRYPT_RDP | CHANNEL_OPTION_COMPRESS_RDP;
