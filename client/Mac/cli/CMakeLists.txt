@@ -1,6 +1,9 @@
 
 project(MacFreeRDP)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/)
+include(PreventInSourceBuilds)
+
 set(MODULE_NAME "MacFreeRDP")
 set(MODULE_OUTPUT_NAME "MacFreeRDP")
 set(MODULE_PREFIX "FREERDP_CLIENT_MAC_CLIENT")
@@ -42,19 +45,19 @@ set(${MODULE_PREFIX}_HEADERS
 
 set(${MODULE_PREFIX}_RESOURCES ${MACOSX_BUNDLE_ICON_FILE})
 
-# Include XIB file in Xcode resources. 
+# Include XIB file in Xcode resources.
 if("${CMAKE_GENERATOR}" MATCHES "Xcode")
 	message(STATUS "Adding Xcode XIB resources for ${MODULE_NAME}")
 	set(${MODULE_PREFIX}_RESOURCES ${${MODULE_PREFIX}_RESOURCES} ${${MODULE_PREFIX}_XIBS})
 endif()
 
 add_executable(${MODULE_NAME}
-	${APP_TYPE} 
+	${APP_TYPE}
 	${${MODULE_PREFIX}_HEADERS}
 	${${MODULE_PREFIX}_SOURCES}
 	${${MODULE_PREFIX}_RESOURCES})
 
-set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_OUTPUT_NAME}") 
+set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_OUTPUT_NAME}")
 add_dependencies(${MODULE_NAME} prepare-framework-headers)
 
 # This is necessary for the xib file part below
@@ -101,11 +104,11 @@ add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
 # Add post-build NIB file generation in unix makefiles. XCode handles this implicitly.
 if(NOT "${CMAKE_GENERATOR}" MATCHES "Xcode")
 	message(STATUS "Adding post-build NIB file generation event for ${MODULE_NAME}")
-	 
+
 	# Make sure we can find the 'ibtool' program. If we can NOT find it we skip generation of this project
 	find_program(IBTOOL ibtool HINTS "/usr/bin" "${OSX_DEVELOPER_ROOT}/usr/bin")
 	if (${IBTOOL} STREQUAL "IBTOOL-NOTFOUND")
-		message(SEND_ERROR "ibtool can not be found and is needed to compile the .xib files. It should have been installed with 
+		message(SEND_ERROR "ibtool can not be found and is needed to compile the .xib files. It should have been installed with
 						the Apple developer tools. The default system paths were searched in addition to ${OSX_DEVELOPER_ROOT}/usr/bin")
 	endif()
 
@@ -115,9 +118,9 @@ if(NOT "${CMAKE_GENERATOR}" MATCHES "Xcode")
 	# Compile the .xib files using the 'ibtool' program with the destination being the app package
 	foreach(xib ${${MODULE_PREFIX}_XIBS})
 		get_filename_component(XIB_WE ${xib} NAME_WE)
-						 
-		add_custom_command (TARGET ${MODULE_NAME} POST_BUILD 
-			COMMAND ${IBTOOL} --errors --warnings --notices --output-format human-readable-text 
+
+		add_custom_command (TARGET ${MODULE_NAME} POST_BUILD
+			COMMAND ${IBTOOL} --errors --warnings --notices --output-format human-readable-text
 				--compile ${CMAKE_CURRENT_BINARY_DIR}/${safe_configuration}/${MODULE_OUTPUT_NAME}.app/Contents/Resources/${XIB_WE}.nib ${CMAKE_CURRENT_SOURCE_DIR}/${xib}
 			COMMENT "Compiling ${xib}")
 	endforeach()
