@@ -115,6 +115,8 @@ include(CheckSymbolExists)
 include(CheckStructHasMember)
 include(TestBigEndian)
 
+include(PreventInSourceBuilds)
+
 # Check for cmake compatibility (enable/disable features)
 include(CheckCmakeCompat)
 include(FindFeature)
@@ -355,4 +357,3 @@ install(EXPORT WinPRTargets DESTINATION ${WINPR_CMAKE_INSTALL_DIR})
 include(pkg-config-install-prefix)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/winpr.pc.in ${CMAKE_CURRENT_BINARY_DIR}/winpr${WINPR_VERSION_MAJOR}.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/winpr${WINPR_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
-

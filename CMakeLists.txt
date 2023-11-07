@@ -62,6 +62,7 @@ endif()
 
 # Include our extra modules
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)
+include(PreventInSourceBuilds)
 
 if((CMAKE_SYSTEM_NAME MATCHES "WindowsStore") AND (CMAKE_SYSTEM_VERSION MATCHES "10.0"))
 	set(UWP 1)

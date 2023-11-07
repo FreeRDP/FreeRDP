@@ -26,7 +26,9 @@ set(CMAKE_C_EXTENSIONS ON)
 option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
 option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
 option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/)
+include(PreventInSourceBuilds)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)

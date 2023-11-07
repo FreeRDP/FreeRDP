@@ -65,6 +65,7 @@ endif()
 
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
+include(PreventInSourceBuilds)
 
 # Include cmake modules
 include(CheckIncludeFiles)
