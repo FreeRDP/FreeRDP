@@ -32,21 +32,23 @@ file(GLOB_RECURSE PUBLIC_COMMON_BIN_HEADERS
 )
 list(SORT PUBLIC_COMMON_HEADERS)
 
-set(PUBLIC_SERVER_HEADERS ${PUBLIC_COMMON_HEADERS})
-list(FILTER PUBLIC_SERVER_HEADERS INCLUDE REGEX ".*freerdp/server.*")
-
-set(PUBLIC_PROXY_HEADERS ${PUBLIC_SERVER_HEADERS})
-list(FILTER PUBLIC_SERVER_HEADERS EXCLUDE REGEX ".*freerdp/server/proxy.*")
-list(FILTER PUBLIC_PROXY_HEADERS INCLUDE REGEX ".*freerdp/server/proxy.*")
 if (WITH_SERVER)
-    set_property(TARGET freerdp-server APPEND PROPERTY SOURCES
-        ${PUBLIC_SERVER_HEADERS}
-    )
-endif()
-if (WITH_PROXY)
-    set_property(TARGET freerdp-server-proxy APPEND PROPERTY SOURCES
-        ${PUBLIC_PROXY_HEADERS}
-    )
+    set(PUBLIC_SERVER_HEADERS ${PUBLIC_COMMON_HEADERS})
+    list(FILTER PUBLIC_SERVER_HEADERS INCLUDE REGEX ".*freerdp/server.*")
+
+    set(PUBLIC_PROXY_HEADERS ${PUBLIC_SERVER_HEADERS})
+    list(FILTER PUBLIC_SERVER_HEADERS EXCLUDE REGEX ".*freerdp/server/proxy.*")
+    list(FILTER PUBLIC_PROXY_HEADERS INCLUDE REGEX ".*freerdp/server/proxy.*")
+    if (WITH_SERVER)
+        set_property(TARGET freerdp-server APPEND PROPERTY SOURCES
+            ${PUBLIC_SERVER_HEADERS}
+        )
+    endif()
+    if (WITH_PROXY)
+        set_property(TARGET freerdp-server-proxy APPEND PROPERTY SOURCES
+            ${PUBLIC_PROXY_HEADERS}
+        )
+    endif()
 endif()
 
 if (WITH_CLIENT_COMMON)
@@ -57,7 +59,10 @@ if (WITH_CLIENT_COMMON)
     )
 endif()
 
-list(FILTER PUBLIC_COMMON_HEADERS EXCLUDE REGEX ".*freerdp/server.*")
+if (WITH_SERVER)
+    list(FILTER PUBLIC_COMMON_HEADERS EXCLUDE REGEX ".*freerdp/server.*")
+endif()
+
 list(FILTER PUBLIC_COMMON_HEADERS EXCLUDE REGEX ".*freerdp/client.*")
 list(APPEND PUBLIC_COMMON_HEADERS ${PUBLIC_COMMON_BIN_HEADERS})
 set_property(TARGET freerdp APPEND PROPERTY SOURCES
