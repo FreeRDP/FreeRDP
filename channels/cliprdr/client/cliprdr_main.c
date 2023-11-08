@@ -621,6 +621,9 @@ static UINT cliprdr_client_capabilities(CliprdrClientContext* context,
 
 	Stream_Write_UINT32(s, flags); /* generalFlags */
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ClientCapabilities");
+
+	cliprdr->initialFormatListSent = FALSE;
+
 	return cliprdr_packet_send(cliprdr, s);
 }
 
