@@ -1,6 +1,5 @@
 message("PRELOADING windows cache")
 set (CMAKE_WINDOWS_VERSION "WIN7" CACHE STRING "windows build version")
-set (MSVC_RUNTIME "static" CACHE STRING "link MSVC runtime static")
 set (BUILD_SHARED_LIBS OFF CACHE BOOL "build static linked executable")
 set (CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded" CACHE STRING "MSVC runtime to use")
 set (OPENSSL_USE_STATIC_LIBS ON CACHE BOOL "link OpenSSL static")

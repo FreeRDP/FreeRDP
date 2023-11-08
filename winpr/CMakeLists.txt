@@ -49,6 +49,8 @@ if (NOT FREERDP_UNIFIED_BUILD)
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
 		endif()
 	endif()
+
+	include(MSVCRuntime)
 endif()
 
 set(DEFAULT_DEBUG_OPTION OFF)

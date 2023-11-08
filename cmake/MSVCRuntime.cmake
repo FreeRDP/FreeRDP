@@ -1,48 +1,47 @@
-
-macro(configure_msvc_runtime)
-	if(MSVC)
-		# Default to statically-linked runtime.
-		if("${MSVC_RUNTIME}" STREQUAL "")
-			set(MSVC_RUNTIME "dynamic")
-		endif()
-
-		# Set compiler options.
-		set(variables
-			CMAKE_C_FLAGS
-			CMAKE_C_FLAGS_DEBUG
-			CMAKE_C_FLAGS_MINSIZEREL
-			CMAKE_C_FLAGS_RELEASE
-			CMAKE_C_FLAGS_RELWITHDEBINFO
-			CMAKE_CXX_FLAGS
-			CMAKE_CXX_FLAGS_DEBUG
-			CMAKE_CXX_FLAGS_MINSIZEREL
-			CMAKE_CXX_FLAGS_RELEASE
-			CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-
-		if(${MSVC_RUNTIME} STREQUAL "static")
-			message(STATUS "MSVC: using statically-linked runtime (/MT and /MTd).")
-			foreach(variable ${variables})
-				if(${variable} MATCHES "/MD")
-					string(REGEX REPLACE "/MD" "/MT" ${variable} "${${variable}}")
-				endif()
-			endforeach()
-		else()
-			message(STATUS "MSVC: using dynamically-linked runtime (/MD and /MDd).")
-			foreach(variable ${variables})
-				if(${variable} MATCHES "/MT")
-					string(REGEX REPLACE "/MT" "/MD" ${variable} "${${variable}}")
-				endif()
-			endforeach()
-		endif()
-
-		foreach(variable ${variables})
-			if(${variable} MATCHES "/Ob0")
-				string(REGEX REPLACE "/Ob0" "/Ob2" ${variable} "${${variable}}")
-			endif()
-		endforeach()
-
-		foreach(variable ${variables})
-			set(${variable} "${${variable}}" CACHE STRING "MSVC_${variable}" FORCE)
-		endforeach()
+if (WIN32)
+	if (CMAKE_VERSION VERSION_LESS 3.15.0)
+		message(FATAL_ERROR "windows builds require CMake >= 3.15")
 	endif()
-endmacro(configure_msvc_runtime)
+	if(NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
+		if (MSVC_RUNTIME STREQUAL "dynamic")
+			set(MSVC_DEFAULT_RUNTIME "MultiThreadedDLL")
+		elseif(MSVC_RUNTIME STREQUAL "static")
+			set(MSVC_DEFAULT_RUNTIME "MultiThreaded")
+		else()
+			message(WARNING "invalid MSVC_RUNTIME (deprecated) value '${MSVC_RUNTIME}', ignoring")
+		endif()
+
+		if(MSVC_DEFAULT_RUNTIME)
+			message("Using CMAKE_MSVC_RUNTIME_LIBRARY=${MSVC_DEFAULT_RUNTIME} (derived from MSVC_RUNTIME (deprecated) value '${MSVC_RUNTIME}')" )
+		else()
+			set(MSVC_DEFAULT_RUNTIME "MultiThreaded")
+
+			if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+				string(APPEND MSVC_DEFAULT_RUNTIME "Debug")
+			endif()
+
+			if (BUILD_SHARED_LIBS)
+				string(APPEND MSVC_DEFAULT_RUNTIME "DLL")
+			endif()
+			message("Using CMAKE_MSVC_RUNTIME_LIBRARY=${MSVC_DEFAULT_RUNTIME}" )
+		endif()
+
+		set(CMAKE_MSVC_RUNTIME_LIBRARY ${MSVC_DEFAULT_RUNTIME} CACHE STRING "MSVC runtime")
+	endif()
+
+	message("build is using MSVC runtime ${CMAKE_MSVC_RUNTIME_LIBRARY}")
+
+	string(FIND ${CMAKE_MSVC_RUNTIME_LIBRARY} "DLL" IS_SHARED)
+	if(IS_SHARED STREQUAL "-1")
+		if(BUILD_SHARED_LIBS)
+			message(FATAL_ERROR "Static CRT is only supported in a fully static build")
+		endif()
+		message(STATUS "Use the MSVC static runtime option carefully!")
+		message(STATUS "OpenSSL uses /MD by default, and is very picky")
+		message(STATUS "Random freeing errors are a common sign of runtime issues")
+	endif()
+
+	if(NOT DEFINED CMAKE_SUPPRESS_REGENERATION)
+		set(CMAKE_SUPPRESS_REGENERATION ON)
+	endif()
+endif()
