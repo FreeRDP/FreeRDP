@@ -45,7 +45,7 @@ extern "C"
 		const map_info_t* map_info_list;
 	} memory_t;
 
-#if __i386__
+#ifdef __i386__
 	/* ptrace() register context. */
 	typedef struct pt_regs_x86
 	{
@@ -69,7 +69,7 @@ extern "C"
 	} pt_regs_x86_t;
 #endif
 
-#if __mips__
+#ifdef __mips__
 	/* ptrace() GET_REGS context. */
 	typedef struct pt_regs_mips
 	{

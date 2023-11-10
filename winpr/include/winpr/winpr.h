@@ -37,7 +37,7 @@
 #endif
 #endif
 #else
-#if __GNUC__ >= 4
+#if defined(__GNUC__) && (__GNUC__ >= 4)
 #define WINPR_API __attribute__((visibility("default")))
 #else
 #define WINPR_API
@@ -79,7 +79,7 @@
 #if defined _WIN32 || defined __CYGWIN__
 #define WINPR_LOCAL
 #else
-#if __GNUC__ >= 4
+#if defined(__GNUC__) && (__GNUC__ >= 4)
 #define WINPR_LOCAL __attribute__((visibility("hidden")))
 #else
 #define WINPR_LOCAL

@@ -52,7 +52,7 @@
 #endif
 #endif
 #else
-#if __GNUC__ >= 4
+#if defined(__GNUC__) && (__GNUC__ >= 4)
 #define FREERDP_API __attribute__((visibility("default")))
 #else
 #define FREERDP_API
@@ -65,7 +65,7 @@
 #if defined _WIN32 || defined __CYGWIN__
 #define FREERDP_LOCAL
 #else
-#if __GNUC__ >= 4
+#if defined(__GNUC__) && (__GNUC__ >= 4)
 #define FREERDP_LOCAL __attribute__((visibility("hidden")))
 #else
 #define FREERDP_LOCAL
