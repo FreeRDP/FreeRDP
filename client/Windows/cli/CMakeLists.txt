@@ -23,7 +23,7 @@ include_directories(..)
 set(${MODULE_PREFIX}_SRCS
 	wfreerdp.c
 	wfreerdp.h
-	../wfreerdp.rc)
+	../resource/wfreerdp.rc)
 
 # On windows create dll version information.
 # Vendor, product and year are already set in top level CMakeLists.txt
