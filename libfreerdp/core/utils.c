@@ -288,3 +288,14 @@ BOOL utils_abort_event_is_set(rdpRdp* rdp)
 	status = WaitForSingleObject(rdp->abortEvent, 0);
 	return status == WAIT_OBJECT_0;
 }
+
+const char* utils_is_vsock(const char* hostname)
+{
+	if (!hostname)
+		return NULL;
+
+	const char vsock[8] = "vsock://";
+	if (strncmp(hostname, vsock, sizeof(vsock)) == 0)
+		return &hostname[sizeof(vsock)];
+	return NULL;
+}

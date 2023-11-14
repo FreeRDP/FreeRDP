@@ -187,4 +187,6 @@
 #cmakedefine WITH_PROXY_MODULES
 #cmakedefine WITH_PROXY_EMULATE_SMARTCARD
 
+#cmakedefine HAVE_AF_VSOCK_H
+
 #endif /* FREERDP_CONFIG_H */
