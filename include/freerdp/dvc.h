@@ -133,6 +133,8 @@ extern "C"
 		UINT(*OnNewChannelConnection)
 		(IWTSListenerCallback* pListenerCallback, IWTSVirtualChannel* pChannel, BYTE* Data,
 		 BOOL* pbAccept, IWTSVirtualChannelCallback** ppCallback);
+
+		void* pInterface;
 	};
 
 	struct s_IWTSVirtualChannelCallback
@@ -146,6 +148,8 @@ extern "C"
 		UINT(*OnClose)
 		(IWTSVirtualChannelCallback*
 		     pChannelCallback); /**< Notifies the user that the channel has been closed. */
+
+		void* pInterface;
 	};
 
 	/* The DVC Plugin entry points */

@@ -27,7 +27,8 @@ if (ENABLE_WARNING_VERBOSE)
 		endforeach()
 
 		set(C_WARNING_FLAGS
-			/W3
+			/W4
+			/wo4324
 		)
 	else()
 		set(C_WARNING_FLAGS
