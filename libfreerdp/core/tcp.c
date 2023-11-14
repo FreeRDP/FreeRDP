@@ -85,6 +85,11 @@
 #include "tcp.h"
 #include "../crypto/opensslcompat.h"
 
+#if defined(HAVE_AF_VSOCK_H)
+#include <ctype.h>
+#include <linux/vm_sockets.h>
+#endif
+
 #define TAG FREERDP_TAG("core")
 
 /* Simple Socket BIO */
@@ -1090,6 +1095,7 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 	if (hostname[0] == '|')
 		useExternalDefinedSocket = TRUE;
 
+	const char* vsock = utils_is_vsock(hostname);
 	if (ipcSocket)
 	{
 		sockfd = freerdp_uds_connect(hostname);
@@ -1103,6 +1109,40 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 	}
 	else if (useExternalDefinedSocket)
 		sockfd = port;
+	else if (vsock)
+	{
+#if defined(HAVE_AF_VSOCK_H)
+		hostname = vsock;
+		sockfd = socket(AF_VSOCK, SOCK_STREAM, 0);
+		struct sockaddr_vm addr = { 0 };
+
+		addr.svm_family = AF_VSOCK;
+		addr.svm_port = port;
+
+		errno = 0;
+		char* ptr = NULL;
+		unsigned long val = strtoul(hostname, &ptr, 10);
+		if (errno || (val > UINT32_MAX))
+		{
+			WLog_ERR(TAG, "could not extract port from '%s', value=%ul, error=%s", hostname, val,
+			         strerror(errno));
+			return -1;
+		}
+		addr.svm_cid = val;
+		if (addr.svm_cid == 2)
+		{
+			addr.svm_flags = VMADDR_FLAG_TO_HOST;
+		}
+		if ((connect(sockfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_vm))) == -1)
+		{
+			WLog_ERR(TAG, "failed to connect to %s", hostname);
+			return -1;
+		}
+#else
+		WLog_ERR(TAG, "Compiled without AF_VSOCK, '%s' not supported", hostname);
+		return -1;
+#endif
+	}
 	else
 	{
 		sockfd = -1;
@@ -1185,18 +1225,21 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 		}
 	}
 
-	free(settings->ClientAddress);
-	settings->ClientAddress = freerdp_tcp_get_ip_address(sockfd, &settings->IPv6Enabled);
-
-	if (!settings->ClientAddress)
+	if (!vsock)
 	{
-		if (!useExternalDefinedSocket)
-			close(sockfd);
+		free(settings->ClientAddress);
+		settings->ClientAddress = freerdp_tcp_get_ip_address(sockfd, &settings->IPv6Enabled);
 
-		freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
+		if (!settings->ClientAddress)
+		{
+			if (!useExternalDefinedSocket)
+				close(sockfd);
 
-		WLog_ERR(TAG, "Couldn't get socket ip address");
-		return -1;
+			freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_FAILED);
+
+			WLog_ERR(TAG, "Couldn't get socket ip address");
+			return -1;
+		}
 	}
 
 	optval = 1;

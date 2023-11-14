@@ -40,11 +40,84 @@
 #include <net/if.h>
 #endif
 
+#if defined(HAVE_AF_VSOCK_H)
+#include <ctype.h>
+#include <linux/vm_sockets.h>
+#endif
+
 #include <winpr/handle.h>
 
 #include "listener.h"
+#include "utils.h"
 
 #define TAG FREERDP_TAG("core.listener")
+
+static BOOL freerdp_listener_open_from_vsock(freerdp_listener* instance, const char* bind_address,
+                                             UINT16 port)
+{
+#if defined(HAVE_AF_VSOCK_H)
+	rdpListener* listener = (rdpListener*)instance->listener;
+	const int sockfd = socket(AF_VSOCK, SOCK_STREAM, 0);
+	if (sockfd == -1)
+	{
+		WLog_ERR(TAG, "Error creating socket: %s", strerror(errno));
+		return FALSE;
+	}
+	const int flags = fcntl(sockfd, F_GETFL, 0);
+	if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK) == -1)
+	{
+		WLog_ERR(TAG, "Error making socket nonblocking: %s", strerror(errno));
+		closesocket((SOCKET)sockfd);
+		return FALSE;
+	}
+	struct sockaddr_vm addr = { 0 };
+
+	addr.svm_family = AF_VSOCK;
+	addr.svm_port = port;
+
+	errno = 0;
+	char* ptr = NULL;
+	unsigned long val = strtoul(bind_address, &ptr, 10);
+	if (errno || (val > UINT32_MAX))
+	{
+		WLog_ERR(TAG, "could not extract port from '%s', value=%ul, error=%s", bind_address, val,
+		         strerror(errno));
+		return FALSE;
+	}
+	addr.svm_cid = val;
+	if (bind(sockfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_vm)) == -1)
+	{
+		WLog_ERR(TAG, "Error binding vsock at cid %d port %d: %s", addr.svm_cid, port,
+		         strerror(errno));
+		closesocket((SOCKET)sockfd);
+		return FALSE;
+	}
+
+	if (listen(sockfd, 10) == -1)
+	{
+		WLog_ERR(TAG, "Error listening to socket at cid %d port %d: %s", addr.svm_cid, port,
+		         strerror(errno));
+		closesocket((SOCKET)sockfd);
+		return FALSE;
+	}
+	listener->sockfds[listener->num_sockfds] = sockfd;
+	listener->events[listener->num_sockfds] = WSACreateEvent();
+
+	if (!listener->events[listener->num_sockfds])
+	{
+		listener->num_sockfds = 0;
+	}
+
+	WSAEventSelect(sockfd, listener->events[listener->num_sockfds], FD_READ | FD_ACCEPT | FD_CLOSE);
+	listener->num_sockfds++;
+
+	WLog_INFO(TAG, "Listening on %s:%d", bind_address, port);
+	return TRUE;
+#else
+	WLog_ERR(TAG, "compiled without AF_VSOCK, '%s' not supported", bind_address);
+	return FALSE;
+#endif
+}
 
 static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_address, UINT16 port)
 {
@@ -63,6 +136,12 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 
 	if (!bind_address)
 		ai_flags = AI_PASSIVE;
+
+	if (utils_is_vsock(bind_address))
+	{
+		bind_address = utils_is_vsock(bind_address);
+		return freerdp_listener_open_from_vsock(instance, bind_address, port);
+	}
 
 	res = freerdp_tcp_resolve_host(bind_address, port, ai_flags);
 
@@ -322,7 +401,7 @@ BOOL freerdp_peer_set_local_and_hostname(freerdp_peer* client,
 	}
 
 #ifndef _WIN32
-#ifdef AF_VSOCK
+#if defined(HAVE_AF_VSOCK_H)
 	else if (peer_addr->ss_family == AF_UNIX || peer_addr->ss_family == AF_VSOCK)
 #else
 	else if (peer_addr->ss_family == AF_UNIX)

@@ -2315,7 +2315,13 @@ static int parse_host_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	/* ipv4 */
 	if (!p)
 	{
-		p = strchr(arg->Value, ':');
+		const char scheme[] = "://";
+		const char* val = strstr(arg->Value, scheme);
+		if (val)
+			val += strnlen(scheme, sizeof(scheme));
+		else
+			val = arg->Value;
+		p = strchr(val, ':');
 
 		if (p)
 		{
