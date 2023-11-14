@@ -30,17 +30,15 @@ public static class Commands
 
     internal static async Task<bool> UserExists(this ProcessRunner processRunner, string userName, CancellationToken ct = default)
     {
-        var report = await processRunner.Run("net", $"user {userName}", ct);
-        return report.ExitCode is 0;
+        var report = await processRunner.Run("net", $"user {userName}", ct: ct);
+        return report.exitCode is 0;
     }
     internal static Task CreateUser(this ProcessRunner processRunner, string userName, string password, CancellationToken ct = default)
-    => processRunner
-        .Run("net", $"user {userName} {password} /add", ct)
-        .ThrowIfNonZeroCode();
+    => processRunner.Run("net", $"user {userName} {password} /add", throwOnNonZero: true, ct: ct);
+
     internal static Task SetPassword(this ProcessRunner processRunner, string userName, string password, CancellationToken ct = default)
-    => processRunner
-        .Run("net", $"user {userName} {password}", ct)
-        .ThrowIfNonZeroCode();
+    => processRunner.Run("net", $"user {userName} {password}", throwOnNonZero: true, ct: ct);
+        
     internal static async Task EnsureUserHasPassword(this ProcessRunner processRunner, string userName, string password, CancellationToken ct = default)
     {
         if (await processRunner.UserExists(userName, ct))
@@ -53,17 +51,15 @@ public static class Commands
     }
     internal static Task ActivateUserAndDisableExpiration(this ProcessRunner processRunner, string userName, CancellationToken ct = default)
     => processRunner
-        .Run("net", $"user {userName} /active /expires:never", ct)
-        .ThrowIfNonZeroCode();
+        .Run("net", $"user {userName} /active /expires:never", throwOnNonZero: true, ct: ct);
+
     internal static Task ProhibitPasswordChange(this ProcessRunner processRunner, string userName, CancellationToken ct = default)
     => processRunner
-        .Run("net", $"user {userName} /passwordchg:no", ct)
-        .ThrowIfNonZeroCode();
+        .Run("net", $"user {userName} /passwordchg:no", throwOnNonZero: true, ct: ct);
+
     internal static Task DisablePasswordExpiration(this ProcessRunner processRunner, string userName, CancellationToken ct = default)
-    => processRunner
-        .Run("wmic", $"useraccount WHERE Name='{userName}' set PasswordExpires=false", ct)
-        .ThrowIfNonZeroCode();
+    => processRunner.Run("wmic", $"useraccount WHERE Name='{userName}' set PasswordExpires=false", throwOnNonZero: true, ct: ct);
+        
     internal static Task EnsureUserIsInGroup(this ProcessRunner processRunner, string userName, string groupName, CancellationToken ct = default)
-    => processRunner
-        .Run("net", $"localgroup \"{groupName}\" {userName} /add", ct);
+    => processRunner.Run("net", $"localgroup \"{groupName}\" {userName} /add", ct: ct);
 }

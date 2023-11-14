@@ -1,31 +1,40 @@
 ﻿using Moq;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace UiPath.SessionTools.Tests;
 
 internal static class TestHelpers
 {
-    public static void SetupRun(this Mock<ProcessRunner> mock, int? exitCode, string stdout = "stdout")
-    => mock.Setup(AnyCallToRun).ReturnsAsync(MockReport(exitCode, stdout));
+    public static void SetupRun(this Mock<ProcessRunner> mock, int exitCode, string output = "mock-output")
+    {
+        mock.Setup(Run(throwsOnNonZero: false))
+            .ReturnsAsync((output, exitCode));
 
-    public static ProcessRunner.Report MockReport(int? exitCode, string stdout = "stdout")
-    => new ProcessRunner.Report(
-        StartInfo: new()
+        if (exitCode is 0)
         {
-            FileName = "fileName",
-            Arguments = "arguments",
-            WorkingDirectory = "workingDirectory"
-        },
-        ProcessId: 0,
-        ProcessStartTime: DateTime.MinValue,
-        Stdout: stdout,
-        Stderr: "stderr",
-        ExitCode: exitCode);
+            mock.Setup(Run(throwsOnNonZero: true))
+                .ReturnsAsync((output, exitCode));
+            return;
+        }
 
-    private static readonly Expression<Func<ProcessRunner, Task<ProcessRunner.Report>>> AnyCallToRun
-    = processRunner => processRunner.Run(
+        mock.Setup(Run(throwsOnNonZero: true))
+            .ThrowsAsync(new ProcessRunner.NonZeroExitCodeException(exitCode, output, "mock-error", "mock-message"));
+    }
+
+    private static Expression<Func<ProcessRunner, Task<(string output, int exitCode)>>> Run(bool throwsOnNonZero)
+    => processRunner => processRunner.Run(
         It.IsAny<string>(),
         It.IsAny<string>(),
         It.IsAny<string>(),
+        It.Is(throwsOnNonZero, BoolComparer.Instance),
         It.IsAny<CancellationToken>());
+
+    private sealed class BoolComparer : IEqualityComparer<bool>
+    {
+        public static readonly BoolComparer Instance = new();
+
+        public bool Equals(bool x, bool y) => x == y;
+        public int GetHashCode([DisallowNull] bool obj) => obj.GetHashCode();
+    }
 }

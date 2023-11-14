@@ -50,7 +50,9 @@ namespace Logging
 
 		auto negoLog = WLog_Get("com.freerdp.core.nego");
 		WLog_SetLogLevel(negoLog, WLOG_TRACE);
-		DT_TRACE(L"Native logging forwarding initialized. (forwardFreeRdpLogs:%s)", forwardFreeRdpLogs ? L"true" : L"false");
+
+		WLog_INFO("UiPath.FreeRdpLogging", "Native logging forwarding initialized. (forwardFreeRdpLogs:%s)", forwardFreeRdpLogs ? "true" : "false");
+
 		return S_OK;
 	}
 

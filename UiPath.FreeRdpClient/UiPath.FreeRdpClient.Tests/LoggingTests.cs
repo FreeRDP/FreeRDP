@@ -10,7 +10,7 @@ namespace UiPath.FreeRdp.Tests;
 
 public class LoggingTests : TestsBase
 {
-    private readonly ConcurrentDictionary<string, ConcurrentBag<(LogLevel logLevel, string message)>> _logsByCategory = new ();
+    private readonly ConcurrentDictionary<string, ConcurrentBag<(LogLevel logLevel, string message)>> _logsByCategory = new();
     private readonly ConcurrentBag<object> _scopes = new();
     private readonly Mock<ILogger> _loggerMock = new();
     private Wts WtsApi => Host.GetWts();
@@ -85,13 +85,13 @@ public class LoggingTests : TestsBase
             .ToArray();
         wrapperLogs.ShouldNotBeEmpty();
 
-        const string freerdpCategoryPrefix = "com.freerdp";
-        var nonDebugFreeRdpLogs = _logsByCategory.Where(kv => kv.Key.StartsWith(freerdpCategoryPrefix) && !kv.Key.StartsWith(acceptedDebugCategory))
+        const string freeRdpLoggingCategory = "UiPath.FreeRdpLogging";
+        var nonDebugFreeRdpLogs = _logsByCategory.Where(kv => kv.Key.StartsWith(freeRdpLoggingCategory))
             .SelectMany(kv => kv.Value)
             .ToArray();
         nonDebugFreeRdpLogs.ShouldNotBeEmpty();
-        nonDebugFreeRdpLogs.Where(l => l.logLevel == LogLevel.Debug).ShouldBeEmpty();
-        nonDebugFreeRdpLogs.Where(l => l.logLevel == LogLevel.Error).ShouldBeEmpty();
+        nonDebugFreeRdpLogs.ShouldAllBe(l => l.logLevel == LogLevel.Information);
+        nonDebugFreeRdpLogs.ShouldContain(l => l.message.Contains("forwardFreeRdpLogs:true"));
 
         var scopes = _scopes.OfType<IReadOnlyList<KeyValuePair<string, object?>>>()
             .Where(kvl => kvl.Any(kv => kv.Key == NativeLoggingForwarder.ScopeName && connectionSettings.ClientName.Equals(kv.Value)))

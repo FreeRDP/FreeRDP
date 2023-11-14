@@ -73,7 +73,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>comsuppw.lib;comsupp.lib;freerdp2.lib;winpr2.lib;libeay32.lib;ssleay32.lib;Dbghelp.lib;Secur32.lib;ntdsapi.lib;Rpcrt4.lib;Crypt32.lib;ncrypt.lib;Userenv.lib;ws2_32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comsuppw.lib;comsupp.lib;freerdp2.lib;winpr2.lib;libcrypto.lib;libssl.lib;Dbghelp.lib;Secur32.lib;ntdsapi.lib;Rpcrt4.lib;Crypt32.lib;ncrypt.lib;Userenv.lib;ws2_32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\OpenSSL-VC-$(PlatformArchitecture)\lib;..\..\Build\$(PlatformTarget)\$(Configuration)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
@@ -102,7 +102,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>comsuppw.lib;comsupp.lib;freerdp2.lib;winpr2.lib;libeay32.lib;ssleay32.lib;Dbghelp.lib;Secur32.lib;ntdsapi.lib;Rpcrt4.lib;Crypt32.lib;ncrypt.lib;Userenv.lib;ws2_32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>comsuppw.lib;comsupp.lib;freerdp2.lib;winpr2.lib;libcrypto.lib;libssl.lib;Dbghelp.lib;Secur32.lib;ntdsapi.lib;Rpcrt4.lib;Crypt32.lib;ncrypt.lib;Userenv.lib;ws2_32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\OpenSSL-VC-$(PlatformArchitecture)\lib;..\..\Build\$(PlatformTarget)\$(Configuration)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>

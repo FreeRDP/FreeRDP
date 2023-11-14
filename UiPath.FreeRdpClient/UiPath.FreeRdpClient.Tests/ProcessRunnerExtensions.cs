@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text;
 using UiPath.SessionTools;
 
 namespace UiPath.FreeRdp.Tests;
@@ -9,39 +10,32 @@ public static class ProcessRunnerExtensions
     => processRunner.Run(
         "cmd",
         $"/c netsh interface portproxy add v4tov4 listenaddress=127.0.0.1 listenport={listenPort} connectaddress=127.0.0.1 connectport=3389",
-        ct)
-        .ThrowIfNonZeroCode();
+        throwOnNonZero: true,
+        ct: ct);        
 
     public static async Task<bool> PortWithStateExists(this ProcessRunner processRunner, int port, string state, CancellationToken ct = default)
     => await processRunner.PortWithStateExists(port, state, processId: null, ct);
     public static async Task<bool> PortWithStateExists(this ProcessRunner processRunner, int port, string state, int? processId, CancellationToken ct = default)
     {
-        var report = await processRunner.Run("cmd", GetArguments(), ct);
+        (var output, var exitCode) = await processRunner.Run("cmd", GetArguments(), throwOnNonZero: false, ct: ct);
 
-        if (report.ExitCode is not null and not 0) { return false; }
-
-        report.ThrowIfNonZeroCode();
+        if (exitCode is not 0) { return false; }
 
         string needle = port.ToString(CultureInfo.InvariantCulture);
 
-        return report.Stdout.Contains(needle);
+        return output.Contains(needle);
 
         string GetArguments()
         {
-            string filters = string.Join("", EnumerateFilters());
+            StringBuilder sb = new();
 
-            return $"/c netstat -ona{filters}";
-
-            IEnumerable<string> EnumerateFilters()
+            sb.Append($"/c netstat -ona|find \":{port}\"|find \"{state}\"");
+            if (processId is not null)
             {
-                yield return $"|find \":{port}\"";
-                yield return $"|find \"{state}\"";
-
-                if (processId is not null)
-                {
-                    yield return $"|find \"{processId}\"";
-                }
+                sb.Append($"|find \"{processId}\"");
             }
+
+            return sb.ToString();
         }
     }
 }

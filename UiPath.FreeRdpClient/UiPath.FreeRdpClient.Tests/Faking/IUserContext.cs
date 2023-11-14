@@ -44,13 +44,9 @@ public class UserContextReal : UserContextBase
 
     protected override async Task DoCreateUser(UserExistsDetail userDetail)
     {
-        using var _ = ProcessRunner.TimeoutToken(GlobalSettings.DefaultTimeout, out var ct);
+        using var cts = new CancellationTokenSource(GlobalSettings.DefaultTimeout);
 
-        await new ProcessRunner(_log).EnsureUserIsSetUp(
-            userDetail.GetLocalUserName(),
-            userDetail.Password,
-            admin: true,
-            ct);
+        await new ProcessRunner(_log).EnsureUserIsSetUp(userDetail.GetLocalUserName(), userDetail.Password, admin: true, cts.Token);
     }
 
 }

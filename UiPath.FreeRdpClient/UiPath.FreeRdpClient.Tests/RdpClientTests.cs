@@ -160,9 +160,9 @@ public class RdpClientTests : TestsBase
     {
         var log = Host.GetRequiredService<ILogger<TestHost>>();
 
-        using var _ = ProcessRunner.TimeoutToken(GlobalSettings.DefaultTimeout, out var ct);
+        using var ctsTimeout = new CancellationTokenSource(GlobalSettings.DefaultTimeout);
 
-        await new ProcessRunner(log).CreateRDPRedirect(port, ct);
+        await new ProcessRunner(log).CreateRDPRedirect(port, ctsTimeout.Token);
 
         await ShouldHavePortWithState(port, StateListening);
     }
@@ -171,9 +171,9 @@ public class RdpClientTests : TestsBase
     {
         var log = Host.GetRequiredService<ILogger<TestHost>>();
 
-        using var _ = ProcessRunner.TimeoutToken(GlobalSettings.DefaultTimeout, out var ct);
+        using var ctsTimeout = new CancellationTokenSource(GlobalSettings.DefaultTimeout);
 
-        (await new ProcessRunner(log).PortWithStateExists(port, state, processId, ct)).ShouldBeTrue();
+        (await new ProcessRunner(log).PortWithStateExists(port, state, processId, ctsTimeout.Token)).ShouldBeTrue();
     }
 
 
@@ -181,9 +181,9 @@ public class RdpClientTests : TestsBase
     {
         var log = Host.GetRequiredService<ILogger<TestHost>>();
 
-        using var _ = ProcessRunner.TimeoutToken(GlobalSettings.DefaultTimeout, out var ct);
+        using var ctsTimeout = new CancellationTokenSource(GlobalSettings.DefaultTimeout);
 
-        (await new ProcessRunner(log).PortWithStateExists(port, state, ct)).ShouldBeFalse();
+        (await new ProcessRunner(log).PortWithStateExists(port, state, ctsTimeout.Token)).ShouldBeFalse();
     }
 
     [Fact]

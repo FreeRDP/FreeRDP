@@ -5,6 +5,7 @@ using Moq;
 using Microsoft.Extensions.Logging;
 using Nito.Disposables;
 using MartinCostello.Logging.XUnit;
+using UiPath.SessionTools;
 
 namespace UiPath.FreeRdp.Tests.TestInfra;
 

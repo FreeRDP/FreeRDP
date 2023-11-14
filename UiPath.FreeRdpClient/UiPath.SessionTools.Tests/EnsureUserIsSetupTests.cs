@@ -28,10 +28,9 @@ public class EnsureUserIsSetupTests : IAsyncLifetime
         _password.ShouldNotBeNull();
         _userChecks.UserExistsAndHasPassword(Username, _password).ShouldBeFalse();
 
-        using (ProcessRunner.TimeoutToken(TimeSpan.FromSeconds(5), out var ct))
-        {
-            await _processRunner.EnsureUserIsSetUp(Username, _password, admin: true, ct);
-        }
+        using var ctsTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+        await _processRunner.EnsureUserIsSetUp(Username, _password, admin: true, ctsTimeout.Token);
 
         _userChecks.UserExistsAndHasPassword(Username, _password).ShouldBeTrue();
 
@@ -63,7 +62,7 @@ public class EnsureUserIsSetupTests : IAsyncLifetime
         _password = GeneratePassword();
 
         static string GeneratePassword()
-        => $"Ua@1{Path.GetRandomFileName()}".Substring(0, 14);        
+        => $"Ua@1{Path.GetRandomFileName()}".Substring(0, 14);
     }
 
     async Task IAsyncLifetime.DisposeAsync()

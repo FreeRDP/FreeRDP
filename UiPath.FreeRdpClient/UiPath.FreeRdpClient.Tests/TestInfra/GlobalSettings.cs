@@ -2,5 +2,5 @@
 
 public static partial class GlobalSettings
 {
-    public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(30);
+    public static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(2);
 }
