@@ -941,7 +941,7 @@ static BOOL hotplug_delete_foreach(ULONG_PTR key, void* element, void* data)
 		for (i = 0; i < arg->dev_array_size; i++)
 		{
 			hotplug_dev* cur = &arg->dev_array[i];
-			if (strstr(path, cur->path) != NULL)
+			if (cur->path && strstr(path, cur->path) != NULL)
 			{
 				dev_found = TRUE;
 				cur->to_add = FALSE;
