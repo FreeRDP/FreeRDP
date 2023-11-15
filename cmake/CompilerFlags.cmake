@@ -27,7 +27,7 @@ if (ENABLE_WARNING_VERBOSE)
 		endforeach()
 
 		set(C_WARNING_FLAGS
-			/Wall
+			/W3
 		)
 	else()
 		set(C_WARNING_FLAGS
