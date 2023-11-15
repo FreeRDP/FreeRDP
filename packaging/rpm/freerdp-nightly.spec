@@ -47,10 +47,12 @@ BuildRequires: libxml2-devel
 BuildRequires: zlib-devel
 BuildRequires: krb5-devel
 BuildRequires: cjson-devel
+BuildRequires: uriparser-devel
 
 # (Open)Suse
 %if %{defined suse_version}
 BuildRequires: libSDL2-devel
+BuildRequires: libSDL2_ttf-devel
 BuildRequires: docbook-xsl-stylesheets
 BuildRequires: libxslt-tools
 BuildRequires: pkg-config
@@ -65,10 +67,12 @@ BuildRequires: libjpeg-devel
 BuildRequires: libavutil-devel
 BuildRequires: libavcodec-devel
 BuildRequires: libswresample-devel
+BuildRequires: libpkcs11-helper1
 %endif
 # fedora 21+
 %if 0%{?fedora} >= 21 || 0%{?rhel} >= 7
 BuildRequires: SDL2-devel
+BuildRequires: SDL2_ttf-devel
 BuildRequires: docbook-style-xsl
 BuildRequires: libxslt
 BuildRequires: pkgconfig
@@ -79,6 +83,7 @@ BuildRequires: libusbx-devel
 BuildRequires: systemd-devel
 BuildRequires: dbus-glib-devel
 BuildRequires: libjpeg-turbo-devel
+BuildRequires: pkcs11-helper
 %endif 
 
 %if 0%{?fedora} >= 33
@@ -199,6 +204,8 @@ export NO_BRP_CHECK_RPATH true
 
 
 %changelog
+* Wed Nov 15 2023 FreeRDP Team <team@freerdp.com> - 3.0.0-0
+- Update build dependencies
 * Wed Feb 7 2018 FreeRDP Team <team@freerdp.com> - 2.0.0-0
 - Update version information and support for OpenSuse 42.1
 * Tue Feb 03 2015 FreeRDP Team <team@freerdp.com> - 1.2.1-0
