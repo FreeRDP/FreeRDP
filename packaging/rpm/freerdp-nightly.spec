@@ -67,7 +67,8 @@ BuildRequires: libjpeg-devel
 BuildRequires: libavutil-devel
 BuildRequires: libavcodec-devel
 BuildRequires: libswresample-devel
-BuildRequires: libpkcs11-helper1
+BuildRequires: libpkcs11-helper1-devel
+BuildRequires: libfuse3-dev
 %endif
 # fedora 21+
 %if 0%{?fedora} >= 21 || 0%{?rhel} >= 7
@@ -83,8 +84,11 @@ BuildRequires: libusbx-devel
 BuildRequires: systemd-devel
 BuildRequires: dbus-glib-devel
 BuildRequires: libjpeg-turbo-devel
-BuildRequires: pkcs11-helper
-%endif 
+BuildRequires: pkcs11-helper-devel
+BuildRequires: fuse3-devel
+BuildRequires: libasan
+BuildRequires: webkit2gtk4.0-devel
+%endif
 
 %if 0%{?fedora} >= 33
 BuildRequires: wayland-devel
@@ -168,7 +172,7 @@ make %{?_smp_mflags}
 rm -rf $RPM_BUILD_ROOT
 make install DESTDIR=$RPM_BUILD_ROOT
 %endif
-%endif 
+%endif
 
 find %{buildroot} -name "*.a" -delete
 export NO_BRP_CHECK_RPATH true
@@ -182,7 +186,9 @@ export NO_BRP_CHECK_RPATH true
 %dir %{INSTALL_PREFIX}/share/man/
 %dir %{INSTALL_PREFIX}/share/man/man1
 %dir %{INSTALL_PREFIX}/share/man/man7
+%dir %{INSTALL_PREFIX}/%{_lib}/freerdp3/proxy/
 %{INSTALL_PREFIX}/%{_lib}/*.so.*
+%{INSTALL_PREFIX}/%{_lib}/freerdp3/proxy/*.so
 %{INSTALL_PREFIX}/bin/
 %{INSTALL_PREFIX}/share/man/man1/xfreerdp.1*
 %{INSTALL_PREFIX}/share/man/man1/freerdp-shadow-cli.1*
