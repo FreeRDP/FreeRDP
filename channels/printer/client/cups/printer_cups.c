@@ -40,11 +40,14 @@
 
 #include <freerdp/client/printer.h>
 
+#include <freerdp/channels/log.h>
+#define TAG CHANNELS_TAG("printer.client.cups")
+
 typedef struct
 {
 	rdpPrinterDriver driver;
 
-	int id_sequence;
+	size_t id_sequence;
 	size_t references;
 } rdpCupsPrinterDriver;
 
@@ -76,6 +79,31 @@ static void printer_cups_get_printjob_name(char* buf, size_t size, size_t id)
 	          t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, id);
 }
 
+static bool http_status_ok(http_status_t status)
+{
+	switch (status)
+	{
+		case HTTP_OK:
+		case HTTP_CONTINUE:
+			return true;
+		default:
+			return false;
+	}
+}
+
+static UINT write_printjob(rdpPrintJob* printjob, const BYTE* data, size_t size)
+{
+	rdpCupsPrintJob* cups_printjob = (rdpCupsPrintJob*)printjob;
+
+	WINPR_ASSERT(cups_printjob);
+
+	http_status_t rc =
+	    cupsWriteRequestData(cups_printjob->printjob_object, (const char*)data, size);
+	if (!http_status_ok(rc))
+		WLog_WARN(TAG, "cupsWriteRequestData returned %s", httpStatus(rc));
+
+	return CHANNEL_RC_OK;
+}
 /**
  * Function description
  *
@@ -87,9 +115,7 @@ static UINT printer_cups_write_printjob(rdpPrintJob* printjob, const BYTE* data,
 
 	WINPR_ASSERT(cups_printjob);
 
-	cupsWriteRequestData(cups_printjob->printjob_object, (const char*)data, size);
-
-	return CHANNEL_RC_OK;
+	return write_printjob(printjob, data, size);
 }
 
 static void printer_cups_close_printjob(rdpPrintJob* printjob)
@@ -99,7 +125,10 @@ static void printer_cups_close_printjob(rdpPrintJob* printjob)
 
 	WINPR_ASSERT(cups_printjob);
 
-	cupsFinishDocument(cups_printjob->printjob_object, printjob->printer->name);
+	ipp_status_t rc = cupsFinishDocument(cups_printjob->printjob_object, printjob->printer->name);
+	if (rc != IPP_OK)
+		WLog_WARN(TAG, "cupsFinishDocument returned %s", ippErrorString(rc));
+
 	cups_printjob->printjob_id = 0;
 	httpClose(cups_printjob->printjob_object);
 
@@ -118,7 +147,10 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 	WINPR_ASSERT(cups_printer);
 
 	if (cups_printer->printjob != NULL)
+	{
+		WLog_WARN(TAG, "printjob [printer '%s'] already existing, abort!", printer->name);
 		return NULL;
+	}
 
 	cups_printjob = (rdpCupsPrintJob*)calloc(1, sizeof(rdpCupsPrintJob));
 	if (!cups_printjob)
@@ -131,13 +163,14 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 	cups_printjob->printjob.Close = printer_cups_close_printjob;
 
 	{
-		char buf[100];
+		char buf[100] = { 0 };
 
 		cups_printjob->printjob_object = httpConnect2(cupsServer(), ippPort(), NULL, AF_UNSPEC,
 		                                              HTTP_ENCRYPT_IF_REQUESTED, 1, 10000, NULL);
 
 		if (!cups_printjob->printjob_object)
 		{
+			WLog_WARN(TAG, "httpConnect2 failed for '%s:%d", cupsServer(), ippPort());
 			free(cups_printjob);
 			return NULL;
 		}
@@ -149,13 +182,18 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 
 		if (!cups_printjob->printjob_id)
 		{
+			WLog_WARN(TAG, "cupsCreateJob failed for printer '%s', driver '%s'", printer->name,
+			          printer->driver);
 			httpClose(cups_printjob->printjob_object);
 			free(cups_printjob);
 			return NULL;
 		}
 
-		cupsStartDocument(cups_printjob->printjob_object, printer->name, cups_printjob->printjob_id,
-		                  buf, CUPS_FORMAT_AUTO, 1);
+		http_status_t rc = cupsStartDocument(cups_printjob->printjob_object, printer->name,
+		                                     cups_printjob->printjob_id, buf, CUPS_FORMAT_AUTO, 1);
+		if (!http_status_ok(rc))
+			WLog_WARN(TAG, "cupsStartDocument [printer '%s', driver '%s'] returned %s",
+			          printer->name, printer->driver, httpStatus(rc));
 	}
 
 	cups_printer->printjob = cups_printjob;
@@ -282,8 +320,8 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	const int num_dests = cupsGetDests(&dests);
 
 	WINPR_ASSERT(driver);
-
-	printers = (rdpPrinter**)calloc(num_dests + 1, sizeof(rdpPrinter*));
+	if (num_dests >= 0)
+		printers = (rdpPrinter**)calloc((size_t)num_dests + 1, sizeof(rdpPrinter*));
 	if (!printers)
 		return NULL;
 
