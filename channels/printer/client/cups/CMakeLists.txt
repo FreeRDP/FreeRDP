@@ -17,7 +17,7 @@
 # limitations under the License.
 define_channel_client_subsystem("printer" "cups" "")
 
-find_package(Cups REQUIRED)
+find_package(Cups 2.0 REQUIRED)
 set(${MODULE_PREFIX}_SRCS
 		printer_cups.c)
 

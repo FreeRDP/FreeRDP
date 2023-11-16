@@ -87,25 +87,7 @@ static UINT printer_cups_write_printjob(rdpPrintJob* printjob, const BYTE* data,
 
 	WINPR_ASSERT(cups_printjob);
 
-#ifndef _CUPS_API_1_4
-
-	{
-		FILE* fp = winpr_fopen((const char*)cups_printjob->printjob_object, "a+b");
-
-		if (!fp)
-			return ERROR_INTERNAL_ERROR;
-
-		const size_t r = fwrite(data, 1, size, fp);
-		fclose(fp);
-		if (r < size)
-			return ERROR_INTERNAL_ERROR;
-	}
-
-#else
-
 	cupsWriteRequestData(cups_printjob->printjob_object, (const char*)data, size);
-
-#endif
 
 	return CHANNEL_RC_OK;
 }
@@ -117,29 +99,9 @@ static void printer_cups_close_printjob(rdpPrintJob* printjob)
 
 	WINPR_ASSERT(cups_printjob);
 
-#ifndef _CUPS_API_1_4
-
-	{
-		char buf[100];
-
-		printer_cups_get_printjob_name(buf, sizeof(buf), printjob->id);
-
-		if (cupsPrintFile(printjob->printer->name, (const char*)cups_printjob->printjob_object, buf,
-		                  0, NULL) == 0)
-		{
-		}
-
-		unlink(cups_printjob->printjob_object);
-		free(cups_printjob->printjob_object);
-	}
-
-#else
-
 	cupsFinishDocument(cups_printjob->printjob_object, printjob->printer->name);
 	cups_printjob->printjob_id = 0;
 	httpClose(cups_printjob->printjob_object);
-
-#endif
 
 	cups_printer = (rdpCupsPrinter*)printjob->printer;
 	WINPR_ASSERT(cups_printer);
@@ -168,26 +130,12 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 	cups_printjob->printjob.Write = printer_cups_write_printjob;
 	cups_printjob->printjob.Close = printer_cups_close_printjob;
 
-#ifndef _CUPS_API_1_4
-
-	cups_printjob->printjob_object = _strdup(tmpnam(NULL));
-	if (!cups_printjob->printjob_object)
-	{
-		free(cups_printjob);
-		return NULL;
-	}
-
-#else
 	{
 		char buf[100];
 
-#if !defined(_CUPS_API_1_7)
-		cups_printjob->printjob_object =
-		    httpConnectEncrypt(cupsServer(), ippPort(), HTTP_ENCRYPT_IF_REQUESTED);
-#else
 		cups_printjob->printjob_object = httpConnect2(cupsServer(), ippPort(), NULL, AF_UNSPEC,
 		                                              HTTP_ENCRYPT_IF_REQUESTED, 1, 10000, NULL);
-#endif
+
 		if (!cups_printjob->printjob_object)
 		{
 			free(cups_printjob);
@@ -209,8 +157,6 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 		cupsStartDocument(cups_printjob->printjob_object, printer->name, cups_printjob->printjob_id,
 		                  buf, CUPS_FORMAT_AUTO, 1);
 	}
-
-#endif
 
 	cups_printer->printjob = cups_printjob;
 
