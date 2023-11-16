@@ -43,6 +43,40 @@
 #include <freerdp/channels/log.h>
 #define TAG CHANNELS_TAG("printer.client.cups")
 
+#if __APPLE__
+#include <errno.h>
+#include <sys/sysctl.h>
+
+static bool is_mac_os_sonoma_or_later(void)
+{
+	char str[256] = { 0 };
+	size_t size = sizeof(str);
+
+	errno = 0;
+	int ret = sysctlbyname("kern.osrelease", str, &size, NULL, 0);
+	if (ret != 0)
+	{
+		WLog_WARN(TAG, "sysctlbyname('kern.osrelease') failed with %s [%d]", strerror(errno),
+		          errno);
+		return false;
+	}
+
+	int major = 0;
+	int minor = 0;
+	int patch = 0;
+	const int rc = sscanf(str, "%d.%d.%d", &major, &minor, &patch);
+	if (rc != 3)
+	{
+		WLog_WARN(TAG, "could not match '%s' to format '%d.%d.%d'");
+		return false;
+	}
+
+	if (major < 23)
+		return false;
+	return true;
+}
+#endif
+
 typedef struct
 {
 	rdpPrinterDriver driver;
@@ -272,7 +306,14 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, c
 	if (driverName)
 		cups_printer->printer.driver = _strdup(driverName);
 	else
-		cups_printer->printer.driver = _strdup("MS Publisher Imagesetter");
+	{
+		const char* dname = "MS Publisher Imagesetter";
+#if __APPLE__
+		if (is_mac_os_sonoma_or_later())
+			dname = "Microsoft Print to PDF";
+#endif
+		cups_printer->printer.driver = _strdup(dname);
+	}
 	if (!cups_printer->printer.driver)
 		goto fail;
 
