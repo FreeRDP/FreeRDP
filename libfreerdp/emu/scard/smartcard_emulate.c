@@ -1355,9 +1355,6 @@ LONG WINAPI Emulate_SCardGetStatusChangeA(SmartcardEmulationContext* smartcard,
 	WLog_Print(smartcard->log, smartcard->log_default_level, "SCardGetStatusChangeA { hContext: %p",
 	           (void*)hContext);
 
-	if (dwTimeout == INFINITE)
-		dwTimeout = 60000;
-
 	if (status == SCARD_S_SUCCESS)
 	{
 		const DWORD diff = 100;
@@ -1413,7 +1410,8 @@ LONG WINAPI Emulate_SCardGetStatusChangeA(SmartcardEmulationContext* smartcard,
 				break;
 			}
 			Sleep(diff);
-			dwTimeout -= MIN(dwTimeout, diff);
+			if (dwTimeout != INFINITE)
+				dwTimeout -= MIN(dwTimeout, diff);
 		} while (dwTimeout > 0);
 	}
 
@@ -1432,9 +1430,6 @@ LONG WINAPI Emulate_SCardGetStatusChangeW(SmartcardEmulationContext* smartcard,
 
 	WLog_Print(smartcard->log, smartcard->log_default_level, "SCardGetStatusChangeW { hContext: %p",
 	           (void*)hContext);
-
-	if (dwTimeout == INFINITE)
-		dwTimeout = 60000;
 
 	if (status == SCARD_S_SUCCESS)
 	{
@@ -1490,7 +1485,8 @@ LONG WINAPI Emulate_SCardGetStatusChangeW(SmartcardEmulationContext* smartcard,
 				break;
 			}
 			Sleep(diff);
-			dwTimeout -= MIN(dwTimeout, diff);
+			if (dwTimeout != INFINITE)
+				dwTimeout -= MIN(dwTimeout, diff);
 		} while (dwTimeout > 0);
 	}
 
