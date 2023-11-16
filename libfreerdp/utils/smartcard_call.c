@@ -59,8 +59,6 @@
 	ctx->useEmulatedCard ? NULL : ctx->pWinSCardApi->pfn##fkt(__VA_ARGS__)
 #endif
 
-#define SCARD_MAX_TIMEOUT 60000
-
 struct s_scard_call_context
 {
 	BOOL useEmulatedCard;
@@ -905,8 +903,6 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 
 	call = &operation->call.getStatusChangeA;
 	dwTimeOut = call->dwTimeOut;
-	if ((dwTimeOut == INFINITE) || (dwTimeOut > SCARD_MAX_TIMEOUT))
-		dwTimeOut = SCARD_MAX_TIMEOUT;
 
 	if (call->cReaders > 0)
 	{
@@ -917,7 +913,7 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 			goto fail;
 	}
 
-	for (x = 0; x < MAX(1, dwTimeOut); x += dwTimeStep)
+	for (x = 0; x < MAX(1, dwTimeOut);)
 	{
 		if (call->cReaders > 0)
 			memcpy(rgReaderStates, call->rgReaderStates,
@@ -928,6 +924,8 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 			break;
 		if (WaitForSingleObject(smartcard->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
+		if (dwTimeOut != INFINITE)
+			x += dwTimeStep;
 	}
 	scard_log_status_error(TAG, "SCardGetStatusChangeA", ret.ReturnCode);
 
@@ -968,8 +966,6 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 
 	call = &operation->call.getStatusChangeW;
 	dwTimeOut = call->dwTimeOut;
-	if ((dwTimeOut == INFINITE) || (dwTimeOut > SCARD_MAX_TIMEOUT))
-		dwTimeOut = SCARD_MAX_TIMEOUT;
 
 	if (call->cReaders > 0)
 	{
@@ -980,7 +976,7 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 			goto fail;
 	}
 
-	for (x = 0; x < MAX(1, dwTimeOut); x += dwTimeStep)
+	for (x = 0; x < MAX(1, dwTimeOut);)
 	{
 		if (call->cReaders > 0)
 			memcpy(rgReaderStates, call->rgReaderStates,
@@ -993,6 +989,8 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 			break;
 		if (WaitForSingleObject(smartcard->stopEvent, 0) == WAIT_OBJECT_0)
 			break;
+		if (dwTimeOut != INFINITE)
+			x += dwTimeStep;
 	}
 	scard_log_status_error(TAG, "SCardGetStatusChangeW", ret.ReturnCode);
 
