@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Include our extra modules
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
+
 if (NOT FREERDP_UNIFIED_BUILD)
 	cmake_minimum_required(VERSION 3.13)
 	project(WinPR LANGUAGES C)
@@ -111,9 +114,6 @@ include(CheckLibraryExists)
 include(CheckSymbolExists)
 include(CheckStructHasMember)
 include(TestBigEndian)
-
-# Include our extra modules
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
 
 # Check for cmake compatibility (enable/disable features)
 include(CheckCmakeCompat)
