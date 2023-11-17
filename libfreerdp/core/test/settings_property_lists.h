@@ -139,6 +139,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_RemoteAssistanceMode,
 	FreeRDP_RemoteAssistanceRequestControl,
 	FreeRDP_RemoteConsoleAudio,
+	FreeRDP_RemoteCredentialGuard,
 	FreeRDP_RemoteFxCodec,
 	FreeRDP_RemoteFxImageCodec,
 	FreeRDP_RemoteFxOnly,

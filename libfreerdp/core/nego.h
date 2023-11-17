@@ -114,6 +114,9 @@ FREERDP_LOCAL BOOL nego_set_target(rdpNego* nego, const char* hostname, UINT16 p
 FREERDP_LOCAL void nego_set_negotiation_enabled(rdpNego* nego, BOOL NegotiateSecurityLayer);
 FREERDP_LOCAL void nego_set_restricted_admin_mode_required(rdpNego* nego,
                                                            BOOL RestrictedAdminModeRequired);
+FREERDP_LOCAL void nego_set_RCG_required(rdpNego* nego, BOOL enabled);
+FREERDP_LOCAL void nego_set_RCG_supported(rdpNego* nego, BOOL enabled);
+FREERDP_LOCAL BOOL nego_get_remoteCredentialGuard(rdpNego* nego);
 FREERDP_LOCAL void nego_set_childsession_enabled(rdpNego* nego, BOOL ChildSessionEnabled);
 FREERDP_LOCAL void nego_set_gateway_enabled(rdpNego* nego, BOOL GatewayEnabled);
 FREERDP_LOCAL void nego_set_gateway_bypass_local(rdpNego* nego, BOOL GatewayBypassLocal);

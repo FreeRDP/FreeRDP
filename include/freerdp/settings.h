@@ -651,6 +651,7 @@ extern "C"
 #define FreeRDP_RdstlsSecurity (1111)
 #define FreeRDP_AadSecurity (1112)
 #define FreeRDP_WinSCardModule (1113)
+#define FreeRDP_RemoteCredentialGuard (1114)
 #define FreeRDP_MstscCookieMode (1152)
 #define FreeRDP_CookieMaxLength (1153)
 #define FreeRDP_PreconnectionId (1154)
@@ -1185,7 +1186,8 @@ extern "C"
 		ALIGN64 BOOL RdstlsSecurity;               /* 1111 */
 		ALIGN64 BOOL AadSecurity;                  /* 1112 */
 		ALIGN64 char* WinSCardModule;              /* 1113 */
-		UINT64 padding1152[1152 - 1114];           /* 1114 */
+		ALIGN64 BOOL RemoteCredentialGuard;        /* 1114 */
+		UINT64 padding1152[1152 - 1115];           /* 1115 */
 
 		/* Connection Cookie */
 		ALIGN64 BOOL MstscCookieMode;      /* 1152 */
@@ -1491,8 +1493,8 @@ extern "C"
 		 * If used by an implementation ensure proper state resync after reenabling
 		 * input
 		 */
-		ALIGN64 BOOL SuspendInput;       /* 2636 */
-		ALIGN64 char* KeyboardPipeName;  /* 2637 */
+		ALIGN64 BOOL SuspendInput;          /* 2636 */
+		ALIGN64 char* KeyboardPipeName;     /* 2637 */
 		ALIGN64 BOOL HasRelativeMouseEvent; /* 2638 */
 		ALIGN64 BOOL HasQoeEvent;           /* 2639 */
 		UINT64 padding2688[2688 - 2640];    /* 2640 */
@@ -1680,20 +1682,20 @@ extern "C"
 		ALIGN64 BOOL SupportDynamicChannels;      /* 5059 */
 		UINT64 padding5184[5184 - 5060];          /* 5060 */
 
-		ALIGN64 BOOL SupportEchoChannel;      /* 5184 */
-		ALIGN64 BOOL SupportDisplayControl;   /* 5185 */
-		ALIGN64 BOOL SupportGeometryTracking; /* 5186 */
-		ALIGN64 BOOL SupportSSHAgentChannel;  /* 5187 */
-		ALIGN64 BOOL SupportVideoOptimized;   /* 5188 */
-		ALIGN64 char* RDP2TCPArgs;            /* 5189 */
-		ALIGN64 BOOL TcpKeepAlive;            /* 5190 */
-		ALIGN64 UINT32 TcpKeepAliveRetries;   /* 5191 */
-		ALIGN64 UINT32 TcpKeepAliveDelay;     /* 5192 */
-		ALIGN64 UINT32 TcpKeepAliveInterval;  /* 5193 */
-		ALIGN64 UINT32 TcpAckTimeout;         /* 5194 */
-		ALIGN64 char* ActionScript;           /* 5195 */
-		ALIGN64 UINT32 Floatbar;              /* 5196 */
-		ALIGN64 UINT32 TcpConnectTimeout;     /* 5197 */
+		ALIGN64 BOOL SupportEchoChannel;        /* 5184 */
+		ALIGN64 BOOL SupportDisplayControl;     /* 5185 */
+		ALIGN64 BOOL SupportGeometryTracking;   /* 5186 */
+		ALIGN64 BOOL SupportSSHAgentChannel;    /* 5187 */
+		ALIGN64 BOOL SupportVideoOptimized;     /* 5188 */
+		ALIGN64 char* RDP2TCPArgs;              /* 5189 */
+		ALIGN64 BOOL TcpKeepAlive;              /* 5190 */
+		ALIGN64 UINT32 TcpKeepAliveRetries;     /* 5191 */
+		ALIGN64 UINT32 TcpKeepAliveDelay;       /* 5192 */
+		ALIGN64 UINT32 TcpKeepAliveInterval;    /* 5193 */
+		ALIGN64 UINT32 TcpAckTimeout;           /* 5194 */
+		ALIGN64 char* ActionScript;             /* 5195 */
+		ALIGN64 UINT32 Floatbar;                /* 5196 */
+		ALIGN64 UINT32 TcpConnectTimeout;       /* 5197 */
 		ALIGN64 UINT32 FakeMouseMotionInterval; /* 5198 */
 		UINT64 padding5312[5312 - 5199];        /* 5199 */
 

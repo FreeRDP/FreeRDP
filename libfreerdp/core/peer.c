@@ -267,6 +267,7 @@ static BOOL freerdp_peer_initialize(freerdp_peer* client)
 		}
 	}
 
+	nego_set_RCG_supported(rdp->nego, settings->RemoteCredentialGuard);
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_INITIAL))
 		return FALSE;
 

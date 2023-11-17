@@ -60,6 +60,9 @@ struct rdp_nego
 	BOOL NegotiateSecurityLayer;
 	BOOL EnabledProtocols[32];
 	BOOL RestrictedAdminModeRequired;
+	BOOL RemoteCredsGuardRequired;
+	BOOL RemoteCredsGuardActive;
+	BOOL RemoteCredsGuardSupported;
 	BOOL GatewayEnabled;
 	BOOL GatewayBypassLocal;
 	BOOL ConnectChildSession;
@@ -1112,6 +1115,9 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		if (nego->RestrictedAdminModeRequired)
 			flags |= RESTRICTED_ADMIN_MODE_REQUIRED;
 
+		if (nego->RemoteCredsGuardRequired)
+			flags |= REDIRECTED_AUTHENTICATION_MODE_REQUIRED;
+
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_REQ);
 		Stream_Write_UINT8(s, flags);
 		Stream_Write_UINT16(s, 8);                        /* RDP_NEG_DATA length (8) */
@@ -1221,9 +1227,17 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 
 	if (flags & REDIRECTED_AUTHENTICATION_MODE_REQUIRED)
 	{
-		WLog_ERR(TAG, "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED: FreeRDP does "
-		              "not support Remote Credential Guard");
-		return FALSE;
+		if (!nego->RemoteCredsGuardSupported)
+		{
+			WLog_ERR(TAG,
+			         "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED but disabled");
+			return FALSE;
+		}
+		else
+		{
+			WLog_INFO(TAG, "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED");
+		}
+		nego->RemoteCredsGuardActive = TRUE;
 	}
 
 	Stream_Read_UINT16(s, length);
@@ -1417,6 +1431,12 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_SupportGraphicsPipeline))
 			flags |= DYNVC_GFX_PROTOCOL_SUPPORTED;
+
+		if (freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired))
+			flags |= RESTRICTED_ADMIN_MODE_SUPPORTED;
+
+		if (nego->RemoteCredsGuardSupported)
+			flags |= REDIRECTED_AUTHENTICATION_MODE_SUPPORTED;
 
 		/* RDP_NEG_DATA must be present for TLS, NLA, RDP and RDSTLS */
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_RSP);
@@ -1646,6 +1666,28 @@ void nego_set_restricted_admin_mode_required(rdpNego* nego, BOOL RestrictedAdmin
 	WLog_DBG(TAG, "Enabling restricted admin mode: %s",
 	         RestrictedAdminModeRequired ? "TRUE" : "FALSE");
 	nego->RestrictedAdminModeRequired = RestrictedAdminModeRequired;
+}
+
+void nego_set_RCG_required(rdpNego* nego, BOOL enabled)
+{
+	WINPR_ASSERT(nego);
+
+	WLog_DBG(TAG, "Enabling remoteCredentialGuards: %s", enabled ? "TRUE" : "FALSE");
+	nego->RemoteCredsGuardRequired = enabled;
+}
+
+void nego_set_RCG_supported(rdpNego* nego, BOOL enabled)
+{
+	WINPR_ASSERT(nego);
+
+	nego->RemoteCredsGuardSupported = enabled;
+}
+
+BOOL nego_get_remoteCredentialGuard(rdpNego* nego)
+{
+	WINPR_ASSERT(nego);
+
+	return nego->RemoteCredsGuardActive;
 }
 
 void nego_set_childsession_enabled(rdpNego* nego, BOOL ChildSessionEnabled)

@@ -303,6 +303,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			server->authentication = arg->Value ? TRUE : FALSE;
 		}
+		CommandLineSwitchCase(arg, "remote-guard")
+		{
+			settings->RemoteCredentialGuard = arg->Value ? TRUE : FALSE;
+		}
 		CommandLineSwitchCase(arg, "sec")
 		{
 			if (strcmp("rdp", arg->Value) == 0) /* Standard RDP */
