@@ -134,13 +134,11 @@ static long transport_bio_named_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		}
 		case BIO_C_WAIT_READ:
 		{
-			int timeout = (int)arg1;
 			return 1;
 		}
 
 		case BIO_C_WAIT_WRITE:
 		{
-			int timeout = (int)arg1;
 			return 1;
 		}
 

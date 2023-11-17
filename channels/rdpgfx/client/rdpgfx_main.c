@@ -2405,7 +2405,8 @@ void rdpgfx_client_context_free(RdpgfxClientContext* context)
 }
 
 static const IWTSVirtualChannelCallback rdpgfx_callbacks = { rdpgfx_on_data_received,
-	                                                         rdpgfx_on_open, rdpgfx_on_close };
+	                                                         rdpgfx_on_open, rdpgfx_on_close,
+	                                                         NULL };
 
 /**
  * Function description

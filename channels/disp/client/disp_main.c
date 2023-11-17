@@ -308,7 +308,7 @@ static void disp_plugin_terminated(GENERIC_DYNVC_PLUGIN* base)
 }
 
 static const IWTSVirtualChannelCallback disp_callbacks = { disp_on_data_received, NULL, /* Open */
-	                                                       disp_on_close };
+	                                                       disp_on_close, NULL };
 
 /**
  * Function description

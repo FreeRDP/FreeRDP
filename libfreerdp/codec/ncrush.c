@@ -2177,12 +2177,14 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 				if (idx >= ARRAYSIZE(HuffTableMask))
 					return -1;
 
-				const UINT16 Mask = get_word(&HuffTableMask[idx]);
-				const UINT32 MaskedBits = bits & Mask;
-				const UINT32 tmp = CopyOffsetBase + MaskedBits;
-				if (tmp < 1)
-					return -1;
-				CopyOffset = tmp - 1;
+				{
+					const UINT16 Mask = get_word(&HuffTableMask[idx]);
+					const UINT32 MaskedBits = bits & Mask;
+					const UINT32 tmp = CopyOffsetBase + MaskedBits;
+					if (tmp < 1)
+						return -1;
+					CopyOffset = tmp - 1;
+				}
 				bits >>= CopyOffsetBits;
 				nbits -= CopyOffsetBits;
 
