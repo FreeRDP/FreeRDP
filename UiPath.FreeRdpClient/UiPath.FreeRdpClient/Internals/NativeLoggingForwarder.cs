@@ -50,6 +50,7 @@ internal sealed class NativeLoggingForwarder : IDisposable
         if (!FilterLogs(logLevel, message))
             return;
 
+        // This is here so that they don't show up in Windows Event Log.
         if (logLevel is LogLevel.Error)
         {
             logLevel = LogLevel.Warning;
