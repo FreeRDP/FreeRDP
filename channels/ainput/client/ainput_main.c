@@ -168,7 +168,7 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 
 static const IWTSVirtualChannelCallback ainput_functions = { ainput_on_data_received,
 	                                                         NULL, /* Open */
-	                                                         ainput_on_close };
+	                                                         ainput_on_close, NULL };
 
 /**
  * Function description

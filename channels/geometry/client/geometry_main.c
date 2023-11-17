@@ -329,7 +329,7 @@ static void mappedGeometryUnref_void(void* arg)
 
 static const IWTSVirtualChannelCallback geometry_callbacks = { geometry_on_data_received,
 	                                                           NULL, /* Open */
-	                                                           geometry_on_close };
+	                                                           geometry_on_close, NULL };
 
 static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdpSettings* settings)
 {

@@ -43,7 +43,7 @@
 #include <freerdp/channels/log.h>
 #define TAG CHANNELS_TAG("printer.client.cups")
 
-#if __APPLE__
+#if defined(__APPLE__)
 #include <errno.h>
 #include <sys/sysctl.h>
 
@@ -308,7 +308,7 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, c
 	else
 	{
 		const char* dname = "MS Publisher Imagesetter";
-#if __APPLE__
+#if defined(__APPLE__)
 		if (is_mac_os_sonoma_or_later())
 			dname = "Microsoft Print to PDF";
 #endif
@@ -352,7 +352,7 @@ static void printer_cups_release_enum_printers(rdpPrinter** printers)
 
 static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 {
-	rdpPrinter** printers;
+	rdpPrinter** printers = NULL;
 	int num_printers = 0;
 	cups_dest_t* dests = NULL;
 	cups_dest_t* dest = NULL;

@@ -80,7 +80,6 @@ static BOOL rdp_read_info_null_string(rdpSettings* settings, FreeRDP_Settings_Ke
                                       size_t max)
 {
 	const BOOL unicode = (flags & INFO_UNICODE) ? TRUE : FALSE;
-	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
 
 	if (!freerdp_settings_set_string(settings, id, NULL))
 		return FALSE;

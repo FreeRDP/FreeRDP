@@ -1460,7 +1460,7 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 
 static const IWTSVirtualChannelCallback geometry_callbacks = { rdpei_on_data_received,
 	                                                           NULL, /* Open */
-	                                                           rdpei_on_close };
+	                                                           rdpei_on_close, NULL };
 
 /**
  * Function description

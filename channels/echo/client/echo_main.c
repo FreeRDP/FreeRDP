@@ -77,7 +77,7 @@ static UINT echo_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 }
 
 static const IWTSVirtualChannelCallback echo_callbacks = { echo_on_data_received, NULL, /* Open */
-	                                                       echo_on_close };
+	                                                       echo_on_close, NULL };
 
 /**
  * Function description
