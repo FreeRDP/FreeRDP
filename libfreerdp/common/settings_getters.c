@@ -465,6 +465,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, size_t id)
 		case FreeRDP_RemoteConsoleAudio:
 			return settings->RemoteConsoleAudio;
 
+		case FreeRDP_RemoteCredentialGuard:
+			return settings->RemoteCredentialGuard;
+
 		case FreeRDP_RemoteFxCodec:
 			return settings->RemoteFxCodec;
 
@@ -1180,6 +1183,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, size_t id, BOOL val)
 
 		case FreeRDP_RemoteConsoleAudio:
 			settings->RemoteConsoleAudio = cnv.c;
+			break;
+
+		case FreeRDP_RemoteCredentialGuard:
+			settings->RemoteCredentialGuard = cnv.c;
 			break;
 
 		case FreeRDP_RemoteFxCodec:
