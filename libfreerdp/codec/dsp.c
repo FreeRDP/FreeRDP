@@ -39,6 +39,12 @@
 #include <lame/lame.h>
 #endif
 
+#if defined(WITH_OPUS)
+#include <opus/opus.h>
+
+#define OPUS_MAX_FRAMES 5760
+#endif
+
 #if defined(WITH_FAAD2)
 #include <neaacdec.h>
 #endif
@@ -93,6 +99,9 @@ struct S_FREERDP_DSP_CONTEXT
 #if defined(WITH_LAME)
 	lame_t lame;
 	hip_t hip;
+#endif
+#if defined(WITH_OPUS)
+	OpusDecoder* opus_decoder;
 #endif
 #if defined(WITH_FAAD2)
 	NeAACDecHandle faad;
@@ -560,6 +569,31 @@ static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 			Stream_SetPosition(context->buffer, 0);
 		}
 	}
+
+	return TRUE;
+}
+#endif
+
+#if defined(WITH_OPUS)
+static BOOL freerdp_dsp_decode_opus(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
+                                    wStream* out)
+{
+	size_t max_size = 5760;
+	int frames;
+
+	if (!context || !src || !out)
+		return FALSE;
+
+	/* Max packet duration is 120ms (5760 at 48KHz) */
+	max_size = OPUS_MAX_FRAMES * context->format.nChannels * sizeof(int16_t);
+	if (!Stream_EnsureRemainingCapacity(context->buffer, max_size))
+		return FALSE;
+
+	frames = opus_decode(context->opus_decoder, src, size, Stream_Pointer(out), OPUS_MAX_FRAMES, 0);
+	if (frames < 0)
+		return FALSE;
+
+	Stream_Seek(out, frames * context->format.nChannels * sizeof(int16_t));
 
 	return TRUE;
 }
@@ -1122,6 +1156,12 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 			hip_decode_exit(context->hip);
 
 #endif
+#if defined(WITH_OPUS)
+
+		if (context->opus_decoder)
+			opus_decoder_destroy(context->opus_decoder);
+
+#endif
 #if defined(WITH_FAAD2)
 
 		if (!context->encoder)
@@ -1207,6 +1247,11 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
                         const BYTE* data, size_t length, wStream* out)
 {
+#if defined(WITH_OPUS)
+	if (context->format.wFormatTag == WAVE_FORMAT_OPUS)
+		return freerdp_dsp_decode_opus(context, data, length, out);
+#endif
+
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_decode(context, srcFormat, data, length, out);
 #else
@@ -1254,6 +1299,14 @@ BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 
 BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 {
+#if defined(WITH_OPUS)
+	if (format->wFormatTag == WAVE_FORMAT_OPUS && !encode &&
+	    (format->nSamplesPerSec == 8000 || format->nSamplesPerSec == 12000 ||
+	     format->nSamplesPerSec == 16000 || format->nSamplesPerSec == 24000 ||
+	     format->nSamplesPerSec == 48000))
+		return TRUE;
+#endif
+
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_supports_format(format, encode);
 #else
@@ -1339,6 +1392,22 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 		Stream_SetPosition(context->buffer, 0);
 	}
 
+#if defined(WITH_OPUS)
+
+	if (!context->encoder &&
+	    (context->format.nSamplesPerSec == 8000 || context->format.nSamplesPerSec == 12000 ||
+	     context->format.nSamplesPerSec == 16000 || context->format.nSamplesPerSec == 24000 ||
+	     context->format.nSamplesPerSec == 48000))
+	{
+		int opus_error = OPUS_OK;
+
+		context->opus_decoder = opus_decoder_create(context->format.nSamplesPerSec,
+		                                            context->format.nChannels, &opus_error);
+		if (opus_error != OPUS_OK)
+			return FALSE;
+	}
+
+#endif
 #if defined(WITH_FAAD2)
 	context->faadSetup = FALSE;
 #endif
