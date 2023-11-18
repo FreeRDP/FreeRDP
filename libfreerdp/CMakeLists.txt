@@ -216,6 +216,11 @@ if(LAME_FOUND)
     include_directories(${LAME_INCLUDE_DIRS})
 endif()
 
+if(OPUS_FOUND)
+    freerdp_library_add(${OPUS_LIBRARIES})
+    include_directories(${OPUS_INCLUDE_DIRS})
+endif()
+
 if(FAAD2_FOUND)
     freerdp_library_add(${FAAD2_LIBRARIES})
     include_directories(${FAAD2_INCLUDE_DIRS})
