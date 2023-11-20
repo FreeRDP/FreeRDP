@@ -1455,6 +1455,11 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 			                        OPUS_APPLICATION_VOIP, &opus_error);
 			if (opus_error != OPUS_OK)
 				return FALSE;
+
+			opus_error = opus_encoder_ctl(context->opus_encoder,
+			                              OPUS_SET_BITRATE(context->format.nAvgBytesPerSec * 8));
+			if (opus_error != OPUS_OK)
+				return FALSE;
 		}
 	}
 
