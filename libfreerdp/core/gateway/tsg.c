@@ -316,8 +316,10 @@ static BOOL TsProxyReadTunnelContext(wLog* log, wStream* s, CONTEXT_HANDLE* tunn
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 20))
 		return FALSE;
 
+	WINPR_ASSERT(tunnelContext);
 	Stream_Read_UINT32(s, tunnelContext->ContextType); /* ContextType (4 bytes) */
-	Stream_Read(s, tunnelContext->ContextUuid, 16);    /* ContextUuid (16 bytes) */
+	Stream_Read(s, &tunnelContext->ContextUuid,
+	            sizeof(tunnelContext->ContextUuid)); /* ContextUuid (16 bytes) */
 	return TRUE;
 }
 
@@ -327,7 +329,8 @@ static BOOL TsProxyWriteTunnelContext(wLog* log, wStream* s, const CONTEXT_HANDL
 		return FALSE;
 
 	Stream_Write_UINT32(s, tunnelContext->ContextType); /* ContextType (4 bytes) */
-	Stream_Write(s, tunnelContext->ContextUuid, 16);    /* ContextUuid (16 bytes) */
+	Stream_Write(s, &tunnelContext->ContextUuid,
+	             sizeof(tunnelContext->ContextUuid)); /* ContextUuid (16 bytes) */
 	return TRUE;
 }
 
@@ -619,11 +622,7 @@ static BOOL tsg_ndr_read_quarenc_response(wLog* log, wStream* s, UINT32* index,
 static BOOL tsg_ndr_read_quarenc_data(wLog* log, wStream* s, UINT32* index,
                                       TSG_PACKET_QUARENC_RESPONSE* quarenc)
 {
-	UINT32 MsgPtr = 0;
 	WINPR_ASSERT(quarenc);
-
-	if (!tsg_ndr_pointer_read(log, s, index, &MsgPtr, TRUE))
-		return FALSE;
 
 	if (quarenc->certChainLen > 0)
 	{
@@ -1495,6 +1494,30 @@ static BOOL tsg_ndr_read_consent_message(wLog* log, rdpContext* context, wStream
 	return TRUE;
 }
 
+static BOOL tsg_ndr_read_tunnel_context(wLog* log, wStream* s, CONTEXT_HANDLE* tunnelContext,
+                                        UINT32* tunnelId)
+{
+
+	if (!tsg_stream_align(log, s, 4))
+		return FALSE;
+
+	/* TunnelContext (20 bytes) */
+	if (!TsProxyReadTunnelContext(log, s, tunnelContext))
+		return FALSE;
+
+	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 8))
+		return FALSE;
+
+	WINPR_ASSERT(tunnelId);
+	Stream_Read_UINT32(s, *tunnelId); /* TunnelId (4 bytes) */
+
+	UINT32 ReturnValue = 0;
+	Stream_Read_UINT32(s, ReturnValue); /* ReturnValue (4 bytes) */
+	if (ReturnValue != NO_ERROR)
+		WLog_WARN(TAG, "ReturnValue=%s", NtStatus2Tag(ReturnValue));
+	return TRUE;
+}
+
 static BOOL tsg_ndr_read_caps_response(wLog* log, rdpContext* context, wStream* s, UINT32* index,
                                        UINT32 PacketPtr, TSG_PACKET_CAPS_RESPONSE* caps,
                                        CONTEXT_HANDLE* tunnelContext, UINT32* tunnelId)
@@ -1527,6 +1550,11 @@ static BOOL tsg_ndr_read_caps_response(wLog* log, rdpContext* context, wStream* 
 		Stream_Read_UINT32(s, MessageSwitchValue); /* MessageSwitchValue (4 bytes) */
 	}
 
+	{
+		UINT32 MsgPtr = 0;
+		if (!tsg_ndr_pointer_read(log, s, index, &MsgPtr, TRUE))
+			return FALSE;
+	}
 	if (!tsg_ndr_read_quarenc_data(log, s, index, &caps->pktQuarEncResponse))
 		goto fail;
 
@@ -1558,19 +1586,7 @@ static BOOL tsg_ndr_read_caps_response(wLog* log, rdpContext* context, wStream* 
 			goto fail;
 	}
 
-	if (!tsg_stream_align(log, s, 4))
-		goto fail;
-
-	/* TunnelContext (20 bytes) */
-	if (!TsProxyReadTunnelContext(log, s, tunnelContext))
-		return FALSE;
-
-	UINT32 ReturnValue = 0;
-	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 8))
-		goto fail;
-	Stream_Read_UINT32(s, *tunnelId);   /* TunnelId (4 bytes) */
-	Stream_Read_UINT32(s, ReturnValue); /* ReturnValue (4 bytes) */
-	return TRUE;
+	return tsg_ndr_read_tunnel_context(log, s, tunnelContext, tunnelId);
 fail:
 	return FALSE;
 }
@@ -1618,25 +1634,18 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 	{
 		UINT32 PacketQuarResponsePtr = 0;
 
-		if (!Stream_CheckAndLogRequiredLengthWLog(tsg->log, pdu->s, 32))
-			goto fail;
-
 		if (!tsg_ndr_pointer_read(tsg->log, pdu->s, &index, &PacketQuarResponsePtr, TRUE))
 			goto fail;
+
 		if (!tsg_ndr_read_quarenc_response(tsg->log, pdu->s, &index,
 		                                   &packet.tsgPacket.packetQuarEncResponse))
 			goto fail;
 
-		if (!Stream_CheckAndLogRequiredLengthWLog(tsg->log, pdu->s, 36))
+		if (!tsg_ndr_read_quarenc_data(tsg->log, pdu->s, &index,
+		                               &packet.tsgPacket.packetQuarEncResponse))
 			goto fail;
 
-		/* Not sure exactly what this is */
-		Stream_Seek_UINT32(pdu->s); /* 0x00000001 (4 bytes) */
-		Stream_Seek_UINT32(pdu->s); /* 0x00000001 (4 bytes) */
-		Stream_Seek_UINT32(pdu->s); /* 0x00000001 (4 bytes) */
-		Stream_Seek_UINT32(pdu->s); /* 0x00000002 (4 bytes) */
-		/* TunnelContext (20 bytes) */
-		if (!TsProxyReadTunnelContext(tsg->log, pdu->s, tunnelContext))
+		if (!tsg_ndr_read_tunnel_context(tsg->log, pdu->s, tunnelContext, tunnelId))
 			goto fail;
 	}
 	else
