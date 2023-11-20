@@ -119,6 +119,25 @@ struct S_FREERDP_DSP_CONTEXT
 #endif
 };
 
+#if defined(WITH_OPUS)
+static BOOL opus_is_valid_samplerate(const AUDIO_FORMAT* format)
+{
+	WINPR_ASSERT(format);
+
+	switch (format->nSamplesPerSec)
+	{
+		case 8000:
+		case 12000:
+		case 16000:
+		case 24000:
+		case 48000:
+			return TRUE;
+		default:
+			return FALSE;
+	}
+}
+#endif
+
 static INT16 read_int16(const BYTE* src)
 {
 	return (INT16)(src[0] | (src[1] << 8));
@@ -1351,11 +1370,7 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 		case WAVE_FORMAT_OPUS:
 			if (encode)
 				return FALSE;
-			if ((format->nSamplesPerSec == 8000 || format->nSamplesPerSec == 12000 ||
-			     format->nSamplesPerSec == 16000 || format->nSamplesPerSec == 24000 ||
-			     format->nSamplesPerSec == 48000))
-				return TRUE;
-			return FALSE;
+			return opus_is_valid_samplerate(format);
 #endif
 
 		default:
@@ -1395,10 +1410,7 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 
 #if defined(WITH_OPUS)
 
-	if (!context->encoder &&
-	    (context->format.nSamplesPerSec == 8000 || context->format.nSamplesPerSec == 12000 ||
-	     context->format.nSamplesPerSec == 16000 || context->format.nSamplesPerSec == 24000 ||
-	     context->format.nSamplesPerSec == 48000))
+	if (!context->encoder && opus_is_valid_samplerate(&context->format))
 	{
 		int opus_error = OPUS_OK;
 
