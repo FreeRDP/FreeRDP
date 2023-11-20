@@ -25,7 +25,7 @@
 typedef struct
 {
 	UINT32 ContextType;
-	BYTE ContextUuid[16];
+	GUID ContextUuid;
 } CONTEXT_HANDLE;
 
 typedef PCONTEXT_HANDLE PTUNNEL_CONTEXT_HANDLE_NOSERIALIZE;
