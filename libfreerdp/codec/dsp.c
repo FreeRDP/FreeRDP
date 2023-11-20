@@ -102,6 +102,7 @@ struct S_FREERDP_DSP_CONTEXT
 #endif
 #if defined(WITH_OPUS)
 	OpusDecoder* opus_decoder;
+	OpusEncoder* opus_encoder;
 #endif
 #if defined(WITH_FAAD2)
 	NeAACDecHandle faad;
@@ -615,6 +616,26 @@ static BOOL freerdp_dsp_decode_opus(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 	Stream_Seek(out, frames * context->format.nChannels * sizeof(int16_t));
 
 	return TRUE;
+}
+
+static BOOL freerdp_dsp_encode_opus(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
+                                    wStream* out)
+{
+	if (!context || !src || !out)
+		return FALSE;
+
+	/* Max packet duration is 120ms (5760 at 48KHz) */
+	const size_t max_size = OPUS_MAX_FRAMES * context->format.nChannels * sizeof(int16_t);
+	if (!Stream_EnsureRemainingCapacity(context->buffer, max_size))
+		return FALSE;
+
+	const int src_frames = size / sizeof(opus_int16) / context->format.nChannels;
+	const opus_int16* src_data = (const opus_int16*)src;
+	const int frames =
+	    opus_encode(context->opus_encoder, src_data, src_frames, Stream_Pointer(out), max_size);
+	if (frames < 0)
+		return FALSE;
+	return Stream_SafeSeek(out, frames * context->format.nChannels * sizeof(int16_t));
 }
 #endif
 
@@ -1179,6 +1200,8 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 
 		if (context->opus_decoder)
 			opus_decoder_destroy(context->opus_decoder);
+		if (context->opus_encoder)
+			opus_encoder_destroy(context->opus_encoder);
 
 #endif
 #if defined(WITH_FAAD2)
@@ -1254,7 +1277,11 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 		case WAVE_FORMAT_AAC_MS:
 			return freerdp_dsp_encode_faac(context, data, length, out);
 #endif
+#if defined(WITH_OPUS)
 
+		case WAVE_FORMAT_OPUS:
+			return freerdp_dsp_encode_opus(context, data, length, out);
+#endif
 		default:
 			return FALSE;
 	}
@@ -1368,8 +1395,6 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 #endif
 #if defined(WITH_OPUS)
 		case WAVE_FORMAT_OPUS:
-			if (encode)
-				return FALSE;
 			return opus_is_valid_samplerate(format);
 #endif
 
@@ -1410,14 +1435,27 @@ BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 
 #if defined(WITH_OPUS)
 
-	if (!context->encoder && opus_is_valid_samplerate(&context->format))
+	if (opus_is_valid_samplerate(&context->format))
 	{
-		int opus_error = OPUS_OK;
+		if (!context->encoder)
+		{
+			int opus_error = OPUS_OK;
 
-		context->opus_decoder = opus_decoder_create(context->format.nSamplesPerSec,
-		                                            context->format.nChannels, &opus_error);
-		if (opus_error != OPUS_OK)
-			return FALSE;
+			context->opus_decoder = opus_decoder_create(context->format.nSamplesPerSec,
+			                                            context->format.nChannels, &opus_error);
+			if (opus_error != OPUS_OK)
+				return FALSE;
+		}
+		else
+		{
+			int opus_error = OPUS_OK;
+
+			context->opus_encoder =
+			    opus_encoder_create(context->format.nSamplesPerSec, context->format.nChannels,
+			                        OPUS_APPLICATION_VOIP, &opus_error);
+			if (opus_error != OPUS_OK)
+				return FALSE;
+		}
 	}
 
 #endif
