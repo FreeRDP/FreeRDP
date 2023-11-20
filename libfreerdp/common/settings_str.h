@@ -195,6 +195,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_RemoteAssistanceRequestControl, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_RemoteAssistanceRequestControl" },
 	{ FreeRDP_RemoteConsoleAudio, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RemoteConsoleAudio" },
+	{ FreeRDP_RemoteCredentialGuard, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RemoteCredentialGuard" },
 	{ FreeRDP_RemoteFxCodec, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RemoteFxCodec" },
 	{ FreeRDP_RemoteFxImageCodec, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RemoteFxImageCodec" },
 	{ FreeRDP_RemoteFxOnly, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_RemoteFxOnly" },
