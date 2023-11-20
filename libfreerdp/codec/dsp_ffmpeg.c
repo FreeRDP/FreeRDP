@@ -136,6 +136,9 @@ static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* format)
 		case WAVE_FORMAT_AAC_MS:
 			return AV_CODEC_ID_AAC;
 
+		case WAVE_FORMAT_OPUS:
+			return AV_CODEC_ID_OPUS;
+
 		default:
 			return AV_CODEC_ID_NONE;
 	}
@@ -165,6 +168,9 @@ static int ffmpeg_sample_format(const AUDIO_FORMAT* format)
 		case WAVE_FORMAT_MPEGLAYER3:
 		case WAVE_FORMAT_AAC_MS:
 			return AV_SAMPLE_FMT_FLTP;
+
+		case WAVE_FORMAT_OPUS:
+			return AV_SAMPLE_FMT_S16;
 
 		case WAVE_FORMAT_MSG723:
 		case WAVE_FORMAT_GSM610:
