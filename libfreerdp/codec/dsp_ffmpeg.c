@@ -418,9 +418,29 @@ static BOOL ffmpeg_resample_frame(AVAudioResampleContext* context, AVFrame* in, 
 static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in, AVPacket* packet,
                                 wStream* out)
 {
-	int ret;
+	if (in->format == AV_SAMPLE_FMT_FLTP)
+	{
+		uint8_t** pp = in->extended_data;
+		for (int y = 0; y < in->channels; y++)
+		{
+			float* data = pp[y];
+			for (int x = 0; x < in->nb_samples; x++)
+			{
+				const float val1 = data[x];
+				if (isnan(val1))
+					data[x] = 0.0f;
+				else if (isinf(val1))
+				{
+					if (val1 < 0.0f)
+						data[x] = -1.0f;
+					else
+						data[x] = 1.0f;
+				}
+			}
+		}
+	}
 	/* send the packet with the compressed data to the encoder */
-	ret = avcodec_send_frame(context, in);
+	int ret = avcodec_send_frame(context, in);
 
 	if (ret < 0)
 	{
