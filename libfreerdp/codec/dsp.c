@@ -1247,11 +1247,6 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
                         const BYTE* data, size_t length, wStream* out)
 {
-#if defined(WITH_OPUS)
-	if (context->format.wFormatTag == WAVE_FORMAT_OPUS)
-		return freerdp_dsp_decode_opus(context, data, length, out);
-#endif
-
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_decode(context, srcFormat, data, length, out);
 #else
@@ -1289,6 +1284,10 @@ BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 			return freerdp_dsp_decode_faad(context, data, length, out);
 #endif
 
+#if defined(WITH_OPUS)
+		case WAVE_FORMAT_OPUS:
+			return freerdp_dsp_decode_opus(context, data, length, out);
+#endif
 		default:
 			return FALSE;
 	}
@@ -1299,14 +1298,6 @@ BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 
 BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 {
-#if defined(WITH_OPUS)
-	if (format->wFormatTag == WAVE_FORMAT_OPUS && !encode &&
-	    (format->nSamplesPerSec == 8000 || format->nSamplesPerSec == 12000 ||
-	     format->nSamplesPerSec == 16000 || format->nSamplesPerSec == 24000 ||
-	     format->nSamplesPerSec == 48000))
-		return TRUE;
-#endif
-
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_supports_format(format, encode);
 #else
@@ -1355,6 +1346,16 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 			if (encode)
 				return TRUE;
 
+#endif
+#if defined(WITH_OPUS)
+		case WAVE_FORMAT_OPUS:
+			if (encode)
+				return FALSE;
+			if ((format->nSamplesPerSec == 8000 || format->nSamplesPerSec == 12000 ||
+			     format->nSamplesPerSec == 16000 || format->nSamplesPerSec == 24000 ||
+			     format->nSamplesPerSec == 48000))
+				return TRUE;
+			return FALSE;
 #endif
 
 		default:
