@@ -73,6 +73,7 @@
         "-DWITH_SERVER:BOOL=ON",
         "-DWITH_SAMPLE:BOOL=ON",
         "-DWITH_CUPS:BOOL=ON",
+        "-DWITH_OPUS:BOOL=ON",
         "-DWITH_FUSE:BOOL=OFF",
         "-DWITH_FFMPEG:BOOL=ON",
         "-DWITH_URIPARSER:BOOL=ON",

@@ -48,6 +48,8 @@ BuildRequires: zlib-devel
 BuildRequires: krb5-devel
 BuildRequires: cjson-devel
 BuildRequires: uriparser-devel
+BuildRequires: opus-devel
+BuildRequires: libopusenc-devel
 
 # (Open)Suse
 %if %{defined suse_version}
@@ -132,6 +134,7 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
         -DWITH_CUPS=ON \
         -DWITH_PCSC=ON \
         -DWITH_JPEG=ON \
+        -DWITH_OPUS=ON \
 %if 0%{?fedora} >= 36 || 0%{?rhel} >= 9 || 0%{?suse_version}
         -DWITH_FFMPEG=ON \
         -DWITH_DSP_FFMPEG=ON \

@@ -16,6 +16,7 @@ DEB_CMAKE_EXTRA_FLAGS :=  -GNinja \
                           -DWITH_KRB5=ON \
                           -DWITH_PCSC=ON \
                           -DWITH_FFMPEG=ON \
+                          -DWITH_OPUS=ON \
                           -DWITH_DSP_FFMPEG=ON \
                           -DCHANNEL_URBDRC=ON \
                           -DCHANNEL_URBDRC_CLIENT=ON \
