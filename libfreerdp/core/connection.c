@@ -1268,12 +1268,10 @@ state_run_t rdp_client_connect_demand_active(rdpRdp* rdp, wStream* s)
 		case PDU_TYPE_DEMAND_ACTIVE:
 			if (!rdp_recv_demand_active(rdp, s, pduSource, length))
 				return STATE_RUN_FAILED;
-			break;
+			return STATE_RUN_ACTIVE;
 		default:
 			return rdp_recv_out_of_sequence_pdu(rdp, s, pduType, length);
 	}
-
-	return STATE_RUN_SUCCESS;
 }
 
 state_run_t rdp_client_connect_finalize(rdpRdp* rdp)
