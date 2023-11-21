@@ -4258,55 +4258,15 @@ BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId, UIN
 	return TRUE;
 }
 
-BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s)
+BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s, UINT16 pduSource, UINT16 length)
 {
-	UINT16 channelId;
-	UINT16 pduType;
-	UINT16 pduSource;
-	UINT16 length;
-	UINT16 lengthSourceDescriptor;
-	UINT16 lengthCombinedCapabilities;
+	UINT16 lengthSourceDescriptor = 0;
+	UINT16 lengthCombinedCapabilities = 0;
 
 	WINPR_ASSERT(rdp);
+	WINPR_ASSERT(rdp->settings);
 	WINPR_ASSERT(rdp->context);
 	WINPR_ASSERT(s);
-
-	if (!rdp_recv_get_active_header(rdp, s, &channelId, &length))
-		return FALSE;
-
-	if (freerdp_shall_disconnect_context(rdp->context))
-		return TRUE;
-
-	if (!rdp_read_share_control_header(rdp, s, NULL, NULL, &pduType, &pduSource))
-		return FALSE;
-
-	if (pduType == PDU_TYPE_DATA)
-	{
-		/*
-		 * We can receive a Save Session Info Data PDU containing a LogonErrorInfo
-		 * structure at this point from the server to indicate a connection error.
-		 */
-		state_run_t rc = rdp_recv_data_pdu(rdp, s);
-		if (state_run_failed(rc))
-			return FALSE;
-
-		return FALSE;
-	}
-
-	if (pduType != PDU_TYPE_DEMAND_ACTIVE)
-	{
-		if (pduType != PDU_TYPE_SERVER_REDIRECTION)
-		{
-			char buffer1[256] = { 0 };
-			char buffer2[256] = { 0 };
-
-			WLog_ERR(TAG, "expected %s, got %s",
-			         pdu_type_to_str(PDU_TYPE_DEMAND_ACTIVE, buffer1, sizeof(buffer1)),
-			         pdu_type_to_str(pduType, buffer2, sizeof(buffer2)));
-		}
-
-		return FALSE;
-	}
 
 	rdp->settings->PduSource = pduSource;
 
