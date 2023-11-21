@@ -159,7 +159,7 @@
 
 FREERDP_LOCAL BOOL rdp_recv_get_active_header(rdpRdp* rdp, wStream* s, UINT16* pChannelId,
                                               UINT16* length);
-FREERDP_LOCAL BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s);
+FREERDP_LOCAL BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s, UINT16 pduSource, UINT16 length);
 FREERDP_LOCAL BOOL rdp_send_demand_active(rdpRdp* rdp);
 FREERDP_LOCAL BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength);
 FREERDP_LOCAL BOOL rdp_send_confirm_active(rdpRdp* rdp);

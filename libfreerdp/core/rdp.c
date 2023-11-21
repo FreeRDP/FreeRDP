@@ -1340,34 +1340,40 @@ state_run_t rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securit
 	return STATE_RUN_SUCCESS;
 }
 
-state_run_t rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s)
+state_run_t rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s, UINT16 pduType, UINT16 length)
 {
-	UINT16 type;
-	UINT16 length;
-	UINT16 channelId;
-
+	state_run_t rc;
 	WINPR_ASSERT(rdp);
 
-	if (!rdp_read_share_control_header(rdp, s, &length, NULL, &type, &channelId))
-		return STATE_RUN_FAILED;
+	switch (pduType)
+	{
+		case PDU_TYPE_DATA:
+			rc = rdp_recv_data_pdu(rdp, s);
+			break;
+		case PDU_TYPE_SERVER_REDIRECTION:
+			rc = rdp_recv_enhanced_security_redirection_packet(rdp, s);
+			break;
+		case PDU_TYPE_FLOW_RESPONSE:
+		case PDU_TYPE_FLOW_STOP:
+		case PDU_TYPE_FLOW_TEST:
+			rc = STATE_RUN_SUCCESS;
+			break;
+		default:
+		{
+			char buffer1[256] = { 0 };
+			char buffer2[256] = { 0 };
 
-	if (type == PDU_TYPE_DATA)
-	{
-		return rdp_recv_data_pdu(rdp, s);
+			WLog_Print(rdp->log, WLOG_ERROR, "expected %s, got %s",
+			           pdu_type_to_str(PDU_TYPE_DEMAND_ACTIVE, buffer1, sizeof(buffer1)),
+			           pdu_type_to_str(pduType, buffer2, sizeof(buffer2)));
+			rc = STATE_RUN_FAILED;
+		}
+		break;
 	}
-	else if (type == PDU_TYPE_SERVER_REDIRECTION)
-	{
-		return rdp_recv_enhanced_security_redirection_packet(rdp, s);
-	}
-	else if (type == PDU_TYPE_FLOW_RESPONSE || type == PDU_TYPE_FLOW_STOP ||
-	         type == PDU_TYPE_FLOW_TEST)
-	{
-		return STATE_RUN_SUCCESS;
-	}
-	else
-	{
+
+	if (!tpkt_ensure_stream_consumed(s, length))
 		return STATE_RUN_FAILED;
-	}
+	return rc;
 }
 
 BOOL rdp_read_flow_control_pdu(rdpRdp* rdp, wStream* s, UINT16* type, UINT16* channel_id)
