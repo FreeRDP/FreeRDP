@@ -32,6 +32,7 @@ internal sealed class NativeLoggingForwarder : IDisposable
         "history buffer index out of range",//10+
         "history buffer overflow",
         "fastpath_recv_update() - -1",
+        "Primary Drawing Order"
     };
 
     public NativeLoggingForwarder(ILoggerFactory loggerFactory)
