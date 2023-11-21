@@ -2041,7 +2041,7 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 				           rdp_get_state_string(rdp),
 				           state_run_result_string(status, buffer, ARRAYSIZE(buffer)));
 			}
-			else if (status != STATE_RUN_REDIRECT)
+			else if (status == STATE_RUN_ACTIVE)
 			{
 				if (!rdp_client_transition_to_state(
 				        rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE))
