@@ -305,7 +305,9 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "remote-guard")
 		{
-			settings->RemoteCredentialGuard = arg->Value ? TRUE : FALSE;
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteCredentialGuard,
+			                               arg->Value ? TRUE : FALSE))
+				return COMMAND_LINE_ERROR;
 		}
 		CommandLineSwitchCase(arg, "sec")
 		{
