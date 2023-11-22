@@ -109,11 +109,14 @@ static BOOL compare_utf16_int(const WCHAR* what, size_t buffersize, SSIZE_T rc, 
 		}
 	}
 
-	if (memcmp(test->utf16, what, rc * sizeof(WCHAR)) != 0)
+	if (rc >= 0)
 	{
-		fprintf(stderr, "%s contents does not match expectations: TODO '%s' != '%s'\n", prefix,
-		        test->utf8, test->utf8);
-		return FALSE;
+		if (memcmp(test->utf16, what, rc * sizeof(WCHAR)) != 0)
+		{
+			fprintf(stderr, "%s contents does not match expectations: TODO '%s' != '%s'\n", prefix,
+			        test->utf8, test->utf8);
+			return FALSE;
+		}
 	}
 
 	printf("%s success\n", prefix);
@@ -159,12 +162,16 @@ static BOOL compare_utf8_int(const char* what, size_t buffersize, SSIZE_T rc, SS
 		}
 	}
 
-	if (memcmp(test->utf8, what, rc) != 0)
+	if (rc >= 0)
 	{
-		fprintf(stderr, "%s contents does not match expectations: '%s' != '%s'\n", prefix, what,
-		        test->utf8);
-		return FALSE;
+		if (memcmp(test->utf8, what, rc) != 0)
+		{
+			fprintf(stderr, "%s contents does not match expectations: '%s' != '%s'\n", prefix, what,
+			        test->utf8);
+			return FALSE;
+		}
 	}
+
 	printf("%s success\n", prefix);
 
 	return TRUE;
