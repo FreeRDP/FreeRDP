@@ -1270,7 +1270,7 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* 
 		return -1;
 	}
 	rc = libusb_submit_transfer(iso_transfer);
-	if (log_libusb_result(urbdrc->log, WLOG_ERROR, "", rc))
+	if (log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_submit_transfer", rc))
 		return -1;
 	return rc;
 }
@@ -1388,7 +1388,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev,
 		return -1;
 	}
 	rc = libusb_submit_transfer(transfer);
-	if (log_libusb_result(urbdrc->log, WLOG_ERROR, "", rc))
+	if (log_libusb_result(urbdrc->log, WLOG_ERROR, "libusb_submit_transfer", rc))
 		return -1;
 	return rc;
 }
