@@ -380,16 +380,8 @@ SSIZE_T ConvertWCharToUtf8(const WCHAR* wstr, char* str, size_t len)
 		return 0;
 	}
 
-	const int rc =
-	    WideCharToMultiByte(CP_UTF8, 0, wstr, -1, str, (int)MIN(INT32_MAX, len), NULL, NULL);
-	if (rc <= 0)
-		return -1;
-	else if ((size_t)rc == len)
-	{
-		if (str && (str[rc - 1] != '\0'))
-			return rc;
-	}
-	return rc - 1;
+	const size_t wlen = _wcslen(wstr);
+	return ConvertWCharNToUtf8(wstr, wlen + 1, str, len);
 }
 
 SSIZE_T ConvertWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t len)
@@ -460,16 +452,8 @@ SSIZE_T ConvertUtf8ToWChar(const char* str, WCHAR* wstr, size_t wlen)
 		return 0;
 	}
 
-	const int iwlen = MIN(INT32_MAX, wlen);
-	const int rc = MultiByteToWideChar(CP_UTF8, 0, str, -1, wstr, iwlen);
-	if (rc <= 0)
-		return -1;
-	else if (iwlen == rc)
-	{
-		if (wstr && (wstr[rc - 1] != '\0'))
-			return rc;
-	}
-	return rc - 1;
+	const size_t len = strlen(str);
+	return ConvertUtf8NToWChar(str, len + 1, wstr, wlen);
 }
 
 SSIZE_T ConvertUtf8NToWChar(const char* str, size_t len, WCHAR* wstr, size_t wlen)
