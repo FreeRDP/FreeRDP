@@ -139,7 +139,11 @@ static BOOL tsmf_ffmpeg_init_audio_stream(ITSMFDecoder* decoder, const TS_AM_MED
 #endif
 #else /* LIBAVCODEC_VERSION_MAJOR < 55 */
 #ifdef AV_CPU_FLAG_SSE2
+#if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(57, 17, 100)
 	av_set_cpu_flags_mask(AV_CPU_FLAG_SSE2 | AV_CPU_FLAG_MMXEXT);
+#else
+	av_force_cpu_flags(AV_CPU_FLAG_SSE2 | AV_CPU_FLAG_MMXEXT);
+#endif
 #else
 	av_set_cpu_flags_mask(FF_MM_SSE2 | FF_MM_MMX2);
 #endif
@@ -377,7 +381,18 @@ static BOOL tsmf_ffmpeg_decode_video(ITSMFDecoder* decoder, const BYTE* data, UI
 		if (extensions & TSMM_SAMPLE_EXT_CLEANPOINT)
 			pkt.flags |= AV_PKT_FLAG_KEY;
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57, 48, 101)
 		len = avcodec_decode_video2(mdecoder->codec_context, mdecoder->frame, &decoded, &pkt);
+#else
+		len = avcodec_send_packet(mdecoder->codec_context, &pkt);
+		if (len > 0)
+		{
+			do
+			{
+				len = avcodec_receive_frame(mdecoder->codec_context, mdecoder->frame);
+			} while (len == AVERROR(EAGAIN));
+		}
+#endif
 	}
 #endif
 
@@ -504,7 +519,18 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 			av_init_packet(&pkt);
 			pkt.data = (BYTE*)src;
 			pkt.size = src_size;
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57, 48, 101)
 			len = avcodec_decode_audio4(mdecoder->codec_context, decoded_frame, &got_frame, &pkt);
+#else
+			len = avcodec_send_packet(mdecoder->codec_context, &pkt);
+			if (len > 0)
+			{
+				do
+				{
+					len = avcodec_receive_frame(mdecoder->codec_context, decoded_frame);
+				} while (len == AVERROR(EAGAIN));
+			}
+#endif
 
 			if (len >= 0 && got_frame)
 			{
