@@ -49,7 +49,6 @@ BuildRequires: krb5-devel
 BuildRequires: cjson-devel
 BuildRequires: uriparser-devel
 BuildRequires: opus-devel
-BuildRequires: libopusenc-devel
 
 # (Open)Suse
 %if %{defined suse_version}
