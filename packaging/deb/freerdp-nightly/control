@@ -52,8 +52,7 @@ Build-Depends:
  libpkcs11-helper1-dev,
  libwebkit2gtk-4.0-dev,
  liburiparser-dev,
- libopus-dev,
- libopusenc-dev
+ libopus-dev
 Standards-Version: 3.9.5
 Homepage: http://www.freerdp.com/
 Vcs-Browser: http://github.com/FreeRDP/FreeRDP.git
