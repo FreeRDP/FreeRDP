@@ -32,6 +32,7 @@
 
 #include <freerdp/channels/urbdrc.h>
 #include <freerdp/channels/rdpecam.h>
+#include <freerdp/channels/location.h>
 
 /**
  * Remote Desktop Plus - Overview of .rdp file settings:
@@ -145,6 +146,7 @@ struct rdp_file
 	DWORD RedirectDrives;              /* redirectdrives */
 	DWORD RedirectPrinters;            /* redirectprinters */
 	DWORD RedirectComPorts;            /* redirectcomports */
+	DWORD RedirectLocation;            /* redirectlocation */
 	DWORD RedirectSmartCards;          /* redirectsmartcards */
 	DWORD RedirectWebauthN;            /* redirectwebauthn */
 	LPSTR RedirectCameras;             /* camerastoredirect */
@@ -289,6 +291,7 @@ static const char key_int_redirectposdevices[] = "redirectposdevices";
 static const char key_int_redirectclipboard[] = "redirectclipboard";
 static const char key_int_redirectsmartcards[] = "redirectsmartcards";
 static const char key_int_redirectcomports[] = "redirectcomports";
+static const char key_int_redirectlocation[] = "redirectlocation";
 static const char key_int_redirectprinters[] = "redirectprinters";
 static const char key_int_redirectdrives[] = "redirectdrives";
 static const char key_int_server_port[] = "server port";
@@ -436,6 +439,8 @@ static BOOL freerdp_client_rdp_file_find_integer_entry(rdpFile* file, const char
 		*outValue = &file->RedirectPrinters;
 	else if (_stricmp(name, key_int_redirectcomports) == 0)
 		*outValue = &file->RedirectComPorts;
+	else if (_stricmp(name, key_int_redirectlocation) == 0)
+		*outValue = &file->RedirectLocation;
 	else if (_stricmp(name, key_int_redirectsmartcards) == 0)
 		*outValue = &file->RedirectSmartCards;
 	else if (_stricmp(name, key_int_redirectclipboard) == 0)
@@ -1301,6 +1306,8 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->RdgIsKdcProxy = freerdp_settings_get_bool(settings, FreeRDP_KerberosRdgIsProxy) ? 1 : 0;
 	file->RedirectComPorts = (freerdp_settings_get_bool(settings, FreeRDP_RedirectSerialPorts) ||
 	                          freerdp_settings_get_bool(settings, FreeRDP_RedirectParallelPorts));
+	file->RedirectLocation =
+	    freerdp_dynamic_channel_collection_find(settings, LOCATION_DVC_CHANNEL_NAME) ? TRUE : FALSE;
 	if (!FILE_POPULATE_STRING(&file->DrivesToRedirect, settings, FreeRDP_DrivesToRedirect) ||
 	    !FILE_POPULATE_STRING(&file->PreconnectionBlob, settings, FreeRDP_PreconnectionBlob) ||
 	    !FILE_POPULATE_STRING(&file->KdcProxyName, settings, FreeRDP_KerberosKdcUrl))
@@ -1526,6 +1533,7 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	WRITE_SETTING_INT(key_int_redirectdrives, file->RedirectDrives);
 	WRITE_SETTING_INT(key_int_redirectprinters, file->RedirectPrinters);
 	WRITE_SETTING_INT(key_int_redirectcomports, file->RedirectComPorts);
+	WRITE_SETTING_INT(key_int_redirectlocation, file->RedirectLocation);
 	WRITE_SETTING_INT(key_int_redirectsmartcards, file->RedirectSmartCards);
 	WRITE_SETTING_INT(key_int_redirectclipboard, file->RedirectClipboard);
 	WRITE_SETTING_INT(key_int_redirectposdevices, file->RedirectPosDevices);
@@ -2281,6 +2289,17 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		                               file->RedirectComPorts != 0) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_RedirectParallelPorts,
 		                               file->RedirectComPorts != 0))
+			return FALSE;
+	}
+
+	if (~file->RedirectLocation)
+	{
+		size_t count = 0;
+		char** str =
+		    CommandLineParseCommaSeparatedValuesEx(LOCATION_DVC_CHANNEL_NAME, NULL, &count);
+		const BOOL rc = freerdp_client_add_dynamic_channel(settings, count, str);
+		free(str);
+		if (!rc)
 			return FALSE;
 	}
 
