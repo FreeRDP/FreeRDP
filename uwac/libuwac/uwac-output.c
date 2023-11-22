@@ -36,7 +36,7 @@ static bool dupstr(char** dst, const char* src)
 	*dst = NULL;
 	if (!src)
 		return true;
-	*dst = _strdup(src);
+	*dst = strdup(src);
 	return *dst != NULL;
 }
 
