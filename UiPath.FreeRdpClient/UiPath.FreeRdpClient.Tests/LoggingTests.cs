@@ -104,6 +104,7 @@ public class LoggingTests : TestsBase
     {
         var forwarder = Host.GetRequiredService<NativeLoggingForwarder>();
         forwarder.FilterRemoveStartsWith = new[] { Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
+        forwarder.FilterRemoveStartsWithWarnings = new[] { Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
 
         var someTestCategory = Guid.NewGuid().ToString();
         var testLogs = _logsByCategory.Where(kv => kv.Key == someTestCategory)
@@ -115,16 +116,26 @@ public class LoggingTests : TestsBase
             forwarder.LogCallbackDelegate(someTestCategory, LogLevel.Error, startWith + "_extra2");
             forwarder.LogCallbackDelegate(someTestCategory, LogLevel.Error, startWith);
         }
+        foreach (var startWith in forwarder.FilterRemoveStartsWithWarnings)
+        {
+            forwarder.LogCallbackDelegate(someTestCategory, LogLevel.Warning, startWith + "_extra1");
+            forwarder.LogCallbackDelegate(someTestCategory, LogLevel.Warning, startWith + "_extra2");
+            forwarder.LogCallbackDelegate(someTestCategory, LogLevel.Warning, startWith);
+        }
         testLogs.ShouldBeEmpty();
 
         foreach (var startWith in forwarder.FilterRemoveStartsWith)
         {
             forwarder.LogCallbackDelegate(someTestCategory, LogLevel.Error, "_" + startWith);
         }
+        foreach (var startWith in forwarder.FilterRemoveStartsWithWarnings)
+        {
+            forwarder.LogCallbackDelegate(someTestCategory, LogLevel.Warning, "_" + startWith);
+        }
         testLogs.Count()
-            .ShouldBe(forwarder.FilterRemoveStartsWith.Length);
+            .ShouldBe(forwarder.FilterRemoveStartsWith.Length + forwarder.FilterRemoveStartsWithWarnings.Length);
         testLogs.Count(l => l.logLevel is LogLevel.Warning)
-            .ShouldBe(forwarder.FilterRemoveStartsWith.Length);
+            .ShouldBe(forwarder.FilterRemoveStartsWith.Length + forwarder.FilterRemoveStartsWithWarnings.Length);
         testLogs.Where(l => l.logLevel is LogLevel.Error)
             .ShouldBeEmpty();
     }
