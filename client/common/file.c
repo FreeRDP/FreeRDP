@@ -2569,7 +2569,7 @@ const char* freerdp_client_rdp_file_get_string_option(const rdpFile* file, const
 
 	if (freerdp_client_rdp_file_find_string_entry((rdpFile*)file, name, &value, &line))
 	{
-		if (value)
+		if (value && ~(size_t)(*value))
 			return *value;
 		if (line)
 			return line->sValue;
@@ -2590,7 +2590,7 @@ int freerdp_client_rdp_file_get_integer_option(const rdpFile* file, const char* 
 
 	if (freerdp_client_rdp_file_find_integer_entry((rdpFile*)file, name, &value, &line))
 	{
-		if (value)
+		if (value && ~(*value))
 			return *value;
 		if (line)
 			return (int)line->iValue;
