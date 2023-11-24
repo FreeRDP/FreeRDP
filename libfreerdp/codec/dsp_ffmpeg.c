@@ -439,7 +439,13 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in, AVPacket* 
 	if (in->format == AV_SAMPLE_FMT_FLTP)
 	{
 		uint8_t** pp = in->extended_data;
-		for (int y = 0; y < in->channels; y++)
+#if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(57, 28, 100)
+		const int nr_channels = in->channels;
+#else
+		const int nr_channels = in->ch_layout.nb_channels;
+#endif
+
+		for (int y = 0; y < nr_channels; y++)
 		{
 			float* data = pp[y];
 			for (int x = 0; x < in->nb_samples; x++)
