@@ -1345,7 +1345,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 			}
 
 			/* supplementalCreds [1] SEQUENCE OF TSRemoteGuardPackageCred OPTIONAL, */
-			MSV1_0_SUPPLEMENTAL_CREDENTIAL ntlmCreds;
+			MSV1_0_SUPPLEMENTAL_CREDENTIAL ntlmCreds = { 0 };
 			MSV1_0_SUPPLEMENTAL_CREDENTIAL* suppCreds = NULL;
 			WinPrAsn1Decoder suppCredsSeq = { 0 };
 

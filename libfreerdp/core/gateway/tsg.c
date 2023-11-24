@@ -1526,7 +1526,6 @@ static BOOL tsg_ndr_read_caps_response(wLog* log, rdpContext* context, wStream* 
 {
 	UINT32 PacketQuarResponsePtr = 0;
 	UINT32 MessageSwitchValue = 0;
-	UINT32 SwitchValue = 0;
 	UINT32 MsgId = 0;
 	UINT32 MsgType = 0;
 	UINT32 IsMessagePresent = 0;
