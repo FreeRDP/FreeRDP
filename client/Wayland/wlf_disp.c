@@ -63,7 +63,7 @@ static BOOL wlf_disp_settings_changed(wlfDispContext* wlfDisp)
 		return TRUE;
 
 	if (wlfDisp->lastSentDesktopOrientation !=
-	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopOrientation))
+	    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation))
 		return TRUE;
 
 	if (wlfDisp->lastSentDesktopScaleFactor !=
@@ -93,7 +93,7 @@ static BOOL wlf_update_last_sent(wlfDispContext* wlfDisp)
 	wlfDisp->lastSentWidth = wlfDisp->targetWidth;
 	wlfDisp->lastSentHeight = wlfDisp->targetHeight;
 	wlfDisp->lastSentDesktopOrientation =
-	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopOrientation);
+	    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
 	wlfDisp->lastSentDesktopScaleFactor =
 	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 	wlfDisp->lastSentDeviceScaleFactor =
@@ -143,7 +143,7 @@ static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp)
 		layout.Top = layout.Left = 0;
 		layout.Width = wlfDisp->targetWidth;
 		layout.Height = wlfDisp->targetHeight;
-		layout.Orientation = freerdp_settings_get_uint32(settings, FreeRDP_DesktopOrientation);
+		layout.Orientation = freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
 		layout.DesktopScaleFactor =
 		    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 		layout.DeviceScaleFactor = freerdp_settings_get_uint32(settings, FreeRDP_DeviceScaleFactor);
