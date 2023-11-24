@@ -82,7 +82,7 @@ UINT32 gdi_GetBkColor(HGDI_DC hdc)
 }
 
 /**
- * @brief Set the current background color.\n
+ * @brief Set the current background color.
  * msdn{dd162964}
  *
  * @param hdc device color

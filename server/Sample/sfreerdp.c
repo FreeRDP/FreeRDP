@@ -1299,7 +1299,7 @@ WINPR_ATTR_FORMAT_ARG(2, 0)
 static void print_entry(FILE* fp, WINPR_FORMAT_ARG const char* fmt, const char* what, size_t size)
 {
 	char buffer[32] = { 0 };
-	strncpy(buffer, what, MIN(size, sizeof(buffer)));
+	strncpy(buffer, what, MIN(size, sizeof(buffer) - 1));
 	fprintf(fp, fmt, buffer);
 }
 
