@@ -340,8 +340,8 @@ static WINPR_CIPHER_CTX* treatAuthBlob(const BYTE* pbInput, size_t cbInput)
 	WINPR_CIPHER_CTX* ret = NULL;
 	char algoName[100] = { 0 };
 
-	SSIZE_T algoSz =
-	    ConvertWCharNToUtf8((WCHAR*)pbInput, cbInput / sizeof(WCHAR), algoName, sizeof(algoName));
+	SSIZE_T algoSz = ConvertWCharNToUtf8((const WCHAR*)pbInput, cbInput / sizeof(WCHAR), algoName,
+	                                     sizeof(algoName));
 	if (algoSz <= 0)
 	{
 		WLog_ERR(TAG, "invalid algoName");

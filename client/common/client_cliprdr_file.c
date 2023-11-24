@@ -1220,7 +1220,7 @@ static UINT cliprdr_file_context_server_file_contents_response(
 		DEBUG_CLIPRDR(file_context->log, "Received file size for file \"%s\" with stream id %u",
 		              fuse_request->fuse_file->filename, file_contents_response->streamId);
 
-		fuse_request->fuse_file->size = *((UINT64*)file_contents_response->requestedData);
+		fuse_request->fuse_file->size = *((const UINT64*)file_contents_response->requestedData);
 		fuse_request->fuse_file->has_size = TRUE;
 
 		entry.ino = fuse_request->fuse_file->ino;
