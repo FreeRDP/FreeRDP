@@ -1221,6 +1221,15 @@ static UINT rdpdr_process_server_announce_request(rdpdrPlugin* rdpdr, wStream* s
 	Stream_Read_UINT16(s, rdpdr->serverVersionMinor);
 	Stream_Read_UINT32(s, rdpdr->clientID);
 	rdpdr->sequenceId++;
+
+	rdpdr->clientVersionMajor = MIN(RDPDR_VERSION_MAJOR, rdpdr->serverVersionMajor);
+	rdpdr->clientVersionMinor = MIN(RDPDR_VERSION_MINOR_RDP10X, rdpdr->serverVersionMinor);
+	WLog_Print(rdpdr->log, WLOG_DEBUG,
+	           "[rdpdr] server announces version %" PRIu32 ".%" PRIu32 ", client uses %" PRIu32
+	           ".%" PRIu32,
+	           rdpdr->serverVersionMajor, rdpdr->serverVersionMinor, rdpdr->clientVersionMajor,
+	           rdpdr->clientVersionMinor);
+
 	return CHANNEL_RC_OK;
 }
 
@@ -1372,8 +1381,8 @@ static UINT rdpdr_send_device_list_announce_request(rdpdrPlugin* rdpdr, BOOL use
 		 * 3. other devices are sent only after user_loggedon
 		 */
 
-		if ((rdpdr->clientVersionMinor == 0x0005) || (device->type == RDPDR_DTYP_SMARTCARD) ||
-		    userLoggedOn)
+		if ((rdpdr->clientVersionMinor == RDPDR_VERSION_MINOR_RDP51) ||
+		    (device->type == RDPDR_DTYP_SMARTCARD) || userLoggedOn)
 		{
 			data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));
 
