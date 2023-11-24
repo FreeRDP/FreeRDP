@@ -1012,7 +1012,7 @@ static BOOL mac_authenticate_raw(freerdp *instance, char **username, char **pass
 			                     [NSString stringWithCString:freerdp_settings_get_string(
 			                                                     settings, FreeRDP_ServerHostname)
 			                                        encoding:NSUTF8StringEncoding],
-			                     settings -> ServerPort];
+			                     freerdp_settings_get_uint32(settings, FreeRDP_ServerPort)];
 			break;
 		case AUTH_TLS:
 		case AUTH_RDP:
@@ -1022,7 +1022,7 @@ static BOOL mac_authenticate_raw(freerdp *instance, char **username, char **pass
 			                     [NSString stringWithCString:freerdp_settings_get_string(
 			                                                     settings, FreeRDP_ServerHostname)
 			                                        encoding:NSUTF8StringEncoding],
-			                     settings -> ServerPort];
+			                     freerdp_settings_get_uint32(settings, FreeRDP_ServerPort)];
 			break;
 		case GW_AUTH_HTTP:
 		case GW_AUTH_RDG:
@@ -1032,7 +1032,7 @@ static BOOL mac_authenticate_raw(freerdp *instance, char **username, char **pass
 			                     [NSString stringWithCString:freerdp_settings_get_string(
 			                                                     settings, FreeRDP_GatewayHostname)
 			                                        encoding:NSUTF8StringEncoding],
-			                     settings -> GatewayPort];
+			                     freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort)];
 			break;
 		default:
 			return FALSE;
