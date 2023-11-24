@@ -27,12 +27,12 @@
 #include <winpr/thread.h>
 #include <winpr/collections.h>
 
+#include "settings.h"
 #include "update.h"
 #include "surface.h"
 #include "message.h"
 #include "info.h"
 #include "window.h"
-#include "settings.h"
 
 #include <freerdp/log.h>
 #include <freerdp/peer.h>

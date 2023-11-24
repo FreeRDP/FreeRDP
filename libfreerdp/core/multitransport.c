@@ -21,8 +21,8 @@
 #include <freerdp/config.h>
 #include <freerdp/log.h>
 
-#include "rdp.h"
 #include "settings.h"
+#include "rdp.h"
 #include "multitransport.h"
 
 struct rdp_multitransport
