@@ -1394,10 +1394,11 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 
 #endif
 #if defined(WITH_OPUS)
+			WINPR_FALLTHROUGH
 		case WAVE_FORMAT_OPUS:
 			return opus_is_valid_samplerate(format);
 #endif
-
+			WINPR_FALLTHROUGH
 		default:
 			return FALSE;
 	}
