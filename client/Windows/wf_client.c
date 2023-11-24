@@ -1379,7 +1379,7 @@ static int wfreerdp_client_start(rdpContext* context)
 	WINPR_ASSERT(settings);
 
 	HINSTANCE hInstance = GetModuleHandle(NULL);
-	HWND hWndParent = (HWND)freerdp_settings_get_uint32(context->settings, FreeRDP_ParentWindowId);
+	HWND hWndParent = (HWND)freerdp_settings_get_uint64(context->settings, FreeRDP_ParentWindowId);
 	if (!freerdp_settings_set_bool(settings, FreeRDP_EmbeddedWindow, (hWndParent) ? TRUE : FALSE))
 		return -1;
 
