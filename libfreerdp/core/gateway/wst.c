@@ -28,6 +28,8 @@
 #include <winpr/winsock.h>
 #include <winpr/cred.h>
 
+#include "../settings.h"
+
 #include <freerdp/log.h>
 #include <freerdp/error.h>
 #include <freerdp/utils/ringbuffer.h>
@@ -42,7 +44,6 @@
 #include "../../crypto/opensslcompat.h"
 #include "rpc_fault.h"
 #include "../utils.h"
-#include "../settings.h"
 
 #define TAG FREERDP_TAG("core.gateway.wst")
 
