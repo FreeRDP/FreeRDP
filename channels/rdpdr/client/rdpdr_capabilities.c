@@ -73,15 +73,9 @@ static void rdpdr_write_general_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process device direction general capability set */
-static UINT rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* s)
+static UINT rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* s, UINT16 capabilityLength)
 {
-	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
-
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 2))
-		return ERROR_INVALID_DATA;
-
-	Stream_Read_UINT16(s, capabilityLength);
 
 	if (capabilityLength != 36)
 	{
@@ -120,23 +114,14 @@ static void rdpdr_write_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process printer direction capability set */
-static UINT rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
+static UINT rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* s, UINT16 capabilityLength)
 {
-	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 2))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT16(s, capabilityLength);
-
-	if (capabilityLength < 4)
-		return ERROR_INVALID_DATA;
-
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength - 4U))
-		return ERROR_INVALID_DATA;
-
-	Stream_Seek(s, capabilityLength - 4U);
+	Stream_Seek(s, capabilityLength);
 	return CHANNEL_RC_OK;
 }
 
@@ -148,23 +133,14 @@ static void rdpdr_write_port_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process port redirection capability set */
-static UINT rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* s)
+static UINT rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* s, UINT16 capabilityLength)
 {
-	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 2))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT16(s, capabilityLength);
-
-	if (capabilityLength < 4U)
-		return ERROR_INVALID_DATA;
-
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength - 4U))
-		return ERROR_INVALID_DATA;
-
-	Stream_Seek(s, capabilityLength - 4U);
+	Stream_Seek(s, capabilityLength);
 	return CHANNEL_RC_OK;
 }
 
@@ -176,23 +152,14 @@ static void rdpdr_write_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process drive redirection capability set */
-static UINT rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
+static UINT rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* s, UINT16 capabilityLength)
 {
-	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 2))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT16(s, capabilityLength);
-
-	if (capabilityLength < 4)
-		return ERROR_INVALID_DATA;
-
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength - 4U))
-		return ERROR_INVALID_DATA;
-
-	Stream_Seek(s, capabilityLength - 4U);
+	Stream_Seek(s, capabilityLength);
 	return CHANNEL_RC_OK;
 }
 
@@ -204,23 +171,14 @@ static void rdpdr_write_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process smartcard redirection capability set */
-static UINT rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
+static UINT rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s, UINT16 capabilityLength)
 {
-	UINT16 capabilityLength;
 	WINPR_UNUSED(rdpdr);
 
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 2))
+	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength))
 		return ERROR_INVALID_DATA;
 
-	Stream_Read_UINT16(s, capabilityLength);
-
-	if (capabilityLength < 4)
-		return ERROR_INVALID_DATA;
-
-	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, capabilityLength - 4U))
-		return ERROR_INVALID_DATA;
-
-	Stream_Seek(s, capabilityLength - 4U);
+	Stream_Seek(s, capabilityLength);
 	return CHANNEL_RC_OK;
 }
 
@@ -229,7 +187,6 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 	UINT status = CHANNEL_RC_OK;
 	UINT16 i;
 	UINT16 numCapabilities;
-	UINT16 capabilityType;
 
 	if (!rdpdr || !s)
 		return CHANNEL_RC_NULL_DATA;
@@ -245,31 +202,44 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 
 	for (i = 0; i < numCapabilities; i++)
 	{
-		if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, sizeof(UINT16)))
+		UINT16 capabilityType;
+		UINT16 capabilityLength;
+		UINT32 version = 0;
+
+		if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s,
+		                                          2 * sizeof(UINT16) + sizeof(UINT32)))
 			return ERROR_INVALID_DATA;
 
 		Stream_Read_UINT16(s, capabilityType);
+		Stream_Read_UINT16(s, capabilityLength);
+		Stream_Read_UINT32(s, version);
+
+		if (capabilityLength < 8)
+		{
+			return ERROR_INVALID_DATA;
+		}
+		capabilityLength -= 8;
 
 		switch (capabilityType)
 		{
 			case CAP_GENERAL_TYPE:
-				status = rdpdr_process_general_capset(rdpdr, s);
+				status = rdpdr_process_general_capset(rdpdr, s, capabilityLength);
 				break;
 
 			case CAP_PRINTER_TYPE:
-				status = rdpdr_process_printer_capset(rdpdr, s);
+				status = rdpdr_process_printer_capset(rdpdr, s, capabilityLength);
 				break;
 
 			case CAP_PORT_TYPE:
-				status = rdpdr_process_port_capset(rdpdr, s);
+				status = rdpdr_process_port_capset(rdpdr, s, capabilityLength);
 				break;
 
 			case CAP_DRIVE_TYPE:
-				status = rdpdr_process_drive_capset(rdpdr, s);
+				status = rdpdr_process_drive_capset(rdpdr, s, capabilityLength);
 				break;
 
 			case CAP_SMARTCARD_TYPE:
-				status = rdpdr_process_smartcard_capset(rdpdr, s);
+				status = rdpdr_process_smartcard_capset(rdpdr, s, capabilityLength);
 				break;
 
 			default:
