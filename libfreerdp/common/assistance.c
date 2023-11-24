@@ -73,10 +73,10 @@ struct rdp_assistance_file
 	char* password;
 };
 
-static char* strrstr(const char* haystack, size_t len, const char* needle)
+static const char* strrstr(const char* haystack, size_t len, const char* needle)
 {
 	if (*needle == '\0')
-		return (char*)haystack;
+		return (const char*)haystack;
 
 	char* result = NULL;
 	for (;;)
@@ -538,8 +538,8 @@ static char* freerdp_assistance_contains_element(char* input, size_t ilen, const
 		return NULL;
 	}
 
-	char* end = start;
-	char* dend = start - 1;
+	const char* end = start;
+	const char* dend = start - 1;
 	if (*dend != '/')
 	{
 		char ekey[128] = { 0 };
