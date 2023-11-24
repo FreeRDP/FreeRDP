@@ -1321,14 +1321,13 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 				return FALSE;
 
 			/* logonCred[0] TSRemoteGuardPackageCred */
-			BOOL error = FALSE;
-			KERB_TICKET_LOGON kerbLogon;
+			KERB_TICKET_LOGON kerbLogon = { 0 };
 			WinPrAsn1Decoder logonCredsSeq = { 0 };
 			if (!WinPrAsn1DecReadContextualSequence(&dec2, 0, &error, &logonCredsSeq) || error)
 				return FALSE;
 
-			RemoteGuardPackageCredType logonCredsType;
-			wStream logonPayload;
+			RemoteGuardPackageCredType logonCredsType = { 0 };
+			wStream logonPayload = { 0 };
 			if (!nla_read_TSRemoteGuardPackageCred(nla, &logonCredsSeq, &logonCredsType,
 			                                       &logonPayload))
 				return FALSE;
@@ -1355,8 +1354,8 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 				if (!WinPrAsn1DecReadSequence(&suppCredsSeq, &ntlmCredsSeq))
 					return FALSE;
 
-				RemoteGuardPackageCredType suppCredsType;
-				wStream ntlmPayload;
+				RemoteGuardPackageCredType suppCredsType = { 0 };
+				wStream ntlmPayload = { 0 };
 				if (!nla_read_TSRemoteGuardPackageCred(nla, &ntlmCredsSeq, &suppCredsType,
 				                                       &ntlmPayload))
 					return FALSE;
