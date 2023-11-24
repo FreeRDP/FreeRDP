@@ -57,15 +57,11 @@ static BOOL g_keystates[256] = { 0 };
 
 static BOOL ctrl_down(void)
 {
-	WINPR_ASSERT(g_keystates && (ARRAYSIZE(g_keystates) >= 0xFF));
-
 	return g_keystates[VK_CONTROL] || g_keystates[VK_LCONTROL] || g_keystates[VK_RCONTROL];
 }
 
 static BOOL alt_ctrl_down(void)
 {
-	WINPR_ASSERT(g_keystates && (ARRAYSIZE(g_keystates) >= 0xFF));
-
 	const BOOL altDown = g_keystates[VK_MENU] || g_keystates[VK_LMENU] || g_keystates[VK_RMENU];
 	return altDown && ctrl_down();
 }
