@@ -40,6 +40,7 @@ extern "C"
 
 	typedef enum
 	{
+		RDP_NETCHAR_RESERVED = 0x0000U,
 		/* The baseRTT and averageRTT fields are valid */
 		RDP_NETCHAR_RESULT_TYPE_BASE_RTT_AVG_RTT = 0x0840U,
 		/* The bandwidth and averageRTT fields are valid */
