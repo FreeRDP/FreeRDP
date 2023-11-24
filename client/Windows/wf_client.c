@@ -1346,6 +1346,7 @@ static void wfreerdp_client_free(freerdp* instance, rdpContext* context)
 
 static int wfreerdp_client_start(rdpContext* context)
 {
+	int dpiAwareness = 0;
 	HWND hWndParent;
 	HINSTANCE hInstance;
 	wfContext* wfc = (wfContext*)context;
@@ -1361,6 +1362,13 @@ static int wfreerdp_client_start(rdpContext* context)
 	hWndParent = (HWND)context->settings->ParentWindowId;
 	context->settings->EmbeddedWindow = (hWndParent) ? TRUE : FALSE;
 	wfc->hWndParent = hWndParent;
+
+	if (context->settings->EmbeddedWindow)
+	{
+		dpiAwareness = GetDpiForWindow(hWndParent);
+		if (dpiAwareness == 0x000000c0)
+			SetProcessDPIAware();
+	}
 
 	/* initial windows system item position where we will insert new menu item
 	 * after default 5 items (restore, move, size, minimize, maximize)
