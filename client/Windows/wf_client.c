@@ -46,6 +46,7 @@
 #include <freerdp/log.h>
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
+#include <freerdp/settings.h>
 
 #include <freerdp/locale/keyboard.h>
 #include <freerdp/codec/region.h>
@@ -443,8 +444,8 @@ static BOOL wf_post_connect(freerdp* instance)
 	context->update->EndPaint = wf_end_paint;
 	wf_register_pointer(context->graphics);
 
-	wfc->floatbar =
-	    wf_floatbar_new(wfc, wfc->hInstance, freerdp_settings_get_bool(settings, FreeRDP_Floatbar));
+	wfc->floatbar = wf_floatbar_new(wfc, wfc->hInstance,
+	                                freerdp_settings_get_uint32(settings, FreeRDP_Floatbar));
 	return TRUE;
 }
 
@@ -1375,11 +1376,11 @@ static int wfreerdp_client_start(rdpContext* context)
 	freerdp* instance = context->instance;
 	WINPR_ASSERT(instance);
 
-	rdpContext* settings = context->instance;
+	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
 	HINSTANCE hInstance = GetModuleHandle(NULL);
-	HWND hWndParent = (HWND)freerdp_settings_get_uint64(context->settings, FreeRDP_ParentWindowId);
+	HWND hWndParent = (HWND)freerdp_settings_get_uint64(settings, FreeRDP_ParentWindowId);
 	if (!freerdp_settings_set_bool(settings, FreeRDP_EmbeddedWindow, (hWndParent) ? TRUE : FALSE))
 		return -1;
 

@@ -185,7 +185,7 @@ static BOOL flip_bitmap(const BYTE* src, BYTE* dst, UINT32 scanline, UINT32 nHei
 	return TRUE;
 }
 
-static BOOL wf_Pointer_New(rdpContext* context, const rdpPointer* pointer)
+static BOOL wf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
 	HCURSOR hCur;
 	ICONINFO info;
@@ -275,19 +275,17 @@ fail:
 	return rc;
 }
 
-static BOOL wf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
+static void wf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 {
 	HCURSOR hCur;
 
 	if (!context || !pointer)
-		return FALSE;
+		return;
 
 	hCur = ((wfPointer*)pointer)->cursor;
 
 	if (hCur != 0)
 		DestroyIcon(hCur);
-
-	return TRUE;
 }
 
 static BOOL wf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
