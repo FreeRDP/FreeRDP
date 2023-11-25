@@ -68,11 +68,11 @@ int xf_list_monitors(xfContext* xfc)
 
 #if defined(USABLE_XRANDR)
 
-	if (XRRQueryExtension(xfc->display, &major, &minor) &&
-	    (XRRQueryVersion(xfc->display, &major, &minor) == True) && (major * 100 + minor >= 105))
+	if (XRRQueryExtension(display, &major, &minor) &&
+	    (XRRQueryVersion(display, &major, &minor) == True) && (major * 100 + minor >= 105))
 	{
 		XRRMonitorInfo* monitors =
-		    XRRGetMonitors(xfc->display, DefaultRootWindow(xfc->display), 1, &nmonitors);
+		    XRRGetMonitors(display, DefaultRootWindow(display), 1, &nmonitors);
 
 		for (i = 0; i < nmonitors; i++)
 		{
