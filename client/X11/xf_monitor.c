@@ -385,10 +385,11 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	{
 		UINT32 nr = 0;
 
-		UINT32* ids = freerdp_settings_get_pointer_array_writable(settings, FreeRDP_MonitorIds, 0);
-		if (ids)
-			nr = *ids;
-
+		{
+			const UINT32* ids = freerdp_settings_get_pointer(settings, FreeRDP_MonitorIds);
+			if (ids)
+				nr = *ids;
+		}
 		for (UINT32 i = 0; i < vscreen->nmonitors; i++)
 		{
 			MONITOR_ATTRIBUTES* attrs;
