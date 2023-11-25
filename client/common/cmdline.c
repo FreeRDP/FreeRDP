@@ -502,7 +502,7 @@ static COMMAND_LINE_ARGUMENT_A* create_merged_args(const COMMAND_LINE_ARGUMENT_A
 	    calloc(count + ARRAYSIZE(global_cmd_args), sizeof(COMMAND_LINE_ARGUMENT_A));
 	*pcount = 0;
 	if (!largs)
-		NULL;
+		return NULL;
 
 	size_t lcount = 0;
 	const COMMAND_LINE_ARGUMENT_A* cur = custom;
