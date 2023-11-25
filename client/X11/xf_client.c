@@ -1202,9 +1202,11 @@ static BOOL xf_pre_connect(freerdp* instance)
 	{
 		if (!xf_keyboard_init(xfc))
 			return FALSE;
-
-		xf_detect_monitors(xfc, &maxWidth, &maxHeight);
 	}
+
+	if (!xf_detect_monitors(xfc, &maxWidth, &maxHeight))
+		return FALSE;
+
 	if (maxWidth && maxHeight && !freerdp_settings_get_bool(settings, FreeRDP_SmartSizing))
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, maxWidth))
