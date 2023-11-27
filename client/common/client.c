@@ -1875,7 +1875,7 @@ BOOL freerdp_client_load_channels(freerdp* instance)
 
 	if (!freerdp_client_load_addins(instance->context->channels, instance->context->settings))
 	{
-		WLog_ERR(TAG, "Failed to load addins [%l08X]", GetLastError());
+		WLog_ERR(TAG, "Failed to load addins [%08" PRIx32 "]", GetLastError());
 		return FALSE;
 	}
 	return TRUE;
