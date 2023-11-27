@@ -3196,9 +3196,7 @@ static int parse_cert_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	}
 	free(ptr.p);
 
-	if (rc)
-		return rc;
-	return 0;
+	return rc;
 }
 
 static int parse_mouse_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
@@ -3240,9 +3238,7 @@ static int parse_mouse_options(rdpSettings* settings, const COMMAND_LINE_ARGUMEN
 	}
 	free(ptr);
 
-	if (rc != 0)
-		return rc;
-	return 0;
+	return rc;
 }
 
 static int parse_floatbar_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
