@@ -1386,6 +1386,28 @@ static int wfreerdp_client_start(rdpContext* context)
 
 	wfc->hWndParent = hWndParent;
 
+	if (freerdp_settings_get_bool(settings, FreeRDP_EmbeddedWindow))
+	{
+		typedef UINT(WINAPI * GetDpiForWindow_t)(HWND hwnd);
+		typedef BOOL(WINAPI * SetProcessDPIAware_t)(void);
+
+		HMODULE module = GetModuleHandle(_T("User32"));
+		if (module)
+		{
+			GetDpiForWindow_t pGetDpiForWindow =
+			    (GetDpiForWindow_t)GetProcAddress(module, "GetDpiForWindow");
+			SetProcessDPIAware_t pSetProcessDPIAware =
+			    (SetProcessDPIAware_t)GetProcAddress(module, "SetProcessDPIAware");
+			if (pGetDpiForWindow && pSetProcessDPIAware)
+			{
+				const UINT dpiAwareness = pGetDpiForWindow(hWndParent);
+				if (dpiAwareness != USER_DEFAULT_SCREEN_DPI)
+					pSetProcessDPIAware();
+			}
+			FreeLibrary(module);
+		}
+	}
+
 	/* initial windows system item position where we will insert new menu item
 	 * after default 5 items (restore, move, size, minimize, maximize)
 	 * gets incremented each time wf_append_item_to_system_menu is called
