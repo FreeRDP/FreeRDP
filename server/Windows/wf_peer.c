@@ -132,9 +132,9 @@ static BOOL wf_peer_post_connect(freerdp_peer* client)
 		freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight), wfi->servscreen_width,
 		wfi->servscreen_height);
 		    */
-		freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) = wfi->servscreen_width;
-		freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) = wfi->servscreen_height;
-		if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, wfi->bitsPerPixel))
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, wfi->servscreen_width) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, wfi->servscreen_height) ||
+		    !freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, wfi->bitsPerPixel))
 			return FALSE;
 
 		WINPR_ASSERT(client->context->update);
