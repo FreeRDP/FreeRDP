@@ -467,6 +467,10 @@ BOOL freerdp_settings_copy_item(rdpSettings* dst, const rdpSettings* src, SSIZE_
 			return freerdp_settings_set_string(dst, (FreeRDP_Settings_Keys_String)id, val);
 		}
 		case FREERDP_SETTINGS_TYPE_POINTER:
+		{
+			const void* val = freerdp_settings_get_pointer(src, (FreeRDP_Settings_Keys_Pointer)id);
+			return freerdp_settings_set_pointer(dst, (FreeRDP_Settings_Keys_Pointer)id, val);
+		}
 		default:
 			return FALSE;
 	}
