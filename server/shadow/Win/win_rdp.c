@@ -314,7 +314,7 @@ static BOOL shw_freerdp_client_new(freerdp* instance, rdpContext* context)
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_BrushSupportLevel, FALSE))
 		return FALSE;
-	ZeroMemory(freerdp_settings_get_pointer_writeable(settings, FreeRDP_OrderSupport), 32);
+	ZeroMemory(freerdp_settings_get_pointer_writable(settings, FreeRDP_OrderSupport), 32);
 	if (!freerdp_settings_set_bool(settings, FreeRDP_FrameMarkerCommandEnabled, TRUE))
 		return FALSE;
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SurfaceFrameMarkerEnabled, TRUE))
