@@ -24,3 +24,15 @@ or
 ")
 endif()
 
+# Check for remnants of in source builds
+if(EXISTS "${CMAKE_SOURCE_DIR}/CMakeCache.txt" OR EXISTS "${CMAKE_SOURCE_DIR}/CMakeFiles")
+	message(FATAL_ERROR " \
+
+Remnants of in source CMake run detected, aborting!
+
+To clean up after this aborted in-source compilation:
+   rm -r CMakeCache.txt CMakeFiles
+or
+   git clean -xdf
+")
+endif()
