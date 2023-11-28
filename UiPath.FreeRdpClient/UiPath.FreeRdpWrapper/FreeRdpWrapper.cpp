@@ -39,7 +39,7 @@ namespace FreeRdpClient
 
 		WCHAR szMsgBuff[MAX_TRACE_MSG];
 		swprintf_s(szMsgBuff, _countof(szMsgBuff),
-		           L"Rdp connection failed: Message: %S, Last error: %d", rdpErrorString, rdpError);
+		           L"Rdp connection failed: Message: %S Last error: %d", rdpErrorString, rdpError);
 		SetErrorInfo(szMsgBuff);		
 		DT_ERROR(szMsgBuff);
 	}
