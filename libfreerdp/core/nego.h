@@ -141,6 +141,8 @@ FREERDP_LOCAL BOOL nego_set_selected_protocol(rdpNego* nego, UINT32 SelectedProt
 FREERDP_LOCAL UINT32 nego_get_requested_protocols(rdpNego* nego);
 FREERDP_LOCAL BOOL nego_set_requested_protocols(rdpNego* nego, UINT32 RequestedProtocols);
 
+FREERDP_LOCAL BOOL nego_update_settings_from_state(rdpNego* nego, rdpSettings* settings);
+
 FREERDP_LOCAL BOOL nego_set_state(rdpNego* nego, NEGO_STATE state);
 FREERDP_LOCAL NEGO_STATE nego_get_state(rdpNego* nego);
 
