@@ -104,6 +104,18 @@ static BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s);
 static BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s);
 static BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s);
 
+BOOL nego_update_settings_from_state(rdpNego* nego, rdpSettings* settings)
+{
+	WINPR_ASSERT(nego);
+
+	/* update settings with negotiated protocol security */
+	return freerdp_settings_set_uint32(settings, FreeRDP_RequestedProtocols,
+	                                   nego->RequestedProtocols) &&
+	       freerdp_settings_set_uint32(settings, FreeRDP_SelectedProtocol,
+	                                   nego->SelectedProtocol) &&
+	       freerdp_settings_set_uint32(settings, FreeRDP_NegotiationFlags, nego->flags);
+}
+
 /**
  * Negotiate protocol security and connect.
  *
@@ -243,13 +255,9 @@ BOOL nego_connect(rdpNego* nego)
 	}
 
 	WLog_DBG(TAG, "Negotiated %s security", protocol_security_string(nego->SelectedProtocol));
+
 	/* update settings with negotiated protocol security */
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_RequestedProtocols,
-	                                 nego->RequestedProtocols))
-		return FALSE;
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_SelectedProtocol, nego->SelectedProtocol))
-		return FALSE;
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_NegotiationFlags, nego->flags))
+	if (!nego_update_settings_from_state(nego, settings))
 		return FALSE;
 
 	if (nego->SelectedProtocol == PROTOCOL_RDP)

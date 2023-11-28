@@ -1442,7 +1442,7 @@ BOOL rdp_decrypt(rdpRdp* rdp, wStream* s, UINT16* pLength, UINT16 securityFlags)
 			goto unlock;
 
 		UINT16 len = 0;
-		Stream_Read_UINT16(s, len);    /* 0x10 */
+		Stream_Read_UINT16(s, len); /* 0x10 */
 		if (len != 0x10)
 			WLog_Print(rdp->log, WLOG_WARN, "ENCRYPTION_METHOD_FIPS length %" PRIu16 " != 0x10",
 			           len);
@@ -1851,6 +1851,9 @@ static state_run_t rdp_recv_callback_int(rdpTransport* transport, wStream* s, vo
 			else if (nla_get_state(rdp->nla) == NLA_STATE_POST_NEGO)
 			{
 				nego_recv(rdp->transport, s, (void*)rdp->nego);
+
+				if (!nego_update_settings_from_state(rdp->nego, rdp->settings))
+					return FALSE;
 
 				if (nego_get_state(rdp->nego) != NEGO_STATE_FINAL)
 				{
