@@ -177,7 +177,6 @@ struct xf_context
 	BOOL UseXThreads;
 	BOOL cursorHidden;
 
-	HGDI_DC hdc;
 	UINT32 bitmap_size;
 	BYTE* bitmap_buffer;
 

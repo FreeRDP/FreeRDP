@@ -403,11 +403,8 @@ static BOOL xf_paint(xfContext* xfc, const GDI_RGN* region)
 	}
 	else
 	{
-		const BOOL sw =
-		    freerdp_settings_get_bool(xfc->common.context.settings, FreeRDP_SoftwareGdi);
-		if (sw)
-			XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, region->x, region->y,
-			          region->x, region->y, region->w, region->h);
+		XPutImage(xfc->display, xfc->primary, xfc->gc, xfc->image, region->x, region->y, region->x,
+		          region->y, region->w, region->h);
 		xf_draw_screen(xfc, region->x, region->y, region->w, region->h);
 	}
 	return TRUE;
@@ -421,8 +418,7 @@ static BOOL xf_end_paint(rdpContext* context)
 	if (gdi->suppressOutput)
 		return TRUE;
 
-	const BOOL sw = freerdp_settings_get_bool(context->settings, FreeRDP_SoftwareGdi);
-	HGDI_DC hdc = sw ? gdi->primary->hdc : xfc->hdc;
+	HGDI_DC hdc = gdi->primary->hdc;
 
 	if (!xfc->complex_regions)
 	{
@@ -488,33 +484,6 @@ static BOOL xf_sw_desktop_resize(rdpContext* context)
 
 	xfc->image->byte_order = LSBFirst;
 	xfc->image->bitmap_bit_order = LSBFirst;
-	ret = xf_desktop_resize(context);
-out:
-	xf_unlock_x11(xfc);
-	return ret;
-}
-
-static BOOL xf_hw_desktop_resize(rdpContext* context)
-{
-	rdpGdi* gdi;
-	xfContext* xfc = (xfContext*)context;
-	rdpSettings* settings;
-	BOOL ret = FALSE;
-
-	WINPR_ASSERT(xfc);
-
-	gdi = context->gdi;
-	WINPR_ASSERT(gdi);
-
-	settings = context->settings;
-	WINPR_ASSERT(settings);
-
-	xf_lock_x11(xfc);
-
-	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
-	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
-		goto out;
-
 	ret = xf_desktop_resize(context);
 out:
 	xf_unlock_x11(xfc);
@@ -628,12 +597,6 @@ BOOL xf_create_window(xfContext* xfc)
 	if (vinfo.red_mask & 0xFF)
 	{
 		xfc->invert = FALSE;
-	}
-
-	if (!xfc->hdc)
-	{
-		if (!(xfc->hdc = gdi_CreateDC(xf_get_local_color_format(xfc, TRUE))))
-			return FALSE;
 	}
 
 	if (!xfc->remote_app)
@@ -753,12 +716,6 @@ static void xf_window_free(xfContext* xfc)
 	{
 		xf_DestroyDesktopWindow(xfc, xfc->window);
 		xfc->window = NULL;
-	}
-
-	if (xfc->hdc)
-	{
-		gdi_DeleteDC(xfc->hdc);
-		xfc->hdc = NULL;
 	}
 
 #if defined(CHANNEL_TSMF_CLIENT)
@@ -1380,15 +1337,6 @@ static BOOL xf_post_connect(freerdp* instance)
 	if (!xf_register_pointer(context->graphics))
 		return FALSE;
 
-	if (!freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
-	{
-		if (!xf_register_graphics(context->graphics))
-		{
-			WLog_ERR(TAG, "failed to register graphics");
-			return FALSE;
-		}
-	}
-
 #ifdef WITH_XRENDER
 	xfc->scaledWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 	xfc->scaledHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
@@ -1413,11 +1361,7 @@ static BOOL xf_post_connect(freerdp* instance)
 		}
 	}
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_SoftwareGdi))
-		update->DesktopResize = xf_sw_desktop_resize;
-	else
-		update->DesktopResize = xf_hw_desktop_resize;
-
+	update->DesktopResize = xf_sw_desktop_resize;
 	update->EndPaint = xf_end_paint;
 	update->PlaySound = xf_play_sound;
 	update->SetKeyboardIndicators = xf_keyboard_set_indicators;
