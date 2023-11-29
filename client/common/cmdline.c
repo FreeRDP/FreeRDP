@@ -2095,7 +2095,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, (arg->Value != NULL)))
+	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, TRUE))
 		return COMMAND_LINE_ERROR;
 
 	if (arg->Value)
