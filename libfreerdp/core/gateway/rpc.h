@@ -397,6 +397,8 @@ typedef struct
 
 } rpcconn_cancel_hdr_t;
 
+#pragma pack(pop)
+
 /* fault codes */
 
 typedef struct
@@ -456,6 +458,8 @@ typedef struct
 #define nca_s_fault_codeset_conv_error 0x1C000023
 #define nca_s_fault_object_not_found 0x1C000024
 #define nca_s_fault_no_client_stub 0x1C000025
+
+#pragma pack(push, 1)
 
 typedef struct
 {
