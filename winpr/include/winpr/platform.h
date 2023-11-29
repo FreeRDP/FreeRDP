@@ -172,6 +172,14 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 #endif
 #endif
 
+/* E2K (_M_E2K) */
+
+#if defined(__e2k__)
+#ifndef _M_E2K
+#define _M_E2K 1
+#endif
+#endif
+
 /**
  * Operating Systems:
  * http://sourceforge.net/p/predef/wiki/OperatingSystems/
@@ -326,7 +334,7 @@ WINPR_PRAGMA_DIAG_IGNORED_RESERVED_ID_MACRO
 #else
 
 #if defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) || defined(_MIPSEL) || \
-    defined(__MIPSEL) || defined(__MIPSEL__)
+    defined(__MIPSEL) || defined(__MIPSEL__) || defined(__e2k__)
 #ifndef __LITTLE_ENDIAN__
 #define __LITTLE_ENDIAN__ 1
 #endif
