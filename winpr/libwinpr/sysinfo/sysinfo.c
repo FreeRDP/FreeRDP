@@ -120,6 +120,8 @@ static DWORD GetProcessorArchitecture(void)
 	cpuArch = PROCESSOR_ARCHITECTURE_PPC;
 #elif defined(_M_ALPHA)
 	cpuArch = PROCESSOR_ARCHITECTURE_ALPHA;
+#elif defined(_M_E2K)
+	cpuArch = PROCESSOR_ARCHITECTURE_E2K;
 #endif
 	return cpuArch;
 }
@@ -851,6 +853,32 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 	}
 
 #endif // __GNUC__
+#elif defined(_M_E2K)
+	/* compiler flags on e2k arch determine CPU features */
+	switch (ProcessorFeature)
+	{
+		case PF_MMX_INSTRUCTIONS_AVAILABLE:
+#ifdef __MMX__
+			ret = TRUE;
+#endif
+			break;
+
+		case PF_3DNOW_INSTRUCTIONS_AVAILABLE:
+#ifdef __3dNOW__
+			ret = TRUE;
+#endif
+			break;
+
+		case PF_SSE3_INSTRUCTIONS_AVAILABLE:
+#ifdef __SSE3__
+			ret = TRUE;
+#endif
+			break;
+
+		default:
+			break;
+	}
+
 #endif
 	return ret;
 }
@@ -1026,7 +1054,55 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 		default:
 			break;
 	}
+#elif defined(_M_E2K)
+	/* compiler flags on e2k arch determine CPU features */
+	switch (ProcessorFeature)
+	{
+		case PF_EX_LZCNT:
+#ifdef __LZCNT__
+			ret = TRUE;
+#endif
+			break;
 
+		case PF_EX_SSSE3:
+#ifdef __SSSE3__
+			ret = TRUE;
+#endif
+			break;
+
+		case PF_EX_SSE41:
+#ifdef __SSE4_1__
+			ret = TRUE;
+#endif
+			break;
+
+		case PF_EX_SSE42:
+#ifdef __SSE4_2__
+			ret = TRUE;
+#endif
+			break;
+
+		case PF_EX_AVX:
+#ifdef __AVX__
+			ret = TRUE;
+#endif
+			break;
+
+		case PF_EX_AVX2:
+#ifdef __AVX2__
+			ret = TRUE;
+#endif
+			break;
+
+		case PF_EX_FMA:
+#ifdef __FMA__
+			ret = TRUE;
+#endif
+			break;
+
+		default:
+			break;
+	}
 #endif
 	return ret;
 }
