@@ -7,9 +7,9 @@
 //
 
 #import "AppDelegate.h"
-#import "MacFreeRDP/mfreerdp.h"
-#import "MacFreeRDP/mf_client.h"
-#import "MacFreeRDP/MRDPView.h"
+#import <mfreerdp.h>
+#import <mf_client.h>
+#import <MRDPView.h>
 
 #import <winpr/assert.h>
 #import <freerdp/client/cmdline.h>

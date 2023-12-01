@@ -79,8 +79,12 @@
 	        [self.usernameText.stringValue cStringUsingEncoding:NSUTF8StringEncoding],
 	        &submittedUser, &submittedDomain))
 	{
-		self.username = [NSString stringWithCString:submittedUser encoding:NSUTF8StringEncoding];
-		self.domain = [NSString stringWithCString:submittedDomain encoding:NSUTF8StringEncoding];
+		if (submittedUser)
+			self.username = [NSString stringWithCString:submittedUser
+			                                   encoding:NSUTF8StringEncoding];
+		if (submittedDomain)
+			self.domain = [NSString stringWithCString:submittedDomain
+			                                 encoding:NSUTF8StringEncoding];
 	}
 	else
 	{
@@ -88,6 +92,8 @@
 	}
 
 	self.password = self.passwordText.stringValue;
+	free(submittedUser);
+	free(submittedDomain);
 	[NSApp stopModalWithCode:TRUE];
 }
 

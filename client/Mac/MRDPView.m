@@ -721,10 +721,10 @@ DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE type)
 
 			formatString = [[NSString alloc] initWithData:formatData encoding:NSUTF8StringEncoding];
 
-			const char *data = [formatString UTF8String];
-			const size_t size = strlen(data) + 1;
+			const char *data = [formatString cStringUsingEncoding:NSUTF8StringEncoding];
+			const size_t dataLen = [formatString lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
 			formatId = ClipboardRegisterFormat(mfc->clipboard, "text/plain");
-			ClipboardSetData(mfc->clipboard, formatId, data, size);
+			ClipboardSetData(mfc->clipboard, formatId, data, dataLen + 1);
 			[formatString release];
 
 			formatMatch = TRUE;
@@ -950,6 +950,13 @@ static BOOL mac_show_auth_dialog(MRDPView *view, NSString *title, char **usernam
 	if (*domain)
 		dialog.domain = [NSString stringWithCString:*domain encoding:NSUTF8StringEncoding];
 
+	free(*username);
+	free(*password);
+	free(*domain);
+	*username = NULL;
+	*password = NULL;
+	*domain = NULL;
+
 	dispatch_sync(dispatch_get_main_queue(), ^{
 		[dialog performSelectorOnMainThread:@selector(runModal:)
 		                         withObject:[view window]
@@ -959,31 +966,33 @@ static BOOL mac_show_auth_dialog(MRDPView *view, NSString *title, char **usernam
 
 	if (ok)
 	{
-		size_t ulen, plen, dlen;
 		const char *submittedUsername = [dialog.username cStringUsingEncoding:NSUTF8StringEncoding];
-		ulen = (strlen(submittedUsername) + 1) * sizeof(char);
-		*username = malloc(ulen);
+		const size_t submittedUsernameLen =
+		    [dialog.username lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+		if (submittedUsername && (submittedUsernameLen > 0))
+			*username = strndup(submittedUsername, submittedUsernameLen);
 
 		if (!(*username))
 			return FALSE;
 
-		sprintf_s(*username, ulen, "%s", submittedUsername);
 		const char *submittedPassword = [dialog.password cStringUsingEncoding:NSUTF8StringEncoding];
-		plen = (strlen(submittedPassword) + 1) * sizeof(char);
-		*password = malloc(plen);
+		const size_t submittedPasswordLen =
+		    [dialog.password lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+		if (submittedPassword && (submittedPasswordLen > 0))
+			*password = strndup(submittedPassword, submittedPasswordLen);
 
 		if (!(*password))
 			return FALSE;
 
-		sprintf_s(*password, plen, "%s", submittedPassword);
 		const char *submittedDomain = [dialog.domain cStringUsingEncoding:NSUTF8StringEncoding];
-		dlen = (strlen(submittedDomain) + 1) * sizeof(char);
-		*domain = malloc(dlen);
-
-		if (!(*domain))
-			return FALSE;
-
-		sprintf_s(*domain, dlen, "%s", submittedDomain);
+		const size_t submittedDomainLen =
+		    [dialog.domain lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+		if (submittedDomain && (submittedDomainLen > 0))
+		{
+			*domain = strndup(submittedDomain, submittedDomainLen);
+			if (!(*domain))
+				return FALSE;
+		}
 	}
 
 	return ok;
