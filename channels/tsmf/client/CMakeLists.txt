@@ -20,28 +20,18 @@ define_channel_client("tsmf")
 
 message(DEPRECATION "TSMF channel is no longer maintained. Use [MS-RDPEVOR] (/video) instead.")
 
-set(GSTREAMER_1_0_FEATURE_TYPE "RECOMMENDED")
-set(GSTREAMER_1_0_FEATURE_PURPOSE "multimedia")
-set(GSTREAMER_1_0_FEATURE_DESCRIPTION "multimedia redirection, audio and video playback")
 
-if (WIN32)
-	set(GSTREAMER_1_0_FEATURE_TYPE "DISABLED")
+find_package(PkgConfig)
+if (PkgConfig_FOUND)
+    pkg_check_modules(gstreamer gstreamer-1.0)
 endif()
-if (APPLE)
-	set(GSTREAMER_1_0_FEATURE_TYPE "OPTIONAL")
 
-	if (IOS)
-		set(GSTREAMER_1_0_FEATURE_TYPE "DISABLED")
+if (WITH_GSTREAMER_1_0)
+	if(gstreamer_FOUND)
+		add_definitions(-DWITH_GSTREAMER_1_0)
+	else()
+		message(WARNING "gstreamer not detected, disabling support")
 	endif()
-endif()
-if (ANDROID)
-	set(GSTREAMER_1_0_FEATURE_TYPE "DISABLED")
-endif()
-
-find_feature(GStreamer_1_0 ${GSTREAMER_1_0_FEATURE_TYPE} ${GSTREAMER_1_0_FEATURE_PURPOSE} ${GSTREAMER_1_0_FEATURE_DESCRIPTION})
-
-if (WITH_GSTREAMER_1_0 AND GSTREAMER_1_0_FOUND)
-	add_definitions(-DWITH_GSTREAMER_1_0)
 endif()
 
 set(${MODULE_PREFIX}_SRCS

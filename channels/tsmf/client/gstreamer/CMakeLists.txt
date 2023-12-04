@@ -17,25 +17,37 @@
 
 define_channel_client_subsystem("tsmf" "gstreamer" "decoder")
 
-if(NOT GSTREAMER_1_0_FOUND)
+if(NOT gstreamer_FOUND)
 	message(FATAL_ERROR "GStreamer library not found, but required for TSMF module.")
 endif()
 
 set(SRC "tsmf_gstreamer.c")
 
-if (GSTREAMER_1_0_FOUND)
-	set(LIBS ${GSTREAMER_1_0_LIBRARIES})
-	include_directories(${GSTREAMER_1_0_INCLUDE_DIRS})
-endif()
+pkg_check_modules(gstreamerbase gstreamer-base-1.0 REQUIRED)
+pkg_check_modules(gstreamervideo gstreamer-video-1.0 REQUIRED)
+pkg_check_modules(gstreamerapp gstreamer-app-1.0 REQUIRED)
+
+set(LIBS
+    ${gstreamer_LIBRARIES}
+    ${gstreamerbase_LIBRARIES}
+    ${gstreamervideo_LIBRARIES}
+    ${gstreamerapp_LIBRARIES}
+)
+include_directories(
+    ${gstreamer_INCLUDE_DIRS}
+    ${gstreamerbase_INCLUDE_DIRS}
+    ${gstreamervideo_INCLUDE_DIRS}
+    ${gstreamerapp_INCLUDE_DIRS}
+)
+
 
 if(ANDROID)
 	set(SRC ${SRC}
-		tsmf_android.c)
-	set(LIBS ${LIBS})
+                tsmf_android.c)
 else()
 	find_package(X11 REQUIRED)
 
-	list(APPENDSRC
+        list(APPEND SRC
 		tsmf_X11.c)
 	list(APPEND LIBS
 		${X11_LIBRARIES}
