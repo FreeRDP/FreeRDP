@@ -44,7 +44,7 @@ typedef enum
 	FREERDP_CODEC_PROGRESSIVE = 0x00000040,
 	FREERDP_CODEC_AVC420 = 0x00000080,
 	FREERDP_CODEC_AVC444 = 0x00000100,
-	FREERDP_CODEC_ALL = 0xFFFFFFFF
+	FREERDP_CODEC_ALL = 0x7FFFFFFF /* C enum types are restricted to int */
 } FreeRDP_CodecFlags;
 
 #ifdef __cplusplus
