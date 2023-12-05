@@ -487,8 +487,8 @@ static BOOL input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 fla
 	return fastpath_send_input_pdu(rdp->fastpath, s);
 }
 
-static BOOL input_send_fastpath_relmouse_event(rdpInput* input, UINT16 flags, UINT16 xDelta,
-                                               UINT16 yDelta)
+static BOOL input_send_fastpath_relmouse_event(rdpInput* input, UINT16 flags, INT16 xDelta,
+                                               INT16 yDelta)
 {
 	wStream* s;
 	rdpRdp* rdp;
