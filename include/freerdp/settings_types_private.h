@@ -32,6 +32,11 @@
 
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #ifndef FREERDP_SETTINGS_INTERNAL_USE
 #define SETTINGS_DEPRECATED(x) WINPR_DEPRECATED(x)
 #else
@@ -790,5 +795,9 @@ struct rdp_settings
 	 * is therefore potentially subject to ABI breakage.
 	 */
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_SETTINGS_TYPES_PRIVATE_H */

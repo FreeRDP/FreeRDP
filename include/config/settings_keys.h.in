@@ -23,6 +23,11 @@
 
 #include <freerdp/api.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 typedef enum
 {
     @SETTINGS_KEYS_BOOL@
@@ -70,5 +75,9 @@ typedef enum
 
 
 #define FreeRDP_Settings_StableAPI_MAX 5312
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FREERDP_SETTINGS_KEYS_H */
