@@ -1,3 +1,32 @@
+# 2023-12-12 Version 3.0.0
+
+Final 3.0.0 release just a little over two weeks after the last 3.0.0-rc0.
+This contains bugfixes, drops some legacy code, implements a small feature
+request and adds some improvements to the build system.
+
+Most notably is the new PreventInSourceBuilds.cmake which does exactly what
+the name implies, it aborts builds where source equals build directory.
+If you can not use out of source tree builds for some reason, you can
+circumvent this measure with the CMake setting -DALLOW_IN_SOURCE_BUILD=ON
+
+Noteworthy changes:
+* add support for AF_VSOCK #9561
+* xfreerdp drop X11 GDI implementation #9492
+* fixed connection freeze with childSession #9594
+* fixed relative mouse input issues #9608
+* fixed issues with drive redirection #9610
+* simplified mac build #9601
+* fixed TSMF to build again #9603
+* fixed command line /gfx parsing bug #9598
+* prevent in source tree build #9550
+* fixed various issues with settings #9595, #9596
+* add E2K cpu support in WinPR #9599
+* fixed wfreerdp DPI settings when used as embedded window #9593
+* android add mouse hover support #9495
+
+For a complete and detailed change log since the last release run:
+git log 3.0.0..3.0.0-rc0
+
 # 2023-11-27 Version 3.0.0-rc0
 
 Nearly 2 months of testing, bugfixing and API refinements later we´re
