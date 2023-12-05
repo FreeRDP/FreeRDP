@@ -262,7 +262,7 @@ static DWORD WINAPI tf_client_thread_proc(LPVOID arg)
 			break;
 		}
 
-		status = WaitForMultipleObjects(nCount, handles, FALSE, 100);
+		status = WaitForMultipleObjects(nCount, handles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
 		{

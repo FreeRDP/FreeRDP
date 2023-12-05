@@ -2792,12 +2792,13 @@ static int tsg_read(rdpTsg* tsg, BYTE* data, size_t length)
 
 		if (transport_get_blocking(rpc->transport))
 		{
-			while (WaitForSingleObject(rpc->client->PipeEvent, 0) != WAIT_OBJECT_0)
+			DWORD rc;
+			while ((rc = WaitForSingleObject(rpc->client->PipeEvent, 1000)) != WAIT_OBJECT_0)
 			{
+				if (rc == WAIT_FAILED)
+					return -1;
 				if (!tsg_check_event_handles(tsg))
 					return -1;
-
-				WaitForSingleObject(rpc->client->PipeEvent, 100);
 			}
 		}
 	} while (transport_get_blocking(rpc->transport));

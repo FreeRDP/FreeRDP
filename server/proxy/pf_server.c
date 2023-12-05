@@ -985,20 +985,16 @@ BOOL pf_server_run(proxyServer* server)
 
 		WINPR_ASSERT(server->stopEvent);
 		eventHandles[eventCount++] = server->stopEvent;
-		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, 1000);
-
-		if (WAIT_FAILED == status)
-			break;
-
-		if (WaitForSingleObject(server->stopEvent, 0) == WAIT_OBJECT_0)
-			break;
+		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, INFINITE);
 
 		if (WAIT_FAILED == status)
 		{
-			WLog_ERR(TAG, "select failed");
-			rc = FALSE;
+			WLog_ERR(TAG, "WaitForMultipleObjects failed");
 			break;
 		}
+
+		if (WaitForSingleObject(server->stopEvent, 0) == WAIT_OBJECT_0)
+			break;
 
 		WINPR_ASSERT(listener->CheckFileDescriptor);
 		if (listener->CheckFileDescriptor(listener) != TRUE)
