@@ -2132,3 +2132,14 @@ BOOL freerdp_client_is_pen(rdpClientContext* cctx, INT32 deviceid)
 
 	return FALSE;
 }
+
+BOOL freerdp_client_use_relative_mouse_events(rdpClientContext* ccontext)
+{
+	WINPR_ASSERT(ccontext);
+
+	const rdpSettings* settings = ccontext->context.settings;
+	const BOOL useRelative = freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove);
+	const BOOL haveRelative = freerdp_settings_get_bool(settings, FreeRDP_HasRelativeMouseEvent);
+	const BOOL ainput = ccontext->ainput != NULL;
+	return useRelative && (haveRelative || ainput);
+}
