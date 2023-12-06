@@ -4621,3 +4621,31 @@ BOOL rdp_send_confirm_active(rdpRdp* rdp)
 	Stream_Release(s);
 	return status;
 }
+
+const char* rdp_input_flag_string(UINT16 flags, char* buffer, size_t len)
+{
+	char prefix[16] = { 0 };
+
+	_snprintf(prefix, sizeof(prefix), "[0x%04" PRIx16 "][", flags);
+	winpr_str_append(prefix, buffer, len, "");
+	if ((flags & INPUT_FLAG_SCANCODES) != 0)
+		winpr_str_append("INPUT_FLAG_SCANCODES", buffer, len, "|");
+	if ((flags & INPUT_FLAG_MOUSEX) != 0)
+		winpr_str_append("INPUT_FLAG_MOUSEX", buffer, len, "|");
+	if ((flags & INPUT_FLAG_FASTPATH_INPUT) != 0)
+		winpr_str_append("INPUT_FLAG_FASTPATH_INPUT", buffer, len, "|");
+	if ((flags & INPUT_FLAG_UNICODE) != 0)
+		winpr_str_append("INPUT_FLAG_UNICODE", buffer, len, "|");
+	if ((flags & INPUT_FLAG_FASTPATH_INPUT2) != 0)
+		winpr_str_append("INPUT_FLAG_FASTPATH_INPUT2", buffer, len, "|");
+	if ((flags & INPUT_FLAG_UNUSED1) != 0)
+		winpr_str_append("INPUT_FLAG_UNUSED1", buffer, len, "|");
+	if ((flags & INPUT_FLAG_MOUSE_RELATIVE) != 0)
+		winpr_str_append("INPUT_FLAG_MOUSE_RELATIVE", buffer, len, "|");
+	if ((flags & TS_INPUT_FLAG_MOUSE_HWHEEL) != 0)
+		winpr_str_append("TS_INPUT_FLAG_MOUSE_HWHEEL", buffer, len, "|");
+	if ((flags & TS_INPUT_FLAG_QOE_TIMESTAMPS) != 0)
+		winpr_str_append("TS_INPUT_FLAG_QOE_TIMESTAMPS", buffer, len, "|");
+	winpr_str_append("]", buffer, len, "");
+	return buffer;
+}
