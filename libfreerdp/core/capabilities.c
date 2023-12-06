@@ -2822,8 +2822,20 @@ static BOOL rdp_apply_surface_commands_capability_set(rdpSettings* settings, con
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
 
-	settings->SurfaceCommandsEnabled = src->SurfaceCommandsEnabled;
-	settings->SurfaceFrameMarkerEnabled = src->SurfaceFrameMarkerEnabled;
+	/* [MS-RDPBCGR] 2.2.7.2.9 Surface Commands Capability Set (TS_SURFCMDS_CAPABILITYSET)
+	 *
+	 * disable surface commands if the remote does not support fastpath
+	 */
+	if (src->FastPathOutput)
+	{
+		settings->SurfaceCommandsEnabled = src->SurfaceCommandsEnabled;
+		settings->SurfaceFrameMarkerEnabled = src->SurfaceFrameMarkerEnabled;
+	}
+	else
+	{
+		settings->SurfaceCommandsEnabled = FALSE;
+		settings->SurfaceFrameMarkerEnabled = FALSE;
+	}
 
 	return TRUE;
 }
