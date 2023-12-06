@@ -1559,7 +1559,7 @@ static UINT rdpdr_process_component(rdpdrPlugin* rdpdr, UINT16 component, UINT16
 	device = devman_get_device_by_type(rdpdr->devman, type);
 
 	if (!device)
-		return ERROR_INVALID_PARAMETER;
+		return ERROR_DEV_NOT_EXIST;
 
 	return IFCALLRESULT(ERROR_INVALID_PARAMETER, device->CustomComponentRequest, device, component,
 	                    packetId, s);
@@ -1829,7 +1829,16 @@ static UINT rdpdr_process_receive(rdpdrPlugin* rdpdr, wStream* s)
 
 			if (error != CHANNEL_RC_OK)
 			{
-				WLog_Print(rdpdr->log, WLOG_ERROR,
+				DWORD level = WLOG_ERROR;
+				if (rdpdr->ignoreInvalidDevices)
+				{
+					if (error == ERROR_DEV_NOT_EXIST)
+					{
+						level = WLOG_WARN;
+						error = CHANNEL_RC_OK;
+					}
+				}
+				WLog_Print(rdpdr->log, level,
 				           "Unknown message: Component: %s [0x%04" PRIX16
 				           "] PacketId: %s [0x%04" PRIX16 "]",
 				           rdpdr_component_string(component), component,
