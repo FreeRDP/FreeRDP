@@ -198,7 +198,7 @@ static BOOL register_raw_events(xfContext* xfc, Window window)
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	if (freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove))
+	if (freerdp_client_use_relative_mouse_events(&xfc->common))
 	{
 		XISetMask(mask_bytes, XI_RawMotion);
 		XISetMask(mask_bytes, XI_RawButtonPress);
@@ -798,8 +798,8 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 			break;
 		case XI_RawButtonPress:
 		case XI_RawButtonRelease:
-			xfc->xi_rawevent = xfc->common.mouse_grabbed &&
-			                   freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove);
+			xfc->xi_rawevent =
+			    xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common);
 
 			if (xfc->xi_rawevent)
 			{
@@ -809,8 +809,8 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 			}
 			break;
 		case XI_RawMotion:
-			xfc->xi_rawevent = xfc->common.mouse_grabbed &&
-			                   freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove);
+			xfc->xi_rawevent =
+			    xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common);
 
 			if (xfc->xi_rawevent)
 			{

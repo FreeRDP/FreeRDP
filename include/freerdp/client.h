@@ -267,6 +267,15 @@ extern "C"
 	FREERDP_API BOOL freerdp_client_send_mouse_event(rdpClientContext* cctx, UINT64 mflags, INT32 x,
 	                                                 INT32 y);
 
+	/** @brief this function checks if relative mouse events are supported and enabled for this
+	 * session.
+	 *
+	 *  @param cctx The \b rdpClientContext to check
+	 *
+	 *  @return \b TRUE if relative mouse events are to be sent, \b FALSE otherwise
+	 */
+	FREERDP_API BOOL freerdp_client_use_relative_mouse_events(rdpClientContext* cctx);
+
 	FREERDP_API BOOL freerdp_client_send_button_event(rdpClientContext* cctx, BOOL relative,
 	                                                  UINT16 mflags, INT32 x, INT32 y);
 
