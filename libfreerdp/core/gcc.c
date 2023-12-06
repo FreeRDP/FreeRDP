@@ -170,7 +170,8 @@ static const char* rdp_early_client_caps_string(UINT32 flags, char* buffer, size
 	char msg[32] = { 0 };
 	const UINT32 mask = RNS_UD_CS_SUPPORT_ERRINFO_PDU | RNS_UD_CS_WANT_32BPP_SESSION |
 	                    RNS_UD_CS_SUPPORT_STATUSINFO_PDU | RNS_UD_CS_STRONG_ASYMMETRIC_KEYS |
-	                    RNS_UD_CS_VALID_CONNECTION_TYPE | RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU |
+	                    RNS_UD_CS_RELATIVE_MOUSE_INPUT | RNS_UD_CS_VALID_CONNECTION_TYPE |
+	                    RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU |
 	                    RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT |
 	                    RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL | RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE |
 	                    RNS_UD_CS_SUPPORT_HEARTBEAT_PDU | RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN;
@@ -184,6 +185,8 @@ static const char* rdp_early_client_caps_string(UINT32 flags, char* buffer, size
 		winpr_str_append("RNS_UD_CS_SUPPORT_STATUSINFO_PDU", buffer, size, "|");
 	if (flags & RNS_UD_CS_STRONG_ASYMMETRIC_KEYS)
 		winpr_str_append("RNS_UD_CS_STRONG_ASYMMETRIC_KEYS", buffer, size, "|");
+	if (flags & RNS_UD_CS_RELATIVE_MOUSE_INPUT)
+		winpr_str_append("RNS_UD_CS_RELATIVE_MOUSE_INPUT", buffer, size, "|");
 	if (flags & RNS_UD_CS_VALID_CONNECTION_TYPE)
 		winpr_str_append("RNS_UD_CS_VALID_CONNECTION_TYPE", buffer, size, "|");
 	if (flags & RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU)
@@ -971,10 +974,10 @@ static UINT16 filterAndLogEarlyClientCapabilityFlags(UINT32 flags)
 	const UINT32 mask =
 	    (RNS_UD_CS_SUPPORT_ERRINFO_PDU | RNS_UD_CS_WANT_32BPP_SESSION |
 	     RNS_UD_CS_SUPPORT_STATUSINFO_PDU | RNS_UD_CS_STRONG_ASYMMETRIC_KEYS |
-	     RNS_UD_CS_VALID_CONNECTION_TYPE | RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU |
-	     RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT | RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL |
-	     RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE | RNS_UD_CS_SUPPORT_HEARTBEAT_PDU |
-	     RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN);
+	     RNS_UD_CS_RELATIVE_MOUSE_INPUT | RNS_UD_CS_VALID_CONNECTION_TYPE |
+	     RNS_UD_CS_SUPPORT_MONITOR_LAYOUT_PDU | RNS_UD_CS_SUPPORT_NETCHAR_AUTODETECT |
+	     RNS_UD_CS_SUPPORT_DYNVC_GFX_PROTOCOL | RNS_UD_CS_SUPPORT_DYNAMIC_TIME_ZONE |
+	     RNS_UD_CS_SUPPORT_HEARTBEAT_PDU | RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN);
 	const UINT32 filtered = flags & mask;
 	const UINT32 unknown = flags & ~mask;
 	if (unknown != 0)
@@ -1024,6 +1027,9 @@ static UINT16 earlyClientCapsFromSettings(const rdpSettings* settings)
 	if (settings->SupportAsymetricKeys)
 		earlyCapabilityFlags |= RNS_UD_CS_STRONG_ASYMMETRIC_KEYS;
 
+	if (settings->HasRelativeMouseEvent)
+		earlyCapabilityFlags |= RNS_UD_CS_RELATIVE_MOUSE_INPUT;
+
 	if (settings->SupportSkipChannelJoin)
 		earlyCapabilityFlags |= RNS_UD_CS_SUPPORT_SKIP_CHANNELJOIN;
 
@@ -1052,6 +1058,10 @@ static BOOL updateEarlyClientCaps(rdpSettings* settings, UINT32 earlyCapabilityF
 	if (settings->SupportAsymetricKeys)
 		settings->SupportAsymetricKeys =
 		    (earlyCapabilityFlags & RNS_UD_CS_STRONG_ASYMMETRIC_KEYS) ? TRUE : FALSE;
+
+	if (settings->HasRelativeMouseEvent)
+		settings->HasRelativeMouseEvent =
+		    (earlyCapabilityFlags & RNS_UD_CS_RELATIVE_MOUSE_INPUT) ? TRUE : FALSE;
 
 	if (settings->NetworkAutoDetect)
 		settings->NetworkAutoDetect =
