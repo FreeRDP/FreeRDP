@@ -551,6 +551,7 @@ static BOOL xf_grab_kbd(xfContext* xfc)
 	              CurrentTime);
 	return TRUE;
 }
+
 static BOOL xf_event_ButtonPress(xfContext* xfc, const XButtonEvent* event, BOOL app)
 {
 	xf_grab_mouse(xfc);
