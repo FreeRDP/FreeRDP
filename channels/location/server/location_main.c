@@ -75,7 +75,6 @@ static UINT location_server_open_channel(location_server* location)
 {
 	LocationServerContext* context = &location->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 	UINT32 channelId;
@@ -92,14 +91,6 @@ static UINT location_server_open_channel(location_server* location)
 
 	location->SessionId = (DWORD)*pSessionId;
 	WTSFreeMemory(pSessionId);
-	hEvent = WTSVirtualChannelManagerGetEventHandle(location->context.vcm);
-
-	if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
-	{
-		Error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", Error);
-		return Error;
-	}
 
 	location->location_channel = WTSVirtualChannelOpenEx(
 	    location->SessionId, LOCATION_DVC_CHANNEL_NAME, WTS_CHANNEL_OPTION_DYNAMIC);

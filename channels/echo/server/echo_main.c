@@ -61,9 +61,6 @@ typedef struct
  */
 static UINT echo_server_open_channel(echo_server* echo)
 {
-	DWORD Error;
-	HANDLE hEvent;
-	DWORD StartTick;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 
@@ -76,45 +73,30 @@ static UINT echo_server_open_channel(echo_server* echo)
 
 	echo->SessionId = (DWORD)*pSessionId;
 	WTSFreeMemory(pSessionId);
-	hEvent = WTSVirtualChannelManagerGetEventHandle(echo->context.vcm);
-	StartTick = GetTickCount();
 
-	while (echo->echo_channel == NULL)
+	echo->echo_channel =
+	    WTSVirtualChannelOpenEx(echo->SessionId, ECHO_DVC_CHANNEL_NAME, WTS_CHANNEL_OPTION_DYNAMIC);
+
+	const DWORD Error = GetLastError();
+	if (Error == ERROR_NOT_FOUND)
 	{
-		if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
+		WLog_DBG(TAG, "Channel %s not found", ECHO_DVC_CHANNEL_NAME);
+		return ERROR_INTERNAL_ERROR;
+	}
+
+	if (echo->echo_channel)
+	{
+		UINT32 channelId;
+		BOOL status = TRUE;
+
+		channelId = WTSChannelGetIdByHandle(echo->echo_channel);
+
+		IFCALLRET(echo->context.ChannelIdAssigned, status, &echo->context, channelId);
+		if (!status)
 		{
-			Error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", Error);
-			return Error;
+			WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
+			return ERROR_INTERNAL_ERROR;
 		}
-
-		echo->echo_channel = WTSVirtualChannelOpenEx(echo->SessionId, ECHO_DVC_CHANNEL_NAME,
-		                                             WTS_CHANNEL_OPTION_DYNAMIC);
-
-		if (echo->echo_channel)
-		{
-			UINT32 channelId;
-			BOOL status = TRUE;
-
-			channelId = WTSChannelGetIdByHandle(echo->echo_channel);
-
-			IFCALLRET(echo->context.ChannelIdAssigned, status, &echo->context, channelId);
-			if (!status)
-			{
-				WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
-				return ERROR_INTERNAL_ERROR;
-			}
-
-			break;
-		}
-
-		Error = GetLastError();
-
-		if (Error == ERROR_NOT_FOUND)
-			break;
-
-		if (GetTickCount() - StartTick > 5000)
-			break;
 	}
 
 	return echo->echo_channel ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;

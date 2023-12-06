@@ -89,9 +89,6 @@ static BOOL ainput_server_is_open(ainput_server_context* context)
  */
 static UINT ainput_server_open_channel(ainput_server* ainput)
 {
-	DWORD Error;
-	HANDLE hEvent;
-	DWORD StartTick;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 
@@ -106,28 +103,17 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 
 	ainput->SessionId = (DWORD)*pSessionId;
 	WTSFreeMemory(pSessionId);
-	hEvent = WTSVirtualChannelManagerGetEventHandle(ainput->context.vcm);
-	StartTick = GetTickCount();
 
-	while (ainput->ainput_channel == NULL)
-	{
-		if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
-		{
-			Error = GetLastError();
-			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", Error);
-			return Error;
-		}
-
-		ainput->ainput_channel = WTSVirtualChannelOpenEx(ainput->SessionId, AINPUT_DVC_CHANNEL_NAME,
+	    ainput->ainput_channel = WTSVirtualChannelOpenEx(ainput->SessionId, AINPUT_DVC_CHANNEL_NAME,
 		                                                 WTS_CHANNEL_OPTION_DYNAMIC);
 
-		Error = GetLastError();
+	    const DWORD Error = GetLastError();
 
-		if (Error == ERROR_NOT_FOUND)
+	    if (Error == ERROR_NOT_FOUND)
 		{
 			WLog_DBG(TAG, "Channel %s not found", AINPUT_DVC_CHANNEL_NAME);
-			break;
-		}
+		    return ERROR_INTERNAL_ERROR;
+	    }
 
 		if (ainput->ainput_channel)
 		{
@@ -141,17 +127,8 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 			{
 				WLog_ERR(TAG, "context->ChannelIdAssigned failed!");
 				return ERROR_INTERNAL_ERROR;
-			}
-
-			break;
-		}
-
-		if (GetTickCount() - StartTick > 5000)
-		{
-			WLog_WARN(TAG, "Timeout opening channel %s", AINPUT_DVC_CHANNEL_NAME);
-			break;
-		}
-	}
+		    }
+	    }
 
 	return ainput->ainput_channel ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
 }

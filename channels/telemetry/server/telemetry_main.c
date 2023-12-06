@@ -74,7 +74,6 @@ static UINT telemetry_server_open_channel(telemetry_server* telemetry)
 {
 	TelemetryServerContext* context = &telemetry->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 	UINT32 channelId;
@@ -91,14 +90,6 @@ static UINT telemetry_server_open_channel(telemetry_server* telemetry)
 
 	telemetry->SessionId = (DWORD)*pSessionId;
 	WTSFreeMemory(pSessionId);
-	hEvent = WTSVirtualChannelManagerGetEventHandle(telemetry->context.vcm);
-
-	if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
-	{
-		Error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", Error);
-		return Error;
-	}
 
 	telemetry->telemetry_channel = WTSVirtualChannelOpenEx(
 	    telemetry->SessionId, TELEMETRY_DVC_CHANNEL_NAME, WTS_CHANNEL_OPTION_DYNAMIC);

@@ -74,7 +74,6 @@ static UINT device_server_open_channel(device_server* device)
 {
 	CameraDeviceServerContext* context = &device->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 	UINT32 channelId;
@@ -91,14 +90,6 @@ static UINT device_server_open_channel(device_server* device)
 
 	device->SessionId = (DWORD)*pSessionId;
 	WTSFreeMemory(pSessionId);
-	hEvent = WTSVirtualChannelManagerGetEventHandle(device->context.vcm);
-
-	if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
-	{
-		Error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", Error);
-		return Error;
-	}
 
 	device->device_channel = WTSVirtualChannelOpenEx(device->SessionId, context->virtualChannelName,
 	                                                 WTS_CHANNEL_OPTION_DYNAMIC);

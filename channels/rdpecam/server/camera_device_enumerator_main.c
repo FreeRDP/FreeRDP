@@ -74,7 +74,6 @@ static UINT enumerator_server_open_channel(enumerator_server* enumerator)
 {
 	CamDevEnumServerContext* context = &enumerator->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 	UINT32 channelId;
@@ -91,14 +90,6 @@ static UINT enumerator_server_open_channel(enumerator_server* enumerator)
 
 	enumerator->SessionId = (DWORD)*pSessionId;
 	WTSFreeMemory(pSessionId);
-	hEvent = WTSVirtualChannelManagerGetEventHandle(enumerator->context.vcm);
-
-	if (WaitForSingleObject(hEvent, 1000) == WAIT_FAILED)
-	{
-		Error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", Error);
-		return Error;
-	}
 
 	enumerator->enumerator_channel = WTSVirtualChannelOpenEx(
 	    enumerator->SessionId, RDPECAM_CONTROL_DVC_CHANNEL_NAME, WTS_CHANNEL_OPTION_DYNAMIC);
