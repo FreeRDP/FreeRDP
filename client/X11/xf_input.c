@@ -69,10 +69,11 @@ static const char* xf_input_get_class_string(int class)
 
 static BOOL register_input_events(xfContext* xfc, Window window)
 {
+#define MAX_NR_MASKS 64
 	int ndevices = 0;
 	int nmasks = 0;
-	XIEventMask evmasks[64] = { 0 };
-	BYTE masks[8][XIMaskLen(XI_LASTEVENT)] = { 0 };
+	XIEventMask evmasks[MAX_NR_MASKS] = { 0 };
+	BYTE masks[MAX_NR_MASKS][XIMaskLen(XI_LASTEVENT)] = { 0 };
 
 	WINPR_ASSERT(xfc);
 
@@ -81,7 +82,7 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 
 	XIDeviceInfo* info = XIQueryDevice(xfc->display, XIAllDevices, &ndevices);
 
-	for (int i = 0; i < MIN(ndevices, 64); i++)
+	for (int i = 0; i < MIN(ndevices, MAX_NR_MASKS); i++)
 	{
 		BOOL used = FALSE;
 		XIDeviceInfo* dev = &info[i];
@@ -142,10 +143,9 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 					{
 						double max_pressure = t->max;
 
-						char devName[200];
-						strncpy(devName, dev->name, 200);
-						devName[200 - 1] = '\0';
-						CharLowerBuffA(devName, (DWORD)strlen(devName));
+						char devName[200] = { 0 };
+						strncpy(devName, dev->name, ARRAYSIZE(devName) - 1);
+						CharLowerBuffA(devName, ARRAYSIZE(devName));
 
 						if (strstr(devName, "eraser") != NULL)
 						{
