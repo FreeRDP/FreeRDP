@@ -6,6 +6,7 @@ The FreeRDP Android port consists of three parts:
 * FreeRDP library and its dependencies
 * JNI bindings (client/Android/android_freerdp.c
   and client/Android/Studio/freeRDPCore/src/main/java/com/freerdp/freerdpcore/services/LibFreeRDP.java)
+* More documentation might be found at https://github.com/FreeRDP/FreeRDP/wiki/Compilation
 
 Build requirements
 =================

@@ -4,6 +4,8 @@ Overview
 The FreeRDP iOS port allows users to enjoy FreeRDP features on Apple iOS devices.
 The application was written to be compatible with devices running iOS 4.3 or higher. 
 
+More documentation might be found at https://github.com/FreeRDP/FreeRDP/wiki/Compilation
+
 Build requirements
 ==================
 

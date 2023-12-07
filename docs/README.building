@@ -1,3 +1,6 @@
+
+More documentation might be found at https://github.com/FreeRDP/FreeRDP/wiki/Compilation
+
 FreeRDP has a few dependencies that are required for proper operation:
 
 1. SSL (required)
