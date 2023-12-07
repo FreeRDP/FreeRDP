@@ -118,6 +118,8 @@ static int freerdp_connect_begin(freerdp* instance)
 	IFCALLRET(instance->PreConnect, status, instance);
 	instance->ConnectionCallbackState = CLIENT_STATE_PRECONNECT_PASSED;
 
+	freerdp_settings_print_warnings(settings);
+
 	if (status)
 	{
 		if (!rdp_set_backup_settings(rdp))

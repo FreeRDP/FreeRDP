@@ -269,6 +269,17 @@ static BOOL settings_get_computer_name(rdpSettings* settings)
 	return freerdp_settings_set_string(settings, FreeRDP_ComputerName, computerName);
 }
 
+void freerdp_settings_print_warnings(const rdpSettings* settings)
+{
+	const UINT32 level = freerdp_settings_get_uint32(settings, FreeRDP_GlyphSupportLevel);
+	if (level != GLYPH_SUPPORT_NONE)
+	{
+		char buffer[32] = { 0 };
+		WLog_WARN(TAG, "[experimental] enabled GlyphSupportLevel %s, expect visual artefacts!",
+		          freerdp_settings_glyph_level_string(level, buffer, sizeof(buffer)));
+	}
+}
+
 BOOL freerdp_settings_set_default_order_support(rdpSettings* settings)
 {
 	BYTE* OrderSupport = freerdp_settings_get_pointer_writable(settings, FreeRDP_OrderSupport);
@@ -1232,4 +1243,29 @@ BOOL identity_set_from_smartcard_hash(SEC_WINNT_AUTH_IDENTITY_W* identity,
 		return FALSE;
 #endif /* _WIN32 */
 	return TRUE;
+}
+
+const char* freerdp_settings_glyph_level_string(UINT32 level, char* buffer, size_t size)
+{
+	const char* str = "GLYPH_SUPPORT_UNKNOWN";
+	switch (level)
+	{
+		case GLYPH_SUPPORT_NONE:
+			str = "GLYPH_SUPPORT_NONE";
+			break;
+		case GLYPH_SUPPORT_PARTIAL:
+			str = "GLYPH_SUPPORT_PARTIAL";
+			break;
+		case GLYPH_SUPPORT_FULL:
+			str = "GLYPH_SUPPORT_FULL";
+			break;
+		case GLYPH_SUPPORT_ENCODE:
+			str = "GLYPH_SUPPORT_ENCODE";
+			break;
+		default:
+			break;
+	}
+
+	_snprintf(buffer, size, "%s[0x%08" PRIx32 "]", str, level);
+	return buffer;
 }
