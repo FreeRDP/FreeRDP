@@ -5788,7 +5788,7 @@ void freerdp_client_warn_unmaintained(int argc, char* argv[])
 	WLog_Print_unchecked(
 	    log, log_level,
 	    " If problems occur please check https://github.com/FreeRDP/FreeRDP/issues for "
-	    "know issues!");
+	    "known issues!");
 	WLog_Print_unchecked(
 	    log, log_level,
 	    "Be prepared to fix issues yourself though as nobody is actively working on this.");
@@ -5814,7 +5814,7 @@ void freerdp_client_warn_experimental(int argc, char* argv[])
 	WLog_Print_unchecked(
 	    log, log_level,
 	    " If problems occur please check https://github.com/FreeRDP/FreeRDP/issues for "
-	    "know issues or create a new one!");
+	    "known issues or create a new one!");
 	WLog_Print_unchecked(
 	    log, log_level,
 	    " Developers hang out in https://matrix.to/#/#FreeRDP:matrix.org?via=matrix.org "
