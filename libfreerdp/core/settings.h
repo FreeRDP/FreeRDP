@@ -35,6 +35,7 @@
 
 #include <string.h>
 
+FREERDP_LOCAL void freerdp_settings_print_warnings(const rdpSettings* settings);
 FREERDP_LOCAL BOOL freerdp_settings_set_default_order_support(rdpSettings* settings);
 FREERDP_LOCAL BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src);
 FREERDP_LOCAL void freerdp_settings_free_keys(rdpSettings* dst, BOOL cleanup);
@@ -62,5 +63,7 @@ FREERDP_LOCAL BOOL identity_set_from_smartcard_hash(SEC_WINNT_AUTH_IDENTITY_W* i
                                                     FreeRDP_Settings_Keys_String domainId,
                                                     FreeRDP_Settings_Keys_String pwdId,
                                                     const BYTE* certSha1, size_t sha1len);
+FREERDP_LOCAL const char* freerdp_settings_glyph_level_string(UINT32 level, char* buffer,
+                                                              size_t size);
 
 #endif /* FREERDP_LIB_CORE_SETTINGS_H */
