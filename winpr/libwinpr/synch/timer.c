@@ -103,7 +103,7 @@ static DWORD TimerCleanupHandle(HANDLE handle)
 
 		return WAIT_FAILED;
 	}
-#else
+#elif defined(TIMER_IMPL_POSIX) || defined(TIMER_IMPL_DISPATCH)
 	if (!winpr_event_reset(&timer->event))
 	{
 		WLog_ERR(TAG, "timer reset() failure");
@@ -447,7 +447,7 @@ static void timerAPC(LPVOID arg)
 #ifdef TIMER_IMPL_TIMERFD
 	while (timer_drain_fd(timer->fd))
 		;
-#else
+#elif defined(TIMER_IMPL_POSIX) || defined(TIMER_IMPL_DISPATCH)
 	winpr_event_reset(&timer->event);
 #endif
 }

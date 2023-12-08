@@ -80,7 +80,7 @@ typedef struct winpr_semaphore WINPR_SEMAPHORE;
 #define TIMER_IMPL_DISPATCH
 #include <dispatch/dispatch.h>
 #else
-#error missing timer implementation
+#warning missing timer implementation
 #endif
 
 struct winpr_timer
