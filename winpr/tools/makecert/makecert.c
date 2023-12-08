@@ -36,6 +36,7 @@
 #include <openssl/rsa.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509v3.h>
+#include <openssl/bn.h>
 #endif
 
 #include <winpr/tools/makecert.h>
