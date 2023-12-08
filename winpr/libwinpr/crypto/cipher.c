@@ -93,7 +93,7 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 	if (!evp)
 		goto fail;
 
-	EVP_CIPHER_CTX_init(ctx->ctx);
+	EVP_CIPHER_CTX_reset(ctx->ctx);
 	if (EVP_EncryptInit_ex(ctx->ctx, evp, NULL, NULL, NULL) != 1)
 		goto fail;
 

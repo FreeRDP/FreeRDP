@@ -36,6 +36,7 @@
 
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
+#include <openssl/bn.h>
 
 #include "privatekey.h"
 #include "cert_common.h"

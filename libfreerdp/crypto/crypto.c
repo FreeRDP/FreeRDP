@@ -22,6 +22,7 @@
 #include <errno.h>
 
 #include <openssl/objects.h>
+#include <openssl/bn.h>
 
 #include <freerdp/config.h>
 
