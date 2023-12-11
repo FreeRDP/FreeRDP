@@ -24,6 +24,8 @@
 
 #include "sdl_types.hpp"
 
+#include <SDL.h>
+
 class sdlDispContext
 {
 
@@ -50,12 +52,14 @@ class sdlDispContext
 	BOOL update_last_sent();
 	UINT sendLayout(const rdpMonitor* monitors, size_t nmonitors);
 
+	BOOL addTimer();
+
   private:
 	static UINT DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitors,
 	                               UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB);
 	static void OnActivated(void* context, const ActivatedEventArgs* e);
 	static void OnGraphicsReset(void* context, const GraphicsResetEventArgs* e);
-	static void OnTimer(void* context, const TimerEventArgs* e);
+	static Uint32 SDLCALL OnTimer(Uint32 interval, void* param);
 
   private:
 	SdlContext* _sdl = nullptr;
@@ -73,4 +77,6 @@ class sdlDispContext
 	UINT16 _lastSentDesktopOrientation = 0;
 	UINT32 _lastSentDesktopScaleFactor = 0;
 	UINT32 _lastSentDeviceScaleFactor = 0;
+	SDL_TimerID _timer = 0;
+	unsigned _timer_retries = 0;
 };
