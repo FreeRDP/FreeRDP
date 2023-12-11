@@ -34,6 +34,7 @@
 #define TAG CLIENT_TAG("sdl.disp")
 
 #define RESIZE_MIN_DELAY 200 /* minimum delay in ms between two resizes */
+#define MAX_RETRIES 5
 
 BOOL sdlDispContext::settings_changed()
 {
@@ -169,7 +170,7 @@ void sdlDispContext::OnActivated(void* context, const ActivatedEventArgs* e)
 		if (e->firstActivation)
 			return;
 
-		sdlDisp->sendResize();
+		sdlDisp->addTimer();
 	}
 }
 
@@ -188,24 +189,40 @@ void sdlDispContext::OnGraphicsReset(void* context, const GraphicsResetEventArgs
 	if (sdlDisp->_activated && !freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
 	{
 		sdlDisp->set_window_resizable();
-		sdlDisp->sendResize();
+		sdlDisp->addTimer();
 	}
 }
 
-void sdlDispContext::OnTimer(void* context, const TimerEventArgs* e)
+Uint32 sdlDispContext::OnTimer(Uint32 interval, void* param)
 {
-	SdlContext* sdl = nullptr;
+	auto ctx = static_cast<sdlDispContext*>(param);
+	if (!ctx)
+		return 0;
+
+	SdlContext* sdl = ctx->_sdl;
 	sdlDispContext* sdlDisp = nullptr;
 	rdpSettings* settings = nullptr;
 
-	WINPR_UNUSED(e);
-	if (!sdl_disp_check_context(context, &sdl, &sdlDisp, &settings))
-		return;
+	if (!sdl_disp_check_context(sdl->context(), &sdl, &sdlDisp, &settings))
+		return 0;
 
+	WLog_Print(sdl->log, WLOG_TRACE, "checking for display changes...");
 	if (!sdlDisp->_activated || freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
-		return;
+		return 0;
+	else
+	{
+		auto rc = sdlDisp->sendResize();
+		if (!rc)
+			WLog_Print(sdl->log, WLOG_TRACE, "sent new display layout, result %d", rc);
+	}
+	if (sdlDisp->_timer_retries++ >= MAX_RETRIES)
+	{
+		WLog_Print(sdl->log, WLOG_TRACE, "deactivate timer, retries exceeded");
+		return 0;
+	}
 
-	sdlDisp->sendResize();
+	WLog_Print(sdl->log, WLOG_TRACE, "fire timer one more time");
+	return interval;
 }
 
 UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
@@ -274,6 +291,17 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 	return ret;
 }
 
+BOOL sdlDispContext::addTimer()
+{
+	SDL_RemoveTimer(_timer);
+	WLog_Print(_sdl->log, WLOG_TRACE, "adding new display check timer");
+
+	_timer_retries = 0;
+	sendResize();
+	_timer = SDL_AddTimer(1000, sdlDispContext::OnTimer, this);
+	return TRUE;
+}
+
 #if SDL_VERSION_ATLEAST(2, 0, 10)
 BOOL sdlDispContext::handle_display_event(const SDL_DisplayEvent* ev)
 {
@@ -320,7 +348,7 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 		case SDL_WINDOWEVENT_SIZE_CHANGED:
 			_targetWidth = ev->data1;
 			_targetHeight = ev->data2;
-			return sendResize();
+			return addTimer();
 
 		case SDL_WINDOWEVENT_LEAVE:
 			WINPR_ASSERT(_sdl);
@@ -401,7 +429,7 @@ BOOL sdlDispContext::uninit(DispClientContext* disp)
 	return TRUE;
 }
 
-sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
+sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl), _timer(0)
 {
 	WINPR_ASSERT(_sdl);
 	WINPR_ASSERT(_sdl->context()->settings);
@@ -414,7 +442,7 @@ sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 	_lastSentHeight = _targetHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 	PubSub_SubscribeActivated(pubSub, sdlDispContext::OnActivated);
 	PubSub_SubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
-	PubSub_SubscribeTimer(pubSub, sdlDispContext::OnTimer);
+	addTimer();
 }
 
 sdlDispContext::~sdlDispContext()
@@ -424,5 +452,5 @@ sdlDispContext::~sdlDispContext()
 
 	PubSub_UnsubscribeActivated(pubSub, sdlDispContext::OnActivated);
 	PubSub_UnsubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
-	PubSub_UnsubscribeTimer(pubSub, sdlDispContext::OnTimer);
+	SDL_RemoveTimer(_timer);
 }
