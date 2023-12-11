@@ -241,7 +241,7 @@ BOOL winpr_HMAC_Init(WINPR_HMAC_CTX* ctx, WINPR_MD_TYPE md, const void* key, siz
 		return FALSE;
 
 	const char* param_name = OSSL_MAC_PARAM_DIGEST;
-	const OSSL_PARAM param[] = { OSSL_PARAM_construct_utf8_string(param_name, hash, 0),
+	const OSSL_PARAM param[] = { OSSL_PARAM_construct_utf8_string(param_name, (char*)hash, 0),
 		                         OSSL_PARAM_construct_end() };
 
 	if (EVP_MAC_init(ctx->xhmac, key, keylen, param) == 1)
