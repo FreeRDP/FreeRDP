@@ -872,7 +872,7 @@ static LONG WINAPI PCSC_SCardListReaderGroupsW(SCARDCONTEXT hContext, LPWSTR msz
 }
 
 static LONG WINAPI PCSC_SCardListReaders_Internal(SCARDCONTEXT hContext, LPCSTR mszGroups,
-                                                  LPSTR mszReaders, LPDWORD pcchReaders)
+                                                  LPSTR* mszReaders, LPDWORD pcchReaders)
 {
 	PCSC_LONG status = SCARD_S_SUCCESS;
 	BOOL pcchReadersAlloc = FALSE;
@@ -912,12 +912,12 @@ static LONG WINAPI PCSC_SCardListReaders_Internal(SCARDCONTEXT hContext, LPCSTR 
 			else
 				PCSC_AddMemoryBlock(hContext, tmp);
 
-			*(char**)mszReaders = tmp;
+			*mszReaders = tmp;
 		}
 	}
 	else
 	{
-		status = g_PCSC.pfnSCardListReaders(hContext, mszGroups, mszReaders, &pcsc_cchReaders);
+		status = g_PCSC.pfnSCardListReaders(hContext, mszGroups, *mszReaders, &pcsc_cchReaders);
 	}
 
 	*pcchReaders = (DWORD)pcsc_cchReaders;
@@ -946,7 +946,7 @@ static LONG WINAPI PCSC_SCardListReadersA(SCARDCONTEXT hContext, LPCSTR mszGroup
 	if (!PCSC_LockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
 
-	status = PCSC_SCardListReaders_Internal(hContext, mszGroups, mszReaders, pcchReaders);
+	status = PCSC_SCardListReaders_Internal(hContext, mszGroups, &mszReaders, pcchReaders);
 
 	if (!PCSC_UnlockCardContext(hContext))
 		return SCARD_E_INVALID_HANDLE;
@@ -993,7 +993,7 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 	}
 
 	status =
-	    PCSC_SCardListReaders_Internal(hContext, mszGroupsA, (LPSTR*)&mszReadersA, pcchReaders);
+	    PCSC_SCardListReaders_Internal(hContext, mszGroupsA, &mszReadersA, pcchReaders);
 	if (status == SCARD_S_SUCCESS)
 	{
 		size_t size = 0;
