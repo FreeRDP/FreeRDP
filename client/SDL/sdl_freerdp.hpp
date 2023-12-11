@@ -44,8 +44,8 @@ typedef struct
 	int offset_y;
 } sdl_window_t;
 
-using SDLSurfacePtr = std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)>;
-using SDLPixelFormatPtr = std::unique_ptr<SDL_PixelFormat, decltype(&SDL_FreeFormat)>;
+using SDLSurfacePtr = std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)>;
+using SDLPixelFormatPtr = std::unique_ptr<SDL_PixelFormat, decltype(&SDL_DestroyPixelFormat)>;
 
 class SdlContext
 {

@@ -51,7 +51,7 @@ class SdlInputWidget
 	bool remove_str(SDL_Renderer* renderer, size_t count);
 	bool append_str(SDL_Renderer* renderer, const std::string& text);
 
-	const SDL_Rect& input_rect() const;
+	const SDL_FRect& input_rect() const;
 	std::string value() const;
 
 	bool readonly() const;

@@ -72,8 +72,8 @@ static BOOL sdl_Pointer_New(rdpContext* context, rdpPointer* pointer)
 static void sdl_Pointer_Clear(sdlPointer* ptr)
 {
 	WINPR_ASSERT(ptr);
-	SDL_FreeCursor(ptr->cursor);
-	SDL_FreeSurface(ptr->image);
+	SDL_DestroyCursor(ptr->cursor);
+	SDL_DestroySurface(ptr->image);
 	ptr->cursor = nullptr;
 	ptr->image = nullptr;
 }
@@ -140,9 +140,7 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 
 	sdl_Pointer_Clear(ptr);
 
-	const DWORD bpp = FreeRDPGetBitsPerPixel(gdi->dstFormat);
-	ptr->image =
-	    SDL_CreateRGBSurfaceWithFormat(0, sw, sh, static_cast<int>(bpp), sdl->sdl_pixel_format);
+	ptr->image = SDL_CreateSurface(sw, sh, sdl->sdl_pixel_format);
 	if (!ptr->image)
 		return FALSE;
 
@@ -162,7 +160,7 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 		return FALSE;
 
 	SDL_SetCursor(ptr->cursor);
-	SDL_ShowCursor(SDL_ENABLE);
+	SDL_ShowCursor();
 	return TRUE;
 }
 
