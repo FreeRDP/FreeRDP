@@ -40,6 +40,8 @@
 #include "../log.h"
 #define TAG WINPR_TAG("unicode")
 
+#define UCNV_CONVERT 1
+
 /**
  * Notes on cross-platform Unicode portability:
  *
@@ -201,6 +203,26 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int
 		targetCapacity = cchWideChar;
 		error = U_ZERO_ERROR;
 
+#if defined(UCNV_CONVERT)
+		if (cchWideChar == 0)
+		{
+			targetLength =
+			    ucnv_convert("UTF-16LE", "UTF-8", NULL, 0, lpMultiByteStr, cbMultiByte, &error);
+			if (targetLength > 0)
+				targetLength /= sizeof(WCHAR);
+			cchWideChar = targetLength;
+		}
+		else
+		{
+			targetLength =
+			    ucnv_convert("UTF-16LE", "UTF-8", targetStart, targetCapacity * sizeof(WCHAR),
+			                 lpMultiByteStr, cbMultiByte, &error);
+			if (targetLength > 0)
+				targetLength /= sizeof(WCHAR);
+			cchWideChar = U_SUCCESS(error) ? targetLength : 0;
+		}
+
+#else
 		if (cchWideChar == 0)
 		{
 			u_strFromUTF8(NULL, 0, &targetLength, lpMultiByteStr, cbMultiByte, &error);
@@ -212,6 +234,7 @@ int MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int
 			              &error);
 			cchWideChar = U_SUCCESS(error) ? targetLength : 0;
 		}
+#endif
 	}
 #else
 
@@ -327,6 +350,21 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 		targetCapacity = cbMultiByte;
 		error = U_ZERO_ERROR;
 
+#if defined(UCNV_CONVERT)
+		if (cbMultiByte == 0)
+		{
+			targetLength = ucnv_convert("UTF-8", "UTF-16LE", NULL, 0, lpWideCharStr,
+			                            cchWideChar * sizeof(WCHAR), &error);
+			cbMultiByte = targetLength;
+		}
+		else
+		{
+			targetLength = ucnv_convert("UTF-8", "UTF-16LE", targetStarrt, targetCapacity,
+			                            lpWideCharStr, cchWideChar * sizeof(WCHAR), &error);
+			cbMultiByte = U_SUCCESS(error) ? targetLength : 0;
+		}
+
+#else
 		if (cbMultiByte == 0)
 		{
 			u_strToUTF8(NULL, 0, &targetLength, lpWideCharStr, cchWideChar, &error);
@@ -338,6 +376,7 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 			            &error);
 			cbMultiByte = U_SUCCESS(error) ? targetLength : 0;
 		}
+#endif
 	}
 #else
 
