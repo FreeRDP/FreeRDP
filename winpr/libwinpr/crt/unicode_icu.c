@@ -41,6 +41,8 @@
 #include "../log.h"
 #define TAG WINPR_TAG("unicode")
 
+#define UCNV_CONVERT 1
+
 int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte,
                             LPWSTR lpWideCharStr, int cchWideChar)
 {
@@ -93,9 +95,16 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 
 		targetStart = lpWideCharStr;
 		targetCapacity = cchWideChar;
-
+#if defined(UCNV_CONVERT)
+		targetLength =
+		    ucnv_convert("UTF-16LE", "UTF-8", targetStart, targetCapacity * sizeof(WCHAR),
+		                 lpMultiByteStr, cbMultiByte, &error);
+		if (targetLength > 0)
+			targetLength /= sizeof(WCHAR);
+#else
 		u_strFromUTF8(targetStart, targetCapacity, &targetLength, lpMultiByteStr, cbMultiByte,
 		              &error);
+#endif
 
 		switch (error)
 		{
@@ -187,8 +196,12 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 
 		targetStart = lpMultiByteStr;
 		targetCapacity = cbMultiByte;
-
+#if defined(UCNV_CONVERT)
+		targetLength = ucnv_convert("UTF-8", "UTF-16LE", targetStart, targetCapacity, lpWideCharStr,
+		                            cchWideChar * sizeof(WCHAR), &error);
+#else
 		u_strToUTF8(targetStart, targetCapacity, &targetLength, lpWideCharStr, cchWideChar, &error);
+#endif
 		switch (error)
 		{
 			case U_BUFFER_OVERFLOW_ERROR:
