@@ -524,11 +524,13 @@ static BOOL sdl_desktop_resize(rdpContext* context)
 	rdpSettings* settings;
 	auto sdl = get_context(context);
 
+	WINPR_ASSERT(sdl);
 	WINPR_ASSERT(context);
 
 	settings = context->settings;
 	WINPR_ASSERT(settings);
 
+	std::lock_guard<CriticalSection> lock(sdl->critical);
 	gdi = context->gdi;
 	if (!gdi_resize(gdi, freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth),
 	                freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
