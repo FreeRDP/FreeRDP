@@ -363,7 +363,15 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	if (!Stream_EnsureRemainingCapacity(printer_dev->device.data, PrinterNameLen))
 		goto fail;
 
-	for (wptr = wname; (wptr = _wcschr(wptr, L'\\'));)
+	union
+	{
+		char c[2];
+		WCHAR w;
+	} backslash;
+	backslash.c[0] = '\\';
+	backslash.c[1] = '\0';
+
+	for (wptr = wname; (wptr = _wcschr(wptr, backslash.w));)
 		*wptr = L'_';
 	Stream_Write(printer_dev->device.data, wname, PrinterNameLen);
 
