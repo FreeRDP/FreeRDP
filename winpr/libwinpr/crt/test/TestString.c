@@ -91,16 +91,6 @@ int TestString(int argc, char* argv[])
 	if (!test_url_escape())
 		return -1;
 
-#ifdef __BIG_ENDIAN__
-	/* Be sure that we always use LE encoded string */
-	ByteSwapUnicode(testStringW, testStringW_Length);
-	ByteSwapUnicode(testToken1W, testToken1W_Length);
-	ByteSwapUnicode(testToken2W, testToken2W_Length);
-	ByteSwapUnicode(testToken3W, testToken3W_Length);
-	ByteSwapUnicode(testTokensW, testTokensW_Length);
-	ByteSwapUnicode(testDelimiter, testDelimiter_Length);
-#endif
-
 	/* _wcslen */
 
 	length = _wcslen(testStringW);

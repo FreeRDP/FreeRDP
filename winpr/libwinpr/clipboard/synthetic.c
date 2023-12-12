@@ -347,7 +347,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 
 			/* Check the BOM (Byte Order Mark) */
 			if ((pSrcData.cpb[0] == 0xFE) && (pSrcData.cpb[1] == 0xFF))
-				ByteSwapUnicode(pSrcData.pv, (int)(SrcSize / 2));
+				ByteSwapUnicode(pSrcData.pv, (SrcSize / 2));
 
 			/* Check if we have WCHAR, convert to UTF-8 */
 			if ((pSrcData.cpb[0] == 0xFF) && (pSrcData.cpb[1] == 0xFE))
