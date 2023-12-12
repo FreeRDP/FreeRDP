@@ -117,7 +117,8 @@ static WCHAR* drive_file_combine_fullpath(const WCHAR* base_path, const WCHAR* p
 		goto fail;
 
 	/* Ensure the path does not contain sequences like '..' */
-	const WCHAR dotdot[] = { '.', '.', '\0' };
+	WCHAR dotdotbuffer[6] = { 0 };
+	const WCHAR* dotdot = InitializeConstWCharFromUtf8("..", dotdotbuffer, ARRAYSIZE(dotdotbuffer));
 	if (_wcsstr(&fullpath[base_path_length], dotdot))
 	{
 		char abuffer[MAX_PATH] = { 0 };

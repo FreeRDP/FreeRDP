@@ -52,4 +52,6 @@ extern const SecPkgInfoW NEGOTIATE_SecPkgInfoW;
 extern const SecurityFunctionTableA NEGOTIATE_SecurityFunctionTableA;
 extern const SecurityFunctionTableW NEGOTIATE_SecurityFunctionTableW;
 
+BOOL NEGOTIATE_init(void);
+
 #endif /* WINPR_SSPI_NEGOTIATE_PRIVATE_H */

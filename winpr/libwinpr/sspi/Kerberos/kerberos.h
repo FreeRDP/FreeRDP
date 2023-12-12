@@ -34,4 +34,6 @@ extern const SecPkgInfoW KERBEROS_SecPkgInfoW;
 extern const SecurityFunctionTableA KERBEROS_SecurityFunctionTableA;
 extern const SecurityFunctionTableW KERBEROS_SecurityFunctionTableW;
 
+BOOL KERBEROS_init(void);
+
 #endif /* WINPR_SSPI_KERBEROS_PRIVATE_H */

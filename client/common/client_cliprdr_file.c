@@ -2230,11 +2230,13 @@ static BOOL add_directory(CliprdrLocalStream* stream, const char* path)
 
 	BOOL rc = FALSE;
 	char* next = NULL;
+
+	WCHAR dotbuffer[6] = { 0 };
+	WCHAR dotdotbuffer[6] = { 0 };
+	const WCHAR* dot = InitializeConstWCharFromUtf8(".", dotbuffer, ARRAYSIZE(dotbuffer));
+	const WCHAR* dotdot = InitializeConstWCharFromUtf8("..", dotdotbuffer, ARRAYSIZE(dotdotbuffer));
 	do
 	{
-		const WCHAR dot[] = { '.', '\0' };
-		const WCHAR dotdot[] = { '.', '.', '\0' };
-
 		if (_wcscmp(FindFileData.cFileName, dot) == 0)
 			continue;
 		if (_wcscmp(FindFileData.cFileName, dotdot) == 0)

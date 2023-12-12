@@ -300,18 +300,23 @@ const SecPkgInfoA CREDSSP_SecPkgInfoA = {
 	"Microsoft CredSSP Security Provider" /* Comment */
 };
 
-static WCHAR CREDSSP_SecPkgInfoW_Name[] = { 'C', 'R', 'E', 'D', 'S', 'S', 'P', '\0' };
-
-static WCHAR CREDSSP_SecPkgInfoW_Comment[] = { 'M', 'i', 'c', 'r', 'o', 's', 'o', 'f', 't',
-	                                           ' ', 'C', 'r', 'e', 'd', 'S', 'S', 'P', ' ',
-	                                           'S', 'e', 'c', 'u', 'r', 'i', 't', 'y', ' ',
-	                                           'P', 'r', 'o', 'v', 'i', 'd', 'e', 'r', '\0' };
+static WCHAR CREDSSP_SecPkgInfoW_NameBuffer[128] = { 0 };
+static WCHAR CREDSSP_SecPkgInfoW_CommentBuffer[128] = { 0 };
 
 const SecPkgInfoW CREDSSP_SecPkgInfoW = {
-	0x000110733,                /* fCapabilities */
-	1,                          /* wVersion */
-	0xFFFF,                     /* wRPCID */
-	0x000090A8,                 /* cbMaxToken */
-	CREDSSP_SecPkgInfoW_Name,   /* Name */
-	CREDSSP_SecPkgInfoW_Comment /* Comment */
+	0x000110733,                      /* fCapabilities */
+	1,                                /* wVersion */
+	0xFFFF,                           /* wRPCID */
+	0x000090A8,                       /* cbMaxToken */
+	CREDSSP_SecPkgInfoW_NameBuffer,   /* Name */
+	CREDSSP_SecPkgInfoW_CommentBuffer /* Comment */
 };
+
+BOOL CREDSSP_init(void)
+{
+	InitializeConstWCharFromUtf8(CREDSSP_SecPkgInfoA.Name, CREDSSP_SecPkgInfoW_NameBuffer,
+	                             ARRAYSIZE(CREDSSP_SecPkgInfoW_NameBuffer));
+	InitializeConstWCharFromUtf8(CREDSSP_SecPkgInfoA.Comment, CREDSSP_SecPkgInfoW_CommentBuffer,
+	                             ARRAYSIZE(CREDSSP_SecPkgInfoW_CommentBuffer));
+	return TRUE;
+}

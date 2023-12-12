@@ -439,13 +439,14 @@ static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
  */
 static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP* irp)
 {
-	UINT32 FsInformationClass;
+	UINT32 FsInformationClass = 0;
 	wStream* output = NULL;
-	DWORD lpSectorsPerCluster;
-	DWORD lpBytesPerSector;
-	DWORD lpNumberOfFreeClusters;
-	DWORD lpTotalNumberOfClusters;
-	WIN32_FILE_ATTRIBUTE_DATA wfad;
+	DWORD lpSectorsPerCluster = 0;
+	DWORD lpBytesPerSector = 0;
+	DWORD lpNumberOfFreeClusters = 0;
+	DWORD lpTotalNumberOfClusters = 0;
+	WIN32_FILE_ATTRIBUTE_DATA wfad = { 0 };
+	WCHAR LabelBuffer[32] = { 0 };
 
 	if (!drive || !irp)
 		return ERROR_INVALID_PARAMETER;
@@ -464,8 +465,10 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 		case FileFsVolumeInformation:
 		{
 			/* http://msdn.microsoft.com/en-us/library/cc232108.aspx */
-			const WCHAR volumeLabel[] = { 'F', 'R', 'E', 'E', 'R', 'D', 'P', '\0' };
-			const size_t length = 17ul + sizeof(volumeLabel);
+			const WCHAR* volumeLabel =
+			    InitializeConstWCharFromUtf8("FREERDP", LabelBuffer, ARRAYSIZE(LabelBuffer));
+			const size_t volumeLabelLen = (_wcslen(volumeLabel) + 1) * sizeof(WCHAR);
+			const size_t length = 17ul + volumeLabelLen;
 
 			Stream_Write_UINT32(output, length); /* Length */
 
@@ -480,10 +483,10 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			Stream_Write_UINT32(output,
 			                    wfad.ftCreationTime.dwHighDateTime);      /* VolumeCreationTime */
 			Stream_Write_UINT32(output, lpNumberOfFreeClusters & 0xffff); /* VolumeSerialNumber */
-			Stream_Write_UINT32(output, sizeof(volumeLabel));             /* VolumeLabelLength */
+			Stream_Write_UINT32(output, volumeLabelLen);                  /* VolumeLabelLength */
 			Stream_Write_UINT8(output, 0);                                /* SupportsObjects */
 			/* Reserved(1), MUST NOT be added! */
-			Stream_Write(output, volumeLabel, sizeof(volumeLabel)); /* VolumeLabel (Unicode) */
+			Stream_Write(output, volumeLabel, volumeLabelLen); /* VolumeLabel (Unicode) */
 		}
 		break;
 
@@ -506,8 +509,10 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 		case FileFsAttributeInformation:
 		{
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
-			const WCHAR diskType[] = { 'F', 'A', 'T', '3', '2', '\0' };
-			const size_t length = 12ul + sizeof(diskType);
+			const WCHAR* diskType =
+			    InitializeConstWCharFromUtf8("FAT32", LabelBuffer, ARRAYSIZE(LabelBuffer));
+			const size_t diskTypeLen = (wcslen(diskType) + 1) * sizeof(WCHAR);
+			const size_t length = 12ul + diskTypeLen;
 			Stream_Write_UINT32(output, length); /* Length */
 
 			if (!Stream_EnsureRemainingCapacity(output, length))
@@ -519,8 +524,8 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			Stream_Write_UINT32(output, FILE_CASE_SENSITIVE_SEARCH | FILE_CASE_PRESERVED_NAMES |
 			                                FILE_UNICODE_ON_DISK); /* FileSystemAttributes */
 			Stream_Write_UINT32(output, MAX_PATH);                 /* MaximumComponentNameLength */
-			Stream_Write_UINT32(output, sizeof(diskType));         /* FileSystemNameLength */
-			Stream_Write(output, diskType, sizeof(diskType));      /* FileSystemName (Unicode) */
+			Stream_Write_UINT32(output, diskTypeLen);              /* FileSystemNameLength */
+			Stream_Write(output, diskType, diskTypeLen);           /* FileSystemName (Unicode) */
 		}
 		break;
 
