@@ -363,12 +363,13 @@ int ConvertFromUnicode(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int 
  * Swap Unicode byte order (UTF16LE <-> UTF16BE)
  */
 
-void ByteSwapUnicode(WCHAR* wstr, size_t length)
+const WCHAR* ByteSwapUnicode(WCHAR* wstr, size_t length)
 {
 	WINPR_ASSERT(wstr || (length == 0));
 
 	for (size_t x = 0; x < length; x++)
 		wstr[x] = _byteswap_ushort(wstr[x]);
+	return wstr;
 }
 
 SSIZE_T ConvertWCharToUtf8(const WCHAR* wstr, char* str, size_t len)
