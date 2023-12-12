@@ -404,7 +404,7 @@ extern "C"
 	                                                      LPBOOL lpUsedDefaultChar));
 #endif
 
-	WINPR_API void ByteSwapUnicode(WCHAR* wstr, size_t length);
+	WINPR_API const WCHAR* ByteSwapUnicode(WCHAR* wstr, size_t length);
 
 	WINPR_API size_t ConvertLineEndingToLF(char* str, size_t size);
 	WINPR_API char* ConvertLineEndingToCRLF(const char* str, size_t* size);
