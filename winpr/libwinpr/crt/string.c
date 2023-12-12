@@ -413,24 +413,24 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 	if (!strToken)
 		strToken = *context;
 
-	Data_Read_UINT16(strToken, value);
+	value = *strToken;
 
 	while (*strToken && _wcschr(strDelimit, value))
 	{
 		strToken++;
-		Data_Read_UINT16(strToken, value);
+		value = *strToken;
 	}
 
 	if (!*strToken)
 		return NULL;
 
 	nextToken = strToken++;
-	Data_Read_UINT16(strToken, value);
+	value = *strToken;
 
 	while (*strToken && !(_wcschr(strDelimit, value)))
 	{
 		strToken++;
-		Data_Read_UINT16(strToken, value);
+		value = *strToken;
 	}
 
 	if (*strToken)
