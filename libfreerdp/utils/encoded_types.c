@@ -107,6 +107,10 @@ BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value)
 			Stream_Read_UINT8(s, si.val4);
 			*value = si.val1 << 24 | si.val2 << 16 | si.val3 << 8 | si.val4;
 			break;
+		case FIVE_BYTE_VAL:
+		case SIX_BYTE_VAL:
+		case SEVEN_BYTE_VAL:
+		case EIGHT_BYTE_VAL:
 		default:
 			WLog_ERR(TAG, "Invalid byte count value in si.c: %u", si.c);
 			return FALSE;
@@ -162,6 +166,10 @@ BOOL freerdp_read_four_byte_float(wStream* s, double* value)
 			Stream_Read_UINT8(s, f.val4);
 			base = f.val1 << 24 | f.val2 << 16 | f.val3 << 8 | f.val4;
 			break;
+		case FIVE_BYTE_VAL:
+		case SIX_BYTE_VAL:
+		case SEVEN_BYTE_VAL:
+		case EIGHT_BYTE_VAL:
 		default:
 			WLog_ERR(TAG, "Invalid byte count value in f.c: %u", f.c);
 			return FALSE;
