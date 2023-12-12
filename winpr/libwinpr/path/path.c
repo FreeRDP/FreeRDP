@@ -914,41 +914,38 @@ char PathGetSeparatorA(unsigned long dwFlags)
 
 WCHAR PathGetSeparatorW(unsigned long dwFlags)
 {
-	WCHAR separator = PATH_SEPARATOR_CHR;
+	union
+	{
+		WCHAR w;
+		char c[2];
+	} cnv;
+
+	cnv.c[0] = PATH_SEPARATOR_CHR;
+	cnv.c[1] = '\0';
 
 	if (!dwFlags)
 		dwFlags = PATH_STYLE_NATIVE;
 
 	if (dwFlags == PATH_STYLE_WINDOWS)
-		separator = PATH_SEPARATOR_CHR;
+		cnv.c[0] = PATH_SEPARATOR_CHR;
 	else if (dwFlags == PATH_STYLE_UNIX)
-		separator = PATH_SEPARATOR_CHR;
+		cnv.c[0] = PATH_SEPARATOR_CHR;
 	else if (dwFlags == PATH_STYLE_NATIVE)
-		separator = PATH_SEPARATOR_CHR;
+		cnv.c[0] = PATH_SEPARATOR_CHR;
 
-	return separator;
+	return cnv.w;
 }
 
 /**
  * PathGetSharedLibraryExtension
  */
-
 static const CHAR SharedLibraryExtensionDllA[] = "dll";
 static const CHAR SharedLibraryExtensionSoA[] = "so";
 static const CHAR SharedLibraryExtensionDylibA[] = "dylib";
 
-static const WCHAR SharedLibraryExtensionDllW[] = { 'd', 'l', 'l', '\0' };
-static const WCHAR SharedLibraryExtensionSoW[] = { 's', 'o', '\0' };
-static const WCHAR SharedLibraryExtensionDylibW[] = { 'd', 'y', 'l', 'i', 'b', '\0' };
-
 static const CHAR SharedLibraryExtensionDotDllA[] = ".dll";
 static const CHAR SharedLibraryExtensionDotSoA[] = ".so";
 static const CHAR SharedLibraryExtensionDotDylibA[] = ".dylib";
-
-static const WCHAR SharedLibraryExtensionDotDllW[] = { '.', 'd', 'l', 'l', '\0' };
-static const WCHAR SharedLibraryExtensionDotSoW[] = { '.', 's', 'o', '\0' };
-static const WCHAR SharedLibraryExtensionDotDylibW[] = { '.', 'd', 'y', 'l', 'i', 'b', '\0' };
-
 PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 {
 	if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT)
@@ -1009,6 +1006,20 @@ PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 
 PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
 {
+	WCHAR buffer[6][16] = { 0 };
+	const WCHAR* SharedLibraryExtensionDotDllW = InitializeConstWCharFromUtf8(
+	    SharedLibraryExtensionDotDllA, buffer[0], ARRAYSIZE(buffer[0]));
+	const WCHAR* SharedLibraryExtensionDotSoW =
+	    InitializeConstWCharFromUtf8(SharedLibraryExtensionDotSoA, buffer[1], ARRAYSIZE(buffer[1]));
+	const WCHAR* SharedLibraryExtensionDotDylibW = InitializeConstWCharFromUtf8(
+	    SharedLibraryExtensionDotDylibA, buffer[2], ARRAYSIZE(buffer[2]));
+	const WCHAR* SharedLibraryExtensionDllW =
+	    InitializeConstWCharFromUtf8(SharedLibraryExtensionDllA, buffer[3], ARRAYSIZE(buffer[3]));
+	const WCHAR* SharedLibraryExtensionSoW =
+	    InitializeConstWCharFromUtf8(SharedLibraryExtensionSoA, buffer[4], ARRAYSIZE(buffer[4]));
+	const WCHAR* SharedLibraryExtensionDylibW =
+	    InitializeConstWCharFromUtf8(SharedLibraryExtensionDylibA, buffer[5], ARRAYSIZE(buffer[5]));
+
 	if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT)
 	{
 		if (dwFlags & PATH_SHARED_LIB_EXT_WITH_DOT)
@@ -1121,7 +1132,8 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 		return FALSE;
 	_wcsncat(path_slash, lpPathName, pathnamelen);
 
-	const WCHAR star[] = { '*', '\0' };
+	WCHAR starbuffer[8] = { 0 };
+	const WCHAR* star = InitializeConstWCharFromUtf8("*", starbuffer, ARRAYSIZE(starbuffer));
 	const HRESULT hr = NativePathCchAppendW(path_slash, path_slash_len, star);
 	if (FAILED(hr))
 		goto fail;

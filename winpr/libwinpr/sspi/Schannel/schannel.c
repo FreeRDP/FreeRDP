@@ -445,17 +445,23 @@ const SecPkgInfoA SCHANNEL_SecPkgInfoA = {
 	"Schannel Security Package" /* Comment */
 };
 
-static WCHAR SCHANNEL_SecPkgInfoW_Name[] = { 'S', 'c', 'h', 'a', 'n', 'n', 'e', 'l', '\0' };
-
-static WCHAR SCHANNEL_SecPkgInfoW_Comment[] = { 'S', 'c', 'h', 'a', 'n', 'n', 'e', 'l', ' ',
-	                                            'S', 'e', 'c', 'u', 'r', 'i', 't', 'y', ' ',
-	                                            'P', 'a', 'c', 'k', 'a', 'g', 'e', '\0' };
+static WCHAR SCHANNEL_SecPkgInfoW_NameBuffer[32] = { 0 };
+static WCHAR SCHANNEL_SecPkgInfoW_CommentBuffer[32] = { 0 };
 
 const SecPkgInfoW SCHANNEL_SecPkgInfoW = {
-	0x000107B3,                  /* fCapabilities */
-	1,                           /* wVersion */
-	0x000E,                      /* wRPCID */
-	SCHANNEL_CB_MAX_TOKEN,       /* cbMaxToken */
-	SCHANNEL_SecPkgInfoW_Name,   /* Name */
-	SCHANNEL_SecPkgInfoW_Comment /* Comment */
+	0x000107B3,                        /* fCapabilities */
+	1,                                 /* wVersion */
+	0x000E,                            /* wRPCID */
+	SCHANNEL_CB_MAX_TOKEN,             /* cbMaxToken */
+	SCHANNEL_SecPkgInfoW_NameBuffer,   /* Name */
+	SCHANNEL_SecPkgInfoW_CommentBuffer /* Comment */
 };
+
+BOOL SCHANNEL_init(void)
+{
+	InitializeConstWCharFromUtf8(SCHANNEL_SecPkgInfoA.Name, SCHANNEL_SecPkgInfoW_NameBuffer,
+	                             ARRAYSIZE(SCHANNEL_SecPkgInfoW_NameBuffer));
+	InitializeConstWCharFromUtf8(SCHANNEL_SecPkgInfoA.Comment, SCHANNEL_SecPkgInfoW_CommentBuffer,
+	                             ARRAYSIZE(SCHANNEL_SecPkgInfoW_CommentBuffer));
+	return TRUE;
+}

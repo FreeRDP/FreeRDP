@@ -73,19 +73,16 @@ const SecPkgInfoA NEGOTIATE_SecPkgInfoA = {
 	"Microsoft Package Negotiator" /* Comment */
 };
 
-static WCHAR NEGOTIATE_SecPkgInfoW_Name[] = { 'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'e', '\0' };
-
-static WCHAR NEGOTIATE_SecPkgInfoW_Comment[] = { 'M', 'i', 'c', 'r', 'o', 's', 'o', 'f', 't', ' ',
-	                                             'P', 'a', 'c', 'k', 'a', 'g', 'e', ' ', 'N', 'e',
-	                                             'g', 'o', 't', 'i', 'a', 't', 'o', 'r', '\0' };
+static WCHAR NEGOTIATE_SecPkgInfoW_NameBuffer[32] = { 0 };
+static WCHAR NEGOTIATE_SecPkgInfoW_CommentBuffer[32] = { 0 };
 
 const SecPkgInfoW NEGOTIATE_SecPkgInfoW = {
-	0x00083BB3,                   /* fCapabilities */
-	1,                            /* wVersion */
-	0x0009,                       /* wRPCID */
-	0x00002FE0,                   /* cbMaxToken */
-	NEGOTIATE_SecPkgInfoW_Name,   /* Name */
-	NEGOTIATE_SecPkgInfoW_Comment /* Comment */
+	0x00083BB3,                         /* fCapabilities */
+	1,                                  /* wVersion */
+	0x0009,                             /* wRPCID */
+	0x00002FE0,                         /* cbMaxToken */
+	NEGOTIATE_SecPkgInfoW_NameBuffer,   /* Name */
+	NEGOTIATE_SecPkgInfoW_CommentBuffer /* Comment */
 };
 
 static const WinPrAsn1_OID spnego_OID = { 6, (BYTE*)"\x2b\x06\x01\x05\x05\x02" };
@@ -1642,3 +1639,13 @@ const SecurityFunctionTableW NEGOTIATE_SecurityFunctionTableW = {
 	negotiate_SetContextAttributesW,       /* SetContextAttributes */
 	negotiate_SetCredentialsAttributesW,   /* SetCredentialsAttributes */
 };
+
+BOOL NEGOTIATE_init(void)
+{
+	InitializeConstWCharFromUtf8(NEGOTIATE_SecPkgInfoA.Name, NEGOTIATE_SecPkgInfoW_NameBuffer,
+	                             ARRAYSIZE(NEGOTIATE_SecPkgInfoW_NameBuffer));
+	InitializeConstWCharFromUtf8(NEGOTIATE_SecPkgInfoA.Comment, NEGOTIATE_SecPkgInfoW_CommentBuffer,
+	                             ARRAYSIZE(NEGOTIATE_SecPkgInfoW_CommentBuffer));
+
+	return TRUE;
+}

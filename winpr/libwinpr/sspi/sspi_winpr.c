@@ -36,6 +36,7 @@
 
 /* Authentication Functions: http://msdn.microsoft.com/en-us/library/windows/desktop/aa374731/ */
 
+#include "NTLM/ntlm.h"
 #include "NTLM/ntlm_export.h"
 #include "CredSSP/credssp.h"
 #include "Kerberos/kerberos.h"
@@ -73,18 +74,14 @@ static const SecurityFunctionTableA_NAME SecurityFunctionTableA_NAME_LIST[] = {
 	{ "Schannel", &SCHANNEL_SecurityFunctionTableA }
 };
 
-static const WCHAR _NTLM_NAME_W[] = { 'N', 'T', 'L', 'M', '\0' };
-static const WCHAR _KERBEROS_NAME_W[] = { 'K', 'e', 'r', 'b', 'e', 'r', 'o', 's', '\0' };
-static const WCHAR _NEGOTIATE_NAME_W[] = { 'N', 'e', 'g', 'o', 't', 'i', 'a', 't', 'e', '\0' };
-static const WCHAR _CREDSSP_NAME_W[] = { 'C', 'r', 'e', 'd', 'S', 'S', 'P', '\0' };
-static const WCHAR _SCHANNEL_NAME_W[] = { 'S', 'c', 'h', 'a', 'n', 'n', 'e', 'l', '\0' };
+static WCHAR BUFFER_NAME_LIST_W[5][32] = { 0 };
 
 static const SecurityFunctionTableW_NAME SecurityFunctionTableW_NAME_LIST[] = {
-	{ _NTLM_NAME_W, &NTLM_SecurityFunctionTableW },
-	{ _KERBEROS_NAME_W, &KERBEROS_SecurityFunctionTableW },
-	{ _NEGOTIATE_NAME_W, &NEGOTIATE_SecurityFunctionTableW },
-	{ _CREDSSP_NAME_W, &CREDSSP_SecurityFunctionTableW },
-	{ _SCHANNEL_NAME_W, &SCHANNEL_SecurityFunctionTableW }
+	{ BUFFER_NAME_LIST_W[0], &NTLM_SecurityFunctionTableW },
+	{ BUFFER_NAME_LIST_W[1], &KERBEROS_SecurityFunctionTableW },
+	{ BUFFER_NAME_LIST_W[2], &NEGOTIATE_SecurityFunctionTableW },
+	{ BUFFER_NAME_LIST_W[3], &CREDSSP_SecurityFunctionTableW },
+	{ BUFFER_NAME_LIST_W[4], &SCHANNEL_SecurityFunctionTableW }
 };
 
 #define SecHandle_LOWER_MAX 0xFFFFFFFF
@@ -949,11 +946,33 @@ PSecBuffer sspi_FindSecBuffer(PSecBufferDesc pMessage, ULONG BufferType)
 	return pSecBuffer;
 }
 
+static BOOL WINPR_init(void)
+{
+
+	for (size_t x = 0; x < ARRAYSIZE(SecurityFunctionTableA_NAME_LIST); x++)
+	{
+		const SecurityFunctionTableA_NAME* const cur = &SecurityFunctionTableA_NAME_LIST[x];
+		InitializeConstWCharFromUtf8(cur->Name, BUFFER_NAME_LIST_W[x],
+		                             ARRAYSIZE(BUFFER_NAME_LIST_W[x]));
+	}
+	return TRUE;
+}
+
 static BOOL CALLBACK sspi_init(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
 {
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 	sspi_ContextBufferAllocTableNew();
-	return TRUE;
+	if (!SCHANNEL_init())
+		return FALSE;
+	if (!KERBEROS_init())
+		return FALSE;
+	if (!NTLM_init())
+		return FALSE;
+	if (!CREDSSP_init())
+		return FALSE;
+	if (!NEGOTIATE_init())
+		return FALSE;
+	return WINPR_init();
 }
 
 void sspi_GlobalInit(void)

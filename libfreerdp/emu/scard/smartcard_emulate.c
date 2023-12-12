@@ -37,10 +37,21 @@
 #define MAX_CACHE_ITEM_SIZE 4096
 #define MAX_CACHE_ITEM_VALUES 4096
 
-static CHAR g_ReaderNameA[] = { 'F', 'r', 'e', 'e', 'R', 'D', 'P', ' ',  'E',
-	                            'm', 'u', 'l', 'a', 't', 'o', 'r', '\0', '\0' };
-static WCHAR g_ReaderNameW[] = { 'F', 'r', 'e', 'e', 'R', 'D', 'P', ' ',  'E',
-	                             'm', 'u', 'l', 'a', 't', 'o', 'r', '\0', '\0' };
+static const CHAR g_ReaderNameA[] = { 'F', 'r', 'e', 'e', 'R', 'D', 'P', ' ',  'E',
+	                                  'm', 'u', 'l', 'a', 't', 'o', 'r', '\0', '\0' };
+static INIT_ONCE g_ReaderNameWGuard = INIT_ONCE_STATIC_INIT;
+static WCHAR g_ReaderNameW[32] = { 0 };
+static size_t g_ReaderNameWLen = 0;
+
+static BOOL CALLBACK g_ReaderNameWInit(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
+{
+	WINPR_UNUSED(InitOnce);
+	WINPR_UNUSED(Parameter);
+	WINPR_UNUSED(Context);
+	InitializeConstWCharFromUtf8(g_ReaderNameA, g_ReaderNameW, ARRAYSIZE(g_ReaderNameW));
+	g_ReaderNameWLen = _wcsnlen(g_ReaderNameW, ARRAYSIZE(g_ReaderNameW) - 2) + 2;
+	return TRUE;
+}
 
 struct smartcard_emulation_context
 {
@@ -116,6 +127,7 @@ static BOOL scard_status_transition(SCardContext* context)
 			memcpy(reader->rgbAtr, ATR, sizeof(ATR));
 		}
 			{
+				InitOnceExecuteOnce(&g_ReaderNameWGuard, g_ReaderNameWInit, NULL, NULL);
 				SCARD_READERSTATEW* reader = &context->readerStateW[0];
 				reader->szReader = g_ReaderNameW;
 				reader->dwEventState = SCARD_STATE_PRESENT;
@@ -574,6 +586,7 @@ LONG WINAPI Emulate_SCardListReadersW(SmartcardEmulationContext* smartcard, SCAR
 
 	WINPR_UNUSED(mszGroups); /* Not required */
 
+	InitOnceExecuteOnce(&g_ReaderNameWGuard, g_ReaderNameWInit, NULL, NULL);
 	if (SCARD_S_SUCCESS == status)
 	{
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
@@ -585,11 +598,11 @@ LONG WINAPI Emulate_SCardListReadersW(SmartcardEmulationContext* smartcard, SCAR
 
 		/* Return length only */
 		if (!mszReaders)
-			*pcchReaders = ARRAYSIZE(g_ReaderNameW);
+			*pcchReaders = g_ReaderNameWLen;
 		else
 		{
 			*pcchReaders = scard_copy_strings(value, mszReaders, *pcchReaders, g_ReaderNameW,
-			                                  sizeof(g_ReaderNameW)) /
+			                                  g_ReaderNameWLen * sizeof(WCHAR)) /
 			               sizeof(WCHAR);
 		}
 	}

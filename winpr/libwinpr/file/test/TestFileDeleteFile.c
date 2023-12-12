@@ -12,11 +12,10 @@ int TestFileDeleteFile(int argc, char* argv[])
 	char validA[] = "/tmp/valid-test-file-XXXXXX";
 	char validW[] = "/tmp/valid-test-file-XXXXXX";
 	WCHAR* validWW = NULL;
-	const char* invalidA = "/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-	const WCHAR invalidW[] = { '/', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x',
-		                       'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x',
-		                       'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x',
-		                       'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', '\0' };
+	const char invalidA[] = "/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+	WCHAR invalidW[sizeof(invalidA)] = { 0 };
+
+	ConvertUtf8NToWChar(invalidA, ARRAYSIZE(invalidA), invalidW, ARRAYSIZE(invalidW));
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

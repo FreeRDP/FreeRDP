@@ -48,4 +48,6 @@ extern const SecPkgInfoW SCHANNEL_SecPkgInfoW;
 extern const SecurityFunctionTableA SCHANNEL_SecurityFunctionTableA;
 extern const SecurityFunctionTableW SCHANNEL_SecurityFunctionTableW;
 
+BOOL SCHANNEL_init(void);
+
 #endif /* WINPR_SSPI_SCHANNEL_PRIVATE_H */

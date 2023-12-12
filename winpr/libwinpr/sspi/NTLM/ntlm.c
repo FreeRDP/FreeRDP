@@ -1398,31 +1398,26 @@ const SecPkgInfoA NTLM_SecPkgInfoA = {
 	"NTLM Security Package" /* Comment */
 };
 
-static WCHAR NTLM_SecPkgInfoW_Name[] = { 'N', 'T', 'L', 'M', '\0' };
-
-static WCHAR NTLM_SecPkgInfoW_Comment[] = {
-	'N', 'T', 'L', 'M', ' ', 'S', 'e', 'c', 'u', 'r', 'i',
-	't', 'y', ' ', 'P', 'a', 'c', 'k', 'a', 'g', 'e', '\0'
-};
+static WCHAR NTLM_SecPkgInfoW_NameBuffer[32] = { 0 };
+static WCHAR NTLM_SecPkgInfoW_CommentBuffer[32] = { 0 };
 
 const SecPkgInfoW NTLM_SecPkgInfoW = {
-	0x00082B37,              /* fCapabilities */
-	1,                       /* wVersion */
-	0x000A,                  /* wRPCID */
-	0x00000B48,              /* cbMaxToken */
-	NTLM_SecPkgInfoW_Name,   /* Name */
-	NTLM_SecPkgInfoW_Comment /* Comment */
+	0x00082B37,                    /* fCapabilities */
+	1,                             /* wVersion */
+	0x000A,                        /* wRPCID */
+	0x00000B48,                    /* cbMaxToken */
+	NTLM_SecPkgInfoW_NameBuffer,   /* Name */
+	NTLM_SecPkgInfoW_CommentBuffer /* Comment */
 };
 
 char* ntlm_negotiate_flags_string(char* buffer, size_t size, UINT32 flags)
 {
-	int x;
 	if (!buffer || (size == 0))
 		return buffer;
 
 	_snprintf(buffer, size, "[0x%08" PRIx32 "] ", flags);
 
-	for (x = 0; x < 31; x++)
+	for (int x = 0; x < 31; x++)
 	{
 		const UINT32 mask = 1 << x;
 		size_t len = strnlen(buffer, size);
@@ -1518,6 +1513,16 @@ BOOL ntlm_reset_cipher_state(PSecHandle phContext)
 			return FALSE;
 		}
 	}
+
+	return TRUE;
+}
+
+BOOL NTLM_init(void)
+{
+	InitializeConstWCharFromUtf8(NTLM_SecPkgInfoA.Name, NTLM_SecPkgInfoW_NameBuffer,
+	                             ARRAYSIZE(NTLM_SecPkgInfoW_NameBuffer));
+	InitializeConstWCharFromUtf8(NTLM_SecPkgInfoA.Comment, NTLM_SecPkgInfoW_CommentBuffer,
+	                             ARRAYSIZE(NTLM_SecPkgInfoW_CommentBuffer));
 
 	return TRUE;
 }

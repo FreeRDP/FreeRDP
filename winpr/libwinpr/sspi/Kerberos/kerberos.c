@@ -69,19 +69,16 @@ const SecPkgInfoA KERBEROS_SecPkgInfoA = {
 	"Kerberos Security Package" /* Comment */
 };
 
-static WCHAR KERBEROS_SecPkgInfoW_Name[] = { 'K', 'e', 'r', 'b', 'e', 'r', 'o', 's', '\0' };
-
-static WCHAR KERBEROS_SecPkgInfoW_Comment[] = { 'K', 'e', 'r', 'b', 'e', 'r', 'o', 's', ' ',
-	                                            'S', 'e', 'c', 'u', 'r', 'i', 't', 'y', ' ',
-	                                            'P', 'a', 'c', 'k', 'a', 'g', 'e', '\0' };
+static WCHAR KERBEROS_SecPkgInfoW_NameBuffer[32] = { 0 };
+static WCHAR KERBEROS_SecPkgInfoW_CommentBuffer[32] = { 0 };
 
 const SecPkgInfoW KERBEROS_SecPkgInfoW = {
-	0x000F3BBF,                  /* fCapabilities */
-	1,                           /* wVersion */
-	0x0010,                      /* wRPCID */
-	0x0000BB80,                  /* cbMaxToken : 48k bytes maximum for Windows Server 2012 */
-	KERBEROS_SecPkgInfoW_Name,   /* Name */
-	KERBEROS_SecPkgInfoW_Comment /* Comment */
+	0x000F3BBF,                        /* fCapabilities */
+	1,                                 /* wVersion */
+	0x0010,                            /* wRPCID */
+	0x0000BB80,                        /* cbMaxToken : 48k bytes maximum for Windows Server 2012 */
+	KERBEROS_SecPkgInfoW_NameBuffer,   /* Name */
+	KERBEROS_SecPkgInfoW_CommentBuffer /* Comment */
 };
 
 #ifdef WITH_KRB5
@@ -1825,3 +1822,12 @@ const SecurityFunctionTableW KERBEROS_SecurityFunctionTableW = {
 	kerberos_SetContextAttributesW,       /* SetContextAttributes */
 	kerberos_SetCredentialsAttributesW,   /* SetCredentialsAttributes */
 };
+
+BOOL KERBEROS_init(void)
+{
+	InitializeConstWCharFromUtf8(KERBEROS_SecPkgInfoA.Name, KERBEROS_SecPkgInfoW_NameBuffer,
+	                             ARRAYSIZE(KERBEROS_SecPkgInfoW_NameBuffer));
+	InitializeConstWCharFromUtf8(KERBEROS_SecPkgInfoA.Comment, KERBEROS_SecPkgInfoW_CommentBuffer,
+	                             ARRAYSIZE(KERBEROS_SecPkgInfoW_CommentBuffer));
+	return TRUE;
+}

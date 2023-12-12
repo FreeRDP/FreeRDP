@@ -37,4 +37,6 @@ extern const SecPkgInfoW CREDSSP_SecPkgInfoW;
 extern const SecurityFunctionTableA CREDSSP_SecurityFunctionTableA;
 extern const SecurityFunctionTableW CREDSSP_SecurityFunctionTableW;
 
+BOOL CREDSSP_init(void);
+
 #endif /* WINPR_SSPI_CREDSSP_PRIVATE_H */

@@ -60,17 +60,27 @@ fail:
 
 static BOOL test_DsMakeSpnW(void)
 {
-	WCHAR testServiceClass[] = { 'H', 'T', 'T', 'P', '\0' };
-	WCHAR testServiceName[] = { 'L', 'A', 'B', '1', '-', 'W', '2', 'K', '8', 'R', '2',
-		                        '-', 'G', 'W', '.', 'l', 'a', 'b', '1', '.', 'a', 'w',
-		                        'a', 'k', 'e', '.', 'l', 'o', 'c', 'a', 'l', '\0' };
-	WCHAR testSpn[] = { 'H', 'T', 'T', 'P', '/', 'L', 'A', 'B', '1', '-', 'W', '2', 'K',
-		                '8', 'R', '2', '-', 'G', 'W', '.', 'l', 'a', 'b', '1', '.', 'a',
-		                'w', 'a', 'k', 'e', '.', 'l', 'o', 'c', 'a', 'l', '\0' };
+	const CHAR ctestServiceClass[] = { 'H', 'T', 'T', 'P', '\0' };
+	const CHAR ctestServiceName[] = { 'L', 'A', 'B', '1', '-', 'W', '2', 'K', '8', 'R', '2',
+		                              '-', 'G', 'W', '.', 'l', 'a', 'b', '1', '.', 'a', 'w',
+		                              'a', 'k', 'e', '.', 'l', 'o', 'c', 'a', 'l', '\0' };
+	const CHAR ctestSpn[] = { 'H', 'T', 'T', 'P', '/', 'L', 'A', 'B', '1', '-', 'W', '2', 'K',
+		                      '8', 'R', '2', '-', 'G', 'W', '.', 'l', 'a', 'b', '1', '.', 'a',
+		                      'w', 'a', 'k', 'e', '.', 'l', 'o', 'c', 'a', 'l', '\0' };
+	WCHAR testServiceClass[ARRAYSIZE(ctestServiceClass)] = { 0 };
+	WCHAR testServiceName[ARRAYSIZE(ctestServiceName)] = { 0 };
+	WCHAR testSpn[ARRAYSIZE(ctestSpn)] = { 0 };
+
 	BOOL rc = FALSE;
 	WCHAR Spn[100] = { 0 };
 	DWORD status;
 	DWORD SpnLength = -1;
+
+	ConvertUtf8NToWChar(ctestServiceClass, ARRAYSIZE(ctestServiceClass), testServiceClass,
+	                    ARRAYSIZE(testServiceClass));
+	ConvertUtf8NToWChar(ctestServiceName, ARRAYSIZE(ctestServiceName), testServiceName,
+	                    ARRAYSIZE(testServiceName));
+	ConvertUtf8NToWChar(ctestSpn, ARRAYSIZE(ctestSpn), testSpn, ARRAYSIZE(testSpn));
 
 	status = DsMakeSpnW(testServiceClass, testServiceName, NULL, 0, NULL, &SpnLength, NULL);
 
