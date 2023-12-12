@@ -94,18 +94,19 @@ BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value)
 			break;
 		case TWO_BYTE_VAL:
 			Stream_Read_UINT8(s, si.val2);
-			*value = si.val1 << 8 | si.val2;
+			*value = (((INT32)si.val1) << 8) | ((INT32)si.val2);
 			break;
 		case THREE_BYTE_VAL:
 			Stream_Read_UINT8(s, si.val2);
 			Stream_Read_UINT8(s, si.val3);
-			*value = si.val1 << 16 | si.val2 << 8 | si.val3;
+			*value = (((INT32)si.val1) << 16) | (((INT32)si.val2) << 8) | ((INT32)si.val3);
 			break;
 		case FOUR_BYTE_VAL:
 			Stream_Read_UINT8(s, si.val2);
 			Stream_Read_UINT8(s, si.val3);
 			Stream_Read_UINT8(s, si.val4);
-			*value = si.val1 << 24 | si.val2 << 16 | si.val3 << 8 | si.val4;
+			*value = (((INT32)si.val1) << 24) | (((INT32)si.val2) << 16) | (((INT32)si.val3) << 8) |
+			         ((INT32)si.val4);
 			break;
 		case FIVE_BYTE_VAL:
 		case SIX_BYTE_VAL:
@@ -153,18 +154,19 @@ BOOL freerdp_read_four_byte_float(wStream* s, double* value)
 			break;
 		case TWO_BYTE_VAL:
 			Stream_Read_UINT8(s, f.val2);
-			base = f.val1 << 8 | f.val2;
+			base = (((UINT32)f.val1) << 8) | ((UINT32)f.val2);
 			break;
 		case THREE_BYTE_VAL:
 			Stream_Read_UINT8(s, f.val2);
 			Stream_Read_UINT8(s, f.val3);
-			base = f.val1 << 16 | f.val2 << 8 | f.val3;
+			base = (((UINT32)f.val1) << 16) | (((UINT32)f.val2) << 8) | ((UINT32)f.val3);
 			break;
 		case FOUR_BYTE_VAL:
 			Stream_Read_UINT8(s, f.val2);
 			Stream_Read_UINT8(s, f.val3);
 			Stream_Read_UINT8(s, f.val4);
-			base = f.val1 << 24 | f.val2 << 16 | f.val3 << 8 | f.val4;
+			base = (((UINT32)f.val1) << 24) | (((UINT32)f.val2) << 16) | (((UINT32)f.val3) << 8) |
+			       ((UINT32)f.val4);
 			break;
 		case FIVE_BYTE_VAL:
 		case SIX_BYTE_VAL:
