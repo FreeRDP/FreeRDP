@@ -833,3 +833,11 @@ char* strndup(const char* src, size_t n)
 	return dst;
 }
 #endif
+
+const WCHAR* InitializeConstWCharFromUtf8(const char* str, WCHAR* buffer, size_t len)
+{
+	WINPR_ASSERT(str);
+	WINPR_ASSERT(buffer || (len == 0));
+	ConvertUtf8ToWChar(str, buffer, len);
+	return buffer;
+}

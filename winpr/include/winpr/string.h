@@ -390,6 +390,16 @@ extern "C"
 	 */
 	WINPR_API WCHAR* ConvertMszUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize);
 
+	/** \brief Helper function to initialize const WCHAR pointer from a Utf8 string
+	 *
+	 *  \param str The Utf8 string to use for initialization
+	 *  \param buffer The WCHAR buffer used to store the converted data
+	 *  \param len The size of the buffer in number of WCHAR
+	 *
+	 *  \return The WCHAR string (a pointer to buffer)
+	 */
+	WINPR_API const WCHAR* InitializeConstWCharFromUtf8(const char* str, WCHAR* buffer, size_t len);
+
 #if defined(WITH_WINPR_DEPRECATED)
 	WINPR_API WINPR_DEPRECATED_VAR("Use ConvertUtf8ToWChar functions instead",
 	                               int ConvertToUnicode(UINT CodePage, DWORD dwFlags,
