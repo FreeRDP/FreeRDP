@@ -692,7 +692,14 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
                                                   const char* header, const char* lineprefix,
                                                   const char* lineending, BOOL skip_last_lineending)
 {
-	const WCHAR backslash = '\\';
+	union
+	{
+		char c[2];
+		WCHAR w;
+	} backslash;
+	backslash.c[0] = '\\';
+	backslash.c[1] = '\0';
+
 	const FILEDESCRIPTORW* descriptors = NULL;
 	UINT32 nrDescriptors = 0;
 	size_t count, x, alloc, pos, baseLength = 0;
@@ -740,7 +747,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	{
 		const FILEDESCRIPTORW* dsc = &descriptors[x];
 
-		if (_wcschr(dsc->cFileName, backslash) == NULL)
+		if (_wcschr(dsc->cFileName, backslash.w) == NULL)
 		{
 			alloc += ARRAYSIZE(dsc->cFileName) *
 			         8; /* Overallocate, just take the biggest value the result path can have */
@@ -766,7 +773,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	{
 		const FILEDESCRIPTORW* dsc = &descriptors[x];
 		BOOL fail = TRUE;
-		if (_wcschr(dsc->cFileName, backslash) != NULL)
+		if (_wcschr(dsc->cFileName, backslash.w) != NULL)
 		{
 			continue;
 		}
