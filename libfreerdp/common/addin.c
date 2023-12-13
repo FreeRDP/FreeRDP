@@ -307,8 +307,7 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LP
 		const char pszPrefix[] = FREERDP_SHARED_LIBRARY_PREFIX;
 		int rc = 0;
 
-		if (pszPrefix)
-			cchFileName += strnlen(pszPrefix, ARRAYSIZE(pszPrefix));
+		cchFileName += strnlen(pszPrefix, ARRAYSIZE(pszPrefix));
 		if (pszExtension)
 			cchFileName += strnlen(pszExtension, MAX_PATH) + 1;
 		LPSTR tmp = calloc(cchFileName, sizeof(CHAR));

@@ -553,14 +553,16 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 	{
 		classHints->res_name = "xfreerdp";
 
+		char* res_class = NULL;
 		const char* WmClass = freerdp_settings_get_string(settings, FreeRDP_WmClass);
 		if (WmClass)
-			classHints->res_class = WmClass;
+			res_class = _strdup(WmClass);
 		else
-			classHints->res_class = "xfreerdp";
+			res_class = _strdup("xfreerdp");
 
 		XSetClassHint(xfc->display, window->handle, classHints);
 		XFree(classHints);
+		free(res_class);
 	}
 
 	xf_ResizeDesktopWindow(xfc, window, width, height);
@@ -852,14 +854,13 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 
 		const char* WmClass = freerdp_settings_get_string(settings, FreeRDP_WmClass);
 		if (WmClass)
-			class_hints->res_class = WmClass;
+			class = _strdup(WmClass);
 		else
 		{
-			class = malloc(sizeof("RAIL:00000000"));
-			sprintf_s(class, sizeof("RAIL:00000000"), "RAIL:%08" PRIX64 "", appWindow->windowId);
-			class_hints->res_class = class;
+			size_t size = 0;
+			winpr_vasprintf(&class, &size, "RAIL:%08" PRIX64 "", appWindow->windowId);
 		}
-
+		class_hints->res_class = class;
 		class_hints->res_name = "RAIL";
 		XSetClassHint(xfc->display, appWindow->handle, class_hints);
 		XFree(class_hints);

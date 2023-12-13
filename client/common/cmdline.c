@@ -5739,7 +5739,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		}
 	}
 
-	const char* RDP2TCPArgs = freerdp_settings_get_string(settings, FreeRDP_RDP2TCPArgs);
+	char* RDP2TCPArgs = freerdp_settings_get_string_writable(settings, FreeRDP_RDP2TCPArgs);
 	if (RDP2TCPArgs)
 	{
 		if (!freerdp_client_load_static_channel_addin(channels, settings, RDP2TCP_DVC_CHANNEL_NAME,
