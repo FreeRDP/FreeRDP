@@ -35,7 +35,7 @@ CMAKE_ARGS="-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON \
 	-DINSTALL_LIB_DIR='$INSTALL/$LIBDIR' \
 	-DINSTALL_BIN_DIR='$INSTALL/$BINDIR' \
 	-DCMAKE_PREFIX_PATH='$INSTALL;$INSTALL/$LIBDIR;$INSTALL/$LIBDIR/cmake' \
-	-DCMAKE_IGNORE_PATH='/opt/local;/usr/local;/opt/homebrew'
+	-DCMAKE_IGNORE_PATH='/opt/local;/usr/local;/opt/homebrew;/Library;~/Library'
 	"
 
 if [ ! -d $SRC ];
