@@ -11,16 +11,54 @@ BINDIR=MacOS
 LIBDIR=Frameworks
 DATADIR=Resources
 
-DEPLOYMENT_ARCH="arm64 x86_64"
+DEPLOYMENT_ARCH='arm64 x86_64'
 DEPLOYMENT_TARGET=12
+
+usage () {
+  echo "${BASH_SOURCE[0]} [-a|--arch 'arch1 arch2 ...'] [-t|--target target][-h|--help]"
+  echo ""
+  echo "default options:"
+  echo "arch   [$DEPLOYMENT_ARCH]"
+  echo "target [$DEPLOYMENT_TARGET]"
+}
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -a|--arch)
+      DEPLOYMENT_ARCH="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -t|--target)
+      DEPLOYMENT_TARGET="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -t|--target)
+      usage
+      exit 0
+      ;;
+    -*|--*)
+      usage
+      exit 1
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+done
 
 CMAKE_ARCHS=
 OSSL_FLAGS="-mmacosx-version-min=$DEPLOYMENT_TARGET"
-for $ARCH in $DEPLOYMENT_ARCH;
+for ARCH in $DEPLOYMENT_ARCH;
 do
 	OSSL_FLAGS="$OSSL_FLAGS -arch $ARCH"
-	CMAKE_ARCHS="$CMAKE_ARCHS;$ARCH"
+	CMAKE_ARCHS="$ARCH;$CMAKE_ARCHS"
 done
+
+echo "build arch   [$DEPLOYMENT_ARCH]"
+echo "build target [$DEPLOYMENT_TARGET]"
 
 CMAKE_ARGS="-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON \
 	-DCMAKE_VERBOSE_MAKEFILE=ON \
