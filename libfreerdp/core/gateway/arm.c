@@ -793,7 +793,7 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 static BOOL arm_handle_request_ok(rdpArm* arm, const HttpResponse* response)
 {
 	const size_t len = http_response_get_body_length(response);
-	const char* msg = http_response_get_body(response);
+	const char* msg = (const char*)http_response_get_body(response);
 	if (strnlen(msg, len + 1) > len)
 		return FALSE;
 
@@ -811,7 +811,7 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 	BOOL rc = FALSE;
 
 	const size_t len = http_response_get_body_length(response);
-	const char* msg = http_response_get_body(response);
+	const char* msg = (const char*)http_response_get_body(response);
 	if (strnlen(msg, len + 1) > len)
 		return FALSE;
 
