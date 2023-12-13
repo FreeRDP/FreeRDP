@@ -122,7 +122,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	*Destination = (LONG)0xAABBCCDDL;
 
-	oldValue = InterlockedCompareExchange(Destination, 0xCCDDEEFFL, 0x66778899L);
+	oldValue = InterlockedCompareExchange(Destination, -857870593L, 0x66778899L);
 
 	if (oldValue != (LONG)0xAABBCCDDL)
 	{
