@@ -1142,7 +1142,7 @@ BOOL client_common_get_access_token(freerdp* instance, const char* request, char
 		goto cleanup;
 	}
 
-	*token = freerdp_utils_aad_get_access_token(log, response, response_length);
+	*token = (const char*)freerdp_utils_aad_get_access_token(log, response, response_length);
 	if (*token)
 		ret = TRUE;
 
