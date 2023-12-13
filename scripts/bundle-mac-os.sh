@@ -91,6 +91,10 @@ then
 	git clone --depth 1 -b v2.4.0 https://github.com/cisco/openh264.git
 	git clone --depth 1 -b v1.4 https://gitlab.xiph.org/xiph/opus.git
 	git clone --depth 1 -b 2.11.1 https://github.com/knik0/faad2.git
+	git clone --depth 1 -b 1.18.0 https://gitlab.freedesktop.org/cairo/cairo.git
+	git clone --depth 1 -b 1_30 https://github.com/knik0/faac.git
+	cd faac
+	./bootstrap
 fi
 
 if [ -d $INSTALL ];
@@ -114,7 +118,7 @@ cmake -GNinja -Buriparser -S$SRC/uriparser $CMAKE_ARGS -DURIPARSER_BUILD_DOCS=OF
 cmake --build uriparser
 cmake --install uriparser
 
-cmake -GNinja -BcJSON -S$SRC/cJSON $CMAKE_ARGS -DENABLE_CJSON_TEST=OFF -DBUILD_SHARED_AND_STATIC_LIBS=OFF 
+cmake -GNinja -BcJSON -S$SRC/cJSON $CMAKE_ARGS -DENABLE_CJSON_TEST=OFF -DBUILD_SHARED_AND_STATIC_LIBS=OFF
 cmake --build cJSON
 cmake --install cJSON
 
@@ -126,7 +130,7 @@ cmake -GNinja -Bfaad2 -S$SRC/faad2 $CMAKE_ARGS
 cmake --build faad2
 cmake --install faad2
 
-cmake -GNinja -BSDL -S$SRC/SDL $CMAKE_ARGS -DSDL_TEST=OFF -DSDL_TESTS=OFF -DSDL_STATIC_PIC=ON 
+cmake -GNinja -BSDL -S$SRC/SDL $CMAKE_ARGS -DSDL_TEST=OFF -DSDL_TESTS=OFF -DSDL_STATIC_PIC=ON
 cmake --build SDL
 cmake --install SDL
 
@@ -148,6 +152,15 @@ CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j build_sw
 CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j install_sw
 
 cd $BUILD
+mkdir -p faac
+cd faac
+# undefine __SSE2__, symbol clashes with universal build
+CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS $SRC/faac/configure --prefix=$INSTALL --libdir="$INSTALL/$LIBDIR" \
+	--enable-shared --disable-static
+CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j
+CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j install
+
+cd $BUILD
 
 meson setup --prefix="$INSTALL" -Doptimization=3 -Db_lto=true -Db_pie=true -Dc_args="$OSSL_FLAGS" -Dc_link_args="$OSSL_FLAGS" \
 	-Dcpp_args="$OSSL_FLAGS" -Dcpp_link_args="$OSSL_FLAGS" -Dpkgconfig.relocatable=true -Dtests=disabled -Dbindir=$BINDIR \
@@ -155,7 +168,7 @@ meson setup --prefix="$INSTALL" -Doptimization=3 -Db_lto=true -Db_pie=true -Dc_a
 ninja -C openh264 install
 
 cmake -GNinja -Bfreerdp -S"$SCRIPT_PATH/.." $CMAKE_ARGS -DWITH_PLATFORM_SERVER=OFF -DWITH_NEON=OFF -DWITH_SSE=OFF -DWITH_FFMPEG=OFF \
-	-DWITH_SWSCALE=OFF -DWITH_OPUS=ON -DWITH_WEBVIEW=OFF -DWITH_FAAD2=ON
+	-DWITH_SWSCALE=OFF -DWITH_OPUS=ON -DWITH_WEBVIEW=OFF -DWITH_FAAD2=ON -DWITH_FAAC=ON
 cmake --build freerdp
 cmake --install freerdp
 
