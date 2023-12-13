@@ -4287,7 +4287,8 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 #endif
 		CommandLineSwitchCase(arg, "u")
 		{
-			user = _strdup(arg->Value);
+			WINPR_ASSERT(arg->Value);
+			user = arg->Value;
 		}
 		CommandLineSwitchCase(arg, "d")
 		{
@@ -5143,19 +5144,13 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 	{
 		if (!freerdp_settings_get_string(settings, FreeRDP_Domain) && user)
 		{
-			BOOL ret = FALSE;
-
 			if (!freerdp_settings_set_string(settings, FreeRDP_Username, NULL))
-				goto fail;
+				return COMMAND_LINE_ERROR;
 
 			if (!freerdp_settings_set_string(settings, FreeRDP_Domain, NULL))
-				goto fail;
+				return COMMAND_LINE_ERROR;
 
-			ret = freerdp_parse_username_settings(user, settings, FreeRDP_Username, FreeRDP_Domain);
-		fail:
-			free(user);
-
-			if (!ret)
+			if (!freerdp_parse_username_settings(user, settings, FreeRDP_Username, FreeRDP_Domain))
 				return COMMAND_LINE_ERROR;
 		}
 		else
