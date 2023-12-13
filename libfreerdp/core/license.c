@@ -836,7 +836,7 @@ fail:
  * @return if the operation completed successfully
  */
 
-int license_client_recv(rdpLicense* license, wStream* s)
+state_run_t license_client_recv(rdpLicense* license, wStream* s)
 {
 	BYTE flags;
 	BYTE bMsgType;
