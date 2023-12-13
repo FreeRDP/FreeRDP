@@ -942,10 +942,8 @@ BOOL freerdp_image_scale(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 
 		nSrcStep = nSrcWidth * FreeRDPGetBytesPerPixel(SrcFormat);
 
 #if defined(WITH_SWSCALE) || defined(WITH_CAIRO)
-	const BYTE* WINPR_RESTRICT src =
-	    &pSrcData[nXSrc * FreeRDPGetBytesPerPixel(SrcFormat) + nYSrc * nSrcStep];
-	BYTE* WINPR_RESTRICT dst =
-	    &pDstData[nXDst * FreeRDPGetBytesPerPixel(DstFormat) + nYDst * nDstStep];
+	const BYTE* src = &pSrcData[nXSrc * FreeRDPGetBytesPerPixel(SrcFormat) + nYSrc * nSrcStep];
+	BYTE* dst = &pDstData[nXDst * FreeRDPGetBytesPerPixel(DstFormat) + nYDst * nDstStep];
 #endif
 
 	/* direct copy is much faster than scaling, so check if we can simply copy... */
