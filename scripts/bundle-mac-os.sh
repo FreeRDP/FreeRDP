@@ -89,6 +89,7 @@ then
 	git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.26 https://github.com/libusb/libusb-cmake.git
 	git clone --depth 1 -b n6.0 https://github.com/FFmpeg/FFmpeg.git
 	git clone --depth 1 -b v2.4.0 https://github.com/cisco/openh264.git
+	git clone --depth 1 -b v1.4 https://gitlab.xiph.org/xiph/opus.git
 fi
 
 if [ -d $INSTALL ];
@@ -115,6 +116,10 @@ cmake --install uriparser
 cmake -GNinja -BcJSON -S$SRC/cJSON $CMAKE_ARGS -DENABLE_CJSON_TEST=OFF -DBUILD_SHARED_AND_STATIC_LIBS=OFF 
 cmake --build cJSON
 cmake --install cJSON
+
+cmake -GNinja -Bopus -S$SRC/opus $CMAKE_ARGS -DOPUS_BUILD_SHARED_LIBRARY=ON
+cmake --build opus
+cmake --install opus
 
 cmake -GNinja -BSDL -S$SRC/SDL $CMAKE_ARGS -DSDL_TEST=OFF -DSDL_TESTS=OFF -DSDL_STATIC_PIC=ON 
 cmake --build SDL
@@ -145,7 +150,7 @@ meson setup --prefix="$INSTALL" -Doptimization=3 -Db_lto=true -Db_pie=true -Dc_a
 ninja -C openh264 install
 
 cmake -GNinja -Bfreerdp -S"$SCRIPT_PATH/.." $CMAKE_ARGS -DWITH_PLATFORM_SERVER=OFF -DWITH_NEON=OFF -DWITH_SSE=OFF -DWITH_FFMPEG=OFF \
-	-DWITH_SWSCALE=OFF -DWITH_OPUS=OFF -DWITH_WEBVIEW=OFF
+	-DWITH_SWSCALE=OFF -DWITH_OPUS=ON -DWITH_WEBVIEW=OFF
 cmake --build freerdp
 cmake --install freerdp
 
