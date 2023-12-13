@@ -127,8 +127,8 @@ typedef struct
 } FASTPATH_UPDATE_HEADER;
 
 FREERDP_LOCAL BOOL fastpath_read_header_rdp(rdpFastPath* fastpath, wStream* s, UINT16* length);
-FREERDP_LOCAL int fastpath_recv_updates(rdpFastPath* fastpath, wStream* s);
-FREERDP_LOCAL int fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s);
+FREERDP_LOCAL state_run_t fastpath_recv_updates(rdpFastPath* fastpath, wStream* s);
+FREERDP_LOCAL state_run_t fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s);
 
 FREERDP_LOCAL BOOL fastpath_decrypt(rdpFastPath* fastpath, wStream* s, UINT16* length);
 
