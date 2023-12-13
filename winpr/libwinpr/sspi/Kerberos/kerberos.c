@@ -1435,7 +1435,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
 	PSecBuffer sig_buffer, data_buffer;
-	char* header;
+	BYTE* header;
 	BYTE flags = 0;
 	krb5glue_key key;
 	krb5_keyusage usage;
