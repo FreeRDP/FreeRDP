@@ -1,0 +1,58 @@
+.de URL
+\\$2 \(laURL: \\$1 \(ra\\$3
+..
+.if \n[.g] .mso www.tmac
+.TH freerdp\-proxy 1 2023-12-14 "@FREERDP_VERSION_FULL@" "FreeRDP"
+.SH NAME
+freerdp\-proxy \- A server binary allowing MITM proxying of RDP connections
+.SH SYNOPSIS
+.B freerdp\-proxy
+[\fB-h\fP]
+[\fB--help\fP]
+[\fB--buildconfig\fP]
+[\fB--dump-config\fP \fB<config file>\fP]
+[\fB-v\fP]
+[\fB--version\fP]
+[\fB<config file>\fP]
+.SH DESCRIPTION
+.B freerdp\-proxy
+can be used to proxy a RDP connection between a target server and connecting clients.
+Possible usage scenarios are:
+* Proxying outdated RDP servers behind a (more secure) proxy
+* Protocol analysis
+* MITM proxy for 
+.SH OPTIONS
+.IP -h,--help
+Display a help text explaining usage.
+.IP --buildconfig
+Print the build configuration of the proxy and exit.
+.IP -v,--version
+Print the version of the proxy and exit.
+.IP --dump-config \fB<config-ini-file>\fP
+Dump a template configuration to \fB<config-ini-file>\fP
+.IP \fB<config-ini-file>\fP
+Start the proxy with settings read from \fB<config-ini-file>\fP
+
+\fBWarning\fP: The proxy does not support authentication out of the box but acts simply as intermediary.
+Only \fBRDP\fP and \fBTLS\fP security modes are supported, \fBNLA\fP will fail for connections to the proxy.
+To implement authentication a \fBproxy-module\fP can be implemented that can authenticate against some backend
+and map connecting users and credentials to target server users and credentials.
+
+.SH EXAMPLES
+freerdp-proxy /some/config/file
+
+freerdp-proxy --dump-config /some/config/file
+
+.SH EXIT STATUS
+.TP
+.B 0
+Successful program execution.
+.TP
+.B 1
+Otherwise.
+
+.SH SEE ALSO
+wlog(7)
+
+.SH AUTHOR
+FreeRDP <team@freerdp.com>

@@ -44,3 +44,6 @@ if (WITH_DEBUG_SYMBOLS AND MSVC)
 endif()
 
 set_property(TARGET ${APP_NAME} PROPERTY FOLDER "Server/proxy")
+
+configure_file(${APP_NAME}.1.in ${CMAKE_CURRENT_BINARY_DIR}/${APP_NAME}.1)
+install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${APP_NAME}.1 1)
