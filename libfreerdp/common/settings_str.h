@@ -435,6 +435,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_XPan, FREERDP_SETTINGS_TYPE_INT32, "FreeRDP_XPan" },
 	{ FreeRDP_YPan, FREERDP_SETTINGS_TYPE_INT32, "FreeRDP_YPan" },
 	{ FreeRDP_ParentWindowId, FREERDP_SETTINGS_TYPE_UINT64, "FreeRDP_ParentWindowId" },
+	{ FreeRDP_AadServerHostname, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_AadServerHostname" },
 	{ FreeRDP_AcceptedCert, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_AcceptedCert" },
 	{ FreeRDP_ActionScript, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_ActionScript" },
 	{ FreeRDP_AllowedTlsCiphers, FREERDP_SETTINGS_TYPE_STRING, "FreeRDP_AllowedTlsCiphers" },

@@ -349,6 +349,7 @@ static const size_t uint64_list_indices[] = {
 
 #define have_string_list_indices
 static const size_t string_list_indices[] = {
+	FreeRDP_AadServerHostname,
 	FreeRDP_AcceptedCert,
 	FreeRDP_ActionScript,
 	FreeRDP_AllowedTlsCiphers,

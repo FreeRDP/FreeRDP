@@ -2613,6 +2613,9 @@ const char* freerdp_settings_get_string(const rdpSettings* settings,
 
 	switch (id)
 	{
+		case FreeRDP_AadServerHostname:
+			return settings->AadServerHostname;
+
 		case FreeRDP_AcceptedCert:
 			return settings->AcceptedCert;
 
@@ -2919,6 +2922,9 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 
 	switch (id)
 	{
+		case FreeRDP_AadServerHostname:
+			return settings->AadServerHostname;
+
 		case FreeRDP_AcceptedCert:
 			return settings->AcceptedCert;
 
@@ -3235,6 +3241,9 @@ BOOL freerdp_settings_set_string_(rdpSettings* settings, FreeRDP_Settings_Keys_S
 
 	switch (id)
 	{
+		case FreeRDP_AadServerHostname:
+			return update_string_(&settings->AadServerHostname, cnv.c, len);
+
 		case FreeRDP_AcceptedCert:
 			return update_string_(&settings->AcceptedCert, cnv.c, len);
 
@@ -3566,6 +3575,9 @@ BOOL freerdp_settings_set_string_copy_(rdpSettings* settings, FreeRDP_Settings_K
 
 	switch (id)
 	{
+		case FreeRDP_AadServerHostname:
+			return update_string_copy_(&settings->AadServerHostname, cnv.cc, len, cleanup);
+
 		case FreeRDP_AcceptedCert:
 			return update_string_copy_(&settings->AcceptedCert, cnv.cc, len, cleanup);
 

@@ -71,7 +71,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 char* AcceptedCert);            /* 27 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 AcceptedCertLength);     /* 28 */
 	SETTINGS_DEPRECATED(ALIGN64 char* UserSpecifiedServerName); /* 29 */
-	UINT64 padding0064[64 - 30];                                /* 30 */
+	SETTINGS_DEPRECATED(ALIGN64 char* AadServerHostname);       /* 30 */
+	UINT64 padding0064[64 - 31];                                /* 31 */
 	/* resource management related options */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 ThreadingFlags); /* 64 */
 
