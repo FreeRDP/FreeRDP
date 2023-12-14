@@ -50,27 +50,33 @@ while [[ $# -gt 0 ]]; do
 done
 
 fix_rpath() {
+	SEARCH_PATH=$1
 	FIX_PATH=$1
-# some build systems do not handle @rpath on mac os correctly.
-# do check that and fix it.
-DYLIB_ABS_NAMES=$(find $FIX_PATH -name "*.dylib")
-for DYLIB_ABS in $DYLIB_ABS_NAMES;
-do
-	DYLIB_NAME=$(basename $DYLIB_ABS)
-	install_name_tool -id @rpath/$DYLIB_NAME $DYLIB_ABS
+	if ["$#" -gt 1];
+	then
+		FIX_PATH=$2
+	fi
 
-	for DYLIB_DEP in $(otool -L $DYLIB_ABS | grep "$FIX_PATH" | cut -d' ' -f1);
-	do
-		if [[ $DYLIB_DEP == $DYLIB_ABS ]];
-		then
-			continue
-		elif [[ $DYLIB_DEP == $FIX_PATH/* ]];
-		then
-			DEP_BASE=$(basename $DYLIB_DEP)
-			install_name_tool -change $DYLIB_DEP @rpath/$DEP_BASE $DYLIB_ABS
-		fi
-	done
-done
+  # some build systems do not handle @rpath on mac os correctly.
+  # do check that and fix it.
+  DYLIB_ABS_NAMES=$(find $SEARCH_PATH -name "*.dylib")
+  for DYLIB_ABS in $DYLIB_ABS_NAMES;
+  do
+  	DYLIB_NAME=$(basename $DYLIB_ABS)
+  	install_name_tool -id @rpath/$DYLIB_NAME $DYLIB_ABS
+
+  	for DYLIB_DEP in $(otool -L $DYLIB_ABS | grep "$FIX_PATH" | cut -d' ' -f1);
+  	do
+  		if [[ $DYLIB_DEP == $DYLIB_ABS ]];
+  		then
+  			continue
+  		elif [[ $DYLIB_DEP == $FIX_PATH/* ]];
+  		then
+  			DEP_BASE=$(basename $DYLIB_DEP)
+  			install_name_tool -change $DYLIB_DEP @rpath/$DEP_BASE $DYLIB_ABS
+  		fi
+  	done
+  done
 }
 
 CMAKE_ARCHS=
@@ -227,12 +233,16 @@ cmake --install freerdp
 
 fix_rpath "$INSTALL/$LIBDIR"
 
+# workaround for faad2 which writes the wrong RPATH
+fix_rpath "$INSTALL/$LIBDIR" "$INSTALL/lib"
+
 # clean up unused data
 rm -rf "$INSTALL/include"
 rm -rf "$INSTALL/share"
 rm -rf "$INSTALL/bin"
 rm -rf "$INSTALL/$LIBDIR/cmake"
 rm -rf "$INSTALL/$LIBDIR/pkgconfig"
-rm -f "$INSTALL/$LIBDIR/*.a"
+find "$INSTALL/$LIBDIR"  -name "*.a" -exec rm -f {} \;
+find "$INSTALL/$LIBDIR"  -name "*.la" -exec rm -f {} \;
 
 # TODO: Create remaining files required
