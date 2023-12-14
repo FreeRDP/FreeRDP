@@ -17,7 +17,7 @@
 # limitations under the License.
 cmake_minimum_required(VERSION 3.13)
 
-project(xfreerdp-client LANGUAGES C)
+project(xfreerdp LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -104,7 +104,6 @@ else()
 		cli/xfreerdp.c xfreerdp.h
 	)
 	add_executable(${PROJECT_NAME} ${SRCS})
-	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "xfreerdp")
 	include_directories(..)
 endif()
 
