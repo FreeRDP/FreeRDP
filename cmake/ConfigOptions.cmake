@@ -15,7 +15,7 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "e2k")
 	set(TARGET_ARCH "e2k")
 endif()
 
-if (NOT OPENBSD)
+if (NOT OPENBSD AND NOT WIN32)
 	set(MANPAGE_DEF ON)
 endif()
 option(WITH_MANPAGES "Generate manpages." ${MANPAGE_DEF})
