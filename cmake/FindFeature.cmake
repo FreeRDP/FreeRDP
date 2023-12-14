@@ -46,9 +46,9 @@ macro(find_feature _feature _type _purpose _description)
 		endif()
 		
 
-		if(NOT ${${_feature_upper}_FOUND})
+		if(NOT ${${_feature}_FOUND})
 			if(${_feature_default})
-				message(WARNING "    feature ${_feature} was requested but could not be found! ${_feature_default} / ${${_feature_upper}_FOUND}")
+				message(WARNING "    feature ${_feature} was requested but could not be found! ${_feature_default} / ${${_feature}_FOUND}")
 			endif()
 			set(_feature_default "OFF")
 		endif()
