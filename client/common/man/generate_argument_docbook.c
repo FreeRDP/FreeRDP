@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "../common/cmdline.h"
+#include "../cmdline.h"
 
 #define TAG FREERDP_TAG("generate_argument_docbook")
 LPSTR tr_esc_str(LPCSTR arg, bool format)
@@ -172,7 +172,7 @@ int main(int argc, char* argv[])
 {
 	size_t elements = sizeof(global_cmd_args) / sizeof(global_cmd_args[0]);
 	size_t x;
-	const char* fname = "xfreerdp-argument.1.xml";
+	const char* fname = "freerdp-argument.1.xml";
 	FILE* fp = NULL;
 	/* Open output file for writing, truncate if existing. */
 	fp = fopen(fname, "w");
