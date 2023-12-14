@@ -35,7 +35,7 @@ endif()
 
 include(MSVCRuntime)
 
-add_library(${PROJECT_NAME} MODULE
+add_library(${PROJECT_NAME} SHARED
 	cap_main.c
 	cap_config.c
 	cap_config.h
