@@ -30,7 +30,7 @@ if (NOT DOCBOOKXSL_DIR)
    set (STYLESHEET_PATH_LIST)
    foreach (STYLESHEET_PREFIX_ITER ${CMAKE_SYSTEM_PREFIX_PATH})
       file(GLOB STYLESHEET_SUFFIX_ITER RELATIVE ${STYLESHEET_PREFIX_ITER}
-           ${STYLESHEET_PREFIX_ITER}/share/xml/docbook/xsl-stylesheets-*
+           ${STYLESHEET_PREFIX_ITER}/share/xml/docbook/xsl-stylesheets-*-nons
       )
       if (STYLESHEET_SUFFIX_ITER)
          list (APPEND STYLESHEET_PATH_LIST ${STYLESHEET_SUFFIX_ITER})
