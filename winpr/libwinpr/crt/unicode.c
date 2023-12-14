@@ -359,7 +359,7 @@ int WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr, int
 		}
 		else
 		{
-			targetLength = ucnv_convert("UTF-8", "UTF-16LE", targetStarrt, targetCapacity,
+			targetLength = ucnv_convert("UTF-8", "UTF-16LE", targetStart, targetCapacity,
 			                            lpWideCharStr, cchWideChar * sizeof(WCHAR), &error);
 			cbMultiByte = U_SUCCESS(error) ? targetLength : 0;
 		}
