@@ -282,7 +282,9 @@ int aad_client_begin(rdpAad* aad)
 	WINPR_ASSERT(instance);
 
 	/* Get the host part of the hostname */
-	const char* hostname = freerdp_settings_get_string(settings, FreeRDP_ServerHostname);
+	const char* hostname = freerdp_settings_get_string(settings, FreeRDP_AadServerHostname);
+	if (!hostname)
+		hostname = freerdp_settings_get_string(settings, FreeRDP_ServerHostname);
 	if (!hostname)
 	{
 		WLog_Print(aad->log, WLOG_ERROR, "FreeRDP_ServerHostname == NULL");
