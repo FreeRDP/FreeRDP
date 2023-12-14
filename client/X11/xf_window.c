@@ -850,21 +850,21 @@ BOOL xf_AppWindowCreate(xfContext* xfc, xfAppWindow* appWindow)
 
 	if (class_hints)
 	{
-		char* class = NULL;
+		char* strclass = NULL;
 
 		const char* WmClass = freerdp_settings_get_string(settings, FreeRDP_WmClass);
 		if (WmClass)
-			class = _strdup(WmClass);
+			strclass = _strdup(WmClass);
 		else
 		{
 			size_t size = 0;
-			winpr_vasprintf(&class, &size, "RAIL:%08" PRIX64 "", appWindow->windowId);
+			winpr_asprintf(&strclass, &size, "RAIL:%08" PRIX64 "", appWindow->windowId);
 		}
-		class_hints->res_class = class;
+		class_hints->res_class = strclass;
 		class_hints->res_name = "RAIL";
 		XSetClassHint(xfc->display, appWindow->handle, class_hints);
 		XFree(class_hints);
-		free(class);
+		free(strclass);
 	}
 
 	/* Set the input mode hint for the WM */
