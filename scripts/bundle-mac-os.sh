@@ -49,6 +49,30 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+fix_rpath() {
+	FIX_PATH=$1
+# some build systems do not handle @rpath on mac os correctly.
+# do check that and fix it.
+DYLIB_ABS_NAMES=$(find $FIX_PATH -name "*.dylib")
+for DYLIB_ABS in $DYLIB_ABS_NAMES;
+do
+	DYLIB_NAME=$(basename $DYLIB_ABS)
+	install_name_tool -id @rpath/$DYLIB_NAME $DYLIB_ABS
+
+	for DYLIB_DEP in $(otool -L $DYLIB_ABS | grep "$FIX_PATH" | cut -d' ' -f1);
+	do
+		if [[ $DYLIB_DEP == $DYLIB_ABS ]];
+		then
+			continue
+		elif [[ $DYLIB_DEP == $FIX_PATH/* ]];
+		then
+			DEP_BASE=$(basename $DYLIB_DEP)
+			install_name_tool -change $DYLIB_DEP @rpath/$DEP_BASE $DYLIB_ABS
+		fi
+	done
+done
+}
+
 CMAKE_ARCHS=
 OSSL_FLAGS="-mmacosx-version-min=$DEPLOYMENT_TARGET"
 for ARCH in $DEPLOYMENT_ARCH;
@@ -167,31 +191,41 @@ meson setup --prefix="$INSTALL" -Doptimization=3 -Db_lto=true -Db_pie=true -Dc_a
        	-Dlibdir=$LIBDIR openh264 $SRC/openh264
 ninja -C openh264 install
 
+for ARCH in $DEPLOYMENT_ARCH;
+do
+	mkdir -p $BUILD/FFmpeg/$ARCH
+	cd $BUILD/FFmpeg/$ARCH
+	FFCFLAGS="-arch $ARCH -mmacosx-version-min=$DEPLOYMENT_TARGET"
+	FINSTPATH=$BUILD/FFmpeg/install/$ARCH
+	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS $SRC/FFmpeg/configure --libdir=$FINSTPATH/$LIBDIR --prefix=$FINSTPATH --disable-all \
+		--enable-shared --disable-static --enable-swscale --disable-asm --disable-libxcb \
+		--disable-securetransport --disable-xlib
+	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j
+	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j install
+	fix_rpath "$FINSTPATH/$LIBDIR"
+done
+
+BASE_ARCH="${DEPLOYMENT_ARCH%% *}"
+
+cd $BUILD/FFmpeg/install/$ARCH
+cp -r include/* $INSTALL/include/
+find $LIBDIR -type l -exec cp -P {} $INSTALL/$LIBDIR/ \;
+BASE_LIBS=$(find $LIBDIR -type f -name "*.dylib" -exec basename {} \;)
+
+cd $BUILD/FFmpeg/install
+for LIB in $BASE_LIBS;
+do
+	LIBS=$(find . -name $LIB)
+	lipo $LIBS -output $INSTALL/$LIBDIR/$LIB -create
+done
+
+cd $BUILD
 cmake -GNinja -Bfreerdp -S"$SCRIPT_PATH/.." $CMAKE_ARGS -DWITH_PLATFORM_SERVER=OFF -DWITH_NEON=OFF -DWITH_SSE=OFF -DWITH_FFMPEG=OFF \
-	-DWITH_SWSCALE=OFF -DWITH_OPUS=ON -DWITH_WEBVIEW=OFF -DWITH_FAAD2=ON -DWITH_FAAC=ON
+	-DWITH_SWSCALE=ON -DWITH_OPUS=ON -DWITH_WEBVIEW=OFF -DWITH_FAAD2=ON -DWITH_FAAC=ON
 cmake --build freerdp
 cmake --install freerdp
 
-# some build systems do not handle @rpath on mac os correctly.
-# do check that and fix it.
-DYLIB_ABS_NAMES=$(find $INSTALL/$LIBDIR -name "*.dylib")
-for DYLIB_ABS in $DYLIB_ABS_NAMES;
-do
-	DYLIB_NAME=$(basename $DYLIB_ABS)
-	install_name_tool -id @rpath/$DYLIB_NAME $DYLIB_ABS
-
-	for DYLIB_DEP in $(otool -L $DYLIB_ABS | grep "$INSTALL/$LIBDIR" | cut -d' ' -f1);
-	do
-		if [[ $DYLIB_DEP == $DYLIB_ABS ]];
-		then
-			continue
-		elif [[ $DYLIB_DEP == $INSTALL/$LIBDIR/* ]];
-		then
-			DEP_BASE=$(basename $DYLIB_DEP)
-			install_name_tool -change $DYLIB_DEP @rpath/$DEP_BASE $DYLIB_ABS
-		fi
-	done
-done
+fix_rpath "$INSTALL/$LIBDIR"
 
 # clean up unused data
 rm -rf "$INSTALL/include"
