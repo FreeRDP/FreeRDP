@@ -84,6 +84,15 @@ fix_rpath() {
   done
 }
 
+replace_rpath() {
+	FILE=$1
+	for PTH in $(otool -l $FILE | grep -A2 LC_RPATH  | grep path | xargs -J ' ' | cut -d ' ' -f2);
+	do
+		install_name_tool -delete_rpath $PTH $FILE
+	done
+	install_name_tool -add_rpath @loader_path/../$LIBDIR $FILE
+}
+
 CMAKE_ARCHS=
 OSSL_FLAGS="-mmacosx-version-min=$DEPLOYMENT_TARGET"
 for ARCH in $DEPLOYMENT_ARCH;
@@ -249,6 +258,17 @@ fix_rpath "$INSTALL/bin" "$INSTALL/lib" ""
 cd $INSTALL
 mv lib $LIBDIR
 mv bin $BINDIR
+
+# update RPATH
+for LIB in $(find $LIBDIR -type f -name "*.dylib");
+do
+	replace_rpath $LIB
+done
+
+for BIN in $(find $BINDIR -type f);
+do
+	replace_rpath $BIN
+done
 
 # clean up unused data
 rm -rf "$INSTALL/include"
