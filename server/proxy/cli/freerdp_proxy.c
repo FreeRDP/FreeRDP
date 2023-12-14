@@ -76,6 +76,14 @@ static WINPR_NORETURN(void usage(const char* app))
 	printf("%s --buildconfig                    Print the build configuration.\n", app);
 	printf("%s <config ini file>                Start the proxy with <config.ini>\n", app);
 	printf("%s --dump-config <config ini file>  Create a template <config.ini>\n", app);
+	printf("%s -v                               Print out binary version.\n", app);
+	printf("%s --version                        Print out binary version.\n", app);
+	exit(0);
+}
+
+static void version(const char* app)
+{
+	printf("%s version %s", app, freerdp_get_version_string());
 	exit(0);
 }
 
@@ -119,6 +127,10 @@ int main(int argc, char* argv[])
 			status = 0;
 			goto fail;
 		}
+		else if (_stricmp(arg, "-v") == 0)
+			version(argv[0]);
+		else if (_stricmp(arg, "--version") == 0)
+			version(argv[0]);
 		config_path = argv[1];
 	}
 
