@@ -34,7 +34,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(MSVCRuntime)
 
-add_library(${PROJECT_NAME} MODULE
+add_library(${PROJECT_NAME} SHARED
 	demo.cpp
 )
 
