@@ -52,14 +52,19 @@ done
 fix_rpath() {
 	SEARCH_PATH=$1
 	FIX_PATH=$1
-	if ["$#" -gt 1];
+	EXT=".dylib"
+	if [ "$#" -gt 1 ];
 	then
 		FIX_PATH=$2
+	fi
+	if [ "$#" -gt 2 ];
+	then
+		EXT=$3
 	fi
 
   # some build systems do not handle @rpath on mac os correctly.
   # do check that and fix it.
-  DYLIB_ABS_NAMES=$(find $SEARCH_PATH -name "*.dylib")
+  DYLIB_ABS_NAMES=$(find $SEARCH_PATH -type f -name "*$EXT")
   for DYLIB_ABS in $DYLIB_ABS_NAMES;
   do
   	DYLIB_NAME=$(basename $DYLIB_ABS)
@@ -97,12 +102,12 @@ CMAKE_ARGS="-DCMAKE_SKIP_INSTALL_ALL_DEPENDENCY=ON \
 	-DCMAKE_OSX_ARCHITECTURES=$CMAKE_ARCHS \
 	-DCMAKE_OSX_DEPLOYMENT_TARGET=$DEPLOYMENT_TARGET \
 	-DCMAKE_INSTALL_PREFIX='$INSTALL' \
-	-DCMAKE_INSTALL_LIBDIR='$LIBDIR' \
-	-DCMAKE_INSTALL_BINDIR='$BINDIR' \
+	-DCMAKE_INSTALL_LIBDIR='lib' \
+	-DCMAKE_INSTALL_BINDIR='bin' \
 	-DCMAKE_INSTALL_DATADIR='$DATADIR' \
-	-DINSTALL_LIB_DIR='$INSTALL/$LIBDIR' \
-	-DINSTALL_BIN_DIR='$INSTALL/$BINDIR' \
-	-DCMAKE_PREFIX_PATH='$INSTALL;$INSTALL/$LIBDIR;$INSTALL/$LIBDIR/cmake' \
+	-DINSTALL_LIB_DIR='$INSTALL/lib' \
+	-DINSTALL_BIN_DIR='$INSTALL/bin' \
+	-DCMAKE_PREFIX_PATH='$INSTALL;$INSTALL/lib;$INSTALL/lib/cmake' \
 	-DCMAKE_IGNORE_PATH='/opt/local;/usr/local;/opt/homebrew;/Library;~/Library'
 	"
 
@@ -144,7 +149,8 @@ cmake -GNinja -Bzlib -S$SRC/zlib $CMAKE_ARGS
 cmake --build zlib
 cmake --install zlib
 
-cmake -GNinja -Buriparser -S$SRC/uriparser $CMAKE_ARGS -DURIPARSER_BUILD_DOCS=OFF -DURIPARSER_BUILD_TESTS=OFF
+cmake -GNinja -Buriparser -S$SRC/uriparser $CMAKE_ARGS -DURIPARSER_BUILD_DOCS=OFF -DURIPARSER_BUILD_TESTS=OFF \
+	-DURIPARSER_BUILD_TOOLS=OFF
 cmake --build uriparser
 cmake --install uriparser
 
@@ -177,7 +183,7 @@ cmake --install libusb-cmake
 mkdir -p openssl
 cd openssl
 
-CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS $SRC/openssl/config --prefix=$INSTALL --libdir=$LIBDIR no-asm no-tests no-docs no-apps zlib
+CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS $SRC/openssl/config --prefix=$INSTALL --libdir=lib no-asm no-tests no-docs no-apps zlib
 CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j build_sw
 CFLAGS=$OSSL_FLAGS LDFLAGS=$OSSL_FLAGS make -j install_sw
 
@@ -185,7 +191,7 @@ cd $BUILD
 mkdir -p faac
 cd faac
 # undefine __SSE2__, symbol clashes with universal build
-CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS $SRC/faac/configure --prefix=$INSTALL --libdir="$INSTALL/$LIBDIR" \
+CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS $SRC/faac/configure --prefix=$INSTALL --libdir="$INSTALL/lib" \
 	--enable-shared --disable-static
 CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j
 CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j install
@@ -193,8 +199,8 @@ CFLAGS="$OSSL_FLAGS -U__SSE2__" LDFLAGS=$OSSL_FLAGS make -j install
 cd $BUILD
 
 meson setup --prefix="$INSTALL" -Doptimization=3 -Db_lto=true -Db_pie=true -Dc_args="$OSSL_FLAGS" -Dc_link_args="$OSSL_FLAGS" \
-	-Dcpp_args="$OSSL_FLAGS" -Dcpp_link_args="$OSSL_FLAGS" -Dpkgconfig.relocatable=true -Dtests=disabled -Dbindir=$BINDIR \
-       	-Dlibdir=$LIBDIR openh264 $SRC/openh264
+	-Dcpp_args="$OSSL_FLAGS" -Dcpp_link_args="$OSSL_FLAGS" -Dpkgconfig.relocatable=true -Dtests=disabled \
+       	-Dlibdir=lib openh264 $SRC/openh264
 ninja -C openh264 install
 
 for ARCH in $DEPLOYMENT_ARCH;
@@ -203,26 +209,26 @@ do
 	cd $BUILD/FFmpeg/$ARCH
 	FFCFLAGS="-arch $ARCH -mmacosx-version-min=$DEPLOYMENT_TARGET"
 	FINSTPATH=$BUILD/FFmpeg/install/$ARCH
-	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS $SRC/FFmpeg/configure --libdir=$FINSTPATH/$LIBDIR --prefix=$FINSTPATH --disable-all \
+	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS $SRC/FFmpeg/configure --prefix=$FINSTPATH --disable-all \
 		--enable-shared --disable-static --enable-swscale --disable-asm --disable-libxcb \
 		--disable-securetransport --disable-xlib
 	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j
 	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j install
-	fix_rpath "$FINSTPATH/$LIBDIR"
+	fix_rpath "$FINSTPATH/lib"
 done
 
 BASE_ARCH="${DEPLOYMENT_ARCH%% *}"
 
 cd $BUILD/FFmpeg/install/$ARCH
 cp -r include/* $INSTALL/include/
-find $LIBDIR -type l -exec cp -P {} $INSTALL/$LIBDIR/ \;
-BASE_LIBS=$(find $LIBDIR -type f -name "*.dylib" -exec basename {} \;)
+find lib -type l -exec cp -P {} $INSTALL/lib/ \;
+BASE_LIBS=$(find lib -type f -name "*.dylib" -exec basename {} \;)
 
 cd $BUILD/FFmpeg/install
 for LIB in $BASE_LIBS;
 do
 	LIBS=$(find . -name $LIB)
-	lipo $LIBS -output $INSTALL/$LIBDIR/$LIB -create
+	lipo $LIBS -output $INSTALL/lib/$LIB -create
 done
 
 cd $BUILD
@@ -231,10 +237,18 @@ cmake -GNinja -Bfreerdp -S"$SCRIPT_PATH/.." $CMAKE_ARGS -DWITH_PLATFORM_SERVER=O
 cmake --build freerdp
 cmake --install freerdp
 
-fix_rpath "$INSTALL/$LIBDIR"
+# remove unused stuff from bin
+find "$INSTALL"  -name "*.a" -exec rm -f {} \;
+find "$INSTALL"  -name "*.la" -exec rm -f {} \;
+find "$INSTALL" -name sdl2-config -exec rm -f {} \;
 
-# workaround for faad2 which writes the wrong RPATH
-fix_rpath "$INSTALL/$LIBDIR" "$INSTALL/lib"
+fix_rpath "$INSTALL/lib"
+fix_rpath "$INSTALL/bin" "$INSTALL/lib" ""
+
+# move files in place
+cd $INSTALL
+mv lib $LIBDIR
+mv bin $BINDIR
 
 # clean up unused data
 rm -rf "$INSTALL/include"
@@ -242,7 +256,5 @@ rm -rf "$INSTALL/share"
 rm -rf "$INSTALL/bin"
 rm -rf "$INSTALL/$LIBDIR/cmake"
 rm -rf "$INSTALL/$LIBDIR/pkgconfig"
-find "$INSTALL/$LIBDIR"  -name "*.a" -exec rm -f {} \;
-find "$INSTALL/$LIBDIR"  -name "*.la" -exec rm -f {} \;
 
 # TODO: Create remaining files required
