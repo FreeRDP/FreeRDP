@@ -1,12 +1,23 @@
 # 2023-12-14 Version 2.11.3
 
 Notworthy changes:
+* fix a typo in unicode commit (#9652)
+
+For a complete and detailed change log since the last release run:
+git log 2.11.4...2.11.3
+
+# 2023-12-14 Version 2.11.3
+
+Notworthy changes:
 * Disabled windows MEDIA FOUNDATION h264 decoder due to reported issues (#9469)
 * Fix issues with drive redirection (#9530,9554, #9586, #9617)
 * Use endian safe ICU string converter (#9631)
 * Improve AAC support (#9577)
 * Fix swiss german keyboard layout (#9560)
 * Enable rfx-mode:image (#9428)
+
+For a complete and detailed change log since the last release run:
+git log 2.11.3...2.11.2
 
 # 2023-09-20 Version 2.11.2
 
@@ -15,7 +26,7 @@ Notworthy changes:
 * Backported #9360: backported certificate algorithm detection
 
 For a complete and detailed change log since the last release run:
-git log 2.11.3...2.11.2
+git log 2.11.2...2.11.1
 
 # 2023-09-04 Version 2.11.1
 
