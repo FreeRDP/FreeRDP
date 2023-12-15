@@ -30,7 +30,9 @@
 #ifdef WITH_MBEDTLS
 #include <mbedtls/md.h>
 #include <mbedtls/entropy.h>
+#ifdef MBEDTLS_HAVEGE_C
 #include <mbedtls/havege.h>
+#endif
 #include <mbedtls/hmac_drbg.h>
 #endif
 
@@ -41,7 +43,8 @@ int winpr_RAND(void* output, size_t len)
 		return -1;
 	if (RAND_bytes(output, (int)len) != 1)
 		return -1;
-#elif defined(WITH_MBEDTLS) && defined(MBEDTLS_HAVEGE_C)
+#elif defined(WITH_MBEDTLS)
+#if defined(MBEDTLS_HAVEGE_C)
 	mbedtls_havege_state hs;
 	mbedtls_havege_init(&hs);
 
@@ -49,6 +52,27 @@ int winpr_RAND(void* output, size_t len)
 		return -1;
 
 	mbedtls_havege_free(&hs);
+#else
+	int status;
+	mbedtls_entropy_context entropy;
+	mbedtls_hmac_drbg_context hmac_drbg;
+	const mbedtls_md_info_t* md_info;
+
+	mbedtls_entropy_init(&entropy);
+	mbedtls_hmac_drbg_init(&hmac_drbg);
+
+	md_info = mbedtls_md_info_from_type(MBEDTLS_MD_SHA256);
+	if ((status = mbedtls_hmac_drbg_seed(&hmac_drbg, md_info, mbedtls_entropy_func, &entropy, NULL,
+	                                     0)) != 0)
+		return -1;
+
+	status = mbedtls_hmac_drbg_random(&hmac_drbg, output, len);
+	mbedtls_hmac_drbg_free(&hmac_drbg);
+	mbedtls_entropy_free(&entropy);
+
+	if (status != 0)
+		return -1;
+#endif
 #endif
 	return 0;
 }
