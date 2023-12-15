@@ -227,7 +227,11 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 		{
 			auto ev = reinterpret_cast<const SDL_TouchFingerEvent&>(event);
 			update(_renderer);
+#if SDL_VERSION_ATLEAST(2, 0, 18)
 			return windowID == ev.windowID;
+#else
+			return false;
+#endif
 		}
 		case SDL_WINDOWEVENT:
 		{
