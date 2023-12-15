@@ -84,6 +84,12 @@ bool SDLConnectionDialog::showError(const char* fmt, ...)
 	return setTimer();
 }
 
+bool SDLConnectionDialog::show()
+{
+	std::lock_guard lock(_mux);
+	return show(_type_active);
+}
+
 bool SDLConnectionDialog::hide()
 {
 	std::lock_guard lock(_mux);
@@ -105,6 +111,7 @@ bool SDLConnectionDialog::update()
 		case MSG_WARN:
 		case MSG_ERROR:
 			createWindow();
+			_type_active = _type;
 			break;
 		case MSG_DISCARD:
 			resetTimer();
@@ -364,4 +371,49 @@ Uint32 SDLConnectionDialog::timeout(Uint32 intervalMS, void* pvthis)
 	ths->hide();
 	ths->_running = false;
 	return 0;
+}
+
+SDLConnectionDialogHider::SDLConnectionDialogHider(freerdp* instance)
+    : SDLConnectionDialogHider(get(instance))
+{
+}
+
+SDLConnectionDialogHider::SDLConnectionDialogHider(rdpContext* context)
+    : SDLConnectionDialogHider(get(context))
+{
+}
+
+SDLConnectionDialogHider::SDLConnectionDialogHider(SDLConnectionDialog* dialog) : _dialog(dialog)
+{
+	if (_dialog)
+	{
+		_visible = _dialog->visible();
+		if (_visible)
+		{
+			_dialog->hide();
+		}
+	}
+}
+
+SDLConnectionDialogHider::~SDLConnectionDialogHider()
+{
+	if (_dialog && _visible)
+	{
+		_dialog->show();
+	}
+}
+
+SDLConnectionDialog* SDLConnectionDialogHider::get(freerdp* instance)
+{
+	if (!instance)
+		return nullptr;
+	return get(instance->context);
+}
+
+SDLConnectionDialog* SDLConnectionDialogHider::get(rdpContext* context)
+{
+	auto sdl = get_context(context);
+	if (!sdl)
+		return nullptr;
+	return sdl->connection_dialog.get();
 }

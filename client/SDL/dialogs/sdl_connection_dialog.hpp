@@ -43,6 +43,8 @@ class SDLConnectionDialog
 	bool showInfo(const char* fmt, ...);
 	bool showWarn(const char* fmt, ...);
 	bool showError(const char* fmt, ...);
+
+	bool show();
 	bool hide();
 
 	bool running() const;
@@ -90,8 +92,28 @@ class SDLConnectionDialog
 	std::string _title;
 	std::string _msg;
 	MsgType _type = MSG_NONE;
+	MsgType _type_active = MSG_NONE;
 	SDL_TimerID _timer = -1;
 	bool _running = false;
 	std::vector<SdlWidget> _list;
 	SdlButtonList _buttons;
+};
+
+class SDLConnectionDialogHider
+{
+  public:
+	SDLConnectionDialogHider(freerdp* instance);
+	SDLConnectionDialogHider(rdpContext* context);
+
+	SDLConnectionDialogHider(SDLConnectionDialog* dialog);
+
+	~SDLConnectionDialogHider();
+
+  private:
+	SDLConnectionDialog* get(freerdp* instance);
+	SDLConnectionDialog* get(rdpContext* context);
+
+  private:
+	SDLConnectionDialog* _dialog;
+	bool _visible;
 };
