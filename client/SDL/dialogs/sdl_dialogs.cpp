@@ -91,6 +91,8 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 	SDL_Event event = { 0 };
 	BOOL res = FALSE;
 
+	SDLConnectionDialogHider hider(instance);
+
 	const char* target = freerdp_settings_get_server_name(instance->context->settings);
 	switch (reason)
 	{
@@ -158,6 +160,7 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 {
 	BOOL res = FALSE;
 
+	SDLConnectionDialogHider hider(instance);
 	std::vector<std::string> strlist;
 	std::vector<const char*> list;
 	for (DWORD i = 0; i < count; i++)
@@ -274,6 +277,7 @@ BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayM
 		flags = SHOW_DIALOG_TIMED_ACCEPT;
 	char* message = ConvertWCharNToUtf8Alloc(wmessage, length, nullptr);
 
+	SDLConnectionDialogHider hider(instance);
 	const int rc = sdl_show_dialog(instance->context, title, message, flags);
 	free(title);
 	free(message);
@@ -293,6 +297,8 @@ int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	if (type == LOGON_MSG_SESSION_CONTINUE)
 		return 0;
 
+	SDLConnectionDialogHider hider(instance);
+
 	char* title = nullptr;
 	size_t tlen = 0;
 	winpr_asprintf(&title, &tlen, "[%s] info",
@@ -311,6 +317,7 @@ int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 static DWORD sdl_show_ceritifcate_dialog(rdpContext* context, const char* title,
                                          const char* message)
 {
+	SDLConnectionDialogHider hider(context);
 	if (!sdl_push_user_event(SDL_USEREVENT_CERT_DIALOG, title, message))
 		return 0;
 
@@ -332,6 +339,7 @@ DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UIN
 	WINPR_ASSERT(instance->context);
 	WINPR_ASSERT(instance->context->settings);
 
+	SDLConnectionDialogHider hider(instance);
 	/* Newer versions of FreeRDP allow exposing the whole PEM by setting
 	 * FreeRDP_CertificateCallbackPreferPEM to TRUE
 	 */
@@ -448,6 +456,7 @@ DWORD sdl_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port
 	    "Please look at the OpenSSL documentation on how to add a private CA to the store.\n",
 	    common_name, subject, issuer, fp_str);
 
+	SDLConnectionDialogHider hider(instance);
 	const DWORD rc = sdl_show_ceritifcate_dialog(instance->context, title, message);
 	free(fp_str);
 	free(title);
