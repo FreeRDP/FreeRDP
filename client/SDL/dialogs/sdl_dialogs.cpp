@@ -26,6 +26,7 @@
 
 #include <SDL.h>
 
+#include "../sdl_freerdp.hpp"
 #include "sdl_dialogs.hpp"
 #include "sdl_input.hpp"
 #include "sdl_input_widgets.hpp"
@@ -197,6 +198,63 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 
 fail:
 	return res;
+}
+
+SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, void* userarg)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+	WINPR_ASSERT(what);
+
+	auto sdl = get_context(instance->context);
+	WINPR_ASSERT(sdl->connection_dialog);
+
+	sdl->connection_dialog->setTitle("Retry connection to %s",
+	                                 freerdp_settings_get_server_name(instance->context->settings));
+
+	if ((strcmp(what, "arm-transport") != 0) && (strcmp(what, "connection") != 0))
+	{
+		sdl->connection_dialog->showError("Unknown module %s, aborting", what);
+		return -1;
+	}
+
+	if (current == 0)
+	{
+		if (strcmp(what, "arm-transport") == 0)
+			sdl->connection_dialog->showWarn("[%s] Starting your VM. It may take up to 5 minutes",
+			                                 what);
+	}
+
+	auto settings = instance->context->settings;
+	const BOOL enabled = freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
+
+	SDL_Window* window = nullptr;
+	if (!sdl->windows.empty())
+	{
+		window = sdl->windows.begin()->window;
+	}
+	if (!enabled)
+	{
+		sdl->connection_dialog->showError(
+		    "Automatic reconnection disabled, terminating. Try to connect again later");
+		return -1;
+	}
+
+	const size_t max = freerdp_settings_get_uint32(settings, FreeRDP_AutoReconnectMaxRetries);
+	const size_t delay = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
+	if (current >= max)
+	{
+		sdl->connection_dialog->showError(
+		    "[%s] retries exceeded. Your VM failed to start. Try again later or contact your "
+		    "tech support for help if this keeps happening.",
+		    what);
+		return -1;
+	}
+
+	sdl->connection_dialog->showInfo("[%s] retry %" PRIuz "/%" PRIuz ", delaying %" PRIuz
+	                                 "ms before next attempt",
+	                                 what, current, max, delay);
+	return delay;
 }
 
 BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,

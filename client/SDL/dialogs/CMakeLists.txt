@@ -15,6 +15,8 @@ set(SRCS
     sdl_select.cpp
     sdl_selectlist.hpp
     sdl_selectlist.cpp
+    sdl_connection_dialog.cpp
+    sdl_connection_dialog.hpp
 )
 
 set(LIBS

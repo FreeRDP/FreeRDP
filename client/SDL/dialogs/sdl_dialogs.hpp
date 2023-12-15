@@ -30,6 +30,8 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWORD count,
                           DWORD* choice, BOOL gateway);
 
+SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, void* userarg);
+
 DWORD sdl_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port,
                                 const char* common_name, const char* subject, const char* issuer,
                                 const char* fingerprint, DWORD flags);
