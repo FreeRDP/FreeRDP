@@ -5,8 +5,6 @@ static const Uint32 vpadding = 5;
 SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::string>& labels)
     : _window(nullptr), _renderer(nullptr)
 {
-	TTF_Init();
-
 	const size_t widget_height = 50;
 	const size_t widget_width = 600;
 
@@ -48,8 +46,6 @@ SdlSelectList::~SdlSelectList()
 	_buttons.clear();
 	SDL_DestroyRenderer(_renderer);
 	SDL_DestroyWindow(_window);
-
-	TTF_Quit();
 }
 
 int SdlSelectList::run()

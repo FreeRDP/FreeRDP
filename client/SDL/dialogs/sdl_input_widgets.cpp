@@ -16,8 +16,6 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 	const std::vector<int> buttonids = { INPUT_BUTTON_ACCEPT, INPUT_BUTTON_CANCEL };
 	const std::vector<std::string> buttonlabels = { "accept", "cancel" };
 
-	TTF_Init();
-
 	const size_t widget_width = 300;
 	const size_t widget_heigth = 50;
 
@@ -102,8 +100,6 @@ SdlInputWidgetList::~SdlInputWidgetList()
 	_buttons.clear();
 	SDL_DestroyRenderer(_renderer);
 	SDL_DestroyWindow(_window);
-
-	TTF_Quit();
 }
 
 bool SdlInputWidgetList::update(SDL_Renderer* renderer)
