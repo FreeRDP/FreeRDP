@@ -104,3 +104,7 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Common")
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()
+
+if (WITH_MANPAGES)
+	add_subdirectory(man)
+endif()
