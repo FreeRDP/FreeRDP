@@ -1325,6 +1325,7 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 	instance->VerifyChangedCertificateEx = sdl_verify_changed_certificate_ex;
 	instance->LogonErrorInfo = sdl_logon_error_info;
 	instance->PresentGatewayMessage = sdl_present_gateway_message;
+	instance->ChooseSmartcard = sdl_choose_smartcard;
 
 #ifdef WITH_WEBVIEW
 	instance->GetAccessToken = sdl_webview_get_access_token;
