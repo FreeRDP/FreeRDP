@@ -176,7 +176,7 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 		                              SDL_USEREVENT_SCARD_RESULT);
 		if (rc > 0)
 		{
-			res = TRUE;
+			res = (event.user.code >= 0) ? TRUE : FALSE;
 			*choice = static_cast<DWORD>(event.user.code);
 			break;
 		}
