@@ -975,6 +975,7 @@ int shadow_server_uninit(rdpShadowServer* server)
 	shadow_server_stop(server);
 	shadow_subsystem_uninit(server->subsystem);
 	shadow_subsystem_free(server->subsystem);
+	server->subsystem = NULL;
 	freerdp_listener_free(server->listener);
 	server->listener = NULL;
 	free(server->CertificateFile);
