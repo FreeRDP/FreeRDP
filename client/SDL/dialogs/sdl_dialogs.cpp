@@ -116,7 +116,7 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 		{
 			SDL_UserAuthArg* arg = reinterpret_cast<SDL_UserAuthArg*>(event.padding);
 
-			res = arg->result != 0 ? TRUE : FALSE;
+			res = arg->result > 0 ? TRUE : FALSE;
 
 			free(*username);
 			free(*domain);
@@ -516,11 +516,19 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 		rc = ilist.run(result);
 	}
 
-	if ((rc <= 0) || (result.size() < prompt.size()))
-		return FALSE;
+	if ((result.size() < prompt.size()))
+		rc = -1;
 
-	return sdl_push_user_event(SDL_USEREVENT_AUTH_RESULT, _strdup(result[0].c_str()),
-	                           _strdup(result[1].c_str()), _strdup(result[2].c_str()), rc);
+	char* user = nullptr;
+	char* domain = nullptr;
+	char* pwd = nullptr;
+	if (rc > 0)
+	{
+		user = _strdup(result[0].c_str());
+		domain = _strdup(result[1].c_str());
+		pwd = _strdup(result[2].c_str());
+	}
+	return sdl_push_user_event(SDL_USEREVENT_AUTH_RESULT, user, domain, pwd, rc);
 }
 
 BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list)
