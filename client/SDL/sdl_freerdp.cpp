@@ -661,6 +661,13 @@ static const char* sdl_window_get_title(rdpSettings* settings)
 	return freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
 }
 
+static void sdl_term_handler(int signum, const char* signame, void* context)
+{
+	SDL_Event ev = { 0 };
+	ev.type = SDL_QUIT;
+	SDL_PushEvent(&ev);
+}
+
 static void sdl_cleanup_sdl(SdlContext* sdl)
 {
 	if (!sdl)
@@ -670,6 +677,7 @@ static void sdl_cleanup_sdl(SdlContext* sdl)
 
 	sdl_destroy_primary(sdl);
 
+	freerdp_del_signal_cleanup_handler(sdl->context(), sdl_term_handler);
 	SDL_Quit();
 }
 
@@ -791,6 +799,8 @@ static int sdl_run(SdlContext* sdl)
 #if SDL_VERSION_ATLEAST(2, 0, 8)
 	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
 #endif
+
+	freerdp_add_signal_cleanup_handler(sdl->context(), sdl_term_handler);
 
 	sdl->initialized.set();
 
