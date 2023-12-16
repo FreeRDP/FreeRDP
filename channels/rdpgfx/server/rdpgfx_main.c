@@ -331,6 +331,14 @@ static UINT rdpgfx_send_cache_import_reply_pdu(RdpgfxServerContext* context,
 	return rdpgfx_server_single_packet_send(context, s);
 }
 
+static UINT
+rdpgfx_process_cache_import_offer_pdu(RdpgfxServerContext* context,
+                                      const RDPGFX_CACHE_IMPORT_OFFER_PDU* cacheImportOffer)
+{
+	RDPGFX_CACHE_IMPORT_REPLY_PDU reply = { 0 };
+	return IFCALLRESULT(CHANNEL_RC_OK, context->CacheImportReply, context, &reply);
+}
+
 /**
  * Function description
  *
@@ -1591,7 +1599,7 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 	context->SurfaceToSurface = rdpgfx_send_surface_to_surface_pdu;
 	context->SurfaceToCache = rdpgfx_send_surface_to_cache_pdu;
 	context->CacheToSurface = rdpgfx_send_cache_to_surface_pdu;
-	context->CacheImportOffer = NULL;
+	context->CacheImportOffer = rdpgfx_process_cache_import_offer_pdu;
 	context->CacheImportReply = rdpgfx_send_cache_import_reply_pdu;
 	context->EvictCacheEntry = rdpgfx_send_evict_cache_entry_pdu;
 	context->MapSurfaceToOutput = rdpgfx_send_map_surface_to_output_pdu;
