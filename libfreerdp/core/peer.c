@@ -93,14 +93,11 @@ static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char
 		return (HANDLE)peerChannel;
 	}
 
-	peerChannel = (rdpPeerChannel*)calloc(1, sizeof(rdpPeerChannel));
+	peerChannel = server_channel_common_new(client, index, mcsChannel->ChannelId, 128, NULL, name);
 
 	if (peerChannel)
 	{
-		peerChannel->index = index;
-		peerChannel->client = client;
 		peerChannel->channelFlags = flags;
-		peerChannel->channelId = mcsChannel->ChannelId;
 		peerChannel->mcsChannel = mcsChannel;
 		mcsChannel->handle = (void*)peerChannel;
 	}
@@ -122,7 +119,7 @@ static BOOL freerdp_peer_virtual_channel_close(freerdp_peer* client, HANDLE hCha
 	mcsChannel = peerChannel->mcsChannel;
 	WINPR_ASSERT(mcsChannel);
 	mcsChannel->handle = NULL;
-	free(peerChannel);
+	server_channel_common_free(peerChannel);
 	return TRUE;
 }
 

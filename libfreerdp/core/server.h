@@ -69,6 +69,7 @@ struct rdp_peer_channel
 	rdpMcsChannel* mcsChannel;
 
 	char channelName[128];
+	CRITICAL_SECTION writeLock;
 };
 
 struct WTSVirtualChannelManager
@@ -263,5 +264,10 @@ FREERDP_LOCAL DWORD WINAPI FreeRDP_WTSGetActiveConsoleSessionId(void);
 FREERDP_LOCAL BOOL WINAPI FreeRDP_WTSLogoffUser(HANDLE hServer);
 FREERDP_LOCAL BOOL WINAPI FreeRDP_WTSLogonUser(HANDLE hServer, LPCSTR username, LPCSTR password,
                                                LPCSTR domain);
+
+FREERDP_LOCAL rdpPeerChannel* server_channel_common_new(freerdp_peer* client, UINT16 index,
+                                                        UINT32 channelId, size_t chunkSize,
+                                                        const wObject* callback, const char* name);
+FREERDP_LOCAL void server_channel_common_free(rdpPeerChannel*);
 
 #endif /* FREERDP_LIB_CORE_SERVER_H */

@@ -944,7 +944,10 @@ static void wts_virtual_channel_manager_free_message(void* obj)
 	}
 }
 
-static void channel_free(rdpPeerChannel* channel);
+static void channel_free(rdpPeerChannel* channel)
+{
+	server_channel_common_free(channel);
+}
 
 static void array_channel_free(void* ptr)
 {
@@ -1230,23 +1233,15 @@ static void peer_channel_queue_free_message(void* obj)
 	msg->context = NULL;
 }
 
-void channel_free(rdpPeerChannel* channel)
-{
-	if (!channel)
-		return;
-
-	MessageQueue_Free(channel->queue);
-	Stream_Free(channel->receiveData, TRUE);
-	free(channel);
-}
-
 static rdpPeerChannel* channel_new(WTSVirtualChannelManager* vcm, freerdp_peer* client,
                                    UINT32 ChannelId, UINT16 index, UINT16 type, size_t chunkSize,
                                    const char* name)
 {
-	size_t len;
 	wObject queueCallbacks = { 0 };
-	rdpPeerChannel* channel = (rdpPeerChannel*)calloc(1, sizeof(rdpPeerChannel));
+	queueCallbacks.fnObjectFree = peer_channel_queue_free_message;
+
+	rdpPeerChannel* channel =
+	    server_channel_common_new(client, index, ChannelId, chunkSize, &queueCallbacks, name);
 
 	WINPR_ASSERT(vcm);
 	WINPR_ASSERT(client);
@@ -1254,27 +1249,10 @@ static rdpPeerChannel* channel_new(WTSVirtualChannelManager* vcm, freerdp_peer* 
 	if (!channel)
 		goto fail;
 
-	len = strnlen(name, sizeof(channel->channelName) - 1);
-	strncpy(channel->channelName, name, len);
-
 	channel->vcm = vcm;
-	channel->client = client;
-	channel->channelId = ChannelId;
-	channel->index = index;
 	channel->channelType = type;
 	channel->creationStatus =
 	    (type == RDP_PEER_CHANNEL_TYPE_SVC) ? ERROR_SUCCESS : ERROR_OPERATION_IN_PROGRESS;
-	channel->receiveData = Stream_New(NULL, chunkSize);
-
-	if (!channel->receiveData)
-		goto fail;
-
-	queueCallbacks.fnObjectFree = peer_channel_queue_free_message;
-
-	channel->queue = MessageQueue_New(&queueCallbacks);
-
-	if (!channel->queue)
-		goto fail;
 
 	return channel;
 fail:
@@ -1479,8 +1457,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelClose(HANDLE hChannelHandle)
 			{
 				rdpMcsChannel* cur = &mcs->channels[channel->index];
 				rdpPeerChannel* peerChannel = (rdpPeerChannel*)cur->handle;
-				if (peerChannel)
-					channel_free(peerChannel);
+				channel_free(peerChannel);
 				cur->handle = NULL;
 			}
 		}
@@ -1568,11 +1545,12 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 	UINT32 written;
 	UINT32 totalWritten = 0;
 	rdpPeerChannel* channel = (rdpPeerChannel*)hChannelHandle;
-	BOOL ret = TRUE;
+	BOOL ret = FALSE;
 
 	if (!channel)
 		return FALSE;
 
+	EnterCriticalSection(&channel->writeLock);
 	WINPR_ASSERT(channel->vcm);
 	if (channel->channelType == RDP_PEER_CHANNEL_TYPE_SVC)
 	{
@@ -1582,7 +1560,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 		if (!buffer)
 		{
 			SetLastError(E_OUTOFMEMORY);
-			return FALSE;
+			goto fail;
 		}
 
 		CopyMemory(buffer, Buffer, length);
@@ -1592,7 +1570,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 	else if (!channel->vcm->drdynvc_channel || (channel->vcm->drdynvc_state != DRDYNVC_STATE_READY))
 	{
 		DEBUG_DVC("drdynvc not ready");
-		return FALSE;
+		goto fail;
 	}
 	else
 	{
@@ -1610,7 +1588,7 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 			{
 				WLog_ERR(TAG, "Stream_New failed!");
 				SetLastError(E_OUTOFMEMORY);
-				return FALSE;
+				goto fail;
 			}
 
 			buffer = Stream_Buffer(s);
@@ -1639,13 +1617,17 @@ BOOL WINAPI FreeRDP_WTSVirtualChannelWrite(HANDLE hChannelHandle, PCHAR Buffer, 
 			Length -= written;
 			Buffer += written;
 			totalWritten += written;
-			ret = wts_queue_send_item(channel->vcm->drdynvc_channel, buffer, length);
+			if (!wts_queue_send_item(channel->vcm->drdynvc_channel, buffer, length))
+				goto fail;
 		}
 	}
 
 	if (pBytesWritten)
 		*pBytesWritten = totalWritten;
 
+	ret = TRUE;
+fail:
+	LeaveCriticalSection(&channel->writeLock);
 	return ret;
 }
 
@@ -1935,4 +1917,42 @@ BOOL WINAPI FreeRDP_WTSLogoffUser(HANDLE hServer)
 BOOL WINAPI FreeRDP_WTSLogonUser(HANDLE hServer, LPCSTR username, LPCSTR password, LPCSTR domain)
 {
 	return FALSE;
+}
+
+void server_channel_common_free(rdpPeerChannel* channel)
+{
+	if (!channel)
+		return;
+	MessageQueue_Free(channel->queue);
+	Stream_Free(channel->receiveData, TRUE);
+	DeleteCriticalSection(&channel->writeLock);
+	free(channel);
+}
+
+rdpPeerChannel* server_channel_common_new(freerdp_peer* client, UINT16 index, UINT32 channelId,
+                                          size_t chunkSize, const wObject* callback,
+                                          const char* name)
+{
+	rdpPeerChannel* channel = (rdpPeerChannel*)calloc(1, sizeof(rdpPeerChannel));
+	if (!channel)
+		return NULL;
+
+	InitializeCriticalSection(&channel->writeLock);
+
+	channel->receiveData = Stream_New(NULL, chunkSize);
+	if (!channel->receiveData)
+		goto fail;
+
+	channel->queue = MessageQueue_New(callback);
+	if (!channel->queue)
+		goto fail;
+
+	channel->index = index;
+	channel->client = client;
+	channel->channelId = channelId;
+	strncpy(channel->channelName, name, ARRAYSIZE(channel->channelName) - 1);
+	return channel;
+fail:
+	server_channel_common_free(channel);
+	return NULL;
 }
