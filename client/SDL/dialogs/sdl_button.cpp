@@ -24,6 +24,7 @@
 
 static const SDL_Color buttonbackgroundcolor = { 0x69, 0x66, 0x63, 0xff };
 static const SDL_Color buttonhighlightcolor = { 0xcd, 0xca, 0x35, 0x60 };
+static const SDL_Color buttonmouseovercolor = { 0x66, 0xff, 0x66, 0x60 };
 static const SDL_Color buttonfontcolor = { 0xd1, 0xcf, 0xcd, 0xff };
 
 SdlButton::SdlButton(SDL_Renderer* renderer, const std::string& label, int id, const SDL_Rect& rect)
@@ -48,6 +49,14 @@ bool SdlButton::highlight(SDL_Renderer* renderer)
 	assert(renderer);
 
 	std::vector<SDL_Color> colors = { buttonbackgroundcolor, buttonhighlightcolor };
+	if (!fill(renderer, colors))
+		return false;
+	return update_text(renderer, _name, buttonfontcolor);
+}
+
+bool SdlButton::mouseover(SDL_Renderer* renderer)
+{
+	std::vector<SDL_Color> colors = { buttonbackgroundcolor, buttonmouseovercolor };
 	if (!fill(renderer, colors))
 		return false;
 	return update_text(renderer, _name, buttonfontcolor);

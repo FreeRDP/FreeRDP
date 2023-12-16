@@ -12,6 +12,7 @@ class SdlButton : public SdlWidget
 	virtual ~SdlButton() override;
 
 	bool highlight(SDL_Renderer* renderer);
+	bool mouseover(SDL_Renderer* renderer);
 	bool update(SDL_Renderer* renderer);
 
 	int id() const;
