@@ -48,10 +48,92 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
 }
 
 SdlWidget::SdlWidget(SdlWidget&& other) noexcept
-    : _font(std::move(other._font)), _ops(other._ops), _rect(std::move(other._rect))
+    : _font(std::move(other._font)), _ops(other._ops), _rect(std::move(other._rect)),
+      _input(other._input), _wrap(other._wrap)
 {
 	other._font = nullptr;
 	other._ops = nullptr;
+}
+
+SDL_Texture* SdlWidget::render(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor,
+                               SDL_Rect& src, SDL_Rect& dst)
+{
+	auto surface = TTF_RenderUTF8_Blended(_font, text.c_str(), fgcolor);
+	if (!surface)
+	{
+		widget_log_error(-1, "TTF_RenderText_Blended");
+		return nullptr;
+	}
+
+	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+	if (!texture)
+	{
+		widget_log_error(-1, "SDL_CreateTextureFromSurface");
+		return nullptr;
+	}
+
+	TTF_SizeUTF8(_font, text.c_str(), &src.w, &src.h);
+
+	/* Do some magic:
+	 * - Add padding before and after text
+	 * - if text is too long only show the last elements
+	 * - if text is too short only update used space
+	 */
+	dst = _rect;
+	dst.x += hpadding;
+	dst.w -= 2 * hpadding;
+	const float scale = static_cast<float>(dst.h) / static_cast<float>(src.h);
+	const float sws = static_cast<float>(src.w) * scale;
+	const float dws = static_cast<float>(dst.w) / scale;
+	if (static_cast<float>(dst.w) > sws)
+		dst.w = static_cast<int>(sws);
+	if (static_cast<float>(src.w) > dws)
+	{
+		src.x = src.w - static_cast<int>(dws);
+		src.w = static_cast<int>(dws);
+	}
+	return texture;
+}
+
+SDL_Texture* SdlWidget::render_wrapped(SDL_Renderer* renderer, const std::string& text,
+                                       SDL_Color fgcolor, SDL_Rect& src, SDL_Rect& dst)
+{
+	Sint32 w = 0;
+	Sint32 h = 0;
+	TTF_SizeUTF8(_font, " ", &w, &h);
+	auto surface = TTF_RenderUTF8_Blended_Wrapped(_font, text.c_str(), fgcolor, 40 * w);
+	if (!surface)
+	{
+		widget_log_error(-1, "TTF_RenderText_Blended");
+		return nullptr;
+	}
+
+	src.w = surface->w;
+	src.h = surface->h;
+
+	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+	if (!texture)
+	{
+		widget_log_error(-1, "SDL_CreateTextureFromSurface");
+		return nullptr;
+	}
+
+	/* Do some magic:
+	 * - Add padding before and after text
+	 * - if text is too long only show the last elements
+	 * - if text is too short only update used space
+	 */
+	dst = _rect;
+	dst.x += hpadding;
+	dst.w -= 2 * hpadding;
+	const float scale = static_cast<float>(src.h) / static_cast<float>(src.w);
+	auto dh = src.h * scale;
+	if (dh < dst.h)
+		dst.h = dh;
+
+	return texture;
 }
 
 SdlWidget::~SdlWidget()
@@ -111,6 +193,17 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 	return update_text(renderer, text, fgcolor);
 }
 
+bool SdlWidget::wrap() const
+{
+	return _wrap;
+}
+
+bool SdlWidget::set_wrap(bool wrap)
+{
+	_wrap = wrap;
+	return _wrap;
+}
+
 const SDL_Rect& SdlWidget::rect() const
 {
 	return _rect;
@@ -122,36 +215,17 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 	if (text.empty())
 		return true;
 
-	auto surface = TTF_RenderUTF8_Blended(_font, text.c_str(), fgcolor);
-	if (!surface)
-		return !widget_log_error(-1, "TTF_RenderText_Blended");
-
-	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_FreeSurface(surface);
-	if (!texture)
-		return !widget_log_error(-1, "SDL_CreateTextureFromSurface");
-
 	SDL_Rect src{};
-	TTF_SizeUTF8(_font, text.c_str(), &src.w, &src.h);
+	SDL_Rect dst{};
 
-	/* Do some magic:
-	 * - Add padding before and after text
-	 * - if text is too long only show the last elements
-	 * - if text is too short only update used space
-	 */
-	auto dst = _rect;
-	dst.x += hpadding;
-	dst.w -= 2 * hpadding;
-	const float scale = static_cast<float>(dst.h) / static_cast<float>(src.h);
-	const float sws = static_cast<float>(src.w) * scale;
-	const float dws = static_cast<float>(dst.w) / scale;
-	if (static_cast<float>(dst.w) > sws)
-		dst.w = static_cast<int>(sws);
-	if (static_cast<float>(src.w) > dws)
-	{
-		src.x = src.w - static_cast<int>(dws);
-		src.w = static_cast<int>(dws);
-	}
+	SDL_Texture* texture = nullptr;
+	if (_wrap)
+		texture = render_wrapped(renderer, text, fgcolor, src, dst);
+	else
+		texture = render(renderer, text, fgcolor, src, dst);
+	if (!texture)
+		return false;
+
 	const int rc = SDL_RenderCopy(renderer, texture, &src, &dst);
 	SDL_DestroyTexture(texture);
 	if (rc < 0)

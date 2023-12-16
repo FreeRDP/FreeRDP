@@ -60,6 +60,8 @@ class SdlWidget
 	bool update_text(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor,
 	                 SDL_Color bgcolor);
 
+	bool wrap() const;
+	bool set_wrap(bool wrap = true);
 	const SDL_Rect& rect() const;
 
   public:
@@ -70,11 +72,17 @@ class SdlWidget
   private:
 	SdlWidget(const SdlWidget& other) = delete;
 
+	SDL_Texture* render(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor,
+	                    SDL_Rect& src, SDL_Rect& dst);
+	SDL_Texture* render_wrapped(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor,
+	                            SDL_Rect& src, SDL_Rect& dst);
+
   private:
-	TTF_Font* _font;
-	SDL_RWops* _ops;
+	TTF_Font* _font = nullptr;
+	SDL_RWops* _ops = nullptr;
 	SDL_Rect _rect;
-	bool _input;
+	bool _input = false;
+	bool _wrap = false;
 };
 
 bool clear_window(SDL_Renderer* renderer);
