@@ -90,6 +90,8 @@ typedef struct
 
 BOOL sdl_push_user_event(Uint32 type, ...);
 
+bool sdl_push_quit();
+
 const char* sdl_event_type_str(Uint32 type);
 const char* sdl_error_string(Uint32 res);
 

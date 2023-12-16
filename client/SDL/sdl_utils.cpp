@@ -278,3 +278,11 @@ HANDLE WinPREvent::handle() const
 {
 	return _handle;
 }
+
+bool sdl_push_quit()
+{
+	SDL_Event ev = { 0 };
+	ev.type = SDL_QUIT;
+	SDL_PushEvent(&ev);
+	return true;
+}
