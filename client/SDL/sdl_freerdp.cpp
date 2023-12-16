@@ -789,6 +789,9 @@ static int sdl_run(SdlContext* sdl)
 #if SDL_VERSION_ATLEAST(2, 0, 16)
 	SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "0");
 #endif
+#if SDL_VERSION_ATLEAST(2, 0, 8)
+	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
+#endif
 
 	sdl->initialized.set();
 
