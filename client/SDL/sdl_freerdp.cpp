@@ -669,9 +669,7 @@ static const char* sdl_window_get_title(rdpSettings* settings)
 
 static void sdl_term_handler(int signum, const char* signame, void* context)
 {
-	SDL_Event ev = { 0 };
-	ev.type = SDL_QUIT;
-	SDL_PushEvent(&ev);
+	sdl_push_quit();
 }
 
 static void sdl_cleanup_sdl(SdlContext* sdl)
