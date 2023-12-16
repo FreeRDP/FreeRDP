@@ -26,7 +26,6 @@
 static const SDL_Color backgroundcolor = { 0x38, 0x36, 0x35, 0xff };
 static const SDL_Color textcolor = { 0xd1, 0xcf, 0xcd, 0xff };
 
-static const Uint32 hpadding = 10;
 static const Uint32 vpadding = 5;
 
 SDLConnectionDialog::SDLConnectionDialog(rdpContext* context)
@@ -209,37 +208,83 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 			return false;
 		case SDL_KEYDOWN:
 		case SDL_KEYUP:
-		{
-			auto ev = reinterpret_cast<const SDL_KeyboardEvent&>(event);
-			update(_renderer);
-			return windowID == ev.windowID;
-		}
+			if (visible())
+			{
+				auto ev = reinterpret_cast<const SDL_KeyboardEvent&>(event);
+				update(_renderer);
+				switch (event.key.keysym.sym)
+				{
+					case SDLK_RETURN:
+					case SDLK_RETURN2:
+					case SDLK_ESCAPE:
+					case SDLK_KP_ENTER:
+						if (event.type == SDL_KEYUP)
+						{
+							freerdp_abort_event(_context);
+							sdl_push_quit();
+						}
+						break;
+					case SDLK_TAB:
+						_buttons.set_highlight_next();
+						break;
+					default:
+						break;
+				}
+
+				return windowID == ev.windowID;
+			}
+			return false;
+		case SDL_MOUSEMOTION:
+			if (visible())
+			{
+				auto ev = reinterpret_cast<const SDL_MouseMotionEvent&>(event);
+
+				_buttons.set_mouseover(event.button.x, event.button.y);
+				update(_renderer);
+				return windowID == ev.windowID;
+			}
+			return false;
 		case SDL_MOUSEBUTTONDOWN:
 		case SDL_MOUSEBUTTONUP:
-		{
-			auto ev = reinterpret_cast<const SDL_MouseButtonEvent&>(event);
-			update(_renderer);
-			return windowID == ev.windowID;
-		}
-		break;
+			if (visible())
+			{
+				auto ev = reinterpret_cast<const SDL_MouseButtonEvent&>(event);
+				update(_renderer);
+
+				auto button = _buttons.get_selected(event.button);
+				if (button)
+				{
+					if (event.type == SDL_MOUSEBUTTONUP)
+					{
+						freerdp_abort_event(_context);
+						sdl_push_quit();
+					}
+				}
+
+				return windowID == ev.windowID;
+			}
+			return false;
 		case SDL_MOUSEWHEEL:
-		{
-			auto ev = reinterpret_cast<const SDL_MouseWheelEvent&>(event);
-			update(_renderer);
-			return windowID == ev.windowID;
-		}
-		break;
+			if (visible())
+			{
+				auto ev = reinterpret_cast<const SDL_MouseWheelEvent&>(event);
+				update(_renderer);
+				return windowID == ev.windowID;
+			}
+			return false;
 		case SDL_FINGERUP:
 		case SDL_FINGERDOWN:
-		{
-			auto ev = reinterpret_cast<const SDL_TouchFingerEvent&>(event);
-			update(_renderer);
+			if (visible())
+			{
+				auto ev = reinterpret_cast<const SDL_TouchFingerEvent&>(event);
+				update(_renderer);
 #if SDL_VERSION_ATLEAST(2, 0, 18)
-			return windowID == ev.windowID;
+				return windowID == ev.windowID;
 #else
-			return false;
+				return false;
 #endif
-		}
+			}
+			return false;
 		case SDL_WINDOWEVENT:
 		{
 			auto ev = reinterpret_cast<const SDL_WindowEvent&>(event);
@@ -248,8 +293,8 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 				case SDL_WINDOWEVENT_CLOSE:
 					if (windowID == ev.windowID)
 					{
-						resetTimer();
-						destroyWindow();
+						freerdp_abort_event(_context);
+						sdl_push_quit();
 					}
 					break;
 				default:
@@ -271,10 +316,11 @@ bool SDLConnectionDialog::createWindow()
 
 	const size_t widget_height = 50;
 	const size_t widget_width = 600;
-	const size_t total_height = 400;
+	const size_t total_height = 300;
 
-	_window = SDL_CreateWindow(_title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-	                           widget_width, total_height, 0);
+	_window = SDL_CreateWindow(
+	    _title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, widget_width,
+	    total_height, SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS);
 	if (_window == nullptr)
 	{
 		widget_log_error(-1, "SDL_CreateWindow");
@@ -289,14 +335,18 @@ bool SDLConnectionDialog::createWindow()
 		return false;
 	}
 
-	SDL_Rect rect = { 0, 0, widget_width, widget_height };
-	_list.push_back(SdlWidget(_renderer, rect, false));
+	SDL_Rect rect = { 0, vpadding, widget_width, total_height - 3 * vpadding - widget_height };
+	auto w = SdlWidget(_renderer, rect, false);
+	w.set_wrap();
+	_list.emplace_back(std::move(w));
 	rect.y += widget_height + vpadding;
 
 	const std::vector<int> buttonids = { 1 };
 	const std::vector<std::string> buttonlabels = { "cancel" };
-	_buttons.populate(_renderer, buttonlabels, buttonids, static_cast<Sint32>(total_height),
+	_buttons.populate(_renderer, buttonlabels, buttonids, widget_width,
+	                  total_height - widget_height - vpadding,
 	                  static_cast<Sint32>(widget_width / 2), static_cast<Sint32>(widget_height));
+	_buttons.set_highlight(0);
 
 	SDL_ShowWindow(_window);
 	SDL_RaiseWindow(_window);
