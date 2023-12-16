@@ -160,6 +160,10 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 {
 	BOOL res = FALSE;
 
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(cert_list);
+	WINPR_ASSERT(choice);
+
 	SDLConnectionDialogHider hider(instance);
 	std::vector<std::string> strlist;
 	std::vector<const char*> list;
@@ -182,7 +186,7 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 		free(reader);
 		free(container_name);
 
-		auto m = strlist.back();
+		auto& m = strlist.back();
 		list.push_back(m.c_str());
 	}
 
