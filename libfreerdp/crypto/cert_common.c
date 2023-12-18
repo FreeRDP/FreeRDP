@@ -180,7 +180,13 @@ X509* x509_from_rsa(const RSA* rsa)
 {
 	EVP_PKEY* pubkey = NULL;
 	X509* x509 = NULL;
-	BIO* bio = BIO_new(BIO_s_secmem());
+	BIO* bio = BIO_new(
+#if defined(LIBRESSL_VERSION_NUMBER)
+	    BIO_s_mem()
+#else
+	    BIO_s_secmem()
+#endif
+	);
 	if (!bio)
 		return NULL;
 
