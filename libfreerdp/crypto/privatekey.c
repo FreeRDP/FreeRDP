@@ -99,7 +99,13 @@ static RSA* evp_pkey_to_rsa(const rdpPrivateKey* key)
 	}
 
 	RSA* rsa = NULL;
-	BIO* bio = BIO_new(BIO_s_secmem());
+	BIO* bio = BIO_new(
+#if defined(LIBRESSL_VERSION_NUMBER)
+	    BIO_s_mem()
+#else
+	    BIO_s_secmem()
+#endif
+	);
 	if (!bio)
 		return NULL;
 	const int rc = PEM_write_bio_PrivateKey(bio, key->evp, NULL, NULL, 0, NULL, NULL);

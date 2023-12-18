@@ -103,7 +103,7 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 		length = new_len;
 		x509_str = new_str;
 		ERR_clear_error();
-#if OPENSSL_VERSION_NUMBER >= 0x10101000L
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L && !defined(LIBRESSL_VERSION_NUMBER)
 		status = BIO_read_ex(bio, &x509_str[offset], length - offset, &readBytes);
 #else
 		status = BIO_read(bio, &x509_str[offset], length - offset);
