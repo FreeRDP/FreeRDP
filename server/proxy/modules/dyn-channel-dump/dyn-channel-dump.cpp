@@ -32,7 +32,15 @@
 #include <memory>
 #include <mutex>
 #include <atomic>
+#if __has_include(<filesystem>)
 #include <filesystem>
+namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#else
+#error Could not find system header "<filesystem>" or "<experimental/filesystem>"
+#endif
 
 #include <freerdp/server/proxy/proxy_modules_api.h>
 #include <freerdp/server/proxy/proxy_context.h>
@@ -122,15 +130,15 @@ class ChannelData
 
 	bool ensure_path_exists()
 	{
-		if (!std::filesystem::exists(_base))
+		if (!fs::exists(_base))
 		{
-			if (!std::filesystem::create_directories(_base))
+			if (!fs::create_directories(_base))
 			{
 				WLog_ERR(TAG, "Failed to create dump directory %s", _base.c_str());
 				return false;
 			}
 		}
-		else if (!std::filesystem::is_directory(_base))
+		else if (!fs::is_directory(_base))
 		{
 			WLog_ERR(TAG, "dump path %s is not a directory", _base.c_str());
 			return false;
@@ -158,7 +166,7 @@ class ChannelData
 	}
 
   private:
-	std::filesystem::path filepath(const std::string& channel, bool back, uint64_t count) const
+	fs::path filepath(const std::string& channel, bool back, uint64_t count) const
 	{
 		auto name = idstr(channel, back);
 		char cstr[32] = {};
@@ -181,7 +189,7 @@ class ChannelData
 	}
 
   private:
-	std::filesystem::path _base;
+	fs::path _base;
 	std::vector<std::string> _channels_to_dump;
 
 	std::mutex _mux;
