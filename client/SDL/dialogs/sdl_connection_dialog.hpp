@@ -35,6 +35,8 @@ class SDLConnectionDialog
 {
   public:
 	SDLConnectionDialog(rdpContext* context);
+	SDLConnectionDialog(const SDLConnectionDialog& other) = delete;
+	SDLConnectionDialog(const SDLConnectionDialog&& other) = delete;
 	virtual ~SDLConnectionDialog();
 
 	bool visible() const;

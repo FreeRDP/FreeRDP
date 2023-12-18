@@ -602,7 +602,7 @@ static BOOL sdl_pre_connect(freerdp* instance)
 
 		sdl->connection_dialog->setTitle("Connecting to '%s'",
 		                                 freerdp_settings_get_server_name(settings));
-		sdl->connection_dialog->showInfo("Please wait while the connection is being established");
+		sdl->connection_dialog->showInfo("The connection is being established\n\nPlease wait...");
 
 		if (!sdl_detect_monitors(sdl, &maxWidth, &maxHeight))
 			return FALSE;

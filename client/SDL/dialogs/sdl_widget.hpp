@@ -26,6 +26,7 @@
 #include <vector>
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <SDL_image.h>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -51,6 +52,9 @@ class SdlWidget
 {
   public:
 	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input);
+	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, const std::string& path);
+	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, const std::vector<unsigned char>& image,
+	          const std::string& type = "SVG");
 	SdlWidget(SdlWidget&& other) noexcept;
 	virtual ~SdlWidget();
 
@@ -61,7 +65,7 @@ class SdlWidget
 	                 SDL_Color bgcolor);
 
 	bool wrap() const;
-	bool set_wrap(bool wrap = true);
+	bool set_wrap(bool wrap = true, size_t width = 0);
 	const SDL_Rect& rect() const;
 
   public:
@@ -72,17 +76,18 @@ class SdlWidget
   private:
 	SdlWidget(const SdlWidget& other) = delete;
 
-	SDL_Texture* render(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor,
-	                    SDL_Rect& src, SDL_Rect& dst);
-	SDL_Texture* render_wrapped(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor,
-	                            SDL_Rect& src, SDL_Rect& dst);
+	SDL_Texture* render_text(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor,
+	                         SDL_Rect& src, SDL_Rect& dst);
+	SDL_Texture* render_text_wrapped(SDL_Renderer* renderer, const std::string& text,
+	                                 SDL_Color fgcolor, SDL_Rect& src, SDL_Rect& dst);
 
   private:
 	TTF_Font* _font = nullptr;
-	SDL_RWops* _ops = nullptr;
+	SDL_Texture* _image = nullptr;
 	SDL_Rect _rect;
 	bool _input = false;
 	bool _wrap = false;
+	size_t _text_width = 0;
 };
 
 bool clear_window(SDL_Renderer* renderer);

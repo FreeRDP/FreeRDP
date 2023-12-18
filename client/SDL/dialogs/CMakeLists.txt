@@ -22,32 +22,39 @@ set(SRCS
 set(LIBS
     ${SDL2_LIBRARIES}
     font
+    icon
     winpr
 )
 
-find_package(SDL2_ttf COMPONENTS)
-if (NOT SDL2_ttf_FOUND)
-	find_package(PkgConfig REQUIRED)
-	pkg_check_modules(SDL2_ttf REQUIRED SDL2_ttf)
+macro(find_sdl_component name)
+	find_package(${name})
+	if (NOT ${name}_FOUND)
+		find_package(PkgConfig REQUIRED)
+		pkg_check_modules(${name} REQUIRED ${name})
 
-	if (BUILD_SHARED_LIBS)
-		list(APPEND LIBS ${SDL2_ttf_LIBRARIES})
-		link_directories(${SDL2_ttf_LIBRARY_DIRS})
-		include_directories(${SDL2_ttf_INCLUDE_DIRS})
+		if (BUILD_SHARED_LIBS)
+			list(APPEND LIBS ${${name}_LIBRARIES})
+			link_directories(${${name}_LIBRARY_DIRS})
+			include_directories(${${name}_INCLUDE_DIRS})
+		else()
+			list(APPEND LIBS ${${name}_STATIC_LIBRARIES})
+			link_directories(${${name}_STATIC_LIBRARY_DIRS})
+			include_directories(${${name}_STATIC_INCLUDE_DIRS})
+		endif()
 	else()
-		list(APPEND LIBS ${SDL2_ttf_STATIC_LIBRARIES})
-		link_directories(${SDL2_ttf_STATIC_LIBRARY_DIRS})
-		include_directories(${SDL2_ttf_STATIC_INCLUDE_DIRS})
+		if (BUILD_SHARED_LIBS)
+			list(APPEND LIBS ${name}::${name})
+		else()
+			list(APPEND LIBS ${name}::${name}-static)
+		endif()
 	endif()
-else()
-	if (BUILD_SHARED_LIBS)
-		list(APPEND LIBS SDL2_ttf::SDL2_ttf)
-	else()
-		list(APPEND LIBS SDL2_ttf::SDL2_ttf-static)
-	endif()
-endif()
+endmacro()
+
+find_sdl_component(SDL2_ttf)
+find_sdl_component(SDL2_image)
 
 add_subdirectory(font)
+add_subdirectory(icon)
 
 add_library(dialogs STATIC
     ${SRCS}
