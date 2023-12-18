@@ -9,10 +9,11 @@
 
 static void usage(const char* prg)
 {
-	fprintf(stderr, "%s <font file> <buffer file>\n", prg);
+	fprintf(stderr, "%s <font file> <buffer file without extension> <buffer name>\n", prg);
 }
 
-static int write_header(FILE* out, const char* outname, const char* font, size_t size)
+static int write_header(FILE* out, const char* outname, const char* buffername, const char* font,
+                        size_t size)
 {
 	std::string header = outname;
 	auto pos = header.find_last_of("/");
@@ -31,12 +32,15 @@ static int write_header(FILE* out, const char* outname, const char* font, size_t
 	fprintf(out, "#include <vector>\n");
 	fprintf(out, "#include \"%s.hpp\"\n", header.c_str());
 	fprintf(out, "\n");
-	fprintf(out, "const std::vector<unsigned char> font_buffer ={\n");
+	fprintf(out, "static std::vector<unsigned char> init();\n");
+	fprintf(out, "const std::vector<unsigned char> %s = init();\n\n", buffername);
+	fprintf(out, "std::vector<unsigned char> init() {\n");
+	fprintf(out, "static const unsigned char data[] = {\n");
 
 	return 0;
 }
 
-static int read(FILE* out, const char* font, const char* outname)
+static int read(FILE* out, const char* font, const char* outname, const char* buffername)
 {
 	FILE* fp = fopen(font, "rb");
 	if (!fp)
@@ -49,7 +53,7 @@ static int read(FILE* out, const char* font, const char* outname)
 	off_t size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
 
-	const int rc = write_header(out, outname, font, static_cast<size_t>(size));
+	const int rc = write_header(out, outname, buffername, font, static_cast<size_t>(size));
 	if (rc != 0)
 	{
 		fclose(fp);
@@ -79,29 +83,34 @@ static int read(FILE* out, const char* font, const char* outname)
 static int write_trailer(FILE* out)
 {
 	fprintf(out, "};\n");
+	fprintf(out, "return std::vector<unsigned char>(data, data + sizeof(data));\n");
+	fprintf(out, "};\n");
 	return 0;
 }
 
 int main(int argc, char* argv[])
 {
 	int rc = -3;
-	if (argc != 3)
+	if (argc != 4)
 	{
 		usage(argv[0]);
 		return -1;
 	}
 
 	const char* font = argv[1];
-	const char* header = argv[2];
+	std::string header = argv[2];
+	const char* name = argv[3];
 
-	FILE* fp = fopen(header, "w");
+	header += ".cpp";
+
+	FILE* fp = fopen(header.c_str(), "w");
 	if (!fp)
 	{
-		fprintf(stderr, "Failed to open header file '%s'", header);
+		fprintf(stderr, "Failed to open header file '%s'", header.c_str());
 		return -2;
 	}
 
-	rc = read(fp, font, header);
+	rc = read(fp, font, header.c_str(), name);
 	if (rc != 0)
 		goto fail;
 	rc = write_trailer(fp);
