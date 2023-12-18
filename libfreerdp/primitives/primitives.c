@@ -225,31 +225,48 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 	};
 	const struct prim_benchmark* best = NULL;
 
-	primitives_YUV_benchmark bench;
-	primitives_YUV_benchmark* yuvBench = primitives_YUV_benchmark_init(&bench);
-	if (!yuvBench)
-		return FALSE;
-
-	WLog_DBG(TAG, "primitives benchmark result:");
-	for (x = 0; x < ARRAYSIZE(testcases); x++)
+#if !defined(HAVE_CPU_OPTIMIZED_PRIMITIVES) && !defined(WITH_OPENCL)
 	{
-		struct prim_benchmark* cur = &testcases[x];
+		struct prim_benchmark* cur = &testcases[0];
 		cur->prims = primitives_get_by_type(cur->flags);
 		if (!cur->prims)
 		{
 			WLog_WARN(TAG, "Failed to initialize %s primitives", cur->name);
-			continue;
+			return FALSE;
 		}
-		if (!primitives_YUV_benchmark_run(yuvBench, cur->prims, benchDuration, &cur->count))
-		{
-			WLog_WARN(TAG, "error running %s YUV bench", cur->name);
-			continue;
-		}
-
-		WLog_DBG(TAG, " * %s= %" PRIu32, cur->name, cur->count);
-		if (!best || (best->count < cur->count))
-			best = cur;
+		WLog_DBG(TAG, "primitives benchmark: only one backend, skipping...");
+		best = cur;
 	}
+#else
+	{
+		primitives_YUV_benchmark bench = { 0 };
+		primitives_YUV_benchmark* yuvBench = primitives_YUV_benchmark_init(&bench);
+		if (!yuvBench)
+			return FALSE;
+
+		WLog_DBG(TAG, "primitives benchmark result:");
+		for (x = 0; x < ARRAYSIZE(testcases); x++)
+		{
+			struct prim_benchmark* cur = &testcases[x];
+			cur->prims = primitives_get_by_type(cur->flags);
+			if (!cur->prims)
+			{
+				WLog_WARN(TAG, "Failed to initialize %s primitives", cur->name);
+				continue;
+			}
+			if (!primitives_YUV_benchmark_run(yuvBench, cur->prims, benchDuration, &cur->count))
+			{
+				WLog_WARN(TAG, "error running %s YUV bench", cur->name);
+				continue;
+			}
+
+			WLog_DBG(TAG, " * %s= %" PRIu32, cur->name, cur->count);
+			if (!best || (best->count < cur->count))
+				best = cur;
+		}
+		primitives_YUV_benchmark_free(yuvBench);
+	}
+#endif
 
 	if (!best)
 	{
@@ -264,7 +281,7 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 out:
 	if (!ret)
 		*prims = pPrimitivesGeneric;
-	primitives_YUV_benchmark_free(yuvBench);
+
 	return ret;
 }
 
