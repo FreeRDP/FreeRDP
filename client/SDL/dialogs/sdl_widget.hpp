@@ -52,9 +52,7 @@ class SdlWidget
 {
   public:
 	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input);
-	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, const std::string& path);
-	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, const std::vector<unsigned char>& image,
-	          const std::string& type = "SVG");
+	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, SDL_RWops* ops);
 	SdlWidget(SdlWidget&& other) noexcept;
 	virtual ~SdlWidget();
 

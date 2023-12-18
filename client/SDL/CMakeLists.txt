@@ -98,8 +98,9 @@ set(LIBS
         freerdp
         freerdp-client
         Threads::Threads
+        sdl_client_res
         dialogs
-				aad-view
+        aad-view
     )
 
 add_executable(${PROJECT_NAME}

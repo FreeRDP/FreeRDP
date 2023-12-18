@@ -22,7 +22,7 @@
 #include "sdl_connection_dialog.hpp"
 #include "../sdl_utils.hpp"
 #include "../sdl_freerdp.hpp"
-#include "icon/FreeRDP_Icon.hpp"
+#include "res/sdl_resource_manager.hpp"
 
 static const SDL_Color backgroundcolor = { 0x38, 0x36, 0x35, 0xff };
 static const SDL_Color textcolor = { 0xd1, 0xcf, 0xcd, 0xff };
@@ -336,11 +336,11 @@ bool SDLConnectionDialog::createWindow()
 		return false;
 	}
 
-	SdlWidget icon = { _renderer,
-		               { 0, vpadding, widget_width / 4,
-		                 total_height - 3 * vpadding - widget_height },
-		               FreeRDP_Icon_buffer,
-		               FreeRDP_Icon_buffer_type };
+	SdlWidget icon = {
+		_renderer,
+		{ 0, vpadding, widget_width / 4, total_height - 3 * vpadding - widget_height },
+		SDLResourceManager::get(SDLResourceManager::typeImages(), "FreeRDP_Icon.svg")
+	};
 	_list.emplace_back(std::move(icon));
 	SDL_Rect rect = { widget_width / 4, vpadding, widget_width * 3 / 4,
 		              total_height - 3 * vpadding - widget_height };

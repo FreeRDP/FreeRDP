@@ -21,8 +21,7 @@ set(SRCS
 
 set(LIBS
     ${SDL2_LIBRARIES}
-    font
-    icon
+    sdl_client_res
     winpr
 )
 
@@ -53,8 +52,7 @@ endmacro()
 find_sdl_component(SDL2_ttf)
 find_sdl_component(SDL2_image)
 
-add_subdirectory(font)
-add_subdirectory(icon)
+add_subdirectory(res)
 
 add_library(dialogs STATIC
     ${SRCS}
