@@ -1,4 +1,5 @@
 set (BUILD_TESTING ON CACHE BOOL "qa default") 
+set (CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "preload")
 set (WITH_SAMPLE ON CACHE BOOL "qa default") 
 set (WITH_SERVER ON CACHE BOOL "qa default")
 set (WITH_SHADOW ON CACHE BOOL "qa default")
