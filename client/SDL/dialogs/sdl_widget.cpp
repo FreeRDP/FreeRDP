@@ -27,7 +27,7 @@
 #include "sdl_widget.hpp"
 #include "../sdl_utils.hpp"
 
-#include "font/opensans_variable_font.hpp"
+#include "res/sdl_resource_manager.hpp"
 
 #include <freerdp/log.h>
 
@@ -42,9 +42,10 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
 {
 	assert(renderer);
 
-	auto ops = SDL_RWFromConstMem(font_buffer.data(), static_cast<int>(font_buffer.size()));
+	auto ops = SDLResourceManager::get(SDLResourceManager::typeFonts(),
+	                                   "OpenSans-VariableFont_wdth,wght.ttf");
 	if (!ops)
-		widget_log_error(-1, "SDL_RWFromConstMem");
+		widget_log_error(-1, "SDLResourceManager::get");
 	else
 	{
 		_font = TTF_OpenFontRW(ops, 1, 64);
@@ -52,24 +53,17 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
 	}
 }
 
-SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, const std::string& path)
-    : _rect(rect)
+SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, SDL_RWops* ops) : _rect(rect)
 {
-	_image = IMG_LoadTexture(renderer, path.c_str());
-	if (!_image)
-		widget_log_error(-1, "SDL_RWFromConstMem");
-}
-
-SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect,
-                     const std::vector<unsigned char>& image, const std::string& type)
-    : _rect(rect)
-{
-	auto ops = SDL_RWFromConstMem(image.data(), static_cast<int>(image.size()));
 	if (!ops)
-		widget_log_error(-1, "SDL_RWFromConstMem");
-	else
 	{
-		_image = IMG_LoadTextureTyped_RW(renderer, ops, 1, type.c_str());
+		ops = SDLResourceManager::get(SDLResourceManager::typeImages(), "FreeRDP_Icon.svg");
+		if (!ops)
+			widget_log_error(-1, "SDLResourceManager::get");
+	}
+	if (ops)
+	{
+		_image = IMG_LoadTexture_RW(renderer, ops, 1);
 		if (!_image)
 			widget_log_error(-1, "IMG_LoadTextureTyped_RW");
 	}
