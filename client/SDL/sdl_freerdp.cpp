@@ -727,6 +727,9 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 			window.offset_y = 0;
 		}
 
+		if (!freerdp_settings_get_bool(settings, FreeRDP_Decorations))
+			flags |= SDL_WINDOW_BORDERLESS;
+
 		window.window = SDL_CreateWindow(title, startupX, startupY, static_cast<int>(w),
 		                                 static_cast<int>(h), flags);
 		if (!window.window)
