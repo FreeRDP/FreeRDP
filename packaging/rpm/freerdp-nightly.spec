@@ -5,7 +5,7 @@
 #
 # Bugs and comments https://github.com/FreeRDP/FreeRDP/issues
 
-
+%define _build_id_links none
 %define   INSTALL_PREFIX /opt/freerdp-nightly/
 
 # do not add provides for libs provided by this package
@@ -26,7 +26,7 @@ Group:          Productivity/Networking/Other
 Source0:        %{name}-%{version}.tar.bz2
 Source1:        source_version
 BuildRequires:   gcc-c++
-BuildRequires:  cmake >= 2.8.12
+BuildRequires:  cmake >= 3.13.0
 BuildRequires: libxkbfile-devel
 BuildRequires: libX11-devel
 BuildRequires: libXrandr-devel
@@ -54,6 +54,7 @@ BuildRequires: opus-devel
 %if %{defined suse_version}
 BuildRequires: libSDL2-devel
 BuildRequires: libSDL2_ttf-devel
+BuildRequires: libSDL2_image-devel
 BuildRequires: docbook-xsl-stylesheets
 BuildRequires: libxslt-tools
 BuildRequires: pkg-config
@@ -75,6 +76,7 @@ BuildRequires: libfuse3-dev
 %if 0%{?fedora} >= 21 || 0%{?rhel} >= 7
 BuildRequires: SDL2-devel
 BuildRequires: SDL2_ttf-devel
+BuildRequires: SDL2_image-devel
 BuildRequires: docbook-style-xsl
 BuildRequires: libxslt
 BuildRequires: pkgconfig
@@ -212,6 +214,9 @@ export NO_BRP_CHECK_RPATH true
 
 
 %changelog
+* Tue Dec 19 2023 FreeRDP Team <team@freerdp.com> - 3.0.0-1
+- Disable build-id
+- Update build dependencies
 * Wed Nov 15 2023 FreeRDP Team <team@freerdp.com> - 3.0.0-0
 - Update build dependencies
 * Wed Feb 7 2018 FreeRDP Team <team@freerdp.com> - 2.0.0-0
