@@ -93,6 +93,15 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 	const char* target = freerdp_settings_get_server_name(instance->context->settings);
 	switch (reason)
 	{
+		case AUTH_NLA:
+			break;
+
+		case AUTH_TLS:
+		case AUTH_RDP:
+		case AUTH_SMARTCARD_PIN: /* in this case password is pin code */
+			if ((*username) && (*password))
+				return TRUE;
+			break;
 		case GW_AUTH_HTTP:
 		case GW_AUTH_RDG:
 		case GW_AUTH_RPC:
