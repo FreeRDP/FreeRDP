@@ -2140,6 +2140,10 @@ BOOL freerdp_client_use_relative_mouse_events(rdpClientContext* ccontext)
 	const rdpSettings* settings = ccontext->context.settings;
 	const BOOL useRelative = freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove);
 	const BOOL haveRelative = freerdp_settings_get_bool(settings, FreeRDP_HasRelativeMouseEvent);
-	const BOOL ainput = ccontext->ainput != NULL;
+	BOOL ainput = false;
+#if defined(CHANNEL_AINPUT_SERVER)
+	ainput = ccontext->ainput != NULL;
+#endif
+
 	return useRelative && (haveRelative || ainput);
 }
