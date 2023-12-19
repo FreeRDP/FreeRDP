@@ -3293,9 +3293,25 @@ BOOL update_begin_paint(rdpUpdate* update)
 	WINPR_ASSERT(update);
 	rdp_update_lock(update);
 
+	WINPR_ASSERT(update->context);
+
+	/* Reset the invalid regions, we start a new frame here. */
+	rdpGdi* gdi = update->context->gdi;
+	WINPR_ASSERT(gdi);
+	if (gdi->hdc && gdi->primary && gdi->primary->hdc)
+	{
+		HGDI_WND hwnd = gdi->primary->hdc->hwnd;
+		WINPR_ASSERT(hwnd);
+		WINPR_ASSERT(hwnd->invalid);
+
+		hwnd->invalid->null = TRUE;
+		hwnd->ninvalid = 0;
+	}
+
 	BOOL rc = IFCALLRESULT(TRUE, update->BeginPaint, update->context);
 	if (!rc)
 		WLog_WARN(TAG, "BeginPaint call failed");
+
 	return rc;
 }
 
