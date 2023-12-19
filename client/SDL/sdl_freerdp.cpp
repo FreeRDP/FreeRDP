@@ -598,6 +598,7 @@ static BOOL sdl_pre_connect(freerdp* instance)
 		if (!sdl_wait_for_init(sdl))
 			return FALSE;
 
+		std::lock_guard<CriticalSection> lock(sdl->critical);
 		sdl->connection_dialog.reset(new SDLConnectionDialog(instance->context));
 
 		sdl->connection_dialog->setTitle("Connecting to '%s'",
@@ -1104,6 +1105,7 @@ static BOOL sdl_post_connect(freerdp* instance)
 	auto sdl = get_context(context);
 
 	// Retry was successful, discard dialog
+	std::lock_guard<CriticalSection> lock(sdl->critical);
 	if (sdl->connection_dialog)
 		sdl->connection_dialog->hide();
 
@@ -1176,6 +1178,7 @@ static void sdl_post_final_disconnect(freerdp* instance)
 
 	auto context = get_context(instance->context);
 
+	std::lock_guard<CriticalSection> lock(context->critical);
 	if (context->connection_dialog)
 		context->connection_dialog->wait(true);
 	context->connection_dialog.reset();

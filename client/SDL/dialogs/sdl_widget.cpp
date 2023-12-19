@@ -49,7 +49,8 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
 	else
 	{
 		_font = TTF_OpenFontRW(ops, 1, 64);
-		widget_log_error(-1, "TTF_OpenFontRW");
+		if (!_font)
+			widget_log_error(-1, "TTF_OpenFontRW");
 	}
 }
 
