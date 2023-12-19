@@ -16,8 +16,16 @@
  * limitations under the License.
  */
 #include "sdl_resource_manager.hpp"
-#include <filesystem>
 #include <iostream>
+#if __has_include(<filesystem>)
+#include <filesystem>
+namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#else
+#error Could not find system header "<filesystem>" or "<experimental/filesystem>"
+#endif
 
 std::map<std::string, std::vector<unsigned char>> SDLResourceManager::_resources;
 
@@ -33,14 +41,14 @@ SDL_RWops* SDLResourceManager::get(const std::string& type, const std::string& i
 	auto& v = _resources[uuid];
 	return SDL_RWFromConstMem(v.data(), v.size());
 #else
-	std::filesystem::path path(SDL_RESOURCE_ROOT);
+	fs::path path(SDL_RESOURCE_ROOT);
 	path /= type;
 	path /= id;
 
-	if (!std::filesystem::exists(path))
+	if (!fs::exists(path))
 	{
 		std::cerr << "sdl-freerdp expects resource '" << uuid << "' at location "
-		          << std::filesystem::absolute(path) << std::endl;
+		          << fs::absolute(path) << std::endl;
 		std::cerr << "file not found, application will fail" << std::endl;
 	}
 	return SDL_RWFromFile(path.native().c_str(), "rb");
