@@ -72,6 +72,11 @@ else()
     )
 endif()
 
+# C++ static initialization order is dependent on which file is added
+# first. We need the reverse of what we created here (the implementation
+# classes should be last, the factory first)
+list(REVERSE SRCS)
+
 add_library(sdl_client_res OBJECT
     ${RES_FILES}
     ${SRCS}
