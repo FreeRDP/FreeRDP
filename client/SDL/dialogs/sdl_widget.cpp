@@ -55,12 +55,6 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
 
 SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, SDL_RWops* ops) : _rect(rect)
 {
-	if (!ops)
-	{
-		ops = SDLResourceManager::get(SDLResourceManager::typeImages(), "FreeRDP_Icon.svg");
-		if (!ops)
-			widget_log_error(-1, "SDLResourceManager::get");
-	}
 	if (ops)
 	{
 		_image = IMG_LoadTexture_RW(renderer, ops, 1);
