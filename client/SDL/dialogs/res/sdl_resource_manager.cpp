@@ -33,7 +33,8 @@ SDL_RWops* SDLResourceManager::get(const std::string& type, const std::string& i
 	auto& v = _resources[uuid];
 	return SDL_RWFromConstMem(v.data(), v.size());
 #else
-	std::filesystem::path path(type);
+	std::filesystem::path path(SDL_RESOURCE_ROOT);
+	path /= type;
 	path /= id;
 
 	if (!std::filesystem::exists(path))

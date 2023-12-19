@@ -24,7 +24,7 @@
 
 static void usage(const char* prg)
 {
-	std::cerr << prg << " <file> <type> <dst path>" << std::endl;
+	std::cerr << prg << " <file> <type> <class name> <dst path>" << std::endl;
 }
 
 static int write_comment_header(std::ostream& out, const std::filesystem::path& prg,
@@ -41,9 +41,10 @@ static int write_comment_header(std::ostream& out, const std::filesystem::path& 
 }
 
 static int write_cpp_header(std::ostream& out, const std::filesystem::path& prg,
-                            const std::string& fname, const std::string& name,
+                            const std::filesystem::path& file, const std::string& name,
                             const std::string& type)
 {
+	auto fname = file.filename().string();
 	auto rc = write_comment_header(out, prg, fname);
 	if (rc != 0)
 		return rc;
@@ -97,8 +98,12 @@ static int write_cpp_trailer(std::ostream& out)
 static int write_hpp_header(const std::filesystem::path prg, const std::filesystem::path& file,
                             const std::string& name, const std::string& fname)
 {
-	std::ofstream out;
-	out.open(file);
+	std::ofstream out(file, std::ios::out);
+	if (!out.is_open())
+	{
+		std::cerr << "Failed to open output file '" << file << "'" << std::endl;
+		return -1;
+	}
 	auto rc = write_comment_header(out, prg, fname);
 	if (rc != 0)
 		return rc;
@@ -107,7 +112,7 @@ static int write_hpp_header(const std::filesystem::path prg, const std::filesyst
 	    << std::endl
 	    << "#include <vector>" << std::endl
 	    << "#include <string>" << std::endl
-	    << "#include \"../sdl_resource_file.hpp\"" << std::endl
+	    << "#include \"sdl_resource_file.hpp\"" << std::endl
 	    << std::endl
 	    << "class " << name << " {" << std::endl
 	    << "public:" << std::endl
@@ -127,7 +132,7 @@ static int write_hpp_header(const std::filesystem::path prg, const std::filesyst
 int main(int argc, char* argv[])
 {
 	std::filesystem::path prg(argv[0]);
-	if (argc != 4)
+	if (argc != 5)
 	{
 		usage(argv[0]);
 		return -1;
@@ -135,22 +140,12 @@ int main(int argc, char* argv[])
 
 	std::filesystem::path file(argv[1]);
 	std::string etype = argv[2];
-	std::filesystem::path dst(argv[3]);
+	std::string cname = argv[3];
+	std::filesystem::path dst(argv[4]);
+	std::filesystem::path hdr(argv[4]);
 
-	auto name = file.filename().string();
-
-	/* replace some common symbols in file name not allowed for c++ */
-	std::replace(name.begin(), name.end(), '.', '_');
-	std::replace(name.begin(), name.end(), ';', '_');
-	std::replace(name.begin(), name.end(), ',', '_');
-	std::replace(name.begin(), name.end(), ' ', '_');
-	std::replace(name.begin(), name.end(), '\t', '_');
-	std::replace(name.begin(), name.end(), '-', '_');
-
-	dst /= name + ".cpp";
-
-	std::filesystem::path hdr(argv[3]);
-	hdr /= name + ".hpp";
+	dst /= cname + ".cpp";
+	hdr /= cname + ".hpp";
 
 	std::ofstream out;
 	out.open(dst);
@@ -167,7 +162,7 @@ int main(int argc, char* argv[])
 		return -3;
 	}
 
-	auto rc = write_cpp_header(out, prg, file.filename(), name, etype);
+	auto rc = write_cpp_header(out, prg, file, cname, etype);
 	if (rc != 0)
 		return -1;
 
@@ -178,5 +173,5 @@ int main(int argc, char* argv[])
 	rc = write_cpp_trailer(out);
 	if (rc != 0)
 		return rc;
-	return write_hpp_header(prg, hdr, name, file.filename());
+	return write_hpp_header(prg, hdr, cname, file.filename().string());
 }

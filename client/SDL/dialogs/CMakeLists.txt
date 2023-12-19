@@ -19,7 +19,7 @@ set(SRCS
     sdl_connection_dialog.hpp
 )
 
-set(LIBS
+list(APPEND LIBS
     ${SDL2_LIBRARIES}
     sdl_client_res
     winpr

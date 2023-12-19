@@ -110,8 +110,8 @@ bool SDLConnectionDialog::update()
 		case MSG_INFO:
 		case MSG_WARN:
 		case MSG_ERROR:
-			createWindow();
 			_type_active = _type;
+			createWindow();
 			break;
 		case MSG_DISCARD:
 			resetTimer();
@@ -336,11 +336,28 @@ bool SDLConnectionDialog::createWindow()
 		return false;
 	}
 
-	SdlWidget icon = {
-		_renderer,
-		{ 0, vpadding, widget_width / 4, total_height - 3 * vpadding - widget_height },
-		SDLResourceManager::get(SDLResourceManager::typeImages(), "FreeRDP_Icon.svg")
-	};
+	std::string res_name;
+	switch (_type_active)
+	{
+		case MSG_INFO:
+			res_name = "feedback_FILL0_wght400_GRAD0_opsz24.svg";
+			break;
+		case MSG_WARN:
+			res_name = "warning_FILL0_wght400_GRAD0_opsz24.svg";
+			break;
+		case MSG_ERROR:
+			res_name = "error_FILL0_wght400_GRAD0_opsz24.svg";
+			break;
+		case MSG_DISCARD:
+		default:
+			res_name = "FreeRDP_Icon.svg";
+			break;
+	}
+
+	SdlWidget icon = { _renderer,
+		               { 0, vpadding, widget_width / 4,
+		                 total_height - 3 * vpadding - widget_height },
+		               SDLResourceManager::get(SDLResourceManager::typeImages(), res_name) };
 	_list.emplace_back(std::move(icon));
 	SDL_Rect rect = { widget_width / 4, vpadding, widget_width * 3 / 4,
 		              total_height - 3 * vpadding - widget_height };
