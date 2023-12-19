@@ -131,6 +131,11 @@ int main(int argc, char** argv)
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressiveV2, TRUE))
 		goto fail;
 
+	/* TODO: We do not implement relative mouse callbacks, so deactivate it for now */
+	if (!freerdp_settings_set_bool(settings, FreeRDP_MouseUseRelativeMove, FALSE) ||
+	    !freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent, FALSE))
+		goto fail;
+
 	if ((status = shadow_server_parse_command_line(server, argc, argv, shadow_args)) < 0)
 	{
 		shadow_server_command_line_status_print(server, argc, argv, status, shadow_args);
