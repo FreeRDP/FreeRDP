@@ -439,8 +439,7 @@ BOOL xf_generic_RawMotionNotify(xfContext* xfc, int x, int y, Window window, BOO
 		return FALSE;
 	}
 
-	freerdp_client_send_button_event(&xfc->common, TRUE, PTR_FLAGS_MOVE, x, y);
-	return TRUE;
+	return freerdp_client_send_button_event(&xfc->common, TRUE, PTR_FLAGS_MOVE, x, y);
 }
 
 static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOOL app)
