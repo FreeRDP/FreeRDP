@@ -214,6 +214,7 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, vo
 	WINPR_ASSERT(what);
 
 	auto sdl = get_context(instance->context);
+	std::lock_guard<CriticalSection> lock(sdl->critical);
 	WINPR_ASSERT(sdl->connection_dialog);
 
 	sdl->connection_dialog->setTitle("Retry connection to %s",
