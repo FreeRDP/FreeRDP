@@ -51,6 +51,7 @@
 
 static int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype);
 
+#ifdef DEBUG_XINPUT
 static const char* xf_input_get_class_string(int class)
 {
 	if (class == XIKeyClass)
@@ -66,6 +67,7 @@ static const char* xf_input_get_class_string(int class)
 
 	return "XIUnknownClass";
 }
+#endif
 
 static BOOL register_input_events(xfContext* xfc, Window window)
 {
@@ -875,17 +877,11 @@ static int xf_input_handle_event_remote(xfContext* xfc, const XEvent* event)
 				/* fallthrough */
 				WINPR_FALLTHROUGH
 			case XI_TouchUpdate:
-				/* fallthrough */
-				WINPR_FALLTHROUGH
 			case XI_TouchEnd:
 				xf_input_touch_remote(xfc, cookie.cc->data, cookie.cc->evtype);
 				break;
 			case XI_ButtonPress:
-				/* fallthrough */
-				WINPR_FALLTHROUGH
 			case XI_Motion:
-				/* fallthrough */
-				WINPR_FALLTHROUGH
 			case XI_ButtonRelease:
 			{
 				WLog_DBG(TAG, "checking for pen");
