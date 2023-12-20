@@ -43,6 +43,28 @@ freerdp-proxy /some/config/file
 
 freerdp-proxy --dump-config /some/config/file
 
+.SH PREPARATIONS
+
+1. generate certificates for proxy 
+
+\fBwinpr-makecert -rdp -path . proxy\fP
+
+2. generate proxy configuration
+
+\fBfreerdp-proxy --dump-config proxy.ini\fP
+
+3. edit configurartion and:
+
+  * provide (preferrably absolute) paths for \fBCertificateFile\fP and \fBPrivateKeyFile\fP generated previously
+  * remove the \fBCertificateContents\fP and \fBPrivateKeyContents\fP
+  * Adjust the \fB[Server]\fP settings \fBHost\fP and \fBPort\fP to bind a specific port on a network interface
+  * Adjust the \fB[Target]\fP \fBHost\fP and \fBPort\fP settings to the \fBRDP\fP target server
+  * Adjust (or remove if unuse) the \fBPlugins\fP settings
+
+3. start proxy server
+
+ \fBfreerdp-proxy proxy.ini\fP
+
 .SH EXIT STATUS
 .TP
 .B 0
