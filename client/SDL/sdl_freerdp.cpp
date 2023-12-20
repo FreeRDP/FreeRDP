@@ -255,15 +255,16 @@ static const char* sdl_map_to_code_tag(int code)
 	return nullptr;
 }
 
-static int error_info_to_error(freerdp* instance, DWORD* pcode)
+static int error_info_to_error(freerdp* instance, DWORD* pcode, char** msg, size_t* len)
 {
 	const DWORD code = freerdp_error_info(instance);
 	const char* name = freerdp_get_error_info_name(code);
 	const char* str = freerdp_get_error_info_string(code);
 	const int exit_code = sdl_map_error_to_exit_code(code);
 
-	WLog_DBG(SDL_TAG, "Terminate with %s due to ERROR_INFO %s [0x%08" PRIx32 "]: %s",
-	         sdl_map_error_to_code_tag(exit_code), name, code, str);
+	winpr_asprintf(msg, len, "Terminate with %s due to ERROR_INFO %s [0x%08" PRIx32 "]: %s",
+	               sdl_map_error_to_code_tag(exit_code), name, code, str);
+	WLog_DBG(SDL_TAG, "%s", *msg);
 	if (pcode)
 		*pcode = code;
 	return exit_code;
@@ -1189,6 +1190,9 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	DWORD nCount;
 	DWORD status;
 	int exit_code = SDL_EXIT_SUCCESS;
+	char* error_msg = NULL;
+	size_t error_msg_len = 0;
+
 	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = {};
 
 	WINPR_ASSERT(sdl);
@@ -1212,8 +1216,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	{
 		DWORD code = freerdp_get_last_error(context);
 		freerdp_abort_connect_context(context);
-		WLog_Print(sdl->log, WLOG_ERROR,
-		           "Authentication only, freerdp_get_last_error() %s [0x%08" PRIx32 "] %s",
+		WLog_Print(sdl->log, WLOG_ERROR, "Authentication only, %s [0x%08" PRIx32 "] %s",
 		           freerdp_get_last_error_name(code), code, freerdp_get_last_error_string(code));
 		goto terminate;
 	}
@@ -1222,9 +1225,17 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	{
 		DWORD code = freerdp_error_info(instance);
 		if (exit_code == SDL_EXIT_SUCCESS)
-			exit_code = error_info_to_error(instance, &code);
+			exit_code = error_info_to_error(instance, &code, &error_msg, &error_msg_len);
 
-		if (freerdp_get_last_error(context) == FREERDP_ERROR_AUTHENTICATION_FAILED)
+		auto last = freerdp_get_last_error(context);
+		if (!error_msg)
+		{
+			winpr_asprintf(&error_msg, &error_msg_len, "%s [0x%08" PRIx32 "]\n%s",
+			               freerdp_get_last_error_name(last), last,
+			               freerdp_get_last_error_string(last));
+		}
+
+		if (last == FREERDP_ERROR_AUTHENTICATION_FAILED)
 			exit_code = SDL_EXIT_AUTH_FAILURE;
 		else if (code == ERRINFO_SUCCESS)
 			exit_code = SDL_EXIT_CONN_FAILED;
@@ -1291,15 +1302,20 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	if (exit_code == SDL_EXIT_SUCCESS)
 	{
 		DWORD code = 0;
-		exit_code = error_info_to_error(instance, &code);
+		exit_code = error_info_to_error(instance, &code, &error_msg, &error_msg_len);
 
 		if ((code == ERRINFO_LOGOFF_BY_USER) &&
 		    (freerdp_get_disconnect_ultimatum(context) == Disconnect_Ultimatum_user_requested))
 		{
+			const char* msg = "Error info says user did not initiate but disconnect ultimatum says "
+			                  "they did; treat this as a user logoff";
+			free(error_msg);
+			error_msg = nullptr;
+			error_msg_len = 0;
+			winpr_asprintf(&error_msg, &error_msg_len, "%s", msg);
+
 			/* This situation might be limited to Windows XP. */
-			WLog_Print(sdl->log, WLOG_INFO,
-			           "Error info says user did not initiate but disconnect ultimatum says "
-			           "they did; treat this as a user logoff");
+			WLog_Print(sdl->log, WLOG_INFO, "%s", msg);
 			exit_code = SDL_EXIT_LOGOFF;
 		}
 	}
@@ -1310,7 +1326,24 @@ terminate:
 	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
 		WLog_Print(sdl->log, WLOG_INFO, "Authentication only, exit status %s [%" PRId32 "]",
 		           sdl_map_to_code_tag(exit_code), exit_code);
-
+	else
+	{
+		switch (exit_code)
+		{
+			case SDL_EXIT_SUCCESS:
+			case SDL_EXIT_DISCONNECT:
+			case SDL_EXIT_LOGOFF:
+			case SDL_EXIT_DISCONNECT_BY_USER:
+				break;
+			default:
+			{
+				std::lock_guard<CriticalSection> lock(sdl->critical);
+				sdl->connection_dialog->showError(error_msg);
+			}
+			break;
+		}
+	}
+	free(error_msg);
 	sdl->exit_code = exit_code;
 	sdl_push_user_event(SDL_USEREVENT_QUIT);
 #if SDL_VERSION_ATLEAST(2, 0, 16)
