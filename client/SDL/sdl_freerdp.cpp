@@ -1179,11 +1179,6 @@ static void sdl_post_final_disconnect(freerdp* instance)
 		return;
 
 	auto context = get_context(instance->context);
-
-	std::lock_guard<CriticalSection> lock(context->critical);
-	if (context->connection_dialog)
-		context->connection_dialog->wait(true);
-	context->connection_dialog.reset();
 }
 
 /* RDP main loop.
