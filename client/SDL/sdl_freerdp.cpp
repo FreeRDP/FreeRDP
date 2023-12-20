@@ -678,7 +678,9 @@ static void sdl_cleanup_sdl(SdlContext* sdl)
 	if (!sdl)
 		return;
 
+	std::lock_guard<CriticalSection> lock(sdl->critical);
 	sdl->windows.clear();
+	sdl->connection_dialog.reset();
 
 	sdl_destroy_primary(sdl);
 
