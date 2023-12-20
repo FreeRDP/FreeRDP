@@ -31,7 +31,7 @@ function(generate_and_install_freerdp_man_from_xml manpage dependencies)
 	add_custom_command(
                 OUTPUT ${manpage}
                                 COMMAND ${CMAKE_BINARY_DIR}/client/common/man/generate_argument_docbook
-				COMMAND ${XSLTPROC_EXECUTABLE} --path ${CMAKE_CURRENT_SOURCE_DIR} ${DOCBOOKXSL_DIR}/manpages/docbook.xsl ${manpage}.xml
+				COMMAND ${XSLTPROC_EXECUTABLE} -v --path ${CMAKE_CURRENT_SOURCE_DIR} ${DOCBOOKXSL_DIR}/manpages/docbook.xsl ${manpage}.xml
 				WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 				DEPENDS
 					${CMAKE_CURRENT_BINARY_DIR}/${manpage}.xml
@@ -39,7 +39,7 @@ function(generate_and_install_freerdp_man_from_xml manpage dependencies)
 
 	add_custom_target(
 		${manpage}.manpage ALL
-                DEPENDSge
+                DEPENDS
 			${manpage}
                         ${manpage}.xml
                         ${manpage}.xml.in
