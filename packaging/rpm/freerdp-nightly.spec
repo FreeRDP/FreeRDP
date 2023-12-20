@@ -14,7 +14,7 @@
 %global __provides_exclude_from ^%{INSTALL_PREFIX}.*$
 
 # do not require our own libs
-%global __requires_exclude ^(libfreerdp.*|libwinpr).*$
+%global __requires_exclude ^(libfreerdp.*|libwinpr|librdtk|libuwac).*$
 
 Name:           freerdp-nightly
 Version:        3.0
@@ -214,6 +214,8 @@ export NO_BRP_CHECK_RPATH true
 
 
 %changelog
+* Wed Dec 20 2023 FreeRDP Team <team@freerdp.com> - 3.0.0-2
+- Exclude libuwac and librdtk
 * Tue Dec 19 2023 FreeRDP Team <team@freerdp.com> - 3.0.0-1
 - Disable build-id
 - Update build dependencies
