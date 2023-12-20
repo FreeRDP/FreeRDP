@@ -200,7 +200,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Consume multitouch input locally" },
 #ifdef WITH_GFX_H264
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL,
-	  "[[RFX|AVC420|AVC444],mask:<value>,small-cache[:on|off],thin-client[:on|off],progressive[:on|"
+	  "[[progressive[:on|off]|RFX[:on|off]|AVC420[:on|off]AVC444[:on|off]],mask:<value>,small-"
+	  "cache[:on|off],thin-client[:on|off],progressive[:on|"
 	  "off]]",
 	  NULL, NULL, -1, NULL, "RDP8 graphics pipeline" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
@@ -209,8 +210,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 #endif
 #else
 	{ "gfx", COMMAND_LINE_VALUE_OPTIONAL,
-	  "RFX,mask:<value>,small-cache[:on|off],thin-client[:on|off],progressive[:on|off]]", NULL,
-	  NULL, -1, NULL, "RDP8 graphics pipeline" },
+	  "[progressive[:on|off]|RFX[:on|off]|AVC420[:on|off]AVC444[:on|off]],mask:<value>,small-cache["
+	  ":on|off],thin-client[:on|off],progressive[:on|off]]",
+	  NULL, NULL, -1, NULL, "RDP8 graphics pipeline" },
 #endif
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "gfx-progressive", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueFalse, NULL, -1, NULL,
