@@ -279,11 +279,11 @@ static int freerdp_keyboard_init_x11_evdev(DWORD* keyboardLayoutId,
 	WINPR_ASSERT(x11_keycode_to_rdp_scancode);
 	for (size_t keycode = 0; keycode < count; keycode++)
 	{
-		const DWORD vkcode = GetVirtualKeyCodeFromKeycode(keycode, WINPR_KEYCODE_TYPE_EVDEV);
+		const DWORD vkcode = GetVirtualKeyCodeFromKeycode(keycode, WINPR_KEYCODE_TYPE_XKB);
 		x11_keycode_to_rdp_scancode[keycode] =
 		    GetVirtualScanCodeFromVirtualKeyCode(vkcode, WINPR_KBD_TYPE_IBM_ENHANCED);
 	}
-	maptype = WINPR_KEYCODE_TYPE_EVDEV;
+	maptype = WINPR_KEYCODE_TYPE_XKB;
 
 	return 0;
 }
