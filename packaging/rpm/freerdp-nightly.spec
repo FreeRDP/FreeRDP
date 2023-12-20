@@ -25,8 +25,8 @@ Url:            http://www.freerdp.com
 Group:          Productivity/Networking/Other
 Source0:        %{name}-%{version}.tar.bz2
 Source1:        source_version
-BuildRequires:   gcc-c++
-BuildRequires:  cmake >= 3.13.0
+BuildRequires: gcc-c++
+BuildRequires: cmake >= 3.13.0
 BuildRequires: libxkbfile-devel
 BuildRequires: libX11-devel
 BuildRequires: libXrandr-devel
@@ -102,7 +102,7 @@ BuildRequires: libwayland-client-devel
 %endif
 
 %if 0%{?fedora} >= 36 || 0%{?rhel} >= 9
-BuildRequires: ffmpeg-free-devel
+BuildRequires: (ffmpeg-free-devel or ffmpeg-devel)
 %endif
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
@@ -216,6 +216,7 @@ export NO_BRP_CHECK_RPATH true
 %changelog
 * Wed Dec 20 2023 FreeRDP Team <team@freerdp.com> - 3.0.0-2
 - Exclude libuwac and librdtk
+- Allow ffmpeg-devel or ffmpeg-free-devel as dependency
 * Tue Dec 19 2023 FreeRDP Team <team@freerdp.com> - 3.0.0-1
 - Disable build-id
 - Update build dependencies
