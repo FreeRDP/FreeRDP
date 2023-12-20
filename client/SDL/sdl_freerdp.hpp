@@ -36,13 +36,7 @@
 #include "sdl_disp.hpp"
 #include "sdl_kbd.hpp"
 #include "sdl_utils.hpp"
-
-typedef struct
-{
-	SDL_Window* window;
-	int offset_x;
-	int offset_y;
-} sdl_window_t;
+#include "sdl_window.hpp"
 
 using SDLSurfacePtr = std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)>;
 using SDLPixelFormatPtr = std::unique_ptr<SDL_PixelFormat, decltype(&SDL_FreeFormat)>;
@@ -64,7 +58,7 @@ class SdlContext
 	bool grab_mouse = false;
 	bool grab_kbd = false;
 
-	std::vector<sdl_window_t> windows;
+	std::vector<SdlWindow> windows;
 
 	CriticalSection critical;
 	std::thread thread;

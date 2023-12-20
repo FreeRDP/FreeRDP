@@ -86,7 +86,10 @@ set(SRCS
     sdl_freerdp.hpp
     sdl_freerdp.cpp
     sdl_channels.hpp
-    sdl_channels.cpp)
+    sdl_channels.cpp
+    sdl_window.hpp
+    sdl_window.cpp
+)
 
 add_subdirectory(aad)
 set(LIBS

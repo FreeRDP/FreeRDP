@@ -380,7 +380,7 @@ static BOOL sdl_draw_to_window_scaled_rect(SdlContext* sdl, Sint32 windowId, SDL
 	return TRUE;
 }
 
-static BOOL sdl_draw_to_window(SdlContext* sdl, sdl_window_t window,
+static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
                                const std::vector<SDL_Rect>& rects = {})
 {
 	WINPR_ASSERT(sdl);
@@ -388,42 +388,42 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, sdl_window_t window,
 	auto context = sdl->context();
 	auto gdi = context->gdi;
 
-	SDL_Surface* screen = SDL_GetWindowSurface(window.window);
+	SDL_Surface* screen = SDL_GetWindowSurface(window.window());
 
 	int w, h;
-	SDL_GetWindowSize(window.window, &w, &h);
+	SDL_GetWindowSize(window.window(), &w, &h);
 
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
 	{
 		if (gdi->width < w)
 		{
-			window.offset_x = (w - gdi->width) / 2;
+			window.setOffsetX((w - gdi->width) / 2);
 		}
 		if (gdi->height < h)
 		{
-			window.offset_y = (h - gdi->height) / 2;
+			window.setOffsetY((h - gdi->height) / 2);
 		}
 
 		auto surface = sdl->primary.get();
-		if (!sdl_draw_to_window_rect(sdl, screen, surface, { window.offset_x, window.offset_y },
+		if (!sdl_draw_to_window_rect(sdl, screen, surface, { window.offsetX(), window.offsetY() },
 		                             rects))
 			return FALSE;
 	}
 	else
 	{
-		auto id = SDL_GetWindowID(window.window);
+		auto id = SDL_GetWindowID(window.window());
 
 		if (!sdl_draw_to_window_scaled_rect(sdl, id, screen, sdl->primary.get(), rects))
 			return FALSE;
 	}
-	SDL_UpdateWindowSurface(window.window);
+	SDL_UpdateWindowSurface(window.window());
 	return TRUE;
 }
 
-static BOOL sdl_draw_to_window(SdlContext* sdl, const std::vector<sdl_window_t>& window,
+static BOOL sdl_draw_to_window(SdlContext* sdl, std::vector<SdlWindow>& windows,
                                const std::vector<SDL_Rect>& rects = {})
 {
-	for (auto& window : sdl->windows)
+	for (auto& window : windows)
 	{
 		if (!sdl_draw_to_window(sdl, window, rects))
 			return FALSE;
@@ -666,12 +666,10 @@ static void sdl_cleanup_sdl(SdlContext* sdl)
 	if (!sdl)
 		return;
 
-	for (auto& window : sdl->windows)
-		SDL_DestroyWindow(window.window);
+	sdl->windows.clear();
 
 	sdl_destroy_primary(sdl);
 
-	sdl->windows.clear();
 	SDL_Quit();
 }
 
@@ -699,7 +697,6 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 			h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 		}
 
-		sdl_window_t window = {};
 		Uint32 flags = SDL_WINDOW_SHOWN;
 		Uint32 startupX = SDL_WINDOWPOS_CENTERED_DISPLAY(x);
 		Uint32 startupY = SDL_WINDOWPOS_CENTERED_DISPLAY(x);
@@ -721,30 +718,29 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 		{
 			flags |= SDL_WINDOW_BORDERLESS;
 		}
-		else
-		{
-			window.offset_x = 0;
-			window.offset_y = 0;
-		}
 
 		if (!freerdp_settings_get_bool(settings, FreeRDP_Decorations))
 			flags |= SDL_WINDOW_BORDERLESS;
 
-		window.window = SDL_CreateWindow(title, startupX, startupY, static_cast<int>(w),
-		                                 static_cast<int>(h), flags);
-		if (!window.window)
+		SdlWindow window{ title,
+			              static_cast<int>(startupX),
+			              static_cast<int>(startupY),
+			              static_cast<int>(w),
+			              static_cast<int>(h),
+			              flags };
+		if (!window.window())
 			goto fail;
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
 			int win_x;
 			int win_y;
-			SDL_GetWindowPosition(window.window, &win_x, &win_y);
-			window.offset_x = 0 - win_x;
-			window.offset_y = 0 - win_y;
+			SDL_GetWindowPosition(window.window(), &win_x, &win_y);
+			window.setOffsetX(0 - win_x);
+			window.setOffsetY(0 - win_y);
 		}
 
-		sdl->windows.push_back(window);
+		sdl->windows.emplace_back(std::move(window));
 	}
 
 	rc = TRUE;
@@ -1572,7 +1568,7 @@ BOOL SdlContext::update_fullscreen(BOOL enter)
 	std::lock_guard<CriticalSection> lock(critical);
 	for (const auto& window : windows)
 	{
-		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_FULLSCREEN, window.window, enter))
+		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_FULLSCREEN, window.window(), enter))
 			return FALSE;
 	}
 	fullscreen = enter;
@@ -1590,7 +1586,7 @@ BOOL SdlContext::update_resizeable(BOOL enable)
 
 	for (const auto& window : windows)
 	{
-		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_RESIZEABLE, window.window, use))
+		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_RESIZEABLE, window.window(), use))
 			return FALSE;
 	}
 	resizeable = use;
