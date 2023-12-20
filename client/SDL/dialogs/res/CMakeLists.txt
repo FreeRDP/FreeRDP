@@ -5,14 +5,14 @@ add_executable(freerdp-res2bin
 
 set(SRCS
     sdl_resource_manager.cpp
-    sdl_resource_manager.hpp  
+    sdl_resource_manager.hpp
 )
 
 set(RES_SVG_FILES
     ${CMAKE_SOURCE_DIR}/resources/FreeRDP_Icon.svg
-    ${CMAKE_SOURCE_DIR}/resources/error_FILL0_wght400_GRAD0_opsz24.svg
-    ${CMAKE_SOURCE_DIR}/resources/feedback_FILL0_wght400_GRAD0_opsz24.svg
-    ${CMAKE_SOURCE_DIR}/resources/warning_FILL0_wght400_GRAD0_opsz24.svg
+    ${CMAKE_SOURCE_DIR}/resources/icon_info.svg
+    ${CMAKE_SOURCE_DIR}/resources/icon_warning.svg
+    ${CMAKE_SOURCE_DIR}/resources/icon_error.svg
 )
 
 set(RES_FONT_FILES

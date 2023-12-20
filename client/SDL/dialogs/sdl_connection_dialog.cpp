@@ -26,8 +26,12 @@
 
 static const SDL_Color backgroundcolor = { 0x38, 0x36, 0x35, 0xff };
 static const SDL_Color textcolor = { 0xd1, 0xcf, 0xcd, 0xff };
+static const SDL_Color infocolor = { 0x43, 0xe0, 0x0f, 0x60 };
+static const SDL_Color warncolor = { 0xcd, 0xca, 0x35, 0x60 };
+static const SDL_Color errorcolor = { 0xf7, 0x22, 0x30, 0x60 };
 
 static const Uint32 vpadding = 5;
+static const Uint32 hpadding = 5;
 
 SDLConnectionDialog::SDLConnectionDialog(rdpContext* context)
     : _context(context), _window(nullptr), _renderer(nullptr)
@@ -136,7 +140,7 @@ bool SDLConnectionDialog::setModal()
 		if (sdl->windows.empty())
 			return true;
 
-		auto parent = sdl->windows.front().window;
+		auto parent = sdl->windows.front().window();
 		SDL_SetWindowModalFor(_window, parent);
 		SDL_RaiseWindow(_window);
 	}
@@ -166,7 +170,7 @@ bool SDLConnectionDialog::update(SDL_Renderer* renderer)
 
 	for (auto& btn : _list)
 	{
-		if (!btn.update_text(renderer, _msg, textcolor))
+		if (!btn.widget.update_text(renderer, _msg, btn.fgcolor, btn.bgcolor))
 			return false;
 	}
 
@@ -337,32 +341,49 @@ bool SDLConnectionDialog::createWindow()
 	}
 
 	std::string res_name;
+	SDL_Color res_bgcolor;
 	switch (_type_active)
 	{
 		case MSG_INFO:
-			res_name = "feedback_FILL0_wght400_GRAD0_opsz24.svg";
+			res_name = "icon_info.svg";
+			res_bgcolor = infocolor;
 			break;
 		case MSG_WARN:
-			res_name = "warning_FILL0_wght400_GRAD0_opsz24.svg";
+			res_name = "icon_warning.svg";
+			res_bgcolor = warncolor;
 			break;
 		case MSG_ERROR:
-			res_name = "error_FILL0_wght400_GRAD0_opsz24.svg";
+			res_name = "icon_error.svg";
+			res_bgcolor = errorcolor;
 			break;
 		case MSG_DISCARD:
 		default:
-			res_name = "FreeRDP_Icon.svg";
+			res_name = "";
+			res_bgcolor = backgroundcolor;
 			break;
 	}
 
-	SdlWidget icon = { _renderer,
-		               { 0, vpadding, widget_width / 4,
-		                 total_height - 3 * vpadding - widget_height },
-		               SDLResourceManager::get(SDLResourceManager::typeImages(), res_name) };
+	int height = (total_height - 3 * vpadding) / 2;
+	SDL_Rect iconRect{ hpadding, vpadding, widget_width / 4 - 2 * hpadding, height };
+	widget_cfg_t icon{ textcolor,
+		               res_bgcolor,
+		               { _renderer, iconRect,
+		                 SDLResourceManager::get(SDLResourceManager::typeImages(), res_name) } };
 	_list.emplace_back(std::move(icon));
+
+	iconRect.y += height;
+
+	widget_cfg_t logo{ textcolor,
+		               backgroundcolor,
+		               { _renderer, iconRect,
+		                 SDLResourceManager::get(SDLResourceManager::typeImages(),
+		                                         "FreeRDP_Icon.svg") } };
+	_list.emplace_back(std::move(logo));
+
 	SDL_Rect rect = { widget_width / 4, vpadding, widget_width * 3 / 4,
 		              total_height - 3 * vpadding - widget_height };
-	auto w = SdlWidget(_renderer, rect, false);
-	w.set_wrap(true, widget_width);
+	widget_cfg_t w{ textcolor, backgroundcolor, { _renderer, rect, false } };
+	w.widget.set_wrap(true, widget_width);
 	_list.emplace_back(std::move(w));
 	rect.y += widget_height + vpadding;
 

@@ -87,6 +87,14 @@ class SDLConnectionDialog
 	static Uint32 timeout(Uint32 intervalMS, void* _this);
 
   private:
+	struct widget_cfg_t
+	{
+		SDL_Color fgcolor;
+		SDL_Color bgcolor;
+		SdlWidget widget;
+	};
+
+  private:
 	rdpContext* _context;
 	SDL_Window* _window;
 	SDL_Renderer* _renderer;
@@ -97,7 +105,7 @@ class SDLConnectionDialog
 	MsgType _type_active = MSG_NONE;
 	SDL_TimerID _timer = -1;
 	bool _running = false;
-	std::vector<SdlWidget> _list;
+	std::vector<widget_cfg_t> _list;
 	SdlButtonList _buttons;
 };
 
