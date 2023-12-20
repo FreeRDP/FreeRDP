@@ -1,168 +1,107 @@
 #include <stdlib.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 
 #include "../cmdline.h"
 
-#define TAG FREERDP_TAG("generate_argument_docbook")
-LPSTR tr_esc_str(LPCSTR arg, bool format)
+static char* resize(char** buffer, size_t* size, size_t increment)
 {
+	const size_t nsize = *size + increment;
+	char* tmp = realloc(*buffer, nsize);
+	if (!tmp)
+	{
+		fprintf(stderr, "Could not reallocate string buffer from %" PRIuz " to %" PRIuz " bytes.\n",
+		        *size, nsize);
+		free(*buffer);
+	}
+	memset(&tmp[*size], '\0', increment);
+	*size = nsize;
+	*buffer = tmp;
+	return tmp;
+}
+
+static char* append(char** buffer, size_t* size, const char* str)
+{
+	const size_t len = strnlen(*buffer, *size);
+	const size_t add = strlen(str);
+	const size_t required = len + add + 1;
+
+	if (required > *size)
+	{
+		if (!resize(buffer, size, required - *size))
+			return NULL;
+	}
+	strcat(*buffer, str);
+	return *buffer;
+}
+
+static LPSTR tr_esc_str(LPCSTR arg, bool format)
+{
+	const char* str;
 	LPSTR tmp = NULL;
-	LPSTR tmp2 = NULL;
-	size_t cs = 0, x, ds, len;
-	size_t s;
+	size_t ds = 0;
 
 	if (NULL == arg)
 		return NULL;
 
-	s = strlen(arg);
-
-	/* Find trailing whitespaces */
-	while ((s > 0) && isspace(arg[s - 1]))
-		s--;
-
-	/* Prepare a initial buffer with the size of the result string. */
-	ds = s + 1;
-
-	if (ds)
-	{
-		tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
-		if (!tmp2)
-			free(tmp);
-		tmp = tmp2;
-	}
-
-	if (NULL == tmp)
-	{
-		fprintf(stderr, "Could not allocate string buffer.\n");
+	const size_t s = strlen(arg) + 1;
+	if (!resize(&tmp, &ds, s))
 		exit(-2);
-	}
 
-	/* Copy character for character and check, if it is necessary to escape. */
-	memset(tmp, 0, ds * sizeof(CHAR));
-
-	for (x = 0; x < s; x++)
+	for (size_t x = 0; x < s; x++)
 	{
+		char data[2] = { 0 };
 		switch (arg[x])
 		{
 			case '<':
-				len = format ? 13 : 4;
-				ds += len - 1;
-				tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
-				if (!tmp2)
-					free(tmp);
-				tmp = tmp2;
-
-				if (NULL == tmp)
-				{
-					fprintf(stderr, "Could not reallocate string buffer.\n");
-					exit(-3);
-				}
-
 				if (format)
-					/* coverity[buffer_size] */
-					strncpy(&tmp[cs], "<replaceable>", len);
+					str = "<replaceable>";
 				else
-					/* coverity[buffer_size] */
-					strncpy(&tmp[cs], "&lt;", len);
+					str = "&lt;";
 
-				cs += len;
+				if (!append(&tmp, &ds, str))
+					exit(-3);
 				break;
 
 			case '>':
-				len = format ? 14 : 4;
-				ds += len - 1;
-				tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
-				if (!tmp2)
-					free(tmp);
-				tmp = tmp2;
-
-				if (NULL == tmp)
-				{
-					fprintf(stderr, "Could not reallocate string buffer.\n");
-					exit(-4);
-				}
-
 				if (format)
-					/* coverity[buffer_size] */
-					strncpy(&tmp[cs], "</replaceable>", len);
+					str = "</replaceable>";
 				else
-					/* coverity[buffer_size] */
-					strncpy(&tmp[cs], "&gt;", len);
+					str = "&gt;";
 
-				cs += len;
+				if (!append(&tmp, &ds, str))
+					exit(-4);
 				break;
 
 			case '\'':
-				ds += 5;
-				tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
-				if (!tmp2)
-					free(tmp);
-				tmp = tmp2;
-
-				if (NULL == tmp)
-				{
-					fprintf(stderr, "Could not reallocate string buffer.\n");
+				if (!append(&tmp, &ds, "&apos;"))
 					exit(-5);
-				}
-
-				tmp[cs++] = '&';
-				tmp[cs++] = 'a';
-				tmp[cs++] = 'p';
-				tmp[cs++] = 'o';
-				tmp[cs++] = 's';
-				tmp[cs++] = ';';
 				break;
 
 			case '"':
-				ds += 5;
-				tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
-				if (!tmp2)
-					free(tmp);
-				tmp = tmp2;
-
-				if (NULL == tmp)
-				{
-					fprintf(stderr, "Could not reallocate string buffer.\n");
+				if (!append(&tmp, &ds, "&quot;"))
 					exit(-6);
-				}
-
-				tmp[cs++] = '&';
-				tmp[cs++] = 'q';
-				tmp[cs++] = 'u';
-				tmp[cs++] = 'o';
-				tmp[cs++] = 't';
-				tmp[cs++] = ';';
 				break;
 
 			case '&':
-				ds += 4;
-				tmp2 = (LPSTR)realloc(tmp, ds * sizeof(CHAR));
-				if (!tmp2)
-					free(tmp);
-				tmp = tmp2;
+				if (!append(&tmp, &ds, "&amp;"))
+					exit(-6);
+				break;
 
-				if (NULL == tmp)
-				{
-					fprintf(stderr, "Could not reallocate string buffer.\n");
+			case '\r':
+			case '\n':
+				if (!append(&tmp, &ds, "<sbr/>"))
 					exit(-7);
-				}
-
-				tmp[cs++] = '&';
-				tmp[cs++] = 'a';
-				tmp[cs++] = 'm';
-				tmp[cs++] = 'p';
-				tmp[cs++] = ';';
 				break;
 
 			default:
-				tmp[cs++] = arg[x];
+				data[0] = arg[x];
+				if (!append(&tmp, &ds, data))
+					exit(-8);
 				break;
 		}
-
-		/* Assure, the string is '\0' terminated. */
-		tmp[ds - 1] = '\0';
 	}
 
 	return tmp;
@@ -171,12 +110,10 @@ LPSTR tr_esc_str(LPCSTR arg, bool format)
 int main(int argc, char* argv[])
 {
 	size_t elements = sizeof(global_cmd_args) / sizeof(global_cmd_args[0]);
-	size_t x;
 	const char* fname = "freerdp-argument.1.xml";
-	FILE* fp = NULL;
-	/* Open output file for writing, truncate if existing. */
-	fp = fopen(fname, "w");
 
+	fprintf(stdout, "Generating docbook file '%s'\n", fname);
+	FILE* fp = fopen(fname, "w");
 	if (NULL == fp)
 	{
 		fprintf(stderr, "Could not open '%s' for writing.\n", fname);
@@ -196,13 +133,13 @@ int main(int argc, char* argv[])
 		elements = 1;
 	}
 
-	for (x = 0; x < elements - 1; x++)
+	for (size_t x = 0; x < elements - 1; x++)
 	{
 		const COMMAND_LINE_ARGUMENT_A* arg = &global_cmd_args[x];
-		char* name = tr_esc_str((LPSTR)arg->Name, FALSE);
-		char* alias = tr_esc_str((LPSTR)arg->Alias, FALSE);
+		char* name = tr_esc_str(arg->Name, FALSE);
+		char* alias = tr_esc_str(arg->Alias, FALSE);
 		char* format = tr_esc_str(arg->Format, TRUE);
-		char* text = tr_esc_str((LPSTR)arg->Text, FALSE);
+		char* text = tr_esc_str(arg->Text, FALSE);
 		fprintf(fp, "\t\t\t<varlistentry>\n");
 
 		do
@@ -249,7 +186,7 @@ int main(int argc, char* argv[])
 				fprintf(fp, " (default:%s)", arg->Default ? "on" : "off");
 			else if (arg->Default)
 			{
-				char* value = tr_esc_str((LPSTR)arg->Default, FALSE);
+				char* value = tr_esc_str(arg->Default, FALSE);
 				fprintf(fp, " (default:%s)", value);
 				free(value);
 			}
@@ -267,5 +204,7 @@ int main(int argc, char* argv[])
 	fprintf(fp, "\t\t</variablelist>\n");
 	fprintf(fp, "\t</refsect1>\n");
 	fclose(fp);
+
+	fprintf(stdout, "successfully generated '%s'\n", fname);
 	return 0;
 }
