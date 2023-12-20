@@ -236,11 +236,6 @@ SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, vo
 	auto settings = instance->context->settings;
 	const BOOL enabled = freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
 
-	SDL_Window* window = nullptr;
-	if (!sdl->windows.empty())
-	{
-		window = sdl->windows.begin()->window;
-	}
 	if (!enabled)
 	{
 		sdl->connection_dialog->showError(
