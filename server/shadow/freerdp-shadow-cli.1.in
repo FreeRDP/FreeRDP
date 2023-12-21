@@ -2,11 +2,11 @@
 \\$2 \(laURL: \\$1 \(ra\\$3
 ..
 .if \n[.g] .mso www.tmac
-.TH freerdp\-shadow\-cli 1 2017-01-12 "@FREERDP_VERSION_FULL@" "FreeRDP"
+.TH @MANPAGE_NAME@ 1 2017-01-12 "@FREERDP_VERSION_FULL@" "FreeRDP"
 .SH NAME
-freerdp\-shadow\-cli \- A utility for sharing a X display via RDP.
+@MANPAGE_NAME@ \- A utility for sharing a X display via RDP.
 .SH SYNOPSIS
-.B freerdp\-shadow\-cli
+.B @MANPAGE_NAME@
 [\fB/port:\fP\fI<port number>\fP]
 [\fB/ipc-socket:\fP\fI<ipc-socket>\fP]
 [\fB/monitors:\fP\fI<0,1,2,...>\fP]
@@ -23,7 +23,7 @@ freerdp\-shadow\-cli \- A utility for sharing a X display via RDP.
 [\fB/version\fP]
 [\fB/help\fP]
 .SH DESCRIPTION
-.B freerdp\-shadow\-cli
+.B @MANPAGE_NAME@
 can be used to share a running X display like with VNC but by using the RDP
 instead. It is also possibly to share only parts (rect) of the display.
 .SH OPTIONS
@@ -40,7 +40,7 @@ Select rectangle within monitor to share.
 .IP -auth
 Disable authentication. If authentication is enabled PAM is used with the
 X11 subsystem. Running as root is not necessary, however if run as user only
-the same user that started freerdp\-shadow\-cli can authenticate.
+the same user that started @MANPAGE_NAME@ can authenticate.
 .br
 \fBWarning\fP: If authentication is disabled \fIeveryone\fP can connect.
 .IP -may-view
@@ -65,7 +65,7 @@ Print the version and exit.
 Print the help and exit.
 
 .SH EXAMPLES
-freerdp-shadow-cli /port:12345
+@MANPAGE_NAME@ /port:12345
 
 When run as user within a X session (for example from an xterm) a socket on
 12345 is opened and the current display is shared via RDP.

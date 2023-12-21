@@ -357,7 +357,12 @@ endif()
 
 add_subdirectory(include)
 
-install_freerdp_man(wlog.7 7)
+set(MANPAGE_NAME wlog)
+if (WITH_BINARY_VERSIONING)
+	set(MANPAGE_NAME wlog${WINPR_API_VERSION})
+endif()
+configure_file(wlog.7.in ${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.7 @ONLY@)
+install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.7  7)
 # Exporting
 
 export(PACKAGE winpr)

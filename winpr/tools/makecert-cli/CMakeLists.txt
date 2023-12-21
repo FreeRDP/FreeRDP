@@ -44,8 +44,13 @@ set(${MODULE_PREFIX}_LIBS winpr-tools)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS} winpr)
 
+set(MANPAGE_NAME ${MODULE_NAME})
 if (WITH_BINARY_VERSIONING)
-	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${WINPR_API_VERSION}${CMAKE_EXECUTABLE_SUFFIX}")
+	set_target_properties(${MODULE_NAME}
+	       	PROPERTIES
+	       	OUTPUT_NAME "${MODULE_NAME}${WINPR_API_VERSION}${CMAKE_EXECUTABLE_SUFFIX}"
+	)
+	set(MANPAGE_NAME ${MODULE_NAME}${WINPR_API_VERSION})
 endif()
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")
 
@@ -54,5 +59,5 @@ if (WITH_DEBUG_SYMBOLS AND MSVC)
     install(FILES ${CMAKE_PDB_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT symbols)
 endif()
 
-configure_file(winpr-makecert.1.in ${CMAKE_CURRENT_BINARY_DIR}/winpr-makecert.1)
-install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/winpr-makecert.1 1)
+configure_file(winpr-makecert.1.in ${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.1)
+install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.1 1)

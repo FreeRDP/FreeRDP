@@ -2,11 +2,11 @@
 \\$2 \(laURL: \\$1 \(ra\\$3
 ..
 .if \n[.g] .mso www.tmac
-.TH winpr\-makecert 1 2017-01-11 "@WINPR_VERSION_FULL@" "FreeRDP"
+.TH @MANPAGE_NAME@ 1 2017-01-11 "@WINPR_VERSION_FULL@" "FreeRDP"
 .SH NAME
-winpr\-makecert \- A tool to create X.509 certificates.
+@MANPAGE_NAME@ \- A tool to create X.509 certificates.
 .SH SYNOPSIS
-.B winpr\-makecert
+.B @MANPAGE_NAME@
 [\fB-rdp\fP]
 [\fB-silent\fP]
 [\fB-live\fP]
@@ -21,15 +21,15 @@ winpr\-makecert \- A tool to create X.509 certificates.
 [\fB-path\fP outputpath] 
 [outputname]
 .SH DESCRIPTION
-.B winpr-makecert
+.B @MANPAGE_NAME@
 is a tool for generating X.509 certificates modeled after the Windows command
-MakeCert. winpr-makecert aims to be command line compatible with MakeCert
+MakeCert. @MANPAGE_NAME@ aims to be command line compatible with MakeCert
 however not all options are supported or implemented yet.
 
 Unimplemented features are not described here. They are marked as "Unsupported"
-in winpr-makecerts help.
+in @MANPAGE_NAME@s help.
 
-In contrast to it's Windows counterpart winpr\-makecert does, unless the
+In contrast to it's Windows counterpart @MANPAGE_NAME@ does, unless the
 \fB\-live\fP option is given, always creates and save a certificate.
 If \fIoutputname\fP isn't set it is tried to determine the host name of the
 computer the command is run on.
@@ -88,14 +88,14 @@ A directory where the certificate should be created in.
 The base name of the created file(s). A suffix, the format specific suffix is
 appended to this name.
 .SH EXAMPLES
-winpr-makecert -rdp
+@MANPAGE_NAME@ -rdp
 
 Creates a certificate with the default properties, saved to a file in the
 current working directory in crt format named like the host. If the host is
 named freerdp the created files are called freerdp.key and freerdp.crt. 
 
 
-winpr-makecert -len 4096 -a sha384 -path /tmp -# 22 -m 144 -y 1 -format crt mycert
+@MANPAGE_NAME@ -len 4096 -a sha384 -path /tmp -# 22 -m 144 -y 1 -format crt mycert
 
 The command above creates the file /tmp/mycert.pem containing a key and a
 certificate with a length of 4096. It will use sha384 as hash algorithm.
