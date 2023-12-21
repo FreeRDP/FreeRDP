@@ -157,6 +157,9 @@ endif()
 
 message(STATUS "Git Revision ${GIT_REVISION}")
 
+# Make the detected version available as default version for all subprojects
+set(FREERDP_DEFAULT_PROJECT_VERSION ${FREERDP_VERSION} CACHE STRING INTERNAL)
+
 set(FREERDP_MAJOR_DIR "freerdp${FREERDP_VERSION_MAJOR}")
 set(FREERDP_INCLUDE_DIR "include/${FREERDP_MAJOR_DIR}/")
 

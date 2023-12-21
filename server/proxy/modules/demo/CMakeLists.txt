@@ -21,7 +21,16 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-project(proxy-demo-plugin VERSION 1.0.0 LANGUAGES CXX)
+if (NOT FREERDP_DEFAULT_PROJECT_VERSION)
+	set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
+endif()
+
+project(proxy-demo-plugin
+	VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
+       	LANGUAGES CXX
+)
+
+message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
 include(CheckIPOSupported)
 check_ipo_supported(RESULT supported OUTPUT error)
