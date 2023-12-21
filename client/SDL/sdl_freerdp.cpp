@@ -600,12 +600,15 @@ static BOOL sdl_pre_connect(freerdp* instance)
 			return FALSE;
 
 		std::lock_guard<CriticalSection> lock(sdl->critical);
-		sdl->connection_dialog.reset(new SDLConnectionDialog(instance->context));
-
-		sdl->connection_dialog->setTitle("Connecting to '%s'",
-		                                 freerdp_settings_get_server_name(settings));
-		sdl->connection_dialog->showInfo("The connection is being established\n\nPlease wait...");
-
+		if (!freerdp_settings_get_bool(settings, FreeRDP_UseCommonStdioCallbacks))
+			sdl->connection_dialog.reset(new SDLConnectionDialog(instance->context));
+		if (sdl->connection_dialog)
+		{
+			sdl->connection_dialog->setTitle("Connecting to '%s'",
+			                                 freerdp_settings_get_server_name(settings));
+			sdl->connection_dialog->showInfo(
+			    "The connection is being established\n\nPlease wait...");
+		}
 		if (!sdl_detect_monitors(sdl, &maxWidth, &maxHeight))
 			return FALSE;
 
@@ -1338,7 +1341,8 @@ terminate:
 			default:
 			{
 				std::lock_guard<CriticalSection> lock(sdl->critical);
-				sdl->connection_dialog->showError(error_msg);
+				if (sdl->connection_dialog)
+					sdl->connection_dialog->showError(error_msg);
 			}
 			break;
 		}
