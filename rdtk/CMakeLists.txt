@@ -81,6 +81,11 @@ include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 include (SetFreeRDPCMakeInstallDir)
 
+option(RDTK_FORCE_STATIC_BUILD "Force RDTK to be build as static libary" OFF)
+if (RDTK_FORCE_STATIC_BUILD)
+	set(BUILD_SHARED_LIBS OFF)
+endif()
+
 add_definitions(-DRDTK_EXPORTS)
 
 if (NOT IOS)
@@ -109,7 +114,9 @@ add_subdirectory(librdtk)
 add_subdirectory(templates)
 add_subdirectory(include)
 
-install(EXPORT rdtk DESTINATION ${RDTK_CMAKE_INSTALL_DIR})
+if (NOT RDTK_FORCE_STATIC_BUILD)
+	install(EXPORT rdtk DESTINATION ${RDTK_CMAKE_INSTALL_DIR})
+endif()
 
 if(WITH_SAMPLE)
 	if(WITH_X11)
