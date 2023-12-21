@@ -13,12 +13,8 @@ message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 cmake_policy(SET CMP0026 OLD)
 cmake_policy(SET CMP0045 OLD)
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
-endif()
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/)
-include(PreventInSourceBuilds)
+include(CommonConfigOptions)
 
 find_library(FOUNDATION_LIBRARY Foundation REQUIRED)
 find_library(COCOA_LIBRARY Cocoa REQUIRED)

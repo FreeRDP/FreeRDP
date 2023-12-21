@@ -31,27 +31,9 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	set(CMAKE_C_STANDARD_REQUIRED ON)
 	set(CMAKE_C_EXTENSIONS ON)
 
-	include(CheckIPOSupported)
-	check_ipo_supported(RESULT supported OUTPUT error)
-	if (supported)
-		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-	endif()
-
-
-		option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
-		option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
-		option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
-
 	set(WINPR_VERSION_MAJOR 3)
-	option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-  option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
+	option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
 	option(BUILD_TESTING "Build library unit tests" ON)
-	option(WITH_LIBRARY_VERSIONING "Use library version triplet" ON)
-
-	# Default to release build type
-	if(NOT CMAKE_BUILD_TYPE)
-	   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
-	endif()
 
 	if(CMAKE_COMPILER_IS_GNUCC)
 		if(NOT EXPORT_ALL_SYMBOLS)
@@ -65,7 +47,7 @@ endif()
 
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
-include(PreventInSourceBuilds)
+include(CommonConfigOptions)
 
 # Include cmake modules
 include(CheckIncludeFiles)
@@ -77,7 +59,6 @@ include(TestBigEndian)
 include(CheckCmakeCompat)
 include(FindFeature)
 include(CheckCCompilerFlag)
-include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 include (SetFreeRDPCMakeInstallDir)
 

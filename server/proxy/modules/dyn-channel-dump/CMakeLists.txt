@@ -32,16 +32,11 @@ project(proxy-dyn-channel-dump-plugin
 
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
-include(CheckIPOSupported)
-check_ipo_supported(RESULT supported OUTPUT error)
-if (supported)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/)
+include(CommonConfigOptions)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-include(MSVCRuntime)
 
 add_library(${PROJECT_NAME} SHARED
 	dyn-channel-dump.cpp

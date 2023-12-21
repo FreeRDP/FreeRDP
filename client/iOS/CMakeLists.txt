@@ -27,12 +27,8 @@ project(iFreeRDP
 
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
-endif()
-
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_CURRENT_SOURCE_DIR}/../../cmake/)
-include(PreventInSourceBuilds)
+include(CommonConfigOptions)
 
 set(MODULE_NAME "iFreeRDP")
 set(MODULE_PREFIX "IFREERDP_CLIENT")

@@ -28,19 +28,10 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	set(CMAKE_C_STANDARD_REQUIRED ON)
 	set(CMAKE_C_EXTENSIONS ON)
 
-	include(CheckIPOSupported)
-	check_ipo_supported(RESULT supported OUTPUT error)
-	if (supported)
-		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-	endif()
-
-	option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
-	option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
-	option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
-	option(WITH_LIBRARY_VERSIONING "Use library version triplet" ON)
+	include(CommonConfigOptions)
+	include(ConfigOptions)
 
 	# Default to build shared libs
-	option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 	option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
 
 	if (EXPORT_ALL_SYMBOLS)
@@ -54,8 +45,6 @@ if (NOT FREERDP_UNIFIED_BUILD)
 			set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
 		endif()
 	endif()
-
-	include(MSVCRuntime)
 endif()
 
 set(DEFAULT_DEBUG_OPTION OFF)
@@ -127,14 +116,11 @@ include(CheckSymbolExists)
 include(CheckStructHasMember)
 include(TestBigEndian)
 
-include(PreventInSourceBuilds)
-
 # Check for cmake compatibility (enable/disable features)
 include(CheckCmakeCompat)
 include(FindFeature)
 include(FeatureSummary)
 include(CheckCCompilerFlag)
-include(GNUInstallDirsWrapper)
 include(InstallFreeRDPMan)
 include(SetFreeRDPCMakeInstallDir)
 include(CMakePackageConfigHelpers)
@@ -323,11 +309,6 @@ option(WITH_PKCS11 "encryption, certificate validation, hashing functions" ${PKC
 if (WITH_PKCS11)
 	find_package(Pkcs11 REQUIRED)
 	add_definitions("-DWITH_PKCS11")
-endif()
-
-# Default to release build type
-if(NOT CMAKE_BUILD_TYPE)
-   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
 endif()
 
 if(BUILD_SHARED_LIBS)
