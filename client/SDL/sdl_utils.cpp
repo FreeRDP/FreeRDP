@@ -102,6 +102,7 @@ const char* sdl_event_type_str(Uint32 type)
 		EV_CASE_STR(SDL_USEREVENT_AUTH_DIALOG);
 		EV_CASE_STR(SDL_USEREVENT_AUTH_RESULT);
 		EV_CASE_STR(SDL_USEREVENT_SCARD_DIALOG);
+		EV_CASE_STR(SDL_USEREVENT_RETRY_DIALOG);
 		EV_CASE_STR(SDL_USEREVENT_SCARD_RESULT);
 		EV_CASE_STR(SDL_USEREVENT_UPDATE);
 		EV_CASE_STR(SDL_USEREVENT_CREATE_WINDOWS);
@@ -180,6 +181,8 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 			event->code = va_arg(ap, Sint32);
 		}
 		break;
+		case SDL_USEREVENT_RETRY_DIALOG:
+			break;
 		case SDL_USEREVENT_SCARD_RESULT:
 		case SDL_USEREVENT_SHOW_RESULT:
 		case SDL_USEREVENT_CERT_RESULT:
@@ -274,4 +277,12 @@ bool WinPREvent::isSet() const
 HANDLE WinPREvent::handle() const
 {
 	return _handle;
+}
+
+bool sdl_push_quit()
+{
+	SDL_Event ev = { 0 };
+	ev.type = SDL_QUIT;
+	SDL_PushEvent(&ev);
+	return true;
 }

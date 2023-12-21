@@ -16,16 +16,15 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 	const std::vector<int> buttonids = { INPUT_BUTTON_ACCEPT, INPUT_BUTTON_CANCEL };
 	const std::vector<std::string> buttonlabels = { "accept", "cancel" };
 
-	TTF_Init();
-
 	const size_t widget_width = 300;
 	const size_t widget_heigth = 50;
 
 	const size_t total_width = widget_width + widget_width;
 	const size_t input_height = labels.size() * (widget_heigth + vpadding) + vpadding;
 	const size_t total_height = input_height + widget_heigth;
-	_window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-	                           total_width, total_height, 0);
+	_window = SDL_CreateWindow(
+	    title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, total_width, total_height,
+	    SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS);
 	if (_window == nullptr)
 	{
 		widget_log_error(-1, "SDL_CreateWindow");
@@ -44,9 +43,10 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 				_list.push_back(
 				    { _renderer, labels[x], initial[x], flags[x], x, widget_width, widget_heigth });
 
-			_buttons.populate(_renderer, buttonlabels, buttonids, static_cast<Sint32>(input_height),
-			                  static_cast<Sint32>(widget_width),
+			_buttons.populate(_renderer, buttonlabels, buttonids, total_width,
+			                  static_cast<Sint32>(input_height), static_cast<Sint32>(widget_width),
 			                  static_cast<Sint32>(widget_heigth));
+			_buttons.set_highlight(0);
 		}
 	}
 }
@@ -102,8 +102,6 @@ SdlInputWidgetList::~SdlInputWidgetList()
 	_buttons.clear();
 	SDL_DestroyRenderer(_renderer);
 	SDL_DestroyWindow(_window);
-
-	TTF_Quit();
 }
 
 bool SdlInputWidgetList::update(SDL_Renderer* renderer)
@@ -238,12 +236,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 							throw;
 					}
 
-					auto button = _buttons.get_selected(event.button);
-					if (button)
-					{
-						if (!button->highlight(_renderer))
-							throw;
-					}
+					_buttons.set_mouseover(event.button.x, event.button.y);
 				}
 				break;
 				case SDL_MOUSEBUTTONDOWN:

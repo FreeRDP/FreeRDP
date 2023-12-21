@@ -27,7 +27,7 @@
 #include "sdl_widget.hpp"
 #include "../sdl_utils.hpp"
 
-#include "font/opensans_variable_font.hpp"
+#include "res/sdl_resource_manager.hpp"
 
 #include <freerdp/log.h>
 
@@ -38,27 +38,125 @@ static const SDL_Color backgroundcolor = { 0x38, 0x36, 0x35, 0xff };
 static const Uint32 hpadding = 10;
 
 SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
-    : _font(nullptr), _rect(rect), _input(input)
+    : _rect(rect), _input(input)
 {
 	assert(renderer);
 
-	_ops = SDL_RWFromConstMem(font_buffer.data(), static_cast<int>(font_buffer.size()));
-	if (_ops)
-		_font = TTF_OpenFontRW(_ops, 0, 64);
+	auto ops = SDLResourceManager::get(SDLResourceManager::typeFonts(),
+	                                   "OpenSans-VariableFont_wdth,wght.ttf");
+	if (!ops)
+		widget_log_error(-1, "SDLResourceManager::get");
+	else
+	{
+		_font = TTF_OpenFontRW(ops, 1, 64);
+		if (!_font)
+			widget_log_error(-1, "TTF_OpenFontRW");
+	}
+}
+
+SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, SDL_RWops* ops) : _rect(rect)
+{
+	if (ops)
+	{
+		_image = IMG_LoadTexture_RW(renderer, ops, 1);
+		if (!_image)
+			widget_log_error(-1, "IMG_LoadTextureTyped_RW");
+	}
 }
 
 SdlWidget::SdlWidget(SdlWidget&& other) noexcept
-    : _font(std::move(other._font)), _ops(other._ops), _rect(std::move(other._rect))
+    : _font(std::move(other._font)), _image(other._image), _rect(std::move(other._rect)),
+      _input(other._input), _wrap(other._wrap), _text_width(other._text_width)
 {
 	other._font = nullptr;
-	other._ops = nullptr;
+	other._image = nullptr;
+}
+
+SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& text,
+                                    SDL_Color fgcolor, SDL_Rect& src, SDL_Rect& dst)
+{
+	auto surface = TTF_RenderUTF8_Blended(_font, text.c_str(), fgcolor);
+	if (!surface)
+	{
+		widget_log_error(-1, "TTF_RenderText_Blended");
+		return nullptr;
+	}
+
+	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+	if (!texture)
+	{
+		widget_log_error(-1, "SDL_CreateTextureFromSurface");
+		return nullptr;
+	}
+
+	TTF_SizeUTF8(_font, text.c_str(), &src.w, &src.h);
+
+	/* Do some magic:
+	 * - Add padding before and after text
+	 * - if text is too long only show the last elements
+	 * - if text is too short only update used space
+	 */
+	dst = _rect;
+	dst.x += hpadding;
+	dst.w -= 2 * hpadding;
+	const float scale = static_cast<float>(dst.h) / static_cast<float>(src.h);
+	const float sws = static_cast<float>(src.w) * scale;
+	const float dws = static_cast<float>(dst.w) / scale;
+	if (static_cast<float>(dst.w) > sws)
+		dst.w = static_cast<int>(sws);
+	if (static_cast<float>(src.w) > dws)
+	{
+		src.x = src.w - static_cast<int>(dws);
+		src.w = static_cast<int>(dws);
+	}
+	return texture;
+}
+
+SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::string& text,
+                                            SDL_Color fgcolor, SDL_Rect& src, SDL_Rect& dst)
+{
+	Sint32 w = 0;
+	Sint32 h = 0;
+	TTF_SizeUTF8(_font, " ", &w, &h);
+	auto surface = TTF_RenderUTF8_Blended_Wrapped(_font, text.c_str(), fgcolor, _text_width);
+	if (!surface)
+	{
+		widget_log_error(-1, "TTF_RenderText_Blended");
+		return nullptr;
+	}
+
+	src.w = surface->w;
+	src.h = surface->h;
+
+	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
+	SDL_FreeSurface(surface);
+	if (!texture)
+	{
+		widget_log_error(-1, "SDL_CreateTextureFromSurface");
+		return nullptr;
+	}
+
+	/* Do some magic:
+	 * - Add padding before and after text
+	 * - if text is too long only show the last elements
+	 * - if text is too short only update used space
+	 */
+	dst = _rect;
+	dst.x += hpadding;
+	dst.w -= 2 * hpadding;
+	const float scale = static_cast<float>(src.h) / static_cast<float>(src.w);
+	auto dh = src.h * scale;
+	if (dh < dst.h)
+		dst.h = dh;
+
+	return texture;
 }
 
 SdlWidget::~SdlWidget()
 {
 	TTF_CloseFont(_font);
-	if (_ops)
-		SDL_RWclose(_ops);
+	SDL_DestroyTexture(_image);
 }
 
 bool SdlWidget::error_ex(Uint32 res, const char* what, const char* file, size_t line,
@@ -111,6 +209,18 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 	return update_text(renderer, text, fgcolor);
 }
 
+bool SdlWidget::wrap() const
+{
+	return _wrap;
+}
+
+bool SdlWidget::set_wrap(bool wrap, size_t width)
+{
+	_wrap = wrap;
+	_text_width = width;
+	return _wrap;
+}
+
 const SDL_Rect& SdlWidget::rect() const
 {
 	return _rect;
@@ -122,38 +232,28 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 	if (text.empty())
 		return true;
 
-	auto surface = TTF_RenderUTF8_Blended(_font, text.c_str(), fgcolor);
-	if (!surface)
-		return !widget_log_error(-1, "TTF_RenderText_Blended");
-
-	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_FreeSurface(surface);
-	if (!texture)
-		return !widget_log_error(-1, "SDL_CreateTextureFromSurface");
-
 	SDL_Rect src{};
-	TTF_SizeUTF8(_font, text.c_str(), &src.w, &src.h);
+	SDL_Rect dst{};
 
-	/* Do some magic:
-	 * - Add padding before and after text
-	 * - if text is too long only show the last elements
-	 * - if text is too short only update used space
-	 */
-	auto dst = _rect;
-	dst.x += hpadding;
-	dst.w -= 2 * hpadding;
-	const float scale = static_cast<float>(dst.h) / static_cast<float>(src.h);
-	const float sws = static_cast<float>(src.w) * scale;
-	const float dws = static_cast<float>(dst.w) / scale;
-	if (static_cast<float>(dst.w) > sws)
-		dst.w = static_cast<int>(sws);
-	if (static_cast<float>(src.w) > dws)
+	SDL_Texture* texture = nullptr;
+	if (_image)
 	{
-		src.x = src.w - static_cast<int>(dws);
-		src.w = static_cast<int>(dws);
+		texture = _image;
+		dst = _rect;
+		auto rc = SDL_QueryTexture(_image, NULL, NULL, &src.w, &src.h);
+		if (rc < 0)
+			widget_log_error(rc, "SDL_QueryTexture");
 	}
+	else if (_wrap)
+		texture = render_text_wrapped(renderer, text, fgcolor, src, dst);
+	else
+		texture = render_text(renderer, text, fgcolor, src, dst);
+	if (!texture)
+		return false;
+
 	const int rc = SDL_RenderCopy(renderer, texture, &src, &dst);
-	SDL_DestroyTexture(texture);
+	if (!_image)
+		SDL_DestroyTexture(texture);
 	if (rc < 0)
 		return !widget_log_error(rc, "SDL_RenderCopy");
 	return true;

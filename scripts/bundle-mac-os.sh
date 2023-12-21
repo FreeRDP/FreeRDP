@@ -130,6 +130,7 @@ then
 	git clone --depth 1 -b v1.7.16 https://github.com/DaveGamble/cJSON.git
 	git clone --depth 1 -b release-2.28.1 https://github.com/libsdl-org/SDL.git
 	git clone --depth 1 --shallow-submodules --recurse-submodules -b release-2.20.2 https://github.com/libsdl-org/SDL_ttf.git
+	git clone --depth 1 --shallow-submodules --recurse-submodules -b release-2.8.1 /github.com/libsdl-org/SDL_image.git
 	git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.26 https://github.com/libusb/libusb-cmake.git
 	git clone --depth 1 -b n6.0 https://github.com/FFmpeg/FFmpeg.git
 	git clone --depth 1 -b v2.4.0 https://github.com/cisco/openh264.git
@@ -183,6 +184,10 @@ cmake -GNinja -BSDL_ttf -S$SRC/SDL_ttf $CMAKE_ARGS -DSDL2TTF_HARFBUZZ=ON -DSDL2T
     -DFT_DISABLE_ZLIB=OFF -DSDL2TTF_SAMPLES=OFF
 cmake --build SDL_ttf
 cmake --install SDL_ttf
+
+cmake -GNinja -BSDL_image -S$SRC/SDL_image $CMAKE_ARGS -DSDL2IMAGE_SAMPLES=OFF -DSDL2IMAGE_DEPS_SHARED=OFF
+cmake --build SDL_image
+cmake --install SDL_image
 
 cmake -GNinja -Blibusb-cmake -S$SRC/libusb-cmake $CMAKE_ARGS -DLIBUSB_BUILD_EXAMPLES=OFF -DLIBUSB_BUILD_TESTING=OFF \
 	-DLIBUSB_ENABLE_DEBUG_LOGGING=OFF -DLIBUSB_BUILD_SHARED_LIBS=ON

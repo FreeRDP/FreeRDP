@@ -1314,7 +1314,8 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 				return FALSE;
 				/* Automatically activate GFX and RFX codec support */
 #ifdef WITH_GFX_H264
-			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE) ||
+			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, TRUE) ||
 			    !freerdp_settings_set_bool(settings, FreeRDP_GfxH264, TRUE))
 				return FALSE;
 #endif
@@ -2196,6 +2197,8 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 			if ((rc == CHANNEL_RC_OK) && codecSelected)
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, GfxAVC444))
+					rc = COMMAND_LINE_ERROR;
+				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, GfxAVC444))
 					rc = COMMAND_LINE_ERROR;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_GfxH264, GfxH264))
 					rc = COMMAND_LINE_ERROR;

@@ -69,6 +69,7 @@ enum
 	SDL_USEREVENT_SHOW_DIALOG,
 	SDL_USEREVENT_AUTH_DIALOG,
 	SDL_USEREVENT_SCARD_DIALOG,
+	SDL_USEREVENT_RETRY_DIALOG,
 
 	SDL_USEREVENT_CERT_RESULT,
 	SDL_USEREVENT_SHOW_RESULT,
@@ -88,6 +89,8 @@ typedef struct
 } SDL_UserAuthArg;
 
 BOOL sdl_push_user_event(Uint32 type, ...);
+
+bool sdl_push_quit();
 
 const char* sdl_event_type_str(Uint32 type);
 const char* sdl_error_string(Uint32 res);

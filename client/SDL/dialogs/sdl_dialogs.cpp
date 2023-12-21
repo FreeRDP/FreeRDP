@@ -26,6 +26,7 @@
 
 #include <SDL.h>
 
+#include "../sdl_freerdp.hpp"
 #include "sdl_dialogs.hpp"
 #include "sdl_input.hpp"
 #include "sdl_input_widgets.hpp"
@@ -89,6 +90,8 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 {
 	SDL_Event event = { 0 };
 	BOOL res = FALSE;
+
+	SDLConnectionDialogHider hider(instance);
 
 	const char* target = freerdp_settings_get_server_name(instance->context->settings);
 	switch (reason)
@@ -157,6 +160,11 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 {
 	BOOL res = FALSE;
 
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(cert_list);
+	WINPR_ASSERT(choice);
+
+	SDLConnectionDialogHider hider(instance);
 	std::vector<std::string> strlist;
 	std::vector<const char*> list;
 	for (DWORD i = 0; i < count; i++)
@@ -178,7 +186,7 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 		free(reader);
 		free(container_name);
 
-		auto m = strlist.back();
+		auto& m = strlist.back();
 		list.push_back(m.c_str());
 	}
 
@@ -199,6 +207,59 @@ fail:
 	return res;
 }
 
+SSIZE_T sdl_retry_dialog(freerdp* instance, const char* what, size_t current, void* userarg)
+{
+	WINPR_ASSERT(instance);
+	WINPR_ASSERT(instance->context);
+	WINPR_ASSERT(what);
+
+	auto sdl = get_context(instance->context);
+	std::lock_guard<CriticalSection> lock(sdl->critical);
+	WINPR_ASSERT(sdl->connection_dialog);
+
+	sdl->connection_dialog->setTitle("Retry connection to %s",
+	                                 freerdp_settings_get_server_name(instance->context->settings));
+
+	if ((strcmp(what, "arm-transport") != 0) && (strcmp(what, "connection") != 0))
+	{
+		sdl->connection_dialog->showError("Unknown module %s, aborting", what);
+		return -1;
+	}
+
+	if (current == 0)
+	{
+		if (strcmp(what, "arm-transport") == 0)
+			sdl->connection_dialog->showWarn("[%s] Starting your VM. It may take up to 5 minutes",
+			                                 what);
+	}
+
+	auto settings = instance->context->settings;
+	const BOOL enabled = freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
+
+	if (!enabled)
+	{
+		sdl->connection_dialog->showError(
+		    "Automatic reconnection disabled, terminating. Try to connect again later");
+		return -1;
+	}
+
+	const size_t max = freerdp_settings_get_uint32(settings, FreeRDP_AutoReconnectMaxRetries);
+	const size_t delay = freerdp_settings_get_uint32(settings, FreeRDP_TcpConnectTimeout);
+	if (current >= max)
+	{
+		sdl->connection_dialog->showError(
+		    "[%s] retries exceeded. Your VM failed to start. Try again later or contact your "
+		    "tech support for help if this keeps happening.",
+		    what);
+		return -1;
+	}
+
+	sdl->connection_dialog->showInfo("[%s] retry %" PRIuz "/%" PRIuz ", delaying %" PRIuz
+	                                 "ms before next attempt",
+	                                 what, current, max, delay);
+	return delay;
+}
+
 BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
                                  BOOL isConsentMandatory, size_t length, const WCHAR* wmessage)
 {
@@ -216,6 +277,7 @@ BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayM
 		flags = SHOW_DIALOG_TIMED_ACCEPT;
 	char* message = ConvertWCharNToUtf8Alloc(wmessage, length, nullptr);
 
+	SDLConnectionDialogHider hider(instance);
 	const int rc = sdl_show_dialog(instance->context, title, message, flags);
 	free(title);
 	free(message);
@@ -235,6 +297,8 @@ int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	if (type == LOGON_MSG_SESSION_CONTINUE)
 		return 0;
 
+	SDLConnectionDialogHider hider(instance);
+
 	char* title = nullptr;
 	size_t tlen = 0;
 	winpr_asprintf(&title, &tlen, "[%s] info",
@@ -253,6 +317,7 @@ int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 static DWORD sdl_show_ceritifcate_dialog(rdpContext* context, const char* title,
                                          const char* message)
 {
+	SDLConnectionDialogHider hider(context);
 	if (!sdl_push_user_event(SDL_USEREVENT_CERT_DIALOG, title, message))
 		return 0;
 
@@ -274,6 +339,7 @@ DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UIN
 	WINPR_ASSERT(instance->context);
 	WINPR_ASSERT(instance->context->settings);
 
+	SDLConnectionDialogHider hider(instance);
 	/* Newer versions of FreeRDP allow exposing the whole PEM by setting
 	 * FreeRDP_CertificateCallbackPreferPEM to TRUE
 	 */
@@ -390,6 +456,7 @@ DWORD sdl_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port
 	    "Please look at the OpenSSL documentation on how to add a private CA to the store.\n",
 	    common_name, subject, issuer, fp_str);
 
+	SDLConnectionDialogHider hider(instance);
 	const DWORD rc = sdl_show_ceritifcate_dialog(instance->context, title, message);
 	free(fp_str);
 	free(title);

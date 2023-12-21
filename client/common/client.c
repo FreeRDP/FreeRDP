@@ -1163,14 +1163,17 @@ SSIZE_T client_common_retry_dialog(freerdp* instance, const char* what, size_t c
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(what);
 
-	if (strcmp(what, "arm-transport") != 0)
+	if ((strcmp(what, "arm-transport") != 0) && (strcmp(what, "connection") != 0))
 	{
 		WLog_ERR(TAG, "Unknown module %s, aborting", what);
 		return -1;
 	}
 
 	if (current == 0)
-		WLog_INFO(TAG, "[%s] Starting your VM. It may take up to 5 minutes", what);
+	{
+		if (strcmp(what, "arm-transport") == 0)
+			WLog_INFO(TAG, "[%s] Starting your VM. It may take up to 5 minutes", what);
+	}
 
 	const rdpSettings* settings = instance->context->settings;
 	const BOOL enabled = freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled);
@@ -1262,6 +1265,8 @@ BOOL client_auto_reconnect_ex(freerdp* instance, BOOL (*window_events)(freerdp* 
 
 		/* Attempt the next reconnect */
 		WLog_INFO(TAG, "Attempting reconnect (%" PRIu32 " of %" PRIu32 ")", numRetries, maxRetries);
+
+		IFCALL(instance->RetryDialog, instance, "connection", numRetries, NULL);
 
 		if (freerdp_reconnect(instance))
 			return TRUE;
