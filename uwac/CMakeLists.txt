@@ -54,6 +54,7 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	endif()
 endif()
 
+option(UWAC_FORCE_STATIC_BUILD "Force UWAC to be build as static libary" OFF)
 option(UWAC_HAVE_PIXMAN_REGION "Use PIXMAN or FreeRDP for region calculations" "NOT FREERDP_UNIFIED_BUILD")
 
 # Include our extra modules
@@ -68,6 +69,13 @@ include(GNUInstallDirsWrapper)
 
 if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
+endif()
+
+if (UWAC_FORCE_STATIC_BUILD)
+	set(BUILD_SHARED_LIBS OFF)
+else()
+	include(SetFreeRDPCMakeInstallDir)
+	include(CMakePackageConfigHelpers)
 endif()
 
 if (NOT IOS)
