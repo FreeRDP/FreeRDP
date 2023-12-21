@@ -81,7 +81,7 @@ include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 include (SetFreeRDPCMakeInstallDir)
 
-option(RDTK_FORCE_STATIC_BUILD "Force RDTK to be build as static libary" OFF)
+option(RDTK_FORCE_STATIC_BUILD "Force RDTK to be build as static libary (recommended)" OFF)
 if (RDTK_FORCE_STATIC_BUILD)
 	set(BUILD_SHARED_LIBS OFF)
 endif()
