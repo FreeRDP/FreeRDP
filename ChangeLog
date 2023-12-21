@@ -1,3 +1,46 @@
+# 2023-12-22 Version 3.1.0
+
+A new 3.1.0 minor release for the new 3.0.0 series.
+This contains bugfixes, adds (better) support for libressl and mbedtls and
+brings a bunch of improvements for the SDL client.
+
+This comes with a price though, we now (optionally) require SDL_image if you
+want to build the sdl-client
+
+Since there are multiple new features, some new files (man pages) and new
+optional dependencies we´ve directly incremented the minor version.
+
+New CMake options:
+* SDL_USE_COMPILED_RESOURCES (default ON) builds fonts and images into SDL
+  client. Set to OFF to install these resources as files. (was already part of
+  3.0.0, but worth mentioning here)
+* WITH_SDL_IMAGE_DIALOGS (default OFF) Show some nice icons for SDL client
+  connection dialogs. Requires SDL_image for build.
+* WITH_BINARY_VERSIONING (default OFF) Similar as for libraries the binaries,
+  manpages and resource locations created by FreeRDP project are postfixed
+  with the API version. Recommended if packagers want to install the package
+  alongside FreeRDP 2 without conflicts.
+* RDTK_FORCE_STATIC_BUILD (default OFF) Build and link RDTK statically into
+  shadow server. Recommended for packagers as this library is not really used
+  outside of FreeRDP-shadow.
+* UWAC_FORCE_STATIC_BUILD (default OFF) Build and link UWAC statically into
+  wlfreerdp. Recommended for packagers as this library is not really used
+  outside of wlfreerdp.
+
+Noteworthy changes:
+* Fix a nasty bug with relative mouse movement (#9677)
+* LibreSSL support enhancements (#9691, #9670)
+* mbedTLS support enhancements (#9662)
+* Improve building on mac OS (#9641)
+* New and improved manpages (#9690, #9650)
+* Unify CMake common options, add (optional) binary versioning and allow
+  building rdtk and uwac as static dependencies  (#9695)
+* SDL client improvements (#9693, #9657, #9659, #9683, #9680, #9657, #9664,
+  #9656)
+
+For a complete and detailed change log since the last release run:
+git log 3.1.0...3.0.0
+
 # 2023-12-12 Version 3.0.0
 
 Final 3.0.0 release just a little over two weeks after the last 3.0.0-rc0.
