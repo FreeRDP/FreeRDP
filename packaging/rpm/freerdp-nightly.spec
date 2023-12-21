@@ -136,6 +136,11 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
         -DWITH_PCSC=ON \
         -DWITH_JPEG=ON \
         -DWITH_OPUS=ON \
+        -DSDL_USE_COMPILED_RESOURCES=OFF \
+        -DWITH_SDL_IMAGE_DIALOGS=ON \
+        -DWITH_BINARY_VERSIONING=ON \
+        -DRDTK_FORCE_STATIC_BUILD=ON \
+        -DUWAC_FORCE_STATIC_BUILD=ON \
 %if 0%{?fedora} >= 36 || 0%{?rhel} >= 9 || 0%{?suse_version}
         -DWITH_FFMPEG=ON \
         -DWITH_DSP_FFMPEG=ON \
@@ -190,15 +195,17 @@ export NO_BRP_CHECK_RPATH true
 %dir %{INSTALL_PREFIX}/share/man/
 %dir %{INSTALL_PREFIX}/share/man/man1
 %dir %{INSTALL_PREFIX}/share/man/man7
+%dir %{INSTALL_PREFIX}/share/FreeRDP3
+%dir %{INSTALL_PREFIX}/share/FreeRDP3/fonts
+%dir %{INSTALL_PREFIX}/share/FreeRDP3/images
 %dir %{INSTALL_PREFIX}/%{_lib}/freerdp3/proxy/
 %{INSTALL_PREFIX}/%{_lib}/*.so.*
 %{INSTALL_PREFIX}/%{_lib}/freerdp3/proxy/*.so
 %{INSTALL_PREFIX}/bin/
-%{INSTALL_PREFIX}/share/man/man1/xfreerdp.1*
-%{INSTALL_PREFIX}/share/man/man1/freerdp-shadow-cli.1*
-%{INSTALL_PREFIX}/share/man/man1/winpr-makecert.1*
-%{INSTALL_PREFIX}/share/man/man1/winpr-hash.1*
-%{INSTALL_PREFIX}/share/man/man7/wlog.7*
+%{INSTALL_PREFIX}/share/man/man1/
+%{INSTALL_PREFIX}/share/man/man7/
+%{INSTALL_PREFIX}/share/FreeRDP3/fonts/
+%{INSTALL_PREFIX}/share/FreeRDP3/images/
 
 %files devel
 %defattr(-,root,root)
@@ -209,11 +216,12 @@ export NO_BRP_CHECK_RPATH true
 
 %post -p /sbin/ldconfig
 
-
 %postun -p /sbin/ldconfig
 
-
 %changelog
+* Thu Dec 21 2023 FreeRDP Team <team@freerdp.com> - 3.0.0-2
+- Add new manpages
+- Use new CMake options
 * Wed Dec 20 2023 FreeRDP Team <team@freerdp.com> - 3.0.0-2
 - Exclude libuwac and librdtk
 - Allow ffmpeg-devel or ffmpeg-free-devel as dependency
