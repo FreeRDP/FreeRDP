@@ -36,7 +36,13 @@ endif()
 
 set(APP_NAME "freerdp-proxy")
 add_executable(${APP_NAME}
-    ${PROXY_APP_SRCS})
+    ${PROXY_APP_SRCS}
+)
+
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${APP_NAME} PROPERTIES OUTPUT_NAME "${APP_NAME}${FREERDP_API_VERSION}${CMAKE_EXECUTABLE_SUFFIX}")
+endif()
+
 target_link_libraries(${APP_NAME} ${MODULE_NAME})
 install(TARGETS ${APP_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
 if (WITH_DEBUG_SYMBOLS AND MSVC)

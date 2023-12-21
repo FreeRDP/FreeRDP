@@ -26,6 +26,9 @@ set(SRCS
 	rdtk_x11.c)
 
 add_executable(${MODULE_NAME} ${SRCS})
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${RDTK_API_VERSION}${CMAKE_EXECUTABLE_SUFFIX}")
+endif()
 
 set(LIBS rdtk)
 

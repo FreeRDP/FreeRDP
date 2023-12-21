@@ -202,6 +202,10 @@ endif()
 
 add_executable(${MODULE_NAME} ${SRCS})
 
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${FREERDP_API_VERSION}${CMAKE_EXECUTABLE_SUFFIX}")
+endif()
+
 list(APPEND LIBS freerdp-shadow-subsystem freerdp-shadow freerdp winpr)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})

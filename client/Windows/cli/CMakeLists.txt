@@ -42,6 +42,9 @@ if (WIN32)
 endif()
 add_executable(${MODULE_NAME} ${WIN32_GUI_FLAG} ${${MODULE_PREFIX}_SRCS})
 
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${PROJECT_VERSION_MAJOR}${CMAKE_EXECUTABLE_SUFFIX}")
+endif()
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} wfreerdp-client)
 
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
