@@ -113,6 +113,9 @@ else()
 		cli/xfreerdp.c xfreerdp.h
 	)
 	add_executable(${PROJECT_NAME} ${SRCS})
+	if (WITH_BINARY_VERSIONING)
+		set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}${PROJECT_VERSION_MAJOR}${CMAKE_EXECUTABLE_SUFFIX}")
+	endif()
 	include_directories(..)
 endif()
 

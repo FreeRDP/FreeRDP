@@ -23,7 +23,13 @@ set(SRCS
 )
 
 add_executable(${MODULE_NAME} ${SRCS})
-set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "xfreerdp" RUNTIME_OUTPUT_DIRECTORY "..")
+
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "xfreerdp${PROJECT_VERSION_MAJOR}${CMAKE_EXECUTABLE_SUFFIX}")
+else()
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "xfreerdp${CMAKE_EXECUTABLE_SUFFIX}")
+endif()
+set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "..")
 
 list(APPEND LIBS
     xfreerdp-client freerdp-client

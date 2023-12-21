@@ -89,6 +89,9 @@ if(WITH_SERVER_INTERFACE)
 else()
 	set(${MODULE_PREFIX}_SRCS ${${MODULE_PREFIX}_SRCS} cli/wfreerdp.c cli/wfreerdp.h)
 	add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+	if (WITH_BINARY_VERSIONING)
+		set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${FREERDP_API_VERSION}${CMAKE_EXECUTABLE_SUFFIX}")
+	endif()
 endif()
 
 
