@@ -52,6 +52,7 @@
     {
       "name": "freerdp",
       "buildsystem": "cmake-ninja",
+      "builddir": true,
       "cleanup": [
       ],
       "config-opts": [
@@ -65,6 +66,7 @@
         "-DWITH_MANPAGES:BOOL=OFF",
         "-DWITH_KRB5:BOOL=ON",
         "-DWITH_PCSC:BOOL=ON",
+        "-DWITH_SDL_IMAGE_DIALOGS:BOOL=ON",
         "-DWITH_INTERNAL_MD4:BOOL=ON",
         "-DWITH_INTERNAL_MD5:BOOL=ON",
         "-DWITH_INTERNAL_RC4:BOOL=ON",
