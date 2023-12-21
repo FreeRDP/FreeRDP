@@ -1111,9 +1111,11 @@ static BOOL sdl_post_connect(freerdp* instance)
 	auto sdl = get_context(context);
 
 	// Retry was successful, discard dialog
-	std::lock_guard<CriticalSection> lock(sdl->critical);
-	if (sdl->connection_dialog)
-		sdl->connection_dialog->hide();
+	{
+		std::lock_guard<CriticalSection> lock(sdl->critical);
+		if (sdl->connection_dialog)
+			sdl->connection_dialog->hide();
+	}
 
 	if (freerdp_settings_get_bool(context->settings, FreeRDP_AuthenticationOnly))
 	{

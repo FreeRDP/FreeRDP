@@ -50,7 +50,12 @@ macro(find_sdl_component name)
 endmacro()
 
 find_sdl_component(SDL2_ttf)
-find_sdl_component(SDL2_image)
+
+option(WITH_SDL_IMAGE_DIALOGS "Build with SDL_image support (recommended)" OFF)
+if (WITH_SDL_IMAGE_DIALOGS)
+    find_sdl_component(SDL2_image)
+    add_definitions(-DWITH_SDL_IMAGE_DIALOGS)
+endif()
 
 add_subdirectory(res)
 

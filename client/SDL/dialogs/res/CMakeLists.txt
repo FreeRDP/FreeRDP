@@ -26,7 +26,7 @@ macro(convert_to_bin FILE FILE_TYPE)
     set(FILE_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin)
     set(FILE_BYPRODUCTS ${FILE_BIN_DIR}/${TARGET_NAME}.hpp ${FILE_BIN_DIR}/${TARGET_NAME}.cpp)
 
-    list(APPEND SRCS
+    list(APPEND FACTORY_SRCS
         ${FILE_BYPRODUCTS}
     )
 
@@ -49,9 +49,12 @@ if (SDL_USE_COMPILED_RESOURCES)
     )
 
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-    foreach(FILE ${RES_SVG_FILES})
-        convert_to_bin("${FILE}" "images")
-    endforeach()
+
+    if (WITH_SDL_IMAGE_DIALOGS)
+        foreach(FILE ${RES_SVG_FILES})
+            convert_to_bin("${FILE}" "images")
+        endforeach()
+    endif()
 
     foreach(FILE ${RES_FONT_FILES})
         convert_to_bin("${FILE}" "fonts")
@@ -61,10 +64,12 @@ else()
     set(SDL_RESOURCE_ROOT ${CMAKE_INSTALL_FULL_DATAROOTDIR}/FreeRDP)
     add_definitions(-DSDL_RESOURCE_ROOT="${SDL_RESOURCE_ROOT}")
 
-    install(
-        FILES ${RES_SVG_FILES}
-        DESTINATION ${SDL_RESOURCE_ROOT}/images
-    )
+    if (WITH_SDL_IMAGE_DIALOGS)
+        install(
+            FILES ${RES_SVG_FILES}
+            DESTINATION ${SDL_RESOURCE_ROOT}/images
+        )
+    endif()
 
     install(
         FILES ${RES_FONT_FILES}
@@ -72,13 +77,9 @@ else()
     )
 endif()
 
-# C++ static initialization order is dependent on which file is added
-# first. We need the reverse of what we created here (the implementation
-# classes should be last, the factory first)
-list(REVERSE SRCS)
-
 add_library(sdl_client_res OBJECT
     ${RES_FILES}
     ${SRCS}
+    ${FACTORY_SRCS}
 )
 set_property(TARGET sdl_client_res PROPERTY POSITION_INDEPENDENT_CODE ON)

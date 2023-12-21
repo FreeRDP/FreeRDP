@@ -31,6 +31,10 @@
 
 #include <freerdp/log.h>
 
+#if defined(WITH_SDL_IMAGE_DIALOGS)
+#include <SDL_image.h>
+#endif
+
 #define TAG CLIENT_TAG("SDL.widget")
 
 static const SDL_Color backgroundcolor = { 0x38, 0x36, 0x35, 0xff };
@@ -54,6 +58,7 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
 	}
 }
 
+#if defined(WITH_SDL_IMAGE_DIALOGS)
 SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, SDL_RWops* ops) : _rect(rect)
 {
 	if (ops)
@@ -63,6 +68,7 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, SDL_RWops* op
 			widget_log_error(-1, "IMG_LoadTextureTyped_RW");
 	}
 }
+#endif
 
 SdlWidget::SdlWidget(SdlWidget&& other) noexcept
     : _font(std::move(other._font)), _image(other._image), _rect(std::move(other._rect)),
