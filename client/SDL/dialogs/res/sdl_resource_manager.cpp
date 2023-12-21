@@ -27,18 +27,16 @@ namespace fs = std::experimental::filesystem;
 #error Could not find system header "<filesystem>" or "<experimental/filesystem>"
 #endif
 
-std::map<std::string, std::vector<unsigned char>> SDLResourceManager::_resources;
-
 SDL_RWops* SDLResourceManager::get(const std::string& type, const std::string& id)
 {
 	std::string uuid = type + "/" + id;
 
 #if defined(SDL_USE_COMPILED_RESOURCES)
-	auto val = _resources.find(uuid);
-	if (val == _resources.end())
+	auto val = resources().find(uuid);
+	if (val == resources().end())
 		return nullptr;
 
-	auto& v = _resources[uuid];
+	auto& v = resources()[uuid];
 	return SDL_RWFromConstMem(v.data(), v.size());
 #else
 	fs::path path(SDL_RESOURCE_ROOT);
@@ -69,5 +67,12 @@ void SDLResourceManager::insert(const std::string& type, const std::string& id,
                                 const std::vector<unsigned char>& data)
 {
 	std::string uuid = type + "/" + id;
-	_resources.emplace(uuid, data);
+	resources().emplace(uuid, data);
+}
+
+std::map<std::string, std::vector<unsigned char>>& SDLResourceManager::resources()
+{
+
+	static std::map<std::string, std::vector<unsigned char>> resources = {};
+	return resources;
 }
