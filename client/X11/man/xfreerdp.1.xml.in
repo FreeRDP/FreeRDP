@@ -17,13 +17,13 @@ PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 	</author>
 	</refentryinfo>
 	<refmeta>
-	<refentrytitle>xfreerdp</refentrytitle>
+	<refentrytitle>@MANPAGE_NAME@</refentrytitle>
 	<manvolnum>1</manvolnum>
 	<refmiscinfo class="source">freerdp</refmiscinfo>
-	<refmiscinfo class="manual">xfreerdp</refmiscinfo>
+	<refmiscinfo class="manual">@MANPAGE_NAME@</refmiscinfo>
 	</refmeta>
 	<refnamediv>
-	<refname><application>xfreerdp</application></refname>
+	<refname><application>@MANPAGE_NAME@</application></refname>
 	<refpurpose>FreeRDP X11 client</refpurpose>
 	</refnamediv>
 	<refsynopsisdiv>
@@ -31,7 +31,7 @@ PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 		<date>@MAN_TODAY@</date>
 	</refsynopsisdivinfo>
 	<para>
-		<command>xfreerdp</command> [file] [options] [/v:server[:port]]
+		<command>@MANPAGE_NAME@</command> [file] [options] [/v:server[:port]]
 	</para>
 	</refsynopsisdiv>
 	<refsect1>
@@ -40,9 +40,10 @@ PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 	</refsect1info>
 	<title>DESCRIPTION</title>
 	<para>
-		<command>xfreerdp</command> is an X11 Remote Desktop Protocol (RDP)
+		<command>@MANPAGE_NAME@</command> is an X11 Remote Desktop Protocol (RDP)
 		client which is part of the FreeRDP project. An RDP server is built-in
-		to many editions of Windows. Alternative servers included xrdp and VRDP (VirtualBox).
+		to many editions of Windows. Alternative servers included ogon, gnome-remote-desktop,
+		xrdp and VRDP (VirtualBox).
 	</para>
 	</refsect1>
 
