@@ -31,20 +31,8 @@ if (NOT FREERDP_UNIFIED_BUILD)
 	set(CMAKE_C_STANDARD_REQUIRED ON)
 	set(CMAKE_C_EXTENSIONS ON)
 
-	include(CheckIPOSupported)
-	check_ipo_supported(RESULT supported OUTPUT error)
-	if (supported)
-		set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-	endif()
-
-		option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
-		option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
-		option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
-
-	option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 	option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
 	option(BUILD_TESTING "Build library unit tests" ON)
-	option(WITH_LIBRARY_VERSIONING "Use library version triplet" ON)
 
 	if(CMAKE_COMPILER_IS_GNUCC)
 		if(NOT EXPORT_ALL_SYMBOLS)
@@ -59,17 +47,10 @@ option(UWAC_HAVE_PIXMAN_REGION "Use PIXMAN or FreeRDP for region calculations" "
 
 # Include our extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/)
-include(PreventInSourceBuilds)
+include(CommonConfigOptions)
 
 # Check for cmake compatibility (enable/disable features)
 include(FindFeature)
-include(SetFreeRDPCMakeInstallDir)
-include(CMakePackageConfigHelpers)
-include(GNUInstallDirsWrapper)
-
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
-endif()
 
 if (UWAC_FORCE_STATIC_BUILD)
 	set(BUILD_SHARED_LIBS OFF)

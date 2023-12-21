@@ -11,7 +11,7 @@ project(MacFreeRDP
 message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/)
-include(PreventInSourceBuilds)
+include(CommonConfigOptions)
 
 # Import libraries
 find_library(FOUNDATION_LIBRARY Foundation REQUIRED)
