@@ -37,11 +37,10 @@ class SDLResourceManager
 	                   const std::vector<unsigned char>& data);
 
   private:
-	static std::map<std::string, std::vector<unsigned char>> _resources;
-
-  private:
 	SDLResourceManager() = delete;
 	SDLResourceManager(const SDLResourceManager& other) = delete;
 	SDLResourceManager(const SDLResourceManager&& other) = delete;
 	~SDLResourceManager() = delete;
+
+	static std::map<std::string, std::vector<unsigned char>>& resources();
 };
