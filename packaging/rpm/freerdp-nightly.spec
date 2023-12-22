@@ -201,11 +201,11 @@ export NO_BRP_CHECK_RPATH true
 %dir %{INSTALL_PREFIX}/%{_lib}/freerdp3/proxy/
 %{INSTALL_PREFIX}/%{_lib}/*.so.*
 %{INSTALL_PREFIX}/%{_lib}/freerdp3/proxy/*.so
-%{INSTALL_PREFIX}/bin/
-%{INSTALL_PREFIX}/share/man/man1/
-%{INSTALL_PREFIX}/share/man/man7/
-%{INSTALL_PREFIX}/share/FreeRDP3/fonts/
-%{INSTALL_PREFIX}/share/FreeRDP3/images/
+%{INSTALL_PREFIX}/bin/*
+%{INSTALL_PREFIX}/share/man/man1/*
+%{INSTALL_PREFIX}/share/man/man7/*
+%{INSTALL_PREFIX}/share/FreeRDP3/fonts/*
+%{INSTALL_PREFIX}/share/FreeRDP3/images/*
 
 %files devel
 %defattr(-,root,root)
