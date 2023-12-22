@@ -16,6 +16,7 @@
 # limitations under the License.
 cmake_minimum_required(VERSION 3.13)
 
+cmake_policy(SET CMP0091 NEW)
 if (NOT FREERDP_DEFAULT_PROJECT_VERSION)
 	set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
 endif()
