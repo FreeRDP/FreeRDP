@@ -49,7 +49,7 @@ include(ConfigureRPATH)
 option(WITH_DEBUG_SDL_EVENTS "[dangerous, not for release builds!] Debug SDL events" OFF)
 option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL keyboard events" OFF)
 option(WITH_WIN_CONSOLE "Build ${PROJECT_NAME} with console support" ON)
-option(WITH_SDL_LINK_SHARED "link SDL dynamic or static" BUILD_SHARED_LIBS)
+option(WITH_SDL_LINK_SHARED "link SDL dynamic or static" ON)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
