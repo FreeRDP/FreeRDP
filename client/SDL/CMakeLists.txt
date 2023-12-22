@@ -49,6 +49,7 @@ include(ConfigureRPATH)
 option(WITH_DEBUG_SDL_EVENTS "[dangerous, not for release builds!] Debug SDL events" OFF)
 option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL keyboard events" OFF)
 option(WITH_WIN_CONSOLE "Build ${PROJECT_NAME} with console support" ON)
+option(WITH_SDL_LINK_SHARED "link SDL dynamic or static" BUILD_SHARED_LIBS)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
@@ -102,7 +103,6 @@ set(SRCS
 
 add_subdirectory(aad)
 set(LIBS
-	${SDL2_LIBRARIES}
         winpr
         freerdp
         freerdp-client
@@ -111,6 +111,12 @@ set(LIBS
         dialogs
         aad-view
     )
+
+if (NOT WITH_SDL_LINK_SHARED)
+    list(APPEND LIBS ${SDL2_STATIC_LIBRARIES})
+else()
+    list(APPEND LIBS ${SDL2_LIBRARIES})
+endif()
 
 add_executable(${PROJECT_NAME}
 	${WIN32_GUI_FLAG}
