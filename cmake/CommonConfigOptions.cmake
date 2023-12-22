@@ -5,15 +5,18 @@ option(WITH_LIBRARY_VERSIONING "Use library version triplet" ON)
 option(WITH_BINARY_VERSIONING "Use binary versioning" OFF)
 option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 
-# TODO: The detection does not properly work
-#
-#include(CheckIPOSupported)
-#check_ipo_supported(RESULT supported OUTPUT error)
-#if (NOT supported)
-#	message(WARNING "LTO not supported, got ${error}")
-#endif()
+# known issue on android, thus disabled until we support newer CMake
+# https://github.com/android/ndk/issues/1444
+if (NOT ANDROID)
+	cmake_policy(SET CMP0069 NEW)
+	include(CheckIPOSupported)
+	check_ipo_supported(RESULT supported OUTPUT error)
+	if (NOT supported)
+		message(WARNING "LTO not supported, got ${error}")
+	endif()
 
-option(CMAKE_INTERPROCEDURAL_OPTIMIZATION "build with link time optimization" OFF)
+	option(CMAKE_INTERPROCEDURAL_OPTIMIZATION "build with link time optimization" ${supported})
+endif()
 
 # Default to release build type
 if(NOT CMAKE_BUILD_TYPE)
