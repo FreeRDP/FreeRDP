@@ -1796,13 +1796,13 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, wS
 	for (index = 0; index < region->numTiles; index++)
 	{
 		RFX_PROGRESSIVE_TILE* tile = region->tiles[index];
-		params[index].progressive = progressive;
-		params[index].region = region;
-		params[index].context = context;
-		params[index].tile = tile;
 
 		if (progressive->rfx_context->priv->UseThreads)
 		{
+			params[index].progressive = progressive;
+			params[index].region = region;
+			params[index].context = context;
+			params[index].tile = tile;
 			if (!(work_objects[index] = CreateThreadpoolWork(
 			          progressive_process_tiles_tile_work_callback, (void*)&params[index],
 			          &progressive->rfx_context->priv->ThreadPoolEnv)))
@@ -1817,7 +1817,10 @@ static INLINE int progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive, wS
 		}
 		else
 		{
-			progressive_process_tiles_tile_work_callback(0, &params[index], 0);
+			PROGRESSIVE_TILE_PROCESS_WORK_PARAM param = {
+				.progressive = progressive, .region = region, .context = context, .tile = tile
+			};
+			progressive_process_tiles_tile_work_callback(0, &param, 0);
 		}
 
 		if (status < 0)
