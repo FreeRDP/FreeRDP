@@ -290,11 +290,7 @@ static void LIBUSB_CALL func_iso_callback(struct libusb_transfer* transfer)
 			/* fallthrough */
 			WINPR_FALLTHROUGH
 		case LIBUSB_TRANSFER_CANCELLED:
-			/* fallthrough */
-			WINPR_FALLTHROUGH
 		case LIBUSB_TRANSFER_TIMED_OUT:
-			/* fallthrough */
-			WINPR_FALLTHROUGH
 		case LIBUSB_TRANSFER_ERROR:
 		{
 			const UINT32 InterfaceId =
