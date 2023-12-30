@@ -87,6 +87,9 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
                                           int32_t width, int32_t height, struct wl_array* states)
 {
 	UwacWindow* window = (UwacWindow*)data;
+	int scale = window->display->actual_scale;
+	width *= scale;
+	height *= scale;
 	UwacConfigureEvent* event;
 	int ret, surfaceState;
 	enum xdg_toplevel_state* state;
@@ -150,6 +153,15 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 		window->drawingBufferIdx = 0;
 		if (window->pendingBufferIdx != -1)
 			window->pendingBufferIdx = window->drawingBufferIdx;
+
+		if (window->viewport)
+		{
+			wp_viewport_set_source(window->viewport, wl_fixed_from_int(0), wl_fixed_from_int(0),
+			                       wl_fixed_from_int(window->width * scale),
+			                       wl_fixed_from_int(window->height * scale));
+			wp_viewport_set_destination(window->viewport, window->width * scale,
+			                            window->height * scale);
+		}
 	}
 	else
 	{
@@ -551,6 +563,10 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 		wl_shell_surface_set_toplevel(w->shell_surface);
 	}
 
+	w->viewport = wp_viewporter_get_viewport(display->viewporter, w->surface);
+	if (display->actual_scale != 1)
+		wl_surface_set_buffer_scale(w->surface, display->actual_scale);
+
 	wl_list_insert(display->windows.prev, &w->link);
 	display->last_error = UWAC_SUCCESS;
 	UwacWindowSetDecorations(w);
@@ -592,6 +608,9 @@ UwacReturnCode UwacDestroyWindow(UwacWindow** pwindow)
 
 	if (w->input_region)
 		wl_region_destroy(w->input_region);
+
+	if (w->viewport)
+		wp_viewport_destroy(w->viewport);
 
 	wl_surface_destroy(w->surface);
 	wl_list_remove(&w->link);

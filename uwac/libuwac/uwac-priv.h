@@ -250,6 +250,7 @@ struct uwac_window
 	ssize_t drawingBufferIdx;
 	ssize_t pendingBufferIdx;
 	struct wl_surface* surface;
+	struct wp_viewport* viewport;
 	struct wl_shell_surface* shell_surface;
 	struct xdg_surface* xdg_surface;
 	struct xdg_toplevel* xdg_toplevel;
