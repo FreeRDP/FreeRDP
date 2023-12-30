@@ -128,6 +128,7 @@ struct uwac_display
 	UwacTask dispatch_fd_task;
 	uint32_t serial;
 	uint32_t pointer_focus_serial;
+	int actual_scale;
 
 	struct wl_list windows;
 
