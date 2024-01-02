@@ -102,7 +102,10 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 	if (!seat || !seat->display || !seat->default_cursor || !seat->default_cursor->images)
 		return UWAC_ERROR_INTERNAL;
 
-	int scale = seat->pointer_focus->display->actual_scale;
+	int scale = 1;
+	if (seat->pointer_focus)
+		scale = seat->pointer_focus->display->actual_scale;
+
 	switch (seat->pointer_type)
 	{
 		case 2: /* Custom poiner */
