@@ -563,9 +563,12 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 		wl_shell_surface_set_toplevel(w->shell_surface);
 	}
 
-	w->viewport = wp_viewporter_get_viewport(display->viewporter, w->surface);
-	if (display->actual_scale != 1)
-		wl_surface_set_buffer_scale(w->surface, display->actual_scale);
+	if (display->viewporter)
+	{
+		w->viewport = wp_viewporter_get_viewport(display->viewporter, w->surface);
+		if (display->actual_scale != 1)
+			wl_surface_set_buffer_scale(w->surface, display->actual_scale);
+	}
 
 	wl_list_insert(display->windows.prev, &w->link);
 	display->last_error = UWAC_SUCCESS;
