@@ -677,26 +677,26 @@ static void frame_done_cb(void* data, struct wl_callback* callback, uint32_t tim
 static const struct wl_callback_listener frame_listener = { frame_done_cb };
 
 #ifdef UWAC_HAVE_PIXMAN_REGION
-static void damage_surface(UwacWindow* window, UwacBuffer* buffer)
+static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 {
 	int nrects, i;
 	const pixman_box32_t* box = pixman_region32_rectangles(&buffer->damage, &nrects);
 
 	for (i = 0; i < nrects; i++, box++)
-		wl_surface_damage(window->surface, box->x1, box->y1, (box->x2 - box->x1),
-		                  (box->y2 - box->y1));
+		wl_surface_damage(window->surface, box->x1 / scale, box->y1 / scale,
+		                  (box->x2 - box->x1) / scale, (box->y2 - box->y1) / scale);
 
 	pixman_region32_clear(&buffer->damage);
 }
 #else
-static void damage_surface(UwacWindow* window, UwacBuffer* buffer)
+static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 {
 	uint32_t nrects, i;
 	const RECTANGLE_16* box = region16_rects(&buffer->damage, &nrects);
 
 	for (i = 0; i < nrects; i++, box++)
-		wl_surface_damage(window->surface, box->left, box->top, (box->right - box->left),
-		                  (box->bottom - box->top));
+		wl_surface_damage(window->surface, box->left / scale, box->top / scale,
+		                  (box->right - box->left) / scale, (box->bottom - box->top) / scale);
 
 	region16_clear(&buffer->damage);
 }
@@ -706,7 +706,8 @@ static void UwacSubmitBufferPtr(UwacWindow* window, UwacBuffer* buffer)
 {
 	wl_surface_attach(window->surface, buffer->wayland_buffer, 0, 0);
 
-	damage_surface(window, buffer);
+	int scale = window->display->actual_scale;
+	damage_surface(window, buffer, scale);
 
 	struct wl_callback* frame_callback = wl_surface_frame(window->surface);
 	wl_callback_add_listener(frame_callback, &frame_listener, window);
