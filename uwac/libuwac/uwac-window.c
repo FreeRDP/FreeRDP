@@ -680,11 +680,17 @@ static const struct wl_callback_listener frame_listener = { frame_done_cb };
 static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 {
 	int nrects, i;
+	int x, y, w, h;
 	const pixman_box32_t* box = pixman_region32_rectangles(&buffer->damage, &nrects);
 
 	for (i = 0; i < nrects; i++, box++)
-		wl_surface_damage(window->surface, box->x1 / scale, box->y1 / scale,
-		                  (box->x2 - box->x1) / scale, (box->y2 - box->y1) / scale);
+	{
+		x = ((int)floor(box->x1 / scale)) - 1;
+		y = ((int)floor(box->y1 / scale)) - 1;
+		w = ((int)ceil((box->x2 - box->x1) / scale)) + 2;
+		h = ((int)ceil((box->y2 - box->y1) / scale)) + 2;
+		wl_surface_damage(window->surface, x, y, w, h);
+	}
 
 	pixman_region32_clear(&buffer->damage);
 }
@@ -692,11 +698,17 @@ static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 {
 	uint32_t nrects, i;
+	int x, y, w, h;
 	const RECTANGLE_16* box = region16_rects(&buffer->damage, &nrects);
 
 	for (i = 0; i < nrects; i++, box++)
-		wl_surface_damage(window->surface, box->left / scale, box->top / scale,
-		                  (box->right - box->left) / scale, (box->bottom - box->top) / scale);
+	{
+		x = ((int)floor(box->left / scale)) - 1;
+		y = ((int)floor(box->top / scale)) - 1;
+		w = ((int)ceil((box->right - box->left) / scale)) + 2;
+		h = ((int)ceil((box->bottom - box->top) / scale)) + 2;
+		wl_surface_damage(window->surface, x, y, w, h);
+	}
 
 	region16_clear(&buffer->damage);
 }
