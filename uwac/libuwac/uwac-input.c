@@ -102,6 +102,7 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 	if (!seat || !seat->display || !seat->default_cursor || !seat->default_cursor->images)
 		return UWAC_ERROR_INTERNAL;
 
+	int scale = seat->pointer_focus->display->actual_scale;
 	switch (seat->pointer_type)
 	{
 		case 2: /* Custom poiner */
@@ -113,8 +114,8 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 				return UWAC_ERROR_INTERNAL;
 
 			surface = seat->pointer_surface;
-			x = image->hotspot_x;
-			y = image->hotspot_y;
+			x = image->hotspot_x / scale;
+			y = image->hotspot_y / scale;
 			break;
 		case 1: /* NULL pointer */
 			break;
@@ -136,6 +137,7 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 
 	if (surface && buffer)
 	{
+		wl_surface_set_buffer_scale(surface, scale);
 		wl_surface_attach(surface, buffer, 0, 0);
 		wl_surface_damage(surface, 0, 0, image->width, image->height);
 		wl_surface_commit(surface);
