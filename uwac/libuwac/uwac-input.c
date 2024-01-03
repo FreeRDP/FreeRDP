@@ -248,10 +248,7 @@ static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32
 static void keyboard_handle_enter(void* data, struct wl_keyboard* keyboard, uint32_t serial,
                                   struct wl_surface* surface, struct wl_array* keys)
 {
-	uint32_t *key, *pressedKey;
 	UwacSeat* input = (UwacSeat*)data;
-	size_t i, found;
-
 	assert(input);
 
 	UwacKeyboardEnterLeaveEvent* event = (UwacKeyboardEnterLeaveEvent*)UwacDisplayNewEvent(
@@ -262,36 +259,14 @@ static void keyboard_handle_enter(void* data, struct wl_keyboard* keyboard, uint
 	event->window = input->keyboard_focus = (UwacWindow*)wl_surface_get_user_data(surface);
 	event->seat = input;
 
-	/* look for keys that have been released */
-	found = false;
-	for (pressedKey = input->pressed_keys.data, i = 0; i < input->pressed_keys.size;
-	     i += sizeof(uint32_t))
-	{
-		wl_array_for_each(key, keys)
-		{
-			if (*key == *pressedKey)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			keyboard_handle_key(data, keyboard, serial, 0, *pressedKey,
-			                    WL_KEYBOARD_KEY_STATE_RELEASED);
-		}
-		else
-		{
-			pressedKey++;
-		}
-	}
-
-	/* handle keys that are now pressed */
-	wl_array_for_each(key, keys)
-	{
-		keyboard_handle_key(data, keyboard, serial, 0, *key, WL_KEYBOARD_KEY_STATE_PRESSED);
-	}
+	/* we may have the keys in the `keys` array, but as this function is called only
+	 * when the window gets focus, so there may be keys from other unrelated windows, eg.
+	 * this was leading to problems like passing CTRL+D to freerdp from closing terminal window
+	 * if it was closing very fast and the keys was still pressed by the user while the freerdp
+	 * gets focus
+	 *
+	 * currently just ignore this, as further key presses will be handled correctly anyway
+	 */
 }
 
 static void keyboard_handle_leave(void* data, struct wl_keyboard* keyboard, uint32_t serial,
