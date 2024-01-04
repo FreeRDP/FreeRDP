@@ -37,6 +37,8 @@
 
 #include <freerdp/assistance.h>
 
+#include "../core/settings.h"
+
 #define TAG FREERDP_TAG("common")
 
 struct rdp_assistance_file
@@ -1314,21 +1316,27 @@ BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile
 	if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteAssistanceMode, TRUE))
 		return FALSE;
 
-	size_t ports = ArrayList_Count(file->MachinePorts);
+	const size_t ports = ArrayList_Count(file->MachinePorts);
+	const size_t addresses = ArrayList_Count(file->MachineAddresses);
 	if (ports < 1)
+		return FALSE;
+	if (ports != addresses)
 		return FALSE;
 
 	const UINT32 port = (UINT32)ArrayList_GetItem(file->MachinePorts, 0);
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, port))
 		return FALSE;
 
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_TargetNetAddresses, NULL, ports))
-		return FALSE;
-	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_TargetNetPorts, file->MachinePorts,
-	                                      ports))
+	if (!freerdp_target_net_adresses_reset(settings, ports))
 		return FALSE;
 
-	for (size_t i = 0; i < ArrayList_Count(file->MachineAddresses); i++)
+	for (size_t x = 0; x < ports; x++)
+	{
+		const UINT32 port = (UINT32)ArrayList_GetItem(file->MachinePorts, x);
+		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetPorts, x, &port))
+			return FALSE;
+	}
+	for (size_t i = 0; i < addresses; i++)
 	{
 		const char* maddr = ArrayList_GetItem(file->MachineAddresses, i);
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses, i, maddr))
