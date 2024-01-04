@@ -1243,9 +1243,8 @@ BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name
 	return FALSE;
 }
 
-static BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings,
-                                              FreeRDP_Settings_Keys_Pointer id, SSIZE_T lenId,
-                                              const void* data, size_t len, size_t size)
+BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, FreeRDP_Settings_Keys_Pointer id,
+                                       SSIZE_T lenId, const void* data, size_t len, size_t size)
 {
 	BOOL rc = FALSE;
 	void* copy = NULL;
@@ -1373,11 +1372,15 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 			return freerdp_settings_set_pointer_len_(settings, id, FreeRDP_ServerCertificateLength,
 			                                         data, len, sizeof(char));
 		case FreeRDP_TargetNetAddresses:
-			if (data == NULL)
+			if ((data == NULL) && (len == 0))
+			{
 				freerdp_target_net_addresses_free(settings);
-			return freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetAddresses,
-			                                         FreeRDP_TargetNetAddressCount, data, len,
-			                                         sizeof(char*));
+				return TRUE;
+			}
+			WLog_WARN(
+			    TAG,
+			    "[BUG] FreeRDP_TargetNetAddresses must not be resized from outside the library!");
+			return FALSE;
 		case FreeRDP_ServerLicenseProductIssuers:
 			if (data == NULL)
 				freerdp_server_license_issuers_free(settings);
@@ -1385,11 +1388,14 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 			                                         FreeRDP_ServerLicenseProductIssuersCount, data,
 			                                         len, sizeof(char*));
 		case FreeRDP_TargetNetPorts:
-			if (data == NULL)
+			if ((data == NULL) && (len == 0))
+			{
 				freerdp_target_net_addresses_free(settings);
-			return freerdp_settings_set_pointer_len_(settings, FreeRDP_TargetNetPorts,
-			                                         FreeRDP_TargetNetAddressCount, data, len,
-			                                         sizeof(UINT32));
+				return TRUE;
+			}
+			WLog_WARN(TAG,
+			          "[BUG] FreeRDP_TargetNetPorts must not be resized from outside the library!");
+			return FALSE;
 		case FreeRDP_DeviceArray:
 			if (data == NULL)
 				freerdp_device_collection_free(settings);
@@ -1826,27 +1832,16 @@ ADDIN_ARGV* freerdp_dynamic_channel_clone(ADDIN_ARGV* channel)
 
 BOOL freerdp_target_net_addresses_copy(rdpSettings* settings, char** addresses, UINT32 count)
 {
-	UINT32 i;
-
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(addresses);
 
-	freerdp_target_net_addresses_free(settings);
-
-	settings->TargetNetAddressCount = count;
-	settings->TargetNetAddresses = (char**)calloc(settings->TargetNetAddressCount, sizeof(char*));
-
-	if (!settings->TargetNetAddresses)
-	{
-		freerdp_target_net_addresses_free(settings);
+	if (!freerdp_target_net_adresses_reset(settings, count))
 		return FALSE;
-	}
 
-	for (i = 0; i < settings->TargetNetAddressCount; i++)
+	for (UINT32 i = 0; i < settings->TargetNetAddressCount; i++)
 	{
-		settings->TargetNetAddresses[i] = _strdup(addresses[i]);
-
-		if (!settings->TargetNetAddresses[i])
+		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses, i,
+		                                        addresses[i]))
 		{
 			freerdp_target_net_addresses_free(settings);
 			return FALSE;
