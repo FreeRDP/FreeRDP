@@ -660,12 +660,20 @@ static BOOL freerdp_assistance_parse_all_elements_of_l(rdpAssistanceFile* file, 
 	if (!freerdp_assistance_parse_attr(&u, &ulen, "U", data))
 		return FALSE;
 
-	if (!ArrayList_Append(file->MachineAddresses, strndup(n, nlen)))
-		return FALSE;
-	if (!ArrayList_Append(file->MachineAddresses, strndup(u, ulen)))
-		return FALSE;
-	if (!ArrayList_Append(file->MachinePorts, (void*)(uintptr_t)p))
-		return FALSE;
+	if (n && (nlen > 0))
+	{
+		if (!ArrayList_Append(file->MachineAddresses, strndup(n, nlen)))
+			return FALSE;
+		if (!ArrayList_Append(file->MachinePorts, (void*)(uintptr_t)p))
+			return FALSE;
+	}
+	if (u && (ulen > 0))
+	{
+		if (!ArrayList_Append(file->MachineAddresses, strndup(u, ulen)))
+			return FALSE;
+		if (!ArrayList_Append(file->MachinePorts, (void*)(uintptr_t)p))
+			return FALSE;
+	}
 	return TRUE;
 }
 
