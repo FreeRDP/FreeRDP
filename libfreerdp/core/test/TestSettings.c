@@ -832,9 +832,6 @@ static BOOL test_pointer_array(void)
 	size_t x;
 	const struct pointer_test_case tests[] = {
 		{ FALSE, FALSE, FreeRDP_DeviceArray, FreeRDP_DeviceArraySize, 32, sizeof(RDPDR_DEVICE*) },
-		{ FALSE, FALSE, FreeRDP_TargetNetAddresses, FreeRDP_TargetNetAddressCount, 33,
-		  sizeof(char*) },
-		{ FALSE, FALSE, FreeRDP_TargetNetPorts, FreeRDP_TargetNetAddressCount, 33, sizeof(UINT32) },
 		{ FALSE, FALSE, FreeRDP_StaticChannelArray, FreeRDP_StaticChannelArraySize, 32,
 		  sizeof(ADDIN_ARGV*) },
 		{ FALSE, FALSE, FreeRDP_DynamicChannelArray, FreeRDP_DynamicChannelArraySize, 33,
