@@ -36,7 +36,7 @@ SDL_RWops* SDLResourceManager::get(const std::string& type, const std::string& i
 	if (val == resources().end())
 		return nullptr;
 
-	auto& v = resources()[uuid];
+	const auto& v = val->second;
 	return SDL_RWFromConstMem(v.data(), v.size());
 #else
 	fs::path path(SDL_RESOURCE_ROOT);
