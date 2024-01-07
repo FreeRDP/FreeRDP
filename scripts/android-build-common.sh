@@ -24,7 +24,7 @@ if [ -z $NDK_TARGET ]; then
 fi
 
 if [ -z $CMAKE_PROGRAM ]; then
-	CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake $FIND_ARGS)
+	CMAKE_PROGRAM="cmake-missing"
 fi
 
 if [ -z $CCACHE ]; then
@@ -32,11 +32,11 @@ if [ -z $CCACHE ]; then
 fi
 
 if [ -z $ANDROID_NDK ]; then
-	ANDROID_NDK="missing"
+	ANDROID_NDK="ndk-missing"
 fi
 
 if [ -z $ANDROID_SDK ]; then
-	ANDROID_SDK="missing"
+	ANDROID_SDK="sdk-missing"
 fi
 
 if [ -z $BUILD_DST ]; then
@@ -53,6 +53,10 @@ fi
 
 if [ -z $SCM_TAG ]; then
 	SCM_TAG=master
+fi
+
+if [ -z $SCM_HASH ]; then
+    SCM_HASH="missing"
 fi
 
 CLEAN_BUILD_DIR=0
@@ -91,79 +95,6 @@ function common_run {
 	fi
 }
 
-function common_parse_arguments {
-	while [[ $# > 0 ]]
-	do
-		key="$1"
-		case $key in
-			--conf)
-		        source "$2" || exit 1
-		        shift
-		        ;;
-
-			--target)
-			NDK_TARGET="$2"
-			shift
-			;;
-
-			--ndk)
-			ANDROID_NDK="$2"
-			shift
-			;;
-
-			--sdk)
-			ANDROID_SDK="$2"
-			CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake $FIND_ARGS)
-			shift
-			;;
-
-			--arch)
-			BUILD_ARCH="$2"
-			shift
-			;;
-
-			--dst)
-			BUILD_DST="$2"
-			shift
-			;;
-
-			--src)
-			BUILD_SRC="$2"
-			shift
-			;;
-
-			--url)
-			SCM_URL="$2"
-			shift
-			;;
-
-			--tag)
-			SCM_TAG="$2"
-			shift
-			;;
-
-  		--hash)
-			SCM_HASH="$2"
-			shift
-			;;
-
-			--clean)
-			CLEAN_BUILD_DIR=1
-			shift
-			;;
-
-			--help)
-			common_help
-			shift
-			;;
-
-			*) # Unknown
-			;;
-		esac
-		shift
-	done
-}
-
 function common_check_requirements {
 	if [[ ! -d $ANDROID_NDK ]];
 	then
@@ -196,13 +127,13 @@ function common_check_requirements {
 
 	if [[ -z $SCM_TAG ]];
 	then
-		echo "SCM TAG / BRANCH not defined! Define SCM_TAG"
+		echo "SCM_TAG / BRANCH not defined! Define SCM_TAG"
 		exit 1
 	fi
 
 	if [[ -z $SCM_HASH ]];
 	then
-		echo "SCM HASH not defined! Define SCM_HASH"
+		echo "SCM_HASH not defined! Define SCM_HASH"
 		exit 1
 	fi
 
@@ -212,19 +143,7 @@ function common_check_requirements {
 		exit 1
 	fi
 
-	if [ -x $ANDROID_NDK/ndk-build ]; then
-		NDK_BUILD=$ANDROID_NDK/ndk-build
-	else
-		echo "ndk-build not found in NDK directory $ANDROID_NDK"
-		echo "assuming ndk-build is in path..."
-		NDK_BUILD=$(which ndk-build)
-		if [ -z $NDK_BUILD ]; then
-			echo "ndk-build not found in $ANDROID_NDK and not in PATH"
-			exit 1
-		fi
-	fi
-
-	if [ -z $CMAKE_PROGRAM ]; then
+	if [ -z $CMAKE_PROGRAM ] || [ "$CMAKE_PROGRAM" == "cmake-missing" ]; then
 		CMAKE_PROGRAM=$(find $ANDROID_SDK/cmake -name cmake $FIND_ARGS)
 		if [ -z $CMAKE_PROGRAM ]; then
 			echo "CMake not found in $ANDROID_SDK, install CMake from the android SDK!"
@@ -232,7 +151,7 @@ function common_check_requirements {
 		fi
 	fi
 
-	for CMD in make git $CMAKE_PROGRAM $NDK_BUILD
+	for CMD in make git $CMAKE_PROGRAM
 	do
 		if ! type $CMD >/dev/null; then
 			echo "Command $CMD not found. Install and add it to the PATH."
@@ -248,6 +167,80 @@ function common_check_requirements {
 	then
 		BUILD_DST=$(pwd)/$BUILD_DST
 	fi
+}
+
+function common_parse_arguments {
+	while [[ $# > 0 ]]
+	do
+		key="$1"
+		case $key in
+			--conf)
+		        source "$2" || exit 1
+		        shift
+		        ;;
+
+			--target)
+			NDK_TARGET="$2"
+			shift
+			;;
+
+			--ndk)
+			ANDROID_NDK="$2"
+			shift
+			;;
+
+			--sdk)
+			ANDROID_SDK="$2"
+			shift
+			;;
+
+			--arch)
+			BUILD_ARCH="$2"
+			shift
+			;;
+
+			--dst)
+			BUILD_DST="$2"
+			shift
+			;;
+
+			--src)
+			BUILD_SRC="$2"
+			shift
+			;;
+
+			--url)
+			SCM_URL="$2"
+			shift
+			;;
+
+			--tag)
+			SCM_TAG="$2"
+			shift
+			;;
+
+			--hash)
+			SCM_HASH="$2"
+			shift
+			;;
+
+			--clean)
+			CLEAN_BUILD_DIR=1
+			shift
+			;;
+
+			--help)
+			common_help
+			shift
+			;;
+
+			*) # Unknown
+			;;
+		esac
+		shift
+	done
+
+    common_check_requirements
 }
 
 function common_update {
