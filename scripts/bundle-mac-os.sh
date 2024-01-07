@@ -226,7 +226,7 @@ do
 	FINSTPATH=$BUILD/FFmpeg/install/$ARCH
 	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS $SRC/FFmpeg/configure --prefix=$FINSTPATH --disable-all \
 		--enable-shared --disable-static --enable-swscale --disable-asm --disable-libxcb \
-		--disable-securetransport --disable-xlib
+		--disable-securetransport --disable-xlib --enable-cross-compile
 	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j
 	CFLAGS=$FFCFLAGS LDFLAGS=$FFCFLAGS make -j install
 	fix_rpath "$FINSTPATH/lib"
