@@ -141,6 +141,10 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 			else
 				freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, 3389);
 
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_TlsSecLevel,
+			                                 config->TargetTlsSecLevel))
+				return FALSE;
+
 			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname, config->TargetHost))
 			{
 				PROXY_LOG_ERR(TAG, ps, "strdup failed!");

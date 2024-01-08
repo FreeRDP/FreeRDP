@@ -74,6 +74,7 @@ static const char* key_target_fixed = "FixedTarget";
 static const char* key_target_user = "User";
 static const char* key_target_pwd = "Password";
 static const char* key_target_domain = "Domain";
+static const char* key_target_tls_seclevel = "TlsSecLevel";
 
 static const char* section_clipboard = "Clipboard";
 static const char* key_clip_text_only = "TextOnly";
@@ -168,10 +169,11 @@ static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char*
 	WINPR_ASSERT(result);
 
 	strval = IniFile_GetKeyValueString(ini, section, key);
-	if (!strval && required)
+	if (!strval)
 	{
-		WLog_ERR(TAG, "key '%s.%s' does not exist.", section, key);
-		return FALSE;
+		if (required)
+			WLog_ERR(TAG, "key '%s.%s' does not exist.", section, key);
+		return !required;
 	}
 
 	val = IniFile_GetKeyValueInt(ini, section, key);
@@ -258,6 +260,10 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 
 	if (!pf_config_get_uint16(ini, section_target, key_port, &config->TargetPort,
 	                          config->FixedTarget))
+		return FALSE;
+
+	if (!pf_config_get_uint32(ini, section_target, key_target_tls_seclevel,
+	                          &config->TargetTlsSecLevel, FALSE))
 		return FALSE;
 
 	if (config->FixedTarget)
@@ -576,6 +582,10 @@ proxyConfig* server_config_load_ini(wIniFile* ini)
 	config = calloc(1, sizeof(proxyConfig));
 	if (config)
 	{
+		/* Set default values != 0 */
+		config->TargetTlsSecLevel = 1;
+
+		/* Load from ini */
 		if (!pf_config_load_server(ini, config))
 			goto out;
 
@@ -631,6 +641,8 @@ BOOL pf_server_config_dump(const char* file)
 	if (IniFile_SetKeyValueInt(ini, section_target, key_port, 3389) < 0)
 		goto fail;
 	if (IniFile_SetKeyValueString(ini, section_target, key_target_fixed, bool_str_true) < 0)
+		goto fail;
+	if (IniFile_SetKeyValueInt(ini, section_target, key_target_tls_seclevel, 1) < 0)
 		goto fail;
 
 	/* Channel configuration */
@@ -809,6 +821,7 @@ void pf_server_config_print(const proxyConfig* config)
 		CONFIG_PRINT_SECTION(section_target);
 		CONFIG_PRINT_STR(config, TargetHost);
 		CONFIG_PRINT_UINT16(config, TargetPort);
+		CONFIG_PRINT_UINT32(config, TargetTlsSecLevel);
 
 		if (config->TargetUser)
 			CONFIG_PRINT_STR(config, TargetUser);

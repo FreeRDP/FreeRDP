@@ -109,6 +109,9 @@ extern "C"
 		size_t PrivateKeyPEMLength;
 
 		wIniFile* ini;
+
+		/* target continued */
+		UINT32 TargetTlsSecLevel;
 	};
 
 	/**
