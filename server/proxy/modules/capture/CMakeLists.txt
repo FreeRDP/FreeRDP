@@ -21,19 +21,24 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-project(proxy-capture-plugin VERSION 1.0.0 LANGUAGES C)
+cmake_policy(SET CMP0091 NEW)
+if (NOT FREERDP_DEFAULT_PROJECT_VERSION)
+	set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
+endif()
+
+project(proxy-capture-plugin
+	VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
+       	LANGUAGES C
+)
+
+message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-include(CheckIPOSupported)
-check_ipo_supported(RESULT supported OUTPUT error)
-if (supported)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
-
-include(MSVCRuntime)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/)
+include(CommonConfigOptions)
 
 add_library(${PROJECT_NAME} SHARED
 	cap_main.c

@@ -20,16 +20,14 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-project(FreeRDP C)
+cmake_policy(SET CMP0091 NEW)
+project(FreeRDP
+	LANGUAGES C
+)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
-
-# Default to release build type
-if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
-endif()
 
 add_custom_target(fuzzers
 	COMMENT "Build fuzzers"
@@ -47,10 +45,6 @@ if(NOT DEFINED FREERDP_VENDOR)
 	set(FREERDP_VENDOR 1)
 endif()
 
-option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
-option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
-option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
-
 if (NOT WIN32 AND NOT ANDROID)
 	if (APPLE)
 		set(OPT_DEFAULT_VAL OFF)
@@ -62,7 +56,7 @@ endif()
 
 # Include our extra modules
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)
-include(PreventInSourceBuilds)
+include(CommonConfigOptions)
 
 if((CMAKE_SYSTEM_NAME MATCHES "WindowsStore") AND (CMAKE_SYSTEM_VERSION MATCHES "10.0"))
 	set(UWP 1)
@@ -91,27 +85,19 @@ include(ShowCMakeVars)
 include(ConfigOptions)
 include(FeatureSummary)
 include(CheckCCompilerFlag)
-include(GNUInstallDirsWrapper)
 include(CMakePackageConfigHelpers)
 include(InstallFreeRDPMan)
 include(GetGitRevisionDescription)
 include(SetFreeRDPCMakeInstallDir)
-
-include(CheckIPOSupported)
-check_ipo_supported(RESULT supported OUTPUT error)
-if (supported)
-	option(CMAKE_INTERPROCEDURAL_OPTIMIZATION "Enable LTO linking" TRUE)
-endif()
 
 # Soname versioning
 set(BUILD_NUMBER 0)
 if ($ENV{BUILD_NUMBER})
 	set(BUILD_NUMBER $ENV{BUILD_NUMBER})
 endif()
-set(WITH_LIBRARY_VERSIONING "ON")
 
 set(VERSION_REGEX "^(.*)([0-9]+)\\.([0-9]+)\\.([0-9]+)-?(.*)")
-set(RAW_VERSION_STRING "3.0.1-dev0")
+set(RAW_VERSION_STRING "3.1.1-dev0")
 if(EXISTS "${PROJECT_SOURCE_DIR}/.source_tag")
 	file(READ ${PROJECT_SOURCE_DIR}/.source_tag RAW_VERSION_STRING)
 elseif(USE_VERSION_FROM_GIT_TAG)
@@ -156,6 +142,9 @@ if (NOT GIT_REVISION)
 endif()
 
 message(STATUS "Git Revision ${GIT_REVISION}")
+
+# Make the detected version available as default version for all subprojects
+set(FREERDP_DEFAULT_PROJECT_VERSION ${FREERDP_VERSION} CACHE STRING INTERNAL)
 
 set(FREERDP_MAJOR_DIR "freerdp${FREERDP_VERSION_MAJOR}")
 set(FREERDP_INCLUDE_DIR "include/${FREERDP_MAJOR_DIR}/")
@@ -204,12 +193,6 @@ endif(CMAKE_CROSSCOMPILING)
 # Turn on solution folders (2.8.4+)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-
-set(LIB_DEFAULT ON)
-if (IOS)
-	set(LIB_DEFAULT OFF)
-endif()
-option(BUILD_SHARED_LIBS "Build shared libraries" ${LIB_DEFAULT})
 option(EXPORT_ALL_SYMBOLS "Export all symbols form library" OFF)
 
 if(BUILD_TESTING)
@@ -229,9 +212,6 @@ if(FREEBSD)
 	find_path(EPOLLSHIM_INCLUDE_DIR NAMES sys/epoll.h sys/timerfd.h HINTS /usr/local/include/libepoll-shim)
 	find_library(EPOLLSHIM_LIBS NAMES epoll-shim libepoll-shim HINTS /usr/local/lib)
 endif()
-
-# Configure MSVC Runtime
-include(MSVCRuntime)
 
 # Enable 64bit file support on linux and FreeBSD.
 if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux" OR FREEBSD)
@@ -463,8 +443,6 @@ endif(APPLE)
 
 # Android
 if(ANDROID)
-	set(WITH_LIBRARY_VERSIONING "OFF")
-
 	set_property( GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS ${ANDROID_LIBRARY_USE_LIB64_PATHS} )
 
 	if (${ANDROID_ABI} STREQUAL "armeabi")
@@ -609,8 +587,21 @@ endif()
 
 find_feature(Wayland ${WAYLAND_FEATURE_TYPE} ${WAYLAND_FEATURE_PURPOSE} ${WAYLAND_FEATURE_DESCRIPTION})
 
-find_feature(OpenSSL ${OPENSSL_FEATURE_TYPE} ${OPENSSL_FEATURE_PURPOSE} ${OPENSSL_FEATURE_DESCRIPTION})
-find_feature(MbedTLS ${MBEDTLS_FEATURE_TYPE} ${MBEDTLS_FEATURE_PURPOSE} ${MBEDTLS_FEATURE_DESCRIPTION})
+option(WITH_LIBRESSL "build with LibreSSL" OFF)
+if (WITH_LIBRESSL)
+	find_package(LibreSSL REQUIRED)
+	include_directories(${LibreSSL_INCLUDE_DIRS})
+	set(OPENSSL_INCLUDE_DIR ${LIBRESSL_INCLUDE_DIR})
+	set(OPENSSL_LIBRARIES ${LIBRESSL_LIBRARIES})
+	set(OPENSSL_CRYPTO_LIBRARIES ${LIBRESSL_LIBRARIES})
+	set(WITH_OPENSSL ON)
+	set(OPENSSL_FOUND ON)
+	add_definitions("-DWITH_LIBRESSL")
+	add_definitions("-DWITH_OPENSSL")
+else()
+	find_feature(OpenSSL ${OPENSSL_FEATURE_TYPE} ${OPENSSL_FEATURE_PURPOSE} ${OPENSSL_FEATURE_DESCRIPTION})
+	find_feature(MbedTLS ${MBEDTLS_FEATURE_TYPE} ${MBEDTLS_FEATURE_PURPOSE} ${MBEDTLS_FEATURE_DESCRIPTION})
+endif()
 
 find_feature(PCSC ${PCSC_FEATURE_TYPE} ${PCSC_FEATURE_PURPOSE} ${PCSC_FEATURE_DESCRIPTION})
 
@@ -727,9 +718,6 @@ if(NOT DEFINED PROXY_PLUGINDIR)
 else()
 	set(FREERDP_PROXY_PLUGINDIR "${PROXY_PLUGINDIR}")
 endif()
-
-# RPATH configuration
-include(ConfigureRPATH)
 
 if (BUILD_SHARED_LIBS)
 	set(CMAKE_MACOSX_RPATH ON)

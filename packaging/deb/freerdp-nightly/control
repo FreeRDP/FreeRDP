@@ -48,12 +48,14 @@ Build-Depends:
  libsdl2-2.0-0,
  libsdl2-dev,
  libsdl2-ttf-dev,
+ libsdl2-image-dev,
  libsystemd-dev,
  libpkcs11-helper1-dev,
  libwebkit2gtk-4.0-dev,
  liburiparser-dev,
  libopus-dev,
- opensc-pkcs11
+ opensc-pkcs11,
+ libasan5 | libasan6 | libasan8
 Standards-Version: 3.9.5
 Homepage: http://www.freerdp.com/
 Vcs-Browser: http://github.com/FreeRDP/FreeRDP.git

@@ -7,7 +7,7 @@ function(install_freerdp_man manpage section)
  endif()
 endfunction()
 
-function(generate_and_install_freerdp_man_from_xml manpage dependencies)
+function(generate_and_install_freerdp_man_from_xml template manpage dependencies)
     if(WITH_MANPAGES)
 	find_program(XSLTPROC_EXECUTABLE NAMES xsltproc REQUIRED)
 	if (NOT DOCBOOKXSL_FOUND)
@@ -20,7 +20,7 @@ function(generate_and_install_freerdp_man_from_xml manpage dependencies)
 
 	TODAY(MAN_TODAY)
 
-	configure_file(${manpage}.xml.in ${manpage}.xml @ONLY IMMEDIATE)
+	configure_file(${template}.xml.in ${manpage}.xml @ONLY IMMEDIATE)
 
 	set(dep_SRC)
 	foreach(dep ${dependencies})
@@ -39,10 +39,10 @@ function(generate_and_install_freerdp_man_from_xml manpage dependencies)
 
 	add_custom_target(
 		${manpage}.manpage ALL
-		DEPENDS
+                DEPENDS
 			${manpage}
                         ${manpage}.xml
-                        ${manpage}.xml.in
+                        ${template}.xml.in
                         generate_argument_docbook
 		)
 	install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${manpage} 1)

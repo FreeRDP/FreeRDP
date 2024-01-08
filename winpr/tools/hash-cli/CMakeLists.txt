@@ -41,6 +41,11 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 set(${MODULE_PREFIX}_LIBS winpr)
 
+set(MANPAGE_NAME "${MODULE_NAME}")
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${WINPR_API_VERSION}")
+        set(MANPAGE_NAME "${MODULE_NAME}${WINPR_API_VERSION}")
+endif()
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT tools EXPORT WinPRTargets)
@@ -50,5 +55,5 @@ if (WITH_DEBUG_SYMBOLS AND MSVC)
 endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "WinPR/Tools")
-configure_file(winpr-hash.1.in ${CMAKE_CURRENT_BINARY_DIR}/winpr-hash.1)
-install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/winpr-hash.1 1)
+configure_file(winpr-hash.1.in ${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.1)
+install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.1 1)

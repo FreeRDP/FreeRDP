@@ -36,7 +36,18 @@ endif()
 
 set(APP_NAME "freerdp-proxy")
 add_executable(${APP_NAME}
-    ${PROXY_APP_SRCS})
+    ${PROXY_APP_SRCS}
+)
+
+set(MANPAGE_NAME ${APP_NAME}.1)
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${APP_NAME}
+	       	PROPERTIES
+	       	OUTPUT_NAME "${APP_NAME}${FREERDP_API_VERSION}"
+	)
+	set(MANPAGE_NAME ${APP_NAME}${FREERDP_API_VERSION}.1)
+endif()
+
 target_link_libraries(${APP_NAME} ${MODULE_NAME})
 install(TARGETS ${APP_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
 if (WITH_DEBUG_SYMBOLS AND MSVC)
@@ -45,5 +56,5 @@ endif()
 
 set_property(TARGET ${APP_NAME} PROPERTY FOLDER "Server/proxy")
 
-configure_file(${APP_NAME}.1.in ${CMAKE_CURRENT_BINARY_DIR}/${APP_NAME}.1)
-install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${APP_NAME}.1 1)
+configure_file(${APP_NAME}.1.in ${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME})
+install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME} 1)

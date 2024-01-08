@@ -226,6 +226,10 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 		d->xdg_base = wl_registry_bind(registry, id, &xdg_wm_base_interface, 1);
 		xdg_wm_base_add_listener(d->xdg_base, &xdg_wm_base_listener, d);
 	}
+	else if (strcmp(interface, "wp_viewporter") == 0)
+	{
+		d->viewporter = wl_registry_bind(registry, id, &wp_viewporter_interface, 1);
+	}
 	else if (strcmp(interface, "zwp_keyboard_shortcuts_inhibit_manager_v1") == 0)
 	{
 		d->keyboard_inhibit_manager =
@@ -561,6 +565,9 @@ UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 
 	if (display->shm)
 		wl_shm_destroy(display->shm);
+
+	if (display->viewporter)
+		wp_viewporter_destroy(display->viewporter);
 
 	if (display->subcompositor)
 		wl_subcompositor_destroy(display->subcompositor);

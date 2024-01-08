@@ -202,6 +202,12 @@ endif()
 
 add_executable(${MODULE_NAME} ${SRCS})
 
+set(MANPAGE_NAME "${MODULE_NAME}")
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${FREERDP_API_VERSION}")
+	set(MANPAGE_NAME "${MODULE_NAME}${FREERDP_API_VERSION}")
+endif()
+
 list(APPEND LIBS freerdp-shadow-subsystem freerdp-shadow freerdp winpr)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
@@ -216,10 +222,10 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 
 include(pkg-config-install-prefix)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp-shadow.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow${FREERDP_VERSION_MAJOR}.pc @ONLY)
-configure_file(freerdp-shadow-cli.1.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow-cli.1)
-install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow-cli.1 1)
+configure_file(freerdp-shadow-cli.1.in ${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.1)
+install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.1 1)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow${FREERDP_VERSION_MAJOR}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow${FREERDP_VERSION_MAJOR}.pc DESTINATION ${PKG_CONFIG_PC_INSTALL_DIR})
 
 export(PACKAGE freerdp-shadow)
 

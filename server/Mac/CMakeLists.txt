@@ -56,6 +56,9 @@ if(CHANNEL_RDPSND_SERVER)
 endif()	
 	
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${FREERDP_API_VERSION}")
+endif()
 
 set(${MODULE_PREFIX}_LIBS ${${MODULE_PREFIX}_LIBS} 
 	freerdp-server

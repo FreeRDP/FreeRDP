@@ -340,26 +340,40 @@ bool SDLConnectionDialog::createWindow()
 		return false;
 	}
 
-	std::string res_name;
 	SDL_Color res_bgcolor;
 	switch (_type_active)
 	{
 		case MSG_INFO:
-			res_name = "icon_info.svg";
 			res_bgcolor = infocolor;
 			break;
 		case MSG_WARN:
-			res_name = "icon_warning.svg";
 			res_bgcolor = warncolor;
 			break;
 		case MSG_ERROR:
-			res_name = "icon_error.svg";
 			res_bgcolor = errorcolor;
 			break;
 		case MSG_DISCARD:
 		default:
-			res_name = "";
 			res_bgcolor = backgroundcolor;
+			break;
+	}
+
+#if defined(WITH_SDL_IMAGE_DIALOGS)
+	std::string res_name;
+	switch (_type_active)
+	{
+		case MSG_INFO:
+			res_name = "icon_info.svg";
+			break;
+		case MSG_WARN:
+			res_name = "icon_warning.svg";
+			break;
+		case MSG_ERROR:
+			res_name = "icon_error.svg";
+			break;
+		case MSG_DISCARD:
+		default:
+			res_name = "";
 			break;
 	}
 
@@ -382,6 +396,11 @@ bool SDLConnectionDialog::createWindow()
 
 	SDL_Rect rect = { widget_width / 4, vpadding, widget_width * 3 / 4,
 		              total_height - 3 * vpadding - widget_height };
+#else
+	SDL_Rect rect = { hpadding, vpadding, widget_width - 2 * hpadding,
+		              total_height - 2 * vpadding };
+#endif
+
 	widget_cfg_t w{ textcolor, backgroundcolor, { _renderer, rect, false } };
 	w.widget.set_wrap(true, widget_width);
 	_list.emplace_back(std::move(w));

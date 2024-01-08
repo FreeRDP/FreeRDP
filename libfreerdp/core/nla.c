@@ -451,15 +451,15 @@ static int nla_client_init(rdpNla* nla)
 	if (!credssp_auth_setup_client(nla->auth, "TERMSRV", hostname, nla->identity, nla->pkinitArgs))
 		return -1;
 
-	rdpTls* tls = transport_get_tls(nla->transport);
-
-	if (!tls)
+	const BYTE* data = NULL;
+	DWORD length = 0;
+	if (!transport_get_public_key(nla->transport, &data, &length))
 	{
-		WLog_ERR(TAG, "Unknown NLA transport layer");
+		WLog_ERR(TAG, "Failed to get public key");
 		return -1;
 	}
 
-	if (!nla_sec_buffer_alloc_from_data(&nla->PublicKey, tls->PublicKey, 0, tls->PublicKeyLength))
+	if (!nla_sec_buffer_alloc_from_data(&nla->PublicKey, data, 0, length))
 	{
 		WLog_ERR(TAG, "Failed to allocate sspi secBuffer");
 		return -1;
@@ -662,10 +662,15 @@ static int nla_server_init(rdpNla* nla)
 {
 	WINPR_ASSERT(nla);
 
-	rdpTls* tls = transport_get_tls(nla->transport);
-	WINPR_ASSERT(tls);
+	const BYTE* data = NULL;
+	DWORD length = 0;
+	if (!transport_get_public_key(nla->transport, &data, &length))
+	{
+		WLog_ERR(TAG, "Failed to get public key");
+		return -1;
+	}
 
-	if (!nla_sec_buffer_alloc_from_data(&nla->PublicKey, tls->PublicKey, 0, tls->PublicKeyLength))
+	if (!nla_sec_buffer_alloc_from_data(&nla->PublicKey, data, 0, length))
 	{
 		WLog_ERR(TAG, "Failed to allocate SecBuffer for public key");
 		return -1;

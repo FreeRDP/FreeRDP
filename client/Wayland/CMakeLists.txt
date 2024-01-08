@@ -48,10 +48,15 @@ list (APPEND ${MODULE_PREFIX}_LIBS freerdp-client freerdp uwac)
 
 add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
+set(MANPAGE_NAME ${MODULE_NAME})
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${FREERDP_API_VERSION}")
+	set(MANPAGE_NAME ${MODULE_NAME}${FREERDP_API_VERSION})
+endif()
 target_link_libraries(${MODULE_NAME} ${${MODULE_PREFIX}_LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Client/Wayland")
-configure_file(wlfreerdp.1.in ${CMAKE_CURRENT_BINARY_DIR}/wlfreerdp.1)
-install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/wlfreerdp.1 1)
+configure_file(wlfreerdp.1.in ${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.1)
+install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.1 1)

@@ -19,7 +19,16 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-project("freerdp-android")
+if (NOT FREERDP_DEFAULT_PROJECT_VERSION)
+	set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
+endif()
+
+project("freerdp-android"
+	LANGUAGES C
+	VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
+)
+
+message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
 set(MODULE_NAME "freerdp-android")
 set(MODULE_PREFIX "FREERDP_CLIENT_ANDROID")

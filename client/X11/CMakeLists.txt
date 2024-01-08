@@ -17,29 +17,25 @@
 # limitations under the License.
 cmake_minimum_required(VERSION 3.13)
 
-project(xfreerdp LANGUAGES C)
+if (NOT FREERDP_DEFAULT_PROJECT_VERSION)
+	set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
+endif()
+
+project(xfreerdp
+	LANGUAGES C
+	VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
+)
+
+message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
-option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
-option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/)
-include(PreventInSourceBuilds)
-
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
-endif()
+include(CommonConfigOptions)
 
 include(ConfigureFreeRDP)
-
-include(GNUInstallDirsWrapper)
-
-# RPATH configuration
-include(ConfigureRPATH)
 
 find_package(X11 REQUIRED)
 
@@ -104,6 +100,9 @@ else()
 		cli/xfreerdp.c xfreerdp.h
 	)
 	add_executable(${PROJECT_NAME} ${SRCS})
+	if (WITH_BINARY_VERSIONING)
+		set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}${PROJECT_VERSION_MAJOR}")
+	endif()
 	include_directories(..)
 endif()
 

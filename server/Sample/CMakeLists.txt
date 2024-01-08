@@ -52,6 +52,9 @@ endif()
 file(COPY test_icon.ppm DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(${MODULE_NAME} ${SRCS})
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${FREERDP_API_VERSION}")
+endif()
 
 list(APPEND LIBS freerdp-server)
 list(APPEND LIBS winpr freerdp)

@@ -1,8 +1,17 @@
+cmake_minimum_required(VERSION 3.13)
 
-project(MacFreeRDP)
+if (NOT FREERDP_DEFAULT_PROJECT_VERSION)
+	set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
+endif()
+
+project(MacFreeRDP
+	VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
+)
+
+message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/)
-include(PreventInSourceBuilds)
+include(CommonConfigOptions)
 
 # Import libraries
 find_library(FOUNDATION_LIBRARY Foundation REQUIRED)
@@ -57,6 +66,9 @@ add_executable(${PROJECT_NAME}
         ${SOURCES}
         ${RESOURCES})
 
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}${PROJECT_VERSION_MAJOR}")
+endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE "${RESOURCES}")
 set_target_properties(${PROJECT_NAME} PROPERTIES MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
 

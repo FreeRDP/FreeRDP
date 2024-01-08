@@ -17,36 +17,31 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-project(sdl-freerdp CXX)
+cmake_policy(SET CMP0091 NEW)
+if (NOT FREERDP_DEFAULT_PROJECT_VERSION)
+	set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
+endif()
+
+project(sdl-freerdp
+	LANGUAGES CXX
+	VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
+)
+
+message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
-option(CMAKE_COLOR_MAKEFILE "colorful CMake makefile" ON)
-option(CMAKE_VERBOSE_MAKEFILE "verbose CMake makefile" ON)
-option(CMAKE_POSITION_INDEPENDENT_CODE "build with position independent code (-fPIC or -fPIE)" ON)
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/)
-include(PreventInSourceBuilds)
+include(CommonConfigOptions)
 
 include(ConfigureFreeRDP)
-
-include(GNUInstallDirsWrapper)
-
-# RPATH configuration
-include(ConfigureRPATH)
 
 option(WITH_DEBUG_SDL_EVENTS "[dangerous, not for release builds!] Debug SDL events" OFF)
 option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL keyboard events" OFF)
 option(WITH_WIN_CONSOLE "Build ${PROJECT_NAME} with console support" ON)
-
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
-endif()
-
-# Configure MSVC Runtime
-include(MSVCRuntime)
+option(WITH_SDL_LINK_SHARED "link SDL dynamic or static" ON)
 
 if(WITH_WIN_CONSOLE)
   set(WIN32_GUI_FLAG "")
@@ -93,7 +88,6 @@ set(SRCS
 
 add_subdirectory(aad)
 set(LIBS
-	${SDL2_LIBRARIES}
         winpr
         freerdp
         freerdp-client
@@ -103,11 +97,20 @@ set(LIBS
         aad-view
     )
 
+if (NOT WITH_SDL_LINK_SHARED)
+    list(APPEND LIBS ${SDL2_STATIC_LIBRARIES})
+else()
+    list(APPEND LIBS ${SDL2_LIBRARIES})
+endif()
+
 add_executable(${PROJECT_NAME}
 	${WIN32_GUI_FLAG}
 	${SRCS}
     )
 
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}${PROJECT_VERSION_MAJOR}")
+endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/SDL")
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)

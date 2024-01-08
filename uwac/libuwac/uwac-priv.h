@@ -31,6 +31,7 @@
 #include "keyboard-shortcuts-inhibit-unstable-v1-client-protocol.h"
 #include "xdg-decoration-unstable-v1-client-protocol.h"
 #include "server-decoration-client-protocol.h"
+#include "viewporter-client-protocol.h"
 
 #ifdef BUILD_IVI
 #include "ivi-application-client-protocol.h"
@@ -92,6 +93,7 @@ struct uwac_display
 	struct wl_display* display;
 	struct wl_registry* registry;
 	struct wl_compositor* compositor;
+	struct wp_viewporter* viewporter;
 	struct wl_subcompositor* subcompositor;
 	struct wl_shell* shell;
 	struct xdg_toplevel* xdg_toplevel;
@@ -126,6 +128,7 @@ struct uwac_display
 	UwacTask dispatch_fd_task;
 	uint32_t serial;
 	uint32_t pointer_focus_serial;
+	int actual_scale;
 
 	struct wl_list windows;
 
@@ -247,6 +250,7 @@ struct uwac_window
 	ssize_t drawingBufferIdx;
 	ssize_t pendingBufferIdx;
 	struct wl_surface* surface;
+	struct wp_viewport* viewport;
 	struct wl_shell_surface* shell_surface;
 	struct xdg_surface* xdg_surface;
 	struct xdg_toplevel* xdg_toplevel;

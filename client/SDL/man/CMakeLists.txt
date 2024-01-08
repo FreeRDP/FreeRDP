@@ -3,4 +3,9 @@ set(DEPS
         sdl-freerdp-examples.1.xml
         sdl-freerdp-envvar.1.xml
     )
-generate_and_install_freerdp_man_from_xml(sdl-freerdp.1 ${DEPS})
+
+set(MANPAGE_NAME ${PROJECT_NAME})
+if (WITH_BINARY_VERSIONING)
+	set(MANPAGE_NAME ${PROJECT_NAME}${PROJECT_VERSION_MAJOR})
+endif()
+generate_and_install_freerdp_man_from_xml(${PROJECT_NAME}.1 ${MANPAGE_NAME}.1 ${DEPS})

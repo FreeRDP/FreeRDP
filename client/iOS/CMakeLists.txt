@@ -14,14 +14,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-project(iFreeRDP)
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "project default" FORCE)
+cmake_minimum_required(VERSION 3.13)
+
+if (NOT FREERDP_DEFAULT_PROJECT_VERSION)
+	set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
 endif()
 
+project(iFreeRDP
+	VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
+)
+
+message("project ${PROJECT_NAME} is using version ${PROJECT_VERSION}")
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_CURRENT_SOURCE_DIR}/../../cmake/)
-include(PreventInSourceBuilds)
+include(CommonConfigOptions)
 
 set(MODULE_NAME "iFreeRDP")
 set(MODULE_PREFIX "IFREERDP_CLIENT")
@@ -109,6 +116,9 @@ add_executable(${MODULE_NAME}
 	${${MODULE_NAME}_RESOURCES}
 	)
 
+if (WITH_BINARY_VERSIONING)
+	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${PROJECT_VERSION_MAJOR}")
+endif()
 set_target_properties(${MODULE_NAME} PROPERTIES RESOURCE "${${MODULE_NAME}_RESOURCES}")
 
 set(EXECUTABLE_NAME "\${EXECUTABLE_NAME}")

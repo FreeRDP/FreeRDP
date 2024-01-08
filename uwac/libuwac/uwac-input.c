@@ -102,6 +102,10 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 	if (!seat || !seat->display || !seat->default_cursor || !seat->default_cursor->images)
 		return UWAC_ERROR_INTERNAL;
 
+	int scale = 1;
+	if (seat->pointer_focus)
+		scale = seat->pointer_focus->display->actual_scale;
+
 	switch (seat->pointer_type)
 	{
 		case 2: /* Custom poiner */
@@ -113,8 +117,8 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 				return UWAC_ERROR_INTERNAL;
 
 			surface = seat->pointer_surface;
-			x = image->hotspot_x;
-			y = image->hotspot_y;
+			x = image->hotspot_x / scale;
+			y = image->hotspot_y / scale;
 			break;
 		case 1: /* NULL pointer */
 			break;
@@ -136,6 +140,7 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 
 	if (surface && buffer)
 	{
+		wl_surface_set_buffer_scale(surface, scale);
 		wl_surface_attach(surface, buffer, 0, 0);
 		wl_surface_damage(surface, 0, 0, image->width, image->height);
 		wl_surface_commit(surface);
@@ -824,10 +829,11 @@ static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32
 
 	UwacWindow* window = input->pointer_focus;
 
-	int sx_i = wl_fixed_to_int(sx_w);
-	int sy_i = wl_fixed_to_int(sy_w);
-	double sx_d = wl_fixed_to_double(sx_w);
-	double sy_d = wl_fixed_to_double(sy_w);
+	int scale = window->display->actual_scale;
+	int sx_i = wl_fixed_to_int(sx_w) * scale;
+	int sy_i = wl_fixed_to_int(sy_w) * scale;
+	double sx_d = wl_fixed_to_double(sx_w) * scale;
+	double sy_d = wl_fixed_to_double(sy_w) * scale;
 
 	if (!window || (sx_i < 0) || (sy_i < 0))
 		return;
