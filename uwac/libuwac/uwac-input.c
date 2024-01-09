@@ -273,6 +273,8 @@ static void keyboard_handle_leave(void* data, struct wl_keyboard* keyboard, uint
                                   struct wl_surface* surface)
 {
 	struct itimerspec its = { 0 };
+	uint32_t* pressedKey;
+	size_t i;
 
 	UwacSeat* input = (UwacSeat*)data;
 	assert(input);
@@ -289,6 +291,17 @@ static void keyboard_handle_leave(void* data, struct wl_keyboard* keyboard, uint
 		return;
 
 	event->window = input->keyboard_focus;
+
+	/* we are currently loosing input focus of the main window:
+	 * check if we currently have some keys pressed and release them as if we enter the window again
+	 * it will be still "virtually" pressed in remote even if in reality the key has been released
+	 */
+	for (pressedKey = input->pressed_keys.data, i = 0; i < input->pressed_keys.size;
+	     i += sizeof(uint32_t))
+	{
+		keyboard_handle_key(data, keyboard, serial, 0, *pressedKey, WL_KEYBOARD_KEY_STATE_RELEASED);
+		pressedKey++;
+	}
 }
 
 static int update_key_pressed(UwacSeat* seat, uint32_t key)
