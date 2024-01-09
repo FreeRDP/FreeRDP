@@ -1193,7 +1193,6 @@ int rdp_client_transition_to_state(rdpRdp* rdp, int state)
 		case CONNECTION_STATE_FINALIZATION:
 			rdp_set_state(rdp, CONNECTION_STATE_FINALIZATION);
 			update_reset_state(rdp->update);
-			rdp->finalize_sc_pdus = 0;
 			break;
 
 		case CONNECTION_STATE_ACTIVE:
