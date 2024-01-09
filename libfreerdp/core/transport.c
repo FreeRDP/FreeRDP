@@ -802,6 +802,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 	if (!s)
 		return -1;
 
+	Stream_AddRef(s);
 	if (!transport)
 		goto fail;
 

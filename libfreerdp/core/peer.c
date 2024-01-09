@@ -958,9 +958,9 @@ static BOOL freerdp_peer_send_server_redirection_pdu(
 	}
 
 	Stream_Write_UINT8(s, 0);
-	rdp_send_pdu(peer->context->rdp, s, PDU_TYPE_SERVER_REDIRECTION, 0);
-
-	return TRUE;
+	BOOL rc = rdp_send_pdu(peer->context->rdp, s, PDU_TYPE_SERVER_REDIRECTION, 0);
+	Stream_Release(s);
+	return rc;
 
 fail:
 	free(targetNetAddressW);
