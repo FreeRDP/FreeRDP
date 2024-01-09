@@ -66,7 +66,11 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 	if (!evp)
 		return NULL;
 
+#if (OPENSSL_VERSION_NUMBER >= 0x30000000L)
+	EVP_CIPHER_CTX_reset((EVP_CIPHER_CTX*)ctx);
+#else
 	EVP_CIPHER_CTX_init((EVP_CIPHER_CTX*)ctx);
+#endif
 	if (EVP_EncryptInit_ex((EVP_CIPHER_CTX*)ctx, evp, NULL, NULL, NULL) != 1)
 	{
 		EVP_CIPHER_CTX_free ((EVP_CIPHER_CTX*)ctx);
