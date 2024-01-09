@@ -800,13 +800,17 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 			break;
 	}
 
-#elif defined(__APPLE__) // __linux__
+#else // __linux__
 
 	switch (ProcessorFeature)
 	{
 		case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
 		case PF_ARM_NEON:
+#ifdef __ARM_NEON
 			ret = TRUE;
+#endif
+			break;
+		default:
 			break;
 	}
 
