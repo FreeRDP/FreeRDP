@@ -282,11 +282,18 @@ void Stream_Release(wStream* s)
 
 	if (s->pool)
 	{
+		BOOL success = TRUE;
 		StreamPool_Lock(s->pool);
-		count = --(s->count);
+		if (s->count > 0)
+			count = --(s->count);
+		else
+		{
+			WLog_WARN("StreamPool", "Stream_Release of already returned stream!");
+			success = FALSE;
+		}
 		StreamPool_Unlock(s->pool);
 
-		if (count == 0)
+		if (success && (count == 0))
 			StreamPool_Return(s->pool, s);
 	}
 }
