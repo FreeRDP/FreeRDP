@@ -1655,14 +1655,12 @@ static BOOL rdp_server_send_sync(rdpRdp* rdp)
 
 BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 {
-	freerdp_peer* peer;
-
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->context);
 	WINPR_ASSERT(rdp->settings);
 	WINPR_ASSERT(s);
 
-	peer = rdp->context->peer;
+	freerdp_peer* peer = rdp->context->peer;
 	WINPR_ASSERT(peer);
 
 	if (rdp_get_state(rdp) != CONNECTION_STATE_CAPABILITIES_EXCHANGE_CONFIRM_ACTIVE)
@@ -1681,7 +1679,10 @@ BOOL rdp_server_accept_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 		return FALSE;
 
 	if (peer->ClientCapabilities && !peer->ClientCapabilities(peer))
+	{
+		WLog_WARN(TAG, "peer->ClientCapabilities failed");
 		return FALSE;
+	}
 
 	if (rdp->settings->SaltedChecksum)
 		rdp->do_secure_checksum = TRUE;
