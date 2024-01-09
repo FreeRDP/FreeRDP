@@ -1035,6 +1035,10 @@ static state_run_t peer_recv_callback_internal(rdpTransport* transport, wStream*
 				else
 					ret = STATE_RUN_SUCCESS;
 				free(monitors);
+
+				const size_t len = Stream_GetRemainingLength(s);
+				if (!state_run_failed(ret) && (len > 0))
+					ret = STATE_RUN_CONTINUE;
 			}
 			else
 			{
