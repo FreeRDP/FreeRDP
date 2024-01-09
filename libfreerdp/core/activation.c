@@ -115,9 +115,14 @@ static BOOL rdp_recv_control_pdu(wStream* s, UINT16* action)
 	if (Stream_GetRemainingLength(s) < 8)
 		return FALSE;
 
+	UINT16 grantId = 0;
+	UINT32 controlId = 0;
 	Stream_Read_UINT16(s, *action); /* action (2 bytes) */
 	Stream_Seek_UINT16(s);          /* grantId (2 bytes) */
 	Stream_Seek_UINT32(s);          /* controlId (4 bytes) */
+
+	WLog_DBG(TAG, "control action %" PRIu16 ", grandId %" PRIu16 ", controlId %" PRIu32, *action,
+	         grantId, controlId);
 	return TRUE;
 }
 
