@@ -380,24 +380,7 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 		} while (0);
 	}
 
-	rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE);
-
-	for (timeout = 0; timeout < rdp->settings->TcpAckTimeout; timeout += 100)
-	{
-		if (rdp_check_fds(rdp) < 0)
-			return FALSE;
-
-		if (freerdp_shall_disconnect(rdp->instance))
-			return TRUE;
-
-		if (rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE)
-			return TRUE;
-
-		Sleep(100);
-	}
-
-	WLog_ERR(TAG, "Timeout waiting for activation");
-	return FALSE;
+	return rdp_client_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE) >= 0;
 }
 
 BOOL rdp_send_deactivate_all(rdpRdp* rdp)
