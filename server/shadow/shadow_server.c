@@ -53,28 +53,27 @@ static int shadow_server_print_command_line_help(int argc, char** argv,
 	if ((argc < 1) || !largs || !argv)
 		return -1;
 
-	WLog_INFO(TAG, "Usage: %s [options]", argv[0]);
-	WLog_INFO(TAG, "");
-	WLog_INFO(TAG, "Syntax:");
-	WLog_INFO(TAG, "    /flag (enables flag)");
-	WLog_INFO(TAG, "    /option:<value> (specifies option with value)");
-	WLog_INFO(TAG,
-	          "    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')");
-	WLog_INFO(TAG, "");
+	printf("Usage: %s [options]\n", argv[0]);
+	printf("\n");
+	printf("Syntax:\n");
+	printf("    /flag (enables flag)\n");
+	printf("    /option:<value> (specifies option with value)\n");
+	printf("    +toggle -toggle (enables or disables toggle, where '/' is a synonym of '+')\n");
+	printf("\n");
 	arg = largs;
 
 	do
 	{
 		if (arg->Flags & COMMAND_LINE_VALUE_FLAG)
 		{
-			WLog_INFO(TAG, "    %s", "/");
-			WLog_INFO(TAG, "%-20s", arg->Name);
-			WLog_INFO(TAG, "\t%s", arg->Text);
+			printf("    %s", "/");
+			printf("%-20s\n", arg->Name);
+			printf("\t%s\n", arg->Text);
 		}
 		else if ((arg->Flags & COMMAND_LINE_VALUE_REQUIRED) ||
 		         (arg->Flags & COMMAND_LINE_VALUE_OPTIONAL))
 		{
-			WLog_INFO(TAG, "    %s", "/");
+			printf("    %s", "/");
 
 			if (arg->Format)
 			{
@@ -85,15 +84,15 @@ static int shadow_server_print_command_line_help(int argc, char** argv,
 					return -1;
 
 				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
-				WLog_INFO(TAG, "%-20s", str);
+				printf("%-20s\n", str);
 				free(str);
 			}
 			else
 			{
-				WLog_INFO(TAG, "%-20s", arg->Name);
+				printf("%-20s\n", arg->Name);
 			}
 
-			WLog_INFO(TAG, "\t%s", arg->Text);
+			printf("\t%s\n", arg->Text);
 		}
 		else if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
 		{
@@ -104,10 +103,10 @@ static int shadow_server_print_command_line_help(int argc, char** argv,
 				return -1;
 
 			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name, arg->Default ? "on" : "off");
-			WLog_INFO(TAG, "    %s", arg->Default ? "-" : "+");
-			WLog_INFO(TAG, "%-20s", str);
+			printf("    %s", arg->Default ? "-" : "+");
+			printf("%-20s\n", str);
 			free(str);
-			WLog_INFO(TAG, "\t%s", arg->Text);
+			printf("\t%s\n", arg->Text);
 		}
 	} while ((arg = CommandLineFindNextArgumentA(arg)) != NULL);
 
@@ -121,12 +120,12 @@ int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, c
 
 	if (status == COMMAND_LINE_STATUS_PRINT_VERSION)
 	{
-		WLog_INFO(TAG, "FreeRDP version %s (git %s)", FREERDP_VERSION_FULL, FREERDP_GIT_REVISION);
+		printf("FreeRDP version %s (git %s)\n", FREERDP_VERSION_FULL, FREERDP_GIT_REVISION);
 		return COMMAND_LINE_STATUS_PRINT_VERSION;
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT_BUILDCONFIG)
 	{
-		WLog_INFO(TAG, "%s", freerdp_get_build_config());
+		printf("%s\n", freerdp_get_build_config());
 		return COMMAND_LINE_STATUS_PRINT_BUILDCONFIG;
 	}
 	else if (status == COMMAND_LINE_STATUS_PRINT)
