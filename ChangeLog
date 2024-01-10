@@ -1,3 +1,33 @@
+# 2024-01-19 Version 3.2.0
+
+This release mostly addresses issues reported since the last release.
+Fixing some usablity and build issues as well as adding API functions
+that are needed from external projects
+
+Noteworthy changes:
+* Fix proxy module load check (#9777)
+* Improve kerberos error logging (#9771)
+* Improve mac client keyboard handling (#9767)
+* Add option to run client dynamic channel synchronous (#9764)
+* Move huge struct to heap (#9763)
+* Improved failure logging of license module (#9759)
+* Improve server side gfx logging (#9757)
+* Print shadow server help with printf instead of WLog (#9756)
+* Fix SDL client timer initialization (#9754)
+* Fix server peer message parsing (#9751)
+* Enable NEON instructions if __ARM_NEON is defined (#9748)
+* Add new proxy config file option TlsSecLevel (#9741)
+* Improve android and mac os build scripts (#9735)
+* Do not disable wayland support on BSD (#9730)
+* Fix issues with assistance file parsing (#9727, #9728)
+* Keyboard handling fixes for wayland client (#9725)
+* Fix relative pkg-config file paths (#9720)
+* Add new transport IO callback GetPublicKey (#9719)
+* Fix wayland client scaling (#9715)
+
+For a complete and detailed change log since the last release run:
+git log 3.2.0...3.1.0
+
 # 2023-12-22 Version 3.1.0
 
 A new 3.1.0 minor release for the new 3.0.0 series.
