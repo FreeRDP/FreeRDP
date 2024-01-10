@@ -310,7 +310,10 @@ static UINT rdpgfx_send_evict_cache_entry_pdu(RdpgfxServerContext* context,
 static UINT rdpgfx_send_cache_import_reply_pdu(RdpgfxServerContext* context,
                                                const RDPGFX_CACHE_IMPORT_REPLY_PDU* pdu)
 {
-	UINT16 index;
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(pdu);
+
+	WLog_DBG(TAG, "reply with %" PRIu16 " entries", pdu->importedEntriesCount);
 	wStream* s = rdpgfx_server_single_packet_new(RDPGFX_CMDID_CACHEIMPORTREPLY,
 	                                             2 + 2 * pdu->importedEntriesCount);
 
@@ -323,7 +326,7 @@ static UINT rdpgfx_send_cache_import_reply_pdu(RdpgfxServerContext* context,
 	/* importedEntriesCount (2 bytes) */
 	Stream_Write_UINT16(s, pdu->importedEntriesCount);
 
-	for (index = 0; index < pdu->importedEntriesCount; index++)
+	for (UINT16 index = 0; index < pdu->importedEntriesCount; index++)
 	{
 		Stream_Write_UINT16(s, pdu->cacheSlots[index]); /* cacheSlot (2 bytes) */
 	}
@@ -335,7 +338,12 @@ static UINT
 rdpgfx_process_cache_import_offer_pdu(RdpgfxServerContext* context,
                                       const RDPGFX_CACHE_IMPORT_OFFER_PDU* cacheImportOffer)
 {
+	WINPR_ASSERT(context);
+	WINPR_ASSERT(cacheImportOffer);
+
 	RDPGFX_CACHE_IMPORT_REPLY_PDU reply = { 0 };
+	WLog_DBG(TAG, "received %" PRIu16 " entries, reply with %" PRIu16 " entries",
+	         cacheImportOffer->cacheEntriesCount, reply.importedEntriesCount);
 	return IFCALLRESULT(CHANNEL_RC_OK, context->CacheImportReply, context, &reply);
 }
 
