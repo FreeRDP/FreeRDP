@@ -293,6 +293,9 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 
 BOOL sdlDispContext::addTimer()
 {
+	if (SDL_WasInit(SDL_INIT_TIMER) == 0)
+		return FALSE;
+
 	SDL_RemoveTimer(_timer);
 	WLog_Print(_sdl->log, WLOG_TRACE, "adding new display check timer");
 
