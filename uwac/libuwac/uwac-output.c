@@ -88,7 +88,9 @@ static void output_handle_scale(void* data, struct wl_output* wl_output, int32_t
 	UwacOutput* output = data;
 	assert(output);
 
-	output->display->actual_scale = output->scale = scale;
+	output->scale = scale;
+	if (scale > output->display->actual_scale)
+		output->display->actual_scale = scale;
 }
 
 static void output_handle_name(void* data, struct wl_output* wl_output, const char* name)
