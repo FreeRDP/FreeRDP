@@ -132,8 +132,14 @@ BOOL tpkt_read_header(wStream* s, UINT16* length)
 	return TRUE;
 }
 
-BOOL tpkt_ensure_stream_consumed_(wStream* s, UINT16 length, const char* fkt)
+BOOL tpkt_ensure_stream_consumed_(wStream* s, size_t length, const char* fkt)
 {
+	if (length > UINT16_MAX)
+	{
+		WLog_ERR(TAG, "[%s] length %" PRIuz " > %" PRIu16, fkt, length, UINT16_MAX);
+		return FALSE;
+	}
+
 	size_t rem = Stream_GetRemainingLength(s);
 	if (rem > 0)
 	{
