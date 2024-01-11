@@ -1008,7 +1008,10 @@ BOOL freerdp_certificate_read_server_cert(rdpCertificate* certificate, const BYT
 
 	WINPR_ASSERT(certificate);
 	if (length < 4) /* NULL certificate is not an error see #1795 */
+	{
+		WLog_DBG(TAG, "Received empty certificate, ignoring...");
 		return TRUE;
+	}
 
 	WINPR_ASSERT(server_cert);
 	s = Stream_StaticConstInit(&sbuffer, server_cert, length);
