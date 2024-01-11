@@ -841,7 +841,7 @@ static UINT rdpgfx_send_cache_offer(RDPGFX_PLUGIN* gfx)
 	int idx, count;
 	UINT error = CHANNEL_RC_OK;
 	PERSISTENT_CACHE_ENTRY entry;
-	RDPGFX_CACHE_IMPORT_OFFER_PDU offer = { 0 };
+	RDPGFX_CACHE_IMPORT_OFFER_PDU* offer = NULL;
 	rdpPersistentCache* persistent = NULL;
 
 	WINPR_ASSERT(gfx);
@@ -883,7 +883,14 @@ static UINT rdpgfx_send_cache_offer(RDPGFX_PLUGIN* gfx)
 	if (count > gfx->MaxCacheSlots)
 		count = gfx->MaxCacheSlots;
 
-	offer.cacheEntriesCount = (UINT16)count;
+	offer = (RDPGFX_CACHE_IMPORT_OFFER_PDU*)calloc(1, sizeof(RDPGFX_CACHE_IMPORT_OFFER_PDU));
+	if (!offer)
+	{
+		error = CHANNEL_RC_NO_MEMORY;
+		goto fail;
+	}
+
+	offer->cacheEntriesCount = (UINT16)count;
 
 	WLog_DBG(TAG, "Sending Cache Import Offer: %d", count);
 
@@ -895,15 +902,13 @@ static UINT rdpgfx_send_cache_offer(RDPGFX_PLUGIN* gfx)
 			goto fail;
 		}
 
-		offer.cacheEntries[idx].cacheKey = entry.key64;
-		offer.cacheEntries[idx].bitmapLength = entry.size;
+		offer->cacheEntries[idx].cacheKey = entry.key64;
+		offer->cacheEntries[idx].bitmapLength = entry.size;
 	}
 
-	persistent_cache_free(persistent);
-
-	if (offer.cacheEntriesCount > 0)
+	if (offer->cacheEntriesCount > 0)
 	{
-		error = rdpgfx_send_cache_import_offer_pdu(context, &offer);
+		error = rdpgfx_send_cache_import_offer_pdu(context, offer);
 		if (error != CHANNEL_RC_OK)
 		{
 			WLog_Print(gfx->log, WLOG_ERROR, "Failed to send cache import offer PDU");
@@ -911,9 +916,9 @@ static UINT rdpgfx_send_cache_offer(RDPGFX_PLUGIN* gfx)
 		}
 	}
 
-	return error;
 fail:
 	persistent_cache_free(persistent);
+	free(offer);
 	return error;
 }
 
@@ -2057,7 +2062,7 @@ static UINT rdpgfx_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 		WLog_Print(gfx->log, WLOG_ERROR, "Error while processing GFX cmdId: %s (0x%04" PRIX16 ")",
 		           rdpgfx_get_cmd_id_string(header.cmdId), header.cmdId);
 		Stream_SetPosition(s, (beg + header.pduLength));
-		return 0;
+		return error;
 	}
 
 	end = Stream_GetPosition(s);
