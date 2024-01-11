@@ -2011,7 +2011,10 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS_E
 		drdynvc->context = context;
 		context->GetVersion = drdynvc_get_version;
 		drdynvc->rdpcontext = pEntryPointsEx->context;
-		if (!freerdp_settings_get_bool(drdynvc->rdpcontext->settings, FreeRDP_TransportDumpReplay))
+		if (!freerdp_settings_get_bool(drdynvc->rdpcontext->settings,
+		                               FreeRDP_TransportDumpReplay) &&
+		    !freerdp_settings_get_bool(drdynvc->rdpcontext->settings,
+		                               FreeRDP_SynchronousDynamicChannels))
 			drdynvc->async = TRUE;
 	}
 
