@@ -46,7 +46,7 @@ FREERDP_LOCAL BOOL security_licensing_encryption_key(const BYTE* session_key_blo
                                                      size_t server_len, BYTE* output,
                                                      size_t out_len);
 FREERDP_LOCAL BOOL security_mac_data(const BYTE* mac_salt_key, size_t mac_salt_key_length,
-                                     const BYTE* data, UINT32 length, BYTE* output,
+                                     const BYTE* data, size_t length, BYTE* output,
                                      size_t output_length);
 FREERDP_LOCAL BOOL security_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
                                           BYTE* output, size_t out_len);
