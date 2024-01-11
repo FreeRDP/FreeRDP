@@ -770,7 +770,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 DynamicChannelArraySize);   /* 5057 */
 	SETTINGS_DEPRECATED(ALIGN64 ADDIN_ARGV** DynamicChannelArray); /* 5058 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportDynamicChannels);      /* 5059 */
-	UINT64 padding5184[5184 - 5060];                               /* 5060 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL SynchronousDynamicChannels);  /* 5060 */
+	UINT64 padding5184[5184 - 5061];                               /* 5061 */
 
 	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportEchoChannel);        /* 5184 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL SupportDisplayControl);     /* 5185 */
