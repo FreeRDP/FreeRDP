@@ -316,7 +316,7 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 	}
 }
 
-#if 1
+#ifdef BUILTIN_CHANNELS
 #define VirtualChannelEntryEx rdp2tcp_VirtualChannelEntryEx
 #else
 #define VirtualChannelEntryEx FREERDP_API VirtualChannelEntryEx
