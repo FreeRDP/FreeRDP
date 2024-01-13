@@ -1496,7 +1496,13 @@ BOOL freerdp_bitmap_planar_context_reset(BITMAP_PLANAR_CONTEXT* context, UINT32 
 	context->bgr = FALSE;
 	context->maxWidth = PLANAR_ALIGN(width, 4);
 	context->maxHeight = PLANAR_ALIGN(height, 4);
-	context->maxPlaneSize = context->maxWidth * context->maxHeight;
+	const UINT64 tmp = (UINT64)context->maxWidth * context->maxHeight;
+	if (tmp > UINT32_MAX)
+		return FALSE;
+	context->maxPlaneSize = tmp;
+
+	if (context->maxWidth > UINT32_MAX / 4)
+		return FALSE;
 	context->nTempStep = context->maxWidth * 4;
 	free(context->planesBuffer);
 	free(context->pTempData);
