@@ -436,21 +436,26 @@ static BOOL pf_modules_load_ArrayList_ForEachFkt(void* data, size_t index, va_li
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
 	const char* plugin_name = va_arg(ap, const char*);
+	BOOL* res = va_arg(ap, BOOL*);
 
 	WINPR_UNUSED(index);
 	WINPR_UNUSED(ap);
+	WINPR_ASSERT(res);
 
 	if (strcmp(plugin->name, plugin_name) == 0)
-		return TRUE;
-	return FALSE;
+		*res = TRUE;
+	return TRUE;
 }
 
 BOOL pf_modules_is_plugin_loaded(proxyModule* module, const char* plugin_name)
 {
+	BOOL rc = FALSE;
 	WINPR_ASSERT(module);
 	if (ArrayList_Count(module->plugins) < 1)
 		return FALSE;
-	return ArrayList_ForEach(module->plugins, pf_modules_load_ArrayList_ForEachFkt, plugin_name);
+	if (!ArrayList_ForEach(module->plugins, pf_modules_load_ArrayList_ForEachFkt, plugin_name, &rc))
+		return FALSE;
+	return rc;
 }
 
 static BOOL pf_modules_print_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
