@@ -1171,6 +1171,7 @@ static BOOL freerdp_parse_username_ptr(const char* username, const char** user, 
                                        const char** domain, size_t* domainlen)
 {
 	const char* p = strchr(username, '\\');
+	const char* a = strchr(username, '@');
 
 	*user = NULL;
 	*userlen = 0;
@@ -1178,7 +1179,7 @@ static BOOL freerdp_parse_username_ptr(const char* username, const char** user, 
 	*domain = NULL;
 	*domainlen = 0;
 
-	if (p)
+	if (p && !a)
 	{
 		const size_t length = (size_t)(p - username);
 		*user = &p[1];
@@ -1190,11 +1191,15 @@ static BOOL freerdp_parse_username_ptr(const char* username, const char** user, 
 	else if (username)
 	{
 		/* Do not break up the name for '@'; both credSSP and the
-		 * ClientInfo PDU expect 'user@corp.net' to be transmitted
-		 * as username 'user@corp.net', domain empty (not NULL!).
+		 * ClientInfo PDU expect 'AzureAD/user@corp.net' to be transmitted
+		 * as username 'AzureAD/user@corp.net',
 		 */
 		*user = username;
 		*userlen = strlen(username);
+
+		// set domain to "" (not NULL!).
+		*domain = &username[*userlen];
+		*domainlen = 0;
 	}
 	else
 		return FALSE;
