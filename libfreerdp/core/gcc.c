@@ -1504,7 +1504,7 @@ BOOL gcc_read_server_core_data(wStream* s, rdpMcs* mcs)
  */
 BOOL gcc_write_server_core_data(wStream* s, rdpMcs* mcs)
 {
-	rdpSettings* settings = mcs_get_settings(mcs);
+	const rdpSettings* settings = mcs_get_const_settings(mcs);
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(settings);
@@ -1759,145 +1759,10 @@ static BOOL gcc_update_server_random(rdpSettings* settings)
  */
 BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 {
-	rdpSettings* settings = mcs_get_settings(mcs);
+	const rdpSettings* settings = mcs_get_const_settings(mcs);
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(settings);
-
-	/**
-	 * Re: settings->EncryptionLevel:
-	 * This is configured/set by the server implementation and serves the same
-	 * purpose as the "Encryption Level" setting in the RDP-Tcp configuration
-	 * dialog of Microsoft's Remote Desktop Session Host Configuration.
-	 * Re: settings->EncryptionMethods:
-	 * at this point this setting contains the client's supported encryption
-	 * methods we've received in gcc_read_client_security_data()
-	 */
-
-	if (!settings->UseRdpSecurityLayer)
-	{
-		/* TLS/NLA is used: disable rdp style encryption */
-		settings->EncryptionLevel = ENCRYPTION_LEVEL_NONE;
-	}
-	else
-	{
-		/* verify server encryption level value */
-		switch (settings->EncryptionLevel)
-		{
-			case ENCRYPTION_LEVEL_NONE:
-				WLog_INFO(TAG, "Active rdp encryption level: NONE");
-				break;
-
-			case ENCRYPTION_LEVEL_FIPS:
-				WLog_INFO(TAG, "Active rdp encryption level: FIPS Compliant");
-				break;
-
-			case ENCRYPTION_LEVEL_HIGH:
-				WLog_INFO(TAG, "Active rdp encryption level: HIGH");
-				break;
-
-			case ENCRYPTION_LEVEL_LOW:
-				WLog_INFO(TAG, "Active rdp encryption level: LOW");
-				break;
-
-			case ENCRYPTION_LEVEL_CLIENT_COMPATIBLE:
-				WLog_INFO(TAG, "Active rdp encryption level: CLIENT-COMPATIBLE");
-				break;
-
-			default:
-				WLog_ERR(TAG, "Invalid server encryption level 0x%08" PRIX32 "",
-				         settings->EncryptionLevel);
-				WLog_ERR(TAG, "Switching to encryption level CLIENT-COMPATIBLE");
-				settings->EncryptionLevel = ENCRYPTION_LEVEL_CLIENT_COMPATIBLE;
-		}
-	}
-
-	/* choose rdp encryption method based on server level and client methods */
-	switch (settings->EncryptionLevel)
-	{
-		case ENCRYPTION_LEVEL_NONE:
-			/* The only valid method is NONE in this case */
-			settings->EncryptionMethods = ENCRYPTION_METHOD_NONE;
-			break;
-
-		case ENCRYPTION_LEVEL_FIPS:
-
-			/* The only valid method is FIPS in this case */
-			if (!(settings->EncryptionMethods & ENCRYPTION_METHOD_FIPS))
-			{
-				WLog_WARN(TAG, "client does not support FIPS as required by server configuration");
-			}
-
-			settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
-			break;
-
-		case ENCRYPTION_LEVEL_HIGH:
-
-			/* Maximum key strength supported by the server must be used (128 bit)*/
-			if (!(settings->EncryptionMethods & ENCRYPTION_METHOD_128BIT))
-			{
-				WLog_WARN(TAG, "client does not support 128 bit encryption method as required by "
-				               "server configuration");
-			}
-
-			settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
-			break;
-
-		case ENCRYPTION_LEVEL_LOW:
-		case ENCRYPTION_LEVEL_CLIENT_COMPATIBLE:
-
-			/* Maximum key strength supported by the client must be used */
-			if (settings->EncryptionMethods & ENCRYPTION_METHOD_128BIT)
-				settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
-			else if (settings->EncryptionMethods & ENCRYPTION_METHOD_56BIT)
-				settings->EncryptionMethods = ENCRYPTION_METHOD_56BIT;
-			else if (settings->EncryptionMethods & ENCRYPTION_METHOD_40BIT)
-				settings->EncryptionMethods = ENCRYPTION_METHOD_40BIT;
-			else if (settings->EncryptionMethods & ENCRYPTION_METHOD_FIPS)
-				settings->EncryptionMethods = ENCRYPTION_METHOD_FIPS;
-			else
-			{
-				WLog_WARN(TAG, "client has not announced any supported encryption methods");
-				settings->EncryptionMethods = ENCRYPTION_METHOD_128BIT;
-			}
-
-			break;
-
-		default:
-			WLog_ERR(TAG, "internal error: unknown encryption level");
-			return FALSE;
-	}
-
-	/* log selected encryption method */
-	if (settings->UseRdpSecurityLayer)
-	{
-		switch (settings->EncryptionMethods)
-		{
-			case ENCRYPTION_METHOD_NONE:
-				WLog_INFO(TAG, "Selected rdp encryption method: NONE");
-				break;
-
-			case ENCRYPTION_METHOD_40BIT:
-				WLog_INFO(TAG, "Selected rdp encryption method: 40BIT");
-				break;
-
-			case ENCRYPTION_METHOD_56BIT:
-				WLog_INFO(TAG, "Selected rdp encryption method: 56BIT");
-				break;
-
-			case ENCRYPTION_METHOD_128BIT:
-				WLog_INFO(TAG, "Selected rdp encryption method: 128BIT");
-				break;
-
-			case ENCRYPTION_METHOD_FIPS:
-				WLog_INFO(TAG, "Selected rdp encryption method: FIPS");
-				break;
-
-			default:
-				WLog_ERR(TAG, "internal error: unknown encryption method");
-				return FALSE;
-		}
-	}
 
 	const size_t posHeader = Stream_GetPosition(s);
 	if (!gcc_write_user_data_header(s, SC_SECURITY, 12))
