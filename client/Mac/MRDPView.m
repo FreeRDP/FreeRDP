@@ -568,9 +568,9 @@ static DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE
 
 static BOOL updateFlagState(rdpInput *input, DWORD modFlags, DWORD kbdModFlags, DWORD flag)
 {
-	const BOOL press = ((modFlags & flag) != 0) && ((kbdModFlags & flag) == 0);
-	const BOOL release = ((modFlags & flag) == 0) && ((kbdModFlags & flag) != 0);
-	DWORD keyFlags = press ? KBD_FLAGS_DOWN : (release ? KBD_FLAGS_RELEASE : 0);
+	BOOL press = ((modFlags & flag) != 0) && ((kbdModFlags & flag) == 0);
+	BOOL release = ((modFlags & flag) == 0) && ((kbdModFlags & flag) != 0);
+	DWORD keyFlags = 0;
 	const char *name = NULL;
 	DWORD scancode = 0;
 
@@ -579,6 +579,7 @@ static BOOL updateFlagState(rdpInput *input, DWORD modFlags, DWORD kbdModFlags, 
 		case NSEventModifierFlagCapsLock:
 			name = "NSEventModifierFlagCapsLock";
 			scancode = RDP_SCANCODE_CAPSLOCK;
+			release = press = TRUE;
 			break;
 		case NSEventModifierFlagShift:
 			name = "NSEventModifierFlagShift";
@@ -603,6 +604,7 @@ static BOOL updateFlagState(rdpInput *input, DWORD modFlags, DWORD kbdModFlags, 
 		case NSEventModifierFlagNumericPad:
 			name = "NSEventModifierFlagNumericPad";
 			scancode = RDP_SCANCODE_NUMLOCK;
+			release = press = TRUE;
 			break;
 
 		case NSEventModifierFlagHelp:
@@ -620,7 +622,7 @@ static BOOL updateFlagState(rdpInput *input, DWORD modFlags, DWORD kbdModFlags, 
 			return FALSE;
 	}
 
-	keyFlags |= (scancode & KBDEXT);
+	keyFlags = (scancode & KBDEXT);
 	scancode &= 0xFF;
 
 #if defined(WITH_DEBUG_KBD)
@@ -630,10 +632,16 @@ static BOOL updateFlagState(rdpInput *input, DWORD modFlags, DWORD kbdModFlags, 
 #endif
 
 	if (press)
-		return freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_DOWN, scancode);
+	{
+		if (!freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_DOWN, scancode))
+			return FALSE;
+	}
 
 	if (release)
-		return freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_RELEASE, scancode);
+	{
+		if (!freerdp_input_send_keyboard_event(input, keyFlags | KBD_FLAGS_RELEASE, scancode))
+			return FALSE;
+	}
 
 	return TRUE;
 }
