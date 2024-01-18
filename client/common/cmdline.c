@@ -610,6 +610,7 @@ BOOL freerdp_client_print_command_line_help_ex(int argc, char** argv,
 	printf("    %s /u:JohnDoe /p:Pwd123! /vmconnect:C824F53E-95D2-46C6-9A18-23A5BB403532 "
 	       "/v:192.168.1.100\n",
 	       name);
+	printf("    %s /u:\\AzureAD\\user@corp.example /p:pwd /v:host\n", name);
 	printf("\n");
 	printf("Clipboard Redirection: +clipboard\n");
 	printf("\n");
