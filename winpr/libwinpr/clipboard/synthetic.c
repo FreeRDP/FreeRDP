@@ -355,9 +355,9 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 				char* utfString =
 				    ConvertWCharNToUtf8Alloc(&pSrcData.pv[1], SrcSize / sizeof(WCHAR), NULL);
 				free(pSrcData.pv);
+				pSrcData.cpc = utfString;
 				if (!utfString)
 					goto fail;
-				pSrcData.cpc = utfString;
 			}
 		}
 
