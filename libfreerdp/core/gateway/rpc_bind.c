@@ -288,6 +288,7 @@ fail:
 	}
 
 	free(bind_pdu.p_context_elem.p_cont_elem);
+	bind_pdu.p_context_elem.p_cont_elem = NULL;
 
 	Stream_Free(buffer, TRUE);
 	return (status > 0) ? 1 : -1;

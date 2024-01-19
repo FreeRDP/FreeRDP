@@ -5276,8 +5276,15 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 	return status;
 }
 
-static void argv_free(int argc, char* argv[])
+static void argv_free(int* pargc, char** pargv[])
 {
+	WINPR_ASSERT(pargc);
+	WINPR_ASSERT(pargv);
+	const int argc = *pargc;
+	char** argv = *pargv;
+	*pargc = 0;
+	*pargv = NULL;
+
 	if (!argv)
 		return;
 	for (int x = 0; x < argc; x++)
@@ -5360,7 +5367,7 @@ static BOOL args_from_fp(FILE* fp, int* aargc, char** aargv[], const char* file,
 fail:
 	fclose(fp);
 	if (!success)
-		argv_free(*aargc, *aargv);
+		argv_free(aargc, aargv);
 	return success;
 }
 
@@ -5414,7 +5421,7 @@ static BOOL args_from_env(const char* name, int* aargc, char** aargv[], const ch
 cleanup:
 	free(env);
 	if (!success)
-		argv_free(*aargc, *aargv);
+		argv_free(aargc, aargv);
 	return success;
 }
 
@@ -5478,7 +5485,7 @@ int freerdp_client_settings_parse_command_line_arguments_ex(
 	    settings, argc, argv, allowUnknown, largs, lcount, handle_option, handle_userdata);
 fail:
 	free(largs);
-	argv_free(aargc, aargv);
+	argv_free(&aargc, &aargv);
 	return res;
 }
 
