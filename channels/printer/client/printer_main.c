@@ -62,7 +62,7 @@ typedef struct
 	HANDLE thread;
 	rdpContext* rdpcontext;
 	char port[64];
-} PRINTER_DEVICE;
+} DECLSPEC_ALIGN(128) PRINTER_DEVICE;
 
 typedef enum
 {
@@ -101,8 +101,8 @@ static BOOL printer_write_setting(const char* path, prn_conf_t type, const void*
 {
 	DWORD written = 0;
 	BOOL rc = FALSE;
-	HANDLE file;
-	size_t b64len;
+	HANDLE file = NULL;
+	size_t b64len = 0;
 	char* base64 = NULL;
 	const char* name = filemap[type];
 	char* abs = GetCombinedPath(path, name);
@@ -117,14 +117,18 @@ static BOOL printer_write_setting(const char* path, prn_conf_t type, const void*
 	free(abs);
 
 	if (file == INVALID_HANDLE_VALUE)
+	{
 		return FALSE;
+	}
 
 	if (length > 0)
 	{
 		base64 = crypto_base64_encode(data, length);
 
 		if (!base64)
+		{
 			goto fail;
+		}
 
 		/* base64 char represents 6bit -> 4*(n/3) is the length which is
 		 * always smaller than 2*n */
@@ -132,10 +136,14 @@ static BOOL printer_write_setting(const char* path, prn_conf_t type, const void*
 		rc = WriteFile(file, base64, b64len, &written, NULL);
 
 		if (b64len != written)
+		{
 			rc = FALSE;
+		}
 	}
 	else
+	{
 		rc = TRUE;
+	}
 
 fail:
 	CloseHandle(file);
@@ -146,49 +154,64 @@ fail:
 static BOOL printer_config_valid(const char* path)
 {
 	if (!path)
+	{
 		return FALSE;
+	}
 
 	if (!winpr_PathFileExists(path))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
 
 static BOOL printer_read_setting(const char* path, prn_conf_t type, void** data, UINT32* length)
 {
-	DWORD lowSize, highSize;
+	DWORD lowSize;
+	DWORD highSize;
 	DWORD read = 0;
 	BOOL rc = FALSE;
-	HANDLE file;
+	HANDLE file = NULL;
 	char* fdata = NULL;
 	const char* name = filemap[type];
 	char* abs = GetCombinedPath(path, name);
 
 	if (!abs)
+	{
 		return FALSE;
+	}
 
 	file = CreateFileA(abs, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	free(abs);
 
 	if (file == INVALID_HANDLE_VALUE)
+	{
 		return FALSE;
+	}
 
 	lowSize = GetFileSize(file, &highSize);
 
 	if ((lowSize == INVALID_FILE_SIZE) || (highSize != 0))
+	{
 		goto fail;
+	}
 
 	if (lowSize != 0)
 	{
 		fdata = malloc(lowSize);
 
 		if (!fdata)
+		{
 			goto fail;
+		}
 
 		rc = ReadFile(file, fdata, lowSize, &read, NULL);
 
 		if (lowSize != read)
+		{
 			rc = FALSE;
+		}
 	}
 
 fail:
@@ -200,7 +223,9 @@ fail:
 		crypto_base64_decode(fdata, lowSize, (BYTE**)data, &blen);
 
 		if (*data && (blen > 0))
+		{
 			*length = (UINT32)blen;
+		}
 		else
 		{
 			rc = FALSE;
@@ -227,19 +252,29 @@ static BOOL printer_save_to_config(const rdpSettings* settings, const char* Port
 	char* path = get_printer_config_path(settings, PrinterName, PrintNameLen);
 
 	if (!path)
+	{
 		goto fail;
+	}
 
 	if (!printer_write_setting(path, PRN_CONF_PORT, PortDosName, PortDosNameLen))
+	{
 		goto fail;
+	}
 
 	if (!printer_write_setting(path, PRN_CONF_PNP, PnPName, PnPNameLen))
+	{
 		goto fail;
+	}
 
 	if (!printer_write_setting(path, PRN_CONF_DRIVER, DriverName, DriverNameLen))
+	{
 		goto fail;
+	}
 
 	if (!printer_write_setting(path, PRN_CONF_DATA, CachedPrinterConfigData, CacheFieldsLen))
+	{
 		goto fail;
+	}
 
 fail:
 	free(path);
@@ -262,7 +297,9 @@ static BOOL printer_remove_config(const rdpSettings* settings, const WCHAR* name
 	char* path = get_printer_config_path(settings, name, length);
 
 	if (!printer_config_valid(path))
+	{
 		goto fail;
+	}
 
 	rc = winpr_RemoveDirectory(path);
 fail:
@@ -278,7 +315,9 @@ static BOOL printer_move_config(const rdpSettings* settings, const WCHAR* oldNam
 	char* newPath = get_printer_config_path(settings, newName, newLength);
 
 	if (printer_config_valid(oldPath))
+	{
 		rc = winpr_MoveFile(oldPath, newPath);
+	}
 
 	free(oldPath);
 	free(newPath);
@@ -290,7 +329,7 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 {
 	BOOL res = FALSE;
 	WCHAR* wname = NULL;
-	size_t wlen;
+	size_t wlen = 0;
 	char* path = NULL;
 	UINT32 flags = 0;
 	void* DriverName = NULL;
@@ -303,22 +342,30 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	WCHAR* wptr = NULL;
 
 	if (!settings || !printer || !printer->name)
+	{
 		return FALSE;
+	}
 
 	wname = ConvertUtf8ToWCharAlloc(printer->name, &wlen);
 
 	if (!wname)
+	{
 		goto fail;
+	}
 
 	wlen++;
 	path = get_printer_config_path(settings, wname, wlen * sizeof(WCHAR));
 	PrinterNameLen = wlen * sizeof(WCHAR);
 
 	if (!path)
+	{
 		goto fail;
+	}
 
 	if (printer->is_default)
+	{
 		flags |= RDPDR_PRINTER_ANNOUNCE_FLAG_DEFAULTPRINTER;
+	}
 
 	if (!printer_read_setting(path, PRN_CONF_PNP, &PnPName, &PnPNameLen))
 	{
@@ -329,7 +376,9 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 		size_t len = 0;
 		DriverName = ConvertUtf8ToWCharAlloc(printer->driver, &len);
 		if (!DriverName)
+		{
 			goto fail;
+		}
 		DriverNameLen = (len + 1) * sizeof(WCHAR);
 	}
 
@@ -340,7 +389,9 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	Stream_SetPosition(printer_dev->device.data, 0);
 
 	if (!Stream_EnsureRemainingCapacity(printer_dev->device.data, 24))
+	{
 		goto fail;
+	}
 
 	Stream_Write_UINT32(printer_dev->device.data, flags);
 	Stream_Write_UINT32(printer_dev->device.data, 0);          /* CodePage, reserved */
@@ -350,18 +401,26 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	Stream_Write_UINT32(printer_dev->device.data, CachedFieldsLen);
 
 	if (!Stream_EnsureRemainingCapacity(printer_dev->device.data, PnPNameLen))
+	{
 		goto fail;
+	}
 
 	if (PnPNameLen > 0)
+	{
 		Stream_Write(printer_dev->device.data, PnPName, PnPNameLen);
+	}
 
 	if (!Stream_EnsureRemainingCapacity(printer_dev->device.data, DriverNameLen))
+	{
 		goto fail;
+	}
 
 	Stream_Write(printer_dev->device.data, DriverName, DriverNameLen);
 
 	if (!Stream_EnsureRemainingCapacity(printer_dev->device.data, PrinterNameLen))
+	{
 		goto fail;
+	}
 
 	union
 	{
@@ -372,11 +431,15 @@ static BOOL printer_load_from_config(const rdpSettings* settings, rdpPrinter* pr
 	backslash.c[1] = '\0';
 
 	for (wptr = wname; (wptr = _wcschr(wptr, backslash.w));)
+	{
 		*wptr = L'_';
+	}
 	Stream_Write(printer_dev->device.data, wname, PrinterNameLen);
 
 	if (!Stream_EnsureRemainingCapacity(printer_dev->device.data, CachedFieldsLen))
+	{
 		goto fail;
+	}
 
 	Stream_Write(printer_dev->device.data, CachedPrinterConfigData, CachedFieldsLen);
 	res = TRUE;
@@ -394,33 +457,44 @@ static BOOL printer_save_default_config(const rdpSettings* settings, rdpPrinter*
 	BOOL res = FALSE;
 	WCHAR* wname = NULL;
 	WCHAR* driver = NULL;
-	size_t wlen, dlen;
+	size_t wlen;
+	size_t dlen;
 	char* path = NULL;
 
 	if (!settings || !printer || !printer->name || !printer->driver)
+	{
 		return FALSE;
+	}
 
 	wname = ConvertUtf8ToWCharAlloc(printer->name, NULL);
 
 	if (!wname)
+	{
 		goto fail;
+	}
 
 	driver = ConvertUtf8ToWCharAlloc(printer->driver, NULL);
 
 	if (!driver)
+	{
 		goto fail;
+	}
 
 	wlen = _wcslen(wname) + 1;
 	dlen = _wcslen(driver) + 1;
 	path = get_printer_config_path(settings, wname, wlen * sizeof(WCHAR));
 
 	if (!path)
+	{
 		goto fail;
+	}
 
 	if (dlen > 1)
 	{
 		if (!printer_write_setting(path, PRN_CONF_DRIVER, driver, dlen * sizeof(WCHAR)))
+		{
 			goto fail;
+		}
 	}
 
 	res = TRUE;
@@ -501,8 +575,8 @@ static UINT printer_process_irp_close(PRINTER_DEVICE* printer_dev, IRP* irp)
  */
 static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
-	UINT32 Length;
-	UINT64 Offset;
+	UINT32 Length = 0;
+	UINT64 Offset = 0;
 	rdpPrintJob* printjob = NULL;
 	UINT error = CHANNEL_RC_OK;
 
@@ -510,13 +584,17 @@ static UINT printer_process_irp_write(PRINTER_DEVICE* printer_dev, IRP* irp)
 	WINPR_ASSERT(irp);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
+	{
 		return ERROR_INVALID_DATA;
+	}
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
 	Stream_Seek(irp->input, 20); /* Padding */
 	const void* ptr = Stream_ConstPointer(irp->input);
 	if (!Stream_SafeSeek(irp->input, Length))
+	{
 		return ERROR_INVALID_DATA;
+	}
 	if (printer_dev->printer)
 	{
 		WINPR_ASSERT(printer_dev->printer->FindPrintJob);
@@ -569,7 +647,7 @@ static UINT printer_process_irp_device_control(PRINTER_DEVICE* printer_dev, IRP*
  */
 static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 {
-	UINT error;
+	UINT error = 0;
 
 	WINPR_ASSERT(printer_dev);
 	WINPR_ASSERT(irp);
@@ -624,7 +702,7 @@ static UINT printer_process_irp(PRINTER_DEVICE* printer_dev, IRP* irp)
 
 static DWORD WINAPI printer_thread_func(LPVOID arg)
 {
-	IRP* irp;
+	IRP* irp = NULL;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)arg;
 	UINT error = CHANNEL_RC_OK;
 
@@ -643,8 +721,10 @@ static DWORD WINAPI printer_thread_func(LPVOID arg)
 		}
 
 		if (rc == WAIT_OBJECT_0 + 1)
+		{
 			break;
-		else if (rc != WAIT_OBJECT_0)
+		}
+		if (rc != WAIT_OBJECT_0)
 			continue;
 
 		ResetEvent(printer_dev->event);
@@ -665,7 +745,9 @@ static DWORD WINAPI printer_thread_func(LPVOID arg)
 	}
 
 	if (error && printer_dev->rdpcontext)
+	{
 		setChannelError(printer_dev->rdpcontext, error, "printer_thread_func reported an error");
+	}
 
 	ExitThread(error);
 	return error;
@@ -690,7 +772,7 @@ static UINT printer_irp_request(DEVICE* device, IRP* irp)
 
 static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 packetId, wStream* s)
 {
-	UINT32 eventID;
+	UINT32 eventID = 0;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)device;
 
 	WINPR_ASSERT(printer_dev);
@@ -700,10 +782,14 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 	WINPR_ASSERT(settings);
 
 	if (component != RDPDR_CTYP_PRN)
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, eventID);
 
@@ -715,12 +801,19 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 				case RDPDR_ADD_PRINTER_EVENT:
 				{
 					char PortDosName[8];
-					UINT32 PnPNameLen, DriverNameLen, PrintNameLen, CacheFieldsLen;
-					const WCHAR *PnPName, *DriverName, *PrinterName;
-					const BYTE* CachedPrinterConfigData;
+					UINT32 PnPNameLen;
+					UINT32 DriverNameLen;
+					UINT32 PrintNameLen;
+					UINT32 CacheFieldsLen;
+					const WCHAR* PnPName;
+					const WCHAR* DriverName;
+					const WCHAR* PrinterName;
+					const BYTE* CachedPrinterConfigData = NULL;
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					Stream_Read(s, PortDosName, sizeof(PortDosName));
 					Stream_Read_UINT32(s, PnPNameLen);
@@ -729,25 +822,33 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 					Stream_Read_UINT32(s, CacheFieldsLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, PnPNameLen))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					PnPName = Stream_ConstPointer(s);
 					Stream_Seek(s, PnPNameLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, DriverNameLen))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					DriverName = Stream_ConstPointer(s);
 					Stream_Seek(s, DriverNameLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, PrintNameLen))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					PrinterName = Stream_ConstPointer(s);
 					Stream_Seek(s, PrintNameLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, CacheFieldsLen))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					CachedPrinterConfigData = Stream_ConstPointer(s);
 					Stream_Seek(s, CacheFieldsLen);
@@ -756,52 +857,67 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 					                            PnPNameLen, DriverName, DriverNameLen, PrinterName,
 					                            PrintNameLen, CachedPrinterConfigData,
 					                            CacheFieldsLen))
+					{
 						return ERROR_INTERNAL_ERROR;
+					}
 				}
 				break;
 
 				case RDPDR_UPDATE_PRINTER_EVENT:
 				{
-					UINT32 PrinterNameLen, ConfigDataLen;
-					const WCHAR* PrinterName;
-					const BYTE* ConfigData;
+					UINT32 PrinterNameLen;
+					UINT32 ConfigDataLen;
+					const WCHAR* PrinterName = NULL;
+					const BYTE* ConfigData = NULL;
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					Stream_Read_UINT32(s, PrinterNameLen);
 					Stream_Read_UINT32(s, ConfigDataLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, PrinterNameLen))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					PrinterName = Stream_ConstPointer(s);
 					Stream_Seek(s, PrinterNameLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, ConfigDataLen))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					ConfigData = Stream_ConstPointer(s);
 					Stream_Seek(s, ConfigDataLen);
 
 					if (!printer_update_to_config(settings, PrinterName, PrinterNameLen, ConfigData,
 					                              ConfigDataLen))
+					{
 						return ERROR_INTERNAL_ERROR;
+					}
 				}
 				break;
 
 				case RDPDR_DELETE_PRINTER_EVENT:
 				{
-					UINT32 PrinterNameLen;
-					const WCHAR* PrinterName;
+					UINT32 PrinterNameLen = 0;
+					const WCHAR* PrinterName = NULL;
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					Stream_Read_UINT32(s, PrinterNameLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, PrinterNameLen))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					PrinterName = Stream_ConstPointer(s);
 					Stream_Seek(s, PrinterNameLen);
@@ -811,31 +927,40 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 
 				case RDPDR_RENAME_PRINTER_EVENT:
 				{
-					UINT32 OldPrinterNameLen, NewPrinterNameLen;
-					const WCHAR* OldPrinterName;
-					const WCHAR* NewPrinterName;
+					UINT32 OldPrinterNameLen;
+					UINT32 NewPrinterNameLen;
+					const WCHAR* OldPrinterName = NULL;
+					const WCHAR* NewPrinterName = NULL;
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					Stream_Read_UINT32(s, OldPrinterNameLen);
 					Stream_Read_UINT32(s, NewPrinterNameLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, OldPrinterNameLen))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					OldPrinterName = Stream_ConstPointer(s);
 					Stream_Seek(s, OldPrinterNameLen);
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, NewPrinterNameLen))
+					{
 						return ERROR_INVALID_DATA;
+					}
 
 					NewPrinterName = Stream_ConstPointer(s);
 					Stream_Seek(s, NewPrinterNameLen);
 
 					if (!printer_move_config(settings, OldPrinterName, OldPrinterNameLen,
 					                         NewPrinterName, NewPrinterNameLen))
+					{
 						return ERROR_INTERNAL_ERROR;
+					}
 				}
 				break;
 
@@ -848,10 +973,12 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 
 		case PAKID_PRN_USING_XPS:
 		{
-			UINT32 flags;
+			UINT32 flags = 0;
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			Stream_Read_UINT32(s, flags);
 			WLog_ERR(TAG,
@@ -876,9 +1003,9 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
  */
 static UINT printer_free(DEVICE* device)
 {
-	IRP* irp;
+	IRP* irp = NULL;
 	PRINTER_DEVICE* printer_dev = (PRINTER_DEVICE*)device;
-	UINT error;
+	UINT error = 0;
 
 	WINPR_ASSERT(printer_dev);
 
@@ -926,7 +1053,7 @@ static UINT printer_free(DEVICE* device)
  */
 static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrinter* printer)
 {
-	PRINTER_DEVICE* printer_dev;
+	PRINTER_DEVICE* printer_dev = NULL;
 	UINT error = ERROR_INTERNAL_ERROR;
 
 	WINPR_ASSERT(pEntryPoints);
@@ -943,7 +1070,9 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 	printer_dev->device.data = Stream_New(NULL, 1024);
 
 	if (!printer_dev->device.data)
+	{
 		goto error_out;
+	}
 
 	sprintf_s(printer_dev->port, sizeof(printer_dev->port), "PRN%" PRIdz, printer->id);
 	printer_dev->device.type = RDPDR_DTYP_PRINT;
@@ -964,7 +1093,9 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 	}
 
 	if (!printer_load_from_config(pEntryPoints->rdpcontext->settings, printer, printer_dev))
+	{
 		goto error_out;
+	}
 
 	InitializeSListHead(printer_dev->pIrpList);
 
@@ -1015,12 +1146,16 @@ static rdpPrinterDriver* printer_load_backend(const char* backend)
 
 	fktconv.entry = freerdp_load_channel_addin_entry("printer", backend, NULL, 0);
 	if (!fktconv.entry)
+	{
 		return NULL;
+	}
 
 	rdpPrinterDriver* printer = NULL;
 	const UINT rc = fktconv.backend(&printer);
 	if (rc != CHANNEL_RC_OK)
+	{
 		return NULL;
+	}
 
 	return printer;
 }
@@ -1032,15 +1167,17 @@ static rdpPrinterDriver* printer_load_backend(const char* backend)
  */
 FREERDP_ENTRY_POINT(UINT printer_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
-	char* name;
-	char* driver_name;
+	char* name = NULL;
+	char* driver_name = NULL;
 	BOOL default_backend = TRUE;
 	RDPDR_PRINTER* device = NULL;
 	rdpPrinterDriver* driver = NULL;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!pEntryPoints || !pEntryPoints->device)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	device = (RDPDR_PRINTER*)pEntryPoints->device;
 	name = device->device.Name;

@@ -40,8 +40,10 @@ static INLINE UINT16 IN_PIXEL16(const void* in_ptr, UINT32 in_x, UINT32 in_y, UI
                                 UINT16 in_last_pixel)
 {
 	if (in_ptr == 0)
+	{
 		return 0;
-	else if (in_x < in_w)
+	}
+	if (in_x < in_w)
 		return GETPIXEL16(in_ptr, in_x, in_y, in_w);
 	else
 		return in_last_pixel;
@@ -52,8 +54,10 @@ static INLINE UINT32 IN_PIXEL32(const void* in_ptr, UINT32 in_x, UINT32 in_y, UI
                                 UINT32 in_last_pixel)
 {
 	if (in_ptr == 0)
+	{
 		return 0;
-	else if (in_x < in_w)
+	}
+	if (in_x < in_w)
 		return GETPIXEL32(in_ptr, in_x, in_y, in_w);
 	else
 		return in_last_pixel;
@@ -457,9 +461,9 @@ static INLINE UINT16 out_from_count_3(UINT16 in_count, wStream* in_s, const char
 		bicolor_spin = FALSE; \
 	} while (0)
 
-static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UINT32 height,
-                                          wStream* s, UINT32 byte_limit, UINT32 start_line,
-                                          wStream* temp_s, UINT32 e)
+static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, wStream* s,
+                                          UINT32 byte_limit, UINT32 start_line, wStream* temp_s,
+                                          UINT32 e)
 {
 	char fom_mask[8192]; /* good for up to 64K bitmap */
 	SSIZE_T lines_sent = 0;
@@ -484,7 +488,7 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 
 	while ((line >= start) && (out_count < 32768))
 	{
-		UINT32 j;
+		UINT32 j = 0;
 		size_t i = Stream_GetPosition(s) + count * 3U;
 
 		if ((i - (color_count * 3) >= byte_limit) && (i - (bicolor_count * 3) >= byte_limit) &&
@@ -508,7 +512,9 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 				    fill_count >= mix_count && fill_count >= fom_count)
 				{
 					if (fill_count > count)
+					{
 						return -1;
+					}
 
 					count -= fill_count;
 					OUT_COPY_COUNT3(count, s, temp_s);
@@ -525,7 +531,9 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 				    mix_count >= color_count && mix_count >= fom_count)
 				{
 					if (mix_count > count)
+					{
 						return -1;
+					}
 
 					count -= mix_count;
 					OUT_COPY_COUNT3(count, s, temp_s);
@@ -542,7 +550,9 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 				    color_count >= mix_count && color_count >= fom_count)
 				{
 					if (color_count > count)
+					{
 						return -1;
+					}
 
 					count -= color_count;
 					OUT_COPY_COUNT3(count, s, temp_s);
@@ -560,10 +570,14 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 				    bicolor_count >= fom_count)
 				{
 					if ((bicolor_count % 2) != 0)
+					{
 						bicolor_count--;
+					}
 
 					if (bicolor_count > count)
+					{
 						return -1;
+					}
 
 					count -= bicolor_count;
 					OUT_COPY_COUNT3(count, s, temp_s);
@@ -583,7 +597,9 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 				    fom_count >= mix_count && fom_count >= bicolor_count)
 				{
 					if (fom_count > count)
+					{
 						return -1;
+					}
 
 					count -= fom_count;
 					OUT_COPY_COUNT3(count, s, temp_s);
@@ -647,7 +663,9 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 			    fill_count >= mix_count && fill_count >= fom_count)
 			{
 				if (fill_count > count)
+				{
 					return -1;
+				}
 
 				count -= fill_count;
 				OUT_COPY_COUNT3(count, s, temp_s);
@@ -661,7 +679,9 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 			    mix_count >= color_count && mix_count >= fom_count)
 			{
 				if (mix_count > count)
+				{
 					return -1;
+				}
 
 				count -= mix_count;
 				OUT_COPY_COUNT3(count, s, temp_s);
@@ -675,7 +695,9 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 			    fom_count >= mix_count && fom_count >= bicolor_count)
 			{
 				if (fom_count > count)
+				{
 					return -1;
+				}
 
 				count -= fom_count;
 				OUT_COPY_COUNT3(count, s, temp_s);
@@ -699,7 +721,9 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 	    fill_count >= mix_count && fill_count >= fom_count)
 	{
 		if (fill_count > count)
+		{
 			return -1;
+		}
 
 		count -= fill_count;
 		OUT_COPY_COUNT3(count, s, temp_s);
@@ -709,7 +733,9 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 	         mix_count >= fill_count && mix_count >= fom_count)
 	{
 		if (mix_count > count)
+		{
 			return -1;
+		}
 
 		count -= mix_count;
 		OUT_COPY_COUNT3(count, s, temp_s);
@@ -719,7 +745,9 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 	         color_count >= fill_count && color_count >= fom_count)
 	{
 		if (color_count > count)
+		{
 			return -1;
+		}
 
 		count -= color_count;
 		OUT_COPY_COUNT3(count, s, temp_s);
@@ -729,17 +757,23 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 	         bicolor_count >= fill_count && bicolor_count >= fom_count)
 	{
 		if ((bicolor_count % 2) != 0)
+		{
 			bicolor_count--;
+		}
 
 		if (bicolor_count > count)
+		{
 			return -1;
+		}
 
 		count -= bicolor_count;
 		OUT_COPY_COUNT3(count, s, temp_s);
 		OUT_BICOLOR_COUNT3(bicolor_count, s, bicolor2, bicolor1);
 
 		if (bicolor_count > count)
+		{
 			return -1;
+		}
 
 		count -= bicolor_count;
 		OUT_COPY_COUNT3(count, s, temp_s);
@@ -749,7 +783,9 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 	         fom_count >= fill_count && fom_count >= bicolor_count)
 	{
 		if (fom_count > count)
+		{
 			return -1;
+		}
 
 		count -= fom_count;
 		OUT_COPY_COUNT3(count, s, temp_s);
@@ -763,9 +799,9 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 	return lines_sent;
 }
 
-static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UINT32 height,
-                                          wStream* s, UINT32 bpp, UINT32 byte_limit,
-                                          UINT32 start_line, wStream* temp_s, UINT32 e)
+static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, wStream* s, UINT32 bpp,
+                                          UINT32 byte_limit, UINT32 start_line, wStream* temp_s,
+                                          UINT32 e)
 {
 	char fom_mask[8192]; /* good for up to 64K bitmap */
 	SSIZE_T lines_sent = 0;
@@ -790,7 +826,7 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 
 	while ((line >= start) && (out_count < 32768))
 	{
-		UINT32 j;
+		UINT32 j = 0;
 		size_t i = Stream_GetPosition(s) + count * 2;
 
 		if ((i - (color_count * 2) >= byte_limit) && (i - (bicolor_count * 2) >= byte_limit) &&
@@ -814,7 +850,9 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 				    fill_count >= mix_count && fill_count >= fom_count)
 				{
 					if (fill_count > count)
+					{
 						return -1;
+					}
 
 					count -= fill_count;
 					OUT_COPY_COUNT2(count, s, temp_s);
@@ -831,7 +869,9 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 				    mix_count >= color_count && mix_count >= fom_count)
 				{
 					if (mix_count > count)
+					{
 						return -1;
+					}
 
 					count -= mix_count;
 					OUT_COPY_COUNT2(count, s, temp_s);
@@ -848,7 +888,9 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 				    color_count >= mix_count && color_count >= fom_count)
 				{
 					if (color_count > count)
+					{
 						return -1;
+					}
 
 					count -= color_count;
 					OUT_COPY_COUNT2(count, s, temp_s);
@@ -866,10 +908,14 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 				    (bicolor_count >= fom_count))
 				{
 					if ((bicolor_count % 2) != 0)
+					{
 						bicolor_count--;
+					}
 
 					if (bicolor_count > count)
+					{
 						return -1;
+					}
 
 					count -= bicolor_count;
 					OUT_COPY_COUNT2(count, s, temp_s);
@@ -889,7 +935,9 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 				    fom_count >= mix_count && fom_count >= bicolor_count)
 				{
 					if (fom_count > count)
+					{
 						return -1;
+					}
 
 					count -= fom_count;
 					OUT_COPY_COUNT2(count, s, temp_s);
@@ -951,7 +999,9 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 			    fill_count >= mix_count && fill_count >= fom_count)
 			{
 				if (fill_count > count)
+				{
 					return -1;
+				}
 
 				count -= fill_count;
 				OUT_COPY_COUNT2(count, s, temp_s);
@@ -965,7 +1015,9 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 			    mix_count >= color_count && mix_count >= fom_count)
 			{
 				if (mix_count > count)
+				{
 					return -1;
+				}
 
 				count -= mix_count;
 				OUT_COPY_COUNT2(count, s, temp_s);
@@ -979,7 +1031,9 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 			    fom_count >= mix_count && fom_count >= bicolor_count)
 			{
 				if (fom_count > count)
+				{
 					return -1;
+				}
 
 				count -= fom_count;
 				OUT_COPY_COUNT2(count, s, temp_s);
@@ -1003,7 +1057,9 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 	    fill_count >= mix_count && fill_count >= fom_count)
 	{
 		if (fill_count > count)
+		{
 			return -1;
+		}
 
 		count -= fill_count;
 		OUT_COPY_COUNT2(count, s, temp_s);
@@ -1013,7 +1069,9 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 	         mix_count >= fill_count && mix_count >= fom_count)
 	{
 		if (mix_count > count)
+		{
 			return -1;
+		}
 
 		count -= mix_count;
 		OUT_COPY_COUNT2(count, s, temp_s);
@@ -1023,7 +1081,9 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 	         color_count >= fill_count && color_count >= fom_count)
 	{
 		if (color_count > count)
+		{
 			return -1;
+		}
 
 		count -= color_count;
 		OUT_COPY_COUNT2(count, s, temp_s);
@@ -1033,17 +1093,23 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 	         bicolor_count >= fill_count && bicolor_count >= fom_count)
 	{
 		if ((bicolor_count % 2) != 0)
+		{
 			bicolor_count--;
+		}
 
 		if (bicolor_count > count)
+		{
 			return -1;
+		}
 
 		count -= bicolor_count;
 		OUT_COPY_COUNT2(count, s, temp_s);
 		OUT_BICOLOR_COUNT2(bicolor_count, s, bicolor2, bicolor1);
 
 		if (bicolor_count > count)
+		{
 			return -1;
+		}
 
 		count -= bicolor_count;
 		OUT_COPY_COUNT2(count, s, temp_s);
@@ -1053,7 +1119,9 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 	         fom_count >= fill_count && fom_count >= bicolor_count)
 	{
 		if (fom_count > count)
+		{
 			return -1;
+		}
 
 		count -= fom_count;
 		OUT_COPY_COUNT2(count, s, temp_s);
@@ -1077,12 +1145,11 @@ SSIZE_T freerdp_bitmap_compress(const void* srcData, UINT32 width, UINT32 height
 	{
 		case 15:
 		case 16:
-			return freerdp_bitmap_compress_16(srcData, width, height, s, bpp, byte_limit,
-			                                  start_line, temp_s, e);
+			return freerdp_bitmap_compress_16(srcData, width, s, bpp, byte_limit, start_line,
+			                                  temp_s, e);
 
 		case 24:
-			return freerdp_bitmap_compress_24(srcData, width, height, s, byte_limit, start_line,
-			                                  temp_s, e);
+			return freerdp_bitmap_compress_24(srcData, width, s, byte_limit, start_line, temp_s, e);
 
 		default:
 			return -1;

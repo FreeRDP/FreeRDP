@@ -47,7 +47,9 @@ static void log_errors_(wLog* log, const char* msg, const char* file, const char
 	unsigned long ec = 0;
 
 	if (!WLog_IsLevelActive(log, level))
+	{
 		return;
+	}
 
 	BOOL error_logged = FALSE;
 	while ((ec = ERR_get_error()))
@@ -57,8 +59,10 @@ static void log_errors_(wLog* log, const char* msg, const char* file, const char
 		                  ERR_error_string(ec, NULL));
 	}
 	if (!error_logged)
+	{
 		WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, level, line, file, fkt,
 		                  "%s (no details available)", msg);
+	}
 }
 
 static int get_line(BIO* bio, char* buffer, size_t size)
@@ -119,19 +123,25 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 	const size_t len = path - (url + 8);
 	hostname = strndup(&url[8], len);
 	if (!hostname)
+	{
 		return FALSE;
+	}
 
 	size_t blen = 0;
 	if (body)
 	{
 		blen = strlen(body);
 		if (winpr_asprintf(&headers, &size, post_header_fmt, path, hostname, blen) < 0)
+		{
 			return FALSE;
+		}
 	}
 	else
 	{
 		if (winpr_asprintf(&headers, &size, get_header_fmt, path, hostname) < 0)
+		{
 			return FALSE;
+		}
 	}
 
 	ssl_ctx = SSL_CTX_new(TLS_client_method());
@@ -255,7 +265,9 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 
 		*response = calloc(1, *response_length + 1);
 		if (!*response)
+		{
 			goto out;
+		}
 
 		BYTE* p = *response;
 		int left = *response_length;

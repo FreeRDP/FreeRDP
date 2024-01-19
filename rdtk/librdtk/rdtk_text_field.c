@@ -27,15 +27,15 @@
 int rdtk_text_field_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint16_t nWidth,
                          uint16_t nHeight, rdtkTextField* textField, const char* text)
 {
-	uint16_t offsetX;
-	uint16_t offsetY;
-	uint16_t textWidth;
-	uint16_t textHeight;
-	uint16_t fillWidth;
-	uint16_t fillHeight;
-	rdtkFont* font;
-	rdtkEngine* engine;
-	rdtkNinePatch* ninePatch;
+	uint16_t offsetX = 0;
+	uint16_t offsetY = 0;
+	uint16_t textWidth = 0;
+	uint16_t textHeight = 0;
+	uint16_t fillWidth = 0;
+	uint16_t fillHeight = 0;
+	rdtkFont* font = NULL;
+	rdtkEngine* engine = NULL;
+	rdtkNinePatch* ninePatch = NULL;
 
 	WINPR_ASSERT(surface);
 	WINPR_ASSERT(textField);
@@ -59,14 +59,22 @@ int rdtk_text_field_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, u
 		offsetY = ninePatch->fillTop;
 
 		if (textWidth < fillWidth)
+		{
 			offsetX = ((fillWidth - textWidth) / 2) + ninePatch->fillLeft;
+		}
 		else if (textWidth < ninePatch->width)
+		{
 			offsetX = ((ninePatch->width - textWidth) / 2);
+		}
 
 		if (textHeight < fillHeight)
+		{
 			offsetY = ((fillHeight - textHeight) / 2) + ninePatch->fillTop;
+		}
 		else if (textHeight < ninePatch->height)
+		{
 			offsetY = ((ninePatch->height - textHeight) / 2);
+		}
 
 		rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);
 	}
@@ -82,7 +90,9 @@ rdtkTextField* rdtk_text_field_new(rdtkEngine* engine, rdtkNinePatch* ninePatch)
 	rdtkTextField* textField = (rdtkTextField*)calloc(1, sizeof(rdtkTextField));
 
 	if (!textField)
+	{
 		return NULL;
+	}
 
 	textField->engine = engine;
 	textField->ninePatch = ninePatch;
@@ -103,7 +113,9 @@ int rdtk_text_field_engine_init(rdtkEngine* engine)
 	{
 		engine->textField = rdtk_text_field_new(engine, engine->textField9patch);
 		if (!engine->textField)
+		{
 			return -1;
+		}
 	}
 
 	return 1;

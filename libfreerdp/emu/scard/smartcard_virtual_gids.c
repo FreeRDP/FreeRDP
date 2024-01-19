@@ -118,7 +118,7 @@ struct vgids_ef
 	UINT16 id;
 	UINT16 dirID;
 	wStream* data;
-};
+} DECLSPEC_ALIGN(16);
 typedef struct vgids_ef vgidsEF;
 
 struct vgids_se
@@ -126,7 +126,7 @@ struct vgids_se
 	BYTE crt;    /* control reference template tag */
 	BYTE algoId; /* Algorithm ID */
 	BYTE keyRef; /* Key reference */
-};
+} DECLSPEC_ALIGN(4);
 typedef struct vgids_se vgidsSE;
 
 struct vgids_context
@@ -144,7 +144,7 @@ struct vgids_context
 	rdpPrivateKey* privateKey;
 
 	wArrayList* files;
-};
+} DECLSPEC_ALIGN(64);
 
 /* PKCS 1.5 DER encoded digest information */
 #define VGIDS_MAX_DIGEST_INFO 7
@@ -172,7 +172,7 @@ struct vgids_digest_info_map
 	const BYTE* info;
 	size_t infoSize;
 	const EVP_MD* digest;
-};
+} DECLSPEC_ALIGN(32);
 typedef struct vgids_digest_info_map vgidsDigestInfoMap;
 
 /* MS GIDS AID */
@@ -238,7 +238,7 @@ struct vgids_container_map_entry
 	BYTE bReserved;
 	WORD wSigKeySizeBits;
 	WORD wKeyExchangeKeySizeBits;
-};
+} DECLSPEC_ALIGN(128);
 typedef struct vgids_container_map_entry vgidsContainerMapEntry;
 
 struct vgids_filesys_table_entry
@@ -250,7 +250,7 @@ struct vgids_filesys_table_entry
 	UINT16 pad1;
 	UINT16 fileIdentifier;
 	UINT16 unknown;
-};
+} DECLSPEC_ALIGN(32);
 typedef struct vgids_filesys_table_entry vgidsFilesysTableEntry;
 
 struct vgids_keymap_record
@@ -261,10 +261,12 @@ struct vgids_keymap_record
 	UINT16 keyref;
 	UINT16 unknownWithFFFF;
 	UINT16 unknownWith0000;
-};
+} DECLSPEC_ALIGN(16);
 typedef struct vgids_keymap_record vgidsKeymapRecord;
 
 #pragma pack(pop)
+
+static void vgids_ef_free(void* ptr);
 
 static vgidsEF* vgids_ef_new(vgidsContext* ctx, USHORT id)
 {
@@ -288,7 +290,7 @@ static vgidsEF* vgids_ef_new(vgidsContext* ctx, USHORT id)
 	return ef;
 
 create_failed:
-	free(ef);
+	vgids_ef_free(ef);
 	return NULL;
 }
 
@@ -304,9 +306,13 @@ static BOOL vgids_write_tlv(wStream* s, UINT16 tag, const void* data, DWORD data
 	/* BER encoding: If the most-significant bit is set (0x80) the length is encoded in the
 	 * remaining bits. So lengths < 128 bytes can be set directly, all others are encoded */
 	if (tag > 0xFF)
+	{
 		Stream_Write_UINT16_BE(s, tag);
+	}
 	else
+	{
 		Stream_Write_UINT8(s, (BYTE)tag);
+	}
 	if (dataSize < 128)
 	{
 		Stream_Write_UINT8(s, (BYTE)dataSize);
@@ -344,10 +350,10 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 	/* Look for the requested DO */
 	while (Stream_GetRemainingLength(ef->data) > 3)
 	{
-		BYTE len;
-		size_t curPos;
-		UINT16 doSize;
-		UINT16 nextDOID;
+		BYTE len = 0;
+		size_t curPos = 0;
+		UINT16 doSize = 0;
+		UINT16 nextDOID = 0;
 
 		curPos = Stream_GetPosition(ef->data);
 		Stream_Read_UINT16_BE(ef->data, nextDOID);
@@ -356,7 +362,9 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 		{
 			BYTE lenSize = len & 0x7F;
 			if (!Stream_CheckAndLogRequiredLength(TAG, ef->data, lenSize))
+			{
 				return FALSE;
+			}
 
 			switch (lenSize)
 			{
@@ -372,14 +380,18 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 			}
 		}
 		else
+		{
 			doSize = len;
+		}
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, ef->data, doSize))
+		{
 			return FALSE;
+		}
 
 		if (nextDOID == doID)
 		{
-			BYTE* outData;
+			BYTE* outData = NULL;
 
 			/* Include Tag and length in result */
 			doSize += (UINT16)(Stream_GetPosition(ef->data) - curPos);
@@ -396,11 +408,9 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 			*dataSize = doSize;
 			return TRUE;
 		}
-		else
-		{
-			/* Skip DO */
-			Stream_SafeSeek(ef->data, doSize);
-		}
+
+		/* Skip DO */
+		Stream_SafeSeek(ef->data, doSize);
 	}
 
 	return FALSE;
@@ -423,7 +433,7 @@ static BOOL vgids_prepare_fstable(const vgidsFilesysTableEntry* fstable, DWORD n
 	    BYTE unkonwn: 0x01
 	    Array of vgidsFilesysTableEntry
 	*/
-	DWORD i;
+	DWORD i = 0;
 	BYTE* data = malloc(sizeof(vgidsFilesysTableEntry) * numEntries + 1);
 	if (!data)
 	{
@@ -433,8 +443,10 @@ static BOOL vgids_prepare_fstable(const vgidsFilesysTableEntry* fstable, DWORD n
 
 	*data = 0x01;
 	for (i = 0; i < numEntries; ++i)
+	{
 		memcpy(data + 1 + (sizeof(vgidsFilesysTableEntry) * i), &fstable[i],
 		       sizeof(vgidsFilesysTableEntry));
+	}
 
 	*outData = data;
 	*outDataSize = sizeof(vgidsFilesysTableEntry) * numEntries + 1;
@@ -449,7 +461,7 @@ static BOOL vgids_prepare_certificate(const rdpCertificate* cert, BYTE** kxc, DW
 	    UINT16 source size
 	    ZLIB compressed cert
 	*/
-	uLongf destSize;
+	uLongf destSize = 0;
 	wStream* s = NULL;
 	BYTE* comprData = NULL;
 
@@ -535,7 +547,7 @@ static BOOL vgids_prepare_keymap(vgidsContext* context, BYTE** outData, DWORD* o
 	    BYTE unkonwn (count?): 0x01
 	    Array of vgidsKeymapRecord
 	*/
-	BYTE* data;
+	BYTE* data = NULL;
 	vgidsKeymapRecord record = {
 		1,                                /* state */
 		0,                                /* algo */
@@ -548,7 +560,9 @@ static BOOL vgids_prepare_keymap(vgidsContext* context, BYTE** outData, DWORD* o
 	/* Determine algo */
 	BYTE algid = vgids_get_algid(context);
 	if (algid == 0)
+	{
 		return FALSE;
+	}
 
 	data = malloc(sizeof(record) + 1);
 	if (!data)
@@ -571,42 +585,66 @@ static BOOL vgids_parse_apdu_header(wStream* s, BYTE* cla, BYTE* ins, BYTE* p1, 
                                     BYTE* le)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return FALSE;
+	}
 
 	/* Read and verify APDU data */
 	if (cla)
+	{
 		Stream_Read_UINT8(s, *cla);
+	}
 	else
+	{
 		Stream_Seek(s, 1);
+	}
 	if (ins)
+	{
 		Stream_Read_UINT8(s, *ins);
+	}
 	else
+	{
 		Stream_Seek(s, 1);
+	}
 	if (p1)
+	{
 		Stream_Read_UINT8(s, *p1);
+	}
 	else
+	{
 		Stream_Seek(s, 1);
+	}
 	if (p2)
+	{
 		Stream_Read_UINT8(s, *p2);
+	}
 	else
+	{
 		Stream_Seek(s, 1);
+	}
 
 	/* If LC is requested - check remaining length and read as well */
 	if (lc)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+		{
 			return FALSE;
+		}
 
 		Stream_Read_UINT8(s, *lc);
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, *lc))
+		{
 			return FALSE;
+		}
 	}
 
 	/* read LE */
 	if (le)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+		{
 			return FALSE;
+		}
 		Stream_Read_UINT8(s, *le);
 	}
 
@@ -638,8 +676,8 @@ static BOOL vgids_create_response(UINT16 status, const BYTE* answer, DWORD answe
 
 static BOOL vgids_read_do_fkt(void* data, size_t index, va_list ap)
 {
-	BYTE* response;
-	DWORD responseSize;
+	BYTE* response = NULL;
+	DWORD responseSize = 0;
 	vgidsEF* file = (vgidsEF*)data;
 	vgidsContext* context = va_arg(ap, vgidsContext*);
 	UINT16 efID = (UINT16)va_arg(ap, unsigned);
@@ -679,7 +717,9 @@ static void vgids_reset_context_command_data(vgidsContext* context)
 static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
                              DWORD* responseSize)
 {
-	BYTE p1, p2, lc;
+	BYTE p1;
+	BYTE p2;
+	BYTE lc;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
 	UINT16 status = ISO_STATUS_SUCCESS;
@@ -687,7 +727,9 @@ static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
 	/* The only select operations performed are either select by AID or select 3FFF (return
 	 * information about the currently selected DF) */
 	if (!vgids_parse_apdu_header(s, NULL, NULL, &p1, &p2, &lc, NULL))
+	{
 		return FALSE;
+	}
 
 	/* Check P1 for selection mode */
 	switch (p1)
@@ -735,14 +777,16 @@ static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
 			}
 
 			if (resultData)
+			{
 				context->currentDF = ISO_FID_MF;
+			}
 			break;
 		}
 		/* Select by FID */
 		case 0x00:
 		{
 			/* read FID from APDU */
-			UINT16 fid;
+			UINT16 fid = 0;
 			if (lc > 2)
 			{
 				WLog_ERR(TAG, "The LC byte for the file ID is greater than 2");
@@ -789,7 +833,9 @@ static UINT16 vgids_handle_chained_response(vgidsContext* context, const BYTE** 
 	 * in the status word */
 	remainingBytes = (DWORD)(Stream_Length(context->responseData) - remainingBytes);
 	if (remainingBytes < 256 && remainingBytes != 0)
+	{
 		status |= (remainingBytes & 0xFF);
+	}
 	return status;
 }
 
@@ -809,7 +855,9 @@ static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 	char* e = freerdp_certificate_get_param(context->certificate, FREERDP_CERT_RSA_E, &eSize);
 
 	if (!n || !e)
+	{
 		goto handle_error;
+	}
 
 	pubKey = Stream_New(NULL, nSize + eSize + 0x10);
 	if (!pubKey)
@@ -827,14 +875,20 @@ static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 
 	/* write modulus and exponent DOs */
 	if (!vgids_write_tlv(pubKey, 0x81, n, nSize))
+	{
 		goto handle_error;
+	}
 
 	if (!vgids_write_tlv(pubKey, 0x82, e, eSize))
+	{
 		goto handle_error;
+	}
 
 	/* write ISO public key template */
 	if (!vgids_write_tlv(response, doTag, Stream_Buffer(pubKey), (DWORD)Stream_Length(pubKey)))
+	{
 		goto handle_error;
+	}
 
 	/* set response data */
 	Stream_SetPosition(response, 0);
@@ -846,16 +900,20 @@ handle_error:
 	free(e);
 	Stream_Free(pubKey, TRUE);
 	if (!rc)
+	{
 		Stream_Free(response, TRUE);
+	}
 	return rc;
 }
 
 static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response,
                               DWORD* responseSize)
 {
-	UINT16 doId;
-	UINT16 fileId;
-	BYTE p1, p2, lc;
+	UINT16 doId = 0;
+	UINT16 fileId = 0;
+	BYTE p1;
+	BYTE p2;
+	BYTE lc;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
 	UINT16 status = ISO_STATUS_SUCCESS;
@@ -865,7 +923,9 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 	     - To retrieve public key information
 	*/
 	if (!vgids_parse_apdu_header(s, NULL, NULL, &p1, &p2, &lc, NULL))
+	{
 		return FALSE;
+	}
 
 	/* free any previous queried data */
 	vgids_reset_context_response(context);
@@ -878,7 +938,8 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 	{
 		case 4:
 		{
-			BYTE tag, length;
+			BYTE tag;
+			BYTE length;
 			Stream_Read_UINT8(s, tag);
 			Stream_Read_UINT8(s, length);
 			if (tag != 0x5C && length != 0x02)
@@ -893,8 +954,10 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 		}
 		case 0xA:
 		{
-			UINT16 pubKeyDO;
-			BYTE tag, length, keyRef;
+			UINT16 pubKeyDO = 0;
+			BYTE tag;
+			BYTE length;
+			BYTE keyRef;
 
 			/* We want to retrieve the public key? */
 			if (p1 != 0x3F && p2 != 0xFF)
@@ -956,9 +1019,13 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 
 	/* If we have response data, make it ready for return */
 	if (context->responseData)
+	{
 		status = vgids_handle_chained_response(context, &resultData, &resultDataSize);
+	}
 	else if (status == ISO_STATUS_SUCCESS)
+	{
 		status = ISO_STATUS_REFERENCEDATANOTFOUND;
+	}
 
 	return vgids_create_response(status, resultData, resultDataSize, response, responseSize);
 }
@@ -966,8 +1033,11 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 static BOOL vgids_ins_manage_security_environment(vgidsContext* context, wStream* s,
                                                   BYTE** response, DWORD* responseSize)
 {
-	BYTE tag, length;
-	BYTE p1, p2, lc;
+	BYTE tag;
+	BYTE length;
+	BYTE p1;
+	BYTE p2;
+	BYTE lc;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
 	UINT16 status = ISO_STATUS_SUCCESS;
@@ -977,7 +1047,9 @@ static BOOL vgids_ins_manage_security_environment(vgidsContext* context, wStream
 
 	/* Manage security environment prepares the card for performing crypto operations. */
 	if (!vgids_parse_apdu_header(s, NULL, NULL, &p1, &p2, &lc, NULL))
+	{
 		return FALSE;
+	}
 
 	/* Check APDU params */
 	/* P1: Set Computation, decipherment, Internal Auth */
@@ -1020,13 +1092,16 @@ static BOOL vgids_ins_manage_security_environment(vgidsContext* context, wStream
 create_response:
 	/* If an error occured reset SE */
 	if (status != ISO_STATUS_SUCCESS)
+	{
 		memset(&context->currentSE, 0, sizeof(context->currentSE));
+	}
 	return vgids_create_response(status, resultData, resultDataSize, response, responseSize);
 }
 
 static BOOL vgids_perform_digital_signature(vgidsContext* context)
 {
-	size_t sigSize, msgSize;
+	size_t sigSize;
+	size_t msgSize;
 	EVP_PKEY_CTX* ctx = NULL;
 	EVP_PKEY* pk = freerdp_key_get_evp_pkey(context->privateKey);
 	const vgidsDigestInfoMap gidsDigestInfo[VGIDS_MAX_DIGEST_INFO] = {
@@ -1059,7 +1134,9 @@ static BOOL vgids_perform_digital_signature(vgidsContext* context)
 			/* skip digest info and calculate message size */
 			Stream_Seek(context->commandData, digest->infoSize);
 			if (!Stream_CheckAndLogRequiredLength(TAG, context->commandData, 2))
+			{
 				goto sign_failed;
+			}
 			msgSize = Stream_GetRemainingLength(context->commandData);
 
 			/* setup signing context */
@@ -1137,28 +1214,40 @@ static BOOL vgids_perform_decrypt(vgidsContext* context)
 {
 	EVP_PKEY_CTX* ctx = NULL;
 	BOOL rc = FALSE;
-	int res;
+	int res = 0;
 	int padding = RSA_NO_PADDING;
 
 	vgids_reset_context_response(context);
 
 	/* determine padding */
 	if (context->currentSE.algoId & VGIDS_SE_ALGOID_CT_PAD_PKCS1)
+	{
 		padding = RSA_PKCS1_PADDING;
+	}
 	else if (context->currentSE.algoId & VGIDS_SE_ALGOID_CT_PAD_OAEP)
+	{
 		padding = RSA_PKCS1_OAEP_PADDING;
+	}
 
 	/* init response buffer */
 	EVP_PKEY* pkey = freerdp_key_get_evp_pkey(context->privateKey);
 	if (!pkey)
+	{
 		goto decrypt_failed;
+	}
 	ctx = EVP_PKEY_CTX_new(pkey, NULL);
 	if (!ctx)
+	{
 		goto decrypt_failed;
+	}
 	if (EVP_PKEY_decrypt_init(ctx) <= 0)
+	{
 		goto decrypt_failed;
+	}
 	if (EVP_PKEY_CTX_set_rsa_padding(ctx, padding) <= 0)
+	{
 		goto decrypt_failed;
+	}
 
 	/* Determine buffer length */
 	const size_t inlen = Stream_Length(context->commandData);
@@ -1196,21 +1285,28 @@ decrypt_failed:
 	EVP_PKEY_free(pkey);
 	vgids_reset_context_command_data(context);
 	if (!rc)
+	{
 		vgids_reset_context_response(context);
+	}
 	return rc;
 }
 
 static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream* s, BYTE** response,
                                                  DWORD* responseSize)
 {
-	BYTE cla, p1, p2, lc;
+	BYTE cla;
+	BYTE p1;
+	BYTE p2;
+	BYTE lc;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
 	UINT16 status = ISO_STATUS_SUCCESS;
 
 	/* Perform security operation */
 	if (!vgids_parse_apdu_header(s, &cla, NULL, &p1, &p2, &lc, NULL))
+	{
 		return FALSE;
+	}
 
 	if (lc == 0)
 	{
@@ -1237,10 +1333,14 @@ static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream*
 	{
 		context->commandData = Stream_New(NULL, lc);
 		if (!context->commandData)
+		{
 			return FALSE;
+		}
 	}
 	else
+	{
 		Stream_EnsureRemainingCapacity(context->commandData, lc);
+	}
 
 	Stream_Write(context->commandData, Stream_Pointer(s), lc);
 	Stream_SealLength(context->commandData);
@@ -1258,7 +1358,9 @@ static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream*
 
 			/* If chaining is over perform op */
 			if (!(cla & 0x10))
+			{
 				vgids_perform_digital_signature(context);
+			}
 			break;
 		}
 		case VGIDS_SE_CRT_CONF:
@@ -1271,7 +1373,9 @@ static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream*
 
 			/* If chaining is over perform op */
 			if (!(cla & 0x10))
+			{
 				vgids_perform_decrypt(context);
+			}
 			break;
 		}
 		default:
@@ -1281,7 +1385,9 @@ static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream*
 
 	/* Do chaining of response data if necessary */
 	if (status == ISO_STATUS_SUCCESS && context->responseData)
+	{
 		status = vgids_handle_chained_response(context, &resultData, &resultDataSize);
+	}
 
 	/* Check APDU params */
 create_response:
@@ -1291,10 +1397,13 @@ create_response:
 static BOOL vgids_ins_getresponse(vgidsContext* context, wStream* s, BYTE** response,
                                   DWORD* responseSize)
 {
-	BYTE p1, p2, le;
+	BYTE p1;
+	BYTE p2;
+	BYTE le;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
-	DWORD expectedLen, remainingSize;
+	DWORD expectedLen;
+	DWORD remainingSize;
 	UINT16 status = ISO_STATUS_SUCCESS;
 
 	/* Get response continues data transfer after a previous get data command */
@@ -1306,7 +1415,9 @@ static BOOL vgids_ins_getresponse(vgidsContext* context, wStream* s, BYTE** resp
 	}
 
 	if (!vgids_parse_apdu_header(s, NULL, NULL, &p1, &p2, NULL, &le))
+	{
 		return FALSE;
+	}
 
 	/* Check APDU params */
 	if (p1 != 00 || p2 != 0x00)
@@ -1318,12 +1429,16 @@ static BOOL vgids_ins_getresponse(vgidsContext* context, wStream* s, BYTE** resp
 	/* LE = 0 means 256 bytes expected */
 	expectedLen = le;
 	if (expectedLen == 0)
+	{
 		expectedLen = 256;
+	}
 
 	/* prepare response size and update offset */
 	remainingSize = (DWORD)Stream_GetRemainingLength(context->responseData);
 	if (remainingSize < expectedLen)
+	{
 		expectedLen = remainingSize;
+	}
 
 	resultData = Stream_Pointer(context->responseData);
 	resultDataSize = expectedLen;
@@ -1335,7 +1450,9 @@ static BOOL vgids_ins_getresponse(vgidsContext* context, wStream* s, BYTE** resp
 	{
 		status = ISO_STATUS_MORE_DATA;
 		if (remainingSize < 256)
+		{
 			status |= (remainingSize & 0xFF);
+		}
 	}
 
 create_response:
@@ -1345,13 +1462,18 @@ create_response:
 static BOOL vgids_ins_verify(vgidsContext* context, wStream* s, BYTE** response,
                              DWORD* responseSize)
 {
-	BYTE ins, p1, p2, lc;
+	BYTE ins;
+	BYTE p1;
+	BYTE p2;
+	BYTE lc;
 	UINT16 status = ISO_STATUS_SUCCESS;
 	char pin[VGIDS_MAX_PIN_SIZE + 1] = { 0 };
 
 	/* Verify is always called for the application password (PIN) P2=0x80 */
 	if (!vgids_parse_apdu_header(s, NULL, &ins, &p1, &p2, NULL, NULL))
+	{
 		return FALSE;
+	}
 
 	/* Check APDU params */
 	if (p1 != 00 && p2 != 0x80 && p2 != 0x82)
@@ -1410,7 +1532,7 @@ create_response:
 
 vgidsContext* vgids_new(void)
 {
-	wObject* obj;
+	wObject* obj = NULL;
 	vgidsContext* ctx = calloc(1, sizeof(vgidsContext));
 
 	ctx->files = ArrayList_New(FALSE);
@@ -1432,9 +1554,9 @@ create_failed:
 
 BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, const char* pin)
 {
-	DWORD kxcSize;
-	DWORD keymapSize;
-	DWORD fsTableSize;
+	DWORD kxcSize = 0;
+	DWORD keymapSize = 0;
+	DWORD fsTableSize = 0;
 	BOOL rc = FALSE;
 	BYTE* kxc = NULL;
 	BYTE* keymap = NULL;
@@ -1470,74 +1592,110 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 	/* Convert PEM input to DER certificate/public key/private key */
 	ctx->certificate = freerdp_certificate_new_from_pem(cert);
 	if (!ctx->certificate)
+	{
 		goto init_failed;
+	}
 
 	ctx->privateKey = freerdp_key_new_from_pem(privateKey);
 	if (!ctx->privateKey)
+	{
 		goto init_failed;
+	}
 
 	/* create masterfile */
 	masterEF = vgids_ef_new(ctx, VGIDS_EFID_MASTER);
 	if (!masterEF)
+	{
 		goto init_failed;
+	}
 
 	/* create cardid file with cardid DO */
 	cardidEF = vgids_ef_new(ctx, VGIDS_EFID_CARDID);
 	if (!cardidEF)
+	{
 		goto init_failed;
+	}
 	winpr_RAND(cardid, sizeof(cardid));
 	if (!vgids_ef_write_do(cardidEF, VGIDS_DO_CARDID, cardid, sizeof(cardid)))
+	{
 		goto init_failed;
+	}
 
 	/* create user common file */
 	commonEF = vgids_ef_new(ctx, VGIDS_EFID_COMMON);
 	if (!commonEF)
+	{
 		goto init_failed;
+	}
 
 	/* write card cache DO */
 	if (!vgids_ef_write_do(commonEF, VGIDS_DO_CARDCF, g_CardCFContents, sizeof(g_CardCFContents)))
+	{
 		goto init_failed;
+	}
 
 	/* write container map DO */
 	const int size = get_rsa_key_size(ctx->privateKey);
 	if (size <= 0)
+	{
 		goto init_failed;
+	}
 
 	if (size <= 0)
+	{
 		goto init_failed;
+	}
 
 	cmrec.wKeyExchangeKeySizeBits = (WORD)size * 8;
 	if (!vgids_ef_write_do(commonEF, VGIDS_DO_CMAPFILE, &cmrec, sizeof(cmrec)))
+	{
 		goto init_failed;
+	}
 
 	/* write cardapps DO */
 	if (!vgids_ef_write_do(commonEF, VGIDS_DO_CARDAPPS, g_CardAppsContents,
 	                       sizeof(g_CardAppsContents)))
+	{
 		goto init_failed;
+	}
 
 	/* convert and write certificate to key exchange container */
 	if (!vgids_prepare_certificate(ctx->certificate, &kxc, &kxcSize))
+	{
 		goto init_failed;
+	}
 	if (!vgids_ef_write_do(commonEF, VGIDS_DO_KXC00, kxc, kxcSize))
+	{
 		goto init_failed;
+	}
 
 	/* prepare and write file system table */
 	if (!vgids_prepare_fstable(filesys, ARRAYSIZE(filesys), &fsTable, &fsTableSize))
+	{
 		goto init_failed;
+	}
 	if (!vgids_ef_write_do(masterEF, VGIDS_DO_FILESYSTEMTABLE, fsTable, fsTableSize))
+	{
 		goto init_failed;
+	}
 
 	/* vgids_prepare_keymap and write to masterEF */
 	if (!vgids_prepare_keymap(ctx, &keymap, &keymapSize))
+	{
 		goto init_failed;
+	}
 	if (!vgids_ef_write_do(masterEF, VGIDS_DO_KEYMAP, keymap, keymapSize))
+	{
 		goto init_failed;
+	}
 
 	/* store user pin */
 	ctx->curRetryCounter = ctx->retryCounter = VGIDS_DEFAULT_RETRY_COUNTER;
 	ctx->pin = _strdup(pin);
 	if (!ctx->pin)
+	{
 		goto init_failed;
+	}
 
 	rc = TRUE;
 
@@ -1545,6 +1703,9 @@ init_failed:
 	free(kxc);
 	free(keymap);
 	free(fsTable);
+	vgids_ef_free(masterEF);
+	vgids_ef_free(commonEF);
+	vgids_ef_free(cardidEF);
 	return rc;
 }
 
@@ -1570,7 +1731,9 @@ BOOL vgids_process_apdu(vgidsContext* context, const BYTE* data, DWORD dataSize,
 	/* Examine INS byte */
 	Stream_StaticConstInit(&s, data, dataSize);
 	if (x++ == 0xe)
+	{
 		x = 0xe + 1;
+	}
 	switch (data[1])
 	{
 		case ISO_INS_SELECT:

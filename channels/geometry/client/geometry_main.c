@@ -43,7 +43,7 @@ typedef struct
 {
 	GENERIC_DYNVC_PLUGIN base;
 	GeometryClientContext* context;
-} GEOMETRY_PLUGIN;
+} DECLSPEC_ALIGN(128) GEOMETRY_PLUGIN;
 
 static UINT32 mappedGeometryHash(const void* v)
 {
@@ -65,9 +65,14 @@ static void freerdp_rgndata_reset(FREERDP_RGNDATA* data)
 
 static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERDP_RGNDATA* rgndata)
 {
-	UINT32 dwSize, iType;
-	INT32 right, bottom;
-	INT32 x, y, w, h;
+	UINT32 dwSize;
+	UINT32 iType;
+	INT32 right;
+	INT32 bottom;
+	INT32 x;
+	INT32 y;
+	INT32 w;
+	INT32 h;
 
 	if (len < 32)
 	{
@@ -98,11 +103,15 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
 	Stream_Read_INT32(s, right);
 	Stream_Read_INT32(s, bottom);
 	if ((abs(x) > INT16_MAX) || (abs(y) > INT16_MAX))
+	{
 		return ERROR_INVALID_DATA;
+	}
 	w = right - x;
 	h = bottom - y;
 	if ((abs(w) > INT16_MAX) || (abs(h) > INT16_MAX))
+	{
 		return ERROR_INVALID_DATA;
+	}
 	rgndata->boundingRect.x = (INT16)x;
 	rgndata->boundingRect.y = (INT16)y;
 	rgndata->boundingRect.width = (INT16)w;
@@ -117,7 +126,7 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
 
 	if (rgndata->nRectCount)
 	{
-		UINT32 i;
+		UINT32 i = 0;
 		RDP_RECT* tmp = realloc(rgndata->rects, rgndata->nRectCount * sizeof(RDP_RECT));
 
 		if (!tmp)
@@ -135,11 +144,15 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
 			Stream_Read_INT32(s, right);
 			Stream_Read_INT32(s, bottom);
 			if ((abs(x) > INT16_MAX) || (abs(y) > INT16_MAX))
+			{
 				return ERROR_INVALID_DATA;
+			}
 			w = right - x;
 			h = bottom - y;
 			if ((abs(w) > INT16_MAX) || (abs(h) > INT16_MAX))
+			{
 				return ERROR_INVALID_DATA;
+			}
 			rgndata->rects[i].x = (INT16)x;
 			rgndata->rects[i].y = (INT16)y;
 			rgndata->rects[i].width = (INT16)w;
@@ -157,21 +170,25 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
  */
 static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	UINT32 length, cbGeometryBuffer;
-	MAPPED_GEOMETRY* mappedGeometry;
-	GEOMETRY_PLUGIN* geometry;
-	GeometryClientContext* context;
+	UINT32 length;
+	UINT32 cbGeometryBuffer;
+	MAPPED_GEOMETRY* mappedGeometry = NULL;
+	GEOMETRY_PLUGIN* geometry = NULL;
+	GeometryClientContext* context = NULL;
 	UINT ret = CHANNEL_RC_OK;
-	UINT32 updateType, geometryType;
-	UINT64 id;
-	wLog* logger;
+	UINT32 updateType;
+	UINT32 geometryType;
+	UINT64 id = 0;
+	wLog* logger = NULL;
 
 	geometry = (GEOMETRY_PLUGIN*)callback->plugin;
 	logger = geometry->base.log;
 	context = (GeometryClientContext*)geometry->base.iface.pInterface;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, length); /* Length (4 bytes) */
 
@@ -201,10 +218,14 @@ static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 
 		if (mappedGeometry->MappedGeometryClear &&
 		    !mappedGeometry->MappedGeometryClear(mappedGeometry))
+		{
 			return ERROR_INTERNAL_ERROR;
+		}
 
 		if (!HashTable_Remove(context->geometries, &id))
+		{
 			WLog_Print(logger, WLOG_ERROR, "geometry not removed from geometries");
+		}
 	}
 	else if (updateType == GEOMETRY_UPDATE)
 	{
@@ -216,7 +237,9 @@ static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 			WLog_Print(logger, WLOG_DEBUG, "creating geometry 0x%" PRIx64 "", id);
 			mappedGeometry = calloc(1, sizeof(MAPPED_GEOMETRY));
 			if (!mappedGeometry)
+			{
 				return CHANNEL_RC_NO_MEMORY;
+			}
 
 			mappedGeometry->refCounter = 1;
 			mappedGeometry->mappingId = id;
@@ -249,18 +272,26 @@ static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 
 		Stream_Read_UINT32(s, geometryType);
 		if (geometryType != 0x02)
+		{
 			WLog_Print(logger, WLOG_DEBUG, "geometryType should be set to 0x02 and is 0x%" PRIx32,
 			           geometryType);
+		}
 
 		Stream_Read_UINT32(s, cbGeometryBuffer);
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, cbGeometryBuffer))
+		{
+			free(mappedGeometry);
 			return ERROR_INVALID_DATA;
+		}
 
 		if (cbGeometryBuffer)
 		{
 			ret = geometry_read_RGNDATA(logger, s, cbGeometryBuffer, &mappedGeometry->geometry);
 			if (ret != CHANNEL_RC_OK)
+			{
+				free(mappedGeometry);
 				return ret;
+			}
 		}
 		else
 		{
@@ -292,6 +323,7 @@ static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 		ret = CHANNEL_RC_OK;
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	return ret;
 }
 
@@ -333,7 +365,7 @@ static const IWTSVirtualChannelCallback geometry_callbacks = { geometry_on_data_
 
 static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdpSettings* settings)
 {
-	GeometryClientContext* context;
+	GeometryClientContext* context = NULL;
 	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*)base;
 
 	WINPR_ASSERT(base);
@@ -376,7 +408,9 @@ static void terminate_plugin_cb(GENERIC_DYNVC_PLUGIN* base)
 	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*)base;
 
 	if (geometry->context)
+	{
 		HashTable_Free(geometry->context->geometries);
+	}
 	free(geometry->context);
 }
 

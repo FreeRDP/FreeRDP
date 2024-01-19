@@ -37,7 +37,9 @@ static BOOL rdp_write_synchronize_pdu(wStream* s, const rdpSettings* settings)
 	const UINT32 PduSource = freerdp_settings_get_uint32(settings, FreeRDP_PduSource);
 
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 4))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT16(s, SYNCMSGTYPE_SYNC); /* messageType (2 bytes) */
 	Stream_Write_UINT16(s, PduSource);        /* targetUser (2 bytes) */
 	return TRUE;
@@ -45,12 +47,15 @@ static BOOL rdp_write_synchronize_pdu(wStream* s, const rdpSettings* settings)
 
 static BOOL rdp_recv_sync_pdu(rdpRdp* rdp, wStream* s, const char* what)
 {
-	UINT16 msgType, targetUser;
+	UINT16 msgType;
+	UINT16 targetUser;
 
 	WINPR_UNUSED(rdp);
 	if (!Stream_CheckAndLogRequiredLengthEx(TAG, WLOG_WARN, s, 4, 1, "%s(%s:%" PRIuz ") %s",
 	                                        __func__, __FILE__, (size_t)__LINE__, what))
+	{
 		return FALSE;
+	}
 	Stream_Read_UINT16(s, msgType);
 	if (msgType != SYNCMSGTYPE_SYNC)
 	{
@@ -66,7 +71,9 @@ static BOOL rdp_recv_sync_pdu(rdpRdp* rdp, wStream* s, const char* what)
 BOOL rdp_recv_server_synchronize_pdu(rdpRdp* rdp, wStream* s)
 {
 	if (!rdp_recv_sync_pdu(rdp, s, "[MS-RDPBCGR] 2.2.1.19 Server Synchronize PDU"))
+	{
 		return FALSE;
+	}
 	return rdp_finalize_set_flag(rdp, FINALIZE_SC_SYNCHRONIZE_PDU);
 }
 
@@ -74,7 +81,9 @@ BOOL rdp_send_server_synchronize_pdu(rdpRdp* rdp)
 {
 	wStream* s = rdp_data_pdu_init(rdp);
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(rdp);
 	if (!rdp_write_synchronize_pdu(s, rdp->settings))
@@ -90,7 +99,9 @@ BOOL rdp_send_server_synchronize_pdu(rdpRdp* rdp)
 BOOL rdp_recv_client_synchronize_pdu(rdpRdp* rdp, wStream* s)
 {
 	if (!rdp_recv_sync_pdu(rdp, s, "[MS-RDPBCGR] 2.2.1.14 Client Synchronize PDU"))
+	{
 		return FALSE;
+	}
 	return rdp_finalize_set_flag(rdp, FINALIZE_CS_SYNCHRONIZE_PDU);
 }
 
@@ -98,7 +109,9 @@ BOOL rdp_send_client_synchronize_pdu(rdpRdp* rdp)
 {
 	wStream* s = rdp_data_pdu_init(rdp);
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(rdp);
 	if (!rdp_write_synchronize_pdu(s, rdp->settings))
@@ -119,7 +132,9 @@ static BOOL rdp_recv_control_pdu(wStream* s, UINT16* action, UINT16* grantId, UI
 	WINPR_ASSERT(controlId);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, *action);    /* action (2 bytes) */
 	Stream_Read_UINT16(s, *grantId);   /* grantId (2 bytes) */
@@ -132,7 +147,9 @@ static BOOL rdp_write_client_control_pdu(wStream* s, UINT16 action, UINT16 grant
 {
 	WINPR_ASSERT(s);
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 8))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT16(s, action);    /* action (2 bytes) */
 	Stream_Write_UINT16(s, grantId);   /* grantId (2 bytes) */
 	Stream_Write_UINT32(s, controlId); /* controlId (4 bytes) */
@@ -141,14 +158,17 @@ static BOOL rdp_write_client_control_pdu(wStream* s, UINT16 action, UINT16 grant
 
 BOOL rdp_recv_server_control_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT16 action, grantId;
-	UINT32 controlId;
+	UINT16 action;
+	UINT16 grantId;
+	UINT32 controlId = 0;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
 
 	if (!rdp_recv_control_pdu(s, &action, &grantId, &controlId))
+	{
 		return FALSE;
+	}
 
 	switch (action)
 	{
@@ -173,7 +193,9 @@ BOOL rdp_send_server_control_cooperate_pdu(rdpRdp* rdp)
 {
 	wStream* s = rdp_data_pdu_init(rdp);
 	if (!s)
+	{
 		return FALSE;
+	}
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 8))
 	{
 		Stream_Free(s, TRUE);
@@ -191,7 +213,9 @@ BOOL rdp_send_server_control_granted_pdu(rdpRdp* rdp)
 {
 	wStream* s = rdp_data_pdu_init(rdp);
 	if (!s)
+	{
 		return FALSE;
+	}
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 8))
 	{
 		Stream_Free(s, TRUE);
@@ -224,7 +248,9 @@ BOOL rdp_send_client_control_pdu(rdpRdp* rdp, UINT16 action)
 	}
 
 	if (!s)
+	{
 		return FALSE;
+	}
 	if (!rdp_write_client_control_pdu(s, action, GrantId, ControlId))
 	{
 		Stream_Free(s, TRUE);
@@ -241,7 +267,9 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s, RDP_BITMAP_PERS
 	WINPR_ASSERT(info);
 
 	if (!Stream_EnsureRemainingCapacity(s, 24))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT16(s, info->numEntriesCache0);              /* numEntriesCache0 (2 bytes) */
 	Stream_Write_UINT16(s, info->numEntriesCache1);              /* numEntriesCache1 (2 bytes) */
@@ -258,8 +286,10 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s, RDP_BITMAP_PERS
 	Stream_Write_UINT16(s, 0);                                   /* pad3 (2 bytes) */
 	                                                             /* entries */
 
-	if (!Stream_EnsureRemainingCapacity(s, info->keyCount * 8ull))
+	if (!Stream_EnsureRemainingCapacity(s, info->keyCount * 8ULL))
+	{
 		return FALSE;
+	}
 
 	for (UINT32 index = 0; index < info->keyCount; index++)
 	{
@@ -274,31 +304,39 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s, RDP_BITMAP_PERS
 
 static UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 {
-	int index;
-	int count;
-	int status;
-	UINT32 keyCount;
+	int index = 0;
+	int count = 0;
+	int status = 0;
+	UINT32 keyCount = 0;
 	UINT64* keyList = NULL;
-	rdpPersistentCache* persistent;
+	rdpPersistentCache* persistent = NULL;
 	rdpSettings* settings = rdp->settings;
 
 	*pKeyList = NULL;
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_BitmapCachePersistEnabled))
+	{
 		return 0;
+	}
 
 	if (!settings->BitmapCachePersistFile)
+	{
 		return 0;
+	}
 
 	persistent = persistent_cache_new();
 
 	if (!persistent)
+	{
 		return 0;
+	}
 
 	status = persistent_cache_open(persistent, settings->BitmapCachePersistFile, FALSE, 0);
 
 	if (status < 1)
+	{
 		goto error;
+	}
 
 	count = persistent_cache_get_count(persistent);
 
@@ -306,14 +344,18 @@ static UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 	keyList = (UINT64*)malloc(keyCount * sizeof(UINT64));
 
 	if (!keyList)
+	{
 		goto error;
+	}
 
 	for (index = 0; index < count; index++)
 	{
 		PERSISTENT_CACHE_ENTRY cacheEntry = { 0 };
 
 		if (persistent_cache_read_entry(persistent, &cacheEntry) < 1)
+		{
 			continue;
+		}
 
 		keyList[index] = cacheEntry.key64;
 	}
@@ -330,7 +372,7 @@ error:
 
 BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 {
-	UINT32 keyCount;
+	UINT32 keyCount = 0;
 	UINT32 keyMaxFrag = 2042;
 	UINT64* keyList = NULL;
 	RDP_BITMAP_PERSISTENT_INFO info;
@@ -348,7 +390,9 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 	// only bothers sending a single, smaller list of entries instead.
 
 	if (keyCount > keyMaxFrag)
+	{
 		keyCount = keyMaxFrag;
+	}
 
 	info.totalEntriesCache0 = settings->BitmapCacheV2CellInfo[0].numEntries;
 	info.totalEntriesCache1 = settings->BitmapCacheV2CellInfo[1].numEntries;
@@ -396,11 +440,15 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 	wStream* s = rdp_data_pdu_init(rdp);
 
 	if (!s)
+	{
+		free(keyList);
 		return FALSE;
+	}
 
 	if (!rdp_write_client_persistent_key_list_pdu(s, &info))
 	{
 		Stream_Free(s, TRUE);
+		free(keyList);
 		return FALSE;
 	}
 
@@ -415,17 +463,20 @@ BOOL rdp_recv_client_font_list_pdu(wStream* s)
 	WINPR_ASSERT(s);
 	/* 2.2.1.18 Client Font List PDU */
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		return FALSE;
+	}
 
 	return Stream_SafeSeek(s, 8);
 }
 
 BOOL rdp_recv_client_persistent_key_list_pdu(wStream* s)
 {
-	BYTE flags;
+	BYTE flags = 0;
 	size_t count = 0;
 	size_t total = 0;
-	UINT16 cache, x;
+	UINT16 cache;
+	UINT16 x;
 
 	WINPR_ASSERT(s);
 
@@ -490,7 +541,9 @@ static BOOL rdp_write_client_font_list_pdu(wStream* s, UINT16 flags)
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 8))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT16(s, 0);     /* numberFonts (2 bytes) */
 	Stream_Write_UINT16(s, 0);     /* totalNumFonts (2 bytes) */
 	Stream_Write_UINT16(s, flags); /* listFlags (2 bytes) */
@@ -502,7 +555,9 @@ BOOL rdp_send_client_font_list_pdu(rdpRdp* rdp, UINT16 flags)
 {
 	wStream* s = rdp_data_pdu_init(rdp);
 	if (!s)
+	{
 		return FALSE;
+	}
 	if (!rdp_write_client_font_list_pdu(s, flags))
 	{
 		Stream_Free(s, TRUE);
@@ -515,7 +570,10 @@ BOOL rdp_send_client_font_list_pdu(rdpRdp* rdp, UINT16 flags)
 
 BOOL rdp_recv_font_map_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT16 numberEntries, totalNumEntries, mapFlags, entrySize;
+	UINT16 numberEntries;
+	UINT16 totalNumEntries;
+	UINT16 mapFlags;
+	UINT16 entrySize;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
@@ -527,37 +585,47 @@ BOOL rdp_recv_font_map_pdu(rdpRdp* rdp, wStream* s)
 	{
 		Stream_Read_UINT16(s, numberEntries); /* numberEntries (2 bytes) */
 		if (numberEntries != 0)
+		{
 			WLog_WARN(
 			    TAG,
 			    "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::numberEntries != 0 "
 			    "[%" PRIu16 "]",
 			    numberEntries);
+		}
 		Stream_Read_UINT16(s, totalNumEntries); /* totalNumEntries (2 bytes) */
 		if (totalNumEntries != 0)
+		{
 			WLog_WARN(
 			    TAG,
 			    "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::totalNumEntries != "
 			    "0 [%" PRIu16 "]",
 			    totalNumEntries);
+		}
 		Stream_Read_UINT16(s, mapFlags); /* mapFlags (2 bytes) */
 		if (mapFlags != (FONTLIST_FIRST | FONTLIST_LAST))
+		{
 			WLog_WARN(
 			    TAG,
 			    "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::mapFlags != 0x0003 "
 			    "(FONTLIST_FIRST | FONTLIST_LAST) "
 			    "[0x%04" PRIx16 "]",
 			    mapFlags);
+		}
 		Stream_Read_UINT16(s, entrySize); /* entrySize (2 bytes) */
 		if (entrySize != 4)
+		{
 			WLog_WARN(TAG,
 			          "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU)::entrySize != 4 "
 			          "[%" PRIu16 "]",
 			          entrySize);
+		}
 	}
 	else
+	{
 		WLog_WARN(TAG,
 		          "[MS-RDPBCGR] 2.2.1.22.1 Font Map PDU Data (TS_FONT_MAP_PDU) paylaod size is "
 		          "0 instead of 8");
+	}
 
 	return rdp_finalize_set_flag(rdp, FINALIZE_SC_FONT_MAP_PDU);
 }
@@ -566,7 +634,9 @@ BOOL rdp_send_server_font_map_pdu(rdpRdp* rdp)
 {
 	wStream* s = rdp_data_pdu_init(rdp);
 	if (!s)
+	{
 		return FALSE;
+	}
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 8))
 	{
 		Stream_Free(s, TRUE);
@@ -583,7 +653,7 @@ BOOL rdp_send_server_font_map_pdu(rdpRdp* rdp)
 
 BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 {
-	UINT16 lengthSourceDescriptor;
+	UINT16 lengthSourceDescriptor = 0;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
@@ -591,7 +661,9 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 	if (rdp_get_state(rdp) == CONNECTION_STATE_ACTIVE)
 	{
 		if (!rdp_finalize_set_flag(rdp, FINALIZE_DEACTIVATE_REACTIVATE))
+		{
 			return FALSE;
+		}
 
 		rdp->was_deactivated = TRUE;
 		rdp->deactivated_height = freerdp_settings_get_uint32(rdp->settings, FreeRDP_DesktopHeight);
@@ -608,21 +680,29 @@ BOOL rdp_recv_deactivate_all(rdpRdp* rdp, wStream* s)
 	{
 		do
 		{
-			UINT32 ShareId;
+			UINT32 ShareId = 0;
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+			{
 				break;
+			}
 
 			Stream_Read_UINT32(s, ShareId); /* shareId (4 bytes) */
 			if (!freerdp_settings_set_uint32(rdp->settings, FreeRDP_ShareId, ShareId))
+			{
 				return FALSE;
+			}
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+			{
 				break;
+			}
 
 			Stream_Read_UINT16(s, lengthSourceDescriptor); /* lengthSourceDescriptor (2 bytes) */
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, lengthSourceDescriptor))
+			{
 				break;
+			}
 
 			Stream_Seek(s, lengthSourceDescriptor); /* sourceDescriptor (should be 0x00) */
 		} while (0);
@@ -638,10 +718,14 @@ BOOL rdp_send_deactivate_all(rdpRdp* rdp)
 	BOOL status = FALSE;
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 7))
+	{
 		goto fail;
+	}
 
 	WINPR_ASSERT(rdp->settings);
 	const UINT32 ShareId = freerdp_settings_get_uint32(rdp->settings, FreeRDP_ShareId);
@@ -667,7 +751,9 @@ BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(s);
 
 	if (!rdp_recv_control_pdu(s, &action, &GrantId, &ControlId))
+	{
 		return FALSE;
+	}
 
 	switch (action)
 	{
@@ -734,8 +820,8 @@ BOOL rdp_server_accept_client_control_pdu(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 {
-	rdpSettings* settings;
-	freerdp_peer* peer;
+	rdpSettings* settings = NULL;
+	freerdp_peer* peer = NULL;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
@@ -748,17 +834,25 @@ BOOL rdp_server_accept_client_font_list_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(peer);
 
 	if (!rdp_recv_client_font_list_pdu(s))
+	{
 		return FALSE;
+	}
 	rdp_finalize_set_flag(rdp, FINALIZE_CS_FONT_LIST_PDU);
 
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_FINALIZATION_CLIENT_FONT_MAP))
+	{
 		return FALSE;
+	}
 
 	if (!rdp_send_server_font_map_pdu(rdp))
+	{
 		return FALSE;
+	}
 
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_ACTIVE))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -769,7 +863,9 @@ BOOL rdp_server_accept_client_persistent_key_list_pdu(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(s);
 
 	if (!rdp_recv_client_persistent_key_list_pdu(s))
+	{
 		return FALSE;
+	}
 
 	rdp_finalize_set_flag(rdp, FINALIZE_CS_PERSISTENT_KEY_LIST_PDU);
 	// TODO: Actually do something with this
@@ -778,7 +874,7 @@ BOOL rdp_server_accept_client_persistent_key_list_pdu(rdpRdp* rdp, wStream* s)
 
 const char* rdp_ctrlaction_string(UINT16 action, char* buffer, size_t size)
 {
-	const char* actstr;
+	const char* actstr = NULL;
 	switch (action)
 	{
 		case CTRLACTION_COOPERATE:

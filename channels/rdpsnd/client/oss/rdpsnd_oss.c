@@ -62,12 +62,12 @@ typedef struct
 
 	UINT32 latency;
 	AUDIO_FORMAT format;
-} rdpsndOssPlugin;
+} DECLSPEC_ALIGN(128) rdpsndOssPlugin;
 
 #define OSS_LOG_ERR(_text, _error)                                         \
 	do                                                                     \
 	{                                                                      \
-		if (_error != 0)                                                   \
+		if ((_error) != 0)                                                 \
 			WLog_ERR(TAG, "%s: %i - %s", _text, _error, strerror(_error)); \
 	} while (0)
 
@@ -103,7 +103,9 @@ static BOOL rdpsnd_oss_format_supported(rdpsndDevicePlugin* device, const AUDIO_
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || format == NULL)
+	{
 		return FALSE;
+	}
 
 	switch (format->wFormatTag)
 	{
@@ -111,7 +113,9 @@ static BOOL rdpsnd_oss_format_supported(rdpsndDevicePlugin* device, const AUDIO_
 			if (format->cbSize != 0 || format->nSamplesPerSec > 48000 ||
 			    (format->wBitsPerSample != 8 && format->wBitsPerSample != 16) ||
 			    (format->nChannels != 1 && format->nChannels != 2))
+			{
 				return FALSE;
+			}
 
 			break;
 
@@ -125,12 +129,16 @@ static BOOL rdpsnd_oss_format_supported(rdpsndDevicePlugin* device, const AUDIO_
 	if (oss->pcm_handle != -1)
 	{
 		if ((req_fmt & oss->supported_formats) == 0)
+		{
 			return FALSE;
+		}
 	}
 	else
 	{
 		if (req_fmt == 0)
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -143,7 +151,9 @@ static BOOL rdpsnd_oss_set_format(rdpsndDevicePlugin* device, const AUDIO_FORMAT
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->pcm_handle == -1 || format == NULL)
+	{
 		return FALSE;
+	}
 
 	oss->latency = latency;
 	CopyMemory(&(oss->format), format, sizeof(AUDIO_FORMAT));
@@ -188,10 +198,14 @@ static void rdpsnd_oss_open_mixer(rdpsndOssPlugin* oss)
 	char mixer_name[PATH_MAX] = "/dev/mixer";
 
 	if (oss->mixer_handle != -1)
+	{
 		return;
+	}
 
 	if (oss->dev_unit != -1)
+	{
 		sprintf_s(mixer_name, PATH_MAX - 1, "/dev/mixer%i", oss->dev_unit);
+	}
 
 	if ((oss->mixer_handle = open(mixer_name, O_RDWR)) < 0)
 	{
@@ -215,10 +229,14 @@ static BOOL rdpsnd_oss_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* form
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->pcm_handle != -1)
+	{
 		return TRUE;
+	}
 
 	if (oss->dev_unit != -1)
+	{
 		sprintf_s(dev_name, PATH_MAX - 1, "/dev/dsp%i", oss->dev_unit);
+	}
 
 	WLog_INFO(TAG, "open: %s", dev_name);
 
@@ -264,7 +282,9 @@ static void rdpsnd_oss_close(rdpsndDevicePlugin* device)
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL)
+	{
 		return;
+	}
 
 	if (oss->pcm_handle != -1)
 	{
@@ -286,7 +306,9 @@ static void rdpsnd_oss_free(rdpsndDevicePlugin* device)
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL)
+	{
 		return;
+	}
 
 	rdpsnd_oss_close(device);
 	free(oss);
@@ -294,9 +316,10 @@ static void rdpsnd_oss_free(rdpsndDevicePlugin* device)
 
 static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 {
-	int vol;
-	UINT32 dwVolume;
-	UINT16 dwVolumeLeft, dwVolumeRight;
+	int vol = 0;
+	UINT32 dwVolume = 0;
+	UINT16 dwVolumeLeft;
+	UINT16 dwVolumeRight;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 	/* On error return 50% volume. */
 	dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
@@ -304,7 +327,9 @@ static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 	dwVolume = ((dwVolumeLeft << 16) | dwVolumeRight);
 
 	if (device == NULL || oss->mixer_handle == -1)
+	{
 		return dwVolume;
+	}
 
 	if (ioctl(oss->mixer_handle, MIXER_READ(SOUND_MIXER_VOLUME), &vol) == -1)
 	{
@@ -320,24 +345,35 @@ static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 
 static BOOL rdpsnd_oss_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
-	int left, right;
+	int left;
+	int right;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->mixer_handle == -1)
+	{
 		return FALSE;
+	}
 
 	left = (((value & 0xFFFF) * 100) / 0xFFFF);
 	right = ((((value >> 16) & 0xFFFF) * 100) / 0xFFFF);
 
 	if (left < 0)
+	{
 		left = 0;
+	}
 	else if (left > 100)
+	{
 		left = 100;
+	}
 
 	if (right < 0)
+	{
 		right = 0;
+	}
 	else if (right > 100)
+	{
 		right = 100;
+	}
 
 	left |= (right << 8);
 
@@ -355,7 +391,9 @@ static UINT rdpsnd_oss_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->mixer_handle == -1)
+	{
 		return 0;
+	}
 
 	while (size > 0)
 	{
@@ -372,9 +410,13 @@ static UINT rdpsnd_oss_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 		data += status;
 
 		if ((size_t)status <= size)
+		{
 			size -= (size_t)status;
+		}
 		else
+		{
 			size = 0;
+		}
 	}
 
 	return 10; /* TODO: Get real latency in [ms] */
@@ -382,10 +424,11 @@ static UINT rdpsnd_oss_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 
 static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)
 {
-	int status;
-	char *str_num, *eptr;
-	DWORD flags;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	int status = 0;
+	char* str_num;
+	char* eptr;
+	DWORD flags = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_oss_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                            NULL, NULL, -1, NULL, "device" },
@@ -396,7 +439,9 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_A
 	    CommandLineParseArgumentsA(args->argc, args->argv, rdpsnd_oss_args, flags, oss, NULL, NULL);
 
 	if (status < 0)
+	{
 		return status;
+	}
 
 	arg = rdpsnd_oss_args;
 	errno = 0;
@@ -404,14 +449,18 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_A
 	do
 	{
 		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+		{
 			continue;
+		}
 
 		CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "dev")
 		{
 			str_num = _strdup(arg->Value);
 
 			if (!str_num)
+			{
 				return ERROR_OUTOFMEMORY;
+			}
 
 			{
 				long val = strtol(str_num, &eptr, 10);
@@ -426,7 +475,9 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_A
 			}
 
 			if (oss->dev_unit < 0 || *eptr != '\0')
+			{
 				oss->dev_unit = -1;
+			}
 
 			free(str_num);
 		}
@@ -444,11 +495,13 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_A
 FREERDP_ENTRY_POINT(UINT oss_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args;
+	const ADDIN_ARGV* args = NULL;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)calloc(1, sizeof(rdpsndOssPlugin));
 
 	if (!oss)
+	{
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	oss->device.Open = rdpsnd_oss_open;
 	oss->device.FormatSupported = rdpsnd_oss_format_supported;

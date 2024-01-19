@@ -29,7 +29,7 @@ typedef struct
 	const char* name;
 	const char* info;
 	const char* category;
-} ERRINFO;
+} DECLSPEC_ALIGN(32) ERRINFO;
 
 FREERDP_LOCAL void rdp_print_errinfo(UINT32 code);
 

@@ -27,12 +27,12 @@
 int rdtk_button_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint16_t nWidth,
                      uint16_t nHeight, rdtkButton* button, const char* text)
 {
-	uint16_t offsetX;
-	uint16_t offsetY;
-	uint16_t textWidth;
-	uint16_t textHeight;
-	uint16_t fillWidth;
-	uint16_t fillHeight;
+	uint16_t offsetX = 0;
+	uint16_t offsetY = 0;
+	uint16_t textWidth = 0;
+	uint16_t textHeight = 0;
+	uint16_t fillWidth = 0;
+	uint16_t fillHeight = 0;
 
 	WINPR_ASSERT(surface);
 	WINPR_ASSERT(button);
@@ -55,14 +55,22 @@ int rdtk_button_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint1
 		offsetY = ninePatch->fillTop;
 
 		if (textWidth < fillWidth)
+		{
 			offsetX = ((fillWidth - textWidth) / 2) + ninePatch->fillLeft;
+		}
 		else if (textWidth < ninePatch->width)
+		{
 			offsetX = ((ninePatch->width - textWidth) / 2);
+		}
 
 		if (textHeight < fillHeight)
+		{
 			offsetY = ((fillHeight - textHeight) / 2) + ninePatch->fillTop;
+		}
 		else if (textHeight < ninePatch->height)
+		{
 			offsetY = ((ninePatch->height - textHeight) / 2);
+		}
 
 		rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);
 	}
@@ -78,7 +86,9 @@ rdtkButton* rdtk_button_new(rdtkEngine* engine, rdtkNinePatch* ninePatch)
 	rdtkButton* button = (rdtkButton*)calloc(1, sizeof(rdtkButton));
 
 	if (!button)
+	{
 		return NULL;
+	}
 
 	button->engine = engine;
 	button->ninePatch = ninePatch;
@@ -99,7 +109,9 @@ int rdtk_button_engine_init(rdtkEngine* engine)
 	{
 		engine->button = rdtk_button_new(engine, engine->button9patch);
 		if (!engine->button)
+		{
 			return -1;
+		}
 	}
 
 	return 1;

@@ -36,9 +36,9 @@ static UINT
 encomsp_change_participant_control_level(EncomspServerContext* context,
                                          ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU* pdu)
 {
-	BOOL inLobby;
-	BOOL mayView;
-	BOOL mayInteract;
+	BOOL inLobby = 0;
+	BOOL mayView = 0;
+	BOOL mayInteract = 0;
 	rdpShadowClient* client = (rdpShadowClient*)context->custom;
 
 	WLog_INFO(TAG,
@@ -49,7 +49,9 @@ encomsp_change_participant_control_level(EncomspServerContext* context,
 	mayInteract = (pdu->Flags & ENCOMSP_MAY_INTERACT) ? TRUE : FALSE;
 
 	if (mayInteract && !mayView)
+	{
 		mayView = TRUE; /* may interact implies may view */
+	}
 
 	if (mayInteract)
 	{
@@ -102,7 +104,7 @@ encomsp_change_participant_control_level(EncomspServerContext* context,
 
 int shadow_client_encomsp_init(rdpShadowClient* client)
 {
-	EncomspServerContext* encomsp;
+	EncomspServerContext* encomsp = NULL;
 
 	encomsp = client->encomsp = encomsp_server_context_new(client->vcm);
 
@@ -113,7 +115,9 @@ int shadow_client_encomsp_init(rdpShadowClient* client)
 	encomsp->ChangeParticipantControlLevel = encomsp_change_participant_control_level;
 
 	if (client->encomsp)
+	{
 		client->encomsp->Start(client->encomsp);
+	}
 
 	return 1;
 }

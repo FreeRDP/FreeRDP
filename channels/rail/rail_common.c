@@ -103,10 +103,14 @@ const char* rail_get_order_type_string_full(UINT16 orderType, char* buffer, size
 UINT rail_read_pdu_header(wStream* s, UINT16* orderType, UINT16* orderLength)
 {
 	if (!s || !orderType || !orderLength)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT16(s, *orderType);   /* orderType (2 bytes) */
 	Stream_Read_UINT16(s, *orderLength); /* orderLength (2 bytes) */
@@ -121,11 +125,13 @@ void rail_write_pdu_header(wStream* s, UINT16 orderType, UINT16 orderLength)
 
 wStream* rail_pdu_init(size_t length)
 {
-	wStream* s;
+	wStream* s = NULL;
 	s = Stream_New(NULL, length + RAIL_PDU_HEADER_LENGTH);
 
 	if (!s)
+	{
 		return NULL;
+	}
 
 	Stream_Seek(s, RAIL_PDU_HEADER_LENGTH);
 	return s;
@@ -139,7 +145,9 @@ wStream* rail_pdu_init(size_t length)
 UINT rail_read_handshake_order(wStream* s, RAIL_HANDSHAKE_ORDER* handshake)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, handshake->buildNumber); /* buildNumber (4 bytes) */
 	return CHANNEL_RC_OK;
@@ -158,7 +166,9 @@ void rail_write_handshake_order(wStream* s, const RAIL_HANDSHAKE_ORDER* handshak
 UINT rail_read_handshake_ex_order(wStream* s, RAIL_HANDSHAKE_EX_ORDER* handshakeEx)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, handshakeEx->buildNumber);        /* buildNumber (4 bytes) */
 	Stream_Read_UINT32(s, handshakeEx->railHandshakeFlags); /* railHandshakeFlags (4 bytes) */
@@ -179,7 +189,9 @@ void rail_write_handshake_ex_order(wStream* s, const RAIL_HANDSHAKE_EX_ORDER* ha
 UINT rail_write_unicode_string(wStream* s, const RAIL_UNICODE_STRING* unicode_string)
 {
 	if (!s || !unicode_string)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 2 + unicode_string->length))
 	{
@@ -199,10 +211,12 @@ UINT rail_write_unicode_string(wStream* s, const RAIL_UNICODE_STRING* unicode_st
  */
 UINT rail_write_unicode_string_value(wStream* s, const RAIL_UNICODE_STRING* unicode_string)
 {
-	size_t length;
+	size_t length = 0;
 
 	if (!s || !unicode_string)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	length = unicode_string->length;
 
@@ -228,16 +242,22 @@ UINT rail_write_unicode_string_value(wStream* s, const RAIL_UNICODE_STRING* unic
 static UINT rail_read_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast)
 {
 	if (!s || !highContrast)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, highContrast->flags);             /* flags (4 bytes) */
 	Stream_Read_UINT32(s, highContrast->colorSchemeLength); /* colorSchemeLength (4 bytes) */
 
-	if (!rail_read_unicode_string(s, &highContrast->colorScheme)) /* colorScheme */
+	if (!rail_read_unicode_string(s, &highContrast->colorScheme))
+	{ /* colorScheme */
 		return ERROR_INTERNAL_ERROR;
+	}
 	return CHANNEL_RC_OK;
 }
 
@@ -248,13 +268,17 @@ static UINT rail_read_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast
  */
 static UINT rail_write_high_contrast(wStream* s, const RAIL_HIGH_CONTRAST* highContrast)
 {
-	UINT32 colorSchemeLength;
+	UINT32 colorSchemeLength = 0;
 
 	if (!s || !highContrast)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 8))
+	{
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	colorSchemeLength = highContrast->colorScheme.length + 2;
 	Stream_Write_UINT32(s, highContrast->flags); /* flags (4 bytes) */
@@ -270,10 +294,14 @@ static UINT rail_write_high_contrast(wStream* s, const RAIL_HIGH_CONTRAST* highC
 static UINT rail_read_filterkeys(wStream* s, TS_FILTERKEYS* filterKeys)
 {
 	if (!s || !filterKeys)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, filterKeys->Flags);
 	Stream_Read_UINT32(s, filterKeys->WaitTime);
@@ -291,10 +319,14 @@ static UINT rail_read_filterkeys(wStream* s, TS_FILTERKEYS* filterKeys)
 static UINT rail_write_filterkeys(wStream* s, const TS_FILTERKEYS* filterKeys)
 {
 	if (!s || !filterKeys)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 20))
+	{
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Write_UINT32(s, filterKeys->Flags);
 	Stream_Write_UINT32(s, filterKeys->WaitTime);
@@ -311,14 +343,18 @@ static UINT rail_write_filterkeys(wStream* s, const TS_FILTERKEYS* filterKeys)
  */
 UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL extendedSpiSupported)
 {
-	BYTE body;
+	BYTE body = 0;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!s || !sysparam)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 5))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
 
@@ -355,7 +391,9 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			sysparam->params |= SPI_MASK_SET_WORK_AREA;
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			Stream_Read_UINT16(s, sysparam->workArea.left);   /* left (2 bytes) */
 			Stream_Read_UINT16(s, sysparam->workArea.top);    /* top (2 bytes) */
@@ -367,7 +405,9 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			sysparam->params |= SPI_MASK_DISPLAY_CHANGE;
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			Stream_Read_UINT16(s, sysparam->displayChange.left);   /* left (2 bytes) */
 			Stream_Read_UINT16(s, sysparam->displayChange.top);    /* top (2 bytes) */
@@ -379,7 +419,9 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			sysparam->params |= SPI_MASK_TASKBAR_POS;
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			Stream_Read_UINT16(s, sysparam->taskbarPos.left);   /* left (2 bytes) */
 			Stream_Read_UINT16(s, sysparam->taskbarPos.top);    /* top (2 bytes) */
@@ -390,7 +432,9 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 		case SPI_SET_HIGH_CONTRAST:
 			sysparam->params |= SPI_MASK_SET_HIGH_CONTRAST;
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			error = rail_read_high_contrast(s, &sysparam->highContrast);
 			break;
@@ -399,15 +443,21 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			sysparam->params |= SPI_MASK_SET_CARET_WIDTH;
 
 			if (!extendedSpiSupported)
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			Stream_Read_UINT32(s, sysparam->caretWidth);
 
 			if (sysparam->caretWidth < 0x0001)
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			break;
 
@@ -415,10 +465,14 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			sysparam->params |= SPI_MASK_SET_STICKY_KEYS;
 
 			if (!extendedSpiSupported)
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			Stream_Read_UINT32(s, sysparam->stickyKeys);
 			break;
@@ -427,10 +481,14 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			sysparam->params |= SPI_MASK_SET_TOGGLE_KEYS;
 
 			if (!extendedSpiSupported)
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			Stream_Read_UINT32(s, sysparam->toggleKeys);
 			break;
@@ -439,10 +497,14 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 			sysparam->params |= SPI_MASK_SET_FILTER_KEYS;
 
 			if (!extendedSpiSupported)
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			error = rail_read_filterkeys(s, &sysparam->filterKeys);
 			break;
@@ -477,14 +539,18 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 UINT rail_write_sysparam_order(wStream* s, const RAIL_SYSPARAM_ORDER* sysparam,
                                BOOL extendedSpiSupported)
 {
-	BYTE body;
+	BYTE body = 0;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!s || !sysparam)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 12))
+	{
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Write_UINT32(s, sysparam->param); /* systemParam (4 bytes) */
 
@@ -538,31 +604,41 @@ UINT rail_write_sysparam_order(wStream* s, const RAIL_SYSPARAM_ORDER* sysparam,
 
 		case SPI_SETCARETWIDTH:
 			if (!extendedSpiSupported)
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			if (sysparam->caretWidth < 0x0001)
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			Stream_Write_UINT32(s, sysparam->caretWidth);
 			break;
 
 		case SPI_SETSTICKYKEYS:
 			if (!extendedSpiSupported)
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			Stream_Write_UINT32(s, sysparam->stickyKeys);
 			break;
 
 		case SPI_SETTOGGLEKEYS:
 			if (!extendedSpiSupported)
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			Stream_Write_UINT32(s, sysparam->toggleKeys);
 			break;
 
 		case SPI_SETFILTERKEYS:
 			if (!extendedSpiSupported)
+			{
 				return ERROR_INVALID_DATA;
+			}
 
 			error = rail_write_filterkeys(s, &sysparam->filterKeys);
 			break;

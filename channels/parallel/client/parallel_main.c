@@ -67,7 +67,7 @@ typedef struct
 	HANDLE thread;
 	wMessageQueue* queue;
 	rdpContext* rdpcontext;
-} PARALLEL_DEVICE;
+} DECLSPEC_ALIGN(128) PARALLEL_DEVICE;
 
 /**
  * Function description
@@ -77,22 +77,32 @@ typedef struct
 static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	char* path = NULL;
-	UINT32 PathLength;
+	UINT32 PathLength = 0;
 	if (!Stream_SafeSeek(irp->input, 28))
+	{
 		return ERROR_INVALID_DATA;
+	}
 	/* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
 	/* SharedAccess(4) CreateDisposition(4), CreateOptions(4) */
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 4))
+	{
 		return ERROR_INVALID_DATA;
+	}
 	Stream_Read_UINT32(irp->input, PathLength);
 	if (PathLength < sizeof(WCHAR))
+	{
 		return ERROR_INVALID_DATA;
+	}
 	const WCHAR* ptr = Stream_ConstPointer(irp->input);
 	if (!Stream_SafeSeek(irp->input, PathLength))
+	{
 		return ERROR_INVALID_DATA;
+	}
 	path = ConvertWCharNToUtf8Alloc(ptr, PathLength / sizeof(WCHAR), NULL);
 	if (!path)
+	{
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	parallel->id = irp->devman->id_sequence++;
 	parallel->file = open(parallel->path, O_RDWR);
@@ -141,12 +151,14 @@ static UINT parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
  */
 static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	UINT32 Length;
-	UINT64 Offset;
-	ssize_t status;
+	UINT32 Length = 0;
+	UINT64 Offset = 0;
+	ssize_t status = 0;
 	BYTE* buffer = NULL;
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
+	{
 		return ERROR_INVALID_DATA;
+	}
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
 	buffer = (BYTE*)calloc(Length, sizeof(BYTE));
@@ -196,21 +208,27 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
  */
 static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	UINT32 len;
-	UINT32 Length;
-	UINT64 Offset;
-	ssize_t status;
+	UINT32 len = 0;
+	UINT32 Length = 0;
+	UINT64 Offset = 0;
+	ssize_t status = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(irp->input, Length);
 	Stream_Read_UINT64(irp->input, Offset);
-	if (!Stream_SafeSeek(irp->input, 20)) /* Padding */
+	if (!Stream_SafeSeek(irp->input, 20))
+	{ /* Padding */
 		return ERROR_INVALID_DATA;
+	}
 	const void* ptr = Stream_ConstPointer(irp->input);
 	if (!Stream_SafeSeek(irp->input, Length))
+	{
 		return ERROR_INVALID_DATA;
+	}
 	len = Length;
 
 	while (len > 0)
@@ -238,7 +256,7 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* irp)
+static UINT parallel_process_irp_device_control(IRP* irp)
 {
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
 	return irp->Complete(irp);
@@ -251,7 +269,7 @@ static UINT parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* 
  */
 static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	UINT error;
+	UINT error = 0;
 
 	switch (irp->MajorFunction)
 	{
@@ -292,7 +310,7 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 			break;
 
 		case IRP_MJ_DEVICE_CONTROL:
-			if ((error = parallel_process_irp_device_control(parallel, irp)))
+			if ((error = parallel_process_irp_device_control(irp)))
 			{
 				WLog_ERR(TAG, "parallel_process_irp_device_control failed with error %" PRIu32 "!",
 				         error);
@@ -333,7 +351,9 @@ static DWORD WINAPI parallel_thread_func(LPVOID arg)
 		}
 
 		if (message.id == WMQ_QUIT)
+		{
 			break;
+		}
 
 		irp = (IRP*)message.wParam;
 
@@ -345,7 +365,9 @@ static DWORD WINAPI parallel_thread_func(LPVOID arg)
 	}
 
 	if (error && parallel->rdpcontext)
+	{
 		setChannelError(parallel->rdpcontext, error, "parallel_thread_func reported an error");
+	}
 
 	ExitThread(error);
 	return error;
@@ -376,7 +398,7 @@ static UINT parallel_irp_request(DEVICE* device, IRP* irp)
  */
 static UINT parallel_free(DEVICE* device)
 {
-	UINT error;
+	UINT error = 0;
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*)device;
 
 	if (!MessageQueue_PostQuit(parallel->queue, 0) ||
@@ -398,13 +420,19 @@ static void parallel_message_free(void* obj)
 {
 	wMessage* msg = obj;
 	if (!msg)
+	{
 		return;
+	}
 	if (msg->id != 0)
+	{
 		return;
+	}
 
 	IRP* irp = (IRP*)msg->wParam;
 	if (!irp)
+	{
 		return;
+	}
 	WINPR_ASSERT(irp->Discard);
 	irp->Discard(irp);
 }
@@ -416,13 +444,13 @@ static void parallel_message_free(void* obj)
  */
 FREERDP_ENTRY_POINT(UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
-	char* name;
-	char* path;
-	size_t i;
-	size_t length;
-	RDPDR_PARALLEL* device;
-	PARALLEL_DEVICE* parallel;
-	UINT error;
+	char* name = NULL;
+	char* path = NULL;
+	size_t i = 0;
+	size_t length = 0;
+	RDPDR_PARALLEL* device = NULL;
+	PARALLEL_DEVICE* parallel = NULL;
+	UINT error = 0;
 
 	WINPR_ASSERT(pEntryPoints);
 
@@ -464,7 +492,9 @@ FREERDP_ENTRY_POINT(UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINT
 		}
 
 		for (i = 0; i <= length; i++)
+		{
 			Stream_Write_UINT8(parallel->device.data, name[i] < 0 ? '_' : name[i]);
+		}
 
 		parallel->path = path;
 		parallel->queue = MessageQueue_New(NULL);

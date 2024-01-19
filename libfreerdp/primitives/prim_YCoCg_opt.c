@@ -46,7 +46,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 	BYTE* dptr = (BYTE*)pDst;
 	int sRowBump = srcStep - width * sizeof(UINT32);
 	int dRowBump = dstStep - width * sizeof(UINT32);
-	UINT32 h;
+	UINT32 h = 0;
 	/* Shift left by "shift" and divide by two is the same as shift
 	 * left by "shift-1".
 	 */
@@ -72,22 +72,26 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 	for (h = 0; h < height; h++)
 	{
 		UINT32 w = width;
-		BOOL onStride;
+		BOOL onStride = 0;
 
 		/* Get to a 16-byte destination boundary. */
 		if ((ULONG_PTR)dptr & 0x0f)
 		{
-			pstatus_t status;
+			pstatus_t status = 0;
 			UINT32 startup = (16 - ((ULONG_PTR)dptr & 0x0f)) / 4;
 
 			if (startup > width)
+			{
 				startup = width;
+			}
 
 			status = generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, DstFormat, dstStep, startup,
 			                                     1, shift, withAlpha);
 
 			if (status != PRIMITIVES_SUCCESS)
+			{
 				return status;
+			}
 
 			sptr += startup * sizeof(UINT32);
 			dptr += startup * sizeof(UINT32);
@@ -99,7 +103,14 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 
 		while (w >= 8)
 		{
-			__m128i R0, R1, R2, R3, R4, R5, R6, R7;
+			__m128i R0;
+			__m128i R1;
+			__m128i R2;
+			__m128i R3;
+			__m128i R4;
+			__m128i R5;
+			__m128i R6;
+			__m128i R7;
 
 			if (onStride)
 			{
@@ -133,9 +144,13 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 			/* R6 = o7o6o5o4 o3o2o1o0 g7g6g5g4 g3g2g1g0 */
 			/* Save alphas aside */
 			if (withAlpha)
+			{
 				R7 = _mm_unpackhi_epi64(R5, R5);
+			}
 			else
+			{
 				R7 = _mm_set1_epi32(0xFFFFFFFFU);
+			}
 
 			/* R7 = a7a6a5a4 a3a2a1a0 a7a6a5a4 a3a2a1a0 */
 			/* Expand Y's from 8-bit unsigned to 16-bit signed. */
@@ -198,12 +213,14 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 		/* Handle any remainder pixels. */
 		if (w > 0)
 		{
-			pstatus_t status;
+			pstatus_t status = 0;
 			status = generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, DstFormat, dstStep, w, 1,
 			                                     shift, withAlpha);
 
 			if (status != PRIMITIVES_SUCCESS)
+			{
 				return status;
+			}
 
 			sptr += w * sizeof(UINT32);
 			dptr += w * sizeof(UINT32);
@@ -226,7 +243,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 	BYTE* dptr = (BYTE*)pDst;
 	int sRowBump = srcStep - width * sizeof(UINT32);
 	int dRowBump = dstStep - width * sizeof(UINT32);
-	UINT32 h;
+	UINT32 h = 0;
 	/* Shift left by "shift" and divide by two is the same as shift
 	 * left by "shift-1".
 	 */
@@ -252,22 +269,26 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 	for (h = 0; h < height; h++)
 	{
 		int w = width;
-		BOOL onStride;
+		BOOL onStride = 0;
 
 		/* Get to a 16-byte destination boundary. */
 		if ((ULONG_PTR)dptr & 0x0f)
 		{
-			pstatus_t status;
+			pstatus_t status = 0;
 			UINT32 startup = (16 - ((ULONG_PTR)dptr & 0x0f)) / 4;
 
 			if (startup > width)
+			{
 				startup = width;
+			}
 
 			status = generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, DstFormat, dstStep, startup,
 			                                     1, shift, withAlpha);
 
 			if (status != PRIMITIVES_SUCCESS)
+			{
 				return status;
+			}
 
 			sptr += startup * sizeof(UINT32);
 			dptr += startup * sizeof(UINT32);
@@ -279,7 +300,14 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 
 		while (w >= 8)
 		{
-			__m128i R0, R1, R2, R3, R4, R5, R6, R7;
+			__m128i R0;
+			__m128i R1;
+			__m128i R2;
+			__m128i R3;
+			__m128i R4;
+			__m128i R5;
+			__m128i R6;
+			__m128i R7;
 
 			if (onStride)
 			{
@@ -313,9 +341,13 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 			/* R6 = o7o6o5o4 o3o2o1o0 g7g6g5g4 g3g2g1g0 */
 			/* Save alphas aside */
 			if (withAlpha)
+			{
 				R7 = _mm_unpackhi_epi64(R5, R5);
+			}
 			else
+			{
 				R7 = _mm_set1_epi32(0xFFFFFFFFU);
+			}
 
 			/* R7 = a7a6a5a4 a3a2a1a0 a7a6a5a4 a3a2a1a0 */
 			/* Expand Y's from 8-bit unsigned to 16-bit signed. */
@@ -382,12 +414,14 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 		/* Handle any remainder pixels. */
 		if (w > 0)
 		{
-			pstatus_t status;
+			pstatus_t status = 0;
 			status = generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, DstFormat, dstStep, w, 1,
 			                                     shift, withAlpha);
 
 			if (status != PRIMITIVES_SUCCESS)
+			{
 				return status;
+			}
 
 			sptr += w * sizeof(UINT32);
 			dptr += w * sizeof(UINT32);

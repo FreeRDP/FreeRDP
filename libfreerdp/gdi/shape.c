@@ -41,9 +41,13 @@
 
 static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 {
-	INT32 e, e2;
-	INT32 dx, dy;
-	INT32 a, b, c;
+	INT32 e;
+	INT32 e2;
+	INT32 dx;
+	INT32 dy;
+	INT32 a;
+	INT32 b;
+	INT32 c;
 	a = (x1 < x2) ? x2 - x1 : x1 - x2;
 	b = (y1 < y2) ? y2 - y1 : y1 - y2;
 	c = b & 1;
@@ -58,7 +62,9 @@ static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 	}
 
 	if (y1 > y2)
+	{
 		y1 = y2;
+	}
 
 	y1 += (b + 1) / 2;
 	y2 = y1 - c;
@@ -126,20 +132,28 @@ BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int n
 
 BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 {
-	INT32 x, y;
-	UINT32 color, dstColor;
+	INT32 x;
+	INT32 y;
+	UINT32 color;
+	UINT32 dstColor;
 	BOOL monochrome = FALSE;
-	INT32 nXDest, nYDest;
-	INT32 nWidth, nHeight;
-	const BYTE* srcp;
-	DWORD formatSize;
+	INT32 nXDest;
+	INT32 nYDest;
+	INT32 nWidth;
+	INT32 nHeight;
+	const BYTE* srcp = NULL;
+	DWORD formatSize = 0;
 	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
 
 	if (!hdc || !hbr)
+	{
 		return FALSE;
+	}
 
 	if (!gdi_ClipCoords(hdc, &nXDest, &nYDest, &nWidth, &nHeight, NULL, NULL))
+	{
 		return TRUE;
+	}
 
 	switch (hbr->style)
 	{
@@ -151,7 +165,9 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x, nYDest);
 
 				if (dstp)
+				{
 					FreeRDPWriteColor(dstp, hdc->format, color);
+				}
 			}
 
 			srcp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest);
@@ -160,7 +176,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 			for (y = 1; y < nHeight; y++)
 			{
 				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
-				memcpy(dstp, srcp, 1ull * nWidth * formatSize);
+				memcpy(dstp, srcp, 1ULL * nWidth * formatSize);
 			}
 
 			break;
@@ -181,14 +197,20 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 					BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x, nYDest + y);
 
 					if (!patp)
+					{
 						return FALSE;
+					}
 
 					if (monochrome)
 					{
 						if (*patp == 0)
+						{
 							dstColor = hdc->bkColor;
+						}
 						else
+						{
 							dstColor = hdc->textColor;
+						}
 					}
 					else
 					{
@@ -198,7 +220,9 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 					}
 
 					if (dstp)
+					{
 						FreeRDPWriteColor(dstp, hdc->format, dstColor);
+					}
 				}
 			}
 
@@ -209,7 +233,9 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 	}
 
 	if (!gdi_InvalidateRegion(hdc, nXDest, nYDest, nWidth, nHeight))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -245,11 +271,14 @@ BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT* lpPoints, int* lpPolyCounts, int nC
 
 BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nHeight)
 {
-	INT32 x, y;
-	UINT32 color;
+	INT32 x;
+	INT32 y;
+	UINT32 color = 0;
 
 	if (!gdi_ClipCoords(hdc, &nXDst, &nYDst, &nWidth, &nHeight, NULL, NULL))
+	{
 		return TRUE;
+	}
 
 	color = hdc->textColor;
 
@@ -259,10 +288,14 @@ BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nH
 		BYTE* dstRight = gdi_get_bitmap_pointer(hdc, nXDst + nWidth - 1, nYDst + y);
 
 		if (dstLeft)
+		{
 			FreeRDPWriteColor(dstLeft, hdc->format, color);
+		}
 
 		if (dstRight)
+		{
 			FreeRDPWriteColor(dstRight, hdc->format, color);
+		}
 	}
 
 	for (x = 0; x < nWidth; x++)
@@ -271,10 +304,14 @@ BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nH
 		BYTE* dstBottom = gdi_get_bitmap_pointer(hdc, nXDst + x, nYDst + nHeight - 1);
 
 		if (dstTop)
+		{
 			FreeRDPWriteColor(dstTop, hdc->format, color);
+		}
 
 		if (dstBottom)
+		{
 			FreeRDPWriteColor(dstBottom, hdc->format, color);
+		}
 	}
 
 	return FALSE;

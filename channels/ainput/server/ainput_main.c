@@ -30,7 +30,6 @@
 #include <winpr/thread.h>
 #include <winpr/stream.h>
 #include <winpr/sysinfo.h>
-#include <winpr/stream.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/channels/ainput.h>
@@ -68,7 +67,7 @@ typedef struct
 	eAInputChannelState state;
 
 	wStream* buffer;
-} ainput_server;
+} DECLSPEC_ALIGN(128) ainput_server;
 
 static UINT ainput_server_context_poll(ainput_server_context* context);
 static BOOL ainput_server_context_handle(ainput_server_context* context, HANDLE* handle);
@@ -89,9 +88,9 @@ static BOOL ainput_server_is_open(ainput_server_context* context)
  */
 static UINT ainput_server_open_channel(ainput_server* ainput)
 {
-	DWORD Error;
-	HANDLE hEvent;
-	DWORD StartTick;
+	DWORD Error = 0;
+	HANDLE hEvent = NULL;
+	DWORD StartTick = 0;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 
@@ -131,7 +130,7 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 
 		if (ainput->ainput_channel)
 		{
-			UINT32 channelId;
+			UINT32 channelId = 0;
 			BOOL status = TRUE;
 
 			channelId = WTSChannelGetIdByHandle(ainput->ainput_channel);
@@ -158,8 +157,8 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 
 static UINT ainput_server_send_version(ainput_server* ainput)
 {
-	ULONG written;
-	wStream* s;
+	ULONG written = 0;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(ainput);
 
@@ -191,15 +190,19 @@ static UINT ainput_server_send_version(ainput_server* ainput)
 static UINT ainput_server_recv_mouse_event(ainput_server* ainput, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
-	UINT64 flags, time;
-	INT32 x, y;
+	UINT64 flags;
+	UINT64 time;
+	INT32 x;
+	INT32 y;
 	char buffer[128] = { 0 };
 
 	WINPR_ASSERT(ainput);
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
+	{
 		return ERROR_NO_DATA;
+	}
 
 	Stream_Read_UINT64(s, time);
 	Stream_Read_UINT64(s, flags);
@@ -225,7 +228,9 @@ static HANDLE ainput_server_get_channel_handle(ainput_server* ainput)
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
+		{
 			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
+		}
 
 		WTSFreeMemory(buffer);
 	}
@@ -235,11 +240,11 @@ static HANDLE ainput_server_get_channel_handle(ainput_server* ainput)
 
 static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 {
-	DWORD nCount;
+	DWORD nCount = 0;
 	HANDLE events[2] = { 0 };
 	ainput_server* ainput = (ainput_server*)arg;
 	UINT error = CHANNEL_RC_OK;
-	DWORD status;
+	DWORD status = 0;
 
 	WINPR_ASSERT(ainput);
 
@@ -295,8 +300,10 @@ static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 	ainput->ainput_channel = NULL;
 
 	if (error && ainput->context.rdpcontext)
+	{
 		setChannelError(ainput->context.rdpcontext, error,
 		                "ainput_server_thread_func reported an error");
+	}
 
 	ExitThread(error);
 	return error;
@@ -400,7 +407,9 @@ ainput_server_context* ainput_server_context_new(HANDLE vcm)
 	ainput_server* ainput = (ainput_server*)calloc(1, sizeof(ainput_server));
 
 	if (!ainput)
+	{
 		return NULL;
+	}
 
 	ainput->context.vcm = vcm;
 	ainput->context.Open = ainput_server_open;
@@ -412,7 +421,9 @@ ainput_server_context* ainput_server_context_new(HANDLE vcm)
 
 	ainput->buffer = Stream_New(NULL, 4096);
 	if (!ainput->buffer)
+	{
 		goto fail;
+	}
 	return &ainput->context;
 fail:
 	ainput_server_context_free(&ainput->context);
@@ -432,11 +443,12 @@ void ainput_server_context_free(ainput_server_context* context)
 
 static UINT ainput_process_message(ainput_server* ainput)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
-	ULONG BytesReturned, ActualBytesReturned;
-	UINT16 MessageId;
-	wStream* s;
+	ULONG BytesReturned;
+	ULONG ActualBytesReturned;
+	UINT16 MessageId = 0;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(ainput);
 	WINPR_ASSERT(ainput->ainput_channel);
@@ -447,7 +459,9 @@ static UINT ainput_process_message(ainput_server* ainput)
 	Stream_SetPosition(s, 0);
 	rc = WTSVirtualChannelRead(ainput->ainput_channel, 0, NULL, 0, &BytesReturned);
 	if (!rc)
+	{
 		goto out;
+	}
 
 	if (BytesReturned < 2)
 	{
@@ -492,7 +506,9 @@ static UINT ainput_process_message(ainput_server* ainput)
 
 out:
 	if (error)
+	{
 		WLog_ERR(TAG, "Response failed with error %" PRIu32 "!", error);
+	}
 
 	return error;
 }
@@ -529,9 +545,13 @@ UINT ainput_server_context_poll_int(ainput_server_context* context)
 		case AINPUT_INITIAL:
 			error = ainput_server_open_channel(ainput);
 			if (error)
+			{
 				WLog_ERR(TAG, "ainput_server_open_channel failed with error %" PRIu32 "!", error);
+			}
 			else
+			{
 				ainput->state = AINPUT_OPENED;
+			}
 			break;
 		case AINPUT_OPENED:
 		{
@@ -555,13 +575,19 @@ UINT ainput_server_context_poll_int(ainput_server_context* context)
 				{
 					error = ainput_server_send_version(ainput);
 					if (error)
+					{
 						WLog_ERR(TAG, "audin_server_send_version failed with error %" PRIu32 "!",
 						         error);
+					}
 					else
+					{
 						ainput->state = AINPUT_VERSION_SENT;
+					}
 				}
 				else
+				{
 					error = CHANNEL_RC_OK;
+				}
 			}
 			WTSFreeMemory(buffer.pv);
 		}

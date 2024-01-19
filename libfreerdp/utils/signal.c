@@ -64,7 +64,7 @@ typedef struct
 {
 	void* context;
 	freerdp_signal_handler_t handler;
-} cleanup_handler_t;
+} DECLSPEC_ALIGN(16) cleanup_handler_t;
 
 static size_t cleanup_handler_count = 0;
 static cleanup_handler_t cleanup_handlers[20] = { 0 };
@@ -73,14 +73,18 @@ static void lock(void)
 {
 	const int rc = pthread_mutex_lock(&signal_handler_lock);
 	if (rc != 0)
+	{
 		WLog_ERR(TAG, "[pthread_mutex_lock] failed with %s [%d]", strerror(rc), rc);
+	}
 }
 
 static void unlock(void)
 {
 	const int rc = pthread_mutex_unlock(&signal_handler_lock);
 	if (rc != 0)
+	{
 		WLog_ERR(TAG, "[pthread_mutex_lock] failed with %s [%d]", strerror(rc), rc);
+	}
 }
 
 static void term_handler(int signum)
@@ -99,7 +103,9 @@ static void term_handler(int signum)
 		const cleanup_handler_t empty = { 0 };
 		cleanup_handler_t* cur = &cleanup_handlers[x];
 		if (cur->handler)
+		{
 			cur->handler(signum, strsignal(signum), cur->context);
+		}
 		*cur = empty;
 	}
 	cleanup_handler_count = 0;
@@ -191,9 +197,13 @@ int freerdp_handle_signals(void)
 	WLog_DBG(TAG, "Registering signal hook...");
 
 	if (!register_handlers(fatal_signals, ARRAYSIZE(fatal_signals), fatal_handler))
+	{
 		goto fail;
+	}
 	if (!register_handlers(term_signals, ARRAYSIZE(term_signals), term_handler))
+	{
 		goto fail;
+	}
 
 	/* Ignore SIGPIPE signal. */
 	signal(SIGPIPE, SIG_IGN);
@@ -217,8 +227,10 @@ BOOL freerdp_add_signal_cleanup_handler(void* context, freerdp_signal_handler_t 
 			cur->handler = handler;
 		}
 		else
+		{
 			WLog_WARN(TAG, "Failed to register cleanup handler, only %" PRIuz " handlers supported",
 			          ARRAYSIZE(cleanup_handlers));
+		}
 	}
 	rc = TRUE;
 	unlock();

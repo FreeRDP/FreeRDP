@@ -41,7 +41,9 @@ UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
 	WINPR_ASSERT(header);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Read_UINT16(s, header->cmdId);     /* cmdId (2 bytes) */
 	Stream_Read_UINT16(s, header->flags);     /* flags (2 bytes) */
@@ -53,7 +55,9 @@ UINT rdpgfx_read_header(wStream* s, RDPGFX_HEADER* header)
 		return ERROR_INVALID_DATA;
 	}
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, (header->pduLength - 8)))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	return CHANNEL_RC_OK;
 }
@@ -69,7 +73,9 @@ UINT rdpgfx_write_header(wStream* s, const RDPGFX_HEADER* header)
 	WINPR_ASSERT(header);
 
 	if (!Stream_EnsureRemainingCapacity(s, 8))
+	{
 		return CHANNEL_RC_NO_MEMORY;
+	}
 	Stream_Write_UINT16(s, header->cmdId);     /* cmdId (2 bytes) */
 	Stream_Write_UINT16(s, header->flags);     /* flags (2 bytes) */
 	Stream_Write_UINT32(s, header->pduLength); /* pduLength (4 bytes) */
@@ -87,7 +93,9 @@ UINT rdpgfx_read_point16(wStream* s, RDPGFX_POINT16* pt16)
 	WINPR_ASSERT(pt16);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT16(s, pt16->x); /* x (2 bytes) */
 	Stream_Read_UINT16(s, pt16->y); /* y (2 bytes) */
@@ -105,7 +113,9 @@ UINT rdpgfx_write_point16(wStream* s, const RDPGFX_POINT16* point16)
 	WINPR_ASSERT(point16);
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
+	{
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Write_UINT16(s, point16->x); /* x (2 bytes) */
 	Stream_Write_UINT16(s, point16->y); /* y (2 bytes) */
@@ -123,16 +133,22 @@ UINT rdpgfx_read_rect16(wStream* s, RECTANGLE_16* rect16)
 	WINPR_ASSERT(rect16);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT16(s, rect16->left);   /* left (2 bytes) */
 	Stream_Read_UINT16(s, rect16->top);    /* top (2 bytes) */
 	Stream_Read_UINT16(s, rect16->right);  /* right (2 bytes) */
 	Stream_Read_UINT16(s, rect16->bottom); /* bottom (2 bytes) */
 	if (rect16->left >= rect16->right)
+	{
 		return ERROR_INVALID_DATA;
+	}
 	if (rect16->top >= rect16->bottom)
+	{
 		return ERROR_INVALID_DATA;
+	}
 	return CHANNEL_RC_OK;
 }
 
@@ -147,7 +163,9 @@ UINT rdpgfx_write_rect16(wStream* s, const RECTANGLE_16* rect16)
 	WINPR_ASSERT(rect16);
 
 	if (!Stream_EnsureRemainingCapacity(s, 8))
+	{
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Write_UINT16(s, rect16->left);   /* left (2 bytes) */
 	Stream_Write_UINT16(s, rect16->top);    /* top (2 bytes) */
@@ -167,7 +185,9 @@ UINT rdpgfx_read_color32(wStream* s, RDPGFX_COLOR32* color32)
 	WINPR_ASSERT(color32);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT8(s, color32->B);  /* B (1 byte) */
 	Stream_Read_UINT8(s, color32->G);  /* G (1 byte) */
@@ -187,7 +207,9 @@ UINT rdpgfx_write_color32(wStream* s, const RDPGFX_COLOR32* color32)
 	WINPR_ASSERT(color32);
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
+	{
 		return CHANNEL_RC_NO_MEMORY;
+	}
 
 	Stream_Write_UINT8(s, color32->B);  /* B (1 byte) */
 	Stream_Write_UINT8(s, color32->G);  /* G (1 byte) */

@@ -17,7 +17,9 @@ BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 			{
 				BOOL sval = freerdp_settings_get_bool(src, (FreeRDP_Settings_Keys_Bool)cur->id);
 				if (!freerdp_settings_set_bool(dst, (FreeRDP_Settings_Keys_Bool)cur->id, sval))
+				{
 					return FALSE;
+				}
 			}
 			break;
 			case FREERDP_SETTINGS_TYPE_UINT16: /* UINT16 */
@@ -25,14 +27,18 @@ BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 				UINT16 sval =
 				    freerdp_settings_get_uint16(src, (FreeRDP_Settings_Keys_UInt16)cur->id);
 				if (!freerdp_settings_set_uint16(dst, (FreeRDP_Settings_Keys_UInt16)cur->id, sval))
+				{
 					return FALSE;
+				}
 			}
 			break;
 			case FREERDP_SETTINGS_TYPE_INT16: /* INT16 */
 			{
 				INT16 sval = freerdp_settings_get_int16(src, (FreeRDP_Settings_Keys_Int16)cur->id);
 				if (!freerdp_settings_set_int16(dst, (FreeRDP_Settings_Keys_Int16)cur->id, sval))
+				{
 					return FALSE;
+				}
 			}
 			break;
 			case FREERDP_SETTINGS_TYPE_UINT32: /* UINT32 */
@@ -40,14 +46,18 @@ BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 				UINT32 sval =
 				    freerdp_settings_get_uint32(src, (FreeRDP_Settings_Keys_UInt32)cur->id);
 				if (!freerdp_settings_set_uint32(dst, (FreeRDP_Settings_Keys_UInt32)cur->id, sval))
+				{
 					return FALSE;
+				}
 			}
 			break;
 			case FREERDP_SETTINGS_TYPE_INT32: /* INT32 */
 			{
 				INT32 sval = freerdp_settings_get_int32(src, (FreeRDP_Settings_Keys_Int32)cur->id);
 				if (!freerdp_settings_set_int32(dst, (FreeRDP_Settings_Keys_Int32)cur->id, sval))
+				{
 					return FALSE;
+				}
 			}
 			break;
 			case FREERDP_SETTINGS_TYPE_UINT64: /* UINT64 */
@@ -55,14 +65,18 @@ BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 				UINT64 sval =
 				    freerdp_settings_get_uint64(src, (FreeRDP_Settings_Keys_UInt64)cur->id);
 				if (!freerdp_settings_set_uint64(dst, (FreeRDP_Settings_Keys_UInt64)cur->id, sval))
+				{
 					return FALSE;
+				}
 			}
 			break;
 			case FREERDP_SETTINGS_TYPE_INT64: /* INT64 */
 			{
 				INT64 sval = freerdp_settings_get_int64(src, (FreeRDP_Settings_Keys_Int64)cur->id);
 				if (!freerdp_settings_set_int64(dst, (FreeRDP_Settings_Keys_Int64)cur->id, sval))
+				{
 					return FALSE;
+				}
 			}
 			break;
 			case FREERDP_SETTINGS_TYPE_STRING: /* strings */
@@ -71,10 +85,14 @@ BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 				    freerdp_settings_get_string(src, (FreeRDP_Settings_Keys_String)cur->id);
 				size_t len = 0;
 				if (sval)
+				{
 					len = strlen(sval);
+				}
 				if (!freerdp_settings_set_string_copy_(dst, (FreeRDP_Settings_Keys_String)cur->id,
 				                                       sval, len, FALSE))
+				{
 					return FALSE;
+				}
 			}
 			break;
 			case FREERDP_SETTINGS_TYPE_POINTER: /* pointer */
@@ -83,7 +101,9 @@ BOOL freerdp_settings_clone_keys(rdpSettings* dst, const rdpSettings* src)
 				    freerdp_settings_get_pointer(src, (FreeRDP_Settings_Keys_Pointer)cur->id);
 				if (!freerdp_settings_set_pointer(dst, (FreeRDP_Settings_Keys_Pointer)cur->id,
 				                                  sval))
+				{
 					return FALSE;
+				}
 			}
 			break;
 		}
@@ -345,7 +365,9 @@ SSIZE_T freerdp_settings_get_key_for_name(const char* value)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
 		if (strcmp(value, cur->str) == 0)
+		{
 			return cur->id;
+		}
 	}
 	return -1;
 }
@@ -358,7 +380,9 @@ SSIZE_T freerdp_settings_get_type_for_name(const char* value)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
 		if (strcmp(value, cur->str) == 0)
+		{
 			return cur->type;
+		}
 	}
 	return -1;
 }
@@ -402,7 +426,9 @@ SSIZE_T freerdp_settings_get_type_for_key(SSIZE_T key)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
 		if (cur->id == key)
+		{
 			return cur->type;
+		}
 	}
 	return -1;
 }
@@ -413,7 +439,9 @@ const char* freerdp_settings_get_name_for_key(SSIZE_T key)
 	{
 		const struct settings_str_entry* cur = &settings_map[x];
 		if (cur->id == key)
+		{
 			return cur->str;
+		}
 	}
 	return NULL;
 }

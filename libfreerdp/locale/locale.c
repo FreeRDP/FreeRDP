@@ -47,7 +47,7 @@ typedef struct
 	char country[LOCALE_COUNTRY_LEN];   /* Two or three letter country code (Sometimes with Cyrl_
 	                                       prefix) */
 	DWORD code;                         /* 32-bit unsigned integer corresponding to the locale */
-} SYSTEM_LOCALE;
+} DECLSPEC_ALIGN(32) SYSTEM_LOCALE;
 
 /*
  * Refer to MSDN article "Locale Identifier Constants and Strings":
@@ -275,7 +275,7 @@ typedef struct
 {
 	DWORD localeId;
 	const char* name;
-} LOCALE_NAME;
+} DECLSPEC_ALIGN(16) LOCALE_NAME;
 
 static const LOCALE_NAME LOCALE_NAME_TABLE[] = {
 	{ AFRIKAANS, "AFRIKAANS" },
@@ -483,7 +483,7 @@ typedef struct
 {
 	DWORD locale;             /* Locale ID */
 	DWORD keyboardLayouts[5]; /* array of associated keyboard layouts */
-} LOCALE_KEYBOARD_LAYOUTS;
+} DECLSPEC_ALIGN(32) LOCALE_KEYBOARD_LAYOUTS;
 
 /* TODO: Use KBD_* defines instead of hardcoded values */
 
@@ -685,21 +685,25 @@ static BOOL freerdp_get_system_language_and_country_codes(char* language, size_t
 	}
 #else
 	{
-		size_t dot;
-		DWORD nSize;
-		size_t underscore;
+		size_t dot = 0;
+		DWORD nSize = 0;
+		size_t underscore = 0;
 		char* env_lang = NULL;
 		LPCSTR lang = "LANG";
 		/* LANG = <language>_<country>.<encoding> */
 		nSize = GetEnvironmentVariableA(lang, NULL, 0);
 
 		if (!nSize)
+		{
 			return FALSE; /* LANG environment variable was not set */
+		}
 
 		env_lang = (char*)malloc(nSize);
 
 		if (!env_lang)
+		{
 			return FALSE;
+		}
 
 		if (GetEnvironmentVariableA(lang, env_lang, nSize) !=
 		    nSize - 1) /* Get locale from environment variable LANG */
@@ -718,7 +722,7 @@ static BOOL freerdp_get_system_language_and_country_codes(char* language, size_t
 		else
 		{
 			/* Get language code */
-			size_t len = MIN(languageLen - 1u, underscore);
+			size_t len = MIN(languageLen - 1U, underscore);
 			strncpy(language, env_lang, len);
 			language[len] = '\0';
 		}
@@ -746,7 +750,7 @@ static BOOL freerdp_get_system_language_and_country_codes(char* language, size_t
 
 static const SYSTEM_LOCALE* freerdp_detect_system_locale(void)
 {
-	size_t i;
+	size_t i = 0;
 	char language[LOCALE_LANGUAGE_LEN] = { 0 };
 	char country[LOCALE_COUNTRY_LEN] = { 0 };
 	const SYSTEM_LOCALE* locale = NULL;
@@ -770,25 +774,29 @@ static const SYSTEM_LOCALE* freerdp_detect_system_locale(void)
 
 DWORD freerdp_get_system_locale_id(void)
 {
-	const SYSTEM_LOCALE* locale;
+	const SYSTEM_LOCALE* locale = NULL;
 	locale = freerdp_detect_system_locale();
 
 	if (locale != NULL)
+	{
 		return locale->code;
+	}
 
 	return 0;
 }
 
 const char* freerdp_get_system_locale_name_from_id(DWORD localeId)
 {
-	size_t index;
+	size_t index = 0;
 
 	for (index = 0; index < ARRAYSIZE(LOCALE_NAME_TABLE); index++)
 	{
 		const LOCALE_NAME* const current = &LOCALE_NAME_TABLE[index];
 
 		if (localeId == current->localeId)
+		{
 			return current->name;
+		}
 	}
 
 	return NULL;
@@ -811,7 +819,9 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 	const SYSTEM_LOCALE* locale = freerdp_detect_system_locale();
 
 	if (!locale)
+	{
 		return -1;
+	}
 
 	DEBUG_KBD("Found locale : %s_%s", locale->language, locale->country);
 
@@ -829,7 +839,7 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 				{
 					continue; /* Skip, try to get a more localized keyboard layout */
 				}
-				else if (current->keyboardLayouts[j] == 0)
+				if (current->keyboardLayouts[j] == 0)
 				{
 					/*
 					 * If we skip the ENGLISH_UNITED_STATES keyboard layout but there are no

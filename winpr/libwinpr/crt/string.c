@@ -96,11 +96,17 @@ static const char rfc3986[] = {
 static char hex2bin(char what)
 {
 	if (what >= 'a')
+	{
 		what -= 'a' - 'A';
+	}
 	if (what >= 'A')
+	{
 		what -= ('A' - 10);
+	}
 	else
+	{
 		what -= '0';
+	}
 	return what;
 }
 
@@ -119,7 +125,9 @@ char* winpr_str_url_decode(const char* str, size_t len)
 {
 	char* dst = calloc(len + 1, sizeof(char));
 	if (!dst)
+	{
 		return NULL;
+	}
 
 	size_t pos = 0;
 	for (size_t x = 0; x < strnlen(str, len); x++)
@@ -146,7 +154,9 @@ char* winpr_str_url_encode(const char* str, size_t len)
 {
 	char* dst = calloc(len + 1, sizeof(char) * 3);
 	if (!dst)
+	{
 		return NULL;
+	}
 
 	char* ptr = dst;
 	for (size_t x = 0; x < strnlen(str, len); x++)
@@ -166,10 +176,14 @@ BOOL winpr_str_append(const char* what, char* buffer, size_t size, const char* s
 	const size_t sep = (used > 0) ? sep_len : 0;
 
 	if (used + add + sep >= size)
+	{
 		return FALSE;
+	}
 
 	if ((used > 0) && (sep_len > 0))
+	{
 		strncat(buffer, separator, sep_len);
+	}
 
 	strncat(buffer, what, add);
 	return TRUE;
@@ -198,11 +212,15 @@ int winpr_vasprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, 
 	const int length = vsnprintf(NULL, 0, templ, ap);
 	va_end(ap);
 	if (length < 0)
+	{
 		return length;
+	}
 
-	char* str = calloc((size_t)length + 1ul, sizeof(char));
+	char* str = calloc((size_t)length + 1UL, sizeof(char));
 	if (!str)
+	{
 		return -1;
+	}
 
 	va_copy(ap, oap);
 	const int plen = vsprintf(str, templ, ap);
@@ -219,12 +237,16 @@ int winpr_vasprintf(char** s, size_t* slen, WINPR_FORMAT_ARG const char* templ, 
 char* _strdup(const char* strSource)
 {
 	if (strSource == NULL)
+	{
 		return NULL;
+	}
 
 	char* strDestination = strdup(strSource);
 
 	if (strDestination == NULL)
+	{
 		WLog_ERR(TAG, "strdup");
+	}
 
 	return strDestination;
 }
@@ -232,16 +254,22 @@ char* _strdup(const char* strSource)
 WCHAR* _wcsdup(const WCHAR* strSource)
 {
 	if (!strSource)
+	{
 		return NULL;
+	}
 
 	size_t len = _wcslen(strSource);
 	WCHAR* strDestination = calloc(len + 1, sizeof(WCHAR));
 
 	if (strDestination != NULL)
+	{
 		memcpy(strDestination, strSource, len * sizeof(WCHAR));
+	}
 
 	if (strDestination == NULL)
+	{
 		WLog_ERR(TAG, "wcsdup");
+	}
 
 	return strDestination;
 }
@@ -254,7 +282,9 @@ WCHAR* _wcsncat(WCHAR* dst, const WCHAR* src, size_t sz)
 	const size_t dlen = _wcslen(dst);
 	const size_t slen = _wcsnlen(src, sz);
 	for (size_t x = 0; x < slen; x++)
+	{
 		dst[dlen + x] = src[x];
+	}
 	dst[dlen + slen] = '\0';
 	return dst;
 }
@@ -282,8 +312,10 @@ int _wcscmp(const WCHAR* string1, const WCHAR* string2)
 		const WCHAR w2 = *string2++;
 
 		if (w1 != w2)
+		{
 			return (int)w1 - w2;
-		else if ((w1 == '\0') || (w2 == '\0'))
+		}
+		if ((w1 == '\0') || (w2 == '\0'))
 			return (int)w1 - w2;
 	}
 }
@@ -299,8 +331,10 @@ int _wcsncmp(const WCHAR* string1, const WCHAR* string2, size_t count)
 		const WCHAR b = string2[x];
 
 		if (a != b)
+		{
 			return (int)a - b;
-		else if ((a == '\0') || (b == '\0'))
+		}
+		if ((a == '\0') || (b == '\0'))
 			return (int)a - b;
 	}
 	return 0;
@@ -315,7 +349,9 @@ size_t _wcslen(const WCHAR* str)
 	WINPR_ASSERT(p);
 
 	while (*p)
+	{
 		p++;
+	}
 
 	return (size_t)(p - str);
 }
@@ -324,14 +360,16 @@ size_t _wcslen(const WCHAR* str)
 
 size_t _wcsnlen(const WCHAR* str, size_t max)
 {
-	size_t x;
+	size_t x = 0;
 
 	WINPR_ASSERT(str);
 
 	for (x = 0; x < max; x++)
 	{
 		if (str[x] == 0)
+		{
 			return x;
+		}
 	}
 
 	return x;
@@ -345,13 +383,17 @@ WCHAR* _wcsstr(const WCHAR* str, const WCHAR* strSearch)
 	WINPR_ASSERT(strSearch);
 
 	if (strSearch[0] == '\0')
+	{
 		return (WCHAR*)str;
+	}
 
 	const size_t searchLen = _wcslen(strSearch);
 	while (*str)
 	{
 		if (_wcsncmp(str, strSearch, searchLen) == 0)
+		{
 			return (WCHAR*)str;
+		}
 		str++;
 	}
 	return NULL;
@@ -369,7 +411,9 @@ WCHAR* _wcschr(const WCHAR* str, WCHAR value)
 	const WCHAR* p = (const WCHAR*)str;
 
 	while (*p && (*p != value))
+	{
 		p++;
+	}
 
 	cnv.cc = (*p == value) ? p : NULL;
 	return cnv.c;
@@ -387,13 +431,17 @@ WCHAR* _wcsrchr(const WCHAR* str, WCHAR c)
 	const WCHAR* p = NULL;
 
 	if (!str)
+	{
 		return NULL;
+	}
 
 	for (; *str != '\0'; str++)
 	{
 		const WCHAR ch = *str;
 		if (ch == c)
+		{
 			p = str;
+		}
 	}
 
 	cnv.cc = p;
@@ -407,11 +455,13 @@ char* strtok_s(char* strToken, const char* strDelimit, char** context)
 
 WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 {
-	WCHAR* nextToken;
-	WCHAR value;
+	WCHAR* nextToken = NULL;
+	WCHAR value = 0;
 
 	if (!strToken)
+	{
 		strToken = *context;
+	}
 
 	value = *strToken;
 
@@ -422,7 +472,9 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 	}
 
 	if (!*strToken)
+	{
 		return NULL;
+	}
 
 	nextToken = strToken++;
 	value = *strToken;
@@ -434,7 +486,9 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 	}
 
 	if (*strToken)
+	{
 		*strToken++ = 0;
+	}
 
 	*context = strToken;
 	return nextToken;
@@ -452,23 +506,29 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 
 LPSTR CharUpperA(LPSTR lpsz)
 {
-	size_t i;
-	size_t length;
+	size_t i = 0;
+	size_t length = 0;
 
 	if (!lpsz)
+	{
 		return NULL;
+	}
 
 	length = strlen(lpsz);
 
 	if (length < 1)
+	{
 		return (LPSTR)NULL;
+	}
 
 	if (length == 1)
 	{
 		char c = *lpsz;
 
 		if ((c >= 'a') && (c <= 'z'))
+		{
 			c = c - 'a' + 'A';
+		}
 
 		*lpsz = c;
 		return lpsz;
@@ -477,7 +537,9 @@ LPSTR CharUpperA(LPSTR lpsz)
 	for (i = 0; i < length; i++)
 	{
 		if ((lpsz[i] >= 'a') && (lpsz[i] <= 'z'))
+		{
 			lpsz[i] = lpsz[i] - 'a' + 'A';
+		}
 	}
 
 	return lpsz;
@@ -485,23 +547,29 @@ LPSTR CharUpperA(LPSTR lpsz)
 
 LPWSTR CharUpperW(LPWSTR lpsz)
 {
-	size_t i;
-	size_t length;
+	size_t i = 0;
+	size_t length = 0;
 
 	if (!lpsz)
+	{
 		return NULL;
+	}
 
 	length = _wcslen(lpsz);
 
 	if (length < 1)
+	{
 		return (LPWSTR)NULL;
+	}
 
 	if (length == 1)
 	{
 		WCHAR c = *lpsz;
 
 		if ((c >= L'a') && (c <= L'z'))
+		{
 			c = c - L'a' + L'A';
+		}
 
 		*lpsz = c;
 		return lpsz;
@@ -510,7 +578,9 @@ LPWSTR CharUpperW(LPWSTR lpsz)
 	for (i = 0; i < length; i++)
 	{
 		if ((lpsz[i] >= L'a') && (lpsz[i] <= L'z'))
+		{
 			lpsz[i] = lpsz[i] - L'a' + L'A';
+		}
 	}
 
 	return lpsz;
@@ -518,15 +588,19 @@ LPWSTR CharUpperW(LPWSTR lpsz)
 
 DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 {
-	DWORD i;
+	DWORD i = 0;
 
 	if (cchLength < 1)
+	{
 		return 0;
+	}
 
 	for (i = 0; i < cchLength; i++)
 	{
 		if ((lpsz[i] >= 'a') && (lpsz[i] <= 'z'))
+		{
 			lpsz[i] = lpsz[i] - 'a' + 'A';
+		}
 	}
 
 	return cchLength;
@@ -534,8 +608,8 @@ DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 
 DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 {
-	DWORD i;
-	WCHAR value;
+	DWORD i = 0;
+	WCHAR value = 0;
 
 	for (i = 0; i < cchLength; i++)
 	{
@@ -549,23 +623,29 @@ DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 
 LPSTR CharLowerA(LPSTR lpsz)
 {
-	size_t i;
-	size_t length;
+	size_t i = 0;
+	size_t length = 0;
 
 	if (!lpsz)
+	{
 		return (LPSTR)NULL;
+	}
 
 	length = strlen(lpsz);
 
 	if (length < 1)
+	{
 		return (LPSTR)NULL;
+	}
 
 	if (length == 1)
 	{
 		char c = *lpsz;
 
 		if ((c >= 'A') && (c <= 'Z'))
+		{
 			c = c - 'A' + 'a';
+		}
 
 		*lpsz = c;
 		return lpsz;
@@ -574,7 +654,9 @@ LPSTR CharLowerA(LPSTR lpsz)
 	for (i = 0; i < length; i++)
 	{
 		if ((lpsz[i] >= 'A') && (lpsz[i] <= 'Z'))
+		{
 			lpsz[i] = lpsz[i] - 'A' + 'a';
+		}
 	}
 
 	return lpsz;
@@ -588,15 +670,19 @@ LPWSTR CharLowerW(LPWSTR lpsz)
 
 DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 {
-	DWORD i;
+	DWORD i = 0;
 
 	if (cchLength < 1)
+	{
 		return 0;
+	}
 
 	for (i = 0; i < cchLength; i++)
 	{
 		if ((lpsz[i] >= 'A') && (lpsz[i] <= 'Z'))
+		{
 			lpsz[i] = lpsz[i] - 'A' + 'a';
+		}
 	}
 
 	return cchLength;
@@ -604,8 +690,8 @@ DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 
 DWORD CharLowerBuffW(LPWSTR lpsz, DWORD cchLength)
 {
-	DWORD i;
-	WCHAR value;
+	DWORD i = 0;
+	WCHAR value = 0;
 
 	for (i = 0; i < cchLength; i++)
 	{
@@ -620,67 +706,75 @@ DWORD CharLowerBuffW(LPWSTR lpsz, DWORD cchLength)
 BOOL IsCharAlphaA(CHAR ch)
 {
 	if (((ch >= 'a') && (ch <= 'z')) || ((ch >= 'A') && (ch <= 'Z')))
+	{
 		return 1;
-	else
-		return 0;
+	}
+	return 0;
 }
 
 BOOL IsCharAlphaW(WCHAR ch)
 {
 	if (((ch >= L'a') && (ch <= L'z')) || ((ch >= L'A') && (ch <= L'Z')))
+	{
 		return 1;
-	else
-		return 0;
+	}
+	return 0;
 }
 
 BOOL IsCharAlphaNumericA(CHAR ch)
 {
 	if (((ch >= 'a') && (ch <= 'z')) || ((ch >= 'A') && (ch <= 'Z')) ||
 	    ((ch >= '0') && (ch <= '9')))
+	{
 		return 1;
-	else
-		return 0;
+	}
+	return 0;
 }
 
 BOOL IsCharAlphaNumericW(WCHAR ch)
 {
 	if (((ch >= L'a') && (ch <= L'z')) || ((ch >= L'A') && (ch <= L'Z')) ||
 	    ((ch >= L'0') && (ch <= L'9')))
+	{
 		return 1;
-	else
-		return 0;
+	}
+	return 0;
 }
 
 BOOL IsCharUpperA(CHAR ch)
 {
 	if ((ch >= 'A') && (ch <= 'Z'))
+	{
 		return 1;
-	else
-		return 0;
+	}
+	return 0;
 }
 
 BOOL IsCharUpperW(WCHAR ch)
 {
 	if ((ch >= L'A') && (ch <= L'Z'))
+	{
 		return 1;
-	else
-		return 0;
+	}
+	return 0;
 }
 
 BOOL IsCharLowerA(CHAR ch)
 {
 	if ((ch >= 'a') && (ch <= 'z'))
+	{
 		return 1;
-	else
-		return 0;
+	}
+	return 0;
 }
 
 BOOL IsCharLowerW(WCHAR ch)
 {
 	if ((ch >= L'a') && (ch <= L'z'))
+	{
 		return 1;
-	else
-		return 0;
+	}
+	return 0;
 }
 
 #endif
@@ -698,7 +792,9 @@ size_t ConvertLineEndingToLF(char* str, size_t size)
 			case '\r':
 				str[x - skip] = '\n';
 				if ((x + 1 < size) && (str[x + 1] == '\n'))
+				{
 					skip++;
+				}
 				break;
 			default:
 				str[x - skip] = c;
@@ -716,7 +812,9 @@ char* ConvertLineEndingToCRLF(const char* str, size_t* size)
 
 	*size = 0;
 	if (s == 0)
+	{
 		return NULL;
+	}
 
 	size_t linebreaks = 0;
 	for (size_t x = 0; x < s - 1; x++)
@@ -732,9 +830,11 @@ char* ConvertLineEndingToCRLF(const char* str, size_t* size)
 				break;
 		}
 	}
-	char* cnv = calloc(s + linebreaks * 2ull + 1ull, sizeof(char));
+	char* cnv = calloc(s + linebreaks * 2ULL + 1ULL, sizeof(char));
 	if (!cnv)
+	{
 		return NULL;
+	}
 
 	size_t pos = 0;
 	for (size_t x = 0; x < s; x++)
@@ -766,11 +866,13 @@ char* ConvertLineEndingToCRLF(const char* str, size_t* size)
 char* StrSep(char** stringp, const char* delim)
 {
 	char* start = *stringp;
-	char* p;
+	char* p = NULL;
 	p = (start != NULL) ? strpbrk(start, delim) : NULL;
 
 	if (!p)
+	{
 		*stringp = NULL;
+	}
 	else
 	{
 		*p = '\0';

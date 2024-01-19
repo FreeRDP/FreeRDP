@@ -49,7 +49,7 @@ typedef struct
 	eEnumeratorChannelState state;
 
 	wStream* buffer;
-} enumerator_server;
+} DECLSPEC_ALIGN(128) enumerator_server;
 
 static UINT enumerator_server_initialize(CamDevEnumServerContext* context, BOOL externalThread)
 {
@@ -74,10 +74,10 @@ static UINT enumerator_server_open_channel(enumerator_server* enumerator)
 {
 	CamDevEnumServerContext* context = &enumerator->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent;
+	HANDLE hEvent = NULL;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
-	UINT32 channelId;
+	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
 	WINPR_ASSERT(enumerator);
@@ -122,7 +122,6 @@ static UINT enumerator_server_open_channel(enumerator_server* enumerator)
 }
 
 static UINT enumerator_server_handle_select_version_request(CamDevEnumServerContext* context,
-                                                            wStream* s,
                                                             const CAM_SHARED_MSG_HEADER* header)
 {
 	CAM_SELECT_VERSION_REQUEST pdu = { 0 };
@@ -135,7 +134,9 @@ static UINT enumerator_server_handle_select_version_request(CamDevEnumServerCont
 
 	IFCALLRET(context->SelectVersionRequest, error, context, &pdu);
 	if (error)
+	{
 		WLog_ERR(TAG, "context->SelectVersionRequest failed with error %" PRIu32 "", error);
+	}
 
 	return error;
 }
@@ -162,7 +163,9 @@ static UINT enumerator_server_recv_device_added_notification(CamDevEnumServerCon
 	 * Nullterminator VirtualChannelName (1)
 	 */
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return ERROR_NO_DATA;
+	}
 
 	pdu.DeviceName = Stream_Pointer(s);
 
@@ -174,7 +177,9 @@ static UINT enumerator_server_recv_device_added_notification(CamDevEnumServerCon
 	for (i = 0; i < remaining_length; i += sizeof(WCHAR), ++channel_name_start)
 	{
 		if (*channel_name_start == L'\0')
+		{
 			break;
+		}
 	}
 
 	if (*channel_name_start != L'\0')
@@ -197,7 +202,9 @@ static UINT enumerator_server_recv_device_added_notification(CamDevEnumServerCon
 	for (; i < remaining_length; ++i, ++tmp)
 	{
 		if (*tmp == '\0')
+		{
 			break;
+		}
 	}
 
 	if (*tmp != '\0')
@@ -209,7 +216,9 @@ static UINT enumerator_server_recv_device_added_notification(CamDevEnumServerCon
 
 	IFCALLRET(context->DeviceAddedNotification, error, context, &pdu);
 	if (error)
+	{
 		WLog_ERR(TAG, "context->DeviceAddedNotification failed with error %" PRIu32 "", error);
+	}
 
 	return error;
 }
@@ -228,7 +237,9 @@ static UINT enumerator_server_recv_device_removed_notification(CamDevEnumServerC
 	pdu.Header = *header;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	{
 		return ERROR_NO_DATA;
+	}
 
 	pdu.VirtualChannelName = Stream_Pointer(s);
 
@@ -238,7 +249,9 @@ static UINT enumerator_server_recv_device_removed_notification(CamDevEnumServerC
 	for (size_t i = 1; i < remaining_length; ++i, ++tmp)
 	{
 		if (*tmp == '\0')
+		{
 			break;
+		}
 	}
 
 	if (*tmp != '\0')
@@ -250,18 +263,20 @@ static UINT enumerator_server_recv_device_removed_notification(CamDevEnumServerC
 
 	IFCALLRET(context->DeviceRemovedNotification, error, context, &pdu);
 	if (error)
+	{
 		WLog_ERR(TAG, "context->DeviceRemovedNotification failed with error %" PRIu32 "", error);
+	}
 
 	return error;
 }
 
 static UINT enumerator_process_message(enumerator_server* enumerator)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
-	ULONG BytesReturned;
+	ULONG BytesReturned = 0;
 	CAM_SHARED_MSG_HEADER header = { 0 };
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(enumerator);
 	WINPR_ASSERT(enumerator->enumerator_channel);
@@ -272,7 +287,9 @@ static UINT enumerator_process_message(enumerator_server* enumerator)
 	Stream_SetPosition(s, 0);
 	rc = WTSVirtualChannelRead(enumerator->enumerator_channel, 0, NULL, 0, &BytesReturned);
 	if (!rc)
+	{
 		goto out;
+	}
 
 	if (BytesReturned < 1)
 	{
@@ -296,7 +313,9 @@ static UINT enumerator_process_message(enumerator_server* enumerator)
 
 	Stream_SetLength(s, BytesReturned);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, CAM_HEADER_SIZE))
+	{
 		return ERROR_NO_DATA;
+	}
 
 	Stream_Read_UINT8(s, header.Version);
 	Stream_Read_UINT8(s, header.MessageId);
@@ -304,8 +323,7 @@ static UINT enumerator_process_message(enumerator_server* enumerator)
 	switch (header.MessageId)
 	{
 		case CAM_MSG_ID_SelectVersionRequest:
-			error =
-			    enumerator_server_handle_select_version_request(&enumerator->context, s, &header);
+			error = enumerator_server_handle_select_version_request(&enumerator->context, &header);
 			break;
 		case CAM_MSG_ID_DeviceAddedNotification:
 			error =
@@ -323,7 +341,9 @@ static UINT enumerator_process_message(enumerator_server* enumerator)
 
 out:
 	if (error)
+	{
 		WLog_ERR(TAG, "Response failed with error %" PRIu32 "!", error);
+	}
 
 	return error;
 }
@@ -340,10 +360,14 @@ static UINT enumerator_server_context_poll_int(CamDevEnumServerContext* context)
 		case ENUMERATOR_INITIAL:
 			error = enumerator_server_open_channel(enumerator);
 			if (error)
+			{
 				WLog_ERR(TAG, "enumerator_server_open_channel failed with error %" PRIu32 "!",
 				         error);
+			}
 			else
+			{
 				enumerator->state = ENUMERATOR_OPENED;
+			}
 			break;
 		case ENUMERATOR_OPENED:
 			error = enumerator_process_message(enumerator);
@@ -365,7 +389,9 @@ static HANDLE enumerator_server_get_channel_handle(enumerator_server* enumerator
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
+		{
 			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
+		}
 
 		WTSFreeMemory(buffer);
 	}
@@ -375,11 +401,11 @@ static HANDLE enumerator_server_get_channel_handle(enumerator_server* enumerator
 
 static DWORD WINAPI enumerator_server_thread_func(LPVOID arg)
 {
-	DWORD nCount;
+	DWORD nCount = 0;
 	HANDLE events[2] = { 0 };
 	enumerator_server* enumerator = (enumerator_server*)arg;
 	UINT error = CHANNEL_RC_OK;
-	DWORD status;
+	DWORD status = 0;
 
 	WINPR_ASSERT(enumerator);
 
@@ -422,8 +448,10 @@ static DWORD WINAPI enumerator_server_thread_func(LPVOID arg)
 	enumerator->enumerator_channel = NULL;
 
 	if (error && enumerator->context.rdpcontext)
+	{
 		setChannelError(enumerator->context.rdpcontext, error,
 		                "enumerator_server_thread_func reported an error");
+	}
 
 	ExitThread(error);
 	return error;
@@ -503,7 +531,9 @@ static UINT enumerator_server_context_poll(CamDevEnumServerContext* context)
 	WINPR_ASSERT(enumerator);
 
 	if (!enumerator->externalThread)
+	{
 		return ERROR_INTERNAL_ERROR;
+	}
 
 	return enumerator_server_context_poll_int(context);
 }
@@ -516,9 +546,13 @@ static BOOL enumerator_server_context_handle(CamDevEnumServerContext* context, H
 	WINPR_ASSERT(handle);
 
 	if (!enumerator->externalThread)
+	{
 		return FALSE;
+	}
 	if (enumerator->state == ENUMERATOR_INITIAL)
+	{
 		return FALSE;
+	}
 
 	*handle = enumerator_server_get_channel_handle(enumerator);
 
@@ -529,7 +563,7 @@ static UINT enumerator_server_packet_send(CamDevEnumServerContext* context, wStr
 {
 	enumerator_server* enumerator = (enumerator_server*)context;
 	UINT error = CHANNEL_RC_OK;
-	ULONG written;
+	ULONG written = 0;
 
 	if (!WTSVirtualChannelWrite(enumerator->enumerator_channel, (PCHAR)Stream_Buffer(s),
 	                            Stream_GetPosition(s), &written))
@@ -553,7 +587,7 @@ out:
 static UINT enumerator_send_select_version_response_pdu(
     CamDevEnumServerContext* context, const CAM_SELECT_VERSION_RESPONSE* selectVersionResponse)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	s = Stream_New(NULL, CAM_HEADER_SIZE);
 	if (!s)
@@ -573,7 +607,9 @@ CamDevEnumServerContext* cam_dev_enum_server_context_new(HANDLE vcm)
 	enumerator_server* enumerator = (enumerator_server*)calloc(1, sizeof(enumerator_server));
 
 	if (!enumerator)
+	{
 		return NULL;
+	}
 
 	enumerator->context.vcm = vcm;
 	enumerator->context.Initialize = enumerator_server_initialize;
@@ -586,7 +622,9 @@ CamDevEnumServerContext* cam_dev_enum_server_context_new(HANDLE vcm)
 
 	enumerator->buffer = Stream_New(NULL, 4096);
 	if (!enumerator->buffer)
+	{
 		goto fail;
+	}
 
 	return &enumerator->context;
 fail:

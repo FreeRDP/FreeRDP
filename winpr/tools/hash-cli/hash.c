@@ -62,11 +62,11 @@ int main(int argc, char* argv[])
 	unsigned long version = 1;
 	BYTE NtHash[16];
 	char* User = NULL;
-	size_t UserLength;
+	size_t UserLength = 0;
 	char* Domain = NULL;
-	size_t DomainLength;
+	size_t DomainLength = 0;
 	char* Password = NULL;
-	size_t PasswordLength;
+	size_t PasswordLength = 0;
 	errno = 0;
 
 	while (index < argc)

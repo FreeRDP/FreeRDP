@@ -43,8 +43,8 @@
 #include <winpr/wlog.h>
 
 #include "../handle/handle.h"
-#include "../pipe/pipe.h"
 #include "../log.h"
+#include "../pipe/pipe.h"
 
 #define TAG WINPR_TAG("io")
 

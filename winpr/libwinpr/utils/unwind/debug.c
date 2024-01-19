@@ -35,14 +35,14 @@ typedef struct
 {
 	uintptr_t pc;
 	void* langSpecificData;
-} unwind_info_t;
+} DECLSPEC_ALIGN(16) unwind_info_t;
 
 typedef struct
 {
 	size_t pos;
 	size_t size;
 	unwind_info_t* info;
-} unwind_context_t;
+} DECLSPEC_ALIGN(32) unwind_context_t;
 
 static _Unwind_Reason_Code unwind_backtrace_callback(struct _Unwind_Context* context, void* arg)
 {
@@ -65,15 +65,21 @@ void* winpr_unwind_backtrace(DWORD size)
 	_Unwind_Reason_Code rc;
 	unwind_context_t* ctx = calloc(1, sizeof(unwind_context_t));
 	if (!ctx)
+	{
 		goto fail;
+	}
 	ctx->size = size;
 	ctx->info = calloc(size, sizeof(unwind_info_t));
 	if (!ctx->info)
+	{
 		goto fail;
+	}
 
 	rc = _Unwind_Backtrace(unwind_backtrace_callback, ctx);
 	if (rc != _URC_END_OF_STACK)
+	{
 		goto fail;
+	}
 
 	return ctx;
 fail:
@@ -85,7 +91,9 @@ void winpr_unwind_backtrace_free(void* buffer)
 {
 	unwind_context_t* ctx = buffer;
 	if (!ctx)
+	{
 		return;
+	}
 	free(ctx->info);
 	free(ctx);
 }
@@ -94,7 +102,7 @@ void winpr_unwind_backtrace_free(void* buffer)
 
 char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 {
-	size_t x;
+	size_t x = 0;
 	union
 	{
 		char* cp;
@@ -104,14 +112,20 @@ char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 	cnv.cpp = NULL;
 
 	if (!ctx)
+	{
 		return NULL;
+	}
 
 	cnv.cpp = calloc(ctx->pos * (sizeof(char*) + UNWIND_MAX_LINE_SIZE), sizeof(char*));
 	if (!cnv.cpp)
+	{
 		return NULL;
+	}
 
 	if (used)
+	{
 		*used = ctx->pos;
+	}
 
 	for (x = 0; x < ctx->pos; x++)
 	{
@@ -123,10 +137,14 @@ char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 		cnv.cpp[x] = msg;
 
 		if (rc == 0)
+		{
 			_snprintf(msg, UNWIND_MAX_LINE_SIZE, "unresolvable, address=%p", (void*)info->pc);
+		}
 		else
+		{
 			_snprintf(msg, UNWIND_MAX_LINE_SIZE, "dli_fname=%s [%p], dli_sname=%s [%p]",
 			          dlinfo.dli_fname, dlinfo.dli_fbase, dlinfo.dli_sname, dlinfo.dli_saddr);
+		}
 	}
 
 	return cnv.cpp;

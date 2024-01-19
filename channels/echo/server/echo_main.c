@@ -52,7 +52,7 @@ typedef struct
 
 	DWORD SessionId;
 
-} echo_server;
+} DECLSPEC_ALIGN(128) echo_server;
 
 /**
  * Function description
@@ -61,9 +61,9 @@ typedef struct
  */
 static UINT echo_server_open_channel(echo_server* echo)
 {
-	DWORD Error;
-	HANDLE hEvent;
-	DWORD StartTick;
+	DWORD Error = 0;
+	HANDLE hEvent = NULL;
+	DWORD StartTick = 0;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 
@@ -93,7 +93,7 @@ static UINT echo_server_open_channel(echo_server* echo)
 
 		if (echo->echo_channel)
 		{
-			UINT32 channelId;
+			UINT32 channelId = 0;
 			BOOL status = TRUE;
 
 			channelId = WTSChannelGetIdByHandle(echo->echo_channel);
@@ -111,10 +111,14 @@ static UINT echo_server_open_channel(echo_server* echo)
 		Error = GetLastError();
 
 		if (Error == ERROR_NOT_FOUND)
+		{
 			break;
+		}
 
 		if (GetTickCount() - StartTick > 5000)
+		{
 			break;
+		}
 	}
 
 	return echo->echo_channel ? CHANNEL_RC_OK : ERROR_INTERNAL_ERROR;
@@ -122,16 +126,16 @@ static UINT echo_server_open_channel(echo_server* echo)
 
 static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 {
-	wStream* s;
-	void* buffer;
-	DWORD nCount;
+	wStream* s = NULL;
+	void* buffer = NULL;
+	DWORD nCount = 0;
 	HANDLE events[8];
 	BOOL ready = FALSE;
-	HANDLE ChannelEvent;
+	HANDLE ChannelEvent = NULL;
 	DWORD BytesReturned = 0;
 	echo_server* echo = (echo_server*)arg;
-	UINT error;
-	DWORD status;
+	UINT error = 0;
+	DWORD status = 0;
 
 	if ((error = echo_server_open_channel(echo)))
 	{
@@ -141,8 +145,10 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 		          ECHO_SERVER_OPEN_RESULT_NOTSUPPORTED);
 
 		if (error2)
+		{
 			WLog_ERR(TAG, "echo server's OpenResult callback failed with error %" PRIu32 "",
 			         error2);
+		}
 
 		goto out;
 	}
@@ -155,7 +161,9 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
+		{
 			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
+		}
 
 		WTSFreeMemory(buffer);
 	}
@@ -183,7 +191,9 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			          ECHO_SERVER_OPEN_RESULT_CLOSED);
 
 			if (error)
+			{
 				WLog_ERR(TAG, "OpenResult failed with error %" PRIu32 "!", error);
+			}
 
 			break;
 		}
@@ -195,7 +205,9 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			          ECHO_SERVER_OPEN_RESULT_ERROR);
 
 			if (error)
+			{
 				WLog_ERR(TAG, "OpenResult failed with error %" PRIu32 "!", error);
+			}
 
 			break;
 		}
@@ -208,7 +220,9 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 			IFCALLRET(echo->context.OpenResult, error, &echo->context, ECHO_SERVER_OPEN_RESULT_OK);
 
 			if (error)
+			{
 				WLog_ERR(TAG, "OpenResult failed with error %" PRIu32 "!", error);
+			}
 
 			break;
 		}
@@ -236,13 +250,17 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 		}
 
 		if (status == WAIT_OBJECT_0)
+		{
 			break;
+		}
 
 		Stream_SetPosition(s, 0);
 		WTSVirtualChannelRead(echo->echo_channel, 0, NULL, 0, &BytesReturned);
 
 		if (BytesReturned < 1)
+		{
 			continue;
+		}
 
 		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 		{
@@ -275,8 +293,10 @@ static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 out:
 
 	if (error && echo->context.rdpcontext)
+	{
 		setChannelError(echo->context.rdpcontext, error,
 		                "echo_server_thread_func reported an error");
+	}
 
 	ExitThread(error);
 	return error;
@@ -357,7 +377,7 @@ static BOOL echo_server_request(echo_server_context* context, const BYTE* buffer
 
 echo_server_context* echo_server_context_new(HANDLE vcm)
 {
-	echo_server* echo;
+	echo_server* echo = NULL;
 	echo = (echo_server*)calloc(1, sizeof(echo_server));
 
 	if (echo)
@@ -368,7 +388,9 @@ echo_server_context* echo_server_context_new(HANDLE vcm)
 		echo->context.Request = echo_server_request;
 	}
 	else
+	{
 		WLog_ERR(TAG, "calloc failed!");
+	}
 
 	return (echo_server_context*)echo;
 }

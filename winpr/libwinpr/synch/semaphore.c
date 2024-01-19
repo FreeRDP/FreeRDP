@@ -46,18 +46,22 @@ static int SemaphoreGetFd(HANDLE handle)
 	WINPR_SEMAPHORE* sem = (WINPR_SEMAPHORE*)handle;
 
 	if (!SemaphoreIsHandled(handle))
+	{
 		return -1;
+	}
 
 	return sem->pipe_fd[0];
 }
 
 static DWORD SemaphoreCleanupHandle(HANDLE handle)
 {
-	SSIZE_T length;
+	SSIZE_T length = 0;
 	WINPR_SEMAPHORE* sem = (WINPR_SEMAPHORE*)handle;
 
 	if (!SemaphoreIsHandled(handle))
+	{
 		return WAIT_FAILED;
+	}
 
 	length = read(sem->pipe_fd[0], &length, 1);
 
@@ -75,7 +79,9 @@ BOOL SemaphoreCloseHandle(HANDLE handle)
 	WINPR_SEMAPHORE* semaphore = (WINPR_SEMAPHORE*)handle;
 
 	if (!SemaphoreIsHandled(handle))
+	{
 		return FALSE;
+	}
 
 #ifdef WINPR_PIPE_SEMAPHORE
 
@@ -127,12 +133,14 @@ static HANDLE_OPS ops = { SemaphoreIsHandled,
 HANDLE CreateSemaphoreW(LPSECURITY_ATTRIBUTES lpSemaphoreAttributes, LONG lInitialCount,
                         LONG lMaximumCount, LPCWSTR lpName)
 {
-	HANDLE handle;
-	WINPR_SEMAPHORE* semaphore;
+	HANDLE handle = NULL;
+	WINPR_SEMAPHORE* semaphore = NULL;
 	semaphore = (WINPR_SEMAPHORE*)calloc(1, sizeof(WINPR_SEMAPHORE));
 
 	if (!semaphore)
+	{
 		return NULL;
+	}
 
 	semaphore->pipe_fd[0] = -1;
 	semaphore->pipe_fd[1] = -1;
@@ -210,12 +218,14 @@ HANDLE OpenSemaphoreA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
 
 BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCount)
 {
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_SEMAPHORE* semaphore;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+	WINPR_SEMAPHORE* semaphore = NULL;
 
 	if (!winpr_Handle_GetInfo(hSemaphore, &Type, &Object))
+	{
 		return FALSE;
+	}
 
 	if (Type == HANDLE_TYPE_SEMAPHORE)
 	{
@@ -227,7 +237,9 @@ BOOL ReleaseSemaphore(HANDLE hSemaphore, LONG lReleaseCount, LPLONG lpPreviousCo
 			while (lReleaseCount > 0)
 			{
 				if (write(semaphore->pipe_fd[1], "-", 1) != 1)
+				{
 					return FALSE;
+				}
 
 				lReleaseCount--;
 			}

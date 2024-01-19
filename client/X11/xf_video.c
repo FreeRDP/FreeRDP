@@ -31,18 +31,20 @@ typedef struct
 {
 	VideoSurface base;
 	XImage* image;
-} xfVideoSurface;
+} DECLSPEC_ALIGN(64) xfVideoSurface;
 
 static VideoSurface* xfVideoCreateSurface(VideoClientContext* video, UINT32 x, UINT32 y,
                                           UINT32 width, UINT32 height)
 {
-	xfContext* xfc;
-	xfVideoSurface* ret;
+	xfContext* xfc = NULL;
+	xfVideoSurface* ret = NULL;
 
 	WINPR_ASSERT(video);
 	ret = (xfVideoSurface*)VideoClient_CreateCommonContext(sizeof(xfContext), x, y, width, height);
 	if (!ret)
+	{
 		return NULL;
+	}
 
 	xfc = (xfContext*)video->custom;
 	WINPR_ASSERT(xfc);
@@ -64,8 +66,8 @@ static BOOL xfVideoShowSurface(VideoClientContext* video, const VideoSurface* su
                                UINT32 destinationWidth, UINT32 destinationHeight)
 {
 	const xfVideoSurface* xfSurface = (const xfVideoSurface*)surface;
-	xfContext* xfc;
-	const rdpSettings* settings;
+	xfContext* xfc = NULL;
+	const rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(video);
 	WINPR_ASSERT(xfSurface);
@@ -102,7 +104,9 @@ static BOOL xfVideoDeleteSurface(VideoClientContext* video, VideoSurface* surfac
 	WINPR_UNUSED(video);
 
 	if (xfSurface)
+	{
 		XFree(xfSurface->image);
+	}
 
 	VideoClient_DestroyCommonContext(surface);
 	return TRUE;

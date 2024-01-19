@@ -24,12 +24,12 @@
 
 char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
 {
-	size_t x;
+	size_t x = 0;
 	struct map_t
 	{
 		UINT32 flag;
 		const char* name;
-	};
+	} DECLSPEC_ALIGN(16);
 	const struct map_t map[] = {
 		{ LB_TARGET_NET_ADDRESS, "LB_TARGET_NET_ADDRESS" },
 		{ LB_LOAD_BALANCE_INFO, "LB_LOAD_BALANCE_INFO" },
@@ -55,7 +55,9 @@ char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
 		if (flags & cur->flag)
 		{
 			if (!winpr_str_append(cur->name, buffer, size, "|"))
+			{
 				return NULL;
+			}
 		}
 	}
 	return buffer;
@@ -65,11 +67,17 @@ char* rdp_cluster_info_flags_to_string(UINT32 flags, char* buffer, size_t size)
 {
 	const UINT32 version = (flags & ServerSessionRedirectionVersionMask) >> 2;
 	if (flags & REDIRECTION_SUPPORTED)
+	{
 		winpr_str_append("REDIRECTION_SUPPORTED", buffer, size, "|");
+	}
 	if (flags & REDIRECTED_SESSIONID_FIELD_VALID)
+	{
 		winpr_str_append("REDIRECTED_SESSIONID_FIELD_VALID", buffer, size, "|");
+	}
 	if (flags & REDIRECTED_SMARTCARD)
+	{
 		winpr_str_append("REDIRECTED_SMARTCARD", buffer, size, "|");
+	}
 
 	const char* str = NULL;
 	switch (version)

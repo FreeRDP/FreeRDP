@@ -6,7 +6,7 @@
 
 UINT client_rail_server_start_cmd(RailClientContext* context)
 {
-	UINT status;
+	UINT status = 0;
 	char argsAndFile[520] = { 0 };
 	RAIL_EXEC_ORDER exec = { 0 };
 	RAIL_SYSPARAM_ORDER sysparam = { 0 };
@@ -23,7 +23,9 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	clientStatus.flags = TS_RAIL_CLIENTSTATUS_ALLOWLOCALMOVESIZE;
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_AutoReconnectionEnabled))
+	{
 		clientStatus.flags |= TS_RAIL_CLIENTSTATUS_AUTORECONNECT;
+	}
 
 	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_ZORDER_SYNC;
 	clientStatus.flags |= TS_RAIL_CLIENTSTATUS_WINDOW_RESIZE_MARGIN_SUPPORTED;
@@ -33,7 +35,9 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	status = context->ClientInformation(context, &clientStatus);
 
 	if (status != CHANNEL_RC_OK)
+	{
 		return status;
+	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteAppLanguageBarSupported))
 	{
@@ -74,7 +78,9 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 	status = context->ClientSystemParam(context, &sysparam);
 
 	if (status != CHANNEL_RC_OK)
+	{
 		return status;
+	}
 
 	const char* RemoteApplicationFile =
 	    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationFile);
@@ -87,9 +93,13 @@ UINT client_rail_server_start_cmd(RailClientContext* context)
 		exec.RemoteApplicationArguments = argsAndFile;
 	}
 	else if (RemoteApplicationFile)
+	{
 		exec.RemoteApplicationArguments = RemoteApplicationFile;
+	}
 	else
+	{
 		exec.RemoteApplicationArguments = RemoteApplicationCmdLine;
+	}
 	exec.RemoteApplicationProgram =
 	    freerdp_settings_get_string(settings, FreeRDP_RemoteApplicationProgram);
 	exec.RemoteApplicationWorkingDir =

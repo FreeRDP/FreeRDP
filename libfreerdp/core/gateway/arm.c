@@ -66,7 +66,7 @@ struct rdp_arm
 	HttpContext* http;
 
 	UINT32 gateway_retry;
-};
+} DECLSPEC_ALIGN(32);
 
 typedef struct rdp_arm rdpArm;
 
@@ -83,14 +83,19 @@ static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, int timeout)
 	BIO* bufferedBio = NULL;
 	rdpSettings* settings = arm->context->settings;
 	if (!settings)
+	{
 		return FALSE;
+	}
 
 	const char* peerHostname = freerdp_settings_get_string(settings, FreeRDP_GatewayHostname);
 	if (!peerHostname)
+	{
 		return FALSE;
+	}
 
 	UINT16 peerPort = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort);
-	const char *proxyUsername, *proxyPassword;
+	const char* proxyUsername;
+	const char* proxyPassword;
 	BOOL isProxyConnection =
 	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 
@@ -98,7 +103,9 @@ static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, int timeout)
 
 	WLog_DBG(TAG, "connecting to %s %d", peerHostname, peerPort);
 	if (sockfd < 0)
+	{
 		return FALSE;
+	}
 
 	socketBio = BIO_new(BIO_s_simple_socket());
 
@@ -119,7 +126,9 @@ static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, int timeout)
 
 	bufferedBio = BIO_push(bufferedBio, socketBio);
 	if (!bufferedBio)
+	{
 		return FALSE;
+	}
 
 	status = BIO_set_nonblock(bufferedBio, TRUE);
 
@@ -148,9 +157,13 @@ static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, int timeout)
 	{
 		rdpContext* context = arm->context;
 		if (status < 0)
+		{
 			freerdp_set_last_error_if_not(context, FREERDP_ERROR_TLS_CONNECT_FAILED);
+		}
 		else
+		{
 			freerdp_set_last_error_if_not(context, FREERDP_ERROR_CONNECT_CANCELLED);
+		}
 
 		return FALSE;
 	}
@@ -163,7 +176,7 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 {
 	wStream* s = NULL;
 	HttpRequest* request = NULL;
-	const char* uri;
+	const char* uri = NULL;
 
 	WINPR_ASSERT(arm);
 	WINPR_ASSERT(method);
@@ -178,10 +191,14 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 	request = http_request_new();
 
 	if (!request)
+	{
 		return NULL;
+	}
 
 	if (!http_request_set_method(request, method) || !http_request_set_uri(request, uri))
+	{
 		goto out;
+	}
 
 	if (!freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayHttpExtAuthBearer))
 	{
@@ -212,19 +229,25 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 	    !http_request_set_auth_param(
 	        request,
 	        freerdp_settings_get_string(arm->context->settings, FreeRDP_GatewayHttpExtAuthBearer)))
+	{
 		goto out;
+	}
 
 	if (!http_request_set_transfer_encoding(request, transferEncoding) ||
 	    !http_request_set_content_length(request, content_length) ||
 	    !http_request_set_content_type(request, content_type))
+	{
 		goto out;
+	}
 
 	s = http_request_write(arm->http, request);
 out:
 	http_request_free(request);
 
 	if (s)
+	{
 		Stream_SealLength(s);
+	}
 
 	return s;
 }
@@ -237,16 +260,22 @@ static BOOL arm_send_http_request(rdpArm* arm, rdpTls* tls, const char* method,
 	    arm_build_http_request(arm, method, TransferEncodingIdentity, content_type, content_length);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	const size_t sz = Stream_Length(s);
 
 	if (sz <= INT_MAX)
+	{
 		status = freerdp_tls_write_all(tls, Stream_Buffer(s), (int)sz);
+	}
 
 	Stream_Free(s, TRUE);
 	if (status >= 0 && content_length > 0 && data)
+	{
 		status = freerdp_tls_write_all(tls, (const BYTE*)data, content_length);
+	}
 
 	return (status >= 0);
 }
@@ -254,7 +283,9 @@ static BOOL arm_send_http_request(rdpArm* arm, rdpTls* tls, const char* method,
 static void arm_free(rdpArm* arm)
 {
 	if (!arm)
+	{
 		return;
+	}
 
 	freerdp_tls_free(arm->tls);
 	http_context_free(arm->http);
@@ -268,17 +299,23 @@ static rdpArm* arm_new(rdpContext* context)
 
 	rdpArm* arm = (rdpArm*)calloc(1, sizeof(rdpArm));
 	if (!arm)
+	{
 		goto fail;
+	}
 
 	arm->context = context;
 	arm->tls = freerdp_tls_new(context->settings);
 	if (!arm->tls)
+	{
 		goto fail;
+	}
 
 	arm->http = http_context_new();
 
 	if (!arm->http)
+	{
 		goto fail;
+	}
 
 	return arm;
 
@@ -296,7 +333,9 @@ static char* arm_create_request_json(rdpArm* arm)
 
 	cJSON* json = cJSON_CreateObject();
 	if (!json)
+	{
 		goto arm_create_cleanup;
+	}
 	cJSON_AddStringToObject(
 	    json, "application",
 	    freerdp_settings_get_string(arm->context->settings, FreeRDP_RemoteApplicationProgram));
@@ -305,7 +344,9 @@ static char* arm_create_request_json(rdpArm* arm)
 	    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength) + 1,
 	    sizeof(char));
 	if (!lbi)
+	{
 		goto arm_create_cleanup;
+	}
 
 	const size_t len =
 	    freerdp_settings_get_uint32(arm->context->settings, FreeRDP_LoadBalanceInfoLength);
@@ -318,7 +359,9 @@ static char* arm_create_request_json(rdpArm* arm)
 	message = cJSON_PrintUnformatted(json);
 arm_create_cleanup:
 	if (json)
+	{
 		cJSON_Delete(json);
+	}
 	free(lbi);
 	return message;
 }
@@ -438,15 +481,19 @@ static BOOL arm_stringEncodeW(const BYTE* pin, size_t cbIn, BYTE** ppOut, size_t
 	/* encode to base64 with crlf */
 	char* b64encoded = crypto_base64_encode_ex(pin, cbIn, TRUE);
 	if (!b64encoded)
+	{
 		return FALSE;
+	}
 
 	/* and then convert to Unicode */
-	size_t outSz;
+	size_t outSz = 0;
 	*ppOut = (BYTE*)ConvertUtf8NToWCharAlloc(b64encoded, strlen(b64encoded), &outSz);
 	free(b64encoded);
 
 	if (!*ppOut)
+	{
 		return FALSE;
+	}
 
 	*pcbOut = (outSz + 1) * sizeof(WCHAR);
 	return TRUE;
@@ -535,11 +582,15 @@ static BOOL arm_pick_base64Utf16Field(const cJSON* json, const char* name, BYTE*
 
 	const cJSON* node = cJSON_GetObjectItemCaseSensitive(json, name);
 	if (!node || !cJSON_IsString(node))
+	{
 		return TRUE;
+	}
 
 	char* nodeValue = cJSON_GetStringValue(node);
 	if (!nodeValue)
+	{
 		return TRUE;
+	}
 
 	BYTE* output1 = NULL;
 	size_t len1 = 0;
@@ -627,26 +678,36 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(const char* metadata, rdpSett
 	{
 		const cJSON* interN = cJSON_GetArrayItem(iface, i);
 		if (!interN)
+		{
 			continue;
+		}
 
 		const cJSON* ipv4 = cJSON_GetObjectItem(interN, "ipv4");
 		if (!ipv4)
+		{
 			continue;
+		}
 
 		const cJSON* ipAddress = cJSON_GetObjectItem(ipv4, "ipAddress");
 		if (!ipAddress || !cJSON_IsArray(ipAddress))
+		{
 			continue;
+		}
 
 		int naddresses = cJSON_GetArraySize(ipAddress);
 		for (int j = 0; j < naddresses; j++)
 		{
 			const cJSON* adressN = cJSON_GetArrayItem(ipAddress, j);
 			if (!adressN)
+			{
 				continue;
+			}
 
 			const cJSON* publicIpNode = cJSON_GetObjectItem(adressN, "publicIpAddress");
 			if (!publicIpNode || !cJSON_IsString(publicIpNode))
+			{
 				continue;
+			}
 
 			char* publicIp = cJSON_GetStringValue(publicIpNode);
 			if (publicIp && strlen(publicIp) &&
@@ -666,7 +727,7 @@ out:
 	return ret;
 }
 
-static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const cJSON* json)
+static BOOL arm_fill_rdstls(rdpSettings* settings, const cJSON* json)
 {
 	BOOL ret = TRUE;
 	BYTE* cert = NULL;
@@ -679,11 +740,15 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const cJSON* jso
 		const cJSON* redirectedAuthGuidNode =
 		    cJSON_GetObjectItemCaseSensitive(json, "redirectedAuthGuid");
 		if (!redirectedAuthGuidNode || !cJSON_IsString(redirectedAuthGuidNode))
+		{
 			break;
+		}
 
 		char* redirectedAuthGuid = cJSON_GetStringValue(redirectedAuthGuidNode);
 		if (!redirectedAuthGuid)
+		{
 			break;
+		}
 
 		WCHAR wGUID[72] = {
 			0
@@ -709,24 +774,34 @@ static BOOL arm_fill_rdstls(rdpArm* arm, rdpSettings* settings, const cJSON* jso
 		/* redirectedServerCert */
 		size_t certLen = 0;
 		if (!arm_pick_base64Utf16Field(json, "redirectedServerCert", &cert, &certLen))
+		{
 			break;
+		}
 
 		if (!rdp_redirection_read_target_cert(&redirectedServerCert, cert, certLen))
+		{
 			break;
+		}
 
 		/* redirectedAuthBlob */
 		size_t authBlobLen = 0;
 		if (!arm_pick_base64Utf16Field(json, "redirectedAuthBlob", &authBlob, &authBlobLen))
+		{
 			break;
+		}
 
 		WINPR_CIPHER_CTX* cipher = treatAuthBlob(authBlob, authBlobLen);
 		if (!cipher)
+		{
 			break;
+		}
 
 		const BOOL rerp = arm_encodeRedirectPasswd(settings, redirectedServerCert, cipher);
 		winpr_Cipher_Free(cipher);
 		if (!rerp)
+		{
 			break;
+		}
 
 		ret = TRUE;
 	} while (FALSE);
@@ -748,7 +823,9 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 	cJSON* json = cJSON_ParseWithLength(message, len);
 	BOOL status = FALSE;
 	if (!json)
+	{
 		return FALSE;
+	}
 
 	rdpSettings* settings = arm->context->settings;
 	const cJSON* gwurl = cJSON_GetObjectItemCaseSensitive(json, "gatewayLocation");
@@ -756,9 +833,13 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 	{
 		WLog_DBG(TAG, "extracted target url %s", gwurl->valuestring);
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayUrl, gwurl->valuestring))
+		{
 			status = FALSE;
+		}
 		else
+		{
 			status = TRUE;
+		}
 	}
 
 	const cJSON* serverNameNode = cJSON_GetObjectItem(json, "redirectedServerName");
@@ -766,7 +847,9 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 	{
 		char* serverName = cJSON_GetStringValue(serverNameNode);
 		if (serverName)
+		{
 			status = freerdp_settings_set_string(settings, FreeRDP_ServerHostname, serverName);
+		}
 	}
 
 	const cJSON* azureMeta = cJSON_GetObjectItem(json, "azureInstanceNetworkMetadata");
@@ -783,7 +866,7 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 		/* note: we retrieve some more fields for RDSTLS only if we have a password provided by the
 		 * user, otherwise these are useless: we will not be able to do RDSTLS
 		 */
-		status = arm_fill_rdstls(arm, settings, json);
+		status = arm_fill_rdstls(settings, json);
 	}
 
 	cJSON_Delete(json);
@@ -795,13 +878,15 @@ static BOOL arm_handle_request_ok(rdpArm* arm, const HttpResponse* response)
 	const size_t len = http_response_get_body_length(response);
 	const char* msg = (const char*)http_response_get_body(response);
 	if (strnlen(msg, len + 1) > len)
+	{
 		return FALSE;
+	}
 
 	WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
 	return arm_fill_gateway_parameters(arm, msg, len);
 }
 
-static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BOOL* retry)
+static BOOL arm_handle_bad_request(const HttpResponse* response, BOOL* retry)
 {
 	WINPR_ASSERT(response);
 	WINPR_ASSERT(retry);
@@ -813,7 +898,9 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 	const size_t len = http_response_get_body_length(response);
 	const char* msg = (const char*)http_response_get_body(response);
 	if (strnlen(msg, len + 1) > len)
+	{
 		return FALSE;
+	}
 
 	WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
 
@@ -864,7 +951,7 @@ static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 	BOOL rc = FALSE;
 
 	HttpResponse* response = NULL;
-	long StatusCode;
+	long StatusCode = 0;
 
 	if (!http_context_set_uri(arm->http, "/api/arm/v2/connections/") ||
 	    !http_context_set_accept(arm->http, "application/json") ||
@@ -875,32 +962,46 @@ static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 	    !http_context_set_x_ms_user_agent(arm->http, "FreeRDP/3.0") ||
 	    !http_context_set_host(arm->http, freerdp_settings_get_string(arm->context->settings,
 	                                                                  FreeRDP_GatewayHostname)))
+	{
 		goto arm_error;
+	}
 
 	if (!arm_tls_connect(arm, arm->tls, timeout))
+	{
 		goto arm_error;
+	}
 
 	message = arm_create_request_json(arm);
 	if (!message)
+	{
 		goto arm_error;
+	}
 
 	if (!arm_send_http_request(arm, arm->tls, "POST", "application/json", message, strlen(message)))
+	{
 		goto arm_error;
+	}
 
 	response = http_response_recv(arm->tls, TRUE);
 	if (!response)
+	{
 		goto arm_error;
+	}
 
 	StatusCode = http_response_get_status_code(response);
 	if (StatusCode == HTTP_STATUS_OK)
 	{
 		if (!arm_handle_request_ok(arm, response))
+		{
 			goto arm_error;
+		}
 	}
 	else if (StatusCode == HTTP_STATUS_BAD_REQUEST)
 	{
-		if (!arm_handle_bad_request(arm, response, retry))
+		if (!arm_handle_bad_request(response, retry))
+		{
 			goto arm_error;
+		}
 	}
 	else
 	{
@@ -925,10 +1026,14 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 #else
 
 	if (!context)
+	{
 		return FALSE;
+	}
 
 	if (!context->settings)
+	{
 		return FALSE;
+	}
 
 	if ((freerdp_settings_get_uint32(context->settings, FreeRDP_LoadBalanceInfoLength) == 0) ||
 	    (freerdp_settings_get_string(context->settings, FreeRDP_RemoteApplicationProgram) == NULL))
@@ -939,7 +1044,9 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 
 	rdpArm* arm = arm_new(context);
 	if (!arm)
+	{
 		return FALSE;
+	}
 
 	BOOL retry = FALSE;
 	BOOL rc = FALSE;
@@ -953,12 +1060,11 @@ BOOL arm_resolve_endpoint(rdpContext* context, DWORD timeout)
 			                                   arm->gateway_retry, arm);
 			arm->gateway_retry++;
 			if (delay <= 0)
-				break; /* error or no retry desired, abort loop */
-			else
 			{
-				WLog_DBG(TAG, "Delay for %" PRIdz "ms before next attempt", delay);
-				Sleep(delay);
+				break; /* error or no retry desired, abort loop */
 			}
+			WLog_DBG(TAG, "Delay for %" PRIdz "ms before next attempt", delay);
+			Sleep(delay);
 		}
 		rc = arm_handle_request(arm, &retry, timeout);
 

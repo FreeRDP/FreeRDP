@@ -28,12 +28,14 @@ static UINT generic_on_new_channel_connection(IWTSListenerCallback* pListenerCal
                                               BOOL* pbAccept,
                                               IWTSVirtualChannelCallback** ppCallback)
 {
-	GENERIC_CHANNEL_CALLBACK* callback;
-	GENERIC_DYNVC_PLUGIN* plugin;
+	GENERIC_CHANNEL_CALLBACK* callback = NULL;
+	GENERIC_DYNVC_PLUGIN* plugin = NULL;
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	if (!listener_callback || !listener_callback->plugin)
+	{
 		return ERROR_INTERNAL_ERROR;
+	}
 
 	plugin = (GENERIC_DYNVC_PLUGIN*)listener_callback->plugin;
 	WLog_Print(plugin->log, WLOG_TRACE, "...");
@@ -60,15 +62,19 @@ static UINT generic_on_new_channel_connection(IWTSListenerCallback* pListenerCal
 static UINT generic_dynvc_plugin_initialize(IWTSPlugin* pPlugin,
                                             IWTSVirtualChannelManager* pChannelMgr)
 {
-	UINT rc;
-	GENERIC_LISTENER_CALLBACK* listener_callback;
+	UINT rc = 0;
+	GENERIC_LISTENER_CALLBACK* listener_callback = NULL;
 	GENERIC_DYNVC_PLUGIN* plugin = (GENERIC_DYNVC_PLUGIN*)pPlugin;
 
 	if (!plugin)
+	{
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+	}
 
 	if (!pChannelMgr)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (plugin->initialized)
 	{
@@ -102,7 +108,9 @@ static UINT generic_plugin_terminated(IWTSPlugin* pPlugin)
 	UINT error = CHANNEL_RC_OK;
 
 	if (!plugin)
+	{
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+	}
 
 	WLog_Print(plugin->log, WLOG_TRACE, "...");
 
@@ -110,13 +118,17 @@ static UINT generic_plugin_terminated(IWTSPlugin* pPlugin)
 	plugin->initialized = FALSE;
 
 	if (plugin->terminatePluginFn)
+	{
 		plugin->terminatePluginFn(plugin);
+	}
 
 	if (plugin->listener_callback)
 	{
 		IWTSVirtualChannelManager* mgr = plugin->listener_callback->channel_mgr;
 		if (mgr)
+		{
 			IFCALL(mgr->DestroyListener, mgr, plugin->listener);
+		}
 	}
 
 	free(plugin->listener_callback);
@@ -131,7 +143,9 @@ static UINT generic_dynvc_plugin_attached(IWTSPlugin* pPlugin)
 	UINT error = CHANNEL_RC_OK;
 
 	if (!pluginn)
+	{
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+	}
 
 	pluginn->attached = TRUE;
 	return error;
@@ -143,7 +157,9 @@ static UINT generic_dynvc_plugin_detached(IWTSPlugin* pPlugin)
 	UINT error = CHANNEL_RC_OK;
 
 	if (!plugin)
+	{
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
+	}
 
 	plugin->attached = FALSE;
 	return error;
@@ -155,7 +171,7 @@ UINT freerdp_generic_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const c
                                     DYNVC_PLUGIN_INIT_FN initPluginFn,
                                     DYNVC_PLUGIN_TERMINATE_FN terminatePluginFn)
 {
-	GENERIC_DYNVC_PLUGIN* plugin;
+	GENERIC_DYNVC_PLUGIN* plugin = NULL;
 	UINT error = CHANNEL_RC_INITIALIZATION_ERROR;
 
 	WINPR_ASSERT(pEntryPoints);
@@ -167,7 +183,9 @@ UINT freerdp_generic_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const c
 
 	plugin = (GENERIC_DYNVC_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, name);
 	if (plugin != NULL)
+	{
 		return CHANNEL_RC_ALREADY_INITIALIZED;
+	}
 
 	plugin = (GENERIC_DYNVC_PLUGIN*)calloc(1, pluginSize);
 	if (!plugin)
@@ -195,16 +213,22 @@ UINT freerdp_generic_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const c
 
 		error = initPluginFn(plugin, context, settings);
 		if (error != CHANNEL_RC_OK)
+		{
 			goto error;
+		}
 	}
 
 	plugin->dynvc_name = _strdup(name);
 	if (!plugin->dynvc_name)
+	{
 		goto error;
+	}
 
 	error = pEntryPoints->RegisterPlugin(pEntryPoints, name, &plugin->iface);
 	if (error == CHANNEL_RC_OK)
+	{
 		return error;
+	}
 
 error:
 	generic_plugin_terminated(&plugin->iface);

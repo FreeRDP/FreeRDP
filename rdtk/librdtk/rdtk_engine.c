@@ -21,8 +21,8 @@
 #include <rdtk/config.h>
 
 #include "rdtk_font.h"
-#include "rdtk_nine_patch.h"
 #include "rdtk_button.h"
+#include "rdtk_nine_patch.h"
 #include "rdtk_text_field.h"
 
 #include "rdtk_engine.h"
@@ -32,16 +32,26 @@ rdtkEngine* rdtk_engine_new(void)
 	rdtkEngine* engine = (rdtkEngine*)calloc(1, sizeof(rdtkEngine));
 
 	if (!engine)
+	{
 		return NULL;
+	}
 
 	if (rdtk_font_engine_init(engine) < 0)
+	{
 		goto fail;
+	}
 	if (rdtk_nine_patch_engine_init(engine) < 0)
+	{
 		goto fail;
+	}
 	if (rdtk_button_engine_init(engine) < 0)
+	{
 		goto fail;
+	}
 	if (rdtk_text_field_engine_init(engine) < 0)
+	{
 		goto fail;
+	}
 
 	return engine;
 
@@ -53,7 +63,9 @@ fail:
 void rdtk_engine_free(rdtkEngine* engine)
 {
 	if (!engine)
+	{
 		return;
+	}
 
 	rdtk_font_engine_uninit(engine);
 	rdtk_nine_patch_engine_uninit(engine);

@@ -30,7 +30,7 @@
 pf_utils_channel_mode pf_utils_get_channel_mode(const proxyConfig* config, const char* name)
 {
 	pf_utils_channel_mode rc = PF_UTILS_CHANNEL_NOT_HANDLED;
-	size_t i;
+	size_t i = 0;
 	BOOL found = FALSE;
 
 	WINPR_ASSERT(config);
@@ -59,12 +59,18 @@ pf_utils_channel_mode pf_utils_get_channel_mode(const proxyConfig* config, const
 	if (found)
 	{
 		if (config->PassthroughIsBlacklist)
+		{
 			rc = PF_UTILS_CHANNEL_BLOCK;
+		}
 		else
+		{
 			rc = PF_UTILS_CHANNEL_PASSTHROUGH;
+		}
 	}
 	else if (config->PassthroughIsBlacklist)
+	{
 		rc = PF_UTILS_CHANNEL_PASSTHROUGH;
+	}
 
 end:
 	WLog_DBG(TAG, "%s -> %s", name, pf_utils_channel_mode_string(rc));

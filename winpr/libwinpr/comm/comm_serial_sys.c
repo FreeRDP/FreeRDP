@@ -54,7 +54,7 @@
  * 1: CBR_* or actual baud rate
  * 2: BAUD_* (identical to SERIAL_BAUD_*)
  */
-static const speed_t _BAUD_TABLE[][3] = {
+static const speed_t BAUD_TABLE[][3] = {
 #ifdef B0
 	{ B0, 0, 0 }, /* hang up */
 #endif
@@ -156,9 +156,9 @@ static const speed_t _BAUD_TABLE[][3] = {
 	{ BAUD_TABLE_END, 0, 0 }
 };
 
-static BOOL _get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
+static BOOL get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
 {
-	int i;
+	int i = 0;
 
 	/* http://msdn.microsoft.com/en-us/library/windows/hardware/jj680684%28v=vs.85%29.aspx
 	 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363189%28v=vs.85%29.aspx
@@ -200,9 +200,9 @@ static BOOL _get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
 	                                SP_PARITY_CHECK | /*SP_RLSD |*/ SP_STOPBITS;
 
 	pProperties->dwSettableBaud = 0;
-	for (i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
+	for (i = 0; BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
 	{
-		pProperties->dwSettableBaud |= _BAUD_TABLE[i][2];
+		pProperties->dwSettableBaud |= BAUD_TABLE[i][2];
 	}
 
 	pProperties->wSettableData =
@@ -222,10 +222,10 @@ static BOOL _get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
 	return TRUE;
 }
 
-static BOOL _set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
+static BOOL set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 {
-	int i;
-	speed_t newSpeed;
+	int i = 0;
+	speed_t newSpeed = 0;
 	struct termios futureState;
 
 	ZeroMemory(&futureState, sizeof(struct termios));
@@ -236,11 +236,11 @@ static BOOL _set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 		return FALSE;
 	}
 
-	for (i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
+	for (i = 0; BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
 	{
-		if (_BAUD_TABLE[i][1] == pBaudRate->BaudRate)
+		if (BAUD_TABLE[i][1] == pBaudRate->BaudRate)
 		{
-			newSpeed = _BAUD_TABLE[i][0];
+			newSpeed = BAUD_TABLE[i][0];
 			if (cfsetspeed(&futureState, newSpeed) < 0)
 			{
 				CommLog_Print(WLOG_WARN, "failed to set speed 0x%x (%" PRIu32 ")", newSpeed,
@@ -267,10 +267,10 @@ static BOOL _set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 	return FALSE;
 }
 
-static BOOL _get_baud_rate(WINPR_COMM* pComm, SERIAL_BAUD_RATE* pBaudRate)
+static BOOL get_baud_rate(WINPR_COMM* pComm, SERIAL_BAUD_RATE* pBaudRate)
 {
-	int i;
-	speed_t currentSpeed;
+	int i = 0;
+	speed_t currentSpeed = 0;
 	struct termios currentState;
 
 	ZeroMemory(&currentState, sizeof(struct termios));
@@ -282,11 +282,11 @@ static BOOL _get_baud_rate(WINPR_COMM* pComm, SERIAL_BAUD_RATE* pBaudRate)
 
 	currentSpeed = cfgetispeed(&currentState);
 
-	for (i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
+	for (i = 0; BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
 	{
-		if (_BAUD_TABLE[i][0] == currentSpeed)
+		if (BAUD_TABLE[i][0] == currentSpeed)
 		{
-			pBaudRate->BaudRate = _BAUD_TABLE[i][1];
+			pBaudRate->BaudRate = BAUD_TABLE[i][1];
 			return TRUE;
 		}
 	}
@@ -306,7 +306,7 @@ static BOOL _get_baud_rate(WINPR_COMM* pComm, SERIAL_BAUD_RATE* pBaudRate)
  *   ERROR_INVALID_PARAMETER when Xon and Xoff chars are the same;
  *   ERROR_NOT_SUPPORTED
  */
-static BOOL _set_serial_chars(WINPR_COMM* pComm, const SERIAL_CHARS* pSerialChars)
+static BOOL set_serial_chars(WINPR_COMM* pComm, const SERIAL_CHARS* pSerialChars)
 {
 	BOOL result = TRUE;
 	struct termios upcomingTermios;
@@ -385,7 +385,7 @@ static BOOL _set_serial_chars(WINPR_COMM* pComm, const SERIAL_CHARS* pSerialChar
 	return result;
 }
 
-static BOOL _get_serial_chars(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
+static BOOL get_serial_chars(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
 {
 	struct termios currentTermios;
 
@@ -414,7 +414,7 @@ static BOOL _get_serial_chars(WINPR_COMM* pComm, SERIAL_CHARS* pSerialChars)
 	return TRUE;
 }
 
-static BOOL _set_line_control(WINPR_COMM* pComm, const SERIAL_LINE_CONTROL* pLineControl)
+static BOOL set_line_control(WINPR_COMM* pComm, const SERIAL_LINE_CONTROL* pLineControl)
 {
 	BOOL result = TRUE;
 	struct termios upcomingTermios;
@@ -529,7 +529,7 @@ static BOOL _set_line_control(WINPR_COMM* pComm, const SERIAL_LINE_CONTROL* pLin
 	return result;
 }
 
-static BOOL _get_line_control(WINPR_COMM* pComm, SERIAL_LINE_CONTROL* pLineControl)
+static BOOL get_line_control(WINPR_COMM* pComm, SERIAL_LINE_CONTROL* pLineControl)
 {
 	struct termios currentTermios;
 
@@ -575,7 +575,7 @@ static BOOL _get_line_control(WINPR_COMM* pComm, SERIAL_LINE_CONTROL* pLineContr
 	return TRUE;
 }
 
-static BOOL _set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
+static BOOL set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 {
 	BOOL result = TRUE;
 	struct termios upcomingTermios;
@@ -775,7 +775,7 @@ static BOOL _set_handflow(WINPR_COMM* pComm, const SERIAL_HANDFLOW* pHandflow)
 	return result;
 }
 
-static BOOL _get_handflow(WINPR_COMM* pComm, SERIAL_HANDFLOW* pHandflow)
+static BOOL get_handflow(WINPR_COMM* pComm, SERIAL_HANDFLOW* pHandflow)
 {
 	struct termios currentTermios;
 
@@ -791,12 +791,16 @@ static BOOL _get_handflow(WINPR_COMM* pComm, SERIAL_HANDFLOW* pHandflow)
 	pHandflow->ControlHandShake = 0;
 
 	if (currentTermios.c_cflag & HUPCL)
+	{
 		pHandflow->ControlHandShake |= SERIAL_DTR_CONTROL;
+	}
 
 	/* SERIAL_DTR_HANDSHAKE unsupported */
 
 	if (currentTermios.c_cflag & CRTSCTS)
+	{
 		pHandflow->ControlHandShake |= SERIAL_CTS_HANDSHAKE;
+	}
 
 	/* SERIAL_DSR_HANDSHAKE unsupported */
 
@@ -811,24 +815,36 @@ static BOOL _get_handflow(WINPR_COMM* pComm, SERIAL_HANDFLOW* pHandflow)
 	pHandflow->FlowReplace = 0;
 
 	if (currentTermios.c_iflag & IXON)
+	{
 		pHandflow->FlowReplace |= SERIAL_AUTO_TRANSMIT;
+	}
 
 	if (currentTermios.c_iflag & IXOFF)
+	{
 		pHandflow->FlowReplace |= SERIAL_AUTO_RECEIVE;
+	}
 
 	if (!(currentTermios.c_iflag & IGNPAR))
+	{
 		pHandflow->FlowReplace |= SERIAL_ERROR_CHAR;
+	}
 
 	if (currentTermios.c_iflag & IGNBRK)
+	{
 		pHandflow->FlowReplace |= SERIAL_NULL_STRIPPING;
+	}
 
 	/* SERIAL_BREAK_CHAR unsupported */
 
 	if (currentTermios.c_cflag & HUPCL)
+	{
 		pHandflow->FlowReplace |= SERIAL_RTS_CONTROL;
+	}
 
 	if (currentTermios.c_cflag & CRTSCTS)
+	{
 		pHandflow->FlowReplace |= SERIAL_RTS_HANDSHAKE;
+	}
 
 	/* SERIAL_XOFF_CONTINUE unsupported */
 
@@ -843,7 +859,7 @@ static BOOL _get_handflow(WINPR_COMM* pComm, SERIAL_HANDFLOW* pHandflow)
 	return TRUE;
 }
 
-static BOOL _set_timeouts(WINPR_COMM* pComm, const SERIAL_TIMEOUTS* pTimeouts)
+static BOOL set_timeouts(WINPR_COMM* pComm, const SERIAL_TIMEOUTS* pTimeouts)
 {
 	/* NB: timeouts are applied on system during read/write I/O */
 
@@ -878,7 +894,7 @@ static BOOL _set_timeouts(WINPR_COMM* pComm, const SERIAL_TIMEOUTS* pTimeouts)
 	return TRUE;
 }
 
-static BOOL _get_timeouts(WINPR_COMM* pComm, SERIAL_TIMEOUTS* pTimeouts)
+static BOOL get_timeouts(WINPR_COMM* pComm, SERIAL_TIMEOUTS* pTimeouts)
 {
 	pTimeouts->ReadIntervalTimeout = pComm->timeouts.ReadIntervalTimeout;
 	pTimeouts->ReadTotalTimeoutMultiplier = pComm->timeouts.ReadTotalTimeoutMultiplier;
@@ -889,7 +905,7 @@ static BOOL _get_timeouts(WINPR_COMM* pComm, SERIAL_TIMEOUTS* pTimeouts)
 	return TRUE;
 }
 
-static BOOL _set_lines(WINPR_COMM* pComm, UINT32 lines)
+static BOOL set_lines(WINPR_COMM* pComm, UINT32 lines)
 {
 	if (ioctl(pComm->fd, TIOCMBIS, &lines) < 0)
 	{
@@ -902,7 +918,7 @@ static BOOL _set_lines(WINPR_COMM* pComm, UINT32 lines)
 	return TRUE;
 }
 
-static BOOL _clear_lines(WINPR_COMM* pComm, UINT32 lines)
+static BOOL clear_lines(WINPR_COMM* pComm, UINT32 lines)
 {
 	if (ioctl(pComm->fd, TIOCMBIC, &lines) < 0)
 	{
@@ -915,11 +931,13 @@ static BOOL _clear_lines(WINPR_COMM* pComm, UINT32 lines)
 	return TRUE;
 }
 
-static BOOL _set_dtr(WINPR_COMM* pComm)
+static BOOL set_dtr(WINPR_COMM* pComm)
 {
 	SERIAL_HANDFLOW handflow;
-	if (!_get_handflow(pComm, &handflow))
+	if (!get_handflow(pComm, &handflow))
+	{
 		return FALSE;
+	}
 
 	/* SERIAL_DTR_HANDSHAKE not supported as of today */
 	WINPR_ASSERT((handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE) == 0);
@@ -930,14 +948,16 @@ static BOOL _set_dtr(WINPR_COMM* pComm)
 		return FALSE;
 	}
 
-	return _set_lines(pComm, TIOCM_DTR);
+	return set_lines(pComm, TIOCM_DTR);
 }
 
-static BOOL _clear_dtr(WINPR_COMM* pComm)
+static BOOL clear_dtr(WINPR_COMM* pComm)
 {
 	SERIAL_HANDFLOW handflow;
-	if (!_get_handflow(pComm, &handflow))
+	if (!get_handflow(pComm, &handflow))
+	{
 		return FALSE;
+	}
 
 	/* SERIAL_DTR_HANDSHAKE not supported as of today */
 	WINPR_ASSERT((handflow.ControlHandShake & SERIAL_DTR_HANDSHAKE) == 0);
@@ -948,14 +968,16 @@ static BOOL _clear_dtr(WINPR_COMM* pComm)
 		return FALSE;
 	}
 
-	return _clear_lines(pComm, TIOCM_DTR);
+	return clear_lines(pComm, TIOCM_DTR);
 }
 
-static BOOL _set_rts(WINPR_COMM* pComm)
+static BOOL set_rts(WINPR_COMM* pComm)
 {
 	SERIAL_HANDFLOW handflow;
-	if (!_get_handflow(pComm, &handflow))
+	if (!get_handflow(pComm, &handflow))
+	{
 		return FALSE;
+	}
 
 	if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE)
 	{
@@ -963,14 +985,16 @@ static BOOL _set_rts(WINPR_COMM* pComm)
 		return FALSE;
 	}
 
-	return _set_lines(pComm, TIOCM_RTS);
+	return set_lines(pComm, TIOCM_RTS);
 }
 
-static BOOL _clear_rts(WINPR_COMM* pComm)
+static BOOL clear_rts(WINPR_COMM* pComm)
 {
 	SERIAL_HANDFLOW handflow;
-	if (!_get_handflow(pComm, &handflow))
+	if (!get_handflow(pComm, &handflow))
+	{
 		return FALSE;
+	}
 
 	if (handflow.FlowReplace & SERIAL_RTS_HANDSHAKE)
 	{
@@ -978,10 +1002,10 @@ static BOOL _clear_rts(WINPR_COMM* pComm)
 		return FALSE;
 	}
 
-	return _clear_lines(pComm, TIOCM_RTS);
+	return clear_lines(pComm, TIOCM_RTS);
 }
 
-static BOOL _get_modemstatus(WINPR_COMM* pComm, ULONG* pRegister)
+static BOOL get_modemstatus(WINPR_COMM* pComm, ULONG* pRegister)
 {
 	UINT32 lines = 0;
 	if (ioctl(pComm->fd, TIOCMGET, &lines) < 0)
@@ -1006,19 +1030,27 @@ static BOOL _get_modemstatus(WINPR_COMM* pComm, ULONG* pRegister)
 	/* #define SERIAL_MSR_DDCD     0x08 */
 
 	if (lines & TIOCM_CTS)
+	{
 		*pRegister |= SERIAL_MSR_CTS;
+	}
 	if (lines & TIOCM_DSR)
+	{
 		*pRegister |= SERIAL_MSR_DSR;
+	}
 	if (lines & TIOCM_RI)
+	{
 		*pRegister |= SERIAL_MSR_RI;
+	}
 	if (lines & TIOCM_CD)
+	{
 		*pRegister |= SERIAL_MSR_DCD;
+	}
 
 	return TRUE;
 }
 
 /* http://msdn.microsoft.com/en-us/library/windows/hardware/hh439605%28v=vs.85%29.aspx */
-static const ULONG _SERIAL_SYS_SUPPORTED_EV_MASK =
+static const ULONG SERIAL_SYS_SUPPORTED_EV_MASK =
     SERIAL_EV_RXCHAR | SERIAL_EV_RXFLAG | SERIAL_EV_TXEMPTY | SERIAL_EV_CTS | SERIAL_EV_DSR |
     SERIAL_EV_RLSD | SERIAL_EV_BREAK | SERIAL_EV_ERR | SERIAL_EV_RING |
     /* SERIAL_EV_PERR     | */
@@ -1027,9 +1059,9 @@ static const ULONG _SERIAL_SYS_SUPPORTED_EV_MASK =
     SERIAL_EV_EVENT2*/
     ;
 
-static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
+static BOOL set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 {
-	ULONG possibleMask;
+	ULONG possibleMask = 0;
 
 	/* Stops pending IOCTL_SERIAL_WAIT_ON_MASK
 	 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
@@ -1045,7 +1077,9 @@ static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 
 		/* waiting the end of the pending _wait_on_mask() */
 		while (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
+		{
 			Sleep(10); /* 10ms */
+		}
 	}
 
 	/* NB: ensure to leave the critical section before to return */
@@ -1076,7 +1110,7 @@ static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 		pComm->PendingEvents = 0;
 	}
 
-	possibleMask = *pWaitMask & _SERIAL_SYS_SUPPORTED_EV_MASK;
+	possibleMask = *pWaitMask & SERIAL_SYS_SUPPORTED_EV_MASK;
 
 	if (possibleMask != *pWaitMask)
 	{
@@ -1098,36 +1132,42 @@ static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 	return TRUE;
 }
 
-static BOOL _get_wait_mask(WINPR_COMM* pComm, ULONG* pWaitMask)
+static BOOL get_wait_mask(WINPR_COMM* pComm, ULONG* pWaitMask)
 {
 	*pWaitMask = pComm->WaitEventMask;
 	return TRUE;
 }
 
-static BOOL _set_queue_size(WINPR_COMM* pComm, const SERIAL_QUEUE_SIZE* pQueueSize)
+static BOOL set_queue_size(WINPR_COMM* pComm, const SERIAL_QUEUE_SIZE* pQueueSize)
 {
 	if ((pQueueSize->InSize <= N_TTY_BUF_SIZE) && (pQueueSize->OutSize <= N_TTY_BUF_SIZE))
+	{
 		return TRUE; /* nothing to do */
+	}
 
 	/* FIXME: could be implemented on top of N_TTY */
 
 	if (pQueueSize->InSize > N_TTY_BUF_SIZE)
+	{
 		CommLog_Print(WLOG_WARN,
 		              "Requested an incompatible input buffer size: %" PRIu32
 		              ", keeping on with a %" PRIu32 " bytes buffer.",
 		              pQueueSize->InSize, N_TTY_BUF_SIZE);
+	}
 
 	if (pQueueSize->OutSize > N_TTY_BUF_SIZE)
+	{
 		CommLog_Print(WLOG_WARN,
 		              "Requested an incompatible output buffer size: %" PRIu32
 		              ", keeping on with a %" PRIu32 " bytes buffer.",
 		              pQueueSize->OutSize, N_TTY_BUF_SIZE);
+	}
 
 	SetLastError(ERROR_CANCELLED);
 	return FALSE;
 }
 
-static BOOL _purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
+static BOOL purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 {
 	if ((*pPurgeMask & ~(SERIAL_PURGE_TXABORT | SERIAL_PURGE_RXABORT | SERIAL_PURGE_TXCLEAR |
 	                     SERIAL_PURGE_RXCLEAR)) > 0)
@@ -1207,7 +1247,7 @@ static BOOL _purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
  *  - SERIAL_EV_RXFLAG: FIXME: once EventChar supported
  *
  */
-static BOOL _get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
+static BOOL get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 {
 	/* http://msdn.microsoft.com/en-us/library/jj673022%28v=vs.85%29.aspx */
 
@@ -1370,13 +1410,13 @@ static BOOL _get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 	return TRUE;
 }
 
-static BOOL _refresh_PendingEvents(WINPR_COMM* pComm)
+static BOOL refresh_PendingEvents(WINPR_COMM* pComm)
 {
 	SERIAL_STATUS serialStatus;
 
 	/* NB: also ensures PendingEvents to be up to date */
 	ZeroMemory(&serialStatus, sizeof(SERIAL_STATUS));
-	if (!_get_commstatus(pComm, &serialStatus))
+	if (!get_commstatus(pComm, &serialStatus))
 	{
 		return FALSE;
 	}
@@ -1384,7 +1424,7 @@ static BOOL _refresh_PendingEvents(WINPR_COMM* pComm)
 	return TRUE;
 }
 
-static void _consume_event(WINPR_COMM* pComm, ULONG* pOutputMask, ULONG event)
+static void consume_event(WINPR_COMM* pComm, ULONG* pOutputMask, ULONG event)
 {
 	if ((pComm->WaitEventMask & event) && (pComm->PendingEvents & event))
 	{
@@ -1396,7 +1436,7 @@ static void _consume_event(WINPR_COMM* pComm, ULONG* pOutputMask, ULONG event)
 /*
  * NB: see also: _set_wait_mask()
  */
-static BOOL _wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
+static BOOL wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 {
 	WINPR_ASSERT(*pOutputMask == 0);
 
@@ -1407,7 +1447,7 @@ static BOOL _wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 	while (TRUE)
 	{
 		/* NB: EventsLock also used by _refresh_PendingEvents() */
-		if (!_refresh_PendingEvents(pComm))
+		if (!refresh_PendingEvents(pComm))
 		{
 			EnterCriticalSection(&pComm->EventsLock);
 			pComm->PendingEvents &= ~SERIAL_EV_WINPR_WAITING;
@@ -1434,16 +1474,16 @@ static BOOL _wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 			return TRUE;
 		}
 
-		_consume_event(pComm, pOutputMask, SERIAL_EV_RXCHAR);
-		_consume_event(pComm, pOutputMask, SERIAL_EV_RXFLAG);
-		_consume_event(pComm, pOutputMask, SERIAL_EV_TXEMPTY);
-		_consume_event(pComm, pOutputMask, SERIAL_EV_CTS);
-		_consume_event(pComm, pOutputMask, SERIAL_EV_DSR);
-		_consume_event(pComm, pOutputMask, SERIAL_EV_RLSD);
-		_consume_event(pComm, pOutputMask, SERIAL_EV_BREAK);
-		_consume_event(pComm, pOutputMask, SERIAL_EV_ERR);
-		_consume_event(pComm, pOutputMask, SERIAL_EV_RING);
-		_consume_event(pComm, pOutputMask, SERIAL_EV_RX80FULL);
+		consume_event(pComm, pOutputMask, SERIAL_EV_RXCHAR);
+		consume_event(pComm, pOutputMask, SERIAL_EV_RXFLAG);
+		consume_event(pComm, pOutputMask, SERIAL_EV_TXEMPTY);
+		consume_event(pComm, pOutputMask, SERIAL_EV_CTS);
+		consume_event(pComm, pOutputMask, SERIAL_EV_DSR);
+		consume_event(pComm, pOutputMask, SERIAL_EV_RLSD);
+		consume_event(pComm, pOutputMask, SERIAL_EV_BREAK);
+		consume_event(pComm, pOutputMask, SERIAL_EV_ERR);
+		consume_event(pComm, pOutputMask, SERIAL_EV_RING);
+		consume_event(pComm, pOutputMask, SERIAL_EV_RX80FULL);
 
 		LeaveCriticalSection(&pComm->EventsLock);
 
@@ -1472,7 +1512,7 @@ static BOOL _wait_on_mask(WINPR_COMM* pComm, ULONG* pOutputMask)
 	}
 }
 
-static BOOL _set_break_on(WINPR_COMM* pComm)
+static BOOL set_break_on(WINPR_COMM* pComm)
 {
 	if (ioctl(pComm->fd, TIOCSBRK, NULL) < 0)
 	{
@@ -1484,7 +1524,7 @@ static BOOL _set_break_on(WINPR_COMM* pComm)
 	return TRUE;
 }
 
-static BOOL _set_break_off(WINPR_COMM* pComm)
+static BOOL set_break_off(WINPR_COMM* pComm)
 {
 	if (ioctl(pComm->fd, TIOCCBRK, NULL) < 0)
 	{
@@ -1496,7 +1536,7 @@ static BOOL _set_break_off(WINPR_COMM* pComm)
 	return TRUE;
 }
 
-static BOOL _set_xoff(WINPR_COMM* pComm)
+static BOOL set_xoff(WINPR_COMM* pComm)
 {
 	if (tcflow(pComm->fd, TCIOFF) < 0)
 	{
@@ -1508,7 +1548,7 @@ static BOOL _set_xoff(WINPR_COMM* pComm)
 	return TRUE;
 }
 
-static BOOL _set_xon(WINPR_COMM* pComm)
+static BOOL set_xon(WINPR_COMM* pComm)
 {
 	if (tcflow(pComm->fd, TCION) < 0)
 	{
@@ -1520,7 +1560,7 @@ static BOOL _set_xon(WINPR_COMM* pComm)
 	return TRUE;
 }
 
-static BOOL _get_dtrrts(WINPR_COMM* pComm, ULONG* pMask)
+static BOOL get_dtrrts(WINPR_COMM* pComm, ULONG* pMask)
 {
 	UINT32 lines = 0;
 	if (ioctl(pComm->fd, TIOCMGET, &lines) < 0)
@@ -1533,26 +1573,32 @@ static BOOL _get_dtrrts(WINPR_COMM* pComm, ULONG* pMask)
 	*pMask = 0;
 
 	if (!(lines & TIOCM_DTR))
+	{
 		*pMask |= SERIAL_DTR_STATE;
+	}
 	if (!(lines & TIOCM_RTS))
+	{
 		*pMask |= SERIAL_RTS_STATE;
+	}
 
 	return TRUE;
 }
 
-static BOOL _config_size(WINPR_COMM* pComm, ULONG* pSize)
+static BOOL config_size(WINPR_COMM* pComm, ULONG* pSize)
 {
 	/* http://msdn.microsoft.com/en-us/library/ff546548%28v=vs.85%29.aspx */
 	if (!pSize)
+	{
 		return FALSE;
+	}
 
 	*pSize = 0;
 	return TRUE;
 }
 
-static BOOL _immediate_char(WINPR_COMM* pComm, const UCHAR* pChar)
+static BOOL immediate_char(WINPR_COMM* pComm, const UCHAR* pChar)
 {
-	BOOL result;
+	BOOL result = 0;
 	DWORD nbBytesWritten = -1;
 
 	/* FIXME: CommWriteFile uses a critical section, shall it be
@@ -1568,50 +1614,50 @@ static BOOL _immediate_char(WINPR_COMM* pComm, const UCHAR* pChar)
 	return result;
 }
 
-static BOOL _reset_device(WINPR_COMM* pComm)
+static BOOL reset_device(WINPR_COMM* pComm)
 {
 	/* http://msdn.microsoft.com/en-us/library/dn265347%28v=vs.85%29.aspx */
 	return TRUE;
 }
 
-static SERIAL_DRIVER _SerialSys = {
+static SERIAL_DRIVER SerialSys = {
 	.id = SerialDriverSerialSys,
 	.name = _T("Serial.sys"),
-	.set_baud_rate = _set_baud_rate,
-	.get_baud_rate = _get_baud_rate,
-	.get_properties = _get_properties,
-	.set_serial_chars = _set_serial_chars,
-	.get_serial_chars = _get_serial_chars,
-	.set_line_control = _set_line_control,
-	.get_line_control = _get_line_control,
-	.set_handflow = _set_handflow,
-	.get_handflow = _get_handflow,
-	.set_timeouts = _set_timeouts,
-	.get_timeouts = _get_timeouts,
-	.set_dtr = _set_dtr,
-	.clear_dtr = _clear_dtr,
-	.set_rts = _set_rts,
-	.clear_rts = _clear_rts,
-	.get_modemstatus = _get_modemstatus,
-	.set_wait_mask = _set_wait_mask,
-	.get_wait_mask = _get_wait_mask,
-	.wait_on_mask = _wait_on_mask,
-	.set_queue_size = _set_queue_size,
-	.purge = _purge,
-	.get_commstatus = _get_commstatus,
-	.set_break_on = _set_break_on,
-	.set_break_off = _set_break_off,
-	.set_xoff = _set_xoff,
-	.set_xon = _set_xon,
-	.get_dtrrts = _get_dtrrts,
-	.config_size = _config_size,
-	.immediate_char = _immediate_char,
-	.reset_device = _reset_device,
+	.set_baud_rate = set_baud_rate,
+	.get_baud_rate = get_baud_rate,
+	.get_properties = get_properties,
+	.set_serial_chars = set_serial_chars,
+	.get_serial_chars = get_serial_chars,
+	.set_line_control = set_line_control,
+	.get_line_control = get_line_control,
+	.set_handflow = set_handflow,
+	.get_handflow = get_handflow,
+	.set_timeouts = set_timeouts,
+	.get_timeouts = get_timeouts,
+	.set_dtr = set_dtr,
+	.clear_dtr = clear_dtr,
+	.set_rts = set_rts,
+	.clear_rts = clear_rts,
+	.get_modemstatus = get_modemstatus,
+	.set_wait_mask = set_wait_mask,
+	.get_wait_mask = get_wait_mask,
+	.wait_on_mask = wait_on_mask,
+	.set_queue_size = set_queue_size,
+	.purge = purge,
+	.get_commstatus = get_commstatus,
+	.set_break_on = set_break_on,
+	.set_break_off = set_break_off,
+	.set_xoff = set_xoff,
+	.set_xon = set_xon,
+	.get_dtrrts = get_dtrrts,
+	.config_size = config_size,
+	.immediate_char = immediate_char,
+	.reset_device = reset_device,
 };
 
 SERIAL_DRIVER* SerialSys_s(void)
 {
-	return &_SerialSys;
+	return &SerialSys;
 }
 
 #endif /* __linux__ */

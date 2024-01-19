@@ -34,10 +34,14 @@
 static BOOL update_recv_surfcmd_bitmap_header_ex(wStream* s, TS_COMPRESSED_BITMAP_HEADER_EX* header)
 {
 	if (!s || !header)
+	{
 		return FALSE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, header->highUniqueId);
 	Stream_Read_UINT32(s, header->lowUniqueId);
@@ -49,10 +53,14 @@ static BOOL update_recv_surfcmd_bitmap_header_ex(wStream* s, TS_COMPRESSED_BITMA
 static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 {
 	if (!s || !bmp)
+	{
 		return FALSE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, bmp->bpp);
 	Stream_Read_UINT8(s, bmp->flags);
@@ -78,7 +86,9 @@ static BOOL update_recv_surfcmd_bitmap_ex(wStream* s, TS_BITMAP_DATA_EX* bmp)
 	if (bmp->flags & EX_COMPRESSED_BITMAP_HEADER_PRESENT)
 	{
 		if (!update_recv_surfcmd_bitmap_header_ex(s, &bmp->exBitmapDataHeader))
+		{
 			return FALSE;
+		}
 	}
 
 	bmp->bitmapData = Stream_Pointer(s);
@@ -130,7 +140,9 @@ static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT
 	SURFACE_BITS_COMMAND cmd = { 0 };
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		goto fail;
+	}
 
 	cmd.cmdType = cmdType;
 	Stream_Read_UINT16(s, cmd.destLeft);
@@ -139,10 +151,14 @@ static BOOL update_recv_surfcmd_surface_bits(rdpUpdate* update, wStream* s, UINT
 	Stream_Read_UINT16(s, cmd.destBottom);
 
 	if (!update_recv_surfcmd_is_rect_valid(update->context, &cmd))
+	{
 		goto fail;
+	}
 
 	if (!update_recv_surfcmd_bitmap_ex(s, &cmd.bmp))
+	{
 		goto fail;
+	}
 
 	if (!IFCALLRESULT(TRUE, update->SurfaceBits, update->context, &cmd))
 	{
@@ -163,17 +179,23 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, marker.frameAction);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		WLog_WARN(TAG,
 		          "[SERVER-BUG]: got %" PRIuz ", expected %" PRIuz
 		          " bytes. [MS-RDPBCGR] 2.2.9.2.3 Frame Marker Command (TS_FRAME_MARKER) is "
 		          "missing frameId, ignoring",
 		          Stream_GetRemainingLength(s), 4);
+	}
 	else
+	{
 		Stream_Read_UINT32(s, marker.frameId);
+	}
 	WLog_Print(up->log, WLOG_DEBUG, "SurfaceFrameMarker: action: %s (%" PRIu32 ") id: %" PRIu32 "",
 	           (!marker.frameAction) ? "Begin" : "End", marker.frameAction, marker.frameId);
 
@@ -181,7 +203,9 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 	{
 		WINPR_ASSERT(update->context);
 		if (freerdp_settings_get_bool(update->context->settings, FreeRDP_DeactivateClientDecoding))
+		{
 			return TRUE;
+		}
 		WLog_ERR(TAG, "Missing callback update->SurfaceFrameMarker");
 		return FALSE;
 	}
@@ -197,7 +221,7 @@ static BOOL update_recv_surfcmd_frame_marker(rdpUpdate* update, wStream* s)
 
 int update_recv_surfcmds(rdpUpdate* update, wStream* s)
 {
-	UINT16 cmdType;
+	UINT16 cmdType = 0;
 	rdp_update_internal* up = update_cast(update);
 
 	WINPR_ASSERT(s);
@@ -214,13 +238,17 @@ int update_recv_surfcmds(rdpUpdate* update, wStream* s)
 			case CMDTYPE_SET_SURFACE_BITS:
 			case CMDTYPE_STREAM_SURFACE_BITS:
 				if (!update_recv_surfcmd_surface_bits(update, s, cmdType))
+				{
 					return -1;
+				}
 
 				break;
 
 			case CMDTYPE_FRAME_MARKER:
 				if (!update_recv_surfcmd_frame_marker(update, s))
+				{
 					return -1;
+				}
 
 				break;
 
@@ -245,10 +273,14 @@ static BOOL update_write_surfcmd_bitmap_header_ex(wStream* s,
                                                   const TS_COMPRESSED_BITMAP_HEADER_EX* header)
 {
 	if (!s || !header)
+	{
 		return FALSE;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 24))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, header->highUniqueId);
 	Stream_Write_UINT32(s, header->lowUniqueId);
@@ -260,10 +292,14 @@ static BOOL update_write_surfcmd_bitmap_header_ex(wStream* s,
 static BOOL update_write_surfcmd_bitmap_ex(wStream* s, const TS_BITMAP_DATA_EX* bmp)
 {
 	if (!s || !bmp)
+	{
 		return FALSE;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 12))
+	{
 		return FALSE;
+	}
 
 	if (bmp->codecID > UINT8_MAX)
 	{
@@ -281,11 +317,15 @@ static BOOL update_write_surfcmd_bitmap_ex(wStream* s, const TS_BITMAP_DATA_EX* 
 	if (bmp->flags & EX_COMPRESSED_BITMAP_HEADER_PRESENT)
 	{
 		if (!update_write_surfcmd_bitmap_header_ex(s, &bmp->exBitmapDataHeader))
+		{
 			return FALSE;
+		}
 	}
 
 	if (!Stream_EnsureRemainingCapacity(s, bmp->bitmapDataLength))
+	{
 		return FALSE;
+	}
 
 	Stream_Write(s, bmp->bitmapData, bmp->bitmapDataLength);
 	return TRUE;
@@ -293,9 +333,11 @@ static BOOL update_write_surfcmd_bitmap_ex(wStream* s, const TS_BITMAP_DATA_EX* 
 
 BOOL update_write_surfcmd_surface_bits(wStream* s, const SURFACE_BITS_COMMAND* cmd)
 {
-	UINT16 cmdType;
+	UINT16 cmdType = 0;
 	if (!Stream_EnsureRemainingCapacity(s, SURFCMD_SURFACE_BITS_HEADER_LENGTH))
+	{
 		return FALSE;
+	}
 
 	cmdType = cmd->cmdType;
 	switch (cmdType)
@@ -323,7 +365,9 @@ BOOL update_write_surfcmd_surface_bits(wStream* s, const SURFACE_BITS_COMMAND* c
 BOOL update_write_surfcmd_frame_marker(wStream* s, UINT16 frameAction, UINT32 frameId)
 {
 	if (!Stream_EnsureRemainingCapacity(s, SURFCMD_FRAME_MARKER_LENGTH))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT16(s, CMDTYPE_FRAME_MARKER);
 	Stream_Write_UINT16(s, frameAction);

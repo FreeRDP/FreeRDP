@@ -45,7 +45,7 @@ typedef struct
 	CHANNEL_ENTRY_POINTS_FREERDP_EX channelEntryPoints;
 	char buffer[16 * 1024];
 	char* commandline;
-} Plugin;
+} DECLSPEC_ALIGN(128) Plugin;
 
 static int init_external_addin(Plugin* plugin)
 {
@@ -113,7 +113,7 @@ static void dumpData(char* data, unsigned length)
 {
 	unsigned const limit = 98;
 	unsigned l = length > limit ? limit / 2 : length;
-	unsigned i;
+	unsigned i = 0;
 
 	for (i = 0; i < l; ++i)
 	{
@@ -125,7 +125,9 @@ static void dumpData(char* data, unsigned length)
 		printf("...");
 
 		for (i = length - l; i < length; ++i)
+		{
 			printf("%02hhx", data[i]);
+		}
 	}
 
 	puts("");
@@ -141,7 +143,7 @@ static DWORD WINAPI copyThread(void* data)
 	{
 
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
-		DWORD dwRead;
+		DWORD dwRead = 0;
 		char* buffer = malloc(bufsize);
 
 		if (!buffer)
@@ -176,7 +178,9 @@ static DWORD WINAPI copyThread(void* data)
 		handles[1] = freerdp_abort_event(plugin->channelEntryPoints.context);
 		status = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
 		if (status == WAIT_OBJECT_0)
+		{
 			ResetEvent(plugin->writeComplete);
+		}
 	}
 
 fail:
@@ -187,7 +191,9 @@ fail:
 static void closeChannel(Plugin* plugin)
 {
 	if (debug)
+	{
 		puts("rdp2tcp closing channel");
+	}
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(plugin->channelEntryPoints.pVirtualChannelCloseEx);
@@ -197,12 +203,14 @@ static void closeChannel(Plugin* plugin)
 static void dataReceived(Plugin* plugin, void* pData, UINT32 dataLength, UINT32 totalLength,
                          UINT32 dataFlags)
 {
-	DWORD dwWritten;
+	DWORD dwWritten = 0;
 
 	if (dataFlags & CHANNEL_FLAG_SUSPEND)
 	{
 		if (debug)
+		{
 			puts("rdp2tcp Channel Suspend");
+		}
 
 		return;
 	}
@@ -210,7 +218,9 @@ static void dataReceived(Plugin* plugin, void* pData, UINT32 dataLength, UINT32 
 	if (dataFlags & CHANNEL_FLAG_RESUME)
 	{
 		if (debug)
+		{
 			puts("rdp2tcp Channel Resume");
+		}
 
 		return;
 	}
@@ -224,11 +234,15 @@ static void dataReceived(Plugin* plugin, void* pData, UINT32 dataLength, UINT32 
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
 		if (!WriteFile(plugin->hStdInputWrite, &totalLength, sizeof(totalLength), &dwWritten, NULL))
+		{
 			closeChannel(plugin);
+		}
 	}
 
 	if (!WriteFile(plugin->hStdInputWrite, pData, dataLength, &dwWritten, NULL))
+	{
 		closeChannel(plugin);
+	}
 }
 
 static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam, DWORD openHandle, UINT event,
@@ -256,15 +270,23 @@ static void VCAPITYPE VirtualChannelOpenEventEx(LPVOID lpUserParam, DWORD openHa
 static void channel_terminated(Plugin* plugin)
 {
 	if (debug)
+	{
 		puts("rdp2tcp terminated");
+	}
 
 	if (!plugin)
+	{
 		return;
+	}
 
 	if (plugin->copyThread)
+	{
 		TerminateThread(plugin->copyThread, 0);
+	}
 	if (plugin->writeComplete)
+	{
 		CloseHandle(plugin->writeComplete);
+	}
 
 	CloseHandle(plugin->hStdInputWrite);
 	CloseHandle(plugin->hStdOutputRead);
@@ -293,20 +315,26 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 
 		case CHANNEL_EVENT_CONNECTED:
 			if (debug)
+			{
 				puts("rdp2tcp connected");
+			}
 
 			WINPR_ASSERT(plugin);
 			WINPR_ASSERT(plugin->channelEntryPoints.pVirtualChannelOpenEx);
 			if (plugin->channelEntryPoints.pVirtualChannelOpenEx(
 			        pInitHandle, &plugin->openHandle, RDP2TCP_DVC_CHANNEL_NAME,
 			        VirtualChannelOpenEventEx) != CHANNEL_RC_OK)
+			{
 				return;
+			}
 
 			break;
 
 		case CHANNEL_EVENT_DISCONNECTED:
 			if (debug)
+			{
 				puts("rdp2tcp disconnected");
+			}
 
 			break;
 
@@ -324,12 +352,14 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
                                                          PVOID pInitHandle))
 {
-	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx = NULL;
 	CHANNEL_DEF channelDef;
 	Plugin* plugin = (Plugin*)calloc(1, sizeof(Plugin));
 
 	if (!plugin)
+	{
 		return FALSE;
+	}
 
 	pEntryPointsEx = (CHANNEL_ENTRY_POINTS_FREERDP_EX*)pEntryPoints;
 	WINPR_ASSERT(pEntryPointsEx->cbSize >= sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX) &&
@@ -350,7 +380,9 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 	if (pEntryPointsEx->pVirtualChannelInitEx(plugin, NULL, pInitHandle, &channelDef, 1,
 	                                          VIRTUAL_CHANNEL_VERSION_WIN2000,
 	                                          VirtualChannelInitEventEx) != CHANNEL_RC_OK)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }

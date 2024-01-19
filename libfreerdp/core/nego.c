@@ -68,7 +68,7 @@ struct rdp_nego
 	BOOL ConnectChildSession;
 
 	rdpTransport* transport;
-};
+} DECLSPEC_ALIGN(128);
 
 static const char* nego_state_string(NEGO_STATE state)
 {
@@ -78,7 +78,9 @@ static const char* nego_state_string(NEGO_STATE state)
 		                                              "NEGO_STATE_RDP",     "NEGO_STATE_FAIL",
 		                                              "NEGO_STATE_FINAL",   "NEGO_STATE_INVALID" };
 	if (state >= ARRAYSIZE(NEGO_STATE_STRINGS))
+	{
 		return NEGO_STATE_STRINGS[ARRAYSIZE(NEGO_STATE_STRINGS) - 1];
+	}
 	return NEGO_STATE_STRINGS[state];
 }
 
@@ -89,7 +91,9 @@ static const char* protocol_security_string(UINT32 security)
 		                                               "UNK", "UNK", "UNK", "UNK", "UNK",
 		                                               "UNK", "AAD", "UNK", "UNK", "UNK" };
 	if (security >= ARRAYSIZE(PROTOCOL_SECURITY_STRINGS))
+	{
 		return PROTOCOL_SECURITY_STRINGS[ARRAYSIZE(PROTOCOL_SECURITY_STRINGS) - 1];
+	}
 	return PROTOCOL_SECURITY_STRINGS[security];
 }
 
@@ -126,8 +130,8 @@ BOOL nego_update_settings_from_state(rdpNego* nego, rdpSettings* settings)
 
 BOOL nego_connect(rdpNego* nego)
 {
-	rdpContext* context;
-	rdpSettings* settings;
+	rdpContext* context = NULL;
+	rdpSettings* settings = NULL;
 	WINPR_ASSERT(nego);
 	context = transport_get_context(nego->transport);
 	WINPR_ASSERT(context);
@@ -211,7 +215,9 @@ BOOL nego_connect(rdpNego* nego)
 					return FALSE;
 			}
 			if (!nego_set_selected_protocol(nego, SelectedProtocol))
+			{
 				return FALSE;
+			}
 		}
 
 		if (!nego_tcp_connect(nego))
@@ -246,7 +252,9 @@ BOOL nego_connect(rdpNego* nego)
 			{
 				if (freerdp_get_last_error(transport_get_context(nego->transport)) ==
 				    FREERDP_ERROR_SUCCESS)
+				{
 					WLog_ERR(TAG, "Protocol Security Negotiation Failure");
+				}
 
 				nego_set_state(nego, NEGO_STATE_FINAL);
 				return FALSE;
@@ -258,12 +266,16 @@ BOOL nego_connect(rdpNego* nego)
 
 	/* update settings with negotiated protocol security */
 	if (!nego_update_settings_from_state(nego, settings))
+	{
 		return FALSE;
+	}
 
 	if (nego->SelectedProtocol == PROTOCOL_RDP)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, TRUE))
+		{
 			return FALSE;
+		}
 
 		if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionMethods) == 0)
 		{
@@ -274,7 +286,9 @@ BOOL nego_connect(rdpNego* nego)
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionMethods,
 			                                 ENCRYPTION_METHOD_40BIT | ENCRYPTION_METHOD_56BIT |
 			                                     ENCRYPTION_METHOD_128BIT | ENCRYPTION_METHOD_FIPS))
+			{
 				return FALSE;
+			}
 		}
 	}
 
@@ -345,7 +359,9 @@ BOOL nego_security_connect(rdpNego* nego)
 	else if (!nego->SecurityConnected)
 	{
 		if (!nego_try_connect(nego))
+		{
 			return FALSE;
+		}
 	}
 
 	return nego->SecurityConnected;
@@ -353,11 +369,11 @@ BOOL nego_security_connect(rdpNego* nego)
 
 static BOOL nego_tcp_connect(rdpNego* nego)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 	WINPR_ASSERT(nego);
 	if (!nego->TcpConnected)
 	{
-		UINT32 TcpConnectTimeout;
+		UINT32 TcpConnectTimeout = 0;
 
 		context = transport_get_context(nego->transport);
 		WINPR_ASSERT(context);
@@ -411,10 +427,14 @@ BOOL nego_transport_connect(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
 	if (!nego_tcp_connect(nego))
+	{
 		return FALSE;
+	}
 
 	if (nego->TcpConnected && !nego->NegotiateSecurityLayer)
+	{
 		return nego_security_connect(nego);
+	}
 
 	return nego->TcpConnected;
 }
@@ -431,7 +451,9 @@ BOOL nego_transport_disconnect(rdpNego* nego)
 {
 	WINPR_ASSERT(nego);
 	if (nego->TcpConnected)
+	{
 		transport_disconnect(nego->transport);
+	}
 
 	nego->TcpConnected = FALSE;
 	nego->SecurityConnected = FALSE;
@@ -448,8 +470,8 @@ BOOL nego_transport_disconnect(rdpNego* nego)
 
 BOOL nego_send_preconnection_pdu(rdpNego* nego)
 {
-	wStream* s;
-	UINT32 cbSize;
+	wStream* s = NULL;
+	UINT32 cbSize = 0;
 	UINT16 cchPCB = 0;
 	WCHAR* wszPCB = NULL;
 
@@ -458,7 +480,9 @@ BOOL nego_send_preconnection_pdu(rdpNego* nego)
 	WLog_DBG(TAG, "Sending preconnection PDU");
 
 	if (!nego_tcp_connect(nego))
+	{
 		return FALSE;
+	}
 
 	/* it's easier to always send the version 2 PDU, and it's just 2 bytes overhead */
 	cbSize = PRECONNECTION_PDU_V2_MIN_SIZE;
@@ -541,15 +565,25 @@ static void nego_attempt_rdstls(rdpNego* nego)
 		nego_transport_disconnect(nego);
 
 		if (nego->EnabledProtocols[PROTOCOL_HYBRID_EX])
+		{
 			nego_set_state(nego, NEGO_STATE_EXT);
+		}
 		else if (nego->EnabledProtocols[PROTOCOL_HYBRID])
+		{
 			nego_set_state(nego, NEGO_STATE_NLA);
+		}
 		else if (nego->EnabledProtocols[PROTOCOL_SSL])
+		{
 			nego_set_state(nego, NEGO_STATE_TLS);
+		}
 		else if (nego->EnabledProtocols[PROTOCOL_RDP])
+		{
 			nego_set_state(nego, NEGO_STATE_RDP);
+		}
 		else
+		{
 			nego_set_state(nego, NEGO_STATE_FAIL);
+		}
 	}
 }
 
@@ -584,15 +618,25 @@ static void nego_attempt_rdsaad(rdpNego* nego)
 		nego_transport_disconnect(nego);
 
 		if (nego->EnabledProtocols[PROTOCOL_HYBRID_EX])
+		{
 			nego_set_state(nego, NEGO_STATE_EXT);
+		}
 		else if (nego->EnabledProtocols[PROTOCOL_HYBRID])
+		{
 			nego_set_state(nego, NEGO_STATE_NLA);
+		}
 		else if (nego->EnabledProtocols[PROTOCOL_SSL])
+		{
 			nego_set_state(nego, NEGO_STATE_TLS);
+		}
 		else if (nego->EnabledProtocols[PROTOCOL_RDP])
+		{
 			nego_set_state(nego, NEGO_STATE_RDP);
+		}
 		else
+		{
 			nego_set_state(nego, NEGO_STATE_FAIL);
+		}
 	}
 }
 
@@ -627,13 +671,21 @@ static void nego_attempt_ext(rdpNego* nego)
 		nego_transport_disconnect(nego);
 
 		if (nego->EnabledProtocols[PROTOCOL_HYBRID])
+		{
 			nego_set_state(nego, NEGO_STATE_NLA);
+		}
 		else if (nego->EnabledProtocols[PROTOCOL_SSL])
+		{
 			nego_set_state(nego, NEGO_STATE_TLS);
+		}
 		else if (nego->EnabledProtocols[PROTOCOL_RDP])
+		{
 			nego_set_state(nego, NEGO_STATE_RDP);
+		}
 		else
+		{
 			nego_set_state(nego, NEGO_STATE_FAIL);
+		}
 	}
 }
 
@@ -668,11 +720,17 @@ static void nego_attempt_nla(rdpNego* nego)
 		nego_transport_disconnect(nego);
 
 		if (nego->EnabledProtocols[PROTOCOL_SSL])
+		{
 			nego_set_state(nego, NEGO_STATE_TLS);
+		}
 		else if (nego->EnabledProtocols[PROTOCOL_RDP])
+		{
 			nego_set_state(nego, NEGO_STATE_RDP);
+		}
 		else
+		{
 			nego_set_state(nego, NEGO_STATE_FAIL);
+		}
 	}
 }
 
@@ -705,9 +763,13 @@ static void nego_attempt_tls(rdpNego* nego)
 		nego_transport_disconnect(nego);
 
 		if (nego->EnabledProtocols[PROTOCOL_RDP])
+		{
 			nego_set_state(nego, NEGO_STATE_RDP);
+		}
 		else
+		{
 			nego_set_state(nego, NEGO_STATE_FAIL);
+		}
 	}
 }
 
@@ -746,8 +808,8 @@ static void nego_attempt_rdp(rdpNego* nego)
 
 BOOL nego_recv_response(rdpNego* nego)
 {
-	int status;
-	wStream* s;
+	int status = 0;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(nego);
 	s = Stream_New(NULL, 1024);
@@ -770,7 +832,9 @@ BOOL nego_recv_response(rdpNego* nego)
 	Stream_Free(s, TRUE);
 
 	if (status < 0)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -788,17 +852,21 @@ BOOL nego_recv_response(rdpNego* nego)
 
 int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 {
-	BYTE li;
-	BYTE type;
-	UINT16 length;
+	BYTE li = 0;
+	BYTE type = 0;
+	UINT16 length = 0;
 	rdpNego* nego = (rdpNego*)extra;
 
 	WINPR_ASSERT(nego);
 	if (!tpkt_read_header(s, &length))
+	{
 		return -1;
+	}
 
 	if (!tpdu_read_connection_confirm(s, &li, length))
+	{
 		return -1;
+	}
 
 	if (li > 6)
 	{
@@ -809,7 +877,9 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 		{
 			case TYPE_RDP_NEG_RSP:
 				if (!nego_process_negotiation_response(nego, s))
+				{
 					return -1;
+				}
 				WLog_DBG(TAG, "selected_protocol: %" PRIu32 "", nego->SelectedProtocol);
 
 				/* enhanced security selected ? */
@@ -842,7 +912,9 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 
 			case TYPE_RDP_NEG_FAILURE:
 				if (!nego_process_negotiation_failure(nego, s))
+				{
 					return -1;
+				}
 				break;
 		}
 	}
@@ -851,9 +923,13 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 		WLog_DBG(TAG, "no rdpNegData");
 
 		if (!nego->EnabledProtocols[PROTOCOL_RDP])
+		{
 			nego_set_state(nego, NEGO_STATE_FAIL);
+		}
 		else
+		{
 			nego_set_state(nego, NEGO_STATE_FINAL);
+		}
 	}
 	else
 	{
@@ -862,7 +938,9 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 	}
 
 	if (!tpkt_ensure_stream_consumed(s, length))
+	{
 		return -1;
+	}
 	return 0;
 }
 
@@ -886,7 +964,7 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	 * Cookie:[space]mstshash=[ANSISTRING][\x0D\x0A]
 	 */
 	UINT16 crlf = 0;
-	size_t len;
+	size_t len = 0;
 	BOOL result = FALSE;
 	BOOL isToken = FALSE;
 	size_t remain = Stream_GetRemainingLength(s);
@@ -898,7 +976,9 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 
 	/* minimum length for token is 15 */
 	if (remain < 15)
+	{
 		return TRUE;
+	}
 
 	if (memcmp(Stream_ConstPointer(s), "Cookie: mstshash=", 17) != 0)
 	{
@@ -916,7 +996,9 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	{
 		/* not a token, minimum length for cookie is 19 */
 		if (remain < 19)
+		{
 			return TRUE;
+		}
 
 		Stream_Seek(s, 17);
 	}
@@ -926,7 +1008,9 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 		Stream_Read_UINT16(s, crlf);
 
 		if (crlf == 0x0A0D)
+		{
 			break;
+		}
 
 		Stream_Rewind(s, 1);
 	}
@@ -940,9 +1024,13 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 		if (strnlen(str, len) == len)
 		{
 			if (isToken)
+			{
 				result = nego_set_routing_token(nego, str, len);
+			}
 			else
+			{
 				result = nego_set_cookie(nego, str);
+			}
 		}
 	}
 
@@ -970,18 +1058,22 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 
 BOOL nego_read_request(rdpNego* nego, wStream* s)
 {
-	BYTE li;
-	BYTE type;
-	UINT16 length;
+	BYTE li = 0;
+	BYTE type = 0;
+	UINT16 length = 0;
 
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
 
 	if (!tpkt_read_header(s, &length))
+	{
 		return FALSE;
+	}
 
 	if (!tpdu_read_connection_request(s, &li, length))
+	{
 		return FALSE;
+	}
 
 	if (li != Stream_GetRemainingLength(s) + 6)
 	{
@@ -1007,7 +1099,9 @@ BOOL nego_read_request(rdpNego* nego, wStream* s)
 		}
 
 		if (!nego_process_negotiation_request(nego, s))
+		{
 			return FALSE;
+		}
 	}
 
 	return tpkt_ensure_stream_consumed(s, length);
@@ -1062,11 +1156,12 @@ void nego_send(rdpNego* nego)
 BOOL nego_send_negotiation_request(rdpNego* nego)
 {
 	BOOL rc = FALSE;
-	wStream* s;
-	size_t length;
-	size_t bm, em;
+	wStream* s = NULL;
+	size_t length = 0;
+	size_t bm;
+	size_t em;
 	BYTE flags = 0;
-	size_t cookie_length;
+	size_t cookie_length = 0;
 	s = Stream_New(NULL, 512);
 
 	WINPR_ASSERT(nego);
@@ -1106,7 +1201,9 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		cookie_length = strlen(nego->cookie);
 
 		if (cookie_length > nego->CookieMaxLength)
+		{
 			cookie_length = nego->CookieMaxLength;
+		}
 
 		Stream_Write(s, "Cookie: mstshash=", 17);
 		Stream_Write(s, (BYTE*)nego->cookie, cookie_length);
@@ -1121,10 +1218,14 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	{
 		/* RDP_NEG_DATA must be present for TLS and NLA */
 		if (nego->RestrictedAdminModeRequired)
+		{
 			flags |= RESTRICTED_ADMIN_MODE_REQUIRED;
+		}
 
 		if (nego->RemoteCredsGuardRequired)
+		{
 			flags |= REDIRECTED_AUTHENTICATION_MODE_REQUIRED;
+		}
 
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_REQ);
 		Stream_Write_UINT8(s, flags);
@@ -1134,14 +1235,20 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	}
 
 	if (length > UINT16_MAX)
+	{
 		goto fail;
+	}
 
 	em = Stream_GetPosition(s);
 	Stream_SetPosition(s, bm);
 	if (!tpkt_write_header(s, (UINT16)length))
+	{
 		goto fail;
+	}
 	if (!tpdu_write_connection_request(s, (UINT16)length - 5))
+	{
 		goto fail;
+	}
 	Stream_SetPosition(s, em);
 	Stream_SealLength(s);
 	rc = (transport_write(nego->transport, s) >= 0);
@@ -1150,10 +1257,12 @@ fail:
 	return rc;
 }
 
-static BOOL nego_process_correlation_info(rdpNego* nego, wStream* s)
+static BOOL nego_process_correlation_info(wStream* s)
 {
-	UINT8 type, flags, x;
-	UINT16 length;
+	UINT8 type;
+	UINT8 flags;
+	UINT8 x;
+	UINT16 length = 0;
 	BYTE correlationId[16] = { 0 };
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 36))
@@ -1215,14 +1324,16 @@ static BOOL nego_process_correlation_info(rdpNego* nego, wStream* s)
 
 BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 {
-	BYTE flags;
-	UINT16 length;
+	BYTE flags = 0;
+	UINT16 length = 0;
 
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 7))
+	{
 		return FALSE;
+	}
 	Stream_Read_UINT8(s, flags);
 	if ((flags & ~(RESTRICTED_ADMIN_MODE_REQUIRED | REDIRECTED_AUTHENTICATION_MODE_REQUIRED |
 	               CORRELATION_INFO_PRESENT)) != 0)
@@ -1231,7 +1342,9 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 		return FALSE;
 	}
 	if (flags & RESTRICTED_ADMIN_MODE_REQUIRED)
+	{
 		WLog_INFO(TAG, "RDP_NEG_REQ::flags RESTRICTED_ADMIN_MODE_REQUIRED");
+	}
 
 	if (flags & REDIRECTED_AUTHENTICATION_MODE_REQUIRED)
 	{
@@ -1241,10 +1354,9 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 			         "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED but disabled");
 			return FALSE;
 		}
-		else
-		{
-			WLog_INFO(TAG, "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED");
-		}
+
+		WLog_INFO(TAG, "RDP_NEG_REQ::flags REDIRECTED_AUTHENTICATION_MODE_REQUIRED");
+
 		nego->RemoteCredsGuardActive = TRUE;
 	}
 
@@ -1258,8 +1370,10 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 
 	if (flags & CORRELATION_INFO_PRESENT)
 	{
-		if (!nego_process_correlation_info(nego, s))
+		if (!nego_process_correlation_info(s))
+		{
 			return FALSE;
+		}
 	}
 
 	WLog_DBG(TAG, "RDP_NEG_REQ: RequestedProtocol: 0x%08" PRIX32 "", nego->RequestedProtocols);
@@ -1273,26 +1387,38 @@ static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
 
 	_snprintf(buffer, ARRAYSIZE(buffer), "[0x%02" PRIx32 "] ", flags);
 	if (flags & EXTENDED_CLIENT_DATA_SUPPORTED)
+	{
 		winpr_str_append("EXTENDED_CLIENT_DATA_SUPPORTED", buffer, sizeof(buffer), "|");
+	}
 	if (flags & DYNVC_GFX_PROTOCOL_SUPPORTED)
+	{
 		winpr_str_append("DYNVC_GFX_PROTOCOL_SUPPORTED", buffer, sizeof(buffer), "|");
+	}
 	if (flags & RDP_NEGRSP_RESERVED)
+	{
 		winpr_str_append("RDP_NEGRSP_RESERVED", buffer, sizeof(buffer), "|");
+	}
 	if (flags & RESTRICTED_ADMIN_MODE_SUPPORTED)
+	{
 		winpr_str_append("RESTRICTED_ADMIN_MODE_SUPPORTED", buffer, sizeof(buffer), "|");
+	}
 	if (flags & REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)
+	{
 		winpr_str_append("REDIRECTED_AUTHENTICATION_MODE_SUPPORTED", buffer, sizeof(buffer), "|");
+	}
 	if ((flags &
 	     ~(EXTENDED_CLIENT_DATA_SUPPORTED | DYNVC_GFX_PROTOCOL_SUPPORTED | RDP_NEGRSP_RESERVED |
 	       RESTRICTED_ADMIN_MODE_SUPPORTED | REDIRECTED_AUTHENTICATION_MODE_SUPPORTED)))
+	{
 		winpr_str_append("UNKNOWN", buffer, sizeof(buffer), "|");
+	}
 
 	return buffer;
 }
 
 BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 {
-	UINT16 length;
+	UINT16 length = 0;
 
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
@@ -1313,11 +1439,13 @@ BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 		nego_set_state(nego, NEGO_STATE_FAIL);
 		return FALSE;
 	}
-	UINT32 SelectedProtocol;
+	UINT32 SelectedProtocol = 0;
 	Stream_Read_UINT32(s, SelectedProtocol);
 
 	if (!nego_set_selected_protocol(nego, SelectedProtocol))
+	{
 		return FALSE;
+	}
 	return nego_set_state(nego, NEGO_STATE_FINAL);
 }
 
@@ -1331,16 +1459,18 @@ BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 
 BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 {
-	BYTE flags;
-	UINT16 length;
-	UINT32 failureCode;
+	BYTE flags = 0;
+	UINT16 length = 0;
+	UINT32 failureCode = 0;
 
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
 
 	WLog_DBG(TAG, "RDP_NEG_FAILURE");
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 7))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, flags);
 	if (flags != 0)
@@ -1396,13 +1526,14 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 
 BOOL nego_send_negotiation_response(rdpNego* nego)
 {
-	UINT16 length;
-	size_t bm, em;
-	BOOL status;
-	wStream* s;
-	BYTE flags;
-	rdpContext* context;
-	rdpSettings* settings;
+	UINT16 length = 0;
+	size_t bm;
+	size_t em;
+	BOOL status = 0;
+	wStream* s = NULL;
+	BYTE flags = 0;
+	rdpContext* context = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(nego);
 	context = transport_get_context(nego->transport);
@@ -1438,13 +1569,19 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		flags = EXTENDED_CLIENT_DATA_SUPPORTED;
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_SupportGraphicsPipeline))
+		{
 			flags |= DYNVC_GFX_PROTOCOL_SUPPORTED;
+		}
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_RestrictedAdminModeRequired))
+		{
 			flags |= RESTRICTED_ADMIN_MODE_SUPPORTED;
+		}
 
 		if (nego->RemoteCredsGuardSupported)
+		{
 			flags |= REDIRECTED_AUTHENTICATION_MODE_SUPPORTED;
+		}
 
 		/* RDP_NEG_DATA must be present for TLS, NLA, RDP and RDSTLS */
 		Stream_Write_UINT8(s, TYPE_RDP_NEG_RSP);
@@ -1472,22 +1609,34 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 		/* update settings with negotiated protocol security */
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_RequestedProtocols,
 		                                 nego->RequestedProtocols))
+		{
 			return FALSE;
+		}
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_SelectedProtocol,
 		                                 nego->SelectedProtocol))
+		{
 			return FALSE;
+		}
 
 		switch (nego->SelectedProtocol)
 		{
 			case PROTOCOL_RDP:
 				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, TRUE))
+				{
 					return FALSE;
+				}
 
 				if (freerdp_settings_get_uint32(settings, FreeRDP_EncryptionLevel) ==
 				    ENCRYPTION_LEVEL_NONE)
@@ -1498,7 +1647,9 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 					 */
 					if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
 					                                 ENCRYPTION_LEVEL_CLIENT_COMPATIBLE))
+					{
 						return FALSE;
+					}
 				}
 
 				if (freerdp_settings_get_bool(settings, FreeRDP_LocalConnection))
@@ -1512,10 +1663,14 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 					WLog_INFO(TAG,
 					          "Turning off encryption for local peer with standard rdp security");
 					if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+					{
 						return FALSE;
+					}
 					if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
 					                                 ENCRYPTION_LEVEL_NONE))
+					{
 						return FALSE;
+					}
 				}
 				else if (!freerdp_settings_get_pointer(settings, FreeRDP_RdpServerRsaKey))
 				{
@@ -1525,51 +1680,87 @@ BOOL nego_send_negotiation_response(rdpNego* nego)
 				break;
 			case PROTOCOL_SSL:
 				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, FALSE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+				{
 					return FALSE;
+				}
 
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
 				                                 ENCRYPTION_LEVEL_NONE))
+				{
 					return FALSE;
+				}
 				break;
 			case PROTOCOL_HYBRID:
 				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, FALSE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+				{
 					return FALSE;
+				}
 
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
 				                                 ENCRYPTION_LEVEL_NONE))
+				{
 					return FALSE;
+				}
 				break;
 			case PROTOCOL_RDSTLS:
 				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdstlsSecurity, TRUE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+				{
 					return FALSE;
+				}
 
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
 				                                 ENCRYPTION_LEVEL_NONE))
+				{
 					return FALSE;
+				}
 				break;
 			default:
 				break;
@@ -1607,7 +1798,9 @@ rdpNego* nego_new(rdpTransport* transport)
 	rdpNego* nego = (rdpNego*)calloc(1, sizeof(rdpNego));
 
 	if (!nego)
+	{
 		return NULL;
+	}
 
 	nego->transport = transport;
 	nego_init(nego);
@@ -1641,7 +1834,9 @@ void nego_free(rdpNego* nego)
 BOOL nego_set_target(rdpNego* nego, const char* hostname, UINT16 port)
 {
 	if (!nego || !hostname)
+	{
 		return FALSE;
+	}
 
 	nego->hostname = hostname;
 	nego->port = port;
@@ -1809,14 +2004,18 @@ void nego_enable_aad(rdpNego* nego, BOOL enable_aad)
 BOOL nego_set_routing_token(rdpNego* nego, const void* RoutingToken, DWORD RoutingTokenLength)
 {
 	if (RoutingTokenLength == 0)
+	{
 		return FALSE;
+	}
 
 	free(nego->RoutingToken);
 	nego->RoutingTokenLength = RoutingTokenLength;
 	nego->RoutingToken = (BYTE*)malloc(nego->RoutingTokenLength);
 
 	if (!nego->RoutingToken)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(nego->RoutingToken, RoutingToken, nego->RoutingTokenLength);
 	return TRUE;
@@ -1839,12 +2038,16 @@ BOOL nego_set_cookie(rdpNego* nego, const char* cookie)
 	}
 
 	if (!cookie)
+	{
 		return TRUE;
+	}
 
 	nego->cookie = _strdup(cookie);
 
 	if (!nego->cookie)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -1896,7 +2099,9 @@ void nego_set_preconnection_blob(rdpNego* nego, const char* PreconnectionBlob)
 UINT32 nego_get_selected_protocol(rdpNego* nego)
 {
 	if (!nego)
+	{
 		return 0;
+	}
 
 	return nego->SelectedProtocol;
 }
@@ -1911,7 +2116,9 @@ BOOL nego_set_selected_protocol(rdpNego* nego, UINT32 SelectedProtocol)
 UINT32 nego_get_requested_protocols(rdpNego* nego)
 {
 	if (!nego)
+	{
 		return 0;
+	}
 
 	return nego->RequestedProtocols;
 }
@@ -1919,7 +2126,9 @@ UINT32 nego_get_requested_protocols(rdpNego* nego)
 BOOL nego_set_requested_protocols(rdpNego* nego, UINT32 RequestedProtocols)
 {
 	if (!nego)
+	{
 		return FALSE;
+	}
 
 	nego->RequestedProtocols = RequestedProtocols;
 	return TRUE;
@@ -1928,7 +2137,9 @@ BOOL nego_set_requested_protocols(rdpNego* nego, UINT32 RequestedProtocols)
 NEGO_STATE nego_get_state(rdpNego* nego)
 {
 	if (!nego)
+	{
 		return NEGO_STATE_FAIL;
+	}
 
 	return nego->state;
 }
@@ -1936,7 +2147,9 @@ NEGO_STATE nego_get_state(rdpNego* nego)
 BOOL nego_set_state(rdpNego* nego, NEGO_STATE state)
 {
 	if (!nego)
+	{
 		return FALSE;
+	}
 
 	nego->state = state;
 	return TRUE;
@@ -1944,9 +2157,11 @@ BOOL nego_set_state(rdpNego* nego, NEGO_STATE state)
 
 SEC_WINNT_AUTH_IDENTITY* nego_get_identity(rdpNego* nego)
 {
-	rdpNla* nla;
+	rdpNla* nla = NULL;
 	if (!nego)
+	{
 		return NULL;
+	}
 
 	nla = transport_get_nla(nego->transport);
 	return nla_get_identity(nla);
@@ -1955,7 +2170,9 @@ SEC_WINNT_AUTH_IDENTITY* nego_get_identity(rdpNego* nego)
 void nego_free_nla(rdpNego* nego)
 {
 	if (!nego || !nego->transport)
+	{
 		return;
+	}
 
 	transport_set_nla(nego->transport, NULL);
 }
@@ -1963,8 +2180,12 @@ void nego_free_nla(rdpNego* nego)
 const BYTE* nego_get_routing_token(rdpNego* nego, DWORD* RoutingTokenLength)
 {
 	if (!nego)
+	{
 		return NULL;
+	}
 	if (RoutingTokenLength)
+	{
 		*RoutingTokenLength = nego->RoutingTokenLength;
+	}
 	return nego->RoutingToken;
 }

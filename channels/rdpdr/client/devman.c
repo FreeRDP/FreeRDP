@@ -46,17 +46,21 @@ static void devman_device_free(void* obj)
 	DEVICE* device = (DEVICE*)obj;
 
 	if (!device)
+	{
 		return;
+	}
 
 	IFCALL(device->Free, device);
 }
 
 DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 {
-	DEVMAN* devman;
+	DEVMAN* devman = NULL;
 
 	if (!rdpdr)
+	{
 		return NULL;
+	}
 
 	devman = (DEVMAN*)calloc(1, sizeof(DEVMAN));
 
@@ -89,15 +93,19 @@ void devman_free(DEVMAN* devman)
 
 void devman_unregister_device(DEVMAN* devman, void* key)
 {
-	DEVICE* device;
+	DEVICE* device = NULL;
 
 	if (!devman || !key)
+	{
 		return;
+	}
 
 	device = (DEVICE*)ListDictionary_Take(devman->devices, key);
 
 	if (device)
+	{
 		devman_device_free(device);
+	}
 }
 
 /**
@@ -110,7 +118,9 @@ static UINT devman_register_device(DEVMAN* devman, DEVICE* device)
 	void* key = NULL;
 
 	if (!devman || !device)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	device->id = devman->id_sequence++;
 	key = (void*)(size_t)device->id;
@@ -137,7 +147,9 @@ DEVICE* devman_get_device_by_id(DEVMAN* devman, UINT32 id)
 
 	device = (DEVICE*)ListDictionary_GetItemValue(devman->devices, key);
 	if (!device)
+	{
 		WLog_WARN(TAG, "could not find device ID 0x%08" PRIx32, id);
+	}
 	return device;
 }
 
@@ -147,7 +159,9 @@ DEVICE* devman_get_device_by_type(DEVMAN* devman, UINT32 type)
 	ULONG_PTR* keys = NULL;
 
 	if (!devman)
+	{
 		return NULL;
+	}
 
 	ListDictionary_Lock(devman->devices);
 	const size_t count = ListDictionary_GetKeys(devman->devices, &keys);
@@ -157,10 +171,14 @@ DEVICE* devman_get_device_by_type(DEVMAN* devman, UINT32 type)
 		DEVICE* cur = (DEVICE*)ListDictionary_GetItemValue(devman->devices, (void*)keys[x]);
 
 		if (!cur)
+		{
 			continue;
+		}
 
 		if (cur->type != type)
+		{
 			continue;
+		}
 
 		device = cur;
 		break;
@@ -195,18 +213,30 @@ UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpC
 
 	devconv.cdp = device;
 	if (!devman || !device || !rdpcontext)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (device->Type == RDPDR_DTYP_FILESYSTEM)
+	{
 		ServiceName = DRIVE_SERVICE_NAME;
+	}
 	else if (device->Type == RDPDR_DTYP_PRINT)
+	{
 		ServiceName = PRINTER_SERVICE_NAME;
+	}
 	else if (device->Type == RDPDR_DTYP_SMARTCARD)
+	{
 		ServiceName = SMARTCARD_SERVICE_NAME;
+	}
 	else if (device->Type == RDPDR_DTYP_SERIAL)
+	{
 		ServiceName = SERIAL_SERVICE_NAME;
+	}
 	else if (device->Type == RDPDR_DTYP_PARALLEL)
+	{
 		ServiceName = PARALLEL_SERVICE_NAME;
+	}
 
 	if (!ServiceName)
 	{
@@ -215,9 +245,13 @@ UINT devman_load_device_service(DEVMAN* devman, const RDPDR_DEVICE* device, rdpC
 	}
 
 	if (device->Name)
+	{
 		WLog_INFO(TAG, "Loading device service %s [%s] (static)", ServiceName, device->Name);
+	}
 	else
+	{
 		WLog_INFO(TAG, "Loading device service %s (static)", ServiceName);
+	}
 
 	entry = (PDEVICE_SERVICE_ENTRY)freerdp_load_channel_addin_entry(ServiceName, NULL,
 	                                                                "DeviceServiceEntry", 0);

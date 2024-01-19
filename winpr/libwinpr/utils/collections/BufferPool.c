@@ -27,7 +27,7 @@ typedef struct
 {
 	SSIZE_T size;
 	void* buffer;
-} wBufferPoolItem;
+} DECLSPEC_ALIGN(16) wBufferPoolItem;
 
 struct s_wBufferPool
 {
@@ -47,25 +47,33 @@ struct s_wBufferPool
 	SSIZE_T uSize;
 	SSIZE_T uCapacity;
 	wBufferPoolItem* uArray;
-};
+} DECLSPEC_ALIGN(128);
 
 static BOOL BufferPool_Lock(wBufferPool* pool)
 {
 	if (!pool)
+	{
 		return FALSE;
+	}
 
 	if (pool->synchronized)
+	{
 		EnterCriticalSection(&pool->lock);
+	}
 	return TRUE;
 }
 
 static BOOL BufferPool_Unlock(wBufferPool* pool)
 {
 	if (!pool)
+	{
 		return FALSE;
+	}
 
 	if (pool->synchronized)
+	{
 		LeaveCriticalSection(&pool->lock);
+	}
 	return TRUE;
 }
 
@@ -84,17 +92,23 @@ static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, size_t index, int count
 	{
 		if (pool->aSize + count > pool->aCapacity)
 		{
-			wBufferPoolItem* newArray;
+			wBufferPoolItem* newArray = NULL;
 			SSIZE_T newCapacity = pool->aCapacity * 2;
 
 			if (pool->alignment > 0)
+			{
 				newArray = (wBufferPoolItem*)winpr_aligned_realloc(
 				    pool->aArray, sizeof(wBufferPoolItem) * newCapacity, pool->alignment);
+			}
 			else
+			{
 				newArray =
 				    (wBufferPoolItem*)realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
+			}
 			if (!newArray)
+			{
 				return FALSE;
+			}
 			pool->aArray = newArray;
 			pool->aCapacity = newCapacity;
 		}
@@ -119,15 +133,21 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, SSIZE_T index, SSIZE_T count
 		if (pool->uSize + count > pool->uCapacity)
 		{
 			SSIZE_T newUCapacity = pool->uCapacity * 2;
-			wBufferPoolItem* newUArray;
+			wBufferPoolItem* newUArray = NULL;
 			if (pool->alignment > 0)
+			{
 				newUArray = (wBufferPoolItem*)winpr_aligned_realloc(
 				    pool->uArray, sizeof(wBufferPoolItem) * newUCapacity, pool->alignment);
+			}
 			else
+			{
 				newUArray =
 				    (wBufferPoolItem*)realloc(pool->uArray, sizeof(wBufferPoolItem) * newUCapacity);
+			}
 			if (!newUArray)
+			{
 				return FALSE;
+			}
 			pool->uCapacity = newUCapacity;
 			pool->uArray = newUArray;
 		}
@@ -151,7 +171,7 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, SSIZE_T index, SSIZE_T count
 
 SSIZE_T BufferPool_GetPoolSize(wBufferPool* pool)
 {
-	SSIZE_T size;
+	SSIZE_T size = 0;
 
 	BufferPool_Lock(pool);
 
@@ -215,9 +235,9 @@ SSIZE_T BufferPool_GetBufferSize(wBufferPool* pool, const void* buffer)
 
 void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 {
-	SSIZE_T index;
-	SSIZE_T maxSize;
-	SSIZE_T maxIndex;
+	SSIZE_T index = 0;
+	SSIZE_T maxSize = 0;
+	SSIZE_T maxIndex = 0;
 	SSIZE_T foundIndex = -1;
 	BOOL found = FALSE;
 	void* buffer = NULL;
@@ -229,18 +249,26 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 		/* fixed size buffers */
 
 		if (pool->size > 0)
+		{
 			buffer = pool->array[--(pool->size)];
+		}
 
 		if (!buffer)
 		{
 			if (pool->alignment)
+			{
 				buffer = winpr_aligned_malloc(pool->fixedSize, pool->alignment);
+			}
 			else
+			{
 				buffer = malloc(pool->fixedSize);
+			}
 		}
 
 		if (!buffer)
+		{
 			goto out_error;
+		}
 	}
 	else
 	{
@@ -250,7 +278,9 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 		maxIndex = 0;
 
 		if (size < 1)
+		{
 			size = pool->fixedSize;
+		}
 
 		for (index = 0; index < pool->aSize; index++)
 		{
@@ -277,16 +307,24 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 		if (!found)
 		{
 			if (!size)
+			{
 				buffer = NULL;
+			}
 			else
 			{
 				if (pool->alignment)
+				{
 					buffer = winpr_aligned_malloc(size, pool->alignment);
+				}
 				else
+				{
 					buffer = malloc(size);
+				}
 
 				if (!buffer)
+				{
 					goto out_error;
+				}
 			}
 		}
 		else
@@ -295,24 +333,34 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 
 			if (maxSize < size)
 			{
-				void* newBuffer;
+				void* newBuffer = NULL;
 				if (pool->alignment)
+				{
 					newBuffer = winpr_aligned_realloc(buffer, size, pool->alignment);
+				}
 				else
+				{
 					newBuffer = realloc(buffer, size);
+				}
 
 				if (!newBuffer)
+				{
 					goto out_error_no_free;
+				}
 
 				buffer = newBuffer;
 			}
 
 			if (!BufferPool_ShiftAvailable(pool, foundIndex, -1))
+			{
 				goto out_error;
+			}
 		}
 
 		if (!buffer)
+		{
 			goto out_error;
+		}
 
 		if (pool->uSize + 1 > pool->uCapacity)
 		{
@@ -320,7 +368,9 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 			wBufferPoolItem* newUArray =
 			    (wBufferPoolItem*)realloc(pool->uArray, sizeof(wBufferPoolItem) * newUCapacity);
 			if (!newUArray)
+			{
 				goto out_error;
+			}
 
 			pool->uCapacity = newUCapacity;
 			pool->uArray = newUArray;
@@ -337,9 +387,13 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 
 out_error:
 	if (pool->alignment)
+	{
 		winpr_aligned_free(buffer);
+	}
 	else
+	{
 		free(buffer);
+	}
 out_error_no_free:
 	BufferPool_Unlock(pool);
 	return NULL;
@@ -367,7 +421,9 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 			SSIZE_T newCapacity = pool->capacity * 2;
 			void** newArray = (void**)realloc(pool->array, sizeof(void*) * newCapacity);
 			if (!newArray)
+			{
 				goto out_error;
+			}
 
 			pool->capacity = newCapacity;
 			pool->array = newArray;
@@ -392,7 +448,9 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 		{
 			size = pool->uArray[index].size;
 			if (!BufferPool_ShiftUsed(pool, index, -1))
+			{
 				goto out_error;
+			}
 		}
 
 		if (size)
@@ -403,7 +461,9 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 				wBufferPoolItem* newArray =
 				    (wBufferPoolItem*)realloc(pool->aArray, sizeof(wBufferPoolItem) * newCapacity);
 				if (!newArray)
+				{
 					goto out_error;
+				}
 
 				pool->aCapacity = newCapacity;
 				pool->aArray = newArray;
@@ -438,9 +498,13 @@ void BufferPool_Clear(wBufferPool* pool)
 			(pool->size)--;
 
 			if (pool->alignment)
+			{
 				winpr_aligned_free(pool->array[pool->size]);
+			}
 			else
+			{
 				free(pool->array[pool->size]);
+			}
 		}
 	}
 	else
@@ -452,9 +516,13 @@ void BufferPool_Clear(wBufferPool* pool)
 			(pool->aSize)--;
 
 			if (pool->alignment)
+			{
 				winpr_aligned_free(pool->aArray[pool->aSize].buffer);
+			}
 			else
+			{
 				free(pool->aArray[pool->aSize].buffer);
+			}
 		}
 
 		while (pool->uSize > 0)
@@ -462,9 +530,13 @@ void BufferPool_Clear(wBufferPool* pool)
 			(pool->uSize)--;
 
 			if (pool->alignment)
+			{
 				winpr_aligned_free(pool->uArray[pool->uSize].buffer);
+			}
 			else
+			{
 				free(pool->uArray[pool->uSize].buffer);
+			}
 		}
 	}
 
@@ -486,13 +558,17 @@ wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignmen
 		pool->fixedSize = fixedSize;
 
 		if (pool->fixedSize < 0)
+		{
 			pool->fixedSize = 0;
+		}
 
 		pool->alignment = alignment;
 		pool->synchronized = synchronized;
 
 		if (pool->synchronized)
+		{
 			InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
+		}
 
 		if (pool->fixedSize)
 		{
@@ -502,7 +578,9 @@ wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignmen
 			pool->capacity = 32;
 			pool->array = (void**)calloc(pool->capacity, sizeof(void*));
 			if (!pool->array)
+			{
 				goto out_error;
+			}
 		}
 		else
 		{
@@ -512,13 +590,17 @@ wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignmen
 			pool->aCapacity = 32;
 			pool->aArray = (wBufferPoolItem*)calloc(pool->aCapacity, sizeof(wBufferPoolItem));
 			if (!pool->aArray)
+			{
 				goto out_error;
+			}
 
 			pool->uSize = 0;
 			pool->uCapacity = 32;
 			pool->uArray = (wBufferPoolItem*)calloc(pool->uCapacity, sizeof(wBufferPoolItem));
 			if (!pool->uArray)
+			{
 				goto out_error;
+			}
 		}
 	}
 
@@ -536,7 +618,9 @@ void BufferPool_Free(wBufferPool* pool)
 		BufferPool_Clear(pool);
 
 		if (pool->synchronized)
+		{
 			DeleteCriticalSection(&pool->lock);
+		}
 
 		if (pool->fixedSize)
 		{

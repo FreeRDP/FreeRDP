@@ -33,30 +33,36 @@ typedef struct
 	struct sockaddr targetAddr;
 	int targetAddrLen;
 	SOCKET sock;
-} wLogUdpAppender;
+} DECLSPEC_ALIGN(128) wLogUdpAppender;
 
 static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 {
-	wLogUdpAppender* udpAppender;
+	wLogUdpAppender* udpAppender = NULL;
 	char addressString[256] = { 0 };
 	struct addrinfo hints = { 0 };
 	struct addrinfo* result = { 0 };
-	int status;
-	size_t addrLen;
-	char* colonPos;
+	int status = 0;
+	size_t addrLen = 0;
+	char* colonPos = NULL;
 
 	if (!appender)
+	{
 		return FALSE;
+	}
 
 	udpAppender = (wLogUdpAppender*)appender;
 
-	if (udpAppender->targetAddrLen) /* already opened */
+	if (udpAppender->targetAddrLen)
+	{ /* already opened */
 		return TRUE;
+	}
 
 	colonPos = strchr(udpAppender->host, ':');
 
 	if (!colonPos)
+	{
 		return FALSE;
+	}
 
 	addrLen = (colonPos - udpAppender->host);
 	memcpy(addressString, udpAppender->host, addrLen);
@@ -66,7 +72,9 @@ static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 	status = getaddrinfo(addressString, colonPos + 1, &hints, &result);
 
 	if (status != 0)
+	{
 		return FALSE;
+	}
 
 	if (result->ai_addrlen > sizeof(udpAppender->targetAddr))
 	{
@@ -83,7 +91,9 @@ static BOOL WLog_UdpAppender_Open(wLog* log, wLogAppender* appender)
 static BOOL WLog_UdpAppender_Close(wLog* log, wLogAppender* appender)
 {
 	if (!log || !appender)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -91,10 +101,12 @@ static BOOL WLog_UdpAppender_Close(wLog* log, wLogAppender* appender)
 static BOOL WLog_UdpAppender_WriteMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
 	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
-	wLogUdpAppender* udpAppender;
+	wLogUdpAppender* udpAppender = NULL;
 
 	if (!log || !appender || !message)
+	{
 		return FALSE;
+	}
 
 	udpAppender = (wLogUdpAppender*)appender;
 	message->PrefixString = prefix;
@@ -111,7 +123,9 @@ static BOOL WLog_UdpAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
                                               wLogMessage* message)
 {
 	if (!log || !appender || !message)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -120,7 +134,9 @@ static BOOL WLog_UdpAppender_WriteImageMessage(wLog* log, wLogAppender* appender
                                                wLogMessage* message)
 {
 	if (!log || !appender || !message)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -132,15 +148,21 @@ static BOOL WLog_UdpAppender_Set(wLogAppender* appender, const char* setting, vo
 
 	/* Just check the value string is not empty */
 	if (!value || (strnlen(value, 2) == 0))
+	{
 		return FALSE;
+	}
 
-	if (strncmp(target, setting, sizeof(target)))
+	if (strncmp(target, setting, sizeof(target)) != 0)
+	{
 		return FALSE;
+	}
 
 	udpAppender->targetAddrLen = 0;
 
 	if (udpAppender->host)
+	{
 		free(udpAppender->host);
+	}
 
 	udpAppender->host = _strdup((const char*)value);
 	return (udpAppender->host != NULL) && WLog_UdpAppender_Open(NULL, appender);
@@ -148,7 +170,7 @@ static BOOL WLog_UdpAppender_Set(wLogAppender* appender, const char* setting, vo
 
 static void WLog_UdpAppender_Free(wLogAppender* appender)
 {
-	wLogUdpAppender* udpAppender;
+	wLogUdpAppender* udpAppender = NULL;
 
 	if (appender)
 	{
@@ -167,13 +189,15 @@ static void WLog_UdpAppender_Free(wLogAppender* appender)
 
 wLogAppender* WLog_UdpAppender_New(wLog* log)
 {
-	wLogUdpAppender* appender;
-	DWORD nSize;
-	LPCSTR name;
+	wLogUdpAppender* appender = NULL;
+	DWORD nSize = 0;
+	LPCSTR name = NULL;
 	appender = (wLogUdpAppender*)calloc(1, sizeof(wLogUdpAppender));
 
 	if (!appender)
+	{
 		return NULL;
+	}
 
 	appender->Type = WLOG_APPENDER_UDP;
 	appender->Open = WLog_UdpAppender_Open;
@@ -186,7 +210,9 @@ wLogAppender* WLog_UdpAppender_New(wLog* log)
 	appender->sock = _socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
 	if (appender->sock == INVALID_SOCKET)
+	{
 		goto error_sock;
+	}
 
 	name = "WLOG_UDP_TARGET";
 	nSize = GetEnvironmentVariableA(name, NULL, 0);
@@ -196,20 +222,28 @@ wLogAppender* WLog_UdpAppender_New(wLog* log)
 		appender->host = (LPSTR)malloc(nSize);
 
 		if (!appender->host)
+		{
 			goto error_open;
+		}
 
 		if (GetEnvironmentVariableA(name, appender->host, nSize) != nSize - 1)
+		{
 			goto error_open;
+		}
 
 		if (!WLog_UdpAppender_Open(log, (wLogAppender*)appender))
+		{
 			goto error_open;
+		}
 	}
 	else
 	{
 		appender->host = _strdup("127.0.0.1:20000");
 
 		if (!appender->host)
+		{
 			goto error_open;
+		}
 	}
 
 	return (wLogAppender*)appender;

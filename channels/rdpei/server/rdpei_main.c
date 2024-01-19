@@ -55,27 +55,35 @@ struct s_rdpei_server_private
 	RDPINPUT_PEN_EVENT penEvent;
 
 	enum RdpEiState automataState;
-};
+} DECLSPEC_ALIGN(128);
 
 RdpeiServerContext* rdpei_server_context_new(HANDLE vcm)
 {
 	RdpeiServerContext* ret = calloc(1, sizeof(*ret));
-	RdpeiServerPrivate* priv;
+	RdpeiServerPrivate* priv = NULL;
 
 	if (!ret)
+	{
 		return NULL;
+	}
 
 	ret->priv = priv = calloc(1, sizeof(*ret->priv));
 	if (!priv)
+	{
 		goto fail;
+	}
 
 	priv->inputStream = Stream_New(NULL, 256);
 	if (!priv->inputStream)
+	{
 		goto fail;
+	}
 
 	priv->outputStream = Stream_New(NULL, 200);
 	if (!priv->inputStream)
+	{
 		goto fail;
+	}
 
 	ret->vcm = vcm;
 	rdpei_server_context_reset(ret);
@@ -94,9 +102,9 @@ fail:
 UINT rdpei_server_init(RdpeiServerContext* context)
 {
 	void* buffer = NULL;
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 	RdpeiServerPrivate* priv = context->priv;
-	UINT32 channelId;
+	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
 	priv->channelHandle = WTSVirtualChannelOpenEx(WTS_CURRENT_SESSION, RDPEI_DVC_CHANNEL_NAME,
@@ -124,7 +132,9 @@ UINT rdpei_server_init(RdpeiServerContext* context)
 		         "WTSVirtualChannelQuery failed or invalid invalid returned size(%" PRIu32 ")!",
 		         bytesReturned);
 		if (buffer)
+		{
 			WTSFreeMemory(buffer);
+		}
 		goto out_close;
 	}
 	CopyMemory(&priv->eventHandle, buffer, sizeof(HANDLE));
@@ -150,15 +160,19 @@ void rdpei_server_context_reset(RdpeiServerContext* context)
 
 void rdpei_server_context_free(RdpeiServerContext* context)
 {
-	RdpeiServerPrivate* priv;
+	RdpeiServerPrivate* priv = NULL;
 
 	if (!context)
+	{
 		return;
+	}
 	priv = context->priv;
 	if (priv)
 	{
 		if (priv->channelHandle != INVALID_HANDLE_VALUE)
+		{
 			WTSVirtualChannelClose(priv->channelHandle);
+		}
 		Stream_Free(priv->inputStream, TRUE);
 	}
 	free(priv);
@@ -179,7 +193,9 @@ static UINT read_cs_ready_message(RdpeiServerContext* context, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 10))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, context->protocolFlags);
 	Stream_Read_UINT32(s, context->clientVersion);
@@ -199,7 +215,9 @@ static UINT read_cs_ready_message(RdpeiServerContext* context, wStream* s)
 
 	IFCALLRET(context->onClientReady, error, context);
 	if (error)
+	{
 		WLog_ERR(TAG, "context->onClientReady failed with error %" PRIu32 "", error);
+	}
 
 	return error;
 }
@@ -214,7 +232,9 @@ static UINT read_touch_contact_data(RdpeiServerContext* context, wStream* s,
 {
 	WINPR_UNUSED(context);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT8(s, contactData->contactId);
 	if (!rdpei_read_2byte_unsigned(s, &contactData->fieldsPresent) ||
@@ -260,7 +280,9 @@ static UINT read_pen_contact(RdpeiServerContext* context, wStream* s,
 {
 	WINPR_UNUSED(context);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT8(s, contactData->deviceId);
 	if (!rdpei_read_2byte_unsigned(s, &contactData->fieldsPresent) ||
@@ -275,27 +297,37 @@ static UINT read_pen_contact(RdpeiServerContext* context, wStream* s,
 	if (contactData->fieldsPresent & RDPINPUT_PEN_CONTACT_PENFLAGS_PRESENT)
 	{
 		if (!rdpei_read_4byte_unsigned(s, &contactData->penFlags))
+		{
 			return ERROR_INVALID_DATA;
+		}
 	}
 	if (contactData->fieldsPresent & RDPINPUT_PEN_CONTACT_PRESSURE_PRESENT)
 	{
 		if (!rdpei_read_4byte_unsigned(s, &contactData->pressure))
+		{
 			return ERROR_INVALID_DATA;
+		}
 	}
 	if (contactData->fieldsPresent & RDPINPUT_PEN_CONTACT_ROTATION_PRESENT)
 	{
 		if (!rdpei_read_2byte_unsigned(s, &contactData->rotation))
+		{
 			return ERROR_INVALID_DATA;
+		}
 	}
 	if (contactData->fieldsPresent & RDPINPUT_PEN_CONTACT_TILTX_PRESENT)
 	{
 		if (!rdpei_read_2byte_signed(s, &contactData->tiltX))
+		{
 			return ERROR_INVALID_DATA;
+		}
 	}
 	if (contactData->fieldsPresent & RDPINPUT_PEN_CONTACT_TILTY_PRESENT)
 	{
 		if (!rdpei_read_2byte_signed(s, &contactData->tiltY))
+		{
 			return ERROR_INVALID_DATA;
+		}
 	}
 
 	return CHANNEL_RC_OK;
@@ -308,9 +340,9 @@ static UINT read_pen_contact(RdpeiServerContext* context, wStream* s,
  */
 static UINT read_touch_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 {
-	UINT32 i;
-	RDPINPUT_CONTACT_DATA* contact;
-	UINT error;
+	UINT32 i = 0;
+	RDPINPUT_CONTACT_DATA* contact = NULL;
+	UINT error = 0;
 
 	if (!rdpei_read_2byte_unsigned(s, &frame->contactCount) ||
 	    !rdpei_read_8byte_unsigned(s, &frame->frameOffset))
@@ -341,9 +373,9 @@ static UINT read_touch_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_T
 
 static UINT read_pen_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_PEN_FRAME* frame)
 {
-	UINT32 i;
-	RDPINPUT_PEN_CONTACT* contact;
-	UINT error;
+	UINT32 i = 0;
+	RDPINPUT_PEN_CONTACT* contact = NULL;
+	UINT error = 0;
 
 	if (!rdpei_read_2byte_unsigned(s, &frame->contactCount) ||
 	    !rdpei_read_8byte_unsigned(s, &frame->frameOffset))
@@ -379,10 +411,10 @@ static UINT read_pen_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_PEN
  */
 static UINT read_touch_event(RdpeiServerContext* context, wStream* s)
 {
-	UINT16 frameCount;
-	UINT32 i;
+	UINT16 frameCount = 0;
+	UINT32 i = 0;
 	RDPINPUT_TOUCH_EVENT* event = &context->priv->touchEvent;
-	RDPINPUT_TOUCH_FRAME* frame;
+	RDPINPUT_TOUCH_FRAME* frame = NULL;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!rdpei_read_4byte_unsigned(s, &event->encodeTime) ||
@@ -412,7 +444,9 @@ static UINT read_touch_event(RdpeiServerContext* context, wStream* s)
 
 	IFCALLRET(context->onTouchEvent, error, context, event);
 	if (error)
+	{
 		WLog_ERR(TAG, "context->onTouchEvent failed with error %" PRIu32 "", error);
+	}
 
 out_cleanup:
 	touch_event_reset(event);
@@ -421,10 +455,10 @@ out_cleanup:
 
 static UINT read_pen_event(RdpeiServerContext* context, wStream* s)
 {
-	UINT16 frameCount;
-	UINT32 i;
+	UINT16 frameCount = 0;
+	UINT32 i = 0;
 	RDPINPUT_PEN_EVENT* event = &context->priv->penEvent;
-	RDPINPUT_PEN_FRAME* frame;
+	RDPINPUT_PEN_FRAME* frame = NULL;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!rdpei_read_4byte_unsigned(s, &event->encodeTime) ||
@@ -454,7 +488,9 @@ static UINT read_pen_event(RdpeiServerContext* context, wStream* s)
 
 	IFCALLRET(context->onPenEvent, error, context, event);
 	if (error)
+	{
 		WLog_ERR(TAG, "context->onPenEvent failed with error %" PRIu32 "", error);
+	}
 
 out_cleanup:
 	pen_event_reset(event);
@@ -468,17 +504,21 @@ out_cleanup:
  */
 static UINT read_dismiss_hovering_contact(RdpeiServerContext* context, wStream* s)
 {
-	BYTE contactId;
+	BYTE contactId = 0;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT8(s, contactId);
 
 	IFCALLRET(context->onTouchReleased, error, context, contactId);
 	if (error)
+	{
 		WLog_ERR(TAG, "context->onTouchReleased failed with error %" PRIu32 "", error);
+	}
 
 	return error;
 }
@@ -490,7 +530,7 @@ static UINT read_dismiss_hovering_contact(RdpeiServerContext* context, wStream* 
  */
 UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 {
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 	RdpeiServerPrivate* priv = context->priv;
 	wStream* s = priv->inputStream;
 	UINT error = CHANNEL_RC_OK;
@@ -499,7 +539,9 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 	                           &bytesReturned))
 	{
 		if (GetLastError() == ERROR_NO_DATA)
+		{
 			return ERROR_READ_FAULT;
+		}
 
 		WLog_DBG(TAG, "channel connection closed");
 		return CHANNEL_RC_OK;
@@ -508,14 +550,16 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 	Stream_Seek(s, bytesReturned);
 
 	if (priv->expectedBytes)
+	{
 		return CHANNEL_RC_OK;
+	}
 
 	Stream_SealLength(s);
 	Stream_SetPosition(s, 0);
 
 	if (priv->waitingHeaders)
 	{
-		UINT32 pduLen;
+		UINT32 pduLen = 0;
 
 		/* header case */
 		Stream_Read_UINT16(s, priv->currentMsgType);
@@ -596,7 +640,7 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
  */
 UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UINT32 features)
 {
-	ULONG written;
+	ULONG written = 0;
 	RdpeiServerPrivate* priv = context->priv;
 	UINT32 pduLen = 4;
 
@@ -609,7 +653,9 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UIN
 	Stream_SetPosition(priv->outputStream, 0);
 
 	if (version >= RDPINPUT_PROTOCOL_V300)
+	{
 		pduLen += 4;
+	}
 
 	if (!Stream_EnsureCapacity(priv->outputStream, RDPINPUT_HEADER_LENGTH + pduLen))
 	{
@@ -621,7 +667,9 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UIN
 	Stream_Write_UINT32(priv->outputStream, RDPINPUT_HEADER_LENGTH + pduLen);
 	Stream_Write_UINT32(priv->outputStream, version);
 	if (version >= RDPINPUT_PROTOCOL_V300)
+	{
 		Stream_Write_UINT32(priv->outputStream, features);
+	}
 
 	if (!WTSVirtualChannelWrite(priv->channelHandle, (PCHAR)Stream_Buffer(priv->outputStream),
 	                            Stream_GetPosition(priv->outputStream), &written))
@@ -641,7 +689,7 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UIN
  */
 UINT rdpei_server_suspend(RdpeiServerContext* context)
 {
-	ULONG written;
+	ULONG written = 0;
 	RdpeiServerPrivate* priv = context->priv;
 
 	switch (priv->automataState)
@@ -684,7 +732,7 @@ UINT rdpei_server_suspend(RdpeiServerContext* context)
  */
 UINT rdpei_server_resume(RdpeiServerContext* context)
 {
-	ULONG written;
+	ULONG written = 0;
 	RdpeiServerPrivate* priv = context->priv;
 
 	switch (priv->automataState)

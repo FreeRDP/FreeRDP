@@ -37,18 +37,22 @@
 
 BOOL per_read_length(wStream* s, UINT16* length)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	WINPR_ASSERT(length);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x80)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+		{
 			return FALSE;
+		}
 
 		byte &= ~(0x80);
 		*length = (byte << 8);
@@ -76,13 +80,17 @@ BOOL per_write_length(wStream* s, UINT16 length)
 	if (length > 0x7F)
 	{
 		if (!Stream_EnsureRemainingCapacity(s, 2))
+		{
 			return FALSE;
+		}
 		Stream_Write_UINT16_BE(s, (length | 0x8000));
 	}
 	else
 	{
 		if (!Stream_EnsureRemainingCapacity(s, 1))
+		{
 			return FALSE;
+		}
 		Stream_Write_UINT8(s, (UINT8)length);
 	}
 	return TRUE;
@@ -99,7 +107,9 @@ BOOL per_write_length(wStream* s, UINT16 length)
 BOOL per_read_choice(wStream* s, BYTE* choice)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, *choice);
 	return TRUE;
@@ -116,7 +126,9 @@ BOOL per_read_choice(wStream* s, BYTE* choice)
 BOOL per_write_choice(wStream* s, BYTE choice)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 1))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT8(s, choice);
 	return TRUE;
 }
@@ -132,7 +144,9 @@ BOOL per_write_choice(wStream* s, BYTE choice)
 BOOL per_read_selection(wStream* s, BYTE* selection)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(selection);
 	Stream_Read_UINT8(s, *selection);
@@ -150,7 +164,9 @@ BOOL per_read_selection(wStream* s, BYTE* selection)
 BOOL per_write_selection(wStream* s, BYTE selection)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 1))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT8(s, selection);
 	return TRUE;
 }
@@ -166,7 +182,9 @@ BOOL per_write_selection(wStream* s, BYTE selection)
 BOOL per_read_number_of_sets(wStream* s, BYTE* number)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(number);
 	Stream_Read_UINT8(s, *number);
@@ -185,7 +203,9 @@ BOOL per_read_number_of_sets(wStream* s, BYTE* number)
 BOOL per_write_number_of_sets(wStream* s, BYTE number)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 1))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT8(s, number);
 	return TRUE;
 }
@@ -202,7 +222,9 @@ BOOL per_write_number_of_sets(wStream* s, BYTE number)
 BOOL per_read_padding(wStream* s, UINT16 length)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
+	{
 		return FALSE;
+	}
 
 	Stream_Seek(s, length);
 	return TRUE;
@@ -219,7 +241,9 @@ BOOL per_read_padding(wStream* s, UINT16 length)
 BOOL per_write_padding(wStream* s, UINT16 length)
 {
 	if (!Stream_EnsureRemainingCapacity(s, length))
+	{
 		return FALSE;
+	}
 	Stream_Zero(s, length);
 	return TRUE;
 }
@@ -234,24 +258,36 @@ BOOL per_write_padding(wStream* s, UINT16 length)
 
 BOOL per_read_integer(wStream* s, UINT32* integer)
 {
-	UINT16 length;
+	UINT16 length = 0;
 
 	WINPR_ASSERT(integer);
 
 	if (!per_read_length(s, &length))
+	{
 		return FALSE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
+	{
 		return FALSE;
+	}
 
 	if (length == 0)
+	{
 		*integer = 0;
+	}
 	else if (length == 1)
+	{
 		Stream_Read_UINT8(s, *integer);
+	}
 	else if (length == 2)
+	{
 		Stream_Read_UINT16_BE(s, *integer);
+	}
 	else
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -269,25 +305,37 @@ BOOL per_write_integer(wStream* s, UINT32 integer)
 	if (integer <= UINT8_MAX)
 	{
 		if (!per_write_length(s, 1))
+		{
 			return FALSE;
+		}
 		if (!Stream_EnsureRemainingCapacity(s, 1))
+		{
 			return FALSE;
+		}
 		Stream_Write_UINT8(s, integer);
 	}
 	else if (integer <= UINT16_MAX)
 	{
 		if (!per_write_length(s, 2))
+		{
 			return FALSE;
+		}
 		if (!Stream_EnsureRemainingCapacity(s, 2))
+		{
 			return FALSE;
+		}
 		Stream_Write_UINT16_BE(s, integer);
 	}
 	else if (integer <= UINT32_MAX)
 	{
 		if (!per_write_length(s, 4))
+		{
 			return FALSE;
+		}
 		if (!Stream_EnsureRemainingCapacity(s, 4))
+		{
 			return FALSE;
+		}
 		Stream_Write_UINT32_BE(s, integer);
 	}
 	return TRUE;
@@ -306,7 +354,9 @@ BOOL per_write_integer(wStream* s, UINT32 integer)
 BOOL per_read_integer16(wStream* s, UINT16* integer, UINT16 min)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16_BE(s, *integer);
 
@@ -334,7 +384,9 @@ BOOL per_read_integer16(wStream* s, UINT16* integer, UINT16 min)
 BOOL per_write_integer16(wStream* s, UINT16 integer, UINT16 min)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 2))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT16_BE(s, integer - min);
 	return TRUE;
 }
@@ -352,7 +404,9 @@ BOOL per_write_integer16(wStream* s, UINT16 integer, UINT16 min)
 BOOL per_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(enumerated);
 	Stream_Read_UINT8(s, *enumerated);
@@ -380,7 +434,9 @@ BOOL per_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 BOOL per_write_enumerated(wStream* s, BYTE enumerated, BYTE count)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 1))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT8(s, enumerated);
 	return TRUE;
 }
@@ -391,16 +447,14 @@ static BOOL per_check_oid_and_log_mismatch(const BYTE* got, const BYTE* expect, 
 	{
 		return TRUE;
 	}
-	else
-	{
-		char* got_str = winpr_BinToHexString(got, length, TRUE);
-		char* expect_str = winpr_BinToHexString(expect, length, TRUE);
 
-		WLog_WARN(TAG, "PER OID mismatch, got %s, expected %s", got_str, expect_str);
-		free(got_str);
-		free(expect_str);
-		return FALSE;
-	}
+	char* got_str = winpr_BinToHexString(got, length, TRUE);
+	char* expect_str = winpr_BinToHexString(expect, length, TRUE);
+
+	WLog_WARN(TAG, "PER OID mismatch, got %s, expected %s", got_str, expect_str);
+	free(got_str);
+	free(expect_str);
+	return FALSE;
 }
 
 /**
@@ -415,12 +469,14 @@ static BOOL per_check_oid_and_log_mismatch(const BYTE* got, const BYTE* expect, 
 
 BOOL per_read_object_identifier(wStream* s, const BYTE oid[6])
 {
-	BYTE t12;
-	UINT16 length;
+	BYTE t12 = 0;
+	UINT16 length = 0;
 	BYTE a_oid[6] = { 0 };
 
 	if (!per_read_length(s, &length))
+	{
 		return FALSE;
+	}
 
 	if (length != 5)
 	{
@@ -429,7 +485,9 @@ BOOL per_read_object_identifier(wStream* s, const BYTE oid[6])
 	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, t12); /* first two tuples */
 	a_oid[0] = t12 / 40;
@@ -456,7 +514,9 @@ BOOL per_write_object_identifier(wStream* s, const BYTE oid[6])
 {
 	BYTE t12 = oid[0] * 40 + oid[1];
 	if (!Stream_EnsureRemainingCapacity(s, 6))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT8(s, 5);      /* length */
 	Stream_Write_UINT8(s, t12);    /* first two tuples */
 	Stream_Write_UINT8(s, oid[2]); /* tuple 3 */
@@ -475,10 +535,12 @@ BOOL per_write_object_identifier(wStream* s, const BYTE oid[6])
 
 static void per_write_string(wStream* s, BYTE* str, int length)
 {
-	int i;
+	int i = 0;
 
 	for (i = 0; i < length; i++)
+	{
 		Stream_Write_UINT8(s, str[i]);
+	}
 }
 
 /**
@@ -497,7 +559,9 @@ BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT1
 	UINT16 mlength = 0;
 
 	if (!per_read_length(s, &mlength))
+	{
 		return FALSE;
+	}
 
 	if (mlength + min != length)
 	{
@@ -506,7 +570,9 @@ BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT1
 	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
+	{
 		return FALSE;
+	}
 
 	const BYTE* a_oct_str = Stream_ConstPointer(s);
 	Stream_Seek(s, length);
@@ -526,18 +592,24 @@ BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT1
 
 BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT16 min)
 {
-	UINT16 i;
-	UINT16 mlength;
+	UINT16 i = 0;
+	UINT16 mlength = 0;
 
 	mlength = (length >= min) ? length - min : min;
 
 	if (!per_write_length(s, mlength))
+	{
 		return FALSE;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, length))
+	{
 		return FALSE;
+	}
 	for (i = 0; i < length; i++)
+	{
 		Stream_Write_UINT8(s, oct_str[i]);
+	}
 	return TRUE;
 }
 
@@ -551,16 +623,20 @@ BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT
 
 BOOL per_read_numeric_string(wStream* s, UINT16 min)
 {
-	size_t length;
-	UINT16 mlength;
+	size_t length = 0;
+	UINT16 mlength = 0;
 
 	if (!per_read_length(s, &mlength))
+	{
 		return FALSE;
+	}
 
 	length = (mlength + min + 1) / 2;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, length))
+	{
 		return FALSE;
+	}
 
 	Stream_Seek(s, length);
 	return TRUE;
@@ -578,17 +654,23 @@ BOOL per_read_numeric_string(wStream* s, UINT16 min)
 
 BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length, UINT16 min)
 {
-	UINT16 i;
-	UINT16 mlength;
-	BYTE num, c1, c2;
+	UINT16 i = 0;
+	UINT16 mlength = 0;
+	BYTE num;
+	BYTE c1;
+	BYTE c2;
 
 	mlength = (length >= min) ? length - min : min;
 
 	if (!per_write_length(s, mlength))
+	{
 		return FALSE;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, length))
+	{
 		return FALSE;
+	}
 	for (i = 0; i < length; i += 2)
 	{
 		c1 = num_str[i];

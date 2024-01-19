@@ -38,7 +38,7 @@
 typedef struct
 {
 	GENERIC_DYNVC_PLUGIN baseDynPlugin;
-} ECHO_PLUGIN;
+} DECLSPEC_ALIGN(128) ECHO_PLUGIN;
 
 /**
  * Function description
@@ -56,7 +56,9 @@ static UINT echo_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, 
 	WINPR_ASSERT(callback->channel->Write);
 
 	if (cbSize > UINT32_MAX)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	/* echo back what we have received. ECHO does not have any message IDs. */
 	return callback->channel->Write(callback->channel, (ULONG)cbSize, pBuffer, NULL);

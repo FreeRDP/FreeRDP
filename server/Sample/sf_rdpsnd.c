@@ -48,7 +48,9 @@ BOOL sf_peer_rdpsnd_init(testPeerContext* context)
 	    server_rdpsnd_get_formats(&context->rdpsnd->server_formats);
 
 	if (context->rdpsnd->num_server_formats > 0)
+	{
 		context->rdpsnd->src_format = &context->rdpsnd->server_formats[0];
+	}
 
 	context->rdpsnd->Activated = sf_peer_rdpsnd_activated;
 

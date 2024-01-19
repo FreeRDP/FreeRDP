@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#include <winpr/assert.h>
 #include <rdtk/config.h>
+#include <winpr/assert.h>
 
 #include "rdtk_surface.h"
 
@@ -28,12 +28,12 @@ int rdtk_surface_fill(rdtkSurface* surface, uint16_t x, uint16_t y, uint16_t wid
 {
 	WINPR_ASSERT(surface);
 
-	for (uint32_t i = y; i < y * 1ul + height; i++)
+	for (uint32_t i = y; i < y * 1UL + height; i++)
 	{
 		uint8_t* line = &surface->data[i * surface->scanline];
-		for (uint32_t j = x; j < x * 1ul + width; j++)
+		for (uint32_t j = x; j < x * 1UL + width; j++)
 		{
-			uint32_t* pixel = (uint32_t*)&line[j + 4ul];
+			uint32_t* pixel = (uint32_t*)&line[j + 4UL];
 			*pixel = color;
 		}
 	}
@@ -49,7 +49,9 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width,
 	rdtkSurface* surface = (rdtkSurface*)calloc(1, sizeof(rdtkSurface));
 
 	if (!surface)
+	{
 		return NULL;
+	}
 
 	surface->engine = engine;
 
@@ -57,7 +59,9 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width,
 	surface->height = height;
 
 	if (scanline == 0)
-		scanline = width * 4ul;
+	{
+		scanline = width * 4UL;
+	}
 
 	surface->scanline = scanline;
 
@@ -66,7 +70,7 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width,
 
 	if (!data)
 	{
-		surface->scanline = (surface->width + (surface->width % 4ul)) * 4ul;
+		surface->scanline = (surface->width + (surface->width % 4UL)) * 4UL;
 
 		surface->data = (uint8_t*)calloc(surface->height, surface->scanline);
 
@@ -85,10 +89,14 @@ rdtkSurface* rdtk_surface_new(rdtkEngine* engine, uint8_t* data, uint16_t width,
 void rdtk_surface_free(rdtkSurface* surface)
 {
 	if (!surface)
+	{
 		return;
+	}
 
 	if (surface->owner)
+	{
 		free(surface->data);
+	}
 
 	free(surface);
 }

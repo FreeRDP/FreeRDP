@@ -21,6 +21,8 @@
 
 #include <iostream>
 
+#include <winpr/spec.h>
+
 #include <freerdp/api.h>
 #include <freerdp/scancode.h>
 #include <freerdp/server/proxy/proxy_modules_api.h>
@@ -31,25 +33,27 @@ struct demo_custom_data
 {
 	proxyPluginsManager* mgr;
 	int somesetting;
-};
+} DECLSPEC_ALIGN(16);
 
 static constexpr char plugin_name[] = "demo";
 static constexpr char plugin_desc[] = "this is a test plugin";
 
-static BOOL demo_plugin_unload(proxyPlugin* plugin)
+static auto demo_plugin_unload(proxyPlugin* plugin) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 
 	std::cout << "C++ demo plugin: unloading..." << std::endl;
 
 	/* Here we have to free up our custom data storage. */
-	if (plugin)
+	if (plugin != nullptr)
+	{
 		delete static_cast<struct demo_custom_data*>(plugin->custom);
+	}
 
 	return TRUE;
 }
 
-static BOOL demo_client_init_connect(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_client_init_connect(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -59,7 +63,7 @@ static BOOL demo_client_init_connect(proxyPlugin* plugin, proxyData* pdata, void
 	return TRUE;
 }
 
-static BOOL demo_client_uninit_connect(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_client_uninit_connect(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -69,7 +73,7 @@ static BOOL demo_client_uninit_connect(proxyPlugin* plugin, proxyData* pdata, vo
 	return TRUE;
 }
 
-static BOOL demo_client_pre_connect(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_client_pre_connect(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -79,7 +83,7 @@ static BOOL demo_client_pre_connect(proxyPlugin* plugin, proxyData* pdata, void*
 	return TRUE;
 }
 
-static BOOL demo_client_post_connect(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_client_post_connect(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -89,7 +93,7 @@ static BOOL demo_client_post_connect(proxyPlugin* plugin, proxyData* pdata, void
 	return TRUE;
 }
 
-static BOOL demo_client_post_disconnect(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_client_post_disconnect(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -99,7 +103,8 @@ static BOOL demo_client_post_disconnect(proxyPlugin* plugin, proxyData* pdata, v
 	return TRUE;
 }
 
-static BOOL demo_client_x509_certificate(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_client_x509_certificate(proxyPlugin* plugin, proxyData* pdata, void* custom)
+    -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -109,7 +114,7 @@ static BOOL demo_client_x509_certificate(proxyPlugin* plugin, proxyData* pdata, 
 	return TRUE;
 }
 
-static BOOL demo_client_login_failure(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_client_login_failure(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -119,7 +124,7 @@ static BOOL demo_client_login_failure(proxyPlugin* plugin, proxyData* pdata, voi
 	return TRUE;
 }
 
-static BOOL demo_client_end_paint(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_client_end_paint(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -129,7 +134,7 @@ static BOOL demo_client_end_paint(proxyPlugin* plugin, proxyData* pdata, void* c
 	return TRUE;
 }
 
-static BOOL demo_client_redirect(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_client_redirect(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -139,7 +144,7 @@ static BOOL demo_client_redirect(proxyPlugin* plugin, proxyData* pdata, void* cu
 	return TRUE;
 }
 
-static BOOL demo_server_post_connect(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_server_post_connect(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -149,7 +154,7 @@ static BOOL demo_server_post_connect(proxyPlugin* plugin, proxyData* pdata, void
 	return TRUE;
 }
 
-static BOOL demo_server_peer_activate(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_server_peer_activate(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -159,7 +164,7 @@ static BOOL demo_server_peer_activate(proxyPlugin* plugin, proxyData* pdata, voi
 	return TRUE;
 }
 
-static BOOL demo_server_channels_init(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_server_channels_init(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -169,7 +174,7 @@ static BOOL demo_server_channels_init(proxyPlugin* plugin, proxyData* pdata, voi
 	return TRUE;
 }
 
-static BOOL demo_server_channels_free(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_server_channels_free(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -179,7 +184,7 @@ static BOOL demo_server_channels_free(proxyPlugin* plugin, proxyData* pdata, voi
 	return TRUE;
 }
 
-static BOOL demo_server_session_end(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto demo_server_session_end(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -189,10 +194,10 @@ static BOOL demo_server_session_end(proxyPlugin* plugin, proxyData* pdata, void*
 	return TRUE;
 }
 
-static BOOL demo_filter_keyboard_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+static auto demo_filter_keyboard_event(proxyPlugin* plugin, proxyData* pdata, void* param) -> BOOL
 {
-	proxyPluginsManager* mgr;
-	auto event_data = static_cast<const proxyKeyboardEventInfo*>(param);
+	proxyPluginsManager* mgr = nullptr;
+	const auto* event_data = static_cast<const proxyKeyboardEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -202,7 +207,9 @@ static BOOL demo_filter_keyboard_event(proxyPlugin* plugin, proxyData* pdata, vo
 	WINPR_ASSERT(mgr);
 
 	if (event_data == nullptr)
+	{
 		return FALSE;
+	}
 
 	if (event_data->rdp_scan_code == RDP_SCANCODE_KEY_B)
 	{
@@ -214,10 +221,10 @@ static BOOL demo_filter_keyboard_event(proxyPlugin* plugin, proxyData* pdata, vo
 	return TRUE;
 }
 
-static BOOL demo_filter_unicode_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+static auto demo_filter_unicode_event(proxyPlugin* plugin, proxyData* pdata, void* param) -> BOOL
 {
-	proxyPluginsManager* mgr;
-	auto event_data = static_cast<const proxyUnicodeEventInfo*>(param);
+	proxyPluginsManager* mgr = nullptr;
+	const auto* event_data = static_cast<const proxyUnicodeEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -227,7 +234,9 @@ static BOOL demo_filter_unicode_event(proxyPlugin* plugin, proxyData* pdata, voi
 	WINPR_ASSERT(mgr);
 
 	if (event_data == nullptr)
+	{
 		return FALSE;
+	}
 
 	if (event_data->code == 'b')
 	{
@@ -239,9 +248,9 @@ static BOOL demo_filter_unicode_event(proxyPlugin* plugin, proxyData* pdata, voi
 	return TRUE;
 }
 
-static BOOL demo_mouse_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+static auto demo_mouse_event(proxyPlugin* plugin, proxyData* pdata, void* param) -> BOOL
 {
-	auto event_data = static_cast<const proxyMouseEventInfo*>(param);
+	const auto* event_data = static_cast<const proxyMouseEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -251,9 +260,9 @@ static BOOL demo_mouse_event(proxyPlugin* plugin, proxyData* pdata, void* param)
 	return TRUE;
 }
 
-static BOOL demo_mouse_ex_event(proxyPlugin* plugin, proxyData* pdata, void* param)
+static auto demo_mouse_ex_event(proxyPlugin* plugin, proxyData* pdata, void* param) -> BOOL
 {
-	auto event_data = static_cast<const proxyMouseExEventInfo*>(param);
+	const auto* event_data = static_cast<const proxyMouseExEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -263,9 +272,9 @@ static BOOL demo_mouse_ex_event(proxyPlugin* plugin, proxyData* pdata, void* par
 	return TRUE;
 }
 
-static BOOL demo_client_channel_data(proxyPlugin* plugin, proxyData* pdata, void* param)
+static auto demo_client_channel_data(proxyPlugin* plugin, proxyData* pdata, void* param) -> BOOL
 {
-	const proxyChannelDataEventInfo* channel = static_cast<const proxyChannelDataEventInfo*>(param);
+	const auto* channel = static_cast<const proxyChannelDataEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -276,9 +285,9 @@ static BOOL demo_client_channel_data(proxyPlugin* plugin, proxyData* pdata, void
 	return TRUE;
 }
 
-static BOOL demo_server_channel_data(proxyPlugin* plugin, proxyData* pdata, void* param)
+static auto demo_server_channel_data(proxyPlugin* plugin, proxyData* pdata, void* param) -> BOOL
 {
-	const proxyChannelDataEventInfo* channel = static_cast<const proxyChannelDataEventInfo*>(param);
+	const auto* channel = static_cast<const proxyChannelDataEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -289,9 +298,9 @@ static BOOL demo_server_channel_data(proxyPlugin* plugin, proxyData* pdata, void
 	return TRUE;
 }
 
-static BOOL demo_dynamic_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param)
+static auto demo_dynamic_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param) -> BOOL
 {
-	const proxyChannelDataEventInfo* channel = static_cast<const proxyChannelDataEventInfo*>(param);
+	const auto* channel = static_cast<const proxyChannelDataEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -301,9 +310,10 @@ static BOOL demo_dynamic_channel_create(proxyPlugin* plugin, proxyData* pdata, v
 	return TRUE;
 }
 
-static BOOL demo_server_fetch_target_addr(proxyPlugin* plugin, proxyData* pdata, void* param)
+static auto demo_server_fetch_target_addr(proxyPlugin* plugin, proxyData* pdata, void* param)
+    -> BOOL
 {
-	auto event_data = static_cast<const proxyFetchTargetEventInfo*>(param);
+	const auto* event_data = static_cast<const proxyFetchTargetEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -313,9 +323,9 @@ static BOOL demo_server_fetch_target_addr(proxyPlugin* plugin, proxyData* pdata,
 	return TRUE;
 }
 
-static BOOL demo_server_peer_logon(proxyPlugin* plugin, proxyData* pdata, void* param)
+static auto demo_server_peer_logon(proxyPlugin* plugin, proxyData* pdata, void* param) -> BOOL
 {
-	auto info = static_cast<const proxyServerPeerLogon*>(param);
+	const auto* info = static_cast<const proxyServerPeerLogon*>(param);
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(info);
@@ -325,9 +335,10 @@ static BOOL demo_server_peer_logon(proxyPlugin* plugin, proxyData* pdata, void* 
 	return TRUE;
 }
 
-static BOOL demo_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdata, void* arg)
+static auto demo_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdata, void* arg)
+    -> BOOL
 {
-	auto data = static_cast<proxyChannelToInterceptData*>(arg);
+	auto* data = static_cast<proxyChannelToInterceptData*>(arg);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -337,9 +348,10 @@ static BOOL demo_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdat
 	return TRUE;
 }
 
-static BOOL demo_static_channel_intercept_list(proxyPlugin* plugin, proxyData* pdata, void* arg)
+static auto demo_static_channel_intercept_list(proxyPlugin* plugin, proxyData* pdata, void* arg)
+    -> BOOL
 {
-	auto data = static_cast<proxyChannelToInterceptData*>(arg);
+	auto* data = static_cast<proxyChannelToInterceptData*>(arg);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -349,9 +361,9 @@ static BOOL demo_static_channel_intercept_list(proxyPlugin* plugin, proxyData* p
 	return TRUE;
 }
 
-static BOOL demo_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, void* arg)
+static auto demo_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, void* arg) -> BOOL
 {
-	auto data = static_cast<proxyDynChannelInterceptData*>(arg);
+	auto* data = static_cast<proxyDynChannelInterceptData*>(arg);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -365,14 +377,15 @@ static BOOL demo_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, vo
 extern "C"
 {
 #endif
-	FREERDP_API BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata);
+	FREERDP_API auto proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
+	    -> BOOL;
 #ifdef __cplusplus
 }
 #endif
 
-BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
+auto proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata) -> BOOL
 {
-	struct demo_custom_data* custom;
+	struct demo_custom_data* custom = nullptr;
 	proxyPlugin plugin = {};
 
 	plugin.name = plugin_name;
@@ -409,8 +422,10 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 	plugin.userdata = userdata;
 
 	custom = new (struct demo_custom_data);
-	if (!custom)
+	if (custom == nullptr)
+	{
 		return FALSE;
+	}
 
 	custom->mgr = plugins_manager;
 	custom->somesetting = 42;

@@ -30,31 +30,32 @@
 
 int main(int argc, char** argv)
 {
-	GC gc;
-	int index;
-	int depth;
-	int x, y;
-	int width;
-	int height;
-	uint8_t* buffer;
-	int scanline;
-	int pf_count;
+	GC gc = NULL;
+	int index = 0;
+	int depth = 0;
+	int x;
+	int y;
+	int width = 0;
+	int height = 0;
+	uint8_t* buffer = NULL;
+	int scanline = 0;
+	int pf_count = 0;
 	XEvent event;
-	XImage* image;
-	Pixmap pixmap;
-	Screen* screen;
-	Visual* visual;
-	int scanline_pad;
-	int screen_number;
-	Display* display;
-	Window window;
-	Window root_window;
-	rdtkEngine* engine;
-	rdtkSurface* surface;
-	unsigned long border;
-	unsigned long background;
-	XPixmapFormatValues* pf;
-	XPixmapFormatValues* pfs;
+	XImage* image = NULL;
+	Pixmap pixmap = 0;
+	Screen* screen = NULL;
+	Visual* visual = NULL;
+	int scanline_pad = 0;
+	int screen_number = 0;
+	Display* display = NULL;
+	Window window = 0;
+	Window root_window = 0;
+	rdtkEngine* engine = NULL;
+	rdtkSurface* surface = NULL;
+	unsigned long border = 0;
+	unsigned long background = 0;
+	XPixmapFormatValues* pf = NULL;
+	XPixmapFormatValues* pfs = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -100,12 +101,16 @@ int main(int argc, char** argv)
 
 	engine = rdtk_engine_new();
 	if (!engine)
+	{
 		return 1;
+	}
 
 	scanline = width * 4;
 	buffer = (uint8_t*)calloc(height, scanline);
 	if (!buffer)
+	{
 		return 1;
+	}
 
 	surface = rdtk_surface_new(engine, buffer, width, height, scanline);
 
@@ -138,10 +143,14 @@ int main(int argc, char** argv)
 		}
 
 		if (event.type == KeyPress)
+		{
 			break;
+		}
 
 		if (event.type == ClientMessage)
+		{
 			break;
+		}
 	}
 
 	XFlush(display);

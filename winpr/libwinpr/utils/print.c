@@ -42,7 +42,9 @@ void winpr_HexDump(const char* tag, UINT32 level, const void* data, size_t lengt
 void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 {
 	const BYTE* p = data;
-	size_t i, line, offset = 0;
+	size_t i;
+	size_t line;
+	size_t offset = 0;
 	const size_t maxlen = 20; /* 64bit SIZE_MAX as decimal */
 	/* String line length:
 	 * prefix          '[1234] '
@@ -55,13 +57,17 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 	    (maxlen + 3) + (WINPR_HEXDUMP_LINE_LENGTH * 3) + 3 + WINPR_HEXDUMP_LINE_LENGTH + 1;
 	size_t pos = 0;
 
-	char* buffer;
+	char* buffer = NULL;
 
 	if (!WLog_IsLevelActive(log, lvl))
+	{
 		return;
+	}
 
 	if (!log)
+	{
 		return;
+	}
 
 	buffer = malloc(blen);
 
@@ -77,20 +83,26 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 		int rc = _snprintf(&buffer[pos], blen - pos, "%04" PRIuz " ", offset);
 
 		if (rc < 0)
+		{
 			goto fail;
+		}
 
 		pos += (size_t)rc;
 		line = length - offset;
 
 		if (line > WINPR_HEXDUMP_LINE_LENGTH)
+		{
 			line = WINPR_HEXDUMP_LINE_LENGTH;
+		}
 
 		for (i = 0; i < line; i++)
 		{
 			rc = _snprintf(&buffer[pos], blen - pos, "%02" PRIx8 " ", p[i]);
 
 			if (rc < 0)
+			{
 				goto fail;
+			}
 
 			pos += (size_t)rc;
 		}
@@ -100,7 +112,9 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 			rc = _snprintf(&buffer[pos], blen - pos, "   ");
 
 			if (rc < 0)
+			{
 				goto fail;
+			}
 
 			pos += (size_t)rc;
 		}
@@ -111,7 +125,9 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 			               (p[i] >= 0x20 && p[i] < 0x7F) ? (char)p[i] : '.');
 
 			if (rc < 0)
+			{
 				goto fail;
+			}
 
 			pos += (size_t)rc;
 		}
@@ -130,9 +146,10 @@ fail:
 void winpr_CArrayDump(const char* tag, UINT32 level, const void* data, size_t length, size_t width)
 {
 	const BYTE* p = data;
-	size_t i, offset = 0;
-	const size_t llen = ((length > width) ? width : length) * 4ull + 1ull;
-	size_t pos;
+	size_t i;
+	size_t offset = 0;
+	const size_t llen = ((length > width) ? width : length) * 4ULL + 1ULL;
+	size_t pos = 0;
 	char* buffer = malloc(llen);
 
 	if (!buffer)
@@ -146,7 +163,9 @@ void winpr_CArrayDump(const char* tag, UINT32 level, const void* data, size_t le
 		size_t line = length - offset;
 
 		if (line > width)
+		{
 			line = width;
+		}
 
 		pos = 0;
 
@@ -154,7 +173,9 @@ void winpr_CArrayDump(const char* tag, UINT32 level, const void* data, size_t le
 		{
 			const int rc = _snprintf(&buffer[pos], llen - pos, "\\x%02" PRIX8 "", p[i]);
 			if (rc < 0)
+			{
 				goto fail;
+			}
 			pos += (size_t)rc;
 		}
 
@@ -170,35 +191,50 @@ fail:
 static BYTE value(char c)
 {
 	if ((c >= '0') && (c <= '9'))
+	{
 		return c - '0';
+	}
 	if ((c >= 'A') && (c <= 'F'))
+	{
 		return 10 + c - 'A';
+	}
 	if ((c >= 'a') && (c <= 'f'))
+	{
 		return 10 + c - 'a';
+	}
 	return 0;
 }
 
 size_t winpr_HexStringToBinBuffer(const char* str, size_t strLength, BYTE* data, size_t dataLength)
 {
-	size_t x, y = 0;
-	size_t maxStrLen;
+	size_t x;
+	size_t y = 0;
+	size_t maxStrLen = 0;
 	if (!str || !data || (strLength == 0) || (dataLength == 0))
+	{
 		return 0;
+	}
 
 	maxStrLen = strnlen(str, strLength);
 	for (x = 0; x < maxStrLen;)
 	{
 		BYTE val = value(str[x++]);
 		if (x < maxStrLen)
+		{
 			val = (BYTE)(val << 4) | (value(str[x++]));
+		}
 		if (x < maxStrLen)
 		{
 			if (str[x] == ' ')
+			{
 				x++;
+			}
 		}
 		data[y++] = val;
 		if (y >= dataLength)
+		{
 			return y;
+		}
 	}
 	return y;
 }
@@ -209,10 +245,12 @@ size_t winpr_BinToHexStringBuffer(const BYTE* data, size_t length, char* dstStr,
 	const size_t n = space ? 3 : 2;
 	const char bin2hex[] = "0123456789ABCDEF";
 	const size_t maxLength = MIN(length, dstSize / n);
-	size_t i;
+	size_t i = 0;
 
 	if (!data || !dstStr || (length == 0) || (dstSize == 0))
+	{
 		return 0;
+	}
 
 	for (i = 0; i < maxLength; i++)
 	{
@@ -224,7 +262,9 @@ size_t winpr_BinToHexStringBuffer(const BYTE* data, size_t length, char* dstStr,
 		dst[1] = bin2hex[ln];
 
 		if (space)
+		{
 			dst[2] = ' ';
+		}
 	}
 
 	if (space && (maxLength > 0))
@@ -238,13 +278,15 @@ size_t winpr_BinToHexStringBuffer(const BYTE* data, size_t length, char* dstStr,
 
 char* winpr_BinToHexString(const BYTE* data, size_t length, BOOL space)
 {
-	size_t rc;
+	size_t rc = 0;
 	const size_t n = space ? 3 : 2;
 	const size_t size = (length + 1ULL) * n;
 	char* p = (char*)malloc(size);
 
 	if (!p)
+	{
 		return NULL;
+	}
 
 	rc = winpr_BinToHexStringBuffer(data, length, p, size, space);
 	if (rc == 0)

@@ -45,7 +45,9 @@ HGDI_DC gdi_GetDC(void)
 	HGDI_DC hDC = (HGDI_DC)calloc(1, sizeof(GDI_DC));
 
 	if (!hDC)
+	{
 		return NULL;
+	}
 
 	hDC->format = PIXEL_FORMAT_XRGB32;
 	hDC->drawMode = GDI_R2_BLACK;
@@ -71,31 +73,41 @@ HGDI_DC gdi_GetDC(void)
 
 HGDI_DC gdi_CreateDC(UINT32 format)
 {
-	HGDI_DC hDC;
+	HGDI_DC hDC = NULL;
 
 	if (!(hDC = (HGDI_DC)calloc(1, sizeof(GDI_DC))))
+	{
 		return NULL;
+	}
 
 	hDC->drawMode = GDI_R2_BLACK;
 
 	if (!(hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0)))
+	{
 		goto fail;
+	}
 
 	hDC->clip->null = TRUE;
 	hDC->hwnd = NULL;
 	hDC->format = format;
 
 	if (!(hDC->hwnd = (HGDI_WND)calloc(1, sizeof(GDI_WND))))
+	{
 		goto fail;
+	}
 
 	if (!(hDC->hwnd->invalid = gdi_CreateRectRgn(0, 0, 0, 0)))
+	{
 		goto fail;
+	}
 
 	hDC->hwnd->invalid->null = TRUE;
 	hDC->hwnd->count = 32;
 
 	if (!(hDC->hwnd->cinvalid = (HGDI_RGN)calloc(hDC->hwnd->count, sizeof(GDI_RGN))))
+	{
 		goto fail;
+	}
 
 	hDC->hwnd->ninvalid = 0;
 	return hDC;
@@ -116,7 +128,9 @@ HGDI_DC gdi_CreateCompatibleDC(HGDI_DC hdc)
 	HGDI_DC hDC = (HGDI_DC)calloc(1, sizeof(GDI_DC));
 
 	if (!hDC)
+	{
 		return NULL;
+	}
 
 	if (!(hDC->clip = gdi_CreateRectRgn(0, 0, 0, 0)))
 	{
@@ -145,7 +159,9 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 	HGDIOBJECT previousSelectedObject = hdc->selectedObject;
 
 	if (hgdiobject == NULL)
+	{
 		return NULL;
+	}
 
 	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
 	{
@@ -190,7 +206,9 @@ HGDIOBJECT gdi_SelectObject(HGDI_DC hdc, HGDIOBJECT hgdiobject)
 BOOL gdi_DeleteObject(HGDIOBJECT hgdiobject)
 {
 	if (!hgdiobject)
+	{
 		return FALSE;
+	}
 
 	if (hgdiobject->objectType == GDIOBJECT_BITMAP)
 	{

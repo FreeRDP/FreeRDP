@@ -55,7 +55,7 @@ struct format_option
 	const char* (*ext)(const struct format_option* opt, const char* str, size_t* preplacelen,
 	                   size_t* pskiplen);
 	struct format_option_recurse* recurse;
-};
+} DECLSPEC_ALIGN(64);
 
 struct format_option_recurse
 {
@@ -65,14 +65,14 @@ struct format_option_recurse
 	wLogLayout* layout;
 	wLogMessage* message;
 	char buffer[WLOG_MAX_PREFIX_SIZE];
-};
+} DECLSPEC_ALIGN(128);
 
 /**
  * Log Layout
  */
-WINPR_ATTR_FORMAT_ARG(3, 0)
-static void WLog_PrintMessagePrefixVA(wLog* log, wLogMessage* message,
-                                      WINPR_FORMAT_ARG const char* format, va_list args)
+WINPR_ATTR_FORMAT_ARG(2, 0)
+static void WLog_PrintMessagePrefixVA(wLogMessage* message, WINPR_FORMAT_ARG const char* format,
+                                      va_list args)
 {
 	WINPR_ASSERT(message);
 	vsnprintf(message->PrefixString, WLOG_MAX_PREFIX_SIZE - 1, format, args);
@@ -84,14 +84,14 @@ static void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message,
 {
 	va_list args;
 	va_start(args, format);
-	WLog_PrintMessagePrefixVA(log, message, format, args);
+	WLog_PrintMessagePrefixVA(message, format, args);
 	va_end(args);
 }
 
 static const char* get_tid(void* arg)
 {
 	char* str = arg;
-	size_t tid;
+	size_t tid = 0;
 #if defined __linux__ && !defined ANDROID
 	/* On Linux we prefer to see the LWP id */
 	tid = (size_t)syscall(SYS_gettid);
@@ -127,20 +127,26 @@ static int opt_compare_fn(const void* a, const void* b)
 	const char* what = a;
 	const struct format_option* opt = b;
 	if (!opt)
+	{
 		return -1;
+	}
 	return strncmp(what, opt->fmt, opt->fmtlen);
 }
 
 static BOOL has_format_arg(const char* str, size_t len)
 {
 	if (!str || (len == 0))
+	{
 		return FALSE;
+	}
 
 	for (size_t x = 0; x < len; x++)
 	{
 		char c = str[x];
 		if (c == '%')
+		{
 			return TRUE;
+		}
 	}
 
 	return FALSE;
@@ -163,11 +169,15 @@ static const char* skip_if_null(const struct format_option* opt, const char* fmt
 	const char* str = &fmt[opt->fmtlen]; /* Skip first %{ from string */
 	const char* end = strstr(str, opt->replace);
 	if (!end)
+	{
 		return NULL;
+	}
 	*pskiplen = end - fmt + opt->replacelen;
 
 	if (!opt->arg)
+	{
 		return NULL;
+	}
 
 	const size_t replacelen = end - str;
 
@@ -176,7 +186,9 @@ static const char* skip_if_null(const struct format_option* opt, const char* fmt
 
 	if (!replace_format_string(buffer, opt->recurse, opt->recurse->buffer,
 	                           ARRAYSIZE(opt->recurse->buffer)))
+	{
 		return NULL;
+	}
 
 	*preplacelen = strnlen(opt->recurse->buffer, ARRAYSIZE(opt->recurse->buffer));
 	return opt->recurse->buffer;
@@ -203,17 +215,25 @@ static BOOL replace_format_string(const char* FormatString, struct format_option
 			const void* arg = opt->arg;
 
 			if (opt->ext)
+			{
 				replace = opt->ext(opt, FormatString, &replacelen, &fmtlen);
+			}
 			if (opt->fkt)
+			{
 				arg = opt->fkt(opt->arg);
+			}
 
 			if (replace && (replacelen > 0))
 			{
 				const int rc = _snprintf(&format[index], formatlen - index, replace, arg);
 				if (rc < 0)
+				{
 					return FALSE;
+				}
 				if (!check_and_log_format_size(format, formatlen, index, rc))
+				{
 					return FALSE;
+				}
 				index += rc;
 			}
 			FormatString += fmtlen;
@@ -222,16 +242,22 @@ static BOOL replace_format_string(const char* FormatString, struct format_option
 		{
 			/* Unknown format string */
 			if (*FormatString == '%')
+			{
 				return log_invalid_fmt(FormatString);
+			}
 
 			if (!check_and_log_format_size(format, formatlen, index, 1))
+			{
 				return FALSE;
+			}
 			format[index++] = *FormatString++;
 		}
 	}
 
 	if (!check_and_log_format_size(format, formatlen, index, 0))
+	{
 		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -288,7 +314,9 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 	recurse.nroptions = ARRAYSIZE(options);
 
 	if (!replace_format_string(layout->FormatString, &recurse, format, ARRAYSIZE(format)))
+	{
 		return FALSE;
+	}
 
 	WINPR_PRAGMA_DIAG_PUSH
 	WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY
@@ -302,7 +330,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 
 wLogLayout* WLog_GetLogLayout(wLog* log)
 {
-	wLogAppender* appender;
+	wLogAppender* appender = NULL;
 	appender = WLog_GetLogAppender(log);
 	return appender->Layout;
 }
@@ -317,7 +345,9 @@ BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* form
 		layout->FormatString = _strdup(format);
 
 		if (!layout->FormatString)
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -326,13 +356,15 @@ BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* form
 wLogLayout* WLog_Layout_New(wLog* log)
 {
 	LPCSTR prefix = "WLOG_PREFIX";
-	DWORD nSize;
+	DWORD nSize = 0;
 	char* env = NULL;
-	wLogLayout* layout;
+	wLogLayout* layout = NULL;
 	layout = (wLogLayout*)calloc(1, sizeof(wLogLayout));
 
 	if (!layout)
+	{
 		return NULL;
+	}
 
 	nSize = GetEnvironmentVariableA(prefix, NULL, 0);
 
@@ -355,7 +387,9 @@ wLogLayout* WLog_Layout_New(wLog* log)
 	}
 
 	if (env)
+	{
 		layout->FormatString = env;
+	}
 	else
 	{
 #ifdef ANDROID

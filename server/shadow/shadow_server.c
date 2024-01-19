@@ -47,11 +47,13 @@ static const char bind_address[] = "bind-address,";
 static int shadow_server_print_command_line_help(int argc, char** argv,
                                                  COMMAND_LINE_ARGUMENT_A* largs)
 {
-	char* str;
-	size_t length;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	char* str = NULL;
+	size_t length = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	if ((argc < 1) || !largs || !argv)
+	{
 		return -1;
+	}
 
 	printf("Usage: %s [options]\n", argv[0]);
 	printf("\n");
@@ -81,7 +83,9 @@ static int shadow_server_print_command_line_help(int argc, char** argv,
 				str = (char*)malloc(length + 1);
 
 				if (!str)
+				{
 					return -1;
+				}
 
 				sprintf_s(str, length + 1, "%s:%s", arg->Name, arg->Format);
 				printf("%-20s\n", str);
@@ -100,7 +104,9 @@ static int shadow_server_print_command_line_help(int argc, char** argv,
 			str = (char*)malloc(length + 1);
 
 			if (!str)
+			{
 				return -1;
+			}
 
 			sprintf_s(str, length + 1, "%s (default:%s)", arg->Name, arg->Default ? "on" : "off");
 			printf("    %s", arg->Default ? "-" : "+");
@@ -123,7 +129,7 @@ int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, c
 		printf("FreeRDP version %s (git %s)\n", FREERDP_VERSION_FULL, FREERDP_GIT_REVISION);
 		return COMMAND_LINE_STATUS_PRINT_VERSION;
 	}
-	else if (status == COMMAND_LINE_STATUS_PRINT_BUILDCONFIG)
+	if (status == COMMAND_LINE_STATUS_PRINT_BUILDCONFIG)
 	{
 		printf("%s\n", freerdp_get_build_config());
 		return COMMAND_LINE_STATUS_PRINT_BUILDCONFIG;
@@ -146,13 +152,15 @@ int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, c
 int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** argv,
                                      COMMAND_LINE_ARGUMENT_A* cargs)
 {
-	int status;
-	DWORD flags;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	int status = 0;
+	DWORD flags = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	rdpSettings* settings = server->settings;
 
 	if ((argc < 2) || !argv || !cargs)
+	{
 		return 1;
+	}
 
 	CommandLineClearArgumentsA(cargs);
 	flags = COMMAND_LINE_SEPARATOR_COLON;
@@ -160,7 +168,9 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	status = CommandLineParseArgumentsA(argc, argv, cargs, flags, server, NULL, NULL);
 
 	if (status < 0)
+	{
 		return status;
+	}
 
 	arg = cargs;
 	errno = 0;
@@ -168,14 +178,18 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	do
 	{
 		if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
+		{
 			continue;
+		}
 
 		CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "port")
 		{
 			long val = strtol(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val <= 0) || (val > UINT16_MAX))
+			{
 				return -1;
+			}
 
 			server->port = (DWORD)val;
 		}
@@ -183,27 +197,37 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			/* /bind-address is incompatible */
 			if (server->ipcSocket)
+			{
 				return -1;
+			}
 			server->ipcSocket = _strdup(arg->Value);
 
 			if (!server->ipcSocket)
+			{
 				return -1;
+			}
 		}
 		CommandLineSwitchCase(arg, "bind-address")
 		{
-			int rc;
+			int rc = 0;
 			size_t len = strlen(arg->Value) + sizeof(bind_address);
 			/* /ipc-socket is incompatible */
 			if (server->ipcSocket)
+			{
 				return -1;
+			}
 			server->ipcSocket = calloc(len, sizeof(CHAR));
 
 			if (!server->ipcSocket)
+			{
 				return -1;
+			}
 
 			rc = _snprintf(server->ipcSocket, len, "%s%s", bind_address, arg->Value);
 			if ((rc < 0) || ((size_t)rc != len - 1))
+			{
 				return -1;
+			}
 		}
 		CommandLineSwitchCase(arg, "may-view")
 		{
@@ -219,18 +243,25 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			unsigned long val = strtoul(arg->Value, NULL, 0);
 
 			if ((errno != 0) || (val > UINT32_MAX))
+			{
 				return -1;
+			}
 			server->maxClientsConnected = val;
 		}
 		CommandLineSwitchCase(arg, "rect")
 		{
-			char* p;
+			char* p = NULL;
 			char* tok[4];
-			long x = -1, y = -1, w = -1, h = -1;
+			long x = -1;
+			long y = -1;
+			long w = -1;
+			long h = -1;
 			char* str = _strdup(arg->Value);
 
 			if (!str)
+			{
 				return -1;
+			}
 
 			tok[0] = p = str;
 			p = strchr(p + 1, ',');
@@ -266,32 +297,44 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			x = strtol(tok[0], NULL, 0);
 
 			if (errno != 0)
+			{
 				goto fail;
+			}
 
 			y = strtol(tok[1], NULL, 0);
 
 			if (errno != 0)
+			{
 				goto fail;
+			}
 
 			w = strtol(tok[2], NULL, 0);
 
 			if (errno != 0)
+			{
 				goto fail;
+			}
 
 			h = strtol(tok[3], NULL, 0);
 
 			if (errno != 0)
+			{
 				goto fail;
+			}
 
 		fail:
 			free(str);
 
 			if ((x < 0) || (y < 0) || (w < 1) || (h < 1) || (errno != 0))
+			{
 				return -1;
+			}
 
 			if ((x > UINT16_MAX) || (y > UINT16_MAX) || (x + w > UINT16_MAX) ||
 			    (y + h > UINT16_MAX))
+			{
 				return -1;
+			}
 			server->subRect.left = (UINT16)x;
 			server->subRect.top = (UINT16)y;
 			server->subRect.right = (UINT16)(x + w);
@@ -306,55 +349,91 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteCredentialGuard,
 			                               arg->Value ? TRUE : FALSE))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "sec")
 		{
 			if (strcmp("rdp", arg->Value) == 0) /* Standard RDP */
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, TRUE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 			}
 			else if (strcmp("tls", arg->Value) == 0) /* TLS */
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 			}
 			else if (strcmp("nla", arg->Value) == 0) /* NLA */
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, FALSE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 			}
 			else if (strcmp("ext", arg->Value) == 0) /* NLA Extended */
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, FALSE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, TRUE))
+				{
 					return COMMAND_LINE_ERROR;
+				}
 			}
 			else
 			{
@@ -365,25 +444,33 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity,
 			                               arg->Value ? TRUE : FALSE))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "sec-tls")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity,
 			                               arg->Value ? TRUE : FALSE))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "sec-nla")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity,
 			                               arg->Value ? TRUE : FALSE))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "sec-ext")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity,
 			                               arg->Value ? TRUE : FALSE))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "sam-file")
 		{
@@ -394,57 +481,79 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			wLog* root = WLog_GetRoot();
 
 			if (!WLog_SetStringLogLevel(root, arg->Value))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "log-filters")
 		{
 			if (!WLog_AddStringLogFilters(arg->Value))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "gfx-progressive")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive,
 			                               arg->Value ? TRUE : FALSE))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "gfx-rfx")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec,
 			                               arg->Value ? TRUE : FALSE))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "gfx-planar")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxPlanar, arg->Value ? TRUE : FALSE))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "gfx-avc420")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxH264, arg->Value ? TRUE : FALSE))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "gfx-avc444")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2,
 			                               arg->Value ? TRUE : FALSE))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444, arg->Value ? TRUE : FALSE))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "keytab")
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_KerberosKeytab, arg->Value))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "ccache")
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_KerberosCache, arg->Value))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchCase(arg, "tls-secrets-file")
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_TlsSecretsFile, arg->Value))
+			{
 				return COMMAND_LINE_ERROR;
+			}
 		}
 		CommandLineSwitchDefault(arg)
 		{
@@ -456,8 +565,8 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 	{
-		UINT32 index;
-		UINT32 numMonitors;
+		UINT32 index = 0;
+		UINT32 numMonitors = 0;
 		MONITOR_DEF monitors[16] = { 0 };
 		numMonitors = shadow_enum_monitors(monitors, 16);
 
@@ -467,7 +576,9 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 			long val = strtol(arg->Value, NULL, 0);
 
 			if ((val < 0) || (errno != 0) || ((UINT32)val >= numMonitors))
+			{
 				status = COMMAND_LINE_STATUS_PRINT;
+			}
 
 			server->selectedMonitor = (UINT32)val;
 		}
@@ -495,7 +606,9 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 	if (!server->authentication)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, FALSE))
+		{
 			return COMMAND_LINE_ERROR;
+		}
 	}
 	return status;
 }
@@ -504,7 +617,7 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 {
 	rdpShadowServer* server = (rdpShadowServer*)arg;
 	BOOL running = TRUE;
-	DWORD status;
+	DWORD status = 0;
 	freerdp_listener* listener = server->listener;
 	shadow_subsystem_start(server->subsystem);
 
@@ -567,7 +680,7 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 
 static BOOL open_port(rdpShadowServer* server, char* address)
 {
-	BOOL status;
+	BOOL status = 0;
 	char* modaddr = address;
 
 	if (modaddr)
@@ -602,15 +715,19 @@ static BOOL open_port(rdpShadowServer* server, char* address)
 
 int shadow_server_start(rdpShadowServer* server)
 {
-	BOOL ipc;
-	BOOL status;
+	BOOL ipc = 0;
+	BOOL status = 0;
 	WSADATA wsaData;
 
 	if (!server)
+	{
 		return -1;
+	}
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+	{
 		return -1;
+	}
 
 #ifndef _WIN32
 	signal(SIGPIPE, SIG_IGN);
@@ -641,7 +758,8 @@ int shadow_server_start(rdpShadowServer* server)
 	                                    strnlen(bind_address, sizeof(bind_address))) != 0);
 	if (!ipc)
 	{
-		size_t x, count;
+		size_t x;
+		size_t count;
 		char** list = CommandLineParseCommaSeparatedValuesEx(NULL, server->ipcSocket, &count);
 		if (!list || (count <= 1))
 		{
@@ -695,7 +813,9 @@ int shadow_server_start(rdpShadowServer* server)
 int shadow_server_stop(rdpShadowServer* server)
 {
 	if (!server)
+	{
 		return -1;
+	}
 
 	if (server->thread)
 	{
@@ -773,7 +893,7 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 
 	if (!server->ConfigPath)
 	{
-		char* configHome;
+		char* configHome = NULL;
 		configHome = GetKnownPath(KNOWN_PATH_XDG_CONFIG_HOME);
 
 		if (configHome)
@@ -791,7 +911,9 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 	}
 
 	if (!server->ConfigPath)
+	{
 		return -1; /* no usable config path */
+	}
 
 	return 1;
 }
@@ -805,26 +927,36 @@ static BOOL shadow_server_create_certificate(rdpShadowServer* server, const char
 	MAKECERT_CONTEXT* makecert = makecert_context_new();
 
 	if (!makecert)
+	{
 		goto out_fail;
+	}
 
 	if (makecert_context_process(makecert, makecert_argc, makecert_argv) < 0)
+	{
 		goto out_fail;
+	}
 
 	if (makecert_context_set_output_file_name(makecert, "shadow") != 1)
+	{
 		goto out_fail;
+	}
 
 	WINPR_ASSERT(server);
 	WINPR_ASSERT(filepath);
 	if (!winpr_PathFileExists(server->CertificateFile))
 	{
 		if (makecert_context_output_certificate_file(makecert, filepath) != 1)
+		{
 			goto out_fail;
+		}
 	}
 
 	if (!winpr_PathFileExists(server->PrivateKeyFile))
 	{
 		if (makecert_context_output_private_key_file(makecert, filepath) != 1)
+		{
 			goto out_fail;
+		}
 	}
 	rc = TRUE;
 out_fail:
@@ -845,7 +977,9 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	}
 
 	if (!(filepath = GetCombinedPath(server->ConfigPath, "shadow")))
+	{
 		return FALSE;
+	}
 
 	if (!winpr_PathFileExists(filepath) && !winpr_PathMakePath(filepath, 0))
 	{
@@ -860,13 +994,17 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 	server->PrivateKeyFile = GetCombinedPath(filepath, "shadow.key");
 
 	if (!server->CertificateFile || !server->PrivateKeyFile)
+	{
 		goto out_fail;
+	}
 
 	if ((!winpr_PathFileExists(server->CertificateFile)) ||
 	    (!winpr_PathFileExists(server->PrivateKeyFile)))
 	{
 		if (!shadow_server_create_certificate(server, filepath))
+		{
 			goto out_fail;
+		}
 	}
 
 	rdpSettings* settings = server->settings;
@@ -874,23 +1012,35 @@ static BOOL shadow_server_init_certificate(rdpShadowServer* server)
 
 	rdpPrivateKey* key = freerdp_key_new_from_file(server->PrivateKeyFile);
 	if (!key)
+	{
 		goto out_fail;
+	}
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
+	{
 		goto out_fail;
+	}
 
 	rdpCertificate* cert = freerdp_certificate_new_from_file(server->CertificateFile);
 	if (!cert)
+	{
 		goto out_fail;
+	}
 
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
+	{
 		goto out_fail;
+	}
 
 	if (!freerdp_certificate_is_rdp_security_compatible(cert))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_UseRdpSecurityLayer, FALSE))
+		{
 			goto out_fail;
+		}
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, FALSE))
+		{
 			goto out_fail;
+		}
 	}
 	ret = TRUE;
 out_fail:
@@ -920,31 +1070,43 @@ static BOOL shadow_server_check_peer_restrictions(freerdp_listener* listener)
 
 int shadow_server_init(rdpShadowServer* server)
 {
-	int status;
+	int status = 0;
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 
 	if (!(server->clients = ArrayList_New(TRUE)))
+	{
 		goto fail;
+	}
 
 	if (!(server->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
 		goto fail;
+	}
 
 	if (!InitializeCriticalSectionAndSpinCount(&(server->lock), 4000))
+	{
 		goto fail;
+	}
 
 	status = shadow_server_init_config_path(server);
 
 	if (status < 0)
+	{
 		goto fail;
+	}
 
 	if (!shadow_server_init_certificate(server))
+	{
 		goto fail;
+	}
 
 	server->listener = freerdp_listener_new();
 
 	if (!server->listener)
+	{
 		goto fail;
+	}
 
 	server->listener->info = (void*)server;
 	server->listener->CheckPeerAcceptRestrictions = shadow_server_check_peer_restrictions;
@@ -952,11 +1114,15 @@ int shadow_server_init(rdpShadowServer* server)
 	server->subsystem = shadow_subsystem_new();
 
 	if (!server->subsystem)
+	{
 		goto fail;
+	}
 
 	status = shadow_subsystem_init(server->subsystem, server);
 	if (status < 0)
+	{
 		goto fail;
+	}
 
 	return status;
 
@@ -969,7 +1135,9 @@ fail:
 int shadow_server_uninit(rdpShadowServer* server)
 {
 	if (!server)
+	{
 		return -1;
+	}
 
 	shadow_server_stop(server);
 	shadow_subsystem_uninit(server->subsystem);
@@ -993,11 +1161,13 @@ int shadow_server_uninit(rdpShadowServer* server)
 
 rdpShadowServer* shadow_server_new(void)
 {
-	rdpShadowServer* server;
+	rdpShadowServer* server = NULL;
 	server = (rdpShadowServer*)calloc(1, sizeof(rdpShadowServer));
 
 	if (!server)
+	{
 		return NULL;
+	}
 
 	server->port = 3389;
 	server->mayView = TRUE;
@@ -1015,7 +1185,9 @@ rdpShadowServer* shadow_server_new(void)
 void shadow_server_free(rdpShadowServer* server)
 {
 	if (!server)
+	{
 		return;
+	}
 
 	free(server->ipcSocket);
 	server->ipcSocket = NULL;

@@ -24,7 +24,9 @@
 void WLog_Appender_Free(wLog* log, wLogAppender* appender)
 {
 	if (!appender)
+	{
 		return;
+	}
 
 	if (appender->Layout)
 	{
@@ -39,10 +41,14 @@ void WLog_Appender_Free(wLog* log, wLogAppender* appender)
 wLogAppender* WLog_GetLogAppender(wLog* log)
 {
 	if (!log)
+	{
 		return NULL;
+	}
 
 	if (!log->Appender)
+	{
 		return WLog_GetLogAppender(log->Parent);
+	}
 
 	return log->Appender;
 }
@@ -50,15 +56,19 @@ wLogAppender* WLog_GetLogAppender(wLog* log)
 BOOL WLog_OpenAppender(wLog* log)
 {
 	int status = 0;
-	wLogAppender* appender;
+	wLogAppender* appender = NULL;
 
 	appender = WLog_GetLogAppender(log);
 
 	if (!appender)
+	{
 		return FALSE;
+	}
 
 	if (!appender->Open)
+	{
 		return TRUE;
+	}
 
 	if (!appender->active)
 	{
@@ -72,15 +82,19 @@ BOOL WLog_OpenAppender(wLog* log)
 BOOL WLog_CloseAppender(wLog* log)
 {
 	int status = 0;
-	wLogAppender* appender;
+	wLogAppender* appender = NULL;
 
 	appender = WLog_GetLogAppender(log);
 
 	if (!appender)
+	{
 		return FALSE;
+	}
 
 	if (!appender->Close)
+	{
 		return TRUE;
+	}
 
 	if (appender->active)
 	{
@@ -93,10 +107,12 @@ BOOL WLog_CloseAppender(wLog* log)
 
 static wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 {
-	wLogAppender* appender;
+	wLogAppender* appender = NULL;
 
 	if (!log)
+	{
 		return NULL;
+	}
 
 	switch (logAppenderType)
 	{
@@ -132,10 +148,14 @@ static wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 	}
 
 	if (!appender)
+	{
 		appender = (wLogAppender*)WLog_ConsoleAppender_New(log);
+	}
 
 	if (!appender)
+	{
 		return NULL;
+	}
 
 	if (!(appender->Layout = WLog_Layout_New(log)))
 	{
@@ -151,7 +171,9 @@ static wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 BOOL WLog_SetLogAppenderType(wLog* log, DWORD logAppenderType)
 {
 	if (!log)
+	{
 		return FALSE;
+	}
 
 	if (log->Appender)
 	{
@@ -167,10 +189,13 @@ BOOL WLog_ConfigureAppender(wLogAppender* appender, const char* setting, void* v
 {
 	/* Just check the settings string is not empty */
 	if (!appender || !setting || (strnlen(setting, 2) == 0))
+	{
 		return FALSE;
+	}
 
 	if (appender->Set)
+	{
 		return appender->Set(appender, setting, value);
-	else
-		return FALSE;
+	}
+	return FALSE;
 }

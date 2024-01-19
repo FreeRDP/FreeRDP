@@ -27,11 +27,13 @@
 rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, UINT16 x, UINT16 y, UINT32 width,
                                      UINT32 height)
 {
-	rdpShadowSurface* surface;
+	rdpShadowSurface* surface = NULL;
 	surface = (rdpShadowSurface*)calloc(1, sizeof(rdpShadowSurface));
 
 	if (!surface)
+	{
 		return NULL;
+	}
 
 	surface->server = server;
 	surface->x = x;
@@ -62,7 +64,9 @@ rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, UINT16 x, UINT16 y
 void shadow_surface_free(rdpShadowSurface* surface)
 {
 	if (!surface)
+	{
 		return;
+	}
 
 	free(surface->data);
 	DeleteCriticalSection(&(surface->lock));
@@ -77,7 +81,9 @@ BOOL shadow_surface_resize(rdpShadowSurface* surface, UINT16 x, UINT16 y, UINT32
 	UINT32 scanline = ALIGN_SCREEN_SIZE(width, 4) * 4;
 
 	if (!surface)
+	{
 		return FALSE;
+	}
 
 	if ((width == surface->width) && (height == surface->height))
 	{
@@ -87,7 +93,7 @@ BOOL shadow_surface_resize(rdpShadowSurface* surface, UINT16 x, UINT16 y, UINT32
 		return TRUE;
 	}
 
-	buffer = (BYTE*)realloc(surface->data, 1ull * scanline * ALIGN_SCREEN_SIZE(height, 4ull));
+	buffer = (BYTE*)realloc(surface->data, 1ULL * scanline * ALIGN_SCREEN_SIZE(height, 4ULL));
 
 	if (buffer)
 	{

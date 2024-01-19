@@ -20,8 +20,8 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/pool.h>
 #include <winpr/library.h>
+#include <winpr/pool.h>
 
 #ifdef WINPR_THREAD_POOL
 

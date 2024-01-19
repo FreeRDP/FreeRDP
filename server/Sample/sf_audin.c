@@ -69,7 +69,9 @@ BOOL sf_peer_audin_start(testPeerContext* context)
 {
 #if defined(CHANNEL_AUDIN_SERVER)
 	if (!context || !context->audin || !context->audin->Open)
+	{
 		return FALSE;
+	}
 
 	return context->audin->Open(context->audin);
 #else
@@ -81,7 +83,9 @@ BOOL sf_peer_audin_stop(testPeerContext* context)
 {
 #if defined(CHANNEL_AUDIN_SERVER)
 	if (!context || !context->audin || !context->audin->Close)
+	{
 		return FALSE;
+	}
 
 	return context->audin->Close(context->audin);
 #else
@@ -93,7 +97,9 @@ BOOL sf_peer_audin_running(testPeerContext* context)
 {
 #if defined(CHANNEL_AUDIN_SERVER)
 	if (!context || !context->audin || !context->audin->IsOpen)
+	{
 		return FALSE;
+	}
 
 	return context->audin->IsOpen(context->audin);
 #else

@@ -31,9 +31,9 @@
 
 #include "comm.h"
 #include "comm_ioctl.h"
-#include "comm_serial_sys.h"
-#include "comm_sercx_sys.h"
 #include "comm_sercx2_sys.h"
+#include "comm_sercx_sys.h"
+#include "comm_serial_sys.h"
 
 /* NB: MS-RDPESP's recommendation:
  *
@@ -53,7 +53,7 @@
 
 const char* _comm_serial_ioctl_name(ULONG number)
 {
-	int i;
+	int i = 0;
 
 	for (i = 0; _SERIAL_IOCTL_NAMES[i].number != 0; i++)
 	{
@@ -74,7 +74,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 	SERIAL_DRIVER* pServerSerialDriver = NULL;
 
 	if (!CommIsHandleValid(hDevice))
+	{
 		return FALSE;
+	}
 
 	if (lpOverlapped)
 	{
@@ -164,7 +166,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				}
 
 				if (!pServerSerialDriver->get_baud_rate(pComm, pBaudRate))
+				{
 					return FALSE;
+				}
 
 				*lpBytesReturned = sizeof(SERIAL_BAUD_RATE);
 				return TRUE;
@@ -185,7 +189,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				}
 
 				if (!pServerSerialDriver->get_properties(pComm, pProperties))
+				{
 					return FALSE;
+				}
 
 				*lpBytesReturned = sizeof(COMMPROP);
 				return TRUE;
@@ -223,7 +229,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				}
 
 				if (!pServerSerialDriver->get_serial_chars(pComm, pSerialChars))
+				{
 					return FALSE;
+				}
 
 				*lpBytesReturned = sizeof(SERIAL_CHARS);
 				return TRUE;
@@ -261,7 +269,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				}
 
 				if (!pServerSerialDriver->get_line_control(pComm, pLineControl))
+				{
 					return FALSE;
+				}
 
 				*lpBytesReturned = sizeof(SERIAL_LINE_CONTROL);
 				return TRUE;
@@ -299,7 +309,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				}
 
 				if (!pServerSerialDriver->get_handflow(pComm, pHandflow))
+				{
 					return FALSE;
+				}
 
 				*lpBytesReturned = sizeof(SERIAL_HANDFLOW);
 				return TRUE;
@@ -337,7 +349,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				}
 
 				if (!pServerSerialDriver->get_timeouts(pComm, pHandflow))
+				{
 					return FALSE;
+				}
 
 				*lpBytesReturned = sizeof(SERIAL_TIMEOUTS);
 				return TRUE;
@@ -390,7 +404,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				}
 
 				if (!pServerSerialDriver->get_modemstatus(pComm, pRegister))
+				{
 					return FALSE;
+				}
 
 				*lpBytesReturned = sizeof(ULONG);
 				return TRUE;
@@ -428,7 +444,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				}
 
 				if (!pServerSerialDriver->get_wait_mask(pComm, pWaitMask))
+				{
 					return FALSE;
+				}
 
 				*lpBytesReturned = sizeof(ULONG);
 				return TRUE;
@@ -507,7 +525,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				}
 
 				if (!pServerSerialDriver->get_commstatus(pComm, pCommstatus))
+				{
 					return FALSE;
+				}
 
 				*lpBytesReturned = sizeof(SERIAL_STATUS);
 				return TRUE;
@@ -560,7 +580,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				}
 
 				if (!pServerSerialDriver->get_dtrrts(pComm, pMask))
+				{
 					return FALSE;
+				}
 
 				*lpBytesReturned = sizeof(ULONG);
 				return TRUE;
@@ -581,7 +603,9 @@ static BOOL s_CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID 
 				}
 
 				if (!pServerSerialDriver->config_size(pComm, pSize))
+				{
 					return FALSE;
+				}
 
 				*lpBytesReturned = sizeof(ULONG);
 				return TRUE;
@@ -639,7 +663,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
                          LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
-	BOOL result;
+	BOOL result = 0;
 
 	if (hDevice == INVALID_HANDLE_VALUE)
 	{
@@ -648,7 +672,9 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 	}
 
 	if (!CommIsHandled(hDevice))
+	{
 		return FALSE;
+	}
 
 	if (!pComm->fd)
 	{
@@ -686,7 +712,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 
 int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p)
 {
-	int result;
+	int result = 0;
 	struct termios currentState = { 0 };
 
 	if ((result = tcsetattr(fd, optional_actions, termios_p)) < 0)

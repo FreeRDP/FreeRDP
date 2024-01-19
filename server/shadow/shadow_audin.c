@@ -35,8 +35,8 @@
 
 static UINT AudinServerData(audin_server_context* audin, const SNDIN_DATA* data)
 {
-	rdpShadowClient* client;
-	rdpShadowSubsystem* subsystem;
+	rdpShadowClient* client = NULL;
+	rdpShadowSubsystem* subsystem = NULL;
 
 	WINPR_ASSERT(audin);
 	WINPR_ASSERT(data);
@@ -48,11 +48,15 @@ static UINT AudinServerData(audin_server_context* audin, const SNDIN_DATA* data)
 	WINPR_ASSERT(subsystem);
 
 	if (!client->mayInteract)
+	{
 		return CHANNEL_RC_OK;
+	}
 
 	if (!IFCALLRESULT(TRUE, subsystem->AudinServerReceiveSamples, subsystem, client,
 	                  audin_server_get_negotiated_format(client->audin), data->Data))
+	{
 		return ERROR_INTERNAL_ERROR;
+	}
 
 	return CHANNEL_RC_OK;
 }
@@ -67,7 +71,9 @@ BOOL shadow_client_audin_init(rdpShadowClient* client)
 	audin_server_context* audin = client->audin = audin_server_context_new(client->vcm);
 
 	if (!audin)
+	{
 		return FALSE;
+	}
 
 	audin->userdata = client;
 
@@ -77,12 +83,16 @@ BOOL shadow_client_audin_init(rdpShadowClient* client)
 	{
 		if (!audin_server_set_formats(client->audin, client->subsystem->nAudinFormats,
 		                              client->subsystem->audinFormats))
+		{
 			goto fail;
+		}
 	}
 	else
 	{
 		if (!audin_server_set_formats(client->audin, -1, NULL))
+		{
 			goto fail;
+		}
 	}
 
 	return TRUE;

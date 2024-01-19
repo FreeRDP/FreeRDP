@@ -47,10 +47,12 @@
 
 static BOOL update_message_BeginPaint(rdpContext* context)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(Update, BeginPaint), NULL,
@@ -59,10 +61,12 @@ static BOOL update_message_BeginPaint(rdpContext* context)
 
 static BOOL update_message_EndPaint(rdpContext* context)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(Update, EndPaint), NULL,
@@ -72,17 +76,21 @@ static BOOL update_message_EndPaint(rdpContext* context)
 static BOOL update_message_SetBounds(rdpContext* context, const rdpBounds* bounds)
 {
 	rdpBounds* wParam = NULL;
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
+	{
 		return FALSE;
+	}
 
 	if (bounds)
 	{
 		wParam = (rdpBounds*)malloc(sizeof(rdpBounds));
 
 		if (!wParam)
+		{
 			return FALSE;
+		}
 
 		CopyMemory(wParam, bounds, sizeof(rdpBounds));
 	}
@@ -94,10 +102,12 @@ static BOOL update_message_SetBounds(rdpContext* context, const rdpBounds* bound
 
 static BOOL update_message_Synchronize(rdpContext* context)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(Update, Synchronize), NULL,
@@ -106,10 +116,12 @@ static BOOL update_message_Synchronize(rdpContext* context)
 
 static BOOL update_message_DesktopResize(rdpContext* context)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(Update, DesktopResize), NULL,
@@ -118,16 +130,20 @@ static BOOL update_message_DesktopResize(rdpContext* context)
 
 static BOOL update_message_BitmapUpdate(rdpContext* context, const BITMAP_UPDATE* bitmap)
 {
-	BITMAP_UPDATE* wParam;
-	rdp_update_internal* up;
+	BITMAP_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !bitmap)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_bitmap_update(context, bitmap);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(Update, BitmapUpdate),
@@ -136,16 +152,20 @@ static BOOL update_message_BitmapUpdate(rdpContext* context, const BITMAP_UPDATE
 
 static BOOL update_message_Palette(rdpContext* context, const PALETTE_UPDATE* palette)
 {
-	PALETTE_UPDATE* wParam;
-	rdp_update_internal* up;
+	PALETTE_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !palette)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_palette_update(context, palette);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(Update, Palette),
@@ -154,16 +174,20 @@ static BOOL update_message_Palette(rdpContext* context, const PALETTE_UPDATE* pa
 
 static BOOL update_message_PlaySound(rdpContext* context, const PLAY_SOUND_UPDATE* playSound)
 {
-	PLAY_SOUND_UPDATE* wParam;
-	rdp_update_internal* up;
+	PLAY_SOUND_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !playSound)
+	{
 		return FALSE;
+	}
 
 	wParam = (PLAY_SOUND_UPDATE*)malloc(sizeof(PLAY_SOUND_UPDATE));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, playSound, sizeof(PLAY_SOUND_UPDATE));
 
@@ -174,10 +198,12 @@ static BOOL update_message_PlaySound(rdpContext* context, const PLAY_SOUND_UPDAT
 
 static BOOL update_message_SetKeyboardIndicators(rdpContext* context, UINT16 led_flags)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context,
@@ -188,10 +214,12 @@ static BOOL update_message_SetKeyboardIndicators(rdpContext* context, UINT16 led
 static BOOL update_message_SetKeyboardImeStatus(rdpContext* context, UINT16 imeId, UINT32 imeState,
                                                 UINT32 imeConvMode)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(Update, SetKeyboardImeStatus),
@@ -201,16 +229,20 @@ static BOOL update_message_SetKeyboardImeStatus(rdpContext* context, UINT16 imeI
 
 static BOOL update_message_RefreshRect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
-	RECTANGLE_16* lParam;
-	rdp_update_internal* up;
+	RECTANGLE_16* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !areas)
+	{
 		return FALSE;
+	}
 
 	lParam = (RECTANGLE_16*)calloc(count, sizeof(RECTANGLE_16));
 
 	if (!lParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(lParam, areas, sizeof(RECTANGLE_16) * count);
 
@@ -222,17 +254,21 @@ static BOOL update_message_RefreshRect(rdpContext* context, BYTE count, const RE
 static BOOL update_message_SuppressOutput(rdpContext* context, BYTE allow, const RECTANGLE_16* area)
 {
 	RECTANGLE_16* lParam = NULL;
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
+	{
 		return FALSE;
+	}
 
 	if (area)
 	{
 		lParam = (RECTANGLE_16*)malloc(sizeof(RECTANGLE_16));
 
 		if (!lParam)
+		{
 			return FALSE;
+		}
 
 		CopyMemory(lParam, area, sizeof(RECTANGLE_16));
 	}
@@ -244,16 +280,20 @@ static BOOL update_message_SuppressOutput(rdpContext* context, BYTE allow, const
 
 static BOOL update_message_SurfaceCommand(rdpContext* context, wStream* s)
 {
-	wStream* wParam;
-	rdp_update_internal* up;
+	wStream* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !s)
+	{
 		return FALSE;
+	}
 
 	wParam = Stream_New(NULL, Stream_GetRemainingLength(s));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	Stream_Copy(s, wParam, Stream_GetRemainingLength(s));
 	Stream_SetPosition(wParam, 0);
@@ -266,16 +306,20 @@ static BOOL update_message_SurfaceCommand(rdpContext* context, wStream* s)
 static BOOL update_message_SurfaceBits(rdpContext* context,
                                        const SURFACE_BITS_COMMAND* surfaceBitsCommand)
 {
-	SURFACE_BITS_COMMAND* wParam;
-	rdp_update_internal* up;
+	SURFACE_BITS_COMMAND* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !surfaceBitsCommand)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_surface_bits_command(context, surfaceBitsCommand);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(Update, SurfaceBits),
@@ -285,16 +329,20 @@ static BOOL update_message_SurfaceBits(rdpContext* context,
 static BOOL update_message_SurfaceFrameMarker(rdpContext* context,
                                               const SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
-	SURFACE_FRAME_MARKER* wParam;
-	rdp_update_internal* up;
+	SURFACE_FRAME_MARKER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !surfaceFrameMarker)
+	{
 		return FALSE;
+	}
 
 	wParam = (SURFACE_FRAME_MARKER*)malloc(sizeof(SURFACE_FRAME_MARKER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, surfaceFrameMarker, sizeof(SURFACE_FRAME_MARKER));
 
@@ -305,10 +353,12 @@ static BOOL update_message_SurfaceFrameMarker(rdpContext* context,
 
 static BOOL update_message_SurfaceFrameAcknowledge(rdpContext* context, UINT32 frameId)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context,
@@ -320,16 +370,20 @@ static BOOL update_message_SurfaceFrameAcknowledge(rdpContext* context, UINT32 f
 
 static BOOL update_message_DstBlt(rdpContext* context, const DSTBLT_ORDER* dstBlt)
 {
-	DSTBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	DSTBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !dstBlt)
+	{
 		return FALSE;
+	}
 
 	wParam = (DSTBLT_ORDER*)malloc(sizeof(DSTBLT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, dstBlt, sizeof(DSTBLT_ORDER));
 
@@ -340,16 +394,20 @@ static BOOL update_message_DstBlt(rdpContext* context, const DSTBLT_ORDER* dstBl
 
 static BOOL update_message_PatBlt(rdpContext* context, PATBLT_ORDER* patBlt)
 {
-	PATBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	PATBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !patBlt)
+	{
 		return FALSE;
+	}
 
 	wParam = (PATBLT_ORDER*)malloc(sizeof(PATBLT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, patBlt, sizeof(PATBLT_ORDER));
 	wParam->brush.data = (BYTE*)wParam->brush.p8x8;
@@ -361,16 +419,20 @@ static BOOL update_message_PatBlt(rdpContext* context, PATBLT_ORDER* patBlt)
 
 static BOOL update_message_ScrBlt(rdpContext* context, const SCRBLT_ORDER* scrBlt)
 {
-	SCRBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	SCRBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !scrBlt)
+	{
 		return FALSE;
+	}
 
 	wParam = (SCRBLT_ORDER*)malloc(sizeof(SCRBLT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, scrBlt, sizeof(SCRBLT_ORDER));
 
@@ -381,16 +443,20 @@ static BOOL update_message_ScrBlt(rdpContext* context, const SCRBLT_ORDER* scrBl
 
 static BOOL update_message_OpaqueRect(rdpContext* context, const OPAQUE_RECT_ORDER* opaqueRect)
 {
-	OPAQUE_RECT_ORDER* wParam;
-	rdp_update_internal* up;
+	OPAQUE_RECT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !opaqueRect)
+	{
 		return FALSE;
+	}
 
 	wParam = (OPAQUE_RECT_ORDER*)malloc(sizeof(OPAQUE_RECT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, opaqueRect, sizeof(OPAQUE_RECT_ORDER));
 
@@ -402,16 +468,20 @@ static BOOL update_message_OpaqueRect(rdpContext* context, const OPAQUE_RECT_ORD
 static BOOL update_message_DrawNineGrid(rdpContext* context,
                                         const DRAW_NINE_GRID_ORDER* drawNineGrid)
 {
-	DRAW_NINE_GRID_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_NINE_GRID_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawNineGrid)
+	{
 		return FALSE;
+	}
 
 	wParam = (DRAW_NINE_GRID_ORDER*)malloc(sizeof(DRAW_NINE_GRID_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, drawNineGrid, sizeof(DRAW_NINE_GRID_ORDER));
 
@@ -422,16 +492,20 @@ static BOOL update_message_DrawNineGrid(rdpContext* context,
 
 static BOOL update_message_MultiDstBlt(rdpContext* context, const MULTI_DSTBLT_ORDER* multiDstBlt)
 {
-	MULTI_DSTBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	MULTI_DSTBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !multiDstBlt)
+	{
 		return FALSE;
+	}
 
 	wParam = (MULTI_DSTBLT_ORDER*)malloc(sizeof(MULTI_DSTBLT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, multiDstBlt, sizeof(MULTI_DSTBLT_ORDER));
 
@@ -442,16 +516,20 @@ static BOOL update_message_MultiDstBlt(rdpContext* context, const MULTI_DSTBLT_O
 
 static BOOL update_message_MultiPatBlt(rdpContext* context, const MULTI_PATBLT_ORDER* multiPatBlt)
 {
-	MULTI_PATBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	MULTI_PATBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !multiPatBlt)
+	{
 		return FALSE;
+	}
 
 	wParam = (MULTI_PATBLT_ORDER*)malloc(sizeof(MULTI_PATBLT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, multiPatBlt, sizeof(MULTI_PATBLT_ORDER));
 	wParam->brush.data = (BYTE*)wParam->brush.p8x8;
@@ -463,16 +541,20 @@ static BOOL update_message_MultiPatBlt(rdpContext* context, const MULTI_PATBLT_O
 
 static BOOL update_message_MultiScrBlt(rdpContext* context, const MULTI_SCRBLT_ORDER* multiScrBlt)
 {
-	MULTI_SCRBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	MULTI_SCRBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !multiScrBlt)
+	{
 		return FALSE;
+	}
 
 	wParam = (MULTI_SCRBLT_ORDER*)malloc(sizeof(MULTI_SCRBLT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, multiScrBlt, sizeof(MULTI_SCRBLT_ORDER));
 
@@ -484,16 +566,20 @@ static BOOL update_message_MultiScrBlt(rdpContext* context, const MULTI_SCRBLT_O
 static BOOL update_message_MultiOpaqueRect(rdpContext* context,
                                            const MULTI_OPAQUE_RECT_ORDER* multiOpaqueRect)
 {
-	MULTI_OPAQUE_RECT_ORDER* wParam;
-	rdp_update_internal* up;
+	MULTI_OPAQUE_RECT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !multiOpaqueRect)
+	{
 		return FALSE;
+	}
 
 	wParam = (MULTI_OPAQUE_RECT_ORDER*)malloc(sizeof(MULTI_OPAQUE_RECT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, multiOpaqueRect, sizeof(MULTI_OPAQUE_RECT_ORDER));
 
@@ -505,16 +591,20 @@ static BOOL update_message_MultiOpaqueRect(rdpContext* context,
 static BOOL update_message_MultiDrawNineGrid(rdpContext* context,
                                              const MULTI_DRAW_NINE_GRID_ORDER* multiDrawNineGrid)
 {
-	MULTI_DRAW_NINE_GRID_ORDER* wParam;
-	rdp_update_internal* up;
+	MULTI_DRAW_NINE_GRID_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !multiDrawNineGrid)
+	{
 		return FALSE;
+	}
 
 	wParam = (MULTI_DRAW_NINE_GRID_ORDER*)malloc(sizeof(MULTI_DRAW_NINE_GRID_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, multiDrawNineGrid, sizeof(MULTI_DRAW_NINE_GRID_ORDER));
 	/* TODO: complete copy */
@@ -526,16 +616,20 @@ static BOOL update_message_MultiDrawNineGrid(rdpContext* context,
 
 static BOOL update_message_LineTo(rdpContext* context, const LINE_TO_ORDER* lineTo)
 {
-	LINE_TO_ORDER* wParam;
-	rdp_update_internal* up;
+	LINE_TO_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !lineTo)
+	{
 		return FALSE;
+	}
 
 	wParam = (LINE_TO_ORDER*)malloc(sizeof(LINE_TO_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, lineTo, sizeof(LINE_TO_ORDER));
 
@@ -546,16 +640,20 @@ static BOOL update_message_LineTo(rdpContext* context, const LINE_TO_ORDER* line
 
 static BOOL update_message_Polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 {
-	POLYLINE_ORDER* wParam;
-	rdp_update_internal* up;
+	POLYLINE_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !polyline)
+	{
 		return FALSE;
+	}
 
 	wParam = (POLYLINE_ORDER*)malloc(sizeof(POLYLINE_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, polyline, sizeof(POLYLINE_ORDER));
 	wParam->points = (DELTA_POINT*)calloc(wParam->numDeltaEntries, sizeof(DELTA_POINT));
@@ -575,16 +673,20 @@ static BOOL update_message_Polyline(rdpContext* context, const POLYLINE_ORDER* p
 
 static BOOL update_message_MemBlt(rdpContext* context, MEMBLT_ORDER* memBlt)
 {
-	MEMBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	MEMBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !memBlt)
+	{
 		return FALSE;
+	}
 
 	wParam = (MEMBLT_ORDER*)malloc(sizeof(MEMBLT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, memBlt, sizeof(MEMBLT_ORDER));
 
@@ -595,16 +697,20 @@ static BOOL update_message_MemBlt(rdpContext* context, MEMBLT_ORDER* memBlt)
 
 static BOOL update_message_Mem3Blt(rdpContext* context, MEM3BLT_ORDER* mem3Blt)
 {
-	MEM3BLT_ORDER* wParam;
-	rdp_update_internal* up;
+	MEM3BLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !mem3Blt)
+	{
 		return FALSE;
+	}
 
 	wParam = (MEM3BLT_ORDER*)malloc(sizeof(MEM3BLT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, mem3Blt, sizeof(MEM3BLT_ORDER));
 	wParam->brush.data = (BYTE*)wParam->brush.p8x8;
@@ -616,16 +722,20 @@ static BOOL update_message_Mem3Blt(rdpContext* context, MEM3BLT_ORDER* mem3Blt)
 
 static BOOL update_message_SaveBitmap(rdpContext* context, const SAVE_BITMAP_ORDER* saveBitmap)
 {
-	SAVE_BITMAP_ORDER* wParam;
-	rdp_update_internal* up;
+	SAVE_BITMAP_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !saveBitmap)
+	{
 		return FALSE;
+	}
 
 	wParam = (SAVE_BITMAP_ORDER*)malloc(sizeof(SAVE_BITMAP_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, saveBitmap, sizeof(SAVE_BITMAP_ORDER));
 
@@ -636,16 +746,20 @@ static BOOL update_message_SaveBitmap(rdpContext* context, const SAVE_BITMAP_ORD
 
 static BOOL update_message_GlyphIndex(rdpContext* context, GLYPH_INDEX_ORDER* glyphIndex)
 {
-	GLYPH_INDEX_ORDER* wParam;
-	rdp_update_internal* up;
+	GLYPH_INDEX_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !glyphIndex)
+	{
 		return FALSE;
+	}
 
 	wParam = (GLYPH_INDEX_ORDER*)malloc(sizeof(GLYPH_INDEX_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, glyphIndex, sizeof(GLYPH_INDEX_ORDER));
 	wParam->brush.data = (BYTE*)wParam->brush.p8x8;
@@ -657,16 +771,20 @@ static BOOL update_message_GlyphIndex(rdpContext* context, GLYPH_INDEX_ORDER* gl
 
 static BOOL update_message_FastIndex(rdpContext* context, const FAST_INDEX_ORDER* fastIndex)
 {
-	FAST_INDEX_ORDER* wParam;
-	rdp_update_internal* up;
+	FAST_INDEX_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !fastIndex)
+	{
 		return FALSE;
+	}
 
 	wParam = (FAST_INDEX_ORDER*)malloc(sizeof(FAST_INDEX_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, fastIndex, sizeof(FAST_INDEX_ORDER));
 
@@ -677,16 +795,20 @@ static BOOL update_message_FastIndex(rdpContext* context, const FAST_INDEX_ORDER
 
 static BOOL update_message_FastGlyph(rdpContext* context, const FAST_GLYPH_ORDER* fastGlyph)
 {
-	FAST_GLYPH_ORDER* wParam;
-	rdp_update_internal* up;
+	FAST_GLYPH_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !fastGlyph)
+	{
 		return FALSE;
+	}
 
 	wParam = (FAST_GLYPH_ORDER*)malloc(sizeof(FAST_GLYPH_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, fastGlyph, sizeof(FAST_GLYPH_ORDER));
 
@@ -714,16 +836,20 @@ static BOOL update_message_FastGlyph(rdpContext* context, const FAST_GLYPH_ORDER
 
 static BOOL update_message_PolygonSC(rdpContext* context, const POLYGON_SC_ORDER* polygonSC)
 {
-	POLYGON_SC_ORDER* wParam;
-	rdp_update_internal* up;
+	POLYGON_SC_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !polygonSC)
+	{
 		return FALSE;
+	}
 
 	wParam = (POLYGON_SC_ORDER*)malloc(sizeof(POLYGON_SC_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, polygonSC, sizeof(POLYGON_SC_ORDER));
 	wParam->points = (DELTA_POINT*)calloc(wParam->numPoints, sizeof(DELTA_POINT));
@@ -743,16 +869,20 @@ static BOOL update_message_PolygonSC(rdpContext* context, const POLYGON_SC_ORDER
 
 static BOOL update_message_PolygonCB(rdpContext* context, POLYGON_CB_ORDER* polygonCB)
 {
-	POLYGON_CB_ORDER* wParam;
-	rdp_update_internal* up;
+	POLYGON_CB_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !polygonCB)
+	{
 		return FALSE;
+	}
 
 	wParam = (POLYGON_CB_ORDER*)malloc(sizeof(POLYGON_CB_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, polygonCB, sizeof(POLYGON_CB_ORDER));
 	wParam->points = (DELTA_POINT*)calloc(wParam->numPoints, sizeof(DELTA_POINT));
@@ -773,16 +903,20 @@ static BOOL update_message_PolygonCB(rdpContext* context, POLYGON_CB_ORDER* poly
 
 static BOOL update_message_EllipseSC(rdpContext* context, const ELLIPSE_SC_ORDER* ellipseSC)
 {
-	ELLIPSE_SC_ORDER* wParam;
-	rdp_update_internal* up;
+	ELLIPSE_SC_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !ellipseSC)
+	{
 		return FALSE;
+	}
 
 	wParam = (ELLIPSE_SC_ORDER*)malloc(sizeof(ELLIPSE_SC_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, ellipseSC, sizeof(ELLIPSE_SC_ORDER));
 
@@ -793,16 +927,20 @@ static BOOL update_message_EllipseSC(rdpContext* context, const ELLIPSE_SC_ORDER
 
 static BOOL update_message_EllipseCB(rdpContext* context, const ELLIPSE_CB_ORDER* ellipseCB)
 {
-	ELLIPSE_CB_ORDER* wParam;
-	rdp_update_internal* up;
+	ELLIPSE_CB_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !ellipseCB)
+	{
 		return FALSE;
+	}
 
 	wParam = (ELLIPSE_CB_ORDER*)malloc(sizeof(ELLIPSE_CB_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, ellipseCB, sizeof(ELLIPSE_CB_ORDER));
 	wParam->brush.data = (BYTE*)wParam->brush.p8x8;
@@ -817,16 +955,20 @@ static BOOL update_message_EllipseCB(rdpContext* context, const ELLIPSE_CB_ORDER
 static BOOL update_message_CacheBitmap(rdpContext* context,
                                        const CACHE_BITMAP_ORDER* cacheBitmapOrder)
 {
-	CACHE_BITMAP_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_BITMAP_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheBitmapOrder)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_cache_bitmap_order(context, cacheBitmapOrder);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(SecondaryUpdate, CacheBitmap),
@@ -836,16 +978,20 @@ static BOOL update_message_CacheBitmap(rdpContext* context,
 static BOOL update_message_CacheBitmapV2(rdpContext* context,
                                          CACHE_BITMAP_V2_ORDER* cacheBitmapV2Order)
 {
-	CACHE_BITMAP_V2_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_BITMAP_V2_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheBitmapV2Order)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_cache_bitmap_v2_order(context, cacheBitmapV2Order);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context,
@@ -855,16 +1001,20 @@ static BOOL update_message_CacheBitmapV2(rdpContext* context,
 static BOOL update_message_CacheBitmapV3(rdpContext* context,
                                          CACHE_BITMAP_V3_ORDER* cacheBitmapV3Order)
 {
-	CACHE_BITMAP_V3_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_BITMAP_V3_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheBitmapV3Order)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_cache_bitmap_v3_order(context, cacheBitmapV3Order);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context,
@@ -874,16 +1024,20 @@ static BOOL update_message_CacheBitmapV3(rdpContext* context,
 static BOOL update_message_CacheColorTable(rdpContext* context,
                                            const CACHE_COLOR_TABLE_ORDER* cacheColorTableOrder)
 {
-	CACHE_COLOR_TABLE_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_COLOR_TABLE_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheColorTableOrder)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_cache_color_table_order(context, cacheColorTableOrder);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context,
@@ -892,16 +1046,20 @@ static BOOL update_message_CacheColorTable(rdpContext* context,
 
 static BOOL update_message_CacheGlyph(rdpContext* context, const CACHE_GLYPH_ORDER* cacheGlyphOrder)
 {
-	CACHE_GLYPH_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_GLYPH_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheGlyphOrder)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_cache_glyph_order(context, cacheGlyphOrder);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(SecondaryUpdate, CacheGlyph),
@@ -911,16 +1069,20 @@ static BOOL update_message_CacheGlyph(rdpContext* context, const CACHE_GLYPH_ORD
 static BOOL update_message_CacheGlyphV2(rdpContext* context,
                                         const CACHE_GLYPH_V2_ORDER* cacheGlyphV2Order)
 {
-	CACHE_GLYPH_V2_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_GLYPH_V2_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheGlyphV2Order)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_cache_glyph_v2_order(context, cacheGlyphV2Order);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context,
@@ -929,16 +1091,20 @@ static BOOL update_message_CacheGlyphV2(rdpContext* context,
 
 static BOOL update_message_CacheBrush(rdpContext* context, const CACHE_BRUSH_ORDER* cacheBrushOrder)
 {
-	CACHE_BRUSH_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_BRUSH_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheBrushOrder)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_cache_brush_order(context, cacheBrushOrder);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(SecondaryUpdate, CacheBrush),
@@ -951,16 +1117,20 @@ static BOOL
 update_message_CreateOffscreenBitmap(rdpContext* context,
                                      const CREATE_OFFSCREEN_BITMAP_ORDER* createOffscreenBitmap)
 {
-	CREATE_OFFSCREEN_BITMAP_ORDER* wParam;
-	rdp_update_internal* up;
+	CREATE_OFFSCREEN_BITMAP_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !createOffscreenBitmap)
+	{
 		return FALSE;
+	}
 
 	wParam = (CREATE_OFFSCREEN_BITMAP_ORDER*)malloc(sizeof(CREATE_OFFSCREEN_BITMAP_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, createOffscreenBitmap, sizeof(CREATE_OFFSCREEN_BITMAP_ORDER));
 	wParam->deleteList.cIndices = createOffscreenBitmap->deleteList.cIndices;
@@ -985,16 +1155,20 @@ update_message_CreateOffscreenBitmap(rdpContext* context,
 static BOOL update_message_SwitchSurface(rdpContext* context,
                                          const SWITCH_SURFACE_ORDER* switchSurface)
 {
-	SWITCH_SURFACE_ORDER* wParam;
-	rdp_update_internal* up;
+	SWITCH_SURFACE_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !switchSurface)
+	{
 		return FALSE;
+	}
 
 	wParam = (SWITCH_SURFACE_ORDER*)malloc(sizeof(SWITCH_SURFACE_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, switchSurface, sizeof(SWITCH_SURFACE_ORDER));
 
@@ -1007,16 +1181,20 @@ static BOOL
 update_message_CreateNineGridBitmap(rdpContext* context,
                                     const CREATE_NINE_GRID_BITMAP_ORDER* createNineGridBitmap)
 {
-	CREATE_NINE_GRID_BITMAP_ORDER* wParam;
-	rdp_update_internal* up;
+	CREATE_NINE_GRID_BITMAP_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !createNineGridBitmap)
+	{
 		return FALSE;
+	}
 
 	wParam = (CREATE_NINE_GRID_BITMAP_ORDER*)malloc(sizeof(CREATE_NINE_GRID_BITMAP_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, createNineGridBitmap, sizeof(CREATE_NINE_GRID_BITMAP_ORDER));
 
@@ -1028,16 +1206,20 @@ update_message_CreateNineGridBitmap(rdpContext* context,
 
 static BOOL update_message_FrameMarker(rdpContext* context, const FRAME_MARKER_ORDER* frameMarker)
 {
-	FRAME_MARKER_ORDER* wParam;
-	rdp_update_internal* up;
+	FRAME_MARKER_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !frameMarker)
+	{
 		return FALSE;
+	}
 
 	wParam = (FRAME_MARKER_ORDER*)malloc(sizeof(FRAME_MARKER_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, frameMarker, sizeof(FRAME_MARKER_ORDER));
 
@@ -1049,16 +1231,20 @@ static BOOL update_message_FrameMarker(rdpContext* context, const FRAME_MARKER_O
 static BOOL update_message_StreamBitmapFirst(rdpContext* context,
                                              const STREAM_BITMAP_FIRST_ORDER* streamBitmapFirst)
 {
-	STREAM_BITMAP_FIRST_ORDER* wParam;
-	rdp_update_internal* up;
+	STREAM_BITMAP_FIRST_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !streamBitmapFirst)
+	{
 		return FALSE;
+	}
 
 	wParam = (STREAM_BITMAP_FIRST_ORDER*)malloc(sizeof(STREAM_BITMAP_FIRST_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, streamBitmapFirst, sizeof(STREAM_BITMAP_FIRST_ORDER));
 	/* TODO: complete copy */
@@ -1071,16 +1257,20 @@ static BOOL update_message_StreamBitmapFirst(rdpContext* context,
 static BOOL update_message_StreamBitmapNext(rdpContext* context,
                                             const STREAM_BITMAP_NEXT_ORDER* streamBitmapNext)
 {
-	STREAM_BITMAP_NEXT_ORDER* wParam;
-	rdp_update_internal* up;
+	STREAM_BITMAP_NEXT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !streamBitmapNext)
+	{
 		return FALSE;
+	}
 
 	wParam = (STREAM_BITMAP_NEXT_ORDER*)malloc(sizeof(STREAM_BITMAP_NEXT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, streamBitmapNext, sizeof(STREAM_BITMAP_NEXT_ORDER));
 	/* TODO: complete copy */
@@ -1093,16 +1283,20 @@ static BOOL update_message_StreamBitmapNext(rdpContext* context,
 static BOOL update_message_DrawGdiPlusFirst(rdpContext* context,
                                             const DRAW_GDIPLUS_FIRST_ORDER* drawGdiPlusFirst)
 {
-	DRAW_GDIPLUS_FIRST_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_GDIPLUS_FIRST_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawGdiPlusFirst)
+	{
 		return FALSE;
+	}
 
 	wParam = (DRAW_GDIPLUS_FIRST_ORDER*)malloc(sizeof(DRAW_GDIPLUS_FIRST_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, drawGdiPlusFirst, sizeof(DRAW_GDIPLUS_FIRST_ORDER));
 	/* TODO: complete copy */
@@ -1114,16 +1308,20 @@ static BOOL update_message_DrawGdiPlusFirst(rdpContext* context,
 static BOOL update_message_DrawGdiPlusNext(rdpContext* context,
                                            const DRAW_GDIPLUS_NEXT_ORDER* drawGdiPlusNext)
 {
-	DRAW_GDIPLUS_NEXT_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_GDIPLUS_NEXT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawGdiPlusNext)
+	{
 		return FALSE;
+	}
 
 	wParam = (DRAW_GDIPLUS_NEXT_ORDER*)malloc(sizeof(DRAW_GDIPLUS_NEXT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, drawGdiPlusNext, sizeof(DRAW_GDIPLUS_NEXT_ORDER));
 	/* TODO: complete copy */
@@ -1136,16 +1334,20 @@ static BOOL update_message_DrawGdiPlusNext(rdpContext* context,
 static BOOL update_message_DrawGdiPlusEnd(rdpContext* context,
                                           const DRAW_GDIPLUS_END_ORDER* drawGdiPlusEnd)
 {
-	DRAW_GDIPLUS_END_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_GDIPLUS_END_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawGdiPlusEnd)
+	{
 		return FALSE;
+	}
 
 	wParam = (DRAW_GDIPLUS_END_ORDER*)malloc(sizeof(DRAW_GDIPLUS_END_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, drawGdiPlusEnd, sizeof(DRAW_GDIPLUS_END_ORDER));
 	/* TODO: complete copy */
@@ -1159,16 +1361,20 @@ static BOOL
 update_message_DrawGdiPlusCacheFirst(rdpContext* context,
                                      const DRAW_GDIPLUS_CACHE_FIRST_ORDER* drawGdiPlusCacheFirst)
 {
-	DRAW_GDIPLUS_CACHE_FIRST_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_GDIPLUS_CACHE_FIRST_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawGdiPlusCacheFirst)
+	{
 		return FALSE;
+	}
 
 	wParam = (DRAW_GDIPLUS_CACHE_FIRST_ORDER*)malloc(sizeof(DRAW_GDIPLUS_CACHE_FIRST_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, drawGdiPlusCacheFirst, sizeof(DRAW_GDIPLUS_CACHE_FIRST_ORDER));
 	/* TODO: complete copy */
@@ -1183,16 +1389,20 @@ static BOOL
 update_message_DrawGdiPlusCacheNext(rdpContext* context,
                                     const DRAW_GDIPLUS_CACHE_NEXT_ORDER* drawGdiPlusCacheNext)
 {
-	DRAW_GDIPLUS_CACHE_NEXT_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_GDIPLUS_CACHE_NEXT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawGdiPlusCacheNext)
+	{
 		return FALSE;
+	}
 
 	wParam = (DRAW_GDIPLUS_CACHE_NEXT_ORDER*)malloc(sizeof(DRAW_GDIPLUS_CACHE_NEXT_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, drawGdiPlusCacheNext, sizeof(DRAW_GDIPLUS_CACHE_NEXT_ORDER));
 	/* TODO: complete copy */
@@ -1207,16 +1417,20 @@ static BOOL
 update_message_DrawGdiPlusCacheEnd(rdpContext* context,
                                    const DRAW_GDIPLUS_CACHE_END_ORDER* drawGdiPlusCacheEnd)
 {
-	DRAW_GDIPLUS_CACHE_END_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_GDIPLUS_CACHE_END_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawGdiPlusCacheEnd)
+	{
 		return FALSE;
+	}
 
 	wParam = (DRAW_GDIPLUS_CACHE_END_ORDER*)malloc(sizeof(DRAW_GDIPLUS_CACHE_END_ORDER));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, drawGdiPlusCacheEnd, sizeof(DRAW_GDIPLUS_CACHE_END_ORDER));
 	/* TODO: complete copy */
@@ -1231,17 +1445,21 @@ update_message_DrawGdiPlusCacheEnd(rdpContext* context,
 static BOOL update_message_WindowCreate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                         const WINDOW_STATE_ORDER* windowState)
 {
-	WINDOW_ORDER_INFO* wParam;
-	WINDOW_STATE_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	WINDOW_STATE_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !windowState)
+	{
 		return FALSE;
+	}
 
 	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
 	lParam = (WINDOW_STATE_ORDER*)malloc(sizeof(WINDOW_STATE_ORDER));
@@ -1262,17 +1480,21 @@ static BOOL update_message_WindowCreate(rdpContext* context, const WINDOW_ORDER_
 static BOOL update_message_WindowUpdate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                         const WINDOW_STATE_ORDER* windowState)
 {
-	WINDOW_ORDER_INFO* wParam;
-	WINDOW_STATE_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	WINDOW_STATE_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !windowState)
+	{
 		return FALSE;
+	}
 
 	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
 	lParam = (WINDOW_STATE_ORDER*)malloc(sizeof(WINDOW_STATE_ORDER));
@@ -1293,28 +1515,36 @@ static BOOL update_message_WindowUpdate(rdpContext* context, const WINDOW_ORDER_
 static BOOL update_message_WindowIcon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                       const WINDOW_ICON_ORDER* windowIcon)
 {
-	WINDOW_ORDER_INFO* wParam;
-	WINDOW_ICON_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	WINDOW_ICON_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !windowIcon)
+	{
 		return FALSE;
+	}
 
 	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
 	lParam = (WINDOW_ICON_ORDER*)calloc(1, sizeof(WINDOW_ICON_ORDER));
 
 	if (!lParam)
+	{
 		goto out_fail;
+	}
 
 	lParam->iconInfo = calloc(1, sizeof(ICON_INFO));
 
 	if (!lParam->iconInfo)
+	{
 		goto out_fail;
+	}
 
 	CopyMemory(lParam, windowIcon, sizeof(WINDOW_ICON_ORDER));
 	WLog_VRB(TAG, "update_message_WindowIcon");
@@ -1324,7 +1554,9 @@ static BOOL update_message_WindowIcon(rdpContext* context, const WINDOW_ORDER_IN
 		lParam->iconInfo->bitsColor = (BYTE*)malloc(windowIcon->iconInfo->cbBitsColor);
 
 		if (!lParam->iconInfo->bitsColor)
+		{
 			goto out_fail;
+		}
 
 		CopyMemory(lParam->iconInfo->bitsColor, windowIcon->iconInfo->bitsColor,
 		           windowIcon->iconInfo->cbBitsColor);
@@ -1335,7 +1567,9 @@ static BOOL update_message_WindowIcon(rdpContext* context, const WINDOW_ORDER_IN
 		lParam->iconInfo->bitsMask = (BYTE*)malloc(windowIcon->iconInfo->cbBitsMask);
 
 		if (!lParam->iconInfo->bitsMask)
+		{
 			goto out_fail;
+		}
 
 		CopyMemory(lParam->iconInfo->bitsMask, windowIcon->iconInfo->bitsMask,
 		           windowIcon->iconInfo->cbBitsMask);
@@ -1346,7 +1580,9 @@ static BOOL update_message_WindowIcon(rdpContext* context, const WINDOW_ORDER_IN
 		lParam->iconInfo->colorTable = (BYTE*)malloc(windowIcon->iconInfo->cbColorTable);
 
 		if (!lParam->iconInfo->colorTable)
+		{
 			goto out_fail;
+		}
 
 		CopyMemory(lParam->iconInfo->colorTable, windowIcon->iconInfo->colorTable,
 		           windowIcon->iconInfo->cbColorTable);
@@ -1373,17 +1609,21 @@ out_fail:
 static BOOL update_message_WindowCachedIcon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                             const WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
 {
-	WINDOW_ORDER_INFO* wParam;
-	WINDOW_CACHED_ICON_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	WINDOW_CACHED_ICON_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !windowCachedIcon)
+	{
 		return FALSE;
+	}
 
 	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
 	lParam = (WINDOW_CACHED_ICON_ORDER*)malloc(sizeof(WINDOW_CACHED_ICON_ORDER));
@@ -1404,16 +1644,20 @@ static BOOL update_message_WindowCachedIcon(rdpContext* context, const WINDOW_OR
 
 static BOOL update_message_WindowDelete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
-	WINDOW_ORDER_INFO* wParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo)
+	{
 		return FALSE;
+	}
 
 	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
 
@@ -1425,17 +1669,21 @@ static BOOL update_message_WindowDelete(rdpContext* context, const WINDOW_ORDER_
 static BOOL update_message_NotifyIconCreate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                             const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
-	WINDOW_ORDER_INFO* wParam;
-	NOTIFY_ICON_STATE_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	NOTIFY_ICON_STATE_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !notifyIconState)
+	{
 		return FALSE;
+	}
 
 	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
 	lParam = (NOTIFY_ICON_STATE_ORDER*)malloc(sizeof(NOTIFY_ICON_STATE_ORDER));
@@ -1457,17 +1705,21 @@ static BOOL update_message_NotifyIconCreate(rdpContext* context, const WINDOW_OR
 static BOOL update_message_NotifyIconUpdate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                             const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
-	WINDOW_ORDER_INFO* wParam;
-	NOTIFY_ICON_STATE_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	NOTIFY_ICON_STATE_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !notifyIconState)
+	{
 		return FALSE;
+	}
 
 	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
 	lParam = (NOTIFY_ICON_STATE_ORDER*)malloc(sizeof(NOTIFY_ICON_STATE_ORDER));
@@ -1488,16 +1740,20 @@ static BOOL update_message_NotifyIconUpdate(rdpContext* context, const WINDOW_OR
 
 static BOOL update_message_NotifyIconDelete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
-	WINDOW_ORDER_INFO* wParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo)
+	{
 		return FALSE;
+	}
 
 	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
 
@@ -1509,17 +1765,21 @@ static BOOL update_message_NotifyIconDelete(rdpContext* context, const WINDOW_OR
 static BOOL update_message_MonitoredDesktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                             const MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
-	WINDOW_ORDER_INFO* wParam;
-	MONITORED_DESKTOP_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	MONITORED_DESKTOP_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !monitoredDesktop)
+	{
 		return FALSE;
+	}
 
 	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
 	lParam = (MONITORED_DESKTOP_ORDER*)malloc(sizeof(MONITORED_DESKTOP_ORDER));
@@ -1548,16 +1808,20 @@ static BOOL update_message_MonitoredDesktop(rdpContext* context, const WINDOW_OR
 static BOOL update_message_NonMonitoredDesktop(rdpContext* context,
                                                const WINDOW_ORDER_INFO* orderInfo)
 {
-	WINDOW_ORDER_INFO* wParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo)
+	{
 		return FALSE;
+	}
 
 	wParam = (WINDOW_ORDER_INFO*)malloc(sizeof(WINDOW_ORDER_INFO));
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	CopyMemory(wParam, orderInfo, sizeof(WINDOW_ORDER_INFO));
 
@@ -1571,16 +1835,20 @@ static BOOL update_message_NonMonitoredDesktop(rdpContext* context,
 static BOOL update_message_PointerPosition(rdpContext* context,
                                            const POINTER_POSITION_UPDATE* pointerPosition)
 {
-	POINTER_POSITION_UPDATE* wParam;
-	rdp_update_internal* up;
+	POINTER_POSITION_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !pointerPosition)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_pointer_position_update(context, pointerPosition);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context,
@@ -1590,16 +1858,20 @@ static BOOL update_message_PointerPosition(rdpContext* context,
 static BOOL update_message_PointerSystem(rdpContext* context,
                                          const POINTER_SYSTEM_UPDATE* pointerSystem)
 {
-	POINTER_SYSTEM_UPDATE* wParam;
-	rdp_update_internal* up;
+	POINTER_SYSTEM_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !pointerSystem)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_pointer_system_update(context, pointerSystem);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(PointerUpdate, PointerSystem),
@@ -1609,16 +1881,20 @@ static BOOL update_message_PointerSystem(rdpContext* context,
 static BOOL update_message_PointerColor(rdpContext* context,
                                         const POINTER_COLOR_UPDATE* pointerColor)
 {
-	POINTER_COLOR_UPDATE* wParam;
-	rdp_update_internal* up;
+	POINTER_COLOR_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !pointerColor)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_pointer_color_update(context, pointerColor);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(PointerUpdate, PointerColor),
@@ -1627,16 +1903,20 @@ static BOOL update_message_PointerColor(rdpContext* context,
 
 static BOOL update_message_PointerLarge(rdpContext* context, const POINTER_LARGE_UPDATE* pointer)
 {
-	POINTER_LARGE_UPDATE* wParam;
-	rdp_update_internal* up;
+	POINTER_LARGE_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !pointer)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_pointer_large_update(context, pointer);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(PointerUpdate, PointerLarge),
@@ -1645,16 +1925,20 @@ static BOOL update_message_PointerLarge(rdpContext* context, const POINTER_LARGE
 
 static BOOL update_message_PointerNew(rdpContext* context, const POINTER_NEW_UPDATE* pointerNew)
 {
-	POINTER_NEW_UPDATE* wParam;
-	rdp_update_internal* up;
+	POINTER_NEW_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !pointerNew)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_pointer_new_update(context, pointerNew);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(PointerUpdate, PointerNew),
@@ -1664,16 +1948,20 @@ static BOOL update_message_PointerNew(rdpContext* context, const POINTER_NEW_UPD
 static BOOL update_message_PointerCached(rdpContext* context,
                                          const POINTER_CACHED_UPDATE* pointerCached)
 {
-	POINTER_CACHED_UPDATE* wParam;
-	rdp_update_internal* up;
+	POINTER_CACHED_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !pointerCached)
+	{
 		return FALSE;
+	}
 
 	wParam = copy_pointer_cached_update(context, pointerCached);
 
 	if (!wParam)
+	{
 		return FALSE;
+	}
 
 	up = update_cast(context->update);
 	return MessageQueue_Post(up->queue, (void*)context, MakeMessageId(PointerUpdate, PointerCached),
@@ -1683,10 +1971,12 @@ static BOOL update_message_PointerCached(rdpContext* context,
 /* Message Queue */
 static BOOL update_message_free_update_class(wMessage* msg, int type)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!msg)
+	{
 		return FALSE;
+	}
 
 	context = (rdpContext*)msg->context;
 
@@ -1769,7 +2059,9 @@ static BOOL update_message_process_update_class(rdpUpdateProxy* proxy, wMessage*
 	BOOL rc = FALSE;
 
 	if (!proxy || !msg)
+	{
 		return FALSE;
+	}
 
 	switch (type)
 	{
@@ -1860,7 +2152,9 @@ static BOOL update_message_process_update_class(rdpUpdateProxy* proxy, wMessage*
 static BOOL update_message_free_primary_update_class(wMessage* msg, int type)
 {
 	if (!msg)
+	{
 		return FALSE;
+	}
 
 	switch (type)
 	{
@@ -1979,7 +2273,9 @@ static BOOL update_message_process_primary_update_class(rdpUpdateProxy* proxy, w
                                                         int type)
 {
 	if (!proxy || !msg)
+	{
 		return FALSE;
+	}
 
 	switch (type)
 	{
@@ -2071,10 +2367,12 @@ static BOOL update_message_process_primary_update_class(rdpUpdateProxy* proxy, w
 
 static BOOL update_message_free_secondary_update_class(wMessage* msg, int type)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!msg)
+	{
 		return FALSE;
+	}
 
 	context = msg->context;
 
@@ -2140,7 +2438,9 @@ static BOOL update_message_process_secondary_update_class(rdpUpdateProxy* proxy,
                                                           int type)
 {
 	if (!proxy || !msg)
+	{
 		return FALSE;
+	}
 
 	switch (type)
 	{
@@ -2180,7 +2480,9 @@ static BOOL update_message_process_secondary_update_class(rdpUpdateProxy* proxy,
 static BOOL update_message_free_altsec_update_class(wMessage* msg, int type)
 {
 	if (!msg)
+	{
 		return FALSE;
+	}
 
 	switch (type)
 	{
@@ -2247,7 +2549,9 @@ static BOOL update_message_process_altsec_update_class(rdpUpdateProxy* proxy, wM
                                                        int type)
 {
 	if (!proxy || !msg)
+	{
 		return FALSE;
+	}
 
 	switch (type)
 	{
@@ -2307,7 +2611,9 @@ static BOOL update_message_process_altsec_update_class(rdpUpdateProxy* proxy, wM
 static BOOL update_message_free_window_update_class(wMessage* msg, int type)
 {
 	if (!msg)
+	{
 		return FALSE;
+	}
 
 	switch (type)
 	{
@@ -2394,7 +2700,9 @@ static BOOL update_message_process_window_update_class(rdpUpdateProxy* proxy, wM
                                                        int type)
 {
 	if (!proxy || !msg)
+	{
 		return FALSE;
+	}
 
 	switch (type)
 	{
@@ -2452,10 +2760,12 @@ static BOOL update_message_process_window_update_class(rdpUpdateProxy* proxy, wM
 
 static BOOL update_message_free_pointer_update_class(wMessage* msg, int type)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!msg)
+	{
 		return FALSE;
+	}
 
 	context = msg->context;
 
@@ -2507,7 +2817,9 @@ static BOOL update_message_process_pointer_update_class(rdpUpdateProxy* proxy, w
                                                         int type)
 {
 	if (!proxy || !msg)
+	{
 		return FALSE;
+	}
 
 	switch (type)
 	{
@@ -2571,7 +2883,9 @@ static BOOL update_message_free_class(wMessage* msg, int msgClass, int msgType)
 	}
 
 	if (!status)
+	{
 		WLog_ERR(TAG, "Unknown message: class: %d type: %d", msgClass, msgType);
+	}
 
 	return status;
 }
@@ -2623,16 +2937,20 @@ static int update_message_process_class(rdpUpdateProxy* proxy, wMessage* msg, in
 
 int update_message_queue_process_message(rdpUpdate* update, wMessage* message)
 {
-	int status;
-	int msgClass;
-	int msgType;
+	int status = 0;
+	int msgClass = 0;
+	int msgType = 0;
 	rdp_update_internal* up = update_cast(update);
 
 	if (!update || !message)
+	{
 		return -1;
+	}
 
 	if (message->id == WMQ_QUIT)
+	{
 		return 0;
+	}
 
 	msgClass = GetMessageClass(message->id);
 	msgType = GetMessageType(message->id);
@@ -2640,21 +2958,27 @@ int update_message_queue_process_message(rdpUpdate* update, wMessage* message)
 	update_message_free_class(message, msgClass, msgType);
 
 	if (status < 0)
+	{
 		return -1;
+	}
 
 	return 1;
 }
 
 int update_message_queue_free_message(wMessage* message)
 {
-	int msgClass;
-	int msgType;
+	int msgClass = 0;
+	int msgType = 0;
 
 	if (!message)
+	{
 		return -1;
+	}
 
 	if (message->id == WMQ_QUIT)
+	{
 		return 0;
+	}
 
 	msgClass = GetMessageClass(message->id);
 	msgType = GetMessageType(message->id);
@@ -2674,7 +2998,9 @@ int update_message_queue_process_pending_messages(rdpUpdate* update)
 		status = update_message_queue_process_message(update, &message);
 
 		if (!status)
+		{
 			break;
+		}
 	}
 
 	return status;
@@ -2682,14 +3008,16 @@ int update_message_queue_process_pending_messages(rdpUpdate* update)
 
 static BOOL update_message_register_interface(rdpUpdateProxy* message, rdpUpdate* update)
 {
-	rdpPrimaryUpdate* primary;
-	rdpSecondaryUpdate* secondary;
-	rdpAltSecUpdate* altsec;
-	rdpWindowUpdate* window;
-	rdpPointerUpdate* pointer;
+	rdpPrimaryUpdate* primary = NULL;
+	rdpSecondaryUpdate* secondary = NULL;
+	rdpAltSecUpdate* altsec = NULL;
+	rdpWindowUpdate* window = NULL;
+	rdpPointerUpdate* pointer = NULL;
 
 	if (!message || !update)
+	{
 		return FALSE;
+	}
 
 	primary = update->primary;
 	secondary = update->secondary;
@@ -2698,7 +3026,9 @@ static BOOL update_message_register_interface(rdpUpdateProxy* message, rdpUpdate
 	pointer = update->pointer;
 
 	if (!primary || !secondary || !altsec || !window || !pointer)
+	{
 		return FALSE;
+	}
 
 	/* Update */
 	message->BeginPaint = update->BeginPaint;
@@ -2866,10 +3196,14 @@ static DWORD WINAPI update_message_proxy_thread(LPVOID arg)
 		int status = 0;
 
 		if (MessageQueue_Peek(up->queue, &message, TRUE))
+		{
 			status = update_message_queue_process_message(update, &message);
+		}
 
 		if (!status)
+		{
 			break;
+		}
 	}
 
 	ExitThread(0);
@@ -2881,10 +3215,14 @@ rdpUpdateProxy* update_message_proxy_new(rdpUpdate* update)
 	rdpUpdateProxy* message = NULL;
 
 	if (!update)
+	{
 		return NULL;
+	}
 
 	if (!(message = (rdpUpdateProxy*)calloc(1, sizeof(rdpUpdateProxy))))
+	{
 		return NULL;
+	}
 
 	message->update = update;
 	update_message_register_interface(message, update);
@@ -2905,7 +3243,9 @@ void update_message_proxy_free(rdpUpdateProxy* message)
 	{
 		rdp_update_internal* up = update_cast(message->update);
 		if (MessageQueue_PostQuit(up->queue, 0))
+		{
 			WaitForSingleObject(message->thread, INFINITE);
+		}
 
 		CloseHandle(message->thread);
 		free(message);
@@ -2955,7 +3295,9 @@ static int input_message_process_input_class(rdpInputProxy* proxy, wMessage* msg
 	int status = 0;
 
 	if (!proxy || !msg)
+	{
 		return -1;
+	}
 
 	switch (type)
 	{
@@ -2975,8 +3317,9 @@ static int input_message_process_input_class(rdpInputProxy* proxy, wMessage* msg
 
 		case Input_MouseEvent:
 		{
-			UINT32 pos;
-			UINT16 x, y;
+			UINT32 pos = 0;
+			UINT16 x;
+			UINT16 y;
 			pos = (UINT32)(size_t)msg->lParam;
 			x = ((pos & 0xFFFF0000) >> 16);
 			y = (pos & 0x0000FFFF);
@@ -2986,8 +3329,9 @@ static int input_message_process_input_class(rdpInputProxy* proxy, wMessage* msg
 
 		case Input_ExtendedMouseEvent:
 		{
-			UINT32 pos;
-			UINT16 x, y;
+			UINT32 pos = 0;
+			UINT16 x;
+			UINT16 y;
 			pos = (UINT32)(size_t)msg->lParam;
 			x = ((pos & 0xFFFF0000) >> 16);
 			y = (pos & 0x0000FFFF);
@@ -3027,7 +3371,9 @@ static int input_message_free_class(wMessage* msg, int msgClass, int msgType)
 	}
 
 	if (status < 0)
+	{
 		WLog_ERR(TAG, "Unknown event: class: %d type: %d", msgClass, msgType);
+	}
 
 	return status;
 }
@@ -3049,45 +3395,57 @@ static int input_message_process_class(rdpInputProxy* proxy, wMessage* msg, int 
 	}
 
 	if (status < 0)
+	{
 		WLog_ERR(TAG, "Unknown event: class: %d type: %d", msgClass, msgType);
+	}
 
 	return status;
 }
 
 int input_message_queue_free_message(wMessage* message)
 {
-	int status;
-	int msgClass;
-	int msgType;
+	int status = 0;
+	int msgClass = 0;
+	int msgType = 0;
 
 	if (!message)
+	{
 		return -1;
+	}
 
 	if (message->id == WMQ_QUIT)
+	{
 		return 0;
+	}
 
 	msgClass = GetMessageClass(message->id);
 	msgType = GetMessageType(message->id);
 	status = input_message_free_class(message, msgClass, msgType);
 
 	if (status < 0)
+	{
 		return -1;
+	}
 
 	return 1;
 }
 
 int input_message_queue_process_message(rdpInput* input, wMessage* message)
 {
-	int status;
-	int msgClass;
-	int msgType;
+	int status = 0;
+	int msgClass = 0;
+	int msgType = 0;
 	rdp_input_internal* in = input_cast(input);
 
 	if (!message)
+	{
 		return -1;
+	}
 
 	if (message->id == WMQ_QUIT)
+	{
 		return 0;
+	}
 
 	msgClass = GetMessageClass(message->id);
 	msgType = GetMessageType(message->id);
@@ -3095,7 +3453,9 @@ int input_message_queue_process_message(rdpInput* input, wMessage* message)
 	input_message_free_class(message, msgClass, msgType);
 
 	if (status < 0)
+	{
 		return -1;
+	}
 
 	return 1;
 }
@@ -3109,7 +3469,9 @@ int input_message_queue_process_pending_messages(rdpInput* input)
 	rdp_input_internal* in = input_cast(input);
 
 	if (!in->queue)
+	{
 		return -1;
+	}
 
 	queue = in->queue;
 
@@ -3118,7 +3480,9 @@ int input_message_queue_process_pending_messages(rdpInput* input)
 		status = input_message_queue_process_message(input, &message);
 
 		if (!status)
+		{
 			break;
+		}
 
 		count++;
 	}

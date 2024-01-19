@@ -50,7 +50,9 @@ void wlf_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 		wlf_disp_init(wlf->disp, (DispClientContext*)e->pInterface);
 	}
 	else
+	{
 		freerdp_client_OnChannelConnectedEventHandler(context, e);
+	}
 }
 
 void wlf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnectedEventArgs* e)
@@ -75,5 +77,7 @@ void wlf_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 		wlf_disp_uninit(wlf->disp, (DispClientContext*)e->pInterface);
 	}
 	else
+	{
 		freerdp_client_OnChannelDisconnectedEventHandler(context, e);
+	}
 }

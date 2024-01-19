@@ -88,7 +88,9 @@ static const char* support_msg = "Invalid stacktrace buffer! check if platform i
 void winpr_backtrace_free(void* buffer)
 {
 	if (!buffer)
+	{
 		return;
+	}
 
 #if defined(USE_UNWIND)
 	winpr_unwind_backtrace_free(buffer);
@@ -122,7 +124,9 @@ void* winpr_backtrace(DWORD size)
 char** winpr_backtrace_symbols(void* buffer, size_t* used)
 {
 	if (used)
+	{
 		*used = 0;
+	}
 
 	if (!buffer)
 	{
@@ -178,8 +182,9 @@ void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 
 void winpr_log_backtrace_ex(wLog* log, DWORD level, DWORD size)
 {
-	size_t used, x;
-	char** msg;
+	size_t used;
+	size_t x;
+	char** msg = NULL;
 	void* stack = winpr_backtrace(20);
 
 	if (!stack)
@@ -193,7 +198,9 @@ void winpr_log_backtrace_ex(wLog* log, DWORD level, DWORD size)
 	if (msg)
 	{
 		for (x = 0; x < used; x++)
+		{
 			WLog_Print(log, level, "%" PRIuz ": %s", x, msg[x]);
+		}
 	}
 	free(msg);
 

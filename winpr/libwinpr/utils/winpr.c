@@ -37,11 +37,17 @@
 void winpr_get_version(int* major, int* minor, int* revision)
 {
 	if (major)
+	{
 		*major = WINPR_VERSION_MAJOR;
+	}
 	if (minor)
+	{
 		*minor = WINPR_VERSION_MINOR;
+	}
 	if (revision)
+	{
 		*revision = WINPR_VERSION_REVISION;
+	}
 }
 
 const char* winpr_get_version_string(void)

@@ -24,8 +24,8 @@
 
 #include "credssp.h"
 
-#include "../sspi.h"
 #include "../../log.h"
+#include "../sspi.h"
 
 #define TAG WINPR_TAG("sspi.CredSSP")
 
@@ -45,12 +45,14 @@ static SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	CREDSSP_CONTEXT* context;
-	SSPI_CREDENTIALS* credentials;
+	CREDSSP_CONTEXT* context = NULL;
+	SSPI_CREDENTIALS* credentials = NULL;
 
 	/* behave like windows SSPIs that don't want empty context */
 	if (phContext && !phContext->dwLower && !phContext->dwUpper)
+	{
 		return SEC_E_INVALID_HANDLE;
+	}
 
 	context = (CREDSSP_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -64,7 +66,9 @@ static SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(
 		context = credssp_ContextNew();
 
 		if (!context)
+		{
 			return SEC_E_INSUFFICIENT_MEMORY;
+		}
 
 		credentials = (SSPI_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
 
@@ -85,11 +89,13 @@ static SECURITY_STATUS SEC_ENTRY credssp_InitializeSecurityContextA(
 
 CREDSSP_CONTEXT* credssp_ContextNew(void)
 {
-	CREDSSP_CONTEXT* context;
+	CREDSSP_CONTEXT* context = NULL;
 	context = (CREDSSP_CONTEXT*)calloc(1, sizeof(CREDSSP_CONTEXT));
 
 	if (!context)
+	{
 		return NULL;
+	}
 
 	return context;
 }
@@ -103,10 +109,14 @@ static SECURITY_STATUS SEC_ENTRY credssp_QueryContextAttributes(PCtxtHandle phCo
                                                                 ULONG ulAttribute, void* pBuffer)
 {
 	if (!phContext)
+	{
 		return SEC_E_INVALID_HANDLE;
+	}
 
 	if (!pBuffer)
+	{
 		return SEC_E_INSUFFICIENT_MEMORY;
+	}
 
 	WLog_ERR(TAG, "TODO: Implement");
 	return SEC_E_UNSUPPORTED_FUNCTION;
@@ -126,8 +136,8 @@ static SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleA(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	SSPI_CREDENTIALS* credentials;
-	SEC_WINNT_AUTH_IDENTITY* identity;
+	SSPI_CREDENTIALS* credentials = NULL;
+	SEC_WINNT_AUTH_IDENTITY* identity = NULL;
 
 	if (fCredentialUse == SECPKG_CRED_OUTBOUND)
 	{
@@ -139,7 +149,9 @@ static SECURITY_STATUS SEC_ENTRY credssp_AcquireCredentialsHandleA(
 		credentials = sspi_CredentialsNew();
 
 		if (!credentials)
+		{
 			return SEC_E_INSUFFICIENT_MEMORY;
+		}
 
 		identity = (SEC_WINNT_AUTH_IDENTITY*)pAuthData;
 		CopyMemory(&(credentials->identity), identity, sizeof(SEC_WINNT_AUTH_IDENTITY));
@@ -172,7 +184,9 @@ static SECURITY_STATUS SEC_ENTRY credssp_QueryCredentialsAttributesA(PCredHandle
 		    (SSPI_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
 
 		if (!credentials)
+		{
 			return SEC_E_INVALID_HANDLE;
+		}
 
 		return SEC_E_OK;
 	}
@@ -183,15 +197,19 @@ static SECURITY_STATUS SEC_ENTRY credssp_QueryCredentialsAttributesA(PCredHandle
 
 static SECURITY_STATUS SEC_ENTRY credssp_FreeCredentialsHandle(PCredHandle phCredential)
 {
-	SSPI_CREDENTIALS* credentials;
+	SSPI_CREDENTIALS* credentials = NULL;
 
 	if (!phCredential)
+	{
 		return SEC_E_INVALID_HANDLE;
+	}
 
 	credentials = (SSPI_CREDENTIALS*)sspi_SecureHandleGetLowerPointer(phCredential);
 
 	if (!credentials)
+	{
 		return SEC_E_INVALID_HANDLE;
+	}
 
 	sspi_CredentialsFree(credentials);
 	return SEC_E_OK;

@@ -38,13 +38,15 @@ BOOL state_run_failed(state_run_t status)
 BOOL state_run_success(state_run_t status)
 {
 	if (status == STATE_RUN_CONTINUE)
+	{
 		return TRUE;
+	}
 	return status >= STATE_RUN_SUCCESS;
 }
 
 const char* state_run_result_string(state_run_t status, char* buffer, size_t buffersize)
 {
-	const char* name;
+	const char* name = NULL;
 
 	switch (status)
 	{

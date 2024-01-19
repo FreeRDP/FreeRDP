@@ -31,20 +31,24 @@ struct S_PROFILER
 {
 	char* name;
 	STOPWATCH* stopwatch;
-};
+} DECLSPEC_ALIGN(16);
 
 PROFILER* profiler_create(const char* name)
 {
 	PROFILER* profiler = (PROFILER*)calloc(1, sizeof(PROFILER));
 
 	if (!profiler)
+	{
 		return NULL;
+	}
 
 	profiler->name = _strdup(name);
 	profiler->stopwatch = stopwatch_create();
 
 	if (!profiler->name || !profiler->stopwatch)
+	{
 		goto fail;
+	}
 
 	return profiler;
 fail:

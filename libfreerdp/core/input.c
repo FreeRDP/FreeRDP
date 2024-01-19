@@ -60,11 +60,13 @@ static void rdp_write_input_event_header(wStream* s, UINT32 time, UINT16 type)
 
 static wStream* rdp_client_input_pdu_init(rdpRdp* rdp, UINT16 type)
 {
-	wStream* s;
+	wStream* s = NULL;
 	s = rdp_data_pdu_init(rdp);
 
 	if (!s)
+	{
 		return NULL;
+	}
 
 	rdp_write_client_input_pdu_header(s, 1);
 	rdp_write_input_event_header(s, 0, type);
@@ -97,21 +99,27 @@ static BOOL input_ensure_client_running(rdpInput* input)
 
 static BOOL input_send_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	wStream* s;
-	rdpRdp* rdp;
+	wStream* s = NULL;
+	rdpRdp* rdp = NULL;
 
 	if (!input || !input->context)
+	{
 		return FALSE;
+	}
 
 	rdp = input->context->rdp;
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_SYNC);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	input_write_synchronize_event(s, flags);
 	return rdp_send_client_input_pdu(rdp, s);
@@ -129,21 +137,27 @@ static void input_write_keyboard_event(wStream* s, UINT16 flags, UINT16 code)
 
 static BOOL input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
-	wStream* s;
-	rdpRdp* rdp;
+	wStream* s = NULL;
+	rdpRdp* rdp = NULL;
 
 	if (!input || !input->context)
+	{
 		return FALSE;
+	}
 
 	rdp = input->context->rdp;
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_SCANCODE);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	input_write_keyboard_event(s, flags, code);
 	return rdp_send_client_input_pdu(rdp, s);
@@ -158,14 +172,18 @@ static void input_write_unicode_keyboard_event(wStream* s, UINT16 flags, UINT16 
 
 static BOOL input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	wStream* s;
-	rdpRdp* rdp;
+	wStream* s = NULL;
+	rdpRdp* rdp = NULL;
 
 	if (!input || !input->context)
+	{
 		return FALSE;
+	}
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_UnicodeInput))
 	{
@@ -177,7 +195,9 @@ static BOOL input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UIN
 	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_UNICODE);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	input_write_unicode_keyboard_event(s, flags, code);
 	return rdp_send_client_input_pdu(rdp, s);
@@ -192,16 +212,20 @@ static void input_write_mouse_event(wStream* s, UINT16 flags, UINT16 x, UINT16 y
 
 static BOOL input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	wStream* s;
-	rdpRdp* rdp;
+	wStream* s = NULL;
+	rdpRdp* rdp = NULL;
 
 	if (!input || !input->context || !input->context->settings)
+	{
 		return FALSE;
+	}
 
 	rdp = input->context->rdp;
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasHorizontalWheel))
 	{
@@ -218,7 +242,9 @@ static BOOL input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT
 	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_MOUSE);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	input_write_mouse_event(s, flags, x, y);
 	return rdp_send_client_input_pdu(rdp, s);
@@ -226,16 +252,20 @@ static BOOL input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT
 
 static BOOL input_send_relmouse_event(rdpInput* input, UINT16 flags, INT16 xDelta, INT16 yDelta)
 {
-	wStream* s;
-	rdpRdp* rdp;
+	wStream* s = NULL;
+	rdpRdp* rdp = NULL;
 
 	if (!input || !input->context || !input->context->settings)
+	{
 		return FALSE;
+	}
 
 	rdp = input->context->rdp;
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasRelativeMouseEvent))
 	{
@@ -246,7 +276,9 @@ static BOOL input_send_relmouse_event(rdpInput* input, UINT16 flags, INT16 xDelt
 	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_MOUSEREL);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT16(s, flags); /* pointerFlags (2 bytes) */
 	Stream_Write_INT16(s, xDelta); /* xDelta (2 bytes) */
@@ -264,8 +296,8 @@ static void input_write_extended_mouse_event(wStream* s, UINT16 flags, UINT16 x,
 
 static BOOL input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	wStream* s;
-	rdpRdp* rdp;
+	wStream* s = NULL;
+	rdpRdp* rdp = NULL;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(input->context);
@@ -275,7 +307,9 @@ static BOOL input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT1
 	WINPR_ASSERT(rdp);
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasExtendedMouseEvent))
 	{
@@ -289,7 +323,9 @@ static BOOL input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT1
 	s = rdp_client_input_pdu_init(rdp, INPUT_EVENT_MOUSEX);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	input_write_extended_mouse_event(s, flags, x, y);
 	return rdp_send_client_input_pdu(rdp, s);
@@ -299,11 +335,15 @@ static BOOL input_send_focus_in_event(rdpInput* input, UINT16 toggleStates)
 {
 	/* send a tab up like mstsc.exe */
 	if (!input_send_keyboard_event(input, KBD_FLAGS_RELEASE, 0x0f))
+	{
 		return FALSE;
+	}
 
 	/* send the toggle key states */
 	if (!input_send_synchronize_event(input, (toggleStates & 0x1F)))
+	{
 		return FALSE;
+	}
 
 	/* send another tab up like mstsc.exe */
 	return input_send_keyboard_event(input, KBD_FLAGS_RELEASE, 0x0f);
@@ -319,16 +359,22 @@ static BOOL input_send_keyboard_pause_event(rdpInput* input)
 	/* Control down (0x1D) */
 	if (!input_send_keyboard_event(input, KBD_FLAGS_EXTENDED1,
 	                               RDP_SCANCODE_CODE(RDP_SCANCODE_LCONTROL)))
+	{
 		return FALSE;
+	}
 
 	/* Numlock down (0x45) */
 	if (!input_send_keyboard_event(input, 0, RDP_SCANCODE_CODE(RDP_SCANCODE_NUMLOCK)))
+	{
 		return FALSE;
+	}
 
 	/* Control up (0x1D) */
 	if (!input_send_keyboard_event(input, KBD_FLAGS_RELEASE | KBD_FLAGS_EXTENDED1,
 	                               RDP_SCANCODE_CODE(RDP_SCANCODE_LCONTROL)))
+	{
 		return FALSE;
+	}
 
 	/* Numlock up (0x45) */
 	return input_send_keyboard_event(input, KBD_FLAGS_RELEASE,
@@ -337,8 +383,8 @@ static BOOL input_send_keyboard_pause_event(rdpInput* input)
 
 static BOOL input_send_fastpath_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	wStream* s;
-	rdpRdp* rdp;
+	wStream* s = NULL;
+	rdpRdp* rdp = NULL;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(input->context);
@@ -347,22 +393,26 @@ static BOOL input_send_fastpath_synchronize_event(rdpInput* input, UINT32 flags)
 	WINPR_ASSERT(rdp);
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	/* The FastPath Synchronization eventFlags has identical values as SlowPath */
 	s = fastpath_input_pdu_init(rdp->fastpath, (BYTE)flags, FASTPATH_INPUT_EVENT_SYNC);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	return fastpath_send_input_pdu(rdp->fastpath, s);
 }
 
 static BOOL input_send_fastpath_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
-	wStream* s;
+	wStream* s = NULL;
 	BYTE eventFlags = 0;
-	rdpRdp* rdp;
+	rdpRdp* rdp = NULL;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(input->context);
@@ -371,7 +421,9 @@ static BOOL input_send_fastpath_keyboard_event(rdpInput* input, UINT16 flags, UI
 	WINPR_ASSERT(rdp);
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	eventFlags |= (flags & KBD_FLAGS_RELEASE) ? FASTPATH_INPUT_KBDFLAGS_RELEASE : 0;
 	eventFlags |= (flags & KBD_FLAGS_EXTENDED) ? FASTPATH_INPUT_KBDFLAGS_EXTENDED : 0;
@@ -379,7 +431,9 @@ static BOOL input_send_fastpath_keyboard_event(rdpInput* input, UINT16 flags, UI
 	s = fastpath_input_pdu_init(rdp->fastpath, eventFlags, FASTPATH_INPUT_EVENT_SCANCODE);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(code <= UINT8_MAX);
 	Stream_Write_UINT8(s, (UINT8)code); /* keyCode (1 byte) */
@@ -388,9 +442,9 @@ static BOOL input_send_fastpath_keyboard_event(rdpInput* input, UINT16 flags, UI
 
 static BOOL input_send_fastpath_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	wStream* s;
+	wStream* s = NULL;
 	BYTE eventFlags = 0;
-	rdpRdp* rdp;
+	rdpRdp* rdp = NULL;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(input->context);
@@ -400,7 +454,9 @@ static BOOL input_send_fastpath_unicode_keyboard_event(rdpInput* input, UINT16 f
 	WINPR_ASSERT(rdp);
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_UnicodeInput))
 	{
@@ -412,7 +468,9 @@ static BOOL input_send_fastpath_unicode_keyboard_event(rdpInput* input, UINT16 f
 	s = fastpath_input_pdu_init(rdp->fastpath, eventFlags, FASTPATH_INPUT_EVENT_UNICODE);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT16(s, code); /* unicodeCode (2 bytes) */
 	return fastpath_send_input_pdu(rdp->fastpath, s);
@@ -420,8 +478,8 @@ static BOOL input_send_fastpath_unicode_keyboard_event(rdpInput* input, UINT16 f
 
 static BOOL input_send_fastpath_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	wStream* s;
-	rdpRdp* rdp;
+	wStream* s = NULL;
+	rdpRdp* rdp = NULL;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(input->context);
@@ -431,7 +489,9 @@ static BOOL input_send_fastpath_mouse_event(rdpInput* input, UINT16 flags, UINT1
 	WINPR_ASSERT(rdp);
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasHorizontalWheel))
 	{
@@ -448,7 +508,9 @@ static BOOL input_send_fastpath_mouse_event(rdpInput* input, UINT16 flags, UINT1
 	s = fastpath_input_pdu_init(rdp->fastpath, 0, FASTPATH_INPUT_EVENT_MOUSE);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	input_write_mouse_event(s, flags, x, y);
 	return fastpath_send_input_pdu(rdp->fastpath, s);
@@ -457,8 +519,8 @@ static BOOL input_send_fastpath_mouse_event(rdpInput* input, UINT16 flags, UINT1
 static BOOL input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x,
                                                      UINT16 y)
 {
-	wStream* s;
-	rdpRdp* rdp;
+	wStream* s = NULL;
+	rdpRdp* rdp = NULL;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(input->context);
@@ -467,7 +529,9 @@ static BOOL input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 fla
 	WINPR_ASSERT(rdp);
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasExtendedMouseEvent))
 	{
@@ -481,7 +545,9 @@ static BOOL input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 fla
 	s = fastpath_input_pdu_init(rdp->fastpath, 0, FASTPATH_INPUT_EVENT_MOUSEX);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	input_write_extended_mouse_event(s, flags, x, y);
 	return fastpath_send_input_pdu(rdp->fastpath, s);
@@ -490,8 +556,8 @@ static BOOL input_send_fastpath_extended_mouse_event(rdpInput* input, UINT16 fla
 static BOOL input_send_fastpath_relmouse_event(rdpInput* input, UINT16 flags, INT16 xDelta,
                                                INT16 yDelta)
 {
-	wStream* s;
-	rdpRdp* rdp;
+	wStream* s = NULL;
+	rdpRdp* rdp = NULL;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(input->context);
@@ -501,7 +567,9 @@ static BOOL input_send_fastpath_relmouse_event(rdpInput* input, UINT16 flags, IN
 	WINPR_ASSERT(rdp);
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasRelativeMouseEvent))
 	{
@@ -512,7 +580,9 @@ static BOOL input_send_fastpath_relmouse_event(rdpInput* input, UINT16 flags, IN
 	s = fastpath_input_pdu_init(rdp->fastpath, 0, TS_FP_RELPOINTER_EVENT);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT16(s, flags); /* pointerFlags (2 bytes) */
 	Stream_Write_INT16(s, xDelta); /* xDelta (2 bytes) */
@@ -530,7 +600,9 @@ static BOOL input_send_fastpath_qoe_event(rdpInput* input, UINT32 timestampMS)
 	WINPR_ASSERT(rdp);
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_get_bool(input->context->settings, FreeRDP_HasQoeEvent))
 	{
@@ -541,7 +613,9 @@ static BOOL input_send_fastpath_qoe_event(rdpInput* input, UINT32 timestampMS)
 	wStream* s = fastpath_input_pdu_init(rdp->fastpath, 0, TS_FP_QOETIMESTAMP_EVENT);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
 	{
@@ -555,9 +629,9 @@ static BOOL input_send_fastpath_qoe_event(rdpInput* input, UINT32 timestampMS)
 
 static BOOL input_send_fastpath_focus_in_event(rdpInput* input, UINT16 toggleStates)
 {
-	wStream* s;
+	wStream* s = NULL;
 	BYTE eventFlags = 0;
-	rdpRdp* rdp;
+	rdpRdp* rdp = NULL;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(input->context);
@@ -566,12 +640,16 @@ static BOOL input_send_fastpath_focus_in_event(rdpInput* input, UINT16 toggleSta
 	WINPR_ASSERT(rdp);
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	s = fastpath_input_pdu_init_header(rdp->fastpath);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	/* send a tab up like mstsc.exe */
 	eventFlags = FASTPATH_INPUT_KBDFLAGS_RELEASE | FASTPATH_INPUT_EVENT_SCANCODE << 5;
@@ -593,10 +671,10 @@ static BOOL input_send_fastpath_keyboard_pause_event(rdpInput* input)
 	 * and pause-up sent nothing.  However, reverse engineering mstsc shows
 	 * it sending the following sequence:
 	 */
-	wStream* s;
+	wStream* s = NULL;
 	const BYTE keyDownEvent = FASTPATH_INPUT_EVENT_SCANCODE << 5;
 	const BYTE keyUpEvent = (FASTPATH_INPUT_EVENT_SCANCODE << 5) | FASTPATH_INPUT_KBDFLAGS_RELEASE;
-	rdpRdp* rdp;
+	rdpRdp* rdp = NULL;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(input->context);
@@ -605,12 +683,16 @@ static BOOL input_send_fastpath_keyboard_pause_event(rdpInput* input)
 	WINPR_ASSERT(rdp);
 
 	if (!input_ensure_client_running(input))
+	{
 		return FALSE;
+	}
 
 	s = fastpath_input_pdu_init_header(rdp->fastpath);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	/* Control down (0x1D) */
 	Stream_Write_UINT8(s, keyDownEvent | FASTPATH_INPUT_KBDFLAGS_PREFIX_E1);
@@ -629,13 +711,15 @@ static BOOL input_send_fastpath_keyboard_pause_event(rdpInput* input)
 
 static BOOL input_recv_sync_event(rdpInput* input, wStream* s)
 {
-	UINT32 toggleFlags;
+	UINT32 toggleFlags = 0;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
+	{
 		return FALSE;
+	}
 
 	Stream_Seek(s, 2);                  /* pad2Octets (2 bytes) */
 	Stream_Read_UINT32(s, toggleFlags); /* toggleFlags (4 bytes) */
@@ -644,39 +728,49 @@ static BOOL input_recv_sync_event(rdpInput* input, wStream* s)
 
 static BOOL input_recv_keyboard_event(rdpInput* input, wStream* s)
 {
-	UINT16 keyboardFlags, keyCode;
+	UINT16 keyboardFlags;
+	UINT16 keyCode;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, keyboardFlags); /* keyboardFlags (2 bytes) */
 	Stream_Read_UINT16(s, keyCode);       /* keyCode (2 bytes) */
 	Stream_Seek(s, 2);                    /* pad2Octets (2 bytes) */
 
 	if (keyboardFlags & KBD_FLAGS_RELEASE)
+	{
 		keyboardFlags &= ~KBD_FLAGS_DOWN;
+	}
 
 	if (keyCode & 0xFF00)
+	{
 		WLog_WARN(TAG,
 		          "Problematic [MS-RDPBCGR] 2.2.8.1.1.3.1.1.1 Keyboard Event (TS_KEYBOARD_EVENT) "
 		          "keyCode=0x%04" PRIx16
 		          ", high byte values should be sent in keyboardFlags field, ignoring.",
 		          keyCode);
+	}
 	return IFCALLRESULT(TRUE, input->KeyboardEvent, input, keyboardFlags, keyCode & 0xFF);
 }
 
 static BOOL input_recv_unicode_keyboard_event(rdpInput* input, wStream* s)
 {
-	UINT16 keyboardFlags, unicodeCode;
+	UINT16 keyboardFlags;
+	UINT16 unicodeCode;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, keyboardFlags); /* keyboardFlags (2 bytes) */
 	Stream_Read_UINT16(s, unicodeCode);   /* unicodeCode (2 bytes) */
@@ -685,20 +779,26 @@ static BOOL input_recv_unicode_keyboard_event(rdpInput* input, wStream* s)
 	/* "fix" keyboardFlags - see comment in input_recv_keyboard_event() */
 
 	if (keyboardFlags & KBD_FLAGS_RELEASE)
+	{
 		keyboardFlags &= ~KBD_FLAGS_DOWN;
+	}
 
 	return IFCALLRESULT(TRUE, input->UnicodeKeyboardEvent, input, keyboardFlags, unicodeCode);
 }
 
 static BOOL input_recv_mouse_event(rdpInput* input, wStream* s)
 {
-	UINT16 pointerFlags, xPos, yPos;
+	UINT16 pointerFlags;
+	UINT16 xPos;
+	UINT16 yPos;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, pointerFlags); /* pointerFlags (2 bytes) */
 	Stream_Read_UINT16(s, xPos);         /* xPos (2 bytes) */
@@ -708,14 +808,17 @@ static BOOL input_recv_mouse_event(rdpInput* input, wStream* s)
 
 static BOOL input_recv_relmouse_event(rdpInput* input, wStream* s)
 {
-	UINT16 pointerFlags;
-	INT16 xDelta, yDelta;
+	UINT16 pointerFlags = 0;
+	INT16 xDelta;
+	INT16 yDelta;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, pointerFlags); /* pointerFlags (2 bytes) */
 	Stream_Read_INT16(s, xDelta);        /* xPos (2 bytes) */
@@ -735,13 +838,17 @@ static BOOL input_recv_relmouse_event(rdpInput* input, wStream* s)
 
 static BOOL input_recv_extended_mouse_event(rdpInput* input, wStream* s)
 {
-	UINT16 pointerFlags, xPos, yPos;
+	UINT16 pointerFlags;
+	UINT16 xPos;
+	UINT16 yPos;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, pointerFlags); /* pointerFlags (2 bytes) */
 	Stream_Read_UINT16(s, xPos);         /* xPos (2 bytes) */
@@ -761,13 +868,15 @@ static BOOL input_recv_extended_mouse_event(rdpInput* input, wStream* s)
 
 static BOOL input_recv_event(rdpInput* input, wStream* s)
 {
-	UINT16 messageType;
+	UINT16 messageType = 0;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
+	{
 		return FALSE;
+	}
 
 	Stream_Seek(s, 4);                  /* eventTime (4 bytes), ignored by the server */
 	Stream_Read_UINT16(s, messageType); /* messageType (2 bytes) */
@@ -776,37 +885,49 @@ static BOOL input_recv_event(rdpInput* input, wStream* s)
 	{
 		case INPUT_EVENT_SYNC:
 			if (!input_recv_sync_event(input, s))
+			{
 				return FALSE;
+			}
 
 			break;
 
 		case INPUT_EVENT_SCANCODE:
 			if (!input_recv_keyboard_event(input, s))
+			{
 				return FALSE;
+			}
 
 			break;
 
 		case INPUT_EVENT_UNICODE:
 			if (!input_recv_unicode_keyboard_event(input, s))
+			{
 				return FALSE;
+			}
 
 			break;
 
 		case INPUT_EVENT_MOUSE:
 			if (!input_recv_mouse_event(input, s))
+			{
 				return FALSE;
+			}
 
 			break;
 
 		case INPUT_EVENT_MOUSEX:
 			if (!input_recv_extended_mouse_event(input, s))
+			{
 				return FALSE;
+			}
 
 			break;
 
 		case INPUT_EVENT_MOUSEREL:
 			if (!input_recv_relmouse_event(input, s))
+			{
 				return FALSE;
+			}
 
 			break;
 
@@ -822,25 +943,32 @@ static BOOL input_recv_event(rdpInput* input, wStream* s)
 
 BOOL input_recv(rdpInput* input, wStream* s)
 {
-	UINT16 i, numberEvents;
+	UINT16 i;
+	UINT16 numberEvents;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, numberEvents); /* numberEvents (2 bytes) */
 	Stream_Seek(s, 2);                   /* pad2Octets (2 bytes) */
 
 	/* Each input event uses 6 exactly bytes. */
-	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, numberEvents, 6ull))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, numberEvents, 6ULL))
+	{
 		return FALSE;
+	}
 
 	for (i = 0; i < numberEvents; i++)
 	{
 		if (!input_recv_event(input, s))
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -848,15 +976,19 @@ BOOL input_recv(rdpInput* input, wStream* s)
 
 BOOL input_register_client_callbacks(rdpInput* input)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	if (!input->context)
+	{
 		return FALSE;
+	}
 
 	settings = input->context->settings;
 
 	if (!settings)
+	{
 		return FALSE;
+	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_FastPathInput))
 	{
@@ -910,10 +1042,14 @@ static BOOL input_update_last_event(rdpInput* input, BOOL mouse, UINT16 x, UINT1
 BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags)
 {
 	if (!input || !input->context)
+	{
 		return FALSE;
+	}
 
 	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+	{
 		return TRUE;
+	}
 
 	return IFCALLRESULT(TRUE, input->SynchronizeEvent, input, flags);
 }
@@ -921,10 +1057,14 @@ BOOL freerdp_input_send_synchronize_event(rdpInput* input, UINT32 flags)
 BOOL freerdp_input_send_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
 	if (!input || !input->context)
+	{
 		return FALSE;
+	}
 
 	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+	{
 		return TRUE;
+	}
 
 	input_update_last_event(input, FALSE, 0, 0);
 
@@ -936,9 +1076,13 @@ BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, BOOL repea
 {
 	UINT16 flags = (RDP_SCANCODE_EXTENDED(rdp_scancode) ? KBD_FLAGS_EXTENDED : 0);
 	if (down && repeat)
+	{
 		flags |= KBD_FLAGS_DOWN;
+	}
 	else if (!down)
+	{
 		flags |= KBD_FLAGS_RELEASE;
+	}
 
 	return freerdp_input_send_keyboard_event(input, flags, RDP_SCANCODE_CODE(rdp_scancode));
 }
@@ -946,10 +1090,14 @@ BOOL freerdp_input_send_keyboard_event_ex(rdpInput* input, BOOL down, BOOL repea
 BOOL freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
 	if (!input || !input->context)
+	{
 		return FALSE;
+	}
 
 	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+	{
 		return TRUE;
+	}
 
 	input_update_last_event(input, FALSE, 0, 0);
 
@@ -959,10 +1107,14 @@ BOOL freerdp_input_send_unicode_keyboard_event(rdpInput* input, UINT16 flags, UI
 BOOL freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	if (!input || !input->context)
+	{
 		return FALSE;
+	}
 
 	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+	{
 		return TRUE;
+	}
 
 	input_update_last_event(
 	    input, flags & (PTR_FLAGS_MOVE | PTR_FLAGS_BUTTON1 | PTR_FLAGS_BUTTON2 | PTR_FLAGS_BUTTON3),
@@ -974,10 +1126,14 @@ BOOL freerdp_input_send_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UIN
 BOOL freerdp_input_send_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xDelta, INT16 yDelta)
 {
 	if (!input || !input->context)
+	{
 		return FALSE;
+	}
 
 	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+	{
 		return TRUE;
+	}
 
 	return IFCALLRESULT(TRUE, input->RelMouseEvent, input, flags, xDelta, yDelta);
 }
@@ -985,7 +1141,9 @@ BOOL freerdp_input_send_rel_mouse_event(rdpInput* input, UINT16 flags, INT16 xDe
 BOOL freerdp_input_send_qoe_timestamp(rdpInput* input, UINT32 timestampMS)
 {
 	if (!input || !input->context)
+	{
 		return FALSE;
+	}
 
 	return IFCALLRESULT(TRUE, input->QoEEvent, input, timestampMS);
 }
@@ -993,10 +1151,14 @@ BOOL freerdp_input_send_qoe_timestamp(rdpInput* input, UINT32 timestampMS)
 BOOL freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	if (!input || !input->context)
+	{
 		return FALSE;
+	}
 
 	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+	{
 		return TRUE;
+	}
 
 	input_update_last_event(input, TRUE, x, y);
 
@@ -1006,10 +1168,14 @@ BOOL freerdp_input_send_extended_mouse_event(rdpInput* input, UINT16 flags, UINT
 BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates)
 {
 	if (!input || !input->context)
+	{
 		return FALSE;
+	}
 
 	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+	{
 		return TRUE;
+	}
 
 	return IFCALLRESULT(TRUE, input->FocusInEvent, input, toggleStates);
 }
@@ -1017,10 +1183,14 @@ BOOL freerdp_input_send_focus_in_event(rdpInput* input, UINT16 toggleStates)
 BOOL freerdp_input_send_keyboard_pause_event(rdpInput* input)
 {
 	if (!input || !input->context)
+	{
 		return FALSE;
+	}
 
 	if (freerdp_settings_get_bool(input->context->settings, FreeRDP_SuspendInput))
+	{
 		return TRUE;
+	}
 
 	return IFCALLRESULT(TRUE, input->KeyboardPauseEvent, input);
 }
@@ -1028,7 +1198,9 @@ BOOL freerdp_input_send_keyboard_pause_event(rdpInput* input)
 int input_process_events(rdpInput* input)
 {
 	if (!input)
+	{
 		return FALSE;
+	}
 
 	return input_message_queue_process_pending_messages(input);
 }
@@ -1047,7 +1219,9 @@ rdpInput* input_new(rdpRdp* rdp)
 	WINPR_UNUSED(rdp);
 
 	if (!input)
+	{
 		return NULL;
+	}
 
 	input->common.context = rdp->context;
 	input->queue = MessageQueue_New(&cb);

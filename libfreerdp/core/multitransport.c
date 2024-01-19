@@ -37,7 +37,7 @@ struct rdp_multitransport
 
 	BYTE reliableCookie[RDPUDP_COOKIE_LEN];
 	BYTE reliableCookieHash[RDPUDP_COOKIE_HASHLEN];
-};
+} DECLSPEC_ALIGN(128);
 
 enum
 {
@@ -60,12 +60,14 @@ state_run_t multitransport_recv_request(rdpMultitransport* multi, wStream* s)
 	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
+	{
 		return STATE_RUN_FAILED;
+	}
 
-	UINT32 requestId;
-	UINT16 requestedProto;
-	UINT16 reserved;
-	const BYTE* cookie;
+	UINT32 requestId = 0;
+	UINT16 requestedProto = 0;
+	UINT16 reserved = 0;
+	const BYTE* cookie = NULL;
 
 	Stream_Read_UINT32(s, requestId);      /* requestId (4 bytes) */
 	Stream_Read_UINT16(s, requestedProto); /* requestedProtocol (2 bytes) */
@@ -98,7 +100,9 @@ static BOOL multitransport_request_send(rdpMultitransport* multi, UINT32 reqId, 
 	WINPR_ASSERT(multi);
 	wStream* s = rdp_message_channel_pdu_init(multi->rdp);
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 24))
 	{
@@ -142,7 +146,9 @@ BOOL multitransport_client_send_response(rdpMultitransport* multi, UINT32 reqId,
 
 	wStream* s = rdp_message_channel_pdu_init(multi->rdp);
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 28))
 	{
@@ -170,10 +176,12 @@ state_run_t multitransport_recv_response(rdpMultitransport* multi, wStream* s)
 	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		return STATE_RUN_FAILED;
+	}
 
-	UINT32 requestId;
-	HRESULT hr;
+	UINT32 requestId = 0;
+	HRESULT hr = 0;
 
 	Stream_Read_UINT32(s, requestId); /* requestId (4 bytes) */
 	Stream_Read_UINT32(s, hr);        /* hrResponse (4 bytes) */
@@ -194,7 +202,9 @@ static state_run_t multitransport_server_handle_response(rdpMultitransport* mult
 	rdpRdp* rdp = multi->rdp;
 
 	if (!rdp_server_transition_to_state(rdp, CONNECTION_STATE_CAPABILITIES_EXCHANGE_DEMAND_ACTIVE))
+	{
 		return STATE_RUN_FAILED;
+	}
 
 	return STATE_RUN_CONTINUE;
 }
@@ -208,7 +218,9 @@ rdpMultitransport* multitransport_new(rdpRdp* rdp, UINT16 protocol)
 
 	rdpMultitransport* multi = calloc(1, sizeof(rdpMultitransport));
 	if (!multi)
+	{
 		return NULL;
+	}
 
 	if (settings->ServerMode)
 	{

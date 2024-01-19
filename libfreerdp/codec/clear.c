@@ -43,14 +43,14 @@ typedef struct
 	UINT32 size;
 	UINT32 count;
 	UINT32* pixels;
-} CLEAR_GLYPH_ENTRY;
+} DECLSPEC_ALIGN(16) CLEAR_GLYPH_ENTRY;
 
 typedef struct
 {
 	UINT32 size;
 	UINT32 count;
 	BYTE* pixels;
-} CLEAR_VBAR_ENTRY;
+} DECLSPEC_ALIGN(16) CLEAR_VBAR_ENTRY;
 
 struct S_CLEAR_CONTEXT
 {
@@ -67,7 +67,7 @@ struct S_CLEAR_CONTEXT
 	CLEAR_VBAR_ENTRY VBarStorage[CLEARCODEC_VBAR_SIZE];
 	UINT32 ShortVBarStorageCursor;
 	CLEAR_VBAR_ENTRY ShortVBarStorage[CLEARCODEC_VBAR_SHORT_SIZE];
-};
+} DECLSPEC_ALIGN(128);
 
 static const UINT32 CLEAR_LOG2_FLOOR[256] = {
 	0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -87,7 +87,9 @@ static void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
 	if (zero)
 	{
 		for (size_t i = 0; i < ARRAYSIZE(clear->VBarStorage); i++)
+		{
 			winpr_aligned_free(clear->VBarStorage[i].pixels);
+		}
 
 		ZeroMemory(clear->VBarStorage, sizeof(clear->VBarStorage));
 	}
@@ -97,7 +99,9 @@ static void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
 	if (zero)
 	{
 		for (size_t i = 0; i < ARRAYSIZE(clear->ShortVBarStorage); i++)
+		{
 			winpr_aligned_free(clear->ShortVBarStorage[i].pixels);
+		}
 
 		ZeroMemory(clear->ShortVBarStorage, sizeof(clear->ShortVBarStorage));
 	}
@@ -108,7 +112,9 @@ static void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
 static void clear_reset_glyph_cache(CLEAR_CONTEXT* clear)
 {
 	for (size_t i = 0; i < ARRAYSIZE(clear->GlyphCache); i++)
+	{
 		winpr_aligned_free(clear->GlyphCache[i].pixels);
+	}
 
 	ZeroMemory(clear->GlyphCache, sizeof(clear->GlyphCache));
 }
@@ -119,10 +125,14 @@ static BOOL convert_color(BYTE* dst, UINT32 nDstStep, UINT32 DstFormat, UINT32 n
                           const gdiPalette* palette)
 {
 	if (nWidth + nXDst > nDstWidth)
+	{
 		nWidth = nDstWidth - nXDst;
+	}
 
 	if (nHeight + nYDst > nDstHeight)
+	{
 		nHeight = nDstHeight - nYDst;
+	}
 
 	return freerdp_image_copy(dst, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight, src,
 	                          SrcFormat, nSrcStep, 0, 0, palette, FREERDP_KEEP_DST_ALPHA);
@@ -132,10 +142,12 @@ static BOOL clear_decompress_nscodec(NSC_CONTEXT* nsc, UINT32 width, UINT32 heig
                                      UINT32 bitmapDataByteCount, BYTE* pDstData, UINT32 DstFormat,
                                      UINT32 nDstStep, UINT32 nXDstRel, UINT32 nYDstRel)
 {
-	BOOL rc;
+	BOOL rc = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, bitmapDataByteCount))
+	{
 		return FALSE;
+	}
 
 	rc = nsc_process_message(nsc, 32, width, height, Stream_Pointer(s), bitmapDataByteCount,
 	                         pDstData, DstFormat, nDstStep, nXDstRel, nYDstRel, width, height,
@@ -149,24 +161,29 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
                                           UINT32 nDstStep, UINT32 nXDstRel, UINT32 nYDstRel,
                                           UINT32 nDstWidth, UINT32 nDstHeight)
 {
-	UINT32 x = 0, y = 0;
-	UINT32 i;
-	UINT32 pixelCount;
-	UINT32 bitmapDataOffset;
-	size_t pixelIndex;
-	UINT32 numBits;
-	BYTE startIndex;
-	BYTE stopIndex;
-	BYTE suiteIndex;
-	BYTE suiteDepth;
-	BYTE paletteCount;
+	UINT32 x = 0;
+	UINT32 y = 0;
+	UINT32 i = 0;
+	UINT32 pixelCount = 0;
+	UINT32 bitmapDataOffset = 0;
+	size_t pixelIndex = 0;
+	UINT32 numBits = 0;
+	BYTE startIndex = 0;
+	BYTE stopIndex = 0;
+	BYTE suiteIndex = 0;
+	BYTE suiteDepth = 0;
+	BYTE paletteCount = 0;
 	UINT32 palette[128] = { 0 };
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, bitmapDataByteCount))
+	{
 		return FALSE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 	Stream_Read_UINT8(s, paletteCount);
 	bitmapDataOffset = 1 + (paletteCount * 3);
 
@@ -176,12 +193,16 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 		return FALSE;
 	}
 
-	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, paletteCount, 3ull))
+	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, paletteCount, 3ULL))
+	{
 		return FALSE;
+	}
 
 	for (i = 0; i < paletteCount; i++)
 	{
-		BYTE r, g, b;
+		BYTE r;
+		BYTE g;
+		BYTE b;
 		Stream_Read_UINT8(s, b);
 		Stream_Read_UINT8(s, g);
 		Stream_Read_UINT8(s, r);
@@ -199,7 +220,9 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 		UINT32 runLengthFactor = 0;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+		{
 			return FALSE;
+		}
 
 		Stream_Read_UINT8(s, tmp);
 		Stream_Read_UINT8(s, runLengthFactor);
@@ -211,7 +234,9 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 		if (runLengthFactor >= 0xFF)
 		{
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+			{
 				return FALSE;
+			}
 
 			Stream_Read_UINT16(s, runLengthFactor);
 			bitmapDataOffset += 2;
@@ -219,7 +244,9 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 			if (runLengthFactor >= 0xFFFF)
 			{
 				if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+				{
 					return FALSE;
+				}
 
 				Stream_Read_UINT32(s, runLengthFactor);
 				bitmapDataOffset += 4;
@@ -265,7 +292,9 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 			                           (nYDstRel + y) * nDstStep];
 
 			if ((nXDstRel + x < nDstWidth) && (nYDstRel + y < nDstHeight))
+			{
 				FreeRDPWriteColor(pTmpData, DstFormat, color);
+			}
 
 			if (++x >= width)
 			{
@@ -299,7 +328,9 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 			suiteIndex++;
 
 			if ((nXDstRel + x < nDstWidth) && (nYDstRel + y < nDstHeight))
+			{
 				FreeRDPWriteColor(pTmpData, DstFormat, ccolor);
+			}
 
 			if (++x >= width)
 			{
@@ -322,10 +353,12 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 
 static BOOL clear_resize_buffer(CLEAR_CONTEXT* clear, UINT32 width, UINT32 height)
 {
-	UINT32 size;
+	UINT32 size = 0;
 
 	if (!clear)
+	{
 		return FALSE;
+	}
 
 	size = ((width + 16) * (height + 16) * FreeRDPGetBytesPerPixel(clear->format));
 
@@ -353,33 +386,41 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
                                            UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth,
                                            UINT32 nDstHeight, const gdiPalette* palette)
 {
-	UINT32 i;
-	UINT32 nSrcStep;
-	UINT32 suboffset;
-	BYTE* dstBuffer;
-	UINT32 pixelIndex;
-	UINT32 pixelCount;
+	UINT32 i = 0;
+	UINT32 nSrcStep = 0;
+	UINT32 suboffset = 0;
+	BYTE* dstBuffer = NULL;
+	UINT32 pixelIndex = 0;
+	UINT32 pixelCount = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, residualByteCount))
+	{
 		return FALSE;
+	}
 
 	suboffset = 0;
 	pixelIndex = 0;
 	pixelCount = nWidth * nHeight;
 
 	if (!clear_resize_buffer(clear, nWidth, nHeight))
+	{
 		return FALSE;
+	}
 
 	dstBuffer = clear->TempBuffer;
 
 	while (suboffset < residualByteCount)
 	{
-		BYTE r, g, b;
-		UINT32 runLengthFactor;
-		UINT32 color;
+		BYTE r;
+		BYTE g;
+		BYTE b;
+		UINT32 runLengthFactor = 0;
+		UINT32 color = 0;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		{
 			return FALSE;
+		}
 
 		Stream_Read_UINT8(s, b);
 		Stream_Read_UINT8(s, g);
@@ -391,7 +432,9 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 		if (runLengthFactor >= 0xFF)
 		{
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+			{
 				return FALSE;
+			}
 
 			Stream_Read_UINT16(s, runLengthFactor);
 			suboffset += 2;
@@ -399,7 +442,9 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 			if (runLengthFactor >= 0xFFFF)
 			{
 				if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+				{
 					return FALSE;
+				}
 
 				Stream_Read_UINT32(s, runLengthFactor);
 				suboffset += 4;
@@ -443,26 +488,30 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
                                             UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth,
                                             UINT32 nDstHeight, const gdiPalette* palette)
 {
-	UINT16 xStart;
-	UINT16 yStart;
-	UINT16 width;
-	UINT16 height;
-	UINT32 bitmapDataByteCount;
-	BYTE subcodecId;
-	UINT32 suboffset;
+	UINT16 xStart = 0;
+	UINT16 yStart = 0;
+	UINT16 width = 0;
+	UINT16 height = 0;
+	UINT32 bitmapDataByteCount = 0;
+	BYTE subcodecId = 0;
+	UINT32 suboffset = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, subcodecByteCount))
+	{
 		return FALSE;
+	}
 
 	suboffset = 0;
 
 	while (suboffset < subcodecByteCount)
 	{
-		UINT32 nXDstRel;
-		UINT32 nYDstRel;
+		UINT32 nXDstRel = 0;
+		UINT32 nYDstRel = 0;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 13))
+		{
 			return FALSE;
+		}
 
 		Stream_Read_UINT16(s, xStart);
 		Stream_Read_UINT16(s, yStart);
@@ -473,7 +522,9 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 		suboffset += 13;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, bitmapDataByteCount))
+		{
 			return FALSE;
+		}
 
 		nXDstRel = nXDst + xStart;
 		nYDstRel = nYDst + yStart;
@@ -491,7 +542,9 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 		}
 
 		if (!clear_resize_buffer(clear, width, height))
+		{
 			return FALSE;
+		}
 
 		switch (subcodecId)
 		{
@@ -510,7 +563,9 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 				if (!convert_color(pDstData, nDstStep, DstFormat, nXDstRel, nYDstRel, width, height,
 				                   Stream_Pointer(s), nSrcStep, PIXEL_FORMAT_BGR24, nDstWidth,
 				                   nDstHeight, palette))
+				{
 					return FALSE;
+				}
 
 				Stream_Seek(s, bitmapDataByteCount);
 			}
@@ -519,7 +574,9 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 			case 1: /* NSCodec */
 				if (!clear_decompress_nscodec(clear->nsc, width, height, s, bitmapDataByteCount,
 				                              pDstData, DstFormat, nDstStep, nXDstRel, nYDstRel))
+				{
 					return FALSE;
+				}
 
 				break;
 
@@ -527,7 +584,9 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 				if (!clear_decompress_subcode_rlex(s, bitmapDataByteCount, width, height, pDstData,
 				                                   DstFormat, nDstStep, nXDstRel, nYDstRel,
 				                                   nDstWidth, nDstHeight))
+				{
 					return FALSE;
+				}
 
 				break;
 
@@ -552,7 +611,7 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* clear, CLEAR_VBAR_ENTRY* vBarEntry)
 
 		vBarEntry->size = vBarEntry->count;
 		BYTE* tmp =
-		    (BYTE*)winpr_aligned_recalloc(vBarEntry->pixels, vBarEntry->count, 1ull * bpp, 32);
+		    (BYTE*)winpr_aligned_recalloc(vBarEntry->pixels, vBarEntry->count, 1ULL * bpp, 32);
 
 		if (!tmp)
 		{
@@ -583,25 +642,31 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 	UINT32 suboffset = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, bandsByteCount))
+	{
 		return FALSE;
+	}
 
 	while (suboffset < bandsByteCount)
 	{
-		BYTE cr, cg, cb;
-		UINT16 xStart;
-		UINT16 xEnd;
-		UINT16 yStart;
-		UINT16 yEnd;
-		UINT32 colorBkg;
-		UINT16 vBarHeader;
+		BYTE cr;
+		BYTE cg;
+		BYTE cb;
+		UINT16 xStart = 0;
+		UINT16 xEnd = 0;
+		UINT16 yStart = 0;
+		UINT16 yEnd = 0;
+		UINT32 colorBkg = 0;
+		UINT16 vBarHeader = 0;
 		UINT16 vBarYOn = 0;
-		UINT16 vBarYOff;
-		UINT32 vBarCount;
-		UINT32 vBarPixelCount;
+		UINT16 vBarYOff = 0;
+		UINT32 vBarCount = 0;
+		UINT32 vBarPixelCount = 0;
 		UINT32 vBarShortPixelCount = 0;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 11))
+		{
 			return FALSE;
+		}
 
 		Stream_Read_UINT16(s, xStart);
 		Stream_Read_UINT16(s, xEnd);
@@ -629,14 +694,16 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 		for (UINT32 i = 0; i < vBarCount; i++)
 		{
-			UINT32 vBarHeight;
+			UINT32 vBarHeight = 0;
 			CLEAR_VBAR_ENTRY* vBarEntry = NULL;
 			CLEAR_VBAR_ENTRY* vBarShortEntry = NULL;
 			BOOL vBarUpdate = FALSE;
-			const BYTE* cpSrcPixel;
+			const BYTE* cpSrcPixel = NULL;
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+			{
 				return FALSE;
+			}
 
 			Stream_Read_UINT16(s, vBarHeader);
 			suboffset += 2;
@@ -660,7 +727,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				}
 
 				if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+				{
 					return FALSE;
+				}
 
 				Stream_Read_UINT8(s, vBarYOn);
 				suboffset += 1;
@@ -686,8 +755,10 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 					return FALSE;
 				}
 
-				if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, vBarShortPixelCount, 3ull))
+				if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, vBarShortPixelCount, 3ULL))
+				{
 					return FALSE;
+				}
 
 				if (clear->ShortVBarStorageCursor >= CLEARCODEC_VBAR_SHORT_SIZE)
 				{
@@ -702,11 +773,15 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				vBarShortEntry->count = vBarShortPixelCount;
 
 				if (!resize_vbar_entry(clear, vBarShortEntry))
+				{
 					return FALSE;
+				}
 
 				for (UINT32 y = 0; y < vBarShortPixelCount; y++)
 				{
-					BYTE r = 0, g = 0, b = 0;
+					BYTE r = 0;
+					BYTE g = 0;
+					BYTE b = 0;
 					BYTE* dstBuffer =
 					    &vBarShortEntry->pixels[y * FreeRDPGetBytesPerPixel(clear->format)];
 					UINT32 color = 0;
@@ -716,7 +791,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 					color = FreeRDPGetColor(clear->format, r, g, b, 0xFF);
 
 					if (!FreeRDPWriteColor(dstBuffer, clear->format, color))
+					{
 						return FALSE;
+					}
 				}
 
 				suboffset += (vBarShortPixelCount * 3);
@@ -736,7 +813,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 					vBarEntry->count = vBarHeight;
 
 					if (!resize_vbar_entry(clear, vBarEntry))
+					{
 						return FALSE;
+					}
 				}
 			}
 			else
@@ -747,9 +826,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 			if (vBarUpdate)
 			{
-				UINT32 x;
+				UINT32 x = 0;
 				BYTE* pSrcPixel = NULL;
-				BYTE* dstBuffer;
+				BYTE* dstBuffer = NULL;
 
 				if (clear->VBarStorageCursor >= CLEARCODEC_VBAR_SIZE)
 				{
@@ -765,7 +844,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				vBarEntry->count = vBarPixelCount;
 
 				if (!resize_vbar_entry(clear, vBarEntry))
+				{
 					return FALSE;
+				}
 
 				dstBuffer = vBarEntry->pixels;
 				/* if (y < vBarYOn), use colorBkg */
@@ -773,7 +854,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				UINT32 count = vBarYOn;
 
 				if ((y + count) > vBarPixelCount)
+				{
 					count = (vBarPixelCount > y) ? (vBarPixelCount - y) : 0;
+				}
 
 				while (count--)
 				{
@@ -789,21 +872,27 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				count = vBarShortPixelCount;
 
 				if ((y + count) > vBarPixelCount)
+				{
 					count = (vBarPixelCount > y) ? (vBarPixelCount - y) : 0;
+				}
 
 				if (count > 0)
+				{
 					pSrcPixel =
 					    &vBarShortEntry
 					         ->pixels[(y - vBarYOn) * FreeRDPGetBytesPerPixel(clear->format)];
+				}
 
 				for (x = 0; x < count; x++)
 				{
-					UINT32 color;
+					UINT32 color = 0;
 					color = FreeRDPReadColor(&pSrcPixel[x * FreeRDPGetBytesPerPixel(clear->format)],
 					                         clear->format);
 
 					if (!FreeRDPWriteColor(dstBuffer, clear->format, color))
+					{
 						return FALSE;
+					}
 
 					dstBuffer += FreeRDPGetBytesPerPixel(clear->format);
 				}
@@ -815,7 +904,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				while (count--)
 				{
 					if (!FreeRDPWriteColor(dstBuffer, clear->format, colorBkg))
+					{
 						return FALSE;
+					}
 
 					dstBuffer += FreeRDPGetBytesPerPixel(clear->format);
 				}
@@ -831,7 +922,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				vBarEntry->count = vBarHeight;
 
 				if (!resize_vbar_entry(clear, vBarEntry))
+				{
 					return FALSE;
+				}
 			}
 
 			const UINT32 nXDstRel = nXDst + xStart;
@@ -843,15 +936,21 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 				UINT32 count = vBarEntry->count;
 
 				if (count > nHeight)
+				{
 					count = nHeight;
+				}
 
 				if (nXDstRel + i > nDstWidth)
+				{
 					return FALSE;
+				}
 
 				for (UINT32 y = 0; y < count; y++)
 				{
 					if (nYDstRel + y > nDstHeight)
+					{
 						return FALSE;
+					}
 
 					BYTE* pDstPixel8 =
 					    &pDstData[((nYDstRel + y) * nDstStep) +
@@ -860,7 +959,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 					color = FreeRDPConvertColor(color, clear->format, DstFormat, NULL);
 
 					if (!FreeRDPWriteColor(pDstPixel8, DstFormat, color))
+					{
 						return FALSE;
+					}
 
 					cpSrcPixel += FreeRDPGetBytesPerPixel(clear->format);
 				}
@@ -880,7 +981,9 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 	UINT16 glyphIndex = 0;
 
 	if (ppGlyphData)
+	{
 		*ppGlyphData = NULL;
+	}
 
 	if ((glyphFlags & CLEARCODEC_FLAG_GLYPH_HIT) && !(glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX))
 	{
@@ -889,7 +992,9 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 	}
 
 	if ((glyphFlags & CLEARCODEC_FLAG_GLYPH_INDEX) == 0)
+	{
 		return TRUE;
+	}
 
 	if ((nWidth * nHeight) > (1024 * 1024))
 	{
@@ -898,7 +1003,9 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, glyphIndex);
 
@@ -910,9 +1017,9 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 	if (glyphFlags & CLEARCODEC_FLAG_GLYPH_HIT)
 	{
-		UINT32 nSrcStep;
+		UINT32 nSrcStep = 0;
 		CLEAR_GLYPH_ENTRY* glyphEntry = &(clear->GlyphCache[glyphIndex]);
-		BYTE* glyphData;
+		BYTE* glyphData = NULL;
 
 		if (!glyphEntry)
 		{
@@ -950,7 +1057,7 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 		if (glyphEntry->count > glyphEntry->size)
 		{
 			BYTE* tmp =
-			    winpr_aligned_recalloc(glyphEntry->pixels, glyphEntry->count, 1ull * bpp, 32);
+			    winpr_aligned_recalloc(glyphEntry->pixels, glyphEntry->count, 1ULL * bpp, 32);
 
 			if (!tmp)
 			{
@@ -970,7 +1077,9 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 		}
 
 		if (ppGlyphData)
+		{
 			*ppGlyphData = (BYTE*)glyphEntry->pixels;
+		}
 
 		return TRUE;
 	}
@@ -981,7 +1090,9 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 static INLINE BOOL updateContextFormat(CLEAR_CONTEXT* clear, UINT32 DstFormat)
 {
 	if (!clear || !clear->nsc)
+	{
 		return FALSE;
+	}
 
 	clear->format = DstFormat;
 	return nsc_context_set_parameters(clear->nsc, NSC_COLOR_FORMAT, DstFormat);
@@ -993,40 +1104,54 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
                        const gdiPalette* palette)
 {
 	INT32 rc = -1;
-	BYTE seqNumber;
-	BYTE glyphFlags;
-	UINT32 residualByteCount;
-	UINT32 bandsByteCount;
-	UINT32 subcodecByteCount;
+	BYTE seqNumber = 0;
+	BYTE glyphFlags = 0;
+	UINT32 residualByteCount = 0;
+	UINT32 bandsByteCount = 0;
+	UINT32 subcodecByteCount = 0;
 	wStream sbuffer = { 0 };
-	wStream* s;
+	wStream* s = NULL;
 	BYTE* glyphData = NULL;
 
 	if (!pDstData)
+	{
 		return -1002;
+	}
 
 	if ((nDstWidth == 0) || (nDstHeight == 0))
+	{
 		return -1022;
+	}
 
 	if ((nWidth > 0xFFFF) || (nHeight > 0xFFFF))
+	{
 		return -1004;
+	}
 
 	s = Stream_StaticConstInit(&sbuffer, pSrcData, SrcSize);
 
 	if (!s)
+	{
 		return -2005;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	{
 		goto fail;
+	}
 
 	if (!updateContextFormat(clear, DstFormat))
+	{
 		goto fail;
+	}
 
 	Stream_Read_UINT8(s, glyphFlags);
 	Stream_Read_UINT8(s, seqNumber);
 
 	if (!clear->seqNumber && seqNumber)
+	{
 		clear->seqNumber = seqNumber;
+	}
 
 	if (seqNumber != clear->seqNumber)
 	{
@@ -1058,7 +1183,9 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 		const UINT32 mask = (CLEARCODEC_FLAG_GLYPH_HIT | CLEARCODEC_FLAG_GLYPH_INDEX);
 
 		if ((glyphFlags & mask) == mask)
+		{
 			goto finish;
+		}
 
 		WLog_ERR(TAG,
 		         "invalid glyphFlags, missing flags: 0x%02" PRIx8 " & 0x%02" PRIx32
@@ -1107,7 +1234,9 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 	{
 		if (!freerdp_image_copy(glyphData, clear->format, 0, 0, 0, nWidth, nHeight, pDstData,
 		                        DstFormat, nDstStep, nXDst, nYDst, palette, FREERDP_KEEP_DST_ALPHA))
+		{
 			goto fail;
+		}
 	}
 
 finish:
@@ -1126,7 +1255,9 @@ int clear_compress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSize, B
 BOOL clear_context_reset(CLEAR_CONTEXT* clear)
 {
 	if (!clear)
+	{
 		return FALSE;
+	}
 
 	/**
 	 * The ClearCodec context is not bound to a particular surface,
@@ -1141,25 +1272,37 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 	CLEAR_CONTEXT* clear = (CLEAR_CONTEXT*)winpr_aligned_calloc(1, sizeof(CLEAR_CONTEXT), 32);
 
 	if (!clear)
+	{
 		return NULL;
+	}
 
 	clear->Compressor = Compressor;
 	clear->nsc = nsc_context_new();
 
 	if (!clear->nsc)
+	{
 		goto error_nsc;
+	}
 
 	if (!updateContextFormat(clear, PIXEL_FORMAT_BGRX32))
+	{
 		goto error_nsc;
+	}
 
 	if (!clear_resize_buffer(clear, 512, 512))
+	{
 		goto error_nsc;
+	}
 
 	if (!clear->TempBuffer)
+	{
 		goto error_nsc;
+	}
 
 	if (!clear_context_reset(clear))
+	{
 		goto error_nsc;
+	}
 
 	return clear;
 error_nsc:
@@ -1170,7 +1313,9 @@ error_nsc:
 void clear_context_free(CLEAR_CONTEXT* clear)
 {
 	if (!clear)
+	{
 		return;
+	}
 
 	nsc_context_free(clear->nsc);
 	winpr_aligned_free(clear->TempBuffer);

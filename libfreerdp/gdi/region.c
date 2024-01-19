@@ -38,7 +38,9 @@
 static char* gdi_rect_str(char* buffer, size_t size, const HGDI_RECT rect)
 {
 	if (!buffer || (size < 1) || !rect)
+	{
 		return NULL;
+	}
 
 	_snprintf(buffer, size - 1,
 	          "[top/left=%" PRId32 "x%" PRId32 "-bottom/right%" PRId32 "x%" PRId32 "]", rect->top,
@@ -51,7 +53,9 @@ static char* gdi_rect_str(char* buffer, size_t size, const HGDI_RECT rect)
 static char* gdi_regn_str(char* buffer, size_t size, const HGDI_RGN rgn)
 {
 	if (!buffer || (size < 1) || !rgn)
+	{
 		return NULL;
+	}
 
 	_snprintf(buffer, size - 1, "[%" PRId32 "x%" PRId32 "-%" PRId32 "x%" PRId32 "]", rgn->x, rgn->y,
 	          rgn->w, rgn->h);
@@ -74,11 +78,12 @@ static char* gdi_regn_str(char* buffer, size_t size, const HGDI_RGN rgn)
 
 HGDI_RGN gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, INT32 nBottomRect)
 {
-	INT64 w, h;
-	HGDI_RGN hRgn;
+	INT64 w;
+	INT64 h;
+	HGDI_RGN hRgn = NULL;
 
-	w = nRightRect - nLeftRect + 1ll;
-	h = nBottomRect - nTopRect + 1ll;
+	w = nRightRect - nLeftRect + 1LL;
+	h = nBottomRect - nTopRect + 1LL;
 	if ((w < 0) || (h < 0) || (w > INT32_MAX) || (h > INT32_MAX))
 	{
 		WLog_ERR(TAG,
@@ -90,7 +95,9 @@ HGDI_RGN gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, IN
 	hRgn = (HGDI_RGN)calloc(1, sizeof(GDI_RGN));
 
 	if (!hRgn)
+	{
 		return NULL;
+	}
 
 	hRgn->objectType = GDIOBJECT_REGION;
 	hRgn->x = nLeftRect;
@@ -112,17 +119,23 @@ HGDI_RGN gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, IN
 
 HGDI_RECT gdi_CreateRect(INT32 xLeft, INT32 yTop, INT32 xRight, INT32 yBottom)
 {
-	HGDI_RECT hRect;
+	HGDI_RECT hRect = NULL;
 
 	if (xLeft > xRight)
+	{
 		return NULL;
+	}
 	if (yTop > yBottom)
+	{
 		return NULL;
+	}
 
 	hRect = (HGDI_RECT)calloc(1, sizeof(GDI_RECT));
 
 	if (!hRect)
+	{
 		return NULL;
+	}
 
 	hRect->objectType = GDIOBJECT_RECT;
 	hRect->left = xLeft;
@@ -141,9 +154,10 @@ HGDI_RECT gdi_CreateRect(INT32 xLeft, INT32 yTop, INT32 xRight, INT32 yBottom)
 BOOL gdi_RectToRgn(const HGDI_RECT rect, HGDI_RGN rgn)
 {
 	BOOL rc = TRUE;
-	INT64 w, h;
-	w = rect->right - rect->left + 1ll;
-	h = rect->bottom - rect->top + 1ll;
+	INT64 w;
+	INT64 h;
+	w = rect->right - rect->left + 1LL;
+	h = rect->bottom - rect->top + 1LL;
 
 	if ((w < 0) || (h < 0) || (w > INT32_MAX) || (h > INT32_MAX))
 	{
@@ -176,12 +190,15 @@ BOOL gdi_RectToRgn(const HGDI_RECT rect, HGDI_RGN rgn)
 BOOL gdi_CRectToRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, HGDI_RGN rgn)
 {
 	BOOL rc = TRUE;
-	INT64 w, h;
-	w = right - left + 1ll;
-	h = bottom - top + 1ll;
+	INT64 w;
+	INT64 h;
+	w = right - left + 1LL;
+	h = bottom - top + 1LL;
 
 	if (!rgn)
+	{
 		return FALSE;
+	}
 
 	if ((w < 0) || (h < 0) || (w > INT32_MAX) || (h > INT32_MAX))
 	{
@@ -224,7 +241,9 @@ BOOL gdi_RectToCRgn(const HGDI_RECT rect, INT32* x, INT32* y, INT32* w, INT32* h
 		rc = FALSE;
 	}
 	else
+	{
 		*w = tmp;
+	}
 	tmp = rect->bottom - rect->top + 1;
 	if ((tmp < 0) || (tmp > INT32_MAX))
 	{
@@ -234,7 +253,9 @@ BOOL gdi_RectToCRgn(const HGDI_RECT rect, INT32* x, INT32* y, INT32* w, INT32* h
 		rc = FALSE;
 	}
 	else
+	{
 		*h = tmp;
+	}
 	return rc;
 }
 
@@ -253,10 +274,11 @@ BOOL gdi_RectToCRgn(const HGDI_RECT rect, INT32* x, INT32* y, INT32* w, INT32* h
 BOOL gdi_CRectToCRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, INT32* x, INT32* y, INT32* w,
                      INT32* h)
 {
-	INT64 wl, hl;
+	INT64 wl;
+	INT64 hl;
 	BOOL rc = TRUE;
-	wl = right - left + 1ll;
-	hl = bottom - top + 1ll;
+	wl = right - left + 1LL;
+	hl = bottom - top + 1LL;
 
 	if ((left > right) || (top > bottom) || (wl <= 0) || (hl <= 0) || (wl > INT32_MAX) ||
 	    (hl > INT32_MAX))
@@ -285,10 +307,11 @@ BOOL gdi_CRectToCRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, INT32* x,
 
 BOOL gdi_RgnToRect(const HGDI_RGN rgn, HGDI_RECT rect)
 {
-	INT64 r, b;
+	INT64 r;
+	INT64 b;
 	BOOL rc = TRUE;
-	r = rgn->x + rgn->w - 1ll;
-	b = rgn->y + rgn->h - 1ll;
+	r = rgn->x + rgn->w - 1LL;
+	b = rgn->y + rgn->h - 1LL;
 
 	if ((r < INT32_MIN) || (r > INT32_MAX) || (b < INT32_MIN) || (b > INT32_MAX))
 	{
@@ -326,17 +349,27 @@ INLINE BOOL gdi_CRgnToRect(INT64 x, INT64 y, INT32 w, INT32 h, HGDI_RECT rect)
 	rect->bottom = rect->top;
 
 	if ((w <= 0) || (h <= 0))
+	{
 		invalid = TRUE;
+	}
 
 	if (r > 0)
+	{
 		rect->right = r;
+	}
 	else
+	{
 		invalid = TRUE;
+	}
 
 	if (b > 0)
+	{
 		rect->bottom = b;
+	}
 	else
+	{
 		invalid = TRUE;
+	}
 
 	if (invalid)
 	{
@@ -396,7 +429,9 @@ INLINE BOOL gdi_CRgnToCRect(INT32 x, INT32 y, INT32 w, INT32 h, INT32* left, INT
 	*right = 0;
 
 	if (w > 0)
+	{
 		*right = x + w - 1;
+	}
 	else
 	{
 		WLog_ERR(TAG, "Invalid width");
@@ -406,7 +441,9 @@ INLINE BOOL gdi_CRgnToCRect(INT32 x, INT32 y, INT32 w, INT32 h, INT32* left, INT
 	*bottom = 0;
 
 	if (h > 0)
+	{
 		*bottom = y + h - 1;
+	}
 	else
 	{
 		WLog_ERR(TAG, "Invalid height");
@@ -435,13 +472,21 @@ INLINE BOOL gdi_CopyOverlap(INT32 x, INT32 y, INT32 width, INT32 height, INT32 s
 	gdi_CRgnToRect(srcx, srcy, width, height, &src);
 
 	if (dst.right < src.left)
+	{
 		return FALSE;
+	}
 	if (dst.left > src.right)
+	{
 		return FALSE;
+	}
 	if (dst.bottom < src.top)
+	{
 		return FALSE;
+	}
 	if (dst.top > src.bottom)
+	{
 		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -461,11 +506,17 @@ INLINE BOOL gdi_CopyOverlap(INT32 x, INT32 y, INT32 width, INT32 height, INT32 s
 INLINE BOOL gdi_SetRect(HGDI_RECT rc, INT32 xLeft, INT32 yTop, INT32 xRight, INT32 yBottom)
 {
 	if (!rc)
+	{
 		return FALSE;
+	}
 	if (xLeft > xRight)
+	{
 		return FALSE;
+	}
 	if (yTop > yBottom)
+	{
 		return FALSE;
+	}
 
 	rc->left = xLeft;
 	rc->top = yTop;
@@ -487,10 +538,14 @@ INLINE BOOL gdi_SetRect(HGDI_RECT rc, INT32 xLeft, INT32 yTop, INT32 xRight, INT
 INLINE BOOL gdi_SetRgn(HGDI_RGN hRgn, INT32 nXLeft, INT32 nYLeft, INT32 nWidth, INT32 nHeight)
 {
 	if (!hRgn)
+	{
 		return FALSE;
+	}
 
 	if ((nWidth < 0) || (nHeight < 0))
+	{
 		return FALSE;
+	}
 
 	hRgn->x = nXLeft;
 	hRgn->y = nYLeft;
@@ -514,7 +569,9 @@ INLINE BOOL gdi_SetRectRgn(HGDI_RGN hRgn, INT32 nLeftRect, INT32 nTopRect, INT32
                            INT32 nBottomRect)
 {
 	if (!gdi_CRectToRgn(nLeftRect, nTopRect, nRightRect, nBottomRect, hRgn))
+	{
 		return FALSE;
+	}
 	hRgn->null = FALSE;
 	return TRUE;
 }
@@ -551,7 +608,9 @@ INLINE BOOL gdi_EqualRgn(const HGDI_RGN hSrcRgn1, const HGDI_RGN hSrcRgn2)
 INLINE BOOL gdi_CopyRect(HGDI_RECT dst, const HGDI_RECT src)
 {
 	if (!dst || !src)
+	{
 		return FALSE;
+	}
 
 	dst->left = src->left;
 	dst->top = src->top;
@@ -601,32 +660,42 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 {
 	GDI_RECT inv;
 	GDI_RECT rgn;
-	HGDI_RGN invalid;
-	HGDI_RGN cinvalid;
+	HGDI_RGN invalid = NULL;
+	HGDI_RGN cinvalid = NULL;
 
 	if (!hdc->hwnd)
+	{
 		return TRUE;
+	}
 
 	if (!hdc->hwnd->invalid)
+	{
 		return TRUE;
+	}
 
 	if (w == 0 || h == 0)
+	{
 		return TRUE;
+	}
 
 	cinvalid = hdc->hwnd->cinvalid;
 
 	if ((hdc->hwnd->ninvalid + 1) > (INT64)hdc->hwnd->count)
 	{
-		size_t new_cnt;
-		HGDI_RGN new_rgn;
+		size_t new_cnt = 0;
+		HGDI_RGN new_rgn = NULL;
 		new_cnt = hdc->hwnd->count * 2;
 		if (new_cnt > UINT32_MAX)
+		{
 			return FALSE;
+		}
 
 		new_rgn = (HGDI_RGN)realloc(cinvalid, sizeof(GDI_RGN) * new_cnt);
 
 		if (!new_rgn)
+		{
 			return FALSE;
+		}
 
 		hdc->hwnd->count = new_cnt;
 		cinvalid = new_rgn;
@@ -650,16 +719,24 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 	gdi_RgnToRect(invalid, &inv);
 
 	if (rgn.left < inv.left)
+	{
 		inv.left = rgn.left;
+	}
 
 	if (rgn.top < inv.top)
+	{
 		inv.top = rgn.top;
+	}
 
 	if (rgn.right > inv.right)
+	{
 		inv.right = rgn.right;
+	}
 
 	if (rgn.bottom > inv.bottom)
+	{
 		inv.bottom = rgn.bottom;
+	}
 
 	gdi_RectToRgn(&inv, invalid);
 	return TRUE;

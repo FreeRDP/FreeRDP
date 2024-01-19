@@ -35,7 +35,9 @@ static bool dupstr(char** dst, const char* src)
 	free(*dst);
 	*dst = NULL;
 	if (!src)
+	{
 		return true;
+	}
 	*dst = strdup(src);
 	return *dst != NULL;
 }
@@ -90,7 +92,9 @@ static void output_handle_scale(void* data, struct wl_output* wl_output, int32_t
 
 	output->scale = scale;
 	if (scale > output->display->actual_scale)
+	{
 		output->display->actual_scale = scale;
+	}
 }
 
 static void output_handle_name(void* data, struct wl_output* wl_output, const char* name)
@@ -151,7 +155,9 @@ UwacOutput* UwacCreateOutput(UwacDisplay* d, uint32_t id, uint32_t version)
 {
 	UwacOutput* o = xzalloc(sizeof *o);
 	if (!o)
+	{
 		return NULL;
+	}
 
 	o->display = d;
 	o->server_output_id = id;
@@ -168,7 +174,9 @@ UwacOutput* UwacCreateOutput(UwacDisplay* d, uint32_t id, uint32_t version)
 int UwacDestroyOutput(UwacOutput* output)
 {
 	if (!output)
+	{
 		return UWAC_SUCCESS;
+	}
 
 	free(output->make);
 	free(output->model);

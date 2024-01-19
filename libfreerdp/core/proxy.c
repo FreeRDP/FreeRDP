@@ -80,20 +80,30 @@ BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* l
                    const char** lpProxyUsername, const char** lpProxyPassword)
 {
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType) == PROXY_TYPE_IGNORE)
+	{
 		return FALSE;
+	}
 
 	/* For TSGateway, find the system HTTPS proxy automatically */
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType) == PROXY_TYPE_NONE)
+	{
 		proxy_read_environment(settings, "https_proxy");
+	}
 
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType) == PROXY_TYPE_NONE)
+	{
 		proxy_read_environment(settings, "HTTPS_PROXY");
+	}
 
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType) != PROXY_TYPE_NONE)
+	{
 		proxy_read_environment(settings, "no_proxy");
+	}
 
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType) != PROXY_TYPE_NONE)
+	{
 		proxy_read_environment(settings, "NO_PROXY");
+	}
 
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ProxyType) != PROXY_TYPE_NONE)
 	{
@@ -109,19 +119,25 @@ BOOL proxy_prepare(rdpSettings* settings, const char** lpPeerHostname, UINT16* l
 
 static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONGLONG max)
 {
-	long long rc;
+	long long rc = 0;
 
 	if (!value || !result)
+	{
 		return FALSE;
+	}
 
 	errno = 0;
 	rc = _strtoi64(value, NULL, 0);
 
 	if (errno != 0)
+	{
 		return FALSE;
+	}
 
 	if ((rc < min) || (rc > max))
+	{
 		return FALSE;
+	}
 
 	*result = rc;
 	return TRUE;
@@ -129,12 +145,16 @@ static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONG
 
 static BOOL cidr4_match(const struct in_addr* addr, const struct in_addr* net, BYTE bits)
 {
-	uint32_t mask, amask, nmask;
+	uint32_t mask;
+	uint32_t amask;
+	uint32_t nmask;
 
 	if (bits == 0)
+	{
 		return TRUE;
+	}
 
-	mask = htonl(0xFFFFFFFFu << (32 - bits));
+	mask = htonl(0xFFFFFFFFU << (32 - bits));
 	amask = addr->s_addr & mask;
 	nmask = net->s_addr & mask;
 	return amask == nmask;
@@ -145,22 +165,27 @@ static BOOL cidr6_match(const struct in6_addr* address, const struct in6_addr* n
 {
 	const uint32_t* a = (const uint32_t*)address;
 	const uint32_t* n = (const uint32_t*)network;
-	size_t bits_whole, bits_incomplete;
+	size_t bits_whole;
+	size_t bits_incomplete;
 	bits_whole = bits >> 5;
 	bits_incomplete = bits & 0x1F;
 
 	if (bits_whole)
 	{
 		if (memcmp(a, n, bits_whole << 2) != 0)
+		{
 			return FALSE;
+		}
 	}
 
 	if (bits_incomplete)
 	{
-		uint32_t mask = htonl((0xFFFFFFFFu) << (32 - bits_incomplete));
+		uint32_t mask = htonl((0xFFFFFFFFU) << (32 - bits_incomplete));
 
 		if ((a[bits_whole] ^ n[bits_whole]) & mask)
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -170,28 +195,36 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 {
 	const char* delimiter = ",";
 	BOOL result = FALSE;
-	char* current;
-	char* copy;
+	char* current = NULL;
+	char* copy = NULL;
 	char* context = NULL;
-	size_t host_len;
+	size_t host_len = 0;
 	struct sockaddr_in sa4;
 	struct sockaddr_in6 sa6;
 	BOOL is_ipv4 = FALSE;
 	BOOL is_ipv6 = FALSE;
 
 	if (!no_proxy || !settings)
+	{
 		return FALSE;
+	}
 
 	if (inet_pton(AF_INET, settings->ServerHostname, &sa4.sin_addr) == 1)
+	{
 		is_ipv4 = TRUE;
+	}
 	else if (inet_pton(AF_INET6, settings->ServerHostname, &sa6.sin6_addr) == 1)
+	{
 		is_ipv6 = TRUE;
+	}
 
 	host_len = strlen(settings->ServerHostname);
 	copy = _strdup(no_proxy);
 
 	if (!copy)
+	{
 		return FALSE;
+	}
 
 	current = strtok_s(copy, delimiter, &context);
 
@@ -212,13 +245,17 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 					const char* name = settings->ServerHostname + offset;
 
 					if (strncmp(current + 1, name, currentlen - 1) == 0)
+					{
 						result = TRUE;
+					}
 				}
 			}
 			else if (current[currentlen - 1] == '*')
 			{
 				if (strncmp(current, settings->ServerHostname, currentlen - 1) == 0)
+				{
 					result = TRUE;
+				}
 			}
 			else if (current[0] ==
 			         '.') /* Only compare if the no_proxy variable contains a whole domain. */
@@ -229,11 +266,15 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 					const char* name = settings->ServerHostname + offset;
 
 					if (strncmp(current, name, currentlen) == 0)
+					{
 						result = TRUE; /* right-aligned match for host names */
+					}
 				}
 			}
 			else if (strcmp(current, settings->ServerHostname) == 0)
+			{
 				result = TRUE; /* exact match */
+			}
 			else if (is_ipv4 || is_ipv6)
 			{
 				char* rangedelim = strchr(current, '/');
@@ -254,21 +295,29 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 							struct sockaddr_in mask;
 
 							if (inet_pton(AF_INET, current, &mask.sin_addr))
+							{
 								result = cidr4_match(&sa4.sin_addr, &mask.sin_addr, sub);
+							}
 						}
 						else if (is_ipv6)
 						{
 							struct sockaddr_in6 mask;
 
 							if (inet_pton(AF_INET6, current, &mask.sin6_addr))
+							{
 								result = cidr6_match(&sa6.sin6_addr, &mask.sin6_addr, sub);
+							}
 						}
 					}
 					else
+					{
 						WLog_WARN(TAG, "NO_PROXY invalid entry %s", current);
+					}
 				}
 				else if (strncmp(current, settings->ServerHostname, currentlen) == 0)
+				{
 					result = TRUE; /* left-aligned match for IPs */
+				}
 			}
 		}
 
@@ -281,12 +330,14 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 
 void proxy_read_environment(rdpSettings* settings, char* envname)
 {
-	DWORD envlen;
-	char* env;
+	DWORD envlen = 0;
+	char* env = NULL;
 	envlen = GetEnvironmentVariableA(envname, NULL, 0);
 
 	if (!envlen)
+	{
 		return;
+	}
 
 	env = calloc(1, envlen);
 
@@ -325,13 +376,15 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 {
 	BOOL rc = FALSE;
 	const char* protocol = "";
-	UINT16 port;
-	char* p;
-	char* atPtr;
+	UINT16 port = 0;
+	char* p = NULL;
+	char* atPtr = NULL;
 	char* uri_copy = _strdup(uri_in);
 	char* uri = uri_copy;
 	if (!uri)
+	{
 		goto fail;
+	}
 
 	p = strstr(uri, "://");
 
@@ -342,18 +395,24 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 		if (_stricmp("no_proxy", uri) == 0)
 		{
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_IGNORE))
+			{
 				goto fail;
+			}
 		}
 		if (_stricmp("http", uri) == 0)
 		{
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_HTTP))
+			{
 				goto fail;
+			}
 			protocol = "http";
 		}
 		else if (_stricmp("socks5", uri) == 0)
 		{
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_SOCKS))
+			{
 				goto fail;
+			}
 			protocol = "socks5";
 		}
 		else
@@ -368,7 +427,9 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 	{
 		/* default proxy protocol is http */
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_HTTP))
+		{
 			goto fail;
+		}
 		protocol = "http";
 	}
 
@@ -414,7 +475,7 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 
 	if (p)
 	{
-		LONGLONG val;
+		LONGLONG val = 0;
 
 		if (!value_to_int(&p[1], &val, 0, UINT16_MAX))
 		{
@@ -447,13 +508,19 @@ BOOL proxy_parse_uri(rdpSettings* settings, const char* uri_in)
 	}
 
 	if (!freerdp_settings_set_uint16(settings, FreeRDP_ProxyPort, port))
+	{
 		goto fail;
+	}
 
 	p = strchr(uri, '/');
 	if (p)
+	{
 		*p = '\0';
+	}
 	if (!freerdp_settings_set_string(settings, FreeRDP_ProxyHostname, uri))
+	{
 		goto fail;
+	}
 
 	if (_stricmp("", uri) == 0)
 	{
@@ -506,10 +573,14 @@ static const char* get_response_header(char* response)
 {
 	char* current_pos = strchr(response, '\r');
 	if (!current_pos)
+	{
 		current_pos = strchr(response, '\n');
+	}
 
 	if (current_pos)
+	{
 		*current_pos = '\0';
+	}
 
 	return response;
 }
@@ -518,15 +589,15 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
                                const char* proxyPassword, const char* hostname, UINT16 port)
 {
 	BOOL rc = FALSE;
-	int status;
-	wStream* s;
+	int status = 0;
+	wStream* s = NULL;
 	char port_str[10] = { 0 };
 	char recv_buf[256] = { 0 };
 	char* eol = NULL;
 	size_t resultsize = 0;
-	size_t reserveSize;
-	size_t portLen;
-	size_t hostLen;
+	size_t reserveSize = 0;
+	size_t portLen = 0;
+	size_t hostLen = 0;
 	const char connect[] = "CONNECT ";
 	const char httpheader[] = " HTTP/1.1" CRLF "Host: ";
 
@@ -540,7 +611,9 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	reserveSize = strlen(connect) + (hostLen + 1 + portLen) * 2 + strlen(httpheader);
 	s = Stream_New(NULL, reserveSize);
 	if (!s)
+	{
 		goto fail;
+	}
 
 	Stream_Write(s, connect, strlen(connect));
 	Stream_Write(s, hostname, hostLen);
@@ -556,15 +629,17 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 		const int length = _scprintf("%s:%s", proxyUsername, proxyPassword);
 		if (length > 0)
 		{
-			const size_t size = (size_t)length + 1ull;
+			const size_t size = (size_t)length + 1ULL;
 			char* creds = (char*)malloc(size);
 
 			if (!creds)
+			{
 				goto fail;
+			}
 			else
 			{
 				const char basic[] = CRLF "Proxy-Authorization: Basic ";
-				char* base64;
+				char* base64 = NULL;
 
 				sprintf_s(creds, size, "%s:%s", proxyUsername, proxyPassword);
 				base64 = crypto_base64_encode((const BYTE*)creds, size - 1);
@@ -585,7 +660,9 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
+	{
 		goto fail;
+	}
 
 	Stream_Write(s, CRLF CRLF, 4);
 	ERR_clear_error();
@@ -646,12 +723,16 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	WLog_INFO(TAG, "HTTP Proxy: %s", recv_buf);
 
 	if (strnlen(recv_buf, sizeof(recv_buf)) < 12)
+	{
 		goto fail;
+	}
 
 	recv_buf[7] = 'X';
 
-	if (strncmp(recv_buf, "HTTP/1.X 200", 12))
+	if (strncmp(recv_buf, "HTTP/1.X 200", 12) != 0)
+	{
 		goto fail;
+	}
 
 	rc = TRUE;
 fail:
@@ -661,7 +742,7 @@ fail:
 
 static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, BYTE checkVer)
 {
-	int status;
+	int status = 0;
 
 	for (;;)
 	{
@@ -672,7 +753,7 @@ static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, 
 		{
 			break;
 		}
-		else if (status < 0)
+		if (status < 0)
 		{
 			/* Error? */
 			if (BIO_should_retry(bufferedBio))
@@ -711,8 +792,9 @@ static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, 
 static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
                                 const char* proxyPassword, const char* hostname, UINT16 port)
 {
-	int status;
-	int nauthMethods = 1, writeLen = 3;
+	int status = 0;
+	int nauthMethods = 1;
+	int writeLen = 3;
 	BYTE buf[3 + 255 + 255]; /* biggest packet is user/pass auth */
 	size_t hostnlen = strnlen(hostname, 255);
 
@@ -728,7 +810,9 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	buf[2] = AUTH_M_NO_AUTH;
 
 	if (nauthMethods > 1)
+	{
 		buf[3] = AUTH_M_USR_PASS;
+	}
 
 	ERR_clear_error();
 	status = BIO_write(bufferedBio, buf, writeLen);
@@ -742,7 +826,9 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	status = recv_socks_reply(bufferedBio, buf, 2, "AUTH REQ", 5);
 
 	if (status <= 0)
+	{
 		return FALSE;
+	}
 
 	switch (buf[1])
 	{
@@ -752,12 +838,14 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 
 		case AUTH_M_USR_PASS:
 			if (!proxyUsername || !proxyPassword)
+			{
 				return FALSE;
+			}
 			else
 			{
 				int usernameLen = strnlen(proxyUsername, 255);
 				int userpassLen = strnlen(proxyPassword, 255);
-				BYTE* ptr;
+				BYTE* ptr = NULL;
 
 				if (nauthMethods < 2)
 				{
@@ -786,7 +874,9 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 				status = recv_socks_reply(bufferedBio, buf, 2, "AUTH REQ", 1);
 
 				if (status < 2)
+				{
 					return FALSE;
+				}
 
 				if (buf[1] != 0x00)
 				{
@@ -824,7 +914,9 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	status = recv_socks_reply(bufferedBio, buf, sizeof(buf), "CONN REQ", 5);
 
 	if (status < 4)
+	{
 		return FALSE;
+	}
 
 	if (buf[1] == 0)
 	{
@@ -833,9 +925,13 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	}
 
 	if (buf[1] > 0 && buf[1] < 9)
+	{
 		WLog_INFO(TAG, "SOCKS Proxy replied: %s", rplstat[buf[1]]);
+	}
 	else
+	{
 		WLog_INFO(TAG, "SOCKS Proxy replied: %" PRIu8 " status not listed in rfc1928", buf[1]);
+	}
 
 	return FALSE;
 }

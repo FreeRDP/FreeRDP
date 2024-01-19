@@ -15,6 +15,7 @@ static char* resize(char** buffer, size_t* size, size_t increment)
 		fprintf(stderr, "Could not reallocate string buffer from %" PRIuz " to %" PRIuz " bytes.\n",
 		        *size, nsize);
 		free(*buffer);
+		return NULL;
 	}
 	memset(&tmp[*size], '\0', increment);
 	*size = nsize;
@@ -31,7 +32,9 @@ static char* append(char** buffer, size_t* size, const char* str)
 	if (required > *size)
 	{
 		if (!resize(buffer, size, required - *size))
+		{
 			return NULL;
+		}
 	}
 	strcat(*buffer, str);
 	return *buffer;
@@ -39,16 +42,20 @@ static char* append(char** buffer, size_t* size, const char* str)
 
 static LPSTR tr_esc_str(LPCSTR arg, bool format)
 {
-	const char* str;
+	const char* str = NULL;
 	LPSTR tmp = NULL;
 	size_t ds = 0;
 
 	if (NULL == arg)
+	{
 		return NULL;
+	}
 
 	const size_t s = strlen(arg) + 1;
 	if (!resize(&tmp, &ds, s))
+	{
 		exit(-2);
+	}
 
 	for (size_t x = 0; x < s; x++)
 	{
@@ -57,49 +64,71 @@ static LPSTR tr_esc_str(LPCSTR arg, bool format)
 		{
 			case '<':
 				if (format)
+				{
 					str = "<replaceable>";
+				}
 				else
+				{
 					str = "&lt;";
+				}
 
 				if (!append(&tmp, &ds, str))
+				{
 					exit(-3);
+				}
 				break;
 
 			case '>':
 				if (format)
+				{
 					str = "</replaceable>";
+				}
 				else
+				{
 					str = "&gt;";
+				}
 
 				if (!append(&tmp, &ds, str))
+				{
 					exit(-4);
+				}
 				break;
 
 			case '\'':
 				if (!append(&tmp, &ds, "&apos;"))
+				{
 					exit(-5);
+				}
 				break;
 
 			case '"':
 				if (!append(&tmp, &ds, "&quot;"))
+				{
 					exit(-6);
+				}
 				break;
 
 			case '&':
 				if (!append(&tmp, &ds, "&amp;"))
+				{
 					exit(-6);
+				}
 				break;
 
 			case '\r':
 			case '\n':
 				if (!append(&tmp, &ds, "<sbr/>"))
+				{
 					exit(-7);
+				}
 				break;
 
 			default:
 				data[0] = arg[x];
 				if (!append(&tmp, &ds, data))
+				{
 					exit(-8);
+				}
 				break;
 		}
 	}
@@ -147,27 +176,37 @@ int main(int argc, char* argv[])
 			fprintf(fp, "\t\t\t\t<term><option>");
 
 			if (arg->Flags == COMMAND_LINE_VALUE_BOOL)
+			{
 				fprintf(fp, "%s", arg->Default ? "-" : "+");
+			}
 			else
+			{
 				fprintf(fp, "/");
+			}
 
 			fprintf(fp, "%s</option>", name);
 
 			if (format)
 			{
 				if (arg->Flags == COMMAND_LINE_VALUE_OPTIONAL)
+				{
 					fprintf(fp, "[");
+				}
 
 				fprintf(fp, ":%s", format);
 
 				if (arg->Flags == COMMAND_LINE_VALUE_OPTIONAL)
+				{
 					fprintf(fp, "]");
+				}
 			}
 
 			fprintf(fp, "</term>\n");
 
 			if (alias == name)
+			{
 				break;
+			}
 
 			free(name);
 			name = alias;
@@ -179,11 +218,15 @@ int main(int argc, char* argv[])
 			fprintf(fp, "\t\t\t\t\t<para>");
 
 			if (text)
+			{
 				fprintf(fp, "%s", text);
+			}
 
 			if (arg->Flags & COMMAND_LINE_VALUE_BOOL &&
 			    (!arg->Default || arg->Default == BoolValueTrue))
+			{
 				fprintf(fp, " (default:%s)", arg->Default ? "on" : "off");
+			}
 			else if (arg->Default)
 			{
 				char* value = tr_esc_str(arg->Default, FALSE);

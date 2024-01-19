@@ -40,7 +40,7 @@ struct rdp_persistent_cache
 	char* filename;
 	BYTE* bmpData;
 	UINT32 bmpSize;
-};
+} DECLSPEC_ALIGN(64);
 
 int persistent_cache_get_version(rdpPersistentCache* persistent)
 {
@@ -63,7 +63,9 @@ static int persistent_cache_read_entry_v2(rdpPersistentCache* persistent,
 	WINPR_ASSERT(entry);
 
 	if (fread((void*)&entry2, sizeof(entry2), 1, persistent->fp) != 1)
+	{
 		return -1;
+	}
 
 	entry->key64 = entry2.key64;
 	entry->width = entry2.width;
@@ -74,7 +76,9 @@ static int persistent_cache_read_entry_v2(rdpPersistentCache* persistent,
 	entry->data = persistent->bmpData;
 
 	if (fread((void*)entry->data, 0x4000, 1, persistent->fp) != 1)
+	{
 		return -1;
+	}
 
 	return 1;
 }
@@ -82,7 +86,7 @@ static int persistent_cache_read_entry_v2(rdpPersistentCache* persistent,
 static int persistent_cache_write_entry_v2(rdpPersistentCache* persistent,
                                            const PERSISTENT_CACHE_ENTRY* entry)
 {
-	int padding;
+	int padding = 0;
 	PERSISTENT_CACHE_ENTRY_V2 entry2 = { 0 };
 
 	WINPR_ASSERT(persistent);
@@ -94,20 +98,28 @@ static int persistent_cache_write_entry_v2(rdpPersistentCache* persistent,
 	entry2.flags = entry->flags;
 
 	if (!entry2.flags)
+	{
 		entry2.flags = 0x00000011;
+	}
 
 	if (fwrite((void*)&entry2, sizeof(entry2), 1, persistent->fp) != 1)
+	{
 		return -1;
+	}
 
 	if (fwrite((void*)entry->data, entry->size, 1, persistent->fp) != 1)
+	{
 		return -1;
+	}
 
 	if (0x4000 > entry->size)
 	{
 		padding = 0x4000 - entry->size;
 
 		if (fwrite((void*)persistent->bmpData, padding, 1, persistent->fp) != 1)
+		{
 			return -1;
+		}
 	}
 
 	persistent->count++;
@@ -123,10 +135,14 @@ static int persistent_cache_read_v2(rdpPersistentCache* persistent)
 		PERSISTENT_CACHE_ENTRY_V2 entry = { 0 };
 
 		if (fread((void*)&entry, sizeof(entry), 1, persistent->fp) != 1)
+		{
 			break;
+		}
 
 		if (fseek(persistent->fp, 0x4000, SEEK_CUR) != 0)
+		{
 			break;
+		}
 
 		persistent->count++;
 	}
@@ -143,7 +159,9 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 	WINPR_ASSERT(entry);
 
 	if (fread((void*)&entry3, sizeof(entry3), 1, persistent->fp) != 1)
+	{
 		return -1;
+	}
 
 	entry->key64 = entry3.key64;
 	entry->width = entry3.width;
@@ -158,7 +176,9 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 		                                              sizeof(BYTE), 32);
 
 		if (!bmpData)
+		{
 			return -1;
+		}
 
 		persistent->bmpData = bmpData;
 	}
@@ -166,7 +186,9 @@ static int persistent_cache_read_entry_v3(rdpPersistentCache* persistent,
 	entry->data = persistent->bmpData;
 
 	if (fread((void*)entry->data, entry->size, 1, persistent->fp) != 1)
+	{
 		return -1;
+	}
 
 	return 1;
 }
@@ -184,10 +206,14 @@ static int persistent_cache_write_entry_v3(rdpPersistentCache* persistent,
 	entry3.height = entry->height;
 
 	if (fwrite((void*)&entry3, sizeof(entry3), 1, persistent->fp) != 1)
+	{
 		return -1;
+	}
 
 	if (fwrite((void*)entry->data, entry->size, 1, persistent->fp) != 1)
+	{
 		return -1;
+	}
 
 	persistent->count++;
 
@@ -202,10 +228,14 @@ static int persistent_cache_read_v3(rdpPersistentCache* persistent)
 		PERSISTENT_CACHE_ENTRY_V3 entry = { 0 };
 
 		if (fread((void*)&entry, sizeof(entry), 1, persistent->fp) != 1)
+		{
 			break;
+		}
 
 		if (fseek(persistent->fp, (entry.width * entry.height * 4), SEEK_CUR) != 0)
+		{
 			break;
+		}
 
 		persistent->count++;
 	}
@@ -219,8 +249,10 @@ int persistent_cache_read_entry(rdpPersistentCache* persistent, PERSISTENT_CACHE
 	WINPR_ASSERT(entry);
 
 	if (persistent->version == 3)
+	{
 		return persistent_cache_read_entry_v3(persistent, entry);
-	else if (persistent->version == 2)
+	}
+	if (persistent->version == 2)
 		return persistent_cache_read_entry_v2(persistent, entry);
 
 	return -1;
@@ -233,8 +265,10 @@ int persistent_cache_write_entry(rdpPersistentCache* persistent,
 	WINPR_ASSERT(entry);
 
 	if (persistent->version == 3)
+	{
 		return persistent_cache_write_entry_v3(persistent, entry);
-	else if (persistent->version == 2)
+	}
+	if (persistent->version == 2)
 		return persistent_cache_write_entry_v2(persistent, entry);
 
 	return -1;
@@ -244,21 +278,29 @@ static int persistent_cache_open_read(rdpPersistentCache* persistent)
 {
 	BYTE sig[8] = { 0 };
 	int status = 1;
-	long offset;
+	long offset = 0;
 
 	WINPR_ASSERT(persistent);
 	persistent->fp = winpr_fopen(persistent->filename, "rb");
 
 	if (!persistent->fp)
+	{
 		return -1;
+	}
 
 	if (fread(sig, 8, 1, persistent->fp) != 1)
+	{
 		return -1;
+	}
 
-	if (!strncmp((const char*)sig, "RDP8bmp", 8))
+	if (!strncmp((const char*)sig, "RDP8bmp", 7))
+	{
 		persistent->version = 3;
+	}
 	else
+	{
 		persistent->version = 2;
+	}
 
 	fseek(persistent->fp, 0, SEEK_SET);
 
@@ -267,7 +309,9 @@ static int persistent_cache_open_read(rdpPersistentCache* persistent)
 		PERSISTENT_CACHE_HEADER_V3 header;
 
 		if (fread(&header, sizeof(header), 1, persistent->fp) != 1)
+		{
 			return -1;
+		}
 
 		status = persistent_cache_read_v3(persistent);
 		offset = sizeof(header);
@@ -290,7 +334,9 @@ static int persistent_cache_open_write(rdpPersistentCache* persistent)
 	persistent->fp = winpr_fopen(persistent->filename, "w+b");
 
 	if (!persistent->fp)
+	{
 		return -1;
+	}
 
 	if (persistent->version == 3)
 	{
@@ -299,7 +345,9 @@ static int persistent_cache_open_write(rdpPersistentCache* persistent)
 		header.flags = 0x00000006;
 
 		if (fwrite(&header, sizeof(header), 1, persistent->fp) != 1)
+		{
 			return -1;
+		}
 	}
 
 	ZeroMemory(persistent->bmpData, persistent->bmpSize);
@@ -317,7 +365,9 @@ int persistent_cache_open(rdpPersistentCache* persistent, const char* filename, 
 	persistent->filename = _strdup(filename);
 
 	if (!persistent->filename)
+	{
 		return -1;
+	}
 
 	if (persistent->write)
 	{
@@ -345,13 +395,18 @@ rdpPersistentCache* persistent_cache_new(void)
 	rdpPersistentCache* persistent = calloc(1, sizeof(rdpPersistentCache));
 
 	if (!persistent)
+	{
 		return NULL;
+	}
 
 	persistent->bmpSize = 0x4000;
 	persistent->bmpData = calloc(1, persistent->bmpSize);
 
 	if (!persistent->bmpData)
+	{
+		free(persistent);
 		return NULL;
+	}
 
 	return persistent;
 }
@@ -359,7 +414,9 @@ rdpPersistentCache* persistent_cache_new(void)
 void persistent_cache_free(rdpPersistentCache* persistent)
 {
 	if (!persistent)
+	{
 		return;
+	}
 
 	persistent_cache_close(persistent);
 

@@ -354,7 +354,7 @@ static UINT32 rpc_map_status_code_to_win32_error_code(UINT32 code)
 
 const char* rpc_error_to_string(UINT32 code)
 {
-	size_t index;
+	size_t index = 0;
 	static char buffer[1024];
 
 	for (index = 0; index < ARRAYSIZE(RPC_FAULT_CODES); index++)
@@ -394,27 +394,33 @@ out:
 
 const char* rpc_error_to_category(UINT32 code)
 {
-	size_t index;
+	size_t index = 0;
 
 	for (index = 0; index < ARRAYSIZE(RPC_FAULT_CODES); index++)
 	{
 		const RPC_FAULT_CODE* const current = &RPC_FAULT_CODES[index];
 		if (current->code == code)
+		{
 			return current->category;
+		}
 	}
 
 	for (index = 0; index < ARRAYSIZE(RPC_TSG_FAULT_CODES); index++)
 	{
 		const RPC_FAULT_CODE* const current = &RPC_TSG_FAULT_CODES[index];
 		if (current->code == code)
+		{
 			return current->category;
+		}
 	}
 
 	for (index = 0; index < ARRAYSIZE(RPC_TSG_FAULT_CODES); index++)
 	{
 		const RPC_FAULT_CODE* const current = &RPC_TSG_FAULT_CODES[index];
 		if (current->code == HRESULT_CODE(code))
+		{
 			return current->category;
+		}
 	}
 
 	return "UNKNOWN";

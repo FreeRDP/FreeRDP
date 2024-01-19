@@ -65,11 +65,15 @@ static BOOL update_pointer_position(rdpContext* context,
 {
 	if (!context || !context->graphics || !context->graphics->Pointer_Prototype ||
 	    !pointer_position)
+	{
 		return FALSE;
+	}
 
 	const BOOL GrabMouse = freerdp_settings_get_bool(context->settings, FreeRDP_GrabMouse);
 	if (!GrabMouse)
+	{
 		return TRUE;
+	}
 
 	const rdpPointer* pointer = context->graphics->Pointer_Prototype;
 	WINPR_ASSERT(pointer);
@@ -80,10 +84,12 @@ static BOOL update_pointer_position(rdpContext* context,
 
 static BOOL update_pointer_system(rdpContext* context, const POINTER_SYSTEM_UPDATE* pointer_system)
 {
-	rdpPointer* pointer;
+	rdpPointer* pointer = NULL;
 
 	if (!context || !context->graphics || !context->graphics->Pointer_Prototype || !pointer_system)
+	{
 		return FALSE;
+	}
 
 	pointer = context->graphics->Pointer_Prototype;
 
@@ -113,7 +119,9 @@ static BOOL upate_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskDa
 		pointer->lengthAndMask = lengthAndMask;
 		pointer->andMaskData = (BYTE*)malloc(lengthAndMask);
 		if (!pointer->andMaskData)
+		{
 			return FALSE;
+		}
 
 		CopyMemory(pointer->andMaskData, andMaskData, lengthAndMask);
 	}
@@ -123,7 +131,9 @@ static BOOL upate_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskDa
 		pointer->lengthXorMask = lengthXorMask;
 		pointer->xorMaskData = (BYTE*)malloc(lengthXorMask);
 		if (!pointer->xorMaskData)
+		{
 			return FALSE;
+		}
 
 		CopyMemory(pointer->xorMaskData, xorMaskData, lengthXorMask);
 	}
@@ -133,8 +143,8 @@ static BOOL upate_pointer_copy_andxor(rdpPointer* pointer, const BYTE* andMaskDa
 
 static BOOL update_pointer_color(rdpContext* context, const POINTER_COLOR_UPDATE* pointer_color)
 {
-	rdpPointer* pointer;
-	rdpCache* cache;
+	rdpPointer* pointer = NULL;
+	rdpCache* cache = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(pointer_color);
@@ -145,7 +155,9 @@ static BOOL update_pointer_color(rdpContext* context, const POINTER_COLOR_UPDATE
 	pointer = Pointer_Alloc(context);
 
 	if (pointer == NULL)
+	{
 		return FALSE;
+	}
 	pointer->xorBpp = 24;
 	pointer->xPos = pointer_color->hotSpotX;
 	pointer->yPos = pointer_color->hotSpotY;
@@ -155,13 +167,19 @@ static BOOL update_pointer_color(rdpContext* context, const POINTER_COLOR_UPDATE
 	if (!upate_pointer_copy_andxor(pointer, pointer_color->andMaskData,
 	                               pointer_color->lengthAndMask, pointer_color->xorMaskData,
 	                               pointer_color->lengthXorMask))
+	{
 		goto out_fail;
+	}
 
 	if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
+	{
 		goto out_fail;
+	}
 
 	if (!pointer_cache_put(cache->pointer, pointer_color->cacheIndex, pointer, TRUE))
+	{
 		goto out_fail;
+	}
 
 	return IFCALLRESULT(TRUE, pointer->Set, context, pointer);
 
@@ -172,8 +190,8 @@ out_fail:
 
 static BOOL update_pointer_large(rdpContext* context, const POINTER_LARGE_UPDATE* pointer_large)
 {
-	rdpPointer* pointer;
-	rdpCache* cache;
+	rdpPointer* pointer = NULL;
+	rdpCache* cache = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(pointer_large);
@@ -183,7 +201,9 @@ static BOOL update_pointer_large(rdpContext* context, const POINTER_LARGE_UPDATE
 
 	pointer = Pointer_Alloc(context);
 	if (pointer == NULL)
+	{
 		return FALSE;
+	}
 	pointer->xorBpp = pointer_large->xorBpp;
 	pointer->xPos = pointer_large->hotSpotX;
 	pointer->yPos = pointer_large->hotSpotY;
@@ -193,13 +213,19 @@ static BOOL update_pointer_large(rdpContext* context, const POINTER_LARGE_UPDATE
 	if (!upate_pointer_copy_andxor(pointer, pointer_large->andMaskData,
 	                               pointer_large->lengthAndMask, pointer_large->xorMaskData,
 	                               pointer_large->lengthXorMask))
+	{
 		goto out_fail;
+	}
 
 	if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
+	{
 		goto out_fail;
+	}
 
 	if (!pointer_cache_put(cache->pointer, pointer_large->cacheIndex, pointer, FALSE))
+	{
 		goto out_fail;
+	}
 
 	return IFCALLRESULT(TRUE, pointer->Set, context, pointer);
 
@@ -211,13 +237,17 @@ out_fail:
 static BOOL update_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* pointer_new)
 {
 	if (!context || !pointer_new)
+	{
 		return FALSE;
+	}
 
 	rdpCache* cache = context->cache;
 	rdpPointer* pointer = Pointer_Alloc(context);
 
 	if (!pointer)
+	{
 		return FALSE;
+	}
 
 	pointer->xorBpp = pointer_new->xorBpp;
 	pointer->xPos = pointer_new->colorPtrAttr.hotSpotX;
@@ -227,13 +257,19 @@ static BOOL update_pointer_new(rdpContext* context, const POINTER_NEW_UPDATE* po
 	if (!upate_pointer_copy_andxor(
 	        pointer, pointer_new->colorPtrAttr.andMaskData, pointer_new->colorPtrAttr.lengthAndMask,
 	        pointer_new->colorPtrAttr.xorMaskData, pointer_new->colorPtrAttr.lengthXorMask))
+	{
 		goto out_fail;
+	}
 
 	if (!IFCALLRESULT(TRUE, pointer->New, context, pointer))
+	{
 		goto out_fail;
+	}
 
 	if (!pointer_cache_put(cache->pointer, pointer_new->colorPtrAttr.cacheIndex, pointer, FALSE))
+	{
 		goto out_fail;
+	}
 
 	return IFCALLRESULT(TRUE, pointer->Set, context, pointer);
 
@@ -244,8 +280,8 @@ out_fail:
 
 static BOOL update_pointer_cached(rdpContext* context, const POINTER_CACHED_UPDATE* pointer_cached)
 {
-	rdpPointer* pointer;
-	rdpCache* cache;
+	rdpPointer* pointer = NULL;
+	rdpCache* cache = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(pointer_cached);
@@ -256,14 +292,16 @@ static BOOL update_pointer_cached(rdpContext* context, const POINTER_CACHED_UPDA
 	pointer = pointer_cache_get(cache->pointer, pointer_cached->cacheIndex);
 
 	if (pointer != NULL)
+	{
 		return IFCALLRESULT(TRUE, pointer->Set, context, pointer);
+	}
 
 	return FALSE;
 }
 
 rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 {
-	rdpPointer* pointer;
+	rdpPointer* pointer = NULL;
 
 	WINPR_ASSERT(pointer_cache);
 
@@ -282,7 +320,7 @@ rdpPointer* pointer_cache_get(rdpPointerCache* pointer_cache, UINT32 index)
 BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer* pointer,
                        BOOL colorCache)
 {
-	rdpPointer* prevPointer;
+	rdpPointer* prevPointer = NULL;
 	const FreeRDP_Settings_Keys_UInt32 id =
 	    colorCache ? FreeRDP_ColorPointerCacheSize : FreeRDP_PointerCacheSize;
 
@@ -316,7 +354,7 @@ BOOL pointer_cache_put(rdpPointerCache* pointer_cache, UINT32 index, rdpPointer*
 
 void pointer_cache_register_callbacks(rdpUpdate* update)
 {
-	rdpPointerUpdate* pointer;
+	rdpPointerUpdate* pointer = NULL;
 
 	WINPR_ASSERT(update);
 	WINPR_ASSERT(update->context);
@@ -337,8 +375,8 @@ void pointer_cache_register_callbacks(rdpUpdate* update)
 
 rdpPointerCache* pointer_cache_new(rdpContext* context)
 {
-	rdpPointerCache* pointer_cache;
-	rdpSettings* settings;
+	rdpPointerCache* pointer_cache = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -348,7 +386,9 @@ rdpPointerCache* pointer_cache_new(rdpContext* context)
 	pointer_cache = (rdpPointerCache*)calloc(1, sizeof(rdpPointerCache));
 
 	if (!pointer_cache)
+	{
 		return NULL;
+	}
 
 	pointer_cache->context = context;
 
@@ -373,8 +413,8 @@ void pointer_cache_free(rdpPointerCache* pointer_cache)
 {
 	if (pointer_cache != NULL)
 	{
-		UINT32 i;
-		rdpPointer* pointer;
+		UINT32 i = 0;
+		rdpPointer* pointer = NULL;
 
 		if (pointer_cache->entries)
 		{
@@ -396,7 +436,9 @@ POINTER_COLOR_UPDATE* copy_pointer_color_update(rdpContext* context,
 	POINTER_COLOR_UPDATE* dst = calloc(1, sizeof(POINTER_COLOR_UPDATE));
 
 	if (!dst || !src)
+	{
 		goto fail;
+	}
 
 	*dst = *src;
 
@@ -405,7 +447,9 @@ POINTER_COLOR_UPDATE* copy_pointer_color_update(rdpContext* context,
 		dst->andMaskData = calloc(src->lengthAndMask, sizeof(BYTE));
 
 		if (!dst->andMaskData)
+		{
 			goto fail;
+		}
 
 		memcpy(dst->andMaskData, src->andMaskData, src->lengthAndMask);
 	}
@@ -415,7 +459,9 @@ POINTER_COLOR_UPDATE* copy_pointer_color_update(rdpContext* context,
 		dst->xorMaskData = calloc(src->lengthXorMask, sizeof(BYTE));
 
 		if (!dst->xorMaskData)
+		{
 			goto fail;
+		}
 
 		memcpy(dst->xorMaskData, src->xorMaskData, src->lengthXorMask);
 	}
@@ -431,7 +477,9 @@ void free_pointer_color_update(rdpContext* context, POINTER_COLOR_UPDATE* pointe
 	WINPR_UNUSED(context);
 
 	if (!pointer)
+	{
 		return;
+	}
 
 	free(pointer->xorMaskData);
 	free(pointer->andMaskData);
@@ -444,7 +492,9 @@ POINTER_LARGE_UPDATE* copy_pointer_large_update(rdpContext* context,
 	POINTER_LARGE_UPDATE* dst = calloc(1, sizeof(POINTER_LARGE_UPDATE));
 
 	if (!dst || !src)
+	{
 		goto fail;
+	}
 
 	*dst = *src;
 
@@ -453,7 +503,9 @@ POINTER_LARGE_UPDATE* copy_pointer_large_update(rdpContext* context,
 		dst->andMaskData = calloc(src->lengthAndMask, sizeof(BYTE));
 
 		if (!dst->andMaskData)
+		{
 			goto fail;
+		}
 
 		memcpy(dst->andMaskData, src->andMaskData, src->lengthAndMask);
 	}
@@ -463,7 +515,9 @@ POINTER_LARGE_UPDATE* copy_pointer_large_update(rdpContext* context,
 		dst->xorMaskData = calloc(src->lengthXorMask, sizeof(BYTE));
 
 		if (!dst->xorMaskData)
+		{
 			goto fail;
+		}
 
 		memcpy(dst->xorMaskData, src->xorMaskData, src->lengthXorMask);
 	}
@@ -478,7 +532,9 @@ void free_pointer_large_update(rdpContext* context, POINTER_LARGE_UPDATE* pointe
 {
 	WINPR_UNUSED(context);
 	if (!pointer)
+	{
 		return;
+	}
 
 	free(pointer->xorMaskData);
 	free(pointer->andMaskData);
@@ -490,7 +546,9 @@ POINTER_NEW_UPDATE* copy_pointer_new_update(rdpContext* context, const POINTER_N
 	POINTER_NEW_UPDATE* dst = calloc(1, sizeof(POINTER_NEW_UPDATE));
 
 	if (!dst || !src)
+	{
 		goto fail;
+	}
 
 	*dst = *src;
 
@@ -499,7 +557,9 @@ POINTER_NEW_UPDATE* copy_pointer_new_update(rdpContext* context, const POINTER_N
 		dst->colorPtrAttr.andMaskData = calloc(src->colorPtrAttr.lengthAndMask, sizeof(BYTE));
 
 		if (!dst->colorPtrAttr.andMaskData)
+		{
 			goto fail;
+		}
 
 		memcpy(dst->colorPtrAttr.andMaskData, src->colorPtrAttr.andMaskData,
 		       src->colorPtrAttr.lengthAndMask);
@@ -510,7 +570,9 @@ POINTER_NEW_UPDATE* copy_pointer_new_update(rdpContext* context, const POINTER_N
 		dst->colorPtrAttr.xorMaskData = calloc(src->colorPtrAttr.lengthXorMask, sizeof(BYTE));
 
 		if (!dst->colorPtrAttr.xorMaskData)
+		{
 			goto fail;
+		}
 
 		memcpy(dst->colorPtrAttr.xorMaskData, src->colorPtrAttr.xorMaskData,
 		       src->colorPtrAttr.lengthXorMask);
@@ -525,7 +587,9 @@ fail:
 void free_pointer_new_update(rdpContext* context, POINTER_NEW_UPDATE* pointer)
 {
 	if (!pointer)
+	{
 		return;
+	}
 
 	free(pointer->colorPtrAttr.xorMaskData);
 	free(pointer->colorPtrAttr.andMaskData);
@@ -538,7 +602,9 @@ POINTER_CACHED_UPDATE* copy_pointer_cached_update(rdpContext* context,
 	POINTER_CACHED_UPDATE* dst = calloc(1, sizeof(POINTER_CACHED_UPDATE));
 
 	if (!dst)
+	{
 		goto fail;
+	}
 
 	*dst = *pointer;
 	return dst;
@@ -565,7 +631,9 @@ POINTER_POSITION_UPDATE* copy_pointer_position_update(rdpContext* context,
 	POINTER_POSITION_UPDATE* dst = calloc(1, sizeof(POINTER_POSITION_UPDATE));
 
 	if (!dst || !pointer)
+	{
 		goto fail;
+	}
 
 	*dst = *pointer;
 	return dst;
@@ -586,7 +654,9 @@ POINTER_SYSTEM_UPDATE* copy_pointer_system_update(rdpContext* context,
 	POINTER_SYSTEM_UPDATE* dst = calloc(1, sizeof(POINTER_SYSTEM_UPDATE));
 
 	if (!dst || !pointer)
+	{
 		goto fail;
+	}
 
 	*dst = *pointer;
 	return dst;

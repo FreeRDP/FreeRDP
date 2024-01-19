@@ -17,9 +17,9 @@
  * limitations under the License.
  */
 
+#include <winpr/config.h>
 #include <winpr/platform.h>
 #include <winpr/wtypes.h>
-#include <winpr/config.h>
 
 #ifdef _WIN32
 #define SEC_ENTRY __stdcall

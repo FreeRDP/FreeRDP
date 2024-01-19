@@ -41,7 +41,7 @@ struct reg_data_type
 	char* tag;
 	size_t length;
 	DWORD type;
-};
+} DECLSPEC_ALIGN(32);
 
 static struct reg_data_type REG_DATA_TYPE_TABLE[] = { { "\"", 1, REG_SZ },
 	                                                  { "dword:", 6, REG_DWORD },
@@ -88,8 +88,8 @@ static char* reg_data_type_string(DWORD type)
 
 static BOOL reg_load_start(Reg* reg)
 {
-	char* buffer;
-	INT64 file_size;
+	char* buffer = NULL;
+	INT64 file_size = 0;
 
 	WINPR_ASSERT(reg);
 	WINPR_ASSERT(reg->fp);
@@ -101,16 +101,22 @@ static BOOL reg_load_start(Reg* reg)
 	reg->next_line = NULL;
 
 	if (file_size < 1)
+	{
 		return FALSE;
+	}
 
 	buffer = (char*)realloc(reg->buffer, (size_t)file_size + 2);
 
 	if (!buffer)
+	{
 		return FALSE;
+	}
 	reg->buffer = buffer;
 
 	if (fread(reg->buffer, (size_t)file_size, 1, reg->fp) != 1)
+	{
 		return FALSE;
+	}
 
 	reg->buffer[file_size] = '\n';
 	reg->buffer[file_size + 1] = '\0';
@@ -121,7 +127,9 @@ static BOOL reg_load_start(Reg* reg)
 static void reg_load_finish(Reg* reg)
 {
 	if (!reg)
+	{
 		return;
+	}
 
 	if (reg->buffer)
 	{
@@ -132,12 +140,12 @@ static void reg_load_finish(Reg* reg)
 
 static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 {
-	size_t index;
+	size_t index = 0;
 	const char* p[5] = { 0 };
-	size_t length;
+	size_t length = 0;
 	char* name = NULL;
-	const char* type;
-	const char* data;
+	const char* type = NULL;
+	const char* data = NULL;
 	RegVal* value = NULL;
 
 	WINPR_ASSERT(reg);
@@ -147,34 +155,48 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 	p[0] = reg->line + 1;
 	p[1] = strstr(p[0], "\"=");
 	if (!p[1])
+	{
 		return NULL;
+	}
 
 	p[2] = p[1] + 2;
 	type = p[2];
 
 	if (p[2][0] == '"')
+	{
 		p[3] = p[2];
+	}
 	else
+	{
 		p[3] = strchr(p[2], ':');
+	}
 
 	if (!p[3])
+	{
 		return NULL;
+	}
 
 	data = p[3] + 1;
 	length = (size_t)(p[1] - p[0]);
 	if (length < 1)
+	{
 		goto fail;
+	}
 
 	name = (char*)calloc(length + 1, sizeof(char));
 
 	if (!name)
+	{
 		goto fail;
+	}
 
 	memcpy(name, p[0], length);
 	value = (RegVal*)calloc(1, sizeof(RegVal));
 
 	if (!value)
+	{
 		goto fail;
+	}
 
 	value->name = name;
 	value->type = REG_NONE;
@@ -197,7 +219,7 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 	{
 		case REG_DWORD:
 		{
-			unsigned long val;
+			unsigned long val = 0;
 			errno = 0;
 			val = strtoul(data, NULL, 0);
 
@@ -211,7 +233,7 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 		break;
 		case REG_QWORD:
 		{
-			unsigned long long val;
+			unsigned long long val = 0;
 			errno = 0;
 			val = strtoull(data, NULL, 0);
 
@@ -226,28 +248,41 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 		break;
 		case REG_SZ:
 		{
-			size_t len, cmp;
-			char* end;
+			size_t len;
+			size_t cmp;
+			char* end = NULL;
 			char* start = strchr(data, '"');
 			if (!start)
+			{
 				goto fail;
+			}
 
 			/* Check for terminating quote, check it is the last symbol */
 			len = strlen(start);
 			end = strchr(start + 1, '"');
 			if (!end)
+			{
 				goto fail;
+			}
 			cmp = end - start + 1;
 			if (len != cmp)
+			{
 				goto fail;
+			}
 			if (start[0] == '"')
+			{
 				start++;
+			}
 			if (end[0] == '"')
+			{
 				end[0] = '\0';
+			}
 			value->data.string = _strdup(start);
 
 			if (!value->data.string)
+			{
 				goto fail;
+			}
 		}
 		break;
 		default:
@@ -284,7 +319,9 @@ fail:
 static BOOL reg_load_has_next_line(Reg* reg)
 {
 	if (!reg)
+	{
 		return 0;
+	}
 
 	return (reg->next_line != NULL) ? 1 : 0;
 }
@@ -292,7 +329,9 @@ static BOOL reg_load_has_next_line(Reg* reg)
 static char* reg_load_get_next_line(Reg* reg)
 {
 	if (!reg)
+	{
 		return NULL;
+	}
 
 	reg->line = reg->next_line;
 	reg->next_line = strtok(NULL, "\n");
@@ -320,7 +359,9 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 	path = _strdup(subkey->name);
 
 	if (!path)
+	{
 		return;
+	}
 
 	name = strtok_s(path, "\\", &save);
 
@@ -329,7 +370,9 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 		if (strcmp(key->name, name) == 0)
 		{
 			if (save)
+			{
 				subkey->subname = _strdup(save);
+			}
 
 			/* TODO: free allocated memory in error case */
 			if (!subkey->subname)
@@ -348,8 +391,8 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 static RegKey* reg_load_key(Reg* reg, RegKey* key)
 {
 	char* p[2];
-	size_t length;
-	RegKey* subkey;
+	size_t length = 0;
+	RegKey* subkey = NULL;
 
 	WINPR_ASSERT(reg);
 	WINPR_ASSERT(key);
@@ -358,12 +401,16 @@ static RegKey* reg_load_key(Reg* reg, RegKey* key)
 	p[0] = reg->line + 1;
 	p[1] = strrchr(p[0], ']');
 	if (!p[1])
+	{
 		return NULL;
+	}
 
 	subkey = (RegKey*)calloc(1, sizeof(RegKey));
 
 	if (!subkey)
+	{
 		return NULL;
+	}
 
 	length = (size_t)(p[1] - p[0]);
 	subkey->name = (char*)malloc(length + 1);
@@ -382,7 +429,9 @@ static RegKey* reg_load_key(Reg* reg, RegKey* key)
 		char* line = reg_load_peek_next_line(reg);
 
 		if (line[0] == '[')
+		{
 			break;
+		}
 
 		reg_load_get_next_line(reg);
 
@@ -450,7 +499,7 @@ static void reg_unload_value(Reg* reg, RegVal* value)
 
 static void reg_unload_key(Reg* reg, RegKey* key)
 {
-	RegVal* pValue;
+	RegVal* pValue = NULL;
 
 	WINPR_ASSERT(reg);
 	WINPR_ASSERT(key);
@@ -491,28 +540,38 @@ Reg* reg_open(BOOL read_only)
 	Reg* reg = (Reg*)calloc(1, sizeof(Reg));
 
 	if (!reg)
+	{
 		return NULL;
+	}
 
 	reg->read_only = read_only;
 	reg->filename = WINPR_HKLM_HIVE;
 
 	if (reg->read_only)
+	{
 		reg->fp = winpr_fopen(reg->filename, "r");
+	}
 	else
 	{
 		reg->fp = winpr_fopen(reg->filename, "r+");
 
 		if (!reg->fp)
+		{
 			reg->fp = winpr_fopen(reg->filename, "w+");
+		}
 	}
 
 	if (!reg->fp)
+	{
 		goto fail;
+	}
 
 	reg->root_key = (RegKey*)calloc(1, sizeof(RegKey));
 
 	if (!reg->root_key)
+	{
 		goto fail;
+	}
 
 	reg->root_key->values = NULL;
 	reg->root_key->subkeys = NULL;
@@ -531,7 +590,9 @@ void reg_close(Reg* reg)
 	{
 		reg_unload(reg);
 		if (reg->fp)
+		{
 			fclose(reg->fp);
+		}
 		free(reg);
 	}
 }

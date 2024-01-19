@@ -40,15 +40,15 @@ typedef struct
 {
 	BOOL gfxOpened;
 	BOOL gfxSurfaceCreated;
-} SHADOW_GFX_STATUS;
+} DECLSPEC_ALIGN(8) SHADOW_GFX_STATUS;
 
 static INLINE BOOL shadow_client_rdpgfx_new_surface(rdpShadowClient* client)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_CREATE_SURFACE_PDU createSurface;
 	RDPGFX_MAP_SURFACE_TO_OUTPUT_PDU surfaceToOutput;
-	RdpgfxServerContext* context;
-	rdpSettings* settings;
+	RdpgfxServerContext* context = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(client);
 	context = client->rdpgfx;
@@ -89,7 +89,7 @@ static INLINE BOOL shadow_client_rdpgfx_release_surface(rdpShadowClient* client)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_DELETE_SURFACE_PDU pdu;
-	RdpgfxServerContext* context;
+	RdpgfxServerContext* context = NULL;
 
 	WINPR_ASSERT(client);
 
@@ -112,8 +112,8 @@ static INLINE BOOL shadow_client_rdpgfx_reset_graphic(rdpShadowClient* client)
 {
 	UINT error = CHANNEL_RC_OK;
 	RDPGFX_RESET_GRAPHICS_PDU pdu = { 0 };
-	RdpgfxServerContext* context;
-	rdpSettings* settings;
+	RdpgfxServerContext* context = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->rdpgfx);
@@ -155,15 +155,19 @@ static INLINE void shadow_client_free_queued_message(void* obj)
 static void shadow_client_context_free(freerdp_peer* peer, rdpContext* context)
 {
 	rdpShadowClient* client = (rdpShadowClient*)context;
-	rdpShadowServer* server;
+	rdpShadowServer* server = NULL;
 
 	WINPR_UNUSED(peer);
 	if (!client)
+	{
 		return;
+	}
 
 	server = client->server;
 	if (server && server->clients)
+	{
 		ArrayList_Remove(server->clients, (void*)client);
+	}
 
 	shadow_encoder_free(client->encoder);
 
@@ -180,12 +184,12 @@ static void shadow_client_context_free(freerdp_peer* peer, rdpContext* context)
 
 static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 {
-	BOOL NSCodec;
+	BOOL NSCodec = 0;
 	const char bind_address[] = "bind-address,";
 	rdpShadowClient* client = (rdpShadowClient*)context;
-	rdpSettings* settings;
-	const rdpSettings* srvSettings;
-	rdpShadowServer* server;
+	rdpSettings* settings = NULL;
+	const rdpSettings* srvSettings = NULL;
+	rdpShadowServer* server = NULL;
 	const wObject cb = { NULL, NULL, NULL, shadow_client_free_queued_message, NULL };
 
 	WINPR_ASSERT(client);
@@ -208,40 +212,68 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth,
 	                                 freerdp_settings_get_uint32(srvSettings, FreeRDP_ColorDepth)))
+	{
 		return FALSE;
+	}
 	NSCodec = freerdp_settings_get_bool(srvSettings, FreeRDP_NSCodec);
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, NSCodec))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec,
 	                               freerdp_settings_get_bool(srvSettings, FreeRDP_RemoteFxCodec)))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCacheV3Enabled, TRUE))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_FrameMarkerCommandEnabled, TRUE))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SurfaceFrameMarkerEnabled, TRUE))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, TRUE))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_GfxH264,
 	                               freerdp_settings_get_bool(srvSettings, FreeRDP_GfxH264)))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_DrawAllowSkipAlpha, TRUE))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_DrawAllowColorSubsampling, TRUE))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_DrawAllowDynamicColorFidelity, TRUE))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_CompressionLevel, PACKET_COMPR_TYPE_RDP8))
+	{
 		return FALSE;
+	}
 
 	if (server->ipcSocket && (strncmp(bind_address, server->ipcSocket,
 	                                  strnlen(bind_address, sizeof(bind_address))) != 0))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_LyncRdpMode, TRUE))
+		{
 			return FALSE;
+		}
 		if (!freerdp_settings_set_bool(settings, FreeRDP_CompressionEnabled, FALSE))
+		{
 			return FALSE;
+		}
 	}
 
 	client->inLobby = TRUE;
@@ -249,22 +281,32 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 	client->mayInteract = server->mayInteract;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(client->lock), 4000))
+	{
 		goto fail;
+	}
 
 	region16_init(&(client->invalidRegion));
 	client->vcm = WTSOpenServerA(peer->context);
 
 	if (!client->vcm || client->vcm == INVALID_HANDLE_VALUE)
+	{
 		goto fail;
+	}
 
 	if (!(client->MsgQueue = MessageQueue_New(&cb)))
+	{
 		goto fail;
+	}
 
 	if (!(client->encoder = shadow_encoder_new(client)))
+	{
 		goto fail;
+	}
 
 	if (!ArrayList_Append(server->clients, (void*)client))
+	{
 		goto fail;
+	}
 
 	return TRUE;
 
@@ -276,9 +318,9 @@ fail:
 static INLINE void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 numRects,
                                               const RECTANGLE_16* rects)
 {
-	UINT32 index;
+	UINT32 index = 0;
 	RECTANGLE_16 screenRegion;
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(rects || (numRects == 0));
@@ -318,9 +360,10 @@ static INLINE void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 nu
  */
 static INLINE BOOL shadow_client_recalc_desktop_size(rdpShadowClient* client)
 {
-	INT32 width, height;
-	rdpShadowServer* server;
-	rdpSettings* settings;
+	INT32 width;
+	INT32 height;
+	rdpShadowServer* server = NULL;
+	rdpSettings* settings = NULL;
 	RECTANGLE_16 viewport = { 0 };
 
 	WINPR_ASSERT(client);
@@ -350,15 +393,17 @@ static INLINE BOOL shadow_client_recalc_desktop_size(rdpShadowClient* client)
 	WINPR_ASSERT(height <= UINT16_MAX);
 	if (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) != (UINT32)width ||
 	    freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight) != (UINT32)height)
+	{
 		return TRUE;
+	}
 
 	return FALSE;
 }
 
 static BOOL shadow_client_capabilities(freerdp_peer* peer)
 {
-	rdpShadowSubsystem* subsystem;
-	rdpShadowClient* client;
+	rdpShadowSubsystem* subsystem = NULL;
+	rdpShadowClient* client = NULL;
 	BOOL ret = TRUE;
 
 	WINPR_ASSERT(peer);
@@ -373,7 +418,9 @@ static BOOL shadow_client_capabilities(freerdp_peer* peer)
 	IFCALLRET(subsystem->ClientCapabilities, ret, subsystem, client);
 
 	if (!ret)
+	{
 		WLog_WARN(TAG, "subsystem->ClientCapabilities failed");
+	}
 
 	return ret;
 }
@@ -386,10 +433,10 @@ static void shadow_reset_desktop_resize(rdpShadowClient* client)
 
 static BOOL shadow_send_desktop_resize(rdpShadowClient* client)
 {
-	BOOL rc;
-	rdpUpdate* update;
-	rdpSettings* settings;
-	const freerdp_peer* peer;
+	BOOL rc = 0;
+	rdpUpdate* update = NULL;
+	rdpSettings* settings = NULL;
+	const freerdp_peer* peer = NULL;
 
 	WINPR_ASSERT(client);
 
@@ -423,9 +470,13 @@ static BOOL shadow_send_desktop_resize(rdpShadowClient* client)
 	// Update peer resolution, required so that during disconnect/reconnect the correct resolution
 	// is sent to the client.
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, resizeWidth))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, resizeHeight))
+	{
 		return FALSE;
+	}
 	rc = update->DesktopResize(update->context);
 	WLog_INFO(TAG, "Client %s resize requested (%" PRIu32 "x%" PRIu32 "@%" PRIu32 ")",
 	          peer->hostname, resizeWidth, resizeHeight,
@@ -439,11 +490,11 @@ static BOOL shadow_send_desktop_resize(rdpShadowClient* client)
 
 static BOOL shadow_client_post_connect(freerdp_peer* peer)
 {
-	int authStatus;
-	rdpSettings* settings;
-	rdpShadowClient* client;
-	rdpShadowServer* server;
-	rdpShadowSubsystem* subsystem;
+	int authStatus = 0;
+	rdpSettings* settings = NULL;
+	rdpShadowClient* client = NULL;
+	rdpShadowServer* server = NULL;
+	rdpShadowSubsystem* subsystem = NULL;
 
 	WINPR_ASSERT(peer);
 
@@ -461,8 +512,10 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 
 	if (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) == 24)
 	{
-		if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 16)) /* disable 24bpp */
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 16))
+		{ /* disable 24bpp */
 			return FALSE;
+		}
 	}
 
 	const UINT32 MultifragMaxRequestSize =
@@ -481,7 +534,9 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 	          freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth));
 
 	if (shadow_client_channels_post_connect(client) != CHANNEL_RC_OK)
+	{
 		return FALSE;
+	}
 
 	shadow_client_mark_invalid(client, 0, NULL);
 	authStatus = -1;
@@ -493,7 +548,9 @@ static BOOL shadow_client_post_connect(freerdp_peer* peer)
 	if (Username && Password)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AutoLogonEnabled, TRUE))
+		{
 			return FALSE;
+		}
 	}
 
 	if (server->authentication && !freerdp_settings_get_bool(settings, FreeRDP_NlaSecurity))
@@ -556,7 +613,7 @@ static INLINE void shadow_client_convert_rects(rdpShadowClient* client, RECTANGL
 static BOOL shadow_client_refresh_request(rdpShadowClient* client)
 {
 	wMessage message = { 0 };
-	wMessagePipe* MsgPipe;
+	wMessagePipe* MsgPipe = NULL;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->subsystem);
@@ -575,11 +632,13 @@ static BOOL shadow_client_refresh_request(rdpShadowClient* client)
 static BOOL shadow_client_refresh_rect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
 	rdpShadowClient* client = (rdpShadowClient*)context;
-	RECTANGLE_16* rects;
+	RECTANGLE_16* rects = NULL;
 
 	/* It is invalid if we have area count but no actual area */
 	if (count && !areas)
+	{
 		return FALSE;
+	}
 
 	if (count)
 	{
@@ -629,8 +688,8 @@ static BOOL shadow_client_suppress_output(rdpContext* context, BYTE allow, const
 
 static BOOL shadow_client_activate(freerdp_peer* peer)
 {
-	rdpSettings* settings;
-	rdpShadowClient* client;
+	rdpSettings* settings = NULL;
+	rdpShadowClient* client = NULL;
 
 	WINPR_ASSERT(peer);
 
@@ -642,7 +701,9 @@ static BOOL shadow_client_activate(freerdp_peer* peer)
 
 	/* Resize client if necessary */
 	if (shadow_client_recalc_desktop_size(client))
+	{
 		return shadow_send_desktop_resize(client);
+	}
 
 	shadow_reset_desktop_resize(client);
 	client->activated = TRUE;
@@ -665,7 +726,7 @@ static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTIT
 	char* user = NULL;
 	char* domain = NULL;
 	char* password = NULL;
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_UNUSED(automatic);
 
@@ -680,38 +741,58 @@ static BOOL shadow_client_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTIT
 	if (identity->Flags & SEC_WINNT_AUTH_IDENTITY_UNICODE)
 	{
 		if (identity->User)
+		{
 			user = ConvertWCharNToUtf8Alloc(identity->User, identity->UserLength, NULL);
+		}
 
 		if (identity->Domain)
+		{
 			domain = ConvertWCharNToUtf8Alloc(identity->Domain, identity->DomainLength, NULL);
+		}
 
 		if (identity->Password)
+		{
 			password = ConvertWCharNToUtf8Alloc(identity->Password, identity->PasswordLength, NULL);
+		}
 	}
 	else
 	{
 		if (identity->User)
+		{
 			user = _strdup((char*)identity->User);
+		}
 
 		if (identity->Domain)
+		{
 			domain = _strdup((char*)identity->Domain);
+		}
 
 		if (identity->Password)
+		{
 			password = _strdup((char*)identity->Password);
+		}
 	}
 
 	if ((identity->User && !user) || (identity->Domain && !domain) ||
 	    (identity->Password && !password))
+	{
 		goto fail;
+	}
 
 	if (user)
+	{
 		freerdp_settings_set_string(settings, FreeRDP_Username, user);
+	}
 
 	if (domain)
+	{
 		freerdp_settings_set_string(settings, FreeRDP_Domain, domain);
+	}
 
 	if (password)
+	{
 		freerdp_settings_set_string(settings, FreeRDP_Password, password);
+	}
 
 	rc = TRUE;
 fail:
@@ -753,7 +834,7 @@ static UINT
 shadow_client_rdpgfx_frame_acknowledge(RdpgfxServerContext* context,
                                        const RDPGFX_FRAME_ACKNOWLEDGE_PDU* frameAcknowledge)
 {
-	rdpShadowClient* client;
+	rdpShadowClient* client = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(frameAcknowledge);
@@ -782,7 +863,9 @@ static BOOL shadow_are_caps_filtered(const rdpSettings* settings, UINT32 caps)
 	for (UINT32 x = 0; x < ARRAYSIZE(capList); x++)
 	{
 		if (caps == capList[x])
+		{
 			return (filter & (1 << x)) != 0;
+		}
 	}
 
 	return TRUE;
@@ -803,9 +886,9 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
                                             BOOL h264, const RDPGFX_CAPSET* capsSets,
                                             UINT32 capsSetCount, UINT32 capsVersion, UINT* rc)
 {
-	UINT32 index;
-	const rdpSettings* srvSettings;
-	rdpSettings* clientSettings;
+	UINT32 index = 0;
+	const rdpSettings* srvSettings = NULL;
+	rdpSettings* clientSettings = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(client);
@@ -820,7 +903,9 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 	WINPR_ASSERT(clientSettings);
 
 	if (shadow_are_caps_filtered(srvSettings, capsVersion))
+	{
 		return FALSE;
+	}
 
 	for (index = 0; index < capsSetCount; index++)
 	{
@@ -828,7 +913,7 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 
 		if (currentCaps->version == capsVersion)
 		{
-			UINT32 flags;
+			UINT32 flags = 0;
 			BOOL planar = FALSE;
 			BOOL rfx = FALSE;
 			BOOL avc444v2 = FALSE;
@@ -843,39 +928,63 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxSmallCache,
 			                               (flags & RDPGFX_CAPS_FLAG_SMALL_CACHE) ? TRUE : FALSE))
+			{
 				return FALSE;
+			}
 
 			avc444v2 = avc444 = !(flags & RDPGFX_CAPS_FLAG_AVC_DISABLED);
 			if (!freerdp_settings_get_bool(srvSettings, FreeRDP_GfxAVC444v2) || !h264)
+			{
 				avc444v2 = FALSE;
+			}
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444v2, avc444v2))
+			{
 				return FALSE;
+			}
 			if (!freerdp_settings_get_bool(srvSettings, FreeRDP_GfxAVC444) || !h264)
+			{
 				avc444 = FALSE;
+			}
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxAVC444, avc444))
+			{
 				return FALSE;
+			}
 			if (!freerdp_settings_get_bool(srvSettings, FreeRDP_GfxH264) || !h264)
+			{
 				avc420 = FALSE;
+			}
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, avc420))
+			{
 				return FALSE;
+			}
 
 			progressive = freerdp_settings_get_bool(srvSettings, FreeRDP_GfxProgressive);
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxProgressive, progressive))
+			{
 				return FALSE;
+			}
 			progressive = freerdp_settings_get_bool(srvSettings, FreeRDP_GfxProgressiveV2);
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxProgressiveV2, progressive))
+			{
 				return FALSE;
+			}
 
 			rfx = freerdp_settings_get_bool(srvSettings, FreeRDP_RemoteFxCodec);
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_RemoteFxCodec, rfx))
+			{
 				return FALSE;
+			}
 
 			planar = freerdp_settings_get_bool(srvSettings, FreeRDP_GfxPlanar);
 			if (!freerdp_settings_set_bool(clientSettings, FreeRDP_GfxPlanar, planar))
+			{
 				return FALSE;
+			}
 
 			if (!avc444v2 && !avc444 && !avc420)
+			{
 				pdu.capsSet->flags |= RDPGFX_CAPS_FLAG_AVC_DISABLED;
+			}
 
 			*rc = shadow_client_send_caps_confirm(context, client, &pdu);
 			return TRUE;
@@ -893,14 +1002,14 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
                                                 const RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
 {
-	UINT16 index;
+	UINT16 index = 0;
 	UINT rc = ERROR_INTERNAL_ERROR;
-	const rdpSettings* srvSettings;
-	rdpSettings* clientSettings;
+	const rdpSettings* srvSettings = NULL;
+	rdpSettings* clientSettings = NULL;
 	BOOL h264 = FALSE;
 
 	UINT32 flags = 0;
-	rdpShadowClient* client;
+	rdpShadowClient* client = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(capsAdvertise);
@@ -926,44 +1035,64 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 	/* Request full screen update for new gfx channel */
 	if (!shadow_client_refresh_rect(&client->context, 0, NULL))
+	{
 		return rc;
+	}
 
 	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_107, &rc))
+	{
 		return rc;
+	}
 
 	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_106, &rc))
+	{
 		return rc;
+	}
 
 	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_106_ERR,
 	                                    &rc))
+	{
 		return rc;
+	}
 
 	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_105, &rc))
+	{
 		return rc;
+	}
 
 	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_104, &rc))
+	{
 		return rc;
+	}
 
 	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_103, &rc))
+	{
 		return rc;
+	}
 
 	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_102, &rc))
+	{
 		return rc;
+	}
 
 	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_101, &rc))
+	{
 		return rc;
+	}
 
 	if (shadow_client_caps_test_version(context, client, h264, capsAdvertise->capsSets,
 	                                    capsAdvertise->capsSetCount, RDPGFX_CAPVERSION_10, &rc))
+	{
 		return rc;
+	}
 
 	if (!shadow_are_caps_filtered(srvSettings, RDPGFX_CAPVERSION_81))
 	{
@@ -993,11 +1122,15 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 #else
 
 				if (h264)
+				{
 					freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264,
 					                          (flags & RDPGFX_CAPS_FLAG_AVC420_ENABLED) ? TRUE
 					                                                                    : FALSE);
+				}
 				else
+				{
 					freerdp_settings_set_bool(clientSettings, FreeRDP_GfxH264, FALSE);
+				}
 #endif
 
 				return shadow_client_send_caps_confirm(context, client, &pdu);
@@ -1054,24 +1187,28 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
                                            UINT32 nSrcStep, UINT32 SrcFormat, UINT16 nXSrc,
                                            UINT16 nYSrc, UINT16 nWidth, UINT16 nHeight)
 {
-	UINT32 id;
+	UINT32 id = 0;
 	UINT error = CHANNEL_RC_OK;
 	const rdpContext* context = (const rdpContext*)client;
-	const rdpSettings* settings;
-	rdpShadowEncoder* encoder;
+	const rdpSettings* settings = NULL;
+	rdpShadowEncoder* encoder = NULL;
 	RDPGFX_SURFACE_COMMAND cmd = { 0 };
 	RDPGFX_START_FRAME_PDU cmdstart = { 0 };
 	RDPGFX_END_FRAME_PDU cmdend = { 0 };
 	SYSTEMTIME sTime = { 0 };
 
 	if (!context || !pSrcData)
+	{
 		return FALSE;
+	}
 
 	settings = context->settings;
 	encoder = client->encoder;
 
 	if (!settings || !encoder)
+	{
 		return FALSE;
+	}
 
 	if (client->first_frame)
 	{
@@ -1100,7 +1237,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	const BOOL GfxAVC444v2 = freerdp_settings_get_bool(settings, FreeRDP_GfxAVC444v2);
 	if (GfxAVC444 || GfxAVC444v2)
 	{
-		INT32 rc;
+		INT32 rc = 0;
 		RDPGFX_AVC444_BITMAP_STREAM avc444 = { 0 };
 		RECTANGLE_16 regionRect = { 0 };
 		BYTE version = GfxAVC444v2 ? 2 : 1;
@@ -1150,7 +1287,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	}
 	else if (GfxH264)
 	{
-		INT32 rc;
+		INT32 rc = 0;
 		RDPGFX_AVC420_BITMAP_STREAM avc420 = { 0 };
 		RECTANGLE_16 regionRect;
 
@@ -1197,8 +1334,8 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 #endif
 	    if (freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec) && (id != 0))
 	{
-		BOOL rc;
-		wStream* s;
+		BOOL rc = 0;
+		wStream* s = NULL;
 		RFX_RECT rect;
 
 		if (shadow_encoder_prepare(encoder, FREERDP_CODEC_REMOTEFX) < 0)
@@ -1251,7 +1388,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	}
 	else if (freerdp_settings_get_bool(settings, FreeRDP_GfxProgressive))
 	{
-		INT32 rc;
+		INT32 rc = 0;
 		REGION16 region;
 		RECTANGLE_16 regionRect;
 
@@ -1297,7 +1434,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	}
 	else if (freerdp_settings_get_bool(settings, FreeRDP_GfxPlanar))
 	{
-		BOOL rc;
+		BOOL rc = 0;
 		const UINT32 w = cmd.right - cmd.left;
 		const UINT32 h = cmd.bottom - cmd.top;
 		const BYTE* src =
@@ -1329,7 +1466,7 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 	}
 	else
 	{
-		BOOL rc;
+		BOOL rc = 0;
 		const UINT32 w = cmd.right - cmd.left;
 		const UINT32 h = cmd.bottom - cmd.top;
 		const UINT32 length = w * 4 * h;
@@ -1367,30 +1504,37 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
                                             UINT16 nWidth, UINT16 nHeight)
 {
 	BOOL ret = TRUE;
-	BOOL first;
-	BOOL last;
-	wStream* s;
-	size_t numMessages;
+	BOOL first = 0;
+	BOOL last = 0;
+	wStream* s = NULL;
+	size_t numMessages = 0;
 	UINT32 frameId = 0;
-	rdpUpdate* update;
+	rdpUpdate* update = NULL;
 	rdpContext* context = (rdpContext*)client;
-	rdpSettings* settings;
-	rdpShadowEncoder* encoder;
+	rdpSettings* settings = NULL;
+	rdpShadowEncoder* encoder = NULL;
 	SURFACE_BITS_COMMAND cmd = { 0 };
-	UINT32 nsID, rfxID;
+	UINT32 nsID;
+	UINT32 rfxID;
 
 	if (!context || !pSrcData)
+	{
 		return FALSE;
+	}
 
 	update = context->update;
 	settings = context->settings;
 	encoder = client->encoder;
 
 	if (!update || !settings || !encoder)
+	{
 		return FALSE;
+	}
 
 	if (encoder->frameAck)
+	{
 		frameId = shadow_encoder_create_frame_id(encoder);
+	}
 
 	nsID = freerdp_settings_get_uint32(settings, FreeRDP_NSCodecId);
 	rfxID = freerdp_settings_get_uint32(settings, FreeRDP_RemoteFxCodecId);
@@ -1458,10 +1602,14 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 			last = ((i + 1) == numMessages) ? TRUE : FALSE;
 
 			if (!encoder->frameAck)
+			{
 				IFCALLRET(update->SurfaceBits, ret, update->context, &cmd);
+			}
 			else
+			{
 				IFCALLRET(update->SurfaceFrameBits, ret, update->context, &cmd, first, last,
 				          frameId);
+			}
 
 			if (!ret)
 			{
@@ -1501,9 +1649,13 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 		last = TRUE;
 
 		if (!encoder->frameAck)
+		{
 			IFCALLRET(update->SurfaceBits, ret, update->context, &cmd);
+		}
 		else
+		{
 			IFCALLRET(update->SurfaceFrameBits, ret, update->context, &cmd, first, last, frameId);
+		}
 
 		if (!ret)
 		{
@@ -1524,32 +1676,38 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
                                              UINT16 nWidth, UINT16 nHeight)
 {
 	BOOL ret = TRUE;
-	BYTE* data;
-	BYTE* buffer;
-	UINT32 k;
-	UINT32 yIdx, xIdx;
-	UINT32 rows, cols;
-	UINT32 DstSize;
-	UINT32 SrcFormat;
-	BITMAP_DATA* bitmap;
-	rdpUpdate* update;
+	BYTE* data = NULL;
+	BYTE* buffer = NULL;
+	UINT32 k = 0;
+	UINT32 yIdx;
+	UINT32 xIdx;
+	UINT32 rows;
+	UINT32 cols;
+	UINT32 DstSize = 0;
+	UINT32 SrcFormat = 0;
+	BITMAP_DATA* bitmap = NULL;
+	rdpUpdate* update = NULL;
 	rdpContext* context = (rdpContext*)client;
-	rdpSettings* settings;
-	UINT32 totalBitmapSize;
-	UINT32 updateSizeEstimate;
-	BITMAP_DATA* bitmapData;
+	rdpSettings* settings = NULL;
+	UINT32 totalBitmapSize = 0;
+	UINT32 updateSizeEstimate = 0;
+	BITMAP_DATA* bitmapData = NULL;
 	BITMAP_UPDATE bitmapUpdate;
-	rdpShadowEncoder* encoder;
+	rdpShadowEncoder* encoder = NULL;
 
 	if (!context || !pSrcData)
+	{
 		return FALSE;
+	}
 
 	update = context->update;
 	settings = context->settings;
 	encoder = client->encoder;
 
 	if (!update || !settings || !encoder)
+	{
 		return FALSE;
+	}
 
 	const UINT32 maxUpdateSize =
 	    freerdp_settings_get_uint32(settings, FreeRDP_MultifragMaxRequestSize);
@@ -1591,7 +1749,9 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 	bitmapUpdate.number = rows * cols;
 
 	if (!(bitmapData = (BITMAP_DATA*)calloc(bitmapUpdate.number, sizeof(BITMAP_DATA))))
+	{
 		return FALSE;
+	}
 
 	bitmapUpdate.rectangles = bitmapData;
 
@@ -1616,17 +1776,23 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 			bitmap->destTop = nYSrc + (yIdx * 64);
 
 			if ((INT64)(bitmap->destLeft + bitmap->width) > (nXSrc + nWidth))
+			{
 				bitmap->width = (UINT32)(nXSrc + nWidth) - bitmap->destLeft;
+			}
 
 			if ((INT64)(bitmap->destTop + bitmap->height) > (nYSrc + nHeight))
+			{
 				bitmap->height = (UINT32)(nYSrc + nHeight) - bitmap->destTop;
+			}
 
 			bitmap->destRight = bitmap->destLeft + bitmap->width - 1;
 			bitmap->destBottom = bitmap->destTop + bitmap->height - 1;
 			bitmap->compressed = TRUE;
 
 			if ((bitmap->width < 4) || (bitmap->height < 4))
+			{
 				continue;
+			}
 
 			if (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth) < 32)
 			{
@@ -1645,7 +1811,7 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 			}
 			else
 			{
-				UINT32 dstSize;
+				UINT32 dstSize = 0;
 				buffer = encoder->grid[k];
 				data = &pSrcData[(bitmap->destTop * nSrcStep) + (bitmap->destLeft * 4)];
 
@@ -1671,13 +1837,16 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 
 	if (updateSizeEstimate > maxUpdateSize)
 	{
-		UINT32 i, j;
-		UINT32 updateSize;
-		UINT32 newUpdateSize;
+		UINT32 i;
+		UINT32 j;
+		UINT32 updateSize = 0;
+		UINT32 newUpdateSize = 0;
 		BITMAP_DATA* fragBitmapData = NULL;
 
 		if (k > 0)
+		{
 			fragBitmapData = (BITMAP_DATA*)calloc(k, sizeof(BITMAP_DATA));
+		}
 
 		if (!fragBitmapData)
 		{
@@ -1741,34 +1910,43 @@ out:
 static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GFX_STATUS* pStatus)
 {
 	BOOL ret = TRUE;
-	INT64 nXSrc, nYSrc;
-	INT64 nWidth, nHeight;
+	INT64 nXSrc;
+	INT64 nYSrc;
+	INT64 nWidth;
+	INT64 nHeight;
 	rdpContext* context = (rdpContext*)client;
-	rdpSettings* settings;
-	rdpShadowServer* server;
-	rdpShadowSurface* surface;
+	rdpSettings* settings = NULL;
+	rdpShadowServer* server = NULL;
+	rdpShadowSurface* surface = NULL;
 	REGION16 invalidRegion;
 	RECTANGLE_16 surfaceRect;
-	const RECTANGLE_16* extents;
-	BYTE* pSrcData;
-	UINT32 nSrcStep, SrcFormat;
-	UINT32 index;
+	const RECTANGLE_16* extents = NULL;
+	BYTE* pSrcData = NULL;
+	UINT32 nSrcStep;
+	UINT32 SrcFormat;
+	UINT32 index = 0;
 	UINT32 numRects = 0;
-	const RECTANGLE_16* rects;
+	const RECTANGLE_16* rects = NULL;
 
 	if (!context || !pStatus)
+	{
 		return FALSE;
+	}
 
 	settings = context->settings;
 	server = client->server;
 
 	if (!settings || !server)
+	{
 		return FALSE;
+	}
 
 	surface = client->inLobby ? server->lobby : server->surface;
 
 	if (!surface)
+	{
 		return FALSE;
+	}
 
 	EnterCriticalSection(&(client->lock));
 	region16_init(&invalidRegion);
@@ -1780,7 +1958,9 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	rects = region16_rects(&(surface->invalidRegion), &numRects);
 
 	for (index = 0; index < numRects; index++)
+	{
 		region16_union_rect(&invalidRegion, &invalidRegion, &rects[index]);
+	}
 
 	surfaceRect.left = 0;
 	surfaceRect.top = 0;
@@ -1813,7 +1993,8 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	/* Move to new pSrcData / nXSrc / nYSrc according to sub rect */
 	if (server->shareSubRect)
 	{
-		INT32 subX, subY;
+		INT32 subX;
+		INT32 subY;
 		subX = server->subRect.left;
 		subY = server->subRect.top;
 		nXSrc -= subX;
@@ -1842,10 +2023,14 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 			{
 				/* Only init surface when we have h264 supported */
 				if (!(ret = shadow_client_rdpgfx_reset_graphic(client)))
+				{
 					goto out;
+				}
 
 				if (!(ret = shadow_client_rdpgfx_new_surface(client)))
+				{
 					goto out;
+				}
 
 				pStatus->gfxSurfaceCreated = TRUE;
 			}
@@ -1906,17 +2091,21 @@ out:
 static BOOL shadow_client_send_resize(rdpShadowClient* client, SHADOW_GFX_STATUS* pStatus)
 {
 	rdpContext* context = (rdpContext*)client;
-	rdpSettings* settings;
-	freerdp_peer* peer;
+	rdpSettings* settings = NULL;
+	freerdp_peer* peer = NULL;
 
 	if (!context || !pStatus)
+	{
 		return FALSE;
+	}
 
 	peer = context->peer;
 	settings = context->settings;
 
 	if (!peer || !settings)
+	{
 		return FALSE;
+	}
 
 	/**
 	 * Unset client activated flag to avoid sending update message during
@@ -1929,14 +2118,18 @@ static BOOL shadow_client_send_resize(rdpShadowClient* client, SHADOW_GFX_STATUS
 	if (pStatus->gfxSurfaceCreated)
 	{
 		if (!shadow_client_rdpgfx_release_surface(client))
+		{
 			return FALSE;
+		}
 
 		pStatus->gfxSurfaceCreated = FALSE;
 	}
 
 	/* Send Resize */
 	if (!shadow_send_desktop_resize(client))
+	{
 		return FALSE;
+	}
 	shadow_reset_desktop_resize(client);
 
 	/* Clear my invalidRegion. shadow_client_activate refreshes fullscreen */
@@ -1955,7 +2148,7 @@ static BOOL shadow_client_send_resize(rdpShadowClient* client, SHADOW_GFX_STATUS
 static BOOL shadow_client_surface_update(rdpShadowClient* client, REGION16* region)
 {
 	UINT32 numRects = 0;
-	const RECTANGLE_16* rects;
+	const RECTANGLE_16* rects = NULL;
 	rects = region16_rects(region, &numRects);
 	shadow_client_mark_invalid(client, numRects, rects);
 	return TRUE;
@@ -1970,8 +2163,8 @@ static BOOL shadow_client_surface_update(rdpShadowClient* client, REGION16* regi
 static INLINE BOOL shadow_client_no_surface_update(rdpShadowClient* client,
                                                    SHADOW_GFX_STATUS* pStatus)
 {
-	rdpShadowServer* server;
-	rdpShadowSurface* surface;
+	rdpShadowServer* server = NULL;
+	rdpShadowSurface* surface = NULL;
 	WINPR_UNUSED(pStatus);
 	WINPR_ASSERT(client);
 	server = client->server;
@@ -1983,7 +2176,7 @@ static INLINE BOOL shadow_client_no_surface_update(rdpShadowClient* client,
 static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* message)
 {
 	rdpContext* context = (rdpContext*)client;
-	rdpUpdate* update;
+	rdpUpdate* update = NULL;
 
 	WINPR_ASSERT(message);
 	WINPR_ASSERT(context);
@@ -2139,7 +2332,9 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 
 	rc = peer->Initialize(peer);
 	if (!rc)
+	{
 		goto out;
+	}
 
 	update = peer->context->update;
 	WINPR_ASSERT(update);
@@ -2149,12 +2344,16 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 	update->SurfaceFrameAcknowledge = shadow_client_surface_frame_acknowledge;
 
 	if ((!client->vcm) || (!subsystem->updateEvent))
+	{
 		goto out;
+	}
 
 	UpdateSubscriber = shadow_multiclient_get_subscriber(subsystem->updateEvent);
 
 	if (!UpdateSubscriber)
+	{
 		goto out;
+	}
 
 	UpdateEvent = shadow_multiclient_getevent(UpdateSubscriber);
 	WINPR_ASSERT(UpdateEvent);
@@ -2192,12 +2391,16 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 		HANDLE gfxevent = rdpgfx_server_get_event_handle(client->rdpgfx);
 
 		if (gfxevent)
+		{
 			events[nCount++] = gfxevent;
+		}
 
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
+		{
 			goto fail;
+		}
 
 		if (WaitForSingleObject(UpdateEvent, 0) == WAIT_OBJECT_0)
 		{
@@ -2297,7 +2500,9 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 							WLog_WARN(TAG, "Failed to open GraphicsPipeline");
 							if (!freerdp_settings_set_bool(settings,
 							                               FreeRDP_SupportGraphicsPipeline, FALSE))
+							{
 								goto fail;
+							}
 						}
 						else
 						{
@@ -2420,7 +2625,9 @@ fail:
 		if (gfxstatus.gfxSurfaceCreated)
 		{
 			if (!shadow_client_rdpgfx_release_surface(client))
+			{
 				WLog_WARN(TAG, "GFX release surface failure!");
+			}
 		}
 
 		WINPR_ASSERT(client->rdpgfx);
@@ -2453,11 +2660,13 @@ out:
 
 BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 {
-	rdpShadowClient* client;
-	rdpShadowServer* server;
+	rdpShadowClient* client = NULL;
+	rdpShadowServer* server = NULL;
 
 	if (!listener || !peer)
+	{
 		return FALSE;
+	}
 
 	server = (rdpShadowServer*)listener->info;
 	WINPR_ASSERT(server);
@@ -2468,7 +2677,9 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 	peer->ContextFree = shadow_client_context_free;
 
 	if (!freerdp_peer_context_new_ex(peer, server->settings))
+	{
 		return FALSE;
+	}
 
 	client = (rdpShadowClient*)peer->context;
 	WINPR_ASSERT(client);
@@ -2478,19 +2689,17 @@ BOOL shadow_client_accepted(freerdp_listener* listener, freerdp_peer* peer)
 		freerdp_peer_context_free(peer);
 		return FALSE;
 	}
-	else
-	{
-		/* Close the thread handle to make it detached. */
-		CloseHandle(client->thread);
-		client->thread = NULL;
-	}
+
+	/* Close the thread handle to make it detached. */
+	CloseHandle(client->thread);
+	client->thread = NULL;
 
 	return TRUE;
 }
 
 static void shadow_msg_out_addref(wMessage* message)
 {
-	SHADOW_MSG_OUT* msg;
+	SHADOW_MSG_OUT* msg = NULL;
 
 	WINPR_ASSERT(message);
 	msg = (SHADOW_MSG_OUT*)message->wParam;
@@ -2501,7 +2710,7 @@ static void shadow_msg_out_addref(wMessage* message)
 
 static void shadow_msg_out_release(wMessage* message)
 {
-	SHADOW_MSG_OUT* msg;
+	SHADOW_MSG_OUT* msg = NULL;
 
 	WINPR_ASSERT(message);
 	msg = (SHADOW_MSG_OUT*)message->wParam;
@@ -2516,20 +2725,21 @@ static void shadow_msg_out_release(wMessage* message)
 static BOOL shadow_client_dispatch_msg(rdpShadowClient* client, wMessage* message)
 {
 	if (!client || !message)
+	{
 		return FALSE;
+	}
 
 	/* Add reference when it is posted */
 	shadow_msg_out_addref(message);
 
 	WINPR_ASSERT(client->MsgQueue);
 	if (MessageQueue_Dispatch(client->MsgQueue, message))
-		return TRUE;
-	else
 	{
-		/* Release the reference since post failed */
-		shadow_msg_out_release(message);
-		return FALSE;
+		return TRUE;
 	}
+	/* Release the reference since post failed */
+	shadow_msg_out_release(message);
+	return FALSE;
 }
 
 BOOL shadow_client_post_msg(rdpShadowClient* client, void* context, UINT32 type,

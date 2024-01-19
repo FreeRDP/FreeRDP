@@ -43,14 +43,19 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
                                   UINT32 pixel_format, const BYTE* palette, INT16* r_buf,
                                   INT16* g_buf, INT16* b_buf)
 {
-	int x, y;
-	int x_exceed;
-	int y_exceed;
-	const BYTE* src;
-	const UINT32* src_32;
-	const UINT16* src_16;
-	INT16 r, g, b;
-	INT16 *r_last, *g_last, *b_last;
+	int x;
+	int y;
+	int x_exceed = 0;
+	int y_exceed = 0;
+	const BYTE* src = NULL;
+	const UINT32* src_32 = NULL;
+	const UINT16* src_16 = NULL;
+	INT16 r;
+	INT16 g;
+	INT16 b;
+	INT16* r_last;
+	INT16* g_last;
+	INT16* b_last;
 	x_exceed = 64 - width;
 	y_exceed = 64 - height;
 
@@ -166,12 +171,14 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 
 			case PIXEL_FORMAT_RGB8:
 				if (!palette)
+				{
 					break;
+				}
 
 				for (x = 0; x < width; x++)
 				{
-					int shift;
-					BYTE idx;
+					int shift = 0;
+					BYTE idx = 0;
 					shift = (7 - (x % 8));
 					idx = (BYTE)(((*src_32 & 0xFF) >> shift) & 1);
 					idx |= (BYTE)(((((*src_32 >> 8) & 0xFF) >> shift) & 1) << 1);
@@ -183,14 +190,18 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 					*b_buf++ = (INT16)palette[idx + 2];
 
 					if (shift == 0)
+					{
 						src_32++;
+					}
 				}
 
 				break;
 
 			case PIXEL_FORMAT_A4:
 				if (!palette)
+				{
 					break;
+				}
 
 				for (x = 0; x < width; x++)
 				{
@@ -249,7 +260,7 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 static void rfx_encode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
                                  INT16* data, BYTE* buffer, int buffer_size, int* size)
 {
-	INT16* dwt_buffer;
+	INT16* dwt_buffer = NULL;
 	dwt_buffer = BufferPool_Take(context->priv->BufferPool, -1); /* dwt_buffer */
 	PROFILER_ENTER(context->priv->prof_rfx_encode_component)
 	PROFILER_ENTER(context->priv->prof_rfx_dwt_2d_encode)
@@ -275,15 +286,21 @@ void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
 		const INT16** cpv;
 		INT16** pv;
 	} cnv;
-	BYTE* pBuffer;
+	BYTE* pBuffer = NULL;
 	INT16* pSrcDst[3];
-	int YLen, CbLen, CrLen;
-	UINT32 *YQuant, *CbQuant, *CrQuant;
+	int YLen;
+	int CbLen;
+	int CrLen;
+	UINT32* YQuant;
+	UINT32* CbQuant;
+	UINT32* CrQuant;
 	primitives_t* prims = primitives_get();
 	static const prim_size_t roi_64x64 = { 64, 64 };
 
 	if (!(pBuffer = (BYTE*)BufferPool_Take(context->priv->BufferPool, -1)))
+	{
 		return;
+	}
 
 	YLen = CbLen = CrLen = 0;
 	YQuant = context->quants + (tile->quantIdxY * 10);

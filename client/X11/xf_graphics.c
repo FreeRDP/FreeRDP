@@ -48,20 +48,29 @@ static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
 BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 {
 	UINT32 SrcFormat = 0;
-	BYTE r = 0, g = 0, b = 0, a = 0;
+	BYTE r = 0;
+	BYTE g = 0;
+	BYTE b = 0;
+	BYTE a = 0;
 
 	if (!xfc || !color)
+	{
 		return FALSE;
+	}
 
 	rdpGdi* gdi = xfc->common.context.gdi;
 
 	if (!gdi)
+	{
 		return FALSE;
+	}
 
 	rdpSettings* settings = xfc->common.context.settings;
 
 	if (!settings)
+	{
 		return FALSE;
+	}
 
 	switch (freerdp_settings_get_uint32(settings, FreeRDP_ColorDepth))
 	{
@@ -93,7 +102,9 @@ BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 	color->flags = DoRed | DoGreen | DoBlue;
 
 	if (XAllocColor(xfc->display, xfc->colormap, color) == 0)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -108,12 +119,16 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 	int cursorIndex = -1;
 
 	if (!context || !pointer || !context->gdi)
+	{
 		return FALSE;
+	}
 
 	rdpSettings* settings = xfc->common.context.settings;
 
 	if (!settings)
+	{
 		return FALSE;
+	}
 
 	const double xscale = (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing)
 	                           ? xfc->scaledWidth / (double)freerdp_settings_get_uint32(
@@ -145,13 +160,17 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 		xf_lock_x11(xfc);
 
 		if (!xfc->invert)
+		{
 			CursorFormat = (!xfc->big_endian) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_ABGR32;
+		}
 		else
+		{
 			CursorFormat = (!xfc->big_endian) ? PIXEL_FORMAT_BGRA32 : PIXEL_FORMAT_ARGB32;
+		}
 
 		if (xpointer->nCursors == xpointer->mCursors)
 		{
-			void* tmp2;
+			void* tmp2 = NULL;
 			xpointer->mCursors = (xpointer->mCursors == 0 ? 1 : xpointer->mCursors * 2);
 
 			tmp2 = realloc(xpointer->cursorWidths, sizeof(UINT32) * xpointer->mCursors);
@@ -185,7 +204,7 @@ static BOOL xf_Pointer_GetCursorForCurrentScale(rdpContext* context, rdpPointer*
 		ci.height = yTargetSize;
 		ci.xhot = pointer->xPos * xscale;
 		ci.yhot = pointer->yPos * yscale;
-		const size_t size = 1ull * ci.height * ci.width * FreeRDPGetBytesPerPixel(CursorFormat);
+		const size_t size = 1ULL * ci.height * ci.width * FreeRDPGetBytesPerPixel(CursorFormat);
 
 		void* tmp = winpr_aligned_malloc(size, 16);
 		if (!tmp)
@@ -255,25 +274,25 @@ static Window xf_Pointer_get_window(xfContext* xfc)
 		}
 		return xfc->appWindow->handle;
 	}
-	else
+
+	if (!xfc->window)
 	{
-		if (!xfc->window)
-		{
-			WLog_WARN(TAG, "xf_Pointer: Invalid window");
-			return 0;
-		}
-		return xfc->window->handle;
+		WLog_WARN(TAG, "xf_Pointer: Invalid window");
+		return 0;
 	}
+	return xfc->window->handle;
 }
 
 BOOL xf_pointer_update_scale(xfContext* xfc)
 {
-	xfPointer* pointer;
+	xfPointer* pointer = NULL;
 	WINPR_ASSERT(xfc);
 
 	pointer = xfc->pointer;
 	if (!pointer)
+	{
 		return TRUE;
+	}
 
 	return xf_Pointer_Set(&xfc->common.context, &xfc->pointer->pointer);
 }
@@ -283,26 +302,34 @@ static BOOL xf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	BOOL rc = FALSE;
 
 #ifdef WITH_XCURSOR
-	UINT32 CursorFormat;
-	size_t size;
+	UINT32 CursorFormat = 0;
+	size_t size = 0;
 	xfContext* xfc = (xfContext*)context;
 	xfPointer* xpointer = (xfPointer*)pointer;
 
 	if (!context || !pointer || !context->gdi)
+	{
 		goto fail;
+	}
 
 	if (!xfc->invert)
+	{
 		CursorFormat = (!xfc->big_endian) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_ABGR32;
+	}
 	else
+	{
 		CursorFormat = (!xfc->big_endian) ? PIXEL_FORMAT_BGRA32 : PIXEL_FORMAT_ARGB32;
+	}
 
 	xpointer->nCursors = 0;
 	xpointer->mCursors = 0;
 
-	size = 1ull * pointer->height * pointer->width * FreeRDPGetBytesPerPixel(CursorFormat);
+	size = 1ULL * pointer->height * pointer->width * FreeRDPGetBytesPerPixel(CursorFormat);
 
 	if (!(xpointer->cursorPixels = (XcursorPixel*)winpr_aligned_malloc(size, 16)))
+	{
 		goto fail;
+	}
 
 	if (!freerdp_image_copy_from_pointer_data(
 	        (BYTE*)xpointer->cursorPixels, CursorFormat, 0, 0, 0, pointer->width, pointer->height,
@@ -327,7 +354,7 @@ static void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	WLog_DBG(TAG, "%p", pointer);
 
 #ifdef WITH_XCURSOR
-	UINT32 i;
+	UINT32 i = 0;
 	xfContext* xfc = (xfContext*)context;
 	xfPointer* xpointer = (xfPointer*)pointer;
 
@@ -367,7 +394,9 @@ static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	if (handle)
 	{
 		if (!xf_Pointer_GetCursorForCurrentScale(context, pointer, &(xfc->pointer->cursor)))
+		{
 			return FALSE;
+		}
 		xf_lock_x11(xfc);
 		XDefineCursor(xfc->display, handle, xfc->pointer->cursor);
 		xf_unlock_x11(xfc);
@@ -405,7 +434,9 @@ static BOOL xf_Pointer_SetNull(rdpContext* context)
 	xfc->pointer = NULL;
 
 	if ((handle) && (nullcursor != None))
+	{
 		XDefineCursor(xfc->display, handle, nullcursor);
+	}
 
 	xf_unlock_x11(xfc);
 #endif
@@ -422,7 +453,9 @@ static BOOL xf_Pointer_SetDefault(rdpContext* context)
 	xfc->pointer = NULL;
 
 	if (handle)
+	{
 		XUndefineCursor(xfc->display, handle);
+	}
 
 	xf_unlock_x11(xfc);
 #endif
@@ -446,7 +479,9 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 
 	WLog_DBG(TAG, "%" PRIu32 "x%" PRIu32, x, y);
 	if (!xfc->focused)
+	{
 		return TRUE;
+	}
 
 	xf_adjust_coordinates_to_screen(xfc, &x, &y);
 
@@ -470,11 +505,15 @@ static BOOL xf_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 
 	rc = XWarpPointer(xfc->display, handle, handle, 0, 0, 0, 0, x, y);
 	if (rc == 0)
+	{
 		WLog_WARN(TAG, "XWarpPointer==%d", rc);
+	}
 	tmp.event_mask = current.your_event_mask;
 	rc = XChangeWindowAttributes(xfc->display, handle, CWEventMask, &tmp);
 	if (rc == 0)
+	{
 		WLog_WARN(TAG, "2.try XChangeWindowAttributes==%d", rc);
+	}
 	ret = TRUE;
 out:
 	xf_unlock_x11(xfc);
@@ -499,32 +538,48 @@ BOOL xf_register_pointer(rdpGraphics* graphics)
 
 UINT32 xf_get_local_color_format(xfContext* xfc, BOOL aligned)
 {
-	UINT32 DstFormat;
+	UINT32 DstFormat = 0;
 	BOOL invert = FALSE;
 
 	if (!xfc)
+	{
 		return 0;
+	}
 
 	invert = xfc->invert;
 
 	WINPR_ASSERT(xfc->depth != 0);
 	if (xfc->depth == 32)
+	{
 		DstFormat = (!invert) ? PIXEL_FORMAT_RGBA32 : PIXEL_FORMAT_BGRA32;
+	}
 	else if (xfc->depth == 30)
+	{
 		DstFormat = (!invert) ? PIXEL_FORMAT_RGBX32_DEPTH30 : PIXEL_FORMAT_BGRX32_DEPTH30;
+	}
 	else if (xfc->depth == 24)
 	{
 		if (aligned)
+		{
 			DstFormat = (!invert) ? PIXEL_FORMAT_RGBX32 : PIXEL_FORMAT_BGRX32;
+		}
 		else
+		{
 			DstFormat = (!invert) ? PIXEL_FORMAT_RGB24 : PIXEL_FORMAT_BGR24;
+		}
 	}
 	else if (xfc->depth == 16)
+	{
 		DstFormat = PIXEL_FORMAT_RGB16;
+	}
 	else if (xfc->depth == 15)
+	{
 		DstFormat = PIXEL_FORMAT_RGB15;
+	}
 	else
+	{
 		DstFormat = (!invert) ? PIXEL_FORMAT_RGBX32 : PIXEL_FORMAT_BGRX32;
+	}
 
 	return DstFormat;
 }

@@ -21,10 +21,10 @@
 #include <winpr/config.h>
 
 #include <winpr/assert.h>
-#include <winpr/tchar.h>
+#include <winpr/interlocked.h>
 #include <winpr/synch.h>
 #include <winpr/sysinfo.h>
-#include <winpr/interlocked.h>
+#include <winpr/tchar.h>
 #include <winpr/thread.h>
 
 #include "synch.h"
@@ -76,7 +76,9 @@ BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwS
 	lpCriticalSection->LockSemaphore = (winpr_sem_t*)malloc(sizeof(winpr_sem_t));
 
 	if (!lpCriticalSection->LockSemaphore)
+	{
 		return FALSE;
+	}
 
 #if defined(__APPLE__)
 
@@ -87,7 +89,9 @@ BOOL InitializeCriticalSectionEx(LPCRITICAL_SECTION lpCriticalSection, DWORD dwS
 #else
 
 	if (sem_init(lpCriticalSection->LockSemaphore, 0, 0) != 0)
+	{
 		goto out_fail;
+	}
 
 #endif
 	SetCriticalSectionSpinCount(lpCriticalSection, dwSpinCount);
@@ -125,7 +129,7 @@ DWORD SetCriticalSectionSpinCount(LPCRITICAL_SECTION lpCriticalSection, DWORD dw
 #endif
 }
 
-static VOID _WaitForCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
+static VOID WaitForCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 	WINPR_ASSERT(lpCriticalSection);
 #if defined(__APPLE__)
@@ -135,7 +139,7 @@ static VOID _WaitForCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 #endif
 }
 
-static VOID _UnWaitCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
+static VOID UnWaitCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 {
 	WINPR_ASSERT(lpCriticalSection);
 #if defined __APPLE__
@@ -192,7 +196,7 @@ VOID EnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 		}
 
 		/* Section is locked by another thread. We have to wait. */
-		_WaitForCriticalSection(lpCriticalSection);
+		WaitForCriticalSection(lpCriticalSection);
 	}
 
 	/* We got the lock. Own it ... */
@@ -239,7 +243,7 @@ VOID LeaveCriticalSection(LPCRITICAL_SECTION lpCriticalSection)
 		if (InterlockedDecrement(&lpCriticalSection->LockCount) >= 0)
 		{
 			/* ...signal the semaphore to unblock the next waiting thread */
-			_UnWaitCriticalSection(lpCriticalSection);
+			UnWaitCriticalSection(lpCriticalSection);
 		}
 	}
 	else

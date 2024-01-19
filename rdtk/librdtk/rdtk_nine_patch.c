@@ -32,8 +32,8 @@
 #endif
 
 static int rdtk_image_copy_alpha_blend(uint8_t* pDstData, int nDstStep, int nXDst, int nYDst,
-                                       int nWidth, int nHeight, uint8_t* pSrcData, int nSrcStep,
-                                       int nXSrc, int nYSrc)
+                                       int nWidth, int nHeight, const uint8_t* pSrcData,
+                                       int nSrcStep, int nXSrc, int nYSrc)
 {
 	WINPR_ASSERT(pDstData);
 	WINPR_ASSERT(pSrcData);
@@ -78,25 +78,30 @@ static int rdtk_image_copy_alpha_blend(uint8_t* pDstData, int nDstStep, int nXDs
 int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
                          rdtkNinePatch* ninePatch)
 {
-	int x, y;
-	int width;
-	int height;
-	int nXSrc;
-	int nYSrc;
-	int nSrcStep;
-	int nDstStep;
-	uint8_t* pSrcData;
-	uint8_t* pDstData;
-	int scaleWidth;
+	int x;
+	int y;
+	int width = 0;
+	int height = 0;
+	int nXSrc = 0;
+	int nYSrc = 0;
+	int nSrcStep = 0;
+	int nDstStep = 0;
+	uint8_t* pSrcData = NULL;
+	uint8_t* pDstData = NULL;
+	int scaleWidth = 0;
 
 	WINPR_ASSERT(surface);
 	WINPR_ASSERT(ninePatch);
 
 	if (nWidth < ninePatch->width)
+	{
 		nWidth = ninePatch->width;
+	}
 
 	if (nHeight < ninePatch->height)
+	{
 		nHeight = ninePatch->height;
+	}
 
 	WINPR_UNUSED(nHeight);
 
@@ -126,7 +131,9 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 		width = (nXSrc + scaleWidth) - x;
 
 		if (width > ninePatch->scaleWidth)
+		{
 			width = ninePatch->scaleWidth;
+		}
 
 		rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height,
 		                            pSrcData, nSrcStep, nXSrc, nYSrc);
@@ -161,7 +168,9 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 		width = (nXSrc + scaleWidth) - x;
 
 		if (width > ninePatch->scaleWidth)
+		{
 			width = ninePatch->scaleWidth;
+		}
 
 		rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height,
 		                            pSrcData, nSrcStep, nXSrc, nYSrc);
@@ -196,7 +205,9 @@ int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth,
 		width = (nXSrc + scaleWidth) - x;
 
 		if (width > ninePatch->scaleWidth)
+		{
 			width = ninePatch->scaleWidth;
+		}
 
 		rdtk_image_copy_alpha_blend(pDstData, nDstStep, nXDst + x, nYDst + y, width, height,
 		                            pSrcData, nSrcStep, nXSrc, nYSrc);
@@ -230,7 +241,9 @@ static BOOL rdtk_nine_patch_get_scale_lr(rdtkNinePatch* ninePatch, wImage* image
 		if (beg < 0)
 		{
 			if (*pixel)
+			{
 				beg = x;
+			}
 		}
 		else if (end < 0)
 		{
@@ -243,7 +256,9 @@ static BOOL rdtk_nine_patch_get_scale_lr(rdtkNinePatch* ninePatch, wImage* image
 	}
 
 	if ((beg <= 0) || (end <= 0))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(beg <= INT32_MAX);
 	WINPR_ASSERT(end <= INT32_MAX);
@@ -272,7 +287,9 @@ static BOOL rdtk_nine_patch_get_scale_ht(rdtkNinePatch* ninePatch, wImage* image
 		if (beg < 0)
 		{
 			if (*pixel)
+			{
 				beg = y;
+			}
 		}
 		else if (end < 0)
 		{
@@ -285,7 +302,9 @@ static BOOL rdtk_nine_patch_get_scale_ht(rdtkNinePatch* ninePatch, wImage* image
 	}
 
 	if ((beg <= 0) || (end <= 0))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(beg <= INT32_MAX);
 	WINPR_ASSERT(end <= INT32_MAX);
@@ -316,7 +335,9 @@ static BOOL rdtk_nine_patch_get_fill_lr(rdtkNinePatch* ninePatch, wImage* image)
 		if (beg < 0)
 		{
 			if (*pixel)
+			{
 				beg = x;
+			}
 		}
 		else if (end < 0)
 		{
@@ -329,7 +350,9 @@ static BOOL rdtk_nine_patch_get_fill_lr(rdtkNinePatch* ninePatch, wImage* image)
 	}
 
 	if ((beg <= 0) || (end <= 0))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(beg <= INT32_MAX);
 	WINPR_ASSERT(end <= INT32_MAX);
@@ -358,11 +381,13 @@ static BOOL rdtk_nine_patch_get_fill_ht(rdtkNinePatch* ninePatch, wImage* image)
 	{
 		const uint32_t* pixel =
 		    (uint32_t*)&image->data[((image->width - 1) * sizeof(uint32_t)) +
-		                            1ull * image->scanline * y]; /* (width - 1, 1) */
+		                            1ULL * image->scanline * y]; /* (width - 1, 1) */
 		if (beg < 0)
 		{
 			if (*pixel)
+			{
 				beg = y;
+			}
 		}
 		else if (end < 0)
 		{
@@ -375,7 +400,9 @@ static BOOL rdtk_nine_patch_get_fill_ht(rdtkNinePatch* ninePatch, wImage* image)
 	}
 
 	if ((beg <= 0) || (end <= 0))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(beg <= INT32_MAX);
 	WINPR_ASSERT(end <= INT32_MAX);
@@ -395,17 +422,25 @@ int rdtk_nine_patch_set_image(rdtkNinePatch* ninePatch, wImage* image)
 
 	/* parse scalable area */
 	if (!rdtk_nine_patch_get_scale_lr(ninePatch, image))
+	{
 		return -1;
+	}
 
 	if (!rdtk_nine_patch_get_scale_ht(ninePatch, image))
+	{
 		return -1;
+	}
 
 	/* parse fillable area */
 	if (!rdtk_nine_patch_get_fill_lr(ninePatch, image))
+	{
 		return -1;
+	}
 
 	if (!rdtk_nine_patch_get_fill_ht(ninePatch, image))
+	{
 		return -1;
+	}
 
 	/* cut out borders from image */
 	WINPR_ASSERT(image->width >= 2);
@@ -430,7 +465,9 @@ rdtkNinePatch* rdtk_nine_patch_new(rdtkEngine* engine)
 	rdtkNinePatch* ninePatch = (rdtkNinePatch*)calloc(1, sizeof(rdtkNinePatch));
 
 	if (!ninePatch)
+	{
 		return NULL;
+	}
 
 	ninePatch->engine = engine;
 	return ninePatch;
@@ -439,7 +476,9 @@ rdtkNinePatch* rdtk_nine_patch_new(rdtkEngine* engine)
 void rdtk_nine_patch_free(rdtkNinePatch* ninePatch)
 {
 	if (!ninePatch)
+	{
 		return;
+	}
 
 	winpr_image_free(ninePatch->image, TRUE);
 	free(ninePatch);
@@ -447,16 +486,16 @@ void rdtk_nine_patch_free(rdtkNinePatch* ninePatch)
 
 int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 {
-	int status;
+	int status = 0;
 	wImage* image = NULL;
-	rdtkNinePatch* ninePatch;
+	rdtkNinePatch* ninePatch = NULL;
 
 	WINPR_ASSERT(engine);
 
 	if (!engine->button9patch)
 	{
-		SSIZE_T size;
-		const uint8_t* data;
+		SSIZE_T size = 0;
+		const uint8_t* data = NULL;
 		status = -1;
 		size = rdtk_get_embedded_resource_file("btn_default_normal.9." FILE_EXT, &data);
 
@@ -465,7 +504,9 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 			image = winpr_image_new();
 
 			if (image)
+			{
 				status = winpr_image_read_buffer(image, data, (size_t)size);
+			}
 		}
 
 		if (status > 0)
@@ -473,18 +514,24 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 			ninePatch = engine->button9patch = rdtk_nine_patch_new(engine);
 
 			if (ninePatch)
+			{
 				rdtk_nine_patch_set_image(ninePatch, image);
+			}
 			else
+			{
 				winpr_image_free(image, TRUE);
+			}
 		}
 		else
+		{
 			winpr_image_free(image, TRUE);
+		}
 	}
 
 	if (!engine->textField9patch)
 	{
-		SSIZE_T size;
-		const uint8_t* data;
+		SSIZE_T size = 0;
+		const uint8_t* data = NULL;
 		status = -1;
 		size = rdtk_get_embedded_resource_file("textfield_default.9." FILE_EXT, &data);
 		image = NULL;
@@ -494,7 +541,9 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 			image = winpr_image_new();
 
 			if (image)
+			{
 				status = winpr_image_read_buffer(image, data, (size_t)size);
+			}
 		}
 
 		if (status > 0)
@@ -502,12 +551,18 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 			ninePatch = engine->textField9patch = rdtk_nine_patch_new(engine);
 
 			if (ninePatch)
+			{
 				rdtk_nine_patch_set_image(ninePatch, image);
+			}
 			else
+			{
 				winpr_image_free(image, TRUE);
+			}
 		}
 		else
+		{
 			winpr_image_free(image, TRUE);
+		}
 	}
 
 	return 1;

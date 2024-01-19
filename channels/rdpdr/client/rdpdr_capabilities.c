@@ -78,7 +78,9 @@ static UINT rdpdr_process_general_capset(rdpdrPlugin* rdpdr, wStream* s,
 		return ERROR_INVALID_DATA;
 	}
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 36))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, rdpdr->serverOsType);    /* osType, ignored on receipt */
 	Stream_Read_UINT32(s, rdpdr->serverOsVersion); /* osVersion, unused and must be set to zero */
@@ -108,8 +110,7 @@ static void rdpdr_write_printer_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process printer direction capability set */
-static UINT rdpdr_process_printer_capset(rdpdrPlugin* rdpdr, wStream* s,
-                                         const RDPDR_CAPABILITY_HEADER* header)
+static UINT rdpdr_process_printer_capset(wStream* s, const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(header);
 	Stream_Seek(s, header->CapabilityLength);
@@ -126,8 +127,7 @@ static void rdpdr_write_port_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process port redirection capability set */
-static UINT rdpdr_process_port_capset(rdpdrPlugin* rdpdr, wStream* s,
-                                      const RDPDR_CAPABILITY_HEADER* header)
+static UINT rdpdr_process_port_capset(wStream* s, const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(header);
 	Stream_Seek(s, header->CapabilityLength);
@@ -144,8 +144,7 @@ static void rdpdr_write_drive_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process drive redirection capability set */
-static UINT rdpdr_process_drive_capset(rdpdrPlugin* rdpdr, wStream* s,
-                                       const RDPDR_CAPABILITY_HEADER* header)
+static UINT rdpdr_process_drive_capset(wStream* s, const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(header);
 	Stream_Seek(s, header->CapabilityLength);
@@ -162,8 +161,7 @@ static void rdpdr_write_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s)
 }
 
 /* Process smartcard redirection capability set */
-static UINT rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s,
-                                           const RDPDR_CAPABILITY_HEADER* header)
+static UINT rdpdr_process_smartcard_capset(wStream* s, const RDPDR_CAPABILITY_HEADER* header)
 {
 	WINPR_ASSERT(header);
 	Stream_Seek(s, header->CapabilityLength);
@@ -173,17 +171,21 @@ static UINT rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s,
 UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT status = CHANNEL_RC_OK;
-	UINT16 i;
-	UINT16 numCapabilities;
+	UINT16 i = 0;
+	UINT16 numCapabilities = 0;
 
 	if (!rdpdr || !s)
+	{
 		return CHANNEL_RC_NULL_DATA;
+	}
 
 	WINPR_ASSERT(rdpdr->state == RDPDR_CHANNEL_STATE_SERVER_CAPS);
 	rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_CLIENT_CAPS);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 4))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT16(s, numCapabilities);
 	Stream_Seek(s, 2); /* pad (2 bytes) */
@@ -193,7 +195,9 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 		RDPDR_CAPABILITY_HEADER header = { 0 };
 		UINT error = rdpdr_read_capset_header(rdpdr->log, s, &header);
 		if (error != CHANNEL_RC_OK)
+		{
 			return error;
+		}
 
 		switch (header.CapabilityType)
 		{
@@ -202,19 +206,19 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 				break;
 
 			case CAP_PRINTER_TYPE:
-				status = rdpdr_process_printer_capset(rdpdr, s, &header);
+				status = rdpdr_process_printer_capset(s, &header);
 				break;
 
 			case CAP_PORT_TYPE:
-				status = rdpdr_process_port_capset(rdpdr, s, &header);
+				status = rdpdr_process_port_capset(s, &header);
 				break;
 
 			case CAP_DRIVE_TYPE:
-				status = rdpdr_process_drive_capset(rdpdr, s, &header);
+				status = rdpdr_process_drive_capset(s, &header);
 				break;
 
 			case CAP_SMARTCARD_TYPE:
-				status = rdpdr_process_smartcard_capset(rdpdr, s, &header);
+				status = rdpdr_process_smartcard_capset(s, &header);
 				break;
 
 			default:
@@ -223,7 +227,9 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 		}
 
 		if (status != CHANNEL_RC_OK)
+		{
 			return status;
+		}
 	}
 
 	return CHANNEL_RC_OK;
@@ -236,7 +242,7 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
  */
 UINT rdpdr_send_capability_response(rdpdrPlugin* rdpdr)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(rdpdr);
 	s = StreamPool_Take(rdpdr->pool, 256);

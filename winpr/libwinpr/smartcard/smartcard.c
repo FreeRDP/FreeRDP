@@ -21,12 +21,12 @@
 
 #include <winpr/config.h>
 
+#include <winpr/assert.h>
 #include <winpr/crt.h>
 #include <winpr/library.h>
 #include <winpr/smartcard.h>
 #include <winpr/synch.h>
 #include <winpr/wlog.h>
-#include <winpr/assert.h>
 
 #include "../log.h"
 
@@ -90,7 +90,9 @@ static BOOL CALLBACK InitializeSCardApiStubs(PINIT_ONCE once, PVOID param, PVOID
 #else
 #if defined(WITH_SMARTCARD_PCSC)
 	if (PCSC_InitializeSCardApi() >= 0)
+	{
 		g_SCardApi = PCSC_GetSCardApiFunctionTable();
+	}
 #endif
 #endif
 
@@ -940,31 +942,49 @@ WINSCARDAPI const char* WINAPI SCardGetAttributeString(DWORD dwAttrId)
 WINSCARDAPI const char* WINAPI SCardGetProtocolString(DWORD dwProtocols)
 {
 	if (dwProtocols == SCARD_PROTOCOL_UNDEFINED)
+	{
 		return "SCARD_PROTOCOL_UNDEFINED";
+	}
 
 	if (dwProtocols == SCARD_PROTOCOL_T0)
+	{
 		return "SCARD_PROTOCOL_T0";
+	}
 
 	if (dwProtocols == SCARD_PROTOCOL_T1)
+	{
 		return "SCARD_PROTOCOL_T1";
+	}
 
 	if (dwProtocols == SCARD_PROTOCOL_Tx)
+	{
 		return "SCARD_PROTOCOL_Tx";
+	}
 
 	if (dwProtocols == SCARD_PROTOCOL_RAW)
+	{
 		return "SCARD_PROTOCOL_RAW";
+	}
 
 	if (dwProtocols == SCARD_PROTOCOL_DEFAULT)
+	{
 		return "SCARD_PROTOCOL_DEFAULT";
+	}
 
 	if (dwProtocols == (SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_RAW))
+	{
 		return "SCARD_PROTOCOL_T0 | SCARD_PROTOCOL_RAW";
+	}
 
 	if (dwProtocols == (SCARD_PROTOCOL_T1 | SCARD_PROTOCOL_RAW))
+	{
 		return "SCARD_PROTOCOL_T1 | SCARD_PROTOCOL_RAW";
+	}
 
 	if (dwProtocols == (SCARD_PROTOCOL_Tx | SCARD_PROTOCOL_RAW))
+	{
 		return "SCARD_PROTOCOL_Tx | SCARD_PROTOCOL_RAW";
+	}
 
 	return "SCARD_PROTOCOL_UNKNOWN";
 }
@@ -1059,43 +1079,69 @@ WINSCARDAPI char* WINAPI SCardGetReaderStateString(DWORD dwReaderState)
 	char* buffer = calloc(size, sizeof(char));
 
 	if (!buffer)
+	{
 		return NULL;
+	}
 
 	if (dwReaderState & SCARD_STATE_IGNORE)
+	{
 		winpr_str_append("SCARD_STATE_IGNORE", buffer, size, "|");
+	}
 
 	if (dwReaderState & SCARD_STATE_CHANGED)
+	{
 		winpr_str_append("SCARD_STATE_CHANGED", buffer, size, "|");
+	}
 
 	if (dwReaderState & SCARD_STATE_UNKNOWN)
+	{
 		winpr_str_append("SCARD_STATE_UNKNOWN", buffer, size, "|");
+	}
 
 	if (dwReaderState & SCARD_STATE_UNAVAILABLE)
+	{
 		winpr_str_append("SCARD_STATE_UNAVAILABLE", buffer, size, "|");
+	}
 
 	if (dwReaderState & SCARD_STATE_EMPTY)
+	{
 		winpr_str_append("SCARD_STATE_EMPTY", buffer, size, "|");
+	}
 
 	if (dwReaderState & SCARD_STATE_PRESENT)
+	{
 		winpr_str_append("SCARD_STATE_PRESENT", buffer, size, "|");
+	}
 
 	if (dwReaderState & SCARD_STATE_ATRMATCH)
+	{
 		winpr_str_append("SCARD_STATE_ATRMATCH", buffer, size, "|");
+	}
 
 	if (dwReaderState & SCARD_STATE_EXCLUSIVE)
+	{
 		winpr_str_append("SCARD_STATE_EXCLUSIVE", buffer, size, "|");
+	}
 
 	if (dwReaderState & SCARD_STATE_INUSE)
+	{
 		winpr_str_append("SCARD_STATE_INUSE", buffer, size, "|");
+	}
 
 	if (dwReaderState & SCARD_STATE_MUTE)
+	{
 		winpr_str_append("SCARD_STATE_MUTE", buffer, size, "|");
+	}
 
 	if (dwReaderState & SCARD_STATE_UNPOWERED)
+	{
 		winpr_str_append("SCARD_STATE_UNPOWERED", buffer, size, "|");
+	}
 
 	if (!buffer[0])
+	{
 		winpr_str_append("SCARD_STATE_UNAWARE", buffer, size, "|");
+	}
 
 	return buffer;
 }

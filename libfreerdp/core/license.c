@@ -215,7 +215,7 @@ struct rdp_license
 	UINT16 ClientType;
 	UINT16 LicenseDetailLevel;
 	BOOL update;
-};
+} DECLSPEC_ALIGN(128);
 
 static BOOL license_send_error_alert(rdpLicense* license, UINT32 dwErrorCode,
                                      UINT32 dwStateTransition, const LICENSE_BLOB* info);
@@ -434,9 +434,10 @@ state_run_t license_recv(rdpLicense* license, wStream* s)
 	WINPR_ASSERT(license->rdp->settings);
 
 	if (freerdp_settings_get_bool(license->rdp->settings, FreeRDP_ServerMode))
+	{
 		return license_server_recv(license, s);
-	else
-		return license_client_recv(license, s);
+	}
+	return license_client_recv(license, s);
 }
 
 static BOOL license_check_stream_length(wStream* s, SSIZE_T expect, const char* where)
@@ -464,7 +465,9 @@ static BOOL license_check_stream_capacity(wStream* s, size_t expect, const char*
 
 	if (!Stream_CheckAndLogRequiredCapacityEx(TAG, WLOG_WARN, s, expect, 1, "%s(%s:%" PRIuz ") %s",
 	                                          __func__, __FILE__, (size_t)__LINE__, where))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -479,24 +482,38 @@ static BOOL computeCalHash(const char* hostname, char* hashStr, size_t len)
 	WINPR_ASSERT(hashStr);
 
 	if (len < 2 * sizeof(hash) + 1)
+	{
 		return FALSE;
+	}
 
 	if (!(sha1 = winpr_Digest_New()))
+	{
 		goto out;
+	}
 	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
+	{
 		goto out;
+	}
 	if (!winpr_Digest_Update(sha1, (const BYTE*)hostname, strlen(hostname)))
+	{
 		goto out;
+	}
 	if (!winpr_Digest_Final(sha1, hash, sizeof(hash)))
+	{
 		goto out;
+	}
 
 	for (size_t i = 0; i < sizeof(hash); i++, hashStr += 2)
+	{
 		sprintf_s(hashStr, 3, "%.2x", hash[i]);
+	}
 
 	ret = TRUE;
 out:
 	if (!ret)
+	{
 		WLog_ERR(TAG, "failed to generate SHA1 of hostname '%s'", hostname);
+	}
 	winpr_Digest_Free(sha1);
 	return ret;
 }
@@ -507,10 +524,12 @@ static BOOL saveCal(const rdpSettings* settings, const BYTE* data, size_t length
 	char hash[41] = { 0 };
 	FILE* fp = NULL;
 	char* licenseStorePath = NULL;
-	char filename[MAX_PATH] = { 0 }, filenameNew[MAX_PATH] = { 0 };
-	char *filepath = NULL, *filepathNew = NULL;
+	char filename[MAX_PATH] = { 0 };
+	char filenameNew[MAX_PATH] = { 0 };
+	char* filepath = NULL;
+	char* filepathNew = NULL;
 
-	size_t written;
+	size_t written = 0;
 	BOOL ret = FALSE;
 	const char* path = freerdp_settings_get_string(settings, FreeRDP_ConfigPath);
 
@@ -545,7 +564,9 @@ static BOOL saveCal(const rdpSettings* settings, const BYTE* data, size_t length
 	}
 
 	if (!computeCalHash(hostname, hash, sizeof(hash)))
+	{
 		goto out;
+	}
 	sprintf_s(filename, sizeof(filename) - 1, "%s.cal", hash);
 	sprintf_s(filenameNew, sizeof(filenameNew) - 1, "%s.cal.new", hash);
 
@@ -580,7 +601,9 @@ static BOOL saveCal(const rdpSettings* settings, const BYTE* data, size_t length
 
 	ret = winpr_MoveFileEx(filepathNew, filepath, MOVEFILE_REPLACE_EXISTING);
 	if (!ret)
+	{
 		WLog_ERR(TAG, "Failed to move license file '%s' to '%s'", filepathNew, filepath);
+	}
 
 out:
 	free(filepathNew);
@@ -591,7 +614,8 @@ out:
 
 static BYTE* loadCalFile(const rdpSettings* settings, const char* hostname, size_t* dataLen)
 {
-	char *licenseStorePath = NULL, *calPath = NULL;
+	char* licenseStorePath = NULL;
+	char* calPath = NULL;
 	char calFilename[MAX_PATH] = { 0 };
 	char hash[41] = { 0 };
 	INT64 length = 0;
@@ -613,28 +637,40 @@ static BYTE* loadCalFile(const rdpSettings* settings, const char* hostname, size
 
 	if (!(licenseStorePath = GetCombinedPath(
 	          freerdp_settings_get_string(settings, FreeRDP_ConfigPath), licenseStore)))
+	{
 		return NULL;
+	}
 
 	if (!(calPath = GetCombinedPath(licenseStorePath, calFilename)))
+	{
 		goto error_path;
+	}
 
 	fp = winpr_fopen(calPath, "rb");
 	if (!fp)
+	{
 		goto error_open;
+	}
 
 	_fseeki64(fp, 0, SEEK_END);
 	length = _ftelli64(fp);
 	_fseeki64(fp, 0, SEEK_SET);
 	if (length < 0)
+	{
 		goto error_malloc;
+	}
 
 	ret = (BYTE*)malloc((size_t)length);
 	if (!ret)
+	{
 		goto error_malloc;
+	}
 
 	status = fread(ret, (size_t)length, 1, fp);
 	if (status == 0)
+	{
 		goto error_read;
+	}
 
 	*dataLen = (size_t)length;
 
@@ -672,12 +708,14 @@ static BOOL license_read_preamble(wStream* s, BYTE* bMsgType, BYTE* flags, UINT1
 
 	/* preamble (4 bytes) */
 	if (!license_check_stream_length(s, 4, "license preamble"))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, *bMsgType);  /* bMsgType (1 byte) */
 	Stream_Read_UINT8(s, *flags);     /* flags (1 byte) */
 	Stream_Read_UINT16(s, *wMsgSize); /* wMsgSize (2 bytes) */
-	return license_check_stream_length(s, *wMsgSize - 4ll, "license preamble::wMsgSize");
+	return license_check_stream_length(s, *wMsgSize - 4LL, "license preamble::wMsgSize");
 }
 
 /**
@@ -693,7 +731,9 @@ static BOOL license_read_preamble(wStream* s, BYTE* bMsgType, BYTE* flags, UINT1
 static BOOL license_write_preamble(wStream* s, BYTE bMsgType, BYTE flags, UINT16 wMsgSize)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 4))
+	{
 		return FALSE;
+	}
 
 	/* preamble (4 bytes) */
 	Stream_Write_UINT8(s, bMsgType);  /* bMsgType (1 byte) */
@@ -735,12 +775,16 @@ wStream* license_send_stream_init(rdpLicense* license)
 
 	wStream* s = rdp_send_stream_init(license->rdp);
 	if (!s)
+	{
 		return NULL;
+	}
 
 	license->rdp->do_crypt = do_crypt;
 	license->PacketHeaderLength = (UINT16)Stream_GetPosition(s);
 	if (!Stream_SafeSeek(s, LICENSE_PREAMBLE_LENGTH))
+	{
 		goto fail;
+	}
 	return s;
 
 fail:
@@ -778,10 +822,14 @@ static BOOL license_send(rdpLicense* license, wStream* s, BYTE type)
 	 */
 
 	if (!rdp->settings->ServerMode)
+	{
 		flags |= EXTENDED_ERROR_MSG_SUPPORTED;
+	}
 
 	if (!license_write_preamble(s, type, flags, wMsgSize))
+	{
 		return FALSE;
+	}
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "Sending %s Packet, length %" PRIu16 "", license_request_type_string(type),
@@ -799,10 +847,14 @@ BOOL license_read_server_upgrade_license(rdpLicense* license, wStream* s)
 	WINPR_ASSERT(license);
 
 	if (!license_read_binary_blob(s, license->EncryptedLicenseInfo))
+	{
 		return FALSE;
+	}
 	if (!license_check_stream_length(s, sizeof(license->MACData),
 	                                 "SERVER_UPGRADE_LICENSE::MACData"))
+	{
 		return FALSE;
+	}
 	Stream_Read(s, license->MACData, sizeof(license->MACData));
 	return TRUE;
 }
@@ -812,10 +864,14 @@ BOOL license_write_server_upgrade_license(const rdpLicense* license, wStream* s)
 	WINPR_ASSERT(license);
 
 	if (!license_write_binary_blob(s, license->EncryptedLicenseInfo))
+	{
 		return FALSE;
+	}
 	if (!license_check_stream_capacity(s, sizeof(license->MACData),
 	                                   "SERVER_UPGRADE_LICENSE::MACData"))
+	{
 		return FALSE;
+	}
 	Stream_Write(s, license->MACData, sizeof(license->MACData));
 	return TRUE;
 }
@@ -826,10 +882,14 @@ static BOOL license_server_send_new_or_upgrade_license(rdpLicense* license, BOOL
 	const BYTE type = upgrade ? UPGRADE_LICENSE : NEW_LICENSE;
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	if (!license_write_server_upgrade_license(license, s))
+	{
 		goto fail;
+	}
 
 	return license_send(license, s, type);
 
@@ -855,8 +915,10 @@ state_run_t license_client_recv(rdpLicense* license, wStream* s)
 
 	WINPR_ASSERT(license);
 
-	if (!license_read_preamble(s, &bMsgType, &flags, &wMsgSize)) /* preamble (4 bytes) */
+	if (!license_read_preamble(s, &bMsgType, &flags, &wMsgSize))
+	{ /* preamble (4 bytes) */
 		return STATE_RUN_FAILED;
+	}
 
 	DEBUG_LICENSE("Receiving %s Packet", license_request_type_string(bMsgType));
 
@@ -865,43 +927,63 @@ state_run_t license_client_recv(rdpLicense* license, wStream* s)
 		case LICENSE_REQUEST:
 			/* Client does not require configuration, so skip this state */
 			if (license_get_state(license) == LICENSE_STATE_INITIAL)
+			{
 				license_set_state(license, LICENSE_STATE_CONFIGURED);
+			}
 
 			if (!license_ensure_state(license, LICENSE_STATE_CONFIGURED, bMsgType))
+			{
 				return STATE_RUN_FAILED;
+			}
 
 			if (!license_read_license_request_packet(license, s))
+			{
 				return STATE_RUN_FAILED;
+			}
 
 			if (!license_answer_license_request(license))
+			{
 				return STATE_RUN_FAILED;
+			}
 
 			license_set_state(license, LICENSE_STATE_NEW_REQUEST);
 			break;
 
 		case PLATFORM_CHALLENGE:
 			if (!license_ensure_state(license, LICENSE_STATE_NEW_REQUEST, bMsgType))
+			{
 				return STATE_RUN_FAILED;
+			}
 
 			if (!license_read_platform_challenge_packet(license, s))
+			{
 				return STATE_RUN_FAILED;
+			}
 
 			if (!license_send_platform_challenge_response(license))
+			{
 				return STATE_RUN_FAILED;
+			}
 			license_set_state(license, LICENSE_STATE_PLATFORM_CHALLENGE_RESPONSE);
 			break;
 
 		case NEW_LICENSE:
 		case UPGRADE_LICENSE:
 			if (!license_ensure_state(license, LICENSE_STATE_PLATFORM_CHALLENGE_RESPONSE, bMsgType))
+			{
 				return STATE_RUN_FAILED;
+			}
 			if (!license_read_new_or_upgrade_license_packet(license, s))
+			{
 				return STATE_RUN_FAILED;
+			}
 			break;
 
 		case ERROR_ALERT:
 			if (!license_read_error_alert_packet(license, s))
+			{
 				return STATE_RUN_FAILED;
+			}
 			break;
 
 		default:
@@ -910,7 +992,9 @@ state_run_t license_client_recv(rdpLicense* license, wStream* s)
 	}
 
 	if (!tpkt_ensure_stream_consumed(s, length))
+	{
 		return STATE_RUN_FAILED;
+	}
 	return STATE_RUN_SUCCESS;
 }
 
@@ -924,8 +1008,10 @@ state_run_t license_server_recv(rdpLicense* license, wStream* s)
 
 	WINPR_ASSERT(license);
 
-	if (!license_read_preamble(s, &bMsgType, &flags, &wMsgSize)) /* preamble (4 bytes) */
+	if (!license_read_preamble(s, &bMsgType, &flags, &wMsgSize))
+	{ /* preamble (4 bytes) */
 		goto fail;
+	}
 
 	DEBUG_LICENSE("Receiving %s Packet", license_request_type_string(bMsgType));
 
@@ -933,49 +1019,75 @@ state_run_t license_server_recv(rdpLicense* license, wStream* s)
 	{
 		case NEW_LICENSE_REQUEST:
 			if (!license_ensure_state(license, LICENSE_STATE_REQUEST, bMsgType))
+			{
 				goto fail;
+			}
 			if (!license_read_new_license_request_packet(license, s))
+			{
 				goto fail;
+			}
 			// TODO: Validate if client is allowed
 			if (!license_send_error_alert(license, ERR_INVALID_MAC, ST_TOTAL_ABORT,
 			                              license->ErrorInfo))
+			{
 				goto fail;
+			}
 			if (!license_send_platform_challenge_packet(license))
+			{
 				goto fail;
+			}
 			license->update = FALSE;
 			if (!license_set_state(license, LICENSE_STATE_PLATFORM_CHALLENGE))
+			{
 				goto fail;
+			}
 			break;
 		case LICENSE_INFO:
 			if (!license_ensure_state(license, LICENSE_STATE_REQUEST, bMsgType))
+			{
 				goto fail;
+			}
 			if (!license_read_license_info(license, s))
+			{
 				goto fail;
+			}
 			// TODO: Validate license info
 			if (!license_send_platform_challenge_packet(license))
+			{
 				goto fail;
+			}
 			if (!license_set_state(license, LICENSE_STATE_PLATFORM_CHALLENGE))
+			{
 				goto fail;
+			}
 			license->update = TRUE;
 			break;
 
 		case PLATFORM_CHALLENGE_RESPONSE:
 			if (!license_ensure_state(license, LICENSE_STATE_PLATFORM_CHALLENGE, bMsgType))
+			{
 				goto fail;
+			}
 			if (!license_read_client_platform_challenge_response(license, s))
+			{
 				goto fail;
+			}
 
 			// TODO: validate challenge response
 			if (FALSE)
 			{
 				if (license_send_error_alert(license, ERR_INVALID_CLIENT, ST_TOTAL_ABORT,
 				                             license->ErrorInfo))
+				{
 					goto fail;
+				}
 			}
 			else
 			{
 				if (!license_server_send_new_or_upgrade_license(license, license->update))
+				{
 					goto fail;
+				}
 
 				license->type = LICENSE_TYPE_ISSUED;
 				license_set_state(license, LICENSE_STATE_COMPLETED);
@@ -986,7 +1098,9 @@ state_run_t license_server_recv(rdpLicense* license, wStream* s)
 
 		case ERROR_ALERT:
 			if (!license_read_error_alert_packet(license, s))
+			{
 				goto fail;
+			}
 			break;
 
 		default:
@@ -995,16 +1109,22 @@ state_run_t license_server_recv(rdpLicense* license, wStream* s)
 	}
 
 	if (!tpkt_ensure_stream_consumed(s, length))
+	{
 		goto fail;
+	}
 
 	if (!state_run_success(rc))
+	{
 		rc = STATE_RUN_SUCCESS;
+	}
 
 fail:
 	if (state_run_failed(rc))
 	{
 		if (flags & EXTENDED_ERROR_MSG_SUPPORTED)
+		{
 			license_send_error_alert(license, ERR_INVALID_CLIENT, ST_TOTAL_ABORT, NULL);
+		}
 		license_set_state(license, LICENSE_STATE_ABORTED);
 	}
 
@@ -1130,7 +1250,7 @@ BOOL license_generate_hwid(rdpLicense* license)
 
 static BOOL license_get_server_rsa_public_key(rdpLicense* license)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->certificate);
@@ -1143,7 +1263,9 @@ static BOOL license_get_server_rsa_public_key(rdpLicense* license)
 	{
 		if (!freerdp_certificate_read_server_cert(license->certificate, settings->ServerCertificate,
 		                                          settings->ServerCertificateLength))
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -1155,7 +1277,9 @@ BOOL license_encrypt_premaster_secret(rdpLicense* license)
 	WINPR_ASSERT(license->certificate);
 
 	if (!license_get_server_rsa_public_key(license))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(license->EncryptedPremasterSecret);
 
@@ -1219,13 +1343,17 @@ static BOOL license_rc4_with_licenseKey(const rdpLicense* license, const BYTE* i
 
 	BYTE* buffer = (BYTE*)realloc(target->data, len);
 	if (!buffer)
+	{
 		goto error_buffer;
+	}
 
 	target->data = buffer;
 	target->length = (UINT16)len;
 
 	if (!winpr_RC4_Update(rc4, len, input, buffer))
+	{
 		goto error_buffer;
+	}
 
 	winpr_RC4_Free(rc4);
 	return TRUE;
@@ -1281,11 +1409,15 @@ static BOOL license_decrypt_and_check_MAC(rdpLicense* license, const BYTE* input
 	}
 
 	if (!license_rc4_with_licenseKey(license, input, len, target))
+	{
 		return FALSE;
+	}
 
 	if (!security_mac_data(license->MacSaltKey, sizeof(license->MacSaltKey), target->data, len,
 	                       macData, sizeof(macData)))
+	{
 		return FALSE;
+	}
 
 	if (memcmp(packetMac, macData, sizeof(macData)) != 0)
 	{
@@ -1307,7 +1439,9 @@ BOOL license_read_product_info(wStream* s, LICENSE_PRODUCT_INFO* productInfo)
 	WINPR_ASSERT(productInfo);
 
 	if (!license_check_stream_length(s, 8, "license product info::cbCompanyName"))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, productInfo->dwVersion);     /* dwVersion (4 bytes) */
 	Stream_Read_UINT32(s, productInfo->cbCompanyName); /* cbCompanyName (4 bytes) */
@@ -1322,16 +1456,22 @@ BOOL license_read_product_info(wStream* s, LICENSE_PRODUCT_INFO* productInfo)
 
 	if (!license_check_stream_length(s, productInfo->cbCompanyName,
 	                                 "license product info::CompanyName"))
+	{
 		return FALSE;
+	}
 
 	productInfo->pbProductId = NULL;
 	productInfo->pbCompanyName = (BYTE*)malloc(productInfo->cbCompanyName);
 	if (!productInfo->pbCompanyName)
+	{
 		goto out_fail;
+	}
 	Stream_Read(s, productInfo->pbCompanyName, productInfo->cbCompanyName);
 
 	if (!license_check_stream_length(s, 4, "license product info::cbProductId"))
+	{
 		goto out_fail;
+	}
 
 	Stream_Read_UINT32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
 
@@ -1344,11 +1484,15 @@ BOOL license_read_product_info(wStream* s, LICENSE_PRODUCT_INFO* productInfo)
 
 	if (!license_check_stream_length(s, productInfo->cbProductId,
 	                                 "license product info::ProductId"))
+	{
 		goto out_fail;
+	}
 
 	productInfo->pbProductId = (BYTE*)malloc(productInfo->cbProductId);
 	if (!productInfo->pbProductId)
+	{
 		goto out_fail;
+	}
 	Stream_Read(s, productInfo->pbProductId, productInfo->cbProductId);
 	return TRUE;
 
@@ -1365,7 +1509,9 @@ static BOOL license_write_product_info(wStream* s, const LICENSE_PRODUCT_INFO* p
 	WINPR_ASSERT(productInfo);
 
 	if (!license_check_stream_capacity(s, 8, "license product info::cbCompanyName"))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, productInfo->dwVersion);     /* dwVersion (4 bytes) */
 	Stream_Write_UINT32(s, productInfo->cbCompanyName); /* cbCompanyName (4 bytes) */
@@ -1381,12 +1527,16 @@ static BOOL license_write_product_info(wStream* s, const LICENSE_PRODUCT_INFO* p
 
 	if (!license_check_stream_capacity(s, productInfo->cbCompanyName,
 	                                   "license product info::CompanyName"))
+	{
 		return FALSE;
+	}
 
 	Stream_Write(s, productInfo->pbCompanyName, productInfo->cbCompanyName);
 
 	if (!license_check_stream_capacity(s, 4, "license product info::cbProductId"))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, productInfo->cbProductId); /* cbProductId (4 bytes) */
 
@@ -1400,7 +1550,9 @@ static BOOL license_write_product_info(wStream* s, const LICENSE_PRODUCT_INFO* p
 
 	if (!license_check_stream_capacity(s, productInfo->cbProductId,
 	                                   "license product info::ProductId"))
+	{
 		return FALSE;
+	}
 
 	Stream_Write(s, productInfo->pbProductId, productInfo->cbProductId);
 	return TRUE;
@@ -1417,7 +1569,9 @@ LICENSE_PRODUCT_INFO* license_new_product_info(void)
 	LICENSE_PRODUCT_INFO* productInfo =
 	    (LICENSE_PRODUCT_INFO*)calloc(1, sizeof(LICENSE_PRODUCT_INFO));
 	if (!productInfo)
+	{
 		return NULL;
+	}
 	return productInfo;
 }
 
@@ -1492,16 +1646,22 @@ BOOL license_read_binary_blob(wStream* s, LICENSE_BLOB* blob)
 	WINPR_ASSERT(blob);
 
 	if (!license_check_stream_length(s, 4, "license binary blob::type"))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, wBlobType); /* wBlobType (2 bytes) */
 	Stream_Read_UINT16(s, length);    /* wBlobLen (2 bytes) */
 
 	if (!license_check_stream_length(s, length, "license binary blob::length"))
+	{
 		return FALSE;
+	}
 
 	if (!license_read_binary_blob_data(blob, wBlobType, Stream_Pointer(s), length))
+	{
 		return FALSE;
+	}
 
 	return Stream_SafeSeek(s, length);
 }
@@ -1518,13 +1678,17 @@ BOOL license_write_binary_blob(wStream* s, const LICENSE_BLOB* blob)
 	WINPR_ASSERT(blob);
 
 	if (!Stream_EnsureRemainingCapacity(s, blob->length + 4))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT16(s, blob->type);   /* wBlobType (2 bytes) */
 	Stream_Write_UINT16(s, blob->length); /* wBlobLen (2 bytes) */
 
 	if (blob->length > 0)
+	{
 		Stream_Write(s, blob->data, blob->length); /* blobData */
+	}
 	return TRUE;
 }
 
@@ -1543,12 +1707,16 @@ static BOOL license_write_encrypted_premaster_secret_blob(wStream* s, const LICE
 	}
 
 	if (!Stream_EnsureRemainingCapacity(s, length + 4))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT16(s, blob->type); /* wBlobType (2 bytes) */
 	Stream_Write_UINT16(s, (UINT16)length); /* wBlobLen (2 bytes) */
 
 	if (blob->length > 0)
+	{
 		Stream_Write(s, blob->data, blob->length); /* blobData */
+	}
 
 	Stream_Zero(s, length - blob->length);
 	return TRUE;
@@ -1558,7 +1726,9 @@ static BOOL license_read_encrypted_premaster_secret_blob(wStream* s, LICENSE_BLO
                                                          UINT32* ModulusLength)
 {
 	if (!license_read_binary_blob(s, blob))
+	{
 		return FALSE;
+	}
 	WINPR_ASSERT(ModulusLength);
 	*ModulusLength = blob->length;
 	return TRUE;
@@ -1574,7 +1744,9 @@ LICENSE_BLOB* license_new_binary_blob(UINT16 type)
 {
 	LICENSE_BLOB* blob = (LICENSE_BLOB*)calloc(1, sizeof(LICENSE_BLOB));
 	if (blob)
+	{
 		blob->type = type;
+	}
 	return blob;
 }
 
@@ -1607,20 +1779,28 @@ BOOL license_read_scope_list(wStream* s, SCOPE_LIST* scopeList)
 	WINPR_ASSERT(scopeList);
 
 	if (!license_check_stream_length(s, 4, "license scope list"))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, scopeCount); /* ScopeCount (4 bytes) */
 
-	if (!license_check_stream_length(s, scopeCount * 4ull, "license scope list::count"))
+	if (!license_check_stream_length(s, scopeCount * 4ULL, "license scope list::count"))
+	{
 		return FALSE;
+	}
 
 	if (!license_scope_list_resize(scopeList, scopeCount))
+	{
 		return FALSE;
+	}
 	/* ScopeArray */
 	for (UINT32 i = 0; i < scopeCount; i++)
 	{
 		if (!license_read_binary_blob(s, scopeList->array[i]))
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -1631,12 +1811,16 @@ BOOL license_write_scope_list(wStream* s, const SCOPE_LIST* scopeList)
 	WINPR_ASSERT(scopeList);
 
 	if (!license_check_stream_capacity(s, 4, "license scope list"))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, scopeList->count); /* ScopeCount (4 bytes) */
 
-	if (!license_check_stream_capacity(s, scopeList->count * 4ull, "license scope list::count"))
+	if (!license_check_stream_capacity(s, scopeList->count * 4ULL, "license scope list::count"))
+	{
 		return FALSE;
+	}
 
 	/* ScopeArray */
 	WINPR_ASSERT(scopeList->array || (scopeList->count == 0));
@@ -1645,7 +1829,9 @@ BOOL license_write_scope_list(wStream* s, const SCOPE_LIST* scopeList)
 		const LICENSE_BLOB* element = scopeList->array[i];
 
 		if (!license_write_binary_blob(s, element))
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -1678,7 +1864,9 @@ BOOL license_scope_list_resize(SCOPE_LIST* scopeList, UINT32 count)
 	{
 		LICENSE_BLOB** tmp = realloc(scopeList->array, count * sizeof(LICENSE_BLOB*));
 		if (!tmp)
+		{
 			return FALSE;
+		}
 		scopeList->array = tmp;
 	}
 	else
@@ -1711,7 +1899,9 @@ BOOL license_scope_list_resize(SCOPE_LIST* scopeList, UINT32 count)
 void license_free_scope_list(SCOPE_LIST* scopeList)
 {
 	if (!scopeList)
+	{
 		return;
+	}
 
 	license_scope_list_resize(scopeList, 0);
 	free(scopeList);
@@ -1729,11 +1919,15 @@ BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
 	const rdpCertInfo* info = freerdp_certificate_get_info(license->certificate);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	if (!license_check_stream_capacity(s, 8 + sizeof(license->ClientRandom),
 	                                   "license info::ClientRandom"))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s,
 	                    license->PreferredKeyExchangeAlg); /* PreferredKeyExchangeAlg (4 bytes) */
@@ -1745,19 +1939,27 @@ BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
 	/* Licensing Binary Blob with EncryptedPreMasterSecret: */
 	if (!license_write_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret,
 	                                                   info->ModulusLength))
+	{
 		goto error;
+	}
 
 	/* Licensing Binary Blob with LicenseInfo: */
 	if (!license_write_binary_blob(s, calBlob))
+	{
 		goto error;
+	}
 
 	/* Licensing Binary Blob with EncryptedHWID */
 	if (!license_write_binary_blob(s, license->EncryptedHardwareId))
+	{
 		goto error;
+	}
 
 	/* MACData */
 	if (!license_check_stream_capacity(s, signature_length, "license info::MACData"))
+	{
 		goto error;
+	}
 	Stream_Write(s, signature, signature_length);
 
 	return license_send(license, s, LICENSE_INFO);
@@ -1790,22 +1992,28 @@ static BOOL license_check_preferred_alg(rdpLicense* license, UINT32 PreferredKey
 BOOL license_read_license_info(rdpLicense* license, wStream* s)
 {
 	BOOL rc = FALSE;
-	UINT32 PreferredKeyExchangeAlg;
+	UINT32 PreferredKeyExchangeAlg = 0;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->certificate);
 
 	const rdpCertInfo* info = freerdp_certificate_get_info(license->certificate);
 	if (!info)
+	{
 		goto error;
+	}
 
 	/* ClientRandom (32 bytes) */
 	if (!license_check_stream_length(s, 8 + sizeof(license->ClientRandom), "license info"))
+	{
 		goto error;
+	}
 
 	Stream_Read_UINT32(s, PreferredKeyExchangeAlg); /* PreferredKeyExchangeAlg (4 bytes) */
 	if (!license_check_preferred_alg(license, PreferredKeyExchangeAlg, "license info"))
+	{
 		goto error;
+	}
 	Stream_Read_UINT32(s, license->PlatformId); /* PlatformId (4 bytes) */
 
 	/* ClientRandom (32 bytes) */
@@ -1815,7 +2023,9 @@ BOOL license_read_license_info(rdpLicense* license, wStream* s)
 	UINT32 ModulusLength = 0;
 	if (!license_read_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret,
 	                                                  &ModulusLength))
+	{
 		goto error;
+	}
 
 	if (ModulusLength != info->ModulusLength)
 	{
@@ -1827,15 +2037,21 @@ BOOL license_read_license_info(rdpLicense* license, wStream* s)
 	}
 	/* Licensing Binary Blob with LicenseInfo: */
 	if (!license_read_binary_blob(s, license->LicenseInfo))
+	{
 		goto error;
+	}
 
 	/* Licensing Binary Blob with EncryptedHWID */
 	if (!license_read_binary_blob(s, license->EncryptedHardwareId))
+	{
 		goto error;
+	}
 
 	/* MACData */
 	if (!license_check_stream_length(s, sizeof(license->MACData), "license info::MACData"))
+	{
 		goto error;
+	}
 	Stream_Read(s, license->MACData, sizeof(license->MACData));
 
 	rc = TRUE;
@@ -1857,35 +2073,49 @@ BOOL license_read_license_request_packet(rdpLicense* license, wStream* s)
 
 	/* ServerRandom (32 bytes) */
 	if (!license_check_stream_length(s, sizeof(license->ServerRandom), "license request"))
+	{
 		return FALSE;
+	}
 
 	Stream_Read(s, license->ServerRandom, sizeof(license->ServerRandom));
 
 	/* ProductInfo */
 	if (!license_read_product_info(s, license->ProductInfo))
+	{
 		return FALSE;
+	}
 
 	/* KeyExchangeList */
 	if (!license_read_binary_blob(s, license->KeyExchangeList))
+	{
 		return FALSE;
+	}
 
 	/* ServerCertificate */
 	if (!license_read_binary_blob(s, license->ServerCertificate))
+	{
 		return FALSE;
+	}
 
 	/* ScopeList */
 	if (!license_read_scope_list(s, license->ScopeList))
+	{
 		return FALSE;
+	}
 
 	/* Parse Server Certificate */
 	if (!freerdp_certificate_read_server_cert(license->certificate,
 	                                          license->ServerCertificate->data,
 	                                          license->ServerCertificate->length))
+	{
 		return FALSE;
+	}
 
 	if (!license_generate_keys(license) || !license_generate_hwid(license) ||
 	    !license_encrypt_premaster_secret(license))
+	{
 		return FALSE;
+	}
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "ServerRandom:");
@@ -1902,24 +2132,34 @@ BOOL license_write_license_request_packet(const rdpLicense* license, wStream* s)
 
 	/* ServerRandom (32 bytes) */
 	if (!license_check_stream_capacity(s, sizeof(license->ServerRandom), "license request"))
+	{
 		return FALSE;
+	}
 	Stream_Write(s, license->ServerRandom, sizeof(license->ServerRandom));
 
 	/* ProductInfo */
 	if (!license_write_product_info(s, license->ProductInfo))
+	{
 		return FALSE;
+	}
 
 	/* KeyExchangeList */
 	if (!license_write_binary_blob(s, license->KeyExchangeList))
+	{
 		return FALSE;
+	}
 
 	/* ServerCertificate */
 	if (!license_write_binary_blob(s, license->ServerCertificate))
+	{
 		return FALSE;
+	}
 
 	/* ScopeList */
 	if (!license_write_scope_list(s, license->ScopeList))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -1928,10 +2168,14 @@ static BOOL license_send_license_request_packet(rdpLicense* license)
 {
 	wStream* s = license_send_stream_init(license);
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	if (!license_write_license_request_packet(license, s))
+	{
 		goto fail;
+	}
 
 	return license_send(license, s, LICENSE_REQUEST);
 
@@ -1957,25 +2201,33 @@ BOOL license_read_platform_challenge_packet(rdpLicense* license, wStream* s)
 	DEBUG_LICENSE("Receiving Platform Challenge Packet");
 
 	if (!license_check_stream_length(s, 4, "license platform challenge"))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, ConnectFlags); /* ConnectFlags, Reserved (4 bytes) */
 
 	/* EncryptedPlatformChallenge */
 	license->EncryptedPlatformChallenge->type = BB_ANY_BLOB;
 	if (!license_read_binary_blob(s, license->EncryptedPlatformChallenge))
+	{
 		return FALSE;
+	}
 	license->EncryptedPlatformChallenge->type = BB_ENCRYPTED_DATA_BLOB;
 
 	/* MACData (16 bytes) */
 	if (!license_check_stream_length(s, sizeof(macData), "license platform challenge::MAC"))
+	{
 		return FALSE;
+	}
 
 	Stream_Read(s, macData, sizeof(macData));
 	if (!license_decrypt_and_check_MAC(license, license->EncryptedPlatformChallenge->data,
 	                                   license->EncryptedPlatformChallenge->length,
 	                                   license->PlatformChallenge, macData))
+	{
 		return FALSE;
+	}
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "ConnectFlags: 0x%08" PRIX32 "", ConnectFlags);
@@ -1997,17 +2249,23 @@ BOOL license_send_error_alert(rdpLicense* license, UINT32 dwErrorCode, UINT32 dw
 	wStream* s = license_send_stream_init(license);
 
 	if (!s)
+	{
 		goto fail;
+	}
 
 	if (!license_check_stream_capacity(s, 8, "license error alert"))
+	{
 		goto fail;
+	}
 	Stream_Write_UINT32(s, dwErrorCode);
 	Stream_Write_UINT32(s, dwStateTransition);
 
 	if (info)
 	{
 		if (!license_write_binary_blob(s, info))
+		{
 			goto fail;
+		}
 	}
 
 	return license_send(license, s, ERROR_ALERT);
@@ -2021,23 +2279,31 @@ BOOL license_send_platform_challenge_packet(rdpLicense* license)
 	wStream* s = license_send_stream_init(license);
 
 	if (!s)
+	{
 		goto fail;
+	}
 
 	DEBUG_LICENSE("Receiving Platform Challenge Packet");
 
 	if (!license_check_stream_capacity(s, 4, "license platform challenge"))
+	{
 		goto fail;
+	}
 
 	Stream_Zero(s, 4); /* ConnectFlags, Reserved (4 bytes) */
 
 	/* EncryptedPlatformChallenge */
 	if (!license_write_binary_blob(s, license->EncryptedPlatformChallenge))
+	{
 		goto fail;
+	}
 
 	/* MACData (16 bytes) */
 	if (!license_check_stream_length(s, sizeof(license->MACData),
 	                                 "license platform challenge::MAC"))
+	{
 		goto fail;
+	}
 
 	Stream_Write(s, license->MACData, sizeof(license->MACData));
 
@@ -2049,13 +2315,16 @@ fail:
 
 static BOOL license_read_encrypted_blob(const rdpLicense* license, wStream* s, LICENSE_BLOB* target)
 {
-	UINT16 wBlobType = 0, wBlobLen = 0;
+	UINT16 wBlobType = 0;
+	UINT16 wBlobLen = 0;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(target);
 
 	if (!license_check_stream_length(s, 4, "license encrypted blob"))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, wBlobType);
 	if (wBlobType != BB_ENCRYPTED_DATA_BLOB)
@@ -2090,7 +2359,10 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 {
 	UINT32 os_major = 0;
 	UINT32 os_minor = 0;
-	UINT32 cbScope = 0, cbCompanyName = 0, cbProductId = 0, cbLicenseInfo = 0;
+	UINT32 cbScope = 0;
+	UINT32 cbCompanyName = 0;
+	UINT32 cbProductId = 0;
+	UINT32 cbLicenseInfo = 0;
 	wStream sbuffer = { 0 };
 	wStream* licenseStream = NULL;
 	BOOL ret = FALSE;
@@ -2103,11 +2375,15 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 
 	LICENSE_BLOB* calBlob = license_new_binary_blob(BB_DATA_BLOB);
 	if (!calBlob)
+	{
 		return FALSE;
+	}
 
 	/* EncryptedLicenseInfo */
 	if (!license_read_encrypted_blob(license, s, calBlob))
+	{
 		goto fail;
+	}
 
 	/* compute MAC and check it */
 	readMac = Stream_Pointer(s);
@@ -2120,7 +2396,9 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 
 	if (!security_mac_data(license->MacSaltKey, sizeof(license->MacSaltKey), calBlob->data,
 	                       calBlob->length, computedMac, sizeof(computedMac)))
+	{
 		goto fail;
+	}
 
 	if (memcmp(computedMac, readMac, sizeof(computedMac)) != 0)
 	{
@@ -2137,7 +2415,9 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	}
 
 	if (!license_check_stream_length(licenseStream, 8, "license new/upgrade::blob::version"))
+	{
 		goto fail;
+	}
 
 	Stream_Read_UINT16(licenseStream, os_minor);
 	Stream_Read_UINT16(licenseStream, os_major);
@@ -2147,7 +2427,9 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 	/* Scope */
 	Stream_Read_UINT32(licenseStream, cbScope);
 	if (!license_check_stream_length(licenseStream, cbScope, "license new/upgrade::blob::scope"))
+	{
 		goto fail;
+	}
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "Scope:");
@@ -2157,12 +2439,16 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 
 	/* CompanyName */
 	if (!license_check_stream_length(licenseStream, 4, "license new/upgrade::blob::cbCompanyName"))
+	{
 		goto fail;
+	}
 
 	Stream_Read_UINT32(licenseStream, cbCompanyName);
 	if (!license_check_stream_length(licenseStream, cbCompanyName,
 	                                 "license new/upgrade::blob::CompanyName"))
+	{
 		goto fail;
+	}
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "Company name:");
@@ -2172,13 +2458,17 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 
 	/* productId */
 	if (!license_check_stream_length(licenseStream, 4, "license new/upgrade::blob::cbProductId"))
+	{
 		goto fail;
+	}
 
 	Stream_Read_UINT32(licenseStream, cbProductId);
 
 	if (!license_check_stream_length(licenseStream, cbProductId,
 	                                 "license new/upgrade::blob::ProductId"))
+	{
 		goto fail;
+	}
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "Product id:");
@@ -2188,19 +2478,25 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 
 	/* licenseInfo */
 	if (!license_check_stream_length(licenseStream, 4, "license new/upgrade::blob::cbLicenseInfo"))
+	{
 		goto fail;
+	}
 
 	Stream_Read_UINT32(licenseStream, cbLicenseInfo);
 	if (!license_check_stream_length(licenseStream, cbLicenseInfo,
 	                                 "license new/upgrade::blob::LicenseInfo"))
+	{
 		goto fail;
+	}
 
 	license->type = LICENSE_TYPE_ISSUED;
 	ret = license_set_state(license, LICENSE_STATE_COMPLETED);
 
 	if (!license->rdp->settings->OldLicenseBehaviour)
+	{
 		ret = saveCal(license->rdp->settings, Stream_Pointer(licenseStream), cbLicenseInfo,
 		              license->rdp->settings->ClientHostname);
+	}
 
 fail:
 	license_free_binary_blob(calBlob);
@@ -2216,20 +2512,24 @@ fail:
 
 BOOL license_read_error_alert_packet(rdpLicense* license, wStream* s)
 {
-	UINT32 dwErrorCode;
-	UINT32 dwStateTransition;
+	UINT32 dwErrorCode = 0;
+	UINT32 dwStateTransition = 0;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->rdp);
 
-	if (!license_check_stream_length(s, 8ul, "error alert"))
+	if (!license_check_stream_length(s, 8UL, "error alert"))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, dwErrorCode);       /* dwErrorCode (4 bytes) */
 	Stream_Read_UINT32(s, dwStateTransition); /* dwStateTransition (4 bytes) */
 
-	if (!license_read_binary_blob(s, license->ErrorInfo)) /* bbErrorInfo */
+	if (!license_read_binary_blob(s, license->ErrorInfo))
+	{ /* bbErrorInfo */
 		return FALSE;
+	}
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "dwErrorCode: %s, dwStateTransition: %s", error_codes[dwErrorCode],
@@ -2275,10 +2575,14 @@ BOOL license_write_new_license_request_packet(const rdpLicense* license, wStream
 
 	const rdpCertInfo* info = freerdp_certificate_get_info(license->certificate);
 	if (!info)
+	{
 		return FALSE;
+	}
 
 	if (!license_check_stream_capacity(s, 8 + sizeof(license->ClientRandom), "License Request"))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s,
 	                    license->PreferredKeyExchangeAlg); /* PreferredKeyExchangeAlg (4 bytes) */
@@ -2314,17 +2618,21 @@ BOOL license_write_new_license_request_packet(const rdpLicense* license, wStream
 
 BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 {
-	UINT32 PreferredKeyExchangeAlg;
+	UINT32 PreferredKeyExchangeAlg = 0;
 
 	WINPR_ASSERT(license);
 
-	if (!license_check_stream_length(s, 8ull + sizeof(license->ClientRandom),
+	if (!license_check_stream_length(s, 8ULL + sizeof(license->ClientRandom),
 	                                 "new license request"))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, PreferredKeyExchangeAlg); /* PreferredKeyExchangeAlg (4 bytes) */
 	if (!license_check_preferred_alg(license, PreferredKeyExchangeAlg, "new license request"))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, license->PlatformId);                  /* PlatformId (4 bytes) */
 	Stream_Read(s, license->ClientRandom,
@@ -2334,11 +2642,15 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 	UINT32 ModulusLength = 0;
 	if (!license_read_encrypted_premaster_secret_blob(s, license->EncryptedPremasterSecret,
 	                                                  &ModulusLength))
+	{
 		return FALSE;
+	}
 
 	const rdpCertInfo* info = freerdp_certificate_get_info(license->certificate);
 	if (!info)
+	{
 		WLog_WARN(TAG, "Missing license certificate, skipping ModulusLength checks");
+	}
 	else if (ModulusLength != info->ModulusLength)
 	{
 		WLog_WARN(TAG,
@@ -2350,10 +2662,14 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 
 	/* ClientUserName */
 	if (!license_read_binary_blob(s, license->ClientUserName))
+	{
 		return FALSE;
+	}
 	/* ClientMachineName */
 	if (!license_read_binary_blob(s, license->ClientMachineName))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -2366,19 +2682,21 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 
 BOOL license_answer_license_request(rdpLicense* license)
 {
-	wStream* s;
+	wStream* s = NULL;
 	BYTE* license_data = NULL;
 	size_t license_size = 0;
-	BOOL status;
-	char* username;
+	BOOL status = 0;
+	char* username = NULL;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->rdp);
 	WINPR_ASSERT(license->rdp->settings);
 
 	if (!license->rdp->settings->OldLicenseBehaviour)
+	{
 		license_data = loadCalFile(license->rdp->settings, license->rdp->settings->ClientHostname,
 		                           &license_size);
+	}
 
 	if (license_data)
 	{
@@ -2416,11 +2734,17 @@ BOOL license_answer_license_request(rdpLicense* license)
 
 	s = license_send_stream_init(license);
 	if (!s)
+	{
 		return FALSE;
+	}
 	if (license->rdp->settings->Username != NULL)
+	{
 		username = license->rdp->settings->Username;
+	}
 	else
+	{
 		username = "username";
+	}
 
 	{
 		WINPR_ASSERT(license->ClientUserName);
@@ -2467,9 +2791,9 @@ BOOL license_answer_license_request(rdpLicense* license)
 BOOL license_send_platform_challenge_response(rdpLicense* license)
 {
 	wStream* s = license_send_stream_init(license);
-	wStream* challengeRespData;
-	BYTE* buffer;
-	BOOL status;
+	wStream* challengeRespData = NULL;
+	BYTE* buffer = NULL;
+	BOOL status = 0;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->PlatformChallenge);
@@ -2484,7 +2808,9 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	/* prepare the PLATFORM_CHALLENGE_RESPONSE_DATA */
 	challengeRespData = Stream_New(NULL, 8 + license->PlatformChallenge->length);
 	if (!challengeRespData)
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT16(challengeRespData, PLATFORM_CHALLENGE_RESPONSE_VERSION); /* wVersion */
 	Stream_Write_UINT16(challengeRespData, license->ClientType);                 /* wClientType */
 	Stream_Write_UINT16(challengeRespData, license->LicenseDetailLevel); /* wLicenseDetailLevel */
@@ -2528,7 +2854,9 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	                                     license->EncryptedPlatformChallengeResponse);
 	Stream_Free(challengeRespData, TRUE);
 	if (!status)
+	{
 		return FALSE;
+	}
 
 #ifdef WITH_DEBUG_LICENSE
 	WLog_DBG(TAG, "LicensingEncryptionKey:");
@@ -2540,7 +2868,9 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 	              license->EncryptedHardwareId->length);
 #endif
 	if (license_write_client_platform_challenge_response(license, s))
+	{
 		return license_send(license, s, PLATFORM_CHALLENGE_RESPONSE);
+	}
 
 	Stream_Release(s);
 	return FALSE;
@@ -2548,9 +2878,9 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 
 BOOL license_read_platform_challenge_response(rdpLicense* license, wStream* s)
 {
-	UINT16 wVersion;
-	UINT16 cbChallenge;
-	const BYTE* pbChallenge;
+	UINT16 wVersion = 0;
+	UINT16 cbChallenge = 0;
+	const BYTE* pbChallenge = NULL;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->PlatformChallenge);
@@ -2561,7 +2891,9 @@ BOOL license_read_platform_challenge_response(rdpLicense* license, wStream* s)
 	DEBUG_LICENSE("Receiving Platform Challenge Response Packet");
 
 	if (!license_check_stream_length(s, 8, "PLATFORM_CHALLENGE_RESPONSE_DATA"))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, wVersion);
 	if (wVersion != PLATFORM_CHALLENGE_RESPONSE_VERSION)
@@ -2578,12 +2910,16 @@ BOOL license_read_platform_challenge_response(rdpLicense* license, wStream* s)
 
 	if (!license_check_stream_length(s, cbChallenge,
 	                                 "PLATFORM_CHALLENGE_RESPONSE_DATA::pbChallenge"))
+	{
 		return FALSE;
+	}
 
 	pbChallenge = Stream_Pointer(s);
 	if (!license_read_binary_blob_data(license->EncryptedPlatformChallengeResponse, BB_DATA_BLOB,
 	                                   pbChallenge, cbChallenge))
+	{
 		return FALSE;
+	}
 	return Stream_SafeSeek(s, cbChallenge);
 }
 
@@ -2592,12 +2928,18 @@ BOOL license_write_client_platform_challenge_response(rdpLicense* license, wStre
 	WINPR_ASSERT(license);
 
 	if (!license_write_binary_blob(s, license->EncryptedPlatformChallengeResponse))
+	{
 		return FALSE;
+	}
 	if (!license_write_binary_blob(s, license->EncryptedHardwareId))
+	{
 		return FALSE;
+	}
 	if (!license_check_stream_capacity(s, sizeof(license->MACData),
 	                                   "CLIENT_PLATFORM_CHALLENGE_RESPONSE::MACData"))
+	{
 		return FALSE;
+	}
 	Stream_Write(s, license->MACData, sizeof(license->MACData));
 	return TRUE;
 }
@@ -2607,12 +2949,18 @@ BOOL license_read_client_platform_challenge_response(rdpLicense* license, wStrea
 	WINPR_ASSERT(license);
 
 	if (!license_read_binary_blob(s, license->EncryptedPlatformChallengeResponse))
+	{
 		return FALSE;
+	}
 	if (!license_read_binary_blob(s, license->EncryptedHardwareId))
+	{
 		return FALSE;
+	}
 	if (!license_check_stream_length(s, sizeof(license->MACData),
 	                                 "CLIENT_PLATFORM_CHALLENGE_RESPONSE::MACData"))
+	{
 		return FALSE;
+	}
 	Stream_Read(s, license->MACData, sizeof(license->MACData));
 	return TRUE;
 }
@@ -2646,12 +2994,14 @@ BOOL license_send_valid_client_error_packet(rdpRdp* rdp)
 
 rdpLicense* license_new(rdpRdp* rdp)
 {
-	rdpLicense* license;
+	rdpLicense* license = NULL;
 	WINPR_ASSERT(rdp);
 
 	license = (rdpLicense*)calloc(1, sizeof(rdpLicense));
 	if (!license)
+	{
 		return NULL;
+	}
 
 	license->PlatformId = PLATFORMID;
 	license->ClientType = OTHER_PLATFORM_CHALLENGE_TYPE;
@@ -2661,36 +3011,66 @@ rdpLicense* license_new(rdpRdp* rdp)
 
 	license_set_state(license, LICENSE_STATE_INITIAL);
 	if (!(license->certificate = freerdp_certificate_new()))
+	{
 		goto out_error;
+	}
 	if (!(license->ProductInfo = license_new_product_info()))
+	{
 		goto out_error;
+	}
 	if (!(license->ErrorInfo = license_new_binary_blob(BB_ERROR_BLOB)))
+	{
 		goto out_error;
+	}
 	if (!(license->LicenseInfo = license_new_binary_blob(BB_DATA_BLOB)))
+	{
 		goto out_error;
+	}
 	if (!(license->KeyExchangeList = license_new_binary_blob(BB_KEY_EXCHG_ALG_BLOB)))
+	{
 		goto out_error;
+	}
 	if (!(license->ServerCertificate = license_new_binary_blob(BB_CERTIFICATE_BLOB)))
+	{
 		goto out_error;
+	}
 	if (!(license->ClientUserName = license_new_binary_blob(BB_CLIENT_USER_NAME_BLOB)))
+	{
 		goto out_error;
+	}
 	if (!(license->ClientMachineName = license_new_binary_blob(BB_CLIENT_MACHINE_NAME_BLOB)))
+	{
 		goto out_error;
+	}
 	if (!(license->PlatformChallenge = license_new_binary_blob(BB_ANY_BLOB)))
+	{
 		goto out_error;
+	}
 	if (!(license->EncryptedPlatformChallenge = license_new_binary_blob(BB_ANY_BLOB)))
+	{
 		goto out_error;
+	}
 	if (!(license->EncryptedPlatformChallengeResponse =
 	          license_new_binary_blob(BB_ENCRYPTED_DATA_BLOB)))
+	{
 		goto out_error;
+	}
 	if (!(license->EncryptedPremasterSecret = license_new_binary_blob(BB_ANY_BLOB)))
+	{
 		goto out_error;
+	}
 	if (!(license->EncryptedHardwareId = license_new_binary_blob(BB_ENCRYPTED_DATA_BLOB)))
+	{
 		goto out_error;
+	}
 	if (!(license->EncryptedLicenseInfo = license_new_binary_blob(BB_ENCRYPTED_DATA_BLOB)))
+	{
 		goto out_error;
+	}
 	if (!(license->ScopeList = license_new_scope_list()))
+	{
 		goto out_error;
+	}
 
 	license_generate_randoms(license);
 
@@ -2786,9 +3166,13 @@ const char* license_get_state_string(LICENSE_STATE state)
 BOOL license_server_send_request(rdpLicense* license)
 {
 	if (!license_ensure_state(license, LICENSE_STATE_CONFIGURED, LICENSE_REQUEST))
+	{
 		return FALSE;
+	}
 	if (!license_send_license_request_packet(license))
+	{
 		return FALSE;
+	}
 	return license_set_state(license, LICENSE_STATE_REQUEST);
 }
 
@@ -2839,44 +3223,62 @@ BOOL license_server_configure(rdpLicense* license)
 	WINPR_ASSERT(issuers || (issuerCount == 0));
 
 	if (!license_ensure_state(license, LICENSE_STATE_INITIAL, LICENSE_REQUEST))
+	{
 		return FALSE;
+	}
 
 	license->ProductInfo->dwVersion = ProductVersion;
 	if (!license_set_string("pbCompanyName", CompanyName, &license->ProductInfo->pbCompanyName,
 	                        &license->ProductInfo->cbCompanyName))
+	{
 		return FALSE;
+	}
 
 	if (!license_set_string("pbProductId", ProductName, &license->ProductInfo->pbProductId,
 	                        &license->ProductInfo->cbProductId))
+	{
 		return FALSE;
+	}
 
 	if (!license_read_binary_blob_data(license->KeyExchangeList, BB_KEY_EXCHG_ALG_BLOB, algs,
 	                                   sizeof(algs)))
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_certificate_read_server_cert(license->certificate, settings->ServerCertificate,
 	                                          settings->ServerCertificateLength))
+	{
 		return FALSE;
+	}
 
 	s = Stream_New(NULL, 1024);
 	if (!s)
+	{
 		return FALSE;
+	}
 	else
 	{
 		BOOL r = FALSE;
 		SSIZE_T res =
 		    freerdp_certificate_write_server_cert(license->certificate, CERT_CHAIN_VERSION_2, s);
 		if (res >= 0)
+		{
 			r = license_read_binary_blob_data(license->ServerCertificate, BB_CERTIFICATE_BLOB,
 			                                  Stream_Buffer(s), Stream_GetPosition(s));
+		}
 
 		Stream_Free(s, TRUE);
 		if (!r)
+		{
 			return FALSE;
+		}
 	}
 
 	if (!license_scope_list_resize(license->ScopeList, issuerCount))
+	{
 		return FALSE;
+	}
 	for (size_t x = 0; x < issuerCount; x++)
 	{
 		LICENSE_BLOB* blob = license->ScopeList->array[x];
@@ -2891,7 +3293,9 @@ BOOL license_server_configure(rdpLicense* license)
 			return FALSE;
 		}
 		if (!license_read_binary_blob_data(blob, BB_SCOPE_BLOB, name, length))
+		{
 			return FALSE;
+		}
 	}
 
 	return license_set_state(license, LICENSE_STATE_CONFIGURED);

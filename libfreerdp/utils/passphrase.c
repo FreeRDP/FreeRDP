@@ -84,7 +84,7 @@ char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf
 
 static int wait_for_fd(int fd, int timeout)
 {
-	int status;
+	int status = 0;
 #if defined(WINPR_HAVE_POLL_H) && !defined(__APPLE__)
 	struct pollfd pollset = { 0 };
 	pollset.fd = fd;
@@ -117,13 +117,15 @@ static int wait_for_fd(int fd, int timeout)
 	return status;
 }
 
-static void replace_char(char* buffer, size_t buffer_len, const char* toreplace)
+static void replace_char(char* buffer, const char* toreplace)
 {
 	while (*toreplace != '\0')
 	{
-		char* ptr;
+		char* ptr = NULL;
 		while ((ptr = strrchr(buffer, *toreplace)) != NULL)
+		{
 			*ptr = '\0';
+		}
 		toreplace++;
 	}
 }
@@ -133,7 +135,7 @@ char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf
 {
 	BOOL terminal_needs_reset = FALSE;
 	char term_name[L_ctermid] = { 0 };
-	int term_file;
+	int term_file = 0;
 
 	FILE* fout = NULL;
 
@@ -144,7 +146,7 @@ char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf
 	}
 
 	ctermid(term_name);
-	int terminal_fildes;
+	int terminal_fildes = 0;
 	if (from_stdin || strcmp(term_name, "") == 0 || (term_file = open(term_name, O_RDWR)) == -1)
 	{
 		fout = stdout;
@@ -165,12 +167,16 @@ char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf
 		new_flags.c_lflag |= ECHONL;
 		terminal_needs_reset = TRUE;
 		if (tcsetattr(terminal_fildes, TCSAFLUSH, &new_flags) == -1)
+		{
 			terminal_needs_reset = FALSE;
+		}
 	}
 
 	FILE* fp = fdopen(terminal_fildes, "r");
 	if (!fp)
+	{
 		goto error;
+	}
 
 	fprintf(fout, "%s", prompt);
 	fflush(fout);
@@ -180,21 +186,27 @@ char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf
 
 	const SSIZE_T res = freerdp_interruptible_get_line(context, &ptr, &ptr_len, fp);
 	if (res < 0)
+	{
 		goto error;
-	replace_char(ptr, ptr_len, "\r\n");
+	}
+	replace_char(ptr, "\r\n");
 
 	strncpy(buf, ptr, MIN(bufsiz, ptr_len));
 	free(ptr);
 	if (terminal_needs_reset)
 	{
 		if (tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags) == -1)
+		{
 			goto error;
+		}
 	}
 
 	if (terminal_fildes != STDIN_FILENO)
 	{
 		if (fclose(fp) == -1)
+		{
 			goto error;
+		}
 	}
 
 	return buf;
@@ -203,11 +215,15 @@ error:
 {
 	int saved_errno = errno;
 	if (terminal_needs_reset)
+	{
 		tcsetattr(terminal_fildes, TCSAFLUSH, &orig_flags);
+	}
 	if (terminal_fildes != STDIN_FILENO)
 	{
 		if (fp)
+		{
 			fclose(fp);
+		}
 	}
 	errno = saved_errno;
 	return NULL;
@@ -229,7 +245,9 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 			char c = 0;
 			const ssize_t rd = read(fd, &c, 1);
 			if (rd == 1)
+			{
 				rc = c;
+			}
 			break;
 		}
 	} while (!freerdp_shall_disconnect_context(context));
@@ -255,8 +273,8 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, size_t* psize,
                                        FILE* stream)
 {
-	int c;
-	char* n;
+	int c = 0;
+	char* n = NULL;
 	size_t step = 32;
 	size_t used = 0;
 	char* ptr = NULL;
@@ -285,7 +303,9 @@ SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, siz
 
 		c = freerdp_interruptible_getc(context, stream);
 		if (c != EOF)
+		{
 			ptr[used++] = (char)c;
+		}
 	} while ((c != '\n') && (c != '\r') && (c != EOF));
 
 	ptr[used] = '\0';

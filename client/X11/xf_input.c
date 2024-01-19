@@ -95,7 +95,9 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 
 		/* Ignore virtual core pointer */
 		if (strcmp(dev->name, "Virtual core pointer") == 0)
+		{
 			continue;
+		}
 
 		for (int j = 0; j < dev->num_classes; j++)
 		{
@@ -156,7 +158,9 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 							                                  FREERDP_PEN_IS_INVERTED |
 							                                  FREERDP_PEN_HAS_PRESSURE,
 							                              dev->deviceid, max_pressure))
+							{
 								WLog_DBG(TAG, "registered eraser");
+							}
 						}
 						else if (strstr(devName, "stylus") != NULL ||
 						         strstr(devName, "pen") != NULL)
@@ -164,7 +168,9 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 							if (freerdp_client_handle_pen(
 							        &xfc->common, FREERDP_PEN_REGISTER | FREERDP_PEN_HAS_PRESSURE,
 							        dev->deviceid, max_pressure))
+							{
 								WLog_DBG(TAG, "registered pen");
+							}
 						}
 					}
 					break;
@@ -174,7 +180,9 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 			}
 		}
 		if (used)
+		{
 			nmasks++;
+		}
 	}
 
 	XIFreeDeviceInfo(info);
@@ -183,7 +191,9 @@ static BOOL register_input_events(xfContext* xfc, Window window)
 	{
 		Status xstatus = XISelectEvents(xfc->display, window, evmasks, nmasks);
 		if (xstatus != 0)
+		{
 			WLog_WARN(TAG, "XISelectEvents returned %d", xstatus);
+		}
 	}
 
 	return TRUE;
@@ -193,7 +203,7 @@ static BOOL register_raw_events(xfContext* xfc, Window window)
 {
 	XIEventMask mask;
 	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 
@@ -220,7 +230,7 @@ static BOOL register_device_events(xfContext* xfc, Window window)
 {
 	XIEventMask mask;
 	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 
@@ -243,7 +253,9 @@ int xf_input_init(xfContext* xfc, Window window)
 {
 	int major = XI_2_Major;
 	int minor = XI_2_Minor;
-	int opcode = 0, event = 0, error = 0;
+	int opcode = 0;
+	int event = 0;
+	int error = 0;
 
 	WINPR_ASSERT(xfc);
 
@@ -276,11 +288,17 @@ int xf_input_init(xfContext* xfc, Window window)
 		Window root = RootWindow(xfc->display, scr);
 
 		if (!register_raw_events(xfc, root))
+		{
 			return -1;
+		}
 		if (!register_input_events(xfc, window))
+		{
 			return -1;
+		}
 		if (!register_device_events(xfc, window))
+		{
 			return -1;
+		}
 	}
 
 	return 0;
@@ -288,7 +306,7 @@ int xf_input_init(xfContext* xfc, Window window)
 
 static BOOL xf_input_is_duplicate(xfContext* xfc, const XGenericEventCookie* cookie)
 {
-	const XIDeviceEvent* event;
+	const XIDeviceEvent* event = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(cookie);
@@ -309,7 +327,7 @@ static BOOL xf_input_is_duplicate(xfContext* xfc, const XGenericEventCookie* coo
 
 static void xf_input_save_last_event(xfContext* xfc, const XGenericEventCookie* cookie)
 {
-	const XIDeviceEvent* event;
+	const XIDeviceEvent* event = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(cookie);
@@ -328,11 +346,11 @@ static void xf_input_detect_pan(xfContext* xfc)
 {
 	double dx[2];
 	double dy[2];
-	double px;
-	double py;
-	double dist_x;
-	double dist_y;
-	rdpContext* ctx;
+	double px = NAN;
+	double py = NAN;
+	double dist_x = NAN;
+	double dist_y = NAN;
+	rdpContext* ctx = NULL;
 
 	WINPR_ASSERT(xfc);
 	ctx = &xfc->common.context;
@@ -417,10 +435,10 @@ static void xf_input_detect_pan(xfContext* xfc)
 
 static void xf_input_detect_pinch(xfContext* xfc)
 {
-	double dist;
-	double delta;
+	double dist = NAN;
+	double delta = NAN;
 	ZoomingChangeEventArgs e;
-	rdpContext* ctx;
+	rdpContext* ctx = NULL;
 
 	WINPR_ASSERT(xfc);
 	ctx = &xfc->common.context;
@@ -450,10 +468,14 @@ static void xf_input_detect_pinch(xfContext* xfc)
 		delta = xfc->lastDist - dist;
 
 		if (delta > 1.0)
+		{
 			delta = 1.0;
+		}
 
 		if (delta < -1.0)
+		{
 			delta = -1.0;
+		}
 
 		/* compare the current distance to the first one */
 		xfc->z_vector += delta;
@@ -483,7 +505,7 @@ static void xf_input_detect_pinch(xfContext* xfc)
 
 static void xf_input_touch_begin(xfContext* xfc, const XIDeviceEvent* event)
 {
-	int i;
+	int i = 0;
 
 	WINPR_UNUSED(xfc);
 	for (i = 0; i < MAX_CONTACTS; i++)
@@ -502,7 +524,7 @@ static void xf_input_touch_begin(xfContext* xfc, const XIDeviceEvent* event)
 
 static void xf_input_touch_update(xfContext* xfc, const XIDeviceEvent* event)
 {
-	int i;
+	int i = 0;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
@@ -525,7 +547,7 @@ static void xf_input_touch_update(xfContext* xfc, const XIDeviceEvent* event)
 
 static void xf_input_touch_end(xfContext* xfc, const XIDeviceEvent* event)
 {
-	int i;
+	int i = 0;
 
 	WINPR_UNUSED(xfc);
 	for (i = 0; i < MAX_CONTACTS; i++)
@@ -556,21 +578,27 @@ static int xf_input_handle_event_local(xfContext* xfc, const XEvent* event)
 		{
 			case XI_TouchBegin:
 				if (xf_input_is_duplicate(xfc, cookie.cc) == FALSE)
+				{
 					xf_input_touch_begin(xfc, cookie.cc->data);
+				}
 
 				xf_input_save_last_event(xfc, cookie.cc);
 				break;
 
 			case XI_TouchUpdate:
 				if (xf_input_is_duplicate(xfc, cookie.cc) == FALSE)
+				{
 					xf_input_touch_update(xfc, cookie.cc->data);
+				}
 
 				xf_input_save_last_event(xfc, cookie.cc);
 				break;
 
 			case XI_TouchEnd:
 				if (xf_input_is_duplicate(xfc, cookie.cc) == FALSE)
+				{
 					xf_input_touch_end(xfc, cookie.cc->data);
+				}
 
 				xf_input_save_last_event(xfc, cookie.cc);
 				break;
@@ -623,7 +651,9 @@ static void xf_input_hide_cursor(xfContext* xfc)
 		nullcursor = XcursorImageLoadCursor(xfc->display, &ci);
 
 		if ((xfc->window) && (nullcursor != None))
+		{
 			XDefineCursor(xfc->display, xfc->window->handle, nullcursor);
+		}
 
 		xfc->cursorHidden = TRUE;
 		xf_unlock_x11(xfc);
@@ -642,9 +672,13 @@ static void xf_input_show_cursor(xfContext* xfc)
 		if (xfc->window)
 		{
 			if (!xfc->pointer)
+			{
 				XUndefineCursor(xfc->display, xfc->window->handle);
+			}
 			else
+			{
 				XDefineCursor(xfc->display, xfc->window->handle, xfc->pointer->cursor);
+			}
 		}
 
 		xfc->cursorHidden = FALSE;
@@ -656,12 +690,15 @@ static void xf_input_show_cursor(xfContext* xfc)
 
 static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 {
-	int x, y;
-	int touchId;
+	int x;
+	int y;
+	int touchId = 0;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)
+	{
 		return 0;
+	}
 
 	xf_input_hide_cursor(xfc);
 	touchId = event->detail;
@@ -689,11 +726,14 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 
 static BOOL xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype, int deviceid)
 {
-	int x, y;
+	int x;
+	int y;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)
+	{
 		return FALSE;
+	}
 
 	xf_input_hide_cursor(xfc);
 	x = (int)event->event_x;
@@ -708,7 +748,9 @@ static BOOL xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype
 		{
 			double value = *val++;
 			if (i == 2)
+			{
 				pressure = value;
+			}
 		}
 	}
 
@@ -733,17 +775,23 @@ static BOOL xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype
 		case XI_ButtonPress:
 			flags |= FREERDP_PEN_PRESS;
 			if (!freerdp_client_handle_pen(&xfc->common, flags, deviceid, x, y, pressure))
+			{
 				return FALSE;
+			}
 			break;
 		case XI_Motion:
 			flags |= FREERDP_PEN_MOTION;
 			if (!freerdp_client_handle_pen(&xfc->common, flags, deviceid, x, y, pressure))
+			{
 				return FALSE;
+			}
 			break;
 		case XI_ButtonRelease:
 			flags |= FREERDP_PEN_RELEASE;
 			if (!freerdp_client_handle_pen(&xfc->common, flags, deviceid, x, y, pressure))
+			{
 				return FALSE;
+			}
 			break;
 		default:
 			break;
@@ -761,7 +809,7 @@ static int xf_input_pens_unhover(xfContext* xfc)
 
 int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype)
 {
-	const rdpSettings* settings;
+	const rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xevent);
@@ -774,7 +822,9 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 	if (window)
 	{
 		if (xf_floatbar_is_locked(window->floatbar))
+		{
 			return 0;
+		}
 	}
 
 	xf_input_show_cursor(xfc);
@@ -820,9 +870,13 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 				double x = 0.0;
 				double y = 0.0;
 				if (XIMaskIsSet(ev->valuators.mask, 0))
+				{
 					x = ev->raw_values[0];
+				}
 				if (XIMaskIsSet(ev->valuators.mask, 1))
+				{
 					y = ev->raw_values[1];
+				}
 
 				xf_generic_RawMotionNotify(xfc, (int)x, (int)y, event->event, xfc->remote_app);
 			}
@@ -831,7 +885,9 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 		{
 			const XIDeviceChangedEvent* ev = (const XIDeviceChangedEvent*)event;
 			if (ev->reason != XIDeviceChange)
+			{
 				break;
+			}
 
 			/*
 			 * TODO:
@@ -842,12 +898,16 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 			 *    `Window` we registered.
 			 */
 			if (xfc->window)
+			{
 				register_input_events(xfc, xfc->window->handle);
+			}
 		}
 		break;
 		case XI_HierarchyChanged:
 			if (xfc->window)
+			{
 				register_input_events(xfc, xfc->window->handle);
+			}
 			break;
 
 		default:
@@ -923,7 +983,7 @@ int xf_input_init(xfContext* xfc, Window window)
 int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 {
 #ifdef WITH_XI
-	const rdpSettings* settings;
+	const rdpSettings* settings = NULL;
 	WINPR_ASSERT(xfc);
 
 	settings = xfc->common.context.settings;
@@ -933,7 +993,7 @@ int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 	{
 		return xf_input_handle_event_remote(xfc, event);
 	}
-	else if (freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures))
+	if (freerdp_settings_get_bool(settings, FreeRDP_MultiTouchGestures))
 	{
 		return xf_input_handle_event_local(xfc, event);
 	}

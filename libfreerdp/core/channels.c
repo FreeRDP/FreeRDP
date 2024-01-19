@@ -52,11 +52,11 @@
 
 BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_t size)
 {
-	DWORD i;
-	size_t left;
-	UINT32 flags;
-	size_t chunkSize;
-	rdpMcs* mcs;
+	DWORD i = 0;
+	size_t left = 0;
+	UINT32 flags = 0;
+	size_t chunkSize = 0;
+	rdpMcs* mcs = NULL;
 	const rdpMcsChannel* channel = NULL;
 
 	WINPR_ASSERT(rdp);
@@ -101,7 +101,9 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_
 		}
 
 		if (!freerdp_channel_send_packet(rdp, channelId, size, flags, data, chunkSize))
+		{
 			return FALSE;
+		}
 
 		data += chunkSize;
 		left -= chunkSize;
@@ -114,9 +116,9 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_
 BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId, size_t packetLength)
 {
 	BOOL rc = FALSE;
-	UINT32 length;
-	UINT32 flags;
-	size_t chunkLength;
+	UINT32 length = 0;
+	UINT32 flags = 0;
+	size_t chunkLength = 0;
 
 	WINPR_ASSERT(instance);
 
@@ -128,7 +130,9 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId, si
 	packetLength -= 8;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		return FALSE;
+	}
 
 	/* [MS-RDPBCGR] 3.1.5.2.2 Processing of Virtual Channel PDU
 	 * chunked data. Length is the total size of the combined data,
@@ -158,15 +162,17 @@ BOOL freerdp_channel_process(freerdp* instance, wStream* s, UINT16 channelId, si
 
 BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 channelId)
 {
-	UINT32 length;
-	UINT32 flags;
-	size_t chunkLength;
+	UINT32 length = 0;
+	UINT32 flags = 0;
+	size_t chunkLength = 0;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, length);
 	Stream_Read_UINT32(s, flags);
@@ -174,8 +180,8 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 
 	if (client->VirtualChannelRead)
 	{
-		int rc;
-		UINT32 index;
+		int rc = 0;
+		UINT32 index = 0;
 		BOOL found = FALSE;
 		HANDLE hChannel = 0;
 		rdpContext* context = client->context;
@@ -194,18 +200,24 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 		}
 
 		if (!found)
+		{
 			return FALSE;
+		}
 
 		rc = client->VirtualChannelRead(client, hChannel, Stream_Pointer(s), chunkLength);
 		if (rc < 0)
+		{
 			return FALSE;
+		}
 	}
 	else if (client->ReceiveChannelData)
 	{
 		BOOL rc = client->ReceiveChannelData(client, channelId, Stream_Pointer(s), chunkLength,
 		                                     flags, length);
 		if (!rc)
+		{
 			return FALSE;
+		}
 	}
 	if (!Stream_SafeSeek(s, chunkLength))
 	{
@@ -300,7 +312,9 @@ BOOL freerdp_channel_send_packet(rdpRdp* rdp, UINT16 channelId, size_t totalSize
 	wStream* s = rdp_send_stream_init(rdp);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, totalSize);
 	Stream_Write_UINT32(s, flags);

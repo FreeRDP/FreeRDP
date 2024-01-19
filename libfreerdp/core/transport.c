@@ -96,7 +96,7 @@ struct rdp_transport
 	HANDLE ioEvent;
 	BOOL useIoEvent;
 	BOOL earlyUserAuth;
-};
+} DECLSPEC_ALIGN(128);
 
 static void transport_ssl_cb(SSL* ssl, int where, int ret)
 {
@@ -126,9 +126,13 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 					{
 						UINT32 kret = 0;
 						if (transport->nla)
+						{
 							kret = nla_get_error(transport->nla);
+						}
 						if (kret == 0)
+						{
 							kret = FREERDP_ERROR_CONNECT_PASSWORD_CERTAINLY_EXPIRED;
+						}
 						freerdp_set_last_error_log(transport_get_context(transport), kret);
 					}
 				}
@@ -150,11 +154,13 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 
 wStream* transport_send_stream_init(rdpTransport* transport, size_t size)
 {
-	wStream* s;
+	wStream* s = NULL;
 	WINPR_ASSERT(transport);
 
 	if (!(s = StreamPool_Take(transport->ReceivePool, size)))
+	{
 		return NULL;
+	}
 
 	if (!Stream_EnsureCapacity(s, size))
 	{
@@ -169,15 +175,17 @@ wStream* transport_send_stream_init(rdpTransport* transport, size_t size)
 BOOL transport_attach(rdpTransport* transport, int sockfd)
 {
 	if (!transport)
+	{
 		return FALSE;
+	}
 	return IFCALLRESULT(FALSE, transport->io.TransportAttach, transport, sockfd);
 }
 
 static BOOL transport_default_attach(rdpTransport* transport, int sockfd)
 {
 	BIO* socketBio = NULL;
-	BIO* bufferedBio;
-	const rdpSettings* settings;
+	BIO* bufferedBio = NULL;
+	const rdpSettings* settings = NULL;
 	rdpContext* context = transport_get_context(transport);
 
 	if (sockfd < 0)
@@ -192,31 +200,43 @@ static BOOL transport_default_attach(rdpTransport* transport, int sockfd)
 	if (sockfd >= 0)
 	{
 		if (!freerdp_tcp_set_keep_alive_mode(settings, sockfd))
+		{
 			goto fail;
+		}
 
 		socketBio = BIO_new(BIO_s_simple_socket());
 
 		if (!socketBio)
+		{
 			goto fail;
+		}
 
 		BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
 	}
 
 	bufferedBio = BIO_new(BIO_s_buffered_socket());
 	if (!bufferedBio)
+	{
 		goto fail;
+	}
 
 	if (socketBio)
+	{
 		bufferedBio = BIO_push(bufferedBio, socketBio);
+	}
 	WINPR_ASSERT(bufferedBio);
 	transport->frontBio = bufferedBio;
 	return TRUE;
 fail:
 
 	if (socketBio)
+	{
 		BIO_free_all(socketBio);
+	}
 	else
+	{
 		closesocket(sockfd);
+	}
 
 	return FALSE;
 }
@@ -224,7 +244,9 @@ fail:
 BOOL transport_connect_rdp(rdpTransport* transport)
 {
 	if (!transport)
+	{
 		return FALSE;
+	}
 
 	switch (utils_authenticate(transport_get_context(transport)->instance, AUTH_RDP, FALSE))
 	{
@@ -243,7 +265,7 @@ BOOL transport_connect_rdp(rdpTransport* transport)
 
 BOOL transport_connect_tls(rdpTransport* transport)
 {
-	const rdpSettings* settings;
+	const rdpSettings* settings = NULL;
 	rdpContext* context = transport_get_context(transport);
 
 	settings = context->settings;
@@ -271,10 +293,10 @@ BOOL transport_connect_tls(rdpTransport* transport)
 
 static BOOL transport_default_connect_tls(rdpTransport* transport)
 {
-	int tlsStatus;
+	int tlsStatus = 0;
 	rdpTls* tls = NULL;
-	rdpContext* context;
-	rdpSettings* settings;
+	rdpContext* context = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(transport);
 
@@ -285,21 +307,29 @@ static BOOL transport_default_connect_tls(rdpTransport* transport)
 	WINPR_ASSERT(settings);
 
 	if (!(tls = freerdp_tls_new(settings)))
+	{
 		return FALSE;
+	}
 
 	transport->tls = tls;
 
 	if (transport->GatewayEnabled)
+	{
 		transport->layer = TRANSPORT_LAYER_TSG_TLS;
+	}
 	else
+	{
 		transport->layer = TRANSPORT_LAYER_TLS;
+	}
 
 	tls->hostname = settings->ServerHostname;
 	tls->serverName = settings->UserSpecifiedServerName;
 	tls->port = settings->ServerPort;
 
 	if (tls->port == 0)
+	{
 		tls->port = 3389;
+	}
 
 	tls->isGatewayTransport = FALSE;
 	tlsStatus = freerdp_tls_connect(tls, transport->frontBio);
@@ -337,7 +367,9 @@ BOOL transport_connect_nla(rdpTransport* transport, BOOL earlyUserAuth)
 	rdpSettings* settings = NULL;
 	rdpRdp* rdp = NULL;
 	if (!transport)
+	{
 		return FALSE;
+	}
 
 	context = transport_get_context(transport);
 	WINPR_ASSERT(context);
@@ -349,16 +381,22 @@ BOOL transport_connect_nla(rdpTransport* transport, BOOL earlyUserAuth)
 	WINPR_ASSERT(rdp);
 
 	if (!transport_connect_tls(transport))
+	{
 		return FALSE;
+	}
 
 	if (!settings->Authentication)
+	{
 		return TRUE;
+	}
 
 	nla_free(rdp->nla);
 	rdp->nla = nla_new(context, transport);
 
 	if (!rdp->nla)
+	{
 		return FALSE;
+	}
 
 	nla_set_early_user_auth(rdp->nla, earlyUserAuth);
 
@@ -368,7 +406,9 @@ BOOL transport_connect_nla(rdpTransport* transport, BOOL earlyUserAuth)
 	{
 		if (!nla_set_service_principal(rdp->nla, settings->AuthenticationServiceClass,
 		                               freerdp_settings_get_server_name(settings)))
+		{
 			return FALSE;
+		}
 	}
 
 	if (nla_client_begin(rdp->nla) < 0)
@@ -396,11 +436,15 @@ BOOL transport_connect_rdstls(rdpTransport* transport)
 	WINPR_ASSERT(context);
 
 	if (!transport_connect_tls(transport))
+	{
 		goto fail;
+	}
 
 	rdstls = rdstls_new(context, transport);
 	if (!rdstls)
+	{
 		goto fail;
+	}
 
 	transport_set_rdstls_mode(transport, TRUE);
 
@@ -424,7 +468,9 @@ BOOL transport_connect_aad(rdpTransport* transport)
 	rdpSettings* settings = NULL;
 	rdpRdp* rdp = NULL;
 	if (!transport)
+	{
 		return FALSE;
+	}
 
 	context = transport_get_context(transport);
 	WINPR_ASSERT(context);
@@ -436,13 +482,19 @@ BOOL transport_connect_aad(rdpTransport* transport)
 	WINPR_ASSERT(rdp);
 
 	if (!transport_connect_tls(transport))
+	{
 		return FALSE;
+	}
 
 	if (!settings->Authentication)
+	{
 		return TRUE;
+	}
 
 	if (!rdp->aad)
+	{
 		return FALSE;
+	}
 
 	transport_set_aad_mode(transport, TRUE);
 
@@ -461,11 +513,11 @@ BOOL transport_connect_aad(rdpTransport* transport)
 
 BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 port, DWORD timeout)
 {
-	int sockfd;
+	int sockfd = 0;
 	BOOL status = FALSE;
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 	rdpContext* context = transport_get_context(transport);
-	BOOL rpcFallback;
+	BOOL rpcFallback = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(hostname);
@@ -483,7 +535,9 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			transport->wst = wst_new(context);
 
 			if (!transport->wst)
+			{
 				return FALSE;
+			}
 
 			status = wst_connect(transport->wst, timeout);
 
@@ -507,7 +561,9 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			transport->rdg = rdg_new(context);
 
 			if (!transport->rdg)
+			{
 				return FALSE;
+			}
 
 			status = rdg_connect(transport->rdg, timeout, &rpcFallback);
 
@@ -532,7 +588,9 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 			transport->tsg = tsg_new(transport);
 
 			if (!transport->tsg)
+			{
 				return FALSE;
+			}
 
 			/* Reset error condition from RDG */
 			freerdp_set_last_error_log(context, FREERDP_ERROR_SUCCESS);
@@ -553,27 +611,39 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	}
 	else
 	{
-		UINT16 peerPort;
-		const char *proxyHostname, *proxyUsername, *proxyPassword;
+		UINT16 peerPort = 0;
+		const char* proxyHostname;
+		const char* proxyUsername;
+		const char* proxyPassword;
 		BOOL isProxyConnection =
 		    proxy_prepare(settings, &proxyHostname, &peerPort, &proxyUsername, &proxyPassword);
 
 		if (isProxyConnection)
+		{
 			sockfd = transport_tcp_connect(transport, proxyHostname, peerPort, timeout);
+		}
 		else
+		{
 			sockfd = transport_tcp_connect(transport, hostname, port, timeout);
+		}
 
 		if (sockfd < 0)
+		{
 			return FALSE;
+		}
 
 		if (!transport_attach(transport, sockfd))
+		{
 			return FALSE;
+		}
 
 		if (isProxyConnection)
 		{
 			if (!proxy_connect(settings, transport->frontBio, proxyUsername, proxyPassword,
 			                   hostname, port))
+			{
 				return FALSE;
+			}
 		}
 
 		status = TRUE;
@@ -588,7 +658,9 @@ BOOL transport_connect_childsession(rdpTransport* transport)
 
 	transport->frontBio = createChildSessionBio();
 	if (!transport->frontBio)
+	{
 		return FALSE;
+	}
 
 	transport->layer = TRANSPORT_LAYER_TSG;
 	return TRUE;
@@ -597,7 +669,9 @@ BOOL transport_connect_childsession(rdpTransport* transport)
 BOOL transport_accept_rdp(rdpTransport* transport)
 {
 	if (!transport)
+	{
 		return FALSE;
+	}
 	/* RDP encryption */
 	return TRUE;
 }
@@ -605,14 +679,16 @@ BOOL transport_accept_rdp(rdpTransport* transport)
 BOOL transport_accept_tls(rdpTransport* transport)
 {
 	if (!transport)
+	{
 		return FALSE;
+	}
 	return IFCALLRESULT(FALSE, transport->io.TLSAccept, transport);
 }
 
 static BOOL transport_default_accept_tls(rdpTransport* transport)
 {
 	rdpContext* context = transport_get_context(transport);
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -620,12 +696,16 @@ static BOOL transport_default_accept_tls(rdpTransport* transport)
 	WINPR_ASSERT(settings);
 
 	if (!transport->tls)
+	{
 		transport->tls = freerdp_tls_new(settings);
+	}
 
 	transport->layer = TRANSPORT_LAYER_TLS;
 
 	if (!freerdp_tls_accept(transport->tls, transport->frontBio, settings))
+	{
 		return FALSE;
+	}
 
 	transport->frontBio = transport->tls->bio;
 	return TRUE;
@@ -634,7 +714,7 @@ static BOOL transport_default_accept_tls(rdpTransport* transport)
 BOOL transport_accept_nla(rdpTransport* transport)
 {
 	rdpContext* context = transport_get_context(transport);
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -642,12 +722,16 @@ BOOL transport_accept_nla(rdpTransport* transport)
 	WINPR_ASSERT(settings);
 
 	if (!IFCALLRESULT(FALSE, transport->io.TLSAccept, transport))
+	{
 		return FALSE;
+	}
 
 	/* Network Level Authentication */
 
 	if (!settings->Authentication)
+	{
 		return TRUE;
+	}
 
 	if (!transport->nla)
 	{
@@ -684,11 +768,15 @@ BOOL transport_accept_rdstls(rdpTransport* transport)
 	WINPR_ASSERT(context);
 
 	if (!IFCALLRESULT(FALSE, transport->io.TLSAccept, transport))
+	{
 		goto fail;
+	}
 
 	rdstls = rdstls_new(context, transport);
 	if (!rdstls)
+	{
 		goto fail;
+	}
 
 	transport_set_rdstls_mode(transport, TRUE);
 
@@ -714,9 +802,9 @@ fail:
 static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO* bio, LPCSTR file,
                                     LPCSTR func, DWORD line)
 {
-	unsigned long sslerr;
-	int saveerrno;
-	DWORD level;
+	unsigned long sslerr = 0;
+	int saveerrno = 0;
+	DWORD level = 0;
 
 	WINPR_ASSERT(transport);
 
@@ -724,13 +812,17 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO
 	level = WLOG_ERROR;
 
 	if (level < WLog_GetLogLevel(transport->log))
+	{
 		return;
+	}
 
 	if (ERR_peek_error() == 0)
 	{
 		const char* fmt = "%s returned a system error %d: %s";
 		if (saveerrno == 0)
+		{
 			fmt = "%s retries exceeded";
+		}
 		WLog_PrintMessage(transport->log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
 		                  saveerrno, strerror(saveerrno));
 		return;
@@ -750,8 +842,8 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO
 static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t bytes)
 {
 	SSIZE_T read = 0;
-	rdpRdp* rdp;
-	rdpContext* context;
+	rdpRdp* rdp = NULL;
+	rdpContext* context = NULL;
 
 	WINPR_ASSERT(transport);
 
@@ -776,7 +868,9 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 		int status = BIO_read(transport->frontBio, data + read, r);
 
 		if (freerdp_shall_disconnect_context(context))
+		{
 			return -1;
+		}
 
 		if (status <= 0)
 		{
@@ -797,7 +891,9 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
 
 			/* non blocking will survive a partial read */
 			if (!transport->blocking)
+			{
 				return read;
+			}
 
 			/* blocking means that we can't continue until we have read the number of requested
 			 * bytes */
@@ -836,17 +932,23 @@ static SSIZE_T transport_read_layer(rdpTransport* transport, BYTE* data, size_t 
  */
 static SSIZE_T transport_read_layer_bytes(rdpTransport* transport, wStream* s, size_t toRead)
 {
-	SSIZE_T status;
+	SSIZE_T status = 0;
 	if (!transport)
+	{
 		return -1;
+	}
 
 	if (toRead > SSIZE_MAX)
+	{
 		return 0;
+	}
 
 	status = IFCALLRESULT(-1, transport->io.ReadBytes, transport, Stream_Pointer(s), toRead);
 
 	if (status <= 0)
+	{
 		return status;
+	}
 
 	Stream_Seek(s, (size_t)status);
 	return status == (SSIZE_T)toRead ? 1 : 0;
@@ -867,7 +969,9 @@ static SSIZE_T transport_read_layer_bytes(rdpTransport* transport, wStream* s, s
 int transport_read_pdu(rdpTransport* transport, wStream* s)
 {
 	if (!transport)
+	{
 		return -1;
+	}
 	return IFCALLRESULT(-1, transport->io.ReadPdu, transport, s);
 }
 
@@ -882,24 +986,30 @@ static SSIZE_T parse_nla_mode_pdu(rdpTransport* transport, wStream* stream)
 	 * bit 6 P/C constructed
 	 * bit 5 tag number - sequence
 	 */
-	UINT8 typeEncoding;
+	UINT8 typeEncoding = 0;
 	if (Stream_GetRemainingLength(s) < 1)
+	{
 		return 0;
+	}
 	Stream_Read_UINT8(s, typeEncoding);
 	if (typeEncoding == 0x30)
 	{
 		/* TSRequest (NLA) */
-		UINT8 lengthEncoding;
+		UINT8 lengthEncoding = 0;
 		if (Stream_GetRemainingLength(s) < 1)
+		{
 			return 0;
+		}
 		Stream_Read_UINT8(s, lengthEncoding);
 		if (lengthEncoding & 0x80)
 		{
 			if ((lengthEncoding & ~(0x80)) == 1)
 			{
-				UINT8 length;
+				UINT8 length = 0;
 				if (Stream_GetRemainingLength(s) < 1)
+				{
 					return 0;
+				}
 				Stream_Read_UINT8(s, length);
 				pduLength = length;
 				pduLength += 3;
@@ -907,9 +1017,11 @@ static SSIZE_T parse_nla_mode_pdu(rdpTransport* transport, wStream* stream)
 			else if ((lengthEncoding & ~(0x80)) == 2)
 			{
 				/* check for header bytes already was readed in previous calls */
-				UINT16 length;
+				UINT16 length = 0;
 				if (Stream_GetRemainingLength(s) < 2)
+				{
 					return 0;
+				}
 				Stream_Read_UINT16_BE(s, length);
 				pduLength = length;
 				pduLength += 4;
@@ -936,16 +1048,20 @@ static SSIZE_T parse_default_mode_pdu(rdpTransport* transport, wStream* stream)
 	wStream sbuffer = { 0 };
 	wStream* s = Stream_StaticConstInit(&sbuffer, Stream_Buffer(stream), Stream_Length(stream));
 
-	UINT8 version;
+	UINT8 version = 0;
 	if (Stream_GetRemainingLength(s) < 1)
+	{
 		return 0;
+	}
 	Stream_Read_UINT8(s, version);
 	if (version == 0x03)
 	{
 		/* TPKT header */
-		UINT16 length;
+		UINT16 length = 0;
 		if (Stream_GetRemainingLength(s) < 3)
+		{
 			return 0;
+		}
 		Stream_Seek(s, 1);
 		Stream_Read_UINT16_BE(s, length);
 		pduLength = length;
@@ -960,20 +1076,26 @@ static SSIZE_T parse_default_mode_pdu(rdpTransport* transport, wStream* stream)
 	else
 	{
 		/* Fast-Path Header */
-		UINT8 length1;
+		UINT8 length1 = 0;
 		if (Stream_GetRemainingLength(s) < 1)
+		{
 			return 0;
+		}
 		Stream_Read_UINT8(s, length1);
 		if (length1 & 0x80)
 		{
-			UINT8 length2;
+			UINT8 length2 = 0;
 			if (Stream_GetRemainingLength(s) < 1)
+			{
 				return 0;
+			}
 			Stream_Read_UINT8(s, length2);
 			pduLength = ((length1 & 0x7F) << 8) | length2;
 		}
 		else
+		{
 			pduLength = length1;
+		}
 
 		/*
 		 * fast-path has 7 bits for length so the maximum size, including headers is 0x8000
@@ -996,41 +1118,59 @@ SSIZE_T transport_parse_pdu(rdpTransport* transport, wStream* s, BOOL* incomplet
 	size_t pduLength = 0;
 
 	if (!transport)
+	{
 		return -1;
+	}
 
 	if (!s)
+	{
 		return -1;
+	}
 
 	if (incomplete)
+	{
 		*incomplete = TRUE;
+	}
 
 	Stream_SealLength(s);
 	if (transport->NlaMode)
+	{
 		pduLength = parse_nla_mode_pdu(transport, s);
+	}
 	else if (transport->RdstlsMode)
+	{
 		pduLength = rdstls_parse_pdu(transport->log, s);
+	}
 	else
+	{
 		pduLength = parse_default_mode_pdu(transport, s);
+	}
 
 	if (pduLength == 0)
+	{
 		return pduLength;
+	}
 
 	const size_t len = Stream_Length(s);
 	if (len > pduLength)
+	{
 		return -1;
+	}
 
 	if (incomplete)
+	{
 		*incomplete = len < pduLength;
+	}
 
 	return pduLength;
 }
 
 static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 {
-	BOOL incomplete;
-	SSIZE_T status;
-	size_t pduLength;
-	size_t position;
+	BOOL incomplete = 0;
+	SSIZE_T status = 0;
+	size_t pduLength = 0;
+	size_t position = 0;
 
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(s);
@@ -1044,19 +1184,27 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 		{
 			const int rc = transport_read_layer(transport, &c, 1);
 			if (rc != 1)
+			{
 				return rc;
+			}
 			if (!Stream_EnsureRemainingCapacity(s, 1))
+			{
 				return -1;
+			}
 			Stream_Write_UINT8(s, c);
 		} while (c != '\0');
 	}
 	else if (transport->earlyUserAuth)
 	{
 		if (!Stream_EnsureCapacity(s, 4))
+		{
 			return -1;
+		}
 		const int rc = transport_read_layer_bytes(transport, s, 4);
 		if (rc != 1)
+		{
 			return rc;
+		}
 	}
 	else
 	{
@@ -1064,36 +1212,50 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 		status = transport_parse_pdu(transport, s, &incomplete);
 		while ((status == 0) && incomplete)
 		{
-			int rc;
+			int rc = 0;
 			if (!Stream_EnsureRemainingCapacity(s, 1))
+			{
 				return -1;
+			}
 			rc = transport_read_layer_bytes(transport, s, 1);
 			if (rc != 1)
+			{
 				return rc;
+			}
 			status = transport_parse_pdu(transport, s, &incomplete);
 		}
 
 		if (status < 0)
+		{
 			return -1;
+		}
 
 		pduLength = (size_t)status;
 
 		/* Read in rest of the PDU */
 		if (!Stream_EnsureCapacity(s, pduLength))
+		{
 			return -1;
+		}
 
 		position = Stream_GetPosition(s);
 		if (position > pduLength)
+		{
 			return -1;
+		}
 
 		status = transport_read_layer_bytes(transport, s, pduLength - Stream_GetPosition(s));
 
 		if (status != 1)
+		{
 			return status;
+		}
 
 		if (Stream_GetPosition(s) >= pduLength)
+		{
 			WLog_Packet(transport->log, WLOG_TRACE, Stream_Buffer(s), pduLength,
 			            WLOG_PACKET_INBOUND);
+		}
 	}
 
 	Stream_SealLength(s);
@@ -1104,34 +1266,42 @@ static int transport_default_read_pdu(rdpTransport* transport, wStream* s)
 int transport_write(rdpTransport* transport, wStream* s)
 {
 	if (!transport)
+	{
 		return -1;
+	}
 
 	return IFCALLRESULT(-1, transport->io.WritePdu, transport, s);
 }
 
 static int transport_default_write(rdpTransport* transport, wStream* s)
 {
-	size_t length;
+	size_t length = 0;
 	int status = -1;
 	int writtenlength = 0;
-	rdpRdp* rdp;
+	rdpRdp* rdp = NULL;
 	rdpContext* context = transport_get_context(transport);
 
 	WINPR_ASSERT(transport);
 	WINPR_ASSERT(context);
 
 	if (!s)
+	{
 		return -1;
+	}
 
 	Stream_AddRef(s);
 
 	rdp = context->rdp;
 	if (!rdp)
+	{
 		goto fail;
+	}
 
 	EnterCriticalSection(&(transport->WriteLock));
 	if (!transport->frontBio)
+	{
 		goto out_cleanup;
+	}
 
 	length = Stream_GetPosition(s);
 	writtenlength = length;
@@ -1228,7 +1398,9 @@ static BOOL transport_default_get_public_key(rdpTransport* transport, const BYTE
 {
 	rdpTls* tls = transport_get_tls(transport);
 	if (!tls)
+	{
 		return FALSE;
+	}
 
 	*data = tls->PublicKey;
 	*length = tls->PublicKeyLength;
@@ -1257,7 +1429,9 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 		if (transport->useIoEvent)
 		{
 			if (count < 2)
+			{
 				return 0;
+			}
 			events[nCount++] = transport->ioEvent;
 		}
 	}
@@ -1294,7 +1468,9 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 			    rdg_get_event_handles(transport->rdg, &events[nCount], count - nCount);
 
 			if (tmp == 0)
+			{
 				return 0;
+			}
 
 			nCount += tmp;
 		}
@@ -1304,7 +1480,9 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 			    tsg_get_event_handles(transport->tsg, &events[nCount], count - nCount);
 
 			if (tmp == 0)
+			{
 				return 0;
+			}
 
 			nCount += tmp;
 		}
@@ -1314,7 +1492,9 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 			    wst_get_event_handles(transport->wst, &events[nCount], count - nCount);
 
 			if (tmp == 0)
+			{
 				return 0;
+			}
 
 			nCount += tmp;
 		}
@@ -1362,7 +1542,9 @@ int transport_drain_output_buffer(rdpTransport* transport)
 	if (BIO_write_blocked(transport->frontBio))
 	{
 		if (BIO_flush(transport->frontBio) < 1)
+		{
 			return -1;
+		}
 
 		status |= BIO_write_blocked(transport->frontBio);
 	}
@@ -1372,9 +1554,9 @@ int transport_drain_output_buffer(rdpTransport* transport)
 
 int transport_check_fds(rdpTransport* transport)
 {
-	int status;
+	int status = 0;
 	state_run_t recv_status;
-	wStream* received;
+	wStream* received = NULL;
 	rdpContext* context = transport_get_context(transport);
 
 	WINPR_ASSERT(context);
@@ -1398,8 +1580,10 @@ int transport_check_fds(rdpTransport* transport)
 	if ((status = transport_read_pdu(transport, transport->ReceiveBuffer)) <= 0)
 	{
 		if (status < 0)
+		{
 			WLog_Print(transport->log, WLOG_DEBUG, "transport_check_fds: transport_read_pdu() - %i",
 			           status);
+		}
 		if (transport->haveMoreBytesToRead)
 		{
 			transport->haveMoreBytesToRead = FALSE;
@@ -1411,7 +1595,9 @@ int transport_check_fds(rdpTransport* transport)
 	received = transport->ReceiveBuffer;
 
 	if (!(transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0)))
+	{
 		return -1;
+	}
 
 	/**
 	 * status:
@@ -1459,7 +1645,9 @@ static BOOL transport_default_set_blocking_mode(rdpTransport* transport, BOOL bl
 	if (transport->frontBio)
 	{
 		if (!BIO_set_nonblock(transport->frontBio, blocking ? FALSE : TRUE))
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -1492,7 +1680,9 @@ void transport_set_aad_mode(rdpTransport* transport, BOOL AadMode)
 BOOL transport_disconnect(rdpTransport* transport)
 {
 	if (!transport)
+	{
 		return FALSE;
+	}
 	return IFCALLRESULT(FALSE, transport->io.TransportDisconnect, transport);
 }
 
@@ -1501,7 +1691,9 @@ static BOOL transport_default_disconnect(rdpTransport* transport)
 	BOOL status = TRUE;
 
 	if (!transport)
+	{
 		return FALSE;
+	}
 
 	if (transport->tls)
 	{
@@ -1511,7 +1703,9 @@ static BOOL transport_default_disconnect(rdpTransport* transport)
 	else
 	{
 		if (transport->frontBio)
+		{
 			BIO_free_all(transport->frontBio);
+		}
 	}
 
 	if (transport->tsg)
@@ -1544,12 +1738,16 @@ rdpTransport* transport_new(rdpContext* context)
 
 	WINPR_ASSERT(context);
 	if (!transport)
+	{
 		return NULL;
+	}
 
 	transport->log = WLog_Get(TAG);
 
 	if (!transport->log)
+	{
 		goto fail;
+	}
 
 	// transport->io.DataHandler = transport_data_handler;
 	transport->io.TCPConnect = freerdp_tcp_default_connect;
@@ -1567,28 +1765,38 @@ rdpTransport* transport_new(rdpContext* context)
 	transport->ReceivePool = StreamPool_New(TRUE, BUFFER_SIZE);
 
 	if (!transport->ReceivePool)
+	{
 		goto fail;
+	}
 
 	/* receive buffer for non-blocking read. */
 	transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0);
 
 	if (!transport->ReceiveBuffer)
+	{
 		goto fail;
+	}
 
 	transport->connectedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	if (!transport->connectedEvent || transport->connectedEvent == INVALID_HANDLE_VALUE)
+	{
 		goto fail;
+	}
 
 	transport->rereadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	if (!transport->rereadEvent || transport->rereadEvent == INVALID_HANDLE_VALUE)
+	{
 		goto fail;
+	}
 
 	transport->ioEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
 	if (!transport->ioEvent || transport->ioEvent == INVALID_HANDLE_VALUE)
+	{
 		goto fail;
+	}
 
 	transport->haveMoreBytesToRead = FALSE;
 	transport->blocking = TRUE;
@@ -1596,10 +1804,14 @@ rdpTransport* transport_new(rdpContext* context)
 	transport->layer = TRANSPORT_LAYER_TCP;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(transport->ReadLock), 4000))
+	{
 		goto fail;
+	}
 
 	if (!InitializeCriticalSectionAndSpinCount(&(transport->WriteLock), 4000))
+	{
 		goto fail;
+	}
 
 	return transport;
 fail:
@@ -1610,12 +1822,16 @@ fail:
 void transport_free(rdpTransport* transport)
 {
 	if (!transport)
+	{
 		return;
+	}
 
 	transport_disconnect(transport);
 
 	if (transport->ReceiveBuffer)
+	{
 		Stream_Release(transport->ReceiveBuffer);
+	}
 
 	nla_free(transport->nla);
 	StreamPool_Free(transport->ReceivePool);
@@ -1630,7 +1846,9 @@ void transport_free(rdpTransport* transport)
 BOOL transport_set_io_callbacks(rdpTransport* transport, const rdpTransportIo* io_callbacks)
 {
 	if (!transport || !io_callbacks)
+	{
 		return FALSE;
+	}
 
 	transport->io = *io_callbacks;
 	return TRUE;
@@ -1639,7 +1857,9 @@ BOOL transport_set_io_callbacks(rdpTransport* transport, const rdpTransportIo* i
 const rdpTransportIo* transport_get_io_callbacks(rdpTransport* transport)
 {
 	if (!transport)
+	{
 		return NULL;
+	}
 	return &transport->io;
 }
 
@@ -1706,11 +1926,13 @@ wStream* transport_take_from_pool(rdpTransport* transport, size_t size)
 
 ULONG transport_get_bytes_sent(rdpTransport* transport, BOOL resetCount)
 {
-	ULONG rc;
+	ULONG rc = 0;
 	WINPR_ASSERT(transport);
 	rc = transport->written;
 	if (resetCount)
+	{
 		transport->written = 0;
+	}
 	return rc;
 }
 
@@ -1784,7 +2006,9 @@ BOOL transport_io_callback_set_event(rdpTransport* transport, BOOL set)
 	WINPR_ASSERT(transport);
 	transport->useIoEvent = TRUE;
 	if (!set)
+	{
 		return ResetEvent(transport->ioEvent);
+	}
 	return SetEvent(transport->ioEvent);
 }
 

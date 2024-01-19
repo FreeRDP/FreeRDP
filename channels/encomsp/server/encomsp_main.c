@@ -40,7 +40,9 @@
 static UINT encomsp_read_header(wStream* s, ENCOMSP_ORDER_HEADER* header)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, ENCOMSP_ORDER_HEADER_SIZE))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT16(s, header->Type);   /* Type (2 bytes) */
 	Stream_Read_UINT16(s, header->Length); /* Length (2 bytes) */
@@ -86,14 +88,17 @@ static UINT encomsp_recv_change_participant_control_level_pdu(EncomspServerConte
                                                               wStream* s,
                                                               ENCOMSP_ORDER_HEADER* header)
 {
-	int beg, end;
+	int beg;
+	int end;
 	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
 	UINT error = CHANNEL_RC_OK;
 	beg = ((int)Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
 	CopyMemory(&pdu, header, sizeof(ENCOMSP_ORDER_HEADER));
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 6))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT16(s, pdu.Flags);         /* Flags (2 bytes) */
 	Stream_Read_UINT32(s, pdu.ParticipantId); /* ParticipantId (4 bytes) */
@@ -108,7 +113,9 @@ static UINT encomsp_recv_change_participant_control_level_pdu(EncomspServerConte
 	if ((beg + header->Length) > end)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)((beg + header->Length) - end)))
+		{
 			return ERROR_INVALID_DATA;
+		}
 
 		Stream_SetPosition(s, (beg + header->Length));
 	}
@@ -116,8 +123,10 @@ static UINT encomsp_recv_change_participant_control_level_pdu(EncomspServerConte
 	IFCALLRET(context->ChangeParticipantControlLevel, error, context, &pdu);
 
 	if (error)
+	{
 		WLog_ERR(TAG, "context->ChangeParticipantControlLevel failed with error %" PRIu32 "",
 		         error);
+	}
 
 	return error;
 }
@@ -169,16 +178,16 @@ static UINT encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s
 
 static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 {
-	wStream* s;
-	DWORD nCount;
-	void* buffer;
+	wStream* s = NULL;
+	DWORD nCount = 0;
+	void* buffer = NULL;
 	HANDLE events[8];
-	HANDLE ChannelEvent;
-	DWORD BytesReturned;
-	ENCOMSP_ORDER_HEADER* header;
-	EncomspServerContext* context;
+	HANDLE ChannelEvent = NULL;
+	DWORD BytesReturned = 0;
+	ENCOMSP_ORDER_HEADER* header = NULL;
+	EncomspServerContext* context = NULL;
 	UINT error = CHANNEL_RC_OK;
-	DWORD status;
+	DWORD status = 0;
 	context = (EncomspServerContext*)arg;
 
 	buffer = NULL;
@@ -197,7 +206,9 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
+		{
 			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
+		}
 
 		WTSFreeMemory(buffer);
 	}
@@ -234,7 +245,9 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 		WTSVirtualChannelRead(context->priv->ChannelHandle, 0, NULL, 0, &BytesReturned);
 
 		if (BytesReturned < 1)
+		{
 			continue;
+		}
 
 		if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 		{
@@ -276,7 +289,9 @@ static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 out:
 
 	if (error && context->rdpcontext)
+	{
 		setChannelError(context->rdpcontext, error, "encomsp_server_thread reported an error");
+	}
 
 	ExitThread(error);
 	return error;
@@ -293,7 +308,9 @@ static UINT encomsp_server_start(EncomspServerContext* context)
 	    WTSVirtualChannelOpen(context->vcm, WTS_CURRENT_SESSION, ENCOMSP_SVC_CHANNEL_NAME);
 
 	if (!context->priv->ChannelHandle)
+	{
 		return CHANNEL_RC_BAD_CHANNEL;
+	}
 
 	if (!(context->priv->StopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
@@ -337,7 +354,7 @@ static UINT encomsp_server_stop(EncomspServerContext* context)
 
 EncomspServerContext* encomsp_server_context_new(HANDLE vcm)
 {
-	EncomspServerContext* context;
+	EncomspServerContext* context = NULL;
 	context = (EncomspServerContext*)calloc(1, sizeof(EncomspServerContext));
 
 	if (context)
@@ -363,7 +380,9 @@ void encomsp_server_context_free(EncomspServerContext* context)
 	if (context)
 	{
 		if (context->priv->ChannelHandle != INVALID_HANDLE_VALUE)
+		{
 			WTSVirtualChannelClose(context->priv->ChannelHandle);
+		}
 
 		free(context->priv);
 		free(context);

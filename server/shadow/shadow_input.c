@@ -26,7 +26,9 @@ static BOOL shadow_input_synchronize_event(rdpInput* input, UINT32 flags)
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
 
 	if (!client->mayInteract)
+	{
 		return TRUE;
+	}
 
 	return IFCALLRESULT(TRUE, subsystem->SynchronizeEvent, subsystem, client, flags);
 }
@@ -37,7 +39,9 @@ static BOOL shadow_input_keyboard_event(rdpInput* input, UINT16 flags, UINT8 cod
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
 
 	if (!client->mayInteract)
+	{
 		return TRUE;
+	}
 
 	return IFCALLRESULT(TRUE, subsystem->KeyboardEvent, subsystem, client, flags, code);
 }
@@ -48,7 +52,9 @@ static BOOL shadow_input_unicode_keyboard_event(rdpInput* input, UINT16 flags, U
 	rdpShadowSubsystem* subsystem = client->server->subsystem;
 
 	if (!client->mayInteract)
+	{
 		return TRUE;
+	}
 
 	return IFCALLRESULT(TRUE, subsystem->UnicodeKeyboardEvent, subsystem, client, flags, code);
 }
@@ -74,12 +80,16 @@ static BOOL shadow_input_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UI
 			flags &= ~PTR_FLAGS_MOVE;
 
 			if (!(flags & (PTR_FLAGS_BUTTON1 | PTR_FLAGS_BUTTON2 | PTR_FLAGS_BUTTON3)))
+			{
 				return TRUE;
+			}
 		}
 	}
 
 	if (!client->mayInteract)
+	{
 		return TRUE;
+	}
 
 	return IFCALLRESULT(TRUE, subsystem->MouseEvent, subsystem, client, flags, x, y);
 }
@@ -99,7 +109,9 @@ static BOOL shadow_input_extended_mouse_event(rdpInput* input, UINT16 flags, UIN
 	client->pointerY = y;
 
 	if (!client->mayInteract)
+	{
 		return TRUE;
+	}
 
 	return IFCALLRESULT(TRUE, subsystem->ExtendedMouseEvent, subsystem, client, flags, x, y);
 }

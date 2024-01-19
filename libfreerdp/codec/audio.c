@@ -49,7 +49,7 @@ UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size)
 
 		if (format->wFormatTag == WAVE_FORMAT_GSM610)
 		{
-			UINT16 nSamplesPerBlock;
+			UINT16 nSamplesPerBlock = 0;
 
 			if ((format->cbSize == 2) && (format->data))
 			{
@@ -130,8 +130,8 @@ void audio_format_print(wLog* log, DWORD level, const AUDIO_FORMAT* format)
 
 void audio_formats_print(wLog* log, DWORD level, const AUDIO_FORMAT* formats, UINT16 count)
 {
-	UINT16 index;
-	const AUDIO_FORMAT* format;
+	UINT16 index = 0;
+	const AUDIO_FORMAT* format = NULL;
 
 	if (formats)
 	{
@@ -151,10 +151,14 @@ void audio_formats_print(wLog* log, DWORD level, const AUDIO_FORMAT* formats, UI
 BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format)
 {
 	if (!s || !format)
+	{
 		return FALSE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 18))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, format->wFormatTag);
 	Stream_Read_UINT16(s, format->nChannels);
@@ -165,7 +169,9 @@ BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format)
 	Stream_Read_UINT16(s, format->cbSize);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, format->cbSize))
+	{
 		return FALSE;
+	}
 
 	format->data = NULL;
 
@@ -174,7 +180,9 @@ BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format)
 		format->data = malloc(format->cbSize);
 
 		if (!format->data)
+		{
 			return FALSE;
+		}
 
 		Stream_Read(s, format->data, format->cbSize);
 	}
@@ -185,10 +193,14 @@ BOOL audio_format_read(wStream* s, AUDIO_FORMAT* format)
 BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format)
 {
 	if (!s || !format)
+	{
 		return FALSE;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, 18 + format->cbSize))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT16(s, format->wFormatTag);      /* wFormatTag (WAVE_FORMAT_PCM) */
 	Stream_Write_UINT16(s, format->nChannels);       /* nChannels */
@@ -199,7 +211,9 @@ BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format)
 	Stream_Write_UINT16(s, format->cbSize);          /* cbSize */
 
 	if (format->cbSize > 0)
+	{
 		Stream_Write(s, format->data, format->cbSize);
+	}
 
 	return TRUE;
 }
@@ -207,7 +221,9 @@ BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format)
 BOOL audio_format_copy(const AUDIO_FORMAT* srcFormat, AUDIO_FORMAT* dstFormat)
 {
 	if (!srcFormat || !dstFormat)
+	{
 		return FALSE;
+	}
 
 	*dstFormat = *srcFormat;
 
@@ -216,7 +232,9 @@ BOOL audio_format_copy(const AUDIO_FORMAT* srcFormat, AUDIO_FORMAT* dstFormat)
 		dstFormat->data = malloc(srcFormat->cbSize);
 
 		if (!dstFormat->data)
+		{
 			return FALSE;
+		}
 
 		memcpy(dstFormat->data, srcFormat->data, dstFormat->cbSize);
 	}
@@ -227,30 +245,40 @@ BOOL audio_format_copy(const AUDIO_FORMAT* srcFormat, AUDIO_FORMAT* dstFormat)
 BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what)
 {
 	if (!with || !what)
+	{
 		return FALSE;
+	}
 
 	if (with->wFormatTag != WAVE_FORMAT_UNKNOWN)
 	{
 		if (with->wFormatTag != what->wFormatTag)
+		{
 			return FALSE;
+		}
 	}
 
 	if (with->nChannels != 0)
 	{
 		if (with->nChannels != what->nChannels)
+		{
 			return FALSE;
+		}
 	}
 
 	if (with->nSamplesPerSec != 0)
 	{
 		if (with->nSamplesPerSec != what->nSamplesPerSec)
+		{
 			return FALSE;
+		}
 	}
 
 	if (with->wBitsPerSample != 0)
 	{
 		if (with->wBitsPerSample != what->wBitsPerSample)
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -259,13 +287,19 @@ BOOL audio_format_compatible(const AUDIO_FORMAT* with, const AUDIO_FORMAT* what)
 static BOOL audio_format_valid(const AUDIO_FORMAT* format)
 {
 	if (!format)
+	{
 		return FALSE;
+	}
 
 	if (format->nChannels == 0)
+	{
 		return FALSE;
+	}
 
 	if (format->nSamplesPerSec == 0)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -283,12 +317,14 @@ AUDIO_FORMAT* audio_formats_new(size_t count)
 void audio_format_free(AUDIO_FORMAT* format)
 {
 	if (format)
+	{
 		free(format->data);
+	}
 }
 
 void audio_formats_free(AUDIO_FORMAT* formats, size_t count)
 {
-	size_t index;
+	size_t index = 0;
 
 	if (formats)
 	{

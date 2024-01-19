@@ -24,7 +24,7 @@ typedef struct
 {
 	const char* (*name)(void);
 	pfnShadowSubsystemEntry entry;
-} RDP_SHADOW_SUBSYSTEM;
+} DECLSPEC_ALIGN(16) RDP_SHADOW_SUBSYSTEM;
 
 extern int ShadowSubsystemEntry(RDP_SHADOW_ENTRY_POINTS* pEntryPoints);
 extern const char* ShadowSubsystemName(void);
@@ -58,7 +58,9 @@ static pfnShadowSubsystemEntry shadow_subsystem_load_static_entry(const char* na
 		WINPR_ASSERT(cur->entry);
 
 		if (strcmp(name, cur->name()) == 0)
+		{
 			return cur->entry;
+		}
 	}
 
 	return NULL;
@@ -69,7 +71,7 @@ void shadow_subsystem_set_entry_builtin(const char* name)
 	pfnShadowSubsystemEntry entry = shadow_subsystem_load_static_entry(name);
 
 	if (entry)
+	{
 		shadow_subsystem_set_entry(entry);
-
-	return;
+	}
 }

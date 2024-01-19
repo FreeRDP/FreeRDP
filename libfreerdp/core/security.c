@@ -99,32 +99,48 @@ static BOOL security_salted_hash(const BYTE* salt, size_t salt_len, const BYTE* 
 
 	/* SHA1_Digest = SHA1(Input + Salt + Salt1 + Salt2) */
 	if (!(sha1 = winpr_Digest_New()))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
+	{
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, input, length)) /* Input */
+	if (!winpr_Digest_Update(sha1, input, length))
+	{ /* Input */
 		goto out;
+	}
 
 	WINPR_ASSERT(salt_len == 48);
-	if (!winpr_Digest_Update(sha1, salt, salt_len)) /* Salt (48 bytes) */
+	if (!winpr_Digest_Update(sha1, salt, salt_len))
+	{ /* Salt (48 bytes) */
 		goto out;
+	}
 
 	WINPR_ASSERT(salt1_len == 32);
-	if (!winpr_Digest_Update(sha1, salt1, salt1_len)) /* Salt1 (32 bytes) */
+	if (!winpr_Digest_Update(sha1, salt1, salt1_len))
+	{ /* Salt1 (32 bytes) */
 		goto out;
+	}
 
 	WINPR_ASSERT(salt2_len == 32);
-	if (!winpr_Digest_Update(sha1, salt2, salt2_len)) /* Salt2 (32 bytes) */
+	if (!winpr_Digest_Update(sha1, salt2, salt2_len))
+	{ /* Salt2 (32 bytes) */
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(sha1, sha1_digest, sizeof(sha1_digest)))
+	{
 		goto out;
+	}
 
 	/* SaltedHash(Salt, Input, Salt1, Salt2) = MD5(S + SHA1_Digest) */
 	if (!(md5 = winpr_Digest_New()))
+	{
 		goto out;
+	}
 
 	/* Allow FIPS override for use of MD5 here, this is used for creating hashes of the
 	 * premaster_secret and master_secret */
@@ -132,16 +148,24 @@ static BOOL security_salted_hash(const BYTE* salt, size_t salt_len, const BYTE* 
 	/* which will already be encrypted under FIPS, so the use of MD5 here is not for sensitive data
 	 * protection. */
 	if (!winpr_Digest_Init_Allow_FIPS(md5, WINPR_MD_MD5))
+	{
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(md5, salt, 48)) /* Salt (48 bytes) */
+	if (!winpr_Digest_Update(md5, salt, 48))
+	{ /* Salt (48 bytes) */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(md5, sha1_digest, sizeof(sha1_digest))) /* SHA1_Digest */
+	if (!winpr_Digest_Update(md5, sha1_digest, sizeof(sha1_digest)))
+	{ /* SHA1_Digest */
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(md5, output, out_len))
+	{
 		goto out;
+	}
 
 	result = TRUE;
 out:
@@ -224,22 +248,34 @@ static BOOL security_md5_16_32_32(const BYTE* in0, const BYTE* in1, const BYTE* 
 	WINPR_ASSERT(WINPR_MD5_DIGEST_LENGTH <= out_len);
 
 	if (!(md5 = winpr_Digest_New()))
+	{
 		return FALSE;
+	}
 
 	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Update(md5, in0, 16))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Update(md5, in1, 32))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Update(md5, in2, 32))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(md5, output, out_len))
+	{
 		goto out;
+	}
 
 	result = TRUE;
 out:
@@ -256,17 +292,29 @@ static BOOL security_md5_16_32_32_Allow_FIPS(const BYTE* in0, const BYTE* in1, c
 	WINPR_ASSERT(out_len >= WINPR_MD5_DIGEST_LENGTH);
 
 	if (!(md5 = winpr_Digest_New()))
+	{
 		return FALSE;
+	}
 	if (!winpr_Digest_Init_Allow_FIPS(md5, WINPR_MD_MD5))
+	{
 		goto out;
+	}
 	if (!winpr_Digest_Update(md5, in0, 16))
+	{
 		goto out;
+	}
 	if (!winpr_Digest_Update(md5, in1, 32))
+	{
 		goto out;
+	}
 	if (!winpr_Digest_Update(md5, in2, 32))
+	{
 		goto out;
+	}
 	if (!winpr_Digest_Final(md5, output, out_len))
+	{
 		goto out;
+	}
 
 	result = TRUE;
 out:
@@ -280,11 +328,17 @@ BOOL security_licensing_encryption_key(const BYTE* session_key_blob, size_t sess
                                        size_t out_len)
 {
 	if (session_len < 16)
+	{
 		return FALSE;
+	}
 	if (client_len < 32)
+	{
 		return FALSE;
+	}
 	if (server_len < 32)
+	{
 		return FALSE;
+	}
 	/* LicensingEncryptionKey = MD5(Second128Bits(SessionKeyBlob) + ClientRandom + ServerRandom))
 	 * Allow FIPS use of MD5 here, this is just used for creating the licensing encryption key as
 	 * described in MS-RDPELE. This is for RDP licensing packets which will already be encrypted
@@ -321,29 +375,45 @@ BOOL security_mac_data(const BYTE* mac_salt_key, size_t mac_salt_key_length, con
 
 	/* SHA1_Digest = SHA1(MacSaltKey + pad1 + length + data) */
 	if (!(sha1 = winpr_Digest_New()))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
+	{
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, mac_salt_key, mac_salt_key_length)) /* MacSaltKey */
+	if (!winpr_Digest_Update(sha1, mac_salt_key, mac_salt_key_length))
+	{ /* MacSaltKey */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, pad1, sizeof(pad1))) /* pad1 */
+	if (!winpr_Digest_Update(sha1, pad1, sizeof(pad1)))
+	{ /* pad1 */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, length_le, sizeof(length_le))) /* length */
+	if (!winpr_Digest_Update(sha1, length_le, sizeof(length_le)))
+	{ /* length */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, data, length)) /* data */
+	if (!winpr_Digest_Update(sha1, data, length))
+	{ /* data */
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(sha1, sha1_digest, sizeof(sha1_digest)))
+	{
 		goto out;
+	}
 
 	/* MacData = MD5(MacSaltKey + pad2 + SHA1_Digest) */
 	if (!(md5 = winpr_Digest_New()))
+	{
 		goto out;
+	}
 
 	/* Allow FIPS override for use of MD5 here, this is only used for creating the MACData field of
 	 * the */
@@ -352,24 +422,36 @@ BOOL security_mac_data(const BYTE* mac_salt_key, size_t mac_salt_key_length, con
 	/* which will already be encrypted under FIPS, so the use of MD5 here is not for sensitive data
 	 * protection. */
 	if (!winpr_Digest_Init_Allow_FIPS(md5, WINPR_MD_MD5))
+	{
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(md5, mac_salt_key, 16)) /* MacSaltKey */
+	if (!winpr_Digest_Update(md5, mac_salt_key, 16))
+	{ /* MacSaltKey */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(md5, pad2, sizeof(pad2))) /* pad2 */
+	if (!winpr_Digest_Update(md5, pad2, sizeof(pad2)))
+	{ /* pad2 */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(md5, sha1_digest, sizeof(sha1_digest))) /* SHA1_Digest */
+	if (!winpr_Digest_Update(md5, sha1_digest, sizeof(sha1_digest)))
+	{ /* SHA1_Digest */
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(md5, output, output_length))
+	{
 		goto out;
+	}
 
 	result = TRUE;
 out:
 	if (!result)
+	{
 		WLog_ERR(TAG, "failed to create security mac");
+	}
 	winpr_Digest_Free(sha1);
 	winpr_Digest_Free(md5);
 	return result;
@@ -394,50 +476,78 @@ BOOL security_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length, BYTE* 
 
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
 	if (!(sha1 = winpr_Digest_New()))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
+	{
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
+	if (!winpr_Digest_Update(sha1, rdp->sign_key, rdp->rc4_key_len))
+	{ /* MacKeyN */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, pad1, sizeof(pad1))) /* pad1 */
+	if (!winpr_Digest_Update(sha1, pad1, sizeof(pad1)))
+	{ /* pad1 */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, length_le, sizeof(length_le))) /* length */
+	if (!winpr_Digest_Update(sha1, length_le, sizeof(length_le)))
+	{ /* length */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, data, length)) /* data */
+	if (!winpr_Digest_Update(sha1, data, length))
+	{ /* data */
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(sha1, sha1_digest, sizeof(sha1_digest)))
+	{
 		goto out;
+	}
 
 	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
 	if (!(md5 = winpr_Digest_New()))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	{
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(md5, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
+	if (!winpr_Digest_Update(md5, rdp->sign_key, rdp->rc4_key_len))
+	{ /* MacKeyN */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(md5, pad2, sizeof(pad2))) /* pad2 */
+	if (!winpr_Digest_Update(md5, pad2, sizeof(pad2)))
+	{ /* pad2 */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(md5, sha1_digest, sizeof(sha1_digest))) /* SHA1_Digest */
+	if (!winpr_Digest_Update(md5, sha1_digest, sizeof(sha1_digest)))
+	{ /* SHA1_Digest */
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(md5, md5_digest, sizeof(md5_digest)))
+	{
 		goto out;
+	}
 
 	memcpy(output, md5_digest, 8);
 	result = TRUE;
 out:
 	if (!result)
+	{
 		WLog_WARN(TAG, "security mac generation failed");
+	}
 	winpr_Digest_Free(sha1);
 	winpr_Digest_Free(md5);
 	return result;
@@ -472,58 +582,88 @@ BOOL security_salted_mac_signature(rdpRdp* rdp, const BYTE* data, UINT32 length,
 		 * decrypt it, which means decrypt_checksum_use_count is off by one.
 		 */
 		security_UINT32_le(use_count_le, sizeof(use_count_le),
-		                   rdp->decrypt_checksum_use_count - 1u);
+		                   rdp->decrypt_checksum_use_count - 1U);
 	}
 
 	/* SHA1_Digest = SHA1(MACKeyN + pad1 + length + data) */
 	if (!(sha1 = winpr_Digest_New()))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
+	{
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
+	if (!winpr_Digest_Update(sha1, rdp->sign_key, rdp->rc4_key_len))
+	{ /* MacKeyN */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, pad1, sizeof(pad1))) /* pad1 */
+	if (!winpr_Digest_Update(sha1, pad1, sizeof(pad1)))
+	{ /* pad1 */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, length_le, sizeof(length_le))) /* length */
+	if (!winpr_Digest_Update(sha1, length_le, sizeof(length_le)))
+	{ /* length */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, data, length)) /* data */
+	if (!winpr_Digest_Update(sha1, data, length))
+	{ /* data */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(sha1, use_count_le, sizeof(use_count_le))) /* encryptionCount */
+	if (!winpr_Digest_Update(sha1, use_count_le, sizeof(use_count_le)))
+	{ /* encryptionCount */
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(sha1, sha1_digest, sizeof(sha1_digest)))
+	{
 		goto out;
+	}
 
 	/* MACSignature = First64Bits(MD5(MACKeyN + pad2 + SHA1_Digest)) */
 	if (!(md5 = winpr_Digest_New()))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	{
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(md5, rdp->sign_key, rdp->rc4_key_len)) /* MacKeyN */
+	if (!winpr_Digest_Update(md5, rdp->sign_key, rdp->rc4_key_len))
+	{ /* MacKeyN */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(md5, pad2, sizeof(pad2))) /* pad2 */
+	if (!winpr_Digest_Update(md5, pad2, sizeof(pad2)))
+	{ /* pad2 */
 		goto out;
+	}
 
-	if (!winpr_Digest_Update(md5, sha1_digest, sizeof(sha1_digest))) /* SHA1_Digest */
+	if (!winpr_Digest_Update(md5, sha1_digest, sizeof(sha1_digest)))
+	{ /* SHA1_Digest */
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(md5, md5_digest, sizeof(md5_digest)))
+	{
 		goto out;
+	}
 
 	memcpy(output, md5_digest, 8);
 	result = TRUE;
 out:
 	if (!result)
+	{
 		WLog_WARN(TAG, "security mac signature generation failed");
+	}
 
 	winpr_Digest_Free(sha1);
 	winpr_Digest_Free(md5);
@@ -576,7 +716,9 @@ static void fips_expand_key_bits(const BYTE* in, size_t in_len, BYTE* out, size_
 
 	/* reverse every byte in the key */
 	for (size_t i = 0; i < sizeof(buf); i++)
+	{
 		buf[i] = fips_reverse_table[in[i]];
+	}
 
 	/* insert a zero-bit after every 7th bit */
 	size_t b = 0;
@@ -602,7 +744,9 @@ static void fips_expand_key_bits(const BYTE* in, size_t in_len, BYTE* out, size_
 	/* reverse every byte */
 	/* alter lsb so the byte has odd parity */
 	for (size_t i = 0; i < 24; i++)
+	{
 		out[i] = fips_oddparity_table[fips_reverse_table[out[i]]];
+	}
 }
 
 BOOL security_establish_keys(rdpRdp* rdp)
@@ -635,7 +779,9 @@ BOOL security_establish_keys(rdpRdp* rdp)
 		BYTE client_decrypt_key_t[WINPR_SHA1_DIGEST_LENGTH + 1] = { 0 };
 		WINPR_DIGEST_CTX* sha1 = winpr_Digest_New();
 		if (!sha1)
+		{
 			return FALSE;
+		}
 
 		if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1) ||
 		    !winpr_Digest_Update(sha1, client_random + 16, 16) ||
@@ -722,7 +868,9 @@ BOOL security_establish_keys(rdpRdp* rdp)
 	}
 
 	if (!status)
+	{
 		return FALSE;
+	}
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT)
 	{
@@ -744,7 +892,9 @@ BOOL security_establish_keys(rdpRdp* rdp)
 	}
 
 	if (!security_lock(rdp))
+	{
 		return FALSE;
+	}
 	memcpy(rdp->decrypt_update_key, rdp->decrypt_key, 16);
 	memcpy(rdp->encrypt_update_key, rdp->encrypt_key, 16);
 	rdp->decrypt_use_count = 0;
@@ -766,51 +916,83 @@ static BOOL security_key_update(BYTE* key, BYTE* update_key, size_t key_len, rdp
 	WLog_DBG(TAG, "updating RDP key");
 
 	if (!(sha1 = winpr_Digest_New()))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Init(sha1, WINPR_MD_SHA1))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Update(sha1, update_key, key_len))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Update(sha1, pad1, sizeof(pad1)))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Update(sha1, key, key_len))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(sha1, sha1h, sizeof(sha1h)))
+	{
 		goto out;
+	}
 
 	if (!(md5 = winpr_Digest_New()))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Update(md5, update_key, key_len))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Update(md5, pad2, sizeof(pad2)))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Update(md5, sha1h, sizeof(sha1h)))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(md5, key, WINPR_MD5_DIGEST_LENGTH))
+	{
 		goto out;
+	}
 
 	if (!(rc4 = winpr_RC4_New(key, key_len)))
+	{
 		goto out;
+	}
 
 	if (!winpr_RC4_Update(rc4, key_len, key, key))
+	{
 		goto out;
+	}
 
 	if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_40BIT)
+	{
 		memcpy(key, salt, 3);
+	}
 	else if (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_56BIT)
+	{
 		memcpy(key, salt, 1);
+	}
 
 	result = TRUE;
 out:
@@ -834,14 +1016,20 @@ BOOL security_encrypt(BYTE* data, size_t length, rdpRdp* rdp)
 	if (rdp->encrypt_use_count >= 4096)
 	{
 		if (!security_key_update(rdp->encrypt_key, rdp->encrypt_update_key, rdp->rc4_key_len, rdp))
+		{
 			goto fail;
+		}
 
 		if (!rdp_reset_rc4_encrypt_keys(rdp))
+		{
 			goto fail;
+		}
 	}
 
 	if (!winpr_RC4_Update(rdp->rc4_encrypt_key, length, data, data))
+	{
 		goto fail;
+	}
 
 	rdp->encrypt_use_count++;
 	rdp->encrypt_checksum_use_count++;
@@ -866,21 +1054,29 @@ BOOL security_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 	if (rdp->decrypt_use_count >= 4096)
 	{
 		if (!security_key_update(rdp->decrypt_key, rdp->decrypt_update_key, rdp->rc4_key_len, rdp))
+		{
 			goto fail;
+		}
 
 		if (!rdp_reset_rc4_decrypt_keys(rdp))
+		{
 			goto fail;
+		}
 	}
 
 	if (!winpr_RC4_Update(rdp->rc4_decrypt_key, length, data, data))
+	{
 		goto fail;
+	}
 
 	rdp->decrypt_use_count += 1;
 	rdp->decrypt_checksum_use_count++;
 	rc = TRUE;
 fail:
 	if (!rc)
+	{
 		WLog_WARN(TAG, "Failed to decrypt security");
+	}
 	return rc;
 }
 
@@ -899,19 +1095,29 @@ BOOL security_hmac_signature(const BYTE* data, size_t length, BYTE* output, size
 	security_UINT32_le(use_count_le, sizeof(use_count_le), rdp->encrypt_use_count);
 
 	if (!(hmac = winpr_HMAC_New()))
+	{
 		return FALSE;
+	}
 
 	if (!winpr_HMAC_Init(hmac, WINPR_MD_SHA1, rdp->fips_sign_key, WINPR_SHA1_DIGEST_LENGTH))
+	{
 		goto out;
+	}
 
 	if (!winpr_HMAC_Update(hmac, data, length))
+	{
 		goto out;
+	}
 
 	if (!winpr_HMAC_Update(hmac, use_count_le, 4))
+	{
 		goto out;
+	}
 
 	if (!winpr_HMAC_Final(hmac, buf, WINPR_SHA1_DIGEST_LENGTH))
+	{
 		goto out;
+	}
 
 	memmove(output, buf, 8);
 	result = TRUE;
@@ -926,7 +1132,9 @@ BOOL security_fips_encrypt(BYTE* data, size_t length, rdpRdp* rdp)
 	size_t olen = 0;
 
 	if (!winpr_Cipher_Update(rdp->fips_encrypt, data, length, data, &olen))
+	{
 		goto fail;
+	}
 
 	rdp->encrypt_use_count++;
 	rc = TRUE;
@@ -945,7 +1153,9 @@ BOOL security_fips_decrypt(BYTE* data, size_t length, rdpRdp* rdp)
 	}
 
 	if (!winpr_Cipher_Update(rdp->fips_decrypt, data, length, data, &olen))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -961,26 +1171,40 @@ BOOL security_fips_check_signature(const BYTE* data, size_t length, const BYTE* 
 	security_UINT32_le(use_count_le, sizeof(use_count_le), rdp->decrypt_use_count++);
 
 	if (!(hmac = winpr_HMAC_New()))
+	{
 		goto out;
+	}
 
 	if (!winpr_HMAC_Init(hmac, WINPR_MD_SHA1, rdp->fips_sign_key, WINPR_SHA1_DIGEST_LENGTH))
+	{
 		goto out;
+	}
 
 	if (!winpr_HMAC_Update(hmac, data, length))
+	{
 		goto out;
+	}
 
 	if (!winpr_HMAC_Update(hmac, use_count_le, 4))
+	{
 		goto out;
+	}
 
 	if (!winpr_HMAC_Final(hmac, buf, WINPR_SHA1_DIGEST_LENGTH))
+	{
 		goto out;
+	}
 
 	if ((sig_len >= 8) && (memcmp(sig, buf, 8) == 0))
+	{
 		result = TRUE;
+	}
 
 out:
 	if (!result)
+	{
 		WLog_WARN(TAG, "signature check failed");
+	}
 	winpr_HMAC_Free(hmac);
 	return result;
 }

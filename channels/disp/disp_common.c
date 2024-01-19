@@ -35,7 +35,9 @@
 UINT disp_read_header(wStream* s, DISPLAY_CONTROL_HEADER* header)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, header->type);
 	Stream_Read_UINT32(s, header->length);

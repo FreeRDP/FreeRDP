@@ -42,20 +42,28 @@
 
 BOOL CloseHandle(HANDLE hObject)
 {
-	ULONG Type;
-	WINPR_HANDLE* Object;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
 
 	if (!winpr_Handle_GetInfo(hObject, &Type, &Object))
+	{
 		return FALSE;
+	}
 
 	if (!Object)
+	{
 		return FALSE;
+	}
 
 	if (!Object->ops)
+	{
 		return FALSE;
+	}
 
 	if (Object->ops->CloseHandle)
+	{
 		return Object->ops->CloseHandle(hObject);
+	}
 
 	return FALSE;
 }

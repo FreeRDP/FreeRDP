@@ -54,7 +54,7 @@ struct AINPUT_PLUGIN_
  */
 static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-	UINT16 type;
+	UINT16 type = 0;
 	AINPUT_PLUGIN* ainput;
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 
@@ -64,19 +64,20 @@ static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	ainput = (AINPUT_PLUGIN*)callback->plugin;
 	WINPR_ASSERT(ainput);
 
-	if (!Stream_CheckAndLogRequiredLength(TAG, data, 2))
+	if (!Stream_CheckAndLogRequiredLengthWLog(ainput->base.log, data, 2))
 		return ERROR_NO_DATA;
 	Stream_Read_UINT16(data, type);
 	switch (type)
 	{
 		case MSG_AINPUT_VERSION:
-			if (!Stream_CheckAndLogRequiredLength(TAG, data, 8))
+			if (!Stream_CheckAndLogRequiredLengthWLog(ainput->base.log, data, 8))
 				return ERROR_NO_DATA;
 			Stream_Read_UINT32(data, ainput->MajorVersion);
 			Stream_Read_UINT32(data, ainput->MinorVersion);
 			break;
 		default:
-			WLog_WARN(TAG, "Received unsupported message type 0x%04" PRIx16, type);
+			WLog_Print(ainput->base.log, WLOG_WARN,
+			           "Received unsupported message type 0x%04" PRIx16, type);
 			break;
 	}
 
@@ -85,10 +86,10 @@ static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 
 static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, INT32 x, INT32 y)
 {
-	AINPUT_PLUGIN* ainput;
-	GENERIC_CHANNEL_CALLBACK* callback;
+	AINPUT_PLUGIN* ainput = NULL;
+	GENERIC_CHANNEL_CALLBACK* callback = NULL;
 	BYTE buffer[32] = { 0 };
-	UINT64 time;
+	UINT64 time = 0;
 	wStream sbuffer = { 0 };
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 
@@ -101,8 +102,9 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 
 	if (ainput->MajorVersion != AINPUT_VERSION_MAJOR)
 	{
-		WLog_WARN(TAG, "Unsupported channel version %" PRIu32 ".%" PRIu32 ", aborting.",
-		          ainput->MajorVersion, ainput->MinorVersion);
+		WLog_Print(ainput->base.log, WLOG_WARN,
+		           "Unsupported channel version %" PRIu32 ".%" PRIu32 ", aborting.",
+		           ainput->MajorVersion, ainput->MinorVersion);
 		return CHANNEL_RC_UNSUPPORTED_VERSION;
 	}
 	callback = ainput->base.listener_callback->channel_callback;
@@ -110,8 +112,9 @@ static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, 
 
 	{
 		char ebuffer[128] = { 0 };
-		WLog_VRB(TAG, "sending timestamp=0x%08" PRIx64 ", flags=%s, %" PRId32 "x%" PRId32, time,
-		         ainput_flags_to_string(flags, ebuffer, sizeof(ebuffer)), x, y);
+		WLog_Print(ainput->base.log, WLOG_TRACE,
+		           "sending timestamp=0x%08" PRIx64 ", flags=%s, %" PRId32 "x%" PRId32, time,
+		           ainput_flags_to_string(flags, ebuffer, sizeof(ebuffer)), x, y);
 	}
 
 	/* Message type */

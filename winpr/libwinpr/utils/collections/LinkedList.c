@@ -19,8 +19,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/collections.h>
 #include <winpr/assert.h>
+#include <winpr/collections.h>
 
 typedef struct s_wLinkedListItem wLinkedListNode;
 
@@ -29,7 +29,7 @@ struct s_wLinkedListItem
 	void* value;
 	wLinkedListNode* prev;
 	wLinkedListNode* next;
-};
+} DECLSPEC_ALIGN(32);
 
 struct s_wLinkedList
 {
@@ -39,7 +39,7 @@ struct s_wLinkedList
 	wLinkedListNode* tail;
 	wLinkedListNode* current;
 	wObject object;
-};
+} DECLSPEC_ALIGN(128);
 
 /**
  * C equivalent of the C# LinkedList<T> Class:
@@ -70,9 +70,10 @@ void* LinkedList_First(wLinkedList* list)
 {
 	WINPR_ASSERT(list);
 	if (list->head)
+	{
 		return list->head->value;
-	else
-		return NULL;
+	}
+	return NULL;
 }
 
 /**
@@ -83,9 +84,10 @@ void* LinkedList_Last(wLinkedList* list)
 {
 	WINPR_ASSERT(list);
 	if (list->tail)
+	{
 		return list->tail->value;
-	else
-		return NULL;
+	}
+	return NULL;
 }
 
 /**
@@ -98,12 +100,14 @@ void* LinkedList_Last(wLinkedList* list)
 
 BOOL LinkedList_Contains(wLinkedList* list, const void* value)
 {
-	wLinkedListNode* item;
-	OBJECT_EQUALS_FN keyEquals;
+	wLinkedListNode* item = NULL;
+	OBJECT_EQUALS_FN keyEquals = NULL;
 
 	WINPR_ASSERT(list);
 	if (!list->head)
+	{
 		return FALSE;
+	}
 
 	item = list->head;
 	keyEquals = list->object.fnObjectEquals;
@@ -111,7 +115,9 @@ BOOL LinkedList_Contains(wLinkedList* list, const void* value)
 	while (item)
 	{
 		if (keyEquals(item->value, value))
+		{
 			break;
+		}
 
 		item = item->next;
 	}
@@ -121,8 +127,8 @@ BOOL LinkedList_Contains(wLinkedList* list, const void* value)
 
 static wLinkedListNode* LinkedList_FreeNode(wLinkedList* list, wLinkedListNode* node)
 {
-	wLinkedListNode* next;
-	wLinkedListNode* prev;
+	wLinkedListNode* next = NULL;
+	wLinkedListNode* prev = NULL;
 
 	WINPR_ASSERT(list);
 	WINPR_ASSERT(node);
@@ -130,22 +136,34 @@ static wLinkedListNode* LinkedList_FreeNode(wLinkedList* list, wLinkedListNode* 
 	next = node->next;
 	prev = node->prev;
 	if (prev)
+	{
 		prev->next = next;
+	}
 
 	if (next)
+	{
 		next->prev = prev;
+	}
 
 	if (node == list->head)
+	{
 		list->head = node->next;
+	}
 
 	if (node == list->tail)
+	{
 		list->tail = node->prev;
+	}
 
 	if (list->object.fnObjectUninit)
+	{
 		list->object.fnObjectUninit(node);
+	}
 
 	if (list->object.fnObjectFree)
+	{
 		list->object.fnObjectFree(node);
+	}
 
 	free(node);
 	list->count--;
@@ -158,15 +176,19 @@ static wLinkedListNode* LinkedList_FreeNode(wLinkedList* list, wLinkedListNode* 
 
 void LinkedList_Clear(wLinkedList* list)
 {
-	wLinkedListNode* node;
+	wLinkedListNode* node = NULL;
 	WINPR_ASSERT(list);
 	if (!list->head)
+	{
 		return;
+	}
 
 	node = list->head;
 
 	while (node)
+	{
 		node = LinkedList_FreeNode(list, node);
+	}
 
 	list->head = list->tail = NULL;
 	list->count = 0;
@@ -174,16 +196,20 @@ void LinkedList_Clear(wLinkedList* list)
 
 static wLinkedListNode* LinkedList_Create(wLinkedList* list, const void* value)
 {
-	wLinkedListNode* node;
+	wLinkedListNode* node = NULL;
 
 	WINPR_ASSERT(list);
 	node = (wLinkedListNode*)calloc(1, sizeof(wLinkedListNode));
 
 	if (!node)
+	{
 		return NULL;
+	}
 
 	if (list->object.fnObjectNew)
+	{
 		node->value = list->object.fnObjectNew(value);
+	}
 	else
 	{
 		union
@@ -196,7 +222,9 @@ static wLinkedListNode* LinkedList_Create(wLinkedList* list, const void* value)
 	}
 
 	if (list->object.fnObjectInit)
+	{
 		list->object.fnObjectInit(node);
+	}
 
 	return node;
 }
@@ -209,7 +237,9 @@ BOOL LinkedList_AddFirst(wLinkedList* list, const void* value)
 	wLinkedListNode* node = LinkedList_Create(list, value);
 
 	if (!node)
+	{
 		return FALSE;
+	}
 
 	if (!list->head)
 	{
@@ -235,7 +265,9 @@ BOOL LinkedList_AddLast(wLinkedList* list, const void* value)
 	wLinkedListNode* node = LinkedList_Create(list, value);
 
 	if (!node)
+	{
 		return FALSE;
+	}
 
 	if (!list->tail)
 	{
@@ -258,8 +290,8 @@ BOOL LinkedList_AddLast(wLinkedList* list, const void* value)
 
 BOOL LinkedList_Remove(wLinkedList* list, const void* value)
 {
-	wLinkedListNode* node;
-	OBJECT_EQUALS_FN keyEquals;
+	wLinkedListNode* node = NULL;
+	OBJECT_EQUALS_FN keyEquals = NULL;
 	WINPR_ASSERT(list);
 
 	keyEquals = list->object.fnObjectEquals;
@@ -287,7 +319,9 @@ void LinkedList_RemoveFirst(wLinkedList* list)
 {
 	WINPR_ASSERT(list);
 	if (list->head)
+	{
 		LinkedList_FreeNode(list, list->head);
+	}
 }
 
 /**
@@ -298,7 +332,9 @@ void LinkedList_RemoveLast(wLinkedList* list)
 {
 	WINPR_ASSERT(list);
 	if (list->tail)
+	{
 		LinkedList_FreeNode(list, list->tail);
+	}
 }
 
 /**
@@ -320,12 +356,15 @@ void* LinkedList_Enumerator_Current(wLinkedList* list)
 {
 	WINPR_ASSERT(list);
 	if (list->initial)
+	{
 		return NULL;
+	}
 
 	if (list->current)
+	{
 		return list->current->value;
-	else
-		return NULL;
+	}
+	return NULL;
 }
 
 /*
@@ -336,12 +375,18 @@ BOOL LinkedList_Enumerator_MoveNext(wLinkedList* list)
 {
 	WINPR_ASSERT(list);
 	if (list->initial)
+	{
 		list->initial = 0;
+	}
 	else if (list->current)
+	{
 		list->current = list->current->next;
+	}
 
 	if (!list->current)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }

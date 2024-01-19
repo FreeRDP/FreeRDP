@@ -29,12 +29,12 @@ static const char base64url[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstu
 static char* base64_encode_ex(const char* alphabet, const BYTE* data, size_t length, BOOL pad,
                               BOOL crLf, size_t lineSize)
 {
-	int c;
-	const BYTE* q;
-	char* p;
-	char* ret;
+	int c = 0;
+	const BYTE* q = NULL;
+	char* p = NULL;
+	char* ret = NULL;
 	int i = 0;
-	int blocks;
+	int blocks = 0;
 	size_t outLen = (length + 3) * 4 / 3;
 	size_t extra = 0;
 	if (crLf)
@@ -45,9 +45,11 @@ static char* base64_encode_ex(const char* alphabet, const BYTE* data, size_t len
 	size_t outCounter = 0;
 
 	q = data;
-	p = ret = (char*)malloc(outLen + extra + 1ull);
+	p = ret = (char*)malloc(outLen + extra + 1ULL);
 	if (!p)
+	{
 		return NULL;
+	}
 
 	/* b1, b2, b3 are input bytes
 	 *
@@ -101,7 +103,9 @@ static char* base64_encode_ex(const char* alphabet, const BYTE* data, size_t len
 			*p++ = alphabet[(c & 0x0003F000) >> 12];
 			*p++ = alphabet[(c & 0x00000FC0) >> 6];
 			if (pad)
+			{
 				*p++ = '=';
+			}
 			break;
 	}
 
@@ -125,10 +129,14 @@ static int base64_decode_char(const char* alphabet, char c)
 	char* p = NULL;
 
 	if (c == '\0')
+	{
 		return -1;
+	}
 
 	if ((p = strchr(alphabet, c)))
+	{
 		return p - alphabet;
+	}
 
 	return -1;
 }
@@ -137,20 +145,28 @@ static void* base64_decode(const char* alphabet, const char* s, size_t length, s
                            BOOL pad)
 {
 	int n[4];
-	BYTE* q;
-	BYTE* data;
-	size_t nBlocks, i, outputLen;
+	BYTE* q = NULL;
+	BYTE* data = NULL;
+	size_t nBlocks;
+	size_t i;
+	size_t outputLen;
 	int remainder = length % 4;
 
 	if ((pad && remainder > 0) || (remainder == 1))
+	{
 		return NULL;
+	}
 
 	if (!pad && remainder)
+	{
 		length += 4 - remainder;
+	}
 
 	q = data = (BYTE*)malloc(length / 4 * 3 + 1);
 	if (!q)
+	{
 		return NULL;
+	}
 
 	/* first treat complete blocks */
 	nBlocks = (length / 4);
@@ -170,7 +186,9 @@ static void* base64_decode(const char* alphabet, const char* s, size_t length, s
 		n[3] = base64_decode_char(alphabet, *s++);
 
 		if ((n[0] == -1) || (n[1] == -1) || (n[2] == -1) || (n[3] == -1))
+		{
 			goto out_free;
+		}
 
 		q[0] = (n[0] << 2) + (n[1] >> 4);
 		q[1] = ((n[1] & 15) << 4) + (n[2] >> 2);
@@ -182,7 +200,9 @@ static void* base64_decode(const char* alphabet, const char* s, size_t length, s
 	n[0] = base64_decode_char(alphabet, *s++);
 	n[1] = base64_decode_char(alphabet, *s++);
 	if ((n[0] == -1) || (n[1] == -1))
+	{
 		goto out_free;
+	}
 
 	n[2] = remainder == 2 ? -1 : base64_decode_char(alphabet, *s++);
 	n[3] = remainder >= 2 ? -1 : base64_decode_char(alphabet, *s++);
@@ -193,7 +213,9 @@ static void* base64_decode(const char* alphabet, const char* s, size_t length, s
 		/* XX== */
 		outputLen += 1;
 		if (n[3] != -1)
+		{
 			goto out_free;
+		}
 
 		q[1] = ((n[1] & 15) << 4);
 	}
@@ -214,7 +236,9 @@ static void* base64_decode(const char* alphabet, const char* s, size_t length, s
 	}
 
 	if (data_len)
+	{
 		*data_len = outputLen;
+	}
 	data[outputLen] = '\0';
 
 	return data;

@@ -46,7 +46,7 @@
 
 static wStream* disp_server_single_packet_new(UINT32 type, UINT32 length)
 {
-	UINT error;
+	UINT error = 0;
 	DISPLAY_CONTROL_HEADER header;
 	wStream* s = Stream_New(NULL, DISPLAY_CONTROL_HEADER_LENGTH + length);
 
@@ -79,11 +79,13 @@ static void disp_server_sanitize_monitor_layout(DISPLAY_CONTROL_MONITOR_LAYOUT* 
 	    monitor->PhysicalHeight > DISPLAY_CONTROL_MAX_PHYSICAL_MONITOR_HEIGHT)
 	{
 		if (monitor->PhysicalWidth != 0 || monitor->PhysicalHeight != 0)
+		{
 			WLog_DBG(
 			    TAG,
 			    "Sanitizing invalid physical monitor size. Old physical monitor size: [%" PRIu32
 			    ", %" PRIu32 "]",
 			    monitor->PhysicalWidth, monitor->PhysicalHeight);
+		}
 
 		monitor->PhysicalWidth = monitor->PhysicalHeight = 0;
 	}
@@ -127,14 +129,16 @@ static BOOL disp_server_is_monitor_layout_valid(const DISPLAY_CONTROL_MONITOR_LA
 static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerContext* context)
 {
 	UINT32 error = CHANNEL_RC_OK;
-	UINT32 index;
+	UINT32 index = 0;
 	DISPLAY_CONTROL_MONITOR_LAYOUT_PDU pdu = { 0 };
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(context);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, pdu.MonitorLayoutSize); /* MonitorLayoutSize (4 bytes) */
 
@@ -156,7 +160,9 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, pdu.NumMonitors,
 	                                            DISPLAY_CONTROL_MONITOR_LAYOUT_SIZE))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	pdu.Monitors = (DISPLAY_CONTROL_MONITOR_LAYOUT*)calloc(pdu.NumMonitors,
 	                                                       sizeof(DISPLAY_CONTROL_MONITOR_LAYOUT));
@@ -204,7 +210,9 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 	}
 
 	if (context)
+	{
 		IFCALLRET(context->DispMonitorLayout, error, context, &pdu);
+	}
 
 out:
 	free(pdu.Monitors);
@@ -214,7 +222,8 @@ out:
 static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
-	size_t beg, end;
+	size_t beg;
+	size_t end;
 	DISPLAY_CONTROL_HEADER header = { 0 };
 
 	WINPR_ASSERT(s);
@@ -232,10 +241,12 @@ static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
 	{
 		case DISPLAY_CONTROL_PDU_TYPE_MONITOR_LAYOUT:
 			if ((error = disp_recv_display_control_monitor_layout_pdu(s, context)))
+			{
 				WLog_ERR(TAG,
 				         "disp_recv_display_control_monitor_layout_pdu "
 				         "failed with error %" PRIu32 "!",
 				         error);
+			}
 
 			break;
 
@@ -259,11 +270,11 @@ static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
 
 static UINT disp_server_handle_messages(DispServerContext* context)
 {
-	DWORD BytesReturned;
-	void* buffer;
+	DWORD BytesReturned = 0;
+	void* buffer = NULL;
 	UINT ret = CHANNEL_RC_OK;
-	DispServerPrivate* priv;
-	wStream* s;
+	DispServerPrivate* priv = NULL;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -280,7 +291,9 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 		                           &BytesReturned) == FALSE)
 		{
 			if (GetLastError() == ERROR_NO_DATA)
+			{
 				return ERROR_NO_DATA;
+			}
 
 			WLog_ERR(TAG, "WTSVirtualChannelQuery failed");
 			return ERROR_INTERNAL_ERROR;
@@ -296,14 +309,18 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 	if (!WTSVirtualChannelRead(priv->disp_channel, 0, NULL, 0, &BytesReturned))
 	{
 		if (GetLastError() == ERROR_NO_DATA)
+		{
 			return ERROR_NO_DATA;
+		}
 
 		WLog_ERR(TAG, "WTSVirtualChannelRead failed!");
 		return ERROR_INTERNAL_ERROR;
 	}
 
 	if (BytesReturned < 1)
+	{
 		return CHANNEL_RC_OK;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(s, BytesReturned))
 	{
@@ -339,8 +356,8 @@ static UINT disp_server_handle_messages(DispServerContext* context)
 static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 {
 	DispServerContext* context = (DispServerContext*)arg;
-	DispServerPrivate* priv;
-	DWORD status;
+	DispServerPrivate* priv = NULL;
+	DWORD status = 0;
 	DWORD nCount = 0;
 	HANDLE events[8] = { 0 };
 	UINT error = CHANNEL_RC_OK;
@@ -367,7 +384,9 @@ static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 
 		/* Stop Event */
 		if (status == WAIT_OBJECT_0)
+		{
 			break;
+		}
 
 		if ((error = disp_server_handle_messages(context)))
 		{
@@ -388,11 +407,11 @@ static DWORD WINAPI disp_server_thread_func(LPVOID arg)
 static UINT disp_server_open(DispServerContext* context)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	DispServerPrivate* priv;
+	DispServerPrivate* priv = NULL;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 	void* buffer = NULL;
-	UINT32 channelId;
+	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
 	WINPR_ASSERT(context);
@@ -443,7 +462,9 @@ static UINT disp_server_open(DispServerContext* context)
 		         BytesReturned);
 
 		if (buffer)
+		{
 			WTSFreeMemory(buffer);
+		}
 
 		rc = ERROR_INTERNAL_ERROR;
 		goto out_close;
@@ -482,8 +503,8 @@ out_close:
 
 static UINT disp_server_packet_send(DispServerContext* context, wStream* s)
 {
-	UINT ret;
-	ULONG written;
+	UINT ret = 0;
+	ULONG written = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
@@ -515,7 +536,7 @@ out:
  */
 static UINT disp_server_send_caps_pdu(DispServerContext* context)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -541,7 +562,7 @@ static UINT disp_server_send_caps_pdu(DispServerContext* context)
 static UINT disp_server_close(DispServerContext* context)
 {
 	UINT error = CHANNEL_RC_OK;
-	DispServerPrivate* priv;
+	DispServerPrivate* priv = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -576,8 +597,8 @@ static UINT disp_server_close(DispServerContext* context)
 
 DispServerContext* disp_server_context_new(HANDLE vcm)
 {
-	DispServerContext* context;
-	DispServerPrivate* priv;
+	DispServerContext* context = NULL;
+	DispServerPrivate* priv = NULL;
 	context = (DispServerContext*)calloc(1, sizeof(DispServerContext));
 
 	if (!context)
@@ -616,7 +637,9 @@ fail:
 void disp_server_context_free(DispServerContext* context)
 {
 	if (!context)
+	{
 		return;
+	}
 
 	if (context->priv)
 	{

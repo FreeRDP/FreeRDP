@@ -20,8 +20,8 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/pool.h>
 #include <winpr/library.h>
+#include <winpr/pool.h>
 
 #include "pool.h"
 
@@ -59,11 +59,11 @@ static TP_POOL DEFAULT_POOL = {
 
 static DWORD WINAPI thread_pool_work_func(LPVOID arg)
 {
-	DWORD status;
-	PTP_POOL pool;
-	PTP_WORK work;
+	DWORD status = 0;
+	PTP_POOL pool = NULL;
+	PTP_WORK work = NULL;
 	HANDLE events[2];
-	PTP_CALLBACK_INSTANCE callbackInstance;
+	PTP_CALLBACK_INSTANCE callbackInstance = NULL;
 
 	pool = (PTP_POOL)arg;
 
@@ -75,10 +75,14 @@ static DWORD WINAPI thread_pool_work_func(LPVOID arg)
 		status = WaitForMultipleObjects(2, events, FALSE, INFINITE);
 
 		if (status == WAIT_OBJECT_0)
+		{
 			break;
+		}
 
 		if (status != (WAIT_OBJECT_0 + 1))
+		{
 			break;
+		}
 
 		callbackInstance = (PTP_CALLBACK_INSTANCE)Queue_Dequeue(pool->PendingQueue);
 
@@ -104,27 +108,37 @@ static void threads_close(void* thread)
 static BOOL InitializeThreadpool(PTP_POOL pool)
 {
 	BOOL rc = FALSE;
-	int index;
-	wObject* obj;
-	HANDLE thread;
+	int index = 0;
+	wObject* obj = NULL;
+	HANDLE thread = NULL;
 
 	if (pool->Threads)
+	{
 		return TRUE;
+	}
 
 	pool->Minimum = 0;
 	pool->Maximum = 500;
 
 	if (!(pool->PendingQueue = Queue_New(TRUE, -1, -1)))
+	{
 		goto fail;
+	}
 
 	if (!(pool->WorkComplete = CountdownEvent_New(0)))
+	{
 		goto fail;
+	}
 
 	if (!(pool->TerminateEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
 		goto fail;
+	}
 
 	if (!(pool->Threads = ArrayList_New(TRUE)))
+	{
 		goto fail;
+	}
 
 	obj = ArrayList_Object(pool->Threads);
 	obj->fnObjectFree = threads_close;
@@ -156,7 +170,9 @@ PTP_POOL GetDefaultThreadpool(void)
 	pool = &DEFAULT_POOL;
 
 	if (!InitializeThreadpool(pool))
+	{
 		return NULL;
+	}
 
 	return pool;
 }
@@ -172,7 +188,9 @@ PTP_POOL winpr_CreateThreadpool(PVOID reserved)
 	WINPR_UNUSED(reserved);
 #endif
 	if (!(pool = (PTP_POOL)calloc(1, sizeof(TP_POOL))))
+	{
 		return NULL;
+	}
 
 	if (!InitializeThreadpool(pool))
 	{
@@ -206,12 +224,14 @@ VOID winpr_CloseThreadpool(PTP_POOL ptpp)
 	}
 
 	if (ptpp != &DEFAULT_POOL)
+	{
 		free(ptpp);
+	}
 }
 
 BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 {
-	HANDLE thread;
+	HANDLE thread = NULL;
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
 	if (pSetThreadpoolThreadMinimum)

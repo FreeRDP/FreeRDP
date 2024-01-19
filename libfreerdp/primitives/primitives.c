@@ -117,27 +117,33 @@ typedef struct
 	BYTE* outputBuffer;
 	UINT32 outputStride;
 	UINT32 testedFormat;
-} primitives_YUV_benchmark;
+} DECLSPEC_ALIGN(64) primitives_YUV_benchmark;
 
 static void primitives_YUV_benchmark_free(primitives_YUV_benchmark* bench)
 {
-	int i;
+	int i = 0;
 	if (!bench)
+	{
 		return;
+	}
 
 	free(bench->outputBuffer);
 
 	for (i = 0; i < 3; i++)
+	{
 		free(bench->channels[i]);
+	}
 	memset(bench, 0, sizeof(primitives_YUV_benchmark));
 }
 
 static primitives_YUV_benchmark* primitives_YUV_benchmark_init(primitives_YUV_benchmark* ret)
 {
-	int i;
-	prim_size_t* roi;
+	int i = 0;
+	prim_size_t* roi = NULL;
 	if (!ret)
+	{
 		return NULL;
+	}
 
 	memset(ret, 0, sizeof(primitives_YUV_benchmark));
 	roi = &ret->roi;
@@ -148,15 +154,19 @@ static primitives_YUV_benchmark* primitives_YUV_benchmark_init(primitives_YUV_be
 
 	ret->outputBuffer = calloc(ret->outputStride, roi->height);
 	if (!ret->outputBuffer)
+	{
 		goto fail;
+	}
 
 	for (i = 0; i < 3; i++)
 	{
 		BYTE* buf = ret->channels[i] = calloc(roi->width, roi->height);
 		if (!buf)
+		{
 			goto fail;
+		}
 
-		winpr_RAND(buf, 1ull * roi->width * roi->height);
+		winpr_RAND(buf, 1ULL * roi->width * roi->height);
 		ret->steps[i] = roi->width;
 	}
 
@@ -170,21 +180,25 @@ fail:
 static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primitives_t* prims,
                                          UINT64 runTime, UINT32* computations)
 {
-	ULONGLONG dueDate;
+	ULONGLONG dueDate = 0;
 	const BYTE* channels[3] = { 0 };
-	size_t i;
-	pstatus_t status;
+	size_t i = 0;
+	pstatus_t status = 0;
 
 	*computations = 0;
 
 	for (i = 0; i < 3; i++)
+	{
 		channels[i] = bench->channels[i];
+	}
 
 	/* do a first dry run to initialize cache and such */
 	status = prims->YUV420ToRGB_8u_P3AC4R(channels, bench->steps, bench->outputBuffer,
 	                                      bench->outputStride, bench->testedFormat, &bench->roi);
 	if (status != PRIMITIVES_SUCCESS)
+	{
 		return FALSE;
+	}
 
 	/* let's run the benchmark */
 	dueDate = GetTickCount64() + runTime;
@@ -194,7 +208,9 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
 		    prims->YUV420ToRGB_8u_P3AC4R(channels, bench->steps, bench->outputBuffer,
 		                                 bench->outputStride, bench->testedFormat, &bench->roi);
 		if (cstatus != PRIMITIVES_SUCCESS)
+		{
 			return FALSE;
+		}
 		*computations = *computations + 1;
 	}
 	return TRUE;
@@ -202,7 +218,7 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
 
 static BOOL primitives_autodetect_best(primitives_t* prims)
 {
-	size_t x;
+	size_t x = 0;
 	BOOL ret = FALSE;
 	UINT64 benchDuration = 150; /* 150 ms */
 	struct prim_benchmark
@@ -211,7 +227,7 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 		primitives_t* prims;
 		UINT32 flags;
 		UINT32 count;
-	};
+	} DECLSPEC_ALIGN(32);
 
 	struct prim_benchmark testcases[] =
 	{
@@ -242,7 +258,9 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 		primitives_YUV_benchmark bench = { 0 };
 		primitives_YUV_benchmark* yuvBench = primitives_YUV_benchmark_init(&bench);
 		if (!yuvBench)
+		{
 			return FALSE;
+		}
 
 		WLog_DBG(TAG, "primitives benchmark result:");
 		for (x = 0; x < ARRAYSIZE(testcases); x++)
@@ -262,7 +280,9 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 
 			WLog_DBG(TAG, " * %s= %" PRIu32, cur->name, cur->count);
 			if (!best || (best->count < cur->count))
+			{
 				best = cur;
+			}
 		}
 		primitives_YUV_benchmark_free(yuvBench);
 	}
@@ -280,7 +300,9 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 	ret = TRUE;
 out:
 	if (!ret)
+	{
 		*prims = pPrimitivesGeneric;
+	}
 
 	return ret;
 }
@@ -307,7 +329,9 @@ static BOOL CALLBACK primitives_init_cpu_cb(PINIT_ONCE once, PVOID param, PVOID*
 	WINPR_UNUSED(context);
 
 	if (!primitives_init_optimized(&pPrimitivesCpu))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -355,10 +379,14 @@ void primitives_uninit(void)
 #endif
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
 	if (pPrimitivesCpu.uninit)
+	{
 		pPrimitivesCpu.uninit();
+	}
 #endif
 	if (pPrimitivesGeneric.uninit)
+	{
 		pPrimitivesGeneric.uninit();
+	}
 }
 
 /* ------------------------------------------------------------------------- */
@@ -401,7 +429,9 @@ primitives_t* primitives_get_by_type(DWORD type)
 		case PRIMITIVES_ONLY_CPU:
 #if defined(HAVE_CPU_OPTIMIZED_PRIMITIVES)
 			if (!InitOnceExecuteOnce(&cpu_primitives_InitOnce, primitives_init_cpu_cb, NULL, NULL))
+			{
 				return NULL;
+			}
 			return &pPrimitivesCpu;
 #endif
 		case PRIMITIVES_PURE_SOFT:

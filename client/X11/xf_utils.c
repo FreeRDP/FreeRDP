@@ -35,7 +35,9 @@ static void write_log(wLog* log, DWORD level, const char* fname, const char* fkt
 char* Safe_XGetAtomName(Display* display, Atom atom)
 {
 	if (atom == None)
+	{
 		return strdup("Atom_None");
+	}
 	return XGetAtomName(display, atom);
 }
 

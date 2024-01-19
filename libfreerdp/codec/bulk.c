@@ -17,6 +17,9 @@
  * limitations under the License.
  */
 
+#include <float.h>
+#include <math.h>
+
 #include <winpr/assert.h>
 
 #include <freerdp/config.h>
@@ -44,7 +47,7 @@ struct rdp_bulk
 	ALIGN64 XCRUSH_CONTEXT* xcrushRecv;
 	ALIGN64 XCRUSH_CONTEXT* xcrushSend;
 	ALIGN64 BYTE OutputBuffer[65536];
-};
+} DECLSPEC_ALIGN(128);
 
 #if defined(WITH_BULK_DEBUG)
 static INLINE const char* bulk_get_compression_flags_string(UINT32 flags)
@@ -74,7 +77,7 @@ static INLINE const char* bulk_get_compression_flags_string(UINT32 flags)
 
 static UINT32 bulk_compression_level(rdpBulk* bulk)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 	WINPR_ASSERT(bulk);
 	WINPR_ASSERT(bulk->context);
 	settings = bulk->context->settings;
@@ -148,12 +151,12 @@ static INLINE int bulk_compress_validate(rdpBulk* bulk, const BYTE* pSrcData, UI
 int bulk_decompress(rdpBulk* bulk, const BYTE* pSrcData, UINT32 SrcSize, const BYTE** ppDstData,
                     UINT32* pDstSize, UINT32 flags)
 {
-	UINT32 type;
+	UINT32 type = 0;
 	int status = -1;
-	rdpMetrics* metrics;
-	UINT32 CompressedBytes;
-	UINT32 UncompressedBytes;
-	double CompressionRatio;
+	rdpMetrics* metrics = NULL;
+	UINT32 CompressedBytes = 0;
+	UINT32 UncompressedBytes = 0;
+	double CompressionRatio = NAN;
 
 	WINPR_ASSERT(bulk);
 	WINPR_ASSERT(bulk->context);
@@ -242,10 +245,10 @@ int bulk_compress(rdpBulk* bulk, const BYTE* pSrcData, UINT32 SrcSize, const BYT
                   UINT32* pDstSize, UINT32* pFlags)
 {
 	int status = -1;
-	rdpMetrics* metrics;
-	UINT32 CompressedBytes;
-	UINT32 UncompressedBytes;
-	double CompressionRatio;
+	rdpMetrics* metrics = NULL;
+	UINT32 CompressedBytes = 0;
+	UINT32 UncompressedBytes = 0;
+	double CompressionRatio = NAN;
 
 	WINPR_ASSERT(bulk);
 	WINPR_ASSERT(bulk->context);
@@ -337,33 +340,47 @@ void bulk_reset(rdpBulk* bulk)
 
 rdpBulk* bulk_new(rdpContext* context)
 {
-	rdpBulk* bulk;
+	rdpBulk* bulk = NULL;
 	WINPR_ASSERT(context);
 
 	bulk = (rdpBulk*)calloc(1, sizeof(rdpBulk));
 
 	if (!bulk)
+	{
 		goto fail;
+	}
 
 	bulk->context = context;
 	bulk->mppcSend = mppc_context_new(1, TRUE);
 	if (!bulk->mppcSend)
+	{
 		goto fail;
+	}
 	bulk->mppcRecv = mppc_context_new(1, FALSE);
 	if (!bulk->mppcRecv)
+	{
 		goto fail;
+	}
 	bulk->ncrushRecv = ncrush_context_new(FALSE);
 	if (!bulk->ncrushRecv)
+	{
 		goto fail;
+	}
 	bulk->ncrushSend = ncrush_context_new(TRUE);
 	if (!bulk->ncrushSend)
+	{
 		goto fail;
+	}
 	bulk->xcrushRecv = xcrush_context_new(FALSE);
 	if (!bulk->xcrushRecv)
+	{
 		goto fail;
+	}
 	bulk->xcrushSend = xcrush_context_new(TRUE);
 	if (!bulk->xcrushSend)
+	{
 		goto fail;
+	}
 	bulk->CompressionLevel = context->settings->CompressionLevel;
 
 	return bulk;
@@ -375,7 +392,9 @@ fail:
 void bulk_free(rdpBulk* bulk)
 {
 	if (!bulk)
+	{
 		return;
+	}
 
 	mppc_context_free(bulk->mppcSend);
 	mppc_context_free(bulk->mppcRecv);

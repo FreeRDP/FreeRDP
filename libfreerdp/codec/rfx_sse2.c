@@ -43,16 +43,16 @@
 #define ATTRIBUTES __gnu_inline__, __always_inline__
 #endif
 
-#define _mm_between_epi16(_val, _min, _max)                    \
-	do                                                         \
-	{                                                          \
-		_val = _mm_min_epi16(_max, _mm_max_epi16(_val, _min)); \
+#define mm_between_epi16(_val, _min, _max)                       \
+	do                                                           \
+	{                                                            \
+		(_val) = _mm_min_epi16(_max, _mm_max_epi16(_val, _min)); \
 	} while (0)
 
-static __inline void __attribute__((ATTRIBUTES)) _mm_prefetch_buffer(char* buffer, int num_bytes)
+static __inline void __attribute__((ATTRIBUTES)) mm_prefetch_buffer(char* buffer, int num_bytes)
 {
 	__m128i* buf = (__m128i*)buffer;
-	unsigned int i;
+	unsigned int i = 0;
 
 	for (i = 0; i < (num_bytes / sizeof(__m128i)); i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 	{
@@ -71,7 +71,9 @@ rfx_quantization_decode_block_sse2(INT16* buffer, const size_t buffer_size, cons
 	__m128i* buf_end = (__m128i*)(buffer + buffer_size);
 
 	if (factor == 0)
+	{
 		return;
+	}
 
 	do
 	{
@@ -87,7 +89,7 @@ static void rfx_quantization_decode_sse2(INT16* buffer, const UINT32* WINPR_REST
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(quantVals);
 
-	_mm_prefetch_buffer((char*)buffer, 4096 * sizeof(INT16));
+	mm_prefetch_buffer((char*)buffer, 4096 * sizeof(INT16));
 	rfx_quantization_decode_block_sse2(&buffer[0], 1024, quantVals[8] - 1);    /* HL1 */
 	rfx_quantization_decode_block_sse2(&buffer[1024], 1024, quantVals[7] - 1); /* LH1 */
 	rfx_quantization_decode_block_sse2(&buffer[2048], 1024, quantVals[9] - 1); /* HH1 */
@@ -109,7 +111,9 @@ rfx_quantization_encode_block_sse2(INT16* buffer, const int buffer_size, const U
 	__m128i half;
 
 	if (factor == 0)
+	{
 		return;
+	}
 
 	half = _mm_set1_epi16(1 << (factor - 1));
 
@@ -129,7 +133,7 @@ static void rfx_quantization_encode_sse2(INT16* buffer,
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(quantization_values);
 
-	_mm_prefetch_buffer((char*)buffer, 4096 * sizeof(INT16));
+	mm_prefetch_buffer((char*)buffer, 4096 * sizeof(INT16));
 	rfx_quantization_encode_block_sse2(buffer, 1024, quantization_values[8] - 6);        /* HL1 */
 	rfx_quantization_encode_block_sse2(buffer + 1024, 1024, quantization_values[7] - 6); /* LH1 */
 	rfx_quantization_encode_block_sse2(buffer + 2048, 1024, quantization_values[9] - 6); /* HH1 */
@@ -146,12 +150,13 @@ static void rfx_quantization_encode_sse2(INT16* buffer,
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_width)
 {
-	int y, n;
+	int y;
+	int n;
 	INT16* l_ptr = l;
 	INT16* h_ptr = h;
 	INT16* dst_ptr = dst;
-	int first;
-	int last;
+	int first = 0;
+	int last = 0;
 	__m128i l_n;
 	__m128i h_n;
 	__m128i h_n_m;
@@ -221,7 +226,8 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_w
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_vert_sse2(INT16* l, INT16* h, INT16* dst, int subband_width)
 {
-	int x, n;
+	int x;
+	int n;
 	INT16* l_ptr = l;
 	INT16* h_ptr = h;
 	INT16* dst_ptr = dst;
@@ -245,7 +251,9 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* l, INT16* h, INT16* dst, int subband_wi
 			tmp_n = _mm_add_epi16(h_n, _mm_set1_epi16(1));
 
 			if (n == 0)
+			{
 				tmp_n = _mm_add_epi16(tmp_n, h_n);
+			}
 			else
 			{
 				h_n_m = _mm_loadu_si128((__m128i*)(h_ptr - total_width));
@@ -278,7 +286,9 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* l, INT16* h, INT16* dst, int subband_wi
 			tmp_n = dst_n_m;
 
 			if (n == subband_width - 1)
+			{
 				tmp_n = _mm_add_epi16(tmp_n, dst_n_m);
+			}
 			else
 			{
 				dst_n_p = _mm_loadu_si128((__m128i*)(dst_ptr + total_width));
@@ -299,9 +309,13 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* l, INT16* h, INT16* dst, int subband_wi
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_sse2(INT16* buffer, INT16* idwt, int subband_width)
 {
-	INT16 *hl, *lh, *hh, *ll;
-	INT16 *l_dst, *h_dst;
-	_mm_prefetch_buffer((char*)idwt, subband_width * 4 * sizeof(INT16));
+	INT16* hl;
+	INT16* lh;
+	INT16* hh;
+	INT16* ll;
+	INT16* l_dst;
+	INT16* h_dst;
+	mm_prefetch_buffer((char*)idwt, subband_width * 4 * sizeof(INT16));
 	/* Inverse DWT in horizontal direction, results in 2 sub-bands in L, H order in tmp buffer idwt.
 	 */
 	/* The 4 sub-bands are stored in HL(0), LH(1), HH(2), LL(3) order. */
@@ -324,7 +338,7 @@ static void rfx_dwt_2d_decode_sse2(INT16* buffer, INT16* dwt_buffer)
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(dwt_buffer);
 
-	_mm_prefetch_buffer((char*)buffer, 4096 * sizeof(INT16));
+	mm_prefetch_buffer((char*)buffer, 4096 * sizeof(INT16));
 	rfx_dwt_2d_decode_block_sse2(&buffer[3840], dwt_buffer, 8);
 	rfx_dwt_2d_decode_block_sse2(&buffer[3072], dwt_buffer, 16);
 	rfx_dwt_2d_decode_block_sse2(&buffer[0], dwt_buffer, 32);
@@ -333,9 +347,9 @@ static void rfx_dwt_2d_decode_sse2(INT16* buffer, INT16* dwt_buffer)
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_vert_sse2(INT16* src, INT16* l, INT16* h, int subband_width)
 {
-	int total_width;
-	int x;
-	int n;
+	int total_width = 0;
+	int x = 0;
+	int n = 0;
 	__m128i src_2n;
 	__m128i src_2n_1;
 	__m128i src_2n_2;
@@ -352,9 +366,13 @@ rfx_dwt_2d_encode_block_vert_sse2(INT16* src, INT16* l, INT16* h, int subband_wi
 			src_2n_1 = _mm_load_si128((__m128i*)(src + total_width));
 
 			if (n < subband_width - 1)
+			{
 				src_2n_2 = _mm_load_si128((__m128i*)(src + 2 * total_width));
+			}
 			else
+			{
 				src_2n_2 = src_2n;
+			}
 
 			/* h[n] = (src[2n + 1] - ((src[2n] + src[2n + 2]) >> 1)) >> 1 */
 			h_n = _mm_add_epi16(src_2n, src_2n_2);
@@ -364,9 +382,13 @@ rfx_dwt_2d_encode_block_vert_sse2(INT16* src, INT16* l, INT16* h, int subband_wi
 			_mm_store_si128((__m128i*)h, h_n);
 
 			if (n == 0)
+			{
 				h_n_m = h_n;
+			}
 			else
+			{
 				h_n_m = _mm_load_si128((__m128i*)(h - total_width));
+			}
 
 			/* l[n] = src[2n] + ((h[n - 1] + h[n]) >> 1) */
 			l_n = _mm_add_epi16(h_n_m, h_n);
@@ -385,9 +407,9 @@ rfx_dwt_2d_encode_block_vert_sse2(INT16* src, INT16* l, INT16* h, int subband_wi
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_horiz_sse2(INT16* src, INT16* l, INT16* h, int subband_width)
 {
-	int y;
-	int n;
-	int first;
+	int y = 0;
+	int n = 0;
+	int first = 0;
 	__m128i src_2n;
 	__m128i src_2n_1;
 	__m128i src_2n_2;
@@ -436,9 +458,13 @@ rfx_dwt_2d_encode_block_horiz_sse2(INT16* src, INT16* l, INT16* h, int subband_w
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_sse2(INT16* buffer, INT16* dwt, int subband_width)
 {
-	INT16 *hl, *lh, *hh, *ll;
-	INT16 *l_src, *h_src;
-	_mm_prefetch_buffer((char*)dwt, subband_width * 4 * sizeof(INT16));
+	INT16* hl;
+	INT16* lh;
+	INT16* hh;
+	INT16* ll;
+	INT16* l_src;
+	INT16* h_src;
+	mm_prefetch_buffer((char*)dwt, subband_width * 4 * sizeof(INT16));
 	/* DWT in vertical direction, results in 2 sub-bands in L, H order in tmp buffer dwt. */
 	l_src = dwt;
 	h_src = dwt + subband_width * subband_width * 2;
@@ -460,7 +486,7 @@ static void rfx_dwt_2d_encode_sse2(INT16* buffer, INT16* dwt_buffer)
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(dwt_buffer);
 
-	_mm_prefetch_buffer((char*)buffer, 4096 * sizeof(INT16));
+	mm_prefetch_buffer((char*)buffer, 4096 * sizeof(INT16));
 	rfx_dwt_2d_encode_block_sse2(buffer, dwt_buffer, 32);
 	rfx_dwt_2d_encode_block_sse2(buffer + 3072, dwt_buffer, 16);
 	rfx_dwt_2d_encode_block_sse2(buffer + 3840, dwt_buffer, 8);
@@ -469,7 +495,9 @@ static void rfx_dwt_2d_encode_sse2(INT16* buffer, INT16* dwt_buffer)
 void rfx_init_sse2(RFX_CONTEXT* context)
 {
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
+	{
 		return;
+	}
 
 	PROFILER_RENAME(context->priv->prof_rfx_quantization_decode, "rfx_quantization_decode_sse2")
 	PROFILER_RENAME(context->priv->prof_rfx_quantization_encode, "rfx_quantization_encode_sse2")

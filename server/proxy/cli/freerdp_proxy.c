@@ -87,7 +87,7 @@ static void version(const char* app)
 	exit(0);
 }
 
-static WINPR_NORETURN(void buildconfig(const char* app))
+static WINPR_NORETURN(void buildconfig())
 {
 	printf("This is FreeRDP version %s (%s)\n", FREERDP_VERSION_FULL, FREERDP_GIT_REVISION);
 	printf("%s", freerdp_get_build_config());
@@ -108,35 +108,51 @@ int main(int argc, char* argv[])
 	WLog_DBG(TAG, "\tBuild config: %s", freerdp_get_build_config());
 
 	if (argc < 2)
+	{
 		usage(argv[0]);
+	}
 
 	{
 		const char* arg = argv[1];
 
 		if (_stricmp(arg, "-h") == 0)
+		{
 			usage(argv[0]);
+		}
 		else if (_stricmp(arg, "--help") == 0)
+		{
 			usage(argv[0]);
+		}
 		else if (_stricmp(arg, "--buildconfig") == 0)
-			buildconfig(argv[0]);
+		{
+			buildconfig();
+		}
 		else if (_stricmp(arg, "--dump-config") == 0)
 		{
 			if (argc <= 2)
+			{
 				usage(argv[0]);
+			}
 			pf_server_config_dump(argv[2]);
 			status = 0;
 			goto fail;
 		}
 		else if (_stricmp(arg, "-v") == 0)
+		{
 			version(argv[0]);
+		}
 		else if (_stricmp(arg, "--version") == 0)
+		{
 			version(argv[0]);
+		}
 		config_path = argv[1];
 	}
 
 	config = pf_server_config_load_file(config_path);
 	if (!config)
+	{
 		goto fail;
+	}
 
 	pf_server_config_print(config);
 
@@ -144,13 +160,19 @@ int main(int argc, char* argv[])
 	pf_server_config_free(config);
 
 	if (!server)
+	{
 		goto fail;
+	}
 
 	if (!pf_server_start(server))
+	{
 		goto fail;
+	}
 
 	if (!pf_server_run(server))
+	{
 		goto fail;
+	}
 
 	status = 0;
 

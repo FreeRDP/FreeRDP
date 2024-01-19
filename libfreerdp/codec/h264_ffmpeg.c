@@ -89,14 +89,16 @@ typedef struct
 	AVBufferRef* hw_frames_ctx;
 #endif
 #endif
-} H264_CONTEXT_LIBAVCODEC;
+} DECLSPEC_ALIGN(64) H264_CONTEXT_LIBAVCODEC;
 
 static void libavcodec_destroy_encoder(H264_CONTEXT* h264)
 {
-	H264_CONTEXT_LIBAVCODEC* sys;
+	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 
 	if (!h264 || !h264->subsystem)
+	{
 		return;
+	}
 
 	sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
 
@@ -117,39 +119,53 @@ static void libavcodec_destroy_encoder(H264_CONTEXT* h264)
 static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
 {
 	BOOL recreate = FALSE;
-	H264_CONTEXT_LIBAVCODEC* sys;
+	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 
 	if (!h264 || !h264->subsystem)
+	{
 		return FALSE;
+	}
 
 	if ((h264->width > INT_MAX) || (h264->height > INT_MAX))
+	{
 		return FALSE;
+	}
 
 	sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
 	if (!sys)
+	{
 		return FALSE;
+	}
 	recreate = !sys->codecEncoder || !sys->codecEncoderContext;
 
 	if (sys->codecEncoderContext)
 	{
 		if ((sys->codecEncoderContext->width != (int)h264->width) ||
 		    (sys->codecEncoderContext->height != (int)h264->height))
+		{
 			recreate = TRUE;
+		}
 	}
 
 	if (!recreate)
+	{
 		return TRUE;
+	}
 
 	libavcodec_destroy_encoder(h264);
 	sys->codecEncoder = avcodec_find_encoder(AV_CODEC_ID_H264);
 
 	if (!sys->codecEncoder)
+	{
 		goto EXCEPTION;
+	}
 
 	sys->codecEncoderContext = avcodec_alloc_context3(sys->codecEncoder);
 
 	if (!sys->codecEncoderContext)
+	{
 		goto EXCEPTION;
+	}
 
 	switch (h264->RateControlMode)
 	{
@@ -178,7 +194,9 @@ static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
 	sys->codecEncoderContext->pix_fmt = AV_PIX_FMT_YUV420P;
 
 	if (avcodec_open2(sys->codecEncoderContext, sys->codecEncoder, NULL) < 0)
+	{
 		goto EXCEPTION;
+	}
 
 	return TRUE;
 EXCEPTION:
@@ -194,7 +212,7 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 		BYTE* pv;
 	} cnv;
 	int rc = -1;
-	int status;
+	int status = 0;
 	int gotFrame = 0;
 	AVPacket* packet = NULL;
 
@@ -312,7 +330,9 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 		rc = 1;
 	}
 	else
+	{
 		rc = -2;
+	}
 
 fail:
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
@@ -333,7 +353,7 @@ static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 		uint8_t* pv;
 	} cnv;
 	int rc = -1;
-	int status;
+	int status = 0;
 	int gotFrame = 0;
 
 	WINPR_ASSERT(h264);
@@ -342,7 +362,9 @@ static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 	WINPR_ASSERT(sys);
 
 	if (!libavcodec_create_encoder(h264))
+	{
 		return -1;
+	}
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 133, 100)
 	sys->packet = &sys->bufferpacket;
@@ -449,7 +471,9 @@ static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 		rc = -2;
 	}
 	else
+	{
 		rc = 1;
+	}
 fail:
 	return rc;
 }
@@ -461,7 +485,9 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
 
 	if (!sys)
+	{
 		return;
+	}
 
 	if (sys->packet)
 	{
@@ -504,7 +530,9 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 #endif
 
 	if (sys->codecParser)
+	{
 		av_parser_close(sys->codecParser);
+	}
 
 	if (sys->codecDecoderContext)
 	{
@@ -581,7 +609,7 @@ static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
 
 static BOOL libavcodec_init(H264_CONTEXT* h264)
 {
-	H264_CONTEXT_LIBAVCODEC* sys;
+	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 
 	WINPR_ASSERT(h264);
 	sys = (H264_CONTEXT_LIBAVCODEC*)calloc(1, sizeof(H264_CONTEXT_LIBAVCODEC));

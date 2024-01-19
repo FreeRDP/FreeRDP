@@ -41,7 +41,9 @@ static BOOL NoneHandleIsHandle(HANDLE handle)
 static int NoneHandleGetFd(HANDLE handle)
 {
 	if (!NoneHandleIsHandle(handle))
+	{
 		return -1;
+	}
 
 	return -1;
 }
@@ -73,7 +75,9 @@ HANDLE CreateNoneHandle(void)
 	WINPR_NONE_HANDLE* none = (WINPR_NONE_HANDLE*)calloc(1, sizeof(WINPR_NONE_HANDLE));
 
 	if (!none)
+	{
 		return NULL;
+	}
 
 	none->common.ops = &ops;
 	return (HANDLE)none;

@@ -20,8 +20,8 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/rpc.h>
 #include <winpr/crypto.h>
+#include <winpr/rpc.h>
 
 #if !defined(_WIN32) || defined(_UWP)
 
@@ -147,7 +147,9 @@ RPC_STATUS RpcStringBindingParseW(RPC_WSTR StringBinding, RPC_WSTR* ObjUuid, RPC
 RPC_STATUS RpcStringFreeA(RPC_CSTR* String)
 {
 	if (String)
+	{
 		free(*String);
+	}
 
 	return RPC_S_OK;
 }
@@ -155,7 +157,9 @@ RPC_STATUS RpcStringFreeA(RPC_CSTR* String)
 RPC_STATUS RpcStringFreeW(RPC_WSTR* String)
 {
 	if (String)
+	{
 		free(*String);
+	}
 
 	return RPC_S_OK;
 }
@@ -708,10 +712,14 @@ RPC_STATUS UuidToStringA(const UUID* Uuid, RPC_CSTR* StringUuid)
 	*StringUuid = (RPC_CSTR)malloc(36 + 1);
 
 	if (!(*StringUuid))
+	{
 		return RPC_S_OUT_OF_MEMORY;
+	}
 
 	if (!Uuid)
+	{
 		Uuid = &UUID_NIL;
+	}
 
 	/**
 	 * Format is 32 hex digits partitioned in 5 groups:
@@ -731,14 +739,18 @@ RPC_STATUS UuidToStringW(const UUID* Uuid, RPC_WSTR* StringUuid)
 
 RPC_STATUS UuidFromStringA(RPC_CSTR StringUuid, UUID* Uuid)
 {
-	int index;
+	int index = 0;
 	BYTE bin[36];
 
 	if (!StringUuid)
+	{
 		return UuidCreateNil(Uuid);
+	}
 
 	if (strlen((char*)StringUuid) != 36)
+	{
 		return RPC_S_INVALID_STRING_UUID;
+	}
 
 	if ((StringUuid[8] != '-') || (StringUuid[13] != '-') || (StringUuid[18] != '-') ||
 	    (StringUuid[23] != '-'))
@@ -749,16 +761,26 @@ RPC_STATUS UuidFromStringA(RPC_CSTR StringUuid, UUID* Uuid)
 	for (index = 0; index < 36; index++)
 	{
 		if ((index == 8) || (index == 13) || (index == 18) || (index == 23))
+		{
 			continue;
+		}
 
 		if ((StringUuid[index] >= '0') && (StringUuid[index] <= '9'))
+		{
 			bin[index] = StringUuid[index] - '0';
+		}
 		else if ((StringUuid[index] >= 'a') && (StringUuid[index] <= 'f'))
+		{
 			bin[index] = StringUuid[index] - 'a' + 10;
+		}
 		else if ((StringUuid[index] >= 'A') && (StringUuid[index] <= 'F'))
+		{
 			bin[index] = StringUuid[index] - 'A' + 10;
+		}
 		else
+		{
 			return RPC_S_INVALID_STRING_UUID;
+		}
 	}
 
 	Uuid->Data1 = ((bin[0] << 28) | (bin[1] << 24) | (bin[2] << 20) | (bin[3] << 16) |
@@ -784,28 +806,40 @@ RPC_STATUS UuidFromStringW(RPC_WSTR StringUuid, UUID* Uuid)
 
 signed int UuidCompare(const UUID* Uuid1, const UUID* Uuid2, RPC_STATUS* Status)
 {
-	int index;
+	int index = 0;
 	*Status = RPC_S_OK;
 
 	if (!Uuid1)
+	{
 		Uuid1 = &UUID_NIL;
+	}
 
 	if (!Uuid2)
+	{
 		Uuid2 = &UUID_NIL;
+	}
 
 	if (Uuid1->Data1 != Uuid2->Data1)
+	{
 		return (Uuid1->Data1 < Uuid2->Data1) ? -1 : 1;
+	}
 
 	if (Uuid1->Data2 != Uuid2->Data2)
+	{
 		return (Uuid1->Data2 < Uuid2->Data2) ? -1 : 1;
+	}
 
 	if (Uuid1->Data3 != Uuid2->Data3)
+	{
 		return (Uuid1->Data3 < Uuid2->Data3) ? -1 : 1;
+	}
 
 	for (index = 0; index < 8; index++)
 	{
 		if (Uuid1->Data4[index] != Uuid2->Data4[index])
+		{
 			return (Uuid1->Data4[index] < Uuid2->Data4[index]) ? -1 : 1;
+		}
 	}
 
 	return 0;

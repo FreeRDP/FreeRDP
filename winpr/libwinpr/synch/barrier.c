@@ -20,8 +20,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/synch.h>
 #include <winpr/assert.h>
+#include <winpr/synch.h>
 
 #include "synch.h"
 
@@ -30,9 +30,9 @@
 #ifdef WINPR_SYNCHRONIZATION_BARRIER
 
 #include <winpr/assert.h>
-#include <winpr/sysinfo.h>
-#include <winpr/library.h>
 #include <winpr/interlocked.h>
+#include <winpr/library.h>
+#include <winpr/sysinfo.h>
 #include <winpr/thread.h>
 
 /**
@@ -92,8 +92,8 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
                                                    LONG lTotalThreads, LONG lSpinCount)
 {
 	SYSTEM_INFO sysinfo;
-	HANDLE hEvent0;
-	HANDLE hEvent1;
+	HANDLE hEvent0 = NULL;
+	HANDLE hEvent1 = NULL;
 
 #ifdef _WIN32
 	InitOnceExecuteOnce(&g_InitOnce, InitOnce_Barrier, NULL, NULL);
@@ -111,10 +111,14 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
 	ZeroMemory(lpBarrier, sizeof(SYNCHRONIZATION_BARRIER));
 
 	if (lSpinCount == -1)
+	{
 		lSpinCount = 2000;
+	}
 
 	if (!(hEvent0 = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
 		return FALSE;
+	}
 
 	if (!(hEvent1 = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
@@ -138,9 +142,9 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
 
 BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags)
 {
-	LONG remainingThreads;
-	HANDLE hCurrentEvent;
-	HANDLE hDormantEvent;
+	LONG remainingThreads = 0;
+	HANDLE hCurrentEvent = NULL;
+	HANDLE hDormantEvent = NULL;
 
 #ifdef _WIN32
 	if (g_NativeBarrier)
@@ -148,7 +152,9 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 #endif
 
 	if (!lpBarrier)
+	{
 		return FALSE;
+	}
 
 	/**
 	 * dwFlags according to
@@ -205,12 +211,18 @@ BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrie
 			volatile ULONG_PTR* cmp = &lpBarrier->Reserved3[0];
 			/* we spin until the last thread _completed_ the event switch */
 			while ((block = (*cmp == (ULONG_PTR)hCurrentEvent)))
+			{
 				if (!spinOnly && ++sp > dwSpinCount)
+				{
 					break;
+				}
+			}
 		}
 
 		if (block)
+		{
 			WaitForSingleObject(hCurrentEvent, INFINITE);
+		}
 
 		return FALSE;
 	}
@@ -245,16 +257,24 @@ BOOL WINAPI winpr_DeleteSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarri
 	 */
 
 	if (!lpBarrier)
+	{
 		return TRUE;
+	}
 
 	while (lpBarrier->Reserved1 != lpBarrier->Reserved2)
+	{
 		SwitchToThread();
+	}
 
 	if (lpBarrier->Reserved3[0])
+	{
 		CloseHandle((HANDLE)lpBarrier->Reserved3[0]);
+	}
 
 	if (lpBarrier->Reserved3[1])
+	{
 		CloseHandle((HANDLE)lpBarrier->Reserved3[1]);
+	}
 
 	ZeroMemory(lpBarrier, sizeof(SYNCHRONIZATION_BARRIER));
 

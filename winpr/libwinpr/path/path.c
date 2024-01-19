@@ -22,8 +22,8 @@
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 
-#include <winpr/path.h>
 #include <winpr/file.h>
+#include <winpr/path.h>
 
 #define PATH_SLASH_CHR '/'
 #define PATH_SLASH_STR "/"
@@ -523,7 +523,9 @@ HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)
 	const char* p = (const char*)pszPath;
 
 	if (!pszPath || !cchPath || !ppszExt)
+	{
 		return E_INVALIDARG;
+	}
 
 	/* find end of string */
 
@@ -552,7 +554,9 @@ HRESULT PathCchFindExtensionA(PCSTR pszPath, size_t cchPath, PCSTR* ppszExt)
 		}
 
 		if ((*p == '\\') || (*p == '/') || (*p == ':'))
+		{
 			break;
+		}
 
 		p--;
 	}
@@ -621,7 +625,9 @@ BOOL PathCchIsRootW(PCWSTR pszPath)
 BOOL PathIsUNCExA(PCSTR pszPath, PCSTR* ppszServer)
 {
 	if (!pszPath)
+	{
 		return FALSE;
+	}
 
 	if ((pszPath[0] == '\\') && (pszPath[1] == '\\'))
 	{
@@ -635,7 +641,9 @@ BOOL PathIsUNCExA(PCSTR pszPath, PCSTR* ppszServer)
 BOOL PathIsUNCExW(PCWSTR pszPath, PCWSTR* ppszServer)
 {
 	if (!pszPath)
+	{
 		return FALSE;
+	}
 
 	if ((pszPath[0] == '\\') && (pszPath[1] == '\\'))
 	{
@@ -684,13 +692,17 @@ HRESULT PathCchStripToRootW(PWSTR pszPath, size_t cchPath)
 
 HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 {
-	BOOL hasPrefix;
+	BOOL hasPrefix = 0;
 
 	if (!pszPath)
+	{
 		return E_INVALIDARG;
+	}
 
 	if (cchPath < 4 || cchPath > PATHCCH_MAX_CCH)
+	{
 		return E_INVALIDARG;
+	}
 
 	hasPrefix = ((pszPath[0] == '\\') && (pszPath[1] == '\\') && (pszPath[2] == '?') &&
 	             (pszPath[3] == '\\'))
@@ -700,7 +712,9 @@ HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 	if (hasPrefix)
 	{
 		if (cchPath < 6)
+		{
 			return S_FALSE;
+		}
 
 		if (IsCharAlpha(pszPath[4]) && (pszPath[5] == ':')) /* like C: */
 		{
@@ -719,13 +733,17 @@ HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 
 HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 {
-	BOOL hasPrefix;
+	BOOL hasPrefix = 0;
 
 	if (!pszPath)
+	{
 		return E_INVALIDARG;
+	}
 
 	if (cchPath < 4 || cchPath > PATHCCH_MAX_CCH)
+	{
 		return E_INVALIDARG;
+	}
 
 	hasPrefix = ((pszPath[0] == '\\') && (pszPath[1] == '\\') && (pszPath[2] == '?') &&
 	             (pszPath[3] == '\\'))
@@ -734,13 +752,17 @@ HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 
 	if (hasPrefix)
 	{
-		int rc;
+		int rc = 0;
 		if (cchPath < 6)
+		{
 			return S_FALSE;
+		}
 
 		rc = (_wcslen(&pszPath[4]) + 1);
 		if ((rc < 0) || ((INT64)cchPath < rc))
+		{
 			return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+		}
 
 		if (IsCharAlphaW(pszPath[4]) && (pszPath[5] == L':')) /* like C: */
 		{
@@ -783,14 +805,16 @@ HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath)
 
 HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags)
 {
-	size_t index;
+	size_t index = 0;
 
 	if (dwFlags == PATH_STYLE_WINDOWS)
 	{
 		for (index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_SLASH_CHR)
+			{
 				pszPath[index] = PATH_BACKSLASH_CHR;
+			}
 		}
 	}
 	else if (dwFlags == PATH_STYLE_UNIX)
@@ -798,7 +822,9 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 		for (index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_BACKSLASH_CHR)
+			{
 				pszPath[index] = PATH_SLASH_CHR;
+			}
 		}
 	}
 	else if (dwFlags == PATH_STYLE_NATIVE)
@@ -817,7 +843,9 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 		for (index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_BACKSLASH_CHR)
+			{
 				pszPath[index] = PATH_SLASH_CHR;
+			}
 		}
 #else
 		/* Unexpected error */
@@ -835,14 +863,16 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 
 HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlags)
 {
-	size_t index;
+	size_t index = 0;
 
 	if (dwFlags == PATH_STYLE_WINDOWS)
 	{
 		for (index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_SLASH_CHR)
+			{
 				pszPath[index] = PATH_BACKSLASH_CHR;
+			}
 		}
 	}
 	else if (dwFlags == PATH_STYLE_UNIX)
@@ -850,7 +880,9 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 		for (index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_BACKSLASH_CHR)
+			{
 				pszPath[index] = PATH_SLASH_CHR;
+			}
 		}
 	}
 	else if (dwFlags == PATH_STYLE_NATIVE)
@@ -872,7 +904,9 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 			for (index = 0; index < cchPath; index++)
 			{
 				if (pszPath[index] == PATH_BACKSLASH_CHR)
+				{
 					pszPath[index] = PATH_SLASH_CHR;
+				}
 			}
 		}
 #else
@@ -900,14 +934,22 @@ char PathGetSeparatorA(unsigned long dwFlags)
 	char separator = PATH_SEPARATOR_CHR;
 
 	if (!dwFlags)
+	{
 		dwFlags = PATH_STYLE_NATIVE;
+	}
 
 	if (dwFlags == PATH_STYLE_WINDOWS)
+	{
 		separator = PATH_SEPARATOR_CHR;
+	}
 	else if (dwFlags == PATH_STYLE_UNIX)
+	{
 		separator = PATH_SEPARATOR_CHR;
+	}
 	else if (dwFlags == PATH_STYLE_NATIVE)
+	{
 		separator = PATH_SEPARATOR_CHR;
+	}
 
 	return separator;
 }
@@ -924,14 +966,22 @@ WCHAR PathGetSeparatorW(unsigned long dwFlags)
 	cnv.c[1] = '\0';
 
 	if (!dwFlags)
+	{
 		dwFlags = PATH_STYLE_NATIVE;
+	}
 
 	if (dwFlags == PATH_STYLE_WINDOWS)
+	{
 		cnv.c[0] = PATH_SEPARATOR_CHR;
+	}
 	else if (dwFlags == PATH_STYLE_UNIX)
+	{
 		cnv.c[0] = PATH_SEPARATOR_CHR;
+	}
 	else if (dwFlags == PATH_STYLE_NATIVE)
+	{
 		cnv.c[0] = PATH_SEPARATOR_CHR;
+	}
 
 	return cnv.w;
 }
@@ -953,24 +1003,36 @@ PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 		if (dwFlags & PATH_SHARED_LIB_EXT_WITH_DOT)
 		{
 			if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT_DLL)
+			{
 				return SharedLibraryExtensionDotDllA;
+			}
 
 			if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT_SO)
+			{
 				return SharedLibraryExtensionDotSoA;
+			}
 
 			if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT_DYLIB)
+			{
 				return SharedLibraryExtensionDotDylibA;
+			}
 		}
 		else
 		{
 			if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT_DLL)
+			{
 				return SharedLibraryExtensionDllA;
+			}
 
 			if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT_SO)
+			{
 				return SharedLibraryExtensionSoA;
+			}
 
 			if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT_DYLIB)
+			{
 				return SharedLibraryExtensionDylibA;
+			}
 		}
 	}
 
@@ -1025,24 +1087,36 @@ PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
 		if (dwFlags & PATH_SHARED_LIB_EXT_WITH_DOT)
 		{
 			if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT_DLL)
+			{
 				return SharedLibraryExtensionDotDllW;
+			}
 
 			if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT_SO)
+			{
 				return SharedLibraryExtensionDotSoW;
+			}
 
 			if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT_DYLIB)
+			{
 				return SharedLibraryExtensionDotDylibW;
+			}
 		}
 		else
 		{
 			if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT_DLL)
+			{
 				return SharedLibraryExtensionDllW;
+			}
 
 			if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT_SO)
+			{
 				return SharedLibraryExtensionSoW;
+			}
 
 			if (dwFlags & PATH_SHARED_LIB_EXT_EXPLICIT_DYLIB)
+			{
 				return SharedLibraryExtensionDylibW;
+			}
 		}
 	}
 
@@ -1101,7 +1175,9 @@ static WCHAR* concat(const WCHAR* path, size_t pathlen, const WCHAR* name, size_
 {
 	WCHAR* str = calloc(pathlen + namelen + 1, sizeof(WCHAR));
 	if (!str)
+	{
 		return NULL;
+	}
 
 	_wcsncat(str, path, pathlen);
 	_wcsncat(str, name, namelen);
@@ -1112,7 +1188,9 @@ BOOL winpr_RemoveDirectory_RecursiveA(LPCSTR lpPathName)
 {
 	WCHAR* name = ConvertUtf8ToWCharAlloc(lpPathName, NULL);
 	if (!name)
+	{
 		return FALSE;
+	}
 	const BOOL rc = winpr_RemoveDirectory_RecursiveW(name);
 	free(name);
 	return rc;
@@ -1123,26 +1201,34 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 	BOOL ret = FALSE;
 
 	if (!lpPathName)
+	{
 		return FALSE;
+	}
 
 	const size_t pathnamelen = _wcslen(lpPathName);
 	const size_t path_slash_len = pathnamelen + 3;
 	WCHAR* path_slash = calloc(pathnamelen + 4, sizeof(WCHAR));
 	if (!path_slash)
+	{
 		return FALSE;
+	}
 	_wcsncat(path_slash, lpPathName, pathnamelen);
 
 	WCHAR starbuffer[8] = { 0 };
 	const WCHAR* star = InitializeConstWCharFromUtf8("*", starbuffer, ARRAYSIZE(starbuffer));
 	const HRESULT hr = NativePathCchAppendW(path_slash, path_slash_len, star);
 	if (FAILED(hr))
+	{
 		goto fail;
+	}
 
 	WIN32_FIND_DATAW findFileData = { 0 };
 	HANDLE dir = FindFirstFileW(path_slash, &findFileData);
 
 	if (dir == INVALID_HANDLE_VALUE)
+	{
 		goto fail;
+	}
 
 	ret = TRUE;
 	path_slash[path_slash_len - 1] = '\0'; /* remove trailing '*' */
@@ -1158,17 +1244,25 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 
 		WCHAR* fullpath = concat(path_slash, path_slash_len, findFileData.cFileName, len);
 		if (!fullpath)
+		{
 			goto fail;
+		}
 
 		if (findFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		{
 			ret = winpr_RemoveDirectory_RecursiveW(fullpath);
+		}
 		else
+		{
 			ret = DeleteFileW(fullpath);
+		}
 
 		free(fullpath);
 
 		if (!ret)
+		{
 			break;
+		}
 	} while (ret && FindNextFileW(dir, &findFileData) != 0);
 
 	FindClose(dir);
@@ -1176,7 +1270,9 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 	if (ret)
 	{
 		if (!RemoveDirectoryW(lpPathName))
+		{
 			ret = FALSE;
+		}
 	}
 
 fail:

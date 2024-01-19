@@ -49,7 +49,7 @@ typedef struct
 	eTelemetryChannelState state;
 
 	wStream* buffer;
-} telemetry_server;
+} DECLSPEC_ALIGN(128) telemetry_server;
 
 static UINT telemetry_server_initialize(TelemetryServerContext* context, BOOL externalThread)
 {
@@ -74,10 +74,10 @@ static UINT telemetry_server_open_channel(telemetry_server* telemetry)
 {
 	TelemetryServerContext* context = &telemetry->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent;
+	HANDLE hEvent = NULL;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
-	UINT32 channelId;
+	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
 	WINPR_ASSERT(telemetry);
@@ -127,7 +127,9 @@ static UINT telemetry_server_recv_rdp_telemetry_pdu(TelemetryServerContext* cont
 	UINT error = CHANNEL_RC_OK;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16))
+	{
 		return ERROR_NO_DATA;
+	}
 
 	Stream_Read_UINT32(s, pdu.PromptForCredentialsMillis);
 	Stream_Read_UINT32(s, pdu.PromptForCredentialsDoneMillis);
@@ -136,19 +138,21 @@ static UINT telemetry_server_recv_rdp_telemetry_pdu(TelemetryServerContext* cont
 
 	IFCALLRET(context->RdpTelemetry, error, context, &pdu);
 	if (error)
+	{
 		WLog_ERR(TAG, "context->RdpTelemetry failed with error %" PRIu32 "", error);
+	}
 
 	return error;
 }
 
 static UINT telemetry_process_message(telemetry_server* telemetry)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
-	ULONG BytesReturned;
-	BYTE MessageId;
-	BYTE Length;
-	wStream* s;
+	ULONG BytesReturned = 0;
+	BYTE MessageId = 0;
+	BYTE Length = 0;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(telemetry);
 	WINPR_ASSERT(telemetry->telemetry_channel);
@@ -159,7 +163,9 @@ static UINT telemetry_process_message(telemetry_server* telemetry)
 	Stream_SetPosition(s, 0);
 	rc = WTSVirtualChannelRead(telemetry->telemetry_channel, 0, NULL, 0, &BytesReturned);
 	if (!rc)
+	{
 		goto out;
+	}
 
 	if (BytesReturned < 1)
 	{
@@ -183,7 +189,9 @@ static UINT telemetry_process_message(telemetry_server* telemetry)
 
 	Stream_SetLength(s, BytesReturned);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	{
 		return ERROR_NO_DATA;
+	}
 
 	Stream_Read_UINT8(s, MessageId);
 	Stream_Read_UINT8(s, Length);
@@ -200,7 +208,9 @@ static UINT telemetry_process_message(telemetry_server* telemetry)
 
 out:
 	if (error)
+	{
 		WLog_ERR(TAG, "Response failed with error %" PRIu32 "!", error);
+	}
 
 	return error;
 }
@@ -217,10 +227,14 @@ static UINT telemetry_server_context_poll_int(TelemetryServerContext* context)
 		case TELEMETRY_INITIAL:
 			error = telemetry_server_open_channel(telemetry);
 			if (error)
+			{
 				WLog_ERR(TAG, "telemetry_server_open_channel failed with error %" PRIu32 "!",
 				         error);
+			}
 			else
+			{
 				telemetry->state = TELEMETRY_OPENED;
+			}
 			break;
 		case TELEMETRY_OPENED:
 			error = telemetry_process_message(telemetry);
@@ -242,7 +256,9 @@ static HANDLE telemetry_server_get_channel_handle(telemetry_server* telemetry)
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
+		{
 			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
+		}
 
 		WTSFreeMemory(buffer);
 	}
@@ -252,11 +268,11 @@ static HANDLE telemetry_server_get_channel_handle(telemetry_server* telemetry)
 
 static DWORD WINAPI telemetry_server_thread_func(LPVOID arg)
 {
-	DWORD nCount;
+	DWORD nCount = 0;
 	HANDLE events[2] = { 0 };
 	telemetry_server* telemetry = (telemetry_server*)arg;
 	UINT error = CHANNEL_RC_OK;
-	DWORD status;
+	DWORD status = 0;
 
 	WINPR_ASSERT(telemetry);
 
@@ -299,8 +315,10 @@ static DWORD WINAPI telemetry_server_thread_func(LPVOID arg)
 	telemetry->telemetry_channel = NULL;
 
 	if (error && telemetry->context.rdpcontext)
+	{
 		setChannelError(telemetry->context.rdpcontext, error,
 		                "telemetry_server_thread_func reported an error");
+	}
 
 	ExitThread(error);
 	return error;
@@ -379,7 +397,9 @@ static UINT telemetry_server_context_poll(TelemetryServerContext* context)
 	WINPR_ASSERT(telemetry);
 
 	if (!telemetry->externalThread)
+	{
 		return ERROR_INTERNAL_ERROR;
+	}
 
 	return telemetry_server_context_poll_int(context);
 }
@@ -392,9 +412,13 @@ static BOOL telemetry_server_context_handle(TelemetryServerContext* context, HAN
 	WINPR_ASSERT(handle);
 
 	if (!telemetry->externalThread)
+	{
 		return FALSE;
+	}
 	if (telemetry->state == TELEMETRY_INITIAL)
+	{
 		return FALSE;
+	}
 
 	*handle = telemetry_server_get_channel_handle(telemetry);
 
@@ -406,7 +430,9 @@ TelemetryServerContext* telemetry_server_context_new(HANDLE vcm)
 	telemetry_server* telemetry = (telemetry_server*)calloc(1, sizeof(telemetry_server));
 
 	if (!telemetry)
+	{
 		return NULL;
+	}
 
 	telemetry->context.vcm = vcm;
 	telemetry->context.Initialize = telemetry_server_initialize;
@@ -417,7 +443,9 @@ TelemetryServerContext* telemetry_server_context_new(HANDLE vcm)
 
 	telemetry->buffer = Stream_New(NULL, 4096);
 	if (!telemetry->buffer)
+	{
 		goto fail;
+	}
 
 	return &telemetry->context;
 fail:

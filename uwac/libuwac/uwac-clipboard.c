@@ -78,13 +78,17 @@ static void data_device_data_offer(void* data, struct wl_data_device* data_devic
 			                        "failed to allocate a close event\n"));
 		}
 		else
+		{
 			event->seat = seat;
+		}
 
 		wl_data_offer_add_listener(data_offer, &data_offer_listener, data);
 		seat->offer = data_offer;
 	}
 	else
+	{
 		seat->offer = NULL;
+	}
 }
 
 static void data_device_selection(void* data, struct wl_data_device* data_device,
@@ -129,7 +133,9 @@ static void UwacRegisterDeviceListener(UwacSeat* s)
 static UwacReturnCode UwacCreateDataSource(UwacSeat* s)
 {
 	if (!s)
+	{
 		return UWAC_ERROR_INTERNAL;
+	}
 
 	s->data_source = wl_data_device_manager_create_data_source(s->display->data_device_manager);
 	wl_data_source_add_listener(s->data_source, &data_source_listener, s);
@@ -139,20 +145,26 @@ static UwacReturnCode UwacCreateDataSource(UwacSeat* s)
 UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s)
 {
 	UwacReturnCode rc;
-	UwacClipboardEvent* event;
+	UwacClipboardEvent* event = NULL;
 
 	if (!s)
+	{
 		return UWAC_ERROR_INTERNAL;
+	}
 
 	if (!s->display->data_device_manager || !s->data_device)
+	{
 		return UWAC_NOT_ENOUGH_RESOURCES;
+	}
 
 	UwacRegisterDeviceListener(s);
 
 	rc = UwacCreateDataSource(s);
 
 	if (rc != UWAC_SUCCESS)
+	{
 		return rc;
+	}
 	event = (UwacClipboardEvent*)UwacDisplayNewEvent(s->display, UWAC_EVENT_CLIPBOARD_AVAILABLE);
 
 	if (!event)
@@ -169,10 +181,14 @@ UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s)
 UwacReturnCode UwacClipboardOfferDestroy(UwacSeat* seat)
 {
 	if (!seat)
+	{
 		return UWAC_ERROR_INTERNAL;
+	}
 
 	if (seat->data_source)
+	{
 		wl_data_source_destroy(seat->data_source);
+	}
 
 	return UwacCreateDataSource(seat);
 }
@@ -180,7 +196,9 @@ UwacReturnCode UwacClipboardOfferDestroy(UwacSeat* seat)
 UwacReturnCode UwacClipboardOfferCreate(UwacSeat* seat, const char* mime)
 {
 	if (!seat || !mime)
+	{
 		return UWAC_ERROR_INTERNAL;
+	}
 
 	wl_data_source_offer(seat->data_source, mime);
 	return UWAC_SUCCESS;
@@ -195,7 +213,7 @@ static const struct wl_callback_listener callback_listener = { .done = callback_
 
 static uint32_t get_serial(UwacSeat* s)
 {
-	struct wl_callback* callback;
+	struct wl_callback* callback = NULL;
 	uint32_t serial = 0;
 	callback = wl_display_sync(s->display->display);
 	wl_callback_add_listener(callback, &callback_listener, &serial);
@@ -213,7 +231,9 @@ UwacReturnCode UwacClipboardOfferAnnounce(UwacSeat* seat, void* context,
                                           UwacCancelDataTransferHandler cancel)
 {
 	if (!seat)
+	{
 		return UWAC_ERROR_INTERNAL;
+	}
 
 	seat->data_context = context;
 	seat->transfer_data = transfer;
@@ -234,11 +254,15 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 	int pipefd[2];
 
 	if (!seat || !mime || !size || !seat->offer)
+	{
 		return NULL;
+	}
 
 	*size = 0;
 	if (pipe(pipefd) != 0)
+	{
 		return NULL;
+	}
 
 	wl_data_offer_receive(seat->offer, mime, pipefd[1]);
 	close(pipefd[1]);
@@ -247,7 +271,7 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 
 	do
 	{
-		void* tmp;
+		void* tmp = NULL;
 		alloc += 1024;
 		tmp = xrealloc(data, alloc);
 		if (!tmp)
@@ -260,7 +284,9 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 		data = tmp;
 		r = read(pipefd[0], &data[pos], alloc - pos);
 		if (r > 0)
+		{
 			pos += r;
+		}
 		if (r < 0)
 		{
 			free(data);

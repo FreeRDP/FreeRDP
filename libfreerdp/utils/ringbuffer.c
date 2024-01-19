@@ -44,7 +44,9 @@ BOOL ringbuffer_init(RingBuffer* rb, size_t initialSize)
 	rb->buffer = malloc(initialSize);
 
 	if (!rb->buffer)
+	{
 		return FALSE;
+	}
 
 	rb->readPtr = rb->writePtr = 0;
 	rb->initialSize = rb->size = rb->freeSize = initialSize;
@@ -71,7 +73,7 @@ void ringbuffer_destroy(RingBuffer* rb)
 
 static BOOL ringbuffer_realloc(RingBuffer* rb, size_t targetSize)
 {
-	BYTE* newData;
+	BYTE* newData = NULL;
 	DEBUG_RINGBUFFER("ringbuffer_realloc(%p): targetSize: %" PRIdz "", (void*)rb, targetSize);
 
 	if (rb->writePtr == rb->readPtr)
@@ -82,7 +84,9 @@ static BOOL ringbuffer_realloc(RingBuffer* rb, size_t targetSize)
 		newData = (BYTE*)realloc(rb->buffer, targetSize);
 
 		if (!newData)
+		{
 			return FALSE;
+		}
 
 		rb->readPtr = rb->writePtr = 0;
 		rb->buffer = newData;
@@ -100,7 +104,9 @@ static BOOL ringbuffer_realloc(RingBuffer* rb, size_t targetSize)
 		newData = (BYTE*)realloc(rb->buffer, targetSize);
 
 		if (!newData)
+		{
 			return FALSE;
+		}
 
 		rb->buffer = newData;
 	}
@@ -112,7 +118,9 @@ static BOOL ringbuffer_realloc(RingBuffer* rb, size_t targetSize)
 		newData = (BYTE*)malloc(targetSize);
 
 		if (!newData)
+		{
 			return FALSE;
+		}
 
 		if (rb->readPtr < rb->writePtr)
 		{
@@ -135,7 +143,9 @@ static BOOL ringbuffer_realloc(RingBuffer* rb, size_t targetSize)
 			dst += (rb->size - rb->readPtr);
 
 			if (rb->writePtr)
+			{
 				memcpy(dst, rb->buffer, rb->writePtr);
+			}
 		}
 
 		rb->writePtr = rb->size - rb->freeSize;
@@ -160,12 +170,14 @@ static BOOL ringbuffer_realloc(RingBuffer* rb, size_t targetSize)
  */
 BOOL ringbuffer_write(RingBuffer* rb, const BYTE* ptr, size_t sz)
 {
-	size_t toWrite;
-	size_t remaining;
+	size_t toWrite = 0;
+	size_t remaining = 0;
 	DEBUG_RINGBUFFER("ringbuffer_write(%p): sz: %" PRIdz "", (void*)rb, sz);
 
 	if ((rb->freeSize <= sz) && !ringbuffer_realloc(rb, rb->size + sz))
+	{
 		return FALSE;
+	}
 
 	/*  the write could be split in two
 	 *    readHead        writeHead
@@ -177,7 +189,9 @@ BOOL ringbuffer_write(RingBuffer* rb, const BYTE* ptr, size_t sz)
 	remaining = sz;
 
 	if (rb->size - rb->writePtr < sz)
+	{
 		toWrite = rb->size - rb->writePtr;
+	}
 
 	if (toWrite)
 	{
@@ -187,7 +201,9 @@ BOOL ringbuffer_write(RingBuffer* rb, const BYTE* ptr, size_t sz)
 	}
 
 	if (remaining)
+	{
 		memcpy(rb->buffer, ptr, remaining);
+	}
 
 	rb->writePtr = (rb->writePtr + sz) % rb->size;
 	rb->freeSize -= sz;
@@ -201,7 +217,9 @@ BYTE* ringbuffer_ensure_linear_write(RingBuffer* rb, size_t sz)
 	if (rb->freeSize < sz)
 	{
 		if (!ringbuffer_realloc(rb, rb->size + sz - rb->freeSize + 32))
+		{
 			return NULL;
+		}
 	}
 
 	if (rb->writePtr == rb->readPtr)
@@ -210,7 +228,9 @@ BYTE* ringbuffer_ensure_linear_write(RingBuffer* rb, size_t sz)
 	}
 
 	if (rb->writePtr + sz < rb->size)
+	{
 		return rb->buffer + rb->writePtr;
+	}
 
 	/*
 	 * to add:             .......
@@ -230,10 +250,14 @@ BOOL ringbuffer_commit_written_bytes(RingBuffer* rb, size_t sz)
 	DEBUG_RINGBUFFER("ringbuffer_commit_written_bytes(%p): sz: %" PRIdz "", (void*)rb, sz);
 
 	if (sz < 1)
+	{
 		return TRUE;
+	}
 
 	if (rb->writePtr + sz > rb->size)
+	{
 		return FALSE;
+	}
 
 	rb->writePtr = (rb->writePtr + sz) % rb->size;
 	rb->freeSize -= sz;
@@ -243,21 +267,27 @@ BOOL ringbuffer_commit_written_bytes(RingBuffer* rb, size_t sz)
 int ringbuffer_peek(const RingBuffer* rb, DataChunk chunks[2], size_t sz)
 {
 	size_t remaining = sz;
-	size_t toRead;
+	size_t toRead = 0;
 	int chunkIndex = 0;
 	int status = 0;
 	DEBUG_RINGBUFFER("ringbuffer_peek(%p): sz: %" PRIdz "", (void*)rb, sz);
 
 	if (sz < 1)
+	{
 		return 0;
+	}
 
 	if ((rb->size - rb->freeSize) < sz)
+	{
 		remaining = rb->size - rb->freeSize;
+	}
 
 	toRead = remaining;
 
 	if ((rb->readPtr + remaining) > rb->size)
+	{
 		toRead = rb->size - rb->readPtr;
+	}
 
 	if (toRead)
 	{
@@ -283,7 +313,9 @@ void ringbuffer_commit_read_bytes(RingBuffer* rb, size_t sz)
 	DEBUG_RINGBUFFER("ringbuffer_commit_read_bytes(%p): sz: %" PRIdz "", (void*)rb, sz);
 
 	if (sz < 1)
+	{
 		return;
+	}
 
 	WINPR_ASSERT(rb->size - rb->freeSize >= sz);
 	rb->readPtr = (rb->readPtr + sz) % rb->size;
@@ -291,5 +323,7 @@ void ringbuffer_commit_read_bytes(RingBuffer* rb, size_t sz)
 
 	/* when we reach a reasonable free size, we can go back to the original size */
 	if ((rb->size != rb->initialSize) && (ringbuffer_used(rb) < rb->initialSize / 2))
+	{
 		ringbuffer_realloc(rb, rb->initialSize);
+	}
 }

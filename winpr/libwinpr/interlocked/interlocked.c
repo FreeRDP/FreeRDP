@@ -19,9 +19,9 @@
 
 #include <winpr/config.h>
 
+#include <winpr/handle.h>
 #include <winpr/platform.h>
 #include <winpr/synch.h>
-#include <winpr/handle.h>
 
 #include <winpr/interlocked.h>
 
@@ -81,11 +81,17 @@ WINPR_PSLIST_ENTRY InterlockedPushEntrySList(WINPR_PSLIST_HEADER ListHead,
 		newHeader.s.Depth = old.s.Depth + 1;
 		newHeader.s.Sequence = old.s.Sequence + 1;
 		if (old.Alignment > INT64_MAX)
+		{
 			return NULL;
+		}
 		if (newHeader.Alignment > INT64_MAX)
+		{
 			return NULL;
+		}
 		if (ListHead->Alignment > INT64_MAX)
+		{
 			return NULL;
+		}
 	} while (InterlockedCompareExchange64((LONGLONG*)&ListHead->Alignment,
 	                                      (LONGLONG)newHeader.Alignment,
 	                                      (LONGLONG)old.Alignment) != (LONGLONG)old.Alignment);
@@ -109,7 +115,7 @@ WINPR_PSLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
 {
 	WINPR_SLIST_HEADER old;
 	WINPR_SLIST_HEADER newHeader;
-	WINPR_PSLIST_ENTRY entry;
+	WINPR_PSLIST_ENTRY entry = NULL;
 
 #ifdef _WIN64
 	while (1)
@@ -141,18 +147,26 @@ WINPR_PSLIST_ENTRY InterlockedPopEntrySList(WINPR_PSLIST_HEADER ListHead)
 		entry = old.s.Next.Next;
 
 		if (!entry)
+		{
 			return NULL;
+		}
 
 		newHeader.s.Next.Next = entry->Next;
 		newHeader.s.Depth = old.s.Depth - 1;
 		newHeader.s.Sequence = old.s.Sequence + 1;
 
 		if (old.Alignment > INT64_MAX)
+		{
 			return NULL;
+		}
 		if (newHeader.Alignment > INT64_MAX)
+		{
 			return NULL;
+		}
 		if (ListHead->Alignment > INT64_MAX)
+		{
 			return NULL;
+		}
 	} while (InterlockedCompareExchange64((LONGLONG*)&ListHead->Alignment,
 	                                      (LONGLONG)newHeader.Alignment,
 	                                      (LONGLONG)old.Alignment) != (LONGLONG)old.Alignment);
@@ -166,7 +180,9 @@ WINPR_PSLIST_ENTRY InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead)
 	WINPR_SLIST_HEADER newHeader;
 
 	if (!QueryDepthSList(ListHead))
+	{
 		return NULL;
+	}
 
 #ifdef _WIN64
 	newHeader.s.Alignment = 0;
@@ -197,11 +213,17 @@ WINPR_PSLIST_ENTRY InterlockedFlushSList(WINPR_PSLIST_HEADER ListHead)
 		newHeader.s.Sequence = old.s.Sequence + 1;
 
 		if (old.Alignment > INT64_MAX)
+		{
 			return NULL;
+		}
 		if (newHeader.Alignment > INT64_MAX)
+		{
 			return NULL;
+		}
 		if (ListHead->Alignment > INT64_MAX)
+		{
 			return NULL;
+		}
 	} while (InterlockedCompareExchange64((LONGLONG*)&ListHead->Alignment,
 	                                      (LONGLONG)newHeader.Alignment,
 	                                      (LONGLONG)old.Alignment) != (LONGLONG)old.Alignment);
@@ -400,8 +422,8 @@ BOOL IsListEmpty(const WINPR_LIST_ENTRY* ListHead)
 
 BOOL RemoveEntryList(WINPR_PLIST_ENTRY Entry)
 {
-	WINPR_PLIST_ENTRY OldFlink;
-	WINPR_PLIST_ENTRY OldBlink;
+	WINPR_PLIST_ENTRY OldFlink = NULL;
+	WINPR_PLIST_ENTRY OldBlink = NULL;
 
 	OldFlink = Entry->Flink;
 	OldBlink = Entry->Blink;
@@ -413,7 +435,7 @@ BOOL RemoveEntryList(WINPR_PLIST_ENTRY Entry)
 
 VOID InsertHeadList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY Entry)
 {
-	WINPR_PLIST_ENTRY OldFlink;
+	WINPR_PLIST_ENTRY OldFlink = NULL;
 
 	OldFlink = ListHead->Flink;
 	Entry->Flink = OldFlink;
@@ -424,8 +446,8 @@ VOID InsertHeadList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY Entry)
 
 WINPR_PLIST_ENTRY RemoveHeadList(WINPR_PLIST_ENTRY ListHead)
 {
-	WINPR_PLIST_ENTRY Flink;
-	WINPR_PLIST_ENTRY Entry;
+	WINPR_PLIST_ENTRY Flink = NULL;
+	WINPR_PLIST_ENTRY Entry = NULL;
 
 	Entry = ListHead->Flink;
 	Flink = Entry->Flink;
@@ -437,7 +459,7 @@ WINPR_PLIST_ENTRY RemoveHeadList(WINPR_PLIST_ENTRY ListHead)
 
 VOID InsertTailList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY Entry)
 {
-	WINPR_PLIST_ENTRY OldBlink;
+	WINPR_PLIST_ENTRY OldBlink = NULL;
 
 	OldBlink = ListHead->Blink;
 	Entry->Flink = ListHead;
@@ -448,8 +470,8 @@ VOID InsertTailList(WINPR_PLIST_ENTRY ListHead, WINPR_PLIST_ENTRY Entry)
 
 WINPR_PLIST_ENTRY RemoveTailList(WINPR_PLIST_ENTRY ListHead)
 {
-	WINPR_PLIST_ENTRY Blink;
-	WINPR_PLIST_ENTRY Entry;
+	WINPR_PLIST_ENTRY Blink = NULL;
+	WINPR_PLIST_ENTRY Entry = NULL;
 
 	Entry = ListHead->Blink;
 	Blink = Entry->Blink;
@@ -477,12 +499,14 @@ VOID PushEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead, WINPR_PSINGLE_LIST_ENTRY E
 
 WINPR_PSINGLE_LIST_ENTRY PopEntryList(WINPR_PSINGLE_LIST_ENTRY ListHead)
 {
-	WINPR_PSINGLE_LIST_ENTRY FirstEntry;
+	WINPR_PSINGLE_LIST_ENTRY FirstEntry = NULL;
 
 	FirstEntry = ListHead->Next;
 
 	if (FirstEntry != NULL)
+	{
 		ListHead->Next = FirstEntry->Next;
+	}
 
 	return FirstEntry;
 }

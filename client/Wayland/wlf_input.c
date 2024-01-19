@@ -40,9 +40,9 @@
 static BOOL scale_signed_coordinates(rdpContext* context, int32_t* x, int32_t* y,
                                      BOOL fromLocalToRDP)
 {
-	BOOL rc;
-	UINT32 ux;
-	UINT32 uy;
+	BOOL rc = 0;
+	UINT32 ux = 0;
+	UINT32 uy = 0;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(x);
 	WINPR_ASSERT(y);
@@ -61,17 +61,22 @@ static BOOL scale_signed_coordinates(rdpContext* context, int32_t* x, int32_t* y
 
 BOOL wlf_handle_pointer_enter(freerdp* instance, const UwacPointerEnterLeaveEvent* ev)
 {
-	uint32_t x, y;
-	rdpClientContext* cctx;
+	uint32_t x;
+	uint32_t y;
+	rdpClientContext* cctx = NULL;
 
 	if (!instance || !ev)
+	{
 		return FALSE;
+	}
 
 	x = ev->x;
 	y = ev->y;
 
 	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(x <= UINT16_MAX);
 	WINPR_ASSERT(y <= UINT16_MAX);
@@ -81,11 +86,14 @@ BOOL wlf_handle_pointer_enter(freerdp* instance, const UwacPointerEnterLeaveEven
 
 BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* ev)
 {
-	uint32_t x, y;
-	rdpClientContext* cctx;
+	uint32_t x;
+	uint32_t y;
+	rdpClientContext* cctx = NULL;
 
 	if (!instance || !ev)
+	{
 		return FALSE;
+	}
 
 	cctx = (rdpClientContext*)instance->context;
 	WINPR_ASSERT(cctx);
@@ -94,7 +102,9 @@ BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* 
 	y = ev->y;
 
 	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(x <= UINT16_MAX);
 	WINPR_ASSERT(y <= UINT16_MAX);
@@ -103,13 +113,16 @@ BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* 
 
 BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent* ev)
 {
-	rdpClientContext* cctx;
+	rdpClientContext* cctx = NULL;
 	UINT16 flags = 0;
 	UINT16 xflags = 0;
-	uint32_t x, y;
+	uint32_t x;
+	uint32_t y;
 
 	if (!instance || !ev)
+	{
 		return FALSE;
+	}
 
 	cctx = (rdpClientContext*)instance->context;
 	WINPR_ASSERT(cctx);
@@ -118,7 +131,9 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent*
 	y = ev->y;
 
 	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
+	{
 		return FALSE;
+	}
 
 	if (ev->state == WL_POINTER_BUTTON_STATE_PRESSED)
 	{
@@ -156,19 +171,25 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent*
 	WINPR_ASSERT(y <= UINT16_MAX);
 
 	if ((flags & ~PTR_FLAGS_DOWN) != 0)
+	{
 		return freerdp_client_send_button_event(cctx, FALSE, flags, x, y);
+	}
 
 	if ((xflags & ~PTR_XFLAGS_DOWN) != 0)
+	{
 		return freerdp_client_send_extended_button_event(cctx, FALSE, xflags, x, y);
+	}
 
 	return FALSE;
 }
 
 BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 {
-	wlfContext* context;
+	wlfContext* context = NULL;
 	if (!instance || !instance->context || !ev)
+	{
 		return FALSE;
+	}
 
 	context = (wlfContext*)instance->context;
 	return ArrayList_Append(context->events, ev);
@@ -176,9 +197,11 @@ BOOL wlf_handle_pointer_axis(freerdp* instance, const UwacPointerAxisEvent* ev)
 
 BOOL wlf_handle_pointer_axis_discrete(freerdp* instance, const UwacPointerAxisEvent* ev)
 {
-	wlfContext* context;
+	wlfContext* context = NULL;
 	if (!instance || !instance->context || !ev)
+	{
 		return FALSE;
+	}
 
 	context = (wlfContext*)instance->context;
 	return ArrayList_Append(context->events, ev);
@@ -187,9 +210,9 @@ BOOL wlf_handle_pointer_axis_discrete(freerdp* instance, const UwacPointerAxisEv
 static BOOL wlf_handle_wheel(freerdp* instance, uint32_t x, uint32_t y, uint32_t axis,
                              int32_t value)
 {
-	rdpClientContext* cctx;
+	rdpClientContext* cctx = NULL;
 	UINT16 flags = 0;
-	int32_t direction;
+	int32_t direction = 0;
 	uint32_t avalue = (uint32_t)abs(value);
 
 	WINPR_ASSERT(instance);
@@ -198,7 +221,9 @@ static BOOL wlf_handle_wheel(freerdp* instance, uint32_t x, uint32_t y, uint32_t
 	WINPR_ASSERT(cctx);
 
 	if (!wlf_scale_coordinates(instance->context, &x, &y, TRUE))
+	{
 		return FALSE;
+	}
 
 	direction = value;
 	switch (axis)
@@ -206,13 +231,17 @@ static BOOL wlf_handle_wheel(freerdp* instance, uint32_t x, uint32_t y, uint32_t
 		case WL_POINTER_AXIS_VERTICAL_SCROLL:
 			flags |= PTR_FLAGS_WHEEL;
 			if (direction > 0)
+			{
 				flags |= PTR_FLAGS_WHEEL_NEGATIVE;
+			}
 			break;
 
 		case WL_POINTER_AXIS_HORIZONTAL_SCROLL:
 			flags |= PTR_FLAGS_HWHEEL;
 			if (direction < 0)
+			{
 				flags |= PTR_FLAGS_WHEEL_NEGATIVE;
+			}
 			break;
 
 		default:
@@ -231,9 +260,13 @@ static BOOL wlf_handle_wheel(freerdp* instance, uint32_t x, uint32_t y, uint32_t
 		UINT16 cflags = flags | cval;
 		/* Convert negative values to 9bit twos complement */
 		if (flags & PTR_FLAGS_WHEEL_NEGATIVE)
+		{
 			cflags = (flags & 0xFF00) | (0x100 - cval);
+		}
 		if (!freerdp_client_send_wheel_event(cctx, cflags))
+		{
 			return FALSE;
+		}
 
 		avalue -= cval;
 	}
@@ -244,12 +277,14 @@ BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev
 {
 	BOOL success = TRUE;
 	BOOL handle = FALSE;
-	size_t x;
-	wlfContext* context;
+	size_t x = 0;
+	wlfContext* context = NULL;
 	enum wl_pointer_axis_source source = WL_POINTER_AXIS_SOURCE_CONTINUOUS;
 
 	if (!instance || !ev || !instance->context)
+	{
 		return FALSE;
+	}
 
 	context = (wlfContext*)instance->context;
 
@@ -257,7 +292,9 @@ BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev
 	{
 		UwacEvent* cev = ArrayList_GetItem(context->events, x);
 		if (!cev)
+		{
 			continue;
+		}
 		if (cev->type == UWAC_EVENT_POINTER_SOURCE)
 		{
 			handle = TRUE;
@@ -272,7 +309,9 @@ BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev
 		{
 			UwacEvent* cev = ArrayList_GetItem(context->events, x);
 			if (!cev)
+			{
 				continue;
+			}
 
 			switch (source)
 			{
@@ -288,7 +327,9 @@ BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev
 						/* No wheel event received, success! */
 						if (!wlf_handle_wheel(instance, cev->mouse_axis.x, cev->mouse_axis.y,
 						                      cev->mouse_axis.axis, val))
+						{
 							success = FALSE;
+						}
 					}
 					break;
 					/* If we have a touch pad we get actual data, scale */
@@ -300,7 +341,9 @@ BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev
 						int32_t val = (int32_t)(dval * 0x78 / 10.0);
 						if (!wlf_handle_wheel(instance, cev->mouse_axis.x, cev->mouse_axis.y,
 						                      cev->mouse_axis.axis, val))
+						{
 							success = FALSE;
+						}
 					}
 					break;
 				default:
@@ -314,9 +357,11 @@ BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev
 
 BOOL wlf_handle_pointer_source(freerdp* instance, const UwacPointerSourceEvent* ev)
 {
-	wlfContext* context;
+	wlfContext* context = NULL;
 	if (!instance || !instance->context || !ev)
+	{
 		return FALSE;
+	}
 
 	context = (wlfContext*)instance->context;
 	return ArrayList_Append(context->events, ev);
@@ -324,31 +369,39 @@ BOOL wlf_handle_pointer_source(freerdp* instance, const UwacPointerSourceEvent* 
 
 BOOL wlf_handle_key(freerdp* instance, const UwacKeyEvent* ev)
 {
-	rdpInput* input;
-	DWORD rdp_scancode;
+	rdpInput* input = NULL;
+	DWORD rdp_scancode = 0;
 
 	if (!instance || !ev)
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(instance->context);
 	if (freerdp_settings_get_bool(instance->context->settings, FreeRDP_GrabKeyboard) &&
 	    ev->raw_key == KEY_RIGHTCTRL)
+	{
 		wlf_handle_ungrab_key(instance, ev);
+	}
 
 	input = instance->context->input;
 	rdp_scancode = freerdp_keyboard_get_rdp_scancode_from_x11_keycode(ev->raw_key + 8);
 
 	if (rdp_scancode == RDP_SCANCODE_UNKNOWN)
+	{
 		return TRUE;
+	}
 
 	return freerdp_input_send_keyboard_event_ex(input, ev->pressed, ev->repeated, rdp_scancode);
 }
 
 BOOL wlf_handle_ungrab_key(freerdp* instance, const UwacKeyEvent* ev)
 {
-	wlfContext* context;
+	wlfContext* context = NULL;
 	if (!instance || !instance->context || !ev)
+	{
 		return FALSE;
+	}
 
 	context = (wlfContext*)instance->context;
 
@@ -358,7 +411,9 @@ BOOL wlf_handle_ungrab_key(freerdp* instance, const UwacKeyEvent* ev)
 BOOL wlf_keyboard_enter(freerdp* instance, const UwacKeyboardEnterLeaveEvent* ev)
 {
 	if (!instance || !ev)
+	{
 		return FALSE;
+	}
 
 	((wlfContext*)instance->context)->focusing = TRUE;
 	return TRUE;
@@ -366,12 +421,14 @@ BOOL wlf_keyboard_enter(freerdp* instance, const UwacKeyboardEnterLeaveEvent* ev
 
 BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent* ev)
 {
-	rdpInput* input;
-	UINT16 syncFlags;
-	wlfContext* wlf;
+	rdpInput* input = NULL;
+	UINT16 syncFlags = 0;
+	wlfContext* wlf = NULL;
 
 	if (!instance || !ev)
+	{
 		return FALSE;
+	}
 
 	wlf = (wlfContext*)instance->context;
 	WINPR_ASSERT(wlf);
@@ -382,12 +439,18 @@ BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent*
 	syncFlags = 0;
 
 	if (ev->modifiers & UWAC_MOD_CAPS_MASK)
+	{
 		syncFlags |= KBD_SYNC_CAPS_LOCK;
+	}
 	if (ev->modifiers & UWAC_MOD_NUM_MASK)
+	{
 		syncFlags |= KBD_SYNC_NUM_LOCK;
+	}
 
 	if (!wlf->focusing)
+	{
 		return TRUE;
+	}
 
 	((wlfContext*)instance->context)->focusing = FALSE;
 
@@ -397,7 +460,8 @@ BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent*
 
 BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 {
-	int32_t x, y;
+	int32_t x;
+	int32_t y;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(ev);
@@ -409,14 +473,17 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 	y = ev->y;
 
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
+	{
 		return FALSE;
+	}
 
 	return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_UP, ev->id, 0, x, y);
 }
 
 BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 {
-	int32_t x, y;
+	int32_t x;
+	int32_t y;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(ev);
@@ -428,14 +495,17 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 	y = ev->y;
 
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
+	{
 		return FALSE;
+	}
 
 	return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_DOWN, ev->id, 0, x, y);
 }
 
 BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 {
-	int32_t x, y;
+	int32_t x;
+	int32_t y;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(ev);
@@ -447,7 +517,9 @@ BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 	y = ev->y;
 
 	if (!scale_signed_coordinates(instance->context, &x, &y, TRUE))
+	{
 		return FALSE;
+	}
 
 	return freerdp_client_handle_touch(&wlf->common, FREERDP_TOUCH_MOTION, 0, ev->id, x, y);
 }

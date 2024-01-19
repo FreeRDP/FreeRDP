@@ -20,8 +20,8 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/pool.h>
 #include <winpr/library.h>
+#include <winpr/pool.h>
 
 #include "pool.h"
 
@@ -67,7 +67,9 @@ PTP_CLEANUP_GROUP winpr_CreateThreadpoolCleanupGroup(void)
 	cleanupGroup = (PTP_CLEANUP_GROUP)calloc(1, sizeof(TP_CLEANUP_GROUP));
 
 	if (!cleanupGroup)
+	{
 		return NULL;
+	}
 
 	cleanupGroup->groups = ArrayList_New(FALSE);
 
@@ -128,10 +130,14 @@ VOID winpr_CloseThreadpoolCleanupGroup(PTP_CLEANUP_GROUP ptpcg)
 #else
 
 	if (ptpcg && ptpcg->groups)
+	{
 		ArrayList_Free(ptpcg->groups);
+	}
 
 	if (ptpcg && ptpcg->env)
+	{
 		ptpcg->env->CleanupGroup = NULL;
+	}
 
 	free(ptpcg);
 #endif

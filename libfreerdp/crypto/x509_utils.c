@@ -39,7 +39,7 @@
 BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 {
 	UINT32 fp_len = EVP_MAX_MD_SIZE;
-	BYTE* fp;
+	BYTE* fp = NULL;
 	const EVP_MD* md = EVP_get_digestbyname(hash);
 	if (!md)
 	{
@@ -79,11 +79,15 @@ static char* crypto_print_name(const X509_NAME* name)
 	{
 		UINT64 size = BIO_number_written(outBIO);
 		if (size > INT_MAX)
+		{
 			return NULL;
+		}
 		buffer = calloc(1, (size_t)size + 1);
 
 		if (!buffer)
+		{
 			return NULL;
+		}
 
 		ERR_clear_error();
 		BIO_read(outBIO, buffer, (int)size);
@@ -95,7 +99,7 @@ static char* crypto_print_name(const X509_NAME* name)
 
 char* x509_utils_get_subject(const X509* xcert)
 {
-	char* subject;
+	char* subject = NULL;
 	if (!xcert)
 	{
 		WLog_ERR(TAG, "Invalid certificate %p", xcert);
@@ -103,7 +107,9 @@ char* x509_utils_get_subject(const X509* xcert)
 	}
 	subject = crypto_print_name(X509_get_subject_name(xcert));
 	if (!subject)
+	{
 		WLog_WARN(TAG, "certificate does not have a subject!");
+	}
 	return subject;
 }
 
@@ -120,12 +126,10 @@ static const char* general_name_type_label(int general_name_type)
 	{
 		return general_name_type_labels[general_name_type];
 	}
-	else
-	{
-		static char buffer[80];
-		sprintf(buffer, "Unknown general name type (%d)", general_name_type);
-		return buffer;
-	}
+
+	static char buffer[80];
+	sprintf(buffer, "Unknown general name type (%d)", general_name_type);
+	return buffer;
 }
 
 /*
@@ -178,9 +182,9 @@ typedef int (*general_name_mapper_pr)(GENERAL_NAME* name, void* data, int index,
 static void map_subject_alt_name(const X509* x509, int general_name_type,
                                  general_name_mapper_pr mapper, void* data)
 {
-	int i;
-	int num;
-	STACK_OF(GENERAL_NAME) * gens;
+	int i = 0;
+	int num = 0;
+	STACK_OF(GENERAL_NAME)* gens = NULL;
 	gens = X509_get_ext_d2i(x509, NID_subject_alt_name, NULL, NULL);
 
 	if (!gens)
@@ -234,7 +238,7 @@ typedef struct string_list
 	int allocated;
 	int count;
 	int maximum;
-} string_list;
+} DECLSPEC_ALIGN(32) string_list;
 
 static void string_list_initialize(string_list* list)
 {
@@ -266,7 +270,7 @@ static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
 {
 	string_list* list = data;
 	unsigned char* cstring = 0;
-	ASN1_STRING* str;
+	ASN1_STRING* str = NULL;
 
 	switch (name->type)
 	{
@@ -337,7 +341,7 @@ typedef struct object_list
 	int allocated;
 	int count;
 	int maximum;
-} object_list;
+} DECLSPEC_ALIGN(32) object_list;
 
 static void object_list_initialize(object_list* list)
 {
@@ -360,9 +364,9 @@ static void object_list_allocate(object_list* list, int allocate_count)
 
 static char* object_string(ASN1_TYPE* object)
 {
-	char* result;
-	unsigned char* utf8String;
-	int length;
+	char* result = NULL;
+	unsigned char* utf8String = NULL;
+	int length = 0;
 	/* TODO: check that object.type is a string type. */
 	length = ASN1_STRING_to_UTF8(&utf8String, object->value.asn1_string);
 
@@ -516,7 +520,7 @@ char** x509_utils_get_dns_names(const X509* x509, size_t* count, size_t** length
 
 char* x509_utils_get_issuer(const X509* xcert)
 {
-	char* issuer;
+	char* issuer = NULL;
 	if (!xcert)
 	{
 		WLog_ERR(TAG, "Invalid certificate %p", xcert);
@@ -524,29 +528,39 @@ char* x509_utils_get_issuer(const X509* xcert)
 	}
 	issuer = crypto_print_name(X509_get_issuer_name(xcert));
 	if (!issuer)
+	{
 		WLog_WARN(TAG, "certificate does not have an issuer!");
+	}
 	return issuer;
 }
 
 BOOL x509_utils_check_eku(const X509* xcert, int nid)
 {
 	BOOL ret = FALSE;
-	STACK_OF(ASN1_OBJECT) * oid_stack;
-	ASN1_OBJECT* oid;
+	STACK_OF(ASN1_OBJECT)* oid_stack = NULL;
+	ASN1_OBJECT* oid = NULL;
 
 	if (!xcert)
+	{
 		return FALSE;
+	}
 
 	oid = OBJ_nid2obj(nid);
 	if (!oid)
+	{
 		return FALSE;
+	}
 
 	oid_stack = X509_get_ext_d2i(xcert, NID_ext_key_usage, NULL, NULL);
 	if (!oid_stack)
+	{
 		return FALSE;
+	}
 
 	if (sk_ASN1_OBJECT_find(oid_stack, oid) >= 0)
+	{
 		ret = TRUE;
+	}
 
 	sk_ASN1_OBJECT_pop_free(oid_stack, ASN1_OBJECT_free);
 	return ret;
@@ -554,9 +568,9 @@ BOOL x509_utils_check_eku(const X509* xcert, int nid)
 
 void x509_utils_print_info(const X509* xcert)
 {
-	char* fp;
-	char* issuer;
-	char* subject;
+	char* fp = NULL;
+	char* issuer = NULL;
+	char* subject = NULL;
 	subject = x509_utils_get_subject(xcert);
 	issuer = x509_utils_get_issuer(xcert);
 	fp = (char*)x509_utils_get_hash(xcert, "sha256", NULL);
@@ -583,15 +597,19 @@ out_free_issuer:
 
 static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain, size_t* plength)
 {
-	BIO* bio;
-	int status, count, x;
-	size_t offset;
+	BIO* bio = NULL;
+	int status;
+	int count;
+	int x;
+	size_t offset = 0;
 	size_t length = 0;
 	BOOL rc = FALSE;
 	BYTE* pemCert = NULL;
 
 	if (!xcert || !plength)
+	{
 		return NULL;
+	}
 
 	/**
 	 * Don't manage certificates internally, leave it up entirely to the external client
@@ -651,13 +669,15 @@ static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain,
 
 	while (offset >= length)
 	{
-		int new_len;
-		BYTE* new_cert;
+		int new_len = 0;
+		BYTE* new_cert = NULL;
 		new_len = length * 2;
 		new_cert = (BYTE*)realloc(pemCert, new_len + 1);
 
 		if (!new_cert)
+		{
 			goto fail;
+		}
 
 		length = new_len;
 		pemCert = new_cert;
@@ -665,7 +685,9 @@ static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain,
 		status = BIO_read(bio, &pemCert[offset], length - offset);
 
 		if (status < 0)
+		{
 			break;
+		}
 
 		offset += status;
 	}
@@ -696,11 +718,15 @@ fail:
 X509* x509_utils_from_pem(const char* data, size_t len, BOOL fromFile)
 {
 	X509* x509 = NULL;
-	BIO* bio;
+	BIO* bio = NULL;
 	if (fromFile)
+	{
 		bio = BIO_new_file(data, "rb");
+	}
 	else
+	{
 		bio = BIO_new_mem_buf(data, len);
+	}
 
 	if (!bio)
 	{
@@ -711,7 +737,9 @@ X509* x509_utils_from_pem(const char* data, size_t len, BOOL fromFile)
 	x509 = PEM_read_bio_X509(bio, NULL, NULL, 0);
 	BIO_free_all(bio);
 	if (!x509)
+	{
 		WLog_ERR(TAG, "PEM_read_bio_X509 returned NULL [input length %" PRIuz "]", len);
+	}
 
 	return x509;
 }
@@ -726,7 +754,9 @@ WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
 	int nid = 0;
 	const int res = EVP_PKEY_get_default_digest_nid(evp, &nid);
 	if (res <= 0)
+	{
 		return WINPR_MD_NONE;
+	}
 
 	switch (nid)
 	{
@@ -772,27 +802,39 @@ char* x509_utils_get_common_name(const X509* xcert, size_t* plength)
 {
 	X509_NAME* subject_name = X509_get_subject_name(xcert);
 	if (subject_name == NULL)
+	{
 		return NULL;
+	}
 
 	const int index = X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
 	if (index < 0)
+	{
 		return NULL;
+	}
 
 	const X509_NAME_ENTRY* entry = X509_NAME_get_entry(subject_name, index);
 	if (entry == NULL)
+	{
 		return NULL;
+	}
 
 	const ASN1_STRING* entry_data = X509_NAME_ENTRY_get_data(entry);
 	if (entry_data == NULL)
+	{
 		return NULL;
+	}
 
 	BYTE* common_name_raw = NULL;
 	const int length = ASN1_STRING_to_UTF8(&common_name_raw, entry_data);
 	if (length < 0)
+	{
 		return NULL;
+	}
 
 	if (plength)
+	{
 		*plength = (size_t)length;
+	}
 
 	char* common_name = _strdup((char*)common_name_raw);
 	OPENSSL_free(common_name_raw);
@@ -827,12 +869,16 @@ BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certific
 	X509_LOOKUP* lookup = NULL;
 
 	if (!xcert)
+	{
 		return FALSE;
+	}
 
 	X509_STORE* cert_ctx = X509_STORE_new();
 
 	if (cert_ctx == NULL)
+	{
 		goto end;
+	}
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	OpenSSL_add_all_algorithms();
@@ -843,12 +889,16 @@ BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certific
 #endif
 
 	if (X509_STORE_set_default_paths(cert_ctx) != 1)
+	{
 		goto end;
+	}
 
 	lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
 
 	if (lookup == NULL)
+	{
 		goto end;
+	}
 
 	X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
 
@@ -861,14 +911,19 @@ BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certific
 
 	for (size_t i = 0; i < ARRAYSIZE(purposes); i++)
 	{
-		int err = -1, rc = -1;
+		int err = -1;
+		int rc = -1;
 		int purpose = purposes[i];
 		csc = X509_STORE_CTX_new();
 
 		if (csc == NULL)
+		{
 			goto skip;
+		}
 		if (!X509_STORE_CTX_init(csc, cert_ctx, xcert, chain))
+		{
 			goto skip;
+		}
 
 		X509_STORE_CTX_set_purpose(csc, purpose);
 		X509_STORE_CTX_set_verify_cb(csc, verify_cb);
@@ -882,7 +937,7 @@ BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certific
 			status = TRUE;
 			break;
 		}
-		else if (err != X509_V_ERR_INVALID_PURPOSE)
+		if (err != X509_V_ERR_INVALID_PURPOSE)
 			break;
 	}
 

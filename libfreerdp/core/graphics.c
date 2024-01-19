@@ -29,8 +29,8 @@
 
 rdpBitmap* Bitmap_Alloc(rdpContext* context)
 {
-	rdpBitmap* bitmap;
-	rdpGraphics* graphics;
+	rdpBitmap* bitmap = NULL;
+	rdpGraphics* graphics = NULL;
 	graphics = context->graphics;
 	bitmap = (rdpBitmap*)calloc(1, graphics->Bitmap_Prototype->size);
 
@@ -46,13 +46,17 @@ rdpBitmap* Bitmap_Alloc(rdpContext* context)
 void Bitmap_Free(rdpContext* context, rdpBitmap* bitmap)
 {
 	if (bitmap)
+	{
 		bitmap->Free(context, bitmap);
+	}
 }
 
 BOOL Bitmap_SetRectangle(rdpBitmap* bitmap, UINT16 left, UINT16 top, UINT16 right, UINT16 bottom)
 {
 	if (!bitmap)
+	{
 		return FALSE;
+	}
 
 	bitmap->left = left;
 	bitmap->top = top;
@@ -64,7 +68,9 @@ BOOL Bitmap_SetRectangle(rdpBitmap* bitmap, UINT16 left, UINT16 top, UINT16 righ
 BOOL Bitmap_SetDimensions(rdpBitmap* bitmap, UINT16 width, UINT16 height)
 {
 	if (!bitmap)
+	{
 		return FALSE;
+	}
 
 	bitmap->right = bitmap->left + width - 1;
 	bitmap->bottom = bitmap->top + height - 1;
@@ -85,8 +91,8 @@ void graphics_register_bitmap(rdpGraphics* graphics, const rdpBitmap* bitmap)
 /* Pointer Class */
 rdpPointer* Pointer_Alloc(rdpContext* context)
 {
-	rdpPointer* pointer;
-	rdpGraphics* graphics;
+	rdpPointer* pointer = NULL;
+	rdpGraphics* graphics = NULL;
 	graphics = context->graphics;
 	pointer = (rdpPointer*)calloc(1, graphics->Pointer_Prototype->size);
 
@@ -113,21 +119,27 @@ void graphics_register_pointer(rdpGraphics* graphics, const rdpPointer* pointer)
 rdpGlyph* Glyph_Alloc(rdpContext* context, INT32 x, INT32 y, UINT32 cx, UINT32 cy, UINT32 cb,
                       const BYTE* aj)
 {
-	rdpGlyph* glyph;
-	rdpGraphics* graphics;
+	rdpGlyph* glyph = NULL;
+	rdpGraphics* graphics = NULL;
 
 	if (!context || !context->graphics)
+	{
 		return NULL;
+	}
 
 	graphics = context->graphics;
 
 	if (!graphics->Glyph_Prototype)
+	{
 		return NULL;
+	}
 
 	glyph = (rdpGlyph*)calloc(1, graphics->Glyph_Prototype->size);
 
 	if (!glyph)
+	{
 		return NULL;
+	}
 
 	*glyph = *graphics->Glyph_Prototype;
 	glyph->cb = cb;
@@ -168,7 +180,7 @@ void graphics_register_glyph(rdpGraphics* graphics, const rdpGlyph* glyph)
 
 rdpGraphics* graphics_new(rdpContext* context)
 {
-	rdpGraphics* graphics;
+	rdpGraphics* graphics = NULL;
 	graphics = (rdpGraphics*)calloc(1, sizeof(rdpGraphics));
 
 	if (graphics)

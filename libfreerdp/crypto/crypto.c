@@ -53,22 +53,32 @@ static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_le
 	size_t bufferSize = 0;
 
 	if (!input || !modulus || !exponent || !output)
+	{
 		return -1;
+	}
 
 	if ((size_t)exponent_size > INT_MAX / 2)
+	{
 		return -1;
+	}
 
 	if (key_length >= INT_MAX / 2 - exponent_size)
+	{
 		return -1;
+	}
 
 	bufferSize = 2ULL * key_length + exponent_size;
 	if ((size_t)length > bufferSize)
+	{
 		bufferSize = (size_t)length;
+	}
 
 	input_reverse = (BYTE*)calloc(bufferSize, 1);
 
 	if (!input_reverse)
+	{
 		return -1;
+	}
 
 	modulus_reverse = input_reverse + key_length;
 	exponent_reverse = modulus_reverse + key_length;
@@ -80,41 +90,65 @@ static SSIZE_T crypto_rsa_common(const BYTE* input, size_t length, UINT32 key_le
 	crypto_reverse(input_reverse, length);
 
 	if (!(ctx = BN_CTX_new()))
+	{
 		goto fail;
+	}
 
 	if (!(mod = BN_new()))
+	{
 		goto fail;
+	}
 
 	if (!(exp = BN_new()))
+	{
 		goto fail;
+	}
 
 	if (!(x = BN_new()))
+	{
 		goto fail;
+	}
 
 	if (!(y = BN_new()))
+	{
 		goto fail;
+	}
 
 	if (!BN_bin2bn(modulus_reverse, key_length, mod))
+	{
 		goto fail;
+	}
 
 	if (!BN_bin2bn(exponent_reverse, exponent_size, exp))
+	{
 		goto fail;
+	}
 	if (!BN_bin2bn(input_reverse, length, x))
+	{
 		goto fail;
+	}
 	if (BN_mod_exp(y, x, exp, mod, ctx) != 1)
+	{
 		goto fail;
+	}
 	output_length = BN_bn2bin(y, output);
 	if (output_length < 0)
+	{
 		goto fail;
+	}
 	if ((size_t)output_length > out_length)
+	{
 		goto fail;
+	}
 	crypto_reverse(output, output_length);
 
 	if ((size_t)output_length < key_length)
 	{
 		size_t diff = key_length - output_length;
 		if ((size_t)output_length + diff > out_length)
+		{
 			diff = out_length - (size_t)output_length;
+		}
 		memset(output + output_length, 0, diff);
 	}
 
@@ -175,10 +209,13 @@ SSIZE_T crypto_rsa_private_decrypt(const BYTE* input, size_t length, const rdpPr
 
 void crypto_reverse(BYTE* data, size_t length)
 {
-	size_t i, j;
+	size_t i;
+	size_t j;
 
 	if (length < 1)
+	{
 		return;
+	}
 
 	for (i = 0, j = length - 1; i < j; i++, j--)
 	{
@@ -196,31 +233,47 @@ char* crypto_read_pem(const char* filename, size_t* plength)
 	WINPR_ASSERT(filename);
 
 	if (plength)
+	{
 		*plength = 0;
+	}
 
 	fp = winpr_fopen(filename, "r");
 	if (!fp)
+	{
 		goto fail;
+	}
 	const int rs = _fseeki64(fp, 0, SEEK_END);
 	if (rs < 0)
+	{
 		goto fail;
+	}
 	const SSIZE_T size = _ftelli64(fp);
 	if (size < 0)
+	{
 		goto fail;
+	}
 	const int rc = _fseeki64(fp, 0, SEEK_SET);
 	if (rc < 0)
+	{
 		goto fail;
+	}
 
 	pem = calloc(size + 1, sizeof(char));
 	if (!pem)
+	{
 		goto fail;
+	}
 
 	const size_t fr = fread(pem, (size_t)size, 1, fp);
 	if (fr != 1)
+	{
 		goto fail;
+	}
 
 	if (plength)
+	{
 		*plength = (size_t)strnlen(pem, size);
+	}
 	fclose(fp);
 	return pem;
 
@@ -231,7 +284,9 @@ fail:
 	          winpr_strerror(errno, buffer, sizeof(buffer)));
 }
 	if (fp)
+	{
 		fclose(fp);
+	}
 	free(pem);
 	return NULL;
 }
@@ -248,7 +303,9 @@ BOOL crypto_write_pem(const char* filename, const char* pem, size_t length)
 	size_t rc = 0;
 	FILE* fp = winpr_fopen(filename, "w");
 	if (!fp)
+	{
 		goto fail;
+	}
 	rc = fwrite(pem, 1, size, fp);
 	fclose(fp);
 fail:

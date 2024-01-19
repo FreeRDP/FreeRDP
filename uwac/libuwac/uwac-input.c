@@ -42,16 +42,18 @@
 static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, size_t size)
 {
 	struct wl_buffer* buffer = NULL;
-	int fd;
-	void* data;
-	struct wl_shm_pool* pool;
+	int fd = 0;
+	void* data = NULL;
+	struct wl_shm_pool* pool = NULL;
 
 	assert(seat);
 
 	fd = uwac_create_anonymous_file(size);
 
 	if (fd < 0)
+	{
 		return buffer;
+	}
 
 	data = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
@@ -75,8 +77,10 @@ static struct wl_buffer* create_pointer_buffer(UwacSeat* seat, const void* src, 
 	wl_shm_pool_destroy(pool);
 
 	if (munmap(data, size) < 0)
+	{
 		fprintf(stderr, "%s: munmap(%p, %zu) failed with [%d] %s\n", __func__, data, size, errno,
 		        strerror(errno));
+	}
 
 error_mmap:
 	close(fd);
@@ -94,17 +98,22 @@ static const struct wl_buffer_listener buffer_release_listener = { on_buffer_rel
 static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 {
 	struct wl_buffer* buffer = NULL;
-	struct wl_cursor* cursor;
+	struct wl_cursor* cursor = NULL;
 	struct wl_cursor_image* image = NULL;
 	struct wl_surface* surface = NULL;
-	int32_t x = 0, y = 0;
+	int32_t x = 0;
+	int32_t y = 0;
 
 	if (!seat || !seat->display || !seat->default_cursor || !seat->default_cursor->images)
+	{
 		return UWAC_ERROR_INTERNAL;
+	}
 
 	int scale = 1;
 	if (seat->pointer_focus)
+	{
 		scale = seat->pointer_focus->display->actual_scale;
+	}
 
 	switch (seat->pointer_type)
 	{
@@ -112,9 +121,13 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 			image = seat->pointer_image;
 			buffer = create_pointer_buffer(seat, seat->pointer_data, seat->pointer_size);
 			if (!buffer)
+			{
 				return UWAC_ERROR_INTERNAL;
+			}
 			if (wl_buffer_add_listener(buffer, &buffer_release_listener, seat) < 0)
+			{
 				return UWAC_ERROR_INTERNAL;
+			}
 
 			surface = seat->pointer_surface;
 			x = image->hotspot_x / scale;
@@ -125,15 +138,21 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 		default: /* Default system pointer */
 			cursor = seat->default_cursor;
 			if (!cursor)
+			{
 				return UWAC_ERROR_INTERNAL;
+			}
 			image = cursor->images[0];
 			if (!image)
+			{
 				return UWAC_ERROR_INTERNAL;
+			}
 			x = image->hotspot_x;
 			y = image->hotspot_y;
 			buffer = wl_cursor_image_get_buffer(image);
 			if (!buffer)
+			{
 				return UWAC_ERROR_INTERNAL;
+			}
 			surface = seat->pointer_surface;
 			break;
 	}
@@ -156,21 +175,25 @@ static void keyboard_repeat_func(UwacTask* task, uint32_t events)
 	UwacSeat* input = container_of(task, UwacSeat, repeat_task);
 	assert(input);
 	UwacWindow* window = input->keyboard_focus;
-	uint64_t exp;
+	uint64_t exp = 0;
 
 	if (read(input->repeat_timer_fd, &exp, sizeof exp) != sizeof exp)
+	{
 		/* If we change the timer between the fd becoming
 		 * readable and getting here, there'll be nothing to
 		 * read and we get EAGAIN. */
 		return;
+	}
 
 	if (window)
 	{
-		UwacKeyEvent* key;
+		UwacKeyEvent* key = NULL;
 
 		key = (UwacKeyEvent*)UwacDisplayNewEvent(input->display, UWAC_EVENT_KEY);
 		if (!key)
+		{
 			return;
+		}
 
 		key->window = window;
 		key->sym = input->repeat_sym;
@@ -184,9 +207,9 @@ static void keyboard_handle_keymap(void* data, struct wl_keyboard* keyboard, uin
                                    int fd, uint32_t size)
 {
 	UwacSeat* input = data;
-	struct xkb_keymap* keymap;
-	struct xkb_state* state;
-	char* map_str;
+	struct xkb_keymap* keymap = NULL;
+	struct xkb_state* state = NULL;
+	char* map_str = NULL;
 	int mapFlags = MAP_SHARED;
 
 	if (!data)
@@ -202,7 +225,9 @@ static void keyboard_handle_keymap(void* data, struct wl_keyboard* keyboard, uin
 	}
 
 	if (input->seat_version >= 7)
+	{
 		mapFlags = MAP_PRIVATE;
+	}
 
 	map_str = mmap(NULL, size, PROT_READ, mapFlags, fd, 0);
 	if (map_str == MAP_FAILED)
@@ -254,7 +279,9 @@ static void keyboard_handle_enter(void* data, struct wl_keyboard* keyboard, uint
 	UwacKeyboardEnterLeaveEvent* event = (UwacKeyboardEnterLeaveEvent*)UwacDisplayNewEvent(
 	    input->display, UWAC_EVENT_KEYBOARD_ENTER);
 	if (!event)
+	{
 		return;
+	}
 
 	event->window = input->keyboard_focus = (UwacWindow*)wl_surface_get_user_data(surface);
 	event->seat = input;
@@ -273,8 +300,8 @@ static void keyboard_handle_leave(void* data, struct wl_keyboard* keyboard, uint
                                   struct wl_surface* surface)
 {
 	struct itimerspec its = { 0 };
-	uint32_t* pressedKey;
-	size_t i;
+	uint32_t* pressedKey = NULL;
+	size_t i = 0;
 
 	UwacSeat* input = (UwacSeat*)data;
 	assert(input);
@@ -288,7 +315,9 @@ static void keyboard_handle_leave(void* data, struct wl_keyboard* keyboard, uint
 	UwacPointerEnterLeaveEvent* event =
 	    (UwacPointerEnterLeaveEvent*)UwacDisplayNewEvent(input->display, UWAC_EVENT_POINTER_LEAVE);
 	if (!event)
+	{
 		return;
+	}
 
 	event->window = input->keyboard_focus;
 
@@ -313,12 +342,16 @@ static int update_key_pressed(UwacSeat* seat, uint32_t key)
 	wl_array_for_each(keyPtr, &seat->pressed_keys)
 	{
 		if (*keyPtr == key)
+		{
 			return 1;
+		}
 	}
 
 	keyPtr = wl_array_add(&seat->pressed_keys, sizeof(uint32_t));
 	if (!keyPtr)
+	{
 		return -1;
+	}
 
 	*keyPtr = key;
 	return 0;
@@ -326,13 +359,13 @@ static int update_key_pressed(UwacSeat* seat, uint32_t key)
 
 static int update_key_released(UwacSeat* seat, uint32_t key)
 {
-	uint32_t* keyPtr;
-	size_t toMove;
+	uint32_t* keyPtr = NULL;
+	size_t toMove = 0;
 	bool found = false;
 
 	assert(seat);
 
-	size_t i;
+	size_t i = 0;
 	for (i = 0, keyPtr = seat->pressed_keys.data; i < seat->pressed_keys.size; i++, keyPtr++)
 	{
 		if (*keyPtr == key)
@@ -346,7 +379,9 @@ static int update_key_released(UwacSeat* seat, uint32_t key)
 	{
 		toMove = seat->pressed_keys.size - ((i + 1) * sizeof(uint32_t));
 		if (toMove)
+		{
 			memmove(keyPtr, keyPtr + 1, toMove);
+		}
 
 		seat->pressed_keys.size -= sizeof(uint32_t);
 	}
@@ -360,23 +395,30 @@ static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32
 	assert(input);
 
 	UwacWindow* window = input->keyboard_focus;
-	UwacKeyEvent* keyEvent;
+	UwacKeyEvent* keyEvent = NULL;
 
-	uint32_t code, num_syms;
+	uint32_t code;
+	uint32_t num_syms;
 	enum wl_keyboard_key_state state = state_w;
-	const xkb_keysym_t* syms;
-	xkb_keysym_t sym;
+	const xkb_keysym_t* syms = NULL;
+	xkb_keysym_t sym = 0;
 	struct itimerspec its;
 
 	if (state_w == WL_KEYBOARD_KEY_STATE_PRESSED)
+	{
 		update_key_pressed(input, key);
+	}
 	else
+	{
 		update_key_released(input, key);
+	}
 
 	input->display->serial = serial;
 	code = key + 8;
 	if (!window || !input->xkb.state)
+	{
 		return;
+	}
 
 	/* We only use input grabs for pointer events for now, so just
 	 * ignore key presses if a grab is active.  We expand the key
@@ -390,7 +432,9 @@ static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32
 
 	sym = XKB_KEY_NoSymbol;
 	if (num_syms == 1)
+	{
 		sym = syms[0];
+	}
 
 	if (state == WL_KEYBOARD_KEY_STATE_RELEASED && key == input->repeat_key)
 	{
@@ -415,7 +459,9 @@ static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32
 
 	keyEvent = (UwacKeyEvent*)UwacDisplayNewEvent(input->display, UWAC_EVENT_KEY);
 	if (!keyEvent)
+	{
 		return;
+	}
 
 	keyEvent->window = window;
 	keyEvent->sym = sym;
@@ -431,12 +477,14 @@ static void keyboard_handle_modifiers(void* data, struct wl_keyboard* keyboard, 
 	UwacSeat* input = data;
 	assert(input);
 
-	UwacKeyboardModifiersEvent* event;
-	xkb_mod_mask_t mask;
+	UwacKeyboardModifiersEvent* event = NULL;
+	xkb_mod_mask_t mask = 0;
 
 	/* If we're not using a keymap, then we don't handle PC-style modifiers */
 	if (!input->xkb.keymap)
+	{
 		return;
+	}
 
 	xkb_state_update_mask(input->xkb.state, mods_depressed, mods_latched, mods_locked, 0, 0, group);
 	mask = xkb_state_serialize_mods(input->xkb.state, XKB_STATE_MODS_DEPRESSED |
@@ -444,20 +492,32 @@ static void keyboard_handle_modifiers(void* data, struct wl_keyboard* keyboard, 
 	                                                      XKB_STATE_MODS_LOCKED);
 	input->modifiers = 0;
 	if (mask & input->xkb.control_mask)
+	{
 		input->modifiers |= UWAC_MOD_CONTROL_MASK;
+	}
 	if (mask & input->xkb.alt_mask)
+	{
 		input->modifiers |= UWAC_MOD_ALT_MASK;
+	}
 	if (mask & input->xkb.shift_mask)
+	{
 		input->modifiers |= UWAC_MOD_SHIFT_MASK;
+	}
 	if (mask & input->xkb.caps_mask)
+	{
 		input->modifiers |= UWAC_MOD_CAPS_MASK;
+	}
 	if (mask & input->xkb.num_mask)
+	{
 		input->modifiers |= UWAC_MOD_NUM_MASK;
+	}
 
 	event = (UwacKeyboardModifiersEvent*)UwacDisplayNewEvent(input->display,
 	                                                         UWAC_EVENT_KEYBOARD_MODIFIERS);
 	if (!event)
+	{
 		return;
+	}
 
 	event->modifiers = input->modifiers;
 }
@@ -472,12 +532,18 @@ static void set_repeat_info(UwacSeat* input, int32_t rate, int32_t delay)
 	/* a rate of zero disables any repeating, regardless of the delay's
 	 * value */
 	if (rate == 0)
+	{
 		return;
+	}
 
 	if (rate == 1)
+	{
 		input->repeat_rate_sec = 1;
+	}
 	else
+	{
 		input->repeat_rate_nsec = 1000000000 / rate;
+	}
 
 	input->repeat_delay_sec = delay / 1000;
 	delay -= (input->repeat_delay_sec * 1000);
@@ -505,7 +571,9 @@ static bool touch_send_start_frame(UwacSeat* seat)
 	UwacTouchFrameBegin* ev =
 	    (UwacTouchFrameBegin*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_TOUCH_FRAME_BEGIN);
 	if (!ev)
+	{
 		return false;
+	}
 
 	seat->touch_frame_started = true;
 	return true;
@@ -516,18 +584,22 @@ static void touch_handle_down(void* data, struct wl_touch* wl_touch, uint32_t se
                               wl_fixed_t y_w)
 {
 	UwacSeat* seat = data;
-	UwacTouchDown* tdata;
+	UwacTouchDown* tdata = NULL;
 
 	assert(seat);
 	assert(seat->display);
 
 	seat->display->serial = serial;
 	if (!seat->touch_frame_started && !touch_send_start_frame(seat))
+	{
 		return;
+	}
 
 	tdata = (UwacTouchDown*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_TOUCH_DOWN);
 	if (!tdata)
+	{
 		return;
+	}
 
 	tdata->seat = seat;
 	tdata->id = id;
@@ -585,16 +657,20 @@ static void touch_handle_up(void* data, struct wl_touch* wl_touch, uint32_t seri
                             int32_t id)
 {
 	UwacSeat* seat = data;
-	UwacTouchUp* tdata;
+	UwacTouchUp* tdata = NULL;
 
 	assert(seat);
 
 	if (!seat->touch_frame_started && !touch_send_start_frame(seat))
+	{
 		return;
+	}
 
 	tdata = (UwacTouchUp*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_TOUCH_UP);
 	if (!tdata)
+	{
 		return;
+	}
 
 	tdata->seat = seat;
 	tdata->id = id;
@@ -630,14 +706,18 @@ static void touch_handle_motion(void* data, struct wl_touch* wl_touch, uint32_t 
 	UwacSeat* seat = data;
 	assert(seat);
 
-	UwacTouchMotion* tdata;
+	UwacTouchMotion* tdata = NULL;
 
 	if (!seat->touch_frame_started && !touch_send_start_frame(seat))
+	{
 		return;
+	}
 
 	tdata = (UwacTouchMotion*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_TOUCH_MOTION);
 	if (!tdata)
+	{
 		return;
+	}
 
 	tdata->seat = seat;
 	tdata->id = id;
@@ -683,7 +763,9 @@ static void touch_handle_frame(void* data, struct wl_touch* wl_touch)
 	UwacTouchFrameEnd* ev =
 	    (UwacTouchFrameEnd*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_TOUCH_FRAME_END);
 	if (!ev)
+	{
 		return;
+	}
 
 	ev->seat = seat;
 	seat->touch_frame_started = false;
@@ -697,7 +779,9 @@ static void touch_handle_cancel(void* data, struct wl_touch* wl_touch)
 	UwacTouchCancel* ev =
 	    (UwacTouchCancel*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_TOUCH_CANCEL);
 	if (!ev)
+	{
 		return;
+	}
 
 	ev->seat = seat;
 	seat->touch_frame_started = false;
@@ -750,8 +834,8 @@ static void pointer_handle_enter(void* data, struct wl_pointer* pointer, uint32_
                                  struct wl_surface* surface, wl_fixed_t sx_w, wl_fixed_t sy_w)
 {
 	UwacSeat* input = data;
-	UwacWindow* window;
-	UwacPointerEnterLeaveEvent* event;
+	UwacWindow* window = NULL;
+	UwacPointerEnterLeaveEvent* event = NULL;
 
 	assert(input);
 
@@ -768,7 +852,9 @@ static void pointer_handle_enter(void* data, struct wl_pointer* pointer, uint32_
 	input->display->pointer_focus_serial = serial;
 	window = wl_surface_get_user_data(surface);
 	if (window)
+	{
 		window->pointer_enter_serial = serial;
+	}
 	input->pointer_focus = window;
 	input->sx = sx;
 	input->sy = sy;
@@ -776,7 +862,9 @@ static void pointer_handle_enter(void* data, struct wl_pointer* pointer, uint32_
 	event =
 	    (UwacPointerEnterLeaveEvent*)UwacDisplayNewEvent(input->display, UWAC_EVENT_POINTER_ENTER);
 	if (!event)
+	{
 		return;
+	}
 
 	event->seat = input;
 	event->window = window;
@@ -790,8 +878,8 @@ static void pointer_handle_enter(void* data, struct wl_pointer* pointer, uint32_
 static void pointer_handle_leave(void* data, struct wl_pointer* pointer, uint32_t serial,
                                  struct wl_surface* surface)
 {
-	UwacPointerEnterLeaveEvent* event;
-	UwacWindow* window;
+	UwacPointerEnterLeaveEvent* event = NULL;
+	UwacWindow* window = NULL;
 	UwacSeat* input = data;
 	assert(input);
 
@@ -800,7 +888,9 @@ static void pointer_handle_leave(void* data, struct wl_pointer* pointer, uint32_
 	event =
 	    (UwacPointerEnterLeaveEvent*)UwacDisplayNewEvent(input->display, UWAC_EVENT_POINTER_LEAVE);
 	if (!event)
+	{
 		return;
+	}
 
 	window = wl_surface_get_user_data(surface);
 
@@ -811,7 +901,7 @@ static void pointer_handle_leave(void* data, struct wl_pointer* pointer, uint32_
 static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32_t time,
                                   wl_fixed_t sx_w, wl_fixed_t sy_w)
 {
-	UwacPointerMotionEvent* motion_event;
+	UwacPointerMotionEvent* motion_event = NULL;
 	UwacSeat* input = data;
 	assert(input);
 
@@ -824,7 +914,9 @@ static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32
 	double sy_d = wl_fixed_to_double(sy_w) * scale;
 
 	if (!window || (sx_i < 0) || (sy_i < 0))
+	{
 		return;
+	}
 
 	input->sx = sx_d;
 	input->sy = sy_d;
@@ -832,7 +924,9 @@ static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32
 	motion_event =
 	    (UwacPointerMotionEvent*)UwacDisplayNewEvent(input->display, UWAC_EVENT_POINTER_MOTION);
 	if (!motion_event)
+	{
 		return;
+	}
 
 	motion_event->seat = input;
 	motion_event->window = window;
@@ -843,7 +937,7 @@ static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32
 static void pointer_handle_button(void* data, struct wl_pointer* pointer, uint32_t serial,
                                   uint32_t time, uint32_t button, uint32_t state_w)
 {
-	UwacPointerButtonEvent* event;
+	UwacPointerButtonEvent* event = NULL;
 	UwacSeat* seat = data;
 	assert(seat);
 
@@ -853,7 +947,9 @@ static void pointer_handle_button(void* data, struct wl_pointer* pointer, uint32
 
 	event = (UwacPointerButtonEvent*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_POINTER_BUTTONS);
 	if (!event)
+	{
 		return;
+	}
 
 	event->seat = seat;
 	event->window = window;
@@ -866,18 +962,22 @@ static void pointer_handle_button(void* data, struct wl_pointer* pointer, uint32
 static void pointer_handle_axis(void* data, struct wl_pointer* pointer, uint32_t time,
                                 uint32_t axis, wl_fixed_t value)
 {
-	UwacPointerAxisEvent* event;
+	UwacPointerAxisEvent* event = NULL;
 	UwacSeat* seat = data;
 	assert(seat);
 
 	UwacWindow* window = seat->pointer_focus;
 
 	if (!window)
+	{
 		return;
+	}
 
 	event = (UwacPointerAxisEvent*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_POINTER_AXIS);
 	if (!event)
+	{
 		return;
+	}
 
 	event->seat = seat;
 	event->window = window;
@@ -889,18 +989,22 @@ static void pointer_handle_axis(void* data, struct wl_pointer* pointer, uint32_t
 
 static void pointer_frame(void* data, struct wl_pointer* wl_pointer)
 {
-	UwacPointerFrameEvent* event;
+	UwacPointerFrameEvent* event = NULL;
 	UwacSeat* seat = data;
 	assert(seat);
 
 	UwacWindow* window = seat->pointer_focus;
 
 	if (!window)
+	{
 		return;
+	}
 
 	event = (UwacPointerFrameEvent*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_POINTER_FRAME);
 	if (!event)
+	{
 		return;
+	}
 
 	event->seat = seat;
 	event->window = window;
@@ -908,18 +1012,22 @@ static void pointer_frame(void* data, struct wl_pointer* wl_pointer)
 
 static void pointer_axis_source(void* data, struct wl_pointer* wl_pointer, uint32_t axis_source)
 {
-	UwacPointerSourceEvent* event;
+	UwacPointerSourceEvent* event = NULL;
 	UwacSeat* seat = data;
 	assert(seat);
 
 	UwacWindow* window = seat->pointer_focus;
 
 	if (!window)
+	{
 		return;
+	}
 
 	event = (UwacPointerSourceEvent*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_POINTER_SOURCE);
 	if (!event)
+	{
 		return;
+	}
 
 	event->seat = seat;
 	event->window = window;
@@ -937,19 +1045,23 @@ static void pointer_axis_discrete(void* data, struct wl_pointer* wl_pointer, uin
                                   int32_t discrete)
 {
 	/*UwacSeat *seat = data;*/
-	UwacPointerAxisEvent* event;
+	UwacPointerAxisEvent* event = NULL;
 	UwacSeat* seat = data;
 	assert(seat);
 
 	UwacWindow* window = seat->pointer_focus;
 
 	if (!window)
+	{
 		return;
+	}
 
 	event =
 	    (UwacPointerAxisEvent*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_POINTER_AXIS_DISCRETE);
 	if (!event)
+	{
 		return;
+	}
 
 	event->seat = seat;
 	event->window = window;
@@ -963,19 +1075,23 @@ static void pointer_axis_value120(void* data, struct wl_pointer* wl_pointer, uin
                                   int32_t value120)
 {
 	/*UwacSeat *seat = data;*/
-	UwacPointerAxisEvent* event;
+	UwacPointerAxisEvent* event = NULL;
 	UwacSeat* seat = data;
 	assert(seat);
 
 	UwacWindow* window = seat->pointer_focus;
 
 	if (!window)
+	{
 		return;
+	}
 
 	event =
 	    (UwacPointerAxisEvent*)UwacDisplayNewEvent(seat->display, UWAC_EVENT_POINTER_AXIS_DISCRETE);
 	if (!event)
+	{
 		return;
+	}
 
 	event->seat = seat;
 	event->window = window;
@@ -1022,12 +1138,18 @@ static void seat_handle_capabilities(void* data, struct wl_seat* seat, enum wl_s
 	{
 #ifdef WL_POINTER_RELEASE_SINCE_VERSION
 		if (input->seat_version >= WL_POINTER_RELEASE_SINCE_VERSION)
+		{
 			wl_pointer_release(input->pointer);
+		}
 		else
+		{
 #endif
 			wl_pointer_destroy(input->pointer);
+		}
 		if (input->cursor_theme)
+		{
 			wl_cursor_theme_destroy(input->cursor_theme);
+		}
 
 		input->default_cursor = NULL;
 		input->cursor_theme = NULL;
@@ -1044,10 +1166,14 @@ static void seat_handle_capabilities(void* data, struct wl_seat* seat, enum wl_s
 	{
 #ifdef WL_KEYBOARD_RELEASE_SINCE_VERSION
 		if (input->seat_version >= WL_KEYBOARD_RELEASE_SINCE_VERSION)
+		{
 			wl_keyboard_release(input->keyboard);
+		}
 		else
+		{
 #endif
 			wl_keyboard_destroy(input->keyboard);
+		}
 		input->keyboard = NULL;
 	}
 
@@ -1061,10 +1187,14 @@ static void seat_handle_capabilities(void* data, struct wl_seat* seat, enum wl_s
 	{
 #ifdef WL_TOUCH_RELEASE_SINCE_VERSION
 		if (input->seat_version >= WL_TOUCH_RELEASE_SINCE_VERSION)
+		{
 			wl_touch_release(input->touch);
+		}
 		else
+		{
 #endif
 			wl_touch_destroy(input->touch);
+		}
 		input->touch = NULL;
 	}
 }
@@ -1075,12 +1205,16 @@ static void seat_handle_name(void* data, struct wl_seat* seat, const char* name)
 	assert(input);
 
 	if (input->name)
+	{
 		free(input->name);
+	}
 
 	input->name = strdup(name);
 	if (!input->name)
+	{
 		assert(uwacErrorHandler(input->display, UWAC_ERROR_NOMEMORY,
 		                        "unable to strdup seat's name\n"));
+	}
 }
 
 static const struct wl_seat_listener seat_listener = { seat_handle_capabilities, seat_handle_name };
@@ -1089,7 +1223,9 @@ UwacSeat* UwacSeatNew(UwacDisplay* d, uint32_t id, uint32_t version)
 {
 	UwacSeat* ret = xzalloc(sizeof(UwacSeat));
 	if (!ret)
+	{
 		return NULL;
+	}
 
 	ret->display = d;
 	ret->seat_id = id;
@@ -1131,17 +1267,23 @@ fail:
 void UwacSeatDestroy(UwacSeat* s)
 {
 	if (!s)
+	{
 		return;
+	}
 
 	UwacSeatInhibitShortcuts(s, false);
 	if (s->seat)
 	{
 #ifdef WL_SEAT_RELEASE_SINCE_VERSION
 		if (s->seat_version >= WL_SEAT_RELEASE_SINCE_VERSION)
+		{
 			wl_seat_release(s->seat);
+		}
 		else
+		{
 #endif
 			wl_seat_destroy(s->seat);
+		}
 	}
 	s->seat = NULL;
 
@@ -1155,40 +1297,58 @@ void UwacSeatDestroy(UwacSeat* s)
 	{
 #ifdef WL_POINTER_RELEASE_SINCE_VERSION
 		if (s->seat_version >= WL_POINTER_RELEASE_SINCE_VERSION)
+		{
 			wl_pointer_release(s->pointer);
+		}
 		else
+		{
 #endif
 			wl_pointer_destroy(s->pointer);
+		}
 	}
 
 	if (s->touch)
 	{
 #ifdef WL_TOUCH_RELEASE_SINCE_VERSION
 		if (s->seat_version >= WL_TOUCH_RELEASE_SINCE_VERSION)
+		{
 			wl_touch_release(s->touch);
+		}
 		else
+		{
 #endif
 			wl_touch_destroy(s->touch);
+		}
 	}
 
 	if (s->keyboard)
 	{
 #ifdef WL_KEYBOARD_RELEASE_SINCE_VERSION
 		if (s->seat_version >= WL_KEYBOARD_RELEASE_SINCE_VERSION)
+		{
 			wl_keyboard_release(s->keyboard);
+		}
 		else
+		{
 #endif
 			wl_keyboard_destroy(s->keyboard);
+		}
 	}
 
 	if (s->data_device)
+	{
 		wl_data_device_destroy(s->data_device);
+	}
 
 	if (s->data_source)
+	{
 		wl_data_source_destroy(s->data_source);
+	}
 
 	if (s->pointer_surface)
+	{
 		wl_surface_destroy(s->pointer_surface);
+	}
 
 	free(s->pointer_image);
 	free(s->pointer_data);
@@ -1212,7 +1372,9 @@ UwacSeatId UwacSeatGetId(const UwacSeat* seat)
 UwacReturnCode UwacSeatInhibitShortcuts(UwacSeat* s, bool inhibit)
 {
 	if (!s)
+	{
 		return UWAC_ERROR_CLOSED;
+	}
 
 	if (s->keyboard_inhibitor)
 	{
@@ -1220,11 +1382,15 @@ UwacReturnCode UwacSeatInhibitShortcuts(UwacSeat* s, bool inhibit)
 		s->keyboard_inhibitor = NULL;
 	}
 	if (inhibit && s->display && s->display->keyboard_inhibit_manager)
+	{
 		s->keyboard_inhibitor = zwp_keyboard_shortcuts_inhibit_manager_v1_inhibit_shortcuts(
 		    s->display->keyboard_inhibit_manager, s->keyboard_focus->surface, s->seat);
+	}
 
 	if (inhibit && !s->keyboard_inhibitor)
+	{
 		return UWAC_ERROR_INTERNAL;
+	}
 	return UWAC_SUCCESS;
 }
 
@@ -1232,7 +1398,9 @@ UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t l
                                       size_t height, size_t hot_x, size_t hot_y)
 {
 	if (!seat)
+	{
 		return UWAC_ERROR_CLOSED;
+	}
 
 	free(seat->pointer_image);
 	seat->pointer_image = NULL;
@@ -1246,7 +1414,9 @@ UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t l
 	{
 		seat->pointer_image = xzalloc(sizeof(struct wl_cursor_image));
 		if (!seat->pointer_image)
+		{
 			return UWAC_ERROR_NOMEMORY;
+		}
 		seat->pointer_image->width = width;
 		seat->pointer_image->height = height;
 		seat->pointer_image->hotspot_x = hot_x;
@@ -1270,6 +1440,8 @@ UwacReturnCode UwacSeatSetMouseCursor(UwacSeat* seat, const void* data, size_t l
 		seat->pointer_type = 1;
 	}
 	if (seat && !seat->default_cursor)
+	{
 		return UWAC_SUCCESS;
+	}
 	return set_cursor_image(seat, seat->display->pointer_focus_serial);
 }

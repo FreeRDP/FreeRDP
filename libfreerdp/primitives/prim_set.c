@@ -41,13 +41,16 @@ static pstatus_t general_zero(void* pDst, size_t len)
 static pstatus_t general_set_32s(INT32 val, INT32* pDst, UINT32 len)
 {
 	INT32* dptr = (INT32*)pDst;
-	size_t span, remaining;
-	primitives_t* prims;
+	size_t span;
+	size_t remaining;
+	primitives_t* prims = NULL;
 
 	if (len < 256)
 	{
 		while (len--)
+		{
 			*dptr++ = val;
+		}
 
 		return PRIMITIVES_SUCCESS;
 	}
@@ -63,7 +66,9 @@ static pstatus_t general_set_32s(INT32 val, INT32* pDst, UINT32 len)
 		size_t thiswidth = span;
 
 		if (thiswidth > remaining)
+		{
 			thiswidth = remaining;
+		}
 
 		prims->copy_8u((BYTE*)dptr, (BYTE*)(dptr + span), thiswidth << 2);
 		remaining -= thiswidth;
@@ -77,13 +82,16 @@ static pstatus_t general_set_32s(INT32 val, INT32* pDst, UINT32 len)
 static pstatus_t general_set_32u(UINT32 val, UINT32* pDst, UINT32 len)
 {
 	UINT32* dptr = (UINT32*)pDst;
-	size_t span, remaining;
-	primitives_t* prims;
+	size_t span;
+	size_t remaining;
+	primitives_t* prims = NULL;
 
 	if (len < 256)
 	{
 		while (len--)
+		{
 			*dptr++ = val;
+		}
 
 		return PRIMITIVES_SUCCESS;
 	}
@@ -99,7 +107,9 @@ static pstatus_t general_set_32u(UINT32 val, UINT32* pDst, UINT32 len)
 		size_t thiswidth = span;
 
 		if (thiswidth > remaining)
+		{
 			thiswidth = remaining;
+		}
 
 		prims->copy_8u((BYTE*)dptr, (BYTE*)(dptr + span), thiswidth << 2);
 		remaining -= thiswidth;

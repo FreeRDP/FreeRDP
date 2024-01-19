@@ -64,7 +64,7 @@ struct rdp_pcap
 	pcap_record* head;
 	pcap_record* tail;
 	pcap_record* record;
-};
+} DECLSPEC_ALIGN(128);
 
 static BOOL pcap_read_header(rdpPcap* pcap, pcap_header* header)
 {
@@ -104,12 +104,16 @@ static BOOL pcap_read_record(rdpPcap* pcap, pcap_record* record)
 	WINPR_ASSERT(record);
 
 	if (!pcap_read_record_header(pcap, &record->header))
+	{
 		return FALSE;
+	}
 
 	record->length = record->header.incl_len;
 	record->data = malloc(record->length);
 	if (!record->data)
+	{
 		return FALSE;
+	}
 
 	if (fread(record->data, record->length, 1, pcap->fp) != 1)
 	{
@@ -131,7 +135,7 @@ static BOOL pcap_write_record(rdpPcap* pcap, const pcap_record* record)
 
 BOOL pcap_add_record(rdpPcap* pcap, const void* data, size_t length)
 {
-	pcap_record* record;
+	pcap_record* record = NULL;
 	struct timeval tp;
 
 	WINPR_ASSERT(pcap);
@@ -140,7 +144,9 @@ BOOL pcap_add_record(rdpPcap* pcap, const void* data, size_t length)
 
 	record = (pcap_record*)calloc(1, sizeof(pcap_record));
 	if (!record)
+	{
 		return FALSE;
+	}
 
 	record->cdata = data;
 	record->length = length;
@@ -155,7 +161,9 @@ BOOL pcap_add_record(rdpPcap* pcap, const void* data, size_t length)
 	{
 		pcap->tail = record;
 		if (!pcap->tail)
+		{
 			return FALSE;
+		}
 
 		pcap->head = pcap->tail;
 	}
@@ -166,7 +174,9 @@ BOOL pcap_add_record(rdpPcap* pcap, const void* data, size_t length)
 	}
 
 	if (pcap->record == NULL)
+	{
 		pcap->record = record;
+	}
 
 	return TRUE;
 }
@@ -176,7 +186,9 @@ BOOL pcap_has_next_record(const rdpPcap* pcap)
 	WINPR_ASSERT(pcap);
 
 	if (pcap->file_size - (_ftelli64(pcap->fp)) <= 16)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -187,7 +199,9 @@ BOOL pcap_get_next_record_header(rdpPcap* pcap, pcap_record* record)
 	WINPR_ASSERT(record);
 
 	if (pcap_has_next_record(pcap) != TRUE)
+	{
 		return FALSE;
+	}
 
 	pcap_read_record_header(pcap, &record->header);
 	record->length = record->header.incl_len;
@@ -213,13 +227,15 @@ BOOL pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
 
 rdpPcap* pcap_open(const char* name, BOOL write)
 {
-	rdpPcap* pcap;
+	rdpPcap* pcap = NULL;
 
 	WINPR_ASSERT(name);
 
 	pcap = (rdpPcap*)calloc(1, sizeof(rdpPcap));
 	if (!pcap)
+	{
 		goto fail;
+	}
 
 	pcap->name = _strdup(name);
 	pcap->write = write;
@@ -227,7 +243,9 @@ rdpPcap* pcap_open(const char* name, BOOL write)
 	pcap->fp = winpr_fopen(name, write ? "w+b" : "rb");
 
 	if (pcap->fp == NULL)
+	{
 		goto fail;
+	}
 
 	if (write)
 	{
@@ -239,7 +257,9 @@ rdpPcap* pcap_open(const char* name, BOOL write)
 		pcap->header.snaplen = UINT32_MAX;
 		pcap->header.network = 0;
 		if (!pcap_write_header(pcap, &pcap->header))
+		{
 			goto fail;
+		}
 	}
 	else
 	{
@@ -247,7 +267,9 @@ rdpPcap* pcap_open(const char* name, BOOL write)
 		pcap->file_size = _ftelli64(pcap->fp);
 		_fseeki64(pcap->fp, 0, SEEK_SET);
 		if (!pcap_read_header(pcap, &pcap->header))
+		{
 			goto fail;
+		}
 	}
 
 	return pcap;
@@ -268,18 +290,24 @@ void pcap_flush(rdpPcap* pcap)
 	}
 
 	if (pcap->fp != NULL)
+	{
 		fflush(pcap->fp);
+	}
 }
 
 void pcap_close(rdpPcap* pcap)
 {
 	if (!pcap)
+	{
 		return;
+	}
 
 	pcap_flush(pcap);
 
 	if (pcap->fp != NULL)
+	{
 		fclose(pcap->fp);
+	}
 
 	free(pcap->name);
 	free(pcap);

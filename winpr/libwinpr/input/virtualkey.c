@@ -31,7 +31,7 @@ typedef struct
 {
 	DWORD code;       /* Windows Virtual Key Code */
 	const char* name; /* Virtual Key Code Name */
-} VIRTUAL_KEY_CODE;
+} DECLSPEC_ALIGN(16) VIRTUAL_KEY_CODE;
 
 static const VIRTUAL_KEY_CODE VIRTUAL_KEY_CODE_TABLE[256] = {
 	{ 0, NULL },
@@ -296,7 +296,7 @@ typedef struct
 {
 	const char* name;
 	DWORD vkcode;
-} XKB_KEYNAME;
+} DECLSPEC_ALIGN(16) XKB_KEYNAME;
 
 static XKB_KEYNAME XKB_KEYNAME_TABLE[] = {
 	{ "BKSP", VK_BACK },
@@ -422,24 +422,30 @@ const char* GetVirtualKeyName(DWORD vkcode)
 	const char* vkname = NULL;
 
 	if (vkcode < ARRAYSIZE(VIRTUAL_KEY_CODE_TABLE))
+	{
 		vkname = VIRTUAL_KEY_CODE_TABLE[vkcode].name;
+	}
 
 	if (!vkname)
+	{
 		vkname = "VK_NONE";
+	}
 
 	return vkname;
 }
 
 DWORD GetVirtualKeyCodeFromName(const char* vkname)
 {
-	unsigned long i;
+	unsigned long i = 0;
 
 	for (i = 0; i < ARRAYSIZE(VIRTUAL_KEY_CODE_TABLE); i++)
 	{
 		if (VIRTUAL_KEY_CODE_TABLE[i].name)
 		{
 			if (strcmp(vkname, VIRTUAL_KEY_CODE_TABLE[i].name) == 0)
+			{
 				return VIRTUAL_KEY_CODE_TABLE[i].code;
+			}
 		}
 	}
 
@@ -448,14 +454,16 @@ DWORD GetVirtualKeyCodeFromName(const char* vkname)
 
 DWORD GetVirtualKeyCodeFromXkbKeyName(const char* xkbname)
 {
-	unsigned long i;
+	unsigned long i = 0;
 
 	for (i = 0; i < ARRAYSIZE(XKB_KEYNAME_TABLE); i++)
 	{
 		if (XKB_KEYNAME_TABLE[i].name)
 		{
 			if (strcmp(xkbname, XKB_KEYNAME_TABLE[i].name) == 0)
+			{
 				return XKB_KEYNAME_TABLE[i].vkcode;
+			}
 		}
 	}
 

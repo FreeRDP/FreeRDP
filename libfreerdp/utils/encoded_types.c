@@ -52,7 +52,7 @@ typedef struct
 	BYTE val2;
 	BYTE val3;
 	BYTE val4;
-} FOUR_BYTE_SIGNED_INTEGER;
+} DECLSPEC_ALIGN(16) FOUR_BYTE_SIGNED_INTEGER;
 
 typedef struct
 {
@@ -63,12 +63,12 @@ typedef struct
 	BYTE val2;
 	BYTE val3;
 	BYTE val4;
-} FOUR_BYTE_FLOAT;
+} DECLSPEC_ALIGN(16) FOUR_BYTE_FLOAT;
 
 BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value)
 {
 	FOUR_BYTE_SIGNED_INTEGER si = { 0 };
-	BYTE byte;
+	BYTE byte = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(value);
@@ -76,7 +76,9 @@ BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value)
 	*value = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, byte);
 
@@ -85,7 +87,9 @@ BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value)
 	si.val1 = (byte & 0x1F);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, si.c))
+	{
 		return FALSE;
+	}
 
 	switch (si.c)
 	{
@@ -118,7 +122,9 @@ BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value)
 	}
 
 	if (si.s == NEGATIVE_VAL)
+	{
 		*value *= -1;
+	}
 
 	return TRUE;
 }
@@ -126,8 +132,8 @@ BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value)
 BOOL freerdp_read_four_byte_float(wStream* s, double* value)
 {
 	FOUR_BYTE_FLOAT f = { 0 };
-	UINT32 base;
-	BYTE byte;
+	UINT32 base = 0;
+	BYTE byte = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(value);
@@ -135,7 +141,9 @@ BOOL freerdp_read_four_byte_float(wStream* s, double* value)
 	*value = 0.0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, byte);
 
@@ -145,7 +153,9 @@ BOOL freerdp_read_four_byte_float(wStream* s, double* value)
 	f.val1 = (byte & 0x03);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, f.c))
+	{
 		return FALSE;
+	}
 
 	switch (f.c)
 	{
@@ -181,7 +191,9 @@ BOOL freerdp_read_four_byte_float(wStream* s, double* value)
 	*value /= pow(10, f.e);
 
 	if (f.s == NEGATIVE_VAL)
+	{
 		*value *= -1.0;
+	}
 
 	return TRUE;
 }

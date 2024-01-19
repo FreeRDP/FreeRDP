@@ -28,10 +28,10 @@ int rdtk_label_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint16
                     uint16_t nHeight, rdtkLabel* label, const char* text, uint16_t hAlign,
                     uint16_t vAlign)
 {
-	uint16_t offsetX;
-	uint16_t offsetY;
-	uint16_t textWidth;
-	uint16_t textHeight;
+	uint16_t offsetX = 0;
+	uint16_t offsetY = 0;
+	uint16_t textWidth = 0;
+	uint16_t textHeight = 0;
 
 	WINPR_ASSERT(surface);
 
@@ -46,10 +46,14 @@ int rdtk_label_draw(rdtkSurface* surface, uint16_t nXDst, uint16_t nYDst, uint16
 		offsetY = 0;
 
 		if (textWidth < nWidth)
+		{
 			offsetX = ((nWidth - textWidth) / 2);
+		}
 
 		if (textHeight < nHeight)
+		{
 			offsetY = ((nHeight - textHeight) / 2);
+		}
 
 		rdtk_font_draw_text(surface, nXDst + offsetX, nYDst + offsetY, font, text);
 	}
@@ -63,7 +67,9 @@ rdtkLabel* rdtk_label_new(rdtkEngine* engine)
 	rdtkLabel* label = (rdtkLabel*)calloc(1, sizeof(rdtkLabel));
 
 	if (!label)
+	{
 		return NULL;
+	}
 
 	label->engine = engine;
 

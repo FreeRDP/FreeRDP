@@ -137,7 +137,7 @@ void winpr_event_init_from_fd(WINPR_EVENT_IMPL* event, int fd)
 
 BOOL winpr_event_set(WINPR_EVENT_IMPL* event)
 {
-	int ret;
+	int ret = 0;
 	do
 	{
 #ifdef WINPR_HAVE_SYS_EVENTFD_H
@@ -153,7 +153,7 @@ BOOL winpr_event_set(WINPR_EVENT_IMPL* event)
 
 BOOL winpr_event_reset(WINPR_EVENT_IMPL* event)
 {
-	int ret;
+	int ret = 0;
 	do
 	{
 		do
@@ -198,7 +198,9 @@ static int EventGetFd(HANDLE handle)
 	WINPR_EVENT* event = (WINPR_EVENT*)handle;
 
 	if (!EventIsHandled(handle))
+	{
 		return -1;
+	}
 
 	return event->impl.fds[0];
 }
@@ -206,7 +208,9 @@ static int EventGetFd(HANDLE handle)
 static BOOL EventCloseHandle_(WINPR_EVENT* event)
 {
 	if (!event)
+	{
 		return FALSE;
+	}
 
 	if (event->bAttached)
 	{
@@ -239,7 +243,9 @@ static BOOL EventCloseHandle(HANDLE handle)
 	WINPR_EVENT* event = (WINPR_EVENT*)handle;
 
 	if (!EventIsHandled(handle))
+	{
 		return FALSE;
+	}
 
 	return EventCloseHandle_(event);
 }
@@ -269,14 +275,16 @@ static HANDLE_OPS ops = { EventIsHandled,
 HANDLE CreateEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,
                     LPCWSTR lpName)
 {
-	HANDLE handle;
+	HANDLE handle = NULL;
 	char* name = NULL;
 
 	if (lpName)
 	{
 		name = ConvertWCharToUtf8Alloc(lpName, NULL);
 		if (!name)
+		{
 			return NULL;
+		}
 	}
 
 	handle = CreateEventA(lpEventAttributes, bManualReset, bInitialState, name);
@@ -290,13 +298,19 @@ HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 	WINPR_EVENT* event = (WINPR_EVENT*)calloc(1, sizeof(WINPR_EVENT));
 
 	if (lpEventAttributes)
+	{
 		WLog_WARN(TAG, "[%s] does not support lpEventAttributes", lpName);
+	}
 
 	if (!event)
+	{
 		return NULL;
+	}
 
 	if (lpName)
+	{
 		event->name = strdup(lpName);
+	}
 
 	event->impl.fds[0] = -1;
 	event->impl.fds[1] = -1;
@@ -306,15 +320,21 @@ HANDLE CreateEventA(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, 
 	WINPR_HANDLE_SET_TYPE_AND_MODE(event, HANDLE_TYPE_EVENT, FD_READ);
 
 	if (!event->bManualReset)
+	{
 		WLog_ERR(TAG, "auto-reset events not yet implemented");
+	}
 
 	if (!winpr_event_init(&event->impl))
+	{
 		goto fail;
+	}
 
 	if (bInitialState)
 	{
 		if (!SetEvent(event))
+		{
 			goto fail;
+		}
 	}
 
 #if defined(WITH_DEBUG_EVENTS)
@@ -338,14 +358,20 @@ HANDLE CreateEventExW(LPSECURITY_ATTRIBUTES lpEventAttributes, LPCWSTR lpName, D
 	BOOL manual = FALSE;
 
 	if (dwFlags & CREATE_EVENT_INITIAL_SET)
+	{
 		initial = TRUE;
+	}
 
 	if (dwFlags & CREATE_EVENT_MANUAL_RESET)
+	{
 		manual = TRUE;
+	}
 
 	if (dwDesiredAccess != 0)
+	{
 		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, lpName,
 		          dwDesiredAccess);
+	}
 
 	return CreateEventW(lpEventAttributes, manual, initial, lpName);
 }
@@ -357,14 +383,20 @@ HANDLE CreateEventExA(LPSECURITY_ATTRIBUTES lpEventAttributes, LPCSTR lpName, DW
 	BOOL manual = FALSE;
 
 	if (dwFlags & CREATE_EVENT_INITIAL_SET)
+	{
 		initial = TRUE;
+	}
 
 	if (dwFlags & CREATE_EVENT_MANUAL_RESET)
+	{
 		manual = TRUE;
+	}
 
 	if (dwDesiredAccess != 0)
+	{
 		WLog_WARN(TAG, "[%s] does not support dwDesiredAccess 0x%08" PRIx32, lpName,
 		          dwDesiredAccess);
+	}
 
 	return CreateEventA(lpEventAttributes, manual, initial, lpName);
 }
@@ -391,9 +423,9 @@ HANDLE OpenEventA(DWORD dwDesiredAccess, BOOL bInheritHandle, LPCSTR lpName)
 
 BOOL SetEvent(HANDLE hEvent)
 {
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_EVENT* event;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+	WINPR_EVENT* event = NULL;
 
 	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object) || Type != HANDLE_TYPE_EVENT)
 	{
@@ -408,9 +440,9 @@ BOOL SetEvent(HANDLE hEvent)
 
 BOOL ResetEvent(HANDLE hEvent)
 {
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_EVENT* event;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+	WINPR_EVENT* event = NULL;
 
 	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object) || Type != HANDLE_TYPE_EVENT)
 	{
@@ -429,7 +461,7 @@ HANDLE CreateFileDescriptorEventW(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL 
                                   BOOL bInitialState, int FileDescriptor, ULONG mode)
 {
 #ifndef _WIN32
-	WINPR_EVENT* event;
+	WINPR_EVENT* event = NULL;
 	HANDLE handle = NULL;
 	event = (WINPR_EVENT*)calloc(1, sizeof(WINPR_EVENT));
 
@@ -497,9 +529,9 @@ int GetEventFileDescriptor(HANDLE hEvent)
 int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor, ULONG mode)
 {
 #ifndef _WIN32
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_EVENT* event;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+	WINPR_EVENT* event = NULL;
 
 	if (!winpr_Handle_GetInfo(hEvent, &Type, &Object) || Type != HANDLE_TYPE_EVENT)
 	{
@@ -511,7 +543,9 @@ int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor, ULONG mode)
 	event = (WINPR_EVENT*)Object;
 
 	if (!event->bAttached && event->impl.fds[0] >= 0 && event->impl.fds[0] != FileDescriptor)
+	{
 		close(event->impl.fds[0]);
+	}
 
 	event->bAttached = TRUE;
 	event->common.Mode = mode;
@@ -535,8 +569,8 @@ int SetEventFileDescriptor(HANDLE hEvent, int FileDescriptor, ULONG mode)
 void* GetEventWaitObject(HANDLE hEvent)
 {
 #ifndef _WIN32
-	int fd;
-	void* obj;
+	int fd = 0;
+	void* obj = NULL;
 	fd = GetEventFileDescriptor(hEvent);
 	obj = ((void*)(long)fd);
 	return obj;

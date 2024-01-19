@@ -25,9 +25,9 @@
 #include <winpr/synch.h>
 
 #include "../log.h"
+#include "../synch/pollset.h"
 #include "../thread/apc.h"
 #include "../thread/thread.h"
-#include "../synch/pollset.h"
 
 #define TAG WINPR_TAG("synch.sleep")
 
@@ -56,15 +56,17 @@ DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
 {
 	WINPR_THREAD* thread = winpr_GetCurrentThread();
 	WINPR_POLL_SET pollset;
-	int status;
+	int status = 0;
 	DWORD ret = WAIT_FAILED;
-	BOOL autoSignalled;
+	BOOL autoSignalled = 0;
 
 	if (thread)
 	{
 		/* treat re-entrancy if a completion is calling us */
 		if (thread->apc.treatingCompletions)
+		{
 			bAlertable = FALSE;
+		}
 	}
 	else
 	{

@@ -36,7 +36,7 @@ typedef struct
 	WLOG_APPENDER_COMMON();
 
 	int outputStream;
-} wLogConsoleAppender;
+} DECLSPEC_ALIGN(128) wLogConsoleAppender;
 
 static BOOL WLog_ConsoleAppender_Open(wLog* log, wLogAppender* appender)
 {
@@ -51,11 +51,13 @@ static BOOL WLog_ConsoleAppender_Close(wLog* log, wLogAppender* appender)
 static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
                                               wLogMessage* message)
 {
-	FILE* fp;
+	FILE* fp = NULL;
 	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
-	wLogConsoleAppender* consoleAppender;
+	wLogConsoleAppender* consoleAppender = NULL;
 	if (!appender)
+	{
 		return FALSE;
+	}
 
 	consoleAppender = (wLogConsoleAppender*)appender;
 
@@ -131,7 +133,9 @@ static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
 	}
 
 	if (message->Level != WLOG_OFF)
+	{
 		fprintf(fp, "%s%s\n", message->PrefixString, message->TextString);
+	}
 #endif
 	return TRUE;
 }
@@ -144,8 +148,8 @@ static BOOL WLog_ConsoleAppender_WriteDataMessage(wLog* log, wLogAppender* appen
 #if defined(ANDROID)
 	return FALSE;
 #else
-	int DataId;
-	char* FullFileName;
+	int DataId = 0;
+	char* FullFileName = NULL;
 
 	DataId = g_DataId++;
 	FullFileName = WLog_Message_GetOutputFileName(DataId, "dat");
@@ -166,8 +170,8 @@ static BOOL WLog_ConsoleAppender_WriteImageMessage(wLog* log, wLogAppender* appe
 #if defined(ANDROID)
 	return FALSE;
 #else
-	int ImageId;
-	char* FullFileName;
+	int ImageId = 0;
+	char* FullFileName = NULL;
 
 	ImageId = g_ImageId++;
 	FullFileName = WLog_Message_GetOutputFileName(ImageId, "bmp");
@@ -189,7 +193,7 @@ static BOOL WLog_ConsoleAppender_WritePacketMessage(wLog* log, wLogAppender* app
 #if defined(ANDROID)
 	return FALSE;
 #else
-	char* FullFileName;
+	char* FullFileName = NULL;
 
 	g_PacketId++;
 
@@ -201,8 +205,10 @@ static BOOL WLog_ConsoleAppender_WritePacketMessage(wLog* log, wLogAppender* app
 	}
 
 	if (appender->PacketMessageContext)
+	{
 		return WLog_PacketMessage_Write((wPcap*)appender->PacketMessageContext, message->PacketData,
 		                                message->PacketLength, message->PacketFlags);
+	}
 
 	return TRUE;
 #endif
@@ -213,21 +219,35 @@ static BOOL WLog_ConsoleAppender_Set(wLogAppender* appender, const char* setting
 
 	/* Just check the value string is not empty */
 	if (!value || (strnlen(value, 2) == 0))
+	{
 		return FALSE;
+	}
 
-	if (strcmp("outputstream", setting))
+	if (strcmp("outputstream", setting) != 0)
+	{
 		return FALSE;
+	}
 
 	if (!strcmp("stdout", value))
+	{
 		consoleAppender->outputStream = WLOG_CONSOLE_STDOUT;
+	}
 	else if (!strcmp("stderr", value))
+	{
 		consoleAppender->outputStream = WLOG_CONSOLE_STDERR;
+	}
 	else if (!strcmp("default", value))
+	{
 		consoleAppender->outputStream = WLOG_CONSOLE_DEFAULT;
+	}
 	else if (!strcmp("debug", value))
+	{
 		consoleAppender->outputStream = WLOG_CONSOLE_DEBUG;
+	}
 	else
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -247,12 +267,14 @@ static void WLog_ConsoleAppender_Free(wLogAppender* appender)
 
 wLogAppender* WLog_ConsoleAppender_New(wLog* log)
 {
-	wLogConsoleAppender* ConsoleAppender;
+	wLogConsoleAppender* ConsoleAppender = NULL;
 
 	ConsoleAppender = (wLogConsoleAppender*)calloc(1, sizeof(wLogConsoleAppender));
 
 	if (!ConsoleAppender)
+	{
 		return NULL;
+	}
 
 	ConsoleAppender->Type = WLOG_APPENDER_CONSOLE;
 

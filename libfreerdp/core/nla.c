@@ -138,7 +138,7 @@ struct rdp_nla
 	SmartcardCertInfo* smartcardCert;
 	BYTE certSha1[20];
 	BOOL earlyUserAuth;
-};
+} DECLSPEC_ALIGN(128);
 
 static BOOL nla_send(rdpNla* nla);
 static int nla_server_recv(rdpNla* nla);
@@ -169,7 +169,9 @@ static void nla_buffer_free(rdpNla* nla)
 static BOOL nla_Digest_Update_From_SecBuffer(WINPR_DIGEST_CTX* ctx, const SecBuffer* buffer)
 {
 	if (!buffer)
+	{
 		return FALSE;
+	}
 	return winpr_Digest_Update(ctx, buffer->pvBuffer, buffer->cbBuffer);
 }
 
@@ -178,9 +180,13 @@ static BOOL nla_sec_buffer_alloc(SecBuffer* buffer, size_t size)
 	WINPR_ASSERT(buffer);
 	sspi_SecBufferFree(buffer);
 	if (size > ULONG_MAX)
+	{
 		return FALSE;
+	}
 	if (!sspi_SecBufferAlloc(buffer, (ULONG)size))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(buffer);
 	buffer->BufferType = SECBUFFER_TOKEN;
@@ -191,7 +197,9 @@ static BOOL nla_sec_buffer_alloc_from_data(SecBuffer* buffer, const BYTE* data, 
                                            size_t size)
 {
 	if (!nla_sec_buffer_alloc(buffer, offset + size))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(buffer);
 	BYTE* pb = buffer->pvBuffer;
@@ -226,7 +234,9 @@ static BOOL nla_adjust_settings_from_smartcard(rdpNla* nla)
 	WINPR_ASSERT(settings);
 
 	if (!settings->SmartcardLogon)
+	{
 		return TRUE;
+	}
 
 	smartcardCertInfo_Free(nla->smartcardCert);
 
@@ -338,11 +348,15 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 		if (settings->RestrictedAdminModeRequired)
 		{
 			if ((settings->PasswordHash) && (strlen(settings->PasswordHash) > 0))
+			{
 				PromptPassword = FALSE;
+			}
 		}
 
 		if (settings->RemoteCredentialGuard)
+		{
 			PromptPassword = FALSE;
+		}
 	}
 #endif
 
@@ -375,13 +389,17 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 		if (smartCardLogonWasDisabled)
 		{
 			if (!nla_adjust_settings_from_smartcard(nla))
+			{
 				return FALSE;
+			}
 		}
 
 		if (!identity_set_from_smartcard_hash(nla->identity, settings, FreeRDP_Username,
 		                                      FreeRDP_Domain, FreeRDP_Password, nla->certSha1,
 		                                      sizeof(nla->certSha1)))
+		{
 			return FALSE;
+		}
 	}
 	else
 	{
@@ -393,7 +411,9 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 			        nla->identity, settings, FreeRDP_Username, FreeRDP_Domain,
 			        (const WCHAR*)settings->RedirectionPassword,
 			        settings->RedirectionPasswordLength / sizeof(WCHAR)))
+			{
 				return FALSE;
+			}
 
 			usePassword = FALSE;
 		}
@@ -404,7 +424,9 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 			{
 				if (!identity_set_from_settings(nla->identity, settings, FreeRDP_Username,
 				                                FreeRDP_Domain, FreeRDP_PasswordHash))
+				{
 					return FALSE;
+				}
 
 				/**
 				 * Increase password hash length by LB_PASSWORD_MAX_LENGTH to obtain a
@@ -420,7 +442,9 @@ static BOOL nla_client_setup_identity(rdpNla* nla)
 		{
 			if (!identity_set_from_settings(nla->identity, settings, FreeRDP_Username,
 			                                FreeRDP_Domain, FreeRDP_Password))
+			{
 				return FALSE;
+			}
 		}
 	}
 
@@ -438,18 +462,26 @@ static int nla_client_init(rdpNla* nla)
 	nla_set_state(nla, NLA_STATE_INITIAL);
 
 	if (!nla_adjust_settings_from_smartcard(nla))
+	{
 		return -1;
+	}
 
 	if (!credssp_auth_init(nla->auth, NLA_AUTH_PKG, NULL))
+	{
 		return -1;
+	}
 
 	if (!nla_client_setup_identity(nla))
+	{
 		return -1;
+	}
 
 	const char* hostname = freerdp_settings_get_server_name(settings);
 
 	if (!credssp_auth_setup_client(nla->auth, "TERMSRV", hostname, nla->identity, nla->pkinitArgs))
+	{
 		return -1;
+	}
 
 	const BYTE* data = NULL;
 	DWORD length = 0;
@@ -473,10 +505,14 @@ int nla_client_begin(rdpNla* nla)
 	WINPR_ASSERT(nla);
 
 	if (nla_client_init(nla) < 1)
+	{
 		return -1;
+	}
 
 	if (nla_get_state(nla) != NLA_STATE_INITIAL)
+	{
 		return -1;
+	}
 
 	/*
 	 * from tspkg.dll: 0x00000132
@@ -493,14 +529,18 @@ int nla_client_begin(rdpNla* nla)
 	{
 		case 0:
 			if (!nla_send(nla))
+			{
 				return -1;
+			}
 			nla_set_state(nla, NLA_STATE_NEGO_TOKEN);
 			break;
 		case 1:
 			if (credssp_auth_have_output_token(nla->auth))
 			{
 				if (!nla_send(nla))
+				{
 					return -1;
+				}
 			}
 			nla_set_state(nla, NLA_STATE_FINAL);
 			break;
@@ -520,21 +560,31 @@ static int nla_client_recv_nego_token(rdpNla* nla)
 	{
 		case 0:
 			if (!nla_send(nla))
+			{
 				return -1;
+			}
 			break;
 		case 1: /* completed */
 		{
 			int res = -1;
 			if (nla->peerVersion < 5)
+			{
 				res = nla_encrypt_public_key_echo(nla);
+			}
 			else
+			{
 				res = nla_encrypt_public_key_hash(nla);
+			}
 
 			if (!res)
+			{
 				return -1;
+			}
 
 			if (!nla_send(nla))
+			{
 				return -1;
+			}
 
 			nla_set_state(nla, NLA_STATE_PUB_KEY_AUTH);
 		}
@@ -555,22 +605,32 @@ static int nla_client_recv_pub_key_auth(rdpNla* nla)
 
 	/* Verify Server Public Key Echo */
 	if (nla->peerVersion < 5)
+	{
 		rc = nla_decrypt_public_key_echo(nla);
+	}
 	else
+	{
 		rc = nla_decrypt_public_key_hash(nla);
+	}
 
 	sspi_SecBufferFree(&nla->pubKeyAuth);
 
 	if (!rc)
+	{
 		return -1;
+	}
 
 	/* Send encrypted credentials */
 	rc = nla_encrypt_ts_credentials(nla);
 	if (!rc)
+	{
 		return -1;
+	}
 
 	if (!nla_send(nla))
+	{
 		return -1;
+	}
 
 	if (nla->earlyUserAuth)
 	{
@@ -578,7 +638,9 @@ static int nla_client_recv_pub_key_auth(rdpNla* nla)
 		nla_set_state(nla, NLA_STATE_EARLY_USER_AUTH);
 	}
 	else
+	{
 		nla_set_state(nla, NLA_STATE_AUTH_INFO);
+	}
 	return 1;
 }
 
@@ -629,7 +691,9 @@ static int nla_client_authenticate(rdpNla* nla)
 	}
 
 	if (nla_client_begin(nla) < 1)
+	{
 		goto fail;
+	}
 
 	while (nla_get_state(nla) < NLA_STATE_AUTH_INFO)
 	{
@@ -645,7 +709,9 @@ static int nla_client_authenticate(rdpNla* nla)
 		const int status2 = nla_recv_pdu(nla, s);
 
 		if (status2 < 0)
+		{
 			goto fail;
+		}
 	}
 
 	rc = 1;
@@ -677,10 +743,14 @@ static int nla_server_init(rdpNla* nla)
 	}
 
 	if (!credssp_auth_init(nla->auth, NLA_AUTH_PKG, NULL))
+	{
 		return -1;
+	}
 
 	if (!credssp_auth_setup_server(nla->auth))
+	{
 		return -1;
+	}
 
 	nla_set_state(nla, NLA_STATE_INITIAL);
 	return 1;
@@ -696,7 +766,9 @@ static wStream* nla_server_recv_stream(rdpNla* nla)
 	s = Stream_New(NULL, 4096);
 
 	if (!s)
+	{
 		goto fail;
+	}
 
 	status = transport_read_pdu(nla->transport, s);
 
@@ -716,16 +788,24 @@ static BOOL nla_server_recv_credentials(rdpNla* nla)
 	WINPR_ASSERT(nla);
 
 	if (nla_server_recv(nla) < 0)
+	{
 		return FALSE;
+	}
 
 	if (!nla_decrypt_ts_credentials(nla))
+	{
 		return FALSE;
+	}
 
 	if (!nla_impersonate(nla))
+	{
 		return FALSE;
+	}
 
 	if (!nla_revert_to_self(nla))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -744,7 +824,9 @@ static int nla_server_authenticate(rdpNla* nla)
 	WINPR_ASSERT(nla);
 
 	if (nla_server_init(nla) < 1)
+	{
 		goto fail;
+	}
 
 	/*
 	 * from tspkg.dll: 0x00000112
@@ -787,7 +869,9 @@ static int nla_server_authenticate(rdpNla* nla)
 		int res = -1;
 
 		if (nla_server_recv(nla) < 0)
+		{
 			goto fail;
+		}
 
 		WLog_DBG(TAG, "Receiving Authentication Token");
 		credssp_auth_take_input_buffer(nla->auth, &nla->negoToken);
@@ -829,39 +913,57 @@ static int nla_server_authenticate(rdpNla* nla)
 			if (credssp_auth_have_output_token(nla->auth))
 			{
 				if (!nla_send(nla))
+				{
 					goto fail;
+				}
 
 				if (nla_server_recv(nla) < 0)
+				{
 					goto fail;
+				}
 
 				WLog_DBG(TAG, "Receiving pubkey Token");
 			}
 
 			if (nla->peerVersion < 5)
+			{
 				res = nla_decrypt_public_key_echo(nla);
+			}
 			else
+			{
 				res = nla_decrypt_public_key_hash(nla);
+			}
 
 			if (!res)
+			{
 				goto fail;
+			}
 
 			/* Clear nego token buffer or we will send it again to the client */
 			sspi_SecBufferFree(&nla->negoToken);
 
 			if (nla->peerVersion < 5)
+			{
 				res = nla_encrypt_public_key_echo(nla);
+			}
 			else
+			{
 				res = nla_encrypt_public_key_hash(nla);
+			}
 
 			if (!res)
+			{
 				goto fail;
+			}
 		}
 
 		/* send authentication token */
 		WLog_DBG(TAG, "Sending Authentication Token");
 
 		if (!nla_send(nla))
+		{
 			goto fail;
+		}
 
 		if (res == 1)
 		{
@@ -872,7 +974,9 @@ static int nla_server_authenticate(rdpNla* nla)
 
 	/* Receive encrypted credentials */
 	if (!nla_server_recv_credentials(nla))
+	{
 		ret = -1;
+	}
 
 fail:
 	nla_buffer_free(nla);
@@ -891,9 +995,10 @@ int nla_authenticate(rdpNla* nla)
 	WINPR_ASSERT(nla);
 
 	if (nla->server)
+	{
 		return nla_server_authenticate(nla);
-	else
-		return nla_client_authenticate(nla);
+	}
+	return nla_client_authenticate(nla);
 }
 
 static void ap_integer_increment_le(BYTE* number, size_t size)
@@ -907,11 +1012,9 @@ static void ap_integer_increment_le(BYTE* number, size_t size)
 			number[index]++;
 			break;
 		}
-		else
-		{
-			number[index] = 0;
-			continue;
-		}
+
+		number[index] = 0;
+		continue;
 	}
 }
 
@@ -926,11 +1029,9 @@ static void ap_integer_decrement_le(BYTE* number, size_t size)
 			number[index]--;
 			break;
 		}
-		else
-		{
-			number[index] = 0xFF;
-			continue;
-		}
+
+		number[index] = 0xFF;
+		continue;
 	}
 }
 
@@ -945,7 +1046,9 @@ BOOL nla_encrypt_public_key_echo(rdpNla* nla)
 	{
 		SecBuffer buf = { 0 };
 		if (!sspi_SecBufferAlloc(&buf, nla->PublicKey.cbBuffer))
+		{
 			return FALSE;
+		}
 		ap_integer_increment_le(buf.pvBuffer, buf.cbBuffer);
 		status = credssp_auth_encrypt(nla->auth, &buf, &nla->pubKeyAuth, NULL, nla->sendSeqNum++);
 		sspi_SecBufferFree(&buf);
@@ -972,32 +1075,48 @@ BOOL nla_encrypt_public_key_hash(rdpNla* nla)
 	    nla->server ? sizeof(ServerClientHashMagic) : sizeof(ClientServerHashMagic);
 
 	if (!sspi_SecBufferAlloc(&buf, WINPR_SHA256_DIGEST_LENGTH))
+	{
 		return FALSE;
+	}
 
 	/* generate SHA256 of following data: ClientServerHashMagic, Nonce, SubjectPublicKey */
 	if (!(sha256 = winpr_Digest_New()))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Init(sha256, WINPR_MD_SHA256))
+	{
 		goto out;
+	}
 
 	/* include trailing \0 from hashMagic */
 	if (!winpr_Digest_Update(sha256, hashMagic, hashSize))
+	{
 		goto out;
+	}
 
 	if (!nla_Digest_Update_From_SecBuffer(sha256, &nla->ClientNonce))
+	{
 		goto out;
+	}
 
 	/* SubjectPublicKey */
 	if (!nla_Digest_Update_From_SecBuffer(sha256, &nla->PublicKey))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(sha256, buf.pvBuffer, WINPR_SHA256_DIGEST_LENGTH))
+	{
 		goto out;
+	}
 
 	sspi_SecBufferFree(&nla->pubKeyAuth);
 	if (!credssp_auth_encrypt(nla->auth, &buf, &nla->pubKeyAuth, NULL, nla->sendSeqNum++))
+	{
 		goto out;
+	}
 
 	status = TRUE;
 
@@ -1013,10 +1132,14 @@ BOOL nla_decrypt_public_key_echo(rdpNla* nla)
 	SecBuffer public_key = { 0 };
 
 	if (!nla)
+	{
 		goto fail;
+	}
 
 	if (!credssp_auth_decrypt(nla->auth, &nla->pubKeyAuth, &public_key, nla->recvSeqNum++))
+	{
 		return FALSE;
+	}
 
 	if (!nla->server)
 	{
@@ -1058,28 +1181,42 @@ BOOL nla_decrypt_public_key_hash(rdpNla* nla)
 	SecBuffer hash = { 0 };
 
 	if (!credssp_auth_decrypt(nla->auth, &nla->pubKeyAuth, &hash, nla->recvSeqNum++))
+	{
 		return FALSE;
+	}
 
 	/* generate SHA256 of following data: ServerClientHashMagic, Nonce, SubjectPublicKey */
 	if (!(sha256 = winpr_Digest_New()))
+	{
 		goto fail;
+	}
 
 	if (!winpr_Digest_Init(sha256, WINPR_MD_SHA256))
+	{
 		goto fail;
+	}
 
 	/* include trailing \0 from hashMagic */
 	if (!winpr_Digest_Update(sha256, hashMagic, hashSize))
+	{
 		goto fail;
+	}
 
 	if (!nla_Digest_Update_From_SecBuffer(sha256, &nla->ClientNonce))
+	{
 		goto fail;
+	}
 
 	/* SubjectPublicKey */
 	if (!nla_Digest_Update_From_SecBuffer(sha256, &nla->PublicKey))
+	{
 		goto fail;
+	}
 
 	if (!winpr_Digest_Final(sha256, serverClientHash, sizeof(serverClientHash)))
+	{
 		goto fail;
+	}
 
 	/* verify hash */
 	if (hash.cbBuffer != WINPR_SHA256_DIGEST_LENGTH ||
@@ -1103,9 +1240,11 @@ static BOOL set_creds_octetstring_to_settings(WinPrAsn1Decoder* dec, WinPrAsn1_t
 {
 	if (optional)
 	{
-		WinPrAsn1_tagId itemTag;
+		WinPrAsn1_tagId itemTag = 0;
 		if (!WinPrAsn1DecPeekTag(dec, &itemTag) || (itemTag != tagId))
+		{
 			return TRUE;
+		}
 	}
 
 	BOOL error = FALSE;
@@ -1114,7 +1253,9 @@ static BOOL set_creds_octetstring_to_settings(WinPrAsn1Decoder* dec, WinPrAsn1_t
 	 *       if the function fails it's because of a real error not because the item is not present
 	 */
 	if (!WinPrAsn1DecReadContextualOctetString(dec, tagId, &error, &value, FALSE))
+	{
 		return FALSE;
+	}
 
 	return freerdp_settings_set_string_from_utf16N(settings, settingId, (const WCHAR*)value.data,
 	                                               value.len / sizeof(WCHAR));
@@ -1125,32 +1266,42 @@ static BOOL nla_read_TSCspDataDetail(WinPrAsn1Decoder* dec, rdpSettings* setting
 	BOOL error = FALSE;
 
 	/* keySpec [0] INTEGER */
-	WinPrAsn1_INTEGER keyspec;
+	WinPrAsn1_INTEGER keyspec = 0;
 	if (!WinPrAsn1DecReadContextualInteger(dec, 0, &error, &keyspec))
+	{
 		return FALSE;
+	}
 	settings->KeySpec = (UINT32)keyspec;
 
 	/* cardName [1] OCTET STRING OPTIONAL */
 	if (!set_creds_octetstring_to_settings(dec, 1, TRUE, FreeRDP_CardName, settings))
+	{
 		return FALSE;
+	}
 
 	/* readerName [2] OCTET STRING OPTIONAL */
 	if (!set_creds_octetstring_to_settings(dec, 2, TRUE, FreeRDP_ReaderName, settings))
+	{
 		return FALSE;
+	}
 
 	/* containerName [3] OCTET STRING OPTIONAL */
 	if (!set_creds_octetstring_to_settings(dec, 3, TRUE, FreeRDP_ContainerName, settings))
+	{
 		return FALSE;
+	}
 
 	/* cspName [4] OCTET STRING OPTIONAL */
 	return set_creds_octetstring_to_settings(dec, 4, TRUE, FreeRDP_CspName, settings);
 }
 
-static BOOL nla_read_KERB_TICKET_LOGON(rdpNla* nla, wStream* s, KERB_TICKET_LOGON* ticket)
+static BOOL nla_read_KERB_TICKET_LOGON(wStream* s, KERB_TICKET_LOGON* ticket)
 {
 	/* mysterious extra 16 bytes before TGS/TGT content */
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16 + 16))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, ticket->MessageType);
 	Stream_Read_UINT32(s, ticket->Flags);
@@ -1164,8 +1315,10 @@ static BOOL nla_read_KERB_TICKET_LOGON(rdpNla* nla, wStream* s, KERB_TICKET_LOGO
 	}
 
 	if (!Stream_CheckAndLogRequiredLength(
-	        TAG, s, 16ull + ticket->ServiceTicketLength + ticket->TicketGrantingTicketLength))
+	        TAG, s, 16ULL + ticket->ServiceTicketLength + ticket->TicketGrantingTicketLength))
+	{
 		return FALSE;
+	}
 
 	/* mysterious 16 bytes in the way, maybe they would need to be interpreted... */
 	Stream_Seek(s, 16);
@@ -1189,7 +1342,7 @@ typedef enum
 	RCG_TYPE_NTLM
 } RemoteGuardPackageCredType;
 
-static BOOL nla_read_TSRemoteGuardPackageCred(rdpNla* nla, WinPrAsn1Decoder* dec,
+static BOOL nla_read_TSRemoteGuardPackageCred(WinPrAsn1Decoder* dec,
                                               RemoteGuardPackageCredType* credsType,
                                               wStream* payload)
 {
@@ -1200,7 +1353,9 @@ static BOOL nla_read_TSRemoteGuardPackageCred(rdpNla* nla, WinPrAsn1Decoder* dec
 
 	/* packageName [0] OCTET STRING */
 	if (!WinPrAsn1DecReadContextualOctetString(dec, 0, &error, &packageName, FALSE) || error)
+	{
 		return TRUE;
+	}
 
 	ConvertMszWCharNToUtf8((WCHAR*)packageName.data, packageName.len / sizeof(WCHAR),
 	                       packageNameStr, 100);
@@ -1208,7 +1363,9 @@ static BOOL nla_read_TSRemoteGuardPackageCred(rdpNla* nla, WinPrAsn1Decoder* dec
 
 	/* credBuffer [1] OCTET STRING, */
 	if (!WinPrAsn1DecReadContextualOctetString(dec, 1, &error, &credBuffer, FALSE) || error)
+	{
 		return TRUE;
+	}
 
 	if (_stricmp(packageNameStr, "Kerberos") == 0)
 	{
@@ -1252,16 +1409,22 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 
 	/* TSCredentials */
 	if (!WinPrAsn1DecReadSequence(&dec, &dec2))
+	{
 		return FALSE;
+	}
 	dec = dec2;
 
 	/* credType [0] INTEGER */
 	if (!WinPrAsn1DecReadContextualInteger(&dec, 0, &error, &credType))
+	{
 		return FALSE;
+	}
 
 	/* credentials [1] OCTET STRING */
 	if (!WinPrAsn1DecReadContextualOctetString(&dec, 1, &error, &credentials, FALSE))
+	{
 		return FALSE;
+	}
 
 	WinPrAsn1Decoder_InitMem(&dec, WINPR_ASN1_DER, credentials.data, credentials.len);
 
@@ -1279,16 +1442,22 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 		{
 			/* TSPasswordCreds */
 			if (!WinPrAsn1DecReadSequence(&dec, &dec2))
+			{
 				return FALSE;
+			}
 			dec = dec2;
 
 			/* domainName [0] OCTET STRING */
 			if (!set_creds_octetstring_to_settings(&dec, 0, FALSE, FreeRDP_Domain, settings))
+			{
 				return FALSE;
+			}
 
 			/* userName [1] OCTET STRING */
 			if (!set_creds_octetstring_to_settings(&dec, 1, FALSE, FreeRDP_Username, settings))
+			{
 				return FALSE;
+			}
 
 			/* password [2] OCTET STRING */
 			return set_creds_octetstring_to_settings(&dec, 2, FALSE, FreeRDP_Password, settings);
@@ -1297,24 +1466,34 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 		{
 			/* TSSmartCardCreds */
 			if (!WinPrAsn1DecReadSequence(&dec, &dec2))
+			{
 				return FALSE;
+			}
 			dec = dec2;
 
 			/* pin [0] OCTET STRING, */
 			if (!set_creds_octetstring_to_settings(&dec, 0, FALSE, FreeRDP_Password, settings))
+			{
 				return FALSE;
+			}
 			settings->PasswordIsSmartcardPin = TRUE;
 
 			/* cspData [1] TSCspDataDetail */
 			WinPrAsn1Decoder cspDetails = { 0 };
 			if (!WinPrAsn1DecReadContextualSequence(&dec, 1, &error, &cspDetails) && error)
+			{
 				return FALSE;
+			}
 			if (!nla_read_TSCspDataDetail(&cspDetails, settings))
+			{
 				return FALSE;
+			}
 
 			/* userHint [2] OCTET STRING OPTIONAL */
 			if (!set_creds_octetstring_to_settings(&dec, 2, TRUE, FreeRDP_Username, settings))
+			{
 				return FALSE;
+			}
 
 			/* domainHint [3] OCTET STRING OPTIONAL */
 			return set_creds_octetstring_to_settings(&dec, 3, TRUE, FreeRDP_Domain, settings);
@@ -1323,26 +1502,31 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 		{
 			/* TSRemoteGuardCreds */
 			if (!WinPrAsn1DecReadSequence(&dec, &dec2))
+			{
 				return FALSE;
+			}
 
 			/* logonCred[0] TSRemoteGuardPackageCred */
 			KERB_TICKET_LOGON kerbLogon = { 0 };
 			WinPrAsn1Decoder logonCredsSeq = { 0 };
 			if (!WinPrAsn1DecReadContextualSequence(&dec2, 0, &error, &logonCredsSeq) || error)
+			{
 				return FALSE;
+			}
 
 			RemoteGuardPackageCredType logonCredsType = { 0 };
 			wStream logonPayload = { 0 };
-			if (!nla_read_TSRemoteGuardPackageCred(nla, &logonCredsSeq, &logonCredsType,
-			                                       &logonPayload))
+			if (!nla_read_TSRemoteGuardPackageCred(&logonCredsSeq, &logonCredsType, &logonPayload))
+			{
 				return FALSE;
+			}
 			if (logonCredsType != RCG_TYPE_KERB)
 			{
 				WLog_ERR(TAG, "logonCred must be some Kerberos creds");
 				return FALSE;
 			}
 
-			if (!nla_read_KERB_TICKET_LOGON(nla, &logonPayload, &kerbLogon))
+			if (!nla_read_KERB_TICKET_LOGON(&logonPayload, &kerbLogon))
 			{
 				WLog_ERR(TAG, "invalid KERB_TICKET_LOGON");
 				return FALSE;
@@ -1357,13 +1541,16 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 			{
 				WinPrAsn1Decoder ntlmCredsSeq = { 0 };
 				if (!WinPrAsn1DecReadSequence(&suppCredsSeq, &ntlmCredsSeq))
+				{
 					return FALSE;
+				}
 
 				RemoteGuardPackageCredType suppCredsType = { 0 };
 				wStream ntlmPayload = { 0 };
-				if (!nla_read_TSRemoteGuardPackageCred(nla, &ntlmCredsSeq, &suppCredsType,
-				                                       &ntlmPayload))
+				if (!nla_read_TSRemoteGuardPackageCred(&ntlmCredsSeq, &suppCredsType, &ntlmPayload))
+				{
 					return FALSE;
+				}
 
 				if (suppCredsType != RCG_TYPE_NTLM)
 				{
@@ -1414,27 +1601,41 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	WINPR_ASSERT(settings);
 
 	if (settings->RemoteCredentialGuard)
+	{
 		credType = TSCREDS_REMOTEGUARD;
+	}
 	else if (settings->SmartcardLogon)
+	{
 		credType = TSCREDS_SMARTCARD;
+	}
 	else
+	{
 		credType = TSCREDS_USER_PASSWD;
+	}
 
 	enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
 	if (!enc)
+	{
 		return FALSE;
+	}
 
 	/* TSCredentials */
 	if (!WinPrAsn1EncSeqContainer(enc))
+	{
 		goto out;
+	}
 
 	/* credType [0] INTEGER */
 	if (!WinPrAsn1EncContextualInteger(enc, 0, (WinPrAsn1_INTEGER)credType))
+	{
 		goto out;
+	}
 
 	/* credentials [1] OCTET STRING */
 	if (!WinPrAsn1EncContextualOctetStringContainer(enc, 1))
+	{
 		goto out;
+	}
 
 	switch (credType)
 	{
@@ -1444,38 +1645,46 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 			{
 				WinPrAsn1_tagId tag;
 				size_t setting_id;
-			} cspData_fields[] = { { 1, FreeRDP_CardName },
-				                   { 2, FreeRDP_ReaderName },
-				                   { 3, FreeRDP_ContainerName },
-				                   { 4, FreeRDP_CspName } };
+			} DECLSPEC_ALIGN(16) cspData_fields[] = { { 1, FreeRDP_CardName },
+				                                      { 2, FreeRDP_ReaderName },
+				                                      { 3, FreeRDP_ContainerName },
+				                                      { 4, FreeRDP_CspName } };
 			WinPrAsn1_OctetString octet_string = { 0 };
 
 			/* TSSmartCardCreds */
 			if (!WinPrAsn1EncSeqContainer(enc))
+			{
 				goto out;
+			}
 
 			/* pin [0] OCTET STRING */
-			size_t ss;
+			size_t ss = 0;
 			octet_string.data =
 			    (BYTE*)freerdp_settings_get_string_as_utf16(settings, FreeRDP_Password, &ss);
 			octet_string.len = ss * sizeof(WCHAR);
 			const BOOL res = WinPrAsn1EncContextualOctetString(enc, 0, &octet_string) > 0;
 			free(octet_string.data);
 			if (!res)
+			{
 				goto out;
+			}
 
 			/* cspData [1] SEQUENCE */
 			if (!WinPrAsn1EncContextualSeqContainer(enc, 1))
+			{
 				goto out;
+			}
 
 			/* keySpec [0] INTEGER */
 			if (!WinPrAsn1EncContextualInteger(
 			        enc, 0, freerdp_settings_get_uint32(settings, FreeRDP_KeySpec)))
+			{
 				goto out;
+			}
 
 			for (size_t i = 0; i < ARRAYSIZE(cspData_fields); i++)
 			{
-				size_t len;
+				size_t len = 0;
 
 				octet_string.data = (BYTE*)freerdp_settings_get_string_as_utf16(
 				    settings, cspData_fields[i].setting_id, &len);
@@ -1486,17 +1695,23 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 					                                                    &octet_string) > 0;
 					free(octet_string.data);
 					if (!res2)
+					{
 						goto out;
+					}
 				}
 			}
 
 			/* End cspData */
 			if (!WinPrAsn1EncEndContainer(enc))
+			{
 				goto out;
+			}
 
 			/* End TSSmartCardCreds */
 			if (!WinPrAsn1EncEndContainer(enc))
+			{
 				goto out;
+			}
 			break;
 		}
 		case TSCREDS_USER_PASSWD:
@@ -1507,7 +1722,9 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 
 			/* TSPasswordCreds */
 			if (!WinPrAsn1EncSeqContainer(enc))
+			{
 				goto out;
+			}
 
 			if (!settings->DisableCredentialsDelegation && nla->identity)
 			{
@@ -1522,15 +1739,23 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 			}
 
 			if (WinPrAsn1EncContextualOctetString(enc, 0, &domain) == 0)
+			{
 				goto out;
+			}
 			if (WinPrAsn1EncContextualOctetString(enc, 1, &username) == 0)
+			{
 				goto out;
+			}
 			if (WinPrAsn1EncContextualOctetString(enc, 2, &password) == 0)
+			{
 				goto out;
+			}
 
 			/* End TSPasswordCreds */
 			if (!WinPrAsn1EncEndContainer(enc))
+			{
 				goto out;
+			}
 			break;
 		}
 		case TSCREDS_REMOTEGUARD:
@@ -1540,10 +1765,14 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 
 	/* End credentials | End TSCredentials */
 	if (!WinPrAsn1EncEndContainer(enc) || !WinPrAsn1EncEndContainer(enc))
+	{
 		goto out;
+	}
 
 	if (!WinPrAsn1EncStreamSize(enc, &length))
+	{
 		goto out;
+	}
 
 	if (!nla_sec_buffer_alloc(&nla->tsCredentials, length))
 	{
@@ -1565,12 +1794,16 @@ static BOOL nla_encrypt_ts_credentials(rdpNla* nla)
 	WINPR_ASSERT(nla);
 
 	if (!nla_encode_ts_credentials(nla))
+	{
 		return FALSE;
+	}
 
 	sspi_SecBufferFree(&nla->authInfo);
 	if (!credssp_auth_encrypt(nla->auth, &nla->tsCredentials, &nla->authInfo, NULL,
 	                          nla->sendSeqNum++))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -1587,10 +1820,14 @@ static BOOL nla_decrypt_ts_credentials(rdpNla* nla)
 
 	sspi_SecBufferFree(&nla->tsCredentials);
 	if (!credssp_auth_decrypt(nla->auth, &nla->authInfo, &nla->tsCredentials, nla->recvSeqNum++))
+	{
 		return FALSE;
+	}
 
 	if (!nla_read_ts_credentials(nla, &nla->tsCredentials))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -1614,7 +1851,9 @@ static BOOL nla_write_octet_string(WinPrAsn1Encoder* enc, const SecBuffer* buffe
 		octet_string.len = buffer->cbBuffer;
 		rc = WinPrAsn1EncContextualOctetString(enc, tagId, &octet_string);
 		if (rc != 0)
+		{
 			res = TRUE;
+		}
 	}
 
 	return res;
@@ -1647,17 +1886,23 @@ BOOL nla_send(rdpNla* nla)
 
 	enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
 	if (!enc)
+	{
 		return FALSE;
+	}
 
 	/* TSRequest */
 	WLog_DBG(TAG, "----->> sending...");
 	if (!WinPrAsn1EncSeqContainer(enc))
+	{
 		goto fail;
+	}
 
 	/* version [0] INTEGER */
 	WLog_DBG(TAG, "   ----->> protocol version %" PRIu32, nla->version);
 	if (!WinPrAsn1EncContextualInteger(enc, 0, nla->version))
+	{
 		goto fail;
+	}
 
 	/* negoTokens [1] SEQUENCE OF SEQUENCE */
 	if (nla_get_state(nla) <= NLA_STATE_NEGO_TOKEN && credssp_auth_have_output_token(nla->auth))
@@ -1665,29 +1910,39 @@ BOOL nla_send(rdpNla* nla)
 		const SecBuffer* buffer = credssp_auth_get_output_buffer(nla->auth);
 
 		if (!WinPrAsn1EncContextualSeqContainer(enc, 1) || !WinPrAsn1EncSeqContainer(enc))
+		{
 			goto fail;
+		}
 
 		/* negoToken [0] OCTET STRING */
 		if (!nla_write_octet_string(enc, buffer, 0, "negoToken"))
+		{
 			goto fail;
+		}
 
 		/* End negoTokens (SEQUENCE OF SEQUENCE) */
 		if (!WinPrAsn1EncEndContainer(enc) || !WinPrAsn1EncEndContainer(enc))
+		{
 			goto fail;
+		}
 	}
 
 	/* authInfo [2] OCTET STRING */
 	if (nla->authInfo.cbBuffer > 0)
 	{
 		if (!nla_write_octet_string_free(enc, &nla->authInfo, 2, "auth info"))
+		{
 			goto fail;
+		}
 	}
 
 	/* pubKeyAuth [3] OCTET STRING */
 	if (nla->pubKeyAuth.cbBuffer > 0)
 	{
 		if (!nla_write_octet_string_free(enc, &nla->pubKeyAuth, 3, "public key auth"))
+		{
 			goto fail;
+		}
 	}
 
 	/* errorCode [4] INTEGER */
@@ -1696,33 +1951,47 @@ BOOL nla_send(rdpNla* nla)
 		WLog_DBG(TAG, "   ----->> error code %s 0x%08" PRIx32, NtStatus2Tag(nla->errorCode),
 		         nla->errorCode);
 		if (!WinPrAsn1EncContextualInteger(enc, 4, nla->errorCode))
+		{
 			goto fail;
+		}
 	}
 
 	/* clientNonce [5] OCTET STRING */
 	if (!nla->server && nla->ClientNonce.cbBuffer > 0)
 	{
 		if (!nla_write_octet_string(enc, &nla->ClientNonce, 5, "client nonce"))
+		{
 			goto fail;
+		}
 	}
 
 	/* End TSRequest */
 	if (!WinPrAsn1EncEndContainer(enc))
+	{
 		goto fail;
+	}
 
 	if (!WinPrAsn1EncStreamSize(enc, &length))
+	{
 		goto fail;
+	}
 
 	s = Stream_New(NULL, length);
 	if (!s)
+	{
 		goto fail;
+	}
 
 	if (!WinPrAsn1EncToStream(enc, s))
+	{
 		goto fail;
+	}
 
 	WLog_DBG(TAG, "[%" PRIuz " bytes]", length);
 	if (transport_write(nla->transport, s) < 0)
+	{
 		goto fail;
+	}
 	rc = TRUE;
 
 fail:
@@ -1750,21 +2019,29 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 	/* TSRequest */
 	const size_t offset = WinPrAsn1DecReadSequence(&dec, &dec2);
 	if (offset == 0)
+	{
 		return -1;
+	}
 	dec = dec2;
 
 	/* version [0] INTEGER */
 	if (WinPrAsn1DecReadContextualInteger(&dec, 0, &error, &val) == 0)
+	{
 		return -1;
+	}
 
 	if (!Stream_SafeSeek(s, offset))
+	{
 		return -1;
+	}
 
 	version = (UINT)val;
 	WLog_DBG(TAG, "   <<----- protocol version %" PRIu32, version);
 
 	if (nla->peerVersion == 0)
+	{
 		nla->peerVersion = version;
+	}
 
 	/* if the peer suddenly changed its version - kick it */
 	if (nla->peerVersion != version)
@@ -1786,38 +2063,54 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 				/* negoTokens [1] SEQUENCE OF SEQUENCE */
 				if ((WinPrAsn1DecReadSequence(&dec2, &dec3) == 0) ||
 				    (WinPrAsn1DecReadSequence(&dec3, &dec2) == 0))
+				{
 					return -1;
+				}
 				/* negoToken [0] OCTET STRING */
 				if ((WinPrAsn1DecReadContextualOctetString(&dec2, 0, &error, &octet_string,
 				                                           FALSE) == 0) &&
 				    error)
+				{
 					return -1;
+				}
 				if (!nla_sec_buffer_alloc_from_data(&nla->negoToken, octet_string.data, 0,
 				                                    octet_string.len))
+				{
 					return -1;
+				}
 				break;
 			case 2:
 				WLog_DBG(TAG, "   <<----- auth info");
 				/* authInfo [2] OCTET STRING */
 				if (WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE) == 0)
+				{
 					return -1;
+				}
 				if (!nla_sec_buffer_alloc_from_data(&nla->authInfo, octet_string.data, 0,
 				                                    octet_string.len))
+				{
 					return -1;
+				}
 				break;
 			case 3:
 				WLog_DBG(TAG, "   <<----- public key auth");
 				/* pubKeyAuth [3] OCTET STRING */
 				if (WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE) == 0)
+				{
 					return -1;
+				}
 				if (!nla_sec_buffer_alloc_from_data(&nla->pubKeyAuth, octet_string.data, 0,
 				                                    octet_string.len))
+				{
 					return -1;
+				}
 				break;
 			case 4:
 				/* errorCode [4] INTEGER */
 				if (WinPrAsn1DecReadInteger(&dec2, &val) == 0)
+				{
 					return -1;
+				}
 				nla->errorCode = (UINT)val;
 				WLog_DBG(TAG, "   <<----- error code %s 0x%08" PRIx32, NtStatus2Tag(nla->errorCode),
 				         nla->errorCode);
@@ -1826,10 +2119,14 @@ static int nla_decode_ts_request(rdpNla* nla, wStream* s)
 				WLog_DBG(TAG, "   <<----- client nonce");
 				/* clientNonce [5] OCTET STRING */
 				if (WinPrAsn1DecReadOctetString(&dec2, &octet_string, FALSE) == 0)
+				{
 					return -1;
+				}
 				if (!nla_sec_buffer_alloc_from_data(&nla->ClientNonce, octet_string.data, 0,
 				                                    octet_string.len))
+				{
 					return -1;
+				}
 				break;
 			default:
 				return -1;
@@ -1846,7 +2143,7 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 
 	if (nla_get_state(nla) == NLA_STATE_EARLY_USER_AUTH)
 	{
-		UINT32 code;
+		UINT32 code = 0;
 		Stream_Read_UINT32(s, code);
 		if (code != AUTHZ_SUCCESS)
 		{
@@ -1855,17 +2152,18 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 			freerdp_set_last_error_log(nla->rdpcontext, code);
 			return -1;
 		}
-		else
-			WLog_DBG(TAG, "Early User Auth active: SUCCESS");
+		WLog_DBG(TAG, "Early User Auth active: SUCCESS");
 	}
 	else
 	{
 		if (nla_decode_ts_request(nla, s) < 1)
+		{
 			return -1;
+		}
 
 		if (nla->errorCode)
 		{
-			UINT32 code;
+			UINT32 code = 0;
 
 			switch (nla->errorCode)
 			{
@@ -1932,7 +2230,9 @@ int nla_server_recv(rdpNla* nla)
 
 	wStream* s = nla_server_recv_stream(nla);
 	if (!s)
+	{
 		goto fail;
+	}
 	status = nla_decode_ts_request(nla, s);
 
 fail:
@@ -1960,7 +2260,9 @@ rdpNla* nla_new(rdpContext* context, rdpTransport* transport)
 	rdpNla* nla = (rdpNla*)calloc(1, sizeof(rdpNla));
 
 	if (!nla)
+	{
 		return NULL;
+	}
 
 	nla->rdpcontext = context;
 	nla->server = settings->ServerMode;
@@ -1972,19 +2274,27 @@ rdpNla* nla_new(rdpContext* context, rdpTransport* transport)
 
 	nla->identity = calloc(1, sizeof(SEC_WINNT_AUTH_IDENTITY));
 	if (!nla->identity)
+	{
 		goto cleanup;
+	}
 
 	nla->auth = credssp_auth_new(context);
 	if (!nla->auth)
+	{
 		goto cleanup;
+	}
 
 	/* init to 0 or we end up freeing a bad pointer if the alloc fails */
 	if (!nla_sec_buffer_alloc(&nla->ClientNonce, NonceLength))
+	{
 		goto cleanup;
+	}
 
 	/* generate random 32-byte nonce */
 	if (winpr_RAND(nla->ClientNonce.pvBuffer, NonceLength) < 0)
+	{
 		goto cleanup;
+	}
 
 	return nla;
 cleanup:
@@ -2002,7 +2312,9 @@ cleanup:
 void nla_free(rdpNla* nla)
 {
 	if (!nla)
+	{
 		return;
+	}
 
 	smartcardCertInfo_Free(nla->smartcardCert);
 	nla_buffer_free(nla);
@@ -2018,7 +2330,9 @@ void nla_free(rdpNla* nla)
 SEC_WINNT_AUTH_IDENTITY* nla_get_identity(rdpNla* nla)
 {
 	if (!nla)
+	{
 		return NULL;
+	}
 
 	return nla->identity;
 }
@@ -2026,7 +2340,9 @@ SEC_WINNT_AUTH_IDENTITY* nla_get_identity(rdpNla* nla)
 NLA_STATE nla_get_state(rdpNla* nla)
 {
 	if (!nla)
+	{
 		return NLA_STATE_FINAL;
+	}
 
 	return nla->state;
 }
@@ -2034,7 +2350,9 @@ NLA_STATE nla_get_state(rdpNla* nla)
 BOOL nla_set_state(rdpNla* nla, NLA_STATE state)
 {
 	if (!nla)
+	{
 		return FALSE;
+	}
 
 	WLog_DBG(TAG, "-- %s\t--> %s", nla_get_state_str(nla->state), nla_get_state_str(state));
 	nla->state = state;
@@ -2044,7 +2362,9 @@ BOOL nla_set_state(rdpNla* nla, NLA_STATE state)
 BOOL nla_set_service_principal(rdpNla* nla, const char* service, const char* hostname)
 {
 	if (!credssp_auth_set_spn(nla->auth, service, hostname))
+	{
 		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -2084,7 +2404,9 @@ const char* nla_get_state_str(NLA_STATE state)
 DWORD nla_get_error(rdpNla* nla)
 {
 	if (!nla)
+	{
 		return ERROR_INTERNAL_ERROR;
+	}
 	return nla->errorCode;
 }
 

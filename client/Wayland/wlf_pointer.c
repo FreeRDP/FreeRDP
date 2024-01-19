@@ -30,20 +30,24 @@ typedef struct
 	rdpPointer pointer;
 	size_t size;
 	void* data;
-} wlfPointer;
+} DECLSPEC_ALIGN(128) wlfPointer;
 
 static BOOL wlf_Pointer_New(rdpContext* context, rdpPointer* pointer)
 {
 	wlfPointer* ptr = (wlfPointer*)pointer;
 
 	if (!ptr)
+	{
 		return FALSE;
+	}
 
 	ptr->size = pointer->width * pointer->height * 4ULL;
 	ptr->data = winpr_aligned_malloc(ptr->size, 16);
 
 	if (!ptr->data)
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_image_copy_from_pointer_data(
 	        ptr->data, PIXEL_FORMAT_BGRA32, 0, 0, 0, pointer->width, pointer->height,
@@ -63,22 +67,29 @@ static void wlf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	WINPR_UNUSED(context);
 
 	if (ptr)
+	{
 		winpr_aligned_free(ptr->data);
+	}
 }
 
 static BOOL wlf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	wlfContext* wlf = (wlfContext*)context;
 	wlfPointer* ptr = (wlfPointer*)pointer;
-	void* data;
-	UINT32 w, h, x, y;
-	size_t size;
+	void* data = NULL;
+	UINT32 w;
+	UINT32 h;
+	UINT32 x;
+	UINT32 y;
+	size_t size = 0;
 	UwacReturnCode rc;
 	BOOL res = FALSE;
 	RECTANGLE_16 area;
 
 	if (!wlf || !wlf->seat)
+	{
 		return FALSE;
+	}
 
 	x = pointer->xPos;
 	y = pointer->yPos;
@@ -87,13 +98,17 @@ static BOOL wlf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 
 	if (!wlf_scale_coordinates(context, &x, &y, FALSE) ||
 	    !wlf_scale_coordinates(context, &w, &h, FALSE))
+	{
 		return FALSE;
+	}
 
 	size = w * h * 4ULL;
 	data = malloc(size);
 
 	if (!data)
+	{
 		return FALSE;
+	}
 
 	area.top = 0;
 	area.left = 0;
@@ -103,12 +118,16 @@ static BOOL wlf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 	if (!wlf_copy_image(ptr->data, pointer->width * 4, pointer->width, pointer->height, data, w * 4,
 	                    w, h, &area,
 	                    freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing)))
+	{
 		goto fail;
+	}
 
 	rc = UwacSeatSetMouseCursor(wlf->seat, data, size, w, h, x, y);
 
 	if (rc == UWAC_SUCCESS)
+	{
 		res = TRUE;
+	}
 
 fail:
 	free(data);
@@ -120,10 +139,14 @@ static BOOL wlf_Pointer_SetNull(rdpContext* context)
 	wlfContext* wlf = (wlfContext*)context;
 
 	if (!wlf || !wlf->seat)
+	{
 		return FALSE;
+	}
 
 	if (UwacSeatSetMouseCursor(wlf->seat, NULL, 0, 0, 0, 0, 0) != UWAC_SUCCESS)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -133,10 +156,14 @@ static BOOL wlf_Pointer_SetDefault(rdpContext* context)
 	wlfContext* wlf = (wlfContext*)context;
 
 	if (!wlf || !wlf->seat)
+	{
 		return FALSE;
+	}
 
 	if (UwacSeatSetMouseCursor(wlf->seat, NULL, 1, 0, 0, 0, 0) != UWAC_SUCCESS)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }

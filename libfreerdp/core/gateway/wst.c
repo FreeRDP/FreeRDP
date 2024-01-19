@@ -64,7 +64,7 @@ struct rdp_wst
 	uint16_t gwport;
 	char* gwpath;
 	websocket_context wscontext;
-};
+} DECLSPEC_ALIGN(128);
 
 static const char arm_query_param[] = "%s%cClmTk=Bearer%%20%s&X-MS-User-Agent=FreeRDP%%2F3.0";
 
@@ -100,18 +100,24 @@ static BOOL wst_auth_init(rdpWst* wst, rdpTls* tls, TCHAR* authPkg)
 	rdpContext* context = wst->context;
 	rdpSettings* settings = context->settings;
 	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
-	int rc;
+	int rc = 0;
 
 	wst->auth_required = TRUE;
 	if (!credssp_auth_init(wst->auth, authPkg, tls->Bindings))
+	{
 		return FALSE;
+	}
 
 	if (!wst_get_gateway_credentials(context, GW_AUTH_RDG))
+	{
 		return FALSE;
+	}
 
 	if (!identity_set_from_settings(&identity, settings, FreeRDP_GatewayUsername,
 	                                FreeRDP_GatewayDomain, FreeRDP_GatewayPassword))
+	{
 		return FALSE;
+	}
 
 	SEC_WINNT_AUTH_IDENTITY* identityArg = (settings->GatewayUsername ? &identity : NULL);
 	if (!credssp_auth_setup_client(wst->auth, "HTTP", wst->gwhostname, identityArg, NULL))
@@ -125,7 +131,9 @@ static BOOL wst_auth_init(rdpWst* wst, rdpTls* tls, TCHAR* authPkg)
 
 	rc = credssp_auth_authenticate(wst->auth);
 	if (rc < 0)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -141,7 +149,9 @@ static BOOL wst_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 	if (authToken)
 	{
 		if (authToken->cbBuffer > INT_MAX)
+		{
 			return FALSE;
+		}
 
 		base64AuthToken = crypto_base64_encode(authToken->pvBuffer, (int)authToken->cbBuffer);
 	}
@@ -153,7 +163,9 @@ static BOOL wst_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 		free(base64AuthToken);
 
 		if (!rc)
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -161,16 +173,18 @@ static BOOL wst_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 
 static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 {
-	size_t len;
+	size_t len = 0;
 	const char* token64 = NULL;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = NULL;
 	SecBuffer authToken = { 0 };
-	long StatusCode;
-	int rc;
+	long StatusCode = 0;
+	int rc = 0;
 
 	if (!auth || !response)
+	{
 		return FALSE;
+	}
 
 	StatusCode = http_response_get_status_code(response);
 	switch (StatusCode)
@@ -186,7 +200,9 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 	token64 = http_response_get_auth_token(response, credssp_auth_pkg_name(auth));
 
 	if (!token64)
+	{
 		return FALSE;
+	}
 
 	len = strlen(token64);
 
@@ -201,7 +217,9 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 
 	rc = credssp_auth_authenticate(auth);
 	if (rc < 0)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -217,7 +235,8 @@ static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, int timeout)
 	rdpSettings* settings = wst->settings;
 	const char* peerHostname = wst->gwhostname;
 	UINT16 peerPort = wst->gwport;
-	const char *proxyUsername, *proxyPassword;
+	const char* proxyUsername;
+	const char* proxyPassword;
 	BOOL isProxyConnection =
 	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 
@@ -290,24 +309,32 @@ static wStream* wst_build_http_request(rdpWst* wst)
 {
 	wStream* s = NULL;
 	HttpRequest* request = NULL;
-	const char* uri;
+	const char* uri = NULL;
 
 	if (!wst)
+	{
 		return NULL;
+	}
 
 	uri = http_context_get_uri(wst->http);
 	request = http_request_new();
 
 	if (!request)
+	{
 		return NULL;
+	}
 
 	if (!http_request_set_method(request, "GET") || !http_request_set_uri(request, uri))
+	{
 		goto out;
+	}
 
 	if (wst->auth_required)
 	{
 		if (!wst_set_auth_header(wst->auth, request))
+		{
 			goto out;
+		}
 	}
 	else if (freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer))
 	{
@@ -321,14 +348,16 @@ out:
 	http_request_free(request);
 
 	if (s)
+	{
 		Stream_SealLength(s);
+	}
 
 	return s;
 }
 
 static BOOL wst_send_http_request(rdpWst* wst, rdpTls* tls)
 {
-	size_t sz;
+	size_t sz = 0;
 	wStream* s = NULL;
 	int status = -1;
 	WINPR_ASSERT(wst);
@@ -337,12 +366,16 @@ static BOOL wst_send_http_request(rdpWst* wst, rdpTls* tls)
 	s = wst_build_http_request(wst);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	sz = Stream_Length(s);
 
 	if (sz <= INT_MAX)
+	{
 		status = freerdp_tls_write_all(tls, Stream_Buffer(s), (int)sz);
+	}
 
 	Stream_Free(s, TRUE);
 	return (status >= 0);
@@ -367,12 +400,16 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 		/* Terminate this connection and make a new one with the Loadbalancing Cookie */
 		int fd = BIO_get_fd(wst->tls->bio, NULL);
 		if (fd >= 0)
+		{
 			closesocket((SOCKET)fd);
+		}
 		freerdp_tls_free(wst->tls);
 
 		wst->tls = freerdp_tls_new(wst->settings);
 		if (!wst_tls_connect(wst, wst->tls, timeout))
+		{
 			return FALSE;
+		}
 
 		if (freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer) &&
 		    freerdp_settings_get_bool(wst->settings, FreeRDP_GatewayArmTransport))
@@ -384,7 +421,9 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 			    &urlWithAuth, &urlLen, arm_query_param, wst->gwpath, firstParam,
 			    freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer));
 			if (!urlWithAuth)
+			{
 				return FALSE;
+			}
 			free(wst->gwpath);
 			wst->gwpath = urlWithAuth;
 			http_context_set_uri(wst->http, wst->gwpath);
@@ -392,10 +431,14 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 		}
 
 		if (!wst_send_http_request(wst, wst->tls))
+		{
 			return FALSE;
+		}
 		*ppresponse = http_response_recv(wst->tls, TRUE);
 		if (!*ppresponse)
+		{
 			return FALSE;
+		}
 
 		*pStatusCode = http_response_get_status_code(*ppresponse);
 	}
@@ -411,32 +454,46 @@ static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, long* pSta
 	WINPR_ASSERT(pStatusCode);
 
 	if (freerdp_settings_get_string(wst->settings, FreeRDP_GatewayHttpExtAuthBearer))
+	{
 		return FALSE;
+	}
 
 	if (!wst_auth_init(wst, wst->tls, AUTH_PKG))
+	{
 		return FALSE;
+	}
 	if (!wst_send_http_request(wst, wst->tls))
+	{
 		return FALSE;
+	}
 
 	http_response_free(*ppresponse);
 	*ppresponse = http_response_recv(wst->tls, TRUE);
 	if (!*ppresponse)
+	{
 		return FALSE;
+	}
 
 	while (!credssp_auth_is_complete(wst->auth))
 	{
 		if (!wst_recv_auth_token(wst->auth, *ppresponse))
+		{
 			return FALSE;
+		}
 
 		if (credssp_auth_have_output_token(wst->auth))
 		{
 			if (!wst_send_http_request(wst, wst->tls))
+			{
 				return FALSE;
+			}
 
 			http_response_free(*ppresponse);
 			*ppresponse = http_response_recv(wst->tls, TRUE);
 			if (!*ppresponse)
+			{
 				return FALSE;
+			}
 		}
 	}
 	*pStatusCode = http_response_get_status_code(*ppresponse);
@@ -446,11 +503,13 @@ static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, long* pSta
 BOOL wst_connect(rdpWst* wst, DWORD timeout)
 {
 	HttpResponse* response = NULL;
-	long StatusCode;
+	long StatusCode = 0;
 
 	WINPR_ASSERT(wst);
 	if (!wst_tls_connect(wst, wst->tls, timeout))
+	{
 		return FALSE;
+	}
 	if (freerdp_settings_get_bool(wst->settings, FreeRDP_GatewayArmTransport))
 	{
 		/*
@@ -461,7 +520,9 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 		http_context_enable_websocket_upgrade(wst->http, FALSE);
 	}
 	if (!wst_send_http_request(wst, wst->tls))
+	{
 		return FALSE;
+	}
 
 	response = http_response_recv(wst->tls, TRUE);
 	if (!response)
@@ -489,7 +550,9 @@ BOOL wst_connect(rdpWst* wst, DWORD timeout)
 	const BOOL isWebsocket = http_response_is_websocket(wst->http, response);
 	http_response_free(response);
 	if (!success)
+	{
 		return FALSE;
+	}
 
 	if (isWebsocket)
 	{
@@ -519,7 +582,9 @@ DWORD wst_get_event_handles(rdpWst* wst, HANDLE* events, DWORD count)
 			nCount++;
 		}
 		else
+		{
 			return 0;
+		}
 	}
 
 	return nCount;
@@ -527,7 +592,7 @@ DWORD wst_get_event_handles(rdpWst* wst, HANDLE* events, DWORD count)
 
 static int wst_bio_write(BIO* bio, const char* buf, int num)
 {
-	int status;
+	int status = 0;
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(buf);
 
@@ -543,7 +608,7 @@ static int wst_bio_write(BIO* bio, const char* buf, int num)
 		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 		return -1;
 	}
-	else if (status < num)
+	if (status < num)
 	{
 		BIO_set_flags(bio, BIO_FLAGS_WRITE);
 		WSASetLastError(WSAEWOULDBLOCK);
@@ -571,7 +636,9 @@ static int wst_bio_read(BIO* bio, char* buf, int size)
 		if (status <= 0)
 		{
 			if (!BIO_should_retry(wst->tls->bio))
+			{
 				return -1;
+			}
 			return 0;
 		}
 	}
@@ -581,7 +648,7 @@ static int wst_bio_read(BIO* bio, char* buf, int size)
 		BIO_clear_retry_flags(bio);
 		return -1;
 	}
-	else if (status == 0)
+	if (status == 0)
 	{
 		BIO_set_retry_read(bio);
 		WSASetLastError(WSAEWOULDBLOCK);
@@ -602,7 +669,7 @@ static int wst_bio_puts(BIO* bio, const char* str)
 	return -2;
 }
 
-static int wst_bio_gets(BIO* bio, char* str, int size)
+static int wst_bio_gets(BIO* bio, const char* str, int size)
 {
 	WINPR_UNUSED(bio);
 	WINPR_UNUSED(str);
@@ -641,7 +708,9 @@ static long wst_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		int timeout = (int)arg1;
 
 		if (BIO_read_blocked(tls->bio))
+		{
 			return BIO_wait_read(tls->bio, timeout);
+		}
 		status = 1;
 	}
 	else if (cmd == BIO_C_WAIT_WRITE)
@@ -649,9 +718,13 @@ static long wst_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		int timeout = (int)arg1;
 
 		if (BIO_write_blocked(tls->bio))
+		{
 			status = BIO_wait_write(tls->bio, timeout);
+		}
 		else
+		{
 			status = 1;
+		}
 	}
 	else if (cmd == BIO_C_GET_EVENT || cmd == BIO_C_GET_FD)
 	{
@@ -697,7 +770,9 @@ static BIO_METHOD* BIO_s_wst(void)
 	if (bio_methods == NULL)
 	{
 		if (!(bio_methods = BIO_meth_new(BIO_TYPE_TSG, "WSTransport")))
+		{
 			return NULL;
+		}
 
 		BIO_meth_set_write(bio_methods, wst_bio_write);
 		BIO_meth_set_read(bio_methods, wst_bio_read);
@@ -713,8 +788,8 @@ static BIO_METHOD* BIO_s_wst(void)
 
 static BOOL wst_parse_url(rdpWst* wst, const char* url)
 {
-	const char* hostStart;
-	const char* pos;
+	const char* hostStart = NULL;
+	const char* pos = NULL;
 	WINPR_ASSERT(wst);
 	WINPR_ASSERT(url);
 
@@ -730,57 +805,78 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 			WLog_ERR(TAG, "Websocket URL is invalid. Only wss:// or https:// URLs are supported");
 			return FALSE;
 		}
-		else
-			hostStart = url + 8;
+		hostStart = url + 8;
 	}
 	else
+	{
 		hostStart = url + 6;
+	}
 
 	pos = hostStart;
 	while (*pos != '\0' && *pos != ':' && *pos != '/')
+	{
 		pos++;
+	}
 	free(wst->gwhostname);
 	wst->gwhostname = NULL;
 	if (pos - hostStart == 0)
+	{
 		return FALSE;
+	}
 	wst->gwhostname = malloc(sizeof(char) * (pos - hostStart + 1));
 	if (!wst->gwhostname)
+	{
 		return FALSE;
+	}
 	strncpy(wst->gwhostname, hostStart, (pos - hostStart));
 	wst->gwhostname[pos - hostStart] = '\0';
 
 	if (*pos == ':')
 	{
 		char port[6];
-		char* portNumberEnd;
+		char* portNumberEnd = NULL;
 		pos++;
 		const char* portStart = pos;
 		while (*pos != '\0' && *pos != '/')
+		{
 			pos++;
+		}
 		if (pos - portStart > 5 || pos - portStart == 0)
+		{
 			return FALSE;
+		}
 		strncpy(port, portStart, (pos - portStart));
 		port[pos - portStart] = '\0';
 		int _p = strtol(port, &portNumberEnd, 10);
 		if (portNumberEnd && *portNumberEnd == '\0' && _p > 0 && _p <= UINT16_MAX)
+		{
 			wst->gwport = _p;
+		}
 		else
+		{
 			return FALSE;
+		}
 	}
 	else
+	{
 		wst->gwport = 443;
+	}
 	wst->gwpath = _strdup(pos);
 	if (!wst->gwpath)
+	{
 		return FALSE;
+	}
 	return TRUE;
 }
 
 rdpWst* wst_new(rdpContext* context)
 {
-	rdpWst* wst;
+	rdpWst* wst = NULL;
 
 	if (!context)
+	{
 		return NULL;
+	}
 
 	wst = (rdpWst*)calloc(1, sizeof(rdpWst));
 
@@ -794,16 +890,22 @@ rdpWst* wst_new(rdpContext* context)
 		wst->gwpath = NULL;
 
 		if (!wst_parse_url(wst, context->settings->GatewayUrl))
+		{
 			goto wst_alloc_error;
+		}
 
 		wst->tls = freerdp_tls_new(wst->settings);
 		if (!wst->tls)
+		{
 			goto wst_alloc_error;
+		}
 
 		wst->http = http_context_new();
 
 		if (!wst->http)
+		{
 			goto wst_alloc_error;
+		}
 
 		if (!http_context_set_uri(wst->http, wst->gwpath) ||
 		    !http_context_set_accept(wst->http, "*/*") ||
@@ -821,13 +923,17 @@ rdpWst* wst_new(rdpContext* context)
 		wst->frontBio = BIO_new(BIO_s_wst());
 
 		if (!wst->frontBio)
+		{
 			goto wst_alloc_error;
+		}
 
 		BIO_set_data(wst->frontBio, wst);
 		InitializeCriticalSection(&wst->writeSection);
 		wst->auth = credssp_auth_new(context);
 		if (!wst->auth)
+		{
 			goto wst_alloc_error;
+		}
 	}
 
 	return wst;
@@ -839,7 +945,9 @@ wst_alloc_error:
 void wst_free(rdpWst* wst)
 {
 	if (!wst)
+	{
 		return;
+	}
 
 	freerdp_tls_free(wst->tls);
 	http_context_free(wst->http);
@@ -848,12 +956,16 @@ void wst_free(rdpWst* wst)
 	free(wst->gwpath);
 
 	if (!wst->attached)
+	{
 		BIO_free_all(wst->frontBio);
+	}
 
 	DeleteCriticalSection(&wst->writeSection);
 
 	if (wst->wscontext.responseStreamBuffer != NULL)
+	{
 		Stream_Free(wst->wscontext.responseStreamBuffer, TRUE);
+	}
 
 	free(wst);
 }
@@ -861,7 +973,9 @@ void wst_free(rdpWst* wst)
 BIO* wst_get_front_bio_and_take_ownership(rdpWst* wst)
 {
 	if (!wst)
+	{
 		return NULL;
+	}
 
 	wst->attached = TRUE;
 	return wst->frontBio;

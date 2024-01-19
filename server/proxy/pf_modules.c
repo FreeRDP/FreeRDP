@@ -44,7 +44,7 @@ struct proxy_module
 	proxyPluginsManager mgr;
 	wArrayList* plugins;
 	wArrayList* handles;
-};
+} DECLSPEC_ALIGN(128);
 
 static const char* pf_modules_get_filter_type_string(PF_FILTER_TYPE result)
 {
@@ -126,8 +126,8 @@ static BOOL pf_modules_proxy_ArrayList_ForEachFkt(void* data, size_t index, va_l
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
 	PF_HOOK_TYPE type;
-	proxyData* pdata;
-	void* custom;
+	proxyData* pdata = NULL;
+	void* custom = NULL;
 	BOOL ok = FALSE;
 
 	WINPR_UNUSED(index);
@@ -238,8 +238,8 @@ static BOOL pf_modules_ArrayList_ForEachFkt(void* data, size_t index, va_list ap
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
 	PF_FILTER_TYPE type;
-	proxyData* pdata;
-	void* param;
+	proxyData* pdata = NULL;
+	void* param = NULL;
 	BOOL result = FALSE;
 
 	WINPR_UNUSED(index);
@@ -350,8 +350,10 @@ static BOOL pf_modules_set_plugin_data(proxyPluginsManager* mgr, const char* plu
 	WINPR_ASSERT(plugin_name);
 
 	ccharconv.ccp = plugin_name;
-	if (data == NULL) /* no need to store anything */
+	if (data == NULL)
+	{ /* no need to store anything */
 		return FALSE;
+	}
 
 	if (!HashTable_Insert(pdata->modules_info, ccharconv.cp, data))
 	{
@@ -414,14 +416,18 @@ static BOOL pf_modules_register_plugin(proxyPluginsManager* mgr,
 	WINPR_ASSERT(module);
 
 	if (!plugin_to_register)
+	{
 		return FALSE;
+	}
 
 	internal = *plugin_to_register;
 	internal.mgr = mgr;
 
 	/* make sure there's no other loaded plugin with the same name of `plugin_to_register`. */
 	if (!ArrayList_ForEach(module->plugins, pf_modules_register_ArrayList_ForEachFkt, &internal))
+	{
 		return FALSE;
+	}
 
 	if (!ArrayList_Append(module->plugins, &internal))
 	{
@@ -443,7 +449,9 @@ static BOOL pf_modules_load_ArrayList_ForEachFkt(void* data, size_t index, va_li
 	WINPR_ASSERT(res);
 
 	if (strcmp(plugin->name, plugin_name) == 0)
+	{
 		*res = TRUE;
+	}
 	return TRUE;
 }
 
@@ -452,9 +460,13 @@ BOOL pf_modules_is_plugin_loaded(proxyModule* module, const char* plugin_name)
 	BOOL rc = FALSE;
 	WINPR_ASSERT(module);
 	if (ArrayList_Count(module->plugins) < 1)
+	{
 		return FALSE;
+	}
 	if (!ArrayList_ForEach(module->plugins, pf_modules_load_ArrayList_ForEachFkt, plugin_name, &rc))
+	{
 		return FALSE;
+	}
 	return rc;
 }
 
@@ -472,7 +484,7 @@ static BOOL pf_modules_print_ArrayList_ForEachFkt(void* data, size_t index, va_l
 
 void pf_modules_list_loaded_plugins(proxyModule* module)
 {
-	size_t count;
+	size_t count = 0;
 
 	WINPR_ASSERT(module);
 	WINPR_ASSERT(module->plugins);
@@ -480,7 +492,9 @@ void pf_modules_list_loaded_plugins(proxyModule* module)
 	count = ArrayList_Count(module->plugins);
 
 	if (count > 0)
+	{
 		WLog_INFO(TAG, "Loaded plugins:");
+	}
 
 	ArrayList_ForEach(module->plugins, pf_modules_print_ArrayList_ForEachFkt);
 }
@@ -488,7 +502,7 @@ void pf_modules_list_loaded_plugins(proxyModule* module)
 static BOOL pf_modules_load_module(const char* module_path, proxyModule* module, void* userdata)
 {
 	HMODULE handle = NULL;
-	proxyModuleEntryPoint pEntryPoint;
+	proxyModuleEntryPoint pEntryPoint = NULL;
 	WINPR_ASSERT(module);
 
 	handle = LoadLibraryX(module_path);
@@ -521,7 +535,9 @@ static void free_handle(void* obj)
 {
 	HANDLE handle = (HANDLE)obj;
 	if (handle)
+	{
 		FreeLibrary(handle);
+	}
 }
 
 static void free_plugin(void* obj)
@@ -530,7 +546,9 @@ static void free_plugin(void* obj)
 	WINPR_ASSERT(plugin);
 
 	if (!IFCALLRESULT(TRUE, plugin->PluginUnload, plugin))
+	{
 		WLog_WARN(TAG, "PluginUnload failed for plugin '%s'", plugin->name);
+	}
 
 	free(plugin);
 }
@@ -540,19 +558,23 @@ static void* new_plugin(const void* obj)
 	const proxyPlugin* src = obj;
 	proxyPlugin* proxy = calloc(1, sizeof(proxyPlugin));
 	if (!proxy)
+	{
 		return NULL;
+	}
 	*proxy = *src;
 	return proxy;
 }
 
 proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t count)
 {
-	size_t i;
-	wObject* obj;
+	size_t i = 0;
+	wObject* obj = NULL;
 	char* path = NULL;
 	proxyModule* module = calloc(1, sizeof(proxyModule));
 	if (!module)
+	{
 		return NULL;
+	}
 
 	module->mgr.RegisterPlugin = pf_modules_register_plugin;
 	module->mgr.SetPluginData = pf_modules_set_plugin_data;
@@ -584,9 +606,13 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 	{
 		WINPR_ASSERT(root_dir);
 		if (!winpr_PathFileExists(root_dir))
+		{
 			path = GetCombinedPath(FREERDP_INSTALL_PREFIX, root_dir);
+		}
 		else
+		{
 			path = _strdup(root_dir);
+		}
 
 		if (!winpr_PathFileExists(path))
 		{
@@ -598,12 +624,14 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 		}
 
 		if (winpr_PathFileExists(path))
+		{
 			WLog_DBG(TAG, "modules root directory: %s", path);
+		}
 
 		for (i = 0; i < count; i++)
 		{
 			char name[8192] = { 0 };
-			char* fullpath;
+			char* fullpath = NULL;
 			_snprintf(name, sizeof(name), "proxy-%s-plugin%s", modules[i],
 			          FREERDP_SHARED_LIBRARY_SUFFIX);
 			fullpath = GetCombinedPath(path, name);
@@ -624,7 +652,9 @@ error:
 void pf_modules_free(proxyModule* module)
 {
 	if (!module)
+	{
 		return;
+	}
 
 	ArrayList_Free(module->plugins);
 	ArrayList_Free(module->handles);

@@ -42,7 +42,7 @@ struct rdp_offscreen_cache
 	UINT32 currentSurface; /* 3 */
 
 	rdpContext* context;
-};
+} DECLSPEC_ALIGN(32);
 
 static void offscreen_cache_put(rdpOffscreenCache* offscreen_cache, UINT32 index,
                                 rdpBitmap* bitmap);
@@ -52,19 +52,23 @@ static BOOL
 update_gdi_create_offscreen_bitmap(rdpContext* context,
                                    const CREATE_OFFSCREEN_BITMAP_ORDER* createOffscreenBitmap)
 {
-	UINT32 i;
-	UINT16 index;
-	rdpBitmap* bitmap;
-	rdpCache* cache;
+	UINT32 i = 0;
+	UINT16 index = 0;
+	rdpBitmap* bitmap = NULL;
+	rdpCache* cache = NULL;
 
 	if (!context || !createOffscreenBitmap || !context->cache)
+	{
 		return FALSE;
+	}
 
 	cache = context->cache;
 	bitmap = Bitmap_Alloc(context);
 
 	if (!bitmap)
+	{
 		return FALSE;
+	}
 
 	Bitmap_SetDimensions(bitmap, createOffscreenBitmap->cx, createOffscreenBitmap->cy);
 
@@ -78,7 +82,9 @@ update_gdi_create_offscreen_bitmap(rdpContext* context,
 	offscreen_cache_put(cache->offscreen, createOffscreenBitmap->id, bitmap);
 
 	if (cache->offscreen->currentSurface == createOffscreenBitmap->id)
+	{
 		bitmap->SetSurface(context, bitmap, FALSE);
+	}
 
 	for (i = 0; i < createOffscreenBitmap->deleteList.cIndices; i++)
 	{
@@ -92,16 +98,20 @@ update_gdi_create_offscreen_bitmap(rdpContext* context,
 static BOOL update_gdi_switch_surface(rdpContext* context,
                                       const SWITCH_SURFACE_ORDER* switchSurface)
 {
-	rdpCache* cache;
-	rdpBitmap* bitmap;
+	rdpCache* cache = NULL;
+	rdpBitmap* bitmap = NULL;
 
 	if (!context || !context->cache || !switchSurface || !context->graphics)
+	{
 		return FALSE;
+	}
 
 	cache = context->cache;
 	bitmap = context->graphics->Bitmap_Prototype;
 	if (!bitmap)
+	{
 		return FALSE;
+	}
 
 	if (switchSurface->bitmapId == SCREEN_BITMAP_SURFACE)
 	{
@@ -109,10 +119,12 @@ static BOOL update_gdi_switch_surface(rdpContext* context,
 	}
 	else
 	{
-		rdpBitmap* bmp;
+		rdpBitmap* bmp = NULL;
 		bmp = offscreen_cache_get(cache->offscreen, switchSurface->bitmapId);
 		if (bmp == NULL)
+		{
 			return FALSE;
+		}
 
 		bitmap->SetSurface(context, bmp, FALSE);
 	}
@@ -123,7 +135,7 @@ static BOOL update_gdi_switch_surface(rdpContext* context,
 
 rdpBitmap* offscreen_cache_get(rdpOffscreenCache* offscreenCache, UINT32 index)
 {
-	rdpBitmap* bitmap;
+	rdpBitmap* bitmap = NULL;
 
 	WINPR_ASSERT(offscreenCache);
 
@@ -160,7 +172,7 @@ void offscreen_cache_put(rdpOffscreenCache* offscreenCache, UINT32 index, rdpBit
 
 void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
 {
-	rdpBitmap* prevBitmap;
+	rdpBitmap* prevBitmap = NULL;
 
 	WINPR_ASSERT(offscreenCache);
 
@@ -173,7 +185,9 @@ void offscreen_cache_delete(rdpOffscreenCache* offscreenCache, UINT32 index)
 	prevBitmap = offscreenCache->entries[index];
 
 	if (prevBitmap != NULL)
+	{
 		Bitmap_Free(offscreenCache->context, prevBitmap);
+	}
 
 	offscreenCache->entries[index] = NULL;
 }
@@ -189,8 +203,8 @@ void offscreen_cache_register_callbacks(rdpUpdate* update)
 
 rdpOffscreenCache* offscreen_cache_new(rdpContext* context)
 {
-	rdpOffscreenCache* offscreenCache;
-	rdpSettings* settings;
+	rdpOffscreenCache* offscreenCache = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -200,21 +214,29 @@ rdpOffscreenCache* offscreen_cache_new(rdpContext* context)
 	offscreenCache = (rdpOffscreenCache*)calloc(1, sizeof(rdpOffscreenCache));
 
 	if (!offscreenCache)
+	{
 		return NULL;
+	}
 
 	offscreenCache->context = context;
 	offscreenCache->currentSurface = SCREEN_BITMAP_SURFACE;
 	offscreenCache->maxSize = 7680;
 	offscreenCache->maxEntries = 2000;
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_OffscreenCacheSize, offscreenCache->maxSize))
+	{
 		goto fail;
+	}
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_OffscreenCacheEntries,
 	                                 offscreenCache->maxEntries))
+	{
 		goto fail;
+	}
 	offscreenCache->entries = (rdpBitmap**)calloc(offscreenCache->maxEntries, sizeof(rdpBitmap*));
 
 	if (!offscreenCache->entries)
+	{
 		goto fail;
+	}
 
 	return offscreenCache;
 fail:
@@ -226,7 +248,7 @@ void offscreen_cache_free(rdpOffscreenCache* offscreenCache)
 {
 	if (offscreenCache)
 	{
-		size_t i;
+		size_t i = 0;
 		if (offscreenCache->entries)
 		{
 			for (i = 0; i < offscreenCache->maxEntries; i++)

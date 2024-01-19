@@ -35,11 +35,11 @@
 
 static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanline)
 {
-	UINT16 x;
-	UINT16 y;
-	UINT16 rw;
-	BYTE ccl;
-	const BYTE* src;
+	UINT16 x = 0;
+	UINT16 y = 0;
+	UINT16 rw = 0;
+	BYTE ccl = 0;
+	const BYTE* src = NULL;
 	BYTE* yplane = NULL;
 	BYTE* coplane = NULL;
 	BYTE* cgplane = NULL;
@@ -51,10 +51,12 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 	__m128i y_val;
 	__m128i co_val;
 	__m128i cg_val;
-	UINT32 tempWidth;
+	UINT32 tempWidth = 0;
 
 	if (!context || !data || (scanline == 0))
+	{
 		return FALSE;
+	}
 
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	rw = (context->ChromaSubsamplingLevel > 0 ? tempWidth : context->width);
@@ -204,7 +206,7 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 
 				case PIXEL_FORMAT_A4:
 				{
-					int shift;
+					int shift = 0;
 					BYTE idx[8];
 
 					for (shift = 7; shift >= 0; shift--)
@@ -318,15 +320,15 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 
 static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 {
-	UINT32 y;
-	BYTE* co_dst;
-	BYTE* cg_dst;
-	INT8* co_src0;
-	INT8* co_src1;
-	INT8* cg_src0;
-	INT8* cg_src1;
-	UINT32 tempWidth;
-	UINT32 tempHeight;
+	UINT32 y = 0;
+	BYTE* co_dst = NULL;
+	BYTE* cg_dst = NULL;
+	INT8* co_src0 = NULL;
+	INT8* co_src1 = NULL;
+	INT8* cg_src0 = NULL;
+	INT8* cg_src1 = NULL;
+	UINT32 tempWidth = 0;
+	UINT32 tempHeight = 0;
 	__m128i t;
 	__m128i val;
 	__m128i mask = _mm_set1_epi16(0xFF);
@@ -335,7 +337,7 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 
 	for (y = 0; y < tempHeight >> 1; y++)
 	{
-		UINT32 x;
+		UINT32 x = 0;
 		co_dst = context->priv->PlaneBuffers[1] + y * (tempWidth >> 1);
 		cg_dst = context->priv->PlaneBuffers[2] + y * (tempWidth >> 1);
 		co_src0 = (INT8*)context->priv->PlaneBuffers[1] + (y << 1) * tempWidth;
@@ -370,10 +372,14 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 static BOOL nsc_encode_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanline)
 {
 	if (!nsc_encode_argb_to_aycocg_sse2(context, data, scanline))
+	{
 		return FALSE;
+	}
 
 	if (context->ChromaSubsamplingLevel > 0)
+	{
 		nsc_encode_subsampling_sse2(context);
+	}
 
 	return TRUE;
 }
@@ -381,7 +387,9 @@ static BOOL nsc_encode_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanl
 void nsc_init_sse2(NSC_CONTEXT* context)
 {
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
+	{
 		return;
+	}
 
 	PROFILER_RENAME(context->priv->prof_nsc_encode, "nsc_encode_sse2")
 	context->encode = nsc_encode_sse2;

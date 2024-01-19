@@ -31,11 +31,17 @@ static pstatus_t general_add_16s(const INT16* pSrc1, const INT16* pSrc2, INT16* 
 		INT32 k = (INT32)(*pSrc1++) + (INT32)(*pSrc2++);
 
 		if (k > 32767)
+		{
 			*pDst++ = ((INT16)32767);
+		}
 		else if (k < -32768)
+		{
 			*pDst++ = ((INT16)-32768);
+		}
 		else
+		{
 			*pDst++ = (INT16)k;
+		}
 	}
 
 	return PRIMITIVES_SUCCESS;

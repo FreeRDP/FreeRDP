@@ -34,20 +34,24 @@ static BOOL pf_server_check_and_sync_input_state(pClientContext* pc)
 	WINPR_ASSERT(pc);
 
 	if (!freerdp_is_active_state(&pc->context))
+	{
 		return FALSE;
+	}
 	if (pc->input_state_sync_pending)
 	{
 		BOOL rc = freerdp_input_send_synchronize_event(pc->context.input, pc->input_state);
 		if (rc)
+		{
 			pc->input_state_sync_pending = FALSE;
+		}
 	}
 	return TRUE;
 }
 
 static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 {
-	pServerContext* ps;
-	pClientContext* pc;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
 
 	WINPR_ASSERT(input);
 	ps = (pServerContext*)input->context;
@@ -66,10 +70,10 @@ static BOOL pf_server_synchronize_event(rdpInput* input, UINT32 flags)
 
 static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
-	const proxyConfig* config;
+	const proxyConfig* config = NULL;
 	proxyKeyboardEventInfo event = { 0 };
-	pServerContext* ps;
-	pClientContext* pc;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
 
 	WINPR_ASSERT(input);
 	ps = (pServerContext*)input->context;
@@ -83,26 +87,32 @@ static BOOL pf_server_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 	WINPR_ASSERT(config);
 
 	if (!pf_server_check_and_sync_input_state(pc))
+	{
 		return TRUE;
+	}
 
 	if (!config->Keyboard)
+	{
 		return TRUE;
+	}
 
 	event.flags = flags;
 	event.rdp_scan_code = code;
 
 	if (pf_modules_run_filter(pc->pdata->module, FILTER_TYPE_KEYBOARD, pc->pdata, &event))
+	{
 		return freerdp_input_send_keyboard_event(pc->context.input, flags, code);
+	}
 
 	return TRUE;
 }
 
 static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT16 code)
 {
-	const proxyConfig* config;
+	const proxyConfig* config = NULL;
 	proxyUnicodeEventInfo event = { 0 };
-	pServerContext* ps;
-	pClientContext* pc;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
 
 	WINPR_ASSERT(input);
 	ps = (pServerContext*)input->context;
@@ -116,24 +126,30 @@ static BOOL pf_server_unicode_keyboard_event(rdpInput* input, UINT16 flags, UINT
 	WINPR_ASSERT(config);
 
 	if (!pf_server_check_and_sync_input_state(pc))
+	{
 		return TRUE;
+	}
 
 	if (!config->Keyboard)
+	{
 		return TRUE;
+	}
 
 	event.flags = flags;
 	event.code = code;
 	if (pf_modules_run_filter(pc->pdata->module, FILTER_TYPE_UNICODE, pc->pdata, &event))
+	{
 		return freerdp_input_send_unicode_keyboard_event(pc->context.input, flags, code);
+	}
 	return TRUE;
 }
 
 static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
 	proxyMouseEventInfo event = { 0 };
-	const proxyConfig* config;
-	pServerContext* ps;
-	pClientContext* pc;
+	const proxyConfig* config = NULL;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
 
 	WINPR_ASSERT(input);
 	ps = (pServerContext*)input->context;
@@ -147,27 +163,33 @@ static BOOL pf_server_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT1
 	WINPR_ASSERT(config);
 
 	if (!pf_server_check_and_sync_input_state(pc))
+	{
 		return TRUE;
+	}
 
 	if (!config->Mouse)
+	{
 		return TRUE;
+	}
 
 	event.flags = flags;
 	event.x = x;
 	event.y = y;
 
 	if (pf_modules_run_filter(pc->pdata->module, FILTER_TYPE_MOUSE, pc->pdata, &event))
+	{
 		return freerdp_input_send_mouse_event(pc->context.input, flags, x, y);
+	}
 
 	return TRUE;
 }
 
 static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x, UINT16 y)
 {
-	const proxyConfig* config;
+	const proxyConfig* config = NULL;
 	proxyMouseExEventInfo event = { 0 };
-	pServerContext* ps;
-	pClientContext* pc;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
 
 	WINPR_ASSERT(input);
 	ps = (pServerContext*)input->context;
@@ -181,16 +203,22 @@ static BOOL pf_server_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16
 	WINPR_ASSERT(config);
 
 	if (!pf_server_check_and_sync_input_state(pc))
+	{
 		return TRUE;
+	}
 
 	if (!config->Mouse)
+	{
 		return TRUE;
+	}
 
 	event.flags = flags;
 	event.x = x;
 	event.y = y;
 	if (pf_modules_run_filter(pc->pdata->module, FILTER_TYPE_MOUSE, pc->pdata, &event))
+	{
 		return freerdp_input_send_extended_mouse_event(pc->context.input, flags, x, y);
+	}
 	return TRUE;
 }
 

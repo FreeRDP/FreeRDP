@@ -61,7 +61,7 @@ typedef struct
 {
 	HANDLE thread;
 	freerdp_peer* client;
-} peer_thread_args;
+} DECLSPEC_ALIGN(16) peer_thread_args;
 
 static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, rdpSettings* settings,
                                                       FreeRDP_Settings_Keys_String targetID,
@@ -69,15 +69,17 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, rdpSe
 {
 #define TARGET_MAX (100)
 #define ROUTING_TOKEN_PREFIX "Cookie: msts="
-	char* colon;
-	size_t len;
-	DWORD routing_token_length;
+	char* colon = NULL;
+	size_t len = 0;
+	DWORD routing_token_length = 0;
 	const size_t prefix_len = strnlen(ROUTING_TOKEN_PREFIX, sizeof(ROUTING_TOKEN_PREFIX));
 	const char* routing_token = freerdp_nego_get_routing_token(context, &routing_token_length);
 	pServerContext* ps = (pServerContext*)context;
 
 	if (!routing_token)
+	{
 		return FALSE;
+	}
 
 	if ((routing_token_length <= prefix_len) || (routing_token_length >= TARGET_MAX))
 	{
@@ -88,7 +90,9 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, rdpSe
 	len = routing_token_length - prefix_len;
 
 	if (!freerdp_settings_set_string_len(settings, targetID, routing_token + prefix_len, len))
+	{
 		return FALSE;
+	}
 
 	const char* target = freerdp_settings_get_string(settings, targetID);
 	colon = strchr(target, ':');
@@ -99,10 +103,14 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, rdpSe
 		unsigned long p = strtoul(colon + 1, NULL, 10);
 
 		if (p > USHRT_MAX)
+		{
 			return FALSE;
+		}
 
 		if (!freerdp_settings_set_uint32(settings, portID, p))
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -123,7 +131,9 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 
 	if (!pf_modules_run_filter(ps->pdata->module, FILTER_TYPE_SERVER_FETCH_TARGET_ADDR, ps->pdata,
 	                           &ev))
+	{
 		return FALSE;
+	}
 
 	switch (ev.fetch_method)
 	{
@@ -137,13 +147,19 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 			WINPR_ASSERT(config);
 
 			if (config->TargetPort > 0)
+			{
 				freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, config->TargetPort);
+			}
 			else
+			{
 				freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, 3389);
+			}
 
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_TlsSecLevel,
 			                                 config->TargetTlsSecLevel))
+			{
 				return FALSE;
+			}
 
 			if (!freerdp_settings_set_string(settings, FreeRDP_ServerHostname, config->TargetHost))
 			{
@@ -152,13 +168,19 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 			}
 
 			if (config->TargetUser)
+			{
 				freerdp_settings_set_string(settings, FreeRDP_Username, config->TargetUser);
+			}
 
 			if (config->TargetDomain)
+			{
 				freerdp_settings_set_string(settings, FreeRDP_Domain, config->TargetDomain);
+			}
 
 			if (config->TargetPassword)
+			{
 				freerdp_settings_set_string(settings, FreeRDP_Password, config->TargetPassword);
+			}
 
 			return TRUE;
 		}
@@ -191,17 +213,19 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 static BOOL pf_server_setup_channels(freerdp_peer* peer)
 {
 	char** accepted_channels = NULL;
-	size_t accepted_channels_count;
-	size_t i;
+	size_t accepted_channels_count = 0;
+	size_t i = 0;
 	pServerContext* ps = (pServerContext*)peer->context;
 
 	accepted_channels = WTSGetAcceptedChannelNames(peer, &accepted_channels_count);
 	if (!accepted_channels)
+	{
 		return TRUE;
+	}
 
 	for (i = 0; i < accepted_channels_count; i++)
 	{
-		pServerStaticChannelContext* channelContext;
+		pServerStaticChannelContext* channelContext = NULL;
 		const char* cname = accepted_channels[i];
 		UINT16 channelId = WTSChannelGetId(peer, cname);
 
@@ -266,11 +290,11 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
  */
 static BOOL pf_server_post_connect(freerdp_peer* peer)
 {
-	pServerContext* ps;
-	pClientContext* pc;
-	rdpSettings* client_settings;
-	proxyData* pdata;
-	rdpSettings* frontSettings;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
+	rdpSettings* client_settings = NULL;
+	proxyData* pdata = NULL;
+	rdpSettings* frontSettings = NULL;
 
 	WINPR_ASSERT(peer);
 
@@ -314,7 +338,9 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 	               freerdp_settings_get_uint32(client_settings, FreeRDP_ServerPort));
 
 	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_POST_CONNECT, pdata, peer))
+	{
 		return FALSE;
+	}
 
 	/* Start a proxy's client in it's own thread */
 	if (!(pdata->client_thread = CreateThread(NULL, 0, pf_client_start, pc, 0, NULL)))
@@ -328,9 +354,9 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 
 static BOOL pf_server_activate(freerdp_peer* peer)
 {
-	pServerContext* ps;
-	proxyData* pdata;
-	rdpSettings* settings;
+	pServerContext* ps = NULL;
+	proxyData* pdata = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(peer);
 
@@ -343,9 +369,13 @@ static BOOL pf_server_activate(freerdp_peer* peer)
 	settings = peer->context->settings;
 
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_CompressionLevel, PACKET_COMPR_TYPE_RDP8))
+	{
 		return FALSE;
+	}
 	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_ACTIVATE, pdata, peer))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -353,8 +383,8 @@ static BOOL pf_server_activate(freerdp_peer* peer)
 static BOOL pf_server_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* identity,
                             BOOL automatic)
 {
-	pServerContext* ps;
-	proxyData* pdata;
+	pServerContext* ps = NULL;
+	proxyData* pdata = NULL;
 	proxyServerPeerLogon info = { 0 };
 
 	WINPR_ASSERT(peer);
@@ -369,7 +399,9 @@ static BOOL pf_server_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* i
 	info.identity = identity;
 	info.automatic = automatic;
 	if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_SERVER_PEER_LOGON, pdata, &info))
+	{
 		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -384,11 +416,11 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
                                                 const BYTE* data, size_t size, UINT32 flags,
                                                 size_t totalSize)
 {
-	pServerContext* ps;
-	pClientContext* pc;
-	proxyData* pdata;
-	const proxyConfig* config;
-	const pServerStaticChannelContext* channel;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
+	proxyData* pdata = NULL;
+	const proxyConfig* config = NULL;
+	const pServerStaticChannelContext* channel = NULL;
 	UINT64 channelId64 = channelId;
 
 	WINPR_ASSERT(peer);
@@ -408,7 +440,9 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
 	 * which doesn't need to be proxied.
 	 */
 	if (!pc)
+	{
 		goto original_cb;
+	}
 
 	channel = HashTable_GetItemValue(ps->channelsByFrontId, &channelId64);
 	if (!channel)
@@ -450,14 +484,18 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 
 	pServerContext* ps = (pServerContext*)peer->context;
 	if (!ps)
+	{
 		return FALSE;
+	}
 
 	rdpSettings* settings = peer->context->settings;
 	WINPR_ASSERT(settings);
 
 	proxyData* pdata = proxy_data_new();
 	if (!pdata)
+	{
 		return FALSE;
+	}
 	proxyServer* server = (proxyServer*)peer->ContextExtra;
 	WINPR_ASSERT(server);
 	proxy_data_set_server_context(pdata, ps);
@@ -467,17 +505,25 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 
 	rdpPrivateKey* key = freerdp_key_new_from_pem(config->PrivateKeyPEM);
 	if (!key)
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerRsaKey, key, 1))
+	{
 		return FALSE;
+	}
 
 	rdpCertificate* cert = freerdp_certificate_new_from_pem(config->CertificatePEM);
 	if (!cert)
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_set_pointer_len(settings, FreeRDP_RdpServerCertificate, cert, 1))
+	{
 		return FALSE;
+	}
 
 	/* currently not supporting GDI orders */
 	{
@@ -489,14 +535,20 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	peer->context->update->autoCalculateBitmapData = FALSE;
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMonitorLayoutPdu, TRUE))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGraphicsPipeline, config->GFX))
+	{
 		return FALSE;
+	}
 
 	if (pf_utils_is_passthrough(config))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeactivateClientDecoding, TRUE))
+		{
 			return FALSE;
+		}
 	}
 
 	if (config->RemoteApp)
@@ -508,33 +560,54 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 		    RAIL_LEVEL_HIDE_MINIMIZED_APPS_SUPPORTED | RAIL_LEVEL_WINDOW_CLOAKING_SUPPORTED |
 		    RAIL_LEVEL_HANDSHAKE_EX_SUPPORTED;
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_RemoteApplicationSupportLevel, mask))
+		{
 			return FALSE;
+		}
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteAppLanguageBarSupported, TRUE))
+		{
 			return FALSE;
+		}
 	}
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, config->ServerRdpSecurity))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, config->ServerTlsSecurity))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, config->ServerNlaSecurity))
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel,
 	                                 ENCRYPTION_LEVEL_CLIENT_COMPATIBLE))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, 32))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_SuppressOutput, TRUE))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_RefreshRect, TRUE))
+	{
 		return FALSE;
+	}
 	if (!freerdp_settings_set_bool(settings, FreeRDP_DesktopResize, TRUE))
+	{
 		return FALSE;
+	}
 
-	if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize,
-	                                 0xFFFFFF)) /* FIXME */
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_MultifragMaxRequestSize, 0xFFFFFF))
+	{ /* FIXME */
 		return FALSE;
+	}
 
 	peer->PostConnect = pf_server_post_connect;
 	peer->Activate = pf_server_activate;
@@ -546,7 +619,9 @@ static BOOL pf_server_initialize_peer_connection(freerdp_peer* peer)
 	peer->ReceiveChannelData = pf_server_receive_channel_data_hook;
 
 	if (!stream_dump_register_handlers(peer->context, CONNECTION_STATE_NEGO, TRUE))
+	{
 		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -573,10 +648,14 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 	size_t count = ArrayList_Count(server->peer_list);
 
 	if (!pf_context_init_server_context(client))
+	{
 		goto out_free_peer;
+	}
 
 	if (!pf_server_initialize_peer_connection(client))
+	{
 		goto out_free_peer;
+	}
 
 	ps = (pServerContext*)client->context;
 	WINPR_ASSERT(ps);
@@ -586,7 +665,9 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 	WINPR_ASSERT(pdata);
 
 	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_SESSION_INITIALIZE, pdata, client))
+	{
 		goto out_free_peer;
+	}
 
 	WINPR_ASSERT(client->Initialize);
 	client->Initialize(client);
@@ -595,7 +676,9 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 	               pdata->config->Host, client->hostname);
 
 	if (!pf_modules_run_hook(pdata->module, HOOK_TYPE_SERVER_SESSION_STARTED, pdata, client))
+	{
 		goto out_free_peer;
+	}
 
 	while (1)
 	{
@@ -634,7 +717,9 @@ static DWORD WINAPI pf_server_handle_peer(LPVOID arg)
 
 		WINPR_ASSERT(client->CheckFileDescriptor);
 		if (client->CheckFileDescriptor(client) != TRUE)
+		{
 			break;
+		}
 
 		if (WaitForSingleObject(ChannelEvent, 0) == WAIT_OBJECT_0)
 		{
@@ -734,11 +819,13 @@ out_free_peer:
 
 static BOOL pf_server_start_peer(freerdp_peer* client)
 {
-	HANDLE hThread;
-	proxyServer* server;
+	HANDLE hThread = NULL;
+	proxyServer* server = NULL;
 	peer_thread_args* args = calloc(1, sizeof(peer_thread_args));
 	if (!args)
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(client);
 	args->client = client;
@@ -748,7 +835,9 @@ static BOOL pf_server_start_peer(freerdp_peer* client)
 
 	hThread = CreateThread(NULL, 0, pf_server_handle_peer, args, CREATE_SUSPENDED, NULL);
 	if (!hThread)
+	{
 		return FALSE;
+	}
 
 	args->thread = hThread;
 	if (!ArrayList_Append(server->peer_list, hThread))
@@ -780,7 +869,9 @@ BOOL pf_server_start(proxyServer* server)
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+	{
 		goto error;
+	}
 
 	WINPR_ASSERT(server->config);
 	WINPR_ASSERT(server->listener);
@@ -820,7 +911,9 @@ BOOL pf_server_start_from_socket(proxyServer* server, int socket)
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+	{
 		goto error;
+	}
 
 	WINPR_ASSERT(server->listener);
 	WINPR_ASSERT(server->listener->OpenFromSocket);
@@ -858,22 +951,32 @@ BOOL pf_server_start_with_peer_socket(proxyServer* server, int peer_fd)
 	WINPR_ASSERT(server);
 
 	if (WaitForSingleObject(server->stopEvent, 0) == WAIT_OBJECT_0)
+	{
 		goto fail;
+	}
 
 	client = freerdp_peer_new(peer_fd);
 	if (!client)
+	{
 		goto fail;
+	}
 
 	if (getpeername(peer_fd, (struct sockaddr*)&peer_addr, &len) != 0)
+	{
 		goto fail;
+	}
 
 	if (!freerdp_peer_set_local_and_hostname(client, &peer_addr))
+	{
 		goto fail;
+	}
 
 	client->ContextExtra = server;
 
 	if (!pf_server_start_peer(client))
+	{
 		goto fail;
+	}
 
 	return TRUE;
 
@@ -885,7 +988,7 @@ fail:
 
 static BOOL are_all_required_modules_loaded(proxyModule* module, const proxyConfig* config)
 {
-	size_t i;
+	size_t i = 0;
 
 	for (i = 0; i < pf_config_required_plugins_count(config); i++)
 	{
@@ -909,17 +1012,21 @@ static void peer_free(void* obj)
 
 proxyServer* pf_server_new(const proxyConfig* config)
 {
-	wObject* obj;
-	proxyServer* server;
+	wObject* obj = NULL;
+	proxyServer* server = NULL;
 
 	WINPR_ASSERT(config);
 
 	server = calloc(1, sizeof(proxyServer));
 	if (!server)
+	{
 		return NULL;
+	}
 
 	if (!pf_config_clone(&server->config, config))
+	{
 		goto out;
+	}
 
 	server->module = pf_modules_new(FREERDP_PROXY_PLUGINDIR, pf_config_modules(server->config),
 	                                pf_config_modules_count(server->config));
@@ -931,19 +1038,27 @@ proxyServer* pf_server_new(const proxyConfig* config)
 
 	pf_modules_list_loaded_plugins(server->module);
 	if (!are_all_required_modules_loaded(server->module, server->config))
+	{
 		goto out;
+	}
 
 	server->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (!server->stopEvent)
+	{
 		goto out;
+	}
 
 	server->listener = freerdp_listener_new();
 	if (!server->listener)
+	{
 		goto out;
+	}
 
 	server->peer_list = ArrayList_New(FALSE);
 	if (!server->peer_list)
+	{
 		goto out;
+	}
 
 	obj = ArrayList_Object(server->peer_list);
 	WINPR_ASSERT(obj);
@@ -954,7 +1069,9 @@ proxyServer* pf_server_new(const proxyConfig* config)
 	server->listener->PeerAccepted = pf_server_peer_accepted;
 
 	if (!pf_modules_add(server->module, pf_config_plugin, (void*)server->config))
+	{
 		goto out;
+	}
 
 	return server;
 
@@ -967,9 +1084,9 @@ BOOL pf_server_run(proxyServer* server)
 {
 	BOOL rc = TRUE;
 	HANDLE eventHandles[MAXIMUM_WAIT_OBJECTS] = { 0 };
-	DWORD eventCount;
-	DWORD status;
-	freerdp_listener* listener;
+	DWORD eventCount = 0;
+	DWORD status = 0;
+	freerdp_listener* listener = NULL;
 
 	WINPR_ASSERT(server);
 
@@ -992,10 +1109,14 @@ BOOL pf_server_run(proxyServer* server)
 		status = WaitForMultipleObjects(eventCount, eventHandles, FALSE, 1000);
 
 		if (WAIT_FAILED == status)
+		{
 			break;
+		}
 
 		if (WaitForSingleObject(server->stopEvent, 0) == WAIT_OBJECT_0)
+		{
 			break;
+		}
 
 		if (WAIT_FAILED == status)
 		{
@@ -1022,7 +1143,9 @@ void pf_server_stop(proxyServer* server)
 {
 
 	if (!server)
+	{
 		return;
+	}
 
 	/* signal main thread to stop and wait for the thread to exit */
 	SetEvent(server->stopEvent);
@@ -1031,7 +1154,9 @@ void pf_server_stop(proxyServer* server)
 void pf_server_free(proxyServer* server)
 {
 	if (!server)
+	{
 		return;
+	}
 
 	pf_server_stop(server);
 
@@ -1053,7 +1178,9 @@ void pf_server_free(proxyServer* server)
 	freerdp_listener_free(server->listener);
 
 	if (server->stopEvent)
+	{
 		CloseHandle(server->stopEvent);
+	}
 
 	pf_server_config_free(server->config);
 	pf_modules_free(server->module);

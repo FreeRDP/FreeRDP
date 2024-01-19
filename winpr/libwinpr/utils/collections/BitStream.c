@@ -20,8 +20,8 @@
 #include <winpr/assert.h>
 #include <winpr/config.h>
 
-#include <winpr/print.h>
 #include <winpr/bitstream.h>
+#include <winpr/print.h>
 
 static const char* BYTE_BIT_STRINGS_LSB[256] = {
 	"00000000", "00000001", "00000010", "00000011", "00000100", "00000101", "00000110", "00000111",
@@ -95,7 +95,7 @@ static const char* BYTE_BIT_STRINGS_MSB[256] = {
 
 void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length, UINT32 flags)
 {
-	DWORD i;
+	DWORD i = 0;
 	const char** strs = (flags & BITDUMP_MSB_FIRST) ? BYTE_BIT_STRINGS_MSB : BYTE_BIT_STRINGS_LSB;
 	char pbuffer[64 * 8 + 1] = { 0 };
 	size_t pos = 0;
@@ -109,7 +109,9 @@ void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length, U
 		const int nbits = (length - i) > 8 ? 8 : (length - i);
 		const int rc = _snprintf(&pbuffer[pos], length - pos, "%.*s ", nbits, str);
 		if (rc < 0)
+		{
 			return;
+		}
 
 		pos += (size_t)rc;
 		if ((i % 64) == 0)
@@ -120,7 +122,9 @@ void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length, U
 	}
 
 	if (i)
+	{
 		WLog_LVL(tag, level, "%s ", pbuffer);
+	}
 }
 
 UINT32 ReverseBits32(UINT32 bits, UINT32 nbits)
@@ -170,7 +174,9 @@ wBitStream* BitStream_New(void)
 void BitStream_Free(wBitStream* bs)
 {
 	if (!bs)
+	{
 		return;
+	}
 
 	free(bs);
 }

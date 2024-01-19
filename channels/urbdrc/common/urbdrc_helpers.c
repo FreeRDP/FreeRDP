@@ -63,23 +63,22 @@ static const char* call_to_string_none(BOOL client, UINT32 interfaceId, UINT32 f
 	WINPR_UNUSED(interfaceId);
 
 	if (client)
-		return "RIM_EXCHANGE_CAPABILITY_RESPONSE  [none |client]";
-	else
 	{
-		switch (functionId)
-		{
-			case RIM_EXCHANGE_CAPABILITY_REQUEST:
-				return "RIM_EXCHANGE_CAPABILITY_REQUEST   [none |server]";
+		return "RIM_EXCHANGE_CAPABILITY_RESPONSE  [none |client]";
+	}
+	switch (functionId)
+	{
+		case RIM_EXCHANGE_CAPABILITY_REQUEST:
+			return "RIM_EXCHANGE_CAPABILITY_REQUEST   [none |server]";
 
-			case RIMCALL_RELEASE:
-				return "RIMCALL_RELEASE                   [none |server]";
+		case RIMCALL_RELEASE:
+			return "RIMCALL_RELEASE                   [none |server]";
 
-			case RIMCALL_QUERYINTERFACE:
-				return "RIMCALL_QUERYINTERFACE            [none |server]";
+		case RIMCALL_QUERYINTERFACE:
+			return "RIMCALL_QUERYINTERFACE            [none |server]";
 
-			default:
-				return "UNKNOWN                           [none |server]";
-		}
+		default:
+			return "UNKNOWN                           [none |server]";
 	}
 }
 
@@ -189,13 +188,17 @@ static const char* call_to_string_proxy(BOOL client, UINT32 interfaceId, UINT32 
 
 		default:
 			if (client)
+			{
 				return call_to_string_proxy_client(functionId);
+			}
 			else
+			{
 				return call_to_string_proxy_server(functionId);
+			}
 	}
 }
 
-static const char* call_to_string_stub(BOOL client, UINT32 interfaceNr, UINT32 functionId)
+static const char* call_to_string_stub(UINT32 interfaceNr, UINT32 functionId)
 {
 	return "QUERY_DEVICE_TEXT_RSP             [stub  |client]";
 }
@@ -214,7 +217,7 @@ const char* call_to_string(BOOL client, UINT32 interfaceNr, UINT32 functionId)
 			return call_to_string_proxy(client, interfaceId, functionId);
 
 		case STREAM_ID_STUB:
-			return call_to_string_stub(client, interfaceId, functionId);
+			return call_to_string_stub(interfaceId, functionId);
 
 		default:
 			return "UNKNOWN[mask]";
@@ -386,8 +389,11 @@ const char* urb_function_string(UINT16 urb)
 void urbdrc_dump_message(wLog* log, BOOL client, BOOL write, wStream* s)
 {
 	const char* type = write ? "WRITE" : "READ";
-	UINT32 InterfaceId, MessageId, FunctionId;
-	size_t length, pos;
+	UINT32 InterfaceId;
+	UINT32 MessageId;
+	UINT32 FunctionId;
+	size_t length;
+	size_t pos;
 
 	pos = Stream_GetPosition(s);
 	if (write)
@@ -396,10 +402,14 @@ void urbdrc_dump_message(wLog* log, BOOL client, BOOL write, wStream* s)
 		Stream_SetPosition(s, 0);
 	}
 	else
+	{
 		length = Stream_GetRemainingLength(s);
+	}
 
 	if (length < 12)
+	{
 		return;
+	}
 
 	Stream_Read_UINT32(s, InterfaceId);
 	Stream_Read_UINT32(s, MessageId);

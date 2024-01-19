@@ -19,12 +19,12 @@
 
 #include <winpr/config.h>
 
-#include <winpr/environment.h>
-#include <winpr/wtypes.h>
-#include <winpr/timezone.h>
-#include <winpr/crt.h>
-#include <winpr/file.h>
 #include "../log.h"
+#include <winpr/crt.h>
+#include <winpr/environment.h>
+#include <winpr/file.h>
+#include <winpr/timezone.h>
+#include <winpr/wtypes.h>
 
 #define TAG WINPR_TAG("timezone")
 
@@ -38,12 +38,14 @@
 
 static UINT64 winpr_windows_gmtime(void)
 {
-	time_t unix_time;
-	UINT64 windows_time;
+	time_t unix_time = 0;
+	UINT64 windows_time = 0;
 	time(&unix_time);
 
 	if (unix_time < 0)
+	{
 		return 0;
+	}
 
 	windows_time = (UINT64)unix_time;
 	windows_time *= 10000000;
@@ -54,21 +56,29 @@ static UINT64 winpr_windows_gmtime(void)
 static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 {
 	const INT CHUNK_SIZE = 32;
-	INT64 rc, read = 0, length = CHUNK_SIZE;
+	INT64 rc;
+	INT64 read = 0;
+	INT64 length = CHUNK_SIZE;
 	char* tzid = NULL;
 
 	tzid = (char*)malloc(length);
 	if (!tzid)
+	{
 		return NULL;
+	}
 
 	do
 	{
 		rc = fread(tzid + read, 1, length - read - 1, fp);
 		if (rc > 0)
+		{
 			read += rc;
+		}
 
 		if (read < (length - 1))
+		{
 			break;
+		}
 
 		length += CHUNK_SIZE;
 		char* tmp = (char*)realloc(tzid, length);
@@ -91,7 +101,9 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 	if (read > 0)
 	{
 		if (tzid[read - 1] == '\n')
+		{
 			tzid[read - 1] = '\0';
+		}
 	}
 
 	return tzid;
@@ -100,7 +112,7 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 {
 	const char* _links[] = { "/etc/localtime", "/etc/TZ" };
-	size_t x;
+	size_t x = 0;
 
 	if (links == NULL)
 	{
@@ -123,7 +135,7 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 
 		if (buf)
 		{
-			size_t i;
+			size_t i = 0;
 			size_t sep = 0;
 			size_t alloc = 0;
 			size_t pos = 0;
@@ -136,7 +148,9 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 				const char cur = buf[curpos];
 
 				if (cur == '/')
+				{
 					sep++;
+				}
 				if (sep >= 2)
 				{
 					alloc = i;
@@ -146,12 +160,16 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 			}
 
 			if ((len == 0) || (sep != 2))
+			{
 				goto end;
+			}
 
 			tzid = (char*)calloc(alloc + 1, sizeof(char));
 
 			if (!tzid)
+			{
 				goto end;
+			}
 
 			strncpy(tzid, &buf[pos], alloc);
 			WLog_DBG(TAG, "tzid: %s", tzid);
@@ -161,7 +179,9 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 	end:
 		free(buf);
 		if (tzid)
+		{
 			return tzid;
+		}
 	}
 
 	return NULL;
@@ -245,7 +265,7 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 #if defined(ANDROID)
 	return winpr_get_android_timezone_identifier();
 #else
-	FILE* fp;
+	FILE* fp = NULL;
 	char* tzid = NULL;
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 	fp = winpr_fopen("/var/db/zoneinfo", "r");
@@ -254,26 +274,32 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 #endif
 
 	if (NULL == fp)
+	{
 		return NULL;
+	}
 
 	tzid = winpr_read_unix_timezone_identifier_from_file(fp);
 	fclose(fp);
 	if (tzid != NULL)
+	{
 		WLog_DBG(TAG, "tzid: %s", tzid);
+	}
 	return tzid;
 #endif
 }
 
 static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, const char* list)
 {
-	char* p;
-	char* list_copy;
+	char* p = NULL;
+	char* list_copy = NULL;
 	char* context = NULL;
 
 	list_copy = _strdup(list);
 
 	if (!list_copy)
+	{
 		return FALSE;
+	}
 
 	p = strtok_s(list_copy, " ", &context);
 
@@ -294,8 +320,10 @@ static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, con
 
 static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 {
-	size_t i, j;
-	char *tzid = NULL, *ntzid = NULL;
+	size_t i;
+	size_t j;
+	char* tzid = NULL;
+	char* ntzid = NULL;
 	LPCSTR tz = "TZ";
 
 	DWORD nSize = GetEnvironmentVariableA(tz, NULL, 0);
@@ -310,7 +338,9 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 	}
 
 	if (tzid == NULL)
+	{
 		tzid = winpr_get_unix_timezone_identifier_from_file();
+	}
 
 	if (tzid == NULL)
 	{
@@ -332,7 +362,9 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 	}
 
 	if (tzid == NULL)
+	{
 		return NULL;
+	}
 
 	WLog_INFO(TAG, "tzid: %s", tzid);
 
@@ -345,7 +377,9 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 			const WINDOWS_TZID_ENTRY* wzid = &WindowsTimeZoneIdTable[j];
 
 			if (strcmp(tze->Id, wzid->windows) != 0)
+			{
 				continue;
+			}
 
 			if (winpr_match_unix_timezone_identifier_with_list(tzid, wzid->tzid))
 			{
@@ -353,7 +387,9 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 				free(tzid);
 
 				if (!ctimezone)
+				{
 					return NULL;
+				}
 
 				*ctimezone = TimeZoneTable[i];
 				return ctimezone;
@@ -369,8 +405,8 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 static const TIME_ZONE_RULE_ENTRY*
 winpr_get_current_time_zone_rule(const TIME_ZONE_RULE_ENTRY* rules, UINT32 count)
 {
-	UINT32 i;
-	UINT64 windows_time;
+	UINT32 i = 0;
+	UINT64 windows_time = 0;
 	windows_time = winpr_windows_gmtime();
 
 	for (i = 0; i < count; i++)
@@ -389,16 +425,18 @@ winpr_get_current_time_zone_rule(const TIME_ZONE_RULE_ENTRY* rules, UINT32 count
 
 DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
-	time_t t;
+	time_t t = 0;
 	struct tm tres;
-	struct tm* local_time;
+	struct tm* local_time = NULL;
 	TIME_ZONE_ENTRY* dtz = NULL;
 	LPTIME_ZONE_INFORMATION tz = lpTimeZoneInformation;
 	lpTimeZoneInformation->StandardBias = 0;
 	time(&t);
 	local_time = localtime_r(&t, &tres);
 	if (!local_time)
+	{
 		goto out_error;
+	}
 
 	memset(tz, 0, sizeof(TIME_ZONE_INFORMATION));
 #ifdef WINPR_HAVE_TM_GMTOFF
@@ -406,7 +444,9 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 		long bias = -(local_time->tm_gmtoff / 60L);
 
 		if (bias > INT32_MAX)
+		{
 			bias = INT32_MAX;
+		}
 
 		tz->Bias = (LONG)bias;
 	}
@@ -571,7 +611,8 @@ DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
 }
 
 DWORD GetDynamicTimeZoneInformationEffectiveYears(
-    const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation, LPDWORD FirstYear, LPDWORD LastYear)
+    const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation, const LPDWORD FirstYear,
+    const LPDWORD LastYear)
 {
 	WINPR_UNUSED(lpTimeZoneInformation);
 	WINPR_UNUSED(FirstYear);

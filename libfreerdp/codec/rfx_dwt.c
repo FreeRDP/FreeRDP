@@ -27,9 +27,15 @@
 
 static void rfx_dwt_2d_decode_block(INT16* buffer, INT16* idwt, size_t subband_width)
 {
-	INT16 *dst, *l, *h;
-	INT16 *l_dst, *h_dst;
-	INT16 *hl, *lh, *hh, *ll;
+	INT16* dst;
+	INT16* l;
+	INT16* h;
+	INT16* l_dst;
+	INT16* h_dst;
+	INT16* hl;
+	INT16* lh;
+	INT16* hh;
+	INT16* ll;
 
 	const size_t total_width = subband_width << 1;
 
@@ -120,9 +126,15 @@ void rfx_dwt_2d_decode(INT16* buffer, INT16* dwt_buffer)
 
 static void rfx_dwt_2d_encode_block(INT16* buffer, INT16* dwt, UINT32 subband_width)
 {
-	INT16 *src, *l, *h;
-	INT16 *l_src, *h_src;
-	INT16 *hl, *lh, *hh, *ll;
+	INT16* src;
+	INT16* l;
+	INT16* h;
+	INT16* l_src;
+	INT16* h_src;
+	INT16* hl;
+	INT16* lh;
+	INT16* hh;
+	INT16* ll;
 
 	const UINT32 total_width = subband_width << 1;
 

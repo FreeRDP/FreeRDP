@@ -26,10 +26,14 @@
 static pstatus_t general_andC_32u(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len)
 {
 	if (val == 0)
+	{
 		return PRIMITIVES_SUCCESS;
+	}
 
 	while (len--)
+	{
 		*pDst++ = *pSrc++ & val;
+	}
 
 	return PRIMITIVES_SUCCESS;
 }
@@ -40,10 +44,14 @@ static pstatus_t general_andC_32u(const UINT32* pSrc, UINT32 val, UINT32* pDst, 
 static pstatus_t general_orC_32u(const UINT32* pSrc, UINT32 val, UINT32* pDst, INT32 len)
 {
 	if (val == 0)
+	{
 		return PRIMITIVES_SUCCESS;
+	}
 
 	while (len--)
+	{
 		*pDst++ = *pSrc++ | val;
+	}
 
 	return PRIMITIVES_SUCCESS;
 }

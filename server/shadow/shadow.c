@@ -116,7 +116,9 @@ int main(int argc, char** argv)
 	if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_TlsSecurity, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_RdpSecurity, TRUE))
+	{
 		goto fail;
+	}
 
 	/* By default allow all GFX modes.
 	 * This can be changed with command line flags [+|-]gfx-CODEC
@@ -129,12 +131,16 @@ int main(int argc, char** argv)
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxAVC444v2, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressive, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_GfxProgressiveV2, TRUE))
+	{
 		goto fail;
+	}
 
 	/* TODO: We do not implement relative mouse callbacks, so deactivate it for now */
 	if (!freerdp_settings_set_bool(settings, FreeRDP_MouseUseRelativeMove, FALSE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_HasRelativeMouseEvent, FALSE))
+	{
 		goto fail;
+	}
 
 	if ((status = shadow_server_parse_command_line(server, argc, argv, shadow_args)) < 0)
 	{
@@ -168,9 +174,13 @@ int main(int argc, char** argv)
 	WaitForSingleObject(server->thread, INFINITE);
 
 	if (!GetExitCodeThread(server->thread, &dwExitCode))
+	{
 		status = -1;
+	}
 	else
+	{
 		status = (int)dwExitCode;
+	}
 
 fail:
 	shadow_server_uninit(server);

@@ -27,49 +27,65 @@
 
 rdpCache* cache_new(rdpContext* context)
 {
-	rdpCache* cache;
+	rdpCache* cache = NULL;
 
 	WINPR_ASSERT(context);
 
 	cache = (rdpCache*)calloc(1, sizeof(rdpCache));
 
 	if (!cache)
+	{
 		return NULL;
+	}
 
 	cache->glyph = glyph_cache_new(context);
 
 	if (!cache->glyph)
+	{
 		goto error;
+	}
 
 	cache->brush = brush_cache_new(context);
 
 	if (!cache->brush)
+	{
 		goto error;
+	}
 
 	cache->pointer = pointer_cache_new(context);
 
 	if (!cache->pointer)
+	{
 		goto error;
+	}
 
 	cache->bitmap = bitmap_cache_new(context);
 
 	if (!cache->bitmap)
+	{
 		goto error;
+	}
 
 	cache->offscreen = offscreen_cache_new(context);
 
 	if (!cache->offscreen)
+	{
 		goto error;
+	}
 
 	cache->palette = palette_cache_new(context);
 
 	if (!cache->palette)
+	{
 		goto error;
+	}
 
 	cache->nine_grid = nine_grid_cache_new(context);
 
 	if (!cache->nine_grid)
+	{
 		goto error;
+	}
 
 	return cache;
 error:
@@ -98,7 +114,9 @@ CACHE_COLOR_TABLE_ORDER* copy_cache_color_table_order(rdpContext* context,
 	CACHE_COLOR_TABLE_ORDER* dst = calloc(1, sizeof(CACHE_COLOR_TABLE_ORDER));
 
 	if (!dst || !order)
+	{
 		goto fail;
+	}
 
 	*dst = *order;
 	return dst;
@@ -117,14 +135,18 @@ SURFACE_BITS_COMMAND* copy_surface_bits_command(rdpContext* context,
 {
 	SURFACE_BITS_COMMAND* dst = calloc(1, sizeof(SURFACE_BITS_COMMAND));
 	if (!dst || !order)
+	{
 		goto fail;
+	}
 
 	*dst = *order;
 
 	dst->bmp.bitmapData = (BYTE*)malloc(order->bmp.bitmapDataLength);
 
 	if (!dst->bmp.bitmapData)
+	{
 		goto fail;
+	}
 
 	CopyMemory(dst->bmp.bitmapData, order->bmp.bitmapData, order->bmp.bitmapDataLength);
 
@@ -138,6 +160,8 @@ fail:
 void free_surface_bits_command(rdpContext* context, SURFACE_BITS_COMMAND* order)
 {
 	if (order)
+	{
 		free(order->bmp.bitmapData);
+	}
 	free(order);
 }

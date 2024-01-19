@@ -56,7 +56,7 @@ struct scancode_map_entry
 {
 	DWORD scancode;
 	const char* name;
-};
+} DECLSPEC_ALIGN(16);
 
 static const struct scancode_map_entry RDP_SCANCODE_MAP[] = {
 	{ RDP_SCANCODE_ESCAPE, "VK_ESCAPE" },
@@ -243,27 +243,33 @@ static int freerdp_detect_keyboard(DWORD* keyboardLayoutId)
 
 #ifdef WITH_X11
 	if (*keyboardLayoutId == 0)
+	{
 		freerdp_detect_keyboard_layout_from_xkb(keyboardLayoutId);
+	}
 #endif
 
 	if (*keyboardLayoutId == 0)
+	{
 		freerdp_detect_keyboard_layout_from_system_locale(keyboardLayoutId);
+	}
 
 	if (*keyboardLayoutId == 0)
+	{
 		*keyboardLayoutId = ENGLISH_UNITED_STATES;
+	}
 
 	return 0;
 }
 
-static int freerdp_keyboard_init_apple(DWORD* keyboardLayoutId, DWORD* x11_keycode_to_rdp_scancode,
-                                       size_t count)
+static int freerdp_keyboard_init_apple(const DWORD* keyboardLayoutId,
+                                       DWORD* x11_keycode_to_rdp_scancode, size_t count)
 {
 	WINPR_ASSERT(x11_keycode_to_rdp_scancode);
 	WINPR_ASSERT(keyboardLayoutId);
 
 	for (size_t keycode = 8; keycode < count; keycode++)
 	{
-		const DWORD vkcode = GetVirtualKeyCodeFromKeycode(keycode - 8u, WINPR_KEYCODE_TYPE_APPLE);
+		const DWORD vkcode = GetVirtualKeyCodeFromKeycode(keycode - 8U, WINPR_KEYCODE_TYPE_APPLE);
 		x11_keycode_to_rdp_scancode[keycode] =
 		    GetVirtualScanCodeFromVirtualKeyCode(vkcode, WINPR_KBD_TYPE_IBM_ENHANCED);
 	}
@@ -272,7 +278,7 @@ static int freerdp_keyboard_init_apple(DWORD* keyboardLayoutId, DWORD* x11_keyco
 	return 0;
 }
 
-static int freerdp_keyboard_init_x11_evdev(DWORD* keyboardLayoutId,
+static int freerdp_keyboard_init_x11_evdev(const DWORD* keyboardLayoutId,
                                            DWORD* x11_keycode_to_rdp_scancode, size_t count)
 {
 	WINPR_ASSERT(keyboardLayoutId);
@@ -290,7 +296,7 @@ static int freerdp_keyboard_init_x11_evdev(DWORD* keyboardLayoutId,
 
 DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 {
-	DWORD keycode;
+	DWORD keycode = 0;
 	int status = -1;
 
 #if defined(__APPLE__)
@@ -307,18 +313,24 @@ DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 		status = freerdp_keyboard_init_xkbfile(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE,
 		                                       ARRAYSIZE(X11_KEYCODE_TO_VIRTUAL_SCANCODE));
 		if (status >= 0)
+		{
 			maptype = WINPR_KEYCODE_TYPE_XKB;
+		}
 	}
 #endif
 
 	if (status < 0)
+	{
 		status = freerdp_keyboard_init_x11_evdev(&keyboardLayoutId, X11_KEYCODE_TO_VIRTUAL_SCANCODE,
 		                                         ARRAYSIZE(X11_KEYCODE_TO_VIRTUAL_SCANCODE));
+	}
 
 #endif
 
 	if (status < 0)
+	{
 		WLog_DBG(TAG, "Platform keyboard detection failed, trying autodetection");
+	}
 
 	freerdp_detect_keyboard(&keyboardLayoutId);
 
@@ -344,24 +356,37 @@ DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId, const char* keyboardRemap
 	{
 		char* copy = _strdup(keyboardRemappingList);
 		char* context = NULL;
-		char* token;
+		char* token = NULL;
 		if (!copy)
+		{
 			goto fail;
+		}
 		token = strtok_s(copy, ",", &context);
 		while (token)
 		{
-			DWORD key, value;
+			DWORD key;
+			DWORD value;
 			int rc = sscanf(token, "%" PRIu32 "=%" PRIu32, &key, &value);
 			if (rc != 2)
+			{
 				rc = sscanf(token, "%" PRIx32 "=%" PRIx32 "", &key, &value);
+			}
 			if (rc != 2)
+			{
 				rc = sscanf(token, "%" PRIu32 "=%" PRIx32, &key, &value);
+			}
 			if (rc != 2)
+			{
 				rc = sscanf(token, "%" PRIx32 "=%" PRIu32, &key, &value);
+			}
 			if (rc != 2)
+			{
 				goto fail;
+			}
 			if (key >= ARRAYSIZE(REMAPPING_TABLE))
+			{
 				goto fail;
+			}
 			REMAPPING_TABLE[key] = value;
 			token = strtok_s(NULL, ",", &context);
 		}
@@ -404,20 +429,23 @@ DWORD freerdp_keyboard_get_x11_keycode_from_rdp_scancode(DWORD scancode, BOOL ex
 	WINPR_ASSERT(x11);
 
 	if (extended)
+	{
 		return x11[1];
-	else
-		return x11[0];
+	}
+	return x11[0];
 }
 
 const char* freerdp_keyboard_scancode_name(DWORD scancode)
 {
-	size_t x;
+	size_t x = 0;
 
 	for (x = 0; x < ARRAYSIZE(RDP_SCANCODE_MAP); x++)
 	{
 		const struct scancode_map_entry* entry = &RDP_SCANCODE_MAP[x];
 		if (entry->scancode == scancode)
+		{
 			return entry->name;
+		}
 	}
 
 	return NULL;

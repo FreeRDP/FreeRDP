@@ -42,7 +42,7 @@ void UwacTouchAutomataReset(UwacTouchAutomata* automata)
 bool UwacTouchAutomataInjectEvent(UwacTouchAutomata* automata, UwacEvent* event)
 {
 
-	UwacTouchPoint* tp;
+	UwacTouchPoint* tp = NULL;
 
 	switch (event->type)
 	{

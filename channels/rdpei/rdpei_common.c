@@ -31,17 +31,21 @@
 
 BOOL rdpei_read_2byte_unsigned(wStream* s, UINT16* value)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x80)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+		{
 			return FALSE;
+		}
 
 		*value = (byte & 0x7F) << 8;
 		Stream_Read_UINT8(s, byte);
@@ -57,13 +61,17 @@ BOOL rdpei_read_2byte_unsigned(wStream* s, UINT16* value)
 
 BOOL rdpei_write_2byte_unsigned(wStream* s, UINT16 value)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	if (!Stream_EnsureRemainingCapacity(s, 2))
+	{
 		return FALSE;
+	}
 
 	if (value > 0x7FFF)
+	{
 		return FALSE;
+	}
 
 	if (value >= 0x7F)
 	{
@@ -83,11 +91,13 @@ BOOL rdpei_write_2byte_unsigned(wStream* s, UINT16 value)
 
 BOOL rdpei_read_2byte_signed(wStream* s, INT16* value)
 {
-	BYTE byte;
-	BOOL negative;
+	BYTE byte = 0;
+	BOOL negative = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, byte);
 
@@ -98,25 +108,31 @@ BOOL rdpei_read_2byte_signed(wStream* s, INT16* value)
 	if (byte & 0x80)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+		{
 			return FALSE;
+		}
 
 		Stream_Read_UINT8(s, byte);
 		*value = (*value << 8) | byte;
 	}
 
 	if (negative)
+	{
 		*value *= -1;
+	}
 
 	return TRUE;
 }
 
 BOOL rdpei_write_2byte_signed(wStream* s, INT16 value)
 {
-	BYTE byte;
+	BYTE byte = 0;
 	BOOL negative = FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(s, 2))
+	{
 		return FALSE;
+	}
 
 	if (value < 0)
 	{
@@ -125,14 +141,18 @@ BOOL rdpei_write_2byte_signed(wStream* s, INT16 value)
 	}
 
 	if (value > 0x3FFF)
+	{
 		return FALSE;
+	}
 
 	if (value >= 0x3F)
 	{
 		byte = ((value & 0x3F00) >> 8);
 
 		if (negative)
+		{
 			byte |= 0x40;
+		}
 
 		Stream_Write_UINT8(s, byte | 0x80);
 		byte = (value & 0xFF);
@@ -143,7 +163,9 @@ BOOL rdpei_write_2byte_signed(wStream* s, INT16 value)
 		byte = (value & 0x3F);
 
 		if (negative)
+		{
 			byte |= 0x40;
+		}
 
 		Stream_Write_UINT8(s, byte);
 	}
@@ -153,18 +175,22 @@ BOOL rdpei_write_2byte_signed(wStream* s, INT16 value)
 
 BOOL rdpei_read_4byte_unsigned(wStream* s, UINT32* value)
 {
-	BYTE byte;
-	BYTE count;
+	BYTE byte = 0;
+	BYTE count = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, byte);
 
 	count = (byte & 0xC0) >> 6;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, count))
+	{
 		return FALSE;
+	}
 
 	switch (count)
 	{
@@ -205,10 +231,12 @@ BOOL rdpei_read_4byte_unsigned(wStream* s, UINT32* value)
 
 BOOL rdpei_write_4byte_unsigned(wStream* s, UINT32 value)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
+	{
 		return FALSE;
+	}
 
 	if (value <= 0x3FUL)
 	{
@@ -251,12 +279,14 @@ BOOL rdpei_write_4byte_unsigned(wStream* s, UINT32 value)
 
 BOOL rdpei_read_4byte_signed(wStream* s, INT32* value)
 {
-	BYTE byte;
-	BYTE count;
-	BOOL negative;
+	BYTE byte = 0;
+	BYTE count = 0;
+	BOOL negative = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, byte);
 
@@ -264,7 +294,9 @@ BOOL rdpei_read_4byte_signed(wStream* s, INT32* value)
 	negative = (byte & 0x20) ? TRUE : FALSE;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, count))
+	{
 		return FALSE;
+	}
 
 	switch (count)
 	{
@@ -301,18 +333,22 @@ BOOL rdpei_read_4byte_signed(wStream* s, INT32* value)
 	}
 
 	if (negative)
+	{
 		*value *= -1;
+	}
 
 	return TRUE;
 }
 
 BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 {
-	BYTE byte;
+	BYTE byte = 0;
 	BOOL negative = FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
+	{
 		return FALSE;
+	}
 
 	if (value < 0)
 	{
@@ -325,7 +361,9 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 		byte = value & 0x1F;
 
 		if (negative)
+		{
 			byte |= 0x20;
+		}
 
 		Stream_Write_UINT8(s, byte);
 	}
@@ -334,7 +372,9 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 		byte = (value >> 8) & 0x1F;
 
 		if (negative)
+		{
 			byte |= 0x20;
+		}
 
 		Stream_Write_UINT8(s, byte | 0x40);
 		byte = (value & 0xFF);
@@ -345,7 +385,9 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 		byte = (value >> 16) & 0x1F;
 
 		if (negative)
+		{
 			byte |= 0x20;
+		}
 
 		Stream_Write_UINT8(s, byte | 0x80);
 		byte = (value >> 8) & 0xFF;
@@ -358,7 +400,9 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 		byte = (value >> 24) & 0x1F;
 
 		if (negative)
+		{
 			byte |= 0x20;
+		}
 
 		Stream_Write_UINT8(s, byte | 0xC0);
 		byte = (value >> 16) & 0xFF;
@@ -378,18 +422,22 @@ BOOL rdpei_write_4byte_signed(wStream* s, INT32 value)
 
 BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 {
-	UINT64 byte;
-	BYTE count;
+	UINT64 byte = 0;
+	BYTE count = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, byte);
 
 	count = (byte & 0xE0) >> 5;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, count))
+	{
 		return FALSE;
+	}
 
 	switch (count)
 	{
@@ -490,10 +538,12 @@ BOOL rdpei_read_8byte_unsigned(wStream* s, UINT64* value)
 
 BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	if (!Stream_EnsureRemainingCapacity(s, 8))
+	{
 		return FALSE;
+	}
 
 	if (value <= 0x1FULL)
 	{
@@ -608,10 +658,12 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 
 void touch_event_reset(RDPINPUT_TOUCH_EVENT* event)
 {
-	UINT16 i;
+	UINT16 i = 0;
 
 	for (i = 0; i < event->frameCount; i++)
+	{
 		touch_frame_reset(&event->frames[i]);
+	}
 
 	free(event->frames);
 	event->frames = NULL;
@@ -627,10 +679,12 @@ void touch_frame_reset(RDPINPUT_TOUCH_FRAME* frame)
 
 void pen_event_reset(RDPINPUT_PEN_EVENT* event)
 {
-	UINT16 i;
+	UINT16 i = 0;
 
 	for (i = 0; i < event->frameCount; i++)
+	{
 		pen_frame_reset(&event->frames[i]);
+	}
 
 	free(event->frames);
 	event->frames = NULL;

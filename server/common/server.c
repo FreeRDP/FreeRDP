@@ -92,16 +92,21 @@ size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats)
 		{ WAVE_FORMAT_ALAW, 1, 22050, 22050, 2, 8, 0, NULL }
 	};
 	const size_t nrDefaultFormatsMax = ARRAYSIZE(default_supported_audio_formats);
-	size_t x, nr_formats = 0;
+	size_t x;
+	size_t nr_formats = 0;
 	AUDIO_FORMAT* formats = audio_formats_new(nrDefaultFormatsMax);
 
 	if (!dst_formats)
+	{
 		goto fail;
+	}
 
 	*dst_formats = NULL;
 
 	if (!formats)
+	{
 		goto fail;
+	}
 
 	for (x = 0; x < nrDefaultFormatsMax; x++)
 	{
@@ -112,7 +117,9 @@ size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats)
 			AUDIO_FORMAT* dst = &formats[nr_formats++];
 
 			if (!audio_format_copy(format, dst))
+			{
 				goto fail;
+			}
 		}
 	}
 
@@ -125,7 +132,8 @@ fail:
 
 size_t server_rdpsnd_get_formats(AUDIO_FORMAT** dst_formats)
 {
-	size_t x, y = 0;
+	size_t x;
+	size_t y = 0;
 	/* Default supported audio formats */
 	static const AUDIO_FORMAT default_supported_audio_formats[] = {
 		{ WAVE_FORMAT_AAC_MS, 2, 44100, 176400, 4, 16, 0, NULL },
@@ -141,14 +149,18 @@ size_t server_rdpsnd_get_formats(AUDIO_FORMAT** dst_formats)
 	    audio_formats_new(ARRAYSIZE(default_supported_audio_formats));
 
 	if (!supported_audio_formats)
+	{
 		goto fail;
+	}
 
 	for (x = 0; x < ARRAYSIZE(default_supported_audio_formats); x++)
 	{
 		const AUDIO_FORMAT* format = &default_supported_audio_formats[x];
 
 		if (freerdp_dsp_supports_format(format, TRUE))
+		{
 			supported_audio_formats[y++] = *format;
+		}
 	}
 
 	/* Set default audio formats. */
@@ -158,7 +170,9 @@ fail:
 	audio_formats_free(supported_audio_formats, ARRAYSIZE(default_supported_audio_formats));
 
 	if (dst_formats)
+	{
 		*dst_formats = NULL;
+	}
 
 	return 0;
 }
@@ -171,7 +185,9 @@ void freerdp_server_warn_unmaintained(int argc, char* argv[])
 	WINPR_ASSERT(log);
 
 	if (!WLog_IsLevelActive(log, log_level))
+	{
 		return;
+	}
 
 	WLog_Print_unchecked(log, log_level, "[unmaintained] %s server is currently unmaintained!",
 	                     app);
@@ -197,7 +213,9 @@ void freerdp_server_warn_experimental(int argc, char* argv[])
 	WINPR_ASSERT(log);
 
 	if (!WLog_IsLevelActive(log, log_level))
+	{
 		return;
+	}
 
 	WLog_Print_unchecked(log, log_level, "[experimental] %s server is currently experimental!",
 	                     app);
@@ -220,7 +238,9 @@ void freerdp_server_warn_deprecated(int argc, char* argv[])
 	WINPR_ASSERT(log);
 
 	if (!WLog_IsLevelActive(log, log_level))
+	{
 		return;
+	}
 
 	WLog_Print_unchecked(log, log_level, "[deprecated] %s server has been deprecated", app);
 	WLog_Print_unchecked(log, log_level, "As replacement there is a SDL based client available.");

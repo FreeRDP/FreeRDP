@@ -49,26 +49,30 @@ class DynChannelState
 {
 
   public:
-	bool skip() const
+	auto skip() const -> bool
 	{
 		return _toSkip != 0;
 	}
 
-	bool skip(size_t s)
+	auto skip(size_t s) -> bool
 	{
 		if (s > _toSkip)
+		{
 			_toSkip = 0;
+		}
 		else
+		{
 			_toSkip -= s;
+		}
 		return skip();
 	}
 
-	size_t remaining() const
+	auto remaining() const -> size_t
 	{
 		return _toSkip;
 	}
 
-	size_t total() const
+	auto total() const -> size_t
 	{
 		return _totalSkipSize;
 	}
@@ -78,7 +82,7 @@ class DynChannelState
 		_toSkip = _totalSkipSize = len;
 	}
 
-	bool drop() const
+	auto drop() const -> bool
 	{
 		return _drop;
 	}
@@ -88,7 +92,7 @@ class DynChannelState
 		_drop = d;
 	}
 
-	uint32_t channelId() const
+	auto channelId() const -> uint32_t
 	{
 		return _channelId;
 	}
@@ -105,22 +109,23 @@ class DynChannelState
 	uint32_t _channelId = 0;
 };
 
-static BOOL filter_client_pre_connect(proxyPlugin* plugin, proxyData* pdata, void* custom)
+static auto filter_client_pre_connect(proxyPlugin* plugin, proxyData* pdata, void* custom) -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(pdata->pc);
 	WINPR_ASSERT(custom);
 
-	auto settings = pdata->pc->context.settings;
+	auto* settings = pdata->pc->context.settings;
 
 	/* We do not want persistent bitmap cache to be used with proxy */
 	return freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled, FALSE);
 }
 
-static BOOL filter_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdata, void* arg)
+static auto filter_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdata, void* arg)
+    -> BOOL
 {
-	auto data = static_cast<proxyChannelToInterceptData*>(arg);
+	auto* data = static_cast<proxyChannelToInterceptData*>(arg);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -129,13 +134,16 @@ static BOOL filter_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pd
 	auto intercept = std::find(plugin_dyn_intercept.begin(), plugin_dyn_intercept.end(),
 	                           data->name) != plugin_dyn_intercept.end();
 	if (intercept)
+	{
 		data->intercept = TRUE;
+	}
 	return TRUE;
 }
 
-static BOOL filter_static_channel_intercept_list(proxyPlugin* plugin, proxyData* pdata, void* arg)
+static auto filter_static_channel_intercept_list(proxyPlugin* plugin, proxyData* pdata, void* arg)
+    -> BOOL
 {
-	auto data = static_cast<proxyChannelToInterceptData*>(arg);
+	auto* data = static_cast<proxyChannelToInterceptData*>(arg);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
@@ -144,11 +152,13 @@ static BOOL filter_static_channel_intercept_list(proxyPlugin* plugin, proxyData*
 	auto intercept = std::find(plugin_static_intercept.begin(), plugin_static_intercept.end(),
 	                           data->name) != plugin_static_intercept.end();
 	if (intercept)
+	{
 		data->intercept = TRUE;
+	}
 	return TRUE;
 }
 
-static size_t drdynvc_cblen_to_bytes(UINT8 cbLen)
+static auto drdynvc_cblen_to_bytes(UINT8 cbLen) -> size_t
 {
 	switch (cbLen)
 	{
@@ -163,7 +173,7 @@ static size_t drdynvc_cblen_to_bytes(UINT8 cbLen)
 	}
 }
 
-static UINT32 drdynvc_read_variable_uint(wStream* s, UINT8 cbLen)
+static auto drdynvc_read_variable_uint(wStream* s, UINT8 cbLen) -> UINT32
 {
 	UINT32 val = 0;
 
@@ -185,12 +195,14 @@ static UINT32 drdynvc_read_variable_uint(wStream* s, UINT8 cbLen)
 	return val;
 }
 
-static BOOL drdynvc_try_read_header(wStream* s, size_t& channelId, size_t& length)
+static auto drdynvc_try_read_header(wStream* s, size_t& channelId, size_t& length) -> BOOL
 {
 	UINT8 value = 0;
 	Stream_SetPosition(s, 0);
 	if (Stream_GetRemainingLength(s) < 1)
+	{
 		return FALSE;
+	}
 	Stream_Read_UINT8(s, value);
 
 	const UINT8 cmd = (value & 0xf0) >> 4;
@@ -208,7 +220,9 @@ static BOOL drdynvc_try_read_header(wStream* s, size_t& channelId, size_t& lengt
 
 	const size_t channelIdLen = drdynvc_cblen_to_bytes(cbChId);
 	if (Stream_GetRemainingLength(s) < channelIdLen)
+	{
 		return FALSE;
+	}
 
 	channelId = drdynvc_read_variable_uint(s, cbChId);
 	length = Stream_Length(s);
@@ -216,7 +230,9 @@ static BOOL drdynvc_try_read_header(wStream* s, size_t& channelId, size_t& lengt
 	{
 		const size_t dataLen = drdynvc_cblen_to_bytes(Sp);
 		if (Stream_GetRemainingLength(s) < dataLen)
+		{
 			return FALSE;
+		}
 
 		length = drdynvc_read_variable_uint(s, Sp);
 	}
@@ -224,40 +240,45 @@ static BOOL drdynvc_try_read_header(wStream* s, size_t& channelId, size_t& lengt
 	return TRUE;
 }
 
-static DynChannelState* filter_get_plugin_data(proxyPlugin* plugin, proxyData* pdata)
+static auto filter_get_plugin_data(proxyPlugin* plugin, proxyData* pdata) -> DynChannelState*
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 
-	auto mgr = static_cast<proxyPluginsManager*>(plugin->custom);
+	auto* mgr = static_cast<proxyPluginsManager*>(plugin->custom);
 	WINPR_ASSERT(mgr);
 
 	WINPR_ASSERT(mgr->GetPluginData);
 	return static_cast<DynChannelState*>(mgr->GetPluginData(mgr, plugin_name, pdata));
 }
 
-static BOOL filter_set_plugin_data(proxyPlugin* plugin, proxyData* pdata, DynChannelState* data)
+static auto filter_set_plugin_data(proxyPlugin* plugin, proxyData* pdata, DynChannelState* data)
+    -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 
-	auto mgr = static_cast<proxyPluginsManager*>(plugin->custom);
+	auto* mgr = static_cast<proxyPluginsManager*>(plugin->custom);
 	WINPR_ASSERT(mgr);
 
 	WINPR_ASSERT(mgr->SetPluginData);
 	return mgr->SetPluginData(mgr, plugin_name, pdata, data);
 }
 
-static UINT8 drdynvc_value_to_cblen(UINT32 value)
+static auto drdynvc_value_to_cblen(UINT32 value) -> UINT8
 {
 	if (value <= 0xFF)
+	{
 		return 0;
+	}
 	if (value <= 0xFFFF)
+	{
 		return 1;
+	}
 	return 2;
 }
 
-static BOOL drdynvc_write_variable_uint(wStream* s, UINT32 value, UINT8 cbLen)
+static auto drdynvc_write_variable_uint(wStream* s, UINT32 value, UINT8 cbLen) -> BOOL
 {
 	switch (cbLen)
 	{
@@ -277,30 +298,36 @@ static BOOL drdynvc_write_variable_uint(wStream* s, UINT32 value, UINT8 cbLen)
 	return TRUE;
 }
 
-static BOOL drdynvc_write_header(wStream* s, UINT32 channelId)
+static auto drdynvc_write_header(wStream* s, UINT32 channelId) -> BOOL
 {
 	const UINT8 cbChId = drdynvc_value_to_cblen(channelId);
 	const UINT8 value = (DATA_PDU << 4) | cbChId;
 	const size_t len = drdynvc_cblen_to_bytes(cbChId) + 1;
 
-	if (!Stream_EnsureRemainingCapacity(s, len))
+	if (Stream_EnsureRemainingCapacity(s, len) == 0)
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT8(s, value);
 	return drdynvc_write_variable_uint(s, value, cbChId);
 }
 
-static BOOL filter_forward_empty_offer(const char* sessionID, proxyDynChannelInterceptData* data,
-                                       size_t startPosition, UINT32 channelId)
+static auto filter_forward_empty_offer(const char* sessionID, proxyDynChannelInterceptData* data,
+                                       size_t startPosition, UINT32 channelId) -> BOOL
 {
 	WINPR_ASSERT(data);
 
 	Stream_SetPosition(data->data, startPosition);
-	if (!drdynvc_write_header(data->data, channelId))
+	if (drdynvc_write_header(data->data, channelId) == 0)
+	{
 		return FALSE;
+	}
 
-	if (!Stream_EnsureRemainingCapacity(data->data, sizeof(UINT16)))
+	if (Stream_EnsureRemainingCapacity(data->data, sizeof(UINT16)) == 0)
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT16(data->data, 0);
 	Stream_SealLength(data->data);
 
@@ -310,20 +337,20 @@ static BOOL filter_forward_empty_offer(const char* sessionID, proxyDynChannelInt
 	return TRUE;
 }
 
-static BOOL filter_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, void* arg)
+static auto filter_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, void* arg) -> BOOL
 {
-	auto data = static_cast<proxyDynChannelInterceptData*>(arg);
+	auto* data = static_cast<proxyDynChannelInterceptData*>(arg);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(data);
 
 	data->result = PF_CHANNEL_RESULT_PASS;
-	if (!data->isBackData &&
+	if ((data->isBackData == 0) &&
 	    (strncmp(data->name, RDPGFX_DVC_CHANNEL_NAME, ARRAYSIZE(RDPGFX_DVC_CHANNEL_NAME)) == 0))
 	{
-		auto state = filter_get_plugin_data(plugin, pdata);
-		if (!state)
+		auto* state = filter_get_plugin_data(plugin, pdata);
+		if (state == nullptr)
 		{
 			WLog_ERR(TAG, "[SessionID=%s][%s] missing custom data, aborting!", pdata->session_id,
 			         plugin_name);
@@ -335,11 +362,11 @@ static BOOL filter_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, 
 		const auto pos = Stream_GetPosition(data->data);
 		if (!state->skip())
 		{
-			if (data->first)
+			if (data->first != 0)
 			{
 				size_t channelId = 0;
 				size_t length = 0;
-				if (drdynvc_try_read_header(data->data, channelId, length))
+				if (drdynvc_try_read_header(data->data, channelId, length) != 0)
 				{
 					if (Stream_GetRemainingLength(data->data) >= 2)
 					{
@@ -390,16 +417,17 @@ static BOOL filter_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, 
 	return TRUE;
 }
 
-static BOOL filter_server_session_started(proxyPlugin* plugin, proxyData* pdata, void*)
+static auto filter_server_session_started(proxyPlugin* plugin, proxyData* pdata, void* /*unused*/)
+    -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 
-	auto state = filter_get_plugin_data(plugin, pdata);
+	auto* state = filter_get_plugin_data(plugin, pdata);
 	delete state;
 
-	auto newstate = new DynChannelState();
-	if (!filter_set_plugin_data(plugin, pdata, newstate))
+	auto* newstate = new DynChannelState();
+	if (filter_set_plugin_data(plugin, pdata, newstate) == 0)
 	{
 		delete newstate;
 		return FALSE;
@@ -408,12 +436,13 @@ static BOOL filter_server_session_started(proxyPlugin* plugin, proxyData* pdata,
 	return TRUE;
 }
 
-static BOOL filter_server_session_end(proxyPlugin* plugin, proxyData* pdata, void*)
+static auto filter_server_session_end(proxyPlugin* plugin, proxyData* pdata, void* /*unused*/)
+    -> BOOL
 {
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 
-	auto state = filter_get_plugin_data(plugin, pdata);
+	auto* state = filter_get_plugin_data(plugin, pdata);
 	delete state;
 	filter_set_plugin_data(plugin, pdata, nullptr);
 	return TRUE;
@@ -423,12 +452,13 @@ static BOOL filter_server_session_end(proxyPlugin* plugin, proxyData* pdata, voi
 extern "C"
 {
 #endif
-	FREERDP_API BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata);
+	FREERDP_API auto proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
+	    -> BOOL;
 #ifdef __cplusplus
 }
 #endif
 
-BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
+auto proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata) -> BOOL
 {
 	proxyPlugin plugin = {};
 
@@ -445,8 +475,10 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 	plugin.DynChannelIntercept = filter_dyn_channel_intercept;
 
 	plugin.custom = plugins_manager;
-	if (!plugin.custom)
+	if (plugin.custom == nullptr)
+	{
 		return FALSE;
+	}
 	plugin.userdata = userdata;
 
 	return plugins_manager->RegisterPlugin(plugins_manager, &plugin);

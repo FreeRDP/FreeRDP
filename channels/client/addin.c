@@ -83,14 +83,13 @@ void* freerdp_channels_client_find_static_entry(const char* name, const char* id
 
 extern const STATIC_ADDIN_TABLE CLIENT_STATIC_ADDIN_TABLE[];
 
-static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName,
-                                                                  LPCSTR pszSubsystem,
-                                                                  LPCSTR pszType, DWORD dwFlags)
+static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszType, DWORD dwFlags)
 {
-	size_t i, j;
-	DWORD nAddins;
+	size_t i;
+	size_t j;
+	DWORD nAddins = 0;
 	FREERDP_ADDIN** ppAddins = NULL;
-	const STATIC_SUBSYSTEM_ENTRY* subsystems;
+	const STATIC_SUBSYSTEM_ENTRY* subsystems = NULL;
 	nAddins = 0;
 	ppAddins = (FREERDP_ADDIN**)calloc(128, sizeof(FREERDP_ADDIN*));
 
@@ -150,10 +149,14 @@ static HANDLE FindFirstFileUTF8(LPCSTR pszSearchPath, WIN32_FIND_DATAW* FindData
 {
 	HANDLE hdl = INVALID_HANDLE_VALUE;
 	if (!pszSearchPath)
+	{
 		return hdl;
+	}
 	WCHAR* wpath = ConvertUtf8ToWCharAlloc(pszSearchPath, NULL);
 	if (!wpath)
+	{
 		return hdl;
+	}
 
 	hdl = FindFirstFileW(wpath, FindData);
 	free(wpath);
@@ -164,20 +167,20 @@ static HANDLE FindFirstFileUTF8(LPCSTR pszSearchPath, WIN32_FIND_DATAW* FindData
 static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCSTR pszSubsystem,
                                                             LPCSTR pszType, DWORD dwFlags)
 {
-	int index;
-	int nDashes;
-	HANDLE hFind;
-	DWORD nAddins;
-	LPSTR pszPattern;
-	size_t cchPattern;
+	int index = 0;
+	int nDashes = 0;
+	HANDLE hFind = NULL;
+	DWORD nAddins = 0;
+	LPSTR pszPattern = NULL;
+	size_t cchPattern = 0;
 	LPCSTR pszAddinPath = FREERDP_ADDIN_PATH;
 	LPCSTR pszInstallPrefix = FREERDP_INSTALL_PREFIX;
-	LPCSTR pszExtension;
-	LPSTR pszSearchPath;
-	size_t cchSearchPath;
-	size_t cchAddinPath;
-	size_t cchInstallPrefix;
-	FREERDP_ADDIN** ppAddins;
+	LPCSTR pszExtension = NULL;
+	LPSTR pszSearchPath = NULL;
+	size_t cchSearchPath = 0;
+	size_t cchAddinPath = 0;
+	size_t cchInstallPrefix = 0;
+	FREERDP_ADDIN** ppAddins = NULL;
 	WIN32_FIND_DATAW FindData = { 0 };
 	cchAddinPath = strnlen(pszAddinPath, sizeof(FREERDP_ADDIN_PATH));
 	cchInstallPrefix = strnlen(pszInstallPrefix, sizeof(FREERDP_INSTALL_PREFIX));
@@ -249,7 +252,9 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 	}
 
 	if (hFind == INVALID_HANDLE_VALUE)
+	{
 		return ppAddins;
+	}
 
 	do
 	{
@@ -266,21 +271,27 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 		cFileName =
 		    ConvertWCharNToUtf8Alloc(FindData.cFileName, ARRAYSIZE(FindData.cFileName), NULL);
 		if (!cFileName)
+		{
 			goto skip;
+		}
 
 		nDashes = 0;
 		for (index = 0; cFileName[index]; index++)
+		{
 			nDashes += (cFileName[index] == '-') ? 1 : 0;
+		}
 
 		if (nDashes == 1)
 		{
-			size_t len;
+			size_t len = 0;
 			char* p[2] = { 0 };
 			/* <name>-client.<extension> */
 			p[0] = cFileName;
 			p[1] = strchr(p[0], '-');
 			if (!p[1])
+			{
 				goto skip;
+			}
 			p[1] += 1;
 
 			len = (size_t)(p[1] - p[0]);
@@ -300,21 +311,27 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 		}
 		else if (nDashes == 2)
 		{
-			size_t len;
+			size_t len = 0;
 			char* p[4] = { 0 };
 			/* <name>-client-<subsystem>.<extension> */
 			p[0] = cFileName;
 			p[1] = strchr(p[0], '-');
 			if (!p[1])
+			{
 				goto skip;
+			}
 			p[1] += 1;
 			p[2] = strchr(p[1], '-');
 			if (!p[2])
+			{
 				goto skip;
+			}
 			p[2] += 1;
 			p[3] = strchr(p[2], '.');
 			if (!p[3])
+			{
 				goto skip;
+			}
 			p[3] += 1;
 
 			len = (size_t)(p[1] - p[0]);
@@ -343,25 +360,33 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 		}
 		else if (nDashes == 3)
 		{
-			size_t len;
+			size_t len = 0;
 			char* p[5] = { 0 };
 			/* <name>-client-<subsystem>-<type>.<extension> */
 			p[0] = cFileName;
 			p[1] = strchr(p[0], '-');
 			if (!p[1])
+			{
 				goto skip;
+			}
 			p[1] += 1;
 			p[2] = strchr(p[1], '-');
 			if (!p[2])
+			{
 				goto skip;
+			}
 			p[2] += 1;
 			p[3] = strchr(p[2], '-');
 			if (!p[3])
+			{
 				goto skip;
+			}
 			p[3] += 1;
 			p[4] = strchr(p[3], '.');
 			if (!p[4])
+			{
 				goto skip;
+			}
 			p[4] += 1;
 
 			len = (size_t)(p[1] - p[0]);
@@ -401,7 +426,9 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 	skip:
 		free(cFileName);
 		if (!used)
+		{
 			free(pAddin);
+		}
 
 	} while (FindNextFileW(hFind, &FindData));
 
@@ -418,8 +445,10 @@ FREERDP_ADDIN** freerdp_channels_list_addins(LPCSTR pszName, LPCSTR pszSubsystem
                                              DWORD dwFlags)
 {
 	if (dwFlags & FREERDP_ADDIN_STATIC)
-		return freerdp_channels_list_client_static_addins(pszName, pszSubsystem, pszType, dwFlags);
-	else if (dwFlags & FREERDP_ADDIN_DYNAMIC)
+	{
+		return freerdp_channels_list_client_static_addins(pszType, dwFlags);
+	}
+	if (dwFlags & FREERDP_ADDIN_DYNAMIC)
 		return freerdp_channels_list_dynamic_addins(pszName, pszSubsystem, pszType, dwFlags);
 
 	return NULL;
@@ -427,13 +456,17 @@ FREERDP_ADDIN** freerdp_channels_list_addins(LPCSTR pszName, LPCSTR pszSubsystem
 
 void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins)
 {
-	size_t index;
+	size_t index = 0;
 
 	if (!ppAddins)
+	{
 		return;
+	}
 
 	for (index = 0; ppAddins[index] != NULL; index++)
+	{
 		free(ppAddins[index]);
+	}
 
 	free(ppAddins);
 }
@@ -442,14 +475,16 @@ extern const STATIC_ENTRY CLIENT_VirtualChannelEntryEx_TABLE[];
 
 static BOOL freerdp_channels_is_virtual_channel_entry_ex(LPCSTR pszName)
 {
-	size_t i;
+	size_t i = 0;
 
 	for (i = 0; CLIENT_VirtualChannelEntryEx_TABLE[i].name != NULL; i++)
 	{
 		const STATIC_ENTRY* entry = &CLIENT_VirtualChannelEntryEx_TABLE[i];
 
 		if (!strncmp(entry->name, pszName, MAX_PATH))
+		{
 			return TRUE;
+		}
 	}
 
 	return FALSE;
@@ -462,26 +497,38 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 	const char* type = NULL;
 
 	if (!pszName)
+	{
 		return NULL;
+	}
 
 	if (dwFlags & FREERDP_ADDIN_CHANNEL_DYNAMIC)
+	{
 		type = "DVCPluginEntry";
+	}
 	else if (dwFlags & FREERDP_ADDIN_CHANNEL_DEVICE)
+	{
 		type = "DeviceServiceEntry";
+	}
 	else if (dwFlags & FREERDP_ADDIN_CHANNEL_STATIC)
 	{
 		if (dwFlags & FREERDP_ADDIN_CHANNEL_ENTRYEX)
+		{
 			type = "VirtualChannelEntryEx";
+		}
 		else
+		{
 			type = "VirtualChannelEntry";
+		}
 	}
 
 	for (; table->name != NULL; table++)
 	{
 		if (strncmp(table->name, pszName, MAX_PATH) == 0)
 		{
-			if (type && strncmp(table->type, type, MAX_PATH))
+			if (type && strncmp(table->type, type, MAX_PATH) != 0)
+			{
 				continue;
+			}
 
 			if (pszSubsystem != NULL)
 			{
@@ -497,7 +544,9 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 						if (pszType)
 						{
 							if (strncmp(subsystems->type, pszType, MAX_PATH) == 0)
+							{
 								return (PVIRTUALCHANNELENTRY)subsystems->entry;
+							}
 						}
 						else
 						{
@@ -511,7 +560,9 @@ PVIRTUALCHANNELENTRY freerdp_channels_load_static_addin_entry(LPCSTR pszName, LP
 				if (dwFlags & FREERDP_ADDIN_CHANNEL_ENTRYEX)
 				{
 					if (!freerdp_channels_is_virtual_channel_entry_ex(pszName))
+					{
 						return NULL;
+					}
 				}
 
 				return (PVIRTUALCHANNELENTRY)table->entry;
@@ -531,7 +582,7 @@ typedef struct
 	rdpContext* ctx;
 	LPVOID userdata;
 	MsgHandler msg_handler;
-} msg_proc_internals;
+} DECLSPEC_ALIGN(64) msg_proc_internals;
 
 static DWORD WINAPI channel_client_thread_proc(LPVOID userdata)
 {
@@ -558,7 +609,9 @@ static DWORD WINAPI channel_client_thread_proc(LPVOID userdata)
 		}
 
 		if (message.id == WMQ_QUIT)
+		{
 			break;
+		}
 
 		if (message.id == 0)
 		{
@@ -595,6 +648,18 @@ static void free_msg(void* obj)
 	}
 }
 
+static void msg_proc_internals_free(msg_proc_internals* internals)
+{
+	if (!internals)
+	{
+		return;
+	}
+	Stream_Free(internals->data_in, TRUE);
+	free(internals->channel_name);
+	MessageQueue_Free(internals->queue);
+	free(internals);
+}
+
 /*  Create message queue and thread or not, depending on settings */
 void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata, MsgHandler msg_handler,
                                     const char* channel_name)
@@ -603,7 +668,7 @@ void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata, MsgHandler
 	if (!internals)
 	{
 		WLog_ERR(TAG, "calloc failed!");
-		return 0;
+		return NULL;
 	}
 	internals->msg_handler = msg_handler;
 	internals->userdata = userdata;
@@ -619,16 +684,17 @@ void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata, MsgHandler
 		internals->queue = MessageQueue_New(&obj);
 		if (!internals->queue)
 		{
+			msg_proc_internals_free(internals);
 			WLog_ERR(TAG, "MessageQueue_New failed!");
-			return 0;
+			return NULL;
 		}
 
 		if (!(internals->thread =
 		          CreateThread(NULL, 0, channel_client_thread_proc, (void*)internals, 0, NULL)))
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
-			MessageQueue_Free(internals->queue);
-			internals->queue = NULL;
+			msg_proc_internals_free(internals);
+			return NULL;
 		}
 	}
 	return internals;
@@ -638,7 +704,7 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
                                  UINT32 totalLength, UINT32 dataFlags)
 {
 	msg_proc_internals* internals = MsgsHandle;
-	wStream* data_in;
+	wStream* data_in = NULL;
 
 	if (!internals)
 	{
@@ -654,7 +720,9 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
 		if (internals->data_in)
+		{
 			Stream_Free(internals->data_in, TRUE);
+		}
 
 		internals->data_in = Stream_New(NULL, totalLength);
 	}
@@ -713,7 +781,7 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 UINT channel_client_quit_handler(void* MsgsHandle)
 {
 	msg_proc_internals* internals = MsgsHandle;
-	UINT rc;
+	UINT rc = 0;
 	if (!internals)
 	{
 		/* TODO: return some error here */
@@ -736,12 +804,10 @@ UINT channel_client_quit_handler(void* MsgsHandle)
 				return rc;
 			}
 		}
-		MessageQueue_Free(internals->queue);
 		CloseHandle(internals->thread);
 	}
 
-	Stream_Free(internals->data_in, TRUE);
-	free(internals->channel_name);
-	free(internals);
+	msg_proc_internals_free(internals);
+
 	return CHANNEL_RC_OK;
 }

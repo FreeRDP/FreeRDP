@@ -43,7 +43,7 @@ typedef struct
 {
 	SMARTCARD_OPERATION operation;
 	IRP* irp;
-} scard_irp_queue_element;
+} DECLSPEC_ALIGN(128) scard_irp_queue_element;
 
 static SMARTCARD_DEVICE* sSmartcard = NULL;
 
@@ -108,7 +108,7 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 
 		if (waitStatus == WAIT_OBJECT_0)
 		{
-			scard_irp_queue_element* element;
+			scard_irp_queue_element* element = NULL;
 
 			if (!MessageQueue_Peek(pContext->IrpQueue, &message, TRUE))
 			{
@@ -118,7 +118,9 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 			}
 
 			if (message.id == WMQ_QUIT)
+			{
 				break;
+			}
 
 			element = (scard_irp_queue_element*)message.wParam;
 
@@ -140,7 +142,9 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 
 				error = smartcard_complete_irp(smartcard, element->irp, &handled);
 				if (!handled)
+				{
 					element->irp->Discard(element->irp);
+				}
 				smartcard_operation_free(&element->operation, TRUE);
 
 				if (error)
@@ -153,7 +157,9 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 	}
 
 	if (status && smartcard->rdpcontext)
+	{
 		setChannelError(smartcard->rdpcontext, error, "smartcard_context_thread reported an error");
+	}
 
 	ExitThread(status);
 	return error;
@@ -163,13 +169,19 @@ static void smartcard_operation_queue_free(void* obj)
 {
 	wMessage* msg = obj;
 	if (!msg)
+	{
 		return;
+	}
 	if (msg->id != 0)
+	{
 		return;
+	}
 
 	scard_irp_queue_element* element = (scard_irp_queue_element*)msg->wParam;
 	if (!element)
+	{
 		return;
+	}
 	WINPR_ASSERT(element->irp);
 	WINPR_ASSERT(element->irp->Discard);
 	element->irp->Discard(element->irp);
@@ -178,7 +190,7 @@ static void smartcard_operation_queue_free(void* obj)
 
 static void* smartcard_context_new(void* smartcard, SCARDCONTEXT hContext)
 {
-	SMARTCARD_CONTEXT* pContext;
+	SMARTCARD_CONTEXT* pContext = NULL;
 	pContext = (SMARTCARD_CONTEXT*)calloc(1, sizeof(SMARTCARD_CONTEXT));
 
 	if (!pContext)
@@ -219,7 +231,9 @@ void smartcard_context_free(void* pCtx)
 	SMARTCARD_CONTEXT* pContext = pCtx;
 
 	if (!pContext)
+	{
 		return;
+	}
 
 	/* cancel blocking calls like SCardGetStatusChange */
 	WINPR_ASSERT(pContext->smartcard);
@@ -230,7 +244,9 @@ void smartcard_context_free(void* pCtx)
 		if (MessageQueue_PostQuit(pContext->IrpQueue, 0))
 		{
 			if (WaitForSingleObject(pContext->thread, INFINITE) == WAIT_FAILED)
+			{
 				WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "!", GetLastError());
+			}
 
 			CloseHandle(pContext->thread);
 		}
@@ -248,7 +264,9 @@ static void smartcard_release_all_contexts(SMARTCARD_DEVICE* smartcard)
 static UINT smartcard_free_(SMARTCARD_DEVICE* smartcard)
 {
 	if (!smartcard)
+	{
 		return CHANNEL_RC_OK;
+	}
 
 	if (smartcard->IrpQueue)
 	{
@@ -274,7 +292,9 @@ static UINT smartcard_free(DEVICE* device)
 	SMARTCARD_DEVICE* smartcard = CAST_FROM_DEVICE(device);
 
 	if (!smartcard)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	/**
 	 * Calling smartcard_release_all_contexts to unblock all operations waiting for transactions
@@ -296,7 +316,9 @@ static UINT smartcard_free(DEVICE* device)
 	}
 
 	if (sSmartcard == smartcard)
+	{
 		sSmartcard = NULL;
+	}
 
 	return smartcard_free_(smartcard);
 }
@@ -316,7 +338,9 @@ static UINT smartcard_init(DEVICE* device)
 	SMARTCARD_DEVICE* smartcard = CAST_FROM_DEVICE(device);
 
 	if (!smartcard)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	smartcard_release_all_contexts(smartcard);
 	return CHANNEL_RC_OK;
@@ -353,7 +377,7 @@ UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* handled
  */
 static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* handled)
 {
-	LONG status;
+	LONG status = 0;
 	BOOL asyncIrp = FALSE;
 	SMARTCARD_CONTEXT* pContext = NULL;
 
@@ -374,7 +398,9 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 	{
 		scard_irp_queue_element* element = calloc(1, sizeof(scard_irp_queue_element));
 		if (!element)
+		{
 			return ERROR_OUTOFMEMORY;
+		}
 
 		element->irp = irp;
 		element->operation.completionID = irp->CompletionId;
@@ -384,7 +410,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 
 		if (status != SCARD_S_SUCCESS)
 		{
-			UINT error;
+			UINT error = 0;
 
 			smartcard_operation_free(&element->operation, TRUE);
 			irp->IoStatus = (UINT32)STATUS_UNSUCCESSFUL;
@@ -460,11 +486,13 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 		pContext = smartcard_call_get_context(smartcard->callctx, element->operation.hContext);
 
 		if (!pContext)
+		{
 			asyncIrp = FALSE;
+		}
 
 		if (!asyncIrp)
 		{
-			UINT error;
+			UINT error = 0;
 
 			status =
 			    smartcard_irp_device_control_call(smartcard->callctx, element->irp->output,
@@ -500,7 +528,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 	}
 	else
 	{
-		UINT ustatus;
+		UINT ustatus = 0;
 		WLog_ERR(TAG, "Unexpected SmartCard IRP: MajorFunction %s, MinorFunction: 0x%08" PRIX32 "",
 		         rdpdr_irp_string(irp->MajorFunction), irp->MinorFunction);
 		irp->IoStatus = (UINT32)STATUS_NOT_SUPPORTED;
@@ -526,7 +554,9 @@ static DWORD WINAPI smartcard_thread_func(LPVOID arg)
 	SMARTCARD_DEVICE* smartcard = CAST_FROM_DEVICE(arg);
 
 	if (!smartcard)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	hEvents[nCount++] = MessageQueue_Event(smartcard->IrpQueue);
 
@@ -551,7 +581,9 @@ static DWORD WINAPI smartcard_thread_func(LPVOID arg)
 			}
 
 			if (message.id == WMQ_QUIT)
+			{
 				break;
+			}
 
 			irp = (IRP*)message.wParam;
 
@@ -575,7 +607,9 @@ static DWORD WINAPI smartcard_thread_func(LPVOID arg)
 out:
 
 	if (error && smartcard->rdpcontext)
+	{
 		setChannelError(smartcard->rdpcontext, error, "smartcard_thread_func reported an error");
+	}
 
 	ExitThread(error);
 	return error;
@@ -591,7 +625,9 @@ static UINT smartcard_irp_request(DEVICE* device, IRP* irp)
 	SMARTCARD_DEVICE* smartcard = CAST_FROM_DEVICE(device);
 
 	if (!smartcard)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (!MessageQueue_Post(smartcard->IrpQueue, NULL, 0, (void*)irp, NULL))
 	{
@@ -606,13 +642,19 @@ static void smartcard_free_irp(void* obj)
 {
 	wMessage* msg = obj;
 	if (!msg)
+	{
 		return;
+	}
 	if (msg->id != 0)
+	{
 		return;
+	}
 
 	IRP* irp = (IRP*)msg->wParam;
 	if (!irp)
+	{
 		return;
+	}
 	WINPR_ASSERT(irp->Discard);
 	irp->Discard(irp);
 }
@@ -629,7 +671,7 @@ extern UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints);
 UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	SMARTCARD_DEVICE* smartcard = NULL;
-	size_t length;
+	size_t length = 0;
 	UINT error = CHANNEL_RC_NO_MEMORY;
 
 	if (!sSmartcard)
@@ -680,11 +722,15 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 
 		smartcard->callctx = smartcard_call_context_new(smartcard->rdpcontext->settings);
 		if (!smartcard->callctx)
+		{
 			goto fail;
+		}
 
 		if (!smarcard_call_set_callbacks(smartcard->callctx, smartcard, smartcard_context_new,
 		                                 smartcard_context_free))
+		{
 			goto fail;
+		}
 
 		if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, &smartcard->device)))
 		{
@@ -705,7 +751,9 @@ UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 		ResumeThread(smartcard->thread);
 	}
 	else
+	{
 		smartcard = sSmartcard;
+	}
 
 	if (pEntryPoints->device->Name)
 	{

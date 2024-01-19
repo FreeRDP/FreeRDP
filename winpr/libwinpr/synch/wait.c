@@ -28,15 +28,15 @@
 #include <errno.h>
 
 #include <winpr/crt.h>
-#include <winpr/synch.h>
 #include <winpr/platform.h>
+#include <winpr/synch.h>
 #include <winpr/sysinfo.h>
 
 #include "synch.h"
-#include "pollset.h"
 #include "../thread/thread.h"
-#include <winpr/thread.h>
+#include "pollset.h"
 #include <winpr/debug.h>
+#include <winpr/thread.h>
 
 #include "../log.h"
 #define TAG WINPR_TAG("sync.wait")
@@ -207,7 +207,7 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 				process->dwExitCode = (DWORD)process->status;
 				return WAIT_OBJECT_0;
 			}
-			else if (ret < 0)
+			if (ret < 0)
 			{
 				WLog_ERR(TAG, "waitpid failure [%d] %s", errno, strerror(errno));
 				SetLastError(ERROR_INTERNAL_ERROR);
@@ -219,7 +219,9 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 
 			status = SleepEx(waitDelay, bAlertable);
 			if (status != 0)
+			{
 				return status;
+			}
 
 			dwMilliseconds -= waitDelay;
 
@@ -241,7 +243,9 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 			status = pthread_mutex_timedlock(&mutex->mutex, &timeout);
 
 			if (ETIMEDOUT == status)
+			{
 				return WAIT_TIMEOUT;
+			}
 		}
 		else
 		{
@@ -267,9 +271,13 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 				/* treat reentrancy, we can't switch to alertable state when we're already
 				   treating completions */
 				if (thread->apc.treatingCompletions)
+				{
 					bAlertable = FALSE;
+				}
 				else
+				{
 					extraFds = thread->apc.length;
+				}
 			}
 			else
 			{
@@ -317,13 +325,17 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 
 		ret = WAIT_TIMEOUT;
 		if (bAlertable && apc_executeCompletions(thread, &pollset, 1))
+		{
 			ret = WAIT_IO_COMPLETION;
+		}
 
 		isSet = pollset_isSignaled(&pollset, 0);
 		pollset_uninit(&pollset);
 
 		if (!isSet)
+		{
 			return ret;
+		}
 
 		return winpr_Handle_cleanup(Object);
 	}
@@ -355,7 +367,8 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 	WINPR_POLL_SET pollset = { 0 };
 	DWORD ret = WAIT_FAILED;
 	size_t extraFds = 0;
-	UINT64 now = 0, dueTime = 0;
+	UINT64 now = 0;
+	UINT64 dueTime = 0;
 
 	if (!nCount || (nCount > MAXIMUM_WAIT_OBJECTS))
 	{
@@ -371,9 +384,13 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 			/* treat reentrancy, we can't switch to alertable state when we're already
 			   treating completions */
 			if (thread->apc.treatingCompletions)
+			{
 				bAlertable = FALSE;
+			}
 			else
+			{
 				extraFds = thread->apc.length;
+			}
 		}
 		else
 		{
@@ -393,9 +410,13 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 
 	now = GetTickCount64();
 	if (dwMilliseconds != INFINITE)
+	{
 		dueTime = now + dwMilliseconds;
+	}
 	else
+	{
 		dueTime = 0xFFFFFFFFFFFFFFFF;
+	}
 
 	do
 	{
@@ -408,7 +429,9 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 			if (bWaitAll)
 			{
 				if (signalled_handles[index])
+				{
 					continue;
+				}
 
 				poll_map[polled] = index;
 			}
@@ -454,12 +477,16 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 		status = 0;
 		if (!autoSignaled)
 		{
-			DWORD waitTime;
+			DWORD waitTime = 0;
 
 			if (dwMilliseconds == INFINITE)
+			{
 				waitTime = INFINITE;
+			}
 			else
+			{
 				waitTime = (DWORD)(dueTime - now);
+			}
 
 			status = pollset_poll(&pollset, waitTime);
 			if (status < 0)
@@ -493,9 +520,13 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 				BOOL signal_set = FALSE;
 
 				if (bWaitAll)
+				{
 					handlesIndex = poll_map[index];
+				}
 				else
+				{
 					handlesIndex = index;
+				}
 
 				signal_set = pollset_isSignaled(&pollset, index);
 				if (signal_set)
@@ -517,7 +548,9 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 						for (; signalled < nCount; signalled++)
 						{
 							if (!signalled_handles[signalled])
+							{
 								break;
+							}
 						}
 					}
 					else
@@ -547,7 +580,9 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 			}
 		}
 		else
+		{
 			pollset_reset(&pollset);
+		}
 
 		now = GetTickCount64();
 	} while (now < dueTime);
@@ -569,7 +604,9 @@ DWORD SignalObjectAndWait(HANDLE hObjectToSignal, HANDLE hObjectToWaitOn, DWORD 
                           BOOL bAlertable)
 {
 	if (!SetEvent(hObjectToSignal))
+	{
 		return WAIT_FAILED;
+	}
 
 	return WaitForSingleObjectEx(hObjectToWaitOn, dwMilliseconds, bAlertable);
 }

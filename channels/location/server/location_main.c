@@ -50,7 +50,7 @@ typedef struct
 	eLocationChannelState state;
 
 	wStream* buffer;
-} location_server;
+} DECLSPEC_ALIGN(128) location_server;
 
 static UINT location_server_initialize(LocationServerContext* context, BOOL externalThread)
 {
@@ -75,10 +75,10 @@ static UINT location_server_open_channel(location_server* location)
 {
 	LocationServerContext* context = &location->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent;
+	HANDLE hEvent = NULL;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
-	UINT32 channelId;
+	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
 	WINPR_ASSERT(location);
@@ -135,16 +135,22 @@ static UINT location_server_recv_client_ready(LocationServerContext* context, wS
 	pdu.header = *header;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return ERROR_NO_DATA;
+	}
 
 	Stream_Read_UINT32(s, pdu.protocolVersion);
 
 	if (Stream_GetRemainingLength(s) >= 4)
+	{
 		Stream_Read_UINT32(s, pdu.flags);
+	}
 
 	IFCALLRET(context->ClientReady, error, context, &pdu);
 	if (error)
+	{
 		WLog_ERR(TAG, "context->ClientReady failed with error %" PRIu32 "", error);
+	}
 
 	return error;
 }
@@ -168,7 +174,9 @@ static UINT location_server_recv_base_location3d(LocationServerContext* context,
 	if (!freerdp_read_four_byte_float(s, &pdu.latitude) ||
 	    !freerdp_read_four_byte_float(s, &pdu.longitude) ||
 	    !freerdp_read_four_byte_signed_integer(s, &pdu.altitude))
+	{
 		return FALSE;
+	}
 
 	if (Stream_GetRemainingLength(s) >= 1)
 	{
@@ -176,7 +184,9 @@ static UINT location_server_recv_base_location3d(LocationServerContext* context,
 		    !freerdp_read_four_byte_float(s, &heading) ||
 		    !freerdp_read_four_byte_float(s, &horizontalAccuracy) ||
 		    !Stream_CheckAndLogRequiredLength(TAG, s, 1))
+		{
 			return FALSE;
+		}
 
 		Stream_Read_UINT8(s, source);
 
@@ -188,7 +198,9 @@ static UINT location_server_recv_base_location3d(LocationServerContext* context,
 
 	IFCALLRET(context->BaseLocation3D, error, context, &pdu);
 	if (error)
+	{
 		WLog_ERR(TAG, "context->BaseLocation3D failed with error %" PRIu32 "", error);
+	}
 
 	return error;
 }
@@ -209,13 +221,17 @@ static UINT location_server_recv_location2d_delta(LocationServerContext* context
 
 	if (!freerdp_read_four_byte_float(s, &pdu.latitudeDelta) ||
 	    !freerdp_read_four_byte_float(s, &pdu.longitudeDelta))
+	{
 		return FALSE;
+	}
 
 	if (Stream_GetRemainingLength(s) >= 1)
 	{
 		if (!freerdp_read_four_byte_float(s, &speedDelta) ||
 		    !freerdp_read_four_byte_float(s, &headingDelta))
+		{
 			return FALSE;
+		}
 
 		pdu.speedDelta = &speedDelta;
 		pdu.headingDelta = &headingDelta;
@@ -223,7 +239,9 @@ static UINT location_server_recv_location2d_delta(LocationServerContext* context
 
 	IFCALLRET(context->Location2DDelta, error, context, &pdu);
 	if (error)
+	{
 		WLog_ERR(TAG, "context->Location2DDelta failed with error %" PRIu32 "", error);
+	}
 
 	return error;
 }
@@ -245,13 +263,17 @@ static UINT location_server_recv_location3d_delta(LocationServerContext* context
 	if (!freerdp_read_four_byte_float(s, &pdu.latitudeDelta) ||
 	    !freerdp_read_four_byte_float(s, &pdu.longitudeDelta) ||
 	    !freerdp_read_four_byte_signed_integer(s, &pdu.altitudeDelta))
+	{
 		return FALSE;
+	}
 
 	if (Stream_GetRemainingLength(s) >= 1)
 	{
 		if (!freerdp_read_four_byte_float(s, &speedDelta) ||
 		    !freerdp_read_four_byte_float(s, &headingDelta))
+		{
 			return FALSE;
+		}
 
 		pdu.speedDelta = &speedDelta;
 		pdu.headingDelta = &headingDelta;
@@ -259,18 +281,20 @@ static UINT location_server_recv_location3d_delta(LocationServerContext* context
 
 	IFCALLRET(context->Location3DDelta, error, context, &pdu);
 	if (error)
+	{
 		WLog_ERR(TAG, "context->Location3DDelta failed with error %" PRIu32 "", error);
+	}
 
 	return error;
 }
 
 static UINT location_process_message(location_server* location)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
-	ULONG BytesReturned;
+	ULONG BytesReturned = 0;
 	RDPLOCATION_HEADER header = { 0 };
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(location);
 	WINPR_ASSERT(location->location_channel);
@@ -281,7 +305,9 @@ static UINT location_process_message(location_server* location)
 	Stream_SetPosition(s, 0);
 	rc = WTSVirtualChannelRead(location->location_channel, 0, NULL, 0, &BytesReturned);
 	if (!rc)
+	{
 		goto out;
+	}
 
 	if (BytesReturned < 1)
 	{
@@ -305,7 +331,9 @@ static UINT location_process_message(location_server* location)
 
 	Stream_SetLength(s, BytesReturned);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, LOCATION_HEADER_SIZE))
+	{
 		return ERROR_NO_DATA;
+	}
 
 	Stream_Read_UINT16(s, header.pduType);
 	Stream_Read_UINT32(s, header.pduLength);
@@ -332,7 +360,9 @@ static UINT location_process_message(location_server* location)
 
 out:
 	if (error)
+	{
 		WLog_ERR(TAG, "Response failed with error %" PRIu32 "!", error);
+	}
 
 	return error;
 }
@@ -349,9 +379,13 @@ static UINT location_server_context_poll_int(LocationServerContext* context)
 		case LOCATION_INITIAL:
 			error = location_server_open_channel(location);
 			if (error)
+			{
 				WLog_ERR(TAG, "location_server_open_channel failed with error %" PRIu32 "!", error);
+			}
 			else
+			{
 				location->state = LOCATION_OPENED;
+			}
 			break;
 		case LOCATION_OPENED:
 			error = location_process_message(location);
@@ -373,7 +407,9 @@ static HANDLE location_server_get_channel_handle(location_server* location)
 	                           &BytesReturned) == TRUE)
 	{
 		if (BytesReturned == sizeof(HANDLE))
+		{
 			CopyMemory(&ChannelEvent, buffer, sizeof(HANDLE));
+		}
 
 		WTSFreeMemory(buffer);
 	}
@@ -383,11 +419,11 @@ static HANDLE location_server_get_channel_handle(location_server* location)
 
 static DWORD WINAPI location_server_thread_func(LPVOID arg)
 {
-	DWORD nCount;
+	DWORD nCount = 0;
 	HANDLE events[2] = { 0 };
 	location_server* location = (location_server*)arg;
 	UINT error = CHANNEL_RC_OK;
-	DWORD status;
+	DWORD status = 0;
 
 	WINPR_ASSERT(location);
 
@@ -430,8 +466,10 @@ static DWORD WINAPI location_server_thread_func(LPVOID arg)
 	location->location_channel = NULL;
 
 	if (error && location->context.rdpcontext)
+	{
 		setChannelError(location->context.rdpcontext, error,
 		                "location_server_thread_func reported an error");
+	}
 
 	ExitThread(error);
 	return error;
@@ -510,7 +548,9 @@ static UINT location_server_context_poll(LocationServerContext* context)
 	WINPR_ASSERT(location);
 
 	if (!location->externalThread)
+	{
 		return ERROR_INTERNAL_ERROR;
+	}
 
 	return location_server_context_poll_int(context);
 }
@@ -523,9 +563,13 @@ static BOOL location_server_context_handle(LocationServerContext* context, HANDL
 	WINPR_ASSERT(handle);
 
 	if (!location->externalThread)
+	{
 		return FALSE;
+	}
 	if (location->state == LOCATION_INITIAL)
+	{
 		return FALSE;
+	}
 
 	*handle = location_server_get_channel_handle(location);
 
@@ -536,7 +580,7 @@ static UINT location_server_packet_send(LocationServerContext* context, wStream*
 {
 	location_server* location = (location_server*)context;
 	UINT error = CHANNEL_RC_OK;
-	ULONG written;
+	ULONG written = 0;
 
 	WINPR_ASSERT(location);
 	WINPR_ASSERT(s);
@@ -563,9 +607,9 @@ out:
 static UINT location_server_send_server_ready(LocationServerContext* context,
                                               const RDPLOCATION_SERVER_READY_PDU* serverReady)
 {
-	wStream* s;
-	UINT32 pduLength;
-	UINT32 protocolVersion;
+	wStream* s = NULL;
+	UINT32 pduLength = 0;
+	UINT32 protocolVersion = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(serverReady);
@@ -596,7 +640,9 @@ LocationServerContext* location_server_context_new(HANDLE vcm)
 	location_server* location = (location_server*)calloc(1, sizeof(location_server));
 
 	if (!location)
+	{
 		return NULL;
+	}
 
 	location->context.vcm = vcm;
 	location->context.Initialize = location_server_initialize;
@@ -609,7 +655,9 @@ LocationServerContext* location_server_context_new(HANDLE vcm)
 
 	location->buffer = Stream_New(NULL, 4096);
 	if (!location->buffer)
+	{
 		goto fail;
+	}
 
 	return &location->context;
 fail:

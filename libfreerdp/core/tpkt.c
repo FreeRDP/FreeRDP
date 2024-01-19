@@ -69,17 +69,20 @@
 
 int tpkt_verify_header(wStream* s)
 {
-	BYTE version;
+	BYTE version = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return -1;
+	}
 
 	Stream_Peek_UINT8(s, version);
 
 	if (version == 3)
+	{
 		return 1;
-	else
-		return 0;
+	}
+	return 0;
 }
 
 /**
@@ -93,18 +96,22 @@ int tpkt_verify_header(wStream* s)
 
 BOOL tpkt_read_header(wStream* s, UINT16* length)
 {
-	BYTE version;
+	BYTE version = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+	{
 		return FALSE;
+	}
 
 	Stream_Peek_UINT8(s, version);
 
 	if (version == 3)
 	{
-		UINT16 len;
+		UINT16 len = 0;
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		{
 			return FALSE;
+		}
 
 		Stream_Seek(s, 2);
 		Stream_Read_UINT16_BE(s, len);
@@ -163,7 +170,9 @@ BOOL tpkt_ensure_stream_consumed_(wStream* s, size_t length, const char* fkt)
 BOOL tpkt_write_header(wStream* s, UINT16 length)
 {
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 4))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT8(s, 3);          /* version */
 	Stream_Write_UINT8(s, 0);          /* reserved */
 	Stream_Write_UINT16_BE(s, length); /* length */

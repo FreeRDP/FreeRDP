@@ -22,8 +22,8 @@
 
 #ifndef _WIN32
 
-#include <winpr/print.h>
 #include "../log.h"
+#include <winpr/print.h>
 
 #include "ncrypt.h"
 
@@ -75,7 +75,9 @@ void* ncrypt_new_handle(NCryptHandleType kind, size_t len, NCryptGetPropertyFn g
 {
 	NCryptBaseHandle* ret = calloc(1, len);
 	if (!ret)
+	{
 		return NULL;
+	}
 
 	memcpy(ret->magic, NCRYPT_MAGIC, sizeof(ret->magic));
 	ret->type = kind;
@@ -99,12 +101,12 @@ SECURITY_STATUS winpr_NCryptDefault_dtor(NCRYPT_HANDLE handle)
 SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
                                            NCryptProviderName** ppProviderList, DWORD dwFlags)
 {
-	NCryptProviderName* ret;
+	NCryptProviderName* ret = NULL;
 	size_t stringAllocSize = 0;
 #ifdef WITH_PKCS11
-	LPWSTR strPtr;
+	LPWSTR strPtr = NULL;
 	static const WCHAR emptyComment[] = { 0 };
-	size_t copyAmount;
+	size_t copyAmount = 0;
 #endif
 
 	*wProviderCount = 0;
@@ -117,11 +119,15 @@ SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
 #endif
 
 	if (!*wProviderCount)
+	{
 		return ERROR_SUCCESS;
+	}
 
 	ret = malloc(*wProviderCount * sizeof(NCryptProviderName) + stringAllocSize);
 	if (!ret)
+	{
 		return NTE_NO_MEMORY;
+	}
 
 #ifdef WITH_PKCS11
 	strPtr = (LPWSTR)(ret + *wProviderCount);
@@ -154,7 +160,9 @@ SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider
 #if defined(WITH_PKCS11)
 	if (pszProviderName && ((_wcscmp(pszProviderName, MS_SMART_CARD_KEY_STORAGE_PROVIDER) == 0) ||
 	                        (_wcscmp(pszProviderName, MS_SCARD_PROV) == 0)))
+	{
 		return NCryptOpenP11StorageProviderEx(phProvider, pszProviderName, dwFlags, modulePaths);
+	}
 
 	char buffer[128] = { 0 };
 	ConvertWCharToUtf8(pszProviderName, buffer, sizeof(buffer));
@@ -169,12 +177,14 @@ SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider
 SECURITY_STATUS NCryptEnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR pszScope,
                                NCryptKeyName** ppKeyName, PVOID* ppEnumState, DWORD dwFlags)
 {
-	SECURITY_STATUS ret;
+	SECURITY_STATUS ret = 0;
 	NCryptBaseProvider* provider = (NCryptBaseProvider*)hProvider;
 
 	ret = checkNCryptHandle((NCRYPT_HANDLE)hProvider, WINPR_NCRYPT_PROVIDER);
 	if (ret != ERROR_SUCCESS)
+	{
 		return ret;
+	}
 
 	return provider->enumKeysFn(hProvider, pszScope, ppKeyName, ppEnumState, dwFlags);
 }
@@ -182,14 +192,18 @@ SECURITY_STATUS NCryptEnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR pszScope,
 SECURITY_STATUS NCryptOpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY_HANDLE* phKey,
                               LPCWSTR pszKeyName, DWORD dwLegacyKeySpec, DWORD dwFlags)
 {
-	SECURITY_STATUS ret;
+	SECURITY_STATUS ret = 0;
 	NCryptBaseProvider* provider = (NCryptBaseProvider*)hProvider;
 
 	ret = checkNCryptHandle((NCRYPT_HANDLE)hProvider, WINPR_NCRYPT_PROVIDER);
 	if (ret != ERROR_SUCCESS)
+	{
 		return ret;
+	}
 	if (!phKey || !pszKeyName)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	return provider->openKeyFn(hProvider, phKey, pszKeyName, dwLegacyKeySpec, dwFlags);
 }
@@ -200,7 +214,7 @@ static NCryptKeyGetPropertyEnum propertyStringToEnum(LPCWSTR pszProperty)
 	{
 		return NCRYPT_PROPERTY_CERTIFICATE;
 	}
-	else if (_wcscmp(pszProperty, NCRYPT_READER_PROPERTY) == 0)
+	if (_wcscmp(pszProperty, NCRYPT_READER_PROPERTY) == 0)
 	{
 		return NCRYPT_PROPERTY_READER;
 	}
@@ -220,32 +234,42 @@ SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty, PB
                                   DWORD cbOutput, DWORD* pcbResult, DWORD dwFlags)
 {
 	NCryptKeyGetPropertyEnum property;
-	NCryptBaseHandle* base;
+	NCryptBaseHandle* base = NULL;
 
 	if (!hObject)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	base = (NCryptBaseHandle*)hObject;
 	if (memcmp(base->magic, NCRYPT_MAGIC, 6) != 0)
+	{
 		return ERROR_INVALID_HANDLE;
+	}
 
 	property = propertyStringToEnum(pszProperty);
 	if (property == NCRYPT_PROPERTY_UNKNOWN)
+	{
 		return ERROR_NOT_SUPPORTED;
+	}
 
 	return base->getPropertyFn(hObject, property, pbOutput, cbOutput, pcbResult, dwFlags);
 }
 
 SECURITY_STATUS NCryptFreeObject(NCRYPT_HANDLE hObject)
 {
-	NCryptBaseHandle* base;
+	NCryptBaseHandle* base = NULL;
 	SECURITY_STATUS ret = checkNCryptHandle((NCRYPT_HANDLE)hObject, WINPR_NCRYPT_INVALID);
 	if (ret != ERROR_SUCCESS)
+	{
 		return ret;
+	}
 
 	base = (NCryptBaseHandle*)hObject;
 	if (base->releaseFn)
+	{
 		ret = base->releaseFn(hObject);
+	}
 
 	return ret;
 }
@@ -253,7 +277,9 @@ SECURITY_STATUS NCryptFreeObject(NCRYPT_HANDLE hObject)
 SECURITY_STATUS NCryptFreeBuffer(PVOID pvInput)
 {
 	if (!pvInput)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	free(pvInput);
 	return ERROR_SUCCESS;
@@ -290,8 +316,8 @@ out_free_lib:
 
 const char* winpr_NCryptSecurityStatusError(SECURITY_STATUS status)
 {
-#define NTE_CASE(S)          \
-	case (SECURITY_STATUS)S: \
+#define NTE_CASE(S)            \
+	case (SECURITY_STATUS)(S): \
 		return #S
 
 	switch (status)

@@ -26,7 +26,7 @@ typedef struct
 	WLOG_APPENDER_COMMON();
 
 	wLogCallbacks* callbacks;
-} wLogCallbackAppender;
+} DECLSPEC_ALIGN(128) wLogCallbackAppender;
 
 static BOOL WLog_CallbackAppender_Open(wLog* log, wLogAppender* appender)
 {
@@ -42,10 +42,12 @@ static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender
                                                wLogMessage* message)
 {
 	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
-	wLogCallbackAppender* callbackAppender;
+	wLogCallbackAppender* callbackAppender = NULL;
 
 	if (!appender)
+	{
 		return FALSE;
+	}
 
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
@@ -53,74 +55,86 @@ static BOOL WLog_CallbackAppender_WriteMessage(wLog* log, wLogAppender* appender
 	callbackAppender = (wLogCallbackAppender*)appender;
 
 	if (callbackAppender->callbacks && callbackAppender->callbacks->message)
+	{
 		return callbackAppender->callbacks->message(message);
-	else
-		return FALSE;
+	}
+	return FALSE;
 }
 
 static BOOL WLog_CallbackAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
                                                    wLogMessage* message)
 {
 	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
-	wLogCallbackAppender* callbackAppender;
+	wLogCallbackAppender* callbackAppender = NULL;
 
 	if (!appender)
+	{
 		return FALSE;
+	}
 
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
 	callbackAppender = (wLogCallbackAppender*)appender;
 	if (callbackAppender->callbacks && callbackAppender->callbacks->data)
+	{
 		return callbackAppender->callbacks->data(message);
-	else
-		return FALSE;
+	}
+	return FALSE;
 }
 
 static BOOL WLog_CallbackAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
                                                     wLogMessage* message)
 {
 	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
-	wLogCallbackAppender* callbackAppender;
+	wLogCallbackAppender* callbackAppender = NULL;
 
 	if (!appender)
+	{
 		return FALSE;
+	}
 
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
 	callbackAppender = (wLogCallbackAppender*)appender;
 	if (callbackAppender->callbacks && callbackAppender->callbacks->image)
+	{
 		return callbackAppender->callbacks->image(message);
-	else
-		return FALSE;
+	}
+	return FALSE;
 }
 
 static BOOL WLog_CallbackAppender_WritePacketMessage(wLog* log, wLogAppender* appender,
                                                      wLogMessage* message)
 {
 	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
-	wLogCallbackAppender* callbackAppender;
+	wLogCallbackAppender* callbackAppender = NULL;
 
 	if (!appender)
+	{
 		return FALSE;
+	}
 
 	message->PrefixString = prefix;
 	WLog_Layout_GetMessagePrefix(log, appender->Layout, message);
 
 	callbackAppender = (wLogCallbackAppender*)appender;
 	if (callbackAppender->callbacks && callbackAppender->callbacks->package)
+	{
 		return callbackAppender->callbacks->package(message);
-	else
-		return FALSE;
+	}
+	return FALSE;
 }
 
 static BOOL WLog_CallbackAppender_Set(wLogAppender* appender, const char* setting, void* value)
 {
 	wLogCallbackAppender* callbackAppender = (wLogCallbackAppender*)appender;
 
-	if (!value || strcmp(setting, "callbacks"))
+	if (!value || strcmp(setting, "callbacks") != 0)
+	{
 		return FALSE;
+	}
 
 	if (!(callbackAppender->callbacks = calloc(1, sizeof(wLogCallbacks))))
 	{
@@ -133,7 +147,7 @@ static BOOL WLog_CallbackAppender_Set(wLogAppender* appender, const char* settin
 
 static void WLog_CallbackAppender_Free(wLogAppender* appender)
 {
-	wLogCallbackAppender* callbackAppender;
+	wLogCallbackAppender* callbackAppender = NULL;
 	if (!appender)
 	{
 		return;
@@ -147,11 +161,13 @@ static void WLog_CallbackAppender_Free(wLogAppender* appender)
 
 wLogAppender* WLog_CallbackAppender_New(wLog* log)
 {
-	wLogCallbackAppender* CallbackAppender;
+	wLogCallbackAppender* CallbackAppender = NULL;
 
 	CallbackAppender = (wLogCallbackAppender*)calloc(1, sizeof(wLogCallbackAppender));
 	if (!CallbackAppender)
+	{
 		return NULL;
+	}
 
 	CallbackAppender->Type = WLOG_APPENDER_CALLBACK;
 

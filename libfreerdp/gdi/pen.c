@@ -48,7 +48,9 @@ HGDI_PEN gdi_CreatePen(UINT32 fnPenStyle, UINT32 nWidth, UINT32 crColor, UINT32 
 {
 	HGDI_PEN hPen = (HGDI_PEN)calloc(1, sizeof(GDI_PEN));
 	if (!hPen)
+	{
 		return NULL;
+	}
 	hPen->objectType = GDIOBJECT_PEN;
 	hPen->style = fnPenStyle;
 	hPen->color = crColor;

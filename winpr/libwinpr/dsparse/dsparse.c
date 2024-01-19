@@ -19,8 +19,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/dsparse.h>
 #include <winpr/assert.h>
+#include <winpr/dsparse.h>
 
 /**
  * dsparse.dll:
@@ -53,7 +53,7 @@ DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName
 	char* InstanceNameA = NULL;
 	char* ReferrerA = NULL;
 	char* pszSpnA = NULL;
-	size_t length;
+	size_t length = 0;
 
 	WINPR_ASSERT(ServiceClass);
 	WINPR_ASSERT(ServiceName);
@@ -61,31 +61,41 @@ DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName
 
 	length = *pcSpnLength;
 	if ((length > 0) && pszSpn)
+	{
 		pszSpnA = calloc(length + 1, sizeof(char));
+	}
 
 	if (ServiceClass)
 	{
 		ServiceClassA = ConvertWCharToUtf8Alloc(ServiceClass, NULL);
 		if (!ServiceClassA)
+		{
 			goto fail;
+		}
 	}
 	if (ServiceName)
 	{
 		ServiceNameA = ConvertWCharToUtf8Alloc(ServiceName, NULL);
 		if (!ServiceNameA)
+		{
 			goto fail;
+		}
 	}
 	if (InstanceName)
 	{
 		InstanceNameA = ConvertWCharToUtf8Alloc(InstanceName, NULL);
 		if (!InstanceNameA)
+		{
 			goto fail;
+		}
 	}
 	if (Referrer)
 	{
 		ReferrerA = ConvertWCharToUtf8Alloc(Referrer, NULL);
 		if (!ReferrerA)
+		{
 			goto fail;
+		}
 	}
 	res = DsMakeSpnA(ServiceClassA, ServiceNameA, InstanceNameA, InstancePort, ReferrerA,
 	                 pcSpnLength, pszSpnA);
@@ -93,7 +103,9 @@ DWORD DsMakeSpnW(LPCWSTR ServiceClass, LPCWSTR ServiceName, LPCWSTR InstanceName
 	if (res == ERROR_SUCCESS)
 	{
 		if (ConvertUtf8NToWChar(pszSpnA, *pcSpnLength, pszSpn, length) < 0)
+		{
 			res = ERROR_OUTOFMEMORY;
+		}
 	}
 
 fail:
@@ -108,9 +120,9 @@ fail:
 DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName, USHORT InstancePort,
                  LPCSTR Referrer, DWORD* pcSpnLength, LPSTR pszSpn)
 {
-	DWORD SpnLength;
-	DWORD ServiceClassLength;
-	DWORD ServiceNameLength;
+	DWORD SpnLength = 0;
+	DWORD ServiceClassLength = 0;
+	DWORD ServiceNameLength = 0;
 
 	WINPR_ASSERT(ServiceClass);
 	WINPR_ASSERT(ServiceName);
@@ -121,7 +133,9 @@ DWORD DsMakeSpnA(LPCSTR ServiceClass, LPCSTR ServiceName, LPCSTR InstanceName, U
 	WINPR_UNUSED(Referrer);
 
 	if ((*pcSpnLength != 0) && (pszSpn == NULL))
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	ServiceClassLength = (DWORD)strlen(ServiceClass);
 	ServiceNameLength = (DWORD)strlen(ServiceName);

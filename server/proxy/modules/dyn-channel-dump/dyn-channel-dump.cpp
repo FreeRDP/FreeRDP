@@ -63,7 +63,7 @@ static constexpr char key_channels[] = "channels";
 class PluginData
 {
   public:
-	PluginData(proxyPluginsManager* mgr) : _mgr(mgr), _sessionid(0)
+	PluginData(proxyPluginsManager* mgr) : _mgr(mgr)
 	{
 	}
 
@@ -79,14 +79,14 @@ class PluginData
 
   private:
 	proxyPluginsManager* _mgr;
-	uint64_t _sessionid;
+	uint64_t _sessionid{ 0 };
 };
 
 class ChannelData
 {
   public:
-	ChannelData(const std::string& base, const std::vector<std::string>& list, uint64_t sessionid)
-	    : _base(base), _channels_to_dump(list), _session_id(sessionid)
+	ChannelData(const std::string& base, std::vector<std::string> list, uint64_t sessionid)
+	    : _base(base), _channels_to_dump(std::move(list)), _session_id(sessionid)
 	{
 		char str[64] = {};
 		_snprintf(str, sizeof(str), "session-%016" PRIx64, _session_id);
@@ -149,7 +149,9 @@ class ChannelData
 	bool create()
 	{
 		if (!ensure_path_exists())
+		{
 			return false;
+		}
 
 		if (_channels_to_dump.empty())
 		{
@@ -182,9 +184,13 @@ class ChannelData
 		std::stringstream ss;
 		ss << name << ".";
 		if (back)
+		{
 			ss << "back";
+		}
 		else
+		{
 			ss << "front";
+		}
 		return ss.str();
 	}
 
@@ -263,7 +269,9 @@ static BOOL dump_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdat
 	{
 		auto cdata = dump_get_plugin_data(plugin, pdata);
 		if (!cdata)
+		{
 			return FALSE;
+		}
 
 		if (!cdata->add(data->name, false))
 		{
@@ -317,7 +325,9 @@ static BOOL dump_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, vo
 		}
 
 		if (!cdata->ensure_path_exists())
+		{
 			return FALSE;
+		}
 
 		auto stream = cdata->stream(data->name, data->isBackData);
 		auto buffer = reinterpret_cast<const char*>(Stream_ConstBuffer(data->data));
@@ -342,7 +352,8 @@ static std::vector<std::string> split(const std::string& input, const std::strin
 {
 	// passing -1 as the submatch index parameter performs splitting
 	std::regex re(regex);
-	std::sregex_token_iterator first{ input.begin(), input.end(), re, -1 }, last;
+	std::sregex_token_iterator first{ input.begin(), input.end(), re, -1 };
+	std::sregex_token_iterator last;
 	return { first, last };
 }
 
@@ -395,15 +406,19 @@ static BOOL dump_session_end(proxyPlugin* plugin, proxyData* pdata, void*)
 
 	auto cfg = dump_get_plugin_data(plugin, pdata);
 	if (cfg)
+	{
 		WLog_DBG(TAG, "ending session dump %" PRIu64, cfg->session());
+	}
 	dump_set_plugin_data(plugin, pdata, nullptr);
 	return TRUE;
 }
 
 static BOOL dump_unload(proxyPlugin* plugin)
 {
-	if (!plugin)
+	if (plugin == nullptr)
+	{
 		return TRUE;
+	}
 	delete static_cast<PluginData*>(plugin->custom);
 	return TRUE;
 }
@@ -427,8 +442,10 @@ BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userda
 	plugin.DynChannelIntercept = dump_dyn_channel_intercept;
 
 	plugin.custom = new PluginData(plugins_manager);
-	if (!plugin.custom)
+	if (plugin.custom == nullptr)
+	{
 		return FALSE;
+	}
 	plugin.userdata = userdata;
 
 	return plugins_manager->RegisterPlugin(plugins_manager, &plugin);

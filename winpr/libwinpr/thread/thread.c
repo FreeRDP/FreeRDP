@@ -114,7 +114,9 @@ static int ThreadGetFd(HANDLE handle)
 	WINPR_THREAD* pThread = (WINPR_THREAD*)handle;
 
 	if (!ThreadIsHandled(handle))
+	{
 		return -1;
+	}
 
 	return pThread->event.fds[0];
 }
@@ -124,7 +126,7 @@ static BOOL run_mutex_init_(int (*fkt)(pthread_mutex_t*, const pthread_mutexattr
                             const char* name, pthread_mutex_t* mutex,
                             const pthread_mutexattr_t* mutexattr)
 {
-	int rc;
+	int rc = 0;
 
 	WINPR_ASSERT(fkt);
 	WINPR_ASSERT(mutex);
@@ -141,7 +143,7 @@ static BOOL run_mutex_init_(int (*fkt)(pthread_mutex_t*, const pthread_mutexattr
 static BOOL run_mutex_fkt_(int (*fkt)(pthread_mutex_t* mux), const char* name,
                            pthread_mutex_t* mutex)
 {
-	int rc;
+	int rc = 0;
 
 	WINPR_ASSERT(fkt);
 	WINPR_ASSERT(mutex);
@@ -158,7 +160,7 @@ static BOOL run_mutex_fkt_(int (*fkt)(pthread_mutex_t* mux), const char* name,
 static BOOL run_cond_init_(int (*fkt)(pthread_cond_t*, const pthread_condattr_t*), const char* name,
                            pthread_cond_t* condition, const pthread_condattr_t* conditionattr)
 {
-	int rc;
+	int rc = 0;
 
 	WINPR_ASSERT(fkt);
 	WINPR_ASSERT(condition);
@@ -175,7 +177,7 @@ static BOOL run_cond_init_(int (*fkt)(pthread_cond_t*, const pthread_condattr_t*
 static BOOL run_cond_fkt_(int (*fkt)(pthread_cond_t* mux), const char* name,
                           pthread_cond_t* condition)
 {
-	int rc;
+	int rc = 0;
 
 	WINPR_ASSERT(fkt);
 	WINPR_ASSERT(condition);
@@ -201,10 +203,14 @@ static BOOL mux_condition_bundle_init(mux_condition_bundle* bundle)
 
 	bundle->val = FALSE;
 	if (!run_mutex_init(pthread_mutex_init, &bundle->mux, NULL))
+	{
 		return FALSE;
+	}
 
 	if (!run_cond_init(pthread_cond_init, &bundle->cond, NULL))
+	{
 		return FALSE;
+	}
 	return TRUE;
 }
 
@@ -225,12 +231,18 @@ static BOOL mux_condition_bundle_signal(mux_condition_bundle* bundle)
 	WINPR_ASSERT(bundle);
 
 	if (!run_mutex_fkt(pthread_mutex_lock, &bundle->mux))
+	{
 		return FALSE;
+	}
 	bundle->val = TRUE;
 	if (!run_cond_fkt(pthread_cond_signal, &bundle->cond))
+	{
 		rc = FALSE;
+	}
 	if (!run_mutex_fkt(pthread_mutex_checked_unlock, &bundle->mux))
+	{
 		rc = FALSE;
+	}
 	return rc;
 }
 
@@ -300,10 +312,14 @@ static DWORD ThreadCleanupHandle(HANDLE handle)
 	WINPR_THREAD* thread = (WINPR_THREAD*)handle;
 
 	if (!ThreadIsHandled(handle))
+	{
 		return WAIT_FAILED;
+	}
 
 	if (!run_mutex_fkt(pthread_mutex_lock, &thread->mutex))
+	{
 		return WAIT_FAILED;
+	}
 
 	if (!thread->joined)
 	{
@@ -315,14 +331,18 @@ static DWORD ThreadCleanupHandle(HANDLE handle)
 			goto fail;
 		}
 		else
+		{
 			thread->joined = TRUE;
+		}
 	}
 
 	status = WAIT_OBJECT_0;
 
 fail:
 	if (!run_mutex_fkt(pthread_mutex_checked_unlock, &thread->mutex))
+	{
 		return WAIT_FAILED;
+	}
 
 	return status;
 }
@@ -462,13 +482,19 @@ static BOOL signal_and_wait_for_ready(WINPR_THREAD* thread)
 	WINPR_ASSERT(thread);
 
 	if (!mux_condition_bundle_lock(&thread->isRunning))
+	{
 		return FALSE;
+	}
 
 	if (!signal_thread_ready(thread))
+	{
 		goto fail;
+	}
 
 	if (!mux_condition_bundle_wait(&thread->isRunning, "threadIsRunning"))
+	{
 		goto fail;
+	}
 
 #if defined(WITH_THREAD_LIST)
 	if (!ListDictionary_Contains(thread_list, &thread->thread))
@@ -482,7 +508,9 @@ static BOOL signal_and_wait_for_ready(WINPR_THREAD* thread)
 
 fail:
 	if (!mux_condition_bundle_unlock(&thread->isRunning))
+	{
 		return FALSE;
+	}
 
 	return res;
 }
@@ -494,7 +522,7 @@ static void* thread_launcher(void* arg)
 {
 	DWORD rc = 0;
 	WINPR_THREAD* thread = (WINPR_THREAD*)arg;
-	LPTHREAD_START_ROUTINE fkt;
+	LPTHREAD_START_ROUTINE fkt = NULL;
 
 	if (!thread)
 	{
@@ -515,7 +543,9 @@ static void* thread_launcher(void* arg)
 	}
 
 	if (!signal_and_wait_for_ready(thread))
+	{
 		goto exit;
+	}
 
 	rc = fkt(thread->lpParameter);
 exit:
@@ -525,14 +555,18 @@ exit:
 		apc_cleanupThread(thread);
 
 		if (!thread->exited)
+		{
 			thread->dwExitCode = rc;
+		}
 
 		set_event(thread);
 
 		signal_thread_ready(thread);
 
 		if (thread->detached || !thread->started)
+		{
 			cleanup_handle(thread);
+		}
 	}
 
 	return NULL;
@@ -545,14 +579,18 @@ static BOOL winpr_StartThread(WINPR_THREAD* thread)
 	pthread_attr_t attr = { 0 };
 
 	if (!mux_condition_bundle_lock(&thread->isCreated))
+	{
 		return FALSE;
+	}
 	locked = TRUE;
 
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
 	if (thread->dwStackSize > 0)
+	{
 		pthread_attr_setstacksize(&attr, (size_t)thread->dwStackSize);
+	}
 
 	thread->started = TRUE;
 	reset_event(thread);
@@ -566,14 +604,20 @@ static BOOL winpr_StartThread(WINPR_THREAD* thread)
 #endif
 
 	if (pthread_create(&thread->thread, &attr, thread_launcher, thread))
+	{
 		goto error;
+	}
 
 	if (!mux_condition_bundle_wait(&thread->isCreated, "threadIsCreated"))
+	{
 		goto error;
+	}
 
 	locked = FALSE;
 	if (!mux_condition_bundle_unlock(&thread->isCreated))
+	{
 		goto error;
+	}
 
 	if (!signal_thread_is_running(thread))
 	{
@@ -586,13 +630,17 @@ error:
 	if (locked)
 	{
 		if (!mux_condition_bundle_unlock(&thread->isCreated))
+		{
 			rc = FALSE;
+		}
 	}
 
 	pthread_attr_destroy(&attr);
 
 	if (rc)
+	{
 		dump_thread(thread);
+	}
 
 	return rc;
 }
@@ -601,11 +649,13 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
                     LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter,
                     DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
-	HANDLE handle;
+	HANDLE handle = NULL;
 	WINPR_THREAD* thread = (WINPR_THREAD*)calloc(1, sizeof(WINPR_THREAD));
 
 	if (!thread)
+	{
 		return NULL;
+	}
 
 	thread->dwStackSize = dwStackSize;
 	thread->lpParameter = lpParameter;
@@ -636,9 +686,13 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	}
 
 	if (!mux_condition_bundle_init(&thread->isCreated))
+	{
 		goto fail;
+	}
 	if (!mux_condition_bundle_init(&thread->isRunning))
+	{
 		goto fail;
+	}
 
 	WINPR_HANDLE_SET_TYPE_AND_MODE(thread, HANDLE_TYPE_THREAD, WINPR_FD_READ);
 	handle = (HANDLE)thread;
@@ -648,12 +702,16 @@ HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize
 	if (!(dwCreationFlags & CREATE_SUSPENDED))
 	{
 		if (!winpr_StartThread(thread))
+		{
 			goto fail;
+		}
 	}
 	else
 	{
 		if (!set_event(thread))
+		{
 			goto fail;
+		}
 	}
 
 	return handle;
@@ -666,10 +724,14 @@ void cleanup_handle(void* obj)
 {
 	WINPR_THREAD* thread = (WINPR_THREAD*)obj;
 	if (!thread)
+	{
 		return;
+	}
 
 	if (!apc_uninit(&thread->apc))
+	{
 		WLog_ERR(TAG, "failed to destroy APC");
+	}
 
 	mux_condition_bundle_uninit(&thread->isCreated);
 	mux_condition_bundle_uninit(&thread->isRunning);
@@ -790,9 +852,9 @@ VOID ExitThread(DWORD dwExitCode)
 
 BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
 {
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_THREAD* thread;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+	WINPR_THREAD* thread = NULL;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
 	{
@@ -808,11 +870,13 @@ BOOL GetExitCodeThread(HANDLE hThread, LPDWORD lpExitCode)
 
 WINPR_THREAD* winpr_GetCurrentThread(VOID)
 {
-	WINPR_THREAD* ret;
+	WINPR_THREAD* ret = NULL;
 
 	InitOnceExecuteOnce(&threads_InitOnce, initializeThreads, NULL, NULL);
 	if (mainThreadId == pthread_self())
+	{
 		return (HANDLE)&mainThread;
+	}
 
 	ret = TlsGetValue(currentThreadTlsIndex);
 	return ret;
@@ -825,7 +889,7 @@ HANDLE _GetCurrentThread(VOID)
 
 DWORD GetCurrentThreadId(VOID)
 {
-	pthread_t tid;
+	pthread_t tid = 0;
 	tid = pthread_self();
 	/* Since pthread_t can be 64-bits on some systems, take just the    */
 	/* lower 32-bits of it for the thread ID returned by this function. */
@@ -837,7 +901,7 @@ typedef struct
 	WINPR_APC_ITEM apc;
 	PAPCFUNC completion;
 	ULONG_PTR completionArg;
-} UserApcItem;
+} DECLSPEC_ALIGN(128) UserApcItem;
 
 static void userAPC(LPVOID arg)
 {
@@ -850,13 +914,15 @@ static void userAPC(LPVOID arg)
 
 DWORD QueueUserAPC(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData)
 {
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_APC_ITEM* apc;
-	UserApcItem* apcItem;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+	WINPR_APC_ITEM* apc = NULL;
+	UserApcItem* apcItem = NULL;
 
 	if (!pfnAPC)
+	{
 		return 1;
+	}
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
 	{
@@ -886,9 +952,9 @@ DWORD QueueUserAPC(PAPCFUNC pfnAPC, HANDLE hThread, ULONG_PTR dwData)
 
 DWORD ResumeThread(HANDLE hThread)
 {
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_THREAD* thread;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+	WINPR_THREAD* thread = NULL;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
 	{
@@ -900,7 +966,9 @@ DWORD ResumeThread(HANDLE hThread)
 	thread = (WINPR_THREAD*)Object;
 
 	if (!run_mutex_fkt(pthread_mutex_lock, &thread->mutex))
+	{
 		return (DWORD)-1;
+	}
 
 	if (!thread->started)
 	{
@@ -911,10 +979,14 @@ DWORD ResumeThread(HANDLE hThread)
 		}
 	}
 	else
+	{
 		WLog_WARN(TAG, "Thread already started!");
+	}
 
 	if (!run_mutex_fkt(pthread_mutex_checked_unlock, &thread->mutex))
+	{
 		return (DWORD)-1;
+	}
 
 	return 0;
 }
@@ -933,26 +1005,32 @@ BOOL SwitchToThread(VOID)
 	 * usleep should at least trigger a context switch if any thread is waiting.
 	 */
 	if (sched_yield() != 0)
+	{
 		usleep(1);
+	}
 
 	return TRUE;
 }
 
 BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 {
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_THREAD* thread;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+	WINPR_THREAD* thread = NULL;
 
 	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
+	{
 		return FALSE;
+	}
 
 	thread = (WINPR_THREAD*)Object;
 	thread->exited = TRUE;
 	thread->dwExitCode = dwExitCode;
 
 	if (!run_mutex_fkt(pthread_mutex_lock, &thread->mutex))
+	{
 		return FALSE;
+	}
 
 #ifndef ANDROID
 	pthread_cancel(thread->thread);
@@ -961,7 +1039,9 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 #endif
 
 	if (!run_mutex_fkt(pthread_mutex_checked_unlock, &thread->mutex))
+	{
 		return FALSE;
+	}
 
 	set_event(thread);
 	return TRUE;

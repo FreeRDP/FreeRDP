@@ -19,8 +19,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/crt.h>
 #include <winpr/assert.h>
+#include <winpr/crt.h>
 
 #include <winpr/collections.h>
 
@@ -32,7 +32,7 @@ struct s_wObjectPool
 	CRITICAL_SECTION lock;
 	wObject object;
 	BOOL synchronized;
-};
+} DECLSPEC_ALIGN(128);
 
 /**
  * C Object Pool similar to C# BufferManager Class:
@@ -47,14 +47,18 @@ static void ObjectPool_Lock(wObjectPool* pool)
 {
 	WINPR_ASSERT(pool);
 	if (pool->synchronized)
+	{
 		EnterCriticalSection(&pool->lock);
+	}
 }
 
 static void ObjectPool_Unlock(wObjectPool* pool)
 {
 	WINPR_ASSERT(pool);
 	if (pool->synchronized)
+	{
 		LeaveCriticalSection(&pool->lock);
+	}
 }
 
 /**
@@ -68,16 +72,22 @@ void* ObjectPool_Take(wObjectPool* pool)
 	ObjectPool_Lock(pool);
 
 	if (pool->size > 0)
+	{
 		obj = pool->array[--(pool->size)];
+	}
 
 	if (!obj)
 	{
 		if (pool->object.fnObjectNew)
+		{
 			obj = pool->object.fnObjectNew(NULL);
+		}
 	}
 
 	if (pool->object.fnObjectInit)
+	{
 		pool->object.fnObjectInit(obj);
+	}
 
 	ObjectPool_Unlock(pool);
 
@@ -94,13 +104,15 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 
 	if ((pool->size + 1) >= pool->capacity)
 	{
-		size_t new_cap;
-		void** new_arr;
+		size_t new_cap = 0;
+		void** new_arr = NULL;
 
 		new_cap = pool->capacity * 2;
 		new_arr = (void**)realloc(pool->array, sizeof(void*) * new_cap);
 		if (!new_arr)
+		{
 			goto out;
+		}
 
 		pool->array = new_arr;
 		pool->capacity = new_cap;
@@ -109,7 +121,9 @@ void ObjectPool_Return(wObjectPool* pool, void* obj)
 	pool->array[(pool->size)++] = obj;
 
 	if (pool->object.fnObjectUninit)
+	{
 		pool->object.fnObjectUninit(obj);
+	}
 
 out:
 	ObjectPool_Unlock(pool);
@@ -134,7 +148,9 @@ void ObjectPool_Clear(wObjectPool* pool)
 		(pool->size)--;
 
 		if (pool->object.fnObjectFree)
+		{
 			pool->object.fnObjectFree(pool->array[pool->size]);
+		}
 	}
 
 	ObjectPool_Unlock(pool);
@@ -163,7 +179,9 @@ wObjectPool* ObjectPool_New(BOOL synchronized)
 		pool->synchronized = synchronized;
 
 		if (pool->synchronized)
+		{
 			InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
+		}
 	}
 
 	return pool;
@@ -176,7 +194,9 @@ void ObjectPool_Free(wObjectPool* pool)
 		ObjectPool_Clear(pool);
 
 		if (pool->synchronized)
+		{
 			DeleteCriticalSection(&pool->lock);
+		}
 
 		free(pool->array);
 

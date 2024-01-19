@@ -38,7 +38,7 @@ struct _ChannelStateTracker
 	ChannelTrackerPeekFn peekFn;
 	void* trackerData;
 	proxyData* pdata;
-};
+} DECLSPEC_ALIGN(128);
 
 static BOOL channelTracker_resetCurrentPacket(ChannelStateTracker* tracker)
 {
@@ -49,15 +49,23 @@ static BOOL channelTracker_resetCurrentPacket(ChannelStateTracker* tracker)
 	{
 		const size_t cap = Stream_Capacity(tracker->currentPacket);
 		if (cap < 1 * 1000 * 1000)
+		{
 			create = FALSE;
+		}
 		else
+		{
 			Stream_Free(tracker->currentPacket, TRUE);
+		}
 	}
 
 	if (create)
+	{
 		tracker->currentPacket = Stream_New(NULL, 10 * 1024);
+	}
 	if (!tracker->currentPacket)
+	{
 		return FALSE;
+	}
 	Stream_SetPosition(tracker->currentPacket, 0);
 	return TRUE;
 }
@@ -67,7 +75,9 @@ ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel,
 {
 	ChannelStateTracker* ret = calloc(1, sizeof(ChannelStateTracker));
 	if (!ret)
+	{
 		return ret;
+	}
 
 	WINPR_ASSERT(fn);
 
@@ -75,10 +85,14 @@ ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel,
 	ret->peekFn = fn;
 
 	if (!channelTracker_setCustomData(ret, data))
+	{
 		goto fail;
+	}
 
 	if (!channelTracker_resetCurrentPacket(ret))
+	{
 		goto fail;
+	}
 
 	return ret;
 
@@ -101,7 +115,9 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 	if (flags & CHANNEL_FLAG_FIRST)
 	{
 		if (!channelTracker_resetCurrentPacket(tracker))
+		{
 			return FALSE;
+		}
 		channelTracker_setCurrentPacketSize(tracker, totalSize);
 		tracker->currentPacketReceived = 0;
 		tracker->currentPacketFragments = 0;
@@ -110,8 +126,10 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 	{
 		const size_t currentPacketSize = channelTracker_getCurrentPacketSize(tracker);
 		if (tracker->currentPacketReceived + xsize > currentPacketSize)
+		{
 			WLog_INFO(TAG, "cumulated size is bigger (%" PRIuz ") than total size (%" PRIuz ")",
 			          tracker->currentPacketReceived + xsize, currentPacketSize);
+		}
 	}
 
 	tracker->currentPacketReceived += xsize;
@@ -123,7 +141,9 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 		{
 			wStream* currentPacket = channelTracker_getCurrentPacket(tracker);
 			if (!Stream_EnsureRemainingCapacity(currentPacket, xsize))
+			{
 				return PF_CHANNEL_RESULT_ERROR;
+			}
 
 			Stream_Write(currentPacket, xdata, xsize);
 
@@ -145,8 +165,10 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 		channelTracker_setMode(tracker, CHANNEL_TRACKER_PEEK);
 
 		if (tracker->currentPacketReceived != currentPacketSize)
+		{
 			WLog_INFO(TAG, "cumulated size(%" PRIuz ") does not match total size (%" PRIuz ")",
 			          tracker->currentPacketReceived, currentPacketSize);
+		}
 	}
 
 	return result;
@@ -155,7 +177,9 @@ PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* 
 void channelTracker_free(ChannelStateTracker* t)
 {
 	if (!t)
+	{
 		return;
+	}
 
 	Stream_Free(t->currentPacket, TRUE);
 	free(t);
@@ -170,11 +194,11 @@ void channelTracker_free(ChannelStateTracker* t)
 PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, BOOL last,
                                             BOOL toBack)
 {
-	proxyData* pdata;
-	pServerContext* ps;
-	pServerStaticChannelContext* channel;
+	proxyData* pdata = NULL;
+	pServerContext* ps = NULL;
+	pServerStaticChannelContext* channel = NULL;
 	UINT32 flags = CHANNEL_FLAG_FIRST;
-	BOOL r;
+	BOOL r = 0;
 	const char* direction = toBack ? "F->B" : "B->F";
 	const size_t currentPacketSize = channelTracker_getCurrentPacketSize(t);
 	wStream* currentPacket = channelTracker_getCurrentPacket(t);
@@ -185,12 +209,16 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 	         t->channel->channel_name, direction, Stream_GetPosition(currentPacket), first, last);
 
 	if (first)
+	{
 		return PF_CHANNEL_RESULT_PASS;
+	}
 
 	pdata = t->pdata;
 	channel = t->channel;
 	if (last)
+	{
 		flags |= CHANNEL_FLAG_LAST;
+	}
 
 	if (toBack)
 	{
@@ -204,7 +232,9 @@ PfChannelResult channelTracker_flushCurrent(ChannelStateTracker* t, BOOL first, 
 		ev.total_size = currentPacketSize;
 
 		if (!pdata->pc->sendChannelData)
+		{
 			return PF_CHANNEL_RESULT_ERROR;
+		}
 
 		return pdata->pc->sendChannelData(pdata->pc, &ev) ? PF_CHANNEL_RESULT_DROP
 		                                                  : PF_CHANNEL_RESULT_ERROR;
@@ -240,7 +270,9 @@ static PfChannelResult pf_channel_generic_back_data(proxyData* pdata,
 
 			if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_CLIENT_PASSTHROUGH_CHANNEL_DATA,
 			                           pdata, &ev))
+			{
 				return PF_CHANNEL_RESULT_DROP; /* Silently drop */
+			}
 
 			return PF_CHANNEL_RESULT_PASS;
 
@@ -274,7 +306,9 @@ static PfChannelResult pf_channel_generic_front_data(proxyData* pdata,
 
 			if (!pf_modules_run_filter(pdata->module, FILTER_TYPE_SERVER_PASSTHROUGH_CHANNEL_DATA,
 			                           pdata, &ev))
+			{
 				return PF_CHANNEL_RESULT_DROP; /* Silently drop */
+			}
 
 			return PF_CHANNEL_RESULT_PASS;
 

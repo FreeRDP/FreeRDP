@@ -21,9 +21,9 @@
 
 #include <winpr/config.h>
 
-#include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
+#include <winpr/wtypes.h>
 
 #include <winpr/image.h>
 
@@ -38,7 +38,9 @@
 static BOOL writeBitmapFileHeader(wStream* s, const WINPR_BITMAP_FILE_HEADER* bf)
 {
 	if (!Stream_EnsureRemainingCapacity(s, sizeof(WINPR_BITMAP_FILE_HEADER)))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT8(s, bf->bfType[0]);
 	Stream_Write_UINT8(s, bf->bfType[1]);
@@ -52,7 +54,9 @@ static BOOL writeBitmapFileHeader(wStream* s, const WINPR_BITMAP_FILE_HEADER* bf
 static BOOL readBitmapFileHeader(wStream* s, WINPR_BITMAP_FILE_HEADER* bf)
 {
 	if (!s || !bf || (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(WINPR_BITMAP_FILE_HEADER))))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT8(s, bf->bfType[0]);
 	Stream_Read_UINT8(s, bf->bfType[1]);
@@ -66,7 +70,9 @@ static BOOL readBitmapFileHeader(wStream* s, WINPR_BITMAP_FILE_HEADER* bf)
 static BOOL writeBitmapInfoHeader(wStream* s, const WINPR_BITMAP_INFO_HEADER* bi)
 {
 	if (!Stream_EnsureRemainingCapacity(s, sizeof(WINPR_BITMAP_INFO_HEADER)))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, bi->biSize);
 	Stream_Write_INT32(s, bi->biWidth);
@@ -85,7 +91,9 @@ static BOOL writeBitmapInfoHeader(wStream* s, const WINPR_BITMAP_INFO_HEADER* bi
 static BOOL readBitmapInfoHeader(wStream* s, WINPR_BITMAP_INFO_HEADER* bi)
 {
 	if (!s || !bi || (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(WINPR_BITMAP_INFO_HEADER))))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, bi->biSize);
 	Stream_Read_INT32(s, bi->biWidth);
@@ -106,16 +114,20 @@ BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 	BYTE* result = NULL;
 	WINPR_BITMAP_FILE_HEADER bf = { 0 };
 	WINPR_BITMAP_INFO_HEADER bi = { 0 };
-	wStream* s;
-	size_t imgSize;
+	wStream* s = NULL;
+	size_t imgSize = 0;
 
 	imgSize = width * height * (bpp / 8);
 	if ((width > INT32_MAX) || (height > INT32_MAX) || (bpp > UINT16_MAX) || (imgSize > UINT32_MAX))
+	{
 		return NULL;
+	}
 
 	s = Stream_New(NULL, WINPR_IMAGE_BMP_HEADER_LEN);
 	if (!s)
+	{
 		return NULL;
+	}
 
 	bf.bfType[0] = 'B';
 	bf.bfType[1] = 'M';
@@ -136,10 +148,14 @@ BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp)
 	bi.biSize = (UINT32)sizeof(WINPR_BITMAP_INFO_HEADER);
 
 	if (!writeBitmapFileHeader(s, &bf))
+	{
 		goto fail;
+	}
 
 	if (!writeBitmapInfoHeader(s, &bi))
+	{
 		goto fail;
+	}
 
 	result = Stream_Buffer(s);
 fail:
@@ -165,7 +181,9 @@ int winpr_bitmap_write_ex(const char* filename, const BYTE* data, size_t stride,
 	const size_t bpp_stride = width * (bpp / 8);
 
 	if (stride == 0)
+	{
 		stride = bpp_stride;
+	}
 
 	int ret = -1;
 	fp = winpr_fopen(filename, "w+b");
@@ -178,22 +196,30 @@ int winpr_bitmap_write_ex(const char* filename, const BYTE* data, size_t stride,
 
 	bmp_header = winpr_bitmap_construct_header(width, height, bpp);
 	if (!bmp_header)
+	{
 		goto fail;
+	}
 
 	if (fwrite(bmp_header, WINPR_IMAGE_BMP_HEADER_LEN, 1, fp) != 1)
+	{
 		goto fail;
+	}
 
 	for (size_t y = 0; y < height; y++)
 	{
 		const void* line = &data[stride * y];
 		if (fwrite(line, bpp_stride, 1, fp) != 1)
+		{
 			goto fail;
+		}
 	}
 
 	ret = 1;
 fail:
 	if (fp)
+	{
 		fclose(fp);
+	}
 	free(bmp_header);
 	return ret;
 }
@@ -278,41 +304,55 @@ static int winpr_image_png_read_buffer(wImage* image, const BYTE* buffer, size_t
 static int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 {
 	int rc = -1;
-	UINT32 index;
-	BOOL vFlip;
-	BYTE* pDstData;
-	wStream* s;
+	UINT32 index = 0;
+	BOOL vFlip = 0;
+	BYTE* pDstData = NULL;
+	wStream* s = NULL;
 	wStream sbuffer = { 0 };
 	BYTE buffer[sizeof(WINPR_BITMAP_FILE_HEADER) + sizeof(WINPR_BITMAP_INFO_HEADER)] = { 0 };
 	WINPR_BITMAP_FILE_HEADER bf = { 0 };
 	WINPR_BITMAP_INFO_HEADER bi = { 0 };
 
 	if (!image || !fp)
+	{
 		return -1;
+	}
 
 	image->data = NULL;
 
 	s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 
 	if (!s)
+	{
 		return -1;
+	}
 
 	if (fread(Stream_Buffer(s), Stream_Capacity(s), 1, fp) != 1)
+	{
 		goto fail;
+	}
 
 	if (!readBitmapFileHeader(s, &bf) || !readBitmapInfoHeader(s, &bi))
+	{
 		goto fail;
+	}
 
 	if ((bf.bfType[0] != 'B') || (bf.bfType[1] != 'M'))
+	{
 		goto fail;
+	}
 
 	image->type = WINPR_IMAGE_BITMAP;
 
 	if (_ftelli64(fp) != bf.bfOffBits)
+	{
 		_fseeki64(fp, bf.bfOffBits, SEEK_SET);
+	}
 
 	if (bi.biWidth < 0)
+	{
 		goto fail;
+	}
 
 	image->width = (UINT32)bi.biWidth;
 
@@ -333,12 +373,16 @@ static int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 	image->data = (BYTE*)malloc(bi.biSizeImage);
 
 	if (!image->data)
+	{
 		goto fail;
+	}
 
 	if (!vFlip)
 	{
 		if (fread((void*)image->data, bi.biSizeImage, 1, fp) != 1)
+		{
 			goto fail;
+		}
 	}
 	else
 	{
@@ -347,7 +391,9 @@ static int winpr_image_bitmap_read_fp(wImage* image, FILE* fp)
 		for (index = 0; index < image->height; index++)
 		{
 			if (fread((void*)pDstData, image->scanline, 1, fp) != 1)
+			{
 				goto fail;
+			}
 
 			pDstData -= image->scanline;
 		}
@@ -368,34 +414,48 @@ fail:
 static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, size_t size)
 {
 	int rc = -1;
-	UINT32 index;
-	BOOL vFlip;
-	BYTE* pDstData;
+	UINT32 index = 0;
+	BOOL vFlip = 0;
+	BYTE* pDstData = NULL;
 	WINPR_BITMAP_FILE_HEADER bf;
 	WINPR_BITMAP_INFO_HEADER bi;
 	wStream sbuffer = { 0 };
 	wStream* s = Stream_StaticConstInit(&sbuffer, buffer, size);
 
 	if (!s)
+	{
 		return -1;
+	}
 
 	if (!readBitmapFileHeader(s, &bf) || !readBitmapInfoHeader(s, &bi))
+	{
 		goto fail;
+	}
 
 	if ((bf.bfType[0] != 'B') || (bf.bfType[1] != 'M'))
+	{
 		goto fail;
+	}
 
 	image->type = WINPR_IMAGE_BITMAP;
 
 	if (Stream_GetPosition(s) > bf.bfOffBits)
+	{
 		goto fail;
+	}
 	if (!Stream_SafeSeek(s, bf.bfOffBits - Stream_GetPosition(s)))
+	{
 		goto fail;
+	}
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, s, bi.biSizeImage))
+	{
 		goto fail;
+	}
 
 	if (bi.biWidth < 0)
+	{
 		goto fail;
+	}
 
 	image->width = (UINT32)bi.biWidth;
 
@@ -416,10 +476,14 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 	image->data = (BYTE*)malloc(bi.biSizeImage);
 
 	if (!image->data)
+	{
 		goto fail;
+	}
 
 	if (!vFlip)
+	{
 		Stream_Read(s, image->data, bi.biSizeImage);
+	}
 	else
 	{
 		pDstData = &(image->data[(image->height - 1) * image->scanline]);
@@ -445,7 +509,7 @@ fail:
 
 int winpr_image_read(wImage* image, const char* filename)
 {
-	FILE* fp;
+	FILE* fp = NULL;
 	BYTE sig[8];
 	int status = -1;
 
@@ -487,7 +551,9 @@ int winpr_image_read_buffer(wImage* image, const BYTE* buffer, size_t size)
 	int status = -1;
 
 	if (size < 8)
+	{
 		return -1;
+	}
 
 	CopyMemory(sig, buffer, 8);
 
@@ -510,11 +576,13 @@ int winpr_image_read_buffer(wImage* image, const BYTE* buffer, size_t size)
 
 wImage* winpr_image_new(void)
 {
-	wImage* image;
+	wImage* image = NULL;
 	image = (wImage*)calloc(1, sizeof(wImage));
 
 	if (!image)
+	{
 		return NULL;
+	}
 
 	return image;
 }
@@ -522,10 +590,14 @@ wImage* winpr_image_new(void)
 void winpr_image_free(wImage* image, BOOL bFreeBuffer)
 {
 	if (!image)
+	{
 		return;
+	}
 
 	if (bFreeBuffer)
+	{
 		free(image->data);
+	}
 
 	free(image);
 }

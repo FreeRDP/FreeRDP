@@ -51,12 +51,14 @@ extern "C"
 	                                                    SCARDCONTEXT hContext);
 
 	FREERDP_API LONG WINAPI Emulate_SCardListReaderGroupsA(SmartcardEmulationContext* smartcard,
-	                                                       SCARDCONTEXT hContext, LPSTR mszGroups,
-	                                                       LPDWORD pcchGroups);
+	                                                       SCARDCONTEXT hContext,
+	                                                       const LPSTR mszGroups,
+	                                                       const LPDWORD pcchGroups);
 
 	FREERDP_API LONG WINAPI Emulate_SCardListReaderGroupsW(SmartcardEmulationContext* smartcard,
-	                                                       SCARDCONTEXT hContext, LPWSTR mszGroups,
-	                                                       LPDWORD pcchGroups);
+	                                                       SCARDCONTEXT hContext,
+	                                                       const LPWSTR mszGroups,
+	                                                       const LPDWORD pcchGroups);
 
 	FREERDP_API LONG WINAPI Emulate_SCardListReadersA(SmartcardEmulationContext* smartcard,
 	                                                  SCARDCONTEXT hContext, LPCSTR mszGroups,
@@ -69,24 +71,24 @@ extern "C"
 	FREERDP_API LONG WINAPI Emulate_SCardListCardsA(SmartcardEmulationContext* smartcard,
 	                                                SCARDCONTEXT hContext, LPCBYTE pbAtr,
 	                                                LPCGUID rgquidInterfaces,
-	                                                DWORD cguidInterfaceCount, CHAR* mszCards,
-	                                                LPDWORD pcchCards);
+	                                                DWORD cguidInterfaceCount, const CHAR* mszCards,
+	                                                const LPDWORD pcchCards);
 
 	FREERDP_API LONG WINAPI Emulate_SCardListCardsW(SmartcardEmulationContext* smartcard,
 	                                                SCARDCONTEXT hContext, LPCBYTE pbAtr,
 	                                                LPCGUID rgquidInterfaces,
-	                                                DWORD cguidInterfaceCount, WCHAR* mszCards,
-	                                                LPDWORD pcchCards);
+	                                                DWORD cguidInterfaceCount,
+	                                                const WCHAR* mszCards, const LPDWORD pcchCards);
 
 	FREERDP_API LONG WINAPI Emulate_SCardListInterfacesA(SmartcardEmulationContext* smartcard,
 	                                                     SCARDCONTEXT hContext, LPCSTR szCard,
 	                                                     LPGUID pguidInterfaces,
-	                                                     LPDWORD pcguidInterfaces);
+	                                                     const LPDWORD pcguidInterfaces);
 
 	FREERDP_API LONG WINAPI Emulate_SCardListInterfacesW(SmartcardEmulationContext* smartcard,
 	                                                     SCARDCONTEXT hContext, LPCWSTR szCard,
 	                                                     LPGUID pguidInterfaces,
-	                                                     LPDWORD pcguidInterfaces);
+	                                                     const LPDWORD pcguidInterfaces);
 
 	FREERDP_API LONG WINAPI Emulate_SCardGetProviderIdA(SmartcardEmulationContext* smartcard,
 	                                                    SCARDCONTEXT hContext, LPCSTR szCard,
@@ -98,11 +100,11 @@ extern "C"
 
 	FREERDP_API LONG WINAPI Emulate_SCardGetCardTypeProviderNameA(
 	    SmartcardEmulationContext* smartcard, SCARDCONTEXT hContext, LPCSTR szCardName,
-	    DWORD dwProviderId, CHAR* szProvider, LPDWORD pcchProvider);
+	    DWORD dwProviderId, const CHAR* szProvider, const LPDWORD pcchProvider);
 
 	FREERDP_API LONG WINAPI Emulate_SCardGetCardTypeProviderNameW(
 	    SmartcardEmulationContext* smartcard, SCARDCONTEXT hContext, LPCWSTR szCardName,
-	    DWORD dwProviderId, WCHAR* szProvider, LPDWORD pcchProvider);
+	    DWORD dwProviderId, const WCHAR* szProvider, const LPDWORD pcchProvider);
 
 	FREERDP_API LONG WINAPI Emulate_SCardIntroduceReaderGroupA(SmartcardEmulationContext* smartcard,
 	                                                           SCARDCONTEXT hContext,
@@ -277,11 +279,11 @@ extern "C"
 	                                             SCARDHANDLE hCard, DWORD dwControlCode,
 	                                             LPCVOID lpInBuffer, DWORD cbInBufferSize,
 	                                             LPVOID lpOutBuffer, DWORD cbOutBufferSize,
-	                                             LPDWORD lpBytesReturned);
+	                                             const LPDWORD lpBytesReturned);
 
 	FREERDP_API LONG WINAPI Emulate_SCardGetAttrib(SmartcardEmulationContext* smartcard,
-	                                               SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr,
-	                                               LPDWORD pcbAttrLen);
+	                                               SCARDHANDLE hCard, DWORD dwAttrId,
+	                                               const LPBYTE pbAttr, const LPDWORD pcbAttrLen);
 
 	FREERDP_API LONG WINAPI Emulate_SCardSetAttrib(SmartcardEmulationContext* smartcard,
 	                                               SCARDHANDLE hCard, DWORD dwAttrId,
@@ -340,17 +342,17 @@ extern "C"
 
 	FREERDP_API LONG WINAPI Emulate_SCardGetReaderDeviceInstanceIdA(
 	    SmartcardEmulationContext* smartcard, SCARDCONTEXT hContext, LPCSTR szReaderName,
-	    LPSTR szDeviceInstanceId, LPDWORD pcchDeviceInstanceId);
+	    const LPSTR szDeviceInstanceId, const LPDWORD pcchDeviceInstanceId);
 
 	FREERDP_API LONG WINAPI Emulate_SCardGetReaderDeviceInstanceIdW(
 	    SmartcardEmulationContext* smartcard, SCARDCONTEXT hContext, LPCWSTR szReaderName,
-	    LPWSTR szDeviceInstanceId, LPDWORD pcchDeviceInstanceId);
+	    const LPWSTR szDeviceInstanceId, const LPDWORD pcchDeviceInstanceId);
 	FREERDP_API LONG WINAPI Emulate_SCardListReadersWithDeviceInstanceIdA(
 	    SmartcardEmulationContext* smartcard, SCARDCONTEXT hContext, LPCSTR szDeviceInstanceId,
-	    LPSTR mszReaders, LPDWORD pcchReaders);
+	    const LPSTR mszReaders, const LPDWORD pcchReaders);
 	FREERDP_API LONG WINAPI Emulate_SCardListReadersWithDeviceInstanceIdW(
 	    SmartcardEmulationContext* smartcard, SCARDCONTEXT hContext, LPCWSTR szDeviceInstanceId,
-	    LPWSTR mszReaders, LPDWORD pcchReaders);
+	    const LPWSTR mszReaders, const LPDWORD pcchReaders);
 	FREERDP_API LONG WINAPI Emulate_SCardAudit(SmartcardEmulationContext* smartcard,
 	                                           SCARDCONTEXT hContext, DWORD dwEvent);
 

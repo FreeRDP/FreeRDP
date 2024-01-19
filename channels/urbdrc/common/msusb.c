@@ -39,7 +39,9 @@ static void msusb_mspipes_free(MSUSB_PIPE_DESCRIPTOR** MsPipes, UINT32 NumberOfP
 	if (MsPipes)
 	{
 		for (pnum = 0; pnum < NumberOfPipes && MsPipes[pnum]; pnum++)
+		{
 			free(MsPipes[pnum]);
+		}
 
 		free(MsPipes);
 	}
@@ -49,7 +51,9 @@ BOOL msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
                            MSUSB_PIPE_DESCRIPTOR** NewMsPipes, UINT32 NewNumberOfPipes)
 {
 	if (!MsInterface || !NewMsPipes)
+	{
 		return FALSE;
+	}
 
 	/* free orignal MsPipes */
 	msusb_mspipes_free(MsInterface->MsPipes, MsInterface->NumberOfPipes);
@@ -61,23 +65,29 @@ BOOL msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
 
 static MSUSB_PIPE_DESCRIPTOR** msusb_mspipes_read(wStream* s, UINT32 NumberOfPipes)
 {
-	UINT32 pnum;
-	MSUSB_PIPE_DESCRIPTOR** MsPipes;
+	UINT32 pnum = 0;
+	MSUSB_PIPE_DESCRIPTOR** MsPipes = NULL;
 
-	if (!Stream_CheckAndLogRequiredCapacityOfSize(TAG, (s), NumberOfPipes, 12ull))
+	if (!Stream_CheckAndLogRequiredCapacityOfSize(TAG, (s), NumberOfPipes, 12ULL))
+	{
 		return NULL;
+	}
 
 	MsPipes = (MSUSB_PIPE_DESCRIPTOR**)calloc(NumberOfPipes, sizeof(MSUSB_PIPE_DESCRIPTOR*));
 
 	if (!MsPipes)
+	{
 		return NULL;
+	}
 
 	for (pnum = 0; pnum < NumberOfPipes; pnum++)
 	{
 		MSUSB_PIPE_DESCRIPTOR* MsPipe = msusb_mspipe_new();
 
 		if (!MsPipe)
+		{
 			goto out_error;
+		}
 
 		Stream_Read_UINT16(s, MsPipe->MaximumPacketSize);
 		Stream_Seek(s, 2);
@@ -97,7 +107,9 @@ static MSUSB_PIPE_DESCRIPTOR** msusb_mspipes_read(wStream* s, UINT32 NumberOfPip
 out_error:
 
 	for (pnum = 0; pnum < NumberOfPipes; pnum++)
+	{
 		free(MsPipes[pnum]);
+	}
 
 	free(MsPipes);
 	return NULL;
@@ -138,7 +150,9 @@ BOOL msusb_msinterface_replace(MSUSB_CONFIG_DESCRIPTOR* MsConfig, BYTE Interface
                                MSUSB_INTERFACE_DESCRIPTOR* NewMsInterface)
 {
 	if (!MsConfig || !MsConfig->MsInterfaces)
+	{
 		return FALSE;
+	}
 
 	msusb_msinterface_free(MsConfig->MsInterfaces[InterfaceNumber]);
 	MsConfig->MsInterfaces[InterfaceNumber] = NewMsInterface;
@@ -147,15 +161,19 @@ BOOL msusb_msinterface_replace(MSUSB_CONFIG_DESCRIPTOR* MsConfig, BYTE Interface
 
 MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* s)
 {
-	MSUSB_INTERFACE_DESCRIPTOR* MsInterface;
+	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = NULL;
 
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 12))
+	{
 		return NULL;
+	}
 
 	MsInterface = msusb_msinterface_new();
 
 	if (!MsInterface)
+	{
 		return NULL;
+	}
 
 	Stream_Read_UINT16(s, MsInterface->Length);
 	Stream_Read_UINT16(s, MsInterface->NumberOfPipesExpected);
@@ -175,7 +193,9 @@ MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* s)
 		MsInterface->MsPipes = msusb_mspipes_read(s, MsInterface->NumberOfPipes);
 
 		if (!MsInterface->MsPipes)
+		{
 			goto out_error;
+		}
 	}
 
 	return MsInterface;
@@ -186,15 +206,19 @@ out_error:
 
 BOOL msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR* MsInterface, wStream* out)
 {
-	MSUSB_PIPE_DESCRIPTOR** MsPipes;
-	MSUSB_PIPE_DESCRIPTOR* MsPipe;
+	MSUSB_PIPE_DESCRIPTOR** MsPipes = NULL;
+	MSUSB_PIPE_DESCRIPTOR* MsPipe = NULL;
 	UINT32 pnum = 0;
 
 	if (!MsInterface)
+	{
 		return FALSE;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(out, 16 + MsInterface->NumberOfPipes * 20))
+	{
 		return FALSE;
+	}
 
 	/* Length */
 	Stream_Write_UINT16(out, MsInterface->Length);
@@ -241,27 +265,33 @@ BOOL msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR* MsInterface, wStream* o
 
 static MSUSB_INTERFACE_DESCRIPTOR** msusb_msinterface_read_list(wStream* s, UINT32 NumInterfaces)
 {
-	UINT32 inum;
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces;
+	UINT32 inum = 0;
+	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
 	MsInterfaces =
 	    (MSUSB_INTERFACE_DESCRIPTOR**)calloc(NumInterfaces, sizeof(MSUSB_INTERFACE_DESCRIPTOR*));
 
 	if (!MsInterfaces)
+	{
 		return NULL;
+	}
 
 	for (inum = 0; inum < NumInterfaces; inum++)
 	{
 		MsInterfaces[inum] = msusb_msinterface_read(s);
 
 		if (!MsInterfaces[inum])
+		{
 			goto fail;
+		}
 	}
 
 	return MsInterfaces;
 fail:
 
 	for (inum = 0; inum < NumInterfaces; inum++)
+	{
 		msusb_msinterface_free(MsInterfaces[inum]);
+	}
 
 	free(MsInterfaces);
 	return NULL;
@@ -270,14 +300,18 @@ fail:
 BOOL msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR* MsConfg, wStream* out)
 {
 	UINT32 inum = 0;
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces;
-	MSUSB_INTERFACE_DESCRIPTOR* MsInterface;
+	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
+	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = NULL;
 
 	if (!MsConfg)
+	{
 		return FALSE;
+	}
 
 	if (!Stream_EnsureRemainingCapacity(out, 8))
+	{
 		return FALSE;
+	}
 
 	/* ConfigurationHandle*/
 	Stream_Write_UINT32(out, MsConfg->ConfigurationHandle);
@@ -291,7 +325,9 @@ BOOL msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR* MsConfg, wStream* out)
 		MsInterface = MsInterfaces[inum];
 
 		if (!msusb_msinterface_write(MsInterface, out))
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -314,21 +350,28 @@ void msusb_msconfig_free(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 
 MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(wStream* s, UINT32 NumInterfaces)
 {
-	MSUSB_CONFIG_DESCRIPTOR* MsConfig;
-	BYTE lenConfiguration, typeConfiguration;
+	MSUSB_CONFIG_DESCRIPTOR* MsConfig = NULL;
+	BYTE lenConfiguration;
+	BYTE typeConfiguration;
 
 	if (!Stream_CheckAndLogRequiredCapacityOfSize(TAG, (s), 3ULL + NumInterfaces, 2ULL))
+	{
 		return NULL;
+	}
 
 	MsConfig = msusb_msconfig_new();
 
 	if (!MsConfig)
+	{
 		goto fail;
+	}
 
 	MsConfig->MsInterfaces = msusb_msinterface_read_list(s, NumInterfaces);
 
 	if (!MsConfig->MsInterfaces)
+	{
 		goto fail;
+	}
 
 	Stream_Read_UINT8(s, lenConfiguration);
 	Stream_Read_UINT8(s, typeConfiguration);
@@ -352,11 +395,12 @@ fail:
 
 void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 {
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces;
-	MSUSB_INTERFACE_DESCRIPTOR* MsInterface;
-	MSUSB_PIPE_DESCRIPTOR** MsPipes;
-	MSUSB_PIPE_DESCRIPTOR* MsPipe;
-	UINT32 inum = 0, pnum = 0;
+	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
+	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = NULL;
+	MSUSB_PIPE_DESCRIPTOR** MsPipes = NULL;
+	MSUSB_PIPE_DESCRIPTOR* MsPipe = NULL;
+	UINT32 inum = 0;
+	UINT32 pnum = 0;
 	WLog_INFO(TAG, "=================MsConfig:========================");
 	WLog_INFO(TAG, "wTotalLength:%" PRIu16 "", MsConfig->wTotalLength);
 	WLog_INFO(TAG, "bConfigurationValue:%" PRIu8 "", MsConfig->bConfigurationValue);

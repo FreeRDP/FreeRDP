@@ -90,7 +90,9 @@ static __m128i* ssse3_YUV444Pixel(__m128i* WINPR_RESTRICT dst, __m128i Yraw, __m
 	__m128i BGRX = _mm_and_si128(_mm_loadu_si128(dst),
 	                             _mm_set_epi32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000));
 	{
-		__m128i C, D, E;
+		__m128i C;
+		__m128i D;
+		__m128i E;
 		/* Load Y values and expand to 32 bit */
 		{
 			C = _mm_shuffle_epi8(Yraw, mapY[pos]); /* Reorder and multiply by 256 */
@@ -159,11 +161,11 @@ static pstatus_t ssse3_YUV420ToRGB_BGRX(const BYTE* const WINPR_RESTRICT pSrc[],
 	const UINT32 nHeight = roi->height;
 	const UINT32 pad = roi->width % 16;
 	const __m128i duplicate = _mm_set_epi8(7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0);
-	UINT32 y;
+	UINT32 y = 0;
 
 	for (y = 0; y < nHeight; y++)
 	{
-		UINT32 x;
+		UINT32 x = 0;
 		__m128i* dst = (__m128i*)(pDst + dstStep * y);
 		const BYTE* YData = pSrc[0] + y * srcStep[0];
 		const BYTE* UData = pSrc[1] + (y / 2) * srcStep[1];
@@ -230,11 +232,11 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R_BGRX(const BYTE* const WINPR_RESTRI
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
 	const UINT32 pad = roi->width % 16;
-	UINT32 y;
+	UINT32 y = 0;
 
 	for (y = 0; y < nHeight; y++)
 	{
-		UINT32 x;
+		UINT32 x = 0;
 		__m128i* dst = (__m128i*)(pDst + dstStep * y);
 		const BYTE* YData = pSrc[0] + y * srcStep[0];
 		const BYTE* UData = pSrc[1] + y * srcStep[1];
@@ -276,7 +278,9 @@ static pstatus_t ssse3_YUV444ToRGB_8u_P3AC4R(const BYTE* const WINPR_RESTRICT pS
 {
 	if ((uintptr_t)pSrc[0] % 16 || (uintptr_t)pSrc[1] % 16 || (uintptr_t)pSrc[2] % 16 ||
 	    srcStep[0] % 16 || srcStep[1] % 16 || srcStep[2] % 16)
+	{
 		return generic->YUV444ToRGB_8u_P3AC4R(pSrc, srcStep, pDst, dstStep, DstFormat, roi);
+	}
 
 	switch (DstFormat)
 	{
@@ -346,8 +350,11 @@ PRIM_ALIGN_128 static const BYTE rgbx_v_factors[] = {
 
 static INLINE void ssse3_RGBToYUV420_BGRX_Y(const BYTE* WINPR_RESTRICT src, BYTE* dst, UINT32 width)
 {
-	UINT32 x;
-	__m128i x0, x1, x2, x3;
+	UINT32 x = 0;
+	__m128i x0;
+	__m128i x1;
+	__m128i x2;
+	__m128i x3;
 	const __m128i y_factors = BGRX_Y_FACTORS;
 	const __m128i* argb = (const __m128i*)src;
 	__m128i* ydst = (__m128i*)dst;
@@ -384,11 +391,16 @@ static INLINE void ssse3_RGBToYUV420_BGRX_UV(const BYTE* WINPR_RESTRICT src1,
                                              BYTE* WINPR_RESTRICT dst1, BYTE* WINPR_RESTRICT dst2,
                                              UINT32 width)
 {
-	UINT32 x;
+	UINT32 x = 0;
 	const __m128i u_factors = BGRX_U_FACTORS;
 	const __m128i v_factors = BGRX_V_FACTORS;
 	const __m128i vector128 = CONST128_FACTORS;
-	__m128i x0, x1, x2, x3, x4, x5;
+	__m128i x0;
+	__m128i x1;
+	__m128i x2;
+	__m128i x3;
+	__m128i x4;
+	__m128i x5;
 	const __m128i* rgb1 = (const __m128i*)src1;
 	const __m128i* rgb2 = (const __m128i*)src2;
 	__m64* udst = (__m64*)dst1;
@@ -448,7 +460,7 @@ static pstatus_t ssse3_RGBToYUV420_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT32 
                                         const UINT32 dstStep[],
                                         const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 y;
+	UINT32 y = 0;
 	const BYTE* argb = pSrc;
 	BYTE* ydst = pDst[0];
 	BYTE* udst = pDst[1];
@@ -512,7 +524,7 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
     BYTE* WINPR_RESTRICT b3, BYTE* WINPR_RESTRICT b4, BYTE* WINPR_RESTRICT b5,
     BYTE* WINPR_RESTRICT b6, BYTE* WINPR_RESTRICT b7, UINT32 width)
 {
-	UINT32 x;
+	UINT32 x = 0;
 	const __m128i* argbEven = (const __m128i*)srcEven;
 	const __m128i* argbOdd = (const __m128i*)srcOdd;
 	const __m128i y_factors = BGRX_Y_FACTORS;
@@ -564,7 +576,8 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			 *
 			 * We need to split these according to
 			 * 3.3.8.3.2 YUV420p Stream Combination for YUV444 mode */
-			__m128i ue, uo = { 0 };
+			__m128i ue;
+			__m128i uo = { 0 };
 			{
 				const __m128i ue1 =
 				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, u_factors),
@@ -641,7 +654,8 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			 *
 			 * We need to split these according to
 			 * 3.3.8.3.2 YUV420p Stream Combination for YUV444 mode */
-			__m128i ve, vo = { 0 };
+			__m128i ve;
+			__m128i vo = { 0 };
 			{
 				const __m128i ve1 =
 				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, v_factors),
@@ -723,11 +737,15 @@ static pstatus_t ssse3_RGBToAVC444YUV_BGRX(const BYTE* WINPR_RESTRICT pSrc, UINT
 	const BYTE* pMaxSrc = pSrc + (roi->height - 1) * srcStep;
 
 	if (roi->height < 1 || roi->width < 1)
+	{
 		return !PRIMITIVES_SUCCESS;
+	}
 
 	if (roi->width % 16 || (uintptr_t)pSrc % 16 || srcStep % 16)
+	{
 		return generic->RGBToAVC444YUV(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step,
 		                               roi);
+	}
 
 	for (UINT32 y = 0; y < roi->height; y += 2)
 	{
@@ -792,7 +810,7 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
     BYTE* WINPR_RESTRICT uChromaDst1, BYTE* WINPR_RESTRICT uChromaDst2,
     BYTE* WINPR_RESTRICT vChromaDst1, BYTE* WINPR_RESTRICT vChromaDst2, UINT32 width)
 {
-	UINT32 x;
+	UINT32 x = 0;
 	const __m128i vector128 = CONST128_FACTORS;
 	const __m128i* argbEven = (const __m128i*)srcEven;
 	const __m128i* argbOdd = (const __m128i*)srcOdd;
@@ -847,7 +865,9 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 			 * We need to split these according to
 			 * 3.3.8.3.3 YUV420p Stream Combination for YUV444v2 mode */
 			/* U: multiplications with subtotals and horizontal sums */
-			__m128i ue, uo, uavg;
+			__m128i ue;
+			__m128i uo;
+			__m128i uavg;
 			{
 				const __m128i u_factors = BGRX_U_FACTORS;
 				const __m128i ue1 =
@@ -936,7 +956,9 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 
 		{
 			/* V: multiplications with subtotals and horizontal sums */
-			__m128i ve, vo, vavg;
+			__m128i ve;
+			__m128i vo;
+			__m128i vavg;
 			{
 				const __m128i v_factors = BGRX_V_FACTORS;
 				const __m128i ve1 =
@@ -1032,11 +1054,15 @@ static pstatus_t ssse3_RGBToAVC444YUVv2_BGRX(const BYTE* WINPR_RESTRICT pSrc, UI
                                              const prim_size_t* WINPR_RESTRICT roi)
 {
 	if (roi->height < 1 || roi->width < 1)
+	{
 		return !PRIMITIVES_SUCCESS;
+	}
 
 	if (roi->width % 16 || (uintptr_t)pSrc % 16 || srcStep % 16)
+	{
 		return generic->RGBToAVC444YUVv2(pSrc, srcFormat, srcStep, pDst1, dst1Step, pDst2, dst2Step,
 		                                 roi);
+	}
 
 	for (UINT32 y = 0; y < roi->height; y += 2)
 	{
@@ -1086,7 +1112,8 @@ static pstatus_t ssse3_LumaToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[],
                                     const UINT32 srcStep[], BYTE* WINPR_RESTRICT pDstRaw[],
                                     const UINT32 dstStep[], const RECTANGLE_16* WINPR_RESTRICT roi)
 {
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
@@ -1200,7 +1227,8 @@ static pstatus_t ssse3_ChromaFilter(BYTE* WINPR_RESTRICT pDst[], const UINT32 ds
 	const UINT32 halfHeight = (nHeight + 1) / 2;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
 	const UINT32 halfPad = halfWidth % 16;
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 
 	/* Filter */
 	for (y = roi->top; y < halfHeight + roi->top; y++)
@@ -1213,7 +1241,9 @@ static pstatus_t ssse3_ChromaFilter(BYTE* WINPR_RESTRICT pDst[], const UINT32 ds
 		BYTE* pV = pDst[2] + dstStep[2] * val2y;
 
 		if (val2y1 > nHeight)
+		{
 			continue;
+		}
 
 		for (x = roi->left; x < halfWidth + roi->left - halfPad; x += 16)
 		{
@@ -1229,11 +1259,13 @@ static pstatus_t ssse3_ChromaFilter(BYTE* WINPR_RESTRICT pDst[], const UINT32 ds
 			const BYTE inV = pV[val2x];
 			const INT32 up = inU * 4;
 			const INT32 vp = inV * 4;
-			INT32 u2020;
-			INT32 v2020;
+			INT32 u2020 = 0;
+			INT32 v2020 = 0;
 
 			if (val2x1 > nWidth)
+			{
 				continue;
+			}
 
 			u2020 = up - pU[val2x1] - pU1[val2x] - pU1[val2x1];
 			v2020 = vp - pV[val2x1] - pV1[val2x] - pV1[val2x1];
@@ -1253,7 +1285,8 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw
 	const UINT32 mod = 16;
 	UINT32 uY = 0;
 	UINT32 vY = 0;
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
@@ -1280,14 +1313,16 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw
 	for (y = 0; y < padHeigth; y++)
 	{
 		const BYTE* Ya = pSrc[0] + srcStep[0] * y;
-		BYTE* pX;
+		BYTE* pX = NULL;
 
 		if ((y) % mod < (mod + 1) / 2)
 		{
 			const UINT32 pos = (2 * uY++ + oddY);
 
 			if (pos >= nHeight)
+			{
 				continue;
+			}
 
 			pX = pDst[1] + dstStep[1] * pos;
 		}
@@ -1296,7 +1331,9 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw
 			const UINT32 pos = (2 * vY++ + oddY);
 
 			if (pos >= nHeight)
+			{
 				continue;
+			}
 
 			pX = pDst[2] + dstStep[2] * pos;
 		}
@@ -1345,11 +1382,11 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw
 
 static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[3],
                                         const UINT32 srcStep[3], UINT32 nTotalWidth,
-                                        UINT32 nTotalHeight, BYTE* WINPR_RESTRICT pDst[3],
-                                        const UINT32 dstStep[3],
+                                        BYTE* WINPR_RESTRICT pDst[3], const UINT32 dstStep[3],
                                         const RECTANGLE_16* WINPR_RESTRICT roi)
 {
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
@@ -1465,13 +1502,19 @@ static pstatus_t ssse3_YUV420CombineToYUV444(avc444_frame_type type,
                                              const RECTANGLE_16* WINPR_RESTRICT roi)
 {
 	if (!pSrc || !pSrc[0] || !pSrc[1] || !pSrc[2])
+	{
 		return -1;
+	}
 
 	if (!pDst || !pDst[0] || !pDst[1] || !pDst[2])
+	{
 		return -1;
+	}
 
 	if (!roi)
+	{
 		return -1;
+	}
 
 	switch (type)
 	{
@@ -1482,7 +1525,7 @@ static pstatus_t ssse3_YUV420CombineToYUV444(avc444_frame_type type,
 			return ssse3_ChromaV1ToYUV444(pSrc, srcStep, pDst, dstStep, roi);
 
 		case AVC444_CHROMAv2:
-			return ssse3_ChromaV2ToYUV444(pSrc, srcStep, nWidth, nHeight, pDst, dstStep, roi);
+			return ssse3_ChromaV2ToYUV444(pSrc, srcStep, nWidth, pDst, dstStep, roi);
 
 		default:
 			return -1;

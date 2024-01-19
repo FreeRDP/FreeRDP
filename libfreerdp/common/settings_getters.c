@@ -13,7 +13,9 @@ static void free_string(char** current, BOOL cleanup)
 	if (cleanup)
 	{
 		if (*current)
+		{
 			memset(*current, 0, strlen(*current));
+		}
 		free(*current);
 		(*current) = NULL;
 	}
@@ -34,7 +36,9 @@ static BOOL update_string_copy_(char** current, const char* next, size_t next_le
 	free_string(current, cleanup);
 
 	if (alloc_empty_string(current, next, next_len))
+	{
 		return TRUE;
+	}
 
 	*current = (next ? strndup(next, next_len) : NULL);
 	return !next || (*current != NULL);
@@ -45,7 +49,9 @@ static BOOL update_string_(char** current, char* next, size_t next_len)
 	free_string(current, TRUE);
 
 	if (alloc_empty_string(current, next, next_len))
+	{
 		return TRUE;
+	}
 
 	*current = next;
 	return !next || (*current != NULL);
@@ -3232,8 +3238,8 @@ char* freerdp_settings_get_string_writable(rdpSettings* settings, FreeRDP_Settin
 	}
 }
 
-BOOL freerdp_settings_set_string_(rdpSettings* settings, FreeRDP_Settings_Keys_String id, char* val,
-                                  size_t len)
+BOOL freerdp_settings_set_string_(rdpSettings* settings, FreeRDP_Settings_Keys_String id,
+                                  const char* val, size_t len)
 {
 	union
 	{
@@ -3562,7 +3568,9 @@ BOOL freerdp_settings_set_string(rdpSettings* settings, FreeRDP_Settings_Keys_St
 {
 	size_t len = 0;
 	if (val)
+	{
 		len = strlen(val);
+	}
 	return freerdp_settings_set_string_copy_(settings, id, val, len, TRUE);
 }
 

@@ -51,12 +51,12 @@
 
 #define CONFIG_PRINT_SECTION(section) WLog_INFO(TAG, "\t%s:", section)
 #define CONFIG_PRINT_SECTION_KEY(section, key) WLog_INFO(TAG, "\t%s/%s:", section, key)
-#define CONFIG_PRINT_STR(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, config->key)
+#define CONFIG_PRINT_STR(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, (config)->key)
 #define CONFIG_PRINT_STR_CONTENT(config, key) \
-	WLog_INFO(TAG, "\t\t%s: %s", #key, config->key ? "set" : NULL)
-#define CONFIG_PRINT_BOOL(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, boolstr(config->key))
-#define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu16 "", #key, config->key)
-#define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu32 "", #key, config->key)
+	WLog_INFO(TAG, "\t\t%s: %s", #key, (config)->key ? "set" : NULL)
+#define CONFIG_PRINT_BOOL(config, key) WLog_INFO(TAG, "\t\t%s: %s", #key, boolstr((config)->key))
+#define CONFIG_PRINT_UINT16(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu16 "", #key, (config)->key)
+#define CONFIG_PRINT_UINT32(config, key) WLog_INFO(TAG, "\t\t%s: %" PRIu32 "", #key, (config)->key)
 
 static const char* bool_str_true = "true";
 static const char* bool_str_false = "false";
@@ -124,7 +124,9 @@ static const char* key_cert_content = "CertificateContent";
 static char** pf_config_parse_comma_separated_list(const char* list, size_t* count)
 {
 	if (!list || !count)
+	{
 		return NULL;
+	}
 
 	if (strlen(list) == 0)
 	{
@@ -138,8 +140,8 @@ static char** pf_config_parse_comma_separated_list(const char* list, size_t* cou
 static BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char* key,
                                  UINT16* result, BOOL required)
 {
-	int val;
-	const char* strval;
+	int val = 0;
+	const char* strval = NULL;
 
 	WINPR_ASSERT(result);
 
@@ -163,8 +165,8 @@ static BOOL pf_config_get_uint16(wIniFile* ini, const char* section, const char*
 static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char* key,
                                  UINT32* result, BOOL required)
 {
-	int val;
-	const char* strval;
+	int val = 0;
+	const char* strval = NULL;
 
 	WINPR_ASSERT(result);
 
@@ -172,7 +174,9 @@ static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char*
 	if (!strval)
 	{
 		if (required)
+		{
 			WLog_ERR(TAG, "key '%s.%s' does not exist.", section, key);
+		}
 		return !required;
 	}
 
@@ -189,8 +193,8 @@ static BOOL pf_config_get_uint32(wIniFile* ini, const char* section, const char*
 
 static BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* key, BOOL fallback)
 {
-	int num_value;
-	const char* str_value;
+	int num_value = 0;
+	const char* str_value = NULL;
 
 	str_value = IniFile_GetKeyValueString(ini, section, key);
 	if (!str_value)
@@ -201,14 +205,20 @@ static BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* k
 	}
 
 	if (_stricmp(str_value, bool_str_true) == 0)
+	{
 		return TRUE;
+	}
 	if (_stricmp(str_value, bool_str_false) == 0)
+	{
 		return FALSE;
+	}
 
 	num_value = IniFile_GetKeyValueInt(ini, section, key);
 
 	if (num_value != 0)
+	{
 		return TRUE;
+	}
 
 	return FALSE;
 }
@@ -216,14 +226,16 @@ static BOOL pf_config_get_bool(wIniFile* ini, const char* section, const char* k
 static const char* pf_config_get_str(wIniFile* ini, const char* section, const char* key,
                                      BOOL required)
 {
-	const char* value;
+	const char* value = NULL;
 
 	value = IniFile_GetKeyValueString(ini, section, key);
 
 	if (!value)
 	{
 		if (required)
+		{
 			WLog_ERR(TAG, "key '%s.%s' not found.", section, key);
+		}
 		return NULL;
 	}
 
@@ -232,49 +244,63 @@ static const char* pf_config_get_str(wIniFile* ini, const char* section, const c
 
 static BOOL pf_config_load_server(wIniFile* ini, proxyConfig* config)
 {
-	const char* host;
+	const char* host = NULL;
 
 	WINPR_ASSERT(config);
 	host = pf_config_get_str(ini, section_server, key_host, FALSE);
 
 	if (!host)
+	{
 		return TRUE;
+	}
 
 	config->Host = _strdup(host);
 
 	if (!config->Host)
+	{
 		return FALSE;
+	}
 
 	if (!pf_config_get_uint16(ini, section_server, key_port, &config->Port, TRUE))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
 
 static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 {
-	const char* target_value;
+	const char* target_value = NULL;
 
 	WINPR_ASSERT(config);
 	config->FixedTarget = pf_config_get_bool(ini, section_target, key_target_fixed, FALSE);
 
 	if (!pf_config_get_uint16(ini, section_target, key_port, &config->TargetPort,
 	                          config->FixedTarget))
+	{
 		return FALSE;
+	}
 
 	if (!pf_config_get_uint32(ini, section_target, key_target_tls_seclevel,
 	                          &config->TargetTlsSecLevel, FALSE))
+	{
 		return FALSE;
+	}
 
 	if (config->FixedTarget)
 	{
 		target_value = pf_config_get_str(ini, section_target, key_host, TRUE);
 		if (!target_value)
+		{
 			return FALSE;
+		}
 
 		config->TargetHost = _strdup(target_value);
 		if (!config->TargetHost)
+		{
 			return FALSE;
+		}
 	}
 
 	target_value = pf_config_get_str(ini, section_target, key_target_user, FALSE);
@@ -282,7 +308,9 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	{
 		config->TargetUser = _strdup(target_value);
 		if (!config->TargetUser)
+		{
 			return FALSE;
+		}
 	}
 
 	target_value = pf_config_get_str(ini, section_target, key_target_pwd, FALSE);
@@ -290,7 +318,9 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	{
 		config->TargetPassword = _strdup(target_value);
 		if (!config->TargetPassword)
+		{
 			return FALSE;
+		}
 	}
 
 	target_value = pf_config_get_str(ini, section_target, key_target_domain, FALSE);
@@ -298,7 +328,9 @@ static BOOL pf_config_load_target(wIniFile* ini, proxyConfig* config)
 	{
 		config->TargetDomain = _strdup(target_value);
 		if (!config->TargetDomain)
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -366,15 +398,17 @@ static BOOL pf_config_load_clipboard(wIniFile* ini, proxyConfig* config)
 
 	if (!pf_config_get_uint32(ini, section_clipboard, key_clip_text_max_len, &config->MaxTextLength,
 	                          FALSE))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
 
 static BOOL pf_config_load_modules(wIniFile* ini, proxyConfig* config)
 {
-	const char* modules_to_load;
-	const char* required_modules;
+	const char* modules_to_load = NULL;
+	const char* required_modules = NULL;
 
 	modules_to_load = pf_config_get_str(ini, section_plugins, key_plugins_modules, FALSE);
 	required_modules = pf_config_get_str(ini, section_plugins, key_plugins_required, FALSE);
@@ -421,7 +455,9 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 			const char* header = headers[x];
 
 			if (strncmp(data, header, strlen(header)) == 0)
+			{
 				expected = TRUE;
+			}
 		}
 
 		if (!expected)
@@ -434,7 +470,9 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 			if (end)
 			{
 				while (*end == '-')
+				{
 					end++;
+				}
 
 				const size_t s = MIN(ARRAYSIZE(hdr) - 1, end - data);
 				memcpy(hdr, data, s);
@@ -466,8 +504,8 @@ static char* pf_config_decode_base64(const char* data, const char* name, size_t*
 
 static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 {
-	const char* tmp1;
-	const char* tmp2;
+	const char* tmp1 = NULL;
+	const char* tmp2 = NULL;
 
 	WINPR_ASSERT(ini);
 	WINPR_ASSERT(config);
@@ -485,7 +523,9 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 		config->CertificatePEM =
 		    crypto_read_pem(config->CertificateFile, &config->CertificatePEMLength);
 		if (!config->CertificatePEM)
+		{
 			return FALSE;
+		}
 		config->CertificatePEMLength += 1;
 	}
 	tmp2 = pf_config_get_str(ini, section_certificates, key_cert_content, FALSE);
@@ -500,7 +540,9 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 		config->CertificatePEM = pf_config_decode_base64(
 		    config->CertificateContent, "CertificateContent", &config->CertificatePEMLength);
 		if (!config->CertificatePEM)
+		{
 			return FALSE;
+		}
 	}
 	if (tmp1 && tmp2)
 	{
@@ -510,7 +552,7 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 		         section_certificates, key_cert_file, section_certificates, key_cert_content);
 		return FALSE;
 	}
-	else if (!tmp1 && !tmp2)
+	if (!tmp1 && !tmp2)
 	{
 		WLog_ERR(TAG,
 		         "%s/%s or %s/%s are "
@@ -532,7 +574,9 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 		config->PrivateKeyPEM =
 		    crypto_read_pem(config->PrivateKeyFile, &config->PrivateKeyPEMLength);
 		if (!config->PrivateKeyPEM)
+		{
 			return FALSE;
+		}
 		config->PrivateKeyPEMLength += 1;
 	}
 	tmp2 = pf_config_get_str(ini, section_certificates, key_private_key_content, FALSE);
@@ -548,7 +592,9 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 		config->PrivateKeyPEM = pf_config_decode_base64(
 		    config->PrivateKeyContent, "PrivateKeyContent", &config->PrivateKeyPEMLength);
 		if (!config->PrivateKeyPEM)
+		{
 			return FALSE;
+		}
 	}
 
 	if (tmp1 && tmp2)
@@ -560,7 +606,7 @@ static BOOL pf_config_load_certificates(wIniFile* ini, proxyConfig* config)
 		         key_private_key_content);
 		return FALSE;
 	}
-	else if (!tmp1 && !tmp2)
+	if (!tmp1 && !tmp2)
 	{
 		WLog_ERR(TAG,
 		         "%s/%s or %s/%s are "
@@ -587,34 +633,54 @@ proxyConfig* server_config_load_ini(wIniFile* ini)
 
 		/* Load from ini */
 		if (!pf_config_load_server(ini, config))
+		{
 			goto out;
+		}
 
 		if (!pf_config_load_target(ini, config))
+		{
 			goto out;
+		}
 
 		if (!pf_config_load_channels(ini, config))
+		{
 			goto out;
+		}
 
 		if (!pf_config_load_input(ini, config))
+		{
 			goto out;
+		}
 
 		if (!pf_config_load_security(ini, config))
+		{
 			goto out;
+		}
 
 		if (!pf_config_load_modules(ini, config))
+		{
 			goto out;
+		}
 
 		if (!pf_config_load_clipboard(ini, config))
+		{
 			goto out;
+		}
 
 		if (!pf_config_load_gfx_settings(ini, config))
+		{
 			goto out;
+		}
 
 		if (!pf_config_load_certificates(ini, config))
+		{
 			goto out;
+		}
 		config->ini = IniFile_Clone(ini);
 		if (!config->ini)
+		{
 			goto out;
+		}
 	}
 	return config;
 out:
@@ -627,119 +693,197 @@ BOOL pf_server_config_dump(const char* file)
 	BOOL rc = FALSE;
 	wIniFile* ini = IniFile_New();
 	if (!ini)
+	{
 		return FALSE;
+	}
 
 	/* Proxy server configuration */
 	if (IniFile_SetKeyValueString(ini, section_server, key_host, "0.0.0.0") < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueInt(ini, section_server, key_port, 3389) < 0)
+	{
 		goto fail;
+	}
 
 	/* Target configuration */
 	if (IniFile_SetKeyValueString(ini, section_target, key_host, "somehost.example.com") < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueInt(ini, section_target, key_port, 3389) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_target, key_target_fixed, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueInt(ini, section_target, key_target_tls_seclevel, 1) < 0)
+	{
 		goto fail;
+	}
 
 	/* Channel configuration */
 	if (IniFile_SetKeyValueString(ini, section_channels, key_channels_gfx, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_channels, key_channels_disp, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_channels, key_channels_clip, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_channels, key_channels_mic, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_channels, key_channels_sound, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_channels, key_channels_rdpdr, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_channels, key_channels_video, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_channels, key_channels_camera, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_channels, key_channels_rails, bool_str_false) < 0)
+	{
 		goto fail;
+	}
 
 	if (IniFile_SetKeyValueString(ini, section_channels, key_channels_blacklist, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_channels, key_channels_pass, "") < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_channels, key_channels_intercept, "") < 0)
+	{
 		goto fail;
+	}
 
 	/* Input configuration */
 	if (IniFile_SetKeyValueString(ini, section_input, key_input_kbd, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_input, key_input_mouse, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_input, key_input_multitouch, bool_str_true) < 0)
+	{
 		goto fail;
+	}
 
 	/* Security settings */
 	if (IniFile_SetKeyValueString(ini, section_security, key_security_server_tls, bool_str_true) <
 	    0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_security, key_security_server_nla, bool_str_false) <
 	    0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_security, key_security_server_rdp, bool_str_true) <
 	    0)
+	{
 		goto fail;
+	}
 
 	if (IniFile_SetKeyValueString(ini, section_security, key_security_client_tls, bool_str_true) <
 	    0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_security, key_security_client_nla, bool_str_true) <
 	    0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_security, key_security_client_rdp, bool_str_true) <
 	    0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_security, key_security_client_fallback,
 	                              bool_str_true) < 0)
+	{
 		goto fail;
+	}
 
 	/* Module configuration */
 	if (IniFile_SetKeyValueString(ini, section_plugins, key_plugins_modules,
 	                              "module1,module2,...") < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_plugins, key_plugins_required,
 	                              "module1,module2,...") < 0)
+	{
 		goto fail;
+	}
 
 	/* Clipboard configuration */
 	if (IniFile_SetKeyValueString(ini, section_clipboard, key_clip_text_only, bool_str_false) < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueInt(ini, section_clipboard, key_clip_text_max_len, 0) < 0)
+	{
 		goto fail;
+	}
 
 	/* GFX configuration */
 	if (IniFile_SetKeyValueString(ini, section_gfx_settings, key_gfx_decode, bool_str_false) < 0)
+	{
 		goto fail;
+	}
 
 	/* Certificate configuration */
 	if (IniFile_SetKeyValueString(ini, section_certificates, key_cert_file,
 	                              "<absolute path to some certificate file> OR") < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_certificates, key_cert_content,
 	                              "<Contents of some certificate file in PEM format>") < 0)
+	{
 		goto fail;
+	}
 
 	if (IniFile_SetKeyValueString(ini, section_certificates, key_private_key_file,
 	                              "<absolute path to some private key file> OR") < 0)
+	{
 		goto fail;
+	}
 	if (IniFile_SetKeyValueString(ini, section_certificates, key_private_key_content,
 	                              "<Contents of some private key file in PEM format>") < 0)
+	{
 		goto fail;
+	}
 
 	/* store configuration */
 	if (IniFile_WriteFile(ini, file) < 0)
+	{
 		goto fail;
+	}
 
 	rc = TRUE;
 
@@ -751,7 +895,7 @@ fail:
 proxyConfig* pf_server_config_load_buffer(const char* buffer)
 {
 	proxyConfig* config = NULL;
-	wIniFile* ini;
+	wIniFile* ini = NULL;
 
 	ini = IniFile_New();
 
@@ -798,16 +942,18 @@ out:
 
 static void pf_server_config_print_list(char** list, size_t count)
 {
-	size_t i;
+	size_t i = 0;
 
 	WINPR_ASSERT(list);
 	for (i = 0; i < count; i++)
+	{
 		WLog_INFO(TAG, "\t\t- %s", list[i]);
+	}
 }
 
 void pf_server_config_print(const proxyConfig* config)
 {
-	size_t x;
+	size_t x = 0;
 
 	WINPR_ASSERT(config);
 	WLog_INFO(TAG, "Proxy configuration:");
@@ -824,9 +970,13 @@ void pf_server_config_print(const proxyConfig* config)
 		CONFIG_PRINT_UINT32(config, TargetTlsSecLevel);
 
 		if (config->TargetUser)
+		{
 			CONFIG_PRINT_STR(config, TargetUser);
+		}
 		if (config->TargetDomain)
+		{
 			CONFIG_PRINT_STR(config, TargetDomain);
+		}
 	}
 
 	CONFIG_PRINT_SECTION(section_input);
@@ -870,7 +1020,9 @@ void pf_server_config_print(const proxyConfig* config)
 	CONFIG_PRINT_SECTION(section_clipboard);
 	CONFIG_PRINT_BOOL(config, TextOnly);
 	if (config->MaxTextLength > 0)
+	{
 		CONFIG_PRINT_UINT32(config, MaxTextLength);
+	}
 
 	CONFIG_PRINT_SECTION(section_gfx_settings);
 	CONFIG_PRINT_BOOL(config, DecodeGFX);
@@ -878,12 +1030,16 @@ void pf_server_config_print(const proxyConfig* config)
 	/* modules */
 	CONFIG_PRINT_SECTION_KEY(section_plugins, key_plugins_modules);
 	for (x = 0; x < config->ModulesCount; x++)
+	{
 		CONFIG_PRINT_STR(config, Modules[x]);
+	}
 
 	/* Required plugins */
 	CONFIG_PRINT_SECTION_KEY(section_plugins, key_plugins_required);
 	for (x = 0; x < config->RequiredPluginsCount; x++)
+	{
 		CONFIG_PRINT_STR(config, RequiredPlugins[x]);
+	}
 
 	CONFIG_PRINT_SECTION(section_certificates);
 	CONFIG_PRINT_STR(config, CertificateFile);
@@ -895,7 +1051,9 @@ void pf_server_config_print(const proxyConfig* config)
 void pf_server_config_free(proxyConfig* config)
 {
 	if (config == NULL)
+	{
 		return;
+	}
 
 	free(config->Passthrough);
 	free(config->Intercept);
@@ -906,12 +1064,16 @@ void pf_server_config_free(proxyConfig* config)
 	free(config->CertificateFile);
 	free(config->CertificateContent);
 	if (config->CertificatePEM)
+	{
 		memset(config->CertificatePEM, 0, config->CertificatePEMLength);
+	}
 	free(config->CertificatePEM);
 	free(config->PrivateKeyFile);
 	free(config->PrivateKeyContent);
 	if (config->PrivateKeyPEM)
+	{
 		memset(config->PrivateKeyPEM, 0, config->PrivateKeyPEMLength);
+	}
 	free(config->PrivateKeyPEM);
 	IniFile_Free(config->ini);
 	free(config);
@@ -927,7 +1089,9 @@ const char* pf_config_required_plugin(const proxyConfig* config, size_t index)
 {
 	WINPR_ASSERT(config);
 	if (index >= config->RequiredPluginsCount)
+	{
 		return NULL;
+	}
 
 	return config->RequiredPlugins[index];
 }
@@ -956,7 +1120,9 @@ static BOOL pf_config_copy_string(char** dst, const char* src)
 {
 	*dst = NULL;
 	if (src)
+	{
 		*dst = _strdup(src);
+	}
 	return TRUE;
 }
 
@@ -969,7 +1135,9 @@ static BOOL pf_config_copy_string_n(char** dst, const char* src, size_t size)
 		WINPR_ASSERT(strnlen(src, size) == size - 1);
 		*dst = calloc(size, sizeof(char));
 		if (!*dst)
+		{
 			return FALSE;
+		}
 		memcpy(*dst, src, size);
 	}
 
@@ -985,7 +1153,9 @@ static BOOL pf_config_copy_string_list(char*** dst, size_t* size, char** src, si
 	*dst = NULL;
 	*size = 0;
 	if (srcSize == 0)
+	{
 		return TRUE;
+	}
 	{
 		char* csv = CommandLineToCommaSeparatedValues(srcSize, src);
 		*dst = CommandLineParseCommaSeparatedValues(csv, size);
@@ -1003,45 +1173,73 @@ BOOL pf_config_clone(proxyConfig** dst, const proxyConfig* config)
 	WINPR_ASSERT(config);
 
 	if (!tmp)
+	{
 		return FALSE;
+	}
 
 	*tmp = *config;
 
 	if (!pf_config_copy_string(&tmp->Host, config->Host))
+	{
 		goto fail;
+	}
 	if (!pf_config_copy_string(&tmp->TargetHost, config->TargetHost))
+	{
 		goto fail;
+	}
 
 	if (!pf_config_copy_string_list(&tmp->Passthrough, &tmp->PassthroughCount, config->Passthrough,
 	                                config->PassthroughCount))
+	{
 		goto fail;
+	}
 	if (!pf_config_copy_string_list(&tmp->Intercept, &tmp->InterceptCount, config->Intercept,
 	                                config->InterceptCount))
+	{
 		goto fail;
+	}
 	if (!pf_config_copy_string_list(&tmp->Modules, &tmp->ModulesCount, config->Modules,
 	                                config->ModulesCount))
+	{
 		goto fail;
+	}
 	if (!pf_config_copy_string_list(&tmp->RequiredPlugins, &tmp->RequiredPluginsCount,
 	                                config->RequiredPlugins, config->RequiredPluginsCount))
+	{
 		goto fail;
+	}
 	if (!pf_config_copy_string(&tmp->CertificateFile, config->CertificateFile))
+	{
 		goto fail;
+	}
 	if (!pf_config_copy_string(&tmp->CertificateContent, config->CertificateContent))
+	{
 		goto fail;
+	}
 	if (!pf_config_copy_string_n(&tmp->CertificatePEM, config->CertificatePEM,
 	                             config->CertificatePEMLength))
+	{
 		goto fail;
+	}
 	if (!pf_config_copy_string(&tmp->PrivateKeyFile, config->PrivateKeyFile))
+	{
 		goto fail;
+	}
 	if (!pf_config_copy_string(&tmp->PrivateKeyContent, config->PrivateKeyContent))
+	{
 		goto fail;
+	}
 	if (!pf_config_copy_string_n(&tmp->PrivateKeyPEM, config->PrivateKeyPEM,
 	                             config->PrivateKeyPEMLength))
+	{
 		goto fail;
+	}
 
 	tmp->ini = IniFile_Clone(config->ini);
 	if (!tmp->ini)
+	{
 		goto fail;
+	}
 
 	*dst = tmp;
 	return TRUE;
@@ -1055,7 +1253,7 @@ struct config_plugin_data
 {
 	proxyPluginsManager* mgr;
 	const proxyConfig* config;
-};
+} DECLSPEC_ALIGN(16);
 
 static const char config_plugin_name[] = "config";
 static const char config_plugin_desc[] =
@@ -1077,9 +1275,9 @@ static BOOL config_plugin_unload(proxyPlugin* plugin)
 
 static BOOL config_plugin_keyboard_event(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	BOOL rc;
-	const struct config_plugin_data* custom;
-	const proxyConfig* cfg;
+	BOOL rc = 0;
+	const struct config_plugin_data* custom = NULL;
+	const proxyConfig* cfg = NULL;
 	const proxyKeyboardEventInfo* event_data = (const proxyKeyboardEventInfo*)(param);
 
 	WINPR_ASSERT(plugin);
@@ -1101,9 +1299,9 @@ static BOOL config_plugin_keyboard_event(proxyPlugin* plugin, proxyData* pdata, 
 
 static BOOL config_plugin_unicode_event(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	BOOL rc;
-	const struct config_plugin_data* custom;
-	const proxyConfig* cfg;
+	BOOL rc = 0;
+	const struct config_plugin_data* custom = NULL;
+	const proxyConfig* cfg = NULL;
 	const proxyUnicodeEventInfo* event_data = (const proxyUnicodeEventInfo*)(param);
 
 	WINPR_ASSERT(plugin);
@@ -1125,9 +1323,9 @@ static BOOL config_plugin_unicode_event(proxyPlugin* plugin, proxyData* pdata, v
 
 static BOOL config_plugin_mouse_event(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	BOOL rc;
-	const struct config_plugin_data* custom;
-	const proxyConfig* cfg;
+	BOOL rc = 0;
+	const struct config_plugin_data* custom = NULL;
+	const proxyConfig* cfg = NULL;
 	const proxyMouseEventInfo* event_data = (const proxyMouseEventInfo*)(param);
 
 	WINPR_ASSERT(plugin);
@@ -1148,9 +1346,9 @@ static BOOL config_plugin_mouse_event(proxyPlugin* plugin, proxyData* pdata, voi
 
 static BOOL config_plugin_mouse_ex_event(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	BOOL rc;
-	const struct config_plugin_data* custom;
-	const proxyConfig* cfg;
+	BOOL rc = 0;
+	const struct config_plugin_data* custom = NULL;
+	const proxyConfig* cfg = NULL;
 	const proxyMouseExEventInfo* event_data = (const proxyMouseExEventInfo*)(param);
 
 	WINPR_ASSERT(plugin);
@@ -1198,9 +1396,9 @@ static BOOL config_plugin_server_channel_data(proxyPlugin* plugin, proxyData* pd
 static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
 	pf_utils_channel_mode rc;
-	BOOL accept;
-	const struct config_plugin_data* custom;
-	const proxyConfig* cfg;
+	BOOL accept = 0;
+	const struct config_plugin_data* custom = NULL;
+	const proxyConfig* cfg = NULL;
 	const proxyChannelDataEventInfo* channel = (const proxyChannelDataEventInfo*)(param);
 
 	WINPR_ASSERT(plugin);
@@ -1231,31 +1429,49 @@ static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData*
 	{
 		if (strncmp(RDPGFX_DVC_CHANNEL_NAME, channel->channel_name,
 		            sizeof(RDPGFX_DVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->GFX;
+		}
 		else if (strncmp(RDPSND_DVC_CHANNEL_NAME, channel->channel_name,
 		                 sizeof(RDPSND_DVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->AudioOutput;
+		}
 		else if (strncmp(RDPSND_LOSSY_DVC_CHANNEL_NAME, channel->channel_name,
 		                 sizeof(RDPSND_LOSSY_DVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->AudioOutput;
+		}
 		else if (strncmp(AUDIN_DVC_CHANNEL_NAME, channel->channel_name,
 		                 sizeof(AUDIN_DVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->AudioInput;
+		}
 		else if (strncmp(RDPEI_DVC_CHANNEL_NAME, channel->channel_name,
 		                 sizeof(RDPEI_DVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->Multitouch;
+		}
 		else if (strncmp(TSMF_DVC_CHANNEL_NAME, channel->channel_name,
 		                 sizeof(TSMF_DVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->VideoRedirection;
+		}
 		else if (strncmp(VIDEO_CONTROL_DVC_CHANNEL_NAME, channel->channel_name,
 		                 sizeof(VIDEO_CONTROL_DVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->VideoRedirection;
+		}
 		else if (strncmp(VIDEO_DATA_DVC_CHANNEL_NAME, channel->channel_name,
 		                 sizeof(VIDEO_DATA_DVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->VideoRedirection;
+		}
 		else if (strncmp(RDPECAM_DVC_CHANNEL_NAME, channel->channel_name,
 		                 sizeof(RDPECAM_DVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->CameraRedirection;
+		}
 	}
 
 	WLog_DBG(TAG, "%s [0x%04" PRIx16 "]: %s", channel->channel_name, channel->channel_id,
@@ -1266,9 +1482,9 @@ static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData*
 static BOOL config_plugin_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
 	pf_utils_channel_mode rc;
-	BOOL accept;
-	const struct config_plugin_data* custom;
-	const proxyConfig* cfg;
+	BOOL accept = 0;
+	const struct config_plugin_data* custom = NULL;
+	const proxyConfig* cfg = NULL;
 	const proxyChannelDataEventInfo* channel = (const proxyChannelDataEventInfo*)(param);
 
 	WINPR_ASSERT(plugin);
@@ -1297,19 +1513,29 @@ static BOOL config_plugin_channel_create(proxyPlugin* plugin, proxyData* pdata, 
 	{
 		if (strncmp(CLIPRDR_SVC_CHANNEL_NAME, channel->channel_name,
 		            sizeof(CLIPRDR_SVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->Clipboard;
+		}
 		else if (strncmp(RDPSND_CHANNEL_NAME, channel->channel_name, sizeof(RDPSND_CHANNEL_NAME)) ==
 		         0)
+		{
 			accept = cfg->AudioOutput;
+		}
 		else if (strncmp(RDPDR_SVC_CHANNEL_NAME, channel->channel_name,
 		                 sizeof(RDPDR_SVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->DeviceRedirection;
+		}
 		else if (strncmp(DISP_DVC_CHANNEL_NAME, channel->channel_name,
 		                 sizeof(DISP_DVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->DisplayControl;
+		}
 		else if (strncmp(RAIL_SVC_CHANNEL_NAME, channel->channel_name,
 		                 sizeof(RAIL_SVC_CHANNEL_NAME)) == 0)
+		{
 			accept = cfg->RemoteApp;
+		}
 	}
 
 	WLog_DBG(TAG, "%s [static]: %s", channel->channel_name, boolstr(accept));
@@ -1318,7 +1544,7 @@ static BOOL config_plugin_channel_create(proxyPlugin* plugin, proxyData* pdata, 
 
 BOOL pf_config_plugin(proxyPluginsManager* plugins_manager, void* userdata)
 {
-	struct config_plugin_data* custom;
+	struct config_plugin_data* custom = NULL;
 	proxyPlugin plugin = { 0 };
 
 	plugin.name = config_plugin_name;
@@ -1337,7 +1563,9 @@ BOOL pf_config_plugin(proxyPluginsManager* plugins_manager, void* userdata)
 
 	custom = calloc(1, sizeof(struct config_plugin_data));
 	if (!custom)
+	{
 		return FALSE;
+	}
 
 	custom->mgr = plugins_manager;
 	custom->config = userdata;

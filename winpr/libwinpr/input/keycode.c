@@ -849,7 +849,7 @@ static DWORD KEYCODE_TO_VKCODE_XKB[256] = {
 
 DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, WINPR_KEYCODE_TYPE type)
 {
-	DWORD vkcode;
+	DWORD vkcode = 0;
 
 	vkcode = VK_NONE;
 
@@ -857,31 +857,39 @@ DWORD GetVirtualKeyCodeFromKeycode(DWORD keycode, WINPR_KEYCODE_TYPE type)
 	{
 		case WINPR_KEYCODE_TYPE_APPLE:
 			if (keycode < 0xFF)
+			{
 				vkcode = KEYCODE_TO_VKCODE_APPLE[keycode & 0xFF];
+			}
 			break;
 		case WINPR_KEYCODE_TYPE_EVDEV:
 			if (keycode < 0xFF)
+			{
 				vkcode = KEYCODE_TO_VKCODE_EVDEV[keycode & 0xFF];
+			}
 			break;
 		case WINPR_KEYCODE_TYPE_XKB:
 			if (keycode < 0xFF)
+			{
 				vkcode = KEYCODE_TO_VKCODE_XKB[keycode & 0xFF];
+			}
 			break;
 		default:
 			break;
 	}
 
 	if (!vkcode)
+	{
 		vkcode = VK_NONE;
+	}
 
 	return vkcode;
 }
 
 DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, WINPR_KEYCODE_TYPE type)
 {
-	DWORD index;
-	DWORD* targetArray;
-	size_t targetSize;
+	DWORD index = 0;
+	DWORD* targetArray = NULL;
+	size_t targetSize = 0;
 
 	switch (type)
 	{
@@ -904,7 +912,9 @@ DWORD GetKeycodeFromVirtualKeyCode(DWORD vkcode, WINPR_KEYCODE_TYPE type)
 	for (index = 0; index < targetSize; index++)
 	{
 		if (vkcode == targetArray[index])
+		{
 			return index;
+		}
 	}
 
 	return 0;

@@ -83,7 +83,7 @@ typedef struct
 
 	size_t id_sequence;
 	size_t references;
-} rdpCupsPrinterDriver;
+} DECLSPEC_ALIGN(64) rdpCupsPrinterDriver;
 
 typedef struct
 {
@@ -91,14 +91,14 @@ typedef struct
 
 	http_t* printjob_object;
 	int printjob_id;
-} rdpCupsPrintJob;
+} DECLSPEC_ALIGN(64) rdpCupsPrintJob;
 
 typedef struct
 {
 	rdpPrinter printer;
 
 	rdpCupsPrintJob* printjob;
-} rdpCupsPrinter;
+} DECLSPEC_ALIGN(128) rdpCupsPrinter;
 
 static void printer_cups_get_printjob_name(char* buf, size_t size, size_t id)
 {
@@ -134,7 +134,9 @@ static UINT write_printjob(rdpPrintJob* printjob, const BYTE* data, size_t size)
 	http_status_t rc =
 	    cupsWriteRequestData(cups_printjob->printjob_object, (const char*)data, size);
 	if (!http_status_ok(rc))
+	{
 		WLog_WARN(TAG, "cupsWriteRequestData returned %s", httpStatus(rc));
+	}
 
 	return CHANNEL_RC_OK;
 }
@@ -155,13 +157,15 @@ static UINT printer_cups_write_printjob(rdpPrintJob* printjob, const BYTE* data,
 static void printer_cups_close_printjob(rdpPrintJob* printjob)
 {
 	rdpCupsPrintJob* cups_printjob = (rdpCupsPrintJob*)printjob;
-	rdpCupsPrinter* cups_printer;
+	rdpCupsPrinter* cups_printer = NULL;
 
 	WINPR_ASSERT(cups_printjob);
 
 	ipp_status_t rc = cupsFinishDocument(cups_printjob->printjob_object, printjob->printer->name);
 	if (rc != IPP_OK)
+	{
 		WLog_WARN(TAG, "cupsFinishDocument returned %s", ippErrorString(rc));
+	}
 
 	cups_printjob->printjob_id = 0;
 	httpClose(cups_printjob->printjob_object);
@@ -176,7 +180,7 @@ static void printer_cups_close_printjob(rdpPrintJob* printjob)
 static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 {
 	rdpCupsPrinter* cups_printer = (rdpCupsPrinter*)printer;
-	rdpCupsPrintJob* cups_printjob;
+	rdpCupsPrintJob* cups_printjob = NULL;
 
 	WINPR_ASSERT(cups_printer);
 
@@ -188,7 +192,9 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 
 	cups_printjob = (rdpCupsPrintJob*)calloc(1, sizeof(rdpCupsPrintJob));
 	if (!cups_printjob)
+	{
 		return NULL;
+	}
 
 	cups_printjob->printjob.id = id;
 	cups_printjob->printjob.printer = printer;
@@ -226,8 +232,10 @@ static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 		http_status_t rc = cupsStartDocument(cups_printjob->printjob_object, printer->name,
 		                                     cups_printjob->printjob_id, buf, CUPS_FORMAT_AUTO, 1);
 		if (!http_status_ok(rc))
+		{
 			WLog_WARN(TAG, "cupsStartDocument [printer '%s', driver '%s'] returned %s",
 			          printer->name, printer->driver, httpStatus(rc));
+		}
 	}
 
 	cups_printer->printjob = cups_printjob;
@@ -242,9 +250,13 @@ static rdpPrintJob* printer_cups_find_printjob(rdpPrinter* printer, UINT32 id)
 	WINPR_ASSERT(cups_printer);
 
 	if (cups_printer->printjob == NULL)
+	{
 		return NULL;
+	}
 	if (cups_printer->printjob->printjob.id != id)
+	{
 		return NULL;
+	}
 
 	return &cups_printer->printjob->printjob;
 }
@@ -274,37 +286,51 @@ static void printer_cups_free_printer(rdpPrinter* printer)
 static void printer_cups_add_ref_printer(rdpPrinter* printer)
 {
 	if (printer)
+	{
 		printer->references++;
+	}
 }
 
 static void printer_cups_release_ref_printer(rdpPrinter* printer)
 {
 	if (!printer)
+	{
 		return;
+	}
 	if (printer->references <= 1)
+	{
 		printer_cups_free_printer(printer);
+	}
 	else
+	{
 		printer->references--;
+	}
 }
 
 static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, const char* name,
                                             const char* driverName, BOOL is_default)
 {
-	rdpCupsPrinter* cups_printer;
+	rdpCupsPrinter* cups_printer = NULL;
 
 	cups_printer = (rdpCupsPrinter*)calloc(1, sizeof(rdpCupsPrinter));
 	if (!cups_printer)
+	{
 		return NULL;
+	}
 
 	cups_printer->printer.backend = &cups_driver->driver;
 
 	cups_printer->printer.id = cups_driver->id_sequence++;
 	cups_printer->printer.name = _strdup(name);
 	if (!cups_printer->printer.name)
+	{
 		goto fail;
+	}
 
 	if (driverName)
+	{
 		cups_printer->printer.driver = _strdup(driverName);
+	}
 	else
 	{
 		const char* dname = "MS Publisher Imagesetter";
@@ -315,7 +341,9 @@ static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, c
 		cups_printer->printer.driver = _strdup(dname);
 	}
 	if (!cups_printer->printer.driver)
+	{
 		goto fail;
+	}
 
 	cups_printer->printer.is_default = is_default;
 
@@ -344,7 +372,9 @@ static void printer_cups_release_enum_printers(rdpPrinter** printers)
 	while ((cur != NULL) && ((*cur) != NULL))
 	{
 		if ((*cur)->ReleaseRef)
+		{
 			(*cur)->ReleaseRef(*cur);
+		}
 		cur++;
 	}
 	free(printers);
@@ -356,15 +386,19 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	int num_printers = 0;
 	cups_dest_t* dests = NULL;
 	cups_dest_t* dest = NULL;
-	int i;
+	int i = 0;
 	BOOL haveDefault = FALSE;
 	const int num_dests = cupsGetDests(&dests);
 
 	WINPR_ASSERT(driver);
 	if (num_dests >= 0)
+	{
 		printers = (rdpPrinter**)calloc((size_t)num_dests + 1, sizeof(rdpPrinter*));
+	}
 	if (!printers)
+	{
 		return NULL;
+	}
 
 	for (i = 0, dest = dests; i < num_dests; i++, dest++)
 	{
@@ -380,7 +414,9 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 			}
 
 			if (current->is_default)
+			{
 				haveDefault = TRUE;
+			}
 
 			printers[num_printers++] = current;
 		}
@@ -390,7 +426,9 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	if (!haveDefault && (num_dests > 0) && printers)
 	{
 		if (printers[0])
+		{
 			printers[0]->is_default = TRUE;
+		}
 	}
 
 	return printers;
@@ -409,7 +447,9 @@ static void printer_cups_add_ref_driver(rdpPrinterDriver* driver)
 {
 	rdpCupsPrinterDriver* cups_driver = (rdpCupsPrinterDriver*)driver;
 	if (cups_driver)
+	{
 		cups_driver->references++;
+	}
 }
 
 /* Singleton */
@@ -424,25 +464,33 @@ static void printer_cups_release_ref_driver(rdpPrinterDriver* driver)
 	if (cups_driver->references <= 1)
 	{
 		if (uniq_cups_driver == cups_driver)
+		{
 			uniq_cups_driver = NULL;
+		}
 		free(cups_driver);
 	}
 	else
+	{
 		cups_driver->references--;
+	}
 }
 
 FREERDP_ENTRY_POINT(UINT cups_freerdp_printer_client_subsystem_entry(void* arg))
 {
 	rdpPrinterDriver** ppPrinter = (rdpPrinterDriver**)arg;
 	if (!ppPrinter)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (!uniq_cups_driver)
 	{
 		uniq_cups_driver = (rdpCupsPrinterDriver*)calloc(1, sizeof(rdpCupsPrinterDriver));
 
 		if (!uniq_cups_driver)
+		{
 			return ERROR_OUTOFMEMORY;
+		}
 
 		uniq_cups_driver->driver.EnumPrinters = printer_cups_enum_printers;
 		uniq_cups_driver->driver.ReleaseEnumPrinters = printer_cups_release_enum_printers;

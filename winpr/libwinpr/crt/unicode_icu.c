@@ -60,9 +60,13 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 
 	size_t len = 0;
 	if (isNullTerminated)
+	{
 		len = strlen(lpMultiByteStr) + 1;
+	}
 	else
+	{
 		len = cbMultiByte;
+	}
 
 	if (len >= INT_MAX)
 	{
@@ -98,7 +102,9 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 		    ucnv_convert("UTF-16LE", "UTF-8", targetStart, targetCapacity * (int32_t)sizeof(WCHAR),
 		                 lpMultiByteStr, cbMultiByte, &error);
 		if (targetLength > 0)
+		{
 			targetLength /= sizeof(WCHAR);
+		}
 #else
 		WCHAR* targetStart = lpWideCharStr;
 		u_strFromUTF8(targetStart, targetCapacity, &targetLength, lpMultiByteStr, cbMultiByte,
@@ -116,7 +122,9 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
 				}
 				else
+				{
 					cchWideChar = targetLength;
+				}
 				break;
 			case U_STRING_NOT_TERMINATED_WARNING:
 				cchWideChar = targetLength;
@@ -135,7 +143,9 @@ int int_MultiByteToWideChar(UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr,
 					SetLastError(ERROR_NO_UNICODE_TRANSLATION);
 				}
 				else
+				{
 					cchWideChar = targetLength;
+				}
 				break;
 		}
 	}
@@ -159,9 +169,13 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 
 	size_t len = 0;
 	if (cchWideChar == -1)
+	{
 		len = _wcslen(lpWideCharStr) + 1;
+	}
 	else
+	{
 		len = cchWideChar;
+	}
 
 	if (len >= INT32_MAX)
 	{
@@ -210,7 +224,9 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 					SetLastError(ERROR_INSUFFICIENT_BUFFER);
 				}
 				else
+				{
 					cbMultiByte = targetLength;
+				}
 				break;
 			case U_STRING_NOT_TERMINATED_WARNING:
 				cbMultiByte = targetLength;
@@ -229,7 +245,9 @@ int int_WideCharToMultiByte(UINT CodePage, DWORD dwFlags, LPCWSTR lpWideCharStr,
 					SetLastError(ERROR_NO_UNICODE_TRANSLATION);
 				}
 				else
+				{
 					cbMultiByte = targetLength;
+				}
 				break;
 		}
 	}

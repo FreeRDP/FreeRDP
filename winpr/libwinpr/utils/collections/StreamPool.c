@@ -39,7 +39,7 @@ struct s_wStreamPool
 	CRITICAL_SECTION lock;
 	BOOL synchronized;
 	size_t defaultSize;
-};
+} DECLSPEC_ALIGN(128);
 
 /**
  * Lock the stream pool
@@ -49,7 +49,9 @@ static INLINE void StreamPool_Lock(wStreamPool* pool)
 {
 	WINPR_ASSERT(pool);
 	if (pool->synchronized)
+	{
 		EnterCriticalSection(&pool->lock);
+	}
 }
 
 /**
@@ -60,15 +62,17 @@ static INLINE void StreamPool_Unlock(wStreamPool* pool)
 {
 	WINPR_ASSERT(pool);
 	if (pool->synchronized)
+	{
 		LeaveCriticalSection(&pool->lock);
+	}
 }
 
 static BOOL StreamPool_EnsureCapacity(wStreamPool* pool, size_t count, BOOL usedOrAvailable)
 {
 	size_t new_cap = 0;
-	size_t* cap;
-	size_t* size;
-	wStream*** array;
+	size_t* cap = NULL;
+	size_t* size = NULL;
+	wStream*** array = NULL;
 
 	WINPR_ASSERT(pool);
 
@@ -76,22 +80,32 @@ static BOOL StreamPool_EnsureCapacity(wStreamPool* pool, size_t count, BOOL used
 	size = (usedOrAvailable) ? &pool->uSize : &pool->aSize;
 	array = (usedOrAvailable) ? &pool->uArray : &pool->aArray;
 	if (*cap == 0)
+	{
 		new_cap = *size + count;
+	}
 	else if (*size + count > *cap)
+	{
 		new_cap = *cap * 2;
+	}
 	else if ((*size + count) < *cap / 3)
+	{
 		new_cap = *cap / 2;
+	}
 
 	if (new_cap > 0)
 	{
-		wStream** new_arr;
+		wStream** new_arr = NULL;
 
 		if (*cap < *size + count)
+		{
 			*cap += count;
+		}
 
 		new_arr = (wStream**)realloc(*array, sizeof(wStream*) * new_cap);
 		if (!new_arr)
+		{
 			return FALSE;
+		}
 		*cap = new_cap;
 		*array = new_arr;
 	}
@@ -143,7 +157,7 @@ static void StreamPool_AddUsed(wStreamPool* pool, wStream* s)
 
 static void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 {
-	size_t index;
+	size_t index = 0;
 	BOOL found = FALSE;
 
 	WINPR_ASSERT(pool);
@@ -157,7 +171,9 @@ static void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 	}
 
 	if (found)
+	{
 		StreamPool_ShiftUsed(pool, index, -1);
+	}
 }
 
 static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index, INT64 count)
@@ -192,14 +208,16 @@ static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index, INT64 cou
 
 wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 {
-	size_t index;
-	SSIZE_T foundIndex;
+	size_t index = 0;
+	SSIZE_T foundIndex = 0;
 	wStream* s = NULL;
 
 	StreamPool_Lock(pool);
 
 	if (size == 0)
+	{
 		size = pool->defaultSize;
+	}
 
 	foundIndex = -1;
 
@@ -218,7 +236,9 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	{
 		s = Stream_New(NULL, size);
 		if (!s)
+		{
 			goto out_fail;
+		}
 	}
 	else
 	{
@@ -262,9 +282,13 @@ static void StreamPool_ReleaseOrReturn(wStreamPool* pool, wStream* s)
 {
 	StreamPool_Lock(pool);
 	if (s->count > 0)
+	{
 		s->count--;
+	}
 	if (s->count == 0)
+	{
 		StreamPool_Remove(pool, s);
+	}
 	StreamPool_Unlock(pool);
 }
 
@@ -272,7 +296,9 @@ void StreamPool_Return(wStreamPool* pool, wStream* s)
 {
 	WINPR_ASSERT(pool);
 	if (!s)
+	{
 		return;
+	}
 
 	StreamPool_Lock(pool);
 	StreamPool_Remove(pool, s);
@@ -302,16 +328,18 @@ void Stream_Release(wStream* s)
 {
 	WINPR_ASSERT(s);
 	if (s->pool)
+	{
 		StreamPool_ReleaseOrReturn(s->pool, s);
+	}
 }
 
 /**
  * Find stream in pool using pointer inside buffer
  */
 
-wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
+wStream* StreamPool_Find(wStreamPool* pool, const BYTE* ptr)
 {
-	size_t index;
+	size_t index = 0;
 	wStream* s = NULL;
 	BOOL found = FALSE;
 
@@ -372,9 +400,13 @@ wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize)
 		pool->defaultSize = defaultSize;
 
 		if (!StreamPool_EnsureCapacity(pool, 32, FALSE))
+		{
 			goto fail;
+		}
 		if (!StreamPool_EnsureCapacity(pool, 32, TRUE))
+		{
 			goto fail;
+		}
 
 		InitializeCriticalSectionAndSpinCount(&pool->lock, 4000);
 	}
@@ -405,7 +437,9 @@ char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size)
 	WINPR_ASSERT(pool);
 
 	if (!buffer || (size < 1))
+	{
 		return NULL;
+	}
 	_snprintf(buffer, size - 1,
 	          "aSize    =%" PRIuz ", uSize    =%" PRIuz "aCapacity=%" PRIuz ", uCapacity=%" PRIuz,
 	          pool->aSize, pool->uSize, pool->aCapacity, pool->uCapacity);

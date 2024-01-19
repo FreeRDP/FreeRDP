@@ -28,25 +28,33 @@
 
 void er_read_length(wStream* s, int* length)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	Stream_Read_UINT8(s, byte);
 
 	if (!length)
+	{
 		return;
+	}
 
 	*length = 0;
 	if (!s)
+	{
 		return;
+	}
 
 	if (byte & 0x80)
 	{
 		byte &= ~(0x80);
 
 		if (byte == 1)
+		{
 			Stream_Read_UINT8(s, *length);
+		}
 		if (byte == 2)
+		{
 			Stream_Read_UINT16_BE(s, *length);
+		}
 	}
 	else
 	{
@@ -63,25 +71,28 @@ void er_read_length(wStream* s, int* length)
 int er_write_length(wStream* s, int length, BOOL flag)
 {
 	if (flag)
+	{
 		return der_write_length(s, length);
-	else
-		return ber_write_length(s, length);
+	}
+	return ber_write_length(s, length);
 }
 
 int _er_skip_length(int length)
 {
 	if (length > 0x7F)
+	{
 		return 3;
-	else
-		return 1;
+	}
+	return 1;
 }
 
 int er_get_content_length(int length)
 {
 	if (length - 1 > 0x7F)
+	{
 		return length - 4;
-	else
-		return length - 2;
+	}
+	return length - 2;
 }
 
 /**
@@ -93,12 +104,14 @@ int er_get_content_length(int length)
 
 BOOL er_read_universal_tag(wStream* s, BYTE tag, BOOL pc)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	Stream_Read_UINT8(s, byte);
 
 	if (byte != (ER_CLASS_UNIV | ER_PC(pc) | (ER_TAG_MASK & tag)))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -124,19 +137,23 @@ void er_write_universal_tag(wStream* s, BYTE tag, BOOL pc)
 
 BOOL er_read_application_tag(wStream* s, BYTE tag, int* length)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	if (tag > 30)
 	{
 		Stream_Read_UINT8(s, byte);
 
 		if (byte != ((ER_CLASS_APPL | ER_CONSTRUCT) | ER_TAG_MASK))
+		{
 			return FALSE;
+		}
 
 		Stream_Read_UINT8(s, byte);
 
 		if (byte != tag)
+		{
 			return FALSE;
+		}
 
 		er_read_length(s, length);
 	}
@@ -145,7 +162,9 @@ BOOL er_read_application_tag(wStream* s, BYTE tag, int* length)
 		Stream_Read_UINT8(s, byte);
 
 		if (byte != ((ER_CLASS_APPL | ER_CONSTRUCT) | (ER_TAG_MASK & tag)))
+		{
 			return FALSE;
+		}
 
 		er_read_length(s, length);
 	}
@@ -177,7 +196,7 @@ void er_write_application_tag(wStream* s, BYTE tag, int length, BOOL flag)
 
 BOOL er_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	Stream_Read_UINT8(s, byte);
 
@@ -205,12 +224,14 @@ int er_skip_contextual_tag(int length)
 
 BOOL er_read_sequence_tag(wStream* s, int* length)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	Stream_Read_UINT8(s, byte);
 
 	if (byte != ((ER_CLASS_UNIV | ER_CONSTRUCT) | (ER_TAG_SEQUENCE_OF)))
+	{
 		return FALSE;
+	}
 
 	er_read_length(s, length);
 
@@ -247,13 +268,19 @@ BOOL er_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 	er_read_length(s, &length);
 
 	if (length == 1)
+	{
 		Stream_Read_UINT8(s, *enumerated);
+	}
 	else
+	{
 		return FALSE;
+	}
 
 	/* check that enumerated value falls within expected range */
 	if (*enumerated + 1 > count)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -285,7 +312,9 @@ BOOL er_write_bit_string_tag(wStream* s, UINT32 length, BYTE padding, BOOL flag)
 BOOL er_read_octet_string(wStream* s, int* length)
 {
 	if (!er_read_universal_tag(s, ER_TAG_OCTET_STRING, FALSE))
+	{
 		return FALSE;
+	}
 	er_read_length(s, length);
 
 	return TRUE;
@@ -326,13 +355,17 @@ int er_skip_octet_string(int length)
 BOOL er_read_BOOL(wStream* s, BOOL* value)
 {
 	int length = 0;
-	BYTE v;
+	BYTE v = 0;
 
 	if (!er_read_universal_tag(s, ER_TAG_BOOLEAN, FALSE))
+	{
 		return FALSE;
+	}
 	er_read_length(s, &length);
 	if (length != 1)
+	{
 		return FALSE;
+	}
 	Stream_Read_UINT8(s, v);
 	*value = (v ? TRUE : FALSE);
 	return TRUE;
@@ -374,7 +407,7 @@ BOOL er_read_integer(wStream* s, UINT32* value)
 	}
 	else if (length == 3)
 	{
-		BYTE byte;
+		BYTE byte = 0;
 		Stream_Read_UINT8(s, byte);
 		Stream_Read_UINT16_BE(s, *value);
 		*value += (byte << 16);
@@ -407,7 +440,7 @@ int er_write_integer(wStream* s, INT32 value)
 		Stream_Write_UINT8(s, value);
 		return 2;
 	}
-	else if (value <= 32767 && value >= -32768)
+	if (value <= 32767 && value >= -32768)
 	{
 		er_write_length(s, 2, FALSE);
 		Stream_Write_UINT16_BE(s, value);
@@ -427,7 +460,7 @@ int er_skip_integer(INT32 value)
 	{
 		return _er_skip_length(1) + 2;
 	}
-	else if (value <= 32767 && value >= -32768)
+	if (value <= 32767 && value >= -32768)
 	{
 		return _er_skip_length(2) + 3;
 	}

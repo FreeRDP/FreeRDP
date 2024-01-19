@@ -33,14 +33,14 @@ typedef struct
 {
 	const char* variant;     /* XKB Keyboard layout variant */
 	UINT32 keyboardLayoutID; /* Keyboard Layout ID */
-} XKB_VARIANT;
+} DECLSPEC_ALIGN(16) XKB_VARIANT;
 
 typedef struct
 {
 	const char* layout;      /* XKB Keyboard layout */
 	UINT32 keyboardLayoutID; /* Keyboard Layout ID */
 	const XKB_VARIANT* variants;
-} XKB_LAYOUT;
+} DECLSPEC_ALIGN(32) XKB_LAYOUT;
 
 /* Those have been generated automatically and are waiting to be filled by hand */
 
@@ -838,7 +838,9 @@ static UINT32 find_keyboard_layout_variant(const XKB_LAYOUT* layout, const char*
 		while (var->variant && (strlen(var->variant) != 0))
 		{
 			if (strcmp(var->variant, variant) == 0)
+			{
 				return var->keyboardLayoutID;
+			}
 			var++;
 		}
 	}
@@ -849,7 +851,9 @@ static UINT32 find_keyboard_layout_variant(const XKB_LAYOUT* layout, const char*
 UINT32 find_keyboard_layout_in_xorg_rules(const char* layout, const char* variant)
 {
 	if ((layout == NULL) || (variant == NULL))
+	{
 		return 0;
+	}
 
 	DEBUG_KBD("xkbLayout: %s\txkbVariant: %s", layout, variant);
 
@@ -857,7 +861,9 @@ UINT32 find_keyboard_layout_in_xorg_rules(const char* layout, const char* varian
 	{
 		const XKB_LAYOUT* cur = &xkbLayouts[i];
 		if (strcmp(cur->layout, layout) == 0)
+		{
 			return find_keyboard_layout_variant(cur, variant);
+		}
 	}
 
 	return 0;

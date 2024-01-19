@@ -45,17 +45,19 @@
 
 BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSize)
 {
-	char* buf;
-	int buflen;
-	int status;
-	DWORD cchDirSize;
+	char* buf = NULL;
+	int buflen = 0;
+	int status = 0;
+	DWORD cchDirSize = 0;
 	struct passwd pwd;
 	struct passwd* pw = NULL;
-	WINPR_ACCESS_TOKEN* token;
+	WINPR_ACCESS_TOKEN* token = NULL;
 	token = (WINPR_ACCESS_TOKEN*)hToken;
 
 	if (!AccessTokenIsValid(hToken))
+	{
 		return FALSE;
+	}
 
 	if (!lpcchSize)
 	{
@@ -66,12 +68,16 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 	buflen = sysconf(_SC_GETPW_R_SIZE_MAX);
 
 	if (buflen == -1)
+	{
 		buflen = 8196;
+	}
 
 	buf = (char*)malloc(buflen);
 
 	if (!buf)
+	{
 		return FALSE;
+	}
 
 	status = getpwnam_r(token->Username, &pwd, buf, buflen, &pw);
 
@@ -101,9 +107,9 @@ BOOL GetUserProfileDirectoryA(HANDLE hToken, LPSTR lpProfileDir, LPDWORD lpcchSi
 
 BOOL GetUserProfileDirectoryW(HANDLE hToken, LPWSTR lpProfileDir, LPDWORD lpcchSize)
 {
-	BOOL bStatus;
-	DWORD cchSizeA;
-	LPSTR lpProfileDirA;
+	BOOL bStatus = 0;
+	DWORD cchSizeA = 0;
+	LPSTR lpProfileDirA = NULL;
 
 	if (!lpcchSize)
 	{

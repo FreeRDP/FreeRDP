@@ -35,7 +35,7 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 {
 	const INT16* sptr = (const INT16*)pSrc;
 	INT16* dptr = (INT16*)pDst;
-	size_t count;
+	size_t count = 0;
 
 	if (len < 16)
 	{
@@ -55,7 +55,9 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 		*dptr++ = (src < 0) ? (-1) : ((src > 0) ? 1 : 0);
 
 		if (--len == 0)
+		{
 			return PRIMITIVES_SUCCESS;
+		}
 	}
 
 	/* Do 32-short chunks using 8 XMM registers. */
@@ -67,7 +69,14 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 		/* Unaligned */
 		while (count--)
 		{
-			__m128i xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7;
+			__m128i xmm0;
+			__m128i xmm1;
+			__m128i xmm2;
+			__m128i xmm3;
+			__m128i xmm4;
+			__m128i xmm5;
+			__m128i xmm6;
+			__m128i xmm7;
 			xmm0 = _mm_set1_epi16(0x0001U);
 			xmm1 = _mm_set1_epi16(0x0001U);
 			xmm2 = _mm_set1_epi16(0x0001U);
@@ -99,7 +108,14 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 		/* Aligned */
 		while (count--)
 		{
-			__m128i xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7;
+			__m128i xmm0;
+			__m128i xmm1;
+			__m128i xmm2;
+			__m128i xmm3;
+			__m128i xmm4;
+			__m128i xmm5;
+			__m128i xmm6;
+			__m128i xmm7;
 			xmm0 = _mm_set1_epi16(0x0001U);
 			xmm1 = _mm_set1_epi16(0x0001U);
 			xmm2 = _mm_set1_epi16(0x0001U);

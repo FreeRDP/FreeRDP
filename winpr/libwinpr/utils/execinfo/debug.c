@@ -30,13 +30,15 @@ typedef struct
 	void** buffer;
 	size_t max;
 	size_t used;
-} t_execinfo;
+} DECLSPEC_ALIGN(32) t_execinfo;
 
 void winpr_execinfo_backtrace_free(void* buffer)
 {
 	t_execinfo* data = (t_execinfo*)buffer;
 	if (!data)
+	{
 		return;
+	}
 
 	free(data->buffer);
 	free(data);
@@ -47,7 +49,9 @@ void* winpr_execinfo_backtrace(DWORD size)
 	t_execinfo* data = calloc(1, sizeof(t_execinfo));
 
 	if (!data)
+	{
 		return NULL;
+	}
 
 	data->buffer = calloc(size, sizeof(void*));
 
@@ -72,13 +76,19 @@ char** winpr_execinfo_backtrace_symbols(void* buffer, size_t* used)
 {
 	t_execinfo* data = (t_execinfo*)buffer;
 	if (used)
+	{
 		*used = 0;
+	}
 
 	if (!data)
+	{
 		return NULL;
+	}
 
 	if (used)
+	{
 		*used = data->used;
+	}
 
 	return backtrace_symbols(data->buffer, data->used);
 }
@@ -88,7 +98,9 @@ void winpr_execinfo_backtrace_symbols_fd(void* buffer, int fd)
 	t_execinfo* data = (t_execinfo*)buffer;
 
 	if (!data)
+	{
 		return;
+	}
 
 	backtrace_symbols_fd(data->buffer, data->used, fd);
 }

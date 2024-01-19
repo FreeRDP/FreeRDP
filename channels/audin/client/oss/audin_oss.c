@@ -65,12 +65,12 @@ typedef struct
 	void* user_data;
 
 	rdpContext* rdpcontext;
-} AudinOSSDevice;
+} DECLSPEC_ALIGN(128) AudinOSSDevice;
 
 #define OSS_LOG_ERR(_text, _error)                                           \
 	do                                                                       \
 	{                                                                        \
-		if (_error != 0)                                                     \
+		if ((_error) != 0)                                                   \
 			WLog_ERR(TAG, "%s: %i - %s\n", _text, _error, strerror(_error)); \
 	} while (0)
 
@@ -103,7 +103,9 @@ static UINT32 audin_oss_get_format(const AUDIO_FORMAT* format)
 static BOOL audin_oss_format_supported(IAudinDevice* device, const AUDIO_FORMAT* format)
 {
 	if (device == NULL || format == NULL)
+	{
 		return FALSE;
+	}
 
 	switch (format->wFormatTag)
 	{
@@ -111,7 +113,9 @@ static BOOL audin_oss_format_supported(IAudinDevice* device, const AUDIO_FORMAT*
 			if (format->cbSize != 0 || format->nSamplesPerSec > 48000 ||
 			    (format->wBitsPerSample != 8 && format->wBitsPerSample != 16) ||
 			    (format->nChannels != 1 && format->nChannels != 2))
+			{
 				return FALSE;
+			}
 
 			break;
 
@@ -133,7 +137,9 @@ static UINT audin_oss_set_format(IAudinDevice* device, const AUDIO_FORMAT* forma
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
 
 	if (device == NULL || format == NULL)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	oss->FramesPerPacket = FramesPerPacket;
 	oss->format = *format;
@@ -144,13 +150,14 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 {
 	char dev_name[PATH_MAX] = "/dev/dsp";
 	char mixer_name[PATH_MAX] = "/dev/mixer";
-	int pcm_handle = -1, mixer_handle;
+	int pcm_handle = -1;
+	int mixer_handle;
 	BYTE* buffer = NULL;
 	unsigned long tmp = 0;
 	size_t buffer_size = 0;
 	AudinOSSDevice* oss = (AudinOSSDevice*)arg;
 	UINT error = 0;
-	DWORD status;
+	DWORD status = 0;
 
 	if (oss == NULL)
 	{
@@ -183,12 +190,16 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 		tmp = (100 | (100 << 8));
 
 		if (ioctl(mixer_handle, MIXER_WRITE(SOUND_MIXER_MIC), &tmp) == -1)
+		{
 			OSS_LOG_ERR("WRITE_MIXER - SOUND_MIXER_MIC, not critical", errno);
+		}
 
 		tmp = (100 | (100 << 8));
 
 		if (ioctl(mixer_handle, MIXER_WRITE(SOUND_MIXER_RECLEV), &tmp) == -1)
+		{
 			OSS_LOG_ERR("WRITE_MIXER - SOUND_MIXER_RECLEV, not critical", errno);
+		}
 
 		close(mixer_handle);
 	}
@@ -211,24 +222,33 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 	tmp = audin_oss_get_format(&oss->format);
 
 	if (ioctl(pcm_handle, SNDCTL_DSP_SETFMT, &tmp) == -1)
+	{
 		OSS_LOG_ERR("SNDCTL_DSP_SETFMT failed", errno);
+	}
 
 	tmp = oss->format.nChannels;
 
 	if (ioctl(pcm_handle, SNDCTL_DSP_CHANNELS, &tmp) == -1)
+	{
 		OSS_LOG_ERR("SNDCTL_DSP_CHANNELS failed", errno);
+	}
 
 	tmp = oss->format.nSamplesPerSec;
 
 	if (ioctl(pcm_handle, SNDCTL_DSP_SPEED, &tmp) == -1)
+	{
 		OSS_LOG_ERR("SNDCTL_DSP_SPEED failed", errno);
+	}
 
 	tmp = oss->format.nBlockAlign;
 
 	if (ioctl(pcm_handle, SNDCTL_DSP_SETFRAGMENT, &tmp) == -1)
+	{
 		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
+	}
 
-	buffer_size = (oss->FramesPerPacket * oss->format.nChannels * (oss->format.wBitsPerSample / 8));
+	buffer_size =
+	    (1ull * oss->FramesPerPacket * oss->format.nChannels * (oss->format.wBitsPerSample / 8));
 	buffer = (BYTE*)calloc((buffer_size + sizeof(void*)), sizeof(BYTE));
 
 	if (NULL == buffer)
@@ -251,7 +271,9 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 		}
 
 		if (status == WAIT_OBJECT_0)
+		{
 			break;
+		}
 
 		stmp = read(pcm_handle, buffer, buffer_size);
 
@@ -262,8 +284,10 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 			continue;
 		}
 
-		if ((size_t)stmp < buffer_size) /* Not enouth data. */
+		if ((size_t)stmp < buffer_size)
+		{ /* Not enouth data. */
 			continue;
+		}
 
 		if ((error = oss->receive(&oss->format, buffer, buffer_size, oss->user_data)))
 		{
@@ -275,7 +299,9 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 err_out:
 
 	if (error && oss && oss->rdpcontext)
+	{
 		setChannelError(oss->rdpcontext, error, "audin_oss_thread_func reported an error");
+	}
 
 	if (pcm_handle != -1)
 	{
@@ -323,11 +349,13 @@ static UINT audin_oss_open(IAudinDevice* device, AudinReceive receive, void* use
  */
 static UINT audin_oss_close(IAudinDevice* device)
 {
-	UINT error;
+	UINT error = 0;
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
 
 	if (device == NULL)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if (oss->stopEvent != NULL)
 	{
@@ -359,10 +387,12 @@ static UINT audin_oss_close(IAudinDevice* device)
 static UINT audin_oss_free(IAudinDevice* device)
 {
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
-	UINT error;
+	UINT error = 0;
 
 	if (device == NULL)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	if ((error = audin_oss_close(device)))
 	{
@@ -380,10 +410,11 @@ static UINT audin_oss_free(IAudinDevice* device)
  */
 static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV* args)
 {
-	int status;
-	char *str_num, *eptr;
-	DWORD flags;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	int status = 0;
+	char* str_num;
+	char* eptr;
+	DWORD flags = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
 	COMMAND_LINE_ARGUMENT_A audin_oss_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                           NULL, NULL, -1, NULL, "audio device name" },
@@ -395,7 +426,9 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV*
 	    CommandLineParseArgumentsA(args->argc, args->argv, audin_oss_args, flags, oss, NULL, NULL);
 
 	if (status < 0)
+	{
 		return ERROR_INVALID_PARAMETER;
+	}
 
 	arg = audin_oss_args;
 	errno = 0;
@@ -403,7 +436,9 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV*
 	do
 	{
 		if (!(arg->Flags & COMMAND_LINE_VALUE_PRESENT))
+		{
 			continue;
+		}
 
 		CommandLineSwitchStart(arg) CommandLineSwitchCase(arg, "dev")
 		{
@@ -428,7 +463,9 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV*
 			}
 
 			if (oss->dev_unit < 0 || *eptr != '\0')
+			{
 				oss->dev_unit = -1;
+			}
 
 			free(str_num);
 		}
@@ -446,9 +483,9 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV*
 FREERDP_ENTRY_POINT(
     UINT oss_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args;
-	AudinOSSDevice* oss;
-	UINT error;
+	const ADDIN_ARGV* args = NULL;
+	AudinOSSDevice* oss = NULL;
+	UINT error = 0;
 	oss = (AudinOSSDevice*)calloc(1, sizeof(AudinOSSDevice));
 
 	if (!oss)

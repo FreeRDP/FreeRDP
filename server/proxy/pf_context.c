@@ -76,16 +76,22 @@ pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const 
 	if (pf_modules_run_filter(ps->pdata->module, FILTER_TYPE_STATIC_INTERCEPT_LIST, ps->pdata,
 	                          &channel) &&
 	    channel.intercept)
+	{
 		ret->channelMode = PF_UTILS_CHANNEL_INTERCEPT;
+	}
 	else
+	{
 		ret->channelMode = pf_utils_get_channel_mode(ps->pdata->config, name);
+	}
 	return ret;
 }
 
 void StaticChannelContext_free(pServerStaticChannelContext* ctx)
 {
 	if (!ctx)
+	{
 		return;
+	}
 
 	IFCALL(ctx->contextDtor, ctx->context);
 
@@ -103,7 +109,7 @@ static void HashStaticChannelContext_free(void* ptr)
 static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx);
 static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 {
-	wObject* obj;
+	wObject* obj = NULL;
 	pServerContext* context = (pServerContext*)ctx;
 
 	WINPR_ASSERT(client);
@@ -114,16 +120,24 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 	context->vcm = WTSOpenServerA((LPSTR)client->context);
 
 	if (!context->vcm || context->vcm == INVALID_HANDLE_VALUE)
+	{
 		goto error;
+	}
 
 	if (!(context->dynvcReady = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
 		goto error;
+	}
 
 	context->interceptContextMap = HashTable_New(FALSE);
 	if (!context->interceptContextMap)
+	{
 		goto error;
+	}
 	if (!HashTable_SetupForStringData(context->interceptContextMap, FALSE))
+	{
 		goto error;
+	}
 	obj = HashTable_ValueObject(context->interceptContextMap);
 	WINPR_ASSERT(obj);
 	obj->fnObjectFree = intercept_context_entry_free;
@@ -131,9 +145,13 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 	/* channels by ids */
 	context->channelsByFrontId = HashTable_New(FALSE);
 	if (!context->channelsByFrontId)
+	{
 		goto error;
+	}
 	if (!HashTable_SetHashFunction(context->channelsByFrontId, ChannelId_Hash))
+	{
 		goto error;
+	}
 
 	obj = HashTable_KeyObject(context->channelsByFrontId);
 	obj->fnObjectEquals = ChannelId_Compare;
@@ -143,9 +161,13 @@ static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 
 	context->channelsByBackId = HashTable_New(FALSE);
 	if (!context->channelsByBackId)
+	{
 		goto error;
+	}
 	if (!HashTable_SetHashFunction(context->channelsByBackId, ChannelId_Hash))
+	{
 		goto error;
+	}
 
 	obj = HashTable_KeyObject(context->channelsByBackId);
 	obj->fnObjectEquals = ChannelId_Compare;
@@ -166,7 +188,9 @@ void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 	WINPR_UNUSED(client);
 
 	if (!context)
+	{
 		return;
+	}
 
 	if (context->dynvcReady)
 	{
@@ -179,7 +203,9 @@ void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx)
 	HashTable_Free(context->channelsByBackId);
 
 	if (context->vcm && (context->vcm != INVALID_HANDLE_VALUE))
+	{
 		WTSCloseServer((HANDLE)context->vcm);
+	}
 	context->vcm = NULL;
 }
 
@@ -206,7 +232,9 @@ static BOOL pf_context_revert_str_settings(rdpSettings* dst, const rdpSettings* 
 		FreeRDP_Settings_Keys_String id = ids[x];
 		const char* what = freerdp_settings_get_string(before, id);
 		if (!freerdp_settings_set_string(dst, id, what))
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -216,42 +244,58 @@ void intercept_context_entry_free(void* obj)
 {
 	InterceptContextMapEntry* entry = obj;
 	if (!entry)
+	{
 		return;
+	}
 	if (!entry->free)
+	{
 		return;
+	}
 	entry->free(entry);
 }
 
 BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 {
 	BOOL rc = FALSE;
-	rdpSettings* before_copy;
+	rdpSettings* before_copy = NULL;
 	const FreeRDP_Settings_Keys_String to_revert[] = { FreeRDP_ConfigPath,
 		                                               FreeRDP_CertificateName };
 
 	if (!dst || !src)
+	{
 		return FALSE;
+	}
 
 	before_copy = freerdp_settings_clone(dst);
 	if (!before_copy)
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_settings_copy(dst, src))
+	{
 		goto out_fail;
+	}
 
 	/* keep original ServerMode value */
 	if (!freerdp_settings_copy_item(dst, before_copy, FreeRDP_ServerMode))
+	{
 		goto out_fail;
+	}
 
 	/* revert some values that must not be changed */
 	if (!pf_context_revert_str_settings(dst, before_copy, ARRAYSIZE(to_revert), to_revert))
+	{
 		goto out_fail;
+	}
 
 	if (!freerdp_settings_get_bool(dst, FreeRDP_ServerMode))
 	{
 		/* adjust instance pointer */
 		if (!freerdp_settings_copy_item(dst, before_copy, FreeRDP_instance))
+		{
 			goto out_fail;
+		}
 
 		/*
 		 * RdpServerRsaKey must be set to NULL if `dst` is client's context
@@ -259,7 +303,9 @@ BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 		 */
 
 		if (!freerdp_settings_set_pointer_len(dst, FreeRDP_RdpServerRsaKey, NULL, 1))
+		{
 			goto out_fail;
+		}
 	}
 
 	/* We handle certificate management for this client ourselfes. */
@@ -273,8 +319,8 @@ out_fail:
 pClientContext* pf_context_create_client_context(const rdpSettings* clientSettings)
 {
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-	pClientContext* pc;
-	rdpContext* context;
+	pClientContext* pc = NULL;
+	rdpContext* context = NULL;
 
 	WINPR_ASSERT(clientSettings);
 
@@ -282,12 +328,16 @@ pClientContext* pf_context_create_client_context(const rdpSettings* clientSettin
 	context = freerdp_client_context_new(&clientEntryPoints);
 
 	if (!context)
+	{
 		return NULL;
+	}
 
 	pc = (pClientContext*)context;
 
 	if (!pf_context_copy_settings(context->settings, clientSettings))
+	{
 		goto error;
+	}
 
 	return pc;
 error:
@@ -298,34 +348,46 @@ error:
 proxyData* proxy_data_new(void)
 {
 	BYTE temp[16];
-	char* hex;
-	proxyData* pdata;
+	char* hex = NULL;
+	proxyData* pdata = NULL;
 
 	pdata = calloc(1, sizeof(proxyData));
 	if (!pdata)
+	{
 		return NULL;
+	}
 
 	if (!(pdata->abort_event = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
 		goto error;
+	}
 
 	if (!(pdata->gfx_server_ready = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	{
 		goto error;
+	}
 
 	winpr_RAND(&temp, 16);
 	hex = winpr_BinToHexString(temp, 16, FALSE);
 	if (!hex)
+	{
 		goto error;
+	}
 
 	CopyMemory(pdata->session_id, hex, PROXY_SESSION_ID_LENGTH);
 	pdata->session_id[PROXY_SESSION_ID_LENGTH] = '\0';
 	free(hex);
 
 	if (!(pdata->modules_info = HashTable_New(FALSE)))
+	{
 		goto error;
+	}
 
 	/* modules_info maps between plugin name to custom data */
 	if (!HashTable_SetupForStringData(pdata->modules_info, FALSE))
+	{
 		goto error;
+	}
 
 	return pdata;
 error:
@@ -354,22 +416,34 @@ void proxy_data_set_server_context(proxyData* pdata, pServerContext* context)
 void proxy_data_free(proxyData* pdata)
 {
 	if (!pdata)
+	{
 		return;
+	}
 
 	if (pdata->abort_event)
+	{
 		CloseHandle(pdata->abort_event);
+	}
 
 	if (pdata->client_thread)
+	{
 		CloseHandle(pdata->client_thread);
+	}
 
 	if (pdata->gfx_server_ready)
+	{
 		CloseHandle(pdata->gfx_server_ready);
+	}
 
 	if (pdata->modules_info)
+	{
 		HashTable_Free(pdata->modules_info);
+	}
 
 	if (pdata->pc)
+	{
 		freerdp_client_context_free(&pdata->pc->context);
+	}
 
 	free(pdata);
 }
@@ -380,7 +454,9 @@ void proxy_data_abort_connect(proxyData* pdata)
 	WINPR_ASSERT(pdata->abort_event);
 	SetEvent(pdata->abort_event);
 	if (pdata->pc)
+	{
 		freerdp_abort_connect_context(&pdata->pc->context);
+	}
 }
 
 BOOL proxy_data_shall_disconnect(proxyData* pdata)

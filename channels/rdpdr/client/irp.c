@@ -43,12 +43,18 @@
 static UINT irp_free(IRP* irp)
 {
 	if (!irp)
+	{
 		return CHANNEL_RC_OK;
+	}
 
 	if (irp->input)
+	{
 		Stream_Release(irp->input);
+	}
 	if (irp->output)
+	{
 		Stream_Release(irp->output);
+	}
 
 	winpr_aligned_free(irp);
 	return CHANNEL_RC_OK;
@@ -61,9 +67,9 @@ static UINT irp_free(IRP* irp)
  */
 static UINT irp_complete(IRP* irp)
 {
-	size_t pos;
-	rdpdrPlugin* rdpdr;
-	UINT error;
+	size_t pos = 0;
+	rdpdrPlugin* rdpdr = NULL;
+	UINT error = 0;
 
 	WINPR_ASSERT(irp);
 	WINPR_ASSERT(irp->output);
@@ -86,9 +92,9 @@ static UINT irp_complete(IRP* irp)
 
 IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* error)
 {
-	IRP* irp;
-	DEVICE* device;
-	UINT32 DeviceId;
+	IRP* irp = NULL;
+	DEVICE* device = NULL;
+	UINT32 DeviceId = 0;
 
 	WINPR_ASSERT(devman);
 	WINPR_ASSERT(pool);
@@ -97,7 +103,9 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, s, 20))
 	{
 		if (error)
+		{
 			*error = ERROR_INVALID_DATA;
+		}
 		return NULL;
 	}
 
@@ -107,7 +115,9 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 	if (!device)
 	{
 		if (error)
+		{
 			*error = ERROR_DEV_NOT_EXIST;
+		}
 
 		return NULL;
 	}
@@ -118,7 +128,9 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 	{
 		WLog_Print(log, WLOG_ERROR, "_aligned_malloc failed!");
 		if (error)
+		{
 			*error = CHANNEL_RC_NO_MEMORY;
+		}
 		return NULL;
 	}
 
@@ -140,7 +152,9 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 		WLog_Print(log, WLOG_ERROR, "Stream_New failed!");
 		irp_free(irp);
 		if (error)
+		{
 			*error = CHANNEL_RC_NO_MEMORY;
+		}
 		return NULL;
 	}
 
@@ -148,7 +162,9 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 	{
 		irp_free(irp);
 		if (error)
+		{
 			*error = CHANNEL_RC_NO_MEMORY;
+		}
 		return NULL;
 	}
 
@@ -159,7 +175,9 @@ IRP* irp_new(DEVMAN* devman, wStreamPool* pool, wStream* s, wLog* log, UINT* err
 	irp->cancelled = FALSE;
 
 	if (error)
+	{
 		*error = CHANNEL_RC_OK;
+	}
 
 	return irp;
 }

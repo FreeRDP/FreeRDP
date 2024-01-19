@@ -74,14 +74,14 @@ struct rdp_CertBlob
 {
 	UINT32 length;
 	BYTE* data;
-};
+} DECLSPEC_ALIGN(16);
 typedef struct rdp_CertBlob rdpCertBlob;
 
 struct rdp_X509CertChain
 {
 	UINT32 count;
 	rdpCertBlob* array;
-};
+} DECLSPEC_ALIGN(16);
 typedef struct rdp_X509CertChain rdpX509CertChain;
 
 struct rdp_certificate
@@ -91,7 +91,7 @@ struct rdp_certificate
 
 	rdpCertInfo cert_info;
 	rdpX509CertChain x509_cert_chain;
-};
+} DECLSPEC_ALIGN(64);
 
 /**
  *
@@ -233,18 +233,24 @@ BOOL cert_blob_read(rdpCertBlob* blob, wStream* s)
 	cert_blob_free(blob);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		goto fail;
+	}
 
 	Stream_Read_UINT32(s, certLength);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, certLength))
+	{
 		goto fail;
+	}
 
 	DEBUG_CERTIFICATE("X.509 Certificate length:%" PRIu32 "", certLength);
 	blob->data = (BYTE*)malloc(certLength);
 
 	if (!blob->data)
+	{
 		goto fail;
+	}
 
 	Stream_Read(s, blob->data, certLength);
 	blob->length = certLength;
@@ -261,7 +267,9 @@ BOOL cert_blob_write(const rdpCertBlob* blob, wStream* s)
 	WINPR_ASSERT(blob);
 
 	if (!Stream_EnsureRemainingCapacity(s, 4 + blob->length))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, blob->length);
 	Stream_Write(s, blob->data, blob->length);
@@ -271,7 +279,9 @@ BOOL cert_blob_write(const rdpCertBlob* blob, wStream* s)
 void cert_blob_free(rdpCertBlob* blob)
 {
 	if (!blob)
+	{
 		return;
+	}
 	free(blob->data);
 	blob->data = NULL;
 	blob->length = 0;
@@ -285,7 +295,9 @@ static BOOL is_rsa_key(const X509* x509)
 {
 	EVP_PKEY* evp = X509_get0_pubkey(x509);
 	if (!evp)
+	{
 		return FALSE;
+	}
 
 	return (EVP_PKEY_id(evp) == EVP_PKEY_RSA);
 }
@@ -302,94 +314,124 @@ static BOOL certificate_read_x509_certificate(const rdpCertBlob* cert, rdpCertIn
 	int error = 0;
 
 	if (!cert || !info)
+	{
 		return FALSE;
+	}
 
 	cert_info_free(info);
 
 	s = Stream_StaticConstInit(&sbuffer, cert->data, cert->length);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
-	if (!ber_read_sequence_tag(s, &length)) /* Certificate (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length))
+	{ /* Certificate (SEQUENCE) */
 		goto error;
+	}
 
 	error++;
 
-	if (!ber_read_sequence_tag(s, &length)) /* TBSCertificate (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length))
+	{ /* TBSCertificate (SEQUENCE) */
 		goto error;
+	}
 
 	error++;
 
-	if (!ber_read_contextual_tag(s, 0, &length, TRUE)) /* Explicit Contextual Tag [0] */
+	if (!ber_read_contextual_tag(s, 0, &length, TRUE))
+	{ /* Explicit Contextual Tag [0] */
 		goto error;
+	}
 
 	error++;
 
-	if (!ber_read_integer(s, &version)) /* version (INTEGER) */
+	if (!ber_read_integer(s, &version))
+	{ /* version (INTEGER) */
 		goto error;
+	}
 
 	error++;
 	version++;
 
 	/* serialNumber */
-	if (!ber_read_integer(s, NULL)) /* CertificateSerialNumber (INTEGER) */
+	if (!ber_read_integer(s, NULL))
+	{ /* CertificateSerialNumber (INTEGER) */
 		goto error;
+	}
 
 	error++;
 
 	/* signature */
-	if (!ber_read_sequence_tag(s, &length) ||
-	    !Stream_SafeSeek(s, length)) /* AlgorithmIdentifier (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length))
+	{ /* AlgorithmIdentifier (SEQUENCE) */
 		goto error;
+	}
 
 	error++;
 
 	/* issuer */
-	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length)) /* Name (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length))
+	{ /* Name (SEQUENCE) */
 		goto error;
+	}
 
 	error++;
 
 	/* validity */
-	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length)) /* Validity (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length))
+	{ /* Validity (SEQUENCE) */
 		goto error;
+	}
 
 	error++;
 
 	/* subject */
-	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length)) /* Name (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length))
+	{ /* Name (SEQUENCE) */
 		goto error;
+	}
 
 	error++;
 
 	/* subjectPublicKeyInfo */
-	if (!ber_read_sequence_tag(s, &length)) /* SubjectPublicKeyInfo (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length))
+	{ /* SubjectPublicKeyInfo (SEQUENCE) */
 		goto error;
+	}
 
 	error++;
 
 	/* subjectPublicKeyInfo::AlgorithmIdentifier */
-	if (!ber_read_sequence_tag(s, &length) ||
-	    !Stream_SafeSeek(s, length)) /* AlgorithmIdentifier (SEQUENCE) */
+	if (!ber_read_sequence_tag(s, &length) || !Stream_SafeSeek(s, length))
+	{ /* AlgorithmIdentifier (SEQUENCE) */
 		goto error;
+	}
 
 	error++;
 
 	/* subjectPublicKeyInfo::subjectPublicKey */
-	if (!ber_read_bit_string(s, &length, &padding)) /* BIT_STRING */
+	if (!ber_read_bit_string(s, &length, &padding))
+	{ /* BIT_STRING */
 		goto error;
+	}
 
 	error++;
 
 	/* RSAPublicKey (SEQUENCE) */
-	if (!ber_read_sequence_tag(s, &length)) /* SEQUENCE */
+	if (!ber_read_sequence_tag(s, &length))
+	{ /* SEQUENCE */
 		goto error;
+	}
 
 	error++;
 
-	if (!ber_read_integer_length(s, &modulus_length)) /* modulus (INTEGER) */
+	if (!ber_read_integer_length(s, &modulus_length))
+	{ /* modulus (INTEGER) */
 		goto error;
+	}
 
 	error++;
 
@@ -397,14 +439,18 @@ static BOOL certificate_read_x509_certificate(const rdpCertBlob* cert, rdpCertIn
 	do
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
+		{
 			goto error;
+		}
 
 		Stream_Peek_UINT8(s, padding);
 
 		if (padding == 0)
 		{
 			if (!Stream_SafeSeek(s, 1))
+			{
 				goto error;
+			}
 
 			modulus_length--;
 		}
@@ -413,17 +459,23 @@ static BOOL certificate_read_x509_certificate(const rdpCertBlob* cert, rdpCertIn
 	error++;
 
 	if (!cert_info_read_modulus(info, modulus_length, s))
+	{
 		goto error;
+	}
 
 	error++;
 
-	if (!ber_read_integer_length(s, &exponent_length)) /* publicExponent (INTEGER) */
+	if (!ber_read_integer_length(s, &exponent_length))
+	{ /* publicExponent (INTEGER) */
 		goto error;
+	}
 
 	error++;
 
 	if (!cert_info_read_exponent(info, exponent_length, s))
+	{
 		goto error;
+	}
 	return TRUE;
 error:
 	WLog_ERR(TAG, "error reading when reading certificate: part=%s error=%d",
@@ -445,7 +497,9 @@ static rdpX509CertChain certificate_new_x509_certificate_chain(UINT32 count)
 	x509_cert_chain.array = (rdpCertBlob*)calloc(count, sizeof(rdpCertBlob));
 
 	if (x509_cert_chain.array)
+	{
 		x509_cert_chain.count = count;
+	}
 
 	return x509_cert_chain;
 }
@@ -458,7 +512,9 @@ static rdpX509CertChain certificate_new_x509_certificate_chain(UINT32 count)
 static void certificate_free_x509_certificate_chain(rdpX509CertChain* x509_cert_chain)
 {
 	if (!x509_cert_chain)
+	{
 		return;
+	}
 
 	if (x509_cert_chain->array)
 	{
@@ -481,20 +537,30 @@ static OSSL_PARAM* get_params(const BIGNUM* e, const BIGNUM* mod)
 	OSSL_PARAM* parameters = NULL;
 	OSSL_PARAM_BLD* param = OSSL_PARAM_BLD_new();
 	if (!param)
+	{
 		return NULL;
+	}
 
 	const int bits = BN_num_bits(e);
 	if ((bits < 0) || (bits > 32))
+	{
 		goto fail;
+	}
 
 	UINT ie = 0;
 	const int ne = BN_bn2nativepad(e, (BYTE*)&ie, sizeof(ie));
 	if ((ne < 0) || (ne > 4))
+	{
 		goto fail;
+	}
 	if (OSSL_PARAM_BLD_push_BN(param, OSSL_PKEY_PARAM_RSA_N, mod) != 1)
+	{
 		goto fail;
+	}
 	if (OSSL_PARAM_BLD_push_uint(param, OSSL_PKEY_PARAM_RSA_E, ie) != 1)
+	{
 		goto fail;
+	}
 
 	parameters = OSSL_PARAM_BLD_to_param(param);
 fail:
@@ -524,11 +590,17 @@ static BOOL update_x509_from_info(rdpCertificate* cert)
 #endif
 
 	if (!mod || !e)
+	{
 		goto fail;
+	}
 	if (!BN_bin2bn(info->Modulus, info->ModulusLength, mod))
+	{
 		goto fail;
+	}
 	if (!BN_bin2bn(info->exponent, sizeof(info->exponent), e))
+	{
 		goto fail;
+	}
 
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	const int rec = RSA_set0_key(rsa, mod, e, NULL);
@@ -540,22 +612,32 @@ static BOOL update_x509_from_info(rdpCertificate* cert)
 	EVP_PKEY* pkey = NULL;
 	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
 	if (!ctx)
+	{
 		goto fail2;
+	}
 	const int xx = EVP_PKEY_fromdata_init(ctx);
 	if (xx != 1)
+	{
 		goto fail2;
+	}
 	OSSL_PARAM* parameters = get_params(e, mod);
 	if (!parameters)
+	{
 		goto fail2;
+	}
 
 	const int rc2 = EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_PUBLIC_KEY, parameters);
 	OSSL_PARAM_free(parameters);
 	if (rc2 <= 0)
+	{
 		goto fail2;
+	}
 
 	cert->x509 = X509_new();
 	if (!cert->x509)
+	{
 		goto fail2;
+	}
 	if (X509_set_pubkey(cert->x509, pkey) != 1)
 	{
 		X509_free(cert->x509);
@@ -566,7 +648,9 @@ fail2:
 	EVP_PKEY_CTX_free(ctx);
 #endif
 	if (!cert->x509)
+	{
 		goto fail;
+	}
 
 	rc = TRUE;
 
@@ -583,7 +667,7 @@ fail:
 	return rc;
 }
 
-static BOOL certificate_process_server_public_key(rdpCertificate* cert, wStream* s, UINT32 length)
+static BOOL certificate_process_server_public_key(rdpCertificate* cert, wStream* s)
 {
 	char magic[sizeof(rsa_magic)] = { 0 };
 	UINT32 keylen = 0;
@@ -594,7 +678,9 @@ static BOOL certificate_process_server_public_key(rdpCertificate* cert, wStream*
 	WINPR_ASSERT(s);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 20))
+	{
 		return FALSE;
+	}
 
 	Stream_Read(s, magic, sizeof(magic));
 
@@ -613,13 +699,17 @@ static BOOL certificate_process_server_public_key(rdpCertificate* cert, wStream*
 	Stream_Read(s, info->exponent, 4);
 
 	if ((keylen <= 8) || (!Stream_CheckAndLogRequiredLength(TAG, s, keylen)))
+	{
 		return FALSE;
+	}
 
 	info->ModulusLength = keylen - 8;
 	BYTE* tmp = realloc(info->Modulus, info->ModulusLength);
 
 	if (!tmp)
+	{
 		return FALSE;
+	}
 	info->Modulus = tmp;
 
 	Stream_Read(s, info->Modulus, info->ModulusLength);
@@ -662,9 +752,11 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	Stream_Read(s, encsig, siglen);
 
 	if (siglen < 8)
+	{
 		return FALSE;
+	}
 
-		/* Last 8 bytes shall be all zero. */
+	/* Last 8 bytes shall be all zero. */
 #if defined(CERT_VALIDATE_PADDING)
 
 	for (sum = 0, i = sizeof(encsig) - 8; i < sizeof(encsig); i++)
@@ -729,7 +821,9 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 
 	WINPR_ASSERT(certificate);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
+	{
 		return FALSE;
+	}
 
 	/* -4, because we need to include dwVersion */
 	const BYTE* sigdata = Stream_PointerAs(s, const BYTE) - 4;
@@ -756,13 +850,19 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 	Stream_Read_UINT16(s, wPublicKeyBlobLen);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, wPublicKeyBlobLen))
+	{
 		return FALSE;
+	}
 
-	if (!certificate_process_server_public_key(certificate, s, wPublicKeyBlobLen))
+	if (!certificate_process_server_public_key(certificate, s))
+	{
 		return FALSE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return FALSE;
+	}
 
 	sigdatalen = Stream_PointerAs(s, const BYTE) - sigdata;
 	Stream_Read_UINT16(s, wSignatureBlobType);
@@ -776,7 +876,9 @@ static BOOL certificate_read_server_proprietary_certificate(rdpCertificate* cert
 	Stream_Read_UINT16(s, wSignatureBlobLen);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, wSignatureBlobLen))
+	{
 		return FALSE;
+	}
 
 	if (wSignatureBlobLen != 72)
 	{
@@ -811,7 +913,9 @@ static BOOL cert_write_rsa_public_key(wStream* s, const rdpCertificate* cert)
 	const size_t wPublicKeyBlobLen = 16 + pubExpLen + keyLen;
 	WINPR_ASSERT(wPublicKeyBlobLen <= UINT16_MAX);
 	if (!Stream_EnsureRemainingCapacity(s, 2 + wPublicKeyBlobLen))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT16(s, (UINT16)wPublicKeyBlobLen);
 	Stream_Write(s, rsa_magic, sizeof(rsa_magic));
 	Stream_Write_UINT32(s, keyLen);
@@ -830,13 +934,17 @@ static BOOL cert_write_rsa_signature(wStream* s, const void* sigData, size_t sig
 
 	memcpy(signature, initial_signature, sizeof(initial_signature));
 	if (!winpr_Digest(WINPR_MD_MD5, sigData, sigDataLen, signature, sizeof(signature)))
+	{
 		return FALSE;
+	}
 
 	crypto_rsa_private_encrypt(signature, sizeof(signature), priv_key_tssk, encryptedSignature,
 	                           sizeof(encryptedSignature));
 
 	if (!Stream_EnsureRemainingCapacity(s, 2 * sizeof(UINT16) + sizeof(encryptedSignature) + 8))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT16(s, BB_RSA_SIGNATURE_BLOB);
 	Stream_Write_UINT16(s, sizeof(encryptedSignature) + 8); /* wSignatureBlobLen */
 	Stream_Write(s, encryptedSignature, sizeof(encryptedSignature));
@@ -852,12 +960,16 @@ static BOOL cert_write_server_certificate_v1(wStream* s, const rdpCertificate* c
 
 	WINPR_ASSERT(start >= 4);
 	if (!Stream_EnsureRemainingCapacity(s, 10))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT32(s, SIGNATURE_ALG_RSA);
 	Stream_Write_UINT32(s, KEY_EXCHANGE_ALG_RSA);
 	Stream_Write_UINT16(s, BB_RSA_KEY_BLOB);
 	if (!cert_write_rsa_public_key(s, certificate))
+	{
 		return FALSE;
+	}
 
 	const size_t end = Stream_GetPosition(s);
 	return cert_write_rsa_signature(s, sigData, end - start + sizeof(UINT32));
@@ -868,21 +980,27 @@ static BOOL cert_write_server_certificate_v2(wStream* s, const rdpCertificate* c
 	WINPR_ASSERT(certificate);
 
 	const rdpX509CertChain* chain = &certificate->x509_cert_chain;
-	const size_t padding = 8ull + 4ull * chain->count;
+	const size_t padding = 8ULL + 4ULL * chain->count;
 
 	if (!Stream_EnsureRemainingCapacity(s, sizeof(UINT32)))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, chain->count);
 	for (UINT32 x = 0; x < chain->count; x++)
 	{
 		const rdpCertBlob* cert = &chain->array[x];
 		if (!cert_blob_write(cert, s))
+		{
 			return FALSE;
+		}
 	}
 
 	if (!Stream_EnsureRemainingCapacity(s, padding))
+	{
 		return FALSE;
+	}
 	Stream_Zero(s, padding);
 	return TRUE;
 }
@@ -891,22 +1009,30 @@ SSIZE_T freerdp_certificate_write_server_cert(const rdpCertificate* certificate,
                                               wStream* s)
 {
 	if (!certificate)
+	{
 		return -1;
+	}
 
 	const size_t start = Stream_GetPosition(s);
 	if (!Stream_EnsureRemainingCapacity(s, 4))
+	{
 		return -1;
+	}
 	Stream_Write_UINT32(s, dwVersion);
 
 	switch (dwVersion & CERT_CHAIN_VERSION_MASK)
 	{
 		case CERT_CHAIN_VERSION_1:
 			if (!cert_write_server_certificate_v1(s, certificate))
+			{
 				return -1;
+			}
 			break;
 		case CERT_CHAIN_VERSION_2:
 			if (!cert_write_server_certificate_v2(s, certificate))
+			{
 				return -1;
+			}
 			break;
 		default:
 			WLog_ERR(TAG, "invalid certificate chain version:%" PRIu32 "",
@@ -932,7 +1058,9 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* cert,
 
 	WINPR_ASSERT(cert);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, numCertBlobs); /* numCertBlobs */
 	certificate_free_x509_certificate_chain(&cert->x509_cert_chain);
@@ -942,7 +1070,9 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* cert,
 	{
 		rdpCertBlob* blob = &cert->x509_cert_chain.array[i];
 		if (!cert_blob_read(blob, s))
+		{
 			return FALSE;
+		}
 
 		if (numCertBlobs - i == 1)
 		{
@@ -953,7 +1083,9 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* cert,
 			if (res)
 			{
 				if (!update_x509_from_info(cert))
+				{
 					res = FALSE;
+				}
 			}
 
 			if (!res)
@@ -979,14 +1111,18 @@ static BOOL certificate_write_server_x509_certificate_chain(const rdpCertificate
 	numCertBlobs = certificate->x509_cert_chain.count;
 
 	if (!Stream_EnsureRemainingCapacity(s, 4))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT32(s, numCertBlobs); /* numCertBlobs */
 
 	for (UINT32 i = 0; i < numCertBlobs; i++)
 	{
 		const rdpCertBlob* cert = &certificate->x509_cert_chain.array[i];
 		if (!cert_blob_write(cert, s))
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -1003,7 +1139,8 @@ BOOL freerdp_certificate_read_server_cert(rdpCertificate* certificate, const BYT
                                           size_t length)
 {
 	BOOL ret = FALSE;
-	wStream *s, sbuffer;
+	wStream* s;
+	wStream sbuffer;
 	UINT32 dwVersion = 0;
 
 	WINPR_ASSERT(certificate);
@@ -1054,7 +1191,9 @@ static BOOL cert_blob_copy(rdpCertBlob* dst, const rdpCertBlob* src)
 	{
 		dst->data = malloc(src->length);
 		if (!dst->data)
+		{
 			return FALSE;
+		}
 		dst->length = src->length;
 		memcpy(dst->data, src->data, src->length);
 	}
@@ -1068,7 +1207,9 @@ static BOOL cert_x509_chain_copy(rdpX509CertChain* cert, const rdpX509CertChain*
 
 	certificate_free_x509_certificate_chain(cert);
 	if (!src)
+	{
 		return TRUE;
+	}
 
 	if (src->count > 0)
 	{
@@ -1104,26 +1245,36 @@ BOOL cert_clone_int(rdpCertificate* dst, const rdpCertificate* src)
 	{
 		dst->x509 = X509_dup(src->x509);
 		if (!dst->x509)
+		{
 			return FALSE;
+		}
 	}
 
 	if (!cert_info_clone(&dst->cert_info, &src->cert_info))
+	{
 		return FALSE;
+	}
 	return cert_x509_chain_copy(&dst->x509_cert_chain, &src->x509_cert_chain);
 }
 
 rdpCertificate* freerdp_certificate_clone(const rdpCertificate* certificate)
 {
 	if (!certificate)
+	{
 		return NULL;
+	}
 
 	rdpCertificate* _certificate = freerdp_certificate_new();
 
 	if (!_certificate)
+	{
 		return NULL;
+	}
 
 	if (!cert_clone_int(_certificate, certificate))
+	{
 		goto out_fail;
+	}
 
 	return _certificate;
 out_fail:
@@ -1147,9 +1298,13 @@ void certificate_free_int(rdpCertificate* cert)
 	WINPR_ASSERT(cert);
 
 	if (cert->x509)
+	{
 		X509_free(cert->x509);
+	}
 	if (cert->chain)
+	{
 		sk_X509_free(cert->chain);
+	}
 
 	certificate_free_x509_certificate_chain(&cert->x509_cert_chain);
 	cert_info_free(&cert->cert_info);
@@ -1163,7 +1318,9 @@ void certificate_free_int(rdpCertificate* cert)
 void freerdp_certificate_free(rdpCertificate* cert)
 {
 	if (!cert)
+	{
 		return;
+	}
 
 	certificate_free_int(cert);
 	free(cert);
@@ -1176,7 +1333,9 @@ static BOOL freerdp_rsa_from_x509(rdpCertificate* cert)
 	WINPR_ASSERT(cert);
 
 	if (!freerdp_certificate_is_rsa(cert))
+	{
 		return TRUE;
+	}
 
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	RSA* rsa = NULL;
@@ -1188,7 +1347,9 @@ static BOOL freerdp_rsa_from_x509(rdpCertificate* cert)
 #endif
 	EVP_PKEY* pubkey = X509_get0_pubkey(cert->x509);
 	if (!pubkey)
+	{
 		goto fail;
+	}
 
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	rsa = EVP_PKEY_get1_RSA(pubkey);
@@ -1204,14 +1365,22 @@ static BOOL freerdp_rsa_from_x509(rdpCertificate* cert)
 	RSA_get0_key(rsa, &rsa_n, &rsa_e, NULL);
 #else
 	if (!EVP_PKEY_get_bn_param(pubkey, OSSL_PKEY_PARAM_RSA_E, &rsa_e))
+	{
 		goto fail;
+	}
 	if (!EVP_PKEY_get_bn_param(pubkey, OSSL_PKEY_PARAM_RSA_N, &rsa_n))
+	{
 		goto fail;
+	}
 #endif
 	if (!rsa_n || !rsa_e)
+	{
 		goto fail;
+	}
 	if (!cert_info_create(&cert->cert_info, rsa_n, rsa_e))
+	{
 		goto fail;
+	}
 	rc = TRUE;
 fail:
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
@@ -1228,13 +1397,19 @@ rdpCertificate* freerdp_certificate_new_from_der(const BYTE* data, size_t length
 	rdpCertificate* cert = freerdp_certificate_new();
 
 	if (!cert || !data || (length == 0))
+	{
 		goto fail;
+	}
 	const BYTE* ptr = data;
 	cert->x509 = d2i_X509(NULL, &ptr, length);
 	if (!cert->x509)
+	{
 		goto fail;
+	}
 	if (!freerdp_rsa_from_x509(cert))
+	{
 		goto fail;
+	}
 	return cert;
 fail:
 	freerdp_certificate_free(cert);
@@ -1247,14 +1422,20 @@ rdpCertificate* freerdp_certificate_new_from_x509(const X509* xcert, const STACK
 
 	rdpCertificate* cert = freerdp_certificate_new();
 	if (!cert)
+	{
 		return NULL;
+	}
 
 	cert->x509 = X509_dup(xcert);
 	if (!cert->x509)
+	{
 		goto fail;
+	}
 
 	if (!freerdp_rsa_from_x509(cert))
+	{
 		goto fail;
+	}
 
 	if (chain)
 	{
@@ -1270,7 +1451,9 @@ static rdpCertificate* freerdp_certificate_new_from(const char* file, BOOL isFil
 {
 	X509* x509 = x509_utils_from_pem(file, strlen(file), isFile);
 	if (!x509)
+	{
 		return NULL;
+	}
 	rdpCertificate* cert = freerdp_certificate_new_from_x509(x509, NULL);
 	X509_free(x509);
 	return cert;
@@ -1290,7 +1473,9 @@ const rdpCertInfo* freerdp_certificate_get_info(const rdpCertificate* cert)
 {
 	WINPR_ASSERT(cert);
 	if (!freerdp_certificate_is_rsa(cert))
+	{
 		return NULL;
+	}
 	return &cert->cert_info;
 }
 
@@ -1324,26 +1509,36 @@ char* freerdp_certificate_get_fingerprint_by_hash_ex(const rdpCertificate* cert,
 	}
 	fp = x509_utils_get_hash(cert->x509, hash, &fp_len);
 	if (!fp)
+	{
 		return NULL;
+	}
 
 	size = fp_len * 3 + 1;
 	fp_buffer = calloc(size, sizeof(char));
 	if (!fp_buffer)
+	{
 		goto fail;
+	}
 
 	pos = 0;
 
 	size_t i = 0;
 	for (i = 0; i < (fp_len - 1); i++)
 	{
-		int rc;
+		int rc = 0;
 		char* p = &fp_buffer[pos];
 		if (separator)
+		{
 			rc = sprintf_s(p, size - pos, "%02" PRIx8 ":", fp[i]);
+		}
 		else
+		{
 			rc = sprintf_s(p, size - pos, "%02" PRIx8, fp[i]);
+		}
 		if (rc <= 0)
+		{
 			goto fail;
+		}
 		pos += (size_t)rc;
 	}
 
@@ -1372,7 +1567,9 @@ static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
 	{
 		char* tmp = realloc(pem, length + 1);
 		if (!tmp)
+		{
 			goto fail;
+		}
 		pem = tmp;
 
 		ERR_clear_error();
@@ -1385,17 +1582,23 @@ static BOOL bio_read_pem(BIO* bio, char** ppem, size_t* plength)
 		}
 
 		if (status == 0)
+		{
 			break;
+		}
 
 		offset += (size_t)status;
 		if (length - offset > 0)
+		{
 			break;
+		}
 		length *= 2;
 	}
 	pem[offset] = '\0';
 	*ppem = pem;
 	if (plength)
+	{
 		*plength = offset;
+	}
 	rc = TRUE;
 fail:
 	return rc;
@@ -1407,10 +1610,12 @@ char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
 	WINPR_ASSERT(cert);
 
 	if (!cert->x509)
+	{
 		return NULL;
+	}
 
-	BIO* bio;
-	int status;
+	BIO* bio = NULL;
+	int status = 0;
 
 	/**
 	 * Don't manage certificates internally, leave it up entirely to the external client
@@ -1449,7 +1654,9 @@ char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
         }
 #endif
 	if (!bio_read_pem(bio, &pem, pLength))
+	{
 		goto fail;
+	}
 fail:
 	BIO_free_all(bio);
 	return pem;
@@ -1490,7 +1697,7 @@ BOOL freerdp_certificate_get_public_key(const rdpCertificate* cert, BYTE** Publi
 {
 	BYTE* ptr = NULL;
 	BYTE* optr = NULL;
-	int length;
+	int length = 0;
 	BOOL status = FALSE;
 	EVP_PKEY* pkey = NULL;
 
@@ -1515,17 +1722,23 @@ BOOL freerdp_certificate_get_public_key(const rdpCertificate* cert, BYTE** Publi
 	*PublicKey = optr = ptr = (BYTE*)calloc(length, sizeof(BYTE));
 
 	if (!ptr)
+	{
 		goto exit;
+	}
 
 	const int length2 = i2d_PublicKey(pkey, &ptr);
 	if (length != length2)
+	{
 		goto exit;
+	}
 	*PublicKeyLength = (DWORD)length2;
 	status = TRUE;
 exit:
 
 	if (!status)
+	{
 		free(optr);
+	}
 
 	return status;
 }
@@ -1584,11 +1797,15 @@ BOOL freerdp_certificate_publickey_encrypt(const rdpCertificate* cert, const BYT
 	BYTE* output = NULL;
 	EVP_PKEY* pkey = X509_get0_pubkey(cert->x509);
 	if (!pkey)
+	{
 		return FALSE;
+	}
 
 	EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(pkey, NULL);
 	if (!ctx)
+	{
 		return FALSE;
+	}
 
 	size_t outputSize = EVP_PKEY_size(pkey);
 	output = malloc(outputSize);
@@ -1632,15 +1849,21 @@ BYTE* freerdp_certificate_get_der(const rdpCertificate* cert, size_t* pLength)
 	WINPR_ASSERT(cert);
 
 	if (pLength)
+	{
 		*pLength = 0;
+	}
 
 	const int rc = i2d_X509(cert->x509, NULL);
 	if (rc <= 0)
+	{
 		return NULL;
+	}
 
 	BYTE* ptr = calloc(rc + 1, sizeof(BYTE));
 	if (!ptr)
+	{
 		return NULL;
+	}
 	BYTE* i2d_ptr = ptr;
 
 	const int rc2 = i2d_X509(cert->x509, &i2d_ptr);
@@ -1651,7 +1874,9 @@ BYTE* freerdp_certificate_get_der(const rdpCertificate* cert, size_t* pLength)
 	}
 
 	if (pLength)
+	{
 		*pLength = (size_t)rc2;
+	}
 	return ptr;
 }
 
@@ -1699,18 +1924,24 @@ char* freerdp_certificate_get_param(const rdpCertificate* cert, enum FREERDP_CER
 #else
 	EVP_PKEY* pkey = X509_get0_pubkey(cert->x509);
 	if (!pkey)
+	{
 		return NULL;
+	}
 
 	BIGNUM* bn = NULL;
 	switch (what)
 	{
 		case FREERDP_CERT_RSA_E:
 			if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_E, &bn))
+			{
 				return NULL;
+			}
 			break;
 		case FREERDP_CERT_RSA_N:
 			if (!EVP_PKEY_get_bn_param(pkey, OSSL_PKEY_PARAM_RSA_N, &bn))
+			{
 				return NULL;
+			}
 			break;
 		default:
 			return NULL;
@@ -1720,7 +1951,9 @@ char* freerdp_certificate_get_param(const rdpCertificate* cert, enum FREERDP_CER
 	const size_t bnsize = BN_num_bytes(bn);
 	char* rc = calloc(bnsize + 1, sizeof(char));
 	if (!rc)
+	{
 		goto fail;
+	}
 	BN_bn2bin(bn, (BYTE*)rc);
 	*psize = bnsize;
 

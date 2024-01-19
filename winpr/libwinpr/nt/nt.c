@@ -23,10 +23,10 @@
 #include <winpr/config.h>
 
 #include <winpr/crt.h>
-#include <winpr/library.h>
-#include <winpr/wlog.h>
-#include <winpr/nt.h>
 #include <winpr/endian.h>
+#include <winpr/library.h>
+#include <winpr/nt.h>
+#include <winpr/wlog.h>
 
 #include "../log.h"
 #define TAG WINPR_TAG("nt")
@@ -61,7 +61,9 @@ PTEB NtCurrentTeb(void)
 		{
 			teb = calloc(1, sizeof(TEB));
 			if (teb)
+			{
 				pthread_setspecific(sTebKey, teb);
+			}
 		}
 	}
 	return teb;

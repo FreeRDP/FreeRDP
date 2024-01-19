@@ -40,12 +40,14 @@ struct SmartcardKeyInfo_st
 {
 	char* certPath;
 	char* keyPath;
-};
+} DECLSPEC_ALIGN(16);
 
 static void delete_file(char* path)
 {
 	if (!path)
+	{
 		return;
+	}
 
 	/* Overwrite data in files before deletion */
 	{
@@ -56,7 +58,9 @@ static void delete_file(char* path)
 			INT64 size = 0;
 			int rs = _fseeki64(fp, 0, SEEK_END);
 			if (rs == 0)
+			{
 				size = _ftelli64(fp);
+			}
 			_fseeki64(fp, 0, SEEK_SET);
 
 			for (INT64 x = 0; x < size; x += sizeof(buffer))
@@ -65,7 +69,9 @@ static void delete_file(char* path)
 				const size_t nmemb = MIN(sizeof(buffer), dnmemb);
 				const size_t count = fwrite(buffer, nmemb, 1, fp);
 				if (count != 1)
+				{
 					break;
+				}
 			}
 
 			fclose(fp);
@@ -79,7 +85,9 @@ static void delete_file(char* path)
 static void smartcardKeyInfo_Free(SmartcardKeyInfo* key_info)
 {
 	if (!key_info)
+	{
 		return;
+	}
 
 	delete_file(key_info->certPath);
 	delete_file(key_info->keyPath);
@@ -90,7 +98,9 @@ static void smartcardKeyInfo_Free(SmartcardKeyInfo* key_info)
 void smartcardCertInfo_Free(SmartcardCertInfo* scCert)
 {
 	if (!scCert)
+	{
 		return;
+	}
 
 	free(scCert->csp);
 	free(scCert->reader);
@@ -111,7 +121,9 @@ void smartcardCertInfo_Free(SmartcardCertInfo* scCert)
 void smartcardCertList_Free(SmartcardCertInfo** cert_list, size_t count)
 {
 	if (!cert_list)
+	{
 		return;
+	}
 
 	for (size_t i = 0; i < count; i++)
 	{
@@ -164,7 +176,7 @@ static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 
 	if (scCert->upn)
 	{
-		size_t userLen;
+		size_t userLen = 0;
 		const char* atPos = strchr(scCert->upn, '@');
 
 		if (!atPos)
@@ -251,7 +263,9 @@ static BOOL build_pkinit_args(const rdpSettings* settings, SmartcardCertInfo* sc
 
 	if (winpr_asprintf(&scCert->pkinitArgs, &size, "PKCS11:module_name=%s:slotid=%" PRIu16,
 	                   pkModule, (UINT16)scCert->slotId) <= 0)
+	{
 		return FALSE;
+	}
 	return TRUE;
 }
 #endif /* _WIN32 */
@@ -392,18 +406,22 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		NCRYPT_KEY_HANDLE phKey = 0;
 		PBYTE certBytes = NULL;
 		DWORD dwFlags = NCRYPT_SILENT_FLAG;
-		DWORD cbOutput;
+		DWORD cbOutput = 0;
 		SmartcardCertInfo* cert = NULL;
 		BOOL haveError = TRUE;
-		SECURITY_STATUS status;
+		SECURITY_STATUS status = 0;
 
 		cert = calloc(1, sizeof(SmartcardCertInfo));
 		if (!cert)
+		{
 			goto out;
+		}
 
 		cert->keyName = ConvertWCharToUtf8Alloc(keyName->pszName, NULL);
 		if (!cert->keyName)
+		{
 			goto endofloop;
+		}
 
 		WLog_DBG(TAG, "opening key %s", cert->keyName);
 
@@ -421,7 +439,9 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 
 		cert->csp = _wcsdup(csp);
 		if (!cert->csp)
+		{
 			goto endofloop;
+		}
 
 #ifndef _WIN32
 		status = NCryptGetProperty(phKey, NCRYPT_WINPR_SLOTID, (PBYTE)&cert->slotId, 4, &cbOutput,
@@ -509,7 +529,9 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		}
 
 		if (!set_info_certificate(cert, certBytes, cbOutput, userFilter, domainFilter))
+		{
 			goto endofloop;
+		}
 
 #ifndef _WIN32
 		if (!build_pkinit_args(settings, cert))
@@ -524,14 +546,20 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		free(certBytes);
 		NCryptFreeBuffer(keyName);
 		if (phKey)
+		{
 			NCryptFreeObject((NCRYPT_HANDLE)phKey);
+		}
 
 		if (haveError)
+		{
 			smartcardCertInfo_Free(cert);
+		}
 		else
 		{
 			if (!add_cert_to_list(&cert_list, &count, cert))
+			{
 				goto out;
+			}
 		}
 	}
 
@@ -559,8 +587,8 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 {
 	BOOL ret = FALSE;
 	LPWSTR scope = NULL;
-	NCRYPT_PROV_HANDLE provider;
-	SECURITY_STATUS status;
+	NCRYPT_PROV_HANDLE provider = 0;
+	SECURITY_STATUS status = 0;
 	size_t count = 0;
 	SmartcardCertInfo** cert_list = NULL;
 	const char* Pkcs11Module = freerdp_settings_get_string(settings, FreeRDP_Pkcs11Module);
@@ -573,14 +601,18 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		size_t readerSz = strlen(reader);
 		char* scopeStr = malloc(4 + readerSz + 1 + 1);
 		if (!scopeStr)
+		{
 			goto out;
+		}
 
 		_snprintf(scopeStr, readerSz + 5, "\\\\.\\%s\\", reader);
 		scope = ConvertUtf8NToWCharAlloc(scopeStr, readerSz + 5, NULL);
 		free(scopeStr);
 
 		if (!scope)
+		{
 			goto out;
+		}
 	}
 
 	if (Pkcs11Module)
@@ -589,7 +621,9 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 		LPCSTR paths[] = { Pkcs11Module, NULL };
 
 		if (!csp)
+		{
 			csp = MS_SCARD_PROV;
+		}
 
 		status = winpr_NCryptOpenStorageProviderEx(&provider, csp, 0, paths);
 		if (status != ERROR_SUCCESS)
@@ -610,7 +644,8 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 	else
 	{
 		NCryptProviderName* names = NULL;
-		DWORD nproviders, i;
+		DWORD nproviders;
+		DWORD i;
 
 #ifdef _WIN32
 		/* On Windows, mstsc first enumerates the legacy CAPI providers for usable certificates. */
@@ -676,11 +711,15 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 
 			status = NCryptOpenStorageProvider(&provider, name->pszName, 0);
 			if (status != ERROR_SUCCESS)
+			{
 				continue;
+			}
 
 			if (!list_provider_keys(settings, provider, name->pszName, scope, userFilter,
 			                        domainFilter, &cert_list, &count))
+			{
 				WLog_INFO(TAG, "error when retrieving keys in CSP '%s'", providerNameStr);
+			}
 
 			NCryptFreeObject((NCRYPT_HANDLE)provider);
 		}
@@ -694,7 +733,9 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 
 out:
 	if (!ret)
+	{
 		smartcardCertList_Free(cert_list, count);
+	}
 	free(scope);
 	return ret;
 }
@@ -702,8 +743,8 @@ out:
 static char* create_temporary_file(void)
 {
 	BYTE buffer[32];
-	char* hex;
-	char* path;
+	char* hex = NULL;
+	char* path = NULL;
 
 	winpr_RAND(buffer, sizeof(buffer));
 	hex = winpr_BinToHexString(buffer, sizeof(buffer), FALSE);
@@ -721,11 +762,15 @@ static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const ch
 
 	SmartcardCertInfo* cert = calloc(1, sizeof(SmartcardCertInfo));
 	if (!cert)
+	{
 		goto fail;
+	}
 
 	SmartcardKeyInfo* info = cert->key_info = calloc(1, sizeof(SmartcardKeyInfo));
 	if (!info)
+	{
 		goto fail;
+	}
 
 	cert->certificate = freerdp_certificate_new_from_pem(certPEM);
 	if (!cert->certificate)
@@ -742,11 +787,15 @@ static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const ch
 
 	cert->reader = ConvertUtf8ToWCharAlloc("FreeRDP Emulator", NULL);
 	if (!cert->reader)
+	{
 		goto fail;
+	}
 
 	cert->containerName = ConvertUtf8ToWCharAlloc("Private Key 00", NULL);
 	if (!cert->containerName)
+	{
 		goto fail;
+	}
 
 	/* compute PKINIT args FILE:<cert file>,<key file>
 	 *
@@ -756,16 +805,22 @@ static SmartcardCertInfo* smartcardCertInfo_New(const char* privKeyPEM, const ch
 	info->keyPath = create_temporary_file();
 	WLog_DBG(TAG, "writing PKINIT key to %s", info->keyPath);
 	if (!crypto_write_pem(info->keyPath, privKeyPEM, strlen(privKeyPEM)))
+	{
 		goto fail;
+	}
 
 	info->certPath = create_temporary_file();
 	WLog_DBG(TAG, "writing PKINIT cert to %s", info->certPath);
 	if (!crypto_write_pem(info->certPath, certPEM, strlen(certPEM)))
+	{
 		goto fail;
+	}
 
 	int res = winpr_asprintf(&cert->pkinitArgs, &size, "FILE:%s,%s", info->certPath, info->keyPath);
 	if (res <= 0)
+	{
 		goto fail;
+	}
 
 	return cert;
 fail:
@@ -798,12 +853,16 @@ static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCe
 
 	cert_list = calloc(1, sizeof(SmartcardCertInfo*));
 	if (!cert_list)
+	{
 		goto out_error;
+	}
 
 	{
 		SmartcardCertInfo* cert = smartcardCertInfo_New(privKeyPEM, certPEM);
 		if (!cert)
+		{
 			goto out_error;
+		}
 		cert_list[0] = cert;
 	}
 
@@ -813,19 +872,21 @@ static BOOL smartcard_sw_enumerateCerts(const rdpSettings* settings, SmartcardCe
 
 out_error:
 	if (!rc)
+	{
 		smartcardCertList_Free(cert_list, 1);
+	}
 	return rc;
 }
 
 BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCertInfo*** scCerts,
                               size_t* retCount, BOOL gateway)
 {
-	BOOL ret;
+	BOOL ret = 0;
 	LPWSTR csp = NULL;
 	const char* ReaderName = freerdp_settings_get_string(settings, FreeRDP_ReaderName);
 	const char* CspName = freerdp_settings_get_string(settings, FreeRDP_CspName);
-	const char* Username;
-	const char* Domain;
+	const char* Username = NULL;
+	const char* Domain = NULL;
 
 	if (gateway)
 	{
@@ -843,10 +904,14 @@ BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCertInfo*** 
 	WINPR_ASSERT(retCount);
 
 	if (Domain && !strlen(Domain))
+	{
 		Domain = NULL;
+	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_SmartcardEmulation))
+	{
 		return smartcard_sw_enumerateCerts(settings, scCerts, retCount);
+	}
 
 	if (CspName && (!(csp = ConvertUtf8ToWCharAlloc(CspName, NULL))))
 	{
@@ -866,8 +931,12 @@ static BOOL set_settings_from_smartcard(rdpSettings* settings, FreeRDP_Settings_
 	WINPR_ASSERT(settings);
 
 	if (!freerdp_settings_get_string(settings, id) && value)
+	{
 		if (!freerdp_settings_set_string(settings, id, value))
+		{
 			return FALSE;
+		}
+	}
 
 	return TRUE;
 }
@@ -878,14 +947,16 @@ BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert, BOOL
 
 	const freerdp* instance = context->instance;
 	rdpSettings* settings = context->settings;
-	SmartcardCertInfo** cert_list;
+	SmartcardCertInfo** cert_list = NULL;
 	size_t count = 0;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(settings);
 
 	if (!smartcard_enumerateCerts(settings, &cert_list, &count, gateway))
+	{
 		return FALSE;
+	}
 
 	if (count < 1)
 	{
@@ -914,12 +985,18 @@ BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert, BOOL
 		*cert = cert_list[index];
 
 		for (DWORD i = 0; i < index; i++)
+		{
 			smartcardCertInfo_Free(cert_list[i]);
+		}
 		for (DWORD i = index + 1; i < count; i++)
+		{
 			smartcardCertInfo_Free(cert_list[i]);
+		}
 	}
 	else
+	{
 		*cert = cert_list[0];
+	}
 
 	FreeRDP_Settings_Keys_String username_setting =
 	    gateway ? FreeRDP_GatewayUsername : FreeRDP_Username;

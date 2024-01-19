@@ -80,13 +80,15 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 	GDI_RECT bmp;
 	GDI_RECT clip;
 	GDI_RECT coords;
-	HGDI_BITMAP hBmp;
+	HGDI_BITMAP hBmp = NULL;
 	int dx = 0;
 	int dy = 0;
 	BOOL draw = TRUE;
 
 	if (hdc == NULL)
+	{
 		return FALSE;
+	}
 
 	hBmp = (HGDI_BITMAP)hdc->selectedObject;
 
@@ -102,16 +104,24 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 			gdi_CRgnToRect(0, 0, hBmp->width, hBmp->height, &bmp);
 
 			if (clip.left < bmp.left)
+			{
 				clip.left = bmp.left;
+			}
 
 			if (clip.right > bmp.right)
+			{
 				clip.right = bmp.right;
+			}
 
 			if (clip.top < bmp.top)
+			{
 				clip.top = bmp.top;
+			}
 
 			if (clip.bottom > bmp.bottom)
+			{
 				clip.bottom = bmp.bottom;
+			}
 		}
 	}
 	else
@@ -132,7 +142,9 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 		}
 
 		if (coords.right > clip.right)
+		{
 			coords.right = clip.right;
+		}
 
 		if (coords.top < clip.top)
 		{
@@ -141,7 +153,9 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 		}
 
 		if (coords.bottom > clip.bottom)
+		{
 			coords.bottom = clip.bottom;
+		}
 	}
 	else
 	{
@@ -154,10 +168,14 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 	}
 
 	if (srcx != NULL)
+	{
 		*srcx += dx;
+	}
 
 	if (srcy != NULL)
+	{
 		*srcy += dy;
+	}
 
 	gdi_RectToCRgn(&coords, x, y, w, h);
 	return draw;

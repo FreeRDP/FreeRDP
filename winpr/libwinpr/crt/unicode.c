@@ -368,7 +368,9 @@ const WCHAR* ByteSwapUnicode(WCHAR* wstr, size_t length)
 	WINPR_ASSERT(wstr || (length == 0));
 
 	for (size_t x = 0; x < length; x++)
+	{
 		wstr[x] = _byteswap_ushort(wstr[x]);
+	}
 	return wstr;
 }
 
@@ -377,7 +379,9 @@ SSIZE_T ConvertWCharToUtf8(const WCHAR* wstr, char* str, size_t len)
 	if (!wstr)
 	{
 		if (str && len)
+		{
 			str[0] = 0;
+		}
 		return 0;
 	}
 
@@ -389,7 +393,9 @@ SSIZE_T ConvertWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t le
 {
 	BOOL isNullTerminated = FALSE;
 	if (wlen == 0)
+	{
 		return 0;
+	}
 
 	WINPR_ASSERT(wstr);
 	size_t iwlen = _wcsnlen(wstr, wlen);
@@ -408,8 +414,10 @@ SSIZE_T ConvertWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t le
 	const int rc = WideCharToMultiByte(CP_UTF8, 0, wstr, (int)iwlen, str, (int)MIN(INT32_MAX, len),
 	                                   NULL, NULL);
 	if ((rc <= 0) || ((len > 0) && ((size_t)rc > len)))
+	{
 		return -1;
-	else if (!isNullTerminated)
+	}
+	if (!isNullTerminated)
 	{
 		if (str && ((size_t)rc < len))
 			str[rc] = '\0';
@@ -426,7 +434,9 @@ SSIZE_T ConvertWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t le
 SSIZE_T ConvertMszWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t len)
 {
 	if (wlen == 0)
+	{
 		return 0;
+	}
 
 	WINPR_ASSERT(wstr);
 
@@ -439,7 +449,9 @@ SSIZE_T ConvertMszWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t
 	const int iwlen = MIN(INT32_MAX, len);
 	const int rc = WideCharToMultiByte(CP_UTF8, 0, wstr, (int)wlen, str, (int)iwlen, NULL, NULL);
 	if ((rc <= 0) || ((len > 0) && (rc > iwlen)))
+	{
 		return -1;
+	}
 
 	return rc;
 }
@@ -449,7 +461,9 @@ SSIZE_T ConvertUtf8ToWChar(const char* str, WCHAR* wstr, size_t wlen)
 	if (!str)
 	{
 		if (wstr && wlen)
+		{
 			wstr[0] = 0;
+		}
 		return 0;
 	}
 
@@ -462,7 +476,9 @@ SSIZE_T ConvertUtf8NToWChar(const char* str, size_t len, WCHAR* wstr, size_t wle
 	size_t ilen = strnlen(str, len);
 	BOOL isNullTerminated = FALSE;
 	if (len == 0)
+	{
 		return 0;
+	}
 
 	WINPR_ASSERT(str);
 
@@ -480,14 +496,18 @@ SSIZE_T ConvertUtf8NToWChar(const char* str, size_t len, WCHAR* wstr, size_t wle
 	const int iwlen = MIN(INT32_MAX, wlen);
 	const int rc = MultiByteToWideChar(CP_UTF8, 0, str, (int)ilen, wstr, (int)iwlen);
 	if ((rc <= 0) || ((wlen > 0) && (rc > iwlen)))
+	{
 		return -1;
+	}
 	if (!isNullTerminated)
 	{
 		if (wstr && (rc < iwlen))
+		{
 			wstr[rc] = '\0';
+		}
 		return rc;
 	}
-	else if (rc == iwlen)
+	if (rc == iwlen)
 	{
 		if (wstr && (wstr[rc - 1] != '\0'))
 			return rc;
@@ -498,7 +518,9 @@ SSIZE_T ConvertUtf8NToWChar(const char* str, size_t len, WCHAR* wstr, size_t wle
 SSIZE_T ConvertMszUtf8NToWChar(const char* str, size_t len, WCHAR* wstr, size_t wlen)
 {
 	if (len == 0)
+	{
 		return 0;
+	}
 
 	WINPR_ASSERT(str);
 
@@ -511,7 +533,9 @@ SSIZE_T ConvertMszUtf8NToWChar(const char* str, size_t len, WCHAR* wstr, size_t 
 	const int iwlen = MIN(INT32_MAX, wlen);
 	const int rc = MultiByteToWideChar(CP_UTF8, 0, str, (int)len, wstr, (int)iwlen);
 	if ((rc <= 0) || ((wlen > 0) && (rc > iwlen)))
+	{
 		return -1;
+	}
 
 	return rc;
 }
@@ -521,13 +545,19 @@ char* ConvertWCharToUtf8Alloc(const WCHAR* wstr, size_t* pUtfCharLength)
 	char* tmp = NULL;
 	const SSIZE_T rc = ConvertWCharToUtf8(wstr, NULL, 0);
 	if (pUtfCharLength)
+	{
 		*pUtfCharLength = 0;
+	}
 	if (rc < 0)
+	{
 		return NULL;
-	tmp = calloc((size_t)rc + 1ull, sizeof(char));
+	}
+	tmp = calloc((size_t)rc + 1ULL, sizeof(char));
 	if (!tmp)
+	{
 		return NULL;
-	const SSIZE_T rc2 = ConvertWCharToUtf8(wstr, tmp, (size_t)rc + 1ull);
+	}
+	const SSIZE_T rc2 = ConvertWCharToUtf8(wstr, tmp, (size_t)rc + 1ULL);
 	if (rc2 < 0)
 	{
 		free(tmp);
@@ -535,7 +565,9 @@ char* ConvertWCharToUtf8Alloc(const WCHAR* wstr, size_t* pUtfCharLength)
 	}
 	WINPR_ASSERT(rc == rc2);
 	if (pUtfCharLength)
+	{
 		*pUtfCharLength = (size_t)rc2;
+	}
 	return tmp;
 }
 
@@ -545,13 +577,19 @@ char* ConvertWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pUtfCharL
 	const SSIZE_T rc = ConvertWCharNToUtf8(wstr, wlen, NULL, 0);
 
 	if (pUtfCharLength)
+	{
 		*pUtfCharLength = 0;
+	}
 	if (rc < 0)
+	{
 		return NULL;
-	tmp = calloc((size_t)rc + 1ull, sizeof(char));
+	}
+	tmp = calloc((size_t)rc + 1ULL, sizeof(char));
 	if (!tmp)
+	{
 		return NULL;
-	const SSIZE_T rc2 = ConvertWCharNToUtf8(wstr, wlen, tmp, (size_t)rc + 1ull);
+	}
+	const SSIZE_T rc2 = ConvertWCharNToUtf8(wstr, wlen, tmp, (size_t)rc + 1ULL);
 	if (rc2 < 0)
 	{
 		free(tmp);
@@ -559,7 +597,9 @@ char* ConvertWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pUtfCharL
 	}
 	WINPR_ASSERT(rc == rc2);
 	if (pUtfCharLength)
+	{
 		*pUtfCharLength = (size_t)rc2;
+	}
 	return tmp;
 }
 
@@ -569,13 +609,19 @@ char* ConvertMszWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pUtfCh
 	const SSIZE_T rc = ConvertMszWCharNToUtf8(wstr, wlen, NULL, 0);
 
 	if (pUtfCharLength)
+	{
 		*pUtfCharLength = 0;
+	}
 	if (rc < 0)
+	{
 		return NULL;
-	tmp = calloc((size_t)rc + 1ull, sizeof(char));
+	}
+	tmp = calloc((size_t)rc + 1ULL, sizeof(char));
 	if (!tmp)
+	{
 		return NULL;
-	const SSIZE_T rc2 = ConvertMszWCharNToUtf8(wstr, wlen, tmp, (size_t)rc + 1ull);
+	}
+	const SSIZE_T rc2 = ConvertMszWCharNToUtf8(wstr, wlen, tmp, (size_t)rc + 1ULL);
 	if (rc2 < 0)
 	{
 		free(tmp);
@@ -583,7 +629,9 @@ char* ConvertMszWCharNToUtf8Alloc(const WCHAR* wstr, size_t wlen, size_t* pUtfCh
 	}
 	WINPR_ASSERT(rc == rc2);
 	if (pUtfCharLength)
+	{
 		*pUtfCharLength = (size_t)rc2;
+	}
 	return tmp;
 }
 
@@ -592,13 +640,19 @@ WCHAR* ConvertUtf8ToWCharAlloc(const char* str, size_t* pSize)
 	WCHAR* tmp = NULL;
 	const SSIZE_T rc = ConvertUtf8ToWChar(str, NULL, 0);
 	if (pSize)
+	{
 		*pSize = 0;
+	}
 	if (rc < 0)
+	{
 		return NULL;
-	tmp = calloc((size_t)rc + 1ull, sizeof(WCHAR));
+	}
+	tmp = calloc((size_t)rc + 1ULL, sizeof(WCHAR));
 	if (!tmp)
+	{
 		return NULL;
-	const SSIZE_T rc2 = ConvertUtf8ToWChar(str, tmp, (size_t)rc + 1ull);
+	}
+	const SSIZE_T rc2 = ConvertUtf8ToWChar(str, tmp, (size_t)rc + 1ULL);
 	if (rc2 < 0)
 	{
 		free(tmp);
@@ -606,7 +660,9 @@ WCHAR* ConvertUtf8ToWCharAlloc(const char* str, size_t* pSize)
 	}
 	WINPR_ASSERT(rc == rc2);
 	if (pSize)
+	{
 		*pSize = (size_t)rc2;
+	}
 	return tmp;
 }
 
@@ -615,13 +671,19 @@ WCHAR* ConvertUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize)
 	WCHAR* tmp = NULL;
 	const SSIZE_T rc = ConvertUtf8NToWChar(str, len, NULL, 0);
 	if (pSize)
+	{
 		*pSize = 0;
+	}
 	if (rc < 0)
+	{
 		return NULL;
-	tmp = calloc((size_t)rc + 1ull, sizeof(WCHAR));
+	}
+	tmp = calloc((size_t)rc + 1ULL, sizeof(WCHAR));
 	if (!tmp)
+	{
 		return NULL;
-	const SSIZE_T rc2 = ConvertUtf8NToWChar(str, len, tmp, (size_t)rc + 1ull);
+	}
+	const SSIZE_T rc2 = ConvertUtf8NToWChar(str, len, tmp, (size_t)rc + 1ULL);
 	if (rc2 < 0)
 	{
 		free(tmp);
@@ -629,7 +691,9 @@ WCHAR* ConvertUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize)
 	}
 	WINPR_ASSERT(rc == rc2);
 	if (pSize)
+	{
 		*pSize = (size_t)rc2;
+	}
 	return tmp;
 }
 
@@ -638,13 +702,19 @@ WCHAR* ConvertMszUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize)
 	WCHAR* tmp = NULL;
 	const SSIZE_T rc = ConvertMszUtf8NToWChar(str, len, NULL, 0);
 	if (pSize)
+	{
 		*pSize = 0;
+	}
 	if (rc < 0)
+	{
 		return NULL;
-	tmp = calloc((size_t)rc + 1ull, sizeof(WCHAR));
+	}
+	tmp = calloc((size_t)rc + 1ULL, sizeof(WCHAR));
 	if (!tmp)
+	{
 		return NULL;
-	const SSIZE_T rc2 = ConvertMszUtf8NToWChar(str, len, tmp, (size_t)rc + 1ull);
+	}
+	const SSIZE_T rc2 = ConvertMszUtf8NToWChar(str, len, tmp, (size_t)rc + 1ULL);
 	if (rc2 < 0)
 	{
 		free(tmp);
@@ -652,6 +722,8 @@ WCHAR* ConvertMszUtf8NToWCharAlloc(const char* str, size_t len, size_t* pSize)
 	}
 	WINPR_ASSERT(rc == rc2);
 	if (pSize)
+	{
 		*pSize = (size_t)rc2;
+	}
 	return tmp;
 }

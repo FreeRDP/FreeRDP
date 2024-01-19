@@ -60,7 +60,7 @@ static BOOL cliprdr_validate_file_contents_request(const CLIPRDR_FILE_CONTENTS_R
 
 wStream* cliprdr_packet_new(UINT16 msgType, UINT16 msgFlags, UINT32 dataLen)
 {
-	wStream* s;
+	wStream* s = NULL;
 	s = Stream_New(NULL, dataLen + 8);
 
 	if (!s)
@@ -87,7 +87,9 @@ static void cliprdr_write_file_contents_request(wStream* s,
 	Stream_Write_UINT32(s, request->cbRequested);   /* cbRequested (4 bytes) */
 
 	if (request->haveClipDataId)
+	{
 		Stream_Write_UINT32(s, request->clipDataId); /* clipDataId (4 bytes) */
+	}
 }
 
 static INLINE void cliprdr_write_lock_unlock_clipdata(wStream* s, UINT32 clipDataId)
@@ -116,15 +118,19 @@ static void cliprdr_write_file_contents_response(wStream* s,
 
 wStream* cliprdr_packet_lock_clipdata_new(const CLIPRDR_LOCK_CLIPBOARD_DATA* lockClipboardData)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!lockClipboardData)
+	{
 		return NULL;
+	}
 
 	s = cliprdr_packet_new(CB_LOCK_CLIPDATA, 0, 4);
 
 	if (!s)
+	{
 		return NULL;
+	}
 
 	cliprdr_write_lock_clipdata(s, lockClipboardData);
 	return s;
@@ -133,15 +139,19 @@ wStream* cliprdr_packet_lock_clipdata_new(const CLIPRDR_LOCK_CLIPBOARD_DATA* loc
 wStream*
 cliprdr_packet_unlock_clipdata_new(const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!unlockClipboardData)
+	{
 		return NULL;
+	}
 
 	s = cliprdr_packet_new(CB_UNLOCK_CLIPDATA, 0, 4);
 
 	if (!s)
+	{
 		return NULL;
+	}
 
 	cliprdr_write_unlock_clipdata(s, unlockClipboardData);
 	return s;
@@ -149,15 +159,19 @@ cliprdr_packet_unlock_clipdata_new(const CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockCl
 
 wStream* cliprdr_packet_file_contents_request_new(const CLIPRDR_FILE_CONTENTS_REQUEST* request)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!request)
+	{
 		return NULL;
+	}
 
 	s = cliprdr_packet_new(CB_FILECONTENTS_REQUEST, 0, 28);
 
 	if (!s)
+	{
 		return NULL;
+	}
 
 	cliprdr_write_file_contents_request(s, request);
 	return s;
@@ -165,16 +179,20 @@ wStream* cliprdr_packet_file_contents_request_new(const CLIPRDR_FILE_CONTENTS_RE
 
 wStream* cliprdr_packet_file_contents_response_new(const CLIPRDR_FILE_CONTENTS_RESPONSE* response)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!response)
+	{
 		return NULL;
+	}
 
 	s = cliprdr_packet_new(CB_FILECONTENTS_RESPONSE, response->common.msgFlags,
 	                       4 + response->cbRequested);
 
 	if (!s)
+	{
 		return NULL;
+	}
 
 	cliprdr_write_file_contents_response(s, response);
 	return s;
@@ -183,17 +201,19 @@ wStream* cliprdr_packet_file_contents_response_new(const CLIPRDR_FILE_CONTENTS_R
 wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
                                         BOOL useLongFormatNames)
 {
-	wStream* s;
-	UINT32 index;
+	wStream* s = NULL;
+	UINT32 index = 0;
 	size_t formatNameSize = 0;
-	char* szFormatName;
-	WCHAR* wszFormatName;
+	char* szFormatName = NULL;
+	WCHAR* wszFormatName = NULL;
 	BOOL asciiNames = FALSE;
-	CLIPRDR_FORMAT* format;
-	UINT32 length;
+	CLIPRDR_FORMAT* format = NULL;
+	UINT32 length = 0;
 
 	if (formatList->common.msgType != CB_FORMAT_LIST)
+	{
 		WLog_WARN(TAG, "called with invalid type %08" PRIx32, formatList->common.msgType);
+	}
 
 	if (!useLongFormatNames)
 	{
@@ -218,10 +238,14 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 			if (asciiNames)
 			{
 				if (szFormatName)
+				{
 					formatNameLength = strnlen(szFormatName, 32);
+				}
 
 				if (formatNameLength > 31)
+				{
 					formatNameLength = 31;
+				}
 
 				Stream_Write(s, szFormatName, formatNameLength);
 				Stream_Zero(s, 32 - formatNameLength);
@@ -243,13 +267,17 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 				}
 
 				if (formatNameSize > 15)
+				{
 					formatNameSize = 15;
+				}
 
 				/* size in bytes  instead of wchar */
 				formatNameSize *= sizeof(WCHAR);
 
 				if (wszFormatName)
+				{
 					Stream_Write(s, wszFormatName, (size_t)formatNameSize);
+				}
 
 				Stream_Zero(s, (size_t)(32 - formatNameSize));
 				free(wszFormatName);
@@ -269,7 +297,9 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 			{
 				SSIZE_T size = ConvertUtf8ToWChar(format->formatName, NULL, 0);
 				if (size < 0)
+				{
 					return NULL;
+				}
 				formatNameSize = (size_t)(size + 1) * sizeof(WCHAR);
 			}
 
@@ -320,7 +350,9 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 UINT cliprdr_read_unlock_clipdata(wStream* s, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unlockClipboardData)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, unlockClipboardData->clipDataId); /* clipDataId (4 bytes) */
 	return CHANNEL_RC_OK;
@@ -329,7 +361,9 @@ UINT cliprdr_read_unlock_clipdata(wStream* s, CLIPRDR_UNLOCK_CLIPBOARD_DATA* unl
 UINT cliprdr_read_format_data_request(wStream* s, CLIPRDR_FORMAT_DATA_REQUEST* request)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, request->requestedFormatId); /* requestedFormatId (4 bytes) */
 	return CHANNEL_RC_OK;
@@ -340,10 +374,14 @@ UINT cliprdr_read_format_data_response(wStream* s, CLIPRDR_FORMAT_DATA_RESPONSE*
 	response->requestedFormatData = NULL;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, response->common.dataLen))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	if (response->common.dataLen)
+	{
 		response->requestedFormatData = Stream_ConstPointer(s);
+	}
 
 	return CHANNEL_RC_OK;
 }
@@ -351,7 +389,9 @@ UINT cliprdr_read_format_data_response(wStream* s, CLIPRDR_FORMAT_DATA_RESPONSE*
 UINT cliprdr_read_file_contents_request(wStream* s, CLIPRDR_FILE_CONTENTS_REQUEST* request)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	request->haveClipDataId = FALSE;
 	Stream_Read_UINT32(s, request->streamId);      /* streamId (4 bytes) */
@@ -368,7 +408,9 @@ UINT cliprdr_read_file_contents_request(wStream* s, CLIPRDR_FILE_CONTENTS_REQUES
 	}
 
 	if (!cliprdr_validate_file_contents_request(request))
+	{
 		return ERROR_BAD_ARGUMENTS;
+	}
 
 	return CHANNEL_RC_OK;
 }
@@ -376,7 +418,9 @@ UINT cliprdr_read_file_contents_request(wStream* s, CLIPRDR_FILE_CONTENTS_REQUES
 UINT cliprdr_read_file_contents_response(wStream* s, CLIPRDR_FILE_CONTENTS_RESPONSE* response)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	Stream_Read_UINT32(s, response->streamId);   /* streamId (4 bytes) */
 	response->requestedData = Stream_ConstPointer(s); /* requestedFileContentsData */
@@ -388,8 +432,8 @@ UINT cliprdr_read_file_contents_response(wStream* s, CLIPRDR_FILE_CONTENTS_RESPO
 
 UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL useLongFormatNames)
 {
-	UINT32 index;
-	int formatNameLength;
+	UINT32 index = 0;
+	int formatNameLength = 0;
 	const char* szFormatName = NULL;
 	const WCHAR* wszFormatName = NULL;
 	wStream sub1buffer = { 0 };
@@ -406,7 +450,9 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 	wStream* sub1 =
 	    Stream_StaticConstInit(&sub1buffer, Stream_ConstPointer(s), formatList->common.dataLen);
 	if (!Stream_SafeSeek(s, formatList->common.dataLen))
+	{
 		return ERROR_INVALID_DATA;
+	}
 
 	if (!formatList->common.dataLen)
 	{
@@ -423,7 +469,9 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 		}
 
 		if (formatList->numFormats)
+		{
 			formats = (CLIPRDR_FORMAT*)calloc(formatList->numFormats, sizeof(CLIPRDR_FORMAT));
+		}
 
 		if (!formats)
 		{
@@ -450,7 +498,9 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 			szFormatName = Stream_ConstPointer(sub1);
 			wszFormatName = Stream_ConstPointer(sub1);
 			if (!Stream_SafeSeek(sub1, 32))
+			{
 				goto error_out;
+			}
 
 			free(format->formatName);
 			format->formatName = NULL;
@@ -475,7 +525,9 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 				{
 					format->formatName = ConvertWCharNToUtf8Alloc(wszFormatName, 16, NULL);
 					if (!format->formatName)
+					{
 						goto error_out;
+					}
 				}
 			}
 
@@ -489,21 +541,27 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 
 		while (Stream_GetRemainingLength(sub1) > 0)
 		{
-			size_t rest;
-			if (!Stream_SafeSeek(sub1, 4)) /* formatId (4 bytes) */
+			size_t rest = 0;
+			if (!Stream_SafeSeek(sub1, 4))
+			{ /* formatId (4 bytes) */
 				goto error_out;
+			}
 
 			wszFormatName = Stream_ConstPointer(sub1);
 			rest = Stream_GetRemainingLength(sub1);
 			formatNameLength = _wcsnlen(wszFormatName, rest / sizeof(WCHAR));
 
 			if (!Stream_SafeSeek(sub1, (formatNameLength + 1) * sizeof(WCHAR)))
+			{
 				goto error_out;
+			}
 			formatList->numFormats++;
 		}
 
 		if (formatList->numFormats)
+		{
 			formats = (CLIPRDR_FORMAT*)calloc(formatList->numFormats, sizeof(CLIPRDR_FORMAT));
+		}
 
 		if (!formats)
 		{
@@ -515,7 +573,7 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 
 		while (Stream_GetRemainingLength(sub2) >= 4)
 		{
-			size_t rest;
+			size_t rest = 0;
 			CLIPRDR_FORMAT* format = &formats[index];
 
 			Stream_Read_UINT32(sub2, format->formatId); /* formatId (4 bytes) */
@@ -527,14 +585,18 @@ UINT cliprdr_read_format_list(wStream* s, CLIPRDR_FORMAT_LIST* formatList, BOOL 
 			rest = Stream_GetRemainingLength(sub2);
 			formatNameLength = _wcsnlen(wszFormatName, rest / sizeof(WCHAR));
 			if (!Stream_SafeSeek(sub2, (formatNameLength + 1) * sizeof(WCHAR)))
+			{
 				goto error_out;
+			}
 
 			if (formatNameLength)
 			{
 				format->formatName =
 				    ConvertWCharNToUtf8Alloc(wszFormatName, formatNameLength, NULL);
 				if (!format->formatName)
+				{
 					goto error_out;
+				}
 			}
 
 			index++;
@@ -553,7 +615,9 @@ void cliprdr_free_format_list(CLIPRDR_FORMAT_LIST* formatList)
 	UINT index = 0;
 
 	if (formatList == NULL)
+	{
 		return;
+	}
 
 	if (formatList->formats)
 	{

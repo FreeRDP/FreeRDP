@@ -36,12 +36,16 @@ static BOOL memory_regions_overlap_1d(const BYTE* p1, const BYTE* p2, size_t byt
 	if (p1m <= p2m)
 	{
 		if (p1m + bytes > p2m)
+		{
 			return TRUE;
+		}
 	}
 	else
 	{
 		if (p2m + bytes > p1m)
+		{
 			return TRUE;
+		}
 	}
 
 	/* else */
@@ -58,17 +62,21 @@ static BOOL memory_regions_overlap_2d(const BYTE* p1, int p1Step, int p1Size, co
 
 	if (p1m <= p2m)
 	{
-		ULONG_PTR p1mEnd = p1m + 1ull * (height - 1) * p1Step + 1ull * width * p1Size;
+		ULONG_PTR p1mEnd = p1m + 1ULL * (height - 1) * p1Step + 1ULL * width * p1Size;
 
 		if (p1mEnd > p2m)
+		{
 			return TRUE;
+		}
 	}
 	else
 	{
-		ULONG_PTR p2mEnd = p2m + 1ull * (height - 1) * p2Step + 1ull * width * p2Size;
+		ULONG_PTR p2mEnd = p2m + 1ULL * (height - 1) * p2Step + 1ULL * width * p2Size;
 
 		if (p2mEnd > p1m)
+		{
 			return TRUE;
+		}
 	}
 
 	/* else */
@@ -103,7 +111,9 @@ static pstatus_t general_copy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDs
 	int rowbytes = width * sizeof(UINT32);
 
 	if ((width == 0) || (height == 0))
+	{
 		return PRIMITIVES_SUCCESS;
+	}
 
 	if (memory_regions_overlap_2d(pSrc, srcStep, sizeof(UINT32), pDst, dstStep, sizeof(UINT32),
 	                              width, height))

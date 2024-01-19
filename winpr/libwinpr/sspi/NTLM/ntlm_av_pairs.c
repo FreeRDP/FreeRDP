@@ -42,11 +42,15 @@ static BOOL ntlm_av_pair_get_next_offset(const NTLM_AV_PAIR* pAvPair, size_t siz
 
 static BOOL ntlm_av_pair_check_data(const NTLM_AV_PAIR* pAvPair, size_t cbAvPair, size_t size)
 {
-	size_t offset;
+	size_t offset = 0;
 	if (!pAvPair || cbAvPair < sizeof(NTLM_AV_PAIR) + size)
+	{
 		return FALSE;
+	}
 	if (!ntlm_av_pair_get_next_offset(pAvPair, cbAvPair, &offset))
+	{
 		return FALSE;
+	}
 	return cbAvPair >= offset;
 }
 
@@ -101,7 +105,9 @@ static BOOL ntlm_av_pair_list_init(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairLis
 	NTLM_AV_PAIR* pAvPair = pAvPairList;
 
 	if (!pAvPair || (cbAvPairList < sizeof(NTLM_AV_PAIR)))
+	{
 		return FALSE;
+	}
 
 	ntlm_av_pair_set_id(pAvPair, MsvAvEOL);
 	ntlm_av_pair_set_len(pAvPair, 0);
@@ -110,12 +116,16 @@ static BOOL ntlm_av_pair_list_init(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairLis
 
 static INLINE BOOL ntlm_av_pair_get_id(const NTLM_AV_PAIR* pAvPair, size_t size, UINT16* pair)
 {
-	UINT16 AvId;
+	UINT16 AvId = 0;
 	if (!pAvPair || !pair)
+	{
 		return FALSE;
+	}
 
 	if (size < sizeof(NTLM_AV_PAIR))
+	{
 		return FALSE;
+	}
 
 	Data_Read_UINT16(&pAvPair->AvId, AvId);
 
@@ -125,13 +135,15 @@ static INLINE BOOL ntlm_av_pair_get_id(const NTLM_AV_PAIR* pAvPair, size_t size,
 
 ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 {
-	size_t size;
-	size_t cbAvPair;
-	NTLM_AV_PAIR* pAvPair;
+	size_t size = 0;
+	size_t cbAvPair = 0;
+	NTLM_AV_PAIR* pAvPair = NULL;
 
 	pAvPair = ntlm_av_pair_get(pAvPairList, cbAvPairList, MsvAvEOL, &cbAvPair);
 	if (!pAvPair)
+	{
 		return 0;
+	}
 
 	size = ((PBYTE)pAvPair - (PBYTE)pAvPairList) + sizeof(NTLM_AV_PAIR);
 	WINPR_ASSERT(size <= ULONG_MAX);
@@ -140,12 +152,16 @@ ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 
 static INLINE BOOL ntlm_av_pair_get_len(const NTLM_AV_PAIR* pAvPair, size_t size, size_t* pAvLen)
 {
-	UINT16 AvLen;
+	UINT16 AvLen = 0;
 	if (!pAvPair)
+	{
 		return FALSE;
+	}
 
 	if (size < sizeof(NTLM_AV_PAIR))
+	{
 		return FALSE;
+	}
 
 	Data_Read_UINT16(&pAvPair->AvLen, AvLen);
 
@@ -192,12 +208,16 @@ PBYTE ntlm_av_pair_get_value_pointer(NTLM_AV_PAIR* pAvPair)
 
 static BOOL ntlm_av_pair_get_next_offset(const NTLM_AV_PAIR* pAvPair, size_t size, size_t* pOffset)
 {
-	size_t avLen;
+	size_t avLen = 0;
 	if (!pOffset)
+	{
 		return FALSE;
+	}
 
 	if (!ntlm_av_pair_get_len(pAvPair, size, &avLen))
+	{
 		return FALSE;
+	}
 	*pOffset = avLen + sizeof(NTLM_AV_PAIR);
 	return TRUE;
 }
@@ -209,15 +229,21 @@ static BOOL ntlm_av_pair_check(const NTLM_AV_PAIR* pAvPair, size_t cbAvPair)
 
 static NTLM_AV_PAIR* ntlm_av_pair_next(NTLM_AV_PAIR* pAvPair, size_t* pcbAvPair)
 {
-	size_t offset;
+	size_t offset = 0;
 
 	if (!pcbAvPair)
+	{
 		return NULL;
+	}
 	if (!ntlm_av_pair_check(pAvPair, *pcbAvPair))
+	{
 		return NULL;
+	}
 
 	if (!ntlm_av_pair_get_next_offset(pAvPair, *pcbAvPair, &offset))
+	{
 		return NULL;
+	}
 
 	*pcbAvPair -= offset;
 	return (NTLM_AV_PAIR*)((PBYTE)pAvPair + offset);
@@ -226,17 +252,21 @@ static NTLM_AV_PAIR* ntlm_av_pair_next(NTLM_AV_PAIR* pAvPair, size_t* pcbAvPair)
 NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTLM_AV_ID AvId,
                                size_t* pcbAvPairListRemaining)
 {
-	UINT16 id;
+	UINT16 id = 0;
 	size_t cbAvPair = cbAvPairList;
 	NTLM_AV_PAIR* pAvPair = pAvPairList;
 
 	if (!ntlm_av_pair_check(pAvPair, cbAvPair))
+	{
 		pAvPair = NULL;
+	}
 
 	while (pAvPair && ntlm_av_pair_get_id(pAvPair, cbAvPair, &id))
 	{
 		if (id == AvId)
+		{
 			break;
+		}
 		if (id == MsvAvEOL)
 		{
 			pAvPair = NULL;
@@ -247,9 +277,13 @@ NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, N
 	}
 
 	if (!pAvPair)
+	{
 		cbAvPair = 0;
+	}
 	if (pcbAvPairListRemaining)
+	{
 		*pcbAvPairListRemaining = cbAvPair;
+	}
 
 	return pAvPair;
 }
@@ -257,14 +291,16 @@ NTLM_AV_PAIR* ntlm_av_pair_get(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, N
 static BOOL ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTLM_AV_ID AvId,
                              PBYTE Value, UINT16 AvLen)
 {
-	size_t cbAvPair;
-	NTLM_AV_PAIR* pAvPair;
+	size_t cbAvPair = 0;
+	NTLM_AV_PAIR* pAvPair = NULL;
 
 	pAvPair = ntlm_av_pair_get(pAvPairList, cbAvPairList, MsvAvEOL, &cbAvPair);
 
 	/* size of header + value length + terminating MsvAvEOL AV_PAIR */
 	if (!pAvPair || cbAvPair < 2 * sizeof(NTLM_AV_PAIR) + AvLen)
+	{
 		return FALSE;
+	}
 
 	ntlm_av_pair_set_id(pAvPair, (UINT16)AvId);
 	ntlm_av_pair_set_len(pAvPair, AvLen);
@@ -281,17 +317,23 @@ static BOOL ntlm_av_pair_add(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList, NTL
 static BOOL ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList,
                                   NTLM_AV_PAIR* pAvPair, size_t cbAvPair)
 {
-	UINT16 pair;
-	size_t avLen;
+	UINT16 pair = 0;
+	size_t avLen = 0;
 
 	if (!ntlm_av_pair_check(pAvPair, cbAvPair))
+	{
 		return FALSE;
+	}
 
 	if (!ntlm_av_pair_get_id(pAvPair, cbAvPair, &pair))
+	{
 		return FALSE;
+	}
 
 	if (!ntlm_av_pair_get_len(pAvPair, cbAvPair, &avLen))
+	{
 		return FALSE;
+	}
 
 	WINPR_ASSERT(avLen <= UINT16_MAX);
 	return ntlm_av_pair_add(pAvPairList, cbAvPairList, pair,
@@ -300,20 +342,24 @@ static BOOL ntlm_av_pair_add_copy(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList
 
 static int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FORMAT type)
 {
-	char* name;
+	char* name = NULL;
 	int status = -1;
 	DWORD nSize = 0;
-	CHAR* computerName;
+	CHAR* computerName = NULL;
 
 	WINPR_ASSERT(pName);
 
 	if (GetComputerNameExA(ComputerNameNetBIOS, NULL, &nSize) || GetLastError() != ERROR_MORE_DATA)
+	{
 		return -1;
+	}
 
 	computerName = calloc(nSize, sizeof(CHAR));
 
 	if (!computerName)
+	{
 		return -1;
+	}
 
 	if (!GetComputerNameExA(ComputerNameNetBIOS, computerName, &nSize))
 	{
@@ -322,15 +368,21 @@ static int ntlm_get_target_computer_name(PUNICODE_STRING pName, COMPUTER_NAME_FO
 	}
 
 	if (nSize > MAX_COMPUTERNAME_LENGTH)
+	{
 		computerName[MAX_COMPUTERNAME_LENGTH] = '\0';
+	}
 
 	name = computerName;
 
 	if (!name)
+	{
 		return -1;
+	}
 
 	if (type == ComputerNameNetBIOS)
+	{
 		CharUpperA(name);
+	}
 
 	size_t len = 0;
 	pName->Buffer = ConvertUtf8ToWCharAlloc(name, &len);
@@ -403,10 +455,10 @@ static BOOL ntlm_md5_update_uint32_be(WINPR_DIGEST_CTX* md5, UINT32 num)
 
 static void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 {
-	WINPR_DIGEST_CTX* md5;
-	BYTE* ChannelBindingToken;
-	UINT32 ChannelBindingTokenLength;
-	SEC_CHANNEL_BINDINGS* ChannelBindings;
+	WINPR_DIGEST_CTX* md5 = NULL;
+	BYTE* ChannelBindingToken = NULL;
+	UINT32 ChannelBindingTokenLength = 0;
+	SEC_CHANNEL_BINDINGS* ChannelBindings = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -414,37 +466,57 @@ static void ntlm_compute_channel_bindings(NTLM_CONTEXT* context)
 	ChannelBindings = context->Bindings.Bindings;
 
 	if (!ChannelBindings)
+	{
 		return;
+	}
 
 	if (!(md5 = winpr_Digest_New()))
+	{
 		return;
+	}
 
 	if (!winpr_Digest_Init(md5, WINPR_MD_MD5))
+	{
 		goto out;
+	}
 
 	ChannelBindingTokenLength = context->Bindings.BindingsLength - sizeof(SEC_CHANNEL_BINDINGS);
 	ChannelBindingToken = &((BYTE*)ChannelBindings)[ChannelBindings->dwApplicationDataOffset];
 
 	if (!ntlm_md5_update_uint32_be(md5, ChannelBindings->dwInitiatorAddrType))
+	{
 		goto out;
+	}
 
 	if (!ntlm_md5_update_uint32_be(md5, ChannelBindings->cbInitiatorLength))
+	{
 		goto out;
+	}
 
 	if (!ntlm_md5_update_uint32_be(md5, ChannelBindings->dwAcceptorAddrType))
+	{
 		goto out;
+	}
 
 	if (!ntlm_md5_update_uint32_be(md5, ChannelBindings->cbAcceptorLength))
+	{
 		goto out;
+	}
 
 	if (!ntlm_md5_update_uint32_be(md5, ChannelBindings->cbApplicationDataLength))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Update(md5, (void*)ChannelBindingToken, ChannelBindingTokenLength))
+	{
 		goto out;
+	}
 
 	if (!winpr_Digest_Final(md5, context->ChannelBindingsHash, WINPR_MD5_DIGEST_LENGTH))
+	{
 		goto out;
+	}
 
 out:
 	winpr_Digest_Free(md5);
@@ -471,11 +543,11 @@ static void ntlm_compute_single_host_data(NTLM_CONTEXT* context)
 BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 {
 	BOOL rc = FALSE;
-	ULONG length;
-	ULONG AvPairsCount;
-	ULONG AvPairsLength;
-	NTLM_AV_PAIR* pAvPairList;
-	size_t cbAvPairList;
+	ULONG length = 0;
+	ULONG AvPairsCount = 0;
+	ULONG AvPairsLength = 0;
+	NTLM_AV_PAIR* pAvPairList = NULL;
+	size_t cbAvPairList = 0;
 	UNICODE_STRING NbDomainName = { 0 };
 	UNICODE_STRING NbComputerName = { 0 };
 	UNICODE_STRING DnsDomainName = { 0 };
@@ -484,22 +556,30 @@ BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	WINPR_ASSERT(context);
 
 	if (ntlm_get_target_computer_name(&NbDomainName, ComputerNameNetBIOS) < 0)
+	{
 		goto fail;
+	}
 
 	NbComputerName.Buffer = NULL;
 
 	if (ntlm_get_target_computer_name(&NbComputerName, ComputerNameNetBIOS) < 0)
+	{
 		goto fail;
+	}
 
 	DnsDomainName.Buffer = NULL;
 
 	if (ntlm_get_target_computer_name(&DnsDomainName, ComputerNameDnsDomain) < 0)
+	{
 		goto fail;
+	}
 
 	DnsComputerName.Buffer = NULL;
 
 	if (ntlm_get_target_computer_name(&DnsComputerName, ComputerNameDnsHostname) < 0)
+	{
 		goto fail;
+	}
 
 	AvPairsCount = 5;
 	AvPairsLength = NbDomainName.Length + NbComputerName.Length + DnsDomainName.Length +
@@ -507,33 +587,47 @@ BOOL ntlm_construct_challenge_target_info(NTLM_CONTEXT* context)
 	length = ntlm_av_pair_list_size(AvPairsCount, AvPairsLength);
 
 	if (!sspi_SecBufferAlloc(&context->ChallengeTargetInfo, length))
+	{
 		goto fail;
+	}
 
 	pAvPairList = (NTLM_AV_PAIR*)context->ChallengeTargetInfo.pvBuffer;
 	cbAvPairList = context->ChallengeTargetInfo.cbBuffer;
 
 	if (!ntlm_av_pair_list_init(pAvPairList, cbAvPairList))
+	{
 		goto fail;
+	}
 
 	if (!ntlm_av_pair_add(pAvPairList, cbAvPairList, MsvAvNbDomainName, (PBYTE)NbDomainName.Buffer,
 	                      NbDomainName.Length))
+	{
 		goto fail;
+	}
 
 	if (!ntlm_av_pair_add(pAvPairList, cbAvPairList, MsvAvNbComputerName,
 	                      (PBYTE)NbComputerName.Buffer, NbComputerName.Length))
+	{
 		goto fail;
+	}
 
 	if (!ntlm_av_pair_add(pAvPairList, cbAvPairList, MsvAvDnsDomainName,
 	                      (PBYTE)DnsDomainName.Buffer, DnsDomainName.Length))
+	{
 		goto fail;
+	}
 
 	if (!ntlm_av_pair_add(pAvPairList, cbAvPairList, MsvAvDnsComputerName,
 	                      (PBYTE)DnsComputerName.Buffer, DnsComputerName.Length))
+	{
 		goto fail;
+	}
 
 	if (!ntlm_av_pair_add(pAvPairList, cbAvPairList, MsvAvTimestamp, context->Timestamp,
 	                      sizeof(context->Timestamp)))
+	{
 		goto fail;
+	}
 
 	rc = TRUE;
 fail:
@@ -546,25 +640,25 @@ fail:
 
 BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 {
-	ULONG size;
-	ULONG AvPairsCount;
-	ULONG AvPairsValueLength;
-	NTLM_AV_PAIR* AvTimestamp;
-	NTLM_AV_PAIR* AvNbDomainName;
-	NTLM_AV_PAIR* AvNbComputerName;
-	NTLM_AV_PAIR* AvDnsDomainName;
-	NTLM_AV_PAIR* AvDnsComputerName;
-	NTLM_AV_PAIR* AvDnsTreeName;
-	NTLM_AV_PAIR* ChallengeTargetInfo;
-	NTLM_AV_PAIR* AuthenticateTargetInfo;
-	size_t cbAvTimestamp;
-	size_t cbAvNbDomainName;
-	size_t cbAvNbComputerName;
-	size_t cbAvDnsDomainName;
-	size_t cbAvDnsComputerName;
-	size_t cbAvDnsTreeName;
-	size_t cbChallengeTargetInfo;
-	size_t cbAuthenticateTargetInfo;
+	ULONG size = 0;
+	ULONG AvPairsCount = 0;
+	ULONG AvPairsValueLength = 0;
+	NTLM_AV_PAIR* AvTimestamp = NULL;
+	NTLM_AV_PAIR* AvNbDomainName = NULL;
+	NTLM_AV_PAIR* AvNbComputerName = NULL;
+	NTLM_AV_PAIR* AvDnsDomainName = NULL;
+	NTLM_AV_PAIR* AvDnsComputerName = NULL;
+	NTLM_AV_PAIR* AvDnsTreeName = NULL;
+	NTLM_AV_PAIR* ChallengeTargetInfo = NULL;
+	NTLM_AV_PAIR* AuthenticateTargetInfo = NULL;
+	size_t cbAvTimestamp = 0;
+	size_t cbAvNbDomainName = 0;
+	size_t cbAvNbComputerName = 0;
+	size_t cbAvDnsDomainName = 0;
+	size_t cbAvDnsComputerName = 0;
+	size_t cbAvDnsTreeName = 0;
+	size_t cbChallengeTargetInfo = 0;
+	size_t cbAuthenticateTargetInfo = 0;
 
 	WINPR_ASSERT(context);
 
@@ -587,45 +681,55 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 
 	if (AvNbDomainName)
 	{
-		size_t avLen;
+		size_t avLen = 0;
 		if (!ntlm_av_pair_get_len(AvNbDomainName, cbAvNbDomainName, &avLen))
+		{
 			goto fail;
+		}
 		AvPairsCount++; /* MsvAvNbDomainName */
 		AvPairsValueLength += avLen;
 	}
 
 	if (AvNbComputerName)
 	{
-		size_t avLen;
+		size_t avLen = 0;
 		if (!ntlm_av_pair_get_len(AvNbComputerName, cbAvNbComputerName, &avLen))
+		{
 			goto fail;
+		}
 		AvPairsCount++; /* MsvAvNbComputerName */
 		AvPairsValueLength += avLen;
 	}
 
 	if (AvDnsDomainName)
 	{
-		size_t avLen;
+		size_t avLen = 0;
 		if (!ntlm_av_pair_get_len(AvDnsDomainName, cbAvDnsDomainName, &avLen))
+		{
 			goto fail;
+		}
 		AvPairsCount++; /* MsvAvDnsDomainName */
 		AvPairsValueLength += avLen;
 	}
 
 	if (AvDnsComputerName)
 	{
-		size_t avLen;
+		size_t avLen = 0;
 		if (!ntlm_av_pair_get_len(AvDnsComputerName, cbAvDnsComputerName, &avLen))
+		{
 			goto fail;
+		}
 		AvPairsCount++; /* MsvAvDnsComputerName */
 		AvPairsValueLength += avLen;
 	}
 
 	if (AvDnsTreeName)
 	{
-		size_t avLen;
+		size_t avLen = 0;
 		if (!ntlm_av_pair_get_len(AvDnsTreeName, cbAvDnsTreeName, &avLen))
+		{
 			goto fail;
+		}
 		AvPairsCount++; /* MsvAvDnsTreeName */
 		AvPairsValueLength += avLen;
 	}
@@ -671,67 +775,87 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 	size = ntlm_av_pair_list_size(AvPairsCount, AvPairsValueLength);
 
 	if (context->NTLMv2)
+	{
 		size += 8; /* unknown 8-byte padding */
+	}
 
 	if (!sspi_SecBufferAlloc(&context->AuthenticateTargetInfo, size))
+	{
 		goto fail;
+	}
 
 	AuthenticateTargetInfo = (NTLM_AV_PAIR*)context->AuthenticateTargetInfo.pvBuffer;
 	cbAuthenticateTargetInfo = context->AuthenticateTargetInfo.cbBuffer;
 
 	if (!ntlm_av_pair_list_init(AuthenticateTargetInfo, cbAuthenticateTargetInfo))
+	{
 		goto fail;
+	}
 
 	if (AvNbDomainName)
 	{
 		if (!ntlm_av_pair_add_copy(AuthenticateTargetInfo, cbAuthenticateTargetInfo, AvNbDomainName,
 		                           cbAvNbDomainName))
+		{
 			goto fail;
+		}
 	}
 
 	if (AvNbComputerName)
 	{
 		if (!ntlm_av_pair_add_copy(AuthenticateTargetInfo, cbAuthenticateTargetInfo,
 		                           AvNbComputerName, cbAvNbComputerName))
+		{
 			goto fail;
+		}
 	}
 
 	if (AvDnsDomainName)
 	{
 		if (!ntlm_av_pair_add_copy(AuthenticateTargetInfo, cbAuthenticateTargetInfo,
 		                           AvDnsDomainName, cbAvDnsDomainName))
+		{
 			goto fail;
+		}
 	}
 
 	if (AvDnsComputerName)
 	{
 		if (!ntlm_av_pair_add_copy(AuthenticateTargetInfo, cbAuthenticateTargetInfo,
 		                           AvDnsComputerName, cbAvDnsComputerName))
+		{
 			goto fail;
+		}
 	}
 
 	if (AvDnsTreeName)
 	{
 		if (!ntlm_av_pair_add_copy(AuthenticateTargetInfo, cbAuthenticateTargetInfo, AvDnsTreeName,
 		                           cbAvDnsTreeName))
+		{
 			goto fail;
+		}
 	}
 
 	if (AvTimestamp)
 	{
 		if (!ntlm_av_pair_add_copy(AuthenticateTargetInfo, cbAuthenticateTargetInfo, AvTimestamp,
 		                           cbAvTimestamp))
+		{
 			goto fail;
+		}
 	}
 
 	if (context->UseMIC)
 	{
-		UINT32 flags;
+		UINT32 flags = 0;
 		Data_Write_UINT32(&flags, MSV_AV_FLAGS_MESSAGE_INTEGRITY_CHECK);
 
 		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvAvFlags,
 		                      (PBYTE)&flags, 4))
+		{
 			goto fail;
+		}
 	}
 
 	if (context->SendSingleHostData)
@@ -740,31 +864,39 @@ BOOL ntlm_construct_authenticate_target_info(NTLM_CONTEXT* context)
 		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvAvSingleHost,
 		                      (PBYTE)&context->SingleHostData,
 		                      (UINT16)context->SingleHostData.Size))
+		{
 			goto fail;
+		}
 	}
 
 	if (!context->SuppressExtendedProtection)
 	{
 		if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo,
 		                      MsvAvChannelBindings, context->ChannelBindingsHash, 16))
+		{
 			goto fail;
+		}
 
 		if (context->ServicePrincipalName.Length > 0)
 		{
 			if (!ntlm_av_pair_add(AuthenticateTargetInfo, cbAuthenticateTargetInfo, MsvAvTargetName,
 			                      (PBYTE)context->ServicePrincipalName.Buffer,
 			                      context->ServicePrincipalName.Length))
+			{
 				goto fail;
+			}
 		}
 	}
 
 	if (context->NTLMv2)
 	{
-		NTLM_AV_PAIR* AvEOL;
+		NTLM_AV_PAIR* AvEOL = NULL;
 		AvEOL = ntlm_av_pair_get(ChallengeTargetInfo, cbChallengeTargetInfo, MsvAvEOL, NULL);
 
 		if (!AvEOL)
+		{
 			goto fail;
+		}
 
 		ZeroMemory(AvEOL, sizeof(NTLM_AV_PAIR));
 	}

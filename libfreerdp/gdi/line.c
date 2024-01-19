@@ -41,7 +41,7 @@ static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 {
 	WINPR_ASSERT(pixelPtr);
 	const UINT32 srcPixel = FreeRDPReadColor(pixelPtr, format);
-	UINT32 dstPixel;
+	UINT32 dstPixel = 0;
 
 	switch (rop)
 	{
@@ -118,8 +118,8 @@ static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 
 BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
 {
-	INT32 e2;
-	UINT32 pen;
+	INT32 e2 = 0;
+	UINT32 pen = 0;
 
 	WINPR_ASSERT(hdc);
 	const INT32 rop2 = gdi_GetROP2(hdc);
@@ -137,7 +137,10 @@ BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
 	INT32 y = y1;
 
 	WINPR_ASSERT(hdc->clip);
-	INT32 bx1, by1, bx2, by2;
+	INT32 bx1;
+	INT32 by1;
+	INT32 bx2;
+	INT32 by2;
 	if (hdc->clip->null)
 	{
 		bx1 = (x1 < x2) ? x1 : x2;
@@ -162,7 +165,9 @@ BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
 	by2 = MIN(by2, bmp->height - 1);
 
 	if (!gdi_InvalidateRegion(hdc, bx1, by1, bx2 - bx1 + 1, by2 - by1 + 1))
+	{
 		return FALSE;
+	}
 
 	pen = gdi_GetPenColor(hdc->pen, bmp->format);
 
@@ -215,10 +220,14 @@ BOOL gdi_PolylineTo(HGDI_DC hdc, GDI_POINT* lppt, DWORD cCount)
 	for (DWORD i = 0; i < cCount; i++)
 	{
 		if (!gdi_LineTo(hdc, lppt[i].x, lppt[i].y))
+		{
 			return FALSE;
+		}
 
 		if (!gdi_MoveToEx(hdc, lppt[i].x, lppt[i].y, NULL))
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -241,19 +250,27 @@ BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32 cPoints)
 		GDI_POINT pt = { 0 };
 
 		if (!gdi_MoveToEx(hdc, lppt[0].x, lppt[0].y, &pt))
+		{
 			return FALSE;
+		}
 
 		for (UINT32 i = 0; i < cPoints; i++)
 		{
 			if (!gdi_LineTo(hdc, lppt[i].x, lppt[i].y))
+			{
 				return FALSE;
+			}
 
 			if (!gdi_MoveToEx(hdc, lppt[i].x, lppt[i].y, NULL))
+			{
 				return FALSE;
+			}
 		}
 
 		if (!gdi_MoveToEx(hdc, pt.x, pt.y, NULL))
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -267,7 +284,7 @@ BOOL gdi_Polyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32 cPoints)
  * @param cCount count of entries in lpdwPolyPoints
  * @return nonzero on success, 0 otherwise
  */
-BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32* lpdwPolyPoints, DWORD cCount)
+BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT* lppt, const UINT32* lpdwPolyPoints, DWORD cCount)
 {
 	DWORD j = 0;
 
@@ -280,7 +297,9 @@ BOOL gdi_PolyPolyline(HGDI_DC hdc, GDI_POINT* lppt, UINT32* lpdwPolyPoints, DWOR
 		const UINT32 cPoints = lpdwPolyPoints[i];
 
 		if (!gdi_Polyline(hdc, &lppt[j], cPoints))
+		{
 			return FALSE;
+		}
 
 		j += cPoints;
 	}

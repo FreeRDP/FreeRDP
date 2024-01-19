@@ -233,13 +233,13 @@ FREERDP_LOCAL BOOL update_write_glyph_index_order(wStream* s, ORDER_INFO* orderI
                                                   GLYPH_INDEX_ORDER* glyph_index);
 
 FREERDP_LOCAL size_t update_approximate_cache_bitmap_order(const CACHE_BITMAP_ORDER* cache_bitmap,
-                                                           BOOL compressed, UINT16* flags);
+                                                           BOOL compressed, const UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_bitmap_order(wStream* s,
                                                    const CACHE_BITMAP_ORDER* cache_bitmap_order,
                                                    BOOL compressed, UINT16* flags);
 
 FREERDP_LOCAL size_t update_approximate_cache_bitmap_v2_order(
-    CACHE_BITMAP_V2_ORDER* cache_bitmap_v2, BOOL compressed, UINT16* flags);
+    CACHE_BITMAP_V2_ORDER* cache_bitmap_v2, BOOL compressed, const UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_bitmap_v2_order(wStream* s,
                                                       CACHE_BITMAP_V2_ORDER* cache_bitmap_v2_order,
                                                       BOOL compressed, UINT16* flags);
@@ -251,24 +251,24 @@ FREERDP_LOCAL BOOL update_write_cache_bitmap_v3_order(wStream* s,
                                                       UINT16* flags);
 
 FREERDP_LOCAL size_t update_approximate_cache_color_table_order(
-    const CACHE_COLOR_TABLE_ORDER* cache_color_table, UINT16* flags);
+    const CACHE_COLOR_TABLE_ORDER* cache_color_table, const UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_color_table_order(
     wStream* s, const CACHE_COLOR_TABLE_ORDER* cache_color_table_order, UINT16* flags);
 
 FREERDP_LOCAL size_t update_approximate_cache_glyph_order(const CACHE_GLYPH_ORDER* cache_glyph,
-                                                          UINT16* flags);
+                                                          const UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_glyph_order(wStream* s,
                                                   const CACHE_GLYPH_ORDER* cache_glyph_order,
                                                   UINT16* flags);
 
-FREERDP_LOCAL size_t
-update_approximate_cache_glyph_v2_order(const CACHE_GLYPH_V2_ORDER* cache_glyph_v2, UINT16* flags);
+FREERDP_LOCAL size_t update_approximate_cache_glyph_v2_order(
+    const CACHE_GLYPH_V2_ORDER* cache_glyph_v2, const UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_glyph_v2_order(wStream* s,
                                                      const CACHE_GLYPH_V2_ORDER* cache_glyph_v2,
                                                      UINT16* flags);
 
 FREERDP_LOCAL size_t update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush,
-                                                          UINT16* flags);
+                                                          const UINT16* flags);
 FREERDP_LOCAL BOOL update_write_cache_brush_order(wStream* s,
                                                   const CACHE_BRUSH_ORDER* cache_brush_order,
                                                   UINT16* flags);

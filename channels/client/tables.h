@@ -49,6 +49,6 @@ typedef struct
 	const char* type;
 	UINT (*entry)();
 	const STATIC_SUBSYSTEM_ENTRY* table;
-} STATIC_ADDIN_TABLE;
+} DECLSPEC_ALIGN(32) STATIC_ADDIN_TABLE;
 
 WINPR_PRAGMA_DIAG_POP

@@ -46,7 +46,9 @@ static Reg* instance = NULL;
 static Reg* RegGetInstance(void)
 {
 	if (!instance)
+	{
 		instance = reg_open(1);
+	}
 
 	return instance;
 }
@@ -237,10 +239,12 @@ LONG RegOpenCurrentUser(REGSAM samDesired, PHKEY phkResult)
 
 LONG RegOpenKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
 {
-	LONG rc;
+	LONG rc = 0;
 	char* str = ConvertWCharToUtf8Alloc(lpSubKey, NULL);
 	if (!str)
+	{
 		return ERROR_FILE_NOT_FOUND;
+	}
 
 	rc = RegOpenKeyExA(hKey, str, ulOptions, samDesired, phkResult);
 	free(str);
@@ -252,7 +256,9 @@ LONG RegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesire
 	Reg* reg = RegGetInstance();
 
 	if (!reg)
+	{
 		return -1;
+	}
 
 	if (hKey != HKEY_LOCAL_MACHINE)
 	{
@@ -308,7 +314,7 @@ LONG RegQueryInfoKeyA(HKEY hKey, LPSTR lpClass, LPDWORD lpcClass, LPDWORD lpRese
 static LONG reg_read_int(const RegVal* pValue, LPBYTE lpData, LPDWORD lpcbData)
 {
 	const BYTE* ptr = NULL;
-	DWORD required;
+	DWORD required = 0;
 
 	WINPR_ASSERT(pValue);
 
@@ -334,32 +340,38 @@ static LONG reg_read_int(const RegVal* pValue, LPBYTE lpData, LPDWORD lpcbData)
 		if (lpData)
 		{
 			if (size < *lpcbData)
+			{
 				return ERROR_MORE_DATA;
+			}
 		}
 	}
 
 	if (lpData != NULL)
 	{
-		DWORD size;
+		DWORD size = 0;
 		WINPR_ASSERT(lpcbData);
 
 		size = *lpcbData;
 		*lpcbData = required;
 		if (size < required)
+		{
 			return ERROR_MORE_DATA;
+		}
 		memcpy(lpData, ptr, required);
 	}
 	else if (lpcbData != NULL)
+	{
 		*lpcbData = required;
+	}
 	return ERROR_SUCCESS;
 }
 
-LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType,
+LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, const LPDWORD lpReserved, LPDWORD lpType,
                       LPBYTE lpData, LPDWORD lpcbData)
 {
 	LONG status = ERROR_FILE_NOT_FOUND;
-	RegKey* key;
-	RegVal* pValue;
+	RegKey* key = NULL;
+	RegVal* pValue = NULL;
 	char* valueName = NULL;
 
 	WINPR_UNUSED(lpReserved);
@@ -369,7 +381,9 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWOR
 
 	valueName = ConvertWCharToUtf8Alloc(lpValueName, NULL);
 	if (!valueName)
+	{
 		goto end;
+	}
 
 	pValue = key->values;
 
@@ -378,7 +392,9 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWOR
 		if (strcmp(pValue->name, valueName) == 0)
 		{
 			if (lpType)
+			{
 				*lpType = pValue->type;
+			}
 
 			switch (pValue->type)
 			{
@@ -392,7 +408,7 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWOR
 
 					if (lpData != NULL)
 					{
-						DWORD size;
+						DWORD size = 0;
 						union
 						{
 							WCHAR* wc;
@@ -404,12 +420,18 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWOR
 						size = *lpcbData;
 						*lpcbData = (DWORD)length;
 						if (size < length)
+						{
 							return ERROR_MORE_DATA;
+						}
 						if (ConvertUtf8NToWChar(pValue->data.string, length, cnv.wc, length) < 0)
+						{
 							return ERROR_OUTOFMEMORY;
+						}
 					}
 					else if (lpcbData)
+					{
 						*lpcbData = (UINT32)length;
+					}
 
 					status = ERROR_SUCCESS;
 					goto end;
@@ -430,11 +452,11 @@ end:
 	return status;
 }
 
-LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType,
+LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, const LPDWORD lpReserved, LPDWORD lpType,
                       LPBYTE lpData, LPDWORD lpcbData)
 {
-	RegKey* key;
-	RegVal* pValue;
+	RegKey* key = NULL;
+	RegVal* pValue = NULL;
 
 	WINPR_UNUSED(lpReserved);
 
@@ -448,7 +470,9 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD
 		if (strcmp(pValue->name, lpValueName) == 0)
 		{
 			if (lpType)
+			{
 				*lpType = pValue->type;
+			}
 
 			switch (pValue->type)
 			{
@@ -463,18 +487,22 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD
 
 					if (pData != NULL)
 					{
-						DWORD size;
+						DWORD size = 0;
 						WINPR_ASSERT(lpcbData);
 
 						size = *lpcbData;
 						*lpcbData = (DWORD)length;
 						if (size < length)
+						{
 							return ERROR_MORE_DATA;
+						}
 						memcpy(pData, pValue->data.string, length);
 						pData[length] = '\0';
 					}
 					else if (lpcbData)
+					{
 						*lpcbData = (UINT32)length;
+					}
 
 					return ERROR_SUCCESS;
 				}

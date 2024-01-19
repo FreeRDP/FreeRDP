@@ -20,8 +20,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/sysinfo.h>
 #include <winpr/platform.h>
+#include <winpr/sysinfo.h>
 
 #if defined(ANDROID)
 #include "cpufeatures/cpu-features.h"
@@ -171,21 +171,29 @@ static DWORD GetSystemPageSize(void)
 #if defined(_SC_PAGESIZE)
 
 	if (sc_page_size < 0)
+	{
 		sc_page_size = sysconf(_SC_PAGESIZE);
+	}
 
 #endif
 #if defined(_SC_PAGE_SIZE)
 
 	if (sc_page_size < 0)
+	{
 		sc_page_size = sysconf(_SC_PAGE_SIZE);
+	}
 
 #endif
 
 	if (sc_page_size > 0)
+	{
 		dwPageSize = (DWORD)sc_page_size;
+	}
 
 	if (dwPageSize < 4096)
+	{
 		dwPageSize = 4096;
+	}
 
 	return dwPageSize;
 }
@@ -299,7 +307,9 @@ DWORD GetTickCount(void)
 	struct timespec ts;
 
 	if (!clock_gettime(CLOCK_MONOTONIC_RAW, &ts))
+	{
 		ticks = (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
+	}
 
 #else
 	/**
@@ -393,16 +403,20 @@ BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 
 BOOL GetComputerNameW(LPWSTR lpBuffer, LPDWORD lpnSize)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	LPSTR buffer = NULL;
 	if (!lpnSize || (*lpnSize > INT_MAX))
+	{
 		return FALSE;
+	}
 
 	if (*lpnSize > 0)
 	{
 		buffer = malloc(*lpnSize);
 		if (!buffer)
+		{
 			return FALSE;
+		}
 	}
 	rc = GetComputerNameA(buffer, lpnSize);
 
@@ -419,8 +433,8 @@ BOOL GetComputerNameW(LPWSTR lpBuffer, LPDWORD lpnSize)
 
 BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 {
-	char* dot;
-	size_t length;
+	char* dot = NULL;
+	size_t length = 0;
 	char hostname[256] = { 0 };
 
 	if (!lpnSize)
@@ -430,13 +444,17 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 	}
 
 	if (gethostname(hostname, sizeof(hostname)) == -1)
+	{
 		return FALSE;
+	}
 
 	length = strnlen(hostname, sizeof(hostname));
 	dot = strchr(hostname, '.');
 
 	if (dot)
+	{
 		length = (dot - hostname);
+	}
 
 	if ((*lpnSize <= (DWORD)length) || !lpBuffer)
 	{
@@ -453,7 +471,7 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 
 BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize)
 {
-	size_t length;
+	size_t length = 0;
 	char hostname[256] = { 0 };
 
 	if (!lpnSize)
@@ -469,14 +487,18 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 		if (!rc)
 		{
 			if (GetLastError() == ERROR_BUFFER_OVERFLOW)
+			{
 				SetLastError(ERROR_MORE_DATA);
+			}
 		}
 
 		return rc;
 	}
 
 	if (gethostname(hostname, sizeof(hostname)) == -1)
+	{
 		return FALSE;
+	}
 
 	length = strnlen(hostname, sizeof(hostname));
 
@@ -509,7 +531,7 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 
 BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD lpnSize)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	LPSTR lpABuffer = NULL;
 
 	if (!lpnSize)
@@ -523,7 +545,9 @@ BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD 
 		lpABuffer = calloc(*lpnSize, sizeof(CHAR));
 
 		if (!lpABuffer)
+		{
 			return FALSE;
+		}
 	}
 
 	rc = GetComputerNameExA(NameType, lpABuffer, lpnSize);
@@ -558,7 +582,9 @@ ULONGLONG winpr_GetTickCount64(void)
 	struct timespec ts;
 
 	if (!clock_gettime(CLOCK_MONOTONIC_RAW, &ts))
+	{
 		ticks = (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
+	}
 
 #elif defined(_WIN32)
 	FILETIME ft;
@@ -817,38 +843,51 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 #endif // __linux__
 #elif defined(_M_IX86_AMD64)
 #ifdef __GNUC__
-	unsigned a, b, c, d;
+	unsigned a;
+	unsigned b;
+	unsigned c;
+	unsigned d;
 	cpuid(1, &a, &b, &c, &d);
 
 	switch (ProcessorFeature)
 	{
 		case PF_MMX_INSTRUCTIONS_AVAILABLE:
 			if (d & D_BIT_MMX)
+			{
 				ret = TRUE;
+			}
 
 			break;
 
 		case PF_XMMI_INSTRUCTIONS_AVAILABLE:
 			if (d & D_BIT_SSE)
+			{
 				ret = TRUE;
+			}
 
 			break;
 
 		case PF_XMMI64_INSTRUCTIONS_AVAILABLE:
 			if (d & D_BIT_SSE2)
+			{
 				ret = TRUE;
+			}
 
 			break;
 
 		case PF_3DNOW_INSTRUCTIONS_AVAILABLE:
 			if (d & D_BIT_3DN)
+			{
 				ret = TRUE;
+			}
 
 			break;
 
 		case PF_SSE3_INSTRUCTIONS_AVAILABLE:
 			if (c & C_BIT_SSE3)
+			{
 				ret = TRUE;
+			}
 
 			break;
 
@@ -945,42 +984,58 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 
 #endif // __linux__
 #elif defined(_M_IX86_AMD64)
-	unsigned a, b, c, d;
+	unsigned a;
+	unsigned b;
+	unsigned c;
+	unsigned d;
 	cpuid(1, &a, &b, &c, &d);
 
 	switch (ProcessorFeature)
 	{
 		case PF_EX_LZCNT:
 		{
-			unsigned a81, b81, c81, d81;
+			unsigned a81;
+			unsigned b81;
+			unsigned c81;
+			unsigned d81;
 			cpuid(0x80000001, &a81, &b81, &c81, &d81);
 
 			if (c81 & C81_BIT_LZCNT)
+			{
 				ret = TRUE;
+			}
 		}
 		break;
 
 		case PF_EX_3DNOW_PREFETCH:
 			if (c & C_BIT_3DNP)
+			{
 				ret = TRUE;
+			}
 
 			break;
 
 		case PF_EX_SSSE3:
 			if (c & C_BIT_SSSE3)
+			{
 				ret = TRUE;
+			}
 
 			break;
 
 		case PF_EX_SSE41:
 			if (c & C_BIT_SSE41)
+			{
 				ret = TRUE;
+			}
 
 			break;
 
 		case PF_EX_SSE42:
 			if (c & C_BIT_SSE42)
+			{
 				ret = TRUE;
+			}
 
 			break;
 #if defined(__GNUC__) || defined(_MSC_VER)
@@ -994,13 +1049,18 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 		{
 			/* Check for general AVX support */
 			if (!(c & C_BIT_AVX))
+			{
 				break;
+			}
 
 			/* Check for xgetbv support */
 			if (!(c & C_BIT_XGETBV))
+			{
 				break;
+			}
 
-			int e, f;
+			int e;
+			int f;
 			xgetbv(0, e, f);
 
 			/* XGETBV enabled for applications and XMM/YMM states enabled */
@@ -1019,12 +1079,16 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 						{
 							case PF_EX_AVX2:
 								if (b & B_BIT_AVX2)
+								{
 									ret = TRUE;
+								}
 								break;
 
 							case PF_EX_AVX512F:
 								if (b & B_BIT_AVX512F)
+								{
 									ret = TRUE;
+								}
 								break;
 
 							default:
@@ -1034,19 +1098,25 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 
 					case PF_EX_FMA:
 						if (c & C_BIT_FMA)
+						{
 							ret = TRUE;
+						}
 
 						break;
 
 					case PF_EX_AVX_AES:
 						if (c & C_BIT_AES)
+						{
 							ret = TRUE;
+						}
 
 						break;
 
 					case PF_EX_AVX_PCLMULQDQ:
 						if (c & C_BIT_PCLMULQDQ)
+						{
 							ret = TRUE;
+						}
 
 						break;
 				}

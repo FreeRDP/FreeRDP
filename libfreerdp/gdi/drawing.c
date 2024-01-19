@@ -62,7 +62,9 @@ INT32 gdi_SetROP2(HGDI_DC hdc, INT32 fnDrawMode)
 	INT32 prevDrawMode = hdc->drawMode;
 
 	if (fnDrawMode > 0 && fnDrawMode <= 16)
+	{
 		hdc->drawMode = fnDrawMode;
+	}
 
 	return prevDrawMode;
 }

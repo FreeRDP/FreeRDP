@@ -77,7 +77,7 @@ struct rdp_file_line
 	long iValue;
 	DWORD flags;
 	int valueLength;
-};
+} DECLSPEC_ALIGN(64);
 typedef struct rdp_file_line rdpFileLine;
 
 struct rdp_file
@@ -224,7 +224,7 @@ struct rdp_file
 	void* context;
 
 	DWORD flags;
-};
+} DECLSPEC_ALIGN(128);
 
 static const char key_str_username[] = "username";
 static const char key_str_domain[] = "domain";
@@ -354,156 +354,304 @@ static BOOL freerdp_client_rdp_file_find_integer_entry(rdpFile* file, const char
 	*outLine = NULL;
 
 	if (_stricmp(name, key_int_use_multimon) == 0)
+	{
 		*outValue = &file->UseMultiMon;
+	}
 	else if (_stricmp(name, key_int_maximizetocurrentdisplays) == 0)
+	{
 		*outValue = &file->MaximizeToCurrentDisplays;
+	}
 	else if (_stricmp(name, key_int_singlemoninwindowedmode) == 0)
+	{
 		*outValue = &file->SingleMonInWindowedMode;
+	}
 	else if (_stricmp(name, key_int_screen_mode_id) == 0)
+	{
 		*outValue = &file->ScreenModeId;
+	}
 	else if (_stricmp(name, key_int_span_monitors) == 0)
+	{
 		*outValue = &file->SpanMonitors;
+	}
 	else if (_stricmp(name, key_int_smart_sizing) == 0)
+	{
 		*outValue = &file->SmartSizing;
+	}
 	else if (_stricmp(name, key_int_dynamic_resolution) == 0)
+	{
 		*outValue = &file->DynamicResolution;
+	}
 	else if (_stricmp(name, key_int_enablesuperpan) == 0)
+	{
 		*outValue = &file->EnableSuperSpan;
+	}
 	else if (_stricmp(name, key_int_superpanaccelerationfactor) == 0)
+	{
 		*outValue = &file->SuperSpanAccelerationFactor;
+	}
 	else if (_stricmp(name, key_int_desktopwidth) == 0)
+	{
 		*outValue = &file->DesktopWidth;
+	}
 	else if (_stricmp(name, key_int_desktopheight) == 0)
+	{
 		*outValue = &file->DesktopHeight;
+	}
 	else if (_stricmp(name, key_int_desktop_size_id) == 0)
+	{
 		*outValue = &file->DesktopSizeId;
+	}
 	else if (_stricmp(name, key_int_session_bpp) == 0)
+	{
 		*outValue = &file->SessionBpp;
+	}
 	else if (_stricmp(name, key_int_desktopscalefactor) == 0)
+	{
 		*outValue = &file->DesktopScaleFactor;
+	}
 	else if (_stricmp(name, key_int_compression) == 0)
+	{
 		*outValue = &file->Compression;
+	}
 	else if (_stricmp(name, key_int_keyboardhook) == 0)
+	{
 		*outValue = &file->KeyboardHook;
+	}
 	else if (_stricmp(name, key_int_disable_ctrl_alt_del) == 0)
+	{
 		*outValue = &file->DisableCtrlAltDel;
+	}
 	else if (_stricmp(name, key_int_audiomode) == 0)
+	{
 		*outValue = &file->AudioMode;
+	}
 	else if (_stricmp(name, key_int_audioqualitymode) == 0)
+	{
 		*outValue = &file->AudioQualityMode;
+	}
 	else if (_stricmp(name, key_int_audiocapturemode) == 0)
+	{
 		*outValue = &file->AudioCaptureMode;
+	}
 	else if (_stricmp(name, key_int_encode_redirected_video_capture) == 0)
+	{
 		*outValue = &file->EncodeRedirectedVideoCapture;
+	}
 	else if (_stricmp(name, key_int_redirected_video_capture_encoding_quality) == 0)
+	{
 		*outValue = &file->RedirectedVideoCaptureEncodingQuality;
+	}
 	else if (_stricmp(name, key_int_videoplaybackmode) == 0)
+	{
 		*outValue = &file->VideoPlaybackMode;
+	}
 	else if (_stricmp(name, key_int_connection_type) == 0)
+	{
 		*outValue = &file->ConnectionType;
+	}
 	else if (_stricmp(name, key_int_networkautodetect) == 0)
+	{
 		*outValue = &file->NetworkAutoDetect;
+	}
 	else if (_stricmp(name, key_int_bandwidthautodetect) == 0)
+	{
 		*outValue = &file->BandwidthAutoDetect;
+	}
 	else if (_stricmp(name, key_int_pinconnectionbar) == 0)
+	{
 		*outValue = &file->PinConnectionBar;
+	}
 	else if (_stricmp(name, key_int_displayconnectionbar) == 0)
+	{
 		*outValue = &file->DisplayConnectionBar;
+	}
 	else if (_stricmp(name, key_int_workspaceid) == 0)
+	{
 		*outValue = &file->WorkspaceId;
+	}
 	else if (_stricmp(name, key_int_enableworkspacereconnect) == 0)
+	{
 		*outValue = &file->EnableWorkspaceReconnect;
+	}
 	else if (_stricmp(name, key_int_disable_wallpaper) == 0)
+	{
 		*outValue = &file->DisableWallpaper;
+	}
 	else if (_stricmp(name, key_int_allow_font_smoothing) == 0)
+	{
 		*outValue = &file->AllowFontSmoothing;
+	}
 	else if (_stricmp(name, key_int_allow_desktop_composition) == 0)
+	{
 		*outValue = &file->AllowDesktopComposition;
+	}
 	else if (_stricmp(name, key_int_disable_full_window_drag) == 0)
+	{
 		*outValue = &file->DisableFullWindowDrag;
+	}
 	else if (_stricmp(name, key_int_disable_menu_anims) == 0)
+	{
 		*outValue = &file->DisableMenuAnims;
+	}
 	else if (_stricmp(name, key_int_disable_themes) == 0)
+	{
 		*outValue = &file->DisableThemes;
+	}
 	else if (_stricmp(name, key_int_disable_cursor_setting) == 0)
+	{
 		*outValue = &file->DisableCursorSetting;
+	}
 	else if (_stricmp(name, key_int_bitmapcachesize) == 0)
+	{
 		*outValue = &file->BitmapCacheSize;
+	}
 	else if (_stricmp(name, key_int_bitmapcachepersistenable) == 0)
+	{
 		*outValue = &file->BitmapCachePersistEnable;
+	}
 	else if (_stricmp(name, key_int_server_port) == 0)
+	{
 		*outValue = &file->ServerPort;
+	}
 	else if (_stricmp(name, key_int_redirectdrives) == 0)
+	{
 		*outValue = &file->RedirectDrives;
+	}
 	else if (_stricmp(name, key_int_redirectprinters) == 0)
+	{
 		*outValue = &file->RedirectPrinters;
+	}
 	else if (_stricmp(name, key_int_redirectcomports) == 0)
+	{
 		*outValue = &file->RedirectComPorts;
+	}
 	else if (_stricmp(name, key_int_redirectlocation) == 0)
+	{
 		*outValue = &file->RedirectLocation;
+	}
 	else if (_stricmp(name, key_int_redirectsmartcards) == 0)
+	{
 		*outValue = &file->RedirectSmartCards;
+	}
 	else if (_stricmp(name, key_int_redirectclipboard) == 0)
+	{
 		*outValue = &file->RedirectClipboard;
+	}
 	else if (_stricmp(name, key_int_redirectposdevices) == 0)
+	{
 		*outValue = &file->RedirectPosDevices;
+	}
 	else if (_stricmp(name, key_int_redirectdirectx) == 0)
+	{
 		*outValue = &file->RedirectDirectX;
+	}
 	else if (_stricmp(name, key_int_disableprinterredirection) == 0)
+	{
 		*outValue = &file->DisablePrinterRedirection;
+	}
 	else if (_stricmp(name, key_int_disableclipboardredirection) == 0)
+	{
 		*outValue = &file->DisableClipboardRedirection;
+	}
 	else if (_stricmp(name, key_int_connect_to_console) == 0)
+	{
 		*outValue = &file->ConnectToConsole;
+	}
 	else if (_stricmp(name, key_int_administrative_session) == 0)
+	{
 		*outValue = &file->AdministrativeSession;
+	}
 	else if (_stricmp(name, key_int_autoreconnection_enabled) == 0)
+	{
 		*outValue = &file->AutoReconnectionEnabled;
+	}
 	else if (_stricmp(name, key_int_autoreconnect_max_retries) == 0)
+	{
 		*outValue = &file->AutoReconnectMaxRetries;
+	}
 	else if (_stricmp(name, key_int_public_mode) == 0)
+	{
 		*outValue = &file->PublicMode;
+	}
 	else if (_stricmp(name, key_int_authentication_level) == 0)
+	{
 		*outValue = &file->AuthenticationLevel;
+	}
 	else if (_stricmp(name, key_int_promptcredentialonce) == 0)
+	{
 		*outValue = &file->PromptCredentialOnce;
+	}
 	else if ((_stricmp(name, key_int_prompt_for_credentials) == 0))
+	{
 		*outValue = &file->PromptForCredentials;
+	}
 	else if (_stricmp(name, key_int_negotiate_security_layer) == 0)
+	{
 		*outValue = &file->NegotiateSecurityLayer;
+	}
 	else if (_stricmp(name, key_int_enablecredsspsupport) == 0)
+	{
 		*outValue = &file->EnableCredSSPSupport;
+	}
 	else if (_stricmp(name, key_int_enablerdsaadauth) == 0)
+	{
 		*outValue = &file->EnableRdsAadAuth;
+	}
 	else if (_stricmp(name, key_int_remoteapplicationmode) == 0)
+	{
 		*outValue = &file->RemoteApplicationMode;
+	}
 	else if (_stricmp(name, key_int_remoteapplicationexpandcmdline) == 0)
+	{
 		*outValue = &file->RemoteApplicationExpandCmdLine;
+	}
 	else if (_stricmp(name, key_int_remoteapplicationexpandworkingdir) == 0)
+	{
 		*outValue = &file->RemoteApplicationExpandWorkingDir;
+	}
 	else if (_stricmp(name, key_int_disableconnectionsharing) == 0)
+	{
 		*outValue = &file->DisableConnectionSharing;
+	}
 	else if (_stricmp(name, key_int_disableremoteappcapscheck) == 0)
+	{
 		*outValue = &file->DisableRemoteAppCapsCheck;
+	}
 	else if (_stricmp(name, key_int_gatewayusagemethod) == 0)
+	{
 		*outValue = &file->GatewayUsageMethod;
+	}
 	else if (_stricmp(name, key_int_gatewayprofileusagemethod) == 0)
+	{
 		*outValue = &file->GatewayProfileUsageMethod;
+	}
 	else if (_stricmp(name, key_int_gatewaycredentialssource) == 0)
+	{
 		*outValue = &file->GatewayCredentialsSource;
+	}
 	else if (_stricmp(name, key_int_use_redirection_server_name) == 0)
+	{
 		*outValue = &file->UseRedirectionServerName;
+	}
 	else if (_stricmp(name, key_int_rdgiskdcproxy) == 0)
+	{
 		*outValue = &file->RdgIsKdcProxy;
+	}
 	else if (_stricmp(name, key_int_redirectwebauthn) == 0)
+	{
 		*outValue = &file->RedirectWebauthN;
+	}
 	else
 	{
 		rdpFileLine* line = freerdp_client_rdp_file_find_line_by_name(file, name);
 		if (!line)
+		{
 			return FALSE;
+		}
 		if (!(line->flags & RDP_FILE_LINE_FLAG_TYPE_INTEGER))
+		{
 			return FALSE;
+		}
 
 		*outLine = line;
 	}
@@ -523,76 +671,144 @@ static BOOL freerdp_client_rdp_file_find_string_entry(rdpFile* file, const char*
 	*outLine = NULL;
 
 	if (_stricmp(name, key_str_username) == 0)
+	{
 		*outValue = &file->Username;
+	}
 	else if (_stricmp(name, key_str_domain) == 0)
+	{
 		*outValue = &file->Domain;
+	}
 	else if (_stricmp(name, key_str_password) == 0)
+	{
 		*outValue = &file->Password;
+	}
 	else if (_stricmp(name, key_str_full_address) == 0)
+	{
 		*outValue = &file->FullAddress;
+	}
 	else if (_stricmp(name, key_str_alternate_full_address) == 0)
+	{
 		*outValue = &file->AlternateFullAddress;
+	}
 	else if (_stricmp(name, key_str_usbdevicestoredirect) == 0)
+	{
 		*outValue = &file->UsbDevicesToRedirect;
+	}
 	else if (_stricmp(name, key_str_camerastoredirect) == 0)
+	{
 		*outValue = &file->RedirectCameras;
+	}
 	else if (_stricmp(name, key_str_loadbalanceinfo) == 0)
+	{
 		*outValue = &file->LoadBalanceInfo;
+	}
 	else if (_stricmp(name, key_str_remoteapplicationname) == 0)
+	{
 		*outValue = &file->RemoteApplicationName;
+	}
 	else if (_stricmp(name, key_str_remoteapplicationicon) == 0)
+	{
 		*outValue = &file->RemoteApplicationIcon;
+	}
 	else if (_stricmp(name, key_str_remoteapplicationprogram) == 0)
+	{
 		*outValue = &file->RemoteApplicationProgram;
+	}
 	else if (_stricmp(name, key_str_remoteapplicationfile) == 0)
+	{
 		*outValue = &file->RemoteApplicationFile;
+	}
 	else if (_stricmp(name, key_str_remoteapplicationguid) == 0)
+	{
 		*outValue = &file->RemoteApplicationGuid;
+	}
 	else if (_stricmp(name, key_str_remoteapplicationcmdline) == 0)
+	{
 		*outValue = &file->RemoteApplicationCmdLine;
+	}
 	else if (_stricmp(name, key_str_alternate_shell) == 0)
+	{
 		*outValue = &file->AlternateShell;
+	}
 	else if (_stricmp(name, key_str_shell_working_directory) == 0)
+	{
 		*outValue = &file->ShellWorkingDirectory;
+	}
 	else if (_stricmp(name, key_str_gatewayhostname) == 0)
+	{
 		*outValue = &file->GatewayHostname;
+	}
 	else if (_stricmp(name, key_str_resourceprovider) == 0)
+	{
 		*outValue = &file->ResourceProvider;
+	}
 	else if (_stricmp(name, key_str_wvd) == 0)
+	{
 		*outValue = &file->WvdEndpointPool;
+	}
 	else if (_stricmp(name, key_str_geo) == 0)
+	{
 		*outValue = &file->geo;
+	}
 	else if (_stricmp(name, key_str_armpath) == 0)
+	{
 		*outValue = &file->armpath;
+	}
 	else if (_stricmp(name, key_str_aadtenantid) == 0)
+	{
 		*outValue = &file->aadtenantid;
+	}
 	else if (_stricmp(name, key_str_diagnosticserviceurl) == 0)
+	{
 		*outValue = &file->diagnosticserviceurl;
+	}
 	else if (_stricmp(name, key_str_hubdiscoverygeourl) == 0)
+	{
 		*outValue = &file->hubdiscoverygeourl;
+	}
 	else if (_stricmp(name, key_str_activityhint) == 0)
+	{
 		*outValue = &file->activityhint;
+	}
 	else if (_stricmp(name, key_str_gatewayaccesstoken) == 0)
+	{
 		*outValue = &file->GatewayAccessToken;
+	}
 	else if (_stricmp(name, key_str_kdcproxyname) == 0)
+	{
 		*outValue = &file->KdcProxyName;
+	}
 	else if (_stricmp(name, key_str_drivestoredirect) == 0)
+	{
 		*outValue = &file->DrivesToRedirect;
+	}
 	else if (_stricmp(name, key_str_devicestoredirect) == 0)
+	{
 		*outValue = &file->DevicesToRedirect;
+	}
 	else if (_stricmp(name, key_str_winposstr) == 0)
+	{
 		*outValue = &file->WinPosStr;
+	}
 	else if (_stricmp(name, key_str_pcb) == 0)
+	{
 		*outValue = &file->PreconnectionBlob;
+	}
 	else if (_stricmp(name, key_str_selectedmonitors) == 0)
+	{
 		*outValue = &file->SelectedMonitors;
+	}
 	else
 	{
 		rdpFileLine* line = freerdp_client_rdp_file_find_line_by_name(file, name);
 		if (!line)
+		{
 			return FALSE;
+		}
 		if (!(line->flags & RDP_FILE_LINE_FLAG_TYPE_STRING))
+		{
 			return FALSE;
+		}
 
 		*outLine = line;
 	}
@@ -615,13 +831,17 @@ static BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name,
 #endif
 
 	if (value < 0)
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_client_rdp_file_find_integer_entry(file, name, &targetValue, &line))
 	{
 		SSIZE_T index = freerdp_client_rdp_file_add_line(file);
 		if (index == -1)
+		{
 			return FALSE;
+		}
 		line = &file->lines[index];
 	}
 
@@ -655,8 +875,8 @@ static BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name,
 static BOOL freerdp_client_parse_rdp_file_integer(rdpFile* file, const char* name,
                                                   const char* value)
 {
-	char* endptr;
-	long ivalue;
+	char* endptr = NULL;
+	long ivalue = 0;
 	errno = 0;
 	ivalue = strtol(value, &endptr, 0);
 
@@ -668,11 +888,9 @@ static BOOL freerdp_client_parse_rdp_file_integer(rdpFile* file, const char* nam
 			WLog_WARN(TAG, "Integer option %s has invalid value %s, using default", name, value);
 			return TRUE;
 		}
-		else
-		{
-			WLog_ERR(TAG, "Failed to convert RDP file integer option %s [value=%s]", name, value);
-			return FALSE;
-		}
+
+		WLog_ERR(TAG, "Failed to convert RDP file integer option %s [value=%s]", name, value);
+		return FALSE;
 	}
 
 	return freerdp_client_rdp_file_set_integer(file, name, ivalue);
@@ -695,13 +913,17 @@ static BOOL freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, 
 #endif
 
 	if (!name || !value)
+	{
 		return FALSE;
+	}
 
 	if (!freerdp_client_rdp_file_find_string_entry(file, name, &targetValue, &line))
 	{
 		SSIZE_T index = freerdp_client_rdp_file_add_line(file);
 		if (index == -1)
+		{
 			return FALSE;
+		}
 		line = &file->lines[index];
 	}
 
@@ -709,7 +931,9 @@ static BOOL freerdp_client_rdp_file_set_string(rdpFile* file, const char* name, 
 	{
 		*targetValue = _strdup(value);
 		if (!(*targetValue))
+		{
 			return FALSE;
+		}
 		return TRUE;
 	}
 
@@ -748,13 +972,15 @@ static SSIZE_T freerdp_client_rdp_file_add_line(rdpFile* file)
 
 	while ((file->lineCount + 1) > file->lineSize)
 	{
-		size_t new_size;
-		rdpFileLine* new_line;
+		size_t new_size = 0;
+		rdpFileLine* new_line = NULL;
 		new_size = file->lineSize * 2;
 		new_line = (rdpFileLine*)realloc(file->lines, new_size * sizeof(rdpFileLine));
 
 		if (!new_line)
+		{
 			return -1;
+		}
 
 		file->lines = new_line;
 		file->lineSize = new_size;
@@ -783,25 +1009,35 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer, siz
 
 static BOOL trim(char** strptr)
 {
-	char* start;
-	char* str;
-	char* end;
+	char* start = NULL;
+	char* str = NULL;
+	char* end = NULL;
 
 	start = str = *strptr;
 	if (!str)
+	{
 		return TRUE;
+	}
 	if (!(~((size_t)str)))
+	{
 		return TRUE;
+	}
 	end = str + strlen(str) - 1;
 
 	while (isspace(*str))
+	{
 		str++;
+	}
 
 	while ((end > str) && isspace(*end))
+	{
 		end--;
+	}
 	end[1] = '\0';
 	if (start == str)
+	{
 		*strptr = str;
+	}
 	else
 	{
 		*strptr = _strdup(str);
@@ -815,53 +1051,101 @@ static BOOL trim(char** strptr)
 static BOOL trim_strings(rdpFile* file)
 {
 	if (!trim(&file->Username))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->Domain))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->AlternateFullAddress))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->FullAddress))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->UsbDevicesToRedirect))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->RedirectCameras))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->LoadBalanceInfo))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->GatewayHostname))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->GatewayAccessToken))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->RemoteApplicationName))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->RemoteApplicationIcon))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->RemoteApplicationProgram))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->RemoteApplicationFile))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->RemoteApplicationGuid))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->RemoteApplicationCmdLine))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->AlternateShell))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->ShellWorkingDirectory))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->DrivesToRedirect))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->DevicesToRedirect))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->DevicesToRedirect))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->WinPosStr))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->PreconnectionBlob))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->KdcProxyName))
+	{
 		return FALSE;
+	}
 	if (!trim(&file->SelectedMonitors))
+	{
 		return FALSE;
+	}
 
 	for (size_t i = 0; i < file->lineCount; ++i)
 	{
@@ -869,7 +1153,9 @@ static BOOL trim_strings(rdpFile* file)
 		if (curLine->flags & RDP_FILE_LINE_FLAG_TYPE_STRING)
 		{
 			if (!trim(&curLine->sValue))
+			{
 				return FALSE;
+			}
 		}
 	}
 
@@ -880,19 +1166,25 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
                                              rdp_file_fkt_parse parse)
 {
 	BOOL rc = FALSE;
-	size_t length;
-	char* line;
-	char* type;
-	char* context;
-	char *d1, *d2;
-	char* beg;
-	char *name, *value;
+	size_t length = 0;
+	char* line = NULL;
+	char* type = NULL;
+	char* context = NULL;
+	char* d1;
+	char* d2;
+	char* beg = NULL;
+	char* name;
+	char* value;
 	char* copy = NULL;
 
 	if (!file)
+	{
 		return FALSE;
+	}
 	if (size < 2)
+	{
 		return FALSE;
+	}
 
 	if ((buffer[0] == BOM_UTF16_LE[0]) && (buffer[1] == BOM_UTF16_LE[1]))
 	{
@@ -911,7 +1203,9 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
 		copy = calloc(1, size + sizeof(BYTE));
 
 		if (!copy)
+		{
 			return FALSE;
+		}
 
 		memcpy(copy, buffer, size);
 	}
@@ -928,7 +1222,9 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
 			if (beg[0] == '/')
 			{
 				if (!freerdp_client_parse_rdp_file_option(file, line))
+				{
 					goto fail;
+				}
 
 				goto next_line; /* FreeRDP option */
 			}
@@ -936,16 +1232,22 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
 			d1 = strchr(line, ':');
 
 			if (!d1)
+			{
 				goto next_line; /* not first delimiter */
+			}
 
 			type = &d1[1];
 			d2 = strchr(type, ':');
 
 			if (!d2)
+			{
 				goto next_line; /* no second delimiter */
+			}
 
 			if ((d2 - d1) != 2)
+			{
 				goto next_line; /* improper type length */
+			}
 
 			*d1 = 0;
 			*d2 = 0;
@@ -959,13 +1261,17 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
 			{
 				/* integer type */
 				if (!freerdp_client_parse_rdp_file_integer(file, name, value))
+				{
 					goto fail;
+				}
 			}
 			else if (*type == 's')
 			{
 				/* string type */
 				if (!freerdp_client_parse_rdp_file_string(file, name, value))
+				{
 					goto fail;
+				}
 			}
 			else if (*type == 'b')
 			{
@@ -991,18 +1297,22 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 
 BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_fkt_parse parse)
 {
-	BOOL status;
-	BYTE* buffer;
+	BOOL status = 0;
+	BYTE* buffer = NULL;
 	FILE* fp = NULL;
-	size_t read_size;
-	INT64 file_size;
+	size_t read_size = 0;
+	INT64 file_size = 0;
 	const char* fname = name;
 
 	if (!file || !name)
+	{
 		return FALSE;
+	}
 
 	if (_strnicmp(fname, "file://", 7) == 0)
+	{
 		fname = &name[7];
+	}
 
 	fp = winpr_fopen(fname, "r");
 	if (!fp)
@@ -1035,7 +1345,9 @@ BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_
 	if (!read_size)
 	{
 		if (!ferror(fp))
+		{
 			read_size = (size_t)file_size;
+		}
 	}
 
 	fclose(fp);
@@ -1067,7 +1379,9 @@ static INLINE BOOL FILE_POPULATE_STRING(char** _target, const rdpSettings* _sett
 	{
 		*_target = _strdup(str);
 		if (!_target)
+		{
 			return FALSE;
+		}
 	}
 	return TRUE;
 }
@@ -1078,7 +1392,9 @@ static char* freerdp_client_channel_args_to_string(const rdpSettings* settings, 
 	ADDIN_ARGV* args = freerdp_dynamic_channel_collection_find(settings, channel);
 	const char* filters[] = { option };
 	if (!args || (args->argc < 2))
+	{
 		return NULL;
+	}
 
 	return CommandLineToCommaSeparatedValuesEx(args->argc - 1, args->argv + 1, filters,
 	                                           ARRAYSIZE(filters));
@@ -1095,7 +1411,9 @@ static BOOL rdp_opt_duplicate(const rdpSettings* _settings, FreeRDP_Settings_Key
 	{
 		*_key = _strdup(tmp);
 		if (!*_key)
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -1104,13 +1422,15 @@ static BOOL rdp_opt_duplicate(const rdpSettings* _settings, FreeRDP_Settings_Key
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSettings* settings)
 {
 	FreeRDP_Settings_Keys_String index;
-	UINT32 LoadBalanceInfoLength;
+	UINT32 LoadBalanceInfoLength = 0;
 	const char* GatewayHostname = NULL;
 	char* redirectCameras = NULL;
 	char* redirectUsb = NULL;
 
 	if (!file || !settings)
+	{
 		return FALSE;
+	}
 
 	if (!FILE_POPULATE_STRING(&file->Domain, settings, FreeRDP_Domain) ||
 	    !FILE_POPULATE_STRING(&file->Username, settings, FreeRDP_Username) ||
@@ -1119,8 +1439,10 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	    !FILE_POPULATE_STRING(&file->AlternateFullAddress, settings, FreeRDP_ServerHostname) ||
 	    !FILE_POPULATE_STRING(&file->AlternateShell, settings, FreeRDP_AlternateShell) ||
 	    !FILE_POPULATE_STRING(&file->DrivesToRedirect, settings, FreeRDP_DrivesToRedirect))
+	{
 
 		return FALSE;
+	}
 	file->ServerPort = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
 
 	file->DesktopWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
@@ -1141,11 +1463,17 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->EnableRdsAadAuth = freerdp_settings_get_bool(settings, FreeRDP_AadSecurity);
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_RemoteApplicationMode))
+	{
 		index = FreeRDP_RemoteApplicationWorkingDir;
+	}
 	else
+	{
 		index = FreeRDP_ShellWorkingDirectory;
+	}
 	if (!FILE_POPULATE_STRING(&file->ShellWorkingDirectory, settings, index))
+	{
 		return FALSE;
+	}
 	file->ConnectionType = freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType);
 
 	file->ScreenModeId = freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) ? 2 : 1;
@@ -1157,16 +1485,24 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		    freerdp_settings_get_pointer(settings, FreeRDP_LoadBalanceInfo);
 		file->LoadBalanceInfo = calloc(LoadBalanceInfoLength + 1, 1);
 		if (!file->LoadBalanceInfo)
+		{
 			return FALSE;
+		}
 		memcpy(file->LoadBalanceInfo, LoadBalanceInfo, LoadBalanceInfoLength);
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_AudioPlayback))
+	{
 		file->AudioMode = AUDIO_MODE_REDIRECT;
+	}
 	else if (freerdp_settings_get_bool(settings, FreeRDP_RemoteConsoleAudio))
+	{
 		file->AudioMode = AUDIO_MODE_PLAY_ON_SERVER;
+	}
 	else
+	{
 		file->AudioMode = AUDIO_MODE_NONE;
+	}
 
 	/* The gateway hostname should also contain a port specifier unless it is the default port 443
 	 */
@@ -1176,44 +1512,70 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		const UINT32 GatewayPort = freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort);
 		freerdp_client_file_string_check_free(file->GatewayHostname);
 		if (GatewayPort == 443)
+		{
 			file->GatewayHostname = _strdup(GatewayHostname);
+		}
 		else
 		{
 			int length = _scprintf("%s:%" PRIu32, GatewayHostname, GatewayPort);
 			if (length < 0)
+			{
 				return FALSE;
+			}
 
 			file->GatewayHostname = (char*)malloc((size_t)length + 1);
 			if (!file->GatewayHostname)
+			{
 				return FALSE;
+			}
 
 			if (sprintf_s(file->GatewayHostname, (size_t)length + 1, "%s:%" PRIu32, GatewayHostname,
 			              GatewayPort) < 0)
+			{
 				return FALSE;
+			}
 		}
 		if (!file->GatewayHostname)
+		{
 			return FALSE;
+		}
 	}
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_GatewayArmTransport))
+	{
 		file->ResourceProvider = _strdup(str_resourceprovider_arm);
+	}
 
 	if (!rdp_opt_duplicate(settings, FreeRDP_GatewayAvdWvdEndpointPool, &file->WvdEndpointPool))
+	{
 		return FALSE;
+	}
 	if (!rdp_opt_duplicate(settings, FreeRDP_GatewayAvdGeo, &file->geo))
+	{
 		return FALSE;
+	}
 	if (!rdp_opt_duplicate(settings, FreeRDP_GatewayAvdArmpath, &file->armpath))
+	{
 		return FALSE;
+	}
 	if (!rdp_opt_duplicate(settings, FreeRDP_GatewayAvdAadtenantid, &file->aadtenantid))
+	{
 		return FALSE;
+	}
 	if (!rdp_opt_duplicate(settings, FreeRDP_GatewayAvdDiagnosticserviceurl,
 	                       &file->diagnosticserviceurl))
+	{
 		return FALSE;
+	}
 	if (!rdp_opt_duplicate(settings, FreeRDP_GatewayAvdHubdiscoverygeourl,
 	                       &file->hubdiscoverygeourl))
+	{
 		return FALSE;
+	}
 	if (!rdp_opt_duplicate(settings, FreeRDP_GatewayAvdActivityhint, &file->activityhint))
+	{
 		return FALSE;
+	}
 
 	file->AudioCaptureMode = freerdp_settings_get_bool(settings, FreeRDP_AudioCapture);
 	file->BitmapCachePersistEnable =
@@ -1241,7 +1603,9 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	                          FreeRDP_RemoteApplicationGuid) ||
 	    !FILE_POPULATE_STRING(&file->RemoteApplicationCmdLine, settings,
 	                          FreeRDP_RemoteApplicationCmdLine))
+	{
 		return FALSE;
+	}
 	file->SpanMonitors = freerdp_settings_get_bool(settings, FreeRDP_SpanMonitors);
 	file->UseMultiMon = freerdp_settings_get_bool(settings, FreeRDP_UseMultimon);
 	file->AllowDesktopComposition =
@@ -1270,11 +1634,13 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		file->EncodeRedirectedVideoCapture = 0;
 		if (str)
 		{
-			unsigned long val;
+			unsigned long val = 0;
 			errno = 0;
 			val = strtoul(str, NULL, 0);
 			if ((val < UINT32_MAX) && (errno == 0))
+			{
 				file->EncodeRedirectedVideoCapture = val;
+			}
 		}
 		free(str);
 
@@ -1282,7 +1648,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		file->RedirectedVideoCaptureEncodingQuality = 0;
 		if (str)
 		{
-			unsigned long val;
+			unsigned long val = 0;
 			errno = 0;
 			val = strtoul(str, NULL, 0);
 			if ((val <= 2) && (errno == 0))
@@ -1297,7 +1663,9 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 #ifdef CHANNEL_URBDRC_CLIENT
 	redirectUsb = freerdp_client_channel_args_to_string(settings, URBDRC_CHANNEL_NAME, "device:");
 	if (redirectUsb)
+	{
 		file->UsbDevicesToRedirect = redirectUsb;
+	}
 
 #endif
 	file->RedirectClipboard =
@@ -1312,11 +1680,14 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	if (!FILE_POPULATE_STRING(&file->DrivesToRedirect, settings, FreeRDP_DrivesToRedirect) ||
 	    !FILE_POPULATE_STRING(&file->PreconnectionBlob, settings, FreeRDP_PreconnectionBlob) ||
 	    !FILE_POPULATE_STRING(&file->KdcProxyName, settings, FreeRDP_KerberosKdcUrl))
+	{
 		return FALSE;
+	}
 
 	{
 		size_t offset = 0;
-		UINT32 x, count = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
+		UINT32 x;
+		UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
 		const UINT32* MonitorIds = freerdp_settings_get_pointer(settings, FreeRDP_MonitorIds);
 		/* String size: 10 char UINT32 max string length, 1 char separator, one element NULL */
 		size_t size = count * (10 + 1) + 1;
@@ -1333,7 +1704,9 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 			offset += (size_t)rc;
 		}
 		if (offset > 0)
+		{
 			str[offset - 1] = '\0';
+		}
 		freerdp_client_file_string_check_free(file->SelectedMonitors);
 		file->SelectedMonitors = str;
 	}
@@ -1345,18 +1718,22 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 
 BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL unicode)
 {
-	FILE* fp;
-	size_t size;
-	char* buffer;
+	FILE* fp = NULL;
+	size_t size = 0;
+	char* buffer = NULL;
 	int status = 0;
 	WCHAR* unicodestr = NULL;
 
 	if (!file || !name)
+	{
 		return FALSE;
+	}
 
 	size = freerdp_client_write_rdp_file_buffer(file, NULL, 0);
 	if (size == 0)
+	{
 		return FALSE;
+	}
 	buffer = (char*)calloc((size_t)(size + 1), sizeof(char));
 
 	if (freerdp_client_write_rdp_file_buffer(file, buffer, (size_t)size + 1) != size)
@@ -1417,12 +1794,14 @@ static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* buf
                                                       WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	va_list ap;
-	SSIZE_T len;
-	char* buf;
-	size_t bufSize;
+	SSIZE_T len = 0;
+	char* buf = NULL;
+	size_t bufSize = 0;
 
 	if (!buffer || !bufferSize || !fmt)
+	{
 		return -1;
+	}
 
 	buf = *buffer;
 	bufSize = *bufferSize;
@@ -1431,17 +1810,23 @@ static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* buf
 	len = vsnprintf(buf, bufSize, fmt, ap);
 	va_end(ap);
 	if (len < 0)
+	{
 		return -1;
+	}
 
 	/* _snprintf doesn't add the ending \0 to its return value */
 	++len;
 
 	/* we just want to know the size - return it */
 	if (!buf && !bufSize)
+	{
 		return len;
+	}
 
 	if (!buf)
+	{
 		return -1;
+	}
 
 	/* update buffer size and buffer position and replace \0 with \n */
 	if (bufSize >= (size_t)len)
@@ -1451,7 +1836,9 @@ static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* buf
 		*buffer = buf + len;
 	}
 	else
+	{
 		return -1;
+	}
 
 	return len;
 }
@@ -1461,11 +1848,15 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	size_t totalSize = 0;
 
 	if (!file)
+	{
 		return 0;
+	}
 
 	/* either buffer and size are null or non-null */
 	if ((!buffer || !size) && (buffer || size))
+	{
 		return 0;
+	}
 
 #define WRITE_SETTING_(fmt_, ...)                                                                \
 	{                                                                                            \
@@ -1606,13 +1997,19 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 		const rdpFileLine* curLine = &file->lines[i];
 
 		if (curLine->flags & RDP_FILE_LINE_FLAG_TYPE_INTEGER)
+		{
 			res = freerdp_client_write_setting_to_buffer(&buffer, &size, "%s:i:%" PRIu32,
 			                                             curLine->name, (UINT32)curLine->iValue);
+		}
 		else if (curLine->flags & RDP_FILE_LINE_FLAG_TYPE_STRING)
+		{
 			res = freerdp_client_write_setting_to_buffer(&buffer, &size, "%s:s:%s", curLine->name,
 			                                             curLine->sValue);
+		}
 		if (res < 0)
+		{
 			return 0;
+		}
 
 		totalSize += (size_t)res;
 	}
@@ -1622,29 +2019,38 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 
 static ADDIN_ARGV* rdp_file_to_args(const char* channel, const char* values)
 {
-	size_t count, x;
+	size_t count;
+	size_t x;
 	char** p = NULL;
 	ADDIN_ARGV* args = freerdp_addin_argv_new(0, NULL);
 	if (!args)
+	{
 		return NULL;
+	}
 	if (!freerdp_addin_argv_add_argument(args, channel))
+	{
 		goto fail;
+	}
 
 	p = CommandLineParseCommaSeparatedValues(values, &count);
 	for (x = 0; x < count; x++)
 	{
-		BOOL rc;
+		BOOL rc = 0;
 		const char* val = p[x];
 		const size_t len = strlen(val) + 8;
 		char* str = calloc(len, sizeof(char));
 		if (!str)
+		{
 			goto fail;
+		}
 
 		_snprintf(str, len, "device:%s", val);
 		rc = freerdp_addin_argv_add_argument(args, str);
 		free(str);
 		if (!rc)
+		{
 			goto fail;
+		}
 	}
 	free(p);
 	return args;
@@ -1660,12 +2066,16 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	BOOL setDefaultConnectionType = TRUE;
 
 	if (!file || !settings)
+	{
 		return FALSE;
+	}
 
 	if (~((size_t)file->Domain))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_Domain, file->Domain))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->Username))
@@ -1674,15 +2084,21 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		char* domain = NULL;
 
 		if (!freerdp_parse_username(file->Username, &user, &domain))
+		{
 			return FALSE;
+		}
 
 		if (!freerdp_settings_set_string(settings, FreeRDP_Username, user))
+		{
 			return FALSE;
+		}
 
 		if (!(~((size_t)file->Domain)) && domain)
 		{
 			if (!freerdp_settings_set_string(settings, FreeRDP_Domain, domain))
+			{
 				return FALSE;
+			}
 		}
 
 		free(user);
@@ -1692,7 +2108,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	if (~((size_t)file->Password))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_Password, file->Password))
+		{
 			return FALSE;
+		}
 	}
 
 	{
@@ -1701,9 +2119,13 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		/* With MSTSC alternate full address always wins,
 		 * so mimic this. */
 		if (~((size_t)file->AlternateFullAddress))
+		{
 			address = file->AlternateFullAddress;
+		}
 		else if (~((size_t)file->FullAddress))
+		{
 			address = file->FullAddress;
+		}
 
 		if (address)
 		{
@@ -1711,17 +2133,23 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 			char* host = NULL;
 
 			if (!freerdp_parse_hostname(address, &host, &port))
+			{
 				return FALSE;
+			}
 
 			const BOOL rc = freerdp_settings_set_string(settings, FreeRDP_ServerHostname, host);
 			free(host);
 			if (!rc)
+			{
 				return FALSE;
+			}
 
 			if (port > 0)
 			{
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, (UINT32)port))
+				{
 					return FALSE;
+				}
 			}
 		}
 	}
@@ -1729,7 +2157,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	if (~file->ServerPort)
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, file->ServerPort))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->DesktopSizeId)
@@ -1738,33 +2168,53 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		{
 			case 0:
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 640))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, 480))
+				{
 					return FALSE;
+				}
 				break;
 			case 1:
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 800))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, 600))
+				{
 					return FALSE;
+				}
 				break;
 			case 2:
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 1024))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, 768))
+				{
 					return FALSE;
+				}
 				break;
 			case 3:
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 1280))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, 1024))
+				{
 					return FALSE;
+				}
 				break;
 			case 4:
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, 1600))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, 1200))
+				{
 					return FALSE;
+				}
 				break;
 			default:
 				WLog_WARN(TAG, "Unsupported 'desktop size id' value %" PRIu32, file->DesktopSizeId);
@@ -1774,59 +2224,77 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	if (~file->DesktopWidth)
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopWidth, file->DesktopWidth))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->DesktopHeight)
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopHeight, file->DesktopHeight))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->SessionBpp)
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_ColorDepth, file->SessionBpp))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->ConnectToConsole)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_ConsoleSession,
 		                               file->ConnectToConsole != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->AdministrativeSession)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_ConsoleSession,
 		                               file->AdministrativeSession != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->NegotiateSecurityLayer)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NegotiateSecurityLayer,
 		                               file->NegotiateSecurityLayer != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->EnableCredSSPSupport)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity,
 		                               file->EnableCredSSPSupport != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->EnableRdsAadAuth)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AadSecurity, file->EnableRdsAadAuth != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->AlternateShell))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_AlternateShell, file->AlternateShell))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->ShellWorkingDirectory))
@@ -1838,7 +2306,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		        : FreeRDP_ShellWorkingDirectory;
 
 		if (!freerdp_settings_set_string(settings, targetId, file->ShellWorkingDirectory))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->ScreenModeId)
@@ -1857,14 +2327,18 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		 */
 		if (!freerdp_settings_set_bool(settings, FreeRDP_Fullscreen,
 		                               (file->ScreenModeId == 2) ? TRUE : FALSE))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~(file->SmartSizing))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_SmartSizing,
 		                               (file->SmartSizing == 1) ? TRUE : FALSE))
+		{
 			return FALSE;
+		}
 		/**
 		 *  SmartSizingWidth and SmartSizingHeight:
 		 *
@@ -1879,10 +2353,14 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		{
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingWidth,
 			                                 file->DesktopWidth))
+			{
 				return FALSE;
+			}
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_SmartSizingHeight,
 			                                 file->DesktopHeight))
+			{
 				return FALSE;
+			}
 		}
 	}
 
@@ -1891,7 +2369,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		const size_t len = strlen(file->LoadBalanceInfo);
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_LoadBalanceInfo,
 		                                      file->LoadBalanceInfo, len))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->AuthenticationLevel)
@@ -1912,13 +2392,17 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		 */
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_AuthenticationLevel,
 		                                 file->AuthenticationLevel))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->ConnectionType)
 	{
 		if (!freerdp_set_connection_type(settings, file->ConnectionType))
+		{
 			return FALSE;
+		}
 		setDefaultConnectionType = FALSE;
 	}
 
@@ -1928,22 +2412,34 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		{
 			case AUDIO_MODE_REDIRECT:
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteConsoleAudio, FALSE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, TRUE))
+				{
 					return FALSE;
+				}
 				break;
 			case AUDIO_MODE_PLAY_ON_SERVER:
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteConsoleAudio, TRUE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, FALSE))
+				{
 					return FALSE;
+				}
 				break;
 			case AUDIO_MODE_NONE:
 			default:
 				if (!freerdp_settings_set_bool(settings, FreeRDP_AudioPlayback, FALSE))
+				{
 					return FALSE;
+				}
 				if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteConsoleAudio, FALSE))
+				{
 					return FALSE;
+				}
 				break;
 		}
 	}
@@ -1951,14 +2447,18 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	if (~file->AudioCaptureMode)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AudioCapture, file->AudioCaptureMode != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->Compression)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_CompressionEnabled,
 		                               file->Compression != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->GatewayHostname))
@@ -1967,17 +2467,23 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		char* host = NULL;
 
 		if (!freerdp_parse_hostname(file->GatewayHostname, &host, &port))
+		{
 			return FALSE;
+		}
 
 		const BOOL rc = freerdp_settings_set_string(settings, FreeRDP_GatewayHostname, host);
 		free(host);
 		if (!rc)
+		{
 			return FALSE;
+		}
 
 		if (port > 0)
 		{
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_GatewayPort, (UINT32)port))
+			{
 				return FALSE;
+			}
 		}
 	}
 
@@ -1986,7 +2492,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		if (_stricmp(file->ResourceProvider, str_resourceprovider_arm) == 0)
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayArmTransport, TRUE))
+			{
 				return FALSE;
+			}
 		}
 	}
 
@@ -1994,190 +2502,246 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdWvdEndpointPool,
 		                                 file->WvdEndpointPool))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->geo))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdGeo, file->geo))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->armpath))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdArmpath, file->armpath))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->aadtenantid))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdAadtenantid,
 		                                 file->aadtenantid))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->diagnosticserviceurl))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdDiagnosticserviceurl,
 		                                 file->diagnosticserviceurl))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->hubdiscoverygeourl))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdHubdiscoverygeourl,
 		                                 file->hubdiscoverygeourl))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->activityhint))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAvdActivityhint,
 		                                 file->activityhint))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->GatewayAccessToken))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayAccessToken,
 		                                 file->GatewayAccessToken))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->GatewayUsageMethod)
 	{
 		if (!freerdp_set_gateway_usage_method(settings, file->GatewayUsageMethod))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->PromptCredentialOnce)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_GatewayUseSameCredentials,
 		                               file->PromptCredentialOnce != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->PromptForCredentials)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_PromptForCredentials,
 		                               file->PromptForCredentials != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->RemoteApplicationMode)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteApplicationMode,
 		                               file->RemoteApplicationMode != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->RemoteApplicationProgram))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationProgram,
 		                                 file->RemoteApplicationProgram))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->RemoteApplicationName))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationName,
 		                                 file->RemoteApplicationName))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->RemoteApplicationIcon))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationIcon,
 		                                 file->RemoteApplicationIcon))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->RemoteApplicationFile))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationFile,
 		                                 file->RemoteApplicationFile))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->RemoteApplicationGuid))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationGuid,
 		                                 file->RemoteApplicationGuid))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->RemoteApplicationCmdLine))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_RemoteApplicationCmdLine,
 		                                 file->RemoteApplicationCmdLine))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->SpanMonitors)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_SpanMonitors, file->SpanMonitors != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->UseMultiMon)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_UseMultimon, file->UseMultiMon != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->AllowFontSmoothing)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AllowFontSmoothing,
 		                               file->AllowFontSmoothing != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->DisableWallpaper)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableWallpaper,
 		                               file->DisableWallpaper != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->DisableFullWindowDrag)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableFullWindowDrag,
 		                               file->DisableFullWindowDrag != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->DisableMenuAnims)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableMenuAnims,
 		                               file->DisableMenuAnims != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->DisableThemes)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableThemes, file->DisableThemes != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->AllowDesktopComposition)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AllowDesktopComposition,
 		                               file->AllowDesktopComposition != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->BitmapCachePersistEnable)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_BitmapCachePersistEnabled,
 		                               file->BitmapCachePersistEnable != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->DisableRemoteAppCapsCheck)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DisableRemoteAppCapsCheck,
 		                               file->DisableRemoteAppCapsCheck != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->BandwidthAutoDetect)
@@ -2195,13 +2759,17 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 			}
 
 			if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
+			{
 				return FALSE;
+			}
 			setDefaultConnectionType = FALSE;
 		}
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect,
 		                               (file->BandwidthAutoDetect != 0) ||
 		                                   (file->NetworkAutoDetect != 0)))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->NetworkAutoDetect)
@@ -2219,62 +2787,80 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 			}
 
 			if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
+			{
 				return FALSE;
+			}
 
 			setDefaultConnectionType = FALSE;
 		}
 		if (!freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect,
 		                               (file->BandwidthAutoDetect != 0) ||
 		                                   (file->NetworkAutoDetect != 0)))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->AutoReconnectionEnabled)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_AutoReconnectionEnabled,
 		                               file->AutoReconnectionEnabled != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->AutoReconnectMaxRetries)
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_AutoReconnectMaxRetries,
 		                                 file->AutoReconnectMaxRetries))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->RedirectSmartCards)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectSmartCards,
 		                               file->RedirectSmartCards != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->RedirectWebauthN)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectWebAuthN,
 		                               file->RedirectWebauthN != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->RedirectClipboard)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectClipboard,
 		                               file->RedirectClipboard != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->RedirectPrinters)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectPrinters,
 		                               file->RedirectPrinters != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->RedirectDrives)
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectDrives, file->RedirectDrives != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->RedirectPosDevices)
@@ -2283,7 +2869,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		                               file->RedirectComPorts != 0) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_RedirectParallelPorts,
 		                               file->RedirectComPorts != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->RedirectComPorts)
@@ -2292,7 +2880,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		                               file->RedirectComPorts != 0) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_RedirectParallelPorts,
 		                               file->RedirectComPorts != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->RedirectLocation)
@@ -2303,7 +2893,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		const BOOL rc = freerdp_client_add_dynamic_channel(settings, count, str);
 		free(str);
 		if (!rc)
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->RedirectDirectX)
@@ -2338,14 +2930,18 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		 *
 		 */
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DeviceRedirection, TRUE))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->DrivesToRedirect))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_DrivesToRedirect,
 		                                 file->DrivesToRedirect))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->RedirectCameras))
@@ -2398,12 +2994,16 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		} cnv;
 		ADDIN_ARGV* args = rdp_file_to_args(URBDRC_CHANNEL_NAME, file->UsbDevicesToRedirect);
 		if (!args)
+		{
 			return FALSE;
+		}
 		cnv.c = args->argv;
 		const BOOL status = freerdp_client_add_dynamic_channel(settings, args->argc, cnv.cc);
 		freerdp_addin_argv_free(args);
 		if (!status)
+		{
 			return FALSE;
+		}
 #else
 		WLog_WARN(TAG,
 		          "This build does not support [MS-RDPEUSB] usb redirection channel. Ignoring '%s'",
@@ -2414,14 +3014,17 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	if (~file->KeyboardHook)
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardHook, file->KeyboardHook))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~(size_t)file->SelectedMonitors)
 	{
-		size_t count = 0, x;
+		size_t count = 0;
+		size_t x;
 		char** args = CommandLineParseCommaSeparatedValues(file->SelectedMonitors, &count);
-		UINT32* list;
+		UINT32* list = NULL;
 
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, NULL, count))
 		{
@@ -2436,7 +3039,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		}
 		for (x = 0; x < count; x++)
 		{
-			unsigned long val;
+			unsigned long val = 0;
 			errno = 0;
 			val = strtoul(args[x], NULL, 0);
 			if ((val >= UINT32_MAX) && (errno != 0))
@@ -2456,17 +3059,23 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		if (val)
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_SupportDisplayControl, TRUE))
+			{
 				return FALSE;
+			}
 		}
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DynamicResolutionUpdate, val))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->DesktopScaleFactor)
 	{
 		if (!freerdp_settings_set_uint32(settings, FreeRDP_DesktopScaleFactor,
 		                                 file->DesktopScaleFactor))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~file->VideoPlaybackMode)
@@ -2475,12 +3084,16 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_SupportGeometryTracking, TRUE) ||
 			    !freerdp_settings_set_bool(settings, FreeRDP_SupportVideoOptimized, TRUE))
+			{
 				return FALSE;
+			}
 		}
 		else
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_SupportVideoOptimized, FALSE))
+			{
 				return FALSE;
+			}
 		}
 	}
 	// TODO file->MaximizeToCurrentDisplays;
@@ -2493,20 +3106,26 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		if (!freerdp_settings_set_string(settings, FreeRDP_PreconnectionBlob,
 		                                 file->PreconnectionBlob) ||
 		    !freerdp_settings_set_bool(settings, FreeRDP_SendPreconnectionPdu, TRUE))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->KdcProxyName))
 	{
 		if (!freerdp_settings_set_string(settings, FreeRDP_KerberosKdcUrl, file->KdcProxyName))
+		{
 			return FALSE;
+		}
 	}
 
 	if (~((size_t)file->RdgIsKdcProxy))
 	{
 		if (!freerdp_settings_set_bool(settings, FreeRDP_KerberosRdgIsProxy,
 		                               file->RdgIsKdcProxy != 0))
+		{
 			return FALSE;
+		}
 	}
 
 	if (file->args->argc > 1)
@@ -2525,13 +3144,17 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		                                                 ConnectionFile);
 		free(ConnectionFile);
 		if (!rc)
+		{
 			return FALSE;
+		}
 	}
 
 	if (setDefaultConnectionType)
 	{
 		if (!freerdp_set_connection_type(settings, CONNECTION_TYPE_AUTODETECT))
+		{
 			return FALSE;
+		}
 	}
 
 	return TRUE;
@@ -2539,7 +3162,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 
 static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(const rdpFile* file, const char* name)
 {
-	size_t index;
+	size_t index = 0;
 	BOOL bFound = FALSE;
 	rdpFileLine* line = NULL;
 
@@ -2579,9 +3202,13 @@ const char* freerdp_client_rdp_file_get_string_option(const rdpFile* file, const
 	if (freerdp_client_rdp_file_find_string_entry((rdpFile*)file, name, &value, &line))
 	{
 		if (value && ~(size_t)(*value))
+		{
 			return *value;
+		}
 		if (line)
+		{
 			return line->sValue;
+		}
 	}
 
 	return NULL;
@@ -2600,9 +3227,13 @@ int freerdp_client_rdp_file_get_integer_option(const rdpFile* file, const char* 
 	if (freerdp_client_rdp_file_find_integer_entry((rdpFile*)file, name, &value, &line))
 	{
 		if (value && ~(*value))
+		{
 			return *value;
+		}
 		if (line)
+		{
 			return (int)line->iValue;
+		}
 	}
 
 	return -1;
@@ -2611,7 +3242,9 @@ int freerdp_client_rdp_file_get_integer_option(const rdpFile* file, const char* 
 static void freerdp_client_file_string_check_free(LPSTR str)
 {
 	if (~((size_t)str))
+	{
 		free(str);
+	}
 }
 
 rdpFile* freerdp_client_rdp_file_new(void)
@@ -2624,7 +3257,9 @@ rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags)
 	rdpFile* file = (rdpFile*)calloc(1, sizeof(rdpFile));
 
 	if (!file)
+	{
 		return NULL;
+	}
 
 	file->flags = flags;
 
@@ -2637,10 +3272,14 @@ rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags)
 
 	file->args = freerdp_addin_argv_new(0, NULL);
 	if (!file->lines || !file->args)
+	{
 		goto fail;
+	}
 
 	if (!freerdp_client_add_option(file, "freerdp"))
+	{
 		goto fail;
+	}
 
 	return file;
 fail:
@@ -2653,7 +3292,7 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 	{
 		if (file->lineCount)
 		{
-			size_t i;
+			size_t i = 0;
 			for (i = 0; i < file->lineCount; i++)
 			{
 				free(file->lines[i].name);

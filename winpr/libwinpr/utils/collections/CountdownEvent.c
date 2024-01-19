@@ -17,8 +17,8 @@
  * limitations under the License.
  */
 
-#include <winpr/config.h>
 #include <winpr/assert.h>
+#include <winpr/config.h>
 
 #include <winpr/crt.h>
 
@@ -30,7 +30,7 @@ struct CountdownEvent
 	CRITICAL_SECTION lock;
 	HANDLE event;
 	size_t initialCount;
-};
+} DECLSPEC_ALIGN(64);
 
 /**
  * C equivalent of the C# CountdownEvent Class
@@ -71,7 +71,9 @@ BOOL CountdownEvent_IsSet(wCountdownEvent* countdown)
 
 	WINPR_ASSERT(countdown);
 	if (WaitForSingleObject(countdown->event, 0) == WAIT_OBJECT_0)
+	{
 		status = TRUE;
+	}
 
 	return status;
 }
@@ -102,7 +104,9 @@ void CountdownEvent_AddCount(wCountdownEvent* countdown, size_t signalCount)
 	countdown->count += signalCount;
 
 	if (countdown->count > 0)
+	{
 		ResetEvent(countdown->event);
+	}
 
 	LeaveCriticalSection(&countdown->lock);
 }
@@ -123,15 +127,23 @@ BOOL CountdownEvent_Signal(wCountdownEvent* countdown, size_t signalCount)
 	EnterCriticalSection(&countdown->lock);
 
 	if (WaitForSingleObject(countdown->event, 0) == WAIT_OBJECT_0)
+	{
 		oldStatus = TRUE;
+	}
 
 	if (signalCount <= countdown->count)
+	{
 		countdown->count -= signalCount;
+	}
 	else
+	{
 		countdown->count = 0;
+	}
 
 	if (countdown->count == 0)
+	{
 		newStatus = TRUE;
+	}
 
 	if (newStatus && (!oldStatus))
 	{
@@ -163,22 +175,30 @@ wCountdownEvent* CountdownEvent_New(size_t initialCount)
 	wCountdownEvent* countdown = (wCountdownEvent*)calloc(1, sizeof(wCountdownEvent));
 
 	if (!countdown)
+	{
 		return NULL;
+	}
 
 	countdown->count = initialCount;
 	countdown->initialCount = initialCount;
 
 	if (!InitializeCriticalSectionAndSpinCount(&countdown->lock, 4000))
+	{
 		goto fail;
+	}
 
 	countdown->event = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (!countdown->event)
+	{
 		goto fail;
+	}
 
 	if (countdown->count == 0)
 	{
 		if (!SetEvent(countdown->event))
+		{
 			goto fail;
+		}
 	}
 
 	return countdown;
@@ -191,7 +211,9 @@ fail:
 void CountdownEvent_Free(wCountdownEvent* countdown)
 {
 	if (!countdown)
+	{
 		return;
+	}
 
 	DeleteCriticalSection(&countdown->lock);
 	CloseHandle(countdown->event);

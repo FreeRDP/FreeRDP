@@ -47,7 +47,7 @@ CLIPRDR_FORMAT_LIST cliprdr_filter_format_list(const CLIPRDR_FORMAT_LIST* list, 
 	CLIPRDR_FORMAT_LIST filtered = { 0 };
 	filtered.common.msgType = CB_FORMAT_LIST;
 	filtered.numFormats = list->numFormats;
-	filtered.formats = calloc(filtered.numFormats, sizeof(CLIPRDR_FORMAT_LIST));
+	filtered.formats = calloc(filtered.numFormats, sizeof(CLIPRDR_FORMAT));
 
 	size_t wpos = 0;
 	if ((mask & checkMask) == checkMask)
@@ -58,7 +58,9 @@ CLIPRDR_FORMAT_LIST cliprdr_filter_format_list(const CLIPRDR_FORMAT_LIST* list, 
 			CLIPRDR_FORMAT* cur = &filtered.formats[x];
 			cur->formatId = format->formatId;
 			if (format->formatName)
+			{
 				cur->formatName = _strdup(format->formatName);
+			}
 			wpos++;
 		}
 	}
@@ -70,7 +72,9 @@ CLIPRDR_FORMAT_LIST cliprdr_filter_format_list(const CLIPRDR_FORMAT_LIST* list, 
 			CLIPRDR_FORMAT* cur = &filtered.formats[wpos];
 
 			if (!format->formatName)
+			{
 				continue;
+			}
 			if (strcmp(format->formatName, type_FileGroupDescriptorW) == 0 ||
 			    strcmp(format->formatName, type_FileContents) == 0)
 			{
@@ -93,7 +97,9 @@ CLIPRDR_FORMAT_LIST cliprdr_filter_format_list(const CLIPRDR_FORMAT_LIST* list, 
 			{
 				cur->formatId = format->formatId;
 				if (format->formatName)
+				{
 					cur->formatName = _strdup(format->formatName);
+				}
 				wpos++;
 			}
 		}
@@ -120,14 +126,18 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	formatList.common.dataLen = dataLen;
 
 	if ((error = cliprdr_read_format_list(s, &formatList, cliprdr->useLongFormatNames)))
+	{
 		goto error_out;
+	}
 
 	const UINT32 mask =
 	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
 	filteredFormatList = cliprdr_filter_format_list(
 	    &formatList, mask, CLIPRDR_FLAG_REMOTE_TO_LOCAL | CLIPRDR_FLAG_REMOTE_TO_LOCAL_FILES);
 	if (filteredFormatList.numFormats == 0)
+	{
 		goto error_out;
+	}
 
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerFormatList: numFormats: %" PRIu32 "",
 	           filteredFormatList.numFormats);
@@ -135,7 +145,9 @@ UINT cliprdr_process_format_list(cliprdrPlugin* cliprdr, wStream* s, UINT32 data
 	if (context->ServerFormatList)
 	{
 		if ((error = context->ServerFormatList(context, &filteredFormatList)))
+		{
 			WLog_ERR(TAG, "ServerFormatList failed with error %" PRIu32 "", error);
+		}
 	}
 
 error_out:
@@ -164,7 +176,9 @@ UINT cliprdr_process_format_list_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	IFCALLRET(context->ServerFormatListResponse, error, context, &formatListResponse);
 	if (error)
+	{
 		WLog_ERR(TAG, "ServerFormatListResponse failed with error %" PRIu32 "!", error);
+	}
 
 	return error;
 }
@@ -188,7 +202,9 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 	formatDataRequest.common.dataLen = dataLen;
 
 	if ((error = cliprdr_read_format_data_request(s, &formatDataRequest)))
+	{
 		return error;
+	}
 
 	const UINT32 mask =
 	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
@@ -200,7 +216,9 @@ UINT cliprdr_process_format_data_request(cliprdrPlugin* cliprdr, wStream* s, UIN
 	context->lastRequestedFormatId = formatDataRequest.requestedFormatId;
 	IFCALLRET(context->ServerFormatDataRequest, error, context, &formatDataRequest);
 	if (error)
+	{
 		WLog_ERR(TAG, "ServerFormatDataRequest failed with error %" PRIu32 "!", error);
+	}
 
 	return error;
 }
@@ -224,7 +242,9 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 	formatDataResponse.common.dataLen = dataLen;
 
 	if ((error = cliprdr_read_format_data_response(s, &formatDataResponse)))
+	{
 		return error;
+	}
 
 	const UINT32 mask =
 	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
@@ -237,7 +257,9 @@ UINT cliprdr_process_format_data_response(cliprdrPlugin* cliprdr, wStream* s, UI
 
 	IFCALLRET(context->ServerFormatDataResponse, error, context, &formatDataResponse);
 	if (error)
+	{
 		WLog_ERR(TAG, "ServerFormatDataResponse failed with error %" PRIu32 "!", error);
+	}
 
 	return error;
 }

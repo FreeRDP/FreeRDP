@@ -2,10 +2,10 @@
 #include <errno.h>
 
 #include "pollset.h"
+#include "../log.h"
+#include <winpr/assert.h>
 #include <winpr/handle.h>
 #include <winpr/sysinfo.h>
-#include <winpr/assert.h>
-#include "../log.h"
 
 #define TAG WINPR_TAG("sync.pollset")
 
@@ -15,10 +15,14 @@ static INT16 handle_mode_to_pollevent(ULONG mode)
 	INT16 event = 0;
 
 	if (mode & WINPR_FD_READ)
+	{
 		event |= POLLIN;
+	}
 
 	if (mode & WINPR_FD_WRITE)
+	{
 		event |= POLLOUT;
+	}
 
 	return event;
 }
@@ -33,7 +37,9 @@ BOOL pollset_init(WINPR_POLL_SET* set, size_t nhandles)
 		set->isStatic = FALSE;
 		set->pollset = calloc(nhandles, sizeof(*set->pollset));
 		if (!set->pollset)
+		{
 			return FALSE;
+		}
 	}
 	else
 	{
@@ -63,7 +69,9 @@ void pollset_uninit(WINPR_POLL_SET* set)
 	WINPR_ASSERT(set);
 #ifdef WINPR_HAVE_POLL_H
 	if (!set->isStatic)
+	{
 		free(set->pollset);
+	}
 #else
 	free(set->fdIndex);
 #endif
@@ -85,9 +93,11 @@ BOOL pollset_add(WINPR_POLL_SET* set, int fd, ULONG mode)
 {
 	WINPR_ASSERT(set);
 #ifdef WINPR_HAVE_POLL_H
-	struct pollfd* item;
+	struct pollfd* item = NULL;
 	if (set->fillIndex == set->size)
+	{
 		return FALSE;
+	}
 
 	item = &set->pollset[set->fillIndex];
 	item->fd = fd;
@@ -121,30 +131,43 @@ int pollset_poll(WINPR_POLL_SET* set, DWORD dwMilliseconds)
 {
 	WINPR_ASSERT(set);
 	int ret = 0;
-	UINT64 dueTime, now;
+	UINT64 dueTime;
+	UINT64 now;
 
 	now = GetTickCount64();
 	if (dwMilliseconds == INFINITE)
+	{
 		dueTime = 0xFFFFFFFFFFFFFFFF;
+	}
 	else
+	{
 		dueTime = now + dwMilliseconds;
+	}
 
 #ifdef WINPR_HAVE_POLL_H
-	int timeout;
+	int timeout = 0;
 
 	do
 	{
 		if (dwMilliseconds == INFINITE)
+		{
 			timeout = -1;
+		}
 		else
+		{
 			timeout = (int)(dueTime - now);
+		}
 
 		ret = poll(set->pollset, set->fillIndex, timeout);
 		if (ret >= 0)
+		{
 			return ret;
+		}
 
 		if (errno != EINTR)
+		{
 			return -1;
+		}
 
 		now = GetTickCount64();
 	} while (now < dueTime);

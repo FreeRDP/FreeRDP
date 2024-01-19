@@ -30,7 +30,9 @@
 errno_t memmove_s(void* dest, size_t numberOfElements, const void* src, size_t count)
 {
 	if (count > numberOfElements)
+	{
 		return -1;
+	}
 
 	memmove(dest, src, count);
 
@@ -40,7 +42,9 @@ errno_t memmove_s(void* dest, size_t numberOfElements, const void* src, size_t c
 errno_t wmemmove_s(WCHAR* dest, size_t numberOfElements, const WCHAR* src, size_t count)
 {
 	if (count * 2 > numberOfElements)
+	{
 		return -1;
+	}
 
 	memmove(dest, src, count * 2);
 

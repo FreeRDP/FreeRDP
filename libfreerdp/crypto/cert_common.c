@@ -61,12 +61,16 @@ BOOL read_bignum(BYTE** dst, UINT32* length, const BIGNUM* num, BOOL alloc)
 
 	const int len = BN_num_bytes(num);
 	if (len < 0)
+	{
 		return FALSE;
+	}
 
 	if (!alloc)
 	{
 		if (*length < (UINT32)len)
+		{
 			return FALSE;
+		}
 	}
 
 	if (len > 0)
@@ -75,7 +79,9 @@ BOOL read_bignum(BYTE** dst, UINT32* length, const BIGNUM* num, BOOL alloc)
 		{
 			*dst = malloc((size_t)len);
 			if (!*dst)
+			{
 				return FALSE;
+			}
 		}
 		BN_bn2bin(num, *dst);
 		crypto_reverse(*dst, (size_t)len);
@@ -95,12 +101,16 @@ BOOL cert_info_create(rdpCertInfo* dst, const BIGNUM* rsa, const BIGNUM* rsa_e)
 	*dst = empty;
 
 	if (!read_bignum(&dst->Modulus, &dst->ModulusLength, rsa, TRUE))
+	{
 		goto fail;
+	}
 
 	UINT32 len = sizeof(dst->exponent);
 	BYTE* ptr = &dst->exponent[0];
 	if (!read_bignum(&ptr, &len, rsa_e, FALSE))
+	{
 		goto fail;
+	}
 	return TRUE;
 
 fail:
@@ -121,7 +131,9 @@ BOOL cert_info_clone(rdpCertInfo* dst, const rdpCertInfo* src)
 	{
 		dst->Modulus = malloc(src->ModulusLength);
 		if (!dst->Modulus)
+		{
 			return FALSE;
+		}
 		memcpy(dst->Modulus, src->Modulus, src->ModulusLength);
 		dst->ModulusLength = src->ModulusLength;
 	}
@@ -144,7 +156,9 @@ BOOL cert_info_allocate(rdpCertInfo* info, size_t size)
 	info->Modulus = (BYTE*)malloc(size);
 
 	if (!info->Modulus && (size > 0))
+	{
 		return FALSE;
+	}
 	info->ModulusLength = (UINT32)size;
 	return TRUE;
 }
@@ -152,11 +166,17 @@ BOOL cert_info_allocate(rdpCertInfo* info, size_t size)
 BOOL cert_info_read_modulus(rdpCertInfo* info, size_t size, wStream* s)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, size))
+	{
 		return FALSE;
+	}
 	if (size > UINT32_MAX)
+	{
 		return FALSE;
+	}
 	if (!cert_info_allocate(info, size))
+	{
 		return FALSE;
+	}
 	Stream_Read(s, info->Modulus, info->ModulusLength);
 	return TRUE;
 }
@@ -164,11 +184,17 @@ BOOL cert_info_read_modulus(rdpCertInfo* info, size_t size, wStream* s)
 BOOL cert_info_read_exponent(rdpCertInfo* info, size_t size, wStream* s)
 {
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, size))
+	{
 		return FALSE;
+	}
 	if (size > 4)
+	{
 		return FALSE;
+	}
 	if (!info->Modulus || (info->ModulusLength == 0))
+	{
 		return FALSE;
+	}
 	Stream_Read(s, &info->exponent[4 - size], size);
 	crypto_reverse(info->Modulus, info->ModulusLength);
 	crypto_reverse(info->exponent, 4);

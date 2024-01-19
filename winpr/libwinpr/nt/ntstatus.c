@@ -27,7 +27,7 @@ struct ntstatus_map
 {
 	DWORD code;
 	const char* tag;
-};
+} DECLSPEC_ALIGN(16);
 
 static const struct ntstatus_map win32errmap[] = {
 	{ 0x00000000, "ERROR_SUCCESS" },
@@ -4609,7 +4609,9 @@ static int ntstatus_compare(const void* pKey, const void* pValue)
 	const DWORD* key = (const DWORD*)pKey;
 	const struct ntstatus_map* cur = (const struct ntstatus_map*)pValue;
 	if (*key == cur->code)
+	{
 		return 0;
+	}
 	return *key < cur->code ? -1 : 1;
 }
 
@@ -4622,7 +4624,9 @@ const char* NtStatus2Tag(DWORD ntstatus)
 	const struct ntstatus_map* found =
 	    bsearch(&ntstatus, ntstatusmap, count, base, ntstatus_compare);
 	if (!found)
+	{
 		return NULL;
+	}
 	return found->tag;
 #else
 	size_t x;
@@ -4646,7 +4650,9 @@ const char* Win32ErrorCode2Tag(UINT16 code)
 	const struct ntstatus_map* found =
 	    bsearch(&ntstatus, win32errmap, count, base, ntstatus_compare);
 	if (!found)
+	{
 		return NULL;
+	}
 	return found->tag;
 #else
 	size_t x;

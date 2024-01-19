@@ -19,8 +19,8 @@
 
 #include <winpr/config.h>
 
-#include <winpr/ntlm.h>
 #include <winpr/assert.h>
+#include <winpr/ntlm.h>
 
 #include <winpr/crt.h>
 #include <winpr/crypto.h>
@@ -34,11 +34,15 @@
 BOOL NTOWFv1W(LPWSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 {
 	if (!Password || !NtHash)
+	{
 		return FALSE;
+	}
 
 	if (!winpr_Digest(WINPR_MD_MD4, (BYTE*)Password, (size_t)PasswordLength, NtHash,
 	                  WINPR_MD4_DIGEST_LENGTH))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -50,14 +54,20 @@ BOOL NTOWFv1A(LPSTR Password, UINT32 PasswordLength, BYTE* NtHash)
 	size_t pwdCharLength = 0;
 
 	if (!NtHash)
+	{
 		return FALSE;
+	}
 
 	PasswordW = ConvertUtf8NToWCharAlloc(Password, PasswordLength, &pwdCharLength);
 	if (!PasswordW)
+	{
 		return FALSE;
+	}
 
 	if (!NTOWFv1W(PasswordW, (UINT32)pwdCharLength * sizeof(WCHAR), NtHash))
+	{
 		goto out_fail;
+	}
 
 	result = TRUE;
 out_fail:
@@ -78,10 +88,14 @@ BOOL NTOWFv2W(LPWSTR Password, UINT32 PasswordLength, LPWSTR User, UINT32 UserLe
 	BYTE NtHashV1[WINPR_MD5_DIGEST_LENGTH];
 
 	if ((!User) || (!Password) || (!NtHash))
+	{
 		return FALSE;
+	}
 
 	if (!NTOWFv1W(Password, PasswordLength, NtHashV1))
+	{
 		return FALSE;
+	}
 
 	return NTOWFv2FromHashW(NtHashV1, User, UserLength, Domain, DomainLength, NtHash);
 }
@@ -98,19 +112,25 @@ BOOL NTOWFv2A(LPSTR Password, UINT32 PasswordLength, LPSTR User, UINT32 UserLeng
 	size_t pwdCharLength = 0;
 
 	if (!NtHash)
+	{
 		return FALSE;
+	}
 
 	UserW = ConvertUtf8NToWCharAlloc(User, UserLength, &userCharLength);
 	DomainW = ConvertUtf8NToWCharAlloc(Domain, DomainLength, &domainCharLength);
 	PasswordW = ConvertUtf8NToWCharAlloc(Password, PasswordLength, &pwdCharLength);
 
 	if (!UserW || !DomainW || !PasswordW)
+	{
 		goto out_fail;
+	}
 
 	if (!NTOWFv2W(PasswordW, (UINT32)pwdCharLength * sizeof(WCHAR), UserW,
 	              (UINT32)userCharLength * sizeof(WCHAR), DomainW,
 	              (UINT32)domainCharLength * sizeof(WCHAR), NtHash))
+	{
 		goto out_fail;
+	}
 
 	result = TRUE;
 out_fail:
@@ -123,14 +143,18 @@ out_fail:
 BOOL NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength, LPWSTR Domain,
                       UINT32 DomainLength, BYTE* NtHash)
 {
-	BYTE* buffer;
+	BYTE* buffer = NULL;
 	BYTE result = FALSE;
 
 	if (!User || !NtHash)
+	{
 		return FALSE;
+	}
 
 	if (!(buffer = (BYTE*)malloc(UserLength + DomainLength)))
+	{
 		return FALSE;
+	}
 
 	/* Concatenate(UpperCase(User), Domain) */
 	CopyMemory(buffer, User, UserLength);
@@ -145,7 +169,9 @@ BOOL NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength, LPWSTR Dom
 	 * the NTLMv2 hash */
 	if (!winpr_HMAC(WINPR_MD_MD5, NtHashV1, 16, buffer, UserLength + DomainLength, NtHash,
 	                WINPR_MD5_DIGEST_LENGTH))
+	{
 		goto out_fail;
+	}
 
 	result = TRUE;
 out_fail:
@@ -162,17 +188,23 @@ BOOL NTOWFv2FromHashA(BYTE* NtHashV1, LPSTR User, UINT32 UserLength, LPSTR Domai
 	size_t userCharLength = 0;
 	size_t domainCharLength = 0;
 	if (!NtHash)
+	{
 		return FALSE;
+	}
 
 	UserW = ConvertUtf8NToWCharAlloc(User, UserLength, &userCharLength);
 	DomainW = ConvertUtf8NToWCharAlloc(Domain, DomainLength, &domainCharLength);
 
 	if (!UserW || !DomainW)
+	{
 		goto out_fail;
+	}
 
 	if (!NTOWFv2FromHashW(NtHashV1, UserW, (UINT32)userCharLength * sizeof(WCHAR), DomainW,
 	                      (UINT32)domainCharLength * sizeof(WCHAR), NtHash))
+	{
 		goto out_fail;
+	}
 
 	result = TRUE;
 out_fail:

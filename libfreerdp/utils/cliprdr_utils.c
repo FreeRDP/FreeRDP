@@ -67,11 +67,15 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 	wStream* s = NULL;
 
 	if (!format_data || !file_descriptor_array || !file_descriptor_count)
+	{
 		return ERROR_BAD_ARGUMENTS;
+	}
 
 	s = Stream_StaticConstInit(&sbuffer, format_data, format_data_length);
 	if (!s)
+	{
 		return ERROR_NOT_ENOUGH_MEMORY;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 	{
@@ -100,12 +104,16 @@ UINT cliprdr_parse_file_list(const BYTE* format_data, UINT32 format_data_length,
 		FILEDESCRIPTORW* file = &((*file_descriptor_array)[i]);
 
 		if (!cliprdr_read_filedescriptor(s, file))
+		{
 			goto out;
+		}
 	}
 
 	if (Stream_GetRemainingLength(s) > 0)
+	{
 		WLog_WARN(TAG, "packed file list has %" PRIuz " excess bytes",
 		          Stream_GetRemainingLength(s));
+	}
 out:
 
 	return result;
@@ -117,7 +125,9 @@ BOOL cliprdr_read_filedescriptor(wStream* s, FILEDESCRIPTORW* file)
 	WINPR_ASSERT(file);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, sizeof(FILEDESCRIPTORW)))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, file->dwFlags); /* flags (4 bytes) */
 	Stream_Read_UINT32(s, file->clsid.Data1);
@@ -147,7 +157,9 @@ BOOL cliprdr_write_filedescriptor(wStream* s, const FILEDESCRIPTORW* file)
 	WINPR_ASSERT(file);
 
 	if (!Stream_EnsureRemainingCapacity(s, sizeof(FILEDESCRIPTORW)))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, file->dwFlags); /* flags (4 bytes) */
 
@@ -195,11 +207,13 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
                                     UINT32* format_data_length)
 {
 	UINT result = NO_ERROR;
-	size_t len;
+	size_t len = 0;
 	wStream* s = NULL;
 
 	if (!file_descriptor_array || !format_data || !format_data_length)
+	{
 		return ERROR_BAD_ARGUMENTS;
+	}
 
 	if ((flags & CB_STREAM_FILECLIP_ENABLED) == 0)
 	{
@@ -209,7 +223,9 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
 
 	s = Stream_New(NULL, 4 + file_descriptor_count * CLIPRDR_FILEDESCRIPTOR_SIZE);
 	if (!s)
+	{
 		return ERROR_NOT_ENOUGH_MEMORY;
+	}
 
 	Stream_Write_UINT32(s, file_descriptor_count); /* cItems (4 bytes) */
 
@@ -235,7 +251,9 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
 		}
 
 		if (!cliprdr_write_filedescriptor(s, file))
+		{
 			goto error;
+		}
 	}
 
 	Stream_SealLength(s);
@@ -243,7 +261,9 @@ UINT cliprdr_serialize_file_list_ex(UINT32 flags, const FILEDESCRIPTORW* file_de
 	Stream_GetBuffer(s, *format_data);
 	Stream_GetLength(s, len);
 	if (len > UINT32_MAX)
+	{
 		goto error;
+	}
 
 	*format_data_length = (UINT32)len;
 

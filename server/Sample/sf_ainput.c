@@ -65,7 +65,9 @@ void sf_peer_ainput_init(testPeerContext* context)
 BOOL sf_peer_ainput_start(testPeerContext* context)
 {
 	if (!context || !context->ainput || !context->ainput->Open)
+	{
 		return FALSE;
+	}
 
 	return context->ainput->Open(context->ainput) == CHANNEL_RC_OK;
 }
@@ -73,7 +75,9 @@ BOOL sf_peer_ainput_start(testPeerContext* context)
 BOOL sf_peer_ainput_stop(testPeerContext* context)
 {
 	if (!context || !context->ainput || !context->ainput->Close)
+	{
 		return FALSE;
+	}
 
 	return context->ainput->Close(context->ainput) == CHANNEL_RC_OK;
 }
@@ -81,7 +85,9 @@ BOOL sf_peer_ainput_stop(testPeerContext* context)
 BOOL sf_peer_ainput_running(testPeerContext* context)
 {
 	if (!context || !context->ainput || !context->ainput->IsOpen)
+	{
 		return FALSE;
+	}
 
 	return context->ainput->IsOpen(context->ainput);
 }

@@ -33,13 +33,17 @@ rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 	rdpShadowScreen* screen = (rdpShadowScreen*)calloc(1, sizeof(rdpShadowScreen));
 
 	if (!screen)
+	{
 		goto fail;
+	}
 
 	screen->server = server;
 	rdpShadowSubsystem* subsystem = server->subsystem;
 
 	if (!InitializeCriticalSectionAndSpinCount(&(screen->lock), 4000))
+	{
 		goto fail;
+	}
 
 	region16_init(&(screen->invalidRegion));
 
@@ -68,19 +72,25 @@ rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 	    shadow_surface_new(server, (UINT16)x, (UINT16)y, (UINT16)width, (UINT16)height);
 
 	if (!screen->primary)
+	{
 		goto fail;
+	}
 
 	server->surface = screen->primary;
 
 	screen->lobby = shadow_surface_new(server, (UINT16)x, (UINT16)y, (UINT16)width, (UINT16)height);
 
 	if (!screen->lobby)
+	{
 		goto fail;
+	}
 
 	server->lobby = screen->lobby;
 
 	if (!shadow_client_init_lobby(server))
+	{
 		goto fail;
+	}
 
 	return screen;
 
@@ -93,7 +103,9 @@ fail:
 void shadow_screen_free(rdpShadowScreen* screen)
 {
 	if (!screen)
+	{
 		return;
+	}
 
 	DeleteCriticalSection(&(screen->lock));
 
@@ -116,13 +128,17 @@ void shadow_screen_free(rdpShadowScreen* screen)
 
 BOOL shadow_screen_resize(rdpShadowScreen* screen)
 {
-	int x, y;
-	int width, height;
-	MONITOR_DEF* primary;
-	rdpShadowSubsystem* subsystem;
+	int x;
+	int y;
+	int width;
+	int height;
+	MONITOR_DEF* primary = NULL;
+	rdpShadowSubsystem* subsystem = NULL;
 
 	if (!screen)
+	{
 		return FALSE;
+	}
 
 	subsystem = screen->server->subsystem;
 	primary = &(subsystem->monitors[subsystem->selectedMonitor]);

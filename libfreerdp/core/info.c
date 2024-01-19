@@ -51,7 +51,7 @@ struct info_flags_t
 {
 	UINT32 flag;
 	const char* label;
-};
+} DECLSPEC_ALIGN(16);
 
 static const struct info_flags_t info_flags[] = {
 	{ INFO_MOUSE, "INFO_MOUSE" },
@@ -82,10 +82,14 @@ static BOOL rdp_read_info_null_string(rdpSettings* settings, FreeRDP_Settings_Ke
 	const BOOL unicode = (flags & INFO_UNICODE) ? TRUE : FALSE;
 
 	if (!freerdp_settings_set_string(settings, id, NULL))
+	{
 		return FALSE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(cbLen)))
+	{
 		return FALSE;
+	}
 
 	if (cbLen > 0)
 	{
@@ -110,7 +114,9 @@ static BOOL rdp_read_info_null_string(rdpSettings* settings, FreeRDP_Settings_Ke
 		{
 			const char* domain = Stream_ConstPointer(s);
 			if (!freerdp_settings_set_string_len(settings, id, domain, cbLen))
+			{
 				return FALSE;
+			}
 		}
 	}
 	Stream_Seek(s, cbLen);
@@ -120,14 +126,16 @@ static BOOL rdp_read_info_null_string(rdpSettings* settings, FreeRDP_Settings_Ke
 
 static char* rdp_info_package_flags_description(UINT32 flags)
 {
-	char* result;
+	char* result = NULL;
 	size_t maximum_size = 1 + MAX_LABEL_LENGTH * ARRAYSIZE(info_flags);
-	size_t i;
+	size_t i = 0;
 
 	result = calloc(maximum_size, sizeof(char));
 
 	if (!result)
+	{
 		return 0;
+	}
 
 	for (i = 0; i < ARRAYSIZE(info_flags); i++)
 	{
@@ -145,8 +153,8 @@ static BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 {
 	BYTE ClientRandom[CLIENT_RANDOM_LENGTH] = { 0 };
 	BYTE AutoReconnectRandom[32] = { 0 };
-	ARC_SC_PRIVATE_PACKET* serverCookie;
-	ARC_CS_PRIVATE_PACKET* clientCookie;
+	ARC_SC_PRIVATE_PACKET* serverCookie = NULL;
+	ARC_CS_PRIVATE_PACKET* clientCookie = NULL;
 
 	WINPR_ASSERT(rdp);
 	rdpSettings* settings = rdp->settings;
@@ -162,13 +170,17 @@ static BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 	           sizeof(serverCookie->arcRandomBits));
 
 	if (settings->SelectedProtocol == PROTOCOL_RDP)
+	{
 		CopyMemory(ClientRandom, settings->ClientRandom, settings->ClientRandomLength);
+	}
 
 	/* SecurityVerifier = HMAC_MD5(AutoReconnectRandom, ClientRandom) */
 
 	if (!winpr_HMAC(WINPR_MD_MD5, AutoReconnectRandom, 16, ClientRandom, sizeof(ClientRandom),
 	                clientCookie->securityVerifier, sizeof(clientCookie->securityVerifier)))
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -180,13 +192,15 @@ static BOOL rdp_compute_client_auto_reconnect_cookie(rdpRdp* rdp)
 
 static BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s, logon_info_ex* info)
 {
-	BYTE* p;
-	ARC_SC_PRIVATE_PACKET* autoReconnectCookie;
+	BYTE* p = NULL;
+	ARC_SC_PRIVATE_PACKET* autoReconnectCookie = NULL;
 	rdpSettings* settings = rdp->settings;
 	autoReconnectCookie = settings->ServerAutoReconnectCookie;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 28))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, autoReconnectCookie->cbLen); /* cbLen (4 bytes) */
 
@@ -214,7 +228,7 @@ static BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s, logon
 
 	if ((settings->PrintReconnectCookie))
 	{
-		char* base64;
+		char* base64 = NULL;
 		base64 = crypto_base64_encode((BYTE*)autoReconnectCookie, sizeof(ARC_SC_PRIVATE_PACKET));
 		WLog_INFO(TAG, "Reconnect-cookie: %s", base64);
 		free(base64);
@@ -230,12 +244,14 @@ static BOOL rdp_read_server_auto_reconnect_cookie(rdpRdp* rdp, wStream* s, logon
 
 static BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 {
-	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
+	ARC_CS_PRIVATE_PACKET* autoReconnectCookie = NULL;
 	rdpSettings* settings = rdp->settings;
 	autoReconnectCookie = settings->ClientAutoReconnectCookie;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 28))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, autoReconnectCookie->cbLen);         /* cbLen (4 bytes) */
 	Stream_Read_UINT32(s, autoReconnectCookie->version);       /* version (4 bytes) */
@@ -251,9 +267,9 @@ static BOOL rdp_read_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 
 static BOOL rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 {
-	BYTE* p;
-	ARC_CS_PRIVATE_PACKET* autoReconnectCookie;
-	rdpSettings* settings;
+	BYTE* p = NULL;
+	ARC_CS_PRIVATE_PACKET* autoReconnectCookie = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(rdp);
 
@@ -274,8 +290,10 @@ static BOOL rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 	         "%02" PRIX8 "",
 	         autoReconnectCookie->version, autoReconnectCookie->logonId, p[0], p[1], p[2], p[3],
 	         p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11], p[12], p[13], p[14], p[15]);
-	if (!Stream_EnsureRemainingCapacity(s, 12ull + 16ull))
+	if (!Stream_EnsureRemainingCapacity(s, 12ULL + 16ULL))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT32(s, autoReconnectCookie->cbLen);         /* cbLen (4 bytes) */
 	Stream_Write_UINT32(s, autoReconnectCookie->version);       /* version (4 bytes) */
 	Stream_Write_UINT32(s, autoReconnectCookie->logonId);       /* LogonId (4 bytes) */
@@ -290,8 +308,8 @@ static BOOL rdp_write_client_auto_reconnect_cookie(rdpRdp* rdp, wStream* s)
 
 static size_t rdp_get_client_address_max_size(const rdpRdp* rdp)
 {
-	UINT32 version;
-	rdpSettings* settings;
+	UINT32 version = 0;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(rdp);
 
@@ -300,7 +318,9 @@ static size_t rdp_get_client_address_max_size(const rdpRdp* rdp)
 
 	version = freerdp_settings_get_uint32(settings, FreeRDP_RdpVersion);
 	if (version < RDP_VERSION_10_0)
+	{
 		return 64;
+	}
 	return 80;
 }
 
@@ -322,7 +342,9 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(settings);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
 	Stream_Read_UINT16(s, cbClientAddress);     /* cbClientAddress (2 bytes) */
@@ -331,10 +353,14 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_info_null_string(settings, FreeRDP_ClientAddress, "cbClientAddress", INFO_UNICODE,
 	                               s, cbClientAddress, rdp_get_client_address_max_size(rdp)))
+	{
 		return FALSE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, cbClientDir); /* cbClientDir (2 bytes) */
 
@@ -348,7 +374,9 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	if (!rdp_read_info_null_string(settings, FreeRDP_ClientDir, "cbClientDir", INFO_UNICODE, s,
 	                               cbClientDir, 512))
+	{
 		return FALSE;
+	}
 
 	/**
 	 * down below all fields are optional but if one field is not present,
@@ -357,35 +385,51 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	/* optional: clientTimeZone (172 bytes) */
 	if (Stream_GetRemainingLength(s) == 0)
+	{
 		goto end;
+	}
 
 	if (!rdp_read_client_time_zone(s, settings))
+	{
 		return FALSE;
+	}
 
 	/* optional: clientSessionId (4 bytes), should be set to 0 */
 	if (Stream_GetRemainingLength(s) == 0)
+	{
 		goto end;
+	}
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, settings->ClientSessionId);
 
 	/* optional: performanceFlags (4 bytes) */
 	if (Stream_GetRemainingLength(s) == 0)
+	{
 		goto end;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, settings->PerformanceFlags);
 	freerdp_performance_flags_split(settings);
 
 	/* optional: cbAutoReconnectLen (2 bytes) */
 	if (Stream_GetRemainingLength(s) == 0)
+	{
 		goto end;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, cbAutoReconnectLen);
 
@@ -394,27 +438,41 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if (cbAutoReconnectLen > 0)
 	{
 		if (!rdp_read_client_auto_reconnect_cookie(rdp, s))
+		{
 			return FALSE;
+		}
 	}
 
 	/* skip reserved1 and reserved2 fields */
 	if (Stream_GetRemainingLength(s) == 0)
+	{
 		goto end;
+	}
 
 	if (!Stream_SafeSeek(s, 2))
+	{
 		return FALSE;
+	}
 
 	if (Stream_GetRemainingLength(s) == 0)
+	{
 		goto end;
+	}
 
 	if (!Stream_SafeSeek(s, 2))
+	{
 		return FALSE;
+	}
 
 	if (Stream_GetRemainingLength(s) == 0)
+	{
 		goto end;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+	{
 		return FALSE;
+	}
 	{
 		UINT16 cbDynamicDSTTimeZoneKeyName = 0;
 
@@ -423,13 +481,19 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 		if (!rdp_read_info_null_string(settings, FreeRDP_DynamicDSTTimeZoneKeyName,
 		                               "cbDynamicDSTTimeZoneKeyName", INFO_UNICODE, s,
 		                               cbDynamicDSTTimeZoneKeyName, 254))
+		{
 			return FALSE;
+		}
 
 		if (Stream_GetRemainingLength(s) == 0)
+		{
 			goto end;
+		}
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
+		{
 			return FALSE;
+		}
 		UINT16 DynamicDaylightTimeDisabled = 0;
 		Stream_Read_UINT16(s, DynamicDaylightTimeDisabled);
 		if (DynamicDaylightTimeDisabled > 1)
@@ -443,7 +507,9 @@ static BOOL rdp_read_extended_info_packet(rdpRdp* rdp, wStream* s)
 		}
 		if (!freerdp_settings_set_bool(settings, FreeRDP_DynamicDaylightTimeDisabled,
 		                               DynamicDaylightTimeDisabled != 0))
+		{
 			return FALSE;
+		}
 	}
 
 end:
@@ -524,8 +590,10 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	cbAutoReconnectCookie = (UINT16)settings->ServerAutoReconnectCookie->cbLen;
 
-	if (!Stream_EnsureRemainingCapacity(s, 4ull + cbClientAddress + 2ull + cbClientDir))
+	if (!Stream_EnsureRemainingCapacity(s, 4ULL + cbClientAddress + 2ULL + cbClientDir))
+	{
 		goto fail;
+	}
 
 	Stream_Write_UINT16(s, clientAddressFamily); /* clientAddressFamily (2 bytes) */
 	Stream_Write_UINT16(s, cbClientAddress);     /* cbClientAddress (2 bytes) */
@@ -536,11 +604,15 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 
 	Stream_Write(s, clientDir, cbClientDir); /* clientDir */
 
-	if (!rdp_write_client_time_zone(s, settings)) /* clientTimeZone (172 bytes) */
+	if (!rdp_write_client_time_zone(s, settings))
+	{ /* clientTimeZone (172 bytes) */
 		goto fail;
+	}
 
-	if (!Stream_EnsureRemainingCapacity(s, 10ull))
+	if (!Stream_EnsureRemainingCapacity(s, 10ULL))
+	{
 		goto fail;
+	}
 
 	Stream_Write_UINT32(
 	    s, settings->ClientSessionId); /* clientSessionId (4 bytes), should be set to 0 */
@@ -551,12 +623,18 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if (cbAutoReconnectCookie > 0)
 	{
 		if (!rdp_compute_client_auto_reconnect_cookie(rdp))
+		{
 			goto fail;
-		if (!rdp_write_client_auto_reconnect_cookie(rdp, s)) /* autoReconnectCookie */
+		}
+		if (!rdp_write_client_auto_reconnect_cookie(rdp, s))
+		{ /* autoReconnectCookie */
 			goto fail;
+		}
 
-		if (!Stream_EnsureRemainingCapacity(s, 4ull))
+		if (!Stream_EnsureRemainingCapacity(s, 4ULL))
+		{
 			goto fail;
+		}
 		Stream_Write_UINT16(s, 0); /* reserved1 (2 bytes) */
 		Stream_Write_UINT16(s, 0); /* reserved2 (2 bytes) */
 	}
@@ -564,7 +642,9 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	if (freerdp_settings_get_bool(settings, FreeRDP_SupportDynamicTimeZone))
 	{
 		if (!Stream_EnsureRemainingCapacity(s, 10 + 254 * sizeof(WCHAR)))
+		{
 			goto fail;
+		}
 
 		/* skip reserved1 and reserved2 fields */
 		Stream_Seek(s, 4);
@@ -572,10 +652,14 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 		size_t rlen = 0;
 		const char* tz = freerdp_settings_get_string(settings, FreeRDP_DynamicDSTTimeZoneKeyName);
 		if (tz)
+		{
 			rlen = strnlen(tz, 254);
+		}
 		Stream_Write_UINT16(s, (UINT16)rlen * sizeof(WCHAR));
 		if (Stream_Write_UTF16_String_From_UTF8(s, rlen, tz, rlen, FALSE) < 0)
+		{
 			goto fail;
+		}
 		Stream_Write_UINT16(s, settings->DynamicDaylightTimeDisabled ? 0x01 : 0x00);
 	}
 
@@ -600,10 +684,14 @@ static BOOL rdp_read_info_string(rdpSettings* settings, FreeRDP_Settings_Keys_St
 	const size_t nullSize = unicode ? sizeof(WCHAR) : sizeof(CHAR);
 
 	if (!freerdp_settings_set_string(settings, id, NULL))
+	{
 		return FALSE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, (size_t)(cbLenNonNull + nullSize)))
+	{
 		return FALSE;
+	}
 
 	if (cbLenNonNull > 0)
 	{
@@ -622,13 +710,17 @@ static BOOL rdp_read_info_string(rdpSettings* settings, FreeRDP_Settings_Keys_St
 			const WCHAR* domain = Stream_PointerAs(s, WCHAR);
 			if (!freerdp_settings_set_string_from_utf16N(settings, id, domain,
 			                                             cbLenNonNull / sizeof(WCHAR)))
+			{
 				return FALSE;
+			}
 		}
 		else
 		{
 			const char* domain = Stream_PointerAs(s, char);
 			if (!freerdp_settings_set_string_len(settings, id, domain, cbLenNonNull))
+			{
 				return FALSE;
+			}
 		}
 	}
 
@@ -655,17 +747,19 @@ static BOOL rdp_read_info_string(rdpSettings* settings, FreeRDP_Settings_Keys_St
 static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 {
 	BOOL smallsize = FALSE;
-	UINT32 flags;
-	UINT16 cbDomain;
-	UINT16 cbUserName;
-	UINT16 cbPassword;
-	UINT16 cbAlternateShell;
-	UINT16 cbWorkingDir;
-	UINT32 CompressionLevel;
+	UINT32 flags = 0;
+	UINT16 cbDomain = 0;
+	UINT16 cbUserName = 0;
+	UINT16 cbPassword = 0;
+	UINT16 cbAlternateShell = 0;
+	UINT16 cbWorkingDir = 0;
+	UINT32 CompressionLevel = 0;
 	rdpSettings* settings = rdp->settings;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 18))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, settings->KeyboardCodePage); /* CodePage (4 bytes ) */
 	Stream_Read_UINT32(s, flags);                      /* flags (4 bytes) */
@@ -694,7 +788,9 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 
 	/* RDP 4 and 5 have smaller credential limits */
 	if (settings->RdpVersion < RDP_VERSION_5_PLUS)
+	{
 		smallsize = TRUE;
+	}
 
 	Stream_Read_UINT16(s, cbDomain);         /* cbDomain (2 bytes) */
 	Stream_Read_UINT16(s, cbUserName);       /* cbUserName (2 bytes) */
@@ -703,31 +799,45 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 	Stream_Read_UINT16(s, cbWorkingDir);     /* cbWorkingDir (2 bytes) */
 
 	if (!rdp_read_info_string(settings, FreeRDP_Domain, flags, s, cbDomain, smallsize ? 52 : 512))
+	{
 		return FALSE;
+	}
 
 	if (!rdp_read_info_string(settings, FreeRDP_Username, flags, s, cbUserName,
 	                          smallsize ? 44 : 512))
+	{
 		return FALSE;
+	}
 
 	if (!rdp_read_info_string(settings, FreeRDP_Password, flags, s, cbPassword,
 	                          smallsize ? 32 : 512))
+	{
 		return FALSE;
+	}
 
 	if (!rdp_read_info_string(settings, FreeRDP_AlternateShell, flags, s, cbAlternateShell, 512))
+	{
 		return FALSE;
+	}
 
 	if (!rdp_read_info_string(settings, FreeRDP_ShellWorkingDirectory, flags, s, cbWorkingDir, 512))
+	{
 		return FALSE;
+	}
 
 	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
 	{
-		if (!rdp_read_extended_info_packet(rdp, s)) /* extraInfo */
+		if (!rdp_read_extended_info_packet(rdp, s))
+		{ /* extraInfo */
 			return FALSE;
+		}
 	}
 
 	const size_t xrem = Stream_GetRemainingLength(s);
 	if (!tpkt_ensure_stream_consumed(s, tpktlength))
+	{
 		Stream_Seek(s, xrem);
+	}
 	return TRUE;
 }
 
@@ -739,7 +849,7 @@ static BOOL rdp_read_info_packet(rdpRdp* rdp, wStream* s, UINT16 tpktlength)
 static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 {
 	BOOL ret = FALSE;
-	UINT32 flags;
+	UINT32 flags = 0;
 	WCHAR* domainW = NULL;
 	size_t cbDomain = 0;
 	WCHAR* userNameW = NULL;
@@ -751,7 +861,7 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	WCHAR* workingDirW = NULL;
 	size_t cbWorkingDir = 0;
 	BOOL usedPasswordCookie = FALSE;
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(rdp);
 	settings = rdp->settings;
@@ -768,27 +878,39 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	}
 
 	if (settings->AudioCapture)
+	{
 		flags |= INFO_AUDIOCAPTURE;
+	}
 
 	if (!settings->AudioPlayback)
+	{
 		flags |= INFO_NOAUDIOPLAYBACK;
+	}
 
 	if (settings->VideoDisable)
+	{
 		flags |= INFO_VIDEO_DISABLE;
+	}
 
 	if (settings->AutoLogonEnabled)
+	{
 		flags |= INFO_AUTOLOGON;
+	}
 
 	if (settings->RemoteApplicationMode)
 	{
 		if (settings->HiDefRemoteApp)
+		{
 			flags |= INFO_HIDEF_RAIL_SUPPORTED;
+		}
 
 		flags |= INFO_RAIL;
 	}
 
 	if (settings->RemoteConsoleAudio)
+	{
 		flags |= INFO_REMOTECONSOLEAUDIO;
+	}
 
 	if (settings->CompressionEnabled)
 	{
@@ -797,10 +919,14 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	}
 
 	if (settings->LogonNotify)
+	{
 		flags |= INFO_LOGONNOTIFY;
+	}
 
 	if (settings->PasswordIsSmartcardPin)
+	{
 		flags |= INFO_PASSWORD_IS_SC_PIN;
+	}
 
 	{
 		char* flags_description = rdp_info_package_flags_description(flags);
@@ -854,7 +980,9 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 			cbPassword = (UINT16)settings->RedirectionPasswordLength;
 		}
 		else
+		{
 			pin = freerdp_settings_get_string(settings, FreeRDP_Password);
+		}
 	}
 
 	if (!usedPasswordCookie && pin)
@@ -868,13 +996,19 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 		cbPassword = (UINT16)cbPassword * sizeof(WCHAR);
 	}
 
-	const char* altShell;
+	const char* altShell = NULL;
 	if (!settings->RemoteAssistanceMode)
+	{
 		altShell = freerdp_settings_get_string(settings, FreeRDP_AlternateShell);
+	}
 	else if (settings->RemoteAssistancePassStub)
+	{
 		altShell = "*"; /* This field MUST be filled with "*" */
+	}
 	else
+	{
 		altShell = freerdp_settings_get_string(settings, FreeRDP_RemoteAssistancePassword);
+	}
 
 	if (altShell && strlen(altShell) > 0)
 	{
@@ -894,7 +1028,9 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 
 	FreeRDP_Settings_Keys_String inputId = FreeRDP_RemoteAssistanceSessionId;
 	if (!freerdp_settings_get_bool(settings, FreeRDP_RemoteAssistanceMode))
+	{
 		inputId = FreeRDP_ShellWorkingDirectory;
+	}
 
 	workingDirW = freerdp_settings_get_string_as_utf16(settings, inputId, &cbWorkingDir);
 	if (cbWorkingDir > (UINT16_MAX / sizeof(WCHAR)))
@@ -904,9 +1040,11 @@ static BOOL rdp_write_info_packet(rdpRdp* rdp, wStream* s)
 	}
 	cbWorkingDir = (UINT16)cbWorkingDir * sizeof(WCHAR);
 
-	if (!Stream_EnsureRemainingCapacity(s, 18ull + cbDomain + cbUserName + cbPassword +
+	if (!Stream_EnsureRemainingCapacity(s, 18ULL + cbDomain + cbUserName + cbPassword +
 	                                           cbAlternateShell + cbWorkingDir + 5 * sizeof(WCHAR)))
+	{
 		goto fail;
+	}
 
 	Stream_Write_UINT32(s, settings->KeyboardCodePage); /* CodePage (4 bytes) */
 	Stream_Write_UINT32(s, flags);                      /* flags (4 bytes) */
@@ -948,13 +1086,19 @@ fail:
 	free(workingDirW);
 
 	if (!usedPasswordCookie)
+	{
 		free(passwordW);
+	}
 
 	if (!ret)
+	{
 		return FALSE;
+	}
 
 	if (settings->RdpVersion >= RDP_VERSION_5_PLUS)
+	{
 		ret = rdp_write_extended_info_packet(rdp, s); /* extraInfo */
+	}
 
 	return ret;
 }
@@ -968,20 +1112,26 @@ fail:
 
 BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 {
-	UINT16 length;
-	UINT16 channelId;
+	UINT16 length = 0;
+	UINT16 channelId = 0;
 	UINT16 securityFlags = 0;
 
 	WINPR_ASSERT(rdp_get_state(rdp) == CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE);
 
 	if (!rdp_read_header(rdp, s, &length, &channelId))
+	{
 		return FALSE;
+	}
 
 	if (!rdp_read_security_header(rdp, s, &securityFlags, &length))
+	{
 		return FALSE;
+	}
 
 	if ((securityFlags & SEC_INFO_PKT) == 0)
+	{
 		return FALSE;
+	}
 
 	if (rdp->settings->UseRdpSecurityLayer)
 	{
@@ -994,7 +1144,9 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 		if (securityFlags & SEC_ENCRYPT)
 		{
 			if (!rdp_decrypt(rdp, s, &length, securityFlags))
+			{
 				return FALSE;
+			}
 		}
 	}
 
@@ -1009,7 +1161,7 @@ BOOL rdp_recv_client_info(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_send_client_info(rdpRdp* rdp)
 {
-	wStream* s;
+	wStream* s = NULL;
 	WINPR_ASSERT(rdp);
 	rdp->sec_flags |= SEC_INFO_PKT;
 	s = rdp_send_stream_init(rdp);
@@ -1031,12 +1183,13 @@ BOOL rdp_send_client_info(rdpRdp* rdp)
 static void rdp_free_logon_info(logon_info* info)
 {
 	if (!info)
+	{
 		return;
+	}
 	free(info->domain);
 	free(info->username);
-
-	const logon_info empty = { 0 };
-	*info = empty;
+	info->domain = NULL;
+	info->username = NULL;
 }
 
 static BOOL rdp_info_read_string(const char* what, wStream* s, size_t size, size_t max,
@@ -1048,7 +1201,9 @@ static BOOL rdp_info_read_string(const char* what, wStream* s, size_t size, size
 	if (size == 0)
 	{
 		if (skipMax)
+		{
 			return Stream_SafeSeek(s, max);
+		}
 		return TRUE;
 	}
 
@@ -1066,7 +1221,9 @@ static BOOL rdp_info_read_string(const char* what, wStream* s, size_t size, size
 	}
 
 	if (!Stream_SafeSeek(s, skipMax ? max : size))
+	{
 		return FALSE;
+	}
 
 	size_t len = 0;
 	char* rc = ConvertWCharNToUtf8Alloc(str, size / sizeof(WCHAR), &len);
@@ -1083,15 +1240,17 @@ static BOOL rdp_info_read_string(const char* what, wStream* s, size_t size, size
 
 static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 {
-	UINT32 cbDomain;
-	UINT32 cbUserName;
+	UINT32 cbDomain = 0;
+	UINT32 cbUserName = 0;
 
 	WINPR_UNUSED(rdp);
 	WINPR_ASSERT(info);
 	rdp_free_logon_info(info);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 576))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, cbDomain); /* cbDomain (4 bytes) */
 
@@ -1099,7 +1258,9 @@ static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 	 * null terminator) in bytes present in the fixed-length (52 bytes) Domain field
 	 */
 	if (!rdp_info_read_string("Domain", s, cbDomain, 52, TRUE, &info->domain))
+	{
 		goto fail;
+	}
 
 	Stream_Read_UINT32(s, cbUserName); /* cbUserName (4 bytes) */
 
@@ -1107,7 +1268,9 @@ static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 	 * null terminator) in bytes present in the fixed-length (512 bytes) UserName field.
 	 */
 	if (!rdp_info_read_string("UserName", s, cbUserName, 512, TRUE, &info->username))
+	{
 		goto fail;
+	}
 
 	Stream_Read_UINT32(s, info->sessionId); /* SessionId (4 bytes) */
 	WLog_DBG(TAG, "LogonInfoV1: SessionId: 0x%08" PRIX32 " UserName: [%s] Domain: [%s]",
@@ -1120,10 +1283,10 @@ fail:
 
 static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 {
-	UINT16 Version;
-	UINT32 Size;
-	UINT32 cbDomain;
-	UINT32 cbUserName;
+	UINT16 Version = 0;
+	UINT32 Size = 0;
+	UINT32 cbDomain = 0;
+	UINT32 cbUserName = 0;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
@@ -1133,7 +1296,9 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	rdp_free_logon_info(info);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, logonInfoV2TotalSize))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT16(s, Version); /* Version (2 bytes) */
 	if (Version != SAVE_SESSION_PDU_VERSION_ONE)
@@ -1171,7 +1336,9 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	 *       Domain field in the Logon Info Version 1 (TS_LOGON_INFO) structure.
 	 */
 	if (!rdp_info_read_string("Domain", s, cbDomain, 52, FALSE, &info->domain))
+	{
 		goto fail;
+	}
 
 	/* cbUserName is the size in bytes of the Unicode character data in the UserName field.
 	 * The size of the mandatory null terminator is include in this value.
@@ -1180,7 +1347,9 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	 *       Username field in the Logon Info Version 1 (TS_LOGON_INFO) structure.
 	 */
 	if (!rdp_info_read_string("UserName", s, cbUserName, 512, FALSE, &info->username))
+	{
 		goto fail;
+	}
 
 	/* We´ve seen undocumented padding with windows 11 here.
 	 * unless it has actual data in it ignore it.
@@ -1194,7 +1363,9 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 		for (size_t x = 0; x < rem; x++)
 		{
 			if (str[x] != '\0')
+			{
 				warn = TRUE;
+			}
 		}
 		if (warn)
 		{
@@ -1203,7 +1374,9 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 		}
 
 		if (!Stream_SafeSeek(s, rem))
+		{
 			goto fail;
+		}
 	}
 
 	WLog_DBG(TAG, "LogonInfoV2: SessionId: 0x%08" PRIX32 " UserName: [%s] Domain: [%s]",
@@ -1218,7 +1391,9 @@ static BOOL rdp_recv_logon_plain_notify(rdpRdp* rdp, wStream* s)
 {
 	WINPR_UNUSED(rdp);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 576))
+	{
 		return FALSE;
+	}
 
 	Stream_Seek(s, 576); /* pad (576 bytes) */
 	WLog_DBG(TAG, "LogonPlainNotify");
@@ -1227,9 +1402,9 @@ static BOOL rdp_recv_logon_plain_notify(rdpRdp* rdp, wStream* s)
 
 static BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s, logon_info_ex* info)
 {
-	freerdp* instance;
-	UINT32 errorNotificationType;
-	UINT32 errorNotificationData;
+	freerdp* instance = NULL;
+	UINT32 errorNotificationType = 0;
+	UINT32 errorNotificationData = 0;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->context);
@@ -1240,7 +1415,9 @@ static BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s, logon_info_ex* in
 	WINPR_ASSERT(instance);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, errorNotificationType); /* errorNotificationType (4 bytes) */
 	Stream_Read_UINT32(s, errorNotificationData); /* errorNotificationData (4 bytes) */
@@ -1254,9 +1431,9 @@ static BOOL rdp_recv_logon_error_info(rdpRdp* rdp, wStream* s, logon_info_ex* in
 
 static BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex* info)
 {
-	UINT32 cbFieldData;
-	UINT32 fieldsPresent;
-	UINT16 Length;
+	UINT32 cbFieldData = 0;
+	UINT32 fieldsPresent = 0;
+	UINT16 Length = 0;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
@@ -1287,16 +1464,22 @@ static BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex*
 	if (fieldsPresent & LOGON_EX_AUTORECONNECTCOOKIE)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		{
 			return FALSE;
+		}
 
 		info->haveCookie = TRUE;
 		Stream_Read_UINT32(s, cbFieldData); /* cbFieldData (4 bytes) */
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, cbFieldData))
+		{
 			return FALSE;
+		}
 
 		if (!rdp_read_server_auto_reconnect_cookie(rdp, s, info))
+		{
 			return FALSE;
+		}
 	}
 
 	if (fieldsPresent & LOGON_EX_LOGONERRORS)
@@ -1304,19 +1487,27 @@ static BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex*
 		info->haveErrorInfo = TRUE;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+		{
 			return FALSE;
+		}
 
 		Stream_Read_UINT32(s, cbFieldData); /* cbFieldData (4 bytes) */
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, cbFieldData))
+		{
 			return FALSE;
+		}
 
 		if (!rdp_recv_logon_error_info(rdp, s, info))
+		{
 			return FALSE;
+		}
 	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 570))
+	{
 		return FALSE;
+	}
 
 	Stream_Seek(s, 570); /* pad (570 bytes) */
 	return TRUE;
@@ -1324,15 +1515,17 @@ static BOOL rdp_recv_logon_info_extended(rdpRdp* rdp, wStream* s, logon_info_ex*
 
 BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 {
-	UINT32 infoType;
-	BOOL status;
+	UINT32 infoType = 0;
+	BOOL status = 0;
 	logon_info logonInfo = { 0 };
 	logon_info_ex logonInfoEx = { 0 };
 	rdpContext* context = rdp->context;
 	rdpUpdate* update = rdp->context->update;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
+	{
 		return FALSE;
+	}
 
 	Stream_Read_UINT32(s, infoType); /* infoType (4 bytes) */
 
@@ -1342,17 +1535,20 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 			status = rdp_recv_logon_info_v1(rdp, s, &logonInfo);
 
 			if (status && update->SaveSessionInfo)
+			{
 				status = update->SaveSessionInfo(context, infoType, &logonInfo);
+			}
 
-			free(logonInfo.domain);
-			free(logonInfo.username);
+			rdp_free_logon_info(&logonInfo);
 			break;
 
 		case INFO_TYPE_LOGON_LONG:
 			status = rdp_recv_logon_info_v2(rdp, s, &logonInfo);
 
 			if (status && update->SaveSessionInfo)
+			{
 				status = update->SaveSessionInfo(context, infoType, &logonInfo);
+			}
 
 			rdp_free_logon_info(&logonInfo);
 			break;
@@ -1361,7 +1557,9 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 			status = rdp_recv_logon_plain_notify(rdp, s);
 
 			if (status && update->SaveSessionInfo)
+			{
 				status = update->SaveSessionInfo(context, infoType, NULL);
+			}
 
 			break;
 
@@ -1369,7 +1567,9 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 			status = rdp_recv_logon_info_extended(rdp, s, &logonInfoEx);
 
 			if (status && update->SaveSessionInfo)
+			{
 				status = update->SaveSessionInfo(context, infoType, &logonInfoEx);
+			}
 
 			break;
 
@@ -1394,28 +1594,38 @@ static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 	const size_t userCharLen = 512 / sizeof(WCHAR);
 
 	size_t sz = 4 + 52 + 4 + 512 + 4;
-	size_t len;
+	size_t len = 0;
 
 	if (!Stream_EnsureRemainingCapacity(s, sz))
+	{
 		return FALSE;
+	}
 
 	/* domain */
 	len = strnlen(info->domain, charLen + 1);
 	if (len > charLen)
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, len * sizeof(WCHAR));
 	if (Stream_Write_UTF16_String_From_UTF8(s, charLen, info->domain, len, TRUE) < 0)
+	{
 		return FALSE;
+	}
 
 	/* username */
 	len = strnlen(info->username, userCharLen + 1);
 	if (len > userCharLen)
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, len * sizeof(WCHAR));
 	if (Stream_Write_UTF16_String_From_UTF8(s, userCharLen, info->username, len, TRUE) < 0)
+	{
 		return FALSE;
+	}
 
 	/* sessionId */
 	Stream_Write_UINT32(s, info->sessionId);
@@ -1424,10 +1634,13 @@ static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 
 static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
 {
-	size_t domainLen, usernameLen;
+	size_t domainLen;
+	size_t usernameLen;
 
 	if (!Stream_EnsureRemainingCapacity(s, logonInfoV2TotalSize))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT16(s, SAVE_SESSION_PDU_VERSION_ONE);
 	/* [MS-RDPBCGR] 2.2.10.1.1.2 Logon Info Version 2 (TS_LOGON_INFO_VERSION_2)
@@ -1438,25 +1651,35 @@ static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
 	Stream_Write_UINT32(s, info->sessionId);
 	domainLen = strnlen(info->domain, UINT32_MAX);
 	if (domainLen >= UINT32_MAX / sizeof(WCHAR))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT32(s, (UINT32)(domainLen + 1) * sizeof(WCHAR));
 	usernameLen = strnlen(info->username, UINT32_MAX);
 	if (usernameLen >= UINT32_MAX / sizeof(WCHAR))
+	{
 		return FALSE;
+	}
 	Stream_Write_UINT32(s, (UINT32)(usernameLen + 1) * sizeof(WCHAR));
 	Stream_Seek(s, logonInfoV2ReservedSize);
 	if (Stream_Write_UTF16_String_From_UTF8(s, domainLen + 1, info->domain, domainLen, TRUE) < 0)
+	{
 		return FALSE;
+	}
 	if (Stream_Write_UTF16_String_From_UTF8(s, usernameLen + 1, info->username, usernameLen, TRUE) <
 	    0)
+	{
 		return FALSE;
+	}
 	return TRUE;
 }
 
 static BOOL rdp_write_logon_info_plain(wStream* s)
 {
 	if (!Stream_EnsureRemainingCapacity(s, 576))
+	{
 		return FALSE;
+	}
 
 	Stream_Seek(s, 576);
 	return TRUE;
@@ -1480,7 +1703,9 @@ static BOOL rdp_write_logon_info_ex(wStream* s, logon_info_ex* info)
 	}
 
 	if (!Stream_EnsureRemainingCapacity(s, Size))
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT16(s, Size);
 	Stream_Write_UINT32(s, FieldsPresent);
@@ -1507,13 +1732,15 @@ static BOOL rdp_write_logon_info_ex(wStream* s, logon_info_ex* info)
 
 BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 {
-	wStream* s;
-	BOOL status;
+	wStream* s = NULL;
+	BOOL status = 0;
 	rdpRdp* rdp = context->rdp;
 	s = rdp_data_pdu_init(rdp);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, type);
 
@@ -1542,21 +1769,27 @@ BOOL rdp_send_save_session_info(rdpContext* context, UINT32 type, void* data)
 	}
 
 	if (status)
+	{
 		status = rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_SAVE_SESSION_INFO, rdp->mcs->userId);
+	}
 	else
+	{
 		Stream_Release(s);
+	}
 
 	return status;
 }
 
 BOOL rdp_send_server_status_info(rdpContext* context, UINT32 status)
 {
-	wStream* s;
+	wStream* s = NULL;
 	rdpRdp* rdp = context->rdp;
 	s = rdp_data_pdu_init(rdp);
 
 	if (!s)
+	{
 		return FALSE;
+	}
 
 	Stream_Write_UINT32(s, status);
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_STATUS_INFO, rdp->mcs->userId);

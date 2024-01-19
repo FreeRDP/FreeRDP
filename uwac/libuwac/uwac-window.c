@@ -58,7 +58,7 @@ static const struct wl_buffer_listener buffer_listener = { buffer_release };
 
 static void UwacWindowDestroyBuffers(UwacWindow* w)
 {
-	int i;
+	int i = 0;
 
 	for (i = 0; i < w->nbuffers; i++)
 	{
@@ -90,9 +90,10 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 	int scale = window->display->actual_scale;
 	width *= scale;
 	height *= scale;
-	UwacConfigureEvent* event;
-	int ret, surfaceState;
-	enum xdg_toplevel_state* state;
+	UwacConfigureEvent* event = NULL;
+	int ret;
+	int surfaceState;
+	enum xdg_toplevel_state* state = NULL;
 	surfaceState = 0;
 	wl_array_for_each(state, states)
 	{
@@ -152,7 +153,9 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 
 		window->drawingBufferIdx = 0;
 		if (window->pendingBufferIdx != -1)
+		{
 			window->pendingBufferIdx = window->drawingBufferIdx;
+		}
 
 		if (window->viewport)
 		{
@@ -172,7 +175,7 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 
 static void xdg_handle_toplevel_close(void* data, struct xdg_toplevel* xdg_toplevel)
 {
-	UwacCloseEvent* event;
+	UwacCloseEvent* event = NULL;
 	UwacWindow* window = (UwacWindow*)data;
 	event = (UwacCloseEvent*)UwacDisplayNewEvent(window->display, UWAC_EVENT_CLOSE);
 
@@ -207,8 +210,8 @@ static void ivi_handle_configure(void* data, struct ivi_surface* surface, int32_
                                  int32_t height)
 {
 	UwacWindow* window = (UwacWindow*)data;
-	UwacConfigureEvent* event;
-	int ret;
+	UwacConfigureEvent* event = NULL;
+	int ret = 0;
 	event = (UwacConfigureEvent*)UwacDisplayNewEvent(window->display, UWAC_EVENT_CONFIGURE);
 
 	if (!event)
@@ -242,7 +245,9 @@ static void ivi_handle_configure(void* data, struct ivi_surface* surface, int32_
 
 		window->drawingBufferIdx = 0;
 		if (window->pendingBufferIdx != -1)
+		{
 			window->pendingBufferIdx = window->drawingBufferIdx;
+		}
 	}
 	else
 	{
@@ -265,8 +270,8 @@ static void shell_configure(void* data, struct wl_shell_surface* surface, uint32
                             int32_t width, int32_t height)
 {
 	UwacWindow* window = (UwacWindow*)data;
-	UwacConfigureEvent* event;
-	int ret;
+	UwacConfigureEvent* event = NULL;
+	int ret = 0;
 	event = (UwacConfigureEvent*)UwacDisplayNewEvent(window->display, UWAC_EVENT_CONFIGURE);
 
 	if (!event)
@@ -300,7 +305,9 @@ static void shell_configure(void* data, struct wl_shell_surface* surface, uint32
 
 		window->drawingBufferIdx = 0;
 		if (window->pendingBufferIdx != -1)
+		{
 			window->pendingBufferIdx = window->drawingBufferIdx;
+		}
 	}
 	else
 	{
@@ -320,29 +327,32 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
                               uint32_t height, enum wl_shm_format format)
 {
 	int ret = UWAC_SUCCESS;
-	UwacBuffer* newBuffers;
-	int i, fd;
-	void* data;
-	struct wl_shm_pool* pool;
+	UwacBuffer* newBuffers = NULL;
+	int i;
+	int fd;
+	void* data = NULL;
+	struct wl_shm_pool* pool = NULL;
 	size_t pagesize = sysconf(_SC_PAGESIZE);
 	newBuffers = xrealloc(w->buffers, (w->nbuffers + nbuffers) * sizeof(UwacBuffer));
 
 	if (!newBuffers)
+	{
 		return UWAC_ERROR_NOMEMORY;
+	}
 
 	/* round up to a multiple of PAGESIZE to page align data for each buffer */
 	allocSize = (allocSize + pagesize - 1) & ~(pagesize - 1);
 
 	w->buffers = newBuffers;
 	memset(w->buffers + w->nbuffers, 0, sizeof(UwacBuffer) * nbuffers);
-	fd = uwac_create_anonymous_file(1ull * allocSize * nbuffers);
+	fd = uwac_create_anonymous_file(1ULL * allocSize * nbuffers);
 
 	if (fd < 0)
 	{
 		return UWAC_ERROR_INTERNAL;
 	}
 
-	data = mmap(NULL, 1ull * allocSize * nbuffers, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	data = mmap(NULL, 1ULL * allocSize * nbuffers, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
 	if (data == MAP_FAILED)
 	{
@@ -354,7 +364,7 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 
 	if (!pool)
 	{
-		munmap(data, 1ull * allocSize * nbuffers);
+		munmap(data, 1ULL * allocSize * nbuffers);
 		ret = UWAC_ERROR_NOMEMORY;
 		goto error_mmap;
 	}
@@ -387,11 +397,13 @@ error_mmap:
 
 static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w, ssize_t* index)
 {
-	ssize_t i;
-	int ret;
+	ssize_t i = 0;
+	int ret = 0;
 
 	if (index)
+	{
 		*index = -1;
+	}
 
 	for (i = 0; i < w->nbuffers; i++)
 	{
@@ -399,7 +411,9 @@ static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w, ssize_t* index)
 		{
 			w->buffers[i].used = true;
 			if (index)
+			{
 				*index = i;
+			}
 			return &w->buffers[i];
 		}
 	}
@@ -414,14 +428,18 @@ static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w, ssize_t* index)
 
 	w->buffers[i].used = true;
 	if (index)
+	{
 		*index = i;
+	}
 	return &w->buffers[i];
 }
 
 static UwacReturnCode UwacWindowSetDecorations(UwacWindow* w)
 {
 	if (!w || !w->display)
+	{
 		return UWAC_ERROR_INTERNAL;
+	}
 
 	if (w->display->deco_manager)
 	{
@@ -433,8 +451,10 @@ static UwacReturnCode UwacWindowSetDecorations(UwacWindow* w)
 			                 "Current window manager does not allow decorating with SSD");
 		}
 		else
+		{
 			zxdg_toplevel_decoration_v1_set_mode(w->deco,
 			                                     ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+		}
 	}
 	else if (w->display->kde_deco_manager)
 	{
@@ -446,8 +466,10 @@ static UwacReturnCode UwacWindowSetDecorations(UwacWindow* w)
 			                 "Current window manager does not allow decorating with SSD");
 		}
 		else
+		{
 			org_kde_kwin_server_decoration_request_mode(w->kde_deco,
 			                                            ORG_KDE_KWIN_SERVER_DECORATION_MODE_SERVER);
+		}
 	}
 	return UWAC_SUCCESS;
 }
@@ -455,8 +477,9 @@ static UwacReturnCode UwacWindowSetDecorations(UwacWindow* w)
 UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t height,
                                 enum wl_shm_format format)
 {
-	UwacWindow* w;
-	int allocSize, ret;
+	UwacWindow* w = NULL;
+	int allocSize;
+	int ret;
 
 	if (!display)
 	{
@@ -503,14 +526,16 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 	char* env = getenv("IVI_SURFACE_ID");
 	if (env)
 	{
-		unsigned long val;
-		char* endp;
+		unsigned long val = 0;
+		char* endp = NULL;
 
 		errno = 0;
 		val = strtoul(env, &endp, 10);
 
 		if (!errno && val != 0 && val != UINT32_MAX)
+		{
 			ivi_surface_id = val;
+		}
 	}
 
 	if (display->ivi_application)
@@ -567,7 +592,9 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
 	{
 		w->viewport = wp_viewporter_get_viewport(display->viewporter, w->surface);
 		if (display->actual_scale != 1)
+		{
 			wl_surface_set_buffer_scale(w->surface, display->actual_scale);
+		}
 	}
 
 	wl_list_insert(display->windows.prev, &w->link);
@@ -585,35 +612,49 @@ out_error_free:
 
 UwacReturnCode UwacDestroyWindow(UwacWindow** pwindow)
 {
-	UwacWindow* w;
+	UwacWindow* w = NULL;
 	assert(pwindow);
 	w = *pwindow;
 	UwacWindowDestroyBuffers(w);
 
 	if (w->deco)
+	{
 		zxdg_toplevel_decoration_v1_destroy(w->deco);
+	}
 
 	if (w->kde_deco)
+	{
 		org_kde_kwin_server_decoration_destroy(w->kde_deco);
+	}
 
 	if (w->xdg_surface)
+	{
 		xdg_surface_destroy(w->xdg_surface);
+	}
 
 #if BUILD_IVI
 
 	if (w->ivi_surface)
+	{
 		ivi_surface_destroy(w->ivi_surface);
+	}
 
 #endif
 
 	if (w->opaque_region)
+	{
 		wl_region_destroy(w->opaque_region);
+	}
 
 	if (w->input_region)
+	{
 		wl_region_destroy(w->input_region);
+	}
 
 	if (w->viewport)
+	{
 		wp_viewport_destroy(w->viewport);
+	}
 
 	wl_surface_destroy(w->surface);
 	wl_list_remove(&w->link);
@@ -628,12 +669,16 @@ UwacReturnCode UwacWindowSetOpaqueRegion(UwacWindow* window, uint32_t x, uint32_
 	assert(window);
 
 	if (window->opaque_region)
+	{
 		wl_region_destroy(window->opaque_region);
+	}
 
 	window->opaque_region = wl_compositor_create_region(window->display->compositor);
 
 	if (!window->opaque_region)
+	{
 		return UWAC_ERROR_NOMEMORY;
+	}
 
 	wl_region_add(window->opaque_region, x, y, width, height);
 	wl_surface_set_opaque_region(window->surface, window->opaque_region);
@@ -646,12 +691,16 @@ UwacReturnCode UwacWindowSetInputRegion(UwacWindow* window, uint32_t x, uint32_t
 	assert(window);
 
 	if (window->input_region)
+	{
 		wl_region_destroy(window->input_region);
+	}
 
 	window->input_region = wl_compositor_create_region(window->display->compositor);
 
 	if (!window->input_region)
+	{
 		return UWAC_ERROR_NOMEMORY;
+	}
 
 	wl_region_add(window->input_region, x, y, width, height);
 	wl_surface_set_input_region(window->surface, window->input_region);
@@ -660,14 +709,18 @@ UwacReturnCode UwacWindowSetInputRegion(UwacWindow* window, uint32_t x, uint32_t
 
 void* UwacWindowGetDrawingBuffer(UwacWindow* window)
 {
-	UwacBuffer* buffer;
+	UwacBuffer* buffer = NULL;
 
 	if (window->drawingBufferIdx < 0)
+	{
 		return NULL;
+	}
 
 	buffer = &window->buffers[window->drawingBufferIdx];
 	if (!buffer)
+	{
 		return NULL;
+	}
 
 	return buffer->data;
 }
@@ -679,8 +732,12 @@ static const struct wl_callback_listener frame_listener = { frame_done_cb };
 #ifdef UWAC_HAVE_PIXMAN_REGION
 static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 {
-	int nrects, i;
-	int x, y, w, h;
+	int nrects;
+	int i;
+	int x;
+	int y;
+	int w;
+	int h;
 	const pixman_box32_t* box = pixman_region32_rectangles(&buffer->damage, &nrects);
 
 	for (i = 0; i < nrects; i++, box++)
@@ -730,28 +787,34 @@ static void UwacSubmitBufferPtr(UwacWindow* window, UwacBuffer* buffer)
 static void frame_done_cb(void* data, struct wl_callback* callback, uint32_t time)
 {
 	UwacWindow* window = (UwacWindow*)data;
-	UwacFrameDoneEvent* event;
+	UwacFrameDoneEvent* event = NULL;
 
 	wl_callback_destroy(callback);
 	window->pendingBufferIdx = -1;
 	event = (UwacFrameDoneEvent*)UwacDisplayNewEvent(window->display, UWAC_EVENT_FRAME_DONE);
 
 	if (event)
+	{
 		event->window = window;
+	}
 }
 
 #ifdef UWAC_HAVE_PIXMAN_REGION
 UwacReturnCode UwacWindowAddDamage(UwacWindow* window, uint32_t x, uint32_t y, uint32_t width,
                                    uint32_t height)
 {
-	UwacBuffer* buf;
+	UwacBuffer* buf = NULL;
 
 	if (window->drawingBufferIdx < 0)
+	{
 		return UWAC_ERROR_INTERNAL;
+	}
 
 	buf = &window->buffers[window->drawingBufferIdx];
 	if (!pixman_region32_union_rect(&buf->damage, &buf->damage, x, y, width, height))
+	{
 		return UWAC_ERROR_INTERNAL;
+	}
 
 	buf->dirty = true;
 	return UWAC_SUCCESS;
@@ -787,7 +850,9 @@ UwacReturnCode UwacWindowGetDrawingBufferGeometry(UwacWindow* window, UwacSize* 
                                                   size_t* stride)
 {
 	if (!window || (window->drawingBufferIdx < 0))
+	{
 		return UWAC_ERROR_INTERNAL;
+	}
 
 	if (geometry)
 	{
@@ -796,35 +861,45 @@ UwacReturnCode UwacWindowGetDrawingBufferGeometry(UwacWindow* window, UwacSize* 
 	}
 
 	if (stride)
+	{
 		*stride = window->stride;
+	}
 
 	return UWAC_SUCCESS;
 }
 
 UwacReturnCode UwacWindowSubmitBuffer(UwacWindow* window, bool copyContentForNextFrame)
 {
-	UwacBuffer* currentDrawingBuffer;
-	UwacBuffer* nextDrawingBuffer;
-	UwacBuffer* pendingBuffer;
+	UwacBuffer* currentDrawingBuffer = NULL;
+	UwacBuffer* nextDrawingBuffer = NULL;
+	UwacBuffer* pendingBuffer = NULL;
 
 	if (window->drawingBufferIdx < 0)
+	{
 		return UWAC_ERROR_INTERNAL;
+	}
 
 	currentDrawingBuffer = &window->buffers[window->drawingBufferIdx];
 
 	if ((window->pendingBufferIdx >= 0) || !currentDrawingBuffer->dirty)
+	{
 		return UWAC_SUCCESS;
+	}
 
 	window->pendingBufferIdx = window->drawingBufferIdx;
 	nextDrawingBuffer = UwacWindowFindFreeBuffer(window, &window->drawingBufferIdx);
 	pendingBuffer = &window->buffers[window->pendingBufferIdx];
 
 	if ((!nextDrawingBuffer) || (window->drawingBufferIdx < 0))
+	{
 		return UWAC_ERROR_NOMEMORY;
+	}
 
 	if (copyContentForNextFrame)
+	{
 		memcpy(nextDrawingBuffer->data, pendingBuffer->data,
-		       1ull * window->stride * window->height);
+		       1ULL * window->stride * window->height);
+	}
 
 	UwacSubmitBufferPtr(window, pendingBuffer);
 	return UWAC_SUCCESS;
@@ -873,13 +948,19 @@ UwacReturnCode UwacWindowSetFullscreenState(UwacWindow* window, UwacOutput* outp
 void UwacWindowSetTitle(UwacWindow* window, const char* name)
 {
 	if (window->xdg_toplevel)
+	{
 		xdg_toplevel_set_title(window->xdg_toplevel, name);
+	}
 	else if (window->shell_surface)
+	{
 		wl_shell_surface_set_title(window->shell_surface, name);
+	}
 }
 
 void UwacWindowSetAppId(UwacWindow* window, const char* app_id)
 {
 	if (window->xdg_toplevel)
+	{
 		xdg_toplevel_set_app_id(window->xdg_toplevel, app_id);
+	}
 }

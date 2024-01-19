@@ -26,10 +26,10 @@
 #include <sys/stat.h>
 
 #include <winpr/crt.h>
-#include <winpr/platform.h>
-#include <winpr/file.h>
-#include <winpr/tchar.h>
 #include <winpr/environment.h>
+#include <winpr/file.h>
+#include <winpr/platform.h>
+#include <winpr/tchar.h>
 
 #include <winpr/path.h>
 #include <winpr/wlog.h>
@@ -63,8 +63,8 @@ static char* GetPath_XDG_RUNTIME_DIR(void);
 
 char* GetEnvAlloc(LPCSTR lpName)
 {
-	DWORD nSize;
-	DWORD nStatus;
+	DWORD nSize = 0;
+	DWORD nStatus = 0;
 	char* env = NULL;
 
 	nSize = GetEnvironmentVariableX(lpName, NULL, 0);
@@ -74,7 +74,9 @@ char* GetEnvAlloc(LPCSTR lpName)
 		env = malloc(nSize);
 
 		if (!env)
+		{
 			return NULL;
+		}
 
 		nStatus = GetEnvironmentVariableX(lpName, env, nSize);
 
@@ -112,7 +114,9 @@ static char* GetPath_TEMP(void)
 	path = GetEnvAlloc("TMPDIR");
 
 	if (!path)
+	{
 		path = _strdup("/tmp");
+	}
 
 #endif
 	return path;
@@ -124,7 +128,7 @@ static char* GetPath_XDG_DATA_HOME(void)
 #if defined(WIN32) || defined(__IOS__)
 	path = GetPath_XDG_CONFIG_HOME();
 #else
-	size_t size;
+	size_t size = 0;
 	char* home = NULL;
 	/**
 	 * There is a single base directory relative to which user-specific data files should be
@@ -137,12 +141,16 @@ static char* GetPath_XDG_DATA_HOME(void)
 	path = GetEnvAlloc("XDG_DATA_HOME");
 
 	if (path)
+	{
 		return path;
+	}
 
 	home = GetPath_HOME();
 
 	if (!home)
+	{
 		return NULL;
+	}
 
 	size = strlen(home) + strlen("/.local/share") + 1;
 	path = (char*)malloc(size);
@@ -177,7 +185,7 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 #elif defined(__IOS__)
 	path = ios_get_data();
 #else
-	size_t size;
+	size_t size = 0;
 	char* home = NULL;
 	/**
 	 * There is a single base directory relative to which user-specific configuration files should
@@ -190,15 +198,21 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 	path = GetEnvAlloc("XDG_CONFIG_HOME");
 
 	if (path)
+	{
 		return path;
+	}
 
 	home = GetPath_HOME();
 
 	if (!home)
+	{
 		home = GetPath_TEMP();
+	}
 
 	if (!home)
+	{
 		return NULL;
+	}
 
 	size = strlen(home) + strlen("/.config") + 1;
 	path = (char*)malloc(size);
@@ -235,7 +249,7 @@ static char* GetPath_XDG_CACHE_HOME(void)
 #elif defined(__IOS__)
 	path = ios_get_cache();
 #else
-	size_t size;
+	size_t size = 0;
 	/**
 	 * There is a single base directory relative to which user-specific non-essential (cached) data
 	 * should be written. This directory is defined by the environment variable $XDG_CACHE_HOME.
@@ -247,12 +261,16 @@ static char* GetPath_XDG_CACHE_HOME(void)
 	path = GetEnvAlloc("XDG_CACHE_HOME");
 
 	if (path)
+	{
 		return path;
+	}
 
 	home = GetPath_HOME();
 
 	if (!home)
+	{
 		return NULL;
+	}
 
 	size = strlen(home) + strlen("/.cache") + 1;
 	path = (char*)malloc(size);
@@ -320,7 +338,9 @@ char* GetPath_XDG_RUNTIME_DIR(void)
 #endif
 
 	if (path)
+	{
 		return path;
+	}
 
 	path = GetPath_TEMP();
 	return path;
@@ -362,18 +382,22 @@ char* GetKnownPath(int id)
 	}
 
 	if (!path)
+	{
 		WLog_WARN(TAG, "Path %s is %p", GetKnownPathIdString(id), path);
+	}
 	return path;
 }
 
 char* GetKnownSubPath(int id, const char* path)
 {
-	char* subPath;
-	char* knownPath;
+	char* subPath = NULL;
+	char* knownPath = NULL;
 	knownPath = GetKnownPath(id);
 
 	if (!knownPath)
+	{
 		return NULL;
+	}
 
 	subPath = GetCombinedPath(knownPath, path);
 	free(knownPath);
@@ -383,8 +407,8 @@ char* GetKnownSubPath(int id, const char* path)
 char* GetEnvironmentPath(char* name)
 {
 	char* env = NULL;
-	DWORD nSize;
-	DWORD nStatus;
+	DWORD nSize = 0;
+	DWORD nStatus = 0;
 	nSize = GetEnvironmentVariableX(name, NULL, 0);
 
 	if (nSize)
@@ -392,7 +416,9 @@ char* GetEnvironmentPath(char* name)
 		env = (LPSTR)malloc(nSize);
 
 		if (!env)
+		{
 			return NULL;
+		}
 
 		nStatus = GetEnvironmentVariableX(name, env, nSize);
 
@@ -408,12 +434,14 @@ char* GetEnvironmentPath(char* name)
 
 char* GetEnvironmentSubPath(char* name, const char* path)
 {
-	char* env;
-	char* subpath;
+	char* env = NULL;
+	char* subpath = NULL;
 	env = GetEnvironmentPath(name);
 
 	if (!env)
+	{
 		return NULL;
+	}
 
 	subpath = GetCombinedPath(env, path);
 	free(env);
@@ -422,45 +450,63 @@ char* GetEnvironmentSubPath(char* name, const char* path)
 
 char* GetCombinedPath(const char* basePath, const char* subPath)
 {
-	size_t length;
-	HRESULT status;
+	size_t length = 0;
+	HRESULT status = 0;
 	char* path = NULL;
 	char* subPathCpy = NULL;
 	size_t basePathLength = 0;
 	size_t subPathLength = 0;
 
 	if (basePath)
+	{
 		basePathLength = strlen(basePath);
+	}
 
 	if (subPath)
+	{
 		subPathLength = strlen(subPath);
+	}
 
 	length = basePathLength + subPathLength + 1;
 	path = (char*)calloc(1, length + 1);
 
 	if (!path)
+	{
 		goto fail;
+	}
 
 	if (basePath)
+	{
 		CopyMemory(path, basePath, basePathLength);
+	}
 
 	if (FAILED(PathCchConvertStyleA(path, basePathLength, PATH_STYLE_NATIVE)))
+	{
 		goto fail;
+	}
 
 	if (!subPath)
+	{
 		return path;
+	}
 
 	subPathCpy = _strdup(subPath);
 
 	if (!subPathCpy)
+	{
 		goto fail;
+	}
 
 	if (FAILED(PathCchConvertStyleA(subPathCpy, subPathLength, PATH_STYLE_NATIVE)))
+	{
 		goto fail;
+	}
 
 	status = NativePathCchAppendA(path, length + 1, subPathCpy);
 	if (FAILED(status))
+	{
 		goto fail;
+	}
 
 	free(subPathCpy);
 	return path;
@@ -479,8 +525,8 @@ BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 	return (SHCreateDirectoryExA(NULL, path, lpAttributes) == ERROR_SUCCESS);
 #else
 	const char delim = PathGetSeparatorA(PATH_STYLE_NATIVE);
-	char* dup;
-	char* p;
+	char* dup = NULL;
+	char* p = NULL;
 	BOOL result = TRUE;
 	/* we only operate on a non-null, absolute path */
 #if defined(__OS2__)
@@ -491,12 +537,16 @@ BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 #else
 
 	if (!path || *path != delim)
+	{
 		return FALSE;
+	}
 
 #endif
 
 	if (!(dup = _strdup(path)))
+	{
 		return FALSE;
+	}
 
 #ifdef __OS2__
 	p = (strlen(dup) > 3) && (dup[1] == ':') && (dup[2] == delim)) ? &dup[3] : dup;
@@ -507,17 +557,23 @@ BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 #endif
 	{
 		if ((p = strchr(p + 1, delim)))
+		{
 			*p = '\0';
+		}
 
 		if (mkdir(dup, 0777) != 0)
+		{
 			if (errno != EEXIST)
 			{
 				result = FALSE;
 				break;
 			}
+		}
 
 		if (p)
+		{
 			*p = delim;
+		}
 	}
 
 	free(dup);
@@ -534,8 +590,8 @@ BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 #else
 	const WCHAR wdelim = PathGetSeparatorW(PATH_STYLE_NATIVE);
 	const char delim = PathGetSeparatorA(PATH_STYLE_NATIVE);
-	char* dup;
-	char* p;
+	char* dup = NULL;
+	char* p = NULL;
 	BOOL result = TRUE;
 	/* we only operate on a non-null, absolute path */
 #if defined(__OS2__)
@@ -546,13 +602,17 @@ BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 #else
 
 	if (!path || *path != wdelim)
+	{
 		return FALSE;
+	}
 
 #endif
 
 	dup = ConvertWCharToUtf8Alloc(path, NULL);
 	if (!dup)
+	{
 		return FALSE;
+	}
 
 #ifdef __OS2__
 	p = (strlen(dup) > 3) && (dup[1] == ':') && (dup[2] == delim)) ? &dup[3] : dup;
@@ -563,17 +623,23 @@ BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 #endif
 	{
 		if ((p = strchr(p + 1, delim)))
+		{
 			*p = '\0';
+		}
 
 		if (mkdir(dup, 0777) != 0)
+		{
 			if (errno != EEXIST)
 			{
 				result = FALSE;
 				break;
 			}
+		}
 
 		if (p)
+		{
 			*p = delim;
+		}
 	}
 
 	free(dup);
@@ -586,7 +652,9 @@ BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 BOOL PathIsRelativeA(LPCSTR pszPath)
 {
 	if (!pszPath)
+	{
 		return FALSE;
+	}
 
 	return pszPath[0] != '/';
 }
@@ -597,11 +665,15 @@ BOOL PathIsRelativeW(LPCWSTR pszPath)
 	BOOL ret = FALSE;
 
 	if (!pszPath)
+	{
 		goto fail;
+	}
 
 	lpFileNameA = ConvertWCharToUtf8Alloc(pszPath, NULL);
 	if (!lpFileNameA)
+	{
 		goto fail;
+	}
 	ret = PathIsRelativeA(lpFileNameA);
 fail:
 	free(lpFileNameA);
@@ -613,7 +685,9 @@ BOOL PathFileExistsA(LPCSTR pszPath)
 	struct stat stat_info;
 
 	if (stat(pszPath, &stat_info) != 0)
+	{
 		return FALSE;
+	}
 
 	return TRUE;
 }
@@ -624,10 +698,14 @@ BOOL PathFileExistsW(LPCWSTR pszPath)
 	BOOL ret = FALSE;
 
 	if (!pszPath)
+	{
 		goto fail;
+	}
 	lpFileNameA = ConvertWCharToUtf8Alloc(pszPath, NULL);
 	if (!lpFileNameA)
+	{
 		goto fail;
+	}
 
 	ret = winpr_PathFileExists(lpFileNameA);
 fail:
@@ -637,17 +715,21 @@ fail:
 
 BOOL PathIsDirectoryEmptyA(LPCSTR pszPath)
 {
-	struct dirent* dp;
+	struct dirent* dp = NULL;
 	int empty = 1;
 	DIR* dir = opendir(pszPath);
 
-	if (dir == NULL) /* Not a directory or doesn't exist */
+	if (dir == NULL)
+	{ /* Not a directory or doesn't exist */
 		return 1;
+	}
 
 	while ((dp = readdir(dir)) != NULL)
 	{
 		if (strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0)
+		{
 			continue; /* Skip . and .. */
+		}
 
 		empty = 0;
 		break;
@@ -662,10 +744,14 @@ BOOL PathIsDirectoryEmptyW(LPCWSTR pszPath)
 	LPSTR lpFileNameA = NULL;
 	BOOL ret = FALSE;
 	if (!pszPath)
+	{
 		goto fail;
+	}
 	lpFileNameA = ConvertWCharToUtf8Alloc(pszPath, NULL);
 	if (!lpFileNameA)
+	{
 		goto fail;
+	}
 	ret = PathIsDirectoryEmptyA(lpFileNameA);
 fail:
 	free(lpFileNameA);
@@ -785,7 +871,9 @@ cleanup:
 BOOL winpr_PathFileExists(const char* pszPath)
 {
 	if (!pszPath)
+	{
 		return FALSE;
+	}
 #ifndef _WIN32
 	return PathFileExistsA(pszPath);
 #else
@@ -805,7 +893,9 @@ BOOL winpr_PathFileExists(const char* pszPath)
 BOOL winpr_PathMakePath(const char* path, LPSECURITY_ATTRIBUTES lpAttributes)
 {
 	if (!path)
+	{
 		return FALSE;
+	}
 #ifndef _WIN32
 	return PathMakePathA(path, lpAttributes);
 #else
