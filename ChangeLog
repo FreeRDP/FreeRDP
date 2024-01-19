@@ -1,4 +1,14 @@
-# 2023-12-14 Version 2.11.3
+# 2024-01-19 Version 2.11.5
+
+Noteworthy changes:
+* Fix integer overflow in progressive decoder
+* Update OpenSSL API usage for compatiblility with newer versions (#9747)
+* Prevent NULL dereference for single thread decoder (#9712)
+
+For a complete and detailed change log since the last release run:
+git log 2.11.5...2.11.4
+
+# 2023-12-14 Version 2.11.4
 
 Notworthy changes:
 * fix a typo in unicode commit (#9652)
