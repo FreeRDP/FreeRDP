@@ -43,6 +43,7 @@ extern "C"
 	typedef SSIZE_T (*pTransportRead)(rdpTransport* transport, BYTE* data, size_t bytes);
 	typedef BOOL (*pTransportGetPublicKey)(rdpTransport* transport, const BYTE** data,
 	                                       DWORD* length);
+	typedef BOOL (*pTransportSetBlockingMode)(rdpTransport* transport, BOOL blocking);
 
 	struct rdp_transport_io
 	{
@@ -55,6 +56,7 @@ extern "C"
 		pTransportRWFkt WritePdu; /* Writes a whole PDU to the transport */
 		pTransportRead ReadBytes; /* Reads up to a requested amount of bytes from the transport */
 		pTransportGetPublicKey GetPublicKey;
+		pTransportSetBlockingMode SetBlockingMode;
 	};
 	typedef struct rdp_transport_io rdpTransportIo;
 
