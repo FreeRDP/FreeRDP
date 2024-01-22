@@ -162,7 +162,8 @@ SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::s
 SdlWidget::~SdlWidget()
 {
 	TTF_CloseFont(_font);
-	SDL_DestroyTexture(_image);
+	if (_image)
+		SDL_DestroyTexture(_image);
 }
 
 bool SdlWidget::error_ex(Uint32 res, const char* what, const char* file, size_t line,
