@@ -1447,6 +1447,13 @@ BOOL transport_set_blocking_mode(rdpTransport* transport, BOOL blocking)
 {
 	WINPR_ASSERT(transport);
 
+	return IFCALLRESULT(FALSE, transport->io.SetBlockingMode, transport, blocking);
+}
+
+static BOOL transport_default_set_blocking_mode(rdpTransport* transport, BOOL blocking)
+{
+	WINPR_ASSERT(transport);
+
 	transport->blocking = blocking;
 
 	if (transport->frontBio)
@@ -1554,6 +1561,7 @@ rdpTransport* transport_new(rdpContext* context)
 	transport->io.WritePdu = transport_default_write;
 	transport->io.ReadBytes = transport_read_layer;
 	transport->io.GetPublicKey = transport_default_get_public_key;
+	transport->io.SetBlockingMode = transport_default_set_blocking_mode;
 
 	transport->context = context;
 	transport->ReceivePool = StreamPool_New(TRUE, BUFFER_SIZE);
