@@ -1,0 +1,26 @@
+name: clang-tidy-review
+on:
+  push:
+    branches: [ master, stable*  ]
+  pull_request:
+    branches: [ master, stable* ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: ZedThree/clang-tidy-review@v0.14.0
+      id: review
+      with:
+        # List of packages to install
+        apt_packages: libxrandr-dev, libxinerama-dev, libusb-1.0-0-dev, xserver-xorg-dev, libswscale-dev, libswresample-dev, libavutil-dev, libavcodec-dev, libcups2-dev, libpulse-dev, libasound2-dev, libpcsclite-dev, xsltproc, libxcb-cursor-dev, libxcursor-dev, libcairo2-dev, libfaac-dev, libfaad-dev, libjpeg-dev, libgsm1-dev, ninja-build, libxfixes-dev, libxkbcommon-dev, libwayland-dev, libpam0g-dev, libxdamage-dev, libxcb-damage0-dev, ccache, libxtst-dev, libfuse3-dev, libsystemd-dev, libcairo2-dev, libsoxr-dev, libsdl2-dev, docbook-xsl, libkrb5-dev, libcjson-dev, libpkcs11-helper1-dev, libsdl2-ttf-dev, libsdl2-image-dev, libwebkit2gtk-4.0-dev, clang, libopus-dev, liburiparser-dev
+
+        # CMake command to run in order to generate compile_commands.json
+        build_dir: tidy
+        cmake_command: cmake -Btidy -S. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
