@@ -554,7 +554,9 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	else
 	{
 		UINT16 peerPort;
-		const char *proxyHostname, *proxyUsername, *proxyPassword;
+		const char* proxyHostname;
+		const char* proxyUsername;
+		const char* proxyPassword;
 		BOOL isProxyConnection =
 		    proxy_prepare(settings, &proxyHostname, &peerPort, &proxyUsername, &proxyPassword);
 

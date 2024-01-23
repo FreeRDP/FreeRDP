@@ -770,8 +770,10 @@ static BOOL rdg_skip_seed_payload(rdpTls* tls, SSIZE_T lastResponseLength,
 static BOOL rdg_process_handshake_response(rdpRdg* rdg, wStream* s)
 {
 	UINT32 errorCode;
-	UINT16 serverVersion, extendedAuth;
-	BYTE verMajor, verMinor;
+	UINT16 serverVersion;
+	UINT16 extendedAuth;
+	BYTE verMajor;
+	BYTE verMinor;
 	const char* error;
 	WLog_DBG(TAG, "Handshake response received");
 
@@ -872,7 +874,8 @@ static BOOL rdg_process_tunnel_response_optional(rdpRdg* rdg, wStream* s, UINT16
 
 static BOOL rdg_process_tunnel_response(rdpRdg* rdg, wStream* s)
 {
-	UINT16 serverVersion, fieldsPresent;
+	UINT16 serverVersion;
+	UINT16 fieldsPresent;
 	UINT32 errorCode;
 	const char* error;
 	WLog_DBG(TAG, "Tunnel response received");
@@ -1225,7 +1228,8 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 	rdpSettings* settings = rdg->settings;
 	const char* peerHostname = settings->GatewayHostname;
 	UINT16 peerPort = (UINT16)settings->GatewayPort;
-	const char *proxyUsername, *proxyPassword;
+	const char* proxyUsername;
+	const char* proxyPassword;
 	BOOL isProxyConnection =
 	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 

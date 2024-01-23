@@ -653,7 +653,9 @@ static UINT rail_read_client_status_order(wStream* s, RAIL_CLIENT_STATUS_ORDER* 
 static UINT rail_read_exec_order(wStream* s, RAIL_EXEC_ORDER* exec)
 {
 	RAIL_EXEC_ORDER order = { 0 };
-	UINT16 exeLen, workLen, argLen;
+	UINT16 exeLen;
+	UINT16 workLen;
+	UINT16 argLen;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, RAIL_EXEC_ORDER_LENGTH))
 		return ERROR_INVALID_DATA;

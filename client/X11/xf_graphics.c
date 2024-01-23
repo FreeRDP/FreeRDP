@@ -48,7 +48,10 @@ static BOOL xf_Pointer_Set(rdpContext* context, rdpPointer* pointer);
 BOOL xf_decode_color(xfContext* xfc, const UINT32 srcColor, XColor* color)
 {
 	UINT32 SrcFormat = 0;
-	BYTE r = 0, g = 0, b = 0, a = 0;
+	BYTE r = 0;
+	BYTE g = 0;
+	BYTE b = 0;
+	BYTE a = 0;
 
 	if (!xfc || !color)
 		return FALSE;

@@ -610,7 +610,8 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 	else
 	{
 		NCryptProviderName* names = NULL;
-		DWORD nproviders, i;
+		DWORD nproviders;
+		DWORD i;
 
 #ifdef _WIN32
 		/* On Windows, mstsc first enumerates the legacy CAPI providers for usable certificates. */

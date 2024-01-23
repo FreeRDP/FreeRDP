@@ -362,7 +362,8 @@ static void dump_thread(WINPR_THREAD* thread)
 #if defined(WITH_DEBUG_THREADS)
 	void* stack = winpr_backtrace(20);
 	char** msg;
-	size_t used, i;
+	size_t used;
+	size_t i;
 	WLog_DBG(TAG, "Called from:");
 	msg = winpr_backtrace_symbols(stack, &used);
 
@@ -979,7 +980,8 @@ VOID DumpThreadHandles(void)
 {
 #if defined(WITH_DEBUG_THREADS)
 	char** msg;
-	size_t used, i;
+	size_t used;
+	size_t i;
 	void* stack = winpr_backtrace(20);
 	WLog_DBG(TAG, "---------------- Called from ----------------------------");
 	msg = winpr_backtrace_symbols(stack, &used);

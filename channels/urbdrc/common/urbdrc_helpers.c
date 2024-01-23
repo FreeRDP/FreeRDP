@@ -386,8 +386,11 @@ const char* urb_function_string(UINT16 urb)
 void urbdrc_dump_message(wLog* log, BOOL client, BOOL write, wStream* s)
 {
 	const char* type = write ? "WRITE" : "READ";
-	UINT32 InterfaceId, MessageId, FunctionId;
-	size_t length, pos;
+	UINT32 InterfaceId;
+	UINT32 MessageId;
+	UINT32 FunctionId;
+	size_t length;
+	size_t pos;
 
 	pos = Stream_GetPosition(s);
 	if (write)

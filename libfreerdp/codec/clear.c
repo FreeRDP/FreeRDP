@@ -149,7 +149,8 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
                                           UINT32 nDstStep, UINT32 nXDstRel, UINT32 nYDstRel,
                                           UINT32 nDstWidth, UINT32 nDstHeight)
 {
-	UINT32 x = 0, y = 0;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	UINT32 i;
 	UINT32 pixelCount;
 	UINT32 bitmapDataOffset;
@@ -181,7 +182,9 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 
 	for (i = 0; i < paletteCount; i++)
 	{
-		BYTE r, g, b;
+		BYTE r;
+		BYTE g;
+		BYTE b;
 		Stream_Read_UINT8(s, b);
 		Stream_Read_UINT8(s, g);
 		Stream_Read_UINT8(s, r);
@@ -374,7 +377,9 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 
 	while (suboffset < residualByteCount)
 	{
-		BYTE r, g, b;
+		BYTE r;
+		BYTE g;
+		BYTE b;
 		UINT32 runLengthFactor;
 		UINT32 color;
 
@@ -587,7 +592,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 	while (suboffset < bandsByteCount)
 	{
-		BYTE cr, cg, cb;
+		BYTE cr;
+		BYTE cg;
+		BYTE cb;
 		UINT16 xStart;
 		UINT16 xEnd;
 		UINT16 yStart;
@@ -706,7 +713,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 				for (UINT32 y = 0; y < vBarShortPixelCount; y++)
 				{
-					BYTE r = 0, g = 0, b = 0;
+					BYTE r = 0;
+					BYTE g = 0;
+					BYTE b = 0;
 					BYTE* dstBuffer =
 					    &vBarShortEntry->pixels[y * FreeRDPGetBytesPerPixel(clear->format)];
 					UINT32 color = 0;

@@ -838,8 +838,12 @@ static BOOL rdp_write_bitmap_cache_capability_set(wStream* s, const rdpSettings*
 #ifdef WITH_DEBUG_CAPABILITIES
 static BOOL rdp_print_bitmap_cache_capability_set(wStream* s)
 {
-	UINT32 pad1, pad2, pad3;
-	UINT32 pad4, pad5, pad6;
+	UINT32 pad1;
+	UINT32 pad2;
+	UINT32 pad3;
+	UINT32 pad4;
+	UINT32 pad5;
+	UINT32 pad6;
 	UINT16 Cache0Entries;
 	UINT16 Cache0MaximumCellSize;
 	UINT16 Cache1Entries;
@@ -4166,7 +4170,9 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, rdpSetti
                                      UINT16 totalLength)
 {
 	BOOL rc = FALSE;
-	size_t start, end, len;
+	size_t start;
+	size_t end;
+	size_t len;
 	UINT16 numberCapabilities;
 	UINT16 count;
 
@@ -4317,7 +4323,9 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s, UINT16 pduSource, UINT16 le
 
 static BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
 {
-	size_t bm, em, lm;
+	size_t bm;
+	size_t em;
+	size_t lm;
 	UINT16 numberCapabilities;
 	size_t lengthCombinedCapabilities;
 
@@ -4472,7 +4480,9 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 
 static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 {
-	size_t bm, em, lm;
+	size_t bm;
+	size_t em;
+	size_t lm;
 	UINT16 numberCapabilities;
 	UINT16 lengthSourceDescriptor;
 	size_t lengthCombinedCapabilities;

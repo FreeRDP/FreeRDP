@@ -232,8 +232,10 @@ static DynvcReadResult dynvc_read_varInt(wLog* log, wStream* s, size_t len, UINT
 static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL firstPacket,
                                           BOOL lastPacket)
 {
-	BYTE cmd, byte0;
-	wStream *s, sbuffer;
+	BYTE cmd;
+	BYTE byte0;
+	wStream* s;
+	wStream sbuffer;
 	BOOL haveChannelId;
 	BOOL haveLength;
 	UINT64 dynChannelId = 0;

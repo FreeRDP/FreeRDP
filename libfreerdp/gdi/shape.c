@@ -41,9 +41,13 @@
 
 static void Ellipse_Bresenham(HGDI_DC hdc, int x1, int y1, int x2, int y2)
 {
-	INT32 e, e2;
-	INT32 dx, dy;
-	INT32 a, b, c;
+	INT32 e;
+	INT32 e2;
+	INT32 dx;
+	INT32 dy;
+	INT32 a;
+	INT32 b;
+	INT32 c;
 	a = (x1 < x2) ? x2 - x1 : x1 - x2;
 	b = (y1 < y2) ? y2 - y1 : y1 - y2;
 	c = b & 1;
@@ -126,11 +130,15 @@ BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int n
 
 BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 {
-	INT32 x, y;
-	UINT32 color, dstColor;
+	INT32 x;
+	INT32 y;
+	UINT32 color;
+	UINT32 dstColor;
 	BOOL monochrome = FALSE;
-	INT32 nXDest, nYDest;
-	INT32 nWidth, nHeight;
+	INT32 nXDest;
+	INT32 nYDest;
+	INT32 nWidth;
+	INT32 nHeight;
 	const BYTE* srcp;
 	DWORD formatSize;
 	gdi_RectToCRgn(rect, &nXDest, &nYDest, &nWidth, &nHeight);
@@ -245,7 +253,8 @@ BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT* lpPoints, int* lpPolyCounts, int nC
 
 BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nHeight)
 {
-	INT32 x, y;
+	INT32 x;
+	INT32 y;
 	UINT32 color;
 
 	if (!gdi_ClipCoords(hdc, &nXDst, &nYDst, &nWidth, &nHeight, NULL, NULL))

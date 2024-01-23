@@ -422,7 +422,9 @@ void xf_keyboard_focus_in(xfContext* xfc)
 {
 	UINT32 state = 0;
 	Window w = None;
-	int d = 0, x = 0, y = 0;
+	int d = 0;
+	int x = 0;
+	int y = 0;
 
 	WINPR_ASSERT(xfc);
 	if (!xfc->display || !xfc->window)

@@ -328,8 +328,10 @@ static float tsmf_stream_read_float(wStream* s)
 UINT tsmf_ifman_set_source_video_rect(TSMF_IFMAN* ifman)
 {
 	UINT status = CHANNEL_RC_OK;
-	float Left, Top;
-	float Right, Bottom;
+	float Left;
+	float Top;
+	float Right;
+	float Bottom;
 	TSMF_PRESENTATION* presentation;
 	DEBUG_TSMF("");
 

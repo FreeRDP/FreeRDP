@@ -583,7 +583,8 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	UINT32 foreColor;
 	UINT32 backColor;
 	UINT32 originalColor;
-	HGDI_BRUSH originalBrush, hbrush = NULL;
+	HGDI_BRUSH originalBrush;
+	HGDI_BRUSH hbrush = NULL;
 	rdpGdi* gdi = context->gdi;
 	BOOL ret = FALSE;
 	const DWORD rop = gdi_rop3_code(patblt->bRop);
@@ -795,7 +796,8 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	HGDI_PEN hPen;
 	DELTA_POINT* points;
 	rdpGdi* gdi = context->gdi;
-	INT32 w = 0, h = 0;
+	INT32 w = 0;
+	INT32 h = 0;
 
 	if (!gdi_decode_color(gdi, polyline->penColor, &color, NULL))
 		return FALSE;

@@ -109,7 +109,8 @@ static const struct zwp_fullscreen_shell_v1_listener fullscreen_shell_listener =
 
 static void display_destroy_seat(UwacDisplay* d, uint32_t name)
 {
-	UwacSeat *seat, *tmp;
+	UwacSeat* seat;
+	UwacSeat* tmp;
 	wl_list_for_each_safe(seat, tmp, &d->seats, link)
 	{
 		if (seat->seat_id == name)
@@ -204,7 +205,8 @@ static void registry_handle_global(void* data, struct wl_registry* registry, uin
 	}
 	else if (strcmp(interface, "wl_data_device_manager") == 0)
 	{
-		UwacSeat *seat, *tmp;
+		UwacSeat* seat;
+		UwacSeat* tmp;
 
 		d->data_device_manager = wl_registry_bind(registry, id, &wl_data_device_manager_interface,
 		                                          min(TARGET_DDM_INTERFACE, version));
@@ -458,7 +460,9 @@ out_free:
 
 int UwacDisplayDispatch(UwacDisplay* display, int timeout)
 {
-	int ret, count, i;
+	int ret;
+	int count;
+	int i;
 	UwacTask* task;
 	struct epoll_event ep[16];
 	wl_display_dispatch_pending(display->display);
@@ -498,10 +502,14 @@ UwacReturnCode UwacDisplayGetLastError(const UwacDisplay* display)
 UwacReturnCode UwacCloseDisplay(UwacDisplay** pdisplay)
 {
 	UwacDisplay* display;
-	UwacSeat *seat, *tmpSeat;
-	UwacWindow *window, *tmpWindow;
-	UwacOutput *output, *tmpOutput;
-	UwacGlobal *global, *tmpGlobal;
+	UwacSeat* seat;
+	UwacSeat* tmpSeat;
+	UwacWindow* window;
+	UwacWindow* tmpWindow;
+	UwacOutput* output;
+	UwacOutput* tmpOutput;
+	UwacGlobal* global;
+	UwacGlobal* tmpGlobal;
 	assert(pdisplay);
 	display = *pdisplay;
 
@@ -622,7 +630,8 @@ const char* UwacErrorString(UwacReturnCode error)
 UwacReturnCode UwacDisplayQueryInterfaceVersion(const UwacDisplay* display, const char* name,
                                                 uint32_t* version)
 {
-	const UwacGlobal *global, *tmp;
+	const UwacGlobal* global;
+	const UwacGlobal* tmp;
 
 	if (!display)
 		return UWAC_ERROR_INVALID_DISPLAY;
@@ -675,7 +684,8 @@ uint32_t UwacDisplayGetNbOutputs(const UwacDisplay* display)
 
 const UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index)
 {
-	int i, display_count;
+	int i;
+	int display_count;
 	UwacOutput* ret = NULL;
 
 	if (!display)

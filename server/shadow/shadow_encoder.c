@@ -80,7 +80,9 @@ UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 
 static int shadow_encoder_init_grid(rdpShadowEncoder* encoder)
 {
-	UINT32 i, j, k;
+	UINT32 i;
+	UINT32 j;
+	UINT32 k;
 	UINT32 tileSize;
 	UINT32 tileCount;
 	encoder->gridWidth = ((encoder->width + (encoder->maxTileWidth - 1)) / encoder->maxTileWidth);

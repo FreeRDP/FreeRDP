@@ -31,7 +31,8 @@
 static BOOL parse_xkb_rule_names(char* xkb_rule, unsigned long num_bytes, char** layout,
                                  char** variant)
 {
-	size_t i, index;
+	size_t i;
+	size_t index;
 	/* Sample output for "Canadian Multilingual Standard"
 	 *
 	 * _XKB_RULES_NAMES_BACKUP(STRING) = "xorg", "pc105", "ca", "multi", "magic"

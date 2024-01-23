@@ -315,7 +315,8 @@ void msusb_msconfig_free(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(wStream* s, UINT32 NumInterfaces)
 {
 	MSUSB_CONFIG_DESCRIPTOR* MsConfig;
-	BYTE lenConfiguration, typeConfiguration;
+	BYTE lenConfiguration;
+	BYTE typeConfiguration;
 
 	if (!Stream_CheckAndLogRequiredCapacityOfSize(TAG, (s), 3ULL + NumInterfaces, 2ULL))
 		return NULL;
@@ -356,7 +357,8 @@ void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 	MSUSB_INTERFACE_DESCRIPTOR* MsInterface;
 	MSUSB_PIPE_DESCRIPTOR** MsPipes;
 	MSUSB_PIPE_DESCRIPTOR* MsPipe;
-	UINT32 inum = 0, pnum = 0;
+	UINT32 inum = 0;
+	UINT32 pnum = 0;
 	WLog_INFO(TAG, "=================MsConfig:========================");
 	WLog_INFO(TAG, "wTotalLength:%" PRIu16 "", MsConfig->wTotalLength);
 	WLog_INFO(TAG, "bConfigurationValue:%" PRIu8 "", MsConfig->bConfigurationValue);

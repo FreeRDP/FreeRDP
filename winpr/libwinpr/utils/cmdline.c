@@ -57,7 +57,8 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
                                void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter,
                                COMMAND_LINE_POST_FILTER_FN_A postFilter)
 {
-	int i, j;
+	int i;
+	int j;
 	int status;
 	int count;
 	size_t length;
@@ -672,7 +673,8 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 	*count = 0;
 	if (list)
 	{
-		int start, end;
+		int start;
+		int end;
 		unquoted = copy = _strdup(list);
 		if (!copy)
 			goto fail;

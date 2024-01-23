@@ -183,7 +183,9 @@ static const char* openclProgram =
 static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 {
 	cl_platform_id* platform_ids = NULL;
-	cl_uint ndevices, nplatforms, i;
+	cl_uint ndevices;
+	cl_uint nplatforms;
+	cl_uint i;
 	cl_kernel kernel;
 	cl_int ret;
 

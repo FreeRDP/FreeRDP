@@ -72,7 +72,8 @@ static int test_gdi_FillRect(void)
 	UINT32 color;
 	UINT32 pixel;
 	UINT32 rawPixel;
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 	UINT32 badPixels;
 	UINT32 goodPixels;
 	UINT32 width = 200;

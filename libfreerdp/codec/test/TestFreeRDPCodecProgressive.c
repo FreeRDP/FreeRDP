@@ -151,7 +151,8 @@ static void sample_file_free(EGFX_SAMPLE_FILE* file)
 
 static void test_fill_image_alpha_channel(BYTE* data, int width, int height, BYTE value)
 {
-	int i, j;
+	int i;
+	int j;
 	UINT32* pixel;
 
 	for (i = 0; i < height; i++)
@@ -817,7 +818,8 @@ static size_t test_memcmp_count(const BYTE* mem1, const BYTE* mem2, size_t size,
 static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE files[4],
                                    EGFX_SAMPLE_FILE bitmaps[4], int quarter, int count)
 {
-	int nXSrc, nYSrc;
+	int nXSrc;
+	int nYSrc;
 
 	RECTANGLE_16 clippingRect = { 0 };
 	clippingRect.right = g_Width;
@@ -903,7 +905,9 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 
 static int test_progressive_ms_sample(char* ms_sample_path)
 {
-	int i, j, k;
+	int i;
+	int j;
+	int k;
 	int count;
 	int status;
 	EGFX_SAMPLE_FILE files[3][4][4] = { 0 };
@@ -1014,8 +1018,14 @@ static BOOL diff(BYTE a, BYTE b)
 
 static BOOL colordiff(UINT32 format, UINT32 a, UINT32 b)
 {
-	BYTE ar, ag, ab, aa;
-	BYTE br, bg, bb, ba;
+	BYTE ar;
+	BYTE ag;
+	BYTE ab;
+	BYTE aa;
+	BYTE br;
+	BYTE bg;
+	BYTE bb;
+	BYTE ba;
 	FreeRDPSplitColor(a, format, &ar, &ag, &ab, &aa, NULL);
 	FreeRDPSplitColor(b, format, &br, &bg, &bb, &ba, NULL);
 	if (!diff(aa, ba) || !diff(ar, br) || !diff(ag, bg) || !diff(ab, bb))

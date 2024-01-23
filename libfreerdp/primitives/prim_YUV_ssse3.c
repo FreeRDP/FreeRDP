@@ -90,7 +90,9 @@ static __m128i* ssse3_YUV444Pixel(__m128i* WINPR_RESTRICT dst, __m128i Yraw, __m
 	__m128i BGRX = _mm_and_si128(_mm_loadu_si128(dst),
 	                             _mm_set_epi32(0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000));
 	{
-		__m128i C, D, E;
+		__m128i C;
+		__m128i D;
+		__m128i E;
 		/* Load Y values and expand to 32 bit */
 		{
 			C = _mm_shuffle_epi8(Yraw, mapY[pos]); /* Reorder and multiply by 256 */
@@ -347,7 +349,10 @@ PRIM_ALIGN_128 static const BYTE rgbx_v_factors[] = {
 static INLINE void ssse3_RGBToYUV420_BGRX_Y(const BYTE* WINPR_RESTRICT src, BYTE* dst, UINT32 width)
 {
 	UINT32 x;
-	__m128i x0, x1, x2, x3;
+	__m128i x0;
+	__m128i x1;
+	__m128i x2;
+	__m128i x3;
 	const __m128i y_factors = BGRX_Y_FACTORS;
 	const __m128i* argb = (const __m128i*)src;
 	__m128i* ydst = (__m128i*)dst;
@@ -388,7 +393,12 @@ static INLINE void ssse3_RGBToYUV420_BGRX_UV(const BYTE* WINPR_RESTRICT src1,
 	const __m128i u_factors = BGRX_U_FACTORS;
 	const __m128i v_factors = BGRX_V_FACTORS;
 	const __m128i vector128 = CONST128_FACTORS;
-	__m128i x0, x1, x2, x3, x4, x5;
+	__m128i x0;
+	__m128i x1;
+	__m128i x2;
+	__m128i x3;
+	__m128i x4;
+	__m128i x5;
 	const __m128i* rgb1 = (const __m128i*)src1;
 	const __m128i* rgb2 = (const __m128i*)src2;
 	__m64* udst = (__m64*)dst1;
@@ -564,7 +574,8 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			 *
 			 * We need to split these according to
 			 * 3.3.8.3.2 YUV420p Stream Combination for YUV444 mode */
-			__m128i ue, uo = { 0 };
+			__m128i ue;
+			__m128i uo = { 0 };
 			{
 				const __m128i ue1 =
 				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, u_factors),
@@ -641,7 +652,8 @@ static INLINE void ssse3_RGBToAVC444YUV_BGRX_DOUBLE_ROW(
 			 *
 			 * We need to split these according to
 			 * 3.3.8.3.2 YUV420p Stream Combination for YUV444 mode */
-			__m128i ve, vo = { 0 };
+			__m128i ve;
+			__m128i vo = { 0 };
 			{
 				const __m128i ve1 =
 				    _mm_srai_epi16(_mm_hadd_epi16(_mm_maddubs_epi16(xe1, v_factors),
@@ -847,7 +859,9 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 			 * We need to split these according to
 			 * 3.3.8.3.3 YUV420p Stream Combination for YUV444v2 mode */
 			/* U: multiplications with subtotals and horizontal sums */
-			__m128i ue, uo, uavg;
+			__m128i ue;
+			__m128i uo;
+			__m128i uavg;
 			{
 				const __m128i u_factors = BGRX_U_FACTORS;
 				const __m128i ue1 =
@@ -936,7 +950,9 @@ static INLINE void ssse3_RGBToAVC444YUVv2_BGRX_DOUBLE_ROW(
 
 		{
 			/* V: multiplications with subtotals and horizontal sums */
-			__m128i ve, vo, vavg;
+			__m128i ve;
+			__m128i vo;
+			__m128i vavg;
 			{
 				const __m128i v_factors = BGRX_V_FACTORS;
 				const __m128i ve1 =
@@ -1086,7 +1102,8 @@ static pstatus_t ssse3_LumaToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[],
                                     const UINT32 srcStep[], BYTE* WINPR_RESTRICT pDstRaw[],
                                     const UINT32 dstStep[], const RECTANGLE_16* WINPR_RESTRICT roi)
 {
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
@@ -1200,7 +1217,8 @@ static pstatus_t ssse3_ChromaFilter(BYTE* WINPR_RESTRICT pDst[], const UINT32 ds
 	const UINT32 halfHeight = (nHeight + 1) / 2;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
 	const UINT32 halfPad = halfWidth % 16;
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 
 	/* Filter */
 	for (y = roi->top; y < halfHeight + roi->top; y++)
@@ -1253,7 +1271,8 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw
 	const UINT32 mod = 16;
 	UINT32 uY = 0;
 	UINT32 vY = 0;
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
@@ -1349,7 +1368,8 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[3]
                                         const UINT32 dstStep[3],
                                         const RECTANGLE_16* WINPR_RESTRICT roi)
 {
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;

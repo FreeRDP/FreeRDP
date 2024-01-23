@@ -565,7 +565,8 @@ static BOOL test_line(HGDI_DC hdc, const gdiPalette* hPalette, UINT32 mX, UINT32
 int TestGdiLine(int argc, char* argv[])
 {
 	int rc = -1;
-	UINT32 x, i;
+	UINT32 x;
+	UINT32 i;
 	gdiPalette g;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
 	const UINT32 colorFormats[] = { PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_ARGB15, PIXEL_FORMAT_RGB16,

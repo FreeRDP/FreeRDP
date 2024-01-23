@@ -524,7 +524,8 @@ out:
 
 static int test_r1_inter_r3(void)
 {
-	REGION16 region, intersection;
+	REGION16 region;
+	REGION16 intersection;
 	int retCode = -1;
 	const RECTANGLE_16* rects;
 	UINT32 nbRects;
@@ -570,7 +571,8 @@ out:
 
 static int test_r1_r3_inter_r11(void)
 {
-	REGION16 region, intersection;
+	REGION16 region;
+	REGION16 intersection;
 	int retCode = -1;
 	const RECTANGLE_16* rects;
 	UINT32 nbRects;
@@ -629,10 +631,12 @@ out:
 
 static int test_norbert_case(void)
 {
-	REGION16 region, intersection;
+	REGION16 region;
+	REGION16 intersection;
 	int retCode = -1;
 	const RECTANGLE_16* rects;
-	UINT32 nbRects, i;
+	UINT32 nbRects;
+	UINT32 i;
 	RECTANGLE_16 inRectangles[5] = { { 1680, 0, 1920, 242 },
 		                             { 294, 242, 971, 776 },
 		                             { 1680, 242, 1920, 776 },
@@ -770,7 +774,8 @@ out:
 
 static int test_empty_rectangle(void)
 {
-	REGION16 region, intersection;
+	REGION16 region;
+	REGION16 intersection;
 	int retCode = -1;
 	int i;
 	RECTANGLE_16 emptyRectangles[3] = { { 0, 0, 0, 0 }, { 10, 10, 10, 11 }, { 10, 10, 11, 10 } };
@@ -840,7 +845,8 @@ static struct UnitaryTest tests[] = { { "Basic trivial tests", test_basic },
 
 int TestFreeRDPRegion(int argc, char* argv[])
 {
-	int i, testNb = 0;
+	int i;
+	int testNb = 0;
 	int retCode = -1;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

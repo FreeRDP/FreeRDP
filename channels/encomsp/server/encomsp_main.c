@@ -86,7 +86,8 @@ static UINT encomsp_recv_change_participant_control_level_pdu(EncomspServerConte
                                                               wStream* s,
                                                               ENCOMSP_ORDER_HEADER* header)
 {
-	int beg, end;
+	int beg;
+	int end;
 	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
 	UINT error = CHANNEL_RC_OK;
 	beg = ((int)Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;

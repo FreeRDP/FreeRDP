@@ -163,11 +163,14 @@ fail:
 static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	UINT32 surfaceX, surfaceY;
+	UINT32 surfaceX;
+	UINT32 surfaceY;
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* rects;
-	UINT32 i, nbRects;
-	double sx, sy;
+	UINT32 i;
+	UINT32 nbRects;
+	double sx;
+	double sy;
 	rdpUpdate* update;
 
 	WINPR_ASSERT(gdi);
@@ -400,7 +403,8 @@ static UINT gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* contex
 	gdiGfxSurface* surface;
 	REGION16 invalidRegion;
 	const RECTANGLE_16* rects;
-	UINT32 nrRects, x;
+	UINT32 nrRects;
+	UINT32 x;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cmd);
@@ -770,7 +774,9 @@ static BOOL gdi_apply_alpha(BYTE* data, UINT32 format, UINT32 stride, RECTANGLE_
 
 		for (UINT32 x = first ? rect->left + startOffsetX : rect->left; x < rect->right; x++)
 		{
-			BYTE r = 0, g = 0, b = 0;
+			BYTE r = 0;
+			BYTE g = 0;
+			BYTE b = 0;
 
 			if (written == count)
 				return TRUE;
@@ -797,7 +803,8 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
                                      const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT status = CHANNEL_RC_OK;
-	UINT16 alphaSig, compressed;
+	UINT16 alphaSig;
+	UINT16 compressed;
 	gdiGfxSurface* surface;
 	RECTANGLE_16 invalidRect;
 	wStream buffer;
@@ -842,7 +849,10 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 			for (UINT32 x = cmd->left; x < cmd->left + cmd->width; x++)
 			{
 				UINT32 color;
-				BYTE r, g, b, a;
+				BYTE r;
+				BYTE g;
+				BYTE b;
+				BYTE a;
 				BYTE* src = &line[x * FreeRDPGetBytesPerPixel(surface->format)];
 				Stream_Read_UINT8(s, a);
 				color = FreeRDPReadColor(src, surface->format);
@@ -936,7 +946,8 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* con
 	gdiGfxSurface* surface;
 	REGION16 invalidRegion;
 	const RECTANGLE_16* rects;
-	UINT32 nrRects, x;
+	UINT32 nrRects;
+	UINT32 x;
 	/**
 	 * Note: Since this comes via a Wire-To-Surface-2 PDU the
 	 * cmd's top/left/right/bottom/width/height members are always zero!
@@ -1315,7 +1326,8 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 	UINT status = ERROR_INTERNAL_ERROR;
 	UINT16 index;
 	BOOL sameSurface;
-	UINT32 nWidth, nHeight;
+	UINT32 nWidth;
+	UINT32 nHeight;
 	const RECTANGLE_16* rectSrc;
 	RECTANGLE_16 invalidRect;
 	gdiGfxSurface* surfaceSrc;

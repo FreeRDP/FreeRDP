@@ -77,7 +77,8 @@ void* winpr_aligned_recalloc(void* memblock, size_t num, size_t size, size_t ali
 
 void* winpr_aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 {
-	size_t header, alignsize;
+	size_t header;
+	size_t alignsize;
 	uintptr_t basesize;
 	void* base;
 	void* memblock;

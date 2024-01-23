@@ -161,7 +161,8 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 {
 	UINT32 i;
 	const rdpSettings* settings;
-	int startX, startY;
+	int startX;
+	int startY;
 	UINT32 width = window->width;
 	UINT32 height = window->height;
 
@@ -1112,7 +1113,8 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 
 void xf_UpdateWindowArea(xfContext* xfc, xfAppWindow* appWindow, int x, int y, int width,
                          int height)
 {
-	int ax, ay;
+	int ax;
+	int ay;
 	const rdpSettings* settings;
 
 	WINPR_ASSERT(xfc);

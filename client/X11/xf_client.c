@@ -880,7 +880,9 @@ static BOOL xf_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE* play_sou
 
 static void xf_check_extensions(xfContext* context)
 {
-	int xkb_opcode, xkb_event, xkb_error;
+	int xkb_opcode;
+	int xkb_event;
+	int xkb_error;
 	int xkb_major = XkbMajorVersion;
 	int xkb_minor = XkbMinorVersion;
 
@@ -914,12 +916,15 @@ static const size_t TEST_PTR_LEN = sizeof(TEST_PTR_STR) / sizeof(char);
 static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 {
 #ifdef WITH_XI
-	int opcode, event, error;
+	int opcode;
+	int event;
+	int error;
 	XDevice* ptr_dev;
 	XExtensionVersion* version;
 	XDeviceInfo* devices1;
 	XIDeviceInfo* devices2;
-	int i, num_devices;
+	int i;
+	int num_devices;
 
 	if (XQueryExtension(xfc->display, "XInputExtension", &opcode, &event, &error))
 	{
@@ -1683,7 +1688,8 @@ static void xf_TerminateEventHandler(void* context, const TerminateEventArgs* e)
 #ifdef WITH_XRENDER
 static void xf_ZoomingChangeEventHandler(void* context, const ZoomingChangeEventArgs* e)
 {
-	int w, h;
+	int w;
+	int h;
 	rdpSettings* settings;
 	xfContext* xfc = (xfContext*)context;
 
@@ -1876,7 +1882,8 @@ BOOL xf_setup_x11(xfContext* xfc)
 	{
 		Atom actual_type = 0;
 		int actual_format = 0;
-		unsigned long nitems = 0, after = 0;
+		unsigned long nitems = 0;
+		unsigned long after = 0;
 		unsigned char* data = NULL;
 		int status = LogTagAndXGetWindowProperty(
 		    TAG, xfc->display, RootWindowOfScreen(xfc->screen), xfc->_NET_SUPPORTED, 0, 1024, False,

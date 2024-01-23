@@ -5427,7 +5427,8 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
 	const UINT32 srcABits = FreeRDPGetBitsPerPixel(srcAFormat);
 	const UINT32 srcBBits = FreeRDPGetBitsPerPixel(srcBFormat);
 	UINT32 diff = fabs((double)srcABits - srcBBits);
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 
 	/* No support for 8bpp */
 	if ((srcABits < 15) || (srcBBits < 15))
@@ -5469,7 +5470,14 @@ static BOOL CompareBitmap(const BYTE* srcA, UINT32 srcAFormat, const BYTE* srcB,
 
 		for (x = 0; x < width; x++)
 		{
-			BYTE sR, sG, sB, sA, dR, dG, dB, dA;
+			BYTE sR;
+			BYTE sG;
+			BYTE sB;
+			BYTE sA;
+			BYTE dR;
+			BYTE dG;
+			BYTE dB;
+			BYTE dA;
 			const BYTE* a = &lineA[x * FreeRDPGetBytesPerPixel(srcAFormat)];
 			const BYTE* b = &lineB[x * FreeRDPGetBytesPerPixel(srcBFormat)];
 			UINT32 colorA = FreeRDPReadColor(a, srcAFormat);
@@ -5541,7 +5549,10 @@ fail:
 static BOOL RunTestPlanarSingleColor(BITMAP_PLANAR_CONTEXT* planar, const UINT32 srcFormat,
                                      const UINT32 dstFormat)
 {
-	UINT32 i, j, x, y;
+	UINT32 i;
+	UINT32 j;
+	UINT32 x;
+	UINT32 y;
 	BOOL rc = FALSE;
 	printf("%s: [%s] --> [%s]: ", __func__, FreeRDPGetColorFormatName(srcFormat),
 	       FreeRDPGetColorFormatName(dstFormat));

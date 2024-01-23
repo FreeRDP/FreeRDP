@@ -63,7 +63,9 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 {
 	HANDLE* threads;
 	struct test_params p;
-	DWORD dwStatus, expectedTrueCount, expectedFalseCount;
+	DWORD dwStatus;
+	DWORD expectedTrueCount;
+	DWORD expectedFalseCount;
 	DWORD i;
 	p.threadCount = 0;
 	p.trueCount = 0;

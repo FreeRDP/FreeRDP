@@ -226,7 +226,8 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 		break;
 		case REG_SZ:
 		{
-			size_t len, cmp;
+			size_t len;
+			size_t cmp;
 			char* end;
 			char* start = strchr(data, '"');
 			if (!start)

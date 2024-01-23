@@ -482,7 +482,10 @@ static int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 
 static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 {
-	int x = 0, y = 0, n, k;
+	int x = 0;
+	int y = 0;
+	int n;
+	int k;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
 	server = subsystem->common.server;
@@ -530,9 +533,12 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 	else
 	{
 		UINT32 mask;
-		int win_x, win_y;
-		int root_x, root_y;
-		Window root, child;
+		int win_x;
+		int win_y;
+		int root_x;
+		int root_y;
+		Window root;
+		Window child;
 		XLockDisplay(subsystem->display);
 
 		if (!XQueryPointer(subsystem->display, subsystem->root_window, &root, &child, &root_x,
@@ -606,7 +612,8 @@ static void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int
 
 static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 {
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 	UINT32 nXSrc;
 	UINT32 nYSrc;
 	INT64 nXDst;
@@ -617,7 +624,10 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	UINT32 nDstStep;
 	BYTE* pSrcData;
 	BYTE* pDstData;
-	BYTE A, R, G, B;
+	BYTE A;
+	BYTE R;
+	BYTE G;
+	BYTE B;
 	rdpShadowSurface* surface;
 
 	if (!subsystem)
@@ -754,8 +764,10 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 	int rc = 0;
 	size_t count;
 	int status = -1;
-	int x, y;
-	int width, height;
+	int x;
+	int y;
+	int width;
+	int height;
 	XImage* image;
 	rdpShadowServer* server;
 	rdpShadowSurface* surface;
@@ -1007,7 +1019,8 @@ static int x11_shadow_xfixes_init(x11ShadowSubsystem* subsystem)
 #ifdef WITH_XFIXES
 	int xfixes_event;
 	int xfixes_error;
-	int major, minor;
+	int major;
+	int minor;
 
 	if (!XFixesQueryExtension(subsystem->display, &xfixes_event, &xfixes_error))
 		return -1;
@@ -1035,7 +1048,8 @@ static int x11_shadow_xinerama_init(x11ShadowSubsystem* subsystem)
 		return -1;
 
 #if defined(WITH_XDAMAGE)
-	int major, minor;
+	int major;
+	int minor;
 	if (!XDamageQueryVersion(subsystem->display, &major, &minor))
 		return -1;
 #endif
@@ -1052,7 +1066,8 @@ static int x11_shadow_xinerama_init(x11ShadowSubsystem* subsystem)
 static int x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
 {
 #ifdef WITH_XDAMAGE
-	int major, minor;
+	int major;
+	int minor;
 	int damage_event;
 	int damage_error;
 
@@ -1091,7 +1106,8 @@ static int x11_shadow_xdamage_init(x11ShadowSubsystem* subsystem)
 static int x11_shadow_xshm_init(x11ShadowSubsystem* subsystem)
 {
 	Bool pixmaps;
-	int major, minor;
+	int major;
+	int minor;
 	XGCValues values;
 
 	if (!XShmQueryExtension(subsystem->display))
@@ -1183,7 +1199,8 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 #ifdef WITH_XINERAMA
 	{
 #if defined(WITH_XDAMAGE)
-		int major, minor;
+		int major;
+		int minor;
 #endif
 		int xinerama_event;
 		int xinerama_error;

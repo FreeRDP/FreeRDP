@@ -147,7 +147,9 @@ static UINT dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const ch
 static IWTSPlugin* dvcman_get_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name)
 {
 	IWTSPlugin* plugin = NULL;
-	size_t i, nc, pc;
+	size_t i;
+	size_t nc;
+	size_t pc;
 	WINPR_ASSERT(pEntryPoints);
 	DVCMAN* dvcman = ((DVCMAN_ENTRY_POINTS*)pEntryPoints)->dvcman;
 	if (!dvcman || !pEntryPoints || !name)

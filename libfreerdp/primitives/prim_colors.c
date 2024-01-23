@@ -34,7 +34,8 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const WINPR_R
                                                       UINT32 dstStep, UINT32 DstFormat,
                                                       const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 	BYTE* pRGB = pDst;
 	const INT16* pY = pSrc[0];
 	const INT16* pCb = pSrc[1];
@@ -47,7 +48,9 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const WINPR_R
 	{
 		for (x = 0; x < roi->width; x++)
 		{
-			INT16 R, G, B;
+			INT16 R;
+			INT16 G;
+			INT16 B;
 			const INT32 divisor = 16;
 			const INT32 Y = (INT32)((UINT32)((*pY++) + 4096) << divisor);
 			const INT32 Cb = (*pCb++);
@@ -76,7 +79,8 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* const WINP
                                                          UINT32 dstStep, UINT32 DstFormat,
                                                          const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 	BYTE* pRGB = pDst;
 	const INT16* pY = pSrc[0];
 	const INT16* pCb = pSrc[1];
@@ -90,7 +94,9 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* const WINP
 	{
 		for (x = 0; x < roi->width; x++)
 		{
-			INT64 R, G, B;
+			INT64 R;
+			INT64 G;
+			INT64 B;
 			const INT32 divisor = 16;
 			const INT32 Y = (INT32)((UINT32)((*pY++) + 4096) << divisor);
 			const INT32 Cb = (*pCb++);
@@ -172,7 +178,9 @@ general_yCbCrToRGB_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], INT32 
 			INT32 cy = (INT32)(*yptr++);
 			INT32 cb = (INT32)(*cbptr++);
 			INT32 cr = (INT32)(*crptr++);
-			INT64 r, g, b;
+			INT64 r;
+			INT64 g;
+			INT64 b;
 			/*
 			 * This is the slow floating point version kept here for reference.
 			 * y = y + 4096; // 128<<5=4096 so that we can scale the sum by>>5

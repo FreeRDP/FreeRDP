@@ -226,7 +226,10 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			char* p;
 			char* tok[4];
-			long x = -1, y = -1, w = -1, h = -1;
+			long x = -1;
+			long y = -1;
+			long w = -1;
+			long h = -1;
 			char* str = _strdup(arg->Value);
 
 			if (!str)
@@ -641,7 +644,8 @@ int shadow_server_start(rdpShadowServer* server)
 	                                    strnlen(bind_address, sizeof(bind_address))) != 0);
 	if (!ipc)
 	{
-		size_t x, count;
+		size_t x;
+		size_t count;
 		char** list = CommandLineParseCommaSeparatedValuesEx(NULL, server->ipcSocket, &count);
 		if (!list || (count <= 1))
 		{

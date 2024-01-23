@@ -1424,7 +1424,8 @@ static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 
 static BOOL rdp_write_logon_info_v2(wStream* s, logon_info* info)
 {
-	size_t domainLen, usernameLen;
+	size_t domainLen;
+	size_t usernameLen;
 
 	if (!Stream_EnsureRemainingCapacity(s, logonInfoV2TotalSize))
 		return FALSE;

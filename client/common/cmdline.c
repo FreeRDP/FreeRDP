@@ -1395,7 +1395,8 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 
 static UINT32 freerdp_get_keyboard_layout_for_type(const char* name, DWORD type)
 {
-	size_t count = 0, x;
+	size_t count = 0;
+	size_t x;
 	RDP_KEYBOARD_LAYOUT* layouts =
 	    freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD, &count);
 
@@ -1598,7 +1599,8 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int
 static void freerdp_client_print_keyboard_type_list(const char* msg, DWORD type)
 {
 
-	size_t x, count = 0;
+	size_t x;
+	size_t count = 0;
 	RDP_KEYBOARD_LAYOUT* layouts;
 	layouts = freerdp_keyboard_get_layouts(type, &count);
 
@@ -2136,7 +2138,8 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	size_t count, x;
+	size_t count;
+	size_t x;
 	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 	for (x = 0; x < count; x++)
 	{
@@ -2346,7 +2349,8 @@ static int parse_codec_cache_options(rdpSettings* settings, const COMMAND_LINE_A
 
 static BOOL check_kbd_remap_valid(const char* token)
 {
-	DWORD key, value;
+	DWORD key;
+	DWORD value;
 
 	WINPR_ASSERT(token);
 	/* The remapping is only allowed for scancodes, so maximum is 999=999 */
@@ -2545,7 +2549,8 @@ static int parse_size_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 
 	if (p)
 	{
-		unsigned long w, h;
+		unsigned long w;
+		unsigned long h;
 
 		if (!parseSizeValue(arg->Value, &w, &h) || (w > UINT16_MAX) || (h > UINT16_MAX))
 			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2691,7 +2696,8 @@ static int parse_smart_sizing_options(rdpSettings* settings, const COMMAND_LINE_
 
 	if (arg->Value)
 	{
-		unsigned long w, h;
+		unsigned long w;
+		unsigned long h;
 
 		if (!parseSizeValue(arg->Value, &w, &h) || (w > UINT16_MAX) || (h > UINT16_MAX))
 			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -2939,7 +2945,8 @@ static int parse_clipboard_options(rdpSettings* settings, const COMMAND_LINE_ARG
 			char** p;
 			const char** pc;
 		} ptr;
-		size_t count, x;
+		size_t count;
+		size_t x;
 		ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 		for (x = 0; (x < count) && (rc == 0); x++)
 		{
@@ -3105,7 +3112,8 @@ static int parse_sec_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	size_t count = 0, x;
+	size_t count = 0;
+	size_t x;
 	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 	if (count == 0)
 		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
@@ -3224,7 +3232,8 @@ static int parse_cert_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		char** p;
 		const char** pc;
 	} ptr;
-	size_t count, x;
+	size_t count;
+	size_t x;
 	ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 	for (x = 0; (x < count) && (rc == 0); x++)
 	{
@@ -3521,7 +3530,8 @@ static int parse_tune_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	size_t x, count;
+	size_t x;
+	size_t count;
 	union
 	{
 		char** p;
@@ -4558,7 +4568,8 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 		}
 		CommandLineSwitchCase(arg, "window-position")
 		{
-			unsigned long x, y;
+			unsigned long x;
+			unsigned long y;
 
 			if (!arg->Value)
 				return COMMAND_LINE_ERROR_MISSING_ARGUMENT;

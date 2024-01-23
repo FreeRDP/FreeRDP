@@ -243,7 +243,9 @@ int xf_input_init(xfContext* xfc, Window window)
 {
 	int major = XI_2_Major;
 	int minor = XI_2_Minor;
-	int opcode = 0, event = 0, error = 0;
+	int opcode = 0;
+	int event = 0;
+	int error = 0;
 
 	WINPR_ASSERT(xfc);
 
@@ -656,7 +658,8 @@ static void xf_input_show_cursor(xfContext* xfc)
 
 static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 {
-	int x, y;
+	int x;
+	int y;
 	int touchId;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
@@ -689,7 +692,8 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 
 static BOOL xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype, int deviceid)
 {
-	int x, y;
+	int x;
+	int y;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)

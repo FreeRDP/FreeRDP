@@ -428,7 +428,8 @@ static int IniFile_Load(wIniFile* ini)
 	char* name;
 	char* value;
 	char* separator;
-	char *beg, *end;
+	char* beg;
+	char* end;
 	wIniFileSection* section = NULL;
 
 	WINPR_ASSERT(ini);

@@ -46,9 +46,16 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 	for (x = 0; x < size; x++)
 	{
 		const double maxDiff = 4.0;
-		UINT32 sColor, dColor;
-		BYTE sR, sG, sB, sA;
-		BYTE dR, dG, dB, dA;
+		UINT32 sColor;
+		UINT32 dColor;
+		BYTE sR;
+		BYTE sG;
+		BYTE sB;
+		BYTE sA;
+		BYTE dR;
+		BYTE dG;
+		BYTE dB;
+		BYTE dA;
 		sColor = FreeRDPReadColor(src, format);
 		dColor = FreeRDPReadColor(dst, format);
 		src += bpp;
@@ -179,8 +186,11 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 		const BYTE** cpv;
 		BYTE** pv;
 	} cnv;
-	UINT32 x, y, i;
-	UINT32 awidth, aheight;
+	UINT32 x;
+	UINT32 y;
+	UINT32 i;
+	UINT32 awidth;
+	UINT32 aheight;
 	BOOL rc = FALSE;
 	BYTE* luma[3] = { 0 };
 	BYTE* chroma[3] = { 0 };
@@ -385,14 +395,17 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 		BYTE** pv;
 	} cnv;
 	BOOL res = FALSE;
-	UINT32 x, y;
-	UINT32 awidth, aheight;
+	UINT32 x;
+	UINT32 y;
+	UINT32 awidth;
+	UINT32 aheight;
 	BYTE* yuv[3] = { 0 };
 	UINT32 yuv_step[3];
 	BYTE* rgb = NULL;
 	BYTE* rgb_dst = NULL;
 	size_t size;
-	size_t uvsize, uvwidth;
+	size_t uvsize;
+	size_t uvwidth;
 	size_t padding = 100 * 16;
 	UINT32 stride;
 	const UINT32 formats[] = { PIXEL_FORMAT_XRGB32, PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_ARGB32,
@@ -681,8 +694,11 @@ static BOOL compare_yuv420(BYTE** planesA, BYTE** planesB, UINT32 width, UINT32 
 static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, UINT32 version)
 {
 	BOOL res = FALSE;
-	UINT32 x, y, cnt;
-	UINT32 awidth, aheight;
+	UINT32 x;
+	UINT32 y;
+	UINT32 cnt;
+	UINT32 awidth;
+	UINT32 aheight;
 	BYTE* luma[3] = { 0 };
 	BYTE* chroma[3] = { 0 };
 	BYTE* lumaGeneric[3] = { 0 };
@@ -690,10 +706,12 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 	UINT32 yuv_step[3];
 	BYTE* rgb = NULL;
 	size_t size;
-	size_t uvsize, uvwidth;
+	size_t uvsize;
+	size_t uvwidth;
 	const size_t padding = 0x1000;
 	UINT32 stride;
-	__RGBToAVC444YUV_t fkt, gen;
+	__RGBToAVC444YUV_t fkt;
+	__RGBToAVC444YUV_t gen;
 	const UINT32 formats[] = { PIXEL_FORMAT_XRGB32, PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_ARGB32,
 		                       PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_RGBX32,
 		                       PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };

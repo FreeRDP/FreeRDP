@@ -60,7 +60,9 @@ POD_ARRAYS_IMPL(BasicStruct, basicstruct)
 
 int TestPodArrays(int argc, char* argv[])
 {
-	UINT32 i, sum, foreach_index;
+	UINT32 i;
+	UINT32 sum;
+	UINT32 foreach_index;
 	ArrayUINT32 uint32s;
 	UINT32* ptr;
 	const UINT32* cptr;

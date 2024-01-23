@@ -332,7 +332,8 @@ static BOOL test_gdi_GetPixel(void)
 
 	for (x = 0; x < colorFormatCount; x++)
 	{
-		UINT32 i, j;
+		UINT32 i;
+		UINT32 j;
 		UINT32 bpp;
 		HGDI_DC hdc;
 		UINT32 width = 128;
@@ -393,7 +394,9 @@ static BOOL test_gdi_SetPixel(void)
 
 	for (x = 0; x < colorFormatCount; x++)
 	{
-		UINT32 i, j, bpp;
+		UINT32 i;
+		UINT32 j;
+		UINT32 bpp;
 		HGDI_DC hdc;
 		UINT32 width = 128;
 		UINT32 height = 64;

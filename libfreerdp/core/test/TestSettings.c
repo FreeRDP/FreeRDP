@@ -442,7 +442,9 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 	int test_rounds = 100;
 	BOOL res = FALSE;
 	rdpSettings* settings = NULL;
-	SSIZE_T rc, tkey, type;
+	SSIZE_T rc;
+	SSIZE_T tkey;
+	SSIZE_T type;
 	size_t x;
 	const size_t clear_keys[] = { FreeRDP_RdpServerCertificate,
 		                          FreeRDP_RdpServerRsaKey,
@@ -527,7 +529,8 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 	do
 	{
 		UINT16 intEntryType = 0;
-		BOOL expect, have;
+		BOOL expect;
+		BOOL have;
 		char value[8192] = { 0 };
 		union
 		{

@@ -9,7 +9,9 @@ int TestVersion(int argc, char* argv[])
 	const char* version;
 	const char* git;
 	const char* build;
-	int major = 0, minor = 0, revision = 0;
+	int major = 0;
+	int minor = 0;
+	int revision = 0;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	winpr_get_version(&major, &minor, &revision);

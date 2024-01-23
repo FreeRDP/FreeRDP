@@ -179,7 +179,8 @@ static BOOL log_recursion(LPCSTR file, LPCSTR fkt, size_t line)
 {
 	BOOL status = FALSE;
 	char** msg = NULL;
-	size_t used, i;
+	size_t used;
+	size_t i;
 	void* bt = winpr_backtrace(20);
 #if defined(ANDROID)
 	LPCSTR tag = WINPR_TAG("utils.wlog");
@@ -741,7 +742,8 @@ BOOL WLog_ParseFilters(wLog* root)
 
 LONG WLog_GetFilterLogLevel(wLog* log)
 {
-	DWORD i, j;
+	DWORD i;
+	DWORD j;
 	BOOL match = FALSE;
 
 	if (log->FilterLevel >= 0)

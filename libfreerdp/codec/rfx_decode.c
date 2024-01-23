@@ -72,7 +72,9 @@ BOOL rfx_decode_rgb(RFX_CONTEXT* context, const RFX_TILE* tile, BYTE* rgb_buffer
 	BOOL rc = TRUE;
 	BYTE* pBuffer;
 	INT16* pSrcDst[3];
-	UINT32 *y_quants, *cb_quants, *cr_quants;
+	UINT32* y_quants;
+	UINT32* cb_quants;
+	UINT32* cr_quants;
 	static const prim_size_t roi_64x64 = { 64, 64 };
 	const primitives_t* prims = primitives_get();
 	PROFILER_ENTER(context->priv->prof_rfx_decode_rgb)

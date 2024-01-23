@@ -100,8 +100,14 @@ static char* gdi_convert_postfix_to_infix(const char* postfix)
 	size_t length;
 	BOOL unary;
 	wStack* stack;
-	size_t al, bl, cl, dl;
-	char *a, *b, *c, *d;
+	size_t al;
+	size_t bl;
+	size_t cl;
+	size_t dl;
+	char* a;
+	char* b;
+	char* c;
+	char* d;
 	bl = cl = dl = 0;
 	stack = Stack_New(FALSE);
 	length = strlen(postfix);

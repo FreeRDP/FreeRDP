@@ -1003,7 +1003,8 @@ BOOL freerdp_certificate_read_server_cert(rdpCertificate* certificate, const BYT
                                           size_t length)
 {
 	BOOL ret = FALSE;
-	wStream *s, sbuffer;
+	wStream* s;
+	wStream sbuffer;
 	UINT32 dwVersion = 0;
 
 	WINPR_ASSERT(certificate);

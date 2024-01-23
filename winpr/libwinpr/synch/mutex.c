@@ -69,7 +69,8 @@ BOOL MutexCloseHandle(HANDLE handle)
 		         winpr_strerror(rc, ebuffer, sizeof(ebuffer)), rc);
 #if defined(WITH_DEBUG_MUTEX)
 		{
-			size_t used = 0, i;
+			size_t used = 0;
+			size_t i;
 			void* stack = winpr_backtrace(20);
 			char** msg = NULL;
 

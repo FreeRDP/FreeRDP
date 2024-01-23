@@ -170,7 +170,8 @@ static UINT rdpgfx_decode_AVC444(RDPGFX_PLUGIN* gfx, RDPGFX_SURFACE_COMMAND* cmd
 {
 	UINT error = 0;
 	UINT32 tmp = 0;
-	size_t pos1 = 0, pos2 = 0;
+	size_t pos1 = 0;
+	size_t pos2 = 0;
 
 	RDPGFX_AVC444_BITMAP_STREAM h264 = { 0 };
 	RdpgfxClientContext* context = gfx->context;

@@ -65,9 +65,14 @@ static void freerdp_rgndata_reset(FREERDP_RGNDATA* data)
 
 static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERDP_RGNDATA* rgndata)
 {
-	UINT32 dwSize, iType;
-	INT32 right, bottom;
-	INT32 x, y, w, h;
+	UINT32 dwSize;
+	UINT32 iType;
+	INT32 right;
+	INT32 bottom;
+	INT32 x;
+	INT32 y;
+	INT32 w;
+	INT32 h;
 
 	if (len < 32)
 	{
@@ -157,12 +162,14 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
  */
 static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	UINT32 length, cbGeometryBuffer;
+	UINT32 length;
+	UINT32 cbGeometryBuffer;
 	MAPPED_GEOMETRY* mappedGeometry;
 	GEOMETRY_PLUGIN* geometry;
 	GeometryClientContext* context;
 	UINT ret = CHANNEL_RC_OK;
-	UINT32 updateType, geometryType;
+	UINT32 updateType;
+	UINT32 geometryType;
 	UINT64 id;
 	wLog* logger;
 

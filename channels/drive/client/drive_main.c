@@ -886,7 +886,8 @@ static void drive_message_free(void* obj)
 static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, const char* name,
                                       const char* path, BOOL automount)
 {
-	size_t i, length;
+	size_t i;
+	size_t length;
 	DRIVE_DEVICE* drive;
 	UINT error = ERROR_INTERNAL_ERROR;
 

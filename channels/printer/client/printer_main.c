@@ -156,7 +156,8 @@ static BOOL printer_config_valid(const char* path)
 
 static BOOL printer_read_setting(const char* path, prn_conf_t type, void** data, UINT32* length)
 {
-	DWORD lowSize, highSize;
+	DWORD lowSize;
+	DWORD highSize;
 	DWORD read = 0;
 	BOOL rc = FALSE;
 	HANDLE file;
@@ -394,7 +395,8 @@ static BOOL printer_save_default_config(const rdpSettings* settings, rdpPrinter*
 	BOOL res = FALSE;
 	WCHAR* wname = NULL;
 	WCHAR* driver = NULL;
-	size_t wlen, dlen;
+	size_t wlen;
+	size_t dlen;
 	char* path = NULL;
 
 	if (!settings || !printer || !printer->name || !printer->driver)
@@ -715,8 +717,13 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 				case RDPDR_ADD_PRINTER_EVENT:
 				{
 					char PortDosName[8];
-					UINT32 PnPNameLen, DriverNameLen, PrintNameLen, CacheFieldsLen;
-					const WCHAR *PnPName, *DriverName, *PrinterName;
+					UINT32 PnPNameLen;
+					UINT32 DriverNameLen;
+					UINT32 PrintNameLen;
+					UINT32 CacheFieldsLen;
+					const WCHAR* PnPName;
+					const WCHAR* DriverName;
+					const WCHAR* PrinterName;
 					const BYTE* CachedPrinterConfigData;
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
@@ -762,7 +769,8 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 
 				case RDPDR_UPDATE_PRINTER_EVENT:
 				{
-					UINT32 PrinterNameLen, ConfigDataLen;
+					UINT32 PrinterNameLen;
+					UINT32 ConfigDataLen;
 					const WCHAR* PrinterName;
 					const BYTE* ConfigData;
 
@@ -811,7 +819,8 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 
 				case RDPDR_RENAME_PRINTER_EVENT:
 				{
-					UINT32 OldPrinterNameLen, NewPrinterNameLen;
+					UINT32 OldPrinterNameLen;
+					UINT32 NewPrinterNameLen;
 					const WCHAR* OldPrinterName;
 					const WCHAR* NewPrinterName;
 

@@ -97,7 +97,8 @@ static UwacReturnCode set_cursor_image(UwacSeat* seat, uint32_t serial)
 	struct wl_cursor* cursor;
 	struct wl_cursor_image* image = NULL;
 	struct wl_surface* surface = NULL;
-	int32_t x = 0, y = 0;
+	int32_t x = 0;
+	int32_t y = 0;
 
 	if (!seat || !seat->display || !seat->default_cursor || !seat->default_cursor->images)
 		return UWAC_ERROR_INTERNAL;
@@ -362,7 +363,8 @@ static void keyboard_handle_key(void* data, struct wl_keyboard* keyboard, uint32
 	UwacWindow* window = input->keyboard_focus;
 	UwacKeyEvent* keyEvent;
 
-	uint32_t code, num_syms;
+	uint32_t code;
+	uint32_t num_syms;
 	enum wl_keyboard_key_state state = state_w;
 	const xkb_keysym_t* syms;
 	xkb_keysym_t sym;

@@ -147,7 +147,8 @@ static wListDictionary* g_ProtectedMemoryBlocks = NULL;
 BOOL CryptProtectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 {
 	BYTE* pCipherText;
-	size_t cbOut, cbFinal;
+	size_t cbOut;
+	size_t cbFinal;
 	WINPR_CIPHER_CTX* enc = NULL;
 	BYTE randomKey[256] = { 0 };
 	WINPR_PROTECTED_MEMORY_BLOCK* pMemBlock;
@@ -210,7 +211,8 @@ out:
 BOOL CryptUnprotectMemory(LPVOID pData, DWORD cbData, DWORD dwFlags)
 {
 	BYTE* pPlainText = NULL;
-	size_t cbOut, cbFinal;
+	size_t cbOut;
+	size_t cbFinal;
 	WINPR_CIPHER_CTX* dec = NULL;
 	WINPR_PROTECTED_MEMORY_BLOCK* pMemBlock = NULL;
 

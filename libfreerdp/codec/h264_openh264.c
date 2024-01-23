@@ -182,7 +182,8 @@ static int openh264_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 
 static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UINT32* iStride,
                              BYTE** ppDstData, UINT32* pDstSize)
 {
-	int i, j;
+	int i;
+	int j;
 	int status;
 	SFrameBSInfo info = { 0 };
 	SSourcePicture pic = { 0 };

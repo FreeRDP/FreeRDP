@@ -100,7 +100,8 @@ struct s_http_response
 
 static char* string_strnstr(char* str1, const char* str2, size_t slen)
 {
-	char c, sc;
+	char c;
+	char sc;
 	size_t len;
 
 	if ((c = *str2++) != '\0')
@@ -556,7 +557,8 @@ static BOOL http_encode_print(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	char* str;
 	va_list ap;
-	int length, used;
+	int length;
+	int used;
 
 	if (!s || !fmt)
 		return FALSE;

@@ -836,7 +836,9 @@ BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* pas
 	WINPR_CIPHER_CTX* rc4Ctx = NULL;
 	BYTE* pbIn = NULL;
 	BYTE* pbOut = NULL;
-	size_t cbOut, cbIn, cbFinal;
+	size_t cbOut;
+	size_t cbIn;
+	size_t cbFinal;
 	WCHAR* PasswordW = ConvertUtf8ToWCharAlloc(password, &cbPasswordW);
 	WCHAR* PassStubW = ConvertUtf8ToWCharAlloc(passStub, &cbPassStubW);
 
@@ -907,7 +909,9 @@ static BOOL freerdp_assistance_decrypt2(rdpAssistanceFile* file)
 	WCHAR* PasswordW = NULL;
 	BYTE* pbIn = NULL;
 	BYTE* pbOut = NULL;
-	size_t cbOut, cbIn, cbFinal;
+	size_t cbOut;
+	size_t cbIn;
+	size_t cbFinal;
 	BYTE DerivedKey[WINPR_AES_BLOCK_SIZE] = { 0 };
 	BYTE InitializationVector[WINPR_AES_BLOCK_SIZE] = { 0 };
 	BYTE PasswordHash[WINPR_SHA1_DIGEST_LENGTH] = { 0 };

@@ -92,7 +92,8 @@ size_t server_audin_get_formats(AUDIO_FORMAT** dst_formats)
 		{ WAVE_FORMAT_ALAW, 1, 22050, 22050, 2, 8, 0, NULL }
 	};
 	const size_t nrDefaultFormatsMax = ARRAYSIZE(default_supported_audio_formats);
-	size_t x, nr_formats = 0;
+	size_t x;
+	size_t nr_formats = 0;
 	AUDIO_FORMAT* formats = audio_formats_new(nrDefaultFormatsMax);
 
 	if (!dst_formats)
@@ -125,7 +126,8 @@ fail:
 
 size_t server_rdpsnd_get_formats(AUDIO_FORMAT** dst_formats)
 {
-	size_t x, y = 0;
+	size_t x;
+	size_t y = 0;
 	/* Default supported audio formats */
 	static const AUDIO_FORMAT default_supported_audio_formats[] = {
 		{ WAVE_FORMAT_AAC_MS, 2, 44100, 176400, 4, 16, 0, NULL },

@@ -29,7 +29,8 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 	BYTE* out_sse = NULL;
 	BYTE* in = NULL;
 	BYTE* out_c = NULL;
-	UINT32 i, x;
+	UINT32 i;
+	UINT32 x;
 	const UINT32 srcStride = width * 4;
 	const UINT32 size = srcStride * height;
 	const UINT32 formats[] = { PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_RGBA32,
@@ -120,7 +121,8 @@ int TestPrimitivesYCoCg(int argc, char* argv[])
 
 		for (x = 0; x < 10; x++)
 		{
-			UINT32 w, h;
+			UINT32 w;
+			UINT32 h;
 
 			do
 			{

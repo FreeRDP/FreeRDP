@@ -155,7 +155,8 @@ static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
 static INLINE BOOL diff_tile(const RECTANGLE_16* regionRect, BYTE* pYUVData[3],
                              BYTE* pOldYUVData[3], UINT32 const iStride[3])
 {
-	size_t size, y;
+	size_t size;
+	size_t y;
 	if (!regionRect || !pYUVData || !pOldYUVData || !iStride)
 		return FALSE;
 	size = regionRect->right - regionRect->left;
@@ -189,7 +190,9 @@ static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE
                            BYTE* pYUVData[3], BYTE* pOldYUVData[3], UINT32 const iStride[3],
                            RDPGFX_H264_METABLOCK* meta)
 {
-	size_t count = 0, wc, hc;
+	size_t count = 0;
+	size_t wc;
+	size_t hc;
 	RECTANGLE_16* rectangles;
 
 	if (!regionRect || !pYUVData || !pOldYUVData || !iStride || !meta)
@@ -207,7 +210,8 @@ static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE
 	}
 	else
 	{
-		size_t x, y;
+		size_t x;
+		size_t y;
 		for (y = regionRect->top; y < regionRect->bottom; y += 64)
 		{
 			for (x = regionRect->left; x < regionRect->right; x += 64)

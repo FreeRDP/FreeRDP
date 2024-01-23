@@ -364,7 +364,8 @@ out:
 
 int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, int argc, char* argv[])
 {
-	int status, x;
+	int status;
+	int x;
 	int ret = -1;
 	char* filename;
 	char* password = NULL;
@@ -1514,7 +1515,8 @@ BOOL freerdp_client_send_wheel_event(rdpClientContext* cctx, UINT16 mflags)
 	{
 		UINT rc;
 		UINT64 flags = 0;
-		INT32 x = 0, y = 0;
+		INT32 x = 0;
+		INT32 y = 0;
 		INT32 value = mflags & 0xFF;
 
 		if (mflags & PTR_FLAGS_WHEEL_NEGATIVE)

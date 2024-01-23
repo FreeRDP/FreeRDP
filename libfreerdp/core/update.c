@@ -2055,7 +2055,9 @@ static BOOL update_send_create_offscreen_bitmap_order(
     rdpContext* context, const CREATE_OFFSCREEN_BITMAP_ORDER* create_offscreen_bitmap)
 {
 	wStream* s;
-	size_t bm, em, inf;
+	size_t bm;
+	size_t em;
+	size_t inf;
 	BYTE orderType;
 	BYTE controlFlags;
 	size_t headerLength;
@@ -2098,7 +2100,9 @@ static BOOL update_send_switch_surface_order(rdpContext* context,
                                              const SWITCH_SURFACE_ORDER* switch_surface)
 {
 	wStream* s;
-	size_t bm, em, inf;
+	size_t bm;
+	size_t em;
+	size_t inf;
 	BYTE orderType;
 	BYTE controlFlags;
 	size_t headerLength;

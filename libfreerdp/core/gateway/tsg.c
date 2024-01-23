@@ -1736,7 +1736,8 @@ static BOOL TsProxyAuthorizeTunnelReadResponse(wLog* log, RPC_PDU* pdu)
 	UINT32 SwitchValue;
 	UINT32 index = 0;
 	TSG_PACKET packet = { 0 };
-	UINT32 PacketPtr = 0, PacketResponsePtr = 0;
+	UINT32 PacketPtr = 0;
+	UINT32 PacketResponsePtr = 0;
 	if (!pdu)
 		return FALSE;
 
@@ -1858,7 +1859,8 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 	TSG_PACKET_MSG_RESPONSE packetMsgResponse = { 0 };
 	TSG_PACKET_STRING_MESSAGE packetStringMessage = { 0 };
 	TSG_PACKET_REAUTH_MESSAGE packetReauthMessage = { 0 };
-	UINT32 PacketPtr = 0, PacketMsgResponsePtr = 0;
+	UINT32 PacketPtr = 0;
+	UINT32 PacketMsgResponsePtr = 0;
 
 	WINPR_ASSERT(tsg);
 	WINPR_ASSERT(tsg->rpc);

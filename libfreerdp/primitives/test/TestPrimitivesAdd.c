@@ -23,9 +23,10 @@ static BOOL test_add16s_func(void)
 {
 	pstatus_t status;
 
-	INT16 ALIGN(src1[FUNC_TEST_SIZE + 3]) = { 0 }, ALIGN(src2[FUNC_TEST_SIZE + 3]) = { 0 },
-	                                  ALIGN(d1[FUNC_TEST_SIZE + 3]) = { 0 },
-	                                  ALIGN(d2[FUNC_TEST_SIZE + 3]) = { 0 };
+	INT16 ALIGN(src1[FUNC_TEST_SIZE + 3]) = { 0 };
+	INT16 ALIGN(src2[FUNC_TEST_SIZE + 3]) = { 0 };
+	INT16 ALIGN(d1[FUNC_TEST_SIZE + 3]) = { 0 };
+	INT16 ALIGN(d2[FUNC_TEST_SIZE + 3]) = { 0 };
 
 	winpr_RAND(src1, sizeof(src1));
 	winpr_RAND(src2, sizeof(src2));
@@ -44,8 +45,9 @@ static BOOL test_add16s_func(void)
 /* ------------------------------------------------------------------------- */
 static BOOL test_add16s_speed(void)
 {
-	BYTE ALIGN(src1[MAX_TEST_SIZE + 3]), ALIGN(src2[MAX_TEST_SIZE + 3]),
-	    ALIGN(dst[MAX_TEST_SIZE + 3]);
+	BYTE ALIGN(src1[MAX_TEST_SIZE + 3]);
+	BYTE ALIGN(src2[MAX_TEST_SIZE + 3]);
+	BYTE ALIGN(dst[MAX_TEST_SIZE + 3]);
 
 	if (!g_TestPrimitivesPerformance)
 		return TRUE;

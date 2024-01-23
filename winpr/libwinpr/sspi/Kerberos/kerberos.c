@@ -574,7 +574,8 @@ cleanup:
 
 static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb5_data* ticket)
 {
-	WinPrAsn1Decoder dec, dec2;
+	WinPrAsn1Decoder dec;
+	WinPrAsn1Decoder dec2;
 	BOOL error;
 	WinPrAsn1_tagId tag;
 	WinPrAsn1_INTEGER val;
@@ -1331,7 +1332,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 
 	if (ulAttribute == SECPKG_ATTR_SIZES)
 	{
-		UINT header, pad, trailer;
+		UINT header;
+		UINT pad;
+		UINT trailer;
 		krb5glue_key key;
 		KRB_CONTEXT* context = get_context(phContext);
 		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*)pBuffer;
@@ -1484,7 +1487,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer, data_buffer;
+	PSecBuffer sig_buffer;
+	PSecBuffer data_buffer;
 	BYTE* header;
 	BYTE flags = 0;
 	krb5glue_key key;
@@ -1570,7 +1574,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer, data_buffer;
+	PSecBuffer sig_buffer;
+	PSecBuffer data_buffer;
 	krb5glue_key key;
 	krb5_keyusage usage;
 	char* header;
@@ -1669,7 +1674,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer, data_buffer;
+	PSecBuffer sig_buffer;
+	PSecBuffer data_buffer;
 	krb5glue_key key;
 	krb5_keyusage usage;
 	char* header;
@@ -1737,7 +1743,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
                                                           ULONG MessageSeqNo, ULONG* pfQOP)
 {
 #ifdef WITH_KRB5
-	PSecBuffer sig_buffer, data_buffer;
+	PSecBuffer sig_buffer;
+	PSecBuffer data_buffer;
 	krb5glue_key key;
 	krb5_keyusage usage;
 	char* header;

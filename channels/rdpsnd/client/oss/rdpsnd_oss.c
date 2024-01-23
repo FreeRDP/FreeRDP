@@ -300,7 +300,8 @@ static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 {
 	int vol;
 	UINT32 dwVolume;
-	UINT16 dwVolumeLeft, dwVolumeRight;
+	UINT16 dwVolumeLeft;
+	UINT16 dwVolumeRight;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 	/* On error return 50% volume. */
 	dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
@@ -324,7 +325,8 @@ static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 
 static BOOL rdpsnd_oss_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
-	int left, right;
+	int left;
+	int right;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->mixer_handle == -1)
@@ -387,7 +389,8 @@ static UINT rdpsnd_oss_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)
 {
 	int status;
-	char *str_num, *eptr;
+	char* str_num;
+	char* eptr;
 	DWORD flags;
 	const COMMAND_LINE_ARGUMENT_A* arg;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;

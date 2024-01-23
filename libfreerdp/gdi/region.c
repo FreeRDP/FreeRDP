@@ -74,7 +74,8 @@ static char* gdi_regn_str(char* buffer, size_t size, const HGDI_RGN rgn)
 
 HGDI_RGN gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, INT32 nBottomRect)
 {
-	INT64 w, h;
+	INT64 w;
+	INT64 h;
 	HGDI_RGN hRgn;
 
 	w = nRightRect - nLeftRect + 1ll;
@@ -141,7 +142,8 @@ HGDI_RECT gdi_CreateRect(INT32 xLeft, INT32 yTop, INT32 xRight, INT32 yBottom)
 BOOL gdi_RectToRgn(const HGDI_RECT rect, HGDI_RGN rgn)
 {
 	BOOL rc = TRUE;
-	INT64 w, h;
+	INT64 w;
+	INT64 h;
 	w = rect->right - rect->left + 1ll;
 	h = rect->bottom - rect->top + 1ll;
 
@@ -176,7 +178,8 @@ BOOL gdi_RectToRgn(const HGDI_RECT rect, HGDI_RGN rgn)
 BOOL gdi_CRectToRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, HGDI_RGN rgn)
 {
 	BOOL rc = TRUE;
-	INT64 w, h;
+	INT64 w;
+	INT64 h;
 	w = right - left + 1ll;
 	h = bottom - top + 1ll;
 
@@ -253,7 +256,8 @@ BOOL gdi_RectToCRgn(const HGDI_RECT rect, INT32* x, INT32* y, INT32* w, INT32* h
 BOOL gdi_CRectToCRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, INT32* x, INT32* y, INT32* w,
                      INT32* h)
 {
-	INT64 wl, hl;
+	INT64 wl;
+	INT64 hl;
 	BOOL rc = TRUE;
 	wl = right - left + 1ll;
 	hl = bottom - top + 1ll;
@@ -285,7 +289,8 @@ BOOL gdi_CRectToCRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, INT32* x,
 
 BOOL gdi_RgnToRect(const HGDI_RGN rgn, HGDI_RECT rect)
 {
-	INT64 r, b;
+	INT64 r;
+	INT64 b;
 	BOOL rc = TRUE;
 	r = rgn->x + rgn->w - 1ll;
 	b = rgn->y + rgn->h - 1ll;

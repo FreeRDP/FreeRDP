@@ -72,7 +72,9 @@ finish:
 static int testTimeout(int port)
 {
 	const DWORD timeout = 200;
-	DWORD start, end, diff;
+	DWORD start;
+	DWORD end;
+	DWORD diff;
 	char arg1[] = "/v:192.0.2.1:XXXXX";
 	char* argv[] = { "test", "/v:192.0.2.1:XXXXX" };
 	int rc;
@@ -123,7 +125,9 @@ static DWORD WINAPI testThread(LPVOID arg)
 static int testAbort(int port)
 {
 	DWORD status;
-	DWORD start, end, diff;
+	DWORD start;
+	DWORD end;
+	DWORD diff;
 	HANDLE thread;
 	struct testThreadArgs args;
 	freerdp* instance = NULL;

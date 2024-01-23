@@ -56,8 +56,10 @@
 int xf_list_monitors(xfContext* xfc)
 {
 	Display* display;
-	int major, minor;
-	int i, nmonitors = 0;
+	int major;
+	int minor;
+	int i;
+	int nmonitors = 0;
 	display = XOpenDisplay(NULL);
 
 	if (!display)
@@ -144,12 +146,15 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	BOOL primaryMonitorFound = FALSE;
 	VIRTUAL_SCREEN* vscreen = NULL;
 	rdpSettings* settings = NULL;
-	int mouse_x = 0, mouse_y = 0, _dummy_i = 0;
+	int mouse_x = 0;
+	int mouse_y = 0;
+	int _dummy_i = 0;
 	Window _dummy_w = 0;
 	int current_monitor = 0;
 	Screen* screen = NULL;
 #if defined WITH_XINERAMA || defined WITH_XRANDR
-	int major = 0, minor = 0;
+	int major = 0;
+	int minor = 0;
 #endif
 #if defined(USABLE_XRANDR)
 	XRRMonitorInfo* rrmonitors = NULL;
@@ -429,7 +434,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 			if (useXRandr && rrmonitors)
 			{
-				Rotation rot, ret;
+				Rotation rot;
+				Rotation ret;
 				attrs = &monitor->attributes;
 				attrs->physicalWidth = rrmonitors[i].mwidth;
 				attrs->physicalHeight = rrmonitors[i].mheight;
@@ -457,7 +463,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	 * to go fullscreen on the current monitor only */
 	if (nmonitors == 0 && vscreen->nmonitors > 0)
 	{
-		INT32 width, height;
+		INT32 width;
+		INT32 height;
 		if (!vscreen->monitors)
 			goto fail;
 

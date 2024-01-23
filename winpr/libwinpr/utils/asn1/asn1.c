@@ -390,8 +390,11 @@ BOOL WinPrAsn1EncContextualOctetStringContainer(WinPrAsn1Encoder* enc, WinPrAsn1
 
 size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc)
 {
-	size_t innerLen, i, unused;
-	size_t innerHeaderBytes, outerHeaderBytes;
+	size_t innerLen;
+	size_t i;
+	size_t unused;
+	size_t innerHeaderBytes;
+	size_t outerHeaderBytes;
 	BYTE containerByte = 0;
 	WinPrAsn1EncContainer* container;
 	Asn1Chunk* chunk;
@@ -578,7 +581,8 @@ static size_t WinPrAsn1EncContextualIntegerLike(WinPrAsn1Encoder* enc, WinPrAsn1
 {
 	wStream staticS;
 	wStream* s = &staticS;
-	size_t len, outLen;
+	size_t len;
+	size_t outLen;
 
 	WINPR_ASSERT(enc);
 	WINPR_ASSERT_VALID_TAG(tagId);
@@ -711,7 +715,8 @@ static size_t WinPrAsn1EncContextualMemoryChunk(WinPrAsn1Encoder* enc, BYTE wire
                                                 const WinPrAsn1_MemoryChunk* mchunk)
 {
 	wStream s;
-	size_t len, outLen;
+	size_t len;
+	size_t outLen;
 
 	WINPR_ASSERT(enc);
 	WINPR_ASSERT_VALID_TAG(tagId);
@@ -1369,7 +1374,8 @@ static size_t readContextualHeader(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId,
 size_t WinPrAsn1DecReadContextualBool(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error,
                                       WinPrAsn1_BOOL* target)
 {
-	size_t ret, ret2;
+	size_t ret;
+	size_t ret2;
 	WinPrAsn1Decoder content;
 
 	ret = readContextualHeader(dec, tagId, error, &content);
@@ -1390,7 +1396,8 @@ size_t WinPrAsn1DecReadContextualBool(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tag
 size_t WinPrAsn1DecReadContextualInteger(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error,
                                          WinPrAsn1_INTEGER* target)
 {
-	size_t ret, ret2;
+	size_t ret;
+	size_t ret2;
 	WinPrAsn1Decoder content;
 
 	ret = readContextualHeader(dec, tagId, error, &content);
@@ -1411,7 +1418,8 @@ size_t WinPrAsn1DecReadContextualInteger(WinPrAsn1Decoder* dec, WinPrAsn1_tagId 
 size_t WinPrAsn1DecReadContextualOID(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error,
                                      WinPrAsn1_OID* target, BOOL allocate)
 {
-	size_t ret, ret2;
+	size_t ret;
+	size_t ret2;
 	WinPrAsn1Decoder content;
 
 	ret = readContextualHeader(dec, tagId, error, &content);
@@ -1433,7 +1441,8 @@ size_t WinPrAsn1DecReadContextualOctetString(WinPrAsn1Decoder* dec, WinPrAsn1_ta
                                              BOOL* error, WinPrAsn1_OctetString* target,
                                              BOOL allocate)
 {
-	size_t ret, ret2;
+	size_t ret;
+	size_t ret2;
 	WinPrAsn1Decoder content;
 
 	ret = readContextualHeader(dec, tagId, error, &content);
@@ -1454,7 +1463,8 @@ size_t WinPrAsn1DecReadContextualOctetString(WinPrAsn1Decoder* dec, WinPrAsn1_ta
 size_t WinPrAsn1DecReadContextualSequence(WinPrAsn1Decoder* dec, WinPrAsn1_tagId tagId, BOOL* error,
                                           WinPrAsn1Decoder* target)
 {
-	size_t ret, ret2;
+	size_t ret;
+	size_t ret2;
 	WinPrAsn1Decoder content;
 
 	ret = readContextualHeader(dec, tagId, error, &content);

@@ -1103,7 +1103,7 @@ static BOOL set_creds_octetstring_to_settings(WinPrAsn1Decoder* dec, WinPrAsn1_t
 {
 	if (optional)
 	{
-		WinPrAsn1_tagId itemTag;
+		WinPrAsn1_tagId itemTag = 0;
 		if (!WinPrAsn1DecPeekTag(dec, &itemTag) || (itemTag != tagId))
 			return TRUE;
 	}
@@ -1125,7 +1125,7 @@ static BOOL nla_read_TSCspDataDetail(WinPrAsn1Decoder* dec, rdpSettings* setting
 	BOOL error = FALSE;
 
 	/* keySpec [0] INTEGER */
-	WinPrAsn1_INTEGER keyspec;
+	WinPrAsn1_INTEGER keyspec = 0;
 	if (!WinPrAsn1DecReadContextualInteger(dec, 0, &error, &keyspec))
 		return FALSE;
 	settings->KeySpec = (UINT32)keyspec;
@@ -1455,7 +1455,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 				goto out;
 
 			/* pin [0] OCTET STRING */
-			size_t ss;
+			size_t ss = 0;
 			octet_string.data =
 			    (BYTE*)freerdp_settings_get_string_as_utf16(settings, FreeRDP_Password, &ss);
 			octet_string.len = ss * sizeof(WCHAR);
@@ -1475,7 +1475,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 
 			for (size_t i = 0; i < ARRAYSIZE(cspData_fields); i++)
 			{
-				size_t len;
+				size_t len = 0;
 
 				octet_string.data = (BYTE*)freerdp_settings_get_string_as_utf16(
 				    settings, cspData_fields[i].setting_id, &len);
@@ -1846,7 +1846,7 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 
 	if (nla_get_state(nla) == NLA_STATE_EARLY_USER_AUTH)
 	{
-		UINT32 code;
+		UINT32 code = 0;
 		Stream_Read_UINT32(s, code);
 		if (code != AUTHZ_SUCCESS)
 		{
@@ -1865,7 +1865,7 @@ int nla_recv_pdu(rdpNla* nla, wStream* s)
 
 		if (nla->errorCode)
 		{
-			UINT32 code;
+			UINT32 code = 0;
 
 			switch (nla->errorCode)
 			{

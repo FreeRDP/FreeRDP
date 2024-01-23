@@ -33,7 +33,8 @@ int main(int argc, char** argv)
 	GC gc;
 	int index;
 	int depth;
-	int x, y;
+	int x;
+	int y;
 	int width;
 	int height;
 	uint8_t* buffer;
