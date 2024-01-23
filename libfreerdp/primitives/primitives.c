@@ -121,7 +121,7 @@ typedef struct
 
 static void primitives_YUV_benchmark_free(primitives_YUV_benchmark* bench)
 {
-	int i;
+	int i = 0;
 	if (!bench)
 		return;
 
@@ -134,8 +134,8 @@ static void primitives_YUV_benchmark_free(primitives_YUV_benchmark* bench)
 
 static primitives_YUV_benchmark* primitives_YUV_benchmark_init(primitives_YUV_benchmark* ret)
 {
-	int i;
-	prim_size_t* roi;
+	int i = 0;
+	prim_size_t* roi = NULL;
 	if (!ret)
 		return NULL;
 
@@ -170,10 +170,10 @@ fail:
 static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primitives_t* prims,
                                          UINT64 runTime, UINT32* computations)
 {
-	ULONGLONG dueDate;
+	ULONGLONG dueDate = 0;
 	const BYTE* channels[3] = { 0 };
-	size_t i;
-	pstatus_t status;
+	size_t i = 0;
+	pstatus_t status = 0;
 
 	*computations = 0;
 
@@ -202,7 +202,7 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
 
 static BOOL primitives_autodetect_best(primitives_t* prims)
 {
-	size_t x;
+	size_t x = 0;
 	BOOL ret = FALSE;
 	UINT64 benchDuration = 150; /* 150 ms */
 	struct prim_benchmark

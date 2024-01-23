@@ -22,7 +22,7 @@
 /* ------------------------------------------------------------------------- */
 static BOOL test_sign16s_func(void)
 {
-	pstatus_t status;
+	pstatus_t status = 0;
 	INT16 ALIGN(src[TEST_BUFFER_SIZE + 16]) = { 0 };
 	INT16 ALIGN(d1[TEST_BUFFER_SIZE + 16]) = { 0 };
 	INT16 ALIGN(d2[TEST_BUFFER_SIZE + 16]) = { 0 };

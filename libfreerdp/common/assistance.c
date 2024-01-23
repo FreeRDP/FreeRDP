@@ -760,9 +760,9 @@ out_fail:
 
 char* freerdp_assistance_construct_expert_blob(const char* name, const char* pass)
 {
-	size_t size;
-	size_t nameLength;
-	size_t passLength;
+	size_t size = 0;
+	size_t nameLength = 0;
+	size_t passLength = 0;
 	char* ExpertBlob = NULL;
 
 	if (!name || !pass)
@@ -828,17 +828,17 @@ char* freerdp_assistance_generate_pass_stub(DWORD flags)
 BYTE* freerdp_assistance_encrypt_pass_stub(const char* password, const char* passStub,
                                            size_t* pEncryptedSize)
 {
-	BOOL rc;
-	size_t cbPasswordW;
-	size_t cbPassStubW;
-	size_t EncryptedSize;
+	BOOL rc = 0;
+	size_t cbPasswordW = 0;
+	size_t cbPassStubW = 0;
+	size_t EncryptedSize = 0;
 	BYTE PasswordHash[WINPR_MD5_DIGEST_LENGTH];
 	WINPR_CIPHER_CTX* rc4Ctx = NULL;
 	BYTE* pbIn = NULL;
 	BYTE* pbOut = NULL;
-	size_t cbOut;
-	size_t cbIn;
-	size_t cbFinal;
+	size_t cbOut = 0;
+	size_t cbIn = 0;
+	size_t cbFinal = 0;
 	WCHAR* PasswordW = ConvertUtf8ToWCharAlloc(password, &cbPasswordW);
 	WCHAR* PassStubW = ConvertUtf8ToWCharAlloc(passStub, &cbPassStubW);
 
@@ -903,15 +903,15 @@ static BOOL freerdp_assistance_decrypt2(rdpAssistanceFile* file)
 {
 	BOOL rc = FALSE;
 	int status = 0;
-	size_t cbPasswordW;
+	size_t cbPasswordW = 0;
 	size_t cchOutW = 0;
 	WINPR_CIPHER_CTX* aesDec = NULL;
 	WCHAR* PasswordW = NULL;
 	BYTE* pbIn = NULL;
 	BYTE* pbOut = NULL;
-	size_t cbOut;
-	size_t cbIn;
-	size_t cbFinal;
+	size_t cbOut = 0;
+	size_t cbIn = 0;
+	size_t cbFinal = 0;
 	BYTE DerivedKey[WINPR_AES_BLOCK_SIZE] = { 0 };
 	BYTE InitializationVector[WINPR_AES_BLOCK_SIZE] = { 0 };
 	BYTE PasswordHash[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
@@ -1200,10 +1200,10 @@ int freerdp_assistance_parse_file_buffer(rdpAssistanceFile* file, const char* cb
 
 int freerdp_assistance_parse_file(rdpAssistanceFile* file, const char* name, const char* password)
 {
-	int status;
-	BYTE* buffer;
+	int status = 0;
+	BYTE* buffer = NULL;
 	FILE* fp = NULL;
-	size_t readSize;
+	size_t readSize = 0;
 	union
 	{
 		INT64 i64;

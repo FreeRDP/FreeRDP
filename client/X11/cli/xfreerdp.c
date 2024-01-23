@@ -34,12 +34,12 @@
 int main(int argc, char* argv[])
 {
 	int rc = 1;
-	int status;
-	HANDLE thread;
-	xfContext* xfc;
-	DWORD dwExitCode;
-	rdpContext* context;
-	rdpSettings* settings;
+	int status = 0;
+	HANDLE thread = NULL;
+	xfContext* xfc = NULL;
+	DWORD dwExitCode = 0;
+	rdpContext* context = NULL;
+	rdpSettings* settings = NULL;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
 
 	clientEntryPoints.Size = sizeof(RDP_CLIENT_ENTRY_POINTS);

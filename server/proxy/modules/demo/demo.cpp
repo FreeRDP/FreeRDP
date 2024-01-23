@@ -191,7 +191,7 @@ static BOOL demo_server_session_end(proxyPlugin* plugin, proxyData* pdata, void*
 
 static BOOL demo_filter_keyboard_event(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	proxyPluginsManager* mgr;
+	proxyPluginsManager* mgr = nullptr;
 	auto event_data = static_cast<const proxyKeyboardEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
@@ -216,7 +216,7 @@ static BOOL demo_filter_keyboard_event(proxyPlugin* plugin, proxyData* pdata, vo
 
 static BOOL demo_filter_unicode_event(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	proxyPluginsManager* mgr;
+	proxyPluginsManager* mgr = nullptr;
 	auto event_data = static_cast<const proxyUnicodeEventInfo*>(param);
 
 	WINPR_ASSERT(plugin);
@@ -372,7 +372,7 @@ extern "C"
 
 BOOL proxy_module_entry_point(proxyPluginsManager* plugins_manager, void* userdata)
 {
-	struct demo_custom_data* custom;
+	struct demo_custom_data* custom = nullptr;
 	proxyPlugin plugin = {};
 
 	plugin.name = plugin_name;

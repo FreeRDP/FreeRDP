@@ -108,9 +108,9 @@ void shadow_multiclient_free(rdpShadowMultiClientEvent* event)
 
 static void _Publish(rdpShadowMultiClientEvent* event)
 {
-	wArrayList* subscribers;
+	wArrayList* subscribers = NULL;
 	struct rdp_shadow_multiclient_subscriber* subscriber = NULL;
-	size_t i;
+	size_t i = 0;
 
 	subscribers = event->subscribers;
 
@@ -253,7 +253,7 @@ static BOOL _Consume(struct rdp_shadow_multiclient_subscriber* subscriber, BOOL 
 
 void* shadow_multiclient_get_subscriber(rdpShadowMultiClientEvent* event)
 {
-	struct rdp_shadow_multiclient_subscriber* subscriber;
+	struct rdp_shadow_multiclient_subscriber* subscriber = NULL;
 
 	if (!event)
 		return NULL;
@@ -296,8 +296,8 @@ out_error:
  */
 void shadow_multiclient_release_subscriber(void* subscriber)
 {
-	struct rdp_shadow_multiclient_subscriber* s;
-	rdpShadowMultiClientEvent* event;
+	struct rdp_shadow_multiclient_subscriber* s = NULL;
+	rdpShadowMultiClientEvent* event = NULL;
 
 	if (!subscriber)
 		return;
@@ -324,8 +324,8 @@ void shadow_multiclient_release_subscriber(void* subscriber)
 
 BOOL shadow_multiclient_consume(void* subscriber)
 {
-	struct rdp_shadow_multiclient_subscriber* s;
-	rdpShadowMultiClientEvent* event;
+	struct rdp_shadow_multiclient_subscriber* s = NULL;
+	rdpShadowMultiClientEvent* event = NULL;
 	BOOL ret = FALSE;
 
 	if (!subscriber)

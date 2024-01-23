@@ -48,7 +48,7 @@ static UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monit
 
 static BOOL wlf_disp_settings_changed(wlfDispContext* wlfDisp)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(wlfDisp);
 	WINPR_ASSERT(wlfDisp->wlc);
@@ -82,7 +82,7 @@ static BOOL wlf_disp_settings_changed(wlfDispContext* wlfDisp)
 
 static BOOL wlf_update_last_sent(wlfDispContext* wlfDisp)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(wlfDisp);
 	WINPR_ASSERT(wlfDisp->wlc);
@@ -105,8 +105,8 @@ static BOOL wlf_update_last_sent(wlfDispContext* wlfDisp)
 static BOOL wlf_disp_sendResize(wlfDispContext* wlfDisp)
 {
 	DISPLAY_CONTROL_MONITOR_LAYOUT layout;
-	wlfContext* wlc;
-	rdpSettings* settings;
+	wlfContext* wlc = NULL;
+	rdpSettings* settings = NULL;
 
 	if (!wlfDisp || !wlfDisp->wlc)
 		return FALSE;
@@ -167,7 +167,7 @@ static BOOL wlf_disp_set_window_resizable(wlfDispContext* wlfDisp)
 static BOOL wlf_disp_check_context(void* context, wlfContext** ppwlc, wlfDispContext** ppwlfDisp,
                                    rdpSettings** ppSettings)
 {
-	wlfContext* wlc;
+	wlfContext* wlc = NULL;
 
 	if (!context)
 		return FALSE;
@@ -188,9 +188,9 @@ static BOOL wlf_disp_check_context(void* context, wlfContext** ppwlc, wlfDispCon
 
 static void wlf_disp_OnActivated(void* context, const ActivatedEventArgs* e)
 {
-	wlfContext* wlc;
-	wlfDispContext* wlfDisp;
-	rdpSettings* settings;
+	wlfContext* wlc = NULL;
+	wlfDispContext* wlfDisp = NULL;
+	rdpSettings* settings = NULL;
 
 	if (!wlf_disp_check_context(context, &wlc, &wlfDisp, &settings))
 		return;
@@ -210,9 +210,9 @@ static void wlf_disp_OnActivated(void* context, const ActivatedEventArgs* e)
 
 static void wlf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs* e)
 {
-	wlfContext* wlc;
-	wlfDispContext* wlfDisp;
-	rdpSettings* settings;
+	wlfContext* wlc = NULL;
+	wlfDispContext* wlfDisp = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_UNUSED(e);
 	if (!wlf_disp_check_context(context, &wlc, &wlfDisp, &settings))
@@ -229,9 +229,9 @@ static void wlf_disp_OnGraphicsReset(void* context, const GraphicsResetEventArgs
 
 static void wlf_disp_OnTimer(void* context, const TimerEventArgs* e)
 {
-	wlfContext* wlc;
-	wlfDispContext* wlfDisp;
-	rdpSettings* settings;
+	wlfContext* wlc = NULL;
+	wlfDispContext* wlfDisp = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_UNUSED(e);
 	if (!wlf_disp_check_context(context, &wlc, &wlfDisp, &settings))
@@ -245,9 +245,9 @@ static void wlf_disp_OnTimer(void* context, const TimerEventArgs* e)
 
 wlfDispContext* wlf_disp_new(wlfContext* wlc)
 {
-	wlfDispContext* ret;
-	wPubSub* pubSub;
-	rdpSettings* settings;
+	wlfDispContext* ret = NULL;
+	wPubSub* pubSub = NULL;
+	rdpSettings* settings = NULL;
 
 	if (!wlc || !wlc->common.context.settings || !wlc->common.context.pubSub)
 		return NULL;
@@ -289,10 +289,10 @@ void wlf_disp_free(wlfDispContext* disp)
 UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, size_t nmonitors)
 {
 	UINT ret = CHANNEL_RC_OK;
-	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts;
-	size_t i;
-	wlfDispContext* wlfDisp;
-	rdpSettings* settings;
+	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts = NULL;
+	size_t i = 0;
+	wlfDispContext* wlfDisp = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(disp);
 	WINPR_ASSERT(monitors);
@@ -376,8 +376,8 @@ static UINT wlf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitor
                                    UINT32 maxMonitorAreaFactorA, UINT32 maxMonitorAreaFactorB)
 {
 	/* we're called only if dynamic resolution update is activated */
-	wlfDispContext* wlfDisp;
-	rdpSettings* settings;
+	wlfDispContext* wlfDisp = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(disp);
 
@@ -403,7 +403,7 @@ static UINT wlf_DisplayControlCaps(DispClientContext* disp, UINT32 maxNumMonitor
 
 BOOL wlf_disp_init(wlfDispContext* wlfDisp, DispClientContext* disp)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	if (!wlfDisp || !wlfDisp->wlc || !disp)
 		return FALSE;
@@ -435,10 +435,9 @@ BOOL wlf_disp_uninit(wlfDispContext* wlfDisp, DispClientContext* disp)
 
 int wlf_list_monitors(wlfContext* wlc)
 {
-	uint32_t i;
 	uint32_t nmonitors = UwacDisplayGetNbOutputs(wlc->display);
 
-	for (i = 0; i < nmonitors; i++)
+	for (uint32_t i = 0; i < nmonitors; i++)
 	{
 		const UwacOutput* monitor = UwacDisplayGetOutput(wlc->display, i);
 		UwacSize resolution;

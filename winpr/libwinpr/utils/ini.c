@@ -105,7 +105,7 @@ static BOOL IniFile_BufferResize(wIniFile* ini, size_t size)
 
 static BOOL IniFile_Load_String(wIniFile* ini, const char* iniString)
 {
-	size_t fileSize;
+	size_t fileSize = 0;
 
 	WINPR_ASSERT(ini);
 
@@ -150,7 +150,7 @@ static FILE* IniFile_Open_File(wIniFile* ini, const char* filename)
 static BOOL IniFile_Load_File(wIniFile* ini, const char* filename)
 {
 	BOOL rc = FALSE;
-	INT64 fileSize;
+	INT64 fileSize = 0;
 
 	WINPR_ASSERT(ini);
 
@@ -425,11 +425,11 @@ static wIniFileKey* IniFile_AddKey(wIniFileSection* section, const char* name, c
 
 static int IniFile_Load(wIniFile* ini)
 {
-	char* name;
-	char* value;
-	char* separator;
-	char* beg;
-	char* end;
+	char* name = NULL;
+	char* value = NULL;
+	char* separator = NULL;
+	char* beg = NULL;
+	char* end = NULL;
 	wIniFileSection* section = NULL;
 
 	WINPR_ASSERT(ini);
@@ -507,7 +507,7 @@ static BOOL IniFile_SetFilename(wIniFile* ini, const char* name)
 
 int IniFile_ReadBuffer(wIniFile* ini, const char* buffer)
 {
-	BOOL status;
+	BOOL status = 0;
 
 	WINPR_ASSERT(ini);
 
@@ -648,7 +648,7 @@ const char* IniFile_GetKeyValueString(wIniFile* ini, const char* section, const 
 
 int IniFile_GetKeyValueInt(wIniFile* ini, const char* section, const char* key)
 {
-	int err;
+	int err = 0;
 	long value = 0;
 	wIniFileKey* pKey = NULL;
 	wIniFileSection* pSection = NULL;

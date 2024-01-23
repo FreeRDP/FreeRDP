@@ -100,9 +100,9 @@ struct s_http_response
 
 static char* string_strnstr(char* str1, const char* str2, size_t slen)
 {
-	char c;
-	char sc;
-	size_t len;
+	char c = 0;
+	char sc = 0;
+	size_t len = 0;
 
 	if ((c = *str2++) != '\0')
 	{
@@ -555,10 +555,10 @@ BOOL http_request_set_transfer_encoding(HttpRequest* request, TRANSFER_ENCODING 
 WINPR_ATTR_FORMAT_ARG(2, 3)
 static BOOL http_encode_print(wStream* s, WINPR_FORMAT_ARG const char* fmt, ...)
 {
-	char* str;
+	char* str = NULL;
 	va_list ap;
-	int length;
-	int used;
+	int length = 0;
+	int used = 0;
 
 	if (!s || !fmt)
 		return FALSE;
@@ -657,7 +657,7 @@ unlock:
 
 wStream* http_request_write(HttpContext* context, HttpRequest* request)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!context || !request)
 		return NULL;
@@ -790,8 +790,8 @@ static BOOL http_response_parse_header_status_line(HttpResponse* response, const
 {
 	BOOL rc = FALSE;
 	char* separator = NULL;
-	char* status_code;
-	char* reason_phrase;
+	char* status_code = NULL;
+	char* reason_phrase = NULL;
 
 	if (!response)
 		goto fail;
@@ -843,7 +843,7 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 
 	if (_stricmp(name, "Content-Length") == 0)
 	{
-		unsigned long long val;
+		unsigned long long val = 0;
 		errno = 0;
 		val = _strtoui64(value, NULL, 0);
 
@@ -970,14 +970,14 @@ static BOOL http_response_parse_header_field(HttpResponse* response, const char*
 static BOOL http_response_parse_header(HttpResponse* response)
 {
 	BOOL rc = FALSE;
-	char c;
-	size_t count;
-	char* line;
-	char* name;
-	char* value;
-	char* colon_pos;
-	char* end_of_header;
-	char end_of_header_char;
+	char c = 0;
+	size_t count = 0;
+	char* line = NULL;
+	char* name = NULL;
+	char* value = NULL;
+	char* colon_pos = NULL;
+	char* end_of_header = NULL;
+	char end_of_header_char = 0;
 
 	if (!response)
 		goto fail;
@@ -1118,7 +1118,7 @@ static int print_bio_error(const char* str, size_t len, void* bp)
 int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
                        http_encoding_chunked_context* encodingContext)
 {
-	int status;
+	int status = 0;
 	int effectiveDataLen = 0;
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(pBuffer);
@@ -1223,7 +1223,7 @@ int http_chuncked_read(BIO* bio, BYTE* pBuffer, size_t size,
 
 HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 {
-	size_t position;
+	size_t position = 0;
 	size_t bodyLength = 0;
 	size_t payloadOffset = 0;
 	HttpResponse* response = http_response_new();
@@ -1235,8 +1235,8 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 
 	while (payloadOffset == 0)
 	{
-		size_t s;
-		char* end;
+		size_t s = 0;
+		char* end = NULL;
 		/* Read until we encounter \r\n\r\n */
 		ERR_clear_error();
 		int status = BIO_read(tls->bio, Stream_Pointer(response->data), 1);
@@ -1391,7 +1391,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		{
 			while (response->BodyLength < bodyLength)
 			{
-				int status;
+				int status = 0;
 
 				if (!Stream_EnsureRemainingCapacity(response->data,
 				                                    bodyLength - response->BodyLength))

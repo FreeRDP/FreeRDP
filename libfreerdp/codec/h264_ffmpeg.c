@@ -93,7 +93,7 @@ typedef struct
 
 static void libavcodec_destroy_encoder(H264_CONTEXT* h264)
 {
-	H264_CONTEXT_LIBAVCODEC* sys;
+	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 
 	if (!h264 || !h264->subsystem)
 		return;
@@ -117,7 +117,7 @@ static void libavcodec_destroy_encoder(H264_CONTEXT* h264)
 static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
 {
 	BOOL recreate = FALSE;
-	H264_CONTEXT_LIBAVCODEC* sys;
+	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 
 	if (!h264 || !h264->subsystem)
 		return FALSE;
@@ -194,7 +194,7 @@ static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT3
 		BYTE* pv;
 	} cnv;
 	int rc = -1;
-	int status;
+	int status = 0;
 	int gotFrame = 0;
 	AVPacket* packet = NULL;
 
@@ -333,7 +333,7 @@ static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const U
 		uint8_t* pv;
 	} cnv;
 	int rc = -1;
-	int status;
+	int status = 0;
 	int gotFrame = 0;
 
 	WINPR_ASSERT(h264);
@@ -533,7 +533,7 @@ static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
 	WINPR_ASSERT(sys);
 
-	const enum AVPixelFormat* p;
+	const enum AVPixelFormat* p = NULL;
 
 	for (p = fmts; *p != AV_PIX_FMT_NONE; p++)
 	{
@@ -581,7 +581,7 @@ static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
 
 static BOOL libavcodec_init(H264_CONTEXT* h264)
 {
-	H264_CONTEXT_LIBAVCODEC* sys;
+	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 
 	WINPR_ASSERT(h264);
 	sys = (H264_CONTEXT_LIBAVCODEC*)calloc(1, sizeof(H264_CONTEXT_LIBAVCODEC));

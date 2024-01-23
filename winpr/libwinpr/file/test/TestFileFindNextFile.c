@@ -11,11 +11,11 @@ static TCHAR testDirectory2File2[] = _T("TestDirectory2File2");
 
 int TestFileFindNextFile(int argc, char* argv[])
 {
-	char* str;
+	char* str = NULL;
 	size_t length = 0;
-	BOOL status;
-	HANDLE hFind;
-	LPTSTR BasePath;
+	BOOL status = 0;
+	HANDLE hFind = NULL;
+	LPTSTR BasePath = NULL;
 	WIN32_FIND_DATA FindData;
 	TCHAR FilePath[PATHCCH_MAX_CCH] = { 0 };
 	WINPR_UNUSED(argc);

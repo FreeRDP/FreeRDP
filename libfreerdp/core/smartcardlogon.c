@@ -164,7 +164,7 @@ static BOOL treat_sc_cert(SmartcardCertInfo* scCert)
 
 	if (scCert->upn)
 	{
-		size_t userLen;
+		size_t userLen = 0;
 		const char* atPos = strchr(scCert->upn, '@');
 
 		if (!atPos)
@@ -392,10 +392,10 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 		NCRYPT_KEY_HANDLE phKey = 0;
 		PBYTE certBytes = NULL;
 		DWORD dwFlags = NCRYPT_SILENT_FLAG;
-		DWORD cbOutput;
+		DWORD cbOutput = 0;
 		SmartcardCertInfo* cert = NULL;
 		BOOL haveError = TRUE;
-		SECURITY_STATUS status;
+		SECURITY_STATUS status = 0;
 
 		cert = calloc(1, sizeof(SmartcardCertInfo));
 		if (!cert)
@@ -559,8 +559,8 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 {
 	BOOL ret = FALSE;
 	LPWSTR scope = NULL;
-	NCRYPT_PROV_HANDLE provider;
-	SECURITY_STATUS status;
+	NCRYPT_PROV_HANDLE provider = 0;
+	SECURITY_STATUS status = 0;
 	size_t count = 0;
 	SmartcardCertInfo** cert_list = NULL;
 	const char* Pkcs11Module = freerdp_settings_get_string(settings, FreeRDP_Pkcs11Module);
@@ -610,8 +610,8 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 	else
 	{
 		NCryptProviderName* names = NULL;
-		DWORD nproviders;
-		DWORD i;
+		DWORD nproviders = 0;
+		DWORD i = 0;
 
 #ifdef _WIN32
 		/* On Windows, mstsc first enumerates the legacy CAPI providers for usable certificates. */
@@ -703,8 +703,8 @@ out:
 static char* create_temporary_file(void)
 {
 	BYTE buffer[32];
-	char* hex;
-	char* path;
+	char* hex = NULL;
+	char* path = NULL;
 
 	winpr_RAND(buffer, sizeof(buffer));
 	hex = winpr_BinToHexString(buffer, sizeof(buffer), FALSE);
@@ -821,12 +821,12 @@ out_error:
 BOOL smartcard_enumerateCerts(const rdpSettings* settings, SmartcardCertInfo*** scCerts,
                               size_t* retCount, BOOL gateway)
 {
-	BOOL ret;
+	BOOL ret = 0;
 	LPWSTR csp = NULL;
 	const char* ReaderName = freerdp_settings_get_string(settings, FreeRDP_ReaderName);
 	const char* CspName = freerdp_settings_get_string(settings, FreeRDP_CspName);
-	const char* Username;
-	const char* Domain;
+	const char* Username = NULL;
+	const char* Domain = NULL;
 
 	if (gateway)
 	{
@@ -879,7 +879,7 @@ BOOL smartcard_getCert(const rdpContext* context, SmartcardCertInfo** cert, BOOL
 
 	const freerdp* instance = context->instance;
 	rdpSettings* settings = context->settings;
-	SmartcardCertInfo** cert_list;
+	SmartcardCertInfo** cert_list = NULL;
 	size_t count = 0;
 
 	WINPR_ASSERT(instance);

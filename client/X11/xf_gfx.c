@@ -21,6 +21,7 @@
 
 #include <freerdp/config.h>
 
+#include <math.h>
 #include <winpr/assert.h>
 #include <freerdp/log.h>
 #include "xf_gfx.h"
@@ -33,16 +34,16 @@
 static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	UINT32 surfaceX;
-	UINT32 surfaceY;
+	UINT32 surfaceX = 0;
+	UINT32 surfaceY = 0;
 	RECTANGLE_16 surfaceRect;
-	rdpGdi* gdi;
-	const rdpSettings* settings;
-	UINT32 nbRects;
-	UINT32 x;
-	double sx;
-	double sy;
-	const RECTANGLE_16* rects;
+	rdpGdi* gdi = NULL;
+	const rdpSettings* settings = NULL;
+	UINT32 nbRects = 0;
+	UINT32 x = 0;
+	double sx = NAN;
+	double sy = NAN;
+	const RECTANGLE_16* rects = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(surface);
@@ -132,12 +133,12 @@ static UINT xf_WindowUpdate(RdpgfxClientContext* context, xfGfxSurface* surface)
 
 static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 {
-	UINT16 count;
-	UINT32 index;
+	UINT16 count = 0;
+	UINT32 index = 0;
 	UINT status = CHANNEL_RC_OK;
 	UINT16* pSurfaceIds = NULL;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
-	xfContext* xfc;
+	xfContext* xfc = NULL;
 
 	if (!gdi)
 		return status;
@@ -179,13 +180,13 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 
 UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 height)
 {
-	UINT16 count;
-	UINT32 index;
+	UINT16 count = 0;
+	UINT32 index = 0;
 	UINT status = ERROR_INTERNAL_ERROR;
 	RECTANGLE_16 invalidRect = { 0 };
 	RECTANGLE_16 intersection = { 0 };
 	UINT16* pSurfaceIds = NULL;
-	RdpgfxClientContext* context;
+	RdpgfxClientContext* context = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xfc->common.context.gdi);
@@ -271,8 +272,8 @@ static UINT xf_CreateSurface(RdpgfxClientContext* context,
                              const RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
 	UINT ret = CHANNEL_RC_NO_MEMORY;
-	size_t size;
-	xfGfxSurface* surface;
+	size_t size = 0;
+	xfGfxSurface* surface = NULL;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
 	xfContext* xfc = (xfContext*)gdi->context;
 	surface = (xfGfxSurface*)calloc(1, sizeof(xfGfxSurface));
@@ -396,7 +397,7 @@ static UINT xf_DeleteSurface(RdpgfxClientContext* context,
 {
 	rdpCodecs* codecs = NULL;
 	xfGfxSurface* surface = NULL;
-	UINT status;
+	UINT status = 0;
 	EnterCriticalSection(&context->mux);
 	surface = (xfGfxSurface*)context->GetSurfaceData(context, deleteSurface->surfaceId);
 
@@ -446,8 +447,8 @@ static UINT xf_UpdateWindowFromSurface(RdpgfxClientContext* context, gdiGfxSurfa
 
 void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	rdpGdi* gdi;
-	const rdpSettings* settings;
+	rdpGdi* gdi = NULL;
+	const rdpSettings* settings = NULL;
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(gfx);
 
@@ -469,7 +470,7 @@ void xf_graphics_pipeline_init(xfContext* xfc, RdpgfxClientContext* gfx)
 
 void xf_graphics_pipeline_uninit(xfContext* xfc, RdpgfxClientContext* gfx)
 {
-	rdpGdi* gdi;
+	rdpGdi* gdi = NULL;
 
 	WINPR_ASSERT(xfc);
 

@@ -34,8 +34,8 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const WINPR_R
                                                       UINT32 dstStep, UINT32 DstFormat,
                                                       const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	BYTE* pRGB = pDst;
 	const INT16* pY = pSrc[0];
 	const INT16* pCb = pSrc[1];
@@ -48,9 +48,9 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const WINPR_R
 	{
 		for (x = 0; x < roi->width; x++)
 		{
-			INT16 R;
-			INT16 G;
-			INT16 B;
+			INT16 R = 0;
+			INT16 G = 0;
+			INT16 B = 0;
 			const INT32 divisor = 16;
 			const INT32 Y = (INT32)((UINT32)((*pY++) + 4096) << divisor);
 			const INT32 Cb = (*pCb++);
@@ -79,8 +79,8 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* const WINP
                                                          UINT32 dstStep, UINT32 DstFormat,
                                                          const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	BYTE* pRGB = pDst;
 	const INT16* pY = pSrc[0];
 	const INT16* pCb = pSrc[1];
@@ -94,9 +94,9 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* const WINP
 	{
 		for (x = 0; x < roi->width; x++)
 		{
-			INT64 R;
-			INT64 G;
-			INT64 B;
+			INT64 R = 0;
+			INT64 G = 0;
+			INT64 B = 0;
 			const INT32 divisor = 16;
 			const INT32 Y = (INT32)((UINT32)((*pY++) + 4096) << divisor);
 			const INT32 Cb = (*pCb++);
@@ -164,11 +164,11 @@ general_yCbCrToRGB_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], INT32 
 	INT16* bptr = pDst[2];
 	UINT32 srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	UINT32 dstbump = (dstStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	UINT32 y;
+	UINT32 y = 0;
 
 	for (y = 0; y < roi->height; y++)
 	{
-		UINT32 x;
+		UINT32 x = 0;
 
 		for (x = 0; x < roi->width; ++x)
 		{
@@ -178,9 +178,9 @@ general_yCbCrToRGB_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], INT32 
 			INT32 cy = (INT32)(*yptr++);
 			INT32 cb = (INT32)(*cbptr++);
 			INT32 cr = (INT32)(*crptr++);
-			INT64 r;
-			INT64 g;
-			INT64 b;
+			INT64 r = 0;
+			INT64 g = 0;
+			INT64 b = 0;
 			/*
 			 * This is the slow floating point version kept here for reference.
 			 * y = y + 4096; // 128<<5=4096 so that we can scale the sum by>>5
@@ -245,11 +245,11 @@ general_RGBToYCbCr_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], INT32 
 	INT16* crptr = pDst[2];
 	UINT32 srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	UINT32 dstbump = (dstStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	UINT32 y;
+	UINT32 y = 0;
 
 	for (y = 0; y < roi->height; y++)
 	{
-		UINT32 x;
+		UINT32 x = 0;
 
 		for (x = 0; x < roi->width; ++x)
 		{
@@ -293,7 +293,7 @@ general_RGBToYCbCr_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], INT32 
 static INLINE void writeScanlineGeneric(BYTE* dst, DWORD formatSize, UINT32 DstFormat,
                                         const INT16* r, const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x;
+	DWORD x = 0;
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
 
 	for (x = 0; x < width; x++)
@@ -303,7 +303,7 @@ static INLINE void writeScanlineGeneric(BYTE* dst, DWORD formatSize, UINT32 DstF
 static INLINE void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                     const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x;
+	DWORD x = 0;
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(DstFormat);
 
@@ -321,7 +321,7 @@ static INLINE void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstForma
 static INLINE void writeScanlineBGR(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                     const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x;
+	DWORD x = 0;
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(DstFormat);
 
@@ -339,7 +339,7 @@ static INLINE void writeScanlineBGR(BYTE* dst, DWORD formatSize, UINT32 DstForma
 static INLINE void writeScanlineBGRX(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                      const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x;
+	DWORD x = 0;
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(DstFormat);
 
@@ -358,7 +358,7 @@ static INLINE void writeScanlineBGRX(BYTE* dst, DWORD formatSize, UINT32 DstForm
 static INLINE void writeScanlineRGBX(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                      const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x;
+	DWORD x = 0;
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(DstFormat);
 
@@ -377,7 +377,7 @@ static INLINE void writeScanlineRGBX(BYTE* dst, DWORD formatSize, UINT32 DstForm
 static INLINE void writeScanlineXBGR(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                      const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x;
+	DWORD x = 0;
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(DstFormat);
 
@@ -396,7 +396,7 @@ static INLINE void writeScanlineXBGR(BYTE* dst, DWORD formatSize, UINT32 DstForm
 static INLINE void writeScanlineXRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                      const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x;
+	DWORD x = 0;
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(DstFormat);
 
@@ -457,7 +457,7 @@ static pstatus_t general_RGBToRGB_16s8u_P3AC4R_general(
 	const INT16* r = pSrc[0];
 	const INT16* g = pSrc[1];
 	const INT16* b = pSrc[2];
-	UINT32 y;
+	UINT32 y = 0;
 	const DWORD srcAdd = srcStep / sizeof(INT16);
 	fkt_writeScanline writeScanline = getScanlineWriteFunction(DstFormat);
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
@@ -484,7 +484,7 @@ static pstatus_t general_RGBToRGB_16s8u_P3AC4R_BGRX(
 	const INT16* r = pSrc[0];
 	const INT16* g = pSrc[1];
 	const INT16* b = pSrc[2];
-	UINT32 y;
+	UINT32 y = 0;
 	const DWORD srcAdd = srcStep / sizeof(INT16);
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 

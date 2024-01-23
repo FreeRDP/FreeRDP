@@ -46,10 +46,10 @@ BOOL Stream_EnsureCapacity(wStream* s, size_t size)
 	WINPR_ASSERT(s);
 	if (s->capacity < size)
 	{
-		size_t position;
-		size_t old_capacity;
-		size_t new_capacity;
-		BYTE* new_buf;
+		size_t position = 0;
+		size_t old_capacity = 0;
+		size_t new_capacity = 0;
+		BYTE* new_buf = NULL;
 
 		old_capacity = s->capacity;
 		new_capacity = old_capacity;
@@ -93,7 +93,7 @@ BOOL Stream_EnsureRemainingCapacity(wStream* s, size_t size)
 
 wStream* Stream_New(BYTE* buffer, size_t size)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	if (!buffer && !size)
 		return NULL;
@@ -155,7 +155,7 @@ wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size)
 
 void Stream_EnsureValidity(wStream* s)
 {
-	size_t cur;
+	size_t cur = 0;
 
 	STREAM_ASSERT(s);
 	STREAM_ASSERT(s->pointer >= s->buffer);
@@ -202,7 +202,7 @@ BOOL Stream_SetPosition(wStream* _s, size_t _p)
 
 void Stream_SealLength(wStream* _s)
 {
-	size_t cur;
+	size_t cur = 0;
 	WINPR_ASSERT(_s);
 	WINPR_ASSERT(_s->buffer <= _s->pointer);
 	cur = (size_t)(_s->pointer - _s->buffer);
@@ -250,7 +250,7 @@ void Stream_SetCapacity(wStream* _s, size_t _c)
 
 size_t Stream_GetRemainingCapacity(const wStream* _s)
 {
-	size_t cur;
+	size_t cur = 0;
 	WINPR_ASSERT(_s);
 	WINPR_ASSERT(_s->buffer <= _s->pointer);
 	cur = (size_t)(_s->pointer - _s->buffer);
@@ -266,7 +266,7 @@ size_t Stream_GetRemainingCapacity(const wStream* _s)
 
 size_t Stream_GetRemainingLength(const wStream* _s)
 {
-	size_t cur;
+	size_t cur = 0;
 	WINPR_ASSERT(_s);
 	WINPR_ASSERT(_s->buffer <= _s->pointer);
 	WINPR_ASSERT(_s->length <= _s->capacity);
@@ -283,7 +283,7 @@ size_t Stream_GetRemainingLength(const wStream* _s)
 
 BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t length)
 {
-	size_t x;
+	size_t x = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(src || (length == 0));
@@ -301,7 +301,7 @@ BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t length)
 
 BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t length)
 {
-	size_t x;
+	size_t x = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(dst);

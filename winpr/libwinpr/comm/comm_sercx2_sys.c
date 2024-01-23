@@ -66,7 +66,7 @@ static const ULONG _SERCX2_SYS_SUPPORTED_EV_MASK =
 /* use Serial.sys for basis (not SerCx.sys) */
 static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 {
-	ULONG possibleMask;
+	ULONG possibleMask = 0;
 	SERIAL_DRIVER* pSerialSys = SerialSys_s();
 
 	possibleMask = *pWaitMask & _SERCX2_SYS_SUPPORTED_EV_MASK;

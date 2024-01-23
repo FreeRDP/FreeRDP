@@ -59,7 +59,7 @@ static BOOL WLog_FileAppender_SetOutputFilePath(wLogFileAppender* appender, cons
 
 static BOOL WLog_FileAppender_Open(wLog* log, wLogAppender* appender)
 {
-	wLogFileAppender* fileAppender;
+	wLogFileAppender* fileAppender = NULL;
 
 	if (!log || !appender)
 		return FALSE;
@@ -111,7 +111,7 @@ static BOOL WLog_FileAppender_Open(wLog* log, wLogAppender* appender)
 
 static BOOL WLog_FileAppender_Close(wLog* log, wLogAppender* appender)
 {
-	wLogFileAppender* fileAppender;
+	wLogFileAppender* fileAppender = NULL;
 
 	if (!log || !appender)
 		return FALSE;
@@ -128,9 +128,9 @@ static BOOL WLog_FileAppender_Close(wLog* log, wLogAppender* appender)
 
 static BOOL WLog_FileAppender_WriteMessage(wLog* log, wLogAppender* appender, wLogMessage* message)
 {
-	FILE* fp;
+	FILE* fp = NULL;
 	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
-	wLogFileAppender* fileAppender;
+	wLogFileAppender* fileAppender = NULL;
 
 	if (!log || !appender || !message)
 		return FALSE;
@@ -153,8 +153,8 @@ static int g_DataId = 0;
 static BOOL WLog_FileAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
                                                wLogMessage* message)
 {
-	int DataId;
-	char* FullFileName;
+	int DataId = 0;
+	char* FullFileName = NULL;
 
 	if (!log || !appender || !message)
 		return FALSE;
@@ -171,8 +171,8 @@ static int g_ImageId = 0;
 static BOOL WLog_FileAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
                                                 wLogMessage* message)
 {
-	int ImageId;
-	char* FullFileName;
+	int ImageId = 0;
+	char* FullFileName = NULL;
 
 	if (!log || !appender || !message)
 		return FALSE;
@@ -218,10 +218,10 @@ static void WLog_FileAppender_Free(wLogAppender* appender)
 
 wLogAppender* WLog_FileAppender_New(wLog* log)
 {
-	LPSTR env;
-	LPCSTR name;
-	DWORD nSize;
-	wLogFileAppender* FileAppender;
+	LPSTR env = NULL;
+	LPCSTR name = NULL;
+	DWORD nSize = 0;
+	wLogFileAppender* FileAppender = NULL;
 	FileAppender = (wLogFileAppender*)calloc(1, sizeof(wLogFileAppender));
 
 	if (!FileAppender)
@@ -240,7 +240,7 @@ wLogAppender* WLog_FileAppender_New(wLog* log)
 
 	if (nSize)
 	{
-		BOOL status;
+		BOOL status = 0;
 		env = (LPSTR)malloc(nSize);
 
 		if (!env)

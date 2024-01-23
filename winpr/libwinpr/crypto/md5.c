@@ -92,15 +92,15 @@
  */
 static const void* body(WINPR_MD5_CTX* ctx, const void* data, unsigned long size)
 {
-	const unsigned char* ptr;
-	winpr_MD5_u32plus a;
-	winpr_MD5_u32plus b;
-	winpr_MD5_u32plus c;
-	winpr_MD5_u32plus d;
-	winpr_MD5_u32plus saved_a;
-	winpr_MD5_u32plus saved_b;
-	winpr_MD5_u32plus saved_c;
-	winpr_MD5_u32plus saved_d;
+	const unsigned char* ptr = NULL;
+	winpr_MD5_u32plus a = 0;
+	winpr_MD5_u32plus b = 0;
+	winpr_MD5_u32plus c = 0;
+	winpr_MD5_u32plus d = 0;
+	winpr_MD5_u32plus saved_a = 0;
+	winpr_MD5_u32plus saved_b = 0;
+	winpr_MD5_u32plus saved_c = 0;
+	winpr_MD5_u32plus saved_d = 0;
 
 	ptr = (const unsigned char*)data;
 
@@ -217,9 +217,9 @@ void winpr_MD5_Init(WINPR_MD5_CTX* ctx)
 
 void winpr_MD5_Update(WINPR_MD5_CTX* ctx, const void* data, unsigned long size)
 {
-	winpr_MD5_u32plus saved_lo;
-	unsigned long used;
-	unsigned long available;
+	winpr_MD5_u32plus saved_lo = 0;
+	unsigned long used = 0;
+	unsigned long available = 0;
 
 	saved_lo = ctx->lo;
 	if ((ctx->lo = (saved_lo + size) & 0x1fffffff) < saved_lo)
@@ -261,8 +261,8 @@ void winpr_MD5_Update(WINPR_MD5_CTX* ctx, const void* data, unsigned long size)
 
 void winpr_MD5_Final(unsigned char* result, WINPR_MD5_CTX* ctx)
 {
-	unsigned long used;
-	unsigned long available;
+	unsigned long used = 0;
+	unsigned long available = 0;
 
 	used = ctx->lo & 0x3f;
 

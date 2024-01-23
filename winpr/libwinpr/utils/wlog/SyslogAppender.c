@@ -68,7 +68,7 @@ static BOOL WLog_SyslogAppender_Close(wLog* log, wLogAppender* appender)
 static BOOL WLog_SyslogAppender_WriteMessage(wLog* log, wLogAppender* appender,
                                              wLogMessage* message)
 {
-	int syslogLevel;
+	int syslogLevel = 0;
 
 	if (!log || !appender || !message)
 		return FALSE;
@@ -83,7 +83,7 @@ static BOOL WLog_SyslogAppender_WriteMessage(wLog* log, wLogAppender* appender,
 static BOOL WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogAppender* appender,
                                                  wLogMessage* message)
 {
-	int syslogLevel;
+	int syslogLevel = 0;
 
 	if (!log || !appender || !message)
 		return FALSE;
@@ -98,7 +98,7 @@ static BOOL WLog_SyslogAppender_WriteDataMessage(wLog* log, wLogAppender* append
 static BOOL WLog_SyslogAppender_WriteImageMessage(wLog* log, wLogAppender* appender,
                                                   wLogMessage* message)
 {
-	int syslogLevel;
+	int syslogLevel = 0;
 
 	if (!log || !appender || !message)
 		return FALSE;
@@ -118,7 +118,7 @@ static void WLog_SyslogAppender_Free(wLogAppender* appender)
 
 wLogAppender* WLog_SyslogAppender_New(wLog* log)
 {
-	wLogSyslogAppender* appender;
+	wLogSyslogAppender* appender = NULL;
 
 	appender = (wLogSyslogAppender*)calloc(1, sizeof(wLogSyslogAppender));
 	if (!appender)

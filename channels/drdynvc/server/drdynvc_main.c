@@ -153,7 +153,7 @@ static UINT drdynvc_server_start(DrdynvcServerContext* context)
  */
 static UINT drdynvc_server_stop(DrdynvcServerContext* context)
 {
-	UINT error;
+	UINT error = 0;
 	SetEvent(context->priv->StopEvent);
 
 	if (WaitForSingleObject(context->priv->Thread, INFINITE) == WAIT_FAILED)
@@ -169,7 +169,7 @@ static UINT drdynvc_server_stop(DrdynvcServerContext* context)
 
 DrdynvcServerContext* drdynvc_server_context_new(HANDLE vcm)
 {
-	DrdynvcServerContext* context;
+	DrdynvcServerContext* context = NULL;
 	context = (DrdynvcServerContext*)calloc(1, sizeof(DrdynvcServerContext));
 
 	if (context)

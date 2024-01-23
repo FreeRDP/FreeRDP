@@ -65,7 +65,7 @@ typedef struct
 
 static DWORD drive_map_windows_err(DWORD fs_errno)
 {
-	DWORD rc;
+	DWORD rc = 0;
 
 	/* try to return NTSTATUS version of error code */
 
@@ -149,17 +149,17 @@ static DRIVE_FILE* drive_get_file_by_id(DRIVE_DEVICE* drive, UINT32 id)
  */
 static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
 {
-	UINT32 FileId;
-	DRIVE_FILE* file;
-	BYTE Information;
-	UINT32 FileAttributes;
-	UINT32 SharedAccess;
-	UINT32 DesiredAccess;
-	UINT32 CreateDisposition;
-	UINT32 CreateOptions;
-	UINT32 PathLength;
-	UINT64 allocationSize;
-	const WCHAR* path;
+	UINT32 FileId = 0;
+	DRIVE_FILE* file = NULL;
+	BYTE Information = 0;
+	UINT32 FileAttributes = 0;
+	UINT32 SharedAccess = 0;
+	UINT32 DesiredAccess = 0;
+	UINT32 CreateDisposition = 0;
+	UINT32 CreateOptions = 0;
+	UINT32 PathLength = 0;
+	UINT64 allocationSize = 0;
+	const WCHAR* path = NULL;
 
 	if (!drive || !irp || !irp->devman || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
@@ -234,8 +234,8 @@ static UINT drive_process_irp_create(DRIVE_DEVICE* drive, IRP* irp)
  */
 static UINT drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
 {
-	void* key;
-	DRIVE_FILE* file;
+	void* key = NULL;
+	DRIVE_FILE* file = NULL;
 
 	if (!drive || !irp || !irp->Complete || !irp->output)
 		return ERROR_INVALID_PARAMETER;
@@ -266,9 +266,9 @@ static UINT drive_process_irp_close(DRIVE_DEVICE* drive, IRP* irp)
  */
 static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
 {
-	DRIVE_FILE* file;
-	UINT32 Length;
-	UINT64 Offset;
+	DRIVE_FILE* file = NULL;
+	UINT32 Length = 0;
+	UINT64 Offset = 0;
 
 	if (!drive || !irp || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
@@ -324,9 +324,9 @@ static UINT drive_process_irp_read(DRIVE_DEVICE* drive, IRP* irp)
  */
 static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
 {
-	DRIVE_FILE* file;
-	UINT32 Length;
-	UINT64 Offset;
+	DRIVE_FILE* file = NULL;
+	UINT32 Length = 0;
+	UINT64 Offset = 0;
 
 	if (!drive || !irp || !irp->input || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
@@ -370,8 +370,8 @@ static UINT drive_process_irp_write(DRIVE_DEVICE* drive, IRP* irp)
  */
 static UINT drive_process_irp_query_information(DRIVE_DEVICE* drive, IRP* irp)
 {
-	DRIVE_FILE* file;
-	UINT32 FsInformationClass;
+	DRIVE_FILE* file = NULL;
+	UINT32 FsInformationClass = 0;
 
 	if (!drive || !irp || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
@@ -401,9 +401,9 @@ static UINT drive_process_irp_query_information(DRIVE_DEVICE* drive, IRP* irp)
  */
 static UINT drive_process_irp_set_information(DRIVE_DEVICE* drive, IRP* irp)
 {
-	DRIVE_FILE* file;
-	UINT32 FsInformationClass;
-	UINT32 Length;
+	DRIVE_FILE* file = NULL;
+	UINT32 FsInformationClass = 0;
+	UINT32 Length = 0;
 
 	if (!drive || !irp || !irp->Complete || !irp->input || !irp->output)
 		return ERROR_INVALID_PARAMETER;
@@ -579,7 +579,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
  */
 static UINT drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
 {
-	UINT32 FsInformationClass;
+	UINT32 FsInformationClass = 0;
 
 	if (!drive || !irp || !irp->output || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
@@ -599,11 +599,11 @@ static UINT drive_process_irp_silent_ignore(DRIVE_DEVICE* drive, IRP* irp)
  */
 static UINT drive_process_irp_query_directory(DRIVE_DEVICE* drive, IRP* irp)
 {
-	const WCHAR* path;
-	DRIVE_FILE* file;
-	BYTE InitialQuery;
-	UINT32 PathLength;
-	UINT32 FsInformationClass;
+	const WCHAR* path = NULL;
+	DRIVE_FILE* file = NULL;
+	BYTE InitialQuery = 0;
+	UINT32 PathLength = 0;
+	UINT32 FsInformationClass = 0;
 
 	if (!drive || !irp || !irp->Complete)
 		return ERROR_INVALID_PARAMETER;
@@ -683,7 +683,7 @@ static UINT drive_process_irp_device_control(DRIVE_DEVICE* drive, IRP* irp)
  */
 static UINT drive_process_irp(DRIVE_DEVICE* drive, IRP* irp)
 {
-	UINT error;
+	UINT error = 0;
 
 	if (!drive || !irp)
 		return ERROR_INVALID_PARAMETER;
@@ -886,9 +886,9 @@ static void drive_message_free(void* obj)
 static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, const char* name,
                                       const char* path, BOOL automount)
 {
-	size_t i;
-	size_t length;
-	DRIVE_DEVICE* drive;
+	size_t i = 0;
+	size_t length = 0;
+	DRIVE_DEVICE* drive = NULL;
 	UINT error = ERROR_INTERNAL_ERROR;
 
 	if (!pEntryPoints || !name || !path)
@@ -1012,8 +1012,8 @@ out_error:
  */
 FREERDP_ENTRY_POINT(UINT drive_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
-	RDPDR_DRIVE* drive;
-	UINT error;
+	RDPDR_DRIVE* drive = NULL;
+	UINT error = 0;
 #ifdef WIN32
 	char* dev;
 	int len;

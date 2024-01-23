@@ -21,7 +21,7 @@
 /* ========================================================================= */
 static BOOL test_add16s_func(void)
 {
-	pstatus_t status;
+	pstatus_t status = 0;
 
 	INT16 ALIGN(src1[FUNC_TEST_SIZE + 3]) = { 0 };
 	INT16 ALIGN(src2[FUNC_TEST_SIZE + 3]) = { 0 };

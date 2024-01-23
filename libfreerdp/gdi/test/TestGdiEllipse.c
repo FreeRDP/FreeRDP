@@ -77,8 +77,8 @@ static const BYTE ellipse_case_3[256] = {
 int TestGdiEllipse(int argc, char* argv[])
 {
 	int rc = -1;
-	UINT32 i;
-	UINT32 j;
+	UINT32 i = 0;
+	UINT32 j = 0;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
 	const UINT32 colorFormats[] = { PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_ARGB15, PIXEL_FORMAT_RGB16,
 		                            PIXEL_FORMAT_RGB24,  PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_XRGB32,

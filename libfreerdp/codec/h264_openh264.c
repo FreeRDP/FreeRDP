@@ -76,12 +76,12 @@ static void openh264_trace_callback(H264_CONTEXT* h264, int level, const char* m
 
 static int openh264_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize)
 {
-	DECODING_STATE state;
+	DECODING_STATE state = dsInvalidArgument;
 	SBufferInfo sBufferInfo = { 0 };
-	SSysMEMBuffer* pSystemBuffer;
-	H264_CONTEXT_OPENH264* sys;
-	UINT32* iStride;
-	BYTE** pYUVData;
+	SSysMEMBuffer* pSystemBuffer = NULL;
+	H264_CONTEXT_OPENH264* sys = NULL;
+	UINT32* iStride = NULL;
+	BYTE** pYUVData = NULL;
 
 	WINPR_ASSERT(h264);
 	WINPR_ASSERT(pSrcData || (SrcSize == 0));
@@ -182,13 +182,13 @@ static int openh264_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 
 static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UINT32* iStride,
                              BYTE** ppDstData, UINT32* pDstSize)
 {
-	int i;
-	int j;
-	int status;
+	int i = 0;
+	int j = 0;
+	int status = 0;
 	SFrameBSInfo info = { 0 };
 	SSourcePicture pic = { 0 };
 
-	H264_CONTEXT_OPENH264* sys;
+	H264_CONTEXT_OPENH264* sys = NULL;
 
 	WINPR_ASSERT(h264);
 	WINPR_ASSERT(pYUVData);
@@ -388,8 +388,8 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 
 static void openh264_uninit(H264_CONTEXT* h264)
 {
-	UINT32 x;
-	H264_CONTEXT_OPENH264* sysContexts;
+	UINT32 x = 0;
+	H264_CONTEXT_OPENH264* sysContexts = NULL;
 
 	WINPR_ASSERT(h264);
 
@@ -492,9 +492,9 @@ static BOOL openh264_init(H264_CONTEXT* h264)
 	BOOL success = FALSE;
 	size_t i;
 #endif
-	UINT32 x;
-	long status;
-	H264_CONTEXT_OPENH264* sysContexts;
+	UINT32 x = 0;
+	long status = 0;
+	H264_CONTEXT_OPENH264* sysContexts = NULL;
 	static int traceLevel = WELS_LOG_DEBUG;
 #if (OPENH264_MAJOR == 1) && (OPENH264_MINOR <= 5)
 	static EVideoFormatType videoFormat = videoFormatI420;

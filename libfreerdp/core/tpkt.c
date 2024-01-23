@@ -69,7 +69,7 @@
 
 int tpkt_verify_header(wStream* s)
 {
-	BYTE version;
+	BYTE version = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return -1;
@@ -93,7 +93,7 @@ int tpkt_verify_header(wStream* s)
 
 BOOL tpkt_read_header(wStream* s, UINT16* length)
 {
-	BYTE version;
+	BYTE version = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
@@ -102,7 +102,7 @@ BOOL tpkt_read_header(wStream* s, UINT16* length)
 
 	if (version == 3)
 	{
-		UINT16 len;
+		UINT16 len = 0;
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return FALSE;
 

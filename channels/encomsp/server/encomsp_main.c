@@ -86,8 +86,8 @@ static UINT encomsp_recv_change_participant_control_level_pdu(EncomspServerConte
                                                               wStream* s,
                                                               ENCOMSP_ORDER_HEADER* header)
 {
-	int beg;
-	int end;
+	int beg = 0;
+	int end = 0;
 	ENCOMSP_CHANGE_PARTICIPANT_CONTROL_LEVEL_PDU pdu;
 	UINT error = CHANNEL_RC_OK;
 	beg = ((int)Stream_GetPosition(s)) - ENCOMSP_ORDER_HEADER_SIZE;
@@ -170,16 +170,16 @@ static UINT encomsp_server_receive_pdu(EncomspServerContext* context, wStream* s
 
 static DWORD WINAPI encomsp_server_thread(LPVOID arg)
 {
-	wStream* s;
-	DWORD nCount;
-	void* buffer;
+	wStream* s = NULL;
+	DWORD nCount = 0;
+	void* buffer = NULL;
 	HANDLE events[8];
-	HANDLE ChannelEvent;
-	DWORD BytesReturned;
-	ENCOMSP_ORDER_HEADER* header;
-	EncomspServerContext* context;
+	HANDLE ChannelEvent = NULL;
+	DWORD BytesReturned = 0;
+	ENCOMSP_ORDER_HEADER* header = NULL;
+	EncomspServerContext* context = NULL;
 	UINT error = CHANNEL_RC_OK;
-	DWORD status;
+	DWORD status = 0;
 	context = (EncomspServerContext*)arg;
 
 	buffer = NULL;
@@ -338,7 +338,7 @@ static UINT encomsp_server_stop(EncomspServerContext* context)
 
 EncomspServerContext* encomsp_server_context_new(HANDLE vcm)
 {
-	EncomspServerContext* context;
+	EncomspServerContext* context = NULL;
 	context = (EncomspServerContext*)calloc(1, sizeof(EncomspServerContext));
 
 	if (context)

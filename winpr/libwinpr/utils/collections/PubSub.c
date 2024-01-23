@@ -71,7 +71,7 @@ void PubSub_Unlock(wPubSub* pubSub)
 
 wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName)
 {
-	size_t index;
+	size_t index = 0;
 	wEventType* event = NULL;
 
 	WINPR_ASSERT(pubSub);
@@ -97,8 +97,8 @@ void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, size_t count)
 
 	while (pubSub->count + count >= pubSub->size)
 	{
-		size_t new_size;
-		wEventType* new_event;
+		size_t new_size = 0;
+		wEventType* new_event = NULL;
 
 		new_size = pubSub->size * 2;
 		new_event = (wEventType*)realloc(pubSub->events, new_size * sizeof(wEventType));
@@ -117,7 +117,7 @@ void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, size_t count)
 
 int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, ...)
 {
-	wEventType* event;
+	wEventType* event = NULL;
 	int status = -1;
 	WINPR_ASSERT(pubSub);
 
@@ -149,8 +149,8 @@ int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, ...)
 
 int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...)
 {
-	size_t index;
-	wEventType* event;
+	size_t index = 0;
+	wEventType* event = NULL;
 	int status = -1;
 	WINPR_ASSERT(pubSub);
 	WINPR_ASSERT(EventName);
@@ -190,8 +190,8 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...)
 
 int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, const wEventArgs* e)
 {
-	size_t index;
-	wEventType* event;
+	size_t index = 0;
+	wEventType* event = NULL;
 	int status = -1;
 
 	if (!pubSub)

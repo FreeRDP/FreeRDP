@@ -266,7 +266,7 @@ void Pcap_Close(wPcap* pcap)
 
 static BOOL WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader* ethernet)
 {
-	wStream* s;
+	wStream* s = NULL;
 	wStream sbuffer = { 0 };
 	BYTE buffer[14] = { 0 };
 	BOOL ret = TRUE;
@@ -288,7 +288,7 @@ static BOOL WLog_PacketMessage_Write_EthernetHeader(wPcap* pcap, wEthernetHeader
 
 static UINT16 IPv4Checksum(BYTE* ipv4, int length)
 {
-	UINT16 tmp16;
+	UINT16 tmp16 = 0;
 	long checksum = 0;
 
 	while (length > 1)
@@ -310,7 +310,7 @@ static UINT16 IPv4Checksum(BYTE* ipv4, int length)
 
 static BOOL WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 {
-	wStream* s;
+	wStream* s = NULL;
 	wStream sbuffer = { 0 };
 	BYTE buffer[20] = { 0 };
 	int ret = TRUE;
@@ -343,7 +343,7 @@ static BOOL WLog_PacketMessage_Write_IPv4Header(wPcap* pcap, wIPv4Header* ipv4)
 
 static BOOL WLog_PacketMessage_Write_TcpHeader(wPcap* pcap, wTcpHeader* tcp)
 {
-	wStream* s;
+	wStream* s = NULL;
 	wStream sbuffer = { 0 };
 	BYTE buffer[20] = { 0 };
 	BOOL ret = TRUE;

@@ -34,8 +34,8 @@
 static char* create_temporary_file(void)
 {
 	BYTE buffer[32];
-	char* hex;
-	char* path;
+	char* hex = NULL;
+	char* path = NULL;
 
 	winpr_RAND(buffer, sizeof(buffer));
 	hex = winpr_BinToHexString(buffer, sizeof(buffer), FALSE);

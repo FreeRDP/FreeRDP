@@ -95,7 +95,7 @@ static void rpc_pdu_reset(RPC_PDU* pdu)
 
 static RPC_PDU* rpc_pdu_new(void)
 {
-	RPC_PDU* pdu;
+	RPC_PDU* pdu = NULL;
 	pdu = (RPC_PDU*)malloc(sizeof(RPC_PDU));
 
 	if (!pdu)
@@ -358,10 +358,10 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 static int rpc_client_recv_fragment(rdpRpc* rpc, wStream* fragment)
 {
 	int rc = -1;
-	RPC_PDU* pdu;
-	size_t StubOffset;
-	size_t StubLength;
-	RpcClientCall* call;
+	RPC_PDU* pdu = NULL;
+	size_t StubOffset = 0;
+	size_t StubLength = 0;
+	RpcClientCall* call = NULL;
 	rpcconn_hdr_t header = { 0 };
 
 	WINPR_ASSERT(rpc);
@@ -561,10 +561,10 @@ fail:
 static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 {
 	SSIZE_T status = -1;
-	UINT32 statusCode;
-	HttpResponse* response;
-	RpcInChannel* inChannel;
-	RpcOutChannel* outChannel;
+	UINT32 statusCode = 0;
+	HttpResponse* response = NULL;
+	RpcInChannel* inChannel = NULL;
+	RpcOutChannel* outChannel = NULL;
 	HANDLE outChannelEvent = NULL;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 	inChannel = connection->DefaultInChannel;
@@ -667,7 +667,7 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 
 		while (1)
 		{
-			size_t pos;
+			size_t pos = 0;
 			rpcconn_common_hdr_t header = { 0 };
 
 			while (Stream_GetPosition(fragment) < RPC_COMMON_FIELDS_LENGTH)
@@ -746,8 +746,8 @@ static SSIZE_T rpc_client_default_out_channel_recv(rdpRpc* rpc)
 static SSIZE_T rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
 {
 	SSIZE_T status = -1;
-	HttpResponse* response;
-	RpcOutChannel* nextOutChannel;
+	HttpResponse* response = NULL;
+	RpcOutChannel* nextOutChannel = NULL;
 	HANDLE nextOutChannelEvent = NULL;
 	nextOutChannel = rpc->VirtualConnection->NonDefaultOutChannel;
 	BIO_get_event(nextOutChannel->common.tls->bio, &nextOutChannelEvent);
@@ -816,7 +816,7 @@ static SSIZE_T rpc_client_nondefault_out_channel_recv(rdpRpc* rpc)
 
 int rpc_client_out_channel_recv(rdpRpc* rpc)
 {
-	SSIZE_T status;
+	SSIZE_T status = 0;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 
 	if (connection->DefaultOutChannel)
@@ -841,9 +841,9 @@ int rpc_client_out_channel_recv(rdpRpc* rpc)
 int rpc_client_in_channel_recv(rdpRpc* rpc)
 {
 	int status = 1;
-	HttpResponse* response;
-	RpcInChannel* inChannel;
-	RpcOutChannel* outChannel;
+	HttpResponse* response = NULL;
+	RpcInChannel* inChannel = NULL;
+	RpcOutChannel* outChannel = NULL;
 	HANDLE InChannelEvent = NULL;
 	RpcVirtualConnection* connection = rpc->VirtualConnection;
 	inChannel = connection->DefaultInChannel;
@@ -927,8 +927,8 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT32 CallId)
 {
-	size_t index;
-	size_t count;
+	size_t index = 0;
+	size_t count = 0;
 	RpcClientCall* clientCall = NULL;
 
 	if (!client)
@@ -951,7 +951,7 @@ RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT32 CallId)
 
 RpcClientCall* rpc_client_call_new(UINT32 CallId, UINT32 OpNum)
 {
-	RpcClientCall* clientCall;
+	RpcClientCall* clientCall = NULL;
 	clientCall = (RpcClientCall*)calloc(1, sizeof(RpcClientCall));
 
 	if (!clientCall)
@@ -975,8 +975,8 @@ static void rpc_array_client_call_free(void* call)
 
 int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t length)
 {
-	SSIZE_T status;
-	RpcClientCall* clientCall;
+	SSIZE_T status = 0;
+	RpcClientCall* clientCall = NULL;
 	wStream s;
 	rpcconn_common_hdr_t header = { 0 };
 
@@ -1010,18 +1010,18 @@ int rpc_in_channel_send_pdu(RpcInChannel* inChannel, const BYTE* buffer, size_t 
 
 BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 {
-	size_t offset;
+	size_t offset = 0;
 	BYTE* buffer = NULL;
-	UINT32 stub_data_pad;
+	UINT32 stub_data_pad = 0;
 	SecBuffer plaintext;
 	SecBuffer ciphertext = { 0 };
 	RpcClientCall* clientCall = NULL;
-	rdpCredsspAuth* auth;
+	rdpCredsspAuth* auth = NULL;
 	rpcconn_request_hdr_t request_pdu = { 0 };
-	RpcVirtualConnection* connection;
-	RpcInChannel* inChannel;
-	size_t length;
-	size_t size;
+	RpcVirtualConnection* connection = NULL;
+	RpcInChannel* inChannel = NULL;
+	size_t length = 0;
+	size_t size = 0;
 	BOOL rc = FALSE;
 
 	if (!s)
@@ -1124,7 +1124,7 @@ fail:
 static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT16* port,
                                        BOOL* isProxy)
 {
-	struct addrinfo* result;
+	struct addrinfo* result = NULL;
 
 	if (!settings || !host || !port || !isProxy)
 		return FALSE;
@@ -1149,7 +1149,7 @@ static BOOL rpc_client_resolve_gateway(rdpSettings* settings, char** host, UINT1
 
 RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
 {
-	wObject* obj;
+	wObject* obj = NULL;
 	RpcClient* client = (RpcClient*)calloc(1, sizeof(RpcClient));
 
 	if (!client)

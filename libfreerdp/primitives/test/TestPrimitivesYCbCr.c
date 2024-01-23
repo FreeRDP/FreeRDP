@@ -1488,7 +1488,7 @@ static const UINT32 TEST_XRGB_IMAGE[4096] = {
 
 static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size, int channel, int margin)
 {
-	int error;
+	int error = 0;
 	int count = 0;
 	int index = 0;
 	size /= 4;
@@ -1533,12 +1533,12 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 			const INT16 Cr = TEST_CR_COMPONENT[index];
 			const int x = index % 64;
 			const int y = (index - x) / 64;
-			BYTE R;
-			BYTE G;
-			BYTE B;
-			BYTE eR;
-			BYTE eG;
-			BYTE eB;
+			BYTE R = 0;
+			BYTE G = 0;
+			BYTE B = 0;
+			BYTE eR = 0;
+			BYTE eG = 0;
+			BYTE eB = 0;
 
 			FreeRDPSplitColor(pixel, PIXEL_FORMAT_XRGB32, &R, &G, &B, NULL, NULL);
 			FreeRDPSplitColor(ePixel, PIXEL_FORMAT_XRGB32, &eR, &eG, &eB, NULL, NULL);
@@ -1576,8 +1576,8 @@ static int test_PrimitivesYCbCr(const primitives_t* prims, UINT32 format, prim_s
 	pstatus_t status = -1;
 	int cnt[3];
 	float err[3];
-	BYTE* actual;
-	BYTE* actual1;
+	BYTE* actual = NULL;
+	BYTE* actual1 = NULL;
 	const BYTE* expected = (const BYTE*)TEST_XRGB_IMAGE;
 	int margin = 1;
 	INT16* pYCbCr[3] = { NULL, NULL, NULL };
@@ -1727,7 +1727,7 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 		                       PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };
 	const primitives_t* prims = primitives_get();
 	const primitives_t* generics = primitives_get_generic();
-	UINT32 x;
+	UINT32 x = 0;
 
 	WINPR_UNUSED(argv);
 
@@ -1738,7 +1738,7 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 			for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 			{
 				prim_size_t roi = { 64, 64 };
-				int rc;
+				int rc = 0;
 				printf("----------------------- GENERIC %s [%" PRIu32 "x%" PRIu32
 				       "] COMPARE CONTENT ----\n",
 				       FreeRDPGetColorFormatName(formats[x]), roi.width, roi.height);
@@ -1779,7 +1779,7 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 
 			for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 			{
-				int rc;
+				int rc = 0;
 				printf("----------------------- GENERIC %s [%" PRIu32 "x%" PRIu32
 				       "] COMPARE CONTENT ----\n",
 				       FreeRDPGetColorFormatName(formats[x]), roi.width, roi.height);
@@ -1810,7 +1810,7 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 
 		for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 		{
-			int rc;
+			int rc = 0;
 			printf("----------------------- GENERIC %s [%" PRIu32 "x%" PRIu32
 			       "] COMPARE CONTENT ----\n",
 			       FreeRDPGetColorFormatName(formats[x]), roi.width, roi.height);

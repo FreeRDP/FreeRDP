@@ -395,7 +395,7 @@ static void license_print_scope_list(const SCOPE_LIST* scopeList)
 
 	for (UINT32 index = 0; index < scopeList->count; index++)
 	{
-		const LICENSE_BLOB* scope;
+		const LICENSE_BLOB* scope = NULL;
 
 		WINPR_ASSERT(scopeList->array);
 		scope = scopeList->array[index];
@@ -512,7 +512,7 @@ static BOOL saveCal(const rdpSettings* settings, const BYTE* data, size_t length
 	char* filepath = NULL;
 	char* filepathNew = NULL;
 
-	size_t written;
+	size_t written = 0;
 	BOOL ret = FALSE;
 	const char* path = freerdp_settings_get_string(settings, FreeRDP_ConfigPath);
 
@@ -1133,7 +1133,7 @@ BOOL license_generate_hwid(rdpLicense* license)
 
 static BOOL license_get_server_rsa_public_key(rdpLicense* license)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->certificate);
@@ -1793,7 +1793,7 @@ static BOOL license_check_preferred_alg(rdpLicense* license, UINT32 PreferredKey
 BOOL license_read_license_info(rdpLicense* license, wStream* s)
 {
 	BOOL rc = FALSE;
-	UINT32 PreferredKeyExchangeAlg;
+	UINT32 PreferredKeyExchangeAlg = 0;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->certificate);
@@ -2223,8 +2223,8 @@ fail:
 
 BOOL license_read_error_alert_packet(rdpLicense* license, wStream* s)
 {
-	UINT32 dwErrorCode;
-	UINT32 dwStateTransition;
+	UINT32 dwErrorCode = 0;
+	UINT32 dwStateTransition = 0;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->rdp);
@@ -2321,7 +2321,7 @@ BOOL license_write_new_license_request_packet(const rdpLicense* license, wStream
 
 BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 {
-	UINT32 PreferredKeyExchangeAlg;
+	UINT32 PreferredKeyExchangeAlg = 0;
 
 	WINPR_ASSERT(license);
 
@@ -2373,11 +2373,11 @@ BOOL license_read_new_license_request_packet(rdpLicense* license, wStream* s)
 
 BOOL license_answer_license_request(rdpLicense* license)
 {
-	wStream* s;
+	wStream* s = NULL;
 	BYTE* license_data = NULL;
 	size_t license_size = 0;
-	BOOL status;
-	char* username;
+	BOOL status = 0;
+	char* username = NULL;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->rdp);
@@ -2474,9 +2474,9 @@ BOOL license_answer_license_request(rdpLicense* license)
 BOOL license_send_platform_challenge_response(rdpLicense* license)
 {
 	wStream* s = license_send_stream_init(license);
-	wStream* challengeRespData;
-	BYTE* buffer;
-	BOOL status;
+	wStream* challengeRespData = NULL;
+	BYTE* buffer = NULL;
+	BOOL status = 0;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->PlatformChallenge);
@@ -2555,9 +2555,9 @@ BOOL license_send_platform_challenge_response(rdpLicense* license)
 
 BOOL license_read_platform_challenge_response(rdpLicense* license, wStream* s)
 {
-	UINT16 wVersion;
-	UINT16 cbChallenge;
-	const BYTE* pbChallenge;
+	UINT16 wVersion = 0;
+	UINT16 cbChallenge = 0;
+	const BYTE* pbChallenge = NULL;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(license->PlatformChallenge);
@@ -2653,7 +2653,7 @@ BOOL license_send_valid_client_error_packet(rdpRdp* rdp)
 
 rdpLicense* license_new(rdpRdp* rdp)
 {
-	rdpLicense* license;
+	rdpLicense* license = NULL;
 	WINPR_ASSERT(rdp);
 
 	license = (rdpLicense*)calloc(1, sizeof(rdpLicense));

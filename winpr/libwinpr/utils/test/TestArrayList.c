@@ -5,11 +5,11 @@
 
 int TestArrayList(int argc, char* argv[])
 {
-	size_t index;
-	int count;
-	int rc;
-	size_t val;
-	wArrayList* arrayList;
+	size_t index = 0;
+	int count = 0;
+	int rc = 0;
+	size_t val = 0;
+	wArrayList* arrayList = NULL;
 	const size_t elemsToInsert = 10;
 
 	WINPR_UNUSED(argc);

@@ -61,11 +61,11 @@ static UINT
 disp_send_display_control_monitor_layout_pdu(GENERIC_CHANNEL_CALLBACK* callback, UINT32 NumMonitors,
                                              const DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
-	UINT status;
-	wStream* s;
-	UINT32 index;
-	DISP_PLUGIN* disp;
-	UINT32 MonitorLayoutSize;
+	UINT status = 0;
+	wStream* s = NULL;
+	UINT32 index = 0;
+	DISP_PLUGIN* disp = NULL;
+	UINT32 MonitorLayoutSize = 0;
 	DISPLAY_CONTROL_HEADER header = { 0 };
 
 	WINPR_ASSERT(callback);
@@ -154,8 +154,8 @@ out:
  */
 static UINT disp_recv_display_control_caps_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	DISP_PLUGIN* disp;
-	DispClientContext* context;
+	DISP_PLUGIN* disp = NULL;
+	DispClientContext* context = NULL;
 	UINT ret = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(callback);
@@ -188,7 +188,7 @@ static UINT disp_recv_display_control_caps_pdu(GENERIC_CHANNEL_CALLBACK* callbac
  */
 static UINT disp_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	UINT32 error;
+	UINT32 error = 0;
 	DISPLAY_CONTROL_HEADER header = { 0 };
 
 	WINPR_ASSERT(callback);
@@ -254,8 +254,8 @@ static UINT disp_on_close(IWTSVirtualChannelCallback* pChannelCallback)
 static UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonitors,
                                      DISPLAY_CONTROL_MONITOR_LAYOUT* Monitors)
 {
-	DISP_PLUGIN* disp;
-	GENERIC_CHANNEL_CALLBACK* callback;
+	DISP_PLUGIN* disp = NULL;
+	GENERIC_CHANNEL_CALLBACK* callback = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -275,7 +275,7 @@ static UINT disp_send_monitor_layout(DispClientContext* context, UINT32 NumMonit
 static UINT disp_plugin_initialize(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext,
                                    rdpSettings* settings)
 {
-	DispClientContext* context;
+	DispClientContext* context = NULL;
 	DISP_PLUGIN* disp = (DISP_PLUGIN*)base;
 
 	WINPR_ASSERT(disp);

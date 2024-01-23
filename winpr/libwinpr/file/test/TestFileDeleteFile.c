@@ -8,7 +8,7 @@
 int TestFileDeleteFile(int argc, char* argv[])
 {
 	BOOL rc = FALSE;
-	int fd;
+	int fd = 0;
 	char validA[] = "/tmp/valid-test-file-XXXXXX";
 	char validW[] = "/tmp/valid-test-file-XXXXXX";
 	WCHAR* validWW = NULL;

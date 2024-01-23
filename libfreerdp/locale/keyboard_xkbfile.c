@@ -314,7 +314,7 @@ static int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD* x11_keyc
 
 static void* freerdp_keyboard_xkb_init(void)
 {
-	int status;
+	int status = 0;
 
 	Display* display = XOpenDisplay(NULL);
 
@@ -362,7 +362,7 @@ int freerdp_keyboard_init_xkbfile(DWORD* keyboardLayoutId, DWORD* x11_keycode_to
 /* return substring starting after nth comma, ending at following comma */
 static char* comma_substring(char* s, size_t n)
 {
-	char* p;
+	char* p = NULL;
 
 	if (!s)
 		return "";

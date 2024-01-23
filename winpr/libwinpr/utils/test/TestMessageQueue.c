@@ -24,8 +24,8 @@ static DWORD WINAPI message_queue_consumer_thread(LPVOID arg)
 
 int TestMessageQueue(int argc, char* argv[])
 {
-	HANDLE thread;
-	wMessageQueue* queue;
+	HANDLE thread = NULL;
+	wMessageQueue* queue = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

@@ -29,12 +29,12 @@ static const char base64url[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstu
 static char* base64_encode_ex(const char* alphabet, const BYTE* data, size_t length, BOOL pad,
                               BOOL crLf, size_t lineSize)
 {
-	int c;
-	const BYTE* q;
-	char* p;
-	char* ret;
+	int c = 0;
+	const BYTE* q = NULL;
+	char* p = NULL;
+	char* ret = NULL;
 	int i = 0;
-	int blocks;
+	int blocks = 0;
 	size_t outLen = (length + 3) * 4 / 3;
 	size_t extra = 0;
 	if (crLf)
@@ -137,11 +137,11 @@ static void* base64_decode(const char* alphabet, const char* s, size_t length, s
                            BOOL pad)
 {
 	int n[4];
-	BYTE* q;
-	BYTE* data;
-	size_t nBlocks;
-	size_t i;
-	size_t outputLen;
+	BYTE* q = NULL;
+	BYTE* data = NULL;
+	size_t nBlocks = 0;
+	size_t i = 0;
+	size_t outputLen = 0;
 	int remainder = length % 4;
 
 	if ((pad && remainder > 0) || (remainder == 1))

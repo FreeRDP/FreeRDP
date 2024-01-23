@@ -6,7 +6,7 @@
 int TestNtCurrentTeb(int argc, char* argv[])
 {
 #ifndef _WIN32
-	PTEB teb;
+	PTEB teb = NULL;
 
 	teb = NtCurrentTeb();
 

@@ -84,7 +84,7 @@ static BOOL BufferPool_ShiftAvailable(wBufferPool* pool, size_t index, int count
 	{
 		if (pool->aSize + count > pool->aCapacity)
 		{
-			wBufferPoolItem* newArray;
+			wBufferPoolItem* newArray = NULL;
 			SSIZE_T newCapacity = pool->aCapacity * 2;
 
 			if (pool->alignment > 0)
@@ -119,7 +119,7 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, SSIZE_T index, SSIZE_T count
 		if (pool->uSize + count > pool->uCapacity)
 		{
 			SSIZE_T newUCapacity = pool->uCapacity * 2;
-			wBufferPoolItem* newUArray;
+			wBufferPoolItem* newUArray = NULL;
 			if (pool->alignment > 0)
 				newUArray = (wBufferPoolItem*)winpr_aligned_realloc(
 				    pool->uArray, sizeof(wBufferPoolItem) * newUCapacity, pool->alignment);
@@ -151,7 +151,7 @@ static BOOL BufferPool_ShiftUsed(wBufferPool* pool, SSIZE_T index, SSIZE_T count
 
 SSIZE_T BufferPool_GetPoolSize(wBufferPool* pool)
 {
-	SSIZE_T size;
+	SSIZE_T size = 0;
 
 	BufferPool_Lock(pool);
 
@@ -215,9 +215,9 @@ SSIZE_T BufferPool_GetBufferSize(wBufferPool* pool, const void* buffer)
 
 void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 {
-	SSIZE_T index;
-	SSIZE_T maxSize;
-	SSIZE_T maxIndex;
+	SSIZE_T index = 0;
+	SSIZE_T maxSize = 0;
+	SSIZE_T maxIndex = 0;
 	SSIZE_T foundIndex = -1;
 	BOOL found = FALSE;
 	void* buffer = NULL;
@@ -295,7 +295,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 
 			if (maxSize < size)
 			{
-				void* newBuffer;
+				void* newBuffer = NULL;
 				if (pool->alignment)
 					newBuffer = winpr_aligned_realloc(buffer, size, pool->alignment);
 				else

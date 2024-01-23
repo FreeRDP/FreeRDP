@@ -738,8 +738,8 @@ static const BYTE TEST_ISLAND_DATA_RDP5[] =
 static int test_MppcCompressBellsRdp5(void)
 {
 	int rc = -1;
-	int status;
-	UINT32 Flags;
+	int status = 0;
+	UINT32 Flags = 0;
 	BYTE OutputBuffer[65536] = { 0 };
 	const UINT32 SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
 	const BYTE* pSrcData = (const BYTE*)TEST_MPPC_BELLS;
@@ -786,8 +786,8 @@ fail:
 static int test_MppcCompressBellsRdp4(void)
 {
 	int rc = -1;
-	int status;
-	UINT32 Flags;
+	int status = 0;
+	UINT32 Flags = 0;
 	BYTE OutputBuffer[65536] = { 0 };
 	const BYTE* pSrcData = (const BYTE*)TEST_MPPC_BELLS;
 	const UINT32 SrcSize = sizeof(TEST_MPPC_BELLS) - 1;
@@ -833,13 +833,13 @@ fail:
 static int test_MppcDecompressBellsRdp5(void)
 {
 	int rc = -1;
-	int status;
-	UINT32 Flags;
-	const BYTE* pSrcData;
-	UINT32 SrcSize;
-	UINT32 DstSize;
-	MPPC_CONTEXT* mppc;
-	UINT32 expectedSize;
+	int status = 0;
+	UINT32 Flags = 0;
+	const BYTE* pSrcData = NULL;
+	UINT32 SrcSize = 0;
+	UINT32 DstSize = 0;
+	MPPC_CONTEXT* mppc = NULL;
+	UINT32 expectedSize = 0;
 	const BYTE* pDstData = NULL;
 	mppc = mppc_context_new(1, FALSE);
 
@@ -880,13 +880,13 @@ fail:
 static int test_MppcDecompressBellsRdp4(void)
 {
 	int rc = -1;
-	int status;
-	UINT32 Flags;
-	const BYTE* pSrcData;
-	UINT32 SrcSize;
-	UINT32 DstSize;
-	MPPC_CONTEXT* mppc;
-	UINT32 expectedSize;
+	int status = 0;
+	UINT32 Flags = 0;
+	const BYTE* pSrcData = NULL;
+	UINT32 SrcSize = 0;
+	UINT32 DstSize = 0;
+	MPPC_CONTEXT* mppc = NULL;
+	UINT32 expectedSize = 0;
 	const BYTE* pDstData = NULL;
 	mppc = mppc_context_new(0, FALSE);
 
@@ -927,8 +927,8 @@ fail:
 static int test_MppcCompressIslandRdp5(void)
 {
 	int rc = -1;
-	int status;
-	UINT32 Flags;
+	int status = 0;
+	UINT32 Flags = 0;
 	BYTE OutputBuffer[65536] = { 0 };
 	const UINT32 SrcSize = sizeof(TEST_ISLAND_DATA) - 1;
 	const BYTE* pSrcData = (const BYTE*)TEST_ISLAND_DATA;
@@ -974,8 +974,8 @@ fail:
 static int test_MppcCompressBufferRdp5(void)
 {
 	int rc = -1;
-	int status;
-	UINT32 Flags;
+	int status = 0;
+	UINT32 Flags = 0;
 	BYTE OutputBuffer[65536] = { 0 };
 	const UINT32 SrcSize = sizeof(TEST_RDP5_UNCOMPRESSED_DATA);
 	const BYTE* pSrcData = (const BYTE*)TEST_RDP5_UNCOMPRESSED_DATA;
@@ -1019,13 +1019,13 @@ fail:
 static int test_MppcDecompressBufferRdp5(void)
 {
 	int rc = -1;
-	int status;
-	UINT32 Flags;
-	const BYTE* pSrcData;
-	UINT32 SrcSize;
-	UINT32 DstSize;
-	MPPC_CONTEXT* mppc;
-	UINT32 expectedSize;
+	int status = 0;
+	UINT32 Flags = 0;
+	const BYTE* pSrcData = NULL;
+	UINT32 SrcSize = 0;
+	UINT32 DstSize = 0;
+	MPPC_CONTEXT* mppc = NULL;
+	UINT32 expectedSize = 0;
 	const BYTE* pDstData = NULL;
 	mppc = mppc_context_new(1, FALSE);
 

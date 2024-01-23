@@ -27,7 +27,7 @@
 
 rdpCache* cache_new(rdpContext* context)
 {
-	rdpCache* cache;
+	rdpCache* cache = NULL;
 
 	WINPR_ASSERT(context);
 

@@ -64,7 +64,7 @@
 
 static char* GetDeviceFileNameWithoutPrefixA(LPCSTR lpName)
 {
-	char* lpFileName;
+	char* lpFileName = NULL;
 
 	if (!lpName)
 		return NULL;
@@ -79,8 +79,8 @@ static char* GetDeviceFileNameWithoutPrefixA(LPCSTR lpName)
 
 static char* GetDeviceFileUnixDomainSocketBaseFilePathA(void)
 {
-	char* lpTempPath;
-	char* lpPipePath;
+	char* lpTempPath = NULL;
+	char* lpPipePath = NULL;
 	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
 
 	if (!lpTempPath)
@@ -125,9 +125,9 @@ NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtension
                            ULONG DeviceCharacteristics, BOOLEAN Exclusive,
                            PDEVICE_OBJECT_EX* DeviceObject)
 {
-	int status;
-	char* DeviceBasePath;
-	DEVICE_OBJECT_EX* pDeviceObjectEx;
+	int status = 0;
+	char* DeviceBasePath = NULL;
+	DEVICE_OBJECT_EX* pDeviceObjectEx = NULL;
 	DeviceBasePath = GetDeviceFileUnixDomainSocketBaseFilePathA();
 
 	if (!DeviceBasePath)
@@ -219,7 +219,7 @@ NTSTATUS _IoCreateDeviceEx(PDRIVER_OBJECT_EX DriverObject, ULONG DeviceExtension
 
 VOID _IoDeleteDeviceEx(PDEVICE_OBJECT_EX DeviceObject)
 {
-	DEVICE_OBJECT_EX* pDeviceObjectEx;
+	DEVICE_OBJECT_EX* pDeviceObjectEx = NULL;
 	pDeviceObjectEx = (DEVICE_OBJECT_EX*)DeviceObject;
 
 	if (!pDeviceObjectEx)

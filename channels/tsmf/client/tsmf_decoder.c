@@ -32,8 +32,8 @@
 
 static ITSMFDecoder* tsmf_load_decoder_by_name(const char* name)
 {
-	ITSMFDecoder* decoder;
-	TSMF_DECODER_ENTRY entry;
+	ITSMFDecoder* decoder = NULL;
+	TSMF_DECODER_ENTRY entry = NULL;
 
 	entry = (TSMF_DECODER_ENTRY)(void*)freerdp_load_channel_addin_entry("tsmf", name, "decoder", 0);
 

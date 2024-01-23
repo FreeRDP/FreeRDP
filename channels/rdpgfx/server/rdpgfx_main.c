@@ -113,12 +113,12 @@ static INLINE BOOL rdpgfx_server_packet_complete_header(wStream* s, size_t start
  */
 static UINT rdpgfx_server_packet_send(RdpgfxServerContext* context, wStream* s)
 {
-	UINT error;
+	UINT error = 0;
 	UINT32 flags = 0;
-	ULONG written;
+	ULONG written = 0;
 	BYTE* pSrcData = Stream_Buffer(s);
 	UINT32 SrcSize = Stream_GetPosition(s);
-	wStream* fs;
+	wStream* fs = NULL;
 	/* Allocate new stream with enough capacity. Additional overhead is
 	 * descriptor (1 bytes) + segmentCount (2 bytes) + uncompressedSize (4 bytes)
 	 * + segmentCount * size (4 bytes) */
@@ -174,8 +174,8 @@ out:
  */
 static wStream* rdpgfx_server_single_packet_new(wLog* log, UINT16 cmdId, UINT32 dataLen)
 {
-	UINT error;
-	wStream* s;
+	UINT error = 0;
+	wStream* s = NULL;
 	UINT32 pduLength = rdpgfx_pdu_length(dataLen);
 	s = Stream_New(NULL, pduLength);
 
@@ -220,8 +220,8 @@ static INLINE UINT rdpgfx_server_single_packet_send(RdpgfxServerContext* context
 static UINT rdpgfx_send_caps_confirm_pdu(RdpgfxServerContext* context,
                                          const RDPGFX_CAPS_CONFIRM_PDU* capsConfirm)
 {
-	wStream* s;
-	RDPGFX_CAPSET* capsSet;
+	wStream* s = NULL;
+	RDPGFX_CAPSET* capsSet = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(capsConfirm);
@@ -265,8 +265,8 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
-	UINT32 index;
-	wStream* s;
+	UINT32 index = 0;
+	wStream* s = NULL;
 
 	/* Check monitorCount. This ensures total size within 340 bytes) */
 	if (pdu->monitorCount >= 16)
@@ -576,9 +576,9 @@ static INLINE UINT16 rdpgfx_surface_command_cmdid(const RDPGFX_SURFACE_COMMAND* 
  */
 static UINT rdpgfx_write_h264_metablock(wLog* log, wStream* s, const RDPGFX_H264_METABLOCK* meta)
 {
-	UINT32 index;
-	RECTANGLE_16* regionRect;
-	RDPGFX_H264_QUANT_QUALITY* quantQualityVal;
+	UINT32 index = 0;
+	RECTANGLE_16* regionRect = NULL;
+	RDPGFX_H264_QUANT_QUALITY* quantQualityVal = NULL;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!Stream_EnsureRemainingCapacity(s, 4 + meta->numRegionRects * 10))
@@ -769,7 +769,7 @@ static UINT rdpgfx_send_surface_command(RdpgfxServerContext* context,
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 	UINT error = CHANNEL_RC_OK;
-	wStream* s;
+	wStream* s = NULL;
 	s = rdpgfx_server_single_packet_new(context->priv->log, rdpgfx_surface_command_cmdid(cmd),
 	                                    rdpgfx_estimate_surface_command(cmd));
 
@@ -810,7 +810,7 @@ static UINT rdpgfx_send_surface_frame_command(RdpgfxServerContext* context,
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 	UINT error = CHANNEL_RC_OK;
-	wStream* s;
+	wStream* s = NULL;
 	UINT32 position = 0;
 	UINT32 size = rdpgfx_pdu_length(rdpgfx_estimate_surface_command(cmd));
 
@@ -932,8 +932,8 @@ static UINT rdpgfx_send_solid_fill_pdu(RdpgfxServerContext* context,
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 	UINT error = CHANNEL_RC_OK;
-	UINT16 index;
-	RECTANGLE_16* fillRect;
+	UINT16 index = 0;
+	RECTANGLE_16* fillRect = NULL;
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_SOLIDFILL,
 	                                             8 + 8 * pdu->fillRectCount);
 
@@ -984,8 +984,8 @@ static UINT rdpgfx_send_surface_to_surface_pdu(RdpgfxServerContext* context,
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 	UINT error = CHANNEL_RC_OK;
-	UINT16 index;
-	RDPGFX_POINT16* destPt;
+	UINT16 index = 0;
+	RDPGFX_POINT16* destPt = NULL;
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_SURFACETOSURFACE,
 	                                             14 + 4 * pdu->destPtsCount);
 
@@ -1075,8 +1075,8 @@ static UINT rdpgfx_send_cache_to_surface_pdu(RdpgfxServerContext* context,
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 	UINT error = CHANNEL_RC_OK;
-	UINT16 index;
-	RDPGFX_POINT16* destPt;
+	UINT16 index = 0;
+	RDPGFX_POINT16* destPt = NULL;
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_CACHETOSURFACE,
 	                                             6 + 4 * pdu->destPtsCount);
 
@@ -1224,9 +1224,9 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
-	UINT16 index;
+	UINT16 index = 0;
 	RDPGFX_CACHE_IMPORT_OFFER_PDU pdu = { 0 };
-	RDPGFX_CACHE_ENTRY_METADATA* cacheEntry;
+	RDPGFX_CACHE_ENTRY_METADATA* cacheEntry = NULL;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
@@ -1272,7 +1272,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
  */
 static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream* s)
 {
-	UINT16 index;
+	UINT16 index = 0;
 	RDPGFX_CAPSET* capsSets = NULL;
 	RDPGFX_CAPS_ADVERTISE_PDU pdu = { 0 };
 	UINT error = ERROR_INVALID_DATA;
@@ -1390,8 +1390,8 @@ rdpgfx_send_map_surface_to_scaled_output_pdu(RdpgfxServerContext* context,
  */
 static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
 {
-	size_t beg;
-	size_t end;
+	size_t beg = 0;
+	size_t end = 0;
 	RDPGFX_HEADER header;
 	UINT error = CHANNEL_RC_OK;
 	beg = Stream_GetPosition(s);
@@ -1480,7 +1480,7 @@ static DWORD WINAPI rdpgfx_server_thread_func(LPVOID arg)
 	WINPR_ASSERT(context);
 
 	RdpgfxServerPrivate* priv = context->priv;
-	DWORD status;
+	DWORD status = 0;
 	DWORD nCount = 0;
 	HANDLE events[8] = { 0 };
 	UINT error = CHANNEL_RC_OK;
@@ -1541,7 +1541,7 @@ static BOOL rdpgfx_server_open(RdpgfxServerContext* context)
 		PULONG pSessionId = NULL;
 		DWORD BytesReturned = 0;
 		priv->SessionId = WTS_CURRENT_SESSION;
-		UINT32 channelId;
+		UINT32 channelId = 0;
 		BOOL status = TRUE;
 
 		if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION, WTSSessionId,
@@ -1791,8 +1791,8 @@ HANDLE rdpgfx_server_get_event_handle(RdpgfxServerContext* context)
  */
 UINT rdpgfx_server_handle_messages(RdpgfxServerContext* context)
 {
-	DWORD BytesReturned;
-	void* buffer;
+	DWORD BytesReturned = 0;
+	void* buffer = NULL;
 	UINT ret = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(context);

@@ -484,7 +484,7 @@ static SSIZE_T freerdp_bitmap_compress_24(const void* srcData, UINT32 width, UIN
 
 	while ((line >= start) && (out_count < 32768))
 	{
-		UINT32 j;
+		UINT32 j = 0;
 		size_t i = Stream_GetPosition(s) + count * 3U;
 
 		if ((i - (color_count * 3) >= byte_limit) && (i - (bicolor_count * 3) >= byte_limit) &&
@@ -790,7 +790,7 @@ static SSIZE_T freerdp_bitmap_compress_16(const void* srcData, UINT32 width, UIN
 
 	while ((line >= start) && (out_count < 32768))
 	{
-		UINT32 j;
+		UINT32 j = 0;
 		size_t i = Stream_GetPosition(s) + count * 2;
 
 		if ((i - (color_count * 2) >= byte_limit) && (i - (bicolor_count * 2) >= byte_limit) &&

@@ -123,11 +123,11 @@ static HANDLE NamedPipeClientCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAcces
                                          DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                                          HANDLE hTemplateFile)
 {
-	char* name;
-	int status;
-	HANDLE hNamedPipe;
+	char* name = NULL;
+	int status = 0;
+	HANDLE hNamedPipe = NULL;
 	struct sockaddr_un s = { 0 };
-	WINPR_NAMED_PIPE* pNamedPipe;
+	WINPR_NAMED_PIPE* pNamedPipe = NULL;
 
 	if (dwFlagsAndAttributes & FILE_FLAG_OVERLAPPED)
 	{
@@ -249,7 +249,7 @@ BOOL IsNamedPipeFileNameA(LPCSTR lpName)
 
 char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
 {
-	char* lpFileName;
+	char* lpFileName = NULL;
 
 	if (!lpName)
 		return NULL;
@@ -263,8 +263,8 @@ char* GetNamedPipeNameWithoutPrefixA(LPCSTR lpName)
 
 char* GetNamedPipeUnixDomainSocketBaseFilePathA(void)
 {
-	char* lpTempPath;
-	char* lpPipePath;
+	char* lpTempPath = NULL;
+	char* lpPipePath = NULL;
 	lpTempPath = GetKnownPath(KNOWN_PATH_TEMP);
 
 	if (!lpTempPath)
@@ -277,9 +277,9 @@ char* GetNamedPipeUnixDomainSocketBaseFilePathA(void)
 
 char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName)
 {
-	char* lpPipePath;
-	char* lpFileName;
-	char* lpFilePath;
+	char* lpPipePath = NULL;
+	char* lpFileName = NULL;
+	char* lpFilePath = NULL;
 	lpPipePath = GetNamedPipeUnixDomainSocketBaseFilePathA();
 	lpFileName = GetNamedPipeNameWithoutPrefixA(lpName);
 	lpFilePath = GetCombinedPath(lpPipePath, (char*)lpFileName);
@@ -291,7 +291,7 @@ char* GetNamedPipeUnixDomainSocketFilePathA(LPCSTR lpName)
 int GetNamePipeFileDescriptor(HANDLE hNamedPipe)
 {
 #ifndef _WIN32
-	int fd;
+	int fd = 0;
 	WINPR_NAMED_PIPE* pNamedPipe = (WINPR_NAMED_PIPE*)hNamedPipe;
 
 	if (!NamedPipeClientIsHandled(hNamedPipe))

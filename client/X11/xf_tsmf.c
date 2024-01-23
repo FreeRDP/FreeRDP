@@ -56,7 +56,7 @@ typedef struct xf_xv_context xfXvContext;
 
 static BOOL xf_tsmf_is_format_supported(xfXvContext* xv, UINT32 pixfmt)
 {
-	int i;
+	int i = 0;
 
 	if (!xv->xv_pixfmts)
 		return FALSE;
@@ -72,20 +72,20 @@ static BOOL xf_tsmf_is_format_supported(xfXvContext* xv, UINT32 pixfmt)
 
 static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT* event)
 {
-	int i;
-	int x;
-	int y;
-	UINT32 width;
-	UINT32 height;
-	BYTE* data1;
-	BYTE* data2;
-	UINT32 pixfmt;
-	UINT32 xvpixfmt;
-	XvImage* image;
+	int i = 0;
+	int x = 0;
+	int y = 0;
+	UINT32 width = 0;
+	UINT32 height = 0;
+	BYTE* data1 = NULL;
+	BYTE* data2 = NULL;
+	UINT32 pixfmt = 0;
+	UINT32 xvpixfmt = 0;
+	XvImage* image = NULL;
 	int colorkey = 0;
 	int numRects = 0;
-	xfContext* xfc;
-	xfXvContext* xv;
+	xfContext* xfc = NULL;
+	xfXvContext* xv = NULL;
 	XRectangle* xrects = NULL;
 	XShmSegmentInfo shminfo;
 	BOOL converti420yv12 = FALSE;
@@ -308,18 +308,18 @@ static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAM
 
 static int xf_tsmf_xv_init(xfContext* xfc, TsmfClientContext* tsmf)
 {
-	int ret;
-	unsigned int i;
-	unsigned int version;
-	unsigned int release;
-	unsigned int event_base;
-	unsigned int error_base;
-	unsigned int request_base;
-	unsigned int num_adaptors;
-	xfXvContext* xv;
-	XvAdaptorInfo* ai;
-	XvAttribute* attr;
-	XvImageFormatValues* fo;
+	int ret = 0;
+	unsigned int i = 0;
+	unsigned int version = 0;
+	unsigned int release = 0;
+	unsigned int event_base = 0;
+	unsigned int error_base = 0;
+	unsigned int request_base = 0;
+	unsigned int num_adaptors = 0;
+	xfXvContext* xv = NULL;
+	XvAdaptorInfo* ai = NULL;
+	XvAttribute* attr = NULL;
+	XvImageFormatValues* fo = NULL;
 
 	if (xfc->xv_context)
 		return 1; /* context already created */

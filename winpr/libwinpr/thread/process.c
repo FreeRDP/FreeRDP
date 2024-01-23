@@ -98,10 +98,10 @@
 static char* FindApplicationPath(char* application)
 {
 	LPCSTR pathName = "PATH";
-	char* path;
-	char* save;
-	DWORD nSize;
-	LPSTR lpSystemPath;
+	char* path = NULL;
+	char* save = NULL;
+	DWORD nSize = 0;
+	LPSTR lpSystemPath = NULL;
 	char* filename = NULL;
 
 	if (!application)
@@ -157,15 +157,15 @@ static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplic
                               LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo,
                               LPPROCESS_INFORMATION lpProcessInformation)
 {
-	pid_t pid;
-	int numArgs;
+	pid_t pid = 0;
+	int numArgs = 0;
 	LPSTR* pArgs = NULL;
 	char** envp = NULL;
 	char* filename = NULL;
-	HANDLE thread;
-	HANDLE process;
-	WINPR_ACCESS_TOKEN* token;
-	LPTCH lpszEnvironmentBlock;
+	HANDLE thread = NULL;
+	HANDLE process = NULL;
+	WINPR_ACCESS_TOKEN* token = NULL;
+	LPTCH lpszEnvironmentBlock = NULL;
 	BOOL ret = FALSE;
 	sigset_t oldSigMask;
 	sigset_t newSigMask;
@@ -222,10 +222,10 @@ static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplic
 	{
 		/* child process */
 #ifndef __sun
-		int maxfd;
+		int maxfd = 0;
 #endif
-		int fd;
-		int sig;
+		int fd = 0;
+		int sig = 0;
 		sigset_t set = { 0 };
 		struct sigaction act = { 0 };
 		/* set default signal handlers */
@@ -242,7 +242,7 @@ static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplic
 
 		if (lpStartupInfo)
 		{
-			int handle_fd;
+			int handle_fd = 0;
 			handle_fd = winpr_Handle_getFd(lpStartupInfo->hStdOutput);
 
 			if (handle_fd != -1)
@@ -446,7 +446,7 @@ VOID ExitProcess(UINT uExitCode)
 
 BOOL GetExitCodeProcess(HANDLE hProcess, LPDWORD lpExitCode)
 {
-	WINPR_PROCESS* process;
+	WINPR_PROCESS* process = NULL;
 
 	if (!hProcess)
 		return FALSE;
@@ -471,7 +471,7 @@ DWORD GetCurrentProcessId(VOID)
 
 BOOL TerminateProcess(HANDLE hProcess, UINT uExitCode)
 {
-	WINPR_PROCESS* process;
+	WINPR_PROCESS* process = NULL;
 	process = (WINPR_PROCESS*)hProcess;
 
 	if (!process || (process->pid <= 0))
@@ -562,7 +562,7 @@ static int _pidfd_open(pid_t pid)
 	{
 		/* possibly PIDFD_NONBLOCK is not supported, let's try to create a pidfd and set it
 		 * non blocking afterward */
-		int flags;
+		int flags = 0;
 		fd = syscall(__NR_pidfd_open, pid, 0);
 		if (fd < 0)
 			return -1;
@@ -582,7 +582,7 @@ static int _pidfd_open(pid_t pid)
 
 HANDLE CreateProcessHandle(pid_t pid)
 {
-	WINPR_PROCESS* process;
+	WINPR_PROCESS* process = NULL;
 	process = (WINPR_PROCESS*)calloc(1, sizeof(WINPR_PROCESS));
 
 	if (!process)

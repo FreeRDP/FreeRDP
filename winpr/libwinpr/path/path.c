@@ -684,7 +684,7 @@ HRESULT PathCchStripToRootW(PWSTR pszPath, size_t cchPath)
 
 HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 {
-	BOOL hasPrefix;
+	BOOL hasPrefix = 0;
 
 	if (!pszPath)
 		return E_INVALIDARG;
@@ -719,7 +719,7 @@ HRESULT PathCchStripPrefixA(PSTR pszPath, size_t cchPath)
 
 HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 {
-	BOOL hasPrefix;
+	BOOL hasPrefix = 0;
 
 	if (!pszPath)
 		return E_INVALIDARG;
@@ -734,7 +734,7 @@ HRESULT PathCchStripPrefixW(PWSTR pszPath, size_t cchPath)
 
 	if (hasPrefix)
 	{
-		int rc;
+		int rc = 0;
 		if (cchPath < 6)
 			return S_FALSE;
 
@@ -783,7 +783,7 @@ HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath)
 
 HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags)
 {
-	size_t index;
+	size_t index = 0;
 
 	if (dwFlags == PATH_STYLE_WINDOWS)
 	{
@@ -835,7 +835,7 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 
 HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlags)
 {
-	size_t index;
+	size_t index = 0;
 
 	if (dwFlags == PATH_STYLE_WINDOWS)
 	{

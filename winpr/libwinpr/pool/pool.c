@@ -59,11 +59,11 @@ static TP_POOL DEFAULT_POOL = {
 
 static DWORD WINAPI thread_pool_work_func(LPVOID arg)
 {
-	DWORD status;
-	PTP_POOL pool;
-	PTP_WORK work;
+	DWORD status = 0;
+	PTP_POOL pool = NULL;
+	PTP_WORK work = NULL;
 	HANDLE events[2];
-	PTP_CALLBACK_INSTANCE callbackInstance;
+	PTP_CALLBACK_INSTANCE callbackInstance = NULL;
 
 	pool = (PTP_POOL)arg;
 
@@ -104,9 +104,9 @@ static void threads_close(void* thread)
 static BOOL InitializeThreadpool(PTP_POOL pool)
 {
 	BOOL rc = FALSE;
-	int index;
-	wObject* obj;
-	HANDLE thread;
+	int index = 0;
+	wObject* obj = NULL;
+	HANDLE thread = NULL;
 
 	if (pool->Threads)
 		return TRUE;
@@ -211,7 +211,7 @@ VOID winpr_CloseThreadpool(PTP_POOL ptpp)
 
 BOOL winpr_SetThreadpoolThreadMinimum(PTP_POOL ptpp, DWORD cthrdMic)
 {
-	HANDLE thread;
+	HANDLE thread = NULL;
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
 	if (pSetThreadpoolThreadMinimum)

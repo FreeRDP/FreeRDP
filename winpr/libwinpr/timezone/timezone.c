@@ -38,8 +38,8 @@
 
 static UINT64 winpr_windows_gmtime(void)
 {
-	time_t unix_time;
-	UINT64 windows_time;
+	time_t unix_time = 0;
+	UINT64 windows_time = 0;
 	time(&unix_time);
 
 	if (unix_time < 0)
@@ -54,7 +54,7 @@ static UINT64 winpr_windows_gmtime(void)
 static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 {
 	const INT CHUNK_SIZE = 32;
-	INT64 rc;
+	INT64 rc = 0;
 	INT64 read = 0;
 	INT64 length = CHUNK_SIZE;
 	char* tzid = NULL;
@@ -102,7 +102,7 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 {
 	const char* _links[] = { "/etc/localtime", "/etc/TZ" };
-	size_t x;
+	size_t x = 0;
 
 	if (links == NULL)
 	{
@@ -125,7 +125,7 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 
 		if (buf)
 		{
-			size_t i;
+			size_t i = 0;
 			size_t sep = 0;
 			size_t alloc = 0;
 			size_t pos = 0;
@@ -247,7 +247,7 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 #if defined(ANDROID)
 	return winpr_get_android_timezone_identifier();
 #else
-	FILE* fp;
+	FILE* fp = NULL;
 	char* tzid = NULL;
 #if defined(__FreeBSD__) || defined(__OpenBSD__)
 	fp = winpr_fopen("/var/db/zoneinfo", "r");
@@ -268,8 +268,8 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 
 static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, const char* list)
 {
-	char* p;
-	char* list_copy;
+	char* p = NULL;
+	char* list_copy = NULL;
 	char* context = NULL;
 
 	list_copy = _strdup(list);
@@ -296,8 +296,8 @@ static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, con
 
 static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 {
-	size_t i;
-	size_t j;
+	size_t i = 0;
+	size_t j = 0;
 	char* tzid = NULL;
 	char* ntzid = NULL;
 	LPCSTR tz = "TZ";
@@ -373,8 +373,8 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 static const TIME_ZONE_RULE_ENTRY*
 winpr_get_current_time_zone_rule(const TIME_ZONE_RULE_ENTRY* rules, UINT32 count)
 {
-	UINT32 i;
-	UINT64 windows_time;
+	UINT32 i = 0;
+	UINT64 windows_time = 0;
 	windows_time = winpr_windows_gmtime();
 
 	for (i = 0; i < count; i++)
@@ -393,9 +393,9 @@ winpr_get_current_time_zone_rule(const TIME_ZONE_RULE_ENTRY* rules, UINT32 count
 
 DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
-	time_t t;
+	time_t t = 0;
 	struct tm tres;
-	struct tm* local_time;
+	struct tm* local_time = NULL;
 	TIME_ZONE_ENTRY* dtz = NULL;
 	LPTIME_ZONE_INFORMATION tz = lpTimeZoneInformation;
 	lpTimeZoneInformation->StandardBias = 0;

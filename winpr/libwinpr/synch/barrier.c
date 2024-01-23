@@ -92,8 +92,8 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
                                                    LONG lTotalThreads, LONG lSpinCount)
 {
 	SYSTEM_INFO sysinfo;
-	HANDLE hEvent0;
-	HANDLE hEvent1;
+	HANDLE hEvent0 = NULL;
+	HANDLE hEvent1 = NULL;
 
 #ifdef _WIN32
 	InitOnceExecuteOnce(&g_InitOnce, InitOnce_Barrier, NULL, NULL);
@@ -138,9 +138,9 @@ BOOL WINAPI winpr_InitializeSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpB
 
 BOOL WINAPI winpr_EnterSynchronizationBarrier(LPSYNCHRONIZATION_BARRIER lpBarrier, DWORD dwFlags)
 {
-	LONG remainingThreads;
-	HANDLE hCurrentEvent;
-	HANDLE hDormantEvent;
+	LONG remainingThreads = 0;
+	HANDLE hCurrentEvent = NULL;
+	HANDLE hDormantEvent = NULL;
 
 #ifdef _WIN32
 	if (g_NativeBarrier)

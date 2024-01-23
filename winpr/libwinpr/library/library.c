@@ -121,7 +121,7 @@ HMODULE LoadLibraryA(LPCSTR lpLibFileName)
 	free(filenameW);
 	return hModule;
 #else
-	HMODULE library;
+	HMODULE library = NULL;
 	library = dlopen(lpLibFileName, RTLD_LOCAL | RTLD_LAZY);
 
 	if (!library)
@@ -142,7 +142,7 @@ HMODULE LoadLibraryW(LPCWSTR lpLibFileName)
 #if defined(_UWP)
 	return LoadPackagedLibrary(lpLibFileName, 0);
 #else
-	HMODULE module;
+	HMODULE module = NULL;
 	char* name = ConvertWCharToUtf8Alloc(lpLibFileName, NULL);
 	if (!name)
 		return NULL;
@@ -181,7 +181,7 @@ HMODULE LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags)
 
 FARPROC GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 {
-	FARPROC proc;
+	FARPROC proc = NULL;
 	proc = dlsym(hModule, lpProcName);
 
 	if (proc == NULL)
@@ -195,7 +195,7 @@ FARPROC GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
 
 BOOL FreeLibrary(HMODULE hLibModule)
 {
-	int status;
+	int status = 0;
 	status = dlclose(hLibModule);
 
 	if (status != 0)
@@ -230,7 +230,7 @@ HMODULE GetModuleHandleW(LPCWSTR lpModuleName)
 
 DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 {
-	DWORD status;
+	DWORD status = 0;
 	if (!lpFilename)
 	{
 		SetLastError(ERROR_INTERNAL_ERROR);
@@ -268,8 +268,8 @@ DWORD GetModuleFileNameW(HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
 DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 {
 #if defined(__linux__)
-	SSIZE_T status;
-	size_t length;
+	SSIZE_T status = 0;
+	size_t length = 0;
 	char path[64];
 
 	if (!hModule)

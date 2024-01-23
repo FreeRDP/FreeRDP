@@ -12,9 +12,9 @@
 
 int TestThreadCreateProcess(int argc, char* argv[])
 {
-	BOOL status;
-	DWORD exitCode;
-	LPCTSTR lpApplicationName;
+	BOOL status = 0;
+	DWORD exitCode = 0;
+	LPCTSTR lpApplicationName = NULL;
 
 #ifdef _WIN32
 	TCHAR lpCommandLine[200] = _T("cmd /C set");
@@ -23,19 +23,19 @@ int TestThreadCreateProcess(int argc, char* argv[])
 #endif
 
 	// LPTSTR lpCommandLine;
-	LPSECURITY_ATTRIBUTES lpProcessAttributes;
-	LPSECURITY_ATTRIBUTES lpThreadAttributes;
-	BOOL bInheritHandles;
-	DWORD dwCreationFlags;
-	LPVOID lpEnvironment;
-	LPCTSTR lpCurrentDirectory;
+	LPSECURITY_ATTRIBUTES lpProcessAttributes = NULL;
+	LPSECURITY_ATTRIBUTES lpThreadAttributes = NULL;
+	BOOL bInheritHandles = 0;
+	DWORD dwCreationFlags = 0;
+	LPVOID lpEnvironment = NULL;
+	LPCTSTR lpCurrentDirectory = NULL;
 	STARTUPINFO StartupInfo = { 0 };
 	PROCESS_INFORMATION ProcessInformation = { 0 };
-	LPTCH lpszEnvironmentBlock;
+	LPTCH lpszEnvironmentBlock = NULL;
 	HANDLE pipe_read = NULL;
 	HANDLE pipe_write = NULL;
 	char buf[1024] = { 0 };
-	DWORD read_bytes;
+	DWORD read_bytes = 0;
 	int ret = 0;
 	SECURITY_ATTRIBUTES saAttr;
 

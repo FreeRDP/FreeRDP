@@ -54,8 +54,8 @@ struct AINPUT_PLUGIN_
  */
 static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-	UINT16 type;
-	AINPUT_PLUGIN* ainput;
+	UINT16 type = 0;
+	AINPUT_PLUGIN* ainput = NULL;
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 
 	WINPR_ASSERT(callback);
@@ -85,10 +85,10 @@ static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 
 static UINT ainput_send_input_event(AInputClientContext* context, UINT64 flags, INT32 x, INT32 y)
 {
-	AINPUT_PLUGIN* ainput;
-	GENERIC_CHANNEL_CALLBACK* callback;
+	AINPUT_PLUGIN* ainput = NULL;
+	GENERIC_CHANNEL_CALLBACK* callback = NULL;
 	BYTE buffer[32] = { 0 };
-	UINT64 time;
+	UINT64 time = 0;
 	wStream sbuffer = { 0 };
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 

@@ -44,9 +44,9 @@ static BOOL TestSynchCritical_TriggerAndCheckRaceCondition(HANDLE OwningThread, 
  * FALSE */
 static DWORD WINAPI TestSynchCritical_Test1(LPVOID arg)
 {
-	int i;
-	int j;
-	int rc;
+	int i = 0;
+	int j = 0;
+	int rc = 0;
 	HANDLE hThread = (HANDLE)(ULONG_PTR)GetCurrentThreadId();
 
 	PBOOL pbContinueRunning = (PBOOL)arg;
@@ -99,18 +99,18 @@ static DWORD WINAPI TestSynchCritical_Test2(LPVOID arg)
 
 static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 {
-	int i;
-	int j;
+	int i = 0;
+	int j = 0;
 	SYSTEM_INFO sysinfo;
-	DWORD dwPreviousSpinCount;
-	DWORD dwSpinCount;
-	DWORD dwSpinCountExpected;
-	HANDLE hMainThread;
-	HANDLE* hThreads;
-	HANDLE hThread;
-	DWORD dwThreadCount;
-	DWORD dwThreadExitCode;
-	BOOL bTest1Running;
+	DWORD dwPreviousSpinCount = 0;
+	DWORD dwSpinCount = 0;
+	DWORD dwSpinCountExpected = 0;
+	HANDLE hMainThread = NULL;
+	HANDLE* hThreads = NULL;
+	HANDLE hThread = NULL;
+	DWORD dwThreadCount = 0;
+	DWORD dwThreadExitCode = 0;
+	BOOL bTest1Running = 0;
 
 	PBOOL pbThreadTerminated = (PBOOL)arg;
 
@@ -314,10 +314,10 @@ fail:
 int TestSynchCritical(int argc, char* argv[])
 {
 	BOOL bThreadTerminated = FALSE;
-	HANDLE hThread;
-	DWORD dwThreadExitCode;
-	DWORD dwDeadLockDetectionTimeMs;
-	DWORD i;
+	HANDLE hThread = NULL;
+	DWORD dwThreadExitCode = 0;
+	DWORD dwDeadLockDetectionTimeMs = 0;
+	DWORD i = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

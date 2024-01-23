@@ -208,7 +208,7 @@ static const struct sdl_exit_code_map_t sdl_exit_code_map[] = {
 
 static const struct sdl_exit_code_map_t* sdl_map_entry_by_code(int exit_code)
 {
-	size_t x;
+	size_t x = 0;
 	for (x = 0; x < ARRAYSIZE(sdl_exit_code_map); x++)
 	{
 		const struct sdl_exit_code_map_t* cur = &sdl_exit_code_map[x];
@@ -220,7 +220,7 @@ static const struct sdl_exit_code_map_t* sdl_map_entry_by_code(int exit_code)
 
 static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(DWORD error)
 {
-	size_t x;
+	size_t x = 0;
 	for (x = 0; x < ARRAYSIZE(sdl_exit_code_map); x++)
 	{
 		const struct sdl_exit_code_map_t* cur = &sdl_exit_code_map[x];
@@ -274,7 +274,7 @@ static int error_info_to_error(freerdp* instance, DWORD* pcode, char** msg, size
  * It can be used to reset invalidated areas. */
 static BOOL sdl_begin_paint(rdpContext* context)
 {
-	rdpGdi* gdi;
+	rdpGdi* gdi = nullptr;
 	auto sdl = get_context(context);
 
 	WINPR_ASSERT(sdl);
@@ -391,8 +391,8 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 
 	SDL_Surface* screen = SDL_GetWindowSurface(window.window());
 
-	int w;
-	int h;
+	int w = 0;
+	int h = 0;
 	SDL_GetWindowSize(window.window(), &w, &h);
 
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
@@ -436,7 +436,7 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, std::vector<SdlWindow>& windows,
 
 static BOOL sdl_end_paint_process(rdpContext* context)
 {
-	rdpGdi* gdi;
+	rdpGdi* gdi = nullptr;
 	auto sdl = get_context(context);
 
 	WINPR_ASSERT(context);
@@ -494,7 +494,7 @@ static void sdl_destroy_primary(SdlContext* sdl)
 /* Create a SDL surface from the GDI buffer */
 static BOOL sdl_create_primary(SdlContext* sdl)
 {
-	rdpGdi* gdi;
+	rdpGdi* gdi = nullptr;
 
 	WINPR_ASSERT(sdl);
 
@@ -522,8 +522,8 @@ static BOOL sdl_create_primary(SdlContext* sdl)
 
 static BOOL sdl_desktop_resize(rdpContext* context)
 {
-	rdpGdi* gdi;
-	rdpSettings* settings;
+	rdpGdi* gdi = nullptr;
+	rdpSettings* settings = nullptr;
 	auto sdl = get_context(context);
 
 	WINPR_ASSERT(sdl);
@@ -644,10 +644,10 @@ static BOOL sdl_pre_connect(freerdp* instance)
 
 static const char* sdl_window_get_title(rdpSettings* settings)
 {
-	const char* windowTitle;
-	UINT32 port;
-	BOOL addPort;
-	const char* name;
+	const char* windowTitle = nullptr;
+	UINT32 port = 0;
+	BOOL addPort = 0;
+	const char* name = nullptr;
 	const char* prefix = "FreeRDP:";
 
 	if (!settings)
@@ -754,8 +754,8 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
-			int win_x;
-			int win_y;
+			int win_x = 0;
+			int win_y = 0;
 			SDL_GetWindowPosition(window.window(), &win_x, &win_y);
 			window.setOffsetX(0 - win_x);
 			window.setOffsetY(0 - win_y);
@@ -1193,8 +1193,8 @@ static void sdl_post_final_disconnect(freerdp* instance)
  * after the connection ends. */
 static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 {
-	DWORD nCount;
-	DWORD status;
+	DWORD nCount = 0;
+	DWORD status = 0;
 	int exit_code = SDL_EXIT_SUCCESS;
 	char* error_msg = NULL;
 	size_t error_msg_len = 0;
@@ -1597,7 +1597,7 @@ static void SDLCALL winpr_LogOutputFunction(void* userdata, int category, SDL_Lo
 int main(int argc, char* argv[])
 {
 	int rc = -1;
-	int status;
+	int status = 0;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = {};
 
 	freerdp_client_warn_experimental(argc, argv);

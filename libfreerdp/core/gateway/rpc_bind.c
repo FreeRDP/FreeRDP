@@ -111,9 +111,9 @@ const p_uuid_t BTFN_UUID = {
 static int rpc_bind_setup(rdpRpc* rpc)
 {
 	int rc = -1;
-	rdpContext* context;
-	rdpSettings* settings;
-	freerdp* instance;
+	rdpContext* context = NULL;
+	rdpSettings* settings = NULL;
+	freerdp* instance = NULL;
 	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
 
 	WINPR_ASSERT(rpc);
@@ -177,12 +177,12 @@ int rpc_send_bind_pdu(rdpRpc* rpc, BOOL initial)
 {
 	int status = -1;
 	wStream* buffer = NULL;
-	UINT32 offset;
-	RpcClientCall* clientCall;
-	p_cont_elem_t* p_cont_elem;
+	UINT32 offset = 0;
+	RpcClientCall* clientCall = NULL;
+	p_cont_elem_t* p_cont_elem = NULL;
 	rpcconn_bind_hdr_t bind_pdu = { 0 };
-	RpcVirtualConnection* connection;
-	RpcInChannel* inChannel;
+	RpcVirtualConnection* connection = NULL;
+	RpcInChannel* inChannel = NULL;
 	const SecBuffer* sbuffer = NULL;
 
 	WINPR_ASSERT(rpc);
@@ -323,9 +323,9 @@ fail:
 BOOL rpc_recv_bind_ack_pdu(rdpRpc* rpc, wStream* s)
 {
 	BOOL rc = FALSE;
-	const BYTE* auth_data;
-	size_t pos;
-	size_t end;
+	const BYTE* auth_data = NULL;
+	size_t pos = 0;
+	size_t end = 0;
 	rpcconn_hdr_t header = { 0 };
 	SecBuffer buffer = { 0 };
 
@@ -376,13 +376,13 @@ fail:
 int rpc_send_rpc_auth_3_pdu(rdpRpc* rpc)
 {
 	int status = -1;
-	wStream* buffer;
-	size_t offset;
-	const SecBuffer* sbuffer;
-	RpcClientCall* clientCall;
+	wStream* buffer = NULL;
+	size_t offset = 0;
+	const SecBuffer* sbuffer = NULL;
+	RpcClientCall* clientCall = NULL;
 	rpcconn_rpc_auth_3_hdr_t auth_3_pdu = { 0 };
-	RpcVirtualConnection* connection;
-	RpcInChannel* inChannel;
+	RpcVirtualConnection* connection = NULL;
+	RpcInChannel* inChannel = NULL;
 
 	WINPR_ASSERT(rpc);
 
@@ -440,8 +440,8 @@ fail:
 
 enum RPC_BIND_STATE rpc_bind_state(rdpRpc* rpc)
 {
-	BOOL complete;
-	BOOL have_token;
+	BOOL complete = 0;
+	BOOL have_token = 0;
 	WINPR_ASSERT(rpc);
 
 	complete = credssp_auth_is_complete(rpc->auth);

@@ -88,8 +88,8 @@ static char* reg_data_type_string(DWORD type)
 
 static BOOL reg_load_start(Reg* reg)
 {
-	char* buffer;
-	INT64 file_size;
+	char* buffer = NULL;
+	INT64 file_size = 0;
 
 	WINPR_ASSERT(reg);
 	WINPR_ASSERT(reg->fp);
@@ -132,12 +132,12 @@ static void reg_load_finish(Reg* reg)
 
 static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 {
-	size_t index;
+	size_t index = 0;
 	const char* p[5] = { 0 };
-	size_t length;
+	size_t length = 0;
 	char* name = NULL;
-	const char* type;
-	const char* data;
+	const char* type = NULL;
+	const char* data = NULL;
 	RegVal* value = NULL;
 
 	WINPR_ASSERT(reg);
@@ -197,7 +197,7 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 	{
 		case REG_DWORD:
 		{
-			unsigned long val;
+			unsigned long val = 0;
 			errno = 0;
 			val = strtoul(data, NULL, 0);
 
@@ -211,7 +211,7 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 		break;
 		case REG_QWORD:
 		{
-			unsigned long long val;
+			unsigned long long val = 0;
 			errno = 0;
 			val = strtoull(data, NULL, 0);
 
@@ -226,9 +226,9 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 		break;
 		case REG_SZ:
 		{
-			size_t len;
-			size_t cmp;
-			char* end;
+			size_t len = 0;
+			size_t cmp = 0;
+			char* end = NULL;
 			char* start = strchr(data, '"');
 			if (!start)
 				goto fail;
@@ -349,8 +349,8 @@ static void reg_insert_key(Reg* reg, RegKey* key, RegKey* subkey)
 static RegKey* reg_load_key(Reg* reg, RegKey* key)
 {
 	char* p[2];
-	size_t length;
-	RegKey* subkey;
+	size_t length = 0;
+	RegKey* subkey = NULL;
 
 	WINPR_ASSERT(reg);
 	WINPR_ASSERT(key);
@@ -451,7 +451,7 @@ static void reg_unload_value(Reg* reg, RegVal* value)
 
 static void reg_unload_key(Reg* reg, RegKey* key)
 {
-	RegVal* pValue;
+	RegVal* pValue = NULL;
 
 	WINPR_ASSERT(reg);
 	WINPR_ASSERT(key);

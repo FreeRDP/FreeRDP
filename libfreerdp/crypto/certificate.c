@@ -1003,7 +1003,7 @@ BOOL freerdp_certificate_read_server_cert(rdpCertificate* certificate, const BYT
                                           size_t length)
 {
 	BOOL ret = FALSE;
-	wStream* s;
+	wStream* s = NULL;
 	wStream sbuffer;
 	UINT32 dwVersion = 0;
 
@@ -1337,7 +1337,7 @@ char* freerdp_certificate_get_fingerprint_by_hash_ex(const rdpCertificate* cert,
 	size_t i = 0;
 	for (i = 0; i < (fp_len - 1); i++)
 	{
-		int rc;
+		int rc = 0;
 		char* p = &fp_buffer[pos];
 		if (separator)
 			rc = sprintf_s(p, size - pos, "%02" PRIx8 ":", fp[i]);
@@ -1410,8 +1410,8 @@ char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
 	if (!cert->x509)
 		return NULL;
 
-	BIO* bio;
-	int status;
+	BIO* bio = NULL;
+	int status = 0;
 
 	/**
 	 * Don't manage certificates internally, leave it up entirely to the external client
@@ -1491,7 +1491,7 @@ BOOL freerdp_certificate_get_public_key(const rdpCertificate* cert, BYTE** Publi
 {
 	BYTE* ptr = NULL;
 	BYTE* optr = NULL;
-	int length;
+	int length = 0;
 	BOOL status = FALSE;
 	EVP_PKEY* pkey = NULL;
 

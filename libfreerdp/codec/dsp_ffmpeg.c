@@ -225,7 +225,7 @@ static void ffmpeg_close_context(FREERDP_DSP_CONTEXT* context)
 
 static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* context)
 {
-	int ret;
+	int ret = 0;
 
 	if (!context || context->isOpen)
 		return FALSE;
@@ -372,7 +372,7 @@ fail:
 #if defined(SWRESAMPLE_FOUND)
 static BOOL ffmpeg_resample_frame(SwrContext* context, AVFrame* in, AVFrame* out)
 {
-	int ret;
+	int ret = 0;
 
 	if (!swr_is_initialized(context))
 	{
@@ -500,8 +500,8 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in, AVPacket* 
 static BOOL ffmpeg_fill_frame(AVFrame* frame, const AUDIO_FORMAT* inputFormat, const BYTE* data,
                               size_t size)
 {
-	int ret;
-	int bpp;
+	int ret = 0;
+	int bpp = 0;
 #if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(57, 28, 100)
 	frame->channels = inputFormat->nChannels;
 	frame->channel_layout = av_get_default_channel_layout(frame->channels);
@@ -532,7 +532,7 @@ static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt, AVFrame* frame
                           AVAudioResampleContext* resampleContext, AVFrame* resampled, wStream* out)
 #endif
 {
-	int ret;
+	int ret = 0;
 	/* send the packet with the compressed data to the decoder */
 	ret = avcodec_send_packet(dec_ctx, pkt);
 
@@ -626,7 +626,7 @@ BOOL freerdp_dsp_ffmpeg_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 
 FREERDP_DSP_CONTEXT* freerdp_dsp_ffmpeg_context_new(BOOL encode)
 {
-	FREERDP_DSP_CONTEXT* context;
+	FREERDP_DSP_CONTEXT* context = NULL;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 10, 100)
 	avcodec_register_all();
 #endif
@@ -673,10 +673,10 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
                                     const AUDIO_FORMAT* srcFormat, const BYTE** data,
                                     size_t* length, AUDIO_FORMAT* dstFormat)
 {
-	UINT32 bpp;
-	size_t samples;
-	size_t x;
-	size_t y;
+	UINT32 bpp = 0;
+	size_t samples = 0;
+	size_t x = 0;
+	size_t y = 0;
 
 	if (!context || !data || !length || !dstFormat)
 		return FALSE;
@@ -761,7 +761,7 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* format,
                                const BYTE* data, size_t length, wStream* out)
 {
-	int rc;
+	int rc = 0;
 	AUDIO_FORMAT fmt = { 0 };
 
 	if (!context || !format || !data || !out || !context->encoder)

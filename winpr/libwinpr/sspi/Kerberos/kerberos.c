@@ -166,7 +166,7 @@ static void kerberos_ContextFree(KRB_CONTEXT* ctx, BOOL allocated)
 
 static KRB_CONTEXT* kerberos_ContextNew(void)
 {
-	KRB_CONTEXT* context;
+	KRB_CONTEXT* context = NULL;
 
 	context = (KRB_CONTEXT*)calloc(1, sizeof(KRB_CONTEXT));
 	if (!context)
@@ -395,7 +395,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = 0;
 	char* principal = NULL;
 	char* package = NULL;
 
@@ -427,8 +427,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleW(
 static SECURITY_STATUS SEC_ENTRY kerberos_FreeCredentialsHandle(PCredHandle phCredential)
 {
 #ifdef WITH_KRB5
-	KRB_CREDENTIALS* credentials;
-	krb5_context ctx;
+	KRB_CREDENTIALS* credentials = NULL;
+	krb5_context ctx = NULL;
 
 	credentials = sspi_SecureHandleGetLowerPointer(phCredential);
 	if (!credentials)
@@ -489,10 +489,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryCredentialsAttributesA(PCredHandl
 static BOOL kerberos_mk_tgt_token(SecBuffer* buf, int msg_type, char* sname, char* host,
                                   const krb5_data* ticket)
 {
-	WinPrAsn1Encoder* enc;
+	WinPrAsn1Encoder* enc = NULL;
 	WinPrAsn1_MemoryChunk data;
 	wStream s;
-	size_t len;
+	size_t len = 0;
 	sspi_gss_data token;
 	BOOL ret = FALSE;
 
@@ -576,10 +576,10 @@ static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb
 {
 	WinPrAsn1Decoder dec;
 	WinPrAsn1Decoder dec2;
-	BOOL error;
-	WinPrAsn1_tagId tag;
-	WinPrAsn1_INTEGER val;
-	size_t len;
+	BOOL error = 0;
+	WinPrAsn1_tagId tag = 0;
+	WinPrAsn1_INTEGER val = 0;
+	size_t len = 0;
 	wStream s;
 	char* buf = NULL;
 	char* str = NULL;
@@ -732,8 +732,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, ULONG* pfContextAttr, PTimeStamp ptsExpiry)
 {
 #ifdef WITH_KRB5
-	KRB_CREDENTIALS* credentials;
-	KRB_CONTEXT* context;
+	KRB_CREDENTIALS* credentials = NULL;
+	KRB_CONTEXT* context = NULL;
 	KRB_CONTEXT new_context = { 0 };
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
@@ -1038,7 +1038,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextW(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, ULONG* pfContextAttr, PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = 0;
 	char* target_name = NULL;
 
 	if (pszTargetName)
@@ -1064,22 +1064,22 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
     PTimeStamp ptsExpity)
 {
 #ifdef WITH_KRB5
-	KRB_CREDENTIALS* credentials;
-	KRB_CONTEXT* context;
+	KRB_CREDENTIALS* credentials = NULL;
+	KRB_CONTEXT* context = NULL;
 	KRB_CONTEXT new_context = { 0 };
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
 	WinPrAsn1_OID oid = { 0 };
-	uint16_t tok_id;
+	uint16_t tok_id = 0;
 	krb5_data input_token = { 0 };
 	krb5_data output_token = { 0 };
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 	krb5_flags ap_flags = 0;
-	krb5glue_authenticator authenticator;
+	krb5glue_authenticator authenticator = NULL;
 	char* target = NULL;
 	char* sname = NULL;
 	char* realm = NULL;
-	krb5_kt_cursor cur;
+	krb5_kt_cursor cur = { 0 };
 	krb5_keytab_entry entry = { 0 };
 	krb5_principal principal = NULL;
 	krb5_creds creds = { 0 };
@@ -1332,10 +1332,10 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 
 	if (ulAttribute == SECPKG_ATTR_SIZES)
 	{
-		UINT header;
-		UINT pad;
-		UINT trailer;
-		krb5glue_key key;
+		UINT header = 0;
+		UINT pad = 0;
+		UINT trailer = 0;
+		krb5glue_key key = NULL;
 		KRB_CONTEXT* context = get_context(phContext);
 		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*)pBuffer;
 
@@ -1417,7 +1417,7 @@ static SECURITY_STATUS SEC_ENTRY kerberos_SetCredentialsAttributesX(PCredHandle 
                                                                     BOOL unicode)
 {
 #ifdef WITH_KRB5
-	KRB_CREDENTIALS* credentials;
+	KRB_CREDENTIALS* credentials = NULL;
 
 	if (!phCredential)
 		return SEC_E_INVALID_HANDLE;
@@ -1487,12 +1487,12 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer;
-	PSecBuffer data_buffer;
-	BYTE* header;
+	PSecBuffer sig_buffer = NULL;
+	PSecBuffer data_buffer = NULL;
+	BYTE* header = NULL;
 	BYTE flags = 0;
-	krb5glue_key key;
-	krb5_keyusage usage;
+	krb5glue_key key = NULL;
+	krb5_keyusage usage = 0;
 	krb5_crypto_iov encrypt_iov[] = { { KRB5_CRYPTO_TYPE_HEADER, { 0 } },
 		                              { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                              { KRB5_CRYPTO_TYPE_DATA, { 0 } },
@@ -1574,16 +1574,16 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer;
-	PSecBuffer data_buffer;
-	krb5glue_key key;
-	krb5_keyusage usage;
-	char* header;
-	uint16_t tok_id;
-	BYTE flags;
-	uint16_t ec;
-	uint16_t rrc;
-	uint64_t seq_no;
+	PSecBuffer sig_buffer = NULL;
+	PSecBuffer data_buffer = NULL;
+	krb5glue_key key = NULL;
+	krb5_keyusage usage = 0;
+	char* header = NULL;
+	uint16_t tok_id = 0;
+	BYTE flags = 0;
+	uint16_t ec = 0;
+	uint16_t rrc = 0;
+	uint64_t seq_no = 0;
 	krb5_crypto_iov iov[] = { { KRB5_CRYPTO_TYPE_HEADER, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_DATA, { 0 } },
@@ -1674,11 +1674,11 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer;
-	PSecBuffer data_buffer;
-	krb5glue_key key;
-	krb5_keyusage usage;
-	char* header;
+	PSecBuffer sig_buffer = NULL;
+	PSecBuffer data_buffer = NULL;
+	krb5glue_key key = NULL;
+	krb5_keyusage usage = 0;
+	char* header = NULL;
 	BYTE flags = 0;
 	krb5_crypto_iov iov[] = { { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_DATA, { 0 } },
@@ -1743,15 +1743,15 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
                                                           ULONG MessageSeqNo, ULONG* pfQOP)
 {
 #ifdef WITH_KRB5
-	PSecBuffer sig_buffer;
-	PSecBuffer data_buffer;
-	krb5glue_key key;
-	krb5_keyusage usage;
-	char* header;
-	BYTE flags;
-	uint16_t tok_id;
-	uint64_t seq_no;
-	krb5_boolean is_valid;
+	PSecBuffer sig_buffer = NULL;
+	PSecBuffer data_buffer = NULL;
+	krb5glue_key key = NULL;
+	krb5_keyusage usage = 0;
+	char* header = NULL;
+	BYTE flags = 0;
+	uint16_t tok_id = 0;
+	uint64_t seq_no = 0;
+	krb5_boolean is_valid = 0;
 	krb5_crypto_iov iov[] = { { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_DATA, { 0 } },
 		                      { KRB5_CRYPTO_TYPE_CHECKSUM, { 0 } } };

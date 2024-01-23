@@ -9,7 +9,7 @@
 int TestLibraryGetModuleFileName(int argc, char* argv[])
 {
 	char ModuleFileName[4096];
-	DWORD len;
+	DWORD len = 0;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	/* Test insufficient buffer size behaviour */

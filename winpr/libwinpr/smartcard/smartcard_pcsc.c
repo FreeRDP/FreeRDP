@@ -366,7 +366,7 @@ static DWORD PCSC_ConvertProtocolsFromWinSCard(DWORD dwProtocols)
 
 static PCSC_SCARDCONTEXT* PCSC_GetCardContextData(SCARDCONTEXT hContext)
 {
-	PCSC_SCARDCONTEXT* pContext;
+	PCSC_SCARDCONTEXT* pContext = NULL;
 
 	if (!g_CardContexts)
 		return NULL;
@@ -389,7 +389,7 @@ static void pcsc_cache_item_free(void* ptr)
 
 static PCSC_SCARDCONTEXT* PCSC_EstablishCardContext(SCARDCONTEXT hContext)
 {
-	PCSC_SCARDCONTEXT* pContext;
+	PCSC_SCARDCONTEXT* pContext = NULL;
 	pContext = (PCSC_SCARDCONTEXT*)calloc(1, sizeof(PCSC_SCARDCONTEXT));
 
 	if (!pContext)
@@ -432,7 +432,7 @@ error_spinlock:
 
 static void PCSC_ReleaseCardContext(SCARDCONTEXT hContext)
 {
-	PCSC_SCARDCONTEXT* pContext;
+	PCSC_SCARDCONTEXT* pContext = NULL;
 	pContext = PCSC_GetCardContextData(hContext);
 
 	if (!pContext)
@@ -453,7 +453,7 @@ static void PCSC_ReleaseCardContext(SCARDCONTEXT hContext)
 
 static BOOL PCSC_LockCardContext(SCARDCONTEXT hContext)
 {
-	PCSC_SCARDCONTEXT* pContext;
+	PCSC_SCARDCONTEXT* pContext = NULL;
 	pContext = PCSC_GetCardContextData(hContext);
 
 	if (!pContext)
@@ -468,7 +468,7 @@ static BOOL PCSC_LockCardContext(SCARDCONTEXT hContext)
 
 static BOOL PCSC_UnlockCardContext(SCARDCONTEXT hContext)
 {
-	PCSC_SCARDCONTEXT* pContext;
+	PCSC_SCARDCONTEXT* pContext = NULL;
 	pContext = PCSC_GetCardContextData(hContext);
 
 	if (!pContext)
@@ -483,7 +483,7 @@ static BOOL PCSC_UnlockCardContext(SCARDCONTEXT hContext)
 
 static PCSC_SCARDHANDLE* PCSC_GetCardHandleData(SCARDHANDLE hCard)
 {
-	PCSC_SCARDHANDLE* pCard;
+	PCSC_SCARDHANDLE* pCard = NULL;
 
 	if (!g_CardHandles)
 		return NULL;
@@ -498,7 +498,7 @@ static PCSC_SCARDHANDLE* PCSC_GetCardHandleData(SCARDHANDLE hCard)
 
 static SCARDCONTEXT PCSC_GetCardContextFromHandle(SCARDHANDLE hCard)
 {
-	PCSC_SCARDHANDLE* pCard;
+	PCSC_SCARDHANDLE* pCard = NULL;
 	pCard = PCSC_GetCardHandleData(hCard);
 
 	if (!pCard)
@@ -611,8 +611,8 @@ static BOOL PCSC_ReleaseCardAccess(SCARDCONTEXT hContext, SCARDHANDLE hCard)
 
 static PCSC_SCARDHANDLE* PCSC_ConnectCardHandle(SCARDCONTEXT hSharedContext, SCARDHANDLE hCard)
 {
-	PCSC_SCARDHANDLE* pCard;
-	PCSC_SCARDCONTEXT* pContext;
+	PCSC_SCARDHANDLE* pCard = NULL;
+	PCSC_SCARDCONTEXT* pContext = NULL;
 	pContext = PCSC_GetCardContextData(hSharedContext);
 
 	if (!pContext)
@@ -648,8 +648,8 @@ error:
 
 static void PCSC_DisconnectCardHandle(SCARDHANDLE hCard)
 {
-	PCSC_SCARDHANDLE* pCard;
-	PCSC_SCARDCONTEXT* pContext;
+	PCSC_SCARDHANDLE* pCard = NULL;
+	PCSC_SCARDCONTEXT* pContext = NULL;
 	pCard = PCSC_GetCardHandleData(hCard);
 
 	if (!pCard)
@@ -717,7 +717,7 @@ static LONG WINAPI PCSC_SCardEstablishContext_Internal(DWORD dwScope, LPCVOID pv
 static LONG WINAPI PCSC_SCardEstablishContext(DWORD dwScope, LPCVOID pvReserved1,
                                               LPCVOID pvReserved2, LPSCARDCONTEXT phContext)
 {
-	LONG status;
+	LONG status = 0;
 
 	status = PCSC_SCardEstablishContext_Internal(dwScope, pvReserved1, pvReserved2, phContext);
 
@@ -1048,7 +1048,7 @@ static PcscKnownAtr knownAtrs[] = {
 
 static const char* findCardByAtr(LPCBYTE pbAtr)
 {
-	size_t i;
+	size_t i = 0;
 
 	for (i = 0; i < ARRAY_LENGTH(knownAtrs); i++)
 	{
@@ -1066,7 +1066,7 @@ static LONG WINAPI PCSC_SCardListCardsA(SCARDCONTEXT hContext, LPCBYTE pbAtr,
 	const char* cardName = NULL;
 	DWORD outputLen = 1;
 	CHAR* output = NULL;
-	BOOL autoAllocate;
+	BOOL autoAllocate = 0;
 
 	if (!pbAtr || rgquidInterfaces || cguidInterfaceCount)
 		return SCARD_E_UNSUPPORTED_FEATURE;
@@ -1119,7 +1119,7 @@ static LONG WINAPI PCSC_SCardListCardsW(SCARDCONTEXT hContext, LPCBYTE pbAtr,
 	const char* cardName = NULL;
 	DWORD outputLen = 1;
 	WCHAR* output = NULL;
-	BOOL autoAllocate;
+	BOOL autoAllocate = 0;
 
 	if (!pbAtr || rgquidInterfaces || cguidInterfaceCount)
 		return SCARD_E_UNSUPPORTED_FEATURE;
@@ -1524,11 +1524,11 @@ static LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext, DWO
                                                       LPSCARD_READERSTATEA rgReaderStates,
                                                       DWORD cReaders)
 {
-	PCSC_DWORD i;
-	PCSC_DWORD j;
-	INT64* map;
-	PCSC_DWORD cMappedReaders;
-	PCSC_SCARD_READERSTATE* states;
+	PCSC_DWORD i = 0;
+	PCSC_DWORD j = 0;
+	INT64* map = NULL;
+	PCSC_DWORD cMappedReaders = 0;
+	PCSC_SCARD_READERSTATE* states = NULL;
 	PCSC_LONG status = SCARD_S_SUCCESS;
 	PCSC_DWORD pcsc_dwTimeout = (PCSC_DWORD)dwTimeout;
 	PCSC_DWORD pcsc_cReaders = (PCSC_DWORD)cReaders;
@@ -1638,8 +1638,8 @@ static LONG WINAPI PCSC_SCardGetStatusChangeA(SCARDCONTEXT hContext, DWORD dwTim
 static LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext, DWORD dwTimeout,
                                               LPSCARD_READERSTATEW rgReaderStates, DWORD cReaders)
 {
-	DWORD index;
-	LPSCARD_READERSTATEA states;
+	DWORD index = 0;
+	LPSCARD_READERSTATEA states = NULL;
 	LONG status = SCARD_S_SUCCESS;
 
 	if (!g_PCSC.pfnSCardGetStatusChange)
@@ -1704,8 +1704,8 @@ static LONG WINAPI PCSC_SCardConnect_Internal(SCARDCONTEXT hContext, LPCSTR szRe
                                               DWORD dwShareMode, DWORD dwPreferredProtocols,
                                               LPSCARDHANDLE phCard, LPDWORD pdwActiveProtocol)
 {
-	BOOL shared;
-	const char* szReaderPCSC;
+	BOOL shared = 0;
+	const char* szReaderPCSC = NULL;
 	PCSC_LONG status = SCARD_S_SUCCESS;
 	PCSC_SCARDHANDLE* pCard = NULL;
 	PCSC_DWORD pcsc_dwShareMode = (PCSC_DWORD)dwShareMode;
@@ -1795,7 +1795,7 @@ static LONG WINAPI PCSC_SCardReconnect(SCARDHANDLE hCard, DWORD dwShareMode,
                                        DWORD dwPreferredProtocols, DWORD dwInitialization,
                                        LPDWORD pdwActiveProtocol)
 {
-	BOOL shared;
+	BOOL shared = 0;
 	PCSC_LONG status = SCARD_S_SUCCESS;
 	PCSC_DWORD pcsc_dwShareMode = (PCSC_DWORD)dwShareMode;
 	PCSC_DWORD pcsc_dwPreferredProtocols = 0;
@@ -1909,8 +1909,8 @@ static LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard, LPSTR mszReaderN
                                              BOOL unicode)
 {
 	PCSC_SCARDHANDLE* pCard = NULL;
-	SCARDCONTEXT hContext;
-	PCSC_LONG status;
+	SCARDCONTEXT hContext = 0;
+	PCSC_LONG status = 0;
 	PCSC_DWORD pcsc_cchReaderLen = 0;
 	PCSC_DWORD pcsc_cbAtrLen = 0;
 	PCSC_DWORD pcsc_dwState = 0;
@@ -2067,7 +2067,7 @@ out_fail:
 static LONG WINAPI PCSC_SCardState(SCARDHANDLE hCard, LPDWORD pdwState, LPDWORD pdwProtocol,
                                    LPBYTE pbAtr, LPDWORD pcbAtrLen)
 {
-	DWORD cchReaderLen;
+	DWORD cchReaderLen = 0;
 	SCARDCONTEXT hContext = 0;
 	LPSTR mszReaderNames = NULL;
 	PCSC_LONG status = SCARD_S_SUCCESS;
@@ -2313,8 +2313,8 @@ static LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, LPC
 
 	if (getFeatureRequest)
 	{
-		UINT32 index;
-		UINT32 count;
+		UINT32 index = 0;
+		UINT32 count = 0;
 		PCSC_TLV_STRUCTURE* tlv = (PCSC_TLV_STRUCTURE*)lpOutBuffer;
 
 		if ((*lpBytesReturned % sizeof(PCSC_TLV_STRUCTURE)) != 0)
@@ -2407,7 +2407,7 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 	char* pbAttrA = NULL;
 	DWORD cbAttrLen = 0;
 	WCHAR* pbAttrW = NULL;
-	SCARDCONTEXT hContext;
+	SCARDCONTEXT hContext = 0;
 	LONG status = SCARD_S_SUCCESS;
 
 	hContext = PCSC_GetCardContextFromHandle(hCard);
@@ -2509,8 +2509,8 @@ static LONG WINAPI PCSC_SCardGetAttrib_FriendlyName(SCARDHANDLE hCard, DWORD dwA
 static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr,
                                        LPDWORD pcbAttrLen)
 {
-	DWORD cbAttrLen;
-	SCARDCONTEXT hContext;
+	DWORD cbAttrLen = 0;
+	SCARDCONTEXT hContext = 0;
 	BOOL pcbAttrLenAlloc = FALSE;
 	LONG status = SCARD_S_SUCCESS;
 
@@ -2557,7 +2557,7 @@ static LONG WINAPI PCSC_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE
 		{
 			if (pbAttr)
 			{
-				const char* vendorName;
+				const char* vendorName = NULL;
 
 				/**
 				 * pcsc-lite adds a null terminator to the vendor name,
@@ -2756,7 +2756,7 @@ static char* card_id_and_name_a(const UUID* CardIdentifier, LPCSTR LookupName)
 
 static char* card_id_and_name_w(const UUID* CardIdentifier, LPCWSTR LookupName)
 {
-	char* res;
+	char* res = NULL;
 	char* tmp = ConvertWCharToUtf8Alloc(LookupName, NULL);
 	if (!tmp)
 		return NULL;
@@ -2769,7 +2769,7 @@ static LONG WINAPI PCSC_SCardReadCacheA(SCARDCONTEXT hContext, UUID* CardIdentif
                                         DWORD FreshnessCounter, LPSTR LookupName, PBYTE Data,
                                         DWORD* DataLen)
 {
-	PCSC_CACHE_ITEM* data;
+	PCSC_CACHE_ITEM* data = NULL;
 	PCSC_SCARDCONTEXT* ctx = PCSC_GetCardContextData(hContext);
 	char* id = card_id_and_name_a(CardIdentifier, LookupName);
 
@@ -2812,7 +2812,7 @@ static LONG WINAPI PCSC_SCardReadCacheW(SCARDCONTEXT hContext, UUID* CardIdentif
                                         DWORD FreshnessCounter, LPWSTR LookupName, PBYTE Data,
                                         DWORD* DataLen)
 {
-	PCSC_CACHE_ITEM* data;
+	PCSC_CACHE_ITEM* data = NULL;
 	PCSC_SCARDCONTEXT* ctx = PCSC_GetCardContextData(hContext);
 	char* id = card_id_and_name_w(CardIdentifier, LookupName);
 
@@ -2856,9 +2856,9 @@ static LONG WINAPI PCSC_SCardWriteCacheA(SCARDCONTEXT hContext, UUID* CardIdenti
                                          DWORD FreshnessCounter, LPSTR LookupName, PBYTE Data,
                                          DWORD DataLen)
 {
-	PCSC_CACHE_ITEM* data;
+	PCSC_CACHE_ITEM* data = NULL;
 	PCSC_SCARDCONTEXT* ctx = PCSC_GetCardContextData(hContext);
-	char* id;
+	char* id = NULL;
 
 	if (!ctx)
 		return SCARD_E_FILE_NOT_FOUND;
@@ -2902,9 +2902,9 @@ static LONG WINAPI PCSC_SCardWriteCacheW(SCARDCONTEXT hContext, UUID* CardIdenti
                                          DWORD FreshnessCounter, LPWSTR LookupName, PBYTE Data,
                                          DWORD DataLen)
 {
-	PCSC_CACHE_ITEM* data;
+	PCSC_CACHE_ITEM* data = NULL;
 	PCSC_SCARDCONTEXT* ctx = PCSC_GetCardContextData(hContext);
-	char* id;
+	char* id = NULL;
 	if (!ctx)
 		return SCARD_E_FILE_NOT_FOUND;
 

@@ -212,15 +212,15 @@ RFX_CONTEXT* rfx_context_new(BOOL encoder)
 
 RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 {
-	HKEY hKey;
-	LONG status;
-	DWORD dwType;
-	DWORD dwSize;
-	DWORD dwValue;
+	HKEY hKey = NULL;
+	LONG status = 0;
+	DWORD dwType = 0;
+	DWORD dwSize = 0;
+	DWORD dwValue = 0;
 	SYSTEM_INFO sysinfo;
-	RFX_CONTEXT* context;
-	wObject* pool;
-	RFX_CONTEXT_PRIV* priv;
+	RFX_CONTEXT* context = NULL;
+	wObject* pool = NULL;
+	RFX_CONTEXT_PRIV* priv = NULL;
 	context = (RFX_CONTEXT*)winpr_aligned_calloc(1, sizeof(RFX_CONTEXT), 32);
 
 	if (!context)
@@ -350,7 +350,7 @@ fail:
 
 void rfx_context_free(RFX_CONTEXT* context)
 {
-	RFX_CONTEXT_PRIV* priv;
+	RFX_CONTEXT_PRIV* priv = NULL;
 
 	if (!context)
 		return;
@@ -455,7 +455,7 @@ BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height)
 
 static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 {
-	UINT32 magic;
+	UINT32 magic = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -487,7 +487,7 @@ static BOOL rfx_process_message_sync(RFX_CONTEXT* context, wStream* s)
 
 static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 {
-	BYTE numCodecs;
+	BYTE numCodecs = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -530,8 +530,8 @@ static BOOL rfx_process_message_codec_versions(RFX_CONTEXT* context, wStream* s)
 
 static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 {
-	BYTE channelId;
-	BYTE numChannels;
+	BYTE channelId = 0;
+	BYTE numChannels = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -586,9 +586,9 @@ static BOOL rfx_process_message_channels(RFX_CONTEXT* context, wStream* s)
 
 static BOOL rfx_process_message_context(RFX_CONTEXT* context, wStream* s)
 {
-	BYTE ctxId;
-	UINT16 tileSize;
-	UINT16 properties;
+	BYTE ctxId = 0;
+	UINT16 tileSize = 0;
+	UINT16 properties = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -639,8 +639,8 @@ static BOOL rfx_process_message_context(RFX_CONTEXT* context, wStream* s)
 static BOOL rfx_process_message_frame_begin(RFX_CONTEXT* context, RFX_MESSAGE* message, wStream* s,
                                             UINT16* pExpectedBlockType)
 {
-	UINT32 frameIdx;
-	UINT16 numRegions;
+	UINT32 frameIdx = 0;
+	UINT16 numRegions = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -702,9 +702,9 @@ static BOOL rfx_resize_rects(RFX_MESSAGE* message)
 static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* message, wStream* s,
                                        UINT16* pExpectedBlockType)
 {
-	UINT16 i;
-	UINT16 regionType;
-	UINT16 numTileSets;
+	UINT16 i = 0;
+	UINT16 regionType = 0;
+	UINT16 numTileSets = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -823,19 +823,19 @@ static BOOL rfx_allocate_tiles(RFX_MESSAGE* message, size_t count, BOOL allocOnl
 static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* message, wStream* s,
                                         UINT16* pExpectedBlockType)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	size_t close_cnt = 0;
-	BYTE quant;
-	RFX_TILE* tile;
-	UINT32* quants;
-	UINT16 subtype;
-	UINT16 numTiles;
-	UINT32 blockLen;
-	UINT32 blockType;
-	UINT32 tilesDataSize;
+	BYTE quant = 0;
+	RFX_TILE* tile = NULL;
+	UINT32* quants = NULL;
+	UINT16 subtype = 0;
+	UINT16 numTiles = 0;
+	UINT32 blockLen = 0;
+	UINT32 blockType = 0;
+	UINT32 tilesDataSize = 0;
 	PTP_WORK* work_objects = NULL;
 	RFX_TILE_PROCESS_WORK_PARAM* params = NULL;
-	void* pmem;
+	void* pmem = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -956,7 +956,7 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 		for (size_t i = 0; i < message->numTiles; i++)
 		{
 			wStream subBuffer;
-			wStream* sub;
+			wStream* sub = NULL;
 
 			if (!(tile = (RFX_TILE*)ObjectPool_Take(context->priv->TilePool)))
 			{
@@ -1585,7 +1585,7 @@ static BOOL setupWorkers(RFX_CONTEXT* context, size_t nbTiles)
 	RFX_CONTEXT_PRIV* priv = context->priv;
 	WINPR_ASSERT(priv);
 
-	void* pmem;
+	void* pmem = NULL;
 
 	if (!context->priv->UseThreads)
 		return TRUE;
@@ -2322,7 +2322,7 @@ static INLINE BOOL rfx_write_progressive_frame_end(RFX_CONTEXT* rfx, wStream* s)
 static INLINE BOOL rfx_write_progressive_tile_simple(RFX_CONTEXT* rfx, wStream* s,
                                                      const RFX_TILE* tile)
 {
-	UINT32 blockLen;
+	UINT32 blockLen = 0;
 	WINPR_ASSERT(rfx);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(tile);

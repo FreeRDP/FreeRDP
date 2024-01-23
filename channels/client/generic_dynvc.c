@@ -28,8 +28,8 @@ static UINT generic_on_new_channel_connection(IWTSListenerCallback* pListenerCal
                                               BOOL* pbAccept,
                                               IWTSVirtualChannelCallback** ppCallback)
 {
-	GENERIC_CHANNEL_CALLBACK* callback;
-	GENERIC_DYNVC_PLUGIN* plugin;
+	GENERIC_CHANNEL_CALLBACK* callback = NULL;
+	GENERIC_DYNVC_PLUGIN* plugin = NULL;
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	if (!listener_callback || !listener_callback->plugin)
@@ -60,8 +60,8 @@ static UINT generic_on_new_channel_connection(IWTSListenerCallback* pListenerCal
 static UINT generic_dynvc_plugin_initialize(IWTSPlugin* pPlugin,
                                             IWTSVirtualChannelManager* pChannelMgr)
 {
-	UINT rc;
-	GENERIC_LISTENER_CALLBACK* listener_callback;
+	UINT rc = 0;
+	GENERIC_LISTENER_CALLBACK* listener_callback = NULL;
 	GENERIC_DYNVC_PLUGIN* plugin = (GENERIC_DYNVC_PLUGIN*)pPlugin;
 
 	if (!plugin)
@@ -155,7 +155,7 @@ UINT freerdp_generic_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const c
                                     DYNVC_PLUGIN_INIT_FN initPluginFn,
                                     DYNVC_PLUGIN_TERMINATE_FN terminatePluginFn)
 {
-	GENERIC_DYNVC_PLUGIN* plugin;
+	GENERIC_DYNVC_PLUGIN* plugin = NULL;
 	UINT error = CHANNEL_RC_INITIALIZATION_ERROR;
 
 	WINPR_ASSERT(pEntryPoints);

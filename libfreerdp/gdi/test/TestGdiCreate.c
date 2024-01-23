@@ -24,7 +24,7 @@ static const UINT32 colorFormatCount = sizeof(colorFormatList) / sizeof(colorFor
 static int test_gdi_GetDC(void)
 {
 	int rc = -1;
-	HGDI_DC hdc;
+	HGDI_DC hdc = NULL;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -85,9 +85,9 @@ static int test_gdi_CreateBitmap(void)
 {
 	int rc = -1;
 	UINT32 format = PIXEL_FORMAT_ARGB32;
-	INT32 width;
-	INT32 height;
-	BYTE* data;
+	INT32 width = 0;
+	INT32 height = 0;
+	BYTE* data = NULL;
 	HGDI_BITMAP hBitmap = NULL;
 	width = 32;
 	height = 16;
@@ -133,9 +133,9 @@ fail:
 static int test_gdi_CreateCompatibleBitmap(void)
 {
 	int rc = -1;
-	HGDI_DC hdc;
-	INT32 width;
-	INT32 height;
+	HGDI_DC hdc = NULL;
+	INT32 width = 0;
+	INT32 height = 0;
 	HGDI_BITMAP hBitmap = NULL;
 
 	if (!(hdc = gdi_GetDC()))
@@ -224,8 +224,8 @@ fail:
 static int test_gdi_CreatePatternBrush(void)
 {
 	int rc = -1;
-	HGDI_BRUSH hBrush;
-	HGDI_BITMAP hBitmap;
+	HGDI_BRUSH hBrush = NULL;
+	HGDI_BITMAP hBitmap = NULL;
 	hBitmap = gdi_CreateBitmap(64, 64, 32, NULL);
 	hBrush = gdi_CreatePatternBrush(hBitmap);
 
@@ -292,7 +292,7 @@ fail:
 static int test_gdi_CreateRect(void)
 {
 	int rc = -1;
-	HGDI_RECT hRect;
+	HGDI_RECT hRect = NULL;
 	INT32 x1 = 32;
 	INT32 y1 = 64;
 	INT32 x2 = 128;
@@ -328,17 +328,17 @@ fail:
 static BOOL test_gdi_GetPixel(void)
 {
 	BOOL rc = TRUE;
-	UINT32 x;
+	UINT32 x = 0;
 
 	for (x = 0; x < colorFormatCount; x++)
 	{
-		UINT32 i;
-		UINT32 j;
-		UINT32 bpp;
-		HGDI_DC hdc;
+		UINT32 i = 0;
+		UINT32 j = 0;
+		UINT32 bpp = 0;
+		HGDI_DC hdc = NULL;
 		UINT32 width = 128;
 		UINT32 height = 64;
-		HGDI_BITMAP hBitmap;
+		HGDI_BITMAP hBitmap = NULL;
 
 		if (!(hdc = gdi_GetDC()))
 		{
@@ -362,7 +362,7 @@ static BOOL test_gdi_GetPixel(void)
 		{
 			for (j = 0; j < width; j++)
 			{
-				UINT32 pixel;
+				UINT32 pixel = 0;
 				const UINT32 color =
 				    FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
 				FreeRDPWriteColor(&hBitmap->data[i * hBitmap->scanline + j * bpp], hBitmap->format,
@@ -390,17 +390,17 @@ static BOOL test_gdi_GetPixel(void)
 static BOOL test_gdi_SetPixel(void)
 {
 	BOOL rc = TRUE;
-	UINT32 x;
+	UINT32 x = 0;
 
 	for (x = 0; x < colorFormatCount; x++)
 	{
-		UINT32 i;
-		UINT32 j;
-		UINT32 bpp;
-		HGDI_DC hdc;
+		UINT32 i = 0;
+		UINT32 j = 0;
+		UINT32 bpp = 0;
+		HGDI_DC hdc = NULL;
 		UINT32 width = 128;
 		UINT32 height = 64;
-		HGDI_BITMAP hBitmap;
+		HGDI_BITMAP hBitmap = NULL;
 
 		if (!(hdc = gdi_GetDC()))
 		{
@@ -417,7 +417,7 @@ static BOOL test_gdi_SetPixel(void)
 		{
 			for (j = 0; j < width; j++)
 			{
-				UINT32 pixel;
+				UINT32 pixel = 0;
 				const UINT32 color =
 				    FreeRDPGetColor(hBitmap->format, rand(), rand(), rand(), rand());
 				gdi_SetPixel(hdc, j, i, color);
@@ -445,7 +445,7 @@ static BOOL test_gdi_SetPixel(void)
 static int test_gdi_SetROP2(void)
 {
 	int rc = -1;
-	HGDI_DC hdc;
+	HGDI_DC hdc = NULL;
 
 	if (!(hdc = gdi_GetDC()))
 	{
@@ -467,7 +467,7 @@ fail:
 static int test_gdi_MoveToEx(void)
 {
 	int rc = -1;
-	HGDI_DC hdc;
+	HGDI_DC hdc = NULL;
 	HGDI_PEN hPen = NULL;
 	HGDI_POINT prevPoint = NULL;
 	const UINT32 format = PIXEL_FORMAT_RGBA32;

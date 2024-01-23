@@ -145,7 +145,7 @@ BOOL tpdu_write_header(wStream* s, UINT16 length, BYTE code)
 
 BOOL tpdu_read_connection_request(wStream* s, BYTE* li, UINT16 tpktlength)
 {
-	BYTE code;
+	BYTE code = 0;
 
 	if (!tpdu_read_header(s, &code, li, tpktlength))
 		return FALSE;
@@ -178,8 +178,8 @@ BOOL tpdu_write_connection_request(wStream* s, UINT16 length)
 
 BOOL tpdu_read_connection_confirm(wStream* s, BYTE* li, UINT16 tpktlength)
 {
-	BYTE code;
-	size_t position;
+	BYTE code = 0;
+	size_t position = 0;
 	size_t bytes_read = 0;
 
 	/* save the position to determine the number of bytes read */

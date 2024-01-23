@@ -87,11 +87,11 @@ static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName
                                                                   LPCSTR pszSubsystem,
                                                                   LPCSTR pszType, DWORD dwFlags)
 {
-	size_t i;
-	size_t j;
-	DWORD nAddins;
+	size_t i = 0;
+	size_t j = 0;
+	DWORD nAddins = 0;
 	FREERDP_ADDIN** ppAddins = NULL;
-	const STATIC_SUBSYSTEM_ENTRY* subsystems;
+	const STATIC_SUBSYSTEM_ENTRY* subsystems = NULL;
 	nAddins = 0;
 	ppAddins = (FREERDP_ADDIN**)calloc(128, sizeof(FREERDP_ADDIN*));
 
@@ -165,20 +165,20 @@ static HANDLE FindFirstFileUTF8(LPCSTR pszSearchPath, WIN32_FIND_DATAW* FindData
 static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCSTR pszSubsystem,
                                                             LPCSTR pszType, DWORD dwFlags)
 {
-	int index;
-	int nDashes;
-	HANDLE hFind;
-	DWORD nAddins;
-	LPSTR pszPattern;
-	size_t cchPattern;
+	int index = 0;
+	int nDashes = 0;
+	HANDLE hFind = NULL;
+	DWORD nAddins = 0;
+	LPSTR pszPattern = NULL;
+	size_t cchPattern = 0;
 	LPCSTR pszAddinPath = FREERDP_ADDIN_PATH;
 	LPCSTR pszInstallPrefix = FREERDP_INSTALL_PREFIX;
-	LPCSTR pszExtension;
-	LPSTR pszSearchPath;
-	size_t cchSearchPath;
-	size_t cchAddinPath;
-	size_t cchInstallPrefix;
-	FREERDP_ADDIN** ppAddins;
+	LPCSTR pszExtension = NULL;
+	LPSTR pszSearchPath = NULL;
+	size_t cchSearchPath = 0;
+	size_t cchAddinPath = 0;
+	size_t cchInstallPrefix = 0;
+	FREERDP_ADDIN** ppAddins = NULL;
 	WIN32_FIND_DATAW FindData = { 0 };
 	cchAddinPath = strnlen(pszAddinPath, sizeof(FREERDP_ADDIN_PATH));
 	cchInstallPrefix = strnlen(pszInstallPrefix, sizeof(FREERDP_INSTALL_PREFIX));
@@ -275,7 +275,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 
 		if (nDashes == 1)
 		{
-			size_t len;
+			size_t len = 0;
 			char* p[2] = { 0 };
 			/* <name>-client.<extension> */
 			p[0] = cFileName;
@@ -301,7 +301,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 		}
 		else if (nDashes == 2)
 		{
-			size_t len;
+			size_t len = 0;
 			char* p[4] = { 0 };
 			/* <name>-client-<subsystem>.<extension> */
 			p[0] = cFileName;
@@ -344,7 +344,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 		}
 		else if (nDashes == 3)
 		{
-			size_t len;
+			size_t len = 0;
 			char* p[5] = { 0 };
 			/* <name>-client-<subsystem>-<type>.<extension> */
 			p[0] = cFileName;
@@ -428,7 +428,7 @@ FREERDP_ADDIN** freerdp_channels_list_addins(LPCSTR pszName, LPCSTR pszSubsystem
 
 void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins)
 {
-	size_t index;
+	size_t index = 0;
 
 	if (!ppAddins)
 		return;
@@ -443,7 +443,7 @@ extern const STATIC_ENTRY CLIENT_VirtualChannelEntryEx_TABLE[];
 
 static BOOL freerdp_channels_is_virtual_channel_entry_ex(LPCSTR pszName)
 {
-	size_t i;
+	size_t i = 0;
 
 	for (i = 0; CLIENT_VirtualChannelEntryEx_TABLE[i].name != NULL; i++)
 	{
@@ -639,7 +639,7 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
                                  UINT32 totalLength, UINT32 dataFlags)
 {
 	msg_proc_internals* internals = MsgsHandle;
-	wStream* data_in;
+	wStream* data_in = NULL;
 
 	if (!internals)
 	{
@@ -714,7 +714,7 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 UINT channel_client_quit_handler(void* MsgsHandle)
 {
 	msg_proc_internals* internals = MsgsHandle;
-	UINT rc;
+	UINT rc = 0;
 	if (!internals)
 	{
 		/* TODO: return some error here */

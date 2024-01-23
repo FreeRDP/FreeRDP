@@ -68,7 +68,7 @@ typedef struct
 BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value)
 {
 	FOUR_BYTE_SIGNED_INTEGER si = { 0 };
-	BYTE byte;
+	BYTE byte = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(value);
@@ -126,8 +126,8 @@ BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value)
 BOOL freerdp_read_four_byte_float(wStream* s, double* value)
 {
 	FOUR_BYTE_FLOAT f = { 0 };
-	UINT32 base;
-	BYTE byte;
+	UINT32 base = 0;
+	BYTE byte = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(value);

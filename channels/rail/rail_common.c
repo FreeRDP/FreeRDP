@@ -121,7 +121,7 @@ void rail_write_pdu_header(wStream* s, UINT16 orderType, UINT16 orderLength)
 
 wStream* rail_pdu_init(size_t length)
 {
-	wStream* s;
+	wStream* s = NULL;
 	s = Stream_New(NULL, length + RAIL_PDU_HEADER_LENGTH);
 
 	if (!s)
@@ -199,7 +199,7 @@ UINT rail_write_unicode_string(wStream* s, const RAIL_UNICODE_STRING* unicode_st
  */
 UINT rail_write_unicode_string_value(wStream* s, const RAIL_UNICODE_STRING* unicode_string)
 {
-	size_t length;
+	size_t length = 0;
 
 	if (!s || !unicode_string)
 		return ERROR_INVALID_PARAMETER;
@@ -248,7 +248,7 @@ static UINT rail_read_high_contrast(wStream* s, RAIL_HIGH_CONTRAST* highContrast
  */
 static UINT rail_write_high_contrast(wStream* s, const RAIL_HIGH_CONTRAST* highContrast)
 {
-	UINT32 colorSchemeLength;
+	UINT32 colorSchemeLength = 0;
 
 	if (!s || !highContrast)
 		return ERROR_INVALID_PARAMETER;
@@ -311,7 +311,7 @@ static UINT rail_write_filterkeys(wStream* s, const TS_FILTERKEYS* filterKeys)
  */
 UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL extendedSpiSupported)
 {
-	BYTE body;
+	BYTE body = 0;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!s || !sysparam)
@@ -477,7 +477,7 @@ UINT rail_read_sysparam_order(wStream* s, RAIL_SYSPARAM_ORDER* sysparam, BOOL ex
 UINT rail_write_sysparam_order(wStream* s, const RAIL_SYSPARAM_ORDER* sysparam,
                                BOOL extendedSpiSupported)
 {
-	BYTE body;
+	BYTE body = 0;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!s || !sysparam)

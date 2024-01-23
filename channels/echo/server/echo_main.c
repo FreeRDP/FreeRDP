@@ -61,9 +61,9 @@ typedef struct
  */
 static UINT echo_server_open_channel(echo_server* echo)
 {
-	DWORD Error;
-	HANDLE hEvent;
-	DWORD StartTick;
+	DWORD Error = 0;
+	HANDLE hEvent = NULL;
+	DWORD StartTick = 0;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 
@@ -93,7 +93,7 @@ static UINT echo_server_open_channel(echo_server* echo)
 
 		if (echo->echo_channel)
 		{
-			UINT32 channelId;
+			UINT32 channelId = 0;
 			BOOL status = TRUE;
 
 			channelId = WTSChannelGetIdByHandle(echo->echo_channel);
@@ -122,16 +122,16 @@ static UINT echo_server_open_channel(echo_server* echo)
 
 static DWORD WINAPI echo_server_thread_func(LPVOID arg)
 {
-	wStream* s;
-	void* buffer;
-	DWORD nCount;
+	wStream* s = NULL;
+	void* buffer = NULL;
+	DWORD nCount = 0;
 	HANDLE events[8];
 	BOOL ready = FALSE;
-	HANDLE ChannelEvent;
+	HANDLE ChannelEvent = NULL;
 	DWORD BytesReturned = 0;
 	echo_server* echo = (echo_server*)arg;
-	UINT error;
-	DWORD status;
+	UINT error = 0;
+	DWORD status = 0;
 
 	if ((error = echo_server_open_channel(echo)))
 	{
@@ -357,7 +357,7 @@ static BOOL echo_server_request(echo_server_context* context, const BYTE* buffer
 
 echo_server_context* echo_server_context_new(HANDLE vcm)
 {
-	echo_server* echo;
+	echo_server* echo = NULL;
 	echo = (echo_server*)calloc(1, sizeof(echo_server));
 
 	if (echo)

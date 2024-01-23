@@ -151,9 +151,9 @@ static void sample_file_free(EGFX_SAMPLE_FILE* file)
 
 static void test_fill_image_alpha_channel(BYTE* data, int width, int height, BYTE value)
 {
-	int i;
-	int j;
-	UINT32* pixel;
+	int i = 0;
+	int j = 0;
+	UINT32* pixel = NULL;
 
 	for (i = 0; i < height; i++)
 	{
@@ -178,8 +178,8 @@ static void* test_image_memset32(UINT32* ptr, UINT32 fill, size_t length)
 static int test_image_fill(BYTE* pDstData, int nDstStep, int nXDst, int nYDst, int nWidth,
                            int nHeight, UINT32 color)
 {
-	int y;
-	UINT32* pDstPixel;
+	int y = 0;
+	UINT32* pDstPixel = NULL;
 
 	if (nDstStep < 0)
 		nDstStep = 4 * nWidth;
@@ -537,10 +537,10 @@ static int test_progressive_load_files(char* ms_sample_path, EGFX_SAMPLE_FILE fi
 
 static BYTE* test_progressive_load_bitmap(char* path, char* file, size_t* size, int quarter)
 {
-	int status;
-	BYTE* buffer;
-	wImage* image;
-	char* filename;
+	int status = 0;
+	BYTE* buffer = NULL;
+	wImage* image = NULL;
+	char* filename = NULL;
 	filename = GetCombinedPath(path, file);
 
 	if (!filename)
@@ -818,8 +818,8 @@ static size_t test_memcmp_count(const BYTE* mem1, const BYTE* mem2, size_t size,
 static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE_FILE files[4],
                                    EGFX_SAMPLE_FILE bitmaps[4], int quarter, int count)
 {
-	int nXSrc;
-	int nYSrc;
+	int nXSrc = 0;
+	int nYSrc = 0;
 
 	RECTANGLE_16 clippingRect = { 0 };
 	clippingRect.right = g_Width;
@@ -905,14 +905,14 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 
 static int test_progressive_ms_sample(char* ms_sample_path)
 {
-	int i;
-	int j;
-	int k;
-	int count;
-	int status;
+	int i = 0;
+	int j = 0;
+	int k = 0;
+	int count = 0;
+	int status = 0;
 	EGFX_SAMPLE_FILE files[3][4][4] = { 0 };
 	EGFX_SAMPLE_FILE bitmaps[3][4][4] = { 0 };
-	PROGRESSIVE_CONTEXT* progressive;
+	PROGRESSIVE_CONTEXT* progressive = NULL;
 	g_Width = 1920;
 	g_Height = 1080;
 	g_DstStep = g_Width * 4;
@@ -1018,14 +1018,14 @@ static BOOL diff(BYTE a, BYTE b)
 
 static BOOL colordiff(UINT32 format, UINT32 a, UINT32 b)
 {
-	BYTE ar;
-	BYTE ag;
-	BYTE ab;
-	BYTE aa;
-	BYTE br;
-	BYTE bg;
-	BYTE bb;
-	BYTE ba;
+	BYTE ar = 0;
+	BYTE ag = 0;
+	BYTE ab = 0;
+	BYTE aa = 0;
+	BYTE br = 0;
+	BYTE bg = 0;
+	BYTE bb = 0;
+	BYTE ba = 0;
 	FreeRDPSplitColor(a, format, &ar, &ag, &ab, &aa, NULL);
 	FreeRDPSplitColor(b, format, &br, &bg, &bb, &ba, NULL);
 	if (!diff(aa, ba) || !diff(ar, br) || !diff(ag, bg) || !diff(ab, bb))
@@ -1036,7 +1036,7 @@ static BOOL colordiff(UINT32 format, UINT32 a, UINT32 b)
 static BOOL test_encode_decode(const char* path)
 {
 	BOOL res = FALSE;
-	int rc;
+	int rc = 0;
 	BYTE* resultData = NULL;
 	BYTE* dstData = NULL;
 	UINT32 dstSize = 0;
@@ -1116,7 +1116,7 @@ fail:
 int TestFreeRDPCodecProgressive(int argc, char* argv[])
 {
 	int rc = -1;
-	char* ms_sample_path;
+	char* ms_sample_path = NULL;
 	char name[8192];
 	SYSTEMTIME systemTime;
 	WINPR_UNUSED(argc);

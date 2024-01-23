@@ -12,7 +12,7 @@ static BOOL test_crypto_hash_md5(void)
 {
 	BOOL result = FALSE;
 	BYTE hash[WINPR_MD5_DIGEST_LENGTH] = { 0 };
-	WINPR_DIGEST_CTX* ctx;
+	WINPR_DIGEST_CTX* ctx = NULL;
 
 	if (!(ctx = winpr_Digest_New()))
 	{
@@ -37,8 +37,8 @@ static BOOL test_crypto_hash_md5(void)
 	}
 	if (memcmp(hash, TEST_MD5_HASH, WINPR_MD5_DIGEST_LENGTH) != 0)
 	{
-		char* actual;
-		char* expected;
+		char* actual = NULL;
+		char* expected = NULL;
 
 		actual = winpr_BinToHexString(hash, WINPR_MD5_DIGEST_LENGTH, FALSE);
 		expected = winpr_BinToHexString(TEST_MD5_HASH, WINPR_MD5_DIGEST_LENGTH, FALSE);
@@ -65,7 +65,7 @@ static BOOL test_crypto_hash_md4(void)
 {
 	BOOL result = FALSE;
 	BYTE hash[WINPR_MD4_DIGEST_LENGTH] = { 0 };
-	WINPR_DIGEST_CTX* ctx;
+	WINPR_DIGEST_CTX* ctx = NULL;
 
 	if (!(ctx = winpr_Digest_New()))
 	{
@@ -90,8 +90,8 @@ static BOOL test_crypto_hash_md4(void)
 	}
 	if (memcmp(hash, TEST_MD4_HASH, WINPR_MD4_DIGEST_LENGTH) != 0)
 	{
-		char* actual;
-		char* expected;
+		char* actual = NULL;
+		char* expected = NULL;
 
 		actual = winpr_BinToHexString(hash, WINPR_MD4_DIGEST_LENGTH, FALSE);
 		expected = winpr_BinToHexString(TEST_MD4_HASH, WINPR_MD4_DIGEST_LENGTH, FALSE);
@@ -118,7 +118,7 @@ static BOOL test_crypto_hash_sha1(void)
 {
 	BOOL result = FALSE;
 	BYTE hash[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
-	WINPR_DIGEST_CTX* ctx;
+	WINPR_DIGEST_CTX* ctx = NULL;
 
 	if (!(ctx = winpr_Digest_New()))
 	{
@@ -144,8 +144,8 @@ static BOOL test_crypto_hash_sha1(void)
 
 	if (memcmp(hash, TEST_SHA1_HASH, WINPR_MD5_DIGEST_LENGTH) != 0)
 	{
-		char* actual;
-		char* expected;
+		char* actual = NULL;
+		char* expected = NULL;
 
 		actual = winpr_BinToHexString(hash, WINPR_SHA1_DIGEST_LENGTH, FALSE);
 		expected = winpr_BinToHexString(TEST_SHA1_HASH, WINPR_SHA1_DIGEST_LENGTH, FALSE);
@@ -173,7 +173,7 @@ static const BYTE TEST_HMAC_MD5_HASH[] =
 static BOOL test_crypto_hash_hmac_md5(void)
 {
 	BYTE hash[WINPR_MD5_DIGEST_LENGTH] = { 0 };
-	WINPR_HMAC_CTX* ctx;
+	WINPR_HMAC_CTX* ctx = NULL;
 	BOOL result = FALSE;
 
 	if (!(ctx = winpr_HMAC_New()))
@@ -207,8 +207,8 @@ static BOOL test_crypto_hash_hmac_md5(void)
 
 	if (memcmp(hash, TEST_HMAC_MD5_HASH, WINPR_MD5_DIGEST_LENGTH) != 0)
 	{
-		char* actual;
-		char* expected;
+		char* actual = NULL;
+		char* expected = NULL;
 
 		actual = winpr_BinToHexString(hash, WINPR_MD5_DIGEST_LENGTH, FALSE);
 		expected = winpr_BinToHexString(TEST_HMAC_MD5_HASH, WINPR_MD5_DIGEST_LENGTH, FALSE);
@@ -236,7 +236,7 @@ static const BYTE TEST_HMAC_SHA1_HASH[] =
 static BOOL test_crypto_hash_hmac_sha1(void)
 {
 	BYTE hash[WINPR_SHA1_DIGEST_LENGTH] = { 0 };
-	WINPR_HMAC_CTX* ctx;
+	WINPR_HMAC_CTX* ctx = NULL;
 	BOOL result = FALSE;
 
 	if (!(ctx = winpr_HMAC_New()))
@@ -270,8 +270,8 @@ static BOOL test_crypto_hash_hmac_sha1(void)
 
 	if (memcmp(hash, TEST_HMAC_SHA1_HASH, WINPR_SHA1_DIGEST_LENGTH) != 0)
 	{
-		char* actual;
-		char* expected;
+		char* actual = NULL;
+		char* expected = NULL;
 
 		actual = winpr_BinToHexString(hash, WINPR_SHA1_DIGEST_LENGTH, FALSE);
 		expected = winpr_BinToHexString(TEST_HMAC_SHA1_HASH, WINPR_SHA1_DIGEST_LENGTH, FALSE);

@@ -5,10 +5,10 @@
 
 int TestQueue(int argc, char* argv[])
 {
-	size_t item;
-	size_t index;
-	size_t count;
-	wQueue* queue;
+	size_t item = 0;
+	size_t index = 0;
+	size_t count = 0;
+	wQueue* queue = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

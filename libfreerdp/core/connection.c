@@ -198,7 +198,7 @@ static BOOL rdp_set_state(rdpRdp* rdp, CONNECTION_STATE state);
 
 static BOOL rdp_client_reset_codecs(rdpContext* context)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	if (!context || !context->settings)
 		return FALSE;
@@ -297,9 +297,9 @@ static BOOL rdp_client_wait_for_activation(rdpRdp* rdp)
 
 BOOL rdp_client_connect(rdpRdp* rdp)
 {
-	UINT32 SelectedProtocol;
-	BOOL status;
-	rdpSettings* settings;
+	UINT32 SelectedProtocol = 0;
+	BOOL status = 0;
+	rdpSettings* settings = NULL;
 	/* make sure SSL is initialize for earlier enough for crypto, by taking advantage of winpr SSL
 	 * FIPS flag for openssl initialization */
 	DWORD flags = WINPR_SSL_INIT_DEFAULT;
@@ -473,7 +473,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 
 BOOL rdp_client_disconnect(rdpRdp* rdp)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!rdp || !rdp->settings || !rdp->context)
 		return FALSE;
@@ -502,7 +502,7 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 
 BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!rdp_client_disconnect(rdp))
 		return FALSE;
@@ -523,7 +523,7 @@ BOOL rdp_client_disconnect_and_clear(rdpRdp* rdp)
 static BOOL rdp_client_reconnect_channels(rdpRdp* rdp, BOOL redirect)
 {
 	BOOL status = FALSE;
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!rdp || !rdp->context || !rdp->context->channels)
 		return FALSE;
@@ -616,8 +616,8 @@ static BOOL rdp_client_redirect_try_netbios(rdpSettings* settings)
 
 BOOL rdp_client_redirect(rdpRdp* rdp)
 {
-	BOOL status;
-	rdpSettings* settings;
+	BOOL status = 0;
+	rdpSettings* settings = NULL;
 
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
@@ -702,7 +702,7 @@ BOOL rdp_client_redirect(rdpRdp* rdp)
 
 BOOL rdp_client_reconnect(rdpRdp* rdp)
 {
-	BOOL status;
+	BOOL status = 0;
 
 	if (!rdp_client_disconnect_and_clear(rdp))
 		return FALSE;
@@ -1023,8 +1023,8 @@ static BOOL rdp_client_join_channel(rdpRdp* rdp, UINT16 ChannelId)
 
 BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 {
-	UINT32 i;
-	UINT16 channelId;
+	UINT32 i = 0;
+	UINT16 channelId = 0;
 	BOOL allJoined = TRUE;
 
 	WINPR_ASSERT(rdp);
@@ -1176,10 +1176,10 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 {
 	state_run_t status = STATE_RUN_FAILED;
-	LICENSE_STATE state;
-	UINT16 length;
-	UINT16 channelId;
-	UINT16 securityFlags;
+	LICENSE_STATE state = LICENSE_STATE_ABORTED;
+	UINT16 length = 0;
+	UINT16 channelId = 0;
+	UINT16 securityFlags = 0;
 
 	WINPR_ASSERT(rdp);
 	if (!rdp_read_header(rdp, s, &length, &channelId))
@@ -1380,10 +1380,10 @@ BOOL rdp_client_transition_to_state(rdpRdp* rdp, CONNECTION_STATE state)
 BOOL rdp_server_accept_nego(rdpRdp* rdp, wStream* s)
 {
 	UINT32 SelectedProtocol = 0;
-	UINT32 RequestedProtocols;
-	BOOL status;
-	rdpSettings* settings;
-	rdpNego* nego;
+	UINT32 RequestedProtocols = 0;
+	BOOL status = 0;
+	rdpSettings* settings = NULL;
+	rdpNego* nego = NULL;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(s);
@@ -1661,7 +1661,7 @@ BOOL rdp_server_accept_mcs_connect_initial(rdpRdp* rdp, wStream* s)
 	WINPR_ASSERT(mcs->channels || (mcs->channelCount == 0));
 	for (UINT32 i = 0; i < mcs->channelCount; i++)
 	{
-		ADDIN_ARGV* arg;
+		ADDIN_ARGV* arg = NULL;
 		rdpMcsChannel* cur = &mcs->channels[i];
 		const char* params[1] = { cur->Name };
 		WLog_DBG(TAG, " %s [%" PRIu16 "]", cur->Name, cur->ChannelId);
@@ -1738,10 +1738,10 @@ BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 {
-	UINT32 i;
-	UINT16 channelId;
+	UINT32 i = 0;
+	UINT16 channelId = 0;
 	BOOL allJoined = TRUE;
-	rdpMcs* mcs;
+	rdpMcs* mcs = NULL;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->context);
@@ -1778,7 +1778,7 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 			allJoined = FALSE;
 	}
 
-	CONNECTION_STATE rc;
+	CONNECTION_STATE rc = CONNECTION_STATE_INITIAL;
 	if ((mcs->userChannelJoined) && (mcs->globalChannelJoined) &&
 	    (mcs->messageChannelId == 0 || mcs->messageChannelJoined) && allJoined)
 		rc = CONNECTION_STATE_RDP_SECURITY_COMMENCEMENT;
@@ -2053,8 +2053,8 @@ const char* rdp_get_state_string(const rdpRdp* rdp)
 
 BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp)
 {
-	size_t x;
-	const rdpMcs* mcs;
+	size_t x = 0;
+	const rdpMcs* mcs = NULL;
 
 	WINPR_ASSERT(rdp);
 

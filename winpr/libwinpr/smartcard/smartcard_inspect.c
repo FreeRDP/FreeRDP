@@ -77,7 +77,7 @@ static const SCardApiFunctionTable* g_SCardApi = NULL;
 static LONG WINAPI Inspect_SCardEstablishContext(DWORD dwScope, LPCVOID pvReserved1,
                                                  LPCVOID pvReserved2, LPSCARDCONTEXT phContext)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardEstablishContext { dwScope: %s (0x%08" PRIX32 ")",
 	           SCardGetScopeString(dwScope), dwScope);
@@ -93,7 +93,7 @@ static LONG WINAPI Inspect_SCardEstablishContext(DWORD dwScope, LPCVOID pvReserv
 
 static LONG WINAPI Inspect_SCardReleaseContext(SCARDCONTEXT hContext)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReleaseContext { hContext: %p", (void*)hContext);
 
@@ -107,7 +107,7 @@ static LONG WINAPI Inspect_SCardReleaseContext(SCARDCONTEXT hContext)
 
 static LONG WINAPI Inspect_SCardIsValidContext(SCARDCONTEXT hContext)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIsValidContext { hContext: %p", (void*)hContext);
 
@@ -122,7 +122,7 @@ static LONG WINAPI Inspect_SCardIsValidContext(SCARDCONTEXT hContext)
 static LONG WINAPI Inspect_SCardListReaderGroupsA(SCARDCONTEXT hContext, LPSTR mszGroups,
                                                   LPDWORD pcchGroups)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListReaderGroupsA { hContext: %p", (void*)hContext);
 
@@ -137,7 +137,7 @@ static LONG WINAPI Inspect_SCardListReaderGroupsA(SCARDCONTEXT hContext, LPSTR m
 static LONG WINAPI Inspect_SCardListReaderGroupsW(SCARDCONTEXT hContext, LPWSTR mszGroups,
                                                   LPDWORD pcchGroups)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListReaderGroupsW { hContext: %p", (void*)hContext);
 
@@ -152,7 +152,7 @@ static LONG WINAPI Inspect_SCardListReaderGroupsW(SCARDCONTEXT hContext, LPWSTR 
 static LONG WINAPI Inspect_SCardListReadersA(SCARDCONTEXT hContext, LPCSTR mszGroups,
                                              LPSTR mszReaders, LPDWORD pcchReaders)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListReadersA { hContext: %p", (void*)hContext);
 
@@ -168,7 +168,7 @@ static LONG WINAPI Inspect_SCardListReadersA(SCARDCONTEXT hContext, LPCSTR mszGr
 static LONG WINAPI Inspect_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGroups,
                                              LPWSTR mszReaders, LPDWORD pcchReaders)
 {
-	LONG status;
+	LONG status = 0;
 	WLog_Print(g_Log, g_LogLevel, "SCardListReadersW { hContext: %p", (void*)hContext);
 
 	SCARDAPI_STUB_CALL_LONG(status, SCardListReadersW, hContext, mszGroups, mszReaders,
@@ -183,7 +183,7 @@ static LONG WINAPI Inspect_SCardListCardsA(SCARDCONTEXT hContext, LPCBYTE pbAtr,
                                            LPCGUID rgquidInterfaces, DWORD cguidInterfaceCount,
                                            CHAR* mszCards, LPDWORD pcchCards)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListCardsA { hContext: %p", (void*)hContext);
 
@@ -200,7 +200,7 @@ static LONG WINAPI Inspect_SCardListCardsW(SCARDCONTEXT hContext, LPCBYTE pbAtr,
                                            LPCGUID rgquidInterfaces, DWORD cguidInterfaceCount,
                                            WCHAR* mszCards, LPDWORD pcchCards)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListCardsW { hContext: %p", (void*)hContext);
 
@@ -216,7 +216,7 @@ static LONG WINAPI Inspect_SCardListCardsW(SCARDCONTEXT hContext, LPCBYTE pbAtr,
 static LONG WINAPI Inspect_SCardListInterfacesA(SCARDCONTEXT hContext, LPCSTR szCard,
                                                 LPGUID pguidInterfaces, LPDWORD pcguidInterfaces)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListInterfacesA { hContext: %p", (void*)hContext);
 
@@ -232,7 +232,7 @@ static LONG WINAPI Inspect_SCardListInterfacesA(SCARDCONTEXT hContext, LPCSTR sz
 static LONG WINAPI Inspect_SCardListInterfacesW(SCARDCONTEXT hContext, LPCWSTR szCard,
                                                 LPGUID pguidInterfaces, LPDWORD pcguidInterfaces)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListInterfacesW { hContext: %p", (void*)hContext);
 
@@ -248,7 +248,7 @@ static LONG WINAPI Inspect_SCardListInterfacesW(SCARDCONTEXT hContext, LPCWSTR s
 static LONG WINAPI Inspect_SCardGetProviderIdA(SCARDCONTEXT hContext, LPCSTR szCard,
                                                LPGUID pguidProviderId)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetProviderIdA { hContext: %p", (void*)hContext);
 
@@ -263,7 +263,7 @@ static LONG WINAPI Inspect_SCardGetProviderIdA(SCARDCONTEXT hContext, LPCSTR szC
 static LONG WINAPI Inspect_SCardGetProviderIdW(SCARDCONTEXT hContext, LPCWSTR szCard,
                                                LPGUID pguidProviderId)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetProviderIdW { hContext: %p", (void*)hContext);
 
@@ -279,7 +279,7 @@ static LONG WINAPI Inspect_SCardGetCardTypeProviderNameA(SCARDCONTEXT hContext, 
                                                          DWORD dwProviderId, CHAR* szProvider,
                                                          LPDWORD pcchProvider)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetCardTypeProviderNameA { hContext: %p", (void*)hContext);
 
@@ -296,7 +296,7 @@ static LONG WINAPI Inspect_SCardGetCardTypeProviderNameW(SCARDCONTEXT hContext, 
                                                          DWORD dwProviderId, WCHAR* szProvider,
                                                          LPDWORD pcchProvider)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetCardTypeProviderNameW { hContext: %p", (void*)hContext);
 
@@ -311,7 +311,7 @@ static LONG WINAPI Inspect_SCardGetCardTypeProviderNameW(SCARDCONTEXT hContext, 
 
 static LONG WINAPI Inspect_SCardIntroduceReaderGroupA(SCARDCONTEXT hContext, LPCSTR szGroupName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceReaderGroupA { hContext: %p", (void*)hContext);
 
@@ -325,7 +325,7 @@ static LONG WINAPI Inspect_SCardIntroduceReaderGroupA(SCARDCONTEXT hContext, LPC
 
 static LONG WINAPI Inspect_SCardIntroduceReaderGroupW(SCARDCONTEXT hContext, LPCWSTR szGroupName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceReaderGroupW { hContext: %p", (void*)hContext);
 
@@ -339,7 +339,7 @@ static LONG WINAPI Inspect_SCardIntroduceReaderGroupW(SCARDCONTEXT hContext, LPC
 
 static LONG WINAPI Inspect_SCardForgetReaderGroupA(SCARDCONTEXT hContext, LPCSTR szGroupName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetReaderGroupA { hContext: %p", (void*)hContext);
 
@@ -353,7 +353,7 @@ static LONG WINAPI Inspect_SCardForgetReaderGroupA(SCARDCONTEXT hContext, LPCSTR
 
 static LONG WINAPI Inspect_SCardForgetReaderGroupW(SCARDCONTEXT hContext, LPCWSTR szGroupName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetReaderGroupW { hContext: %p", (void*)hContext);
 
@@ -368,7 +368,7 @@ static LONG WINAPI Inspect_SCardForgetReaderGroupW(SCARDCONTEXT hContext, LPCWST
 static LONG WINAPI Inspect_SCardIntroduceReaderA(SCARDCONTEXT hContext, LPCSTR szReaderName,
                                                  LPCSTR szDeviceName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceReaderA { hContext: %p", (void*)hContext);
 
@@ -383,7 +383,7 @@ static LONG WINAPI Inspect_SCardIntroduceReaderA(SCARDCONTEXT hContext, LPCSTR s
 static LONG WINAPI Inspect_SCardIntroduceReaderW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
                                                  LPCWSTR szDeviceName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceReaderW { hContext: %p", (void*)hContext);
 
@@ -397,7 +397,7 @@ static LONG WINAPI Inspect_SCardIntroduceReaderW(SCARDCONTEXT hContext, LPCWSTR 
 
 static LONG WINAPI Inspect_SCardForgetReaderA(SCARDCONTEXT hContext, LPCSTR szReaderName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetReaderA { hContext: %p", (void*)hContext);
 
@@ -411,7 +411,7 @@ static LONG WINAPI Inspect_SCardForgetReaderA(SCARDCONTEXT hContext, LPCSTR szRe
 
 static LONG WINAPI Inspect_SCardForgetReaderW(SCARDCONTEXT hContext, LPCWSTR szReaderName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetReaderW { hContext: %p", (void*)hContext);
 
@@ -426,7 +426,7 @@ static LONG WINAPI Inspect_SCardForgetReaderW(SCARDCONTEXT hContext, LPCWSTR szR
 static LONG WINAPI Inspect_SCardAddReaderToGroupA(SCARDCONTEXT hContext, LPCSTR szReaderName,
                                                   LPCSTR szGroupName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAddReaderToGroupA { hContext: %p", (void*)hContext);
 
@@ -441,7 +441,7 @@ static LONG WINAPI Inspect_SCardAddReaderToGroupA(SCARDCONTEXT hContext, LPCSTR 
 static LONG WINAPI Inspect_SCardAddReaderToGroupW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
                                                   LPCWSTR szGroupName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAddReaderToGroupW { hContext: %p", (void*)hContext);
 
@@ -456,7 +456,7 @@ static LONG WINAPI Inspect_SCardAddReaderToGroupW(SCARDCONTEXT hContext, LPCWSTR
 static LONG WINAPI Inspect_SCardRemoveReaderFromGroupA(SCARDCONTEXT hContext, LPCSTR szReaderName,
                                                        LPCSTR szGroupName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardRemoveReaderFromGroupA { hContext: %p", (void*)hContext);
 
@@ -472,7 +472,7 @@ static LONG WINAPI Inspect_SCardRemoveReaderFromGroupA(SCARDCONTEXT hContext, LP
 static LONG WINAPI Inspect_SCardRemoveReaderFromGroupW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
                                                        LPCWSTR szGroupName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardRemoveReaderFromGroupW { hContext: %p", (void*)hContext);
 
@@ -490,7 +490,7 @@ static LONG WINAPI Inspect_SCardIntroduceCardTypeA(SCARDCONTEXT hContext, LPCSTR
                                                    LPCGUID rgguidInterfaces, DWORD dwInterfaceCount,
                                                    LPCBYTE pbAtr, LPCBYTE pbAtrMask, DWORD cbAtrLen)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceCardTypeA { hContext: %p", (void*)hContext);
 
@@ -509,7 +509,7 @@ static LONG WINAPI Inspect_SCardIntroduceCardTypeW(SCARDCONTEXT hContext, LPCWST
                                                    LPCGUID rgguidInterfaces, DWORD dwInterfaceCount,
                                                    LPCBYTE pbAtr, LPCBYTE pbAtrMask, DWORD cbAtrLen)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardIntroduceCardTypeW { hContext: %p", (void*)hContext);
 
@@ -526,7 +526,7 @@ static LONG WINAPI Inspect_SCardIntroduceCardTypeW(SCARDCONTEXT hContext, LPCWST
 static LONG WINAPI Inspect_SCardSetCardTypeProviderNameA(SCARDCONTEXT hContext, LPCSTR szCardName,
                                                          DWORD dwProviderId, LPCSTR szProvider)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardSetCardTypeProviderNameA { hContext: %p", (void*)hContext);
 
@@ -542,7 +542,7 @@ static LONG WINAPI Inspect_SCardSetCardTypeProviderNameA(SCARDCONTEXT hContext, 
 static LONG WINAPI Inspect_SCardSetCardTypeProviderNameW(SCARDCONTEXT hContext, LPCWSTR szCardName,
                                                          DWORD dwProviderId, LPCWSTR szProvider)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardSetCardTypeProviderNameA { hContext: %p", (void*)hContext);
 
@@ -557,7 +557,7 @@ static LONG WINAPI Inspect_SCardSetCardTypeProviderNameW(SCARDCONTEXT hContext, 
 
 static LONG WINAPI Inspect_SCardForgetCardTypeA(SCARDCONTEXT hContext, LPCSTR szCardName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetCardTypeA { hContext: %p", (void*)hContext);
 
@@ -571,7 +571,7 @@ static LONG WINAPI Inspect_SCardForgetCardTypeA(SCARDCONTEXT hContext, LPCSTR sz
 
 static LONG WINAPI Inspect_SCardForgetCardTypeW(SCARDCONTEXT hContext, LPCWSTR szCardName)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardForgetCardTypeW { hContext: %p", (void*)hContext);
 
@@ -585,7 +585,7 @@ static LONG WINAPI Inspect_SCardForgetCardTypeW(SCARDCONTEXT hContext, LPCWSTR s
 
 static LONG WINAPI Inspect_SCardFreeMemory(SCARDCONTEXT hContext, LPVOID pvMem)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardFreeMemory { hContext: %p", (void*)hContext);
 
@@ -599,7 +599,7 @@ static LONG WINAPI Inspect_SCardFreeMemory(SCARDCONTEXT hContext, LPVOID pvMem)
 
 static HANDLE WINAPI Inspect_SCardAccessStartedEvent(void)
 {
-	HANDLE hEvent;
+	HANDLE hEvent = NULL;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAccessStartedEvent {");
 
@@ -622,7 +622,7 @@ static void WINAPI Inspect_SCardReleaseStartedEvent(void)
 static LONG WINAPI Inspect_SCardLocateCardsA(SCARDCONTEXT hContext, LPCSTR mszCards,
                                              LPSCARD_READERSTATEA rgReaderStates, DWORD cReaders)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardLocateCardsA { hContext: %p", (void*)hContext);
 
@@ -638,7 +638,7 @@ static LONG WINAPI Inspect_SCardLocateCardsA(SCARDCONTEXT hContext, LPCSTR mszCa
 static LONG WINAPI Inspect_SCardLocateCardsW(SCARDCONTEXT hContext, LPCWSTR mszCards,
                                              LPSCARD_READERSTATEW rgReaderStates, DWORD cReaders)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardLocateCardsW { hContext: %p", (void*)hContext);
 
@@ -655,7 +655,7 @@ static LONG WINAPI Inspect_SCardLocateCardsByATRA(SCARDCONTEXT hContext, LPSCARD
                                                   DWORD cAtrs, LPSCARD_READERSTATEA rgReaderStates,
                                                   DWORD cReaders)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardLocateCardsByATRA { hContext: %p", (void*)hContext);
 
@@ -672,7 +672,7 @@ static LONG WINAPI Inspect_SCardLocateCardsByATRW(SCARDCONTEXT hContext, LPSCARD
                                                   DWORD cAtrs, LPSCARD_READERSTATEW rgReaderStates,
                                                   DWORD cReaders)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardLocateCardsByATRW { hContext: %p", (void*)hContext);
 
@@ -689,7 +689,7 @@ static LONG WINAPI Inspect_SCardGetStatusChangeA(SCARDCONTEXT hContext, DWORD dw
                                                  LPSCARD_READERSTATEA rgReaderStates,
                                                  DWORD cReaders)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetStatusChangeA { hContext: %p", (void*)hContext);
 
@@ -706,7 +706,7 @@ static LONG WINAPI Inspect_SCardGetStatusChangeW(SCARDCONTEXT hContext, DWORD dw
                                                  LPSCARD_READERSTATEW rgReaderStates,
                                                  DWORD cReaders)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetStatusChangeW { hContext: %p", (void*)hContext);
 
@@ -721,7 +721,7 @@ static LONG WINAPI Inspect_SCardGetStatusChangeW(SCARDCONTEXT hContext, DWORD dw
 
 static LONG WINAPI Inspect_SCardCancel(SCARDCONTEXT hContext)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardCancel { hContext: %p", (void*)hContext);
 
@@ -737,7 +737,7 @@ static LONG WINAPI Inspect_SCardConnectA(SCARDCONTEXT hContext, LPCSTR szReader,
                                          DWORD dwPreferredProtocols, LPSCARDHANDLE phCard,
                                          LPDWORD pdwActiveProtocol)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardConnectA { hContext: %p", (void*)hContext);
 
@@ -754,7 +754,7 @@ static LONG WINAPI Inspect_SCardConnectW(SCARDCONTEXT hContext, LPCWSTR szReader
                                          DWORD dwPreferredProtocols, LPSCARDHANDLE phCard,
                                          LPDWORD pdwActiveProtocol)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardConnectW { hContext: %p", (void*)hContext);
 
@@ -771,7 +771,7 @@ static LONG WINAPI Inspect_SCardReconnect(SCARDHANDLE hCard, DWORD dwShareMode,
                                           DWORD dwPreferredProtocols, DWORD dwInitialization,
                                           LPDWORD pdwActiveProtocol)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReconnect { hCard: %p", (void*)hCard);
 
@@ -786,7 +786,7 @@ static LONG WINAPI Inspect_SCardReconnect(SCARDHANDLE hCard, DWORD dwShareMode,
 
 static LONG WINAPI Inspect_SCardDisconnect(SCARDHANDLE hCard, DWORD dwDisposition)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardDisconnect { hCard: %p", (void*)hCard);
 
@@ -800,7 +800,7 @@ static LONG WINAPI Inspect_SCardDisconnect(SCARDHANDLE hCard, DWORD dwDispositio
 
 static LONG WINAPI Inspect_SCardBeginTransaction(SCARDHANDLE hCard)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardBeginTransaction { hCard: %p", (void*)hCard);
 
@@ -814,7 +814,7 @@ static LONG WINAPI Inspect_SCardBeginTransaction(SCARDHANDLE hCard)
 
 static LONG WINAPI Inspect_SCardEndTransaction(SCARDHANDLE hCard, DWORD dwDisposition)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardEndTransaction { hCard: %p", (void*)hCard);
 
@@ -828,7 +828,7 @@ static LONG WINAPI Inspect_SCardEndTransaction(SCARDHANDLE hCard, DWORD dwDispos
 
 static LONG WINAPI Inspect_SCardCancelTransaction(SCARDHANDLE hCard)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardCancelTransaction { hCard: %p", (void*)hCard);
 
@@ -843,7 +843,7 @@ static LONG WINAPI Inspect_SCardCancelTransaction(SCARDHANDLE hCard)
 static LONG WINAPI Inspect_SCardState(SCARDHANDLE hCard, LPDWORD pdwState, LPDWORD pdwProtocol,
                                       LPBYTE pbAtr, LPDWORD pcbAtrLen)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardState { hCard: %p", (void*)hCard);
 
@@ -859,7 +859,7 @@ static LONG WINAPI Inspect_SCardStatusA(SCARDHANDLE hCard, LPSTR mszReaderNames,
                                         LPDWORD pcchReaderLen, LPDWORD pdwState,
                                         LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardStatusA { hCard: %p", (void*)hCard);
 
@@ -876,7 +876,7 @@ static LONG WINAPI Inspect_SCardStatusW(SCARDHANDLE hCard, LPWSTR mszReaderNames
                                         LPDWORD pcchReaderLen, LPDWORD pdwState,
                                         LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardStatusW { hCard: %p", (void*)hCard);
 
@@ -894,7 +894,7 @@ static LONG WINAPI Inspect_SCardTransmit(SCARDHANDLE hCard, LPCSCARD_IO_REQUEST 
                                          LPSCARD_IO_REQUEST pioRecvPci, LPBYTE pbRecvBuffer,
                                          LPDWORD pcbRecvLength)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardTransmit { hCard: %p", (void*)hCard);
 
@@ -909,7 +909,7 @@ static LONG WINAPI Inspect_SCardTransmit(SCARDHANDLE hCard, LPCSCARD_IO_REQUEST 
 
 static LONG WINAPI Inspect_SCardGetTransmitCount(SCARDHANDLE hCard, LPDWORD pcTransmitCount)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetTransmitCount { hCard: %p", (void*)hCard);
 
@@ -925,7 +925,7 @@ static LONG WINAPI Inspect_SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, 
                                         DWORD cbInBufferSize, LPVOID lpOutBuffer,
                                         DWORD cbOutBufferSize, LPDWORD lpBytesReturned)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardControl { hCard: %p", (void*)hCard);
 
@@ -941,7 +941,7 @@ static LONG WINAPI Inspect_SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, 
 static LONG WINAPI Inspect_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPBYTE pbAttr,
                                           LPDWORD pcbAttrLen)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetAttrib { hCard: %p", (void*)hCard);
 
@@ -956,7 +956,7 @@ static LONG WINAPI Inspect_SCardGetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPB
 static LONG WINAPI Inspect_SCardSetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPCBYTE pbAttr,
                                           DWORD cbAttrLen)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardSetAttrib { hCard: %p", (void*)hCard);
 
@@ -970,7 +970,7 @@ static LONG WINAPI Inspect_SCardSetAttrib(SCARDHANDLE hCard, DWORD dwAttrId, LPC
 
 static LONG WINAPI Inspect_SCardUIDlgSelectCardA(LPOPENCARDNAMEA_EX pDlgStruc)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardUIDlgSelectCardA {");
 
@@ -984,7 +984,7 @@ static LONG WINAPI Inspect_SCardUIDlgSelectCardA(LPOPENCARDNAMEA_EX pDlgStruc)
 
 static LONG WINAPI Inspect_SCardUIDlgSelectCardW(LPOPENCARDNAMEW_EX pDlgStruc)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardUIDlgSelectCardW {");
 
@@ -998,7 +998,7 @@ static LONG WINAPI Inspect_SCardUIDlgSelectCardW(LPOPENCARDNAMEW_EX pDlgStruc)
 
 static LONG WINAPI Inspect_GetOpenCardNameA(LPOPENCARDNAMEA pDlgStruc)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "GetOpenCardNameA {");
 
@@ -1012,7 +1012,7 @@ static LONG WINAPI Inspect_GetOpenCardNameA(LPOPENCARDNAMEA pDlgStruc)
 
 static LONG WINAPI Inspect_GetOpenCardNameW(LPOPENCARDNAMEW pDlgStruc)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "GetOpenCardNameW {");
 
@@ -1026,7 +1026,7 @@ static LONG WINAPI Inspect_GetOpenCardNameW(LPOPENCARDNAMEW pDlgStruc)
 
 static LONG WINAPI Inspect_SCardDlgExtendedError(void)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardDlgExtendedError {");
 
@@ -1042,7 +1042,7 @@ static LONG WINAPI Inspect_SCardReadCacheA(SCARDCONTEXT hContext, UUID* CardIden
                                            DWORD FreshnessCounter, LPSTR LookupName, PBYTE Data,
                                            DWORD* DataLen)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReadCacheA { hContext: %p", (void*)hContext);
 
@@ -1059,7 +1059,7 @@ static LONG WINAPI Inspect_SCardReadCacheW(SCARDCONTEXT hContext, UUID* CardIden
                                            DWORD FreshnessCounter, LPWSTR LookupName, PBYTE Data,
                                            DWORD* DataLen)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardReadCacheW { hContext: %p", (void*)hContext);
 
@@ -1076,7 +1076,7 @@ static LONG WINAPI Inspect_SCardWriteCacheA(SCARDCONTEXT hContext, UUID* CardIde
                                             DWORD FreshnessCounter, LPSTR LookupName, PBYTE Data,
                                             DWORD DataLen)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardWriteCacheA { hContext: %p", (void*)hContext);
 
@@ -1093,7 +1093,7 @@ static LONG WINAPI Inspect_SCardWriteCacheW(SCARDCONTEXT hContext, UUID* CardIde
                                             DWORD FreshnessCounter, LPWSTR LookupName, PBYTE Data,
                                             DWORD DataLen)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardWriteCacheW { hContext: %p", (void*)hContext);
 
@@ -1109,7 +1109,7 @@ static LONG WINAPI Inspect_SCardWriteCacheW(SCARDCONTEXT hContext, UUID* CardIde
 static LONG WINAPI Inspect_SCardGetReaderIconA(SCARDCONTEXT hContext, LPCSTR szReaderName,
                                                LPBYTE pbIcon, LPDWORD pcbIcon)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetReaderIconA { hContext: %p", (void*)hContext);
 
@@ -1124,7 +1124,7 @@ static LONG WINAPI Inspect_SCardGetReaderIconA(SCARDCONTEXT hContext, LPCSTR szR
 static LONG WINAPI Inspect_SCardGetReaderIconW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
                                                LPBYTE pbIcon, LPDWORD pcbIcon)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetReaderIconW { hContext: %p", (void*)hContext);
 
@@ -1139,7 +1139,7 @@ static LONG WINAPI Inspect_SCardGetReaderIconW(SCARDCONTEXT hContext, LPCWSTR sz
 static LONG WINAPI Inspect_SCardGetDeviceTypeIdA(SCARDCONTEXT hContext, LPCSTR szReaderName,
                                                  LPDWORD pdwDeviceTypeId)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetDeviceTypeIdA { hContext: %p", (void*)hContext);
 
@@ -1154,7 +1154,7 @@ static LONG WINAPI Inspect_SCardGetDeviceTypeIdA(SCARDCONTEXT hContext, LPCSTR s
 static LONG WINAPI Inspect_SCardGetDeviceTypeIdW(SCARDCONTEXT hContext, LPCWSTR szReaderName,
                                                  LPDWORD pdwDeviceTypeId)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetDeviceTypeIdW { hContext: %p", (void*)hContext);
 
@@ -1171,7 +1171,7 @@ static LONG WINAPI Inspect_SCardGetReaderDeviceInstanceIdA(SCARDCONTEXT hContext
                                                            LPSTR szDeviceInstanceId,
                                                            LPDWORD pcchDeviceInstanceId)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetReaderDeviceInstanceIdA { hContext: %p",
 	           (void*)hContext);
@@ -1190,7 +1190,7 @@ static LONG WINAPI Inspect_SCardGetReaderDeviceInstanceIdW(SCARDCONTEXT hContext
                                                            LPWSTR szDeviceInstanceId,
                                                            LPDWORD pcchDeviceInstanceId)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardGetReaderDeviceInstanceIdW { hContext: %p",
 	           (void*)hContext);
@@ -1209,7 +1209,7 @@ static LONG WINAPI Inspect_SCardListReadersWithDeviceInstanceIdA(SCARDCONTEXT hC
                                                                  LPSTR mszReaders,
                                                                  LPDWORD pcchReaders)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListReadersWithDeviceInstanceIdA { hContext: %p",
 	           (void*)hContext);
@@ -1229,7 +1229,7 @@ static LONG WINAPI Inspect_SCardListReadersWithDeviceInstanceIdW(SCARDCONTEXT hC
                                                                  LPWSTR mszReaders,
                                                                  LPDWORD pcchReaders)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardListReadersWithDeviceInstanceIdW { hContext: %p",
 	           (void*)hContext);
@@ -1246,7 +1246,7 @@ static LONG WINAPI Inspect_SCardListReadersWithDeviceInstanceIdW(SCARDCONTEXT hC
 
 static LONG WINAPI Inspect_SCardAudit(SCARDCONTEXT hContext, DWORD dwEvent)
 {
-	LONG status;
+	LONG status = 0;
 
 	WLog_Print(g_Log, g_LogLevel, "SCardAudit { hContext: %p", (void*)hContext);
 

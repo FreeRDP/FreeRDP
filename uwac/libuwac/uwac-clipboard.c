@@ -138,8 +138,7 @@ static UwacReturnCode UwacCreateDataSource(UwacSeat* s)
 
 UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s)
 {
-	UwacReturnCode rc;
-	UwacClipboardEvent* event;
+	UwacClipboardEvent* event = NULL;
 
 	if (!s)
 		return UWAC_ERROR_INTERNAL;
@@ -149,7 +148,7 @@ UwacReturnCode UwacSeatRegisterClipboard(UwacSeat* s)
 
 	UwacRegisterDeviceListener(s);
 
-	rc = UwacCreateDataSource(s);
+	UwacReturnCode rc = UwacCreateDataSource(s);
 
 	if (rc != UWAC_SUCCESS)
 		return rc;
@@ -195,7 +194,7 @@ static const struct wl_callback_listener callback_listener = { .done = callback_
 
 static uint32_t get_serial(UwacSeat* s)
 {
-	struct wl_callback* callback;
+	struct wl_callback* callback = NULL;
 	uint32_t serial = 0;
 	callback = wl_display_sync(s->display->display);
 	wl_callback_add_listener(callback, &callback_listener, &serial);
@@ -247,7 +246,7 @@ void* UwacClipboardDataGet(UwacSeat* seat, const char* mime, size_t* size)
 
 	do
 	{
-		void* tmp;
+		void* tmp = NULL;
 		alloc += 1024;
 		tmp = xrealloc(data, alloc);
 		if (!tmp)

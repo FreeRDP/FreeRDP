@@ -29,10 +29,10 @@
 
 char* WLog_Message_GetOutputFileName(int id, const char* ext)
 {
-	DWORD ProcessId;
-	char* FilePath;
-	char* FileName;
-	char* FullFileName;
+	DWORD ProcessId = 0;
+	char* FilePath = NULL;
+	char* FileName = NULL;
+	char* FullFileName = NULL;
 
 	if (!(FileName = (char*)malloc(256)))
 		return NULL;

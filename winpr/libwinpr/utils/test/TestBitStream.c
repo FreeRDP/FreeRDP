@@ -6,8 +6,8 @@
 
 static void BitStrGen(void)
 {
-	DWORD i;
-	DWORD j;
+	DWORD i = 0;
+	DWORD j = 0;
 	char str[64];
 
 	for (i = 0; i < 256;)
@@ -53,7 +53,7 @@ static void BitStrGen(void)
 
 int TestBitStream(int argc, char* argv[])
 {
-	wBitStream* bs;
+	wBitStream* bs = NULL;
 	BYTE buffer[1024] = { 0 };
 
 	WINPR_UNUSED(argc);

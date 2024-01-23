@@ -194,7 +194,7 @@ bool SdlWidget::fill(SDL_Renderer* renderer, SDL_Color color)
 bool SdlWidget::fill(SDL_Renderer* renderer, const std::vector<SDL_Color>& colors)
 {
 	assert(renderer);
-	SDL_BlendMode mode;
+	SDL_BlendMode mode = SDL_BLENDMODE_INVALID;
 	SDL_GetRenderDrawBlendMode(renderer, &mode);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 	for (auto color : colors)

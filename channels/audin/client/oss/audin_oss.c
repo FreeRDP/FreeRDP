@@ -149,13 +149,13 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 	char dev_name[PATH_MAX] = "/dev/dsp";
 	char mixer_name[PATH_MAX] = "/dev/mixer";
 	int pcm_handle = -1;
-	int mixer_handle;
+	int mixer_handle = 0;
 	BYTE* buffer = NULL;
 	unsigned long tmp = 0;
 	size_t buffer_size = 0;
 	AudinOSSDevice* oss = (AudinOSSDevice*)arg;
 	UINT error = 0;
-	DWORD status;
+	DWORD status = 0;
 
 	if (oss == NULL)
 	{
@@ -328,7 +328,7 @@ static UINT audin_oss_open(IAudinDevice* device, AudinReceive receive, void* use
  */
 static UINT audin_oss_close(IAudinDevice* device)
 {
-	UINT error;
+	UINT error = 0;
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
 
 	if (device == NULL)
@@ -364,7 +364,7 @@ static UINT audin_oss_close(IAudinDevice* device)
 static UINT audin_oss_free(IAudinDevice* device)
 {
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
-	UINT error;
+	UINT error = 0;
 
 	if (device == NULL)
 		return ERROR_INVALID_PARAMETER;
@@ -385,11 +385,11 @@ static UINT audin_oss_free(IAudinDevice* device)
  */
 static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV* args)
 {
-	int status;
-	char* str_num;
-	char* eptr;
-	DWORD flags;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	int status = 0;
+	char* str_num = NULL;
+	char* eptr = NULL;
+	DWORD flags = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;
 	COMMAND_LINE_ARGUMENT_A audin_oss_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                           NULL, NULL, -1, NULL, "audio device name" },
@@ -452,9 +452,9 @@ static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV*
 FREERDP_ENTRY_POINT(
     UINT oss_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args;
-	AudinOSSDevice* oss;
-	UINT error;
+	const ADDIN_ARGV* args = NULL;
+	AudinOSSDevice* oss = NULL;
+	UINT error = 0;
 	oss = (AudinOSSDevice*)calloc(1, sizeof(AudinOSSDevice));
 
 	if (!oss)

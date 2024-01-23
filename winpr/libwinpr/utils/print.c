@@ -43,8 +43,8 @@ void winpr_HexDump(const char* tag, UINT32 level, const void* data, size_t lengt
 void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 {
 	const BYTE* p = data;
-	size_t i;
-	size_t line;
+	size_t i = 0;
+	size_t line = 0;
 	size_t offset = 0;
 	const size_t maxlen = 20; /* 64bit SIZE_MAX as decimal */
 	/* String line length:
@@ -58,7 +58,7 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 	    (maxlen + 3) + (WINPR_HEXDUMP_LINE_LENGTH * 3) + 3 + WINPR_HEXDUMP_LINE_LENGTH + 1;
 	size_t pos = 0;
 
-	char* buffer;
+	char* buffer = NULL;
 
 	if (!WLog_IsLevelActive(log, lvl))
 		return;
@@ -134,10 +134,10 @@ fail:
 void winpr_CArrayDump(const char* tag, UINT32 level, const void* data, size_t length, size_t width)
 {
 	const BYTE* p = data;
-	size_t i;
+	size_t i = 0;
 	size_t offset = 0;
 	const size_t llen = ((length > width) ? width : length) * 4ull + 1ull;
-	size_t pos;
+	size_t pos = 0;
 	char* buffer = malloc(llen);
 
 	if (!buffer)
@@ -187,9 +187,9 @@ static BYTE value(char c)
 
 size_t winpr_HexStringToBinBuffer(const char* str, size_t strLength, BYTE* data, size_t dataLength)
 {
-	size_t x;
+	size_t x = 0;
 	size_t y = 0;
-	size_t maxStrLen;
+	size_t maxStrLen = 0;
 	if (!str || !data || (strLength == 0) || (dataLength == 0))
 		return 0;
 
@@ -217,7 +217,7 @@ size_t winpr_BinToHexStringBuffer(const BYTE* data, size_t length, char* dstStr,
 	const size_t n = space ? 3 : 2;
 	const char bin2hex[] = "0123456789ABCDEF";
 	const size_t maxLength = MIN(length, dstSize / n);
-	size_t i;
+	size_t i = 0;
 
 	if (!data || !dstStr || (length == 0) || (dstSize == 0))
 		return 0;
@@ -246,7 +246,7 @@ size_t winpr_BinToHexStringBuffer(const BYTE* data, size_t length, char* dstStr,
 
 char* winpr_BinToHexString(const BYTE* data, size_t length, BOOL space)
 {
-	size_t rc;
+	size_t rc = 0;
 	const size_t n = space ? 3 : 2;
 	const size_t size = (length + 1ULL) * n;
 	char* p = (char*)malloc(size);

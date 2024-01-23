@@ -74,10 +74,10 @@ static UINT enumerator_server_open_channel(enumerator_server* enumerator)
 {
 	CamDevEnumServerContext* context = &enumerator->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent;
+	HANDLE hEvent = NULL;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
-	UINT32 channelId;
+	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
 	WINPR_ASSERT(enumerator);
@@ -257,11 +257,11 @@ static UINT enumerator_server_recv_device_removed_notification(CamDevEnumServerC
 
 static UINT enumerator_process_message(enumerator_server* enumerator)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
-	ULONG BytesReturned;
+	ULONG BytesReturned = 0;
 	CAM_SHARED_MSG_HEADER header = { 0 };
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(enumerator);
 	WINPR_ASSERT(enumerator->enumerator_channel);
@@ -375,11 +375,11 @@ static HANDLE enumerator_server_get_channel_handle(enumerator_server* enumerator
 
 static DWORD WINAPI enumerator_server_thread_func(LPVOID arg)
 {
-	DWORD nCount;
+	DWORD nCount = 0;
 	HANDLE events[2] = { 0 };
 	enumerator_server* enumerator = (enumerator_server*)arg;
 	UINT error = CHANNEL_RC_OK;
-	DWORD status;
+	DWORD status = 0;
 
 	WINPR_ASSERT(enumerator);
 
@@ -529,7 +529,7 @@ static UINT enumerator_server_packet_send(CamDevEnumServerContext* context, wStr
 {
 	enumerator_server* enumerator = (enumerator_server*)context;
 	UINT error = CHANNEL_RC_OK;
-	ULONG written;
+	ULONG written = 0;
 
 	if (!WTSVirtualChannelWrite(enumerator->enumerator_channel, (PCHAR)Stream_Buffer(s),
 	                            Stream_GetPosition(s), &written))
@@ -553,7 +553,7 @@ out:
 static UINT enumerator_send_select_version_response_pdu(
     CamDevEnumServerContext* context, const CAM_SELECT_VERSION_RESPONSE* selectVersionResponse)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	s = Stream_New(NULL, CAM_HEADER_SIZE);
 	if (!s)

@@ -113,7 +113,7 @@ static void dumpData(char* data, unsigned length)
 {
 	unsigned const limit = 98;
 	unsigned l = length > limit ? limit / 2 : length;
-	unsigned i;
+	unsigned i = 0;
 
 	for (i = 0; i < l; ++i)
 	{
@@ -141,7 +141,7 @@ static DWORD WINAPI copyThread(void* data)
 	{
 
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
-		DWORD dwRead;
+		DWORD dwRead = 0;
 		char* buffer = malloc(bufsize);
 
 		if (!buffer)
@@ -197,7 +197,7 @@ static void closeChannel(Plugin* plugin)
 static void dataReceived(Plugin* plugin, void* pData, UINT32 dataLength, UINT32 totalLength,
                          UINT32 dataFlags)
 {
-	DWORD dwWritten;
+	DWORD dwWritten = 0;
 
 	if (dataFlags & CHANNEL_FLAG_SUSPEND)
 	{
@@ -324,7 +324,7 @@ static VOID VCAPITYPE VirtualChannelInitEventEx(LPVOID lpUserParam, LPVOID pInit
 FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
                                                          PVOID pInitHandle))
 {
-	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx = NULL;
 	CHANNEL_DEF channelDef;
 	Plugin* plugin = (Plugin*)calloc(1, sizeof(Plugin));
 

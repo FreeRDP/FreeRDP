@@ -12,7 +12,7 @@ static const TCHAR testPathExtension[] = _T("C:\\Windows\\System32\\cmd.exe");
 
 int TestPathCchAddExtension(int argc, char* argv[])
 {
-	HRESULT status;
+	HRESULT status = 0;
 	TCHAR Path[PATHCCH_MAX_CCH];
 
 	WINPR_UNUSED(argc);

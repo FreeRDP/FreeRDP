@@ -28,6 +28,7 @@
 #include <freerdp/gdi/gfx.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/utils/gfx.h>
+#include <math.h>
 
 #define TAG FREERDP_TAG("gdi")
 
@@ -84,14 +85,14 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
                               const RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	UINT32 index;
-	UINT16 count;
-	UINT32 DesktopWidth;
-	UINT32 DesktopHeight;
+	UINT32 index = 0;
+	UINT16 count = 0;
+	UINT32 DesktopWidth = 0;
+	UINT32 DesktopHeight = 0;
 	UINT16* pSurfaceIds = NULL;
-	rdpGdi* gdi;
-	rdpUpdate* update;
-	rdpSettings* settings;
+	rdpGdi* gdi = NULL;
+	rdpUpdate* update = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(resetGraphics);
@@ -163,15 +164,15 @@ fail:
 static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	UINT32 surfaceX;
-	UINT32 surfaceY;
+	UINT32 surfaceX = 0;
+	UINT32 surfaceY = 0;
 	RECTANGLE_16 surfaceRect;
-	const RECTANGLE_16* rects;
-	UINT32 i;
-	UINT32 nbRects;
-	double sx;
-	double sy;
-	rdpUpdate* update;
+	const RECTANGLE_16* rects = NULL;
+	UINT32 i = 0;
+	UINT32 nbRects = 0;
+	double sx = NAN;
+	double sy = NAN;
+	rdpUpdate* update = NULL;
 
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(gdi->context);
@@ -241,11 +242,11 @@ static UINT gdi_WindowUpdate(RdpgfxClientContext* context, gdiGfxSurface* surfac
 
 static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
 {
-	UINT16 count;
-	UINT16 index;
+	UINT16 count = 0;
+	UINT16 index = 0;
 	UINT status = ERROR_INTERNAL_ERROR;
 	UINT16* pSurfaceIds = NULL;
-	rdpGdi* gdi;
+	rdpGdi* gdi = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -295,7 +296,7 @@ static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
  */
 static UINT gdi_StartFrame(RdpgfxClientContext* context, const RDPGFX_START_FRAME_PDU* startFrame)
 {
-	rdpGdi* gdi;
+	rdpGdi* gdi = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(startFrame);
@@ -315,7 +316,7 @@ static UINT gdi_StartFrame(RdpgfxClientContext* context, const RDPGFX_START_FRAM
 static UINT gdi_EndFrame(RdpgfxClientContext* context, const RDPGFX_END_FRAME_PDU* endFrame)
 {
 	UINT status = CHANNEL_RC_OK;
-	rdpGdi* gdi;
+	rdpGdi* gdi = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(endFrame);
@@ -336,10 +337,10 @@ static UINT gdi_SurfaceCommand_Uncompressed(rdpGdi* gdi, RdpgfxClientContext* co
                                             const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT status = CHANNEL_RC_OK;
-	gdiGfxSurface* surface;
+	gdiGfxSurface* surface = NULL;
 	RECTANGLE_16 invalidRect;
-	DWORD bpp;
-	size_t size;
+	DWORD bpp = 0;
+	size_t size = 0;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cmd);
@@ -400,11 +401,11 @@ static UINT gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* contex
                                         const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT status = ERROR_INTERNAL_ERROR;
-	gdiGfxSurface* surface;
+	gdiGfxSurface* surface = NULL;
 	REGION16 invalidRegion;
-	const RECTANGLE_16* rects;
-	UINT32 nrRects;
-	UINT32 x;
+	const RECTANGLE_16* rects = NULL;
+	UINT32 nrRects = 0;
+	UINT32 x = 0;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cmd);
@@ -460,9 +461,9 @@ fail:
 static UINT gdi_SurfaceCommand_ClearCodec(rdpGdi* gdi, RdpgfxClientContext* context,
                                           const RDPGFX_SURFACE_COMMAND* cmd)
 {
-	INT32 rc;
+	INT32 rc = 0;
 	UINT status = CHANNEL_RC_OK;
-	gdiGfxSurface* surface;
+	gdiGfxSurface* surface = NULL;
 	RECTANGLE_16 invalidRect;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(context);
@@ -520,7 +521,7 @@ static UINT gdi_SurfaceCommand_Planar(rdpGdi* gdi, RdpgfxClientContext* context,
 {
 	UINT status = CHANNEL_RC_OK;
 	BYTE* DstData = NULL;
-	gdiGfxSurface* surface;
+	gdiGfxSurface* surface = NULL;
 	RECTANGLE_16 invalidRect;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(context);
@@ -576,12 +577,12 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
                                       const RDPGFX_SURFACE_COMMAND* cmd)
 {
 #ifdef WITH_GFX_H264
-	INT32 rc;
+	INT32 rc = 0;
 	UINT status = CHANNEL_RC_OK;
-	UINT32 i;
-	gdiGfxSurface* surface;
-	RDPGFX_H264_METABLOCK* meta;
-	RDPGFX_AVC420_BITMAP_STREAM* bs;
+	UINT32 i = 0;
+	gdiGfxSurface* surface = NULL;
+	RDPGFX_H264_METABLOCK* meta = NULL;
+	RDPGFX_AVC420_BITMAP_STREAM* bs = NULL;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cmd);
@@ -663,9 +664,9 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
                                       const RDPGFX_SURFACE_COMMAND* cmd)
 {
 #ifdef WITH_GFX_H264
-	INT32 rc;
+	INT32 rc = 0;
 	UINT status = CHANNEL_RC_OK;
-	UINT32 i;
+	UINT32 i = 0;
 	gdiGfxSurface* surface = NULL;
 	RDPGFX_AVC444_BITMAP_STREAM* bs = NULL;
 	RDPGFX_AVC420_BITMAP_STREAM* avc1 = NULL;
@@ -803,12 +804,12 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
                                      const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT status = CHANNEL_RC_OK;
-	UINT16 alphaSig;
-	UINT16 compressed;
-	gdiGfxSurface* surface;
+	UINT16 alphaSig = 0;
+	UINT16 compressed = 0;
+	gdiGfxSurface* surface = NULL;
 	RECTANGLE_16 invalidRect;
 	wStream buffer;
-	wStream* s;
+	wStream* s = NULL;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cmd);
@@ -848,11 +849,11 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 
 			for (UINT32 x = cmd->left; x < cmd->left + cmd->width; x++)
 			{
-				UINT32 color;
-				BYTE r;
-				BYTE g;
-				BYTE b;
-				BYTE a;
+				UINT32 color = 0;
+				BYTE r = 0;
+				BYTE g = 0;
+				BYTE b = 0;
+				BYTE a = 0;
 				BYTE* src = &line[x * FreeRDPGetBytesPerPixel(surface->format)];
 				Stream_Read_UINT8(s, a);
 				color = FreeRDPReadColor(src, surface->format);
@@ -873,8 +874,8 @@ static UINT gdi_SurfaceCommand_Alpha(rdpGdi* gdi, RdpgfxClientContext* context,
 
 		while (rect.top < rect.bottom)
 		{
-			UINT32 count;
-			BYTE a;
+			UINT32 count = 0;
+			BYTE a = 0;
 
 			if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 				return ERROR_INVALID_DATA;
@@ -941,13 +942,13 @@ fail:
 static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* context,
                                            const RDPGFX_SURFACE_COMMAND* cmd)
 {
-	INT32 rc;
+	INT32 rc = 0;
 	UINT status = CHANNEL_RC_OK;
-	gdiGfxSurface* surface;
+	gdiGfxSurface* surface = NULL;
 	REGION16 invalidRegion;
-	const RECTANGLE_16* rects;
-	UINT32 nrRects;
-	UINT32 x;
+	const RECTANGLE_16* rects = NULL;
+	UINT32 nrRects = 0;
+	UINT32 x = 0;
 	/**
 	 * Note: Since this comes via a Wire-To-Surface-2 PDU the
 	 * cmd's top/left/right/bottom/width/height members are always zero!
@@ -1023,7 +1024,7 @@ fail:
 static UINT gdi_SurfaceCommand(RdpgfxClientContext* context, const RDPGFX_SURFACE_COMMAND* cmd)
 {
 	UINT status = CHANNEL_RC_OK;
-	rdpGdi* gdi;
+	rdpGdi* gdi = NULL;
 
 	if (!context || !cmd)
 		return ERROR_INVALID_PARAMETER;
@@ -1116,8 +1117,8 @@ static UINT gdi_CreateSurface(RdpgfxClientContext* context,
                               const RDPGFX_CREATE_SURFACE_PDU* createSurface)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	gdiGfxSurface* surface;
-	rdpGdi* gdi;
+	gdiGfxSurface* surface = NULL;
+	rdpGdi* gdi = NULL;
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(createSurface);
 	gdi = (rdpGdi*)context->custom;
@@ -1324,14 +1325,14 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
                                  const RDPGFX_SURFACE_TO_SURFACE_PDU* surfaceToSurface)
 {
 	UINT status = ERROR_INTERNAL_ERROR;
-	UINT16 index;
-	BOOL sameSurface;
-	UINT32 nWidth;
-	UINT32 nHeight;
-	const RECTANGLE_16* rectSrc;
+	UINT16 index = 0;
+	BOOL sameSurface = 0;
+	UINT32 nWidth = 0;
+	UINT32 nHeight = 0;
+	const RECTANGLE_16* rectSrc = NULL;
 	RECTANGLE_16 invalidRect;
-	gdiGfxSurface* surfaceSrc;
-	gdiGfxSurface* surfaceDst;
+	gdiGfxSurface* surfaceSrc = NULL;
+	gdiGfxSurface* surfaceDst = NULL;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
 	EnterCriticalSection(&context->mux);
 	rectSrc = &(surfaceToSurface->rectSrc);
@@ -1436,8 +1437,8 @@ fail:
 static UINT gdi_SurfaceToCache(RdpgfxClientContext* context,
                                const RDPGFX_SURFACE_TO_CACHE_PDU* surfaceToCache)
 {
-	const RECTANGLE_16* rect;
-	gdiGfxSurface* surface;
+	const RECTANGLE_16* rect = NULL;
+	gdiGfxSurface* surface = NULL;
 	gdiGfxCacheEntry* cacheEntry = NULL;
 	UINT rc = ERROR_INTERNAL_ERROR;
 	EnterCriticalSection(&context->mux);
@@ -1488,9 +1489,9 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
                                const RDPGFX_CACHE_TO_SURFACE_PDU* cacheToSurface)
 {
 	UINT status = ERROR_INTERNAL_ERROR;
-	UINT16 index;
-	gdiGfxSurface* surface;
-	gdiGfxCacheEntry* cacheEntry;
+	UINT16 index = 0;
+	gdiGfxSurface* surface = NULL;
+	gdiGfxCacheEntry* cacheEntry = NULL;
 	RECTANGLE_16 invalidRect;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
 
@@ -1555,9 +1556,9 @@ fail:
 static UINT gdi_CacheImportReply(RdpgfxClientContext* context,
                                  const RDPGFX_CACHE_IMPORT_REPLY_PDU* cacheImportReply)
 {
-	UINT16 index;
-	UINT16 count;
-	const UINT16* slots;
+	UINT16 index = 0;
+	UINT16 count = 0;
+	const UINT16* slots = NULL;
 	UINT error = CHANNEL_RC_OK;
 
 	slots = cacheImportReply->cacheSlots;
@@ -1601,7 +1602,7 @@ static UINT gdi_ImportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
                                  PERSISTENT_CACHE_ENTRY* importCacheEntry)
 {
 	UINT error = ERROR_INTERNAL_ERROR;
-	gdiGfxCacheEntry* cacheEntry;
+	gdiGfxCacheEntry* cacheEntry = NULL;
 
 	if (cacheSlot == 0)
 		return CHANNEL_RC_OK;
@@ -1639,7 +1640,7 @@ fail:
 static UINT gdi_ExportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
                                  PERSISTENT_CACHE_ENTRY* exportCacheEntry)
 {
-	gdiGfxCacheEntry* cacheEntry;
+	gdiGfxCacheEntry* cacheEntry = NULL;
 
 	WINPR_ASSERT(context->GetCacheSlotData);
 	cacheEntry = (gdiGfxCacheEntry*)context->GetCacheSlotData(context, cacheSlot);
@@ -1666,7 +1667,7 @@ static UINT gdi_ExportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
 static UINT gdi_EvictCacheEntry(RdpgfxClientContext* context,
                                 const RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry)
 {
-	gdiGfxCacheEntry* cacheEntry;
+	gdiGfxCacheEntry* cacheEntry = NULL;
 	UINT rc = ERROR_NOT_FOUND;
 
 	WINPR_ASSERT(context);
@@ -1762,7 +1763,7 @@ static UINT gdi_MapSurfaceToWindow(RdpgfxClientContext* context,
                                    const RDPGFX_MAP_SURFACE_TO_WINDOW_PDU* surfaceToWindow)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	gdiGfxSurface* surface;
+	gdiGfxSurface* surface = NULL;
 	EnterCriticalSection(&context->mux);
 
 	WINPR_ASSERT(context->GetSurfaceData);
@@ -1805,7 +1806,7 @@ gdi_MapSurfaceToScaledWindow(RdpgfxClientContext* context,
                              const RDPGFX_MAP_SURFACE_TO_SCALED_WINDOW_PDU* surfaceToWindow)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	gdiGfxSurface* surface;
+	gdiGfxSurface* surface = NULL;
 	EnterCriticalSection(&context->mux);
 
 	WINPR_ASSERT(context->GetSurfaceData);
@@ -1853,8 +1854,8 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
                                    pcRdpgfxUnmapWindowForSurface unmap,
                                    pcRdpgfxUpdateSurfaceArea update)
 {
-	rdpContext* context;
-	const rdpSettings* settings;
+	rdpContext* context = NULL;
+	const rdpSettings* settings = NULL;
 
 	if (!gdi || !gfx || !gdi->context || !gdi->context->settings)
 		return FALSE;

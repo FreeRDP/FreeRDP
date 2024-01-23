@@ -77,7 +77,7 @@ typedef struct
 static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	char* path = NULL;
-	UINT32 PathLength;
+	UINT32 PathLength = 0;
 	if (!Stream_SafeSeek(irp->input, 28))
 		return ERROR_INVALID_DATA;
 	/* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
@@ -141,9 +141,9 @@ static UINT parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
  */
 static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	UINT32 Length;
-	UINT64 Offset;
-	ssize_t status;
+	UINT32 Length = 0;
+	UINT64 Offset = 0;
+	ssize_t status = 0;
 	BYTE* buffer = NULL;
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
 		return ERROR_INVALID_DATA;
@@ -196,10 +196,10 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
  */
 static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	UINT32 len;
-	UINT32 Length;
-	UINT64 Offset;
-	ssize_t status;
+	UINT32 len = 0;
+	UINT32 Length = 0;
+	UINT64 Offset = 0;
+	ssize_t status = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
 		return ERROR_INVALID_DATA;
@@ -251,7 +251,7 @@ static UINT parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* 
  */
 static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 {
-	UINT error;
+	UINT error = 0;
 
 	switch (irp->MajorFunction)
 	{
@@ -376,7 +376,7 @@ static UINT parallel_irp_request(DEVICE* device, IRP* irp)
  */
 static UINT parallel_free(DEVICE* device)
 {
-	UINT error;
+	UINT error = 0;
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*)device;
 
 	if (!MessageQueue_PostQuit(parallel->queue, 0) ||
@@ -416,13 +416,13 @@ static void parallel_message_free(void* obj)
  */
 FREERDP_ENTRY_POINT(UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
-	char* name;
-	char* path;
-	size_t i;
-	size_t length;
-	RDPDR_PARALLEL* device;
-	PARALLEL_DEVICE* parallel;
-	UINT error;
+	char* name = NULL;
+	char* path = NULL;
+	size_t i = 0;
+	size_t length = 0;
+	RDPDR_PARALLEL* device = NULL;
+	PARALLEL_DEVICE* parallel = NULL;
+	UINT error = 0;
 
 	WINPR_ASSERT(pEntryPoints);
 

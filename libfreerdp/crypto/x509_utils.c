@@ -39,7 +39,7 @@
 BYTE* x509_utils_get_hash(const X509* xcert, const char* hash, size_t* length)
 {
 	UINT32 fp_len = EVP_MAX_MD_SIZE;
-	BYTE* fp;
+	BYTE* fp = NULL;
 	const EVP_MD* md = EVP_get_digestbyname(hash);
 	if (!md)
 	{
@@ -95,7 +95,7 @@ static char* crypto_print_name(const X509_NAME* name)
 
 char* x509_utils_get_subject(const X509* xcert)
 {
-	char* subject;
+	char* subject = NULL;
 	if (!xcert)
 	{
 		WLog_ERR(TAG, "Invalid certificate %p", xcert);
@@ -178,9 +178,9 @@ typedef int (*general_name_mapper_pr)(GENERAL_NAME* name, void* data, int index,
 static void map_subject_alt_name(const X509* x509, int general_name_type,
                                  general_name_mapper_pr mapper, void* data)
 {
-	int i;
-	int num;
-	STACK_OF(GENERAL_NAME) * gens;
+	int i = 0;
+	int num = 0;
+	STACK_OF(GENERAL_NAME)* gens = NULL;
 	gens = X509_get_ext_d2i(x509, NID_subject_alt_name, NULL, NULL);
 
 	if (!gens)
@@ -266,7 +266,7 @@ static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
 {
 	string_list* list = data;
 	unsigned char* cstring = 0;
-	ASN1_STRING* str;
+	ASN1_STRING* str = NULL;
 
 	switch (name->type)
 	{
@@ -360,9 +360,9 @@ static void object_list_allocate(object_list* list, int allocate_count)
 
 static char* object_string(ASN1_TYPE* object)
 {
-	char* result;
-	unsigned char* utf8String;
-	int length;
+	char* result = NULL;
+	unsigned char* utf8String = NULL;
+	int length = 0;
 	/* TODO: check that object.type is a string type. */
 	length = ASN1_STRING_to_UTF8(&utf8String, object->value.asn1_string);
 
@@ -516,7 +516,7 @@ char** x509_utils_get_dns_names(const X509* x509, size_t* count, size_t** length
 
 char* x509_utils_get_issuer(const X509* xcert)
 {
-	char* issuer;
+	char* issuer = NULL;
 	if (!xcert)
 	{
 		WLog_ERR(TAG, "Invalid certificate %p", xcert);
@@ -531,8 +531,8 @@ char* x509_utils_get_issuer(const X509* xcert)
 BOOL x509_utils_check_eku(const X509* xcert, int nid)
 {
 	BOOL ret = FALSE;
-	STACK_OF(ASN1_OBJECT) * oid_stack;
-	ASN1_OBJECT* oid;
+	STACK_OF(ASN1_OBJECT)* oid_stack = NULL;
+	ASN1_OBJECT* oid = NULL;
 
 	if (!xcert)
 		return FALSE;
@@ -554,9 +554,9 @@ BOOL x509_utils_check_eku(const X509* xcert, int nid)
 
 void x509_utils_print_info(const X509* xcert)
 {
-	char* fp;
-	char* issuer;
-	char* subject;
+	char* fp = NULL;
+	char* issuer = NULL;
+	char* subject = NULL;
 	subject = x509_utils_get_subject(xcert);
 	issuer = x509_utils_get_issuer(xcert);
 	fp = (char*)x509_utils_get_hash(xcert, "sha256", NULL);
@@ -583,11 +583,11 @@ out_free_issuer:
 
 static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain, size_t* plength)
 {
-	BIO* bio;
-	int status;
-	int count;
-	int x;
-	size_t offset;
+	BIO* bio = NULL;
+	int status = 0;
+	int count = 0;
+	int x = 0;
+	size_t offset = 0;
 	size_t length = 0;
 	BOOL rc = FALSE;
 	BYTE* pemCert = NULL;
@@ -653,8 +653,8 @@ static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain,
 
 	while (offset >= length)
 	{
-		int new_len;
-		BYTE* new_cert;
+		int new_len = 0;
+		BYTE* new_cert = NULL;
 		new_len = length * 2;
 		new_cert = (BYTE*)realloc(pemCert, new_len + 1);
 
@@ -698,7 +698,7 @@ fail:
 X509* x509_utils_from_pem(const char* data, size_t len, BOOL fromFile)
 {
 	X509* x509 = NULL;
-	BIO* bio;
+	BIO* bio = NULL;
 	if (fromFile)
 		bio = BIO_new_file(data, "rb");
 	else
@@ -763,12 +763,12 @@ static WINPR_MD_TYPE hash_nid_to_winpr(int hash_nid)
 static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 {
 	WINPR_MD_TYPE ret = WINPR_MD_NONE;
-	WINPR_MD_TYPE message_digest;
-	WINPR_MD_TYPE mgf1_digest;
-	int param_type;
-	const void* param_value;
-	const ASN1_STRING* sequence;
-	const unsigned char* inp;
+	WINPR_MD_TYPE message_digest = WINPR_MD_NONE;
+	WINPR_MD_TYPE mgf1_digest = WINPR_MD_NONE;
+	int param_type = 0;
+	const void* param_value = NULL;
+	const ASN1_STRING* sequence = NULL;
+	const unsigned char* inp = NULL;
 	RSA_PSS_PARAMS* params = NULL;
 	X509_ALGOR* mgf1_digest_alg = NULL;
 
@@ -795,7 +795,7 @@ static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 	message_digest = WINPR_MD_SHA1;
 	if (params->hashAlgorithm != NULL)
 	{
-		const ASN1_OBJECT* obj;
+		const ASN1_OBJECT* obj = NULL;
 		X509_ALGOR_get0(&obj, NULL, NULL, params->hashAlgorithm);
 		message_digest = hash_nid_to_winpr(OBJ_obj2nid(obj));
 		if (message_digest == WINPR_MD_NONE)
@@ -805,10 +805,10 @@ static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 	mgf1_digest = WINPR_MD_SHA1;
 	if (params->maskGenAlgorithm != NULL)
 	{
-		const ASN1_OBJECT* obj;
-		int mgf_param_type;
-		const void* mgf_param_value;
-		const ASN1_STRING* mgf_param_sequence;
+		const ASN1_OBJECT* obj = NULL;
+		int mgf_param_type = 0;
+		const void* mgf_param_value = NULL;
+		const ASN1_STRING* mgf_param_sequence = NULL;
 		/* First, check this is MGF-1, the only one ever defined. */
 		X509_ALGOR_get0(&obj, &mgf_param_type, &mgf_param_value, params->maskGenAlgorithm);
 		if (OBJ_obj2nid(obj) != NID_mgf1)
@@ -851,7 +851,7 @@ WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
 
 	if (nid == NID_rsassaPss)
 	{
-		const X509_ALGOR* alg;
+		const X509_ALGOR* alg = NULL;
 		X509_get0_signature(NULL, &alg, xcert);
 		return get_rsa_pss_digest(alg);
 	}

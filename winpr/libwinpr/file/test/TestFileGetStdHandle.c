@@ -26,9 +26,9 @@
 
 int TestFileGetStdHandle(int argc, char* argv[])
 {
-	HANDLE so;
+	HANDLE so = NULL;
 	const char buf[] = "happy happy";
-	DWORD bytesWritten;
+	DWORD bytesWritten = 0;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	so = GetStdHandle(STD_OUTPUT_HANDLE);

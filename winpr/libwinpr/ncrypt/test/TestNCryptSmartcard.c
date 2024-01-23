@@ -29,10 +29,10 @@
 
 static void crypto_print_name(const BYTE* b, DWORD sz)
 {
-	X509_NAME* name;
-	X509* x509;
-	BIO* bio;
-	char* ret;
+	X509_NAME* name = NULL;
+	X509* x509 = NULL;
+	BIO* bio = NULL;
+	char* ret = NULL;
 
 	bio = BIO_new_mem_buf(b, sz);
 	if (!bio)
@@ -63,9 +63,9 @@ bio_release:
 
 int TestNCryptSmartcard(int argc, char* argv[])
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = 0;
 	size_t j = 0;
-	DWORD providerCount;
+	DWORD providerCount = 0;
 	NCryptProviderName* names = NULL;
 
 	status = NCryptEnumStorageProviders(&providerCount, &names, NCRYPT_SILENT_FLAG);
@@ -75,7 +75,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 	for (j = 0; j < providerCount; j++)
 	{
 		const NCryptProviderName* name = &names[j];
-		NCRYPT_PROV_HANDLE provider;
+		NCRYPT_PROV_HANDLE provider = 0;
 		char providerNameStr[256] = { 0 };
 		PVOID enumState = NULL;
 		size_t i = 0;
@@ -92,9 +92,9 @@ int TestNCryptSmartcard(int argc, char* argv[])
 		while ((status = NCryptEnumKeys(provider, NULL, &keyName, &enumState,
 		                                NCRYPT_SILENT_FLAG)) == ERROR_SUCCESS)
 		{
-			NCRYPT_KEY_HANDLE phKey;
+			NCRYPT_KEY_HANDLE phKey = 0;
 			DWORD dwFlags = 0;
-			DWORD cbOutput;
+			DWORD cbOutput = 0;
 			char keyNameStr[256] = { 0 };
 			WCHAR reader[1024] = { 0 };
 			PBYTE certBytes = NULL;

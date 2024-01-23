@@ -4,9 +4,9 @@
 int TestBacktrace(int argc, char* argv[])
 {
 	int rc = -1;
-	size_t used;
-	size_t x;
-	char** msg;
+	size_t used = 0;
+	size_t x = 0;
+	char** msg = NULL;
 	void* stack = winpr_backtrace(20);
 
 	WINPR_UNUSED(argc);

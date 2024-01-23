@@ -52,7 +52,7 @@
 static __inline void __attribute__((ATTRIBUTES)) _mm_prefetch_buffer(char* buffer, int num_bytes)
 {
 	__m128i* buf = (__m128i*)buffer;
-	unsigned int i;
+	unsigned int i = 0;
 
 	for (i = 0; i < (num_bytes / sizeof(__m128i)); i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 	{
@@ -146,13 +146,13 @@ static void rfx_quantization_encode_sse2(INT16* buffer,
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_width)
 {
-	int y;
-	int n;
+	int y = 0;
+	int n = 0;
 	INT16* l_ptr = l;
 	INT16* h_ptr = h;
 	INT16* dst_ptr = dst;
-	int first;
-	int last;
+	int first = 0;
+	int last = 0;
 	__m128i l_n;
 	__m128i h_n;
 	__m128i h_n_m;
@@ -222,8 +222,8 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_w
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_vert_sse2(INT16* l, INT16* h, INT16* dst, int subband_width)
 {
-	int x;
-	int n;
+	int x = 0;
+	int n = 0;
 	INT16* l_ptr = l;
 	INT16* h_ptr = h;
 	INT16* dst_ptr = dst;
@@ -301,12 +301,12 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* l, INT16* h, INT16* dst, int subband_wi
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_sse2(INT16* buffer, INT16* idwt, int subband_width)
 {
-	INT16* hl;
-	INT16* lh;
-	INT16* hh;
-	INT16* ll;
-	INT16* l_dst;
-	INT16* h_dst;
+	INT16* hl = NULL;
+	INT16* lh = NULL;
+	INT16* hh = NULL;
+	INT16* ll = NULL;
+	INT16* l_dst = NULL;
+	INT16* h_dst = NULL;
 	_mm_prefetch_buffer((char*)idwt, subband_width * 4 * sizeof(INT16));
 	/* Inverse DWT in horizontal direction, results in 2 sub-bands in L, H order in tmp buffer idwt.
 	 */
@@ -339,9 +339,9 @@ static void rfx_dwt_2d_decode_sse2(INT16* buffer, INT16* dwt_buffer)
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_vert_sse2(INT16* src, INT16* l, INT16* h, int subband_width)
 {
-	int total_width;
-	int x;
-	int n;
+	int total_width = 0;
+	int x = 0;
+	int n = 0;
 	__m128i src_2n;
 	__m128i src_2n_1;
 	__m128i src_2n_2;
@@ -391,9 +391,9 @@ rfx_dwt_2d_encode_block_vert_sse2(INT16* src, INT16* l, INT16* h, int subband_wi
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_horiz_sse2(INT16* src, INT16* l, INT16* h, int subband_width)
 {
-	int y;
-	int n;
-	int first;
+	int y = 0;
+	int n = 0;
+	int first = 0;
 	__m128i src_2n;
 	__m128i src_2n_1;
 	__m128i src_2n_2;
@@ -442,12 +442,12 @@ rfx_dwt_2d_encode_block_horiz_sse2(INT16* src, INT16* l, INT16* h, int subband_w
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_sse2(INT16* buffer, INT16* dwt, int subband_width)
 {
-	INT16* hl;
-	INT16* lh;
-	INT16* hh;
-	INT16* ll;
-	INT16* l_src;
-	INT16* h_src;
+	INT16* hl = NULL;
+	INT16* lh = NULL;
+	INT16* hh = NULL;
+	INT16* ll = NULL;
+	INT16* l_src = NULL;
+	INT16* h_src = NULL;
 	_mm_prefetch_buffer((char*)dwt, subband_width * 4 * sizeof(INT16));
 	/* DWT in vertical direction, results in 2 sub-bands in L, H order in tmp buffer dwt. */
 	l_src = dwt;

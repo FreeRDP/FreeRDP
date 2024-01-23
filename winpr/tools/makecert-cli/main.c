@@ -29,7 +29,7 @@
 
 int main(int argc, char* argv[])
 {
-	MAKECERT_CONTEXT* context;
+	MAKECERT_CONTEXT* context = NULL;
 	int ret = 0;
 
 	context = makecert_context_new();

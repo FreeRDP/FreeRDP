@@ -232,12 +232,12 @@ static DynvcReadResult dynvc_read_varInt(wLog* log, wStream* s, size_t len, UINT
 static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL firstPacket,
                                           BOOL lastPacket)
 {
-	BYTE cmd;
-	BYTE byte0;
-	wStream* s;
+	BYTE cmd = 0;
+	BYTE byte0 = 0;
+	wStream* s = NULL;
 	wStream sbuffer;
-	BOOL haveChannelId;
-	BOOL haveLength;
+	BOOL haveChannelId = 0;
+	BOOL haveLength = 0;
 	UINT64 dynChannelId = 0;
 	UINT64 Length = 0;
 	pServerDynamicChannelContext* dynChannel = NULL;
@@ -350,7 +350,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 
 		case CREATE_REQUEST_PDU:
 		{
-			UINT32 creationStatus;
+			UINT32 creationStatus = 0;
 
 			/* we only want the full packet */
 			if (!lastPacket)
@@ -559,7 +559,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 		}
 	}
 
-	PfChannelResult result;
+	PfChannelResult result = PF_CHANNEL_RESULT_ERROR;
 	switch (dynChannel->channelMode)
 	{
 		case PF_UTILS_CHANNEL_PASSTHROUGH:

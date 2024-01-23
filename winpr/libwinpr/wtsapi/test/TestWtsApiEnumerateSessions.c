@@ -6,11 +6,11 @@
 
 int TestWtsApiEnumerateSessions(int argc, char* argv[])
 {
-	DWORD index;
-	DWORD count;
-	BOOL bSuccess;
-	HANDLE hServer;
-	PWTS_SESSION_INFOA pSessionInfo;
+	DWORD index = 0;
+	DWORD count = 0;
+	BOOL bSuccess = 0;
+	HANDLE hServer = NULL;
+	PWTS_SESSION_INFOA pSessionInfo = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

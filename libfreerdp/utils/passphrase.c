@@ -84,7 +84,7 @@ char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf
 
 static int wait_for_fd(int fd, int timeout)
 {
-	int status;
+	int status = 0;
 #if defined(WINPR_HAVE_POLL_H) && !defined(__APPLE__)
 	struct pollfd pollset = { 0 };
 	pollset.fd = fd;
@@ -121,7 +121,7 @@ static void replace_char(char* buffer, size_t buffer_len, const char* toreplace)
 {
 	while (*toreplace != '\0')
 	{
-		char* ptr;
+		char* ptr = NULL;
 		while ((ptr = strrchr(buffer, *toreplace)) != NULL)
 			*ptr = '\0';
 		toreplace++;
@@ -133,7 +133,7 @@ char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf
 {
 	BOOL terminal_needs_reset = FALSE;
 	char term_name[L_ctermid] = { 0 };
-	int term_file;
+	int term_file = 0;
 
 	FILE* fout = NULL;
 
@@ -144,7 +144,7 @@ char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf
 	}
 
 	ctermid(term_name);
-	int terminal_fildes;
+	int terminal_fildes = 0;
 	if (from_stdin || strcmp(term_name, "") == 0 || (term_file = open(term_name, O_RDWR)) == -1)
 	{
 		fout = stdout;
@@ -255,8 +255,8 @@ int freerdp_interruptible_getc(rdpContext* context, FILE* f)
 SSIZE_T freerdp_interruptible_get_line(rdpContext* context, char** plineptr, size_t* psize,
                                        FILE* stream)
 {
-	int c;
-	char* n;
+	int c = 0;
+	char* n = NULL;
 	size_t step = 32;
 	size_t used = 0;
 	char* ptr = NULL;

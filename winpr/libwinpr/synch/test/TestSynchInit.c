@@ -42,8 +42,8 @@ static BOOL CALLBACK TestOnceFunction(PINIT_ONCE once, PVOID param, PVOID* conte
 
 static DWORD WINAPI TestThreadFunction(LPVOID lpParam)
 {
-	LONG calls;
-	BOOL ok;
+	LONG calls = 0;
+	BOOL ok = 0;
 
 	WINPR_UNUSED(lpParam);
 
@@ -69,7 +69,7 @@ int TestSynchInit(int argc, char* argv[])
 {
 	HANDLE hThreads[TEST_NUM_THREADS];
 	DWORD dwCreatedThreads = 0;
-	DWORD i;
+	DWORD i = 0;
 	BOOL result = FALSE;
 
 	WINPR_UNUSED(argc);

@@ -96,18 +96,18 @@
 
 static char* gdi_convert_postfix_to_infix(const char* postfix)
 {
-	size_t i;
-	size_t length;
-	BOOL unary;
-	wStack* stack;
-	size_t al;
-	size_t bl;
-	size_t cl;
-	size_t dl;
-	char* a;
-	char* b;
-	char* c;
-	char* d;
+	size_t i = 0;
+	size_t length = 0;
+	BOOL unary = 0;
+	wStack* stack = NULL;
+	size_t al = 0;
+	size_t bl = 0;
+	size_t cl = 0;
+	size_t dl = 0;
+	char* a = NULL;
+	char* b = NULL;
+	char* c = NULL;
+	char* d = NULL;
 	bl = cl = dl = 0;
 	stack = Stack_New(FALSE);
 	length = strlen(postfix);
@@ -190,7 +190,7 @@ static const char* test_ROP3[] = { "DSPDxax",  "PSDPxax", "SPna",   "DSna",   "D
 
 int TestGdiRop3(int argc, char* argv[])
 {
-	size_t index;
+	size_t index = 0;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 

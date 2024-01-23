@@ -4,9 +4,9 @@
 
 int TestSynchWaitableTimer(int argc, char* argv[])
 {
-	DWORD status;
-	HANDLE timer;
-	LONG period;
+	DWORD status = 0;
+	HANDLE timer = NULL;
+	LONG period = 0;
 	LARGE_INTEGER due;
 	int result = -1;
 	WINPR_UNUSED(argc);

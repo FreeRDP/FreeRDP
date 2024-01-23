@@ -79,9 +79,9 @@ static UINT rdpsnd_fake_play(rdpsndDevicePlugin* device, const BYTE* data, size_
  */
 static UINT rdpsnd_fake_parse_addin_args(rdpsndFakePlugin* fake, const ADDIN_ARGV* args)
 {
-	int status;
-	DWORD flags;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	int status = 0;
+	DWORD flags = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_fake_args[] = { { NULL, 0, NULL, NULL, NULL, -1, NULL, NULL } };
 	flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
@@ -112,8 +112,8 @@ static UINT rdpsnd_fake_parse_addin_args(rdpsndFakePlugin* fake, const ADDIN_ARG
 FREERDP_ENTRY_POINT(UINT fake_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args;
-	rdpsndFakePlugin* fake;
+	const ADDIN_ARGV* args = NULL;
+	rdpsndFakePlugin* fake = NULL;
 	UINT ret = CHANNEL_RC_OK;
 	fake = (rdpsndFakePlugin*)calloc(1, sizeof(rdpsndFakePlugin));
 

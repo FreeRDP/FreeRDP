@@ -284,8 +284,8 @@ out_error:
 
 void ListDictionary_Clear(wListDictionary* listDictionary)
 {
-	wListDictionaryItem* item;
-	wListDictionaryItem* nextItem;
+	wListDictionaryItem* item = NULL;
+	wListDictionaryItem* nextItem = NULL;
 
 	WINPR_ASSERT(listDictionary);
 
@@ -317,8 +317,8 @@ void ListDictionary_Clear(wListDictionary* listDictionary)
 
 BOOL ListDictionary_Contains(wListDictionary* listDictionary, const void* key)
 {
-	wListDictionaryItem* item;
-	OBJECT_EQUALS_FN keyEquals;
+	wListDictionaryItem* item = NULL;
+	OBJECT_EQUALS_FN keyEquals = NULL;
 
 	WINPR_ASSERT(listDictionary);
 
@@ -350,9 +350,9 @@ static void* ListDictionary_RemoveOrTake(wListDictionary* listDictionary, const 
                                          BOOL take)
 {
 	void* value = NULL;
-	wListDictionaryItem* item;
-	wListDictionaryItem* prevItem;
-	OBJECT_EQUALS_FN keyEquals;
+	wListDictionaryItem* item = NULL;
+	wListDictionaryItem* prevItem = NULL;
+	OBJECT_EQUALS_FN keyEquals = NULL;
 
 	WINPR_ASSERT(listDictionary);
 
@@ -407,7 +407,7 @@ void* ListDictionary_Take(wListDictionary* listDictionary, const void* key)
 
 static void* ListDictionary_Remove_Or_Take_Head(wListDictionary* listDictionary, BOOL take)
 {
-	wListDictionaryItem* item;
+	wListDictionaryItem* item = NULL;
 	void* value = NULL;
 
 	WINPR_ASSERT(listDictionary);
@@ -451,7 +451,7 @@ void* ListDictionary_GetItemValue(wListDictionary* listDictionary, const void* k
 {
 	void* value = NULL;
 	wListDictionaryItem* item = NULL;
-	OBJECT_EQUALS_FN keyEquals;
+	OBJECT_EQUALS_FN keyEquals = NULL;
 
 	WINPR_ASSERT(listDictionary);
 
@@ -489,8 +489,8 @@ BOOL ListDictionary_SetItemValue(wListDictionary* listDictionary, const void* ke
                                  const void* value)
 {
 	BOOL status = FALSE;
-	wListDictionaryItem* item;
-	OBJECT_EQUALS_FN keyEquals;
+	wListDictionaryItem* item = NULL;
+	OBJECT_EQUALS_FN keyEquals = NULL;
 
 	WINPR_ASSERT(listDictionary);
 

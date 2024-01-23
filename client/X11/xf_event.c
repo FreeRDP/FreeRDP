@@ -169,13 +169,13 @@ const char* x11_event_string(int event)
 
 BOOL xf_event_action_script_init(xfContext* xfc)
 {
-	wObject* obj;
-	char* xevent;
-	FILE* actionScript;
+	wObject* obj = NULL;
+	char* xevent = NULL;
+	FILE* actionScript = NULL;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
-	const rdpSettings* settings;
-	const char* ActionScript;
+	const rdpSettings* settings = NULL;
+	const char* ActionScript = NULL;
 
 	WINPR_ASSERT(xfc);
 
@@ -226,13 +226,13 @@ void xf_event_action_script_free(xfContext* xfc)
 
 static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 {
-	int index;
-	int count;
-	char* name;
-	FILE* actionScript;
+	int index = 0;
+	int count = 0;
+	char* name = NULL;
+	FILE* actionScript = NULL;
 	BOOL match = FALSE;
-	const char* xeventName;
-	const char* ActionScript;
+	const char* xeventName = NULL;
+	const char* ActionScript = NULL;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
 
@@ -279,9 +279,9 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 
 void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
 {
-	rdpSettings* settings;
-	INT64 tx;
-	INT64 ty;
+	rdpSettings* settings = NULL;
+	INT64 tx = 0;
+	INT64 ty = 0;
 
 	if (!xfc || !xfc->common.context.settings || !y || !x)
 		return;
@@ -338,11 +338,11 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 
 static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 {
-	int x;
-	int y;
-	int w;
-	int h;
-	rdpSettings* settings;
+	int x = 0;
+	int y = 0;
+	int w = 0;
+	int h = 0;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
@@ -812,8 +812,8 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 		{
-			int alignedWidth;
-			int alignedHeight;
+			int alignedWidth = 0;
+			int alignedHeight = 0;
 			alignedWidth = (xfc->window->width / 2) * 2;
 			alignedHeight = (xfc->window->height / 2) * 2;
 			/* ask the server to resize using the display channel */
@@ -1267,7 +1267,7 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 BOOL xf_generic_RawButtonEvent(xfContext* xfc, int button, BOOL app, BOOL down)
 {
 	UINT16 flags = 0;
-	size_t i;
+	size_t i = 0;
 
 	if (app)
 		return FALSE;

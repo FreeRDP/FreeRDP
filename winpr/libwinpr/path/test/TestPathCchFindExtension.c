@@ -8,9 +8,9 @@ static const char testPathExtension[] = "C:\\Windows\\System32\\cmd.exe";
 
 int TestPathCchFindExtension(int argc, char* argv[])
 {
-	PCSTR pszExt;
-	PCSTR pszTmp;
-	HRESULT hr;
+	PCSTR pszExt = NULL;
+	PCSTR pszTmp = NULL;
+	HRESULT hr = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

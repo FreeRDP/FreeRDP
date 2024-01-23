@@ -46,7 +46,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 	BYTE* dptr = (BYTE*)pDst;
 	int sRowBump = srcStep - width * sizeof(UINT32);
 	int dRowBump = dstStep - width * sizeof(UINT32);
-	UINT32 h;
+	UINT32 h = 0;
 	/* Shift left by "shift" and divide by two is the same as shift
 	 * left by "shift-1".
 	 */
@@ -72,12 +72,12 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 	for (h = 0; h < height; h++)
 	{
 		UINT32 w = width;
-		BOOL onStride;
+		BOOL onStride = 0;
 
 		/* Get to a 16-byte destination boundary. */
 		if ((ULONG_PTR)dptr & 0x0f)
 		{
-			pstatus_t status;
+			pstatus_t status = 0;
 			UINT32 startup = (16 - ((ULONG_PTR)dptr & 0x0f)) / 4;
 
 			if (startup > width)
@@ -205,7 +205,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 		/* Handle any remainder pixels. */
 		if (w > 0)
 		{
-			pstatus_t status;
+			pstatus_t status = 0;
 			status = generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, DstFormat, dstStep, w, 1,
 			                                     shift, withAlpha);
 
@@ -233,7 +233,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 	BYTE* dptr = (BYTE*)pDst;
 	int sRowBump = srcStep - width * sizeof(UINT32);
 	int dRowBump = dstStep - width * sizeof(UINT32);
-	UINT32 h;
+	UINT32 h = 0;
 	/* Shift left by "shift" and divide by two is the same as shift
 	 * left by "shift-1".
 	 */
@@ -259,12 +259,12 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 	for (h = 0; h < height; h++)
 	{
 		int w = width;
-		BOOL onStride;
+		BOOL onStride = 0;
 
 		/* Get to a 16-byte destination boundary. */
 		if ((ULONG_PTR)dptr & 0x0f)
 		{
-			pstatus_t status;
+			pstatus_t status = 0;
 			UINT32 startup = (16 - ((ULONG_PTR)dptr & 0x0f)) / 4;
 
 			if (startup > width)
@@ -396,7 +396,7 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 		/* Handle any remainder pixels. */
 		if (w > 0)
 		{
-			pstatus_t status;
+			pstatus_t status = 0;
 			status = generic->YCoCgToRGB_8u_AC4R(sptr, srcStep, dptr, DstFormat, dstStep, w, 1,
 			                                     shift, withAlpha);
 

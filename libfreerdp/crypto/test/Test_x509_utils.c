@@ -101,7 +101,7 @@ static int TestCertificateFile(const char* certificate_path,
 	for (size_t i = 0; i < count; i++)
 	{
 		const certificate_test_t* test = &ccertificate_tests[i];
-		char* result;
+		char* result = NULL;
 
 		if (test->status == DISABLED)
 		{
@@ -188,7 +188,7 @@ static const signature_alg_test_t signature_alg_tests[] = {
 static int TestSignatureAlgorithm(const signature_alg_test_t* test)
 {
 	int success = 0;
-	WINPR_MD_TYPE signature_alg;
+	WINPR_MD_TYPE signature_alg = WINPR_MD_NONE;
 	char* path = certificate_path(test->filename);
 	X509* certificate = x509_utils_from_pem(path, strlen(path), TRUE);
 
@@ -221,7 +221,7 @@ fail:
 int Test_x509_utils(int argc, char* argv[])
 {
 	char* cert_path = certificate_path("Test_x509_cert_info.pem");
-	int ret;
+	int ret = 0;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 

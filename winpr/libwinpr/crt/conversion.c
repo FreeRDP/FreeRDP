@@ -28,7 +28,7 @@
 
 errno_t _itoa_s(int value, char* buffer, size_t sizeInCharacters, int radix)
 {
-	int length;
+	int length = 0;
 
 	length = sprintf_s(NULL, 0, "%d", value);
 

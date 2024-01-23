@@ -13,7 +13,7 @@ static INLINE UINT32 lzcnt_s(UINT32 x)
 
 	if (!g_LZCNT)
 	{
-		UINT32 y;
+		UINT32 y = 0;
 		int n = 32;
 		y = x >> 16;
 		if (y != 0)

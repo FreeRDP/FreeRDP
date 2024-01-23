@@ -655,8 +655,8 @@ static BOOL freerdp_client_rdp_file_set_integer(rdpFile* file, const char* name,
 static BOOL freerdp_client_parse_rdp_file_integer(rdpFile* file, const char* name,
                                                   const char* value)
 {
-	char* endptr;
-	long ivalue;
+	char* endptr = NULL;
+	long ivalue = 0;
 	errno = 0;
 	ivalue = strtol(value, &endptr, 0);
 
@@ -748,8 +748,8 @@ static SSIZE_T freerdp_client_rdp_file_add_line(rdpFile* file)
 
 	while ((file->lineCount + 1) > file->lineSize)
 	{
-		size_t new_size;
-		rdpFileLine* new_line;
+		size_t new_size = 0;
+		rdpFileLine* new_line = NULL;
 		new_size = file->lineSize * 2;
 		new_line = (rdpFileLine*)realloc(file->lines, new_size * sizeof(rdpFileLine));
 
@@ -783,9 +783,9 @@ BOOL freerdp_client_parse_rdp_file_buffer(rdpFile* file, const BYTE* buffer, siz
 
 static BOOL trim(char** strptr)
 {
-	char* start;
-	char* str;
-	char* end;
+	char* start = NULL;
+	char* str = NULL;
+	char* end = NULL;
 
 	start = str = *strptr;
 	if (!str)
@@ -880,15 +880,15 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
                                              rdp_file_fkt_parse parse)
 {
 	BOOL rc = FALSE;
-	size_t length;
-	char* line;
-	char* type;
-	char* context;
-	char* d1;
-	char* d2;
-	char* beg;
-	char* name;
-	char* value;
+	size_t length = 0;
+	char* line = NULL;
+	char* type = NULL;
+	char* context = NULL;
+	char* d1 = NULL;
+	char* d2 = NULL;
+	char* beg = NULL;
+	char* name = NULL;
+	char* value = NULL;
 	char* copy = NULL;
 
 	if (!file)
@@ -993,11 +993,11 @@ BOOL freerdp_client_parse_rdp_file(rdpFile* file, const char* name)
 
 BOOL freerdp_client_parse_rdp_file_ex(rdpFile* file, const char* name, rdp_file_fkt_parse parse)
 {
-	BOOL status;
-	BYTE* buffer;
+	BOOL status = 0;
+	BYTE* buffer = NULL;
 	FILE* fp = NULL;
-	size_t read_size;
-	INT64 file_size;
+	size_t read_size = 0;
+	INT64 file_size = 0;
 	const char* fname = name;
 
 	if (!file || !name)
@@ -1105,8 +1105,8 @@ static BOOL rdp_opt_duplicate(const rdpSettings* _settings, FreeRDP_Settings_Key
 
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSettings* settings)
 {
-	FreeRDP_Settings_Keys_String index;
-	UINT32 LoadBalanceInfoLength;
+	FreeRDP_Settings_Keys_String index = FreeRDP_STRING_UNUSED;
+	UINT32 LoadBalanceInfoLength = 0;
 	const char* GatewayHostname = NULL;
 	char* redirectCameras = NULL;
 	char* redirectUsb = NULL;
@@ -1272,7 +1272,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		file->EncodeRedirectedVideoCapture = 0;
 		if (str)
 		{
-			unsigned long val;
+			unsigned long val = 0;
 			errno = 0;
 			val = strtoul(str, NULL, 0);
 			if ((val < UINT32_MAX) && (errno == 0))
@@ -1284,7 +1284,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 		file->RedirectedVideoCaptureEncodingQuality = 0;
 		if (str)
 		{
-			unsigned long val;
+			unsigned long val = 0;
 			errno = 0;
 			val = strtoul(str, NULL, 0);
 			if ((val <= 2) && (errno == 0))
@@ -1318,7 +1318,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 
 	{
 		size_t offset = 0;
-		UINT32 x;
+		UINT32 x = 0;
 		UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
 		const UINT32* MonitorIds = freerdp_settings_get_pointer(settings, FreeRDP_MonitorIds);
 		/* String size: 10 char UINT32 max string length, 1 char separator, one element NULL */
@@ -1348,9 +1348,9 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 
 BOOL freerdp_client_write_rdp_file(const rdpFile* file, const char* name, BOOL unicode)
 {
-	FILE* fp;
-	size_t size;
-	char* buffer;
+	FILE* fp = NULL;
+	size_t size = 0;
+	char* buffer = NULL;
 	int status = 0;
 	WCHAR* unicodestr = NULL;
 
@@ -1420,9 +1420,9 @@ static SSIZE_T freerdp_client_write_setting_to_buffer(char** buffer, size_t* buf
                                                       WINPR_FORMAT_ARG const char* fmt, ...)
 {
 	va_list ap;
-	SSIZE_T len;
-	char* buf;
-	size_t bufSize;
+	SSIZE_T len = 0;
+	char* buf = NULL;
+	size_t bufSize = 0;
 
 	if (!buffer || !bufferSize || !fmt)
 		return -1;
@@ -1625,8 +1625,8 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 
 static ADDIN_ARGV* rdp_file_to_args(const char* channel, const char* values)
 {
-	size_t count;
-	size_t x;
+	size_t count = 0;
+	size_t x = 0;
 	char** p = NULL;
 	ADDIN_ARGV* args = freerdp_addin_argv_new(0, NULL);
 	if (!args)
@@ -1637,7 +1637,7 @@ static ADDIN_ARGV* rdp_file_to_args(const char* channel, const char* values)
 	p = CommandLineParseCommaSeparatedValues(values, &count);
 	for (x = 0; x < count; x++)
 	{
-		BOOL rc;
+		BOOL rc = 0;
 		const char* val = p[x];
 		const size_t len = strlen(val) + 8;
 		char* str = calloc(len, sizeof(char));
@@ -2424,9 +2424,9 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	if (~(size_t)file->SelectedMonitors)
 	{
 		size_t count = 0;
-		size_t x;
+		size_t x = 0;
 		char** args = CommandLineParseCommaSeparatedValues(file->SelectedMonitors, &count);
-		UINT32* list;
+		UINT32* list = NULL;
 
 		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_MonitorIds, NULL, count))
 		{
@@ -2441,7 +2441,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		}
 		for (x = 0; x < count; x++)
 		{
-			unsigned long val;
+			unsigned long val = 0;
 			errno = 0;
 			val = strtoul(args[x], NULL, 0);
 			if ((val >= UINT32_MAX) && (errno != 0))
@@ -2544,7 +2544,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 
 static rdpFileLine* freerdp_client_rdp_file_find_line_by_name(const rdpFile* file, const char* name)
 {
-	size_t index;
+	size_t index = 0;
 	BOOL bFound = FALSE;
 	rdpFileLine* line = NULL;
 
@@ -2661,7 +2661,7 @@ void freerdp_client_rdp_file_free(rdpFile* file)
 	{
 		if (file->lineCount)
 		{
-			size_t i;
+			size_t i = 0;
 			for (i = 0; i < file->lineCount; i++)
 			{
 				free(file->lines[i].name);

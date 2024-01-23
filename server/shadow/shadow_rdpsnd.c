@@ -48,7 +48,7 @@ static void rdpsnd_activated(RdpsndServerContext* context)
 
 int shadow_client_rdpsnd_init(rdpShadowClient* client)
 {
-	RdpsndServerContext* rdpsnd;
+	RdpsndServerContext* rdpsnd = NULL;
 	rdpsnd = client->rdpsnd = rdpsnd_server_context_new(client->vcm);
 
 	if (!rdpsnd)

@@ -75,10 +75,10 @@ static UINT location_server_open_channel(location_server* location)
 {
 	LocationServerContext* context = &location->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent;
+	HANDLE hEvent = NULL;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
-	UINT32 channelId;
+	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
 	WINPR_ASSERT(location);
@@ -266,11 +266,11 @@ static UINT location_server_recv_location3d_delta(LocationServerContext* context
 
 static UINT location_process_message(location_server* location)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
-	ULONG BytesReturned;
+	ULONG BytesReturned = 0;
 	RDPLOCATION_HEADER header = { 0 };
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(location);
 	WINPR_ASSERT(location->location_channel);
@@ -383,11 +383,11 @@ static HANDLE location_server_get_channel_handle(location_server* location)
 
 static DWORD WINAPI location_server_thread_func(LPVOID arg)
 {
-	DWORD nCount;
+	DWORD nCount = 0;
 	HANDLE events[2] = { 0 };
 	location_server* location = (location_server*)arg;
 	UINT error = CHANNEL_RC_OK;
-	DWORD status;
+	DWORD status = 0;
 
 	WINPR_ASSERT(location);
 
@@ -536,7 +536,7 @@ static UINT location_server_packet_send(LocationServerContext* context, wStream*
 {
 	location_server* location = (location_server*)context;
 	UINT error = CHANNEL_RC_OK;
-	ULONG written;
+	ULONG written = 0;
 
 	WINPR_ASSERT(location);
 	WINPR_ASSERT(s);
@@ -563,9 +563,9 @@ out:
 static UINT location_server_send_server_ready(LocationServerContext* context,
                                               const RDPLOCATION_SERVER_READY_PDU* serverReady)
 {
-	wStream* s;
-	UINT32 pduLength;
-	UINT32 protocolVersion;
+	wStream* s = NULL;
+	UINT32 pduLength = 0;
+	UINT32 protocolVersion = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(serverReady);

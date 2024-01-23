@@ -50,7 +50,7 @@ static BOOL test_ClearDecompressExample(UINT32 nr, UINT32 width, UINT32 height,
                                         const BYTE* pSrcData, const UINT32 SrcSize)
 {
 	BOOL rc = FALSE;
-	int status;
+	int status = 0;
 	BYTE* pDstData = calloc(width * height, 4);
 	CLEAR_CONTEXT* clear = clear_context_new(FALSE);
 

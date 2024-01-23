@@ -315,10 +315,10 @@ BOOL rts_extract_pdu_signature_ex(RtsPduSignature* signature, wStream* src,
                                   const rpcconn_hdr_t* header, BOOL silent)
 {
 	BOOL rc = FALSE;
-	UINT16 i;
+	UINT16 i = 0;
 	wStream sbuffer = { 0 };
 	rpcconn_hdr_t rheader = { 0 };
-	const rpcconn_rts_hdr_t* rts;
+	const rpcconn_rts_hdr_t* rts = NULL;
 
 	WINPR_ASSERT(signature);
 	WINPR_ASSERT(src);
@@ -339,8 +339,8 @@ BOOL rts_extract_pdu_signature_ex(RtsPduSignature* signature, wStream* src,
 
 	for (i = 0; i < rts->NumberOfCommands; i++)
 	{
-		UINT32 CommandType;
-		size_t CommandLength;
+		UINT32 CommandType = 0;
+		size_t CommandLength = 0;
 
 		if (!Stream_ConditionalCheckAndLogRequiredLength(TAG, s, 4, silent))
 			goto fail;
@@ -366,8 +366,8 @@ fail:
 UINT32 rts_identify_pdu_signature(const RtsPduSignature* signature,
                                   const RTS_PDU_SIGNATURE_ENTRY** entry)
 {
-	size_t i;
-	size_t j;
+	size_t i = 0;
+	size_t j = 0;
 
 	if (entry)
 		*entry = NULL;
@@ -403,8 +403,8 @@ UINT32 rts_identify_pdu_signature(const RtsPduSignature* signature,
 
 BOOL rts_print_pdu_signature(wLog* log, DWORD level, const RtsPduSignature* signature)
 {
-	UINT32 SignatureId;
-	const RTS_PDU_SIGNATURE_ENTRY* entry;
+	UINT32 SignatureId = 0;
+	const RTS_PDU_SIGNATURE_ENTRY* entry = NULL;
 
 	if (!signature)
 		return FALSE;

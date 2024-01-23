@@ -655,8 +655,8 @@ static rdtkFont* rdtk_embedded_font_new(rdtkEngine* engine, const uint8_t* image
                                         size_t imageSize, const uint8_t* descriptorData,
                                         size_t descriptorSize)
 {
-	size_t size;
-	uint8_t* buffer;
+	size_t size = 0;
+	uint8_t* buffer = NULL;
 
 	WINPR_ASSERT(engine);
 

@@ -27,7 +27,7 @@
 rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, UINT16 x, UINT16 y, UINT32 width,
                                      UINT32 height)
 {
-	rdpShadowSurface* surface;
+	rdpShadowSurface* surface = NULL;
 	surface = (rdpShadowSurface*)calloc(1, sizeof(rdpShadowSurface));
 
 	if (!surface)

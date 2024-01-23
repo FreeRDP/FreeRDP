@@ -98,8 +98,8 @@ void* LinkedList_Last(wLinkedList* list)
 
 BOOL LinkedList_Contains(wLinkedList* list, const void* value)
 {
-	wLinkedListNode* item;
-	OBJECT_EQUALS_FN keyEquals;
+	wLinkedListNode* item = NULL;
+	OBJECT_EQUALS_FN keyEquals = NULL;
 
 	WINPR_ASSERT(list);
 	if (!list->head)
@@ -121,8 +121,8 @@ BOOL LinkedList_Contains(wLinkedList* list, const void* value)
 
 static wLinkedListNode* LinkedList_FreeNode(wLinkedList* list, wLinkedListNode* node)
 {
-	wLinkedListNode* next;
-	wLinkedListNode* prev;
+	wLinkedListNode* next = NULL;
+	wLinkedListNode* prev = NULL;
 
 	WINPR_ASSERT(list);
 	WINPR_ASSERT(node);
@@ -158,7 +158,7 @@ static wLinkedListNode* LinkedList_FreeNode(wLinkedList* list, wLinkedListNode* 
 
 void LinkedList_Clear(wLinkedList* list)
 {
-	wLinkedListNode* node;
+	wLinkedListNode* node = NULL;
 	WINPR_ASSERT(list);
 	if (!list->head)
 		return;
@@ -174,7 +174,7 @@ void LinkedList_Clear(wLinkedList* list)
 
 static wLinkedListNode* LinkedList_Create(wLinkedList* list, const void* value)
 {
-	wLinkedListNode* node;
+	wLinkedListNode* node = NULL;
 
 	WINPR_ASSERT(list);
 	node = (wLinkedListNode*)calloc(1, sizeof(wLinkedListNode));
@@ -258,8 +258,8 @@ BOOL LinkedList_AddLast(wLinkedList* list, const void* value)
 
 BOOL LinkedList_Remove(wLinkedList* list, const void* value)
 {
-	wLinkedListNode* node;
-	OBJECT_EQUALS_FN keyEquals;
+	wLinkedListNode* node = NULL;
+	OBJECT_EQUALS_FN keyEquals = NULL;
 	WINPR_ASSERT(list);
 
 	keyEquals = list->object.fnObjectEquals;

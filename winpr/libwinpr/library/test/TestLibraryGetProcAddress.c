@@ -10,15 +10,15 @@ typedef int (*TEST_AB_FN)(int a, int b);
 
 int TestLibraryGetProcAddress(int argc, char* argv[])
 {
-	int a;
-	int b;
-	int c;
-	HINSTANCE library;
-	TEST_AB_FN pFunctionA;
-	TEST_AB_FN pFunctionB;
-	LPCSTR SharedLibraryExtension;
+	int a = 0;
+	int b = 0;
+	int c = 0;
+	HINSTANCE library = NULL;
+	TEST_AB_FN pFunctionA = NULL;
+	TEST_AB_FN pFunctionB = NULL;
+	LPCSTR SharedLibraryExtension = NULL;
 	CHAR LibraryPath[PATHCCH_MAX_CCH];
-	PCHAR p;
+	PCHAR p = NULL;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	if (!GetModuleFileNameA(NULL, LibraryPath, PATHCCH_MAX_CCH))

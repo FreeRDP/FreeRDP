@@ -29,10 +29,10 @@ static DWORD WINAPI named_pipe_client_thread(LPVOID arg)
 	BYTE* lpReadBuffer = NULL;
 	BYTE* lpWriteBuffer = NULL;
 	BOOL fSuccess = FALSE;
-	DWORD nNumberOfBytesToRead;
-	DWORD nNumberOfBytesToWrite;
-	DWORD lpNumberOfBytesRead;
-	DWORD lpNumberOfBytesWritten;
+	DWORD nNumberOfBytesToRead = 0;
+	DWORD nNumberOfBytesToWrite = 0;
+	DWORD lpNumberOfBytesRead = 0;
+	DWORD lpNumberOfBytesWritten = 0;
 	WaitForSingleObject(ReadyEvent, INFINITE);
 	hNamedPipe =
 	    CreateFile(lpszPipeNameMt, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -100,10 +100,10 @@ static DWORD WINAPI named_pipe_server_thread(LPVOID arg)
 	BYTE* lpWriteBuffer = NULL;
 	BOOL fSuccess = FALSE;
 	BOOL fConnected = FALSE;
-	DWORD nNumberOfBytesToRead;
-	DWORD nNumberOfBytesToWrite;
-	DWORD lpNumberOfBytesRead;
-	DWORD lpNumberOfBytesWritten;
+	DWORD nNumberOfBytesToRead = 0;
+	DWORD nNumberOfBytesToWrite = 0;
+	DWORD lpNumberOfBytesRead = 0;
+	DWORD lpNumberOfBytesWritten = 0;
 	hNamedPipe = CreateNamedPipe(
 	    lpszPipeNameMt, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
 	    PIPE_UNLIMITED_INSTANCES, PIPE_BUFFER_SIZE, PIPE_BUFFER_SIZE, 0, NULL);
@@ -193,10 +193,10 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 {
 	HANDLE servers[TESTNUMPIPESST] = { 0 };
 	HANDLE clients[TESTNUMPIPESST] = { 0 };
-	DWORD dwRead;
-	DWORD dwWritten;
-	int i;
-	int numPipes;
+	DWORD dwRead = 0;
+	DWORD dwWritten = 0;
+	int i = 0;
+	int numPipes = 0;
 	BOOL bSuccess = FALSE;
 	numPipes = TESTNUMPIPESST;
 	WaitForSingleObject(ReadyEvent, INFINITE);
@@ -251,7 +251,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 
 	for (i = 0; i < numPipes; i++)
 	{
-		BOOL fConnected;
+		BOOL fConnected = 0;
 		if ((clients[i] = CreateFile(lpszPipeNameSt, GENERIC_READ | GENERIC_WRITE, 0, NULL,
 		                             OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
 		{
@@ -463,10 +463,10 @@ out:
 
 int TestPipeCreateNamedPipe(int argc, char* argv[])
 {
-	HANDLE SingleThread;
-	HANDLE ClientThread;
-	HANDLE ServerThread;
-	HANDLE hPipe;
+	HANDLE SingleThread = NULL;
+	HANDLE ClientThread = NULL;
+	HANDLE ServerThread = NULL;
+	HANDLE hPipe = NULL;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	/* Verify that CreateNamedPipe returns INVALID_HANDLE_VALUE on failure */

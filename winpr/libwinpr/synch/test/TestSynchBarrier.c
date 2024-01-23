@@ -26,7 +26,7 @@ static DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 {
 	BOOL status = FALSE;
 	struct test_params* p = (struct test_params*)lpParam;
-	DWORD i;
+	DWORD i = 0;
 
 	InterlockedIncrement(&p->threadCount);
 
@@ -61,12 +61,12 @@ out:
 
 static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLoops)
 {
-	HANDLE* threads;
+	HANDLE* threads = NULL;
 	struct test_params p;
-	DWORD dwStatus;
-	DWORD expectedTrueCount;
-	DWORD expectedFalseCount;
-	DWORD i;
+	DWORD dwStatus = 0;
+	DWORD expectedTrueCount = 0;
+	DWORD expectedFalseCount = 0;
+	DWORD i = 0;
 	p.threadCount = 0;
 	p.trueCount = 0;
 	p.falseCount = 0;
@@ -180,8 +180,8 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 int TestSynchBarrier(int argc, char* argv[])
 {
 	SYSTEM_INFO sysinfo;
-	DWORD dwMaxThreads;
-	DWORD dwMinThreads;
+	DWORD dwMaxThreads = 0;
+	DWORD dwMinThreads = 0;
 	DWORD dwNumLoops = 10;
 
 	WINPR_UNUSED(argc);

@@ -24,6 +24,7 @@
 
 #include <freerdp/config.h>
 
+#include <math.h>
 #include <winpr/assert.h>
 #include <winpr/sspicli.h>
 
@@ -153,7 +154,7 @@ static void xf_teardown_x11(xfContext* xfc);
 
 static int xf_map_error_to_exit_code(DWORD error)
 {
-	size_t x;
+	size_t x = 0;
 	for (x = 0; x < ARRAYSIZE(xf_exit_code_map); x++)
 	{
 		const struct xf_exit_code_map_t* cur = &xf_exit_code_map[x];
@@ -173,16 +174,16 @@ static BOOL xf_get_pixmap_info(xfContext* xfc);
 static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 {
 	XTransform transform;
-	Picture windowPicture;
-	Picture primaryPicture;
+	Picture windowPicture = 0;
+	Picture primaryPicture = 0;
 	XRenderPictureAttributes pa;
-	XRenderPictFormat* picFormat;
-	double xScalingFactor;
-	double yScalingFactor;
-	int x2;
-	int y2;
-	const char* filter;
-	rdpSettings* settings;
+	XRenderPictFormat* picFormat = NULL;
+	double xScalingFactor = NAN;
+	double yScalingFactor = NAN;
+	int x2 = 0;
+	int y2 = 0;
+	const char* filter = NULL;
+	rdpSettings* settings = NULL;
 	WINPR_ASSERT(xfc);
 
 	settings = xfc->common.context.settings;
@@ -271,7 +272,7 @@ static void xf_draw_screen_scaled(xfContext* xfc, int x, int y, int w, int h)
 
 BOOL xf_picture_transform_required(xfContext* xfc)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 
@@ -324,7 +325,7 @@ void xf_draw_screen_(xfContext* xfc, int x, int y, int w, int h, const char* fkt
 
 static BOOL xf_desktop_resize(rdpContext* context)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 	xfContext* xfc = (xfContext*)context;
 
 	WINPR_ASSERT(xfc);
@@ -518,9 +519,9 @@ static BOOL xf_process_x_events(freerdp* instance)
 
 static char* xf_window_get_title(rdpSettings* settings)
 {
-	BOOL port;
-	char* windowTitle;
-	size_t size;
+	BOOL port = 0;
+	char* windowTitle = NULL;
+	size_t size = 0;
 	const char* prefix = "FreeRDP:";
 
 	if (!settings)
@@ -880,9 +881,9 @@ static BOOL xf_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE* play_sou
 
 static void xf_check_extensions(xfContext* context)
 {
-	int xkb_opcode;
-	int xkb_event;
-	int xkb_error;
+	int xkb_opcode = 0;
+	int xkb_event = 0;
+	int xkb_error = 0;
 	int xkb_major = XkbMajorVersion;
 	int xkb_minor = XkbMinorVersion;
 
@@ -895,8 +896,8 @@ static void xf_check_extensions(xfContext* context)
 
 #ifdef WITH_XRENDER
 	{
-		int xrender_event_base;
-		int xrender_error_base;
+		int xrender_event_base = 0;
+		int xrender_error_base = 0;
 
 		if (XRenderQueryExtension(context->display, &xrender_event_base, &xrender_error_base))
 		{
@@ -916,15 +917,15 @@ static const size_t TEST_PTR_LEN = sizeof(TEST_PTR_STR) / sizeof(char);
 static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 {
 #ifdef WITH_XI
-	int opcode;
-	int event;
-	int error;
-	XDevice* ptr_dev;
-	XExtensionVersion* version;
-	XDeviceInfo* devices1;
-	XIDeviceInfo* devices2;
-	int i;
-	int num_devices;
+	int opcode = 0;
+	int event = 0;
+	int error = 0;
+	XDevice* ptr_dev = NULL;
+	XExtensionVersion* version = NULL;
+	XDeviceInfo* devices1 = NULL;
+	XIDeviceInfo* devices2 = NULL;
+	int i = 0;
+	int num_devices = 0;
 
 	if (XQueryExtension(xfc->display, "XInputExtension", &opcode, &event, &error))
 	{
@@ -1018,7 +1019,7 @@ static const button_map xf_button_flags[NUM_BUTTONS_MAPPED] = {
 
 static UINT16 get_flags_for_button(int button)
 {
-	size_t x;
+	size_t x = 0;
 
 	for (x = 0; x < ARRAYSIZE(xf_button_flags); x++)
 	{
@@ -1035,7 +1036,7 @@ static void xf_button_map_init(xfContext* xfc)
 {
 	size_t pos = 0;
 	/* loop counter for array initialization */
-	size_t physical;
+	size_t physical = 0;
 	/* logical mouse button which is used for each physical mouse  */
 	/* button (indexed from zero). This is the default map.        */
 	unsigned char x11_map[112] = { 0 };
@@ -1098,10 +1099,10 @@ static void xf_button_map_init(xfContext* xfc)
  */
 static BOOL xf_pre_connect(freerdp* instance)
 {
-	rdpChannels* channels;
-	rdpSettings* settings;
-	rdpContext* context;
-	xfContext* xfc;
+	rdpChannels* channels = NULL;
+	rdpSettings* settings = NULL;
+	rdpContext* context = NULL;
+	xfContext* xfc = NULL;
 	UINT32 maxWidth = 0;
 	UINT32 maxHeight = 0;
 
@@ -1406,8 +1407,8 @@ static BOOL xf_post_connect(freerdp* instance)
 
 static void xf_post_disconnect(freerdp* instance)
 {
-	xfContext* xfc;
-	rdpContext* context;
+	xfContext* xfc = NULL;
+	rdpContext* context = NULL;
 
 	if (!instance || !instance->context)
 		return;
@@ -1448,8 +1449,8 @@ static void xf_post_disconnect(freerdp* instance)
 
 static void xf_post_final_disconnect(freerdp* instance)
 {
-	xfContext* xfc;
-	rdpContext* context;
+	xfContext* xfc = NULL;
+	rdpContext* context = NULL;
 
 	if (!instance || !instance->context)
 		return;
@@ -1688,9 +1689,9 @@ static void xf_TerminateEventHandler(void* context, const TerminateEventArgs* e)
 #ifdef WITH_XRENDER
 static void xf_ZoomingChangeEventHandler(void* context, const ZoomingChangeEventArgs* e)
 {
-	int w;
-	int h;
-	rdpSettings* settings;
+	int w = 0;
+	int h = 0;
+	rdpSettings* settings = NULL;
 	xfContext* xfc = (xfContext*)context;
 
 	WINPR_ASSERT(xfc);
@@ -1722,7 +1723,7 @@ static void xf_ZoomingChangeEventHandler(void* context, const ZoomingChangeEvent
 static void xf_PanningChangeEventHandler(void* context, const PanningChangeEventArgs* e)
 {
 	xfContext* xfc = (xfContext*)context;
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(e);
@@ -1780,7 +1781,7 @@ static int xfreerdp_client_start(rdpContext* context)
 
 static Atom get_supported_atom(xfContext* xfc, const char* atomName)
 {
-	unsigned long i;
+	unsigned long i = 0;
 	const Atom atom = XInternAtom(xfc->display, atomName, False);
 
 	for (i = 0; i < xfc->supportedAtomCount; i++)

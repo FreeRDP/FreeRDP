@@ -329,7 +329,7 @@ static BOOL submit_object(PTP_WORK* work_object, PTP_WORK_CALLBACK cb, const voi
 
 static void free_objects(PTP_WORK* work_objects, UINT32 waitCount)
 {
-	UINT32 i;
+	UINT32 i = 0;
 
 	WINPR_ASSERT(work_objects || (waitCount == 0));
 
@@ -348,7 +348,7 @@ static void free_objects(PTP_WORK* work_objects, UINT32 waitCount)
 
 static BOOL intersects(UINT32 pos, const RECTANGLE_16* regionRects, UINT32 numRegionRects)
 {
-	UINT32 x;
+	UINT32 x = 0;
 
 	WINPR_ASSERT(regionRects || (numRegionRects == 0));
 
@@ -386,7 +386,7 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
                         UINT32 nDstStep, const RECTANGLE_16* regionRects, UINT32 numRegionRects)
 {
 	BOOL rc = FALSE;
-	UINT32 x;
+	UINT32 x = 0;
 	UINT32 waitCount = 0;
 	primitives_t* prims = primitives_get();
 
@@ -550,7 +550,7 @@ static BOOL pool_decode_rect(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVDa
                              UINT32 numRegionRects)
 {
 	BOOL rc = FALSE;
-	UINT32 y;
+	UINT32 y = 0;
 	UINT32 waitCount = 0;
 	PTP_WORK_CALLBACK cb = yuv444_combine_work_callback;
 	primitives_t* prims = primitives_get();
@@ -576,7 +576,7 @@ static BOOL pool_decode_rect(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVDa
 	/* case where we use threads */
 	for (waitCount = 0; waitCount < numRegionRects; waitCount++)
 	{
-		YUV_COMBINE_WORK_PARAM* current;
+		YUV_COMBINE_WORK_PARAM* current = NULL;
 
 		if (context->work_object_count <= waitCount)
 		{
@@ -646,7 +646,7 @@ static void CALLBACK yuv420_encode_work_callback(PTP_CALLBACK_INSTANCE instance,
 	YUV_ENCODE_WORK_PARAM* param = (YUV_ENCODE_WORK_PARAM*)context;
 	primitives_t* prims = primitives_get();
 	BYTE* pYUVData[3];
-	const BYTE* src;
+	const BYTE* src = NULL;
 
 	WINPR_UNUSED(instance);
 	WINPR_UNUSED(work);
@@ -677,7 +677,7 @@ static void CALLBACK yuv444v1_encode_work_callback(PTP_CALLBACK_INSTANCE instanc
 	primitives_t* prims = primitives_get();
 	BYTE* pYUVLumaData[3];
 	BYTE* pYUVChromaData[3];
-	const BYTE* src;
+	const BYTE* src = NULL;
 
 	WINPR_UNUSED(instance);
 	WINPR_UNUSED(work);
@@ -714,7 +714,7 @@ static void CALLBACK yuv444v2_encode_work_callback(PTP_CALLBACK_INSTANCE instanc
 	primitives_t* prims = primitives_get();
 	BYTE* pYUVLumaData[3];
 	BYTE* pYUVChromaData[3];
-	const BYTE* src;
+	const BYTE* src = NULL;
 
 	WINPR_UNUSED(instance);
 	WINPR_UNUSED(work);
@@ -786,8 +786,8 @@ static BOOL pool_encode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 {
 	BOOL rc = FALSE;
 	primitives_t* prims = primitives_get();
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	UINT32 waitCount = 0;
 
 	WINPR_ASSERT(context);
@@ -834,7 +834,7 @@ static BOOL pool_encode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 		for (y = 0; y < steps; y++)
 		{
 			RECTANGLE_16 r = *rect;
-			YUV_ENCODE_WORK_PARAM* current;
+			YUV_ENCODE_WORK_PARAM* current = NULL;
 
 			if (context->work_object_count <= waitCount)
 			{
@@ -877,7 +877,7 @@ BOOL yuv444_context_encode(YUV_CONTEXT* context, BYTE version, const BYTE* pSrcD
                            BYTE* pYUVLumaData[3], BYTE* pYUVChromaData[3],
                            const RECTANGLE_16* regionRects, UINT32 numRegionRects)
 {
-	PTP_WORK_CALLBACK cb;
+	PTP_WORK_CALLBACK cb = NULL;
 	switch (version)
 	{
 		case 1:

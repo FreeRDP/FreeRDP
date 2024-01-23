@@ -47,7 +47,7 @@
 
 static BOOL update_message_BeginPaint(rdpContext* context)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
 		return FALSE;
@@ -59,7 +59,7 @@ static BOOL update_message_BeginPaint(rdpContext* context)
 
 static BOOL update_message_EndPaint(rdpContext* context)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
 		return FALSE;
@@ -72,7 +72,7 @@ static BOOL update_message_EndPaint(rdpContext* context)
 static BOOL update_message_SetBounds(rdpContext* context, const rdpBounds* bounds)
 {
 	rdpBounds* wParam = NULL;
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
 		return FALSE;
@@ -94,7 +94,7 @@ static BOOL update_message_SetBounds(rdpContext* context, const rdpBounds* bound
 
 static BOOL update_message_Synchronize(rdpContext* context)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
 		return FALSE;
@@ -106,7 +106,7 @@ static BOOL update_message_Synchronize(rdpContext* context)
 
 static BOOL update_message_DesktopResize(rdpContext* context)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
 		return FALSE;
@@ -118,8 +118,8 @@ static BOOL update_message_DesktopResize(rdpContext* context)
 
 static BOOL update_message_BitmapUpdate(rdpContext* context, const BITMAP_UPDATE* bitmap)
 {
-	BITMAP_UPDATE* wParam;
-	rdp_update_internal* up;
+	BITMAP_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !bitmap)
 		return FALSE;
@@ -136,8 +136,8 @@ static BOOL update_message_BitmapUpdate(rdpContext* context, const BITMAP_UPDATE
 
 static BOOL update_message_Palette(rdpContext* context, const PALETTE_UPDATE* palette)
 {
-	PALETTE_UPDATE* wParam;
-	rdp_update_internal* up;
+	PALETTE_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !palette)
 		return FALSE;
@@ -154,8 +154,8 @@ static BOOL update_message_Palette(rdpContext* context, const PALETTE_UPDATE* pa
 
 static BOOL update_message_PlaySound(rdpContext* context, const PLAY_SOUND_UPDATE* playSound)
 {
-	PLAY_SOUND_UPDATE* wParam;
-	rdp_update_internal* up;
+	PLAY_SOUND_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !playSound)
 		return FALSE;
@@ -174,7 +174,7 @@ static BOOL update_message_PlaySound(rdpContext* context, const PLAY_SOUND_UPDAT
 
 static BOOL update_message_SetKeyboardIndicators(rdpContext* context, UINT16 led_flags)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
 		return FALSE;
@@ -188,7 +188,7 @@ static BOOL update_message_SetKeyboardIndicators(rdpContext* context, UINT16 led
 static BOOL update_message_SetKeyboardImeStatus(rdpContext* context, UINT16 imeId, UINT32 imeState,
                                                 UINT32 imeConvMode)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
 		return FALSE;
@@ -201,8 +201,8 @@ static BOOL update_message_SetKeyboardImeStatus(rdpContext* context, UINT16 imeI
 
 static BOOL update_message_RefreshRect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
-	RECTANGLE_16* lParam;
-	rdp_update_internal* up;
+	RECTANGLE_16* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !areas)
 		return FALSE;
@@ -222,7 +222,7 @@ static BOOL update_message_RefreshRect(rdpContext* context, BYTE count, const RE
 static BOOL update_message_SuppressOutput(rdpContext* context, BYTE allow, const RECTANGLE_16* area)
 {
 	RECTANGLE_16* lParam = NULL;
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
 		return FALSE;
@@ -244,8 +244,8 @@ static BOOL update_message_SuppressOutput(rdpContext* context, BYTE allow, const
 
 static BOOL update_message_SurfaceCommand(rdpContext* context, wStream* s)
 {
-	wStream* wParam;
-	rdp_update_internal* up;
+	wStream* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !s)
 		return FALSE;
@@ -266,8 +266,8 @@ static BOOL update_message_SurfaceCommand(rdpContext* context, wStream* s)
 static BOOL update_message_SurfaceBits(rdpContext* context,
                                        const SURFACE_BITS_COMMAND* surfaceBitsCommand)
 {
-	SURFACE_BITS_COMMAND* wParam;
-	rdp_update_internal* up;
+	SURFACE_BITS_COMMAND* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !surfaceBitsCommand)
 		return FALSE;
@@ -285,8 +285,8 @@ static BOOL update_message_SurfaceBits(rdpContext* context,
 static BOOL update_message_SurfaceFrameMarker(rdpContext* context,
                                               const SURFACE_FRAME_MARKER* surfaceFrameMarker)
 {
-	SURFACE_FRAME_MARKER* wParam;
-	rdp_update_internal* up;
+	SURFACE_FRAME_MARKER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !surfaceFrameMarker)
 		return FALSE;
@@ -305,7 +305,7 @@ static BOOL update_message_SurfaceFrameMarker(rdpContext* context,
 
 static BOOL update_message_SurfaceFrameAcknowledge(rdpContext* context, UINT32 frameId)
 {
-	rdp_update_internal* up;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update)
 		return FALSE;
@@ -320,8 +320,8 @@ static BOOL update_message_SurfaceFrameAcknowledge(rdpContext* context, UINT32 f
 
 static BOOL update_message_DstBlt(rdpContext* context, const DSTBLT_ORDER* dstBlt)
 {
-	DSTBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	DSTBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !dstBlt)
 		return FALSE;
@@ -340,8 +340,8 @@ static BOOL update_message_DstBlt(rdpContext* context, const DSTBLT_ORDER* dstBl
 
 static BOOL update_message_PatBlt(rdpContext* context, PATBLT_ORDER* patBlt)
 {
-	PATBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	PATBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !patBlt)
 		return FALSE;
@@ -361,8 +361,8 @@ static BOOL update_message_PatBlt(rdpContext* context, PATBLT_ORDER* patBlt)
 
 static BOOL update_message_ScrBlt(rdpContext* context, const SCRBLT_ORDER* scrBlt)
 {
-	SCRBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	SCRBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !scrBlt)
 		return FALSE;
@@ -381,8 +381,8 @@ static BOOL update_message_ScrBlt(rdpContext* context, const SCRBLT_ORDER* scrBl
 
 static BOOL update_message_OpaqueRect(rdpContext* context, const OPAQUE_RECT_ORDER* opaqueRect)
 {
-	OPAQUE_RECT_ORDER* wParam;
-	rdp_update_internal* up;
+	OPAQUE_RECT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !opaqueRect)
 		return FALSE;
@@ -402,8 +402,8 @@ static BOOL update_message_OpaqueRect(rdpContext* context, const OPAQUE_RECT_ORD
 static BOOL update_message_DrawNineGrid(rdpContext* context,
                                         const DRAW_NINE_GRID_ORDER* drawNineGrid)
 {
-	DRAW_NINE_GRID_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_NINE_GRID_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawNineGrid)
 		return FALSE;
@@ -422,8 +422,8 @@ static BOOL update_message_DrawNineGrid(rdpContext* context,
 
 static BOOL update_message_MultiDstBlt(rdpContext* context, const MULTI_DSTBLT_ORDER* multiDstBlt)
 {
-	MULTI_DSTBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	MULTI_DSTBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !multiDstBlt)
 		return FALSE;
@@ -442,8 +442,8 @@ static BOOL update_message_MultiDstBlt(rdpContext* context, const MULTI_DSTBLT_O
 
 static BOOL update_message_MultiPatBlt(rdpContext* context, const MULTI_PATBLT_ORDER* multiPatBlt)
 {
-	MULTI_PATBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	MULTI_PATBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !multiPatBlt)
 		return FALSE;
@@ -463,8 +463,8 @@ static BOOL update_message_MultiPatBlt(rdpContext* context, const MULTI_PATBLT_O
 
 static BOOL update_message_MultiScrBlt(rdpContext* context, const MULTI_SCRBLT_ORDER* multiScrBlt)
 {
-	MULTI_SCRBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	MULTI_SCRBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !multiScrBlt)
 		return FALSE;
@@ -484,8 +484,8 @@ static BOOL update_message_MultiScrBlt(rdpContext* context, const MULTI_SCRBLT_O
 static BOOL update_message_MultiOpaqueRect(rdpContext* context,
                                            const MULTI_OPAQUE_RECT_ORDER* multiOpaqueRect)
 {
-	MULTI_OPAQUE_RECT_ORDER* wParam;
-	rdp_update_internal* up;
+	MULTI_OPAQUE_RECT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !multiOpaqueRect)
 		return FALSE;
@@ -505,8 +505,8 @@ static BOOL update_message_MultiOpaqueRect(rdpContext* context,
 static BOOL update_message_MultiDrawNineGrid(rdpContext* context,
                                              const MULTI_DRAW_NINE_GRID_ORDER* multiDrawNineGrid)
 {
-	MULTI_DRAW_NINE_GRID_ORDER* wParam;
-	rdp_update_internal* up;
+	MULTI_DRAW_NINE_GRID_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !multiDrawNineGrid)
 		return FALSE;
@@ -526,8 +526,8 @@ static BOOL update_message_MultiDrawNineGrid(rdpContext* context,
 
 static BOOL update_message_LineTo(rdpContext* context, const LINE_TO_ORDER* lineTo)
 {
-	LINE_TO_ORDER* wParam;
-	rdp_update_internal* up;
+	LINE_TO_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !lineTo)
 		return FALSE;
@@ -546,8 +546,8 @@ static BOOL update_message_LineTo(rdpContext* context, const LINE_TO_ORDER* line
 
 static BOOL update_message_Polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 {
-	POLYLINE_ORDER* wParam;
-	rdp_update_internal* up;
+	POLYLINE_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !polyline)
 		return FALSE;
@@ -575,8 +575,8 @@ static BOOL update_message_Polyline(rdpContext* context, const POLYLINE_ORDER* p
 
 static BOOL update_message_MemBlt(rdpContext* context, MEMBLT_ORDER* memBlt)
 {
-	MEMBLT_ORDER* wParam;
-	rdp_update_internal* up;
+	MEMBLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !memBlt)
 		return FALSE;
@@ -595,8 +595,8 @@ static BOOL update_message_MemBlt(rdpContext* context, MEMBLT_ORDER* memBlt)
 
 static BOOL update_message_Mem3Blt(rdpContext* context, MEM3BLT_ORDER* mem3Blt)
 {
-	MEM3BLT_ORDER* wParam;
-	rdp_update_internal* up;
+	MEM3BLT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !mem3Blt)
 		return FALSE;
@@ -616,8 +616,8 @@ static BOOL update_message_Mem3Blt(rdpContext* context, MEM3BLT_ORDER* mem3Blt)
 
 static BOOL update_message_SaveBitmap(rdpContext* context, const SAVE_BITMAP_ORDER* saveBitmap)
 {
-	SAVE_BITMAP_ORDER* wParam;
-	rdp_update_internal* up;
+	SAVE_BITMAP_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !saveBitmap)
 		return FALSE;
@@ -636,8 +636,8 @@ static BOOL update_message_SaveBitmap(rdpContext* context, const SAVE_BITMAP_ORD
 
 static BOOL update_message_GlyphIndex(rdpContext* context, GLYPH_INDEX_ORDER* glyphIndex)
 {
-	GLYPH_INDEX_ORDER* wParam;
-	rdp_update_internal* up;
+	GLYPH_INDEX_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !glyphIndex)
 		return FALSE;
@@ -657,8 +657,8 @@ static BOOL update_message_GlyphIndex(rdpContext* context, GLYPH_INDEX_ORDER* gl
 
 static BOOL update_message_FastIndex(rdpContext* context, const FAST_INDEX_ORDER* fastIndex)
 {
-	FAST_INDEX_ORDER* wParam;
-	rdp_update_internal* up;
+	FAST_INDEX_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !fastIndex)
 		return FALSE;
@@ -677,8 +677,8 @@ static BOOL update_message_FastIndex(rdpContext* context, const FAST_INDEX_ORDER
 
 static BOOL update_message_FastGlyph(rdpContext* context, const FAST_GLYPH_ORDER* fastGlyph)
 {
-	FAST_GLYPH_ORDER* wParam;
-	rdp_update_internal* up;
+	FAST_GLYPH_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !fastGlyph)
 		return FALSE;
@@ -714,8 +714,8 @@ static BOOL update_message_FastGlyph(rdpContext* context, const FAST_GLYPH_ORDER
 
 static BOOL update_message_PolygonSC(rdpContext* context, const POLYGON_SC_ORDER* polygonSC)
 {
-	POLYGON_SC_ORDER* wParam;
-	rdp_update_internal* up;
+	POLYGON_SC_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !polygonSC)
 		return FALSE;
@@ -743,8 +743,8 @@ static BOOL update_message_PolygonSC(rdpContext* context, const POLYGON_SC_ORDER
 
 static BOOL update_message_PolygonCB(rdpContext* context, POLYGON_CB_ORDER* polygonCB)
 {
-	POLYGON_CB_ORDER* wParam;
-	rdp_update_internal* up;
+	POLYGON_CB_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !polygonCB)
 		return FALSE;
@@ -773,8 +773,8 @@ static BOOL update_message_PolygonCB(rdpContext* context, POLYGON_CB_ORDER* poly
 
 static BOOL update_message_EllipseSC(rdpContext* context, const ELLIPSE_SC_ORDER* ellipseSC)
 {
-	ELLIPSE_SC_ORDER* wParam;
-	rdp_update_internal* up;
+	ELLIPSE_SC_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !ellipseSC)
 		return FALSE;
@@ -793,8 +793,8 @@ static BOOL update_message_EllipseSC(rdpContext* context, const ELLIPSE_SC_ORDER
 
 static BOOL update_message_EllipseCB(rdpContext* context, const ELLIPSE_CB_ORDER* ellipseCB)
 {
-	ELLIPSE_CB_ORDER* wParam;
-	rdp_update_internal* up;
+	ELLIPSE_CB_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !ellipseCB)
 		return FALSE;
@@ -817,8 +817,8 @@ static BOOL update_message_EllipseCB(rdpContext* context, const ELLIPSE_CB_ORDER
 static BOOL update_message_CacheBitmap(rdpContext* context,
                                        const CACHE_BITMAP_ORDER* cacheBitmapOrder)
 {
-	CACHE_BITMAP_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_BITMAP_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheBitmapOrder)
 		return FALSE;
@@ -836,8 +836,8 @@ static BOOL update_message_CacheBitmap(rdpContext* context,
 static BOOL update_message_CacheBitmapV2(rdpContext* context,
                                          CACHE_BITMAP_V2_ORDER* cacheBitmapV2Order)
 {
-	CACHE_BITMAP_V2_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_BITMAP_V2_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheBitmapV2Order)
 		return FALSE;
@@ -855,8 +855,8 @@ static BOOL update_message_CacheBitmapV2(rdpContext* context,
 static BOOL update_message_CacheBitmapV3(rdpContext* context,
                                          CACHE_BITMAP_V3_ORDER* cacheBitmapV3Order)
 {
-	CACHE_BITMAP_V3_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_BITMAP_V3_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheBitmapV3Order)
 		return FALSE;
@@ -874,8 +874,8 @@ static BOOL update_message_CacheBitmapV3(rdpContext* context,
 static BOOL update_message_CacheColorTable(rdpContext* context,
                                            const CACHE_COLOR_TABLE_ORDER* cacheColorTableOrder)
 {
-	CACHE_COLOR_TABLE_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_COLOR_TABLE_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheColorTableOrder)
 		return FALSE;
@@ -892,8 +892,8 @@ static BOOL update_message_CacheColorTable(rdpContext* context,
 
 static BOOL update_message_CacheGlyph(rdpContext* context, const CACHE_GLYPH_ORDER* cacheGlyphOrder)
 {
-	CACHE_GLYPH_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_GLYPH_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheGlyphOrder)
 		return FALSE;
@@ -911,8 +911,8 @@ static BOOL update_message_CacheGlyph(rdpContext* context, const CACHE_GLYPH_ORD
 static BOOL update_message_CacheGlyphV2(rdpContext* context,
                                         const CACHE_GLYPH_V2_ORDER* cacheGlyphV2Order)
 {
-	CACHE_GLYPH_V2_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_GLYPH_V2_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheGlyphV2Order)
 		return FALSE;
@@ -929,8 +929,8 @@ static BOOL update_message_CacheGlyphV2(rdpContext* context,
 
 static BOOL update_message_CacheBrush(rdpContext* context, const CACHE_BRUSH_ORDER* cacheBrushOrder)
 {
-	CACHE_BRUSH_ORDER* wParam;
-	rdp_update_internal* up;
+	CACHE_BRUSH_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !cacheBrushOrder)
 		return FALSE;
@@ -951,8 +951,8 @@ static BOOL
 update_message_CreateOffscreenBitmap(rdpContext* context,
                                      const CREATE_OFFSCREEN_BITMAP_ORDER* createOffscreenBitmap)
 {
-	CREATE_OFFSCREEN_BITMAP_ORDER* wParam;
-	rdp_update_internal* up;
+	CREATE_OFFSCREEN_BITMAP_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !createOffscreenBitmap)
 		return FALSE;
@@ -985,8 +985,8 @@ update_message_CreateOffscreenBitmap(rdpContext* context,
 static BOOL update_message_SwitchSurface(rdpContext* context,
                                          const SWITCH_SURFACE_ORDER* switchSurface)
 {
-	SWITCH_SURFACE_ORDER* wParam;
-	rdp_update_internal* up;
+	SWITCH_SURFACE_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !switchSurface)
 		return FALSE;
@@ -1007,8 +1007,8 @@ static BOOL
 update_message_CreateNineGridBitmap(rdpContext* context,
                                     const CREATE_NINE_GRID_BITMAP_ORDER* createNineGridBitmap)
 {
-	CREATE_NINE_GRID_BITMAP_ORDER* wParam;
-	rdp_update_internal* up;
+	CREATE_NINE_GRID_BITMAP_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !createNineGridBitmap)
 		return FALSE;
@@ -1028,8 +1028,8 @@ update_message_CreateNineGridBitmap(rdpContext* context,
 
 static BOOL update_message_FrameMarker(rdpContext* context, const FRAME_MARKER_ORDER* frameMarker)
 {
-	FRAME_MARKER_ORDER* wParam;
-	rdp_update_internal* up;
+	FRAME_MARKER_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !frameMarker)
 		return FALSE;
@@ -1049,8 +1049,8 @@ static BOOL update_message_FrameMarker(rdpContext* context, const FRAME_MARKER_O
 static BOOL update_message_StreamBitmapFirst(rdpContext* context,
                                              const STREAM_BITMAP_FIRST_ORDER* streamBitmapFirst)
 {
-	STREAM_BITMAP_FIRST_ORDER* wParam;
-	rdp_update_internal* up;
+	STREAM_BITMAP_FIRST_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !streamBitmapFirst)
 		return FALSE;
@@ -1071,8 +1071,8 @@ static BOOL update_message_StreamBitmapFirst(rdpContext* context,
 static BOOL update_message_StreamBitmapNext(rdpContext* context,
                                             const STREAM_BITMAP_NEXT_ORDER* streamBitmapNext)
 {
-	STREAM_BITMAP_NEXT_ORDER* wParam;
-	rdp_update_internal* up;
+	STREAM_BITMAP_NEXT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !streamBitmapNext)
 		return FALSE;
@@ -1093,8 +1093,8 @@ static BOOL update_message_StreamBitmapNext(rdpContext* context,
 static BOOL update_message_DrawGdiPlusFirst(rdpContext* context,
                                             const DRAW_GDIPLUS_FIRST_ORDER* drawGdiPlusFirst)
 {
-	DRAW_GDIPLUS_FIRST_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_GDIPLUS_FIRST_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawGdiPlusFirst)
 		return FALSE;
@@ -1114,8 +1114,8 @@ static BOOL update_message_DrawGdiPlusFirst(rdpContext* context,
 static BOOL update_message_DrawGdiPlusNext(rdpContext* context,
                                            const DRAW_GDIPLUS_NEXT_ORDER* drawGdiPlusNext)
 {
-	DRAW_GDIPLUS_NEXT_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_GDIPLUS_NEXT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawGdiPlusNext)
 		return FALSE;
@@ -1136,8 +1136,8 @@ static BOOL update_message_DrawGdiPlusNext(rdpContext* context,
 static BOOL update_message_DrawGdiPlusEnd(rdpContext* context,
                                           const DRAW_GDIPLUS_END_ORDER* drawGdiPlusEnd)
 {
-	DRAW_GDIPLUS_END_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_GDIPLUS_END_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawGdiPlusEnd)
 		return FALSE;
@@ -1159,8 +1159,8 @@ static BOOL
 update_message_DrawGdiPlusCacheFirst(rdpContext* context,
                                      const DRAW_GDIPLUS_CACHE_FIRST_ORDER* drawGdiPlusCacheFirst)
 {
-	DRAW_GDIPLUS_CACHE_FIRST_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_GDIPLUS_CACHE_FIRST_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawGdiPlusCacheFirst)
 		return FALSE;
@@ -1183,8 +1183,8 @@ static BOOL
 update_message_DrawGdiPlusCacheNext(rdpContext* context,
                                     const DRAW_GDIPLUS_CACHE_NEXT_ORDER* drawGdiPlusCacheNext)
 {
-	DRAW_GDIPLUS_CACHE_NEXT_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_GDIPLUS_CACHE_NEXT_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawGdiPlusCacheNext)
 		return FALSE;
@@ -1207,8 +1207,8 @@ static BOOL
 update_message_DrawGdiPlusCacheEnd(rdpContext* context,
                                    const DRAW_GDIPLUS_CACHE_END_ORDER* drawGdiPlusCacheEnd)
 {
-	DRAW_GDIPLUS_CACHE_END_ORDER* wParam;
-	rdp_update_internal* up;
+	DRAW_GDIPLUS_CACHE_END_ORDER* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !drawGdiPlusCacheEnd)
 		return FALSE;
@@ -1231,9 +1231,9 @@ update_message_DrawGdiPlusCacheEnd(rdpContext* context,
 static BOOL update_message_WindowCreate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                         const WINDOW_STATE_ORDER* windowState)
 {
-	WINDOW_ORDER_INFO* wParam;
-	WINDOW_STATE_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	WINDOW_STATE_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !windowState)
 		return FALSE;
@@ -1262,9 +1262,9 @@ static BOOL update_message_WindowCreate(rdpContext* context, const WINDOW_ORDER_
 static BOOL update_message_WindowUpdate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                         const WINDOW_STATE_ORDER* windowState)
 {
-	WINDOW_ORDER_INFO* wParam;
-	WINDOW_STATE_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	WINDOW_STATE_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !windowState)
 		return FALSE;
@@ -1293,9 +1293,9 @@ static BOOL update_message_WindowUpdate(rdpContext* context, const WINDOW_ORDER_
 static BOOL update_message_WindowIcon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                       const WINDOW_ICON_ORDER* windowIcon)
 {
-	WINDOW_ORDER_INFO* wParam;
-	WINDOW_ICON_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	WINDOW_ICON_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !windowIcon)
 		return FALSE;
@@ -1373,9 +1373,9 @@ out_fail:
 static BOOL update_message_WindowCachedIcon(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                             const WINDOW_CACHED_ICON_ORDER* windowCachedIcon)
 {
-	WINDOW_ORDER_INFO* wParam;
-	WINDOW_CACHED_ICON_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	WINDOW_CACHED_ICON_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !windowCachedIcon)
 		return FALSE;
@@ -1404,8 +1404,8 @@ static BOOL update_message_WindowCachedIcon(rdpContext* context, const WINDOW_OR
 
 static BOOL update_message_WindowDelete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
-	WINDOW_ORDER_INFO* wParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo)
 		return FALSE;
@@ -1425,9 +1425,9 @@ static BOOL update_message_WindowDelete(rdpContext* context, const WINDOW_ORDER_
 static BOOL update_message_NotifyIconCreate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                             const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
-	WINDOW_ORDER_INFO* wParam;
-	NOTIFY_ICON_STATE_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	NOTIFY_ICON_STATE_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !notifyIconState)
 		return FALSE;
@@ -1457,9 +1457,9 @@ static BOOL update_message_NotifyIconCreate(rdpContext* context, const WINDOW_OR
 static BOOL update_message_NotifyIconUpdate(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                             const NOTIFY_ICON_STATE_ORDER* notifyIconState)
 {
-	WINDOW_ORDER_INFO* wParam;
-	NOTIFY_ICON_STATE_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	NOTIFY_ICON_STATE_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !notifyIconState)
 		return FALSE;
@@ -1488,8 +1488,8 @@ static BOOL update_message_NotifyIconUpdate(rdpContext* context, const WINDOW_OR
 
 static BOOL update_message_NotifyIconDelete(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo)
 {
-	WINDOW_ORDER_INFO* wParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo)
 		return FALSE;
@@ -1509,9 +1509,9 @@ static BOOL update_message_NotifyIconDelete(rdpContext* context, const WINDOW_OR
 static BOOL update_message_MonitoredDesktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                             const MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
-	WINDOW_ORDER_INFO* wParam;
-	MONITORED_DESKTOP_ORDER* lParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	MONITORED_DESKTOP_ORDER* lParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo || !monitoredDesktop)
 		return FALSE;
@@ -1548,8 +1548,8 @@ static BOOL update_message_MonitoredDesktop(rdpContext* context, const WINDOW_OR
 static BOOL update_message_NonMonitoredDesktop(rdpContext* context,
                                                const WINDOW_ORDER_INFO* orderInfo)
 {
-	WINDOW_ORDER_INFO* wParam;
-	rdp_update_internal* up;
+	WINDOW_ORDER_INFO* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !orderInfo)
 		return FALSE;
@@ -1571,8 +1571,8 @@ static BOOL update_message_NonMonitoredDesktop(rdpContext* context,
 static BOOL update_message_PointerPosition(rdpContext* context,
                                            const POINTER_POSITION_UPDATE* pointerPosition)
 {
-	POINTER_POSITION_UPDATE* wParam;
-	rdp_update_internal* up;
+	POINTER_POSITION_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !pointerPosition)
 		return FALSE;
@@ -1590,8 +1590,8 @@ static BOOL update_message_PointerPosition(rdpContext* context,
 static BOOL update_message_PointerSystem(rdpContext* context,
                                          const POINTER_SYSTEM_UPDATE* pointerSystem)
 {
-	POINTER_SYSTEM_UPDATE* wParam;
-	rdp_update_internal* up;
+	POINTER_SYSTEM_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !pointerSystem)
 		return FALSE;
@@ -1609,8 +1609,8 @@ static BOOL update_message_PointerSystem(rdpContext* context,
 static BOOL update_message_PointerColor(rdpContext* context,
                                         const POINTER_COLOR_UPDATE* pointerColor)
 {
-	POINTER_COLOR_UPDATE* wParam;
-	rdp_update_internal* up;
+	POINTER_COLOR_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !pointerColor)
 		return FALSE;
@@ -1627,8 +1627,8 @@ static BOOL update_message_PointerColor(rdpContext* context,
 
 static BOOL update_message_PointerLarge(rdpContext* context, const POINTER_LARGE_UPDATE* pointer)
 {
-	POINTER_LARGE_UPDATE* wParam;
-	rdp_update_internal* up;
+	POINTER_LARGE_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !pointer)
 		return FALSE;
@@ -1645,8 +1645,8 @@ static BOOL update_message_PointerLarge(rdpContext* context, const POINTER_LARGE
 
 static BOOL update_message_PointerNew(rdpContext* context, const POINTER_NEW_UPDATE* pointerNew)
 {
-	POINTER_NEW_UPDATE* wParam;
-	rdp_update_internal* up;
+	POINTER_NEW_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !pointerNew)
 		return FALSE;
@@ -1664,8 +1664,8 @@ static BOOL update_message_PointerNew(rdpContext* context, const POINTER_NEW_UPD
 static BOOL update_message_PointerCached(rdpContext* context,
                                          const POINTER_CACHED_UPDATE* pointerCached)
 {
-	POINTER_CACHED_UPDATE* wParam;
-	rdp_update_internal* up;
+	POINTER_CACHED_UPDATE* wParam = NULL;
+	rdp_update_internal* up = NULL;
 
 	if (!context || !context->update || !pointerCached)
 		return FALSE;
@@ -1683,7 +1683,7 @@ static BOOL update_message_PointerCached(rdpContext* context,
 /* Message Queue */
 static BOOL update_message_free_update_class(wMessage* msg, int type)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!msg)
 		return FALSE;
@@ -2071,7 +2071,7 @@ static BOOL update_message_process_primary_update_class(rdpUpdateProxy* proxy, w
 
 static BOOL update_message_free_secondary_update_class(wMessage* msg, int type)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!msg)
 		return FALSE;
@@ -2452,7 +2452,7 @@ static BOOL update_message_process_window_update_class(rdpUpdateProxy* proxy, wM
 
 static BOOL update_message_free_pointer_update_class(wMessage* msg, int type)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!msg)
 		return FALSE;
@@ -2623,9 +2623,9 @@ static int update_message_process_class(rdpUpdateProxy* proxy, wMessage* msg, in
 
 int update_message_queue_process_message(rdpUpdate* update, wMessage* message)
 {
-	int status;
-	int msgClass;
-	int msgType;
+	int status = 0;
+	int msgClass = 0;
+	int msgType = 0;
 	rdp_update_internal* up = update_cast(update);
 
 	if (!update || !message)
@@ -2647,8 +2647,8 @@ int update_message_queue_process_message(rdpUpdate* update, wMessage* message)
 
 int update_message_queue_free_message(wMessage* message)
 {
-	int msgClass;
-	int msgType;
+	int msgClass = 0;
+	int msgType = 0;
 
 	if (!message)
 		return -1;
@@ -2682,11 +2682,11 @@ int update_message_queue_process_pending_messages(rdpUpdate* update)
 
 static BOOL update_message_register_interface(rdpUpdateProxy* message, rdpUpdate* update)
 {
-	rdpPrimaryUpdate* primary;
-	rdpSecondaryUpdate* secondary;
-	rdpAltSecUpdate* altsec;
-	rdpWindowUpdate* window;
-	rdpPointerUpdate* pointer;
+	rdpPrimaryUpdate* primary = NULL;
+	rdpSecondaryUpdate* secondary = NULL;
+	rdpAltSecUpdate* altsec = NULL;
+	rdpWindowUpdate* window = NULL;
+	rdpPointerUpdate* pointer = NULL;
 
 	if (!message || !update)
 		return FALSE;
@@ -2975,9 +2975,9 @@ static int input_message_process_input_class(rdpInputProxy* proxy, wMessage* msg
 
 		case Input_MouseEvent:
 		{
-			UINT32 pos;
-			UINT16 x;
-			UINT16 y;
+			UINT32 pos = 0;
+			UINT16 x = 0;
+			UINT16 y = 0;
 			pos = (UINT32)(size_t)msg->lParam;
 			x = ((pos & 0xFFFF0000) >> 16);
 			y = (pos & 0x0000FFFF);
@@ -2987,9 +2987,9 @@ static int input_message_process_input_class(rdpInputProxy* proxy, wMessage* msg
 
 		case Input_ExtendedMouseEvent:
 		{
-			UINT32 pos;
-			UINT16 x;
-			UINT16 y;
+			UINT32 pos = 0;
+			UINT16 x = 0;
+			UINT16 y = 0;
 			pos = (UINT32)(size_t)msg->lParam;
 			x = ((pos & 0xFFFF0000) >> 16);
 			y = (pos & 0x0000FFFF);
@@ -3058,9 +3058,9 @@ static int input_message_process_class(rdpInputProxy* proxy, wMessage* msg, int 
 
 int input_message_queue_free_message(wMessage* message)
 {
-	int status;
-	int msgClass;
-	int msgType;
+	int status = 0;
+	int msgClass = 0;
+	int msgType = 0;
 
 	if (!message)
 		return -1;
@@ -3080,9 +3080,9 @@ int input_message_queue_free_message(wMessage* message)
 
 int input_message_queue_process_message(rdpInput* input, wMessage* message)
 {
-	int status;
-	int msgClass;
-	int msgType;
+	int status = 0;
+	int msgClass = 0;
+	int msgType = 0;
 	rdp_input_internal* in = input_cast(input);
 
 	if (!message)

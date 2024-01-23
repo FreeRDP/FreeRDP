@@ -74,7 +74,7 @@ static struct synthetic_file* make_synthetic_file(const WCHAR* local_name, const
 {
 	struct synthetic_file* file = NULL;
 	WIN32_FIND_DATAW fd = { 0 };
-	HANDLE hFind;
+	HANDLE hFind = NULL;
 
 	WINPR_ASSERT(local_name);
 	WINPR_ASSERT(remote_name);
@@ -506,7 +506,7 @@ static BOOL convert_local_file_to_filedescriptor(const struct synthetic_file* fi
 
 static FILEDESCRIPTORW* convert_local_file_list_to_filedescriptors(wArrayList* files)
 {
-	size_t i;
+	size_t i = 0;
 	size_t count = 0;
 	FILEDESCRIPTORW* descriptors = NULL;
 
@@ -534,7 +534,7 @@ error:
 static void* convert_any_uri_list_to_filedescriptors(wClipboard* clipboard, UINT32 formatId,
                                                      UINT32* pSize)
 {
-	FILEDESCRIPTORW* descriptors;
+	FILEDESCRIPTORW* descriptors = NULL;
 
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(pSize);
@@ -705,16 +705,16 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 
 	const FILEDESCRIPTORW* descriptors = NULL;
 	UINT32 nrDescriptors = 0;
-	size_t count;
-	size_t x;
-	size_t alloc;
-	size_t pos;
+	size_t count = 0;
+	size_t x = 0;
+	size_t alloc = 0;
+	size_t pos = 0;
 	size_t baseLength = 0;
-	char* dst;
+	char* dst = NULL;
 	size_t header_len = strlen(header);
 	size_t lineprefix_len = strlen(lineprefix);
 	size_t lineending_len = strlen(lineending);
-	size_t decoration_len;
+	size_t decoration_len = 0;
 
 	if (!clipboard || !data || !pSize)
 		return NULL;
@@ -933,7 +933,7 @@ static void array_free_synthetic_file(void* the_file)
 
 static BOOL register_file_formats_and_synthesizers(wClipboard* clipboard)
 {
-	wObject* obj;
+	wObject* obj = NULL;
 
 	/*
 	    1. Gnome Nautilus based file manager (Nautilus only with version >= 3.30 AND < 40):

@@ -8,7 +8,7 @@
 int TestStreamPool(int argc, char* argv[])
 {
 	wStream* s[5];
-	wStreamPool* pool;
+	wStreamPool* pool = NULL;
 	char buffer[8192];
 
 	WINPR_UNUSED(argc);

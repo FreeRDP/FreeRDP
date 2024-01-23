@@ -125,16 +125,13 @@ static const char* pf_modules_get_hook_type_string(PF_HOOK_TYPE result)
 static BOOL pf_modules_proxy_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
-	PF_HOOK_TYPE type;
-	proxyData* pdata;
-	void* custom;
 	BOOL ok = FALSE;
 
 	WINPR_UNUSED(index);
 
-	type = va_arg(ap, PF_HOOK_TYPE);
-	pdata = va_arg(ap, proxyData*);
-	custom = va_arg(ap, void*);
+	PF_HOOK_TYPE type = va_arg(ap, PF_HOOK_TYPE);
+	proxyData* pdata = va_arg(ap, proxyData*);
+	void* custom = va_arg(ap, void*);
 
 	WLog_VRB(TAG, "running hook %s.%s", plugin->name, pf_modules_get_hook_type_string(type));
 
@@ -237,16 +234,13 @@ BOOL pf_modules_run_hook(proxyModule* module, PF_HOOK_TYPE type, proxyData* pdat
 static BOOL pf_modules_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
-	PF_FILTER_TYPE type;
-	proxyData* pdata;
-	void* param;
 	BOOL result = FALSE;
 
 	WINPR_UNUSED(index);
 
-	type = va_arg(ap, PF_FILTER_TYPE);
-	pdata = va_arg(ap, proxyData*);
-	param = va_arg(ap, void*);
+	PF_FILTER_TYPE type = va_arg(ap, PF_FILTER_TYPE);
+	proxyData* pdata = va_arg(ap, proxyData*);
+	void* param = va_arg(ap, void*);
 
 	WLog_VRB(TAG, "running filter: %s", plugin->name);
 
@@ -472,7 +466,7 @@ static BOOL pf_modules_print_ArrayList_ForEachFkt(void* data, size_t index, va_l
 
 void pf_modules_list_loaded_plugins(proxyModule* module)
 {
-	size_t count;
+	size_t count = 0;
 
 	WINPR_ASSERT(module);
 	WINPR_ASSERT(module->plugins);
@@ -488,7 +482,7 @@ void pf_modules_list_loaded_plugins(proxyModule* module)
 static BOOL pf_modules_load_module(const char* module_path, proxyModule* module, void* userdata)
 {
 	HMODULE handle = NULL;
-	proxyModuleEntryPoint pEntryPoint;
+	proxyModuleEntryPoint pEntryPoint = NULL;
 	WINPR_ASSERT(module);
 
 	handle = LoadLibraryX(module_path);
@@ -547,8 +541,8 @@ static void* new_plugin(const void* obj)
 
 proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t count)
 {
-	size_t i;
-	wObject* obj;
+	size_t i = 0;
+	wObject* obj = NULL;
 	char* path = NULL;
 	proxyModule* module = calloc(1, sizeof(proxyModule));
 	if (!module)
@@ -603,7 +597,7 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 		for (i = 0; i < count; i++)
 		{
 			char name[8192] = { 0 };
-			char* fullpath;
+			char* fullpath = NULL;
 			_snprintf(name, sizeof(name), "proxy-%s-plugin%s", modules[i],
 			          FREERDP_SHARED_LIBRARY_SUFFIX);
 			fullpath = GetCombinedPath(path, name);

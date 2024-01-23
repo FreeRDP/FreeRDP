@@ -38,8 +38,8 @@ typedef struct
 
 static BOOL WLog_JournaldAppender_Open(wLog* log, wLogAppender* appender)
 {
-	int fd;
-	wLogJournaldAppender* journaldAppender;
+	int fd = 0;
+	wLogJournaldAppender* journaldAppender = NULL;
 
 	if (!log || !appender)
 		return FALSE;
@@ -74,8 +74,8 @@ static BOOL WLog_JournaldAppender_Close(wLog* log, wLogAppender* appender)
 static BOOL WLog_JournaldAppender_WriteMessage(wLog* log, wLogAppender* appender,
                                                wLogMessage* message)
 {
-	char* formatStr;
-	wLogJournaldAppender* journaldAppender;
+	char* formatStr = NULL;
+	wLogJournaldAppender* journaldAppender = NULL;
 	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
 
 	if (!log || !appender || !message)
@@ -157,7 +157,7 @@ static BOOL WLog_JournaldAppender_Set(wLogAppender* appender, const char* settin
 
 static void WLog_JournaldAppender_Free(wLogAppender* appender)
 {
-	wLogJournaldAppender* journaldAppender;
+	wLogJournaldAppender* journaldAppender = NULL;
 	if (appender)
 	{
 		journaldAppender = (wLogJournaldAppender*)appender;
@@ -170,8 +170,8 @@ static void WLog_JournaldAppender_Free(wLogAppender* appender)
 
 wLogAppender* WLog_JournaldAppender_New(wLog* log)
 {
-	wLogJournaldAppender* appender;
-	DWORD nSize;
+	wLogJournaldAppender* appender = NULL;
+	DWORD nSize = 0;
 	LPCSTR name = "WLOG_JOURNALD_ID";
 
 	appender = (wLogJournaldAppender*)calloc(1, sizeof(wLogJournaldAppender));

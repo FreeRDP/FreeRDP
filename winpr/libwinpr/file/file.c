@@ -100,7 +100,7 @@ static BOOL FileCloseHandle(HANDLE handle)
 static BOOL FileSetEndOfFile(HANDLE hFile)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
-	INT64 size;
+	INT64 size = 0;
 
 	if (!hFile)
 		return FALSE;
@@ -123,8 +123,8 @@ static DWORD FileSetFilePointer(HANDLE hFile, LONG lDistanceToMove, PLONG lpDist
                                 DWORD dwMoveMethod)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
-	INT64 offset;
-	int whence;
+	INT64 offset = 0;
+	int whence = 0;
 
 	if (!hFile)
 		return INVALID_SET_FILE_POINTER;
@@ -168,7 +168,7 @@ static BOOL FileSetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove,
                                  PLARGE_INTEGER lpNewFilePointer, DWORD dwMoveMethod)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
-	int whence;
+	int whence = 0;
 
 	if (!hFile)
 		return FALSE;
@@ -205,8 +205,8 @@ static BOOL FileSetFilePointerEx(HANDLE hFile, LARGE_INTEGER liDistanceToMove,
 static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
                      LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
-	size_t io_status;
-	WINPR_FILE* file;
+	size_t io_status = 0;
+	WINPR_FILE* file = NULL;
 	BOOL status = TRUE;
 
 	if (lpOverlapped)
@@ -246,8 +246,8 @@ static BOOL FileRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
                       LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
-	size_t io_status;
-	WINPR_FILE* file;
+	size_t io_status = 0;
+	WINPR_FILE* file = NULL;
 
 	if (lpOverlapped)
 	{
@@ -275,9 +275,9 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 
 static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 {
-	WINPR_FILE* file;
-	INT64 cur;
-	INT64 size;
+	WINPR_FILE* file = NULL;
+	INT64 cur = 0;
+	INT64 size = 0;
 
 	if (!Object)
 		return 0;
@@ -331,8 +331,8 @@ static BOOL FileGetFileInformationByHandle(HANDLE hFile,
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 	struct stat st;
-	UINT64 ft;
-	const char* lastSep;
+	UINT64 ft = 0;
+	const char* lastSep = NULL;
 
 	if (!pFile)
 		return FALSE;
@@ -399,7 +399,7 @@ static BOOL FileLockFileEx(HANDLE hFile, DWORD dwFlags, DWORD dwReserved,
 	struct flock lock;
 	int lckcmd;
 #else
-	int lock;
+	int lock = 0;
 #endif
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 
@@ -568,7 +568,7 @@ static UINT64 FileTimeToUS(const FILETIME* ft)
 static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
                             const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime)
 {
-	int rc;
+	int rc = 0;
 #if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__) || defined(KFREEBSD)
 	struct stat buf;
 	/* OpenBSD, NetBSD and DragonflyBSD support POSIX futimens */
@@ -737,7 +737,7 @@ static const char* FileGetMode(DWORD dwDesiredAccess, DWORD dwCreationDispositio
 
 UINT32 map_posix_err(int fs_errno)
 {
-	NTSTATUS rc;
+	NTSTATUS rc = 0;
 
 	/* try to return NTSTATUS version of error code */
 
@@ -802,8 +802,8 @@ static HANDLE FileCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dw
                               DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,
                               HANDLE hTemplateFile)
 {
-	WINPR_FILE* pFile;
-	BOOL create;
+	WINPR_FILE* pFile = NULL;
+	BOOL create = 0;
 	const char* mode = FileGetMode(dwDesiredAccess, dwCreationDisposition, &create);
 #ifdef __sun
 	struct flock lock;
@@ -972,7 +972,7 @@ HANDLE_CREATOR* GetFileHandleCreator(void)
 
 static WINPR_FILE* FileHandle_New(FILE* fp)
 {
-	WINPR_FILE* pFile;
+	WINPR_FILE* pFile = NULL;
 	char name[MAX_PATH] = { 0 };
 
 	_snprintf(name, sizeof(name), "device_%d", fileno(fp));
@@ -992,8 +992,8 @@ static WINPR_FILE* FileHandle_New(FILE* fp)
 
 HANDLE GetStdHandle(DWORD nStdHandle)
 {
-	FILE* fp;
-	WINPR_FILE* pFile;
+	FILE* fp = NULL;
+	WINPR_FILE* pFile = NULL;
 
 	switch (nStdHandle)
 	{
@@ -1048,8 +1048,8 @@ BOOL GetDiskFreeSpaceW(LPCWSTR lpwRootPathName, LPDWORD lpSectorsPerCluster,
                        LPDWORD lpBytesPerSector, LPDWORD lpNumberOfFreeClusters,
                        LPDWORD lpTotalNumberOfClusters)
 {
-	LPSTR lpRootPathName;
-	BOOL ret;
+	LPSTR lpRootPathName = NULL;
+	BOOL ret = 0;
 	if (!lpwRootPathName)
 		return FALSE;
 
@@ -1425,9 +1425,9 @@ HANDLE GetFileHandleForFileDescriptor(int fd)
 #ifdef _WIN32
 	return (HANDLE)_get_osfhandle(fd);
 #else  /* _WIN32 */
-	WINPR_FILE* pFile;
-	FILE* fp;
-	int flags;
+	WINPR_FILE* pFile = NULL;
+	FILE* fp = NULL;
+	int flags = 0;
 
 	/* Make sure it's a valid fd */
 	if (fcntl(fd, F_GETFD) == -1 && errno == EBADF)

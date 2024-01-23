@@ -143,7 +143,7 @@ static BOOL wlf_mime_is_file(const char* mime)
 
 static BOOL wlf_mime_is_text(const char* mime)
 {
-	size_t x;
+	size_t x = 0;
 
 	for (x = 0; x < ARRAYSIZE(mime_text); x++)
 	{
@@ -156,7 +156,7 @@ static BOOL wlf_mime_is_text(const char* mime)
 
 static BOOL wlf_mime_is_image(const char* mime)
 {
-	size_t x;
+	size_t x = 0;
 
 	for (x = 0; x < ARRAYSIZE(mime_image); x++)
 	{
@@ -426,7 +426,7 @@ static UINT wlf_cliprdr_send_client_format_list_response(wfClipboard* clipboard,
 static UINT wlf_cliprdr_monitor_ready(CliprdrClientContext* context,
                                       const CLIPRDR_MONITOR_READY* monitorReady)
 {
-	UINT ret;
+	UINT ret = 0;
 
 	WINPR_UNUSED(monitorReady);
 	WINPR_ASSERT(context);
@@ -673,7 +673,7 @@ static UINT wlf_cliprdr_server_format_list(CliprdrClientContext* context,
 
 	if (text)
 	{
-		size_t x;
+		size_t x = 0;
 
 		for (x = 0; x < ARRAYSIZE(mime_text); x++)
 			UwacClipboardOfferCreate(clipboard->seat, mime_text[x]);
@@ -912,8 +912,8 @@ fail:
 
 wfClipboard* wlf_clipboard_new(wlfContext* wfc)
 {
-	rdpChannels* channels;
-	wfClipboard* clipboard;
+	rdpChannels* channels = NULL;
+	wfClipboard* clipboard = NULL;
 
 	WINPR_ASSERT(wfc);
 

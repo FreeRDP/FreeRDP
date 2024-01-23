@@ -34,9 +34,9 @@ static const char* test_args_list_7[] = { "app.exe",  "a\\\\b c", "d", "e",
 
 static int test_command_line_parsing_case(const char* line, const char** list)
 {
-	int i;
-	LPSTR* pArgs;
-	int numArgs;
+	int i = 0;
+	LPSTR* pArgs = NULL;
+	int numArgs = 0;
 
 	pArgs = NULL;
 	numArgs = 0;

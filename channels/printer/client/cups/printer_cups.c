@@ -156,7 +156,7 @@ static UINT printer_cups_write_printjob(rdpPrintJob* printjob, const BYTE* data,
 static void printer_cups_close_printjob(rdpPrintJob* printjob)
 {
 	rdpCupsPrintJob* cups_printjob = (rdpCupsPrintJob*)printjob;
-	rdpCupsPrinter* cups_printer;
+	rdpCupsPrinter* cups_printer = NULL;
 
 	WINPR_ASSERT(cups_printjob);
 
@@ -177,7 +177,7 @@ static void printer_cups_close_printjob(rdpPrintJob* printjob)
 static rdpPrintJob* printer_cups_create_printjob(rdpPrinter* printer, UINT32 id)
 {
 	rdpCupsPrinter* cups_printer = (rdpCupsPrinter*)printer;
-	rdpCupsPrintJob* cups_printjob;
+	rdpCupsPrintJob* cups_printjob = NULL;
 
 	WINPR_ASSERT(cups_printer);
 
@@ -291,7 +291,7 @@ static void printer_cups_release_ref_printer(rdpPrinter* printer)
 static rdpPrinter* printer_cups_new_printer(rdpCupsPrinterDriver* cups_driver, const char* name,
                                             const char* driverName, BOOL is_default)
 {
-	rdpCupsPrinter* cups_printer;
+	rdpCupsPrinter* cups_printer = NULL;
 
 	cups_printer = (rdpCupsPrinter*)calloc(1, sizeof(rdpCupsPrinter));
 	if (!cups_printer)
@@ -357,7 +357,7 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	int num_printers = 0;
 	cups_dest_t* dests = NULL;
 	cups_dest_t* dest = NULL;
-	int i;
+	int i = 0;
 	BOOL haveDefault = FALSE;
 	const int num_dests = cupsGetDests(&dests);
 

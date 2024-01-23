@@ -695,7 +695,7 @@ BOOL WTSRegisterWtsApiFunctionTable(const WtsApiFunctionTable* table)
 
 static BOOL LoadAndInitialize(char* library)
 {
-	INIT_WTSAPI_FN pInitWtsApi;
+	INIT_WTSAPI_FN pInitWtsApi = NULL;
 	g_WtsApiModule = LoadLibraryX(library);
 
 	if (!g_WtsApiModule)
@@ -714,7 +714,7 @@ static BOOL LoadAndInitialize(char* library)
 
 static void InitializeWtsApiStubs_Env(void)
 {
-	DWORD nSize;
+	DWORD nSize = 0;
 	char* env = NULL;
 	LPCSTR wts = "WTSAPI_LIBRARY";
 
@@ -739,9 +739,9 @@ static void InitializeWtsApiStubs_Env(void)
 
 static void InitializeWtsApiStubs_FreeRDS(void)
 {
-	wIniFile* ini;
-	const char* prefix;
-	const char* libdir;
+	wIniFile* ini = NULL;
+	const char* prefix = NULL;
+	const char* libdir = NULL;
 
 	if (g_WtsApi)
 		return;
@@ -762,8 +762,8 @@ static void InitializeWtsApiStubs_FreeRDS(void)
 
 	if (prefix && libdir)
 	{
-		char* prefix_libdir;
-		char* wtsapi_library;
+		char* prefix_libdir = NULL;
+		char* wtsapi_library = NULL;
 		prefix_libdir = GetCombinedPath(prefix, libdir);
 		wtsapi_library = GetCombinedPath(prefix_libdir, FREERDS_LIBRARY_NAME);
 

@@ -84,8 +84,8 @@ static void request_free(void* value);
 
 static struct libusb_transfer* list_contains(wArrayList* list, UINT32 streamID)
 {
-	size_t x;
-	size_t count;
+	size_t x = 0;
+	size_t count = 0;
 	if (!list)
 		return NULL;
 	count = ArrayList_Count(list);
@@ -206,7 +206,7 @@ static ASYNC_TRANSFER_USER_DATA* async_transfer_user_data_new(IUDEVICE* idev, UI
                                                               BOOL NoAck, t_isoch_transfer_cb cb,
                                                               GENERIC_CHANNEL_CALLBACK* callback)
 {
-	ASYNC_TRANSFER_USER_DATA* user_data;
+	ASYNC_TRANSFER_USER_DATA* user_data = NULL;
 	UDEVICE* pdev = (UDEVICE*)idev;
 
 	if (BufferSize > UINT32_MAX)
@@ -261,7 +261,7 @@ static void LIBUSB_CALL func_iso_callback(struct libusb_transfer* transfer)
 	{
 		case LIBUSB_TRANSFER_COMPLETED:
 		{
-			int i;
+			int i = 0;
 			UINT32 index = 0;
 			BYTE* dataStart = Stream_Pointer(user_data->data);
 			Stream_SetPosition(user_data->data,
@@ -328,12 +328,12 @@ static const LIBUSB_ENDPOINT_DESCEIPTOR* func_get_ep_desc(LIBUSB_CONFIG_DESCRIPT
                                                           MSUSB_CONFIG_DESCRIPTOR* MsConfig,
                                                           UINT32 EndpointAddress)
 {
-	BYTE alt;
-	UINT32 inum;
-	UINT32 pnum;
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces;
-	const LIBUSB_INTERFACE* interface;
-	const LIBUSB_ENDPOINT_DESCEIPTOR* endpoint;
+	BYTE alt = 0;
+	UINT32 inum = 0;
+	UINT32 pnum = 0;
+	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
+	const LIBUSB_INTERFACE* interface = NULL;
+	const LIBUSB_ENDPOINT_DESCEIPTOR* endpoint = NULL;
 	MsInterfaces = MsConfig->MsInterfaces;
 	interface = LibusbConfig->interface;
 
@@ -356,9 +356,9 @@ static const LIBUSB_ENDPOINT_DESCEIPTOR* func_get_ep_desc(LIBUSB_CONFIG_DESCRIPT
 
 static void LIBUSB_CALL func_bulk_transfer_cb(struct libusb_transfer* transfer)
 {
-	ASYNC_TRANSFER_USER_DATA* user_data;
-	uint32_t streamID;
-	wArrayList* list;
+	ASYNC_TRANSFER_USER_DATA* user_data = NULL;
+	uint32_t streamID = 0;
+	wArrayList* list = NULL;
 
 	user_data = (ASYNC_TRANSFER_USER_DATA*)transfer->user_data;
 	if (!user_data)
@@ -469,7 +469,7 @@ static int func_config_release_all_interface(URBDRC_PLUGIN* urbdrc,
                                              LIBUSB_DEVICE_HANDLE* libusb_handle,
                                              UINT32 NumInterfaces)
 {
-	UINT32 i;
+	UINT32 i = 0;
 
 	for (i = 0; i < NumInterfaces; i++)
 	{
@@ -485,8 +485,8 @@ static int func_config_release_all_interface(URBDRC_PLUGIN* urbdrc,
 static int func_claim_all_interface(URBDRC_PLUGIN* urbdrc, LIBUSB_DEVICE_HANDLE* libusb_handle,
                                     int NumInterfaces)
 {
-	int i;
-	int ret;
+	int i = 0;
+	int ret = 0;
 
 	for (i = 0; i < NumInterfaces; i++)
 	{
@@ -502,7 +502,7 @@ static int func_claim_all_interface(URBDRC_PLUGIN* urbdrc, LIBUSB_DEVICE_HANDLE*
 static LIBUSB_DEVICE* udev_get_libusb_dev(libusb_context* context, uint8_t bus_number,
                                           uint8_t dev_number)
 {
-	ssize_t i;
+	ssize_t i = 0;
 	LIBUSB_DEVICE** libusb_list = NULL;
 	LIBUSB_DEVICE* device = NULL;
 	const ssize_t total_device = libusb_get_device_list(context, &libusb_list);
@@ -523,7 +523,7 @@ static LIBUSB_DEVICE* udev_get_libusb_dev(libusb_context* context, uint8_t bus_n
 
 static LIBUSB_DEVICE_DESCRIPTOR* udev_new_descript(URBDRC_PLUGIN* urbdrc, LIBUSB_DEVICE* libusb_dev)
 {
-	int ret;
+	int ret = 0;
 	LIBUSB_DEVICE_DESCRIPTOR* descriptor =
 	    (LIBUSB_DEVICE_DESCRIPTOR*)calloc(1, sizeof(LIBUSB_DEVICE_DESCRIPTOR));
 	if (!descriptor)
@@ -544,9 +544,9 @@ static int libusb_udev_select_interface(IUDEVICE* idev, BYTE InterfaceNumber, BY
 	int error = 0;
 	int diff = 0;
 	UDEVICE* pdev = (UDEVICE*)idev;
-	URBDRC_PLUGIN* urbdrc;
-	MSUSB_CONFIG_DESCRIPTOR* MsConfig;
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces;
+	URBDRC_PLUGIN* urbdrc = NULL;
+	MSUSB_CONFIG_DESCRIPTOR* MsConfig = NULL;
+	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
 
 	if (!pdev || !pdev->urbdrc)
 		return -1;
@@ -587,18 +587,18 @@ static MSUSB_CONFIG_DESCRIPTOR*
 libusb_udev_complete_msconfig_setup(IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces;
-	MSUSB_INTERFACE_DESCRIPTOR* MsInterface;
-	MSUSB_PIPE_DESCRIPTOR** MsPipes;
-	MSUSB_PIPE_DESCRIPTOR* MsPipe;
-	MSUSB_PIPE_DESCRIPTOR** t_MsPipes;
-	MSUSB_PIPE_DESCRIPTOR* t_MsPipe;
-	LIBUSB_CONFIG_DESCRIPTOR* LibusbConfig;
-	const LIBUSB_INTERFACE* LibusbInterface;
-	const LIBUSB_INTERFACE_DESCRIPTOR* LibusbAltsetting;
-	const LIBUSB_ENDPOINT_DESCEIPTOR* LibusbEndpoint;
-	BYTE LibusbNumEndpoint;
-	URBDRC_PLUGIN* urbdrc;
+	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
+	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = NULL;
+	MSUSB_PIPE_DESCRIPTOR** MsPipes = NULL;
+	MSUSB_PIPE_DESCRIPTOR* MsPipe = NULL;
+	MSUSB_PIPE_DESCRIPTOR** t_MsPipes = NULL;
+	MSUSB_PIPE_DESCRIPTOR* t_MsPipe = NULL;
+	LIBUSB_CONFIG_DESCRIPTOR* LibusbConfig = NULL;
+	const LIBUSB_INTERFACE* LibusbInterface = NULL;
+	const LIBUSB_INTERFACE_DESCRIPTOR* LibusbAltsetting = NULL;
+	const LIBUSB_ENDPOINT_DESCEIPTOR* LibusbEndpoint = NULL;
+	BYTE LibusbNumEndpoint = 0;
+	URBDRC_PLUGIN* urbdrc = NULL;
 	UINT32 inum = 0;
 	UINT32 pnum = 0;
 	UINT32 MsOutSize = 0;
@@ -742,11 +742,11 @@ libusb_udev_complete_msconfig_setup(IUDEVICE* idev, MSUSB_CONFIG_DESCRIPTOR* MsC
 static int libusb_udev_select_configuration(IUDEVICE* idev, UINT32 bConfigurationValue)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
-	MSUSB_CONFIG_DESCRIPTOR* MsConfig;
-	LIBUSB_DEVICE_HANDLE* libusb_handle;
-	LIBUSB_DEVICE* libusb_dev;
-	URBDRC_PLUGIN* urbdrc;
-	LIBUSB_CONFIG_DESCRIPTOR** LibusbConfig;
+	MSUSB_CONFIG_DESCRIPTOR* MsConfig = NULL;
+	LIBUSB_DEVICE_HANDLE* libusb_handle = NULL;
+	LIBUSB_DEVICE* libusb_dev = NULL;
+	URBDRC_PLUGIN* urbdrc = NULL;
+	LIBUSB_CONFIG_DESCRIPTOR** LibusbConfig = NULL;
 	int ret = 0;
 
 	if (!pdev || !pdev->MsConfig || !pdev->LibusbConfig || !pdev->urbdrc)
@@ -831,18 +831,18 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
                                                     BYTE* Buffer)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
-	LIBUSB_DEVICE_DESCRIPTOR* devDescriptor;
+	LIBUSB_DEVICE_DESCRIPTOR* devDescriptor = NULL;
 	const char strDesc[] = "Generic Usb String";
 	char deviceLocation[25] = { 0 };
-	BYTE bus_number;
-	BYTE device_address;
+	BYTE bus_number = 0;
+	BYTE device_address = 0;
 	int ret = 0;
-	size_t i;
-	size_t len;
-	URBDRC_PLUGIN* urbdrc;
+	size_t i = 0;
+	size_t len = 0;
+	URBDRC_PLUGIN* urbdrc = NULL;
 	WCHAR* text = (WCHAR*)Buffer;
-	BYTE slen;
-	BYTE locale;
+	BYTE slen = 0;
+	BYTE locale = 0;
 	const UINT8 inSize = *BufferSize;
 
 	*BufferSize = 0;
@@ -1030,10 +1030,10 @@ static int libusb_udev_query_device_descriptor(IUDEVICE* idev, int offset)
 
 static BOOL libusb_udev_detach_kernel_driver(IUDEVICE* idev)
 {
-	int i;
+	int i = 0;
 	int err = 0;
 	UDEVICE* pdev = (UDEVICE*)idev;
-	URBDRC_PLUGIN* urbdrc;
+	URBDRC_PLUGIN* urbdrc = NULL;
 
 	if (!pdev || !pdev->LibusbConfig || !pdev->libusb_handle || !pdev->urbdrc)
 		return FALSE;
@@ -1066,7 +1066,7 @@ static BOOL libusb_udev_detach_kernel_driver(IUDEVICE* idev)
 
 static BOOL libusb_udev_attach_kernel_driver(IUDEVICE* idev)
 {
-	int i;
+	int i = 0;
 	int err = 0;
 	UDEVICE* pdev = (UDEVICE*)idev;
 
@@ -1107,7 +1107,7 @@ static int libusb_udev_is_exist(IUDEVICE* idev)
 static int libusb_udev_is_channel_closed(IUDEVICE* idev)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
-	IUDEVMAN* udevman;
+	IUDEVMAN* udevman = NULL;
 	if (!pdev || !pdev->urbdrc)
 		return 1;
 
@@ -1188,8 +1188,8 @@ static int libusb_udev_query_device_port_status(IUDEVICE* idev, UINT32* UsbdStat
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
 	int success = 0;
-	int ret;
-	URBDRC_PLUGIN* urbdrc;
+	int ret = 0;
+	URBDRC_PLUGIN* urbdrc = NULL;
 
 	if (!pdev || !pdev->urbdrc)
 		return -1;
@@ -1224,12 +1224,12 @@ static int libusb_udev_isoch_transfer(IUDEVICE* idev, GENERIC_CHANNEL_CALLBACK* 
                                       UINT32 NumberOfPackets, UINT32 BufferSize, const BYTE* Buffer,
                                       t_isoch_transfer_cb cb, UINT32 Timeout)
 {
-	int rc;
+	int rc = 0;
 	UINT32 iso_packet_size = 0;
 	UDEVICE* pdev = (UDEVICE*)idev;
-	ASYNC_TRANSFER_USER_DATA* user_data;
+	ASYNC_TRANSFER_USER_DATA* user_data = NULL;
 	struct libusb_transfer* iso_transfer = NULL;
-	URBDRC_PLUGIN* urbdrc;
+	URBDRC_PLUGIN* urbdrc = NULL;
 	size_t outSize = (NumberOfPackets * 12);
 	uint32_t streamID = 0x40000000 | RequestId;
 
@@ -1321,13 +1321,13 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev,
                                                   BOOL NoAck, UINT32 BufferSize, const BYTE* data,
                                                   t_isoch_transfer_cb cb, UINT32 Timeout)
 {
-	int rc;
-	UINT32 transfer_type;
+	int rc = 0;
+	UINT32 transfer_type = 0;
 	UDEVICE* pdev = (UDEVICE*)idev;
-	const LIBUSB_ENDPOINT_DESCEIPTOR* ep_desc;
+	const LIBUSB_ENDPOINT_DESCEIPTOR* ep_desc = NULL;
 	struct libusb_transfer* transfer = NULL;
-	URBDRC_PLUGIN* urbdrc;
-	ASYNC_TRANSFER_USER_DATA* user_data;
+	URBDRC_PLUGIN* urbdrc = NULL;
+	ASYNC_TRANSFER_USER_DATA* user_data = NULL;
 	uint32_t streamID = 0x80000000 | RequestId;
 
 	if (!pdev || !pdev->LibusbConfig || !pdev->urbdrc)
@@ -1406,7 +1406,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev,
 
 static int func_cancel_xact_request(URBDRC_PLUGIN* urbdrc, struct libusb_transfer* transfer)
 {
-	int status;
+	int status = 0;
 
 	if (!urbdrc || !transfer)
 		return -1;
@@ -1427,8 +1427,8 @@ static int func_cancel_xact_request(URBDRC_PLUGIN* urbdrc, struct libusb_transfe
 static void libusb_udev_cancel_all_transfer_request(IUDEVICE* idev)
 {
 	UDEVICE* pdev = (UDEVICE*)idev;
-	size_t count;
-	size_t x;
+	size_t count = 0;
+	size_t x = 0;
 
 	if (!pdev || !pdev->request_queue || !pdev->urbdrc)
 		return;
@@ -1449,7 +1449,7 @@ static int libusb_udev_cancel_transfer_request(IUDEVICE* idev, UINT32 RequestId)
 {
 	int rc = -1;
 	UDEVICE* pdev = (UDEVICE*)idev;
-	struct libusb_transfer* transfer;
+	struct libusb_transfer* transfer = NULL;
 	uint32_t cancelID1 = 0x40000000 | RequestId;
 	uint32_t cancelID2 = 0x80000000 | RequestId;
 
@@ -1505,9 +1505,9 @@ static void udev_set_UsbDevice(IUDEVICE* idev, UINT32 val)
 
 static void udev_free(IUDEVICE* idev)
 {
-	int rc;
+	int rc = 0;
 	UDEVICE* udev = (UDEVICE*)idev;
-	URBDRC_PLUGIN* urbdrc;
+	URBDRC_PLUGIN* urbdrc = NULL;
 
 	if (!idev || !udev->urbdrc)
 		return;
@@ -1587,7 +1587,7 @@ static int udev_get_device_handle(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UD
                                   UINT16 bus_number, UINT16 dev_number)
 {
 	int error = -1;
-	ssize_t i;
+	ssize_t i = 0;
 	uint8_t port_numbers[16] = { 0 };
 	LIBUSB_DEVICE** libusb_list = NULL;
 	const ssize_t total_device = libusb_get_device_list(ctx, &libusb_list);
@@ -1642,7 +1642,7 @@ static int udev_get_hub_handle(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UDEVI
                                UINT16 bus_number, UINT16 dev_number)
 {
 	int error = -1;
-	ssize_t i;
+	ssize_t i = 0;
 	LIBUSB_DEVICE** libusb_list = NULL;
 	LIBUSB_DEVICE_HANDLE* handle = NULL;
 	const ssize_t total_device = libusb_get_device_list(ctx, &libusb_list);
@@ -1679,7 +1679,7 @@ static int udev_get_hub_handle(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UDEVI
 
 static void request_free(void* value)
 {
-	ASYNC_TRANSFER_USER_DATA* user_data;
+	ASYNC_TRANSFER_USER_DATA* user_data = NULL;
 	struct libusb_transfer* transfer = (struct libusb_transfer*)value;
 	if (!transfer)
 		return;
@@ -1693,10 +1693,10 @@ static void request_free(void* value)
 static IUDEVICE* udev_init(URBDRC_PLUGIN* urbdrc, libusb_context* context, LIBUSB_DEVICE* device,
                            BYTE bus_number, BYTE dev_number)
 {
-	UDEVICE* pdev;
+	UDEVICE* pdev = NULL;
 	int status = LIBUSB_ERROR_OTHER;
-	LIBUSB_DEVICE_DESCRIPTOR* devDescriptor;
-	LIBUSB_CONFIG_DESCRIPTOR* config_temp;
+	LIBUSB_DEVICE_DESCRIPTOR* devDescriptor = NULL;
+	LIBUSB_CONFIG_DESCRIPTOR* config_temp = NULL;
 	LIBUSB_INTERFACE_DESCRIPTOR interface_temp;
 
 	WINPR_ASSERT(urbdrc);
@@ -1808,10 +1808,10 @@ fail:
 size_t udev_new_by_id(URBDRC_PLUGIN* urbdrc, libusb_context* ctx, UINT16 idVendor, UINT16 idProduct,
                       IUDEVICE*** devArray)
 {
-	LIBUSB_DEVICE** libusb_list;
-	UDEVICE** array;
-	ssize_t i;
-	ssize_t total_device;
+	LIBUSB_DEVICE** libusb_list = NULL;
+	UDEVICE** array = NULL;
+	ssize_t i = 0;
+	ssize_t total_device = 0;
 	size_t num = 0;
 
 	if (!urbdrc || !devArray)

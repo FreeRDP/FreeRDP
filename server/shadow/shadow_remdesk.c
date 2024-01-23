@@ -26,7 +26,7 @@
 
 int shadow_client_remdesk_init(rdpShadowClient* client)
 {
-	RemdeskServerContext* remdesk;
+	RemdeskServerContext* remdesk = NULL;
 
 	remdesk = client->remdesk = remdesk_server_context_new(client->vcm);
 	remdesk->rdpcontext = &client->context;

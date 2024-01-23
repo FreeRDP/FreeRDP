@@ -68,7 +68,7 @@ static int transport_bio_named_read(BIO* bio, char* buf, int size)
 
 	BIO_clear_flags(bio, BIO_FLAGS_READ);
 
-	DWORD readBytes;
+	DWORD readBytes = 0;
 	BOOL ret = ReadFile(ptr->hFile, buf, size, &readBytes, NULL);
 	WLog_VRB(TAG, "transport_bio_named_read(%d)=%d read=%d", size, ret, readBytes);
 	if (!ret)
@@ -205,7 +205,7 @@ static int transport_bio_named_new(BIO* bio)
 
 static int transport_bio_named_free(BIO* bio)
 {
-	WINPR_BIO_NAMED* ptr;
+	WINPR_BIO_NAMED* ptr = NULL;
 
 	if (!bio)
 		return 0;
@@ -252,7 +252,7 @@ static BOOL createChildSessionTransport(HANDLE* pFile)
 	BOOL ret = FALSE;
 	*pFile = INVALID_HANDLE_VALUE;
 
-	BOOL childEnabled;
+	BOOL childEnabled = 0;
 	if (!WTSIsChildSessionsEnabled(&childEnabled))
 	{
 		WLog_ERR(TAG, "error when calling WTSIsChildSessionsEnabled");

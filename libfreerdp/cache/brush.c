@@ -58,10 +58,10 @@ struct rdp_brush_cache
 
 static BOOL update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 {
-	BYTE style;
+	BYTE style = 0;
 	BOOL ret = TRUE;
-	rdpBrush* brush;
-	const rdpCache* cache;
+	rdpBrush* brush = NULL;
+	const rdpCache* cache = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(patblt);
@@ -86,7 +86,7 @@ static BOOL update_gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 static BOOL update_gdi_polygon_sc(rdpContext* context, const POLYGON_SC_ORDER* polygon_sc)
 {
-	rdpCache* cache;
+	rdpCache* cache = NULL;
 	WINPR_ASSERT(context);
 	cache = context->cache;
 	WINPR_ASSERT(cache);
@@ -96,9 +96,9 @@ static BOOL update_gdi_polygon_sc(rdpContext* context, const POLYGON_SC_ORDER* p
 
 static BOOL update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon_cb)
 {
-	BYTE style;
-	rdpBrush* brush;
-	rdpCache* cache;
+	BYTE style = 0;
+	rdpBrush* brush = NULL;
+	rdpCache* cache = NULL;
 	BOOL ret = TRUE;
 
 	WINPR_ASSERT(context);
@@ -124,9 +124,9 @@ static BOOL update_gdi_polygon_cb(rdpContext* context, POLYGON_CB_ORDER* polygon
 
 static BOOL update_gdi_cache_brush(rdpContext* context, const CACHE_BRUSH_ORDER* cacheBrush)
 {
-	UINT32 length;
+	UINT32 length = 0;
 	void* data = NULL;
-	rdpCache* cache;
+	rdpCache* cache = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cacheBrush);
@@ -147,7 +147,7 @@ static BOOL update_gdi_cache_brush(rdpContext* context, const CACHE_BRUSH_ORDER*
 
 void* brush_cache_get(rdpBrushCache* brushCache, UINT32 index, UINT32* bpp)
 {
-	void* entry;
+	void* entry = NULL;
 
 	if (!brushCache)
 		return NULL;
@@ -246,7 +246,7 @@ void brush_cache_register_callbacks(rdpUpdate* update)
 
 rdpBrushCache* brush_cache_new(rdpContext* context)
 {
-	rdpBrushCache* brushCache;
+	rdpBrushCache* brushCache = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -279,7 +279,7 @@ fail:
 
 void brush_cache_free(rdpBrushCache* brushCache)
 {
-	size_t i;
+	size_t i = 0;
 
 	if (brushCache)
 	{
@@ -311,7 +311,7 @@ void free_cache_brush_order(rdpContext* context, CACHE_BRUSH_ORDER* order)
 
 CACHE_BRUSH_ORDER* copy_cache_brush_order(rdpContext* context, const CACHE_BRUSH_ORDER* order)
 {
-	CACHE_BRUSH_ORDER* dst;
+	CACHE_BRUSH_ORDER* dst = NULL;
 
 	WINPR_ASSERT(context);
 

@@ -108,7 +108,7 @@ static DWORD WINAPI smartcard_context_thread(LPVOID arg)
 
 		if (waitStatus == WAIT_OBJECT_0)
 		{
-			scard_irp_queue_element* element;
+			scard_irp_queue_element* element = NULL;
 
 			if (!MessageQueue_Peek(pContext->IrpQueue, &message, TRUE))
 			{
@@ -178,7 +178,7 @@ static void smartcard_operation_queue_free(void* obj)
 
 static void* smartcard_context_new(void* smartcard, SCARDCONTEXT hContext)
 {
-	SMARTCARD_CONTEXT* pContext;
+	SMARTCARD_CONTEXT* pContext = NULL;
 	pContext = (SMARTCARD_CONTEXT*)calloc(1, sizeof(SMARTCARD_CONTEXT));
 
 	if (!pContext)
@@ -353,7 +353,7 @@ UINT smartcard_complete_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* handled
  */
 static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* handled)
 {
-	LONG status;
+	LONG status = 0;
 	BOOL asyncIrp = FALSE;
 	SMARTCARD_CONTEXT* pContext = NULL;
 
@@ -384,7 +384,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 
 		if (status != SCARD_S_SUCCESS)
 		{
-			UINT error;
+			UINT error = 0;
 
 			smartcard_operation_free(&element->operation, TRUE);
 			irp->IoStatus = (UINT32)STATUS_UNSUCCESSFUL;
@@ -464,7 +464,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 
 		if (!asyncIrp)
 		{
-			UINT error;
+			UINT error = 0;
 
 			status =
 			    smartcard_irp_device_control_call(smartcard->callctx, element->irp->output,
@@ -500,7 +500,7 @@ static UINT smartcard_process_irp(SMARTCARD_DEVICE* smartcard, IRP* irp, BOOL* h
 	}
 	else
 	{
-		UINT ustatus;
+		UINT ustatus = 0;
 		WLog_ERR(TAG, "Unexpected SmartCard IRP: MajorFunction %s, MinorFunction: 0x%08" PRIX32 "",
 		         rdpdr_irp_string(irp->MajorFunction), irp->MinorFunction);
 		irp->IoStatus = (UINT32)STATUS_NOT_SUPPORTED;
@@ -629,7 +629,7 @@ extern UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints);
 UINT DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints)
 {
 	SMARTCARD_DEVICE* smartcard = NULL;
-	size_t length;
+	size_t length = 0;
 	UINT error = CHANNEL_RC_NO_MEMORY;
 
 	if (!sSmartcard)

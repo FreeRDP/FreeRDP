@@ -196,7 +196,7 @@ static BOOL test_file_to_settings(wLog* log, rdpAssistanceFile* file)
 static BOOL test_file_from_buffer(wLog* log, const char* data, size_t size, const char* pwd)
 {
 	BOOL rc = FALSE;
-	int status;
+	int status = 0;
 	char* pass = NULL;
 	char* expertBlob = NULL;
 	const char* EncryptedPassStub = NULL;
@@ -262,7 +262,7 @@ static BOOL test_msrsc_incident_file_type2(wLog* log)
 
 int TestCommonAssistance(int argc, char* argv[])
 {
-	wLog* log;
+	wLog* log = NULL;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	log = WLog_Get(__func__);

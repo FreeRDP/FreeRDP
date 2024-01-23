@@ -50,7 +50,7 @@ wLogAppender* WLog_GetLogAppender(wLog* log)
 BOOL WLog_OpenAppender(wLog* log)
 {
 	int status = 0;
-	wLogAppender* appender;
+	wLogAppender* appender = NULL;
 
 	appender = WLog_GetLogAppender(log);
 
@@ -72,7 +72,7 @@ BOOL WLog_OpenAppender(wLog* log)
 BOOL WLog_CloseAppender(wLog* log)
 {
 	int status = 0;
-	wLogAppender* appender;
+	wLogAppender* appender = NULL;
 
 	appender = WLog_GetLogAppender(log);
 
@@ -93,7 +93,7 @@ BOOL WLog_CloseAppender(wLog* log)
 
 static wLogAppender* WLog_Appender_New(wLog* log, DWORD logAppenderType)
 {
-	wLogAppender* appender;
+	wLogAppender* appender = NULL;
 
 	if (!log)
 		return NULL;

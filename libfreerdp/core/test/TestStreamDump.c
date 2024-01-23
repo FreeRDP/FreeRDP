@@ -16,7 +16,7 @@ static BOOL test_entry_read_write(void)
 	wStream* sw = NULL;
 	wStream* sr = NULL;
 	size_t offset = 0;
-	size_t x;
+	size_t x = 0;
 	UINT64 ts = 0;
 	UINT32 flags = 0;
 	BYTE tmp[16] = { 0 };

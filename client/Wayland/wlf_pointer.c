@@ -70,13 +70,13 @@ static BOOL wlf_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	wlfContext* wlf = (wlfContext*)context;
 	wlfPointer* ptr = (wlfPointer*)pointer;
-	void* data;
-	UINT32 w;
-	UINT32 h;
-	UINT32 x;
-	UINT32 y;
-	size_t size;
-	UwacReturnCode rc;
+	void* data = NULL;
+	UINT32 w = 0;
+	UINT32 h = 0;
+	UINT32 x = 0;
+	UINT32 y = 0;
+	size_t size = 0;
+	UwacReturnCode rc = UWAC_ERROR_INTERNAL;
 	BOOL res = FALSE;
 	RECTANGLE_16 area;
 

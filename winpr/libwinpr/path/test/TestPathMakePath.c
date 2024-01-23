@@ -8,12 +8,12 @@
 
 int TestPathMakePath(int argc, char* argv[])
 {
-	int x;
-	size_t baseLen;
-	BOOL success;
+	int x = 0;
+	size_t baseLen = 0;
+	BOOL success = 0;
 	char tmp[64] = { 0 };
 	char* path = NULL;
-	char* cur;
+	char* cur = NULL;
 	char delim = PathGetSeparatorA(0);
 	char* base = GetKnownPath(KNOWN_PATH_TEMP);
 

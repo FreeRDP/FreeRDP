@@ -7,11 +7,11 @@
 
 int TestEnumerateSecurityPackages(int argc, char* argv[])
 {
-	int index;
-	ULONG cPackages;
-	SECURITY_STATUS status;
-	SecPkgInfo* pPackageInfo;
-	SecurityFunctionTable* table;
+	int index = 0;
+	ULONG cPackages = 0;
+	SECURITY_STATUS status = 0;
+	SecPkgInfo* pPackageInfo = NULL;
+	SecurityFunctionTable* table = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

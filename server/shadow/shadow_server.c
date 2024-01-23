@@ -47,9 +47,9 @@ static const char bind_address[] = "bind-address,";
 static int shadow_server_print_command_line_help(int argc, char** argv,
                                                  COMMAND_LINE_ARGUMENT_A* largs)
 {
-	char* str;
-	size_t length;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	char* str = NULL;
+	size_t length = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	if ((argc < 1) || !largs || !argv)
 		return -1;
 
@@ -146,9 +146,9 @@ int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, c
 int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** argv,
                                      COMMAND_LINE_ARGUMENT_A* cargs)
 {
-	int status;
-	DWORD flags;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	int status = 0;
+	DWORD flags = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	rdpSettings* settings = server->settings;
 
 	if ((argc < 2) || !argv || !cargs)
@@ -191,7 +191,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "bind-address")
 		{
-			int rc;
+			int rc = 0;
 			size_t len = strlen(arg->Value) + sizeof(bind_address);
 			/* /ipc-socket is incompatible */
 			if (server->ipcSocket)
@@ -224,7 +224,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		}
 		CommandLineSwitchCase(arg, "rect")
 		{
-			char* p;
+			char* p = NULL;
 			char* tok[4];
 			long x = -1;
 			long y = -1;
@@ -459,8 +459,8 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 	{
-		UINT32 index;
-		UINT32 numMonitors;
+		UINT32 index = 0;
+		UINT32 numMonitors = 0;
 		MONITOR_DEF monitors[16] = { 0 };
 		numMonitors = shadow_enum_monitors(monitors, 16);
 
@@ -507,7 +507,7 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 {
 	rdpShadowServer* server = (rdpShadowServer*)arg;
 	BOOL running = TRUE;
-	DWORD status;
+	DWORD status = 0;
 	freerdp_listener* listener = server->listener;
 	shadow_subsystem_start(server->subsystem);
 
@@ -570,7 +570,7 @@ static DWORD WINAPI shadow_server_thread(LPVOID arg)
 
 static BOOL open_port(rdpShadowServer* server, char* address)
 {
-	BOOL status;
+	BOOL status = 0;
 	char* modaddr = address;
 
 	if (modaddr)
@@ -605,8 +605,8 @@ static BOOL open_port(rdpShadowServer* server, char* address)
 
 int shadow_server_start(rdpShadowServer* server)
 {
-	BOOL ipc;
-	BOOL status;
+	BOOL ipc = 0;
+	BOOL status = 0;
 	WSADATA wsaData;
 
 	if (!server)
@@ -644,8 +644,8 @@ int shadow_server_start(rdpShadowServer* server)
 	                                    strnlen(bind_address, sizeof(bind_address))) != 0);
 	if (!ipc)
 	{
-		size_t x;
-		size_t count;
+		size_t x = 0;
+		size_t count = 0;
 		char** list = CommandLineParseCommaSeparatedValuesEx(NULL, server->ipcSocket, &count);
 		if (!list || (count <= 1))
 		{
@@ -777,7 +777,7 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 
 	if (!server->ConfigPath)
 	{
-		char* configHome;
+		char* configHome = NULL;
 		configHome = GetKnownPath(KNOWN_PATH_XDG_CONFIG_HOME);
 
 		if (configHome)
@@ -924,7 +924,7 @@ static BOOL shadow_server_check_peer_restrictions(freerdp_listener* listener)
 
 int shadow_server_init(rdpShadowServer* server)
 {
-	int status;
+	int status = 0;
 	winpr_InitializeSSL(WINPR_SSL_INIT_DEFAULT);
 	WTSRegisterWtsApiFunctionTable(FreeRDP_InitWtsApi());
 
@@ -997,7 +997,7 @@ int shadow_server_uninit(rdpShadowServer* server)
 
 rdpShadowServer* shadow_server_new(void)
 {
-	rdpShadowServer* server;
+	rdpShadowServer* server = NULL;
 	server = (rdpShadowServer*)calloc(1, sizeof(rdpShadowServer));
 
 	if (!server)

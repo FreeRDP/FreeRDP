@@ -8,9 +8,9 @@ int TestRdTkNinePatch(int argc, char* argv[])
 {
 	rdtkEngine* engine = NULL;
 	rdtkSurface* surface = NULL;
-	uint32_t scanline;
-	uint32_t width;
-	uint32_t height;
+	uint32_t scanline = 0;
+	uint32_t width = 0;
+	uint32_t height = 0;
 	uint8_t* data = NULL;
 	int ret = -1;
 

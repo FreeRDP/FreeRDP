@@ -41,7 +41,7 @@ static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 {
 	WINPR_ASSERT(pixelPtr);
 	const UINT32 srcPixel = FreeRDPReadColor(pixelPtr, format);
-	UINT32 dstPixel;
+	UINT32 dstPixel = 0;
 
 	switch (rop)
 	{
@@ -118,8 +118,8 @@ static BOOL gdi_rop_color(UINT32 rop, BYTE* pixelPtr, UINT32 pen, UINT32 format)
 
 BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
 {
-	INT32 e2;
-	UINT32 pen;
+	INT32 e2 = 0;
+	UINT32 pen = 0;
 
 	WINPR_ASSERT(hdc);
 	const INT32 rop2 = gdi_GetROP2(hdc);
@@ -137,10 +137,10 @@ BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
 	INT32 y = y1;
 
 	WINPR_ASSERT(hdc->clip);
-	INT32 bx1;
-	INT32 by1;
-	INT32 bx2;
-	INT32 by2;
+	INT32 bx1 = 0;
+	INT32 by1 = 0;
+	INT32 bx2 = 0;
+	INT32 by2 = 0;
 	if (hdc->clip->null)
 	{
 		bx1 = (x1 < x2) ? x1 : x2;

@@ -85,7 +85,7 @@ BOOL pollset_add(WINPR_POLL_SET* set, int fd, ULONG mode)
 {
 	WINPR_ASSERT(set);
 #ifdef WINPR_HAVE_POLL_H
-	struct pollfd* item;
+	struct pollfd* item = NULL;
 	if (set->fillIndex == set->size)
 		return FALSE;
 
@@ -121,8 +121,8 @@ int pollset_poll(WINPR_POLL_SET* set, DWORD dwMilliseconds)
 {
 	WINPR_ASSERT(set);
 	int ret = 0;
-	UINT64 dueTime;
-	UINT64 now;
+	UINT64 dueTime = 0;
+	UINT64 now = 0;
 
 	now = GetTickCount64();
 	if (dwMilliseconds == INFINITE)
@@ -131,7 +131,7 @@ int pollset_poll(WINPR_POLL_SET* set, DWORD dwMilliseconds)
 		dueTime = now + dwMilliseconds;
 
 #ifdef WINPR_HAVE_POLL_H
-	int timeout;
+	int timeout = 0;
 
 	do
 	{

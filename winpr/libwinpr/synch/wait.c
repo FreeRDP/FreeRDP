@@ -459,7 +459,7 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 		status = 0;
 		if (!autoSignaled)
 		{
-			DWORD waitTime;
+			DWORD waitTime = 0;
 
 			if (dwMilliseconds == INFINITE)
 				waitTime = INFINITE;

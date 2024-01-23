@@ -25,11 +25,11 @@
 
 state_run_t rdp_recv_heartbeat_packet(rdpRdp* rdp, wStream* s)
 {
-	BYTE reserved;
-	BYTE period;
-	BYTE count1;
-	BYTE count2;
-	BOOL rc;
+	BYTE reserved = 0;
+	BYTE period = 0;
+	BYTE count1 = 0;
+	BYTE count2 = 0;
+	BOOL rc = 0;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->context);

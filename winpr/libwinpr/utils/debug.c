@@ -178,14 +178,13 @@ void winpr_backtrace_symbols_fd(void* buffer, int fd)
 	winpr_execinfo_backtrace_symbols_fd(buffer, fd);
 #elif !defined(ANDROID)
 	{
-		size_t i;
 		size_t used = 0;
 		char** lines = winpr_backtrace_symbols(buffer, &used);
 
 		if (!lines)
 			return;
 
-		for (i = 0; i < used; i++)
+		for (size_t i = 0; i < used; i++)
 			_write(fd, lines[i], (unsigned)strnlen(lines[i], UINT32_MAX));
 		free(lines);
 	}
@@ -201,9 +200,9 @@ void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 
 void winpr_log_backtrace_ex(wLog* log, DWORD level, DWORD size)
 {
-	size_t used;
-	size_t x;
-	char** msg;
+	size_t used = 0;
+	size_t x = 0;
+	char** msg = NULL;
 	void* stack = winpr_backtrace(20);
 
 	if (!stack)

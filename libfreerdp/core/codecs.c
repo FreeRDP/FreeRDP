@@ -243,7 +243,7 @@ BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width, 
 
 rdpCodecs* codecs_new(rdpContext* context)
 {
-	rdpCodecs* codecs;
+	rdpCodecs* codecs = NULL;
 	codecs = (rdpCodecs*)calloc(1, sizeof(rdpCodecs));
 
 	if (codecs)
