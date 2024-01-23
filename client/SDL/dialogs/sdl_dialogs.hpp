@@ -47,7 +47,7 @@ int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type);
 BOOL sdl_present_gateway_message(freerdp* instance, UINT32 type, BOOL isDisplayMandatory,
                                  BOOL isConsentMandatory, size_t length, const WCHAR* message);
 
-BOOL sdl_message_dialog_show(const char* title, const char* message, Sint32 flags);
-BOOL sdl_cert_dialog_show(const char* title, const char* message);
-BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list);
-BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args);
+bool sdl_message_dialog_show(const char* title, const char* message, Sint32 flags);
+bool sdl_cert_dialog_show(const char* title, const char* message);
+bool sdl_scard_dialog_show(const char* title, Sint32 count, const char** list);
+bool sdl_auth_dialog_show(const SDL_UserAuthArg* args);

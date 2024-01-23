@@ -91,7 +91,7 @@ typedef struct
 	Sint32 result;
 } SDL_UserAuthArg;
 
-BOOL sdl_push_user_event(Uint32 type, ...);
+bool sdl_push_user_event(Uint32 type, ...);
 
 bool sdl_push_quit();
 

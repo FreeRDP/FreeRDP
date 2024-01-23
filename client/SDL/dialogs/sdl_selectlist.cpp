@@ -57,7 +57,7 @@ int SdlSelectList::run()
 	ssize_t CurrentActiveTextInput = 0;
 	bool running = true;
 
-	if (!_window || !_renderer)
+	if ((_window == nullptr) || (_renderer == nullptr))
 		return -2;
 	try
 	{
@@ -125,7 +125,7 @@ int SdlSelectList::run()
 				case SDL_MOUSEBUTTONDOWN:
 				{
 					auto button = _buttons.get_selected(event.button);
-					if (button)
+					if (button != nullptr)
 					{
 						running = false;
 						if (button->id() == INPUT_BUTTON_CANCEL)

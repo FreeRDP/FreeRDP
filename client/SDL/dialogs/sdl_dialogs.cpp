@@ -45,15 +45,15 @@ static const char* type_str_for_flags(UINT32 flags)
 {
 	const char* type = "RDP-Server";
 
-	if (flags & VERIFY_CERT_FLAG_GATEWAY)
+	if ((flags & VERIFY_CERT_FLAG_GATEWAY) != 0u)
 		type = "RDP-Gateway";
 
-	if (flags & VERIFY_CERT_FLAG_REDIRECT)
+	if ((flags & VERIFY_CERT_FLAG_REDIRECT) != 0u)
 		type = "RDP-Redirect";
 	return type;
 }
 
-static BOOL sdl_wait_for_result(rdpContext* context, Uint32 type, SDL_Event* result)
+static bool sdl_wait_for_result(rdpContext* context, Uint32 type, SDL_Event* result)
 {
 	const SDL_Event empty = { 0 };
 
@@ -65,10 +65,10 @@ static BOOL sdl_wait_for_result(rdpContext* context, Uint32 type, SDL_Event* res
 		*result = empty;
 		const int rc = SDL_PeepEvents(result, 1, SDL_GETEVENT, type, type);
 		if (rc > 0)
-			return TRUE;
+			return true;
 		Sleep(1);
 	}
-	return FALSE;
+	return false;
 }
 
 static int sdl_show_dialog(rdpContext* context, const char* title, const char* message,
@@ -102,7 +102,7 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 		case AUTH_TLS:
 		case AUTH_RDP:
 		case AUTH_SMARTCARD_PIN: /* in this case password is pin code */
-			if ((*username) && (*password))
+			if (((*username) != nullptr) && ((*password) != nullptr))
 				return TRUE;
 			break;
 		case GW_AUTH_HTTP:
@@ -290,7 +290,7 @@ int sdl_logon_error_info(freerdp* instance, UINT32 data, UINT32 type)
 	const char* str_data = freerdp_get_logon_error_info_data(data);
 	const char* str_type = freerdp_get_logon_error_info_type(type);
 
-	if (!instance || !instance->context)
+	if ((instance == nullptr) || (instance->context == nullptr))
 		return -1;
 
 	/* ignore LOGON_MSG_SESSION_CONTINUE message */
@@ -345,7 +345,7 @@ DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UIN
 	 */
 	char* new_fp_str = nullptr;
 	size_t len = 0;
-	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
+	if ((flags & VERIFY_CERT_FLAG_FP_IS_PEM) != 0u)
 	{
 		winpr_asprintf(&new_fp_str, &len,
 		               "----------- Certificate --------------\n"
@@ -361,7 +361,7 @@ DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UIN
 	 */
 	char* old_fp_str = nullptr;
 	size_t olen = 0;
-	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
+	if ((flags & VERIFY_CERT_FLAG_FP_IS_PEM) != 0u)
 	{
 		winpr_asprintf(&old_fp_str, &olen,
 		               "----------- Certificate --------------\n"
@@ -373,7 +373,7 @@ DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UIN
 		winpr_asprintf(&old_fp_str, &olen, "Thumbprint:  %s\n", old_fingerprint);
 
 	const char* collission_str = "";
-	if (flags & VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1)
+	if ((flags & VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1) != 0u)
 	{
 		collission_str =
 		    "A matching entry with legacy SHA1 was found in local known_hosts2 store.\n"
@@ -428,7 +428,7 @@ DWORD sdl_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port
 	 */
 	char* fp_str = nullptr;
 	size_t len = 0;
-	if (flags & VERIFY_CERT_FLAG_FP_IS_PEM)
+	if ((flags & VERIFY_CERT_FLAG_FP_IS_PEM) != 0u)
 	{
 		winpr_asprintf(&fp_str, &len,
 		               "----------- Certificate --------------\n"
@@ -464,7 +464,7 @@ DWORD sdl_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port
 	return rc;
 }
 
-BOOL sdl_cert_dialog_show(const char* title, const char* message)
+bool sdl_cert_dialog_show(const char* title, const char* message)
 {
 	int buttonid = -1;
 	enum
@@ -505,7 +505,7 @@ BOOL sdl_cert_dialog_show(const char* title, const char* message)
 	return sdl_push_user_event(SDL_USEREVENT_CERT_RESULT, value);
 }
 
-BOOL sdl_message_dialog_show(const char* title, const char* message, Sint32 flags)
+bool sdl_message_dialog_show(const char* title, const char* message, Sint32 flags)
 {
 	int buttonid = -1;
 	enum
@@ -518,7 +518,7 @@ BOOL sdl_message_dialog_show(const char* title, const char* message, Sint32 flag
 		{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, BUTTONID_SHOW_DENY, "cancel" }
 	};
 
-	const int button_cnt = (flags & SHOW_DIALOG_ACCEPT_REJECT) ? 2 : 1;
+	const int button_cnt = (flags & SHOW_DIALOG_ACCEPT_REJECT) != 0 ? 2 : 1;
 	const SDL_MessageBoxData data = {
 		SDL_MESSAGEBOX_WARNING, nullptr, title, message, button_cnt, buttons, nullptr
 	};
@@ -543,7 +543,7 @@ BOOL sdl_message_dialog_show(const char* title, const char* message, Sint32 flag
 	return sdl_push_user_event(SDL_USEREVENT_SHOW_RESULT, value);
 }
 
-BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
+bool sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 {
 	const std::vector<std::string> auth = { "Username:        ", "Domain:          ",
 		                                    "Password:        " };
@@ -576,13 +576,14 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 
 	if (!prompt.empty())
 	{
-		std::vector<std::string> initial{ args->user ? args->user : "Smartcard", "" };
+		std::vector<std::string> initial{ args->user != nullptr ? args->user : "Smartcard", "" };
 		std::vector<Uint32> flags = { SdlInputWidget::SDL_INPUT_READONLY,
 			                          SdlInputWidget::SDL_INPUT_MASK };
 		if (args->result != AUTH_SMARTCARD_PIN)
 		{
-			initial = { args->user ? args->user : "", args->domain ? args->domain : "",
-				        args->password ? args->password : "" };
+			initial = { args->user != nullptr ? args->user : "",
+				        args->domain != nullptr ? args->domain : "",
+				        args->password != nullptr ? args->password : "" };
 			flags = { 0, 0, SdlInputWidget::SDL_INPUT_MASK };
 		}
 		SdlInputWidgetList ilist(args->title, prompt, initial, flags);
@@ -604,7 +605,7 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 	return sdl_push_user_event(SDL_USEREVENT_AUTH_RESULT, user, domain, pwd, rc);
 }
 
-BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list)
+bool sdl_scard_dialog_show(const char* title, Sint32 count, const char** list)
 {
 	std::vector<std::string> vlist;
 	for (Sint32 x = 0; x < count; x++)

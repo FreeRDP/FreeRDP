@@ -480,9 +480,7 @@ static BOOL sdl_end_paint(rdpContext* context)
 	WINPR_ASSERT(sdl);
 
 	std::lock_guard<CriticalSection> lock(sdl->critical);
-	const BOOL rc = sdl_push_user_event(SDL_USEREVENT_UPDATE, context);
-
-	return rc;
+	return sdl_push_user_event(SDL_USEREVENT_UPDATE, context);
 }
 
 static void sdl_destroy_primary(SdlContext* sdl)

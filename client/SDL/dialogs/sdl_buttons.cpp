@@ -104,10 +104,10 @@ bool SdlButtonList::update(SDL_Renderer* renderer)
 			return false;
 	}
 
-	if (_highlighted)
+	if (_highlighted != nullptr)
 		_highlighted->highlight(renderer);
 
-	if (_mouseover)
+	if (_mouseover != nullptr)
 		_mouseover->mouseover(renderer);
 	return true;
 }

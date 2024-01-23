@@ -166,7 +166,7 @@ bool SdlInputWidget::update_input(SDL_Renderer* renderer, SDL_Color fgcolor)
 	std::string text = _text;
 	if (!text.empty())
 	{
-		if (_flags & SDL_INPUT_MASK)
+		if ((_flags & SDL_INPUT_MASK) != 0u)
 		{
 			for (size_t x = 0; x < text.length(); x++)
 				text[x] = '*';

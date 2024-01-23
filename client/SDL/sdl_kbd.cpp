@@ -366,7 +366,7 @@ BOOL sdlInput::keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 BOOL sdlInput::keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
                                        UINT32 imeConvMode)
 {
-	if (!context)
+	if (context == nullptr)
 		return FALSE;
 
 	WLog_WARN(TAG,
@@ -445,7 +445,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 					return TRUE;
 				case SDL_SCANCODE_D:
 					freerdp_abort_connect_context(_sdl->context());
-					return true;
+					return TRUE;
 				default:
 					break;
 			}
@@ -458,7 +458,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 BOOL sdlInput::keyboard_grab(Uint32 windowID, SDL_bool enable)
 {
 	SDL_Window* window = SDL_GetWindowFromID(windowID);
-	if (!window)
+	if (window == nullptr)
 		return FALSE;
 #if SDL_VERSION_ATLEAST(2, 0, 16)
 	_sdl->grab_kbd = enable;
@@ -476,7 +476,7 @@ BOOL sdlInput::mouse_focus(Uint32 windowID)
 	{
 		_lastWindowID = windowID;
 		SDL_Window* window = SDL_GetWindowFromID(windowID);
-		if (!window)
+		if (window == nullptr)
 			return FALSE;
 
 		SDL_RaiseWindow(window);
@@ -487,7 +487,7 @@ BOOL sdlInput::mouse_focus(Uint32 windowID)
 BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
 {
 	SDL_Window* window = SDL_GetWindowFromID(windowID);
-	if (!window)
+	if (window == nullptr)
 		return FALSE;
 #if SDL_VERSION_ATLEAST(2, 0, 16)
 	_sdl->grab_mouse = enable;

@@ -450,7 +450,8 @@ static BOOL ntlm_compute_ntlm_v2_hash(NTLM_CONTEXT* context, BYTE* hash)
 	else if (context->HashCallback)
 	{
 		int ret = 0;
-		SecBuffer proofValue, micValue;
+		SecBuffer proofValue = { 0 };
+		SecBuffer micValue = { 0 };
 
 		if (ntlm_computeProofValue(context, &proofValue) != SEC_E_OK)
 			return FALSE;

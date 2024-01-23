@@ -138,7 +138,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 	ssize_t LastActiveTextInput = -1;
 	ssize_t CurrentActiveTextInput = next(-1);
 
-	if (!_window || !_renderer)
+	if ((_window == nullptr) || (_renderer == nullptr))
 		return -2;
 
 	try
@@ -173,7 +173,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 						case SDLK_BACKSPACE:
 						{
 							auto cur = get(CurrentActiveTextInput);
-							if (cur)
+							if (cur != nullptr)
 							{
 								if (!cur->remove_str(_renderer, 1))
 									throw;
@@ -199,7 +199,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 								if ((pressed[0] == SDLK_LCTRL) || (pressed[0] == SDLK_RCTRL))
 								{
 									auto cur = get(CurrentActiveTextInput);
-									if (cur)
+									if (cur != nullptr)
 									{
 										auto text = SDL_GetClipboardText();
 										cur->set_str(_renderer, text);
@@ -214,7 +214,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 				case SDL_TEXTINPUT:
 				{
 					auto cur = get(CurrentActiveTextInput);
-					if (cur)
+					if (cur != nullptr)
 					{
 						if (!cur->append_str(_renderer, event.text.text))
 							throw;
@@ -246,7 +246,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 						CurrentActiveTextInput = val;
 
 					auto button = _buttons.get_selected(event.button);
-					if (button)
+					if (button != nullptr)
 					{
 						running = false;
 						if (button->id() == INPUT_BUTTON_CANCEL)
@@ -279,7 +279,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 					throw;
 			}
 			auto cur = get(CurrentActiveTextInput);
-			if (cur)
+			if (cur != nullptr)
 			{
 				if (!cur->set_highlight(_renderer, true))
 					throw;
