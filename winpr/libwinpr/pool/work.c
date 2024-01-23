@@ -127,8 +127,8 @@ VOID winpr_CloseThreadpoolWork(PTP_WORK pwk)
 
 VOID winpr_SubmitThreadpoolWork(PTP_WORK pwk)
 {
-	PTP_POOL pool;
-	PTP_CALLBACK_INSTANCE callbackInstance;
+	PTP_POOL pool = NULL;
+	PTP_CALLBACK_INSTANCE callbackInstance = NULL;
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);
 
@@ -169,8 +169,8 @@ BOOL winpr_TrySubmitThreadpoolCallback(PTP_SIMPLE_CALLBACK pfns, PVOID pv,
 
 VOID winpr_WaitForThreadpoolWorkCallbacks(PTP_WORK pwk, BOOL fCancelPendingCallbacks)
 {
-	HANDLE event;
-	PTP_POOL pool;
+	HANDLE event = NULL;
+	PTP_POOL pool = NULL;
 
 #ifdef _WIN32
 	InitOnceExecuteOnce(&init_once_module, init_module, NULL, NULL);

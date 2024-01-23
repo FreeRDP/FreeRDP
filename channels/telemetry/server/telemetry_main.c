@@ -74,10 +74,10 @@ static UINT telemetry_server_open_channel(telemetry_server* telemetry)
 {
 	TelemetryServerContext* context = &telemetry->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent;
+	HANDLE hEvent = NULL;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
-	UINT32 channelId;
+	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
 	WINPR_ASSERT(telemetry);
@@ -143,12 +143,12 @@ static UINT telemetry_server_recv_rdp_telemetry_pdu(TelemetryServerContext* cont
 
 static UINT telemetry_process_message(telemetry_server* telemetry)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
-	ULONG BytesReturned;
-	BYTE MessageId;
-	BYTE Length;
-	wStream* s;
+	ULONG BytesReturned = 0;
+	BYTE MessageId = 0;
+	BYTE Length = 0;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(telemetry);
 	WINPR_ASSERT(telemetry->telemetry_channel);
@@ -252,11 +252,11 @@ static HANDLE telemetry_server_get_channel_handle(telemetry_server* telemetry)
 
 static DWORD WINAPI telemetry_server_thread_func(LPVOID arg)
 {
-	DWORD nCount;
+	DWORD nCount = 0;
 	HANDLE events[2] = { 0 };
 	telemetry_server* telemetry = (telemetry_server*)arg;
 	UINT error = CHANNEL_RC_OK;
-	DWORD status;
+	DWORD status = 0;
 
 	WINPR_ASSERT(telemetry);
 

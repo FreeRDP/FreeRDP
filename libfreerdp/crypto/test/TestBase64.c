@@ -52,10 +52,10 @@ static const struct Encode64test encodeTests_base64url[] = {
 
 int TestBase64(int argc, char* argv[])
 {
-	int i;
+	int i = 0;
 	int testNb = 0;
-	size_t outLen;
-	BYTE* decoded;
+	size_t outLen = 0;
+	BYTE* decoded = NULL;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	testNb++;

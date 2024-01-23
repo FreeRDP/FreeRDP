@@ -60,7 +60,7 @@ struct s_rdpei_server_private
 RdpeiServerContext* rdpei_server_context_new(HANDLE vcm)
 {
 	RdpeiServerContext* ret = calloc(1, sizeof(*ret));
-	RdpeiServerPrivate* priv;
+	RdpeiServerPrivate* priv = NULL;
 
 	if (!ret)
 		return NULL;
@@ -97,9 +97,9 @@ fail:
 UINT rdpei_server_init(RdpeiServerContext* context)
 {
 	void* buffer = NULL;
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 	RdpeiServerPrivate* priv = context->priv;
-	UINT32 channelId;
+	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
 	priv->channelHandle = WTSVirtualChannelOpenEx(WTS_CURRENT_SESSION, RDPEI_DVC_CHANNEL_NAME,
@@ -153,7 +153,7 @@ void rdpei_server_context_reset(RdpeiServerContext* context)
 
 void rdpei_server_context_free(RdpeiServerContext* context)
 {
-	RdpeiServerPrivate* priv;
+	RdpeiServerPrivate* priv = NULL;
 
 	if (!context)
 		return;
@@ -311,9 +311,9 @@ static UINT read_pen_contact(RdpeiServerContext* context, wStream* s,
  */
 static UINT read_touch_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 {
-	UINT32 i;
-	RDPINPUT_CONTACT_DATA* contact;
-	UINT error;
+	UINT32 i = 0;
+	RDPINPUT_CONTACT_DATA* contact = NULL;
+	UINT error = 0;
 
 	if (!rdpei_read_2byte_unsigned(s, &frame->contactCount) ||
 	    !rdpei_read_8byte_unsigned(s, &frame->frameOffset))
@@ -344,9 +344,9 @@ static UINT read_touch_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_T
 
 static UINT read_pen_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_PEN_FRAME* frame)
 {
-	UINT32 i;
-	RDPINPUT_PEN_CONTACT* contact;
-	UINT error;
+	UINT32 i = 0;
+	RDPINPUT_PEN_CONTACT* contact = NULL;
+	UINT error = 0;
 
 	if (!rdpei_read_2byte_unsigned(s, &frame->contactCount) ||
 	    !rdpei_read_8byte_unsigned(s, &frame->frameOffset))
@@ -382,10 +382,10 @@ static UINT read_pen_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_PEN
  */
 static UINT read_touch_event(RdpeiServerContext* context, wStream* s)
 {
-	UINT16 frameCount;
-	UINT32 i;
+	UINT16 frameCount = 0;
+	UINT32 i = 0;
 	RDPINPUT_TOUCH_EVENT* event = &context->priv->touchEvent;
-	RDPINPUT_TOUCH_FRAME* frame;
+	RDPINPUT_TOUCH_FRAME* frame = NULL;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!rdpei_read_4byte_unsigned(s, &event->encodeTime) ||
@@ -424,10 +424,10 @@ out_cleanup:
 
 static UINT read_pen_event(RdpeiServerContext* context, wStream* s)
 {
-	UINT16 frameCount;
-	UINT32 i;
+	UINT16 frameCount = 0;
+	UINT32 i = 0;
 	RDPINPUT_PEN_EVENT* event = &context->priv->penEvent;
-	RDPINPUT_PEN_FRAME* frame;
+	RDPINPUT_PEN_FRAME* frame = NULL;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!rdpei_read_4byte_unsigned(s, &event->encodeTime) ||
@@ -471,7 +471,7 @@ out_cleanup:
  */
 static UINT read_dismiss_hovering_contact(RdpeiServerContext* context, wStream* s)
 {
-	BYTE contactId;
+	BYTE contactId = 0;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
@@ -493,7 +493,7 @@ static UINT read_dismiss_hovering_contact(RdpeiServerContext* context, wStream* 
  */
 UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 {
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 	RdpeiServerPrivate* priv = context->priv;
 	wStream* s = priv->inputStream;
 	UINT error = CHANNEL_RC_OK;
@@ -518,7 +518,7 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
 
 	if (priv->waitingHeaders)
 	{
-		UINT32 pduLen;
+		UINT32 pduLen = 0;
 
 		/* header case */
 		Stream_Read_UINT16(s, priv->currentMsgType);
@@ -599,7 +599,7 @@ UINT rdpei_server_handle_messages(RdpeiServerContext* context)
  */
 UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UINT32 features)
 {
-	ULONG written;
+	ULONG written = 0;
 	RdpeiServerPrivate* priv = context->priv;
 	UINT32 pduLen = 4;
 
@@ -644,7 +644,7 @@ UINT rdpei_server_send_sc_ready(RdpeiServerContext* context, UINT32 version, UIN
  */
 UINT rdpei_server_suspend(RdpeiServerContext* context)
 {
-	ULONG written;
+	ULONG written = 0;
 	RdpeiServerPrivate* priv = context->priv;
 
 	switch (priv->automataState)
@@ -687,7 +687,7 @@ UINT rdpei_server_suspend(RdpeiServerContext* context)
  */
 UINT rdpei_server_resume(RdpeiServerContext* context)
 {
-	ULONG written;
+	ULONG written = 0;
 	RdpeiServerPrivate* priv = context->priv;
 
 	switch (priv->automataState)

@@ -15,8 +15,8 @@
 static int test_gdi_ClipCoords(void)
 {
 	int rc = -1;
-	BOOL draw;
-	HGDI_DC hdc;
+	BOOL draw = 0;
+	HGDI_DC hdc = NULL;
 	HGDI_RGN rgn1 = NULL;
 	HGDI_RGN rgn2 = NULL;
 	HGDI_BITMAP bmp = NULL;
@@ -165,7 +165,7 @@ fail:
 static int test_gdi_InvalidateRegion(void)
 {
 	int rc = -1;
-	HGDI_DC hdc;
+	HGDI_DC hdc = NULL;
 	HGDI_RGN rgn1 = NULL;
 	HGDI_RGN rgn2 = NULL;
 	HGDI_RGN invalid = NULL;

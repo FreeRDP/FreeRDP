@@ -40,7 +40,7 @@
  */
 static UINT remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
 {
-	UINT32 status;
+	UINT32 status = 0;
 
 	if (!remdesk)
 	{
@@ -69,10 +69,10 @@ static UINT remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
  */
 static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 {
-	char* name;
-	char* pass;
-	const char* password;
-	rdpSettings* settings;
+	char* name = NULL;
+	char* pass = NULL;
+	const char* password = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(remdesk);
 
@@ -136,7 +136,7 @@ static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
  */
 static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
-	UINT32 ChannelNameLen;
+	UINT32 ChannelNameLen = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(header);
@@ -174,8 +174,8 @@ static UINT remdesk_read_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* head
  */
 static UINT remdesk_write_channel_header(wStream* s, REMDESK_CHANNEL_HEADER* header)
 {
-	int index;
-	UINT32 ChannelNameLen;
+	int index = 0;
+	UINT32 ChannelNameLen = 0;
 	WCHAR ChannelNameW[32] = { 0 };
 
 	WINPR_ASSERT(s);
@@ -248,8 +248,8 @@ static UINT remdesk_recv_ctl_server_announce_pdu(remdeskPlugin* remdesk, wStream
 static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s,
                                               REMDESK_CHANNEL_HEADER* header)
 {
-	UINT32 versionMajor;
-	UINT32 versionMinor;
+	UINT32 versionMajor = 0;
+	UINT32 versionMinor = 0;
 
 	WINPR_ASSERT(remdesk);
 	WINPR_ASSERT(s);
@@ -278,9 +278,9 @@ static UINT remdesk_recv_ctl_version_info_pdu(remdeskPlugin* remdesk, wStream* s
  */
 static UINT remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 {
-	wStream* s;
+	wStream* s = NULL;
 	REMDESK_CTL_VERSION_INFO_PDU pdu;
-	UINT error;
+	UINT error = 0;
 
 	WINPR_ASSERT(remdesk);
 
@@ -314,7 +314,7 @@ static UINT remdesk_send_ctl_version_info_pdu(remdeskPlugin* remdesk)
 static UINT remdesk_recv_ctl_result_pdu(remdeskPlugin* remdesk, wStream* s,
                                         REMDESK_CHANNEL_HEADER* header, UINT32* pResult)
 {
-	UINT32 result;
+	UINT32 result = 0;
 
 	WINPR_ASSERT(remdesk);
 	WINPR_ASSERT(s);
@@ -354,7 +354,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	size_t cbRaConnectionStringW = 0;
 	WCHAR* raConnectionStringW = NULL;
 	REMDESK_CTL_AUTHENTICATE_PDU pdu = { 0 };
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(remdesk);
 
@@ -417,13 +417,13 @@ out:
  */
 static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 {
-	UINT error;
-	size_t length;
+	UINT error = 0;
+	size_t length = 0;
 	wStream* s = NULL;
 	size_t cbRaConnectionStringW = 0;
 	WCHAR* raConnectionStringW = NULL;
 	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu = { 0 };
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(remdesk);
 	WINPR_ASSERT(remdesk->rdpcontext);
@@ -470,7 +470,7 @@ out:
 static UINT remdesk_send_ctl_verify_password_pdu(remdeskPlugin* remdesk)
 {
 	UINT error = ERROR_INTERNAL_ERROR;
-	wStream* s;
+	wStream* s = NULL;
 	size_t cbExpertBlobW = 0;
 	WCHAR* expertBlobW = NULL;
 	REMDESK_CTL_VERIFY_PASSWORD_PDU pdu = { 0 };
@@ -520,8 +520,8 @@ out:
  */
 static UINT remdesk_send_ctl_expert_on_vista_pdu(remdeskPlugin* remdesk)
 {
-	UINT error;
-	wStream* s;
+	UINT error = 0;
+	wStream* s = NULL;
 	REMDESK_CTL_EXPERT_ON_VISTA_PDU pdu;
 
 	WINPR_ASSERT(remdesk);
@@ -684,7 +684,7 @@ static UINT remdesk_recv_ctl_pdu(remdeskPlugin* remdesk, wStream* s, REMDESK_CHA
  */
 static UINT remdesk_process_receive(remdeskPlugin* remdesk, wStream* s)
 {
-	UINT status;
+	UINT status = 0;
 	REMDESK_CHANNEL_HEADER header;
 
 	WINPR_ASSERT(remdesk);
@@ -741,7 +741,7 @@ static UINT remdesk_virtual_channel_event_data_received(remdeskPlugin* remdesk, 
                                                         UINT32 dataLength, UINT32 totalLength,
                                                         UINT32 dataFlags)
 {
-	wStream* data_in;
+	wStream* data_in = NULL;
 
 	WINPR_ASSERT(remdesk);
 
@@ -907,7 +907,7 @@ static DWORD WINAPI remdesk_virtual_channel_client_thread(LPVOID arg)
 static UINT remdesk_virtual_channel_event_connected(remdeskPlugin* remdesk, LPVOID pData,
                                                     UINT32 dataLength)
 {
-	UINT error;
+	UINT error = 0;
 
 	WINPR_ASSERT(remdesk);
 
@@ -1045,10 +1045,10 @@ static VOID VCAPITYPE remdesk_virtual_channel_init_event_ex(LPVOID lpUserParam, 
 FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
                                                          PVOID pInitHandle))
 {
-	UINT rc;
-	remdeskPlugin* remdesk;
+	UINT rc = 0;
+	remdeskPlugin* remdesk = NULL;
 	RemdeskClientContext* context = NULL;
-	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx;
+	CHANNEL_ENTRY_POINTS_FREERDP_EX* pEntryPointsEx = NULL;
 
 	if (!pEntryPoints)
 	{

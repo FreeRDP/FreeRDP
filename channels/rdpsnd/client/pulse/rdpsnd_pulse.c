@@ -89,7 +89,7 @@ static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, const AUDI
 static void rdpsnd_pulse_get_sink_info(pa_context* c, const pa_sink_info* i, int eol,
                                        void* userdata)
 {
-	uint8_t x;
+	uint8_t x = 0;
 	UINT16 dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
 	UINT16 dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
@@ -125,13 +125,12 @@ static void rdpsnd_pulse_get_sink_info(pa_context* c, const pa_sink_info* i, int
 
 static void rdpsnd_pulse_context_state_callback(pa_context* context, void* userdata)
 {
-	pa_context_state_t state;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(pulse);
 
-	state = pa_context_get_state(context);
+	pa_context_state_t state = pa_context_get_state(context);
 
 	switch (state)
 	{
@@ -159,9 +158,9 @@ static void rdpsnd_pulse_context_state_callback(pa_context* context, void* userd
 
 static BOOL rdpsnd_pulse_connect(rdpsndDevicePlugin* device)
 {
-	BOOL rc;
-	pa_operation* o;
-	pa_context_state_t state;
+	BOOL rc = 0;
+	pa_operation* o = NULL;
+	pa_context_state_t state = PA_CONTEXT_FAILED;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
 	if (!rdpsnd_check_pulse(pulse, FALSE))
@@ -237,14 +236,13 @@ static void rdpsnd_pulse_wait_for_operation(rdpsndPulsePlugin* pulse, pa_operati
 
 static void rdpsnd_pulse_stream_state_callback(pa_stream* stream, void* userdata)
 {
-	pa_stream_state_t state;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
 
 	WINPR_ASSERT(stream);
 	if (!rdpsnd_check_pulse(pulse, TRUE))
 		return;
 
-	state = pa_stream_get_state(stream);
+	pa_stream_state_t state = pa_stream_get_state(stream);
 
 	switch (state)
 	{
@@ -365,8 +363,8 @@ static BOOL rdpsnd_pulse_context_connect(rdpsndDevicePlugin* device)
 
 static BOOL rdpsnd_pulse_open_stream(rdpsndDevicePlugin* device)
 {
-	pa_stream_state_t state;
-	pa_stream_flags_t flags;
+	pa_stream_state_t state = PA_STREAM_FAILED;
+	pa_stream_flags_t flags = PA_STREAM_NOFLAGS;
 	pa_buffer_attr buffer_attr = { 0 };
 	char ss[PA_SAMPLE_SPEC_SNPRINT_MAX] = { 0 };
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
@@ -546,7 +544,7 @@ BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, const AUDIO_FORMA
 
 static UINT32 rdpsnd_pulse_get_volume(rdpsndDevicePlugin* device)
 {
-	pa_operation* o;
+	pa_operation* o = NULL;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
 	if (!rdpsnd_check_pulse(pulse, FALSE))
@@ -574,9 +572,9 @@ static void rdpsnd_set_volume_success_cb(pa_context* c, int success, void* userd
 static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
 	pa_cvolume cv = { 0 };
-	pa_volume_t left;
-	pa_volume_t right;
-	pa_operation* operation;
+	pa_volume_t left = 0;
+	pa_volume_t right = 0;
+	pa_operation* operation = NULL;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
 	if (!rdpsnd_check_pulse(pulse, TRUE))
@@ -604,11 +602,11 @@ static BOOL rdpsnd_pulse_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 
 static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size_t size)
 {
-	size_t length;
-	void* pa_data;
-	int status;
-	pa_usec_t latency;
-	int negative;
+	size_t length = 0;
+	void* pa_data = NULL;
+	int status = 0;
+	pa_usec_t latency = 0;
+	int negative = 0;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 
 	if (!data)
@@ -656,9 +654,9 @@ static UINT rdpsnd_pulse_play(rdpsndDevicePlugin* device, const BYTE* data, size
 
 static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)
 {
-	int status;
-	DWORD flags;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	int status = 0;
+	DWORD flags = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)device;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_pulse_args[] = {
 		{ "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>", NULL, NULL, -1, NULL, "device" },
@@ -710,9 +708,9 @@ static UINT rdpsnd_pulse_parse_addin_args(rdpsndDevicePlugin* device, const ADDI
 FREERDP_ENTRY_POINT(UINT pulse_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args;
-	rdpsndPulsePlugin* pulse;
-	UINT ret;
+	const ADDIN_ARGV* args = NULL;
+	rdpsndPulsePlugin* pulse = NULL;
+	UINT ret = 0;
 
 	WINPR_ASSERT(pEntryPoints);
 

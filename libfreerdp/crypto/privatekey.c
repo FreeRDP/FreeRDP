@@ -121,7 +121,7 @@ fail:
 static EVP_PKEY* evp_pkey_utils_from_pem(const char* data, size_t len, BOOL fromFile)
 {
 	EVP_PKEY* evp = NULL;
-	BIO* bio;
+	BIO* bio = NULL;
 	if (fromFile)
 		bio = BIO_new_file(data, "rb");
 	else

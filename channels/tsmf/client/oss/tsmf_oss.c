@@ -131,7 +131,7 @@ static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 static BOOL tsmf_oss_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UINT32 channels,
                                 UINT32 bits_per_sample)
 {
-	int tmp;
+	int tmp = 0;
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
 
 	if (oss == NULL || oss->pcm_handle == -1)
@@ -167,8 +167,8 @@ static BOOL tsmf_oss_set_format(ITSMFAudioDevice* audio, UINT32 sample_rate, UIN
 
 static BOOL tsmf_oss_play(ITSMFAudioDevice* audio, const BYTE* data, UINT32 data_size)
 {
-	int status;
-	UINT32 offset;
+	int status = 0;
+	UINT32 offset = 0;
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
 	DEBUG_TSMF("tsmf_oss_play: data_size %" PRIu32 "", data_size);
 

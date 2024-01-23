@@ -45,8 +45,8 @@
 
 static IWTSVirtualChannel* get_channel(IUDEVMAN* idevman)
 {
-	IWTSVirtualChannelManager* channel_mgr;
-	URBDRC_PLUGIN* urbdrc;
+	IWTSVirtualChannelManager* channel_mgr = NULL;
+	URBDRC_PLUGIN* urbdrc = NULL;
 
 	if (!idevman)
 		return NULL;
@@ -66,11 +66,11 @@ static IWTSVirtualChannel* get_channel(IUDEVMAN* idevman)
 
 static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 {
-	char* p;
-	char* path;
+	char* p = NULL;
+	char* path = NULL;
 	UINT8 containerId[17] = { 0 };
-	UINT16 idVendor;
-	UINT16 idProduct;
+	UINT16 idVendor = 0;
+	UINT16 idProduct = 0;
 	idVendor = (UINT16)pdev->query_device_descriptor(pdev, ID_VENDOR);
 	idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
 	path = pdev->getPath(pdev);
@@ -118,10 +118,10 @@ static int func_instance_id_generate(IUDEVICE* pdev, char* strInstanceId, size_t
 static UINT urbdrc_process_capability_request(GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                               UINT32 MessageId)
 {
-	UINT32 InterfaceId;
-	UINT32 Version;
-	UINT32 out_size;
-	wStream* out;
+	UINT32 InterfaceId = 0;
+	UINT32 Version = 0;
+	UINT32 out_size = 0;
+	wStream* out = NULL;
 
 	if (!callback || !s)
 		return ERROR_INVALID_PARAMETER;
@@ -156,13 +156,13 @@ static UINT urbdrc_process_capability_request(GENERIC_CHANNEL_CALLBACK* callback
 static UINT urbdrc_process_channel_create(GENERIC_CHANNEL_CALLBACK* callback, wStream* s,
                                           UINT32 MessageId)
 {
-	UINT32 InterfaceId;
-	UINT32 out_size;
-	UINT32 MajorVersion;
-	UINT32 MinorVersion;
-	UINT32 Capabilities;
-	wStream* out;
-	URBDRC_PLUGIN* urbdrc;
+	UINT32 InterfaceId = 0;
+	UINT32 out_size = 0;
+	UINT32 MajorVersion = 0;
+	UINT32 MinorVersion = 0;
+	UINT32 Capabilities = 0;
+	wStream* out = NULL;
+	URBDRC_PLUGIN* urbdrc = NULL;
 
 	if (!callback || !s || !callback->plugin)
 		return ERROR_INVALID_PARAMETER;
@@ -224,21 +224,21 @@ static UINT urdbrc_send_virtual_channel_add(IWTSPlugin* plugin, IWTSVirtualChann
  */
 static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEVICE* pdev)
 {
-	wStream* out;
-	UINT32 InterfaceId;
+	wStream* out = NULL;
+	UINT32 InterfaceId = 0;
 	char HardwareIds[2][DEVICE_HARDWARE_ID_SIZE] = { { 0 } };
 	char CompatibilityIds[3][DEVICE_COMPATIBILITY_ID_SIZE] = { { 0 } };
 	char strContainerId[DEVICE_CONTAINER_STR_SIZE] = { 0 };
 	char strInstanceId[DEVICE_INSTANCE_STR_SIZE] = { 0 };
 	const char* composite_str = "USB\\COMPOSITE";
 	const size_t composite_len = 13;
-	size_t size;
+	size_t size = 0;
 	size_t CompatibilityIdLen[3];
 	size_t HardwareIdsLen[2];
-	size_t ContainerIdLen;
-	size_t InstanceIdLen;
-	size_t cchCompatIds;
-	UINT32 bcdUSB;
+	size_t ContainerIdLen = 0;
+	size_t InstanceIdLen = 0;
+	size_t cchCompatIds = 0;
+	UINT32 bcdUSB = 0;
 	InterfaceId = ((STREAM_ID_PROXY << 30) | CLIENT_DEVICE_SINK);
 	/* USB kernel driver detach!! */
 	pdev->detach_kernel_driver(pdev);
@@ -381,9 +381,9 @@ fail:
  */
 static UINT urbdrc_exchange_capabilities(GENERIC_CHANNEL_CALLBACK* callback, wStream* data)
 {
-	UINT32 MessageId;
-	UINT32 FunctionId;
-	UINT32 InterfaceId;
+	UINT32 MessageId = 0;
+	UINT32 FunctionId = 0;
+	UINT32 InterfaceId = 0;
 	UINT error = CHANNEL_RC_OK;
 
 	if (!data)
@@ -510,11 +510,11 @@ fail:
  */
 static UINT urbdrc_process_channel_notification(GENERIC_CHANNEL_CALLBACK* callback, wStream* data)
 {
-	UINT32 MessageId;
-	UINT32 FunctionId;
-	UINT32 InterfaceId;
+	UINT32 MessageId = 0;
+	UINT32 FunctionId = 0;
+	UINT32 InterfaceId = 0;
 	UINT error = CHANNEL_RC_OK;
-	URBDRC_PLUGIN* urbdrc;
+	URBDRC_PLUGIN* urbdrc = NULL;
 
 	if (!callback || !data)
 		return ERROR_INVALID_PARAMETER;
@@ -561,9 +561,9 @@ static UINT urbdrc_process_channel_notification(GENERIC_CHANNEL_CALLBACK* callba
 static UINT urbdrc_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
-	URBDRC_PLUGIN* urbdrc;
-	IUDEVMAN* udevman;
-	UINT32 InterfaceId;
+	URBDRC_PLUGIN* urbdrc = NULL;
+	IUDEVMAN* udevman = NULL;
+	UINT32 InterfaceId = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
 
 	if (callback == NULL)
@@ -649,7 +649,7 @@ static UINT urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCall
                                              IWTSVirtualChannelCallback** ppCallback)
 {
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
-	GENERIC_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback = NULL;
 
 	if (!ppCallback)
 		return ERROR_INVALID_PARAMETER;
@@ -675,9 +675,9 @@ static UINT urbdrc_on_new_channel_connection(IWTSListenerCallback* pListenerCall
  */
 static UINT urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelManager* pChannelMgr)
 {
-	UINT status;
+	UINT status = 0;
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)pPlugin;
-	IUDEVMAN* udevman;
+	IUDEVMAN* udevman = NULL;
 	char channelName[sizeof(URBDRC_CHANNEL_NAME)] = { URBDRC_CHANNEL_NAME };
 
 	if (!urbdrc || !urbdrc->udevman)
@@ -722,7 +722,7 @@ static UINT urbdrc_plugin_initialize(IWTSPlugin* pPlugin, IWTSVirtualChannelMana
 static UINT urbdrc_plugin_terminated(IWTSPlugin* pPlugin)
 {
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)pPlugin;
-	IUDEVMAN* udevman;
+	IUDEVMAN* udevman = NULL;
 
 	if (!urbdrc)
 		return ERROR_INVALID_DATA;
@@ -769,7 +769,7 @@ static BOOL urbdrc_register_udevman_addin(IWTSPlugin* pPlugin, IUDEVMAN* udevman
 static UINT urbdrc_load_udevman_addin(IWTSPlugin* pPlugin, LPCSTR name, const ADDIN_ARGV* args)
 {
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)pPlugin;
-	PFREERDP_URBDRC_DEVICE_ENTRY entry;
+	PFREERDP_URBDRC_DEVICE_ENTRY entry = NULL;
 	FREERDP_URBDRC_SERVICE_ENTRY_POINTS entryPoints;
 	entry = (PFREERDP_URBDRC_DEVICE_ENTRY)freerdp_load_channel_addin_entry(URBDRC_CHANNEL_NAME,
 	                                                                       name, NULL, 0);
@@ -804,7 +804,7 @@ static BOOL urbdrc_set_subsystem(URBDRC_PLUGIN* urbdrc, const char* subsystem)
  */
 static UINT urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, const ADDIN_ARGV* args)
 {
-	int status;
+	int status = 0;
 	COMMAND_LINE_ARGUMENT_A urbdrc_args[] = {
 		{ "dbg", COMMAND_LINE_VALUE_FLAG, "", NULL, BoolValueFalse, -1, NULL, "debug" },
 		{ "sys", COMMAND_LINE_VALUE_REQUIRED, "<subsystem>", NULL, NULL, -1, NULL, "subsystem" },
@@ -817,7 +817,7 @@ static UINT urbdrc_process_addin_args(URBDRC_PLUGIN* urbdrc, const ADDIN_ARGV* a
 
 	const DWORD flags =
 	    COMMAND_LINE_SIGIL_NONE | COMMAND_LINE_SEPARATOR_COLON | COMMAND_LINE_IGN_UNKNOWN_KEYWORD;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	status =
 	    CommandLineParseArgumentsA(args->argc, args->argv, urbdrc_args, flags, urbdrc, NULL, NULL);
 
@@ -853,8 +853,8 @@ BOOL add_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum, UINT1
                 UINT16 idProduct)
 {
 	size_t success = 0;
-	URBDRC_PLUGIN* urbdrc;
-	UINT32 mask;
+	URBDRC_PLUGIN* urbdrc = NULL;
+	UINT32 mask = 0;
 	UINT32 regflags = 0;
 
 	if (!idevman)
@@ -887,7 +887,7 @@ BOOL del_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum, UINT1
                 UINT16 idProduct)
 {
 	IUDEVICE* pdev = NULL;
-	URBDRC_PLUGIN* urbdrc;
+	URBDRC_PLUGIN* urbdrc = NULL;
 
 	if (!idevman)
 		return FALSE;
@@ -953,8 +953,8 @@ BOOL del_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum, UINT1
 FREERDP_ENTRY_POINT(UINT urbdrc_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	UINT status = 0;
-	const ADDIN_ARGV* args;
-	URBDRC_PLUGIN* urbdrc;
+	const ADDIN_ARGV* args = NULL;
+	URBDRC_PLUGIN* urbdrc = NULL;
 	urbdrc = (URBDRC_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, URBDRC_CHANNEL_NAME);
 	args = pEntryPoints->GetPluginData(pEntryPoints);
 
@@ -998,7 +998,7 @@ fail:
 
 UINT stream_write_and_free(IWTSPlugin* plugin, IWTSVirtualChannel* channel, wStream* out)
 {
-	UINT rc;
+	UINT rc = 0;
 	URBDRC_PLUGIN* urbdrc = (URBDRC_PLUGIN*)plugin;
 
 	if (!out)

@@ -6,8 +6,8 @@
 static BOOL test_alloc(void)
 {
 	BOOL rc = FALSE;
-	int rng;
-	int x;
+	int rng = 0;
+	int x = 0;
 	const char* param[] = { "foo:", "bar", "bla", "rdp", NULL };
 	ADDIN_ARGV* arg1 = NULL;
 	ADDIN_ARGV* arg2 = NULL;
@@ -59,7 +59,7 @@ fail:
 
 static BOOL test_clone(void)
 {
-	int x;
+	int x = 0;
 	BOOL rc = FALSE;
 	const char* param[] = { "foo:", "bar", "bla", "rdp" };
 	ADDIN_ARGV* arg = NULL;
@@ -95,8 +95,8 @@ fail:
 
 static BOOL test_add_remove(void)
 {
-	size_t x;
-	size_t y;
+	size_t x = 0;
+	size_t y = 0;
 	const char* args[] = { "foo", "bar", "bla", "gaga" };
 	BOOL rc = FALSE;
 	ADDIN_ARGV* arg = NULL;
@@ -150,7 +150,7 @@ fail:
 
 static BOOL test_set_argument(void)
 {
-	int ret;
+	int ret = 0;
 	const char* newarg = "foobar";
 	const char* args[] = { "foo", "bar", "bla", "gaga" };
 	BOOL rc = FALSE;
@@ -188,7 +188,7 @@ fail:
 
 static BOOL test_replace_argument(void)
 {
-	int ret;
+	int ret = 0;
 	const char* newarg = "foobar";
 	const char* args[] = { "foo", "bar", "bla", "gaga" };
 	BOOL rc = FALSE;
@@ -229,7 +229,7 @@ fail:
 
 static BOOL test_set_argument_value(void)
 {
-	int ret;
+	int ret = 0;
 	const char* newarg1 = "foobar";
 	const char* newarg2 = "lalala";
 	const char* fullnewarg1 = "foo:foobar";
@@ -277,7 +277,7 @@ fail:
 
 static BOOL test_replace_argument_value(void)
 {
-	int ret;
+	int ret = 0;
 	const char* newarg1 = "foobar";
 	const char* newarg2 = "lalala";
 	const char* fullnewarg1 = "foo:foobar";

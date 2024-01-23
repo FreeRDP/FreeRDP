@@ -51,9 +51,9 @@ static BOOL WLog_ConsoleAppender_Close(wLog* log, wLogAppender* appender)
 static BOOL WLog_ConsoleAppender_WriteMessage(wLog* log, wLogAppender* appender,
                                               wLogMessage* message)
 {
-	FILE* fp;
+	FILE* fp = NULL;
 	char prefix[WLOG_MAX_PREFIX_SIZE] = { 0 };
-	wLogConsoleAppender* consoleAppender;
+	wLogConsoleAppender* consoleAppender = NULL;
 	if (!appender)
 		return FALSE;
 
@@ -144,8 +144,8 @@ static BOOL WLog_ConsoleAppender_WriteDataMessage(wLog* log, wLogAppender* appen
 #if defined(ANDROID)
 	return FALSE;
 #else
-	int DataId;
-	char* FullFileName;
+	int DataId = 0;
+	char* FullFileName = NULL;
 
 	DataId = g_DataId++;
 	FullFileName = WLog_Message_GetOutputFileName(DataId, "dat");
@@ -166,8 +166,8 @@ static BOOL WLog_ConsoleAppender_WriteImageMessage(wLog* log, wLogAppender* appe
 #if defined(ANDROID)
 	return FALSE;
 #else
-	int ImageId;
-	char* FullFileName;
+	int ImageId = 0;
+	char* FullFileName = NULL;
 
 	ImageId = g_ImageId++;
 	FullFileName = WLog_Message_GetOutputFileName(ImageId, "bmp");
@@ -189,7 +189,7 @@ static BOOL WLog_ConsoleAppender_WritePacketMessage(wLog* log, wLogAppender* app
 #if defined(ANDROID)
 	return FALSE;
 #else
-	char* FullFileName;
+	char* FullFileName = NULL;
 
 	g_PacketId++;
 
@@ -247,7 +247,7 @@ static void WLog_ConsoleAppender_Free(wLogAppender* appender)
 
 wLogAppender* WLog_ConsoleAppender_New(wLog* log)
 {
-	wLogConsoleAppender* ConsoleAppender;
+	wLogConsoleAppender* ConsoleAppender = NULL;
 
 	ConsoleAppender = (wLogConsoleAppender*)calloc(1, sizeof(wLogConsoleAppender));
 

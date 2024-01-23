@@ -135,7 +135,7 @@ BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const void* input, void
 	return winpr_int_rc4_update(ctx->ictx, length, input, output);
 #elif defined(WITH_OPENSSL)
 	WINPR_ASSERT(ctx->ctx);
-	int outputLength;
+	int outputLength = 0;
 	if (length > INT_MAX)
 		return FALSE;
 
@@ -471,9 +471,9 @@ WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const void* key, const vo
 {
 	WINPR_CIPHER_CTX* ctx = NULL;
 #if defined(WITH_OPENSSL)
-	int operation;
-	const EVP_CIPHER* evp;
-	EVP_CIPHER_CTX* octx;
+	int operation = 0;
+	const EVP_CIPHER* evp = NULL;
+	EVP_CIPHER_CTX* octx = NULL;
 
 	if (!(evp = winpr_openssl_get_evp_cipher(cipher)))
 		return NULL;
@@ -625,8 +625,8 @@ int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, cons
 	 * https://www.openssl.org/docs/manmaster/crypto/EVP_BytesToKey.html
 	 */
 #if defined(WITH_OPENSSL)
-	const EVP_MD* evp_md;
-	const EVP_CIPHER* evp_cipher;
+	const EVP_MD* evp_md = NULL;
+	const EVP_CIPHER* evp_cipher = NULL;
 	evp_md = winpr_openssl_get_evp_md((WINPR_MD_TYPE)md);
 	evp_cipher = winpr_openssl_get_evp_cipher(cipher);
 	return EVP_BytesToKey(evp_cipher, evp_md, salt, data, datal, count, key, iv);

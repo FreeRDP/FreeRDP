@@ -204,7 +204,7 @@ static INLINE UINT32 ExtractCodeId(BYTE bOrderHdr)
  */
 static UINT ExtractRunLengthRegularFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
 {
-	UINT runLength;
+	UINT runLength = 0;
 
 	WINPR_ASSERT(pbOrderHdr);
 	WINPR_ASSERT(pbEnd);
@@ -229,7 +229,7 @@ static UINT ExtractRunLengthRegularFgBg(const BYTE* pbOrderHdr, const BYTE* pbEn
 
 static UINT ExtractRunLengthLiteFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
 {
-	UINT runLength;
+	UINT runLength = 0;
 
 	WINPR_ASSERT(pbOrderHdr);
 	WINPR_ASSERT(pbEnd);
@@ -254,7 +254,7 @@ static UINT ExtractRunLengthLiteFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, 
 
 static UINT ExtractRunLengthRegular(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
 {
-	UINT runLength;
+	UINT runLength = 0;
 
 	WINPR_ASSERT(pbOrderHdr);
 	WINPR_ASSERT(pbEnd);
@@ -277,7 +277,7 @@ static UINT ExtractRunLengthRegular(const BYTE* pbOrderHdr, const BYTE* pbEnd, U
 
 static UINT ExtractRunLengthMegaMega(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
 {
-	UINT runLength;
+	UINT runLength = 0;
 
 	WINPR_ASSERT(pbOrderHdr);
 	WINPR_ASSERT(pbEnd);
@@ -297,7 +297,7 @@ static UINT ExtractRunLengthMegaMega(const BYTE* pbOrderHdr, const BYTE* pbEnd, 
 
 static UINT ExtractRunLengthLite(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
 {
-	UINT runLength;
+	UINT runLength = 0;
 
 	WINPR_ASSERT(pbOrderHdr);
 	WINPR_ASSERT(pbEnd);
@@ -532,9 +532,9 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
                             UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
                             const gdiPalette* palette)
 {
-	UINT32 scanline;
-	UINT32 SrcFormat;
-	UINT32 BufferSize;
+	UINT32 scanline = 0;
+	UINT32 SrcFormat = 0;
+	UINT32 BufferSize = 0;
 
 	if (!interleaved || !pSrcData || !pDstData)
 	{
@@ -638,8 +638,8 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstDat
                           UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* palette,
                           UINT32 bpp)
 {
-	BOOL status;
-	wStream* s;
+	BOOL status = 0;
+	wStream* s = NULL;
 	UINT32 DstFormat = 0;
 	const UINT32 maxSize = 64 * 64 * 4;
 
@@ -715,7 +715,7 @@ BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved)
 
 BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 {
-	BITMAP_INTERLEAVED_CONTEXT* interleaved;
+	BITMAP_INTERLEAVED_CONTEXT* interleaved = NULL;
 	interleaved = (BITMAP_INTERLEAVED_CONTEXT*)winpr_aligned_recalloc(
 	    NULL, 1, sizeof(BITMAP_INTERLEAVED_CONTEXT), 32);
 

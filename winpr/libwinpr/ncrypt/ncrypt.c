@@ -99,12 +99,12 @@ SECURITY_STATUS winpr_NCryptDefault_dtor(NCRYPT_HANDLE handle)
 SECURITY_STATUS NCryptEnumStorageProviders(DWORD* wProviderCount,
                                            NCryptProviderName** ppProviderList, DWORD dwFlags)
 {
-	NCryptProviderName* ret;
+	NCryptProviderName* ret = NULL;
 	size_t stringAllocSize = 0;
 #ifdef WITH_PKCS11
-	LPWSTR strPtr;
+	LPWSTR strPtr = NULL;
 	static const WCHAR emptyComment[] = { 0 };
-	size_t copyAmount;
+	size_t copyAmount = 0;
 #endif
 
 	*wProviderCount = 0;
@@ -169,7 +169,7 @@ SECURITY_STATUS winpr_NCryptOpenStorageProviderEx(NCRYPT_PROV_HANDLE* phProvider
 SECURITY_STATUS NCryptEnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR pszScope,
                                NCryptKeyName** ppKeyName, PVOID* ppEnumState, DWORD dwFlags)
 {
-	SECURITY_STATUS ret;
+	SECURITY_STATUS ret = 0;
 	NCryptBaseProvider* provider = (NCryptBaseProvider*)hProvider;
 
 	ret = checkNCryptHandle((NCRYPT_HANDLE)hProvider, WINPR_NCRYPT_PROVIDER);
@@ -182,7 +182,7 @@ SECURITY_STATUS NCryptEnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR pszScope,
 SECURITY_STATUS NCryptOpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY_HANDLE* phKey,
                               LPCWSTR pszKeyName, DWORD dwLegacyKeySpec, DWORD dwFlags)
 {
-	SECURITY_STATUS ret;
+	SECURITY_STATUS ret = 0;
 	NCryptBaseProvider* provider = (NCryptBaseProvider*)hProvider;
 
 	ret = checkNCryptHandle((NCRYPT_HANDLE)hProvider, WINPR_NCRYPT_PROVIDER);
@@ -219,8 +219,8 @@ static NCryptKeyGetPropertyEnum propertyStringToEnum(LPCWSTR pszProperty)
 SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty, PBYTE pbOutput,
                                   DWORD cbOutput, DWORD* pcbResult, DWORD dwFlags)
 {
-	NCryptKeyGetPropertyEnum property;
-	NCryptBaseHandle* base;
+	NCryptKeyGetPropertyEnum property = NCRYPT_PROPERTY_UNKNOWN;
+	NCryptBaseHandle* base = NULL;
 
 	if (!hObject)
 		return ERROR_INVALID_PARAMETER;
@@ -238,7 +238,7 @@ SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty, PB
 
 SECURITY_STATUS NCryptFreeObject(NCRYPT_HANDLE hObject)
 {
-	NCryptBaseHandle* base;
+	NCryptBaseHandle* base = NULL;
 	SECURITY_STATUS ret = checkNCryptHandle((NCRYPT_HANDLE)hObject, WINPR_NCRYPT_INVALID);
 	if (ret != ERROR_SUCCESS)
 		return ret;

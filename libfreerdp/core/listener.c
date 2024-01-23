@@ -128,13 +128,13 @@ static BOOL freerdp_listener_open_from_vsock(freerdp_listener* instance, const c
 static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_address, UINT16 port)
 {
 	int ai_flags = 0;
-	int status;
-	int sockfd;
+	int status = 0;
+	int sockfd = 0;
 	char addr[64];
-	void* sin_addr;
-	int option_value;
-	struct addrinfo* ai;
-	struct addrinfo* res;
+	void* sin_addr = NULL;
+	int option_value = 0;
+	struct addrinfo* ai = NULL;
+	struct addrinfo* res = NULL;
 	rdpListener* listener = (rdpListener*)instance->listener;
 #ifdef _WIN32
 	u_long arg;
@@ -237,11 +237,11 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* path)
 {
 #ifndef _WIN32
-	int status;
-	int sockfd;
+	int status = 0;
+	int sockfd = 0;
 	struct sockaddr_un addr = { 0 };
 	rdpListener* listener = (rdpListener*)instance->listener;
-	HANDLE hevent;
+	HANDLE hevent = NULL;
 
 	if (listener->num_sockfds == MAX_LISTENER_HANDLES)
 	{
@@ -330,7 +330,7 @@ static BOOL freerdp_listener_open_from_socket(freerdp_listener* instance, int fd
 
 static void freerdp_listener_close(freerdp_listener* instance)
 {
-	int i;
+	int i = 0;
 	rdpListener* listener = (rdpListener*)instance->listener;
 
 	for (i = 0; i < listener->num_sockfds; i++)
@@ -345,7 +345,7 @@ static void freerdp_listener_close(freerdp_listener* instance)
 #if defined(WITH_FREERDP_DEPRECATED)
 static BOOL freerdp_listener_get_fds(freerdp_listener* instance, void** rfds, int* rcount)
 {
-	int index;
+	int index = 0;
 	rdpListener* listener = (rdpListener*)instance->listener;
 
 	if (listener->num_sockfds < 1)
@@ -364,7 +364,7 @@ static BOOL freerdp_listener_get_fds(freerdp_listener* instance, void** rfds, in
 static DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HANDLE* events,
                                                 DWORD nCount)
 {
-	int index;
+	int index = 0;
 	rdpListener* listener = (rdpListener*)instance->listener;
 
 	if (listener->num_sockfds < 1)
@@ -506,8 +506,8 @@ static BOOL freerdp_listener_check_fds(freerdp_listener* instance)
 
 freerdp_listener* freerdp_listener_new(void)
 {
-	freerdp_listener* instance;
-	rdpListener* listener;
+	freerdp_listener* instance = NULL;
+	rdpListener* listener = NULL;
 	instance = (freerdp_listener*)calloc(1, sizeof(freerdp_listener));
 
 	if (!instance)

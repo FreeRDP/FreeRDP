@@ -27,10 +27,10 @@
 
 BOOL shadow_client_init_lobby(rdpShadowServer* server)
 {
-	int width;
-	int height;
-	rdtkEngine* engine;
-	rdtkSurface* surface;
+	int width = 0;
+	int height = 0;
+	rdtkEngine* engine = NULL;
+	rdtkSurface* surface = NULL;
 	RECTANGLE_16 invalidRect;
 	rdpShadowSurface* lobby = server->lobby;
 

@@ -49,7 +49,7 @@ UINT32 audio_format_compute_time_length(const AUDIO_FORMAT* format, size_t size)
 
 		if (format->wFormatTag == WAVE_FORMAT_GSM610)
 		{
-			UINT16 nSamplesPerBlock;
+			UINT16 nSamplesPerBlock = 0;
 
 			if ((format->cbSize == 2) && (format->data))
 			{
@@ -130,8 +130,8 @@ void audio_format_print(wLog* log, DWORD level, const AUDIO_FORMAT* format)
 
 void audio_formats_print(wLog* log, DWORD level, const AUDIO_FORMAT* formats, UINT16 count)
 {
-	UINT16 index;
-	const AUDIO_FORMAT* format;
+	UINT16 index = 0;
+	const AUDIO_FORMAT* format = NULL;
 
 	if (formats)
 	{
@@ -288,7 +288,7 @@ void audio_format_free(AUDIO_FORMAT* format)
 
 void audio_formats_free(AUDIO_FORMAT* formats, size_t count)
 {
-	size_t index;
+	size_t index = 0;
 
 	if (formats)
 	{

@@ -13,9 +13,9 @@ static DWORD WINAPI test_thread(LPVOID arg)
 
 int TestSynchThread(int argc, char* argv[])
 {
-	DWORD rc;
-	HANDLE thread;
-	int i;
+	DWORD rc = 0;
+	HANDLE thread = NULL;
+	int i = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

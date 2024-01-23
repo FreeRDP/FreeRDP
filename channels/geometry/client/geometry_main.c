@@ -65,14 +65,14 @@ static void freerdp_rgndata_reset(FREERDP_RGNDATA* data)
 
 static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERDP_RGNDATA* rgndata)
 {
-	UINT32 dwSize;
-	UINT32 iType;
-	INT32 right;
-	INT32 bottom;
-	INT32 x;
-	INT32 y;
-	INT32 w;
-	INT32 h;
+	UINT32 dwSize = 0;
+	UINT32 iType = 0;
+	INT32 right = 0;
+	INT32 bottom = 0;
+	INT32 x = 0;
+	INT32 y = 0;
+	INT32 w = 0;
+	INT32 h = 0;
 
 	if (len < 32)
 	{
@@ -122,7 +122,7 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
 
 	if (rgndata->nRectCount)
 	{
-		UINT32 i;
+		UINT32 i = 0;
 		RDP_RECT* tmp = realloc(rgndata->rects, rgndata->nRectCount * sizeof(RDP_RECT));
 
 		if (!tmp)
@@ -162,16 +162,16 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
  */
 static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
-	UINT32 length;
-	UINT32 cbGeometryBuffer;
-	MAPPED_GEOMETRY* mappedGeometry;
-	GEOMETRY_PLUGIN* geometry;
-	GeometryClientContext* context;
+	UINT32 length = 0;
+	UINT32 cbGeometryBuffer = 0;
+	MAPPED_GEOMETRY* mappedGeometry = NULL;
+	GEOMETRY_PLUGIN* geometry = NULL;
+	GeometryClientContext* context = NULL;
 	UINT ret = CHANNEL_RC_OK;
-	UINT32 updateType;
-	UINT32 geometryType;
-	UINT64 id;
-	wLog* logger;
+	UINT32 updateType = 0;
+	UINT32 geometryType = 0;
+	UINT64 id = 0;
+	wLog* logger = NULL;
 
 	geometry = (GEOMETRY_PLUGIN*)callback->plugin;
 	logger = geometry->base.log;
@@ -340,7 +340,7 @@ static const IWTSVirtualChannelCallback geometry_callbacks = { geometry_on_data_
 
 static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdpSettings* settings)
 {
-	GeometryClientContext* context;
+	GeometryClientContext* context = NULL;
 	GEOMETRY_PLUGIN* geometry = (GEOMETRY_PLUGIN*)base;
 
 	WINPR_ASSERT(base);

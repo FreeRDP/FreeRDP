@@ -66,9 +66,9 @@ static INLINE void StreamPool_Unlock(wStreamPool* pool)
 static BOOL StreamPool_EnsureCapacity(wStreamPool* pool, size_t count, BOOL usedOrAvailable)
 {
 	size_t new_cap = 0;
-	size_t* cap;
-	size_t* size;
-	wStream*** array;
+	size_t* cap = NULL;
+	size_t* size = NULL;
+	wStream*** array = NULL;
 
 	WINPR_ASSERT(pool);
 
@@ -84,7 +84,7 @@ static BOOL StreamPool_EnsureCapacity(wStreamPool* pool, size_t count, BOOL used
 
 	if (new_cap > 0)
 	{
-		wStream** new_arr;
+		wStream** new_arr = NULL;
 
 		if (*cap < *size + count)
 			*cap += count;
@@ -143,7 +143,7 @@ static void StreamPool_AddUsed(wStreamPool* pool, wStream* s)
 
 static void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 {
-	size_t index;
+	size_t index = 0;
 	BOOL found = FALSE;
 
 	WINPR_ASSERT(pool);
@@ -192,8 +192,8 @@ static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index, INT64 cou
 
 wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 {
-	size_t index;
-	SSIZE_T foundIndex;
+	size_t index = 0;
+	SSIZE_T foundIndex = 0;
 	wStream* s = NULL;
 
 	StreamPool_Lock(pool);
@@ -311,7 +311,7 @@ void Stream_Release(wStream* s)
 
 wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
 {
-	size_t index;
+	size_t index = 0;
 	wStream* s = NULL;
 	BOOL found = FALSE;
 

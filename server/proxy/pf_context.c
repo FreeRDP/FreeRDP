@@ -103,7 +103,7 @@ static void HashStaticChannelContext_free(void* ptr)
 static void client_to_proxy_context_free(freerdp_peer* client, rdpContext* ctx);
 static BOOL client_to_proxy_context_new(freerdp_peer* client, rdpContext* ctx)
 {
-	wObject* obj;
+	wObject* obj = NULL;
 	pServerContext* context = (pServerContext*)ctx;
 
 	WINPR_ASSERT(client);
@@ -225,7 +225,7 @@ void intercept_context_entry_free(void* obj)
 BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src)
 {
 	BOOL rc = FALSE;
-	rdpSettings* before_copy;
+	rdpSettings* before_copy = NULL;
 	const FreeRDP_Settings_Keys_String to_revert[] = { FreeRDP_ConfigPath,
 		                                               FreeRDP_CertificateName };
 
@@ -273,8 +273,8 @@ out_fail:
 pClientContext* pf_context_create_client_context(const rdpSettings* clientSettings)
 {
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints;
-	pClientContext* pc;
-	rdpContext* context;
+	pClientContext* pc = NULL;
+	rdpContext* context = NULL;
 
 	WINPR_ASSERT(clientSettings);
 
@@ -298,8 +298,8 @@ error:
 proxyData* proxy_data_new(void)
 {
 	BYTE temp[16];
-	char* hex;
-	proxyData* pdata;
+	char* hex = NULL;
+	proxyData* pdata = NULL;
 
 	pdata = calloc(1, sizeof(proxyData));
 	if (!pdata)

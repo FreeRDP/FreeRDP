@@ -42,8 +42,8 @@
 
 BOOL freerdp_addin_argv_add_argument_ex(ADDIN_ARGV* args, const char* argument, size_t len)
 {
-	char* str;
-	char** new_argv;
+	char* str = NULL;
+	char** new_argv = NULL;
 
 	if (!args || !argument)
 		return FALSE;
@@ -73,7 +73,7 @@ BOOL freerdp_addin_argv_add_argument(ADDIN_ARGV* args, const char* argument)
 
 BOOL freerdp_addin_argv_del_argument(ADDIN_ARGV* args, const char* argument)
 {
-	int x;
+	int x = 0;
 	if (!args || !argument)
 		return FALSE;
 	for (x = 0; x < args->argc; x++)
@@ -94,7 +94,7 @@ BOOL freerdp_addin_argv_del_argument(ADDIN_ARGV* args, const char* argument)
 
 int freerdp_addin_set_argument(ADDIN_ARGV* args, const char* argument)
 {
-	int i;
+	int i = 0;
 	if (!args || !argument)
 		return -2;
 
@@ -113,7 +113,7 @@ int freerdp_addin_set_argument(ADDIN_ARGV* args, const char* argument)
 
 int freerdp_addin_replace_argument(ADDIN_ARGV* args, const char* previous, const char* argument)
 {
-	int i;
+	int i = 0;
 
 	if (!args || !previous || !argument)
 		return -2;
@@ -138,11 +138,11 @@ int freerdp_addin_replace_argument(ADDIN_ARGV* args, const char* previous, const
 
 int freerdp_addin_set_argument_value(ADDIN_ARGV* args, const char* option, const char* value)
 {
-	BOOL rc;
-	int i;
-	char* p;
-	char* str;
-	size_t length;
+	BOOL rc = 0;
+	int i = 0;
+	char* p = NULL;
+	char* str = NULL;
+	size_t length = 0;
 	if (!args || !option || !value)
 		return -2;
 	length = strlen(option) + strlen(value) + 1;
@@ -178,10 +178,10 @@ int freerdp_addin_set_argument_value(ADDIN_ARGV* args, const char* option, const
 int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, const char* previous, const char* option,
                                          const char* value)
 {
-	int i;
-	BOOL rc;
-	char* str;
-	size_t length;
+	int i = 0;
+	BOOL rc = 0;
+	char* str = NULL;
+	size_t length = 0;
 	if (!args || !previous || !option || !value)
 		return -2;
 	length = strlen(option) + strlen(value) + 1;
@@ -211,8 +211,8 @@ int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, const char* previous,
 
 BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 {
-	UINT32 count;
-	UINT32 old;
+	UINT32 count = 0;
+	UINT32 old = 0;
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(device);
 
@@ -221,7 +221,7 @@ BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 	if (old < count)
 	{
 		UINT32 new_size = old * 2;
-		RDPDR_DEVICE** new_array;
+		RDPDR_DEVICE** new_array = NULL;
 
 		if (new_size == 0)
 			new_size = count * 2;
@@ -245,8 +245,8 @@ BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 
 RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name)
 {
-	UINT32 index;
-	RDPDR_DEVICE* device;
+	UINT32 index = 0;
+	RDPDR_DEVICE* device = NULL;
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(name);
@@ -266,8 +266,8 @@ RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* 
 
 RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings, UINT32 type)
 {
-	UINT32 index;
-	RDPDR_DEVICE* device;
+	UINT32 index = 0;
+	RDPDR_DEVICE* device = NULL;
 	WINPR_ASSERT(settings);
 
 	for (index = 0; index < settings->DeviceCount; index++)
@@ -283,7 +283,7 @@ RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings, UINT32 
 
 RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[])
 {
-	size_t size;
+	size_t size = 0;
 	union
 	{
 		RDPDR_DEVICE* base;
@@ -539,7 +539,7 @@ RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device)
 
 void freerdp_device_collection_free(rdpSettings* settings)
 {
-	UINT32 index;
+	UINT32 index = 0;
 
 	WINPR_ASSERT(settings);
 
@@ -558,7 +558,7 @@ void freerdp_device_collection_free(rdpSettings* settings)
 
 BOOL freerdp_static_channel_collection_del(rdpSettings* settings, const char* name)
 {
-	UINT32 x;
+	UINT32 x = 0;
 	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_StaticChannelCount);
 	if (!settings || !settings->StaticChannelArray)
 		return FALSE;
@@ -590,7 +590,7 @@ BOOL freerdp_static_channel_collection_del(rdpSettings* settings, const char* na
 
 BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
-	UINT32 count;
+	UINT32 count = 0;
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(channel);
@@ -630,8 +630,8 @@ BOOL freerdp_static_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* ch
 
 ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings, const char* name)
 {
-	UINT32 index;
-	ADDIN_ARGV* channel;
+	UINT32 index = 0;
+	ADDIN_ARGV* channel = NULL;
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(name);
@@ -650,7 +650,7 @@ ADDIN_ARGV* freerdp_static_channel_collection_find(rdpSettings* settings, const 
 
 void freerdp_static_channel_collection_free(rdpSettings* settings)
 {
-	UINT32 i;
+	UINT32 i = 0;
 
 	if (!settings)
 		return;
@@ -669,7 +669,7 @@ void freerdp_static_channel_collection_free(rdpSettings* settings)
 
 BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings, const char* name)
 {
-	UINT32 x;
+	UINT32 x = 0;
 	const UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount);
 	if (!settings || !settings->DynamicChannelArray)
 		return FALSE;
@@ -699,8 +699,8 @@ BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings, const char* n
 
 BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
-	UINT32 count;
-	UINT32 oldSize;
+	UINT32 count = 0;
+	UINT32 oldSize = 0;
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(channel);
@@ -709,7 +709,7 @@ BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* c
 	oldSize = freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelArraySize);
 	if (oldSize < count)
 	{
-		ADDIN_ARGV** new_array;
+		ADDIN_ARGV** new_array = NULL;
 		UINT32 size = oldSize * 2;
 		if (size == 0)
 			size = count * 2;
@@ -735,8 +735,8 @@ BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* c
 
 ADDIN_ARGV* freerdp_dynamic_channel_collection_find(const rdpSettings* settings, const char* name)
 {
-	UINT32 index;
-	ADDIN_ARGV* channel;
+	UINT32 index = 0;
+	ADDIN_ARGV* channel = NULL;
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(name);
@@ -755,7 +755,7 @@ ADDIN_ARGV* freerdp_dynamic_channel_collection_find(const rdpSettings* settings,
 
 void freerdp_addin_argv_free(ADDIN_ARGV* args)
 {
-	int index;
+	int index = 0;
 	if (!args)
 		return;
 
@@ -784,7 +784,7 @@ ADDIN_ARGV* freerdp_addin_argv_new(size_t argc, const char* argv[])
 
 	if (argv)
 	{
-		size_t x;
+		size_t x = 0;
 		for (x = 0; x < argc; x++)
 		{
 			args->argv[x] = _strdup(argv[x]);
@@ -814,7 +814,7 @@ ADDIN_ARGV* freerdp_addin_argv_clone(const ADDIN_ARGV* args)
 
 void freerdp_dynamic_channel_collection_free(rdpSettings* settings)
 {
-	UINT32 i;
+	UINT32 i = 0;
 
 	WINPR_ASSERT(settings);
 
@@ -832,7 +832,7 @@ void freerdp_dynamic_channel_collection_free(rdpSettings* settings)
 
 void freerdp_capability_buffer_free(rdpSettings* settings)
 {
-	UINT32 x;
+	UINT32 x = 0;
 
 	WINPR_ASSERT(settings);
 
@@ -909,7 +909,7 @@ void freerdp_target_net_addresses_free(rdpSettings* settings)
 
 void freerdp_server_license_issuers_free(rdpSettings* settings)
 {
-	UINT32 x;
+	UINT32 x = 0;
 	WINPR_ASSERT(settings);
 
 	if (settings->ServerLicenseProductIssuers)
@@ -924,7 +924,7 @@ void freerdp_server_license_issuers_free(rdpSettings* settings)
 
 BOOL freerdp_server_license_issuers_copy(rdpSettings* settings, char** issuers, UINT32 count)
 {
-	UINT32 x;
+	UINT32 x = 0;
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(issuers || (count == 0));
@@ -1116,7 +1116,7 @@ int freerdp_set_param_string(rdpSettings* settings, int id, const char* param)
 static BOOL value_to_uint(const char* value, ULONGLONG* result, ULONGLONG min, ULONGLONG max)
 {
 	char* endptr = NULL;
-	unsigned long long rc;
+	unsigned long long rc = 0;
 
 	if (!value || !result)
 		return FALSE;
@@ -1140,7 +1140,7 @@ static BOOL value_to_uint(const char* value, ULONGLONG* result, ULONGLONG min, U
 static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONGLONG max)
 {
 	char* endptr = NULL;
-	long long rc;
+	long long rc = 0;
 
 	if (!value || !result)
 		return FALSE;
@@ -1169,9 +1169,9 @@ static BOOL parsing_fail(const char* key, const char* type, const char* value)
 
 BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name, const char* value)
 {
-	ULONGLONG uval;
-	LONGLONG ival;
-	SSIZE_T type;
+	ULONGLONG uval = 0;
+	LONGLONG ival = 0;
+	SSIZE_T type = 0;
 
 	if (!settings || !name)
 		return FALSE;
@@ -1489,7 +1489,7 @@ BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, FreeRDP_Settings_Ke
 void* freerdp_settings_get_pointer_array_writable(const rdpSettings* settings,
                                                   FreeRDP_Settings_Keys_Pointer id, size_t offset)
 {
-	size_t max;
+	size_t max = 0;
 	if (!settings)
 		return NULL;
 	switch (id)
@@ -1979,7 +1979,7 @@ BOOL freerdp_settings_update_from_caps(rdpSettings* settings, const BYTE* capsFl
                                        const BYTE** capsData, const UINT32* capsSizes,
                                        UINT32 capsCount, BOOL serverReceivedCaps)
 {
-	UINT32 x;
+	UINT32 x = 0;
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(capsFlags || (capsCount == 0));
 	WINPR_ASSERT(capsData || (capsCount == 0));

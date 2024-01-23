@@ -8,7 +8,7 @@ static LONG count = 0;
 
 static void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
 {
-	int index;
+	int index = 0;
 	printf("Hello %s: %03" PRId32 " (thread: 0x%08" PRIX32 ")\n", (char*)context,
 	       InterlockedIncrement(&count), GetCurrentThreadId());
 
@@ -28,8 +28,8 @@ static void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* con
 
 static BOOL test1(void)
 {
-	int index;
-	PTP_WORK work;
+	int index = 0;
+	PTP_WORK work = NULL;
 	printf("Global Thread Pool\n");
 	work = CreateThreadpoolWork(test_WorkCallback, "world", NULL);
 
@@ -56,9 +56,9 @@ static BOOL test1(void)
 static BOOL test2(void)
 {
 	BOOL rc = FALSE;
-	int index;
-	PTP_POOL pool;
-	PTP_WORK work;
+	int index = 0;
+	PTP_POOL pool = NULL;
+	PTP_WORK work = NULL;
 	PTP_CLEANUP_GROUP cleanupGroup = NULL;
 	TP_CALLBACK_ENVIRON environment;
 	printf("Private Thread Pool\n");

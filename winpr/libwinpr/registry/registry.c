@@ -237,7 +237,7 @@ LONG RegOpenCurrentUser(REGSAM samDesired, PHKEY phkResult)
 
 LONG RegOpenKeyExW(HKEY hKey, LPCWSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult)
 {
-	LONG rc;
+	LONG rc = 0;
 	char* str = ConvertWCharToUtf8Alloc(lpSubKey, NULL);
 	if (!str)
 		return ERROR_FILE_NOT_FOUND;
@@ -308,7 +308,7 @@ LONG RegQueryInfoKeyA(HKEY hKey, LPSTR lpClass, LPDWORD lpcClass, LPDWORD lpRese
 static LONG reg_read_int(const RegVal* pValue, LPBYTE lpData, LPDWORD lpcbData)
 {
 	const BYTE* ptr = NULL;
-	DWORD required;
+	DWORD required = 0;
 
 	WINPR_ASSERT(pValue);
 
@@ -340,7 +340,7 @@ static LONG reg_read_int(const RegVal* pValue, LPBYTE lpData, LPDWORD lpcbData)
 
 	if (lpData != NULL)
 	{
-		DWORD size;
+		DWORD size = 0;
 		WINPR_ASSERT(lpcbData);
 
 		size = *lpcbData;
@@ -358,8 +358,8 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWOR
                       LPBYTE lpData, LPDWORD lpcbData)
 {
 	LONG status = ERROR_FILE_NOT_FOUND;
-	RegKey* key;
-	RegVal* pValue;
+	RegKey* key = NULL;
+	RegVal* pValue = NULL;
 	char* valueName = NULL;
 
 	WINPR_UNUSED(lpReserved);
@@ -392,7 +392,7 @@ LONG RegQueryValueExW(HKEY hKey, LPCWSTR lpValueName, LPDWORD lpReserved, LPDWOR
 
 					if (lpData != NULL)
 					{
-						DWORD size;
+						DWORD size = 0;
 						union
 						{
 							WCHAR* wc;
@@ -433,8 +433,8 @@ end:
 LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD lpType,
                       LPBYTE lpData, LPDWORD lpcbData)
 {
-	RegKey* key;
-	RegVal* pValue;
+	RegKey* key = NULL;
+	RegVal* pValue = NULL;
 
 	WINPR_UNUSED(lpReserved);
 
@@ -463,7 +463,7 @@ LONG RegQueryValueExA(HKEY hKey, LPCSTR lpValueName, LPDWORD lpReserved, LPDWORD
 
 					if (pData != NULL)
 					{
-						DWORD size;
+						DWORD size = 0;
 						WINPR_ASSERT(lpcbData);
 
 						size = *lpcbData;

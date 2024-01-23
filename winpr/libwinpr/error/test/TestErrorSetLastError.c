@@ -33,9 +33,9 @@ static BOOL bStopTest = FALSE;
 
 static DWORD WINAPI test_error_thread(LPVOID arg)
 {
-	int id;
-	DWORD dwErrorSet;
-	DWORD dwErrorGet;
+	int id = 0;
+	DWORD dwErrorSet = 0;
+	DWORD dwErrorGet = 0;
 
 	id = (int)(size_t)arg;
 
@@ -60,9 +60,9 @@ static DWORD WINAPI test_error_thread(LPVOID arg)
 
 int TestErrorSetLastError(int argc, char* argv[])
 {
-	DWORD error;
+	DWORD error = 0;
 	HANDLE threads[4];
-	int i;
+	int i = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

@@ -7,8 +7,8 @@
 int TestWtsApiSessionNotification(int argc, char* argv[])
 {
 	HWND hWnd = NULL;
-	BOOL bSuccess;
-	DWORD dwFlags;
+	BOOL bSuccess = 0;
+	DWORD dwFlags = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

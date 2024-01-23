@@ -22,12 +22,12 @@
 /* ------------------------------------------------------------------------- */
 static BOOL test_RGBToRGB_16s8u_P3AC4R_func(prim_size_t roi, DWORD DstFormat)
 {
-	INT16* r;
-	INT16* g;
-	INT16* b;
-	BYTE* out1;
-	BYTE* out2;
-	UINT64 i;
+	INT16* r = NULL;
+	INT16* g = NULL;
+	INT16* b = NULL;
+	BYTE* out1 = NULL;
+	BYTE* out2 = NULL;
+	UINT64 i = 0;
 	BOOL failed = FALSE;
 	const INT16* ptrs[3];
 	const UINT32 rgbStride = roi.width * 2;
@@ -129,7 +129,7 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 	INT16 ALIGN(g[4096 + 1]);
 	INT16 ALIGN(b[4096 + 1]);
 	UINT32 ALIGN(dst[4096 + 1]);
-	int i;
+	int i = 0;
 	INT16* ptrs[3];
 	winpr_RAND(r, sizeof(r));
 	winpr_RAND(g, sizeof(g));
@@ -164,7 +164,7 @@ static BOOL test_RGBToRGB_16s8u_P3AC4R_speed(void)
 /* ========================================================================= */
 static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 {
-	pstatus_t status;
+	pstatus_t status = 0;
 	INT16 ALIGN(y[4096]) = { 0 };
 	INT16 ALIGN(cb[4096]) = { 0 };
 	INT16 ALIGN(cr[4096]) = { 0 };
@@ -174,7 +174,7 @@ static BOOL test_yCbCrToRGB_16s16s_P3P3_func(void)
 	INT16 ALIGN(r2[4096]) = { 0 };
 	INT16 ALIGN(g2[4096]) = { 0 };
 	INT16 ALIGN(b2[4096]) = { 0 };
-	int i;
+	int i = 0;
 	const INT16* in[3];
 	INT16* out1[3];
 	INT16* out2[3];
@@ -234,7 +234,7 @@ static int test_yCbCrToRGB_16s16s_P3P3_speed(void)
 	INT16 ALIGN(r[4096]);
 	INT16 ALIGN(g[4096]);
 	INT16 ALIGN(b[4096]);
-	int i;
+	int i = 0;
 	const INT16* input[3];
 	INT16* output[3];
 	winpr_RAND(y, sizeof(y));
@@ -270,7 +270,7 @@ int TestPrimitivesColors(int argc, char* argv[])
 	const DWORD formats[] = { PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_XRGB32, PIXEL_FORMAT_ABGR32,
 		                      PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_RGBX32,
 		                      PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };
-	DWORD x;
+	DWORD x = 0;
 	prim_size_t roi = { 1920 / 4, 1080 / 4 };
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

@@ -78,17 +78,17 @@ static int rdtk_image_copy_alpha_blend(uint8_t* pDstData, int nDstStep, int nXDs
 int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
                          rdtkNinePatch* ninePatch)
 {
-	int x;
-	int y;
-	int width;
-	int height;
-	int nXSrc;
-	int nYSrc;
-	int nSrcStep;
-	int nDstStep;
-	uint8_t* pSrcData;
-	uint8_t* pDstData;
-	int scaleWidth;
+	int x = 0;
+	int y = 0;
+	int width = 0;
+	int height = 0;
+	int nXSrc = 0;
+	int nYSrc = 0;
+	int nSrcStep = 0;
+	int nDstStep = 0;
+	uint8_t* pSrcData = NULL;
+	uint8_t* pDstData = NULL;
+	int scaleWidth = 0;
 
 	WINPR_ASSERT(surface);
 	WINPR_ASSERT(ninePatch);
@@ -448,16 +448,16 @@ void rdtk_nine_patch_free(rdtkNinePatch* ninePatch)
 
 int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 {
-	int status;
+	int status = 0;
 	wImage* image = NULL;
-	rdtkNinePatch* ninePatch;
+	rdtkNinePatch* ninePatch = NULL;
 
 	WINPR_ASSERT(engine);
 
 	if (!engine->button9patch)
 	{
-		SSIZE_T size;
-		const uint8_t* data;
+		SSIZE_T size = 0;
+		const uint8_t* data = NULL;
 		status = -1;
 		size = rdtk_get_embedded_resource_file("btn_default_normal.9." FILE_EXT, &data);
 
@@ -484,8 +484,8 @@ int rdtk_nine_patch_engine_init(rdtkEngine* engine)
 
 	if (!engine->textField9patch)
 	{
-		SSIZE_T size;
-		const uint8_t* data;
+		SSIZE_T size = 0;
+		const uint8_t* data = NULL;
 		status = -1;
 		size = rdtk_get_embedded_resource_file("textfield_default.9." FILE_EXT, &data);
 		image = NULL;

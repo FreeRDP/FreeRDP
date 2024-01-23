@@ -104,7 +104,7 @@ static CK_ATTRIBUTE public_key_filter[] = {
 static SECURITY_STATUS NCryptP11StorageProvider_dtor(NCRYPT_HANDLE handle)
 {
 	NCryptP11ProviderHandle* provider = (NCryptP11ProviderHandle*)handle;
-	CK_RV rv;
+	CK_RV rv = 0;
 
 	WINPR_ASSERT(provider);
 	rv = provider->p11->C_Finalize(NULL);
@@ -130,7 +130,7 @@ static void fix_padded_string(char* str, size_t maxlen)
 
 static BOOL attributes_have_unallocated_buffers(CK_ATTRIBUTE_PTR attributes, CK_ULONG count)
 {
-	CK_ULONG i;
+	CK_ULONG i = 0;
 
 	for (i = 0; i < count; i++)
 	{
@@ -161,7 +161,7 @@ static BOOL attribute_allocate_buffer(CK_ATTRIBUTE_PTR attribute)
 
 static BOOL attributes_allocate_buffers(CK_ATTRIBUTE_PTR attributes, CK_ULONG count)
 {
-	CK_ULONG i;
+	CK_ULONG i = 0;
 	BOOL ret = TRUE;
 
 	for (i = 0; i < count; i++)
@@ -193,7 +193,7 @@ static CK_RV object_load_attributes(NCryptP11ProviderHandle* provider, CK_SESSIO
                                     CK_OBJECT_HANDLE object, CK_ATTRIBUTE_PTR attributes,
                                     CK_ULONG count)
 {
-	CK_RV rv;
+	CK_RV rv = 0;
 
 	WINPR_ASSERT(provider);
 	WINPR_ASSERT(provider->p11);
@@ -463,7 +463,7 @@ static SECURITY_STATUS collect_keys(NCryptP11ProviderHandle* provider, P11EnumKe
 
 static BOOL convertKeyType(CK_KEY_TYPE k, LPWSTR dest, DWORD len, DWORD* outlen)
 {
-	DWORD retLen;
+	DWORD retLen = 0;
 	const WCHAR* r = NULL;
 
 #define ALGO_CASE(V, S) \
@@ -533,8 +533,8 @@ static void wprintKeyName(LPWSTR str, CK_SLOT_ID slotId, CK_BYTE* id, CK_ULONG i
 {
 	char asciiName[128] = { 0 };
 	char* ptr = asciiName;
-	const CK_BYTE* bytePtr;
-	CK_ULONG i;
+	const CK_BYTE* bytePtr = NULL;
+	CK_ULONG i = 0;
 
 	*ptr = '\\';
 	ptr++;
@@ -608,7 +608,7 @@ static SECURITY_STATUS parseKeyName(LPCWSTR pszKeyName, CK_SLOT_ID* slotId, CK_B
                                     CK_ULONG* idLen)
 {
 	char asciiKeyName[128] = { 0 };
-	char* pos;
+	char* pos = NULL;
 
 	if (ConvertWCharToUtf8(pszKeyName, asciiKeyName, ARRAYSIZE(asciiKeyName)) < 0)
 		return NTE_BAD_KEY;
@@ -658,7 +658,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		 * card reader
 		 */
 		char asciiScope[128 + 6 + 1] = { 0 };
-		size_t asciiScopeLen;
+		size_t asciiScopeLen = 0;
 
 		if (ConvertWCharToUtf8(pszScope, asciiScope, ARRAYSIZE(asciiScope) - 1) < 0)
 		{
@@ -732,8 +732,8 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		CK_ATTRIBUTE certificateFilter[] = { { CKA_CLASS, &oclass, sizeof(oclass) },
 			                                 { CKA_CERTIFICATE_TYPE, &ctype, sizeof(ctype) },
 			                                 { CKA_ID, key->id, key->idLen } };
-		CK_ULONG ncertObjects;
-		CK_OBJECT_HANDLE certObject;
+		CK_ULONG ncertObjects = 0;
+		CK_OBJECT_HANDLE certObject = 0;
 
 		/* check the reader filter if any */
 		if (slotFilter && memcmp(key->slotInfo.slotDescription, slotFilter, slotFilterLen) != 0)
@@ -782,7 +782,7 @@ static SECURITY_STATUS NCryptP11EnumKeys(NCRYPT_PROV_HANDLE hProvider, LPCWSTR p
 		if (ncertObjects)
 		{
 			/* sizeof keyName struct + "\<slotId>\<certId>" + keyName->pszAlgid */
-			DWORD algoSz;
+			DWORD algoSz = 0;
 			size_t KEYNAME_SZ =
 			    (1 + (sizeof(key->slotId) * 2) /*slotId*/ + 1 + (key->idLen * 2) + 1) * 2;
 
@@ -946,11 +946,11 @@ static SECURITY_STATUS NCryptP11KeyGetProperties(NCryptP11KeyHandle* keyHandle,
                                                  DWORD cbOutput, DWORD* pcbResult, DWORD dwFlags)
 {
 	SECURITY_STATUS ret = NTE_FAIL;
-	CK_RV rv;
-	CK_SESSION_HANDLE session;
-	CK_OBJECT_HANDLE objectHandle;
-	CK_ULONG objectCount;
-	NCryptP11ProviderHandle* provider;
+	CK_RV rv = 0;
+	CK_SESSION_HANDLE session = 0;
+	CK_OBJECT_HANDLE objectHandle = 0;
+	CK_ULONG objectCount = 0;
+	NCryptP11ProviderHandle* provider = NULL;
 	CK_OBJECT_CLASS oclass = CKO_CERTIFICATE;
 	CK_CERTIFICATE_TYPE ctype = CKC_X_509;
 	CK_ATTRIBUTE certificateFilter[] = { { CKA_CLASS, &oclass, sizeof(oclass) },
@@ -1156,11 +1156,11 @@ static SECURITY_STATUS NCryptP11GetProperty(NCRYPT_HANDLE hObject, NCryptKeyGetP
 static SECURITY_STATUS NCryptP11OpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY_HANDLE* phKey,
                                         LPCWSTR pszKeyName, DWORD dwLegacyKeySpec, DWORD dwFlags)
 {
-	SECURITY_STATUS ret;
-	CK_SLOT_ID slotId;
+	SECURITY_STATUS ret = 0;
+	CK_SLOT_ID slotId = 0;
 	CK_BYTE keyCertId[64] = { 0 };
-	CK_ULONG keyCertIdLen;
-	NCryptP11KeyHandle* keyHandle;
+	CK_ULONG keyCertIdLen = 0;
+	NCryptP11KeyHandle* keyHandle = NULL;
 
 	ret = parseKeyName(pszKeyName, &slotId, keyCertId, &keyCertIdLen);
 	if (ret != ERROR_SUCCESS)
@@ -1184,8 +1184,8 @@ static SECURITY_STATUS initialize_pkcs11(HANDLE handle,
                                          NCRYPT_PROV_HANDLE* phProvider)
 {
 	SECURITY_STATUS status = ERROR_SUCCESS;
-	NCryptP11ProviderHandle* ret;
-	CK_RV rv;
+	NCryptP11ProviderHandle* ret = NULL;
+	CK_RV rv = 0;
 
 	WINPR_ASSERT(c_get_function_list);
 	WINPR_ASSERT(phProvider);
@@ -1267,7 +1267,7 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 	{
 		HANDLE library = LoadLibrary(*modulePaths);
 		typedef CK_RV (*c_get_function_list_t)(CK_FUNCTION_LIST_PTR_PTR);
-		c_get_function_list_t c_get_function_list;
+		c_get_function_list_t c_get_function_list = NULL;
 
 		WLog_DBG(TAG, "Trying pkcs11-helper module '%s'", *modulePaths);
 		if (!library)

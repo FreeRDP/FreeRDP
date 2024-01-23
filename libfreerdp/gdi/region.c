@@ -74,9 +74,9 @@ static char* gdi_regn_str(char* buffer, size_t size, const HGDI_RGN rgn)
 
 HGDI_RGN gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, INT32 nBottomRect)
 {
-	INT64 w;
-	INT64 h;
-	HGDI_RGN hRgn;
+	INT64 w = 0;
+	INT64 h = 0;
+	HGDI_RGN hRgn = NULL;
 
 	w = nRightRect - nLeftRect + 1ll;
 	h = nBottomRect - nTopRect + 1ll;
@@ -113,7 +113,7 @@ HGDI_RGN gdi_CreateRectRgn(INT32 nLeftRect, INT32 nTopRect, INT32 nRightRect, IN
 
 HGDI_RECT gdi_CreateRect(INT32 xLeft, INT32 yTop, INT32 xRight, INT32 yBottom)
 {
-	HGDI_RECT hRect;
+	HGDI_RECT hRect = NULL;
 
 	if (xLeft > xRight)
 		return NULL;
@@ -142,8 +142,8 @@ HGDI_RECT gdi_CreateRect(INT32 xLeft, INT32 yTop, INT32 xRight, INT32 yBottom)
 BOOL gdi_RectToRgn(const HGDI_RECT rect, HGDI_RGN rgn)
 {
 	BOOL rc = TRUE;
-	INT64 w;
-	INT64 h;
+	INT64 w = 0;
+	INT64 h = 0;
 	w = rect->right - rect->left + 1ll;
 	h = rect->bottom - rect->top + 1ll;
 
@@ -178,8 +178,8 @@ BOOL gdi_RectToRgn(const HGDI_RECT rect, HGDI_RGN rgn)
 BOOL gdi_CRectToRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, HGDI_RGN rgn)
 {
 	BOOL rc = TRUE;
-	INT64 w;
-	INT64 h;
+	INT64 w = 0;
+	INT64 h = 0;
 	w = right - left + 1ll;
 	h = bottom - top + 1ll;
 
@@ -256,8 +256,8 @@ BOOL gdi_RectToCRgn(const HGDI_RECT rect, INT32* x, INT32* y, INT32* w, INT32* h
 BOOL gdi_CRectToCRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, INT32* x, INT32* y, INT32* w,
                      INT32* h)
 {
-	INT64 wl;
-	INT64 hl;
+	INT64 wl = 0;
+	INT64 hl = 0;
 	BOOL rc = TRUE;
 	wl = right - left + 1ll;
 	hl = bottom - top + 1ll;
@@ -289,8 +289,8 @@ BOOL gdi_CRectToCRgn(INT32 left, INT32 top, INT32 right, INT32 bottom, INT32* x,
 
 BOOL gdi_RgnToRect(const HGDI_RGN rgn, HGDI_RECT rect)
 {
-	INT64 r;
-	INT64 b;
+	INT64 r = 0;
+	INT64 b = 0;
 	BOOL rc = TRUE;
 	r = rgn->x + rgn->w - 1ll;
 	b = rgn->y + rgn->h - 1ll;
@@ -606,8 +606,8 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 {
 	GDI_RECT inv;
 	GDI_RECT rgn;
-	HGDI_RGN invalid;
-	HGDI_RGN cinvalid;
+	HGDI_RGN invalid = NULL;
+	HGDI_RGN cinvalid = NULL;
 
 	if (!hdc->hwnd)
 		return TRUE;
@@ -622,8 +622,8 @@ INLINE BOOL gdi_InvalidateRegion(HGDI_DC hdc, INT32 x, INT32 y, INT32 w, INT32 h
 
 	if ((hdc->hwnd->ninvalid + 1) > (INT64)hdc->hwnd->count)
 	{
-		size_t new_cnt;
-		HGDI_RGN new_rgn;
+		size_t new_cnt = 0;
+		HGDI_RGN new_rgn = NULL;
 		new_cnt = hdc->hwnd->count * 2;
 		if (new_cnt > UINT32_MAX)
 			return FALSE;

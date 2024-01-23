@@ -37,7 +37,7 @@
 
 BOOL per_read_length(wStream* s, UINT16* length)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	WINPR_ASSERT(length);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
@@ -234,7 +234,7 @@ BOOL per_write_padding(wStream* s, UINT16 length)
 
 BOOL per_read_integer(wStream* s, UINT32* integer)
 {
-	UINT16 length;
+	UINT16 length = 0;
 
 	WINPR_ASSERT(integer);
 
@@ -415,8 +415,8 @@ static BOOL per_check_oid_and_log_mismatch(const BYTE* got, const BYTE* expect, 
 
 BOOL per_read_object_identifier(wStream* s, const BYTE oid[6])
 {
-	BYTE t12;
-	UINT16 length;
+	BYTE t12 = 0;
+	UINT16 length = 0;
 	BYTE a_oid[6] = { 0 };
 
 	if (!per_read_length(s, &length))
@@ -475,7 +475,7 @@ BOOL per_write_object_identifier(wStream* s, const BYTE oid[6])
 
 static void per_write_string(wStream* s, BYTE* str, int length)
 {
-	int i;
+	int i = 0;
 
 	for (i = 0; i < length; i++)
 		Stream_Write_UINT8(s, str[i]);
@@ -526,8 +526,8 @@ BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT1
 
 BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT16 min)
 {
-	UINT16 i;
-	UINT16 mlength;
+	UINT16 i = 0;
+	UINT16 mlength = 0;
 
 	mlength = (length >= min) ? length - min : min;
 
@@ -551,8 +551,8 @@ BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT
 
 BOOL per_read_numeric_string(wStream* s, UINT16 min)
 {
-	size_t length;
-	UINT16 mlength;
+	size_t length = 0;
+	UINT16 mlength = 0;
 
 	if (!per_read_length(s, &mlength))
 		return FALSE;
@@ -578,11 +578,11 @@ BOOL per_read_numeric_string(wStream* s, UINT16 min)
 
 BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length, UINT16 min)
 {
-	UINT16 i;
-	UINT16 mlength;
-	BYTE num;
-	BYTE c1;
-	BYTE c2;
+	UINT16 i = 0;
+	UINT16 mlength = 0;
+	BYTE num = 0;
+	BYTE c1 = 0;
+	BYTE c2 = 0;
 
 	mlength = (length >= min) ? length - min : min;
 

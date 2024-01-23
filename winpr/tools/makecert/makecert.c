@@ -79,9 +79,9 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 
 	while (offset >= length)
 	{
-		size_t new_len;
+		size_t new_len = 0;
 		size_t readBytes = 0;
-		char* new_str;
+		char* new_str = NULL;
 		new_len = length * 2;
 		if (new_len == 0)
 			new_len = 2048;
@@ -131,8 +131,8 @@ static char* makecert_read_str(BIO* bio, size_t* pOffset)
 
 static int makecert_print_command_line_help(COMMAND_LINE_ARGUMENT_A* args, int argc, char** argv)
 {
-	char* str;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	char* str = NULL;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 
 	if (!argv || (argc < 1))
 		return -1;
@@ -182,7 +182,7 @@ static int makecert_print_command_line_help(COMMAND_LINE_ARGUMENT_A* args, int a
 static int x509_add_ext(X509* cert, int nid, char* value)
 {
 	X509V3_CTX ctx;
-	X509_EXTENSION* ext;
+	X509_EXTENSION* ext = NULL;
 
 	if (!cert || !value)
 		return 0;
@@ -201,8 +201,8 @@ static int x509_add_ext(X509* cert, int nid, char* value)
 
 static char* x509_name_parse(char* name, char* txt, size_t* length)
 {
-	char* p;
-	char* entry;
+	char* p = NULL;
+	char* entry = NULL;
 
 	if (!name || !txt || !length)
 		return NULL;
@@ -286,9 +286,9 @@ static int command_line_pre_filter(MAKECERT_CONTEXT* context, int index, int arg
 static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context,
                                             COMMAND_LINE_ARGUMENT_A* args, int argc, char** argv)
 {
-	int status;
-	DWORD flags;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	int status = 0;
+	DWORD flags = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 
 	if (!context || !argv || (argc < 0))
 		return -1;
@@ -385,7 +385,7 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context,
 		}
 		CommandLineSwitchCase(arg, "y")
 		{
-			long val;
+			long val = 0;
 
 			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 				continue;
@@ -399,7 +399,7 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context,
 		}
 		CommandLineSwitchCase(arg, "m")
 		{
-			long val;
+			long val = 0;
 
 			if (!(arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 				continue;
@@ -441,12 +441,12 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, const ch
 {
 #ifdef WITH_OPENSSL
 	FILE* fp = NULL;
-	int status;
-	size_t length;
-	size_t offset;
+	int status = 0;
+	size_t length = 0;
+	size_t offset = 0;
 	char* filename = NULL;
 	char* fullpath = NULL;
-	char* ext;
+	char* ext = NULL;
 	int ret = -1;
 	BIO* bio = NULL;
 	char* x509_str = NULL;
@@ -611,8 +611,8 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, const ch
 {
 #ifdef WITH_OPENSSL
 	FILE* fp = NULL;
-	size_t length;
-	size_t offset;
+	size_t length = 0;
+	size_t offset = 0;
 	char* filename = NULL;
 	char* fullpath = NULL;
 	int ret = -1;
@@ -909,14 +909,14 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		{ NULL, 0, NULL, NULL, NULL, -1, NULL, NULL }
 	};
 #ifdef WITH_OPENSSL
-	size_t length;
-	char* entry;
-	int key_length;
+	size_t length = 0;
+	char* entry = NULL;
+	int key_length = 0;
 	long serial = 0;
 	X509_NAME* name = NULL;
 	const EVP_MD* md = NULL;
-	const COMMAND_LINE_ARGUMENT_A* arg;
-	int ret;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
+	int ret = 0;
 	ret = makecert_context_parse_arguments(context, args, argc, argv);
 
 	if (ret < 1)
@@ -989,8 +989,8 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 	ASN1_INTEGER_set(X509_get_serialNumber(context->x509), serial);
 	{
-		ASN1_TIME* before;
-		ASN1_TIME* after;
+		ASN1_TIME* before = NULL;
+		ASN1_TIME* after = NULL;
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
 		before = X509_get_notBefore(context->x509);
 		after = X509_get_notAfter(context->x509);
@@ -1075,9 +1075,9 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 	if (!context->silent)
 	{
-		BIO* bio;
-		int status;
-		char* x509_str;
+		BIO* bio = NULL;
+		int status = 0;
+		char* x509_str = NULL;
 		bio = BIO_new(BIO_s_mem());
 
 		if (!bio)

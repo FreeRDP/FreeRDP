@@ -31,7 +31,7 @@
 
 BOOL ber_read_length(wStream* s, size_t* length)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(length);
@@ -121,7 +121,7 @@ size_t _ber_sizeof_length(size_t length)
 
 BOOL ber_read_universal_tag(wStream* s, BYTE tag, BOOL pc)
 {
-	BYTE byte;
+	BYTE byte = 0;
 	const BYTE expect = (BER_CLASS_UNIV | BER_PC(pc) | (BER_TAG_MASK & tag));
 
 	WINPR_ASSERT(s);
@@ -163,7 +163,7 @@ size_t ber_write_universal_tag(wStream* s, BYTE tag, BOOL pc)
 
 BOOL ber_read_application_tag(wStream* s, BYTE tag, size_t* length)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(length);
@@ -243,7 +243,7 @@ void ber_write_application_tag(wStream* s, BYTE tag, size_t length)
 BOOL ber_read_contextual_tag(wStream* s, BYTE tag, size_t* length, BOOL pc)
 {
 	const BYTE expect = ((BER_CLASS_CTXT | BER_PC(pc)) | (BER_TAG_MASK & tag));
-	BYTE byte;
+	BYTE byte = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(length);
@@ -283,7 +283,7 @@ size_t ber_sizeof_contextual_tag(size_t length)
 BOOL ber_read_sequence_tag(wStream* s, size_t* length)
 {
 	const BYTE expect = ((BER_CLASS_UNIV | BER_CONSTRUCT) | (BER_TAG_SEQUENCE_OF));
-	BYTE byte;
+	BYTE byte = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
@@ -323,7 +323,7 @@ size_t ber_sizeof_sequence_tag(size_t length)
 
 BOOL ber_read_enumerated(wStream* s, BYTE* enumerated, BYTE count)
 {
-	size_t length;
+	size_t length = 0;
 
 	WINPR_ASSERT(enumerated);
 
@@ -391,8 +391,8 @@ size_t ber_write_octet_string(wStream* s, const BYTE* oct_str, size_t length)
 size_t ber_write_contextual_octet_string(wStream* s, BYTE tag, const BYTE* oct_str, size_t length)
 {
 	size_t inner = ber_sizeof_octet_string(length);
-	size_t ret;
-	size_t r;
+	size_t ret = 0;
+	size_t r = 0;
 
 	ret = ber_write_contextual_tag(s, tag, inner, TRUE);
 	if (!ret)
@@ -422,7 +422,7 @@ size_t ber_write_contextual_unicode_octet_string(wStream* s, BYTE tag, LPWSTR st
 	WINPR_ASSERT(str);
 	size_t len = _wcslen(str) * sizeof(WCHAR);
 	size_t inner_len = ber_sizeof_octet_string(len);
-	size_t ret;
+	size_t ret = 0;
 
 	ret = ber_write_contextual_tag(s, tag, inner_len, TRUE);
 	return ret + ber_write_octet_string(s, (const BYTE*)str, len);
@@ -430,7 +430,7 @@ size_t ber_write_contextual_unicode_octet_string(wStream* s, BYTE tag, LPWSTR st
 
 size_t ber_write_contextual_char_to_unicode_octet_string(wStream* s, BYTE tag, const char* str)
 {
-	size_t ret;
+	size_t ret = 0;
 	size_t len = strlen(str);
 	size_t inner_len = ber_sizeof_octet_string(len * 2);
 
@@ -449,7 +449,7 @@ size_t ber_write_contextual_char_to_unicode_octet_string(wStream* s, BYTE tag, c
 BOOL ber_read_unicode_octet_string(wStream* s, LPWSTR* str)
 {
 	LPWSTR ret = NULL;
-	size_t length;
+	size_t length = 0;
 
 	if (!ber_read_octet_string_tag(s, &length))
 		return FALSE;
@@ -470,8 +470,8 @@ BOOL ber_read_unicode_octet_string(wStream* s, LPWSTR* str)
 
 BOOL ber_read_char_from_unicode_octet_string(wStream* s, char** str)
 {
-	size_t length;
-	char* ptr;
+	size_t length = 0;
+	char* ptr = NULL;
 
 	*str = NULL;
 	if (!ber_read_octet_string_tag(s, &length))
@@ -491,7 +491,7 @@ BOOL ber_read_octet_string_tag(wStream* s, size_t* length)
 
 BOOL ber_read_octet_string(wStream* s, BYTE** content, size_t* length)
 {
-	BYTE* ret;
+	BYTE* ret = NULL;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(content);
@@ -539,8 +539,8 @@ size_t ber_sizeof_contextual_octet_string(size_t length)
 
 BOOL ber_read_BOOL(wStream* s, BOOL* value)
 {
-	size_t length;
-	BYTE v;
+	size_t length = 0;
+	BYTE v = 0;
 
 	WINPR_ASSERT(value);
 	if (!ber_read_universal_tag(s, BER_TAG_BOOLEAN, FALSE) || !ber_read_length(s, &length))
@@ -575,7 +575,7 @@ void ber_write_BOOL(wStream* s, BOOL value)
 
 BOOL ber_read_integer(wStream* s, UINT32* value)
 {
-	size_t length;
+	size_t length = 0;
 
 	WINPR_ASSERT(s);
 
@@ -602,7 +602,7 @@ BOOL ber_read_integer(wStream* s, UINT32* value)
 	}
 	else if (length == 3)
 	{
-		BYTE byte;
+		BYTE byte = 0;
 		Stream_Read_UINT8(s, byte);
 		Stream_Read_UINT16_BE(s, *value);
 		*value += (byte << 16);

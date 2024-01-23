@@ -39,11 +39,11 @@ static const char TEST_INI_03[] = "[FreeRDS]\n"
 int TestIni(int argc, char* argv[])
 {
 	int rc = -1;
-	size_t nKeys;
-	size_t nSections;
-	UINT32 iValue;
+	size_t nKeys = 0;
+	size_t nSections = 0;
+	UINT32 iValue = 0;
 	wIniFile* ini = NULL;
-	const char* sValue;
+	const char* sValue = NULL;
 	char** keyNames = NULL;
 	char** sectionNames = NULL;
 

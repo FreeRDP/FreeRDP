@@ -27,11 +27,11 @@ static BOOL test_overlaps(void)
 	RingBuffer rb;
 	DataChunk chunks[2];
 	BYTE bytes[200];
-	size_t i;
-	size_t k;
-	int x;
-	int nchunks;
-	int j;
+	size_t i = 0;
+	size_t k = 0;
+	int x = 0;
+	int nchunks = 0;
+	int j = 0;
 	int counter = 0;
 
 	for (i = 0; i < sizeof(bytes); i++)
@@ -86,9 +86,9 @@ int TestRingBuffer(int argc, char* argv[])
 {
 	RingBuffer ringBuffer;
 	int testNo = 0;
-	BYTE* tmpBuf;
-	BYTE* rb_ptr;
-	int i /*, chunkNb, counter*/;
+	BYTE* tmpBuf = NULL;
+	BYTE* rb_ptr = NULL;
+	int i = 0 /*, chunkNb, counter*/;
 	DataChunk chunks[2];
 
 	WINPR_UNUSED(argc);

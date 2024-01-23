@@ -393,7 +393,7 @@ BOOL GetVersionExW(LPOSVERSIONINFOW lpVersionInformation)
 
 BOOL GetComputerNameW(LPWSTR lpBuffer, LPDWORD lpnSize)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	LPSTR buffer = NULL;
 	if (!lpnSize || (*lpnSize > INT_MAX))
 		return FALSE;
@@ -419,8 +419,8 @@ BOOL GetComputerNameW(LPWSTR lpBuffer, LPDWORD lpnSize)
 
 BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 {
-	char* dot;
-	size_t length;
+	char* dot = NULL;
+	size_t length = 0;
 	char hostname[256] = { 0 };
 
 	if (!lpnSize)
@@ -453,7 +453,7 @@ BOOL GetComputerNameA(LPSTR lpBuffer, LPDWORD lpnSize)
 
 BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD lpnSize)
 {
-	size_t length;
+	size_t length = 0;
 	char hostname[256] = { 0 };
 
 	if (!lpnSize)
@@ -509,7 +509,7 @@ BOOL GetComputerNameExA(COMPUTER_NAME_FORMAT NameType, LPSTR lpBuffer, LPDWORD l
 
 BOOL GetComputerNameExW(COMPUTER_NAME_FORMAT NameType, LPWSTR lpBuffer, LPDWORD lpnSize)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	LPSTR lpABuffer = NULL;
 
 	if (!lpnSize)
@@ -817,10 +817,10 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 #endif // __linux__
 #elif defined(_M_IX86_AMD64)
 #ifdef __GNUC__
-	unsigned a;
-	unsigned b;
-	unsigned c;
-	unsigned d;
+	unsigned a = 0;
+	unsigned b = 0;
+	unsigned c = 0;
+	unsigned d = 0;
 	cpuid(1, &a, &b, &c, &d);
 
 	switch (ProcessorFeature)
@@ -948,20 +948,20 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 
 #endif // __linux__
 #elif defined(_M_IX86_AMD64)
-	unsigned a;
-	unsigned b;
-	unsigned c;
-	unsigned d;
+	unsigned a = 0;
+	unsigned b = 0;
+	unsigned c = 0;
+	unsigned d = 0;
 	cpuid(1, &a, &b, &c, &d);
 
 	switch (ProcessorFeature)
 	{
 		case PF_EX_LZCNT:
 		{
-			unsigned a81;
-			unsigned b81;
-			unsigned c81;
-			unsigned d81;
+			unsigned a81 = 0;
+			unsigned b81 = 0;
+			unsigned c81 = 0;
+			unsigned d81 = 0;
 			cpuid(0x80000001, &a81, &b81, &c81, &d81);
 
 			if (c81 & C81_BIT_LZCNT)
@@ -1009,8 +1009,8 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 			if (!(c & C_BIT_XGETBV))
 				break;
 
-			int e;
-			int f;
+			int e = 0;
+			int f = 0;
 			xgetbv(0, e, f);
 
 			/* XGETBV enabled for applications and XMM/YMM states enabled */

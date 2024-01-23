@@ -12,9 +12,9 @@ typedef struct
 
 int TestInterlockedSList(int argc, char* argv[])
 {
-	ULONG Count;
-	WINPR_PSLIST_ENTRY pFirstEntry;
-	WINPR_PSLIST_HEADER pListHead;
+	ULONG Count = 0;
+	WINPR_PSLIST_ENTRY pFirstEntry = NULL;
+	WINPR_PSLIST_HEADER pListHead = NULL;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	/* Initialize the list header to a MEMORY_ALLOCATION_ALIGNMENT boundary. */
@@ -48,7 +48,7 @@ int TestInterlockedSList(int argc, char* argv[])
 	/* Remove 10 items from the list and display the signature. */
 	for (Count = 10; Count >= 1; Count -= 1)
 	{
-		PPROGRAM_ITEM pProgramItem;
+		PPROGRAM_ITEM pProgramItem = NULL;
 		WINPR_PSLIST_ENTRY pListEntry = InterlockedPopEntrySList(pListHead);
 
 		if (!pListEntry)

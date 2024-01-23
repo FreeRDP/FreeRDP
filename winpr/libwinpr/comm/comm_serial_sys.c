@@ -158,7 +158,7 @@ static const speed_t _BAUD_TABLE[][3] = {
 
 static BOOL _get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
 {
-	int i;
+	int i = 0;
 
 	/* http://msdn.microsoft.com/en-us/library/windows/hardware/jj680684%28v=vs.85%29.aspx
 	 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363189%28v=vs.85%29.aspx
@@ -224,8 +224,8 @@ static BOOL _get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
 
 static BOOL _set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 {
-	int i;
-	speed_t newSpeed;
+	int i = 0;
+	speed_t newSpeed = 0;
 	struct termios futureState;
 
 	ZeroMemory(&futureState, sizeof(struct termios));
@@ -269,8 +269,8 @@ static BOOL _set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 
 static BOOL _get_baud_rate(WINPR_COMM* pComm, SERIAL_BAUD_RATE* pBaudRate)
 {
-	int i;
-	speed_t currentSpeed;
+	int i = 0;
+	speed_t currentSpeed = 0;
 	struct termios currentState;
 
 	ZeroMemory(&currentState, sizeof(struct termios));
@@ -1033,7 +1033,7 @@ static const ULONG _SERIAL_SYS_SUPPORTED_EV_MASK =
 
 static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 {
-	ULONG possibleMask;
+	ULONG possibleMask = 0;
 
 	/* Stops pending IOCTL_SERIAL_WAIT_ON_MASK
 	 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
@@ -1576,7 +1576,7 @@ static BOOL _config_size(WINPR_COMM* pComm, ULONG* pSize)
 
 static BOOL _immediate_char(WINPR_COMM* pComm, const UCHAR* pChar)
 {
-	BOOL result;
+	BOOL result = 0;
 	DWORD nbBytesWritten = -1;
 
 	/* FIXME: CommWriteFile uses a critical section, shall it be

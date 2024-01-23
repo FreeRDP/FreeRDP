@@ -123,8 +123,8 @@ WINPR_SAM* SamOpen(const char* filename, BOOL readOnly)
 
 static BOOL SamLookupStart(WINPR_SAM* sam)
 {
-	size_t readSize;
-	INT64 fileSize;
+	size_t readSize = 0;
+	INT64 fileSize = 0;
 
 	if (!sam || !sam->fp)
 		return FALSE;
@@ -173,10 +173,10 @@ static void SamLookupFinish(WINPR_SAM* sam)
 static BOOL SamReadEntry(WINPR_SAM* sam, WINPR_SAM_ENTRY* entry)
 {
 	char* p[5];
-	size_t LmHashLength;
-	size_t NtHashLength;
+	size_t LmHashLength = 0;
+	size_t NtHashLength = 0;
 	size_t count = 0;
-	char* cur;
+	char* cur = NULL;
 
 	if (!sam || !entry || !sam->line)
 		return FALSE;
@@ -280,7 +280,7 @@ void SamResetEntry(WINPR_SAM_ENTRY* entry)
 WINPR_SAM_ENTRY* SamLookupUserA(WINPR_SAM* sam, LPCSTR User, UINT32 UserLength, LPCSTR Domain,
                                 UINT32 DomainLength)
 {
-	size_t length;
+	size_t length = 0;
 	BOOL found = FALSE;
 	WINPR_SAM_ENTRY* search = SamEntryFromDataA(User, UserLength, Domain, DomainLength);
 	WINPR_SAM_ENTRY* entry = (WINPR_SAM_ENTRY*)calloc(1, sizeof(WINPR_SAM_ENTRY));

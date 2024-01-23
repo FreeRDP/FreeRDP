@@ -39,7 +39,7 @@ static wStream* rpc_auth_http_request(HttpContext* http, const char* method, int
 	wStream* s = NULL;
 	HttpRequest* request = NULL;
 	char* base64AuthToken = NULL;
-	const char* uri;
+	const char* uri = NULL;
 
 	if (!http || !method)
 		goto fail;
@@ -75,13 +75,13 @@ fail:
 
 BOOL rpc_ncacn_http_send_in_channel_request(RpcChannel* inChannel)
 {
-	wStream* s;
-	SSIZE_T status;
-	int contentLength;
-	rdpCredsspAuth* auth;
-	HttpContext* http;
-	const SecBuffer* buffer;
-	int rc;
+	wStream* s = NULL;
+	SSIZE_T status = 0;
+	int contentLength = 0;
+	rdpCredsspAuth* auth = NULL;
+	HttpContext* http = NULL;
+	const SecBuffer* buffer = NULL;
+	int rc = 0;
 
 	if (!inChannel || !inChannel->auth || !inChannel->http)
 		return FALSE;
@@ -111,7 +111,7 @@ BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel, HttpResponse
 	const char* token64 = NULL;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = NULL;
-	rdpCredsspAuth* auth;
+	rdpCredsspAuth* auth = NULL;
 	SecBuffer buffer = { 0 };
 
 	if (!inChannel || !response || !inChannel->auth)
@@ -138,11 +138,11 @@ BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel, HttpResponse
 
 BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel)
 {
-	rdpTls* tls;
-	rdpCredsspAuth* auth;
-	rdpSettings* settings;
-	freerdp* instance;
-	auth_status rc;
+	rdpTls* tls = NULL;
+	rdpCredsspAuth* auth = NULL;
+	rdpSettings* settings = NULL;
+	freerdp* instance = NULL;
+	auth_status rc = AUTH_FAILED;
 	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
 
 	if (!context || !channel)
@@ -203,12 +203,12 @@ void rpc_ncacn_http_auth_uninit(RpcChannel* channel)
 BOOL rpc_ncacn_http_send_out_channel_request(RpcChannel* outChannel, BOOL replacement)
 {
 	BOOL status = TRUE;
-	wStream* s;
-	int contentLength;
-	rdpCredsspAuth* auth;
-	HttpContext* http;
-	const SecBuffer* buffer;
-	int rc;
+	wStream* s = NULL;
+	int contentLength = 0;
+	rdpCredsspAuth* auth = NULL;
+	HttpContext* http = NULL;
+	const SecBuffer* buffer = NULL;
+	int rc = 0;
 
 	if (!outChannel || !outChannel->auth || !outChannel->http)
 		return FALSE;
@@ -244,7 +244,7 @@ BOOL rpc_ncacn_http_recv_out_channel_response(RpcChannel* outChannel, HttpRespon
 	const char* token64 = NULL;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = NULL;
-	rdpCredsspAuth* auth;
+	rdpCredsspAuth* auth = NULL;
 	SecBuffer buffer = { 0 };
 
 	if (!outChannel || !response || !outChannel->auth)

@@ -37,10 +37,10 @@ static primitives_t* generic = NULL;
 #if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
 {
-	BYTE byte;
-	BYTE* dptr;
+	BYTE byte = 0;
+	BYTE* dptr = NULL;
 	__m128i xmm0;
-	size_t count;
+	size_t count = 0;
 
 	if (len < 16)
 		return generic->set_8u(val, pDst, len);
@@ -127,7 +127,7 @@ static pstatus_t sse2_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, UINT32 le
 	const primitives_t* prim = primitives_get_generic();
 	UINT32* dptr = (UINT32*)pDst;
 	__m128i xmm0;
-	size_t count;
+	size_t count = 0;
 
 	/* If really short, just do it here. */
 	if (len < 32)

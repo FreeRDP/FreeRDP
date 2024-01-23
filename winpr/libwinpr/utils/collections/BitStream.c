@@ -95,7 +95,7 @@ static const char* BYTE_BIT_STRINGS_MSB[256] = {
 
 void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length, UINT32 flags)
 {
-	DWORD i;
+	DWORD i = 0;
 	const char** strs = (flags & BITDUMP_MSB_FIRST) ? BYTE_BIT_STRINGS_MSB : BYTE_BIT_STRINGS_LSB;
 	char pbuffer[64 * 8 + 1] = { 0 };
 	size_t pos = 0;

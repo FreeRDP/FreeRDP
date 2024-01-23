@@ -53,7 +53,7 @@ static void devman_device_free(void* obj)
 
 DEVMAN* devman_new(rdpdrPlugin* rdpdr)
 {
-	DEVMAN* devman;
+	DEVMAN* devman = NULL;
 
 	if (!rdpdr)
 		return NULL;
@@ -89,7 +89,7 @@ void devman_free(DEVMAN* devman)
 
 void devman_unregister_device(DEVMAN* devman, void* key)
 {
-	DEVICE* device;
+	DEVICE* device = NULL;
 
 	if (!devman || !key)
 		return;

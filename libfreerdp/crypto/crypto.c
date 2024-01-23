@@ -175,8 +175,8 @@ SSIZE_T crypto_rsa_private_decrypt(const BYTE* input, size_t length, const rdpPr
 
 void crypto_reverse(BYTE* data, size_t length)
 {
-	size_t i;
-	size_t j;
+	size_t i = 0;
+	size_t j = 0;
 
 	if (length < 1)
 		return;

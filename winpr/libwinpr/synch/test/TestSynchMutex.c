@@ -5,8 +5,8 @@
 
 static BOOL test_mutex_basic(void)
 {
-	HANDLE mutex;
-	DWORD rc;
+	HANDLE mutex = NULL;
+	DWORD rc = 0;
 
 	if (!(mutex = CreateMutex(NULL, FALSE, NULL)))
 	{
@@ -45,9 +45,9 @@ static BOOL test_mutex_basic(void)
 
 static BOOL test_mutex_recursive(void)
 {
-	HANDLE mutex;
-	DWORD rc;
-	DWORD i;
+	HANDLE mutex = NULL;
+	DWORD rc = 0;
+	DWORD i = 0;
 	DWORD cnt = 50;
 
 	if (!(mutex = CreateMutex(NULL, TRUE, NULL)))

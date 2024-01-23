@@ -91,8 +91,8 @@ static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, int timeout)
 		return FALSE;
 
 	UINT16 peerPort = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort);
-	const char* proxyUsername;
-	const char* proxyPassword;
+	const char* proxyUsername = NULL;
+	const char* proxyPassword = NULL;
 	BOOL isProxyConnection =
 	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 
@@ -165,7 +165,7 @@ static wStream* arm_build_http_request(rdpArm* arm, const char* method,
 {
 	wStream* s = NULL;
 	HttpRequest* request = NULL;
-	const char* uri;
+	const char* uri = NULL;
 
 	WINPR_ASSERT(arm);
 	WINPR_ASSERT(method);
@@ -443,7 +443,7 @@ static BOOL arm_stringEncodeW(const BYTE* pin, size_t cbIn, BYTE** ppOut, size_t
 		return FALSE;
 
 	/* and then convert to Unicode */
-	size_t outSz;
+	size_t outSz = 0;
 	*ppOut = (BYTE*)ConvertUtf8NToWCharAlloc(b64encoded, strlen(b64encoded), &outSz);
 	free(b64encoded);
 
@@ -866,7 +866,7 @@ static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 	BOOL rc = FALSE;
 
 	HttpResponse* response = NULL;
-	long StatusCode;
+	long StatusCode = 0;
 
 	if (!http_context_set_uri(arm->http, "/api/arm/v2/connections/") ||
 	    !http_context_set_accept(arm->http, "application/json") ||

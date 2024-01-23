@@ -63,7 +63,7 @@ static UINT32 alpha_add(UINT32 c1, UINT32 c2)
 /* ------------------------------------------------------------------------- */
 static UINT32 colordist(UINT32 c1, UINT32 c2)
 {
-	int d;
+	int d = 0;
 	int maxd = 0;
 	d = ABS((INT32)(ALF(c1) - ALF(c2)));
 
@@ -92,8 +92,8 @@ static UINT32 colordist(UINT32 c1, UINT32 c2)
 static BOOL check(const BYTE* pSrc1, UINT32 src1Step, const BYTE* pSrc2, UINT32 src2Step,
                   BYTE* pDst, UINT32 dstStep, UINT32 width, UINT32 height)
 {
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 
 	for (y = 0; y < height; ++y)
 	{
@@ -119,12 +119,12 @@ static BOOL check(const BYTE* pSrc1, UINT32 src1Step, const BYTE* pSrc2, UINT32 
 
 static BOOL test_alphaComp_func(void)
 {
-	pstatus_t status;
+	pstatus_t status = 0;
 	BYTE ALIGN(src1[SRC1_WIDTH * SRC1_HEIGHT * 4]) = { 0 };
 	BYTE ALIGN(src2[SRC2_WIDTH * SRC2_HEIGHT * 4]) = { 0 };
 	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT * 4]) = { 0 };
-	UINT32* ptr;
-	UINT32 i;
+	UINT32* ptr = NULL;
+	UINT32 i = 0;
 	winpr_RAND(src1, sizeof(src1));
 	/* Special-case the first two values */
 	src1[0] &= 0x00FFFFFFU;
@@ -166,8 +166,8 @@ static int test_alphaComp_speed(void)
 	BYTE ALIGN(src2[SRC2_WIDTH * SRC2_HEIGHT]) = { 0 };
 	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT]) = { 0 };
 	char testStr[256] = { 0 };
-	UINT32* ptr;
-	UINT32 i;
+	UINT32* ptr = NULL;
+	UINT32 i = 0;
 	testStr[0] = '\0';
 	winpr_RAND(src1, sizeof(src1));
 	/* Special-case the first two values */

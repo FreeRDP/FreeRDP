@@ -48,11 +48,11 @@
 
 static BOOL nsc_decode(NSC_CONTEXT* context)
 {
-	UINT16 x;
-	UINT16 y;
-	UINT16 rw;
-	BYTE shift;
-	BYTE* bmpdata;
+	UINT16 x = 0;
+	UINT16 y = 0;
+	UINT16 rw = 0;
+	BYTE shift = 0;
+	BYTE* bmpdata = NULL;
 	size_t pos = 0;
 
 	if (!context)
@@ -67,9 +67,9 @@ static BOOL nsc_decode(NSC_CONTEXT* context)
 
 	for (y = 0; y < context->height; y++)
 	{
-		const BYTE* yplane;
-		const BYTE* coplane;
-		const BYTE* cgplane;
+		const BYTE* yplane = NULL;
+		const BYTE* coplane = NULL;
+		const BYTE* cgplane = NULL;
 		const BYTE* aplane = context->priv->PlaneBuffers[3] + y * context->width; /* A */
 
 		if (context->ChromaSubsamplingLevel)
@@ -428,9 +428,9 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT32 width, UINT32 
                          UINT32 nDstStride, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
                          UINT32 nHeight, UINT32 flip)
 {
-	wStream* s;
+	wStream* s = NULL;
 	wStream sbuffer = { 0 };
-	BOOL ret;
+	BOOL ret = 0;
 	if (!context || !data || !pDstData)
 		return FALSE;
 
@@ -477,7 +477,7 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT32 width, UINT32 
 
 	/* RLE decode */
 	{
-		BOOL rc;
+		BOOL rc = 0;
 		PROFILER_ENTER(context->priv->prof_nsc_rle_decompress_data)
 		rc = nsc_rle_decompress_data(context);
 		PROFILER_EXIT(context->priv->prof_nsc_rle_decompress_data)
@@ -487,7 +487,7 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT32 width, UINT32 
 	}
 	/* Colorloss recover, Chroma supersample and AYCoCg to ARGB Conversion in one step */
 	{
-		BOOL rc;
+		BOOL rc = 0;
 		PROFILER_ENTER(context->priv->prof_nsc_decode)
 		rc = context->decode(context);
 		PROFILER_EXIT(context->priv->prof_nsc_decode)

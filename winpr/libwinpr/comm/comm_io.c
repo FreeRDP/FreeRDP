@@ -73,13 +73,13 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 	int biggestFd = -1;
 	fd_set read_set;
-	int nbFds;
-	COMMTIMEOUTS* pTimeouts;
+	int nbFds = 0;
+	COMMTIMEOUTS* pTimeouts = NULL;
 	UCHAR vmin = 0;
 	UCHAR vtime = 0;
 	ULONGLONG Tmax = 0;
 	struct timeval tmaxTimeout;
-	struct timeval* pTmaxTimeout;
+	struct timeval* pTmaxTimeout = NULL;
 	struct termios currentTermios;
 	EnterCriticalSection(&pComm->ReadLock); /* KISSer by the function's beginning */
 
@@ -368,7 +368,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 	struct timeval tmaxTimeout;
-	struct timeval* pTmaxTimeout;
+	struct timeval* pTmaxTimeout = NULL;
 	EnterCriticalSection(&pComm->WriteLock); /* KISSer by the function's beginning */
 
 	if (!CommIsHandled(hDevice))
@@ -424,7 +424,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 		int biggestFd = -1;
 		fd_set event_set;
 		fd_set write_set;
-		int nbFds;
+		int nbFds = 0;
 		biggestFd = pComm->fd_write;
 
 		if (pComm->fd_write_event > biggestFd)
@@ -492,7 +492,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 		if (FD_ISSET(pComm->fd_write, &write_set))
 		{
-			ssize_t nbWritten;
+			ssize_t nbWritten = 0;
 			nbWritten = write(pComm->fd_write, ((const BYTE*)lpBuffer) + (*lpNumberOfBytesWritten),
 			                  nNumberOfBytesToWrite - (*lpNumberOfBytesWritten));
 

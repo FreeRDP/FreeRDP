@@ -124,8 +124,8 @@ void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 
 	if (subsystem->MsgPipe)
 	{
-		wObject* obj1;
-		wObject* obj2;
+		wObject* obj1 = NULL;
+		wObject* obj2 = NULL;
 		/* Release resource in messages before free */
 		obj1 = MessageQueue_Object(subsystem->MsgPipe->In);
 
@@ -148,7 +148,7 @@ void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem)
 
 int shadow_subsystem_start(rdpShadowSubsystem* subsystem)
 {
-	int status;
+	int status = 0;
 
 	if (!subsystem || !subsystem->ep.Start)
 		return -1;
@@ -160,7 +160,7 @@ int shadow_subsystem_start(rdpShadowSubsystem* subsystem)
 
 int shadow_subsystem_stop(rdpShadowSubsystem* subsystem)
 {
-	int status;
+	int status = 0;
 
 	if (!subsystem || !subsystem->ep.Stop)
 		return -1;
@@ -193,19 +193,19 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data(
     BYTE* pixels, BOOL premultiplied, UINT32 width, UINT32 height,
     SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* pointerColor)
 {
-	UINT32 x;
-	UINT32 y;
-	BYTE* pSrc8;
-	BYTE* pDst8;
-	UINT32 xorStep;
-	UINT32 andStep;
-	UINT32 andBit;
-	BYTE* andBits;
-	UINT32 andPixel;
-	BYTE A;
-	BYTE R;
-	BYTE G;
-	BYTE B;
+	UINT32 x = 0;
+	UINT32 y = 0;
+	BYTE* pSrc8 = NULL;
+	BYTE* pDst8 = NULL;
+	UINT32 xorStep = 0;
+	UINT32 andStep = 0;
+	UINT32 andBit = 0;
+	BYTE* andBits = NULL;
+	UINT32 andPixel = 0;
+	BYTE A = 0;
+	BYTE R = 0;
+	BYTE G = 0;
+	BYTE B = 0;
 
 	xorStep = (width * 3);
 	xorStep += (xorStep % 2);

@@ -53,7 +53,7 @@
 
 const char* _comm_serial_ioctl_name(ULONG number)
 {
-	int i;
+	int i = 0;
 
 	for (i = 0; _SERIAL_IOCTL_NAMES[i].number != 0; i++)
 	{
@@ -639,7 +639,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
                          LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
-	BOOL result;
+	BOOL result = 0;
 
 	if (hDevice == INVALID_HANDLE_VALUE)
 	{
@@ -686,7 +686,7 @@ BOOL CommDeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffe
 
 int _comm_ioctl_tcsetattr(int fd, int optional_actions, const struct termios* termios_p)
 {
-	int result;
+	int result = 0;
 	struct termios currentState = { 0 };
 
 	if ((result = tcsetattr(fd, optional_actions, termios_p)) < 0)

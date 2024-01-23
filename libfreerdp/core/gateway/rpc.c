@@ -277,7 +277,7 @@ rpcconn_common_hdr_t rpc_pdu_header_init(const rdpRpc* rpc)
 
 size_t rpc_offset_align(size_t* offset, size_t alignment)
 {
-	size_t pad;
+	size_t pad = 0;
 	pad = *offset;
 	*offset = (*offset + alignment - 1) & ~(alignment - 1);
 	pad = *offset - pad;
@@ -371,10 +371,10 @@ BOOL rpc_get_stub_data_info(rdpRpc* rpc, const rpcconn_hdr_t* header, size_t* po
 	size_t used = 0;
 	size_t offset = 0;
 	BOOL rc = FALSE;
-	UINT32 frag_length;
-	UINT32 auth_length;
+	UINT32 frag_length = 0;
+	UINT32 auth_length = 0;
 	UINT32 auth_pad_length = 0;
-	UINT32 sec_trailer_offset;
+	UINT32 sec_trailer_offset = 0;
 	const rpc_sec_trailer* sec_trailer = NULL;
 
 	WINPR_ASSERT(rpc);
@@ -451,7 +451,7 @@ fail:
 
 SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t length)
 {
-	int status;
+	int status = 0;
 
 	if (!channel || (length > INT32_MAX))
 		return -1;
@@ -474,7 +474,7 @@ SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t length)
 
 SSIZE_T rpc_channel_write(RpcChannel* channel, const BYTE* data, size_t length)
 {
-	int status;
+	int status = 0;
 
 	if (!channel || (length > INT32_MAX))
 		return -1;
@@ -496,8 +496,8 @@ BOOL rpc_in_channel_transition_to_state(RpcInChannel* inChannel, CLIENT_IN_CHANN
 static int rpc_channel_rpch_init(RpcClient* client, RpcChannel* channel, const char* inout,
                                  const GUID* guid)
 {
-	HttpContext* http;
-	rdpSettings* settings;
+	HttpContext* http = NULL;
+	rdpSettings* settings = NULL;
 	UINT32 timeout = 0;
 
 	if (!client || !channel || !inout || !client->context || !client->context->settings)
@@ -701,15 +701,15 @@ fail:
 
 static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)
 {
-	int sockfd;
-	rdpTls* tls;
-	int tlsStatus;
-	BIO* socketBio;
-	BIO* bufferedBio;
-	rdpContext* context;
-	rdpSettings* settings;
-	const char* proxyUsername;
-	const char* proxyPassword;
+	int sockfd = 0;
+	rdpTls* tls = NULL;
+	int tlsStatus = 0;
+	BIO* socketBio = NULL;
+	BIO* bufferedBio = NULL;
+	rdpContext* context = NULL;
+	rdpSettings* settings = NULL;
+	const char* proxyUsername = NULL;
+	const char* proxyPassword = NULL;
 
 	if (!channel || !channel->client || !channel->client->context ||
 	    !channel->client->context->settings)
@@ -791,7 +791,7 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, UINT32 timeout)
 
 static int rpc_in_channel_connect(RpcInChannel* inChannel, UINT32 timeout)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!inChannel || !inChannel->common.client || !inChannel->common.client->context)
 		return -1;
@@ -825,7 +825,7 @@ static int rpc_in_channel_connect(RpcInChannel* inChannel, UINT32 timeout)
 
 static int rpc_out_channel_connect(RpcOutChannel* outChannel, int timeout)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!outChannel || !outChannel->common.client || !outChannel->common.client->context)
 		return -1;
@@ -857,7 +857,7 @@ static int rpc_out_channel_connect(RpcOutChannel* outChannel, int timeout)
 
 int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 
 	if (!outChannel || !outChannel->common.client || !outChannel->common.client->context)
 		return -1;
@@ -889,9 +889,9 @@ int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout)
 
 BOOL rpc_connect(rdpRpc* rpc, UINT32 timeout)
 {
-	RpcInChannel* inChannel;
-	RpcOutChannel* outChannel;
-	RpcVirtualConnection* connection;
+	RpcInChannel* inChannel = NULL;
+	RpcOutChannel* outChannel = NULL;
+	RpcVirtualConnection* connection = NULL;
 	rpc->VirtualConnection = rpc_virtual_connection_new(rpc);
 
 	if (!rpc->VirtualConnection)
@@ -914,7 +914,7 @@ BOOL rpc_connect(rdpRpc* rpc, UINT32 timeout)
 rdpRpc* rpc_new(rdpTransport* transport)
 {
 	rdpContext* context = transport_get_context(transport);
-	rdpRpc* rpc;
+	rdpRpc* rpc = NULL;
 
 	WINPR_ASSERT(context);
 

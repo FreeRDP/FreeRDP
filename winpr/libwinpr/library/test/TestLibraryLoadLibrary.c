@@ -8,10 +8,10 @@
 
 int TestLibraryLoadLibrary(int argc, char* argv[])
 {
-	HINSTANCE library;
-	LPCSTR SharedLibraryExtension;
+	HINSTANCE library = NULL;
+	LPCSTR SharedLibraryExtension = NULL;
 	CHAR LibraryPath[PATHCCH_MAX_CCH];
-	PCHAR p;
+	PCHAR p = NULL;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	if (!GetModuleFileNameA(NULL, LibraryPath, PATHCCH_MAX_CCH))

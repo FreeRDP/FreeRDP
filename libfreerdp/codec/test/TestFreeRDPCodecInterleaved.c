@@ -22,9 +22,9 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 )
 {
 	BOOL rc2 = FALSE;
-	BOOL rc;
-	UINT32 i;
-	UINT32 j;
+	BOOL rc = 0;
+	UINT32 i = 0;
+	UINT32 j = 0;
 	const UINT32 w = 64;
 	const UINT32 h = 64;
 	const UINT32 x = 0;
@@ -70,12 +70,12 @@ static BOOL run_encode_decode_single(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* enc
 
 		for (j = 0; j < w; j++)
 		{
-			BYTE r;
-			BYTE g;
-			BYTE b;
-			BYTE dr;
-			BYTE dg;
-			BYTE db;
+			BYTE r = 0;
+			BYTE g = 0;
+			BYTE b = 0;
+			BYTE dr = 0;
+			BYTE dg = 0;
+			BYTE db = 0;
 			const UINT32 srcColor = FreeRDPReadColor(&srcLine[j * bstep], format);
 			const UINT32 dstColor = FreeRDPReadColor(&dstLine[j * bstep], format);
 			FreeRDPSplitColor(srcColor, format, &r, &g, &b, NULL, NULL);
@@ -131,7 +131,7 @@ static BOOL run_encode_decode(UINT16 bpp, BITMAP_INTERLEAVED_CONTEXT* encoder,
                               BITMAP_INTERLEAVED_CONTEXT* decoder)
 {
 	BOOL rc = FALSE;
-	UINT32 x;
+	UINT32 x = 0;
 	PROFILER_DEFINE(profiler_comp)
 	PROFILER_DEFINE(profiler_decomp)
 	PROFILER_CREATE(profiler_comp, get_profiler_name(TRUE, bpp))
@@ -163,7 +163,7 @@ static BOOL TestColorConversion(void)
 {
 	const UINT32 formats[] = { PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_BGR15, PIXEL_FORMAT_ABGR15,
 		                       PIXEL_FORMAT_ARGB15, PIXEL_FORMAT_BGR16, PIXEL_FORMAT_RGB16 };
-	UINT32 x;
+	UINT32 x = 0;
 
 	/* Check color conversion 15/16 -> 32bit maps to proper values */
 	for (x = 0; x < ARRAYSIZE(formats); x++)
@@ -174,10 +174,10 @@ static BOOL TestColorConversion(void)
 		const UINT32 colorHigh = FreeRDPGetColor(format, 255, 255, 255, 255);
 		const UINT32 colorLow32 = FreeRDPConvertColor(colorLow, format, dstFormat, NULL);
 		const UINT32 colorHigh32 = FreeRDPConvertColor(colorHigh, format, dstFormat, NULL);
-		BYTE r;
-		BYTE g;
-		BYTE b;
-		BYTE a;
+		BYTE r = 0;
+		BYTE g = 0;
+		BYTE b = 0;
+		BYTE a = 0;
 		FreeRDPSplitColor(colorLow32, dstFormat, &r, &g, &b, &a, NULL);
 		if ((r != 0) || (g != 0) || (b != 0))
 			return FALSE;
@@ -192,8 +192,8 @@ static BOOL TestColorConversion(void)
 
 int TestFreeRDPCodecInterleaved(int argc, char* argv[])
 {
-	BITMAP_INTERLEAVED_CONTEXT* encoder;
-	BITMAP_INTERLEAVED_CONTEXT* decoder;
+	BITMAP_INTERLEAVED_CONTEXT* encoder = NULL;
+	BITMAP_INTERLEAVED_CONTEXT* decoder = NULL;
 	int rc = -1;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

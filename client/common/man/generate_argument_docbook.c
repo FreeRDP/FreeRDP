@@ -39,7 +39,7 @@ static char* append(char** buffer, size_t* size, const char* str)
 
 static LPSTR tr_esc_str(LPCSTR arg, bool format)
 {
-	const char* str;
+	const char* str = NULL;
 	LPSTR tmp = NULL;
 	size_t ds = 0;
 

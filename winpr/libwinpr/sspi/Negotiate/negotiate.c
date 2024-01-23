@@ -294,7 +294,7 @@ static BOOL negotiate_get_config_from_auth_package_list(void* pAuthData, BOOL* k
 static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm)
 {
 	HKEY hKey = NULL;
-	LONG rc;
+	LONG rc = 0;
 
 	WINPR_ASSERT(kerberos);
 	WINPR_ASSERT(ntlm);
@@ -314,7 +314,7 @@ static BOOL negotiate_get_config(void* pAuthData, BOOL* kerberos, BOOL* ntlm)
 	rc = RegOpenKeyExA(HKEY_LOCAL_MACHINE, NEGO_REG_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 	if (rc == ERROR_SUCCESS)
 	{
-		DWORD dwValue;
+		DWORD dwValue = 0;
 
 		if (negotiate_get_dword(hKey, "kerberos", &dwValue))
 			*kerberos = (dwValue != 0) ? TRUE : FALSE;
@@ -341,7 +341,7 @@ static BOOL negotiate_write_neg_token(PSecBuffer output_buffer, NegToken* token)
 	WinPrAsn1_OctetString mechToken = { token->mechToken.cbBuffer, token->mechToken.pvBuffer };
 	WinPrAsn1_OctetString mechListMic = { token->mic.cbBuffer, token->mic.pvBuffer };
 	wStream s;
-	size_t len;
+	size_t len = 0;
 
 	enc = WinPrAsn1Encoder_New(WINPR_ASN1_DER);
 	if (!enc)
@@ -436,11 +436,11 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 	WinPrAsn1Decoder dec;
 	WinPrAsn1Decoder dec2;
 	WinPrAsn1_OID oid;
-	WinPrAsn1_tagId contextual;
-	WinPrAsn1_tag tag;
-	size_t len;
+	WinPrAsn1_tagId contextual = 0;
+	WinPrAsn1_tag tag = 0;
+	size_t len = 0;
 	WinPrAsn1_OctetString octet_string;
-	BOOL err;
+	BOOL err = 0;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(token);
@@ -498,7 +498,7 @@ static BOOL negotiate_read_neg_token(PSecBuffer input, NegToken* token)
 				else
 				{
 					/* negState [0] ENUMERATED */
-					WinPrAsn1_ENUMERATED rd;
+					WinPrAsn1_ENUMERATED rd = 0;
 					if (!WinPrAsn1DecReadEnumerated(&dec2, &rd))
 						return FALSE;
 					token->negState = rd;
@@ -554,7 +554,7 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 {
 	SecBuffer mic_buffers[2] = { 0 };
 	SecBufferDesc mic_buffer_desc = { SECBUFFER_VERSION, 2, mic_buffers };
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(input_token);
@@ -614,7 +614,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 {
 	NEGOTIATE_CONTEXT* context = NULL;
 	NEGOTIATE_CONTEXT init_context = { 0 };
-	MechCred* creds;
+	MechCred* creds = NULL;
 	PCtxtHandle sub_context = NULL;
 	PCredHandle sub_cred = NULL;
 	NegToken input_token = empty_neg_token;
@@ -629,7 +629,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 	SECURITY_STATUS sub_status = SEC_E_INTERNAL_ERROR;
 	WinPrAsn1Encoder* enc = NULL;
 	wStream s;
-	const Mech* mech;
+	const Mech* mech = NULL;
 
 	if (!phCredential || !SecIsValidHandle(phCredential))
 		return SEC_E_NO_CREDENTIALS;
@@ -887,7 +887,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextA(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = 0;
 	SEC_WCHAR* pszTargetNameW = NULL;
 
 	if (pszTargetName)
@@ -908,7 +908,7 @@ static const Mech* guessMech(PSecBuffer input_buffer, BOOL* spNego, WinPrAsn1_OI
 {
 	WinPrAsn1Decoder decoder;
 	WinPrAsn1Decoder appDecoder;
-	WinPrAsn1_tagId tag;
+	WinPrAsn1_tagId tag = 0;
 
 	*spNego = FALSE;
 
@@ -945,7 +945,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 {
 	NEGOTIATE_CONTEXT* context = NULL;
 	NEGOTIATE_CONTEXT init_context = { 0 };
-	MechCred* creds;
+	MechCred* creds = NULL;
 	PCredHandle sub_cred = NULL;
 	NegToken input_token = empty_neg_token;
 	NegToken output_token = empty_neg_token;
@@ -956,7 +956,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
 	WinPrAsn1Decoder dec;
 	WinPrAsn1Decoder dec2;
-	WinPrAsn1_tagId tag;
+	WinPrAsn1_tagId tag = 0;
 	WinPrAsn1_OID oid = { 0 };
 	const Mech* first_mech = NULL;
 
@@ -1175,7 +1175,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 static SECURITY_STATUS SEC_ENTRY negotiate_CompleteAuthToken(PCtxtHandle phContext,
                                                              PSecBufferDesc pToken)
 {
-	NEGOTIATE_CONTEXT* context;
+	NEGOTIATE_CONTEXT* context = NULL;
 	SECURITY_STATUS status = SEC_E_OK;
 	context = (NEGOTIATE_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
 
@@ -1193,10 +1193,10 @@ static SECURITY_STATUS SEC_ENTRY negotiate_CompleteAuthToken(PCtxtHandle phConte
 
 static SECURITY_STATUS SEC_ENTRY negotiate_DeleteSecurityContext(PCtxtHandle phContext)
 {
-	NEGOTIATE_CONTEXT* context;
+	NEGOTIATE_CONTEXT* context = NULL;
 	SECURITY_STATUS status = SEC_E_OK;
 	context = (NEGOTIATE_CONTEXT*)sspi_SecureHandleGetLowerPointer(phContext);
-	const SecPkg* pkg;
+	const SecPkg* pkg = NULL;
 
 	if (!context)
 		return SEC_E_INVALID_HANDLE;
@@ -1301,9 +1301,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesW(PCredHandle
                                                                      ULONG ulAttribute,
                                                                      void* pBuffer, ULONG cbBuffer)
 {
-	MechCred* creds;
+	MechCred* creds = NULL;
 	BOOL success = FALSE;
-	SECURITY_STATUS secStatus;
+	SECURITY_STATUS secStatus = 0;
 
 	creds = sspi_SecureHandleGetLowerPointer(phCredential);
 
@@ -1335,9 +1335,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_SetCredentialsAttributesA(PCredHandle
                                                                      ULONG ulAttribute,
                                                                      void* pBuffer, ULONG cbBuffer)
 {
-	MechCred* creds;
+	MechCred* creds = NULL;
 	BOOL success = FALSE;
-	SECURITY_STATUS secStatus;
+	SECURITY_STATUS secStatus = 0;
 
 	creds = sspi_SecureHandleGetLowerPointer(phCredential);
 
@@ -1373,8 +1373,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	BOOL kerberos;
-	BOOL ntlm;
+	BOOL kerberos = 0;
+	BOOL ntlm = 0;
 
 	if (!negotiate_get_config(pAuthData, &kerberos, &ntlm))
 		return SEC_E_INTERNAL_ERROR;
@@ -1415,8 +1415,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	BOOL kerberos;
-	BOOL ntlm;
+	BOOL kerberos = 0;
+	BOOL ntlm = 0;
 
 	if (!negotiate_get_config(pAuthData, &kerberos, &ntlm))
 		return SEC_E_INTERNAL_ERROR;
@@ -1471,7 +1471,7 @@ static SECURITY_STATUS SEC_ENTRY negotiate_QueryCredentialsAttributesA(PCredHand
 
 static SECURITY_STATUS SEC_ENTRY negotiate_FreeCredentialsHandle(PCredHandle phCredential)
 {
-	MechCred* creds;
+	MechCred* creds = NULL;
 
 	creds = sspi_SecureHandleGetLowerPointer(phCredential);
 	if (!creds)

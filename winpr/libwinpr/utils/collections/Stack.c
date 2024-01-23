@@ -47,7 +47,7 @@ struct s_wStack
 
 size_t Stack_Count(wStack* stack)
 {
-	size_t ret;
+	size_t ret = 0;
 	WINPR_ASSERT(stack);
 	if (stack->synchronized)
 		EnterCriticalSection(&stack->lock);
@@ -86,7 +86,7 @@ wObject* Stack_Object(wStack* stack)
 
 void Stack_Clear(wStack* stack)
 {
-	size_t index;
+	size_t index = 0;
 
 	WINPR_ASSERT(stack);
 	if (stack->synchronized)
@@ -112,7 +112,7 @@ void Stack_Clear(wStack* stack)
 
 BOOL Stack_Contains(wStack* stack, const void* obj)
 {
-	size_t i;
+	size_t i = 0;
 	BOOL found = FALSE;
 
 	WINPR_ASSERT(stack);

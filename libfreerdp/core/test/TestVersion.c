@@ -3,9 +3,9 @@
 
 int TestVersion(int argc, char* argv[])
 {
-	const char* version;
-	const char* git;
-	const char* build;
+	const char* version = NULL;
+	const char* git = NULL;
+	const char* build = NULL;
 	int major = 0;
 	int minor = 0;
 	int revision = 0;

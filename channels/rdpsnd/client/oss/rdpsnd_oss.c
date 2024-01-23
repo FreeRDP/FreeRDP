@@ -298,10 +298,10 @@ static void rdpsnd_oss_free(rdpsndDevicePlugin* device)
 
 static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 {
-	int vol;
-	UINT32 dwVolume;
-	UINT16 dwVolumeLeft;
-	UINT16 dwVolumeRight;
+	int vol = 0;
+	UINT32 dwVolume = 0;
+	UINT16 dwVolumeLeft = 0;
+	UINT16 dwVolumeRight = 0;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 	/* On error return 50% volume. */
 	dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
@@ -325,8 +325,8 @@ static UINT32 rdpsnd_oss_get_volume(rdpsndDevicePlugin* device)
 
 static BOOL rdpsnd_oss_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 {
-	int left;
-	int right;
+	int left = 0;
+	int right = 0;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 
 	if (device == NULL || oss->mixer_handle == -1)
@@ -388,11 +388,11 @@ static UINT rdpsnd_oss_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 
 static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_ARGV* args)
 {
-	int status;
-	char* str_num;
-	char* eptr;
-	DWORD flags;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	int status = 0;
+	char* str_num = NULL;
+	char* eptr = NULL;
+	DWORD flags = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)device;
 	COMMAND_LINE_ARGUMENT_A rdpsnd_oss_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                            NULL, NULL, -1, NULL, "device" },
@@ -451,7 +451,7 @@ static int rdpsnd_oss_parse_addin_args(rdpsndDevicePlugin* device, const ADDIN_A
 FREERDP_ENTRY_POINT(UINT oss_freerdp_rdpsnd_client_subsystem_entry(
     PFREERDP_RDPSND_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args;
+	const ADDIN_ARGV* args = NULL;
 	rdpsndOssPlugin* oss = (rdpsndOssPlugin*)calloc(1, sizeof(rdpsndOssPlugin));
 
 	if (!oss)

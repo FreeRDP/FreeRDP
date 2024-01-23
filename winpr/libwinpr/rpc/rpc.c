@@ -731,7 +731,7 @@ RPC_STATUS UuidToStringW(const UUID* Uuid, RPC_WSTR* StringUuid)
 
 RPC_STATUS UuidFromStringA(RPC_CSTR StringUuid, UUID* Uuid)
 {
-	int index;
+	int index = 0;
 	BYTE bin[36];
 
 	if (!StringUuid)
@@ -784,7 +784,7 @@ RPC_STATUS UuidFromStringW(RPC_WSTR StringUuid, UUID* Uuid)
 
 signed int UuidCompare(const UUID* Uuid1, const UUID* Uuid2, RPC_STATUS* Status)
 {
-	int index;
+	int index = 0;
 	*Status = RPC_S_OK;
 
 	if (!Uuid1)

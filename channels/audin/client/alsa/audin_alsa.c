@@ -88,10 +88,10 @@ static snd_pcm_format_t audin_alsa_format(UINT32 wFormatTag, UINT32 bitPerChanne
 
 static BOOL audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_handle)
 {
-	int error;
-	SSIZE_T s;
+	int error = 0;
+	SSIZE_T s = 0;
 	UINT32 channels = alsa->aformat.nChannels;
-	snd_pcm_hw_params_t* hw_params;
+	snd_pcm_hw_params_t* hw_params = NULL;
 	snd_pcm_format_t format =
 	    audin_alsa_format(alsa->aformat.wFormatTag, alsa->aformat.wBitsPerSample);
 
@@ -121,11 +121,11 @@ static BOOL audin_alsa_set_params(AudinALSADevice* alsa, snd_pcm_t* capture_hand
 
 static DWORD WINAPI audin_alsa_thread_func(LPVOID arg)
 {
-	int error;
-	BYTE* buffer;
+	int error = 0;
+	BYTE* buffer = NULL;
 	snd_pcm_t* capture_handle = NULL;
 	AudinALSADevice* alsa = (AudinALSADevice*)arg;
-	DWORD status;
+	DWORD status = 0;
 	WLog_Print(alsa->log, WLOG_DEBUG, "in");
 
 	if ((error = snd_pcm_open(&capture_handle, alsa->device_name, SND_PCM_STREAM_CAPTURE, 0)) < 0)
@@ -347,9 +347,9 @@ static UINT audin_alsa_close(IAudinDevice* device)
  */
 static UINT audin_alsa_parse_addin_args(AudinALSADevice* device, const ADDIN_ARGV* args)
 {
-	int status;
-	DWORD flags;
-	const COMMAND_LINE_ARGUMENT_A* arg;
+	int status = 0;
+	DWORD flags = 0;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
 	AudinALSADevice* alsa = (AudinALSADevice*)device;
 	COMMAND_LINE_ARGUMENT_A audin_alsa_args[] = { { "dev", COMMAND_LINE_VALUE_REQUIRED, "<device>",
 		                                            NULL, NULL, -1, NULL, "audio device name" },
@@ -393,9 +393,9 @@ static UINT audin_alsa_parse_addin_args(AudinALSADevice* device, const ADDIN_ARG
 FREERDP_ENTRY_POINT(
     UINT alsa_freerdp_audin_client_subsystem_entry(PFREERDP_AUDIN_DEVICE_ENTRY_POINTS pEntryPoints))
 {
-	const ADDIN_ARGV* args;
-	AudinALSADevice* alsa;
-	UINT error;
+	const ADDIN_ARGV* args = NULL;
+	AudinALSADevice* alsa = NULL;
+	UINT error = 0;
 	alsa = (AudinALSADevice*)calloc(1, sizeof(AudinALSADevice));
 
 	if (!alsa)

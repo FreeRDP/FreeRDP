@@ -18,7 +18,7 @@
  * differing by less than 2 abs equal. */
 static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 {
-	size_t x;
+	size_t x = 0;
 
 	for (x = 0; x < size; x++)
 	{
@@ -37,7 +37,7 @@ static BOOL similar(const BYTE* src, const BYTE* dst, size_t size)
 
 static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 format, BOOL use444)
 {
-	size_t x;
+	size_t x = 0;
 	const UINT32 bpp = FreeRDPGetBytesPerPixel(format);
 	BYTE fill = PADDING_FILL_VALUE;
 	if (!FreeRDPColorHasAlpha(format))
@@ -46,16 +46,16 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 	for (x = 0; x < size; x++)
 	{
 		const double maxDiff = 4.0;
-		UINT32 sColor;
-		UINT32 dColor;
-		BYTE sR;
-		BYTE sG;
-		BYTE sB;
-		BYTE sA;
-		BYTE dR;
-		BYTE dG;
-		BYTE dB;
-		BYTE dA;
+		UINT32 sColor = 0;
+		UINT32 dColor = 0;
+		BYTE sR = 0;
+		BYTE sG = 0;
+		BYTE sB = 0;
+		BYTE sA = 0;
+		BYTE dR = 0;
+		BYTE dG = 0;
+		BYTE dB = 0;
+		BYTE dA = 0;
 		sColor = FreeRDPReadColor(src, format);
 		dColor = FreeRDPReadColor(dst, format);
 		src += bpp;
@@ -96,10 +96,10 @@ static void get_size(BOOL large, UINT32* width, UINT32* height)
 
 static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding, const char* buffer)
 {
-	size_t x;
+	size_t x = 0;
 	BOOL rc = TRUE;
-	const BYTE* src;
-	const BYTE* esrc;
+	const BYTE* src = NULL;
+	const BYTE* esrc = NULL;
 	size_t halfPad = (padding + 1) / 2;
 
 	if (!psrc)
@@ -146,7 +146,7 @@ static BOOL check_padding(const BYTE* psrc, size_t size, size_t padding, const c
 static void* set_padding(size_t size, size_t padding)
 {
 	size_t halfPad = (padding + 1) / 2;
-	BYTE* psrc;
+	BYTE* psrc = NULL;
 	BYTE* src = winpr_aligned_malloc(size + 2 * halfPad, 16);
 
 	if (!src)
@@ -168,7 +168,7 @@ static void* set_padding(size_t size, size_t padding)
 
 static void free_padding(void* src, size_t padding)
 {
-	BYTE* ptr;
+	BYTE* ptr = NULL;
 
 	if (!src)
 		return;
@@ -186,11 +186,11 @@ static BOOL TestPrimitiveYUVCombine(primitives_t* prims, prim_size_t roi)
 		const BYTE** cpv;
 		BYTE** pv;
 	} cnv;
-	UINT32 x;
-	UINT32 y;
-	UINT32 i;
-	UINT32 awidth;
-	UINT32 aheight;
+	UINT32 x = 0;
+	UINT32 y = 0;
+	UINT32 i = 0;
+	UINT32 awidth = 0;
+	UINT32 aheight = 0;
 	BOOL rc = FALSE;
 	BYTE* luma[3] = { 0 };
 	BYTE* chroma[3] = { 0 };
@@ -395,19 +395,19 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 		BYTE** pv;
 	} cnv;
 	BOOL res = FALSE;
-	UINT32 x;
-	UINT32 y;
-	UINT32 awidth;
-	UINT32 aheight;
+	UINT32 x = 0;
+	UINT32 y = 0;
+	UINT32 awidth = 0;
+	UINT32 aheight = 0;
 	BYTE* yuv[3] = { 0 };
 	UINT32 yuv_step[3];
 	BYTE* rgb = NULL;
 	BYTE* rgb_dst = NULL;
-	size_t size;
-	size_t uvsize;
-	size_t uvwidth;
+	size_t size = 0;
+	size_t uvsize = 0;
+	size_t uvwidth = 0;
 	size_t padding = 100 * 16;
-	UINT32 stride;
+	UINT32 stride = 0;
 	const UINT32 formats[] = { PIXEL_FORMAT_XRGB32, PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_ARGB32,
 		                       PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_RGBX32,
 		                       PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };
@@ -476,7 +476,7 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 
 	for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 	{
-		pstatus_t rc;
+		pstatus_t rc = 0;
 		const UINT32 DstFormat = formats[x];
 		printf("Testing destination color format %s\n", FreeRDPGetColorFormatName(DstFormat));
 		memset(rgb_dst, PADDING_FILL_VALUE, size * sizeof(UINT32));
@@ -645,7 +645,7 @@ static BOOL check_yuv420(BYTE** planes, UINT32 width, UINT32 height, UINT32 padd
 static BOOL check_for_mismatches(const BYTE* planeA, const BYTE* planeB, UINT32 size)
 {
 	BOOL rc = FALSE;
-	UINT32 x;
+	UINT32 x = 0;
 
 	for (x = 0; x < size; x++)
 	{
@@ -694,24 +694,24 @@ static BOOL compare_yuv420(BYTE** planesA, BYTE** planesB, UINT32 width, UINT32 
 static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, UINT32 version)
 {
 	BOOL res = FALSE;
-	UINT32 x;
-	UINT32 y;
-	UINT32 cnt;
-	UINT32 awidth;
-	UINT32 aheight;
+	UINT32 x = 0;
+	UINT32 y = 0;
+	UINT32 cnt = 0;
+	UINT32 awidth = 0;
+	UINT32 aheight = 0;
 	BYTE* luma[3] = { 0 };
 	BYTE* chroma[3] = { 0 };
 	BYTE* lumaGeneric[3] = { 0 };
 	BYTE* chromaGeneric[3] = { 0 };
 	UINT32 yuv_step[3];
 	BYTE* rgb = NULL;
-	size_t size;
-	size_t uvsize;
-	size_t uvwidth;
+	size_t size = 0;
+	size_t uvsize = 0;
+	size_t uvwidth = 0;
 	const size_t padding = 0x1000;
-	UINT32 stride;
-	__RGBToAVC444YUV_t fkt;
-	__RGBToAVC444YUV_t gen;
+	UINT32 stride = 0;
+	__RGBToAVC444YUV_t fkt = NULL;
+	__RGBToAVC444YUV_t gen = NULL;
 	const UINT32 formats[] = { PIXEL_FORMAT_XRGB32, PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_ARGB32,
 		                       PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_RGBX32,
 		                       PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };
@@ -888,7 +888,7 @@ fail:
 int TestPrimitivesYUV(int argc, char* argv[])
 {
 	BOOL large = (argc > 1);
-	UINT32 x;
+	UINT32 x = 0;
 	int rc = -1;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

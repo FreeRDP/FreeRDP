@@ -132,7 +132,7 @@ static void video_client_context_set_geometry(VideoClientContext* video,
 
 static VideoClientContextPriv* VideoClientContextPriv_new(VideoClientContext* video)
 {
-	VideoClientContextPriv* ret;
+	VideoClientContextPriv* ret = NULL;
 
 	WINPR_ASSERT(video);
 	ret = calloc(1, sizeof(*ret));
@@ -184,8 +184,8 @@ static PresentationContext* PresentationContext_new(VideoClientContext* video, B
                                                     UINT32 x, UINT32 y, UINT32 width, UINT32 height)
 {
 	size_t s = width * height * 4ULL;
-	VideoClientContextPriv* priv;
-	PresentationContext* ret;
+	VideoClientContextPriv* priv = NULL;
+	PresentationContext* ret = NULL;
 
 	WINPR_ASSERT(video);
 
@@ -237,8 +237,8 @@ fail:
 
 static void PresentationContext_unref(PresentationContext** ppresentation)
 {
-	PresentationContext* presentation;
-	MAPPED_GEOMETRY* geometry;
+	PresentationContext* presentation = NULL;
+	MAPPED_GEOMETRY* geometry = NULL;
 
 	WINPR_ASSERT(ppresentation);
 
@@ -267,7 +267,7 @@ static void PresentationContext_unref(PresentationContext** ppresentation)
 
 static void VideoFrame_free(VideoFrame** pframe)
 {
-	VideoFrame* frame;
+	VideoFrame* frame = NULL;
 
 	WINPR_ASSERT(pframe);
 	frame = *pframe;
@@ -288,8 +288,8 @@ static void VideoFrame_free(VideoFrame** pframe)
 static VideoFrame* VideoFrame_new(VideoClientContextPriv* priv, PresentationContext* presentation,
                                   MAPPED_GEOMETRY* geom)
 {
-	VideoFrame* frame;
-	const VideoSurface* surface;
+	VideoFrame* frame = NULL;
+	const VideoSurface* surface = NULL;
 
 	WINPR_ASSERT(priv);
 	WINPR_ASSERT(presentation);
@@ -358,10 +358,10 @@ static UINT video_control_send_presentation_response(VideoClientContext* context
                                                      TSMM_PRESENTATION_RESPONSE* resp)
 {
 	BYTE buf[12] = { 0 };
-	wStream* s;
-	VIDEO_PLUGIN* video;
-	IWTSVirtualChannel* channel;
-	UINT ret;
+	wStream* s = NULL;
+	VIDEO_PLUGIN* video = NULL;
+	IWTSVirtualChannel* channel = NULL;
+	UINT ret = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(resp);
@@ -388,8 +388,8 @@ static UINT video_control_send_presentation_response(VideoClientContext* context
 
 static BOOL video_onMappedGeometryUpdate(MAPPED_GEOMETRY* geometry)
 {
-	PresentationContext* presentation;
-	RDP_RECT* r;
+	PresentationContext* presentation = NULL;
+	RDP_RECT* r = NULL;
 
 	WINPR_ASSERT(geometry);
 
@@ -418,7 +418,7 @@ static BOOL video_onMappedGeometryUpdate(MAPPED_GEOMETRY* geometry)
 
 static BOOL video_onMappedGeometryClear(MAPPED_GEOMETRY* geometry)
 {
-	PresentationContext* presentation;
+	PresentationContext* presentation = NULL;
 
 	WINPR_ASSERT(geometry);
 
@@ -443,7 +443,7 @@ static UINT video_PresentationRequest(VideoClientContext* video,
 
 	if (req->Command == TSMM_START_PRESENTATION)
 	{
-		MAPPED_GEOMETRY* geom;
+		MAPPED_GEOMETRY* geom = NULL;
 		TSMM_PRESENTATION_RESPONSE resp;
 
 		if (memcmp(req->VideoSubtypeId, MFVideoFormat_H264, 16) != 0)
@@ -572,11 +572,11 @@ static UINT video_read_tsmm_presentation_req(VideoClientContext* context, wStrea
 static UINT video_control_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* s)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
-	VIDEO_PLUGIN* video;
-	VideoClientContext* context;
+	VIDEO_PLUGIN* video = NULL;
+	VideoClientContext* context = NULL;
 	UINT ret = CHANNEL_RC_OK;
-	UINT32 cbSize;
-	UINT32 packetType;
+	UINT32 cbSize = 0;
+	UINT32 packetType = 0;
 
 	WINPR_ASSERT(callback);
 	WINPR_ASSERT(s);
@@ -618,11 +618,11 @@ static UINT video_control_send_client_notification(VideoClientContext* context,
                                                    const TSMM_CLIENT_NOTIFICATION* notif)
 {
 	BYTE buf[100];
-	wStream* s;
-	VIDEO_PLUGIN* video;
-	IWTSVirtualChannel* channel;
-	UINT ret;
-	UINT32 cbSize;
+	wStream* s = NULL;
+	VIDEO_PLUGIN* video = NULL;
+	IWTSVirtualChannel* channel = NULL;
+	UINT ret = 0;
+	UINT32 cbSize = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(notif);
@@ -675,9 +675,9 @@ static UINT video_control_send_client_notification(VideoClientContext* context,
 
 static void video_timer(VideoClientContext* video, UINT64 now)
 {
-	PresentationContext* presentation;
-	VideoClientContextPriv* priv;
-	VideoFrame* peekFrame;
+	PresentationContext* presentation = NULL;
+	VideoClientContextPriv* priv = NULL;
+	VideoFrame* peekFrame = NULL;
 	VideoFrame* frame = NULL;
 
 	WINPR_ASSERT(video);
@@ -728,7 +728,7 @@ treat_feedback:
 		 */
 		if (priv->publishedFrames && priv->currentPresentation)
 		{
-			UINT32 computedRate;
+			UINT32 computedRate = 0;
 
 			PresentationContext_ref(priv->currentPresentation);
 
@@ -805,9 +805,9 @@ treat_feedback:
 
 static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* data)
 {
-	VideoClientContextPriv* priv;
-	PresentationContext* presentation;
-	int status;
+	VideoClientContextPriv* priv = NULL;
+	PresentationContext* presentation = NULL;
+	int status = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(data);
@@ -842,7 +842,7 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		VideoSurface* surface = presentation->surface;
 		H264_CONTEXT* h264 = presentation->h264;
 		UINT64 startTime = GetTickCount64();
-		UINT64 timeAfterH264;
+		UINT64 timeAfterH264 = 0;
 		MAPPED_GEOMETRY* geom = presentation->geometry;
 
 		const RECTANGLE_16 rect = { 0, 0, surface->alignedWidth, surface->alignedHeight };
@@ -894,7 +894,7 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		}
 		else
 		{
-			BOOL enqueueResult;
+			BOOL enqueueResult = 0;
 			VideoFrame* frame = VideoFrame_new(priv, presentation, geom);
 			if (!frame)
 			{
@@ -933,10 +933,10 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 static UINT video_data_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* s)
 {
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
-	VIDEO_PLUGIN* video;
-	VideoClientContext* context;
-	UINT32 cbSize;
-	UINT32 packetType;
+	VIDEO_PLUGIN* video = NULL;
+	VideoClientContext* context = NULL;
+	UINT32 cbSize = 0;
+	UINT32 packetType = 0;
 	TSMM_VIDEO_DATA data;
 
 	video = (VIDEO_PLUGIN*)callback->plugin;
@@ -1017,7 +1017,7 @@ static UINT video_control_on_new_channel_connection(IWTSListenerCallback* listen
                                                     BOOL* pbAccept,
                                                     IWTSVirtualChannelCallback** ppCallback)
 {
-	GENERIC_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback = NULL;
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)listenerCallback;
 
 	WINPR_UNUSED(Data);
@@ -1047,7 +1047,7 @@ static UINT video_data_on_new_channel_connection(IWTSListenerCallback* pListener
                                                  BOOL* pbAccept,
                                                  IWTSVirtualChannelCallback** ppCallback)
 {
-	GENERIC_CHANNEL_CALLBACK* callback;
+	GENERIC_CHANNEL_CALLBACK* callback = NULL;
 	GENERIC_LISTENER_CALLBACK* listener_callback = (GENERIC_LISTENER_CALLBACK*)pListenerCallback;
 
 	WINPR_UNUSED(Data);
@@ -1079,9 +1079,9 @@ static UINT video_data_on_new_channel_connection(IWTSListenerCallback* pListener
  */
 static UINT video_plugin_initialize(IWTSPlugin* plugin, IWTSVirtualChannelManager* channelMgr)
 {
-	UINT status;
+	UINT status = 0;
 	VIDEO_PLUGIN* video = (VIDEO_PLUGIN*)plugin;
-	GENERIC_LISTENER_CALLBACK* callback;
+	GENERIC_LISTENER_CALLBACK* callback = NULL;
 
 	if (video->initialized)
 	{
@@ -1172,9 +1172,9 @@ static UINT video_plugin_terminated(IWTSPlugin* pPlugin)
 FREERDP_ENTRY_POINT(UINT video_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoints))
 {
 	UINT error = CHANNEL_RC_OK;
-	VIDEO_PLUGIN* videoPlugin;
-	VideoClientContext* videoContext;
-	VideoClientContextPriv* priv;
+	VIDEO_PLUGIN* videoPlugin = NULL;
+	VideoClientContext* videoContext = NULL;
+	VideoClientContextPriv* priv = NULL;
 
 	videoPlugin = (VIDEO_PLUGIN*)pEntryPoints->GetPlugin(pEntryPoints, "video");
 	if (!videoPlugin)

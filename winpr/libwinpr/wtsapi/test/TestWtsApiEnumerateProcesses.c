@@ -6,10 +6,10 @@
 
 int TestWtsApiEnumerateProcesses(int argc, char* argv[])
 {
-	DWORD count;
-	BOOL bSuccess;
-	HANDLE hServer;
-	PWTS_PROCESS_INFOA pProcessInfo;
+	DWORD count = 0;
+	BOOL bSuccess = 0;
+	HANDLE hServer = NULL;
+	PWTS_PROCESS_INFOA pProcessInfo = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

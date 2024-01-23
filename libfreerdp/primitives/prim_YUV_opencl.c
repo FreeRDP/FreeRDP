@@ -51,12 +51,11 @@ static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[
                                  const UINT32 srcStep[3], BYTE* pDst, UINT32 dstStep,
                                  const prim_size_t* roi)
 {
-	cl_int ret;
-	cl_uint i;
+	cl_int ret = 0;
 	cl_mem objs[3] = { NULL, NULL, NULL };
-	cl_mem destObj;
-	cl_kernel kernel;
-	size_t indexes[2];
+	cl_mem destObj = NULL;
+	cl_kernel kernel = NULL;
+	size_t indexes[2] = { 0 };
 	const char* sourceNames[] = { "Y", "U", "V" };
 	primitives_opencl_context* cl = primitives_get_opencl_context();
 
@@ -67,7 +66,7 @@ static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[
 		return -1;
 	}
 
-	for (i = 0; i < 3; i++)
+	for (cl_uint i = 0; i < 3; i++)
 	{
 		objs[i] = clCreateBuffer(cl->context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
 		                         srcStep[i] * roi->height, (char*)pSrc[i], &ret);
@@ -86,7 +85,7 @@ static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[
 	}
 
 	/* push source + stride arguments*/
-	for (i = 0; i < 3; i++)
+	for (cl_uint i = 0; i < 3; i++)
 	{
 		ret = clSetKernelArg(kernel, i * 2, sizeof(cl_mem), &objs[i]);
 		if (ret != CL_SUCCESS)
@@ -137,7 +136,7 @@ static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[
 
 	/* cleanup things */
 	clReleaseMemObject(destObj);
-	for (i = 0; i < 3; i++)
+	for (cl_uint i = 0; i < 3; i++)
 		if (objs[i])
 			clReleaseMemObject(objs[i]);
 	clReleaseKernel(kernel);
@@ -147,7 +146,7 @@ static pstatus_t opencl_YUVToRGB(const char* kernelName, const BYTE* const pSrc[
 error_set_args:
 	clReleaseMemObject(destObj);
 error_objs:
-	for (i = 0; i < 3; i++)
+	for (cl_uint i = 0; i < 3; i++)
 	{
 		if (objs[i])
 			clReleaseMemObject(objs[i]);
@@ -183,14 +182,13 @@ static const char* openclProgram =
 static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 {
 	cl_platform_id* platform_ids = NULL;
-	cl_uint ndevices;
-	cl_uint nplatforms;
-	cl_uint i;
-	cl_kernel kernel;
-	cl_int ret;
+	cl_uint ndevices = 0;
+	cl_uint nplatforms = 0;
+	cl_kernel kernel = NULL;
+	cl_int ret = 0;
 
 	BOOL gotGPU = FALSE;
-	size_t programLen;
+	size_t programLen = 0;
 
 	ret = clGetPlatformIDs(0, NULL, &nplatforms);
 	if (ret != CL_SUCCESS || nplatforms < 1)
@@ -207,10 +205,10 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 		return FALSE;
 	}
 
-	for (i = 0; (i < nplatforms) && !gotGPU; i++)
+	for (cl_uint i = 0; (i < nplatforms) && !gotGPU; i++)
 	{
-		cl_device_id device_id;
-		cl_context context;
+		cl_device_id device_id = NULL;
+		cl_context context = NULL;
 		char platformName[1000];
 		char deviceName[1000];
 
@@ -277,7 +275,7 @@ static BOOL primitives_init_opencl_context(primitives_opencl_context* cl)
 	ret = clBuildProgram(cl->program, 1, &cl->deviceId, NULL, NULL, NULL);
 	if (ret != CL_SUCCESS)
 	{
-		size_t length;
+		size_t length = 0;
 		char buffer[2048];
 		ret = clGetProgramBuildInfo(cl->program, cl->deviceId, CL_PROGRAM_BUILD_LOG, sizeof(buffer),
 		                            buffer, &length);
@@ -318,7 +316,7 @@ static pstatus_t opencl_YUV420ToRGB_8u_P3AC4R(const BYTE* const pSrc[3], const U
                                               BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                               const prim_size_t* roi)
 {
-	const char* kernel_name;
+	const char* kernel_name = NULL;
 
 	switch (DstFormat)
 	{
@@ -346,7 +344,7 @@ static pstatus_t opencl_YUV444ToRGB_8u_P3AC4R(const BYTE* const pSrc[3], const U
                                               BYTE* pDst, UINT32 dstStep, UINT32 DstFormat,
                                               const prim_size_t* roi)
 {
-	const char* kernel_name;
+	const char* kernel_name = NULL;
 
 	switch (DstFormat)
 	{

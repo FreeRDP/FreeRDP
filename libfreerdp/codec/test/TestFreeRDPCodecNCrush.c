@@ -13,8 +13,8 @@ static const BYTE TEST_BELLS_NCRUSH[] =
 static BOOL test_NCrushCompressBells(void)
 {
 	BOOL rc = FALSE;
-	int status;
-	UINT32 Flags;
+	int status = 0;
+	UINT32 Flags = 0;
 	const BYTE* pDstData = NULL;
 	BYTE OutputBuffer[65536] = { 0 };
 	const UINT32 SrcSize = sizeof(TEST_BELLS_DATA) - 1;
@@ -64,12 +64,12 @@ fail:
 static BOOL test_NCrushDecompressBells(void)
 {
 	BOOL rc = FALSE;
-	int status;
-	UINT32 Flags;
-	const BYTE* pSrcData;
-	UINT32 SrcSize;
-	UINT32 DstSize;
-	UINT32 expectedSize;
+	int status = 0;
+	UINT32 Flags = 0;
+	const BYTE* pSrcData = NULL;
+	UINT32 SrcSize = 0;
+	UINT32 DstSize = 0;
+	UINT32 expectedSize = 0;
 	const BYTE* pDstData = NULL;
 	NCRUSH_CONTEXT* ncrush = ncrush_context_new(FALSE);
 

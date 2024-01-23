@@ -10,7 +10,7 @@
 int TestEnvironmentSetEnvironmentVariable(int argc, char* argv[])
 {
 	int rc = -1;
-	DWORD nSize;
+	DWORD nSize = 0;
 	LPSTR lpBuffer = NULL;
 	DWORD error = 0;
 

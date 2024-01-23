@@ -451,7 +451,7 @@ static BOOL audin_server_open(audin_server_context* context)
 		PULONG pSessionId = NULL;
 		DWORD BytesReturned = 0;
 		audin->SessionId = WTS_CURRENT_SESSION;
-		UINT32 channelId;
+		UINT32 channelId = 0;
 		BOOL status = TRUE;
 
 		if (WTSQuerySessionInformationA(context->vcm, WTS_CURRENT_SESSION, WTSSessionId,
@@ -563,7 +563,7 @@ static UINT audin_server_packet_send(audin_server_context* context, wStream* s)
 {
 	audin_server* audin = (audin_server*)context;
 	UINT error = CHANNEL_RC_OK;
-	ULONG written;
+	ULONG written = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);

@@ -121,10 +121,10 @@ static UINT32 _GetLastErrorToIoStatus(SERIAL_DEVICE* serial)
 
 static UINT serial_process_irp_create(SERIAL_DEVICE* serial, IRP* irp)
 {
-	DWORD DesiredAccess;
-	DWORD SharedAccess;
-	DWORD CreateDisposition;
-	UINT32 PathLength;
+	DWORD DesiredAccess = 0;
+	DWORD SharedAccess = 0;
+	DWORD CreateDisposition = 0;
+	UINT32 PathLength = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
 		return ERROR_INVALID_DATA;
@@ -231,8 +231,8 @@ error_handle:
  */
 static UINT serial_process_irp_read(SERIAL_DEVICE* serial, IRP* irp)
 {
-	UINT32 Length;
-	UINT64 Offset;
+	UINT32 Length = 0;
+	UINT64 Offset = 0;
 	BYTE* buffer = NULL;
 	DWORD nbRead = 0;
 
@@ -292,8 +292,8 @@ error_handle:
 
 static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
 {
-	UINT32 Length;
-	UINT64 Offset;
+	UINT32 Length = 0;
+	UINT64 Offset = 0;
 	DWORD nbWritten = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 32))
@@ -343,10 +343,10 @@ static UINT serial_process_irp_write(SERIAL_DEVICE* serial, IRP* irp)
  */
 static UINT serial_process_irp_device_control(SERIAL_DEVICE* serial, IRP* irp)
 {
-	UINT32 IoControlCode;
-	UINT32 InputBufferLength;
+	UINT32 IoControlCode = 0;
+	UINT32 InputBufferLength = 0;
 	BYTE* InputBuffer = NULL;
-	UINT32 OutputBufferLength;
+	UINT32 OutputBufferLength = 0;
 	BYTE* OutputBuffer = NULL;
 	DWORD BytesReturned = 0;
 
@@ -482,7 +482,7 @@ static UINT serial_process_irp(SERIAL_DEVICE* serial, IRP* irp)
 static DWORD WINAPI irp_thread_func(LPVOID arg)
 {
 	IRP_THREAD_DATA* data = (IRP_THREAD_DATA*)arg;
-	UINT error;
+	UINT error = 0;
 
 	/* blocks until the end of the request */
 	if ((error = serial_process_irp(data->serial, data->irp)))
@@ -511,9 +511,9 @@ error_out:
 static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 {
 	IRP_THREAD_DATA* data = NULL;
-	HANDLE irpThread;
-	HANDLE previousIrpThread;
-	uintptr_t key;
+	HANDLE irpThread = NULL;
+	HANDLE previousIrpThread = NULL;
+	uintptr_t key = 0;
 	/* for a test/debug purpose, uncomment the code below to get a
 	 * single thread for all IRPs. NB: two IRPs could not be
 	 * processed at the same time, typically two concurent
@@ -530,14 +530,14 @@ static void create_irp_thread(SERIAL_DEVICE* serial, IRP* irp)
 	{
 		/* Cleaning up termitating and pending irp
 		 * threads. See also: irp_thread_func() */
-		HANDLE cirpThread;
+		HANDLE cirpThread = NULL;
 		ULONG_PTR* ids = NULL;
 		const size_t nbIds = ListDictionary_GetKeys(serial->IrpThreads, &ids);
 
 		for (size_t i = 0; i < nbIds; i++)
 		{
 			/* Checking if ids[i] is terminating or pending */
-			DWORD waitResult;
+			DWORD waitResult = 0;
 			ULONG_PTR id = ids[i];
 			cirpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)id);
 			/* FIXME: not quite sure a zero timeout is a good thing to check whether a thread is
@@ -671,7 +671,7 @@ static void terminate_pending_irp_threads(SERIAL_DEVICE* serial)
 
 	for (size_t i = 0; i < nbIds; i++)
 	{
-		HANDLE irpThread;
+		HANDLE irpThread = NULL;
 		ULONG_PTR id = ids[i];
 		irpThread = ListDictionary_GetItemValue(serial->IrpThreads, (void*)id);
 		TerminateThread(irpThread, 0);
@@ -765,7 +765,7 @@ static UINT serial_irp_request(DEVICE* device, IRP* irp)
  */
 static UINT serial_free(DEVICE* device)
 {
-	UINT error;
+	UINT error = 0;
 	SERIAL_DEVICE* serial = (SERIAL_DEVICE*)device;
 	WLog_Print(serial->log, WLOG_DEBUG, "freeing");
 	MessageQueue_PostQuit(serial->MainIrpQueue, 0);
@@ -815,14 +815,14 @@ static void serial_message_free(void* obj)
  */
 FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints))
 {
-	char* name;
-	char* path;
-	char* driver;
-	RDPDR_SERIAL* device;
+	char* name = NULL;
+	char* path = NULL;
+	char* driver = NULL;
+	RDPDR_SERIAL* device = NULL;
 #if defined __linux__ && !defined ANDROID
-	size_t i;
-	size_t len;
-	SERIAL_DEVICE* serial;
+	size_t i = 0;
+	size_t len = 0;
+	SERIAL_DEVICE* serial = NULL;
 #endif /* __linux__ */
 	UINT error = CHANNEL_RC_OK;
 
@@ -843,7 +843,7 @@ FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS 
 
 	if ((name && name[0]) && (path && path[0]))
 	{
-		wLog* log;
+		wLog* log = NULL;
 		log = WLog_Get("com.freerdp.channel.serial.client");
 		WLog_Print(log, WLOG_DEBUG, "initializing");
 #ifndef __linux__ /* to be removed */

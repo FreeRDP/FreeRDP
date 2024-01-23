@@ -76,7 +76,7 @@ static BOOL checkResult(size_t index, char** actual, size_t actualCount)
 	}
 	else
 	{
-		size_t x;
+		size_t x = 0;
 
 		if (!actual)
 			return FALSE;
@@ -96,7 +96,7 @@ static BOOL checkResult(size_t index, char** actual, size_t actualCount)
 
 static BOOL TestCommandLineParseCommaSeparatedValuesEx(void)
 {
-	size_t x;
+	size_t x = 0;
 
 	WINPR_ASSERT(ARRAYSIZE(testListArgs) == ARRAYSIZE(testListArgsResult));
 	WINPR_ASSERT(ARRAYSIZE(testListArgs) == ARRAYSIZE(testListArgsCount));
@@ -117,14 +117,14 @@ static BOOL TestCommandLineParseCommaSeparatedValuesEx(void)
 
 int TestCmdLine(int argc, char* argv[])
 {
-	int status;
+	int status = 0;
 	int ret = -1;
-	DWORD flags;
+	DWORD flags = 0;
 	long width = 0;
 	long height = 0;
-	const COMMAND_LINE_ARGUMENT_A* arg;
-	int testArgc;
-	char** command_line;
+	const COMMAND_LINE_ARGUMENT_A* arg = NULL;
+	int testArgc = 0;
+	char** command_line = NULL;
 	COMMAND_LINE_ARGUMENT_A args[] = {
 		{ "v", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "destination server" },
 		{ "port", COMMAND_LINE_VALUE_REQUIRED, NULL, NULL, NULL, -1, NULL, "server port" },
@@ -305,8 +305,8 @@ int TestCmdLine(int argc, char* argv[])
 		}
 		CommandLineSwitchCase(arg, "valuelist")
 		{
-			char** p;
-			size_t count;
+			char** p = NULL;
+			size_t count = 0;
 			p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
 			free(p);
 
@@ -320,8 +320,8 @@ int TestCmdLine(int argc, char* argv[])
 		}
 		CommandLineSwitchCase(arg, "valuelist-empty")
 		{
-			char** p;
-			size_t count;
+			char** p = NULL;
+			size_t count = 0;
 			p = CommandLineParseCommaSeparatedValuesEx(arg->Name, arg->Value, &count);
 			free(p);
 

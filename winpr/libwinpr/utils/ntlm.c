@@ -123,7 +123,7 @@ out_fail:
 BOOL NTOWFv2FromHashW(BYTE* NtHashV1, LPWSTR User, UINT32 UserLength, LPWSTR Domain,
                       UINT32 DomainLength, BYTE* NtHash)
 {
-	BYTE* buffer;
+	BYTE* buffer = NULL;
 	BYTE result = FALSE;
 
 	if (!User || !NtHash)

@@ -324,7 +324,7 @@ size_t _wcslen(const WCHAR* str)
 
 size_t _wcsnlen(const WCHAR* str, size_t max)
 {
-	size_t x;
+	size_t x = 0;
 
 	WINPR_ASSERT(str);
 
@@ -407,8 +407,8 @@ char* strtok_s(char* strToken, const char* strDelimit, char** context)
 
 WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 {
-	WCHAR* nextToken;
-	WCHAR value;
+	WCHAR* nextToken = NULL;
+	WCHAR value = 0;
 
 	if (!strToken)
 		strToken = *context;
@@ -452,8 +452,8 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 
 LPSTR CharUpperA(LPSTR lpsz)
 {
-	size_t i;
-	size_t length;
+	size_t i = 0;
+	size_t length = 0;
 
 	if (!lpsz)
 		return NULL;
@@ -485,8 +485,8 @@ LPSTR CharUpperA(LPSTR lpsz)
 
 LPWSTR CharUpperW(LPWSTR lpsz)
 {
-	size_t i;
-	size_t length;
+	size_t i = 0;
+	size_t length = 0;
 
 	if (!lpsz)
 		return NULL;
@@ -518,7 +518,7 @@ LPWSTR CharUpperW(LPWSTR lpsz)
 
 DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 {
-	DWORD i;
+	DWORD i = 0;
 
 	if (cchLength < 1)
 		return 0;
@@ -534,8 +534,8 @@ DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 
 DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 {
-	DWORD i;
-	WCHAR value;
+	DWORD i = 0;
+	WCHAR value = 0;
 
 	for (i = 0; i < cchLength; i++)
 	{
@@ -549,8 +549,8 @@ DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 
 LPSTR CharLowerA(LPSTR lpsz)
 {
-	size_t i;
-	size_t length;
+	size_t i = 0;
+	size_t length = 0;
 
 	if (!lpsz)
 		return (LPSTR)NULL;
@@ -588,7 +588,7 @@ LPWSTR CharLowerW(LPWSTR lpsz)
 
 DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 {
-	DWORD i;
+	DWORD i = 0;
 
 	if (cchLength < 1)
 		return 0;
@@ -604,8 +604,8 @@ DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 
 DWORD CharLowerBuffW(LPWSTR lpsz, DWORD cchLength)
 {
-	DWORD i;
-	WCHAR value;
+	DWORD i = 0;
+	WCHAR value = 0;
 
 	for (i = 0; i < cchLength; i++)
 	{
@@ -766,7 +766,7 @@ char* ConvertLineEndingToCRLF(const char* str, size_t* size)
 char* StrSep(char** stringp, const char* delim)
 {
 	char* start = *stringp;
-	char* p;
+	char* p = NULL;
 	p = (start != NULL) ? strpbrk(start, delim) : NULL;
 
 	if (!p)

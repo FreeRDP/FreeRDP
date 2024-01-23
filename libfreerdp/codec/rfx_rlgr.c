@@ -91,7 +91,7 @@ static INLINE UINT32 lzcnt_s(UINT32 x)
 
 	if (!g_LZCNT)
 	{
-		UINT32 y;
+		UINT32 y = 0;
 		UINT32 n = 32;
 		y = x >> 16;
 		if (y != 0)
@@ -632,11 +632,11 @@ static void rfx_rlgr_code_gr(RFX_BITSTREAM* bs, int* krp, UINT32 val)
 int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 data_size,
                     BYTE* WINPR_RESTRICT buffer, UINT32 buffer_size)
 {
-	int k;
-	int kp;
-	int krp;
-	RFX_BITSTREAM* bs;
-	int processed_size;
+	int k = 0;
+	int kp = 0;
+	int krp = 0;
+	RFX_BITSTREAM* bs = NULL;
+	int processed_size = 0;
 
 	if (!(bs = (RFX_BITSTREAM*)winpr_aligned_calloc(1, sizeof(RFX_BITSTREAM), 32)))
 		return 0;
@@ -651,13 +651,13 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 	/* process all the input coefficients */
 	while (data_size > 0)
 	{
-		int input;
+		int input = 0;
 
 		if (k)
 		{
-			int numZeros;
-			int runmax;
-			int sign;
+			int numZeros = 0;
+			int runmax = 0;
+			int sign = 0;
 
 			/* RUN-LENGTH MODE */
 
@@ -705,7 +705,7 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 
 			if (mode == RLGR1)
 			{
-				UINT32 twoMs;
+				UINT32 twoMs = 0;
 
 				/* RLGR1 variant */
 
@@ -728,10 +728,10 @@ int rfx_rlgr_encode(RLGR_MODE mode, const INT16* WINPR_RESTRICT data, UINT32 dat
 			}
 			else /* mode == RLGR3 */
 			{
-				UINT32 twoMs1;
-				UINT32 twoMs2;
-				UINT32 sum2Ms;
-				UINT32 nIdx;
+				UINT32 twoMs1 = 0;
+				UINT32 twoMs2 = 0;
+				UINT32 sum2Ms = 0;
+				UINT32 nIdx = 0;
 
 				/* RLGR3 variant */
 

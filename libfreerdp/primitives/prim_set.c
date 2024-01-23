@@ -41,9 +41,9 @@ static pstatus_t general_zero(void* pDst, size_t len)
 static pstatus_t general_set_32s(INT32 val, INT32* pDst, UINT32 len)
 {
 	INT32* dptr = (INT32*)pDst;
-	size_t span;
-	size_t remaining;
-	primitives_t* prims;
+	size_t span = 0;
+	size_t remaining = 0;
+	primitives_t* prims = NULL;
 
 	if (len < 256)
 	{
@@ -78,9 +78,9 @@ static pstatus_t general_set_32s(INT32 val, INT32* pDst, UINT32 len)
 static pstatus_t general_set_32u(UINT32 val, UINT32* pDst, UINT32 len)
 {
 	UINT32* dptr = (UINT32*)pDst;
-	size_t span;
-	size_t remaining;
-	primitives_t* prims;
+	size_t span = 0;
+	size_t remaining = 0;
+	primitives_t* prims = NULL;
 
 	if (len < 256)
 	{

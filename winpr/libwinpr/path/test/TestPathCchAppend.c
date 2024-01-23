@@ -13,9 +13,9 @@ static const TCHAR testPathOut[] = _T("C:\\Program Files\\Microsoft Visual Studi
 
 int TestPathCchAppend(int argc, char* argv[])
 {
-	HRESULT status;
+	HRESULT status = 0;
 	TCHAR Path[PATHCCH_MAX_CCH];
-	size_t i;
+	size_t i = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

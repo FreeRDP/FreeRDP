@@ -91,7 +91,7 @@ static void WLog_PrintMessagePrefix(wLog* log, wLogMessage* message,
 static const char* get_tid(void* arg)
 {
 	char* str = arg;
-	size_t tid;
+	size_t tid = 0;
 #if defined __linux__ && !defined ANDROID
 	/* On Linux we prefer to see the LWP id */
 	tid = (size_t)syscall(SYS_gettid);
@@ -302,7 +302,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 
 wLogLayout* WLog_GetLogLayout(wLog* log)
 {
-	wLogAppender* appender;
+	wLogAppender* appender = NULL;
 	appender = WLog_GetLogAppender(log);
 	return appender->Layout;
 }
@@ -326,9 +326,9 @@ BOOL WLog_Layout_SetPrefixFormat(wLog* log, wLogLayout* layout, const char* form
 wLogLayout* WLog_Layout_New(wLog* log)
 {
 	LPCSTR prefix = "WLOG_PREFIX";
-	DWORD nSize;
+	DWORD nSize = 0;
 	char* env = NULL;
-	wLogLayout* layout;
+	wLogLayout* layout = NULL;
 	layout = (wLogLayout*)calloc(1, sizeof(wLogLayout));
 
 	if (!layout)

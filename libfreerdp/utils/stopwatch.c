@@ -45,7 +45,7 @@ static void stopwatch_set_time(UINT64* usecs)
 
 STOPWATCH* stopwatch_create(void)
 {
-	STOPWATCH* sw;
+	STOPWATCH* sw = NULL;
 #ifdef _WIN32
 	if (stopwatch_freq.QuadPart == 0)
 	{

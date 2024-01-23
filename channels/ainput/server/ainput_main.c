@@ -89,9 +89,9 @@ static BOOL ainput_server_is_open(ainput_server_context* context)
  */
 static UINT ainput_server_open_channel(ainput_server* ainput)
 {
-	DWORD Error;
-	HANDLE hEvent;
-	DWORD StartTick;
+	DWORD Error = 0;
+	HANDLE hEvent = NULL;
+	DWORD StartTick = 0;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
 
@@ -131,7 +131,7 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 
 		if (ainput->ainput_channel)
 		{
-			UINT32 channelId;
+			UINT32 channelId = 0;
 			BOOL status = TRUE;
 
 			channelId = WTSChannelGetIdByHandle(ainput->ainput_channel);
@@ -158,8 +158,8 @@ static UINT ainput_server_open_channel(ainput_server* ainput)
 
 static UINT ainput_server_send_version(ainput_server* ainput)
 {
-	ULONG written;
-	wStream* s;
+	ULONG written = 0;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(ainput);
 
@@ -191,10 +191,10 @@ static UINT ainput_server_send_version(ainput_server* ainput)
 static UINT ainput_server_recv_mouse_event(ainput_server* ainput, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
-	UINT64 flags;
-	UINT64 time;
-	INT32 x;
-	INT32 y;
+	UINT64 flags = 0;
+	UINT64 time = 0;
+	INT32 x = 0;
+	INT32 y = 0;
 	char buffer[128] = { 0 };
 
 	WINPR_ASSERT(ainput);
@@ -237,11 +237,11 @@ static HANDLE ainput_server_get_channel_handle(ainput_server* ainput)
 
 static DWORD WINAPI ainput_server_thread_func(LPVOID arg)
 {
-	DWORD nCount;
+	DWORD nCount = 0;
 	HANDLE events[2] = { 0 };
 	ainput_server* ainput = (ainput_server*)arg;
 	UINT error = CHANNEL_RC_OK;
-	DWORD status;
+	DWORD status = 0;
 
 	WINPR_ASSERT(ainput);
 
@@ -437,12 +437,12 @@ void ainput_server_context_free(ainput_server_context* context)
 
 static UINT ainput_process_message(ainput_server* ainput)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
-	ULONG BytesReturned;
-	ULONG ActualBytesReturned;
-	UINT16 MessageId;
-	wStream* s;
+	ULONG BytesReturned = 0;
+	ULONG ActualBytesReturned = 0;
+	UINT16 MessageId = 0;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(ainput);
 	WINPR_ASSERT(ainput->ainput_channel);

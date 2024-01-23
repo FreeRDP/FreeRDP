@@ -12,7 +12,7 @@ static BOOL test_DsMakeSpnA(void)
 	LPCSTR testSpn = "HTTP/LAB1-W2K8R2-GW.lab1.awake.local";
 	BOOL rc = FALSE;
 	CHAR Spn[100] = { 0 };
-	DWORD status;
+	DWORD status = 0;
 	DWORD SpnLength = -1;
 
 	status = DsMakeSpnA(testServiceClass, testServiceName, NULL, 0, NULL, &SpnLength, NULL);
@@ -73,7 +73,7 @@ static BOOL test_DsMakeSpnW(void)
 
 	BOOL rc = FALSE;
 	WCHAR Spn[100] = { 0 };
-	DWORD status;
+	DWORD status = 0;
 	DWORD SpnLength = -1;
 
 	ConvertUtf8NToWChar(ctestServiceClass, ARRAYSIZE(ctestServiceClass), testServiceClass,

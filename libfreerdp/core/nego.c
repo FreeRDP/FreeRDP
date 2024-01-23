@@ -126,8 +126,8 @@ BOOL nego_update_settings_from_state(rdpNego* nego, rdpSettings* settings)
 
 BOOL nego_connect(rdpNego* nego)
 {
-	rdpContext* context;
-	rdpSettings* settings;
+	rdpContext* context = NULL;
+	rdpSettings* settings = NULL;
 	WINPR_ASSERT(nego);
 	context = transport_get_context(nego->transport);
 	WINPR_ASSERT(context);
@@ -353,11 +353,11 @@ BOOL nego_security_connect(rdpNego* nego)
 
 static BOOL nego_tcp_connect(rdpNego* nego)
 {
-	rdpContext* context;
+	rdpContext* context = NULL;
 	WINPR_ASSERT(nego);
 	if (!nego->TcpConnected)
 	{
-		UINT32 TcpConnectTimeout;
+		UINT32 TcpConnectTimeout = 0;
 
 		context = transport_get_context(nego->transport);
 		WINPR_ASSERT(context);
@@ -448,8 +448,8 @@ BOOL nego_transport_disconnect(rdpNego* nego)
 
 BOOL nego_send_preconnection_pdu(rdpNego* nego)
 {
-	wStream* s;
-	UINT32 cbSize;
+	wStream* s = NULL;
+	UINT32 cbSize = 0;
 	UINT16 cchPCB = 0;
 	WCHAR* wszPCB = NULL;
 
@@ -746,8 +746,8 @@ static void nego_attempt_rdp(rdpNego* nego)
 
 BOOL nego_recv_response(rdpNego* nego)
 {
-	int status;
-	wStream* s;
+	int status = 0;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(nego);
 	s = Stream_New(NULL, 1024);
@@ -788,9 +788,9 @@ BOOL nego_recv_response(rdpNego* nego)
 
 int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 {
-	BYTE li;
-	BYTE type;
-	UINT16 length;
+	BYTE li = 0;
+	BYTE type = 0;
+	UINT16 length = 0;
 	rdpNego* nego = (rdpNego*)extra;
 
 	WINPR_ASSERT(nego);
@@ -886,7 +886,7 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 	 * Cookie:[space]mstshash=[ANSISTRING][\x0D\x0A]
 	 */
 	UINT16 crlf = 0;
-	size_t len;
+	size_t len = 0;
 	BOOL result = FALSE;
 	BOOL isToken = FALSE;
 	size_t remain = Stream_GetRemainingLength(s);
@@ -970,9 +970,9 @@ static BOOL nego_read_request_token_or_cookie(rdpNego* nego, wStream* s)
 
 BOOL nego_read_request(rdpNego* nego, wStream* s)
 {
-	BYTE li;
-	BYTE type;
-	UINT16 length;
+	BYTE li = 0;
+	BYTE type = 0;
+	UINT16 length = 0;
 
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
@@ -1062,12 +1062,12 @@ void nego_send(rdpNego* nego)
 BOOL nego_send_negotiation_request(rdpNego* nego)
 {
 	BOOL rc = FALSE;
-	wStream* s;
-	size_t length;
-	size_t bm;
-	size_t em;
+	wStream* s = NULL;
+	size_t length = 0;
+	size_t bm = 0;
+	size_t em = 0;
 	BYTE flags = 0;
-	size_t cookie_length;
+	size_t cookie_length = 0;
 	s = Stream_New(NULL, 512);
 
 	WINPR_ASSERT(nego);
@@ -1153,10 +1153,10 @@ fail:
 
 static BOOL nego_process_correlation_info(rdpNego* nego, wStream* s)
 {
-	UINT8 type;
-	UINT8 flags;
-	UINT8 x;
-	UINT16 length;
+	UINT8 type = 0;
+	UINT8 flags = 0;
+	UINT8 x = 0;
+	UINT16 length = 0;
 	BYTE correlationId[16] = { 0 };
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 36))
@@ -1218,8 +1218,8 @@ static BOOL nego_process_correlation_info(rdpNego* nego, wStream* s)
 
 BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 {
-	BYTE flags;
-	UINT16 length;
+	BYTE flags = 0;
+	UINT16 length = 0;
 
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
@@ -1295,7 +1295,7 @@ static const char* nego_rdp_neg_rsp_flags_str(UINT32 flags)
 
 BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 {
-	UINT16 length;
+	UINT16 length = 0;
 
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
@@ -1316,7 +1316,7 @@ BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 		nego_set_state(nego, NEGO_STATE_FAIL);
 		return FALSE;
 	}
-	UINT32 SelectedProtocol;
+	UINT32 SelectedProtocol = 0;
 	Stream_Read_UINT32(s, SelectedProtocol);
 
 	if (!nego_set_selected_protocol(nego, SelectedProtocol))
@@ -1334,9 +1334,9 @@ BOOL nego_process_negotiation_response(rdpNego* nego, wStream* s)
 
 BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 {
-	BYTE flags;
-	UINT16 length;
-	UINT32 failureCode;
+	BYTE flags = 0;
+	UINT16 length = 0;
+	UINT32 failureCode = 0;
 
 	WINPR_ASSERT(nego);
 	WINPR_ASSERT(s);
@@ -1399,14 +1399,14 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 
 BOOL nego_send_negotiation_response(rdpNego* nego)
 {
-	UINT16 length;
-	size_t bm;
-	size_t em;
-	BOOL status;
-	wStream* s;
-	BYTE flags;
-	rdpContext* context;
-	rdpSettings* settings;
+	UINT16 length = 0;
+	size_t bm = 0;
+	size_t em = 0;
+	BOOL status = 0;
+	wStream* s = NULL;
+	BYTE flags = 0;
+	rdpContext* context = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(nego);
 	context = transport_get_context(nego->transport);
@@ -1948,7 +1948,7 @@ BOOL nego_set_state(rdpNego* nego, NEGO_STATE state)
 
 SEC_WINNT_AUTH_IDENTITY* nego_get_identity(rdpNego* nego)
 {
-	rdpNla* nla;
+	rdpNla* nla = NULL;
 	if (!nego)
 		return NULL;
 

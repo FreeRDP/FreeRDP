@@ -1,4 +1,5 @@
 
+#include <math.h>
 #include <winpr/crt.h>
 #include <winpr/tchar.h>
 #include <winpr/print.h>
@@ -302,10 +303,10 @@ fail:
 
 int TestPrint(int argc, char* argv[])
 {
-	int a;
-	int b;
-	float c;
-	float d;
+	int a = 0;
+	int b = 0;
+	float c = NAN;
+	float d = NAN;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

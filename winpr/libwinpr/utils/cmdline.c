@@ -57,20 +57,20 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
                                void* context, COMMAND_LINE_PRE_FILTER_FN_A preFilter,
                                COMMAND_LINE_POST_FILTER_FN_A postFilter)
 {
-	int i;
-	int j;
-	int status;
-	int count;
-	size_t length;
-	BOOL notescaped;
-	const char* sigil;
-	size_t sigil_length;
-	char* keyword;
-	size_t keyword_length;
-	SSIZE_T keyword_index;
-	char* separator;
-	char* value;
-	int toggle;
+	int i = 0;
+	int j = 0;
+	int status = 0;
+	int count = 0;
+	size_t length = 0;
+	BOOL notescaped = 0;
+	const char* sigil = NULL;
+	size_t sigil_length = 0;
+	char* keyword = NULL;
+	size_t keyword_length = 0;
+	SSIZE_T keyword_index = 0;
+	char* separator = NULL;
+	char* value = NULL;
+	int toggle = 0;
 	status = 0;
 	notescaped = FALSE;
 
@@ -241,7 +241,7 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 
 				if ((flags & COMMAND_LINE_SEPARATOR_SPACE) && ((i + 1) < argc))
 				{
-					BOOL argument;
+					BOOL argument = 0;
 					int value_present = 1;
 
 					if (flags & COMMAND_LINE_SIGIL_DASH)
@@ -397,7 +397,7 @@ int CommandLineParseArgumentsW(int argc, LPWSTR* argv, COMMAND_LINE_ARGUMENT_W* 
 
 int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options)
 {
-	size_t i;
+	size_t i = 0;
 
 	for (i = 0; options[i].Name != NULL; i++)
 	{
@@ -410,7 +410,7 @@ int CommandLineClearArgumentsA(COMMAND_LINE_ARGUMENT_A* options)
 
 int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options)
 {
-	int i;
+	int i = 0;
 
 	for (i = 0; options[i].Name != NULL; i++)
 	{
@@ -424,7 +424,7 @@ int CommandLineClearArgumentsW(COMMAND_LINE_ARGUMENT_W* options)
 const COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(const COMMAND_LINE_ARGUMENT_A* options,
                                                         LPCSTR Name)
 {
-	size_t i;
+	size_t i = 0;
 
 	WINPR_ASSERT(options);
 	WINPR_ASSERT(Name);
@@ -447,7 +447,7 @@ const COMMAND_LINE_ARGUMENT_A* CommandLineFindArgumentA(const COMMAND_LINE_ARGUM
 const COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(const COMMAND_LINE_ARGUMENT_W* options,
                                                         LPCWSTR Name)
 {
-	size_t i;
+	size_t i = 0;
 
 	WINPR_ASSERT(options);
 	WINPR_ASSERT(Name);
@@ -469,7 +469,7 @@ const COMMAND_LINE_ARGUMENT_W* CommandLineFindArgumentW(const COMMAND_LINE_ARGUM
 
 const COMMAND_LINE_ARGUMENT_A* CommandLineFindNextArgumentA(const COMMAND_LINE_ARGUMENT_A* argument)
 {
-	const COMMAND_LINE_ARGUMENT_A* nextArgument;
+	const COMMAND_LINE_ARGUMENT_A* nextArgument = NULL;
 
 	if (!argument || !argument->Name)
 		return NULL;
@@ -673,8 +673,8 @@ char** CommandLineParseCommaSeparatedValuesEx(const char* name, const char* list
 	*count = 0;
 	if (list)
 	{
-		int start;
-		int end;
+		int start = 0;
+		int end = 0;
 		unquoted = copy = _strdup(list);
 		if (!copy)
 			goto fail;
@@ -815,7 +815,7 @@ char* CommandLineToCommaSeparatedValues(int argc, char* argv[])
 
 static const char* filtered(const char* arg, const char* filters[], size_t number)
 {
-	size_t x;
+	size_t x = 0;
 	if (number == 0)
 		return arg;
 	for (x = 0; x < number; x++)
@@ -831,7 +831,7 @@ static const char* filtered(const char* arg, const char* filters[], size_t numbe
 char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[], const char* filters[],
                                           size_t number)
 {
-	int x;
+	int x = 0;
 	char* str = NULL;
 	size_t offset = 0;
 	size_t size = argc + 1;
@@ -846,7 +846,7 @@ char* CommandLineToCommaSeparatedValuesEx(int argc, char* argv[], const char* fi
 		return NULL;
 	for (x = 0; x < argc; x++)
 	{
-		int rc;
+		int rc = 0;
 		const char* arg = filtered(argv[x], filters, number);
 		if (!arg)
 			continue;

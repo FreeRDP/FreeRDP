@@ -6,10 +6,10 @@
 
 int TestWtsApiWaitSystemEvent(int argc, char* argv[])
 {
-	BOOL bSuccess;
-	HANDLE hServer;
-	DWORD eventMask;
-	DWORD eventFlags;
+	BOOL bSuccess = 0;
+	HANDLE hServer = NULL;
+	DWORD eventMask = 0;
+	DWORD eventFlags = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

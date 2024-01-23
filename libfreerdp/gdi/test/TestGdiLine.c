@@ -565,8 +565,8 @@ static BOOL test_line(HGDI_DC hdc, const gdiPalette* hPalette, UINT32 mX, UINT32
 int TestGdiLine(int argc, char* argv[])
 {
 	int rc = -1;
-	UINT32 x;
-	UINT32 i;
+	UINT32 x = 0;
+	UINT32 i = 0;
 	gdiPalette g;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
 	const UINT32 colorFormats[] = { PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_ARGB15, PIXEL_FORMAT_RGB16,
@@ -603,7 +603,7 @@ int TestGdiLine(int argc, char* argv[])
 		const UINT32 map_size = sizeof(rop_map) / sizeof(rop_map[0]);
 		HGDI_BITMAP hBmp_LineTo[LINTETO_NUMBER] = { NULL };
 		gdiPalette* hPalette = &g;
-		UINT32 penColor;
+		UINT32 penColor = 0;
 		const UINT32 format = colorFormats[i];
 		g.format = format;
 

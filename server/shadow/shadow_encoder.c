@@ -51,7 +51,7 @@ UINT32 shadow_encoder_inflight_frames(rdpShadowEncoder* encoder)
 
 UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 {
-	UINT32 frameId;
+	UINT32 frameId = 0;
 	UINT32 inFlightFrames = shadow_encoder_inflight_frames(encoder);
 
 	/*
@@ -80,11 +80,11 @@ UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 
 static int shadow_encoder_init_grid(rdpShadowEncoder* encoder)
 {
-	UINT32 i;
-	UINT32 j;
-	UINT32 k;
-	UINT32 tileSize;
-	UINT32 tileCount;
+	UINT32 i = 0;
+	UINT32 j = 0;
+	UINT32 k = 0;
+	UINT32 tileSize = 0;
+	UINT32 tileCount = 0;
 	encoder->gridWidth = ((encoder->width + (encoder->maxTileWidth - 1)) / encoder->maxTileWidth);
 	encoder->gridHeight =
 	    ((encoder->height + (encoder->maxTileHeight - 1)) / encoder->maxTileHeight);
@@ -401,7 +401,7 @@ static int shadow_encoder_uninit(rdpShadowEncoder* encoder)
 
 int shadow_encoder_reset(rdpShadowEncoder* encoder)
 {
-	int status;
+	int status = 0;
 	UINT32 codecs = encoder->codecs;
 	rdpContext* context = (rdpContext*)encoder->client;
 	rdpSettings* settings = context->settings;
@@ -430,7 +430,7 @@ int shadow_encoder_reset(rdpShadowEncoder* encoder)
 
 int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 {
-	int status;
+	int status = 0;
 
 	if ((codecs & FREERDP_CODEC_REMOTEFX) && !(encoder->codecs & FREERDP_CODEC_REMOTEFX))
 	{
@@ -492,7 +492,7 @@ int shadow_encoder_prepare(rdpShadowEncoder* encoder, UINT32 codecs)
 
 rdpShadowEncoder* shadow_encoder_new(rdpShadowClient* client)
 {
-	rdpShadowEncoder* encoder;
+	rdpShadowEncoder* encoder = NULL;
 	rdpShadowServer* server = client->server;
 	encoder = (rdpShadowEncoder*)calloc(1, sizeof(rdpShadowEncoder));
 

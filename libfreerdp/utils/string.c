@@ -24,7 +24,7 @@
 
 char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
 {
-	size_t x;
+	size_t x = 0;
 	struct map_t
 	{
 		UINT32 flag;

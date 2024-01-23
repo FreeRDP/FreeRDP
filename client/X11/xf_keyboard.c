@@ -80,13 +80,13 @@ static void xf_keyboard_clear(xfContext* xfc)
 
 static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 {
-	wObject* obj;
-	FILE* keyScript;
-	char* keyCombination;
+	wObject* obj = NULL;
+	FILE* keyScript = NULL;
+	char* keyCombination = NULL;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
-	const rdpSettings* settings;
-	const char* ActionScript;
+	const rdpSettings* settings = NULL;
+	const char* ActionScript = NULL;
 	WINPR_ASSERT(xfc);
 
 	settings = xfc->common.context.settings;
@@ -147,7 +147,7 @@ static void xf_keyboard_action_script_free(xfContext* xfc)
 
 BOOL xf_keyboard_init(xfContext* xfc)
 {
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 
@@ -176,7 +176,7 @@ void xf_keyboard_free(xfContext* xfc)
 
 void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym)
 {
-	BOOL last;
+	BOOL last = 0;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
@@ -236,8 +236,8 @@ BOOL xf_keyboard_key_pressed(xfContext* xfc, KeySym keysym)
 
 void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEvent* event)
 {
-	DWORD rdp_scancode;
-	rdpInput* input;
+	DWORD rdp_scancode = 0;
+	rdpInput* input = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
@@ -276,7 +276,7 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 					    XCreateIC(xim, XNInputStyle, XIMPreeditNothing | XIMStatusNothing, NULL);
 
 					KeySym ignore = { 0 };
-					Status return_status;
+					Status return_status = 0;
 					XKeyEvent ev = *event;
 					ev.type = KeyPress;
 					xwc = XwcLookupString(xic, &ev, buffer, ARRAYSIZE(buffer), &ignore,
@@ -310,8 +310,8 @@ void xf_keyboard_send_key(xfContext* xfc, BOOL down, BOOL repeat, const XKeyEven
 
 int xf_keyboard_read_keyboard_state(xfContext* xfc)
 {
-	int dummy;
-	Window wdummy;
+	int dummy = 0;
+	Window wdummy = 0;
 	UINT32 state = 0;
 
 	if (!xfc->remote_app && xfc->window)

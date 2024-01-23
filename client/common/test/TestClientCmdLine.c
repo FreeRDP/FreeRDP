@@ -30,7 +30,7 @@ typedef BOOL (*validate_settings_pr)(rdpSettings* settings);
 
 static void print_test_title(int argc, char** argv)
 {
-	int i;
+	int i = 0;
 	printf("Running test:");
 
 	for (i = 0; i < argc; i++)
@@ -44,7 +44,7 @@ static void print_test_title(int argc, char** argv)
 static INLINE BOOL testcase(const char* name, char** argv, size_t argc, int expected_return,
                             validate_settings_pr validate_settings)
 {
-	int status;
+	int status = 0;
 	BOOL valid_settings = TRUE;
 	rdpSettings* settings = freerdp_settings_new(0);
 	print_test_title(argc, argv);
@@ -212,8 +212,8 @@ static const test tests[] = {
 
 static void check_modified_arguments(const test* test, char** command_line, int* rc)
 {
-	int k;
-	const char* expected_argument;
+	int k = 0;
+	const char* expected_argument = NULL;
 
 	for (k = 0; (expected_argument = test->modified_arguments[k].expected_value); k++)
 	{
@@ -234,7 +234,7 @@ static void check_modified_arguments(const test* test, char** command_line, int*
 int TestClientCmdLine(int argc, char* argv[])
 {
 	int rc = 0;
-	size_t i;
+	size_t i = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

@@ -799,7 +799,7 @@ static const RDP_KEYBOARD_IME RDP_KEYBOARD_IME_TABLE[] = {
 
 void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts, size_t count)
 {
-	size_t x;
+	size_t x = 0;
 
 	if (!layouts)
 		return;
@@ -816,8 +816,8 @@ void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts, size_t count)
 
 RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_t* count)
 {
-	size_t num;
-	size_t i;
+	size_t num = 0;
+	size_t i = 0;
 	RDP_KEYBOARD_LAYOUT* layouts = NULL;
 
 	num = 0;
@@ -897,7 +897,7 @@ fail:
 
 const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutID)
 {
-	size_t i;
+	size_t i = 0;
 
 	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
 	{
@@ -922,7 +922,7 @@ const char* freerdp_keyboard_get_layout_name_from_id(DWORD keyboardLayoutID)
 
 DWORD freerdp_keyboard_get_layout_id_from_name(const char* name)
 {
-	size_t i;
+	size_t i = 0;
 
 	for (i = 0; i < ARRAYSIZE(RDP_KEYBOARD_LAYOUT_TABLE); i++)
 	{
@@ -966,7 +966,7 @@ static void copy(const struct LanguageIdentifier* id, RDP_CODEPAGE* cp)
 static BOOL copyOnMatch(DWORD column, const char* filter, const struct LanguageIdentifier* cur,
                         RDP_CODEPAGE* dst)
 {
-	const char* what;
+	const char* what = NULL;
 	switch (column)
 	{
 		case 0:
@@ -1000,7 +1000,7 @@ static BOOL copyOnMatch(DWORD column, const char* filter, const struct LanguageI
 RDP_CODEPAGE* freerdp_keyboard_get_matching_codepages(DWORD column, const char* filter,
                                                       size_t* count)
 {
-	size_t x;
+	size_t x = 0;
 	size_t cnt = 0;
 	const size_t c = ARRAYSIZE(language_identifiers);
 	RDP_CODEPAGE* pages = calloc(ARRAYSIZE(language_identifiers), sizeof(RDP_CODEPAGE));

@@ -508,8 +508,8 @@ namespace webview
 
 		inline std::string json_parse(const std::string& s, const std::string& key, const int index)
 		{
-			const char* value;
-			size_t value_sz;
+			const char* value = nullptr;
+			size_t value_sz = 0;
 			if (key.empty())
 			{
 				json_parse_c(s.c_str(), s.length(), nullptr, index, &value, &value_sz);
@@ -765,7 +765,7 @@ namespace webview
 
 			static char* get_string_from_js_result(WebKitJavascriptResult* r)
 			{
-				char* s;
+				char* s = nullptr;
 #if WEBKIT_MAJOR_VERSION >= 2 && WEBKIT_MINOR_VERSION >= 22
 				JSCValue* value = webkit_javascript_result_get_js_value(r);
 				s = jsc_value_to_string(value);

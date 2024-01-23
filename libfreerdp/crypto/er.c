@@ -28,7 +28,7 @@
 
 void er_read_length(wStream* s, int* length)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	Stream_Read_UINT8(s, byte);
 
@@ -93,7 +93,7 @@ int er_get_content_length(int length)
 
 BOOL er_read_universal_tag(wStream* s, BYTE tag, BOOL pc)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	Stream_Read_UINT8(s, byte);
 
@@ -124,7 +124,7 @@ void er_write_universal_tag(wStream* s, BYTE tag, BOOL pc)
 
 BOOL er_read_application_tag(wStream* s, BYTE tag, int* length)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	if (tag > 30)
 	{
@@ -177,7 +177,7 @@ void er_write_application_tag(wStream* s, BYTE tag, int length, BOOL flag)
 
 BOOL er_read_contextual_tag(wStream* s, BYTE tag, int* length, BOOL pc)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	Stream_Read_UINT8(s, byte);
 
@@ -205,7 +205,7 @@ int er_skip_contextual_tag(int length)
 
 BOOL er_read_sequence_tag(wStream* s, int* length)
 {
-	BYTE byte;
+	BYTE byte = 0;
 
 	Stream_Read_UINT8(s, byte);
 
@@ -326,7 +326,7 @@ int er_skip_octet_string(int length)
 BOOL er_read_BOOL(wStream* s, BOOL* value)
 {
 	int length = 0;
-	BYTE v;
+	BYTE v = 0;
 
 	if (!er_read_universal_tag(s, ER_TAG_BOOLEAN, FALSE))
 		return FALSE;
@@ -374,7 +374,7 @@ BOOL er_read_integer(wStream* s, UINT32* value)
 	}
 	else if (length == 3)
 	{
-		BYTE byte;
+		BYTE byte = 0;
 		Stream_Read_UINT8(s, byte);
 		Stream_Read_UINT16_BE(s, *value);
 		*value += (byte << 16);

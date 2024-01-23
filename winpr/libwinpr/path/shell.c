@@ -63,8 +63,8 @@ static char* GetPath_XDG_RUNTIME_DIR(void);
 
 char* GetEnvAlloc(LPCSTR lpName)
 {
-	DWORD nSize;
-	DWORD nStatus;
+	DWORD nSize = 0;
+	DWORD nStatus = 0;
 	char* env = NULL;
 
 	nSize = GetEnvironmentVariableX(lpName, NULL, 0);
@@ -124,7 +124,7 @@ static char* GetPath_XDG_DATA_HOME(void)
 #if defined(WIN32) || defined(__IOS__)
 	path = GetPath_XDG_CONFIG_HOME();
 #else
-	size_t size;
+	size_t size = 0;
 	char* home = NULL;
 	/**
 	 * There is a single base directory relative to which user-specific data files should be
@@ -177,7 +177,7 @@ static char* GetPath_XDG_CONFIG_HOME(void)
 #elif defined(__IOS__)
 	path = ios_get_data();
 #else
-	size_t size;
+	size_t size = 0;
 	char* home = NULL;
 	/**
 	 * There is a single base directory relative to which user-specific configuration files should
@@ -235,7 +235,7 @@ static char* GetPath_XDG_CACHE_HOME(void)
 #elif defined(__IOS__)
 	path = ios_get_cache();
 #else
-	size_t size;
+	size_t size = 0;
 	/**
 	 * There is a single base directory relative to which user-specific non-essential (cached) data
 	 * should be written. This directory is defined by the environment variable $XDG_CACHE_HOME.
@@ -368,8 +368,8 @@ char* GetKnownPath(int id)
 
 char* GetKnownSubPath(int id, const char* path)
 {
-	char* subPath;
-	char* knownPath;
+	char* subPath = NULL;
+	char* knownPath = NULL;
 	knownPath = GetKnownPath(id);
 
 	if (!knownPath)
@@ -383,8 +383,8 @@ char* GetKnownSubPath(int id, const char* path)
 char* GetEnvironmentPath(char* name)
 {
 	char* env = NULL;
-	DWORD nSize;
-	DWORD nStatus;
+	DWORD nSize = 0;
+	DWORD nStatus = 0;
 	nSize = GetEnvironmentVariableX(name, NULL, 0);
 
 	if (nSize)
@@ -408,8 +408,8 @@ char* GetEnvironmentPath(char* name)
 
 char* GetEnvironmentSubPath(char* name, const char* path)
 {
-	char* env;
-	char* subpath;
+	char* env = NULL;
+	char* subpath = NULL;
 	env = GetEnvironmentPath(name);
 
 	if (!env)
@@ -422,8 +422,8 @@ char* GetEnvironmentSubPath(char* name, const char* path)
 
 char* GetCombinedPath(const char* basePath, const char* subPath)
 {
-	size_t length;
-	HRESULT status;
+	size_t length = 0;
+	HRESULT status = 0;
 	char* path = NULL;
 	char* subPathCpy = NULL;
 	size_t basePathLength = 0;
@@ -479,8 +479,8 @@ BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 	return (SHCreateDirectoryExA(NULL, path, lpAttributes) == ERROR_SUCCESS);
 #else
 	const char delim = PathGetSeparatorA(PATH_STYLE_NATIVE);
-	char* dup;
-	char* p;
+	char* dup = NULL;
+	char* p = NULL;
 	BOOL result = TRUE;
 	/* we only operate on a non-null, absolute path */
 #if defined(__OS2__)
@@ -534,8 +534,8 @@ BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 #else
 	const WCHAR wdelim = PathGetSeparatorW(PATH_STYLE_NATIVE);
 	const char delim = PathGetSeparatorA(PATH_STYLE_NATIVE);
-	char* dup;
-	char* p;
+	char* dup = NULL;
+	char* p = NULL;
 	BOOL result = TRUE;
 	/* we only operate on a non-null, absolute path */
 #if defined(__OS2__)
@@ -637,7 +637,7 @@ fail:
 
 BOOL PathIsDirectoryEmptyA(LPCSTR pszPath)
 {
-	struct dirent* dp;
+	struct dirent* dp = NULL;
 	int empty = 1;
 	DIR* dir = opendir(pszPath);
 

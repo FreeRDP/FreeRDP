@@ -59,8 +59,8 @@ static const char client_dll[] = "C:\\Windows\\System32\\mstscax.dll";
 
 static BOOL settings_reg_query_dword_val(HKEY hKey, const TCHAR* sub, DWORD* value)
 {
-	DWORD dwType;
-	DWORD dwSize;
+	DWORD dwType = 0;
+	DWORD dwSize = 0;
 
 	dwSize = sizeof(DWORD);
 	if (RegQueryValueEx(hKey, sub, NULL, &dwType, (BYTE*)value, &dwSize) != ERROR_SUCCESS)
@@ -73,7 +73,7 @@ static BOOL settings_reg_query_dword_val(HKEY hKey, const TCHAR* sub, DWORD* val
 
 static BOOL settings_reg_query_word_val(HKEY hKey, const TCHAR* sub, UINT16* value)
 {
-	DWORD dwValue;
+	DWORD dwValue = 0;
 
 	if (!settings_reg_query_dword_val(hKey, sub, &dwValue))
 		return FALSE;
@@ -87,7 +87,7 @@ static BOOL settings_reg_query_word_val(HKEY hKey, const TCHAR* sub, UINT16* val
 
 static BOOL settings_reg_query_bool_val(HKEY hKey, const TCHAR* sub, BOOL* value)
 {
-	DWORD dwValue;
+	DWORD dwValue = 0;
 
 	if (!settings_reg_query_dword_val(hKey, sub, &dwValue))
 		return FALSE;
@@ -98,7 +98,7 @@ static BOOL settings_reg_query_bool_val(HKEY hKey, const TCHAR* sub, BOOL* value
 static BOOL settings_reg_query_dword(rdpSettings* settings, FreeRDP_Settings_Keys_UInt32 id,
                                      HKEY hKey, const TCHAR* sub)
 {
-	DWORD dwValue;
+	DWORD dwValue = 0;
 
 	if (!settings_reg_query_dword_val(hKey, sub, &dwValue))
 		return FALSE;
@@ -109,7 +109,7 @@ static BOOL settings_reg_query_dword(rdpSettings* settings, FreeRDP_Settings_Key
 static BOOL settings_reg_query_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool id, HKEY hKey,
                                     const TCHAR* sub)
 {
-	DWORD dwValue;
+	DWORD dwValue = 0;
 
 	if (!settings_reg_query_dword_val(hKey, sub, &dwValue))
 		return FALSE;
@@ -119,8 +119,8 @@ static BOOL settings_reg_query_bool(rdpSettings* settings, FreeRDP_Settings_Keys
 
 static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 {
-	HKEY hKey;
-	LONG status;
+	HKEY hKey = NULL;
+	LONG status = 0;
 	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, CLIENT_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
 	if (status == ERROR_SUCCESS)
@@ -155,12 +155,12 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 
 	if (status == ERROR_SUCCESS)
 	{
-		unsigned x;
+		unsigned x = 0;
 
 		settings_reg_query_dword(settings, FreeRDP_BitmapCacheV2NumCells, hKey, _T("NumCells"));
 		for (x = 0; x < 5; x++)
 		{
-			DWORD val;
+			DWORD val = 0;
 			TCHAR numentries[64] = { 0 };
 			TCHAR persist[64] = { 0 };
 			BITMAP_CACHE_V2_CELL_INFO cache = { 0 };
@@ -184,7 +184,7 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 
 	if (status == ERROR_SUCCESS)
 	{
-		unsigned x;
+		unsigned x = 0;
 		UINT32 GlyphSupportLevel = 0;
 		settings_reg_query_dword(settings, FreeRDP_GlyphSupportLevel, hKey, _T("SupportLevel"));
 		for (x = 0; x < 10; x++)
@@ -230,8 +230,8 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 
 static void settings_server_load_hkey_local_machine(rdpSettings* settings)
 {
-	HKEY hKey;
-	LONG status;
+	HKEY hKey = NULL;
+	LONG status = 0;
 
 	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, SERVER_KEY, 0, KEY_READ | KEY_WOW64_64KEY, &hKey);
 
@@ -355,7 +355,7 @@ BOOL freerdp_capability_buffer_allocate(rdpSettings* settings, UINT32 count)
 
 rdpSettings* freerdp_settings_new(DWORD flags)
 {
-	char* base;
+	char* base = NULL;
 	char* issuers[] = { "FreeRDP", "FreeRDP-licenser" };
 	const BOOL server = (flags & FREERDP_SETTINGS_SERVER_MODE) != 0 ? TRUE : FALSE;
 	const BOOL remote = (flags & FREERDP_SETTINGS_REMOTE_MODE) != 0 ? TRUE : FALSE;
@@ -706,8 +706,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
-		BOOL rc;
-		char* path;
+		BOOL rc = 0;
+		char* path = NULL;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectClipboard, TRUE))
 			goto out_fail;
 		/* these values are used only by the client part */
@@ -739,9 +739,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		}
 		else
 		{
-			BOOL res;
-			size_t i;
-			char* cpath;
+			BOOL res = 0;
+			size_t i = 0;
+			char* cpath = NULL;
 			char product[sizeof(FREERDP_PRODUCT_STRING)] = { 0 };
 
 			for (i = 0; i < sizeof(product); i++)
@@ -826,7 +826,7 @@ void freerdp_settings_free(rdpSettings* settings)
 static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSettings* settings)
 {
 	BOOL rc = FALSE;
-	UINT32 index;
+	UINT32 index = 0;
 
 	if (!_settings || !settings)
 		return FALSE;
@@ -1066,7 +1066,7 @@ out_fail:
 
 BOOL freerdp_settings_copy(rdpSettings* _settings, const rdpSettings* settings)
 {
-	BOOL rc;
+	BOOL rc = 0;
 
 	if (!settings || !_settings)
 		return FALSE;

@@ -25,13 +25,13 @@
 
 BOOL websocket_write_wstream(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opcode)
 {
-	size_t fullLen;
-	int status;
-	wStream* sWS;
+	size_t fullLen = 0;
+	int status = 0;
+	wStream* sWS = NULL;
 
-	uint32_t maskingKey;
+	uint32_t maskingKey = 0;
 
-	size_t streamPos;
+	size_t streamPos = 0;
 
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(sPacket);
@@ -74,7 +74,7 @@ BOOL websocket_write_wstream(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opcode
 	/* mask as much as possible with 32bit access */
 	for (streamPos = 0; streamPos + 4 <= len; streamPos += 4)
 	{
-		uint32_t data;
+		uint32_t data = 0;
 		Stream_Read_UINT32(sPacket, data);
 		Stream_Write_UINT32(sWS, data ^ maskingKey);
 	}
@@ -82,7 +82,7 @@ BOOL websocket_write_wstream(BIO* bio, wStream* sPacket, WEBSOCKET_OPCODE opcode
 	/* mask the rest byte by byte */
 	for (; streamPos < len; streamPos++)
 	{
-		BYTE data;
+		BYTE data = 0;
 		BYTE* partialMask = ((BYTE*)&maskingKey) + (streamPos % 4);
 		Stream_Read_UINT8(sPacket, data);
 		Stream_Write_UINT8(sWS, data ^ *partialMask);
@@ -135,14 +135,14 @@ static int websocket_write_all(BIO* bio, const BYTE* data, size_t length)
 
 int websocket_write(BIO* bio, const BYTE* buf, int isize, WEBSOCKET_OPCODE opcode)
 {
-	size_t payloadSize;
-	size_t fullLen;
-	int status;
-	wStream* sWS;
+	size_t payloadSize = 0;
+	size_t fullLen = 0;
+	int status = 0;
+	wStream* sWS = NULL;
 
-	uint32_t maskingKey;
+	uint32_t maskingKey = 0;
 
-	int streamPos;
+	int streamPos = 0;
 
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(buf);
@@ -210,7 +210,7 @@ int websocket_write(BIO* bio, const BYTE* buf, int isize, WEBSOCKET_OPCODE opcod
 static int websocket_read_data(BIO* bio, BYTE* pBuffer, size_t size,
                                websocket_context* encodingContext)
 {
-	int status;
+	int status = 0;
 
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(pBuffer);
@@ -240,7 +240,7 @@ static int websocket_read_data(BIO* bio, BYTE* pBuffer, size_t size,
 static int websocket_read_discard(BIO* bio, websocket_context* encodingContext)
 {
 	char _dummy[256] = { 0 };
-	int status;
+	int status = 0;
 
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(encodingContext);
@@ -266,7 +266,7 @@ static int websocket_read_discard(BIO* bio, websocket_context* encodingContext)
 
 static int websocket_read_wstream(BIO* bio, wStream* s, websocket_context* encodingContext)
 {
-	int status;
+	int status = 0;
 
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(s);
@@ -307,11 +307,11 @@ static int websocket_read_wstream(BIO* bio, wStream* s, websocket_context* encod
 static BOOL websocket_reply_close(BIO* bio, wStream* s)
 {
 	/* write back close */
-	wStream* closeFrame;
-	uint16_t maskingKey1;
-	uint16_t maskingKey2;
-	int status;
-	size_t closeDataLen;
+	wStream* closeFrame = NULL;
+	uint16_t maskingKey1 = 0;
+	uint16_t maskingKey2 = 0;
+	int status = 0;
+	size_t closeDataLen = 0;
 
 	WINPR_ASSERT(bio);
 
@@ -332,7 +332,7 @@ static BOOL websocket_reply_close(BIO* bio, wStream* s)
 
 	if (closeDataLen == 2)
 	{
-		uint16_t data;
+		uint16_t data = 0;
 		Stream_Read_UINT16(s, data);
 		Stream_Write_UINT16(closeFrame, data ^ maskingKey1);
 	}
@@ -351,9 +351,9 @@ static BOOL websocket_reply_close(BIO* bio, wStream* s)
 
 static BOOL websocket_reply_pong(BIO* bio, wStream* s)
 {
-	wStream* closeFrame;
-	uint32_t maskingKey;
-	int status;
+	wStream* closeFrame = NULL;
+	uint32_t maskingKey = 0;
+	int status = 0;
 
 	WINPR_ASSERT(bio);
 
@@ -382,7 +382,7 @@ static BOOL websocket_reply_pong(BIO* bio, wStream* s)
 static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
                                     websocket_context* encodingContext)
 {
-	int status;
+	int status = 0;
 
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(pBuffer);
@@ -459,7 +459,7 @@ static int websocket_handle_payload(BIO* bio, BYTE* pBuffer, size_t size,
 
 int websocket_read(BIO* bio, BYTE* pBuffer, size_t size, websocket_context* encodingContext)
 {
-	int status;
+	int status = 0;
 	int effectiveDataLen = 0;
 
 	WINPR_ASSERT(bio);
@@ -488,7 +488,7 @@ int websocket_read(BIO* bio, BYTE* pBuffer, size_t size, websocket_context* enco
 			case WebsocketStateLengthAndMasking:
 			{
 				BYTE buffer[1];
-				BYTE len;
+				BYTE len = 0;
 				ERR_clear_error();
 				status = BIO_read(bio, (char*)buffer, sizeof(buffer));
 				if (status <= 0)

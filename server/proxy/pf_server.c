@@ -69,9 +69,9 @@ static BOOL pf_server_parse_target_from_routing_token(rdpContext* context, rdpSe
 {
 #define TARGET_MAX (100)
 #define ROUTING_TOKEN_PREFIX "Cookie: msts="
-	char* colon;
-	size_t len;
-	DWORD routing_token_length;
+	char* colon = NULL;
+	size_t len = 0;
+	DWORD routing_token_length = 0;
 	const size_t prefix_len = strnlen(ROUTING_TOKEN_PREFIX, sizeof(ROUTING_TOKEN_PREFIX));
 	const char* routing_token = freerdp_nego_get_routing_token(context, &routing_token_length);
 	pServerContext* ps = (pServerContext*)context;
@@ -191,8 +191,8 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 static BOOL pf_server_setup_channels(freerdp_peer* peer)
 {
 	char** accepted_channels = NULL;
-	size_t accepted_channels_count;
-	size_t i;
+	size_t accepted_channels_count = 0;
+	size_t i = 0;
 	pServerContext* ps = (pServerContext*)peer->context;
 
 	accepted_channels = WTSGetAcceptedChannelNames(peer, &accepted_channels_count);
@@ -201,7 +201,7 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 
 	for (i = 0; i < accepted_channels_count; i++)
 	{
-		pServerStaticChannelContext* channelContext;
+		pServerStaticChannelContext* channelContext = NULL;
 		const char* cname = accepted_channels[i];
 		UINT16 channelId = WTSChannelGetId(peer, cname);
 
@@ -266,11 +266,11 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
  */
 static BOOL pf_server_post_connect(freerdp_peer* peer)
 {
-	pServerContext* ps;
-	pClientContext* pc;
-	rdpSettings* client_settings;
-	proxyData* pdata;
-	rdpSettings* frontSettings;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
+	rdpSettings* client_settings = NULL;
+	proxyData* pdata = NULL;
+	rdpSettings* frontSettings = NULL;
 
 	WINPR_ASSERT(peer);
 
@@ -328,9 +328,9 @@ static BOOL pf_server_post_connect(freerdp_peer* peer)
 
 static BOOL pf_server_activate(freerdp_peer* peer)
 {
-	pServerContext* ps;
-	proxyData* pdata;
-	rdpSettings* settings;
+	pServerContext* ps = NULL;
+	proxyData* pdata = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(peer);
 
@@ -353,8 +353,8 @@ static BOOL pf_server_activate(freerdp_peer* peer)
 static BOOL pf_server_logon(freerdp_peer* peer, const SEC_WINNT_AUTH_IDENTITY* identity,
                             BOOL automatic)
 {
-	pServerContext* ps;
-	proxyData* pdata;
+	pServerContext* ps = NULL;
+	proxyData* pdata = NULL;
 	proxyServerPeerLogon info = { 0 };
 
 	WINPR_ASSERT(peer);
@@ -384,11 +384,11 @@ static BOOL pf_server_receive_channel_data_hook(freerdp_peer* peer, UINT16 chann
                                                 const BYTE* data, size_t size, UINT32 flags,
                                                 size_t totalSize)
 {
-	pServerContext* ps;
-	pClientContext* pc;
-	proxyData* pdata;
-	const proxyConfig* config;
-	const pServerStaticChannelContext* channel;
+	pServerContext* ps = NULL;
+	pClientContext* pc = NULL;
+	proxyData* pdata = NULL;
+	const proxyConfig* config = NULL;
+	const pServerStaticChannelContext* channel = NULL;
 	UINT64 channelId64 = channelId;
 
 	WINPR_ASSERT(peer);
@@ -734,8 +734,8 @@ out_free_peer:
 
 static BOOL pf_server_start_peer(freerdp_peer* client)
 {
-	HANDLE hThread;
-	proxyServer* server;
+	HANDLE hThread = NULL;
+	proxyServer* server = NULL;
 	peer_thread_args* args = calloc(1, sizeof(peer_thread_args));
 	if (!args)
 		return FALSE;
@@ -885,7 +885,7 @@ fail:
 
 static BOOL are_all_required_modules_loaded(proxyModule* module, const proxyConfig* config)
 {
-	size_t i;
+	size_t i = 0;
 
 	for (i = 0; i < pf_config_required_plugins_count(config); i++)
 	{
@@ -909,8 +909,8 @@ static void peer_free(void* obj)
 
 proxyServer* pf_server_new(const proxyConfig* config)
 {
-	wObject* obj;
-	proxyServer* server;
+	wObject* obj = NULL;
+	proxyServer* server = NULL;
 
 	WINPR_ASSERT(config);
 
@@ -970,9 +970,9 @@ BOOL pf_server_run(proxyServer* server)
 {
 	BOOL rc = TRUE;
 	HANDLE eventHandles[MAXIMUM_WAIT_OBJECTS] = { 0 };
-	DWORD eventCount;
-	DWORD status;
-	freerdp_listener* listener;
+	DWORD eventCount = 0;
+	DWORD status = 0;
+	freerdp_listener* listener = NULL;
 
 	WINPR_ASSERT(server);
 

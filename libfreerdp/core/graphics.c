@@ -29,8 +29,8 @@
 
 rdpBitmap* Bitmap_Alloc(rdpContext* context)
 {
-	rdpBitmap* bitmap;
-	rdpGraphics* graphics;
+	rdpBitmap* bitmap = NULL;
+	rdpGraphics* graphics = NULL;
 	graphics = context->graphics;
 	bitmap = (rdpBitmap*)calloc(1, graphics->Bitmap_Prototype->size);
 
@@ -85,8 +85,8 @@ void graphics_register_bitmap(rdpGraphics* graphics, const rdpBitmap* bitmap)
 /* Pointer Class */
 rdpPointer* Pointer_Alloc(rdpContext* context)
 {
-	rdpPointer* pointer;
-	rdpGraphics* graphics;
+	rdpPointer* pointer = NULL;
+	rdpGraphics* graphics = NULL;
 	graphics = context->graphics;
 	pointer = (rdpPointer*)calloc(1, graphics->Pointer_Prototype->size);
 
@@ -113,8 +113,8 @@ void graphics_register_pointer(rdpGraphics* graphics, const rdpPointer* pointer)
 rdpGlyph* Glyph_Alloc(rdpContext* context, INT32 x, INT32 y, UINT32 cx, UINT32 cy, UINT32 cb,
                       const BYTE* aj)
 {
-	rdpGlyph* glyph;
-	rdpGraphics* graphics;
+	rdpGlyph* glyph = NULL;
+	rdpGraphics* graphics = NULL;
 
 	if (!context || !context->graphics)
 		return NULL;
@@ -168,7 +168,7 @@ void graphics_register_glyph(rdpGraphics* graphics, const rdpGlyph* glyph)
 
 rdpGraphics* graphics_new(rdpContext* context)
 {
-	rdpGraphics* graphics;
+	rdpGraphics* graphics = NULL;
 	graphics = (rdpGraphics*)calloc(1, sizeof(rdpGraphics));
 
 	if (graphics)

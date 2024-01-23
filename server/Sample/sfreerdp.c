@@ -170,9 +170,9 @@ static wStream* test_peer_stream_init(testPeerContext* context)
 
 static void test_peer_begin_frame(freerdp_peer* client)
 {
-	rdpUpdate* update;
+	rdpUpdate* update = NULL;
 	SURFACE_FRAME_MARKER fm = { 0 };
-	testPeerContext* context;
+	testPeerContext* context = NULL;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
@@ -191,9 +191,9 @@ static void test_peer_begin_frame(freerdp_peer* client)
 
 static void test_peer_end_frame(freerdp_peer* client)
 {
-	rdpUpdate* update;
+	rdpUpdate* update = NULL;
 	SURFACE_FRAME_MARKER fm = { 0 };
-	testPeerContext* context;
+	testPeerContext* context = NULL;
 
 	WINPR_ASSERT(client);
 
@@ -212,14 +212,14 @@ static void test_peer_end_frame(freerdp_peer* client)
 
 static BOOL test_peer_draw_background(freerdp_peer* client)
 {
-	size_t size;
-	wStream* s;
+	size_t size = 0;
+	wStream* s = NULL;
 	RFX_RECT rect;
-	BYTE* rgb_data;
-	const rdpSettings* settings;
-	rdpUpdate* update;
+	BYTE* rgb_data = NULL;
+	const rdpSettings* settings = NULL;
+	rdpUpdate* update = NULL;
 	SURFACE_BITS_COMMAND cmd = { 0 };
-	testPeerContext* context;
+	testPeerContext* context = NULL;
 	BOOL ret = FALSE;
 	const UINT32 colorFormat = PIXEL_FORMAT_RGB24;
 	const size_t bpp = FreeRDPGetBytesPerPixel(colorFormat);
@@ -331,8 +331,8 @@ static int open_icon(wImage* img)
 
 static BOOL test_peer_load_icon(freerdp_peer* client)
 {
-	testPeerContext* context;
-	rdpSettings* settings;
+	testPeerContext* context = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(client);
 
@@ -366,12 +366,12 @@ out_fail:
 
 static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 {
-	wStream* s;
+	wStream* s = NULL;
 	RFX_RECT rect;
-	rdpUpdate* update;
-	rdpSettings* settings;
+	rdpUpdate* update = NULL;
+	rdpSettings* settings = NULL;
 	SURFACE_BITS_COMMAND cmd = { 0 };
-	testPeerContext* context;
+	testPeerContext* context = NULL;
 
 	WINPR_ASSERT(client);
 
@@ -495,8 +495,8 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 
 static BOOL test_sleep_tsdiff(UINT32* old_sec, UINT32* old_usec, UINT32 new_sec, UINT32 new_usec)
 {
-	INT64 sec;
-	INT64 usec;
+	INT64 sec = 0;
+	INT64 usec = 0;
 
 	WINPR_ASSERT(old_sec);
 	WINPR_ASSERT(old_usec);
@@ -537,13 +537,13 @@ static BOOL test_sleep_tsdiff(UINT32* old_sec, UINT32* old_usec, UINT32 new_sec,
 
 static BOOL tf_peer_dump_rfx(freerdp_peer* client)
 {
-	wStream* s;
-	UINT32 prev_seconds;
-	UINT32 prev_useconds;
-	rdpUpdate* update;
-	rdpPcap* pcap_rfx;
+	wStream* s = NULL;
+	UINT32 prev_seconds = 0;
+	UINT32 prev_useconds = 0;
+	rdpUpdate* update = NULL;
+	rdpPcap* pcap_rfx = NULL;
 	pcap_record record = { 0 };
-	struct server_info* info;
+	struct server_info* info = NULL;
 
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(client->context);
@@ -596,11 +596,11 @@ static BOOL tf_peer_dump_rfx(freerdp_peer* client)
 
 static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 {
-	void* fd;
-	wStream* s;
-	void* buffer;
+	void* fd = NULL;
+	wStream* s = NULL;
+	void* buffer = NULL;
 	DWORD BytesReturned = 0;
-	ULONG written;
+	ULONG written = 0;
 	testPeerContext* context = (testPeerContext*)arg;
 
 	WINPR_ASSERT(context);
@@ -619,7 +619,7 @@ static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
 
 	while (1)
 	{
-		DWORD status;
+		DWORD status = 0;
 		DWORD nCount = 0;
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 
@@ -663,8 +663,8 @@ fail:
 
 static BOOL tf_peer_post_connect(freerdp_peer* client)
 {
-	testPeerContext* context;
-	rdpSettings* settings;
+	testPeerContext* context = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(client);
 
@@ -774,9 +774,9 @@ static BOOL tf_peer_post_connect(freerdp_peer* client)
 
 static BOOL tf_peer_activate(freerdp_peer* client)
 {
-	testPeerContext* context;
-	struct server_info* info;
-	rdpSettings* settings;
+	testPeerContext* context = NULL;
+	struct server_info* info = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(client);
 
@@ -820,11 +820,11 @@ static BOOL tf_peer_synchronize_event(rdpInput* input, UINT32 flags)
 
 static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 {
-	freerdp_peer* client;
-	rdpUpdate* update;
-	rdpContext* context;
-	testPeerContext* tcontext;
-	rdpSettings* settings;
+	freerdp_peer* client = NULL;
+	rdpUpdate* update = NULL;
+	rdpContext* context = NULL;
+	testPeerContext* tcontext = NULL;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(input);
 
@@ -878,7 +878,7 @@ static BOOL tf_peer_keyboard_event(rdpInput* input, UINT16 flags, UINT8 code)
 	{
 		if (tcontext->debug_channel)
 		{
-			ULONG written;
+			ULONG written = 0;
 			WTSVirtualChannelWrite(tcontext->debug_channel, (PCHAR) "test2", 5, &written);
 		}
 	}
@@ -941,7 +941,7 @@ static BOOL tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x
 
 static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
-	BYTE i;
+	BYTE i = 0;
 	WINPR_UNUSED(context);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(areas || (count == 0));
@@ -981,10 +981,9 @@ static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 	UINT64 ts = 0;
 	wStream* ls = NULL;
 	UINT64 last_ts = 0;
-	const struct server_info* info;
-	freerdp_peer* client;
-	CONNECTION_STATE state;
-	testPeerContext* peerCtx;
+	const struct server_info* info = NULL;
+	freerdp_peer* client = NULL;
+	testPeerContext* peerCtx = NULL;
 	size_t offset = 0;
 	UINT32 flags = 0;
 	rdpContext* context = transport_get_context(transport);
@@ -1010,7 +1009,7 @@ static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 	 * configuration as the one that recorded the session!
 	 */
 	WINPR_ASSERT(info);
-	state = freerdp_get_state(context);
+	CONNECTION_STATE state = freerdp_get_state(context);
 	if (state < CONNECTION_STATE_NEGO)
 		return peerCtx->io.WritePdu(transport, s);
 
@@ -1020,7 +1019,7 @@ static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 
 	while (stream_dump_get(context, &flags, ls, &offset, &ts) > 0)
 	{
-		int rc;
+		int rc = 0;
 		/* Skip messages from client. */
 		if (flags & STREAM_MSG_SRV_TX)
 		{
@@ -1044,16 +1043,16 @@ fail:
 
 static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	DWORD error = CHANNEL_RC_OK;
 	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	DWORD count = 0;
 	DWORD status = 0;
 	testPeerContext* context = NULL;
-	struct server_info* info;
-	rdpSettings* settings;
-	rdpInput* input;
-	rdpUpdate* update;
+	struct server_info* info = NULL;
+	rdpSettings* settings = NULL;
+	rdpInput* input = NULL;
+	rdpUpdate* update = NULL;
 	freerdp_peer* client = (freerdp_peer*)arg;
 
 	WINPR_ASSERT(client);
@@ -1245,8 +1244,8 @@ fail:
 
 static BOOL test_peer_accepted(freerdp_listener* instance, freerdp_peer* client)
 {
-	HANDLE hThread;
-	struct server_info* info;
+	HANDLE hThread = NULL;
+	struct server_info* info = NULL;
 
 	WINPR_UNUSED(instance);
 

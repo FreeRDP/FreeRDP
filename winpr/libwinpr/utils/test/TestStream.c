@@ -92,7 +92,7 @@ static BOOL TestStream_Static(void)
 	BYTE buffer[20];
 	wStream staticStream;
 	wStream* s = &staticStream;
-	UINT16 v;
+	UINT16 v = 0;
 	/* Test creation of a static stream */
 	Stream_StaticInit(s, buffer, sizeof(buffer));
 	Stream_Write_UINT16(s, 0xcab1);
@@ -130,10 +130,10 @@ static BOOL TestStream_Static(void)
 
 static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 {
-	size_t i;
-	size_t len;
-	size_t cap;
-	size_t pos;
+	size_t i = 0;
+	size_t len = 0;
+	size_t cap = 0;
+	size_t pos = 0;
 	wStream* s = NULL;
 	void* buffer = NULL;
 
@@ -202,7 +202,7 @@ fail:
 
 static BOOL TestStream_Extent(UINT32 maxSize)
 {
-	UINT32 i;
+	UINT32 i = 0;
 	wStream* s = NULL;
 	BOOL result = FALSE;
 
@@ -322,10 +322,10 @@ static BOOL TestStream_Reading(void)
 static BOOL TestStream_Write(void)
 {
 	BOOL rc = FALSE;
-	UINT8 u8;
-	UINT16 u16;
-	UINT32 u32;
-	UINT64 u64;
+	UINT8 u8 = 0;
+	UINT16 u16 = 0;
+	UINT32 u32 = 0;
+	UINT64 u64 = 0;
 	const BYTE data[] = "someteststreamdata";
 	wStream* s = Stream_New(NULL, 100);
 
@@ -504,7 +504,7 @@ out:
 
 static BOOL TestStream_Zero(void)
 {
-	UINT32 x;
+	UINT32 x = 0;
 	BOOL rc = FALSE;
 	const BYTE data[] = "someteststreamdata";
 	wStream* s = Stream_New(NULL, sizeof(data));
@@ -537,7 +537,7 @@ static BOOL TestStream_Zero(void)
 
 	for (x = 0; x < 5; x++)
 	{
-		UINT8 val;
+		UINT8 val = 0;
 		Stream_Read_UINT8(s, val);
 
 		if (val != 0)

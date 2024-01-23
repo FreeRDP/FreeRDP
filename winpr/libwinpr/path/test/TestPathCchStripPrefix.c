@@ -19,9 +19,9 @@ static const TCHAR testPathPrefixDeviceNamespace[] = _T("\\\\?\\GLOBALROOT");
 
 int TestPathCchStripPrefix(int argc, char* argv[])
 {
-	HRESULT status;
+	HRESULT status = 0;
 	TCHAR Path[PATHCCH_MAX_CCH];
-	int i;
+	int i = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

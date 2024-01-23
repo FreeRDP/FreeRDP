@@ -140,18 +140,14 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
                                                           uint8_t** targetStart, uint8_t* targetEnd,
                                                           ConversionFlags flags)
 {
-	uint8_t* target;
-	const uint16_t* source;
-	bool computeLength;
-	ConversionResult result;
-	computeLength = (!targetEnd) ? true : false;
-	source = *sourceStart;
-	target = *targetStart;
-	result = conversionOK;
+	bool computeLength = (!targetEnd) ? true : false;
+	const uint16_t* source = *sourceStart;
+	uint8_t* target = *targetStart;
+	ConversionResult result = conversionOK;
 
 	while (source < sourceEnd)
 	{
-		uint32_t ch;
+		uint32_t ch = 0;
 		unsigned short bytesToWrite = 0;
 		const uint32_t byteMask = 0xBF;
 		const uint32_t byteMark = 0x80;
@@ -309,7 +305,7 @@ static ConversionResult winpr_ConvertUTF16toUTF8_Internal(const uint16_t** sourc
 
 static bool isLegalUTF8(const uint8_t* source, int length)
 {
-	uint8_t a;
+	uint8_t a = 0;
 	const uint8_t* srcptr = source + length;
 
 	switch (length)
@@ -388,14 +384,10 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
                                                           uint16_t* targetEnd,
                                                           ConversionFlags flags)
 {
-	uint16_t* target;
-	const uint8_t* source;
-	bool computeLength;
-	ConversionResult result;
-	computeLength = (!targetEnd) ? true : false;
-	result = conversionOK;
-	source = *sourceStart;
-	target = *targetStart;
+	bool computeLength = (!targetEnd) ? true : false;
+	ConversionResult result = conversionOK;
+	const uint8_t* source = *sourceStart;
+	uint16_t* target = *targetStart;
 
 	while (source < sourceEnd)
 	{
@@ -543,12 +535,12 @@ static ConversionResult winpr_ConvertUTF8toUTF16_Internal(const uint8_t** source
 
 static int winpr_ConvertUTF8toUTF16(const uint8_t* src, int cchSrc, uint16_t* dst, int cchDst)
 {
-	size_t length;
+	size_t length = 0;
 	uint16_t* dstBeg = NULL;
 	uint16_t* dstEnd = NULL;
-	const uint8_t* srcBeg;
-	const uint8_t* srcEnd;
-	ConversionResult result;
+	const uint8_t* srcBeg = NULL;
+	const uint8_t* srcEnd = NULL;
+	ConversionResult result = sourceIllegal;
 
 	if (cchSrc == -1)
 		cchSrc = strlen((char*)src) + 1;
@@ -585,12 +577,12 @@ static int winpr_ConvertUTF8toUTF16(const uint8_t* src, int cchSrc, uint16_t* ds
 
 static int winpr_ConvertUTF16toUTF8(const uint16_t* src, int cchSrc, uint8_t* dst, int cchDst)
 {
-	size_t length;
+	size_t length = 0;
 	uint8_t* dstBeg = NULL;
 	uint8_t* dstEnd = NULL;
-	const uint16_t* srcBeg;
-	const uint16_t* srcEnd;
-	ConversionResult result;
+	const uint16_t* srcBeg = NULL;
+	const uint16_t* srcEnd = NULL;
+	ConversionResult result = sourceIllegal;
 
 	if (cchSrc == -1)
 		cchSrc = _wcslen((uint16_t*)src) + 1;

@@ -7,11 +7,11 @@
 int TestEnvironmentMergeEnvironmentStrings(int argc, char* argv[])
 {
 #ifndef _WIN32
-	TCHAR* p;
-	size_t length;
-	LPTCH lpszEnvironmentBlock;
+	TCHAR* p = NULL;
+	size_t length = 0;
+	LPTCH lpszEnvironmentBlock = NULL;
 	LPTCH lpsz2Merge = "SHELL=123\0test=1\0test1=2\0DISPLAY=:77\0\0";
-	LPTCH lpszMergedEnvironmentBlock;
+	LPTCH lpszMergedEnvironmentBlock = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

@@ -109,7 +109,7 @@ static int ntlm_SetContextWorkstation(NTLM_CONTEXT* context, char* Workstation)
 {
 	char* ws = Workstation;
 	DWORD nSize = 0;
-	CHAR* computerName;
+	CHAR* computerName = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -479,10 +479,10 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
                            ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext,
                            PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsTimeStamp)
 {
-	SECURITY_STATUS status;
-	SSPI_CREDENTIALS* credentials;
-	PSecBuffer input_buffer;
-	PSecBuffer output_buffer;
+	SECURITY_STATUS status = 0;
+	SSPI_CREDENTIALS* credentials = NULL;
+	PSecBuffer input_buffer = NULL;
+	PSecBuffer output_buffer = NULL;
 
 	/* behave like windows SSPIs that don't want empty context */
 	if (phContext && !phContext->dwLower && !phContext->dwUpper)
@@ -579,7 +579,7 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
 
 			if (pOutput)
 			{
-				ULONG i;
+				ULONG i = 0;
 
 				for (i = 0; i < pOutput->cBuffers; i++)
 				{
@@ -606,8 +606,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
-	SSPI_CREDENTIALS* credentials;
+	SECURITY_STATUS status = 0;
+	SSPI_CREDENTIALS* credentials = NULL;
 	PSecBuffer input_buffer = NULL;
 	PSecBuffer output_buffer = NULL;
 	PSecBuffer channel_bindings = NULL;
@@ -735,7 +735,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(
     ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput, ULONG Reserved2,
     PCtxtHandle phNewContext, PSecBufferDesc pOutput, PULONG pfContextAttr, PTimeStamp ptsExpiry)
 {
-	SECURITY_STATUS status;
+	SECURITY_STATUS status = 0;
 	SEC_WCHAR* pszTargetNameW = NULL;
 
 	if (pszTargetName)
@@ -763,8 +763,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContex
 
 SECURITY_STATUS ntlm_computeProofValue(NTLM_CONTEXT* ntlm, SecBuffer* ntproof)
 {
-	BYTE* blob;
-	SecBuffer* target;
+	BYTE* blob = NULL;
+	SecBuffer* target = NULL;
 
 	WINPR_ASSERT(ntlm);
 	WINPR_ASSERT(ntproof);
@@ -789,8 +789,8 @@ SECURITY_STATUS ntlm_computeProofValue(NTLM_CONTEXT* ntlm, SecBuffer* ntproof)
 
 SECURITY_STATUS ntlm_computeMicValue(NTLM_CONTEXT* ntlm, SecBuffer* micvalue)
 {
-	BYTE* blob;
-	ULONG msgSize;
+	BYTE* blob = NULL;
+	ULONG msgSize = 0;
 
 	WINPR_ASSERT(ntlm);
 	WINPR_ASSERT(micvalue);
@@ -839,7 +839,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_IDENTITY)
 	{
-		SSPI_CREDENTIALS* credentials;
+		SSPI_CREDENTIALS* credentials = NULL;
 		const SecPkgContext_AuthIdentity empty = { 0 };
 		SecPkgContext_AuthIdentity* AuthIdentity = (SecPkgContext_AuthIdentity*)pBuffer;
 
@@ -872,7 +872,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_RANDKEY)
 	{
-		SecBuffer* randkey;
+		SecBuffer* randkey = NULL;
 		randkey = (SecBuffer*)pBuffer;
 
 		if (!sspi_SecBufferAlloc(randkey, 16))

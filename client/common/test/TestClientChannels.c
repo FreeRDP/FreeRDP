@@ -8,10 +8,10 @@
 
 int TestClientChannels(int argc, char* argv[])
 {
-	int index;
-	DWORD dwFlags;
-	FREERDP_ADDIN* pAddin;
-	FREERDP_ADDIN** ppAddins;
+	int index = 0;
+	DWORD dwFlags = 0;
+	FREERDP_ADDIN* pAddin = NULL;
+	FREERDP_ADDIN** ppAddins = NULL;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

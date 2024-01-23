@@ -101,7 +101,7 @@ static BOOL wst_auth_init(rdpWst* wst, rdpTls* tls, TCHAR* authPkg)
 	rdpContext* context = wst->context;
 	rdpSettings* settings = context->settings;
 	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
-	int rc;
+	int rc = 0;
 
 	wst->auth_required = TRUE;
 	if (!credssp_auth_init(wst->auth, authPkg, tls->Bindings))
@@ -162,13 +162,13 @@ static BOOL wst_set_auth_header(rdpCredsspAuth* auth, HttpRequest* request)
 
 static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 {
-	size_t len;
+	size_t len = 0;
 	const char* token64 = NULL;
 	size_t authTokenLength = 0;
 	BYTE* authTokenData = NULL;
 	SecBuffer authToken = { 0 };
-	long StatusCode;
-	int rc;
+	long StatusCode = 0;
+	int rc = 0;
 
 	if (!auth || !response)
 		return FALSE;
@@ -218,8 +218,8 @@ static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, int timeout)
 	rdpSettings* settings = wst->settings;
 	const char* peerHostname = wst->gwhostname;
 	UINT16 peerPort = wst->gwport;
-	const char* proxyUsername;
-	const char* proxyPassword;
+	const char* proxyUsername = NULL;
+	const char* proxyPassword = NULL;
 	BOOL isProxyConnection =
 	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 
@@ -292,7 +292,7 @@ static wStream* wst_build_http_request(rdpWst* wst)
 {
 	wStream* s = NULL;
 	HttpRequest* request = NULL;
-	const char* uri;
+	const char* uri = NULL;
 
 	if (!wst)
 		return NULL;
@@ -330,7 +330,7 @@ out:
 
 static BOOL wst_send_http_request(rdpWst* wst, rdpTls* tls)
 {
-	size_t sz;
+	size_t sz = 0;
 	wStream* s = NULL;
 	int status = -1;
 	WINPR_ASSERT(wst);
@@ -448,7 +448,7 @@ static BOOL wst_handle_denied(rdpWst* wst, HttpResponse** ppresponse, long* pSta
 BOOL wst_connect(rdpWst* wst, DWORD timeout)
 {
 	HttpResponse* response = NULL;
-	long StatusCode;
+	long StatusCode = 0;
 
 	WINPR_ASSERT(wst);
 	if (!wst_tls_connect(wst, wst->tls, timeout))
@@ -529,7 +529,7 @@ DWORD wst_get_event_handles(rdpWst* wst, HANDLE* events, DWORD count)
 
 static int wst_bio_write(BIO* bio, const char* buf, int num)
 {
-	int status;
+	int status = 0;
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(buf);
 
@@ -715,8 +715,8 @@ static BIO_METHOD* BIO_s_wst(void)
 
 static BOOL wst_parse_url(rdpWst* wst, const char* url)
 {
-	const char* hostStart;
-	const char* pos;
+	const char* hostStart = NULL;
+	const char* pos = NULL;
 	WINPR_ASSERT(wst);
 	WINPR_ASSERT(url);
 
@@ -754,7 +754,7 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 	if (*pos == ':')
 	{
 		char port[6];
-		char* portNumberEnd;
+		char* portNumberEnd = NULL;
 		pos++;
 		const char* portStart = pos;
 		while (*pos != '\0' && *pos != '/')
@@ -779,7 +779,7 @@ static BOOL wst_parse_url(rdpWst* wst, const char* url)
 
 rdpWst* wst_new(rdpContext* context)
 {
-	rdpWst* wst;
+	rdpWst* wst = NULL;
 
 	if (!context)
 		return NULL;

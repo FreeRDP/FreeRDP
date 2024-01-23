@@ -72,11 +72,11 @@ static UINT mouse_cursor_server_initialize(MouseCursorServerContext* context, BO
 
 static UINT mouse_cursor_server_open_channel(mouse_cursor_server* mouse_cursor)
 {
-	MouseCursorServerContext* context;
+	MouseCursorServerContext* context = NULL;
 	DWORD Error = ERROR_SUCCESS;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
-	UINT32 channelId;
+	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
 	WINPR_ASSERT(mouse_cursor);
@@ -117,10 +117,10 @@ static UINT mouse_cursor_server_open_channel(mouse_cursor_server* mouse_cursor)
 static BOOL read_cap_set(wStream* s, wArrayList* capsSets)
 {
 	RDP_MOUSE_CURSOR_CAPSET* capsSet = NULL;
-	UINT32 signature;
-	RDP_MOUSE_CURSOR_CAPVERSION version;
-	UINT32 size;
-	size_t capsDataSize;
+	UINT32 signature = 0;
+	RDP_MOUSE_CURSOR_CAPVERSION version = RDP_MOUSE_CURSOR_CAPVERSION_INVALID;
+	UINT32 size = 0;
+	size_t capsDataSize = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return FALSE;
@@ -143,7 +143,7 @@ static BOOL read_cap_set(wStream* s, wArrayList* capsSets)
 	{
 		case RDP_MOUSE_CURSOR_CAPVERSION_1:
 		{
-			RDP_MOUSE_CURSOR_CAPSET_VERSION1* capsSetV1;
+			RDP_MOUSE_CURSOR_CAPSET_VERSION1* capsSetV1 = NULL;
 
 			capsSetV1 = calloc(1, sizeof(RDP_MOUSE_CURSOR_CAPSET_VERSION1));
 			if (!capsSetV1)
@@ -221,11 +221,11 @@ static UINT mouse_cursor_server_recv_cs_caps_advertise(MouseCursorServerContext*
 
 static UINT mouse_cursor_process_message(mouse_cursor_server* mouse_cursor)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
-	ULONG BytesReturned;
+	ULONG BytesReturned = 0;
 	RDP_MOUSE_CURSOR_HEADER header = { 0 };
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(mouse_cursor);
 	WINPR_ASSERT(mouse_cursor->mouse_cursor_channel);
@@ -331,11 +331,11 @@ static HANDLE mouse_cursor_server_get_channel_handle(mouse_cursor_server* mouse_
 
 static DWORD WINAPI mouse_cursor_server_thread_func(LPVOID arg)
 {
-	DWORD nCount;
+	DWORD nCount = 0;
 	HANDLE events[2] = { 0 };
 	mouse_cursor_server* mouse_cursor = (mouse_cursor_server*)arg;
 	UINT error = CHANNEL_RC_OK;
-	DWORD status;
+	DWORD status = 0;
 
 	WINPR_ASSERT(mouse_cursor);
 
@@ -484,7 +484,7 @@ static BOOL mouse_cursor_server_context_handle(MouseCursorServerContext* context
 static wStream* mouse_cursor_server_packet_new(size_t size, RDP_MOUSE_CURSOR_PDUTYPE pduType,
                                                const RDP_MOUSE_CURSOR_HEADER* header)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	/* Allocate what we need plus header bytes */
 	s = Stream_New(NULL, size + RDPEMSC_HEADER_SIZE);
@@ -505,7 +505,7 @@ static UINT mouse_cursor_server_packet_send(MouseCursorServerContext* context, w
 {
 	mouse_cursor_server* mouse_cursor = (mouse_cursor_server*)context;
 	UINT error = CHANNEL_RC_OK;
-	ULONG written;
+	ULONG written = 0;
 
 	WINPR_ASSERT(mouse_cursor);
 	WINPR_ASSERT(s);
@@ -533,10 +533,10 @@ static UINT
 mouse_cursor_server_send_sc_caps_confirm(MouseCursorServerContext* context,
                                          const RDP_MOUSE_CURSOR_CAPS_CONFIRM_PDU* capsConfirm)
 {
-	RDP_MOUSE_CURSOR_CAPSET* capsetHeader;
-	RDP_MOUSE_CURSOR_PDUTYPE pduType;
-	size_t caps_size;
-	wStream* s;
+	RDP_MOUSE_CURSOR_CAPSET* capsetHeader = NULL;
+	RDP_MOUSE_CURSOR_PDUTYPE pduType = PDUTYPE_EMSC_RESERVED;
+	size_t caps_size = 0;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(capsConfirm);
@@ -588,12 +588,12 @@ static void write_point16(wStream* s, const TS_POINT16* point16)
 static UINT mouse_cursor_server_send_sc_mouseptr_update(
     MouseCursorServerContext* context, const RDP_MOUSE_CURSOR_MOUSEPTR_UPDATE_PDU* mouseptrUpdate)
 {
-	TS_POINT16* position;
-	TS_POINTERATTRIBUTE* pointerAttribute;
-	TS_LARGEPOINTERATTRIBUTE* largePointerAttribute;
-	RDP_MOUSE_CURSOR_PDUTYPE pduType;
+	TS_POINT16* position = NULL;
+	TS_POINTERATTRIBUTE* pointerAttribute = NULL;
+	TS_LARGEPOINTERATTRIBUTE* largePointerAttribute = NULL;
+	RDP_MOUSE_CURSOR_PDUTYPE pduType = PDUTYPE_EMSC_RESERVED;
 	size_t update_size = 0;
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(mouseptrUpdate);

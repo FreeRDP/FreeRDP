@@ -15,7 +15,7 @@ static BOOL log_result(BOOL value, const char* fkt)
 
 static BOOL compare(const ADDIN_ARGV* got, const ADDIN_ARGV* expect)
 {
-	int x;
+	int x = 0;
 	BOOL rc = TRUE;
 	if (!got && expect)
 		return FALSE;
@@ -35,16 +35,16 @@ static BOOL compare(const ADDIN_ARGV* got, const ADDIN_ARGV* expect)
 static BOOL test_dyn_channels(void)
 {
 	BOOL rc = FALSE;
-	BOOL test;
-	UINT32 u32;
+	BOOL test = 0;
+	UINT32 u32 = 0;
 	rdpSettings* settings = freerdp_settings_new(0);
 	const char* argv1[] = { "foobar" };
 	ADDIN_ARGV* args1 = NULL;
-	const ADDIN_ARGV* cmp1;
+	const ADDIN_ARGV* cmp1 = NULL;
 	const char* argv2[] = { "gaga", "abba", "foo" };
 	ADDIN_ARGV* args2 = NULL;
-	const ADDIN_ARGV* cmp2;
-	const ADDIN_ARGV* got;
+	const ADDIN_ARGV* cmp2 = NULL;
+	const ADDIN_ARGV* got = NULL;
 
 	if (!settings)
 		goto fail;
@@ -135,16 +135,16 @@ fail:
 static BOOL test_static_channels(void)
 {
 	BOOL rc = FALSE;
-	BOOL test;
-	UINT32 u32;
+	BOOL test = 0;
+	UINT32 u32 = 0;
 	rdpSettings* settings = freerdp_settings_new(0);
 	const char* argv1[] = { "foobar" };
 	ADDIN_ARGV* args1 = NULL;
-	const ADDIN_ARGV* cmp1;
+	const ADDIN_ARGV* cmp1 = NULL;
 	const char* argv2[] = { "gaga", "abba", "foo" };
 	ADDIN_ARGV* args2 = NULL;
-	const ADDIN_ARGV* cmp2;
-	const ADDIN_ARGV* got;
+	const ADDIN_ARGV* cmp2 = NULL;
+	const ADDIN_ARGV* got = NULL;
 
 	if (!settings)
 		goto fail;
@@ -261,7 +261,7 @@ fail:
 static BOOL test_helpers(void)
 {
 	BOOL rc = FALSE;
-	UINT32 flags;
+	UINT32 flags = 0;
 	rdpSettings* settings = freerdp_settings_new(0);
 	if (!settings)
 		goto fail;
@@ -442,10 +442,10 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 	int test_rounds = 100;
 	BOOL res = FALSE;
 	rdpSettings* settings = NULL;
-	SSIZE_T rc;
-	SSIZE_T tkey;
-	SSIZE_T type;
-	size_t x;
+	SSIZE_T rc = 0;
+	SSIZE_T tkey = 0;
+	SSIZE_T type = 0;
+	size_t x = 0;
 	const size_t clear_keys[] = { FreeRDP_RdpServerCertificate,
 		                          FreeRDP_RdpServerRsaKey,
 		                          FreeRDP_RedirectionPassword,
@@ -529,8 +529,8 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 	do
 	{
 		UINT16 intEntryType = 0;
-		BOOL expect;
-		BOOL have;
+		BOOL expect = 0;
+		BOOL have = 0;
 		char value[8192] = { 0 };
 		union
 		{
@@ -720,7 +720,7 @@ fail:
 
 static BOOL check_device_type(void)
 {
-	size_t x;
+	size_t x = 0;
 	struct test_entry
 	{
 		int expect;
@@ -780,7 +780,7 @@ static BOOL check_device_type(void)
 
 static BOOL check_offsets(rdpSettings* settings, size_t id, size_t min, size_t max, BOOL checkPtr)
 {
-	size_t x;
+	size_t x = 0;
 	BOOL rc = TRUE;
 
 	WINPR_ASSERT(settings);
@@ -800,13 +800,13 @@ static BOOL check_offsets(rdpSettings* settings, size_t id, size_t min, size_t m
 static BOOL test_write_offsets(rdpSettings* settings, size_t id, size_t elementSize, size_t min,
                                size_t max)
 {
-	size_t x;
+	size_t x = 0;
 
 	WINPR_ASSERT(settings);
 
 	for (x = min; x < max; x++)
 	{
-		const void* ptr;
+		const void* ptr = NULL;
 		char buffer[8192] = { 0 };
 
 		winpr_RAND(buffer, sizeof(buffer));
@@ -832,7 +832,7 @@ static BOOL test_pointer_array(void)
 		size_t size;
 		size_t elementSize;
 	};
-	size_t x;
+	size_t x = 0;
 	const struct pointer_test_case tests[] = {
 		{ FALSE, FALSE, FreeRDP_DeviceArray, FreeRDP_DeviceArraySize, 32, sizeof(RDPDR_DEVICE*) },
 		{ FALSE, FALSE, FreeRDP_StaticChannelArray, FreeRDP_StaticChannelArraySize, 32,
@@ -937,7 +937,7 @@ fail:
 int TestSettings(int argc, char* argv[])
 {
 	int rc = -1;
-	size_t x;
+	size_t x = 0;
 	rdpSettings* settings = NULL;
 	rdpSettings* cloned = NULL;
 	rdpSettings* cloned2 = NULL;
@@ -1121,7 +1121,7 @@ int TestSettings(int argc, char* argv[])
 	{
 		const size_t key = string_list_indices[x];
 		const char val[] = "test-string";
-		const char* res;
+		const char* res = NULL;
 		const char* name = freerdp_settings_get_name_for_key(key);
 		const char* oval = freerdp_settings_get_string(settings, key);
 		const char* cval = freerdp_settings_get_string(cloned, key);

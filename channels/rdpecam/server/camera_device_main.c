@@ -74,10 +74,10 @@ static UINT device_server_open_channel(device_server* device)
 {
 	CameraDeviceServerContext* context = &device->context;
 	DWORD Error = ERROR_SUCCESS;
-	HANDLE hEvent;
+	HANDLE hEvent = NULL;
 	DWORD BytesReturned = 0;
 	PULONG pSessionId = NULL;
-	UINT32 channelId;
+	UINT32 channelId = 0;
 	BOOL status = TRUE;
 
 	WINPR_ASSERT(device);
@@ -167,7 +167,7 @@ static UINT device_server_recv_stream_list_response(CameraDeviceServerContext* c
 {
 	CAM_STREAM_LIST_RESPONSE pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
-	BYTE i;
+	BYTE i = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(header);
@@ -341,7 +341,7 @@ static UINT device_server_recv_property_list_response(CameraDeviceServerContext*
 
 	if (pdu.N_Properties > 0)
 	{
-		size_t i;
+		size_t i = 0;
 
 		pdu.Properties = calloc(pdu.N_Properties, sizeof(CAM_PROPERTY_DESCRIPTION));
 		if (!pdu.Properties)
@@ -399,11 +399,11 @@ static UINT device_server_recv_property_value_response(CameraDeviceServerContext
 
 static UINT device_process_message(device_server* device)
 {
-	BOOL rc;
+	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
-	ULONG BytesReturned;
+	ULONG BytesReturned = 0;
 	CAM_SHARED_MSG_HEADER header = { 0 };
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(device);
 	WINPR_ASSERT(device->device_channel);
@@ -531,11 +531,11 @@ static HANDLE device_server_get_channel_handle(device_server* device)
 
 static DWORD WINAPI device_server_thread_func(LPVOID arg)
 {
-	DWORD nCount;
+	DWORD nCount = 0;
 	HANDLE events[2] = { 0 };
 	device_server* device = (device_server*)arg;
 	UINT error = CHANNEL_RC_OK;
-	DWORD status;
+	DWORD status = 0;
 
 	WINPR_ASSERT(device);
 
@@ -682,7 +682,7 @@ static BOOL device_server_context_handle(CameraDeviceServerContext* context, HAN
 
 static wStream* device_server_packet_new(size_t size, BYTE version, BYTE messageId)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	/* Allocate what we need plus header bytes */
 	s = Stream_New(NULL, size + CAM_HEADER_SIZE);
@@ -702,7 +702,7 @@ static UINT device_server_packet_send(CameraDeviceServerContext* context, wStrea
 {
 	device_server* device = (device_server*)context;
 	UINT error = CHANNEL_RC_OK;
-	ULONG written;
+	ULONG written = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
@@ -728,7 +728,7 @@ out:
 
 static UINT device_server_write_and_send_header(CameraDeviceServerContext* context, BYTE messageId)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 
@@ -769,7 +769,7 @@ static UINT
 device_send_media_type_list_request_pdu(CameraDeviceServerContext* context,
                                         const CAM_MEDIA_TYPE_LIST_REQUEST* mediaTypeListRequest)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(mediaTypeListRequest);
@@ -787,7 +787,7 @@ static UINT device_send_current_media_type_request_pdu(
     CameraDeviceServerContext* context,
     const CAM_CURRENT_MEDIA_TYPE_REQUEST* currentMediaTypeRequest)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(currentMediaTypeRequest);
@@ -805,8 +805,8 @@ static UINT
 device_send_start_streams_request_pdu(CameraDeviceServerContext* context,
                                       const CAM_START_STREAMS_REQUEST* startStreamsRequest)
 {
-	wStream* s;
-	size_t i;
+	wStream* s = NULL;
+	size_t i = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(startStreamsRequest);
@@ -847,7 +847,7 @@ static UINT device_send_stop_streams_request_pdu(CameraDeviceServerContext* cont
 static UINT device_send_sample_request_pdu(CameraDeviceServerContext* context,
                                            const CAM_SAMPLE_REQUEST* sampleRequest)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(sampleRequest);
@@ -874,7 +874,7 @@ static UINT
 device_send_property_value_request_pdu(CameraDeviceServerContext* context,
                                        const CAM_PROPERTY_VALUE_REQUEST* propertyValueRequest)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(propertyValueRequest);
@@ -893,7 +893,7 @@ static UINT device_send_set_property_value_request_pdu(
     CameraDeviceServerContext* context,
     const CAM_SET_PROPERTY_VALUE_REQUEST* setPropertyValueRequest)
 {
-	wStream* s;
+	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(setPropertyValueRequest);

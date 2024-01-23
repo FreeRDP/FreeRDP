@@ -113,8 +113,8 @@ static BOOL PipeCloseHandle(HANDLE handle)
 static BOOL PipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
                      LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
-	SSIZE_T io_status;
-	WINPR_PIPE* pipe;
+	SSIZE_T io_status = 0;
+	WINPR_PIPE* pipe = NULL;
 	BOOL status = TRUE;
 
 	if (lpOverlapped)
@@ -152,8 +152,8 @@ static BOOL PipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 static BOOL PipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
                       LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
-	SSIZE_T io_status;
-	WINPR_PIPE* pipe;
+	SSIZE_T io_status = 0;
+	WINPR_PIPE* pipe = NULL;
 
 	if (lpOverlapped)
 	{
@@ -249,8 +249,8 @@ static BOOL NamedPipeCloseHandle(HANDLE handle)
 BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
                    LPDWORD lpNumberOfBytesRead, LPOVERLAPPED lpOverlapped)
 {
-	SSIZE_T io_status;
-	WINPR_NAMED_PIPE* pipe;
+	SSIZE_T io_status = 0;
+	WINPR_NAMED_PIPE* pipe = NULL;
 	BOOL status = TRUE;
 
 	if (lpOverlapped)
@@ -342,8 +342,8 @@ BOOL NamedPipeRead(PVOID Object, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 BOOL NamedPipeWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite,
                     LPDWORD lpNumberOfBytesWritten, LPOVERLAPPED lpOverlapped)
 {
-	SSIZE_T io_status;
-	WINPR_NAMED_PIPE* pipe;
+	SSIZE_T io_status = 0;
+	WINPR_NAMED_PIPE* pipe = NULL;
 	BOOL status = TRUE;
 
 	if (lpOverlapped)
@@ -473,8 +473,8 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
                 DWORD nSize)
 {
 	int pipe_fd[2];
-	WINPR_PIPE* pReadPipe;
-	WINPR_PIPE* pWritePipe;
+	WINPR_PIPE* pReadPipe = NULL;
+	WINPR_PIPE* pWritePipe = NULL;
 
 	WINPR_UNUSED(lpPipeAttributes);
 	WINPR_UNUSED(nSize);
@@ -515,8 +515,8 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 
 static void winpr_unref_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
 {
-	size_t index;
-	NamedPipeServerSocketEntry* baseSocket;
+	size_t index = 0;
+	NamedPipeServerSocketEntry* baseSocket = NULL;
 
 	if (!pNamedPipe)
 		return;
@@ -558,8 +558,8 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
                         DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,
                         LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	size_t index;
-	char* lpPipePath;
+	size_t index = 0;
+	char* lpPipePath = NULL;
 	WINPR_NAMED_PIPE* pNamedPipe = NULL;
 	int serverfd = -1;
 	NamedPipeServerSocketEntry* baseSocket = NULL;
@@ -738,9 +738,9 @@ HANDLE CreateNamedPipeW(LPCWSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWOR
 
 BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 {
-	int status;
-	socklen_t length;
-	WINPR_NAMED_PIPE* pNamedPipe;
+	int status = 0;
+	socklen_t length = 0;
+	WINPR_NAMED_PIPE* pNamedPipe = NULL;
 
 	if (lpOverlapped)
 	{
@@ -790,7 +790,7 @@ BOOL ConnectNamedPipe(HANDLE hNamedPipe, LPOVERLAPPED lpOverlapped)
 
 BOOL DisconnectNamedPipe(HANDLE hNamedPipe)
 {
-	WINPR_NAMED_PIPE* pNamedPipe;
+	WINPR_NAMED_PIPE* pNamedPipe = NULL;
 	pNamedPipe = (WINPR_NAMED_PIPE*)hNamedPipe;
 
 	if (pNamedPipe->clientfd != -1)
@@ -821,10 +821,10 @@ BOOL TransactNamedPipe(HANDLE hNamedPipe, LPVOID lpInBuffer, DWORD nInBufferSize
 
 BOOL WaitNamedPipeA(LPCSTR lpNamedPipeName, DWORD nTimeOut)
 {
-	BOOL status;
-	DWORD nWaitTime;
-	char* lpFilePath;
-	DWORD dwSleepInterval;
+	BOOL status = 0;
+	DWORD nWaitTime = 0;
+	char* lpFilePath = NULL;
+	DWORD dwSleepInterval = 0;
 
 	if (!lpNamedPipeName)
 		return FALSE;
@@ -867,9 +867,9 @@ BOOL WaitNamedPipeW(LPCWSTR lpNamedPipeName, DWORD nTimeOut)
 BOOL SetNamedPipeHandleState(HANDLE hNamedPipe, LPDWORD lpMode, LPDWORD lpMaxCollectionCount,
                              LPDWORD lpCollectDataTimeout)
 {
-	int fd;
-	int flags;
-	WINPR_NAMED_PIPE* pNamedPipe;
+	int fd = 0;
+	int flags = 0;
+	WINPR_NAMED_PIPE* pNamedPipe = NULL;
 	pNamedPipe = (WINPR_NAMED_PIPE*)hNamedPipe;
 
 	if (lpMode)

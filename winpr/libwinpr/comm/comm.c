@@ -293,7 +293,7 @@ BOOL GetCommModemStatus(HANDLE hFile, PDWORD lpModemStat)
 BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 
 	if (!CommIsHandleValid(hFile))
 		return FALSE;
@@ -319,10 +319,10 @@ BOOL GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
  */
 BOOL GetCommState(HANDLE hFile, LPDCB lpDCB)
 {
-	DCB* lpLocalDcb;
+	DCB* lpLocalDcb = NULL;
 	struct termios currentState;
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 
 	if (!CommIsHandleValid(hFile))
 		return FALSE;
@@ -474,7 +474,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 {
 	struct termios upcomingTermios = { 0 };
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 
 	/* FIXME: validate changes according GetCommProperties? */
 
@@ -694,7 +694,7 @@ BOOL SetCommState(HANDLE hFile, LPDCB lpDCB)
 BOOL GetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 
 	if (!CommIsHandleValid(hFile))
 		return FALSE;
@@ -718,7 +718,7 @@ BOOL GetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
 BOOL SetCommTimeouts(HANDLE hFile, LPCOMMTIMEOUTS lpCommTimeouts)
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hFile;
-	DWORD bytesReturned;
+	DWORD bytesReturned = 0;
 
 	if (!CommIsHandleValid(hFile))
 		return FALSE;
@@ -1027,8 +1027,8 @@ error_handle:
  */
 DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 {
-	int i;
-	LPTSTR storedTargetPath;
+	int i = 0;
+	LPTSTR storedTargetPath = NULL;
 	SetLastError(ERROR_SUCCESS);
 
 	if (!CommInitialized())
@@ -1107,9 +1107,9 @@ BOOL IsCommDevice(LPCTSTR lpDeviceName)
  */
 void _comm_setServerSerialDriver(HANDLE hComm, SERIAL_DRIVER_ID driverId)
 {
-	ULONG Type;
-	WINPR_HANDLE* Object;
-	WINPR_COMM* pComm;
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+	WINPR_COMM* pComm = NULL;
 
 	if (!CommInitialized())
 		return;

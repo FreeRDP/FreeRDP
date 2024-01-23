@@ -290,7 +290,7 @@ static int freerdp_keyboard_init_x11_evdev(DWORD* keyboardLayoutId,
 
 DWORD freerdp_keyboard_init(DWORD keyboardLayoutId)
 {
-	DWORD keycode;
+	DWORD keycode = 0;
 	int status = -1;
 
 #if defined(__APPLE__)
@@ -344,14 +344,14 @@ DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId, const char* keyboardRemap
 	{
 		char* copy = _strdup(keyboardRemappingList);
 		char* context = NULL;
-		char* token;
+		char* token = NULL;
 		if (!copy)
 			goto fail;
 		token = strtok_s(copy, ",", &context);
 		while (token)
 		{
-			DWORD key;
-			DWORD value;
+			DWORD key = 0;
+			DWORD value = 0;
 			int rc = sscanf(token, "%" PRIu32 "=%" PRIu32, &key, &value);
 			if (rc != 2)
 				rc = sscanf(token, "%" PRIx32 "=%" PRIx32 "", &key, &value);
@@ -412,7 +412,7 @@ DWORD freerdp_keyboard_get_x11_keycode_from_rdp_scancode(DWORD scancode, BOOL ex
 
 const char* freerdp_keyboard_scancode_name(DWORD scancode)
 {
-	size_t x;
+	size_t x = 0;
 
 	for (x = 0; x < ARRAYSIZE(RDP_SCANCODE_MAP); x++)
 	{

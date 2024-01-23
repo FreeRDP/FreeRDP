@@ -163,7 +163,7 @@ static BOOL credssp_auth_setup_auth_data(rdpCredsspAuth* auth,
                                          const SEC_WINNT_AUTH_IDENTITY* identity,
                                          SEC_WINNT_AUTH_IDENTITY_WINPR* pAuthData)
 {
-	SEC_WINNT_AUTH_IDENTITY_EXW* identityEx;
+	SEC_WINNT_AUTH_IDENTITY_EXW* identityEx = NULL;
 
 	WINPR_ASSERT(pAuthData);
 	ZeroMemory(pAuthData, sizeof(SEC_WINNT_AUTH_IDENTITY_WINPR));
@@ -693,8 +693,8 @@ UINT32 credssp_auth_sspi_error(rdpCredsspAuth* auth)
 
 void credssp_auth_free(rdpCredsspAuth* auth)
 {
-	SEC_WINPR_KERBEROS_SETTINGS* krb_settings;
-	SEC_WINPR_NTLM_SETTINGS* ntlm_settings;
+	SEC_WINPR_KERBEROS_SETTINGS* krb_settings = NULL;
+	SEC_WINPR_NTLM_SETTINGS* ntlm_settings = NULL;
 
 	if (!auth)
 		return;
@@ -748,9 +748,9 @@ void credssp_auth_free(rdpCredsspAuth* auth)
 
 static void auth_get_sspi_module_from_reg(char** sspi_module)
 {
-	HKEY hKey;
-	DWORD dwType;
-	DWORD dwSize;
+	HKEY hKey = NULL;
+	DWORD dwType = 0;
+	DWORD dwSize = 0;
 
 	WINPR_ASSERT(sspi_module);
 	*sspi_module = NULL;
@@ -794,7 +794,7 @@ static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* setting
 
 	if (sspi_module || settings->SspiModule)
 	{
-		INIT_SECURITY_INTERFACE InitSecurityInterface_ptr;
+		INIT_SECURITY_INTERFACE InitSecurityInterface_ptr = NULL;
 		const char* module_name = sspi_module ? sspi_module : settings->SspiModule;
 #ifdef UNICODE
 		const char* proc_name = "InitSecurityInterfaceW";
@@ -823,10 +823,10 @@ static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* setting
 
 static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 {
-	const rdpSettings* settings;
-	SEC_WINPR_KERBEROS_SETTINGS* krb_settings;
-	SEC_WINPR_NTLM_SETTINGS* ntlm_settings;
-	freerdp_peer* peer;
+	const rdpSettings* settings = NULL;
+	SEC_WINPR_KERBEROS_SETTINGS* krb_settings = NULL;
+	SEC_WINPR_NTLM_SETTINGS* ntlm_settings = NULL;
+	freerdp_peer* peer = NULL;
 
 	WINPR_ASSERT(auth);
 	WINPR_ASSERT(auth->rdp_ctx);
@@ -927,8 +927,8 @@ static BOOL credssp_auth_setup_identity(rdpCredsspAuth* auth)
 
 BOOL credssp_auth_set_spn(rdpCredsspAuth* auth, const char* service, const char* hostname)
 {
-	size_t length;
-	char* spn;
+	size_t length = 0;
+	char* spn = NULL;
 
 	WINPR_ASSERT(auth);
 
@@ -977,8 +977,8 @@ static const char* parseInt(const char* v, INT32* r)
 
 static BOOL parseKerberosDeltat(const char* value, INT32* dest, const char* message)
 {
-	INT32 v;
-	const char* ptr;
+	INT32 v = 0;
+	const char* ptr = NULL;
 
 	WINPR_ASSERT(value);
 	WINPR_ASSERT(dest);

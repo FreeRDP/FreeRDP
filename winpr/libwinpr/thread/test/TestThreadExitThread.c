@@ -15,9 +15,9 @@ static DWORD WINAPI thread_func(LPVOID arg)
 
 int TestThreadExitThread(int argc, char* argv[])
 {
-	HANDLE thread;
-	DWORD waitResult;
-	int i;
+	HANDLE thread = NULL;
+	DWORD waitResult = 0;
+	int i = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

@@ -6,15 +6,15 @@
 
 static BOOL test_crypto_cipher_aes_128_cbc(void)
 {
-	WINPR_CIPHER_CTX* ctx;
+	WINPR_CIPHER_CTX* ctx = NULL;
 	BOOL result = FALSE;
 	BYTE key[] = "0123456789abcdeF";
 	BYTE iv[] = "1234567887654321";
 	BYTE ibuf[1024] = { 0 };
 	BYTE obuf[1024] = { 0 };
-	size_t ilen;
-	size_t olen;
-	size_t xlen;
+	size_t ilen = 0;
+	size_t olen = 0;
+	size_t xlen = 0;
 	const char plaintext[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do "
 	                         "eiusmod tempor incididunt ut labore et dolore magna aliqua.";
 
@@ -112,10 +112,10 @@ static const BYTE* TEST_RC4_CIPHERTEXT = (BYTE*)"\xBB\xF3\x16\xE8\xD9\x40\xAF\x0
 
 static BOOL test_crypto_cipher_rc4(void)
 {
-	size_t len;
+	size_t len = 0;
 	BOOL rc = FALSE;
 	BYTE* text = NULL;
-	WINPR_RC4_CTX* ctx;
+	WINPR_RC4_CTX* ctx = NULL;
 
 	len = strnlen(TEST_RC4_PLAINTEXT, sizeof(TEST_RC4_PLAINTEXT));
 
@@ -141,8 +141,8 @@ static BOOL test_crypto_cipher_rc4(void)
 
 	if (memcmp(text, TEST_RC4_CIPHERTEXT, len) != 0)
 	{
-		char* actual;
-		char* expected;
+		char* actual = NULL;
+		char* expected = NULL;
 
 		actual = winpr_BinToHexString(text, len, FALSE);
 		expected = winpr_BinToHexString(TEST_RC4_CIPHERTEXT, len, FALSE);
@@ -177,7 +177,7 @@ static const BYTE* TEST_CIPHER_IV =
 
 static BOOL test_crypto_cipher_key(void)
 {
-	int status;
+	int status = 0;
 	BYTE key[32] = { 0 };
 	BYTE iv[16] = { 0 };
 	BYTE salt[8] = { 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77 };
@@ -187,10 +187,10 @@ static BOOL test_crypto_cipher_key(void)
 
 	if (status != 32 || memcmp(key, TEST_CIPHER_KEY, 32) || memcmp(iv, TEST_CIPHER_IV, 16))
 	{
-		char* akstr;
-		char* ekstr;
-		char* aivstr;
-		char* eivstr;
+		char* akstr = NULL;
+		char* ekstr = NULL;
+		char* aivstr = NULL;
+		char* eivstr = NULL;
 
 		akstr = winpr_BinToHexString(key, 32, 0);
 		ekstr = winpr_BinToHexString(TEST_CIPHER_KEY, 32, 0);

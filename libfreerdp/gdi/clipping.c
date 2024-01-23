@@ -80,7 +80,7 @@ BOOL gdi_ClipCoords(HGDI_DC hdc, INT32* x, INT32* y, INT32* w, INT32* h, INT32* 
 	GDI_RECT bmp;
 	GDI_RECT clip;
 	GDI_RECT coords;
-	HGDI_BITMAP hBmp;
+	HGDI_BITMAP hBmp = NULL;
 	int dx = 0;
 	int dy = 0;
 	BOOL draw = TRUE;

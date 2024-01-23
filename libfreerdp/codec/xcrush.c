@@ -163,7 +163,7 @@ static const char* xcrush_get_level_1_compression_flags_string(UINT32 flags)
 
 static UINT32 xcrush_update_hash(const BYTE* data, UINT32 size)
 {
-	const BYTE* end;
+	const BYTE* end = NULL;
 	UINT32 seed = 5381; /* same value as in djb2 */
 
 	WINPR_ASSERT(data);
@@ -188,7 +188,7 @@ static UINT32 xcrush_update_hash(const BYTE* data, UINT32 size)
 
 static int xcrush_append_chunk(XCRUSH_CONTEXT* xcrush, const BYTE* data, UINT32* beg, UINT32 end)
 {
-	UINT32 size;
+	UINT32 size = 0;
 
 	WINPR_ASSERT(xcrush);
 	WINPR_ASSERT(data);
@@ -301,7 +301,7 @@ static UINT32 xcrush_compute_signatures(XCRUSH_CONTEXT* xcrush, const BYTE* data
 
 static void xcrush_clear_hash_table_range(XCRUSH_CONTEXT* xcrush, UINT32 beg, UINT32 end)
 {
-	UINT32 index;
+	UINT32 index = 0;
 
 	WINPR_ASSERT(xcrush);
 
@@ -331,7 +331,7 @@ static void xcrush_clear_hash_table_range(XCRUSH_CONTEXT* xcrush, UINT32 beg, UI
 static int xcrush_find_next_matching_chunk(XCRUSH_CONTEXT* xcrush, XCRUSH_CHUNK* chunk,
                                            XCRUSH_CHUNK** pNextChunk)
 {
-	UINT32 index;
+	UINT32 index = 0;
 	XCRUSH_CHUNK* next = NULL;
 
 	WINPR_ASSERT(xcrush);
@@ -363,8 +363,8 @@ static int xcrush_find_next_matching_chunk(XCRUSH_CONTEXT* xcrush, XCRUSH_CHUNK*
 static int xcrush_insert_chunk(XCRUSH_CONTEXT* xcrush, XCRUSH_SIGNATURE* signature, UINT32 offset,
                                XCRUSH_CHUNK** pPrevChunk)
 {
-	UINT32 seed;
-	UINT32 index;
+	UINT32 seed = 0;
+	UINT32 index = 0;
 
 	WINPR_ASSERT(xcrush);
 
@@ -409,21 +409,21 @@ static int xcrush_find_match_length(XCRUSH_CONTEXT* xcrush, UINT32 MatchOffset, 
                                     UINT32 HistoryOffset, UINT32 SrcSize, UINT32 MaxMatchLength,
                                     XCRUSH_MATCH_INFO* MatchInfo)
 {
-	UINT32 MatchSymbol;
-	UINT32 ChunkSymbol;
-	BYTE* ChunkBuffer;
-	BYTE* MatchBuffer;
-	BYTE* MatchStartPtr;
-	BYTE* ForwardChunkPtr;
-	BYTE* ReverseChunkPtr;
-	BYTE* ForwardMatchPtr;
-	BYTE* ReverseMatchPtr;
-	BYTE* HistoryBufferEnd;
+	UINT32 MatchSymbol = 0;
+	UINT32 ChunkSymbol = 0;
+	BYTE* ChunkBuffer = NULL;
+	BYTE* MatchBuffer = NULL;
+	BYTE* MatchStartPtr = NULL;
+	BYTE* ForwardChunkPtr = NULL;
+	BYTE* ReverseChunkPtr = NULL;
+	BYTE* ForwardMatchPtr = NULL;
+	BYTE* ReverseMatchPtr = NULL;
+	BYTE* HistoryBufferEnd = NULL;
 	UINT32 ReverseMatchLength = 0;
 	UINT32 ForwardMatchLength = 0;
-	UINT32 TotalMatchLength;
-	BYTE* HistoryBuffer;
-	UINT32 HistoryBufferSize;
+	UINT32 TotalMatchLength = 0;
+	BYTE* HistoryBuffer = NULL;
+	UINT32 HistoryBufferSize = 0;
 
 	WINPR_ASSERT(xcrush);
 	WINPR_ASSERT(MatchInfo);
@@ -605,17 +605,17 @@ static int xcrush_find_all_matches(XCRUSH_CONTEXT* xcrush, UINT32 SignatureIndex
 
 static int xcrush_optimize_matches(XCRUSH_CONTEXT* xcrush)
 {
-	UINT32 i;
+	UINT32 i = 0;
 	UINT32 j = 0;
 	UINT32 MatchDiff = 0;
 	UINT32 PrevMatchEnd = 0;
 	UINT32 TotalMatchLength = 0;
 	UINT32 OriginalMatchCount = 0;
 	UINT32 OptimizedMatchCount = 0;
-	XCRUSH_MATCH_INFO* OriginalMatch;
-	XCRUSH_MATCH_INFO* OptimizedMatch;
-	XCRUSH_MATCH_INFO* OriginalMatches;
-	XCRUSH_MATCH_INFO* OptimizedMatches;
+	XCRUSH_MATCH_INFO* OriginalMatch = NULL;
+	XCRUSH_MATCH_INFO* OptimizedMatch = NULL;
+	XCRUSH_MATCH_INFO* OriginalMatches = NULL;
+	XCRUSH_MATCH_INFO* OptimizedMatches = NULL;
 
 	WINPR_ASSERT(xcrush);
 
@@ -673,16 +673,16 @@ static int xcrush_optimize_matches(XCRUSH_CONTEXT* xcrush)
 static int xcrush_generate_output(XCRUSH_CONTEXT* xcrush, BYTE* OutputBuffer, UINT32 OutputSize,
                                   UINT32 HistoryOffset, UINT32* pDstSize)
 {
-	BYTE* Literals;
-	BYTE* OutputEnd;
-	UINT32 MatchIndex;
-	UINT32 MatchOffset;
-	UINT16 MatchLength;
-	UINT32 MatchCount;
-	UINT32 CurrentOffset;
-	UINT32 MatchOffsetDiff;
-	UINT32 HistoryOffsetDiff;
-	RDP61_MATCH_DETAILS* MatchDetails;
+	BYTE* Literals = NULL;
+	BYTE* OutputEnd = NULL;
+	UINT32 MatchIndex = 0;
+	UINT32 MatchOffset = 0;
+	UINT16 MatchLength = 0;
+	UINT32 MatchCount = 0;
+	UINT32 CurrentOffset = 0;
+	UINT32 MatchOffsetDiff = 0;
+	UINT32 HistoryOffsetDiff = 0;
+	RDP61_MATCH_DETAILS* MatchDetails = NULL;
 
 	WINPR_ASSERT(xcrush);
 	WINPR_ASSERT(OutputBuffer);
@@ -905,8 +905,8 @@ int xcrush_decompress(XCRUSH_CONTEXT* xcrush, const BYTE* pSrcData, UINT32 SrcSi
 	int status = 0;
 	UINT32 DstSize = 0;
 	const BYTE* pDstData = NULL;
-	BYTE Level1ComprFlags;
-	BYTE Level2ComprFlags;
+	BYTE Level1ComprFlags = 0;
+	BYTE Level2ComprFlags = 0;
 
 	WINPR_ASSERT(xcrush);
 

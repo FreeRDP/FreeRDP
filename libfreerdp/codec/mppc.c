@@ -88,17 +88,17 @@ static const UINT32 MPPC_MATCH_TABLE[256] = {
 int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
                     const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags)
 {
-	BYTE Literal;
-	BYTE* SrcPtr;
-	UINT32 CopyOffset;
-	UINT32 LengthOfMatch;
-	UINT32 accumulator;
-	BYTE* HistoryPtr;
-	BYTE* HistoryBuffer;
-	BYTE* HistoryBufferEnd;
-	UINT32 HistoryBufferSize;
-	UINT32 CompressionLevel;
-	wBitStream* bs;
+	BYTE Literal = 0;
+	BYTE* SrcPtr = NULL;
+	UINT32 CopyOffset = 0;
+	UINT32 LengthOfMatch = 0;
+	UINT32 accumulator = 0;
+	BYTE* HistoryPtr = NULL;
+	BYTE* HistoryBuffer = NULL;
+	BYTE* HistoryBufferEnd = NULL;
+	UINT32 HistoryBufferSize = 0;
+	UINT32 CompressionLevel = 0;
+	wBitStream* bs = NULL;
 
 	WINPR_ASSERT(mppc);
 	WINPR_ASSERT(pSrcData);
@@ -435,26 +435,26 @@ int mppc_decompress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize,
 int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize, BYTE* pDstBuffer,
                   const BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags)
 {
-	const BYTE* pSrcPtr;
-	const BYTE* pSrcEnd;
-	BYTE* MatchPtr;
-	UINT32 DstSize;
-	BYTE* pDstData;
-	UINT32 MatchIndex;
-	UINT32 accumulator;
-	BOOL PacketFlushed;
-	BOOL PacketAtFront;
-	DWORD CopyOffset;
-	DWORD LengthOfMatch;
-	BYTE* HistoryBuffer;
-	BYTE* HistoryPtr;
-	UINT32 HistoryOffset;
-	UINT32 HistoryBufferSize;
-	BYTE Sym1;
-	BYTE Sym2;
-	BYTE Sym3;
-	UINT32 CompressionLevel;
-	wBitStream* bs;
+	const BYTE* pSrcPtr = NULL;
+	const BYTE* pSrcEnd = NULL;
+	BYTE* MatchPtr = NULL;
+	UINT32 DstSize = 0;
+	BYTE* pDstData = NULL;
+	UINT32 MatchIndex = 0;
+	UINT32 accumulator = 0;
+	BOOL PacketFlushed = 0;
+	BOOL PacketAtFront = 0;
+	DWORD CopyOffset = 0;
+	DWORD LengthOfMatch = 0;
+	BYTE* HistoryBuffer = NULL;
+	BYTE* HistoryPtr = NULL;
+	UINT32 HistoryOffset = 0;
+	UINT32 HistoryBufferSize = 0;
+	BYTE Sym1 = 0;
+	BYTE Sym2 = 0;
+	BYTE Sym3 = 0;
+	UINT32 CompressionLevel = 0;
+	wBitStream* bs = NULL;
 
 	WINPR_ASSERT(mppc);
 	WINPR_ASSERT(pSrcData);

@@ -759,7 +759,7 @@ static BOOL tsg_ndr_read_packet_response(wLog* log, wStream* s, UINT32* index,
 WINPR_ATTR_FORMAT_ARG(3, 4)
 static BOOL tsg_print(char** buffer, size_t* len, WINPR_FORMAT_ARG const char* fmt, ...)
 {
-	int rc;
+	int rc = 0;
 	va_list ap;
 	if (!buffer || !len || !fmt)
 		return FALSE;
@@ -799,7 +799,7 @@ static BOOL tsg_type_capability_nap_to_string(char** buffer, size_t* length,
 static BOOL tsg_packet_capabilities_to_string(char** buffer, size_t* length,
                                               const TSG_PACKET_CAPABILITIES* caps, UINT32 numCaps)
 {
-	UINT32 x;
+	UINT32 x = 0;
 
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(length);
@@ -977,7 +977,7 @@ static BOOL tsg_packet_quarenc_response_to_string(char** buffer, size_t* length,
 {
 	BOOL rc = FALSE;
 	char* strdata = NULL;
-	RPC_CSTR uuid;
+	RPC_CSTR uuid = NULL;
 	char tbuffer[8192] = { 0 };
 	size_t size = ARRAYSIZE(tbuffer);
 	char* ptbuffer = tbuffer;
@@ -1207,7 +1207,7 @@ fail:
 
 static BOOL tsg_stream_align(wLog* log, wStream* s, size_t align)
 {
-	size_t pos;
+	size_t pos = 0;
 	size_t offset = 0;
 
 	if (!s)
@@ -1264,15 +1264,15 @@ static BIO_METHOD* BIO_s_tsg(void);
 static int TsProxySendToServer(handle_t IDL_handle, const byte pRpcMessage[], UINT32 count,
                                UINT32* lengths)
 {
-	wStream* s;
-	rdpTsg* tsg;
-	size_t length;
+	wStream* s = NULL;
+	rdpTsg* tsg = NULL;
+	size_t length = 0;
 	const byte* buffer1 = NULL;
 	const byte* buffer2 = NULL;
 	const byte* buffer3 = NULL;
-	UINT32 buffer1Length;
-	UINT32 buffer2Length;
-	UINT32 buffer3Length;
+	UINT32 buffer1Length = 0;
+	UINT32 buffer2Length = 0;
+	UINT32 buffer3Length = 0;
 	UINT32 numBuffers = 0;
 	UINT32 totalDataBytes = 0;
 	tsg = (rdpTsg*)IDL_handle;
@@ -1362,8 +1362,8 @@ static BOOL TsProxyCreateTunnelWriteRequest(rdpTsg* tsg, const TSG_PACKET* tsgPa
 	BOOL rc = FALSE;
 	BOOL write = TRUE;
 	UINT16 opnum = 0;
-	wStream* s;
-	rdpRpc* rpc;
+	wStream* s = NULL;
+	rdpRpc* rpc = NULL;
 
 	if (!tsg || !tsg->rpc)
 		return FALSE;
@@ -1598,8 +1598,8 @@ static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
 	BOOL rc = FALSE;
 	UINT32 index = 0;
 	TSG_PACKET packet = { 0 };
-	UINT32 SwitchValue;
-	rdpContext* context;
+	UINT32 SwitchValue = 0;
+	rdpContext* context = NULL;
 	UINT32 PacketPtr = 0;
 
 	WINPR_ASSERT(tsg);
@@ -1676,11 +1676,11 @@ fail:
 
 static BOOL TsProxyAuthorizeTunnelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext)
 {
-	size_t pad;
-	wStream* s;
-	size_t count;
-	size_t offset;
-	rdpRpc* rpc;
+	size_t pad = 0;
+	wStream* s = NULL;
+	size_t count = 0;
+	size_t offset = 0;
+	rdpRpc* rpc = NULL;
 
 	if (!tsg || !tsg->rpc || !tunnelContext || !tsg->MachineName)
 		return FALSE;
@@ -1733,7 +1733,7 @@ fail:
 static BOOL TsProxyAuthorizeTunnelReadResponse(wLog* log, RPC_PDU* pdu)
 {
 	BOOL rc = FALSE;
-	UINT32 SwitchValue;
+	UINT32 SwitchValue = 0;
 	UINT32 index = 0;
 	TSG_PACKET packet = { 0 };
 	UINT32 PacketPtr = 0;
@@ -1793,8 +1793,8 @@ fail:
 static BOOL TsProxyMakeTunnelCallWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext,
                                               UINT32 procId)
 {
-	wStream* s;
-	rdpRpc* rpc;
+	wStream* s = NULL;
+	rdpRpc* rpc = NULL;
 
 	if (!tsg || !tsg->rpc || !tunnelContext)
 		return FALSE;
@@ -1852,9 +1852,9 @@ static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
 {
 	BOOL rc = FALSE;
 	UINT32 index = 0;
-	UINT32 SwitchValue;
+	UINT32 SwitchValue = 0;
 	TSG_PACKET packet;
-	rdpContext* context;
+	rdpContext* context = NULL;
 	char* messageText = NULL;
 	TSG_PACKET_MSG_RESPONSE packetMsgResponse = { 0 };
 	TSG_PACKET_STRING_MESSAGE packetStringMessage = { 0 };
@@ -1993,9 +1993,9 @@ fail:
 
 static BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext)
 {
-	size_t count;
-	wStream* s;
-	rdpRpc* rpc;
+	size_t count = 0;
+	wStream* s = NULL;
+	rdpRpc* rpc = NULL;
 	WLog_Print(tsg->log, WLOG_DEBUG, "TsProxyCreateChannelWriteRequest");
 
 	if (!tsg || !tsg->rpc || !tunnelContext || !tsg->Hostname)
@@ -2070,8 +2070,8 @@ fail:
 
 static BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context)
 {
-	wStream* s;
-	rdpRpc* rpc;
+	wStream* s = NULL;
+	rdpRpc* rpc = NULL;
 	WLog_Print(tsg->log, WLOG_DEBUG, "TsProxyCloseChannelWriteRequest");
 
 	if (!tsg || !tsg->rpc || !context)
@@ -2126,8 +2126,8 @@ fail:
 
 static BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, const CONTEXT_HANDLE* context)
 {
-	wStream* s;
-	rdpRpc* rpc;
+	wStream* s = NULL;
+	rdpRpc* rpc = NULL;
 	WLog_Print(tsg->log, WLOG_DEBUG, "TsProxyCloseTunnelWriteRequest");
 
 	if (!tsg || !tsg->rpc || !context)
@@ -2183,8 +2183,8 @@ fail:
 
 static BOOL TsProxySetupReceivePipeWriteRequest(rdpTsg* tsg, const CONTEXT_HANDLE* channelContext)
 {
-	wStream* s;
-	rdpRpc* rpc;
+	wStream* s = NULL;
+	rdpRpc* rpc = NULL;
 	WLog_Print(tsg->log, WLOG_DEBUG, "TsProxySetupReceivePipeWriteRequest");
 
 	WINPR_ASSERT(tsg);
@@ -2299,8 +2299,8 @@ static BOOL tsg_proxy_reauth(rdpTsg* tsg)
 BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 {
 	BOOL rc = FALSE;
-	RpcClientCall* call;
-	rdpRpc* rpc;
+	RpcClientCall* call = NULL;
+	rdpRpc* rpc = NULL;
 
 	WINPR_ASSERT(tsg);
 	WINPR_ASSERT(pdu);
@@ -2320,7 +2320,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 	{
 		case TSG_STATE_INITIAL:
 		{
-			CONTEXT_HANDLE* TunnelContext;
+			CONTEXT_HANDLE* TunnelContext = NULL;
 			TunnelContext = (tsg->reauthSequence) ? &tsg->NewTunnelContext : &tsg->TunnelContext;
 
 			if (!TsProxyCreateTunnelReadResponse(tsg, pdu, TunnelContext, &tsg->TunnelId))
@@ -2344,7 +2344,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 
 		case TSG_STATE_CONNECTED:
 		{
-			CONTEXT_HANDLE* TunnelContext;
+			CONTEXT_HANDLE* TunnelContext = NULL;
 			TunnelContext = (tsg->reauthSequence) ? &tsg->NewTunnelContext : &tsg->TunnelContext;
 
 			if (!TsProxyAuthorizeTunnelReadResponse(tsg->log, pdu))
@@ -2637,12 +2637,12 @@ static BOOL tsg_set_machine_name(rdpTsg* tsg, const char* machineName)
 BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, DWORD timeout)
 {
 	UINT64 looptimeout = timeout * 1000ULL;
-	DWORD nCount;
+	DWORD nCount = 0;
 	HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
-	rdpRpc* rpc;
-	rdpContext* context;
-	rdpSettings* settings;
-	rdpTransport* transport;
+	rdpRpc* rpc = NULL;
+	rdpContext* context = NULL;
+	rdpSettings* settings = NULL;
+	rdpTransport* transport = NULL;
 
 	WINPR_ASSERT(tsg);
 
@@ -2759,7 +2759,7 @@ BOOL tsg_disconnect(rdpTsg* tsg)
 
 static int tsg_read(rdpTsg* tsg, BYTE* data, size_t length)
 {
-	rdpRpc* rpc;
+	rdpRpc* rpc = NULL;
 	int status = 0;
 
 	if (!tsg || !data)
@@ -2809,7 +2809,7 @@ static int tsg_read(rdpTsg* tsg, BYTE* data, size_t length)
 
 static int tsg_write(rdpTsg* tsg, const BYTE* data, UINT32 length)
 {
-	int status;
+	int status = 0;
 
 	if (!tsg || !data || !tsg->rpc || !tsg->rpc->transport)
 		return -1;
@@ -2860,7 +2860,7 @@ void tsg_free(rdpTsg* tsg)
 
 static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 {
-	int status;
+	int status = 0;
 	rdpTsg* tsg = (rdpTsg*)BIO_get_data(bio);
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 
@@ -2888,7 +2888,7 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 
 static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 {
-	int status;
+	int status = 0;
 	rdpTsg* tsg = (rdpTsg*)BIO_get_data(bio);
 
 	if (!tsg || (size < 0))

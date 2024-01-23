@@ -124,7 +124,7 @@ static int prepare(const char* currentFileV2)
 		                    " \t#anothercomment\r\n"
 		                    "otherurl\t3389\taa:bb:cc:dd\tsubject2\tissuer2\r" };
 	FILE* fc = NULL;
-	size_t i;
+	size_t i = 0;
 	fc = winpr_fopen(currentFileV2, "w+");
 
 	if (!fc)
@@ -226,7 +226,7 @@ static BOOL compare_ex(const rdpCertificateData* data, const rdpCertificateData*
 
 static BOOL test_get_data(rdpCertificateStore* store, const rdpCertificateData* data)
 {
-	BOOL res;
+	BOOL res = 0;
 	rdpCertificateData* stored = freerdp_certificate_store_load_data(
 	    store, freerdp_certificate_data_get_host(data), freerdp_certificate_data_get_port(data));
 	if (!stored)
@@ -239,7 +239,7 @@ static BOOL test_get_data(rdpCertificateStore* store, const rdpCertificateData* 
 
 static BOOL test_get_data_ex(rdpCertificateStore* store, const rdpCertificateData* data)
 {
-	BOOL res;
+	BOOL res = 0;
 	rdpCertificateData* stored = freerdp_certificate_store_load_data(
 	    store, freerdp_certificate_data_get_host(data), freerdp_certificate_data_get_port(data));
 	if (!stored)

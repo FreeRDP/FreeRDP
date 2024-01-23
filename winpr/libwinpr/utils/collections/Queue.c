@@ -60,7 +60,7 @@ struct s_wQueue
 
 size_t Queue_Count(wQueue* queue)
 {
-	size_t ret;
+	size_t ret = 0;
 
 	Queue_Lock(queue);
 
@@ -119,7 +119,7 @@ wObject* Queue_Object(wQueue* queue)
 
 void Queue_Clear(wQueue* queue)
 {
-	size_t index;
+	size_t index = 0;
 
 	Queue_Lock(queue);
 
@@ -143,7 +143,7 @@ void Queue_Clear(wQueue* queue)
 
 BOOL Queue_Contains(wQueue* queue, const void* obj)
 {
-	size_t index;
+	size_t index = 0;
 	BOOL found = FALSE;
 
 	Queue_Lock(queue);
@@ -170,7 +170,7 @@ static BOOL Queue_EnsureCapacity(wQueue* queue, size_t count)
 	{
 		const size_t old_capacity = queue->capacity;
 		size_t new_capacity = queue->capacity * queue->growthFactor;
-		void** newArray;
+		void** newArray = NULL;
 		if (new_capacity < queue->size + count)
 			new_capacity = queue->size + count;
 		newArray = (void**)realloc(queue->array, sizeof(void*) * new_capacity);
@@ -273,7 +273,7 @@ void* Queue_Peek(wQueue* queue)
 
 void Queue_Discard(wQueue* queue)
 {
-	void* obj;
+	void* obj = NULL;
 
 	Queue_Lock(queue);
 	obj = Queue_Dequeue(queue);
@@ -294,7 +294,7 @@ static BOOL default_queue_equals(const void* obj1, const void* obj2)
 
 wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor)
 {
-	wObject* obj;
+	wObject* obj = NULL;
 	wQueue* queue = NULL;
 	queue = (wQueue*)calloc(1, sizeof(wQueue));
 

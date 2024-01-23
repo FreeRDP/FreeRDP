@@ -131,7 +131,7 @@ static BOOL pcap_write_record(rdpPcap* pcap, const pcap_record* record)
 
 BOOL pcap_add_record(rdpPcap* pcap, const void* data, size_t length)
 {
-	pcap_record* record;
+	pcap_record* record = NULL;
 	struct timeval tp;
 
 	WINPR_ASSERT(pcap);
@@ -213,7 +213,7 @@ BOOL pcap_get_next_record(rdpPcap* pcap, pcap_record* record)
 
 rdpPcap* pcap_open(const char* name, BOOL write)
 {
-	rdpPcap* pcap;
+	rdpPcap* pcap = NULL;
 
 	WINPR_ASSERT(name);
 

@@ -11,18 +11,18 @@ static const char* test_Password = "Password";
 int TestInitializeSecurityContext(int argc, char* argv[])
 {
 	int rc = -1;
-	UINT32 cbMaxLen;
-	UINT32 fContextReq;
+	UINT32 cbMaxLen = 0;
+	UINT32 fContextReq = 0;
 	void* output_buffer = NULL;
 	CtxtHandle context;
-	ULONG pfContextAttr;
-	SECURITY_STATUS status;
+	ULONG pfContextAttr = 0;
+	SECURITY_STATUS status = 0;
 	CredHandle credentials = { 0 };
 	TimeStamp expiration;
-	PSecPkgInfo pPackageInfo;
+	PSecPkgInfo pPackageInfo = NULL;
 	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
-	SecurityFunctionTable* table;
-	PSecBuffer p_SecBuffer;
+	SecurityFunctionTable* table = NULL;
+	PSecBuffer p_SecBuffer = NULL;
 	SecBuffer output_SecBuffer;
 	SecBufferDesc output_SecBuffer_desc;
 

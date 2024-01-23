@@ -44,7 +44,7 @@ struct stream_dump_context
 
 static UINT32 crc32b(const BYTE* data, size_t length)
 {
-	size_t x;
+	size_t x = 0;
 	UINT32 crc = 0xFFFFFFFF;
 
 	for (x = 0; x < length; x++)
@@ -67,11 +67,11 @@ static
     stream_dump_read_line(FILE* fp, wStream* s, UINT64* pts, size_t* pOffset, UINT32* flags)
 {
 	BOOL rc = FALSE;
-	UINT64 ts;
+	UINT64 ts = 0;
 	UINT64 size = 0;
-	size_t r;
-	UINT32 crc32;
-	BYTE received;
+	size_t r = 0;
+	UINT32 crc32 = 0;
+	BYTE received = 0;
 
 	if (!fp || !s || !flags)
 		return FALSE;
@@ -162,7 +162,7 @@ fail:
 
 static FILE* stream_dump_get_file(const rdpSettings* settings, const char* mode)
 {
-	const char* cfolder;
+	const char* cfolder = NULL;
 	char* file = NULL;
 	FILE* fp = NULL;
 
@@ -190,7 +190,7 @@ SSIZE_T stream_dump_append(const rdpContext* context, UINT32 flags, wStream* s, 
 	FILE* fp = NULL;
 	const UINT32 mask = STREAM_MSG_SRV_RX | STREAM_MSG_SRV_TX;
 	CONNECTION_STATE state = freerdp_get_state(context);
-	int r;
+	int r = 0;
 
 	if (!context || !s || !offset)
 		return -1;
@@ -229,7 +229,7 @@ SSIZE_T stream_dump_get(const rdpContext* context, UINT32* flags, wStream* s, si
 {
 	SSIZE_T rc = -1;
 	FILE* fp = NULL;
-	int r;
+	int r = 0;
 
 	if (!context || !s || !offset)
 		return -1;
@@ -252,7 +252,7 @@ fail:
 
 static int stream_dump_transport_write(rdpTransport* transport, wStream* s)
 {
-	SSIZE_T r;
+	SSIZE_T r = 0;
 	rdpContext* ctx = transport_get_context(transport);
 
 	WINPR_ASSERT(ctx);
@@ -270,7 +270,7 @@ static int stream_dump_transport_write(rdpTransport* transport, wStream* s)
 
 static int stream_dump_transport_read(rdpTransport* transport, wStream* s)
 {
-	int rc;
+	int rc = 0;
 	rdpContext* ctx = transport_get_context(transport);
 
 	WINPR_ASSERT(ctx);
@@ -315,7 +315,7 @@ static BOOL stream_dump_register_write_handlers(rdpContext* context)
 static int stream_dump_replay_transport_write(rdpTransport* transport, wStream* s)
 {
 	rdpContext* ctx = transport_get_context(transport);
-	size_t size;
+	size_t size = 0;
 
 	WINPR_ASSERT(ctx);
 	WINPR_ASSERT(s);

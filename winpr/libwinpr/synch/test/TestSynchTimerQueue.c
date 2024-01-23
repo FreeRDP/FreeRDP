@@ -21,9 +21,9 @@ typedef struct apc_data APC_DATA;
 
 static VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 {
-	UINT32 TimerTime;
-	APC_DATA* apcData;
-	UINT32 expectedTime;
+	UINT32 TimerTime = 0;
+	APC_DATA* apcData = NULL;
+	UINT32 expectedTime = 0;
 	UINT32 CurrentTime = GetTickCount();
 
 	WINPR_UNUSED(TimerOrWaitFired);
@@ -52,8 +52,8 @@ static VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 
 int TestSynchTimerQueue(int argc, char* argv[])
 {
-	DWORD index;
-	HANDLE hTimerQueue;
+	DWORD index = 0;
+	HANDLE hTimerQueue = NULL;
 	HANDLE hTimers[TIMER_COUNT];
 	APC_DATA apcData[TIMER_COUNT];
 

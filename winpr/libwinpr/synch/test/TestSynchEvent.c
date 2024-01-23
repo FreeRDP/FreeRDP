@@ -4,8 +4,8 @@
 
 int TestSynchEvent(int argc, char* argv[])
 {
-	HANDLE event;
-	int i;
+	HANDLE event = NULL;
+	int i = 0;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	if (ResetEvent(NULL))

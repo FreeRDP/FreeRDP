@@ -1231,6 +1231,7 @@ static BOOL nla_read_TSRemoteGuardPackageCred(rdpNla* nla, WinPrAsn1Decoder* dec
 /** @brief kind of TSCreds */
 typedef enum
 {
+	TSCREDS_INVALID = 0,
 	TSCREDS_USER_PASSWD = 1,
 	TSCREDS_SMARTCARD = 2,
 	TSCREDS_REMOTEGUARD = 6
@@ -1405,7 +1406,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	WinPrAsn1Encoder* enc = NULL;
 	size_t length = 0;
 	wStream s = { 0 };
-	TsCredentialsType credType;
+	TsCredentialsType credType = TSCREDS_INVALID;
 
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(nla->rdpcontext);

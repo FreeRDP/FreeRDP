@@ -83,7 +83,7 @@ BOOL HashTable_StringCompare(const void* string1, const void* string2)
 
 UINT32 HashTable_StringHash(const void* key)
 {
-	UINT32 c;
+	UINT32 c = 0;
 	UINT32 hash = 5381;
 	const BYTE* str = (const BYTE*)key;
 
@@ -106,7 +106,7 @@ void HashTable_StringFree(void* str)
 
 static INLINE BOOL HashTable_IsProbablePrime(size_t oddNumber)
 {
-	size_t i;
+	size_t i = 0;
 
 	for (i = 3; i < 51; i += 2)
 	{
@@ -139,11 +139,11 @@ static INLINE size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 
 static INLINE void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
 {
-	size_t index;
-	UINT32 hashValue;
-	wKeyValuePair* pair;
-	wKeyValuePair* nextPair;
-	wKeyValuePair** newBucketArray;
+	size_t index = 0;
+	UINT32 hashValue = 0;
+	wKeyValuePair* pair = NULL;
+	wKeyValuePair* nextPair = NULL;
+	wKeyValuePair** newBucketArray = NULL;
 
 	WINPR_ASSERT(table);
 	if (numOfBuckets == 0)
@@ -192,8 +192,8 @@ static INLINE BOOL HashTable_Equals(wHashTable* table, const wKeyValuePair* pair
 
 static INLINE wKeyValuePair* HashTable_Get(wHashTable* table, const void* key)
 {
-	UINT32 hashValue;
-	wKeyValuePair* pair;
+	UINT32 hashValue = 0;
+	wKeyValuePair* pair = NULL;
 
 	WINPR_ASSERT(table);
 	if (!key)
@@ -310,9 +310,9 @@ int HashTable_Add(wHashTable* table, const void* key, const void* value)
 BOOL HashTable_Insert(wHashTable* table, const void* key, const void* value)
 {
 	BOOL rc = FALSE;
-	UINT32 hashValue;
-	wKeyValuePair* pair;
-	wKeyValuePair* newPair;
+	UINT32 hashValue = 0;
+	wKeyValuePair* pair = NULL;
+	wKeyValuePair* newPair = NULL;
 
 	WINPR_ASSERT(table);
 	if (!key || !value)
@@ -385,7 +385,7 @@ BOOL HashTable_Insert(wHashTable* table, const void* key, const void* value)
 
 BOOL HashTable_Remove(wHashTable* table, const void* key)
 {
-	UINT32 hashValue;
+	UINT32 hashValue = 0;
 	BOOL status = TRUE;
 	wKeyValuePair* pair = NULL;
 	wKeyValuePair* previousPair = NULL;
@@ -451,7 +451,7 @@ out:
 void* HashTable_GetItemValue(wHashTable* table, const void* key)
 {
 	void* value = NULL;
-	wKeyValuePair* pair;
+	wKeyValuePair* pair = NULL;
 
 	WINPR_ASSERT(table);
 	if (!key)
@@ -478,7 +478,7 @@ void* HashTable_GetItemValue(wHashTable* table, const void* key)
 BOOL HashTable_SetItemValue(wHashTable* table, const void* key, const void* value)
 {
 	BOOL status = TRUE;
-	wKeyValuePair* pair;
+	wKeyValuePair* pair = NULL;
 
 	WINPR_ASSERT(table);
 	if (!key)
@@ -508,9 +508,9 @@ BOOL HashTable_SetItemValue(wHashTable* table, const void* key, const void* valu
 
 void HashTable_Clear(wHashTable* table)
 {
-	size_t index;
-	wKeyValuePair* pair;
-	wKeyValuePair* nextPair;
+	size_t index = 0;
+	wKeyValuePair* pair = NULL;
+	wKeyValuePair* nextPair = NULL;
 
 	WINPR_ASSERT(table);
 
@@ -555,12 +555,12 @@ void HashTable_Clear(wHashTable* table)
 
 size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 {
-	size_t iKey;
-	size_t count;
-	size_t index;
-	ULONG_PTR* pKeys;
-	wKeyValuePair* pair;
-	wKeyValuePair* nextPair;
+	size_t iKey = 0;
+	size_t count = 0;
+	size_t index = 0;
+	ULONG_PTR* pKeys = NULL;
+	wKeyValuePair* pair = NULL;
+	wKeyValuePair* nextPair = NULL;
 
 	WINPR_ASSERT(table);
 
@@ -615,8 +615,8 @@ size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 BOOL HashTable_Foreach(wHashTable* table, HASH_TABLE_FOREACH_FN fn, VOID* arg)
 {
 	BOOL ret = TRUE;
-	size_t index;
-	wKeyValuePair* pair;
+	size_t index = 0;
+	wKeyValuePair* pair = NULL;
 
 	WINPR_ASSERT(table);
 	WINPR_ASSERT(fn);
@@ -641,10 +641,10 @@ BOOL HashTable_Foreach(wHashTable* table, HASH_TABLE_FOREACH_FN fn, VOID* arg)
 	if (!table->foreachRecursionLevel && table->pendingRemoves)
 	{
 		/* if we're the last recursive foreach call, let's do the cleanup if needed */
-		wKeyValuePair** prevPtr;
+		wKeyValuePair** prevPtr = NULL;
 		for (index = 0; index < table->numOfBuckets; index++)
 		{
-			wKeyValuePair* nextPair;
+			wKeyValuePair* nextPair = NULL;
 			prevPtr = &table->bucketArray[index];
 			for (pair = table->bucketArray[index]; pair;)
 			{
@@ -677,8 +677,8 @@ out:
 
 BOOL HashTable_Contains(wHashTable* table, const void* key)
 {
-	BOOL status;
-	wKeyValuePair* pair;
+	BOOL status = 0;
+	wKeyValuePair* pair = NULL;
 
 	WINPR_ASSERT(table);
 	if (!key)
@@ -702,8 +702,8 @@ BOOL HashTable_Contains(wHashTable* table, const void* key)
 
 BOOL HashTable_ContainsKey(wHashTable* table, const void* key)
 {
-	BOOL status;
-	wKeyValuePair* pair;
+	BOOL status = 0;
+	wKeyValuePair* pair = NULL;
 
 	WINPR_ASSERT(table);
 	if (!key)
@@ -727,9 +727,9 @@ BOOL HashTable_ContainsKey(wHashTable* table, const void* key)
 
 BOOL HashTable_ContainsValue(wHashTable* table, const void* value)
 {
-	size_t index;
+	size_t index = 0;
 	BOOL status = FALSE;
-	wKeyValuePair* pair;
+	wKeyValuePair* pair = NULL;
 
 	WINPR_ASSERT(table);
 	if (!value)
@@ -801,9 +801,9 @@ fail:
 
 void HashTable_Free(wHashTable* table)
 {
-	size_t index;
-	wKeyValuePair* pair;
-	wKeyValuePair* nextPair;
+	size_t index = 0;
+	wKeyValuePair* pair = NULL;
+	wKeyValuePair* nextPair = NULL;
 
 	if (!table)
 		return;
@@ -862,7 +862,7 @@ BOOL HashTable_SetHashFunction(wHashTable* table, HASH_TABLE_HASH_FN fn)
 
 BOOL HashTable_SetupForStringData(wHashTable* table, BOOL stringValues)
 {
-	wObject* obj;
+	wObject* obj = NULL;
 
 	if (!HashTable_SetHashFunction(table, HashTable_StringHash))
 		return FALSE;

@@ -56,9 +56,9 @@ DWORD SleepEx(DWORD dwMilliseconds, BOOL bAlertable)
 {
 	WINPR_THREAD* thread = winpr_GetCurrentThread();
 	WINPR_POLL_SET pollset;
-	int status;
+	int status = 0;
 	DWORD ret = WAIT_FAILED;
-	BOOL autoSignalled;
+	BOOL autoSignalled = 0;
 
 	if (thread)
 	{

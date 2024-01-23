@@ -193,7 +193,7 @@ static BOOL register_raw_events(xfContext* xfc, Window window)
 {
 	XIEventMask mask;
 	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 
@@ -220,7 +220,7 @@ static BOOL register_device_events(xfContext* xfc, Window window)
 {
 	XIEventMask mask;
 	unsigned char mask_bytes[XIMaskLen(XI_LASTEVENT)] = { 0 };
-	rdpSettings* settings;
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 
@@ -290,7 +290,7 @@ int xf_input_init(xfContext* xfc, Window window)
 
 static BOOL xf_input_is_duplicate(xfContext* xfc, const XGenericEventCookie* cookie)
 {
-	const XIDeviceEvent* event;
+	const XIDeviceEvent* event = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(cookie);
@@ -311,7 +311,7 @@ static BOOL xf_input_is_duplicate(xfContext* xfc, const XGenericEventCookie* coo
 
 static void xf_input_save_last_event(xfContext* xfc, const XGenericEventCookie* cookie)
 {
-	const XIDeviceEvent* event;
+	const XIDeviceEvent* event = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(cookie);
@@ -330,11 +330,11 @@ static void xf_input_detect_pan(xfContext* xfc)
 {
 	double dx[2];
 	double dy[2];
-	double px;
-	double py;
-	double dist_x;
-	double dist_y;
-	rdpContext* ctx;
+	double px = NAN;
+	double py = NAN;
+	double dist_x = NAN;
+	double dist_y = NAN;
+	rdpContext* ctx = NULL;
 
 	WINPR_ASSERT(xfc);
 	ctx = &xfc->common.context;
@@ -419,10 +419,10 @@ static void xf_input_detect_pan(xfContext* xfc)
 
 static void xf_input_detect_pinch(xfContext* xfc)
 {
-	double dist;
-	double delta;
+	double dist = NAN;
+	double delta = NAN;
 	ZoomingChangeEventArgs e;
-	rdpContext* ctx;
+	rdpContext* ctx = NULL;
 
 	WINPR_ASSERT(xfc);
 	ctx = &xfc->common.context;
@@ -485,7 +485,7 @@ static void xf_input_detect_pinch(xfContext* xfc)
 
 static void xf_input_touch_begin(xfContext* xfc, const XIDeviceEvent* event)
 {
-	int i;
+	int i = 0;
 
 	WINPR_UNUSED(xfc);
 	for (i = 0; i < MAX_CONTACTS; i++)
@@ -504,7 +504,7 @@ static void xf_input_touch_begin(xfContext* xfc, const XIDeviceEvent* event)
 
 static void xf_input_touch_update(xfContext* xfc, const XIDeviceEvent* event)
 {
-	int i;
+	int i = 0;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
@@ -527,7 +527,7 @@ static void xf_input_touch_update(xfContext* xfc, const XIDeviceEvent* event)
 
 static void xf_input_touch_end(xfContext* xfc, const XIDeviceEvent* event)
 {
-	int i;
+	int i = 0;
 
 	WINPR_UNUSED(xfc);
 	for (i = 0; i < MAX_CONTACTS; i++)
@@ -658,9 +658,9 @@ static void xf_input_show_cursor(xfContext* xfc)
 
 static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 {
-	int x;
-	int y;
-	int touchId;
+	int x = 0;
+	int y = 0;
+	int touchId = 0;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)
@@ -692,8 +692,8 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 
 static BOOL xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype, int deviceid)
 {
-	int x;
-	int y;
+	int x = 0;
+	int y = 0;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)
@@ -765,7 +765,7 @@ static int xf_input_pens_unhover(xfContext* xfc)
 
 int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, int evtype)
 {
-	const rdpSettings* settings;
+	const rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(xevent);
@@ -927,7 +927,7 @@ int xf_input_init(xfContext* xfc, Window window)
 int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 {
 #ifdef WITH_XI
-	const rdpSettings* settings;
+	const rdpSettings* settings = NULL;
 	WINPR_ASSERT(xfc);
 
 	settings = xfc->common.context.settings;

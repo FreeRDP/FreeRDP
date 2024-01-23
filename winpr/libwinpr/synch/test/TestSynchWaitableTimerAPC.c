@@ -14,7 +14,7 @@ typedef struct apc_data APC_DATA;
 
 static VOID CALLBACK TimerAPCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwTimerHighValue)
 {
-	APC_DATA* apcData;
+	APC_DATA* apcData = NULL;
 	UINT32 CurrentTime = GetTickCount();
 	WINPR_UNUSED(dwTimerLowValue);
 	WINPR_UNUSED(dwTimerHighValue);
@@ -35,9 +35,9 @@ static VOID CALLBACK TimerAPCProc(LPVOID lpArg, DWORD dwTimerLowValue, DWORD dwT
 int TestSynchWaitableTimerAPC(int argc, char* argv[])
 {
 	int status = -1;
-	DWORD rc;
+	DWORD rc = 0;
 	HANDLE hTimer = NULL;
-	BOOL bSuccess;
+	BOOL bSuccess = 0;
 	LARGE_INTEGER due;
 	APC_DATA apcData = { 0 };
 	WINPR_UNUSED(argc);

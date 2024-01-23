@@ -47,12 +47,12 @@ static INLINE BOOL is_path_required(LPCSTR path, size_t len)
 
 LPSTR freerdp_get_library_install_path(void)
 {
-	LPSTR pszPath;
-	size_t cchPath;
-	size_t cchLibraryPath;
-	size_t cchInstallPrefix;
-	BOOL needLibPath;
-	BOOL needInstallPath;
+	LPSTR pszPath = NULL;
+	size_t cchPath = 0;
+	size_t cchLibraryPath = 0;
+	size_t cchInstallPrefix = 0;
+	BOOL needLibPath = 0;
+	BOOL needInstallPath = 0;
 	LPCSTR pszLibraryPath = FREERDP_LIBRARY_PATH;
 	LPCSTR pszInstallPrefix = FREERDP_INSTALL_PREFIX;
 	cchLibraryPath = strlen(pszLibraryPath) + 1;
@@ -92,12 +92,12 @@ LPSTR freerdp_get_dynamic_addin_install_path(void)
 #if defined(WITH_ADD_PLUGIN_TO_RPATH)
 	return NULL;
 #else
-	LPSTR pszPath;
-	size_t cchPath;
-	size_t cchAddinPath;
-	size_t cchInstallPrefix;
-	BOOL needLibPath;
-	BOOL needInstallPath;
+	LPSTR pszPath = NULL;
+	size_t cchPath = 0;
+	size_t cchAddinPath = 0;
+	size_t cchInstallPrefix = 0;
+	BOOL needLibPath = 0;
+	BOOL needInstallPath = 0;
 	LPCSTR pszAddinPath = FREERDP_ADDIN_PATH;
 	LPCSTR pszInstallPrefix = FREERDP_INSTALL_PREFIX;
 	cchAddinPath = strlen(pszAddinPath) + 1;
@@ -145,16 +145,16 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_addin(LPCSTR pszFileName, LPCSTR pszPa
 	LPSTR pszAddinInstallPath = freerdp_get_dynamic_addin_install_path();
 	PVIRTUALCHANNELENTRY entry = NULL;
 	BOOL bHasExt = TRUE;
-	PCSTR pszExt;
+	PCSTR pszExt = NULL;
 	size_t cchExt = 0;
 	HINSTANCE library = NULL;
-	size_t cchFileName;
-	size_t cchFilePath;
+	size_t cchFileName = 0;
+	size_t cchFilePath = 0;
 	LPSTR pszAddinFile = NULL;
 	LPSTR pszFilePath = NULL;
 	LPSTR pszRelativeFilePath = NULL;
-	size_t cchAddinFile;
-	size_t cchAddinInstallPath;
+	size_t cchAddinFile = 0;
+	size_t cchAddinInstallPath = 0;
 
 	if (!pszFileName || !pszEntryName)
 		goto fail;
@@ -254,8 +254,8 @@ fail:
 PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LPCSTR pszSubsystem,
                                                               LPCSTR pszType, DWORD dwFlags)
 {
-	PVIRTUALCHANNELENTRY entry;
-	LPSTR pszFileName;
+	PVIRTUALCHANNELENTRY entry = NULL;
+	LPSTR pszFileName = NULL;
 	const size_t cchBaseFileName = sizeof(FREERDP_SHARED_LIBRARY_PREFIX) + 32;
 	size_t nameLen = 0;
 	size_t subsystemLen = 0;
@@ -327,8 +327,8 @@ PVIRTUALCHANNELENTRY freerdp_load_dynamic_channel_addin_entry(LPCSTR pszName, LP
 
 	if (pszSubsystem)
 	{
-		LPSTR pszEntryName;
-		size_t cchEntryName;
+		LPSTR pszEntryName = NULL;
+		size_t cchEntryName = 0;
 		/* subsystem add-in */
 		cchEntryName = 64 + nameLen;
 		pszEntryName = (LPSTR)malloc(cchEntryName + 1);

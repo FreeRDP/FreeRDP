@@ -61,8 +61,8 @@ BOOL msusb_mspipes_replace(MSUSB_INTERFACE_DESCRIPTOR* MsInterface,
 
 static MSUSB_PIPE_DESCRIPTOR** msusb_mspipes_read(wStream* s, UINT32 NumberOfPipes)
 {
-	UINT32 pnum;
-	MSUSB_PIPE_DESCRIPTOR** MsPipes;
+	UINT32 pnum = 0;
+	MSUSB_PIPE_DESCRIPTOR** MsPipes = NULL;
 
 	if (!Stream_CheckAndLogRequiredCapacityOfSize(TAG, (s), NumberOfPipes, 12ull))
 		return NULL;
@@ -147,7 +147,7 @@ BOOL msusb_msinterface_replace(MSUSB_CONFIG_DESCRIPTOR* MsConfig, BYTE Interface
 
 MSUSB_INTERFACE_DESCRIPTOR* msusb_msinterface_read(wStream* s)
 {
-	MSUSB_INTERFACE_DESCRIPTOR* MsInterface;
+	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = NULL;
 
 	if (!Stream_CheckAndLogRequiredCapacity(TAG, (s), 12))
 		return NULL;
@@ -186,8 +186,8 @@ out_error:
 
 BOOL msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR* MsInterface, wStream* out)
 {
-	MSUSB_PIPE_DESCRIPTOR** MsPipes;
-	MSUSB_PIPE_DESCRIPTOR* MsPipe;
+	MSUSB_PIPE_DESCRIPTOR** MsPipes = NULL;
+	MSUSB_PIPE_DESCRIPTOR* MsPipe = NULL;
 	UINT32 pnum = 0;
 
 	if (!MsInterface)
@@ -241,8 +241,8 @@ BOOL msusb_msinterface_write(MSUSB_INTERFACE_DESCRIPTOR* MsInterface, wStream* o
 
 static MSUSB_INTERFACE_DESCRIPTOR** msusb_msinterface_read_list(wStream* s, UINT32 NumInterfaces)
 {
-	UINT32 inum;
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces;
+	UINT32 inum = 0;
+	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
 	MsInterfaces =
 	    (MSUSB_INTERFACE_DESCRIPTOR**)calloc(NumInterfaces, sizeof(MSUSB_INTERFACE_DESCRIPTOR*));
 
@@ -270,8 +270,8 @@ fail:
 BOOL msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR* MsConfg, wStream* out)
 {
 	UINT32 inum = 0;
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces;
-	MSUSB_INTERFACE_DESCRIPTOR* MsInterface;
+	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
+	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = NULL;
 
 	if (!MsConfg)
 		return FALSE;
@@ -314,9 +314,9 @@ void msusb_msconfig_free(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 
 MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(wStream* s, UINT32 NumInterfaces)
 {
-	MSUSB_CONFIG_DESCRIPTOR* MsConfig;
-	BYTE lenConfiguration;
-	BYTE typeConfiguration;
+	MSUSB_CONFIG_DESCRIPTOR* MsConfig = NULL;
+	BYTE lenConfiguration = 0;
+	BYTE typeConfiguration = 0;
 
 	if (!Stream_CheckAndLogRequiredCapacityOfSize(TAG, (s), 3ULL + NumInterfaces, 2ULL))
 		return NULL;
@@ -353,10 +353,10 @@ fail:
 
 void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 {
-	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces;
-	MSUSB_INTERFACE_DESCRIPTOR* MsInterface;
-	MSUSB_PIPE_DESCRIPTOR** MsPipes;
-	MSUSB_PIPE_DESCRIPTOR* MsPipe;
+	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = NULL;
+	MSUSB_INTERFACE_DESCRIPTOR* MsInterface = NULL;
+	MSUSB_PIPE_DESCRIPTOR** MsPipes = NULL;
+	MSUSB_PIPE_DESCRIPTOR* MsPipe = NULL;
 	UINT32 inum = 0;
 	UINT32 pnum = 0;
 	WLog_INFO(TAG, "=================MsConfig:========================");
