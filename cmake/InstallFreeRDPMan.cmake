@@ -41,9 +41,6 @@ function(generate_and_install_freerdp_man_from_xml template manpage dependencies
 		${manpage}.manpage ALL
                 DEPENDS
 			${manpage}
-                        ${manpage}.xml
-                        ${template}.xml.in
-                        generate_argument_docbook
 		)
 	install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${manpage} 1)
     endif()
