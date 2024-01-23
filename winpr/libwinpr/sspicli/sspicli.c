@@ -61,8 +61,6 @@
 
 #if defined(WINPR_HAVE_GETPWUID_R)
 #include <sys/types.h>
-#include <pwd.h>
-#include <unistd.h>
 #endif
 
 #include <pthread.h>

@@ -36,7 +36,6 @@
 
 #ifdef WITH_XRENDER
 #include <X11/extensions/Xrender.h>
-#include <math.h>
 #endif
 
 #ifdef WITH_XI
@@ -84,12 +83,10 @@
 #include <freerdp/client/cmdline.h>
 
 #include <winpr/crt.h>
-#include <winpr/assert.h>
 #include <winpr/synch.h>
 #include <winpr/file.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
-#include <X11/XKBlib.h>
 
 #include "xf_rail.h"
 #if defined(CHANNEL_TSMF_CLIENT)
@@ -103,7 +100,6 @@
 #include "xf_monitor.h"
 #include "xf_graphics.h"
 #include "xf_keyboard.h"
-#include "xf_input.h"
 #include "xf_channels.h"
 #include "xfreerdp.h"
 #include "xf_utils.h"

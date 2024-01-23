@@ -43,7 +43,6 @@
 #if defined(CHANNEL_VIDEO_CLIENT)
 #include <freerdp/client/video.h>
 #include <freerdp/channels/video.h>
-#include <freerdp/gdi/video.h>
 #endif
 
 #if defined(CHANNEL_RDPGFX_CLIENT)
@@ -55,6 +54,9 @@
 #if defined(CHANNEL_GEOMETRY_CLIENT)
 #include <freerdp/client/geometry.h>
 #include <freerdp/channels/geometry.h>
+#endif
+
+#if defined(CHANNEL_GEOMETRY_CLIENT) || defined(CHANNEL_VIDEO_CLIENT)
 #include <freerdp/gdi/video.h>
 #endif
 

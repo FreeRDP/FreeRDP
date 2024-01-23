@@ -139,7 +139,6 @@
 #include "crypto.h"
 
 #include <winpr/crt.h>
-#include <winpr/crypto.h>
 #include <winpr/collections.h>
 
 static wListDictionary* g_ProtectedMemoryBlocks = NULL;

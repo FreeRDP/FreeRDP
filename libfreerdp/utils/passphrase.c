@@ -72,7 +72,6 @@ char* freerdp_passphrase_read(rdpContext* context, const char* prompt, char* buf
 #include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>
-#include <termios.h>
 #include <freerdp/utils/signal.h>
 
 #if defined(WINPR_HAVE_POLL_H) && !defined(__APPLE__)

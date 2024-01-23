@@ -48,7 +48,6 @@
 
 #ifdef WITH_XI
 #include <X11/extensions/XInput2.h>
-#include "xf_input.h"
 #endif
 
 #include "xf_gfx.h"
