@@ -826,7 +826,7 @@ audin_server_context* audin_server_context_new(HANDLE vcm)
 
 	if (!audin)
 	{
-		WLog_Print(audin->log, WLOG_ERROR, "calloc failed!");
+		WLog_ERR(AUDIN_TAG, "calloc failed!");
 		return NULL;
 	}
 	audin->log = WLog_Get(AUDIN_TAG);

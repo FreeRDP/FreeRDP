@@ -260,7 +260,8 @@ BOOL rdp_read_share_control_header(rdpRdp* rdp, wStream* s, UINT16* tpktLength,
 		char buffer[128] = { 0 };
 		WLog_Print(rdp->log, WLOG_DEBUG,
 		           "[Flow control PDU] type=%s, tpktLength=%" PRIuz ", remainingLength=%" PRIuz,
-		           pdu_type_to_str(*type, buffer, sizeof(buffer)), *tpktLength, *remainingLength);
+		           pdu_type_to_str(*type, buffer, sizeof(buffer)), tpktLength ? *tpktLength : 0,
+		           *remainingLength);
 		return TRUE;
 	}
 

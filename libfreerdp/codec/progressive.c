@@ -1767,9 +1767,12 @@ static INLINE SSIZE_T progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive
 		return -1044;
 	}
 
-	if (progressive->rfx_context->priv->UseThreads)
 	{
-		work_objects = (PTP_WORK*)winpr_aligned_calloc(region->numTiles, sizeof(PTP_WORK), 32);
+		size_t tcount = 1;
+		if (progressive->rfx_context->priv->UseThreads)
+			tcount = region->numTiles;
+
+		work_objects = (PTP_WORK*)winpr_aligned_calloc(tcount, sizeof(PTP_WORK), 32);
 		if (!work_objects)
 			return -1;
 	}

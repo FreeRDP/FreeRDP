@@ -975,7 +975,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 
 			context->state = KERBEROS_STATE_FINAL;
 
-			output_buffer->cbBuffer = 0;
+			if (output_buffer)
+				output_buffer->cbBuffer = 0;
 			status = SEC_E_OK;
 
 			break;
@@ -1224,7 +1225,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_AcceptSecurityContext(
 		}
 		else
 		{
-			output_buffer->cbBuffer = 0;
+			if (output_buffer)
+				output_buffer->cbBuffer = 0;
 		}
 
 		*pfContextAttr = context->flags & 0x1F;

@@ -17,6 +17,8 @@ static BOOL compare(const ADDIN_ARGV* got, const ADDIN_ARGV* expect)
 {
 	int x = 0;
 	BOOL rc = TRUE;
+	if (!got && !expect)
+		return FALSE;
 	if (!got && expect)
 		return FALSE;
 	if (got && !expect)

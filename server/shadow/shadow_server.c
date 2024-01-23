@@ -707,7 +707,8 @@ int shadow_server_stop(rdpShadowServer* server)
 		WaitForSingleObject(server->thread, INFINITE);
 		CloseHandle(server->thread);
 		server->thread = NULL;
-		server->listener->Close(server->listener);
+		if (server->listener && server->listener->Close)
+			server->listener->Close(server->listener);
 	}
 
 	if (server->screen)

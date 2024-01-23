@@ -796,7 +796,8 @@ fail:
 	free(copy);
 	if (!success)
 	{
-		*count = 0;
+		if (count)
+			*count = 0;
 		free(p);
 		return NULL;
 	}

@@ -310,27 +310,31 @@ static int bitmap_cache_save_persistent(rdpBitmapCache* bitmapCache)
 	if (status < 1)
 		goto end;
 
-	for (UINT32 i = 0; i < bitmapCache->maxCells; i++)
+	if (bitmapCache->cells)
 	{
-		for (UINT32 j = 0; j < bitmapCache->cells[i].number + 1; j++)
+		for (UINT32 i = 0; i < bitmapCache->maxCells; i++)
 		{
-			PERSISTENT_CACHE_ENTRY cacheEntry;
-			rdpBitmap* bitmap = bitmapCache->cells[i].entries[j];
-
-			if (!bitmap || !bitmap->key64)
-				continue;
-
-			cacheEntry.key64 = bitmap->key64;
-			cacheEntry.width = bitmap->width;
-			cacheEntry.height = bitmap->height;
-			cacheEntry.size = (UINT32)(bitmap->width * bitmap->height * 4);
-			cacheEntry.flags = 0;
-			cacheEntry.data = bitmap->data;
-
-			if (persistent_cache_write_entry(persistent, &cacheEntry) < 1)
+			BITMAP_V2_CELL* cell = &bitmapCache->cells[i];
+			for (UINT32 j = 0; j < cell->number + 1 && cell->entries; j++)
 			{
-				status = -1;
-				goto end;
+				PERSISTENT_CACHE_ENTRY cacheEntry;
+				rdpBitmap* bitmap = cell->entries[j];
+
+				if (!bitmap || !bitmap->key64)
+					continue;
+
+				cacheEntry.key64 = bitmap->key64;
+				cacheEntry.width = bitmap->width;
+				cacheEntry.height = bitmap->height;
+				cacheEntry.size = (UINT32)(bitmap->width * bitmap->height * 4);
+				cacheEntry.flags = 0;
+				cacheEntry.data = bitmap->data;
+
+				if (persistent_cache_write_entry(persistent, &cacheEntry) < 1)
+				{
+					status = -1;
+					goto end;
+				}
 			}
 		}
 	}
@@ -397,25 +401,28 @@ void bitmap_cache_free(rdpBitmapCache* bitmapCache)
 
 	bitmap_cache_save_persistent(bitmapCache);
 
-	UINT32 i = 0;
-	for (i = 0; i < bitmapCache->maxCells; i++)
+	if (bitmapCache->cells)
 	{
-		UINT32 j = 0;
-		BITMAP_V2_CELL* cell = &bitmapCache->cells[i];
-
-		if (!cell->entries)
-			continue;
-
-		for (j = 0; j < cell->number + 1; j++)
+		for (UINT32 i = 0; i < bitmapCache->maxCells; i++)
 		{
-			rdpBitmap* bitmap = cell->entries[j];
-			Bitmap_Free(bitmapCache->context, bitmap);
+			UINT32 j = 0;
+			BITMAP_V2_CELL* cell = &bitmapCache->cells[i];
+
+			if (!cell->entries)
+				continue;
+
+			for (j = 0; j < cell->number + 1; j++)
+			{
+				rdpBitmap* bitmap = cell->entries[j];
+				Bitmap_Free(bitmapCache->context, bitmap);
+			}
+
+			free(cell->entries);
 		}
 
-		free(bitmapCache->cells[i].entries);
+		free(bitmapCache->cells);
 	}
 
-	free(bitmapCache->cells);
 	persistent_cache_free(bitmapCache->persistent);
 
 	free(bitmapCache);

@@ -189,7 +189,7 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 			break;
 		if ((rv = krb5_init_creds_set_password(ctx, creds_ctx, password)) != 0)
 			break;
-		if (krb_settings->armorCache)
+		if (krb_settings && krb_settings->armorCache)
 		{
 			krb5_ccache armor_cc = NULL;
 			if ((rv = krb5_cc_resolve(ctx, krb_settings->armorCache, &armor_cc)) != 0)

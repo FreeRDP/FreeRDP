@@ -1333,7 +1333,7 @@ BOOL pf_channel_rdpdr_client_handle(pClientContext* pc, UINT16 channelId, const 
 	rdpdr = HashTable_GetItemValue(pc->interceptContextMap, channel_name);
 	if (!rdpdr)
 	{
-		CLIENT_RX_LOG(rdpdr->log, WLOG_ERROR,
+		CLIENT_RX_LOG(WLog_Get(RTAG), WLOG_ERROR,
 		              "Channel %s [0x%04" PRIx16 "] missing context in interceptContextMap",
 		              channel_name, channelId);
 		return FALSE;
@@ -1837,7 +1837,7 @@ static pf_channel_server_context* get_channel(pServerContext* ps, BOOL send)
 	rdpdr = HashTable_GetItemValue(ps->interceptContextMap, RDPDR_SVC_CHANNEL_NAME);
 	if (!rdpdr)
 	{
-		SERVER_RXTX_LOG(send, rdpdr->log, WLOG_ERROR,
+		SERVER_RXTX_LOG(send, WLog_Get(RTAG), WLOG_ERROR,
 		                "Channel %s missing context in interceptContextMap",
 		                RDPDR_SVC_CHANNEL_NAME);
 		return NULL;

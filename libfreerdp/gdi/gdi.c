@@ -476,7 +476,8 @@ BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 		WLog_ERR(TAG,
 		         "Invalid arguments: context=%p, bitmapUpdate=%p, context->gdi=%p, "
 		         "context->codecs=%p",
-		         context, bitmapUpdate, context->gdi, context->codecs);
+		         context, bitmapUpdate, context ? context->gdi : NULL,
+		         context ? context->codecs : NULL);
 		return FALSE;
 	}
 
