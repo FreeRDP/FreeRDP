@@ -37,7 +37,6 @@
 #include "xf_graphics.h"
 
 #include "xf_event.h"
-#include "xf_input.h"
 
 #define TAG CLIENT_TAG("x11")
 

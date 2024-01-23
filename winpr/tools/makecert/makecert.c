@@ -26,7 +26,6 @@
 #include <winpr/cmdline.h>
 #include <winpr/sysinfo.h>
 #include <winpr/crypto.h>
-#include <winpr/file.h>
 
 #ifdef WITH_OPENSSL
 #include <openssl/crypto.h>

@@ -36,7 +36,6 @@
 
 #include <freerdp/settings.h>
 #include <freerdp/build-config.h>
-#include <ctype.h>
 
 #include "../crypto/certificate.h"
 #include "../crypto/privatekey.h"

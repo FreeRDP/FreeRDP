@@ -5,7 +5,6 @@
 #include <freerdp/gdi/pen.h>
 #include <freerdp/gdi/region.h>
 #include <freerdp/gdi/bitmap.h>
-#include <freerdp/gdi/gdi.h>
 
 #include <winpr/crt.h>
 

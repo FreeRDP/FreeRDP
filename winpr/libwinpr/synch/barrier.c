@@ -29,7 +29,6 @@
 
 #ifdef WINPR_SYNCHRONIZATION_BARRIER
 
-#include <winpr/assert.h>
 #include <winpr/sysinfo.h>
 #include <winpr/library.h>
 #include <winpr/interlocked.h>

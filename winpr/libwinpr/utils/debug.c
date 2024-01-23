@@ -45,7 +45,6 @@
 #include <windows/debug.h>
 #endif
 
-#include <winpr/crt.h>
 #include <winpr/wlog.h>
 #include <winpr/debug.h>
 

@@ -25,7 +25,6 @@
 #include <winpr/assert.h>
 #include <winpr/sspi.h>
 #include <winpr/tchar.h>
-#include <winpr/assert.h>
 #include <winpr/registry.h>
 #include <winpr/build-config.h>
 #include <winpr/asn1.h>

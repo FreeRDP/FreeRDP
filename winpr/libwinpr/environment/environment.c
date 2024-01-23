@@ -30,9 +30,6 @@
 
 #ifndef _WIN32
 
-#include <winpr/crt.h>
-#include <winpr/platform.h>
-
 #ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif

@@ -30,7 +30,6 @@
 #include <winpr/tchar.h>
 #include <winpr/sysinfo.h>
 #include <winpr/registry.h>
-#include <winpr/tchar.h>
 
 #include <freerdp/log.h>
 #include <freerdp/settings.h>
@@ -39,7 +38,6 @@
 #include <freerdp/primitives.h>
 #include <freerdp/codec/region.h>
 #include <freerdp/build-config.h>
-#include <freerdp/codec/region.h>
 
 #include "rfx_constants.h"
 #include "rfx_types.h"
