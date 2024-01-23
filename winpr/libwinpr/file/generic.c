@@ -1197,10 +1197,12 @@ BOOL FindNextFileW(HANDLE hFindFile, LPWIN32_FIND_DATAW lpFindFileData)
 BOOL FindClose(HANDLE hFindFile)
 {
 	WIN32_FILE_SEARCH* pFileSearch = (WIN32_FILE_SEARCH*)hFindFile;
+	if (!pFileSearch)
+		return FALSE;
 
-	/* Since INVALID_HANDLE_VALUE != NULL the analyzer guesses that there
-	 * is a initialized HANDLE that is not freed properly.
-	 * Disable this return to stop confusing the analyzer. */
+		/* Since INVALID_HANDLE_VALUE != NULL the analyzer guesses that there
+		 * is a initialized HANDLE that is not freed properly.
+		 * Disable this return to stop confusing the analyzer. */
 #ifndef __clang_analyzer__
 	if (!is_valid_file_search_handle(hFindFile))
 		return FALSE;

@@ -173,6 +173,8 @@ fail:
 static void* winpr_bitmap_write_buffer(const BYTE* data, size_t size, UINT32 width, UINT32 height,
                                        UINT32 stride, UINT32 bpp, UINT32* pSize)
 {
+	WINPR_ASSERT(data || (size == 0));
+
 	void* result = NULL;
 	const size_t bpp_stride = 1ull * width * (bpp / 8);
 	wStream* s = Stream_New(NULL, 1024);
@@ -265,11 +267,14 @@ fail:
 
 int winpr_image_write(wImage* image, const char* filename)
 {
+	WINPR_ASSERT(image);
 	return winpr_image_write_ex(image, image->type, filename);
 }
 
 int winpr_image_write_ex(wImage* image, UINT32 format, const char* filename)
 {
+	WINPR_ASSERT(image);
+
 	size_t size = 0;
 	void* data = winpr_image_write_buffer(image, format, &size);
 	if (!data)
@@ -688,11 +693,21 @@ static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, UINT32 height, const
 	int rc = -1;
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
-	png_uint_32 bytes_per_row = 0;
 	png_byte** row_pointers = NULL;
 	struct png_mem_encode state = { 0 };
 
 	*pDstData = NULL;
+
+	if (!data || (size == 0))
+		return 0;
+
+	WINPR_ASSERT(pDstData);
+
+	const size_t bytes_per_pixel = (bpp + 7) / 8;
+	const size_t bytes_per_row = width * bytes_per_pixel;
+	if (size < bytes_per_row * height)
+		goto fail;
+
 	/* Initialize the write struct. */
 	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
 	if (png_ptr == NULL)
@@ -720,8 +735,6 @@ static SSIZE_T save_png_to_buffer(UINT32 bpp, UINT32 width, UINT32 height, const
 	             PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
 	/* Initialize rows of PNG. */
-	const size_t bytes_per_pixel = (bpp + 7) / 8;
-	bytes_per_row = width * bytes_per_pixel;
 	row_pointers = png_malloc(png_ptr, height * sizeof(png_byte*));
 	for (size_t y = 0; y < height; ++y)
 	{
@@ -853,7 +866,7 @@ void* winpr_convert_to_png(const void* data, size_t size, UINT32 width, UINT32 h
 	*pSize = 0;
 
 #if defined(WINPR_UTILS_IMAGE_PNG)
-	char* dst = NULL;
+	void* dst = NULL;
 	SSIZE_T rc = save_png_to_buffer(bpp, width, height, data, size, &dst);
 	if (rc <= 0)
 		return NULL;
@@ -1088,6 +1101,7 @@ const char* winpr_image_format_extension(UINT32 format)
 
 void* winpr_image_write_buffer(wImage* image, UINT32 format, size_t* psize)
 {
+	WINPR_ASSERT(image);
 	switch (format)
 	{
 		case WINPR_IMAGE_BITMAP:

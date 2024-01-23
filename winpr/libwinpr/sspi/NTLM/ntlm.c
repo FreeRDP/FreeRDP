@@ -56,7 +56,7 @@ static BOOL check_context_(NTLM_CONTEXT* context, const char* file, const char* 
 			WLog_PrintMessage(log, WLOG_MESSAGE_TEXT, log_level, line, file, fkt,
 			                  "invalid context");
 
-		rc = FALSE;
+		return FALSE;
 	}
 
 	if (!context->RecvRc4Seal)

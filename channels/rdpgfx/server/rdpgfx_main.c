@@ -1689,7 +1689,7 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 
 	if (!context)
 	{
-		WLog_Print(context->priv->log, WLOG_ERROR, "calloc failed!");
+		WLog_ERR(TAG, "calloc failed!");
 		return NULL;
 	}
 

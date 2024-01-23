@@ -583,10 +583,12 @@ static SECURITY_STATUS negotiate_mic_exchange(NEGOTIATE_CONTEXT* context, NegTok
 	{
 		/* Store the mic token after the mech token in the output buffer */
 		output_token->mic.BufferType = SECBUFFER_TOKEN;
-		output_token->mic.cbBuffer = output_buffer->cbBuffer - output_token->mechToken.cbBuffer;
-		output_token->mic.pvBuffer =
-		    (BYTE*)output_buffer->pvBuffer + output_token->mechToken.cbBuffer;
-
+		if (output_buffer)
+		{
+			output_token->mic.cbBuffer = output_buffer->cbBuffer - output_token->mechToken.cbBuffer;
+			output_token->mic.pvBuffer =
+			    (BYTE*)output_buffer->pvBuffer + output_token->mechToken.cbBuffer;
+		}
 		mic_buffers[1] = output_token->mic;
 
 		status = table->MakeSignature(&context->sub_context, 0, &mic_buffer_desc, 0);
@@ -849,7 +851,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			if (context->mic || input_token.negState != ACCEPT_COMPLETED)
 				return SEC_E_INVALID_TOKEN;
 
-			output_buffer->cbBuffer = 0;
+			if (output_buffer)
+				output_buffer->cbBuffer = 0;
 			return SEC_E_OK;
 		}
 
@@ -864,7 +867,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 
 	if (input_token.negState == ACCEPT_COMPLETED)
 	{
-		output_buffer->cbBuffer = 0;
+		if (output_buffer)
+			output_buffer->cbBuffer = 0;
 		return SEC_E_OK;
 	}
 
@@ -1016,7 +1020,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 
 				if (init_context.mech)
 				{
-					output_token.mechToken = *output_buffer;
+					if (output_buffer)
+						output_token.mechToken = *output_buffer;
 					WLog_DBG(TAG, "Requested mechanism: %s",
 					         negotiate_mech_name(init_context.mech->oid));
 				}
@@ -1156,7 +1161,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 
 	if (input_token.negState == ACCEPT_COMPLETED)
 	{
-		output_buffer->cbBuffer = 0;
+		if (output_buffer)
+			output_buffer->cbBuffer = 0;
 		return SEC_E_OK;
 	}
 

@@ -68,6 +68,8 @@
 
 #include "rdpdr_main.h"
 
+#define TAG CHANNELS_TAG("rdpdr.client")
+
 /* IMPORTANT: Keep in sync with DRIVE_DEVICE */
 typedef struct
 {
@@ -2231,7 +2233,7 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event_ex(LPVOID lpUserParam, LP
 
 	if (!rdpdr || (rdpdr->InitHandle != pInitHandle))
 	{
-		WLog_Print(rdpdr->log, WLOG_ERROR, "error no match");
+		WLog_ERR(TAG, "error no match");
 		return;
 	}
 
@@ -2277,7 +2279,6 @@ static VOID VCAPITYPE rdpdr_virtual_channel_init_event_ex(LPVOID lpUserParam, LP
 }
 
 /* rdpdr is always built-in */
-#define TAG CHANNELS_TAG("rdpdr.client")
 #define VirtualChannelEntryEx rdpdr_VirtualChannelEntryEx
 
 FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS pEntryPoints,
@@ -2294,7 +2295,7 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 
 	if (!rdpdr)
 	{
-		WLog_Print(rdpdr->log, WLOG_ERROR, "calloc failed!");
+		WLog_ERR(TAG, "calloc failed!");
 		return FALSE;
 	}
 	rdpdr->log = WLog_Get(TAG);

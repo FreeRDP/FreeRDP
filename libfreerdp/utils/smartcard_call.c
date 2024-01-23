@@ -1923,6 +1923,7 @@ void smartcard_call_context_free(scard_call_context* ctx)
 	LinkedList_Free(ctx->names);
 	if (ctx->StartedEvent)
 	{
+		WINPR_ASSERT(ctx->useEmulatedCard || ctx->pWinSCardApi);
 		wrap(ctx, SCardReleaseStartedEvent);
 	}
 
