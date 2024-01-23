@@ -471,8 +471,17 @@ static void freerdp_client_print_command_line_args(COMMAND_LINE_ARGUMENT_A* parg
 		size_t pos = 0;
 		const size_t description_offset = 30 + 8;
 
-		if (arg->Flags & COMMAND_LINE_VALUE_BOOL)
-			rc = printf("    %s%s", arg->Default ? "-" : "+", arg->Name);
+		if (arg->Flags & (COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_FLAG))
+		{
+			if ((arg->Flags & ~COMMAND_LINE_VALUE_BOOL) == 0)
+				rc = printf("    %s%s", arg->Default ? "-" : "+", arg->Name);
+			else if ((arg->Flags & COMMAND_LINE_VALUE_OPTIONAL) != 0)
+				rc = printf("    [%s|/]%s", arg->Default ? "-" : "+", arg->Name);
+			else
+			{
+				rc = printf("    %s%s", arg->Default ? "-" : "+", arg->Name);
+			}
+		}
 		else
 			rc = printf("    /%s", arg->Name);
 

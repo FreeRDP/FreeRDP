@@ -119,10 +119,10 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "Client Build Number sent to server (influences smartcard behaviour, see [MS-RDPESC])" },
 	{ "client-hostname", COMMAND_LINE_VALUE_REQUIRED, "<name>", NULL, NULL, -1, NULL,
 	  "Client Hostname to send to server" },
-	{ "clipboard", COMMAND_LINE_VALUE_OPTIONAL,
+	{ "clipboard", COMMAND_LINE_VALUE_BOOL | COMMAND_LINE_VALUE_OPTIONAL,
 	  "[[use-selection:<atom>],[direction-to:[all|local|remote|off]],[files-to[:all|local|remote|"
-	  "off]]],",
-	  NULL, NULL, -1, NULL,
+	  "off]]]",
+	  BoolValueTrue, NULL, -1, NULL,
 	  "Redirect clipboard:\n"
 	  " * use-selection:<atom>  ... (X11) Specify which X selection to access. Default is "
 	  "CLIPBOARD. PRIMARY is the X-style middle-click selection.\n"
