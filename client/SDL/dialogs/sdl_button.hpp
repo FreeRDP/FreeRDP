@@ -20,7 +20,6 @@ class SdlButton : public SdlWidget
   private:
 	SdlButton(const SdlButton& other) = delete;
 
-  private:
 	std::string _name;
 	int _id;
 };

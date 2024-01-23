@@ -29,7 +29,6 @@ class SdlButtonList
 	SdlButtonList(const SdlButtonList& other) = delete;
 	SdlButtonList(SdlButtonList&& other) = delete;
 
-  private:
 	std::vector<SdlButton> _list;
 	SdlButton* _highlighted = nullptr;
 	size_t _highlight_index = 0;

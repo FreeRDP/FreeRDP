@@ -774,7 +774,7 @@ static void auth_get_sspi_module_from_reg(char** sspi_module)
 	}
 
 	if (RegQueryValueExA(hKey, "SspiModule", NULL, &dwType, (BYTE*)module, &dwSize) !=
-		ERROR_SUCCESS)
+	    ERROR_SUCCESS)
 	{
 		RegCloseKey(hKey);
 		free(module);

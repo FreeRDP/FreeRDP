@@ -43,6 +43,5 @@ class SdlWindow
 	Sint32 _offset_x;
 	Sint32 _offset_y;
 
-  private:
 	SdlWindow(const SdlWindow& other) = delete;
 };

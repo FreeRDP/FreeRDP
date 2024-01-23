@@ -79,7 +79,6 @@ class SdlContext
 
 	std::unique_ptr<SDLConnectionDialog> connection_dialog;
 
-  public:
 	BOOL update_resizeable(BOOL enable);
 	BOOL update_fullscreen(BOOL enter);
 

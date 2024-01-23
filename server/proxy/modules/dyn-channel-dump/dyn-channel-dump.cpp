@@ -194,7 +194,6 @@ class ChannelData
 		return ss.str();
 	}
 
-  private:
 	fs::path _base;
 	std::vector<std::string> _channels_to_dump;
 
