@@ -237,16 +237,13 @@ BOOL pf_modules_run_hook(proxyModule* module, PF_HOOK_TYPE type, proxyData* pdat
 static BOOL pf_modules_ArrayList_ForEachFkt(void* data, size_t index, va_list ap)
 {
 	proxyPlugin* plugin = (proxyPlugin*)data;
-	PF_FILTER_TYPE type;
-	proxyData* pdata = NULL;
-	void* param = NULL;
 	BOOL result = FALSE;
 
 	WINPR_UNUSED(index);
 
-	type = va_arg(ap, PF_FILTER_TYPE);
-	pdata = va_arg(ap, proxyData*);
-	param = va_arg(ap, void*);
+	PF_FILTER_TYPE type = va_arg(ap, PF_FILTER_TYPE);
+	proxyData* pdata = va_arg(ap, proxyData*);
+	void* param = va_arg(ap, void*);
 
 	WLog_VRB(TAG, "running filter: %s", plugin->name);
 

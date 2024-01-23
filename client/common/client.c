@@ -416,8 +416,8 @@ out:
 
 int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, int argc, char* argv[])
 {
-	int status;
-	int x;
+	int status = 0;
+	int x = 0;
 	int ret = -1;
 	char* filename = NULL;
 	char* password = NULL;

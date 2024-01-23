@@ -36,8 +36,7 @@ static const SDL_Color labelbackgroundcolor = { 0x69, 0x66, 0x63, 0xff };
 static const SDL_Color labelhighlightcolor = { 0xcd, 0xca, 0x35, 0x60 };
 static const SDL_Color labelfontcolor = { 0xd1, 0xcf, 0xcd, 0xff };
 
-SdlSelectWidget::SdlSelectWidget(SDL_Renderer* renderer, const std::string& label,
-                                 const SDL_Rect& rect)
+SdlSelectWidget::SdlSelectWidget(SDL_Renderer* renderer, const std::string& label, SDL_Rect rect)
     : SdlWidget(renderer, rect, true), _text(label), _mouseover(false), _highlight(false)
 {
 	update_text(renderer);

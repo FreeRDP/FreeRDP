@@ -55,8 +55,8 @@ LPSTR freerdp_get_library_install_path(void)
 	size_t cchPath = 0;
 	size_t cchLibraryPath = 0;
 	size_t cchInstallPrefix = 0;
-	BOOL needLibPath;
-	BOOL needInstallPath;
+	BOOL needLibPath = 0;
+	BOOL needInstallPath = 0;
 	LPCSTR pszLibraryPath = FREERDP_LIBRARY_PATH;
 	LPCSTR pszInstallPrefix = FREERDP_INSTALL_PREFIX;
 	cchLibraryPath = strlen(pszLibraryPath) + 1;
@@ -104,8 +104,8 @@ LPSTR freerdp_get_dynamic_addin_install_path(void)
 	size_t cchPath = 0;
 	size_t cchAddinPath = 0;
 	size_t cchInstallPrefix = 0;
-	BOOL needLibPath;
-	BOOL needInstallPath;
+	BOOL needLibPath = 0;
+	BOOL needInstallPath = 0;
 	LPCSTR pszAddinPath = FREERDP_ADDIN_PATH;
 	LPCSTR pszInstallPrefix = FREERDP_INSTALL_PREFIX;
 	cchAddinPath = strlen(pszAddinPath) + 1;

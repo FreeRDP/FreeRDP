@@ -83,7 +83,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	UCHAR vt = 0;
 	ULONGLONG Tmax = 0;
 	struct timeval tmaxTimeout;
-	struct timeval* pTmaxTimeout;
+	struct timeval* pTmaxTimeout = NULL;
 	struct termios currentTermios;
 	EnterCriticalSection(&pComm->ReadLock); /* KISSer by the function's beginning */
 
@@ -376,7 +376,7 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 {
 	WINPR_COMM* pComm = (WINPR_COMM*)hDevice;
 	struct timeval tmaxTimeout;
-	struct timeval* pTmaxTimeout;
+	struct timeval* pTmaxTimeout = NULL;
 	EnterCriticalSection(&pComm->WriteLock); /* KISSer by the function's beginning */
 
 	if (!CommIsHandled(hDevice))

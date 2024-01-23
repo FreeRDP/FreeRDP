@@ -101,7 +101,7 @@ static int write_cpp_trailer(std::ostream& out)
 	return 0;
 }
 
-static int write_hpp_header(const fs::path prg, const fs::path& file, const std::string& name,
+static int write_hpp_header(const fs::path& prg, const fs::path& file, const std::string& name,
                             const std::string& fname)
 {
 	std::ofstream out(file, std::ios::out);

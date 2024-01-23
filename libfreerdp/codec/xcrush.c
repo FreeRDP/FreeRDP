@@ -671,7 +671,7 @@ static int xcrush_find_all_matches(XCRUSH_CONTEXT* xcrush, UINT32 SignatureIndex
 
 static int xcrush_optimize_matches(XCRUSH_CONTEXT* xcrush)
 {
-	UINT32 i;
+	UINT32 i = 0;
 	UINT32 j = 0;
 	UINT32 MatchDiff = 0;
 	UINT32 PrevMatchEnd = 0;

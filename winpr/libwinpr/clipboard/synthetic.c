@@ -168,7 +168,7 @@ static void* clipboard_synthesize_utf8_string(wClipboard* clipboard, UINT32 form
 	if ((formatId == CF_TEXT) || (formatId == CF_OEMTEXT) ||
 	    (formatId == ClipboardGetFormatId(clipboard, mime_text_plain)))
 	{
-		int rc;
+		int rc = 0;
 		size = *pSize;
 		pDstData = (char*)malloc(size);
 

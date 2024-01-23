@@ -77,16 +77,16 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
 	__m128i g_cr;
 	__m128i b_cb;
 	__m128i c4096;
-	const __m128i* y_buf;
-	const __m128i* cb_buf;
-	const __m128i* cr_buf;
-	__m128i* r_buf;
-	__m128i* g_buf;
-	__m128i* b_buf;
+	const __m128i* y_buf = NULL;
+	const __m128i* cb_buf = NULL;
+	const __m128i* cr_buf = NULL;
+	__m128i* r_buf = NULL;
+	__m128i* g_buf = NULL;
+	__m128i* b_buf = NULL;
 	UINT32 yp = 0;
-	int srcbump;
-	int dstbump;
-	int imax;
+	int srcbump = 0;
+	int dstbump = 0;
+	int imax = 0;
 
 	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
 	    ((ULONG_PTR)(pSrc[2]) & 0x0f) || ((ULONG_PTR)(pDst[0]) & 0x0f) ||
@@ -668,9 +668,9 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
 	__m128i* cb_buf = (__m128i*)(pDst[1]);
 	__m128i* cr_buf = (__m128i*)(pDst[2]);
 	UINT32 yp = 0;
-	int srcbump;
-	int dstbump;
-	int imax;
+	int srcbump = 0;
+	int dstbump = 0;
+	int imax = 0;
 
 	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
 	    ((ULONG_PTR)(pSrc[2]) & 0x0f) || ((ULONG_PTR)(pDst[0]) & 0x0f) ||
@@ -800,9 +800,9 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 	const UINT32 pad = roi->width % 16;
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	BYTE* out = NULL;
-	UINT32 srcbump;
-	UINT32 dstbump;
-	UINT32 y;
+	UINT32 srcbump = 0;
+	UINT32 dstbump = 0;
+	UINT32 y = 0;
 	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
@@ -914,9 +914,9 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 	const UINT32 pad = roi->width % 16;
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	BYTE* out = NULL;
-	UINT32 srcbump;
-	UINT32 dstbump;
-	UINT32 y;
+	UINT32 srcbump = 0;
+	UINT32 dstbump = 0;
+	UINT32 y = 0;
 	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
@@ -1028,9 +1028,9 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 	const UINT32 pad = roi->width % 16;
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	BYTE* out = NULL;
-	UINT32 srcbump;
-	UINT32 dstbump;
-	UINT32 y;
+	UINT32 srcbump = 0;
+	UINT32 dstbump = 0;
+	UINT32 y = 0;
 	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
@@ -1142,9 +1142,9 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	const UINT32 pad = roi->width % 16;
 	BYTE* out = NULL;
-	UINT32 srcbump;
-	UINT32 dstbump;
-	UINT32 y;
+	UINT32 srcbump = 0;
+	UINT32 dstbump = 0;
+	UINT32 y = 0;
 	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));

@@ -948,9 +948,9 @@ static BOOL xf_play_sound(rdpContext* context, const PLAY_SOUND_UPDATE* play_sou
 
 static void xf_check_extensions(xfContext* context)
 {
-	int xkb_opcode;
-	int xkb_event;
-	int xkb_error;
+	int xkb_opcode = 0;
+	int xkb_event = 0;
+	int xkb_error = 0;
 	int xkb_major = XkbMajorVersion;
 	int xkb_minor = XkbMinorVersion;
 
@@ -984,15 +984,15 @@ static const size_t TEST_PTR_LEN = sizeof(TEST_PTR_STR) / sizeof(char);
 static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 {
 #ifdef WITH_XI
-	int opcode;
-	int event;
-	int error;
+	int opcode = 0;
+	int event = 0;
+	int error = 0;
 	XDevice* ptr_dev = NULL;
 	XExtensionVersion* version = NULL;
 	XDeviceInfo* devices1 = NULL;
 	XIDeviceInfo* devices2 = NULL;
-	int i;
-	int num_devices;
+	int i = 0;
+	int num_devices = 0;
 
 	if (XQueryExtension(xfc->display, "XInputExtension", &opcode, &event, &error))
 	{
@@ -1834,8 +1834,8 @@ static void xf_TerminateEventHandler(void* context, const TerminateEventArgs* e)
 #ifdef WITH_XRENDER
 static void xf_ZoomingChangeEventHandler(void* context, const ZoomingChangeEventArgs* e)
 {
-	int w;
-	int h;
+	int w = 0;
+	int h = 0;
 	rdpSettings* settings = NULL;
 	xfContext* xfc = (xfContext*)context;
 

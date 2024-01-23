@@ -690,8 +690,8 @@ static void xf_input_show_cursor(xfContext* xfc)
 
 static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtype)
 {
-	int x;
-	int y;
+	int x = 0;
+	int y = 0;
 	int touchId = 0;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
@@ -726,8 +726,8 @@ static int xf_input_touch_remote(xfContext* xfc, XIDeviceEvent* event, int evtyp
 
 static BOOL xf_input_pen_remote(xfContext* xfc, XIDeviceEvent* event, int evtype, int deviceid)
 {
-	int x;
-	int y;
+	int x = 0;
+	int y = 0;
 	RdpeiClientContext* rdpei = xfc->common.rdpei;
 
 	if (!rdpei)

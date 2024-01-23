@@ -233,21 +233,18 @@ static NCryptKeyGetPropertyEnum propertyStringToEnum(LPCWSTR pszProperty)
 SECURITY_STATUS NCryptGetProperty(NCRYPT_HANDLE hObject, LPCWSTR pszProperty, PBYTE pbOutput,
                                   DWORD cbOutput, DWORD* pcbResult, DWORD dwFlags)
 {
-	NCryptKeyGetPropertyEnum property;
-	NCryptBaseHandle* base = NULL;
-
 	if (!hObject)
 	{
 		return ERROR_INVALID_PARAMETER;
 	}
 
-	base = (NCryptBaseHandle*)hObject;
+	NCryptBaseHandle* base = (NCryptBaseHandle*)hObject;
 	if (memcmp(base->magic, NCRYPT_MAGIC, 6) != 0)
 	{
 		return ERROR_INVALID_HANDLE;
 	}
 
-	property = propertyStringToEnum(pszProperty);
+	NCryptKeyGetPropertyEnum property = propertyStringToEnum(pszProperty);
 	if (property == NCRYPT_PROPERTY_UNKNOWN)
 	{
 		return ERROR_NOT_SUPPORTED;

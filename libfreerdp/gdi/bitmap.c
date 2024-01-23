@@ -372,8 +372,8 @@ static BOOL adjust_src_coordinates(HGDI_DC hdcSrc, INT32 nWidth, INT32 nHeight, 
                                    INT32* py)
 {
 	HGDI_BITMAP hSrcBmp = NULL;
-	INT32 nXSrc;
-	INT32 nYSrc;
+	INT32 nXSrc = 0;
+	INT32 nYSrc = 0;
 
 	if (!hdcSrc || (nWidth < 0) || (nHeight < 0) || !px || !py)
 	{
@@ -425,14 +425,14 @@ static BOOL adjust_src_dst_coordinates(HGDI_DC hdcDest, INT32* pnXSrc, INT32* pn
                                        INT32* pnYDst, INT32* pnWidth, INT32* pnHeight)
 {
 	HGDI_BITMAP hDstBmp = NULL;
-	volatile INT32 diffX;
-	volatile INT32 diffY;
-	volatile INT32 nXSrc;
-	volatile INT32 nYSrc;
-	volatile INT32 nXDst;
-	volatile INT32 nYDst;
-	volatile INT32 nWidth;
-	volatile INT32 nHeight;
+	volatile INT32 diffX = 0;
+	volatile INT32 diffY = 0;
+	volatile INT32 nXSrc = 0;
+	volatile INT32 nYSrc = 0;
+	volatile INT32 nXDst = 0;
+	volatile INT32 nYDst = 0;
+	volatile INT32 nWidth = 0;
+	volatile INT32 nHeight = 0;
 
 	if (!hdcDest || !pnXSrc || !pnYSrc || !pnXDst || !pnYDst || !pnWidth || !pnHeight)
 	{
@@ -501,8 +501,8 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nW
                            HGDI_DC hdcSrc, INT32 nXSrc, INT32 nYSrc, const char* rop,
                            const gdiPalette* palette)
 {
-	INT32 x;
-	INT32 y;
+	INT32 x = 0;
+	INT32 y = 0;
 	UINT32 style = 0;
 	BOOL useSrc = FALSE;
 	BOOL usePat = FALSE;
@@ -643,8 +643,8 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nW
 BOOL gdi_BitBlt(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nWidth, INT32 nHeight,
                 HGDI_DC hdcSrc, INT32 nXSrc, INT32 nYSrc, DWORD rop, const gdiPalette* palette)
 {
-	HGDI_BITMAP hSrcBmp;
-	HGDI_BITMAP hDstBmp;
+	HGDI_BITMAP hSrcBmp = NULL;
+	HGDI_BITMAP hDstBmp = NULL;
 
 	if (!hdcDest)
 	{

@@ -1395,23 +1395,20 @@ static BOOL config_plugin_server_channel_data(proxyPlugin* plugin, proxyData* pd
 
 static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	pf_utils_channel_mode rc;
 	BOOL accept = 0;
-	const struct config_plugin_data* custom = NULL;
-	const proxyConfig* cfg = NULL;
 	const proxyChannelDataEventInfo* channel = (const proxyChannelDataEventInfo*)(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(channel);
 
-	custom = plugin->custom;
+	const struct config_plugin_data* custom = plugin->custom;
 	WINPR_ASSERT(custom);
 
-	cfg = custom->config;
+	const proxyConfig* cfg = custom->config;
 	WINPR_ASSERT(cfg);
 
-	rc = pf_utils_get_channel_mode(cfg, channel->channel_name);
+	pf_utils_channel_mode rc = pf_utils_get_channel_mode(cfg, channel->channel_name);
 	switch (rc)
 	{
 
@@ -1481,23 +1478,20 @@ static BOOL config_plugin_dynamic_channel_create(proxyPlugin* plugin, proxyData*
 
 static BOOL config_plugin_channel_create(proxyPlugin* plugin, proxyData* pdata, void* param)
 {
-	pf_utils_channel_mode rc;
 	BOOL accept = 0;
-	const struct config_plugin_data* custom = NULL;
-	const proxyConfig* cfg = NULL;
 	const proxyChannelDataEventInfo* channel = (const proxyChannelDataEventInfo*)(param);
 
 	WINPR_ASSERT(plugin);
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(channel);
 
-	custom = plugin->custom;
+	const struct config_plugin_data* custom = plugin->custom;
 	WINPR_ASSERT(custom);
 
-	cfg = custom->config;
+	const proxyConfig* cfg = custom->config;
 	WINPR_ASSERT(cfg);
 
-	rc = pf_utils_get_channel_mode(cfg, channel->channel_name);
+	pf_utils_channel_mode rc = pf_utils_get_channel_mode(cfg, channel->channel_name);
 	switch (rc)
 	{
 		case PF_UTILS_CHANNEL_INTERCEPT:

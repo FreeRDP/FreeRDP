@@ -118,7 +118,7 @@ static BOOL read_cap_set(wStream* s, wArrayList* capsSets)
 {
 	RDP_MOUSE_CURSOR_CAPSET* capsSet = NULL;
 	UINT32 signature = 0;
-	RDP_MOUSE_CURSOR_CAPVERSION version;
+	RDP_MOUSE_CURSOR_CAPVERSION version = 0;
 	UINT32 size = 0;
 	size_t capsDataSize = 0;
 
@@ -564,18 +564,16 @@ static UINT
 mouse_cursor_server_send_sc_caps_confirm(MouseCursorServerContext* context,
                                          const RDP_MOUSE_CURSOR_CAPS_CONFIRM_PDU* capsConfirm)
 {
-	RDP_MOUSE_CURSOR_CAPSET* capsetHeader = NULL;
-	RDP_MOUSE_CURSOR_PDUTYPE pduType;
-	size_t caps_size = 0;
+	RDP_MOUSE_CURSOR_PDUTYPE pduType = PDUTYPE_EMSC_RESERVED;
+	size_t caps_size = 12;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(capsConfirm);
 
-	capsetHeader = capsConfirm->capsSet;
+	RDP_MOUSE_CURSOR_CAPSET* capsetHeader = capsConfirm->capsSet;
 	WINPR_ASSERT(capsetHeader);
 
-	caps_size = 12;
 	switch (capsetHeader->version)
 	{
 		case RDP_MOUSE_CURSOR_CAPVERSION_1:
@@ -621,19 +619,16 @@ static void write_point16(wStream* s, const TS_POINT16* point16)
 static UINT mouse_cursor_server_send_sc_mouseptr_update(
     MouseCursorServerContext* context, const RDP_MOUSE_CURSOR_MOUSEPTR_UPDATE_PDU* mouseptrUpdate)
 {
-	TS_POINT16* position = NULL;
-	TS_POINTERATTRIBUTE* pointerAttribute = NULL;
-	TS_LARGEPOINTERATTRIBUTE* largePointerAttribute = NULL;
-	RDP_MOUSE_CURSOR_PDUTYPE pduType;
+	RDP_MOUSE_CURSOR_PDUTYPE pduType = PDUTYPE_EMSC_RESERVED;
 	size_t update_size = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(mouseptrUpdate);
 
-	position = mouseptrUpdate->position;
-	pointerAttribute = mouseptrUpdate->pointerAttribute;
-	largePointerAttribute = mouseptrUpdate->largePointerAttribute;
+	TS_POINT16* position = mouseptrUpdate->position;
+	TS_POINTERATTRIBUTE* pointerAttribute = mouseptrUpdate->pointerAttribute;
+	TS_LARGEPOINTERATTRIBUTE* largePointerAttribute = mouseptrUpdate->largePointerAttribute;
 
 	switch (mouseptrUpdate->header.updateType)
 	{

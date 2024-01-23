@@ -200,9 +200,9 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 
 	for (i = 0; i < paletteCount; i++)
 	{
-		BYTE r;
-		BYTE g;
-		BYTE b;
+		BYTE r = 0;
+		BYTE g = 0;
+		BYTE b = 0;
 		Stream_Read_UINT8(s, b);
 		Stream_Read_UINT8(s, g);
 		Stream_Read_UINT8(s, r);
@@ -411,9 +411,9 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 
 	while (suboffset < residualByteCount)
 	{
-		BYTE r;
-		BYTE g;
-		BYTE b;
+		BYTE r = 0;
+		BYTE g = 0;
+		BYTE b = 0;
 		UINT32 runLengthFactor = 0;
 		UINT32 color = 0;
 
@@ -648,9 +648,9 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 	while (suboffset < bandsByteCount)
 	{
-		BYTE cr;
-		BYTE cg;
-		BYTE cb;
+		BYTE cr = 0;
+		BYTE cg = 0;
+		BYTE cb = 0;
 		UINT16 xStart = 0;
 		UINT16 xEnd = 0;
 		UINT16 yStart = 0;

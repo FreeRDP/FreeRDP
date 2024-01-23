@@ -43,19 +43,19 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
                                   UINT32 pixel_format, const BYTE* palette, INT16* r_buf,
                                   INT16* g_buf, INT16* b_buf)
 {
-	int x;
-	int y;
+	int x = 0;
+	int y = 0;
 	int x_exceed = 0;
 	int y_exceed = 0;
 	const BYTE* src = NULL;
 	const UINT32* src_32 = NULL;
 	const UINT16* src_16 = NULL;
-	INT16 r;
-	INT16 g;
-	INT16 b;
-	INT16* r_last;
-	INT16* g_last;
-	INT16* b_last;
+	INT16 r = 0;
+	INT16 g = 0;
+	INT16 b = 0;
+	INT16* r_last = NULL;
+	INT16* g_last = NULL;
+	INT16* b_last = NULL;
 	x_exceed = 64 - width;
 	y_exceed = 64 - height;
 
@@ -288,12 +288,12 @@ void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
 	} cnv;
 	BYTE* pBuffer = NULL;
 	INT16* pSrcDst[3];
-	int YLen;
-	int CbLen;
-	int CrLen;
-	UINT32* YQuant;
-	UINT32* CbQuant;
-	UINT32* CrQuant;
+	int YLen = 0;
+	int CbLen = 0;
+	int CrLen = 0;
+	UINT32* YQuant = NULL;
+	UINT32* CbQuant = NULL;
+	UINT32* CrQuant = NULL;
 	primitives_t* prims = primitives_get();
 	static const prim_size_t roi_64x64 = { 64, 64 };
 

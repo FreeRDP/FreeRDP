@@ -4616,9 +4616,9 @@ static BOOL rdp_read_capability_sets(wStream* s, rdpSettings* settings, rdpSetti
                                      UINT16 totalLength)
 {
 	BOOL rc = FALSE;
-	size_t start;
-	size_t end;
-	size_t len;
+	size_t start = 0;
+	size_t end = 0;
+	size_t len = 0;
 	UINT16 numberCapabilities = 0;
 	UINT16 count = 0;
 
@@ -4792,9 +4792,9 @@ BOOL rdp_recv_demand_active(rdpRdp* rdp, wStream* s, UINT16 pduSource, UINT16 le
 
 static BOOL rdp_write_demand_active(wStream* s, rdpSettings* settings)
 {
-	size_t bm;
-	size_t em;
-	size_t lm;
+	size_t bm = 0;
+	size_t em = 0;
+	size_t lm = 0;
 	UINT16 numberCapabilities = 0;
 	size_t lengthCombinedCapabilities = 0;
 
@@ -4965,9 +4965,9 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 
 static BOOL rdp_write_confirm_active(wStream* s, rdpSettings* settings)
 {
-	size_t bm;
-	size_t em;
-	size_t lm;
+	size_t bm = 0;
+	size_t em = 0;
+	size_t lm = 0;
 	UINT16 numberCapabilities = 0;
 	UINT16 lengthSourceDescriptor = 0;
 	size_t lengthCombinedCapabilities = 0;

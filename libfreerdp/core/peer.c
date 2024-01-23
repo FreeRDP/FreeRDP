@@ -536,8 +536,8 @@ static state_run_t peer_recv_tpkt_pdu(freerdp_peer* client, wStream* s)
 	if (channelId == MCS_GLOBAL_CHANNEL_ID)
 	{
 		char buffer[256] = { 0 };
-		UINT16 pduLength;
-		UINT16 remain;
+		UINT16 pduLength = 0;
+		UINT16 remain = 0;
 		if (!rdp_read_share_control_header(rdp, s, &pduLength, &remain, &pduType, &pduSource))
 		{
 			return STATE_RUN_FAILED;

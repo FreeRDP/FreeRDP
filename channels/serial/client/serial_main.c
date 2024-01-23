@@ -858,8 +858,8 @@ FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS 
 	char* driver = NULL;
 	RDPDR_SERIAL* device = NULL;
 #if defined __linux__ && !defined ANDROID
-	size_t i;
-	size_t len;
+	size_t i = 0;
+	size_t len = 0;
 	SERIAL_DEVICE* serial = NULL;
 #endif /* __linux__ */
 	UINT error = CHANNEL_RC_OK;

@@ -119,6 +119,9 @@ class SDLConnectionDialogHider
 
 	~SDLConnectionDialogHider();
 
+	SDLConnectionDialogHider(const SDLConnectionDialogHider&) = delete;
+	SDLConnectionDialogHider(const SDLConnectionDialogHider&&) = delete;
+
   private:
 	SDLConnectionDialog* get(freerdp* instance);
 	SDLConnectionDialog* get(rdpContext* context);

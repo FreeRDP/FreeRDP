@@ -104,7 +104,7 @@ fail:
 PfChannelResult channelTracker_update(ChannelStateTracker* tracker, const BYTE* xdata, size_t xsize,
                                       UINT32 flags, size_t totalSize)
 {
-	PfChannelResult result;
+	PfChannelResult result = PF_CHANNEL_RESULT_ERROR;
 	BOOL firstPacket = (flags & CHANNEL_FLAG_FIRST);
 	BOOL lastPacket = (flags & CHANNEL_FLAG_LAST);
 

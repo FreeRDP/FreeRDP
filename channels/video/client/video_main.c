@@ -609,8 +609,8 @@ static UINT video_control_on_data_received(IWTSVirtualChannelCallback* pChannelC
 	VIDEO_PLUGIN* video = NULL;
 	VideoClientContext* context = NULL;
 	UINT ret = CHANNEL_RC_OK;
-	UINT32 cbSize;
-	UINT32 packetType;
+	UINT32 cbSize = 0;
+	UINT32 packetType = 0;
 
 	WINPR_ASSERT(callback);
 	WINPR_ASSERT(s);
@@ -717,7 +717,7 @@ static void video_timer(VideoClientContext* video, UINT64 now)
 {
 	PresentationContext* presentation = NULL;
 	VideoClientContextPriv* priv = NULL;
-	VideoFrame* peekFrame;
+	VideoFrame* peekFrame = NULL;
 	VideoFrame* frame = NULL;
 
 	WINPR_ASSERT(video);
@@ -896,7 +896,7 @@ static UINT video_VideoData(VideoClientContext* context, const TSMM_VIDEO_DATA* 
 		VideoSurface* surface = presentation->surface;
 		H264_CONTEXT* h264 = presentation->h264;
 		UINT64 startTime = GetTickCount64();
-		UINT64 timeAfterH264;
+		UINT64 timeAfterH264 = 0;
 		MAPPED_GEOMETRY* geom = presentation->geometry;
 
 		const RECTANGLE_16 rect = { 0, 0, surface->alignedWidth, surface->alignedHeight };
@@ -994,8 +994,8 @@ static UINT video_data_on_data_received(IWTSVirtualChannelCallback* pChannelCall
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 	VIDEO_PLUGIN* video = NULL;
 	VideoClientContext* context = NULL;
-	UINT32 cbSize;
-	UINT32 packetType;
+	UINT32 cbSize = 0;
+	UINT32 packetType = 0;
 	TSMM_VIDEO_DATA data;
 
 	video = (VIDEO_PLUGIN*)callback->plugin;

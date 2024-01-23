@@ -1597,8 +1597,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	BOOL kerberos;
-	BOOL ntlm;
+	BOOL kerberos = 0;
+	BOOL ntlm = 0;
 
 	if (!negotiate_get_config(pAuthData, &kerberos, &ntlm))
 	{
@@ -1649,8 +1649,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	BOOL kerberos;
-	BOOL ntlm;
+	BOOL kerberos = 0;
+	BOOL ntlm = 0;
 
 	if (!negotiate_get_config(pAuthData, &kerberos, &ntlm))
 	{

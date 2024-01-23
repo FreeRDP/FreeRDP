@@ -83,8 +83,8 @@ static BOOL update_process_glyph(rdpContext* context, const BYTE* data, UINT32 c
 {
 	INT32 sx = 0;
 	INT32 sy = 0;
-	INT32 dx;
-	INT32 dy;
+	INT32 dx = 0;
+	INT32 dy = 0;
 	rdpGlyph* glyph = NULL;
 	rdpGlyphCache* glyph_cache = NULL;
 
@@ -371,12 +371,12 @@ static BOOL update_gdi_glyph_index(rdpContext* context, GLYPH_INDEX_ORDER* glyph
 
 static BOOL update_gdi_fast_index(rdpContext* context, const FAST_INDEX_ORDER* fastIndex)
 {
-	INT32 x;
-	INT32 y;
-	INT32 opLeft;
-	INT32 opTop;
-	INT32 opRight;
-	INT32 opBottom;
+	INT32 x = 0;
+	INT32 y = 0;
+	INT32 opLeft = 0;
+	INT32 opTop = 0;
+	INT32 opRight = 0;
+	INT32 opBottom = 0;
 	INT32 opWidth = 0;
 	INT32 opHeight = 0;
 	INT32 bkWidth = 0;
@@ -475,13 +475,13 @@ static BOOL update_gdi_fast_index(rdpContext* context, const FAST_INDEX_ORDER* f
 
 static BOOL update_gdi_fast_glyph(rdpContext* context, const FAST_GLYPH_ORDER* fastGlyph)
 {
-	INT32 x;
-	INT32 y;
+	INT32 x = 0;
+	INT32 y = 0;
 	BYTE text_data[4] = { 0 };
-	INT32 opLeft;
-	INT32 opTop;
-	INT32 opRight;
-	INT32 opBottom;
+	INT32 opLeft = 0;
+	INT32 opTop = 0;
+	INT32 opRight = 0;
+	INT32 opBottom = 0;
 	INT32 opWidth = 0;
 	INT32 opHeight = 0;
 	INT32 bkWidth = 0;

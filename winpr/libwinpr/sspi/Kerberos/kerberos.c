@@ -1655,9 +1655,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_QueryContextAttributesA(PCtxtHandle ph
 
 	if (ulAttribute == SECPKG_ATTR_SIZES)
 	{
-		UINT header;
-		UINT pad;
-		UINT trailer;
+		UINT header = 0;
+		UINT pad = 0;
+		UINT trailer = 0;
 		krb5glue_key key = NULL;
 		KRB_CONTEXT* context = get_context(phContext);
 		SecPkgContext_Sizes* ContextSizes = (SecPkgContext_Sizes*)pBuffer;
@@ -1827,8 +1827,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer;
-	PSecBuffer data_buffer;
+	PSecBuffer sig_buffer = NULL;
+	PSecBuffer data_buffer = NULL;
 	BYTE* header = NULL;
 	BYTE flags = 0;
 	krb5glue_key key = NULL;
@@ -1930,8 +1930,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer;
-	PSecBuffer data_buffer;
+	PSecBuffer sig_buffer = NULL;
+	PSecBuffer data_buffer = NULL;
 	krb5glue_key key = NULL;
 	krb5_keyusage usage = 0;
 	char* header = NULL;
@@ -2058,8 +2058,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_MakeSignature(PCtxtHandle phContext, U
 {
 #ifdef WITH_KRB5
 	KRB_CONTEXT* context = get_context(phContext);
-	PSecBuffer sig_buffer;
-	PSecBuffer data_buffer;
+	PSecBuffer sig_buffer = NULL;
+	PSecBuffer data_buffer = NULL;
 	krb5glue_key key = NULL;
 	krb5_keyusage usage = 0;
 	char* header = NULL;
@@ -2141,8 +2141,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_VerifySignature(PCtxtHandle phContext,
                                                           ULONG MessageSeqNo, ULONG* pfQOP)
 {
 #ifdef WITH_KRB5
-	PSecBuffer sig_buffer;
-	PSecBuffer data_buffer;
+	PSecBuffer sig_buffer = NULL;
+	PSecBuffer data_buffer = NULL;
 	krb5glue_key key = NULL;
 	krb5_keyusage usage = 0;
 	char* header = NULL;

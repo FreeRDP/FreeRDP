@@ -78,8 +78,8 @@ static int rdtk_image_copy_alpha_blend(uint8_t* pDstData, int nDstStep, int nXDs
 int rdtk_nine_patch_draw(rdtkSurface* surface, int nXDst, int nYDst, int nWidth, int nHeight,
                          rdtkNinePatch* ninePatch)
 {
-	int x;
-	int y;
+	int x = 0;
+	int y = 0;
 	int width = 0;
 	int height = 0;
 	int nXSrc = 0;

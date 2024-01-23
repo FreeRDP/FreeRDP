@@ -189,7 +189,7 @@ static UINT rdpsnd_server_recv_quality_mode(RdpsndServerContext* context, wStrea
  */
 static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 {
-	UINT16 i;
+	UINT16 i = 0;
 	UINT16 num_known_format = 0;
 	UINT16 udpPort = 0;
 	BYTE lastblock = 0;
@@ -283,7 +283,7 @@ out_free:
 static DWORD WINAPI rdpsnd_server_thread(LPVOID arg)
 {
 	DWORD nCount = 0;
-	DWORD status;
+	DWORD status = 0;
 	HANDLE events[2] = { 0 };
 	RdpsndServerContext* context = (RdpsndServerContext*)arg;
 	UINT error = CHANNEL_RC_OK;
@@ -526,7 +526,7 @@ static BOOL rdpsnd_server_align_wave_pdu(wStream* s, UINT32 alignment)
 static UINT rdpsnd_server_send_wave_pdu(RdpsndServerContext* context, UINT16 wTimestamp)
 {
 	size_t length = 0;
-	size_t start;
+	size_t start = 0;
 	size_t end = 0;
 	const BYTE* src = NULL;
 	AUDIO_FORMAT* format = NULL;

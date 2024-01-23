@@ -47,8 +47,8 @@ static BOOL rdp_write_synchronize_pdu(wStream* s, const rdpSettings* settings)
 
 static BOOL rdp_recv_sync_pdu(rdpRdp* rdp, wStream* s, const char* what)
 {
-	UINT16 msgType;
-	UINT16 targetUser;
+	UINT16 msgType = 0;
+	UINT16 targetUser = 0;
 
 	WINPR_UNUSED(rdp);
 	if (!Stream_CheckAndLogRequiredLengthEx(TAG, WLOG_WARN, s, 4, 1, "%s(%s:%" PRIuz ") %s",
@@ -158,8 +158,8 @@ static BOOL rdp_write_client_control_pdu(wStream* s, UINT16 action, UINT16 grant
 
 BOOL rdp_recv_server_control_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT16 action;
-	UINT16 grantId;
+	UINT16 action = 0;
+	UINT16 grantId = 0;
 	UINT32 controlId = 0;
 
 	WINPR_ASSERT(rdp);
@@ -475,8 +475,8 @@ BOOL rdp_recv_client_persistent_key_list_pdu(wStream* s)
 	BYTE flags = 0;
 	size_t count = 0;
 	size_t total = 0;
-	UINT16 cache;
-	UINT16 x;
+	UINT16 cache = 0;
+	UINT16 x = 0;
 
 	WINPR_ASSERT(s);
 
@@ -570,10 +570,10 @@ BOOL rdp_send_client_font_list_pdu(rdpRdp* rdp, UINT16 flags)
 
 BOOL rdp_recv_font_map_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT16 numberEntries;
-	UINT16 totalNumEntries;
-	UINT16 mapFlags;
-	UINT16 entrySize;
+	UINT16 numberEntries = 0;
+	UINT16 totalNumEntries = 0;
+	UINT16 mapFlags = 0;
+	UINT16 entrySize = 0;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);

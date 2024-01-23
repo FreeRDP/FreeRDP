@@ -37,8 +37,8 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYT
                                             UINT32 DstFormat, INT32 dstStep, UINT32 width,
                                             UINT32 height, UINT8 shift, BOOL withAlpha)
 {
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, TRUE);
 

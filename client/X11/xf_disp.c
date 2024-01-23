@@ -491,8 +491,8 @@ BOOL xf_disp_handle_xevent(xfContext* xfc, const XEvent* event)
 {
 	xfDispContext* xfDisp = NULL;
 	rdpSettings* settings = NULL;
-	UINT32 maxWidth;
-	UINT32 maxHeight;
+	UINT32 maxWidth = 0;
+	UINT32 maxHeight = 0;
 
 	if (!xfc || !event)
 	{

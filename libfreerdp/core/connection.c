@@ -1348,10 +1348,9 @@ BOOL rdp_client_connect_auto_detect(rdpRdp* rdp, wStream* s)
 state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 {
 	state_run_t status = STATE_RUN_FAILED;
-	LICENSE_STATE state;
-	UINT16 length;
-	UINT16 channelId;
-	UINT16 securityFlags;
+	UINT16 length = 0;
+	UINT16 channelId = 0;
+	UINT16 securityFlags = 0;
 
 	WINPR_ASSERT(rdp);
 	if (!rdp_read_header(rdp, s, &length, &channelId))
@@ -1404,7 +1403,7 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 		return status;
 	}
 
-	state = license_get_state(rdp->license);
+	LICENSE_STATE state = license_get_state(rdp->license);
 	switch (state)
 	{
 		case LICENSE_STATE_ABORTED:
@@ -2064,7 +2063,7 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 		}
 	}
 
-	CONNECTION_STATE rc;
+	CONNECTION_STATE rc = CONNECTION_STATE_INITIAL;
 	if ((mcs->userChannelJoined) && (mcs->globalChannelJoined) &&
 	    (mcs->messageChannelId == 0 || mcs->messageChannelJoined) && allJoined)
 	{

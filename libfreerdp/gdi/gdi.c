@@ -607,7 +607,7 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 	UINT32 foreColor = 0;
 	UINT32 backColor = 0;
 	UINT32 originalColor = 0;
-	HGDI_BRUSH originalBrush;
+	HGDI_BRUSH originalBrush = NULL;
 	HGDI_BRUSH hbrush = NULL;
 	rdpGdi* gdi = context->gdi;
 	BOOL ret = FALSE;

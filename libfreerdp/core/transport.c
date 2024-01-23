@@ -612,9 +612,9 @@ BOOL transport_connect(rdpTransport* transport, const char* hostname, UINT16 por
 	else
 	{
 		UINT16 peerPort = 0;
-		const char* proxyHostname;
-		const char* proxyUsername;
-		const char* proxyPassword;
+		const char* proxyHostname = NULL;
+		const char* proxyUsername = NULL;
+		const char* proxyPassword = NULL;
 		BOOL isProxyConnection =
 		    proxy_prepare(settings, &proxyHostname, &peerPort, &proxyUsername, &proxyPassword);
 
@@ -1555,8 +1555,6 @@ int transport_drain_output_buffer(rdpTransport* transport)
 int transport_check_fds(rdpTransport* transport)
 {
 	int status = 0;
-	state_run_t recv_status;
-	wStream* received = NULL;
 	rdpContext* context = transport_get_context(transport);
 
 	WINPR_ASSERT(context);
@@ -1592,7 +1590,7 @@ int transport_check_fds(rdpTransport* transport)
 		return status;
 	}
 
-	received = transport->ReceiveBuffer;
+	wStream* received = transport->ReceiveBuffer;
 
 	if (!(transport->ReceiveBuffer = StreamPool_Take(transport->ReceivePool, 0)))
 	{
@@ -1606,7 +1604,8 @@ int transport_check_fds(rdpTransport* transport)
 	 * 	 1: redirection
 	 */
 	WINPR_ASSERT(transport->ReceiveCallback);
-	recv_status = transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
+	state_run_t recv_status =
+	    transport->ReceiveCallback(transport, received, transport->ReceiveExtra);
 	Stream_Release(received);
 
 	if (state_run_failed(recv_status))

@@ -79,8 +79,8 @@ int sdl_list_monitors(SdlContext* sdl)
 
 static BOOL sdl_is_monitor_id_active(SdlContext* sdl, UINT32 id)
 {
-	UINT32 index;
-	const rdpSettings* settings;
+	UINT32 index = 0;
+	const rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(sdl);
 

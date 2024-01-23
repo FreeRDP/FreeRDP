@@ -21,6 +21,7 @@
 
 #include <freerdp/config.h>
 
+#include <math.h>
 #include <winpr/assert.h>
 #include <freerdp/log.h>
 #include "xf_gfx.h"
@@ -33,15 +34,15 @@
 static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	UINT32 surfaceX;
-	UINT32 surfaceY;
+	UINT32 surfaceX = 0;
+	UINT32 surfaceY = 0;
 	RECTANGLE_16 surfaceRect;
 	rdpGdi* gdi = NULL;
 	const rdpSettings* settings = NULL;
-	UINT32 nbRects;
-	UINT32 x;
-	double sx;
-	double sy;
+	UINT32 nbRects = 0;
+	UINT32 x = 0;
+	double sx = NAN;
+	double sy = NAN;
 	const RECTANGLE_16* rects = NULL;
 
 	WINPR_ASSERT(xfc);

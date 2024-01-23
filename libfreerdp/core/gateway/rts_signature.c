@@ -382,8 +382,8 @@ fail:
 UINT32 rts_identify_pdu_signature(const RtsPduSignature* signature,
                                   const RTS_PDU_SIGNATURE_ENTRY** entry)
 {
-	size_t i;
-	size_t j;
+	size_t i = 0;
+	size_t j = 0;
 
 	if (entry)
 	{

@@ -591,14 +591,12 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 	BYTE code = 0;
 	BYTE choice = 0;
 	UINT16 initiator = 0;
-	DomainMCSPDU MCSPDU;
-	DomainMCSPDU domainMCSPDU;
 
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
 	WINPR_ASSERT(s);
-	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataRequest
-	                                     : DomainMCSPDU_SendDataIndication;
+	DomainMCSPDU MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataRequest
+	                                                  : DomainMCSPDU_SendDataIndication;
 
 	*channelId = 0; /* Initialize in case of early abort */
 	if (!tpkt_read_header(s, length))
@@ -631,7 +629,7 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 		return FALSE;
 	}
 
-	domainMCSPDU = (DomainMCSPDU)(choice >> 2);
+	DomainMCSPDU domainMCSPDU = (DomainMCSPDU)(choice >> 2);
 
 	if (domainMCSPDU != MCSPDU)
 	{
@@ -742,15 +740,13 @@ BOOL rdp_read_header(rdpRdp* rdp, wStream* s, UINT16* length, UINT16* channelId)
 
 BOOL rdp_write_header(rdpRdp* rdp, wStream* s, UINT16 length, UINT16 channelId)
 {
-	DomainMCSPDU MCSPDU;
-
 	WINPR_ASSERT(rdp);
 	WINPR_ASSERT(rdp->settings);
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(length >= RDP_PACKET_HEADER_MAX_LENGTH);
 
-	MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataIndication
-	                                     : DomainMCSPDU_SendDataRequest;
+	DomainMCSPDU MCSPDU = (rdp->settings->ServerMode) ? DomainMCSPDU_SendDataIndication
+	                                                  : DomainMCSPDU_SendDataRequest;
 
 	if ((rdp->sec_flags & SEC_ENCRYPT) &&
 	    (rdp->settings->EncryptionMethods == ENCRYPTION_METHOD_FIPS))
@@ -1540,7 +1536,7 @@ state_run_t rdp_recv_message_channel_pdu(rdpRdp* rdp, wStream* s, UINT16 securit
 
 state_run_t rdp_recv_out_of_sequence_pdu(rdpRdp* rdp, wStream* s, UINT16 pduType, UINT16 length)
 {
-	state_run_t rc;
+	state_run_t rc = STATE_RUN_FAILED;
 	WINPR_ASSERT(rdp);
 
 	switch (pduType)

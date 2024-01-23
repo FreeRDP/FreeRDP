@@ -1617,8 +1617,8 @@ SCardHandle* find_reader(SmartcardEmulationContext* smartcard, const void* szRea
 {
 	SCardHandle* hdl = NULL;
 	UINT_PTR* keys = NULL;
-	size_t x;
-	size_t count;
+	size_t x = 0;
+	size_t count = 0;
 
 	WINPR_ASSERT(smartcard);
 	count = HashTable_GetKeys(smartcard->handles, &keys);

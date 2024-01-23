@@ -199,8 +199,8 @@ out:
 int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx)
 {
 	APC_QUEUE* apc = NULL;
-	WINPR_APC_ITEM* item;
-	WINPR_APC_ITEM* nextItem;
+	WINPR_APC_ITEM* item = NULL;
+	WINPR_APC_ITEM* nextItem = NULL;
 	int ret = 0;
 
 	WINPR_ASSERT(thread);

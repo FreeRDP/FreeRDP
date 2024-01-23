@@ -1634,7 +1634,6 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 	WCHAR* clientName = NULL;
 	size_t clientNameLength = 0;
 	BYTE connectionType = 0;
-	HIGH_COLOR_DEPTH highColorDepth;
 
 	UINT16 earlyCapabilityFlags = 0;
 	WCHAR* clientDigProductId = NULL;
@@ -1687,7 +1686,7 @@ BOOL gcc_write_client_core_data(wStream* s, const rdpMcs* mcs)
 	Stream_Write_UINT16(s, RNS_UD_COLOR_8BPP);             /* postBeta2ColorDepth */
 	Stream_Write_UINT16(s, 1);                             /* clientProductID */
 	Stream_Write_UINT32(s, 0); /* serialNumber (should be initialized to 0) */
-	highColorDepth = ColorDepthToHighColor(ColorDepth);
+	HIGH_COLOR_DEPTH highColorDepth = ColorDepthToHighColor(ColorDepth);
 	earlyCapabilityFlags = earlyClientCapsFromSettings(settings);
 
 	connectionType = settings->ConnectionType;
@@ -2440,11 +2439,11 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 
 	for (index = 0; index < monitorCount; index++)
 	{
-		UINT32 left;
-		UINT32 top;
-		UINT32 right;
-		UINT32 bottom;
-		UINT32 flags;
+		UINT32 left = 0;
+		UINT32 top = 0;
+		UINT32 right = 0;
+		UINT32 bottom = 0;
+		UINT32 flags = 0;
 		rdpMonitor* current = &settings->MonitorDefArray[index];
 
 		Stream_Read_UINT32(s, left);   /* left */

@@ -145,9 +145,9 @@ static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONG
 
 static BOOL cidr4_match(const struct in_addr* addr, const struct in_addr* net, BYTE bits)
 {
-	uint32_t mask;
-	uint32_t amask;
-	uint32_t nmask;
+	uint32_t mask = 0;
+	uint32_t amask = 0;
+	uint32_t nmask = 0;
 
 	if (bits == 0)
 	{
@@ -165,8 +165,8 @@ static BOOL cidr6_match(const struct in6_addr* address, const struct in6_addr* n
 {
 	const uint32_t* a = (const uint32_t*)address;
 	const uint32_t* n = (const uint32_t*)network;
-	size_t bits_whole;
-	size_t bits_incomplete;
+	size_t bits_whole = 0;
+	size_t bits_incomplete = 0;
 	bits_whole = bits >> 5;
 	bits_incomplete = bits & 0x1F;
 

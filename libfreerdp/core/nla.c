@@ -1592,7 +1592,7 @@ static BOOL nla_encode_ts_credentials(rdpNla* nla)
 	WinPrAsn1Encoder* enc = NULL;
 	size_t length = 0;
 	wStream s = { 0 };
-	TsCredentialsType credType;
+	TsCredentialsType credType = TSCREDS_USER_PASSWD;
 
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(nla->rdpcontext);

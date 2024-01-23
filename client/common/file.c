@@ -1170,11 +1170,11 @@ BOOL freerdp_client_parse_rdp_file_buffer_ex(rdpFile* file, const BYTE* buffer, 
 	char* line = NULL;
 	char* type = NULL;
 	char* context = NULL;
-	char* d1;
-	char* d2;
+	char* d1 = NULL;
+	char* d2 = NULL;
 	char* beg = NULL;
-	char* name;
-	char* value;
+	char* name = NULL;
+	char* value = NULL;
 	char* copy = NULL;
 
 	if (!file)
@@ -1421,7 +1421,7 @@ static BOOL rdp_opt_duplicate(const rdpSettings* _settings, FreeRDP_Settings_Key
 
 BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSettings* settings)
 {
-	FreeRDP_Settings_Keys_String index;
+	FreeRDP_Settings_Keys_String index = FreeRDP_STRING_UNUSED;
 	UINT32 LoadBalanceInfoLength = 0;
 	const char* GatewayHostname = NULL;
 	char* redirectCameras = NULL;
@@ -1686,7 +1686,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 
 	{
 		size_t offset = 0;
-		UINT32 x;
+		UINT32 x = 0;
 		UINT32 count = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
 		const UINT32* MonitorIds = freerdp_settings_get_pointer(settings, FreeRDP_MonitorIds);
 		/* String size: 10 char UINT32 max string length, 1 char separator, one element NULL */
@@ -2019,8 +2019,8 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 
 static ADDIN_ARGV* rdp_file_to_args(const char* channel, const char* values)
 {
-	size_t count;
-	size_t x;
+	size_t count = 0;
+	size_t x = 0;
 	char** p = NULL;
 	ADDIN_ARGV* args = freerdp_addin_argv_new(0, NULL);
 	if (!args)
@@ -3022,7 +3022,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	if (~(size_t)file->SelectedMonitors)
 	{
 		size_t count = 0;
-		size_t x;
+		size_t x = 0;
 		char** args = CommandLineParseCommaSeparatedValues(file->SelectedMonitors, &count);
 		UINT32* list = NULL;
 

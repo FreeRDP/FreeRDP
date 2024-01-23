@@ -351,8 +351,8 @@ void msusb_msconfig_free(MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(wStream* s, UINT32 NumInterfaces)
 {
 	MSUSB_CONFIG_DESCRIPTOR* MsConfig = NULL;
-	BYTE lenConfiguration;
-	BYTE typeConfiguration;
+	BYTE lenConfiguration = 0;
+	BYTE typeConfiguration = 0;
 
 	if (!Stream_CheckAndLogRequiredCapacityOfSize(TAG, (s), 3ULL + NumInterfaces, 2ULL))
 	{

@@ -642,8 +642,8 @@ static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)
 {
 	AUDIO_FORMAT* format = NULL;
 	UINT64 end = 0;
-	UINT64 diffMS;
-	UINT64 ts;
+	UINT64 diffMS = 0;
+	UINT64 ts = 0;
 	UINT latency = 0;
 	UINT error = 0;
 

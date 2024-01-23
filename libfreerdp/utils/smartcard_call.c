@@ -958,8 +958,8 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 {
 	LONG status = STATUS_NO_MEMORY;
 	UINT32 index = 0;
-	DWORD dwTimeOut;
-	DWORD x;
+	DWORD dwTimeOut = 0;
+	DWORD x = 0;
 	const DWORD dwTimeStep = 100;
 	GetStatusChange_Return ret = { 0 };
 	GetStatusChangeA_Call* call = NULL;
@@ -1034,8 +1034,8 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 {
 	LONG status = STATUS_NO_MEMORY;
 	UINT32 index = 0;
-	DWORD dwTimeOut;
-	DWORD x;
+	DWORD dwTimeOut = 0;
+	DWORD x = 0;
 	const DWORD dwTimeStep = 100;
 	GetStatusChange_Return ret = { 0 };
 	GetStatusChangeW_Call* call = NULL;
@@ -1602,9 +1602,9 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
                                              SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
-	DWORD i;
-	DWORD j;
-	DWORD k;
+	DWORD i = 0;
+	DWORD j = 0;
+	DWORD k = 0;
 	GetStatusChange_Return ret = { 0 };
 	LPSCARD_READERSTATEA state = NULL;
 	LPSCARD_READERSTATEA states = NULL;

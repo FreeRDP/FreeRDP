@@ -72,11 +72,11 @@ static IWTSVirtualChannel* get_channel(IUDEVMAN* idevman)
 
 static int func_container_id_generate(IUDEVICE* pdev, char* strContainerId)
 {
-	char* p;
-	char* path;
+	char* p = NULL;
+	char* path = NULL;
 	UINT8 containerId[17] = { 0 };
-	UINT16 idVendor;
-	UINT16 idProduct;
+	UINT16 idVendor = 0;
+	UINT16 idProduct = 0;
 	idVendor = (UINT16)pdev->query_device_descriptor(pdev, ID_VENDOR);
 	idProduct = (UINT16)pdev->query_device_descriptor(pdev, ID_PRODUCT);
 	path = pdev->getPath(pdev);
@@ -261,8 +261,8 @@ static UINT urdbrc_send_usb_device_add(GENERIC_CHANNEL_CALLBACK* callback, IUDEV
 	size_t size = 0;
 	size_t CompatibilityIdLen[3];
 	size_t HardwareIdsLen[2];
-	size_t ContainerIdLen;
-	size_t InstanceIdLen;
+	size_t ContainerIdLen = 0;
+	size_t InstanceIdLen = 0;
 	size_t cchCompatIds = 0;
 	UINT32 bcdUSB = 0;
 	InterfaceId = ((STREAM_ID_PROXY << 30) | CLIENT_DEVICE_SINK);
@@ -956,7 +956,7 @@ BOOL add_device(IUDEVMAN* idevman, UINT32 flags, BYTE busnum, BYTE devnum, UINT1
 {
 	size_t success = 0;
 	URBDRC_PLUGIN* urbdrc = NULL;
-	UINT32 mask;
+	UINT32 mask = 0;
 	UINT32 regflags = 0;
 
 	if (!idevman)

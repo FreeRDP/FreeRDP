@@ -971,7 +971,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 	}
 	if (ulAttribute == SECPKG_ATTR_AUTH_IDENTITY)
 	{
-		SSPI_CREDENTIALS* credentials;
+		SSPI_CREDENTIALS* credentials = NULL;
 		const SecPkgContext_AuthIdentity empty = { 0 };
 		SecPkgContext_AuthIdentity* AuthIdentity = (SecPkgContext_AuthIdentity*)pBuffer;
 
@@ -1004,7 +1004,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 	}
 	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_RANDKEY)
 	{
-		SecBuffer* randkey;
+		SecBuffer* randkey = NULL;
 		randkey = (SecBuffer*)pBuffer;
 
 		if (!sspi_SecBufferAlloc(randkey, 16))

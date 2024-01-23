@@ -38,8 +38,8 @@
 #include "cliprdr_format.h"
 #include "../cliprdr_common.h"
 
-const char* type_FileGroupDescriptorW = "FileGroupDescriptorW";
-const char* type_FileContents = "FileContents";
+const char type_FileGroupDescriptorW[] = "FileGroupDescriptorW";
+const char type_FileContents[] = "FileContents";
 
 static const char* CB_MSG_TYPE_STRINGS(UINT32 type)
 {

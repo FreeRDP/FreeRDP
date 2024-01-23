@@ -55,13 +55,12 @@ struct AINPUT_PLUGIN_
 static UINT ainput_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
 	UINT16 type = 0;
-	AINPUT_PLUGIN* ainput;
 	GENERIC_CHANNEL_CALLBACK* callback = (GENERIC_CHANNEL_CALLBACK*)pChannelCallback;
 
 	WINPR_ASSERT(callback);
 	WINPR_ASSERT(data);
 
-	ainput = (AINPUT_PLUGIN*)callback->plugin;
+	AINPUT_PLUGIN* ainput = (AINPUT_PLUGIN*)callback->plugin;
 	WINPR_ASSERT(ainput);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(ainput->base.log, data, 2))

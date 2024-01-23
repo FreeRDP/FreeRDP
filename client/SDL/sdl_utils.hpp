@@ -31,11 +31,14 @@ class CriticalSection
 	CriticalSection();
 	~CriticalSection();
 
+	CriticalSection(const CriticalSection&) = delete;
+	CriticalSection(CriticalSection&&) = delete;
+
 	void lock();
 	void unlock();
 
   private:
-	CRITICAL_SECTION _section;
+	CRITICAL_SECTION _section{};
 };
 
 class WinPREvent

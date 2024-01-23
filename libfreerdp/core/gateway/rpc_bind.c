@@ -348,8 +348,8 @@ BOOL rpc_recv_bind_ack_pdu(rdpRpc* rpc, wStream* s)
 {
 	BOOL rc = FALSE;
 	const BYTE* auth_data = NULL;
-	size_t pos;
-	size_t end;
+	size_t pos = 0;
+	size_t end = 0;
 	rpcconn_hdr_t header = { 0 };
 	SecBuffer buffer = { 0 };
 
@@ -476,8 +476,8 @@ fail:
 
 enum RPC_BIND_STATE rpc_bind_state(rdpRpc* rpc)
 {
-	BOOL complete;
-	BOOL have_token;
+	BOOL complete = 0;
+	BOOL have_token = 0;
 	WINPR_ASSERT(rpc);
 
 	complete = credssp_auth_is_complete(rpc->auth);

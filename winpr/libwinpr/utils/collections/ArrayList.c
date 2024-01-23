@@ -459,9 +459,9 @@ BOOL ArrayList_RemoveAt(wArrayList* arrayList, size_t index)
 
 SSIZE_T ArrayList_IndexOf(wArrayList* arrayList, const void* obj, SSIZE_T startIndex, SSIZE_T count)
 {
-	SSIZE_T index;
-	SSIZE_T sindex;
-	SSIZE_T cindex;
+	SSIZE_T index = 0;
+	SSIZE_T sindex = 0;
+	SSIZE_T cindex = 0;
 	BOOL found = FALSE;
 
 	WINPR_ASSERT(arrayList);
@@ -514,9 +514,9 @@ SSIZE_T ArrayList_IndexOf(wArrayList* arrayList, const void* obj, SSIZE_T startI
 SSIZE_T ArrayList_LastIndexOf(wArrayList* arrayList, const void* obj, SSIZE_T startIndex,
                               SSIZE_T count)
 {
-	SSIZE_T index;
-	SSIZE_T sindex;
-	SSIZE_T cindex;
+	SSIZE_T index = 0;
+	SSIZE_T sindex = 0;
+	SSIZE_T cindex = 0;
 	BOOL found = FALSE;
 
 	WINPR_ASSERT(arrayList);
@@ -577,8 +577,8 @@ BOOL ArrayList_ForEach(wArrayList* arrayList, ArrayList_ForEachFkt fkt, ...)
 
 BOOL ArrayList_ForEachAP(wArrayList* arrayList, ArrayList_ForEachFkt fkt, va_list ap)
 {
-	size_t index;
-	size_t count;
+	size_t index = 0;
+	size_t count = 0;
 	BOOL rc = FALSE;
 	va_list cap;
 

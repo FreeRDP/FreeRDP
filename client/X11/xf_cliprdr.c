@@ -744,8 +744,8 @@ static BOOL xf_clipboard_format_equal(const CLIPRDR_FORMAT* a, const CLIPRDR_FOR
 static BOOL xf_clipboard_changed(xfClipboard* clipboard, const CLIPRDR_FORMAT* formats,
                                  UINT32 numFormats)
 {
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(formats || (numFormats == 0));
@@ -2406,8 +2406,8 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	if (XFixesQueryExtension(xfc->display, &clipboard->xfixes_event_base,
 	                         &clipboard->xfixes_error_base))
 	{
-		int xfmajor;
-		int xfminor;
+		int xfmajor = 0;
+		int xfminor = 0;
 
 		if (XFixesQueryVersion(xfc->display, &xfmajor, &xfminor))
 		{

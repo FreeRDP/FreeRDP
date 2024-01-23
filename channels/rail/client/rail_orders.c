@@ -476,8 +476,8 @@ static UINT rail_recv_compartmentinfo_order(railPlugin* rail, wStream* s)
 
 BOOL rail_is_feature_supported(const rdpContext* context, UINT32 featureMask)
 {
-	UINT32 supported;
-	UINT32 masked;
+	UINT32 supported = 0;
+	UINT32 masked = 0;
 
 	if (!context || !context->settings)
 	{

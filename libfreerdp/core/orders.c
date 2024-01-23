@@ -3220,8 +3220,8 @@ BOOL update_write_cache_glyph_v2_order(wStream* s, const CACHE_GLYPH_V2_ORDER* c
 }
 static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BYTE bpp)
 {
-	size_t x;
-	size_t k;
+	size_t x = 0;
+	size_t k = 0;
 	INT8 y = 0;
 	BYTE byte = 0;
 	const BYTE* palette = Stream_PointerAs(s, const BYTE) + 16;
@@ -4408,10 +4408,10 @@ static BOOL update_recv_primary_order(rdpUpdate* update, wStream* s, BYTE flags)
 static BOOL update_recv_secondary_order(rdpUpdate* update, wStream* s)
 {
 	BOOL rc = FALSE;
-	size_t start;
-	size_t end;
-	size_t pos;
-	size_t diff;
+	size_t start = 0;
+	size_t end = 0;
+	size_t pos = 0;
+	size_t diff = 0;
 	BYTE orderType = 0;
 	UINT16 extraFlags = 0;
 	INT16 orderLength = 0;

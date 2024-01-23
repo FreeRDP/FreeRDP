@@ -240,8 +240,8 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 
 BOOL xf_floatbar_toggle_fullscreen(xfFloatbar* floatbar, bool fullscreen)
 {
-	int i;
-	int size;
+	int i = 0;
+	int size = 0;
 	bool visible = False;
 	xfContext* xfc = NULL;
 
@@ -420,8 +420,8 @@ static unsigned long xf_floatbar_get_color(xfFloatbar* floatbar, char* rgb_value
 
 static void xf_floatbar_event_expose(xfFloatbar* floatbar)
 {
-	GC gc;
-	GC shape_gc;
+	GC gc = NULL;
+	GC shape_gc = NULL;
 	Pixmap pmap = 0;
 	XPoint shape[5] = { 0 };
 	XPoint border[5] = { 0 };
@@ -692,9 +692,9 @@ static void xf_floatbar_event_buttonrelease(xfFloatbar* floatbar, const XButtonE
 
 static void xf_floatbar_resize(xfFloatbar* floatbar, const XMotionEvent* event)
 {
-	int x;
-	int width;
-	int movement;
+	int x = 0;
+	int width = 0;
+	int movement = 0;
 
 	WINPR_ASSERT(floatbar);
 	WINPR_ASSERT(event);
@@ -729,8 +729,8 @@ static void xf_floatbar_resize(xfFloatbar* floatbar, const XMotionEvent* event)
 
 static void xf_floatbar_dragging(xfFloatbar* floatbar, const XMotionEvent* event)
 {
-	int x;
-	int movement;
+	int x = 0;
+	int movement = 0;
 
 	WINPR_ASSERT(floatbar);
 	WINPR_ASSERT(event);
@@ -989,8 +989,8 @@ static void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button)
 
 void xf_floatbar_free(xfFloatbar* floatbar)
 {
-	size_t i;
-	size_t size;
+	size_t i = 0;
+	size_t size = 0;
 	xfContext* xfc = NULL;
 
 	if (!floatbar)

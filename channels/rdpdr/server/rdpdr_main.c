@@ -1249,13 +1249,13 @@ static UINT rdpdr_server_receive_io_create_request(RdpdrServerContext* context, 
                                                    UINT32 FileId, UINT32 CompletionId)
 {
 	const WCHAR* path = NULL;
-	UINT32 DesiredAccess;
-	UINT32 AllocationSize;
-	UINT32 FileAttributes;
-	UINT32 SharedAccess;
-	UINT32 CreateDisposition;
-	UINT32 CreateOptions;
-	UINT32 PathLength;
+	UINT32 DesiredAccess = 0;
+	UINT32 AllocationSize = 0;
+	UINT32 FileAttributes = 0;
+	UINT32 SharedAccess = 0;
+	UINT32 CreateDisposition = 0;
+	UINT32 CreateOptions = 0;
+	UINT32 PathLength = 0;
 
 	WINPR_ASSERT(context);
 	if (!Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, 32))

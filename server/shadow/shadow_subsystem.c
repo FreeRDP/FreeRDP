@@ -221,8 +221,8 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data(
     BYTE* pixels, BOOL premultiplied, UINT32 width, UINT32 height,
     SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* pointerColor)
 {
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	BYTE* pSrc8 = NULL;
 	BYTE* pDst8 = NULL;
 	UINT32 xorStep = 0;
@@ -230,10 +230,10 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data(
 	UINT32 andBit = 0;
 	BYTE* andBits = NULL;
 	UINT32 andPixel = 0;
-	BYTE A;
-	BYTE R;
-	BYTE G;
-	BYTE B;
+	BYTE A = 0;
+	BYTE R = 0;
+	BYTE G = 0;
+	BYTE B = 0;
 
 	xorStep = (width * 3);
 	xorStep += (xorStep % 2);

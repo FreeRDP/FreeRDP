@@ -168,8 +168,8 @@ static BOOL printer_config_valid(const char* path)
 
 static BOOL printer_read_setting(const char* path, prn_conf_t type, void** data, UINT32* length)
 {
-	DWORD lowSize;
-	DWORD highSize;
+	DWORD lowSize = 0;
+	DWORD highSize = 0;
 	DWORD read = 0;
 	BOOL rc = FALSE;
 	HANDLE file = NULL;
@@ -457,8 +457,8 @@ static BOOL printer_save_default_config(const rdpSettings* settings, rdpPrinter*
 	BOOL res = FALSE;
 	WCHAR* wname = NULL;
 	WCHAR* driver = NULL;
-	size_t wlen;
-	size_t dlen;
+	size_t wlen = 0;
+	size_t dlen = 0;
 	char* path = NULL;
 
 	if (!settings || !printer || !printer->name || !printer->driver)
@@ -801,13 +801,13 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 				case RDPDR_ADD_PRINTER_EVENT:
 				{
 					char PortDosName[8];
-					UINT32 PnPNameLen;
-					UINT32 DriverNameLen;
-					UINT32 PrintNameLen;
-					UINT32 CacheFieldsLen;
-					const WCHAR* PnPName;
-					const WCHAR* DriverName;
-					const WCHAR* PrinterName;
+					UINT32 PnPNameLen = 0;
+					UINT32 DriverNameLen = 0;
+					UINT32 PrintNameLen = 0;
+					UINT32 CacheFieldsLen = 0;
+					const WCHAR* PnPName = NULL;
+					const WCHAR* DriverName = NULL;
+					const WCHAR* PrinterName = NULL;
 					const BYTE* CachedPrinterConfigData = NULL;
 
 					if (!Stream_CheckAndLogRequiredLength(TAG, s, 24))
@@ -865,8 +865,8 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 
 				case RDPDR_UPDATE_PRINTER_EVENT:
 				{
-					UINT32 PrinterNameLen;
-					UINT32 ConfigDataLen;
+					UINT32 PrinterNameLen = 0;
+					UINT32 ConfigDataLen = 0;
 					const WCHAR* PrinterName = NULL;
 					const BYTE* ConfigData = NULL;
 
@@ -927,8 +927,8 @@ static UINT printer_custom_component(DEVICE* device, UINT16 component, UINT16 pa
 
 				case RDPDR_RENAME_PRINTER_EVENT:
 				{
-					UINT32 OldPrinterNameLen;
-					UINT32 NewPrinterNameLen;
+					UINT32 OldPrinterNameLen = 0;
+					UINT32 NewPrinterNameLen = 0;
 					const WCHAR* OldPrinterName = NULL;
 					const WCHAR* NewPrinterName = NULL;
 

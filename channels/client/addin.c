@@ -85,8 +85,8 @@ extern const STATIC_ADDIN_TABLE CLIENT_STATIC_ADDIN_TABLE[];
 
 static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszType, DWORD dwFlags)
 {
-	size_t i;
-	size_t j;
+	size_t i = 0;
+	size_t j = 0;
 	DWORD nAddins = 0;
 	FREERDP_ADDIN** ppAddins = NULL;
 	const STATIC_SUBSYSTEM_ENTRY* subsystems = NULL;

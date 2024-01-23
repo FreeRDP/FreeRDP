@@ -62,7 +62,7 @@ static _Unwind_Reason_Code unwind_backtrace_callback(struct _Unwind_Context* con
 
 void* winpr_unwind_backtrace(DWORD size)
 {
-	_Unwind_Reason_Code rc;
+	_Unwind_Reason_Code rc = _URC_FATAL_PHASE1_ERROR;
 	unwind_context_t* ctx = calloc(1, sizeof(unwind_context_t));
 	if (!ctx)
 	{

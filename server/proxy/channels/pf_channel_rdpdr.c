@@ -277,8 +277,8 @@ static UINT rdpdr_seal_send_free_request(pf_channel_server_context* context, wSt
 static BOOL rdpdr_process_server_header(BOOL server, wLog* log, wStream* s, UINT16 component,
                                         UINT16 PacketId, size_t expect)
 {
-	UINT16 rpacketid;
-	UINT16 rcomponent;
+	UINT16 rpacketid = 0;
+	UINT16 rcomponent = 0;
 
 	WINPR_ASSERT(s);
 	if (!Stream_CheckAndLogRequiredLengthRx(server, log, s, 4))
@@ -405,8 +405,8 @@ static UINT rdpdr_process_client_announce_reply(pf_channel_server_context* rdpdr
 {
 	const UINT16 component = RDPDR_CTYP_CORE;
 	const UINT16 packetid = PAKID_CORE_CLIENTID_CONFIRM;
-	UINT16 versionMajor;
-	UINT16 versionMinor;
+	UINT16 versionMajor = 0;
+	UINT16 versionMinor = 0;
 	UINT32 clientID = 0;
 
 	WINPR_ASSERT(rdpdr);
@@ -797,8 +797,8 @@ static UINT rdpdr_process_client_capability_response(pf_channel_server_context* 
 	const UINT16 component = RDPDR_CTYP_CORE;
 	const UINT16 packetid = PAKID_CORE_CLIENT_CAPABILITY;
 	UINT status = CHANNEL_RC_OK;
-	UINT16 numCapabilities;
-	UINT16 x;
+	UINT16 numCapabilities = 0;
+	UINT16 x = 0;
 	WINPR_ASSERT(rdpdr);
 
 	if (!rdpdr_process_server_header(TRUE, rdpdr->log, s, component, packetid, 4))
@@ -981,8 +981,8 @@ rdpdr_process_server_capability_request_or_clientid_confirm(pf_channel_client_co
 	const UINT32 mask = STATE_CLIENT_EXPECT_SERVER_CLIENT_ID_CONFIRM |
 	                    STATE_CLIENT_EXPECT_SERVER_CORE_CAPABILITY_REQUEST;
 	const UINT16 rcomponent = RDPDR_CTYP_CORE;
-	UINT16 component;
-	UINT16 packetid;
+	UINT16 component = 0;
+	UINT16 packetid = 0;
 
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
@@ -1222,8 +1222,8 @@ static BOOL pf_channel_rdpdr_rewrite_device_list(pf_channel_client_context* rdpd
 	WINPR_ASSERT(ps);
 
 	const size_t pos = Stream_GetPosition(s);
-	UINT16 component;
-	UINT16 packetid;
+	UINT16 component = 0;
+	UINT16 packetid = 0;
 	Stream_SetPosition(s, 0);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 4))

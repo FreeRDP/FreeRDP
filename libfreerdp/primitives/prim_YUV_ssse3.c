@@ -1112,8 +1112,8 @@ static pstatus_t ssse3_LumaToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[],
                                     const UINT32 srcStep[], BYTE* WINPR_RESTRICT pDstRaw[],
                                     const UINT32 dstStep[], const RECTANGLE_16* WINPR_RESTRICT roi)
 {
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
@@ -1227,8 +1227,8 @@ static pstatus_t ssse3_ChromaFilter(BYTE* WINPR_RESTRICT pDst[], const UINT32 ds
 	const UINT32 halfHeight = (nHeight + 1) / 2;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
 	const UINT32 halfPad = halfWidth % 16;
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 
 	/* Filter */
 	for (y = roi->top; y < halfHeight + roi->top; y++)
@@ -1285,8 +1285,8 @@ static pstatus_t ssse3_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw
 	const UINT32 mod = 16;
 	UINT32 uY = 0;
 	UINT32 vY = 0;
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
@@ -1385,8 +1385,8 @@ static pstatus_t ssse3_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[3]
                                         BYTE* WINPR_RESTRICT pDst[3], const UINT32 dstStep[3],
                                         const RECTANGLE_16* WINPR_RESTRICT roi)
 {
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;

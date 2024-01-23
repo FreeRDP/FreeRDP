@@ -419,8 +419,8 @@ size_t ber_write_octet_string(wStream* s, const BYTE* oct_str, size_t length)
 size_t ber_write_contextual_octet_string(wStream* s, BYTE tag, const BYTE* oct_str, size_t length)
 {
 	size_t inner = ber_sizeof_octet_string(length);
-	size_t ret;
-	size_t r;
+	size_t ret = 0;
+	size_t r = 0;
 
 	ret = ber_write_contextual_tag(s, tag, inner, TRUE);
 	if (!ret)

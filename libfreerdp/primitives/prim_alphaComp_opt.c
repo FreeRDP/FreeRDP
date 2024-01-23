@@ -51,10 +51,10 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 	const UINT32* sptr1 = (const UINT32*)pSrc1;
 	const UINT32* sptr2 = (const UINT32*)pSrc2;
 	UINT32* dptr = NULL;
-	int linebytes;
-	int src1Jump;
-	int src2Jump;
-	int dstJump;
+	int linebytes = 0;
+	int src1Jump = 0;
+	int src2Jump = 0;
+	int dstJump = 0;
 	UINT32 y = 0;
 	__m128i xmm0;
 	__m128i xmm1;

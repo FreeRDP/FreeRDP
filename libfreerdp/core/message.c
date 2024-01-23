@@ -3318,8 +3318,8 @@ static int input_message_process_input_class(rdpInputProxy* proxy, wMessage* msg
 		case Input_MouseEvent:
 		{
 			UINT32 pos = 0;
-			UINT16 x;
-			UINT16 y;
+			UINT16 x = 0;
+			UINT16 y = 0;
 			pos = (UINT32)(size_t)msg->lParam;
 			x = ((pos & 0xFFFF0000) >> 16);
 			y = (pos & 0x0000FFFF);
@@ -3330,8 +3330,8 @@ static int input_message_process_input_class(rdpInputProxy* proxy, wMessage* msg
 		case Input_ExtendedMouseEvent:
 		{
 			UINT32 pos = 0;
-			UINT16 x;
-			UINT16 y;
+			UINT16 x = 0;
+			UINT16 y = 0;
 			pos = (UINT32)(size_t)msg->lParam;
 			x = ((pos & 0xFFFF0000) >> 16);
 			y = (pos & 0x0000FFFF);

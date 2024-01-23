@@ -28,7 +28,7 @@
 class SdlSelectWidget : public SdlWidget
 {
   public:
-	SdlSelectWidget(SDL_Renderer* renderer, const std::string& label, const SDL_Rect& rect);
+	SdlSelectWidget(SDL_Renderer* renderer, const std::string& label, SDL_Rect rect);
 	SdlSelectWidget(SdlSelectWidget&& other) noexcept;
 	virtual ~SdlSelectWidget() override;
 

@@ -818,8 +818,8 @@ void freerdp_keyboard_layouts_free(RDP_KEYBOARD_LAYOUT* layouts, size_t count)
 
 RDP_KEYBOARD_LAYOUT* freerdp_keyboard_get_layouts(DWORD types, size_t* count)
 {
-	size_t num;
-	size_t i;
+	size_t num = 0;
+	size_t i = 0;
 	RDP_KEYBOARD_LAYOUT* layouts = NULL;
 
 	num = 0;

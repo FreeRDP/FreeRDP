@@ -744,10 +744,10 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 
 	const FILEDESCRIPTORW* descriptors = NULL;
 	UINT32 nrDescriptors = 0;
-	size_t count;
-	size_t x;
-	size_t alloc;
-	size_t pos;
+	size_t count = 0;
+	size_t x = 0;
+	size_t alloc = 0;
+	size_t pos = 0;
 	size_t baseLength = 0;
 	char* dst = NULL;
 	size_t header_len = strlen(header);

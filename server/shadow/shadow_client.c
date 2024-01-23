@@ -360,8 +360,8 @@ static INLINE void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 nu
  */
 static INLINE BOOL shadow_client_recalc_desktop_size(rdpShadowClient* client)
 {
-	INT32 width;
-	INT32 height;
+	INT32 width = 0;
+	INT32 height = 0;
 	rdpShadowServer* server = NULL;
 	rdpSettings* settings = NULL;
 	RECTANGLE_16 viewport = { 0 };
@@ -1514,8 +1514,8 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 	rdpSettings* settings = NULL;
 	rdpShadowEncoder* encoder = NULL;
 	SURFACE_BITS_COMMAND cmd = { 0 };
-	UINT32 nsID;
-	UINT32 rfxID;
+	UINT32 nsID = 0;
+	UINT32 rfxID = 0;
 
 	if (!context || !pSrcData)
 	{
@@ -1679,10 +1679,10 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 	BYTE* data = NULL;
 	BYTE* buffer = NULL;
 	UINT32 k = 0;
-	UINT32 yIdx;
-	UINT32 xIdx;
-	UINT32 rows;
-	UINT32 cols;
+	UINT32 yIdx = 0;
+	UINT32 xIdx = 0;
+	UINT32 rows = 0;
+	UINT32 cols = 0;
 	UINT32 DstSize = 0;
 	UINT32 SrcFormat = 0;
 	BITMAP_DATA* bitmap = NULL;
@@ -1837,8 +1837,8 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 
 	if (updateSizeEstimate > maxUpdateSize)
 	{
-		UINT32 i;
-		UINT32 j;
+		UINT32 i = 0;
+		UINT32 j = 0;
 		UINT32 updateSize = 0;
 		UINT32 newUpdateSize = 0;
 		BITMAP_DATA* fragBitmapData = NULL;
@@ -1910,10 +1910,10 @@ out:
 static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GFX_STATUS* pStatus)
 {
 	BOOL ret = TRUE;
-	INT64 nXSrc;
-	INT64 nYSrc;
-	INT64 nWidth;
-	INT64 nHeight;
+	INT64 nXSrc = 0;
+	INT64 nYSrc = 0;
+	INT64 nWidth = 0;
+	INT64 nHeight = 0;
 	rdpContext* context = (rdpContext*)client;
 	rdpSettings* settings = NULL;
 	rdpShadowServer* server = NULL;
@@ -1922,8 +1922,8 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* extents = NULL;
 	BYTE* pSrcData = NULL;
-	UINT32 nSrcStep;
-	UINT32 SrcFormat;
+	UINT32 nSrcStep = 0;
+	UINT32 SrcFormat = 0;
 	UINT32 index = 0;
 	UINT32 numRects = 0;
 	const RECTANGLE_16* rects = NULL;
@@ -1993,8 +1993,8 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	/* Move to new pSrcData / nXSrc / nYSrc according to sub rect */
 	if (server->shareSubRect)
 	{
-		INT32 subX;
-		INT32 subY;
+		INT32 subX = 0;
+		INT32 subY = 0;
 		subX = server->subRect.left;
 		subY = server->subRect.top;
 		nXSrc -= subX;

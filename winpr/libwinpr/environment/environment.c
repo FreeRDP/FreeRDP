@@ -134,9 +134,7 @@ DWORD GetEnvironmentVariableA(LPCSTR lpName, LPSTR lpBuffer, DWORD nSize)
 {
 #if !defined(_UWP)
 	size_t length = 0;
-	char* env = NULL;
-
-	env = getenv(lpName);
+	char* env = getenv(lpName);
 
 	if (!env)
 	{
@@ -510,9 +508,9 @@ DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, 
 	char* env = NULL;
 	char* foundEquals = NULL;
 	const char* penvb = envBlock;
-	size_t nLength;
-	size_t fLength;
-	size_t lpNameLength;
+	size_t nLength = 0;
+	size_t fLength = 0;
+	size_t lpNameLength = 0;
 
 	if (!lpName || NULL == envBlock)
 	{

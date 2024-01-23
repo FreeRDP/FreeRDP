@@ -177,8 +177,8 @@ static rpcconn_rts_hdr_t rts_pdu_header_init(void)
 
 static BOOL rts_align_stream(wStream* s, size_t alignment, BOOL silent)
 {
-	size_t pos;
-	size_t pad;
+	size_t pos = 0;
+	size_t pad = 0;
 
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(alignment > 0);

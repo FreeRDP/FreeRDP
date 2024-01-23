@@ -56,9 +56,9 @@
 int xf_list_monitors(xfContext* xfc)
 {
 	Display* display = NULL;
-	int major;
-	int minor;
-	int i;
+	int major = 0;
+	int minor = 0;
+	int i = 0;
 	int nmonitors = 0;
 	display = XOpenDisplay(NULL);
 
@@ -470,8 +470,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 			if (useXRandr && rrmonitors)
 			{
-				Rotation rot;
-				Rotation ret;
+				Rotation rot = 0;
+				Rotation ret = 0;
 				attrs = &monitor->attributes;
 				attrs->physicalWidth = rrmonitors[i].mwidth;
 				attrs->physicalHeight = rrmonitors[i].mheight;
@@ -503,8 +503,8 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	 * to go fullscreen on the current monitor only */
 	if (nmonitors == 0 && vscreen->nmonitors > 0)
 	{
-		INT32 width;
-		INT32 height;
+		INT32 width = 0;
+		INT32 height = 0;
 		if (!vscreen->monitors)
 		{
 			goto fail;

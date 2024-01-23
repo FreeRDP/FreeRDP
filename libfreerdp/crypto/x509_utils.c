@@ -598,9 +598,9 @@ out_free_issuer:
 static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain, size_t* plength)
 {
 	BIO* bio = NULL;
-	int status;
-	int count;
-	int x;
+	int status = 0;
+	int count = 0;
+	int x = 0;
 	size_t offset = 0;
 	size_t length = 0;
 	BOOL rc = FALSE;

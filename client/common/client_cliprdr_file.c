@@ -833,8 +833,8 @@ static void write_file_attributes(CliprdrFuseFile* fuse_file, struct stat* attr)
 static void cliprdr_file_fuse_lookup(fuse_req_t fuse_req, fuse_ino_t parent_ino, const char* name)
 {
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
-	CliprdrFuseFile* parent;
-	CliprdrFuseFile* fuse_file;
+	CliprdrFuseFile* parent = NULL;
+	CliprdrFuseFile* fuse_file = NULL;
 	struct fuse_entry_param entry = { 0 };
 
 	WINPR_ASSERT(file_context);
@@ -1079,11 +1079,11 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
                                       off_t offset, struct fuse_file_info* file_info)
 {
 	CliprdrFileContext* file_context = fuse_req_userdata(fuse_req);
-	CliprdrFuseFile* fuse_file;
-	CliprdrFuseFile* child;
+	CliprdrFuseFile* fuse_file = NULL;
+	CliprdrFuseFile* child = NULL;
 	struct stat attr = { 0 };
-	size_t written_size;
-	size_t entry_size;
+	size_t written_size = 0;
+	size_t entry_size = 0;
 	char* filename = NULL;
 	char* buf = NULL;
 	off_t i = 0;

@@ -33,6 +33,9 @@ class sdlDispContext
 	sdlDispContext(SdlContext* sdl);
 	~sdlDispContext();
 
+	sdlDispContext(const sdlDispContext&) = delete;
+	sdlDispContext(sdlDispContext&&) = delete;
+
 	BOOL init(DispClientContext* disp);
 	BOOL uninit(DispClientContext* disp);
 

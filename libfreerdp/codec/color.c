@@ -43,8 +43,8 @@
 
 BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* data)
 {
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	const BYTE* srcp = NULL;
 	BYTE* dstp = NULL;
 	BYTE* dstData = NULL;
@@ -94,8 +94,8 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* WINPR_RESTRICT pDstData, UINT32 Ds
                                         UINT32 backColor, UINT32 foreColor,
                                         const gdiPalette* WINPR_RESTRICT palette)
 {
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	BOOL vFlip = 0;
 	UINT32 monoStep = 0;
 	const UINT32 dstBytesPerPixel = FreeRDPGetBytesPerPixel(DstFormat);
@@ -286,12 +286,12 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* WINPR_RESTRICT pDstData, UINT32 Dst
 	{
 		BYTE nextBit = 0;
 		const BYTE* maskByte = NULL;
-		UINT32 x;
-		UINT32 y;
+		UINT32 x = 0;
+		UINT32 y = 0;
 		UINT32 stride = 0;
-		BYTE r;
-		BYTE g;
-		BYTE b;
+		BYTE r = 0;
+		BYTE g = 0;
+		BYTE b = 0;
 		BYTE* dstBuf = pDstData;
 		UINT32 dstBpp = FreeRDPGetBytesPerPixel(DstFormat);
 
@@ -337,8 +337,8 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT xorMask, UINT32 xorMaskLength,
     const BYTE* WINPR_RESTRICT andMask, UINT32 andMaskLength, UINT32 xorBpp)
 {
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	BOOL vFlip = 0;
 	UINT32 xorStep = 0;
 	UINT32 andStep = 0;
@@ -442,8 +442,8 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
     const BYTE* WINPR_RESTRICT andMask, UINT32 andMaskLength, UINT32 xorBpp,
     const gdiPalette* palette)
 {
-	UINT32 x;
-	UINT32 y;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	BOOL vFlip = 0;
 	UINT32 xorStep = 0;
 	UINT32 andStep = 0;

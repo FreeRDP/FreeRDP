@@ -461,7 +461,7 @@ static BOOL pf_client_load_channels(freerdp* instance)
 		{
 			CHANNEL_DEF* channels = (CHANNEL_DEF*)freerdp_settings_get_pointer_array_writable(
 			    settings, FreeRDP_ChannelDefArray, 0);
-			size_t x;
+			size_t x = 0;
 			size_t size = freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount);
 			UINT32 id = MCS_GLOBAL_CHANNEL_ID + 1;
 

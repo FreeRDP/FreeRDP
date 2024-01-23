@@ -190,10 +190,10 @@ static UINT ainput_server_send_version(ainput_server* ainput)
 static UINT ainput_server_recv_mouse_event(ainput_server* ainput, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
-	UINT64 flags;
-	UINT64 time;
-	INT32 x;
-	INT32 y;
+	UINT64 flags = 0;
+	UINT64 time = 0;
+	INT32 x = 0;
+	INT32 y = 0;
 	char buffer[128] = { 0 };
 
 	WINPR_ASSERT(ainput);
@@ -445,8 +445,8 @@ static UINT ainput_process_message(ainput_server* ainput)
 {
 	BOOL rc = 0;
 	UINT error = ERROR_INTERNAL_ERROR;
-	ULONG BytesReturned;
-	ULONG ActualBytesReturned;
+	ULONG BytesReturned = 0;
+	ULONG ActualBytesReturned = 0;
 	UINT16 MessageId = 0;
 	wStream* s = NULL;
 

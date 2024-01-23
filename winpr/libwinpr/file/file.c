@@ -292,8 +292,8 @@ static BOOL FileWrite(PVOID Object, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrit
 static DWORD FileGetFileSize(HANDLE Object, LPDWORD lpFileSizeHigh)
 {
 	WINPR_FILE* file = NULL;
-	INT64 cur;
-	INT64 size;
+	INT64 cur = 0;
+	INT64 size = 0;
 
 	if (!Object)
 	{

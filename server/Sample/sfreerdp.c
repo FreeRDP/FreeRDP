@@ -529,8 +529,8 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 
 static BOOL test_sleep_tsdiff(UINT32* old_sec, UINT32* old_usec, UINT32 new_sec, UINT32 new_usec)
 {
-	INT64 sec;
-	INT64 usec;
+	INT64 sec = 0;
+	INT64 usec = 0;
 
 	WINPR_ASSERT(old_sec);
 	WINPR_ASSERT(old_usec);
@@ -1055,10 +1055,6 @@ static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 	UINT64 ts = 0;
 	wStream* ls = NULL;
 	UINT64 last_ts = 0;
-	const struct server_info* info = NULL;
-	freerdp_peer* client = NULL;
-	CONNECTION_STATE state;
-	testPeerContext* peerCtx = NULL;
 	size_t offset = 0;
 	UINT32 flags = 0;
 	rdpContext* context = transport_get_context(transport);
@@ -1066,14 +1062,14 @@ static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(s);
 
-	client = context->peer;
+	freerdp_peer* client = context->peer;
 	WINPR_ASSERT(client);
 
-	peerCtx = (testPeerContext*)client->context;
+	testPeerContext* peerCtx = (testPeerContext*)client->context;
 	WINPR_ASSERT(peerCtx);
 	WINPR_ASSERT(peerCtx->io.WritePdu);
 
-	info = client->ContextExtra;
+	const struct server_info* info = client->ContextExtra;
 	WINPR_ASSERT(info);
 
 	/* Let the client authenticate.
@@ -1084,7 +1080,7 @@ static int hook_peer_write_pdu(rdpTransport* transport, wStream* s)
 	 * configuration as the one that recorded the session!
 	 */
 	WINPR_ASSERT(info);
-	state = freerdp_get_state(context);
+	CONNECTION_STATE state = freerdp_get_state(context);
 	if (state < CONNECTION_STATE_NEGO)
 	{
 		return peerCtx->io.WritePdu(transport, s);

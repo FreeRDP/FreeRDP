@@ -1707,8 +1707,8 @@ static LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext, DWO
                                                       LPSCARD_READERSTATEA rgReaderStates,
                                                       DWORD cReaders)
 {
-	PCSC_DWORD i;
-	PCSC_DWORD j;
+	PCSC_DWORD i = 0;
+	PCSC_DWORD j = 0;
 	INT64* map = NULL;
 	PCSC_DWORD cMappedReaders = 0;
 	PCSC_SCARD_READERSTATE* states = NULL;

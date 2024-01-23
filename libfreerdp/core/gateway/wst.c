@@ -235,8 +235,8 @@ static BOOL wst_tls_connect(rdpWst* wst, rdpTls* tls, int timeout)
 	rdpSettings* settings = wst->settings;
 	const char* peerHostname = wst->gwhostname;
 	UINT16 peerPort = wst->gwport;
-	const char* proxyUsername;
-	const char* proxyPassword;
+	const char* proxyUsername = NULL;
+	const char* proxyPassword = NULL;
 	BOOL isProxyConnection =
 	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 

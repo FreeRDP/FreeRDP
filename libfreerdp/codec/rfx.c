@@ -894,8 +894,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	BYTE quant = 0;
 	RFX_TILE* tile = NULL;
 	UINT32* quants = NULL;
-	UINT16 subtype;
-	UINT16 numTiles;
+	UINT16 subtype = 0;
+	UINT16 numTiles = 0;
 	UINT32 blockLen = 0;
 	UINT32 blockType = 0;
 	UINT32 tilesDataSize = 0;

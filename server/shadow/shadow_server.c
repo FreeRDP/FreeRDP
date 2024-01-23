@@ -758,8 +758,8 @@ int shadow_server_start(rdpShadowServer* server)
 	                                    strnlen(bind_address, sizeof(bind_address))) != 0);
 	if (!ipc)
 	{
-		size_t x;
-		size_t count;
+		size_t x = 0;
+		size_t count = 0;
 		char** list = CommandLineParseCommaSeparatedValuesEx(NULL, server->ipcSocket, &count);
 		if (!list || (count <= 1))
 		{

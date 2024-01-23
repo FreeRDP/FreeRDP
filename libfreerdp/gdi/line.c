@@ -137,10 +137,10 @@ BOOL gdi_LineTo(HGDI_DC hdc, UINT32 nXEnd, UINT32 nYEnd)
 	INT32 y = y1;
 
 	WINPR_ASSERT(hdc->clip);
-	INT32 bx1;
-	INT32 by1;
-	INT32 bx2;
-	INT32 by2;
+	INT32 bx1 = 0;
+	INT32 by1 = 0;
+	INT32 bx2 = 0;
+	INT32 by2 = 0;
 	if (hdc->clip->null)
 	{
 		bx1 = (x1 < x2) ? x1 : x2;

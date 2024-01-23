@@ -248,8 +248,8 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 		break;
 		case REG_SZ:
 		{
-			size_t len;
-			size_t cmp;
+			size_t len = 0;
+			size_t cmp = 0;
 			char* end = NULL;
 			char* start = strchr(data, '"');
 			if (!start)

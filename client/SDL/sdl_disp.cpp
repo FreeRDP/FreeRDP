@@ -440,7 +440,7 @@ BOOL sdlDispContext::uninit(DispClientContext* disp)
 	return TRUE;
 }
 
-sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl), _timer(0)
+sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl)
 {
 	WINPR_ASSERT(_sdl);
 	WINPR_ASSERT(_sdl->context()->settings);

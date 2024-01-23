@@ -158,11 +158,6 @@ BOOL rpc_ncacn_http_recv_in_channel_response(RpcChannel* inChannel, HttpResponse
 
 BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel)
 {
-	rdpTls* tls = NULL;
-	rdpCredsspAuth* auth = NULL;
-	rdpSettings* settings = NULL;
-	freerdp* instance = NULL;
-	auth_status rc;
 	SEC_WINNT_AUTH_IDENTITY identity = { 0 };
 
 	if (!context || !channel)
@@ -170,17 +165,17 @@ BOOL rpc_ncacn_http_auth_init(rdpContext* context, RpcChannel* channel)
 		return FALSE;
 	}
 
-	tls = channel->tls;
-	auth = channel->auth;
-	settings = context->settings;
-	instance = context->instance;
+	rdpTls* tls = channel->tls;
+	rdpCredsspAuth* auth = channel->auth;
+	rdpSettings* settings = context->settings;
+	freerdp* instance = context->instance;
 
 	if (!tls || !auth || !instance || !settings)
 	{
 		return FALSE;
 	}
 
-	rc = utils_authenticate_gateway(instance, GW_AUTH_HTTP);
+	auth_status rc = utils_authenticate_gateway(instance, GW_AUTH_HTTP);
 	switch (rc)
 	{
 		case AUTH_SUCCESS:

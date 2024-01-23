@@ -222,8 +222,8 @@ out:
 static UINT disp_server_receive_pdu(DispServerContext* context, wStream* s)
 {
 	UINT error = CHANNEL_RC_OK;
-	size_t beg;
-	size_t end;
+	size_t beg = 0;
+	size_t end = 0;
 	DISPLAY_CONTROL_HEADER header = { 0 };
 
 	WINPR_ASSERT(s);

@@ -50,7 +50,7 @@ typedef SSIZE_T ssize_t;
 class SdlWidget
 {
   public:
-	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input);
+	SdlWidget(SDL_Renderer* renderer, SDL_Rect rect, bool input);
 	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, SDL_RWops* ops);
 	SdlWidget(SdlWidget&& other) noexcept;
 	virtual ~SdlWidget();

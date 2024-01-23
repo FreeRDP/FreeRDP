@@ -343,7 +343,6 @@ BOOL mcs_read_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16
 {
 	UINT16 li = 0;
 	BYTE choice = 0;
-	DomainMCSPDU MCSPDU;
 
 	if (actual)
 	{
@@ -369,7 +368,7 @@ BOOL mcs_read_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU, UINT16
 		return FALSE;
 	}
 
-	MCSPDU = (choice >> 2);
+	DomainMCSPDU MCSPDU = (choice >> 2);
 	if (actual)
 	{
 		*actual = MCSPDU;
@@ -883,8 +882,8 @@ static BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	int status = -1;
 	size_t length = 0;
 	wStream* s = NULL;
-	size_t bm;
-	size_t em;
+	size_t bm = 0;
+	size_t em = 0;
 	wStream* gcc_CCrq = NULL;
 	wStream* client_data = NULL;
 	rdpContext* context = NULL;
@@ -1023,8 +1022,8 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	size_t length = 0;
 	int status = -1;
 	wStream* s = NULL;
-	size_t bm;
-	size_t em;
+	size_t bm = 0;
+	size_t em = 0;
 	wStream* gcc_CCrsp = NULL;
 	wStream* server_data = NULL;
 
@@ -1469,8 +1468,8 @@ fail:
 
 BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs, wStream* s, int* reason)
 {
-	BYTE b1;
-	BYTE b2;
+	BYTE b1 = 0;
+	BYTE b2 = 0;
 
 	WINPR_ASSERT(mcs);
 	WINPR_ASSERT(s);

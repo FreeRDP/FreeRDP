@@ -41,8 +41,7 @@ static const SDL_Color backgroundcolor = { 0x38, 0x36, 0x35, 0xff };
 
 static const Uint32 hpadding = 10;
 
-SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
-    : _rect(rect), _input(input)
+SdlWidget::SdlWidget(SDL_Renderer* renderer, SDL_Rect rect, bool input) : _rect(rect), _input(input)
 {
 	assert(renderer);
 
@@ -194,7 +193,7 @@ bool SdlWidget::fill(SDL_Renderer* renderer, SDL_Color color)
 bool SdlWidget::fill(SDL_Renderer* renderer, const std::vector<SDL_Color>& colors)
 {
 	assert(renderer);
-	SDL_BlendMode mode;
+	SDL_BlendMode mode = SDL_BLENDMODE_INVALID;
 	SDL_GetRenderDrawBlendMode(renderer, &mode);
 	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 	for (auto color : colors)

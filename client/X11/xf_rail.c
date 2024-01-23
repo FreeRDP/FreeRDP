@@ -163,8 +163,8 @@ void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 
 void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 {
-	int x;
-	int y;
+	int x = 0;
+	int y = 0;
 	int child_x = 0;
 	int child_y = 0;
 	unsigned int mask = 0;
