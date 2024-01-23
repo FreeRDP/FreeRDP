@@ -91,7 +91,8 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 	width *= scale;
 	height *= scale;
 	UwacConfigureEvent* event;
-	int ret, surfaceState;
+	int ret;
+	int surfaceState;
 	enum xdg_toplevel_state* state;
 	surfaceState = 0;
 	wl_array_for_each(state, states)
@@ -321,7 +322,8 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 {
 	int ret = UWAC_SUCCESS;
 	UwacBuffer* newBuffers;
-	int i, fd;
+	int i;
+	int fd;
 	void* data;
 	struct wl_shm_pool* pool;
 	size_t pagesize = sysconf(_SC_PAGESIZE);
@@ -456,7 +458,8 @@ UwacWindow* UwacCreateWindowShm(UwacDisplay* display, uint32_t width, uint32_t h
                                 enum wl_shm_format format)
 {
 	UwacWindow* w;
-	int allocSize, ret;
+	int allocSize;
+	int ret;
 
 	if (!display)
 	{
@@ -679,8 +682,12 @@ static const struct wl_callback_listener frame_listener = { frame_done_cb };
 #ifdef UWAC_HAVE_PIXMAN_REGION
 static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 {
-	int nrects, i;
-	int x, y, w, h;
+	int nrects;
+	int i;
+	int x;
+	int y;
+	int w;
+	int h;
 	const pixman_box32_t* box = pixman_region32_rectangles(&buffer->damage, &nrects);
 
 	for (i = 0; i < nrects; i++, box++)
@@ -697,8 +704,12 @@ static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 #else
 static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 {
-	uint32_t nrects, i;
-	int x, y, w, h;
+	uint32_t nrects;
+	uint32_t i;
+	int x;
+	int y;
+	int w;
+	int h;
 	const RECTANGLE_16* box = region16_rects(&buffer->damage, &nrects);
 
 	for (i = 0; i < nrects; i++, box++)

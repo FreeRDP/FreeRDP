@@ -91,7 +91,8 @@ static BOOL arm_tls_connect(rdpArm* arm, rdpTls* tls, int timeout)
 		return FALSE;
 
 	UINT16 peerPort = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_GatewayPort);
-	const char *proxyUsername, *proxyPassword;
+	const char* proxyUsername;
+	const char* proxyPassword;
 	BOOL isProxyConnection =
 	    proxy_prepare(settings, &peerHostname, &peerPort, &proxyUsername, &proxyPassword);
 

@@ -365,7 +365,8 @@ static UINT32 tsmf_codec_parse_VIDEOINFOHEADER(TS_AM_MEDIA_TYPE* mediatype, wStr
 
 static BOOL tsmf_read_format_type(TS_AM_MEDIA_TYPE* mediatype, wStream* s, UINT32 cbFormat)
 {
-	UINT32 i, j;
+	UINT32 i;
+	UINT32 j;
 
 	switch (mediatype->FormatType)
 	{

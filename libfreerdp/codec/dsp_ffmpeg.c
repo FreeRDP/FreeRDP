@@ -500,7 +500,8 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in, AVPacket* 
 static BOOL ffmpeg_fill_frame(AVFrame* frame, const AUDIO_FORMAT* inputFormat, const BYTE* data,
                               size_t size)
 {
-	int ret, bpp;
+	int ret;
+	int bpp;
 #if LIBAVUTIL_VERSION_INT < AV_VERSION_INT(57, 28, 100)
 	frame->channels = inputFormat->nChannels;
 	frame->channel_layout = av_get_default_channel_layout(frame->channels);
@@ -674,7 +675,8 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 {
 	UINT32 bpp;
 	size_t samples;
-	size_t x, y;
+	size_t x;
+	size_t y;
 
 	if (!context || !data || !length || !dstFormat)
 		return FALSE;

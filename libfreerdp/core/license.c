@@ -507,8 +507,10 @@ static BOOL saveCal(const rdpSettings* settings, const BYTE* data, size_t length
 	char hash[41] = { 0 };
 	FILE* fp = NULL;
 	char* licenseStorePath = NULL;
-	char filename[MAX_PATH] = { 0 }, filenameNew[MAX_PATH] = { 0 };
-	char *filepath = NULL, *filepathNew = NULL;
+	char filename[MAX_PATH] = { 0 };
+	char filenameNew[MAX_PATH] = { 0 };
+	char* filepath = NULL;
+	char* filepathNew = NULL;
 
 	size_t written;
 	BOOL ret = FALSE;
@@ -591,7 +593,8 @@ out:
 
 static BYTE* loadCalFile(const rdpSettings* settings, const char* hostname, size_t* dataLen)
 {
-	char *licenseStorePath = NULL, *calPath = NULL;
+	char* licenseStorePath = NULL;
+	char* calPath = NULL;
 	char calFilename[MAX_PATH] = { 0 };
 	char hash[41] = { 0 };
 	INT64 length = 0;
@@ -2049,7 +2052,8 @@ fail:
 
 static BOOL license_read_encrypted_blob(const rdpLicense* license, wStream* s, LICENSE_BLOB* target)
 {
-	UINT16 wBlobType = 0, wBlobLen = 0;
+	UINT16 wBlobType = 0;
+	UINT16 wBlobLen = 0;
 
 	WINPR_ASSERT(license);
 	WINPR_ASSERT(target);
@@ -2090,7 +2094,10 @@ BOOL license_read_new_or_upgrade_license_packet(rdpLicense* license, wStream* s)
 {
 	UINT32 os_major = 0;
 	UINT32 os_minor = 0;
-	UINT32 cbScope = 0, cbCompanyName = 0, cbProductId = 0, cbLicenseInfo = 0;
+	UINT32 cbScope = 0;
+	UINT32 cbCompanyName = 0;
+	UINT32 cbProductId = 0;
+	UINT32 cbLicenseInfo = 0;
 	wStream sbuffer = { 0 };
 	wStream* licenseStream = NULL;
 	BOOL ret = FALSE;

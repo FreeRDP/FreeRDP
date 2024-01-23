@@ -6,7 +6,8 @@
 
 static void BitStrGen(void)
 {
-	DWORD i, j;
+	DWORD i;
+	DWORD j;
 	char str[64];
 
 	for (i = 0; i < 256;)

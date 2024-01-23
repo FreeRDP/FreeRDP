@@ -201,7 +201,8 @@ void winpr_log_backtrace(const char* tag, DWORD level, DWORD size)
 
 void winpr_log_backtrace_ex(wLog* log, DWORD level, DWORD size)
 {
-	size_t used, x;
+	size_t used;
+	size_t x;
 	char** msg;
 	void* stack = winpr_backtrace(20);
 

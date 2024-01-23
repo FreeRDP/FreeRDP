@@ -30,7 +30,9 @@ static BOOL test_overlaps(void)
 	size_t i;
 	size_t k;
 	int x;
-	int nchunks, j, counter = 0;
+	int nchunks;
+	int j;
+	int counter = 0;
 
 	for (i = 0; i < sizeof(bytes); i++)
 		bytes[i] = (BYTE)i;

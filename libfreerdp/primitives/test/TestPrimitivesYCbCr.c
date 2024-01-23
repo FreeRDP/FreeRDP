@@ -1533,8 +1533,12 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 			const INT16 Cr = TEST_CR_COMPONENT[index];
 			const int x = index % 64;
 			const int y = (index - x) / 64;
-			BYTE R, G, B;
-			BYTE eR, eG, eB;
+			BYTE R;
+			BYTE G;
+			BYTE B;
+			BYTE eR;
+			BYTE eG;
+			BYTE eB;
 
 			FreeRDPSplitColor(pixel, PIXEL_FORMAT_XRGB32, &R, &G, &B, NULL, NULL);
 			FreeRDPSplitColor(ePixel, PIXEL_FORMAT_XRGB32, &eR, &eG, &eB, NULL, NULL);

@@ -605,8 +605,11 @@ static INLINE void progressive_rfx_idwt_x(const INT16* pLowBand, size_t nLowStep
 {
 	size_t i;
 	INT16 L0;
-	INT16 H0, H1;
-	INT16 X0, X1, X2;
+	INT16 H0;
+	INT16 H1;
+	INT16 X0;
+	INT16 X1;
+	INT16 X2;
 
 	for (i = 0; i < nDstCount; i++)
 	{
@@ -677,8 +680,11 @@ static INLINE void progressive_rfx_idwt_y(const INT16* pLowBand, size_t nLowStep
 {
 	size_t i;
 	INT16 L0;
-	INT16 H0, H1;
-	INT16 X0, X1, X2;
+	INT16 H0;
+	INT16 H1;
+	INT16 X0;
+	INT16 X1;
+	INT16 X2;
 
 	for (i = 0; i < nDstCount; i++)
 	{
@@ -766,9 +772,13 @@ static INLINE void progressive_rfx_dwt_2d_decode_block(INT16* buffer, INT16* tem
 {
 	size_t nDstStepX;
 	size_t nDstStepY;
-	INT16 *HL, *LH;
-	INT16 *HH, *LL;
-	INT16 *L, *H, *LLx;
+	INT16* HL;
+	INT16* LH;
+	INT16* HH;
+	INT16* LL;
+	INT16* L;
+	INT16* H;
+	INT16* LLx;
 
 	const size_t nBandL = progressive_rfx_get_band_l_count(level);
 	const size_t nBandH = progressive_rfx_get_band_h_count(level);
@@ -913,7 +923,9 @@ static INLINE int progressive_decompress_tile_first(PROGRESSIVE_CONTEXT* progres
                                                     const PROGRESSIVE_BLOCK_CONTEXT* context)
 {
 	int rc;
-	BOOL diff, sub, extrapolate;
+	BOOL diff;
+	BOOL sub;
+	BOOL extrapolate;
 	BYTE* pBuffer;
 	INT16* pSign[3];
 	INT16* pSrcDst[3];
@@ -1315,7 +1327,9 @@ static INLINE int progressive_decompress_tile_upgrade(PROGRESSIVE_CONTEXT* progr
                                                       const PROGRESSIVE_BLOCK_CONTEXT* context)
 {
 	int status;
-	BOOL coeffDiff, sub, extrapolate;
+	BOOL coeffDiff;
+	BOOL sub;
+	BOOL extrapolate;
 	BYTE* pBuffer;
 	INT16* pSign[3] = { 0 };
 	INT16* pSrcDst[3] = { 0 };
@@ -2455,8 +2469,10 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 	BOOL rc = FALSE;
 	int res = -6;
 	wStream* s = NULL;
-	UINT32 i = 0, numRects = 0;
-	UINT32 x = 0, y = 0;
+	UINT32 i = 0;
+	UINT32 numRects = 0;
+	UINT32 x = 0;
+	UINT32 y = 0;
 	RFX_RECT* rects = NULL;
 	RFX_MESSAGE* message = NULL;
 

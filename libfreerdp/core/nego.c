@@ -1064,7 +1064,8 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 	BOOL rc = FALSE;
 	wStream* s;
 	size_t length;
-	size_t bm, em;
+	size_t bm;
+	size_t em;
 	BYTE flags = 0;
 	size_t cookie_length;
 	s = Stream_New(NULL, 512);
@@ -1152,7 +1153,9 @@ fail:
 
 static BOOL nego_process_correlation_info(rdpNego* nego, wStream* s)
 {
-	UINT8 type, flags, x;
+	UINT8 type;
+	UINT8 flags;
+	UINT8 x;
 	UINT16 length;
 	BYTE correlationId[16] = { 0 };
 
@@ -1397,7 +1400,8 @@ BOOL nego_process_negotiation_failure(rdpNego* nego, wStream* s)
 BOOL nego_send_negotiation_response(rdpNego* nego)
 {
 	UINT16 length;
-	size_t bm, em;
+	size_t bm;
+	size_t em;
 	BOOL status;
 	wStream* s;
 	BYTE flags;

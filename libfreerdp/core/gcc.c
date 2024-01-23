@@ -2097,7 +2097,11 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 
 	for (index = 0; index < monitorCount; index++)
 	{
-		UINT32 left, top, right, bottom, flags;
+		UINT32 left;
+		UINT32 top;
+		UINT32 right;
+		UINT32 bottom;
+		UINT32 flags;
 		rdpMonitor* current = &settings->MonitorDefArray[index];
 
 		Stream_Read_UINT32(s, left);   /* left */
@@ -2128,7 +2132,8 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 {
 	UINT32 i;
 	UINT16 length;
-	INT32 baseX = 0, baseY = 0;
+	INT32 baseX = 0;
+	INT32 baseY = 0;
 	const rdpSettings* settings = mcs_get_const_settings(mcs);
 
 	WINPR_ASSERT(s);

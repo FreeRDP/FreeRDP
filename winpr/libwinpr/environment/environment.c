@@ -495,7 +495,9 @@ DWORD GetEnvironmentVariableEBA(LPCSTR envBlock, LPCSTR lpName, LPSTR lpBuffer, 
 	char* env = NULL;
 	char* foundEquals;
 	const char* penvb = envBlock;
-	size_t nLength, fLength, lpNameLength;
+	size_t nLength;
+	size_t fLength;
+	size_t lpNameLength;
 
 	if (!lpName || NULL == envBlock)
 		return 0;

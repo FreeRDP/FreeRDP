@@ -359,7 +359,8 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 	WINPR_POLL_SET pollset = { 0 };
 	DWORD ret = WAIT_FAILED;
 	size_t extraFds = 0;
-	UINT64 now = 0, dueTime = 0;
+	UINT64 now = 0;
+	UINT64 dueTime = 0;
 
 	if (!nCount || (nCount > MAXIMUM_WAIT_OBJECTS))
 	{

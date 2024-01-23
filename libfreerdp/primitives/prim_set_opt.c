@@ -37,7 +37,8 @@ static primitives_t* generic = NULL;
 #if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
 {
-	BYTE byte, *dptr;
+	BYTE byte;
+	BYTE* dptr;
 	__m128i xmm0;
 	size_t count;
 

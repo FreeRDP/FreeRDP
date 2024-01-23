@@ -749,7 +749,8 @@ void credssp_auth_free(rdpCredsspAuth* auth)
 static void auth_get_sspi_module_from_reg(char** sspi_module)
 {
 	HKEY hKey;
-	DWORD dwType, dwSize;
+	DWORD dwType;
+	DWORD dwSize;
 
 	WINPR_ASSERT(sspi_module);
 	*sspi_module = NULL;

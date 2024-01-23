@@ -451,7 +451,8 @@ static UINT rdpsnd_alsa_play(rdpsndDevicePlugin* device, const BYTE* data, size_
 	}
 
 	{
-		snd_pcm_sframes_t available, delay;
+		snd_pcm_sframes_t available;
+		snd_pcm_sframes_t delay;
 		int rc = snd_pcm_avail_delay(alsa->pcm_handle, &available, &delay);
 
 		if (rc != 0)

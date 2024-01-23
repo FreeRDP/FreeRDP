@@ -63,7 +63,8 @@ static UINT32 alpha_add(UINT32 c1, UINT32 c2)
 /* ------------------------------------------------------------------------- */
 static UINT32 colordist(UINT32 c1, UINT32 c2)
 {
-	int d, maxd = 0;
+	int d;
+	int maxd = 0;
 	d = ABS((INT32)(ALF(c1) - ALF(c2)));
 
 	if (d > maxd)
@@ -91,7 +92,8 @@ static UINT32 colordist(UINT32 c1, UINT32 c2)
 static BOOL check(const BYTE* pSrc1, UINT32 src1Step, const BYTE* pSrc2, UINT32 src2Step,
                   BYTE* pDst, UINT32 dstStep, UINT32 width, UINT32 height)
 {
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 
 	for (y = 0; y < height; ++y)
 	{

@@ -495,7 +495,8 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 
 static BOOL test_sleep_tsdiff(UINT32* old_sec, UINT32* old_usec, UINT32 new_sec, UINT32 new_usec)
 {
-	INT64 sec, usec;
+	INT64 sec;
+	INT64 usec;
 
 	WINPR_ASSERT(old_sec);
 	WINPR_ASSERT(old_usec);

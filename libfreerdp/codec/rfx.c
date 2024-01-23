@@ -828,7 +828,8 @@ static BOOL rfx_process_message_tileset(RFX_CONTEXT* context, RFX_MESSAGE* messa
 	BYTE quant;
 	RFX_TILE* tile;
 	UINT32* quants;
-	UINT16 subtype, numTiles;
+	UINT16 subtype;
+	UINT16 numTiles;
 	UINT32 blockLen;
 	UINT32 blockType;
 	UINT32 tilesDataSize;
@@ -1623,7 +1624,8 @@ RFX_MESSAGE* rfx_encode_message(RFX_CONTEXT* context, const RFX_RECT* rects, siz
 	PTP_WORK* workObject = NULL;
 	RFX_TILE_COMPOSE_WORK_PARAM* workParam = NULL;
 	BOOL success = FALSE;
-	REGION16 rectsRegion = { 0 }, tilesRegion = { 0 };
+	REGION16 rectsRegion = { 0 };
+	REGION16 tilesRegion = { 0 };
 	RECTANGLE_16 currentTileRect = { 0 };
 	const RECTANGLE_16* regionRect = NULL;
 

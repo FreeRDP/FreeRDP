@@ -6,7 +6,8 @@
 
 int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 {
-	DWORD index, i;
+	DWORD index;
+	DWORD i;
 	DWORD count;
 	BOOL bSuccess;
 	HANDLE hServer;

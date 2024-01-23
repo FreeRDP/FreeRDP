@@ -435,7 +435,8 @@ BOOL wlf_disp_uninit(wlfDispContext* wlfDisp, DispClientContext* disp)
 
 int wlf_list_monitors(wlfContext* wlc)
 {
-	uint32_t i, nmonitors = UwacDisplayGetNbOutputs(wlc->display);
+	uint32_t i;
+	uint32_t nmonitors = UwacDisplayGetNbOutputs(wlc->display);
 
 	for (i = 0; i < nmonitors; i++)
 	{

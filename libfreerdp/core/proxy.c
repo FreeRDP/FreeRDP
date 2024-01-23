@@ -129,7 +129,9 @@ static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONG
 
 static BOOL cidr4_match(const struct in_addr* addr, const struct in_addr* net, BYTE bits)
 {
-	uint32_t mask, amask, nmask;
+	uint32_t mask;
+	uint32_t amask;
+	uint32_t nmask;
 
 	if (bits == 0)
 		return TRUE;
@@ -145,7 +147,8 @@ static BOOL cidr6_match(const struct in6_addr* address, const struct in6_addr* n
 {
 	const uint32_t* a = (const uint32_t*)address;
 	const uint32_t* n = (const uint32_t*)network;
-	size_t bits_whole, bits_incomplete;
+	size_t bits_whole;
+	size_t bits_incomplete;
 	bits_whole = bits >> 5;
 	bits_incomplete = bits & 0x1F;
 
@@ -712,7 +715,8 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
                                 const char* proxyPassword, const char* hostname, UINT16 port)
 {
 	int status;
-	int nauthMethods = 1, writeLen = 3;
+	int nauthMethods = 1;
+	int writeLen = 3;
 	BYTE buf[3 + 255 + 255]; /* biggest packet is user/pass auth */
 	size_t hostnlen = strnlen(hostname, 255);
 

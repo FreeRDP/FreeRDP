@@ -70,11 +70,23 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
                             INT16* WINPR_RESTRICT pDst[3], int dstStep,
                             const prim_size_t* WINPR_RESTRICT roi) /* region of interest */
 {
-	__m128i zero, max, r_cr, g_cb, g_cr, b_cb, c4096;
-	const __m128i *y_buf, *cb_buf, *cr_buf;
-	__m128i *r_buf, *g_buf, *b_buf;
+	__m128i zero;
+	__m128i max;
+	__m128i r_cr;
+	__m128i g_cb;
+	__m128i g_cr;
+	__m128i b_cb;
+	__m128i c4096;
+	const __m128i* y_buf;
+	const __m128i* cb_buf;
+	const __m128i* cr_buf;
+	__m128i* r_buf;
+	__m128i* g_buf;
+	__m128i* b_buf;
 	UINT32 yp;
-	int srcbump, dstbump, imax;
+	int srcbump;
+	int dstbump;
+	int imax;
 
 	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
 	    ((ULONG_PTR)(pSrc[2]) & 0x0f) || ((ULONG_PTR)(pDst[0]) & 0x0f) ||
@@ -152,7 +164,12 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
 			 * r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
 			 */
 			/* y = (y_r_buf[i] + 4096) >> 2 */
-			__m128i y, cb, cr, r, g, b;
+			__m128i y;
+			__m128i cb;
+			__m128i cr;
+			__m128i r;
+			__m128i g;
+			__m128i b;
 			y = _mm_load_si128(y_buf + i);
 			y = _mm_add_epi16(y, c4096);
 			y = _mm_srai_epi16(y, 2);
@@ -264,7 +281,18 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const WINPR_RESTRICT pSrc[3], UIN
 			 * r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
 			 */
 			/* y = (y_r_buf[i] + 4096) >> 2 */
-			__m128i y1, y2, cb1, cb2, cr1, cr2, r1, r2, g1, g2, b1, b2;
+			__m128i y1;
+			__m128i y2;
+			__m128i cb1;
+			__m128i cb2;
+			__m128i cr1;
+			__m128i cr2;
+			__m128i r1;
+			__m128i r2;
+			__m128i g1;
+			__m128i g2;
+			__m128i b1;
+			__m128i b2;
 			y1 = _mm_load_si128((const __m128i*)y_buf);
 			y_buf += step;
 			y1 = _mm_add_epi16(y1, c4096);
@@ -318,7 +346,11 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const WINPR_RESTRICT pSrc[3], UIN
 			/* b_buf[i] = CLIP(b); */
 			_mm_between_epi16(b2, zero, max);
 			{
-				__m128i R0, R1, R2, R3, R4;
+				__m128i R0;
+				__m128i R1;
+				__m128i R2;
+				__m128i R3;
+				__m128i R4;
 				/* The comments below pretend these are 8-byte registers
 				 * rather than 16-byte, for readability.
 				 */
@@ -452,7 +484,18 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* const WINPR_RESTRICT pSrc[3], UIN
 			 * r = ((y+4096)>>2 + HIWORD(cr*22986)) >> 3
 			 */
 			/* y = (y_r_buf[i] + 4096) >> 2 */
-			__m128i y1, y2, cb1, cb2, cr1, cr2, r1, r2, g1, g2, b1, b2;
+			__m128i y1;
+			__m128i y2;
+			__m128i cb1;
+			__m128i cb2;
+			__m128i cr1;
+			__m128i cr2;
+			__m128i r1;
+			__m128i r2;
+			__m128i g1;
+			__m128i g2;
+			__m128i b1;
+			__m128i b2;
 			y1 = _mm_load_si128((const __m128i*)y_buf);
 			y_buf += step;
 			y1 = _mm_add_epi16(y1, c4096);
@@ -506,7 +549,11 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* const WINPR_RESTRICT pSrc[3], UIN
 			/* b_buf[i] = CLIP(b); */
 			_mm_between_epi16(b2, zero, max);
 			{
-				__m128i R0, R1, R2, R3, R4;
+				__m128i R0;
+				__m128i R1;
+				__m128i R2;
+				__m128i R3;
+				__m128i R4;
 				/* The comments below pretend these are 8-byte registers
 				 * rather than 16-byte, for readability.
 				 */
@@ -603,7 +650,17 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
                             INT16* WINPR_RESTRICT pDst[3], int dstStep,
                             const prim_size_t* WINPR_RESTRICT roi) /* region of interest */
 {
-	__m128i min, max, y_r, y_g, y_b, cb_r, cb_g, cb_b, cr_r, cr_g, cr_b;
+	__m128i min;
+	__m128i max;
+	__m128i y_r;
+	__m128i y_g;
+	__m128i y_b;
+	__m128i cb_r;
+	__m128i cb_g;
+	__m128i cb_b;
+	__m128i cr_r;
+	__m128i cr_g;
+	__m128i cr_b;
 	const __m128i* r_buf = (const __m128i*)(pSrc[0]);
 	const __m128i* g_buf = (const __m128i*)(pSrc[1]);
 	const __m128i* b_buf = (const __m128i*)(pSrc[2]);
@@ -611,7 +668,9 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
 	__m128i* cb_buf = (__m128i*)(pDst[1]);
 	__m128i* cr_buf = (__m128i*)(pDst[2]);
 	UINT32 yp;
-	int srcbump, dstbump, imax;
+	int srcbump;
+	int dstbump;
+	int imax;
 
 	if (((ULONG_PTR)(pSrc[0]) & 0x0f) || ((ULONG_PTR)(pSrc[1]) & 0x0f) ||
 	    ((ULONG_PTR)(pSrc[2]) & 0x0f) || ((ULONG_PTR)(pDst[0]) & 0x0f) ||
@@ -679,7 +738,12 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
 			 * within the upper 16 bits we will also have to scale the RGB
 			 * values used in the multiplication by << 5+(16-n).
 			 */
-			__m128i r, g, b, y, cb, cr;
+			__m128i r;
+			__m128i g;
+			__m128i b;
+			__m128i y;
+			__m128i cb;
+			__m128i cr;
 			r = _mm_load_si128(r_buf + i);
 			g = _mm_load_si128(g_buf + i);
 			b = _mm_load_si128(b_buf + i);
@@ -736,7 +800,9 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 	const UINT32 pad = roi->width % 16;
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	BYTE* out;
-	UINT32 srcbump, dstbump, y;
+	UINT32 srcbump;
+	UINT32 dstbump;
+	UINT32 y;
 	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
@@ -747,12 +813,15 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 
 		for (x = 0; x < roi->width - pad; x += 16)
 		{
-			__m128i r, g, b;
+			__m128i r;
+			__m128i g;
+			__m128i b;
 			/* The comments below pretend these are 8-byte registers
 			 * rather than 16-byte, for readability.
 			 */
 			{
-				__m128i R0, R1;
+				__m128i R0;
+				__m128i R1;
 				R0 = _mm_load_si128((const __m128i*)pb);
 				pb += 8; /* R0 = 00B300B200B100B0 */
 				R1 = _mm_load_si128((const __m128i*)pb);
@@ -760,7 +829,8 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
-				__m128i R0, R1;
+				__m128i R0;
+				__m128i R1;
 				R0 = _mm_load_si128((const __m128i*)pg);
 				pg += 8; /* R1 = 00G300G200G100G0 */
 				R1 = _mm_load_si128((const __m128i*)pg);
@@ -768,7 +838,8 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
-				__m128i R0, R1;
+				__m128i R0;
+				__m128i R1;
 				R0 = _mm_load_si128((const __m128i*)pr);
 				pr += 8; /* R0 = 00R300R200R100R0 */
 				R1 = _mm_load_si128((const __m128i*)pr);
@@ -776,7 +847,10 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
 			{
-				__m128i gbHi, gbLo, arHi, arLo;
+				__m128i gbHi;
+				__m128i gbLo;
+				__m128i arHi;
+				__m128i arLo;
 				{
 					gbLo = _mm_unpacklo_epi8(b, g); /* R0 = G7G6G5G4G3G2G1G0 */
 					gbHi = _mm_unpackhi_epi8(b, g); /* R1 = G7B7G6B7G5B5G4B4 */
@@ -840,7 +914,9 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 	const UINT32 pad = roi->width % 16;
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	BYTE* out;
-	UINT32 srcbump, dstbump, y;
+	UINT32 srcbump;
+	UINT32 dstbump;
+	UINT32 y;
 	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
@@ -851,12 +927,15 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 
 		for (x = 0; x < roi->width - pad; x += 16)
 		{
-			__m128i r, g, b;
+			__m128i r;
+			__m128i g;
+			__m128i b;
 			/* The comments below pretend these are 8-byte registers
 			 * rather than 16-byte, for readability.
 			 */
 			{
-				__m128i R0, R1;
+				__m128i R0;
+				__m128i R1;
 				R0 = _mm_load_si128((const __m128i*)pb);
 				pb += 8; /* R0 = 00B300B200B100B0 */
 				R1 = _mm_load_si128((const __m128i*)pb);
@@ -864,7 +943,8 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
-				__m128i R0, R1;
+				__m128i R0;
+				__m128i R1;
 				R0 = _mm_load_si128((const __m128i*)pg);
 				pg += 8; /* R1 = 00G300G200G100G0 */
 				R1 = _mm_load_si128((const __m128i*)pg);
@@ -872,7 +952,8 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
-				__m128i R0, R1;
+				__m128i R0;
+				__m128i R1;
 				R0 = _mm_load_si128((const __m128i*)pr);
 				pr += 8; /* R0 = 00R300R200R100R0 */
 				R1 = _mm_load_si128((const __m128i*)pr);
@@ -880,7 +961,10 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
 			{
-				__m128i gbHi, gbLo, arHi, arLo;
+				__m128i gbHi;
+				__m128i gbLo;
+				__m128i arHi;
+				__m128i arLo;
 				{
 					gbLo = _mm_unpacklo_epi8(r, g); /* R0 = G7G6G5G4G3G2G1G0 */
 					gbHi = _mm_unpackhi_epi8(r, g); /* R1 = G7B7G6B7G5B5G4B4 */
@@ -944,7 +1028,9 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 	const UINT32 pad = roi->width % 16;
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	BYTE* out;
-	UINT32 srcbump, dstbump, y;
+	UINT32 srcbump;
+	UINT32 dstbump;
+	UINT32 y;
 	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
@@ -955,12 +1041,15 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 
 		for (x = 0; x < roi->width - pad; x += 16)
 		{
-			__m128i r, g, b;
+			__m128i r;
+			__m128i g;
+			__m128i b;
 			/* The comments below pretend these are 8-byte registers
 			 * rather than 16-byte, for readability.
 			 */
 			{
-				__m128i R0, R1;
+				__m128i R0;
+				__m128i R1;
 				R0 = _mm_load_si128((const __m128i*)pb);
 				pb += 8; /* R0 = 00B300B200B100B0 */
 				R1 = _mm_load_si128((const __m128i*)pb);
@@ -968,7 +1057,8 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
-				__m128i R0, R1;
+				__m128i R0;
+				__m128i R1;
 				R0 = _mm_load_si128((const __m128i*)pg);
 				pg += 8; /* R1 = 00G300G200G100G0 */
 				R1 = _mm_load_si128((const __m128i*)pg);
@@ -976,7 +1066,8 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
-				__m128i R0, R1;
+				__m128i R0;
+				__m128i R1;
 				R0 = _mm_load_si128((const __m128i*)pr);
 				pr += 8; /* R0 = 00R300R200R100R0 */
 				R1 = _mm_load_si128((const __m128i*)pr);
@@ -984,7 +1075,10 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
 			{
-				__m128i gbHi, gbLo, arHi, arLo;
+				__m128i gbHi;
+				__m128i gbLo;
+				__m128i arHi;
+				__m128i arLo;
 				{
 					gbLo = _mm_unpacklo_epi8(a, b); /* R0 = G7G6G5G4G3G2G1G0 */
 					gbHi = _mm_unpackhi_epi8(a, b); /* R1 = G7B7G6B7G5B5G4B4 */
@@ -1048,7 +1142,9 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 	const __m128i a = _mm_set1_epi32(0xFFFFFFFFU);
 	const UINT32 pad = roi->width % 16;
 	BYTE* out;
-	UINT32 srcbump, dstbump, y;
+	UINT32 srcbump;
+	UINT32 dstbump;
+	UINT32 y;
 	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
@@ -1059,12 +1155,15 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 
 		for (x = 0; x < roi->width - pad; x += 16)
 		{
-			__m128i r, g, b;
+			__m128i r;
+			__m128i g;
+			__m128i b;
 			/* The comments below pretend these are 8-byte registers
 			 * rather than 16-byte, for readability.
 			 */
 			{
-				__m128i R0, R1;
+				__m128i R0;
+				__m128i R1;
 				R0 = _mm_load_si128((const __m128i*)pb);
 				pb += 8; /* R0 = 00B300B200B100B0 */
 				R1 = _mm_load_si128((const __m128i*)pb);
@@ -1072,7 +1171,8 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 				b = _mm_packus_epi16(R0, R1); /* b = B7B6B5B4B3B2B1B0 */
 			}
 			{
-				__m128i R0, R1;
+				__m128i R0;
+				__m128i R1;
 				R0 = _mm_load_si128((const __m128i*)pg);
 				pg += 8; /* R1 = 00G300G200G100G0 */
 				R1 = _mm_load_si128((const __m128i*)pg);
@@ -1080,7 +1180,8 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 				g = _mm_packus_epi16(R0, R1); /* g = G7G6G5G4G3G2G1G0 */
 			}
 			{
-				__m128i R0, R1;
+				__m128i R0;
+				__m128i R1;
 				R0 = _mm_load_si128((const __m128i*)pr);
 				pr += 8; /* R0 = 00R300R200R100R0 */
 				R1 = _mm_load_si128((const __m128i*)pr);
@@ -1088,7 +1189,10 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 				r = _mm_packus_epi16(R0, R1); /* r = R7R6R5R4R3R2R1R0 */
 			}
 			{
-				__m128i gbHi, gbLo, arHi, arLo;
+				__m128i gbHi;
+				__m128i gbLo;
+				__m128i arHi;
+				__m128i arLo;
 				{
 					gbLo = _mm_unpacklo_epi8(a, r); /* R0 = G7G6G5G4G3G2G1G0 */
 					gbHi = _mm_unpackhi_epi8(a, r); /* R1 = G7B7G6B7G5B5G4B4 */

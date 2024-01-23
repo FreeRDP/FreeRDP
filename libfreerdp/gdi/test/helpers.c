@@ -56,7 +56,9 @@ HGDI_BITMAP test_convert_to_bitmap(const BYTE* src, UINT32 SrcFormat, UINT32 Src
 static void test_dump_data(unsigned char* p, int len, int width, const char* name)
 {
 	unsigned char* line = p;
-	int i, thisline, offset = 0;
+	int i;
+	int thisline;
+	int offset = 0;
 	return; // TODO: Activate this manually if required. Improves test speed
 	printf("\n%s[%d][%d]:\n", name, len / width, width);
 
@@ -91,10 +93,12 @@ void test_dump_bitmap(HGDI_BITMAP hBmp, const char* name)
 
 static BOOL CompareBitmaps(HGDI_BITMAP hBmp1, HGDI_BITMAP hBmp2, const gdiPalette* palette)
 {
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 	const BYTE* p1 = hBmp1->data;
 	const BYTE* p2 = hBmp2->data;
-	UINT32 colorA, colorB;
+	UINT32 colorA;
+	UINT32 colorB;
 	UINT32 minw = (hBmp1->width < hBmp2->width) ? hBmp1->width : hBmp2->width;
 	UINT32 minh = (hBmp1->height < hBmp2->height) ? hBmp1->height : hBmp2->height;
 

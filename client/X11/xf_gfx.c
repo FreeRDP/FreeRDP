@@ -33,12 +33,15 @@
 static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	UINT32 surfaceX, surfaceY;
+	UINT32 surfaceX;
+	UINT32 surfaceY;
 	RECTANGLE_16 surfaceRect;
 	rdpGdi* gdi;
 	const rdpSettings* settings;
-	UINT32 nbRects, x;
-	double sx, sy;
+	UINT32 nbRects;
+	UINT32 x;
+	double sx;
+	double sy;
 	const RECTANGLE_16* rects;
 
 	WINPR_ASSERT(xfc);

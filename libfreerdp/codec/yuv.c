@@ -786,7 +786,8 @@ static BOOL pool_encode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 {
 	BOOL rc = FALSE;
 	primitives_t* prims = primitives_get();
-	UINT32 x, y;
+	UINT32 x;
+	UINT32 y;
 	UINT32 waitCount = 0;
 
 	WINPR_ASSERT(context);

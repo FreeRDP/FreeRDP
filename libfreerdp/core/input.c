@@ -644,7 +644,8 @@ static BOOL input_recv_sync_event(rdpInput* input, wStream* s)
 
 static BOOL input_recv_keyboard_event(rdpInput* input, wStream* s)
 {
-	UINT16 keyboardFlags, keyCode;
+	UINT16 keyboardFlags;
+	UINT16 keyCode;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
@@ -670,7 +671,8 @@ static BOOL input_recv_keyboard_event(rdpInput* input, wStream* s)
 
 static BOOL input_recv_unicode_keyboard_event(rdpInput* input, wStream* s)
 {
-	UINT16 keyboardFlags, unicodeCode;
+	UINT16 keyboardFlags;
+	UINT16 unicodeCode;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
@@ -692,7 +694,9 @@ static BOOL input_recv_unicode_keyboard_event(rdpInput* input, wStream* s)
 
 static BOOL input_recv_mouse_event(rdpInput* input, wStream* s)
 {
-	UINT16 pointerFlags, xPos, yPos;
+	UINT16 pointerFlags;
+	UINT16 xPos;
+	UINT16 yPos;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
@@ -709,7 +713,8 @@ static BOOL input_recv_mouse_event(rdpInput* input, wStream* s)
 static BOOL input_recv_relmouse_event(rdpInput* input, wStream* s)
 {
 	UINT16 pointerFlags;
-	INT16 xDelta, yDelta;
+	INT16 xDelta;
+	INT16 yDelta;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
@@ -735,7 +740,9 @@ static BOOL input_recv_relmouse_event(rdpInput* input, wStream* s)
 
 static BOOL input_recv_extended_mouse_event(rdpInput* input, wStream* s)
 {
-	UINT16 pointerFlags, xPos, yPos;
+	UINT16 pointerFlags;
+	UINT16 xPos;
+	UINT16 yPos;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);
@@ -822,7 +829,8 @@ static BOOL input_recv_event(rdpInput* input, wStream* s)
 
 BOOL input_recv(rdpInput* input, wStream* s)
 {
-	UINT16 i, numberEvents;
+	UINT16 i;
+	UINT16 numberEvents;
 
 	WINPR_ASSERT(input);
 	WINPR_ASSERT(s);

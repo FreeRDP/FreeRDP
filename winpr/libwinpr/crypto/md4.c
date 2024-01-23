@@ -89,9 +89,16 @@
 static const void* body(WINPR_MD4_CTX* ctx, const void* data, unsigned long size)
 {
 	const unsigned char* ptr;
-	winpr_MD4_u32plus a, b, c, d;
-	winpr_MD4_u32plus saved_a, saved_b, saved_c, saved_d;
-	const winpr_MD4_u32plus ac1 = 0x5a827999, ac2 = 0x6ed9eba1;
+	winpr_MD4_u32plus a;
+	winpr_MD4_u32plus b;
+	winpr_MD4_u32plus c;
+	winpr_MD4_u32plus d;
+	winpr_MD4_u32plus saved_a;
+	winpr_MD4_u32plus saved_b;
+	winpr_MD4_u32plus saved_c;
+	winpr_MD4_u32plus saved_d;
+	const winpr_MD4_u32plus ac1 = 0x5a827999;
+	const winpr_MD4_u32plus ac2 = 0x6ed9eba1;
 
 	ptr = (const unsigned char*)data;
 
@@ -191,7 +198,8 @@ void winpr_MD4_Init(WINPR_MD4_CTX* ctx)
 void winpr_MD4_Update(WINPR_MD4_CTX* ctx, const void* data, unsigned long size)
 {
 	winpr_MD4_u32plus saved_lo;
-	unsigned long used, available;
+	unsigned long used;
+	unsigned long available;
 
 	saved_lo = ctx->lo;
 	if ((ctx->lo = (saved_lo + size) & 0x1fffffff) < saved_lo)
@@ -233,7 +241,8 @@ void winpr_MD4_Update(WINPR_MD4_CTX* ctx, const void* data, unsigned long size)
 
 void winpr_MD4_Final(unsigned char* result, WINPR_MD4_CTX* ctx)
 {
-	unsigned long used, available;
+	unsigned long used;
+	unsigned long available;
 
 	used = ctx->lo & 0x3f;
 

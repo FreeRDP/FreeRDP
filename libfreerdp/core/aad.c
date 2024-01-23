@@ -675,7 +675,8 @@ BOOL generate_pop_key(rdpAad* aad)
 	BOOL ret = FALSE;
 	char* buffer = NULL;
 	char* b64_hash = NULL;
-	char *e = NULL, *n = NULL;
+	char* e = NULL;
+	char* n = NULL;
 
 	WINPR_ASSERT(aad);
 

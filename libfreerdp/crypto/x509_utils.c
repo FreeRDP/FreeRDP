@@ -584,7 +584,9 @@ out_free_issuer:
 static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain, size_t* plength)
 {
 	BIO* bio;
-	int status, count, x;
+	int status;
+	int count;
+	int x;
 	size_t offset;
 	size_t length = 0;
 	BOOL rc = FALSE;
@@ -761,7 +763,8 @@ static WINPR_MD_TYPE hash_nid_to_winpr(int hash_nid)
 static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
 {
 	WINPR_MD_TYPE ret = WINPR_MD_NONE;
-	WINPR_MD_TYPE message_digest, mgf1_digest;
+	WINPR_MD_TYPE message_digest;
+	WINPR_MD_TYPE mgf1_digest;
 	int param_type;
 	const void* param_value;
 	const ASN1_STRING* sequence;
@@ -953,7 +956,8 @@ BOOL x509_utils_verify(X509* xcert, STACK_OF(X509) * chain, const char* certific
 
 	for (size_t i = 0; i < ARRAYSIZE(purposes); i++)
 	{
-		int err = -1, rc = -1;
+		int err = -1;
+		int rc = -1;
 		int purpose = purposes[i];
 		csc = X509_STORE_CTX_new();
 

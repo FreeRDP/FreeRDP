@@ -31,7 +31,8 @@
 
 int shadow_capture_align_clip_rect(RECTANGLE_16* rect, RECTANGLE_16* clip)
 {
-	int dx, dy;
+	int dx;
+	int dy;
 	dx = (rect->left % 16);
 
 	if (dx != 0)
@@ -82,11 +83,19 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 {
 	BOOL equal;
 	BOOL allEqual;
-	UINT32 tw, th;
-	UINT32 tx, ty, k;
-	UINT32 nrow, ncol;
-	UINT32 l, t, r, b;
-	BYTE *p1, *p2;
+	UINT32 tw;
+	UINT32 th;
+	UINT32 tx;
+	UINT32 ty;
+	UINT32 k;
+	UINT32 nrow;
+	UINT32 ncol;
+	UINT32 l;
+	UINT32 t;
+	UINT32 r;
+	UINT32 b;
+	BYTE* p1;
+	BYTE* p2;
 	BOOL rows[1024];
 #ifdef WITH_DEBUG_SHADOW_CAPTURE
 	BOOL cols[1024] = { FALSE };

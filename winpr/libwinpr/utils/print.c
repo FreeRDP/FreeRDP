@@ -43,7 +43,9 @@ void winpr_HexDump(const char* tag, UINT32 level, const void* data, size_t lengt
 void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 {
 	const BYTE* p = data;
-	size_t i, line, offset = 0;
+	size_t i;
+	size_t line;
+	size_t offset = 0;
 	const size_t maxlen = 20; /* 64bit SIZE_MAX as decimal */
 	/* String line length:
 	 * prefix          '[1234] '
@@ -132,7 +134,8 @@ fail:
 void winpr_CArrayDump(const char* tag, UINT32 level, const void* data, size_t length, size_t width)
 {
 	const BYTE* p = data;
-	size_t i, offset = 0;
+	size_t i;
+	size_t offset = 0;
 	const size_t llen = ((length > width) ? width : length) * 4ull + 1ull;
 	size_t pos;
 	char* buffer = malloc(llen);
@@ -184,7 +187,8 @@ static BYTE value(char c)
 
 size_t winpr_HexStringToBinBuffer(const char* str, size_t strLength, BYTE* data, size_t dataLength)
 {
-	size_t x, y = 0;
+	size_t x;
+	size_t y = 0;
 	size_t maxStrLen;
 	if (!str || !data || (strLength == 0) || (dataLength == 0))
 		return 0;

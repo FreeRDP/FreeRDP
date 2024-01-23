@@ -74,8 +74,10 @@ static pf_channel_client_context* scard_get_client_context(pClientContext* pc)
 static BOOL pf_channel_client_write_iostatus(wStream* out, const SMARTCARD_OPERATION* op,
                                              UINT32 ioStatus)
 {
-	UINT16 component, packetid;
-	UINT32 dID, cID;
+	UINT16 component;
+	UINT16 packetid;
+	UINT32 dID;
+	UINT32 cID;
 	size_t pos;
 
 	WINPR_ASSERT(op);

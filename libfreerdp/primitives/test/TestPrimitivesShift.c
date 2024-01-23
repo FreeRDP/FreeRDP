@@ -338,7 +338,8 @@ static BOOL test_ShiftWrapper_16u_func(void)
 static BOOL test_lShift_16s_speed(void)
 {
 	UINT32 val;
-	INT16 ALIGN(src[MAX_TEST_SIZE + 1]), ALIGN(dst[MAX_TEST_SIZE + 1]);
+	INT16 ALIGN(src[MAX_TEST_SIZE + 1]);
+	INT16 ALIGN(dst[MAX_TEST_SIZE + 1]);
 	winpr_RAND(src, sizeof(src));
 	winpr_RAND(&val, sizeof(val));
 
@@ -358,7 +359,8 @@ static BOOL test_lShift_16s_speed(void)
 static BOOL test_lShift_16u_speed(void)
 {
 	UINT32 val;
-	UINT16 ALIGN(src[MAX_TEST_SIZE + 1]), ALIGN(dst[MAX_TEST_SIZE + 1]);
+	UINT16 ALIGN(src[MAX_TEST_SIZE + 1]);
+	UINT16 ALIGN(dst[MAX_TEST_SIZE + 1]);
 	winpr_RAND(&val, sizeof(val));
 	winpr_RAND(src, sizeof(src));
 
@@ -378,7 +380,8 @@ static BOOL test_lShift_16u_speed(void)
 static BOOL test_rShift_16s_speed(void)
 {
 	UINT32 val;
-	INT16 ALIGN(src[MAX_TEST_SIZE + 1]), ALIGN(dst[MAX_TEST_SIZE + 1]);
+	INT16 ALIGN(src[MAX_TEST_SIZE + 1]);
+	INT16 ALIGN(dst[MAX_TEST_SIZE + 1]);
 	winpr_RAND(src, sizeof(src));
 	winpr_RAND(&val, sizeof(val));
 
@@ -398,7 +401,8 @@ static BOOL test_rShift_16s_speed(void)
 static BOOL test_rShift_16u_speed(void)
 {
 	UINT32 val;
-	UINT16 ALIGN(src[MAX_TEST_SIZE + 1]), ALIGN(dst[MAX_TEST_SIZE + 1]);
+	UINT16 ALIGN(src[MAX_TEST_SIZE + 1]);
+	UINT16 ALIGN(dst[MAX_TEST_SIZE + 1]);
 	winpr_RAND(&val, sizeof(val));
 	winpr_RAND(src, sizeof(src));
 

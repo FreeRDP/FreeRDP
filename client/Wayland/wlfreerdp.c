@@ -51,7 +51,10 @@ static BOOL wl_update_buffer(wlfContext* context_w, INT32 ix, INT32 iy, INT32 iw
 	BOOL res = FALSE;
 	rdpGdi* gdi;
 	char* data;
-	UINT32 x, y, w, h;
+	UINT32 x;
+	UINT32 y;
+	UINT32 w;
+	UINT32 h;
 	UwacSize geometry;
 	size_t stride;
 	UwacReturnCode rc;
@@ -119,8 +122,10 @@ static BOOL wl_end_paint(rdpContext* context)
 {
 	rdpGdi* gdi;
 	wlfContext* context_w;
-	INT32 x, y;
-	INT32 w, h;
+	INT32 x;
+	INT32 y;
+	INT32 w;
+	INT32 h;
 
 	if (!context || !context->gdi || !context->gdi->primary)
 		return FALSE;
@@ -224,7 +229,8 @@ static BOOL wl_post_connect(freerdp* instance)
 	rdpSettings* settings;
 	char* title = "FreeRDP";
 	char* app_id = "wlfreerdp";
-	UINT32 w, h;
+	UINT32 w;
+	UINT32 h;
 
 	if (!instance || !instance->context)
 		return FALSE;
@@ -770,7 +776,8 @@ BOOL wlf_scale_coordinates(rdpContext* context, UINT32* px, UINT32* py, BOOL fro
 	wlfContext* wlf = (wlfContext*)context;
 	rdpGdi* gdi;
 	UwacSize geometry;
-	double sx, sy;
+	double sx;
+	double sy;
 
 	if (!context || !px || !py || !context->gdi)
 		return FALSE;

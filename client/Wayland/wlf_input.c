@@ -61,7 +61,8 @@ static BOOL scale_signed_coordinates(rdpContext* context, int32_t* x, int32_t* y
 
 BOOL wlf_handle_pointer_enter(freerdp* instance, const UwacPointerEnterLeaveEvent* ev)
 {
-	uint32_t x, y;
+	uint32_t x;
+	uint32_t y;
 	rdpClientContext* cctx;
 
 	if (!instance || !ev)
@@ -81,7 +82,8 @@ BOOL wlf_handle_pointer_enter(freerdp* instance, const UwacPointerEnterLeaveEven
 
 BOOL wlf_handle_pointer_motion(freerdp* instance, const UwacPointerMotionEvent* ev)
 {
-	uint32_t x, y;
+	uint32_t x;
+	uint32_t y;
 	rdpClientContext* cctx;
 
 	if (!instance || !ev)
@@ -106,7 +108,8 @@ BOOL wlf_handle_pointer_buttons(freerdp* instance, const UwacPointerButtonEvent*
 	rdpClientContext* cctx;
 	UINT16 flags = 0;
 	UINT16 xflags = 0;
-	uint32_t x, y;
+	uint32_t x;
+	uint32_t y;
 
 	if (!instance || !ev)
 		return FALSE;
@@ -397,7 +400,8 @@ BOOL wlf_keyboard_modifiers(freerdp* instance, const UwacKeyboardModifiersEvent*
 
 BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 {
-	int32_t x, y;
+	int32_t x;
+	int32_t y;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(ev);
@@ -416,7 +420,8 @@ BOOL wlf_handle_touch_up(freerdp* instance, const UwacTouchUp* ev)
 
 BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 {
-	int32_t x, y;
+	int32_t x;
+	int32_t y;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(ev);
@@ -435,7 +440,8 @@ BOOL wlf_handle_touch_down(freerdp* instance, const UwacTouchDown* ev)
 
 BOOL wlf_handle_touch_motion(freerdp* instance, const UwacTouchMotion* ev)
 {
-	int32_t x, y;
+	int32_t x;
+	int32_t y;
 
 	WINPR_ASSERT(instance);
 	WINPR_ASSERT(ev);

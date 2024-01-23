@@ -630,7 +630,8 @@ static UINT rdpgfx_recv_evict_cache_entry_pdu(GENERIC_CHANNEL_CALLBACK* callback
  */
 static UINT rdpgfx_load_cache_import_offer(RDPGFX_PLUGIN* gfx, RDPGFX_CACHE_IMPORT_OFFER_PDU* offer)
 {
-	int idx, count;
+	int idx;
+	int count;
 	UINT error = CHANNEL_RC_OK;
 	PERSISTENT_CACHE_ENTRY entry;
 	rdpPersistentCache* persistent = NULL;
@@ -843,7 +844,8 @@ fail:
  */
 static UINT rdpgfx_send_cache_offer(RDPGFX_PLUGIN* gfx)
 {
-	int idx, count;
+	int idx;
+	int count;
 	UINT error = CHANNEL_RC_OK;
 	PERSISTENT_CACHE_ENTRY entry;
 	RDPGFX_CACHE_IMPORT_OFFER_PDU* offer = NULL;

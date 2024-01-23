@@ -107,7 +107,12 @@ static BOOL sdl_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 
 BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 {
-	INT32 w, h, x, y, sw, sh;
+	INT32 w;
+	INT32 h;
+	INT32 x;
+	INT32 y;
+	INT32 sw;
+	INT32 sh;
 
 	WINPR_ASSERT(uptr);
 

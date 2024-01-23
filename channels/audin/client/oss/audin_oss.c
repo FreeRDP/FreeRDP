@@ -148,7 +148,8 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 {
 	char dev_name[PATH_MAX] = "/dev/dsp";
 	char mixer_name[PATH_MAX] = "/dev/mixer";
-	int pcm_handle = -1, mixer_handle;
+	int pcm_handle = -1;
+	int mixer_handle;
 	BYTE* buffer = NULL;
 	unsigned long tmp = 0;
 	size_t buffer_size = 0;
@@ -385,7 +386,8 @@ static UINT audin_oss_free(IAudinDevice* device)
 static UINT audin_oss_parse_addin_args(AudinOSSDevice* device, const ADDIN_ARGV* args)
 {
 	int status;
-	char *str_num, *eptr;
+	char* str_num;
+	char* eptr;
 	DWORD flags;
 	const COMMAND_LINE_ARGUMENT_A* arg;
 	AudinOSSDevice* oss = (AudinOSSDevice*)device;

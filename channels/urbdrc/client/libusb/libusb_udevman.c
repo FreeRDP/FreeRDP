@@ -145,7 +145,9 @@ static size_t udevman_register_udevice(IUDEVMAN* idevman, BYTE bus_number, BYTE 
 	IUDEVICE* pdev = NULL;
 	IUDEVICE** devArray;
 	URBDRC_PLUGIN* urbdrc;
-	size_t i, num, addnum = 0;
+	size_t i;
+	size_t num;
+	size_t addnum = 0;
 
 	if (!idevman || !idevman->plugin)
 		return 0;
@@ -675,7 +677,8 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 {
 	const char* pos = devices;
 	VID_PID_PAIR* idpair;
-	UINT16 id1, id2;
+	UINT16 id1;
+	UINT16 id2;
 
 	while (*pos != '\0')
 	{

@@ -269,7 +269,8 @@ static UINT rdpdr_seal_send_free_request(pf_channel_server_context* context, wSt
 static BOOL rdpdr_process_server_header(BOOL server, wLog* log, wStream* s, UINT16 component,
                                         UINT16 PacketId, size_t expect)
 {
-	UINT16 rpacketid, rcomponent;
+	UINT16 rpacketid;
+	UINT16 rcomponent;
 
 	WINPR_ASSERT(s);
 	if (!Stream_CheckAndLogRequiredLengthRx(server, log, s, 4))
@@ -388,7 +389,8 @@ static UINT rdpdr_process_client_announce_reply(pf_channel_server_context* rdpdr
 {
 	const UINT16 component = RDPDR_CTYP_CORE;
 	const UINT16 packetid = PAKID_CORE_CLIENTID_CONFIRM;
-	UINT16 versionMajor, versionMinor;
+	UINT16 versionMajor;
+	UINT16 versionMinor;
 	UINT32 clientID;
 
 	WINPR_ASSERT(rdpdr);
@@ -733,7 +735,8 @@ static UINT rdpdr_process_client_capability_response(pf_channel_server_context* 
 	const UINT16 component = RDPDR_CTYP_CORE;
 	const UINT16 packetid = PAKID_CORE_CLIENT_CAPABILITY;
 	UINT status = CHANNEL_RC_OK;
-	UINT16 numCapabilities, x;
+	UINT16 numCapabilities;
+	UINT16 x;
 	WINPR_ASSERT(rdpdr);
 
 	if (!rdpdr_process_server_header(TRUE, rdpdr->log, s, component, packetid, 4))
@@ -890,7 +893,8 @@ rdpdr_process_server_capability_request_or_clientid_confirm(pf_channel_client_co
 	const UINT32 mask = STATE_CLIENT_EXPECT_SERVER_CLIENT_ID_CONFIRM |
 	                    STATE_CLIENT_EXPECT_SERVER_CORE_CAPABILITY_REQUEST;
 	const UINT16 rcomponent = RDPDR_CTYP_CORE;
-	UINT16 component, packetid;
+	UINT16 component;
+	UINT16 packetid;
 
 	WINPR_ASSERT(rdpdr);
 	WINPR_ASSERT(s);
@@ -1106,7 +1110,8 @@ static BOOL pf_channel_rdpdr_rewrite_device_list(pf_channel_client_context* rdpd
 	WINPR_ASSERT(ps);
 
 	const size_t pos = Stream_GetPosition(s);
-	UINT16 component, packetid;
+	UINT16 component;
+	UINT16 packetid;
 	Stream_SetPosition(s, 0);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 4))
@@ -1190,7 +1195,8 @@ static BOOL filter_smartcard_io_requests(pf_channel_client_context* rdpdr, wStre
                                          UINT16* pPacketid)
 {
 	BOOL rc = FALSE;
-	UINT16 component, packetid;
+	UINT16 component;
+	UINT16 packetid;
 	UINT32 deviceID = 0;
 	size_t pos;
 
@@ -1529,7 +1535,8 @@ static BOOL pf_channel_rdpdr_client_pass_message(pServerContext* ps, pClientCont
 static BOOL filter_smartcard_device_list_remove(pf_channel_server_context* rdpdr, wStream* s)
 {
 	size_t pos;
-	UINT32 x, count;
+	UINT32 x;
+	UINT32 count;
 
 	WINPR_ASSERT(rdpdr);
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, sizeof(UINT32)))
@@ -1630,7 +1637,8 @@ static BOOL filter_smartcard_device_list_announce_request(pf_channel_server_cont
 {
 	BOOL rc = TRUE;
 	size_t pos;
-	UINT16 component, packetid;
+	UINT16 component;
+	UINT16 packetid;
 
 	WINPR_ASSERT(rdpdr);
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 8))

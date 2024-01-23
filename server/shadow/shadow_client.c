@@ -318,7 +318,8 @@ static INLINE void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 nu
  */
 static INLINE BOOL shadow_client_recalc_desktop_size(rdpShadowClient* client)
 {
-	INT32 width, height;
+	INT32 width;
+	INT32 height;
 	rdpShadowServer* server;
 	rdpSettings* settings;
 	RECTANGLE_16 viewport = { 0 };
@@ -1378,7 +1379,8 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 	rdpSettings* settings;
 	rdpShadowEncoder* encoder;
 	SURFACE_BITS_COMMAND cmd = { 0 };
-	UINT32 nsID, rfxID;
+	UINT32 nsID;
+	UINT32 rfxID;
 
 	if (!context || !pSrcData)
 		return FALSE;
@@ -1528,8 +1530,10 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 	BYTE* data;
 	BYTE* buffer;
 	UINT32 k;
-	UINT32 yIdx, xIdx;
-	UINT32 rows, cols;
+	UINT32 yIdx;
+	UINT32 xIdx;
+	UINT32 rows;
+	UINT32 cols;
 	UINT32 DstSize;
 	UINT32 SrcFormat;
 	BITMAP_DATA* bitmap;
@@ -1672,7 +1676,8 @@ static BOOL shadow_client_send_bitmap_update(rdpShadowClient* client, BYTE* pSrc
 
 	if (updateSizeEstimate > maxUpdateSize)
 	{
-		UINT32 i, j;
+		UINT32 i;
+		UINT32 j;
 		UINT32 updateSize;
 		UINT32 newUpdateSize;
 		BITMAP_DATA* fragBitmapData = NULL;
@@ -1742,8 +1747,10 @@ out:
 static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GFX_STATUS* pStatus)
 {
 	BOOL ret = TRUE;
-	INT64 nXSrc, nYSrc;
-	INT64 nWidth, nHeight;
+	INT64 nXSrc;
+	INT64 nYSrc;
+	INT64 nWidth;
+	INT64 nHeight;
 	rdpContext* context = (rdpContext*)client;
 	rdpSettings* settings;
 	rdpShadowServer* server;
@@ -1752,7 +1759,8 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* extents;
 	BYTE* pSrcData;
-	UINT32 nSrcStep, SrcFormat;
+	UINT32 nSrcStep;
+	UINT32 SrcFormat;
 	UINT32 index;
 	UINT32 numRects = 0;
 	const RECTANGLE_16* rects;
@@ -1814,7 +1822,8 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	/* Move to new pSrcData / nXSrc / nYSrc according to sub rect */
 	if (server->shareSubRect)
 	{
-		INT32 subX, subY;
+		INT32 subX;
+		INT32 subY;
 		subX = server->subRect.left;
 		subY = server->subRect.top;
 		nXSrc -= subX;

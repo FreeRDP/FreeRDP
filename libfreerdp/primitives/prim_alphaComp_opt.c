@@ -51,9 +51,13 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 	const UINT32* sptr1 = (const UINT32*)pSrc1;
 	const UINT32* sptr2 = (const UINT32*)pSrc2;
 	UINT32* dptr;
-	int linebytes, src1Jump, src2Jump, dstJump;
+	int linebytes;
+	int src1Jump;
+	int src2Jump;
+	int dstJump;
 	UINT32 y;
-	__m128i xmm0, xmm1;
+	__m128i xmm0;
+	__m128i xmm1;
 
 	if ((width <= 0) || (height <= 0))
 		return PRIMITIVES_SUCCESS;
@@ -125,7 +129,12 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 
 		while (count--)
 		{
-			__m128i xmm2, xmm3, xmm4, xmm5, xmm6, xmm7;
+			__m128i xmm2;
+			__m128i xmm3;
+			__m128i xmm4;
+			__m128i xmm5;
+			__m128i xmm6;
+			__m128i xmm7;
 			/* BdGdRdAdBcGcRcAcBbGbRbAbBaGaRaAa */
 			xmm2 = LOAD_SI128(sptr1);
 			sptr1 += 4;

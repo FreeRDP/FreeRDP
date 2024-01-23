@@ -155,7 +155,8 @@ void xf_rail_adjust_position(xfContext* xfc, xfAppWindow* appWindow)
 
 void xf_rail_end_local_move(xfContext* xfc, xfAppWindow* appWindow)
 {
-	int x, y;
+	int x;
+	int y;
 	int child_x;
 	int child_y;
 	unsigned int mask;
@@ -902,7 +903,8 @@ static UINT xf_rail_server_handshake_ex(RailClientContext* context,
 static UINT xf_rail_server_local_move_size(RailClientContext* context,
                                            const RAIL_LOCALMOVESIZE_ORDER* localMoveSize)
 {
-	int x = 0, y = 0;
+	int x = 0;
+	int y = 0;
 	int direction = 0;
 	Window child_window;
 	xfContext* xfc = (xfContext*)context->custom;

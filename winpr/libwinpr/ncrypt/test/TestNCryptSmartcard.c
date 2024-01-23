@@ -93,7 +93,8 @@ int TestNCryptSmartcard(int argc, char* argv[])
 		                                NCRYPT_SILENT_FLAG)) == ERROR_SUCCESS)
 		{
 			NCRYPT_KEY_HANDLE phKey;
-			DWORD dwFlags = 0, cbOutput;
+			DWORD dwFlags = 0;
+			DWORD cbOutput;
 			char keyNameStr[256] = { 0 };
 			WCHAR reader[1024] = { 0 };
 			PBYTE certBytes = NULL;

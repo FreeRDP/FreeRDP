@@ -280,7 +280,8 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 void xf_adjust_coordinates_to_screen(xfContext* xfc, UINT32* x, UINT32* y)
 {
 	rdpSettings* settings;
-	INT64 tx, ty;
+	INT64 tx;
+	INT64 ty;
 
 	if (!xfc || !xfc->common.context.settings || !y || !x)
 		return;
@@ -337,8 +338,10 @@ void xf_event_adjust_coordinates(xfContext* xfc, int* x, int* y)
 
 static BOOL xf_event_Expose(xfContext* xfc, const XExposeEvent* event, BOOL app)
 {
-	int x, y;
-	int w, h;
+	int x;
+	int y;
+	int w;
+	int h;
 	rdpSettings* settings;
 
 	WINPR_ASSERT(xfc);
@@ -809,7 +812,8 @@ static BOOL xf_event_ConfigureNotify(xfContext* xfc, const XConfigureEvent* even
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_DynamicResolutionUpdate))
 		{
-			int alignedWidth, alignedHeight;
+			int alignedWidth;
+			int alignedHeight;
 			alignedWidth = (xfc->window->width / 2) * 2;
 			alignedHeight = (xfc->window->height / 2) * 2;
 			/* ask the server to resize using the display channel */

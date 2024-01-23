@@ -235,7 +235,8 @@ static PSecHandle negotiate_FindCredential(MechCred* creds, const Mech* mech)
 
 static BOOL negotiate_get_dword(HKEY hKey, const char* subkey, DWORD* pdwValue)
 {
-	DWORD dwValue = 0, dwType = 0;
+	DWORD dwValue = 0;
+	DWORD dwType = 0;
 	DWORD dwSize = sizeof(dwValue);
 	LONG rc = RegQueryValueExA(hKey, subkey, NULL, &dwType, (BYTE*)&dwValue, &dwSize);
 
@@ -953,7 +954,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 	SecBufferDesc mech_input = { SECBUFFER_VERSION, 1, &input_token.mechToken };
 	SecBufferDesc mech_output = { SECBUFFER_VERSION, 1, &output_token.mechToken };
 	SECURITY_STATUS status = SEC_E_INTERNAL_ERROR;
-	WinPrAsn1Decoder dec, dec2;
+	WinPrAsn1Decoder dec;
+	WinPrAsn1Decoder dec2;
 	WinPrAsn1_tagId tag;
 	WinPrAsn1_OID oid = { 0 };
 	const Mech* first_mech = NULL;
@@ -1371,7 +1373,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleW(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	BOOL kerberos, ntlm;
+	BOOL kerberos;
+	BOOL ntlm;
 
 	if (!negotiate_get_config(pAuthData, &kerberos, &ntlm))
 		return SEC_E_INTERNAL_ERROR;
@@ -1412,7 +1415,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcquireCredentialsHandleA(
     void* pAuthData, SEC_GET_KEY_FN pGetKeyFn, void* pvGetKeyArgument, PCredHandle phCredential,
     PTimeStamp ptsExpiry)
 {
-	BOOL kerberos, ntlm;
+	BOOL kerberos;
+	BOOL ntlm;
 
 	if (!negotiate_get_config(pAuthData, &kerberos, &ntlm))
 		return SEC_E_INTERNAL_ERROR;

@@ -14,8 +14,14 @@
 int TestGdiRegion(int argc, char* argv[])
 {
 	int rc = -1;
-	INT32 x, y, w, h;
-	INT32 l, r, t, b;
+	INT32 x;
+	INT32 y;
+	INT32 w;
+	INT32 h;
+	INT32 l;
+	INT32 r;
+	INT32 t;
+	INT32 b;
 	HGDI_RGN rgn1 = NULL;
 	HGDI_RGN rgn2 = NULL;
 	HGDI_RECT rect1 = NULL;

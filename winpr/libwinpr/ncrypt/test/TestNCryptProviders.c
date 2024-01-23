@@ -27,7 +27,8 @@
 int TestNCryptProviders(int argc, char* argv[])
 {
 	SECURITY_STATUS status;
-	DWORD nproviders, i;
+	DWORD nproviders;
+	DWORD i;
 	NCryptProviderName* providers;
 
 	WINPR_UNUSED(argc);

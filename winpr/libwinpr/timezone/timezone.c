@@ -54,7 +54,9 @@ static UINT64 winpr_windows_gmtime(void)
 static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 {
 	const INT CHUNK_SIZE = 32;
-	INT64 rc, read = 0, length = CHUNK_SIZE;
+	INT64 rc;
+	INT64 read = 0;
+	INT64 length = CHUNK_SIZE;
 	char* tzid = NULL;
 
 	tzid = (char*)malloc(length);
@@ -294,8 +296,10 @@ static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, con
 
 static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 {
-	size_t i, j;
-	char *tzid = NULL, *ntzid = NULL;
+	size_t i;
+	size_t j;
+	char* tzid = NULL;
+	char* ntzid = NULL;
 	LPCSTR tz = "TZ";
 
 	DWORD nSize = GetEnvironmentVariableA(tz, NULL, 0);

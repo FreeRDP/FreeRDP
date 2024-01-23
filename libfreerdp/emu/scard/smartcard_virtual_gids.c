@@ -679,7 +679,9 @@ static void vgids_reset_context_command_data(vgidsContext* context)
 static BOOL vgids_ins_select(vgidsContext* context, wStream* s, BYTE** response,
                              DWORD* responseSize)
 {
-	BYTE p1, p2, lc;
+	BYTE p1;
+	BYTE p2;
+	BYTE lc;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
 	UINT16 status = ISO_STATUS_SUCCESS;
@@ -855,7 +857,9 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 {
 	UINT16 doId;
 	UINT16 fileId;
-	BYTE p1, p2, lc;
+	BYTE p1;
+	BYTE p2;
+	BYTE lc;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
 	UINT16 status = ISO_STATUS_SUCCESS;
@@ -878,7 +882,8 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 	{
 		case 4:
 		{
-			BYTE tag, length;
+			BYTE tag;
+			BYTE length;
 			Stream_Read_UINT8(s, tag);
 			Stream_Read_UINT8(s, length);
 			if (tag != 0x5C && length != 0x02)
@@ -894,7 +899,9 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 		case 0xA:
 		{
 			UINT16 pubKeyDO;
-			BYTE tag, length, keyRef;
+			BYTE tag;
+			BYTE length;
+			BYTE keyRef;
 
 			/* We want to retrieve the public key? */
 			if (p1 != 0x3F && p2 != 0xFF)
@@ -966,8 +973,11 @@ static BOOL vgids_ins_getdata(vgidsContext* context, wStream* s, BYTE** response
 static BOOL vgids_ins_manage_security_environment(vgidsContext* context, wStream* s,
                                                   BYTE** response, DWORD* responseSize)
 {
-	BYTE tag, length;
-	BYTE p1, p2, lc;
+	BYTE tag;
+	BYTE length;
+	BYTE p1;
+	BYTE p2;
+	BYTE lc;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
 	UINT16 status = ISO_STATUS_SUCCESS;
@@ -1026,7 +1036,8 @@ create_response:
 
 static BOOL vgids_perform_digital_signature(vgidsContext* context)
 {
-	size_t sigSize, msgSize;
+	size_t sigSize;
+	size_t msgSize;
 	EVP_PKEY_CTX* ctx = NULL;
 	EVP_PKEY* pk = freerdp_key_get_evp_pkey(context->privateKey);
 	const vgidsDigestInfoMap gidsDigestInfo[VGIDS_MAX_DIGEST_INFO] = {
@@ -1203,7 +1214,10 @@ decrypt_failed:
 static BOOL vgids_ins_perform_security_operation(vgidsContext* context, wStream* s, BYTE** response,
                                                  DWORD* responseSize)
 {
-	BYTE cla, p1, p2, lc;
+	BYTE cla;
+	BYTE p1;
+	BYTE p2;
+	BYTE lc;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
 	UINT16 status = ISO_STATUS_SUCCESS;
@@ -1291,10 +1305,13 @@ create_response:
 static BOOL vgids_ins_getresponse(vgidsContext* context, wStream* s, BYTE** response,
                                   DWORD* responseSize)
 {
-	BYTE p1, p2, le;
+	BYTE p1;
+	BYTE p2;
+	BYTE le;
 	DWORD resultDataSize = 0;
 	const BYTE* resultData = NULL;
-	DWORD expectedLen, remainingSize;
+	DWORD expectedLen;
+	DWORD remainingSize;
 	UINT16 status = ISO_STATUS_SUCCESS;
 
 	/* Get response continues data transfer after a previous get data command */
@@ -1345,7 +1362,10 @@ create_response:
 static BOOL vgids_ins_verify(vgidsContext* context, wStream* s, BYTE** response,
                              DWORD* responseSize)
 {
-	BYTE ins, p1, p2, lc;
+	BYTE ins;
+	BYTE p1;
+	BYTE p2;
+	BYTE lc;
 	UINT16 status = ISO_STATUS_SUCCESS;
 	char pin[VGIDS_MAX_PIN_SIZE + 1] = { 0 };
 

@@ -10,7 +10,9 @@ typedef int (*TEST_AB_FN)(int a, int b);
 
 int TestLibraryGetProcAddress(int argc, char* argv[])
 {
-	int a, b, c;
+	int a;
+	int b;
+	int c;
 	HINSTANCE library;
 	TEST_AB_FN pFunctionA;
 	TEST_AB_FN pFunctionB;

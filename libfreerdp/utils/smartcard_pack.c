@@ -100,7 +100,9 @@ static BOOL smartcard_ndr_pointer_read_(wStream* s, UINT32* index, UINT32* ptr, 
 static LONG smartcard_ndr_read(wStream* s, BYTE** data, size_t min, size_t elementSize,
                                ndr_ptr_t type)
 {
-	size_t len = 0, offset, len2;
+	size_t len = 0;
+	size_t offset;
+	size_t len2;
 	void* r;
 	size_t required = 0;
 
@@ -325,7 +327,8 @@ static LONG smartcard_ndr_read_u(wStream* s, UUID** data)
 
 static char* smartcard_convert_string_list(const void* in, size_t bytes, BOOL unicode)
 {
-	size_t index, length = 0;
+	size_t index;
+	size_t length = 0;
 	union
 	{
 		const void* pv;
@@ -2208,7 +2211,8 @@ static void smartcard_trace_get_status_change_a_call(const GetStatusChangeA_Call
 static LONG smartcard_unpack_reader_state_a(wStream* s, LPSCARD_READERSTATEA* ppcReaders,
                                             UINT32 cReaders, UINT32* ptrIndex)
 {
-	UINT32 index, len;
+	UINT32 index;
+	UINT32 len;
 	LONG status = SCARD_E_NO_MEMORY;
 	LPSCARD_READERSTATEA rgReaderStates;
 	BOOL* states;
@@ -2281,7 +2285,8 @@ fail:
 static LONG smartcard_unpack_reader_state_w(wStream* s, LPSCARD_READERSTATEW* ppcReaders,
                                             UINT32 cReaders, UINT32* ptrIndex)
 {
-	UINT32 index, len;
+	UINT32 index;
+	UINT32 len;
 	LONG status = SCARD_E_NO_MEMORY;
 	LPSCARD_READERSTATEW rgReaderStates;
 	BOOL* states;
@@ -3015,7 +3020,8 @@ LONG smartcard_unpack_locate_cards_by_atr_a_call(wStream* s, LocateCardsByATRA_C
 
 LONG smartcard_unpack_context_and_two_strings_a_call(wStream* s, ContextAndTwoStringA_Call* call)
 {
-	UINT32 sz1NdrPtr, sz2NdrPtr;
+	UINT32 sz1NdrPtr;
+	UINT32 sz2NdrPtr;
 	UINT32 index = 0;
 	UINT32 pbContextNdrPtr = 0;
 
@@ -3051,7 +3057,8 @@ LONG smartcard_unpack_context_and_two_strings_a_call(wStream* s, ContextAndTwoSt
 
 LONG smartcard_unpack_context_and_two_strings_w_call(wStream* s, ContextAndTwoStringW_Call* call)
 {
-	UINT32 sz1NdrPtr, sz2NdrPtr;
+	UINT32 sz1NdrPtr;
+	UINT32 sz2NdrPtr;
 	UINT32 index = 0;
 	UINT32 pbContextNdrPtr = 0;
 
@@ -3087,7 +3094,8 @@ LONG smartcard_unpack_context_and_two_strings_w_call(wStream* s, ContextAndTwoSt
 
 LONG smartcard_unpack_locate_cards_a_call(wStream* s, LocateCardsA_Call* call)
 {
-	UINT32 sz1NdrPtr, sz2NdrPtr;
+	UINT32 sz1NdrPtr;
+	UINT32 sz2NdrPtr;
 	UINT32 index = 0;
 	UINT32 pbContextNdrPtr = 0;
 
@@ -3130,7 +3138,8 @@ LONG smartcard_unpack_locate_cards_a_call(wStream* s, LocateCardsA_Call* call)
 
 LONG smartcard_unpack_locate_cards_w_call(wStream* s, LocateCardsW_Call* call)
 {
-	UINT32 sz1NdrPtr, sz2NdrPtr;
+	UINT32 sz1NdrPtr;
+	UINT32 sz2NdrPtr;
 	UINT32 index = 0;
 	UINT32 pbContextNdrPtr = 0;
 

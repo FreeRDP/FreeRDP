@@ -450,7 +450,9 @@ int mppc_compress(MPPC_CONTEXT* mppc, const BYTE* pSrcData, UINT32 SrcSize, BYTE
 	BYTE* HistoryPtr;
 	UINT32 HistoryOffset;
 	UINT32 HistoryBufferSize;
-	BYTE Sym1, Sym2, Sym3;
+	BYTE Sym1;
+	BYTE Sym2;
+	BYTE Sym3;
 	UINT32 CompressionLevel;
 	wBitStream* bs;
 

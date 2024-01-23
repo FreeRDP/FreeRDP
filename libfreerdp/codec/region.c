@@ -234,7 +234,8 @@ BOOL region16_copy(REGION16* dst, const REGION16* src)
 void region16_print(const REGION16* region)
 {
 	const RECTANGLE_16* rects;
-	UINT32 nbRects, i;
+	UINT32 nbRects;
+	UINT32 i;
 	int currentBandY = -1;
 	rects = region16_rects(region, &nbRects);
 	WLog_DBG(TAG, "nrects=%" PRIu32 "", nbRects);
@@ -258,7 +259,8 @@ static void region16_copy_band_with_union(RECTANGLE_16* dst, const RECTANGLE_16*
                                           const RECTANGLE_16** srcPtr, RECTANGLE_16** dstPtr)
 {
 	UINT16 refY = src->top;
-	const RECTANGLE_16 *startOverlap, *endOverlap;
+	const RECTANGLE_16* startOverlap;
+	const RECTANGLE_16* endOverlap;
 
 	/* merges a band with the given rect
 	 * Input:
@@ -419,8 +421,10 @@ static BOOL region16_simplify_bands(REGION16* region)
 	 *
 	 */
 	RECTANGLE_16* endBand;
-	int nbRects, finalNbRects;
-	int bandItems, toMove;
+	int nbRects;
+	int finalNbRects;
+	int bandItems;
+	int toMove;
 	finalNbRects = nbRects = region16_n_rects(region);
 
 	if (nbRects < 2)
@@ -489,11 +493,14 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 {
 	const RECTANGLE_16* srcExtents;
 	RECTANGLE_16* dstExtents;
-	const RECTANGLE_16 *currentBand, *endSrcRect, *nextBand;
+	const RECTANGLE_16* currentBand;
+	const RECTANGLE_16* endSrcRect;
+	const RECTANGLE_16* nextBand;
 	REGION16_DATA* newItems = NULL;
 	REGION16_DATA* tmpItems = NULL;
 	RECTANGLE_16* dstRect = NULL;
-	UINT32 usedRects, srcNbRects;
+	UINT32 usedRects;
+	UINT32 srcNbRects;
 	UINT16 topInterBand;
 	WINPR_ASSERT(src);
 	WINPR_ASSERT(dst);
@@ -680,7 +687,9 @@ BOOL region16_union_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16*
 
 BOOL region16_intersects_rect(const REGION16* src, const RECTANGLE_16* arg2)
 {
-	const RECTANGLE_16 *rect, *endPtr, *srcExtents;
+	const RECTANGLE_16* rect;
+	const RECTANGLE_16* endPtr;
+	const RECTANGLE_16* srcExtents;
 	UINT32 nbRects;
 
 	if (!src || !src->data || !arg2)
@@ -711,10 +720,14 @@ BOOL region16_intersects_rect(const REGION16* src, const RECTANGLE_16* arg2)
 BOOL region16_intersect_rect(REGION16* dst, const REGION16* src, const RECTANGLE_16* rect)
 {
 	REGION16_DATA* newItems;
-	const RECTANGLE_16 *srcPtr, *endPtr, *srcExtents;
+	const RECTANGLE_16* srcPtr;
+	const RECTANGLE_16* endPtr;
+	const RECTANGLE_16* srcExtents;
 	RECTANGLE_16* dstPtr;
-	UINT32 nbRects, usedRects;
-	RECTANGLE_16 common, newExtents;
+	UINT32 nbRects;
+	UINT32 usedRects;
+	RECTANGLE_16 common;
+	RECTANGLE_16 newExtents;
 	WINPR_ASSERT(src);
 	WINPR_ASSERT(src->data);
 	srcPtr = region16_rects(src, &nbRects);

@@ -87,7 +87,8 @@ static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName
                                                                   LPCSTR pszSubsystem,
                                                                   LPCSTR pszType, DWORD dwFlags)
 {
-	size_t i, j;
+	size_t i;
+	size_t j;
 	DWORD nAddins;
 	FREERDP_ADDIN** ppAddins = NULL;
 	const STATIC_SUBSYSTEM_ENTRY* subsystems;

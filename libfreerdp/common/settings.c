@@ -211,7 +211,8 @@ int freerdp_addin_replace_argument_value(ADDIN_ARGV* args, const char* previous,
 
 BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 {
-	UINT32 count, old;
+	UINT32 count;
+	UINT32 old;
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(device);
 
@@ -698,7 +699,8 @@ BOOL freerdp_dynamic_channel_collection_del(rdpSettings* settings, const char* n
 
 BOOL freerdp_dynamic_channel_collection_add(rdpSettings* settings, ADDIN_ARGV* channel)
 {
-	UINT32 count, oldSize;
+	UINT32 count;
+	UINT32 oldSize;
 
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(channel);

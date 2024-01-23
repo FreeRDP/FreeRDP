@@ -119,8 +119,10 @@ void shadow_screen_free(rdpShadowScreen* screen)
 
 BOOL shadow_screen_resize(rdpShadowScreen* screen)
 {
-	int x, y;
-	int width, height;
+	int x;
+	int y;
+	int width;
+	int height;
 	MONITOR_DEF* primary;
 	rdpShadowSubsystem* subsystem;
 

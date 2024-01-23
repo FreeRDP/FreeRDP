@@ -391,7 +391,8 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 
 	SDL_Surface* screen = SDL_GetWindowSurface(window.window());
 
-	int w, h;
+	int w;
+	int h;
 	SDL_GetWindowSize(window.window(), &w, &h);
 
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))

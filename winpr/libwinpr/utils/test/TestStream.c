@@ -90,7 +90,8 @@ static BOOL TestStream_New(void)
 static BOOL TestStream_Static(void)
 {
 	BYTE buffer[20];
-	wStream staticStream, *s = &staticStream;
+	wStream staticStream;
+	wStream* s = &staticStream;
 	UINT16 v;
 	/* Test creation of a static stream */
 	Stream_StaticInit(s, buffer, sizeof(buffer));
@@ -129,7 +130,10 @@ static BOOL TestStream_Static(void)
 
 static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 {
-	size_t i, len, cap, pos;
+	size_t i;
+	size_t len;
+	size_t cap;
+	size_t pos;
 	wStream* s = NULL;
 	void* buffer = NULL;
 
@@ -250,8 +254,8 @@ fail:
 #define TestStream_PeekAndRead(_s, _r, _t)                            \
 	do                                                                \
 	{                                                                 \
-		_t _a, _b;                                                    \
-		size_t _i;                                                    \
+		_t _a;                                                        \
+		_t _b;                                                        \
 		BYTE* _p = Stream_Buffer(_s);                                 \
 		Stream_SetPosition(_s, 0);                                    \
 		Stream_Peek_##_t(_s, _a);                                     \
@@ -261,7 +265,7 @@ fail:
 			printf("%s: test1 " #_t "_LE failed\n", __func__);        \
 			_r = FALSE;                                               \
 		}                                                             \
-		for (_i = 0; _i < sizeof(_t); _i++)                           \
+		for (size_t _i = 0; _i < sizeof(_t); _i++)                    \
 		{                                                             \
 			if (((_a >> (_i * 8)) & 0xFF) != _p[_i])                  \
 			{                                                         \
@@ -279,7 +283,7 @@ fail:
 			printf("%s: test1 " #_t "_BE failed\n", __func__);        \
 			_r = FALSE;                                               \
 		}                                                             \
-		for (_i = 0; _i < sizeof(_t); _i++)                           \
+		for (size_t _i = 0; _i < sizeof(_t); _i++)                    \
 		{                                                             \
 			if (((_a >> (_i * 8)) & 0xFF) != _p[sizeof(_t) - _i - 1]) \
 			{                                                         \

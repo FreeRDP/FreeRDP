@@ -580,7 +580,9 @@ BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length, UI
 {
 	UINT16 i;
 	UINT16 mlength;
-	BYTE num, c1, c2;
+	BYTE num;
+	BYTE c1;
+	BYTE c2;
 
 	mlength = (length >= min) ? length - min : min;
 

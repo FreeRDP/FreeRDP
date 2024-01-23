@@ -73,7 +73,8 @@ static BOOL xf_tsmf_is_format_supported(xfXvContext* xv, UINT32 pixfmt)
 static int xf_tsmf_xv_video_frame_event(TsmfClientContext* tsmf, TSMF_VIDEO_FRAME_EVENT* event)
 {
 	int i;
-	int x, y;
+	int x;
+	int y;
 	UINT32 width;
 	UINT32 height;
 	BYTE* data1;

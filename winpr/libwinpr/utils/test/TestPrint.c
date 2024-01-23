@@ -302,8 +302,10 @@ fail:
 
 int TestPrint(int argc, char* argv[])
 {
-	int a, b;
-	float c, d;
+	int a;
+	int b;
+	float c;
+	float d;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);

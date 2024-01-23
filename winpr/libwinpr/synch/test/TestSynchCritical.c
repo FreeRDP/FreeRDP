@@ -44,7 +44,9 @@ static BOOL TestSynchCritical_TriggerAndCheckRaceCondition(HANDLE OwningThread, 
  * FALSE */
 static DWORD WINAPI TestSynchCritical_Test1(LPVOID arg)
 {
-	int i, j, rc;
+	int i;
+	int j;
+	int rc;
 	HANDLE hThread = (HANDLE)(ULONG_PTR)GetCurrentThreadId();
 
 	PBOOL pbContinueRunning = (PBOOL)arg;
@@ -97,7 +99,8 @@ static DWORD WINAPI TestSynchCritical_Test2(LPVOID arg)
 
 static DWORD WINAPI TestSynchCritical_Main(LPVOID arg)
 {
-	int i, j;
+	int i;
+	int j;
 	SYSTEM_INFO sysinfo;
 	DWORD dwPreviousSpinCount;
 	DWORD dwSpinCount;

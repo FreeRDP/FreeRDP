@@ -821,7 +821,8 @@ static BOOL mcs_send_connect_initial(rdpMcs* mcs)
 	int status = -1;
 	size_t length;
 	wStream* s = NULL;
-	size_t bm, em;
+	size_t bm;
+	size_t em;
 	wStream* gcc_CCrq = NULL;
 	wStream* client_data = NULL;
 	rdpContext* context;
@@ -942,7 +943,8 @@ BOOL mcs_send_connect_response(rdpMcs* mcs)
 	size_t length;
 	int status = -1;
 	wStream* s = NULL;
-	size_t bm, em;
+	size_t bm;
+	size_t em;
 	wStream* gcc_CCrsp = NULL;
 	wStream* server_data = NULL;
 
@@ -1315,7 +1317,8 @@ fail:
 
 BOOL mcs_recv_disconnect_provider_ultimatum(rdpMcs* mcs, wStream* s, int* reason)
 {
-	BYTE b1, b2;
+	BYTE b1;
+	BYTE b2;
 
 	WINPR_ASSERT(mcs);
 	WINPR_ASSERT(s);

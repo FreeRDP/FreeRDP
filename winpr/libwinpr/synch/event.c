@@ -55,7 +55,8 @@ static wArrayList* global_event_list = NULL;
 static void dump_event(WINPR_EVENT* event, size_t index)
 {
 	char** msg;
-	size_t used, i;
+	size_t used;
+	size_t i;
 #if 0
 	void* stack = winpr_backtrace(20);
 	WLog_DBG(TAG, "Called from:");

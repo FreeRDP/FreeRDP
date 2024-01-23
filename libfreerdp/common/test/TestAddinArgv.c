@@ -6,7 +6,8 @@
 static BOOL test_alloc(void)
 {
 	BOOL rc = FALSE;
-	int rng, x;
+	int rng;
+	int x;
 	const char* param[] = { "foo:", "bar", "bla", "rdp", NULL };
 	ADDIN_ARGV* arg1 = NULL;
 	ADDIN_ARGV* arg2 = NULL;
@@ -94,7 +95,8 @@ fail:
 
 static BOOL test_add_remove(void)
 {
-	size_t x, y;
+	size_t x;
+	size_t y;
 	const char* args[] = { "foo", "bar", "bla", "gaga" };
 	BOOL rc = FALSE;
 	ADDIN_ARGV* arg = NULL;

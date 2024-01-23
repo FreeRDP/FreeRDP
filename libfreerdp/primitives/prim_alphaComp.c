@@ -70,7 +70,8 @@ static pstatus_t general_alphaComp_argb(const BYTE* pSrc1, UINT32 src1Step, cons
 				 * I'm not sure who first designed the double-ops trick
 				 * (Red Blue and Alpha Green).
 				 */
-				UINT32 rb, ag;
+				UINT32 rb;
+				UINT32 ag;
 				UINT32 s2rb = src2 & 0x00FF00FFU;
 				UINT32 s2ag = (src2 >> 8) & 0x00FF00FFU;
 				UINT32 s1rb = src1 & 0x00FF00FFU;

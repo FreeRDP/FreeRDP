@@ -1390,7 +1390,8 @@ rdpgfx_send_map_surface_to_scaled_output_pdu(RdpgfxServerContext* context,
  */
 static UINT rdpgfx_server_receive_pdu(RdpgfxServerContext* context, wStream* s)
 {
-	size_t beg, end;
+	size_t beg;
+	size_t end;
 	RDPGFX_HEADER header;
 	UINT error = CHANNEL_RC_OK;
 	beg = Stream_GetPosition(s);

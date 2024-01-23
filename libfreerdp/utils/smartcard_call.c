@@ -262,7 +262,8 @@ static BOOL filter_match(wLinkedList* list, LPCSTR reader, size_t readerLen)
 
 static DWORD filter_device_by_name_a(wLinkedList* list, LPSTR* mszReaders, DWORD cchReaders)
 {
-	size_t rpos = 0, wpos = 0;
+	size_t rpos = 0;
+	size_t wpos = 0;
 
 	if (*mszReaders == NULL || LinkedList_Count(list) < 1)
 		return cchReaders;
@@ -891,7 +892,8 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 {
 	LONG status = STATUS_NO_MEMORY;
 	UINT32 index;
-	DWORD dwTimeOut, x;
+	DWORD dwTimeOut;
+	DWORD x;
 	const DWORD dwTimeStep = 100;
 	GetStatusChange_Return ret = { 0 };
 	GetStatusChangeA_Call* call;
@@ -954,7 +956,8 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 {
 	LONG status = STATUS_NO_MEMORY;
 	UINT32 index;
-	DWORD dwTimeOut, x;
+	DWORD dwTimeOut;
+	DWORD x;
 	const DWORD dwTimeStep = 100;
 	GetStatusChange_Return ret = { 0 };
 	GetStatusChangeW_Call* call;
@@ -1459,7 +1462,9 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
                                              SMARTCARD_OPERATION* operation)
 {
 	LONG status;
-	DWORD i, j, k;
+	DWORD i;
+	DWORD j;
+	DWORD k;
 	GetStatusChange_Return ret = { 0 };
 	LPSCARD_READERSTATEA state = NULL;
 	LPSCARD_READERSTATEA states = NULL;

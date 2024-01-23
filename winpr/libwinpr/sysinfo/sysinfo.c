@@ -817,7 +817,10 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 #endif // __linux__
 #elif defined(_M_IX86_AMD64)
 #ifdef __GNUC__
-	unsigned a, b, c, d;
+	unsigned a;
+	unsigned b;
+	unsigned c;
+	unsigned d;
 	cpuid(1, &a, &b, &c, &d);
 
 	switch (ProcessorFeature)
@@ -945,14 +948,20 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 
 #endif // __linux__
 #elif defined(_M_IX86_AMD64)
-	unsigned a, b, c, d;
+	unsigned a;
+	unsigned b;
+	unsigned c;
+	unsigned d;
 	cpuid(1, &a, &b, &c, &d);
 
 	switch (ProcessorFeature)
 	{
 		case PF_EX_LZCNT:
 		{
-			unsigned a81, b81, c81, d81;
+			unsigned a81;
+			unsigned b81;
+			unsigned c81;
+			unsigned d81;
 			cpuid(0x80000001, &a81, &b81, &c81, &d81);
 
 			if (c81 & C81_BIT_LZCNT)
@@ -1000,7 +1009,8 @@ BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 			if (!(c & C_BIT_XGETBV))
 				break;
 
-			int e, f;
+			int e;
+			int f;
 			xgetbv(0, e, f);
 
 			/* XGETBV enabled for applications and XMM/YMM states enabled */

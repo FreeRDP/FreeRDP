@@ -2337,7 +2337,8 @@ static int ncrush_hash_table_add(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, U
 
 static int ncrush_find_match_length(const BYTE* Ptr1, const BYTE* Ptr2, BYTE* HistoryPtr)
 {
-	BYTE val1, val2;
+	BYTE val1;
+	BYTE val2;
 	const BYTE* Ptr = Ptr1;
 
 	WINPR_ASSERT(Ptr1);
@@ -2362,7 +2363,8 @@ static int ncrush_find_match_length(const BYTE* Ptr1, const BYTE* Ptr2, BYTE* Hi
 static int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT16 HistoryOffset,
                                   UINT32* pMatchOffset)
 {
-	int i, j;
+	int i;
+	int j;
 	int Length;
 	int MatchLength;
 	BYTE* MatchPtr;
@@ -2480,7 +2482,8 @@ static int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT16 HistoryOffset,
 
 static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 {
-	int i, j;
+	int i;
+	int j;
 	int NewHash;
 	int NewMatch;
 	UINT32 HistoryOffset;
@@ -2939,8 +2942,10 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 
 static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 {
-	UINT32 k, i;
-	int j, l;
+	UINT32 k;
+	UINT32 i;
+	int j;
+	int l;
 	k = 0;
 
 	WINPR_ASSERT(context);

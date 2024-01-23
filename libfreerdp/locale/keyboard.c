@@ -350,7 +350,8 @@ DWORD freerdp_keyboard_init_ex(DWORD keyboardLayoutId, const char* keyboardRemap
 		token = strtok_s(copy, ",", &context);
 		while (token)
 		{
-			DWORD key, value;
+			DWORD key;
+			DWORD value;
 			int rc = sscanf(token, "%" PRIu32 "=%" PRIu32, &key, &value);
 			if (rc != 2)
 				rc = sscanf(token, "%" PRIx32 "=%" PRIx32 "", &key, &value);

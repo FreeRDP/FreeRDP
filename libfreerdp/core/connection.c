@@ -1177,7 +1177,9 @@ state_run_t rdp_client_connect_license(rdpRdp* rdp, wStream* s)
 {
 	state_run_t status = STATE_RUN_FAILED;
 	LICENSE_STATE state;
-	UINT16 length, channelId, securityFlags;
+	UINT16 length;
+	UINT16 channelId;
+	UINT16 securityFlags;
 
 	WINPR_ASSERT(rdp);
 	if (!rdp_read_header(rdp, s, &length, &channelId))

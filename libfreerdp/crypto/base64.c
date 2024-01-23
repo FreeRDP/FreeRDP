@@ -139,7 +139,9 @@ static void* base64_decode(const char* alphabet, const char* s, size_t length, s
 	int n[4];
 	BYTE* q;
 	BYTE* data;
-	size_t nBlocks, i, outputLen;
+	size_t nBlocks;
+	size_t i;
+	size_t outputLen;
 	int remainder = length % 4;
 
 	if ((pad && remainder > 0) || (remainder == 1))

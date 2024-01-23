@@ -99,7 +99,14 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_invert(const BYTE* WINPR_RESTRICT pSr
 
 		while (w >= 8)
 		{
-			__m128i R0, R1, R2, R3, R4, R5, R6, R7;
+			__m128i R0;
+			__m128i R1;
+			__m128i R2;
+			__m128i R3;
+			__m128i R4;
+			__m128i R5;
+			__m128i R6;
+			__m128i R7;
 
 			if (onStride)
 			{
@@ -279,7 +286,14 @@ static pstatus_t ssse3_YCoCgRToRGB_8u_AC4R_no_invert(const BYTE* WINPR_RESTRICT 
 
 		while (w >= 8)
 		{
-			__m128i R0, R1, R2, R3, R4, R5, R6, R7;
+			__m128i R0;
+			__m128i R1;
+			__m128i R2;
+			__m128i R3;
+			__m128i R4;
+			__m128i R5;
+			__m128i R6;
+			__m128i R7;
 
 			if (onStride)
 			{
