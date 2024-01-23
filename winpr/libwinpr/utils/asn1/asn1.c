@@ -532,8 +532,7 @@ static size_t asn1IntegerLen(WinPrAsn1_INTEGER value)
 		return 2;
 	if (value <= 32767 && value >= -32768)
 		return 3;
-	else
-		return 5;
+	return 5;
 }
 
 static size_t WinPrAsn1EncIntegerLike(WinPrAsn1Encoder* enc, WinPrAsn1_tag b,

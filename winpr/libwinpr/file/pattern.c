@@ -58,7 +58,7 @@ LPSTR FilePatternFindNextWildcardA(LPCSTR lpPattern, DWORD* pFlags)
 			*pFlags = WILDCARD_QM;
 			return lpWildcard;
 		}
-		else if (*lpWildcard == '~')
+		if (*lpWildcard == '~')
 		{
 			if (lpWildcard[1] == '*')
 			{
@@ -156,10 +156,14 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
 		 * State 0: match 'X'
 		 */
 		if (cchFileName < cchX)
+		{
 			return FALSE;
+		}
 
 		if (_strnicmp(lpFileName, lpX, cchX) != 0)
+		{
 			return FALSE;
+		}
 
 		/*
 		 * State 1: match 'S'
@@ -175,15 +179,21 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
 			lpMatch = strchr(&lpFileName[cchX + 1], *lpY);
 
 			if (!lpMatch)
+			{
 				return FALSE;
+			}
 
 			if (_strnicmp(lpMatch, lpY, cchY) != 0)
+			{
 				return FALSE;
+			}
 		}
 		else
 		{
 			if ((cchX + 1) > cchFileName)
+			{
 				return FALSE;
+			}
 
 			lpMatch = &lpFileName[cchX + 1];
 		}
@@ -194,7 +204,7 @@ static BOOL FilePatternMatchSubExpressionA(LPCSTR lpFileName, size_t cchFileName
 		*ppMatchEnd = &lpMatch[cchY];
 		return TRUE;
 	}
-	else if (*lpWildcard == '~')
+	if (*lpWildcard == '~')
 	{
 		WLog_ERR(TAG, "warning: unimplemented '~' pattern match");
 		return TRUE;
@@ -364,7 +374,9 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 			                                       cchY, lpWildcard, &lpMatchEnd);
 
 			if (!match)
+			{
 				return FALSE;
+			}
 
 			lpSubFileName = lpMatchEnd;
 			cchWildcard = cchNextWildcard;
@@ -375,13 +387,11 @@ BOOL FilePatternMatchA(LPCSTR lpFileName, LPCSTR lpPattern)
 
 		return TRUE;
 	}
-	else
+
+	/* no wildcard characters */
+	if (_stricmp(lpFileName, lpPattern) == 0)
 	{
-		/* no wildcard characters */
-		if (_stricmp(lpFileName, lpPattern) == 0)
-		{
-			return TRUE;
-		}
+		return TRUE;
 	}
 
 	return FALSE;

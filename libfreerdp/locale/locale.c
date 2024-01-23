@@ -855,11 +855,9 @@ int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId)
 					/* No more keyboard layouts */
 					break;
 				}
-				else
-				{
-					*keyboardLayoutId = current->keyboardLayouts[j];
-					return 0;
-				}
+
+				*keyboardLayoutId = current->keyboardLayouts[j];
+				return 0;
 			}
 		}
 	}

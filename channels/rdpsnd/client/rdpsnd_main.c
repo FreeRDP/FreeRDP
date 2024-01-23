@@ -618,24 +618,22 @@ static BOOL rdpsnd_detect_overrun(rdpsndPlugin* rdpsnd, const AUDIO_FORMAT* form
 		rdpsnd->totalPlaySize = size;
 		return FALSE;
 	}
-	else
+
+	/* Calculate remaining duration to be played */
+	remainingDuration = totalDuration - (now - rdpsnd->startPlayTime);
+
+	/* Maximum allow duration calculation */
+	maxDuration = duration * 2 + rdpsnd->latency;
+
+	if (remainingDuration + duration > maxDuration)
 	{
-		/* Calculate remaining duration to be played */
-		remainingDuration = totalDuration - (now - rdpsnd->startPlayTime);
-
-		/* Maximum allow duration calculation */
-		maxDuration = duration * 2 + rdpsnd->latency;
-
-		if (remainingDuration + duration > maxDuration)
-		{
-			WLog_Print(rdpsnd->log, WLOG_DEBUG, "%s Buffer overrun pending %u ms dropping %u ms",
-			           rdpsnd_is_dyn_str(rdpsnd->dynamic), remainingDuration, duration);
-			return TRUE;
-		}
-
-		rdpsnd->totalPlaySize += size;
-		return FALSE;
+		WLog_Print(rdpsnd->log, WLOG_DEBUG, "%s Buffer overrun pending %u ms dropping %u ms",
+		           rdpsnd_is_dyn_str(rdpsnd->dynamic), remainingDuration, duration);
+		return TRUE;
 	}
+
+	rdpsnd->totalPlaySize += size;
+	return FALSE;
 }
 
 static UINT rdpsnd_treat_wave(rdpsndPlugin* rdpsnd, wStream* s, size_t size)

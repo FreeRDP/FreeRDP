@@ -109,9 +109,7 @@ static BOOL update_option(char** opt, const char* val, size_t len)
 	*opt = NULL;
 
 	if (!val && (len != 0))
-	{
 		return FALSE;
-	}
 	if (!val && (len == 0))
 		return TRUE;
 	*opt = strndup(val, len);

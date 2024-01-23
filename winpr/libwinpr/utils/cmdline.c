@@ -419,9 +419,9 @@ int CommandLineParseArgumentsA(int argc, LPSTR* argv, COMMAND_LINE_ARGUMENT_A* o
 				}
 				if (cur->Flags & COMMAND_LINE_PRINT_HELP)
 					return COMMAND_LINE_STATUS_PRINT_HELP;
-				else if (cur->Flags & COMMAND_LINE_PRINT_VERSION)
+				if (cur->Flags & COMMAND_LINE_PRINT_VERSION)
 					return COMMAND_LINE_STATUS_PRINT_VERSION;
-				else if (cur->Flags & COMMAND_LINE_PRINT_BUILDCONFIG)
+				if (cur->Flags & COMMAND_LINE_PRINT_BUILDCONFIG)
 					return COMMAND_LINE_STATUS_PRINT_BUILDCONFIG;
 			}
 

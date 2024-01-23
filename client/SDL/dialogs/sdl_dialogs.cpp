@@ -45,10 +45,10 @@ static const char* type_str_for_flags(UINT32 flags)
 {
 	const char* type = "RDP-Server";
 
-	if ((flags & VERIFY_CERT_FLAG_GATEWAY) != 0u)
+	if ((flags & VERIFY_CERT_FLAG_GATEWAY) != 0U)
 		type = "RDP-Gateway";
 
-	if ((flags & VERIFY_CERT_FLAG_REDIRECT) != 0u)
+	if ((flags & VERIFY_CERT_FLAG_REDIRECT) != 0U)
 		type = "RDP-Redirect";
 	return type;
 }
@@ -345,7 +345,7 @@ DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UIN
 	 */
 	char* new_fp_str = nullptr;
 	size_t len = 0;
-	if ((flags & VERIFY_CERT_FLAG_FP_IS_PEM) != 0u)
+	if ((flags & VERIFY_CERT_FLAG_FP_IS_PEM) != 0U)
 	{
 		winpr_asprintf(&new_fp_str, &len,
 		               "----------- Certificate --------------\n"
@@ -361,7 +361,7 @@ DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UIN
 	 */
 	char* old_fp_str = nullptr;
 	size_t olen = 0;
-	if ((flags & VERIFY_CERT_FLAG_FP_IS_PEM) != 0u)
+	if ((flags & VERIFY_CERT_FLAG_FP_IS_PEM) != 0U)
 	{
 		winpr_asprintf(&old_fp_str, &olen,
 		               "----------- Certificate --------------\n"
@@ -373,7 +373,7 @@ DWORD sdl_verify_changed_certificate_ex(freerdp* instance, const char* host, UIN
 		winpr_asprintf(&old_fp_str, &olen, "Thumbprint:  %s\n", old_fingerprint);
 
 	const char* collission_str = "";
-	if ((flags & VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1) != 0u)
+	if ((flags & VERIFY_CERT_FLAG_MATCH_LEGACY_SHA1) != 0U)
 	{
 		collission_str =
 		    "A matching entry with legacy SHA1 was found in local known_hosts2 store.\n"
@@ -428,7 +428,7 @@ DWORD sdl_verify_certificate_ex(freerdp* instance, const char* host, UINT16 port
 	 */
 	char* fp_str = nullptr;
 	size_t len = 0;
-	if ((flags & VERIFY_CERT_FLAG_FP_IS_PEM) != 0u)
+	if ((flags & VERIFY_CERT_FLAG_FP_IS_PEM) != 0U)
 	{
 		winpr_asprintf(&fp_str, &len,
 		               "----------- Certificate --------------\n"
@@ -608,6 +608,7 @@ bool sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 bool sdl_scard_dialog_show(const char* title, Sint32 count, const char** list)
 {
 	std::vector<std::string> vlist;
+	vlist.reserve(count);
 	for (Sint32 x = 0; x < count; x++)
 		vlist.push_back(list[x]);
 	SdlSelectList slist(title, vlist);

@@ -765,13 +765,10 @@ static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, 
 			WLog_ERR(TAG, "Failed reading %s reply from SOCKS proxy (Status %d)", reason, status);
 			return -1;
 		}
-		else // if (status == 0)
-		{
-			/* Error? */
-			WLog_ERR(TAG, "Failed reading %s reply from SOCKS proxy (BIO_read returned zero)",
-			         reason);
-			return -1;
-		}
+		// if (status == 0)
+		/* Error? */
+		WLog_ERR(TAG, "Failed reading %s reply from SOCKS proxy (BIO_read returned zero)", reason);
+		return -1;
 	}
 
 	if (status < 2)

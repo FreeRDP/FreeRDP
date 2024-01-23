@@ -27,7 +27,7 @@ class SdlWindow
   public:
 	SdlWindow(const std::string& title, Sint32 startupX, Sint32 startupY, Sint32 width,
 	          Sint32 height, Uint32 flags);
-	SdlWindow(SdlWindow&& other);
+	SdlWindow(SdlWindow&& other) noexcept;
 	~SdlWindow();
 
 	SDL_Window* window() const;

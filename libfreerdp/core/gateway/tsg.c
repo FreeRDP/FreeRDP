@@ -3465,8 +3465,7 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			}
 			if (BIO_write_blocked(cbio))
 				return BIO_wait_write(cbio, timeout);
-			else
-				status = 1;
+			status = 1;
 		}
 		break;
 

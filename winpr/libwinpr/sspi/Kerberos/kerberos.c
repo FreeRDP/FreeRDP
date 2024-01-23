@@ -26,7 +26,6 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
 #include <ctype.h>
 
 #include <winpr/assert.h>
@@ -814,8 +813,7 @@ static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb
 		ticket->length = Stream_Length(&s);
 		return TRUE;
 	}
-	else
-		return FALSE;
+	return FALSE;
 
 fail:
 	free(buf);

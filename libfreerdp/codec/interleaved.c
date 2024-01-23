@@ -190,13 +190,11 @@ static INLINE UINT32 ExtractCodeId(BYTE bOrderHdr)
 		/* MEGA and SPECIAL orders (0xF*) */
 		return bOrderHdr;
 	}
-	else
-	{
-		/* LITE orders
-		 * 1100 xxxx, 1101 xxxx, 1110 xxxx)
-		 */
-		return bOrderHdr >> 4;
-	}
+
+	/* LITE orders
+	 * 1100 xxxx, 1101 xxxx, 1110 xxxx)
+	 */
+	return bOrderHdr >> 4;
 }
 
 /**

@@ -102,7 +102,7 @@ BOOL sdl_webview_get_access_token(freerdp* instance, AccessTokenType tokenType, 
 				         count);
 				return FALSE;
 			}
-			else if (count > 2)
+			if (count > 2)
 				WLog_WARN(TAG,
 				          "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
 				          ", ignoring",
@@ -117,10 +117,12 @@ BOOL sdl_webview_get_access_token(freerdp* instance, AccessTokenType tokenType, 
 		}
 		case ACCESS_TOKEN_TYPE_AVD:
 			if (count != 0)
+			{
 				WLog_WARN(TAG,
 				          "ACCESS_TOKEN_TYPE_AVD expected 0 additional arguments, but got %" PRIuz
 				          ", ignoring",
 				          count);
+			}
 			return sdl_webview_get_avd_access_token(instance, token);
 		default:
 			WLog_ERR(TAG, "Unexpected value for AccessTokenType [%" PRIuz "], aborting", tokenType);

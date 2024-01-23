@@ -223,10 +223,10 @@ bool sdl_push_user_event(Uint32 type, ...)
 			break;
 		default:
 			va_end(ap);
-			return FALSE;
+			return false;
 	}
 	va_end(ap);
-	return (SDL_PushEvent(&ev) == 1) ? TRUE : FALSE;
+	return (SDL_PushEvent(&ev) == 1) ? true : false;
 }
 
 CriticalSection::CriticalSection()

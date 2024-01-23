@@ -55,7 +55,6 @@
 #if defined(CHANNEL_GEOMETRY_CLIENT)
 #include <freerdp/client/geometry.h>
 #include <freerdp/channels/geometry.h>
-#include <freerdp/gdi/video.h>
 #endif
 
 #ifdef WITH_AAD
@@ -1202,10 +1201,12 @@ BOOL client_cli_get_access_token(freerdp* instance, AccessTokenType tokenType, c
 				return FALSE;
 			}
 			if (count > 2)
+			{
 				WLog_WARN(TAG,
 				          "ACCESS_TOKEN_TYPE_AAD expected 2 additional arguments, but got %" PRIuz
 				          ", ignoring",
 				          count);
+			}
 			va_list ap;
 			va_start(ap, count);
 			const char* scope = va_arg(ap, const char*);
@@ -2271,7 +2272,7 @@ BOOL freerdp_client_handle_pen(rdpClientContext* cctx, UINT32 flags, INT32 devic
 		}
 		return rc == CHANNEL_RC_OK;
 	}
-	else if ((flags & FREERDP_PEN_RELEASE) != 0)
+	if ((flags & FREERDP_PEN_RELEASE) != 0)
 	{
 		WLog_DBG(TAG, "Pen release %" PRId32, deviceid);
 		pen->pressed = FALSE;

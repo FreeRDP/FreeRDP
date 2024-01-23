@@ -26,13 +26,10 @@
 int _der_skip_length(int length)
 {
 	if (length > 0x7F && length <= 0xFF)
-	{
 		return 2;
-	}
 	if (length > 0xFF)
 		return 3;
-	else
-		return 1;
+	return 1;
 }
 
 int der_write_length(wStream* s, int length)
@@ -49,23 +46,18 @@ int der_write_length(wStream* s, int length)
 		Stream_Write_UINT16_BE(s, length);
 		return 3;
 	}
-	else
-	{
-		Stream_Write_UINT8(s, length);
-		return 1;
-	}
+
+	Stream_Write_UINT8(s, length);
+	return 1;
 }
 
 int der_get_content_length(int length)
 {
 	if (length > 0x81 && length <= 0x102)
-	{
 		return length - 3;
-	}
 	if (length > 0x102)
 		return length - 4;
-	else
-		return length - 2;
+	return length - 2;
 }
 
 int der_skip_contextual_tag(int length)

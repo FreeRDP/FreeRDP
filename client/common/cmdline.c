@@ -886,7 +886,7 @@ BOOL freerdp_client_add_device_channel(rdpSettings* settings, size_t count, cons
 
 		return TRUE;
 	}
-	else if (option_equals(params[0], "smartcard"))
+	if (option_equals(params[0], "smartcard"))
 	{
 		RDPDR_DEVICE* smartcard = NULL;
 

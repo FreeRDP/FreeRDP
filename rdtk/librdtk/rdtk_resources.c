@@ -3919,7 +3919,7 @@ SSIZE_T rdtk_get_embedded_resource_file(const char* filename, const uint8_t** pD
 		*pData = btn_default_normal_9_bmp;
 		return ARRAYSIZE(btn_default_normal_9_bmp);
 	}
-	else if (strcmp(filename, "textfield_default.9.bmp") == 0)
+	if (strcmp(filename, "textfield_default.9.bmp") == 0)
 	{
 		*pData = textfield_default_9_bmp;
 		return ARRAYSIZE(textfield_default_9_bmp);

@@ -134,10 +134,8 @@ int shadow_server_command_line_status_print(rdpShadowServer* server, int argc, c
 		printf("%s\n", freerdp_get_build_config());
 		return COMMAND_LINE_STATUS_PRINT_BUILDCONFIG;
 	}
-	else if (status == COMMAND_LINE_STATUS_PRINT)
-	{
+	if (status == COMMAND_LINE_STATUS_PRINT)
 		return COMMAND_LINE_STATUS_PRINT;
-	}
 	else if (status < 0)
 	{
 		if (shadow_server_print_command_line_help(argc, argv, cargs) < 0)

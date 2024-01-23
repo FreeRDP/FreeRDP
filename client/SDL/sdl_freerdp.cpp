@@ -233,7 +233,7 @@ static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(DWORD error)
 static int sdl_map_error_to_exit_code(DWORD error)
 {
 	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_error(error);
-	if (entry)
+	if (entry != nullptr)
 		return entry->code;
 
 	return SDL_EXIT_CONN_FAILED;
@@ -242,7 +242,7 @@ static int sdl_map_error_to_exit_code(DWORD error)
 static const char* sdl_map_error_to_code_tag(DWORD error)
 {
 	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_error(error);
-	if (entry)
+	if (entry != nullptr)
 		return entry->code_tag;
 	return nullptr;
 }
@@ -250,7 +250,7 @@ static const char* sdl_map_error_to_code_tag(DWORD error)
 static const char* sdl_map_to_code_tag(int code)
 {
 	const struct sdl_exit_code_map_t* entry = sdl_map_entry_by_code(code);
-	if (entry)
+	if (entry != nullptr)
 		return entry->code_tag;
 	return nullptr;
 }
@@ -265,7 +265,7 @@ static int error_info_to_error(freerdp* instance, DWORD* pcode, char** msg, size
 	winpr_asprintf(msg, len, "Terminate with %s due to ERROR_INFO %s [0x%08" PRIx32 "]: %s",
 	               sdl_map_error_to_code_tag(exit_code), name, code, str);
 	WLog_DBG(SDL_TAG, "%s", *msg);
-	if (pcode)
+	if (pcode != nullptr)
 		*pcode = code;
 	return exit_code;
 }
@@ -346,7 +346,7 @@ static BOOL sdl_draw_to_window_rect(SdlContext* sdl, SDL_Surface* screen, SDL_Su
 		return sdl_draw_to_window_rect(sdl, screen, surface, offset,
 		                               { 0, 0, surface->w, surface->h });
 	}
-	for (auto& srcRect : rects)
+	for (const auto& srcRect : rects)
 	{
 		if (!sdl_draw_to_window_rect(sdl, screen, surface, offset, srcRect))
 			return FALSE;
@@ -376,7 +376,7 @@ static BOOL sdl_draw_to_window_scaled_rect(SdlContext* sdl, Sint32 windowId, SDL
 		return sdl_draw_to_window_scaled_rect(sdl, windowId, screen, surface,
 		                                      { 0, 0, surface->w, surface->h });
 	}
-	for (auto& srcRect : rects)
+	for (const auto& srcRect : rects)
 	{
 		if (!sdl_draw_to_window_scaled_rect(sdl, windowId, screen, surface, srcRect))
 			return FALSE;
@@ -394,7 +394,8 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 
 	SDL_Surface* screen = SDL_GetWindowSurface(window.window());
 
-	int w = 0, h = 0;
+	int w = 0;
+	int h = 0;
 	SDL_GetWindowSize(window.window(), &w, &h);
 
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
@@ -463,7 +464,7 @@ static BOOL sdl_end_paint_process(rdpContext* context)
 	std::vector<SDL_Rect> rects;
 	for (INT32 x = 0; x < ninvalid; x++)
 	{
-		auto& rgn = cinvalid[x];
+		const auto& rgn = cinvalid[x];
 		rects.push_back({ rgn.x, rgn.y, rgn.w, rgn.h });
 	}
 
@@ -485,7 +486,7 @@ static BOOL sdl_end_paint(rdpContext* context)
 
 static void sdl_destroy_primary(SdlContext* sdl)
 {
-	if (!sdl)
+	if (sdl == nullptr)
 		return;
 	sdl->primary.reset();
 	sdl->primary_format.reset();
@@ -626,7 +627,7 @@ static BOOL sdl_pre_connect(freerdp* instance)
 	else
 	{
 		/* Check +auth-only has a username and password. */
-		if (!freerdp_settings_get_string(settings, FreeRDP_Password))
+		if (freerdp_settings_get_string(settings, FreeRDP_Password) == nullptr)
 		{
 			WLog_Print(sdl->log, WLOG_INFO, "auth-only, but no password set. Please provide one.");
 			return FALSE;
@@ -650,11 +651,11 @@ static const char* sdl_window_get_title(rdpSettings* settings)
 	const char* name = nullptr;
 	const char* prefix = "FreeRDP:";
 
-	if (!settings)
+	if (settings == nullptr)
 		return nullptr;
 
 	windowTitle = freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
-	if (windowTitle)
+	if (windowTitle != nullptr)
 		return _strdup(windowTitle);
 
 	name = freerdp_settings_get_server_name(settings);
@@ -680,7 +681,7 @@ static void sdl_term_handler(int signum, const char* signame, void* context)
 
 static void sdl_cleanup_sdl(SdlContext* sdl)
 {
-	if (!sdl)
+	if (sdl == nullptr)
 		return;
 
 	std::lock_guard<CriticalSection> lock(sdl->critical);
@@ -699,7 +700,7 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 	WINPR_ASSERT(sdl);
 
 	auto settings = sdl->context()->settings;
-	auto title = sdl_window_get_title(settings);
+	const auto title = sdl_window_get_title(settings);
 	BOOL rc = FALSE;
 
 	UINT32 windowCount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
@@ -749,7 +750,7 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 			              static_cast<int>(w),
 			              static_cast<int>(h),
 			              flags };
-		if (!window.window())
+		if (window.window() == nullptr)
 			goto fail;
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
@@ -932,10 +933,10 @@ static int sdl_run(SdlContext* sdl)
 						{
 							auto window = SDL_GetWindowFromID(ev->windowID);
 
-							if (window)
+							if (window != nullptr)
 							{
 								auto surface = SDL_GetWindowSurface(window);
-								if (surface)
+								if (surface != nullptr)
 								{
 									SDL_Rect rect = { 0, 0, surface->w, surface->h };
 
@@ -963,21 +964,21 @@ static int sdl_run(SdlContext* sdl)
 					break;
 				case SDL_USEREVENT_CERT_DIALOG:
 				{
-					auto title = static_cast<const char*>(windowEvent.user.data1);
-					auto msg = static_cast<const char*>(windowEvent.user.data2);
+					const auto title = static_cast<const char*>(windowEvent.user.data1);
+					const auto msg = static_cast<const char*>(windowEvent.user.data2);
 					sdl_cert_dialog_show(title, msg);
 				}
 				break;
 				case SDL_USEREVENT_SHOW_DIALOG:
 				{
-					auto title = static_cast<const char*>(windowEvent.user.data1);
-					auto msg = static_cast<const char*>(windowEvent.user.data2);
+					const auto title = static_cast<const char*>(windowEvent.user.data1);
+					const auto msg = static_cast<const char*>(windowEvent.user.data2);
 					sdl_message_dialog_show(title, msg, windowEvent.user.code);
 				}
 				break;
 				case SDL_USEREVENT_SCARD_DIALOG:
 				{
-					auto title = static_cast<const char*>(windowEvent.user.data1);
+					const auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char**>(windowEvent.user.data2);
 					sdl_scard_dialog_show(title, windowEvent.user.code, msg);
 				}
@@ -1012,9 +1013,9 @@ static int sdl_run(SdlContext* sdl)
 
 					Uint32 curFlags = SDL_GetWindowFlags(window);
 
-					if (enter)
+					if (enter != 0u)
 					{
-						if (!(curFlags & SDL_WINDOW_BORDERLESS))
+						if ((curFlags & SDL_WINDOW_BORDERLESS) == 0u)
 						{
 							auto idx = SDL_GetWindowDisplayIndex(window);
 							SDL_DisplayMode mode = {};
@@ -1033,7 +1034,7 @@ static int sdl_run(SdlContext* sdl)
 					}
 					else
 					{
-						if (curFlags & SDL_WINDOW_BORDERLESS)
+						if ((curFlags & SDL_WINDOW_BORDERLESS) != 0u)
 						{
 
 							SDL_SetWindowBordered(window, SDL_TRUE);
@@ -1067,7 +1068,7 @@ static int sdl_run(SdlContext* sdl)
 					    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data2));
 
 					SDL_Window* window = SDL_GetMouseFocus();
-					if (window)
+					if (window != nullptr)
 					{
 						const Uint32 id = SDL_GetWindowID(window);
 
@@ -1121,7 +1122,7 @@ static BOOL sdl_post_connect(freerdp* instance)
 	if (freerdp_settings_get_bool(context->settings, FreeRDP_AuthenticationOnly))
 	{
 		/* Check +auth-only has a username and password. */
-		if (!freerdp_settings_get_string(context->settings, FreeRDP_Password))
+		if (freerdp_settings_get_string(context->settings, FreeRDP_Password) == nullptr)
 		{
 			WLog_Print(sdl->log, WLOG_INFO, "auth-only, but no password set. Please provide one.");
 			return FALSE;
@@ -1164,10 +1165,10 @@ static BOOL sdl_post_connect(freerdp* instance)
  */
 static void sdl_post_disconnect(freerdp* instance)
 {
-	if (!instance)
+	if (instance == nullptr)
 		return;
 
-	if (!instance->context)
+	if (instance->context == nullptr)
 		return;
 
 	PubSub_UnsubscribeChannelConnected(instance->context->pubSub,
@@ -1179,10 +1180,10 @@ static void sdl_post_disconnect(freerdp* instance)
 
 static void sdl_post_final_disconnect(freerdp* instance)
 {
-	if (!instance)
+	if (instance == nullptr)
 		return;
 
-	if (!instance->context)
+	if (instance->context == nullptr)
 		return;
 
 	auto context = get_context(instance->context);
@@ -1234,7 +1235,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 			exit_code = error_info_to_error(instance, &code, &error_msg, &error_msg_len);
 
 		auto last = freerdp_get_last_error(context);
-		if (!error_msg)
+		if (error_msg == nullptr)
 		{
 			winpr_asprintf(&error_msg, &error_msg_len, "%s [0x%08" PRIx32 "]\n%s",
 			               freerdp_get_last_error_name(last), last,
@@ -1280,15 +1281,13 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 		{
 			if (client_auto_reconnect(instance))
 				continue;
-			else
-			{
-				/*
-				 * Indicate an unsuccessful connection attempt if reconnect
-				 * did not succeed and no other error was specified.
-				 */
-				if (freerdp_error_info(instance) == 0)
-					exit_code = SDL_EXIT_CONN_FAILED;
-			}
+
+			/*
+			 * Indicate an unsuccessful connection attempt if reconnect
+			 * did not succeed and no other error was specified.
+			 */
+			if (freerdp_error_info(instance) == 0)
+				exit_code = SDL_EXIT_CONN_FAILED;
 
 			if (freerdp_get_last_error(context) == FREERDP_ERROR_SUCCESS)
 				WLog_Print(sdl->log, WLOG_ERROR, "WaitForMultipleObjects failed with %" PRIu32 "",
@@ -1393,11 +1392,11 @@ static BOOL sdl_client_new(freerdp* instance, rdpContext* context)
 {
 	auto sdl = reinterpret_cast<sdl_rdp_context*>(context);
 
-	if (!instance || !context)
+	if ((instance == nullptr) || (context == nullptr))
 		return FALSE;
 
 	sdl->sdl = new SdlContext(context);
-	if (!sdl->sdl)
+	if (sdl->sdl == nullptr)
 		return FALSE;
 
 	instance->PreConnect = sdl_pre_connect;
@@ -1426,7 +1425,7 @@ static void sdl_client_free(freerdp* instance, rdpContext* context)
 {
 	auto sdl = reinterpret_cast<sdl_rdp_context*>(context);
 
-	if (!context)
+	if (context == nullptr)
 		return;
 
 	delete sdl->sdl;
@@ -1475,7 +1474,7 @@ static int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
 
 static void context_free(sdl_rdp_context* sdl)
 {
-	if (sdl)
+	if (sdl != nullptr)
 		freerdp_client_context_free(&sdl->common.context);
 }
 

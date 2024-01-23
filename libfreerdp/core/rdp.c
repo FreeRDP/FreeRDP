@@ -2005,8 +2005,7 @@ static state_run_t rdp_recv_pdu(rdpRdp* rdp, wStream* s)
 	}
 	if (rc == 0)
 		return rdp_recv_fastpath_pdu(rdp, s);
-	else
-		return STATE_RUN_FAILED;
+	return STATE_RUN_FAILED;
 }
 
 static state_run_t rdp_handle_sc_flags(rdpRdp* rdp, wStream* s, UINT32 flag,

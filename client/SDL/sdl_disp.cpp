@@ -86,10 +86,10 @@ BOOL sdlDispContext::sendResize()
 	DISPLAY_CONTROL_MONITOR_LAYOUT layout = {};
 	auto settings = _sdl->context()->settings;
 
-	if (!settings)
+	if (settings == nullptr)
 		return FALSE;
 
-	if (!_activated || !_disp)
+	if (!_activated || (_disp == nullptr))
 		return TRUE;
 
 	if (GetTickCount64() - _lastSentDate < RESIZE_MIN_DELAY)
@@ -103,7 +103,7 @@ BOOL sdlDispContext::sendResize()
 	const UINT32 mcount = freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount);
 	if (_sdl->fullscreen && (mcount > 0))
 	{
-		auto monitors = static_cast<const rdpMonitor*>(
+		const auto monitors = static_cast<const rdpMonitor*>(
 		    freerdp_settings_get_pointer(settings, FreeRDP_MonitorDefArray));
 		if (sendLayout(monitors, mcount) != CHANNEL_RC_OK)
 			return FALSE;
@@ -138,12 +138,12 @@ BOOL sdlDispContext::set_window_resizable()
 static BOOL sdl_disp_check_context(void* context, SdlContext** ppsdl, sdlDispContext** ppsdlDisp,
                                    rdpSettings** ppSettings)
 {
-	if (!context)
+	if (context == nullptr)
 		return FALSE;
 
 	auto sdl = get_context(context);
 
-	if (!sdl->context()->settings)
+	if (sdl->context()->settings == nullptr)
 		return FALSE;
 
 	*ppsdl = sdl;
@@ -196,7 +196,7 @@ void sdlDispContext::OnGraphicsReset(void* context, const GraphicsResetEventArgs
 Uint32 sdlDispContext::OnTimer(Uint32 interval, void* param)
 {
 	auto ctx = static_cast<sdlDispContext*>(param);
-	if (!ctx)
+	if (ctx == nullptr)
 		return 0;
 
 	SdlContext* sdl = ctx->_sdl;
@@ -240,7 +240,7 @@ UINT sdlDispContext::sendLayout(const rdpMonitor* monitors, size_t nmonitors)
 
 	for (size_t i = 0; i < nmonitors; i++)
 	{
-		auto monitor = &monitors[i];
+		const auto monitor = &monitors[i];
 		auto layout = &layouts[i];
 
 		layout->Flags = (monitor->is_primary ? DISPLAY_CONTROL_MONITOR_PRIMARY : 0);
@@ -337,7 +337,7 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 	                    ? SDL_TRUE
 	                    : SDL_FALSE;
 	auto window = SDL_GetWindowFromID(ev->windowID);
-	if (window)
+	if (window != nullptr)
 		SDL_SetWindowBordered(window, bordered);
 
 	switch (ev->event)
@@ -410,12 +410,12 @@ UINT sdlDispContext::DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitor
 
 BOOL sdlDispContext::init(DispClientContext* disp)
 {
-	if (!disp)
+	if (disp == nullptr)
 		return FALSE;
 
 	auto settings = _sdl->context()->settings;
 
-	if (!settings)
+	if (settings == nullptr)
 		return FALSE;
 
 	_disp = disp;
@@ -432,7 +432,7 @@ BOOL sdlDispContext::init(DispClientContext* disp)
 
 BOOL sdlDispContext::uninit(DispClientContext* disp)
 {
-	if (!disp)
+	if (disp == nullptr)
 		return FALSE;
 
 	_disp = nullptr;

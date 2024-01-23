@@ -110,7 +110,7 @@ static SECURITY_STATUS SEC_ENTRY schannel_QueryCredentialsAttributesW(PCredHandl
 		CipherStrengths->dwMaximumCipherStrength = 256;
 		return SEC_E_OK;
 	}
-	else if (ulAttribute == SECPKG_ATTR_SUPPORTED_PROTOCOLS)
+	if (ulAttribute == SECPKG_ATTR_SUPPORTED_PROTOCOLS)
 	{
 		PSecPkgCred_SupportedProtocols SupportedProtocols = (PSecPkgCred_SupportedProtocols)pBuffer;
 		/* Observed SupportedProtocols: 0x208A0 */

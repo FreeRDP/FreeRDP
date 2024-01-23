@@ -26,7 +26,6 @@
 
 #if !defined(_WIN32) || (defined(__MINGW32__) && !defined(_UCRT))
 
-#include <stdlib.h>
 #include <limits.h>
 #include <stdint.h>
 

@@ -423,7 +423,7 @@ SSIZE_T ConvertWCharNToUtf8(const WCHAR* wstr, size_t wlen, char* str, size_t le
 			str[rc] = '\0';
 		return rc;
 	}
-	else if ((size_t)rc == len)
+	if ((size_t)rc == len)
 	{
 		if (str && (str[rc - 1] != '\0'))
 			return rc;

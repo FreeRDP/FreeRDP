@@ -211,22 +211,13 @@ SECURITY_STATUS NCryptOpenKey(NCRYPT_PROV_HANDLE hProvider, NCRYPT_KEY_HANDLE* p
 static NCryptKeyGetPropertyEnum propertyStringToEnum(LPCWSTR pszProperty)
 {
 	if (_wcscmp(pszProperty, NCRYPT_CERTIFICATE_PROPERTY) == 0)
-	{
 		return NCRYPT_PROPERTY_CERTIFICATE;
-	}
 	if (_wcscmp(pszProperty, NCRYPT_READER_PROPERTY) == 0)
-	{
 		return NCRYPT_PROPERTY_READER;
-	}
-	else if (_wcscmp(pszProperty, NCRYPT_WINPR_SLOTID) == 0)
-	{
+	if (_wcscmp(pszProperty, NCRYPT_WINPR_SLOTID) == 0)
 		return NCRYPT_PROPERTY_SLOTID;
-	}
-	else if (_wcscmp(pszProperty, NCRYPT_NAME_PROPERTY) == 0)
-	{
+	if (_wcscmp(pszProperty, NCRYPT_NAME_PROPERTY) == 0)
 		return NCRYPT_PROPERTY_NAME;
-	}
-
 	return NCRYPT_PROPERTY_UNKNOWN;
 }
 

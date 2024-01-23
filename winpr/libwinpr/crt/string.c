@@ -27,7 +27,6 @@
 #include <wchar.h>
 
 #include <winpr/crt.h>
-#include <winpr/assert.h>
 #include <winpr/endian.h>
 
 #if defined(WITH_URIPARSER)

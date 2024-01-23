@@ -65,7 +65,6 @@ class SdlWidget
 	bool set_wrap(bool wrap = true, size_t width = 0);
 	const SDL_Rect& rect() const;
 
-  public:
 #define widget_log_error(res, what) SdlWidget::error_ex(res, what, __FILE__, __LINE__, __func__)
 	static bool error_ex(Uint32 res, const char* what, const char* file, size_t line,
 	                     const char* fkt);
@@ -78,7 +77,6 @@ class SdlWidget
 	SDL_Texture* render_text_wrapped(SDL_Renderer* renderer, const std::string& text,
 	                                 SDL_Color fgcolor, SDL_Rect& src, SDL_Rect& dst);
 
-  private:
 	TTF_Font* _font = nullptr;
 	SDL_Texture* _image = nullptr;
 	SDL_Rect _rect;

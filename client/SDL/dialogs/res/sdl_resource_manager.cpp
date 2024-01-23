@@ -53,12 +53,12 @@ SDL_RWops* SDLResourceManager::get(const std::string& type, const std::string& i
 #endif
 }
 
-const std::string SDLResourceManager::typeFonts()
+std::string SDLResourceManager::typeFonts()
 {
 	return "fonts";
 }
 
-const std::string SDLResourceManager::typeImages()
+std::string SDLResourceManager::typeImages()
 {
 	return "images";
 }

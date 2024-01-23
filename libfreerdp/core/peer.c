@@ -795,8 +795,7 @@ state_run_t peer_recv_pdu(freerdp_peer* client, wStream* s)
 	}
 	if (rc == 0)
 		return peer_recv_fastpath_pdu(client, s);
-	else
-		return STATE_RUN_FAILED;
+	return STATE_RUN_FAILED;
 }
 
 static state_run_t peer_unexpected_client_message(rdpRdp* rdp, UINT32 flag)

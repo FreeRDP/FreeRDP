@@ -88,14 +88,14 @@ static BOOL sdl_is_monitor_id_active(SdlContext* sdl, UINT32 id)
 	WINPR_ASSERT(settings);
 
 	const UINT32 NumMonitorIds = freerdp_settings_get_uint32(settings, FreeRDP_NumMonitorIds);
-	if (!NumMonitorIds)
+	if (NumMonitorIds == 0u)
 		return TRUE;
 
 	for (index = 0; index < NumMonitorIds; index++)
 	{
-		auto cur = static_cast<const UINT32*>(
+		const auto cur = static_cast<const UINT32*>(
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, index));
-		if (cur && (*cur == id))
+		if ((cur != nullptr) && (*cur == id))
 			return TRUE;
 	}
 
@@ -116,7 +116,7 @@ static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxH
 
 	for (size_t x = 0; x < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); x++)
 	{
-		auto monitor = static_cast<const rdpMonitor*>(
+		const auto monitor = static_cast<const rdpMonitor*>(
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, x));
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen))
@@ -140,15 +140,19 @@ static BOOL sdl_apply_max_size(SdlContext* sdl, UINT32* pMaxWidth, UINT32* pMaxH
 			*pMaxHeight = rect.h;
 
 			if (freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseWidth))
+			{
 				*pMaxWidth =
 				    (rect.w * freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)) / 100;
+			}
 
 			if (freerdp_settings_get_bool(settings, FreeRDP_PercentScreenUseHeight))
+			{
 				*pMaxHeight =
 				    (rect.h * freerdp_settings_get_uint32(settings, FreeRDP_PercentScreen)) / 100;
+			}
 		}
-		else if (freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth) &&
-		         freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight))
+		else if ((freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth)) &&
+		         (freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight)))
 		{
 			*pMaxWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 			*pMaxHeight = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
@@ -190,13 +194,13 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 
 	for (UINT32 x = 0; x < numIds; x++)
 	{
-		auto id = static_cast<const UINT32*>(
+		const auto id = static_cast<const UINT32*>(
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, x));
 		WINPR_ASSERT(id);
 
-		float ddpi = 1.0f;
-		float hdpi = 1.0f;
-		float vdpi = 1.0f;
+		float ddpi = 1.0F;
+		float hdpi = 1.0F;
+		float vdpi = 1.0F;
 		SDL_Rect rect = {};
 
 		SDL_GetDisplayBounds(*id, &rect);
@@ -248,7 +252,7 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		WINPR_ASSERT(monitor);
 
 		/* windows uses 96 dpi as 'default' and the scale factors are in percent. */
-		const auto factor = ddpi / 96.0f * 100.0f;
+		const auto factor = ddpi / 96.0F * 100.0F;
 		monitor->orig_screen = x;
 		monitor->x = rect.x;
 		monitor->y = rect.y;

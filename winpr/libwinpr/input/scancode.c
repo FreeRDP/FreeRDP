@@ -112,9 +112,7 @@ DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 	const DWORD codeIndex = scancode & 0xFF;
 
 	if (codeIndex > 127)
-	{
 		return VK_NONE;
-	}
 
 	if ((dwKeyboardType != WINPR_KBD_TYPE_IBM_ENHANCED) &&
 	    (dwKeyboardType != WINPR_KBD_TYPE_JAPANESE))
@@ -123,9 +121,7 @@ DWORD GetVirtualKeyCodeFromVirtualScanCode(DWORD scancode, DWORD dwKeyboardType)
 	}
 
 	if (dwKeyboardType == WINPR_KBD_TYPE_IBM_ENHANCED)
-	{
 		return (scancode & KBDEXT) ? KBD4X[codeIndex] : KBD4T[codeIndex];
-	}
 	if (dwKeyboardType == WINPR_KBD_TYPE_JAPANESE)
 		return (scancode & KBDEXT) ? KBD7X[codeIndex] : KBD7T[codeIndex];
 

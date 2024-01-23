@@ -1014,7 +1014,6 @@ static void ap_integer_increment_le(BYTE* number, size_t size)
 		}
 
 		number[index] = 0;
-		continue;
 	}
 }
 
@@ -1031,7 +1030,6 @@ static void ap_integer_decrement_le(BYTE* number, size_t size)
 		}
 
 		number[index] = 0xFF;
-		continue;
 	}
 }
 

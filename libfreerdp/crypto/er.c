@@ -446,28 +446,20 @@ int er_write_integer(wStream* s, INT32 value)
 		Stream_Write_UINT16_BE(s, value);
 		return 3;
 	}
-	else
-	{
-		er_write_length(s, 4, FALSE);
-		Stream_Write_UINT32_BE(s, value);
-		return 5;
-	}
+
+	er_write_length(s, 4, FALSE);
+	Stream_Write_UINT32_BE(s, value);
+	return 5;
 }
 
 int er_skip_integer(INT32 value)
 {
 	if (value <= 127 && value >= -128)
-	{
 		return _er_skip_length(1) + 2;
-	}
 	if (value <= 32767 && value >= -32768)
-	{
 		return _er_skip_length(2) + 3;
-	}
-	else
-	{
-		return _er_skip_length(4) + 5;
-	}
+
+	return _er_skip_length(4) + 5;
 }
 
 BOOL er_read_integer_length(wStream* s, int* length)

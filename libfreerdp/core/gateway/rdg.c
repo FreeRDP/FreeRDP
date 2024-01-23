@@ -2166,10 +2166,8 @@ static int rdg_bio_read(BIO* bio, char* buf, int size)
 		WSASetLastError(WSAEWOULDBLOCK);
 		return -1;
 	}
-	else
-	{
-		BIO_set_flags(bio, BIO_FLAGS_READ);
-	}
+
+	BIO_set_flags(bio, BIO_FLAGS_READ);
 
 	return status;
 }
@@ -2236,8 +2234,7 @@ static long rdg_bio_ctrl(BIO* in_bio, int cmd, long arg1, void* arg2)
 		}
 		if (BIO_write_blocked(cbio))
 			return BIO_wait_write(cbio, timeout);
-		else
-			status = 1;
+		status = 1;
 	}
 	else if (cmd == BIO_C_WAIT_WRITE)
 	{

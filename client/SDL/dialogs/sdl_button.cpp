@@ -36,7 +36,7 @@ SdlButton::SdlButton(SDL_Renderer* renderer, const std::string& label, int id, S
 }
 
 SdlButton::SdlButton(SdlButton&& other) noexcept
-    : SdlWidget(std::move(other)), _name(std::move(other._name)), _id(std::move(other._id))
+    : SdlWidget(std::move(other)), _name(std::move(other._name)), _id(other._id)
 {
 }
 

@@ -998,7 +998,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
 
 		return SEC_E_OK;
 	}
-	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_NTPROOF_VALUE)
+	if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_NTPROOF_VALUE)
 	{
 		return ntlm_computeProofValue(context, (SecBuffer*)pBuffer);
 	}
@@ -1119,7 +1119,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_SetContextAttributesW(PCtxtHandle phContex
 
 		return SEC_E_OK;
 	}
-	else if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_TIMESTAMP)
+	if (ulAttribute == SECPKG_ATTR_AUTH_NTLM_TIMESTAMP)
 	{
 		SecPkgContext_AuthNtlmTimestamp* AuthNtlmTimestamp =
 		    (SecPkgContext_AuthNtlmTimestamp*)pBuffer;

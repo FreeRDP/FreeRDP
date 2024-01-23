@@ -179,7 +179,7 @@ class ChannelData
 		return path;
 	}
 
-	std::string idstr(const std::string& name, bool back) const
+	static std::string idstr(const std::string& name, bool back)
 	{
 		std::stringstream ss;
 		ss << name << ".";
@@ -247,7 +247,7 @@ static BOOL dump_set_plugin_data(proxyPlugin* plugin, proxyData* pdata, ChannelD
 static bool dump_channel_enabled(proxyPlugin* plugin, proxyData* pdata, const std::string& name)
 {
 	auto config = dump_get_plugin_data(plugin, pdata);
-	if (!config)
+	if (config == nullptr)
 	{
 		WLog_ERR(TAG, "Missing channel data");
 		return false;
@@ -267,7 +267,7 @@ static BOOL dump_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pdat
 	if (data->intercept)
 	{
 		auto cdata = dump_get_plugin_data(plugin, pdata);
-		if (!cdata)
+		if (cdata == nullptr)
 		{
 			return FALSE;
 		}
@@ -317,7 +317,7 @@ static BOOL dump_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, vo
 	{
 		WLog_DBG(TAG, "intercepting channel '%s'", data->name);
 		auto cdata = dump_get_plugin_data(plugin, pdata);
-		if (!cdata)
+		if (cdata == nullptr)
 		{
 			WLog_ERR(TAG, "Missing channel data");
 			return FALSE;
@@ -329,7 +329,7 @@ static BOOL dump_dyn_channel_intercept(proxyPlugin* plugin, proxyData* pdata, vo
 		}
 
 		auto stream = cdata->stream(data->name, data->isBackData);
-		auto buffer = reinterpret_cast<const char*>(Stream_ConstBuffer(data->data));
+		const auto buffer = reinterpret_cast<const char*>(Stream_ConstBuffer(data->data));
 		if (!stream.is_open() || !stream.good())
 		{
 			WLog_ERR(TAG, "Could not write to stream");
@@ -364,18 +364,18 @@ static BOOL dump_session_started(proxyPlugin* plugin, proxyData* pdata, void*)
 	auto custom = dump_get_plugin_data(plugin);
 	WINPR_ASSERT(custom);
 
-	auto config = pdata->config;
+	const auto config = pdata->config;
 	WINPR_ASSERT(config);
 
-	auto cpath = pf_config_get(config, plugin_name, key_path);
-	if (!cpath)
+	const auto cpath = pf_config_get(config, plugin_name, key_path);
+	if (cpath == nullptr)
 	{
 		WLog_ERR(TAG, "Missing configuration entry [%s/%s], can not continue", plugin_name,
 		         key_path);
 		return FALSE;
 	}
-	auto cchannels = pf_config_get(config, plugin_name, key_channels);
-	if (!cchannels)
+	const auto cchannels = pf_config_get(config, plugin_name, key_channels);
+	if (cchannels == nullptr)
 	{
 		WLog_ERR(TAG, "Missing configuration entry [%s/%s], can not continue", plugin_name,
 		         key_channels);
@@ -386,7 +386,7 @@ static BOOL dump_session_started(proxyPlugin* plugin, proxyData* pdata, void*)
 	std::string channels(cchannels);
 	std::vector<std::string> list = split(channels, "[;,]");
 	auto cfg = new ChannelData(path, list, custom->session());
-	if (!cfg || !cfg->create())
+	if ((cfg == nullptr) || !cfg->create())
 	{
 		delete cfg;
 		return FALSE;
@@ -404,7 +404,7 @@ static BOOL dump_session_end(proxyPlugin* plugin, proxyData* pdata, void*)
 	WINPR_ASSERT(pdata);
 
 	auto cfg = dump_get_plugin_data(plugin, pdata);
-	if (cfg)
+	if (cfg != nullptr)
 	{
 		WLog_DBG(TAG, "ending session dump %" PRIu64, cfg->session());
 	}

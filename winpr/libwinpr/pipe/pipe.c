@@ -41,7 +41,6 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <winpr/assert.h>
-#include <unistd.h>
 
 #ifdef WINPR_HAVE_SYS_AIO_H
 #undef WINPR_HAVE_SYS_AIO_H /* disable for now, incomplete */

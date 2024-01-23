@@ -667,7 +667,7 @@ char* parse_uri_to_local_file(const char* uri, size_t uri_len)
 		 *   "file:/path/to/file"
 		 *
 		 */
-		else if ((uri_len > prefixLen + 1) && (uri[prefixLen + 1] != '/'))
+		if ((uri_len > prefixLen + 1) && (uri[prefixLen + 1] != '/'))
 		{
 			if (is_dos_drive(&uri[prefixLen + 1], uri_len - prefixLen - 1))
 			{

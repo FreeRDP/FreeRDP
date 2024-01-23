@@ -654,10 +654,8 @@ static int wst_bio_read(BIO* bio, char* buf, int size)
 		WSASetLastError(WSAEWOULDBLOCK);
 		return -1;
 	}
-	else
-	{
-		BIO_set_flags(bio, BIO_FLAGS_READ);
-	}
+
+	BIO_set_flags(bio, BIO_FLAGS_READ);
 
 	return status;
 }

@@ -475,14 +475,12 @@ int credssp_auth_authenticate(rdpCredsspAuth* auth)
 		auth->state = AUTH_STATE_IN_PROGRESS;
 		return 0;
 	}
-	else
-	{
-		WLog_ERR(TAG, "%s failed with %s [0x%08X]",
-		         auth->server ? "AcceptSecurityContext" : "InitializeSecurityContext",
-		         GetSecurityStatusString(status), status);
-		auth->sspi_error = status;
-		return -1;
-	}
+
+	WLog_ERR(TAG, "%s failed with %s [0x%08X]",
+	         auth->server ? "AcceptSecurityContext" : "InitializeSecurityContext",
+	         GetSecurityStatusString(status), status);
+	auth->sspi_error = status;
+	return -1;
 }
 
 /* Plaintext is not modified; Output buffer MUST be freed if encryption succeeds */

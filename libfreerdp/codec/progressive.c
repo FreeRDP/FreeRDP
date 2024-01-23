@@ -1250,7 +1250,7 @@ static INLINE INT16 progressive_rfx_srl_read(RFX_PROGRESSIVE_UPGRADE_STATE* stat
 		if (k)
 		{
 			bs->mask = ((1 << k) - 1);
-			state->nz = ((bs->accumulator >> (32u - k)) & bs->mask);
+			state->nz = ((bs->accumulator >> (32U - k)) & bs->mask);
 			BitStream_Shift(bs, k);
 		}
 

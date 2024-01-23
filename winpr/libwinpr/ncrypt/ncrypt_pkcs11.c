@@ -999,13 +999,10 @@ static SECURITY_STATUS check_for_piv_container_name(NCryptP11KeyHandle* key, BYT
 		{
 			*pcbResult = (PIV_CONTAINER_NAME_LEN + 1) * sizeof(WCHAR);
 			if (!pbOutput)
-			{
 				return ERROR_SUCCESS;
-			}
 			if (cbOutput < (PIV_CONTAINER_NAME_LEN + 1) * sizeof(WCHAR))
 				return NTE_NO_MEMORY;
-			else
-				return get_piv_container_name(key, cur->tag, pbOutput, cbOutput);
+			return get_piv_container_name(key, cur->tag, pbOutput, cbOutput);
 		}
 	}
 	return NTE_NOT_FOUND;

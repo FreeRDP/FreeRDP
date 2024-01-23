@@ -898,11 +898,11 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 			if (context->context->frame_size <= (int)context->bufferedSamples)
 			{
 				/* Encode in desired format. */
-				if (!ffmpeg_encode_frame(context->context, context->buffered, context->packet, out))
-					return FALSE;
+			    if (!ffmpeg_encode_frame(context->context, context->buffered, context->packet, out))
+				    return FALSE;
 
-				context->bufferedSamples = 0;
-			}
+			    context->bufferedSamples = 0;
+		    }
 	} while (rest > 0);
 
 	return TRUE;

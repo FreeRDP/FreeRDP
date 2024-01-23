@@ -997,10 +997,8 @@ int xf_input_handle_event(xfContext* xfc, const XEvent* event)
 	{
 		return xf_input_handle_event_local(xfc, event);
 	}
-	else
-	{
-		return xf_input_handle_event_local(xfc, event);
-	}
+
+	return xf_input_handle_event_local(xfc, event);
 
 #else
 	return 0;

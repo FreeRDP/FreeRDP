@@ -56,10 +56,9 @@ static UCHAR vtime(ULONG Ti)
 	}
 	if (Ti < 100)
 		return 1;
-	else if (Ti > 25500)
+	if (Ti > 25500)
 		return 255; /* 0xFF */
-	else
-		return Ti / 100;
+	return Ti / 100;
 }
 
 /**

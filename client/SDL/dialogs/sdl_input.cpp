@@ -56,7 +56,7 @@ SdlInputWidget::SdlInputWidget(SDL_Renderer* renderer, const std::string& label,
 }
 
 SdlInputWidget::SdlInputWidget(SdlInputWidget&& other) noexcept
-    : _flags(std::move(other._flags)), _text(std::move(other._text)),
+    : _flags(other._flags), _text(std::move(other._text)),
       _text_label(std::move(other._text_label)), _label(std::move(other._label)),
       _input(std::move(other._input)), _highlight(other._highlight), _mouseover(other._mouseover)
 {
@@ -166,7 +166,7 @@ bool SdlInputWidget::update_input(SDL_Renderer* renderer, SDL_Color fgcolor)
 	std::string text = _text;
 	if (!text.empty())
 	{
-		if ((_flags & SDL_INPUT_MASK) != 0u)
+		if ((_flags & SDL_INPUT_MASK) != 0U)
 		{
 			for (size_t x = 0; x < text.length(); x++)
 				text[x] = '*';

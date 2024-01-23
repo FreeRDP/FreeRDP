@@ -30,7 +30,6 @@
 #include "pf_server.h"
 #include <freerdp/server/proxy/proxy_config.h>
 
-#include <freerdp/server/proxy/proxy_config.h>
 #include <freerdp/server/proxy/proxy_log.h>
 
 #include <freerdp/crypto/crypto.h>

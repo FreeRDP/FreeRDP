@@ -25,7 +25,6 @@
 #include "../sspi.h"
 
 #include <winpr/crt.h>
-#include <winpr/assert.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
 #include <winpr/tchar.h>

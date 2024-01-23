@@ -64,7 +64,6 @@ class SDLConnectionDialog
 		MSG_DISCARD
 	};
 
-  private:
 	bool createWindow();
 	void destroyWindow();
 
@@ -83,10 +82,8 @@ class SDLConnectionDialog
 	bool setTimer(Uint32 timeoutMS = 15000);
 	void resetTimer();
 
-  private:
 	static Uint32 timeout(Uint32 intervalMS, void* _this);
 
-  private:
 	struct widget_cfg_t
 	{
 		SDL_Color fgcolor;
@@ -94,7 +91,6 @@ class SDLConnectionDialog
 		SdlWidget widget;
 	};
 
-  private:
 	rdpContext* _context;
 	SDL_Window* _window;
 	SDL_Renderer* _renderer;
@@ -126,7 +122,6 @@ class SDLConnectionDialogHider
 	SDLConnectionDialog* get(freerdp* instance);
 	SDLConnectionDialog* get(rdpContext* context);
 
-  private:
 	SDLConnectionDialog* _dialog;
 	bool _visible;
 };

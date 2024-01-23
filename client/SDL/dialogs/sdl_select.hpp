@@ -39,7 +39,6 @@ class SdlSelectWidget : public SdlWidget
   private:
 	SdlSelectWidget(const SdlSelectWidget& other) = delete;
 
-  private:
 	std::string _text;
 	bool _mouseover;
 	bool _highlight;

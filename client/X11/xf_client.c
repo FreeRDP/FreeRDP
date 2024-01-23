@@ -83,12 +83,10 @@
 #include <freerdp/client/cmdline.h>
 
 #include <winpr/crt.h>
-#include <winpr/assert.h>
 #include <winpr/synch.h>
 #include <winpr/file.h>
 #include <winpr/print.h>
 #include <winpr/sysinfo.h>
-#include <X11/XKBlib.h>
 
 #include "xf_rail.h"
 #if defined(CHANNEL_TSMF_CLIENT)
@@ -102,7 +100,6 @@
 #include "xf_monitor.h"
 #include "xf_graphics.h"
 #include "xf_keyboard.h"
-#include "xf_input.h"
 #include "xf_channels.h"
 #include "xfreerdp.h"
 #include "xf_utils.h"
@@ -1355,11 +1352,9 @@ static BOOL xf_process_pipe(rdpContext* context, const char* pipe)
 			WLog_ERR(TAG, "pipe '%s' read returned %s [%d]", pipe, strerror(errno), errno);
 			break;
 		}
-		else
-		{
-			if (!xf_inject_keypress(context, buffer, rd))
-				break;
-		}
+
+		if (!xf_inject_keypress(context, buffer, rd))
+			break;
 	}
 	close(fd);
 	return TRUE;
