@@ -27,4 +27,5 @@ include(PreventInSourceBuilds)
 include(GNUInstallDirsWrapper)
 include(MSVCRuntime)
 include(ConfigureRPATH)
+include(ClangTidy)
 
