@@ -1,12 +1,21 @@
 # get all project files
 file(GLOB_RECURSE ALL_SOURCE_FILES *.cpp *.c *.h *.m *.java)
 # minimum version required
-set(_CLANG_FORMAT_MINIMUM_VERSION 7.0.0)
+set(_CLANG_FORMAT_MINIMUM_VERSION 10.0.0)
 
 find_program(CLANG_FORMAT
 	NAMES
-	clang-format-8
-	clang-format-7
+	clang-format-20
+	clang-format-19
+	clang-format-18
+	clang-format-17
+	clang-format-16
+	clang-format-15
+	clang-format-14
+	clang-format-13
+	clang-format-12
+	clang-format-11
+	clang-format-10
 	clang-format
 	)
 
