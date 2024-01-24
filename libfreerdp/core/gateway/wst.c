@@ -18,6 +18,7 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/version.h>
 
 #include <winpr/assert.h>
 
@@ -810,8 +811,8 @@ rdpWst* wst_new(rdpContext* context)
 		    !http_context_set_cache_control(wst->http, "no-cache") ||
 		    !http_context_set_pragma(wst->http, "no-cache") ||
 		    !http_context_set_connection(wst->http, "Keep-Alive") ||
-		    !http_context_set_user_agent(wst->http, "FreeRDP/3.0") ||
-		    !http_context_set_x_ms_user_agent(wst->http, "FreeRDP/3.0") ||
+		    !http_context_set_user_agent(wst->http, FREERDP_USER_AGENT) ||
+		    !http_context_set_x_ms_user_agent(wst->http, FREERDP_USER_AGENT) ||
 		    !http_context_set_host(wst->http, wst->gwhostname) ||
 		    !http_context_enable_websocket_upgrade(wst->http, TRUE))
 		{
