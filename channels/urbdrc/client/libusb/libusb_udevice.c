@@ -1347,6 +1347,7 @@ static int libusb_udev_bulk_or_interrupt_transfer(IUDEVICE* idev,
 		async_transfer_user_data_free(user_data);
 		return -1;
 	}
+	transfer->user_data = user_data;
 
 	ep_desc = func_get_ep_desc(pdev->LibusbConfig, pdev->MsConfig, EndpointAddress);
 

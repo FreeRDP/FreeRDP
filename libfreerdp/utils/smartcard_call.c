@@ -84,6 +84,8 @@ struct s_scard_context_element
 	void (*fn_free)(void*);
 };
 
+static void context_free(void* arg);
+
 static LONG smartcard_EstablishContext_Call(scard_call_context* smartcard, wStream* out,
                                             SMARTCARD_OPERATION* operation)
 {
@@ -114,15 +116,10 @@ static LONG smartcard_EstablishContext_Call(scard_call_context* smartcard, wStre
 			}
 		}
 
-		if (!pContext)
-		{
-			WLog_ERR(TAG, "smartcard_context_new failed!");
-			return STATUS_NO_MEMORY;
-		}
-
 		if (!HashTable_Insert(smartcard->rgSCardContextList, key, (void*)pContext))
 		{
 			WLog_ERR(TAG, "ListDictionary_Add failed!");
+			context_free(pContext);
 			return STATUS_INTERNAL_ERROR;
 		}
 	}
@@ -131,6 +128,7 @@ static LONG smartcard_EstablishContext_Call(scard_call_context* smartcard, wStre
 		return scard_log_status_error(TAG, "SCardEstablishContext", status);
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert takes ownership of pContext
 	smartcard_scard_context_native_to_redir(&(ret.hContext), hContext);
 
 	status = smartcard_pack_establish_context_return(out, &ret);
@@ -1823,7 +1821,7 @@ LONG smartcard_irp_device_control_call(scard_call_context* smartcard, wStream* o
 	return SCARD_S_SUCCESS;
 }
 
-static void context_free(void* arg)
+void context_free(void* arg)
 {
 	struct s_scard_context_element* element = arg;
 	if (!arg)

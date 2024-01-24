@@ -690,6 +690,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 		if (!ArrayList_Append(g_NamedPipeServerSockets, baseSocket))
 		{
 			free(baseSocket->name);
+			free(baseSocket);
 			goto out;
 		}
 
@@ -714,6 +715,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 #endif
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ArrayList_Append takes ownership of baseSocket
 	ArrayList_Unlock(g_NamedPipeServerSockets);
 	return pNamedPipe;
 out:

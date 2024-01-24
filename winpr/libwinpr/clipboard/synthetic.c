@@ -343,7 +343,7 @@ static void* clipboard_synthesize_html_format(wClipboard* clipboard, UINT32 form
 		if (SrcSize > 2)
 		{
 			if (SrcSize > INT_MAX)
-				return NULL;
+				goto fail;
 
 			/* Check the BOM (Byte Order Mark) */
 			if ((pSrcData.cpb[0] == 0xFE) && (pSrcData.cpb[1] == 0xFF))

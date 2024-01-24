@@ -1088,7 +1088,6 @@ static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 
 	WINPR_UNUSED(rdp);
 	WINPR_ASSERT(info);
-	rdp_free_logon_info(info);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 576))
 		return FALSE;
@@ -1114,7 +1113,6 @@ static BOOL rdp_recv_logon_info_v1(rdpRdp* rdp, wStream* s, logon_info* info)
 	         info->sessionId, info->username, info->domain);
 	return TRUE;
 fail:
-	rdp_free_logon_info(info);
 	return FALSE;
 }
 
@@ -1130,7 +1128,6 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	WINPR_ASSERT(info);
 
 	WINPR_UNUSED(rdp);
-	rdp_free_logon_info(info);
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, logonInfoV2TotalSize))
 		return FALSE;
@@ -1210,7 +1207,6 @@ static BOOL rdp_recv_logon_info_v2(rdpRdp* rdp, wStream* s, logon_info* info)
 	         info->sessionId, info->username, info->domain);
 	return TRUE;
 fail:
-	rdp_free_logon_info(info);
 	return FALSE;
 }
 
@@ -1344,8 +1340,7 @@ BOOL rdp_recv_save_session_info(rdpRdp* rdp, wStream* s)
 			if (status && update->SaveSessionInfo)
 				status = update->SaveSessionInfo(context, infoType, &logonInfo);
 
-			free(logonInfo.domain);
-			free(logonInfo.username);
+			rdp_free_logon_info(&logonInfo);
 			break;
 
 		case INFO_TYPE_LOGON_LONG:

@@ -1745,7 +1745,10 @@ BOOL pf_channel_rdpdr_client_new(pClientContext* pc)
 	WINPR_ASSERT(obj);
 	obj->fnObjectNew = stream_copy;
 	obj->fnObjectFree = stream_free;
-	return HashTable_Insert(pc->interceptContextMap, RDPDR_SVC_CHANNEL_NAME, rdpdr);
+	if (!HashTable_Insert(pc->interceptContextMap, RDPDR_SVC_CHANNEL_NAME, rdpdr))
+		goto fail;
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert takes ownership of rdpdr
+	return TRUE;
 fail:
 	pf_channel_rdpdr_client_context_free(&rdpdr->common.base);
 	return FALSE;
@@ -1815,7 +1818,11 @@ BOOL pf_channel_rdpdr_server_new(pServerContext* ps)
 	rdpdr->handle = WTSVirtualChannelOpenEx(rdpdr->SessionId, RDPDR_SVC_CHANNEL_NAME, 0);
 	if (rdpdr->handle == 0)
 		goto fail;
-	return HashTable_Insert(ps->interceptContextMap, RDPDR_SVC_CHANNEL_NAME, rdpdr);
+	if (!HashTable_Insert(ps->interceptContextMap, RDPDR_SVC_CHANNEL_NAME, rdpdr))
+		goto fail;
+
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert takes ownership of rdpdr
+	return TRUE;
 fail:
 	pf_channel_rdpdr_server_context_free(&rdpdr->common.base);
 	return FALSE;

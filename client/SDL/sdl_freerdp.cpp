@@ -655,7 +655,7 @@ static const char* sdl_window_get_title(rdpSettings* settings)
 
 	windowTitle = freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
 	if (windowTitle)
-		return _strdup(windowTitle);
+		return windowTitle;
 
 	name = freerdp_settings_get_server_name(settings);
 	port = freerdp_settings_get_uint32(settings, FreeRDP_ServerPort);
@@ -669,7 +669,8 @@ static const char* sdl_window_get_title(rdpSettings* settings)
 	else
 		sprintf_s(buffer, sizeof(buffer), "%s %s:%" PRIu32, prefix, name, port);
 
-	freerdp_settings_set_string(settings, FreeRDP_WindowTitle, buffer);
+	if (!freerdp_settings_set_string(settings, FreeRDP_WindowTitle, buffer))
+		return NULL;
 	return freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
 }
 

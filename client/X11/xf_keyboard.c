@@ -82,7 +82,6 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 {
 	wObject* obj = NULL;
 	FILE* keyScript = NULL;
-	char* keyCombination = NULL;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
 	const rdpSettings* settings = NULL;
@@ -104,6 +103,8 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 		return FALSE;
 
 	obj = ArrayList_Object(xfc->keyCombinations);
+	WINPR_ASSERT(obj);
+	obj->fnObjectNew = _strdup;
 	obj->fnObjectFree = free;
 	sprintf_s(command, sizeof(command), "%s key", ActionScript);
 	keyScript = popen(command, "r");
@@ -118,9 +119,8 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 	{
 		char* context = NULL;
 		strtok_s(buffer, "\n", &context);
-		keyCombination = _strdup(buffer);
 
-		if (!keyCombination || !ArrayList_Append(xfc->keyCombinations, keyCombination))
+		if (!buffer || !ArrayList_Append(xfc->keyCombinations, buffer))
 		{
 			ArrayList_Free(xfc->keyCombinations);
 			xfc->actionScriptExists = FALSE;

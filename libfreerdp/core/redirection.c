@@ -124,7 +124,7 @@ static BOOL redirection_copy_array(char*** dst, UINT32* plen, const char** str, 
 	if (!str || (len == 0))
 		return TRUE;
 
-	*dst = calloc(len, sizeof(char));
+	*dst = calloc(len, sizeof(char*));
 	if (!*dst)
 		return FALSE;
 	*plen = len;
@@ -446,10 +446,9 @@ static BOOL rdp_redirection_read_target_cert_stream(wStream* s, rdpRedirection* 
 
 	WINPR_ASSERT(redirection);
 
-	if (!rdp_redirection_read_base64_wchar(LB_TARGET_CERTIFICATE, s, &length, &ptr))
-		return FALSE;
-
-	const BOOL rc = rdp_redirection_read_target_cert(&redirection->TargetCertificate, ptr, length);
+	BOOL rc = FALSE;
+	if (rdp_redirection_read_base64_wchar(LB_TARGET_CERTIFICATE, s, &length, &ptr))
+		rc = rdp_redirection_read_target_cert(&redirection->TargetCertificate, ptr, length);
 	free(ptr);
 	return rc;
 }

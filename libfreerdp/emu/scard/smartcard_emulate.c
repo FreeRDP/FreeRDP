@@ -307,8 +307,8 @@ static SCardHandle* scard_handle_new(SmartcardEmulationContext* smartcard, SCARD
 	{
 		size_t s = strlen(name);
 
-		hdl->szReader.pw = calloc(s + 2, sizeof(CHAR));
-		if (!hdl->szReader.pw)
+		hdl->szReader.pc = calloc(s + 2, sizeof(CHAR));
+		if (!hdl->szReader.pc)
 			goto fail;
 		memcpy(hdl->szReader.pv, name, s * sizeof(CHAR));
 	}
@@ -438,6 +438,7 @@ LONG WINAPI Emulate_SCardEstablishContext(SmartcardEmulationContext* smartcard, 
 
 	if (status != SCARD_S_SUCCESS)
 		scard_context_free(ctx);
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert takes ownership of ctx
 	return status;
 }
 
@@ -2309,6 +2310,8 @@ static LONG insert_data(wHashTable* table, DWORD FreshnessCounter, const void* k
 	item->freshness = FreshnessCounter;
 	item->size = DataLen;
 	memcpy(item->data, Data, DataLen);
+
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert takes ownership of item
 	return SCARD_S_SUCCESS;
 }
 

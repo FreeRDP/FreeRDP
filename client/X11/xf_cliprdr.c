@@ -178,6 +178,23 @@ static xfCachedData* xf_cached_data_new(BYTE* data, UINT32 data_length)
 	return cached_data;
 }
 
+static xfCachedData* xf_cached_data_new_copy(BYTE* data, UINT32 data_length)
+{
+	BYTE* copy = NULL;
+	if (data_length > 0)
+	{
+		copy = malloc(data_length);
+		if (!copy)
+			return NULL;
+		memcpy(copy, data, data_length);
+	}
+
+	xfCachedData* cache = xf_cached_data_new(copy, data_length);
+	if (!cache)
+		free(copy);
+	return cache;
+}
+
 static void xf_clipboard_free_server_formats(xfClipboard* clipboard)
 {
 	WINPR_ASSERT(clipboard);
@@ -1384,6 +1401,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 			formatId = format->formatId;
 			rawTransfer = FALSE;
 			xfCachedData* cached_data = NULL;
+			xfCachedData* converted_data = NULL;
 			UINT32 dstFormatId = 0;
 
 			if (formatId == CF_RAW)
@@ -1429,7 +1447,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				              cached_raw_data ? cached_raw_data->data_length : 0);
 
 				if (cached_raw_data && cached_raw_data->data_length != 0)
-					cached_data = convert_data_from_existing_raw_data(
+					converted_data = cached_data = convert_data_from_existing_raw_data(
 					    clipboard, cached_raw_data, srcFormatId, nullTerminated, dstFormatId);
 			}
 
@@ -1439,6 +1457,8 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 			{
 				/* Cached clipboard data available. Send it now */
 				respond->property = xevent->property;
+
+				// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 				xf_cliprdr_provide_data(clipboard, respond, cached_data->data,
 				                        cached_data->data_length);
 			}
@@ -1994,7 +2014,6 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	xfContext* xfc = NULL;
 	xfClipboard* clipboard = NULL;
 	xfCachedData* cached_data = NULL;
-	BYTE* raw_data = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(formatDataResponse);
@@ -2153,20 +2172,12 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 	/* We have to copy the original data again, as pSrcData is now owned
 	 * by clipboard->system. Memory allocation failure is not fatal here
 	 * as this is only a cached value. */
-	raw_data = malloc(size);
-
-	if (raw_data)
 	{
-		xfCachedData* cached_raw_data = NULL;
-
-		CopyMemory(raw_data, data, size);
-
-		cached_raw_data = xf_cached_data_new(raw_data, size);
+		// clipboard->cachedData owns cached_data
+		// NOLINTNEXTLINE(clang-analyzer-unix.Malloc
+		xfCachedData* cached_raw_data = xf_cached_data_new_copy(data, size);
 		if (!cached_raw_data)
-		{
 			WLog_WARN(TAG, "Failed to allocate cache entry");
-			free(raw_data);
-		}
 		else
 		{
 			if (!HashTable_Insert(clipboard->cachedRawData, (void*)(UINT_PTR)srcFormatId,
@@ -2174,16 +2185,12 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 			{
 				WLog_WARN(TAG, "Failed to cache clipboard data");
 				xf_cached_data_free(cached_raw_data);
-				xf_cached_data_free(cached_data);
 			}
 		}
 	}
-	else
-	{
-		WLog_WARN(TAG, "failed to allocate %" PRIu32 " bytes for a copy of raw clipboard data",
-		          size);
-	}
 
+	// clipboard->cachedRawData owns cached_raw_data
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	xf_cliprdr_provide_data(clipboard, clipboard->respond, pDstData, DstSize);
 	{
 		union

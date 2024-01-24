@@ -126,7 +126,10 @@ static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
 
 	/* [MS-RDPEGFX] 2.2.4.4.2 RDPGFX_AVC420_QUANT_QUALITY */
 	if (!meta || (QP > UINT8_MAX))
+	{
+		free(rectangles);
 		return FALSE;
+	}
 
 	meta->regionRects = rectangles;
 	if (count == 0)

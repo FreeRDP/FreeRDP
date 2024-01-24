@@ -397,11 +397,15 @@ BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 	wStream* s = rdp_data_pdu_init(rdp);
 
 	if (!s)
+	{
+		free(keyList);
 		return FALSE;
+	}
 
 	if (!rdp_write_client_persistent_key_list_pdu(s, &info))
 	{
 		Stream_Free(s, TRUE);
+		free(keyList);
 		return FALSE;
 	}
 
