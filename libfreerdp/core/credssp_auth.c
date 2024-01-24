@@ -765,22 +765,23 @@ static void auth_get_sspi_module_from_reg(char** sspi_module)
 		return;
 	}
 
-	*sspi_module = (LPSTR)malloc(dwSize + sizeof(CHAR));
-	if (!(*sspi_module))
+	char* module = (LPSTR)calloc(dwSize + sizeof(CHAR), sizeof(char));
+	if (!module)
 	{
 		RegCloseKey(hKey);
 		return;
 	}
 
-	if (RegQueryValueExA(hKey, "SspiModule", NULL, &dwType, (BYTE*)(*sspi_module), &dwSize) !=
+	if (RegQueryValueExA(hKey, "SspiModule", NULL, &dwType, (BYTE*)module, &dwSize) !=
 	    ERROR_SUCCESS)
 	{
 		RegCloseKey(hKey);
-		free(*sspi_module);
+		free(module);
 		return;
 	}
 
 	RegCloseKey(hKey);
+	*sspi_module = module;
 }
 
 static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* settings)

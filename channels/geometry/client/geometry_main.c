@@ -261,7 +261,10 @@ static UINT geometry_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 
 		Stream_Read_UINT32(s, cbGeometryBuffer);
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, cbGeometryBuffer))
+		{
+			// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert ownership mappedGeometry
 			return ERROR_INVALID_DATA;
+		}
 
 		if (cbGeometryBuffer)
 		{

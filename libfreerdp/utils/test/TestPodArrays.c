@@ -60,68 +60,73 @@ POD_ARRAYS_IMPL(BasicStruct, basicstruct)
 
 int TestPodArrays(int argc, char* argv[])
 {
+	int rc = -1;
 	UINT32 i = 0;
 	UINT32 sum = 0;
 	UINT32 foreach_index = 0;
-	ArrayUINT32 uint32s;
+	ArrayUINT32 uint32s = { 0 };
 	UINT32* ptr = NULL;
 	const UINT32* cptr = NULL;
-	ArrayBasicStruct basicStructs;
+	ArrayBasicStruct basicStructs = { 0 };
 	BasicStruct basicStruct = { 1, 2 };
 
 	array_uint32_init(&uint32s);
+	array_basicstruct_init(&basicStructs);
+
 	for (i = 0; i < 10; i++)
 		if (!array_uint32_append(&uint32s, i))
-			return -1;
+			goto fail;
 
 	sum = 0;
 	if (!array_uint32_foreach(&uint32s, cb_compute_sum, &sum))
-		return -2;
+		goto fail;
 
 	if (sum != 45)
-		return -3;
+		goto fail;
 
 	foreach_index = 0;
 	if (array_uint32_foreach(&uint32s, cb_stop_at_5, &foreach_index))
-		return -4;
+		goto fail;
 
 	if (foreach_index != 5)
-		return -5;
+		goto fail;
 
 	if (array_uint32_get(&uint32s, 4) != 4)
-		return -6;
+		goto fail;
 
 	array_uint32_set(&uint32s, 4, 5);
 	if (array_uint32_get(&uint32s, 4) != 5)
-		return -7;
+		goto fail;
 
 	ptr = array_uint32_data(&uint32s);
 	if (*ptr != 0)
-		return -8;
+		goto fail;
 
 	cptr = array_uint32_cdata(&uint32s);
 	if (*cptr != 0)
-		return -9;
+		goto fail;
 
 	/* test modifying values of the array during the foreach */
 	if (!array_uint32_foreach(&uint32s, cb_set_to_1, NULL) || array_uint32_get(&uint32s, 5) != 1)
-		return -10;
+		goto fail;
 
 	/* this one is to test that we can modify the array itself during the foreach and that things
 	 * go nicely */
 	if (!array_uint32_foreach(&uint32s, cb_reset_after_1, &uint32s) || array_uint32_size(&uint32s))
-		return -11;
-
-	array_uint32_uninit(&uint32s);
+		goto fail;
 
 	/* give a try with an array of BasicStructs */
-	array_basicstruct_init(&basicStructs);
 	if (!array_basicstruct_append(&basicStructs, basicStruct))
-		return -20;
+		goto fail;
 
 	if (!array_basicstruct_foreach(&basicStructs, cb_basic_struct, NULL))
-		return -21;
+		goto fail;
 
+	rc = 0;
+
+fail:
+	array_uint32_uninit(&uint32s);
 	array_basicstruct_uninit(&basicStructs);
-	return 0;
+
+	return rc;
 }

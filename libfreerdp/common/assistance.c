@@ -248,6 +248,21 @@ fail:
 	return rc;
 }
 
+static BOOL append_address_to_list(wArrayList* MachineAddresses, const char* str, size_t len)
+{
+	char* copy = NULL;
+	if (len > 0)
+		copy = strndup(str, len);
+	if (!copy)
+		return FALSE;
+
+	const BOOL rc = ArrayList_Append(MachineAddresses, copy);
+	if (!rc)
+		free(copy);
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ArrayList_Append takes ownership of copy
+	return rc;
+}
+
 static BOOL append_address(rdpAssistanceFile* file, const char* host, const char* port)
 {
 	WINPR_ASSERT(file);
@@ -262,7 +277,7 @@ static BOOL append_address(rdpAssistanceFile* file, const char* host, const char
 		return FALSE;
 	}
 
-	if (!ArrayList_Append(file->MachineAddresses, _strdup(host)))
+	if (!append_address_to_list(file->MachineAddresses, host, host ? strlen(host) : 0))
 		return FALSE;
 	return ArrayList_Append(file->MachinePorts, (void*)(uintptr_t)p);
 }
@@ -664,14 +679,14 @@ static BOOL freerdp_assistance_parse_all_elements_of_l(rdpAssistanceFile* file, 
 
 	if (n && (nlen > 0))
 	{
-		if (!ArrayList_Append(file->MachineAddresses, strndup(n, nlen)))
+		if (!append_address_to_list(file->MachineAddresses, n, nlen))
 			return FALSE;
 		if (!ArrayList_Append(file->MachinePorts, (void*)(uintptr_t)p))
 			return FALSE;
 	}
 	if (u && (ulen > 0))
 	{
-		if (!ArrayList_Append(file->MachineAddresses, strndup(u, ulen)))
+		if (!append_address_to_list(file->MachineAddresses, u, ulen))
 			return FALSE;
 		if (!ArrayList_Append(file->MachinePorts, (void*)(uintptr_t)p))
 			return FALSE;

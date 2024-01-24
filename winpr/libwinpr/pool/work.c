@@ -149,8 +149,10 @@ VOID winpr_SubmitThreadpoolWork(PTP_WORK pwk)
 	{
 		callbackInstance->Work = pwk;
 		CountdownEvent_AddCount(pool->WorkComplete, 1);
-		Queue_Enqueue(pool->PendingQueue, callbackInstance);
+		if (!Queue_Enqueue(pool->PendingQueue, callbackInstance))
+			free(callbackInstance);
 	}
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): Queue_Enqueue takes ownership of callbackInstance
 }
 
 BOOL winpr_TrySubmitThreadpoolCallback(PTP_SIMPLE_CALLBACK pfns, PVOID pv,

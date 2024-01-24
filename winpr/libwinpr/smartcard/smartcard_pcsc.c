@@ -1740,6 +1740,8 @@ static LONG WINAPI PCSC_SCardConnect_Internal(SCARDCONTEXT hContext, LPCSTR szRe
 		pCard = PCSC_ConnectCardHandle(hContext, *phCard);
 		*pdwActiveProtocol = PCSC_ConvertProtocolsToWinSCard((DWORD)pcsc_dwActiveProtocol);
 		pCard->shared = shared;
+
+		// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ListDictionary_Add takes ownership of pCard
 		PCSC_WaitForCardAccess(hContext, pCard->hSharedContext, shared);
 	}
 
@@ -1978,7 +1980,7 @@ static LONG WINAPI PCSC_SCardStatus_Internal(SCARDHANDLE hCard, LPSTR mszReaderN
 			pcsc_cchReaderLen++;
 
 #endif
-		tReader = calloc(sizeof(WCHAR), pcsc_cchReaderLen);
+		tReader = calloc(sizeof(CHAR), pcsc_cchReaderLen + 1);
 
 		if (!tReader)
 		{
@@ -2874,7 +2876,7 @@ static LONG WINAPI PCSC_SCardWriteCacheA(SCARDCONTEXT hContext, UUID* CardIdenti
 		free(id);
 		return SCARD_E_NO_MEMORY;
 	}
-	data->data = malloc(DataLen);
+	data->data = calloc(DataLen, 1);
 	if (!data->data)
 	{
 		free(id);
@@ -2895,6 +2897,7 @@ static LONG WINAPI PCSC_SCardWriteCacheA(SCARDCONTEXT hContext, UUID* CardIdenti
 		return SCARD_E_NO_MEMORY;
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert owns data
 	return SCARD_S_SUCCESS;
 }
 
@@ -2940,6 +2943,7 @@ static LONG WINAPI PCSC_SCardWriteCacheW(SCARDCONTEXT hContext, UUID* CardIdenti
 		return SCARD_E_NO_MEMORY;
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert owns data
 	return SCARD_S_SUCCESS;
 }
 

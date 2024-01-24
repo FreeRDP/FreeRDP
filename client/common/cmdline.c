@@ -2540,6 +2540,7 @@ static int parse_vmconnect_options(rdpSettings* settings, const COMMAND_LINE_ARG
 
 static int parse_size_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
 {
+	int status = 0;
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
@@ -2572,26 +2573,27 @@ static int parse_size_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		{
 			BOOL partial = FALSE;
 
+			status = COMMAND_LINE_ERROR;
 			if (strchr(p, 'w'))
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_PercentScreenUseWidth, TRUE))
-					return COMMAND_LINE_ERROR;
+					goto fail;
 				partial = TRUE;
 			}
 
 			if (strchr(p, 'h'))
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_PercentScreenUseHeight, TRUE))
-					return COMMAND_LINE_ERROR;
+					goto fail;
 				partial = TRUE;
 			}
 
 			if (!partial)
 			{
 				if (!freerdp_settings_set_bool(settings, FreeRDP_PercentScreenUseWidth, TRUE))
-					return COMMAND_LINE_ERROR;
+					goto fail;
 				if (!freerdp_settings_set_bool(settings, FreeRDP_PercentScreenUseHeight, TRUE))
-					return COMMAND_LINE_ERROR;
+					goto fail;
 			}
 
 			*p = '\0';
@@ -2600,19 +2602,22 @@ static int parse_size_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 
 				if (!value_to_int(str, &val, 0, 100))
 				{
-					free(str);
-					return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					status = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					goto fail;
 				}
 
 				if (!freerdp_settings_set_uint32(settings, FreeRDP_PercentScreen, (UINT32)val))
-					return COMMAND_LINE_ERROR;
+					goto fail;
 			}
+
+			status = 0;
 		}
 
+	fail:
 		free(str);
 	}
 
-	return 0;
+	return status;
 }
 
 static int parse_monitors_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_A* arg)
@@ -2773,6 +2778,7 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 						rc = COMMAND_LINE_ERROR_MEMORY;
 					else
 						_snprintf(tmp, tlen, "%s,%s", old, now);
+					free(now);
 					now = tmp;
 				}
 
@@ -5312,7 +5318,7 @@ static void argv_free(int* pargc, char** pargv[])
 	free(argv);
 }
 
-static BOOL argv_append(int* pargc, char** pargv[], char* what)
+static BOOL argv_append(int* pargc, char** pargv[], const char* what)
 {
 	WINPR_ASSERT(pargc);
 	WINPR_ASSERT(pargv);
@@ -5334,6 +5340,18 @@ static BOOL argv_append(int* pargc, char** pargv[], char* what)
 	return TRUE;
 }
 
+static BOOL argv_append_dup(int* pargc, char** pargv[], const char* what)
+{
+	char* copy = NULL;
+	if (what)
+		copy = _strdup(what);
+
+	const BOOL rc = argv_append(pargc, pargv, copy);
+	if (!rc)
+		free(copy);
+	return rc;
+}
+
 static BOOL args_from_fp(FILE* fp, int* aargc, char** aargv[], const char* file, const char* cmd)
 {
 	BOOL success = FALSE;
@@ -5347,7 +5365,7 @@ static BOOL args_from_fp(FILE* fp, int* aargc, char** aargv[], const char* file,
 		WLog_ERR(TAG, "Failed to read command line options from file '%s'", file);
 		return FALSE;
 	}
-	if (!argv_append(aargc, aargv, _strdup(cmd)))
+	if (!argv_append_dup(aargc, aargv, cmd))
 		goto fail;
 	while (!feof(fp))
 	{
@@ -5380,7 +5398,10 @@ static BOOL args_from_fp(FILE* fp, int* aargc, char** aargv[], const char* file,
 			break;
 		}
 		if (!argv_append(aargc, aargv, line))
+		{
+			free(line);
 			goto fail;
+		}
 	}
 
 	success = TRUE;
@@ -5425,14 +5446,14 @@ static BOOL args_from_env(const char* name, int* aargc, char** aargv[], const ch
 		goto cleanup;
 	}
 
-	if (!argv_append(aargc, aargv, _strdup(cmd)))
+	if (!argv_append_dup(aargc, aargv, cmd))
 		goto cleanup;
 
 	char* context = NULL;
 	char* tok = strtok_s(env, "\n", &context);
 	while (tok)
 	{
-		if (!argv_append(aargc, aargv, _strdup(tok)))
+		if (!argv_append_dup(aargc, aargv, tok))
 			goto cleanup;
 		tok = strtok_s(NULL, "\n", &context);
 	}

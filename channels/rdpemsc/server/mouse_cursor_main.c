@@ -170,6 +170,7 @@ static BOOL read_cap_set(wStream* s, wArrayList* capsSets)
 		return FALSE;
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ArrayList_Append owns capsSet
 	return TRUE;
 }
 

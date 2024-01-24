@@ -559,6 +559,8 @@ static UINT prepare_clip_data_entry_with_id(CliprdrFileContext* file_context)
 	}
 	HashTable_Unlock(file_context->inode_table);
 
+	// HashTable_Insert owns clip_data_entry
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	file_context->current_clip_data_id = clip_data_entry->clip_data_id;
 
 	return CHANNEL_RC_OK;
@@ -936,15 +938,18 @@ static BOOL request_file_range_async(CliprdrFileContext* file_context, CliprdrFu
 		           "Failed to send FileContentsRequest for file \"%s\"",
 		           fuse_file->filename_with_root);
 		HashTable_Remove(file_context->request_table, (void*)(UINT_PTR)fuse_request->stream_id);
-		free(fuse_request);
 		return FALSE;
 	}
+
+	// file_context->request_table owns fuse_request
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc)
 	DEBUG_CLIPRDR(
 	    file_context->log,
 	    "Requested file range (%zu Bytes at offset %lu) for file \"%s\" with stream id %u",
 	    requested_size, offset, fuse_file->filename, fuse_request->stream_id);
 
 	return TRUE;
+	// NOLINTEND(clang-analyzer-unix.Malloc)
 }
 
 static void cliprdr_file_fuse_read(fuse_req_t fuse_req, fuse_ino_t fuse_ino, size_t size,
@@ -1840,6 +1845,7 @@ static BOOL set_selection_for_clip_data_entry(CliprdrFileContext* file_context,
 	else
 		WLog_Print(file_context->log, WLOG_DEBUG, "Setting selection");
 
+	// NOLINTBEGIN(clang-analyzer-unix.Malloc) HashTable_Insert owns fuse_file
 	for (UINT32 i = 0; i < n_files; ++i)
 	{
 		FILEDESCRIPTORW* file = &files[i];
@@ -1939,6 +1945,7 @@ static BOOL set_selection_for_clip_data_entry(CliprdrFileContext* file_context,
 			return FALSE;
 		}
 	}
+	// NOLINTEND(clang-analyzer-unix.Malloc) HashTable_Insert owns fuse_file
 
 	if (clip_data_entry->has_clip_data_id)
 		WLog_Print(file_context->log, WLOG_DEBUG, "Selection set for clipDataId %u",
@@ -2516,7 +2523,11 @@ BOOL cliprdr_file_context_update_client_data(CliprdrFileContext* file, const cha
 	{
 		stream = cliprdr_local_stream_new(file, lockId, data, size);
 		rc = HashTable_Insert(file->local_streams, &stream->lockId, stream);
+		if (!rc)
+			cliprdr_local_stream_free(stream);
 	}
+	// HashTable_Insert owns stream
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	HashTable_Unlock(file->local_streams);
 	return rc;
 }

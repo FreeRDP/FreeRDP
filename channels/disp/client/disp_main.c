@@ -283,7 +283,7 @@ static UINT disp_plugin_initialize(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcont
 	disp->MaxMonitorAreaFactorA = 8192;
 	disp->MaxMonitorAreaFactorB = 8192;
 
-	context = (DispClientContext*)calloc(1, sizeof(*disp));
+	context = (DispClientContext*)calloc(1, sizeof(DispClientContext));
 	if (!context)
 	{
 		WLog_Print(base->log, WLOG_ERROR, "unable to allocate DispClientContext");

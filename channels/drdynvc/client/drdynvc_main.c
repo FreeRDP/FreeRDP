@@ -103,7 +103,12 @@ static UINT dvcman_create_listener(IWTSVirtualChannelManager* pChannelMgr,
 		*ppListener = (IWTSListener*)listener;
 
 	if (!HashTable_Insert(dvcman->listeners, listener->channel_name, listener))
+	{
+		dvcman_wtslistener_free(listener);
 		return ERROR_INTERNAL_ERROR;
+	}
+
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert takes ownership of listener
 	return CHANNEL_RC_OK;
 }
 
@@ -135,7 +140,7 @@ static UINT dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const ch
 	DVCMAN* dvcman = ((DVCMAN_ENTRY_POINTS*)pEntryPoints)->dvcman;
 
 	WINPR_ASSERT(dvcman);
-	if (!ArrayList_Append(dvcman->plugin_names, _strdup(name)))
+	if (!ArrayList_Append(dvcman->plugin_names, name))
 		return ERROR_INTERNAL_ERROR;
 	if (!ArrayList_Append(dvcman->plugins, pPlugin))
 		return ERROR_INTERNAL_ERROR;
@@ -326,6 +331,7 @@ static IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	if (!dvcman->plugin_names)
 		goto fail;
 	obj = ArrayList_Object(dvcman->plugin_names);
+	obj->fnObjectNew = _strdup;
 	obj->fnObjectFree = free;
 
 	dvcman->plugins = ArrayList_New(TRUE);

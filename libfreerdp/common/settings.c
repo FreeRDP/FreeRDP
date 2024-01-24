@@ -1273,6 +1273,9 @@ BOOL freerdp_settings_set_pointer_len_(rdpSettings* settings, FreeRDP_Settings_K
 		free(copy);
 		return FALSE;
 	}
+
+	// freerdp_settings_set_pointer takes ownership of copy
+	//  NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	if (lenId < 0)
 		return TRUE;
 	return freerdp_settings_set_uint32(settings, (FreeRDP_Settings_Keys_UInt32)lenId, len);

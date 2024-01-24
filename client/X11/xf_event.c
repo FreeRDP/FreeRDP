@@ -169,7 +169,6 @@ const char* x11_event_string(int event)
 BOOL xf_event_action_script_init(xfContext* xfc)
 {
 	wObject* obj = NULL;
-	char* xevent = NULL;
 	FILE* actionScript = NULL;
 	char buffer[1024] = { 0 };
 	char command[1024] = { 0 };
@@ -187,6 +186,8 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 		return FALSE;
 
 	obj = ArrayList_Object(xfc->xevents);
+	WINPR_ASSERT(obj);
+	obj->fnObjectNew = _strdup;
 	obj->fnObjectFree = free;
 	ActionScript = freerdp_settings_get_string(settings, FreeRDP_ActionScript);
 	sprintf_s(command, sizeof(command), "%s xevent", ActionScript);
@@ -199,9 +200,8 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 	{
 		char* context = NULL;
 		strtok_s(buffer, "\n", &context);
-		xevent = _strdup(buffer);
 
-		if (!xevent || !ArrayList_Append(xfc->xevents, xevent))
+		if (!buffer || !ArrayList_Append(xfc->xevents, buffer))
 		{
 			pclose(actionScript);
 			ArrayList_Free(xfc->xevents);

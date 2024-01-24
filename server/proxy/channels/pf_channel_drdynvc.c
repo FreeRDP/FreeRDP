@@ -413,6 +413,7 @@ static PfChannelResult DynvcTrackerPeekFn(ChannelStateTracker* tracker, BOOL fir
 
 				dynChannel->openStatus = CHANNEL_OPENSTATE_WAITING_OPEN_STATUS;
 
+				// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): HashTable_Insert owns dynChannel
 				return channelTracker_flushCurrent(tracker, firstPacket, lastPacket, FALSE);
 			}
 

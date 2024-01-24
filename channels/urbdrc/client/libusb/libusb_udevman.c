@@ -712,6 +712,7 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 		}
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ArrayList_Append owns idpair
 	return CHANNEL_RC_OK;
 }
 

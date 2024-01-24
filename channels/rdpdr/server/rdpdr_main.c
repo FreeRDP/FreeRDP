@@ -3051,6 +3051,7 @@ static UINT rdpdr_server_drive_read_file(RdpdrServerContext* context, void* call
 	}
 
 	/* Send a request to open the directory. */
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): rdpdr_server_enqueue_irp owns irp
 	return rdpdr_server_send_device_read_request(context, deviceId, fileId, irp->CompletionId,
 	                                             length, offset);
 }
@@ -3127,6 +3128,7 @@ static UINT rdpdr_server_drive_write_file(RdpdrServerContext* context, void* cal
 	}
 
 	/* Send a request to open the directory. */
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): rdpdr_server_enqueue_irp owns irp
 	return rdpdr_server_send_device_write_request(context, deviceId, fileId, irp->CompletionId,
 	                                              buffer, length, offset);
 }
@@ -3200,6 +3202,7 @@ static UINT rdpdr_server_drive_close_file(RdpdrServerContext* context, void* cal
 	}
 
 	/* Send a request to open the directory. */
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): rdpdr_server_enqueue_irp owns irp
 	return rdpdr_server_send_device_close_request(context, deviceId, fileId, irp->CompletionId);
 }
 
@@ -3479,6 +3482,7 @@ static UINT rdpdr_server_drive_rename_file(RdpdrServerContext* context, void* ca
 	}
 
 	/* Send a request to open the file. */
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): rdpdr_server_enqueue_irp owns irp
 	return rdpdr_server_send_device_create_request(context, deviceId, irp->CompletionId,
 	                                               irp->PathName, FILE_READ_DATA | SYNCHRONIZE,
 	                                               FILE_SYNCHRONOUS_IO_NONALERT, FILE_OPEN);

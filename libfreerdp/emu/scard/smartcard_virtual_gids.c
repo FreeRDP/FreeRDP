@@ -266,6 +266,8 @@ typedef struct vgids_keymap_record vgidsKeymapRecord;
 
 #pragma pack(pop)
 
+static void vgids_ef_free(void* ptr);
+
 static vgidsEF* vgids_ef_new(vgidsContext* ctx, USHORT id)
 {
 	vgidsEF* ef = calloc(1, sizeof(vgidsEF));
@@ -288,7 +290,7 @@ static vgidsEF* vgids_ef_new(vgidsContext* ctx, USHORT id)
 	return ef;
 
 create_failed:
-	free(ef);
+	vgids_ef_free(ef);
 	return NULL;
 }
 
@@ -406,7 +408,7 @@ static BOOL vgids_ef_read_do(vgidsEF* ef, UINT16 doID, BYTE** data, DWORD* dataS
 	return FALSE;
 }
 
-static void vgids_ef_free(void* ptr)
+void vgids_ef_free(void* ptr)
 {
 	vgidsEF* ef = ptr;
 	if (ef)
@@ -1562,6 +1564,9 @@ BOOL vgids_init(vgidsContext* ctx, const char* cert, const char* privateKey, con
 	rc = TRUE;
 
 init_failed:
+	// ArrayList_Append in vgids_ef_new takes ownership
+	// of cardidEF, commonEF, masterEF
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc)
 	free(kxc);
 	free(keymap);
 	free(fsTable);

@@ -46,13 +46,13 @@ static void crypto_print_name(const BYTE* b, DWORD sz)
 	if (!name)
 		goto x509_release;
 
-	ret = malloc(1024);
+	ret = calloc(1024, sizeof(char));
 	if (!ret)
 		goto bio_release;
 
-	ret = X509_NAME_oneline(name, ret, 1024);
+	char* ret2 = X509_NAME_oneline(name, ret, 1024);
 
-	printf("\t%s\n", ret);
+	printf("\t%s\n", ret2);
 	free(ret);
 
 x509_release:

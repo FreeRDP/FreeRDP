@@ -596,6 +596,19 @@ static void free_msg(void* obj)
 	}
 }
 
+static void channel_client_handler_free(msg_proc_internals* internals)
+{
+	if (!internals)
+		return;
+
+	if (internals->thread)
+		CloseHandle(internals->thread);
+	MessageQueue_Free(internals->queue);
+	Stream_Free(internals->data_in, TRUE);
+	free(internals->channel_name);
+	free(internals);
+}
+
 /*  Create message queue and thread or not, depending on settings */
 void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata, MsgHandler msg_handler,
                                     const char* channel_name)
@@ -604,11 +617,16 @@ void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata, MsgHandler
 	if (!internals)
 	{
 		WLog_ERR(TAG, "calloc failed!");
-		return 0;
+		return NULL;
 	}
 	internals->msg_handler = msg_handler;
 	internals->userdata = userdata;
-	internals->channel_name = _strdup(channel_name);
+	if (channel_name)
+	{
+		internals->channel_name = _strdup(channel_name);
+		if (!internals->channel_name)
+			goto fail;
+	}
 	WINPR_ASSERT(ctx);
 	WINPR_ASSERT(ctx->settings);
 	internals->ctx = ctx;
@@ -621,18 +639,21 @@ void* channel_client_create_handler(rdpContext* ctx, LPVOID userdata, MsgHandler
 		if (!internals->queue)
 		{
 			WLog_ERR(TAG, "MessageQueue_New failed!");
-			return 0;
+			goto fail;
 		}
 
 		if (!(internals->thread =
 		          CreateThread(NULL, 0, channel_client_thread_proc, (void*)internals, 0, NULL)))
 		{
 			WLog_ERR(TAG, "CreateThread failed!");
-			MessageQueue_Free(internals->queue);
-			internals->queue = NULL;
+			goto fail;
 		}
 	}
 	return internals;
+
+fail:
+	channel_client_handler_free(internals);
+	return NULL;
 }
 /* post a message in the queue or directly call the processing handler */
 UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLength,
@@ -655,9 +676,12 @@ UINT channel_client_post_message(void* MsgsHandle, LPVOID pData, UINT32 dataLeng
 	if (dataFlags & CHANNEL_FLAG_FIRST)
 	{
 		if (internals->data_in)
-			Stream_Free(internals->data_in, TRUE);
-
-		internals->data_in = Stream_New(NULL, totalLength);
+		{
+			if (!Stream_EnsureCapacity(internals->data_in, totalLength))
+				return CHANNEL_RC_NO_MEMORY;
+		}
+		else
+			internals->data_in = Stream_New(NULL, totalLength);
 	}
 
 	if (!(data_in = internals->data_in))
@@ -737,12 +761,8 @@ UINT channel_client_quit_handler(void* MsgsHandle)
 				return rc;
 			}
 		}
-		MessageQueue_Free(internals->queue);
-		CloseHandle(internals->thread);
 	}
 
-	Stream_Free(internals->data_in, TRUE);
-	free(internals->channel_name);
-	free(internals);
+	channel_client_handler_free(internals);
 	return CHANNEL_RC_OK;
 }

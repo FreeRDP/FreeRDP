@@ -351,7 +351,10 @@ rdpPersistentCache* persistent_cache_new(void)
 	persistent->bmpData = calloc(1, persistent->bmpSize);
 
 	if (!persistent->bmpData)
+	{
+		free(persistent);
 		return NULL;
+	}
 
 	return persistent;
 }

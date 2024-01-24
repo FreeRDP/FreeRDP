@@ -1071,6 +1071,7 @@ BOOL rpc_client_write_call(rdpRpc* rpc, wStream* s, UINT16 opnum)
 		goto fail;
 	}
 
+	// NOLINTNEXTLINE(clang-analyzer-unix.Malloc): ArrayList_Append takes ownership of clientCall
 	if (request_pdu.opnum == TsProxySetupReceivePipeOpnum)
 		rpc->PipeCallId = request_pdu.header.call_id;
 

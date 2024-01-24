@@ -678,6 +678,8 @@ static BOOL kerberos_rd_tgt_token(const sspi_gss_data* token, char** target, krb
 
 fail:
 	free(buf);
+	if (target)
+		*target = NULL;
 	return FALSE;
 }
 
