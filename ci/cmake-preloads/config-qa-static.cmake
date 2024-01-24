@@ -6,38 +6,10 @@ set (WITH_VERBOSE_WINPR_ASSERT OFF CACHE BOOL "qa default")
 set (BUILD_SHARED_LIBS OFF CACHE BOOL "qa default")
 
 set (BUILD_WITH_CLANG_TIDY OFF CACHE BOOL "qa default")
-find_program(CLANG_EXE
-    NAMES
-        clang-20
-        clang-19
-        clang-18
-        clang-17
-        clang-16
-        clang-15
-        clang-14
-        clang-13
-        clang-12
-        clang-11
-        clang-10
-        clang
-    REQUIRED
-)
-set (CMAKE_C_COMPILER "${CLANG_EXE}" CACHE STRING "qa default")
 
-find_program(CLANG_XX_EXE
-    NAMES
-        clang++-20
-        clang++-19
-        clang++-18
-        clang++-17
-        clang++-16
-        clang++-15
-        clang++-14
-        clang++-13
-        clang++-12
-        clang++-11
-        clang++-10
-        clang++
-    REQUIRED
-)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ClangDetectTool.cmake)
+clang_detect_tool(CLANG_EXE clang REQUIRED)
+clang_detect_tool(CLANG_XX_EXE clang++ REQUIRED)
+
+set (CMAKE_C_COMPILER "${CLANG_EXE}" CACHE STRING "qa default")
 set (CMAKE_CXX_COMPILER "${CLANG_XX_EXE}" CACHE STRING "qa default")
