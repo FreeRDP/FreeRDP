@@ -19,6 +19,7 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/version.h>
 
 #include "../settings.h"
 
@@ -871,8 +872,8 @@ static BOOL arm_handle_request(rdpArm* arm, BOOL* retry, DWORD timeout)
 	    !http_context_set_cache_control(arm->http, "no-cache") ||
 	    !http_context_set_pragma(arm->http, "no-cache") ||
 	    !http_context_set_connection(arm->http, "Keep-Alive") ||
-	    !http_context_set_user_agent(arm->http, "FreeRDP/3.0") ||
-	    !http_context_set_x_ms_user_agent(arm->http, "FreeRDP/3.0") ||
+	    !http_context_set_user_agent(arm->http, FREERDP_USER_AGENT) ||
+	    !http_context_set_x_ms_user_agent(arm->http, FREERDP_USER_AGENT) ||
 	    !http_context_set_host(arm->http, freerdp_settings_get_string(arm->context->settings,
 	                                                                  FreeRDP_GatewayHostname)))
 		goto arm_error;
