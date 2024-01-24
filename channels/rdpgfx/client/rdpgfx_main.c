@@ -934,13 +934,11 @@ fail:
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rdpgfx_load_cache_import_reply(RDPGFX_PLUGIN* gfx, RDPGFX_CACHE_IMPORT_REPLY_PDU* reply)
+static UINT rdpgfx_load_cache_import_reply(RDPGFX_PLUGIN* gfx,
+                                           const RDPGFX_CACHE_IMPORT_REPLY_PDU* reply)
 {
-	int idx = 0;
 	int count = 0;
-	UINT16 cacheSlot = 0;
 	UINT error = CHANNEL_RC_OK;
-	PERSISTENT_CACHE_ENTRY entry;
 	rdpPersistentCache* persistent = NULL;
 	WINPR_ASSERT(gfx);
 	WINPR_ASSERT(gfx->rdpcontext);
@@ -980,16 +978,16 @@ static UINT rdpgfx_load_cache_import_reply(RDPGFX_PLUGIN* gfx, RDPGFX_CACHE_IMPO
 
 	WLog_DBG(TAG, "Receiving Cache Import Reply: %d", count);
 
-	for (idx = 0; idx < count; idx++)
+	for (int idx = 0; idx < count; idx++)
 	{
+		PERSISTENT_CACHE_ENTRY entry = { 0 };
 		if (persistent_cache_read_entry(persistent, &entry) < 1)
 		{
 			error = ERROR_INVALID_DATA;
 			goto fail;
 		}
 
-		cacheSlot = reply->cacheSlots[idx];
-
+		const UINT16 cacheSlot = reply->cacheSlots[idx];
 		if (context && context->ImportCacheEntry)
 			context->ImportCacheEntry(context, cacheSlot, &entry);
 	}
@@ -1010,7 +1008,7 @@ fail:
 static UINT rdpgfx_recv_cache_import_reply_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
 {
 	UINT16 idx = 0;
-	RDPGFX_CACHE_IMPORT_REPLY_PDU pdu;
+	RDPGFX_CACHE_IMPORT_REPLY_PDU pdu = { 0 };
 	WINPR_ASSERT(callback);
 	RDPGFX_PLUGIN* gfx = (RDPGFX_PLUGIN*)callback->plugin;
 	WINPR_ASSERT(gfx);

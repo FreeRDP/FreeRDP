@@ -1599,7 +1599,7 @@ static UINT gdi_CacheImportReply(RdpgfxClientContext* context,
 }
 
 static UINT gdi_ImportCacheEntry(RdpgfxClientContext* context, UINT16 cacheSlot,
-                                 PERSISTENT_CACHE_ENTRY* importCacheEntry)
+                                 const PERSISTENT_CACHE_ENTRY* importCacheEntry)
 {
 	UINT error = ERROR_INTERNAL_ERROR;
 	gdiGfxCacheEntry* cacheEntry = NULL;

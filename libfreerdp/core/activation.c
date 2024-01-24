@@ -237,7 +237,8 @@ BOOL rdp_send_client_control_pdu(rdpRdp* rdp, UINT16 action)
 	return rdp_send_data_pdu(rdp, s, DATA_PDU_TYPE_CONTROL, rdp->mcs->userId);
 }
 
-static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s, RDP_BITMAP_PERSISTENT_INFO* info)
+static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s,
+                                                     const RDP_BITMAP_PERSISTENT_INFO* info)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(info);
@@ -332,13 +333,11 @@ error:
 
 BOOL rdp_send_client_persistent_key_list_pdu(rdpRdp* rdp)
 {
-	UINT32 keyCount = 0;
 	UINT32 keyMaxFrag = 2042;
 	UINT64* keyList = NULL;
-	RDP_BITMAP_PERSISTENT_INFO info;
+	RDP_BITMAP_PERSISTENT_INFO info = { 0 };
 	rdpSettings* settings = rdp->settings;
-
-	keyCount = rdp_load_persistent_key_list(rdp, &keyList);
+	UINT32 keyCount = rdp_load_persistent_key_list(rdp, &keyList);
 
 	WLog_DBG(TAG, "Persistent Key List: TotalKeyCount: %" PRIu32 " MaxKeyFrag: %" PRIu32, keyCount,
 	         keyMaxFrag);

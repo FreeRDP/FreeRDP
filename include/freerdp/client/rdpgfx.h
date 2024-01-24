@@ -73,7 +73,7 @@ extern "C"
 	typedef UINT (*pcRdpgfxEvictCacheEntry)(RdpgfxClientContext* context,
 	                                        const RDPGFX_EVICT_CACHE_ENTRY_PDU* evictCacheEntry);
 	typedef UINT (*pcRdpgfxImportCacheEntry)(RdpgfxClientContext* context, UINT16 cacheSlot,
-	                                         PERSISTENT_CACHE_ENTRY* importCacheEntry);
+	                                         const PERSISTENT_CACHE_ENTRY* importCacheEntry);
 	typedef UINT (*pcRdpgfxExportCacheEntry)(RdpgfxClientContext* context, UINT16 cacheSlot,
 	                                         PERSISTENT_CACHE_ENTRY* importCacheEntry);
 	typedef UINT (*pcRdpgfxMapSurfaceToOutput)(
