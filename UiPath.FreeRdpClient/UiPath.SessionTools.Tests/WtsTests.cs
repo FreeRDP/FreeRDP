@@ -18,4 +18,11 @@ public class WtsTests
         var act = () => _ = new Wts().QuerySessionInformation(sessionId: 0).ClientDisplay();
         act.ShouldNotThrow();
     }
+
+    [Fact(DisplayName = $"{nameof(Wts.QuerySessionInformation)}.{nameof(WtsInfoProviderExtensions.SessionInfo)} should work.")]
+    public void SessionInfo_ShouldWork()
+    {
+        var act = () => _ = new Wts().QuerySessionInformation(sessionId: 0).SessionInfo();
+        act.ShouldNotThrow();
+    }
 }

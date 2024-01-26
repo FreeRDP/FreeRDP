@@ -21,7 +21,9 @@ internal class NativeInterface
         [MarshalAs(UnmanagedType.BStr)]
         public string Password;
         [MarshalAs(UnmanagedType.BStr)]
-        public string ClientName;
+        public string ScopeName;
+        [MarshalAs(UnmanagedType.BStr)]
+        public string? ClientName;
         [MarshalAs(UnmanagedType.BStr)]
         public string HostName;
         public int Port;

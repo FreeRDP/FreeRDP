@@ -17,22 +17,20 @@ public class RdpConnectionSettings
     public string HostName { get; set; } = "localhost";
     public int? Port { get; set; }
 
+    public string ScopeName { get; set; }
     [MaxLength(15, ErrorMessage = "Sometimes :) Windows returns only first 15 chars for a session ClientName")]
-    public string ClientName { get; }
+    public string? ClientName { get; set; }
 
     public RdpConnectionSettings(string username, string domain, string password)
     {
         Username = username;
         Domain = domain;
         Password = password;
-        ClientName = GetUniqueClientName();
+        ScopeName = GetUniqueScopeName();
     }
 
-    private const int Keep4DecimalsDivider = 1_0000;
-    private const int Keep6DecimalsDivider = 1_000_000;
-
     private static volatile int ConnectionId = 0;
-    private static readonly string ClientNameBase = "RDP_" + (Environment.ProcessId % Keep6DecimalsDivider).ToString(CultureInfo.InvariantCulture) + "_";
-    private static string GetUniqueClientName() => ClientNameBase
-        + (Interlocked.Increment(ref ConnectionId) % Keep4DecimalsDivider).ToString(CultureInfo.InvariantCulture);
+    private static readonly string ScopeNameBase = "RDP_" + Environment.ProcessId.ToString(CultureInfo.InvariantCulture) + "_";
+    private static string GetUniqueScopeName() => ScopeNameBase
+        + Interlocked.Increment(ref ConnectionId).ToString(CultureInfo.InvariantCulture);
 }

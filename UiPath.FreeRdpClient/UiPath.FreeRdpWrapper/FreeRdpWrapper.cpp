@@ -12,10 +12,42 @@ using namespace FreeRdpClient;
 
 namespace FreeRdpClient
 {
-	struct instance_data
+	char* ConvToUtf8(BSTR source)
 	{
+		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> convToUTF8;
+		return _strdup(convToUTF8.to_bytes(source).c_str());
+	}
+
+	class instance_data
+	{
+	  public:
 		rdpContext* context;
 		HANDLE transportStopEvent;
+		char* scopeName;
+
+		instance_data(rdpContext* context, ConnectOptions* rdpOptions)
+		{
+			transportStopEvent = NULL;
+			this->context = context;
+			this->scopeName = ConvToUtf8(rdpOptions->ScopeName);
+		}
+		~instance_data()
+		{
+			if (this->transportStopEvent)
+			{
+				CloseHandle(this->transportStopEvent);
+				this->transportStopEvent = NULL;
+			}
+			if (this->scopeName)
+			{
+				free(this->scopeName);
+				this->scopeName = nullptr;
+			}
+		}
+		_bstr_t getEventName()
+		{
+			return "Global\\" + (_bstr_t)(this->scopeName);
+		}
 	};
 
 	inline HRESULT SetErrorInfo(LPCWSTR szError)
@@ -66,18 +98,17 @@ namespace FreeRdpClient
 
 	void PrepareRdpContext(rdpContext* context, const ConnectOptions* rdpOptions)
 	{
-		std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t> convToUTF8;
-		
-		context->settings->ServerHostname =
-		    _strdup(convToUTF8.to_bytes(rdpOptions->HostName).c_str());
+		context->settings->ServerHostname = ConvToUtf8(rdpOptions->HostName);
 
 		if (rdpOptions->Port)
 			context->settings->ServerPort = rdpOptions->Port;
 
-		context->settings->Domain = _strdup(convToUTF8.to_bytes(rdpOptions->Domain).c_str());
-		context->settings->Username = _strdup(convToUTF8.to_bytes(rdpOptions->User).c_str());
-		context->settings->Password = _strdup(convToUTF8.to_bytes(rdpOptions->Pass).c_str());
-		context->settings->ClientHostname = _strdup(convToUTF8.to_bytes(rdpOptions->ClientName).c_str());
+		context->settings->Domain = ConvToUtf8(rdpOptions->Domain);
+		context->settings->Username = ConvToUtf8(rdpOptions->User);
+		context->settings->Password = ConvToUtf8(rdpOptions->Pass);
+		
+		if (rdpOptions->ClientName)
+			context->settings->ClientHostname = ConvToUtf8(rdpOptions->ClientName);
 
 		context->settings->SoftwareGdi = TRUE;
 		context->settings->LocalConnection = TRUE;
@@ -113,12 +144,6 @@ namespace FreeRdpClient
 	{
 		DT_TRACE(L"RdpRelease: Start");
 
-		if (instanceData == NULL || instanceData->context == NULL)
-		{
-			DT_ERROR(L"RdpRelease: Invalid context data");
-			return ERROR_INVALID_PARAMETER;
-		}
-
 		freerdp* instance = instanceData->context->instance;
 		if (instance->context->cache != NULL)
 		{
@@ -129,10 +154,7 @@ namespace FreeRdpClient
 		freerdp_context_free(instance);
 		freerdp_free(instance);
 
-		CloseHandle(instanceData->transportStopEvent);
-		instanceData->transportStopEvent = NULL;
-
-		free(instanceData);
+		delete instanceData;
 
 		DT_TRACE(L"RdpRelease: Finish");
 		return ERROR_SUCCESS;
@@ -146,16 +168,10 @@ namespace FreeRdpClient
 	DWORD WINAPI transport_thread(LPVOID pData)
 	{
 		instance_data* instanceData = (instance_data*)pData;
-		if (instanceData == NULL || instanceData->context == NULL ||
-		    instanceData->transportStopEvent == NULL)
-		{
-			DT_ERROR(L"Invalid freerdp instance data");
-			return 1;
-		}
 
 		rdpContext* context = instanceData->context;
 
-		Logging::RegisterCurrentThreadScope(context->instance->settings->ClientHostname);
+		Logging::RegisterCurrentThreadScope(instanceData->scopeName);
 
 		context->cache = cache_new(context->instance->settings);
 
@@ -203,28 +219,25 @@ namespace FreeRdpClient
 		return 0;
 	}
 
-	instance_data* transport_start(rdpContext* context, LPCWSTR eventName)
+	instance_data* transport_start(rdpContext* context, ConnectOptions* rdpOptions)
 	{
-		instance_data* instanceData;
-		instanceData = (instance_data*)calloc(1, sizeof(instance_data));
-		if (!instanceData)
-			return NULL;
+		instance_data* instanceData = new instance_data(context, rdpOptions);
 
-		instanceData->context = context;
-		auto existingEvent = OpenEvent(NULL, false, eventName);
+		auto eventName = instanceData->getEventName();
+		auto existingEvent = OpenEvent(NULL, false, eventName.GetBSTR());
 		if (existingEvent)
 		{
 			CloseHandle(existingEvent);
-			DT_ERROR(L"Failed to create freerdp transport stop event, error: alreadyExists: %s", eventName);
-			free(instanceData);
+			DT_ERROR(L"Failed to create freerdp transport stop event, error: alreadyExists: %s", eventName.GetBSTR());
+			delete instanceData;
 			return NULL;
 		}
 
-		instanceData->transportStopEvent = CreateEvent(NULL, TRUE, FALSE, eventName);
+		instanceData->transportStopEvent = CreateEvent(NULL, TRUE, FALSE, eventName.GetBSTR());
 		if (!instanceData->transportStopEvent)
 		{
 			DT_ERROR(L"Failed to create freerdp transport stop event, error: %u", GetLastError());
-			free(instanceData);
+			delete instanceData;
 			return NULL;
 		}
 
@@ -232,8 +245,7 @@ namespace FreeRdpClient
 		if (!transportThreadHandle)
 		{
 			DT_ERROR(L"Failed to create freerdp transport client thread, error: %u", GetLastError());
-			CloseHandle(instanceData->transportStopEvent);
-			free(instanceData);
+			delete instanceData;
 			return NULL;
 		}
 		CloseHandle(transportThreadHandle);
@@ -242,8 +254,8 @@ namespace FreeRdpClient
 
 	HRESULT STDAPICALLTYPE RdpLogon(ConnectOptions* rdpOptions, BSTR& releaseEventName)
 	{
-		DT_TRACE(L"Start for user: [%s], domain: [%s], clientName: [%s]", rdpOptions->User,
-		         rdpOptions->Domain, rdpOptions->ClientName);
+		DT_TRACE(L"Start for user: [%s], domain: [%s], scopeName: [%s]", rdpOptions->User,
+		         rdpOptions->Domain, rdpOptions->ScopeName);
 		releaseEventName = NULL;
 		auto instance = CreateFreeRdpInstance();
 		if (!instance)
@@ -255,10 +267,10 @@ namespace FreeRdpClient
 		auto connectResult = freerdp_connect(instance);
 		if (connectResult)
 		{
-			auto eventName = L"Global\\" + (_bstr_t)(rdpOptions->ClientName);
-			auto lpData = transport_start(context, eventName);
+			auto lpData = transport_start(context, rdpOptions);
 			if (lpData)
 			{
+				auto eventName = lpData->getEventName();
 				releaseEventName = eventName.Detach();
 				DT_TRACE(L"Connection succeeded");
 				return S_OK;

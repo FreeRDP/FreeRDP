@@ -13,6 +13,7 @@ namespace FreeRdpClient
 		BSTR User;
 		BSTR Domain;
 		BSTR Pass;
+		BSTR ScopeName;
 		BSTR ClientName;
 		BSTR HostName;
 		long Port;

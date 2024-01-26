@@ -15,13 +15,10 @@ public class RdpClientTests : TestsBase
     private readonly ITestOutputHelper _output;
 
     private readonly Wts _wts;
-    private IFreeRdpClient FreeRdpClient => Host.GetRequiredService<IFreeRdpClient>();
-    private ILogger Log => Host.GetRequiredService<ILogger<RdpClientTests>>();
 
     private async Task<IAsyncDisposable> Connect(RdpConnectionSettings connectionSettings)
     {
-        using var logScope = Log.BeginScope($"{NativeLoggingForwarder.ScopeName}", connectionSettings.ClientName);
-        return await FreeRdpClient.Connect(connectionSettings);
+        return await Host.Connect(connectionSettings);
     }
 
     public RdpClientTests(ITestOutputHelper output) : base(output)
@@ -31,7 +28,7 @@ public class RdpClientTests : TestsBase
     }
 
     [Fact]
-    public async Task ClientNameIsUniqueForAWhile()
+    public async Task ScopeNameIsUniqueForAWhile()
     {
         var user = await Host.GivenUser();
         var count = 10_000;
@@ -41,7 +38,7 @@ public class RdpClientTests : TestsBase
         {
             var connectionSettings = user.ToRdpConnectionSettings();
 
-            clientNamesHistory.Add(connectionSettings.ClientName).ShouldBe(true);
+            clientNamesHistory.Add(connectionSettings.ScopeName).ShouldBe(true);
         }
     }
 
@@ -64,17 +61,17 @@ public class RdpClientTests : TestsBase
 
         await using (var sut = await Connect(connectionSettings))
         {
-            var sessionId = _wts.FindFirstSessionByClientName(connectionSettings.ClientName);
-            sessionId.ShouldNotBeNull();
-            var displayInfo = _wts.QuerySessionInformation(sessionId.Value).ClientDisplay();
+            var sessionId = await Host.FindSession(connectionSettings);
+            var displayInfo = _wts.QuerySessionInformation(sessionId).ClientDisplay();
 
             ((int)displayInfo.HorizontalResolution).ShouldBe(connectionSettings.DesktopWidth);
             ((int)displayInfo.VerticalResolution).ShouldBe(connectionSettings.DesktopHeight);
             //((int)displayInfo.ColorDepth).ShouldBe(expectedWtsApiValue);
         }
 
-        await WaitFor.Predicate(() => _wts.FindFirstSessionByClientName(connectionSettings.ClientName) == null);
+        await Host.WaitNoSession(connectionSettings);
     }
+
 
     [Fact]
     public async Task HostDispose_ShouldNotTriggerCrash_WhenSessionIsStillActive()
@@ -116,14 +113,14 @@ public class RdpClientTests : TestsBase
             if (Directory.Exists(freerdpAppDataFolder))
                 Directory.Delete(freerdpAppDataFolder, recursive: true);
 
-            var connect1Task = host.GetFreeRdpClient().Connect(connectionSettings1);
-            var connect2Task = host.GetFreeRdpClient().Connect(connectionSettings2);
+            var connect1Task = host.Connect(connectionSettings1);
+            var connect2Task = host.Connect(connectionSettings2);
 
             await using var d = new CollectionAsyncDisposable(await Task.WhenAll(connect1Task, connect2Task));
 
             await d.DisposeAsync();
-            await WaitFor.Predicate(() => _wts.FindFirstSessionByClientName(connectionSettings1.ClientName) == null);
-            await WaitFor.Predicate(() => _wts.FindFirstSessionByClientName(connectionSettings2.ClientName) == null);
+            await host.WaitNoSession(connectionSettings1);
+            await host.WaitNoSession(connectionSettings2);
         }
     }
 
@@ -140,20 +137,16 @@ public class RdpClientTests : TestsBase
 
         connectionSettings.Port = port;
 
-
-
-
         await ShouldNotHavePortWithState(port, StateEstablished);
 
         await using var sut = await Connect(connectionSettings);
-        var sessionId = _wts.FindFirstSessionByClientName(connectionSettings.ClientName);
-        sessionId.HasValue.ShouldBeTrue();
+        var sessionId = await Host.FindSession(connectionSettings);
 
         await ShouldHavePortWithState(port, StateEstablished, Environment.ProcessId);
 
         await sut.DisposeAsync();
         await ShouldNotHavePortWithState(port, StateEstablished);
-        await WaitFor.Predicate(() => _wts.FindFirstSessionByClientName(connectionSettings.ClientName) == null);
+        await Host.WaitNoSession(connectionSettings);
     }
 
     private async Task WithPortRedirectToDefaultRdp(int port)
@@ -175,7 +168,6 @@ public class RdpClientTests : TestsBase
 
         (await new ProcessRunner(log).PortWithStateExists(port, state, processId, ctsTimeout.Token)).ShouldBeTrue();
     }
-
 
     private async Task ShouldNotHavePortWithState(int port, string state)
     {

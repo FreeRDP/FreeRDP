@@ -38,6 +38,7 @@ internal class FreeRdpClient : IFreeRdpClient
             User = connectionSettings.Username,
             Domain = connectionSettings.Domain,
             Password = connectionSettings.Password,
+            ScopeName = connectionSettings.ScopeName,
             ClientName = connectionSettings.ClientName,
             HostName = connectionSettings.HostName,
             Port = connectionSettings.Port ?? default

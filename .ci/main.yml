@@ -19,7 +19,7 @@ steps:
 - task: NuGetToolInstaller@1
   displayName: 'Use NuGet'
 
-- task: NuGetAuthenticate@0
+- task: NuGetAuthenticate@1
 
 - script: |
     call .ci\Scripts\getVars
@@ -110,5 +110,5 @@ steps:
   name: publishOpenSSL
   inputs:
     targetPath: '..\OpenSSL-VC-64' 
-    artifactName: 'openSSL' 
+    artifactName: 'OpenSSL-VC-64' 
     parallel: true

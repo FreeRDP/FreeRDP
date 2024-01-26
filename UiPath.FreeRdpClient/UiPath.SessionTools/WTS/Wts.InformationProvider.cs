@@ -26,7 +26,10 @@ partial class Wts
         where T : unmanaged
         {
             using var _ = Query(infoClass, out var pInfo);
-
+            if (pInfo == default)
+            { 
+                return default;
+            }
             return *(T*)pInfo.ToPointer();
         }
 
@@ -64,4 +67,5 @@ public static class WtsInfoProviderExtensions
     public static string? ClientName(this Wts.InfoProvider reader) => reader.QueryString(WTS_INFO_CLASS.WTSClientName);
     public static WTS_CLIENT_DISPLAY ClientDisplay(this Wts.InfoProvider reader) => reader.QueryStructure<WTS_CLIENT_DISPLAY>(WTS_INFO_CLASS.WTSClientDisplay);
     public static WTS_CONNECTSTATE_CLASS ConnectState(this Wts.InfoProvider reader) => reader.QueryStructure<WTS_CONNECTSTATE_CLASS>(WTS_INFO_CLASS.WTSConnectState);
+    public static WTSINFOEX SessionInfo(this Wts.InfoProvider reader) => reader.QueryStructure<WTSINFOEX>(WTS_INFO_CLASS.WTSSessionInfoEx);
 }
