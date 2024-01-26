@@ -272,8 +272,10 @@ extern "C"
 		rdpContext* rdpcontext;
 	};
 
-	FREERDP_API CameraDeviceServerContext* camera_device_server_context_new(HANDLE vcm);
 	FREERDP_API void camera_device_server_context_free(CameraDeviceServerContext* context);
+
+	WINPR_ATTR_MALLOC(camera_device_server_context_free, 1)
+	FREERDP_API CameraDeviceServerContext* camera_device_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus
 }

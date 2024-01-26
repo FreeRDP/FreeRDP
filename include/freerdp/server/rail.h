@@ -142,8 +142,11 @@ extern "C"
 		rdpContext* rdpcontext;
 	};
 
-	FREERDP_API RailServerContext* rail_server_context_new(HANDLE vcm);
 	FREERDP_API void rail_server_context_free(RailServerContext* context);
+
+	WINPR_ATTR_MALLOC(rail_server_context_free, 1)
+	FREERDP_API RailServerContext* rail_server_context_new(HANDLE vcm);
+
 	FREERDP_API UINT rail_server_handle_messages(RailServerContext* context);
 	FREERDP_API void rail_server_set_handshake_ex_flags(RailServerContext* context, DWORD flags);
 

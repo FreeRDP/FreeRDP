@@ -66,8 +66,10 @@ extern "C"
 		psDispChannelIdAssigned ChannelIdAssigned;
 	};
 
-	FREERDP_API DispServerContext* disp_server_context_new(HANDLE vcm);
 	FREERDP_API void disp_server_context_free(DispServerContext* context);
+
+	WINPR_ATTR_MALLOC(disp_server_context_free, 1)
+	FREERDP_API DispServerContext* disp_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus
 }

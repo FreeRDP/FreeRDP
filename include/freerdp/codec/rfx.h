@@ -113,9 +113,13 @@ extern "C"
 	FREERDP_API BOOL rfx_write_message(RFX_CONTEXT* context, wStream* s,
 	                                   const RFX_MESSAGE* message);
 
-	FREERDP_API RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags);
-	FREERDP_API RFX_CONTEXT* rfx_context_new(BOOL encoder);
 	FREERDP_API void rfx_context_free(RFX_CONTEXT* context);
+
+	WINPR_ATTR_MALLOC(rfx_context_free, 1)
+	FREERDP_API RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags);
+
+	WINPR_ATTR_MALLOC(rfx_context_free, 1)
+	FREERDP_API RFX_CONTEXT* rfx_context_new(BOOL encoder);
 
 	FREERDP_API BOOL rfx_context_reset(RFX_CONTEXT* context, UINT32 width, UINT32 height);
 

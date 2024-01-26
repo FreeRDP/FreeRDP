@@ -130,8 +130,10 @@ extern "C"
 		rdpContext* rdpcontext;
 	};
 
-	FREERDP_API LocationServerContext* location_server_context_new(HANDLE vcm);
 	FREERDP_API void location_server_context_free(LocationServerContext* context);
+
+	WINPR_ATTR_MALLOC(location_server_context_free, 1)
+	FREERDP_API LocationServerContext* location_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus
 }

@@ -29,8 +29,10 @@ extern "C"
 {
 #endif
 
-	rdpShadowSubsystem* shadow_subsystem_new(void);
 	void shadow_subsystem_free(rdpShadowSubsystem* subsystem);
+
+	WINPR_ATTR_MALLOC(shadow_subsystem_free, 1)
+	rdpShadowSubsystem* shadow_subsystem_new(void);
 
 	int shadow_subsystem_init(rdpShadowSubsystem* subsystem, rdpShadowServer* server);
 	void shadow_subsystem_uninit(rdpShadowSubsystem* subsystem);

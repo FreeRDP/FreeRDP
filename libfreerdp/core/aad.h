@@ -51,8 +51,10 @@ FREERDP_LOCAL int aad_recv(rdpAad* aad, wStream* s);
 
 FREERDP_LOCAL AAD_STATE aad_get_state(rdpAad* aad);
 
-FREERDP_LOCAL rdpAad* aad_new(rdpContext* context, rdpTransport* transport);
 FREERDP_LOCAL void aad_free(rdpAad* aad);
+
+WINPR_ATTR_MALLOC(aad_free, 1)
+FREERDP_LOCAL rdpAad* aad_new(rdpContext* context, rdpTransport* transport);
 
 #if defined(USE_CJSON_COMPAT)
 FREERDP_API cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length);

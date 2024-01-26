@@ -174,8 +174,10 @@ extern "C"
 
 	WINPR_API void BitStream_Attach(wBitStream* bs, const BYTE* buffer, UINT32 capacity);
 
-	WINPR_API wBitStream* BitStream_New(void);
 	WINPR_API void BitStream_Free(wBitStream* bs);
+
+	WINPR_ATTR_MALLOC(BitStream_Free, 1)
+	WINPR_API wBitStream* BitStream_New(void);
 
 #ifdef __cplusplus
 }

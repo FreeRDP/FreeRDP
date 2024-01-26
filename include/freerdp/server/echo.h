@@ -90,8 +90,10 @@ extern "C"
 		psEchoServerChannelIdAssigned ChannelIdAssigned;
 	};
 
-	FREERDP_API echo_server_context* echo_server_context_new(HANDLE vcm);
 	FREERDP_API void echo_server_context_free(echo_server_context* context);
+
+	WINPR_ATTR_MALLOC(echo_server_context_free, 1)
+	FREERDP_API echo_server_context* echo_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus
 }

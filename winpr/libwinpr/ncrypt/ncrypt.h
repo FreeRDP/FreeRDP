@@ -79,9 +79,11 @@ typedef struct
 } NCryptBaseProvider;
 
 SECURITY_STATUS checkNCryptHandle(NCRYPT_HANDLE handle, NCryptHandleType matchType);
+
+SECURITY_STATUS winpr_NCryptDefault_dtor(NCRYPT_HANDLE handle);
+
 void* ncrypt_new_handle(NCryptHandleType kind, size_t len, NCryptGetPropertyFn getProp,
                         NCryptReleaseFn dtor);
-SECURITY_STATUS winpr_NCryptDefault_dtor(NCRYPT_HANDLE handle);
 
 #if defined(WITH_PKCS11)
 SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,

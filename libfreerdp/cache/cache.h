@@ -48,17 +48,23 @@ extern "C"
 {
 #endif
 
-	FREERDP_LOCAL rdpCache* cache_new(rdpContext* context);
 	FREERDP_LOCAL void cache_free(rdpCache* cache);
 
-	FREERDP_LOCAL CACHE_COLOR_TABLE_ORDER*
-	copy_cache_color_table_order(rdpContext* context, const CACHE_COLOR_TABLE_ORDER* order);
+	WINPR_ATTR_MALLOC(cache_free, 1)
+	FREERDP_LOCAL rdpCache* cache_new(rdpContext* context);
+
 	FREERDP_LOCAL void free_cache_color_table_order(rdpContext* context,
 	                                                CACHE_COLOR_TABLE_ORDER* order);
 
+	WINPR_ATTR_MALLOC(free_cache_color_table_order, 2)
+	FREERDP_LOCAL CACHE_COLOR_TABLE_ORDER*
+	copy_cache_color_table_order(rdpContext* context, const CACHE_COLOR_TABLE_ORDER* order);
+
+	FREERDP_LOCAL void free_surface_bits_command(rdpContext* context, SURFACE_BITS_COMMAND* order);
+
+	WINPR_ATTR_MALLOC(free_surface_bits_command, 2)
 	FREERDP_LOCAL SURFACE_BITS_COMMAND*
 	copy_surface_bits_command(rdpContext* context, const SURFACE_BITS_COMMAND* order);
-	FREERDP_LOCAL void free_surface_bits_command(rdpContext* context, SURFACE_BITS_COMMAND* order);
 
 #ifdef __cplusplus
 }

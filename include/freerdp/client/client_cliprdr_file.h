@@ -32,8 +32,10 @@ extern "C"
 
 	typedef struct cliprdr_file_context CliprdrFileContext;
 
-	FREERDP_API CliprdrFileContext* cliprdr_file_context_new(void* context);
 	FREERDP_API void cliprdr_file_context_free(CliprdrFileContext* file);
+
+	WINPR_ATTR_MALLOC(cliprdr_file_context_free, 1)
+	FREERDP_API CliprdrFileContext* cliprdr_file_context_new(void* context);
 
 	/**! \brief returns if the implementation supports pasting files in a client file browser.
 	 *

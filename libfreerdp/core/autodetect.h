@@ -32,8 +32,11 @@
 
 #include "state.h"
 
-FREERDP_LOCAL rdpAutoDetect* autodetect_new(rdpContext* context);
 FREERDP_LOCAL void autodetect_free(rdpAutoDetect* autodetect);
+
+WINPR_ATTR_MALLOC(autodetect_free, 1)
+FREERDP_LOCAL rdpAutoDetect* autodetect_new(rdpContext* context);
+
 FREERDP_LOCAL state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect,
                                                          RDP_TRANSPORT_TYPE transport, wStream* s);
 FREERDP_LOCAL state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect,

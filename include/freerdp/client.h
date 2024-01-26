@@ -138,8 +138,10 @@ extern "C"
 
 	/* Common client functions */
 
-	FREERDP_API rdpContext* freerdp_client_context_new(const RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 	FREERDP_API void freerdp_client_context_free(rdpContext* context);
+
+	WINPR_ATTR_MALLOC(freerdp_client_context_free, 1)
+	FREERDP_API rdpContext* freerdp_client_context_new(const RDP_CLIENT_ENTRY_POINTS* pEntryPoints);
 
 	FREERDP_API int freerdp_client_start(rdpContext* context);
 	FREERDP_API int freerdp_client_stop(rdpContext* context);

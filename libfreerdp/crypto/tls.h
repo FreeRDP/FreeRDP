@@ -119,8 +119,10 @@ extern "C"
 
 	FREERDP_LOCAL int freerdp_tls_set_alert_code(rdpTls* tls, int level, int description);
 
-	FREERDP_LOCAL rdpTls* freerdp_tls_new(rdpSettings* settings);
 	FREERDP_LOCAL void freerdp_tls_free(rdpTls* tls);
+
+	WINPR_ATTR_MALLOC(freerdp_tls_free, 1)
+	FREERDP_LOCAL rdpTls* freerdp_tls_new(rdpSettings* settings);
 
 #ifdef __cplusplus
 }

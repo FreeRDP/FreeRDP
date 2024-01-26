@@ -60,7 +60,9 @@ FREERDP_LOCAL BOOL input_recv(rdpInput* input, wStream* s);
 FREERDP_LOCAL int input_process_events(rdpInput* input);
 FREERDP_LOCAL BOOL input_register_client_callbacks(rdpInput* input);
 
-FREERDP_LOCAL rdpInput* input_new(rdpRdp* rdp);
 FREERDP_LOCAL void input_free(rdpInput* input);
+
+WINPR_ATTR_MALLOC(input_free, 1)
+FREERDP_LOCAL rdpInput* input_new(rdpRdp* rdp);
 
 #endif /* FREERDP_LIB_CORE_INPUT_H */

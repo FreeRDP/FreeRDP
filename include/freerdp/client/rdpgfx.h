@@ -177,8 +177,10 @@ extern "C"
 		PROFILER_DEFINE(SurfaceProfiler)
 	};
 
-	FREERDP_API RdpgfxClientContext* rdpgfx_client_context_new(rdpContext* context);
 	FREERDP_API void rdpgfx_client_context_free(RdpgfxClientContext* context);
+
+	WINPR_ATTR_MALLOC(rdpgfx_client_context_free, 1)
+	FREERDP_API RdpgfxClientContext* rdpgfx_client_context_new(rdpContext* context);
 
 #ifdef __cplusplus
 }

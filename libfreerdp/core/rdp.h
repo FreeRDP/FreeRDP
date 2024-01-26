@@ -250,9 +250,11 @@ FREERDP_LOCAL state_run_t rdp_recv_callback(rdpTransport* transport, wStream* s,
 
 FREERDP_LOCAL int rdp_check_fds(rdpRdp* rdp);
 
+FREERDP_LOCAL void rdp_free(rdpRdp* rdp);
+
+WINPR_ATTR_MALLOC(rdp_free, 1)
 FREERDP_LOCAL rdpRdp* rdp_new(rdpContext* context);
 FREERDP_LOCAL BOOL rdp_reset(rdpRdp* rdp);
-FREERDP_LOCAL void rdp_free(rdpRdp* rdp);
 
 FREERDP_LOCAL BOOL rdp_io_callback_set_event(rdpRdp* rdp, BOOL reset);
 

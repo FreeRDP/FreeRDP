@@ -21,9 +21,11 @@
 #define WINPR_RC4_H
 
 #include <winpr/wtypes.h>
+#include <winpr/winpr.h>
 
 typedef struct winpr_int_rc4_ctx winpr_int_RC4_CTX;
 
+WINPR_ATTR_MALLOC(winpr_int_rc4_free, 1)
 winpr_int_RC4_CTX* winpr_int_rc4_new(const BYTE* key, size_t keylength);
 BOOL winpr_int_rc4_update(winpr_int_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE* output);
 void winpr_int_rc4_free(winpr_int_RC4_CTX* ctx);

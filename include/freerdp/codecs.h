@@ -71,8 +71,10 @@ extern "C"
 	FREERDP_API BOOL freerdp_client_codecs_reset(rdpCodecs* codecs, UINT32 flags, UINT32 width,
 	                                             UINT32 height);
 
-	FREERDP_API rdpCodecs* codecs_new(rdpContext* context);
 	FREERDP_API void codecs_free(rdpCodecs* codecs);
+
+	WINPR_ATTR_MALLOC(codecs_free, 1)
+	FREERDP_API rdpCodecs* codecs_new(rdpContext* context);
 
 #ifdef __cplusplus
 }

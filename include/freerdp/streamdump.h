@@ -48,8 +48,10 @@ extern "C"
 	FREERDP_API BOOL stream_dump_register_handlers(rdpContext* context, CONNECTION_STATE state,
 	                                               BOOL isServer);
 
-	FREERDP_API rdpStreamDumpContext* stream_dump_new(void);
 	FREERDP_API void stream_dump_free(rdpStreamDumpContext* dump);
+
+	WINPR_ATTR_MALLOC(stream_dump_free, 1)
+	FREERDP_API rdpStreamDumpContext* stream_dump_new(void);
 
 #ifdef __cplusplus
 }

@@ -47,12 +47,16 @@ extern "C"
 
 	FREERDP_LOCAL void palette_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_LOCAL rdpPaletteCache* palette_cache_new(rdpContext* context);
 	FREERDP_LOCAL void palette_cache_free(rdpPaletteCache* palette_cache);
 
+	WINPR_ATTR_MALLOC(palette_cache_free, 1)
+	FREERDP_LOCAL rdpPaletteCache* palette_cache_new(rdpContext* context);
+
+	FREERDP_LOCAL void free_palette_update(rdpContext* context, PALETTE_UPDATE* pointer);
+
+	WINPR_ATTR_MALLOC(free_palette_update, 2)
 	FREERDP_LOCAL PALETTE_UPDATE* copy_palette_update(rdpContext* context,
 	                                                  const PALETTE_UPDATE* pointer);
-	FREERDP_LOCAL void free_palette_update(rdpContext* context, PALETTE_UPDATE* pointer);
 
 #ifdef __cplusplus
 }

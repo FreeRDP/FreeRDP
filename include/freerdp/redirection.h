@@ -52,8 +52,10 @@ extern "C"
 
 	typedef struct rdp_redirection rdpRedirection;
 
-	FREERDP_API rdpRedirection* redirection_new(void);
 	FREERDP_API void redirection_free(rdpRedirection* redirection);
+
+	WINPR_ATTR_MALLOC(redirection_free, 1)
+	FREERDP_API rdpRedirection* redirection_new(void);
 
 	/** \brief This function checks if all necessary settings for a given \b rdpRedirection are
 	 * available.

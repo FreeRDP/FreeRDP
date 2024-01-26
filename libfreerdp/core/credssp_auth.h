@@ -31,7 +31,11 @@ typedef struct rdp_credssp_auth rdpCredsspAuth;
 #include <winpr/tchar.h>
 #include <winpr/sspi.h>
 
+FREERDP_LOCAL void credssp_auth_free(rdpCredsspAuth* auth);
+
+WINPR_ATTR_MALLOC(credssp_auth_free, 1)
 FREERDP_LOCAL rdpCredsspAuth* credssp_auth_new(const rdpContext* context);
+
 FREERDP_LOCAL BOOL credssp_auth_init(rdpCredsspAuth* auth, TCHAR* pkg_name,
                                      SecPkgContext_Bindings* bindings);
 FREERDP_LOCAL BOOL credssp_auth_setup_client(rdpCredsspAuth* auth, const char* target_service,
@@ -57,6 +61,5 @@ FREERDP_LOCAL BOOL credssp_auth_is_complete(rdpCredsspAuth* auth);
 FREERDP_LOCAL const char* credssp_auth_pkg_name(rdpCredsspAuth* auth);
 FREERDP_LOCAL size_t credssp_auth_trailer_size(rdpCredsspAuth* auth);
 FREERDP_LOCAL UINT32 credssp_auth_sspi_error(rdpCredsspAuth* auth);
-FREERDP_LOCAL void credssp_auth_free(rdpCredsspAuth* auth);
 
 #endif /* FREERDP_LIB_CORE_CREDSSP_AUTH_H */

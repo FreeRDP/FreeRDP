@@ -112,8 +112,10 @@ extern "C"
 		psAInputChannelIdAssigned ChannelIdAssigned;
 	};
 
-	FREERDP_API ainput_server_context* ainput_server_context_new(HANDLE vcm);
 	FREERDP_API void ainput_server_context_free(ainput_server_context* context);
+
+	WINPR_ATTR_MALLOC(ainput_server_context_free, 1)
+	FREERDP_API ainput_server_context* ainput_server_context_new(HANDLE vcm);
 
 #ifdef __cplusplus
 }

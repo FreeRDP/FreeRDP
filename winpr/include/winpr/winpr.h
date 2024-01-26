@@ -47,6 +47,15 @@
 #define WINPR_API
 #endif
 
+#if defined(__clang__) || defined(__GNUC__) && (__GNUC__ <= 10)
+#define WINPR_ATTR_MALLOC(deallocator, ptrindex) __attribute__((malloc, warn_unused_result))
+#elif defined(__GNUC__)
+#define WINPR_ATTR_MALLOC(deallocator, ptrindex) \
+	__attribute__((malloc(deallocator, ptrindex), warn_unused_result))
+#else
+#define WINPR_ATTR_MALLOC(deallocator, ptrindex)
+#endif
+
 #if defined(__GNUC__) || defined(__clang__)
 #define WINPR_ATTR_FORMAT_ARG(pos, args) __attribute__((__format__(__printf__, pos, args)))
 #define WINPR_FORMAT_ARG /**/

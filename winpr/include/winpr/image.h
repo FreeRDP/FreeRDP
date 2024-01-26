@@ -92,8 +92,10 @@ extern "C"
 
 	WINPR_API int winpr_image_read_buffer(wImage* image, const BYTE* buffer, size_t size);
 
-	WINPR_API wImage* winpr_image_new(void);
 	WINPR_API void winpr_image_free(wImage* image, BOOL bFreeBuffer);
+
+	WINPR_ATTR_MALLOC(winpr_image_free, 1)
+	WINPR_API wImage* winpr_image_new(void);
 
 #ifdef __cplusplus
 }

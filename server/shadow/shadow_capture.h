@@ -22,6 +22,7 @@
 #include <freerdp/server/shadow.h>
 
 #include <winpr/crt.h>
+#include <winpr/winpr.h>
 #include <winpr/synch.h>
 
 struct rdp_shadow_capture
@@ -39,8 +40,10 @@ extern "C"
 {
 #endif
 
-	rdpShadowCapture* shadow_capture_new(rdpShadowServer* server);
 	void shadow_capture_free(rdpShadowCapture* capture);
+
+	WINPR_ATTR_MALLOC(shadow_capture_free, 1)
+	rdpShadowCapture* shadow_capture_new(rdpShadowServer* server);
 
 #ifdef __cplusplus
 }

@@ -58,8 +58,10 @@ extern "C"
 
 	FREERDP_LOCAL void glyph_cache_register_callbacks(rdpUpdate* update);
 
-	FREERDP_LOCAL rdpGlyphCache* glyph_cache_new(rdpContext* context);
 	FREERDP_LOCAL void glyph_cache_free(rdpGlyphCache* glyph);
+
+	WINPR_ATTR_MALLOC(glyph_cache_free, 1)
+	FREERDP_LOCAL rdpGlyphCache* glyph_cache_new(rdpContext* context);
 
 	FREERDP_LOCAL CACHE_GLYPH_ORDER* copy_cache_glyph_order(rdpContext* context,
 	                                                        const CACHE_GLYPH_ORDER* glyph);

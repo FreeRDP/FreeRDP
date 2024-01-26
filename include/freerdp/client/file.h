@@ -67,9 +67,13 @@ extern "C"
 	FREERDP_API int freerdp_client_rdp_file_get_integer_option(const rdpFile* file,
 	                                                           const char* name);
 
-	FREERDP_API rdpFile* freerdp_client_rdp_file_new(void);
-	FREERDP_API rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags);
 	FREERDP_API void freerdp_client_rdp_file_free(rdpFile* file);
+
+	WINPR_ATTR_MALLOC(freerdp_client_rdp_file_free, 1)
+	FREERDP_API rdpFile* freerdp_client_rdp_file_new(void);
+
+	WINPR_ATTR_MALLOC(freerdp_client_rdp_file_free, 1)
+	FREERDP_API rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags);
 
 #ifdef __cplusplus
 }

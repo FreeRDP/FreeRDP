@@ -29,9 +29,12 @@ extern "C"
 {
 #endif
 
+	void shadow_surface_free(rdpShadowSurface* surface);
+
+	WINPR_ATTR_MALLOC(shadow_surface_free, 1)
 	rdpShadowSurface* shadow_surface_new(rdpShadowServer* server, UINT16 x, UINT16 y, UINT32 width,
 	                                     UINT32 height);
-	void shadow_surface_free(rdpShadowSurface* surface);
+
 	BOOL shadow_surface_resize(rdpShadowSurface* surface, UINT16 x, UINT16 y, UINT32 width,
 	                           UINT32 height);
 

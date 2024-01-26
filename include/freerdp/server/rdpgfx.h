@@ -139,8 +139,11 @@ extern "C"
 		psRdpgfxServerInitialize Initialize;
 	};
 
-	FREERDP_API RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm);
 	FREERDP_API void rdpgfx_server_context_free(RdpgfxServerContext* context);
+
+	WINPR_ATTR_MALLOC(rdpgfx_server_context_free, 1)
+	FREERDP_API RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm);
+
 	FREERDP_API BOOL rdpgfx_server_set_own_thread(RdpgfxServerContext* context,
 	                                              BOOL internalThread);
 	FREERDP_API HANDLE rdpgfx_server_get_event_handle(RdpgfxServerContext* context);

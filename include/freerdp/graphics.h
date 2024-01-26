@@ -163,8 +163,10 @@ extern "C"
 	FREERDP_API void graphics_register_pointer(rdpGraphics* graphics, const rdpPointer* pointer);
 	FREERDP_API void graphics_register_glyph(rdpGraphics* graphics, const rdpGlyph* glyph);
 
-	FREERDP_API rdpGraphics* graphics_new(rdpContext* context);
 	FREERDP_API void graphics_free(rdpGraphics* graphics);
+
+	WINPR_ATTR_MALLOC(graphics_free, 1)
+	FREERDP_API rdpGraphics* graphics_new(rdpContext* context);
 
 #ifdef __cplusplus
 }

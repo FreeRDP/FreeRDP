@@ -48,8 +48,10 @@ extern "C"
 
 	FREERDP_API BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved);
 
-	FREERDP_API BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor);
 	FREERDP_API void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* interleaved);
+
+	WINPR_ATTR_MALLOC(bitmap_interleaved_context_free, 1)
+	FREERDP_API BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor);
 
 #ifdef __cplusplus
 }
