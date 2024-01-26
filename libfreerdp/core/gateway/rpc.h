@@ -773,6 +773,7 @@ FREERDP_LOCAL SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t l
 
 FREERDP_LOCAL void rpc_channel_free(RpcChannel* channel);
 
+WINPR_ATTR_MALLOC(rpc_channel_free, 1)
 FREERDP_LOCAL RpcOutChannel* rpc_out_channel_new(rdpRpc* rpc, const GUID* guid);
 FREERDP_LOCAL int rpc_out_channel_replacement_connect(RpcOutChannel* outChannel, int timeout);
 
@@ -787,7 +788,9 @@ FREERDP_LOCAL BOOL rpc_virtual_connection_transition_to_state(rdpRpc* rpc,
 
 FREERDP_LOCAL BOOL rpc_connect(rdpRpc* rpc, UINT32 timeout);
 
-FREERDP_LOCAL rdpRpc* rpc_new(rdpTransport* transport);
 FREERDP_LOCAL void rpc_free(rdpRpc* rpc);
+
+WINPR_ATTR_MALLOC(rpc_free, 1)
+FREERDP_LOCAL rdpRpc* rpc_new(rdpTransport* transport);
 
 #endif /* FREERDP_LIB_CORE_GATEWAY_RPC_H */

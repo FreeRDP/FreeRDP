@@ -139,7 +139,10 @@ FREERDP_LOCAL BOOL fastpath_send_multiple_input_pdu(rdpFastPath* fastpath, wStre
                                                     size_t iEventCount);
 FREERDP_LOCAL BOOL fastpath_send_input_pdu(rdpFastPath* fastpath, wStream* s);
 
+WINPR_ATTR_MALLOC(Stream_Release, 1)
 FREERDP_LOCAL wStream* fastpath_update_pdu_init(rdpFastPath* fastpath);
+
+WINPR_ATTR_MALLOC(Stream_Free, 1)
 FREERDP_LOCAL wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath);
 FREERDP_LOCAL BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s,
                                             BOOL skipCompression);

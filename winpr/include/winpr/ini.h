@@ -129,17 +129,18 @@ extern "C"
 	WINPR_API int IniFile_SetKeyValueInt(wIniFile* ini, const char* section, const char* key,
 	                                     int value);
 
-	/** @brief Create a new ini instance
-	 *
-	 *  @return The newly allocated instance or \b NULL if failed.
-	 */
-	WINPR_API wIniFile* IniFile_New(void);
-
 	/** @brief Free a ini instance
 	 *
 	 *  @param ini The instance to free, may be \b NULL
 	 */
 	WINPR_API void IniFile_Free(wIniFile* ini);
+
+	/** @brief Create a new ini instance
+	 *
+	 *  @return The newly allocated instance or \b NULL if failed.
+	 */
+	WINPR_ATTR_MALLOC(IniFile_Free, 1)
+	WINPR_API wIniFile* IniFile_New(void);
 
 	/** @brief Clone a ini instance
 	 *

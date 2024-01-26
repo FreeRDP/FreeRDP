@@ -53,8 +53,10 @@ typedef struct
 /* HTTP context */
 typedef struct s_http_context HttpContext;
 
-FREERDP_LOCAL HttpContext* http_context_new(void);
 FREERDP_LOCAL void http_context_free(HttpContext* context);
+
+WINPR_ATTR_MALLOC(http_context_free, 1)
+FREERDP_LOCAL HttpContext* http_context_new(void);
 
 FREERDP_LOCAL BOOL http_context_set_method(HttpContext* context, const char* Method);
 FREERDP_LOCAL const char* http_context_get_uri(HttpContext* context);
@@ -83,8 +85,10 @@ FREERDP_LOCAL BOOL http_context_is_websocket_upgrade_enabled(HttpContext* contex
 /* HTTP request */
 typedef struct s_http_request HttpRequest;
 
-FREERDP_LOCAL HttpRequest* http_request_new(void);
 FREERDP_LOCAL void http_request_free(HttpRequest* request);
+
+WINPR_ATTR_MALLOC(http_request_free, 1)
+FREERDP_LOCAL HttpRequest* http_request_new(void);
 
 FREERDP_LOCAL BOOL http_request_set_method(HttpRequest* request, const char* Method);
 FREERDP_LOCAL BOOL http_request_set_content_type(HttpRequest* request, const char* ContentType);
@@ -103,8 +107,10 @@ FREERDP_LOCAL wStream* http_request_write(HttpContext* context, HttpRequest* req
 /* HTTP response */
 typedef struct s_http_response HttpResponse;
 
-FREERDP_LOCAL HttpResponse* http_response_new(void);
 FREERDP_LOCAL void http_response_free(HttpResponse* response);
+
+WINPR_ATTR_MALLOC(http_response_free, 1)
+FREERDP_LOCAL HttpResponse* http_response_new(void);
 
 FREERDP_LOCAL HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength);
 

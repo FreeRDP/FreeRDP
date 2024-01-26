@@ -69,8 +69,11 @@ FREERDP_LOCAL BOOL nla_sspi_module_init(rdpNla* nla);
 FREERDP_LOCAL BOOL nla_impersonate(rdpNla* nla);
 FREERDP_LOCAL BOOL nla_revert_to_self(rdpNla* nla);
 
-FREERDP_LOCAL rdpNla* nla_new(rdpContext* context, rdpTransport* transport);
 FREERDP_LOCAL void nla_free(rdpNla* nla);
+
+WINPR_ATTR_MALLOC(nla_free, 1)
+FREERDP_LOCAL rdpNla* nla_new(rdpContext* context, rdpTransport* transport);
+
 FREERDP_LOCAL void nla_set_early_user_auth(rdpNla* nla, BOOL earlyUserAuth);
 
 #endif /* FREERDP_LIB_CORE_NLA_H */

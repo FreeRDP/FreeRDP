@@ -131,8 +131,10 @@ FREERDP_LOCAL BOOL transport_set_recv_callbacks(rdpTransport* transport, Transpo
 FREERDP_LOCAL int transport_tcp_connect(rdpTransport* transport, const char* hostname, int port,
                                         DWORD timeout);
 
-FREERDP_LOCAL rdpTransport* transport_new(rdpContext* context);
 FREERDP_LOCAL void transport_free(rdpTransport* transport);
+
+WINPR_ATTR_MALLOC(transport_free, 1)
+FREERDP_LOCAL rdpTransport* transport_new(rdpContext* context);
 
 FREERDP_LOCAL void transport_set_early_user_auth_mode(rdpTransport* transport, BOOL EUAMode);
 

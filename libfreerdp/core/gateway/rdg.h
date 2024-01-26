@@ -22,14 +22,17 @@
 
 #include <winpr/wtypes.h>
 #include <winpr/stream.h>
+#include <winpr/winpr.h>
 
 /* needed for BIO */
 #include <openssl/ssl.h>
 
 typedef struct rdp_rdg rdpRdg;
 
-FREERDP_LOCAL rdpRdg* rdg_new(rdpContext* context);
 FREERDP_LOCAL void rdg_free(rdpRdg* rdg);
+
+WINPR_ATTR_MALLOC(rdg_free, 1)
+FREERDP_LOCAL rdpRdg* rdg_new(rdpContext* context);
 
 FREERDP_LOCAL BIO* rdg_get_front_bio_and_take_ownership(rdpRdg* rdg);
 

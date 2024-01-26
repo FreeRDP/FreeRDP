@@ -22,6 +22,7 @@
 
 #include "wlog.h"
 
+WINPR_ATTR_MALLOC(WLog_Appender_Free, 2)
 wLogAppender* WLog_BinaryAppender_New(wLog* log);
 
 #endif /* WINPR_WLOG_BINARY_APPENDER_PRIVATE_H */

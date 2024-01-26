@@ -153,8 +153,10 @@ extern "C"
 		rdpContext* rdpcontext;
 	};
 
-	FREERDP_API audin_server_context* audin_server_context_new(HANDLE vcm);
 	FREERDP_API void audin_server_context_free(audin_server_context* context);
+
+	WINPR_ATTR_MALLOC(audin_server_context_free, 1)
+	FREERDP_API audin_server_context* audin_server_context_new(HANDLE vcm);
 
 	/** \brief sets the supported audio formats for AUDIN server channel context.
 	 *

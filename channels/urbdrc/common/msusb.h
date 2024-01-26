@@ -81,8 +81,12 @@ extern "C"
 	FREERDP_API void msusb_msinterface_free(MSUSB_INTERFACE_DESCRIPTOR* MsInterface);
 
 	/* MSUSB_CONFIG exported functions */
-	FREERDP_API MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_new(void);
 	FREERDP_API void msusb_msconfig_free(MSUSB_CONFIG_DESCRIPTOR* MsConfig);
+
+	WINPR_ATTR_MALLOC(msusb_msconfig_free, 1)
+	FREERDP_API MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_new(void);
+
+	WINPR_ATTR_MALLOC(msusb_msconfig_free, 1)
 	FREERDP_API MSUSB_CONFIG_DESCRIPTOR* msusb_msconfig_read(wStream* s, UINT32 NumInterfaces);
 	FREERDP_API BOOL msusb_msconfig_write(MSUSB_CONFIG_DESCRIPTOR* MsConfg, wStream* out);
 	FREERDP_API void msusb_msconfig_dump(MSUSB_CONFIG_DESCRIPTOR* MsConfg);

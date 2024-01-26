@@ -55,8 +55,10 @@ extern "C"
 	FREERDP_API BOOL freerdp_assistance_get_encrypted_pass_stub(rdpAssistanceFile* file,
 	                                                            const char** pwd, size_t* size);
 
-	FREERDP_API rdpAssistanceFile* freerdp_assistance_file_new(void);
 	FREERDP_API void freerdp_assistance_file_free(rdpAssistanceFile* file);
+
+	WINPR_ATTR_MALLOC(freerdp_assistance_file_free, 1)
+	FREERDP_API rdpAssistanceFile* freerdp_assistance_file_new(void);
 
 	FREERDP_API void freerdp_assistance_print_file(rdpAssistanceFile* file, wLog* log, DWORD level);
 

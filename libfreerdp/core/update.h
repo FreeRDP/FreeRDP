@@ -167,8 +167,11 @@ static INLINE rdp_secondary_update_internal* secondary_update_cast(rdpSecondaryU
 	return cnv.internal;
 }
 
-FREERDP_LOCAL rdpUpdate* update_new(rdpRdp* rdp);
 FREERDP_LOCAL void update_free(rdpUpdate* update);
+
+WINPR_ATTR_MALLOC(update_free, 1)
+FREERDP_LOCAL rdpUpdate* update_new(rdpRdp* rdp);
+
 FREERDP_LOCAL void update_reset_state(rdpUpdate* update);
 FREERDP_LOCAL BOOL update_post_connect(rdpUpdate* update);
 FREERDP_LOCAL void update_post_disconnect(rdpUpdate* update);

@@ -35,16 +35,21 @@ extern "C"
 
 	FREERDP_API char* freerdp_certificate_data_hash(const char* hostname, UINT16 port);
 
+	FREERDP_API void freerdp_certificate_data_free(rdpCertificateData* data);
+
+	WINPR_ATTR_MALLOC(freerdp_certificate_data_free, 1)
 	FREERDP_API rdpCertificateData* freerdp_certificate_data_new(const char* hostname, UINT16 port,
 	                                                             const rdpCertificate* xcert);
+
+	WINPR_ATTR_MALLOC(freerdp_certificate_data_free, 1)
 	FREERDP_API rdpCertificateData* freerdp_certificate_data_new_from_pem(const char* hostname,
 	                                                                      UINT16 port,
 	                                                                      const char* pem,
 	                                                                      size_t length);
+
+	WINPR_ATTR_MALLOC(freerdp_certificate_data_free, 1)
 	FREERDP_API rdpCertificateData*
 	freerdp_certificate_data_new_from_file(const char* hostname, UINT16 port, const char* file);
-
-	FREERDP_API void freerdp_certificate_data_free(rdpCertificateData* data);
 
 	FREERDP_API BOOL freerdp_certificate_data_equal(const rdpCertificateData* a,
 	                                                const rdpCertificateData* b);

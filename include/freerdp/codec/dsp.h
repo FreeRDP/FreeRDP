@@ -32,13 +32,17 @@ extern "C"
 
 	typedef struct S_FREERDP_DSP_CONTEXT FREERDP_DSP_CONTEXT;
 
+	FREERDP_API void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context);
+
+	WINPR_ATTR_MALLOC(freerdp_dsp_context_free, 1)
 	FREERDP_API FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder);
+
 	FREERDP_API BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode);
 	FREERDP_API BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
 	                                    const BYTE* data, size_t length, wStream* out);
 	FREERDP_API BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
 	                                    const BYTE* data, size_t length, wStream* out);
-	FREERDP_API void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context);
+
 	FREERDP_API BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context,
 	                                           const AUDIO_FORMAT* targetFormat,
 	                                           UINT32 FramesPerPacket);

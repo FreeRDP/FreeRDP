@@ -169,9 +169,14 @@ typedef struct rdp_settings rdpSettings;
 	FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings,
 	                                                              UINT32 type);
 
-	FREERDP_API RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[]);
-	FREERDP_API RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device);
 	FREERDP_API void freerdp_device_free(RDPDR_DEVICE* device);
+
+	WINPR_ATTR_MALLOC(freerdp_device_free, 1)
+	FREERDP_API RDPDR_DEVICE* freerdp_device_new(UINT32 Type, size_t count, const char* args[]);
+
+	WINPR_ATTR_MALLOC(freerdp_device_free, 1)
+	FREERDP_API RDPDR_DEVICE* freerdp_device_clone(const RDPDR_DEVICE* device);
+
 	FREERDP_API BOOL freerdp_device_equal(const RDPDR_DEVICE* one, const RDPDR_DEVICE* other);
 
 	FREERDP_API void freerdp_device_collection_free(rdpSettings* settings);

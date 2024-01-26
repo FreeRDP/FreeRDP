@@ -38,8 +38,11 @@ extern "C"
 
 	typedef struct s_scard_call_context scard_call_context;
 
-	FREERDP_API scard_call_context* smartcard_call_context_new(const rdpSettings* settings);
 	FREERDP_API void smartcard_call_context_free(scard_call_context* ctx);
+
+	WINPR_ATTR_MALLOC(smartcard_call_context_free, 1)
+	FREERDP_API scard_call_context* smartcard_call_context_new(const rdpSettings* settings);
+
 	FREERDP_API BOOL smartcard_call_context_signal_stop(scard_call_context* ctx, BOOL reset);
 	FREERDP_API BOOL smartcard_call_context_add(scard_call_context* ctx, const char* name);
 	FREERDP_API BOOL smartcard_call_cancel_context(scard_call_context* ctx, SCARDCONTEXT context);

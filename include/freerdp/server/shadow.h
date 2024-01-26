@@ -319,8 +319,10 @@ extern "C"
 
 	FREERDP_API UINT32 shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors);
 
-	FREERDP_API rdpShadowServer* shadow_server_new(void);
 	FREERDP_API void shadow_server_free(rdpShadowServer* server);
+
+	WINPR_ATTR_MALLOC(shadow_server_free, 1)
+	FREERDP_API rdpShadowServer* shadow_server_new(void);
 
 	FREERDP_API int shadow_capture_align_clip_rect(RECTANGLE_16* rect, RECTANGLE_16* clip);
 	FREERDP_API int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth,

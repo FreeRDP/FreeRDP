@@ -89,10 +89,12 @@ extern "C"
 	                                                          size_t nmemb, size_t size,
 	                                                          const char* fmt, va_list args);
 
+	WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
+
+	WINPR_ATTR_MALLOC(Stream_Free, 1)
 	WINPR_API wStream* Stream_New(BYTE* buffer, size_t size);
 	WINPR_API wStream* Stream_StaticConstInit(wStream* s, const BYTE* buffer, size_t size);
 	WINPR_API wStream* Stream_StaticInit(wStream* s, BYTE* buffer, size_t size);
-	WINPR_API void Stream_Free(wStream* s, BOOL bFreeBuffer);
 
 #define Stream_CheckAndLogRequiredLengthOfSize(tag, s, nmemb, size)                         \
 	Stream_CheckAndLogRequiredLengthEx(tag, WLOG_WARN, s, nmemb, size, "%s(%s:%" PRIuz ")", \
@@ -815,8 +817,9 @@ extern "C"
 
 	/* StreamPool */
 
-	WINPR_API wStream* StreamPool_Take(wStreamPool* pool, size_t size);
 	WINPR_API void StreamPool_Return(wStreamPool* pool, wStream* s);
+
+	WINPR_API wStream* StreamPool_Take(wStreamPool* pool, size_t size);
 
 	WINPR_API void Stream_AddRef(wStream* s);
 	WINPR_API void Stream_Release(wStream* s);
@@ -825,8 +828,10 @@ extern "C"
 
 	WINPR_API void StreamPool_Clear(wStreamPool* pool);
 
-	WINPR_API wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize);
 	WINPR_API void StreamPool_Free(wStreamPool* pool);
+
+	WINPR_ATTR_MALLOC(StreamPool_Free, 1)
+	WINPR_API wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize);
 
 	WINPR_API char* StreamPool_GetStatistics(wStreamPool* pool, char* buffer, size_t size);
 

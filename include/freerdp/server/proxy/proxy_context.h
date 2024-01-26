@@ -89,6 +89,7 @@ extern "C"
 	};
 	typedef struct p_server_context pServerContext;
 
+	WINPR_ATTR_MALLOC(StaticChannelContext_free, 1)
 	pServerStaticChannelContext* StaticChannelContext_new(pServerContext* ps, const char* name,
 	                                                      UINT32 id);
 
@@ -164,12 +165,16 @@ extern "C"
 
 	FREERDP_API BOOL pf_context_copy_settings(rdpSettings* dst, const rdpSettings* src);
 	FREERDP_API BOOL pf_context_init_server_context(freerdp_peer* client);
+
+	WINPR_ATTR_MALLOC(freerdp_client_context_free, 1)
 	FREERDP_API pClientContext* pf_context_create_client_context(const rdpSettings* clientSettings);
 
+	FREERDP_API void proxy_data_free(proxyData* pdata);
+
+	WINPR_ATTR_MALLOC(proxy_data_free, 1)
 	FREERDP_API proxyData* proxy_data_new(void);
 	FREERDP_API void proxy_data_set_client_context(proxyData* pdata, pClientContext* context);
 	FREERDP_API void proxy_data_set_server_context(proxyData* pdata, pServerContext* context);
-	FREERDP_API void proxy_data_free(proxyData* pdata);
 
 	FREERDP_API BOOL proxy_data_shall_disconnect(proxyData* pdata);
 	FREERDP_API void proxy_data_abort_connect(proxyData* pdata);

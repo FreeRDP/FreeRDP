@@ -38,8 +38,10 @@ extern "C"
 	WINPR_API int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context,
 	                                                       const char* path);
 
-	WINPR_API MAKECERT_CONTEXT* makecert_context_new(void);
 	WINPR_API void makecert_context_free(MAKECERT_CONTEXT* context);
+
+	WINPR_ATTR_MALLOC(makecert_context_free, 1)
+	WINPR_API MAKECERT_CONTEXT* makecert_context_new(void);
 
 #ifdef __cplusplus
 }

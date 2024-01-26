@@ -57,10 +57,14 @@ extern "C"
 
 	FREERDP_API BOOL progressive_context_reset(PROGRESSIVE_CONTEXT* progressive);
 
+	FREERDP_API void progressive_context_free(PROGRESSIVE_CONTEXT* progressive);
+
+	WINPR_ATTR_MALLOC(progressive_context_free, 1)
 	FREERDP_API PROGRESSIVE_CONTEXT* progressive_context_new(BOOL Compressor);
+
+	WINPR_ATTR_MALLOC(progressive_context_free, 1)
 	FREERDP_API PROGRESSIVE_CONTEXT* progressive_context_new_ex(BOOL Compressor,
 	                                                            UINT32 ThreadingFlags);
-	FREERDP_API void progressive_context_free(PROGRESSIVE_CONTEXT* progressive);
 
 	FREERDP_API BOOL progressive_rfx_write_message_progressive_simple(
 	    PROGRESSIVE_CONTEXT* progressive, wStream* s, const RFX_MESSAGE* msg);

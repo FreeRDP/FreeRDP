@@ -92,6 +92,7 @@ extern "C"
 		UINT32 confirmedCapsVersion;
 	};
 
+	WINPR_ATTR_MALLOC(gfxredir_server_context_free, 1)
 	FREERDP_API GfxRedirServerContext* gfxredir_server_context_new(HANDLE vcm);
 	FREERDP_API void gfxredir_server_context_free(GfxRedirServerContext* context);
 

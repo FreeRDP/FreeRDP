@@ -33,10 +33,11 @@ typedef struct _ChannelStateTracker ChannelStateTracker;
 typedef PfChannelResult (*ChannelTrackerPeekFn)(ChannelStateTracker* tracker, BOOL first,
                                                 BOOL lastPacket);
 
+void channelTracker_free(ChannelStateTracker* t);
+
+WINPR_ATTR_MALLOC(channelTracker_free, 1)
 ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel,
                                         ChannelTrackerPeekFn fn, void* data);
-
-void channelTracker_free(ChannelStateTracker* t);
 
 BOOL channelTracker_setMode(ChannelStateTracker* tracker, ChannelTrackerMode mode);
 ChannelTrackerMode channelTracker_getMode(ChannelStateTracker* tracker);

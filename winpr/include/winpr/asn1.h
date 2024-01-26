@@ -158,7 +158,11 @@ extern "C"
 
 	/* encoder functions */
 
+	WINPR_API void WinPrAsn1Encoder_Free(WinPrAsn1Encoder** penc);
+
+	WINPR_ATTR_MALLOC(WinPrAsn1Encoder_Free, 1)
 	WINPR_API WinPrAsn1Encoder* WinPrAsn1Encoder_New(WinPrAsn1EncodingRule encoding);
+
 	WINPR_API void WinPrAsn1Encoder_Reset(WinPrAsn1Encoder* enc);
 
 	WINPR_API BOOL WinPrAsn1EncAppContainer(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagId);
@@ -202,8 +206,6 @@ extern "C"
 
 	WINPR_API BOOL WinPrAsn1EncStreamSize(WinPrAsn1Encoder* enc, size_t* s);
 	WINPR_API BOOL WinPrAsn1EncToStream(WinPrAsn1Encoder* enc, wStream* s);
-
-	WINPR_API void WinPrAsn1Encoder_Free(WinPrAsn1Encoder** penc);
 
 #ifdef __cplusplus
 }

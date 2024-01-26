@@ -49,8 +49,10 @@ extern "C"
 
 	FREERDP_API void zgfx_context_reset(ZGFX_CONTEXT* zgfx, BOOL flush);
 
-	FREERDP_API ZGFX_CONTEXT* zgfx_context_new(BOOL Compressor);
 	FREERDP_API void zgfx_context_free(ZGFX_CONTEXT* zgfx);
+
+	WINPR_ATTR_MALLOC(zgfx_context_free, 1)
+	FREERDP_API ZGFX_CONTEXT* zgfx_context_new(BOOL Compressor);
 
 #ifdef __cplusplus
 }

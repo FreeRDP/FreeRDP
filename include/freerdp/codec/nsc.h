@@ -66,8 +66,10 @@ extern "C"
 
 	FREERDP_API BOOL nsc_context_reset(NSC_CONTEXT* context, UINT32 width, UINT32 height);
 
-	FREERDP_API NSC_CONTEXT* nsc_context_new(void);
 	FREERDP_API void nsc_context_free(NSC_CONTEXT* context);
+
+	WINPR_ATTR_MALLOC(nsc_context_free, 1)
+	FREERDP_API NSC_CONTEXT* nsc_context_new(void);
 
 #ifdef __cplusplus
 }

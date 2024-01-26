@@ -99,8 +99,10 @@ typedef enum
 #define E_PROXY_REAUTH_NAP_FAILED 0x00005A00
 #define E_PROXY_CONNECTIONABORTED 0x000004D4
 
-FREERDP_LOCAL rdpTsg* tsg_new(rdpTransport* transport);
 FREERDP_LOCAL void tsg_free(rdpTsg* tsg);
+
+WINPR_ATTR_MALLOC(tsg_free, 1)
+FREERDP_LOCAL rdpTsg* tsg_new(rdpTransport* transport);
 
 FREERDP_LOCAL BOOL tsg_proxy_begin(rdpTsg* tsg);
 
