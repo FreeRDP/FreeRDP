@@ -135,6 +135,7 @@ extern "C"
 		BOOL resizeRequested;
 		UINT32 resizeWidth;
 		UINT32 resizeHeight;
+		BOOL areGfxCapsReady;
 	};
 
 	struct rdp_shadow_server

@@ -796,7 +796,9 @@ static UINT shadow_client_send_caps_confirm(RdpgfxServerContext* context, rdpSha
 	WINPR_ASSERT(pdu);
 
 	WINPR_ASSERT(context->CapsConfirm);
-	return context->CapsConfirm(context, pdu);
+	UINT rc = context->CapsConfirm(context, pdu);
+	client->areGfxCapsReady = (rc == CHANNEL_RC_OK);
+	return rc;
 }
 
 static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpShadowClient* client,
@@ -900,12 +902,11 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 	BOOL h264 = FALSE;
 
 	UINT32 flags = 0;
-	rdpShadowClient* client;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(capsAdvertise);
 
-	client = (rdpShadowClient*)context->custom;
+	rdpShadowClient* client = (rdpShadowClient*)context->custom;
 	WINPR_ASSERT(client);
 	WINPR_ASSERT(context->rdpcontext);
 
@@ -1831,7 +1832,7 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_SupportGraphicsPipeline))
 	{
-		if (pStatus->gfxOpened)
+		if (pStatus->gfxOpened && client->areGfxCapsReady)
 		{
 			/* GFX/h264 always full screen encoded */
 			nWidth = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
