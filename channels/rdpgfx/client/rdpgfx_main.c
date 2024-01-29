@@ -314,6 +314,10 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			capsSet->flags = caps10Flags;
 		}
 
+		/* The following capabilities expect support for image scaling.
+		 * Disable these for builds that do not have support for that.
+		 */
+#if defined(WITH_CAIRO) || defined(WITH_SWSCALE)
 		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_105))
 		{
 			capsSet = &capsSets[pdu.capsSetCount++];
@@ -337,6 +341,7 @@ static UINT rdpgfx_send_supported_caps(GENERIC_CHANNEL_CALLBACK* callback)
 			capsSet->length = 0x4;
 			capsSet->flags = caps10Flags;
 		}
+#endif
 
 		if (!rdpgfx_is_capability_filtered(gfx, RDPGFX_CAPVERSION_107))
 		{
