@@ -1,4 +1,9 @@
-option(WITH_WEBVIEW "Build with WebView support for AAD login popup browser" ON)
+set(WITH_WEBVIEW_DEFAULT OFF)
+if (UNIX AND NOT APPLE)
+    set(WITH_WEBVIEW_DEFAULT ON)
+endif()
+
+option(WITH_WEBVIEW "Build with WebView support for AAD login popup browser" ${WITH_WEBVIEW_DEFAULT})
 if (WITH_WEBVIEW)
   option(WITH_WEBVIEW_QT "Build with QtWebEngine support for AAD login broweser popup" OFF)
 
