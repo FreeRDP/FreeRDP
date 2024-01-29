@@ -1498,7 +1498,7 @@ void freerdp_peer_free(freerdp_peer* client)
 	free(client);
 }
 
-static BOOL frerdp_peer_transport_setup(freerdp_peer* client)
+static BOOL freerdp_peer_transport_setup(freerdp_peer* client)
 {
 	rdpRdp* rdp;
 
@@ -1583,7 +1583,7 @@ BOOL freerdp_peer_context_new_ex(freerdp_peer* client, const rdpSettings* settin
 		goto fail;
 	}
 
-	if (!frerdp_peer_transport_setup(client))
+	if (!freerdp_peer_transport_setup(client))
 		goto fail;
 
 	client->IsWriteBlocked = freerdp_peer_is_write_blocked;
