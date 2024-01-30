@@ -78,12 +78,11 @@
 	_pointer_scrolling = NO;
 
 	// create areas array
-	int i, j;
 	CGFloat area_width = [_cur_pointer_img size].width / 3.0f;
 	CGFloat area_height = [_cur_pointer_img size].height / 3.0f;
-	for (i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
 	{
-		for (j = 0; j < 3; j++)
+		for (int j = 0; j < 3; j++)
 		{
 			_pointer_areas[j + i * 3] =
 			    CGRectMake(j * area_width, i * area_height, area_width, area_height);

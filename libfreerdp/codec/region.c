@@ -235,12 +235,11 @@ void region16_print(const REGION16* region)
 {
 	const RECTANGLE_16* rects = NULL;
 	UINT32 nbRects = 0;
-	UINT32 i = 0;
 	int currentBandY = -1;
 	rects = region16_rects(region, &nbRects);
 	WLog_DBG(TAG, "nrects=%" PRIu32 "", nbRects);
 
-	for (i = 0; i < nbRects; i++, rects++)
+	for (UINT32 i = 0; i < nbRects; i++, rects++)
 	{
 		if (rects->top != currentBandY)
 		{

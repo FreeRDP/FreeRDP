@@ -828,8 +828,7 @@ LONG smartcard_irp_device_control_decode(wStream* s, UINT32 CompletionId, UINT32
 
 static void free_reader_states_a(LPSCARD_READERSTATEA rgReaderStates, UINT32 cReaders)
 {
-	UINT32 x = 0;
-	for (x = 0; x < cReaders; x++)
+	for (UINT32 x = 0; x < cReaders; x++)
 	{
 		SCARD_READERSTATEA* state = &rgReaderStates[x];
 		free(state->szReader);
@@ -840,8 +839,7 @@ static void free_reader_states_a(LPSCARD_READERSTATEA rgReaderStates, UINT32 cRe
 
 static void free_reader_states_w(LPSCARD_READERSTATEW rgReaderStates, UINT32 cReaders)
 {
-	UINT32 x = 0;
-	for (x = 0; x < cReaders; x++)
+	for (UINT32 x = 0; x < cReaders; x++)
 	{
 		SCARD_READERSTATEW* state = &rgReaderStates[x];
 		free(state->szReader);

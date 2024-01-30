@@ -71,12 +71,11 @@ void PubSub_Unlock(wPubSub* pubSub)
 
 wEventType* PubSub_FindEventType(wPubSub* pubSub, const char* EventName)
 {
-	size_t index = 0;
 	wEventType* event = NULL;
 
 	WINPR_ASSERT(pubSub);
 	WINPR_ASSERT(EventName);
-	for (index = 0; index < pubSub->count; index++)
+	for (size_t index = 0; index < pubSub->count; index++)
 	{
 		if (strcmp(pubSub->events[index].EventName, EventName) == 0)
 		{
@@ -149,7 +148,6 @@ int PubSub_Subscribe(wPubSub* pubSub, const char* EventName, ...)
 
 int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...)
 {
-	size_t index = 0;
 	wEventType* event = NULL;
 	int status = -1;
 	WINPR_ASSERT(pubSub);
@@ -168,7 +166,7 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...)
 	{
 		status = 0;
 
-		for (index = 0; index < event->EventHandlerCount; index++)
+		for (size_t index = 0; index < event->EventHandlerCount; index++)
 		{
 			if (event->EventHandlers[index] == EventHandler)
 			{
@@ -190,7 +188,6 @@ int PubSub_Unsubscribe(wPubSub* pubSub, const char* EventName, ...)
 
 int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, const wEventArgs* e)
 {
-	size_t index = 0;
 	wEventType* event = NULL;
 	int status = -1;
 
@@ -210,7 +207,7 @@ int PubSub_OnEvent(wPubSub* pubSub, const char* EventName, void* context, const 
 	{
 		status = 0;
 
-		for (index = 0; index < event->EventHandlerCount; index++)
+		for (size_t index = 0; index < event->EventHandlerCount; index++)
 		{
 			if (event->EventHandlers[index])
 			{

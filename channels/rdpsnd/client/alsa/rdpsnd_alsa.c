@@ -353,7 +353,6 @@ static UINT32 rdpsnd_alsa_get_volume(rdpsndDevicePlugin* device)
 	UINT32 dwVolume = 0;
 	UINT16 dwVolumeLeft = 0;
 	UINT16 dwVolumeRight = 0;
-	snd_mixer_elem_t* elem = NULL;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
 	dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
 	dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
@@ -361,7 +360,8 @@ static UINT32 rdpsnd_alsa_get_volume(rdpsndDevicePlugin* device)
 	if (!rdpsnd_alsa_open_mixer(alsa))
 		return 0;
 
-	for (elem = snd_mixer_first_elem(alsa->mixer_handle); elem; elem = snd_mixer_elem_next(elem))
+	for (snd_mixer_elem_t* elem = snd_mixer_first_elem(alsa->mixer_handle); elem;
+	     elem = snd_mixer_elem_next(elem))
 	{
 		if (snd_mixer_selem_has_playback_volume(elem))
 		{
@@ -388,7 +388,6 @@ static BOOL rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	long volume_max = 0;
 	long volume_left = 0;
 	long volume_right = 0;
-	snd_mixer_elem_t* elem = NULL;
 	rdpsndAlsaPlugin* alsa = (rdpsndAlsaPlugin*)device;
 
 	if (!rdpsnd_alsa_open_mixer(alsa))
@@ -397,7 +396,8 @@ static BOOL rdpsnd_alsa_set_volume(rdpsndDevicePlugin* device, UINT32 value)
 	left = (value & 0xFFFF);
 	right = ((value >> 16) & 0xFFFF);
 
-	for (elem = snd_mixer_first_elem(alsa->mixer_handle); elem; elem = snd_mixer_elem_next(elem))
+	for (snd_mixer_elem_t* elem = snd_mixer_first_elem(alsa->mixer_handle); elem;
+	     elem = snd_mixer_elem_next(elem))
 	{
 		if (snd_mixer_selem_has_playback_volume(elem))
 		{

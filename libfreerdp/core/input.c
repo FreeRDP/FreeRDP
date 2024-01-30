@@ -829,7 +829,6 @@ static BOOL input_recv_event(rdpInput* input, wStream* s)
 
 BOOL input_recv(rdpInput* input, wStream* s)
 {
-	UINT16 i = 0;
 	UINT16 numberEvents = 0;
 
 	WINPR_ASSERT(input);
@@ -845,7 +844,7 @@ BOOL input_recv(rdpInput* input, wStream* s)
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, numberEvents, 6ull))
 		return FALSE;
 
-	for (i = 0; i < numberEvents; i++)
+	for (UINT16 i = 0; i < numberEvents; i++)
 	{
 		if (!input_recv_event(input, s))
 			return FALSE;

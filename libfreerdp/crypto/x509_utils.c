@@ -178,7 +178,6 @@ typedef int (*general_name_mapper_pr)(GENERAL_NAME* name, void* data, int index,
 static void map_subject_alt_name(const X509* x509, int general_name_type,
                                  general_name_mapper_pr mapper, void* data)
 {
-	int i = 0;
 	int num = 0;
 	STACK_OF(GENERAL_NAME)* gens = NULL;
 	gens = X509_get_ext_d2i(x509, NID_subject_alt_name, NULL, NULL);
@@ -190,7 +189,7 @@ static void map_subject_alt_name(const X509* x509, int general_name_type,
 
 	num = sk_GENERAL_NAME_num(gens);
 
-	for (i = 0; (i < num); i++)
+	for (int i = 0; (i < num); i++)
 	{
 		GENERAL_NAME* name = sk_GENERAL_NAME_value(gens, i);
 
@@ -586,7 +585,6 @@ static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain,
 	BIO* bio = NULL;
 	int status = 0;
 	int count = 0;
-	int x = 0;
 	size_t offset = 0;
 	size_t length = 0;
 	BOOL rc = FALSE;
@@ -618,7 +616,7 @@ static BYTE* x509_utils_get_pem(const X509* xcert, const STACK_OF(X509) * chain,
 	if (chain)
 	{
 		count = sk_X509_num(chain);
-		for (x = 0; x < count; x++)
+		for (int x = 0; x < count; x++)
 		{
 			X509* c = sk_X509_value(chain, x);
 			status = PEM_write_bio_X509(bio, c);

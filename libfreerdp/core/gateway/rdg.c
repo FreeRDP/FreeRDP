@@ -214,11 +214,10 @@ static const t_flag_mapping capabilities_enum[] = {
 
 static const char* flags_to_string(UINT32 flags, const t_flag_mapping* map, size_t elements)
 {
-	size_t x = 0;
 	static char buffer[1024] = { 0 };
 	char fields[12] = { 0 };
 
-	for (x = 0; x < elements; x++)
+	for (size_t x = 0; x < elements; x++)
 	{
 		const t_flag_mapping* cur = &map[x];
 

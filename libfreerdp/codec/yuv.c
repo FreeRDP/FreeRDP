@@ -329,11 +329,9 @@ static BOOL submit_object(PTP_WORK* work_object, PTP_WORK_CALLBACK cb, const voi
 
 static void free_objects(PTP_WORK* work_objects, UINT32 waitCount)
 {
-	UINT32 i = 0;
-
 	WINPR_ASSERT(work_objects || (waitCount == 0));
 
-	for (i = 0; i < waitCount; i++)
+	for (UINT32 i = 0; i < waitCount; i++)
 	{
 		PTP_WORK cur = work_objects[i];
 		work_objects[i] = NULL;
@@ -348,11 +346,9 @@ static void free_objects(PTP_WORK* work_objects, UINT32 waitCount)
 
 static BOOL intersects(UINT32 pos, const RECTANGLE_16* regionRects, UINT32 numRegionRects)
 {
-	UINT32 x = 0;
-
 	WINPR_ASSERT(regionRects || (numRegionRects == 0));
 
-	for (x = pos + 1; x < numRegionRects; x++)
+	for (UINT32 x = pos + 1; x < numRegionRects; x++)
 	{
 		const RECTANGLE_16* what = &regionRects[pos];
 		const RECTANGLE_16* rect = &regionRects[x];
@@ -386,7 +382,6 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
                         UINT32 nDstStep, const RECTANGLE_16* regionRects, UINT32 numRegionRects)
 {
 	BOOL rc = FALSE;
-	UINT32 x = 0;
 	UINT32 waitCount = 0;
 	primitives_t* prims = primitives_get();
 
@@ -416,7 +411,7 @@ static BOOL pool_decode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 	}
 
 	/* case where we use threads */
-	for (x = 0; x < numRegionRects; x++)
+	for (UINT32 x = 0; x < numRegionRects; x++)
 	{
 		RECTANGLE_16 r = clamp(context, &regionRects[x], yuvHeight);
 
@@ -550,7 +545,6 @@ static BOOL pool_decode_rect(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVDa
                              UINT32 numRegionRects)
 {
 	BOOL rc = FALSE;
-	UINT32 y = 0;
 	UINT32 waitCount = 0;
 	PTP_WORK_CALLBACK cb = yuv444_combine_work_callback;
 	primitives_t* prims = primitives_get();
@@ -564,7 +558,7 @@ static BOOL pool_decode_rect(YUV_CONTEXT* context, BYTE type, const BYTE* pYUVDa
 
 	if (!context->useThreads || (primitives_flags(prims) & PRIM_FLAGS_HAVE_EXTGPU))
 	{
-		for (y = 0; y < numRegionRects; y++)
+		for (UINT32 y = 0; y < numRegionRects; y++)
 		{
 			YUV_COMBINE_WORK_PARAM current = pool_decode_rect_param(
 			    &regionRects[y], context, type, pYUVData, iStride, pYUVDstData, iDstStride);
@@ -786,8 +780,6 @@ static BOOL pool_encode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 {
 	BOOL rc = FALSE;
 	primitives_t* prims = primitives_get();
-	UINT32 x = 0;
-	UINT32 y = 0;
 	UINT32 waitCount = 0;
 
 	WINPR_ASSERT(context);
@@ -805,7 +797,7 @@ static BOOL pool_encode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 
 	if (!context->useThreads || (primitives_flags(prims) & PRIM_FLAGS_HAVE_EXTGPU))
 	{
-		for (x = 0; x < numRegionRects; x++)
+		for (UINT32 x = 0; x < numRegionRects; x++)
 		{
 			YUV_ENCODE_WORK_PARAM current =
 			    pool_encode_fill(&regionRects[x], context, pSrcData, nSrcStep, SrcFormat, iStride,
@@ -816,7 +808,7 @@ static BOOL pool_encode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 	}
 
 	/* case where we use threads */
-	for (x = 0; x < numRegionRects; x++)
+	for (UINT32 x = 0; x < numRegionRects; x++)
 	{
 		const RECTANGLE_16* rect = &regionRects[x];
 		const UINT32 height = rect->bottom - rect->top;
@@ -825,13 +817,13 @@ static BOOL pool_encode(YUV_CONTEXT* context, PTP_WORK_CALLBACK cb, const BYTE* 
 		waitCount += steps;
 	}
 
-	for (x = 0; x < numRegionRects; x++)
+	for (UINT32 x = 0; x < numRegionRects; x++)
 	{
 		const RECTANGLE_16* rect = &regionRects[x];
 		const UINT32 height = rect->bottom - rect->top;
 		const UINT32 steps = (height + context->heightStep / 2) / context->heightStep;
 
-		for (y = 0; y < steps; y++)
+		for (UINT32 y = 0; y < steps; y++)
 		{
 			RECTANGLE_16 r = *rect;
 			YUV_ENCODE_WORK_PARAM* current = NULL;

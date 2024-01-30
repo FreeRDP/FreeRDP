@@ -1328,7 +1328,6 @@ DWORD transport_get_event_handles(rdpTransport* transport, HANDLE* events, DWORD
 #if defined(WITH_FREERDP_DEPRECATED)
 void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 {
-	DWORD index = 0;
 	DWORD nCount = 0;
 	HANDLE events[MAXIMUM_WAIT_OBJECTS] = { 0 };
 
@@ -1339,7 +1338,7 @@ void transport_get_fds(rdpTransport* transport, void** rfds, int* rcount)
 	nCount = transport_get_event_handles(transport, events, ARRAYSIZE(events));
 	*rcount = nCount + 1;
 
-	for (index = 0; index < nCount; index++)
+	for (DWORD index = 0; index < nCount; index++)
 	{
 		rfds[index] = GetEventWaitObject(events[index]);
 	}

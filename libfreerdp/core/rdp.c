@@ -1028,9 +1028,7 @@ static BOOL rdp_recv_server_status_info_pdu(rdpRdp* rdp, wStream* s)
 
 static BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 {
-	UINT32 index = 0;
 	UINT32 monitorCount = 0;
-	MONITOR_DEF* monitor = NULL;
 	MONITOR_DEF* monitorDefArray = NULL;
 	BOOL ret = TRUE;
 
@@ -1048,8 +1046,9 @@ static BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 	if (!monitorDefArray)
 		return FALSE;
 
-	for (monitor = monitorDefArray, index = 0; index < monitorCount; index++, monitor++)
+	for (UINT32 index = 0; index < monitorCount; index++)
 	{
+		MONITOR_DEF* monitor = &monitorDefArray[index];
 		Stream_Read_INT32(s, monitor->left);   /* left (4 bytes) */
 		Stream_Read_INT32(s, monitor->top);    /* top (4 bytes) */
 		Stream_Read_INT32(s, monitor->right);  /* right (4 bytes) */

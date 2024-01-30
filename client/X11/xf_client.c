@@ -150,8 +150,7 @@ static void xf_teardown_x11(xfContext* xfc);
 
 static int xf_map_error_to_exit_code(DWORD error)
 {
-	size_t x = 0;
-	for (x = 0; x < ARRAYSIZE(xf_exit_code_map); x++)
+	for (size_t x = 0; x < ARRAYSIZE(xf_exit_code_map); x++)
 	{
 		const struct xf_exit_code_map_t* cur = &xf_exit_code_map[x];
 		if (cur->error == error)
@@ -920,7 +919,6 @@ static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 	XExtensionVersion* version = NULL;
 	XDeviceInfo* devices1 = NULL;
 	XIDeviceInfo* devices2 = NULL;
-	int i = 0;
 	int num_devices = 0;
 
 	if (XQueryExtension(xfc->display, "XInputExtension", &opcode, &event, &error))
@@ -937,7 +935,7 @@ static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 
 			if (devices2)
 			{
-				for (i = 0; i < num_devices; ++i)
+				for (int i = 0; i < num_devices; ++i)
 				{
 					if ((devices2[i].use == XISlavePointer) &&
 					    (strncmp(devices2[i].name, TEST_PTR_STR, TEST_PTR_LEN) != 0))
@@ -958,7 +956,7 @@ static void xf_get_x11_button_map(xfContext* xfc, unsigned char* x11_map)
 
 			if (devices1)
 			{
-				for (i = 0; i < num_devices; ++i)
+				for (int i = 0; i < num_devices; ++i)
 				{
 					if ((devices1[i].use == IsXExtensionPointer) &&
 					    (strncmp(devices1[i].name, TEST_PTR_STR, TEST_PTR_LEN) != 0))
@@ -1015,9 +1013,7 @@ static const button_map xf_button_flags[NUM_BUTTONS_MAPPED] = {
 
 static UINT16 get_flags_for_button(int button)
 {
-	size_t x = 0;
-
-	for (x = 0; x < ARRAYSIZE(xf_button_flags); x++)
+	for (size_t x = 0; x < ARRAYSIZE(xf_button_flags); x++)
 	{
 		const button_map* map = &xf_button_flags[x];
 
@@ -1032,7 +1028,7 @@ static void xf_button_map_init(xfContext* xfc)
 {
 	size_t pos = 0;
 	/* loop counter for array initialization */
-	size_t physical = 0;
+
 	/* logical mouse button which is used for each physical mouse  */
 	/* button (indexed from zero). This is the default map.        */
 	unsigned char x11_map[112] = { 0 };
@@ -1061,7 +1057,7 @@ static void xf_button_map_init(xfContext* xfc)
 	/* iterate over all (mapped) physical buttons; for each of them */
 	/* find the logical button in X11, and assign to this the       */
 	/* appropriate value to send over the RDP wire.                 */
-	for (physical = 0; physical < ARRAYSIZE(x11_map); ++physical)
+	for (size_t physical = 0; physical < ARRAYSIZE(x11_map); ++physical)
 	{
 		const unsigned char logical = x11_map[physical];
 		const UINT16 flags = get_flags_for_button(logical);
@@ -1777,10 +1773,9 @@ static int xfreerdp_client_start(rdpContext* context)
 
 static Atom get_supported_atom(xfContext* xfc, const char* atomName)
 {
-	unsigned long i = 0;
 	const Atom atom = XInternAtom(xfc->display, atomName, False);
 
-	for (i = 0; i < xfc->supportedAtomCount; i++)
+	for (unsigned long i = 0; i < xfc->supportedAtomCount; i++)
 	{
 		if (xfc->supportedAtoms[i] == atom)
 			return atom;

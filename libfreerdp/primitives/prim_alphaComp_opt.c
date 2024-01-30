@@ -55,7 +55,6 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 	int src1Jump = 0;
 	int src2Jump = 0;
 	int dstJump = 0;
-	UINT32 y = 0;
 	__m128i xmm0;
 	__m128i xmm1;
 
@@ -76,7 +75,7 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 	xmm0 = _mm_set1_epi32(0);
 	xmm1 = _mm_set1_epi16(1);
 
-	for (y = 0; y < height; ++y)
+	for (UINT32 y = 0; y < height; ++y)
 	{
 		int pixels = width;
 		int count = 0;

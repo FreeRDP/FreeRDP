@@ -592,7 +592,6 @@ out_fail:
 int TestSchannel(int argc, char* argv[])
 {
 	int count;
-	DWORD index;
 	ALG_ID algId;
 	HANDLE thread;
 	BYTE* lpTokenIn;
@@ -682,7 +681,7 @@ int TestSchannel(int argc, char* argv[])
 	 */
 	printf("SupportedAlgs: %" PRIu32 "\n", SupportedAlgs.cSupportedAlgs);
 
-	for (index = 0; index < SupportedAlgs.cSupportedAlgs; index++)
+	for (DWORD index = 0; index < SupportedAlgs.cSupportedAlgs; index++)
 	{
 		algId = SupportedAlgs.palgSupportedAlgs[index];
 		printf("\t0x%08" PRIX32 " CLASS: %" PRIu32 " TYPE: %" PRIu32 " SID: %" PRIu32 "\n", algId,
@@ -831,7 +830,7 @@ int TestSchannel(int argc, char* argv[])
 		                  sizeof(test_DummyMessage)) < 0)
 			break;
 
-		for (index = 0; index < sizeof(test_DummyMessage); index++)
+		for (DWORD index = 0; index < sizeof(test_DummyMessage); index++)
 		{
 			BYTE b, ln, hn;
 			b = test_DummyMessage[index];

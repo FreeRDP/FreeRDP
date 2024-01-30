@@ -21,7 +21,6 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 {
 	HRESULT status = 0;
 	TCHAR Path[PATHCCH_MAX_CCH];
-	int i = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -81,7 +80,7 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 	}
 
 	/* Invalid cchPath values: 0, 1, 2, 3 and > PATHCCH_MAX_CCH */
-	for (i = 0; i < 5; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		_tcscpy(Path, testPathPrefixFileNamespace);
 		if (i == 4)
@@ -98,7 +97,7 @@ int TestPathCchStripPrefix(int argc, char* argv[])
 
 	/* Minimum Path that would get successfully stripped on windows */
 	_tcscpy(Path, testPathPrefixFileNamespaceMinimum);
-	i = sizeof(testPathPrefixFileNamespaceMinimum) / sizeof(TCHAR);
+	size_t i = sizeof(testPathPrefixFileNamespaceMinimum) / sizeof(TCHAR);
 	i = i - 1; /* include testing of a non-null terminated string */
 	status = PathCchStripPrefix(Path, i);
 	if (status != S_OK)

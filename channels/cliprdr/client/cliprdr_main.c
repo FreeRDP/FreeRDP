@@ -223,7 +223,6 @@ static UINT cliprdr_process_general_capability(cliprdrPlugin* cliprdr, wStream* 
 static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT32 length,
                                       UINT16 flags)
 {
-	UINT16 index = 0;
 	UINT16 lengthCapability = 0;
 	UINT16 cCapabilitiesSets = 0;
 	UINT16 capabilitySetType = 0;
@@ -239,7 +238,7 @@ static UINT cliprdr_process_clip_caps(cliprdrPlugin* cliprdr, wStream* s, UINT32
 	Stream_Seek_UINT16(s);                    /* pad1 (2 bytes) */
 	WLog_Print(cliprdr->log, WLOG_DEBUG, "ServerCapabilities");
 
-	for (index = 0; index < cCapabilitiesSets; index++)
+	for (UINT16 index = 0; index < cCapabilitiesSets; index++)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 4))
 			return ERROR_INVALID_DATA;

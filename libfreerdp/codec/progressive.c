@@ -354,14 +354,13 @@ static void progressive_tile_free(RFX_PROGRESSIVE_TILE* tile)
 static void progressive_surface_context_free(void* ptr)
 {
 	PROGRESSIVE_SURFACE_CONTEXT* surface = ptr;
-	UINT32 index = 0;
 
 	if (!surface)
 		return;
 
 	if (surface->tiles)
 	{
-		for (index = 0; index < surface->tilesSize; index++)
+		for (size_t index = 0; index < surface->tilesSize; index++)
 		{
 			RFX_PROGRESSIVE_TILE* tile = surface->tiles[index];
 			progressive_tile_free(tile);
@@ -603,7 +602,6 @@ static INLINE void progressive_rfx_idwt_x(const INT16* pLowBand, size_t nLowStep
                                           size_t nDstStep, size_t nLowCount, size_t nHighCount,
                                           size_t nDstCount)
 {
-	size_t i = 0;
 	INT16 L0 = 0;
 	INT16 H0 = 0;
 	INT16 H1 = 0;
@@ -611,9 +609,8 @@ static INLINE void progressive_rfx_idwt_x(const INT16* pLowBand, size_t nLowStep
 	INT16 X1 = 0;
 	INT16 X2 = 0;
 
-	for (i = 0; i < nDstCount; i++)
+	for (size_t i = 0; i < nDstCount; i++)
 	{
-		size_t j = 0;
 		const INT16* pL = pLowBand;
 		const INT16* pH = pHighBand;
 		INT16* pX = pDstBand;
@@ -622,7 +619,7 @@ static INLINE void progressive_rfx_idwt_x(const INT16* pLowBand, size_t nLowStep
 		X0 = L0 - H0;
 		X2 = L0 - H0;
 
-		for (j = 0; j < (nHighCount - 1); j++)
+		for (size_t j = 0; j < (nHighCount - 1); j++)
 		{
 			H1 = *pH;
 			pH++;
@@ -678,7 +675,6 @@ static INLINE void progressive_rfx_idwt_y(const INT16* pLowBand, size_t nLowStep
                                           size_t nDstStep, size_t nLowCount, size_t nHighCount,
                                           size_t nDstCount)
 {
-	size_t i = 0;
 	INT16 L0 = 0;
 	INT16 H0 = 0;
 	INT16 H1 = 0;
@@ -686,9 +682,8 @@ static INLINE void progressive_rfx_idwt_y(const INT16* pLowBand, size_t nLowStep
 	INT16 X1 = 0;
 	INT16 X2 = 0;
 
-	for (i = 0; i < nDstCount; i++)
+	for (size_t i = 0; i < nDstCount; i++)
 	{
-		size_t j = 0;
 		const INT16* pL = pLowBand;
 		const INT16* pH = pHighBand;
 		INT16* pX = pDstBand;
@@ -699,7 +694,7 @@ static INLINE void progressive_rfx_idwt_y(const INT16* pLowBand, size_t nLowStep
 		X0 = L0 - H0;
 		X2 = L0 - H0;
 
-		for (j = 0; j < (nHighCount - 1); j++)
+		for (size_t j = 0; j < (nHighCount - 1); j++)
 		{
 			H1 = *pH;
 			pH += nHighStep;
@@ -1174,7 +1169,6 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* s
                                                 INT16* sign, UINT32 length, UINT32 shift,
                                                 UINT32 bitPos, UINT32 numBits)
 {
-	UINT32 index = 0;
 	INT16 input = 0;
 	wBitStream* raw = NULL;
 
@@ -1185,7 +1179,7 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* s
 
 	if (!state->nonLL)
 	{
-		for (index = 0; index < length; index++)
+		for (UINT32 index = 0; index < length; index++)
 		{
 			raw->mask = ((1 << numBits) - 1);
 			input = (INT16)((raw->accumulator >> (32 - numBits)) & raw->mask);
@@ -1196,7 +1190,7 @@ static INLINE int progressive_rfx_upgrade_block(RFX_PROGRESSIVE_UPGRADE_STATE* s
 		return 1;
 	}
 
-	for (index = 0; index < length; index++)
+	for (UINT32 index = 0; index < length; index++)
 	{
 		if (sign[index] > 0)
 		{
@@ -1785,7 +1779,7 @@ static INLINE SSIZE_T progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive
 		return -1;
 	}
 
-	for (index = 0; index < region->numTiles; index++)
+	for (UINT32 index = 0; index < region->numTiles; index++)
 	{
 		RFX_PROGRESSIVE_TILE* tile = region->tiles[index];
 		PROGRESSIVE_TILE_PROCESS_WORK_PARAM* param = &params[index];
@@ -1827,7 +1821,7 @@ static INLINE SSIZE_T progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive
 
 	if (progressive->rfx_context->priv->UseThreads)
 	{
-		for (index = 0; index < close_cnt; index++)
+		for (UINT32 index = 0; index < close_cnt; index++)
 		{
 			WaitForThreadpoolWorkCallbacks(work_objects[index], FALSE);
 			CloseThreadpoolWork(work_objects[index]);
@@ -2472,7 +2466,6 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 	BOOL rc = FALSE;
 	int res = -6;
 	wStream* s = NULL;
-	UINT32 i = 0;
 	UINT32 numRects = 0;
 	UINT32 x = 0;
 	UINT32 y = 0;
@@ -2523,7 +2516,7 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 	if (invalidRegion)
 	{
 		const RECTANGLE_16* region_rects = region16_rects(invalidRegion, NULL);
-		for (x = 0; x < numRects; x++)
+		for (UINT32 x = 0; x < numRects; x++)
 		{
 			const RECTANGLE_16* r = &region_rects[x];
 			RFX_RECT* rect = &rects[x];
@@ -2538,7 +2531,7 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 	{
 		x = 0;
 		y = 0;
-		for (i = 0; i < numRects; i++)
+		for (UINT32 i = 0; i < numRects; i++)
 		{
 			RFX_RECT* r = &rects[i];
 			r->x = x;

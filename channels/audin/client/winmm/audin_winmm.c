@@ -168,11 +168,11 @@ static BOOL test_format_supported(const PWAVEFORMATEX pwfx)
 static DWORD WINAPI audin_winmm_thread_func(LPVOID arg)
 {
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*)arg;
-	char* buffer;
-	int size, i;
+	char* buffer = NULL;
+	int size = 0;
 	WAVEHDR waveHdr[4] = { 0 };
-	DWORD status;
-	MMRESULT rc;
+	DWORD status = 0;
+	MMRESULT rc = 0;
 
 	if (!winmm->hWaveIn)
 	{
@@ -189,7 +189,7 @@ static DWORD WINAPI audin_winmm_thread_func(LPVOID arg)
 	     7) /
 	    8;
 
-	for (i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		buffer = (char*)malloc(size);
 
@@ -235,7 +235,7 @@ static DWORD WINAPI audin_winmm_thread_func(LPVOID arg)
 	{
 	}
 
-	for (i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		rc = waveInUnprepareHeader(winmm->hWaveIn, &waveHdr[i], sizeof(waveHdr[i]));
 
@@ -263,13 +263,12 @@ static DWORD WINAPI audin_winmm_thread_func(LPVOID arg)
  */
 static UINT audin_winmm_free(IAudinDevice* device)
 {
-	UINT32 i;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*)device;
 
 	if (!winmm)
 		return ERROR_INVALID_PARAMETER;
 
-	for (i = 0; i < winmm->cFormats; i++)
+	for (UINT32 i = 0; i < winmm->cFormats; i++)
 	{
 		free(winmm->ppwfx[i]);
 	}
@@ -322,7 +321,6 @@ static UINT audin_winmm_close(IAudinDevice* device)
 static UINT audin_winmm_set_format(IAudinDevice* device, const AUDIO_FORMAT* format,
                                    UINT32 FramesPerPacket)
 {
-	UINT32 i;
 	AudinWinmmDevice* winmm = (AudinWinmmDevice*)device;
 
 	if (!winmm || !format)
@@ -330,7 +328,7 @@ static UINT audin_winmm_set_format(IAudinDevice* device, const AUDIO_FORMAT* for
 
 	winmm->frames_per_packet = FramesPerPacket;
 
-	for (i = 0; i < winmm->cFormats; i++)
+	for (UINT32 i = 0; i < winmm->cFormats; i++)
 	{
 		const PWAVEFORMATEX ppwfx = winmm->ppwfx[i];
 		if ((ppwfx->wFormatTag == format->wFormatTag) && (ppwfx->nChannels == format->nChannels) &&

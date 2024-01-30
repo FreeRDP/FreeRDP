@@ -956,7 +956,6 @@ static INLINE BOOL update_write_brush(wStream* s, rdpBrush* brush, BYTE fieldFla
 static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, UINT32* nr)
 {
 	UINT32 number = *nr;
-	UINT32 i = 0;
 	BYTE flags = 0;
 	BYTE* zeroBits = NULL;
 	UINT32 zeroBitsSize = 0;
@@ -976,7 +975,7 @@ static INLINE BOOL update_read_delta_rects(wStream* s, DELTA_RECT* rectangles, U
 	Stream_Seek(s, zeroBitsSize);
 	ZeroMemory(rectangles, sizeof(DELTA_RECT) * number);
 
-	for (i = 0; i < number; i++)
+	for (UINT32 i = 0; i < number; i++)
 	{
 		if (i % 2 == 0)
 			flags = zeroBits[i / 2];
@@ -2575,7 +2574,6 @@ BOOL update_write_cache_bitmap_v3_order(wStream* s, CACHE_BITMAP_V3_ORDER* cache
 static CACHE_COLOR_TABLE_ORDER* update_read_cache_color_table_order(rdpUpdate* update, wStream* s,
                                                                     UINT16 flags)
 {
-	int i = 0;
 	UINT32* colorTable = NULL;
 	CACHE_COLOR_TABLE_ORDER* cache_color_table = calloc(1, sizeof(CACHE_COLOR_TABLE_ORDER));
 
@@ -2599,7 +2597,7 @@ static CACHE_COLOR_TABLE_ORDER* update_read_cache_color_table_order(rdpUpdate* u
 
 	colorTable = (UINT32*)&cache_color_table->colorTable;
 
-	for (i = 0; i < (int)cache_color_table->numberColors; i++)
+	for (UINT32 i = 0; i < cache_color_table->numberColors; i++)
 		update_read_color_quad(s, &colorTable[i]);
 
 	return cache_color_table;
@@ -2624,7 +2622,6 @@ BOOL update_write_cache_color_table_order(wStream* s,
                                           const CACHE_COLOR_TABLE_ORDER* cache_color_table,
                                           UINT16* flags)
 {
-	size_t i = 0;
 	size_t inf = 0;
 	const UINT32* colorTable = NULL;
 
@@ -2640,7 +2637,7 @@ BOOL update_write_cache_color_table_order(wStream* s,
 	Stream_Write_UINT16(s, cache_color_table->numberColors); /* numberColors (2 bytes) */
 	colorTable = (const UINT32*)&cache_color_table->colorTable;
 
-	for (i = 0; i < cache_color_table->numberColors; i++)
+	for (size_t i = 0; i < cache_color_table->numberColors; i++)
 	{
 		update_write_color_quad(s, colorTable[i]);
 	}
@@ -2649,7 +2646,6 @@ BOOL update_write_cache_color_table_order(wStream* s,
 }
 static CACHE_GLYPH_ORDER* update_read_cache_glyph_order(rdpUpdate* update, wStream* s, UINT16 flags)
 {
-	UINT32 i = 0;
 	CACHE_GLYPH_ORDER* cache_glyph_order = calloc(1, sizeof(CACHE_GLYPH_ORDER));
 
 	WINPR_ASSERT(update);
@@ -2664,7 +2660,7 @@ static CACHE_GLYPH_ORDER* update_read_cache_glyph_order(rdpUpdate* update, wStre
 	Stream_Read_UINT8(s, cache_glyph_order->cacheId); /* cacheId (1 byte) */
 	Stream_Read_UINT8(s, cache_glyph_order->cGlyphs); /* cGlyphs (1 byte) */
 
-	for (i = 0; i < cache_glyph_order->cGlyphs; i++)
+	for (UINT32 i = 0; i < cache_glyph_order->cGlyphs; i++)
 	{
 		GLYPH_DATA* glyph = &cache_glyph_order->glyphData[i];
 
@@ -2720,7 +2716,6 @@ size_t update_approximate_cache_glyph_order(const CACHE_GLYPH_ORDER* cache_glyph
 
 BOOL update_write_cache_glyph_order(wStream* s, const CACHE_GLYPH_ORDER* cache_glyph, UINT16* flags)
 {
-	UINT32 i = 0;
 	INT16 lsi16 = 0;
 	const GLYPH_DATA* glyph = NULL;
 	size_t inf = update_approximate_cache_glyph_order(cache_glyph, flags);
@@ -2731,7 +2726,7 @@ BOOL update_write_cache_glyph_order(wStream* s, const CACHE_GLYPH_ORDER* cache_g
 	Stream_Write_UINT8(s, cache_glyph->cacheId); /* cacheId (1 byte) */
 	Stream_Write_UINT8(s, cache_glyph->cGlyphs); /* cGlyphs (1 byte) */
 
-	for (i = 0; i < cache_glyph->cGlyphs; i++)
+	for (UINT32 i = 0; i < cache_glyph->cGlyphs; i++)
 	{
 		UINT32 cb = 0;
 		glyph = &cache_glyph->glyphData[i];
@@ -2758,7 +2753,6 @@ BOOL update_write_cache_glyph_order(wStream* s, const CACHE_GLYPH_ORDER* cache_g
 static CACHE_GLYPH_V2_ORDER* update_read_cache_glyph_v2_order(rdpUpdate* update, wStream* s,
                                                               UINT16 flags)
 {
-	UINT32 i = 0;
 	CACHE_GLYPH_V2_ORDER* cache_glyph_v2 = calloc(1, sizeof(CACHE_GLYPH_V2_ORDER));
 
 	if (!cache_glyph_v2)
@@ -2768,7 +2762,7 @@ static CACHE_GLYPH_V2_ORDER* update_read_cache_glyph_v2_order(rdpUpdate* update,
 	cache_glyph_v2->flags = (flags & 0x00F0) >> 4;
 	cache_glyph_v2->cGlyphs = (flags & 0xFF00) >> 8;
 
-	for (i = 0; i < cache_glyph_v2->cGlyphs; i++)
+	for (UINT32 i = 0; i < cache_glyph_v2->cGlyphs; i++)
 	{
 		GLYPH_DATA_V2* glyph = &cache_glyph_v2->glyphData[i];
 
@@ -2828,7 +2822,6 @@ size_t update_approximate_cache_glyph_v2_order(const CACHE_GLYPH_V2_ORDER* cache
 BOOL update_write_cache_glyph_v2_order(wStream* s, const CACHE_GLYPH_V2_ORDER* cache_glyph_v2,
                                        UINT16* flags)
 {
-	UINT32 i = 0;
 	size_t inf = update_approximate_cache_glyph_v2_order(cache_glyph_v2, flags);
 
 	if (!Stream_EnsureRemainingCapacity(s, inf))
@@ -2837,7 +2830,7 @@ BOOL update_write_cache_glyph_v2_order(wStream* s, const CACHE_GLYPH_V2_ORDER* c
 	*flags = (cache_glyph_v2->cacheId & 0x000F) | ((cache_glyph_v2->flags & 0x000F) << 4) |
 	         ((cache_glyph_v2->cGlyphs & 0x00FF) << 8);
 
-	for (i = 0; i < cache_glyph_v2->cGlyphs; i++)
+	for (UINT32 i = 0; i < cache_glyph_v2->cGlyphs; i++)
 	{
 		UINT32 cb = 0;
 		const GLYPH_DATA_V2* glyph = &cache_glyph_v2->glyphData[i];
@@ -2864,9 +2857,6 @@ BOOL update_write_cache_glyph_v2_order(wStream* s, const CACHE_GLYPH_V2_ORDER* c
 }
 static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BYTE bpp)
 {
-	size_t x = 0;
-	size_t k = 0;
-	INT8 y = 0;
 	BYTE byte = 0;
 	const BYTE* palette = Stream_PointerAs(s, const BYTE) + 16;
 	const size_t bytesPerPixel = ((bpp + 1) / 8);
@@ -2874,9 +2864,9 @@ static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BY
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, 4ULL + bytesPerPixel, 4ULL))
 		return FALSE;
 
-	for (y = 7; y >= 0; y--)
+	for (INT8 y = 7; y >= 0; y--)
 	{
-		for (x = 0; x < 8; x++)
+		for (size_t x = 0; x < 8; x++)
 		{
 			UINT32 index = 0;
 			if ((x % 4) == 0)
@@ -2884,7 +2874,7 @@ static BOOL update_decompress_brush(wStream* s, BYTE* output, size_t outSize, BY
 
 			index = ((byte >> ((3 - (x % 4)) * 2)) & 0x03);
 
-			for (k = 0; k < bytesPerPixel; k++)
+			for (size_t k = 0; k < bytesPerPixel; k++)
 			{
 				const size_t dstIndex = ((y * 8 + x) * bytesPerPixel) + k;
 				const size_t srcIndex = (index * bytesPerPixel) + k;
@@ -2903,7 +2893,6 @@ static BOOL update_compress_brush(wStream* s, const BYTE* input, BYTE bpp)
 }
 static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStream* s, UINT16 flags)
 {
-	int i = 0;
 	BOOL rc = 0;
 	BYTE iBitmapFormat = 0;
 	BOOL compressed = FALSE;
@@ -2945,7 +2934,7 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 				goto fail;
 
 			/* rows are encoded in reverse order */
-			for (i = 7; i >= 0; i--)
+			for (int i = 7; i >= 0; i--)
 				Stream_Read_UINT8(s, cache_brush->data[i]);
 		}
 		else
@@ -2974,7 +2963,7 @@ static CACHE_BRUSH_ORDER* update_read_cache_brush_order(rdpUpdate* update, wStre
 				if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, scanline, 8ull))
 					goto fail;
 
-				for (i = 7; i >= 0; i--)
+				for (int i = 7; i >= 0; i--)
 				{
 					Stream_Read(s, &cache_brush->data[i * scanline], scanline);
 				}
@@ -2998,7 +2987,6 @@ size_t update_approximate_cache_brush_order(const CACHE_BRUSH_ORDER* cache_brush
 
 BOOL update_write_cache_brush_order(wStream* s, const CACHE_BRUSH_ORDER* cache_brush, UINT16* flags)
 {
-	int i = 0;
 	BYTE iBitmapFormat = 0;
 	BOOL rc = 0;
 	BOOL compressed = FALSE;
@@ -3027,7 +3015,7 @@ BOOL update_write_cache_brush_order(wStream* s, const CACHE_BRUSH_ORDER* cache_b
 				return FALSE;
 			}
 
-			for (i = 7; i >= 0; i--)
+			for (int i = 7; i >= 0; i--)
 			{
 				Stream_Write_UINT8(s, cache_brush->data[i]);
 			}
@@ -3052,7 +3040,7 @@ BOOL update_write_cache_brush_order(wStream* s, const CACHE_BRUSH_ORDER* cache_b
 				/* uncompressed brush */
 				int scanline = (cache_brush->bpp / 8) * 8;
 
-				for (i = 7; i >= 0; i--)
+				for (int i = 7; i >= 0; i--)
 				{
 					Stream_Write(s, &cache_brush->data[i * scanline], scanline);
 				}
@@ -3090,8 +3078,6 @@ update_read_create_offscreen_bitmap_order(wStream* s,
 
 	if (deleteListPresent)
 	{
-		UINT32 i = 0;
-
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 2))
 			return FALSE;
 
@@ -3112,7 +3098,7 @@ update_read_create_offscreen_bitmap_order(wStream* s,
 		if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, deleteList->cIndices, 2ull))
 			return FALSE;
 
-		for (i = 0; i < deleteList->cIndices; i++)
+		for (UINT32 i = 0; i < deleteList->cIndices; i++)
 		{
 			Stream_Read_UINT16(s, deleteList->indices[i]);
 		}
@@ -3162,10 +3148,9 @@ BOOL update_write_create_offscreen_bitmap_order(
 
 	if (deleteListPresent)
 	{
-		int i = 0;
 		Stream_Write_UINT16(s, deleteList->cIndices);
 
-		for (i = 0; i < (int)deleteList->cIndices; i++)
+		for (size_t i = 0; i < deleteList->cIndices; i++)
 		{
 			Stream_Write_UINT16(s, deleteList->indices[i]);
 		}
@@ -3356,7 +3341,6 @@ update_read_draw_gdiplus_cache_end_order(wStream* s,
 }
 static BOOL update_read_field_flags(wStream* s, UINT32* fieldFlags, BYTE flags, BYTE fieldBytes)
 {
-	int i = 0;
 	BYTE byte = 0;
 
 	if (flags & ORDER_ZERO_FIELD_BYTE_BIT0)
@@ -3375,7 +3359,7 @@ static BOOL update_read_field_flags(wStream* s, UINT32* fieldFlags, BYTE flags, 
 
 	*fieldFlags = 0;
 
-	for (i = 0; i < fieldBytes; i++)
+	for (int i = 0; i < fieldBytes; i++)
 	{
 		Stream_Read_UINT8(s, byte);
 		*fieldFlags |= byte << (i * 8);

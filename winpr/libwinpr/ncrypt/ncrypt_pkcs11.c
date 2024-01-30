@@ -130,9 +130,7 @@ static void fix_padded_string(char* str, size_t maxlen)
 
 static BOOL attributes_have_unallocated_buffers(CK_ATTRIBUTE_PTR attributes, CK_ULONG count)
 {
-	CK_ULONG i = 0;
-
-	for (i = 0; i < count; i++)
+	for (CK_ULONG i = 0; i < count; i++)
 	{
 		if (!attributes[i].pValue && (attributes[i].ulValueLen != CK_UNAVAILABLE_INFORMATION))
 			return TRUE;
@@ -161,10 +159,9 @@ static BOOL attribute_allocate_buffer(CK_ATTRIBUTE_PTR attribute)
 
 static BOOL attributes_allocate_buffers(CK_ATTRIBUTE_PTR attributes, CK_ULONG count)
 {
-	CK_ULONG i = 0;
 	BOOL ret = TRUE;
 
-	for (i = 0; i < count; i++)
+	for (CK_ULONG i = 0; i < count; i++)
 	{
 		if (attributes[i].pValue || (attributes[i].ulValueLen == CK_UNAVAILABLE_INFORMATION))
 			continue;
@@ -534,19 +531,18 @@ static void wprintKeyName(LPWSTR str, CK_SLOT_ID slotId, CK_BYTE* id, CK_ULONG i
 	char asciiName[128] = { 0 };
 	char* ptr = asciiName;
 	const CK_BYTE* bytePtr = NULL;
-	CK_ULONG i = 0;
 
 	*ptr = '\\';
 	ptr++;
 
 	bytePtr = ((CK_BYTE*)&slotId);
-	for (i = 0; i < sizeof(slotId); i++, bytePtr++, ptr += 2)
+	for (CK_ULONG i = 0; i < sizeof(slotId); i++, bytePtr++, ptr += 2)
 		snprintf(ptr, 3, "%.2x", *bytePtr);
 
 	*ptr = '\\';
 	ptr++;
 
-	for (i = 0; i < idLen; i++, id++, ptr += 2)
+	for (CK_ULONG i = 0; i < idLen; i++, id++, ptr += 2)
 		snprintf(ptr, 3, "%.2x", *id);
 
 	ConvertUtf8NToWChar(asciiName, ARRAYSIZE(asciiName), str,
@@ -557,7 +553,7 @@ static size_t parseHex(const char* str, const char* end, CK_BYTE* target)
 {
 	int ret = 0;
 
-	for (ret = 0; str != end && *str; str++, ret++, target++)
+	for (; str != end && *str; str++, ret++, target++)
 	{
 		CK_BYTE v = 0;
 		if (*str <= '9' && *str >= '0')

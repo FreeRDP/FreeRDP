@@ -145,7 +145,6 @@ static size_t udevman_register_udevice(IUDEVMAN* idevman, BYTE bus_number, BYTE 
 	IUDEVICE* pdev = NULL;
 	IUDEVICE** devArray = NULL;
 	URBDRC_PLUGIN* urbdrc = NULL;
-	size_t i = 0;
 	size_t num = 0;
 	size_t addnum = 0;
 
@@ -200,7 +199,7 @@ static size_t udevman_register_udevice(IUDEVMAN* idevman, BYTE bus_number, BYTE 
 			           idProduct);
 		}
 
-		for (i = 0; i < num; i++)
+		for (size_t i = 0; i < num; i++)
 		{
 			UINT32 id = 0;
 			IUDEVICE* tdev = devArray[i];
@@ -532,13 +531,10 @@ static BOOL device_is_filtered(struct libusb_device* dev,
 			int rc = libusb_get_active_config_descriptor(dev, &config);
 			if (rc == LIBUSB_SUCCESS)
 			{
-				uint8_t x = 0;
-
-				for (x = 0; x < config->bNumInterfaces; x++)
+				for (uint8_t x = 0; x < config->bNumInterfaces; x++)
 				{
-					int y = 0;
 					const struct libusb_interface* ifc = &config->interface[x];
-					for (y = 0; y < ifc->num_altsetting; y++)
+					for (int y = 0; y < ifc->num_altsetting; y++)
 					{
 						const struct libusb_interface_descriptor* const alt = &ifc->altsetting[y];
 						if (filter_by_class(alt->bInterfaceClass, alt->bInterfaceSubClass))
@@ -718,10 +714,9 @@ static BOOL urbdrc_udevman_register_devices(UDEVMAN* udevman, const char* device
 
 static UINT urbdrc_udevman_parse_addin_args(UDEVMAN* udevman, const ADDIN_ARGV* args)
 {
-	int x = 0;
 	LPCSTR devices = NULL;
 
-	for (x = 0; x < args->argc; x++)
+	for (int x = 0; x < args->argc; x++)
 	{
 		const char* arg = args->argv[x];
 		if (strcmp(arg, "dbg") == 0)

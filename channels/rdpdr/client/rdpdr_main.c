@@ -233,7 +233,6 @@ fail:
  */
 static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 count, UINT32 ids[])
 {
-	UINT32 i = 0;
 	wStream* s = NULL;
 
 	WINPR_ASSERT(rdpdr);
@@ -257,7 +256,7 @@ static UINT rdpdr_send_device_list_remove_request(rdpdrPlugin* rdpdr, UINT32 cou
 	Stream_Write_UINT16(s, PAKID_CORE_DEVICELIST_REMOVE);
 	Stream_Write_UINT32(s, count);
 
-	for (i = 0; i < count; i++)
+	for (UINT32 i = 0; i < count; i++)
 		Stream_Write_UINT32(s, ids[i]);
 
 	Stream_SealLength(s);
@@ -295,10 +294,9 @@ static BOOL check_path(const char* path)
 
 static void first_hotplug(rdpdrPlugin* rdpdr)
 {
-	size_t i;
 	DWORD unitmask = GetLogicalDrives();
 
-	for (i = 0; i < 26; i++)
+	for (size_t i = 0; i < 26; i++)
 	{
 		if (unitmask & 0x01)
 		{
@@ -334,9 +332,8 @@ static LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 					{
 						PDEV_BROADCAST_VOLUME lpdbv = (PDEV_BROADCAST_VOLUME)lpdb;
 						DWORD unitmask = lpdbv->dbcv_unitmask;
-						int i;
 
-						for (i = 0; i < 26; i++)
+						for (int i = 0; i < 26; i++)
 						{
 							if (unitmask & 0x01)
 							{
@@ -363,13 +360,13 @@ static LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 					{
 						PDEV_BROADCAST_VOLUME lpdbv = (PDEV_BROADCAST_VOLUME)lpdb;
 						DWORD unitmask = lpdbv->dbcv_unitmask;
-						int i, j, count;
+						int count;
 						char drive_name_upper, drive_name_lower;
 						ULONG_PTR* keys = NULL;
 						DEVICE_DRIVE_EXT* device_ext;
 						UINT32 ids[1];
 
-						for (i = 0; i < 26; i++)
+						for (int i = 0; i < 26; i++)
 						{
 							if (unitmask & 0x01)
 							{
@@ -377,7 +374,7 @@ static LRESULT CALLBACK hotplug_proc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM 
 								drive_name_lower = 'a' + i;
 								count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
 
-								for (j = 0; j < count; j++)
+								for (int j = 0; j < count; j++)
 								{
 									device_ext = (DEVICE_DRIVE_EXT*)ListDictionary_GetItemValue(
 									    rdpdr->devman->devices, (void*)keys[j]);
@@ -526,7 +523,6 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	int count;
 	DEVICE_DRIVE_EXT* device_ext;
 	ULONG_PTR* keys = NULL;
-	int i, j;
 	int size = 0;
 	UINT error;
 	UINT32 ids[1];
@@ -566,7 +562,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	/* delete removed devices */
 	count = ListDictionary_GetKeys(rdpdr->devman->devices, &keys);
 
-	for (j = 0; j < count; j++)
+	for (size_t j = 0; j < count; j++)
 	{
 		char* path = NULL;
 		BOOL dev_found = FALSE;
@@ -593,7 +589,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 			continue;
 		}
 
-		for (i = 0; i < size; i++)
+		for (size_t i = 0; i < size; i++)
 		{
 			if (strstr(path, dev_array[i].path) != NULL)
 			{
@@ -621,7 +617,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	}
 
 	/* add new devices */
-	for (i = 0; i < size; i++)
+	for (size_t i = 0; i < size; i++)
 	{
 		const hotplug_dev* dev = &dev_array[i];
 		if (dev->to_add)
@@ -637,7 +633,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 cleanup:
 	free(keys);
 
-	for (i = 0; i < size; i++)
+	for (size_t i = 0; i < size; i++)
 		free(dev_array[i].path);
 
 	return error;
@@ -650,12 +646,11 @@ static void drive_hotplug_fsevent_callback(ConstFSEventStreamRef streamRef,
                                            const FSEventStreamEventId eventIds[])
 {
 	rdpdrPlugin* rdpdr;
-	size_t i;
 	UINT error;
 	char** paths = (char**)eventPaths;
 	rdpdr = (rdpdrPlugin*)clientCallBackInfo;
 
-	for (i = 0; i < numEvents; i++)
+	for (size_t i = 0; i < numEvents; i++)
 	{
 		if (strcmp(paths[i], "/Volumes/") == 0)
 		{
@@ -726,7 +721,6 @@ static const char* automountLocations[] = { "/run/user/%lu/gvfs", "/run/media/%s
 static BOOL isAutomountLocation(const char* path)
 {
 	const size_t nrLocations = sizeof(automountLocations) / sizeof(automountLocations[0]);
-	size_t x = 0;
 	char buffer[MAX_PATH] = { 0 };
 	uid_t uid = getuid();
 	char uname[MAX_PATH] = { 0 };
@@ -738,7 +732,7 @@ static BOOL isAutomountLocation(const char* path)
 	if (!path)
 		return FALSE;
 
-	for (x = 0; x < nrLocations; x++)
+	for (size_t x = 0; x < nrLocations; x++)
 	{
 		const char* location = automountLocations[x];
 		size_t length = 0;
@@ -820,7 +814,6 @@ static UINT handle_platform_mounts_sun(wLog* log, hotplug_dev* dev_array, size_t
 static UINT handle_platform_mounts_bsd(wLog* log, hotplug_dev* dev_array, size_t* size)
 {
 	int mntsize;
-	size_t idx;
 	struct statfs* mntbuf = NULL;
 
 	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
@@ -830,7 +823,7 @@ static UINT handle_platform_mounts_bsd(wLog* log, hotplug_dev* dev_array, size_t
 		WLog_Print(log, WLOG_ERROR, "getmntinfo failed!");
 		return ERROR_OPEN_FAILED;
 	}
-	for (idx = 0; idx < (size_t)mntsize; idx++)
+	for (size_t idx = 0; idx < (size_t)mntsize; idx++)
 	{
 		handle_mountpoint(dev_array, size, mntbuf[idx].f_mntonname);
 	}
@@ -939,8 +932,7 @@ static BOOL hotplug_delete_foreach(ULONG_PTR key, void* element, void* data)
 	/* not plugable device */
 	if (isAutomountLocation(path))
 	{
-		size_t i = 0;
-		for (i = 0; i < arg->dev_array_size; i++)
+		for (size_t i = 0; i < arg->dev_array_size; i++)
 		{
 			hotplug_dev* cur = &arg->dev_array[i];
 			if (cur->path && strstr(path, cur->path) != NULL)
@@ -979,7 +971,6 @@ static BOOL hotplug_delete_foreach(ULONG_PTR key, void* element, void* data)
 static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 {
 	hotplug_dev dev_array[MAX_USB_DEVICES] = { 0 };
-	size_t i = 0;
 	size_t size = 0;
 	UINT error = ERROR_SUCCESS;
 	struct hotplug_delete_arg arg = { dev_array, ARRAYSIZE(dev_array), rdpdr };
@@ -993,7 +984,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 	/* Ignore result */ device_foreach(rdpdr, FALSE, hotplug_delete_foreach, &arg);
 
 	/* add new devices */
-	for (i = 0; i < size; i++)
+	for (size_t i = 0; i < size; i++)
 	{
 		hotplug_dev* cur = &dev_array[i];
 		if (!device_already_plugged(rdpdr, cur))
@@ -1006,7 +997,7 @@ static UINT handle_hotplug(rdpdrPlugin* rdpdr)
 		}
 	}
 
-	for (i = 0; i < size; i++)
+	for (size_t i = 0; i < size; i++)
 		free(dev_array[i].path);
 
 	return error;
@@ -1374,7 +1365,6 @@ static BOOL device_announce(ULONG_PTR key, void* element, void* data)
 	if ((rdpdr->clientVersionMinor == RDPDR_VERSION_MINOR_RDP51) ||
 	    (device->type == RDPDR_DTYP_SMARTCARD) || arg->userLoggedOn)
 	{
-		size_t i = 0;
 		size_t data_len = (device->data == NULL ? 0 : Stream_GetPosition(device->data));
 
 		if (!Stream_EnsureRemainingCapacity(arg->s, 20 + data_len))
@@ -1388,7 +1378,7 @@ static BOOL device_announce(ULONG_PTR key, void* element, void* data)
 		Stream_Write_UINT32(arg->s, device->id);   /* deviceID */
 		strncpy(Stream_Pointer(arg->s), device->name, 8);
 
-		for (i = 0; i < 8; i++)
+		for (size_t i = 0; i < 8; i++)
 		{
 			BYTE c = 0;
 			Stream_Peek_UINT8(arg->s, c);

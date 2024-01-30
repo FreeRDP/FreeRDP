@@ -94,7 +94,6 @@ void winpr_unwind_backtrace_free(void* buffer)
 
 char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 {
-	size_t x = 0;
 	union
 	{
 		char* cp;
@@ -113,7 +112,7 @@ char** winpr_unwind_backtrace_symbols(void* buffer, size_t* used)
 	if (used)
 		*used = ctx->pos;
 
-	for (x = 0; x < ctx->pos; x++)
+	for (size_t x = 0; x < ctx->pos; x++)
 	{
 		char* msg = cnv.cp + ctx->pos * sizeof(char*) + x * UNWIND_MAX_LINE_SIZE;
 		const unwind_info_t* info = &ctx->info[x];

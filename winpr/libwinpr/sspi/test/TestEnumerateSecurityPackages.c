@@ -7,7 +7,6 @@
 
 int TestEnumerateSecurityPackages(int argc, char* argv[])
 {
-	int index = 0;
 	ULONG cPackages = 0;
 	SECURITY_STATUS status = 0;
 	SecPkgInfo* pPackageInfo = NULL;
@@ -29,7 +28,7 @@ int TestEnumerateSecurityPackages(int argc, char* argv[])
 
 	_tprintf(_T("\nEnumerateSecurityPackages (%") _T(PRIu32) _T("):\n"), cPackages);
 
-	for (index = 0; index < (int)cPackages; index++)
+	for (size_t index = 0; index < cPackages; index++)
 	{
 		_tprintf(_T("\"%s\", \"%s\"\n"), pPackageInfo[index].Name, pPackageInfo[index].Comment);
 	}

@@ -5,7 +5,6 @@
 int TestSynchEvent(int argc, char* argv[])
 {
 	HANDLE event = NULL;
-	int i = 0;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 	if (ResetEvent(NULL))
@@ -65,7 +64,7 @@ int TestSynchEvent(int argc, char* argv[])
 		return -1;
 	}
 
-	for (i = 0; i < 10000; i++)
+	for (int i = 0; i < 10000; i++)
 	{
 		if (!SetEvent(event))
 		{

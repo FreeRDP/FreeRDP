@@ -2363,8 +2363,6 @@ static int ncrush_find_match_length(const BYTE* Ptr1, const BYTE* Ptr2, BYTE* Hi
 static int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT16 HistoryOffset,
                                   UINT32* pMatchOffset)
 {
-	int i = 0;
-	int j = 0;
 	int Length = 0;
 	int MatchLength = 0;
 	BYTE* MatchPtr = NULL;
@@ -2387,9 +2385,9 @@ static int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT16 HistoryOffset,
 	NextOffset = ncrush->MatchTable[Offset];
 	MatchPtr = &HistoryBuffer[MatchLength];
 
-	for (i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 	{
-		j = -1;
+		int j = -1;
 
 		if (j < 0)
 		{
@@ -2482,8 +2480,6 @@ static int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT16 HistoryOffset,
 
 static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 {
-	int i = 0;
-	int j = 0;
 	int NewHash = 0;
 	int NewMatch = 0;
 	UINT32 HistoryOffset = 0;
@@ -2503,7 +2499,7 @@ static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 	WINPR_ASSERT(hsize >= 0);
 	HistoryOffset = (UINT32)hsize;
 
-	for (i = 0; i < 65536; i += 4)
+	for (int i = 0; i < 65536; i += 4)
 	{
 		NewHash = ncrush->HashTable[i + 0] - HistoryOffset;
 		ncrush->HashTable[i + 0] = (NewHash <= 0) ? 0 : NewHash;
@@ -2515,7 +2511,7 @@ static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 		ncrush->HashTable[i + 3] = (NewHash <= 0) ? 0 : NewHash;
 	}
 
-	for (j = 0; j < 32768; j += 4)
+	for (int j = 0; j < 32768; j += 4)
 	{
 		NewMatch = ncrush->MatchTable[HistoryOffset + j + 0] - HistoryOffset;
 		ncrush->MatchTable[j + 0] = (NewMatch <= 0) ? 0 : NewMatch;
@@ -2942,29 +2938,23 @@ int ncrush_compress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSize
 
 static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 {
-	UINT32 k = 0;
-	UINT32 i = 0;
-	int j = 0;
-	int l = 0;
-	k = 0;
-
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(28 < ARRAYSIZE(LOMBitsLUT));
 
-	for (i = 0; i < 28; i++)
+	UINT32 k = 0;
+	for (int i = 0; i < 28; i++)
 	{
-		for (j = 0; j < 1 << LOMBitsLUT[i]; j++)
+		for (int j = 0; j < 1 << LOMBitsLUT[i]; j++)
 		{
-			l = (k++) + 2;
+			size_t l = (k++) + 2ull;
 			context->HuffTableLOM[l] = (int)i;
 		}
 	}
 
-	for (k = 2; k < 4096; k++)
+	for (UINT32 k = 2; k < 4096; k++)
 	{
-		if ((k - 2) >= 768)
-			i = 28;
-		else
+		size_t i = 28;
+		if ((k - 2) < 768)
 			i = context->HuffTableLOM[k];
 
 		if (i >= ARRAYSIZE(LOMBitsLUT))
@@ -2978,22 +2968,22 @@ static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 
 	k = 0;
 
-	for (i = 0; i < 16; i++)
+	for (int i = 0; i < 16; i++)
 	{
-		for (j = 0; j < 1 << CopyOffsetBitsLUT[i]; j++)
+		for (int j = 0; j < 1 << CopyOffsetBitsLUT[i]; j++)
 		{
-			l = k++ + 2;
+			size_t l = k++ + 2ull;
 			context->HuffTableCopyOffset[l] = i;
 		}
 	}
 
 	k /= 128;
 
-	for (i = 16; i < 32; i++)
+	for (int i = 16; i < 32; i++)
 	{
-		for (j = 0; j < 1 << (CopyOffsetBitsLUT[i] - 7); j++)
+		for (int j = 0; j < 1 << (CopyOffsetBitsLUT[i] - 7); j++)
 		{
-			l = k++ + 2 + 256;
+			size_t l = k++ + 2 + 256ull;
 			context->HuffTableCopyOffset[l] = i;
 		}
 	}

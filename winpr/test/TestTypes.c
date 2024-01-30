@@ -22,7 +22,6 @@
 
 static BOOL test_co_errors(void)
 {
-	size_t x = 0;
 	const LONG should[] = {
 		(LONG)0x80004006l, (LONG)0x80004007l, (LONG)0x80004008l, (LONG)0x80004009l,
 		(LONG)0x8000400Al, (LONG)0x8000400Bl, (LONG)0x8000400Cl, (LONG)0x8000400Dl,
@@ -98,7 +97,7 @@ static BOOL test_co_errors(void)
 		printf("mismatch: %" PRIuz " vs %" PRIuz "\n", a, b);
 		return FALSE;
 	}
-	for (x = 0; x < ARRAYSIZE(are); x++)
+	for (size_t x = 0; x < ARRAYSIZE(are); x++)
 	{
 		const LONG a = are[x];
 		const LONG b = should[x];

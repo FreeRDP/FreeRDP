@@ -44,10 +44,9 @@ struct stream_dump_context
 
 static UINT32 crc32b(const BYTE* data, size_t length)
 {
-	size_t x = 0;
 	UINT32 crc = 0xFFFFFFFF;
 
-	for (x = 0; x < length; x++)
+	for (size_t x = 0; x < length; x++)
 	{
 		const UINT32 d = data[x] & 0xFF;
 		crc = crc ^ d;

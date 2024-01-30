@@ -279,13 +279,11 @@ fail:
 
 void brush_cache_free(rdpBrushCache* brushCache)
 {
-	size_t i = 0;
-
 	if (brushCache)
 	{
 		if (brushCache->entries)
 		{
-			for (i = 0; i < brushCache->maxEntries; i++)
+			for (size_t i = 0; i < brushCache->maxEntries; i++)
 				free(brushCache->entries[i].entry);
 
 			free(brushCache->entries);
@@ -293,7 +291,7 @@ void brush_cache_free(rdpBrushCache* brushCache)
 
 		if (brushCache->monoEntries)
 		{
-			for (i = 0; i < brushCache->maxMonoEntries; i++)
+			for (size_t i = 0; i < brushCache->maxMonoEntries; i++)
 				free(brushCache->monoEntries[i].entry);
 
 			free(brushCache->monoEntries);

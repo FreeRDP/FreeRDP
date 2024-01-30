@@ -15,7 +15,6 @@ static BOOL log_result(BOOL value, const char* fkt)
 
 static BOOL compare(const ADDIN_ARGV* got, const ADDIN_ARGV* expect)
 {
-	int x = 0;
 	BOOL rc = TRUE;
 	if (!got && !expect)
 		return FALSE;
@@ -26,7 +25,7 @@ static BOOL compare(const ADDIN_ARGV* got, const ADDIN_ARGV* expect)
 	if (got->argc != expect->argc)
 		return FALSE;
 
-	for (x = 0; x < expect->argc; x++)
+	for (int x = 0; x < expect->argc; x++)
 	{
 		if (strcmp(got->argv[x], expect->argv[x]) != 0)
 			rc = FALSE;
@@ -447,7 +446,6 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 	SSIZE_T rc = 0;
 	SSIZE_T tkey = 0;
 	SSIZE_T type = 0;
-	size_t x = 0;
 	const size_t clear_keys[] = { FreeRDP_RdpServerCertificate,
 		                          FreeRDP_RdpServerRsaKey,
 		                          FreeRDP_RedirectionPassword,
@@ -518,7 +516,7 @@ static BOOL check_key_helpers(size_t key, const char* stype)
 		printf("[%s] freerdp_settings_new failed\n", stype);
 		goto fail;
 	}
-	for (x = 0; x < ARRAYSIZE(clear_keys); x++)
+	for (size_t x = 0; x < ARRAYSIZE(clear_keys); x++)
 	{
 		const size_t id = clear_keys[x];
 		const char* foo = freerdp_settings_get_name_for_key(id);
@@ -722,7 +720,6 @@ fail:
 
 static BOOL check_device_type(void)
 {
-	size_t x = 0;
 	struct test_entry
 	{
 		int expect;
@@ -770,7 +767,7 @@ static BOOL check_device_type(void)
 		{ -3, 0x123, 4, args },
 	};
 	BOOL rc = TRUE;
-	for (x = 0; x < ARRAYSIZE(tests); x++)
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
 	{
 		const struct test_entry* cur = &tests[x];
 		int got = check_device_type_arg(cur->type, cur->count, cur->args);
@@ -782,7 +779,6 @@ static BOOL check_device_type(void)
 
 static BOOL check_offsets(rdpSettings* settings, size_t id, size_t min, size_t max, BOOL checkPtr)
 {
-	size_t x = 0;
 	BOOL rc = TRUE;
 
 	WINPR_ASSERT(settings);
@@ -790,7 +786,7 @@ static BOOL check_offsets(rdpSettings* settings, size_t id, size_t min, size_t m
 	if (!freerdp_settings_get_pointer(settings, id))
 		return FALSE;
 
-	for (x = min; x < max; x++)
+	for (size_t x = min; x < max; x++)
 	{
 		const void* ptr = freerdp_settings_get_pointer_array(settings, id, x);
 		if (!ptr && checkPtr)
@@ -802,11 +798,9 @@ static BOOL check_offsets(rdpSettings* settings, size_t id, size_t min, size_t m
 static BOOL test_write_offsets(rdpSettings* settings, size_t id, size_t elementSize, size_t min,
                                size_t max)
 {
-	size_t x = 0;
-
 	WINPR_ASSERT(settings);
 
-	for (x = min; x < max; x++)
+	for (size_t x = min; x < max; x++)
 	{
 		const void* ptr = NULL;
 		char buffer[8192] = { 0 };
@@ -834,7 +828,6 @@ static BOOL test_pointer_array(void)
 		size_t size;
 		size_t elementSize;
 	};
-	size_t x = 0;
 	const struct pointer_test_case tests[] = {
 		{ FALSE, FALSE, FreeRDP_DeviceArray, FreeRDP_DeviceArraySize, 32, sizeof(RDPDR_DEVICE*) },
 		{ FALSE, FALSE, FreeRDP_StaticChannelArray, FreeRDP_StaticChannelArraySize, 32,
@@ -872,7 +865,7 @@ static BOOL test_pointer_array(void)
 	if (!settings)
 		goto fail;
 
-	for (x = 0; x < ARRAYSIZE(tests); x++)
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
 	{
 		const struct pointer_test_case* cur = &tests[x];
 		if (!freerdp_settings_set_pointer_len(settings, cur->id, NULL, cur->size))
@@ -939,7 +932,6 @@ fail:
 int TestSettings(int argc, char* argv[])
 {
 	int rc = -1;
-	size_t x = 0;
 	rdpSettings* settings = NULL;
 	rdpSettings* cloned = NULL;
 	rdpSettings* cloned2 = NULL;
@@ -979,7 +971,7 @@ int TestSettings(int argc, char* argv[])
 
 #if defined(have_bool_list_indices)
 
-	for (x = 0; x < ARRAYSIZE(bool_list_indices); x++)
+	for (size_t x = 0; x < ARRAYSIZE(bool_list_indices); x++)
 	{
 		const size_t key = bool_list_indices[x];
 		const char* name = freerdp_settings_get_name_for_key(key);
@@ -999,7 +991,7 @@ int TestSettings(int argc, char* argv[])
 #endif
 #if defined(have_int16_list_indices)
 
-	for (x = 0; x < ARRAYSIZE(int16_list_indices); x++)
+	for (size_t x = 0; x < ARRAYSIZE(int16_list_indices); x++)
 	{
 		const size_t key = int16_list_indices[x];
 		const char* name = freerdp_settings_get_name_for_key(key);
@@ -1019,7 +1011,7 @@ int TestSettings(int argc, char* argv[])
 #endif
 #if defined(have_uint16_list_indices)
 
-	for (x = 0; x < ARRAYSIZE(uint16_list_indices); x++)
+	for (size_t x = 0; x < ARRAYSIZE(uint16_list_indices); x++)
 	{
 		const size_t key = uint16_list_indices[x];
 		const char* name = freerdp_settings_get_name_for_key(key);
@@ -1039,7 +1031,7 @@ int TestSettings(int argc, char* argv[])
 #endif
 #if defined(have_uint32_list_indices)
 
-	for (x = 0; x < ARRAYSIZE(uint32_list_indices); x++)
+	for (size_t x = 0; x < ARRAYSIZE(uint32_list_indices); x++)
 	{
 		const size_t key = uint32_list_indices[x];
 		const char* name = freerdp_settings_get_name_for_key(key);
@@ -1059,7 +1051,7 @@ int TestSettings(int argc, char* argv[])
 #endif
 #if defined(have_int32_list_indices)
 
-	for (x = 0; x < ARRAYSIZE(int32_list_indices); x++)
+	for (size_t x = 0; x < ARRAYSIZE(int32_list_indices); x++)
 	{
 		const size_t key = int32_list_indices[x];
 		const char* name = freerdp_settings_get_name_for_key(key);
@@ -1079,7 +1071,7 @@ int TestSettings(int argc, char* argv[])
 #endif
 #if defined(have_uint64_list_indices)
 
-	for (x = 0; x < ARRAYSIZE(uint64_list_indices); x++)
+	for (size_t x = 0; x < ARRAYSIZE(uint64_list_indices); x++)
 	{
 		const size_t key = uint64_list_indices[x];
 		const char* name = freerdp_settings_get_name_for_key(key);
@@ -1099,7 +1091,7 @@ int TestSettings(int argc, char* argv[])
 #endif
 #if defined(have_int64_list_indices)
 
-	for (x = 0; x < ARRAYSIZE(int64_list_indices); x++)
+	for (size_t x = 0; x < ARRAYSIZE(int64_list_indices); x++)
 	{
 		const size_t key = int64_list_indices[x];
 		const char* name = freerdp_settings_get_name_for_key(key);
@@ -1119,7 +1111,7 @@ int TestSettings(int argc, char* argv[])
 #endif
 #if defined(have_string_list_indices)
 
-	for (x = 0; x < ARRAYSIZE(string_list_indices); x++)
+	for (size_t x = 0; x < ARRAYSIZE(string_list_indices); x++)
 	{
 		const size_t key = string_list_indices[x];
 		const char val[] = "test-string";
@@ -1144,7 +1136,7 @@ int TestSettings(int argc, char* argv[])
 #endif
 #if defined(have_pointer_list_indices)
 
-	for (x = 0; x < ARRAYSIZE(pointer_list_indices); x++)
+	for (size_t x = 0; x < ARRAYSIZE(pointer_list_indices); x++)
 	{
 		const size_t key = pointer_list_indices[x];
 		const void* val = freerdp_settings_get_pointer(settings, key);

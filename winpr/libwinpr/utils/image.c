@@ -285,7 +285,6 @@ int winpr_image_write_ex(wImage* image, UINT32 format, const char* filename)
 static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, size_t size)
 {
 	int rc = -1;
-	UINT32 index = 0;
 	BOOL vFlip = 0;
 	BYTE* pDstData = NULL;
 	WINPR_BITMAP_FILE_HEADER bf;
@@ -341,7 +340,7 @@ static int winpr_image_bitmap_read_buffer(wImage* image, const BYTE* buffer, siz
 	{
 		pDstData = &(image->data[(image->height - 1) * image->scanline]);
 
-		for (index = 0; index < image->height; index++)
+		for (size_t index = 0; index < image->height; index++)
 		{
 			Stream_Read(s, pDstData, image->scanline);
 			pDstData -= image->scanline;

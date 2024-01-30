@@ -50,8 +50,6 @@ static OSStatus rdpsnd_ios_render_cb(void* inRefCon,
                                      const AudioTimeStamp __unused* inTimeStamp, UInt32 inBusNumber,
                                      UInt32 __unused inNumberFrames, AudioBufferList* ioData)
 {
-	unsigned int i;
-
 	if (inBusNumber != 0)
 	{
 		return noErr;
@@ -59,7 +57,7 @@ static OSStatus rdpsnd_ios_render_cb(void* inRefCon,
 
 	rdpsndIOSPlugin* p = THIS(inRefCon);
 
-	for (i = 0; i < ioData->mNumberBuffers; i++)
+	for (unsigned int i = 0; i < ioData->mNumberBuffers; i++)
 	{
 		AudioBuffer* target_buffer = &ioData->mBuffers[i];
 		int32_t available_bytes = 0;

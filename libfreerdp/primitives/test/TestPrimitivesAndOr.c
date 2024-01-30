@@ -26,12 +26,11 @@
 static BOOL test_and_32u_impl(const char* name, __andC_32u_t fkt, const UINT32* src,
                               const UINT32 val, UINT32* dst, size_t size)
 {
-	size_t i = 0;
 	pstatus_t status = fkt(src, val, dst, size);
 	if (status != PRIMITIVES_SUCCESS)
 		return FALSE;
 
-	for (i = 0; i < size; ++i)
+	for (size_t i = 0; i < size; ++i)
 	{
 		if (dst[i] != (src[i] & val))
 		{
@@ -91,9 +90,7 @@ static BOOL test_and_32u_speed(void)
 /* ========================================================================= */
 static BOOL check(const UINT32* src, const UINT32* dst, UINT32 size, UINT32 value)
 {
-	UINT32 i = 0;
-
-	for (i = 0; i < size; ++i)
+	for (UINT32 i = 0; i < size; ++i)
 	{
 		if (dst[i] != (src[i] | value))
 		{

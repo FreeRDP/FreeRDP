@@ -52,7 +52,6 @@ static BOOL
 update_gdi_create_offscreen_bitmap(rdpContext* context,
                                    const CREATE_OFFSCREEN_BITMAP_ORDER* createOffscreenBitmap)
 {
-	UINT32 i = 0;
 	UINT16 index = 0;
 	rdpBitmap* bitmap = NULL;
 	rdpCache* cache = NULL;
@@ -80,7 +79,7 @@ update_gdi_create_offscreen_bitmap(rdpContext* context,
 	if (cache->offscreen->currentSurface == createOffscreenBitmap->id)
 		bitmap->SetSurface(context, bitmap, FALSE);
 
-	for (i = 0; i < createOffscreenBitmap->deleteList.cIndices; i++)
+	for (UINT32 i = 0; i < createOffscreenBitmap->deleteList.cIndices; i++)
 	{
 		index = createOffscreenBitmap->deleteList.indices[i];
 		offscreen_cache_delete(cache->offscreen, index);
@@ -229,10 +228,9 @@ void offscreen_cache_free(rdpOffscreenCache* offscreenCache)
 {
 	if (offscreenCache)
 	{
-		size_t i = 0;
 		if (offscreenCache->entries)
 		{
-			for (i = 0; i < offscreenCache->maxEntries; i++)
+			for (size_t i = 0; i < offscreenCache->maxEntries; i++)
 			{
 				rdpBitmap* bitmap = offscreenCache->entries[i];
 				Bitmap_Free(offscreenCache->context, bitmap);

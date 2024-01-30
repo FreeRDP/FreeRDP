@@ -239,7 +239,6 @@ static BOOL update_read_notify_icon_infotip(wStream* s, NOTIFY_ICON_INFOTIP* not
 static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
                                            WINDOW_STATE_ORDER* windowState)
 {
-	UINT32 i = 0;
 	size_t size = 0;
 	RECTANGLE_16* newRect = NULL;
 
@@ -378,7 +377,7 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 				return FALSE;
 
 			/* windowRects */
-			for (i = 0; i < windowState->numWindowRects; i++)
+			for (UINT32 i = 0; i < windowState->numWindowRects; i++)
 			{
 				Stream_Read_UINT16(s, windowState->windowRects[i].left);   /* left (2 bytes) */
 				Stream_Read_UINT16(s, windowState->windowRects[i].top);    /* top (2 bytes) */
@@ -423,7 +422,7 @@ static BOOL update_read_window_state_order(wStream* s, WINDOW_ORDER_INFO* orderI
 				return FALSE;
 
 			/* visibilityRects */
-			for (i = 0; i < windowState->numVisibilityRects; i++)
+			for (UINT32 i = 0; i < windowState->numVisibilityRects; i++)
 			{
 				Stream_Read_UINT16(s, windowState->visibilityRects[i].left);  /* left (2 bytes) */
 				Stream_Read_UINT16(s, windowState->visibilityRects[i].top);   /* top (2 bytes) */
@@ -633,9 +632,8 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_WND_RECTS)
 	{
-		UINT32 i = 0;
 		DUMP_APPEND(buffer, bufferSize, " windowRects=(");
-		for (i = 0; i < state->numWindowRects; i++)
+		for (UINT32 i = 0; i < state->numWindowRects; i++)
 		{
 			DUMP_APPEND(buffer, bufferSize, "(%" PRIu16 ",%" PRIu16 ",%" PRIu16 ",%" PRIu16 ")",
 			            state->windowRects[i].left, state->windowRects[i].top,
@@ -650,9 +648,8 @@ static void dump_window_state_order(wLog* log, const char* msg, const WINDOW_ORD
 
 	if (order->fieldFlags & WINDOW_ORDER_FIELD_VISIBILITY)
 	{
-		UINT32 i = 0;
 		DUMP_APPEND(buffer, bufferSize, " visibilityRects=(");
-		for (i = 0; i < state->numVisibilityRects; i++)
+		for (UINT32 i = 0; i < state->numVisibilityRects; i++)
 		{
 			DUMP_APPEND(buffer, bufferSize, "(%" PRIu16 ",%" PRIu16 ",%" PRIu16 ",%" PRIu16 ")",
 			            state->visibilityRects[i].left, state->visibilityRects[i].top,
@@ -895,7 +892,6 @@ static BOOL update_recv_notification_icon_info_order(rdpUpdate* update, wStream*
 static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDER_INFO* orderInfo,
                                                          MONITORED_DESKTOP_ORDER* monitored_desktop)
 {
-	int i = 0;
 	int size = 0;
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ACTIVE_WND)
@@ -933,7 +929,7 @@ static BOOL update_read_desktop_actively_monitored_order(wStream* s, WINDOW_ORDE
 			monitored_desktop->windowIds = newid;
 
 			/* windowIds */
-			for (i = 0; i < (int)monitored_desktop->numWindowIds; i++)
+			for (UINT32 i = 0; i < (int)monitored_desktop->numWindowIds; i++)
 			{
 				Stream_Read_UINT32(s, monitored_desktop->windowIds[i]);
 			}
@@ -961,10 +957,8 @@ static void dump_monitored_desktop(wLog* log, const char* msg, const WINDOW_ORDE
 
 	if (orderInfo->fieldFlags & WINDOW_ORDER_FIELD_DESKTOP_ZORDER)
 	{
-		UINT32 i = 0;
-
 		DUMP_APPEND(buffer, bufferSize, " windows=(");
-		for (i = 0; i < monitored->numWindowIds; i++)
+		for (UINT32 i = 0; i < monitored->numWindowIds; i++)
 		{
 			DUMP_APPEND(buffer, bufferSize, "0x%" PRIx32 ",", monitored->windowIds[i]);
 		}

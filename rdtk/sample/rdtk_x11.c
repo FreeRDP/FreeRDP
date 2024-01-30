@@ -31,7 +31,6 @@
 int main(int argc, char** argv)
 {
 	GC gc = NULL;
-	int index = 0;
 	int depth = 0;
 	int x = 0;
 	int y = 0;
@@ -86,7 +85,7 @@ int main(int argc, char** argv)
 
 	pfs = XListPixmapFormats(display, &pf_count);
 
-	for (index = 0; index < pf_count; index++)
+	for (int index = 0; index < pf_count; index++)
 	{
 		pf = &pfs[index];
 

@@ -318,7 +318,6 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 	const char** mergeStrings = NULL;
 	size_t mergeStringLength = 0;
 	size_t mergeArraySize = 128;
-	size_t run = 0;
 	size_t mergeLength = 0;
 	size_t foundMerge = 0;
 	char* foundEquals = NULL;
@@ -392,7 +391,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 
 		// check if this value is in the mergeStrings
 		foundMerge = 0;
-		for (run = 0; run < mergeStringLength; run++)
+		for (size_t run = 0; run < mergeStringLength; run++)
 		{
 			if (!mergeStrings[run])
 				continue;
@@ -449,7 +448,7 @@ LPCH MergeEnvironmentStrings(PCSTR original, PCSTR merge)
 	}
 
 	// now merge the not already merged env
-	for (run = 0; run < mergeStringLength; run++)
+	for (size_t run = 0; run < mergeStringLength; run++)
 	{
 		if (!mergeStrings[run])
 			continue;

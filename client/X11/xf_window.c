@@ -127,7 +127,6 @@ static void xf_SetWindowTitleText(xfContext* xfc, Window window, const char* nam
 void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int numArgs, ...)
 {
 	XEvent xevent = { 0 };
-	unsigned int i = 0;
 	va_list argp;
 	va_start(argp, numArgs);
 
@@ -139,7 +138,7 @@ void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int n
 	xevent.xclient.message_type = atom;
 	xevent.xclient.format = 32;
 
-	for (i = 0; i < numArgs; i++)
+	for (size_t i = 0; i < numArgs; i++)
 	{
 		xevent.xclient.data.l[i] = va_arg(argp, int);
 	}
@@ -158,7 +157,6 @@ void xf_SetWindowMinimized(xfContext* xfc, xfWindow* window)
 
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 {
-	UINT32 i = 0;
 	const rdpSettings* settings = NULL;
 	int startX = 0;
 	int startY = 0;
@@ -210,7 +208,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 		startY = firstMonitor->y;
 
 		/* Search all monitors to find the lowest startX and startY values */
-		for (i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); i++)
+		for (size_t i = 0; i < freerdp_settings_get_uint32(settings, FreeRDP_MonitorCount); i++)
 		{
 			const rdpMonitor* monitor =
 			    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorDefArray, i);
@@ -1060,7 +1058,6 @@ void xf_ShowWindow(xfContext* xfc, xfAppWindow* appWindow, BYTE state)
 
 void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rects, int nrects)
 {
-	int i = 0;
 	XRectangle* xrects = NULL;
 
 	if (nrects < 1)
@@ -1069,7 +1066,7 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 #ifdef WITH_XEXT
 	xrects = (XRectangle*)calloc(nrects, sizeof(XRectangle));
 
-	for (i = 0; i < nrects; i++)
+	for (int i = 0; i < nrects; i++)
 	{
 		xrects[i].x = rects[i].left;
 		xrects[i].y = rects[i].top;
@@ -1086,7 +1083,6 @@ void xf_SetWindowRects(xfContext* xfc, xfAppWindow* appWindow, RECTANGLE_16* rec
 void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 rectsOffsetX,
                                  UINT32 rectsOffsetY, RECTANGLE_16* rects, int nrects)
 {
-	int i = 0;
 	XRectangle* xrects = NULL;
 
 	if (nrects < 1)
@@ -1095,7 +1091,7 @@ void xf_SetWindowVisibilityRects(xfContext* xfc, xfAppWindow* appWindow, UINT32 
 #ifdef WITH_XEXT
 	xrects = (XRectangle*)calloc(nrects, sizeof(XRectangle));
 
-	for (i = 0; i < nrects; i++)
+	for (int i = 0; i < nrects; i++)
 	{
 		xrects[i].x = rects[i].left;
 		xrects[i].y = rects[i].top;
@@ -1200,17 +1196,15 @@ void xf_DestroyWindow(xfContext* xfc, xfAppWindow* appWindow)
 
 xfAppWindow* xf_AppWindowFromX11Window(xfContext* xfc, Window wnd)
 {
-	size_t index = 0;
-	size_t count = 0;
 	ULONG_PTR* pKeys = NULL;
 
 	WINPR_ASSERT(xfc);
 	if (!xfc->railWindows)
 		return NULL;
 
-	count = HashTable_GetKeys(xfc->railWindows, &pKeys);
+	size_t count = HashTable_GetKeys(xfc->railWindows, &pKeys);
 
-	for (index = 0; index < count; index++)
+	for (size_t index = 0; index < count; index++)
 	{
 		xfAppWindow* appWindow = xf_rail_get_window(xfc, *(UINT64*)pKeys[index]);
 

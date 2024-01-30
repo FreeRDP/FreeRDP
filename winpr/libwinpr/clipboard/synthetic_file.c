@@ -409,8 +409,6 @@ static BOOL process_uri_list(wClipboard* clipboard, const char* data, size_t len
 {
 	const char* cur = data;
 	const char* lim = data + length;
-	const char* start = NULL;
-	const char* stop = NULL;
 
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(data);
@@ -429,9 +427,10 @@ static BOOL process_uri_list(wClipboard* clipboard, const char* data, size_t len
 	while (cur < lim)
 	{
 		BOOL comment = (*cur == '#');
-		start = cur;
+		const char* start = cur;
+		const char* stop = cur;
 
-		for (stop = cur; stop < lim; stop++)
+		for (; stop < lim; stop++)
 		{
 			if (*stop == '\r')
 			{
@@ -506,7 +505,6 @@ static BOOL convert_local_file_to_filedescriptor(const struct synthetic_file* fi
 
 static FILEDESCRIPTORW* convert_local_file_list_to_filedescriptors(wArrayList* files)
 {
-	size_t i = 0;
 	size_t count = 0;
 	FILEDESCRIPTORW* descriptors = NULL;
 
@@ -517,7 +515,7 @@ static FILEDESCRIPTORW* convert_local_file_list_to_filedescriptors(wArrayList* f
 	if (!descriptors)
 		goto error;
 
-	for (i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		const struct synthetic_file* file = ArrayList_GetItem(files, i);
 
@@ -706,7 +704,6 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	const FILEDESCRIPTORW* descriptors = NULL;
 	UINT32 nrDescriptors = 0;
 	size_t count = 0;
-	size_t x = 0;
 	size_t alloc = 0;
 	size_t pos = 0;
 	size_t baseLength = 0;
@@ -750,7 +747,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 	alloc = header_len;
 
 	/* Get total size of file/folder names under first level folder only */
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		const FILEDESCRIPTORW* dsc = &descriptors[x];
 
@@ -776,7 +773,7 @@ static void* convert_filedescriptors_to_file_list(wClipboard* clipboard, UINT32 
 
 	pos = header_len;
 
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		const FILEDESCRIPTORW* dsc = &descriptors[x];
 		BOOL fail = TRUE;

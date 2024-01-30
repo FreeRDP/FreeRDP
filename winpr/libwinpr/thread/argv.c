@@ -118,7 +118,6 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 
 	if (strstr(lpCmdLine, "\\\""))
 	{
-		size_t i = 0;
 		size_t n = 0;
 		const char* pLastEnd = NULL;
 		lpEscapedCmdLine = (char*)calloc(cmdLineLength + 1, sizeof(char));
@@ -164,7 +163,7 @@ LPSTR* CommandLineToArgvA(LPCSTR lpCmdLine, int* pNumArgs)
 			pOutput += length;
 			p += length;
 
-			for (i = 0; i < (n / 2); i++)
+			for (size_t i = 0; i < (n / 2); i++)
 				*pOutput++ = '\\';
 
 			p += n + 1;

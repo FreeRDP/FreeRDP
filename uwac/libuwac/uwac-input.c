@@ -327,14 +327,14 @@ static int update_key_pressed(UwacSeat* seat, uint32_t key)
 
 static int update_key_released(UwacSeat* seat, uint32_t key)
 {
-	uint32_t* keyPtr = NULL;
 	size_t toMove = 0;
 	bool found = false;
 
 	assert(seat);
 
 	size_t i = 0;
-	for (i = 0, keyPtr = seat->pressed_keys.data; i < seat->pressed_keys.size; i++, keyPtr++)
+	uint32_t* keyPtr = seat->pressed_keys.data;
+	for (; i < seat->pressed_keys.size; i++, keyPtr++)
 	{
 		if (*keyPtr == key)
 		{

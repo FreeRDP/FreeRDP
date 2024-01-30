@@ -346,7 +346,7 @@ int TestPrint(int argc, char* argv[])
 	 * 300 148.889
 	 */
 
-	for (a = 0; a <= 300; a = a + 20)
+	for (int a = 0; a <= 300; a = a + 20)
 		_printf("%3d %06.3f\n", a, (5.0 / 9.0) * (a - 32));
 
 	/**

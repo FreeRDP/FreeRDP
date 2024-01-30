@@ -367,7 +367,6 @@ out:
 int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, int argc, char* argv[])
 {
 	int status = 0;
-	int x = 0;
 	int ret = -1;
 	char* filename = NULL;
 	char* password = NULL;
@@ -378,7 +377,7 @@ int freerdp_client_settings_parse_assistance_file(rdpSettings* settings, int arg
 
 	filename = argv[1];
 
-	for (x = 2; x < argc; x++)
+	for (int x = 2; x < argc; x++)
 	{
 		const char* key = strstr(argv[x], "assistance:");
 

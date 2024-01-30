@@ -55,9 +55,9 @@ static primitives_t* generic = NULL;
 static inline void GNU_INLINE _mm_prefetch_buffer(char* WINPR_RESTRICT buffer, int num_bytes)
 {
 	__m128i* buf = (__m128i*)buffer;
-	unsigned int i;
 
-	for (i = 0; i < (num_bytes / sizeof(__m128i)); i += (CACHE_LINE_BYTES / sizeof(__m128i)))
+	for (unsigned int i = 0; i < (num_bytes / sizeof(__m128i));
+	     i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 	{
 		_mm_prefetch((char*)(&buf[i]), _MM_HINT_NTA);
 	}
@@ -83,7 +83,6 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
 	__m128i* r_buf = NULL;
 	__m128i* g_buf = NULL;
 	__m128i* b_buf = NULL;
-	UINT32 yp = 0;
 	int srcbump = 0;
 	int dstbump = 0;
 	int imax = 0;
@@ -115,11 +114,9 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
 #ifdef DO_PREFETCH
 
 	/* Prefetch Y's, Cb's, and Cr's. */
-	for (yp = 0; yp < roi->height; yp++)
+	for (UINT32 yp = 0; yp < roi->height; yp++)
 	{
-		int i;
-
-		for (i = 0; i < roi->width * sizeof(INT16) / sizeof(__m128i);
+		for (int i = 0; i < roi->width * sizeof(INT16) / sizeof(__m128i);
 		     i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 		{
 			_mm_prefetch((char*)(&y_buf[i]), _MM_HINT_NTA);
@@ -138,11 +135,9 @@ sse2_yCbCrToRGB_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
 #endif /* DO_PREFETCH */
 	imax = roi->width * sizeof(INT16) / sizeof(__m128i);
 
-	for (yp = 0; yp < roi->height; ++yp)
+	for (UINT32 yp = 0; yp < roi->height; ++yp)
 	{
-		int i = 0;
-
-		for (i = 0; i < imax; i++)
+		for (int i = 0; i < imax; i++)
 		{
 			/* In order to use SSE2 signed 16-bit integer multiplication
 			 * we need to convert the floating point factors to signed int
@@ -229,16 +224,13 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const WINPR_RESTRICT pSrc[3], UIN
 	const UINT32 step = sizeof(__m128i) / sizeof(INT16);
 	const UINT32 imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
 	BYTE* d_buf = pDst;
-	UINT32 yp = 0;
 	const size_t dstPad = (dstStep - roi->width * 4);
 #ifdef DO_PREFETCH
 
 	/* Prefetch Y's, Cb's, and Cr's. */
-	for (yp = 0; yp < roi->height; yp++)
+	for (UINT32 yp = 0; yp < roi->height; yp++)
 	{
-		int i;
-
-		for (i = 0; i < imax; i += (CACHE_LINE_BYTES / sizeof(__m128i)))
+		for (int i = 0; i < imax; i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 		{
 			_mm_prefetch((char*)(&((__m128i*)y_buf)[i]), _MM_HINT_NTA);
 			_mm_prefetch((char*)(&((__m128i*)cb_buf)[i]), _MM_HINT_NTA);
@@ -255,11 +247,9 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const WINPR_RESTRICT pSrc[3], UIN
 	cr_buf = (INT16*)pSrc[2];
 #endif /* DO_PREFETCH */
 
-	for (yp = 0; yp < roi->height; ++yp)
+	for (UINT32 yp = 0; yp < roi->height; ++yp)
 	{
-		UINT32 i = 0;
-
-		for (i = 0; i < imax; i += 2)
+		for (UINT32 i = 0; i < imax; i += 2)
 		{
 			/* In order to use SSE2 signed 16-bit integer multiplication
 			 * we need to convert the floating point factors to signed int
@@ -387,7 +377,7 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const WINPR_RESTRICT pSrc[3], UIN
 			}
 		}
 
-		for (i = 0; i < pad; i++)
+		for (UINT32 i = 0; i < pad; i++)
 		{
 			const INT32 divisor = 16;
 			const INT32 Y = ((*y_buf++) + 4096) << divisor;
@@ -432,16 +422,13 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* const WINPR_RESTRICT pSrc[3], UIN
 	const UINT32 step = sizeof(__m128i) / sizeof(INT16);
 	const UINT32 imax = (roi->width - pad) * sizeof(INT16) / sizeof(__m128i);
 	BYTE* d_buf = pDst;
-	UINT32 yp = 0;
 	const size_t dstPad = (dstStep - roi->width * 4);
 #ifdef DO_PREFETCH
 
 	/* Prefetch Y's, Cb's, and Cr's. */
-	for (yp = 0; yp < roi->height; yp++)
+	for (UINT32 yp = 0; yp < roi->height; yp++)
 	{
-		int i;
-
-		for (i = 0; i < imax; i += (CACHE_LINE_BYTES / sizeof(__m128i)))
+		for (int i = 0; i < imax; i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 		{
 			_mm_prefetch((char*)(&((__m128i*)y_buf)[i]), _MM_HINT_NTA);
 			_mm_prefetch((char*)(&((__m128i*)cb_buf)[i]), _MM_HINT_NTA);
@@ -458,11 +445,9 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* const WINPR_RESTRICT pSrc[3], UIN
 	cr_buf = (INT16*)(pSrc[2]);
 #endif /* DO_PREFETCH */
 
-	for (yp = 0; yp < roi->height; ++yp)
+	for (UINT32 yp = 0; yp < roi->height; ++yp)
 	{
-		UINT32 i = 0;
-
-		for (i = 0; i < imax; i += 2)
+		for (UINT32 i = 0; i < imax; i += 2)
 		{
 			/* In order to use SSE2 signed 16-bit integer multiplication
 			 * we need to convert the floating point factors to signed int
@@ -590,7 +575,7 @@ sse2_yCbCrToRGB_16s8u_P3AC4R_RGBX(const INT16* const WINPR_RESTRICT pSrc[3], UIN
 			}
 		}
 
-		for (i = 0; i < pad; i++)
+		for (UINT32 i = 0; i < pad; i++)
 		{
 			const INT32 divisor = 16;
 			const INT32 Y = ((*y_buf++) + 4096) << divisor;
@@ -667,7 +652,6 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
 	__m128i* y_buf = (__m128i*)(pDst[0]);
 	__m128i* cb_buf = (__m128i*)(pDst[1]);
 	__m128i* cr_buf = (__m128i*)(pDst[2]);
-	UINT32 yp = 0;
 	int srcbump = 0;
 	int dstbump = 0;
 	int imax = 0;
@@ -698,11 +682,9 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
 #ifdef DO_PREFETCH
 
 	/* Prefetch RGB's. */
-	for (yp = 0; yp < roi->height; yp++)
+	for (UINT32 yp = 0; yp < roi->height; yp++)
 	{
-		int i;
-
-		for (i = 0; i < roi->width * sizeof(INT16) / sizeof(__m128i);
+		for (int i = 0; i < roi->width * sizeof(INT16) / sizeof(__m128i);
 		     i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 		{
 			_mm_prefetch((char*)(&r_buf[i]), _MM_HINT_NTA);
@@ -721,11 +703,9 @@ sse2_RGBToYCbCr_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], int srcSt
 #endif /* DO_PREFETCH */
 	imax = roi->width * sizeof(INT16) / sizeof(__m128i);
 
-	for (yp = 0; yp < roi->height; ++yp)
+	for (UINT32 yp = 0; yp < roi->height; ++yp)
 	{
-		int i = 0;
-
-		for (i = 0; i < imax; i++)
+		for (int i = 0; i < imax; i++)
 		{
 			/* In order to use SSE2 signed 16-bit integer multiplication we
 			 * need to convert the floating point factors to signed int
@@ -802,16 +782,13 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
-	UINT32 y = 0;
 	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 
-	for (y = 0; y < roi->height; ++y)
+	for (UINT32 y = 0; y < roi->height; ++y)
 	{
-		UINT32 x = 0;
-
-		for (x = 0; x < roi->width - pad; x += 16)
+		for (UINT32 x = 0; x < roi->width - pad; x += 16)
 		{
 			__m128i r;
 			__m128i g;
@@ -880,7 +857,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_BGRX(
 			}
 		}
 
-		for (x = 0; x < pad; x++)
+		for (UINT32 x = 0; x < pad; x++)
 		{
 			const BYTE R = CLIP(*pr++);
 			const BYTE G = CLIP(*pg++);
@@ -916,16 +893,13 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
-	UINT32 y = 0;
 	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 
-	for (y = 0; y < roi->height; ++y)
+	for (UINT32 y = 0; y < roi->height; ++y)
 	{
-		UINT32 x = 0;
-
-		for (x = 0; x < roi->width - pad; x += 16)
+		for (UINT32 x = 0; x < roi->width - pad; x += 16)
 		{
 			__m128i r;
 			__m128i g;
@@ -994,7 +968,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_RGBX(
 			}
 		}
 
-		for (x = 0; x < pad; x++)
+		for (UINT32 x = 0; x < pad; x++)
 		{
 			const BYTE R = CLIP(*pr++);
 			const BYTE G = CLIP(*pg++);
@@ -1030,16 +1004,13 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
-	UINT32 y = 0;
 	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 
-	for (y = 0; y < roi->height; ++y)
+	for (UINT32 y = 0; y < roi->height; ++y)
 	{
-		UINT32 x = 0;
-
-		for (x = 0; x < roi->width - pad; x += 16)
+		for (UINT32 x = 0; x < roi->width - pad; x += 16)
 		{
 			__m128i r;
 			__m128i g;
@@ -1108,7 +1079,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XBGR(
 			}
 		}
 
-		for (x = 0; x < pad; x++)
+		for (UINT32 x = 0; x < pad; x++)
 		{
 			const BYTE R = CLIP(*pr++);
 			const BYTE G = CLIP(*pg++);
@@ -1144,16 +1115,13 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 	BYTE* out = NULL;
 	UINT32 srcbump = 0;
 	UINT32 dstbump = 0;
-	UINT32 y = 0;
 	out = (BYTE*)pDst;
 	srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	dstbump = (dstStep - (roi->width * sizeof(UINT32)));
 
-	for (y = 0; y < roi->height; ++y)
+	for (UINT32 y = 0; y < roi->height; ++y)
 	{
-		UINT32 x = 0;
-
-		for (x = 0; x < roi->width - pad; x += 16)
+		for (UINT32 x = 0; x < roi->width - pad; x += 16)
 		{
 			__m128i r;
 			__m128i g;
@@ -1222,7 +1190,7 @@ static pstatus_t sse2_RGBToRGB_16s8u_P3AC4R_XRGB(
 			}
 		}
 
-		for (x = 0; x < pad; x++)
+		for (UINT32 x = 0; x < pad; x++)
 		{
 			const BYTE R = CLIP(*pr++);
 			const BYTE G = CLIP(*pg++);
@@ -1301,14 +1269,11 @@ neon_yCbCrToRGB_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], INT32 src
 	int16x8_t* b_buf = (int16x8_t*)pDst[2];
 	int srcbump = srcStep / sizeof(int16x8_t);
 	int dstbump = dstStep / sizeof(int16x8_t);
-	int yp;
 	int imax = roi->width * sizeof(INT16) / sizeof(int16x8_t);
 
-	for (yp = 0; yp < roi->height; ++yp)
+	for (int yp = 0; yp < roi->height; ++yp)
 	{
-		int i;
-
-		for (i = 0; i < imax; i++)
+		for (int i = 0; i < imax; i++)
 		{
 			/*
 			    In order to use NEON signed 16-bit integer multiplication we need to convert
@@ -1373,7 +1338,6 @@ static pstatus_t neon_yCbCrToRGB_16s8u_P3AC4R_X(const INT16* const WINPR_RESTRIC
                                                 const prim_size_t* WINPR_RESTRICT roi, uint8_t rPos,
                                                 uint8_t gPos, uint8_t bPos, uint8_t aPos)
 {
-	UINT32 x, y;
 	BYTE* pRGB = pDst;
 	const INT16* pY = pSrc[0];
 	const INT16* pCb = pSrc[1];
@@ -1383,9 +1347,9 @@ static pstatus_t neon_yCbCrToRGB_16s8u_P3AC4R_X(const INT16* const WINPR_RESTRIC
 	const size_t pad = roi->width % 8;
 	const int16x4_t c4096 = vdup_n_s16(4096);
 
-	for (y = 0; y < roi->height; y++)
+	for (UINT32 y = 0; y < roi->height; y++)
 	{
-		for (x = 0; x < roi->width - pad; x += 8)
+		for (UINT32 x = 0; x < roi->width - pad; x += 8)
 		{
 			const int16x8_t Y = vld1q_s16(pY);
 			const int16x4_t Yh = vget_high_s16(Y);
@@ -1451,7 +1415,7 @@ static pstatus_t neon_yCbCrToRGB_16s8u_P3AC4R_X(const INT16* const WINPR_RESTRIC
 			pRGB += 32;
 		}
 
-		for (x = 0; x < pad; x++)
+		for (UINT32 x = 0; x < pad; x++)
 		{
 			const INT32 divisor = 16;
 			const INT32 Y = ((*pY++) + 4096) << divisor;
@@ -1520,17 +1484,16 @@ static pstatus_t neon_RGBToRGB_16s8u_P3AC4R_X(
     const prim_size_t* WINPR_RESTRICT roi,     /* region of interest */
     uint8_t rPos, uint8_t gPos, uint8_t bPos, uint8_t aPos)
 {
-	UINT32 x, y;
 	UINT32 pad = roi->width % 8;
 
-	for (y = 0; y < roi->height; y++)
+	for (UINT32 y = 0; y < roi->height; y++)
 	{
 		const INT16* pr = (INT16*)(((BYTE*)pSrc[0]) + y * srcStep);
 		const INT16* pg = (INT16*)(((BYTE*)pSrc[1]) + y * srcStep);
 		const INT16* pb = (INT16*)(((BYTE*)pSrc[2]) + y * srcStep);
 		BYTE* dst = pDst + y * dstStep;
 
-		for (x = 0; x < roi->width - pad; x += 8)
+		for (UINT32 x = 0; x < roi->width - pad; x += 8)
 		{
 			int16x8_t r = vld1q_s16(pr);
 			int16x8_t g = vld1q_s16(pg);
@@ -1547,7 +1510,7 @@ static pstatus_t neon_RGBToRGB_16s8u_P3AC4R_X(
 			dst += 32;
 		}
 
-		for (x = 0; x < pad; x++)
+		for (UINT32 x = 0; x < pad; x++)
 		{
 			BYTE bgrx[4];
 			bgrx[bPos] = *pb++;

@@ -7,7 +7,6 @@ static BOOL test_alloc(void)
 {
 	BOOL rc = FALSE;
 	int rng = 0;
-	int x = 0;
 	const char* param[] = { "foo:", "bar", "bla", "rdp", NULL };
 	ADDIN_ARGV* arg1 = NULL;
 	ADDIN_ARGV* arg2 = NULL;
@@ -26,7 +25,7 @@ static BOOL test_alloc(void)
 	arg2 = freerdp_addin_argv_new(rng, NULL);
 	if (!arg2 || (arg2->argc != rng) || (!arg2->argv))
 		goto fail;
-	for (x = 0; x < arg2->argc; x++)
+	for (int x = 0; x < arg2->argc; x++)
 	{
 		if (arg2->argv[x])
 			goto fail;
@@ -37,7 +36,7 @@ static BOOL test_alloc(void)
 	if (!arg3 || (arg3->argc != ARRAYSIZE(param) - 1) || (!arg3->argv))
 		goto fail;
 
-	for (x = 0; x < arg3->argc; x++)
+	for (int x = 0; x < arg3->argc; x++)
 	{
 		if (strcmp(arg3->argv[x], param[x]) != 0)
 			goto fail;
@@ -59,7 +58,6 @@ fail:
 
 static BOOL test_clone(void)
 {
-	int x = 0;
 	BOOL rc = FALSE;
 	const char* param[] = { "foo:", "bar", "bla", "rdp" };
 	ADDIN_ARGV* arg = NULL;
@@ -73,7 +71,7 @@ static BOOL test_clone(void)
 	if (!clone || (clone->argc != arg->argc))
 		goto fail;
 
-	for (x = 0; x < arg->argc; x++)
+	for (int x = 0; x < arg->argc; x++)
 	{
 		if (strcmp(param[x], arg->argv[x]) != 0)
 			goto fail;
@@ -95,16 +93,13 @@ fail:
 
 static BOOL test_add_remove(void)
 {
-	size_t x = 0;
-	size_t y = 0;
 	const char* args[] = { "foo", "bar", "bla", "gaga" };
 	BOOL rc = FALSE;
-	ADDIN_ARGV* arg = NULL;
+	ADDIN_ARGV* arg = freerdp_addin_argv_new(0, NULL);
 
-	arg = freerdp_addin_argv_new(0, NULL);
 	if (!arg || (arg->argc != 0) || arg->argv)
 		goto fail;
-	for (y = 0; y < ARRAYSIZE(args); y++)
+	for (size_t y = 0; y < ARRAYSIZE(args); y++)
 	{
 		const char* param = args[y];
 		if (!freerdp_addin_argv_add_argument(arg, param))
@@ -130,12 +125,12 @@ static BOOL test_add_remove(void)
 		goto fail;
 
 	/* Remove elements one by one to test argument index move */
-	for (y = 0; y < ARRAYSIZE(args); y++)
+	for (size_t y = 0; y < ARRAYSIZE(args); y++)
 	{
 		const char* param = args[y];
 		if (!freerdp_addin_argv_del_argument(arg, param))
 			goto fail;
-		for (x = y + 1; x < ARRAYSIZE(args); x++)
+		for (size_t x = y + 1; x < ARRAYSIZE(args); x++)
 		{
 			if (strcmp(arg->argv[x - y - 1], args[x]) != 0)
 				goto fail;

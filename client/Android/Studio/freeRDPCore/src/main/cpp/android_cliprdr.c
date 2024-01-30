@@ -36,7 +36,6 @@
 UINT android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	UINT32 index;
 	UINT32 formatId;
 	UINT32 numFormats;
 	UINT32* pFormatIds;
@@ -59,7 +58,7 @@ UINT android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr)
 	if (!formats)
 		goto fail;
 
-	for (index = 0; index < numFormats; index++)
+	for (UINT32 index = 0; index < numFormats; index++)
 	{
 		formatId = pFormatIds[index];
 		formatName = ClipboardGetFormatName(afc->clipboard, formatId);
@@ -169,7 +168,6 @@ static UINT android_cliprdr_monitor_ready(CliprdrClientContext* cliprdr,
 static UINT android_cliprdr_server_capabilities(CliprdrClientContext* cliprdr,
                                                 const CLIPRDR_CAPABILITIES* capabilities)
 {
-	UINT32 index;
 	CLIPRDR_CAPABILITY_SET* capabilitySet;
 	androidContext* afc;
 
@@ -181,7 +179,7 @@ static UINT android_cliprdr_server_capabilities(CliprdrClientContext* cliprdr,
 	if (!afc)
 		return ERROR_INVALID_PARAMETER;
 
-	for (index = 0; index < capabilities->cCapabilitiesSets; index++)
+	for (UINT32 index = 0; index < capabilities->cCapabilitiesSets; index++)
 	{
 		capabilitySet = &(capabilities->capabilitySets[index]);
 
@@ -207,7 +205,6 @@ static UINT android_cliprdr_server_format_list(CliprdrClientContext* cliprdr,
                                                const CLIPRDR_FORMAT_LIST* formatList)
 {
 	UINT rc;
-	UINT32 index;
 	CLIPRDR_FORMAT* format;
 	androidContext* afc;
 
@@ -221,7 +218,7 @@ static UINT android_cliprdr_server_format_list(CliprdrClientContext* cliprdr,
 
 	if (afc->serverFormats)
 	{
-		for (index = 0; index < afc->numServerFormats; index++)
+		for (UINT32 index = 0; index < afc->numServerFormats; index++)
 			free(afc->serverFormats[index].formatName);
 
 		free(afc->serverFormats);
@@ -238,7 +235,7 @@ static UINT android_cliprdr_server_format_list(CliprdrClientContext* cliprdr,
 	if (!afc->serverFormats)
 		return CHANNEL_RC_NO_MEMORY;
 
-	for (index = 0; index < afc->numServerFormats; index++)
+	for (UINT32 index = 0; index < afc->numServerFormats; index++)
 	{
 		afc->serverFormats[index].formatId = formatList->formats[index].formatId;
 		afc->serverFormats[index].formatName = NULL;
@@ -252,7 +249,7 @@ static UINT android_cliprdr_server_format_list(CliprdrClientContext* cliprdr,
 		}
 	}
 
-	for (index = 0; index < afc->numServerFormats; index++)
+	for (UINT32 index = 0; index < afc->numServerFormats; index++)
 	{
 		format = &(afc->serverFormats[index]);
 
@@ -374,7 +371,6 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 {
 	BYTE* data;
 	UINT32 size;
-	UINT32 index;
 	UINT32 formatId;
 	CLIPRDR_FORMAT* format = NULL;
 	androidContext* afc;
@@ -393,7 +389,7 @@ android_cliprdr_server_format_data_response(CliprdrClientContext* cliprdr,
 	if (!instance)
 		return ERROR_INVALID_PARAMETER;
 
-	for (index = 0; index < afc->numServerFormats; index++)
+	for (UINT32 index = 0; index < afc->numServerFormats; index++)
 	{
 		if (afc->requestedFormatId == afc->serverFormats[index].formatId)
 			format = &(afc->serverFormats[index]);

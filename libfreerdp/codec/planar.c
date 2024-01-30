@@ -167,15 +167,13 @@ static INLINE INT32 planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize, 
                                           UINT32 nHeight)
 {
 	UINT32 used = 0;
-	UINT32 x = 0;
-	UINT32 y = 0;
 	BYTE controlByte = 0;
 
 	WINPR_ASSERT(pSrcData);
 
-	for (y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
-		for (x = 0; x < nWidth;)
+		for (UINT32 x = 0; x < nWidth;)
 		{
 			int cRawBytes = 0;
 			int nRunLength = 0;
@@ -232,8 +230,6 @@ static INLINE INT32 planar_skip_plane_rle(const BYTE* pSrcData, UINT32 SrcSize, 
 static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* pSrcData, UINT32 SrcSize,
                                                      BYTE* pDstData, UINT32 nWidth, UINT32 nHeight)
 {
-	INT32 x = 0;
-	INT32 y = 0;
 	UINT32 pixel = 0;
 	UINT32 cRawBytes = 0;
 	UINT32 nRunLength = 0;
@@ -248,13 +244,13 @@ static INLINE INT32 planar_decompress_plane_rle_only(const BYTE* pSrcData, UINT3
 
 	previousScanline = NULL;
 
-	for (y = 0; y < (INT32)nHeight; y++)
+	for (INT32 y = 0; y < (INT32)nHeight; y++)
 	{
 		BYTE* dstp = &pDstData[((y) * (INT32)nWidth)];
 		pixel = 0;
 		currentScanline = dstp;
 
-		for (x = 0; x < (INT32)nWidth;)
+		for (INT32 x = 0; x < (INT32)nWidth;)
 		{
 			controlByte = *srcp;
 			srcp++;
@@ -355,8 +351,6 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 Src
                                                 UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
                                                 UINT32 nChannel, BOOL vFlip)
 {
-	INT32 x = 0;
-	INT32 y = 0;
 	UINT32 pixel = 0;
 	UINT32 cRawBytes = 0;
 	UINT32 nRunLength = 0;
@@ -388,13 +382,13 @@ static INLINE INT32 planar_decompress_plane_rle(const BYTE* pSrcData, UINT32 Src
 		inc = 1;
 	}
 
-	for (y = beg; y != end; y += inc)
+	for (INT32 y = beg; y != end; y += inc)
 	{
 		BYTE* dstp = &pDstData[((nYDst + y) * (INT32)nDstStep) + (nXDst * 4) + nChannel];
 		pixel = 0;
 		currentScanline = dstp;
 
-		for (x = 0; x < (INT32)nWidth;)
+		for (INT32 x = 0; x < (INT32)nWidth;)
 		{
 			controlByte = *srcp;
 			srcp++;
@@ -494,8 +488,6 @@ static INLINE INT32 planar_set_plane(BYTE bValue, BYTE* pDstData, INT32 nDstStep
                                      UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 nChannel,
                                      BOOL vFlip)
 {
-	INT32 x = 0;
-	INT32 y = 0;
 	INT32 beg = 0;
 	INT32 end = 0;
 	INT32 inc = 0;
@@ -517,11 +509,11 @@ static INLINE INT32 planar_set_plane(BYTE bValue, BYTE* pDstData, INT32 nDstStep
 		inc = 1;
 	}
 
-	for (y = beg; y != end; y += inc)
+	for (INT32 y = beg; y != end; y += inc)
 	{
 		BYTE* dstp = &pDstData[((nYDst + y) * (INT32)nDstStep) + (nXDst * 4) + nChannel];
 
-		for (x = 0; x < (INT32)nWidth; ++x)
+		for (INT32 x = 0; x < (INT32)nWidth; ++x)
 		{
 			*dstp = bValue;
 			dstp += 4;
@@ -534,8 +526,6 @@ static INLINE INT32 planar_set_plane(BYTE bValue, BYTE* pDstData, INT32 nDstStep
 static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, const BYTE** ppR,
                              const BYTE** ppG, const BYTE** ppB, const BYTE** ppA)
 {
-	UINT32 x = 0;
-
 	WINPR_ASSERT(ppRgba);
 	WINPR_ASSERT(ppR);
 	WINPR_ASSERT(ppG);
@@ -544,7 +534,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 	switch (DstFormat)
 	{
 		case PIXEL_FORMAT_BGRA32:
-			for (x = 0; x < width; x++)
+			for (UINT32 x = 0; x < width; x++)
 			{
 				*(*ppRgba)++ = *(*ppB)++;
 				*(*ppRgba)++ = *(*ppG)++;
@@ -555,7 +545,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 			return TRUE;
 
 		case PIXEL_FORMAT_BGRX32:
-			for (x = 0; x < width; x++)
+			for (UINT32 x = 0; x < width; x++)
 			{
 				*(*ppRgba)++ = *(*ppB)++;
 				*(*ppRgba)++ = *(*ppG)++;
@@ -568,7 +558,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 		default:
 			if (ppA)
 			{
-				for (x = 0; x < width; x++)
+				for (UINT32 x = 0; x < width; x++)
 				{
 					BYTE alpha = *(*ppA)++;
 					UINT32 color =
@@ -581,7 +571,7 @@ static INLINE BOOL writeLine(BYTE** ppRgba, UINT32 DstFormat, UINT32 width, cons
 			{
 				const BYTE alpha = 0xFF;
 
-				for (x = 0; x < width; x++)
+				for (UINT32 x = 0; x < width; x++)
 				{
 					UINT32 color =
 					    FreeRDPGetColor(DstFormat, *(*ppR)++, *(*ppG)++, *(*ppB)++, alpha);
@@ -599,7 +589,6 @@ static INLINE BOOL planar_decompress_planes_raw(const BYTE* pSrcData[4], BYTE* p
                                                 UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
                                                 BOOL vFlip, UINT32 totalHeight)
 {
-	INT32 y = 0;
 	INT32 beg = 0;
 	INT32 end = 0;
 	INT32 inc = 0;
@@ -640,7 +629,7 @@ static INLINE BOOL planar_decompress_planes_raw(const BYTE* pSrcData[4], BYTE* p
 		return FALSE;
 	}
 
-	for (y = beg; y != end; y += inc)
+	for (INT32 y = beg; y != end; y += inc)
 	{
 		BYTE* pRGB = NULL;
 
@@ -665,7 +654,6 @@ static BOOL planar_subsample_expand(const BYTE* plane, size_t planeLength, UINT3
                                     BYTE* deltaPlane)
 {
 	size_t pos = 0;
-	UINT32 y = 0;
 	WINPR_UNUSED(planeLength);
 
 	WINPR_ASSERT(plane);
@@ -685,12 +673,11 @@ static BOOL planar_subsample_expand(const BYTE* plane, size_t planeLength, UINT3
 		return FALSE;
 	}
 
-	for (y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		const BYTE* src = plane + y / 2 * nPlaneWidth;
-		UINT32 x = 0;
 
-		for (x = 0; x < nWidth; x++)
+		for (UINT32 x = 0; x < nWidth; x++)
 		{
 			deltaPlane[pos++] = src[x / 2];
 		}
@@ -1105,14 +1092,12 @@ static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* planar, con
 
 	if (planar->topdown)
 	{
-		UINT32 i = 0;
-		UINT32 j = 0;
 		UINT32 k = 0;
-		for (i = 0; i < height; i++)
+		for (UINT32 i = 0; i < height; i++)
 		{
 			const BYTE* pixel = &data[scanline * (UINT32)i];
 
-			for (j = 0; j < width; j++)
+			for (UINT32 j = 0; j < width; j++)
 			{
 				const UINT32 color = FreeRDPReadColor(pixel, format);
 				pixel += FreeRDPGetBytesPerPixel(format);
@@ -1124,15 +1109,13 @@ static INLINE BOOL freerdp_split_color_planes(BITMAP_PLANAR_CONTEXT* planar, con
 	}
 	else
 	{
-		INT64 i = 0;
-		UINT32 j = 0;
 		UINT32 k = 0;
 
-		for (i = (INT64)height - 1; i >= 0; i--)
+		for (INT64 i = (INT64)height - 1; i >= 0; i--)
 		{
 			const BYTE* pixel = &data[scanline * (UINT32)i];
 
-			for (j = 0; j < width; j++)
+			for (UINT32 j = 0; j < width; j++)
 			{
 				const UINT32 color = FreeRDPReadColor(pixel, format);
 				pixel += FreeRDPGetBytesPerPixel(format);
@@ -1434,8 +1417,6 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* inPlane, UINT32 width
                                                BYTE* outPlane)
 {
 	char s2c = 0;
-	UINT32 y = 0;
-	UINT32 x = 0;
 	BYTE* outPtr = NULL;
 	const BYTE* srcPtr = NULL;
 	const BYTE* prevLinePtr = NULL;
@@ -1455,9 +1436,9 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* inPlane, UINT32 width
 	srcPtr = inPlane + width;
 	prevLinePtr = inPlane;
 
-	for (y = 1; y < height; y++)
+	for (UINT32 y = 1; y < height; y++)
 	{
-		for (x = 0; x < width; x++, outPtr++, srcPtr++, prevLinePtr++)
+		for (UINT32 x = 0; x < width; x++, outPtr++, srcPtr++, prevLinePtr++)
 		{
 			INT32 delta = *srcPtr - *prevLinePtr;
 			s2c = (delta >= 0) ? (char)delta : (char)(~((BYTE)(-delta)) + 1);
@@ -1473,9 +1454,7 @@ BYTE* freerdp_bitmap_planar_delta_encode_plane(const BYTE* inPlane, UINT32 width
 static INLINE BOOL freerdp_bitmap_planar_delta_encode_planes(BYTE* inPlanes[4], UINT32 width,
                                                              UINT32 height, BYTE* outPlanes[4])
 {
-	UINT32 i = 0;
-
-	for (i = 0; i < 4; i++)
+	for (UINT32 i = 0; i < 4; i++)
 	{
 		outPlanes[i] =
 		    freerdp_bitmap_planar_delta_encode_plane(inPlanes[i], width, height, outPlanes[i]);

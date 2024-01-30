@@ -123,9 +123,7 @@ static const char* rdpei_eventid_string(UINT16 event)
 
 static RDPINPUT_CONTACT_POINT* rdpei_contact(RDPEI_PLUGIN* rdpei, INT32 externalId, BOOL active)
 {
-	UINT16 i = 0;
-
-	for (i = 0; i < rdpei->maxTouchContacts; i++)
+	for (UINT16 i = 0; i < rdpei->maxTouchContacts; i++)
 	{
 		RDPINPUT_CONTACT_POINT* contactPoint = &rdpei->contactPoints[i];
 
@@ -153,7 +151,6 @@ static RDPINPUT_CONTACT_POINT* rdpei_contact(RDPEI_PLUGIN* rdpei, INT32 external
  */
 static UINT rdpei_add_frame(RdpeiClientContext* context)
 {
-	UINT16 i = 0;
 	RDPEI_PLUGIN* rdpei = NULL;
 	RDPINPUT_TOUCH_FRAME frame = { 0 };
 	RDPINPUT_CONTACT_DATA contacts[MAX_CONTACTS] = { 0 };
@@ -164,7 +161,7 @@ static UINT rdpei_add_frame(RdpeiClientContext* context)
 	rdpei = (RDPEI_PLUGIN*)context->handle;
 	frame.contacts = contacts;
 
-	for (i = 0; i < rdpei->maxTouchContacts; i++)
+	for (UINT16 i = 0; i < rdpei->maxTouchContacts; i++)
 	{
 		RDPINPUT_CONTACT_POINT* contactPoint = &rdpei->contactPoints[i];
 		RDPINPUT_CONTACT_DATA* contact = &contactPoint->data;
@@ -236,7 +233,6 @@ static UINT rdpei_send_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s, UINT1
 
 static UINT rdpei_write_pen_frame(wStream* s, const RDPINPUT_PEN_FRAME* frame)
 {
-	UINT16 x = 0;
 	if (!s || !frame)
 		return ERROR_INTERNAL_ERROR;
 
@@ -244,7 +240,7 @@ static UINT rdpei_write_pen_frame(wStream* s, const RDPINPUT_PEN_FRAME* frame)
 		return ERROR_OUTOFMEMORY;
 	if (!rdpei_write_8byte_unsigned(s, frame->frameOffset))
 		return ERROR_OUTOFMEMORY;
-	for (x = 0; x < frame->contactCount; x++)
+	for (UINT16 x = 0; x < frame->contactCount; x++)
 	{
 		const RDPINPUT_PEN_CONTACT* contact = &frame->contacts[x];
 
@@ -293,7 +289,6 @@ static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, UINT32 
 {
 	UINT status = 0;
 	wStream* s = NULL;
-	UINT16 x = 0;
 
 	if (!frames || (count == 0))
 		return ERROR_INTERNAL_ERROR;
@@ -314,7 +309,7 @@ static UINT rdpei_send_pen_event_pdu(GENERIC_CHANNEL_CALLBACK* callback, UINT32 
 	rdpei_write_4byte_unsigned(s, frameOffset); /* encodeTime (FOUR_BYTE_UNSIGNED_INTEGER) */
 	rdpei_write_2byte_unsigned(s, count);       /* (frameCount) TWO_BYTE_UNSIGNED_INTEGER */
 
-	for (x = 0; x < count; x++)
+	for (UINT16 x = 0; x < count; x++)
 	{
 		if ((status = rdpei_write_pen_frame(s, &frames[x])))
 		{
@@ -372,7 +367,6 @@ static UINT rdpei_send_pen_frame(RdpeiClientContext* context, RDPINPUT_PEN_FRAME
 
 static UINT rdpei_add_pen_frame(RdpeiClientContext* context)
 {
-	UINT16 i = 0;
 	RDPEI_PLUGIN* rdpei = NULL;
 	RDPINPUT_PEN_FRAME penFrame = { 0 };
 	RDPINPUT_PEN_CONTACT penContacts[MAX_PEN_CONTACTS] = { 0 };
@@ -384,7 +378,7 @@ static UINT rdpei_add_pen_frame(RdpeiClientContext* context)
 
 	penFrame.contacts = penContacts;
 
-	for (i = 0; i < rdpei->maxPenContacts; i++)
+	for (UINT16 i = 0; i < rdpei->maxPenContacts; i++)
 	{
 		RDPINPUT_PEN_CONTACT_POINT* contact = &(rdpei->penContactPoints[i]);
 
@@ -557,7 +551,6 @@ static void rdpei_print_contact_flags(UINT32 contactFlags)
  */
 static UINT rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 {
-	UINT32 index = 0;
 	int rectSize = 2;
 	RDPINPUT_CONTACT_DATA* contact = NULL;
 	if (!s || !frame)
@@ -581,7 +574,7 @@ static UINT rdpei_write_touch_frame(wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	for (index = 0; index < frame->contactCount; index++)
+	for (UINT32 index = 0; index < frame->contactCount; index++)
 	{
 		contact = &frame->contacts[index];
 		contact->fieldsPresent |= CONTACT_DATA_CONTACTRECT_PRESENT;
@@ -1131,11 +1124,10 @@ static UINT rdpei_touch_raw_event_va(RdpeiClientContext* context, INT32 external
 static RDPINPUT_PEN_CONTACT_POINT* rdpei_pen_contact(RDPEI_PLUGIN* rdpei, INT32 externalId,
                                                      BOOL active)
 {
-	UINT32 x = 0;
 	if (!rdpei)
 		return NULL;
 
-	for (x = 0; x < rdpei->maxPenContacts; x++)
+	for (UINT32 x = 0; x < rdpei->maxPenContacts; x++)
 	{
 		RDPINPUT_PEN_CONTACT_POINT* contact = &rdpei->penContactPoints[x];
 		if (active)

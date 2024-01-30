@@ -28,7 +28,6 @@ int TestNCryptProviders(int argc, char* argv[])
 {
 	SECURITY_STATUS status = 0;
 	DWORD nproviders = 0;
-	DWORD i = 0;
 	NCryptProviderName* providers = NULL;
 
 	WINPR_UNUSED(argc);
@@ -38,7 +37,7 @@ int TestNCryptProviders(int argc, char* argv[])
 	if (status != ERROR_SUCCESS)
 		return -1;
 
-	for (i = 0; i < nproviders; i++)
+	for (DWORD i = 0; i < nproviders; i++)
 	{
 		const NCryptProviderName* provider = &providers[i];
 		char providerNameStr[256] = { 0 };

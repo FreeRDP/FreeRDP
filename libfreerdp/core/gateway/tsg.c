@@ -799,8 +799,6 @@ static BOOL tsg_type_capability_nap_to_string(char** buffer, size_t* length,
 static BOOL tsg_packet_capabilities_to_string(char** buffer, size_t* length,
                                               const TSG_PACKET_CAPABILITIES* caps, UINT32 numCaps)
 {
-	UINT32 x = 0;
-
 	WINPR_ASSERT(buffer);
 	WINPR_ASSERT(length);
 	WINPR_ASSERT(caps);
@@ -808,7 +806,7 @@ static BOOL tsg_packet_capabilities_to_string(char** buffer, size_t* length,
 	if (!tsg_print(buffer, length, "capabilities { "))
 		return FALSE;
 
-	for (x = 0; x < numCaps; x++)
+	for (UINT32 x = 0; x < numCaps; x++)
 	{
 		const TSG_PACKET_CAPABILITIES* cur = &caps[x];
 		switch (cur->capabilityType)

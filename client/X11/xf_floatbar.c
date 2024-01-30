@@ -222,7 +222,6 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 
 BOOL xf_floatbar_toggle_fullscreen(xfFloatbar* floatbar, bool fullscreen)
 {
-	int i = 0;
 	int size = 0;
 	bool visible = False;
 	xfContext* xfc = NULL;
@@ -250,7 +249,7 @@ BOOL xf_floatbar_toggle_fullscreen(xfFloatbar* floatbar, bool fullscreen)
 		XMapWindow(xfc->display, floatbar->handle);
 		size = ARRAYSIZE(floatbar->buttons);
 
-		for (i = 0; i < size; i++)
+		for (int i = 0; i < size; i++)
 		{
 			xfFloatbarButton* button = floatbar->buttons[i];
 			XMapWindow(xfc->display, button->handle);
@@ -898,7 +897,6 @@ static void xf_floatbar_button_free(xfContext* xfc, xfFloatbarButton* button)
 
 void xf_floatbar_free(xfFloatbar* floatbar)
 {
-	size_t i = 0;
 	size_t size = 0;
 	xfContext* xfc = NULL;
 
@@ -911,7 +909,7 @@ void xf_floatbar_free(xfFloatbar* floatbar)
 
 	size = ARRAYSIZE(floatbar->buttons);
 
-	for (i = 0; i < size; i++)
+	for (size_t i = 0; i < size; i++)
 	{
 		xf_floatbar_button_free(xfc, floatbar->buttons[i]);
 		floatbar->buttons[i] = NULL;

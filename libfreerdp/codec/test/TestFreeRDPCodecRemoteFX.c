@@ -809,10 +809,9 @@ static INLINE size_t fuzzyCompare(BYTE b1, BYTE b2)
 
 static BOOL fuzzyCompareImage(const UINT32* crefImage, const BYTE* img, size_t npixels)
 {
-	size_t i = 0;
 	size_t totalDelta = 0;
 
-	for (i = 0; i < npixels; i++, crefImage++)
+	for (size_t i = 0; i < npixels; i++, crefImage++)
 	{
 		BYTE A = *img++;
 		BYTE R = *img++;

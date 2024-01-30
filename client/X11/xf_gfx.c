@@ -40,7 +40,6 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	rdpGdi* gdi = NULL;
 	const rdpSettings* settings = NULL;
 	UINT32 nbRects = 0;
-	UINT32 x = 0;
 	double sx = NAN;
 	double sy = NAN;
 	const RECTANGLE_16* rects = NULL;
@@ -71,7 +70,7 @@ static UINT xf_OutputUpdate(xfContext* xfc, xfGfxSurface* surface)
 	if (!(rects = region16_rects(&surface->gdi.invalidRegion, &nbRects)))
 		return CHANNEL_RC_OK;
 
-	for (x = 0; x < nbRects; x++)
+	for (UINT32 x = 0; x < nbRects; x++)
 	{
 		const RECTANGLE_16* rect = &rects[x];
 		const UINT32 nXSrc = rect->left;
@@ -134,7 +133,6 @@ static UINT xf_WindowUpdate(RdpgfxClientContext* context, xfGfxSurface* surface)
 static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 {
 	UINT16 count = 0;
-	UINT32 index = 0;
 	UINT status = CHANNEL_RC_OK;
 	UINT16* pSurfaceIds = NULL;
 	rdpGdi* gdi = (rdpGdi*)context->custom;
@@ -150,7 +148,7 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 	EnterCriticalSection(&context->mux);
 	context->GetSurfaceIds(context, &pSurfaceIds, &count);
 
-	for (index = 0; index < count; index++)
+	for (UINT32 index = 0; index < count; index++)
 	{
 		xfGfxSurface* surface = (xfGfxSurface*)context->GetSurfaceData(context, pSurfaceIds[index]);
 
@@ -181,7 +179,6 @@ static UINT xf_UpdateSurfaces(RdpgfxClientContext* context)
 UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 height)
 {
 	UINT16 count = 0;
-	UINT32 index = 0;
 	UINT status = ERROR_INTERNAL_ERROR;
 	RECTANGLE_16 invalidRect = { 0 };
 	RECTANGLE_16 intersection = { 0 };
@@ -208,7 +205,7 @@ UINT xf_OutputExpose(xfContext* xfc, UINT32 x, UINT32 y, UINT32 width, UINT32 he
 		free(pSurfaceIds);
 		return CHANNEL_RC_OK;
 	}
-	for (index = 0; index < count; index++)
+	for (UINT32 index = 0; index < count; index++)
 	{
 		RECTANGLE_16 surfaceRect = { 0 };
 		xfGfxSurface* surface = (xfGfxSurface*)context->GetSurfaceData(context, pSurfaceIds[index]);

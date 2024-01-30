@@ -384,7 +384,6 @@ int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width, i
 #if defined(WITH_XEXT)
 		if (hdl->has_shape)
 		{
-			int i;
 			XRectangle* xrects = NULL;
 
 			if (nr_rects == 0)
@@ -402,7 +401,7 @@ int tsmf_window_resize(TSMFGstreamerDecoder* decoder, int x, int y, int width, i
 
 			if (xrects)
 			{
-				for (i = 0; i < nr_rects; i++)
+				for (int i = 0; i < nr_rects; i++)
 				{
 					xrects[i].x = rects[i].x - x;
 					xrects[i].y = rects[i].y - y;

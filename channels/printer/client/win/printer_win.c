@@ -313,7 +313,6 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 {
 	rdpPrinter** printers;
 	int num_printers;
-	int i;
 	PRINTER_INFO_2* prninfo = NULL;
 	DWORD needed, returned;
 	BOOL haveDefault = FALSE;
@@ -359,7 +358,7 @@ static rdpPrinter** printer_win_enum_printers(rdpPrinterDriver* driver)
 
 	num_printers = 0;
 
-	for (i = 0; i < (int)returned; i++)
+	for (int i = 0; i < (int)returned; i++)
 	{
 		rdpPrinter* current = printers[num_printers];
 		current = printer_win_new_printer((rdpWinPrinterDriver*)driver, prninfo[i].pPrinterName,

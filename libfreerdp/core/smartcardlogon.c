@@ -611,12 +611,11 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 	{
 		NCryptProviderName* names = NULL;
 		DWORD nproviders = 0;
-		DWORD i = 0;
 
 #ifdef _WIN32
 		/* On Windows, mstsc first enumerates the legacy CAPI providers for usable certificates. */
 		DWORD provType, cbProvName = 0;
-		for (i = 0; CryptEnumProvidersW(i, NULL, 0, &provType, NULL, &cbProvName); ++i)
+		for (DWORD i = 0; CryptEnumProvidersW(i, NULL, 0, &provType, NULL, &cbProvName); ++i)
 		{
 			char providerNameStr[256] = { 0 };
 			LPWSTR szProvName = malloc(cbProvName * sizeof(WCHAR));
@@ -656,7 +655,7 @@ static BOOL smartcard_hw_enumerateCerts(const rdpSettings* settings, LPCWSTR csp
 			goto out;
 		}
 
-		for (i = 0; i < nproviders; i++)
+		for (DWORD i = 0; i < nproviders; i++)
 		{
 			char providerNameStr[256] = { 0 };
 			const NCryptProviderName* name = &names[i];

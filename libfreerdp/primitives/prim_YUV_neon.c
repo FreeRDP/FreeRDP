@@ -138,7 +138,6 @@ static INLINE pstatus_t neon_YUV420ToX(const BYTE* const WINPR_RESTRICT pSrc[3],
                                        const uint8_t rPos, const uint8_t gPos, const uint8_t bPos,
                                        const uint8_t aPos)
 {
-	UINT32 y;
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
 	const DWORD pad = nWidth % 16;
@@ -148,7 +147,7 @@ static INLINE pstatus_t neon_YUV420ToX(const BYTE* const WINPR_RESTRICT pSrc[3],
 	const UINT32 dPad = dstStep - roi->width * 4;
 	const int16x8_t c128 = vdupq_n_s16(128);
 
-	for (y = 0; y < nHeight; y += 2)
+	for (UINT32 y = 0; y < nHeight; y += 2)
 	{
 		const uint8_t* pY1 = pSrc[0] + y * srcStep[0];
 		const uint8_t* pY2 = pY1 + srcStep[0];
@@ -156,10 +155,9 @@ static INLINE pstatus_t neon_YUV420ToX(const BYTE* const WINPR_RESTRICT pSrc[3],
 		const uint8_t* pV = pSrc[2] + (y / 2) * srcStep[2];
 		uint8_t* pRGB1 = pDst + y * dstStep;
 		uint8_t* pRGB2 = pRGB1 + dstStep;
-		UINT32 x;
 		const BOOL lastY = y >= nHeight - 1;
 
-		for (x = 0; x < nWidth - pad;)
+		for (UINT32 x = 0; x < nWidth - pad;)
 		{
 			const uint8x8_t Uraw = vld1_u8(pU);
 			const uint8x8x2_t Uu = vzip_u8(Uraw, Uraw);
@@ -289,7 +287,6 @@ static INLINE pstatus_t neon_YUV444ToX(const BYTE* const WINPR_RESTRICT pSrc[3],
                                        const uint8_t rPos, const uint8_t gPos, const uint8_t bPos,
                                        const uint8_t aPos)
 {
-	UINT32 y;
 	const UINT32 nWidth = roi->width;
 	const UINT32 nHeight = roi->height;
 	const UINT32 yPad = srcStep[0] - roi->width;
@@ -303,11 +300,9 @@ static INLINE pstatus_t neon_YUV444ToX(const BYTE* const WINPR_RESTRICT pSrc[3],
 	const int16x8_t c128 = vdupq_n_s16(128);
 	const DWORD pad = nWidth % 8;
 
-	for (y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
-		UINT32 x;
-
-		for (x = 0; x < nWidth - pad; x += 8)
+		for (UINT32 x = 0; x < nWidth - pad; x += 8)
 		{
 			const uint8x8_t Yu = vld1_u8(pY);
 			const int16x8_t Y = vreinterpretq_s16_u16(vmovl_u8(Yu));
@@ -325,7 +320,7 @@ static INLINE pstatus_t neon_YUV444ToX(const BYTE* const WINPR_RESTRICT pSrc[3],
 			pV += 8;
 		}
 
-		for (x = 0; x < pad; x++)
+		for (UINT32 x = 0; x < pad; x++)
 		{
 			const BYTE Y = *pY++;
 			const BYTE U = *pU++;
@@ -381,7 +376,6 @@ static pstatus_t neon_LumaToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[3],
                                    const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDstRaw[3],
                                    const UINT32 dstStep[3], const RECTANGLE_16* WINPR_RESTRICT roi)
 {
-	UINT32 x, y;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
@@ -396,7 +390,7 @@ static pstatus_t neon_LumaToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[3],
 
 	/* Y data is already here... */
 	/* B1 */
-	for (y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		const BYTE* Ym = pSrc[0] + srcStep[0] * y;
 		BYTE* pY = pDst[0] + dstStep[0] * y;
@@ -405,7 +399,7 @@ static pstatus_t neon_LumaToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[3],
 
 	/* The first half of U, V are already here part of this frame. */
 	/* B2 and B3 */
-	for (y = 0; y < halfHeight; y++)
+	for (UINT32 y = 0; y < halfHeight; y++)
 	{
 		const UINT32 val2y = (2 * y + evenY);
 		const BYTE* Um = pSrc[1] + srcStep[1] * y;
@@ -415,7 +409,7 @@ static pstatus_t neon_LumaToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[3],
 		BYTE* pU1 = pU + dstStep[1];
 		BYTE* pV1 = pV + dstStep[2];
 
-		for (x = 0; x + 16 < halfWidth; x += 16)
+		for (UINT32 x = 0; x + 16 < halfWidth; x += 16)
 		{
 			{
 				const uint8x16_t u = vld1q_u8(Um);
@@ -469,10 +463,9 @@ static pstatus_t neon_ChromaFilter(BYTE* WINPR_RESTRICT pDst[3], const UINT32 ds
 	const UINT32 halfHeight = (nHeight + 1) / 2;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
 	const UINT32 halfPad = halfWidth % 16;
-	UINT32 x, y;
 
 	/* Filter */
-	for (y = roi->top; y < halfHeight + roi->top; y++)
+	for (UINT32 y = roi->top; y < halfHeight + roi->top; y++)
 	{
 		const UINT32 val2y = (y * 2 + evenY);
 		const UINT32 val2y1 = val2y + oddY;
@@ -484,7 +477,7 @@ static pstatus_t neon_ChromaFilter(BYTE* WINPR_RESTRICT pDst[3], const UINT32 ds
 		if (val2y1 > nHeight)
 			continue;
 
-		for (x = roi->left / 2; x < halfWidth + roi->left / 2 - halfPad; x += 16)
+		for (UINT32 x = roi->left / 2; x < halfWidth + roi->left / 2 - halfPad; x += 16)
 		{
 			{
 				/* U = (U2x,2y << 2) - U2x1,2y - U2x,2y1 - U2x1,2y1 */
@@ -548,7 +541,6 @@ static pstatus_t neon_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[
 	const UINT32 mod = 16;
 	UINT32 uY = 0;
 	UINT32 vY = 0;
-	UINT32 x, y;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth) / 2;
@@ -569,7 +561,7 @@ static pstatus_t neon_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[
 
 	/* The second half of U and V is a bit more tricky... */
 	/* B4 and B5 */
-	for (y = 0; y < padHeigth; y++)
+	for (UINT32 y = 0; y < padHeigth; y++)
 	{
 		const BYTE* Ya = pSrc[0] + srcStep[0] * y;
 		BYTE* pX;
@@ -597,7 +589,7 @@ static pstatus_t neon_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[
 	}
 
 	/* B6 and B7 */
-	for (y = 0; y < halfHeight; y++)
+	for (UINT32 y = 0; y < halfHeight; y++)
 	{
 		const UINT32 val2y = (y * 2 + evenY);
 		const BYTE* Ua = pSrc[1] + srcStep[1] * y;
@@ -605,7 +597,7 @@ static pstatus_t neon_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[
 		BYTE* pU = pDst[1] + dstStep[1] * val2y;
 		BYTE* pV = pDst[2] + dstStep[2] * val2y;
 
-		for (x = 0; x < halfWidth - halfPad; x += 16)
+		for (UINT32 x = 0; x < halfWidth - halfPad; x += 16)
 		{
 			{
 				uint8x16x2_t u = vld2q_u8(&pU[2 * x]);
@@ -637,7 +629,6 @@ static pstatus_t neon_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[3],
                                        const UINT32 dstStep[3],
                                        const RECTANGLE_16* WINPR_RESTRICT roi)
 {
-	UINT32 x, y;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
@@ -647,7 +638,7 @@ static pstatus_t neon_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[3],
 	const UINT32 quaterPad = quaterWidth % 16;
 
 	/* B4 and B5: odd UV values for width/2, height */
-	for (y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		const UINT32 yTop = y + roi->top;
 		const BYTE* pYaU = pSrc[0] + srcStep[0] * yTop + roi->left / 2;
@@ -655,7 +646,7 @@ static pstatus_t neon_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[3],
 		BYTE* pU = pDst[1] + dstStep[1] * yTop + roi->left;
 		BYTE* pV = pDst[2] + dstStep[2] * yTop + roi->left;
 
-		for (x = 0; x < halfWidth - halfPad; x += 16)
+		for (UINT32 x = 0; x < halfWidth - halfPad; x += 16)
 		{
 			{
 				uint8x16x2_t u = vld2q_u8(&pU[2 * x]);
@@ -678,7 +669,7 @@ static pstatus_t neon_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[3],
 	}
 
 	/* B6 - B9 */
-	for (y = 0; y < halfHeight; y++)
+	for (UINT32 y = 0; y < halfHeight; y++)
 	{
 		const BYTE* pUaU = pSrc[1] + srcStep[1] * (y + roi->top / 2) + roi->left / 4;
 		const BYTE* pUaV = pUaU + nTotalWidth / 4;
@@ -687,7 +678,7 @@ static pstatus_t neon_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[3],
 		BYTE* pU = pDst[1] + dstStep[1] * (2 * y + 1 + roi->top) + roi->left;
 		BYTE* pV = pDst[2] + dstStep[2] * (2 * y + 1 + roi->top) + roi->left;
 
-		for (x = 0; x < quaterWidth - quaterPad; x += 16)
+		for (UINT32 x = 0; x < quaterWidth - quaterPad; x += 16)
 		{
 			{
 				uint8x16x4_t u = vld4q_u8(&pU[4 * x]);

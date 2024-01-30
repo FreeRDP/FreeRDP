@@ -783,11 +783,9 @@ HRESULT PathCchRemoveFileSpecW(PWSTR pszPath, size_t cchPath)
 
 HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags)
 {
-	size_t index = 0;
-
 	if (dwFlags == PATH_STYLE_WINDOWS)
 	{
-		for (index = 0; index < cchPath; index++)
+		for (size_t index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_SLASH_CHR)
 				pszPath[index] = PATH_BACKSLASH_CHR;
@@ -795,7 +793,7 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 	}
 	else if (dwFlags == PATH_STYLE_UNIX)
 	{
-		for (index = 0; index < cchPath; index++)
+		for (size_t index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_BACKSLASH_CHR)
 				pszPath[index] = PATH_SLASH_CHR;
@@ -806,7 +804,7 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 #if (PATH_SEPARATOR_CHR == PATH_BACKSLASH_CHR)
 		/* Unix-style to Windows-style */
 
-		for (index = 0; index < cchPath; index++)
+		for (size_t index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_SLASH_CHR)
 				pszPath[index] = PATH_BACKSLASH_CHR;
@@ -814,7 +812,7 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 #elif (PATH_SEPARATOR_CHR == PATH_SLASH_CHR)
 		/* Windows-style to Unix-style */
 
-		for (index = 0; index < cchPath; index++)
+		for (size_t index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_BACKSLASH_CHR)
 				pszPath[index] = PATH_SLASH_CHR;
@@ -835,11 +833,9 @@ HRESULT PathCchConvertStyleA(PSTR pszPath, size_t cchPath, unsigned long dwFlags
 
 HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlags)
 {
-	size_t index = 0;
-
 	if (dwFlags == PATH_STYLE_WINDOWS)
 	{
-		for (index = 0; index < cchPath; index++)
+		for (size_t index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_SLASH_CHR)
 				pszPath[index] = PATH_BACKSLASH_CHR;
@@ -847,7 +843,7 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 	}
 	else if (dwFlags == PATH_STYLE_UNIX)
 	{
-		for (index = 0; index < cchPath; index++)
+		for (size_t index = 0; index < cchPath; index++)
 		{
 			if (pszPath[index] == PATH_BACKSLASH_CHR)
 				pszPath[index] = PATH_SLASH_CHR;
@@ -859,7 +855,7 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 		{
 			/* Unix-style to Windows-style */
 
-			for (index = 0; index < cchPath; index++)
+			for (size_t index = 0; index < cchPath; index++)
 			{
 				if (pszPath[index] == PATH_SLASH_CHR)
 					pszPath[index] = PATH_BACKSLASH_CHR;
@@ -869,7 +865,7 @@ HRESULT PathCchConvertStyleW(PWSTR pszPath, size_t cchPath, unsigned long dwFlag
 		{
 			/* Windows-style to Unix-style */
 
-			for (index = 0; index < cchPath; index++)
+			for (size_t index = 0; index < cchPath; index++)
 			{
 				if (pszPath[index] == PATH_BACKSLASH_CHR)
 					pszPath[index] = PATH_SLASH_CHR;

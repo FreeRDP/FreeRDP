@@ -71,7 +71,7 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR* deviceStr)
 	IMMDevice* pEndpoint = NULL;
 	IPropertyStore* pProps = NULL;
 	LPWSTR pwszID = NULL;
-	unsigned int count, i;
+	unsigned int count;
 
 	CoInitialize(NULL);
 	hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL, &IID_IMMDeviceEnumerator,
@@ -99,7 +99,7 @@ int wf_wasapi_get_device_string(LPWSTR pattern, LPWSTR* deviceStr)
 		exit(1);
 	}
 
-	for (i = 0; i < count; ++i)
+	for (unsigned int i = 0; i < count; ++i)
 	{
 		PROPVARIANT nameVar;
 		PropVariantInit(&nameVar);

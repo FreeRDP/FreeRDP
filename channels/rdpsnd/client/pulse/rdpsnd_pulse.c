@@ -89,7 +89,6 @@ static BOOL rdpsnd_pulse_format_supported(rdpsndDevicePlugin* device, const AUDI
 static void rdpsnd_pulse_get_sink_info(pa_context* c, const pa_sink_info* i, int eol,
                                        void* userdata)
 {
-	uint8_t x = 0;
 	UINT16 dwVolumeLeft = ((50 * 0xFFFF) / 100);  /* 50% */
 	UINT16 dwVolumeRight = ((50 * 0xFFFF) / 100); /* 50% */
 	rdpsndPulsePlugin* pulse = (rdpsndPulsePlugin*)userdata;
@@ -98,7 +97,7 @@ static void rdpsnd_pulse_get_sink_info(pa_context* c, const pa_sink_info* i, int
 	if (!rdpsnd_check_pulse(pulse, FALSE) || !i)
 		return;
 
-	for (x = 0; x < i->volume.channels; x++)
+	for (uint8_t x = 0; x < i->volume.channels; x++)
 	{
 		pa_volume_t volume = i->volume.values[x];
 

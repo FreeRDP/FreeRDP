@@ -143,21 +143,15 @@ static void StreamPool_AddUsed(wStreamPool* pool, wStream* s)
 
 static void StreamPool_RemoveUsed(wStreamPool* pool, wStream* s)
 {
-	size_t index = 0;
-	BOOL found = FALSE;
-
 	WINPR_ASSERT(pool);
-	for (index = 0; index < pool->uSize; index++)
+	for (size_t index = 0; index < pool->uSize; index++)
 	{
 		if (pool->uArray[index] == s)
 		{
-			found = TRUE;
+			StreamPool_ShiftUsed(pool, index, -1);
 			break;
 		}
 	}
-
-	if (found)
-		StreamPool_ShiftUsed(pool, index, -1);
 }
 
 static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index, INT64 count)
@@ -192,8 +186,7 @@ static void StreamPool_ShiftAvailable(wStreamPool* pool, size_t index, INT64 cou
 
 wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 {
-	size_t index = 0;
-	SSIZE_T foundIndex = 0;
+	SSIZE_T foundIndex = -1;
 	wStream* s = NULL;
 
 	StreamPool_Lock(pool);
@@ -201,9 +194,7 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 	if (size == 0)
 		size = pool->defaultSize;
 
-	foundIndex = -1;
-
-	for (index = 0; index < pool->aSize; index++)
+	for (size_t index = 0; index < pool->aSize; index++)
 	{
 		s = pool->aArray[index];
 
@@ -311,13 +302,12 @@ void Stream_Release(wStream* s)
 
 wStream* StreamPool_Find(wStreamPool* pool, BYTE* ptr)
 {
-	size_t index = 0;
 	wStream* s = NULL;
 	BOOL found = FALSE;
 
 	StreamPool_Lock(pool);
 
-	for (index = 0; index < pool->uSize; index++)
+	for (size_t index = 0; index < pool->uSize; index++)
 	{
 		s = pool->uArray[index];
 

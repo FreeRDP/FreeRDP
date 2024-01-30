@@ -173,7 +173,6 @@ static UINT rdpdr_process_smartcard_capset(rdpdrPlugin* rdpdr, wStream* s,
 UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 {
 	UINT status = CHANNEL_RC_OK;
-	UINT16 i = 0;
 	UINT16 numCapabilities = 0;
 
 	if (!rdpdr || !s)
@@ -188,7 +187,7 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 	Stream_Read_UINT16(s, numCapabilities);
 	Stream_Seek(s, 2); /* pad (2 bytes) */
 
-	for (i = 0; i < numCapabilities; i++)
+	for (UINT16 i = 0; i < numCapabilities; i++)
 	{
 		RDPDR_CAPABILITY_HEADER header = { 0 };
 		UINT error = rdpdr_read_capset_header(rdpdr->log, s, &header);

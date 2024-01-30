@@ -899,7 +899,6 @@ static void peer_free(t_peer* peer)
 static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT32* ports,
                                      UINT32 count, UINT16 port, UINT32 timeout)
 {
-	UINT32 index = 0;
 	UINT32 sindex = count;
 	int status = -1;
 	SOCKET sockfd = INVALID_SOCKET;
@@ -917,7 +916,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT
 		return -1;
 	}
 
-	for (index = 0; index < count; index++)
+	for (UINT32 index = 0; index < count; index++)
 	{
 		int curPort = port;
 
@@ -955,7 +954,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT
 		peers[index].result = result;
 	}
 
-	for (index = 0; index < count; index++)
+	for (UINT32 index = 0; index < count; index++)
 	{
 		sockfd = peers[index].s;
 		addr = peers[index].addr;
@@ -982,7 +981,7 @@ static int freerdp_tcp_connect_multi(rdpContext* context, char** hostnames, UINT
 	else
 		freerdp_set_last_error_log(context, FREERDP_ERROR_CONNECT_CANCELLED);
 
-	for (index = 0; index < count; index++)
+	for (UINT32 index = 0; index < count; index++)
 		peer_free(&peers[index]);
 
 	free(peers);

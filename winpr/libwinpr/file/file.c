@@ -1075,8 +1075,6 @@ BOOL GetDiskFreeSpaceW(LPCWSTR lpwRootPathName, LPDWORD lpSectorsPerCluster,
  */
 BOOL ValidFileNameComponent(LPCWSTR lpFileName)
 {
-	LPCWSTR c = NULL;
-
 	if (!lpFileName)
 		return FALSE;
 
@@ -1137,7 +1135,7 @@ BOOL ValidFileNameComponent(LPCWSTR lpFileName)
 	}
 
 	/* Reserved characters */
-	for (c = lpFileName; *c; c++)
+	for (LPCWSTR c = lpFileName; *c; c++)
 	{
 		if ((*c == L'<') || (*c == L'>') || (*c == L':') || (*c == L'"') || (*c == L'/') ||
 		    (*c == L'\\') || (*c == L'|') || (*c == L'?') || (*c == L'*'))

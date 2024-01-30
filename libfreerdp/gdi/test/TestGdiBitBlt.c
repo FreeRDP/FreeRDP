@@ -409,7 +409,6 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 {
 	BOOL rc = FALSE;
 	BOOL failed = FALSE;
-	UINT32 x = 0;
 	HGDI_DC hdcSrc = NULL;
 	HGDI_DC hdcDst = NULL;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
@@ -463,7 +462,7 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 	gdiPalette* hPalette = &g;
 	g.format = DstFormat;
 
-	for (x = 0; x < 256; x++)
+	for (UINT32 x = 0; x < 256; x++)
 		g.palette[x] = FreeRDPGetColor(DstFormat, x, x, x, 0xFF);
 
 	if (!(hdcSrc = gdi_GetDC()))
@@ -499,7 +498,7 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 	if (!hBmpDstOriginal)
 		goto fail;
 
-	for (x = 0; x < number_tests; x++)
+	for (UINT32 x = 0; x < number_tests; x++)
 	{
 		tests[x].bmp = test_convert_to_bitmap(tests[x].src, RawFormat, 0, 0, 0, SrcFormat, 0, 0, 0,
 		                                      16, 16, hPalette);
@@ -511,7 +510,7 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 	brush = gdi_CreateSolidBrush(0x123456);
 	gdi_SelectObject(hdcDst, (HGDIOBJECT)brush);
 
-	for (x = 0; x < number_tests; x++)
+	for (UINT32 x = 0; x < number_tests; x++)
 	{
 		if (!test_rop(hdcDst, hdcSrc, hBmpSrc, hBmpDst, hBmpDstOriginal, tests[x].rop, tests[x].bmp,
 		              hPalette))
@@ -523,7 +522,7 @@ static BOOL test_gdi_BitBlt(UINT32 SrcFormat, UINT32 DstFormat)
 	rc = !failed;
 fail:
 
-	for (x = 0; x < number_tests; x++)
+	for (UINT32 x = 0; x < number_tests; x++)
 		gdi_DeleteObject((HGDIOBJECT)tests[x].bmp);
 
 	gdi_DeleteObject((HGDIOBJECT)hBmpSrc);

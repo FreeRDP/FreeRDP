@@ -746,7 +746,6 @@ static BOOL freerdp_get_system_language_and_country_codes(char* language, size_t
 
 static const SYSTEM_LOCALE* freerdp_detect_system_locale(void)
 {
-	size_t i = 0;
 	char language[LOCALE_LANGUAGE_LEN] = { 0 };
 	char country[LOCALE_COUNTRY_LEN] = { 0 };
 	const SYSTEM_LOCALE* locale = NULL;
@@ -754,7 +753,7 @@ static const SYSTEM_LOCALE* freerdp_detect_system_locale(void)
 	freerdp_get_system_language_and_country_codes(language, ARRAYSIZE(language), country,
 	                                              ARRAYSIZE(country));
 
-	for (i = 0; i < ARRAYSIZE(SYSTEM_LOCALE_TABLE); i++)
+	for (size_t i = 0; i < ARRAYSIZE(SYSTEM_LOCALE_TABLE); i++)
 	{
 		const SYSTEM_LOCALE* current = &SYSTEM_LOCALE_TABLE[i];
 
@@ -781,9 +780,7 @@ DWORD freerdp_get_system_locale_id(void)
 
 const char* freerdp_get_system_locale_name_from_id(DWORD localeId)
 {
-	size_t index = 0;
-
-	for (index = 0; index < ARRAYSIZE(LOCALE_NAME_TABLE); index++)
+	for (size_t index = 0; index < ARRAYSIZE(LOCALE_NAME_TABLE); index++)
 	{
 		const LOCALE_NAME* const current = &LOCALE_NAME_TABLE[index];
 

@@ -377,9 +377,8 @@ const char* gdi_rop3_code_string(BYTE code)
 const char* gdi_rop3_string(DWORD rop)
 {
 	const size_t count = sizeof(rop3_code_table) / sizeof(rop3_code_table[0]);
-	size_t x = 0;
 
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		if (rop3_code_table[x].code == rop)
 			return rop3_code_table[x].name;
@@ -469,8 +468,6 @@ void gdi_bitmap_free_ex(gdiBitmap* bitmap)
 
 BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 {
-	UINT32 index = 0;
-
 	if (!context || !bitmapUpdate || !context->gdi || !context->codecs)
 	{
 		WLog_ERR(TAG,
@@ -481,7 +478,7 @@ BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 		return FALSE;
 	}
 
-	for (index = 0; index < bitmapUpdate->number; index++)
+	for (UINT32 index = 0; index < bitmapUpdate->number; index++)
 	{
 		const BITMAP_DATA* bitmap = &(bitmapUpdate->rectangles[index]);
 		rdpBitmap* bmp = Bitmap_Alloc(context);
@@ -527,7 +524,6 @@ BOOL gdi_bitmap_update(rdpContext* context, const BITMAP_UPDATE* bitmapUpdate)
 
 static BOOL gdi_palette_update(rdpContext* context, const PALETTE_UPDATE* palette)
 {
-	UINT32 index = 0;
 	rdpGdi* gdi = NULL;
 
 	if (!context || !palette)
@@ -536,7 +532,7 @@ static BOOL gdi_palette_update(rdpContext* context, const PALETTE_UPDATE* palett
 	gdi = context->gdi;
 	gdi->palette.format = gdi->dstFormat;
 
-	for (index = 0; index < palette->number; index++)
+	for (UINT32 index = 0; index < palette->number; index++)
 	{
 		const PALETTE_ENTRY* pe = &(palette->entries[index]);
 		gdi->palette.palette[index] =
@@ -725,7 +721,6 @@ static BOOL gdi_opaque_rect(rdpContext* context, const OPAQUE_RECT_ORDER* opaque
 static BOOL gdi_multi_opaque_rect(rdpContext* context,
                                   const MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
-	UINT32 i = 0;
 	GDI_RECT rect;
 	HGDI_BRUSH hBrush = NULL;
 	UINT32 brush_color = 0;
@@ -740,7 +735,7 @@ static BOOL gdi_multi_opaque_rect(rdpContext* context,
 	if (!hBrush)
 		return FALSE;
 
-	for (i = 0; i < multi_opaque_rect->numRectangles; i++)
+	for (UINT32 i = 0; i < multi_opaque_rect->numRectangles; i++)
 	{
 		const DELTA_RECT* rectangle = &multi_opaque_rect->rectangles[i];
 		INT32 x = rectangle->left;
@@ -790,7 +785,6 @@ static BOOL gdi_line_to(rdpContext* context, const LINE_TO_ORDER* lineTo)
 
 static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 {
-	UINT32 i = 0;
 	INT32 x = 0;
 	INT32 y = 0;
 	UINT32 color = 0;
@@ -814,7 +808,7 @@ static BOOL gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 	gdi_MoveToEx(gdi->drawing->hdc, x, y, NULL);
 	points = polyline->points;
 
-	for (i = 0; i < polyline->numDeltaEntries; i++)
+	for (UINT32 i = 0; i < polyline->numDeltaEntries; i++)
 	{
 		x += points[i].x;
 		y += points[i].y;

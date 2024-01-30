@@ -37,16 +37,13 @@ static pstatus_t general_alphaComp_argb(const BYTE* pSrc1, UINT32 src1Step, cons
                                         UINT32 src2Step, BYTE* pDst, UINT32 dstStep, UINT32 width,
                                         UINT32 height)
 {
-	UINT32 y = 0;
-
-	for (y = 0; y < height; y++)
+	for (UINT32 y = 0; y < height; y++)
 	{
 		const UINT32* sptr1 = (const UINT32*)(pSrc1 + y * src1Step);
 		const UINT32* sptr2 = (const UINT32*)(pSrc2 + y * src2Step);
 		UINT32* dptr = (UINT32*)(pDst + y * dstStep);
-		UINT32 x = 0;
 
-		for (x = 0; x < width; x++)
+		for (UINT32 x = 0; x < width; x++)
 		{
 			const UINT32 src1 = *sptr1++;
 			const UINT32 src2 = *sptr2++;

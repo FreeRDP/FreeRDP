@@ -119,11 +119,9 @@ wObject* Queue_Object(wQueue* queue)
 
 void Queue_Clear(wQueue* queue)
 {
-	size_t index = 0;
-
 	Queue_Lock(queue);
 
-	for (index = queue->head; index != queue->tail; index = (index + 1) % queue->capacity)
+	for (size_t index = queue->head; index != queue->tail; index = (index + 1) % queue->capacity)
 	{
 		if (queue->object.fnObjectFree)
 			queue->object.fnObjectFree(queue->array[index]);
@@ -143,12 +141,11 @@ void Queue_Clear(wQueue* queue)
 
 BOOL Queue_Contains(wQueue* queue, const void* obj)
 {
-	size_t index = 0;
 	BOOL found = FALSE;
 
 	Queue_Lock(queue);
 
-	for (index = 0; index < queue->tail; index++)
+	for (size_t index = 0; index < queue->tail; index++)
 	{
 		if (queue->object.fnObjectEquals(queue->array[index], obj))
 		{

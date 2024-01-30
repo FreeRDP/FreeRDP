@@ -272,7 +272,6 @@ static int mac_shadow_capture_stop(macShadowSubsystem* subsystem)
 
 static int mac_shadow_capture_get_dirty_region(macShadowSubsystem* subsystem)
 {
-	size_t index;
 	size_t numRects;
 	const CGRect* rects;
 	RECTANGLE_16 invalidRect;
@@ -283,7 +282,7 @@ static int mac_shadow_capture_get_dirty_region(macShadowSubsystem* subsystem)
 	if (!numRects)
 		return -1;
 
-	for (index = 0; index < numRects; index++)
+	for (size_t index = 0; index < numRects; index++)
 	{
 		invalidRect.left = (UINT16)rects[index].origin.x;
 		invalidRect.top = (UINT16)rects[index].origin.y;
@@ -311,7 +310,6 @@ static int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat, int n
 {
 	BYTE* pSrcPixel;
 	BYTE* pDstPixel;
-	int x, y;
 	int nSrcPad;
 	int nDstPad;
 	int srcBitsPerPixel;
@@ -335,9 +333,9 @@ static int freerdp_image_copy_from_retina(BYTE* pDstData, DWORD DstFormat, int n
 	pSrcPixel = &pSrcData[(nYSrc * nSrcStep) + (nXSrc * 4)];
 	pDstPixel = &pDstData[(nYDst * nDstStep) + (nXDst * 4)];
 
-	for (y = 0; y < nHeight; y++)
+	for (int y = 0; y < nHeight; y++)
 	{
-		for (x = 0; x < nWidth; x++)
+		for (int x = 0; x < nWidth; x++)
 		{
 			UINT32 R, G, B;
 			UINT32 color;

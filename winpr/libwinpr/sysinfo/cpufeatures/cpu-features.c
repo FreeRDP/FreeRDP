@@ -428,7 +428,7 @@ static void cpulist_parse(CpuList* list, const char* line, int line_len)
 	 */
 	while (p < end && *p != '\n')
 	{
-		int val, start_value, end_value;
+		int start_value, end_value;
 		/* Find the end of current item, and put it into 'q' */
 		q = memchr(p, ',', end - p);
 
@@ -457,7 +457,7 @@ static void cpulist_parse(CpuList* list, const char* line, int line_len)
 		}
 
 		/* Set bits CPU list bits */
-		for (val = start_value; val <= end_value; val++)
+		for (int val = start_value; val <= end_value; val++)
 		{
 			cpulist_set(list, val);
 		}
@@ -973,10 +973,9 @@ static void android_cpuInit(void)
 			{ "CPU part", 'x', 4, 12 },
 			{ "CPU revision", 'd', 0, 4 },
 		};
-		size_t i;
 		D("Parsing /proc/cpuinfo to recover CPUID\n");
 
-		for (i = 0; i < sizeof(cpu_id_entries) / sizeof(cpu_id_entries[0]); ++i)
+		for (size_t i = 0; i < sizeof(cpu_id_entries) / sizeof(cpu_id_entries[0]); ++i)
 		{
 			const struct CpuIdEntry* entry = &cpu_id_entries[i];
 			char* value = extract_cpuinfo_field(cpuinfo, cpuinfo_len, entry->field);
@@ -1022,9 +1021,8 @@ static void android_cpuInit(void)
 			{ 0x510006f2, ANDROID_CPU_ARM_FEATURE_IDIV_ARM | ANDROID_CPU_ARM_FEATURE_IDIV_THUMB2 },
 			{ 0x510006f3, ANDROID_CPU_ARM_FEATURE_IDIV_ARM | ANDROID_CPU_ARM_FEATURE_IDIV_THUMB2 },
 		};
-		size_t n;
 
-		for (n = 0; n < sizeof(cpu_fixes) / sizeof(cpu_fixes[0]); ++n)
+		for (size_t n = 0; n < sizeof(cpu_fixes) / sizeof(cpu_fixes[0]); ++n)
 		{
 			const struct CpuFix* entry = &cpu_fixes[n];
 

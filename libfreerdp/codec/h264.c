@@ -122,8 +122,6 @@ INT32 avc420_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize
 static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
                                     RDPGFX_H264_METABLOCK* meta, size_t count)
 {
-	size_t x = 0;
-
 	/* [MS-RDPEGFX] 2.2.4.4.2 RDPGFX_AVC420_QUANT_QUALITY */
 	if (!meta || (QP > UINT8_MAX))
 	{
@@ -143,7 +141,7 @@ static BOOL allocate_h264_metablock(UINT32 QP, RECTANGLE_16* rectangles,
 	if (!meta->quantQualityVals || !meta->regionRects)
 		return FALSE;
 	meta->numRegionRects = (UINT32)count;
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		RDPGFX_H264_QUANT_QUALITY* cur = &meta->quantQualityVals[x];
 		cur->qp = (UINT8)QP;
@@ -159,7 +157,7 @@ static INLINE BOOL diff_tile(const RECTANGLE_16* regionRect, BYTE* pYUVData[3],
                              BYTE* pOldYUVData[3], UINT32 const iStride[3])
 {
 	size_t size = 0;
-	size_t y = 0;
+
 	if (!regionRect || !pYUVData || !pOldYUVData || !iStride)
 		return FALSE;
 	size = regionRect->right - regionRect->left;
@@ -170,7 +168,7 @@ static INLINE BOOL diff_tile(const RECTANGLE_16* regionRect, BYTE* pYUVData[3],
 	if (regionRect->right / 2u > iStride[2])
 		return FALSE;
 
-	for (y = regionRect->top; y < regionRect->bottom; y++)
+	for (UINT16 y = regionRect->top; y < regionRect->bottom; y++)
 	{
 		const BYTE* cur0 = &pYUVData[0][y * iStride[0]];
 		const BYTE* cur1 = &pYUVData[1][y * iStride[1]];
@@ -213,11 +211,9 @@ static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE
 	}
 	else
 	{
-		size_t x = 0;
-		size_t y = 0;
-		for (y = regionRect->top; y < regionRect->bottom; y += 64)
+		for (size_t y = regionRect->top; y < regionRect->bottom; y += 64)
 		{
-			for (x = regionRect->left; x < regionRect->right; x += 64)
+			for (size_t x = regionRect->left; x < regionRect->right; x += 64)
 			{
 				RECTANGLE_16 rect;
 				rect.left = (UINT16)MIN(UINT16_MAX, regionRect->left + x);
@@ -240,7 +236,6 @@ INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
                       UINT32 nSrcWidth, UINT32 nSrcHeight, const RECTANGLE_16* regionRect,
                       BYTE** ppDstData, UINT32* pDstSize, RDPGFX_H264_METABLOCK* meta)
 {
-	size_t x = 0;
 	INT32 rc = -1;
 	BYTE* pYUVData[3] = { 0 };
 	const BYTE* pcYUVData[3] = { 0 };
@@ -257,7 +252,7 @@ INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 
 	if (h264->encodingBuffer)
 	{
-		for (x = 0; x < 3; x++)
+		for (size_t x = 0; x < 3; x++)
 		{
 			pYUVData[x] = h264->pYUVData[x];
 			pOldYUVData[x] = h264->pOldYUVData[x];
@@ -265,7 +260,7 @@ INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 	}
 	else
 	{
-		for (x = 0; x < 3; x++)
+		for (size_t x = 0; x < 3; x++)
 		{
 			pYUVData[x] = h264->pOldYUVData[x];
 			pOldYUVData[x] = h264->pYUVData[x];
@@ -287,7 +282,7 @@ INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat,
 		goto fail;
 	}
 
-	for (x = 0; x < 3; x++)
+	for (size_t x = 0; x < 3; x++)
 		pcYUVData[x] = pYUVData[x];
 
 	rc = h264->subsystem->Compress(h264, pcYUVData, h264->iStride, ppDstData, pDstSize);
@@ -633,8 +628,6 @@ static BOOL CALLBACK h264_register_subsystems(PINIT_ONCE once, PVOID param, PVOI
 
 static BOOL h264_context_init(H264_CONTEXT* h264)
 {
-	int i = 0;
-
 	if (!h264)
 		return FALSE;
 
@@ -646,7 +639,7 @@ static BOOL h264_context_init(H264_CONTEXT* h264)
 	h264->subsystem = NULL;
 	InitOnceExecuteOnce(&subsystems_once, h264_register_subsystems, NULL, NULL);
 
-	for (i = 0; i < MAX_SUBSYSTEMS; i++)
+	for (size_t i = 0; i < MAX_SUBSYSTEMS; i++)
 	{
 		const H264_CONTEXT_SUBSYSTEM* subsystem = subSystems[i];
 
@@ -709,11 +702,10 @@ void h264_context_free(H264_CONTEXT* h264)
 {
 	if (h264)
 	{
-		size_t x = 0;
 		if (h264->subsystem)
 			h264->subsystem->Uninit(h264);
 
-		for (x = 0; x < 3; x++)
+		for (size_t x = 0; x < 3; x++)
 		{
 			if (h264->Compressor)
 			{

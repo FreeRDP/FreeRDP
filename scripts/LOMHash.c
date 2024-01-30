@@ -24,12 +24,9 @@ BYTE minihash(UINT16 key)
 
 void buildhashtable(void)
 {
-	int i, j;
-	UINT16 h;
-
-	for (i = 0; i < 32; i++)
+	for (int i = 0; i < 32; i++)
 	{
-		h = hash(HuffCodeLOM[i]);
+		UINT16 h = hash(HuffCodeLOM[i]);
 
 		if (HashTable[h] != 0xffff)
 		{
@@ -60,11 +57,10 @@ BYTE getvalue(UINT16 huff)
 
 main()
 {
-	int i;
 	buildhashtable();
 	printf("static UINT16 HuffIndexLOM[32] = {\n");
 
-	for (i = 0; i < 32; i++)
+	for (int i = 0; i < 32; i++)
 	{
 		if (i == 31)
 			printf("0x%" PRIx16 " };\n", HashTable[i]);
@@ -72,7 +68,7 @@ main()
 			printf("0x%" PRIx16 ", ", HashTable[i]);
 	}
 
-	for (i = 0; i < 32; i++)
+	for (int i = 0; i < 32; i++)
 		if (i != getvalue(HuffCodeLOM[i]))
 			printf("Fail :( at %d : 0x%04" PRIx16 " got %" PRIu8 "\n", i, HuffCodeLOM[i],
 			       getvalue(HuffCodeLOM[i]));

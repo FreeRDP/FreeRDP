@@ -37,17 +37,17 @@ AQRecorderState recorderState;
 static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 {
 	OSStatus status;
-	int i, j;
 	BOOL formatAgreed = FALSE;
 	AUDIO_FORMAT* agreedFormat = NULL;
 	// we should actually loop through the list of client formats here
 	// and see if we can send the client something that it supports...
 	WLog_DBG(TAG, "Client supports the following %d formats: ", context->num_client_formats);
 
-	for (i = 0; i < context->num_client_formats; i++)
+	int i = 0;
+	for (; i < context->num_client_formats; i++)
 	{
 		/* TODO: improve the way we agree on a format */
-		for (j = 0; j < context->num_server_formats; j++)
+		for (int j = 0; j < context->num_server_formats; j++)
 		{
 			if ((context->client_formats[i].wFormatTag == context->server_formats[j].wFormatTag) &&
 			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&
@@ -113,7 +113,7 @@ static void mf_peer_rdpsnd_activated(RdpsndServerContext* context)
 	mf_rdpsnd_derive_buffer_size(recorderState.queue, &recorderState.dataFormat, 0.05,
 	                             &recorderState.bufferByteSize);
 
-	for (i = 0; i < SND_NUMBUFFERS; ++i)
+	for (int i = 0; i < SND_NUMBUFFERS; ++i)
 	{
 		AudioQueueAllocateBuffer(recorderState.queue, recorderState.bufferByteSize,
 		                         &recorderState.buffers[i]);

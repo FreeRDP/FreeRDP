@@ -73,7 +73,6 @@ const char* ClipboardGetFormatIdString(UINT32 formatId)
 static wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 formatId,
                                              const char* name)
 {
-	UINT32 index = 0;
 	wClipboardFormat* format = NULL;
 
 	if (!clipboard)
@@ -81,7 +80,7 @@ static wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 forma
 
 	if (formatId)
 	{
-		for (index = 0; index < clipboard->numFormats; index++)
+		for (UINT32 index = 0; index < clipboard->numFormats; index++)
 		{
 			if (formatId == clipboard->formats[index].formatId)
 			{
@@ -92,7 +91,7 @@ static wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 forma
 	}
 	else if (name)
 	{
-		for (index = 0; index < clipboard->numFormats; index++)
+		for (UINT32 index = 0; index < clipboard->numFormats; index++)
 		{
 			if (!clipboard->formats[index].formatName)
 				continue;
@@ -181,7 +180,6 @@ UINT32 ClipboardCountRegisteredFormats(wClipboard* clipboard)
 
 UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard, UINT32** ppFormatIds)
 {
-	UINT32 index = 0;
 	UINT32* pFormatIds = NULL;
 	wClipboardFormat* format = NULL;
 
@@ -203,7 +201,7 @@ UINT32 ClipboardGetRegisteredFormatIds(wClipboard* clipboard, UINT32** ppFormatI
 		*ppFormatIds = pFormatIds;
 	}
 
-	for (index = 0; index < clipboard->numFormats; index++)
+	for (UINT32 index = 0; index < clipboard->numFormats; index++)
 	{
 		format = &(clipboard->formats[index]);
 		pFormatIds[index] = format->formatId;
@@ -314,7 +312,6 @@ UINT32 ClipboardCountFormats(wClipboard* clipboard)
 
 UINT32 ClipboardGetFormatIds(wClipboard* clipboard, UINT32** ppFormatIds)
 {
-	UINT32 index = 0;
 	UINT32 count = 0;
 	UINT32* pFormatIds = NULL;
 	wClipboardFormat* format = NULL;
@@ -347,7 +344,7 @@ UINT32 ClipboardGetFormatIds(wClipboard* clipboard, UINT32** ppFormatIds)
 
 	pFormatIds[0] = format->formatId;
 
-	for (index = 1; index < count; index++)
+	for (UINT32 index = 1; index < count; index++)
 	{
 		synthesizer = &(format->synthesizers[index - 1]);
 		pFormatIds[index] = synthesizer->syntheticId;

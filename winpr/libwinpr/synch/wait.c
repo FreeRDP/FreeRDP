@@ -351,7 +351,6 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 	DWORD poll_map[MAXIMUM_WAIT_OBJECTS] = { 0 };
 	BOOL signalled_handles[MAXIMUM_WAIT_OBJECTS] = { FALSE };
 	int fd = -1;
-	DWORD index = 0;
 	int status = -1;
 	ULONG Type = 0;
 	WINPR_HANDLE* Object = NULL;
@@ -408,7 +407,8 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 		polled = 0;
 
 		/* first collect file descriptors to poll */
-		for (index = 0; index < nCount; index++)
+		DWORD index = 0;
+		for (; index < nCount; index++)
 		{
 			if (bWaitAll)
 			{
@@ -493,7 +493,7 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 		/* then treat pollset */
 		if (status)
 		{
-			for (index = 0; index < polled; index++)
+			for (DWORD index = 0; index < polled; index++)
 			{
 				DWORD handlesIndex = 0;
 				BOOL signal_set = FALSE;

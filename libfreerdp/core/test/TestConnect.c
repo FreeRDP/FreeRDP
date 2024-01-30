@@ -185,12 +185,11 @@ static int testAbort(int port)
 
 static char* concatenate(size_t count, ...)
 {
-	size_t x = 0;
 	char* rc = NULL;
 	va_list ap;
 	va_start(ap, count);
 	rc = _strdup(va_arg(ap, char*));
-	for (x = 1; x < count; x++)
+	for (size_t x = 1; x < count; x++)
 	{
 		const char* cur = va_arg(ap, const char*);
 		char* tmp = GetCombinedPath(rc, cur);

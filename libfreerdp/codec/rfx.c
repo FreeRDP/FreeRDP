@@ -700,7 +700,6 @@ static BOOL rfx_resize_rects(RFX_MESSAGE* message)
 static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* message, wStream* s,
                                        UINT16* pExpectedBlockType)
 {
-	UINT16 i = 0;
 	UINT16 regionType = 0;
 	UINT16 numTileSets = 0;
 
@@ -749,7 +748,7 @@ static BOOL rfx_process_message_region(RFX_CONTEXT* context, RFX_MESSAGE* messag
 		return FALSE;
 
 	/* rects */
-	for (i = 0; i < message->numRects; i++)
+	for (UINT16 i = 0; i < message->numRects; i++)
 	{
 		RFX_RECT* rect = rfx_message_get_rect(message, i);
 		/* RFX_RECT */

@@ -114,12 +114,11 @@ static const struct test_argument tests[] = {
 int TestFreeRDPCodecXCrush(int argc, char* argv[])
 {
 	int rc = 0;
-	size_t x = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	for (x = 0; x < ARRAYSIZE(tests); x++)
+	for (size_t x = 0; x < ARRAYSIZE(tests); x++)
 	{
 		const struct test_argument* arg = &tests[x];
 

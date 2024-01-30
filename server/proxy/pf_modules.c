@@ -541,7 +541,6 @@ static void* new_plugin(const void* obj)
 
 proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t count)
 {
-	size_t i = 0;
 	wObject* obj = NULL;
 	char* path = NULL;
 	proxyModule* module = calloc(1, sizeof(proxyModule));
@@ -594,7 +593,7 @@ proxyModule* pf_modules_new(const char* root_dir, const char** modules, size_t c
 		if (winpr_PathFileExists(path))
 			WLog_DBG(TAG, "modules root directory: %s", path);
 
-		for (i = 0; i < count; i++)
+		for (size_t i = 0; i < count; i++)
 		{
 			char name[8192] = { 0 };
 			char* fullpath = NULL;

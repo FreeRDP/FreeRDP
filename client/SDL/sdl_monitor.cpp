@@ -79,7 +79,6 @@ int sdl_list_monitors(SdlContext* sdl)
 
 static BOOL sdl_is_monitor_id_active(SdlContext* sdl, UINT32 id)
 {
-	UINT32 index = 0;
 	const rdpSettings* settings = nullptr;
 
 	WINPR_ASSERT(sdl);
@@ -91,7 +90,7 @@ static BOOL sdl_is_monitor_id_active(SdlContext* sdl, UINT32 id)
 	if (!NumMonitorIds)
 		return TRUE;
 
-	for (index = 0; index < NumMonitorIds; index++)
+	for (UINT32 index = 0; index < NumMonitorIds; index++)
 	{
 		auto cur = static_cast<const UINT32*>(
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, index));

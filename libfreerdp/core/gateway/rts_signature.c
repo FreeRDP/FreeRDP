@@ -315,7 +315,6 @@ BOOL rts_extract_pdu_signature_ex(RtsPduSignature* signature, wStream* src,
                                   const rpcconn_hdr_t* header, BOOL silent)
 {
 	BOOL rc = FALSE;
-	UINT16 i = 0;
 	wStream sbuffer = { 0 };
 	rpcconn_hdr_t rheader = { 0 };
 	const rpcconn_rts_hdr_t* rts = NULL;
@@ -337,7 +336,7 @@ BOOL rts_extract_pdu_signature_ex(RtsPduSignature* signature, wStream* src,
 	signature->Flags = rts->Flags;
 	signature->NumberOfCommands = rts->NumberOfCommands;
 
-	for (i = 0; i < rts->NumberOfCommands; i++)
+	for (UINT16 i = 0; i < rts->NumberOfCommands; i++)
 	{
 		UINT32 CommandType = 0;
 		size_t CommandLength = 0;
@@ -366,13 +365,10 @@ fail:
 UINT32 rts_identify_pdu_signature(const RtsPduSignature* signature,
                                   const RTS_PDU_SIGNATURE_ENTRY** entry)
 {
-	size_t i = 0;
-	size_t j = 0;
-
 	if (entry)
 		*entry = NULL;
 
-	for (i = 0; i < ARRAYSIZE(RTS_PDU_SIGNATURE_TABLE); i++)
+	for (size_t i = 0; i < ARRAYSIZE(RTS_PDU_SIGNATURE_TABLE); i++)
 	{
 		const RTS_PDU_SIGNATURE_ENTRY* current = &RTS_PDU_SIGNATURE_TABLE[i];
 		const RtsPduSignature* pSignature = current->Signature;
@@ -386,7 +382,7 @@ UINT32 rts_identify_pdu_signature(const RtsPduSignature* signature,
 		if (signature->NumberOfCommands != pSignature->NumberOfCommands)
 			continue;
 
-		for (j = 0; j < signature->NumberOfCommands; j++)
+		for (size_t j = 0; j < signature->NumberOfCommands; j++)
 		{
 			if (signature->CommandTypes[j] != pSignature->CommandTypes[j])
 				continue;

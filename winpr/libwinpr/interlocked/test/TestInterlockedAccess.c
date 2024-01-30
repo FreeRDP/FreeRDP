@@ -5,7 +5,6 @@
 
 int TestInterlockedAccess(int argc, char* argv[])
 {
-	int index = 0;
 	LONG* Addend = NULL;
 	LONG* Target = NULL;
 	LONG oldValue = 0;
@@ -25,7 +24,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	*Addend = 0;
 
-	for (index = 0; index < 10; index++)
+	for (int index = 0; index < 10; index++)
 		InterlockedIncrement(Addend);
 
 	if (*Addend != 10)
@@ -36,7 +35,7 @@ int TestInterlockedAccess(int argc, char* argv[])
 
 	/* InterlockedDecrement */
 
-	for (index = 0; index < 10; index++)
+	for (int index = 0; index < 10; index++)
 		InterlockedDecrement(Addend);
 
 	if (*Addend != 0)

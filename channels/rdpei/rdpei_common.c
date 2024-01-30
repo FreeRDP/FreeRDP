@@ -608,9 +608,7 @@ BOOL rdpei_write_8byte_unsigned(wStream* s, UINT64 value)
 
 void touch_event_reset(RDPINPUT_TOUCH_EVENT* event)
 {
-	UINT16 i = 0;
-
-	for (i = 0; i < event->frameCount; i++)
+	for (UINT16 i = 0; i < event->frameCount; i++)
 		touch_frame_reset(&event->frames[i]);
 
 	free(event->frames);
@@ -627,9 +625,7 @@ void touch_frame_reset(RDPINPUT_TOUCH_FRAME* frame)
 
 void pen_event_reset(RDPINPUT_PEN_EVENT* event)
 {
-	UINT16 i = 0;
-
-	for (i = 0; i < event->frameCount; i++)
+	for (UINT16 i = 0; i < event->frameCount; i++)
 		pen_frame_reset(&event->frames[i]);
 
 	free(event->frames);

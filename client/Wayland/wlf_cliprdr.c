@@ -143,9 +143,7 @@ static BOOL wlf_mime_is_file(const char* mime)
 
 static BOOL wlf_mime_is_text(const char* mime)
 {
-	size_t x = 0;
-
-	for (x = 0; x < ARRAYSIZE(mime_text); x++)
+	for (size_t x = 0; x < ARRAYSIZE(mime_text); x++)
 	{
 		if (strcmp(mime, mime_text[x]) == 0)
 			return TRUE;
@@ -156,9 +154,7 @@ static BOOL wlf_mime_is_text(const char* mime)
 
 static BOOL wlf_mime_is_image(const char* mime)
 {
-	size_t x = 0;
-
-	for (x = 0; x < ARRAYSIZE(mime_image); x++)
+	for (size_t x = 0; x < ARRAYSIZE(mime_image); x++)
 	{
 		if (strcmp(mime, mime_image[x]) == 0)
 			return TRUE;
@@ -673,9 +669,7 @@ static UINT wlf_cliprdr_server_format_list(CliprdrClientContext* context,
 
 	if (text)
 	{
-		size_t x = 0;
-
-		for (x = 0; x < ARRAYSIZE(mime_text); x++)
+		for (size_t x = 0; x < ARRAYSIZE(mime_text); x++)
 			UwacClipboardOfferCreate(clipboard->seat, mime_text[x]);
 	}
 

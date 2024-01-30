@@ -247,7 +247,6 @@ BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev
 {
 	BOOL success = TRUE;
 	BOOL handle = FALSE;
-	size_t x = 0;
 	wlfContext* context = NULL;
 	enum wl_pointer_axis_source source = WL_POINTER_AXIS_SOURCE_CONTINUOUS;
 
@@ -256,7 +255,7 @@ BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev
 
 	context = (wlfContext*)instance->context;
 
-	for (x = 0; x < ArrayList_Count(context->events); x++)
+	for (size_t x = 0; x < ArrayList_Count(context->events); x++)
 	{
 		UwacEvent* cev = ArrayList_GetItem(context->events, x);
 		if (!cev)
@@ -271,7 +270,7 @@ BOOL wlf_handle_pointer_frame(freerdp* instance, const UwacPointerFrameEvent* ev
 	/* We need source events to determine how to interpret the data */
 	if (handle)
 	{
-		for (x = 0; x < ArrayList_Count(context->events); x++)
+		for (size_t x = 0; x < ArrayList_Count(context->events); x++)
 		{
 			UwacEvent* cev = ArrayList_GetItem(context->events, x);
 			if (!cev)

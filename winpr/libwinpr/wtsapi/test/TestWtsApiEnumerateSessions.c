@@ -6,7 +6,6 @@
 
 int TestWtsApiEnumerateSessions(int argc, char* argv[])
 {
-	DWORD index = 0;
 	DWORD count = 0;
 	BOOL bSuccess = 0;
 	HANDLE hServer = NULL;
@@ -38,7 +37,7 @@ int TestWtsApiEnumerateSessions(int argc, char* argv[])
 
 	printf("WTSEnumerateSessions count: %" PRIu32 "\n", count);
 
-	for (index = 0; index < count; index++)
+	for (DWORD index = 0; index < count; index++)
 	{
 		printf("[%" PRIu32 "] SessionId: %" PRIu32 " WinstationName: '%s' State: %s (%u)\n", index,
 		       pSessionInfo[index].SessionId, pSessionInfo[index].pWinStationName,

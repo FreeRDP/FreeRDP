@@ -158,8 +158,6 @@ static const speed_t _BAUD_TABLE[][3] = {
 
 static BOOL _get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
 {
-	int i = 0;
-
 	/* http://msdn.microsoft.com/en-us/library/windows/hardware/jj680684%28v=vs.85%29.aspx
 	 * http://msdn.microsoft.com/en-us/library/windows/desktop/aa363189%28v=vs.85%29.aspx
 	 */
@@ -200,7 +198,7 @@ static BOOL _get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
 	                                SP_PARITY_CHECK | /*SP_RLSD |*/ SP_STOPBITS;
 
 	pProperties->dwSettableBaud = 0;
-	for (i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
+	for (int i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
 	{
 		pProperties->dwSettableBaud |= _BAUD_TABLE[i][2];
 	}
@@ -224,7 +222,6 @@ static BOOL _get_properties(WINPR_COMM* pComm, COMMPROP* pProperties)
 
 static BOOL _set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 {
-	int i = 0;
 	speed_t newSpeed = 0;
 	struct termios futureState;
 
@@ -236,7 +233,7 @@ static BOOL _set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 		return FALSE;
 	}
 
-	for (i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
+	for (int i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
 	{
 		if (_BAUD_TABLE[i][1] == pBaudRate->BaudRate)
 		{
@@ -269,7 +266,6 @@ static BOOL _set_baud_rate(WINPR_COMM* pComm, const SERIAL_BAUD_RATE* pBaudRate)
 
 static BOOL _get_baud_rate(WINPR_COMM* pComm, SERIAL_BAUD_RATE* pBaudRate)
 {
-	int i = 0;
 	speed_t currentSpeed = 0;
 	struct termios currentState;
 
@@ -282,7 +278,7 @@ static BOOL _get_baud_rate(WINPR_COMM* pComm, SERIAL_BAUD_RATE* pBaudRate)
 
 	currentSpeed = cfgetispeed(&currentState);
 
-	for (i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
+	for (int i = 0; _BAUD_TABLE[i][0] < BAUD_TABLE_END; i++)
 	{
 		if (_BAUD_TABLE[i][0] == currentSpeed)
 		{

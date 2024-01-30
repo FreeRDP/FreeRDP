@@ -459,8 +459,6 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nW
                            HGDI_DC hdcSrc, INT32 nXSrc, INT32 nYSrc, const char* rop,
                            const gdiPalette* palette)
 {
-	INT32 x = 0;
-	INT32 y = 0;
 	UINT32 style = 0;
 	BOOL useSrc = FALSE;
 	BOOL usePat = FALSE;
@@ -517,9 +515,9 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nW
 
 	if ((nXDest > nXSrc) && (nYDest > nYSrc))
 	{
-		for (y = nHeight - 1; y >= 0; y--)
+		for (INT32 y = nHeight - 1; y >= 0; y--)
 		{
-			for (x = nWidth - 1; x >= 0; x--)
+			for (INT32 x = nWidth - 1; x >= 0; x--)
 			{
 				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest, nXSrc, nYSrc, x, y, useSrc,
 				                  usePat, style, rop, palette))
@@ -529,9 +527,9 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nW
 	}
 	else if (nXDest > nXSrc)
 	{
-		for (y = 0; y < nHeight; y++)
+		for (INT32 y = 0; y < nHeight; y++)
 		{
-			for (x = nWidth - 1; x >= 0; x--)
+			for (INT32 x = nWidth - 1; x >= 0; x--)
 			{
 				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest, nXSrc, nYSrc, x, y, useSrc,
 				                  usePat, style, rop, palette))
@@ -541,9 +539,9 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nW
 	}
 	else if (nYDest > nYSrc)
 	{
-		for (y = nHeight - 1; y >= 0; y--)
+		for (INT32 y = nHeight - 1; y >= 0; y--)
 		{
-			for (x = 0; x < nWidth; x++)
+			for (INT32 x = 0; x < nWidth; x++)
 			{
 				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest, nXSrc, nYSrc, x, y, useSrc,
 				                  usePat, style, rop, palette))
@@ -553,9 +551,9 @@ static BOOL BitBlt_process(HGDI_DC hdcDest, INT32 nXDest, INT32 nYDest, INT32 nW
 	}
 	else
 	{
-		for (y = 0; y < nHeight; y++)
+		for (INT32 y = 0; y < nHeight; y++)
 		{
-			for (x = 0; x < nWidth; x++)
+			for (INT32 x = 0; x < nWidth; x++)
 			{
 				if (!BitBlt_write(hdcDest, hdcSrc, nXDest, nYDest, nXSrc, nYSrc, x, y, useSrc,
 				                  usePat, style, rop, palette))

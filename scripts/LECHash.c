@@ -53,12 +53,9 @@ UINT16 minihash(UINT16 key)
 
 void buildhashtable(void)
 {
-	int i, j;
-	UINT16 h;
-
-	for (i = 0; i < 293; i++)
+	for (int i = 0; i < 293; i++)
 	{
-		h = hash(HuffCodeLEC[i]);
+		UINT16 h = hash(HuffCodeLEC[i]);
 
 		if (HashTable[h] != 0xffff)
 		{
@@ -85,11 +82,10 @@ UINT16 getvalue(UINT16 huff)
 
 main()
 {
-	int i;
 	buildhashtable();
 	printf("static UINT16 HuffIndexLEC[512] = {\n");
 
-	for (i = 0; i < 512; i++)
+	for (int i = 0; i < 512; i++)
 	{
 		if (i == 511)
 			printf("0x%04" PRIx16 " };\n", HashTable[i]);
@@ -97,7 +93,7 @@ main()
 			printf("0x%04" PRIx16 ", ", HashTable[i]);
 	}
 
-	for (i = 0; i < 293; i++)
+	for (int i = 0; i < 293; i++)
 		if (i != getvalue(HuffCodeLEC[i]))
 			printf("Fail :( at %d : 0x%04" PRIx16 "\n", i, HuffCodeLEC[i]);
 

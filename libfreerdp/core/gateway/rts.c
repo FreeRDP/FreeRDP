@@ -460,8 +460,6 @@ static void rts_free_supported_versions(p_rt_versions_supported_t* versions)
 static BOOL rts_read_supported_versions(wStream* s, p_rt_versions_supported_t* versions,
                                         BOOL silent)
 {
-	BYTE x = 0;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(versions);
 
@@ -476,7 +474,7 @@ static BOOL rts_read_supported_versions(wStream* s, p_rt_versions_supported_t* v
 		if (!versions->p_protocols)
 			return FALSE;
 	}
-	for (x = 0; x < versions->n_protocols; x++)
+	for (BYTE x = 0; x < versions->n_protocols; x++)
 	{
 		p_rt_version_t* version = &versions->p_protocols[x];
 		if (!rts_read_version(s, version, silent)) /* size_is(n_protocols) */
@@ -605,7 +603,6 @@ static void rts_context_elem_free(p_cont_elem_t* ptr)
 
 static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element, BOOL silent)
 {
-	BYTE x = 0;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(element);
 
@@ -624,7 +621,7 @@ static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element, BOOL silen
 		element->transfer_syntaxes = rts_syntax_id_new(element->n_transfer_syn);
 		if (!element->transfer_syntaxes)
 			return FALSE;
-		for (x = 0; x < element->n_transfer_syn; x++)
+		for (BYTE x = 0; x < element->n_transfer_syn; x++)
 		{
 			p_syntax_id_t* syn = &element->transfer_syntaxes[x];
 			if (!rts_read_syntax_id(s, syn, silent)) /* size_is(n_transfer_syn) */
@@ -637,7 +634,6 @@ static BOOL rts_read_context_elem(wStream* s, p_cont_elem_t* element, BOOL silen
 
 static BOOL rts_write_context_elem(wStream* s, const p_cont_elem_t* element)
 {
-	BYTE x = 0;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(element);
 
@@ -649,7 +645,7 @@ static BOOL rts_write_context_elem(wStream* s, const p_cont_elem_t* element)
 	if (!rts_write_syntax_id(s, &element->abstract_syntax)) /* transfer syntax list */
 		return FALSE;
 
-	for (x = 0; x < element->n_transfer_syn; x++)
+	for (BYTE x = 0; x < element->n_transfer_syn; x++)
 	{
 		const p_syntax_id_t* syn = &element->transfer_syntaxes[x];
 		if (!rts_write_syntax_id(s, syn)) /* size_is(n_transfer_syn) */
@@ -661,8 +657,6 @@ static BOOL rts_write_context_elem(wStream* s, const p_cont_elem_t* element)
 
 static BOOL rts_read_context_list(wStream* s, p_cont_list_t* list, BOOL silent)
 {
-	BYTE x = 0;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(list);
 
@@ -677,7 +671,7 @@ static BOOL rts_read_context_list(wStream* s, p_cont_list_t* list, BOOL silent)
 		list->p_cont_elem = rts_context_elem_new(list->n_context_elem);
 		if (!list->p_cont_elem)
 			return FALSE;
-		for (x = 0; x < list->n_context_elem; x++)
+		for (BYTE x = 0; x < list->n_context_elem; x++)
 		{
 			p_cont_elem_t* element = &list->p_cont_elem[x];
 			if (!rts_read_context_elem(s, element, silent))
@@ -696,8 +690,6 @@ static void rts_free_context_list(p_cont_list_t* list)
 
 static BOOL rts_write_context_list(wStream* s, const p_cont_list_t* list)
 {
-	BYTE x = 0;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(list);
 
@@ -707,7 +699,7 @@ static BOOL rts_write_context_list(wStream* s, const p_cont_list_t* list)
 	Stream_Write_UINT8(s, 0);                    /* alignment pad, m.b.z. */
 	Stream_Write_UINT16(s, 0);                   /* alignment pad, m.b.z. */
 
-	for (x = 0; x < list->n_context_elem; x++)
+	for (BYTE x = 0; x < list->n_context_elem; x++)
 	{
 		const p_cont_elem_t* element = &list->p_cont_elem[x];
 		if (!rts_write_context_elem(s, element))
@@ -749,8 +741,6 @@ static void rts_free_result(p_result_t* result)
 
 static BOOL rts_read_result_list(wStream* s, p_result_list_t* list, BOOL silent)
 {
-	BYTE x = 0;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(list);
 
@@ -766,7 +756,7 @@ static BOOL rts_read_result_list(wStream* s, p_result_list_t* list, BOOL silent)
 		if (!list->p_results)
 			return FALSE;
 
-		for (x = 0; x < list->n_results; x++)
+		for (BYTE x = 0; x < list->n_results; x++)
 		{
 			p_result_t* result = &list->p_results[x]; /* size_is(n_results) */
 			if (!rts_read_result(s, result, silent))
@@ -779,11 +769,9 @@ static BOOL rts_read_result_list(wStream* s, p_result_list_t* list, BOOL silent)
 
 static void rts_free_result_list(p_result_list_t* list)
 {
-	BYTE x = 0;
-
 	if (!list)
 		return;
-	for (x = 0; x < list->n_results; x++)
+	for (BYTE x = 0; x < list->n_results; x++)
 	{
 		p_result_t* result = &list->p_results[x];
 		rts_free_result(result);

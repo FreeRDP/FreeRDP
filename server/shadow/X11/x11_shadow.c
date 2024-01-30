@@ -71,7 +71,6 @@ typedef struct
 static int x11_shadow_pam_conv(int num_msg, const struct pam_message** msg,
                                struct pam_response** resp, void* appdata_ptr)
 {
-	int index = 0;
 	int pam_status = PAM_CONV_ERR;
 	SHADOW_PAM_AUTH_DATA* appdata = NULL;
 	struct pam_response* response = NULL;
@@ -82,7 +81,7 @@ static int x11_shadow_pam_conv(int num_msg, const struct pam_message** msg,
 	if (!(response = (struct pam_response*)calloc((size_t)num_msg, sizeof(struct pam_response))))
 		return PAM_BUF_ERR;
 
-	for (index = 0; index < num_msg; index++)
+	for (int index = 0; index < num_msg; index++)
 	{
 		switch (msg[index]->msg_style)
 		{
@@ -114,7 +113,7 @@ static int x11_shadow_pam_conv(int num_msg, const struct pam_message** msg,
 	return PAM_SUCCESS;
 out_fail:
 
-	for (index = 0; index < num_msg; ++index)
+	for (int index = 0; index < num_msg; ++index)
 	{
 		if (response[index].resp)
 		{
@@ -131,11 +130,10 @@ out_fail:
 
 static BOOL x11_shadow_pam_get_service_name(SHADOW_PAM_AUTH_INFO* info)
 {
-	size_t x = 0;
 	const char* base = "/etc/pam.d";
 	const char* hints[] = { "lightdm", "gdm", "xdm", "login", "sshd" };
 
-	for (x = 0; x < ARRAYSIZE(hints); x++)
+	for (size_t x = 0; x < ARRAYSIZE(hints); x++)
 	{
 		char path[MAX_PATH];
 		const char* hint = hints[x];
@@ -413,7 +411,6 @@ static int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 	rdpShadowServer* server = NULL;
 	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE templateMsg;
 	int count = 0;
-	size_t index = 0;
 
 	if (!subsystem || !subsystem->common.server || !subsystem->common.server->clients)
 		return -1;
@@ -424,7 +421,7 @@ static int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 	server = subsystem->common.server;
 	ArrayList_Lock(server->clients);
 
-	for (index = 0; index < ArrayList_Count(server->clients); index++)
+	for (size_t index = 0; index < ArrayList_Count(server->clients); index++)
 	{
 		SHADOW_MSG_OUT_POINTER_POSITION_UPDATE* msg = NULL;
 		rdpShadowClient* client = (rdpShadowClient*)ArrayList_GetItem(server->clients, index);
@@ -485,7 +482,6 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 	int x = 0;
 	int y = 0;
 	int n = 0;
-	int k = 0;
 	rdpShadowServer* server = NULL;
 	rdpShadowSurface* surface = NULL;
 	server = subsystem->common.server;
@@ -520,7 +516,7 @@ static int x11_shadow_query_cursor(x11ShadowSubsystem* subsystem, BOOL getImage)
 		n = ci->width * ci->height;
 		pDstPixel = (UINT32*)subsystem->cursorPixels;
 
-		for (k = 0; k < n; k++)
+		for (int k = 0; k < n; k++)
 		{
 			/* XFixesCursorImage.pixels is in *unsigned long*, which may be 8 bytes */
 			*pDstPixel++ = (UINT32)ci->pixels[k];
@@ -612,8 +608,6 @@ static void x11_shadow_validate_region(x11ShadowSubsystem* subsystem, int x, int
 
 static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
 	UINT32 nXSrc = 0;
 	UINT32 nYSrc = 0;
 	INT64 nXDst = 0;
@@ -682,12 +676,12 @@ static int x11_shadow_blend_cursor(x11ShadowSubsystem* subsystem)
 	pDstData = surface->data;
 	nDstStep = surface->scanline;
 
-	for (y = 0; y < nHeight; y++)
+	for (int y = 0; y < nHeight; y++)
 	{
 		const BYTE* pSrcPixel = &pSrcData[((nYSrc + y) * nSrcStep) + (nXSrc * 4)];
 		BYTE* pDstPixel = &pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
 
-		for (x = 0; x < nWidth; x++)
+		for (int x = 0; x < nWidth; x++)
 		{
 			B = *pSrcPixel++;
 			G = *pSrcPixel++;
@@ -1223,8 +1217,7 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 
 			if (screens && (numMonitors > 0))
 			{
-				int index = 0;
-				for (index = 0; index < numMonitors; index++)
+				for (int index = 0; index < numMonitors; index++)
 				{
 					MONITOR_DEF* monitor = &monitors[index];
 					const XineramaScreenInfo* screen = &screens[index];
@@ -1261,7 +1254,6 @@ UINT32 x11_shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
 
 static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 {
-	int i = 0;
 	int pf_count = 0;
 	int vi_count = 0;
 	int nextensions = 0;
@@ -1291,7 +1283,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 	if (!extensions || (nextensions < 0))
 		return -1;
 
-	for (i = 0; i < nextensions; i++)
+	for (int i = 0; i < nextensions; i++)
 	{
 		if (strcmp(extensions[i], "Composite") == 0)
 			subsystem->composite = TRUE;
@@ -1310,7 +1302,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 		return -1;
 	}
 
-	for (i = 0; i < pf_count; i++)
+	for (int i = 0; i < pf_count; i++)
 	{
 		pf = pfs + i;
 
@@ -1334,7 +1326,7 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 		return -1;
 	}
 
-	for (i = 0; i < vi_count; i++)
+	for (int i = 0; i < vi_count; i++)
 	{
 		vi = vis + i;
 

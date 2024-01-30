@@ -5,7 +5,6 @@ int TestBacktrace(int argc, char* argv[])
 {
 	int rc = -1;
 	size_t used = 0;
-	size_t x = 0;
 	char** msg = NULL;
 	void* stack = winpr_backtrace(20);
 
@@ -22,7 +21,7 @@ int TestBacktrace(int argc, char* argv[])
 
 	if (msg)
 	{
-		for (x = 0; x < used; x++)
+		for (size_t x = 0; x < used; x++)
 			printf("%" PRIuz ": %s\n", x, msg[x]);
 
 		rc = 0;

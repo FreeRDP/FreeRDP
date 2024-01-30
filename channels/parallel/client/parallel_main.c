@@ -418,7 +418,6 @@ FREERDP_ENTRY_POINT(UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINT
 {
 	char* name = NULL;
 	char* path = NULL;
-	size_t i = 0;
 	size_t length = 0;
 	RDPDR_PARALLEL* device = NULL;
 	PARALLEL_DEVICE* parallel = NULL;
@@ -463,7 +462,7 @@ FREERDP_ENTRY_POINT(UINT parallel_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINT
 			goto error_out;
 		}
 
-		for (i = 0; i <= length; i++)
+		for (size_t i = 0; i <= length; i++)
 			Stream_Write_UINT8(parallel->device.data, name[i] < 0 ? '_' : name[i]);
 
 		parallel->path = path;

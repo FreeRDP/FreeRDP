@@ -217,7 +217,6 @@ static int xcrush_append_chunk(XCRUSH_CONTEXT* xcrush, const BYTE* data, UINT32*
 static int xcrush_compute_chunks(XCRUSH_CONTEXT* xcrush, const BYTE* data, UINT32 size,
                                  UINT32* pIndex)
 {
-	UINT32 i = 0;
 	UINT32 offset = 0;
 	UINT32 rotation = 0;
 	UINT32 accumulator = 0;
@@ -232,13 +231,13 @@ static int xcrush_compute_chunks(XCRUSH_CONTEXT* xcrush, const BYTE* data, UINT3
 	if (size < 128)
 		return 0;
 
-	for (i = 0; i < 32; i++)
+	for (UINT32 i = 0; i < 32; i++)
 	{
 		rotation = _rotl(accumulator, 1);
 		accumulator = data[i] ^ rotation;
 	}
 
-	for (i = 0; i < size - 64; i++)
+	for (UINT32 i = 0; i < size - 64; i++)
 	{
 		rotation = _rotl(accumulator, 1);
 		accumulator = data[i + 32] ^ data[i] ^ rotation;
@@ -301,11 +300,9 @@ static UINT32 xcrush_compute_signatures(XCRUSH_CONTEXT* xcrush, const BYTE* data
 
 static void xcrush_clear_hash_table_range(XCRUSH_CONTEXT* xcrush, UINT32 beg, UINT32 end)
 {
-	UINT32 index = 0;
-
 	WINPR_ASSERT(xcrush);
 
-	for (index = 0; index < 65536; index++)
+	for (UINT32 index = 0; index < 65536; index++)
 	{
 		if (xcrush->NextChunks[index] >= beg)
 		{
@@ -316,7 +313,7 @@ static void xcrush_clear_hash_table_range(XCRUSH_CONTEXT* xcrush, UINT32 beg, UI
 		}
 	}
 
-	for (index = 0; index < 65534; index++)
+	for (UINT32 index = 0; index < 65534; index++)
 	{
 		if (xcrush->Chunks[index].next >= beg)
 		{
@@ -503,7 +500,6 @@ static int xcrush_find_match_length(XCRUSH_CONTEXT* xcrush, UINT32 MatchOffset, 
 static int xcrush_find_all_matches(XCRUSH_CONTEXT* xcrush, UINT32 SignatureIndex,
                                    UINT32 HistoryOffset, UINT32 SrcOffset, UINT32 SrcSize)
 {
-	UINT32 i = 0;
 	UINT32 j = 0;
 	int status = 0;
 	UINT32 ChunkIndex = 0;
@@ -519,7 +515,7 @@ static int xcrush_find_all_matches(XCRUSH_CONTEXT* xcrush, UINT32 SignatureIndex
 
 	Signatures = xcrush->Signatures;
 
-	for (i = 0; i < SignatureIndex; i++)
+	for (UINT32 i = 0; i < SignatureIndex; i++)
 	{
 		XCRUSH_MATCH_INFO MatchInfo = { 0 };
 		UINT32 offset = SrcOffset + HistoryOffset;
@@ -605,7 +601,6 @@ static int xcrush_find_all_matches(XCRUSH_CONTEXT* xcrush, UINT32 SignatureIndex
 
 static int xcrush_optimize_matches(XCRUSH_CONTEXT* xcrush)
 {
-	UINT32 i = 0;
 	UINT32 j = 0;
 	UINT32 MatchDiff = 0;
 	UINT32 PrevMatchEnd = 0;
@@ -623,7 +618,7 @@ static int xcrush_optimize_matches(XCRUSH_CONTEXT* xcrush)
 	OriginalMatchCount = xcrush->OriginalMatchCount;
 	OptimizedMatches = xcrush->OptimizedMatches;
 
-	for (i = 0; i < OriginalMatchCount; i++)
+	for (UINT32 i = 0; i < OriginalMatchCount; i++)
 	{
 		if (OriginalMatches[i].MatchOffset <= PrevMatchEnd)
 		{

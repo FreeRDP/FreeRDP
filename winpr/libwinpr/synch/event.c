@@ -56,13 +56,12 @@ static void dump_event(WINPR_EVENT* event, size_t index)
 {
 	char** msg = NULL;
 	size_t used = 0;
-	size_t i = 0;
 #if 0
 	void* stack = winpr_backtrace(20);
 	WLog_DBG(TAG, "Called from:");
 	msg = winpr_backtrace_symbols(stack, &used);
 
-	for (i = 0; i < used; i++)
+	for (size_t i = 0; i < used; i++)
 		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
 
 	free(msg);
@@ -71,7 +70,7 @@ static void dump_event(WINPR_EVENT* event, size_t index)
 	WLog_DBG(TAG, "Event handle created still not closed! [%" PRIuz ", %p]", index, event);
 	msg = winpr_backtrace_symbols(event->create_stack, &used);
 
-	for (i = 2; i < used; i++)
+	for (size_t i = 2; i < used; i++)
 		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
 
 	free(msg);
@@ -564,9 +563,8 @@ void DumpEventHandles_(const char* fkt, const char* file, size_t line)
 	int rc = getrlimit(RLIMIT_NOFILE, &r);
 	if (rc >= 0)
 	{
-		rlim_t x = 0;
 		size_t count = 0;
-		for (x = 0; x < r.rlim_cur; x++)
+		for (rlim_t x = 0; x < r.rlim_cur; x++)
 		{
 			int flags = fcntl(x, F_GETFD);
 			if (flags >= 0)

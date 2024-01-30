@@ -162,7 +162,6 @@ static UINT rdpsnd_send_quality_mode_pdu(rdpsndPlugin* rdpsnd)
 
 static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 {
-	UINT16 index = 0;
 	WINPR_ASSERT(rdpsnd);
 	audio_formats_free(rdpsnd->ClientFormats, rdpsnd->NumberOfClientFormats);
 	rdpsnd->NumberOfClientFormats = 0;
@@ -176,7 +175,7 @@ static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
 	if (!rdpsnd->ClientFormats || !rdpsnd->device)
 		return;
 
-	for (index = 0; index < rdpsnd->NumberOfServerFormats; index++)
+	for (UINT16 index = 0; index < rdpsnd->NumberOfServerFormats; index++)
 	{
 		const AUDIO_FORMAT* serverFormat = &rdpsnd->ServerFormats[index];
 
@@ -200,7 +199,6 @@ static void rdpsnd_select_supported_audio_formats(rdpsndPlugin* rdpsnd)
  */
 static UINT rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 {
-	UINT16 index = 0;
 	wStream* pdu = NULL;
 	UINT16 length = 0;
 	UINT32 dwVolume = 0;
@@ -214,7 +212,7 @@ static UINT rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 	wNumberOfFormats = rdpsnd->NumberOfClientFormats;
 	length = 4 + 20;
 
-	for (index = 0; index < wNumberOfFormats; index++)
+	for (UINT16 index = 0; index < wNumberOfFormats; index++)
 		length += (18 + rdpsnd->ClientFormats[index].cbSize);
 
 	pdu = Stream_New(NULL, length);
@@ -237,7 +235,7 @@ static UINT rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
 	Stream_Write_UINT16(pdu, CHANNEL_VERSION_WIN_MAX);            /* wVersion */
 	Stream_Write_UINT8(pdu, 0);                                   /* bPad */
 
-	for (index = 0; index < wNumberOfFormats; index++)
+	for (UINT16 index = 0; index < wNumberOfFormats; index++)
 	{
 		const AUDIO_FORMAT* clientFormat = &rdpsnd->ClientFormats[index];
 
@@ -260,7 +258,6 @@ static UINT rdpsnd_send_client_audio_formats(rdpsndPlugin* rdpsnd)
  */
 static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* s)
 {
-	UINT16 index = 0;
 	UINT16 wNumberOfFormats = 0;
 	UINT ret = ERROR_BAD_LENGTH;
 
@@ -293,7 +290,7 @@ static UINT rdpsnd_recv_server_audio_formats_pdu(rdpsndPlugin* rdpsnd, wStream* 
 		if (!rdpsnd->ServerFormats)
 			return CHANNEL_RC_NO_MEMORY;
 
-		for (index = 0; index < wNumberOfFormats; index++)
+		for (UINT16 index = 0; index < wNumberOfFormats; index++)
 		{
 			AUDIO_FORMAT* format = &rdpsnd->ServerFormats[index];
 
@@ -1070,9 +1067,7 @@ static UINT rdpsnd_process_connect(rdpsndPlugin* rdpsnd)
 	}
 	else
 	{
-		size_t x = 0;
-
-		for (x = 0; x < ARRAYSIZE(backends); x++)
+		for (size_t x = 0; x < ARRAYSIZE(backends); x++)
 		{
 			const char* subsystem_name = backends[x].subsystem;
 			const char* device_name = backends[x].device;

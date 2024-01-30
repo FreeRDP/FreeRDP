@@ -63,7 +63,6 @@ disp_send_display_control_monitor_layout_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 {
 	UINT status = 0;
 	wStream* s = NULL;
-	UINT32 index = 0;
 	DISP_PLUGIN* disp = NULL;
 	UINT32 MonitorLayoutSize = 0;
 	DISPLAY_CONTROL_HEADER header = { 0 };
@@ -99,7 +98,7 @@ disp_send_display_control_monitor_layout_pdu(GENERIC_CHANNEL_CALLBACK* callback,
 	Stream_Write_UINT32(s, NumMonitors);       /* NumMonitors (4 bytes) */
 	WLog_DBG(TAG, "NumMonitors=%" PRIu32 "", NumMonitors);
 
-	for (index = 0; index < NumMonitors; index++)
+	for (UINT32 index = 0; index < NumMonitors; index++)
 	{
 		DISPLAY_CONTROL_MONITOR_LAYOUT current = Monitors[index];
 		current.Width -= (current.Width % 2);

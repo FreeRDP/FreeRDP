@@ -1810,8 +1810,6 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 
 BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs)
 {
-	UINT32 i = 0;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(mcs);
 
@@ -1828,7 +1826,7 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs)
 		return FALSE;
 
 	/* channelDefArray */
-	for (i = 0; i < mcs->channelCount; i++)
+	for (UINT32 i = 0; i < mcs->channelCount; i++)
 	{
 		/**
 		 * CHANNEL_DEF
@@ -1865,7 +1863,6 @@ BOOL gcc_read_client_network_data(wStream* s, rdpMcs* mcs)
 
 BOOL gcc_write_client_network_data(wStream* s, const rdpMcs* mcs)
 {
-	UINT32 i = 0;
 	UINT16 length = 0;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(mcs);
@@ -1877,7 +1874,7 @@ BOOL gcc_write_client_network_data(wStream* s, const rdpMcs* mcs)
 		Stream_Write_UINT32(s, mcs->channelCount); /* channelCount */
 
 		/* channelDefArray */
-		for (i = 0; i < mcs->channelCount; i++)
+		for (UINT32 i = 0; i < mcs->channelCount; i++)
 		{
 			/* CHANNEL_DEF */
 			rdpMcsChannel* channel = &mcs->channels[i];
@@ -1931,7 +1928,6 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 
 BOOL gcc_write_server_network_data(wStream* s, const rdpMcs* mcs)
 {
-	UINT32 i = 0;
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(mcs);
 	const size_t payloadLen = 8 + mcs->channelCount * 2 + (mcs->channelCount % 2 == 1 ? 2 : 0);
@@ -1942,7 +1938,7 @@ BOOL gcc_write_server_network_data(wStream* s, const rdpMcs* mcs)
 	Stream_Write_UINT16(s, MCS_GLOBAL_CHANNEL_ID); /* MCSChannelId */
 	Stream_Write_UINT16(s, mcs->channelCount);     /* channelCount */
 
-	for (i = 0; i < mcs->channelCount; i++)
+	for (UINT32 i = 0; i < mcs->channelCount; i++)
 	{
 		const rdpMcsChannel* channel = &mcs->channels[i];
 		Stream_Write_UINT16(s, channel->ChannelId);
@@ -2059,7 +2055,6 @@ BOOL gcc_write_client_cluster_data(wStream* s, const rdpMcs* mcs)
 
 BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 {
-	UINT32 index = 0;
 	UINT32 monitorCount = 0;
 	rdpSettings* settings = mcs_get_settings(mcs);
 
@@ -2095,7 +2090,7 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 
 	settings->MonitorCount = monitorCount;
 
-	for (index = 0; index < monitorCount; index++)
+	for (UINT32 index = 0; index < monitorCount; index++)
 	{
 		UINT32 left = 0;
 		UINT32 top = 0;
@@ -2130,7 +2125,6 @@ BOOL gcc_read_client_monitor_data(wStream* s, rdpMcs* mcs)
 
 BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 {
-	UINT32 i = 0;
 	UINT16 length = 0;
 	INT32 baseX = 0;
 	INT32 baseY = 0;
@@ -2150,7 +2144,7 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 
 		/* first pass to get the primary monitor coordinates (it is supposed to be
 		 * in (0,0) */
-		for (i = 0; i < settings->MonitorCount; i++)
+		for (UINT32 i = 0; i < settings->MonitorCount; i++)
 		{
 			const rdpMonitor* current = &settings->MonitorDefArray[i];
 			if (current->is_primary)
@@ -2161,7 +2155,7 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 			}
 		}
 
-		for (i = 0; i < settings->MonitorCount; i++)
+		for (UINT32 i = 0; i < settings->MonitorCount; i++)
 		{
 			const rdpMonitor* current = &settings->MonitorDefArray[i];
 			const UINT32 left = current->x - baseX;
@@ -2186,7 +2180,6 @@ BOOL gcc_write_client_monitor_data(wStream* s, const rdpMcs* mcs)
 
 BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs)
 {
-	UINT32 index = 0;
 	UINT32 monitorCount = 0;
 	UINT32 monitorAttributeSize = 0;
 	rdpSettings* settings = mcs_get_settings(mcs);
@@ -2213,7 +2206,7 @@ BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs)
 
 	settings->HasMonitorAttributes = TRUE;
 
-	for (index = 0; index < monitorCount; index++)
+	for (UINT32 index = 0; index < monitorCount; index++)
 	{
 		rdpMonitor* current = &settings->MonitorDefArray[index];
 		Stream_Read_UINT32(s, current->attributes.physicalWidth);      /* physicalWidth */
@@ -2228,7 +2221,6 @@ BOOL gcc_read_client_monitor_extended_data(wStream* s, rdpMcs* mcs)
 
 BOOL gcc_write_client_monitor_extended_data(wStream* s, const rdpMcs* mcs)
 {
-	UINT32 i = 0;
 	UINT16 length = 0;
 	const rdpSettings* settings = mcs_get_const_settings(mcs);
 
@@ -2244,7 +2236,7 @@ BOOL gcc_write_client_monitor_extended_data(wStream* s, const rdpMcs* mcs)
 		Stream_Write_UINT32(s, 20);                              /* monitorAttributeSize */
 		Stream_Write_UINT32(s, settings->MonitorCount);          /* monitorCount */
 
-		for (i = 0; i < settings->MonitorCount; i++)
+		for (UINT32 i = 0; i < settings->MonitorCount; i++)
 		{
 			const rdpMonitor* current = &settings->MonitorDefArray[i];
 			Stream_Write_UINT32(s, current->attributes.physicalWidth);      /* physicalWidth */

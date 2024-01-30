@@ -24,7 +24,6 @@
 
 char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
 {
-	size_t x = 0;
 	struct map_t
 	{
 		UINT32 flag;
@@ -49,7 +48,7 @@ char* rdp_redirection_flags_to_string(UINT32 flags, char* buffer, size_t size)
 		{ LB_TARGET_CERTIFICATE, "LB_TARGET_CERTIFICATE" },
 	};
 
-	for (x = 0; x < ARRAYSIZE(map); x++)
+	for (size_t x = 0; x < ARRAYSIZE(map); x++)
 	{
 		const struct map_t* cur = &map[x];
 		if (flags & cur->flag)

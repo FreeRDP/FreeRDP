@@ -60,7 +60,6 @@ static BOOL shw_begin_paint(rdpContext* context)
 
 static BOOL shw_end_paint(rdpContext* context)
 {
-	int index;
 	int ninvalid;
 	HGDI_RGN cinvalid;
 	RECTANGLE_16 invalidRect;
@@ -71,7 +70,7 @@ static BOOL shw_end_paint(rdpContext* context)
 	ninvalid = gdi->primary->hdc->hwnd->ninvalid;
 	cinvalid = gdi->primary->hdc->hwnd->cinvalid;
 
-	for (index = 0; index < ninvalid; index++)
+	for (int index = 0; index < ninvalid; index++)
 	{
 		invalidRect.left = cinvalid[index].x;
 		invalidRect.top = cinvalid[index].y;

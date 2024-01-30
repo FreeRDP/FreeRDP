@@ -119,14 +119,12 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
                                         const CLIPRDR_CAPABILITIES* capabilities)
 {
 	size_t offset = 0;
-	UINT32 x = 0;
 	wStream* s = NULL;
-	CliprdrServerPrivate* cliprdr = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(capabilities);
 
-	cliprdr = (CliprdrServerPrivate*)context->handle;
+	CliprdrServerPrivate* cliprdr = (CliprdrServerPrivate*)context->handle;
 
 	if (capabilities->common.msgType != CB_CLIP_CAPS)
 		WLog_WARN(TAG, "called with invalid type %08" PRIx32, capabilities->common.msgType);
@@ -148,7 +146,7 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
 	Stream_Write_UINT16(s,
 	                    (UINT16)capabilities->cCapabilitiesSets); /* cCapabilitiesSets (2 bytes) */
 	Stream_Write_UINT16(s, 0);                                    /* pad1 (2 bytes) */
-	for (x = 0; x < capabilities->cCapabilitiesSets; x++)
+	for (UINT32 x = 0; x < capabilities->cCapabilitiesSets; x++)
 	{
 		const CLIPRDR_CAPABILITY_SET* cap =
 		    (const CLIPRDR_CAPABILITY_SET*)(((const BYTE*)capabilities->capabilitySets) + offset);

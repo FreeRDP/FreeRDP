@@ -569,7 +569,6 @@ static UINT rdpdr_process_server_core_capability_request(pf_channel_client_conte
                                                          wStream* s)
 {
 	UINT status = CHANNEL_RC_OK;
-	UINT16 i = 0;
 	UINT16 numCapabilities = 0;
 
 	WINPR_ASSERT(rdpdr);
@@ -581,7 +580,7 @@ static UINT rdpdr_process_server_core_capability_request(pf_channel_client_conte
 	Stream_Read_UINT16(s, numCapabilities);
 	Stream_Seek(s, 2); /* pad (2 bytes) */
 
-	for (i = 0; i < numCapabilities; i++)
+	for (UINT16 i = 0; i < numCapabilities; i++)
 	{
 		RDPDR_CAPABILITY_HEADER header = { 0 };
 		UINT error = rdpdr_read_capset_header(rdpdr->log, s, &header);
@@ -736,7 +735,6 @@ static UINT rdpdr_process_client_capability_response(pf_channel_server_context* 
 	const UINT16 packetid = PAKID_CORE_CLIENT_CAPABILITY;
 	UINT status = CHANNEL_RC_OK;
 	UINT16 numCapabilities = 0;
-	UINT16 x = 0;
 	WINPR_ASSERT(rdpdr);
 
 	if (!rdpdr_process_server_header(TRUE, rdpdr->log, s, component, packetid, 4))
@@ -745,7 +743,7 @@ static UINT rdpdr_process_client_capability_response(pf_channel_server_context* 
 	Stream_Read_UINT16(s, numCapabilities);
 	Stream_Seek_UINT16(s); /* padding */
 
-	for (x = 0; x < numCapabilities; x++)
+	for (UINT16 x = 0; x < numCapabilities; x++)
 	{
 		RDPDR_CAPABILITY_HEADER header = { 0 };
 		UINT error = rdpdr_read_capset_header(rdpdr->log, s, &header);
@@ -1535,7 +1533,6 @@ static BOOL pf_channel_rdpdr_client_pass_message(pServerContext* ps, pClientCont
 static BOOL filter_smartcard_device_list_remove(pf_channel_server_context* rdpdr, wStream* s)
 {
 	size_t pos = 0;
-	UINT32 x = 0;
 	UINT32 count = 0;
 
 	WINPR_ASSERT(rdpdr);
@@ -1550,7 +1547,7 @@ static BOOL filter_smartcard_device_list_remove(pf_channel_server_context* rdpdr
 	if (!Stream_CheckAndLogRequiredLengthOfSizeWLog(rdpdr->log, s, count, sizeof(UINT32)))
 		return TRUE;
 
-	for (x = 0; x < count; x++)
+	for (UINT32 x = 0; x < count; x++)
 	{
 		UINT32 deviceID = 0;
 		BYTE* dst = Stream_Pointer(s);

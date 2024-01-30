@@ -69,9 +69,7 @@ static BOOL addFlag(int *argc, char ***argv, const char *str, BOOL flag)
 
 static void freeArguments(int argc, char **argv)
 {
-	int i;
-
-	for (i = 0; i < argc; i++)
+	for (int i = 0; i < argc; i++)
 		free(argv[i]);
 
 	free(argv);

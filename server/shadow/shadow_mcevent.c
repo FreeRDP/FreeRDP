@@ -110,7 +110,6 @@ static void _Publish(rdpShadowMultiClientEvent* event)
 {
 	wArrayList* subscribers = NULL;
 	struct rdp_shadow_multiclient_subscriber* subscriber = NULL;
-	size_t i = 0;
 
 	subscribers = event->subscribers;
 
@@ -118,7 +117,7 @@ static void _Publish(rdpShadowMultiClientEvent* event)
 
 	/* Count subscribing clients */
 	ArrayList_Lock(subscribers);
-	for (i = 0; i < ArrayList_Count(subscribers); i++)
+	for (size_t i = 0; i < ArrayList_Count(subscribers); i++)
 	{
 		subscriber = (struct rdp_shadow_multiclient_subscriber*)ArrayList_GetItem(subscribers, i);
 		/* Set flag to subscriber: I acknowledge and please handle */

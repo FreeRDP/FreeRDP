@@ -158,8 +158,7 @@ void nine_grid_cache_free(rdpNineGridCache* nine_grid)
 	{
 		if (nine_grid->entries != NULL)
 		{
-			size_t i = 0;
-			for (i = 0; i < nine_grid->maxEntries; i++)
+			for (size_t i = 0; i < nine_grid->maxEntries; i++)
 				free(nine_grid->entries[i].entry);
 
 			free(nine_grid->entries);

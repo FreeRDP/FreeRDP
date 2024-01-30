@@ -823,7 +823,6 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuff
 	maxNumInterfaces = cbOutBuffer / sizeof(INTERFACE_INFO);
 #ifdef WSAIOCTL_IFADDRS
 	{
-		struct ifaddrs* ifa = NULL;
 		struct ifaddrs* ifap = NULL;
 
 		if (getifaddrs(&ifap) != 0)
@@ -835,7 +834,7 @@ int WSAIoctl(SOCKET s, DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbInBuff
 		index = 0;
 		numInterfaces = 0;
 
-		for (ifa = ifap; ifa; ifa = ifa->ifa_next)
+		for (struct ifaddrs* ifa = ifap; ifa; ifa = ifa->ifa_next)
 		{
 			pInterface = &pInterfaces[index];
 			pAddress = (struct sockaddr_in*)&pInterface->iiAddress;

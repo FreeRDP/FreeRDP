@@ -290,7 +290,6 @@ UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, si
 {
 	UINT ret = CHANNEL_RC_OK;
 	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts = NULL;
-	size_t i = 0;
 	wlfDispContext* wlfDisp = NULL;
 	rdpSettings* settings = NULL;
 
@@ -310,7 +309,7 @@ UINT wlf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, si
 	if (!layouts)
 		return CHANNEL_RC_NO_MEMORY;
 
-	for (i = 0; i < nmonitors; i++)
+	for (size_t i = 0; i < nmonitors; i++)
 	{
 		const rdpMonitor* monitor = &monitors[i];
 		DISPLAY_CONTROL_MONITOR_LAYOUT* layout = &layouts[i];

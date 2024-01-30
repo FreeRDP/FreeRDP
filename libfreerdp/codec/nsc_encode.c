@@ -58,7 +58,6 @@ static BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAG
 
 static BOOL nsc_context_initialize_encode(NSC_CONTEXT* context)
 {
-	int i = 0;
 	UINT32 length = 0;
 	UINT32 tempWidth = 0;
 	UINT32 tempHeight = 0;
@@ -69,7 +68,7 @@ static BOOL nsc_context_initialize_encode(NSC_CONTEXT* context)
 
 	if (length > context->priv->PlaneBuffersLength)
 	{
-		for (i = 0; i < 5; i++)
+		for (int i = 0; i < 5; i++)
 		{
 			BYTE* tmp = (BYTE*)winpr_aligned_recalloc(context->priv->PlaneBuffers[i], length,
 			                                          sizeof(BYTE), 32);
@@ -103,7 +102,7 @@ fail:
 
 	if (length > context->priv->PlaneBuffersLength)
 	{
-		for (i = 0; i < 5; i++)
+		for (int i = 0; i < 5; i++)
 			winpr_aligned_free(context->priv->PlaneBuffers[i]);
 	}
 
@@ -133,7 +132,7 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UI
 	rw = (context->ChromaSubsamplingLevel ? tempWidth : context->width);
 	ccl = context->ColorLossLevel;
 
-	for (y = 0; y < context->height; y++)
+	for (; y < context->height; y++)
 	{
 		src = data + (context->height - 1 - y) * scanline;
 		yplane = context->priv->PlaneBuffers[0] + y * rw;
@@ -141,7 +140,7 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UI
 		cgplane = context->priv->PlaneBuffers[2] + y * rw;
 		aplane = context->priv->PlaneBuffers[3] + y * context->width;
 
-		for (x = 0; x < context->width; x++)
+		for (UINT16 x = 0; x < context->width; x++)
 		{
 			switch (context->format)
 			{
@@ -273,7 +272,6 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UI
 
 static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 {
-	UINT32 y = 0;
 	UINT32 tempWidth = 0;
 	UINT32 tempHeight = 0;
 
@@ -289,9 +287,8 @@ static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 	if (tempWidth > context->priv->PlaneBuffersLength / tempHeight)
 		return FALSE;
 
-	for (y = 0; y < tempHeight >> 1; y++)
+	for (UINT32 y = 0; y < tempHeight >> 1; y++)
 	{
-		UINT32 x = 0;
 		BYTE* co_dst = context->priv->PlaneBuffers[1] + y * (tempWidth >> 1);
 		BYTE* cg_dst = context->priv->PlaneBuffers[2] + y * (tempWidth >> 1);
 		const INT8* co_src0 = (INT8*)context->priv->PlaneBuffers[1] + (y << 1) * tempWidth;
@@ -299,7 +296,7 @@ static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 		const INT8* cg_src0 = (INT8*)context->priv->PlaneBuffers[2] + (y << 1) * tempWidth;
 		const INT8* cg_src1 = cg_src0 + tempWidth;
 
-		for (x = 0; x < tempWidth >> 1; x++)
+		for (UINT32 x = 0; x < tempWidth >> 1; x++)
 		{
 			*co_dst++ = (BYTE)(((INT16)*co_src0 + (INT16) * (co_src0 + 1) + (INT16)*co_src1 +
 			                    (INT16) * (co_src1 + 1)) >>
@@ -390,11 +387,10 @@ static UINT32 nsc_rle_encode(const BYTE* in, BYTE* out, UINT32 originalSize)
 
 static void nsc_rle_compress_data(NSC_CONTEXT* context)
 {
-	UINT16 i = 0;
 	UINT32 planeSize = 0;
 	UINT32 originalSize = 0;
 
-	for (i = 0; i < 4; i++)
+	for (UINT16 i = 0; i < 4; i++)
 	{
 		originalSize = context->OrgByteCount[i];
 

@@ -23,7 +23,6 @@
 
 int mac_cliprdr_send_client_format_list(CliprdrClientContext *cliprdr)
 {
-	UINT32 index;
 	UINT32 formatId;
 	UINT32 numFormats;
 	UINT32 *pFormatIds;
@@ -43,7 +42,7 @@ int mac_cliprdr_send_client_format_list(CliprdrClientContext *cliprdr)
 	if (!formats)
 		return -1;
 
-	for (index = 0; index < numFormats; index++)
+	for (UINT32 index = 0; index < numFormats; index++)
 	{
 		formatId = pFormatIds[index];
 		formatName = ClipboardGetFormatName(mfc->clipboard, formatId);
@@ -62,7 +61,7 @@ int mac_cliprdr_send_client_format_list(CliprdrClientContext *cliprdr)
 
 	mfc->cliprdr->ClientFormatList(mfc->cliprdr, &formatList);
 
-	for (index = 0; index < numFormats; index++)
+	for (UINT32 index = 0; index < numFormats; index++)
 	{
 		free(formats[index].formatName);
 	}
@@ -151,11 +150,10 @@ static UINT mac_cliprdr_monitor_ready(CliprdrClientContext *cliprdr,
 static UINT mac_cliprdr_server_capabilities(CliprdrClientContext *cliprdr,
                                             const CLIPRDR_CAPABILITIES *capabilities)
 {
-	UINT32 index;
 	CLIPRDR_CAPABILITY_SET *capabilitySet;
 	mfContext *mfc = (mfContext *)cliprdr->custom;
 
-	for (index = 0; index < capabilities->cCapabilitiesSets; index++)
+	for (UINT32 index = 0; index < capabilities->cCapabilitiesSets; index++)
 	{
 		capabilitySet = &(capabilities->capabilitySets[index]);
 
@@ -181,13 +179,12 @@ static UINT mac_cliprdr_server_capabilities(CliprdrClientContext *cliprdr,
 static UINT mac_cliprdr_server_format_list(CliprdrClientContext *cliprdr,
                                            const CLIPRDR_FORMAT_LIST *formatList)
 {
-	UINT32 index;
 	CLIPRDR_FORMAT *format;
 	mfContext *mfc = (mfContext *)cliprdr->custom;
 
 	if (mfc->serverFormats)
 	{
-		for (index = 0; index < mfc->numServerFormats; index++)
+		for (UINT32 index = 0; index < mfc->numServerFormats; index++)
 		{
 			free(mfc->serverFormats[index].formatName);
 		}
@@ -206,7 +203,7 @@ static UINT mac_cliprdr_server_format_list(CliprdrClientContext *cliprdr,
 	if (!mfc->serverFormats)
 		return CHANNEL_RC_NO_MEMORY;
 
-	for (index = 0; index < mfc->numServerFormats; index++)
+	for (UINT32 index = 0; index < mfc->numServerFormats; index++)
 	{
 		mfc->serverFormats[index].formatId = formatList->formats[index].formatId;
 		mfc->serverFormats[index].formatName = NULL;
@@ -217,7 +214,7 @@ static UINT mac_cliprdr_server_format_list(CliprdrClientContext *cliprdr,
 
 	mac_cliprdr_send_client_format_list_response(cliprdr, TRUE);
 
-	for (index = 0; index < mfc->numServerFormats; index++)
+	for (UINT32 index = 0; index < mfc->numServerFormats; index++)
 	{
 		format = &(mfc->serverFormats[index]);
 

@@ -6,8 +6,6 @@
 
 int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 {
-	DWORD index = 0;
-	DWORD i = 0;
 	DWORD count = 0;
 	BOOL bSuccess = 0;
 	HANDLE hServer = NULL;
@@ -42,7 +40,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 
 	printf("WTSEnumerateSessions count: %" PRIu32 "\n", count);
 
-	for (index = 0; index < count; index++)
+	for (DWORD index = 0; index < count; index++)
 	{
 		char* Username = NULL;
 		char* Domain = NULL;
@@ -183,7 +181,7 @@ int TestWtsApiQuerySessionInformation(int argc, char* argv[])
 		ClientAddress = (PWTS_CLIENT_ADDRESS)pBuffer;
 		printf("\tWTSClientAddress: AddressFamily: %" PRIu32 " Address: ",
 		       ClientAddress->AddressFamily);
-		for (i = 0; i < sizeof(ClientAddress->Address); i++)
+		for (DWORD i = 0; i < sizeof(ClientAddress->Address); i++)
 			printf("%02" PRIX8 "", ClientAddress->Address[i]);
 		printf("\n");
 

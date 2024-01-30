@@ -592,11 +592,9 @@ static xfRailIconCache* RailIconCache_New(rdpSettings* settings)
 
 static void RailIconCache_Free(xfRailIconCache* cache)
 {
-	UINT32 i = 0;
-
 	if (cache)
 	{
-		for (i = 0; i < cache->numCaches * cache->numCacheEntries; i++)
+		for (UINT32 i = 0; i < cache->numCaches * cache->numCacheEntries; i++)
 		{
 			free(cache->entries[i].data);
 		}
@@ -645,7 +643,6 @@ static BOOL convert_rail_icon(const ICON_INFO* iconInfo, xfRailIcon* railIcon)
 	BYTE* argbPixels = NULL;
 	BYTE* nextPixel = NULL;
 	long* pixels = NULL;
-	int i = 0;
 	int nelements = 0;
 	argbPixels = calloc(1ull * iconInfo->width * iconInfo->height, 4);
 
@@ -670,7 +667,7 @@ static BOOL convert_rail_icon(const ICON_INFO* iconInfo, xfRailIcon* railIcon)
 	pixels[1] = iconInfo->height;
 	nextPixel = argbPixels;
 
-	for (i = 2; i < nelements; i++)
+	for (int i = 2; i < nelements; i++)
 	{
 		pixels[i] = FreeRDPReadColor(nextPixel, PIXEL_FORMAT_BGRA32);
 		nextPixel += 4;

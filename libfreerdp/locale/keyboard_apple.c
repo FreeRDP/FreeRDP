@@ -187,7 +187,6 @@ static const KEYBOARD_LAYOUT_MAPPING KEYBOARD_MAPPING_TABLE[] = {
 
 int freerdp_detect_keyboard_layout_from_cf(DWORD* keyboardLayoutId)
 {
-	int i;
 	CFIndex length;
 	char* inputSourceId = NULL;
 	CFStringRef inputSourceIdRef;
@@ -223,7 +222,7 @@ int freerdp_detect_keyboard_layout_from_cf(DWORD* keyboardLayoutId)
 	}
 
 	/* Search for the id in the mapping table */
-	for (i = 0; i < ARRAYSIZE(KEYBOARD_MAPPING_TABLE); ++i)
+	for (size_t i = 0; i < ARRAYSIZE(KEYBOARD_MAPPING_TABLE); ++i)
 	{
 		if (strcmp(inputSourceId, KEYBOARD_MAPPING_TABLE[i].inputSourceId) == 0)
 		{

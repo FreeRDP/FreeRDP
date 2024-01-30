@@ -731,7 +731,6 @@ RPC_STATUS UuidToStringW(const UUID* Uuid, RPC_WSTR* StringUuid)
 
 RPC_STATUS UuidFromStringA(RPC_CSTR StringUuid, UUID* Uuid)
 {
-	int index = 0;
 	BYTE bin[36];
 
 	if (!StringUuid)
@@ -746,7 +745,7 @@ RPC_STATUS UuidFromStringA(RPC_CSTR StringUuid, UUID* Uuid)
 		return RPC_S_INVALID_STRING_UUID;
 	}
 
-	for (index = 0; index < 36; index++)
+	for (int index = 0; index < 36; index++)
 	{
 		if ((index == 8) || (index == 13) || (index == 18) || (index == 23))
 			continue;
@@ -784,7 +783,6 @@ RPC_STATUS UuidFromStringW(RPC_WSTR StringUuid, UUID* Uuid)
 
 signed int UuidCompare(const UUID* Uuid1, const UUID* Uuid2, RPC_STATUS* Status)
 {
-	int index = 0;
 	*Status = RPC_S_OK;
 
 	if (!Uuid1)
@@ -802,7 +800,7 @@ signed int UuidCompare(const UUID* Uuid1, const UUID* Uuid2, RPC_STATUS* Status)
 	if (Uuid1->Data3 != Uuid2->Data3)
 		return (Uuid1->Data3 < Uuid2->Data3) ? -1 : 1;
 
-	for (index = 0; index < 8; index++)
+	for (int index = 0; index < 8; index++)
 	{
 		if (Uuid1->Data4[index] != Uuid2->Data4[index])
 			return (Uuid1->Data4[index] < Uuid2->Data4[index]) ? -1 : 1;

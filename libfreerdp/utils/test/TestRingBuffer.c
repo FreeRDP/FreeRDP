@@ -27,14 +27,10 @@ static BOOL test_overlaps(void)
 	RingBuffer rb;
 	DataChunk chunks[2];
 	BYTE bytes[200];
-	size_t i = 0;
-	size_t k = 0;
-	int x = 0;
 	int nchunks = 0;
-	int j = 0;
 	int counter = 0;
 
-	for (i = 0; i < sizeof(bytes); i++)
+	for (size_t i = 0; i < sizeof(bytes); i++)
 		bytes[i] = (BYTE)i;
 
 	ringbuffer_init(&rb, 5);
@@ -51,9 +47,9 @@ static BOOL test_overlaps(void)
 	if (nchunks != 2 || chunks[0].size != 3 || chunks[1].size != 1)
 		goto error;
 
-	for (x = 0, j = 2; x < nchunks; x++)
+	for (int x = 0, j = 2; x < nchunks; x++)
 	{
-		for (k = 0; k < chunks[x].size; k++, j++)
+		for (size_t k = 0; k < chunks[x].size; k++, j++)
 		{
 			if (chunks[x].data[k] != (BYTE)j)
 				goto error;
@@ -88,7 +84,6 @@ int TestRingBuffer(int argc, char* argv[])
 	int testNo = 0;
 	BYTE* tmpBuf = NULL;
 	BYTE* rb_ptr = NULL;
-	int i = 0 /*, chunkNb, counter*/;
 	DataChunk chunks[2];
 
 	WINPR_UNUSED(argc);
@@ -104,7 +99,7 @@ int TestRingBuffer(int argc, char* argv[])
 	if (!tmpBuf)
 		return -1;
 
-	for (i = 0; i < 50; i++)
+	for (int i = 0; i < 50; i++)
 		tmpBuf[i] = (char)i;
 
 	fprintf(stderr, "%d: basic tests...", ++testNo);
@@ -130,7 +125,7 @@ int TestRingBuffer(int argc, char* argv[])
 	ringbuffer_commit_read_bytes(&ringBuffer, chunks[0].size);
 
 	/* check retrieved bytes */
-	for (i = 0; i < (int)chunks[0].size; i++)
+	for (size_t i = 0; i < chunks[0].size; i++)
 	{
 		if (chunks[0].data[i] != i % 5)
 		{
@@ -168,7 +163,7 @@ int TestRingBuffer(int argc, char* argv[])
 	fprintf(stderr, "ok\n");
 
 	fprintf(stderr, "%d: ensure_linear_write / read() shouldn't grow...", ++testNo);
-	for (i = 0; i < 1000; i++)
+	for (int i = 0; i < 1000; i++)
 	{
 		rb_ptr = ringbuffer_ensure_linear_write(&ringBuffer, 50);
 		if (!rb_ptr)
@@ -188,10 +183,10 @@ int TestRingBuffer(int argc, char* argv[])
 		// ringbuffer_commit_read_bytes(&ringBuffer, 25);
 	}
 
-	for (i = 0; i < 1000; i++)
+	for (int i = 0; i < 1000; i++)
 		ringbuffer_commit_read_bytes(&ringBuffer, 25);
 
-	for (i = 0; i < 1000; i++)
+	for (int i = 0; i < 1000; i++)
 		ringbuffer_commit_read_bytes(&ringBuffer, 25);
 
 	if (ringbuffer_capacity(&ringBuffer) != 10)
@@ -203,7 +198,7 @@ int TestRingBuffer(int argc, char* argv[])
 	fprintf(stderr, "ok\n");
 
 	fprintf(stderr, "%d: free size is correctly computed...", ++testNo);
-	for (i = 0; i < 1000; i++)
+	for (int i = 0; i < 1000; i++)
 	{
 		ringbuffer_ensure_linear_write(&ringBuffer, 50);
 		if (!ringbuffer_commit_written_bytes(&ringBuffer, 50))

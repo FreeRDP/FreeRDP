@@ -177,7 +177,6 @@ static UINT rdpsnd_server_recv_quality_mode(RdpsndServerContext* context, wStrea
  */
 static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 {
-	UINT16 i = 0;
 	UINT16 num_known_format = 0;
 	UINT16 udpPort = 0;
 	BYTE lastblock = 0;
@@ -215,7 +214,7 @@ static UINT rdpsnd_server_recv_formats(RdpsndServerContext* context, wStream* s)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	for (i = 0; i < context->num_client_formats; i++)
+	for (UINT16 i = 0; i < context->num_client_formats; i++)
 	{
 		AUDIO_FORMAT* format = &context->client_formats[i];
 

@@ -102,7 +102,6 @@ static char* winpr_read_unix_timezone_identifier_from_file(FILE* fp)
 static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 {
 	const char* _links[] = { "/etc/localtime", "/etc/TZ" };
-	size_t x = 0;
 
 	if (links == NULL)
 	{
@@ -117,7 +116,7 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 	 * Some distributions do have to symlink at /etc/TZ.
 	 */
 
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		char* tzid = NULL;
 		const char* link = links[x];
@@ -125,14 +124,13 @@ static char* winpr_get_timezone_from_link(const char* links[], size_t count)
 
 		if (buf)
 		{
-			size_t i = 0;
 			size_t sep = 0;
 			size_t alloc = 0;
 			size_t pos = 0;
 			size_t len = pos = strlen(buf);
 
 			/* find the position of the 2nd to last "/" */
-			for (i = 1; i <= len; i++)
+			for (size_t i = 1; i <= len; i++)
 			{
 				const size_t curpos = len - i;
 				const char cur = buf[curpos];
@@ -296,8 +294,6 @@ static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, con
 
 static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 {
-	size_t i = 0;
-	size_t j = 0;
 	char* tzid = NULL;
 	char* ntzid = NULL;
 	LPCSTR tz = "TZ";
@@ -340,11 +336,11 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 
 	WLog_INFO(TAG, "tzid: %s", tzid);
 
-	for (i = 0; i < TimeZoneTableNrElements; i++)
+	for (size_t i = 0; i < TimeZoneTableNrElements; i++)
 	{
 		const TIME_ZONE_ENTRY* tze = &TimeZoneTable[i];
 
-		for (j = 0; j < WindowsTimeZoneIdTableNrElements; j++)
+		for (size_t j = 0; j < WindowsTimeZoneIdTableNrElements; j++)
 		{
 			const WINDOWS_TZID_ENTRY* wzid = &WindowsTimeZoneIdTable[j];
 
@@ -373,11 +369,10 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 static const TIME_ZONE_RULE_ENTRY*
 winpr_get_current_time_zone_rule(const TIME_ZONE_RULE_ENTRY* rules, UINT32 count)
 {
-	UINT32 i = 0;
 	UINT64 windows_time = 0;
 	windows_time = winpr_windows_gmtime();
 
-	for (i = 0; i < count; i++)
+	for (UINT32 i = 0; i < count; i++)
 	{
 		if ((rules[i].TicksStart >= windows_time) && (windows_time >= rules[i].TicksEnd))
 		{

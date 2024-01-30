@@ -277,7 +277,6 @@ static BOOL rdp_write_client_persistent_key_list_pdu(wStream* s,
 
 static UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 {
-	int index = 0;
 	int count = 0;
 	int status = 0;
 	UINT32 keyCount = 0;
@@ -311,7 +310,7 @@ static UINT32 rdp_load_persistent_key_list(rdpRdp* rdp, UINT64** pKeyList)
 	if (!keyList)
 		goto error;
 
-	for (index = 0; index < count; index++)
+	for (int index = 0; index < count; index++)
 	{
 		PERSISTENT_CACHE_ENTRY cacheEntry = { 0 };
 
@@ -431,7 +430,6 @@ BOOL rdp_recv_client_persistent_key_list_pdu(wStream* s)
 	size_t count = 0;
 	size_t total = 0;
 	UINT16 cache = 0;
-	UINT16 x = 0;
 
 	WINPR_ASSERT(s);
 
@@ -443,14 +441,14 @@ BOOL rdp_recv_client_persistent_key_list_pdu(wStream* s)
 		return FALSE;
 	}
 	/* Read numEntriesCacheX for variable length data in PDU */
-	for (x = 0; x < 5; x++)
+	for (size_t x = 0; x < 5; x++)
 	{
 		Stream_Read_UINT16(s, cache);
 		count += cache;
 	}
 
 	/* Skip totalEntriesCacheX */
-	for (x = 0; x < 5; x++)
+	for (size_t x = 0; x < 5; x++)
 	{
 		UINT16 tmp = 0;
 		Stream_Read_UINT16(s, tmp);

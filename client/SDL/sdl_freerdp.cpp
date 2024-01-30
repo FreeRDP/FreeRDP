@@ -208,8 +208,7 @@ static const struct sdl_exit_code_map_t sdl_exit_code_map[] = {
 
 static const struct sdl_exit_code_map_t* sdl_map_entry_by_code(int exit_code)
 {
-	size_t x = 0;
-	for (x = 0; x < ARRAYSIZE(sdl_exit_code_map); x++)
+	for (size_t x = 0; x < ARRAYSIZE(sdl_exit_code_map); x++)
 	{
 		const struct sdl_exit_code_map_t* cur = &sdl_exit_code_map[x];
 		if (cur->code == exit_code)
@@ -220,8 +219,7 @@ static const struct sdl_exit_code_map_t* sdl_map_entry_by_code(int exit_code)
 
 static const struct sdl_exit_code_map_t* sdl_map_entry_by_error(DWORD error)
 {
-	size_t x = 0;
-	for (x = 0; x < ARRAYSIZE(sdl_exit_code_map); x++)
+	for (size_t x = 0; x < ARRAYSIZE(sdl_exit_code_map); x++)
 	{
 		const struct sdl_exit_code_map_t* cur = &sdl_exit_code_map[x];
 		if (cur->error == error)

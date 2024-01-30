@@ -81,7 +81,6 @@ static BOOL wf_has_console(void)
 
 static BOOL wf_end_paint(rdpContext* context)
 {
-	int i;
 	rdpGdi* gdi;
 	int ninvalid;
 	RECT updateRect;
@@ -99,7 +98,7 @@ static BOOL wf_end_paint(rdpContext* context)
 
 	region16_init(&invalidRegion);
 
-	for (i = 0; i < ninvalid; i++)
+	for (int i = 0; i < ninvalid; i++)
 	{
 		invalidRect.left = cinvalid[i].x;
 		invalidRect.top = cinvalid[i].y;

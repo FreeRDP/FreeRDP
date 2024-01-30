@@ -127,7 +127,6 @@ static BOOL disp_server_is_monitor_layout_valid(const DISPLAY_CONTROL_MONITOR_LA
 static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerContext* context)
 {
 	UINT32 error = CHANNEL_RC_OK;
-	UINT32 index = 0;
 	DISPLAY_CONTROL_MONITOR_LAYOUT_PDU pdu = { 0 };
 
 	WINPR_ASSERT(s);
@@ -170,7 +169,7 @@ static UINT disp_recv_display_control_monitor_layout_pdu(wStream* s, DispServerC
 	WLog_DBG(TAG, "disp_recv_display_control_monitor_layout_pdu: NumMonitors=%" PRIu32 "",
 	         pdu.NumMonitors);
 
-	for (index = 0; index < pdu.NumMonitors; index++)
+	for (UINT32 index = 0; index < pdu.NumMonitors; index++)
 	{
 		DISPLAY_CONTROL_MONITOR_LAYOUT* monitor = &(pdu.Monitors[index]);
 

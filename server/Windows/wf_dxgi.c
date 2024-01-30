@@ -411,7 +411,6 @@ int wf_dxgi_releasePixelData(wfInfo* wfi)
 
 int wf_dxgi_getInvalidRegion(RECT* invalid)
 {
-	UINT i;
 	HRESULT status;
 	UINT dirty;
 	UINT BufSize;
@@ -474,7 +473,7 @@ int wf_dxgi_getInvalidRegion(RECT* invalid)
 
 		pRect = (RECT*)DirtyRects;
 
-		for (i = 0; i < dirty; ++i)
+		for (UINT i = 0; i < dirty; ++i)
 		{
 			UnionRect(invalid, invalid, pRect);
 			++pRect;

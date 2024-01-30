@@ -283,8 +283,6 @@ size_t Stream_GetRemainingLength(const wStream* _s)
 
 BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t length)
 {
-	size_t x = 0;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(src || (length == 0));
 	if (!s || !src)
@@ -293,7 +291,7 @@ BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t length)
 	if (!Stream_CheckAndLogRequiredCapacityOfSize(STREAM_TAG, (s), length, sizeof(WCHAR)))
 		return FALSE;
 
-	for (x = 0; x < length; x++)
+	for (size_t x = 0; x < length; x++)
 		Stream_Write_UINT16(s, src[x]);
 
 	return TRUE;
@@ -301,15 +299,13 @@ BOOL Stream_Write_UTF16_String(wStream* s, const WCHAR* src, size_t length)
 
 BOOL Stream_Read_UTF16_String(wStream* s, WCHAR* dst, size_t length)
 {
-	size_t x = 0;
-
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(dst);
 
 	if (!Stream_CheckAndLogRequiredLengthOfSize(STREAM_TAG, s, length, sizeof(WCHAR)))
 		return FALSE;
 
-	for (x = 0; x < length; x++)
+	for (size_t x = 0; x < length; x++)
 		Stream_Read_UINT16(s, dst[x]);
 
 	return TRUE;

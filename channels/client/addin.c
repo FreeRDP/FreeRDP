@@ -87,8 +87,6 @@ static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName
                                                                   LPCSTR pszSubsystem,
                                                                   LPCSTR pszType, DWORD dwFlags)
 {
-	size_t i = 0;
-	size_t j = 0;
 	DWORD nAddins = 0;
 	FREERDP_ADDIN** ppAddins = NULL;
 	const STATIC_SUBSYSTEM_ENTRY* subsystems = NULL;
@@ -103,7 +101,7 @@ static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName
 
 	ppAddins[nAddins] = NULL;
 
-	for (i = 0; CLIENT_STATIC_ADDIN_TABLE[i].name != NULL; i++)
+	for (size_t i = 0; CLIENT_STATIC_ADDIN_TABLE[i].name != NULL; i++)
 	{
 		FREERDP_ADDIN* pAddin = (FREERDP_ADDIN*)calloc(1, sizeof(FREERDP_ADDIN));
 
@@ -120,7 +118,7 @@ static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName
 		ppAddins[nAddins++] = pAddin;
 		subsystems = (const STATIC_SUBSYSTEM_ENTRY*)CLIENT_STATIC_ADDIN_TABLE[i].table;
 
-		for (j = 0; subsystems[j].name != NULL; j++)
+		for (size_t j = 0; subsystems[j].name != NULL; j++)
 		{
 			pAddin = (FREERDP_ADDIN*)calloc(1, sizeof(FREERDP_ADDIN));
 
@@ -165,7 +163,6 @@ static HANDLE FindFirstFileUTF8(LPCSTR pszSearchPath, WIN32_FIND_DATAW* FindData
 static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCSTR pszSubsystem,
                                                             LPCSTR pszType, DWORD dwFlags)
 {
-	int index = 0;
 	int nDashes = 0;
 	HANDLE hFind = NULL;
 	DWORD nAddins = 0;
@@ -270,7 +267,7 @@ static FREERDP_ADDIN** freerdp_channels_list_dynamic_addins(LPCSTR pszName, LPCS
 			goto skip;
 
 		nDashes = 0;
-		for (index = 0; cFileName[index]; index++)
+		for (size_t index = 0; cFileName[index]; index++)
 			nDashes += (cFileName[index] == '-') ? 1 : 0;
 
 		if (nDashes == 1)
@@ -428,12 +425,10 @@ FREERDP_ADDIN** freerdp_channels_list_addins(LPCSTR pszName, LPCSTR pszSubsystem
 
 void freerdp_channels_addin_list_free(FREERDP_ADDIN** ppAddins)
 {
-	size_t index = 0;
-
 	if (!ppAddins)
 		return;
 
-	for (index = 0; ppAddins[index] != NULL; index++)
+	for (size_t index = 0; ppAddins[index] != NULL; index++)
 		free(ppAddins[index]);
 
 	free(ppAddins);
@@ -443,9 +438,7 @@ extern const STATIC_ENTRY CLIENT_VirtualChannelEntryEx_TABLE[];
 
 static BOOL freerdp_channels_is_virtual_channel_entry_ex(LPCSTR pszName)
 {
-	size_t i = 0;
-
-	for (i = 0; CLIENT_VirtualChannelEntryEx_TABLE[i].name != NULL; i++)
+	for (size_t i = 0; CLIENT_VirtualChannelEntryEx_TABLE[i].name != NULL; i++)
 	{
 		const STATIC_ENTRY* entry = &CLIENT_VirtualChannelEntryEx_TABLE[i];
 

@@ -39,7 +39,6 @@
  */
 static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H264_METABLOCK* meta)
 {
-	UINT32 index = 0;
 	RECTANGLE_16* regionRect = NULL;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal = NULL;
 	UINT error = ERROR_INVALID_DATA;
@@ -75,7 +74,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 
 	WLog_DBG(TAG, "H264_METABLOCK: numRegionRects: %" PRIu32 "", meta->numRegionRects);
 
-	for (index = 0; index < meta->numRegionRects; index++)
+	for (UINT32 index = 0; index < meta->numRegionRects; index++)
 	{
 		regionRect = &(meta->regionRects[index]);
 
@@ -97,7 +96,7 @@ static UINT rdpgfx_read_h264_metablock(RDPGFX_PLUGIN* gfx, wStream* s, RDPGFX_H2
 		goto error_out;
 	}
 
-	for (index = 0; index < meta->numRegionRects; index++)
+	for (UINT32 index = 0; index < meta->numRegionRects; index++)
 	{
 		quantQualityVal = &(meta->quantQualityVals[index]);
 		Stream_Read_UINT8(s, quantQualityVal->qpVal);      /* qpVal (1 byte) */

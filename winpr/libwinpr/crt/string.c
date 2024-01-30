@@ -323,11 +323,10 @@ size_t _wcslen(const WCHAR* str)
 
 size_t _wcsnlen(const WCHAR* str, size_t max)
 {
-	size_t x = 0;
-
 	WINPR_ASSERT(str);
 
-	for (x = 0; x < max; x++)
+	size_t x = 0;
+	for (; x < max; x++)
 	{
 		if (str[x] == 0)
 			return x;
@@ -451,7 +450,6 @@ WCHAR* wcstok_s(WCHAR* strToken, const WCHAR* strDelimit, WCHAR** context)
 
 LPSTR CharUpperA(LPSTR lpsz)
 {
-	size_t i = 0;
 	size_t length = 0;
 
 	if (!lpsz)
@@ -473,7 +471,7 @@ LPSTR CharUpperA(LPSTR lpsz)
 		return lpsz;
 	}
 
-	for (i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 	{
 		if ((lpsz[i] >= 'a') && (lpsz[i] <= 'z'))
 			lpsz[i] = lpsz[i] - 'a' + 'A';
@@ -484,7 +482,6 @@ LPSTR CharUpperA(LPSTR lpsz)
 
 LPWSTR CharUpperW(LPWSTR lpsz)
 {
-	size_t i = 0;
 	size_t length = 0;
 
 	if (!lpsz)
@@ -506,7 +503,7 @@ LPWSTR CharUpperW(LPWSTR lpsz)
 		return lpsz;
 	}
 
-	for (i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 	{
 		if ((lpsz[i] >= L'a') && (lpsz[i] <= L'z'))
 			lpsz[i] = lpsz[i] - L'a' + L'A';
@@ -517,12 +514,10 @@ LPWSTR CharUpperW(LPWSTR lpsz)
 
 DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 {
-	DWORD i = 0;
-
 	if (cchLength < 1)
 		return 0;
 
-	for (i = 0; i < cchLength; i++)
+	for (DWORD i = 0; i < cchLength; i++)
 	{
 		if ((lpsz[i] >= 'a') && (lpsz[i] <= 'z'))
 			lpsz[i] = lpsz[i] - 'a' + 'A';
@@ -533,10 +528,9 @@ DWORD CharUpperBuffA(LPSTR lpsz, DWORD cchLength)
 
 DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 {
-	DWORD i = 0;
 	WCHAR value = 0;
 
-	for (i = 0; i < cchLength; i++)
+	for (DWORD i = 0; i < cchLength; i++)
 	{
 		Data_Read_UINT16(&lpsz[i], value);
 		value = WINPR_TOUPPERW(value);
@@ -548,7 +542,6 @@ DWORD CharUpperBuffW(LPWSTR lpsz, DWORD cchLength)
 
 LPSTR CharLowerA(LPSTR lpsz)
 {
-	size_t i = 0;
 	size_t length = 0;
 
 	if (!lpsz)
@@ -570,7 +563,7 @@ LPSTR CharLowerA(LPSTR lpsz)
 		return lpsz;
 	}
 
-	for (i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 	{
 		if ((lpsz[i] >= 'A') && (lpsz[i] <= 'Z'))
 			lpsz[i] = lpsz[i] - 'A' + 'a';
@@ -587,12 +580,10 @@ LPWSTR CharLowerW(LPWSTR lpsz)
 
 DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 {
-	DWORD i = 0;
-
 	if (cchLength < 1)
 		return 0;
 
-	for (i = 0; i < cchLength; i++)
+	for (DWORD i = 0; i < cchLength; i++)
 	{
 		if ((lpsz[i] >= 'A') && (lpsz[i] <= 'Z'))
 			lpsz[i] = lpsz[i] - 'A' + 'a';
@@ -603,10 +594,9 @@ DWORD CharLowerBuffA(LPSTR lpsz, DWORD cchLength)
 
 DWORD CharLowerBuffW(LPWSTR lpsz, DWORD cchLength)
 {
-	DWORD i = 0;
 	WCHAR value = 0;
 
-	for (i = 0; i < cchLength; i++)
+	for (DWORD i = 0; i < cchLength; i++)
 	{
 		Data_Read_UINT16(&lpsz[i], value);
 		value = WINPR_TOLOWERW(value);

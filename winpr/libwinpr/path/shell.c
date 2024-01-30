@@ -480,7 +480,6 @@ BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 #else
 	const char delim = PathGetSeparatorA(PATH_STYLE_NATIVE);
 	char* dup = NULL;
-	char* p = NULL;
 	BOOL result = TRUE;
 	/* we only operate on a non-null, absolute path */
 #if defined(__OS2__)
@@ -503,7 +502,7 @@ BOOL PathMakePathA(LPCSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 
 	while (p)
 #else
-	for (p = dup; p;)
+	for (char* p = dup; p;)
 #endif
 	{
 		if ((p = strchr(p + 1, delim)))
@@ -535,7 +534,6 @@ BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 	const WCHAR wdelim = PathGetSeparatorW(PATH_STYLE_NATIVE);
 	const char delim = PathGetSeparatorA(PATH_STYLE_NATIVE);
 	char* dup = NULL;
-	char* p = NULL;
 	BOOL result = TRUE;
 	/* we only operate on a non-null, absolute path */
 #if defined(__OS2__)
@@ -559,7 +557,7 @@ BOOL PathMakePathW(LPCWSTR path, LPSECURITY_ATTRIBUTES lpAttributes)
 
 	while (p)
 #else
-	for (p = dup; p;)
+	for (char* p = dup; p;)
 #endif
 	{
 		if ((p = strchr(p + 1, delim)))

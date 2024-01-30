@@ -356,7 +356,6 @@ void xf_disp_free(xfDispContext* disp)
 UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, UINT32 nmonitors)
 {
 	UINT ret = CHANNEL_RC_OK;
-	UINT32 i = 0;
 	xfDispContext* xfDisp = NULL;
 	rdpSettings* settings = NULL;
 	DISPLAY_CONTROL_MONITOR_LAYOUT* layouts = NULL;
@@ -377,7 +376,7 @@ UINT xf_disp_sendLayout(DispClientContext* disp, const rdpMonitor* monitors, UIN
 	if (!layouts)
 		return CHANNEL_RC_NO_MEMORY;
 
-	for (i = 0; i < nmonitors; i++)
+	for (UINT32 i = 0; i < nmonitors; i++)
 	{
 		const rdpMonitor* monitor = &monitors[i];
 		DISPLAY_CONTROL_MONITOR_LAYOUT* layout = &layouts[i];

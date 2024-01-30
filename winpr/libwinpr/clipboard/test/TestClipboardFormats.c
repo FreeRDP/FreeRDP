@@ -5,7 +5,6 @@
 
 int TestClipboardFormats(int argc, char* argv[])
 {
-	UINT32 index = 0;
 	UINT32 count = 0;
 	UINT32* pFormatIds = NULL;
 	const char* formatName = NULL;
@@ -27,7 +26,7 @@ int TestClipboardFormats(int argc, char* argv[])
 	pFormatIds = NULL;
 	count = ClipboardGetRegisteredFormatIds(clipboard, &pFormatIds);
 
-	for (index = 0; index < count; index++)
+	for (UINT32 index = 0; index < count; index++)
 	{
 		UINT32 formatId = pFormatIds[index];
 		formatName = ClipboardGetFormatName(clipboard, formatId);
@@ -70,7 +69,7 @@ int TestClipboardFormats(int argc, char* argv[])
 	pFormatIds = NULL;
 	count = ClipboardGetFormatIds(clipboard, &pFormatIds);
 
-	for (index = 0; index < count; index++)
+	for (UINT32 index = 0; index < count; index++)
 	{
 		UINT32 formatId = pFormatIds[index];
 		formatName = ClipboardGetFormatName(clipboard, formatId);

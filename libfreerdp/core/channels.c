@@ -52,7 +52,6 @@
 
 BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_t size)
 {
-	DWORD i = 0;
 	size_t left = 0;
 	UINT32 flags = 0;
 	size_t chunkSize = 0;
@@ -64,7 +63,7 @@ BOOL freerdp_channel_send(rdpRdp* rdp, UINT16 channelId, const BYTE* data, size_
 
 	mcs = rdp->mcs;
 	WINPR_ASSERT(mcs);
-	for (i = 0; i < mcs->channelCount; i++)
+	for (UINT32 i = 0; i < mcs->channelCount; i++)
 	{
 		const rdpMcsChannel* cur = &mcs->channels[i];
 		if (cur->ChannelId == channelId)
@@ -175,13 +174,12 @@ BOOL freerdp_channel_peer_process(freerdp_peer* client, wStream* s, UINT16 chann
 	if (client->VirtualChannelRead)
 	{
 		int rc = 0;
-		UINT32 index = 0;
 		BOOL found = FALSE;
 		HANDLE hChannel = 0;
 		rdpContext* context = client->context;
 		rdpMcs* mcs = context->rdp->mcs;
 
-		for (index = 0; index < mcs->channelCount; index++)
+		for (UINT32 index = 0; index < mcs->channelCount; index++)
 		{
 			const rdpMcsChannel* mcsChannel = &(mcs->channels[index]);
 

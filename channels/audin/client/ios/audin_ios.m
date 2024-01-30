@@ -222,7 +222,6 @@ static UINT audin_ios_open(IAudinDevice *device, AudinReceive receive, void *use
 	DWORD errCode;
 	char errString[1024];
 	OSStatus devStat;
-	size_t index;
 
 	ios->receive = receive;
 	ios->user_data = user_data;
@@ -237,7 +236,7 @@ static UINT audin_ios_open(IAudinDevice *device, AudinReceive receive, void *use
 		goto err_out;
 	}
 
-	for (index = 0; index < IOS_AUDIO_QUEUE_NUM_BUFFERS; index++)
+	for (size_t index = 0; index < IOS_AUDIO_QUEUE_NUM_BUFFERS; index++)
 	{
 		devStat = AudioQueueAllocateBuffer(ios->audioQueue,
 		                                   ios->FramesPerPacket * 2 * ios->format.nChannels,

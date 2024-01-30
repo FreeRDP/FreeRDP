@@ -70,7 +70,6 @@ void rfx_quantization_decode(INT16* buffer, const UINT32* WINPR_RESTRICT quantVa
 
 static void rfx_quantization_encode_block(INT16* buffer, size_t buffer_size, UINT32 factor)
 {
-	INT16* dst = NULL;
 	INT16 half = 0;
 
 	if (factor == 0)
@@ -78,7 +77,7 @@ static void rfx_quantization_encode_block(INT16* buffer, size_t buffer_size, UIN
 
 	half = (1 << (factor - 1));
 	/* Could probably use prims->rShiftC_16s(dst+half, factor, dst, buffer_size); */
-	for (dst = buffer; buffer_size > 0; dst++, buffer_size--)
+	for (INT16* dst = buffer; buffer_size > 0; dst++, buffer_size--)
 	{
 		*dst = (*dst + half) >> factor;
 	}

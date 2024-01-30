@@ -127,11 +127,9 @@ static void ntlm_print_message_fields(const NTLM_MESSAGE_FIELDS* fields, const c
 
 static void ntlm_print_negotiate_flags(UINT32 flags)
 {
-	int i = 0;
-
 	WLog_VRB(TAG, "negotiateFlags \"0x%08" PRIX32 "\"", flags);
 
-	for (i = 31; i >= 0; i--)
+	for (int i = 31; i >= 0; i--)
 	{
 		if ((flags >> i) & 1)
 		{

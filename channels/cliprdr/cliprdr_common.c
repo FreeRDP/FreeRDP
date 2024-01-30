@@ -184,7 +184,6 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
                                         BOOL useLongFormatNames)
 {
 	wStream* s = NULL;
-	UINT32 index = 0;
 	size_t formatNameSize = 0;
 	char* szFormatName = NULL;
 	WCHAR* wszFormatName = NULL;
@@ -206,7 +205,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 			return NULL;
 		}
 
-		for (index = 0; index < formatList->numFormats; index++)
+		for (UINT32 index = 0; index < formatList->numFormats; index++)
 		{
 			size_t formatNameLength = 0;
 			format = (CLIPRDR_FORMAT*)&(formatList->formats[index]);
@@ -259,7 +258,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 	else
 	{
 		length = 0;
-		for (index = 0; index < formatList->numFormats; index++)
+		for (UINT32 index = 0; index < formatList->numFormats; index++)
 		{
 			format = (CLIPRDR_FORMAT*)&(formatList->formats[index]);
 			length += 4;
@@ -284,7 +283,7 @@ wStream* cliprdr_packet_format_list_new(const CLIPRDR_FORMAT_LIST* formatList,
 			return NULL;
 		}
 
-		for (index = 0; index < formatList->numFormats; index++)
+		for (UINT32 index = 0; index < formatList->numFormats; index++)
 		{
 			format = (CLIPRDR_FORMAT*)&(formatList->formats[index]);
 			Stream_Write_UINT32(s, format->formatId); /* formatId (4 bytes) */
@@ -550,14 +549,12 @@ error_out:
 
 void cliprdr_free_format_list(CLIPRDR_FORMAT_LIST* formatList)
 {
-	UINT index = 0;
-
 	if (formatList == NULL)
 		return;
 
 	if (formatList->formats)
 	{
-		for (index = 0; index < formatList->numFormats; index++)
+		for (UINT32 index = 0; index < formatList->numFormats; index++)
 		{
 			free(formatList->formats[index].formatName);
 		}

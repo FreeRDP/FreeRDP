@@ -24,9 +24,7 @@
 
 static BOOL compareRectangles(const RECTANGLE_16* src1, const RECTANGLE_16* src2, int nb)
 {
-	int i = 0;
-
-	for (i = 0; i < nb; i++, src1++, src2++)
+	for (int i = 0; i < nb; i++, src1++, src2++)
 	{
 		if (memcmp(src1, src2, sizeof(RECTANGLE_16)))
 		{
@@ -636,7 +634,6 @@ static int test_norbert_case(void)
 	int retCode = -1;
 	const RECTANGLE_16* rects = NULL;
 	UINT32 nbRects = 0;
-	UINT32 i = 0;
 	RECTANGLE_16 inRectangles[5] = { { 1680, 0, 1920, 242 },
 		                             { 294, 242, 971, 776 },
 		                             { 1680, 242, 1920, 776 },
@@ -673,7 +670,7 @@ static int test_norbert_case(void)
 	 * After intersected with the full screen rect, the
 	 * result should keep the same.
 	 */
-	for (i = 0; i < 5; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		if (!region16_union_rect(&region, &region, &inRectangles[i]))
 			goto out;
@@ -777,7 +774,6 @@ static int test_empty_rectangle(void)
 	REGION16 region;
 	REGION16 intersection;
 	int retCode = -1;
-	int i = 0;
 	RECTANGLE_16 emptyRectangles[3] = { { 0, 0, 0, 0 }, { 10, 10, 10, 11 }, { 10, 10, 11, 10 } };
 	RECTANGLE_16 firstRect = { 0, 0, 100, 100 };
 	RECTANGLE_16 anotherRect = { 100, 100, 200, 200 };
@@ -786,7 +782,7 @@ static int test_empty_rectangle(void)
 	region16_init(&intersection);
 
 	/* Check for empty rectangles */
-	for (i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
 	{
 		if (!rectangle_is_empty(&emptyRectangles[i]))
 			goto out;
@@ -845,13 +841,12 @@ static struct UnitaryTest tests[] = { { "Basic trivial tests", test_basic },
 
 int TestFreeRDPRegion(int argc, char* argv[])
 {
-	int i = 0;
 	int testNb = 0;
 	int retCode = -1;
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	for (i = 0; tests[i].func; i++)
+	for (int i = 0; tests[i].func; i++)
 	{
 		testNb++;
 		fprintf(stderr, "%d: %s\n", testNb, tests[i].name);

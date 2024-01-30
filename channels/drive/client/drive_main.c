@@ -886,7 +886,6 @@ static void drive_message_free(void* obj)
 static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, const char* name,
                                       const char* path, BOOL automount)
 {
-	size_t i = 0;
 	size_t length = 0;
 	DRIVE_DEVICE* drive = NULL;
 	UINT error = ERROR_INTERNAL_ERROR;
@@ -924,7 +923,7 @@ static UINT drive_register_drive_path(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints,
 			goto out_error;
 		}
 
-		for (i = 0; i < length; i++)
+		for (size_t i = 0; i < length; i++)
 		{
 			/* Filter 2.2.1.3 Device Announce Header (DEVICE_ANNOUNCE) forbidden symbols */
 			switch (name[i])
@@ -1015,7 +1014,6 @@ FREERDP_ENTRY_POINT(UINT drive_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS p
 	RDPDR_DRIVE* drive = NULL;
 	UINT error = 0;
 #ifdef WIN32
-	char* dev;
 	int len;
 	char devlist[512], buf[512];
 	char* bufdup;
@@ -1075,12 +1073,14 @@ FREERDP_ENTRY_POINT(UINT drive_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS p
 	}
 	else if (strcmp(drive->Path, "*") == 0)
 	{
-		int i;
 		/* Enumerate all devices: */
 		GetLogicalDriveStringsA(sizeof(devlist) - 1, devlist);
 
-		for (dev = devlist, i = 0; *dev; dev += 4, i++)
+		for (size_t i = 0;; i++)
 		{
+			char* dev = &devlist[i * 4];
+			if (!*dev)
+				break;
 			if (*dev > 'B')
 			{
 				/* Suppress disk drives A and B to avoid pesty messages */
