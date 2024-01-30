@@ -67,7 +67,7 @@ static void rfx_dwt_2d_decode_block(INT16* buffer, INT16* idwt, size_t subband_w
 
 		/* Odd coefficients */
 		size_t n = 0;
-		for (n = 0; n < subband_width - 1; n++)
+		for (; n < subband_width - 1; n++)
 		{
 			const size_t x = n << 1;
 			l_dst[x + 1] = (hl[n] << 1) + ((l_dst[x] + l_dst[x + 2]) >> 1);

@@ -941,14 +941,13 @@ static BOOL tf_peer_extended_mouse_event(rdpInput* input, UINT16 flags, UINT16 x
 
 static BOOL tf_peer_refresh_rect(rdpContext* context, BYTE count, const RECTANGLE_16* areas)
 {
-	BYTE i = 0;
 	WINPR_UNUSED(context);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(areas || (count == 0));
 
 	WLog_DBG(TAG, "Client requested to refresh:");
 
-	for (i = 0; i < count; i++)
+	for (BYTE i = 0; i < count; i++)
 	{
 		WLog_DBG(TAG, "  (%" PRIu16 ", %" PRIu16 ") (%" PRIu16 ", %" PRIu16 ")", areas[i].left,
 		         areas[i].top, areas[i].right, areas[i].bottom);

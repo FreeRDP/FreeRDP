@@ -797,7 +797,6 @@ out:
 static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* context, wStream* s,
                                                           const RDPDR_HEADER* header)
 {
-	UINT16 i = 0;
 	UINT status = 0;
 	UINT16 numCapabilities = 0;
 
@@ -813,7 +812,7 @@ static UINT rdpdr_server_receive_core_capability_response(RdpdrServerContext* co
 	Stream_Seek_UINT16(s);                  /* Padding (2 bytes) */
 
 	UINT16 caps = 0;
-	for (i = 0; i < numCapabilities; i++)
+	for (UINT16 i = 0; i < numCapabilities; i++)
 	{
 		RDPDR_CAPABILITY_HEADER capabilityHeader = { 0 };
 		const size_t start = Stream_GetPosition(s);
@@ -964,7 +963,6 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
                                                               wStream* s,
                                                               const RDPDR_HEADER* header)
 {
-	UINT32 i = 0;
 	UINT32 DeviceCount = 0;
 
 	WINPR_ASSERT(context);
@@ -978,7 +976,7 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
 	WLog_Print(context->priv->log, WLOG_DEBUG, "DeviceCount: %" PRIu32 "", DeviceCount);
 
-	for (i = 0; i < DeviceCount; i++)
+	for (UINT32 i = 0; i < DeviceCount; i++)
 	{
 		UINT error = 0;
 		RdpdrDevice device = { 0 };
@@ -1080,7 +1078,6 @@ static UINT rdpdr_server_receive_device_list_announce_request(RdpdrServerContext
 static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* context, wStream* s,
                                                             const RDPDR_HEADER* header)
 {
-	UINT32 i = 0;
 	UINT32 DeviceCount = 0;
 	UINT32 DeviceType = 0;
 	UINT32 DeviceId = 0;
@@ -1095,7 +1092,7 @@ static UINT rdpdr_server_receive_device_list_remove_request(RdpdrServerContext* 
 	Stream_Read_UINT32(s, DeviceCount); /* DeviceCount (4 bytes) */
 	WLog_Print(context->priv->log, WLOG_DEBUG, "DeviceCount: %" PRIu32 "", DeviceCount);
 
-	for (i = 0; i < DeviceCount; i++)
+	for (UINT32 i = 0; i < DeviceCount; i++)
 	{
 		UINT error = 0;
 		const RdpdrDevice* device = NULL;
@@ -2479,10 +2476,9 @@ static UINT rdpdr_server_send_device_file_rename_request(RdpdrServerContext* con
 
 static void rdpdr_server_convert_slashes(char* path, int size)
 {
-	int i = 0;
 	WINPR_ASSERT(path || (size <= 0));
 
-	for (i = 0; (i < size) && (path[i] != '\0'); i++)
+	for (int i = 0; (i < size) && (path[i] != '\0'); i++)
 	{
 		if (path[i] == '/')
 			path[i] = '\\';

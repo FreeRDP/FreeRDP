@@ -26,7 +26,6 @@ static DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 {
 	BOOL status = FALSE;
 	struct test_params* p = (struct test_params*)lpParam;
-	DWORD i = 0;
 
 	InterlockedIncrement(&p->threadCount);
 
@@ -41,7 +40,7 @@ static DWORD WINAPI test_synch_barrier_thread(LPVOID lpParam)
 
 	// printf("Thread #%03u unblocked.\n", tnum);
 
-	for (i = 0; i < p->loops && gErrorCount == 0; i++)
+	for (DWORD i = 0; i < p->loops && gErrorCount == 0; i++)
 	{
 		/* simulate different execution times before the barrier */
 		Sleep(1 + abs((rand() % MAX_SLEEP_MS)));
@@ -66,7 +65,6 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 	DWORD dwStatus = 0;
 	DWORD expectedTrueCount = 0;
 	DWORD expectedFalseCount = 0;
-	DWORD i = 0;
 	p.threadCount = 0;
 	p.trueCount = 0;
 	p.falseCount = 0;
@@ -101,7 +99,8 @@ static BOOL TestSynchBarrierWithFlags(DWORD dwFlags, DWORD dwThreads, DWORD dwLo
 		return FALSE;
 	}
 
-	for (i = 0; i < dwThreads; i++)
+	DWORD i = 0;
+	for (; i < dwThreads; i++)
 	{
 		if (!(threads[i] = CreateThread(NULL, 0, test_synch_barrier_thread, &p, 0, NULL)))
 		{

@@ -204,7 +204,6 @@ static BOOL update_write_bitmap_data(rdpUpdate* update_pub, wStream* s, BITMAP_D
 
 BITMAP_UPDATE* update_read_bitmap_update(rdpUpdate* update, wStream* s)
 {
-	UINT32 i = 0;
 	BITMAP_UPDATE* bitmapUpdate = calloc(1, sizeof(BITMAP_UPDATE));
 	rdp_update_internal* up = update_cast(update);
 
@@ -223,7 +222,7 @@ BITMAP_UPDATE* update_read_bitmap_update(rdpUpdate* update, wStream* s)
 		goto fail;
 
 	/* rectangles */
-	for (i = 0; i < bitmapUpdate->number; i++)
+	for (UINT32 i = 0; i < bitmapUpdate->number; i++)
 	{
 		if (!update_read_bitmap_data(update, s, &bitmapUpdate->rectangles[i]))
 			goto fail;
@@ -262,8 +261,6 @@ static BOOL update_write_bitmap_update(rdpUpdate* update, wStream* s,
 
 PALETTE_UPDATE* update_read_palette(rdpUpdate* update, wStream* s)
 {
-	int i = 0;
-	PALETTE_ENTRY* entry = NULL;
 	PALETTE_UPDATE* palette_update = calloc(1, sizeof(PALETTE_UPDATE));
 
 	if (!palette_update)
@@ -282,9 +279,9 @@ PALETTE_UPDATE* update_read_palette(rdpUpdate* update, wStream* s)
 		goto fail;
 
 	/* paletteEntries */
-	for (i = 0; i < (int)palette_update->number; i++)
+	for (UINT32 i = 0; i < palette_update->number; i++)
 	{
-		entry = &palette_update->entries[i];
+		PALETTE_ENTRY* entry = &palette_update->entries[i];
 		Stream_Read_UINT8(s, entry->red);
 		Stream_Read_UINT8(s, entry->green);
 		Stream_Read_UINT8(s, entry->blue);
@@ -3044,7 +3041,6 @@ static UINT16 update_calculate_monitored_desktop(const WINDOW_ORDER_INFO* orderI
 static BOOL update_send_monitored_desktop(rdpContext* context, const WINDOW_ORDER_INFO* orderInfo,
                                           const MONITORED_DESKTOP_ORDER* monitoredDesktop)
 {
-	UINT32 i = 0;
 	wStream* s = NULL;
 	BYTE controlFlags = ORDER_SECONDARY | (ORDER_TYPE_WINDOW << 2);
 	UINT16 orderSize = update_calculate_monitored_desktop(orderInfo, monitoredDesktop);
@@ -3077,7 +3073,7 @@ static BOOL update_send_monitored_desktop(rdpContext* context, const WINDOW_ORDE
 		Stream_Write_UINT8(s, monitoredDesktop->numWindowIds); /* numWindowIds (1 byte) */
 
 		/* windowIds */
-		for (i = 0; i < monitoredDesktop->numWindowIds; i++)
+		for (UINT32 i = 0; i < monitoredDesktop->numWindowIds; i++)
 		{
 			Stream_Write_UINT32(s, monitoredDesktop->windowIds[i]);
 		}

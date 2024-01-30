@@ -30,13 +30,12 @@
 pf_utils_channel_mode pf_utils_get_channel_mode(const proxyConfig* config, const char* name)
 {
 	pf_utils_channel_mode rc = PF_UTILS_CHANNEL_NOT_HANDLED;
-	size_t i = 0;
 	BOOL found = FALSE;
 
 	WINPR_ASSERT(config);
 	WINPR_ASSERT(name);
 
-	for (i = 0; i < config->InterceptCount; i++)
+	for (size_t i = 0; i < config->InterceptCount; i++)
 	{
 		const char* channel_name = config->Intercept[i];
 		if (strcmp(name, channel_name) == 0)
@@ -46,7 +45,7 @@ pf_utils_channel_mode pf_utils_get_channel_mode(const proxyConfig* config, const
 		}
 	}
 
-	for (i = 0; i < config->PassthroughCount; i++)
+	for (size_t i = 0; i < config->PassthroughCount; i++)
 	{
 		const char* channel_name = config->Passthrough[i];
 		if (strcmp(name, channel_name) == 0)

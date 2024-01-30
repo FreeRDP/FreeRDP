@@ -80,9 +80,6 @@ UINT32 shadow_encoder_create_frame_id(rdpShadowEncoder* encoder)
 
 static int shadow_encoder_init_grid(rdpShadowEncoder* encoder)
 {
-	UINT32 i = 0;
-	UINT32 j = 0;
-	UINT32 k = 0;
 	UINT32 tileSize = 0;
 	UINT32 tileCount = 0;
 	encoder->gridWidth = ((encoder->width + (encoder->maxTileWidth - 1)) / encoder->maxTileWidth);
@@ -100,11 +97,11 @@ static int shadow_encoder_init_grid(rdpShadowEncoder* encoder)
 	if (!encoder->grid)
 		return -1;
 
-	for (i = 0; i < encoder->gridHeight; i++)
+	for (UINT32 i = 0; i < encoder->gridHeight; i++)
 	{
-		for (j = 0; j < encoder->gridWidth; j++)
+		for (UINT32 j = 0; j < encoder->gridWidth; j++)
 		{
-			k = (i * encoder->gridWidth) + j;
+			UINT32 k = (i * encoder->gridWidth) + j;
 			encoder->grid[k] = &(encoder->gridBuffer[k * tileSize]);
 		}
 	}

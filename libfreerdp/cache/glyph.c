@@ -138,7 +138,6 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
                                            INT32 opX, INT32 opY, INT32 opWidth, INT32 opHeight,
                                            BOOL fOpRedundant)
 {
-	UINT32 n = 0;
 	UINT32 id = 0;
 	UINT32 size = 0;
 	UINT32 index = 0;
@@ -251,7 +250,7 @@ static BOOL update_process_glyph_fragments(rdpContext* context, const BYTE* data
 				if (fragments == NULL)
 					return FALSE;
 
-				for (n = 0; n < size;)
+				for (size_t n = 0; n < size;)
 				{
 					const UINT32 fop = fragments[n++];
 					n = update_glyph_offset(fragments, size, n, &x, &y, ulCharInc, flAccel);
@@ -492,7 +491,6 @@ static BOOL update_gdi_fast_glyph(rdpContext* context, const FAST_GLYPH_ORDER* f
 
 static BOOL update_gdi_cache_glyph(rdpContext* context, const CACHE_GLYPH_ORDER* cacheGlyph)
 {
-	UINT32 i = 0;
 	rdpCache* cache = NULL;
 
 	if (!context || !cacheGlyph || !context->cache)
@@ -500,7 +498,7 @@ static BOOL update_gdi_cache_glyph(rdpContext* context, const CACHE_GLYPH_ORDER*
 
 	cache = context->cache;
 
-	for (i = 0; i < cacheGlyph->cGlyphs; i++)
+	for (size_t i = 0; i < cacheGlyph->cGlyphs; i++)
 	{
 		const GLYPH_DATA* glyph_data = &cacheGlyph->glyphData[i];
 		rdpGlyph* glyph = NULL;
@@ -524,7 +522,6 @@ static BOOL update_gdi_cache_glyph(rdpContext* context, const CACHE_GLYPH_ORDER*
 
 static BOOL update_gdi_cache_glyph_v2(rdpContext* context, const CACHE_GLYPH_V2_ORDER* cacheGlyphV2)
 {
-	UINT32 i = 0;
 	rdpCache* cache = NULL;
 
 	if (!context || !cacheGlyphV2 || !context->cache)
@@ -532,7 +529,7 @@ static BOOL update_gdi_cache_glyph_v2(rdpContext* context, const CACHE_GLYPH_V2_
 
 	cache = context->cache;
 
-	for (i = 0; i < cacheGlyphV2->cGlyphs; i++)
+	for (size_t i = 0; i < cacheGlyphV2->cGlyphs; i++)
 	{
 		const GLYPH_DATA_V2* glyphData = &cacheGlyphV2->glyphData[i];
 		rdpGlyph* glyph = NULL;
@@ -693,7 +690,6 @@ void glyph_cache_register_callbacks(rdpUpdate* update)
 
 rdpGlyphCache* glyph_cache_new(rdpContext* context)
 {
-	size_t i = 0;
 	rdpGlyphCache* glyphCache = NULL;
 	rdpSettings* settings = NULL;
 
@@ -710,7 +706,7 @@ rdpGlyphCache* glyph_cache_new(rdpContext* context)
 	glyphCache->log = WLog_Get("com.freerdp.cache.glyph");
 	glyphCache->context = context;
 
-	for (i = 0; i < 10; i++)
+	for (size_t i = 0; i < 10; i++)
 	{
 		const GLYPH_CACHE_DEFINITION* currentGlyph =
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_GlyphCache, i);
@@ -736,18 +732,16 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 {
 	if (glyphCache)
 	{
-		size_t i = 0;
 		GLYPH_CACHE* cache = glyphCache->glyphCache;
 
-		for (i = 0; i < 10; i++)
+		for (size_t i = 0; i < 10; i++)
 		{
-			UINT32 j = 0;
 			rdpGlyph** entries = cache[i].entries;
 
 			if (!entries)
 				continue;
 
-			for (j = 0; j < cache[i].number; j++)
+			for (size_t j = 0; j < cache[i].number; j++)
 			{
 				rdpGlyph* glyph = entries[j];
 
@@ -762,7 +756,7 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 			cache[i].entries = NULL;
 		}
 
-		for (i = 0; i < ARRAYSIZE(glyphCache->fragCache.entries); i++)
+		for (size_t i = 0; i < ARRAYSIZE(glyphCache->fragCache.entries); i++)
 		{
 			free(glyphCache->fragCache.entries[i].fragment);
 			glyphCache->fragCache.entries[i].fragment = NULL;
@@ -774,7 +768,6 @@ void glyph_cache_free(rdpGlyphCache* glyphCache)
 
 CACHE_GLYPH_ORDER* copy_cache_glyph_order(rdpContext* context, const CACHE_GLYPH_ORDER* glyph)
 {
-	size_t x = 0;
 	CACHE_GLYPH_ORDER* dst = NULL;
 
 	WINPR_ASSERT(context);
@@ -786,7 +779,7 @@ CACHE_GLYPH_ORDER* copy_cache_glyph_order(rdpContext* context, const CACHE_GLYPH
 
 	*dst = *glyph;
 
-	for (x = 0; x < glyph->cGlyphs; x++)
+	for (size_t x = 0; x < glyph->cGlyphs; x++)
 	{
 		const GLYPH_DATA* src = &glyph->glyphData[x];
 		GLYPH_DATA* data = &dst->glyphData[x];
@@ -826,9 +819,7 @@ void free_cache_glyph_order(rdpContext* context, CACHE_GLYPH_ORDER* glyph)
 {
 	if (glyph)
 	{
-		size_t x = 0;
-
-		for (x = 0; x < ARRAYSIZE(glyph->glyphData); x++)
+		for (size_t x = 0; x < ARRAYSIZE(glyph->glyphData); x++)
 			free(glyph->glyphData[x].aj);
 
 		free(glyph->unicodeCharacters);
@@ -840,7 +831,6 @@ void free_cache_glyph_order(rdpContext* context, CACHE_GLYPH_ORDER* glyph)
 CACHE_GLYPH_V2_ORDER* copy_cache_glyph_v2_order(rdpContext* context,
                                                 const CACHE_GLYPH_V2_ORDER* glyph)
 {
-	size_t x = 0;
 	CACHE_GLYPH_V2_ORDER* dst = NULL;
 
 	WINPR_ASSERT(context);
@@ -852,7 +842,7 @@ CACHE_GLYPH_V2_ORDER* copy_cache_glyph_v2_order(rdpContext* context,
 
 	*dst = *glyph;
 
-	for (x = 0; x < glyph->cGlyphs; x++)
+	for (size_t x = 0; x < glyph->cGlyphs; x++)
 	{
 		const GLYPH_DATA_V2* src = &glyph->glyphData[x];
 		GLYPH_DATA_V2* data = &dst->glyphData[x];
@@ -892,9 +882,7 @@ void free_cache_glyph_v2_order(rdpContext* context, CACHE_GLYPH_V2_ORDER* glyph)
 {
 	if (glyph)
 	{
-		size_t x = 0;
-
-		for (x = 0; x < ARRAYSIZE(glyph->glyphData); x++)
+		for (size_t x = 0; x < ARRAYSIZE(glyph->glyphData); x++)
 			free(glyph->glyphData[x].aj);
 
 		free(glyph->unicodeCharacters);

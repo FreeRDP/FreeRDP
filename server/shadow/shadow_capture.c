@@ -85,9 +85,6 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 	BOOL allEqual = 0;
 	UINT32 tw = 0;
 	UINT32 th = 0;
-	UINT32 tx = 0;
-	UINT32 ty = 0;
-	UINT32 k = 0;
 	UINT32 nrow = 0;
 	UINT32 ncol = 0;
 	UINT32 l = 0;
@@ -113,14 +110,14 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 	t = nrow + 1;
 	b = 0;
 
-	for (ty = 0; ty < nrow; ty++)
+	for (UINT32 ty = 0; ty < nrow; ty++)
 	{
 		th = ((ty + 1) == nrow) ? (nHeight % 16) : 16;
 
 		if (!th)
 			th = 16;
 
-		for (tx = 0; tx < ncol; tx++)
+		for (UINT32 tx = 0; tx < ncol; tx++)
 		{
 			equal = TRUE;
 			tw = ((tx + 1) == ncol) ? (nWidth % 16) : 16;
@@ -131,7 +128,7 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 			p1 = &pData1[(ty * 16 * nStep1) + (tx * 16 * 4)];
 			p2 = &pData2[(ty * 16 * nStep2) + (tx * 16 * 4)];
 
-			for (k = 0; k < th; k++)
+			for (UINT32 k = 0; k < th; k++)
 			{
 				if (memcmp(p1, p2, tw * 4) != 0)
 				{
@@ -200,24 +197,24 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 		return 1;
 	}
 
-	for (tx = 0; tx < ncol; tx++)
+	for (UINT32 tx = 0; tx < ncol; tx++)
 		sprintf_s(&col_str[tx], size - tx, "-");
 
 	WLog_INFO(TAG, "%s", col_str);
 
-	for (tx = 0; tx < ncol; tx++)
+	for (UINT32 tx = 0; tx < ncol; tx++)
 		sprintf_s(&col_str[tx], size - tx, "%c", cols[tx] ? 'O' : 'X');
 
 	WLog_INFO(TAG, "%s", col_str);
 
-	for (tx = 0; tx < ncol; tx++)
+	for (UINT32 tx = 0; tx < ncol; tx++)
 		sprintf_s(&col_str[tx], size - tx, "-");
 
 	WLog_INFO(TAG, "%s", col_str);
 
-	for (ty = 0; ty < nrow; ty++)
+	for (UINT32 ty = 0; ty < nrow; ty++)
 	{
-		for (tx = 0; tx < ncol; tx++)
+		for (UINT32 tx = 0; tx < ncol; tx++)
 			sprintf_s(&col_str[tx], size - tx, "%c", cols[tx] ? 'O' : 'X');
 
 		WLog_INFO(TAG, "%s", col_str);

@@ -443,7 +443,6 @@ static UINT xf_cliprdr_send_data_response(xfClipboard* clipboard, const xfCliprd
 
 static wStream* xf_cliprdr_serialize_server_format_list(xfClipboard* clipboard)
 {
-	UINT32 i = 0;
 	UINT32 formatCount = 0;
 	wStream* s = NULL;
 
@@ -460,7 +459,7 @@ static wStream* xf_cliprdr_serialize_server_format_list(xfClipboard* clipboard)
 	formatCount = (clipboard->numServerFormats > 0) ? clipboard->numServerFormats - 1 : 0;
 	Stream_Write_UINT32(s, formatCount);
 
-	for (i = 0; i < formatCount; i++)
+	for (UINT32 i = 0; i < formatCount; i++)
 	{
 		CLIPRDR_FORMAT* format = &clipboard->serverFormats[i];
 		size_t name_length = format->formatName ? strlen(format->formatName) : 0;
@@ -491,7 +490,6 @@ error:
 static CLIPRDR_FORMAT* xf_cliprdr_parse_server_format_list(BYTE* data, size_t length,
                                                            UINT32* numFormats)
 {
-	UINT32 i = 0;
 	wStream* s = NULL;
 	CLIPRDR_FORMAT* formats = NULL;
 
@@ -521,7 +519,7 @@ static CLIPRDR_FORMAT* xf_cliprdr_parse_server_format_list(BYTE* data, size_t le
 		goto error;
 	}
 
-	for (i = 0; i < *numFormats; i++)
+	for (UINT32 i = 0; i < *numFormats; i++)
 	{
 		const char* formatName = NULL;
 		size_t formatNameLength = 0;
@@ -555,11 +553,9 @@ error:
 
 static void xf_cliprdr_free_formats(CLIPRDR_FORMAT* formats, UINT32 numFormats)
 {
-	UINT32 i = 0;
-
 	WINPR_ASSERT(formats || (numFormats == 0));
 
-	for (i = 0; i < numFormats; i++)
+	for (UINT32 i = 0; i < numFormats; i++)
 	{
 		free(formats[i].formatName);
 	}
@@ -729,20 +725,17 @@ static BOOL xf_clipboard_format_equal(const CLIPRDR_FORMAT* a, const CLIPRDR_FOR
 static BOOL xf_clipboard_changed(xfClipboard* clipboard, const CLIPRDR_FORMAT* formats,
                                  UINT32 numFormats)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
-
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(formats || (numFormats == 0));
 
 	if (clipboard->lastSentNumFormats != numFormats)
 		return TRUE;
 
-	for (x = 0; x < numFormats; x++)
+	for (UINT32 x = 0; x < numFormats; x++)
 	{
 		const CLIPRDR_FORMAT* cur = &clipboard->lastSentFormats[x];
 		BOOL contained = FALSE;
-		for (y = 0; y < numFormats; y++)
+		for (UINT32 y = 0; y < numFormats; y++)
 		{
 			if (xf_clipboard_format_equal(cur, &formats[y]))
 			{
@@ -769,8 +762,6 @@ static void xf_clipboard_formats_free(xfClipboard* clipboard)
 static BOOL xf_clipboard_copy_formats(xfClipboard* clipboard, const CLIPRDR_FORMAT* formats,
                                       UINT32 numFormats)
 {
-	UINT32 x = 0;
-
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(formats || (numFormats == 0));
 
@@ -779,7 +770,7 @@ static BOOL xf_clipboard_copy_formats(xfClipboard* clipboard, const CLIPRDR_FORM
 	if (!clipboard->lastSentFormats)
 		return FALSE;
 	clipboard->lastSentNumFormats = numFormats;
-	for (x = 0; x < numFormats; x++)
+	for (UINT32 x = 0; x < numFormats; x++)
 	{
 		CLIPRDR_FORMAT* lcur = &clipboard->lastSentFormats[x];
 		const CLIPRDR_FORMAT* cur = &formats[x];
@@ -1752,7 +1743,6 @@ static UINT xf_cliprdr_monitor_ready(CliprdrClientContext* context,
 static UINT xf_cliprdr_server_capabilities(CliprdrClientContext* context,
                                            const CLIPRDR_CAPABILITIES* capabilities)
 {
-	UINT32 i = 0;
 	const CLIPRDR_GENERAL_CAPABILITY_SET* generalCaps = NULL;
 	const BYTE* capsPtr = NULL;
 	xfClipboard* clipboard = NULL;
@@ -1768,7 +1758,7 @@ static UINT xf_cliprdr_server_capabilities(CliprdrClientContext* context,
 
 	cliprdr_file_context_remote_set_flags(clipboard->file, 0);
 
-	for (i = 0; i < capabilities->cCapabilitiesSets; i++)
+	for (UINT32 i = 0; i < capabilities->cCapabilitiesSets; i++)
 	{
 		const CLIPRDR_CAPABILITY_SET* caps = (const CLIPRDR_CAPABILITY_SET*)capsPtr;
 
@@ -1879,9 +1869,7 @@ static UINT xf_cliprdr_server_format_list(CliprdrClientContext* context,
 
 			if (!srvFormat->formatName)
 			{
-				UINT32 k = 0;
-
-				for (k = 0; k < i; k++)
+				for (UINT32 k = 0; k < i; k++)
 					free(clipboard->serverFormats[k].formatName);
 
 				clipboard->numServerFormats = 0;
@@ -2224,8 +2212,6 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 static BOOL xf_cliprdr_is_valid_unix_filename(LPCWSTR filename)
 {
-	LPCWSTR c = NULL;
-
 	if (!filename)
 		return FALSE;
 
@@ -2233,7 +2219,7 @@ static BOOL xf_cliprdr_is_valid_unix_filename(LPCWSTR filename)
 		return FALSE;
 
 	/* Reserved characters */
-	for (c = filename; *c; ++c)
+	for (const WCHAR* c = filename; *c; ++c)
 	{
 		if (*c == L'/')
 			return FALSE;

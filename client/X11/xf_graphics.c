@@ -330,7 +330,6 @@ static void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	WLog_DBG(TAG, "%p", pointer);
 
 #ifdef WITH_XCURSOR
-	UINT32 i = 0;
 	xfContext* xfc = (xfContext*)context;
 	xfPointer* xpointer = (xfPointer*)pointer;
 
@@ -340,7 +339,7 @@ static void xf_Pointer_Free(rdpContext* context, rdpPointer* pointer)
 	free(xpointer->cursorWidths);
 	free(xpointer->cursorHeights);
 
-	for (i = 0; i < xpointer->nCursors; i++)
+	for (UINT32 i = 0; i < xpointer->nCursors; i++)
 	{
 		XFreeCursor(xfc->display, xpointer->cursors[i]);
 	}

@@ -462,7 +462,6 @@ int UwacDisplayDispatch(UwacDisplay* display, int timeout)
 {
 	int ret = 0;
 	int count = 0;
-	int i = 0;
 	UwacTask* task = NULL;
 	struct epoll_event ep[16];
 	wl_display_dispatch_pending(display->display);
@@ -485,7 +484,7 @@ int UwacDisplayDispatch(UwacDisplay* display, int timeout)
 
 	count = epoll_wait(display->epoll_fd, ep, ARRAY_LENGTH(ep), timeout);
 
-	for (i = 0; i < count; i++)
+	for (int i = 0; i < count; i++)
 	{
 		task = ep[i].data.ptr;
 		task->run(task, ep[i].events);
@@ -695,7 +694,6 @@ const UwacOutput* UwacDisplayGetOutput(UwacDisplay* display, int index)
 	if (display_count <= index)
 		return NULL;
 
-	i = 0;
 	wl_list_for_each(ret, &display->outputs, link)
 	{
 		if (i == index)

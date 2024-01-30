@@ -187,7 +187,6 @@ out:
 int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx)
 {
 	APC_QUEUE* apc = NULL;
-	WINPR_APC_ITEM* item = NULL;
 	WINPR_APC_ITEM* nextItem = NULL;
 	int ret = 0;
 
@@ -200,7 +199,7 @@ int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx
 	apc->treatingCompletions = TRUE;
 
 	/* first pass to compute signaled items */
-	for (item = apc->head; item; item = item->next)
+	for (WINPR_APC_ITEM* item = apc->head; item; item = item->next)
 	{
 		item->isSignaled = item->alwaysSignaled || pollset_isSignaled(set, idx);
 		if (!item->alwaysSignaled)
@@ -208,7 +207,7 @@ int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx
 	}
 
 	/* second pass: run completions */
-	for (item = apc->head; item; item = nextItem)
+	for (WINPR_APC_ITEM* item = apc->head; item; item = nextItem)
 	{
 		if (item->isSignaled)
 		{
@@ -221,7 +220,7 @@ int apc_executeCompletions(WINPR_THREAD* thread, WINPR_POLL_SET* set, size_t idx
 	}
 
 	/* third pass: to do final cleanup */
-	for (item = apc->head; item; item = nextItem)
+	for (WINPR_APC_ITEM* item = apc->head; item; item = nextItem)
 	{
 		nextItem = item->next;
 

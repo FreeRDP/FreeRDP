@@ -634,7 +634,7 @@ int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, cons
 	int rv = 0;
 	BYTE md_buf[64];
 	int niv, nkey, addmd = 0;
-	unsigned int mds = 0, i;
+	unsigned int mds = 0;
 	mbedtls_md_context_t ctx;
 	const mbedtls_md_info_t* md_info;
 	mbedtls_cipher_type_t cipher_type;
@@ -682,7 +682,7 @@ int winpr_Cipher_BytesToKey(int cipher, WINPR_MD_TYPE md, const void* salt, cons
 
 		mds = mbedtls_md_get_size(md_info);
 
-		for (i = 1; i < (unsigned int)count; i++)
+		for (unsigned int i = 1; i < (unsigned int)count; i++)
 		{
 			if (mbedtls_md_starts(&ctx) != 0)
 				goto err;

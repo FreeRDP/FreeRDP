@@ -61,14 +61,12 @@
 
 static BOOL drive_file_fix_path(WCHAR* path, size_t length)
 {
-	size_t i = 0;
-
 	if ((length == 0) || (length > UINT32_MAX))
 		return FALSE;
 
 	WINPR_ASSERT(path);
 
-	for (i = 0; i < length; i++)
+	for (size_t i = 0; i < length; i++)
 	{
 		if (path[i] == L'\\')
 			path[i] = L'/';

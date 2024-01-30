@@ -43,31 +43,25 @@
 
 BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* data)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
-	const BYTE* srcp = NULL;
-	BYTE* dstp = NULL;
-	BYTE* dstData = NULL;
-	UINT32 scanline = 0;
 	/*
 	 * converts a 1-bit-per-pixel glyph to a one-byte-per-pixel glyph:
 	 * this approach uses a little more memory, but provides faster
 	 * means of accessing individual pixels in blitting operations
 	 */
-	scanline = (width + 7) / 8;
-	dstData = (BYTE*)winpr_aligned_malloc(1ull * width * height, 16);
+	const UINT32 scanline = (width + 7) / 8;
+	BYTE* dstData = (BYTE*)winpr_aligned_malloc(1ull * width * height, 16);
 
 	if (!dstData)
 		return NULL;
 
 	ZeroMemory(dstData, width * height);
-	dstp = dstData;
+	BYTE* dstp = dstData;
 
-	for (y = 0; y < height; y++)
+	for (UINT32 y = 0; y < height; y++)
 	{
-		srcp = data + (y * scanline);
+		const BYTE* srcp = data + (y * scanline);
 
-		for (x = 0; x < width; x++)
+		for (UINT32 x = 0; x < width; x++)
 		{
 			if ((*srcp & (0x80 >> (x % 8))) != 0)
 				*dstp = 0xFF;
@@ -88,8 +82,6 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* WINPR_RESTRICT pDstData, UINT32 Ds
                                         UINT32 backColor, UINT32 foreColor,
                                         const gdiPalette* WINPR_RESTRICT palette)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
 	BOOL vFlip = 0;
 	UINT32 monoStep = 0;
 	const UINT32 dstBytesPerPixel = FreeRDPGetBytesPerPixel(DstFormat);
@@ -103,7 +95,7 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* WINPR_RESTRICT pDstData, UINT32 Ds
 	vFlip = FALSE;
 	monoStep = (nWidth + 7) / 8;
 
-	for (y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		const BYTE* monoBits = NULL;
 		BYTE* pDstLine = &pDstData[((nYDst + y) * nDstStep)];
@@ -114,7 +106,7 @@ BOOL freerdp_image_copy_from_monochrome(BYTE* WINPR_RESTRICT pDstData, UINT32 Ds
 		else
 			monoBits = &pSrcData[monoStep * (nHeight - y - 1)];
 
-		for (x = 0; x < nWidth; x++)
+		for (UINT32 x = 0; x < nWidth; x++)
 		{
 			BYTE* pDstPixel = &pDstLine[((nXDst + x) * FreeRDPGetBytesPerPixel(DstFormat))];
 			BOOL monoPixel = (*monoBits & monoBit) ? TRUE : FALSE;
@@ -161,8 +153,6 @@ static INLINE UINT32 freerdp_image_inverted_pointer_color(UINT32 x, UINT32 y, UI
 static void fill_gdi_palette_for_icon(const BYTE* colorTable, UINT16 cbColorTable,
                                       gdiPalette* palette)
 {
-	UINT16 i = 0;
-
 	WINPR_ASSERT(palette);
 
 	palette->format = PIXEL_FORMAT_BGRX32;
@@ -177,7 +167,7 @@ static void fill_gdi_palette_for_icon(const BYTE* colorTable, UINT16 cbColorTabl
 		return;
 	}
 
-	for (i = 0; i < cbColorTable / 4; i++)
+	for (UINT16 i = 0; i < cbColorTable / 4; i++)
 	{
 		palette->palette[i] = FreeRDPReadColor(&colorTable[4 * i], palette->format);
 	}
@@ -260,8 +250,6 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* WINPR_RESTRICT pDstData, UINT32 Dst
 	{
 		BYTE nextBit = 0;
 		const BYTE* maskByte = NULL;
-		UINT32 x = 0;
-		UINT32 y = 0;
 		UINT32 stride = 0;
 		BYTE r = 0;
 		BYTE g = 0;
@@ -276,12 +264,12 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* WINPR_RESTRICT pDstData, UINT32 Dst
 		 */
 		stride = round_up(div_ceil(nWidth, 8), 4);
 
-		for (y = 0; y < nHeight; y++)
+		for (UINT32 y = 0; y < nHeight; y++)
 		{
 			maskByte = &bitsMask[stride * (nHeight - 1 - y)];
 			nextBit = 0x80;
 
-			for (x = 0; x < nWidth; x++)
+			for (UINT32 x = 0; x < nWidth; x++)
 			{
 				UINT32 color = 0;
 				BYTE alpha = (*maskByte & nextBit) ? 0x00 : 0xFF;
@@ -311,8 +299,6 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT xorMask, UINT32 xorMaskLength,
     const BYTE* WINPR_RESTRICT andMask, UINT32 andMaskLength, UINT32 xorBpp)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
 	BOOL vFlip = 0;
 	UINT32 xorStep = 0;
 	UINT32 andStep = 0;
@@ -339,7 +325,7 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(
 	if (andStep * nHeight > andMaskLength)
 		return FALSE;
 
-	for (y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		const BYTE* andBits = NULL;
 		const BYTE* xorBits = NULL;
@@ -358,7 +344,7 @@ static BOOL freerdp_image_copy_from_pointer_data_1bpp(
 			andBits = &andMask[andStep * (nHeight - y - 1)];
 		}
 
-		for (x = 0; x < nWidth; x++)
+		for (UINT32 x = 0; x < nWidth; x++)
 		{
 			UINT32 color = 0;
 			xorPixel = (*xorBits & xorBit) ? 1 : 0;
@@ -400,8 +386,6 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
     const BYTE* WINPR_RESTRICT andMask, UINT32 andMaskLength, UINT32 xorBpp,
     const gdiPalette* palette)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
 	BOOL vFlip = 0;
 	UINT32 xorStep = 0;
 	UINT32 andStep = 0;
@@ -439,7 +423,7 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
 			return FALSE;
 	}
 
-	for (y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		const BYTE* xorBits = NULL;
 		const BYTE* andBits = NULL;
@@ -462,7 +446,7 @@ static BOOL freerdp_image_copy_from_pointer_data_xbpp(
 			xorBits = &xorMask[xorStep * (nHeight - y - 1)];
 		}
 
-		for (x = 0; x < nWidth; x++)
+		for (UINT32 x = 0; x < nWidth; x++)
 		{
 			UINT32 pixelFormat = 0;
 			UINT32 color = 0;
@@ -769,12 +753,10 @@ static BOOL freerdp_image_copy_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 n
 	}
 	else if (FreeRDPAreColorFormatsEqualNoAlpha(SrcFormat, DstFormat))
 	{
-		INT32 y = 0;
-
 		/* Copy down */
 		if (nYDst < nYSrc)
 		{
-			for (y = 0; y < (INT32)nHeight; y++)
+			for (INT32 y = 0; y < (INT32)nHeight; y++)
 			{
 				const BYTE* srcLine =
 				    &pSrcData[(y + nYSrc) * nSrcStep * srcVMultiplier + srcVOffset];
@@ -785,7 +767,7 @@ static BOOL freerdp_image_copy_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 n
 		/* Copy up */
 		else if (nYDst > nYSrc)
 		{
-			for (y = nHeight - 1; y >= 0; y--)
+			for (INT32 y = nHeight - 1; y >= 0; y--)
 			{
 				const BYTE* srcLine =
 				    &pSrcData[(y + nYSrc) * nSrcStep * srcVMultiplier + srcVOffset];
@@ -796,7 +778,7 @@ static BOOL freerdp_image_copy_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 n
 		/* Copy left */
 		else if (nXSrc > nXDst)
 		{
-			for (y = 0; y < (INT32)nHeight; y++)
+			for (INT32 y = 0; y < (INT32)nHeight; y++)
 			{
 				const BYTE* srcLine =
 				    &pSrcData[(y + nYSrc) * nSrcStep * srcVMultiplier + srcVOffset];
@@ -807,7 +789,7 @@ static BOOL freerdp_image_copy_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 n
 		/* Copy right */
 		else if (nXSrc < nXDst)
 		{
-			for (y = (INT32)nHeight - 1; y >= 0; y--)
+			for (INT32 y = (INT32)nHeight - 1; y >= 0; y--)
 			{
 				const BYTE* srcLine =
 				    &pSrcData[(y + nYSrc) * nSrcStep * srcVMultiplier + srcVOffset];

@@ -254,12 +254,10 @@ static BOOL ArrayList_Shift(wArrayList* arrayList, size_t index, SSIZE_T count)
 
 void ArrayList_Clear(wArrayList* arrayList)
 {
-	size_t index = 0;
-
 	WINPR_ASSERT(arrayList);
 	ArrayList_Lock_Conditional(arrayList);
 
-	for (index = 0; index < arrayList->size; index++)
+	for (size_t index = 0; index < arrayList->size; index++)
 	{
 		if (arrayList->object.fnObjectFree)
 			arrayList->object.fnObjectFree(arrayList->array[index]);
@@ -278,13 +276,12 @@ void ArrayList_Clear(wArrayList* arrayList)
 
 BOOL ArrayList_Contains(wArrayList* arrayList, const void* obj)
 {
-	size_t index = 0;
 	BOOL rc = FALSE;
 
 	WINPR_ASSERT(arrayList);
 	ArrayList_Lock_Conditional(arrayList);
 
-	for (index = 0; index < arrayList->size; index++)
+	for (size_t index = 0; index < arrayList->size; index++)
 	{
 		rc = arrayList->object.fnObjectEquals(arrayList->array[index], obj);
 
@@ -365,14 +362,14 @@ BOOL ArrayList_Insert(wArrayList* arrayList, size_t index, const void* obj)
 
 BOOL ArrayList_Remove(wArrayList* arrayList, const void* obj)
 {
-	size_t index = 0;
 	BOOL found = FALSE;
 	BOOL ret = TRUE;
 
 	WINPR_ASSERT(arrayList);
 	ArrayList_Lock_Conditional(arrayList);
 
-	for (index = 0; index < arrayList->size; index++)
+	size_t index = 0;
+	for (; index < arrayList->size; index++)
 	{
 		if (arrayList->object.fnObjectEquals(arrayList->array[index], obj))
 		{
@@ -433,7 +430,6 @@ BOOL ArrayList_RemoveAt(wArrayList* arrayList, size_t index)
 
 SSIZE_T ArrayList_IndexOf(wArrayList* arrayList, const void* obj, SSIZE_T startIndex, SSIZE_T count)
 {
-	SSIZE_T index = 0;
 	SSIZE_T sindex = 0;
 	SSIZE_T cindex = 0;
 	BOOL found = FALSE;
@@ -449,7 +445,8 @@ SSIZE_T ArrayList_IndexOf(wArrayList* arrayList, const void* obj, SSIZE_T startI
 	if (count < 0)
 		cindex = arrayList->size;
 
-	for (index = sindex; index < sindex + cindex; index++)
+	SSIZE_T index = sindex;
+	for (; index < sindex + cindex; index++)
 	{
 		if (arrayList->object.fnObjectEquals(arrayList->array[index], obj))
 		{
@@ -482,7 +479,6 @@ SSIZE_T ArrayList_IndexOf(wArrayList* arrayList, const void* obj, SSIZE_T startI
 SSIZE_T ArrayList_LastIndexOf(wArrayList* arrayList, const void* obj, SSIZE_T startIndex,
                               SSIZE_T count)
 {
-	SSIZE_T index = 0;
 	SSIZE_T sindex = 0;
 	SSIZE_T cindex = 0;
 	BOOL found = FALSE;
@@ -498,7 +494,8 @@ SSIZE_T ArrayList_LastIndexOf(wArrayList* arrayList, const void* obj, SSIZE_T st
 	if (count < 0)
 		cindex = arrayList->size;
 
-	for (index = sindex + cindex; index > sindex; index--)
+	SSIZE_T index = sindex + cindex;
+	for (; index > sindex; index--)
 	{
 		if (arrayList->object.fnObjectEquals(arrayList->array[index - 1], obj))
 		{
@@ -539,8 +536,6 @@ BOOL ArrayList_ForEach(wArrayList* arrayList, ArrayList_ForEachFkt fkt, ...)
 
 BOOL ArrayList_ForEachAP(wArrayList* arrayList, ArrayList_ForEachFkt fkt, va_list ap)
 {
-	size_t index = 0;
-	size_t count = 0;
 	BOOL rc = FALSE;
 	va_list cap;
 
@@ -548,8 +543,8 @@ BOOL ArrayList_ForEachAP(wArrayList* arrayList, ArrayList_ForEachFkt fkt, va_lis
 	WINPR_ASSERT(fkt);
 
 	ArrayList_Lock_Conditional(arrayList);
-	count = ArrayList_Count(arrayList);
-	for (index = 0; index < count; index++)
+	size_t count = ArrayList_Count(arrayList);
+	for (size_t index = 0; index < count; index++)
 	{
 		BOOL rs = 0;
 		void* obj = ArrayList_GetItem(arrayList, index);

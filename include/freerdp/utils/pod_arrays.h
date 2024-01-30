@@ -90,9 +90,8 @@ extern "C"
 	static INLINE BOOL array_##TLOWER##_contains(const Array##T* a, T v)                  \
 	{                                                                                     \
 		WINPR_ASSERT(a);                                                                  \
-		UINT32 i;                                                                         \
                                                                                           \
-		for (i = 0; i < a->nvalues; i++)                                                  \
+		for (UINT32 i = 0; i < a->nvalues; i++)                                           \
 		{                                                                                 \
 			if (memcmp(&a->values[i], &v, sizeof(T)) == 0)                                \
 				return TRUE;                                                              \
@@ -104,8 +103,7 @@ extern "C"
 	static INLINE BOOL array_##TLOWER##_foreach(Array##T* a, Array##T##Cb cb, void* data) \
 	{                                                                                     \
 		WINPR_ASSERT(a);                                                                  \
-		size_t i;                                                                         \
-		for (i = 0; i < a->nvalues; i++)                                                  \
+		for (size_t i = 0; i < a->nvalues; i++)                                           \
 		{                                                                                 \
 			if (!cb(&a->values[i], data))                                                 \
 				return FALSE;                                                             \

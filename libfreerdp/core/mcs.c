@@ -300,8 +300,6 @@ static BOOL mcs_read_domain_mcspdu_header(wStream* s, DomainMCSPDU domainMCSPDU,
 
 static int mcs_initialize_client_channels(rdpMcs* mcs, const rdpSettings* settings)
 {
-	UINT32 index = 0;
-
 	if (!mcs || !settings)
 		return -1;
 
@@ -312,7 +310,7 @@ static int mcs_initialize_client_channels(rdpMcs* mcs, const rdpSettings* settin
 
 	ZeroMemory(mcs->channels, sizeof(rdpMcsChannel) * mcs->channelMaxCount);
 
-	for (index = 0; index < mcs->channelCount; index++)
+	for (UINT32 index = 0; index < mcs->channelCount; index++)
 	{
 		const CHANNEL_DEF* defchannel =
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_ChannelDefArray, index);

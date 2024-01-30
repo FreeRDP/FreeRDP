@@ -95,7 +95,6 @@ static const char* BYTE_BIT_STRINGS_MSB[256] = {
 
 void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length, UINT32 flags)
 {
-	DWORD i = 0;
 	const char** strs = (flags & BITDUMP_MSB_FIRST) ? BYTE_BIT_STRINGS_MSB : BYTE_BIT_STRINGS_LSB;
 	char pbuffer[64 * 8 + 1] = { 0 };
 	size_t pos = 0;
@@ -103,7 +102,8 @@ void BitDump(const char* tag, UINT32 level, const BYTE* buffer, UINT32 length, U
 	WINPR_ASSERT(tag);
 	WINPR_ASSERT(buffer || (length == 0));
 
-	for (i = 0; i < length; i += 8)
+	DWORD i = 0;
+	for (; i < length; i += 8)
 	{
 		const char* str = strs[buffer[i / 8]];
 		const int nbits = (length - i) > 8 ? 8 : (length - i);

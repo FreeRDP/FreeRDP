@@ -111,9 +111,7 @@ void palette_cache_free(rdpPaletteCache* paletteCache)
 {
 	if (paletteCache)
 	{
-		UINT32 i = 0;
-
-		for (i = 0; i < paletteCache->maxEntries; i++)
+		for (UINT32 i = 0; i < paletteCache->maxEntries; i++)
 			free(paletteCache->entries[i].entry);
 
 		free(paletteCache->entries);

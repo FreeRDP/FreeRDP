@@ -195,13 +195,12 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	HANDLE clients[TESTNUMPIPESST] = { 0 };
 	DWORD dwRead = 0;
 	DWORD dwWritten = 0;
-	int i = 0;
 	int numPipes = 0;
 	BOOL bSuccess = FALSE;
 	numPipes = TESTNUMPIPESST;
 	WaitForSingleObject(ReadyEvent, INFINITE);
 
-	for (i = 0; i < numPipes; i++)
+	for (int i = 0; i < numPipes; i++)
 	{
 		if (!(servers[i] = CreateNamedPipe(lpszPipeNameSt, PIPE_ACCESS_DUPLEX,
 		                                   PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT,
@@ -215,7 +214,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 
 #ifndef _WIN32
 
-	for (i = 0; i < numPipes; i++)
+	for (int i = 0; i < numPipes; i++)
 	{
 		WINPR_NAMED_PIPE* p = (WINPR_NAMED_PIPE*)servers[i];
 
@@ -249,7 +248,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 
 #endif
 
-	for (i = 0; i < numPipes; i++)
+	for (int i = 0; i < numPipes; i++)
 	{
 		BOOL fConnected = 0;
 		if ((clients[i] = CreateFile(lpszPipeNameSt, GENERIC_READ | GENERIC_WRITE, 0, NULL,
@@ -279,7 +278,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 
 #ifndef _WIN32
 
-	for (i = 0; i < numPipes; i++)
+	for (int i = 0; i < numPipes; i++)
 	{
 		WINPR_NAMED_PIPE* p = servers[i];
 
@@ -297,7 +296,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 		}
 	}
 
-	for (i = 0; i < numPipes; i++)
+	for (int i = 0; i < numPipes; i++)
 	{
 		{
 			char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
@@ -358,7 +357,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	 * After DisconnectNamedPipe on server end
 	 * ReadFile/WriteFile must fail on client end
 	 */
-	i = numPipes - 1;
+	int i = numPipes - 1;
 	DisconnectNamedPipe(servers[i]);
 	{
 		char sndbuf[PIPE_BUFFER_SIZE] = { 0 };
@@ -445,7 +444,7 @@ static DWORD WINAPI named_pipe_single_thread(LPVOID arg)
 	numPipes--;
 
 	/* Close all remaining pipes */
-	for (i = 0; i < numPipes; i++)
+	for (int i = 0; i < numPipes; i++)
 	{
 		DisconnectNamedPipe(servers[i]);
 		CloseHandle(servers[i]);

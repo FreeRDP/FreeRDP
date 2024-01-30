@@ -30,10 +30,9 @@ typedef BOOL (*validate_settings_pr)(rdpSettings* settings);
 
 static void print_test_title(int argc, char** argv)
 {
-	int i = 0;
 	printf("Running test:");
 
-	for (i = 0; i < argc; i++)
+	for (int i = 0; i < argc; i++)
 	{
 		printf(" %s", argv[i]);
 	}
@@ -212,10 +211,9 @@ static const test tests[] = {
 
 static void check_modified_arguments(const test* test, char** command_line, int* rc)
 {
-	int k = 0;
 	const char* expected_argument = NULL;
 
-	for (k = 0; (expected_argument = test->modified_arguments[k].expected_value); k++)
+	for (int k = 0; (expected_argument = test->modified_arguments[k].expected_value); k++)
 	{
 		int index = test->modified_arguments[k].index;
 		char* actual_argument = command_line[index];
@@ -234,11 +232,10 @@ static void check_modified_arguments(const test* test, char** command_line, int*
 int TestClientCmdLine(int argc, char* argv[])
 {
 	int rc = 0;
-	size_t i = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
-	for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+	for (size_t i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
 	{
 		const test* current = &tests[i];
 		int failure = 0;

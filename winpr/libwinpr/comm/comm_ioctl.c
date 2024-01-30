@@ -53,9 +53,7 @@
 
 const char* _comm_serial_ioctl_name(ULONG number)
 {
-	int i = 0;
-
-	for (i = 0; _SERIAL_IOCTL_NAMES[i].number != 0; i++)
+	for (int i = 0; _SERIAL_IOCTL_NAMES[i].number != 0; i++)
 	{
 		if (_SERIAL_IOCTL_NAMES[i].number == number)
 		{

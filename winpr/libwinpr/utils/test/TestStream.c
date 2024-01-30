@@ -130,17 +130,14 @@ static BOOL TestStream_Static(void)
 
 static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 {
-	size_t i = 0;
 	size_t len = 0;
 	size_t cap = 0;
-	size_t pos = 0;
 	wStream* s = NULL;
 	void* buffer = NULL;
 
-	for (i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 	{
 		len = cap = i + 1;
-		pos = 0;
 
 		if (selfAlloc)
 		{
@@ -157,12 +154,12 @@ static BOOL TestStream_Create(size_t count, BOOL selfAlloc)
 			goto fail;
 		}
 
-		if (!TestStream_Verify(s, cap, len, pos))
+		if (!TestStream_Verify(s, cap, len, 0))
 		{
 			goto fail;
 		}
 
-		for (pos = 0; pos < len; pos++)
+		for (size_t pos = 0; pos < len; pos++)
 		{
 			Stream_SetPosition(s, pos);
 			Stream_SealLength(s);
@@ -202,7 +199,6 @@ fail:
 
 static BOOL TestStream_Extent(UINT32 maxSize)
 {
-	UINT32 i = 0;
 	wStream* s = NULL;
 	BOOL result = FALSE;
 
@@ -212,7 +208,7 @@ static BOOL TestStream_Extent(UINT32 maxSize)
 		return FALSE;
 	}
 
-	for (i = 1; i < maxSize; i++)
+	for (UINT32 i = 1; i < maxSize; i++)
 	{
 		if (i % 2)
 		{
@@ -504,7 +500,6 @@ out:
 
 static BOOL TestStream_Zero(void)
 {
-	UINT32 x = 0;
 	BOOL rc = FALSE;
 	const BYTE data[] = "someteststreamdata";
 	wStream* s = Stream_New(NULL, sizeof(data));
@@ -535,7 +530,7 @@ static BOOL TestStream_Zero(void)
 	if (s->pointer != s->buffer)
 		goto out;
 
-	for (x = 0; x < 5; x++)
+	for (UINT32 x = 0; x < 5; x++)
 	{
 		UINT8 val = 0;
 		Stream_Read_UINT8(s, val);

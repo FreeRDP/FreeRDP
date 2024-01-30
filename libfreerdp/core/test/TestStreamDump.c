@@ -16,7 +16,6 @@ static BOOL test_entry_read_write(void)
 	wStream* sw = NULL;
 	wStream* sr = NULL;
 	size_t offset = 0;
-	size_t x = 0;
 	UINT64 ts = 0;
 	UINT32 flags = 0;
 	BYTE tmp[16] = { 0 };
@@ -27,7 +26,7 @@ static BOOL test_entry_read_write(void)
 
 	winpr_RAND(tmp, sizeof(tmp));
 
-	for (x = 0; x < sizeof(tmp); x++)
+	for (size_t x = 0; x < sizeof(tmp); x++)
 		_snprintf(&tmp2[x * 2], sizeof(tmp2) - 2 * x, "%02" PRIx8, tmp[x]);
 	name = GetKnownSubPath(KNOWN_PATH_TEMP, tmp2);
 	if (!name)

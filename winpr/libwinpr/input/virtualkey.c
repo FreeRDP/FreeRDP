@@ -432,9 +432,7 @@ const char* GetVirtualKeyName(DWORD vkcode)
 
 DWORD GetVirtualKeyCodeFromName(const char* vkname)
 {
-	unsigned long i = 0;
-
-	for (i = 0; i < ARRAYSIZE(VIRTUAL_KEY_CODE_TABLE); i++)
+	for (size_t i = 0; i < ARRAYSIZE(VIRTUAL_KEY_CODE_TABLE); i++)
 	{
 		if (VIRTUAL_KEY_CODE_TABLE[i].name)
 		{
@@ -448,9 +446,7 @@ DWORD GetVirtualKeyCodeFromName(const char* vkname)
 
 DWORD GetVirtualKeyCodeFromXkbKeyName(const char* xkbname)
 {
-	unsigned long i = 0;
-
-	for (i = 0; i < ARRAYSIZE(XKB_KEYNAME_TABLE); i++)
+	for (size_t i = 0; i < ARRAYSIZE(XKB_KEYNAME_TABLE); i++)
 	{
 		if (XKB_KEYNAME_TABLE[i].name)
 		{

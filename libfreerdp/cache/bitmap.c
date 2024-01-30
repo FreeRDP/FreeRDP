@@ -348,7 +348,6 @@ end:
 
 rdpBitmapCache* bitmap_cache_new(rdpContext* context)
 {
-	UINT32 i = 0;
 	rdpSettings* settings = NULL;
 	rdpBitmapCache* bitmapCache = NULL;
 
@@ -371,7 +370,7 @@ rdpBitmapCache* bitmap_cache_new(rdpContext* context)
 		goto fail;
 	bitmapCache->maxCells = BitmapCacheV2NumCells;
 
-	for (i = 0; i < bitmapCache->maxCells; i++)
+	for (UINT32 i = 0; i < bitmapCache->maxCells; i++)
 	{
 		const BITMAP_CACHE_V2_CELL_INFO* info =
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_BitmapCacheV2CellInfo, i);
@@ -430,12 +429,10 @@ void bitmap_cache_free(rdpBitmapCache* bitmapCache)
 
 static void free_bitmap_data(BITMAP_DATA* data, size_t count)
 {
-	size_t x = 0;
-
 	if (!data)
 		return;
 
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 		free(data[x].bitmapDataStream);
 
 	free(data);
@@ -443,13 +440,12 @@ static void free_bitmap_data(BITMAP_DATA* data, size_t count)
 
 static BITMAP_DATA* copy_bitmap_data(const BITMAP_DATA* data, size_t count)
 {
-	size_t x = 0;
 	BITMAP_DATA* dst = (BITMAP_DATA*)calloc(count, sizeof(BITMAP_DATA));
 
 	if (!dst)
 		goto fail;
 
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		dst[x] = data[x];
 

@@ -475,9 +475,7 @@ BOOL per_write_object_identifier(wStream* s, const BYTE oid[6])
 
 static void per_write_string(wStream* s, BYTE* str, int length)
 {
-	int i = 0;
-
-	for (i = 0; i < length; i++)
+	for (int i = 0; i < length; i++)
 		Stream_Write_UINT8(s, str[i]);
 }
 
@@ -526,7 +524,6 @@ BOOL per_read_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT1
 
 BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT16 min)
 {
-	UINT16 i = 0;
 	UINT16 mlength = 0;
 
 	mlength = (length >= min) ? length - min : min;
@@ -536,7 +533,7 @@ BOOL per_write_octet_string(wStream* s, const BYTE* oct_str, UINT16 length, UINT
 
 	if (!Stream_EnsureRemainingCapacity(s, length))
 		return FALSE;
-	for (i = 0; i < length; i++)
+	for (UINT16 i = 0; i < length; i++)
 		Stream_Write_UINT8(s, oct_str[i]);
 	return TRUE;
 }
@@ -578,7 +575,6 @@ BOOL per_read_numeric_string(wStream* s, UINT16 min)
 
 BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length, UINT16 min)
 {
-	UINT16 i = 0;
 	UINT16 mlength = 0;
 	BYTE num = 0;
 	BYTE c1 = 0;
@@ -591,7 +587,7 @@ BOOL per_write_numeric_string(wStream* s, const BYTE* num_str, UINT16 length, UI
 
 	if (!Stream_EnsureRemainingCapacity(s, length))
 		return FALSE;
-	for (i = 0; i < length; i += 2)
+	for (UINT16 i = 0; i < length; i += 2)
 	{
 		c1 = num_str[i];
 		c2 = ((i + 1) < length) ? num_str[i + 1] : 0x30;

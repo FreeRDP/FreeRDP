@@ -45,16 +45,14 @@
 static void wf_peer_rdpsnd_activated(RdpsndServerContext* context)
 {
 	wfInfo* wfi;
-	size_t i;
 	wfi = wf_info_get_instance();
 	wfi->agreed_format = NULL;
 	WLog_DBG(TAG, "Client supports the following %d formats:", context->num_client_formats);
 
-	for (i = 0; i < context->num_client_formats; i++)
+	for (size_t i = 0; i < context->num_client_formats; i++)
 	{
-		size_t j;
 		// TODO: improve the way we agree on a format
-		for (j = 0; j < context->num_server_formats; j++)
+		for (size_t j = 0; j < context->num_server_formats; j++)
 		{
 			if ((context->client_formats[i].wFormatTag == context->server_formats[j].wFormatTag) &&
 			    (context->client_formats[i].nChannels == context->server_formats[j].nChannels) &&

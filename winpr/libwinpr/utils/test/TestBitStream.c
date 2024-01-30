@@ -6,15 +6,13 @@
 
 static void BitStrGen(void)
 {
-	DWORD i = 0;
-	DWORD j = 0;
-	char str[64];
+	char str[64] = { 0 };
 
-	for (i = 0; i < 256;)
+	for (DWORD i = 0; i < 256;)
 	{
 		printf("\t");
 
-		for (j = 0; j < 4; j++)
+		for (DWORD j = 0; j < 4; j++)
 		{
 			if (0)
 			{

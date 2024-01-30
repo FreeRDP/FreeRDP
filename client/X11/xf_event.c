@@ -225,7 +225,6 @@ void xf_event_action_script_free(xfContext* xfc)
 
 static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 {
-	int index = 0;
 	int count = 0;
 	char* name = NULL;
 	FILE* actionScript = NULL;
@@ -244,7 +243,7 @@ static BOOL xf_event_execute_action_script(xfContext* xfc, const XEvent* event)
 	xeventName = x11_event_string(event->type);
 	count = ArrayList_Count(xfc->xevents);
 
-	for (index = 0; index < count; index++)
+	for (int index = 0; index < count; index++)
 	{
 		name = (char*)ArrayList_GetItem(xfc->xevents, index);
 
@@ -916,7 +915,6 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 	if ((((Atom)event->atom == xfc->_NET_WM_STATE) && (event->state != PropertyDelete)) ||
 	    (((Atom)event->atom == xfc->WM_STATE) && (event->state != PropertyDelete)))
 	{
-		unsigned long i = 0;
 		BOOL status = FALSE;
 		BOOL minimized = FALSE;
 		BOOL minimizedChanged = FALSE;
@@ -945,7 +943,7 @@ static BOOL xf_event_PropertyNotify(xfContext* xfc, const XPropertyEvent* event,
 					appWindow->maxVert = FALSE;
 					appWindow->maxHorz = FALSE;
 				}
-				for (i = 0; i < nitems; i++)
+				for (unsigned long i = 0; i < nitems; i++)
 				{
 					if ((Atom)((UINT16**)prop)[i] ==
 					    XInternAtom(xfc->display, "_NET_WM_STATE_MAXIMIZED_VERT", False))
@@ -1266,12 +1264,11 @@ BOOL xf_event_process(freerdp* instance, const XEvent* event)
 BOOL xf_generic_RawButtonEvent(xfContext* xfc, int button, BOOL app, BOOL down)
 {
 	UINT16 flags = 0;
-	size_t i = 0;
 
 	if (app)
 		return FALSE;
 
-	for (i = 0; i < ARRAYSIZE(xfc->button_map); i++)
+	for (size_t i = 0; i < ARRAYSIZE(xfc->button_map); i++)
 	{
 		const button_map* cur = &xfc->button_map[i];
 

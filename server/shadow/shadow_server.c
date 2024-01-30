@@ -459,7 +459,6 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 
 	if (arg && (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT))
 	{
-		UINT32 index = 0;
 		UINT32 numMonitors = 0;
 		MONITOR_DEF monitors[16] = { 0 };
 		numMonitors = shadow_enum_monitors(monitors, 16);
@@ -478,7 +477,7 @@ int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** a
 		{
 			/* List monitors */
 
-			for (index = 0; index < numMonitors; index++)
+			for (UINT32 index = 0; index < numMonitors; index++)
 			{
 				const MONITOR_DEF* monitor = &monitors[index];
 				const INT64 width = monitor->right - monitor->left + 1;
@@ -644,7 +643,6 @@ int shadow_server_start(rdpShadowServer* server)
 	                                    strnlen(bind_address, sizeof(bind_address))) != 0);
 	if (!ipc)
 	{
-		size_t x = 0;
 		size_t count = 0;
 		char** list = CommandLineParseCommaSeparatedValuesEx(NULL, server->ipcSocket, &count);
 		if (!list || (count <= 1))
@@ -665,7 +663,7 @@ int shadow_server_start(rdpShadowServer* server)
 		}
 
 		WINPR_ASSERT(list || (count == 0));
-		for (x = 1; x < count; x++)
+		for (size_t x = 1; x < count; x++)
 		{
 			BOOL success = open_port(server, list[x]);
 			if (!success)

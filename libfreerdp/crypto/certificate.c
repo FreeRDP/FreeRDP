@@ -632,9 +632,6 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
                                                         wStream* s, UINT32 siglen)
 {
 	WINPR_ASSERT(certificate);
-#if defined(CERT_VALIDATE_PADDING) || defined(CERT_VALIDATE_RSA)
-	size_t i, sum;
-#endif
 #if defined(CERT_VALIDATE_RSA)
 	BYTE sig[TSSK_KEY_LENGTH];
 #endif
@@ -666,16 +663,17 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 
 		/* Last 8 bytes shall be all zero. */
 #if defined(CERT_VALIDATE_PADDING)
-
-	for (sum = 0, i = sizeof(encsig) - 8; i < sizeof(encsig); i++)
-		sum += encsig[i];
-
-	if (sum != 0)
 	{
-		WLog_ERR(TAG, "invalid signature");
-		return FALSE;
-	}
+		size_t sum = 0;
+		for (size_t i = sizeof(encsig) - 8; i < sizeof(encsig); i++)
+			sum += encsig[i];
 
+		if (sum != 0)
+		{
+			WLog_ERR(TAG, "invalid signature");
+			return FALSE;
+		}
+	}
 #endif
 #if defined(CERT_VALIDATE_RSA)
 
@@ -703,16 +701,17 @@ static BOOL certificate_process_server_public_signature(rdpCertificate* certific
 	 * The 18th through 62nd bytes are each 0xFF.
 	 * The 63rd byte is 0x01.
 	 */
-
-	for (sum = 0, i = 17; i < 62; i++)
-		sum += sig[i];
-
-	if (sig[16] != 0x00 || sum != 0xFF * (62 - 17) || sig[62] != 0x01)
 	{
-		WLog_ERR(TAG, "invalid signature");
-		return FALSE;
-	}
+		size_t sum = 0;
+		for (size_t i = 17; i < 62; i++)
+			sum += sig[i];
 
+		if (sig[16] != 0x00 || sum != 0xFF * (62 - 17) || sig[62] != 0x01)
+		{
+			WLog_ERR(TAG, "invalid signature");
+			return FALSE;
+		}
+	}
 #endif
 	return TRUE;
 }
@@ -1335,7 +1334,7 @@ char* freerdp_certificate_get_fingerprint_by_hash_ex(const rdpCertificate* cert,
 	pos = 0;
 
 	size_t i = 0;
-	for (i = 0; i < (fp_len - 1); i++)
+	for (; i < (fp_len - 1); i++)
 	{
 		int rc = 0;
 		char* p = &fp_buffer[pos];
@@ -1436,8 +1435,8 @@ char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
 #if 0
         if (chain)
         {
-            count = sk_X509_num(chain);
-            for (x = 0; x < count; x++)
+            int count = sk_X509_num(chain);
+            for (int x = 0; x < count; x++)
             {
                 X509* c = sk_X509_value(chain, x);
                 status = PEM_write_bio_X509(bio, c);

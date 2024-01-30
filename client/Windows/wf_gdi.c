@@ -126,25 +126,18 @@ static void wf_glyph_free(wfBitmap* glyph)
 	wf_image_free(glyph);
 }
 
-static BYTE* wf_glyph_convert(wfContext* wfc, int width, int height, BYTE* data)
+static BYTE* wf_glyph_convert(wfContext* wfc, int width, int height, const BYTE* data)
 {
-	int indexx;
-	int indexy;
-	BYTE* src;
-	BYTE* dst;
-	BYTE* cdata;
-	int src_bytes_per_row;
-	int dst_bytes_per_row;
-	src_bytes_per_row = (width + 7) / 8;
-	dst_bytes_per_row = src_bytes_per_row + (src_bytes_per_row % 2);
-	cdata = (BYTE*)malloc(dst_bytes_per_row * height);
-	src = data;
+	const int src_bytes_per_row = (width + 7) / 8;
+	const int dst_bytes_per_row = src_bytes_per_row + (src_bytes_per_row % 2);
+	BYTE* cdata = (BYTE*)malloc(dst_bytes_per_row * height);
+	const BYTE* src = data;
 
-	for (indexy = 0; indexy < height; indexy++)
+	for (int indexy = 0; indexy < height; indexy++)
 	{
-		dst = cdata + indexy * dst_bytes_per_row;
+		BYTE* dst = cdata + indexy * dst_bytes_per_row;
 
-		for (indexx = 0; indexx < dst_bytes_per_row; indexx++)
+		for (int indexx = 0; indexx < dst_bytes_per_row; indexx++)
 		{
 			if (indexx < src_bytes_per_row)
 				*dst++ = *src++;
@@ -158,7 +151,6 @@ static BYTE* wf_glyph_convert(wfContext* wfc, int width, int height, BYTE* data)
 
 static HBRUSH wf_create_brush(wfContext* wfc, rdpBrush* brush, UINT32 color, UINT32 bpp)
 {
-	UINT32 i;
 	HBRUSH br;
 	LOGBRUSH lbr;
 	BYTE* cdata;
@@ -182,7 +174,7 @@ static HBRUSH wf_create_brush(wfContext* wfc, rdpBrush* brush, UINT32 color, UIN
 		}
 		else
 		{
-			for (i = 0; i != 8; i++)
+			for (UINT32 i = 0; i != 8; i++)
 				ipattern[7 - i] = brush->data[i];
 
 			cdata = wf_glyph_convert(wfc, 8, 8, ipattern);
@@ -595,7 +587,6 @@ static BOOL wf_gdi_opaque_rect(rdpContext* context, const OPAQUE_RECT_ORDER* opa
 static BOOL wf_gdi_multi_opaque_rect(rdpContext* context,
                                      const MULTI_OPAQUE_RECT_ORDER* multi_opaque_rect)
 {
-	UINT32 i;
 	RECT rect;
 	HBRUSH brush;
 	COLORREF brush_color;
@@ -607,7 +598,7 @@ static BOOL wf_gdi_multi_opaque_rect(rdpContext* context,
 	if (!wf_decode_color(wfc, multi_opaque_rect->color, &brush_color, NULL))
 		return FALSE;
 
-	for (i = 0; i < multi_opaque_rect->numRectangles; i++)
+	for (UINT32 i = 0; i < multi_opaque_rect->numRectangles; i++)
 	{
 		const DELTA_RECT* rectangle = &multi_opaque_rect->rectangles[i];
 		rect.left = rectangle->left;
@@ -684,13 +675,12 @@ static BOOL wf_gdi_polyline(rdpContext* context, const POLYLINE_ORDER* polyline)
 		POINT* pts;
 		POINT temp;
 		int numPoints;
-		int i;
 		numPoints = polyline->numDeltaEntries + 1;
 		pts = (POINT*)malloc(sizeof(POINT) * numPoints);
 		pts[0].x = temp.x = polyline->xStart;
 		pts[0].y = temp.y = polyline->yStart;
 
-		for (i = 0; i < (int)polyline->numDeltaEntries; i++)
+		for (UINT32 i = 0; i < polyline->numDeltaEntries; i++)
 		{
 			temp.x += polyline->points[i].x;
 			temp.y += polyline->points[i].y;

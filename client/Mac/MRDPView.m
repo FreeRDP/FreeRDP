@@ -671,9 +671,7 @@ static BOOL releaseFlagStates(rdpInput *input, UINT32 aKbdModFlags)
 
 - (void)releaseResources
 {
-	int i;
-
-	for (i = 0; i < argc; i++)
+	for (int i = 0; i < argc; i++)
 		free(argv[i]);
 
 	if (!is_connected)

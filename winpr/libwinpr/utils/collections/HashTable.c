@@ -106,9 +106,7 @@ void HashTable_StringFree(void* str)
 
 static INLINE BOOL HashTable_IsProbablePrime(size_t oddNumber)
 {
-	size_t i = 0;
-
-	for (i = 3; i < 51; i += 2)
+	for (size_t i = 3; i < 51; i += 2)
 	{
 		if (oddNumber == i)
 			return TRUE;
@@ -139,9 +137,7 @@ static INLINE size_t HashTable_CalculateIdealNumOfBuckets(wHashTable* table)
 
 static INLINE void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
 {
-	size_t index = 0;
 	UINT32 hashValue = 0;
-	wKeyValuePair* pair = NULL;
 	wKeyValuePair* nextPair = NULL;
 	wKeyValuePair** newBucketArray = NULL;
 
@@ -163,9 +159,9 @@ static INLINE void HashTable_Rehash(wHashTable* table, size_t numOfBuckets)
 		return;
 	}
 
-	for (index = 0; index < table->numOfBuckets; index++)
+	for (size_t index = 0; index < table->numOfBuckets; index++)
 	{
-		pair = table->bucketArray[index];
+		wKeyValuePair* pair = table->bucketArray[index];
 
 		while (pair)
 		{
@@ -508,8 +504,6 @@ BOOL HashTable_SetItemValue(wHashTable* table, const void* key, const void* valu
 
 void HashTable_Clear(wHashTable* table)
 {
-	size_t index = 0;
-	wKeyValuePair* pair = NULL;
 	wKeyValuePair* nextPair = NULL;
 
 	WINPR_ASSERT(table);
@@ -517,9 +511,9 @@ void HashTable_Clear(wHashTable* table)
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
 
-	for (index = 0; index < table->numOfBuckets; index++)
+	for (size_t index = 0; index < table->numOfBuckets; index++)
 	{
-		pair = table->bucketArray[index];
+		wKeyValuePair* pair = table->bucketArray[index];
 
 		while (pair)
 		{
@@ -557,9 +551,7 @@ size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 {
 	size_t iKey = 0;
 	size_t count = 0;
-	size_t index = 0;
 	ULONG_PTR* pKeys = NULL;
-	wKeyValuePair* pair = NULL;
 	wKeyValuePair* nextPair = NULL;
 
 	WINPR_ASSERT(table);
@@ -589,9 +581,9 @@ size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 		return 0;
 	}
 
-	for (index = 0; index < table->numOfBuckets; index++)
+	for (size_t index = 0; index < table->numOfBuckets; index++)
 	{
-		pair = table->bucketArray[index];
+		wKeyValuePair* pair = table->bucketArray[index];
 
 		while (pair)
 		{
@@ -615,8 +607,6 @@ size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 BOOL HashTable_Foreach(wHashTable* table, HASH_TABLE_FOREACH_FN fn, VOID* arg)
 {
 	BOOL ret = TRUE;
-	size_t index = 0;
-	wKeyValuePair* pair = NULL;
 
 	WINPR_ASSERT(table);
 	WINPR_ASSERT(fn);
@@ -625,9 +615,9 @@ BOOL HashTable_Foreach(wHashTable* table, HASH_TABLE_FOREACH_FN fn, VOID* arg)
 		EnterCriticalSection(&table->lock);
 
 	table->foreachRecursionLevel++;
-	for (index = 0; index < table->numOfBuckets; index++)
+	for (size_t index = 0; index < table->numOfBuckets; index++)
 	{
-		for (pair = table->bucketArray[index]; pair; pair = pair->next)
+		for (wKeyValuePair* pair = table->bucketArray[index]; pair; pair = pair->next)
 		{
 			if (!pair->markedForRemove && !fn(pair->key, pair->value, arg))
 			{
@@ -642,11 +632,11 @@ BOOL HashTable_Foreach(wHashTable* table, HASH_TABLE_FOREACH_FN fn, VOID* arg)
 	{
 		/* if we're the last recursive foreach call, let's do the cleanup if needed */
 		wKeyValuePair** prevPtr = NULL;
-		for (index = 0; index < table->numOfBuckets; index++)
+		for (size_t index = 0; index < table->numOfBuckets; index++)
 		{
 			wKeyValuePair* nextPair = NULL;
 			prevPtr = &table->bucketArray[index];
-			for (pair = table->bucketArray[index]; pair;)
+			for (wKeyValuePair* pair = table->bucketArray[index]; pair;)
 			{
 				nextPair = pair->next;
 
@@ -727,9 +717,7 @@ BOOL HashTable_ContainsKey(wHashTable* table, const void* key)
 
 BOOL HashTable_ContainsValue(wHashTable* table, const void* value)
 {
-	size_t index = 0;
 	BOOL status = FALSE;
-	wKeyValuePair* pair = NULL;
 
 	WINPR_ASSERT(table);
 	if (!value)
@@ -738,9 +726,9 @@ BOOL HashTable_ContainsValue(wHashTable* table, const void* value)
 	if (table->synchronized)
 		EnterCriticalSection(&table->lock);
 
-	for (index = 0; index < table->numOfBuckets; index++)
+	for (size_t index = 0; index < table->numOfBuckets; index++)
 	{
-		pair = table->bucketArray[index];
+		wKeyValuePair* pair = table->bucketArray[index];
 
 		while (pair)
 		{
@@ -801,7 +789,6 @@ fail:
 
 void HashTable_Free(wHashTable* table)
 {
-	size_t index = 0;
 	wKeyValuePair* pair = NULL;
 	wKeyValuePair* nextPair = NULL;
 
@@ -810,7 +797,7 @@ void HashTable_Free(wHashTable* table)
 
 	if (table->bucketArray)
 	{
-		for (index = 0; index < table->numOfBuckets; index++)
+		for (size_t index = 0; index < table->numOfBuckets; index++)
 		{
 			pair = table->bucketArray[index];
 

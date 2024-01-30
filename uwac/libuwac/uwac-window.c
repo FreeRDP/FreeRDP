@@ -58,9 +58,7 @@ static const struct wl_buffer_listener buffer_listener = { buffer_release };
 
 static void UwacWindowDestroyBuffers(UwacWindow* w)
 {
-	int i = 0;
-
-	for (i = 0; i < w->nbuffers; i++)
+	for (int i = 0; i < w->nbuffers; i++)
 	{
 		UwacBuffer* buffer = &w->buffers[i];
 #ifdef UWAC_HAVE_PIXMAN_REGION
@@ -322,7 +320,6 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 {
 	int ret = UWAC_SUCCESS;
 	UwacBuffer* newBuffers = NULL;
-	int i = 0;
 	int fd = 0;
 	void* data = NULL;
 	struct wl_shm_pool* pool = NULL;
@@ -361,7 +358,7 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 		goto error_mmap;
 	}
 
-	for (i = 0; i < nbuffers; i++)
+	for (int i = 0; i < nbuffers; i++)
 	{
 		int bufferIdx = w->nbuffers + i;
 		UwacBuffer* buffer = &w->buffers[bufferIdx];
@@ -389,13 +386,13 @@ error_mmap:
 
 static UwacBuffer* UwacWindowFindFreeBuffer(UwacWindow* w, ssize_t* index)
 {
-	ssize_t i = 0;
 	int ret = 0;
 
 	if (index)
 		*index = -1;
 
-	for (i = 0; i < w->nbuffers; i++)
+	size_t i = 0;
+	for (; i < w->nbuffers; i++)
 	{
 		if (!w->buffers[i].used)
 		{
@@ -683,19 +680,14 @@ static const struct wl_callback_listener frame_listener = { frame_done_cb };
 static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 {
 	int nrects = 0;
-	int i = 0;
-	int x = 0;
-	int y = 0;
-	int w = 0;
-	int h = 0;
 	const pixman_box32_t* box = pixman_region32_rectangles(&buffer->damage, &nrects);
 
-	for (i = 0; i < nrects; i++, box++)
+	for (int i = 0; i < nrects; i++, box++)
 	{
-		x = ((int)floor(box->x1 / scale)) - 1;
-		y = ((int)floor(box->y1 / scale)) - 1;
-		w = ((int)ceil((box->x2 - box->x1) / scale)) + 2;
-		h = ((int)ceil((box->y2 - box->y1) / scale)) + 2;
+		const int x = ((int)floor(box->x1 / scale)) - 1;
+		const int y = ((int)floor(box->y1 / scale)) - 1;
+		const int w = ((int)ceil((box->x2 - box->x1) / scale)) + 2;
+		const int h = ((int)ceil((box->y2 - box->y1) / scale)) + 2;
 		wl_surface_damage(window->surface, x, y, w, h);
 	}
 
@@ -705,19 +697,14 @@ static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 static void damage_surface(UwacWindow* window, UwacBuffer* buffer, int scale)
 {
 	uint32_t nrects = 0;
-	uint32_t i = 0;
-	int x = 0;
-	int y = 0;
-	int w = 0;
-	int h = 0;
 	const RECTANGLE_16* box = region16_rects(&buffer->damage, &nrects);
 
-	for (i = 0; i < nrects; i++, box++)
+	for (UINT32 i = 0; i < nrects; i++, box++)
 	{
-		x = ((int)floor(box->left / scale)) - 1;
-		y = ((int)floor(box->top / scale)) - 1;
-		w = ((int)ceil((box->right - box->left) / scale)) + 2;
-		h = ((int)ceil((box->bottom - box->top) / scale)) + 2;
+		const int x = ((int)floor(box->left / scale)) - 1;
+		const int y = ((int)floor(box->top / scale)) - 1;
+		const int w = ((int)ceil((box->right - box->left) / scale)) + 2;
+		const int h = ((int)ceil((box->bottom - box->top) / scale)) + 2;
 		wl_surface_damage(window->surface, x, y, w, h);
 	}
 

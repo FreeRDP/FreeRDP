@@ -76,12 +76,10 @@ static BOOL checkResult(size_t index, char** actual, size_t actualCount)
 	}
 	else
 	{
-		size_t x = 0;
-
 		if (!actual)
 			return FALSE;
 
-		for (x = 0; x < actualCount; x++)
+		for (size_t x = 0; x < actualCount; x++)
 		{
 			const char* a = result[x];
 			const char* b = actual[x];
@@ -96,12 +94,10 @@ static BOOL checkResult(size_t index, char** actual, size_t actualCount)
 
 static BOOL TestCommandLineParseCommaSeparatedValuesEx(void)
 {
-	size_t x = 0;
-
 	WINPR_ASSERT(ARRAYSIZE(testListArgs) == ARRAYSIZE(testListArgsResult));
 	WINPR_ASSERT(ARRAYSIZE(testListArgs) == ARRAYSIZE(testListArgsCount));
 
-	for (x = 0; x < ARRAYSIZE(testListArgs); x++)
+	for (size_t x = 0; x < ARRAYSIZE(testListArgs); x++)
 	{
 		const char* list = testListArgs[x];
 		size_t count = 42;

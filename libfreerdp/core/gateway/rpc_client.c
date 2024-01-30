@@ -143,7 +143,6 @@ static int rpc_client_receive_pipe_write(RpcClient* client, const BYTE* buffer, 
 
 int rpc_client_receive_pipe_read(RpcClient* client, BYTE* buffer, size_t length)
 {
-	int index = 0;
 	size_t status = 0;
 	int nchunks = 0;
 	DataChunk chunks[2];
@@ -154,7 +153,7 @@ int rpc_client_receive_pipe_read(RpcClient* client, BYTE* buffer, size_t length)
 	EnterCriticalSection(&(client->PipeLock));
 	nchunks = ringbuffer_peek(&(client->ReceivePipe), chunks, length);
 
-	for (index = 0; index < nchunks; index++)
+	for (int index = 0; index < nchunks; index++)
 	{
 		CopyMemory(&buffer[status], chunks[index].data, chunks[index].size);
 		status += chunks[index].size;
@@ -927,17 +926,15 @@ int rpc_client_in_channel_recv(rdpRpc* rpc)
 
 RpcClientCall* rpc_client_call_find_by_id(RpcClient* client, UINT32 CallId)
 {
-	size_t index = 0;
-	size_t count = 0;
 	RpcClientCall* clientCall = NULL;
 
 	if (!client)
 		return NULL;
 
 	ArrayList_Lock(client->ClientCallList);
-	count = ArrayList_Count(client->ClientCallList);
+	const size_t count = ArrayList_Count(client->ClientCallList);
 
-	for (index = 0; index < count; index++)
+	for (size_t index = 0; index < count; index++)
 	{
 		clientCall = (RpcClientCall*)ArrayList_GetItem(client->ClientCallList, index);
 

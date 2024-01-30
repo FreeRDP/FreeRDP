@@ -122,14 +122,13 @@ static char* rdp_info_package_flags_description(UINT32 flags)
 {
 	char* result = NULL;
 	size_t maximum_size = 1 + MAX_LABEL_LENGTH * ARRAYSIZE(info_flags);
-	size_t i = 0;
 
 	result = calloc(maximum_size, sizeof(char));
 
 	if (!result)
 		return 0;
 
-	for (i = 0; i < ARRAYSIZE(info_flags); i++)
+	for (size_t i = 0; i < ARRAYSIZE(info_flags); i++)
 	{
 		const struct info_flags_t* cur = &info_flags[i];
 		if (cur->flag & flags)

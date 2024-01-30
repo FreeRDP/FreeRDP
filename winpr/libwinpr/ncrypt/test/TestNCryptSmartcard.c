@@ -64,7 +64,6 @@ bio_release:
 int TestNCryptSmartcard(int argc, char* argv[])
 {
 	SECURITY_STATUS status = 0;
-	size_t j = 0;
 	DWORD providerCount = 0;
 	NCryptProviderName* names = NULL;
 
@@ -72,7 +71,7 @@ int TestNCryptSmartcard(int argc, char* argv[])
 	if (status != ERROR_SUCCESS)
 		return -1;
 
-	for (j = 0; j < providerCount; j++)
+	for (size_t j = 0; j < providerCount; j++)
 	{
 		const NCryptProviderName* name = &names[j];
 		NCRYPT_PROV_HANDLE provider = 0;

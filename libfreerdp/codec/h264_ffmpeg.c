@@ -533,9 +533,7 @@ static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
 	H264_CONTEXT_LIBAVCODEC* sys = (H264_CONTEXT_LIBAVCODEC*)h264->pSystemData;
 	WINPR_ASSERT(sys);
 
-	const enum AVPixelFormat* p = NULL;
-
-	for (p = fmts; *p != AV_PIX_FMT_NONE; p++)
+	for (const enum AVPixelFormat* p = fmts; *p != AV_PIX_FMT_NONE; p++)
 	{
 		if (*p == sys->hw_pix_fmt)
 		{

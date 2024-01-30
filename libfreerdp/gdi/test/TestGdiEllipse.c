@@ -77,8 +77,6 @@ static const BYTE ellipse_case_3[256] = {
 int TestGdiEllipse(int argc, char* argv[])
 {
 	int rc = -1;
-	UINT32 i = 0;
-	UINT32 j = 0;
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
 	const UINT32 colorFormats[] = { PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_ARGB15, PIXEL_FORMAT_RGB16,
 		                            PIXEL_FORMAT_RGB24,  PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_XRGB32,
@@ -91,7 +89,7 @@ int TestGdiEllipse(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	for (i = 0; i < number_formats; i++)
+	for (UINT32 i = 0; i < number_formats; i++)
 	{
 		HGDI_DC hdc = NULL;
 		HGDI_PEN pen = NULL;
@@ -103,7 +101,7 @@ int TestGdiEllipse(int argc, char* argv[])
 		gdiPalette* hPalette = &g;
 		g.format = format;
 
-		for (j = 0; j < 256; j++)
+		for (UINT32 j = 0; j < 256; j++)
 			g.palette[i] = FreeRDPGetColor(format, j, j, j, 0xFF);
 
 		rc = -1;

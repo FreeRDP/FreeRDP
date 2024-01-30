@@ -592,7 +592,6 @@ static LONG smartcard_RemoveReaderFromGroupW_Call(scard_call_context* smartcard,
 static LONG smartcard_LocateCardsA_Call(scard_call_context* smartcard, wStream* out,
                                         SMARTCARD_OPERATION* operation)
 {
-	UINT32 x = 0;
 	LONG status = 0;
 	LocateCards_Return ret = { 0 };
 	LocateCardsA_Call* call = NULL;
@@ -616,7 +615,7 @@ static LONG smartcard_LocateCardsA_Call(scard_call_context* smartcard, wStream* 
 			return STATUS_NO_MEMORY;
 	}
 
-	for (x = 0; x < ret.cReaders; x++)
+	for (UINT32 x = 0; x < ret.cReaders; x++)
 	{
 		ret.rgReaderStates[x].dwCurrentState = call->rgReaderStates[x].dwCurrentState;
 		ret.rgReaderStates[x].dwEventState = call->rgReaderStates[x].dwEventState;
@@ -636,7 +635,6 @@ static LONG smartcard_LocateCardsA_Call(scard_call_context* smartcard, wStream* 
 static LONG smartcard_LocateCardsW_Call(scard_call_context* smartcard, wStream* out,
                                         SMARTCARD_OPERATION* operation)
 {
-	UINT32 x = 0;
 	LONG status = 0;
 	LocateCards_Return ret = { 0 };
 	LocateCardsW_Call* call = NULL;
@@ -660,7 +658,7 @@ static LONG smartcard_LocateCardsW_Call(scard_call_context* smartcard, wStream* 
 			return STATUS_NO_MEMORY;
 	}
 
-	for (x = 0; x < ret.cReaders; x++)
+	for (UINT32 x = 0; x < ret.cReaders; x++)
 	{
 		ret.rgReaderStates[x].dwCurrentState = call->rgReaderStates[x].dwCurrentState;
 		ret.rgReaderStates[x].dwEventState = call->rgReaderStates[x].dwEventState;
@@ -889,9 +887,7 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
                                             SMARTCARD_OPERATION* operation)
 {
 	LONG status = STATUS_NO_MEMORY;
-	UINT32 index = 0;
 	DWORD dwTimeOut = 0;
-	DWORD x = 0;
 	const DWORD dwTimeStep = 100;
 	GetStatusChange_Return ret = { 0 };
 	GetStatusChangeA_Call* call = NULL;
@@ -913,7 +909,7 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 			goto fail;
 	}
 
-	for (x = 0; x < MAX(1, dwTimeOut);)
+	for (UINT32 x = 0; x < MAX(1, dwTimeOut);)
 	{
 		if (call->cReaders > 0)
 			memcpy(rgReaderStates, call->rgReaderStates,
@@ -929,7 +925,7 @@ static LONG smartcard_GetStatusChangeA_Call(scard_call_context* smartcard, wStre
 	}
 	scard_log_status_error(TAG, "SCardGetStatusChangeA", ret.ReturnCode);
 
-	for (index = 0; index < ret.cReaders; index++)
+	for (UINT32 index = 0; index < ret.cReaders; index++)
 	{
 		const SCARD_READERSTATEA* cur = &rgReaderStates[index];
 		ReaderState_Return* rout = &ret.rgReaderStates[index];
@@ -953,9 +949,7 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
                                             SMARTCARD_OPERATION* operation)
 {
 	LONG status = STATUS_NO_MEMORY;
-	UINT32 index = 0;
 	DWORD dwTimeOut = 0;
-	DWORD x = 0;
 	const DWORD dwTimeStep = 100;
 	GetStatusChange_Return ret = { 0 };
 	GetStatusChangeW_Call* call = NULL;
@@ -977,7 +971,7 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 			goto fail;
 	}
 
-	for (x = 0; x < MAX(1, dwTimeOut);)
+	for (UINT32 x = 0; x < MAX(1, dwTimeOut);)
 	{
 		if (call->cReaders > 0)
 			memcpy(rgReaderStates, call->rgReaderStates,
@@ -995,7 +989,7 @@ static LONG smartcard_GetStatusChangeW_Call(scard_call_context* smartcard, wStre
 	}
 	scard_log_status_error(TAG, "SCardGetStatusChangeW", ret.ReturnCode);
 
-	for (index = 0; index < ret.cReaders; index++)
+	for (UINT32 index = 0; index < ret.cReaders; index++)
 	{
 		const SCARD_READERSTATEW* cur = &rgReaderStates[index];
 		ReaderState_Return* rout = &ret.rgReaderStates[index];
@@ -1460,9 +1454,6 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
                                              SMARTCARD_OPERATION* operation)
 {
 	LONG status = 0;
-	DWORD i = 0;
-	DWORD j = 0;
-	DWORD k = 0;
 	GetStatusChange_Return ret = { 0 };
 	LPSCARD_READERSTATEA state = NULL;
 	LPSCARD_READERSTATEA states = NULL;
@@ -1477,7 +1468,7 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
 	if (!states)
 		return STATUS_NO_MEMORY;
 
-	for (i = 0; i < call->cReaders; i++)
+	for (UINT32 i = 0; i < call->cReaders; i++)
 	{
 		states[i].szReader = (LPSTR)call->rgReaderStates[i].szReader;
 		states[i].dwCurrentState = call->rgReaderStates[i].dwCurrentState;
@@ -1490,11 +1481,11 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
 	                               0x000001F4, states, call->cReaders);
 
 	scard_log_status_error(TAG, "SCardGetStatusChangeA", status);
-	for (i = 0; i < call->cAtrs; i++)
+	for (UINT32 i = 0; i < call->cAtrs; i++)
 	{
-		for (j = 0; j < call->cReaders; j++)
+		for (UINT32 j = 0; j < call->cReaders; j++)
 		{
-			for (k = 0; k < call->rgAtrMasks[i].cbAtr; k++)
+			for (UINT32 k = 0; k < call->rgAtrMasks[i].cbAtr; k++)
 			{
 				if ((call->rgAtrMasks[i].rgbAtr[k] & call->rgAtrMasks[i].rgbMask[k]) !=
 				    (states[j].rgbAtr[k] & call->rgAtrMasks[i].rgbMask[k]))
@@ -1519,7 +1510,7 @@ static LONG smartcard_LocateCardsByATRA_Call(scard_call_context* smartcard, wStr
 		return STATUS_NO_MEMORY;
 	}
 
-	for (i = 0; i < ret.cReaders; i++)
+	for (UINT32 i = 0; i < ret.cReaders; i++)
 	{
 		state = &states[i];
 		ret.rgReaderStates[i].dwCurrentState = state->dwCurrentState;

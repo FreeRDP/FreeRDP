@@ -519,11 +519,10 @@ static BOOL rdp_apply_order_capability_set(rdpSettings* settings, const rdpSetti
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
 
-	int i = 0;
 	BOOL BitmapCacheV3Enabled = FALSE;
 	BOOL FrameMarkerCommandEnabled = FALSE;
 
-	for (i = 0; i < 32; i++)
+	for (size_t i = 0; i < 32; i++)
 	{
 		if (!src->OrderSupport[i])
 			settings->OrderSupport[i] = FALSE;
@@ -559,7 +558,6 @@ static BOOL rdp_apply_order_capability_set(rdpSettings* settings, const rdpSetti
 
 static BOOL rdp_read_order_capability_set(wStream* s, rdpSettings* settings)
 {
-	size_t i = 0;
 	char terminalDescriptor[17] = { 0 };
 	BYTE orderSupport[32] = { 0 };
 	BOOL BitmapCacheV3Enabled = FALSE;
@@ -590,7 +588,7 @@ static BOOL rdp_read_order_capability_set(wStream* s, rdpSettings* settings)
 	if (!freerdp_settings_set_string(settings, FreeRDP_TerminalDescriptor, terminalDescriptor))
 		return FALSE;
 
-	for (i = 0; i < ARRAYSIZE(orderSupport); i++)
+	for (size_t i = 0; i < ARRAYSIZE(orderSupport); i++)
 		settings->OrderSupport[i] = orderSupport[i];
 
 	if (settings->OrderSupportFlags & ORDER_FLAGS_EXTRA_SUPPORT)
@@ -1644,13 +1642,12 @@ static void rdp_write_cache_definition(wStream* s, GLYPH_CACHE_DEFINITION* cache
 
 static BOOL rdp_apply_glyph_cache_capability_set(rdpSettings* settings, const rdpSettings* src)
 {
-	size_t x = 0;
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(src);
 
 	WINPR_ASSERT(src->GlyphCache);
 	WINPR_ASSERT(settings->GlyphCache);
-	for (x = 0; x < 10; x++)
+	for (size_t x = 0; x < 10; x++)
 		settings->GlyphCache[x] = src->GlyphCache[x];
 
 	WINPR_ASSERT(src->FragCache);
@@ -1668,14 +1665,12 @@ static BOOL rdp_apply_glyph_cache_capability_set(rdpSettings* settings, const rd
 
 static BOOL rdp_read_glyph_cache_capability_set(wStream* s, rdpSettings* settings)
 {
-
-	size_t x = 0;
 	WINPR_ASSERT(settings);
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 48))
 		return FALSE;
 
 	/* glyphCache (40 bytes) */
-	for (x = 0; x < 10; x++)
+	for (size_t x = 0; x < 10; x++)
 		rdp_read_cache_definition(s, &(settings->GlyphCache[x])); /* glyphCache0 (4 bytes) */
 	rdp_read_cache_definition(s, settings->FragCache);            /* fragCache (4 bytes) */
 	Stream_Read_UINT16(s, settings->GlyphSupportLevel);           /* glyphSupportLevel (2 bytes) */
@@ -1988,7 +1983,6 @@ static BOOL rdp_apply_bitmap_cache_v2_capability_set(rdpSettings* settings, cons
 
 static BOOL rdp_read_bitmap_cache_v2_capability_set(wStream* s, rdpSettings* settings)
 {
-	size_t x = 0;
 	UINT16 cacheFlags = 0;
 	WINPR_UNUSED(settings);
 	WINPR_ASSERT(settings);
@@ -2006,7 +2000,7 @@ static BOOL rdp_read_bitmap_cache_v2_capability_set(wStream* s, rdpSettings* set
 
 	Stream_Seek_UINT8(s);                                  /* pad2 (1 byte) */
 	Stream_Read_UINT8(s, settings->BitmapCacheV2NumCells); /* numCellCaches (1 byte) */
-	for (x = 0; x < 5; x++)
+	for (size_t x = 0; x < 5; x++)
 	{
 		BITMAP_CACHE_V2_CELL_INFO* info =
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_BitmapCacheV2CellInfo, x);

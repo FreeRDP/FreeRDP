@@ -932,7 +932,6 @@ BOOL WaitCommEvent(HANDLE hFile, PDWORD lpEvtMask, LPOVERLAPPED lpOverlapped)
  */
 BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTargetPath)
 {
-	int i = 0;
 	LPTSTR storedDeviceName = NULL;
 	LPTSTR storedTargetPath = NULL;
 
@@ -963,7 +962,8 @@ BOOL DefineCommDevice(/* DWORD dwFlags,*/ LPCTSTR lpDeviceName, LPCTSTR lpTarget
 		goto error_handle;
 	}
 
-	for (i = 0; i < COMM_DEVICE_MAX; i++)
+	int i = 0;
+	for (; i < COMM_DEVICE_MAX; i++)
 	{
 		if (_CommDevices[i] != NULL)
 		{
@@ -1027,7 +1027,6 @@ error_handle:
  */
 DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 {
-	int i = 0;
 	LPTSTR storedTargetPath = NULL;
 	SetLastError(ERROR_SUCCESS);
 
@@ -1049,7 +1048,7 @@ DWORD QueryCommDevice(LPCTSTR lpDeviceName, LPTSTR lpTargetPath, DWORD ucchMax)
 	EnterCriticalSection(&_CommDevicesLock);
 	storedTargetPath = NULL;
 
-	for (i = 0; i < COMM_DEVICE_MAX; i++)
+	for (int i = 0; i < COMM_DEVICE_MAX; i++)
 	{
 		if (_CommDevices[i] != NULL)
 		{

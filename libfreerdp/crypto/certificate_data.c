@@ -93,7 +93,6 @@ fail:
 static rdpCertificateData* freerdp_certificate_data_new_nocopy(const char* hostname, UINT16 port,
                                                                rdpCertificate* xcert)
 {
-	size_t i = 0;
 	rdpCertificateData* certdata = NULL;
 
 	if (!hostname || !xcert)
@@ -108,7 +107,7 @@ static rdpCertificateData* freerdp_certificate_data_new_nocopy(const char* hostn
 	certdata->hostname = _strdup(hostname);
 	if (!certdata->hostname)
 		goto fail;
-	for (i = 0; i < strlen(hostname); i++)
+	for (size_t i = 0; i < strlen(hostname); i++)
 		certdata->hostname[i] = tolower(certdata->hostname[i]);
 
 	certdata->cert = xcert;

@@ -579,9 +579,7 @@ ntlm_AcceptSecurityContext(PCredHandle phCredential, PCtxtHandle phContext, PSec
 
 			if (pOutput)
 			{
-				ULONG i = 0;
-
-				for (i = 0; i < pOutput->cBuffers; i++)
+				for (ULONG i = 0; i < pOutput->cBuffers; i++)
 				{
 					pOutput->pBuffers[i].cbBuffer = 0;
 					pOutput->pBuffers[i].BufferType = SECBUFFER_TOKEN;

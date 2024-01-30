@@ -1490,12 +1490,11 @@ static int test_bmp_cmp_count(const BYTE* mem1, const BYTE* mem2, int size, int 
 {
 	int error = 0;
 	int count = 0;
-	int index = 0;
 	size /= 4;
 	mem1 += channel;
 	mem2 += channel;
 
-	for (index = 0; index < size; index++)
+	for (int index = 0; index < size; index++)
 	{
 		if (*mem1 != *mem2)
 		{
@@ -1517,12 +1516,11 @@ static int test_bmp_cmp_dump(const BYTE* actual, const BYTE* expected, int size,
 {
 	int error[3];
 	int count = 0;
-	int index = 0;
 	size /= 4;
 	actual += channel;
 	expected += channel;
 
-	for (index = 0; index < size; index++)
+	for (int index = 0; index < size; index++)
 	{
 		if (*actual != *expected)
 		{
@@ -1727,7 +1725,6 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 		                       PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_BGRX32 };
 	const primitives_t* prims = primitives_get();
 	const primitives_t* generics = primitives_get_generic();
-	UINT32 x = 0;
 
 	WINPR_UNUSED(argv);
 
@@ -1735,7 +1732,7 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 	{
 		{
 			/* Do content comparison. */
-			for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
+			for (UINT32 x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 			{
 				prim_size_t roi = { 64, 64 };
 				int rc = 0;
@@ -1777,7 +1774,7 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 				roi.height %= 2048 / 4;
 			} while (roi.height < 16);
 
-			for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
+			for (size_t x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 			{
 				int rc = 0;
 				printf("----------------------- GENERIC %s [%" PRIu32 "x%" PRIu32
@@ -1808,7 +1805,7 @@ int TestPrimitivesYCbCr(int argc, char* argv[])
 	{
 		prim_size_t roi = { 1928 / 8, 1080 / 8 };
 
-		for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
+		for (size_t x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 		{
 			int rc = 0;
 			printf("----------------------- GENERIC %s [%" PRIu32 "x%" PRIu32

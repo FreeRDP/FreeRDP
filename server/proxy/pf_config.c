@@ -797,17 +797,13 @@ out:
 
 static void pf_server_config_print_list(char** list, size_t count)
 {
-	size_t i = 0;
-
 	WINPR_ASSERT(list);
-	for (i = 0; i < count; i++)
+	for (size_t i = 0; i < count; i++)
 		WLog_INFO(TAG, "\t\t- %s", list[i]);
 }
 
 void pf_server_config_print(const proxyConfig* config)
 {
-	size_t x = 0;
-
 	WINPR_ASSERT(config);
 	WLog_INFO(TAG, "Proxy configuration:");
 
@@ -876,12 +872,12 @@ void pf_server_config_print(const proxyConfig* config)
 
 	/* modules */
 	CONFIG_PRINT_SECTION_KEY(section_plugins, key_plugins_modules);
-	for (x = 0; x < config->ModulesCount; x++)
+	for (size_t x = 0; x < config->ModulesCount; x++)
 		CONFIG_PRINT_STR(config, Modules[x]);
 
 	/* Required plugins */
 	CONFIG_PRINT_SECTION_KEY(section_plugins, key_plugins_required);
-	for (x = 0; x < config->RequiredPluginsCount; x++)
+	for (size_t x = 0; x < config->RequiredPluginsCount; x++)
 		CONFIG_PRINT_STR(config, RequiredPlugins[x]);
 
 	CONFIG_PRINT_SECTION(section_certificates);

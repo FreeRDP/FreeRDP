@@ -141,7 +141,6 @@ static WinPrAsn1_OID oid4 = { sizeof(oid4_val), oid4_val };
 
 int TestASN1Write(int argc, char* argv[])
 {
-	size_t i = 0;
 	wStream* s = NULL;
 	size_t expectedOuputSz = 0;
 	int retCode = 100;
@@ -300,7 +299,7 @@ int TestASN1Write(int argc, char* argv[])
 	WinPrAsn1Encoder_Reset(enc);
 
 	retCode = 203;
-	for (i = 0; i < 1000; i++)
+	for (size_t i = 0; i < 1000; i++)
 	{
 		if (!WinPrAsn1EncSeqContainer(enc))
 			goto out;
@@ -311,7 +310,7 @@ int TestASN1Write(int argc, char* argv[])
 		goto out;
 
 	retCode = 205;
-	for (i = 0; i < 1000; i++)
+	for (size_t i = 0; i < 1000; i++)
 	{
 		if (!WinPrAsn1EncEndContainer(enc))
 			goto out;

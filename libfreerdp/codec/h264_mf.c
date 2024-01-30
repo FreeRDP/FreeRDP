@@ -393,7 +393,6 @@ static BOOL mf_plat_loaded(H264_CONTEXT_MF* sys)
 
 static void mf_uninit(H264_CONTEXT* h264)
 {
-	UINT32 x;
 	H264_CONTEXT_MF* sys = (H264_CONTEXT_MF*)h264->pSystemData;
 
 	if (sys)
@@ -440,7 +439,7 @@ static void mf_uninit(H264_CONTEXT* h264)
 				CoUninitialize();
 		}
 
-		for (x = 0; x < sizeof(h264->pYUVData) / sizeof(h264->pYUVData[0]); x++)
+		for (size_t x = 0; x < sizeof(h264->pYUVData) / sizeof(h264->pYUVData[0]); x++)
 			winpr_aligned_free(h264->pYUVData[x]);
 
 		memset(h264->pYUVData, 0, sizeof(h264->pYUVData));

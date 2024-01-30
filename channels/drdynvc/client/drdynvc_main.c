@@ -152,7 +152,6 @@ static UINT dvcman_register_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const ch
 static IWTSPlugin* dvcman_get_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const char* name)
 {
 	IWTSPlugin* plugin = NULL;
-	size_t i = 0;
 	size_t nc = 0;
 	size_t pc = 0;
 	WINPR_ASSERT(pEntryPoints);
@@ -167,7 +166,7 @@ static IWTSPlugin* dvcman_get_plugin(IDRDYNVC_ENTRY_POINTS* pEntryPoints, const 
 
 	ArrayList_Lock(dvcman->plugin_names);
 	ArrayList_Lock(dvcman->plugins);
-	for (i = 0; i < pc; i++)
+	for (size_t i = 0; i < pc; i++)
 	{
 		const char* cur = ArrayList_GetItem(dvcman->plugin_names, i);
 		if (strcmp(cur, name) == 0)
@@ -579,13 +578,12 @@ static void dvcman_free(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChan
  */
 static UINT dvcman_init(drdynvcPlugin* drdynvc, IWTSVirtualChannelManager* pChannelMgr)
 {
-	size_t i = 0;
 	DVCMAN* dvcman = (DVCMAN*)pChannelMgr;
 	UINT error = CHANNEL_RC_OK;
 
 	WINPR_ASSERT(dvcman);
 	ArrayList_Lock(dvcman->plugins);
-	for (i = 0; i < ArrayList_Count(dvcman->plugins); i++)
+	for (size_t i = 0; i < ArrayList_Count(dvcman->plugins); i++)
 	{
 		IWTSPlugin* pPlugin = ArrayList_GetItem(dvcman->plugins, i);
 
@@ -1672,7 +1670,6 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 {
 	UINT error = 0;
 	UINT32 status = 0;
-	UINT32 index = 0;
 	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(drdynvc);
@@ -1698,8 +1695,8 @@ static UINT drdynvc_virtual_channel_event_connected(drdynvcPlugin* drdynvc, LPVO
 	settings = drdynvc->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
-	for (index = 0; index < freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount);
-	     index++)
+	for (UINT32 index = 0;
+	     index < freerdp_settings_get_uint32(settings, FreeRDP_DynamicChannelCount); index++)
 	{
 		const ADDIN_ARGV* args =
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_DynamicChannelArray, index);
@@ -1834,7 +1831,6 @@ static UINT drdynvc_virtual_channel_event_terminated(drdynvcPlugin* drdynvc)
 static UINT drdynvc_virtual_channel_event_attached(drdynvcPlugin* drdynvc)
 {
 	UINT error = CHANNEL_RC_OK;
-	size_t i = 0;
 	DVCMAN* dvcman = NULL;
 
 	if (!drdynvc)
@@ -1846,7 +1842,7 @@ static UINT drdynvc_virtual_channel_event_attached(drdynvcPlugin* drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
 	ArrayList_Lock(dvcman->plugins);
-	for (i = 0; i < ArrayList_Count(dvcman->plugins); i++)
+	for (size_t i = 0; i < ArrayList_Count(dvcman->plugins); i++)
 	{
 		IWTSPlugin* pPlugin = ArrayList_GetItem(dvcman->plugins, i);
 
@@ -1866,7 +1862,6 @@ fail:
 static UINT drdynvc_virtual_channel_event_detached(drdynvcPlugin* drdynvc)
 {
 	UINT error = CHANNEL_RC_OK;
-	size_t i = 0;
 	DVCMAN* dvcman = NULL;
 
 	if (!drdynvc)
@@ -1878,7 +1873,7 @@ static UINT drdynvc_virtual_channel_event_detached(drdynvcPlugin* drdynvc)
 		return CHANNEL_RC_BAD_CHANNEL_HANDLE;
 
 	ArrayList_Lock(dvcman->plugins);
-	for (i = 0; i < ArrayList_Count(dvcman->plugins); i++)
+	for (size_t i = 0; i < ArrayList_Count(dvcman->plugins); i++)
 	{
 		IWTSPlugin* pPlugin = ArrayList_GetItem(dvcman->plugins, i);
 

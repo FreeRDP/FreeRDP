@@ -50,12 +50,9 @@ static BOOL freerdp_channels_process_message_free(wMessage* message, DWORD type)
 static CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpChannels* channels,
                                                                           const char* name)
 {
-	int index = 0;
-	CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
-
-	for (index = 0; index < channels->openDataCount; index++)
+	for (int index = 0; index < channels->openDataCount; index++)
 	{
-		pChannelOpenData = &channels->openDataList[index];
+		CHANNEL_OPEN_DATA* pChannelOpenData = &channels->openDataList[index];
 
 		if (strncmp(name, pChannelOpenData->name, CHANNEL_NAME_LEN + 1) == 0)
 			return pChannelOpenData;
@@ -67,7 +64,6 @@ static CHANNEL_OPEN_DATA* freerdp_channels_find_channel_open_data_by_name(rdpCha
 /* returns rdpChannel for the channel name passed in */
 static rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp, const char* name)
 {
-	UINT32 index = 0;
 	rdpMcs* mcs = NULL;
 
 	if (!rdp)
@@ -75,7 +71,7 @@ static rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp, const c
 
 	mcs = rdp->mcs;
 
-	for (index = 0; index < mcs->channelCount; index++)
+	for (UINT32 index = 0; index < mcs->channelCount; index++)
 	{
 		rdpMcsChannel* channel = &mcs->channels[index];
 
@@ -90,7 +86,6 @@ static rdpMcsChannel* freerdp_channels_find_channel_by_name(rdpRdp* rdp, const c
 
 static rdpMcsChannel* freerdp_channels_find_channel_by_id(rdpRdp* rdp, UINT16 channel_id)
 {
-	UINT32 index = 0;
 	rdpMcsChannel* channel = NULL;
 	rdpMcs* mcs = NULL;
 
@@ -99,7 +94,7 @@ static rdpMcsChannel* freerdp_channels_find_channel_by_id(rdpRdp* rdp, UINT16 ch
 
 	mcs = rdp->mcs;
 
-	for (index = 0; index < mcs->channelCount; index++)
+	for (UINT32 index = 0; index < mcs->channelCount; index++)
 	{
 		channel = &mcs->channels[index];
 
@@ -265,12 +260,11 @@ void freerdp_channels_register_instance(rdpChannels* channels, freerdp* instance
 UINT freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance)
 {
 	UINT error = CHANNEL_RC_OK;
-	int index = 0;
 	CHANNEL_CLIENT_DATA* pChannelClientData = NULL;
 
 	MessageQueue_Clear(channels->queue);
 
-	for (index = 0; index < channels->clientDataCount; index++)
+	for (int index = 0; index < channels->clientDataCount; index++)
 	{
 		pChannelClientData = &channels->clientDataList[index];
 
@@ -296,7 +290,6 @@ UINT freerdp_channels_pre_connect(rdpChannels* channels, freerdp* instance)
 UINT freerdp_channels_attach(freerdp* instance)
 {
 	UINT error = CHANNEL_RC_OK;
-	int index = 0;
 	const char* hostname = NULL;
 	size_t hostnameLength = 0;
 	rdpChannels* channels = NULL;
@@ -311,7 +304,7 @@ UINT freerdp_channels_attach(freerdp* instance)
 	WINPR_ASSERT(hostname);
 	hostnameLength = strnlen(hostname, MAX_PATH);
 
-	for (index = 0; index < channels->clientDataCount; index++)
+	for (int index = 0; index < channels->clientDataCount; index++)
 	{
 		union
 		{
@@ -355,7 +348,6 @@ fail:
 UINT freerdp_channels_detach(freerdp* instance)
 {
 	UINT error = CHANNEL_RC_OK;
-	int index = 0;
 	const char* hostname = NULL;
 	size_t hostnameLength = 0;
 	rdpChannels* channels = NULL;
@@ -375,7 +367,7 @@ UINT freerdp_channels_detach(freerdp* instance)
 	WINPR_ASSERT(hostname);
 	hostnameLength = strnlen(hostname, MAX_PATH);
 
-	for (index = 0; index < channels->clientDataCount; index++)
+	for (int index = 0; index < channels->clientDataCount; index++)
 	{
 		union
 		{
@@ -424,7 +416,6 @@ fail:
 UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 {
 	UINT error = CHANNEL_RC_OK;
-	int index = 0;
 	const char* hostname = NULL;
 	size_t hostnameLength = 0;
 	CHANNEL_CLIENT_DATA* pChannelClientData = NULL;
@@ -439,7 +430,7 @@ UINT freerdp_channels_post_connect(rdpChannels* channels, freerdp* instance)
 	WINPR_ASSERT(hostname);
 	hostnameLength = strnlen(hostname, MAX_PATH);
 
-	for (index = 0; index < channels->clientDataCount; index++)
+	for (int index = 0; index < channels->clientDataCount; index++)
 	{
 		union
 		{
@@ -494,7 +485,6 @@ fail:
 BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdata, size_t dataSize,
                            UINT32 flags, size_t totalSize)
 {
-	UINT32 index = 0;
 	rdpMcs* mcs = NULL;
 	rdpChannels* channels = NULL;
 	rdpMcsChannel* channel = NULL;
@@ -521,7 +511,7 @@ BOOL freerdp_channels_data(freerdp* instance, UINT16 channelId, const BYTE* cdat
 		return FALSE;
 	}
 
-	for (index = 0; index < mcs->channelCount; index++)
+	for (int index = 0; index < mcs->channelCount; index++)
 	{
 		rdpMcsChannel* cur = &mcs->channels[index];
 
@@ -749,7 +739,6 @@ BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance)
 UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 {
 	UINT error = CHANNEL_RC_OK;
-	int index = 0;
 	CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
 	CHANNEL_CLIENT_DATA* pChannelClientData = NULL;
 
@@ -759,7 +748,7 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 	freerdp_channels_check_fds(channels, instance);
 
 	/* tell all libraries we are shutting down */
-	for (index = 0; index < channels->clientDataCount; index++)
+	for (int index = 0; index < channels->clientDataCount; index++)
 	{
 		ChannelDisconnectedEventArgs e;
 		pChannelClientData = &channels->clientDataList[index];
@@ -792,7 +781,6 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 
 void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 {
-	int index = 0;
 	CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
 	CHANNEL_CLIENT_DATA* pChannelClientData = NULL;
 
@@ -803,7 +791,7 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 	freerdp_channels_check_fds(channels, instance);
 
 	/* tell all libraries we are shutting down */
-	for (index = 0; index < channels->clientDataCount; index++)
+	for (int index = 0; index < channels->clientDataCount; index++)
 	{
 		pChannelClientData = &channels->clientDataList[index];
 
@@ -822,7 +810,7 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 
 	channels->clientDataCount = 0;
 
-	for (index = 0; index < channels->openDataCount; index++)
+	for (int index = 0; index < channels->openDataCount; index++)
 	{
 		pChannelOpenData = &channels->openDataList[index];
 		HashTable_Remove(g_ChannelHandles, (void*)(UINT_PTR)pChannelOpenData->OpenHandle);
@@ -841,7 +829,6 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(
     LPVOID lpUserParam, LPVOID clientContext, LPVOID pInitHandle, PCHANNEL_DEF pChannel,
     INT channelCount, ULONG versionRequested, PCHANNEL_INIT_EVENT_EX_FN pChannelInitEventProcEx)
 {
-	INT index = 0;
 	rdpSettings* settings = NULL;
 	CHANNEL_INIT_DATA* pChannelInitData = NULL;
 	CHANNEL_CLIENT_DATA* pChannelClientData = NULL;
@@ -875,7 +862,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(
 	{
 	}
 
-	for (index = 0; index < channelCount; index++)
+	for (int index = 0; index < channelCount; index++)
 	{
 		const PCHANNEL_DEF pChannelDef = &pChannel[index];
 
@@ -897,7 +884,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInitEx(
 	settings = channels->instance->context->settings;
 	WINPR_ASSERT(settings);
 
-	for (index = 0; index < channelCount; index++)
+	for (int index = 0; index < channelCount; index++)
 	{
 		const PCHANNEL_DEF pChannelDef = &pChannel[index];
 		CHANNEL_OPEN_DATA* pChannelOpenData = &channels->openDataList[channels->openDataCount];
@@ -940,7 +927,6 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_
                                                  INT channelCount, ULONG versionRequested,
                                                  PCHANNEL_INIT_EVENT_FN pChannelInitEventProc)
 {
-	INT index = 0;
 	CHANNEL_DEF* channel = NULL;
 	rdpSettings* settings = NULL;
 	PCHANNEL_DEF pChannelDef = NULL;
@@ -984,7 +970,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_
 	{
 	}
 
-	for (index = 0; index < channelCount; index++)
+	for (int index = 0; index < channelCount; index++)
 	{
 		pChannelDef = &pChannel[index];
 
@@ -1000,7 +986,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelInit(LPVOID* ppInitHandle, PCHANNEL_
 	channels->clientDataCount++;
 	settings = channels->instance->context->settings;
 
-	for (index = 0; index < channelCount; index++)
+	for (int index = 0; index < channelCount; index++)
 	{
 		UINT32 ChannelCount = freerdp_settings_get_uint32(settings, FreeRDP_ChannelCount);
 
@@ -1253,9 +1239,7 @@ static UINT VCAPITYPE FreeRDP_VirtualChannelWrite(DWORD openHandle, LPVOID pData
 
 static BOOL freerdp_channels_is_loaded(rdpChannels* channels, PVIRTUALCHANNELENTRY entry)
 {
-	int i = 0;
-
-	for (i = 0; i < channels->clientDataCount; i++)
+	for (int i = 0; i < channels->clientDataCount; i++)
 	{
 		CHANNEL_CLIENT_DATA* pChannelClientData = &channels->clientDataList[i];
 
@@ -1268,9 +1252,7 @@ static BOOL freerdp_channels_is_loaded(rdpChannels* channels, PVIRTUALCHANNELENT
 
 static BOOL freerdp_channels_is_loaded_ex(rdpChannels* channels, PVIRTUALCHANNELENTRYEX entryEx)
 {
-	int i = 0;
-
-	for (i = 0; i < channels->clientDataCount; i++)
+	for (int i = 0; i < channels->clientDataCount; i++)
 	{
 		CHANNEL_CLIENT_DATA* pChannelClientData = &channels->clientDataList[i];
 

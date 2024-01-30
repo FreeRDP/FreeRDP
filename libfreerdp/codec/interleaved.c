@@ -29,17 +29,16 @@
 
 #define TAG FREERDP_TAG("codec")
 
-#define UNROLL_BODY(_exp, _count)      \
-	do                                 \
-	{                                  \
-		size_t x;                      \
-		for (x = 0; x < (_count); x++) \
-		{                              \
-			do                         \
-			{                          \
-				_exp                   \
-			} while (FALSE);           \
-		}                              \
+#define UNROLL_BODY(_exp, _count)             \
+	do                                        \
+	{                                         \
+		for (size_t x = 0; x < (_count); x++) \
+		{                                     \
+			do                                \
+			{                                 \
+				_exp                          \
+			} while (FALSE);                  \
+		}                                     \
 	} while (FALSE)
 
 #define UNROLL_MULTIPLE(_condition, _exp, _count) \

@@ -34,8 +34,6 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const WINPR_R
                                                       UINT32 dstStep, UINT32 DstFormat,
                                                       const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
 	BYTE* pRGB = pDst;
 	const INT16* pY = pSrc[0];
 	const INT16* pCb = pSrc[1];
@@ -44,9 +42,9 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_BGRX(const INT16* const WINPR_R
 	const size_t dstPad = (dstStep - (roi->width * 4));
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 
-	for (y = 0; y < roi->height; y++)
+	for (UINT32 y = 0; y < roi->height; y++)
 	{
-		for (x = 0; x < roi->width; x++)
+		for (UINT32 x = 0; x < roi->width; x++)
 		{
 			INT16 R = 0;
 			INT16 G = 0;
@@ -79,8 +77,6 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* const WINP
                                                          UINT32 dstStep, UINT32 DstFormat,
                                                          const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
 	BYTE* pRGB = pDst;
 	const INT16* pY = pSrc[0];
 	const INT16* pCb = pSrc[1];
@@ -90,9 +86,9 @@ static pstatus_t general_yCbCrToRGB_16s8u_P3AC4R_general(const INT16* const WINP
 	const fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 
-	for (y = 0; y < roi->height; y++)
+	for (UINT32 y = 0; y < roi->height; y++)
 	{
-		for (x = 0; x < roi->width; x++)
+		for (UINT32 x = 0; x < roi->width; x++)
 		{
 			INT64 R = 0;
 			INT64 G = 0;
@@ -164,13 +160,10 @@ general_yCbCrToRGB_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], INT32 
 	INT16* bptr = pDst[2];
 	UINT32 srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	UINT32 dstbump = (dstStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	UINT32 y = 0;
 
-	for (y = 0; y < roi->height; y++)
+	for (UINT32 y = 0; y < roi->height; y++)
 	{
-		UINT32 x = 0;
-
-		for (x = 0; x < roi->width; ++x)
+		for (UINT32 x = 0; x < roi->width; ++x)
 		{
 			/* INT32 is used intentionally because we calculate
 			 * with shifted factors!
@@ -245,13 +238,10 @@ general_RGBToYCbCr_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], INT32 
 	INT16* crptr = pDst[2];
 	UINT32 srcbump = (srcStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
 	UINT32 dstbump = (dstStep - (roi->width * sizeof(UINT16))) / sizeof(UINT16);
-	UINT32 y = 0;
 
-	for (y = 0; y < roi->height; y++)
+	for (UINT32 y = 0; y < roi->height; y++)
 	{
-		UINT32 x = 0;
-
-		for (x = 0; x < roi->width; ++x)
+		for (UINT32 x = 0; x < roi->width; ++x)
 		{
 			/* INT32 is used intentionally because we calculate with
 			 * shifted factors!
@@ -293,21 +283,19 @@ general_RGBToYCbCr_16s16s_P3P3(const INT16* const WINPR_RESTRICT pSrc[3], INT32 
 static INLINE void writeScanlineGeneric(BYTE* dst, DWORD formatSize, UINT32 DstFormat,
                                         const INT16* r, const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x = 0;
 	fkt_writePixel writePixel = getPixelWriteFunction(DstFormat, FALSE);
 
-	for (x = 0; x < width; x++)
+	for (UINT32 x = 0; x < width; x++)
 		dst = writePixel(dst, formatSize, DstFormat, *r++, *g++, *b++, 0);
 }
 
 static INLINE void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                     const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x = 0;
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(DstFormat);
 
-	for (x = 0; x < width; x++)
+	for (UINT32 x = 0; x < width; x++)
 	{
 		const BYTE R = CLIP(*r++);
 		const BYTE G = CLIP(*g++);
@@ -321,11 +309,10 @@ static INLINE void writeScanlineRGB(BYTE* dst, DWORD formatSize, UINT32 DstForma
 static INLINE void writeScanlineBGR(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                     const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x = 0;
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(DstFormat);
 
-	for (x = 0; x < width; x++)
+	for (UINT32 x = 0; x < width; x++)
 	{
 		const BYTE R = CLIP(*r++);
 		const BYTE G = CLIP(*g++);
@@ -339,11 +326,10 @@ static INLINE void writeScanlineBGR(BYTE* dst, DWORD formatSize, UINT32 DstForma
 static INLINE void writeScanlineBGRX(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                      const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x = 0;
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(DstFormat);
 
-	for (x = 0; x < width; x++)
+	for (UINT32 x = 0; x < width; x++)
 	{
 		const BYTE R = CLIP(*r++);
 		const BYTE G = CLIP(*g++);
@@ -358,11 +344,10 @@ static INLINE void writeScanlineBGRX(BYTE* dst, DWORD formatSize, UINT32 DstForm
 static INLINE void writeScanlineRGBX(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                      const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x = 0;
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(DstFormat);
 
-	for (x = 0; x < width; x++)
+	for (UINT32 x = 0; x < width; x++)
 	{
 		const BYTE R = CLIP(*r++);
 		const BYTE G = CLIP(*g++);
@@ -377,11 +362,10 @@ static INLINE void writeScanlineRGBX(BYTE* dst, DWORD formatSize, UINT32 DstForm
 static INLINE void writeScanlineXBGR(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                      const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x = 0;
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(DstFormat);
 
-	for (x = 0; x < width; x++)
+	for (UINT32 x = 0; x < width; x++)
 	{
 		const BYTE R = CLIP(*r++);
 		const BYTE G = CLIP(*g++);
@@ -396,11 +380,10 @@ static INLINE void writeScanlineXBGR(BYTE* dst, DWORD formatSize, UINT32 DstForm
 static INLINE void writeScanlineXRGB(BYTE* dst, DWORD formatSize, UINT32 DstFormat, const INT16* r,
                                      const INT16* g, const INT16* b, DWORD width)
 {
-	DWORD x = 0;
 	WINPR_UNUSED(formatSize);
 	WINPR_UNUSED(DstFormat);
 
-	for (x = 0; x < width; x++)
+	for (UINT32 x = 0; x < width; x++)
 	{
 		const BYTE R = CLIP(*r++);
 		const BYTE G = CLIP(*g++);
@@ -457,12 +440,11 @@ static pstatus_t general_RGBToRGB_16s8u_P3AC4R_general(
 	const INT16* r = pSrc[0];
 	const INT16* g = pSrc[1];
 	const INT16* b = pSrc[2];
-	UINT32 y = 0;
 	const DWORD srcAdd = srcStep / sizeof(INT16);
 	fkt_writeScanline writeScanline = getScanlineWriteFunction(DstFormat);
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 
-	for (y = 0; y < roi->height; ++y)
+	for (UINT32 y = 0; y < roi->height; ++y)
 	{
 		(*writeScanline)(pDst, formatSize, DstFormat, r, g, b, roi->width);
 		pDst += dstStep;
@@ -484,11 +466,10 @@ static pstatus_t general_RGBToRGB_16s8u_P3AC4R_BGRX(
 	const INT16* r = pSrc[0];
 	const INT16* g = pSrc[1];
 	const INT16* b = pSrc[2];
-	UINT32 y = 0;
 	const DWORD srcAdd = srcStep / sizeof(INT16);
 	const DWORD formatSize = FreeRDPGetBytesPerPixel(DstFormat);
 
-	for (y = 0; y < roi->height; ++y)
+	for (UINT32 y = 0; y < roi->height; ++y)
 	{
 		writeScanlineBGRX(pDst, formatSize, DstFormat, r, g, b, roi->width);
 		pDst += dstStep;

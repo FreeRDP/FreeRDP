@@ -422,7 +422,6 @@ int TestClientRdpFile(int argc, char* argv[])
 	/* Check [MS-RDPECAM] related options */
 #if defined(CHANNEL_RDPECAM_CLIENT)
 	{
-		int x = 0;
 		ADDIN_ARGV* args = NULL;
 		iValue =
 		    freerdp_client_rdp_file_get_integer_option(file, "encode redirected video capture");
@@ -451,7 +450,7 @@ int TestClientRdpFile(int argc, char* argv[])
 			goto fail;
 		}
 
-		for (x = 0; x < args->argc; x++)
+		for (int x = 0; x < args->argc; x++)
 		{
 			if (strcmp(args->argv[x], camera_args[x]) != 0)
 			{
@@ -465,7 +464,6 @@ int TestClientRdpFile(int argc, char* argv[])
 	/* Check [URBDRC] related options */
 #if defined(CHANNEL_URBDRC_CLIENT)
 	{
-		int x = 0;
 		ADDIN_ARGV* args = freerdp_dynamic_channel_collection_find(settings, "urbdrc");
 		if (!args)
 		{
@@ -478,7 +476,7 @@ int TestClientRdpFile(int argc, char* argv[])
 			goto fail;
 		}
 
-		for (x = 0; x < args->argc; x++)
+		for (int x = 0; x < args->argc; x++)
 		{
 			if (strcmp(args->argv[x], urbdrc_args[x]) != 0)
 			{

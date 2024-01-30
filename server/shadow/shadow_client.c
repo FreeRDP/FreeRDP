@@ -276,7 +276,6 @@ fail:
 static INLINE void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 numRects,
                                               const RECTANGLE_16* rects)
 {
-	UINT32 index = 0;
 	RECTANGLE_16 screenRegion;
 	rdpSettings* settings = NULL;
 
@@ -291,7 +290,7 @@ static INLINE void shadow_client_mark_invalid(rdpShadowClient* client, UINT32 nu
 	/* Mark client invalid region. No rectangle means full screen */
 	if (numRects > 0)
 	{
-		for (index = 0; index < numRects; index++)
+		for (UINT32 index = 0; index < numRects; index++)
 		{
 			region16_union_rect(&(client->invalidRegion), &(client->invalidRegion), &rects[index]);
 		}
@@ -530,11 +529,10 @@ static INLINE void shadow_client_convert_rects(rdpShadowClient* client, RECTANGL
 
 	if (client->server->shareSubRect)
 	{
-		UINT32 i = 0;
 		UINT16 offsetX = client->server->subRect.left;
 		UINT16 offsetY = client->server->subRect.top;
 
-		for (i = 0; i < numRects; i++)
+		for (UINT32 i = 0; i < numRects; i++)
 		{
 			const RECTANGLE_16* s = &src[i];
 			RECTANGLE_16* d = &dst[i];
@@ -806,7 +804,6 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
                                             BOOL h264, const RDPGFX_CAPSET* capsSets,
                                             UINT32 capsSetCount, UINT32 capsVersion, UINT* rc)
 {
-	UINT32 index = 0;
 	const rdpSettings* srvSettings = NULL;
 	rdpSettings* clientSettings = NULL;
 
@@ -825,7 +822,7 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 	if (shadow_are_caps_filtered(srvSettings, capsVersion))
 		return FALSE;
 
-	for (index = 0; index < capsSetCount; index++)
+	for (UINT32 index = 0; index < capsSetCount; index++)
 	{
 		const RDPGFX_CAPSET* currentCaps = &capsSets[index];
 
@@ -896,7 +893,6 @@ static BOOL shadow_client_caps_test_version(RdpgfxServerContext* context, rdpSha
 static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
                                                 const RDPGFX_CAPS_ADVERTISE_PDU* capsAdvertise)
 {
-	UINT16 index = 0;
 	UINT rc = ERROR_INTERNAL_ERROR;
 	const rdpSettings* srvSettings = NULL;
 	rdpSettings* clientSettings = NULL;
@@ -969,7 +965,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 	if (!shadow_are_caps_filtered(srvSettings, RDPGFX_CAPVERSION_81))
 	{
-		for (index = 0; index < capsAdvertise->capsSetCount; index++)
+		for (UINT32 index = 0; index < capsAdvertise->capsSetCount; index++)
 		{
 			const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
 
@@ -1009,7 +1005,7 @@ static UINT shadow_client_rdpgfx_caps_advertise(RdpgfxServerContext* context,
 
 	if (!shadow_are_caps_filtered(srvSettings, RDPGFX_CAPVERSION_8))
 	{
-		for (index = 0; index < capsAdvertise->capsSetCount; index++)
+		for (UINT32 index = 0; index < capsAdvertise->capsSetCount; index++)
 		{
 			const RDPGFX_CAPSET* currentCaps = &capsAdvertise->capsSets[index];
 
@@ -1761,7 +1757,6 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	BYTE* pSrcData = NULL;
 	UINT32 nSrcStep = 0;
 	UINT32 SrcFormat = 0;
-	UINT32 index = 0;
 	UINT32 numRects = 0;
 	const RECTANGLE_16* rects = NULL;
 
@@ -1788,7 +1783,7 @@ static BOOL shadow_client_send_surface_update(rdpShadowClient* client, SHADOW_GF
 	EnterCriticalSection(&surface->lock);
 	rects = region16_rects(&(surface->invalidRegion), &numRects);
 
-	for (index = 0; index < numRects; index++)
+	for (UINT32 index = 0; index < numRects; index++)
 		region16_union_rect(&invalidRegion, &invalidRegion, &rects[index]);
 
 	surfaceRect.left = 0;
@@ -2560,7 +2555,6 @@ int shadow_client_boardcast_msg(rdpShadowServer* server, void* context, UINT32 t
 	wMessage message = { 0 };
 	rdpShadowClient* client = NULL;
 	int count = 0;
-	size_t index = 0;
 
 	WINPR_ASSERT(server);
 	WINPR_ASSERT(msg);
@@ -2577,7 +2571,7 @@ int shadow_client_boardcast_msg(rdpShadowServer* server, void* context, UINT32 t
 	WINPR_ASSERT(server->clients);
 	ArrayList_Lock(server->clients);
 
-	for (index = 0; index < ArrayList_Count(server->clients); index++)
+	for (size_t index = 0; index < ArrayList_Count(server->clients); index++)
 	{
 		client = (rdpShadowClient*)ArrayList_GetItem(server->clients, index);
 
@@ -2597,14 +2591,13 @@ int shadow_client_boardcast_quit(rdpShadowServer* server, int nExitCode)
 {
 	wMessageQueue* queue = NULL;
 	int count = 0;
-	size_t index = 0;
 
 	WINPR_ASSERT(server);
 	WINPR_ASSERT(server->clients);
 
 	ArrayList_Lock(server->clients);
 
-	for (index = 0; index < ArrayList_Count(server->clients); index++)
+	for (size_t index = 0; index < ArrayList_Count(server->clients); index++)
 	{
 		queue = ((rdpShadowClient*)ArrayList_GetItem(server->clients, index))->MsgQueue;
 

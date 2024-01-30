@@ -15,7 +15,6 @@ int TestPathCchAppend(int argc, char* argv[])
 {
 	HRESULT status = 0;
 	TCHAR Path[PATHCCH_MAX_CCH];
-	size_t i = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -135,7 +134,7 @@ int TestPathCchAppend(int argc, char* argv[])
 
 	/* Resulting file must not exceed PATHCCH_MAX_CCH */
 
-	for (i = 0; i < PATHCCH_MAX_CCH - 1; i++)
+	for (size_t i = 0; i < PATHCCH_MAX_CCH - 1; i++)
 		Path[i] = _T('X');
 
 	Path[PATHCCH_MAX_CCH - 1] = 0;

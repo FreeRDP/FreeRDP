@@ -167,7 +167,6 @@ static UINT device_server_recv_stream_list_response(CameraDeviceServerContext* c
 {
 	CAM_STREAM_LIST_RESPONSE pdu = { 0 };
 	UINT error = CHANNEL_RC_OK;
-	BYTE i = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(header);
@@ -179,7 +178,7 @@ static UINT device_server_recv_stream_list_response(CameraDeviceServerContext* c
 
 	pdu.N_Descriptions = MIN(Stream_GetRemainingLength(s) / 5, 255);
 
-	for (i = 0; i < pdu.N_Descriptions; ++i)
+	for (BYTE i = 0; i < pdu.N_Descriptions; ++i)
 	{
 		CAM_STREAM_DESCRIPTION* StreamDescription = &pdu.StreamDescriptions[i];
 
@@ -341,8 +340,6 @@ static UINT device_server_recv_property_list_response(CameraDeviceServerContext*
 
 	if (pdu.N_Properties > 0)
 	{
-		size_t i = 0;
-
 		pdu.Properties = calloc(pdu.N_Properties, sizeof(CAM_PROPERTY_DESCRIPTION));
 		if (!pdu.Properties)
 		{
@@ -351,7 +348,7 @@ static UINT device_server_recv_property_list_response(CameraDeviceServerContext*
 			return ERROR_NOT_ENOUGH_MEMORY;
 		}
 
-		for (i = 0; i < pdu.N_Properties; ++i)
+		for (size_t i = 0; i < pdu.N_Properties; ++i)
 		{
 			Stream_Read_UINT8(s, pdu.Properties[i].PropertySet);
 			Stream_Read_UINT8(s, pdu.Properties[i].PropertyId);
@@ -806,7 +803,6 @@ device_send_start_streams_request_pdu(CameraDeviceServerContext* context,
                                       const CAM_START_STREAMS_REQUEST* startStreamsRequest)
 {
 	wStream* s = NULL;
-	size_t i = 0;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(startStreamsRequest);
@@ -816,7 +812,7 @@ device_send_start_streams_request_pdu(CameraDeviceServerContext* context,
 	if (!s)
 		return ERROR_NOT_ENOUGH_MEMORY;
 
-	for (i = 0; i < startStreamsRequest->N_Infos; ++i)
+	for (size_t i = 0; i < startStreamsRequest->N_Infos; ++i)
 	{
 		const CAM_START_STREAM_INFO* info = &startStreamsRequest->StartStreamsInfo[i];
 		const CAM_MEDIA_TYPE_DESCRIPTION* description = &info->MediaTypeDescription;

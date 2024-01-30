@@ -68,7 +68,7 @@ static HANDLE freerdp_peer_virtual_channel_open(freerdp_peer* client, const char
 	if (length > 8)
 		return NULL; /* SVC maximum name length is 8 */
 
-	for (index = 0; index < mcs->channelCount; index++)
+	for (; index < mcs->channelCount; index++)
 	{
 		mcsChannel = &(mcs->channels[index]);
 

@@ -356,8 +356,6 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	rdpPrinter** printers = NULL;
 	int num_printers = 0;
 	cups_dest_t* dests = NULL;
-	cups_dest_t* dest = NULL;
-	int i = 0;
 	BOOL haveDefault = FALSE;
 	const int num_dests = cupsGetDests(&dests);
 
@@ -367,8 +365,9 @@ static rdpPrinter** printer_cups_enum_printers(rdpPrinterDriver* driver)
 	if (!printers)
 		return NULL;
 
-	for (i = 0, dest = dests; i < num_dests; i++, dest++)
+	for (size_t i = 0; i < num_dests; i++)
 	{
+		const cups_dest_t* dest = &dests[i];
 		if (dest->instance == NULL)
 		{
 			rdpPrinter* current = printer_cups_new_printer((rdpCupsPrinterDriver*)driver,

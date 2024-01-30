@@ -121,7 +121,6 @@ static ssize_t recvmsg_cloexec_fallback(int sockfd, struct msghdr* msg, int flag
 	ssize_t len = 0;
 	struct cmsghdr* cmsg = NULL;
 	unsigned char* data = NULL;
-	int* fd = NULL;
 	int* end = NULL;
 	len = recvmsg(sockfd, msg, flags);
 
@@ -141,7 +140,7 @@ static ssize_t recvmsg_cloexec_fallback(int sockfd, struct msghdr* msg, int flag
 		data = CMSG_DATA(cmsg);
 		end = (int*)(data + cmsg->cmsg_len - CMSG_LEN(0));
 
-		for (fd = (int*)data; fd < end; ++fd)
+		for (int* fd = (int*)data; fd < end; ++fd)
 			*fd = set_cloexec_or_close(*fd);
 	}
 

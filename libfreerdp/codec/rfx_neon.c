@@ -239,7 +239,6 @@ static INLINE void rfx_idwt_extrapolate_horiz_neon(INT16* restrict pLowBand, siz
 	WINPR_ASSERT(pHighBand);
 	WINPR_ASSERT(pDstBand);
 
-	size_t n;
 	INT16* l_ptr = pLowBand;
 	const INT16* h_ptr = pHighBand;
 	INT16* dst_ptr = pDstBand;
@@ -248,7 +247,8 @@ static INLINE void rfx_idwt_extrapolate_horiz_neon(INT16* restrict pLowBand, siz
 	for (size_t y = 0; y < nDstCount; y++)
 	{
 		/* Even coefficients */
-		for (n = 0; n < batchSize; n += 8)
+		size_t n = 0;
+		for (; n < batchSize; n += 8)
 		{
 			// dst[2n] = l[n] - ((h[n-1] + h[n] + 1) >> 1);
 			int16x8_t l_n = vld1q_s16(l_ptr);
@@ -278,7 +278,8 @@ static INLINE void rfx_idwt_extrapolate_horiz_neon(INT16* restrict pLowBand, siz
 		h_ptr -= batchSize;
 
 		/* Odd coefficients */
-		for (n = 0; n < batchSize; n += 8)
+		n = 0;
+		for (; n < batchSize; n += 8)
 		{
 			// dst[2n + 1] = (h[n] << 1) + ((dst[2n] + dst[2n + 2]) >> 1);
 			int16x8_t h_n = vld1q_s16(h_ptr);

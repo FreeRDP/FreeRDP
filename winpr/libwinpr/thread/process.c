@@ -224,8 +224,6 @@ static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplic
 #ifndef __sun
 		int maxfd = 0;
 #endif
-		int fd = 0;
-		int sig = 0;
 		sigset_t set = { 0 };
 		struct sigaction act = { 0 };
 		/* set default signal handlers */
@@ -233,7 +231,7 @@ static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplic
 		act.sa_flags = 0;
 		sigemptyset(&act.sa_mask);
 
-		for (sig = 1; sig < NSIG; sig++)
+		for (int sig = 1; sig < NSIG; sig++)
 			sigaction(sig, &act, NULL);
 
 		/* unblock all signals */
@@ -268,7 +266,7 @@ static BOOL _CreateProcessExA(HANDLE hToken, DWORD dwLogonFlags, LPCSTR lpApplic
 		maxfd = sysconf(_SC_OPEN_MAX);
 #endif
 
-		for (fd = 3; fd < maxfd; fd++)
+		for (int fd = 3; fd < maxfd; fd++)
 			close(fd);
 
 #endif // __sun

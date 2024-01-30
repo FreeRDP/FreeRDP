@@ -151,7 +151,6 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 {
 	UINT32 x = 0;
 	UINT32 y = 0;
-	UINT32 i = 0;
 	UINT32 pixelCount = 0;
 	UINT32 bitmapDataOffset = 0;
 	size_t pixelIndex = 0;
@@ -180,7 +179,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, paletteCount, 3ull))
 		return FALSE;
 
-	for (i = 0; i < paletteCount; i++)
+	for (UINT32 i = 0; i < paletteCount; i++)
 	{
 		BYTE r = 0;
 		BYTE g = 0;
@@ -262,7 +261,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 			return FALSE;
 		}
 
-		for (i = 0; i < runLengthFactor; i++)
+		for (UINT32 i = 0; i < runLengthFactor; i++)
 		{
 			BYTE* pTmpData = &pDstData[(nXDstRel + x) * FreeRDPGetBytesPerPixel(DstFormat) +
 			                           (nYDstRel + y) * nDstStep];
@@ -287,7 +286,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 			return FALSE;
 		}
 
-		for (i = 0; i <= suiteDepth; i++)
+		for (UINT32 i = 0; i <= suiteDepth; i++)
 		{
 			BYTE* pTmpData = &pDstData[(nXDstRel + x) * FreeRDPGetBytesPerPixel(DstFormat) +
 			                           (nYDstRel + y) * nDstStep];
@@ -356,7 +355,6 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
                                            UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth,
                                            UINT32 nDstHeight, const gdiPalette* palette)
 {
-	UINT32 i = 0;
 	UINT32 nSrcStep = 0;
 	UINT32 suboffset = 0;
 	BYTE* dstBuffer = NULL;
@@ -420,7 +418,7 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 			return FALSE;
 		}
 
-		for (i = 0; i < runLengthFactor; i++)
+		for (UINT32 i = 0; i < runLengthFactor; i++)
 		{
 			FreeRDPWriteColor(dstBuffer, clear->format, color);
 			dstBuffer += FreeRDPGetBytesPerPixel(clear->format);
@@ -756,7 +754,6 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 			if (vBarUpdate)
 			{
-				UINT32 x = 0;
 				BYTE* pSrcPixel = NULL;
 				BYTE* dstBuffer = NULL;
 
@@ -805,7 +802,7 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 					    &vBarShortEntry
 					         ->pixels[(y - vBarYOn) * FreeRDPGetBytesPerPixel(clear->format)];
 
-				for (x = 0; x < count; x++)
+				for (UINT32 x = 0; x < count; x++)
 				{
 					UINT32 color = 0;
 					color = FreeRDPReadColor(&pSrcPixel[x * FreeRDPGetBytesPerPixel(clear->format)],

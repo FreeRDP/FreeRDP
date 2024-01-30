@@ -132,7 +132,6 @@ static void reg_load_finish(Reg* reg)
 
 static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 {
-	size_t index = 0;
 	const char* p[5] = { 0 };
 	size_t length = 0;
 	char* name = NULL;
@@ -179,7 +178,7 @@ static RegVal* reg_load_value(const Reg* reg, RegKey* key)
 	value->name = name;
 	value->type = REG_NONE;
 
-	for (index = 0; index < ARRAYSIZE(REG_DATA_TYPE_TABLE); index++)
+	for (size_t index = 0; index < ARRAYSIZE(REG_DATA_TYPE_TABLE); index++)
 	{
 		const struct reg_data_type* current = &REG_DATA_TYPE_TABLE[index];
 		WINPR_ASSERT(current->tag);

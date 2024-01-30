@@ -1048,9 +1048,7 @@ static PcscKnownAtr knownAtrs[] = {
 
 static const char* findCardByAtr(LPCBYTE pbAtr)
 {
-	size_t i = 0;
-
-	for (i = 0; i < ARRAY_LENGTH(knownAtrs); i++)
+	for (size_t i = 0; i < ARRAY_LENGTH(knownAtrs); i++)
 	{
 		if (memcmp(knownAtrs[i].atr, pbAtr, knownAtrs[i].atrLen) == 0)
 			return knownAtrs[i].cardName;
@@ -1524,8 +1522,6 @@ static LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext, DWO
                                                       LPSCARD_READERSTATEA rgReaderStates,
                                                       DWORD cReaders)
 {
-	PCSC_DWORD i = 0;
-	PCSC_DWORD j = 0;
 	INT64* map = NULL;
 	PCSC_DWORD cMappedReaders = 0;
 	PCSC_SCARD_READERSTATE* states = NULL;
@@ -1567,7 +1563,8 @@ static LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext, DWO
 		return SCARD_E_NO_MEMORY;
 	}
 
-	for (i = j = 0; i < pcsc_cReaders; i++)
+	PCSC_DWORD j = 0;
+	for (PCSC_DWORD i = 0; i < pcsc_cReaders; i++)
 	{
 		if (!g_PnP_Notification)
 		{
@@ -1602,12 +1599,12 @@ static LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext, DWO
 		status = SCARD_S_SUCCESS;
 	}
 
-	for (i = 0; i < pcsc_cReaders; i++)
+	for (PCSC_DWORD i = 0; i < pcsc_cReaders; i++)
 	{
 		if (map[i] < 0)
 			continue; /* unmapped */
 
-		j = (PCSC_DWORD)map[i];
+		PCSC_DWORD j = (PCSC_DWORD)map[i];
 		rgReaderStates[i].dwCurrentState = (DWORD)states[j].dwCurrentState;
 		rgReaderStates[i].cbAtr = (DWORD)states[j].cbAtr;
 		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[j].rgbAtr), PCSC_MAX_ATR_SIZE);
@@ -1638,7 +1635,6 @@ static LONG WINAPI PCSC_SCardGetStatusChangeA(SCARDCONTEXT hContext, DWORD dwTim
 static LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext, DWORD dwTimeout,
                                               LPSCARD_READERSTATEW rgReaderStates, DWORD cReaders)
 {
-	DWORD index = 0;
 	LPSCARD_READERSTATEA states = NULL;
 	LONG status = SCARD_S_SUCCESS;
 
@@ -1656,7 +1652,7 @@ static LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext, DWORD dwTim
 		return SCARD_E_NO_MEMORY;
 	}
 
-	for (index = 0; index < cReaders; index++)
+	for (DWORD index = 0; index < cReaders; index++)
 	{
 		const LPSCARD_READERSTATEW curReader = &rgReaderStates[index];
 		LPSCARD_READERSTATEA cur = &states[index];
@@ -1671,7 +1667,7 @@ static LONG WINAPI PCSC_SCardGetStatusChangeW(SCARDCONTEXT hContext, DWORD dwTim
 
 	status = PCSC_SCardGetStatusChange_Internal(hContext, dwTimeout, states, cReaders);
 
-	for (index = 0; index < cReaders; index++)
+	for (DWORD index = 0; index < cReaders; index++)
 	{
 		free((void*)states[index].szReader);
 		rgReaderStates[index].pvUserData = states[index].pvUserData;
@@ -2315,7 +2311,6 @@ static LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, LPC
 
 	if (getFeatureRequest)
 	{
-		UINT32 index = 0;
 		UINT32 count = 0;
 		PCSC_TLV_STRUCTURE* tlv = (PCSC_TLV_STRUCTURE*)lpOutBuffer;
 
@@ -2324,7 +2319,7 @@ static LONG WINAPI PCSC_SCardControl(SCARDHANDLE hCard, DWORD dwControlCode, LPC
 
 		count = *lpBytesReturned / sizeof(PCSC_TLV_STRUCTURE);
 
-		for (index = 0; index < count; index++)
+		for (DWORD index = 0; index < count; index++)
 		{
 			if (tlv[index].length != 4)
 				return SCARD_E_UNEXPECTED;

@@ -399,13 +399,12 @@ static UINT urbdrc_process_query_device_text(IUDEVICE* pdev, GENERIC_CHANNEL_CAL
 static void func_select_all_interface_for_msconfig(IUDEVICE* pdev,
                                                    MSUSB_CONFIG_DESCRIPTOR* MsConfig)
 {
-	UINT32 inum = 0;
 	MSUSB_INTERFACE_DESCRIPTOR** MsInterfaces = MsConfig->MsInterfaces;
 	BYTE InterfaceNumber = 0;
 	BYTE AlternateSetting = 0;
 	UINT32 NumInterfaces = MsConfig->NumInterfaces;
 
-	for (inum = 0; inum < NumInterfaces; inum++)
+	for (UINT32 inum = 0; inum < NumInterfaces; inum++)
 	{
 		InterfaceNumber = MsInterfaces[inum]->InterfaceNumber;
 		AlternateSetting = MsInterfaces[inum]->AlternateSetting;

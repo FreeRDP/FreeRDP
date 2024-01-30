@@ -820,7 +820,6 @@ FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS 
 	char* driver = NULL;
 	RDPDR_SERIAL* device = NULL;
 #if defined __linux__ && !defined ANDROID
-	size_t i = 0;
 	size_t len = 0;
 	SERIAL_DEVICE* serial = NULL;
 #endif /* __linux__ */
@@ -883,7 +882,7 @@ FREERDP_ENTRY_POINT(UINT serial_DeviceServiceEntry(PDEVICE_SERVICE_ENTRY_POINTS 
 			goto error_out;
 		}
 
-		for (i = 0; i <= len; i++)
+		for (size_t i = 0; i <= len; i++)
 			Stream_Write_UINT8(serial->device.data, name[i] < 0 ? '_' : name[i]);
 
 		if (driver != NULL)

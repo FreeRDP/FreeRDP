@@ -192,14 +192,13 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 {
 	char** accepted_channels = NULL;
 	size_t accepted_channels_count = 0;
-	size_t i = 0;
 	pServerContext* ps = (pServerContext*)peer->context;
 
 	accepted_channels = WTSGetAcceptedChannelNames(peer, &accepted_channels_count);
 	if (!accepted_channels)
 		return TRUE;
 
-	for (i = 0; i < accepted_channels_count; i++)
+	for (size_t i = 0; i < accepted_channels_count; i++)
 	{
 		pServerStaticChannelContext* channelContext = NULL;
 		const char* cname = accepted_channels[i];
@@ -885,9 +884,7 @@ fail:
 
 static BOOL are_all_required_modules_loaded(proxyModule* module, const proxyConfig* config)
 {
-	size_t i = 0;
-
-	for (i = 0; i < pf_config_required_plugins_count(config); i++)
+	for (size_t i = 0; i < pf_config_required_plugins_count(config); i++)
 	{
 		const char* plugin_name = pf_config_required_plugin(config, i);
 

@@ -77,14 +77,13 @@ static void WLog_Uninit_(void) __attribute__((destructor));
 
 static void WLog_Uninit_(void)
 {
-	DWORD index = 0;
 	wLog* child = NULL;
 	wLog* root = g_RootLog;
 
 	if (!root)
 		return;
 
-	for (index = 0; index < root->ChildrenCount; index++)
+	for (DWORD index = 0; index < root->ChildrenCount; index++)
 	{
 		child = root->Children[index];
 		WLog_Free(child);
@@ -180,7 +179,6 @@ static BOOL log_recursion(LPCSTR file, LPCSTR fkt, size_t line)
 	BOOL status = FALSE;
 	char** msg = NULL;
 	size_t used = 0;
-	size_t i = 0;
 	void* bt = winpr_backtrace(20);
 #if defined(ANDROID)
 	LPCSTR tag = WINPR_TAG("utils.wlog");
@@ -202,7 +200,7 @@ static BOOL log_recursion(LPCSTR file, LPCSTR fkt, size_t line)
 	if (__android_log_print(ANDROID_LOG_FATAL, tag, "Check %s [%s:%zu]", fkt, file, line) < 0)
 		goto out;
 
-	for (i = 0; i < used; i++)
+	for (size_t i = 0; i < used; i++)
 		if (__android_log_print(ANDROID_LOG_FATAL, tag, "%zu: %s", i, msg[i]) < 0)
 			goto out;
 
@@ -214,7 +212,7 @@ static BOOL log_recursion(LPCSTR file, LPCSTR fkt, size_t line)
 	if (fprintf(stderr, "[%s]: Check %s:%" PRIuz "\n", fkt, file, line) < 0)
 		goto out;
 
-	for (i = 0; i < used; i++)
+	for (size_t i = 0; i < used; i++)
 		if (fprintf(stderr, "%s: %" PRIuz ": %s\n", fkt, i, msg[i]) < 0)
 			goto out;
 
@@ -472,14 +470,12 @@ BOOL WLog_SetStringLogLevel(wLog* log, LPCSTR level)
 
 static BOOL WLog_reset_log_filters(wLog* log)
 {
-	DWORD x = 0;
-
 	if (!log)
 		return FALSE;
 
 	log->FilterLevel = WLOG_FILTER_NOT_INITIALIZED;
 
-	for (x = 0; x < log->ChildrenCount; x++)
+	for (DWORD x = 0; x < log->ChildrenCount; x++)
 	{
 		wLog* child = log->Children[x];
 
@@ -567,10 +563,9 @@ static BOOL WLog_UpdateInheritLevel(wLog* log, DWORD logLevel)
 
 	if (log->inherit)
 	{
-		DWORD x = 0;
 		log->Level = logLevel;
 
-		for (x = 0; x < log->ChildrenCount; x++)
+		for (DWORD x = 0; x < log->ChildrenCount; x++)
 		{
 			wLog* child = log->Children[x];
 
@@ -584,8 +579,6 @@ static BOOL WLog_UpdateInheritLevel(wLog* log, DWORD logLevel)
 
 BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel)
 {
-	DWORD x = 0;
-
 	if (!log)
 		return FALSE;
 
@@ -595,7 +588,7 @@ BOOL WLog_SetLogLevel(wLog* log, DWORD logLevel)
 	log->Level = logLevel;
 	log->inherit = (logLevel == WLOG_LEVEL_INHERIT) ? TRUE : FALSE;
 
-	for (x = 0; x < log->ChildrenCount; x++)
+	for (DWORD x = 0; x < log->ChildrenCount; x++)
 	{
 		wLog* child = log->Children[x];
 
@@ -742,18 +735,16 @@ BOOL WLog_ParseFilters(wLog* root)
 
 LONG WLog_GetFilterLogLevel(wLog* log)
 {
-	DWORD i = 0;
-	DWORD j = 0;
 	BOOL match = FALSE;
 
 	if (log->FilterLevel >= 0)
 		return log->FilterLevel;
 
 	log->FilterLevel = WLOG_FILTER_NOT_FILTERED;
-	for (i = 0; i < g_FilterCount; i++)
+	for (DWORD i = 0; i < g_FilterCount; i++)
 	{
 		const wLogFilter* filter = &g_Filters[i];
-		for (j = 0; j < filter->NameCount; j++)
+		for (DWORD j = 0; j < filter->NameCount; j++)
 		{
 			if (j >= log->NameCount)
 				break;
@@ -988,7 +979,6 @@ exit:
 
 static wLog* WLog_FindChild(wLog* root, LPCSTR name)
 {
-	DWORD index = 0;
 	wLog* child = NULL;
 	BOOL found = FALSE;
 
@@ -997,7 +987,7 @@ static wLog* WLog_FindChild(wLog* root, LPCSTR name)
 
 	WLog_Lock(root);
 
-	for (index = 0; index < root->ChildrenCount; index++)
+	for (DWORD index = 0; index < root->ChildrenCount; index++)
 	{
 		child = root->Children[index];
 
@@ -1049,7 +1039,6 @@ BOOL WLog_Init(void)
 
 BOOL WLog_Uninit(void)
 {
-	DWORD index = 0;
 	wLog* root = g_RootLog;
 
 	if (!root)
@@ -1057,7 +1046,7 @@ BOOL WLog_Uninit(void)
 
 	WLog_Lock(root);
 
-	for (index = 0; index < root->ChildrenCount; index++)
+	for (DWORD index = 0; index < root->ChildrenCount; index++)
 	{
 		wLog* child = root->Children[index];
 		WLog_Free(child);

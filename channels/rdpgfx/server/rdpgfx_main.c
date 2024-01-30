@@ -265,7 +265,7 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
-	UINT32 index = 0;
+
 	wStream* s = NULL;
 
 	/* Check monitorCount. This ensures total size within 340 bytes) */
@@ -290,7 +290,7 @@ static UINT rdpgfx_send_reset_graphics_pdu(RdpgfxServerContext* context,
 	Stream_Write_UINT32(s, pdu->height);       /* height (4 bytes) */
 	Stream_Write_UINT32(s, pdu->monitorCount); /* monitorCount (4 bytes) */
 
-	for (index = 0; index < pdu->monitorCount; index++)
+	for (UINT32 index = 0; index < pdu->monitorCount; index++)
 	{
 		const MONITOR_DEF* monitor = &(pdu->monitorDefArray[index]);
 		Stream_Write_UINT32(s, monitor->left);   /* left (4 bytes) */
@@ -576,7 +576,6 @@ static INLINE UINT16 rdpgfx_surface_command_cmdid(const RDPGFX_SURFACE_COMMAND* 
  */
 static UINT rdpgfx_write_h264_metablock(wLog* log, wStream* s, const RDPGFX_H264_METABLOCK* meta)
 {
-	UINT32 index = 0;
 	RECTANGLE_16* regionRect = NULL;
 	RDPGFX_H264_QUANT_QUALITY* quantQualityVal = NULL;
 	UINT error = CHANNEL_RC_OK;
@@ -586,7 +585,7 @@ static UINT rdpgfx_write_h264_metablock(wLog* log, wStream* s, const RDPGFX_H264
 
 	Stream_Write_UINT32(s, meta->numRegionRects); /* numRegionRects (4 bytes) */
 
-	for (index = 0; index < meta->numRegionRects; index++)
+	for (UINT32 index = 0; index < meta->numRegionRects; index++)
 	{
 		regionRect = &(meta->regionRects[index]);
 
@@ -598,7 +597,7 @@ static UINT rdpgfx_write_h264_metablock(wLog* log, wStream* s, const RDPGFX_H264
 		}
 	}
 
-	for (index = 0; index < meta->numRegionRects; index++)
+	for (UINT32 index = 0; index < meta->numRegionRects; index++)
 	{
 		quantQualityVal = &(meta->quantQualityVals[index]);
 		Stream_Write_UINT8(s, quantQualityVal->qp | (quantQualityVal->r << 6) |
@@ -932,7 +931,6 @@ static UINT rdpgfx_send_solid_fill_pdu(RdpgfxServerContext* context,
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 	UINT error = CHANNEL_RC_OK;
-	UINT16 index = 0;
 	RECTANGLE_16* fillRect = NULL;
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_SOLIDFILL,
 	                                             8 + 8 * pdu->fillRectCount);
@@ -955,7 +953,7 @@ static UINT rdpgfx_send_solid_fill_pdu(RdpgfxServerContext* context,
 
 	Stream_Write_UINT16(s, pdu->fillRectCount); /* fillRectCount (2 bytes) */
 
-	for (index = 0; index < pdu->fillRectCount; index++)
+	for (UINT16 index = 0; index < pdu->fillRectCount; index++)
 	{
 		fillRect = &(pdu->fillRects[index]);
 
@@ -984,7 +982,6 @@ static UINT rdpgfx_send_surface_to_surface_pdu(RdpgfxServerContext* context,
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 	UINT error = CHANNEL_RC_OK;
-	UINT16 index = 0;
 	RDPGFX_POINT16* destPt = NULL;
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_SURFACETOSURFACE,
 	                                             14 + 4 * pdu->destPtsCount);
@@ -1008,7 +1005,7 @@ static UINT rdpgfx_send_surface_to_surface_pdu(RdpgfxServerContext* context,
 
 	Stream_Write_UINT16(s, pdu->destPtsCount); /* destPtsCount (2 bytes) */
 
-	for (index = 0; index < pdu->destPtsCount; index++)
+	for (UINT16 index = 0; index < pdu->destPtsCount; index++)
 	{
 		destPt = &(pdu->destPts[index]);
 
@@ -1075,7 +1072,6 @@ static UINT rdpgfx_send_cache_to_surface_pdu(RdpgfxServerContext* context,
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
 	UINT error = CHANNEL_RC_OK;
-	UINT16 index = 0;
 	RDPGFX_POINT16* destPt = NULL;
 	wStream* s = rdpgfx_server_single_packet_new(context->priv->log, RDPGFX_CMDID_CACHETOSURFACE,
 	                                             6 + 4 * pdu->destPtsCount);
@@ -1090,7 +1086,7 @@ static UINT rdpgfx_send_cache_to_surface_pdu(RdpgfxServerContext* context,
 	Stream_Write_UINT16(s, pdu->surfaceId);    /* surfaceId (2 bytes) */
 	Stream_Write_UINT16(s, pdu->destPtsCount); /* destPtsCount (2 bytes) */
 
-	for (index = 0; index < pdu->destPtsCount; index++)
+	for (UINT16 index = 0; index < pdu->destPtsCount; index++)
 	{
 		destPt = &(pdu->destPts[index]);
 
@@ -1224,7 +1220,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 {
 	if (!checkCapsAreExchanged(context))
 		return CHANNEL_RC_NOT_INITIALIZED;
-	UINT16 index = 0;
+
 	RDPGFX_CACHE_IMPORT_OFFER_PDU pdu = { 0 };
 	RDPGFX_CACHE_ENTRY_METADATA* cacheEntry = NULL;
 	UINT error = CHANNEL_RC_OK;
@@ -1246,7 +1242,7 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, pdu.cacheEntriesCount, 12ull))
 		return ERROR_INVALID_DATA;
 
-	for (index = 0; index < pdu.cacheEntriesCount; index++)
+	for (UINT16 index = 0; index < pdu.cacheEntriesCount; index++)
 	{
 		cacheEntry = &(pdu.cacheEntries[index]);
 		Stream_Read_UINT64(s, cacheEntry->cacheKey);     /* cacheKey (8 bytes) */
@@ -1272,7 +1268,6 @@ static UINT rdpgfx_recv_cache_import_offer_pdu(RdpgfxServerContext* context, wSt
  */
 static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream* s)
 {
-	UINT16 index = 0;
 	RDPGFX_CAPSET* capsSets = NULL;
 	RDPGFX_CAPS_ADVERTISE_PDU pdu = { 0 };
 	UINT error = ERROR_INVALID_DATA;
@@ -1293,7 +1288,7 @@ static UINT rdpgfx_recv_caps_advertise_pdu(RdpgfxServerContext* context, wStream
 
 	pdu.capsSets = capsSets;
 
-	for (index = 0; index < pdu.capsSetCount; index++)
+	for (UINT16 index = 0; index < pdu.capsSetCount; index++)
 	{
 		RDPGFX_CAPSET* capsSet = &(pdu.capsSets[index]);
 

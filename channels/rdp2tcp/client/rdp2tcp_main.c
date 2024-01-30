@@ -113,9 +113,8 @@ static void dumpData(char* data, unsigned length)
 {
 	unsigned const limit = 98;
 	unsigned l = length > limit ? limit / 2 : length;
-	unsigned i = 0;
 
-	for (i = 0; i < l; ++i)
+	for (unsigned i = 0; i < l; ++i)
 	{
 		printf("%02hhx", data[i]);
 	}
@@ -124,7 +123,7 @@ static void dumpData(char* data, unsigned length)
 	{
 		printf("...");
 
-		for (i = length - l; i < length; ++i)
+		for (unsigned i = length - l; i < length; ++i)
 			printf("%02hhx", data[i]);
 	}
 

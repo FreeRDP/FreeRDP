@@ -8,11 +8,10 @@ static LONG count = 0;
 
 static void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* context, PTP_WORK work)
 {
-	int index = 0;
 	printf("Hello %s: %03" PRId32 " (thread: 0x%08" PRIX32 ")\n", (char*)context,
 	       InterlockedIncrement(&count), GetCurrentThreadId());
 
-	for (index = 0; index < 100; index++)
+	for (int index = 0; index < 100; index++)
 	{
 		BYTE a[1024];
 		BYTE b[1024];
@@ -28,7 +27,6 @@ static void CALLBACK test_WorkCallback(PTP_CALLBACK_INSTANCE instance, void* con
 
 static BOOL test1(void)
 {
-	int index = 0;
 	PTP_WORK work = NULL;
 	printf("Global Thread Pool\n");
 	work = CreateThreadpoolWork(test_WorkCallback, "world", NULL);
@@ -45,7 +43,7 @@ static BOOL test1(void)
 	 * thread pool may throttle the threads.
 	 */
 
-	for (index = 0; index < 10; index++)
+	for (int index = 0; index < 10; index++)
 		SubmitThreadpoolWork(work);
 
 	WaitForThreadpoolWorkCallbacks(work, FALSE);
@@ -56,7 +54,6 @@ static BOOL test1(void)
 static BOOL test2(void)
 {
 	BOOL rc = FALSE;
-	int index = 0;
 	PTP_POOL pool = NULL;
 	PTP_WORK work = NULL;
 	PTP_CLEANUP_GROUP cleanupGroup = NULL;
@@ -95,7 +92,7 @@ static BOOL test2(void)
 		goto fail;
 	}
 
-	for (index = 0; index < 10; index++)
+	for (int index = 0; index < 10; index++)
 		SubmitThreadpoolWork(work);
 
 	WaitForThreadpoolWorkCallbacks(work, FALSE);

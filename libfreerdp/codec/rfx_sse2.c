@@ -52,9 +52,9 @@
 static __inline void __attribute__((ATTRIBUTES)) _mm_prefetch_buffer(char* buffer, int num_bytes)
 {
 	__m128i* buf = (__m128i*)buffer;
-	unsigned int i = 0;
 
-	for (i = 0; i < (num_bytes / sizeof(__m128i)); i += (CACHE_LINE_BYTES / sizeof(__m128i)))
+	for (unsigned int i = 0; i < (num_bytes / sizeof(__m128i));
+	     i += (CACHE_LINE_BYTES / sizeof(__m128i)))
 	{
 		_mm_prefetch((char*)(&buf[i]), _MM_HINT_NTA);
 	}
@@ -146,8 +146,6 @@ static void rfx_quantization_encode_sse2(INT16* buffer,
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_width)
 {
-	int y = 0;
-	int n = 0;
 	INT16* l_ptr = l;
 	INT16* h_ptr = h;
 	INT16* dst_ptr = dst;
@@ -162,10 +160,10 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_w
 	__m128i dst1;
 	__m128i dst2;
 
-	for (y = 0; y < subband_width; y++)
+	for (int y = 0; y < subband_width; y++)
 	{
 		/* Even coefficients */
-		for (n = 0; n < subband_width; n += 8)
+		for (int n = 0; n < subband_width; n += 8)
 		{
 			/* dst[2n] = l[n] - ((h[n-1] + h[n] + 1) >> 1); */
 			l_n = _mm_load_si128((__m128i*)l_ptr);
@@ -191,7 +189,7 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_w
 		h_ptr -= subband_width;
 
 		/* Odd coefficients */
-		for (n = 0; n < subband_width; n += 8)
+		for (int n = 0; n < subband_width; n += 8)
 		{
 			/* dst[2n + 1] = (h[n] << 1) + ((dst[2n] + dst[2n + 2]) >> 1); */
 			h_n = _mm_load_si128((__m128i*)h_ptr);
@@ -222,8 +220,6 @@ rfx_dwt_2d_decode_block_horiz_sse2(INT16* l, INT16* h, INT16* dst, int subband_w
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_decode_block_vert_sse2(INT16* l, INT16* h, INT16* dst, int subband_width)
 {
-	int x = 0;
-	int n = 0;
 	INT16* l_ptr = l;
 	INT16* h_ptr = h;
 	INT16* dst_ptr = dst;
@@ -237,9 +233,9 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* l, INT16* h, INT16* dst, int subband_wi
 	int total_width = subband_width + subband_width;
 
 	/* Even coefficients */
-	for (n = 0; n < subband_width; n++)
+	for (int n = 0; n < subband_width; n++)
 	{
-		for (x = 0; x < total_width; x += 8)
+		for (int x = 0; x < total_width; x += 8)
 		{
 			/* dst[2n] = l[n] - ((h[n-1] + h[n] + 1) >> 1); */
 			l_n = _mm_load_si128((__m128i*)l_ptr);
@@ -269,9 +265,9 @@ rfx_dwt_2d_decode_block_vert_sse2(INT16* l, INT16* h, INT16* dst, int subband_wi
 	dst_ptr = dst + total_width;
 
 	/* Odd coefficients */
-	for (n = 0; n < subband_width; n++)
+	for (int n = 0; n < subband_width; n++)
 	{
-		for (x = 0; x < total_width; x += 8)
+		for (int x = 0; x < total_width; x += 8)
 		{
 			/* dst[2n + 1] = (h[n] << 1) + ((dst[2n] + dst[2n + 2]) >> 1); */
 			h_n = _mm_load_si128((__m128i*)h_ptr);
@@ -340,8 +336,6 @@ static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_vert_sse2(INT16* src, INT16* l, INT16* h, int subband_width)
 {
 	int total_width = 0;
-	int x = 0;
-	int n = 0;
 	__m128i src_2n;
 	__m128i src_2n_1;
 	__m128i src_2n_2;
@@ -350,9 +344,9 @@ rfx_dwt_2d_encode_block_vert_sse2(INT16* src, INT16* l, INT16* h, int subband_wi
 	__m128i l_n;
 	total_width = subband_width << 1;
 
-	for (n = 0; n < subband_width; n++)
+	for (int n = 0; n < subband_width; n++)
 	{
-		for (x = 0; x < total_width; x += 8)
+		for (int x = 0; x < total_width; x += 8)
 		{
 			src_2n = _mm_load_si128((__m128i*)src);
 			src_2n_1 = _mm_load_si128((__m128i*)(src + total_width));
@@ -391,8 +385,6 @@ rfx_dwt_2d_encode_block_vert_sse2(INT16* src, INT16* l, INT16* h, int subband_wi
 static __inline void __attribute__((ATTRIBUTES))
 rfx_dwt_2d_encode_block_horiz_sse2(INT16* src, INT16* l, INT16* h, int subband_width)
 {
-	int y = 0;
-	int n = 0;
 	int first = 0;
 	__m128i src_2n;
 	__m128i src_2n_1;
@@ -401,9 +393,9 @@ rfx_dwt_2d_encode_block_horiz_sse2(INT16* src, INT16* l, INT16* h, int subband_w
 	__m128i h_n_m;
 	__m128i l_n;
 
-	for (y = 0; y < subband_width; y++)
+	for (int y = 0; y < subband_width; y++)
 	{
-		for (n = 0; n < subband_width; n += 8)
+		for (int n = 0; n < subband_width; n += 8)
 		{
 			/* The following 3 Set operations consumes more than half of the total DWT processing
 			 * time! */

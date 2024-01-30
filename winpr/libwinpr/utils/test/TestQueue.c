@@ -6,7 +6,6 @@
 int TestQueue(int argc, char* argv[])
 {
 	size_t item = 0;
-	size_t index = 0;
 	size_t count = 0;
 	wQueue* queue = NULL;
 
@@ -17,7 +16,7 @@ int TestQueue(int argc, char* argv[])
 	if (!queue)
 		return -1;
 
-	for (index = 1; index <= 10; index++)
+	for (size_t index = 1; index <= 10; index++)
 	{
 		Queue_Enqueue(queue, (void*)(size_t)index);
 	}
@@ -25,7 +24,7 @@ int TestQueue(int argc, char* argv[])
 	count = Queue_Count(queue);
 	printf("queue count: %" PRIuz "\n", count);
 
-	for (index = 1; index <= 10; index++)
+	for (size_t index = 1; index <= 10; index++)
 	{
 		item = (size_t)Queue_Dequeue(queue);
 

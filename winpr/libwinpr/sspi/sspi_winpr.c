@@ -155,10 +155,9 @@ static void sspi_ContextBufferAllocTableFree(void)
 
 static void* sspi_ContextBufferAlloc(UINT32 allocatorIndex, size_t size)
 {
-	UINT32 index = 0;
 	void* contextBuffer = NULL;
 
-	for (index = 0; index < ContextBufferAllocTable.cMaxEntries; index++)
+	for (UINT32 index = 0; index < ContextBufferAllocTable.cMaxEntries; index++)
 	{
 		if (!ContextBufferAllocTable.entries[index].contextBuffer)
 		{
@@ -931,10 +930,9 @@ int sspi_CopyAuthIdentity(SEC_WINNT_AUTH_IDENTITY* identity,
 
 PSecBuffer sspi_FindSecBuffer(PSecBufferDesc pMessage, ULONG BufferType)
 {
-	ULONG index = 0;
 	PSecBuffer pSecBuffer = NULL;
 
-	for (index = 0; index < pMessage->cBuffers; index++)
+	for (UINT32 index = 0; index < pMessage->cBuffers; index++)
 	{
 		if (pMessage->pBuffers[index].BufferType == BufferType)
 		{
@@ -989,11 +987,9 @@ void sspi_GlobalFinish(void)
 
 static const SecurityFunctionTableA* sspi_GetSecurityFunctionTableAByNameA(const SEC_CHAR* Name)
 {
-	int index = 0;
-	UINT32 cPackages = 0;
-	cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
+	size_t cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
 
-	for (index = 0; index < (int)cPackages; index++)
+	for (size_t index = 0; index < cPackages; index++)
 	{
 		if (strcmp(Name, SecurityFunctionTableA_NAME_LIST[index].Name) == 0)
 		{
@@ -1007,11 +1003,9 @@ static const SecurityFunctionTableA* sspi_GetSecurityFunctionTableAByNameA(const
 
 static const SecurityFunctionTableW* sspi_GetSecurityFunctionTableWByNameW(const SEC_WCHAR* Name)
 {
-	int index = 0;
-	UINT32 cPackages = 0;
-	cPackages = sizeof(SecPkgInfoW_LIST) / sizeof(*(SecPkgInfoW_LIST));
+	size_t cPackages = sizeof(SecPkgInfoW_LIST) / sizeof(*(SecPkgInfoW_LIST));
 
-	for (index = 0; index < (int)cPackages; index++)
+	for (size_t index = 0; index < cPackages; index++)
 	{
 		if (_wcscmp(Name, SecurityFunctionTableW_NAME_LIST[index].Name) == 0)
 		{
@@ -1046,10 +1040,9 @@ static void FreeContextBuffer_QuerySecurityPackageInfo(void* contextBuffer);
 
 static void sspi_ContextBufferFree(void* contextBuffer)
 {
-	UINT32 index = 0;
 	UINT32 allocatorIndex = 0;
 
-	for (index = 0; index < ContextBufferAllocTable.cMaxEntries; index++)
+	for (size_t index = 0; index < ContextBufferAllocTable.cMaxEntries; index++)
 	{
 		if (contextBuffer == ContextBufferAllocTable.entries[index].contextBuffer)
 		{
@@ -1082,7 +1075,6 @@ static void sspi_ContextBufferFree(void* contextBuffer)
 static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesW(ULONG* pcPackages,
                                                                   PSecPkgInfoW* ppPackageInfo)
 {
-	int index = 0;
 	size_t size = 0;
 	UINT32 cPackages = 0;
 	SecPkgInfoW* pPackageInfo = NULL;
@@ -1093,7 +1085,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesW(ULONG* pcPacka
 	if (!pPackageInfo)
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	for (index = 0; index < (int)cPackages; index++)
+	for (size_t index = 0; index < cPackages; index++)
 	{
 		pPackageInfo[index].fCapabilities = SecPkgInfoW_LIST[index]->fCapabilities;
 		pPackageInfo[index].wVersion = SecPkgInfoW_LIST[index]->wVersion;
@@ -1111,7 +1103,6 @@ static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesW(ULONG* pcPacka
 static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesA(ULONG* pcPackages,
                                                                   PSecPkgInfoA* ppPackageInfo)
 {
-	int index = 0;
 	size_t size = 0;
 	UINT32 cPackages = 0;
 	SecPkgInfoA* pPackageInfo = NULL;
@@ -1122,7 +1113,7 @@ static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesA(ULONG* pcPacka
 	if (!pPackageInfo)
 		return SEC_E_INSUFFICIENT_MEMORY;
 
-	for (index = 0; index < (int)cPackages; index++)
+	for (size_t index = 0; index < cPackages; index++)
 	{
 		pPackageInfo[index].fCapabilities = SecPkgInfoA_LIST[index]->fCapabilities;
 		pPackageInfo[index].wVersion = SecPkgInfoA_LIST[index]->wVersion;
@@ -1145,7 +1136,6 @@ static SECURITY_STATUS SEC_ENTRY winpr_EnumerateSecurityPackagesA(ULONG* pcPacka
 
 static void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 {
-	int index = 0;
 	UINT32 cPackages = 0;
 	SecPkgInfoA* pPackageInfo = (SecPkgInfoA*)contextBuffer;
 	cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
@@ -1153,7 +1143,7 @@ static void FreeContextBuffer_EnumerateSecurityPackages(void* contextBuffer)
 	if (!pPackageInfo)
 		return;
 
-	for (index = 0; index < (int)cPackages; index++)
+	for (size_t index = 0; index < cPackages; index++)
 	{
 		free(pPackageInfo[index].Name);
 		free(pPackageInfo[index].Comment);
@@ -1175,13 +1165,11 @@ SecurityFunctionTableA* SEC_ENTRY winpr_InitSecurityInterfaceA(void)
 static SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityPackageInfoW(SEC_WCHAR* pszPackageName,
                                                                  PSecPkgInfoW* ppPackageInfo)
 {
-	int index = 0;
 	size_t size = 0;
-	UINT32 cPackages = 0;
 	SecPkgInfoW* pPackageInfo = NULL;
-	cPackages = sizeof(SecPkgInfoW_LIST) / sizeof(*(SecPkgInfoW_LIST));
+	size_t cPackages = sizeof(SecPkgInfoW_LIST) / sizeof(*(SecPkgInfoW_LIST));
 
-	for (index = 0; index < (int)cPackages; index++)
+	for (size_t index = 0; index < cPackages; index++)
 	{
 		if (_wcscmp(pszPackageName, SecPkgInfoW_LIST[index]->Name) == 0)
 		{
@@ -1210,13 +1198,11 @@ static SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityPackageInfoW(SEC_WCHAR* pszP
 static SECURITY_STATUS SEC_ENTRY winpr_QuerySecurityPackageInfoA(SEC_CHAR* pszPackageName,
                                                                  PSecPkgInfoA* ppPackageInfo)
 {
-	int index = 0;
 	size_t size = 0;
-	UINT32 cPackages = 0;
 	SecPkgInfoA* pPackageInfo = NULL;
-	cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
+	size_t cPackages = sizeof(SecPkgInfoA_LIST) / sizeof(*(SecPkgInfoA_LIST));
 
-	for (index = 0; index < (int)cPackages; index++)
+	for (size_t index = 0; index < cPackages; index++)
 	{
 		if (strcmp(pszPackageName, SecPkgInfoA_LIST[index]->Name) == 0)
 		{

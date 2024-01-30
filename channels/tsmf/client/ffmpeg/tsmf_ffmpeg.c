@@ -451,9 +451,8 @@ static BOOL tsmf_ffmpeg_decode_audio(ITSMFDecoder* decoder, const BYTE* data, UI
 	int dst_offset = 0;
 #if 0
 	WLog_DBG(TAG, ("tsmf_ffmpeg_decode_audio: data_size %"PRIu32"", data_size));
-	int i;
 
-	for (i = 0; i < data_size; i++)
+	for (int i = 0; i < data_size; i++)
 	{
 		WLog_DBG(TAG, ("%02"PRIX8"", data[i]));
 

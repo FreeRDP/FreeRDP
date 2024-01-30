@@ -925,8 +925,6 @@ static BOOL fastpath_recv_input_event(rdpFastPath* fastpath, wStream* s)
 
 state_run_t fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s)
 {
-	BYTE i = 0;
-
 	WINPR_ASSERT(fastpath);
 	WINPR_ASSERT(s);
 
@@ -942,7 +940,7 @@ state_run_t fastpath_recv_inputs(rdpFastPath* fastpath, wStream* s)
 		Stream_Read_UINT8(s, fastpath->numberEvents); /* eventHeader (1 byte) */
 	}
 
-	for (i = 0; i < fastpath->numberEvents; i++)
+	for (BYTE i = 0; i < fastpath->numberEvents; i++)
 	{
 		if (!fastpath_recv_input_event(fastpath, s))
 			return STATE_RUN_FAILED;
@@ -1165,7 +1163,6 @@ wStream* fastpath_update_pdu_init_new(rdpFastPath* fastpath)
 BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s,
                               BOOL skipCompression)
 {
-	int fragment = 0;
 	UINT16 maxLength = 0;
 	UINT32 totalLength = 0;
 	BOOL status = TRUE;
@@ -1226,7 +1223,7 @@ BOOL fastpath_send_update_pdu(rdpFastPath* fastpath, BYTE updateCode, wStream* s
 			rdp->sec_flags |= SEC_SECURE_CHECKSUM;
 	}
 
-	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
+	for (int fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
 	{
 		const BYTE* pSrcData = NULL;
 		UINT32 SrcSize = 0;

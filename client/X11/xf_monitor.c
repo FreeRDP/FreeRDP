@@ -58,7 +58,6 @@ int xf_list_monitors(xfContext* xfc)
 	Display* display = NULL;
 	int major = 0;
 	int minor = 0;
-	int i = 0;
 	int nmonitors = 0;
 	display = XOpenDisplay(NULL);
 
@@ -76,7 +75,7 @@ int xf_list_monitors(xfContext* xfc)
 		XRRMonitorInfo* monitors =
 		    XRRGetMonitors(display, DefaultRootWindow(display), 1, &nmonitors);
 
-		for (i = 0; i < nmonitors; i++)
+		for (int i = 0; i < nmonitors; i++)
 		{
 			printf("      %s [%d] %dx%d\t+%d+%d\n", monitors[i].primary ? "*" : " ", i,
 			       monitors[i].width, monitors[i].height, monitors[i].x, monitors[i].y);
@@ -93,7 +92,7 @@ int xf_list_monitors(xfContext* xfc)
 		{
 			XineramaScreenInfo* screen = XineramaQueryScreens(display, &nmonitors);
 
-			for (i = 0; i < nmonitors; i++)
+			for (int i = 0; i < nmonitors; i++)
 			{
 				printf("      %s [%d] %hdx%hd\t+%hd+%hd\n", (i == 0) ? "*" : " ", i,
 				       screen[i].width, screen[i].height, screen[i].x_org, screen[i].y_org);
@@ -116,7 +115,6 @@ int xf_list_monitors(xfContext* xfc)
 
 static BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 {
-	UINT32 index = 0;
 	const rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(xfc);
@@ -128,7 +126,7 @@ static BOOL xf_is_monitor_id_active(xfContext* xfc, UINT32 id)
 	if (NumMonitorIds == 0)
 		return TRUE;
 
-	for (index = 0; index < NumMonitorIds; index++)
+	for (UINT32 index = 0; index < NumMonitorIds; index++)
 	{
 		const UINT32* cur = freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, index);
 		if (cur && (*cur == id))
@@ -196,9 +194,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 		if (vscreen->nmonitors)
 		{
-			int i = 0;
-
-			for (i = 0; i < vscreen->nmonitors; i++)
+			for (int i = 0; i < vscreen->nmonitors; i++)
 			{
 				MONITOR_INFO* cur_vscreen = &vscreen->monitors[i];
 				const XRRMonitorInfo* cur_monitor = &rrmonitors[i];
@@ -224,9 +220,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 
 		if (vscreen->nmonitors)
 		{
-			int i = 0;
-
-			for (i = 0; i < vscreen->nmonitors; i++)
+			for (int i = 0; i < vscreen->nmonitors; i++)
 			{
 				MONITOR_INFO* monitor = &vscreen->monitors[i];
 				monitor->area.left = screenInfo[i].x_org;
@@ -246,9 +240,7 @@ BOOL xf_detect_monitors(xfContext* xfc, UINT32* pMaxWidth, UINT32* pMaxHeight)
 	/* Determine which monitor that the mouse cursor is on */
 	if (vscreen->monitors)
 	{
-		int i = 0;
-
-		for (i = 0; i < vscreen->nmonitors; i++)
+		for (int i = 0; i < vscreen->nmonitors; i++)
 		{
 			const MONITOR_INFO* monitor = &vscreen->monitors[i];
 

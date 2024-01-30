@@ -178,7 +178,6 @@ SSIZE_T BufferPool_GetPoolSize(wBufferPool* pool)
 SSIZE_T BufferPool_GetBufferSize(wBufferPool* pool, const void* buffer)
 {
 	SSIZE_T size = 0;
-	SSIZE_T index = 0;
 	BOOL found = FALSE;
 
 	BufferPool_Lock(pool);
@@ -193,7 +192,7 @@ SSIZE_T BufferPool_GetBufferSize(wBufferPool* pool, const void* buffer)
 	{
 		/* variable size buffers */
 
-		for (index = 0; index < pool->uSize; index++)
+		for (SSIZE_T index = 0; index < pool->uSize; index++)
 		{
 			if (pool->uArray[index].buffer == buffer)
 			{
@@ -215,7 +214,6 @@ SSIZE_T BufferPool_GetBufferSize(wBufferPool* pool, const void* buffer)
 
 void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 {
-	SSIZE_T index = 0;
 	SSIZE_T maxSize = 0;
 	SSIZE_T maxIndex = 0;
 	SSIZE_T foundIndex = -1;
@@ -252,7 +250,7 @@ void* BufferPool_Take(wBufferPool* pool, SSIZE_T size)
 		if (size < 1)
 			size = pool->fixedSize;
 
-		for (index = 0; index < pool->aSize; index++)
+		for (SSIZE_T index = 0; index < pool->aSize; index++)
 		{
 			if (pool->aArray[index].size > maxSize)
 			{
@@ -353,7 +351,6 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 {
 	BOOL rc = FALSE;
 	SSIZE_T size = 0;
-	SSIZE_T index = 0;
 	BOOL found = FALSE;
 
 	BufferPool_Lock(pool);
@@ -379,7 +376,8 @@ BOOL BufferPool_Return(wBufferPool* pool, void* buffer)
 	{
 		/* variable size buffers */
 
-		for (index = 0; index < pool->uSize; index++)
+		SSIZE_T index = 0;
+		for (; index < pool->uSize; index++)
 		{
 			if (pool->uArray[index].buffer == buffer)
 			{

@@ -52,7 +52,6 @@ static const struct Encode64test encodeTests_base64url[] = {
 
 int TestBase64(int argc, char* argv[])
 {
-	int i = 0;
 	int testNb = 0;
 	size_t outLen = 0;
 	BYTE* decoded = NULL;
@@ -61,7 +60,7 @@ int TestBase64(int argc, char* argv[])
 	testNb++;
 	fprintf(stderr, "%d:encode base64...", testNb);
 
-	for (i = 0; encodeTests_base64[i].input; i++)
+	for (int i = 0; encodeTests_base64[i].input; i++)
 	{
 		char* encoded = crypto_base64_encode((const BYTE*)encodeTests_base64[i].input,
 		                                     encodeTests_base64[i].len);
@@ -79,7 +78,7 @@ int TestBase64(int argc, char* argv[])
 	testNb++;
 	fprintf(stderr, "%d:encode base64url...", testNb);
 
-	for (i = 0; encodeTests_base64url[i].input; i++)
+	for (int i = 0; encodeTests_base64url[i].input; i++)
 	{
 		char* encoded = crypto_base64url_encode((const BYTE*)encodeTests_base64url[i].input,
 		                                        encodeTests_base64url[i].len);
@@ -97,7 +96,7 @@ int TestBase64(int argc, char* argv[])
 	testNb++;
 	fprintf(stderr, "%d:decode base64...", testNb);
 
-	for (i = 0; encodeTests_base64[i].input; i++)
+	for (int i = 0; encodeTests_base64[i].input; i++)
 	{
 		crypto_base64_decode(encodeTests_base64[i].output, strlen(encodeTests_base64[i].output),
 		                     &decoded, &outLen);
@@ -116,7 +115,7 @@ int TestBase64(int argc, char* argv[])
 	testNb++;
 	fprintf(stderr, "%d:decode base64url...", testNb);
 
-	for (i = 0; encodeTests_base64url[i].input; i++)
+	for (int i = 0; encodeTests_base64url[i].input; i++)
 	{
 		crypto_base64url_decode(encodeTests_base64url[i].output,
 		                        strlen(encodeTests_base64url[i].output), &decoded, &outLen);

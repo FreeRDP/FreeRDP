@@ -682,7 +682,6 @@ int win_shadow_dxgi_get_next_frame(winShadowSubsystem* subsystem)
 
 int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 {
-	UINT i;
 	HRESULT hr;
 	POINT* pSrcPt;
 	RECT* pDstRect;
@@ -761,7 +760,7 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 
 	numMoveRects = MoveRectsBufferSize / sizeof(DXGI_OUTDUPL_MOVE_RECT);
 
-	for (i = 0; i < numMoveRects; i++)
+	for (UINT i = 0; i < numMoveRects; i++)
 	{
 		pMoveRect = &pMoveRectBuffer[i];
 		pSrcPt = &(pMoveRect->SourcePoint);
@@ -777,7 +776,7 @@ int win_shadow_dxgi_get_invalid_region(winShadowSubsystem* subsystem)
 
 	numDirtyRects = DirtyRectsBufferSize / sizeof(RECT);
 
-	for (i = 0; i < numDirtyRects; i++)
+	for (UINT i = 0; i < numDirtyRects; i++)
 	{
 		pDirtyRect = &pDirtyRectsBuffer[i];
 

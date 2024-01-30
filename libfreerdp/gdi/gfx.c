@@ -85,7 +85,6 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
                               const RDPGFX_RESET_GRAPHICS_PDU* resetGraphics)
 {
 	UINT rc = ERROR_INTERNAL_ERROR;
-	UINT32 index = 0;
 	UINT16 count = 0;
 	UINT32 DesktopWidth = 0;
 	UINT32 DesktopHeight = 0;
@@ -123,7 +122,7 @@ static UINT gdi_ResetGraphics(RdpgfxClientContext* context,
 	WINPR_ASSERT(context->GetSurfaceIds);
 	context->GetSurfaceIds(context, &pSurfaceIds, &count);
 
-	for (index = 0; index < count; index++)
+	for (UINT32 index = 0; index < count; index++)
 	{
 		WINPR_ASSERT(context->GetSurfaceData);
 		gdiGfxSurface* surface =
@@ -168,7 +167,6 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	UINT32 surfaceY = 0;
 	RECTANGLE_16 surfaceRect;
 	const RECTANGLE_16* rects = NULL;
-	UINT32 i = 0;
 	UINT32 nbRects = 0;
 	double sx = NAN;
 	double sy = NAN;
@@ -200,7 +198,7 @@ static UINT gdi_OutputUpdate(rdpGdi* gdi, gdiGfxSurface* surface)
 	if (!update_begin_paint(update))
 		goto fail;
 
-	for (i = 0; i < nbRects; i++)
+	for (UINT32 i = 0; i < nbRects; i++)
 	{
 		const UINT32 nXSrc = rects[i].left;
 		const UINT32 nYSrc = rects[i].top;
@@ -243,7 +241,6 @@ static UINT gdi_WindowUpdate(RdpgfxClientContext* context, gdiGfxSurface* surfac
 static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
 {
 	UINT16 count = 0;
-	UINT16 index = 0;
 	UINT status = ERROR_INTERNAL_ERROR;
 	UINT16* pSurfaceIds = NULL;
 	rdpGdi* gdi = NULL;
@@ -259,7 +256,7 @@ static UINT gdi_UpdateSurfaces(RdpgfxClientContext* context)
 	context->GetSurfaceIds(context, &pSurfaceIds, &count);
 	status = CHANNEL_RC_OK;
 
-	for (index = 0; index < count; index++)
+	for (UINT32 index = 0; index < count; index++)
 	{
 		WINPR_ASSERT(context->GetSurfaceData);
 		gdiGfxSurface* surface =
@@ -405,7 +402,6 @@ static UINT gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* contex
 	REGION16 invalidRegion;
 	const RECTANGLE_16* rects = NULL;
 	UINT32 nrRects = 0;
-	UINT32 x = 0;
 	WINPR_ASSERT(gdi);
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(cmd);
@@ -439,7 +435,7 @@ static UINT gdi_SurfaceCommand_RemoteFX(rdpGdi* gdi, RdpgfxClientContext* contex
 	if (status != CHANNEL_RC_OK)
 		goto fail;
 
-	for (x = 0; x < nrRects; x++)
+	for (UINT32 x = 0; x < nrRects; x++)
 		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &rects[x]);
 
 	if (!gdi->inGfxFrame)
@@ -579,7 +575,6 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
 #ifdef WITH_GFX_H264
 	INT32 rc = 0;
 	UINT status = CHANNEL_RC_OK;
-	UINT32 i = 0;
 	gdiGfxSurface* surface = NULL;
 	RDPGFX_H264_METABLOCK* meta = NULL;
 	RDPGFX_AVC420_BITMAP_STREAM* bs = NULL;
@@ -630,7 +625,7 @@ static UINT gdi_SurfaceCommand_AVC420(rdpGdi* gdi, RdpgfxClientContext* context,
 		return CHANNEL_RC_OK;
 	}
 
-	for (i = 0; i < meta->numRegionRects; i++)
+	for (UINT32 i = 0; i < meta->numRegionRects; i++)
 	{
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
 		                    (RECTANGLE_16*)&(meta->regionRects[i]));
@@ -666,7 +661,6 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 #ifdef WITH_GFX_H264
 	INT32 rc = 0;
 	UINT status = CHANNEL_RC_OK;
-	UINT32 i = 0;
 	gdiGfxSurface* surface = NULL;
 	RDPGFX_AVC444_BITMAP_STREAM* bs = NULL;
 	RDPGFX_AVC420_BITMAP_STREAM* avc1 = NULL;
@@ -724,7 +718,7 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 		return CHANNEL_RC_OK;
 	}
 
-	for (i = 0; i < meta1->numRegionRects; i++)
+	for (UINT32 i = 0; i < meta1->numRegionRects; i++)
 	{
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
 		                    &(meta1->regionRects[i]));
@@ -736,7 +730,7 @@ static UINT gdi_SurfaceCommand_AVC444(rdpGdi* gdi, RdpgfxClientContext* context,
 	if (status != CHANNEL_RC_OK)
 		goto fail;
 
-	for (i = 0; i < meta2->numRegionRects; i++)
+	for (UINT32 i = 0; i < meta2->numRegionRects; i++)
 	{
 		region16_union_rect(&(surface->invalidRegion), &(surface->invalidRegion),
 		                    &(meta2->regionRects[i]));
@@ -948,7 +942,6 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* con
 	REGION16 invalidRegion;
 	const RECTANGLE_16* rects = NULL;
 	UINT32 nrRects = 0;
-	UINT32 x = 0;
 	/**
 	 * Note: Since this comes via a Wire-To-Surface-2 PDU the
 	 * cmd's top/left/right/bottom/width/height members are always zero!
@@ -1001,7 +994,7 @@ static UINT gdi_SurfaceCommand_Progressive(rdpGdi* gdi, RdpgfxClientContext* con
 	if (status != CHANNEL_RC_OK)
 		goto fail;
 
-	for (x = 0; x < nrRects; x++)
+	for (UINT32 x = 0; x < nrRects; x++)
 		region16_union_rect(&surface->invalidRegion, &surface->invalidRegion, &rects[x]);
 
 	region16_uninit(&invalidRegion);
@@ -1325,7 +1318,6 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
                                  const RDPGFX_SURFACE_TO_SURFACE_PDU* surfaceToSurface)
 {
 	UINT status = ERROR_INTERNAL_ERROR;
-	UINT16 index = 0;
 	BOOL sameSurface = 0;
 	UINT32 nWidth = 0;
 	UINT32 nHeight = 0;
@@ -1357,7 +1349,7 @@ static UINT gdi_SurfaceToSurface(RdpgfxClientContext* context,
 	nWidth = rectSrc->right - rectSrc->left;
 	nHeight = rectSrc->bottom - rectSrc->top;
 
-	for (index = 0; index < surfaceToSurface->destPtsCount; index++)
+	for (UINT16 index = 0; index < surfaceToSurface->destPtsCount; index++)
 	{
 		const RDPGFX_POINT16* destPt = &surfaceToSurface->destPts[index];
 		const RECTANGLE_16 rect = { destPt->x, destPt->y,
@@ -1489,7 +1481,6 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
                                const RDPGFX_CACHE_TO_SURFACE_PDU* cacheToSurface)
 {
 	UINT status = ERROR_INTERNAL_ERROR;
-	UINT16 index = 0;
 	gdiGfxSurface* surface = NULL;
 	gdiGfxCacheEntry* cacheEntry = NULL;
 	RECTANGLE_16 invalidRect;
@@ -1506,7 +1497,7 @@ static UINT gdi_CacheToSurface(RdpgfxClientContext* context,
 	if (!surface || !cacheEntry)
 		goto fail;
 
-	for (index = 0; index < cacheToSurface->destPtsCount; index++)
+	for (UINT16 index = 0; index < cacheToSurface->destPtsCount; index++)
 	{
 		const RDPGFX_POINT16* destPt = &cacheToSurface->destPts[index];
 		const RECTANGLE_16 rect = { destPt->x, destPt->y,
@@ -1556,7 +1547,6 @@ fail:
 static UINT gdi_CacheImportReply(RdpgfxClientContext* context,
                                  const RDPGFX_CACHE_IMPORT_REPLY_PDU* cacheImportReply)
 {
-	UINT16 index = 0;
 	UINT16 count = 0;
 	const UINT16* slots = NULL;
 	UINT error = CHANNEL_RC_OK;
@@ -1564,7 +1554,7 @@ static UINT gdi_CacheImportReply(RdpgfxClientContext* context,
 	slots = cacheImportReply->cacheSlots;
 	count = cacheImportReply->importedEntriesCount;
 
-	for (index = 0; index < count; index++)
+	for (UINT16 index = 0; index < count; index++)
 	{
 		UINT16 cacheSlot = slots[index];
 

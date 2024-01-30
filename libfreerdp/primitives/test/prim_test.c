@@ -98,12 +98,10 @@ void prim_test_setup(BOOL performance)
 BOOL speed_test(const char* name, const char* dsc, UINT32 iterations, pstatus_t (*fkt_generic)(),
                 pstatus_t (*optimised)(), ...)
 {
-	UINT32 i = 0;
-
 	if (!name || !generic || !optimised || (iterations == 0))
 		return FALSE;
 
-	for (i = 0; i < iterations; i++)
+	for (UINT32 i = 0; i < iterations; i++)
 	{
 	}
 

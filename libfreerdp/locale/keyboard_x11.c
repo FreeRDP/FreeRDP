@@ -31,8 +31,6 @@
 static BOOL parse_xkb_rule_names(char* xkb_rule, unsigned long num_bytes, char** layout,
                                  char** variant)
 {
-	size_t i = 0;
-	size_t index = 0;
 	/* Sample output for "Canadian Multilingual Standard"
 	 *
 	 * _XKB_RULES_NAMES_BACKUP(STRING) = "xorg", "pc105", "ca", "multi", "magic"
@@ -48,7 +46,7 @@ static BOOL parse_xkb_rule_names(char* xkb_rule, unsigned long num_bytes, char**
 	 * “eurosign:e,lv3:ralt_switch,grp:rctrl_toggle”
 	 *         - three options)
 	 */
-	for (i = 0, index = 0; i < num_bytes; i++, index++)
+	for (size_t i = 0, index = 0; i < num_bytes; i++, index++)
 	{
 		char* ptr = xkb_rule + i;
 

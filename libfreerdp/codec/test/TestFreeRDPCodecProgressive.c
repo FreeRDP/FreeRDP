@@ -150,13 +150,11 @@ static void sample_file_free(EGFX_SAMPLE_FILE* file)
 
 static void test_fill_image_alpha_channel(BYTE* data, int width, int height, BYTE value)
 {
-	int i = 0;
-	int j = 0;
 	UINT32* pixel = NULL;
 
-	for (i = 0; i < height; i++)
+	for (int i = 0; i < height; i++)
 	{
-		for (j = 0; j < width; j++)
+		for (int j = 0; j < width; j++)
 		{
 			pixel = (UINT32*)&data[((i * width) + j) * 4];
 			*pixel = ((*pixel & 0x00FFFFFF) | (value << 24));
@@ -177,13 +175,12 @@ static void* test_image_memset32(UINT32* ptr, UINT32 fill, size_t length)
 static int test_image_fill(BYTE* pDstData, int nDstStep, int nXDst, int nYDst, int nWidth,
                            int nHeight, UINT32 color)
 {
-	int y = 0;
 	UINT32* pDstPixel = NULL;
 
 	if (nDstStep < 0)
 		nDstStep = 4 * nWidth;
 
-	for (y = 0; y < nHeight; y++)
+	for (int y = 0; y < nHeight; y++)
 	{
 		pDstPixel = (UINT32*)&pDstData[((nYDst + y) * nDstStep) + (nXDst * 4)];
 		test_image_memset32(pDstPixel, color, nWidth);
@@ -904,9 +901,6 @@ static int test_progressive_decode(PROGRESSIVE_CONTEXT* progressive, EGFX_SAMPLE
 
 static int test_progressive_ms_sample(char* ms_sample_path)
 {
-	int i = 0;
-	int j = 0;
-	int k = 0;
 	int count = 0;
 	int status = 0;
 	EGFX_SAMPLE_FILE files[3][4][4] = { 0 };
@@ -919,11 +913,11 @@ static int test_progressive_ms_sample(char* ms_sample_path)
 
 	if (status < 0)
 	{
-		for (i = 0; i < 3; i++)
+		for (int i = 0; i < 3; i++)
 		{
-			for (j = 0; j < 4; j++)
+			for (int j = 0; j < 4; j++)
 			{
-				for (k = 0; k < 4; k++)
+				for (int k = 0; k < 4; k++)
 					sample_file_free(&files[i][j][k]);
 			}
 		}
@@ -935,11 +929,11 @@ static int test_progressive_ms_sample(char* ms_sample_path)
 
 	if (status < 0)
 	{
-		for (i = 0; i < 3; i++)
+		for (int i = 0; i < 3; i++)
 		{
-			for (j = 0; j < 4; j++)
+			for (int j = 0; j < 4; j++)
 			{
-				for (k = 0; k < 4; k++)
+				for (int k = 0; k < 4; k++)
 					sample_file_free(&files[i][j][k]);
 			}
 		}
@@ -990,11 +984,11 @@ static int test_progressive_ms_sample(char* ms_sample_path)
 
 	progressive_context_free(progressive);
 
-	for (i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
 	{
-		for (j = 0; j < 4; j++)
+		for (int j = 0; j < 4; j++)
 		{
-			for (k = 0; k < 4; k++)
+			for (int k = 0; k < 4; k++)
 			{
 				sample_file_free(&bitmaps[i][j][k]);
 				sample_file_free(&files[i][j][k]);

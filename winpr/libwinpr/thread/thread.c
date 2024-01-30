@@ -363,11 +363,10 @@ static void dump_thread(WINPR_THREAD* thread)
 	void* stack = winpr_backtrace(20);
 	char** msg = NULL;
 	size_t used = 0;
-	size_t i = 0;
 	WLog_DBG(TAG, "Called from:");
 	msg = winpr_backtrace_symbols(stack, &used);
 
-	for (i = 0; i < used; i++)
+	for (size_t i = 0; i < used; i++)
 		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
 
 	free(msg);
@@ -375,7 +374,7 @@ static void dump_thread(WINPR_THREAD* thread)
 	WLog_DBG(TAG, "Thread handle created still not closed!");
 	msg = winpr_backtrace_symbols(thread->create_stack, &used);
 
-	for (i = 0; i < used; i++)
+	for (size_t i = 0; i < used; i++)
 		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
 
 	free(msg);
@@ -393,7 +392,7 @@ static void dump_thread(WINPR_THREAD* thread)
 		WLog_DBG(TAG, "Thread exited at:");
 		msg = winpr_backtrace_symbols(thread->exit_stack, &used);
 
-		for (i = 0; i < used; i++)
+		for (size_t i = 0; i < used; i++)
 			WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
 
 		free(msg);
@@ -981,12 +980,11 @@ VOID DumpThreadHandles(void)
 #if defined(WITH_DEBUG_THREADS)
 	char** msg = NULL;
 	size_t used = 0;
-	size_t i = 0;
 	void* stack = winpr_backtrace(20);
 	WLog_DBG(TAG, "---------------- Called from ----------------------------");
 	msg = winpr_backtrace_symbols(stack, &used);
 
-	for (i = 0; i < used; i++)
+	for (size_t i = 0; i < used; i++)
 	{
 		WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
 	}
@@ -1007,13 +1005,13 @@ VOID DumpThreadHandles(void)
 		int x, count = ListDictionary_GetKeys(thread_list, &keys);
 		WLog_DBG(TAG, "Dumping %d elements", count);
 
-		for (x = 0; x < count; x++)
+		for (size_t x = 0; x < count; x++)
 		{
 			WINPR_THREAD* thread = ListDictionary_GetItemValue(thread_list, (void*)keys[x]);
 			WLog_DBG(TAG, "Thread [%d] handle created still not closed!", x);
 			msg = winpr_backtrace_symbols(thread->create_stack, &used);
 
-			for (i = 0; i < used; i++)
+			for (size_t i = 0; i < used; i++)
 			{
 				WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
 			}
@@ -1029,7 +1027,7 @@ VOID DumpThreadHandles(void)
 				WLog_DBG(TAG, "Thread [%d] exited at:", x);
 				msg = winpr_backtrace_symbols(thread->exit_stack, &used);
 
-				for (i = 0; i < used; i++)
+				for (size_t i = 0; i < used; i++)
 					WLog_DBG(TAG, "[%" PRIdz "]: %s", i, msg[i]);
 
 				free(msg);

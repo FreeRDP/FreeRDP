@@ -48,8 +48,6 @@
 
 static BOOL nsc_decode(NSC_CONTEXT* context)
 {
-	UINT16 x = 0;
-	UINT16 y = 0;
 	UINT16 rw = 0;
 	BYTE shift = 0;
 	BYTE* bmpdata = NULL;
@@ -65,7 +63,7 @@ static BOOL nsc_decode(NSC_CONTEXT* context)
 	if (!bmpdata)
 		return FALSE;
 
-	for (y = 0; y < context->height; y++)
+	for (UINT32 y = 0; y < context->height; y++)
 	{
 		const BYTE* yplane = NULL;
 		const BYTE* coplane = NULL;
@@ -85,7 +83,7 @@ static BOOL nsc_decode(NSC_CONTEXT* context)
 			cgplane = context->priv->PlaneBuffers[2] + y * context->width; /* Cg */
 		}
 
-		for (x = 0; x < context->width; x++)
+		for (UINT32 x = 0; x < context->width; x++)
 		{
 			INT16 y_val = (INT16)*yplane;
 			INT16 co_val = (INT16)(INT8)(*coplane << shift);

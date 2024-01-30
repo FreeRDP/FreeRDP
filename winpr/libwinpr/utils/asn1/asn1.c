@@ -391,7 +391,6 @@ BOOL WinPrAsn1EncContextualOctetStringContainer(WinPrAsn1Encoder* enc, WinPrAsn1
 size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc)
 {
 	size_t innerLen = 0;
-	size_t i = 0;
 	size_t unused = 0;
 	size_t innerHeaderBytes = 0;
 	size_t outerHeaderBytes = 0;
@@ -407,7 +406,7 @@ size_t WinPrAsn1EncEndContainer(WinPrAsn1Encoder* enc)
 	/* compute inner length */
 	container = &enc->containers[enc->freeContainerIndex - 1];
 	innerLen = 0;
-	for (i = container->headerChunkId + 1; i < enc->freeChunkId; i++)
+	for (size_t i = container->headerChunkId + 1; i < enc->freeChunkId; i++)
 		innerLen += enc->chunks[i].used;
 
 	/* compute effective headerLength */
@@ -824,7 +823,6 @@ size_t WinPrAsn1EncContextualUtcTime(WinPrAsn1Encoder* enc, WinPrAsn1_tagId tagI
 BOOL WinPrAsn1EncStreamSize(WinPrAsn1Encoder* enc, size_t* s)
 {
 	size_t finalSize = 0;
-	size_t i = 0;
 
 	WINPR_ASSERT(enc);
 	WINPR_ASSERT(s);
@@ -835,7 +833,7 @@ BOOL WinPrAsn1EncStreamSize(WinPrAsn1Encoder* enc, size_t* s)
 		return FALSE;
 	}
 
-	for (i = 0; i < enc->freeChunkId; i++)
+	for (size_t i = 0; i < enc->freeChunkId; i++)
 		finalSize += enc->chunks[i].used;
 	*s = finalSize;
 	return TRUE;
@@ -844,7 +842,6 @@ BOOL WinPrAsn1EncStreamSize(WinPrAsn1Encoder* enc, size_t* s)
 BOOL WinPrAsn1EncToStream(WinPrAsn1Encoder* enc, wStream* s)
 {
 	size_t finalSize = 0;
-	size_t i = 0;
 
 	WINPR_ASSERT(enc);
 	WINPR_ASSERT(s);
@@ -855,7 +852,7 @@ BOOL WinPrAsn1EncToStream(WinPrAsn1Encoder* enc, wStream* s)
 	if (!Stream_EnsureRemainingCapacity(s, finalSize))
 		return FALSE;
 
-	for (i = 0; i < enc->freeChunkId; i++)
+	for (size_t i = 0; i < enc->freeChunkId; i++)
 	{
 		BYTE* src = Stream_Buffer(enc->pool) + enc->chunks[i].poolOffset;
 		Stream_Write(s, src, enc->chunks[i].used);

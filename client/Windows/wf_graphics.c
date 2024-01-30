@@ -172,10 +172,9 @@ static BOOL wf_Bitmap_SetSurface(rdpContext* context, rdpBitmap* bitmap, BOOL pr
 
 static BOOL flip_bitmap(const BYTE* src, BYTE* dst, UINT32 scanline, UINT32 nHeight)
 {
-	UINT32 x;
 	BYTE* bottomLine = dst + scanline * (nHeight - 1);
 
-	for (x = 0; x < nHeight; x++)
+	for (UINT32 x = 0; x < nHeight; x++)
 	{
 		memcpy(bottomLine, src, scanline);
 		src += scanline;

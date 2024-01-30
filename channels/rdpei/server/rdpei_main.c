@@ -311,7 +311,6 @@ static UINT read_pen_contact(RdpeiServerContext* context, wStream* s,
  */
 static UINT read_touch_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_TOUCH_FRAME* frame)
 {
-	UINT32 i = 0;
 	RDPINPUT_CONTACT_DATA* contact = NULL;
 	UINT error = 0;
 
@@ -329,7 +328,7 @@ static UINT read_touch_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_T
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	for (i = 0; i < frame->contactCount; i++, contact++)
+	for (UINT32 i = 0; i < frame->contactCount; i++, contact++)
 	{
 		if ((error = read_touch_contact_data(context, s, contact)))
 		{
@@ -344,7 +343,6 @@ static UINT read_touch_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_T
 
 static UINT read_pen_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_PEN_FRAME* frame)
 {
-	UINT32 i = 0;
 	RDPINPUT_PEN_CONTACT* contact = NULL;
 	UINT error = 0;
 
@@ -362,7 +360,7 @@ static UINT read_pen_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_PEN
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	for (i = 0; i < frame->contactCount; i++, contact++)
+	for (UINT32 i = 0; i < frame->contactCount; i++, contact++)
 	{
 		if ((error = read_pen_contact(context, s, contact)))
 		{
@@ -383,7 +381,6 @@ static UINT read_pen_frame(RdpeiServerContext* context, wStream* s, RDPINPUT_PEN
 static UINT read_touch_event(RdpeiServerContext* context, wStream* s)
 {
 	UINT16 frameCount = 0;
-	UINT32 i = 0;
 	RDPINPUT_TOUCH_EVENT* event = &context->priv->touchEvent;
 	RDPINPUT_TOUCH_FRAME* frame = NULL;
 	UINT error = CHANNEL_RC_OK;
@@ -403,7 +400,7 @@ static UINT read_touch_event(RdpeiServerContext* context, wStream* s)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	for (i = 0; i < frameCount; i++, frame++)
+	for (UINT32 i = 0; i < frameCount; i++, frame++)
 	{
 		if ((error = read_touch_frame(context, s, frame)))
 		{
@@ -425,7 +422,6 @@ out_cleanup:
 static UINT read_pen_event(RdpeiServerContext* context, wStream* s)
 {
 	UINT16 frameCount = 0;
-	UINT32 i = 0;
 	RDPINPUT_PEN_EVENT* event = &context->priv->penEvent;
 	RDPINPUT_PEN_FRAME* frame = NULL;
 	UINT error = CHANNEL_RC_OK;
@@ -445,7 +441,7 @@ static UINT read_pen_event(RdpeiServerContext* context, wStream* s)
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
-	for (i = 0; i < frameCount; i++, frame++)
+	for (UINT32 i = 0; i < frameCount; i++, frame++)
 	{
 		if ((error = read_pen_frame(context, s, frame)))
 		{

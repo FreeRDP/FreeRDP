@@ -130,16 +130,13 @@ void audio_format_print(wLog* log, DWORD level, const AUDIO_FORMAT* format)
 
 void audio_formats_print(wLog* log, DWORD level, const AUDIO_FORMAT* formats, UINT16 count)
 {
-	UINT16 index = 0;
-	const AUDIO_FORMAT* format = NULL;
-
 	if (formats)
 	{
 		WLog_Print(log, level, "AUDIO_FORMATS (%" PRIu16 ") ={", count);
 
-		for (index = 0; index < count; index++)
+		for (UINT32 index = 0; index < count; index++)
 		{
-			format = &formats[index];
+			const AUDIO_FORMAT* format = &formats[index];
 			WLog_Print(log, level, "\t");
 			audio_format_print(log, level, format);
 		}
@@ -288,11 +285,9 @@ void audio_format_free(AUDIO_FORMAT* format)
 
 void audio_formats_free(AUDIO_FORMAT* formats, size_t count)
 {
-	size_t index = 0;
-
 	if (formats)
 	{
-		for (index = 0; index < count; index++)
+		for (size_t index = 0; index < count; index++)
 		{
 			AUDIO_FORMAT* format = &formats[index];
 			audio_format_free(format);

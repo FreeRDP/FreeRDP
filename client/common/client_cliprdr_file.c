@@ -1033,8 +1033,6 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 	size_t entry_size = 0;
 	char* filename = NULL;
 	char* buf = NULL;
-	off_t i = 0;
-	size_t j = 0;
 
 	WINPR_ASSERT(file_context);
 
@@ -1071,7 +1069,7 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 	}
 	written_size = 0;
 
-	for (i = offset; i < 2; ++i)
+	for (off_t i = offset; i < 2; ++i)
 	{
 		if (i == 0)
 		{
@@ -1102,7 +1100,7 @@ static void cliprdr_file_fuse_readdir(fuse_req_t fuse_req, fuse_ino_t fuse_ino, 
 		written_size += entry_size;
 	}
 
-	for (j = 0, i = 2; j < ArrayList_Count(fuse_file->children); ++j, ++i)
+	for (size_t j = 0, i = 2; j < ArrayList_Count(fuse_file->children); ++j, ++i)
 	{
 		if (i < offset)
 			continue;

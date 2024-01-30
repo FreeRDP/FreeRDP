@@ -130,8 +130,6 @@ BOOL gdi_Ellipse(HGDI_DC hdc, int nLeftRect, int nTopRect, int nRightRect, int n
 
 BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 {
-	INT32 x = 0;
-	INT32 y = 0;
 	UINT32 color = 0;
 	UINT32 dstColor = 0;
 	BOOL monochrome = FALSE;
@@ -154,7 +152,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 		case GDI_BS_SOLID:
 			color = hbr->color;
 
-			for (x = 0; x < nWidth; x++)
+			for (INT32 x = 0; x < nWidth; x++)
 			{
 				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest + x, nYDest);
 
@@ -165,7 +163,7 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 			srcp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest);
 			formatSize = FreeRDPGetBytesPerPixel(hdc->format);
 
-			for (y = 1; y < nHeight; y++)
+			for (INT32 y = 1; y < nHeight; y++)
 			{
 				BYTE* dstp = gdi_get_bitmap_pointer(hdc, nXDest, nYDest + y);
 				memcpy(dstp, srcp, 1ull * nWidth * formatSize);
@@ -178,9 +176,9 @@ BOOL gdi_FillRect(HGDI_DC hdc, const HGDI_RECT rect, HGDI_BRUSH hbr)
 			monochrome = (hbr->pattern->format == PIXEL_FORMAT_MONO);
 			formatSize = FreeRDPGetBytesPerPixel(hbr->pattern->format);
 
-			for (y = 0; y < nHeight; y++)
+			for (INT32 y = 0; y < nHeight; y++)
 			{
-				for (x = 0; x < nWidth; x++)
+				for (INT32 x = 0; x < nWidth; x++)
 				{
 					const UINT32 yOffset =
 					    ((nYDest + y) * hbr->pattern->width % hbr->pattern->height) * formatSize;
@@ -253,8 +251,6 @@ BOOL gdi_PolyPolygon(HGDI_DC hdc, GDI_POINT* lpPoints, int* lpPolyCounts, int nC
 
 BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nHeight)
 {
-	INT32 x = 0;
-	INT32 y = 0;
 	UINT32 color = 0;
 
 	if (!gdi_ClipCoords(hdc, &nXDst, &nYDst, &nWidth, &nHeight, NULL, NULL))
@@ -262,7 +258,7 @@ BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nH
 
 	color = hdc->textColor;
 
-	for (y = 0; y < nHeight; y++)
+	for (INT32 y = 0; y < nHeight; y++)
 	{
 		BYTE* dstLeft = gdi_get_bitmap_pointer(hdc, nXDst, nYDst + y);
 		BYTE* dstRight = gdi_get_bitmap_pointer(hdc, nXDst + nWidth - 1, nYDst + y);
@@ -274,7 +270,7 @@ BOOL gdi_Rectangle(HGDI_DC hdc, INT32 nXDst, INT32 nYDst, INT32 nWidth, INT32 nH
 			FreeRDPWriteColor(dstRight, hdc->format, color);
 	}
 
-	for (x = 0; x < nWidth; x++)
+	for (INT32 x = 0; x < nWidth; x++)
 	{
 		BYTE* dstTop = gdi_get_bitmap_pointer(hdc, nXDst + x, nYDst);
 		BYTE* dstBottom = gdi_get_bitmap_pointer(hdc, nXDst + x, nYDst + nHeight - 1);

@@ -61,7 +61,6 @@ POD_ARRAYS_IMPL(BasicStruct, basicstruct)
 int TestPodArrays(int argc, char* argv[])
 {
 	int rc = -1;
-	UINT32 i = 0;
 	UINT32 sum = 0;
 	UINT32 foreach_index = 0;
 	ArrayUINT32 uint32s = { 0 };
@@ -73,7 +72,7 @@ int TestPodArrays(int argc, char* argv[])
 	array_uint32_init(&uint32s);
 	array_basicstruct_init(&basicStructs);
 
-	for (i = 0; i < 10; i++)
+	for (UINT32 i = 0; i < 10; i++)
 		if (!array_uint32_append(&uint32s, i))
 			goto fail;
 

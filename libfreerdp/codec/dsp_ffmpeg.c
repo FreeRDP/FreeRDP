@@ -675,8 +675,6 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 {
 	UINT32 bpp = 0;
 	size_t samples = 0;
-	size_t x = 0;
-	size_t y = 0;
 
 	if (!context || !data || !length || !dstFormat)
 		return FALSE;
@@ -706,12 +704,12 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 				if (!Stream_EnsureCapacity(context->channelmix, size * 2))
 					return FALSE;
 
-				for (x = 0; x < samples; x++)
+				for (UINT32 x = 0; x < samples; x++)
 				{
-					for (y = 0; y < bpp; y++)
+					for (UINT32 y = 0; y < bpp; y++)
 						Stream_Write_UINT8(context->channelmix, src[x * bpp + y]);
 
-					for (y = 0; y < bpp; y++)
+					for (UINT32 y = 0; y < bpp; y++)
 						Stream_Write_UINT8(context->channelmix, src[x * bpp + y]);
 				}
 
@@ -737,9 +735,9 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 
 			/* Simply drop second channel.
 			 * TODO: Calculate average */
-			for (x = 0; x < samples; x++)
+			for (UINT32 x = 0; x < samples; x++)
 			{
-				for (y = 0; y < bpp; y++)
+				for (UINT32 y = 0; y < bpp; y++)
 					Stream_Write_UINT8(context->channelmix, src[2 * x * bpp + y]);
 			}
 

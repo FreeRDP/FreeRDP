@@ -133,7 +133,6 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 	char addr[64];
 	void* sin_addr = NULL;
 	int option_value = 0;
-	struct addrinfo* ai = NULL;
 	struct addrinfo* res = NULL;
 	rdpListener* listener = (rdpListener*)instance->listener;
 #ifdef _WIN32
@@ -154,7 +153,7 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 	if (!res)
 		return FALSE;
 
-	for (ai = res; ai && (listener->num_sockfds < 5); ai = ai->ai_next)
+	for (struct addrinfo* ai = res; ai && (listener->num_sockfds < 5); ai = ai->ai_next)
 	{
 		if ((ai->ai_family != AF_INET) && (ai->ai_family != AF_INET6))
 			continue;
@@ -330,10 +329,9 @@ static BOOL freerdp_listener_open_from_socket(freerdp_listener* instance, int fd
 
 static void freerdp_listener_close(freerdp_listener* instance)
 {
-	int i = 0;
 	rdpListener* listener = (rdpListener*)instance->listener;
 
-	for (i = 0; i < listener->num_sockfds; i++)
+	for (int i = 0; i < listener->num_sockfds; i++)
 	{
 		closesocket((SOCKET)listener->sockfds[i]);
 		CloseHandle(listener->events[i]);
@@ -345,13 +343,12 @@ static void freerdp_listener_close(freerdp_listener* instance)
 #if defined(WITH_FREERDP_DEPRECATED)
 static BOOL freerdp_listener_get_fds(freerdp_listener* instance, void** rfds, int* rcount)
 {
-	int index = 0;
 	rdpListener* listener = (rdpListener*)instance->listener;
 
 	if (listener->num_sockfds < 1)
 		return FALSE;
 
-	for (index = 0; index < listener->num_sockfds; index++)
+	for (int index = 0; index < listener->num_sockfds; index++)
 	{
 		rfds[*rcount] = (void*)(long)(listener->sockfds[index]);
 		(*rcount)++;
@@ -364,7 +361,6 @@ static BOOL freerdp_listener_get_fds(freerdp_listener* instance, void** rfds, in
 static DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HANDLE* events,
                                                 DWORD nCount)
 {
-	int index = 0;
 	rdpListener* listener = (rdpListener*)instance->listener;
 
 	if (listener->num_sockfds < 1)
@@ -373,7 +369,7 @@ static DWORD freerdp_listener_get_event_handles(freerdp_listener* instance, HAND
 	if (listener->num_sockfds > (INT64)nCount)
 		return 0;
 
-	for (index = 0; index < listener->num_sockfds; index++)
+	for (int index = 0; index < listener->num_sockfds; index++)
 	{
 		events[index] = listener->events[index];
 	}

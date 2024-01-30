@@ -171,7 +171,7 @@ static UINT enumerator_server_recv_device_added_notification(CamDevEnumServerCon
 
 	/* Search for null terminator of DeviceName */
 	size_t i = 0;
-	for (i = 0; i < remaining_length; i += sizeof(WCHAR), ++channel_name_start)
+	for (; i < remaining_length; i += sizeof(WCHAR), ++channel_name_start)
 	{
 		if (*channel_name_start == L'\0')
 			break;

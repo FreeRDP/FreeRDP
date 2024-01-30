@@ -52,7 +52,6 @@ static VOID CALLBACK TimerRoutine(PVOID lpParam, BOOLEAN TimerOrWaitFired)
 
 int TestSynchTimerQueue(int argc, char* argv[])
 {
-	DWORD index = 0;
 	HANDLE hTimerQueue = NULL;
 	HANDLE hTimers[TIMER_COUNT];
 	APC_DATA apcData[TIMER_COUNT];
@@ -68,7 +67,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		return -1;
 	}
 
-	for (index = 0; index < TIMER_COUNT; index++)
+	for (DWORD index = 0; index < TIMER_COUNT; index++)
 	{
 		apcData[index].TimerId = index;
 		apcData[index].StartTime = GetTickCount();
@@ -92,7 +91,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		}
 	}
 
-	for (index = 0; index < TIMER_COUNT; index++)
+	for (DWORD index = 0; index < TIMER_COUNT; index++)
 	{
 		if (WaitForSingleObject(apcData[index].CompletionEvent, 2000) != WAIT_OBJECT_0)
 		{
@@ -102,7 +101,7 @@ int TestSynchTimerQueue(int argc, char* argv[])
 		}
 	}
 
-	for (index = 0; index < TIMER_COUNT; index++)
+	for (DWORD index = 0; index < TIMER_COUNT; index++)
 	{
 		/**
 		 * Note: If the CompletionEvent parameter is INVALID_HANDLE_VALUE, the function waits

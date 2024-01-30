@@ -514,7 +514,6 @@ BOOL CreatePipe(PHANDLE hReadPipe, PHANDLE hWritePipe, LPSECURITY_ATTRIBUTES lpP
 
 static void winpr_unref_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
 {
-	size_t index = 0;
 	NamedPipeServerSocketEntry* baseSocket = NULL;
 
 	if (!pNamedPipe)
@@ -525,7 +524,7 @@ static void winpr_unref_named_pipe(WINPR_NAMED_PIPE* pNamedPipe)
 	// WLog_VRB(TAG, "%p (%s)", (void*) pNamedPipe, pNamedPipe->name);
 	ArrayList_Lock(g_NamedPipeServerSockets);
 
-	for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
+	for (size_t index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
 	{
 		baseSocket =
 		    (NamedPipeServerSocketEntry*)ArrayList_GetItem(g_NamedPipeServerSockets, index);
@@ -557,7 +556,6 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
                         DWORD nOutBufferSize, DWORD nInBufferSize, DWORD nDefaultTimeOut,
                         LPSECURITY_ATTRIBUTES lpSecurityAttributes)
 {
-	size_t index = 0;
 	char* lpPipePath = NULL;
 	WINPR_NAMED_PIPE* pNamedPipe = NULL;
 	int serverfd = -1;
@@ -608,7 +606,7 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 	pNamedPipe->ServerMode = TRUE;
 	pNamedPipe->common.ops = &namedOps;
 
-	for (index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
+	for (size_t index = 0; index < ArrayList_Count(g_NamedPipeServerSockets); index++)
 	{
 		baseSocket =
 		    (NamedPipeServerSocketEntry*)ArrayList_GetItem(g_NamedPipeServerSockets, index);

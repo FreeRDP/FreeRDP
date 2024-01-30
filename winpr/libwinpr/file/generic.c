@@ -233,8 +233,6 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
                    LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                    DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	size_t i = 0;
-
 	if (!lpFileName)
 		return INVALID_HANDLE_VALUE;
 
@@ -252,7 +250,7 @@ HANDLE CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 
 	ArrayList_Lock(_HandleCreators);
 
-	for (i = 0; i <= ArrayList_Count(_HandleCreators); i++)
+	for (size_t i = 0; i <= ArrayList_Count(_HandleCreators); i++)
 	{
 		HANDLE_CREATOR* creator = ArrayList_GetItem(_HandleCreators, i);
 

@@ -29,8 +29,6 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 	BYTE* out_sse = NULL;
 	BYTE* in = NULL;
 	BYTE* out_c = NULL;
-	UINT32 i = 0;
-	UINT32 x = 0;
 	const UINT32 srcStride = width * 4;
 	const UINT32 size = srcStride * height;
 	const UINT32 formats[] = { PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_RGBA32,
@@ -46,7 +44,7 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 
 	winpr_RAND(in, size);
 
-	for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
+	for (size_t x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
 	{
 		const UINT32 format = formats[x];
 		const UINT32 dstStride = width * FreeRDPGetBytesPerPixel(format);
@@ -71,7 +69,7 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 
 		if (memcmp(out_c, out_sse, dstStride * height) != 0)
 		{
-			for (i = 0; i < width * height; ++i)
+			for (size_t i = 0; i < width * height; ++i)
 			{
 				const UINT32 c = FreeRDPReadColor(out_c + 4 * i, format);
 				const UINT32 sse = FreeRDPReadColor(out_sse + 4 * i, format);
@@ -117,9 +115,7 @@ int TestPrimitivesYCoCg(int argc, char* argv[])
 	/* Random resolution tests */
 	if (argc < 2)
 	{
-		UINT32 x = 0;
-
-		for (x = 0; x < 10; x++)
+		for (UINT32 x = 0; x < 10; x++)
 		{
 			UINT32 w = 0;
 			UINT32 h = 0;

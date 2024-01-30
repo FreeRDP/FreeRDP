@@ -35,7 +35,6 @@
 
 static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanline)
 {
-	UINT16 x = 0;
 	UINT16 y = 0;
 	UINT16 rw = 0;
 	BYTE ccl = 0;
@@ -60,7 +59,7 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 	rw = (context->ChromaSubsamplingLevel > 0 ? tempWidth : context->width);
 	ccl = context->ColorLossLevel;
 
-	for (y = 0; y < context->height; y++)
+	for (; y < context->height; y++)
 	{
 		src = data + (context->height - 1 - y) * scanline;
 		yplane = context->priv->PlaneBuffers[0] + y * rw;
@@ -68,7 +67,7 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 		cgplane = context->priv->PlaneBuffers[2] + y * rw;
 		aplane = context->priv->PlaneBuffers[3] + y * context->width;
 
-		for (x = 0; x < context->width; x += 8)
+		for (UINT16 x = 0; x < context->width; x += 8)
 		{
 			switch (context->format)
 			{
@@ -204,10 +203,9 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 
 				case PIXEL_FORMAT_A4:
 				{
-					int shift = 0;
-					BYTE idx[8];
+					BYTE idx[8] = { 0 };
 
-					for (shift = 7; shift >= 0; shift--)
+					for (int shift = 7; shift >= 0; shift--)
 					{
 						idx[shift] = ((*src) >> shift) & 1;
 						idx[shift] |= (((*(src + 1)) >> shift) & 1) << 1;
@@ -318,7 +316,6 @@ static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* dat
 
 static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 {
-	UINT32 y = 0;
 	BYTE* co_dst = NULL;
 	BYTE* cg_dst = NULL;
 	INT8* co_src0 = NULL;
@@ -333,9 +330,8 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 	tempWidth = ROUND_UP_TO(context->width, 8);
 	tempHeight = ROUND_UP_TO(context->height, 2);
 
-	for (y = 0; y < tempHeight >> 1; y++)
+	for (UINT32 y = 0; y < tempHeight >> 1; y++)
 	{
-		UINT32 x = 0;
 		co_dst = context->priv->PlaneBuffers[1] + y * (tempWidth >> 1);
 		cg_dst = context->priv->PlaneBuffers[2] + y * (tempWidth >> 1);
 		co_src0 = (INT8*)context->priv->PlaneBuffers[1] + (y << 1) * tempWidth;
@@ -343,7 +339,7 @@ static void nsc_encode_subsampling_sse2(NSC_CONTEXT* context)
 		cg_src0 = (INT8*)context->priv->PlaneBuffers[2] + (y << 1) * tempWidth;
 		cg_src1 = cg_src0 + tempWidth;
 
-		for (x = 0; x < tempWidth >> 1; x += 8)
+		for (UINT32 x = 0; x < tempWidth >> 1; x += 8)
 		{
 			t = _mm_loadu_si128((__m128i*)co_src0);
 			t = _mm_avg_epu8(t, _mm_loadu_si128((__m128i*)co_src1));

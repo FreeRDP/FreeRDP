@@ -287,10 +287,9 @@ BOOL freerdp_client_print_buildconfig(void)
 
 static void freerdp_client_print_scancodes(void)
 {
-	DWORD x = 0;
 	printf("RDP scancodes and their name for use with /kbd:remap\n");
 
-	for (x = 0; x < UINT16_MAX; x++)
+	for (UINT32 x = 0; x < UINT16_MAX; x++)
 	{
 		const char* name = freerdp_keyboard_scancode_name(x);
 		if (name)
@@ -923,9 +922,8 @@ static BOOL parseSubOptions(rdpSettings* settings, const CmdLineSubOptions* opts
                             const char* arg)
 {
 	BOOL found = FALSE;
-	size_t xx = 0;
 
-	for (xx = 0; xx < count; xx++)
+	for (size_t xx = 0; xx < count; xx++)
 	{
 		const CmdLineSubOptions* opt = &opts[xx];
 
@@ -995,7 +993,6 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 		ptr.p = CommandLineParseCommaSeparatedValuesEx("kerberos", arg->Value, &count);
 		if (ptr.pc)
 		{
-			size_t x = 0;
 			const CmdLineSubOptions opts[] = {
 				{ "kdc-url:", FreeRDP_KerberosKdcUrl, CMDLINE_SUBOPTION_STRING, NULL },
 				{ "start-time:", FreeRDP_KerberosStartTime, CMDLINE_SUBOPTION_STRING, NULL },
@@ -1008,7 +1005,7 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 				{ "pkcs11-module:", FreeRDP_Pkcs11Module, CMDLINE_SUBOPTION_STRING, NULL }
 			};
 
-			for (x = 1; x < count; x++)
+			for (size_t x = 1; x < count; x++)
 			{
 				const char* cur = ptr.pc[x];
 				if (!parseSubOptions(settings, opts, ARRAYSIZE(opts), cur))
@@ -1386,14 +1383,13 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 static UINT32 freerdp_get_keyboard_layout_for_type(const char* name, DWORD type)
 {
 	size_t count = 0;
-	size_t x = 0;
 	RDP_KEYBOARD_LAYOUT* layouts =
 	    freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD, &count);
 
 	if (!layouts || (count == 0))
 		return FALSE;
 
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		const RDP_KEYBOARD_LAYOUT* layout = &layouts[x];
 		if (option_equals(layout->name, name))
@@ -1408,11 +1404,10 @@ static UINT32 freerdp_get_keyboard_layout_for_type(const char* name, DWORD type)
 
 static UINT32 freerdp_map_keyboard_layout_name_to_id(const char* name)
 {
-	size_t x = 0;
 	const UINT32 variants[] = { RDP_KEYBOARD_LAYOUT_TYPE_STANDARD, RDP_KEYBOARD_LAYOUT_TYPE_VARIANT,
 		                        RDP_KEYBOARD_LAYOUT_TYPE_IME };
 
-	for (x = 0; x < ARRAYSIZE(variants); x++)
+	for (size_t x = 0; x < ARRAYSIZE(variants); x++)
 	{
 		UINT32 rc = freerdp_get_keyboard_layout_for_type(name, variants[x]);
 		if (rc > 0)
@@ -1588,15 +1583,13 @@ int freerdp_client_settings_command_line_status_print(rdpSettings* settings, int
 
 static void freerdp_client_print_keyboard_type_list(const char* msg, DWORD type)
 {
-
-	size_t x = 0;
 	size_t count = 0;
 	RDP_KEYBOARD_LAYOUT* layouts = NULL;
 	layouts = freerdp_keyboard_get_layouts(type, &count);
 
 	printf("\n%s\n", msg);
 
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		const RDP_KEYBOARD_LAYOUT* layout = &layouts[x];
 		printf("0x%08" PRIX32 "\t%s\n", layout->code, layout->name);
@@ -1892,7 +1885,6 @@ static BOOL parseSizeValue(const char* input, unsigned long* v1, unsigned long* 
 static BOOL prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMENT_A* args,
                                      BOOL rdp_file)
 {
-	size_t x = 0;
 	const char* arguments[] = { "network", "gfx", "rfx", "bpp" };
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(args);
@@ -1900,7 +1892,7 @@ static BOOL prepare_default_settings(rdpSettings* settings, COMMAND_LINE_ARGUMEN
 	if (rdp_file)
 		return FALSE;
 
-	for (x = 0; x < ARRAYSIZE(arguments); x++)
+	for (size_t x = 0; x < ARRAYSIZE(arguments); x++)
 	{
 		const char* arg = arguments[x];
 		const COMMAND_LINE_ARGUMENT_A* p = CommandLineFindArgumentA(args, arg);
@@ -2129,9 +2121,8 @@ static int parse_tls_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	WINPR_ASSERT(arg);
 
 	size_t count = 0;
-	size_t x = 0;
 	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		COMMAND_LINE_ARGUMENT_A larg = *arg;
 		larg.Value = ptr[x];
@@ -2942,9 +2933,8 @@ static int parse_clipboard_options(rdpSettings* settings, const COMMAND_LINE_ARG
 			const char** pc;
 		} ptr;
 		size_t count = 0;
-		size_t x = 0;
 		ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
-		for (x = 0; (x < count) && (rc == 0); x++)
+		for (size_t x = 0; (x < count) && (rc == 0); x++)
 		{
 			const char* usesel = "use-selection:";
 
@@ -3109,13 +3099,12 @@ static int parse_sec_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 	WINPR_ASSERT(arg);
 
 	size_t count = 0;
-	size_t x = 0;
 	char** ptr = CommandLineParseCommaSeparatedValues(arg->Value, &count);
 	if (count == 0)
 		return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 	FreeRDP_Settings_Keys_Bool singleOptionWithoutOnOff = FreeRDP_BOOL_UNUSED;
-	for (x = 0; x < count; x++)
+	for (size_t x = 0; x < count; x++)
 	{
 		const char* cur = ptr[x];
 		const PARSE_ON_OFF_RESULT bval = parse_on_off_option(cur);
@@ -3229,9 +3218,8 @@ static int parse_cert_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 		const char** pc;
 	} ptr;
 	size_t count = 0;
-	size_t x = 0;
 	ptr.p = CommandLineParseCommaSeparatedValues(arg->Value, &count);
-	for (x = 0; (x < count) && (rc == 0); x++)
+	for (size_t x = 0; (x < count) && (rc == 0); x++)
 	{
 		const char deny[] = "deny";
 		const char ignore[] = "ignore";
@@ -3495,7 +3483,6 @@ static int parse_smartcard_logon_options(rdpSettings* settings, const COMMAND_LI
 	ptr.p = CommandLineParseCommaSeparatedValuesEx("smartcard-logon", arg->Value, &count);
 	if (ptr.pc)
 	{
-		size_t x = 0;
 		const CmdLineSubOptions opts[] = {
 			{ "cert:", FreeRDP_SmartcardCertificate, CMDLINE_SUBOPTION_FILE,
 			  setSmartcardEmulation },
@@ -3507,7 +3494,7 @@ static int parse_smartcard_logon_options(rdpSettings* settings, const COMMAND_LI
 			{ "container:", FreeRDP_ContainerName, CMDLINE_SUBOPTION_STRING, NULL }
 		};
 
-		for (x = 1; x < count; x++)
+		for (size_t x = 1; x < count; x++)
 		{
 			const char* cur = ptr.pc[x];
 			if (!parseSubOptions(settings, opts, ARRAYSIZE(opts), cur))
@@ -3526,7 +3513,6 @@ static int parse_tune_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	size_t x = 0;
 	size_t count = 0;
 	union
 	{
@@ -3536,7 +3522,7 @@ static int parse_tune_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	ptr.p = CommandLineParseCommaSeparatedValuesEx("tune", arg->Value, &count);
 	if (!ptr.pc)
 		return COMMAND_LINE_ERROR;
-	for (x = 1; x < count; x++)
+	for (size_t x = 1; x < count; x++)
 	{
 		const char* cur = ptr.pc[x];
 		char* sep = strchr(cur, ':');

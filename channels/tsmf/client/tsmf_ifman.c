@@ -68,7 +68,6 @@ UINT tsmf_ifman_rim_exchange_capability_request(TSMF_IFMAN* ifman)
  */
 UINT tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 {
-	UINT32 i = 0;
 	UINT32 v = 0;
 	UINT32 pos = 0;
 	UINT32 CapabilityType = 0;
@@ -91,7 +90,7 @@ UINT tsmf_ifman_exchange_capability_request(TSMF_IFMAN* ifman)
 
 	Stream_Read_UINT32(ifman->output, numHostCapabilities);
 
-	for (i = 0; i < numHostCapabilities; i++)
+	for (UINT32 i = 0; i < numHostCapabilities; i++)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, ifman->output, 8))
 			return ERROR_INVALID_DATA;
@@ -516,7 +515,7 @@ UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 	{
 		rects = (RDP_RECT*)calloc(num_rects, sizeof(RDP_RECT));
 
-		for (i = 0; i < num_rects; i++)
+		for (UINT32 i = 0; i < num_rects; i++)
 		{
 			Stream_Read_UINT16(ifman->input, rects[i].y); /* Top */
 			Stream_Seek_UINT16(ifman->input);

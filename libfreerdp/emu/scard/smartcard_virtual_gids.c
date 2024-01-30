@@ -425,7 +425,6 @@ static BOOL vgids_prepare_fstable(const vgidsFilesysTableEntry* fstable, DWORD n
 	    BYTE unkonwn: 0x01
 	    Array of vgidsFilesysTableEntry
 	*/
-	DWORD i = 0;
 	BYTE* data = malloc(sizeof(vgidsFilesysTableEntry) * numEntries + 1);
 	if (!data)
 	{
@@ -434,7 +433,7 @@ static BOOL vgids_prepare_fstable(const vgidsFilesysTableEntry* fstable, DWORD n
 	}
 
 	*data = 0x01;
-	for (i = 0; i < numEntries; ++i)
+	for (UINT32 i = 0; i < numEntries; ++i)
 		memcpy(data + 1 + (sizeof(vgidsFilesysTableEntry) * i), &fstable[i],
 		       sizeof(vgidsFilesysTableEntry));
 

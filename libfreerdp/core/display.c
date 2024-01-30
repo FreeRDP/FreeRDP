@@ -22,14 +22,12 @@
 static BOOL display_write_monitor_layout_pdu(wStream* s, UINT32 monitorCount,
                                              const MONITOR_DEF* monitorDefArray)
 {
-	UINT32 index = 0;
-
 	if (!Stream_EnsureRemainingCapacity(s, 4 + (monitorCount * 20)))
 		return FALSE;
 
 	Stream_Write_UINT32(s, monitorCount); /* monitorCount (4 bytes) */
 
-	for (index = 0; index < monitorCount; index++)
+	for (UINT32 index = 0; index < monitorCount; index++)
 	{
 		const MONITOR_DEF* monitor = &monitorDefArray[index];
 
@@ -47,7 +45,6 @@ BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
                                                 const rdpMonitor* monitorDefArray,
                                                 MONITOR_DEF** result)
 {
-	UINT32 index = 0;
 	MONITOR_DEF* mdef = NULL;
 
 	if (!monitorDefArray || !result || (*result))
@@ -58,7 +55,7 @@ BOOL display_convert_rdp_monitor_to_monitor_def(UINT32 monitorCount,
 	if (!mdef)
 		return FALSE;
 
-	for (index = 0; index < monitorCount; index++)
+	for (UINT32 index = 0; index < monitorCount; index++)
 	{
 		const rdpMonitor* monitor = &monitorDefArray[index];
 		MONITOR_DEF* current = &mdef[index];

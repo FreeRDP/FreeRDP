@@ -1,4 +1,3 @@
-
 #include <freerdp/gdi/gdi.h>
 
 #include <freerdp/gdi/dc.h>
@@ -565,9 +564,7 @@ static BOOL test_line(HGDI_DC hdc, const gdiPalette* hPalette, UINT32 mX, UINT32
 int TestGdiLine(int argc, char* argv[])
 {
 	int rc = -1;
-	UINT32 x = 0;
-	UINT32 i = 0;
-	gdiPalette g;
+
 	const UINT32 RawFormat = PIXEL_FORMAT_RGB8;
 	const UINT32 colorFormats[] = { PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_ARGB15, PIXEL_FORMAT_RGB16,
 		                            PIXEL_FORMAT_RGB24,  PIXEL_FORMAT_ARGB32, PIXEL_FORMAT_XRGB32,
@@ -575,12 +572,13 @@ int TestGdiLine(int argc, char* argv[])
 		                            PIXEL_FORMAT_ABGR15, PIXEL_FORMAT_BGR16,  PIXEL_FORMAT_BGR24,
 		                            PIXEL_FORMAT_ABGR32, PIXEL_FORMAT_XBGR32, PIXEL_FORMAT_BGRA32,
 		                            PIXEL_FORMAT_BGRX32 };
-	const UINT32 number_formats = sizeof(colorFormats) / sizeof(colorFormats[0]);
+	const size_t number_formats = sizeof(colorFormats) / sizeof(colorFormats[0]);
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
-	for (i = 0; i < number_formats; i++)
+	for (size_t ifmt = 0; ifmt < number_formats; ifmt++)
 	{
+		gdiPalette g = { 0 };
 		HGDI_DC hdc = NULL;
 		HGDI_PEN pen = NULL;
 		HGDI_BITMAP hBmp = NULL;
@@ -600,15 +598,15 @@ int TestGdiLine(int argc, char* argv[])
 			                        { GDI_R2_MERGEPENNOT, NULL, line_to_R2_MERGEPENNOT },
 			                        { GDI_R2_MERGEPEN, NULL, line_to_R2_MERGEPEN },
 			                        { GDI_R2_WHITE, NULL, line_to_R2_WHITE } };
-		const UINT32 map_size = sizeof(rop_map) / sizeof(rop_map[0]);
+		const size_t map_size = sizeof(rop_map) / sizeof(rop_map[0]);
 		HGDI_BITMAP hBmp_LineTo[LINTETO_NUMBER] = { NULL };
 		gdiPalette* hPalette = &g;
 		UINT32 penColor = 0;
-		const UINT32 format = colorFormats[i];
+		const UINT32 format = colorFormats[ifmt];
 		g.format = format;
 
-		for (i = 0; i < 256; i++)
-			g.palette[i] = FreeRDPGetColor(format, i, i, i, 0xFF);
+		for (unsigned x = 0; x < 256; x++)
+			g.palette[x] = FreeRDPGetColor(format, x, x, x, 0xFF);
 
 		rc = -1;
 
@@ -632,7 +630,7 @@ int TestGdiLine(int argc, char* argv[])
 		hBmp = gdi_CreateCompatibleBitmap(hdc, 16, 16);
 		gdi_SelectObject(hdc, (HGDIOBJECT)hBmp);
 
-		for (x = 0; x < LINTETO_NUMBER; x++)
+		for (UINT32 x = 0; x < LINTETO_NUMBER; x++)
 		{
 			hBmp_LineTo[x] = test_convert_to_bitmap(line_to_case[x], RawFormat, 0, 0, 0, format, 0,
 			                                        0, 0, 16, 16, hPalette);
@@ -641,7 +639,7 @@ int TestGdiLine(int argc, char* argv[])
 				goto fail;
 		}
 
-		for (x = 0; x < map_size; x++)
+		for (UINT32 x = 0; x < map_size; x++)
 		{
 			rop_map[x].bmp = test_convert_to_bitmap(rop_map[x].src, RawFormat, 0, 0, 0, format, 0,
 			                                        0, 0, 16, 16, hPalette);
@@ -683,9 +681,9 @@ int TestGdiLine(int argc, char* argv[])
 		if (!test_line(hdc, hPalette, 0, 0, 26, 26, hBmp, hBmp_LineTo[10], 0, 0, 16, 16))
 			goto fail;
 
-		for (x = 0; x < map_size; x++)
+		for (UINT32 x = 0; x < map_size; x++)
 		{
-			char name[1024];
+			char name[1024] = { 0 };
 			_snprintf(name, sizeof(name), "%s [%s]", gdi_rop_to_string(rop_map[x].rop),
 			          FreeRDPGetColorFormatName(hdc->format));
 
@@ -708,10 +706,10 @@ int TestGdiLine(int argc, char* argv[])
 		rc = 0;
 	fail:
 
-		for (x = 0; x < LINTETO_NUMBER; x++)
+		for (UINT32 x = 0; x < LINTETO_NUMBER; x++)
 			gdi_DeleteObject((HGDIOBJECT)hBmp_LineTo[x]);
 
-		for (x = 0; x < map_size; x++)
+		for (UINT32 x = 0; x < map_size; x++)
 			gdi_DeleteObject((HGDIOBJECT)rop_map[x].bmp);
 
 		gdi_DeleteObject((HGDIOBJECT)hBmp);

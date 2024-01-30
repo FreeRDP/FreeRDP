@@ -1023,7 +1023,6 @@ static BOOL rdp_client_join_channel(rdpRdp* rdp, UINT16 ChannelId)
 
 BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 {
-	UINT32 i = 0;
 	UINT16 channelId = 0;
 	BOOL allJoined = TRUE;
 
@@ -1094,7 +1093,8 @@ BOOL rdp_client_connect_mcs_channel_join_confirm(rdpRdp* rdp, wStream* s)
 	}
 	else
 	{
-		for (i = 0; i < mcs->channelCount; i++)
+		UINT32 i = 0;
+		for (; i < mcs->channelCount; i++)
 		{
 			rdpMcsChannel* cur = &mcs->channels[i];
 			if (cur->joined)
@@ -1738,7 +1738,6 @@ BOOL rdp_server_accept_mcs_attach_user_request(rdpRdp* rdp, wStream* s)
 
 BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 {
-	UINT32 i = 0;
 	UINT16 channelId = 0;
 	BOOL allJoined = TRUE;
 	rdpMcs* mcs = NULL;
@@ -1767,7 +1766,7 @@ BOOL rdp_server_accept_mcs_channel_join_request(rdpRdp* rdp, wStream* s)
 	if (channelId == mcs->messageChannelId)
 		mcs->messageChannelJoined = TRUE;
 
-	for (i = 0; i < mcs->channelCount; i++)
+	for (UINT32 i = 0; i < mcs->channelCount; i++)
 	{
 		rdpMcsChannel* cur = &mcs->channels[i];
 		WLog_DBG(TAG, " %s [%" PRIu16 "]", cur->Name, cur->ChannelId);
@@ -2053,7 +2052,6 @@ const char* rdp_get_state_string(const rdpRdp* rdp)
 
 BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp)
 {
-	size_t x = 0;
 	const rdpMcs* mcs = NULL;
 
 	WINPR_ASSERT(rdp);
@@ -2065,7 +2063,7 @@ BOOL rdp_channels_from_mcs(rdpSettings* settings, const rdpRdp* rdp)
 	                                      CHANNEL_MAX_COUNT))
 		return FALSE;
 
-	for (x = 0; x < mcs->channelCount; x++)
+	for (UINT32 x = 0; x < mcs->channelCount; x++)
 	{
 		const rdpMcsChannel* mchannel = &mcs->channels[x];
 		CHANNEL_DEF cur = { 0 };

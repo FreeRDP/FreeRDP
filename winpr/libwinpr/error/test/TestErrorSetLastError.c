@@ -62,7 +62,6 @@ int TestErrorSetLastError(int argc, char* argv[])
 {
 	DWORD error = 0;
 	HANDLE threads[4];
-	int i = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
@@ -91,7 +90,7 @@ int TestErrorSetLastError(int argc, char* argv[])
 	}
 	*pLoopCount = 0;
 
-	for (i = 0; i < 4; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		if (!(threads[i] = CreateThread(NULL, 0, test_error_thread, (void*)(size_t)0, 0, NULL)))
 		{

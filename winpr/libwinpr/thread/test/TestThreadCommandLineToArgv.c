@@ -34,7 +34,6 @@ static const char* test_args_list_7[] = { "app.exe",  "a\\\\b c", "d", "e",
 
 static int test_command_line_parsing_case(const char* line, const char** list)
 {
-	int i = 0;
 	LPSTR* pArgs = NULL;
 	int numArgs = 0;
 
@@ -47,7 +46,7 @@ static int test_command_line_parsing_case(const char* line, const char** list)
 
 	printf("pNumArgs: %d\n", numArgs);
 
-	for (i = 0; i < numArgs; i++)
+	for (int i = 0; i < numArgs; i++)
 	{
 		printf("argv[%d] = %s\n", i, pArgs[i]);
 	}

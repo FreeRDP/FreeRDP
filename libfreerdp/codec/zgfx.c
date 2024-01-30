@@ -496,7 +496,7 @@ int zgfx_compress_to_stream(ZGFX_CONTEXT* zgfx, wStream* sDst, const BYTE* pUnco
 	totalLength = uncompressedSize;
 	pSrcData = pUncompressed;
 
-	for (fragment = 0; (totalLength > 0) || (fragment == 0); fragment++)
+	for (; (totalLength > 0) || (fragment == 0); fragment++)
 	{
 		UINT32 SrcSize = 0;
 		size_t posDstSize = 0;

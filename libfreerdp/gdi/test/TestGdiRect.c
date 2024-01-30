@@ -72,8 +72,6 @@ static int test_gdi_FillRect(void)
 	UINT32 color = 0;
 	UINT32 pixel = 0;
 	UINT32 rawPixel = 0;
-	UINT32 x = 0;
-	UINT32 y = 0;
 	UINT32 badPixels = 0;
 	UINT32 goodPixels = 0;
 	UINT32 width = 200;
@@ -106,9 +104,9 @@ static int test_gdi_FillRect(void)
 	badPixels = 0;
 	goodPixels = 0;
 
-	for (x = 0; x < width; x++)
+	for (UINT32 x = 0; x < width; x++)
 	{
-		for (y = 0; y < height; y++)
+		for (UINT32 y = 0; y < height; y++)
 		{
 			rawPixel = gdi_GetPixel(hdc, x, y);
 			pixel = FreeRDPConvertColor(rawPixel, hdc->format, PIXEL_FORMAT_ARGB32, NULL);

@@ -52,7 +52,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	char** argv = NULL;
 	RDP_CLIENT_ENTRY_POINTS clientEntryPoints = { 0 };
 	int ret = 1;
-	int argc = 0, i;
+	int argc = 0;
 	LPWSTR* args = NULL;
 
 	WINPR_UNUSED(hInstance);
@@ -81,7 +81,7 @@ INT WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (!argv)
 		goto out;
 
-	for (i = 0; i < argc; i++)
+	for (int i = 0; i < argc; i++)
 	{
 		int size = WideCharToMultiByte(CP_UTF8, 0, args[i], -1, NULL, 0, NULL, NULL);
 		if (size <= 0)
@@ -134,7 +134,7 @@ out:
 
 	if (argv)
 	{
-		for (i = 0; i < argc; i++)
+		for (int i = 0; i < argc; i++)
 			free(argv[i]);
 
 		free(argv);

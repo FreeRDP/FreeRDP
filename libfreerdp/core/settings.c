@@ -154,10 +154,8 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 
 	if (status == ERROR_SUCCESS)
 	{
-		unsigned x = 0;
-
 		settings_reg_query_dword(settings, FreeRDP_BitmapCacheV2NumCells, hKey, _T("NumCells"));
-		for (x = 0; x < 5; x++)
+		for (unsigned x = 0; x < 5; x++)
 		{
 			DWORD val = 0;
 			TCHAR numentries[64] = { 0 };
@@ -186,7 +184,7 @@ static void settings_client_load_hkey_local_machine(rdpSettings* settings)
 		unsigned x = 0;
 		UINT32 GlyphSupportLevel = 0;
 		settings_reg_query_dword(settings, FreeRDP_GlyphSupportLevel, hKey, _T("SupportLevel"));
-		for (x = 0; x < 10; x++)
+		for (; x < 10; x++)
 		{
 			GLYPH_CACHE_DEFINITION cache = { 0 };
 			TCHAR numentries[64] = { 0 };
@@ -739,11 +737,10 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		else
 		{
 			BOOL res = 0;
-			size_t i = 0;
 			char* cpath = NULL;
 			char product[sizeof(FREERDP_PRODUCT_STRING)] = { 0 };
 
-			for (i = 0; i < sizeof(product); i++)
+			for (size_t i = 0; i < sizeof(product); i++)
 				product[i] = tolower(FREERDP_PRODUCT_STRING[i]);
 
 			cpath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
@@ -825,7 +822,6 @@ void freerdp_settings_free(rdpSettings* settings)
 static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSettings* settings)
 {
 	BOOL rc = FALSE;
-	UINT32 index = 0;
 
 	if (!_settings || !settings)
 		return FALSE;
@@ -1007,7 +1003,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		if (!freerdp_settings_set_uint32(_settings, FreeRDP_DeviceCount, count))
 			goto out_fail;
 
-		for (index = 0; index < count; index++)
+		for (size_t index = 0; index < count; index++)
 		{
 			const RDPDR_DEVICE* argv =
 			    freerdp_settings_get_pointer_array(settings, FreeRDP_DeviceArray, index);
@@ -1026,7 +1022,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		if (!freerdp_settings_set_uint32(_settings, FreeRDP_StaticChannelCount, count))
 			goto out_fail;
 
-		for (index = 0; index < count; index++)
+		for (size_t index = 0; index < count; index++)
 		{
 			const ADDIN_ARGV* argv =
 			    freerdp_settings_get_pointer_array(settings, FreeRDP_StaticChannelArray, index);
@@ -1046,7 +1042,7 @@ static BOOL freerdp_settings_int_buffer_copy(rdpSettings* _settings, const rdpSe
 		if (!freerdp_settings_set_uint32(_settings, FreeRDP_DynamicChannelCount, count))
 			goto out_fail;
 
-		for (index = 0; index < count; index++)
+		for (size_t index = 0; index < count; index++)
 		{
 			const ADDIN_ARGV* argv =
 			    freerdp_settings_get_pointer_array(settings, FreeRDP_DynamicChannelArray, index);

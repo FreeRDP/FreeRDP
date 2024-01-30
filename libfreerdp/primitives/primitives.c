@@ -121,20 +121,18 @@ typedef struct
 
 static void primitives_YUV_benchmark_free(primitives_YUV_benchmark* bench)
 {
-	int i = 0;
 	if (!bench)
 		return;
 
 	free(bench->outputBuffer);
 
-	for (i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
 		free(bench->channels[i]);
 	memset(bench, 0, sizeof(primitives_YUV_benchmark));
 }
 
 static primitives_YUV_benchmark* primitives_YUV_benchmark_init(primitives_YUV_benchmark* ret)
 {
-	int i = 0;
 	prim_size_t* roi = NULL;
 	if (!ret)
 		return NULL;
@@ -150,7 +148,7 @@ static primitives_YUV_benchmark* primitives_YUV_benchmark_init(primitives_YUV_be
 	if (!ret->outputBuffer)
 		goto fail;
 
-	for (i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++)
 	{
 		BYTE* buf = ret->channels[i] = calloc(roi->width, roi->height);
 		if (!buf)
@@ -172,12 +170,11 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
 {
 	ULONGLONG dueDate = 0;
 	const BYTE* channels[3] = { 0 };
-	size_t i = 0;
 	pstatus_t status = 0;
 
 	*computations = 0;
 
-	for (i = 0; i < 3; i++)
+	for (size_t i = 0; i < 3; i++)
 		channels[i] = bench->channels[i];
 
 	/* do a first dry run to initialize cache and such */
@@ -202,7 +199,6 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
 
 static BOOL primitives_autodetect_best(primitives_t* prims)
 {
-	size_t x = 0;
 	BOOL ret = FALSE;
 	UINT64 benchDuration = 150; /* 150 ms */
 	struct prim_benchmark
@@ -245,7 +241,7 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 			return FALSE;
 
 		WLog_DBG(TAG, "primitives benchmark result:");
-		for (x = 0; x < ARRAYSIZE(testcases); x++)
+		for (size_t x = 0; x < ARRAYSIZE(testcases); x++)
 		{
 			struct prim_benchmark* cur = &testcases[x];
 			cur->prims = primitives_get_by_type(cur->flags);

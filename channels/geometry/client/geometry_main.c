@@ -122,7 +122,6 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
 
 	if (rgndata->nRectCount)
 	{
-		UINT32 i = 0;
 		RDP_RECT* tmp = realloc(rgndata->rects, rgndata->nRectCount * sizeof(RDP_RECT));
 
 		if (!tmp)
@@ -133,7 +132,7 @@ static UINT32 geometry_read_RGNDATA(wLog* logger, wStream* s, UINT32 len, FREERD
 		}
 		rgndata->rects = tmp;
 
-		for (i = 0; i < rgndata->nRectCount; i++)
+		for (UINT32 i = 0; i < rgndata->nRectCount; i++)
 		{
 			Stream_Read_INT32(s, x);
 			Stream_Read_INT32(s, y);

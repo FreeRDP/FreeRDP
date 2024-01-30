@@ -327,12 +327,9 @@ fail:
 static BOOL test_gdi_GetPixel(void)
 {
 	BOOL rc = TRUE;
-	UINT32 x = 0;
 
-	for (x = 0; x < colorFormatCount; x++)
+	for (UINT32 x = 0; x < colorFormatCount; x++)
 	{
-		UINT32 i = 0;
-		UINT32 j = 0;
 		UINT32 bpp = 0;
 		HGDI_DC hdc = NULL;
 		UINT32 width = 128;
@@ -357,9 +354,9 @@ static BOOL test_gdi_GetPixel(void)
 		gdi_SelectObject(hdc, (HGDIOBJECT)hBitmap);
 		bpp = FreeRDPGetBytesPerPixel(hBitmap->format);
 
-		for (i = 0; i < height; i++)
+		for (UINT32 i = 0; i < height; i++)
 		{
-			for (j = 0; j < width; j++)
+			for (UINT32 j = 0; j < width; j++)
 			{
 				UINT32 pixel = 0;
 				const UINT32 color =
@@ -389,12 +386,9 @@ static BOOL test_gdi_GetPixel(void)
 static BOOL test_gdi_SetPixel(void)
 {
 	BOOL rc = TRUE;
-	UINT32 x = 0;
 
-	for (x = 0; x < colorFormatCount; x++)
+	for (UINT32 x = 0; x < colorFormatCount; x++)
 	{
-		UINT32 i = 0;
-		UINT32 j = 0;
 		UINT32 bpp = 0;
 		HGDI_DC hdc = NULL;
 		UINT32 width = 128;
@@ -412,9 +406,9 @@ static BOOL test_gdi_SetPixel(void)
 		gdi_SelectObject(hdc, (HGDIOBJECT)hBitmap);
 		bpp = FreeRDPGetBytesPerPixel(hBitmap->format);
 
-		for (i = 0; i < height; i++)
+		for (UINT32 i = 0; i < height; i++)
 		{
-			for (j = 0; j < width; j++)
+			for (UINT32 j = 0; j < width; j++)
 			{
 				UINT32 pixel = 0;
 				const UINT32 color =

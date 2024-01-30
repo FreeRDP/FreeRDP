@@ -485,10 +485,8 @@ static void xf_input_detect_pinch(xfContext* xfc)
 
 static void xf_input_touch_begin(xfContext* xfc, const XIDeviceEvent* event)
 {
-	int i = 0;
-
 	WINPR_UNUSED(xfc);
-	for (i = 0; i < MAX_CONTACTS; i++)
+	for (int i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (xfc->contacts[i].id == 0)
 		{
@@ -504,12 +502,10 @@ static void xf_input_touch_begin(xfContext* xfc, const XIDeviceEvent* event)
 
 static void xf_input_touch_update(xfContext* xfc, const XIDeviceEvent* event)
 {
-	int i = 0;
-
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
 
-	for (i = 0; i < MAX_CONTACTS; i++)
+	for (int i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (xfc->contacts[i].id == event->detail)
 		{
@@ -527,10 +523,8 @@ static void xf_input_touch_update(xfContext* xfc, const XIDeviceEvent* event)
 
 static void xf_input_touch_end(xfContext* xfc, const XIDeviceEvent* event)
 {
-	int i = 0;
-
 	WINPR_UNUSED(xfc);
-	for (i = 0; i < MAX_CONTACTS; i++)
+	for (int i = 0; i < MAX_CONTACTS; i++)
 	{
 		if (xfc->contacts[i].id == event->detail)
 		{

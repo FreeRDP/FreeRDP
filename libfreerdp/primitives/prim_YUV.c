@@ -99,11 +99,9 @@ static pstatus_t general_ChromaFilter(BYTE* WINPR_RESTRICT pDst[3], const UINT32
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfHeight = (nHeight + 1) / 2;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
-	UINT32 x = 0;
-	UINT32 y = 0;
 
 	/* Filter */
-	for (y = roi->top; y < halfHeight + roi->top; y++)
+	for (UINT32 y = roi->top; y < halfHeight + roi->top; y++)
 	{
 		const UINT32 val2y = (y * 2 + evenY);
 		const UINT32 val2y1 = val2y + oddY;
@@ -115,7 +113,7 @@ static pstatus_t general_ChromaFilter(BYTE* WINPR_RESTRICT pDst[3], const UINT32
 		if (val2y1 > nHeight)
 			continue;
 
-		for (x = roi->left; x < halfWidth + roi->left; x++)
+		for (UINT32 x = roi->left; x < halfWidth + roi->left; x++)
 		{
 			const UINT32 val2x = (x * 2);
 			const UINT32 val2x1 = val2x + 1;
@@ -148,8 +146,6 @@ static pstatus_t general_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcR
 	const UINT32 mod = 16;
 	UINT32 uY = 0;
 	UINT32 vY = 0;
-	UINT32 x = 0;
-	UINT32 y = 0;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth) / 2;
@@ -169,7 +165,7 @@ static pstatus_t general_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcR
 
 	/* The second half of U and V is a bit more tricky... */
 	/* B4 and B5 */
-	for (y = 0; y < padHeigth; y++)
+	for (UINT32 y = 0; y < padHeigth; y++)
 	{
 		const BYTE* Ya = pSrc[0] + srcStep[0] * y;
 		BYTE* pX = NULL;
@@ -197,7 +193,7 @@ static pstatus_t general_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcR
 	}
 
 	/* B6 and B7 */
-	for (y = 0; y < halfHeight; y++)
+	for (UINT32 y = 0; y < halfHeight; y++)
 	{
 		const UINT32 val2y = (y * 2 + evenY);
 		const BYTE* Ua = pSrc[1] + srcStep[1] * y;
@@ -205,7 +201,7 @@ static pstatus_t general_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcR
 		BYTE* pU = pDst[1] + dstStep[1] * val2y;
 		BYTE* pV = pDst[2] + dstStep[2] * val2y;
 
-		for (x = 0; x < halfWidth; x++)
+		for (UINT32 x = 0; x < halfWidth; x++)
 		{
 			const UINT32 val2x1 = (x * 2 + oddX);
 			pU[val2x1] = Ua[x];
@@ -223,8 +219,6 @@ static pstatus_t general_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[
                                           const UINT32 dstStep[3],
                                           const RECTANGLE_16* WINPR_RESTRICT roi)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
 	const UINT32 nWidth = roi->right - roi->left;
 	const UINT32 nHeight = roi->bottom - roi->top;
 	const UINT32 halfWidth = (nWidth + 1) / 2;
@@ -232,7 +226,7 @@ static pstatus_t general_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[
 	const UINT32 quaterWidth = (nWidth + 3) / 4;
 
 	/* B4 and B5: odd UV values for width/2, height */
-	for (y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		const UINT32 yTop = y + roi->top;
 		const BYTE* pYaU = pSrc[0] + srcStep[0] * yTop + roi->left / 2;
@@ -240,7 +234,7 @@ static pstatus_t general_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[
 		BYTE* pU = pDst[1] + dstStep[1] * yTop + roi->left;
 		BYTE* pV = pDst[2] + dstStep[2] * yTop + roi->left;
 
-		for (x = 0; x < halfWidth; x++)
+		for (UINT32 x = 0; x < halfWidth; x++)
 		{
 			const UINT32 odd = 2 * x + 1;
 			pU[odd] = *pYaU++;
@@ -249,7 +243,7 @@ static pstatus_t general_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[
 	}
 
 	/* B6 - B9 */
-	for (y = 0; y < halfHeight; y++)
+	for (UINT32 y = 0; y < halfHeight; y++)
 	{
 		const BYTE* pUaU = pSrc[1] + srcStep[1] * (y + roi->top / 2) + roi->left / 4;
 		const BYTE* pUaV = pUaU + nTotalWidth / 4;
@@ -258,7 +252,7 @@ static pstatus_t general_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[
 		BYTE* pU = pDst[1] + dstStep[1] * (2 * y + 1 + roi->top) + roi->left;
 		BYTE* pV = pDst[2] + dstStep[2] * (2 * y + 1 + roi->top) + roi->left;
 
-		for (x = 0; x < quaterWidth; x++)
+		for (UINT32 x = 0; x < quaterWidth; x++)
 		{
 			pU[4 * x + 0] = *pUaU++;
 			pV[4 * x + 0] = *pUaV++;
@@ -308,8 +302,6 @@ general_YUV444SplitToYUV420(const BYTE* const WINPR_RESTRICT pSrc[3], const UINT
                             BYTE* WINPR_RESTRICT pAuxDst[3], const UINT32 dstAuxStep[3],
                             const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
 	UINT32 uY = 0;
 	UINT32 vY = 0;
 	UINT32 halfWidth = 0;
@@ -321,7 +313,7 @@ general_YUV444SplitToYUV420(const BYTE* const WINPR_RESTRICT pSrc[3], const UINT
 	halfHeight = (roi->height + 1) / 2;
 
 	/* B1 */
-	for (y = 0; y < roi->height; y++)
+	for (UINT32 y = 0; y < roi->height; y++)
 	{
 		const BYTE* pSrcY = pSrc[0] + y * srcStep[0];
 		BYTE* pY = pMainDst[0] + y * dstMainStep[0];
@@ -329,7 +321,7 @@ general_YUV444SplitToYUV420(const BYTE* const WINPR_RESTRICT pSrc[3], const UINT
 	}
 
 	/* B2 and B3 */
-	for (y = 0; y < halfHeight; y++)
+	for (UINT32 y = 0; y < halfHeight; y++)
 	{
 		const BYTE* pSrcU = pSrc[1] + 2 * y * srcStep[1];
 		const BYTE* pSrcV = pSrc[2] + 2 * y * srcStep[2];
@@ -338,7 +330,7 @@ general_YUV444SplitToYUV420(const BYTE* const WINPR_RESTRICT pSrc[3], const UINT
 		BYTE* pU = pMainDst[1] + y * dstMainStep[1];
 		BYTE* pV = pMainDst[2] + y * dstMainStep[2];
 
-		for (x = 0; x < halfWidth; x++)
+		for (UINT32 x = 0; x < halfWidth; x++)
 		{
 			/* Filter */
 			const INT32 u = pSrcU[2 * x] + pSrcU[2 * x + 1] + pSrcU1[2 * x] + pSrcU1[2 * x + 1];
@@ -349,7 +341,7 @@ general_YUV444SplitToYUV420(const BYTE* const WINPR_RESTRICT pSrc[3], const UINT
 	}
 
 	/* B4 and B5 */
-	for (y = 0; y < padHeigth; y++)
+	for (UINT32 y = 0; y < padHeigth; y++)
 	{
 		BYTE* pY = pAuxDst[0] + y * dstAuxStep[0];
 
@@ -376,14 +368,14 @@ general_YUV444SplitToYUV420(const BYTE* const WINPR_RESTRICT pSrc[3], const UINT
 	}
 
 	/* B6 and B7 */
-	for (y = 0; y < halfHeight; y++)
+	for (UINT32 y = 0; y < halfHeight; y++)
 	{
 		const BYTE* pSrcU = pSrc[1] + 2 * y * srcStep[1];
 		const BYTE* pSrcV = pSrc[2] + 2 * y * srcStep[2];
 		BYTE* pU = pAuxDst[1] + y * dstAuxStep[1];
 		BYTE* pV = pAuxDst[2] + y * dstAuxStep[2];
 
-		for (x = 0; x < halfWidth; x++)
+		for (UINT32 x = 0; x < halfWidth; x++)
 		{
 			pU[x] = pSrcU[2 * x + 1];
 			pV[x] = pSrcV[2 * x + 1];
@@ -494,8 +486,6 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* const WINPR_RESTRICT 
                                                UINT32 dstStep, UINT32 DstFormat,
                                                const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
 	UINT32 dstPad = 0;
 	UINT32 srcPad[3];
 	BYTE Y = 0;
@@ -527,12 +517,12 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* const WINPR_RESTRICT 
 	srcPad[2] = (srcStep[2] - halfWidth);
 	dstPad = (dstStep - (nWidth * 4));
 
-	for (y = 0; y < halfHeight;)
+	for (UINT32 y = 0; y < halfHeight;)
 	{
 		if (++y == halfHeight)
 			lastRow <<= 1;
 
-		for (x = 0; x < halfWidth;)
+		for (UINT32 x = 0; x < halfWidth;)
 		{
 			BYTE r = 0;
 			BYTE g = 0;
@@ -575,7 +565,7 @@ static pstatus_t general_YUV420ToRGB_8u_P3AC4R(const BYTE* const WINPR_RESTRICT 
 		if (lastRow & 0x02)
 			break;
 
-		for (x = 0; x < halfWidth;)
+		for (UINT32 x = 0; x < halfWidth;)
 		{
 			BYTE r = 0;
 			BYTE g = 0;
@@ -645,21 +635,19 @@ static pstatus_t general_RGBToYUV444_8u_P3AC4R(const BYTE* WINPR_RESTRICT pSrc, 
                                                const prim_size_t* WINPR_RESTRICT roi)
 {
 	const UINT32 bpp = FreeRDPGetBytesPerPixel(SrcFormat);
-	UINT32 x = 0;
-	UINT32 y = 0;
 	UINT32 nWidth = 0;
 	UINT32 nHeight = 0;
 	nWidth = roi->width;
 	nHeight = roi->height;
 
-	for (y = 0; y < nHeight; y++)
+	for (UINT32 y = 0; y < nHeight; y++)
 	{
 		const BYTE* pRGB = pSrc + y * srcStep;
 		BYTE* pY = pDst[0] + y * dstStep[0];
 		BYTE* pU = pDst[1] + y * dstStep[1];
 		BYTE* pV = pDst[2] + y * dstStep[2];
 
-		for (x = 0; x < nWidth; x++)
+		for (UINT32 x = 0; x < nWidth; x++)
 		{
 			BYTE B = 0;
 			BYTE G = 0;
@@ -680,8 +668,6 @@ static INLINE pstatus_t general_RGBToYUV420_BGRX(const BYTE* WINPR_RESTRICT pSrc
                                                  const UINT32 dstStep[3],
                                                  const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
 	UINT32 i = 0;
 	size_t x1 = 0;
 	size_t x2 = 4;
@@ -694,14 +680,14 @@ static INLINE pstatus_t general_RGBToYUV420_BGRX(const BYTE* WINPR_RESTRICT pSrc
 	UINT32 max_x = roi->width - 1;
 	UINT32 max_y = roi->height - 1;
 
-	for (y = i = 0; y < roi->height; y += 2, i++)
+	for (UINT32 y = i = 0; y < roi->height; y += 2, i++)
 	{
 		const BYTE* src = pSrc + y * srcStep;
 		BYTE* ydst = pDst[0] + y * dstStep[0];
 		BYTE* udst = pDst[1] + i * dstStep[1];
 		BYTE* vdst = pDst[2] + i * dstStep[2];
 
-		for (x = 0; x < roi->width; x += 2)
+		for (UINT32 x = 0; x < roi->width; x += 2)
 		{
 			BYTE R = 0;
 			BYTE G = 0;
@@ -760,9 +746,6 @@ static INLINE pstatus_t general_RGBToYUV420_RGBX(const BYTE* WINPR_RESTRICT pSrc
                                                  const UINT32 dstStep[3],
                                                  const prim_size_t* WINPR_RESTRICT roi)
 {
-	UINT32 x = 0;
-	UINT32 y = 0;
-	UINT32 i = 0;
 	size_t x1 = 0;
 	size_t x2 = 4;
 	size_t x3 = srcStep;
@@ -774,14 +757,14 @@ static INLINE pstatus_t general_RGBToYUV420_RGBX(const BYTE* WINPR_RESTRICT pSrc
 	UINT32 max_x = roi->width - 1;
 	UINT32 max_y = roi->height - 1;
 
-	for (y = i = 0; y < roi->height; y += 2, i++)
+	for (UINT32 y = 0, i = 0; y < roi->height; y += 2, i++)
 	{
 		const BYTE* src = pSrc + y * srcStep;
 		BYTE* ydst = pDst[0] + y * dstStep[0];
 		BYTE* udst = pDst[1] + i * dstStep[1];
 		BYTE* vdst = pDst[2] + i * dstStep[2];
 
-		for (x = 0; x < roi->width; x += 2)
+		for (UINT32 x = 0; x < roi->width; x += 2)
 		{
 			BYTE R = 0;
 			BYTE G = 0;
@@ -841,9 +824,6 @@ static INLINE pstatus_t general_RGBToYUV420_ANY(const BYTE* WINPR_RESTRICT pSrc,
                                                 const prim_size_t* WINPR_RESTRICT roi)
 {
 	const UINT32 bpp = FreeRDPGetBytesPerPixel(srcFormat);
-	UINT32 x = 0;
-	UINT32 y = 0;
-	UINT32 i = 0;
 	size_t x1 = 0;
 	size_t x2 = bpp;
 	size_t x3 = srcStep;
@@ -855,14 +835,14 @@ static INLINE pstatus_t general_RGBToYUV420_ANY(const BYTE* WINPR_RESTRICT pSrc,
 	UINT32 max_x = roi->width - 1;
 	UINT32 max_y = roi->height - 1;
 
-	for (y = i = 0; y < roi->height; y += 2, i++)
+	for (UINT32 y = 0, i = 0; y < roi->height; y += 2, i++)
 	{
 		const BYTE* src = pSrc + y * srcStep;
 		BYTE* ydst = pDst[0] + y * dstStep[0];
 		BYTE* udst = pDst[1] + i * dstStep[1];
 		BYTE* vdst = pDst[2] + i * dstStep[2];
 
-		for (x = 0; x < roi->width; x += 2)
+		for (UINT32 x = 0; x < roi->width; x += 2)
 		{
 			BYTE R = 0;
 			BYTE G = 0;
@@ -1062,10 +1042,9 @@ static INLINE pstatus_t general_RGBToAVC444YUV_BGRX(const BYTE* WINPR_RESTRICT p
 	 * Note:
 	 * Read information in function general_RGBToAVC444YUV_ANY below !
 	 */
-	UINT32 y = 0;
 	const BYTE* pMaxSrc = pSrc + (roi->height - 1) * srcStep;
 
-	for (y = 0; y < roi->height; y += 2)
+	for (UINT32 y = 0; y < roi->height; y += 2)
 	{
 		const BOOL last = (y >= (roi->height - 1));
 		const BYTE* srcEven = y < roi->height ? pSrc + y * srcStep : pMaxSrc;

@@ -1155,7 +1155,6 @@ static BOOL nego_process_correlation_info(rdpNego* nego, wStream* s)
 {
 	UINT8 type = 0;
 	UINT8 flags = 0;
-	UINT8 x = 0;
 	UINT16 length = 0;
 	BYTE correlationId[16] = { 0 };
 
@@ -1191,12 +1190,12 @@ static BOOL nego_process_correlation_info(rdpNego* nego, wStream* s)
 		         correlationId[0]);
 		return FALSE;
 	}
-	for (x = 0; x < ARRAYSIZE(correlationId); x++)
+	for (size_t x = 0; x < ARRAYSIZE(correlationId); x++)
 	{
 		if (correlationId[x] == 0x0D)
 		{
 			WLog_ERR(TAG,
-			         "(RDP_NEG_CORRELATION_INFO::correlationId[%" PRIu8
+			         "(RDP_NEG_CORRELATION_INFO::correlationId[%" PRIuz
 			         "] has invalid value 0x%02" PRIx8,
 			         x, correlationId[x]);
 			return FALSE;
