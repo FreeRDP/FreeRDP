@@ -136,19 +136,22 @@ struct xf_clipboard
 	CliprdrFileContext* file;
 };
 
-static const char* mime_text_plain = "text/plain";
-static const char* mime_uri_list = "text/uri-list";
-static const char* mime_html = "text/html";
-static const char* mime_bmp = "image/bmp";
-static const char* mime_png = "image/png";
-static const char* mime_jpeg = "image/jpeg";
-static const char* mime_gif = "image/gif";
+static const char mime_text_plain[] = "text/plain";
+static const char mime_uri_list[] = "text/uri-list";
+static const char mime_html[] = "text/html";
+static const char* mime_bitmap[] = { "image/bmp", "image/x-bmp", "image/x-MS-bmp",
+	                                 "image/x-win-bitmap" };
+static const char mime_webp[] = "image/webp";
+static const char mime_png[] = "image/png";
+static const char mime_jpeg[] = "image/jpeg";
+static const char mime_tiff[] = "image/tiff";
+static const char* mime_images[] = { mime_webp, mime_png, mime_jpeg, mime_tiff };
 
-static const char* mime_gnome_copied_files = "x-special/gnome-copied-files";
-static const char* mime_mate_copied_files = "x-special/mate-copied-files";
+static const char mime_gnome_copied_files[] = "x-special/gnome-copied-files";
+static const char mime_mate_copied_files[] = "x-special/mate-copied-files";
 
-static const char* type_FileGroupDescriptorW = "FileGroupDescriptorW";
-static const char* type_HtmlFormat = "HTML Format";
+static const char type_FileGroupDescriptorW[] = "FileGroupDescriptorW";
+static const char type_HtmlFormat[] = "HTML Format";
 
 static void xf_cliprdr_clear_cached_data(xfClipboard* clipboard);
 static UINT xf_cliprdr_send_client_format_list(xfClipboard* clipboard, BOOL force);
@@ -1273,6 +1276,9 @@ static void get_src_format_info_for_local_request(xfClipboard* clipboard,
 			case CF_DIB:
 				*srcFormatId = CF_DIB;
 				break;
+			case CF_TIFF:
+				*srcFormatId = CF_TIFF;
+				break;
 			default:
 				break;
 		}
@@ -2105,6 +2111,10 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 				srcFormatId = CF_DIB;
 				break;
 
+			case CF_TIFF:
+				srcFormatId = CF_TIFF;
+				break;
+
 			default:
 				break;
 		}
@@ -2155,18 +2165,21 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 
 	/* Cache converted and original data to avoid doing a possibly costly
 	 * conversion again on subsequent requests */
-	cached_data = xf_cached_data_new(pDstData, DstSize);
-	if (!cached_data)
+	if (pDstData)
 	{
-		WLog_WARN(TAG, "Failed to allocate cache entry");
-		free(pDstData);
-		return CHANNEL_RC_OK;
-	}
-	if (!HashTable_Insert(clipboard->cachedData, (void*)(UINT_PTR)dstFormatId, cached_data))
-	{
-		WLog_WARN(TAG, "Failed to cache clipboard data");
-		xf_cached_data_free(cached_data);
-		return CHANNEL_RC_OK;
+		cached_data = xf_cached_data_new(pDstData, DstSize);
+		if (!cached_data)
+		{
+			WLog_WARN(TAG, "Failed to allocate cache entry");
+			free(pDstData);
+			return CHANNEL_RC_OK;
+		}
+		if (!HashTable_Insert(clipboard->cachedData, (void*)(UINT_PTR)dstFormatId, cached_data))
+		{
+			WLog_WARN(TAG, "Failed to cache clipboard data");
+			xf_cached_data_free(cached_data);
+			return CHANNEL_RC_OK;
+		}
 	}
 
 	/* We have to copy the original data again, as pSrcData is now owned
@@ -2324,24 +2337,42 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	clientFormat->localFormat = ClipboardGetFormatId(xfc->clipboard->system, mime_text_plain);
 
 	clientFormat = &clipboard->clientFormats[n++];
-	clientFormat->atom = XInternAtom(xfc->display, mime_png, False);
-	clientFormat->formatToRequest = clientFormat->localFormat =
-	    ClipboardGetFormatId(xfc->clipboard->system, mime_png);
+	clientFormat->atom = XInternAtom(xfc->display, mime_tiff, False);
+	clientFormat->formatToRequest = clientFormat->localFormat = CF_TIFF;
 
-	clientFormat = &clipboard->clientFormats[n++];
-	clientFormat->atom = XInternAtom(xfc->display, mime_jpeg, False);
-	clientFormat->formatToRequest = clientFormat->localFormat =
-	    ClipboardGetFormatId(xfc->clipboard->system, mime_jpeg);
+	for (size_t x = 0; x < ARRAYSIZE(mime_bitmap); x++)
+	{
+		const char* mime_bmp = mime_bitmap[x];
+		const DWORD format = ClipboardGetFormatId(xfc->clipboard->system, mime_bmp);
+		if (format == 0)
+		{
+			WLog_DBG(TAG, "skipping local bitmap format %s [NOT SUPPORTED]", mime_bmp);
+			continue;
+		}
 
-	clientFormat = &clipboard->clientFormats[n++];
-	clientFormat->atom = XInternAtom(xfc->display, mime_gif, False);
-	clientFormat->formatToRequest = clientFormat->localFormat =
-	    ClipboardGetFormatId(xfc->clipboard->system, mime_gif);
+		WLog_DBG(TAG, "register local bitmap format %s [0x%08" PRIx32 "]", mime_bmp, format);
+		clientFormat = &clipboard->clientFormats[n++];
+		clientFormat->localFormat = format;
+		clientFormat->atom = XInternAtom(xfc->display, mime_bmp, False);
+		clientFormat->formatToRequest = CF_DIB;
+	}
 
-	clientFormat = &clipboard->clientFormats[n++];
-	clientFormat->atom = XInternAtom(xfc->display, mime_bmp, False);
-	clientFormat->formatToRequest = CF_DIB;
-	clientFormat->localFormat = ClipboardGetFormatId(xfc->clipboard->system, mime_bmp);
+	for (size_t x = 0; x < ARRAYSIZE(mime_images); x++)
+	{
+		const char* mime_bmp = mime_images[x];
+		const DWORD format = ClipboardGetFormatId(xfc->clipboard->system, mime_bmp);
+		if (format == 0)
+		{
+			WLog_DBG(TAG, "skipping local bitmap format %s [NOT SUPPORTED]", mime_bmp);
+			continue;
+		}
+
+		WLog_DBG(TAG, "register local bitmap format %s [0x%08" PRIx32 "]", mime_bmp, format);
+		clientFormat = &clipboard->clientFormats[n++];
+		clientFormat->localFormat = format;
+		clientFormat->atom = XInternAtom(xfc->display, mime_bmp, False);
+		clientFormat->formatToRequest = CF_DIB;
+	}
 
 	clientFormat = &clipboard->clientFormats[n++];
 	clientFormat->atom = XInternAtom(xfc->display, mime_html, False);
