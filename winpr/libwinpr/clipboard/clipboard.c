@@ -83,9 +83,10 @@ static wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 forma
 	{
 		for (index = 0; index < clipboard->numFormats; index++)
 		{
-			if (formatId == clipboard->formats[index].formatId)
+			wClipboardFormat* cformat = &clipboard->formats[index];
+			if (formatId == cformat->formatId)
 			{
-				format = &clipboard->formats[index];
+				format = cformat;
 				break;
 			}
 		}
@@ -94,12 +95,13 @@ static wClipboardFormat* ClipboardFindFormat(wClipboard* clipboard, UINT32 forma
 	{
 		for (index = 0; index < clipboard->numFormats; index++)
 		{
-			if (!clipboard->formats[index].formatName)
+			wClipboardFormat* cformat = &clipboard->formats[index];
+			if (!cformat->formatName)
 				continue;
 
-			if (strcmp(name, clipboard->formats[index].formatName) == 0)
+			if (strcmp(name, cformat->formatName) == 0)
 			{
-				format = &clipboard->formats[index];
+				format = cformat;
 				break;
 			}
 		}

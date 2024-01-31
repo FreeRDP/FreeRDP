@@ -234,7 +234,7 @@ static void* clipboard_synthesize_cf_dib(wClipboard* clipboard, UINT32 formatId,
 	}
 	else if (is_format_bitmap(clipboard, formatId))
 	{
-		const BITMAPFILEHEADER* pFileHeader;
+		const BITMAPFILEHEADER* pFileHeader = NULL;
 
 		if (SrcSize < (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER)))
 			return NULL;
