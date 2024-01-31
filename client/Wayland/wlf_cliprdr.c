@@ -53,9 +53,11 @@ static const char* mime_image[] = {
 	"image/gif",       "image/tiff"
 };
 
+static const char mime_tiff[] = "image/tiff";
 static const char mime_uri_list[] = "text/uri-list";
 static const char mime_html[] = "text/html";
-static const char mime_bmp[] = "image/bmp";
+static const char* mime_bitmap[] = { "image/bmp", "image/x-bmp", "image/x-MS-bmp",
+	                                 "image/x-win-bitmap" };
 
 static const char mime_gnome_copied_files[] = "x-special/gnome-copied-files";
 static const char mime_mate_copied_files[] = "x-special/mate-copied-files";
@@ -287,9 +289,14 @@ static BOOL wlf_cliprdr_add_client_format(wfClipboard* clipboard, const char* mi
 	}
 	else if (wlf_mime_is_image(mime))
 	{
-		UINT32 formatId = ClipboardGetFormatId(clipboard->system, mime_bmp);
-		wfl_cliprdr_add_client_format_id(clipboard, formatId);
+		for (size_t x = 0; x < ARRAYSIZE(mime_bitmap); x++)
+		{
+			const char* mime_bmp = mime_bitmap[x];
+			UINT32 formatId = ClipboardGetFormatId(clipboard->system, mime_bmp);
+			wfl_cliprdr_add_client_format_id(clipboard, formatId);
+		}
 		wfl_cliprdr_add_client_format_id(clipboard, CF_DIB);
+		wfl_cliprdr_add_client_format_id(clipboard, CF_TIFF);
 	}
 	else if (wlf_mime_is_file(mime))
 	{
@@ -539,7 +546,10 @@ static void wlf_cliprdr_transfer_data(UwacSeat* seat, void* context, const char*
 	else if (wlf_mime_is_image(mime))
 	{
 		request.responseMime = mime;
-		request.responseFormat = CF_DIB;
+		if (strcmp(mime, mime_tiff) == 0)
+			request.responseFormat = CF_TIFF;
+		else
+			request.responseFormat = CF_DIB;
 	}
 
 	if (request.responseMime != NULL)
@@ -749,7 +759,11 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 
 		case CF_DIB:
 		case CF_DIBV5:
-			mime = mime_bmp;
+			mime = mime_bitmap[0];
+			break;
+
+		case CF_TIFF:
+			mime = mime_tiff;
 			break;
 
 		default:
