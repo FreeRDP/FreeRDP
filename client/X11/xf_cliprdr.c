@@ -139,10 +139,12 @@ struct xf_clipboard
 static const char* mime_text_plain = "text/plain";
 static const char* mime_uri_list = "text/uri-list";
 static const char* mime_html = "text/html";
-static const char* mime_bmp = "image/bmp";
+static const char* mime_bitmap[] = { "image/bmp", "image/x-bmp", "image/x-MS-bmp",
+	                                 "image/x-win-bitmap" };
 static const char* mime_png = "image/png";
 static const char* mime_jpeg = "image/jpeg";
 static const char* mime_gif = "image/gif";
+static const char* mime_tiff = "image/tiff";
 
 static const char* mime_gnome_copied_files = "x-special/gnome-copied-files";
 static const char* mime_mate_copied_files = "x-special/mate-copied-files";
@@ -1227,6 +1229,7 @@ static void get_src_format_info_for_local_request(xfClipboard* clipboard,
 	*srcFormatId = 0;
 	*nullTerminated = FALSE;
 
+	char* atom = Safe_XGetAtomName(clipboard->xfc->display, format->atom);
 	if (format->formatName)
 	{
 		ClipboardLock(clipboard->system);
@@ -1255,10 +1258,14 @@ static void get_src_format_info_for_local_request(xfClipboard* clipboard,
 			case CF_DIB:
 				*srcFormatId = CF_DIB;
 				break;
+			case CF_TIFF:
+				*srcFormatId = CF_TIFF;
+				break;
 			default:
 				break;
 		}
 	}
+	XFree(atom);
 }
 
 static xfCachedData* convert_data_from_existing_raw_data(xfClipboard* clipboard,
@@ -2085,6 +2092,10 @@ xf_cliprdr_server_format_data_response(CliprdrClientContext* context,
 				srcFormatId = CF_DIB;
 				break;
 
+			case CF_TIFF:
+				srcFormatId = CF_TIFF;
+				break;
+
 			default:
 				break;
 		}
@@ -2330,9 +2341,17 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	    ClipboardGetFormatId(xfc->clipboard->system, mime_gif);
 
 	clientFormat = &clipboard->clientFormats[n++];
-	clientFormat->atom = XInternAtom(xfc->display, mime_bmp, False);
-	clientFormat->formatToRequest = CF_DIB;
-	clientFormat->localFormat = ClipboardGetFormatId(xfc->clipboard->system, mime_bmp);
+	clientFormat->atom = XInternAtom(xfc->display, mime_tiff, False);
+	clientFormat->formatToRequest = clientFormat->localFormat = CF_TIFF;
+
+	for (size_t x = 0; x < ARRAYSIZE(mime_bitmap); x++)
+	{
+		const char* mime_bmp = mime_bitmap[x];
+		clientFormat = &clipboard->clientFormats[n++];
+		clientFormat->atom = XInternAtom(xfc->display, mime_bmp, False);
+		clientFormat->formatToRequest = CF_DIB;
+		clientFormat->localFormat = ClipboardGetFormatId(xfc->clipboard->system, mime_bmp);
+	}
 
 	clientFormat = &clipboard->clientFormats[n++];
 	clientFormat->atom = XInternAtom(xfc->display, mime_html, False);
