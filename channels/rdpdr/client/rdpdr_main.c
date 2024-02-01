@@ -1166,6 +1166,13 @@ static UINT rdpdr_process_connect(rdpdrPlugin* rdpdr)
 
 			if (drive->Path && (hotplugAll || hotplugLater))
 			{
+				if (!rdpdr->async)
+				{
+					WLog_Print(rdpdr->log, WLOG_WARN,
+					           "Drive hotplug is not supported in synchronous mode!");
+					continue;
+				}
+
 				if (hotplugAll)
 					first_hotplug(rdpdr);
 
@@ -1952,12 +1959,23 @@ static UINT rdpdr_virtual_channel_event_data_received(rdpdrPlugin* rdpdr, void* 
 		Stream_SealLength(data_in);
 		Stream_SetPosition(data_in, 0);
 
-		if (!MessageQueue_Post(rdpdr->queue, NULL, 0, (void*)data_in, NULL))
+		if (rdpdr->async)
 		{
-			WLog_Print(rdpdr->log, WLOG_ERROR, "MessageQueue_Post failed!");
-			return ERROR_INTERNAL_ERROR;
+			if (!MessageQueue_Post(rdpdr->queue, NULL, 0, (void*)data_in, NULL))
+			{
+				WLog_Print(rdpdr->log, WLOG_ERROR, "MessageQueue_Post failed!");
+				return ERROR_INTERNAL_ERROR;
+			}
+			rdpdr->data_in = NULL;
 		}
-		rdpdr->data_in = NULL;
+		else
+		{
+			UINT error = rdpdr_process_receive(rdpdr, data_in);
+			Stream_Release(data_in);
+			rdpdr->data_in = NULL;
+			if (error)
+				return error;
+		}
 	}
 
 	return CHANNEL_RC_OK;
@@ -2103,22 +2121,35 @@ static UINT rdpdr_virtual_channel_event_connected(rdpdrPlugin* rdpdr, LPVOID pDa
 	WINPR_UNUSED(pData);
 	WINPR_UNUSED(dataLength);
 
-	rdpdr->queue = MessageQueue_New(NULL);
-
-	if (!rdpdr->queue)
+	if (rdpdr->async)
 	{
-		WLog_Print(rdpdr->log, WLOG_ERROR, "MessageQueue_New failed!");
-		return CHANNEL_RC_NO_MEMORY;
+		rdpdr->queue = MessageQueue_New(NULL);
+
+		if (!rdpdr->queue)
+		{
+			WLog_Print(rdpdr->log, WLOG_ERROR, "MessageQueue_New failed!");
+			return CHANNEL_RC_NO_MEMORY;
+		}
+
+		obj = MessageQueue_Object(rdpdr->queue);
+		obj->fnObjectFree = queue_free;
+
+		if (!(rdpdr->thread = CreateThread(NULL, 0, rdpdr_virtual_channel_client_thread,
+		                                   (void*)rdpdr, 0, NULL)))
+		{
+			WLog_Print(rdpdr->log, WLOG_ERROR, "CreateThread failed!");
+			return ERROR_INTERNAL_ERROR;
+		}
 	}
-
-	obj = MessageQueue_Object(rdpdr->queue);
-	obj->fnObjectFree = queue_free;
-
-	if (!(rdpdr->thread =
-	          CreateThread(NULL, 0, rdpdr_virtual_channel_client_thread, (void*)rdpdr, 0, NULL)))
+	else
 	{
-		WLog_Print(rdpdr->log, WLOG_ERROR, "CreateThread failed!");
-		return ERROR_INTERNAL_ERROR;
+		UINT error = rdpdr_process_connect(rdpdr);
+		if (error)
+		{
+			WLog_Print(rdpdr->log, WLOG_ERROR,
+			           "rdpdr_process_connect failed with error %" PRIu32 "!", error);
+			return error;
+		}
 	}
 
 	return rdpdr->channelEntryPoints.pVirtualChannelOpenEx(rdpdr->InitHandle, &rdpdr->OpenHandle,
@@ -2297,6 +2328,9 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE VirtualChannelEntryEx(PCHANNEL_ENTRY_POINTS p
 	    (pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
 		rdpdr->rdpcontext = pEntryPointsEx->context;
+		if (!freerdp_settings_get_bool(rdpdr->rdpcontext->settings,
+		                               FreeRDP_SynchronousStaticChannels))
+			rdpdr->async = TRUE;
 	}
 
 	CopyMemory(&(rdpdr->channelEntryPoints), pEntryPoints, sizeof(CHANNEL_ENTRY_POINTS_FREERDP_EX));

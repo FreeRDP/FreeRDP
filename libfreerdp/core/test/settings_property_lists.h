@@ -176,6 +176,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_SurfaceFrameMarkerEnabled,
 	FreeRDP_SuspendInput,
 	FreeRDP_SynchronousDynamicChannels,
+	FreeRDP_SynchronousStaticChannels,
 	FreeRDP_TcpKeepAlive,
 	FreeRDP_TlsSecurity,
 	FreeRDP_ToggleFullscreen,

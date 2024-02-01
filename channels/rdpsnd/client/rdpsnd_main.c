@@ -114,6 +114,7 @@ struct rdpsnd_plugin
 
 	size_t references;
 	BOOL OnOpenCalled;
+	BOOL async;
 };
 
 static const char* rdpsnd_is_dyn_str(BOOL dynamic)
@@ -1167,10 +1168,19 @@ static UINT rdpsnd_virtual_channel_event_data_received(rdpsndPlugin* plugin, voi
 		Stream_SealLength(plugin->data_in);
 		Stream_SetPosition(plugin->data_in, 0);
 
-		if (!MessageQueue_Post(plugin->queue, NULL, 0, plugin->data_in, NULL))
-			return ERROR_INTERNAL_ERROR;
-
-		plugin->data_in = NULL;
+		if (plugin->async)
+		{
+			if (!MessageQueue_Post(plugin->queue, NULL, 0, plugin->data_in, NULL))
+				return ERROR_INTERNAL_ERROR;
+			plugin->data_in = NULL;
+		}
+		else
+		{
+			UINT error = rdpsnd_recv_pdu(plugin, plugin->data_in);
+			plugin->data_in = NULL;
+			if (error)
+				return error;
+		}
 	}
 
 	return CHANNEL_RC_OK;
@@ -1420,19 +1430,22 @@ static DWORD WINAPI play_thread(LPVOID arg)
 
 static UINT rdpsnd_virtual_channel_event_initialized(rdpsndPlugin* rdpsnd)
 {
-	wObject obj = { 0 };
-
 	if (!rdpsnd)
 		return ERROR_INVALID_PARAMETER;
 
-	obj.fnObjectFree = _queue_free;
-	rdpsnd->queue = MessageQueue_New(&obj);
-	if (!rdpsnd->queue)
-		return CHANNEL_RC_NO_MEMORY;
+	if (rdpsnd->async)
+	{
+		wObject obj = { 0 };
 
-	rdpsnd->thread = CreateThread(NULL, 0, play_thread, rdpsnd, 0, NULL);
-	if (!rdpsnd->thread)
-		return CHANNEL_RC_INITIALIZATION_ERROR;
+		obj.fnObjectFree = _queue_free;
+		rdpsnd->queue = MessageQueue_New(&obj);
+		if (!rdpsnd->queue)
+			return CHANNEL_RC_NO_MEMORY;
+
+		rdpsnd->thread = CreateThread(NULL, 0, play_thread, rdpsnd, 0, NULL);
+		if (!rdpsnd->thread)
+			return CHANNEL_RC_INITIALIZATION_ERROR;
+	}
 
 	if (!allocate_internals(rdpsnd))
 		return CHANNEL_RC_NO_MEMORY;
@@ -1573,6 +1586,9 @@ FREERDP_ENTRY_POINT(BOOL VCAPITYPE rdpsnd_VirtualChannelEntryEx(PCHANNEL_ENTRY_P
 	    (pEntryPointsEx->MagicNumber == FREERDP_CHANNEL_MAGIC_NUMBER))
 	{
 		rdpsnd->rdpcontext = pEntryPointsEx->context;
+		if (!freerdp_settings_get_bool(rdpsnd->rdpcontext->settings,
+		                               FreeRDP_SynchronousStaticChannels))
+			rdpsnd->async = TRUE;
 	}
 
 	CopyMemory(&(rdpsnd->channelEntryPoints), pEntryPoints,
@@ -1636,10 +1652,19 @@ static UINT rdpsnd_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	Stream_SealLength(copy);
 	Stream_SetPosition(copy, 0);
 
-	if (!MessageQueue_Post(plugin->queue, NULL, 0, copy, NULL))
+	if (plugin->async)
 	{
-		Stream_Release(copy);
-		return ERROR_INTERNAL_ERROR;
+		if (!MessageQueue_Post(plugin->queue, NULL, 0, copy, NULL))
+		{
+			Stream_Release(copy);
+			return ERROR_INTERNAL_ERROR;
+		}
+	}
+	else
+	{
+		UINT error = rdpsnd_recv_pdu(plugin, copy);
+		if (error)
+			return error;
 	}
 
 	return CHANNEL_RC_OK;
@@ -1806,6 +1831,10 @@ FREERDP_ENTRY_POINT(UINT rdpsnd_DVCPluginEntry(IDRDYNVC_ENTRY_POINTS* pEntryPoin
 
 		WINPR_ASSERT(pEntryPoints->GetRdpContext);
 		rdpsnd->rdpcontext = pEntryPoints->GetRdpContext(pEntryPoints);
+
+		if (!freerdp_settings_get_bool(rdpsnd->rdpcontext->settings,
+		                               FreeRDP_SynchronousDynamicChannels))
+			rdpsnd->async = TRUE;
 
 		/* user data pointer is not const, cast to avoid warning. */
 		cnv.cev = pEntryPoints->GetPluginData(pEntryPoints);

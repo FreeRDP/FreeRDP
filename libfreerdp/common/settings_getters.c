@@ -576,6 +576,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 		case FreeRDP_SynchronousDynamicChannels:
 			return settings->SynchronousDynamicChannels;
 
+		case FreeRDP_SynchronousStaticChannels:
+			return settings->SynchronousStaticChannels;
+
 		case FreeRDP_TcpKeepAlive:
 			return settings->TcpKeepAlive;
 
@@ -1335,6 +1338,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 
 		case FreeRDP_SynchronousDynamicChannels:
 			settings->SynchronousDynamicChannels = cnv.c;
+			break;
+
+		case FreeRDP_SynchronousStaticChannels:
+			settings->SynchronousStaticChannels = cnv.c;
 			break;
 
 		case FreeRDP_TcpKeepAlive:
