@@ -1,304 +1,180 @@
-#include <winpr/wtypes.h>
-#include <winpr/crt.h>
-#include <winpr/path.h>
+#include <stdio.h>
+#include <winpr/string.h>
 #include <winpr/file.h>
-#include <winpr/print.h>
+#include <winpr/path.h>
 #include <winpr/image.h>
-#include <winpr/environment.h>
 
-#ifndef PATH_MAX
-#define PATH_MAX 4096
-#endif
+static const char test_src_filename[] = TEST_SOURCE_PATH "/rgb";
+static const char test_bin_filename[] = TEST_BINARY_PATH "/rgb";
 
-static void* read_image(const char* src, size_t* size)
+static BOOL test_equal_to(const wImage* bmp, const char* name, UINT32 format)
 {
-	int success = 0;
-	void* a = NULL;
-	INT64 src_size;
-	FILE* fsrc = winpr_fopen(src, "rb");
+	BOOL rc = FALSE;
+	wImage* cmp = winpr_image_new();
+	if (!cmp)
+		goto fail;
 
-	if (!fsrc)
+	char path[MAX_PATH] = { 0 };
+	_snprintf(path, sizeof(path), "%s.%s", name, winpr_image_format_extension(format));
+	const int cmpSize = winpr_image_read(cmp, path);
+	if (cmpSize <= 0)
 	{
-		fprintf(stderr, "Failed to open file %s\n", src);
-		goto cleanup;
+		fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, path);
+		goto fail;
 	}
 
-	if (_fseeki64(fsrc, 0, SEEK_END))
-	{
-		fprintf(stderr, "Failed to seek to file end\n");
-		goto cleanup;
-	}
+	rc = winpr_image_equal(bmp, cmp);
+	if (!rc)
+		fprintf(stderr, "[%s] winpr_image_eqal failed", __func__);
 
-	src_size = _ftelli64(fsrc);
-	if (src_size < 0)
-	{
-		fprintf(stderr, "Invalid file position %" PRId64 "\n", src_size);
-		goto cleanup;
-	}
-	if (_fseeki64(fsrc, 0, SEEK_SET))
-	{
-		fprintf(stderr, "Failed to seek to SEEK_SET\n");
-		goto cleanup;
-	}
-
-	a = malloc((size_t)src_size);
-
-	if (!a)
-	{
-		fprintf(stderr, "Failed malloc %" PRId64 " bytes\n", src_size);
-		goto cleanup;
-	}
-
-	if (fread(a, sizeof(char), (size_t)src_size, fsrc) != (size_t)src_size)
-	{
-		fprintf(stderr, "Failed read %" PRId64 " bytes\n", src_size);
-		goto cleanup;
-	}
-
-	success = 1;
-	*size = src_size;
-cleanup:
-
-	if (a && !success)
-	{
-		free(a);
-		a = NULL;
-	}
-
-	if (fsrc)
-		fclose(fsrc);
-
-	return a;
-}
-
-static int img_compare(wImage* image, wImage* image2, BOOL ignoreType)
-{
-	int rc = -1;
-
-	if ((image->type != image2->type) && !ignoreType)
-	{
-		fprintf(stderr, "Image type mismatch %d:%d\n", image->type, image2->type);
-		goto cleanup;
-	}
-
-	if (image->width != image2->width)
-	{
-		fprintf(stderr, "Image width mismatch %d:%d\n", image->width, image2->width);
-		goto cleanup;
-	}
-
-	if (image->height != image2->height)
-	{
-		fprintf(stderr, "Image height mismatch %d:%d\n", image->height, image2->height);
-		goto cleanup;
-	}
-
-	if (image->scanline != image2->scanline)
-	{
-		fprintf(stderr, "Image scanline mismatch %d:%d\n", image->scanline, image2->scanline);
-		goto cleanup;
-	}
-
-	if (image->bitsPerPixel != image2->bitsPerPixel)
-	{
-		fprintf(stderr, "Image bitsPerPixel mismatch %d:%d\n", image->bitsPerPixel,
-		        image2->bitsPerPixel);
-		goto cleanup;
-	}
-
-	if (image->bytesPerPixel != image2->bytesPerPixel)
-	{
-		fprintf(stderr, "Image bytesPerPixel mismatch %d:%d\n", image->bytesPerPixel,
-		        image2->bytesPerPixel);
-		goto cleanup;
-	}
-
-	rc = memcmp(image->data, image2->data, image->scanline * image->height);
-
-	if (rc)
-		fprintf(stderr, "Image data mismatch!\n");
-
-cleanup:
+fail:
+	winpr_image_free(cmp, TRUE);
 	return rc;
 }
 
-static wImage* get_image(const char* src)
+static BOOL test_equal(void)
 {
-	int status;
-	wImage* image = NULL;
-	image = winpr_image_new();
+	BOOL rc = FALSE;
+	wImage* bmp = winpr_image_new();
 
-	if (!image)
+	if (!bmp)
+		goto fail;
+
+	char path[MAX_PATH] = { 0 };
+	_snprintf(path, sizeof(path), "%s.bmp", test_src_filename);
+	PathCchConvertStyleA(path, sizeof(path), PATH_STYLE_NATIVE);
+
+	const int bmpSize = winpr_image_read(bmp, path);
+	if (bmpSize <= 0)
 	{
-		fprintf(stderr, "Failed to create image!");
-		goto cleanup;
+		fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, path);
+		goto fail;
 	}
 
-	status = winpr_image_read(image, src);
-
-	if (status < 0)
+	for (UINT32 x = 0; x < UINT8_MAX; x++)
 	{
-		fprintf(stderr, "Failed to read image %s!", src);
-		winpr_image_free(image, TRUE);
-		image = NULL;
+		if (!winpr_image_format_is_supported(x))
+			continue;
+		if (!test_equal_to(bmp, test_src_filename, x))
+			goto fail;
 	}
 
-cleanup:
-	return image;
+	rc = TRUE;
+fail:
+	winpr_image_free(bmp, TRUE);
+
+	return rc;
 }
 
-static int create_test(const char* src, const char* dst_png, const char* dst_bmp)
+static BOOL test_read_write_compare(const char* tname, const char* tdst, UINT32 format)
 {
-	int rc = -1;
-	int ret = -1;
-	int status;
-	size_t bsize;
-	void* buffer = NULL;
-	wImage *image = NULL, *image2 = NULL, *image3 = NULL, *image4 = NULL;
+	BOOL rc = FALSE;
+	wImage* bmp1 = winpr_image_new();
+	wImage* bmp2 = winpr_image_new();
+	wImage* bmp3 = winpr_image_new();
+	if (!bmp1 || !bmp2 || !bmp3)
+		goto fail;
 
-	if (!winpr_PathFileExists(src))
+	char spath[MAX_PATH] = { 0 };
+	char dpath[MAX_PATH] = { 0 };
+	char bpath1[MAX_PATH] = { 0 };
+	char bpath2[MAX_PATH] = { 0 };
+	_snprintf(spath, sizeof(spath), "%s.%s", tname, winpr_image_format_extension(format));
+	_snprintf(dpath, sizeof(dpath), "%s.%s", tdst, winpr_image_format_extension(format));
+	_snprintf(bpath1, sizeof(bpath1), "%s.src.%s", dpath,
+	          winpr_image_format_extension(WINPR_IMAGE_BITMAP));
+	_snprintf(bpath2, sizeof(bpath2), "%s.bin.%s", dpath,
+	          winpr_image_format_extension(WINPR_IMAGE_BITMAP));
+	PathCchConvertStyleA(spath, sizeof(spath), PATH_STYLE_NATIVE);
+	PathCchConvertStyleA(dpath, sizeof(dpath), PATH_STYLE_NATIVE);
+	PathCchConvertStyleA(bpath1, sizeof(bpath1), PATH_STYLE_NATIVE);
+	PathCchConvertStyleA(bpath2, sizeof(bpath2), PATH_STYLE_NATIVE);
+
+	const int bmpRSize = winpr_image_read(bmp1, spath);
+	if (bmpRSize <= 0)
 	{
-		fprintf(stderr, "File %s does not exist!", src);
-		return -1;
+		fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, spath);
+		goto fail;
 	}
 
-	image = get_image(src);
-
-	/* Read from file using image methods. */
-	if (!image)
-		goto cleanup;
-
-	/* Write different formats to tmp. */
-	image->type = WINPR_IMAGE_BITMAP;
-	status = winpr_image_write(image, dst_bmp);
-
-	if (status < 0)
+	const int bmpWSize = winpr_image_write(bmp1, dpath);
+	if (bmpWSize <= 0)
 	{
-		fprintf(stderr, "Failed to write image %s!\n", dst_bmp);
-		goto cleanup;
+		fprintf(stderr, "[%s] winpr_image_write failed for %s", __func__, dpath);
+		goto fail;
 	}
 
-	image->type = WINPR_IMAGE_PNG;
-	status = winpr_image_write(image, dst_png);
-
-	if (status < 0)
+	const int bmp2RSize = winpr_image_read(bmp2, dpath);
+	if (bmp2RSize <= 0)
 	{
-		fprintf(stderr, "Failed to write image %s!\n", dst_png);
-		goto cleanup;
+		fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, dpath);
+		goto fail;
 	}
 
-	/* Read image from buffer, compare. */
-	buffer = read_image(src, &bsize);
-
-	if (!buffer)
+	const int bmpSrcWSize = winpr_image_write_ex(bmp1, WINPR_IMAGE_BITMAP, bpath1);
+	if (bmpSrcWSize <= 0)
 	{
-		fprintf(stderr, "Failed to read image %s!\n", src);
-		goto cleanup;
+		fprintf(stderr, "[%s] winpr_image_write_ex failed for %s", __func__, bpath1);
+		goto fail;
 	}
 
-	image2 = winpr_image_new();
-
-	if (!image2)
+	/* write a bitmap and read it back.
+	 * this tests if we have the proper internal format */
+	const int bmpBinWSize = winpr_image_write_ex(bmp2, WINPR_IMAGE_BITMAP, bpath2);
+	if (bmpBinWSize <= 0)
 	{
-		fprintf(stderr, "Failed to create image!\n");
-		goto cleanup;
+		fprintf(stderr, "[%s] winpr_image_write_ex failed for %s", __func__, bpath2);
+		goto fail;
 	}
 
-	status = winpr_image_read_buffer(image2, buffer, bsize);
-
-	if (status < 0)
+	const int bmp3RSize = winpr_image_read(bmp3, bpath2);
+	if (bmp3RSize <= 0)
 	{
-		fprintf(stderr, "Failed to read buffer!\n");
-		goto cleanup;
+		fprintf(stderr, "[%s] winpr_image_read failed for %s", __func__, bpath2);
+		goto fail;
 	}
 
-	rc = img_compare(image, image2, TRUE);
+	if (!winpr_image_equal(bmp1, bmp2))
+	{
+		fprintf(stderr, "[%s] winpr_image_eqal failed bmp1 bmp2", __func__);
+		goto fail;
+	}
 
-	if (rc)
-		goto cleanup;
-
-	image3 = get_image(dst_png);
-
-	if (!image3)
-		goto cleanup;
-
-	rc = img_compare(image, image3, TRUE);
-
-	if (rc)
-		goto cleanup;
-
-	image4 = get_image(dst_bmp);
-
-	if (!image4)
-		goto cleanup;
-
-	rc = img_compare(image, image4, TRUE);
-
-	if (rc)
-		goto cleanup;
-
-	ret = 0;
-cleanup:
-
-	if (image)
-		winpr_image_free(image, TRUE);
-
-	if (image2)
-		winpr_image_free(image2, TRUE);
-
-	if (image3)
-		winpr_image_free(image3, TRUE);
-
-	if (image4)
-		winpr_image_free(image4, TRUE);
-
-	free(buffer);
-	return ret;
+	rc = winpr_image_equal(bmp3, bmp2);
+	if (!rc)
+		fprintf(stderr, "[%s] winpr_image_eqal failed bmp3 bmp2", __func__);
+fail:
+	winpr_image_free(bmp1, TRUE);
+	winpr_image_free(bmp2, TRUE);
+	winpr_image_free(bmp3, TRUE);
+	return rc;
 }
 
-static int test_image_png_to_bmp(void)
+static BOOL test_read_write(void)
 {
-	char* buffer = TEST_SOURCE_PATH;
-	char src_png[PATH_MAX];
-	char src_bmp[PATH_MAX];
-	char dst_png[PATH_MAX];
-	char dst_bmp[PATH_MAX];
-	char dst_png2[PATH_MAX];
-	char dst_bmp2[PATH_MAX];
-	char* tmp = GetKnownPath(KNOWN_PATH_TEMP);
-
-	if (!tmp)
-		return -1;
-
-	if (!buffer)
+	BOOL rc = TRUE;
+	for (UINT32 x = 0; x < UINT8_MAX; x++)
 	{
-		free(tmp);
-		return -1;
+		if (!winpr_image_format_is_supported(x))
+			continue;
+		if (!test_read_write_compare(test_src_filename, test_bin_filename, x))
+			rc = FALSE;
 	}
-
-	sprintf_s(src_png, sizeof(src_png), "%s/lodepng_32bit.png", buffer);
-	sprintf_s(src_bmp, sizeof(src_bmp), "%s/lodepng_32bit.bmp", buffer);
-	sprintf_s(dst_png, sizeof(dst_png), "%s/lodepng_32bit.png", tmp);
-	sprintf_s(dst_bmp, sizeof(dst_bmp), "%s/lodepng_32bit.bmp", tmp);
-	sprintf_s(dst_png2, sizeof(dst_png2), "%s/lodepng_32bit-2.png", tmp);
-	sprintf_s(dst_bmp2, sizeof(dst_bmp2), "%s/lodepng_32bit-2.bmp", tmp);
-	free(tmp);
-
-	if (create_test(src_png, dst_png, dst_bmp))
-		return -1;
-
-	if (create_test(src_bmp, dst_png2, dst_bmp2))
-		return -1;
-
-	return 0;
+	return rc;
 }
 
 int TestImage(int argc, char* argv[])
 {
-	int rc = test_image_png_to_bmp();
+	int rc = 0;
 
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
+
+	if (!test_equal())
+		rc = -1;
+
+	if (!test_read_write())
+		rc = -1;
 
 	return rc;
 }

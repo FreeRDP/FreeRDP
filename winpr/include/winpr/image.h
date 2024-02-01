@@ -62,6 +62,8 @@ typedef struct
 
 #define WINPR_IMAGE_BITMAP 0
 #define WINPR_IMAGE_PNG 1
+#define WINPR_IMAGE_JPEG 2
+#define WINPR_IMAGE_WEBP 3
 
 #define WINPR_IMAGE_BMP_HEADER_LEN 54
 
@@ -88,14 +90,21 @@ extern "C"
 	WINPR_API BYTE* winpr_bitmap_construct_header(size_t width, size_t height, size_t bpp);
 
 	WINPR_API int winpr_image_write(wImage* image, const char* filename);
+	WINPR_API int winpr_image_write_ex(wImage* image, UINT32 format, const char* filename);
 	WINPR_API int winpr_image_read(wImage* image, const char* filename);
 
+	WINPR_API void* winpr_image_write_buffer(wImage* image, UINT32 format, size_t* size);
 	WINPR_API int winpr_image_read_buffer(wImage* image, const BYTE* buffer, size_t size);
 
 	WINPR_API void winpr_image_free(wImage* image, BOOL bFreeBuffer);
 
 	WINPR_ATTR_MALLOC(winpr_image_free, 1)
 	WINPR_API wImage* winpr_image_new(void);
+
+	WINPR_API BOOL winpr_image_format_is_supported(UINT32 format);
+	WINPR_API const char* winpr_image_format_extension(UINT32 format);
+	WINPR_API const char* winpr_image_format_mime(UINT32 format);
+	WINPR_API BOOL winpr_image_equal(const wImage* imageA, const wImage* imageB);
 
 #ifdef __cplusplus
 }
