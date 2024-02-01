@@ -760,7 +760,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 StaticChannelCount);       /* 4928 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 StaticChannelArraySize);   /* 4929 */
 	SETTINGS_DEPRECATED(ALIGN64 ADDIN_ARGV** StaticChannelArray); /* 4930 */
-	UINT64 padding5056[5056 - 4931];                              /* 4931 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL SynchronousStaticChannels);  /* 4931 */
+	UINT64 padding5056[5056 - 4932];                              /* 4932 */
 
 	/**
 	 * Dynamic Virtual Channels
