@@ -54,6 +54,9 @@ Build-Depends:
  libwebkit2gtk-4.0-dev,
  liburiparser-dev,
  libopus-dev,
+ libwebp-dev,
+ libpng-dev,
+ libjpeg-dev,
  opensc-pkcs11,
  libasan5 | libasan6 | libasan8
 Standards-Version: 3.9.5
