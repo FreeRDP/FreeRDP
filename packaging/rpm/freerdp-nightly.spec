@@ -49,6 +49,9 @@ BuildRequires: krb5-devel
 BuildRequires: cjson-devel
 BuildRequires: uriparser-devel
 BuildRequires: opus-devel
+BuildRequires: libpng-devel
+BuildRequires: libwebp-devel
+BuildRequires: libjpeg-turbo-devel
 
 # (Open)Suse
 %if %{defined suse_version}
