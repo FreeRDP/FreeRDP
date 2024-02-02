@@ -505,6 +505,10 @@ static int aad_send_auth_request(rdpAad* aad, const char* ts_nonce)
 	if (stream_sprintf(s, "{\"rdp_assertion\":\"%s.%s.%s\"}", jws_header, jws_payload,
 	                   jws_signature) < 0)
 		goto fail;
+
+	/* Include null terminator in PDU */
+	Stream_Write_UINT8(s, 0);
+
 	Stream_SealLength(s);
 
 	if (transport_write(aad->transport, s) < 0)
