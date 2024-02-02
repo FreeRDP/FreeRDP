@@ -287,11 +287,6 @@ if(WITH_NEON)
     set(CODEC_SRCS ${CODEC_SRCS} ${CODEC_NEON_SRCS})
 endif()
 
-if(WITH_JPEG)
-    freerdp_include_directory_add(${JPEG_INCLUDE_DIR})
-    freerdp_library_add(${JPEG_LIBRARIES})
-endif()
-
 if(WITH_OPENH264)
     set(CODEC_SRCS ${CODEC_SRCS} codec/h264_openh264.c)
     freerdp_include_directory_add(${OPENH264_INCLUDE_DIR})
