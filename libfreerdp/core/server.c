@@ -1953,6 +1953,9 @@ rdpPeerChannel* server_channel_common_new(freerdp_peer* client, UINT16 index, UI
 	strncpy(channel->channelName, name, ARRAYSIZE(channel->channelName) - 1);
 	return channel;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	server_channel_common_free(channel);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }

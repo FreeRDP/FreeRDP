@@ -2683,7 +2683,10 @@ SmartcardEmulationContext* Emulate_New(const rdpSettings* settings)
 	return smartcard;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	Emulate_Free(smartcard);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

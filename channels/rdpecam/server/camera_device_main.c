@@ -947,7 +947,10 @@ CameraDeviceServerContext* camera_device_server_context_new(HANDLE vcm)
 
 	return &device->context;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	camera_device_server_context_free(&device->context);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

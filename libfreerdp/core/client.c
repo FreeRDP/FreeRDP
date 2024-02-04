@@ -163,7 +163,10 @@ rdpChannels* freerdp_channels_new(freerdp* instance)
 
 	return channels;
 error:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	freerdp_channels_free(channels);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

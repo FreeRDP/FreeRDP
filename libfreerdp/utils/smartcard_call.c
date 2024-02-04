@@ -1901,7 +1901,10 @@ scard_call_context* smartcard_call_context_new(const rdpSettings* settings)
 
 	return ctx;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	smartcard_call_context_free(ctx);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

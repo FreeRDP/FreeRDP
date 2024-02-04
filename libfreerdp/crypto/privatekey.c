@@ -288,7 +288,10 @@ rdpPrivateKey* freerdp_key_clone(const rdpPrivateKey* key)
 
 	return _key;
 out_fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	freerdp_key_free(_key);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

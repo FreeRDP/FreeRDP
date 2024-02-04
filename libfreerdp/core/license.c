@@ -2697,7 +2697,10 @@ rdpLicense* license_new(rdpRdp* rdp)
 	return license;
 
 out_error:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	license_free(license);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

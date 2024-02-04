@@ -1603,7 +1603,10 @@ rdpTransport* transport_new(rdpContext* context)
 
 	return transport;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	transport_free(transport);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

@@ -1988,9 +1988,10 @@ rdpNla* nla_new(rdpContext* context, rdpTransport* transport)
 
 	return nla;
 cleanup:
-	credssp_auth_free(nla->auth);
-	free(nla->identity);
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	nla_free(nla);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

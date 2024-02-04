@@ -421,7 +421,10 @@ TelemetryServerContext* telemetry_server_context_new(HANDLE vcm)
 
 	return &telemetry->context;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	telemetry_server_context_free(&telemetry->context);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

@@ -1749,7 +1749,10 @@ RdpgfxServerContext* rdpgfx_server_context_new(HANDLE vcm)
 	priv->activeCapSet = empty;
 	return context;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	rdpgfx_server_context_free(context);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

@@ -804,7 +804,10 @@ rdpAad* aad_new(rdpContext* context, rdpTransport* transport)
 
 	return aad;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	aad_free(aad);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

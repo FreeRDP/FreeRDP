@@ -957,7 +957,10 @@ rdpRpc* rpc_new(rdpTransport* transport)
 
 	return rpc;
 out_free:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	rpc_free(rpc);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

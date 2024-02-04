@@ -2453,7 +2453,10 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 	return file;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	cliprdr_file_context_free(file);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

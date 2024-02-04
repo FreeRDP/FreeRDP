@@ -705,7 +705,10 @@ MouseCursorServerContext* mouse_cursor_server_context_new(HANDLE vcm)
 
 	return &mouse_cursor->context;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	mouse_cursor_server_context_free(&mouse_cursor->context);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

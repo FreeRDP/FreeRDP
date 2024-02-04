@@ -959,7 +959,10 @@ proxyServer* pf_server_new(const proxyConfig* config)
 	return server;
 
 out:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	pf_server_free(server);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

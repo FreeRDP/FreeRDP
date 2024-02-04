@@ -48,7 +48,7 @@ extern "C"
 	FREERDP_API freerdp_certificate_store_result freerdp_certificate_store_contains_data(
 	    rdpCertificateStore* store, const rdpCertificateData* data);
 
-	WINPR_ATTR_MALLOC(freerdp_certificate_store_free, 1)
+	WINPR_ATTR_MALLOC(freerdp_certificate_data_free, 1)
 	FREERDP_API rdpCertificateData*
 	freerdp_certificate_store_load_data(rdpCertificateStore* store, const char* host, UINT16 port);
 

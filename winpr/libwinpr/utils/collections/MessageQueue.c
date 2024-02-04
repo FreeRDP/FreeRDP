@@ -258,7 +258,10 @@ wMessageQueue* MessageQueue_New(const wObject* callback)
 	return queue;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	MessageQueue_Free(queue);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

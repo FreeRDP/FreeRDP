@@ -83,7 +83,10 @@ ChannelStateTracker* channelTracker_new(pServerStaticChannelContext* channel,
 	return ret;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	channelTracker_free(ret);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

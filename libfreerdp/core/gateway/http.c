@@ -164,7 +164,10 @@ HttpContext* http_context_new(void)
 	return context;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	http_context_free(context);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -1502,7 +1505,10 @@ HttpResponse* http_response_new(void)
 	response->TransferEncoding = TransferEncodingIdentity;
 	return response;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	http_response_free(response);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

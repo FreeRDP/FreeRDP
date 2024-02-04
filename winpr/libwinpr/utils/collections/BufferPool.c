@@ -525,7 +525,10 @@ wBufferPool* BufferPool_New(BOOL synchronized, SSIZE_T fixedSize, DWORD alignmen
 	return pool;
 
 out_error:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	BufferPool_Free(pool);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

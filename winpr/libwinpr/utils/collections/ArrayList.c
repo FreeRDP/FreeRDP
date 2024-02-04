@@ -585,7 +585,10 @@ wArrayList* ArrayList_New(BOOL synchronized)
 	InitializeCriticalSectionAndSpinCount(&arrayList->lock, 4000);
 	return arrayList;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	ArrayList_Free(arrayList);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

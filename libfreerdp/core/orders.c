@@ -2234,7 +2234,10 @@ static CACHE_BITMAP_ORDER* update_read_cache_bitmap_order(rdpUpdate* update, wSt
 	cache_bitmap->compressed = compressed;
 	return cache_bitmap;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_cache_bitmap_order(update->context, cache_bitmap);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -2376,7 +2379,10 @@ static CACHE_BITMAP_V2_ORDER* update_read_cache_bitmap_v2_order(rdpUpdate* updat
 	cache_bitmap_v2->compressed = compressed;
 	return cache_bitmap_v2;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_cache_bitmap_v2_order(update->context, cache_bitmap_v2);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -2522,7 +2528,10 @@ static CACHE_BITMAP_V3_ORDER* update_read_cache_bitmap_v3_order(rdpUpdate* updat
 	Stream_Read(s, bitmapData->data, bitmapData->length);
 	return cache_bitmap_v3;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_cache_bitmap_v3_order(update->context, cache_bitmap_v3);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -2595,7 +2604,10 @@ static CACHE_COLOR_TABLE_ORDER* update_read_cache_color_table_order(rdpUpdate* u
 
 	return cache_color_table;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_cache_color_table_order(update->context, cache_color_table);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

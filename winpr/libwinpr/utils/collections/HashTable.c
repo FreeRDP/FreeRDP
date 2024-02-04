@@ -792,7 +792,10 @@ wHashTable* HashTable_New(BOOL synchronized)
 
 	return table;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	HashTable_Free(table);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

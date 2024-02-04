@@ -833,7 +833,10 @@ rdpWst* wst_new(rdpContext* context)
 
 	return wst;
 wst_alloc_error:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	wst_free(wst);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
