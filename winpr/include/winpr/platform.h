@@ -37,6 +37,8 @@
 	_Pragma("clang diagnostic ignored \"-Wunused-const-variable\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY \
 	_Pragma("clang diagnostic ignored \"-Wformat-security\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC \
+	_Pragma("clang diagnostic ignored \"-Wmismatched-dealloc\"")
 #define WINPR_PRAGMA_DIAG_POP _Pragma("clang diagnostic pop")
 #elif defined(__GNUC__)
 #define WINPR_PRAGMA_DIAG_PUSH _Pragma("GCC diagnostic push")
@@ -54,6 +56,8 @@
 	_Pragma("GCC diagnostic ignored \"-Wunused-const-variable\"")
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY \
 	_Pragma("GCC diagnostic ignored \"-Wformat-security\"")
+#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC \
+	_Pragma("GCC diagnostic ignored \"-Wmismatched-dealloc\"")
 #define WINPR_PRAGMA_DIAG_POP _Pragma("GCC diagnostic pop")
 #else
 #define WINPR_PRAGMA_DIAG_PUSH
@@ -64,6 +68,7 @@
 #define WINPR_PRAGMA_DIAG_IGNORED_ATOMIC_SEQ_CST
 #define WINPR_PRAGMA_DIAG_IGNORED_UNUSED_CONST_VAR
 #define WINPR_PRAGMA_DIAG_IGNORED_FORMAT_SECURITY
+#define WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 #define WINPR_PRAGMA_DIAG_POP
 #endif
 

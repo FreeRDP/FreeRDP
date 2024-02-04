@@ -2228,7 +2228,10 @@ rdpRdg* rdg_new(rdpContext* context)
 
 	return rdg;
 rdg_alloc_error:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	rdg_free(rdg);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

@@ -637,7 +637,10 @@ FREERDP_DSP_CONTEXT* freerdp_dsp_ffmpeg_context_new(BOOL encode)
 	context->channelmix = Stream_New(NULL, 1024);
 	if (!context->channelmix)
 	{
+		WINPR_PRAGMA_DIAG_PUSH
+		WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 		freerdp_dsp_ffmpeg_context_free(context);
+		WINPR_PRAGMA_DIAG_POP
 		return NULL;
 	}
 	context->encoder = encode;

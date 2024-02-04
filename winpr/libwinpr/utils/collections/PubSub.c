@@ -248,7 +248,10 @@ wPubSub* PubSub_New(BOOL synchronized)
 
 	return pubSub;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	PubSub_Free(pubSub);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

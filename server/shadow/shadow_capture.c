@@ -237,7 +237,10 @@ rdpShadowCapture* shadow_capture_new(rdpShadowServer* server)
 
 	if (!InitializeCriticalSectionAndSpinCount(&(capture->lock), 4000))
 	{
+		WINPR_PRAGMA_DIAG_PUSH
+		WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 		shadow_capture_free(capture);
+		WINPR_PRAGMA_DIAG_POP
 		return NULL;
 	}
 

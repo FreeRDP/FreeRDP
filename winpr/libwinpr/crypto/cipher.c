@@ -64,12 +64,10 @@ struct winpr_rc4_ctx_private_st
 
 static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOOL override_fips)
 {
-	WINPR_RC4_CTX* ctx = NULL;
-
 	if (!key || (keylen == 0))
 		return NULL;
 
-	ctx = calloc(1, sizeof(WINPR_RC4_CTX));
+	WINPR_RC4_CTX* ctx = (WINPR_RC4_CTX*)calloc(1, sizeof(WINPR_RC4_CTX));
 	if (!ctx)
 		return NULL;
 
@@ -111,7 +109,11 @@ static WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOO
 	return ctx;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
+
 	winpr_RC4_Free(ctx);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

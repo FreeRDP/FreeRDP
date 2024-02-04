@@ -235,7 +235,10 @@ wStack* Stack_New(BOOL synchronized)
 
 	return stack;
 out_free:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	Stack_Free(stack);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

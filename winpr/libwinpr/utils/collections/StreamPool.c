@@ -381,7 +381,10 @@ wStreamPool* StreamPool_New(BOOL synchronized, size_t defaultSize)
 
 	return pool;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	StreamPool_Free(pool);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

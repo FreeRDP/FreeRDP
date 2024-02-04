@@ -30,6 +30,10 @@
 
 #include <winpr/stream.h>
 
+#include "../cache/bitmap.h"
+#include "../cache/palette.h"
+#include "../cache/pointer.h"
+
 #define UPDATE_TYPE_ORDERS 0x0000
 #define UPDATE_TYPE_BITMAP 0x0001
 #define UPDATE_TYPE_PALETTE 0x0002
@@ -180,16 +184,29 @@ FREERDP_LOCAL BOOL update_recv_play_sound(rdpUpdate* update, wStream* s);
 FREERDP_LOCAL BOOL update_recv_pointer(rdpUpdate* update, wStream* s);
 FREERDP_LOCAL BOOL update_recv(rdpUpdate* update, wStream* s);
 
+WINPR_ATTR_MALLOC(free_bitmap_update, 2)
 FREERDP_LOCAL BITMAP_UPDATE* update_read_bitmap_update(rdpUpdate* update, wStream* s);
+
+WINPR_ATTR_MALLOC(free_palette_update, 2)
 FREERDP_LOCAL PALETTE_UPDATE* update_read_palette(rdpUpdate* update, wStream* s);
 
+WINPR_ATTR_MALLOC(free_pointer_system_update, 2)
 FREERDP_LOCAL POINTER_SYSTEM_UPDATE* update_read_pointer_system(rdpUpdate* update, wStream* s);
+
+WINPR_ATTR_MALLOC(free_pointer_position_update, 2)
 FREERDP_LOCAL POINTER_POSITION_UPDATE* update_read_pointer_position(rdpUpdate* update, wStream* s);
+
+WINPR_ATTR_MALLOC(free_pointer_color_update, 2)
 FREERDP_LOCAL POINTER_COLOR_UPDATE* update_read_pointer_color(rdpUpdate* update, wStream* s,
                                                               BYTE xorBpp);
+
+WINPR_ATTR_MALLOC(free_pointer_large_update, 2)
 FREERDP_LOCAL POINTER_LARGE_UPDATE* update_read_pointer_large(rdpUpdate* update, wStream* s);
 
+WINPR_ATTR_MALLOC(free_pointer_new_update, 2)
 FREERDP_LOCAL POINTER_NEW_UPDATE* update_read_pointer_new(rdpUpdate* update, wStream* s);
+
+WINPR_ATTR_MALLOC(free_pointer_cached_update, 2)
 FREERDP_LOCAL POINTER_CACHED_UPDATE* update_read_pointer_cached(rdpUpdate* update, wStream* s);
 
 FREERDP_LOCAL BOOL update_read_refresh_rect(rdpUpdate* update, wStream* s);

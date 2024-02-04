@@ -82,7 +82,10 @@ RdpeiServerContext* rdpei_server_context_new(HANDLE vcm)
 	return ret;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	rdpei_server_context_free(ret);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

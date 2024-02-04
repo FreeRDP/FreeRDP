@@ -329,7 +329,10 @@ proxyData* proxy_data_new(void)
 
 	return pdata;
 error:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	proxy_data_free(pdata);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

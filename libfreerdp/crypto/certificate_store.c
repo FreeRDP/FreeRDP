@@ -164,7 +164,10 @@ rdpCertificateStore* freerdp_certificate_store_new(const rdpSettings* settings)
 	return store;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	freerdp_certificate_store_free(store);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

@@ -270,7 +270,10 @@ rdpBrushCache* brush_cache_new(rdpContext* context)
 
 	return brushCache;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	brush_cache_free(brushCache);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

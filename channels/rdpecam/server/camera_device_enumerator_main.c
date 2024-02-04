@@ -590,7 +590,10 @@ CamDevEnumServerContext* cam_dev_enum_server_context_new(HANDLE vcm)
 
 	return &enumerator->context;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	cam_dev_enum_server_context_free(&enumerator->context);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

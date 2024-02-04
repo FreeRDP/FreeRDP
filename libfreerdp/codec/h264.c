@@ -691,7 +691,10 @@ H264_CONTEXT* h264_context_new(BOOL Compressor)
 	return h264;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	h264_context_free(h264);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

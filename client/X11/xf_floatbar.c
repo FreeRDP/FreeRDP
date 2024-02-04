@@ -363,7 +363,10 @@ xfFloatbar* xf_floatbar_new(xfContext* xfc, Window window, const char* name, DWO
 	XFreeStringList(missingList);
 	return floatbar;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	xf_floatbar_free(floatbar);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

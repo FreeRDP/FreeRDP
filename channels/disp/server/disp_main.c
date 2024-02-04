@@ -609,7 +609,10 @@ DispServerContext* disp_server_context_new(HANDLE vcm)
 	priv->isReady = FALSE;
 	return context;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	disp_server_context_free(context);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

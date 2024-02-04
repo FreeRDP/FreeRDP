@@ -145,7 +145,10 @@ rdpNineGridCache* nine_grid_cache_new(rdpContext* context)
 	return nine_grid;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	nine_grid_cache_free(nine_grid);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

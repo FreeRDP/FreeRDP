@@ -176,7 +176,7 @@ struct winpr_hmac_ctx_private_st
 
 WINPR_HMAC_CTX* winpr_HMAC_New(void)
 {
-	WINPR_HMAC_CTX* ctx = calloc(1, sizeof(WINPR_HMAC_CTX));
+	WINPR_HMAC_CTX* ctx = (WINPR_HMAC_CTX*)calloc(1, sizeof(WINPR_HMAC_CTX));
 	if (!ctx)
 		return NULL;
 #if defined(WITH_OPENSSL)
@@ -205,7 +205,10 @@ WINPR_HMAC_CTX* winpr_HMAC_New(void)
 	return ctx;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	winpr_HMAC_Free(ctx);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -473,7 +476,10 @@ WINPR_DIGEST_CTX* winpr_Digest_New(void)
 	return ctx;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	winpr_Digest_Free(ctx);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

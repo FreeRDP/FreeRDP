@@ -218,7 +218,10 @@ rdpOffscreenCache* offscreen_cache_new(rdpContext* context)
 
 	return offscreenCache;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	offscreen_cache_free(offscreenCache);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

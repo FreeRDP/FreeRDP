@@ -85,7 +85,10 @@ rdpShadowScreen* shadow_screen_new(rdpShadowServer* server)
 	return screen;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	shadow_screen_free(screen);
+	WINPR_PRAGMA_DIAG_POP
 
 	return NULL;
 }

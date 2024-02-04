@@ -136,6 +136,9 @@ PALETTE_UPDATE* copy_palette_update(rdpContext* context, const PALETTE_UPDATE* p
 	*dst = *pointer;
 	return dst;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_palette_update(context, dst);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }

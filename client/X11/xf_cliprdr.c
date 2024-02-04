@@ -2425,7 +2425,10 @@ xfClipboard* xf_clipboard_new(xfContext* xfc, BOOL relieveFilenameRestriction)
 	return clipboard;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	xf_clipboard_free(clipboard);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

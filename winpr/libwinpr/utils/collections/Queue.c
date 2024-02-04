@@ -325,7 +325,10 @@ wQueue* Queue_New(BOOL synchronized, SSIZE_T capacity, SSIZE_T growthFactor)
 
 	return queue;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	Queue_Free(queue);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

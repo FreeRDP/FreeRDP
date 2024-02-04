@@ -2644,7 +2644,10 @@ rdpFile* freerdp_client_rdp_file_new_ex(DWORD flags)
 
 	return file;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	freerdp_client_rdp_file_free(file);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 void freerdp_client_rdp_file_free(rdpFile* file)

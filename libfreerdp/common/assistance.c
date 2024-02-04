@@ -1378,7 +1378,10 @@ rdpAssistanceFile* freerdp_assistance_file_new(void)
 	return file;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	freerdp_assistance_file_free(file);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

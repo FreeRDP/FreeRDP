@@ -383,8 +383,10 @@ rdpBitmapCache* bitmap_cache_new(rdpContext* context)
 
 	return bitmapCache;
 fail:
-
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	bitmap_cache_free(bitmapCache);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -485,7 +487,10 @@ BITMAP_UPDATE* copy_bitmap_update(rdpContext* context, const BITMAP_UPDATE* poin
 
 	return dst;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_bitmap_update(context, dst);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -510,7 +515,10 @@ CACHE_BITMAP_ORDER* copy_cache_bitmap_order(rdpContext* context, const CACHE_BIT
 
 	return dst;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_cache_bitmap_order(context, dst);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -544,7 +552,10 @@ CACHE_BITMAP_V2_ORDER* copy_cache_bitmap_v2_order(rdpContext* context,
 
 	return dst;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_cache_bitmap_v2_order(context, dst);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -578,7 +589,10 @@ CACHE_BITMAP_V3_ORDER* copy_cache_bitmap_v3_order(rdpContext* context,
 
 	return dst;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_cache_bitmap_v3_order(context, dst);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

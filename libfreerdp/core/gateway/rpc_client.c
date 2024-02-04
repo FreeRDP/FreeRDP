@@ -1194,7 +1194,10 @@ RpcClient* rpc_client_new(rdpContext* context, UINT32 max_recv_frag)
 	obj->fnObjectFree = rpc_array_client_call_free;
 	return client;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	rpc_client_free(client);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

@@ -2362,7 +2362,10 @@ rdpRdp* rdp_new(rdpContext* context)
 	return rdp;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	rdp_free(rdp);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

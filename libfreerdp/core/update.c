@@ -231,7 +231,10 @@ BITMAP_UPDATE* update_read_bitmap_update(rdpUpdate* update, wStream* s)
 
 	return bitmapUpdate;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_bitmap_update(update->context, bitmapUpdate);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -289,7 +292,10 @@ PALETTE_UPDATE* update_read_palette(rdpUpdate* update, wStream* s)
 
 	return palette_update;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_palette_update(update->context, palette_update);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -343,7 +349,10 @@ POINTER_POSITION_UPDATE* update_read_pointer_position(rdpUpdate* update, wStream
 	Stream_Read_UINT16(s, pointer_position->yPos); /* yPos (2 bytes) */
 	return pointer_position;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_pointer_position_update(update->context, pointer_position);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -362,7 +371,10 @@ POINTER_SYSTEM_UPDATE* update_read_pointer_system(rdpUpdate* update, wStream* s)
 	Stream_Read_UINT32(s, pointer_system->type); /* systemPointerType (4 bytes) */
 	return pointer_system;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_pointer_system_update(update->context, pointer_system);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -509,7 +521,10 @@ POINTER_COLOR_UPDATE* update_read_pointer_color(rdpUpdate* update, wStream* s, B
 
 	return pointer_color;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_pointer_color_update(update->context, pointer_color);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -635,7 +650,10 @@ POINTER_LARGE_UPDATE* update_read_pointer_large(rdpUpdate* update, wStream* s)
 
 	return pointer;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_pointer_large_update(update->context, pointer);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -665,7 +683,10 @@ POINTER_NEW_UPDATE* update_read_pointer_new(rdpUpdate* update, wStream* s)
 
 	return pointer_new;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_pointer_new_update(update->context, pointer_new);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -684,7 +705,10 @@ POINTER_CACHED_UPDATE* update_read_pointer_cached(rdpUpdate* update, wStream* s)
 	Stream_Read_UINT16(s, pointer->cacheIndex); /* cacheIndex (2 bytes) */
 	return pointer;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	free_pointer_cached_update(update->context, pointer);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
@@ -3234,7 +3258,10 @@ rdpUpdate* update_new(rdpRdp* rdp)
 
 	return &update->common;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	update_free(&update->common);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

@@ -184,7 +184,10 @@ wCountdownEvent* CountdownEvent_New(size_t initialCount)
 	return countdown;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	CountdownEvent_Free(countdown);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
