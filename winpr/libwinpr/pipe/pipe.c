@@ -649,7 +649,9 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 		if ((serverfd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		{
-			WLog_ERR(TAG, "CreateNamedPipeA: socket error, %s", strerror(errno));
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "CreateNamedPipeA: socket error, %s",
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			goto out;
 		}
 
@@ -658,13 +660,17 @@ HANDLE CreateNamedPipeA(LPCSTR lpName, DWORD dwOpenMode, DWORD dwPipeMode, DWORD
 
 		if (bind(serverfd, (struct sockaddr*)&s, sizeof(struct sockaddr_un)) == -1)
 		{
-			WLog_ERR(TAG, "CreateNamedPipeA: bind error, %s", strerror(errno));
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "CreateNamedPipeA: bind error, %s",
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			goto out;
 		}
 
 		if (listen(serverfd, 2) == -1)
 		{
-			WLog_ERR(TAG, "CreateNamedPipeA: listen error, %s", strerror(errno));
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "CreateNamedPipeA: listen error, %s",
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			goto out;
 		}
 

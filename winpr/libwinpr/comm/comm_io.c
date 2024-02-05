@@ -241,7 +241,9 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 	if (nbFds < 0)
 	{
-		CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno,
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
 		goto return_false;
 	}
@@ -268,9 +270,10 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			}
 			else
 			{
+				char ebuffer[256] = { 0 };
 				CommLog_Print(WLOG_WARN,
 				              "unexpected error on reading fd_read_event, errno=[%d] %s\n", errno,
-				              strerror(errno));
+				              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 				/* FIXME: goto return_false ? */
 			}
 
@@ -293,6 +296,7 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 
 		if (nbRead < 0)
 		{
+			char ebuffer[256] = { 0 };
 			CommLog_Print(WLOG_WARN,
 			              "CommReadFile failed, ReadIntervalTimeout=%" PRIu32
 			              ", ReadTotalTimeoutMultiplier=%" PRIu32
@@ -300,9 +304,9 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 			              pTimeouts->ReadIntervalTimeout, pTimeouts->ReadTotalTimeoutMultiplier,
 			              pTimeouts->ReadTotalTimeoutConstant, currentTermios.c_cc[VMIN],
 			              currentTermios.c_cc[VTIME]);
-			CommLog_Print(WLOG_WARN,
-			              "CommReadFile failed, nNumberOfBytesToRead=%" PRIu32 ", errno=[%d] %s",
-			              nNumberOfBytesToRead, errno, strerror(errno));
+			CommLog_Print(
+			    WLOG_WARN, "CommReadFile failed, nNumberOfBytesToRead=%" PRIu32 ", errno=[%d] %s",
+			    nNumberOfBytesToRead, errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 
 			if (errno == EAGAIN)
 			{
@@ -433,7 +437,9 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 		if (nbFds < 0)
 		{
-			CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno, strerror(errno));
+			char ebuffer[256] = { 0 };
+			CommLog_Print(WLOG_WARN, "select() failure, errno=[%d] %s\n", errno,
+			              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			SetLastError(ERROR_IO_DEVICE);
 			goto return_false;
 		}
@@ -460,9 +466,10 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 				}
 				else
 				{
+					char ebuffer[256] = { 0 };
 					CommLog_Print(WLOG_WARN,
 					              "unexpected error on reading fd_write_event, errno=[%d] %s\n",
-					              errno, strerror(errno));
+					              errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 					/* FIXME: goto return_false ? */
 				}
 
@@ -488,10 +495,12 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 
 			if (nbWritten < 0)
 			{
+				char ebuffer[256] = { 0 };
 				CommLog_Print(WLOG_WARN,
 				              "CommWriteFile failed after %" PRIu32
 				              " bytes written, errno=[%d] %s\n",
-				              *lpNumberOfBytesWritten, errno, strerror(errno));
+				              *lpNumberOfBytesWritten, errno,
+				              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 
 				if (errno == EAGAIN)
 				{

@@ -1298,8 +1298,9 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 	if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
 	{
+		char ebuffer[256] = { 0 };
 		CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s.", errno,
-		              strerror(errno));
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		CommLog_Print(WLOG_WARN, "could not read counters.");
 		/* could not initialize counters but keep on.
 		 *

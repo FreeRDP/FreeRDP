@@ -18,7 +18,7 @@
  */
 
 #include <winpr/config.h>
-
+#include <winpr/debug.h>
 #include <winpr/synch.h>
 
 #include "synch.h"
@@ -63,7 +63,9 @@ static DWORD SemaphoreCleanupHandle(HANDLE handle)
 
 	if (length != 1)
 	{
-		WLog_ERR(TAG, "semaphore read() failure [%d] %s", errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		WLog_ERR(TAG, "semaphore read() failure [%d] %s", errno,
+		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return WAIT_FAILED;
 	}
 

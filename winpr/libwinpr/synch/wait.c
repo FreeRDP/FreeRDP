@@ -209,7 +209,9 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 			}
 			else if (ret < 0)
 			{
-				WLog_ERR(TAG, "waitpid failure [%d] %s", errno, strerror(errno));
+				char ebuffer[256] = { 0 };
+				WLog_ERR(TAG, "waitpid failure [%d] %s", errno,
+				         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 				SetLastError(ERROR_INTERNAL_ERROR);
 				return WAIT_FAILED;
 			}
@@ -310,7 +312,9 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 			status = pollset_poll(&pollset, dwMilliseconds);
 			if (status < 0)
 			{
-				WLog_ERR(TAG, "pollset_poll() failure [%d] %s", errno, strerror(errno));
+				char ebuffer[256] = { 0 };
+				WLog_ERR(TAG, "pollset_poll() failure [%d] %s", errno,
+				         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 				goto out;
 			}
 		}
@@ -464,12 +468,13 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 			status = pollset_poll(&pollset, waitTime);
 			if (status < 0)
 			{
+				char ebuffer[256] = { 0 };
 #ifdef WINPR_HAVE_POLL_H
 				WLog_ERR(TAG, "poll() handle %" PRIu32 " (%" PRIu32 ") failure [%d] %s", index,
-				         nCount, errno, strerror(errno));
+				         nCount, errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 #else
 				WLog_ERR(TAG, "select() handle %" PRIu32 " (%" PRIu32 ") failure [%d] %s", index,
-				         nCount, errno, strerror(errno));
+				         nCount, errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 #endif
 				winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 				SetLastError(ERROR_INTERNAL_ERROR);

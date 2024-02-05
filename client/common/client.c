@@ -460,8 +460,9 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 
 		if (freerdp_interruptible_get_line(instance->context, username, &username_size, stdin) < 0)
 		{
-			WLog_ERR(TAG, "freerdp_interruptible_get_line returned %s [%d]", strerror(errno),
-			         errno);
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "freerdp_interruptible_get_line returned %s [%d]",
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 			goto fail;
 		}
 
@@ -480,8 +481,9 @@ static BOOL client_cli_authenticate_raw(freerdp* instance, rdp_auth_reason reaso
 
 		if (freerdp_interruptible_get_line(instance->context, domain, &domain_size, stdin) < 0)
 		{
-			WLog_ERR(TAG, "freerdp_interruptible_get_line returned %s [%d]", strerror(errno),
-			         errno);
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "freerdp_interruptible_get_line returned %s [%d]",
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 			goto fail;
 		}
 

@@ -18,6 +18,7 @@
  */
 
 #include <winpr/config.h>
+#include <winpr/debug.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -67,8 +68,9 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 
 	if (!buffer)
 	{
+		char ebuffer[256] = { 0 };
 		WLog_Print(log, WLOG_ERROR, "malloc(%" PRIuz ") failed with [%" PRIuz "] %s", blen, errno,
-		           strerror(errno));
+		           winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return;
 	}
 
@@ -137,7 +139,9 @@ void winpr_CArrayDump(const char* tag, UINT32 level, const void* data, size_t le
 
 	if (!buffer)
 	{
-		WLog_ERR(tag, "malloc(%" PRIuz ") failed with [%d] %s", llen, errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		WLog_ERR(tag, "malloc(%" PRIuz ") failed with [%d] %s", llen, errno,
+		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return;
 	}
 

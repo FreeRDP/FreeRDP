@@ -1228,7 +1228,9 @@ static BOOL xf_process_pipe(rdpContext* context, const char* pipe)
 	int fd = open(pipe, O_NONBLOCK | O_RDONLY);
 	if (fd < 0)
 	{
-		WLog_ERR(TAG, "pipe '%s' open returned %s [%d]", pipe, strerror(errno), errno);
+		char ebuffer[256] = { 0 };
+		WLog_ERR(TAG, "pipe '%s' open returned %s [%d]", pipe,
+		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 		return FALSE;
 	}
 	while (!freerdp_shall_disconnect_context(context))
@@ -1237,6 +1239,7 @@ static BOOL xf_process_pipe(rdpContext* context, const char* pipe)
 		ssize_t rd = read(fd, buffer, sizeof(buffer) - 1);
 		if (rd == 0)
 		{
+			char ebuffer[256] = { 0 };
 			if ((errno == EAGAIN) || (errno == 0))
 			{
 				Sleep(100);
@@ -1244,12 +1247,15 @@ static BOOL xf_process_pipe(rdpContext* context, const char* pipe)
 			}
 
 			// EOF, abort reading.
-			WLog_ERR(TAG, "pipe '%s' read returned %s [%d]", pipe, strerror(errno), errno);
+			WLog_ERR(TAG, "pipe '%s' read returned %s [%d]", pipe,
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 			break;
 		}
 		else if (rd < 0)
 		{
-			WLog_ERR(TAG, "pipe '%s' read returned %s [%d]", pipe, strerror(errno), errno);
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "pipe '%s' read returned %s [%d]", pipe,
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 			break;
 		}
 		else
@@ -1287,7 +1293,9 @@ static DWORD WINAPI xf_handle_pipe(void* arg)
 	const int rc = mkfifo(pipe, S_IWUSR | S_IRUSR);
 	if (rc != 0)
 	{
-		WLog_ERR(TAG, "Failed to create named pipe '%s': %s [%d]", pipe, strerror(errno), errno);
+		char ebuffer[256] = { 0 };
+		WLog_ERR(TAG, "Failed to create named pipe '%s': %s [%d]", pipe,
+		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 		return 0;
 	}
 	freerdp_add_signal_cleanup_handler(pipe, cleanup_pipe);

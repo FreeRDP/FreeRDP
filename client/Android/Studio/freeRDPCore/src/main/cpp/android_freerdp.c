@@ -650,7 +650,9 @@ JNIEXPORT jlong JNICALL Java_com_freerdp_freerdpcore_services_LibFreeRDP_freerdp
 
 	if (setenv("HOME", _strdup(envStr), 1) != 0)
 	{
-		WLog_FATAL(TAG, "Failed to set environemnt HOME=%s %s [%d]", env, strerror(errno), errno);
+		char ebuffer[256] = { 0 };
+		WLog_FATAL(TAG, "Failed to set environemnt HOME=%s %s [%d]", env,
+		           winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 		return (jlong)NULL;
 	}
 

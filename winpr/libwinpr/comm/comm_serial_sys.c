@@ -893,8 +893,9 @@ static BOOL _set_lines(WINPR_COMM* pComm, UINT32 lines)
 {
 	if (ioctl(pComm->fd, TIOCMBIS, &lines) < 0)
 	{
+		char ebuffer[256] = { 0 };
 		CommLog_Print(WLOG_WARN, "TIOCMBIS ioctl failed, lines=0x%" PRIX32 ", errno=[%d] %s", lines,
-		              errno, strerror(errno));
+		              errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -906,8 +907,9 @@ static BOOL _clear_lines(WINPR_COMM* pComm, UINT32 lines)
 {
 	if (ioctl(pComm->fd, TIOCMBIC, &lines) < 0)
 	{
+		char ebuffer[256] = { 0 };
 		CommLog_Print(WLOG_WARN, "TIOCMBIC ioctl failed, lines=0x%" PRIX32 ", errno=[%d] %s", lines,
-		              errno, strerror(errno));
+		              errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -986,7 +988,9 @@ static BOOL _get_modemstatus(WINPR_COMM* pComm, ULONG* pRegister)
 	UINT32 lines = 0;
 	if (ioctl(pComm->fd, TIOCMGET, &lines) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "TIOCMGET ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		CommLog_Print(WLOG_WARN, "TIOCMGET ioctl failed, errno=[%d] %s", errno,
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -1057,8 +1061,9 @@ static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 
 		if (ioctl(pComm->fd, TIOCGICOUNT, &(pComm->counters)) < 0)
 		{
+			char ebuffer[256] = { 0 };
 			CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s.", errno,
-			              strerror(errno));
+			              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 
 			if (pComm->permissive)
 			{
@@ -1150,8 +1155,9 @@ static BOOL _purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 		{
 			if (errno != EAGAIN)
 			{
+				char ebuffer[256] = { 0 };
 				CommLog_Print(WLOG_WARN, "eventfd_write failed, errno=[%d] %s", errno,
-				              strerror(errno));
+				              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			}
 
 			WINPR_ASSERT(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_WRITE */
@@ -1166,8 +1172,9 @@ static BOOL _purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 		{
 			if (errno != EAGAIN)
 			{
+				char ebuffer[256] = { 0 };
 				CommLog_Print(WLOG_WARN, "eventfd_write failed, errno=[%d] %s", errno,
-				              strerror(errno));
+				              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			}
 
 			WINPR_ASSERT(errno == EAGAIN); /* no reader <=> no pending IRP_MJ_READ */
@@ -1180,8 +1187,9 @@ static BOOL _purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 
 		if (tcflush(pComm->fd, TCOFLUSH) < 0)
 		{
+			char ebuffer[256] = { 0 };
 			CommLog_Print(WLOG_WARN, "tcflush(TCOFLUSH) failure, errno=[%d] %s", errno,
-			              strerror(errno));
+			              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			SetLastError(ERROR_CANCELLED);
 			return FALSE;
 		}
@@ -1193,8 +1201,9 @@ static BOOL _purge(WINPR_COMM* pComm, const ULONG* pPurgeMask)
 
 		if (tcflush(pComm->fd, TCIFLUSH) < 0)
 		{
+			char ebuffer[256] = { 0 };
 			CommLog_Print(WLOG_WARN, "tcflush(TCIFLUSH) failure, errno=[%d] %s", errno,
-			              strerror(errno));
+			              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			SetLastError(ERROR_CANCELLED);
 			return FALSE;
 		}
@@ -1221,8 +1230,9 @@ static BOOL _get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 	ZeroMemory(&currentCounters, sizeof(struct serial_icounter_struct));
 	if (ioctl(pComm->fd, TIOCGICOUNT, &currentCounters) < 0)
 	{
+		char ebuffer[256] = { 0 };
 		CommLog_Print(WLOG_WARN, "TIOCGICOUNT ioctl failed, errno=[%d] %s.", errno,
-		              strerror(errno));
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		CommLog_Print(WLOG_WARN, "  could not read counters.");
 
 		if (pComm->permissive)
@@ -1292,7 +1302,9 @@ static BOOL _get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 
 	if (ioctl(pComm->fd, TIOCINQ, &(pCommstatus->AmountInInQueue)) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "TIOCINQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		CommLog_Print(WLOG_WARN, "TIOCINQ ioctl failed, errno=[%d] %s", errno,
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
 
 		LeaveCriticalSection(&pComm->EventsLock);
@@ -1303,7 +1315,9 @@ static BOOL _get_commstatus(WINPR_COMM* pComm, SERIAL_STATUS* pCommstatus)
 
 	if (ioctl(pComm->fd, TIOCOUTQ, &(pCommstatus->AmountInOutQueue)) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "TIOCOUTQ ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		CommLog_Print(WLOG_WARN, "TIOCOUTQ ioctl failed, errno=[%d] %s", errno,
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
 
 		LeaveCriticalSection(&pComm->EventsLock);
@@ -1476,7 +1490,9 @@ static BOOL _set_break_on(WINPR_COMM* pComm)
 {
 	if (ioctl(pComm->fd, TIOCSBRK, NULL) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "TIOCSBRK ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		CommLog_Print(WLOG_WARN, "TIOCSBRK ioctl failed, errno=[%d] %s", errno,
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -1488,7 +1504,9 @@ static BOOL _set_break_off(WINPR_COMM* pComm)
 {
 	if (ioctl(pComm->fd, TIOCCBRK, NULL) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "TIOCSBRK ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		CommLog_Print(WLOG_WARN, "TIOCSBRK ioctl failed, errno=[%d] %s", errno,
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -1500,7 +1518,9 @@ static BOOL _set_xoff(WINPR_COMM* pComm)
 {
 	if (tcflow(pComm->fd, TCIOFF) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "TCIOFF failure, errno=[%d] %s", errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		CommLog_Print(WLOG_WARN, "TCIOFF failure, errno=[%d] %s", errno,
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -1512,7 +1532,9 @@ static BOOL _set_xon(WINPR_COMM* pComm)
 {
 	if (tcflow(pComm->fd, TCION) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "TCION failure, errno=[%d] %s", errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		CommLog_Print(WLOG_WARN, "TCION failure, errno=[%d] %s", errno,
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
@@ -1525,7 +1547,9 @@ static BOOL _get_dtrrts(WINPR_COMM* pComm, ULONG* pMask)
 	UINT32 lines = 0;
 	if (ioctl(pComm->fd, TIOCMGET, &lines) < 0)
 	{
-		CommLog_Print(WLOG_WARN, "TIOCMGET ioctl failed, errno=[%d] %s", errno, strerror(errno));
+		char ebuffer[256] = { 0 };
+		CommLog_Print(WLOG_WARN, "TIOCMGET ioctl failed, errno=[%d] %s", errno,
+		              winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		SetLastError(ERROR_IO_DEVICE);
 		return FALSE;
 	}
