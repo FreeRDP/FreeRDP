@@ -64,11 +64,15 @@ typedef struct
 	AUDIO_FORMAT format;
 } rdpsndOssPlugin;
 
-#define OSS_LOG_ERR(_text, _error)                                         \
-	do                                                                     \
-	{                                                                      \
-		if (_error != 0)                                                   \
-			WLog_ERR(TAG, "%s: %i - %s", _text, _error, strerror(_error)); \
+#define OSS_LOG_ERR(_text, _error)                                      \
+	do                                                                  \
+	{                                                                   \
+		if (_error != 0)                                                \
+		{                                                               \
+			char ebuffer[256] = { 0 };                                  \
+			WLog_ERR(TAG, "%s: %i - %s", _text, _error,                 \
+			         winpr_strerror(_error, ebuffer, sizeof(ebuffer))); \
+		}                                                               \
 	} while (0)
 
 static int rdpsnd_oss_get_format(const AUDIO_FORMAT* format)

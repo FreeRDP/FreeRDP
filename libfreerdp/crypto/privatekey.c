@@ -156,7 +156,9 @@ static BOOL key_read_private(rdpPrivateKey* key)
 	RSA* rsa = evp_pkey_to_rsa(key);
 	if (!rsa)
 	{
-		WLog_ERR(TAG, "unable to load RSA key: %s.", strerror(errno));
+		char ebuffer[256] = { 0 };
+		WLog_ERR(TAG, "unable to load RSA key: %s.",
+		         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		goto fail;
 	}
 
@@ -171,8 +173,12 @@ static BOOL key_read_private(rdpPrivateKey* key)
 			break;
 
 		default:
-			WLog_ERR(TAG, "unexpected error when checking RSA key: %s.", strerror(errno));
+		{
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "unexpected error when checking RSA key: %s.",
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			goto fail;
+		}
 	}
 
 	const BIGNUM* rsa_e = NULL;

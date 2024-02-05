@@ -238,8 +238,9 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 			*response_length = strtoul(val, NULL, 10);
 			if (errno)
 			{
+				char ebuffer[256] = { 0 };
 				WLog_Print(log, WLOG_ERROR, "could not parse content length (%s): %s [%d]", val,
-				           strerror(errno), errno);
+				           winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 				goto out;
 			}
 		}

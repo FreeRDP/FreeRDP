@@ -144,7 +144,8 @@ static int get_file_size(const char* pathname)
 
 	if (fd < 0)
 	{
-		D("Can't open %s: %s\n", pathname, strerror(errno));
+		char ebuffer[256] = { 0 };
+		D("Can't open %s: %s\n", pathname, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return -1;
 	}
 
@@ -154,10 +155,12 @@ static int get_file_size(const char* pathname)
 
 		if (ret < 0)
 		{
+			char ebuffer[256] = { 0 };
 			if (errno == EINTR)
 				continue;
 
-			D("Error while reading %s: %s\n", pathname, strerror(errno));
+			D("Error while reading %s: %s\n", pathname,
+			  winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			break;
 		}
 
@@ -183,7 +186,8 @@ static int read_file(const char* pathname, char* buffer, size_t buffsize)
 
 	if (fd < 0)
 	{
-		D("Could not open %s: %s\n", pathname, strerror(errno));
+		char ebuffer[256] = { 0 };
+		D("Could not open %s: %s\n", pathname, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return -1;
 	}
 
@@ -195,10 +199,12 @@ static int read_file(const char* pathname, char* buffer, size_t buffsize)
 
 		if (ret < 0)
 		{
+			char ebuffer[256] = { 0 };
 			if (errno == EINTR)
 				continue;
 
-			D("Error while reading from %s: %s\n", pathname, strerror(errno));
+			D("Error while reading from %s: %s\n", pathname,
+			  winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 
 			if (count == 0)
 				count = -1;
@@ -476,7 +482,8 @@ static void cpulist_read_from(CpuList* list, const char* filename)
 
 	if (filelen < 0)
 	{
-		D("Could not read %s: %s\n", filename, strerror(errno));
+		char ebuffer[256] = { 0 };
+		D("Could not read %s: %s\n", filename, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return;
 	}
 
@@ -586,7 +593,8 @@ static uint32_t get_elf_hwcap_from_proc_self_auxv(void)
 
 	if (fd < 0)
 	{
-		D("Could not open %s: %s\n", filepath, strerror(errno));
+		char ebuffer[256] = { 0 };
+		D("Could not open %s: %s\n", filepath, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		return 0;
 	}
 
@@ -604,7 +612,9 @@ static uint32_t get_elf_hwcap_from_proc_self_auxv(void)
 
 		if (ret < 0)
 		{
-			D("Error while reading %s: %s\n", filepath, strerror(errno));
+			char ebuffer[256] = { 0 };
+			D("Error while reading %s: %s\n", filepath,
+			  winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			break;
 		}
 

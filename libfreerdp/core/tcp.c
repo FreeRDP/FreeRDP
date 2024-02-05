@@ -1124,8 +1124,9 @@ int freerdp_tcp_default_connect(rdpContext* context, rdpSettings* settings, cons
 		unsigned long val = strtoul(hostname, &ptr, 10);
 		if (errno || (val > UINT32_MAX))
 		{
+			char ebuffer[256] = { 0 };
 			WLog_ERR(TAG, "could not extract port from '%s', value=%ul, error=%s", hostname, val,
-			         strerror(errno));
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 			return -1;
 		}
 		addr.svm_cid = val;

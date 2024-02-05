@@ -728,11 +728,12 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO
 
 	if (ERR_peek_error() == 0)
 	{
+		char ebuffer[256] = { 0 };
 		const char* fmt = "%s returned a system error %d: %s";
 		if (saveerrno == 0)
 			fmt = "%s retries exceeded";
 		WLog_PrintMessage(transport->log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
-		                  saveerrno, strerror(saveerrno));
+		                  saveerrno, winpr_strerror(saveerrno, ebuffer, sizeof(ebuffer)));
 		return;
 	}
 

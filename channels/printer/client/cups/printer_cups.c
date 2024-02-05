@@ -56,8 +56,9 @@ static bool is_mac_os_sonoma_or_later(void)
 	int ret = sysctlbyname("kern.osrelease", str, &size, NULL, 0);
 	if (ret != 0)
 	{
-		WLog_WARN(TAG, "sysctlbyname('kern.osrelease') failed with %s [%d]", strerror(errno),
-		          errno);
+		char buffer[256] = { 0 };
+		WLog_WARN(TAG, "sysctlbyname('kern.osrelease') failed with %s [%d]",
+		          winpr_strerror(errno, buffer, sizeof(buffer)), errno);
 		return false;
 	}
 

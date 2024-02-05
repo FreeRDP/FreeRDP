@@ -132,7 +132,8 @@ static BOOL run_mutex_init_(int (*fkt)(pthread_mutex_t*, const pthread_mutexattr
 	rc = fkt(mutex, mutexattr);
 	if (rc != 0)
 	{
-		WLog_WARN(TAG, "[%s] failed with [%s]", name, strerror(rc));
+		char ebuffer[256] = { 0 };
+		WLog_WARN(TAG, "[%s] failed with [%s]", name, winpr_strerror(rc, ebuffer, sizeof(ebuffer)));
 	}
 	return rc == 0;
 }
@@ -149,7 +150,8 @@ static BOOL run_mutex_fkt_(int (*fkt)(pthread_mutex_t* mux), const char* name,
 	rc = fkt(mutex);
 	if (rc != 0)
 	{
-		WLog_WARN(TAG, "[%s] failed with [%s]", name, strerror(rc));
+		char ebuffer[256] = { 0 };
+		WLog_WARN(TAG, "[%s] failed with [%s]", name, winpr_strerror(rc, ebuffer, sizeof(ebuffer)));
 	}
 	return rc == 0;
 }
@@ -166,7 +168,8 @@ static BOOL run_cond_init_(int (*fkt)(pthread_cond_t*, const pthread_condattr_t*
 	rc = fkt(condition, conditionattr);
 	if (rc != 0)
 	{
-		WLog_WARN(TAG, "[%s] failed with [%s]", name, strerror(rc));
+		char ebuffer[256] = { 0 };
+		WLog_WARN(TAG, "[%s] failed with [%s]", name, winpr_strerror(rc, ebuffer, sizeof(ebuffer)));
 	}
 	return rc == 0;
 }
@@ -183,7 +186,8 @@ static BOOL run_cond_fkt_(int (*fkt)(pthread_cond_t* mux), const char* name,
 	rc = fkt(condition);
 	if (rc != 0)
 	{
-		WLog_WARN(TAG, "[%s] failed with [%s]", name, strerror(rc));
+		char ebuffer[256] = { 0 };
+		WLog_WARN(TAG, "[%s] failed with [%s]", name, winpr_strerror(rc, ebuffer, sizeof(ebuffer)));
 	}
 	return rc == 0;
 }
@@ -259,7 +263,9 @@ static BOOL mux_condition_bundle_wait(mux_condition_bundle* bundle, const char* 
 		int r = pthread_cond_wait(&bundle->cond, &bundle->mux);
 		if (r != 0)
 		{
-			WLog_ERR(TAG, "failed to wait for %s [%s]", name, strerror(r));
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "failed to wait for %s [%s]", name,
+			         winpr_strerror(r, ebuffer, sizeof(ebuffer)));
 			switch (r)
 			{
 				case ENOTRECOVERABLE:
@@ -311,7 +317,9 @@ static DWORD ThreadCleanupHandle(HANDLE handle)
 
 		if (rc != 0)
 		{
-			WLog_ERR(TAG, "pthread_join failure: [%d] %s", rc, strerror(rc));
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "pthread_join failure: [%d] %s", rc,
+			         winpr_strerror(rc, ebuffer, sizeof(ebuffer)));
 			goto fail;
 		}
 		else

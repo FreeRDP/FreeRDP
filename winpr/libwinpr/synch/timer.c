@@ -84,6 +84,7 @@ static DWORD TimerCleanupHandle(HANDLE handle)
 	{
 		if (length < 0)
 		{
+			char ebuffer[256] = { 0 };
 			switch (errno)
 			{
 				case ETIMEDOUT:
@@ -94,7 +95,8 @@ static DWORD TimerCleanupHandle(HANDLE handle)
 					break;
 			}
 
-			WLog_ERR(TAG, "timer read() failure [%d] %s", errno, strerror(errno));
+			WLog_ERR(TAG, "timer read() failure [%d] %s", errno,
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 		}
 		else
 		{

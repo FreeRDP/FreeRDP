@@ -1362,10 +1362,12 @@ static CliprdrLocalFile* file_for_request(CliprdrFileContext* file, UINT32 lockI
 		}
 		if (!f->fp)
 		{
+			char ebuffer[256] = { 0 };
 			writelog(file->log, WLOG_WARN, __FILE__, __func__, __LINE__,
 			         "[lockID %" PRIu32 ", index %" PRIu32
 			         "] failed to open file '%s' [size %" PRId64 "] %s [%d]",
-			         lockId, listIndex, f->name, f->size, strerror(errno), errno);
+			         lockId, listIndex, f->name, f->size,
+			         winpr_strerror(errno, ebuffer, sizeof(ebuffer)), errno);
 			return NULL;
 		}
 	}

@@ -64,7 +64,9 @@ BOOL MutexCloseHandle(HANDLE handle)
 
 	if ((rc = pthread_mutex_destroy(&mutex->mutex)))
 	{
-		WLog_ERR(TAG, "pthread_mutex_destroy failed with %s [%d]", strerror(rc), rc);
+		char ebuffer[256] = { 0 };
+		WLog_ERR(TAG, "pthread_mutex_destroy failed with %s [%d]",
+		         winpr_strerror(rc, ebuffer, sizeof(ebuffer)), rc);
 #if defined(WITH_DEBUG_MUTEX)
 		{
 			size_t used = 0, i;
@@ -230,7 +232,9 @@ BOOL ReleaseMutex(HANDLE hMutex)
 
 		if (rc)
 		{
-			WLog_ERR(TAG, "pthread_mutex_unlock failed with %s [%d]", strerror(rc), rc);
+			char ebuffer[256] = { 0 };
+			WLog_ERR(TAG, "pthread_mutex_unlock failed with %s [%d]",
+			         winpr_strerror(rc, ebuffer, sizeof(ebuffer)), rc);
 			return FALSE;
 		}
 
