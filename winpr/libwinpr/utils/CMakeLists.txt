@@ -19,6 +19,8 @@ include(CheckFunctionExists)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
+CHECK_FUNCTION_EXISTS(strerror_r WINPR_HAVE_STRERROR_R)
+
 set(COLLECTIONS_SRCS
 	collections/Queue.c
 	collections/Stack.c

@@ -25,6 +25,8 @@
 #cmakedefine WINPR_HAVE_UNWIND_H
 #cmakedefine WINPR_WITH_PNG
 
+#cmakedefine WINPR_HAVE_STRERROR_R
+
 #cmakedefine WITH_EVENTFD_READ_WRITE
 
 #cmakedefine WITH_NATIVE_SSPI
