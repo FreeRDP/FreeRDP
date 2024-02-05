@@ -20,7 +20,9 @@
 
 #include <winpr/config.h>
 
+#define __STDC_WANT_LIB_EXT1__ 1
 #include <stdio.h>
+#include <string.h>
 #include <fcntl.h>
 
 #include <winpr/crt.h>
@@ -203,10 +205,12 @@ fail:
 
 char* winpr_strerror(DWORD dw, char* dmsg, size_t size)
 {
-#if defined(_WIN32)
-	return winpr_win_strerror(dw, dmsg, size);
-#else  /* defined(_WIN32) */
+#ifdef __STDC_LIB_EXT1__
+	strerror_s(dw, dmsg, size);
+#elif defined(WINPR_HAVE_STRERROR_R)
+	strerror_r(dw, dmsg, size);
+#else
 	_snprintf(dmsg, size, "%s", strerror(dw));
-#endif /* defined(_WIN32) */
+#endif
 	return dmsg;
 }
