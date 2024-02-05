@@ -720,15 +720,13 @@ WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
 {
 	WINPR_ASSERT(xcert);
 
-	EVP_PKEY* evp = X509_get0_pubkey(xcert);
-	WINPR_ASSERT(evp);
+	const int nid = X509_get_signature_nid(xcert);
 
-	int nid = 0;
-	const int res = EVP_PKEY_get_default_digest_nid(evp, &nid);
-	if (res <= 0)
+	int hash_nid = 0;
+	if (OBJ_find_sigid_algs(nid, &hash_nid, NULL) != 1)
 		return WINPR_MD_NONE;
 
-	switch (nid)
+	switch (hash_nid)
 	{
 		case NID_md2:
 			return WINPR_MD_MD2;
