@@ -716,16 +716,8 @@ X509* x509_utils_from_pem(const char* data, size_t len, BOOL fromFile)
 	return x509;
 }
 
-WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
+static WINPR_MD_TYPE hash_nid_to_winpr(int hash_nid)
 {
-	WINPR_ASSERT(xcert);
-
-	const int nid = X509_get_signature_nid(xcert);
-
-	int hash_nid = 0;
-	if (OBJ_find_sigid_algs(nid, &hash_nid, NULL) != 1)
-		return WINPR_MD_NONE;
-
 	switch (hash_nid)
 	{
 		case NID_md2:
@@ -764,6 +756,108 @@ WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
 		default:
 			return WINPR_MD_NONE;
 	}
+}
+
+static WINPR_MD_TYPE get_rsa_pss_digest(const X509_ALGOR* alg)
+{
+	WINPR_MD_TYPE ret = WINPR_MD_NONE;
+	WINPR_MD_TYPE message_digest, mgf1_digest;
+	int param_type;
+	const void* param_value;
+	const ASN1_STRING* sequence;
+	const unsigned char* inp;
+	RSA_PSS_PARAMS* params = NULL;
+	X509_ALGOR* mgf1_digest_alg = NULL;
+
+	/* The RSA-PSS digest is encoded in a complex structure, defined in
+	https://www.rfc-editor.org/rfc/rfc4055.html. */
+	X509_ALGOR_get0(NULL, &param_type, &param_value, alg);
+
+	/* param_type and param_value the parameter in ASN1_TYPE form, but split into two parameters. A
+	SEQUENCE is has type V_ASN1_SEQUENCE, and the value is an ASN1_STRING with the encoded
+	structure. */
+	if (param_type != V_ASN1_SEQUENCE)
+		goto end;
+	sequence = param_value;
+
+	/* Decode the structure. */
+	inp = ASN1_STRING_get0_data(sequence);
+	params = d2i_RSA_PSS_PARAMS(NULL, &inp, ASN1_STRING_length(sequence));
+	if (params == NULL)
+		goto end;
+
+	/* RSA-PSS uses two hash algorithms, a message digest and also an MGF function which is, itself,
+	parameterized by a hash function. Both fields default to SHA-1, so we must also check for the
+	value being NULL. */
+	message_digest = WINPR_MD_SHA1;
+	if (params->hashAlgorithm != NULL)
+	{
+		const ASN1_OBJECT* obj;
+		X509_ALGOR_get0(&obj, NULL, NULL, params->hashAlgorithm);
+		message_digest = hash_nid_to_winpr(OBJ_obj2nid(obj));
+		if (message_digest == WINPR_MD_NONE)
+			goto end;
+	}
+
+	mgf1_digest = WINPR_MD_SHA1;
+	if (params->maskGenAlgorithm != NULL)
+	{
+		const ASN1_OBJECT* obj;
+		int mgf_param_type;
+		const void* mgf_param_value;
+		const ASN1_STRING* mgf_param_sequence;
+		/* First, check this is MGF-1, the only one ever defined. */
+		X509_ALGOR_get0(&obj, &mgf_param_type, &mgf_param_value, params->maskGenAlgorithm);
+		if (OBJ_obj2nid(obj) != NID_mgf1)
+			goto end;
+
+		/* MGF-1 is, itself, parameterized by a hash function, encoded as an AlgorithmIdentifier. */
+		if (mgf_param_type != V_ASN1_SEQUENCE)
+			goto end;
+		mgf_param_sequence = mgf_param_value;
+		inp = ASN1_STRING_get0_data(mgf_param_sequence);
+		mgf1_digest_alg = d2i_X509_ALGOR(NULL, &inp, ASN1_STRING_length(mgf_param_sequence));
+		if (mgf1_digest_alg == NULL)
+			goto end;
+
+		/* Finally, extract the digest. */
+		X509_ALGOR_get0(&obj, NULL, NULL, mgf1_digest_alg);
+		mgf1_digest = hash_nid_to_winpr(OBJ_obj2nid(obj));
+		if (mgf1_digest == WINPR_MD_NONE)
+			goto end;
+	}
+
+	/* If the two digests do not match, it is ambiguous which to return. tls-server-end-point leaves
+	it undefined, so return none.
+	https://www.rfc-editor.org/rfc/rfc5929.html#section-4.1 */
+	if (message_digest != mgf1_digest)
+		goto end;
+	ret = message_digest;
+
+end:
+	RSA_PSS_PARAMS_free(params);
+	X509_ALGOR_free(mgf1_digest_alg);
+	return ret;
+}
+
+WINPR_MD_TYPE x509_utils_get_signature_alg(const X509* xcert)
+{
+	WINPR_ASSERT(xcert);
+
+	const int nid = X509_get_signature_nid(xcert);
+
+	if (nid == NID_rsassaPss)
+	{
+		const X509_ALGOR* alg;
+		X509_get0_signature(NULL, &alg, xcert);
+		return get_rsa_pss_digest(alg);
+	}
+
+	int hash_nid = 0;
+	if (OBJ_find_sigid_algs(nid, &hash_nid, NULL) != 1)
+		return WINPR_MD_NONE;
+
+	return hash_nid_to_winpr(hash_nid);
 }
 
 char* x509_utils_get_common_name(const X509* xcert, size_t* plength)
