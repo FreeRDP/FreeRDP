@@ -172,7 +172,6 @@ static const signature_alg_test_t signature_alg_tests[] = {
 	{ "ecdsa_sha384_cert.pem", WINPR_MD_SHA384 },
 	{ "ecdsa_sha512_cert.pem", WINPR_MD_SHA512 },
 
-#if 0
 	{ "rsa_pss_sha1_cert.pem", WINPR_MD_SHA1 },
 	{ "rsa_pss_sha256_cert.pem", WINPR_MD_SHA256 },
 	{ "rsa_pss_sha384_cert.pem", WINPR_MD_SHA384 },
@@ -182,7 +181,6 @@ static const signature_alg_test_t signature_alg_tests[] = {
 	leaves the tls-server-end-point hash unspecified, so it should return WINPR_MD_NONE.
 	*/
 	{ "rsa_pss_sha256_mgf1_sha384_cert.pem", WINPR_MD_NONE },
-#endif
 };
 
 static int TestSignatureAlgorithm(const signature_alg_test_t* test)
