@@ -134,6 +134,7 @@ fail:
 	return success;
 }
 
+/* clang-format off */
 /*
 These certificates were generated with the following commands:
 
@@ -154,6 +155,7 @@ openssl req -x509 -newkey rsa:2048 -keyout /dev/null -days 3650 -nodes -subj "/C
 openssl req -x509 -newkey rsa:2048 -keyout /dev/null -days 3650 -nodes -subj "/CN=Test" -out rsa_pss_sha512_cert.pem -sha512 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:digest
 openssl req -x509 -newkey rsa:2048 -keyout /dev/null -days 3650 -nodes -subj "/CN=Test" -out rsa_pss_sha256_mgf1_sha384_cert.pem -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:digest -sigopt rsa_mgf1_md:sha384
 */
+/* clang-format on */
 
 typedef struct
 {
@@ -201,11 +203,11 @@ static int TestSignatureAlgorithm(const signature_alg_test_t* test)
 	if (signature_alg != test->expected)
 	{
 		const char* signature_alg_string =
-			signature_alg == WINPR_MD_NONE ? "none" : winpr_md_type_to_string(signature_alg);
+		    signature_alg == WINPR_MD_NONE ? "none" : winpr_md_type_to_string(signature_alg);
 		const char* expected_string =
-			test->expected == WINPR_MD_NONE ? "none" : winpr_md_type_to_string(test->expected);
+		    test->expected == WINPR_MD_NONE ? "none" : winpr_md_type_to_string(test->expected);
 		printf("%s: failure: for \"%s\", actual: %s, expected %s\n", __func__, test->filename,
-			signature_alg_string, expected_string);
+		       signature_alg_string, expected_string);
 		success = -1;
 		goto fail;
 	}
