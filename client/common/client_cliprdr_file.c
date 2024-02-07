@@ -1577,26 +1577,6 @@ static UINT cliprdr_file_context_server_file_contents_request(
 	return CHANNEL_RC_OK;
 }
 
-static BOOL xf_cliprdr_clipboard_is_valid_unix_filename(LPCWSTR filename)
-{
-	LPCWSTR c = NULL;
-
-	if (!filename)
-		return FALSE;
-
-	if (filename[0] == L'\0')
-		return FALSE;
-
-	/* Reserved characters */
-	for (c = filename; *c; ++c)
-	{
-		if (*c == L'/')
-			return FALSE;
-	}
-
-	return TRUE;
-}
-
 BOOL cliprdr_file_context_init(CliprdrFileContext* file, CliprdrClientContext* cliprdr)
 {
 	WINPR_ASSERT(file);
