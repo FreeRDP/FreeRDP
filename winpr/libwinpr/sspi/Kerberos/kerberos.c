@@ -880,8 +880,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 			/* Write the checksum (delegation not implemented) */
 			cksum.data = cksum_contents;
 			cksum.length = sizeof(cksum_contents);
-			Data_Write_UINT32(cksum.data, 16);
-			Data_Write_UINT32((cksum.data + 20), context->flags);
+			Data_Write_UINT32(cksum_contents, 16);
+			Data_Write_UINT32((cksum_contents + 20), context->flags);
 
 			if (bindings_buffer)
 			{
@@ -1536,9 +1536,9 @@ static SECURITY_STATUS SEC_ENTRY kerberos_EncryptMessage(PCtxtHandle phContext, 
 	/* Set up the iov array in sig_buffer */
 	header = sig_buffer->pvBuffer;
 	encrypt_iov[2].data.data = header + 16;
-	encrypt_iov[3].data.data = encrypt_iov[2].data.data + encrypt_iov[2].data.length;
-	encrypt_iov[4].data.data = encrypt_iov[3].data.data + encrypt_iov[3].data.length;
-	encrypt_iov[0].data.data = encrypt_iov[4].data.data + encrypt_iov[4].data.length;
+	encrypt_iov[3].data.data = (BYTE*)encrypt_iov[2].data.data + encrypt_iov[2].data.length;
+	encrypt_iov[4].data.data = (BYTE*)encrypt_iov[3].data.data + encrypt_iov[3].data.length;
+	encrypt_iov[0].data.data = (BYTE*)encrypt_iov[4].data.data + encrypt_iov[4].data.length;
 	encrypt_iov[1].data.data = data_buffer->pvBuffer;
 
 	/* Write the GSS header with 0 in RRC */
@@ -1644,8 +1644,8 @@ static SECURITY_STATUS SEC_ENTRY kerberos_DecryptMessage(PCtxtHandle phContext,
 	iov[0].data.data = header + 16 + rrc + ec;
 	iov[1].data.data = data_buffer->pvBuffer;
 	iov[2].data.data = header + 16 + ec;
-	iov[3].data.data = iov[2].data.data + iov[2].data.length;
-	iov[4].data.data = iov[3].data.data + iov[3].data.length;
+	iov[3].data.data = (BYTE*)iov[2].data.data + iov[2].data.length;
+	iov[4].data.data = (BYTE*)iov[3].data.data + iov[3].data.length;
 
 	if (krb_log_exec(krb5glue_decrypt_iov, context->ctx, key, usage, iov, ARRAYSIZE(iov)))
 		return SEC_E_INTERNAL_ERROR;
