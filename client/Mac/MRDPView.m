@@ -486,6 +486,10 @@ static DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE
 
 	rdpInput *input = instance->context->input;
 
+#if defined(WITH_DEBUG_KBD)
+	WLog_DBG(TAG, "flagsChanged: modFlags: 0x%04X kbdModFlags: 0x%04X", modFlags, kbdModFlags);
+#endif
+
 	updateFlagStates(input, modFlags, kbdModFlags);
 	kbdModFlags = modFlags;
 }
@@ -566,13 +570,16 @@ static DWORD fixKeyCode(DWORD keyCode, unichar keyChar, enum APPLE_KEYBOARD_TYPE
 	freerdp_input_send_keyboard_event(instance->context->input, keyFlags, scancode);
 }
 
-static BOOL updateFlagState(rdpInput *input, DWORD modFlags, DWORD kbdModFlags, DWORD flag)
+static BOOL updateFlagState(rdpInput *input, DWORD modFlags, DWORD aKbdModFlags, DWORD flag)
 {
-	BOOL press = ((modFlags & flag) != 0) && ((kbdModFlags & flag) == 0);
-	BOOL release = ((modFlags & flag) == 0) && ((kbdModFlags & flag) != 0);
+	BOOL press = ((modFlags & flag) != 0) && ((aKbdModFlags & flag) == 0);
+	BOOL release = ((modFlags & flag) == 0) && ((aKbdModFlags & flag) != 0);
 	DWORD keyFlags = 0;
 	const char *name = NULL;
 	DWORD scancode = 0;
+
+	if ((modFlags & flag) == (aKbdModFlags & flag))
+		return TRUE;
 
 	switch (flag)
 	{
@@ -646,20 +653,20 @@ static BOOL updateFlagState(rdpInput *input, DWORD modFlags, DWORD kbdModFlags, 
 	return TRUE;
 }
 
-static BOOL updateFlagStates(rdpInput *input, UINT32 modFlags, UINT32 kbdModFlags)
+static BOOL updateFlagStates(rdpInput *input, UINT32 modFlags, UINT32 aKbdModFlags)
 {
-	updateFlagState(input, modFlags, kbdModFlags, NSEventModifierFlagCapsLock);
-	updateFlagState(input, modFlags, kbdModFlags, NSEventModifierFlagShift);
-	updateFlagState(input, modFlags, kbdModFlags, NSEventModifierFlagControl);
-	updateFlagState(input, modFlags, kbdModFlags, NSEventModifierFlagOption);
-	updateFlagState(input, modFlags, kbdModFlags, NSEventModifierFlagCommand);
-	updateFlagState(input, modFlags, kbdModFlags, NSEventModifierFlagNumericPad);
+	updateFlagState(input, modFlags, aKbdModFlags, NSEventModifierFlagCapsLock);
+	updateFlagState(input, modFlags, aKbdModFlags, NSEventModifierFlagShift);
+	updateFlagState(input, modFlags, aKbdModFlags, NSEventModifierFlagControl);
+	updateFlagState(input, modFlags, aKbdModFlags, NSEventModifierFlagOption);
+	updateFlagState(input, modFlags, aKbdModFlags, NSEventModifierFlagCommand);
+	updateFlagState(input, modFlags, aKbdModFlags, NSEventModifierFlagNumericPad);
 	return TRUE;
 }
 
-static BOOL releaseFlagStates(rdpInput *input, UINT32 kbdModFlags)
+static BOOL releaseFlagStates(rdpInput *input, UINT32 aKbdModFlags)
 {
-	return updateFlagStates(input, 0, kbdModFlags);
+	return updateFlagStates(input, 0, aKbdModFlags);
 }
 
 - (void)releaseResources
