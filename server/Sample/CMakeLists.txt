@@ -48,8 +48,21 @@ if (WIN32)
   set ( SRCS ${SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
 endif()
 
+set(SAMPLE_RESOURCE_ROOT ${CMAKE_INSTALL_FULL_DATAROOTDIR}/FreeRDP/images)
+if (WITH_BINARY_VERSIONING)
+  string(APPEND SAMPLE_RESOURCE_ROOT "${PROJECT_VERSION_MAJOR}")
+endif()
+
+set(SAMPLE_ICONS
+    test_icon.bmp
+    test_icon.png
+    test_icon.jpg
+    test_icon.webp
+)
+install(FILES ${SAMPLE_ICONS} DESTINATION ${SAMPLE_RESOURCE_ROOT})
+
 # We need this in runtime path for TestConnect
-file(COPY test_icon.ppm DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY test_icon.bmp DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable(${MODULE_NAME} ${SRCS})
 if (WITH_BINARY_VERSIONING)
