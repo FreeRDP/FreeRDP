@@ -233,16 +233,6 @@ fail:
 	return FALSE;
 }
 
-static BOOL copy_value(const char* value, char** dst)
-{
-	if (!dst || !value)
-		return FALSE;
-
-	free(*dst);
-	(*dst) = _strdup(value);
-	return (*dst) != NULL;
-}
-
 static BOOL value_to_int(const char* value, LONGLONG* result, LONGLONG min, LONGLONG max)
 {
 	long long rc = 0;

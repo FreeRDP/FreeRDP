@@ -131,21 +131,6 @@ static int opt_compare_fn(const void* a, const void* b)
 	return strncmp(what, opt->fmt, opt->fmtlen);
 }
 
-static BOOL has_format_arg(const char* str, size_t len)
-{
-	if (!str || (len == 0))
-		return FALSE;
-
-	for (size_t x = 0; x < len; x++)
-	{
-		char c = str[x];
-		if (c == '%')
-			return TRUE;
-	}
-
-	return FALSE;
-}
-
 static BOOL replace_format_string(const char* FormatString, struct format_option_recurse* recurse,
                                   char* format, size_t formatlen);
 

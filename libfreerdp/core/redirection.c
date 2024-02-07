@@ -195,17 +195,6 @@ static BOOL rdp_redirection_read_unicode_string(wStream* s, char** str, size_t m
 	return TRUE;
 }
 
-static BOOL replace_char(char* utf8, size_t length, char what, char with)
-{
-	for (size_t x = 0; x < length; x++)
-	{
-		char* cur = &utf8[x];
-		if (*cur == what)
-			*cur = with;
-	}
-	return TRUE;
-}
-
 static BOOL rdp_redirection_write_data(wStream* s, size_t length, const void* data)
 {
 	WINPR_ASSERT(data || (length == 0));
