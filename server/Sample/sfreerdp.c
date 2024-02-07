@@ -32,6 +32,7 @@
 #include <winpr/file.h>
 #include <winpr/string.h>
 #include <winpr/path.h>
+#include <winpr/image.h>
 #include <winpr/winsock.h>
 
 #include <freerdp/streamdump.h>
@@ -77,6 +78,7 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 
 	if (context)
 	{
+		winpr_image_free(context->image, TRUE);
 		if (context->debug_channel_thread)
 		{
 			WINPR_ASSERT(context->stopEvent);
@@ -86,7 +88,6 @@ static void test_peer_context_free(freerdp_peer* client, rdpContext* ctx)
 		}
 
 		Stream_Free(context->s, TRUE);
-		free(context->icon_data);
 		free(context->bg_data);
 		rfx_context_free(context->rfx_context);
 		nsc_context_free(context->nsc_context);
@@ -115,6 +116,9 @@ static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(ctx->settings);
 
+	context->image = winpr_image_new();
+	if (!context->image)
+		goto fail;
 	if (!(context->rfx_context = rfx_context_new_ex(
 	          TRUE, freerdp_settings_get_uint32(ctx->settings, FreeRDP_ThreadingFlags))))
 		goto fail;
@@ -124,12 +128,8 @@ static BOOL test_peer_context_new(freerdp_peer* client, rdpContext* ctx)
 		goto fail;
 
 	rfx_context_set_mode(context->rfx_context, RLGR3);
-	rfx_context_set_pixel_format(context->rfx_context, PIXEL_FORMAT_RGB24);
 
 	if (!(context->nsc_context = nsc_context_new()))
-		goto fail;
-
-	if (!nsc_context_set_parameters(context->nsc_context, NSC_COLOR_FORMAT, PIXEL_FORMAT_RGB24))
 		goto fail;
 
 	if (!(context->s = Stream_New(NULL, 65536)))
@@ -221,6 +221,8 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	SURFACE_BITS_COMMAND cmd = { 0 };
 	testPeerContext* context;
 	BOOL ret = FALSE;
+	const UINT32 colorFormat = PIXEL_FORMAT_RGB24;
+	const size_t bpp = FreeRDPGetBytesPerPixel(colorFormat);
 
 	WINPR_ASSERT(client);
 	context = (testPeerContext*)client->context;
@@ -244,7 +246,7 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	rect.y = 0;
 	rect.width = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 	rect.height = (UINT16)freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
-	size = rect.width * rect.height * 3ULL;
+	size = bpp * rect.width * rect.height;
 
 	if (!(rgb_data = malloc(size)))
 	{
@@ -257,8 +259,9 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	if (RemoteFxCodec)
 	{
 		WLog_DBG(TAG, "Using RemoteFX codec");
+		rfx_context_set_pixel_format(context->rfx_context, colorFormat);
 		if (!rfx_compose_message(context->rfx_context, s, &rect, 1, rgb_data, rect.width,
-		                         rect.height, rect.width * 3))
+		                         rect.height, rect.width * bpp))
 		{
 			goto out;
 		}
@@ -272,8 +275,9 @@ static BOOL test_peer_draw_background(freerdp_peer* client)
 	else
 	{
 		WLog_DBG(TAG, "Using NSCodec");
+		nsc_context_set_parameters(context->nsc_context, NSC_COLOR_FORMAT, colorFormat);
 		nsc_compose_message(context->nsc_context, s, rgb_data, rect.width, rect.height,
-		                    rect.width * 3ULL);
+		                    rect.width * bpp);
 		const UINT32 NSCodecId = freerdp_settings_get_uint32(settings, FreeRDP_NSCodecId);
 		WINPR_ASSERT(NSCodecId <= UINT16_MAX);
 		cmd.bmp.codecID = (UINT16)NSCodecId;
@@ -300,14 +304,34 @@ out:
 	return ret;
 }
 
+static int open_icon(wImage* img)
+{
+	char* paths[] = { SAMPLE_RESOURCE_ROOT, "." };
+	const char* names[] = { "test_icon.webp", "test_icon.png", "test_icon.jpg", "test_icon.bmp" };
+
+	for (size_t x = 0; x < ARRAYSIZE(paths); x++)
+	{
+		const char* path = paths[x];
+		if (!winpr_PathFileExists(path))
+			continue;
+
+		for (size_t y = 0; y < ARRAYSIZE(names); y++)
+		{
+			const char* name = names[y];
+			char* file = GetCombinedPath(path, name);
+			int rc = winpr_image_read(img, file);
+			free(file);
+			if (rc > 0)
+				return rc;
+		}
+	}
+	WLog_ERR(TAG, "Unable to open test icon");
+	return -1;
+}
+
 static BOOL test_peer_load_icon(freerdp_peer* client)
 {
 	testPeerContext* context;
-	FILE* fp = NULL;
-	int i;
-	char line[50] = { 0 };
-	BYTE* rgb_data = NULL;
-	int c;
 	rdpSettings* settings;
 
 	WINPR_ASSERT(client);
@@ -325,62 +349,18 @@ static BOOL test_peer_load_icon(freerdp_peer* client)
 		return FALSE;
 	}
 
-	if ((fp = winpr_fopen("test_icon.ppm", "r")) == NULL)
-	{
-		WLog_ERR(TAG, "Unable to open test icon");
-		return FALSE;
-	}
-
-	/* P3 */
-	char* s = fgets(line, sizeof(line), fp);
-	if (!s)
+	int rc = open_icon(context->image);
+	if (rc <= 0)
 		goto out_fail;
-
-	/* Creater comment */
-	s = fgets(line, sizeof(line), fp);
-	if (!s)
-		goto out_fail;
-
-	/* width height */
-	s = fgets(line, sizeof(line), fp);
-	if (!s)
-		goto out_fail;
-
-	if (sscanf(line, "%hu %hu", &context->icon_width, &context->icon_height) < 2)
-	{
-		WLog_ERR(TAG, "Problem while extracting width/height from the icon file");
-		goto out_fail;
-	}
-
-	/* Max */
-	s = fgets(line, sizeof(line), fp);
-	if (!s)
-		goto out_fail;
-
-	if (!(rgb_data = calloc(context->icon_height, context->icon_width * 3)))
-		goto out_fail;
-
-	for (i = 0; i < context->icon_width * context->icon_height * 3; i++)
-	{
-		if (!fgets(line, sizeof(line), fp) || (sscanf(line, "%d", &c) != 1))
-			goto out_fail;
-
-		rgb_data[i] = (BYTE)c;
-	}
 
 	/* background with same size, which will be used to erase the icon from old position */
-	if (!(context->bg_data = calloc(context->icon_height, context->icon_width * 3)))
+	if (!(context->bg_data = calloc(context->image->height, context->image->width * 3)))
 		goto out_fail;
 
-	memset(context->bg_data, 0xA0, context->icon_width * context->icon_height * 3ull);
-	context->icon_data = rgb_data;
-	fclose(fp);
+	memset(context->bg_data, 0xA0, context->image->height * context->image->width * 3ull);
 	return TRUE;
 out_fail:
-	free(rgb_data);
 	context->bg_data = NULL;
-	if (fp)
-		fclose(fp);
 	return FALSE;
 }
 
@@ -407,14 +387,14 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 	if (freerdp_settings_get_bool(settings, FreeRDP_DumpRemoteFx))
 		return;
 
-	if (context->icon_width < 1 || !context->activated)
+	if (context->image->width < 1 || !context->activated)
 		return;
 
 	test_peer_begin_frame(client);
 	rect.x = 0;
 	rect.y = 0;
-	rect.width = context->icon_width;
-	rect.height = context->icon_height;
+	rect.width = context->image->width;
+	rect.height = context->image->height;
 
 	const BOOL RemoteFxCodec = freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec);
 	if (RemoteFxCodec)
@@ -435,23 +415,31 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 
 	if (context->icon_x != UINT32_MAX)
 	{
+		const UINT32 colorFormat = PIXEL_FORMAT_RGB24;
+		const UINT32 bpp = FreeRDPGetBytesPerPixel(colorFormat);
 		s = test_peer_stream_init(context);
 
 		if (RemoteFxCodec)
+		{
+			rfx_context_set_pixel_format(context->rfx_context, colorFormat);
 			rfx_compose_message(context->rfx_context, s, &rect, 1, context->bg_data, rect.width,
-			                    rect.height, rect.width * 3);
+			                    rect.height, rect.width * bpp);
+		}
 		else
+		{
+			nsc_context_set_parameters(context->nsc_context, NSC_COLOR_FORMAT, colorFormat);
 			nsc_compose_message(context->nsc_context, s, context->bg_data, rect.width, rect.height,
-			                    rect.width * 3);
+			                    rect.width * bpp);
+		}
 
 		cmd.destLeft = context->icon_x;
 		cmd.destTop = context->icon_y;
-		cmd.destRight = context->icon_x + context->icon_width;
-		cmd.destBottom = context->icon_y + context->icon_height;
+		cmd.destRight = context->icon_x + context->image->width;
+		cmd.destBottom = context->icon_y + context->image->height;
 		cmd.bmp.bpp = 32;
 		cmd.bmp.flags = 0;
-		cmd.bmp.width = context->icon_width;
-		cmd.bmp.height = context->icon_height;
+		cmd.bmp.width = context->image->width;
+		cmd.bmp.height = context->image->height;
 		cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 		cmd.bmp.bitmapData = Stream_Buffer(s);
 		WINPR_ASSERT(update->SurfaceBits);
@@ -460,20 +448,31 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 
 	s = test_peer_stream_init(context);
 
-	if (RemoteFxCodec)
-		rfx_compose_message(context->rfx_context, s, &rect, 1, context->icon_data, rect.width,
-		                    rect.height, rect.width * 3);
-	else
-		nsc_compose_message(context->nsc_context, s, context->icon_data, rect.width, rect.height,
-		                    rect.width * 3);
+	{
+		const UINT32 colorFormat =
+		    context->image->bitsPerPixel > 24 ? PIXEL_FORMAT_BGRA32 : PIXEL_FORMAT_BGR24;
+		const UINT32 bpp = FreeRDPGetBytesPerPixel(colorFormat);
+		if (RemoteFxCodec)
+		{
+			rfx_context_set_pixel_format(context->rfx_context, colorFormat);
+			rfx_compose_message(context->rfx_context, s, &rect, 1, context->image->data, rect.width,
+			                    rect.height, context->image->scanline);
+		}
+		else
+		{
+			nsc_context_set_parameters(context->nsc_context, NSC_COLOR_FORMAT, colorFormat);
+			nsc_compose_message(context->nsc_context, s, context->image->data, rect.width,
+			                    rect.height, context->image->scanline);
+		}
+	}
 
 	cmd.destLeft = x;
 	cmd.destTop = y;
-	cmd.destRight = x + context->icon_width;
-	cmd.destBottom = y + context->icon_height;
+	cmd.destRight = x + context->image->width;
+	cmd.destBottom = y + context->image->height;
 	cmd.bmp.bpp = 32;
-	cmd.bmp.width = context->icon_width;
-	cmd.bmp.height = context->icon_height;
+	cmd.bmp.width = context->image->width;
+	cmd.bmp.height = context->image->height;
 	cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 	cmd.bmp.bitmapData = Stream_Buffer(s);
 	WINPR_ASSERT(update->SurfaceBits);
