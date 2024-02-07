@@ -159,8 +159,6 @@ extern "C"
 	/* encoder functions */
 
 	WINPR_API void WinPrAsn1Encoder_Free(WinPrAsn1Encoder** penc);
-
-	WINPR_ATTR_MALLOC(WinPrAsn1Encoder_Free, 1)
 	WINPR_API WinPrAsn1Encoder* WinPrAsn1Encoder_New(WinPrAsn1EncodingRule encoding);
 
 	WINPR_API void WinPrAsn1Encoder_Reset(WinPrAsn1Encoder* enc);
