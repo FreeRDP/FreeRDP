@@ -347,7 +347,7 @@ static void wf_send_resize(wfContext* wfc)
 				layout.Width = targetWidth;
 				layout.Height = targetHeight;
 				layout.Orientation =
-				    freerdp_settings_get_uint32(settings, FreeRDP_DesktopOrientation);
+				    freerdp_settings_get_uint16(settings, FreeRDP_DesktopOrientation);
 				layout.DesktopScaleFactor =
 				    freerdp_settings_get_uint32(settings, FreeRDP_DesktopScaleFactor);
 				layout.DeviceScaleFactor =
