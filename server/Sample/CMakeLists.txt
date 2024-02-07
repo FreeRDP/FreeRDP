@@ -69,6 +69,10 @@ if (WITH_BINARY_VERSIONING)
 	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${FREERDP_API_VERSION}")
 endif()
 
+target_compile_definitions(${MODULE_NAME}
+  PRIVATE
+    -DSAMPLE_RESOURCE_ROOT="${SAMPLE_RESOURCE_ROOT}"
+)
 list(APPEND LIBS freerdp-server)
 list(APPEND LIBS winpr freerdp)
 

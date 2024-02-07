@@ -38,6 +38,7 @@
 #include <winpr/crt.h>
 #include <winpr/synch.h>
 #include <winpr/thread.h>
+#include <winpr/image.h>
 
 struct test_peer_context
 {
@@ -46,10 +47,7 @@ struct test_peer_context
 	RFX_CONTEXT* rfx_context;
 	NSC_CONTEXT* nsc_context;
 	wStream* s;
-	BYTE* icon_data;
 	BYTE* bg_data;
-	UINT16 icon_width;
-	UINT16 icon_height;
 	UINT32 icon_x;
 	UINT32 icon_y;
 	BOOL activated;
@@ -71,6 +69,7 @@ struct test_peer_context
 	EncomspServerContext* encomsp;
 
 	rdpTransportIo io;
+	wImage* image;
 };
 typedef struct test_peer_context testPeerContext;
 
