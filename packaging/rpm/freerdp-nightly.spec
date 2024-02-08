@@ -25,7 +25,7 @@ Url:            http://www.freerdp.com
 Group:          Productivity/Networking/Other
 Source0:        %{name}-%{version}.tar.bz2
 Source1:        source_version
-BuildRequires: gcc-c++
+BuildRequires: clang
 BuildRequires: cmake >= 3.13.0
 BuildRequires: libxkbfile-devel
 BuildRequires: libX11-devel
@@ -42,19 +42,22 @@ BuildRequires: libXtst-devel
 BuildRequires: cups-devel
 BuildRequires: cairo-devel
 BuildRequires: pcsc-lite-devel
-BuildRequires: uuid-devel
 BuildRequires: libxml2-devel
 BuildRequires: zlib-devel
 BuildRequires: krb5-devel
-BuildRequires: cjson-devel
 BuildRequires: uriparser-devel
-BuildRequires: opus-devel
 BuildRequires: libpng-devel
 BuildRequires: libwebp-devel
-BuildRequires: libjpeg-turbo-devel
+BuildRequires: fuse3-devel
+BuildRequires: pkcs11-helper-devel
+BuildRequires: pam-devel
+BuildRequires: libicu-devel
 
 # (Open)Suse
 %if %{defined suse_version}
+BuildRequires: libswscale-devel
+BuildRequires: cJSON-devel
+BuildRequires: uuid-devel
 BuildRequires: libSDL2-devel
 BuildRequires: libSDL2_ttf-devel
 BuildRequires: libSDL2_image-devel
@@ -68,15 +71,17 @@ BuildRequires: libusb-1_0-devel
 BuildRequires: libudev-devel
 BuildRequires: dbus-1-glib-devel
 BuildRequires: wayland-devel
-BuildRequires: libjpeg-devel
 BuildRequires: libavutil-devel
 BuildRequires: libavcodec-devel
 BuildRequires: libswresample-devel
-BuildRequires: libpkcs11-helper1-devel
-BuildRequires: libfuse3-dev
+BuildRequires: libopus-devel
+BuildRequires: libjpeg62-devel
 %endif
-# fedora 21+
-%if 0%{?fedora} >= 21 || 0%{?rhel} >= 7
+
+%if 0%{defined rhel}
+BuildRequires: cjson-devel
+BuildRequires: uuid-devel
+BuildRequires: opus-devel
 BuildRequires: SDL2-devel
 BuildRequires: SDL2_ttf-devel
 BuildRequires: SDL2_image-devel
@@ -90,21 +95,36 @@ BuildRequires: libusbx-devel
 BuildRequires: systemd-devel
 BuildRequires: dbus-glib-devel
 BuildRequires: libjpeg-turbo-devel
-BuildRequires: pkcs11-helper-devel
-BuildRequires: fuse3-devel
 BuildRequires: libasan
-BuildRequires: webkit2gtk4.0-devel
-%endif
-
-%if 0%{?fedora} >= 33
+BuildRequires: libjpeg-turbo-devel
 BuildRequires: wayland-devel
 %endif
 
-%if 0%{?rhel} >= 8
-BuildRequires: libwayland-client-devel
+# fedora 21+
+%if 0%{?fedora} >= 37
+BuildRequires: cjson-devel
+BuildRequires: uuid-devel
+BuildRequires: opus-devel
+BuildRequires: SDL2-devel
+BuildRequires: SDL2_ttf-devel
+BuildRequires: SDL2_image-devel
+BuildRequires: docbook-style-xsl
+BuildRequires: libxslt
+BuildRequires: pkgconfig
+BuildRequires: openssl-devel
+BuildRequires: alsa-lib-devel
+BuildRequires: pulseaudio-libs-devel
+BuildRequires: libusbx-devel
+BuildRequires: systemd-devel
+BuildRequires: dbus-glib-devel
+BuildRequires: libjpeg-turbo-devel
+BuildRequires: libasan
+BuildRequires: webkit2gtk4.0-devel
+BuildRequires: libjpeg-turbo-devel
+BuildRequires: wayland-devel
 %endif
 
-%if 0%{?fedora} >= 36 || 0%{?rhel} >= 9
+%if 0%{?fedora} >= 36 || 0%{?rhel} >= 8
 BuildRequires: (ffmpeg-free-devel or ffmpeg-devel)
 %endif
 
@@ -148,8 +168,18 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
         -DWITH_FFMPEG=ON \
         -DWITH_DSP_FFMPEG=ON \
 %endif
-%if 0%{?fedora} < 21 || 0%{?rhel} < 8
-        -DWITH_WAYLAND=OFF \
+%if 0%{?rhel} <= 8
+        -DALLOW_IN_SOURCE_BUILD=ON \
+%endif
+%if 0%{?rhel} >= 8 || 0%{defined suse_version}
+        -DWITH_WEBVIEW=OFF \
+%endif
+	-DCMAKE_C_COMPILER=clang \
+	-DCMAKE_CXX_COMPILER=clang++ \
+%if 0%{defined suse_version}
+        -DWITH_SANITIZE_ADDRESS=OFF \
+%else
+        -DWITH_SANITIZE_ADDRESS=ON \
 %endif
         -DWITH_KRB5=ON \
         -DCHANNEL_URBDRC=ON \
@@ -159,32 +189,13 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
         -DBUILD_TESTING=OFF \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
         -DCMAKE_INSTALL_PREFIX=%{INSTALL_PREFIX} \
-%if %{defined suse_version}
-        -DCMAKE_NO_BUILTIN_CHRPATH=ON \
-%else
-        -DWITH_SANITIZE_ADDRESS=ON \
-%endif
         -DCMAKE_INSTALL_LIBDIR=%{_lib}
 
-%if 0%{?fedora} > 32
 %cmake_build
-%else
-make %{?_smp_mflags}
-%endif
 
 %install
-%if %{defined suse_version}
-%cmake_install
-%endif
 
-%if %{defined fedora} || %{defined rhel}
-%if 0%{?fedora} > 32
 %cmake_install
-%else
-rm -rf $RPM_BUILD_ROOT
-make install DESTDIR=$RPM_BUILD_ROOT
-%endif
-%endif
 
 find %{buildroot} -name "*.a" -delete
 export NO_BRP_CHECK_RPATH true
@@ -222,6 +233,8 @@ export NO_BRP_CHECK_RPATH true
 %postun -p /sbin/ldconfig
 
 %changelog
+* Fri Feb 09 2024 FreeRDP Team <team@freerdp.com> - 3.0.0-3
+- Fix dependencies for alma, suse and rhel
 * Thu Dec 21 2023 FreeRDP Team <team@freerdp.com> - 3.0.0-2
 - Add new manpages
 - Use new CMake options
