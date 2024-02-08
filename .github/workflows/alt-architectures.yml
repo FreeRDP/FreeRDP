@@ -79,6 +79,9 @@ jobs:
               libsdl2-ttf-dev \
               libwebkit2gtk-4.0-dev \
               libopus-dev \
+              libwebp-dev \
+              libpng-dev \
+              libjpeg-dev \
               liburiparser-dev \
               cmake \
               clang
