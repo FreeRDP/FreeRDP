@@ -165,15 +165,19 @@ if (WIN32)
 endif()
 
 if (WINPR_HAVE_EXECINFO_H)
-    list(APPEND SRCS
-        execinfo/debug.c
-        execinfo/debug.h)
+    option(USE_EXECINFO "Use execinfo.h to generate backtraces" ON)
+    if (USE_EXECINFO)
+        winpr_definition_add(-DUSE_EXECINFO)
+        list(APPEND SRCS
+            execinfo/debug.c
+            execinfo/debug.h)
+    endif()
 endif()
 
 if (WINPR_HAVE_UNWIND_H)
     option(USE_UNWIND "Use unwind.h to generate backtraces" ON)
     if (USE_UNWIND)
-        add_definitions(-DUSE_UNWIND)
+        winpr_definition_add(-DUSE_UNWIND)
         list(APPEND SRCS
             unwind/debug.c
             unwind/debug.h)
