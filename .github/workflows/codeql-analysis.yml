@@ -110,6 +110,9 @@ jobs:
          libwebkit2gtk-4.0-dev \
          clang \
          libopus-dev \
+         libwebp-dev \
+         libpng-dev \
+         libjpeg-dev \
          liburiparser-dev
        mkdir ci-build
        cd ci-build
