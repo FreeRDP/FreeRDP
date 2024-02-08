@@ -85,6 +85,8 @@ else()
 	target_link_libraries(${MODULE_NAME} PRIVATE freerdp)
 endif()
 
+target_link_libraries(${MODULE_NAME} PRIVATE m)
+
 if (NOT UWAC_FORCE_STATIC_BUILD)
 	target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include/uwac${UWAC_API_VERSION}>)
 
