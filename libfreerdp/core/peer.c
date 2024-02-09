@@ -1495,7 +1495,8 @@ void freerdp_peer_free(freerdp_peer* client)
 		return;
 
 	sspi_FreeAuthIdentity(&client->identity);
-	closesocket((SOCKET)client->sockfd);
+	if (client->sockfd >= 0)
+		closesocket((SOCKET)client->sockfd);
 	free(client);
 }
 
@@ -1511,6 +1512,7 @@ static BOOL freerdp_peer_transport_setup(freerdp_peer* client)
 
 	if (!transport_attach(rdp->transport, client->sockfd))
 		return FALSE;
+	client->sockfd = -1;
 
 	if (!transport_set_recv_callbacks(rdp->transport, peer_recv_callback, client))
 		return FALSE;
