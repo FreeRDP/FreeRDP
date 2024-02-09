@@ -1234,6 +1234,8 @@ static void freerdp_peer_disconnect(freerdp_peer* client)
 
 	transport = freerdp_get_transport(client->context);
 	transport_disconnect(transport);
+	// the socket is now closed, don't attempt to close it again in freerdp_peer_free
+	client->sockfd = -1;
 }
 
 static BOOL freerdp_peer_send_channel_data(freerdp_peer* client, UINT16 channelId, const BYTE* data,
@@ -1495,7 +1497,10 @@ void freerdp_peer_free(freerdp_peer* client)
 		return;
 
 	sspi_FreeAuthIdentity(&client->identity);
-	closesocket((SOCKET)client->sockfd);
+	if (socket >= 0)
+	{
+		closesocket((SOCKET)client->sockfd);
+	}
 	free(client);
 }
 
