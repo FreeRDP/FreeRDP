@@ -176,11 +176,7 @@ cp %{_topdir}/SOURCES/source_version freerdp-nightly-%{version}/.source_version
 %endif
 	-DCMAKE_C_COMPILER=clang \
 	-DCMAKE_CXX_COMPILER=clang++ \
-%if 0%{defined suse_version}
         -DWITH_SANITIZE_ADDRESS=OFF \
-%else
-        -DWITH_SANITIZE_ADDRESS=ON \
-%endif
         -DWITH_KRB5=ON \
         -DCHANNEL_URBDRC=ON \
         -DCHANNEL_URBDRC_CLIENT=ON \
@@ -233,6 +229,8 @@ export NO_BRP_CHECK_RPATH true
 %postun -p /sbin/ldconfig
 
 %changelog
+* Fri Feb 09 2024 FreeRDP Team <team@freerdp.com> - 3.0.0-4
+- Deactivate ASAN due to issues with clang
 * Fri Feb 09 2024 FreeRDP Team <team@freerdp.com> - 3.0.0-3
 - Fix dependencies for alma, suse and rhel
 * Thu Dec 21 2023 FreeRDP Team <team@freerdp.com> - 3.0.0-2
