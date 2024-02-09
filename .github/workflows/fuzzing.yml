@@ -1,11 +1,10 @@
 name: Fuzzing testing
 
 on:
-  push:
-    branches:
-      - 'master'
-  pull_request:
-    types: [opened, reopened, synchronize, labeled]
+  workflow_dispatch:
+    branches: [ master, stable* ]
+  pull_request_target:
+    branches: [ master, stable* ]
 
 jobs:
   fuzzing:
