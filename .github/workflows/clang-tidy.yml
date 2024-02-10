@@ -12,7 +12,7 @@ jobs:
       id: pr
     - uses: actions/checkout@v4
       with:
-        ref: ${{fromJSON(steps.pr.outputs.result).merge_commit_sha}}
+        ref: ${{steps.pr.outputs.merge_commit_sha}}
 
     # Run clang-tidy
     - uses: ZedThree/clang-tidy-review@v0.17.1
