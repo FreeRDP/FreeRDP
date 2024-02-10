@@ -18,6 +18,12 @@ jobs:
         sanitizer: [address]
 
     steps:
+      - uses: suzuki-shunsuke/get-pr-action@v0.1.0
+        id: pr
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{fromJSON(steps.pr.outputs.result).merge_commit_sha}}
+
       - name: Build fuzzers (${{ matrix.sanitizer }})
         id: build
         uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master

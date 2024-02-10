@@ -8,7 +8,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - uses: suzuki-shunsuke/get-pr-action@v0.1.0
+      id: pr
     - uses: actions/checkout@v4
+      with:
+        ref: ${{fromJSON(steps.pr.outputs.result).merge_commit_sha}}
 
     # Run clang-tidy
     - uses: ZedThree/clang-tidy-review@v0.17.1
