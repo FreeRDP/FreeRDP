@@ -10,6 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # Run clang-tidy
     - uses: ZedThree/clang-tidy-review@v0.17.1
       id: review
       with:
@@ -20,3 +21,7 @@ jobs:
         # CMake command to run in order to generate compile_commands.json
         build_dir: tidy
         cmake_command: cmake -Btidy -S. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+    # Uploads an artefact containing clang_fixes.json
+    - uses: ZedThree/clang-tidy-review/upload@v0.17.1
+      id: upload-review
