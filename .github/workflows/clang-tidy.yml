@@ -1,12 +1,7 @@
 name: clang-tidy-review
 on:
-  workflow_dispatch:
-    branches: [ master, stable* ]
   pull_request_target:
     branches: [ master, stable* ]
-
-permissions:
-  contents: read
 
 jobs:
   build:
