@@ -40,7 +40,7 @@ jobs:
       id: pr
     - uses: actions/checkout@v4
       with:
-        ref: ${{fromJSON(steps.pr.outputs.result).merge_commit_sha}}
+        ref: ${{steps.pr.outputs.merge_commit_sha}}
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL

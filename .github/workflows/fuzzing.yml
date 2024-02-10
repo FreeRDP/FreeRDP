@@ -22,7 +22,7 @@ jobs:
         id: pr
       - uses: actions/checkout@v4
         with:
-          ref: ${{fromJSON(steps.pr.outputs.result).merge_commit_sha}}
+          ref: ${{steps.pr.outputs.merge_commit_sha}}
 
       - name: Build fuzzers (${{ matrix.sanitizer }})
         id: build
