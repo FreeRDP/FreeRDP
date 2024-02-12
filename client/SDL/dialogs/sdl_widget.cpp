@@ -247,7 +247,7 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 	{
 		texture = _image;
 		dst = _rect;
-		auto rc = SDL_QueryTexture(_image, NULL, NULL, &src.w, &src.h);
+		auto rc = SDL_QueryTexture(_image, nullptr, nullptr, &src.w, &src.h);
 		if (rc < 0)
 			widget_log_error(rc, "SDL_QueryTexture");
 	}
