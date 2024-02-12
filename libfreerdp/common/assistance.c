@@ -1373,7 +1373,7 @@ static BOOL setup_string(wArrayList* list)
 	if (!obj)
 		return FALSE;
 	obj->fnObjectFree = free;
-	// obj->fnObjectNew = _strdup;
+	// obj->fnObjectNew = wwinpr_ObjectStringClone;
 	return TRUE;
 }
 

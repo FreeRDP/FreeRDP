@@ -96,12 +96,12 @@ UINT32 HashTable_StringHash(const void* key)
 
 void* HashTable_StringClone(const void* str)
 {
-	return _strdup((const char*)str);
+	return winpr_ObjectStringClone(str);
 }
 
 void HashTable_StringFree(void* str)
 {
-	free(str);
+	winpr_ObjectStringFree(str);
 }
 
 static INLINE BOOL HashTable_IsProbablePrime(size_t oddNumber)

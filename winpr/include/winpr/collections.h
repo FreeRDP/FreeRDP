@@ -62,6 +62,11 @@ extern "C"
 		OBJECT_EQUALS_FN fnObjectEquals;
 	} wObject;
 
+	/* utility function with compatible arguments for string data */
+	WINPR_API void* winpr_ObjectStringClone(const void* pvstr);
+	WINPR_API void* winpr_ObjectWStringClone(const void* pvstr);
+	WINPR_API void winpr_ObjectStringFree(void* pvstr);
+
 	/* System.Collections.Queue */
 
 	typedef struct s_wQueue wQueue;

@@ -59,6 +59,7 @@ endif()
 
 
 set(COLLECTIONS_SRCS
+	collections/Object.c
 	collections/Queue.c
 	collections/Stack.c
 	collections/PubSub.c
