@@ -1159,7 +1159,9 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 
 			count += tmp;
 		}
-		handles[count++] = WTSVirtualChannelManagerGetEventHandle(context->vcm);
+
+		HANDLE channelHandle = WTSVirtualChannelManagerGetEventHandle(context->vcm);
+		handles[count++] = channelHandle;
 		status = WaitForMultipleObjects(count, handles, FALSE, INFINITE);
 
 		if (status == WAIT_FAILED)
@@ -1171,6 +1173,9 @@ static DWORD WINAPI test_peer_mainloop(LPVOID arg)
 		WINPR_ASSERT(client->CheckFileDescriptor);
 		if (client->CheckFileDescriptor(client) != TRUE)
 			break;
+
+		if (WaitForSingleObject(channelHandle, 0) != WAIT_OBJECT_0)
+			continue;
 
 		if (WTSVirtualChannelManagerCheckFileDescriptor(context->vcm) != TRUE)
 			break;
