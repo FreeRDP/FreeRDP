@@ -390,12 +390,23 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 	if (context->image->width < 1 || !context->activated)
 		return;
 
-	test_peer_begin_frame(client);
 	rect.x = 0;
 	rect.y = 0;
 	rect.width = context->image->width;
 	rect.height = context->image->height;
 
+	const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
+	const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+	if (context->icon_x + context->image->width > w)
+		return;
+	if (context->icon_y + context->image->height > h)
+		return;
+	if (x + context->image->width > w)
+		return;
+	if (y + context->image->height > h)
+		return;
+
+	test_peer_begin_frame(client);
 	const BOOL RemoteFxCodec = freerdp_settings_get_bool(settings, FreeRDP_RemoteFxCodec);
 	if (RemoteFxCodec)
 	{
@@ -434,12 +445,12 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 
 		cmd.destLeft = context->icon_x;
 		cmd.destTop = context->icon_y;
-		cmd.destRight = context->icon_x + context->image->width;
-		cmd.destBottom = context->icon_y + context->image->height;
+		cmd.destRight = context->icon_x + rect.width;
+		cmd.destBottom = context->icon_y + rect.height;
 		cmd.bmp.bpp = 32;
 		cmd.bmp.flags = 0;
-		cmd.bmp.width = context->image->width;
-		cmd.bmp.height = context->image->height;
+		cmd.bmp.width = rect.width;
+		cmd.bmp.height = rect.height;
 		cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 		cmd.bmp.bitmapData = Stream_Buffer(s);
 		WINPR_ASSERT(update->SurfaceBits);
@@ -468,11 +479,11 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 
 	cmd.destLeft = x;
 	cmd.destTop = y;
-	cmd.destRight = x + context->image->width;
-	cmd.destBottom = y + context->image->height;
+	cmd.destRight = x + rect.width;
+	cmd.destBottom = y + rect.height;
 	cmd.bmp.bpp = 32;
-	cmd.bmp.width = context->image->width;
-	cmd.bmp.height = context->image->height;
+	cmd.bmp.width = rect.width;
+	cmd.bmp.height = rect.height;
 	cmd.bmp.bitmapDataLength = (UINT32)Stream_GetPosition(s);
 	cmd.bmp.bitmapData = Stream_Buffer(s);
 	WINPR_ASSERT(update->SurfaceBits);
