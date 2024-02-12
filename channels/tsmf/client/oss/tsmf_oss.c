@@ -71,7 +71,7 @@ typedef struct
 
 static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 {
-	int tmp;
+	int tmp = 0;
 	TSMFOssAudioDevice* oss = (TSMFOssAudioDevice*)audio;
 
 	if (oss == NULL || oss->pcm_handle != -1)
@@ -94,8 +94,6 @@ static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 	}
 
 #if 0 /* FreeBSD OSS implementation at this moment (2015.03) does not set PCM_CAP_OUTPUT flag. */
-	tmp = 0;
-
 	if (ioctl(oss->pcm_handle, SNDCTL_DSP_GETCAPS, &mask) == -1)
 	{
 		OSS_LOG_ERR("SNDCTL_DSP_GETCAPS failed, try ignory", errno);
@@ -109,9 +107,8 @@ static BOOL tsmf_oss_open(ITSMFAudioDevice* audio, const char* device)
 	}
 
 #endif
-	tmp = 0;
-
-	if (ioctl(oss->pcm_handle, SNDCTL_DSP_GETFMTS, &tmp) == -1)
+	const int rc = ioctl(oss->pcm_handle, SNDCTL_DSP_GETFMTS, &tmp);
+	if (rc == -1)
 	{
 		OSS_LOG_ERR("SNDCTL_DSP_GETFMTS failed", errno);
 		close(oss->pcm_handle);
