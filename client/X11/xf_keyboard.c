@@ -104,8 +104,8 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 
 	obj = ArrayList_Object(xfc->keyCombinations);
 	WINPR_ASSERT(obj);
-	obj->fnObjectNew = _strdup;
-	obj->fnObjectFree = free;
+	obj->fnObjectNew = winpr_ObjectStringClone;
+	obj->fnObjectFree = winpr_ObjectStringFree;
 	sprintf_s(command, sizeof(command), "%s key", ActionScript);
 	keyScript = popen(command, "r");
 

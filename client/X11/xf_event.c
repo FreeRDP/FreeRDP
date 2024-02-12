@@ -187,8 +187,8 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 
 	obj = ArrayList_Object(xfc->xevents);
 	WINPR_ASSERT(obj);
-	obj->fnObjectNew = _strdup;
-	obj->fnObjectFree = free;
+	obj->fnObjectNew = winpr_ObjectStringClone;
+	obj->fnObjectFree = winpr_ObjectStringFree;
 	ActionScript = freerdp_settings_get_string(settings, FreeRDP_ActionScript);
 	sprintf_s(command, sizeof(command), "%s xevent", ActionScript);
 	actionScript = popen(command, "r");

@@ -331,8 +331,8 @@ static IWTSVirtualChannelManager* dvcman_new(drdynvcPlugin* plugin)
 	if (!dvcman->plugin_names)
 		goto fail;
 	obj = ArrayList_Object(dvcman->plugin_names);
-	obj->fnObjectNew = _strdup;
-	obj->fnObjectFree = free;
+	obj->fnObjectNew = winpr_ObjectStringClone;
+	obj->fnObjectFree = winpr_ObjectStringFree;
 
 	dvcman->plugins = ArrayList_New(TRUE);
 	if (!dvcman->plugins)

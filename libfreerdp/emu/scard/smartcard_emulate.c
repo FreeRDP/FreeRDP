@@ -200,18 +200,6 @@ static BOOL wchar_compare(const void* a, const void* b)
 	return _wcscmp(wa, wb) == 0;
 }
 
-static void* str_copy(const void* ptr)
-{
-	const char* src = ptr;
-	return _strdup(src);
-}
-
-static void* wstr_copy(const void* ptr)
-{
-	const WCHAR* src = ptr;
-	return _wcsdup(src);
-}
-
 static SCardContext* scard_context_new(void)
 {
 	SCardContext* ctx = calloc(1, sizeof(SCardContext));
@@ -239,8 +227,8 @@ static SCardContext* scard_context_new(void)
 		WINPR_ASSERT(val);
 
 		key->fnObjectEquals = char_compare;
-		key->fnObjectNew = str_copy;
-		key->fnObjectFree = free;
+		key->fnObjectNew = winpr_ObjectStringClone;
+		key->fnObjectFree = winpr_ObjectStringFree;
 
 		val->fnObjectFree = free;
 	}
@@ -256,8 +244,8 @@ static SCardContext* scard_context_new(void)
 		WINPR_ASSERT(val);
 
 		key->fnObjectEquals = wchar_compare;
-		key->fnObjectNew = wstr_copy;
-		key->fnObjectFree = free;
+		key->fnObjectNew = winpr_ObjectWStringClone;
+		key->fnObjectFree = winpr_ObjectStringFree;
 
 		val->fnObjectFree = free;
 	}
