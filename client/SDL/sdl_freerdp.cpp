@@ -670,7 +670,7 @@ static const char* sdl_window_get_title(rdpSettings* settings)
 		sprintf_s(buffer, sizeof(buffer), "%s %s:%" PRIu32, prefix, name, port);
 
 	if (!freerdp_settings_set_string(settings, FreeRDP_WindowTitle, buffer))
-		return NULL;
+		return nullptr;
 	return freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
 }
 
@@ -1197,7 +1197,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 	DWORD nCount = 0;
 	DWORD status = 0;
 	int exit_code = SDL_EXIT_SUCCESS;
-	char* error_msg = NULL;
+	char* error_msg = nullptr;
 	size_t error_msg_len = 0;
 
 	HANDLE handles[MAXIMUM_WAIT_OBJECTS] = {};
