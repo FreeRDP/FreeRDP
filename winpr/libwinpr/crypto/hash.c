@@ -531,36 +531,25 @@ BOOL winpr_Digest_Init_Allow_FIPS(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 {
 	WINPR_ASSERT(ctx);
 
+	ctx->md = md;
 	switch (md)
 	{
-#if defined(WITH_INTERNAL_MD5)
 		case WINPR_MD_MD5:
-			ctx->md = md;
+#if defined(WITH_INTERNAL_MD5)
 			winpr_MD5_Init(&ctx->md5);
 			return TRUE;
 #endif
-		default:
 			break;
+		default:
+			WLog_ERR(TAG, "Invalid FIPS digest %s requested", winpr_md_type_to_string(md));
+			return FALSE;
 	}
 
 #if defined(WITH_OPENSSL)
 	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
-
-	/* Only MD5 is supported for FIPS allow override */
-	if (md != WINPR_MD_MD5)
-	{
-		WLog_ERR(TAG, "Invalid FIPS digest %s requested", winpr_md_type_to_string(md));
-		return FALSE;
-	}
-
 	EVP_MD_CTX_set_flags(ctx->mdctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	return winpr_Digest_Init_Internal(ctx, evp);
 #elif defined(WITH_MBEDTLS)
-
-	/* Only MD5 is supported for FIPS allow override */
-	if (md != WINPR_MD_MD5)
-		return FALSE;
-
 	return winpr_Digest_Init_Internal(ctx, md);
 #endif
 }
