@@ -40,8 +40,8 @@ include(CommonConfigOptions)
 
 include(ConfigureFreeRDP)
 
-option(WITH_DEBUG_SDL_EVENTS "[dangerous, not for release builds!] Debug SDL events" OFF)
-option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL keyboard events" OFF)
+option(WITH_DEBUG_SDL_EVENTS "[dangerous, not for release builds!] Debug SDL events" ${DEFAULT_DEBUG_OPTION})
+option(WITH_DEBUG_SDL_KBD_EVENTS "[dangerous, not for release builds!] Debug SDL keyboard events" ${DEFAULT_DEBUG_OPTION})
 option(WITH_WIN_CONSOLE "Build ${PROJECT_NAME} with console support" ON)
 option(WITH_SDL_LINK_SHARED "link SDL dynamic or static" ON)
 
