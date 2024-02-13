@@ -34,7 +34,7 @@
 class SDLConnectionDialog
 {
   public:
-	SDLConnectionDialog(rdpContext* context);
+	explicit SDLConnectionDialog(rdpContext* context);
 	SDLConnectionDialog(const SDLConnectionDialog& other) = delete;
 	SDLConnectionDialog(const SDLConnectionDialog&& other) = delete;
 	virtual ~SDLConnectionDialog();
@@ -112,10 +112,10 @@ class SDLConnectionDialog
 class SDLConnectionDialogHider
 {
   public:
-	SDLConnectionDialogHider(freerdp* instance);
-	SDLConnectionDialogHider(rdpContext* context);
+	explicit SDLConnectionDialogHider(freerdp* instance);
+	explicit SDLConnectionDialogHider(rdpContext* context);
 
-	SDLConnectionDialogHider(SDLConnectionDialog* dialog);
+	explicit SDLConnectionDialogHider(SDLConnectionDialog* dialog);
 
 	~SDLConnectionDialogHider();
 

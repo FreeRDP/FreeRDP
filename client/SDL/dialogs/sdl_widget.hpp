@@ -21,8 +21,6 @@
 
 #include <string>
 
-#include <stdbool.h>
-
 #include <vector>
 #include <SDL.h>
 #include <SDL_ttf.h>

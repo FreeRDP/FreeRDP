@@ -30,8 +30,8 @@
 class sdlInput
 {
   public:
-	sdlInput(SdlContext* sdl);
-	~sdlInput();
+	explicit sdlInput(SdlContext* sdl);
+	~sdlInput() = default;
 
 	BOOL keyboard_sync_state();
 	BOOL keyboard_focus_in();

@@ -28,7 +28,7 @@ namespace fs = std::experimental::filesystem;
 #error Could not find system header "<filesystem>" or "<experimental/filesystem>"
 #endif
 
-#include <assert.h>
+#include <cassert>
 #include "sdl_utils.hpp"
 
 #include "sdl_freerdp.hpp"
@@ -173,7 +173,7 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 	{
 		case SDL_USEREVENT_AUTH_RESULT:
 		{
-			SDL_UserAuthArg* arg = reinterpret_cast<SDL_UserAuthArg*>(ev.padding);
+			auto arg = reinterpret_cast<SDL_UserAuthArg*>(ev.padding);
 			arg->user = va_arg(ap, char*);
 			arg->domain = va_arg(ap, char*);
 			arg->password = va_arg(ap, char*);
@@ -182,7 +182,7 @@ BOOL sdl_push_user_event(Uint32 type, ...)
 		break;
 		case SDL_USEREVENT_AUTH_DIALOG:
 		{
-			SDL_UserAuthArg* arg = reinterpret_cast<SDL_UserAuthArg*>(ev.padding);
+			auto arg = reinterpret_cast<SDL_UserAuthArg*>(ev.padding);
 
 			arg->title = va_arg(ap, char*);
 			arg->user = va_arg(ap, char*);

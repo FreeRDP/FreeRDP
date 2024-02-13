@@ -29,7 +29,7 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 			SDL_Rect rect = { 0, 0, widget_width, widget_height };
 			for (auto& label : labels)
 			{
-				_list.push_back({ _renderer, label, rect });
+				_list.emplace_back(_renderer, label, rect);
 				rect.y += widget_height + vpadding;
 			}
 

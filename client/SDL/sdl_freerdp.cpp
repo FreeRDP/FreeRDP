@@ -23,9 +23,9 @@
 
 #include <freerdp/config.h>
 
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/constants.h>
@@ -315,7 +315,7 @@ class SdlEventUpdateTriggerGuard
 	SdlContext* _sdl;
 
   public:
-	SdlEventUpdateTriggerGuard(SdlContext* sdl) : _sdl(sdl)
+	explicit SdlEventUpdateTriggerGuard(SdlContext* sdl) : _sdl(sdl)
 	{
 	}
 	~SdlEventUpdateTriggerGuard()
@@ -324,57 +324,49 @@ class SdlEventUpdateTriggerGuard
 	}
 };
 
-static BOOL sdl_draw_to_window_rect(SdlContext* sdl, SDL_Surface* screen, SDL_Surface* surface,
+static bool sdl_draw_to_window_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
                                     SDL_Point offset, const SDL_Rect& srcRect)
 {
 	SDL_Rect dstRect = { offset.x + srcRect.x, offset.y + srcRect.y, srcRect.w, srcRect.h };
-	SDL_SetClipRect(surface, &srcRect);
-	SDL_SetClipRect(screen, &dstRect);
-	SDL_BlitSurface(surface, &srcRect, screen, &dstRect);
-	return TRUE;
+	return window.blit(surface, srcRect, dstRect);
 }
 
-static BOOL sdl_draw_to_window_rect(SdlContext* sdl, SDL_Surface* screen, SDL_Surface* surface,
+static bool sdl_draw_to_window_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
                                     SDL_Point offset, const std::vector<SDL_Rect>& rects = {})
 {
 	if (rects.empty())
 	{
-		return sdl_draw_to_window_rect(sdl, screen, surface, offset,
+		return sdl_draw_to_window_rect(sdl, window, surface, offset,
 		                               { 0, 0, surface->w, surface->h });
 	}
 	for (auto& srcRect : rects)
 	{
-		if (!sdl_draw_to_window_rect(sdl, screen, surface, offset, srcRect))
-			return FALSE;
+		if (!sdl_draw_to_window_rect(sdl, window, surface, offset, srcRect))
+			return false;
 	}
-	return TRUE;
+	return true;
 }
 
-static BOOL sdl_draw_to_window_scaled_rect(SdlContext* sdl, Sint32 windowId, SDL_Surface* screen,
-                                           SDL_Surface* surface, const SDL_Rect& srcRect)
+static bool sdl_draw_to_window_scaled_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
+                                           const SDL_Rect& srcRect)
 {
 	SDL_Rect dstRect = srcRect;
-	sdl_scale_coordinates(sdl, windowId, &dstRect.x, &dstRect.y, FALSE, TRUE);
-	sdl_scale_coordinates(sdl, windowId, &dstRect.w, &dstRect.h, FALSE, TRUE);
-	SDL_SetClipRect(surface, &srcRect);
-	SDL_SetClipRect(screen, &dstRect);
-	SDL_BlitScaled(surface, &srcRect, screen, &dstRect);
-
-	return TRUE;
+	sdl_scale_coordinates(sdl, window.id(), &dstRect.x, &dstRect.y, FALSE, TRUE);
+	sdl_scale_coordinates(sdl, window.id(), &dstRect.w, &dstRect.h, FALSE, TRUE);
+	return window.blit(surface, srcRect, dstRect);
 }
 
-static BOOL sdl_draw_to_window_scaled_rect(SdlContext* sdl, Sint32 windowId, SDL_Surface* screen,
-                                           SDL_Surface* surface,
+static BOOL sdl_draw_to_window_scaled_rect(SdlContext* sdl, SdlWindow& window, SDL_Surface* surface,
                                            const std::vector<SDL_Rect>& rects = {})
 {
 	if (rects.empty())
 	{
-		return sdl_draw_to_window_scaled_rect(sdl, windowId, screen, surface,
+		return sdl_draw_to_window_scaled_rect(sdl, window, surface,
 		                                      { 0, 0, surface->w, surface->h });
 	}
-	for (auto& srcRect : rects)
+	for (const auto& srcRect : rects)
 	{
-		if (!sdl_draw_to_window_scaled_rect(sdl, windowId, screen, surface, srcRect))
+		if (!sdl_draw_to_window_scaled_rect(sdl, window, surface, srcRect))
 			return FALSE;
 	}
 	return TRUE;
@@ -388,45 +380,39 @@ static BOOL sdl_draw_to_window(SdlContext* sdl, SdlWindow& window,
 	auto context = sdl->context();
 	auto gdi = context->gdi;
 
-	SDL_Surface* screen = SDL_GetWindowSurface(window.window());
-
-	int w = 0;
-	int h = 0;
-	SDL_GetWindowSize(window.window(), &w, &h);
+	auto size = window.rect();
 
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_SmartSizing))
 	{
-		if (gdi->width < w)
+		if (gdi->width < size.w)
 		{
-			window.setOffsetX((w - gdi->width) / 2);
+			window.setOffsetX((size.w - gdi->width) / 2);
 		}
-		if (gdi->height < h)
+		if (gdi->height < size.h)
 		{
-			window.setOffsetY((h - gdi->height) / 2);
+			window.setOffsetY((size.h - gdi->height) / 2);
 		}
 
 		auto surface = sdl->primary.get();
-		if (!sdl_draw_to_window_rect(sdl, screen, surface, { window.offsetX(), window.offsetY() },
+		if (!sdl_draw_to_window_rect(sdl, window, surface, { window.offsetX(), window.offsetY() },
 		                             rects))
 			return FALSE;
 	}
 	else
 	{
-		auto id = SDL_GetWindowID(window.window());
-
-		if (!sdl_draw_to_window_scaled_rect(sdl, id, screen, sdl->primary.get(), rects))
+		if (!sdl_draw_to_window_scaled_rect(sdl, window, sdl->primary.get(), rects))
 			return FALSE;
 	}
-	SDL_UpdateWindowSurface(window.window());
+	window.updateSurface();
 	return TRUE;
 }
 
-static BOOL sdl_draw_to_window(SdlContext* sdl, std::vector<SdlWindow>& windows,
+static BOOL sdl_draw_to_window(SdlContext* sdl, std::map<Uint32, SdlWindow>& windows,
                                const std::vector<SDL_Rect>& rects = {})
 {
 	for (auto& window : windows)
 	{
-		if (!sdl_draw_to_window(sdl, window, rects))
+		if (!sdl_draw_to_window(sdl, window.second, rects))
 			return FALSE;
 	}
 
@@ -601,7 +587,7 @@ static BOOL sdl_pre_connect(freerdp* instance)
 
 		std::lock_guard<CriticalSection> lock(sdl->critical);
 		if (!freerdp_settings_get_bool(settings, FreeRDP_UseCommonStdioCallbacks))
-			sdl->connection_dialog.reset(new SDLConnectionDialog(instance->context));
+			sdl->connection_dialog = std::make_unique<SDLConnectionDialog>(instance->context);
 		if (sdl->connection_dialog)
 		{
 			sdl->connection_dialog->setTitle("Connecting to '%s'",
@@ -754,14 +740,12 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_UseMultimon))
 		{
-			int win_x = 0;
-			int win_y = 0;
-			SDL_GetWindowPosition(window.window(), &win_x, &win_y);
-			window.setOffsetX(0 - win_x);
-			window.setOffsetY(0 - win_y);
+			auto r = window.rect();
+			window.setOffsetX(0 - r.x);
+			window.setOffsetY(0 - r.y);
 		}
 
-		sdl->windows.emplace_back(std::move(window));
+		sdl->windows.insert({ window.id(), std::move(window) });
 	}
 
 	rc = TRUE;
@@ -817,7 +801,7 @@ static int sdl_run(SdlContext* sdl)
 			return -1;
 	}
 
-	SDL_Init(SDL_INIT_EVERYTHING);
+	SDL_Init(SDL_INIT_VIDEO);
 	TTF_Init();
 #if SDL_VERSION_ATLEAST(2, 0, 16)
 	SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "0");
@@ -935,19 +919,21 @@ static int sdl_run(SdlContext* sdl)
 						case SDL_WINDOWEVENT_RESIZED:
 						case SDL_WINDOWEVENT_SIZE_CHANGED:
 						{
-							auto window = SDL_GetWindowFromID(ev->windowID);
-
-							if (window)
+							auto window = sdl->windows.find(ev->windowID);
+							if (window != sdl->windows.end())
 							{
-								auto surface = SDL_GetWindowSurface(window);
-								if (surface)
-								{
-									SDL_Rect rect = { 0, 0, surface->w, surface->h };
-
-									auto color = SDL_MapRGBA(surface->format, 0, 0, 0, 0xff);
-									SDL_FillRect(surface, &rect, color);
-								}
-								sdl_draw_to_window(sdl, sdl->windows);
+								window->second.fill();
+								window->second.updateSurface();
+							}
+						}
+						break;
+						case SDL_WINDOWEVENT_MOVED:
+						{
+							auto window = sdl->windows.find(ev->windowID);
+							if (window != sdl->windows.end())
+							{
+								auto r = window->second.rect();
+                                auto id = window->second.id();
 							}
 						}
 						break;
@@ -1005,53 +991,18 @@ static int sdl_run(SdlContext* sdl)
 				break;
 				case SDL_USEREVENT_WINDOW_RESIZEABLE:
 				{
-					auto window = static_cast<SDL_Window*>(windowEvent.user.data1);
+					auto window = static_cast<SdlWindow*>(windowEvent.user.data1);
 					const SDL_bool use = windowEvent.user.code != 0 ? SDL_TRUE : SDL_FALSE;
-					SDL_SetWindowResizable(window, use);
+					if (window)
+						window->resizeable(use);
 				}
 				break;
 				case SDL_USEREVENT_WINDOW_FULLSCREEN:
 				{
-					auto window = static_cast<SDL_Window*>(windowEvent.user.data1);
+					auto window = static_cast<SdlWindow*>(windowEvent.user.data1);
 					const SDL_bool enter = windowEvent.user.code != 0 ? SDL_TRUE : SDL_FALSE;
-
-					Uint32 curFlags = SDL_GetWindowFlags(window);
-
-					if (enter)
-					{
-						if (!(curFlags & SDL_WINDOW_BORDERLESS))
-						{
-							auto idx = SDL_GetWindowDisplayIndex(window);
-							SDL_DisplayMode mode = {};
-							SDL_GetCurrentDisplayMode(idx, &mode);
-
-							SDL_RestoreWindow(window); // Maximize so we can see the caption and
-							                           // bits
-							SDL_SetWindowBordered(window, SDL_FALSE);
-							SDL_SetWindowPosition(window, 0, 0);
-#if SDL_VERSION_ATLEAST(2, 0, 16)
-							SDL_SetWindowAlwaysOnTop(window, SDL_TRUE);
-#endif
-							SDL_RaiseWindow(window);
-							SDL_SetWindowSize(window, mode.w, mode.h);
-						}
-					}
-					else
-					{
-						if (curFlags & SDL_WINDOW_BORDERLESS)
-						{
-
-							SDL_SetWindowBordered(window, SDL_TRUE);
-#if SDL_VERSION_ATLEAST(2, 0, 16)
-							SDL_SetWindowAlwaysOnTop(window, SDL_FALSE);
-#endif
-							SDL_RaiseWindow(window);
-							SDL_MinimizeWindow(
-							    window); // Maximize so we can see the caption and bits
-							SDL_MaximizeWindow(
-							    window); // Maximize so we can see the caption and bits
-						}
-					}
+					if (window)
+						window->fullscreen(enter);
 				}
 				break;
 				case SDL_USEREVENT_POINTER_NULL:
@@ -1066,9 +1017,9 @@ static int sdl_run(SdlContext* sdl)
 				break;
 				case SDL_USEREVENT_POINTER_POSITION:
 				{
-					const INT32 x =
+					const auto x =
 					    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data1));
-					const INT32 y =
+					const auto y =
 					    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data2));
 
 					SDL_Window* window = SDL_GetMouseFocus();
@@ -1709,7 +1660,7 @@ BOOL SdlContext::update_fullscreen(BOOL enter)
 	std::lock_guard<CriticalSection> lock(critical);
 	for (const auto& window : windows)
 	{
-		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_FULLSCREEN, window.window(), enter))
+		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_FULLSCREEN, &window.second, enter))
 			return FALSE;
 	}
 	fullscreen = enter;
@@ -1727,7 +1678,7 @@ BOOL SdlContext::update_resizeable(BOOL enable)
 
 	for (const auto& window : windows)
 	{
-		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_RESIZEABLE, window.window(), use))
+		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_RESIZEABLE, &window.second, use))
 			return FALSE;
 	}
 	resizeable = use;

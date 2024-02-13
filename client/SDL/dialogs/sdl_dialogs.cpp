@@ -19,7 +19,7 @@
 
 #include <vector>
 #include <string>
-#include <assert.h>
+#include <cassert>
 
 #include <freerdp/log.h>
 #include <freerdp/utils/smartcardlogon.h>
@@ -138,7 +138,7 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 		goto fail;
 	else
 	{
-		SDL_UserAuthArg* arg = reinterpret_cast<SDL_UserAuthArg*>(event.padding);
+		auto arg = reinterpret_cast<SDL_UserAuthArg*>(event.padding);
 
 		res = arg->result > 0 ? TRUE : FALSE;
 
@@ -181,7 +181,7 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 		               container_name, reader, cert->userHint, cert->domainHint, cert->subject,
 		               cert->issuer, cert->upn);
 
-		strlist.push_back(msg);
+		strlist.emplace_back(msg);
 		free(msg);
 		free(reader);
 		free(container_name);
@@ -607,8 +607,9 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list)
 {
 	std::vector<std::string> vlist;
+	vlist.reserve(count);
 	for (Sint32 x = 0; x < count; x++)
-		vlist.push_back(list[x]);
+		vlist.emplace_back(list[x]);
 	SdlSelectList slist(title, vlist);
 	Sint32 value = slist.run();
 	return sdl_push_user_event(SDL_USEREVENT_SCARD_RESULT, value);

@@ -45,7 +45,7 @@ using SDLPixelFormatPtr = std::unique_ptr<SDL_PixelFormat, decltype(&SDL_FreeFor
 class SdlContext
 {
   public:
-	SdlContext(rdpContext* context);
+	explicit SdlContext(rdpContext* context);
 
   private:
 	rdpContext* _context;
@@ -83,6 +83,6 @@ class SdlContext
 	BOOL update_resizeable(BOOL enable);
 	BOOL update_fullscreen(BOOL enter);
 
-	rdpContext* context() const;
-	rdpClientContext* common() const;
+	[[nodiscard]] rdpContext* context() const;
+	[[nodiscard]] rdpClientContext* common() const;
 };

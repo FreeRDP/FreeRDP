@@ -30,7 +30,7 @@ class sdlDispContext
 {
 
   public:
-	sdlDispContext(SdlContext* sdl);
+	explicit sdlDispContext(SdlContext* sdl);
 	~sdlDispContext();
 
 	BOOL init(DispClientContext* disp);

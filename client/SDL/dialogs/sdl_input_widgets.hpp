@@ -33,7 +33,7 @@ class SdlInputWidgetList
 
   private:
 	ssize_t next(ssize_t current);
-	bool valid(ssize_t current) const;
+	[[nodiscard]] bool valid(ssize_t current) const;
 	SdlInputWidget* get(ssize_t index);
 
   private:

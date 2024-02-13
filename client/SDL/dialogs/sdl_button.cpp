@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-#include <assert.h>
+#include <cassert>
 
 #include "sdl_button.hpp"
 
@@ -37,10 +37,6 @@ SdlButton::SdlButton(SDL_Renderer* renderer, const std::string& label, int id, c
 
 SdlButton::SdlButton(SdlButton&& other) noexcept
     : SdlWidget(std::move(other)), _name(std::move(other._name)), _id(std::move(other._id))
-{
-}
-
-SdlButton::~SdlButton()
 {
 }
 

@@ -16,7 +16,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <assert.h>
+#include <cassert>
 #include <thread>
 
 #include "sdl_connection_dialog.hpp"
@@ -377,8 +377,8 @@ bool SDLConnectionDialog::createWindow()
 			break;
 	}
 
-	int height = (total_height - 3 * vpadding) / 2;
-	SDL_Rect iconRect{ hpadding, vpadding, widget_width / 4 - 2 * hpadding, height };
+	int height = (total_height - 3ul * vpadding) / 2ul;
+	SDL_Rect iconRect{ hpadding, vpadding, widget_width / 4ul - 2ul * hpadding, height };
 	widget_cfg_t icon{ textcolor,
 		               res_bgcolor,
 		               { _renderer, iconRect,
@@ -394,11 +394,11 @@ bool SDLConnectionDialog::createWindow()
 		                                         "FreeRDP_Icon.svg") } };
 	_list.emplace_back(std::move(logo));
 
-	SDL_Rect rect = { widget_width / 4, vpadding, widget_width * 3 / 4,
-		              total_height - 3 * vpadding - widget_height };
+	SDL_Rect rect = { widget_width / 4ul, vpadding, widget_width * 3ul / 4ul,
+		              total_height - 3ul * vpadding - widget_height };
 #else
-	SDL_Rect rect = { hpadding, vpadding, widget_width - 2 * hpadding,
-		              total_height - 2 * vpadding };
+	SDL_Rect rect = { hpadding, vpadding, widget_width - 2ul * hpadding,
+		              total_height - 2ul * vpadding };
 #endif
 
 	widget_cfg_t w{ textcolor, backgroundcolor, { _renderer, rect, false } };

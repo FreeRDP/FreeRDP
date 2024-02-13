@@ -1,13 +1,9 @@
-#include <assert.h>
+#include <cassert>
 #include <algorithm>
 
 #include "sdl_buttons.hpp"
 
 static const Uint32 hpadding = 10;
-
-SdlButtonList::SdlButtonList()
-{
-}
 
 bool SdlButtonList::populate(SDL_Renderer* renderer, const std::vector<std::string>& labels,
                              const std::vector<int>& ids, Sint32 total_width, Sint32 offsetY,
@@ -25,13 +21,9 @@ bool SdlButtonList::populate(SDL_Renderer* renderer, const std::vector<std::stri
 	{
 		const size_t curOffsetX = offsetX + x * (static_cast<size_t>(width) + hpadding);
 		const SDL_Rect rect = { static_cast<int>(curOffsetX), offsetY, width, height };
-		_list.push_back({ renderer, labels[x], ids[x], rect });
+		_list.emplace_back(renderer, labels[x], ids[x], rect);
 	}
 	return true;
-}
-
-SdlButtonList::~SdlButtonList()
-{
 }
 
 SdlButton* SdlButtonList::get_selected(const SDL_MouseButtonEvent& button)

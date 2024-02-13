@@ -50,7 +50,7 @@ static BOOL sdl_Pointer_New(rdpContext* context, rdpPointer* pointer)
 	rdpGdi* gdi = context->gdi;
 	WINPR_ASSERT(gdi);
 
-	ptr->size = pointer->width * pointer->height * 4ULL;
+	ptr->size = 4ull * pointer->width * pointer->height;
 	ptr->data = winpr_aligned_malloc(ptr->size, 16);
 
 	if (!ptr->data)

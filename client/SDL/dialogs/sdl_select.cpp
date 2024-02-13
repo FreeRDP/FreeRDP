@@ -17,8 +17,7 @@
  * limitations under the License.
  */
 
-#include <assert.h>
-#include <stdbool.h>
+#include <cassert>
 
 #include <string>
 
@@ -46,10 +45,6 @@ SdlSelectWidget::SdlSelectWidget(SDL_Renderer* renderer, const std::string& labe
 SdlSelectWidget::SdlSelectWidget(SdlSelectWidget&& other) noexcept
     : SdlWidget(std::move(other)), _text(std::move(other._text)), _mouseover(other._mouseover),
       _highlight(other._highlight)
-{
-}
-
-SdlSelectWidget::~SdlSelectWidget()
 {
 }
 

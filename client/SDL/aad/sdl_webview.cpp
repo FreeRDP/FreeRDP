@@ -19,7 +19,7 @@
 
 #include <string>
 #include <sstream>
-#include <stdlib.h>
+#include <cstdlib>
 #include <winpr/string.h>
 #include <freerdp/log.h>
 
