@@ -531,6 +531,18 @@ BOOL winpr_Digest_Init_Allow_FIPS(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE md)
 {
 	WINPR_ASSERT(ctx);
 
+	switch (md)
+	{
+#if defined(WITH_INTERNAL_MD5)
+		case WINPR_MD_MD5:
+			ctx->md = md;
+			winpr_MD5_Init(&ctx->md5);
+			return TRUE;
+#endif
+		default:
+			break;
+	}
+
 #if defined(WITH_OPENSSL)
 	const EVP_MD* evp = winpr_openssl_get_evp_md(md);
 
@@ -663,11 +675,8 @@ BOOL winpr_DigestSign_Init(WINPR_DIGEST_CTX* ctx, WINPR_MD_TYPE digest, void* ke
 {
 	WINPR_ASSERT(ctx);
 
-	const char* hash = winpr_md_type_to_string(digest);
-	WINPR_ASSERT(hash);
-
 #if defined(WITH_OPENSSL)
-	const EVP_MD* evp = EVP_get_digestbyname(hash);
+	const EVP_MD* evp = winpr_openssl_get_evp_md(digest);
 	if (!evp)
 		return FALSE;
 
