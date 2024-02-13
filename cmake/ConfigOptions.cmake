@@ -86,9 +86,9 @@ option(WITH_DEBUG_ALL "Print all debug messages." OFF)
 
 if(WITH_DEBUG_ALL)
     message(WARNING "WITH_DEBUG_ALL=ON, the build will be slow and might leak sensitive information, do not use with release builds!")
-	set(DEFAULT_DEBUG_OPTION "ON")
+    set(DEFAULT_DEBUG_OPTION ON CACHE INTERNAL "debug default")
 else()
-	set(DEFAULT_DEBUG_OPTION "OFF")
+    set(DEFAULT_DEBUG_OPTION OFF CACHE INTERNAL "debug default")
 endif()
 
 option(WITH_DEBUG_CERTIFICATE "Print certificate related debug messages." ${DEFAULT_DEBUG_OPTION})

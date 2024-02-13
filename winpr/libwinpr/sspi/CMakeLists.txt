@@ -60,7 +60,7 @@ if (NOT WIN32 AND NOT ANDROID AND NOT IOS AND NOT APPLE)
 	set(KRB5_DEFAULT ON)
 endif()
 
-option(WITH_DEBUG_SCHANNEL "Compile support for SCHANNEL debug" OFF)
+option(WITH_DEBUG_SCHANNEL "Compile support for SCHANNEL debug" ${DEFAULT_DEBUG_OPTION})
 if (WITH_DEBUG_SCHANNEL)
 	winpr_definition_add("-DWITH_DEBUG_SCHANNEL")
 endif()
