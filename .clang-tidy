@@ -21,7 +21,7 @@ Checks: >
     -altera-id-dependent-backward-branch,
     -altera-struct-pack-align,
     -altera-unroll-loops,
-    -bugprone-easily-swappable-parameters
+    -bugprone-easily-swappable-parameters,
     -cert-dcl16-c,
     -cert-env33-c,
     -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
