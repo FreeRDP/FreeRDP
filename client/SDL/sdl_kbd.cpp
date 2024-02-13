@@ -579,7 +579,3 @@ sdlInput::sdlInput(SdlContext* sdl) : _sdl(sdl), _lastWindowID(UINT32_MAX)
 {
 	WINPR_ASSERT(_sdl);
 }
-
-sdlInput::~sdlInput()
-{
-}

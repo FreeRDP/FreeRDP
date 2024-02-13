@@ -30,7 +30,7 @@ class SdlSelectWidget : public SdlWidget
   public:
 	SdlSelectWidget(SDL_Renderer* renderer, const std::string& label, const SDL_Rect& rect);
 	SdlSelectWidget(SdlSelectWidget&& other) noexcept;
-	virtual ~SdlSelectWidget() override;
+	~SdlSelectWidget() override = default;
 
 	bool set_mouseover(SDL_Renderer* renderer, bool mouseOver);
 	bool set_highlight(SDL_Renderer* renderer, bool highlight);

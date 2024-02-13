@@ -22,7 +22,6 @@
 #include <winpr/synch.h>
 #include <winpr/wlog.h>
 
-#include <stdbool.h>
 #include <SDL.h>
 #include <string>
 #include <vector>
@@ -43,14 +42,14 @@ class CriticalSection
 class WinPREvent
 {
   public:
-	WinPREvent(bool initial = false);
+	explicit WinPREvent(bool initial = false);
 	~WinPREvent();
 
 	void set();
 	void clear();
-	bool isSet() const;
+	[[nodiscard]] bool isSet() const;
 
-	HANDLE handle() const;
+	[[nodiscard]] HANDLE handle() const;
 
   private:
 	HANDLE _handle;

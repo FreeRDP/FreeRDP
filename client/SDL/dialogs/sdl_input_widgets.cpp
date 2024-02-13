@@ -1,4 +1,4 @@
-#include <assert.h>
+#include <cassert>
 #include <algorithm>
 
 #include "sdl_input_widgets.hpp"
@@ -40,8 +40,8 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 		else
 		{
 			for (size_t x = 0; x < labels.size(); x++)
-				_list.push_back(
-				    { _renderer, labels[x], initial[x], flags[x], x, widget_width, widget_heigth });
+				_list.emplace_back(_renderer, labels[x], initial[x], flags[x], x, widget_width,
+				                   widget_heigth);
 
 			_buttons.populate(_renderer, buttonlabels, buttonids, total_width,
 			                  static_cast<Sint32>(input_height), static_cast<Sint32>(widget_width),
@@ -54,7 +54,7 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 ssize_t SdlInputWidgetList::next(ssize_t current)
 {
 	size_t iteration = 0;
-	size_t val = static_cast<size_t>(current);
+	auto val = static_cast<size_t>(current);
 
 	do
 	{

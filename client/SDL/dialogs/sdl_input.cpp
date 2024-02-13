@@ -19,8 +19,8 @@
 
 #include "sdl_input.hpp"
 
-#include <assert.h>
-#include <stdbool.h>
+#include <cassert>
+
 #include <string>
 
 #include <SDL.h>
@@ -168,8 +168,8 @@ bool SdlInputWidget::update_input(SDL_Renderer* renderer, SDL_Color fgcolor)
 	{
 		if (_flags & SDL_INPUT_MASK)
 		{
-			for (size_t x = 0; x < text.length(); x++)
-				text[x] = '*';
+			for (char& x : text)
+				x = '*';
 		}
 	}
 

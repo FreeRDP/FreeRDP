@@ -21,9 +21,9 @@
 
 #include <freerdp/config.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include <SDL.h>
 
@@ -229,8 +229,8 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 				}
 			}
 
-			const float dw = rect.w / scaleRect.w;
-			const float dh = rect.h / scaleRect.h;
+			const float dw = 1.0f * rect.w / scaleRect.w;
+			const float dh = 1.0f * rect.h / scaleRect.h;
 			hdpi /= dw;
 			vdpi /= dh;
 		}

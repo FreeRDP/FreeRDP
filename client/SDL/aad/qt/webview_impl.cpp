@@ -25,8 +25,8 @@
 #include <QWebEngineUrlRequestJob>
 
 #include <string>
-#include <stdlib.h>
-#include <stdarg.h>
+#include <cstdlib>
+#include <cstdarg>
 #include <winpr/string.h>
 #include <winpr/assert.h>
 #include <freerdp/log.h>
@@ -39,7 +39,7 @@
 class SchemeHandler : public QWebEngineUrlSchemeHandler
 {
   public:
-	SchemeHandler(QObject* parent = nullptr) : QWebEngineUrlSchemeHandler(parent)
+	explicit SchemeHandler(QObject* parent = nullptr) : QWebEngineUrlSchemeHandler(parent)
 	{
 	}
 
@@ -52,7 +52,7 @@ class SchemeHandler : public QWebEngineUrlSchemeHandler
 		{
 			QStringList pair = param.split('=');
 
-			if (pair.size() != 2 || pair[0] != "code")
+			if (pair.size() != 2 || pair[0] != QLatin1String("code"))
 				continue;
 
 			auto qc = pair[1];
@@ -63,20 +63,20 @@ class SchemeHandler : public QWebEngineUrlSchemeHandler
 		qApp->exit(rc);
 	}
 
-	const std::string code() const
+	[[nodiscard]] std::string code() const
 	{
 		return m_code;
 	}
 
   private:
-	std::string m_code;
+	std::string m_code{};
 };
 
 bool webview_impl_run(const std::string& title, const std::string& url, std::string& code)
 {
 	int argc = 1;
-	QString vendor(FREERDP_VENDOR_STRING);
-	QString product(FREERDP_PRODUCT_STRING);
+	const auto vendor = QString::fromUtf8(FREERDP_VENDOR_STRING);
+	const auto product = QString::fromUtf8(FREERDP_PRODUCT_STRING);
 	QWebEngineUrlScheme::registerScheme(QWebEngineUrlScheme("ms-appx-web"));
 
 	std::string wtitle = title;

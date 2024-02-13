@@ -17,10 +17,10 @@
  * limitations under the License.
  */
 
-#include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+
 #include <SDL.h>
 #include <SDL_ttf.h>
 

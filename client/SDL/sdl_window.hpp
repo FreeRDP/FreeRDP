@@ -30,13 +30,13 @@ class SdlWindow
 	SdlWindow(SdlWindow&& other);
 	~SdlWindow();
 
-	SDL_Window* window() const;
+	[[nodiscard]] SDL_Window* window() const;
 
-	Sint32 offsetX() const;
+	[[nodiscard]] Sint32 offsetX() const;
 	void setOffsetX(Sint32 x);
 
 	void setOffsetY(Sint32 y);
-	Sint32 offsetY() const;
+	[[nodiscard]] Sint32 offsetY() const;
 
   private:
 	SDL_Window* _window;

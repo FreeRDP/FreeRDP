@@ -1,15 +1,15 @@
 #pragma once
 
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
 
 #include "sdl_button.hpp"
 
 class SdlButtonList
 {
   public:
-	SdlButtonList();
-	virtual ~SdlButtonList();
+	SdlButtonList() = default;
+	virtual ~SdlButtonList() = default;
 
 	bool populate(SDL_Renderer* renderer, const std::vector<std::string>& labels,
 	              const std::vector<int>& ids, Sint32 total_width, Sint32 offsetY, Sint32 width,

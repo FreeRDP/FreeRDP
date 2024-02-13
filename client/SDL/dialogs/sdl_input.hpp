@@ -51,10 +51,10 @@ class SdlInputWidget
 	bool remove_str(SDL_Renderer* renderer, size_t count);
 	bool append_str(SDL_Renderer* renderer, const std::string& text);
 
-	const SDL_Rect& input_rect() const;
-	std::string value() const;
+	[[nodiscard]] const SDL_Rect& input_rect() const;
+	[[nodiscard]] std::string value() const;
 
-	bool readonly() const;
+	[[nodiscard]] bool readonly() const;
 
   protected:
 	bool update_input(SDL_Renderer* renderer, SDL_Color fgclor);
