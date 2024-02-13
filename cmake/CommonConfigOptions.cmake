@@ -8,8 +8,10 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 # known issue on android, thus disabled until we support newer CMake
 # https://github.com/android/ndk/issues/1444
 if (NOT ANDROID)
-	cmake_policy(SET CMP0069 NEW)
-	if(CMAKE_VERSION GREATER_EQUAL "3.24.0")
+	if(POLICY CMP0069)
+		cmake_policy(SET CMP0069 NEW)
+	endif()
+	if(POLICY CMP0138)
 		cmake_policy(SET CMP0138 NEW)
 	endif()
 	include(CheckIPOSupported)
