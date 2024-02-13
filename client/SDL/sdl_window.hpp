@@ -30,6 +30,9 @@ class SdlWindow
 	SdlWindow(SdlWindow&& other);
 	~SdlWindow();
 
+	[[nodiscard]] Uint32 id() const;
+	[[nodiscard]] int displayIndex() const;
+	[[nodiscard]] SDL_Rect rect() const;
 	[[nodiscard]] SDL_Window* window() const;
 
 	[[nodiscard]] Sint32 offsetX() const;
@@ -38,10 +41,21 @@ class SdlWindow
 	void setOffsetY(Sint32 y);
 	[[nodiscard]] Sint32 offsetY() const;
 
+	bool grabKeyboard(bool enable);
+	bool grabMouse(bool enable);
+	void setBordered(bool bordered);
+	void raise();
+	void resizeable(bool use);
+	void fullscreen(bool use);
+
+	bool fill(Uint8 r = 0x00, Uint8 g = 0x00, Uint8 b = 0x00, Uint8 a = 0xff);
+	bool blit(SDL_Surface* surface, const SDL_Rect& src, SDL_Rect& dst);
+	void updateSurface();
+
   private:
-	SDL_Window* _window;
-	Sint32 _offset_x;
-	Sint32 _offset_y;
+	SDL_Window* _window = nullptr;
+	Sint32 _offset_x = 0;
+	Sint32 _offset_y = 0;
 
   private:
 	SdlWindow(const SdlWindow& other) = delete;

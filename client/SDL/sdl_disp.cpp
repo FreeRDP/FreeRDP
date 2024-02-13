@@ -336,9 +336,10 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 	auto bordered = freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_Decorations)
 	                    ? SDL_TRUE
 	                    : SDL_FALSE;
-	auto window = SDL_GetWindowFromID(ev->windowID);
-	if (window)
-		SDL_SetWindowBordered(window, bordered);
+
+	auto it = _sdl->windows.find(ev->windowID);
+	if (it != _sdl->windows.end())
+		it->second.setBordered(bordered);
 
 	switch (ev->event)
 	{
@@ -442,6 +443,8 @@ BOOL sdlDispContext::uninit(DispClientContext* disp)
 
 sdlDispContext::sdlDispContext(SdlContext* sdl) : _sdl(sdl), _timer(0)
 {
+	SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO);
+
 	WINPR_ASSERT(_sdl);
 	WINPR_ASSERT(_sdl->context()->settings);
 	WINPR_ASSERT(_sdl->context()->pubSub);
@@ -464,4 +467,5 @@ sdlDispContext::~sdlDispContext()
 	PubSub_UnsubscribeActivated(pubSub, sdlDispContext::OnActivated);
 	PubSub_UnsubscribeGraphicsReset(pubSub, sdlDispContext::OnGraphicsReset);
 	SDL_RemoveTimer(_timer);
+	SDL_Quit();
 }

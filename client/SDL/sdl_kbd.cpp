@@ -532,17 +532,11 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 
 BOOL sdlInput::keyboard_grab(Uint32 windowID, SDL_bool enable)
 {
-	SDL_Window* window = SDL_GetWindowFromID(windowID);
-	if (!window)
+	auto it = _sdl->windows.find(windowID);
+	if (it == _sdl->windows.end())
 		return FALSE;
-#if SDL_VERSION_ATLEAST(2, 0, 16)
 	_sdl->grab_kbd = enable;
-	SDL_SetWindowKeyboardGrab(window, enable);
-	return TRUE;
-#else
-	WLog_WARN(TAG, "Keyboard grabbing not supported by SDL2 < 2.0.16");
-	return FALSE;
-#endif
+	return it->second.grabKeyboard(enable);
 }
 
 BOOL sdlInput::mouse_focus(Uint32 windowID)
@@ -550,29 +544,22 @@ BOOL sdlInput::mouse_focus(Uint32 windowID)
 	if (_lastWindowID != windowID)
 	{
 		_lastWindowID = windowID;
-		SDL_Window* window = SDL_GetWindowFromID(windowID);
-		if (!window)
+		auto it = _sdl->windows.find(windowID);
+		if (it == _sdl->windows.end())
 			return FALSE;
 
-		SDL_RaiseWindow(window);
+		it->second.raise();
 	}
 	return TRUE;
 }
 
 BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
 {
-	SDL_Window* window = SDL_GetWindowFromID(windowID);
-	if (!window)
+	auto it = _sdl->windows.find(windowID);
+	if (it == _sdl->windows.end())
 		return FALSE;
-#if SDL_VERSION_ATLEAST(2, 0, 16)
 	_sdl->grab_mouse = enable;
-	SDL_SetWindowMouseGrab(window, enable);
-	return TRUE;
-#else
-	_sdl->grab_mouse = enable;
-	SDL_SetWindowGrab(window, enable);
-	return TRUE;
-#endif
+	return it->second.grabMouse(enable);
 }
 
 sdlInput::sdlInput(SdlContext* sdl) : _sdl(sdl), _lastWindowID(UINT32_MAX)

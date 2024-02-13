@@ -21,7 +21,7 @@
 
 #include <memory>
 #include <thread>
-#include <vector>
+#include <map>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/client/rdpei.h>
@@ -59,7 +59,7 @@ class SdlContext
 	bool grab_mouse = false;
 	bool grab_kbd = false;
 
-	std::vector<SdlWindow> windows;
+	std::map<Uint32, SdlWindow> windows;
 
 	CriticalSection critical;
 	std::thread thread;
