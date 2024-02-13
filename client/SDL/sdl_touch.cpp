@@ -54,19 +54,19 @@ BOOL sdl_scale_coordinates(SdlContext* sdl, Uint32 windowId, INT32* px, INT32* p
 
 	int offset_x = 0;
 	int offset_y = 0;
-	for (const auto& window : sdl->windows)
+	for (const auto& it : sdl->windows)
 	{
-		int w = 0;
-		int h = 0;
-		const Uint32 id = SDL_GetWindowID(window.window());
+		auto& window = it.second;
+		const auto id = window.id();
 		if (id != windowId)
 		{
 			continue;
 		}
-		SDL_GetWindowSize(window.window(), &w, &h);
 
-		sx = w / static_cast<double>(gdi->width);
-		sy = h / static_cast<double>(gdi->height);
+		auto size = window.rect();
+
+		sx = size.w / static_cast<double>(gdi->width);
+		sy = size.h / static_cast<double>(gdi->height);
 		offset_x = window.offsetX();
 		offset_y = window.offsetY();
 		break;

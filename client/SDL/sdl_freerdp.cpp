@@ -933,7 +933,8 @@ static int sdl_run(SdlContext* sdl)
 							if (window != sdl->windows.end())
 							{
 								auto r = window->second.rect();
-                                auto id = window->second.id();
+								auto id = window->second.id();
+								WLog_DBG(SDL_TAG, "%lu: %dx%d-%dx%d", id, r.x, r.y, r.w, r.h);
 							}
 						}
 						break;
