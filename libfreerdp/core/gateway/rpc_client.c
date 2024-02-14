@@ -348,8 +348,8 @@ static int rpc_client_recv_pdu(rdpRpc* rpc, RPC_PDU* pdu)
 	const size_t after = Stream_GetRemainingLength(pdu->s);
 	if (after > 0)
 	{
-		WLog_ERR(TAG, "incompletely parsed RPC PDU, %" PRIuz " byte remain", before);
-		return -1;
+		/* Just log so we do not fail if we have some unprocessed padding bytes */
+		WLog_WARN(TAG, "Incompletely parsed RPC PDU (%" PRIuz " bytes remain)", after);
 	}
 
 	return rc;
