@@ -78,6 +78,14 @@ typedef struct
 	UINT32 bytesPerPixel;
 } wImage;
 
+typedef enum
+{
+	WINPR_IMAGE_CMP_NO_FLAGS = 0,
+	WINPR_IMAGE_CMP_IGNORE_DEPTH = 1,
+	WINPR_IMAGE_CMP_IGNORE_ALPHA = 2,
+	WINPR_IMAGE_CMP_FUZZY = 4
+} wImageFlags;
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -104,7 +112,7 @@ extern "C"
 	WINPR_API BOOL winpr_image_format_is_supported(UINT32 format);
 	WINPR_API const char* winpr_image_format_extension(UINT32 format);
 	WINPR_API const char* winpr_image_format_mime(UINT32 format);
-	WINPR_API BOOL winpr_image_equal(const wImage* imageA, const wImage* imageB);
+	WINPR_API BOOL winpr_image_equal(const wImage* imageA, const wImage* imageB, UINT32 flags);
 
 #ifdef __cplusplus
 }

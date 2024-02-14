@@ -925,37 +925,131 @@ BOOL winpr_image_format_is_supported(UINT32 format)
 	}
 }
 
-BOOL winpr_image_equal(const wImage* imageA, const wImage* imageB)
+static BYTE* convert(const wImage* image, size_t* pstride, UINT32 flags)
+{
+	WINPR_ASSERT(image);
+	WINPR_ASSERT(pstride);
+
+	*pstride = 0;
+	if (image->bitsPerPixel < 24)
+		return NULL;
+
+	const size_t stride = image->width * 4ull;
+	BYTE* data = calloc(stride, image->height);
+	if (data)
+	{
+		for (size_t y = 0; y < image->height; y++)
+		{
+			const BYTE* srcLine = &image->data[image->scanline * y];
+			BYTE* dstLine = &data[stride * y];
+			if (image->bitsPerPixel == 32)
+				memcpy(dstLine, srcLine, stride);
+			else
+			{
+				for (size_t x = 0; x < image->width; x++)
+				{
+					const BYTE* src = &srcLine[image->bytesPerPixel * x];
+					BYTE* dst = &dstLine[4ull * x];
+					BYTE b = *src++;
+					BYTE g = *src++;
+					BYTE r = *src++;
+
+					*dst++ = b;
+					*dst++ = g;
+					*dst++ = r;
+					*dst++ = 0xff;
+				}
+			}
+		}
+		*pstride = stride;
+	}
+	return data;
+}
+
+static BOOL compare_byte_relaxed(BYTE a, BYTE b, UINT32 flags)
+{
+	if (a != b)
+	{
+		if ((flags & WINPR_IMAGE_CMP_FUZZY) != 0)
+		{
+			const int diff = abs((int)a) - abs((int)b);
+			/* filter out quantization errors */
+			if (diff > 6)
+				return FALSE;
+		}
+		else
+		{
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+static BOOL compare_pixel(const BYTE* pa, const BYTE* pb, UINT32 flags)
+{
+	WINPR_ASSERT(pa);
+	WINPR_ASSERT(pb);
+
+	if (!compare_byte_relaxed(*pa++, *pb++, flags))
+		return FALSE;
+	if (!compare_byte_relaxed(*pa++, *pb++, flags))
+		return FALSE;
+	if (!compare_byte_relaxed(*pa++, *pb++, flags))
+		return FALSE;
+	if ((flags & WINPR_IMAGE_CMP_IGNORE_ALPHA) == 0)
+	{
+		if (!compare_byte_relaxed(*pa++, *pb++, flags))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+BOOL winpr_image_equal(const wImage* imageA, const wImage* imageB, UINT32 flags)
 {
 	if (imageA == imageB)
 		return TRUE;
 	if (!imageA || !imageB)
 		return FALSE;
 
-	if (imageA->bitsPerPixel != imageB->bitsPerPixel)
-		return FALSE;
-	if (imageA->bytesPerPixel != imageB->bytesPerPixel)
-		return FALSE;
 	if (imageA->height != imageB->height)
 		return FALSE;
 	if (imageA->width != imageB->width)
 		return FALSE;
-	if (imageA->scanline != imageB->scanline)
-		return FALSE;
 
-	const size_t sizeA = 1ull * imageA->scanline * imageA->height;
-	for (size_t x = 0; x < sizeA; x++)
+	if ((flags & WINPR_IMAGE_CMP_IGNORE_DEPTH) == 0)
 	{
-		const BYTE a = imageA->data[x];
-		const BYTE b = imageB->data[x];
-		if (a != b)
+		if (imageA->bitsPerPixel != imageB->bitsPerPixel)
+			return FALSE;
+		if (imageA->bytesPerPixel != imageB->bytesPerPixel)
+			return FALSE;
+	}
+
+	BOOL rc = FALSE;
+	size_t astride = 0;
+	size_t bstride = 0;
+	BYTE* dataA = convert(imageA, &astride, flags);
+	BYTE* dataB = convert(imageA, &bstride, flags);
+	if (dataA && dataB && (astride == bstride))
+	{
+		rc = TRUE;
+		for (size_t y = 0; y < imageA->height; y++)
 		{
-			/* filter out quantization errors */
-			if (abs((int)a - (int)b) > 6)
-				return FALSE;
+			const BYTE* lineA = &dataA[astride * y];
+			const BYTE* lineB = &dataB[bstride * y];
+
+			for (size_t x = 0; x < imageA->width; x++)
+			{
+				const BYTE* pa = &lineA[x * 4ull];
+				const BYTE* pb = &lineB[x * 4ull];
+
+				if (!compare_pixel(pa, pb, flags))
+					rc = FALSE;
+			}
 		}
 	}
-	return TRUE;
+	free(dataA);
+	free(dataB);
+	return rc;
 }
 
 const char* winpr_image_format_mime(UINT32 format)
