@@ -1,11 +1,19 @@
 #include <stdio.h>
 #include <winpr/string.h>
+#include <winpr/assert.h>
 #include <winpr/file.h>
 #include <winpr/path.h>
 #include <winpr/image.h>
 
 static const char test_src_filename[] = TEST_SOURCE_PATH "/rgb";
 static const char test_bin_filename[] = TEST_BINARY_PATH "/rgb";
+
+static BOOL test_image_equal(const wImage* imageA, const wImage* imageB)
+{
+	return winpr_image_equal(imageA, imageB,
+	                         WINPR_IMAGE_CMP_IGNORE_DEPTH | WINPR_IMAGE_CMP_IGNORE_ALPHA |
+	                             WINPR_IMAGE_CMP_FUZZY);
+}
 
 static BOOL test_equal_to(const wImage* bmp, const char* name, UINT32 format)
 {
@@ -23,7 +31,7 @@ static BOOL test_equal_to(const wImage* bmp, const char* name, UINT32 format)
 		goto fail;
 	}
 
-	rc = winpr_image_equal(bmp, cmp);
+	rc = test_image_equal(bmp, cmp);
 	if (!rc)
 		fprintf(stderr, "[%s] winpr_image_eqal failed", __func__);
 
@@ -134,13 +142,17 @@ static BOOL test_read_write_compare(const char* tname, const char* tdst, UINT32 
 		goto fail;
 	}
 
-	if (!winpr_image_equal(bmp1, bmp2))
+	if (!winpr_image_equal(bmp1, bmp2,
+	                       WINPR_IMAGE_CMP_IGNORE_DEPTH | WINPR_IMAGE_CMP_IGNORE_ALPHA |
+	                           WINPR_IMAGE_CMP_FUZZY))
 	{
 		fprintf(stderr, "[%s] winpr_image_eqal failed bmp1 bmp2", __func__);
 		goto fail;
 	}
 
-	rc = winpr_image_equal(bmp3, bmp2);
+	rc = winpr_image_equal(bmp3, bmp2,
+	                       WINPR_IMAGE_CMP_IGNORE_DEPTH | WINPR_IMAGE_CMP_IGNORE_ALPHA |
+	                           WINPR_IMAGE_CMP_FUZZY);
 	if (!rc)
 		fprintf(stderr, "[%s] winpr_image_eqal failed bmp3 bmp2", __func__);
 fail:
