@@ -175,6 +175,43 @@ static BOOL test_read_write(void)
 	return rc;
 }
 
+static BOOL test_load_file(const char* name)
+{
+	BOOL rc = FALSE;
+	wImage* image = winpr_image_new();
+	if (!image || !name)
+		goto fail;
+
+	const int res = winpr_image_read(image, name);
+	rc = (res > 0) ? TRUE : FALSE;
+
+fail:
+	winpr_image_free(image, TRUE);
+	return rc;
+}
+
+static BOOL test_load(void)
+{
+	const char* names[] = {
+		"rgb.16a.bmp", "rgb.16a.nocolor.bmp", "rgb.16.bmp",  "rgb.16.nocolor.bmp",
+		"rgb.16x.bmp", "rgb.16x.nocolor.bmp", "rgb.24.bmp",  "rgb.24.nocolor.bmp",
+		"rgb.32.bmp",  "rgb.32.nocolor.bmp",  "rgb.32x.bmp", "rgb.32x.nocolor.bmp",
+		"rgb.bmp"
+	};
+
+	for (size_t x = 0; x < ARRAYSIZE(names); x++)
+	{
+		const char* name = names[x];
+		char* fname = GetCombinedPath(TEST_SOURCE_PATH, name);
+		const BOOL res = test_load_file(fname);
+		free(fname);
+		if (!res)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 int TestImage(int argc, char* argv[])
 {
 	int rc = 0;
@@ -183,10 +220,13 @@ int TestImage(int argc, char* argv[])
 	WINPR_UNUSED(argv);
 
 	if (!test_equal())
-		rc = -1;
+		rc -= 1;
 
 	if (!test_read_write())
-		rc = -1;
+		rc -= 2;
+
+	if (!test_load())
+		rc -= 4;
 
 	return rc;
 }
