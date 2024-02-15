@@ -31,6 +31,7 @@
 #include <winpr/assert.h>
 #include <winpr/library.h>
 #include <winpr/registry.h>
+#include <winpr/sspi.h>
 
 #include <freerdp/log.h>
 
@@ -690,6 +691,17 @@ UINT32 credssp_auth_sspi_error(rdpCredsspAuth* auth)
 {
 	WINPR_ASSERT(auth);
 	return (UINT32)auth->sspi_error;
+}
+
+void credssp_auth_tableAndContext(rdpCredsspAuth* auth, SecurityFunctionTable** ptable,
+                                  CtxtHandle* pcontext)
+{
+	WINPR_ASSERT(auth);
+	WINPR_ASSERT(ptable);
+	WINPR_ASSERT(pcontext);
+
+	*ptable = auth->table;
+	*pcontext = auth->context;
 }
 
 void credssp_auth_free(rdpCredsspAuth* auth)

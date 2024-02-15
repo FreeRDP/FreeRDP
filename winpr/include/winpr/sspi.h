@@ -1332,6 +1332,8 @@ extern "C"
 #define SECPKG_ATTR_AUTH_NTLM_MIC 1106
 #define SECPKG_ATTR_AUTH_NTLM_MIC_VALUE 1107
 
+#define SECPKG_CRED_ATTR_TICKET_LOGON 1200
+
 	typedef struct
 	{
 		char User[256 + 1];

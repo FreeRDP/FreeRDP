@@ -23,6 +23,7 @@
 #define FREERDP_H
 
 #include <winpr/stream.h>
+#include <winpr/sspi.h>
 
 #include <freerdp/api.h>
 #include <freerdp/types.h>
@@ -538,10 +539,10 @@ owned by rdpRdp */
 		                                 It is used to get the username/password. The reason
 		                                 argument tells why it was called.  */
 		ALIGN64 pChooseSmartcard
-		    ChooseSmartcard;      /* (offset 70)
-		                        Callback for choosing a smartcard for logon.
-		                        Used when multiple smartcards are available. Returns an index into a list
-		                        of SmartcardCertInfo pointers	*/
+		    ChooseSmartcard;                    /* (offset 70)
+		                                      Callback for choosing a smartcard for logon.
+		                                      Used when multiple smartcards are available. Returns an index into a list
+		                                      of SmartcardCertInfo pointers	*/
 		ALIGN64 pGetAccessToken GetAccessToken; /* (offset 71)
 		                                            Callback for obtaining an access token
 		                                            for \b AccessTokenType authentication */
@@ -659,6 +660,40 @@ owned by rdpRdp */
 	FREERDP_API BOOL freerdp_nla_revert_to_self(rdpContext* context);
 
 	FREERDP_API UINT32 freerdp_get_nla_sspi_error(rdpContext* context);
+
+	/** Encrypts the provided buffer using the NLA's GSSAPI context
+	 *
+	 *	\param context the RDP context
+	 *	\param inBuffer the SecBuffer buffer to encrypt
+	 *	\param outBuffer a SecBuffer to hold the encrypted content
+	 *	\returns if the operation completed successfully
+	 *	\since version 3.9.0
+	 */
+	FREERDP_API BOOL freerdp_nla_encrypt(rdpContext* context, const SecBuffer* inBuffer,
+	                                     SecBuffer* outBuffer);
+
+	/** Decrypts the provided buffer using the NLA's GSSAPI context
+	 *
+	 *	\param context the RDP context
+	 *	\param inBuffer the SecBuffer buffer to decrypt
+	 *	\param outBuffer a SecBuffer to hold the decrypted content
+	 *	\returns if the operation completed successfully
+	 *	\since version 3.9.0
+	 */
+	FREERDP_API BOOL freerdp_nla_decrypt(rdpContext* context, const SecBuffer* inBuffer,
+	                                     SecBuffer* outBuffer);
+
+	/** Calls QueryContextAttributes on the SSPI context associated with the NLA part of
+	 * the RDP context
+	 *
+	 *	\param context the RDP context
+	 *	\param ulAttr the attribute
+	 *	\param pBuffer an opaque pointer depending on ulAttr
+	 *	\returns a SECURITY_STATUS indicating if the operation completed successfully
+	 *	\since version 3.9.0
+	 */
+	FREERDP_API SECURITY_STATUS freerdp_nla_QueryContextAttributes(rdpContext* context,
+	                                                               DWORD ulAttr, PVOID pBuffer);
 
 	FREERDP_API void clearChannelError(rdpContext* context);
 	FREERDP_API HANDLE getChannelErrorEventHandle(rdpContext* context);
