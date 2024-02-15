@@ -12,6 +12,10 @@ set (WITH_SWSCALE ON  CACHE BOOL "qa default")
 set (WITH_DSP_FFMPEG ON CACHE BOOL "qa default")
 set (WITH_FFMPEG ON CACHE BOOL "qa default")
 set (WITH_SANITIZE_ADDRESS ON CACHE BOOL "qa default")
+set (WITH_WINPR_UTILS_IMAGE_JPEG ON  CACHE BOOL "qa default")
+set (WITH_WINPR_UTILS_IMAGE_WEBP ON  CACHE BOOL "qa default")
+set (WITH_WINPR_UTILS_IMAGE_PNG ON  CACHE BOOL "qa default")
+
 set (CMAKE_C_FLAGS "-Weverything -Wno-exit-time-destructors -Wno-cast-align -Wno-documentation -Wno-documentation-unknown-command -Wno-padded -Wno-covered-switch-default -Wno-declaration-after-statement" CACHE STRING "qa default")
 set (CMAKE_CXX_FLAGS "-Weverything -Wno-exit-time-destructors -Wno-cast-align -Wno-documentation -Wno-documentation-unknown-command -Wno-padded -Wno-c++98-compat -Wno-c++98-compat-pedantic -Wno-covered-switch-default -Wno-declaration-after-statement" CACHE STRING "qa default")
 
