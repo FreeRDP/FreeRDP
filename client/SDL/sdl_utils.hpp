@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <winpr/synch.h>
 #include <winpr/wlog.h>
 
@@ -93,6 +95,7 @@ BOOL sdl_push_user_event(Uint32 type, ...);
 
 bool sdl_push_quit();
 
+std::string sdl_window_event_str(Uint8 ev);
 const char* sdl_event_type_str(Uint32 type);
 const char* sdl_error_string(Uint32 res);
 
