@@ -155,7 +155,7 @@ error_objs:
 	return -1;
 }
 
-static primitives_opencl_context openclContext;
+static primitives_opencl_context openclContext = { 0 };
 
 static primitives_opencl_context* primitives_get_opencl_context(void)
 {
