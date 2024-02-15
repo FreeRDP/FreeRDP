@@ -40,6 +40,7 @@
 #include <freerdp/channels/drdynvc.h>
 #include <freerdp/channels/cliprdr.h>
 #include <freerdp/channels/encomsp.h>
+#include <freerdp/channels/rdpear.h>
 #include <freerdp/channels/rdp2tcp.h>
 #include <freerdp/channels/remdesk.h>
 #include <freerdp/channels/rdpsnd.h>
@@ -4401,6 +4402,13 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			if (!freerdp_settings_set_bool(settings, FreeRDP_RestrictedAdminModeRequired, enable))
 				return fail_at(arg, COMMAND_LINE_ERROR);
 		}
+		CommandLineSwitchCase(arg, "remoteGuard")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteCredentialGuard, TRUE))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+			if (!freerdp_settings_set_bool(settings, FreeRDP_ExtSecurity, TRUE))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+		}
 		CommandLineSwitchCase(arg, "pth")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_ConsoleSession, TRUE))
@@ -5773,6 +5781,7 @@ BOOL freerdp_client_load_addins(rdpChannels* channels, rdpSettings* settings)
 		{ FreeRDP_SupportDisplayControl, DISP_CHANNEL_NAME, NULL },
 		{ FreeRDP_SupportGeometryTracking, GEOMETRY_CHANNEL_NAME, NULL },
 		{ FreeRDP_SupportVideoOptimized, VIDEO_CHANNEL_NAME, NULL },
+		{ FreeRDP_RemoteCredentialGuard, RDPEAR_CHANNEL_NAME, NULL },
 	};
 
 	ChannelToLoad staticChannels[] = {

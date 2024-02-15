@@ -402,6 +402,7 @@ BOOL rdp_client_connect(rdpRdp* rdp)
 	nego_set_preconnection_blob(rdp->nego, settings->PreconnectionBlob);
 	nego_set_negotiation_enabled(rdp->nego, settings->NegotiateSecurityLayer);
 	nego_set_restricted_admin_mode_required(rdp->nego, settings->RestrictedAdminModeRequired);
+	nego_set_RCG_required(rdp->nego, settings->RemoteCredentialGuard);
 	nego_set_gateway_enabled(rdp->nego, settings->GatewayEnabled);
 	nego_set_gateway_bypass_local(rdp->nego, settings->GatewayBypassLocal);
 	nego_enable_rdp(rdp->nego, settings->RdpSecurity);

@@ -30,6 +30,7 @@ typedef struct rdp_credssp_auth rdpCredsspAuth;
 #include <freerdp/freerdp.h>
 #include <winpr/tchar.h>
 #include <winpr/sspi.h>
+#include <winpr/secapi.h>
 
 FREERDP_LOCAL void credssp_auth_free(rdpCredsspAuth* auth);
 
@@ -61,5 +62,9 @@ FREERDP_LOCAL BOOL credssp_auth_is_complete(rdpCredsspAuth* auth);
 FREERDP_LOCAL const char* credssp_auth_pkg_name(rdpCredsspAuth* auth);
 FREERDP_LOCAL size_t credssp_auth_trailer_size(rdpCredsspAuth* auth);
 FREERDP_LOCAL UINT32 credssp_auth_sspi_error(rdpCredsspAuth* auth);
+
+FREERDP_LOCAL void credssp_auth_tableAndContext(rdpCredsspAuth* auth,
+                                                SecurityFunctionTable** ptable,
+                                                CtxtHandle* pcontext);
 
 #endif /* FREERDP_LIB_CORE_CREDSSP_AUTH_H */

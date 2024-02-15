@@ -6,6 +6,8 @@ static const BYTE badBoolContent[] = { 0x01, 0x04, 0xFF };
 
 static const BYTE integerContent[] = { 0x02, 0x01, 0x02 };
 static const BYTE badIntegerContent[] = { 0x02, 0x04, 0x02 };
+static const BYTE positiveIntegerContent[] = { 0x02, 0x02, 0x00, 0xff };
+static const BYTE negativeIntegerContent[] = { 0x02, 0x01, 0xff };
 
 static const BYTE seqContent[] = { 0x30, 0x22, 0x06, 0x03, 0x55, 0x04, 0x0A, 0x13, 0x1B, 0x44,
 	                               0x69, 0x67, 0x69, 0x74, 0x61, 0x6C, 0x20, 0x53, 0x69, 0x67,
@@ -44,6 +46,16 @@ int TestASN1Read(int argc, char* argv[])
 	Stream_StaticConstInit(&staticS, integerContent, sizeof(integerContent));
 	WinPrAsn1Decoder_Init(&decoder, WINPR_ASN1_DER, &staticS);
 	if (!WinPrAsn1DecReadInteger(&decoder, &integerV))
+		return -1;
+
+	Stream_StaticConstInit(&staticS, positiveIntegerContent, sizeof(positiveIntegerContent));
+	WinPrAsn1Decoder_Init(&decoder, WINPR_ASN1_DER, &staticS);
+	if (!WinPrAsn1DecReadInteger(&decoder, &integerV) && integerV != 0xff)
+		return -1;
+
+	Stream_StaticConstInit(&staticS, negativeIntegerContent, sizeof(negativeIntegerContent));
+	WinPrAsn1Decoder_Init(&decoder, WINPR_ASN1_DER, &staticS);
+	if (!WinPrAsn1DecReadInteger(&decoder, &integerV) && integerV != -1)
 		return -1;
 
 	Stream_StaticConstInit(&staticS, badIntegerContent, sizeof(badIntegerContent));
