@@ -41,7 +41,8 @@ Checks: >
     -readability-identifier-length,
     -readability-magic-numbers,
     -readability-qualified-auto,
-    -readability-uppercase-literal-suffix
+    -readability-uppercase-literal-suffix,
+    -performance-no-int-to-ptr
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
