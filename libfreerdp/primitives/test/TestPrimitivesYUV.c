@@ -75,8 +75,11 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 
 		if (dA != fill)
 		{
-			fprintf(stderr, "[%s] Invalid destination alpha value %02X at position %" PRIuz "\n",
-			        use444 ? "AVC444" : "AVC420", dA, x);
+			fprintf(
+			    stderr,
+			    "[%s] Invalid destination alpha value 0x%02X [expected 0x%02X] at position %" PRIuz
+			    "\n",
+			    use444 ? "AVC444" : "AVC420", dA, fill, x);
 			return FALSE;
 		}
 	}
