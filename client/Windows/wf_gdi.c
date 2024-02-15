@@ -135,7 +135,7 @@ static BYTE* wf_glyph_convert(wfContext* wfc, int width, int height, const BYTE*
 
 	for (int indexy = 0; indexy < height; indexy++)
 	{
-		BYTE* dst = cdata + indexy * dst_bytes_per_row;
+		BYTE* dst = &cdata[1ull * indexy * dst_bytes_per_row];
 
 		for (int indexx = 0; indexx < dst_bytes_per_row; indexx++)
 		{

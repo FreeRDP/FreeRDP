@@ -59,7 +59,7 @@ BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* data)
 
 	for (UINT32 y = 0; y < height; y++)
 	{
-		const BYTE* srcp = data + (y * scanline);
+		const BYTE* srcp = &data[1ull * y * scanline];
 
 		for (UINT32 x = 0; x < width; x++)
 		{
@@ -767,7 +767,7 @@ static BOOL freerdp_image_copy_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 n
 		/* Copy up */
 		else if (nYDst > nYSrc)
 		{
-			for (INT32 y = nHeight - 1; y >= 0; y--)
+			for (INT32 y = (INT32)nHeight - 1; y >= 0; y--)
 			{
 				const BYTE* srcLine =
 				    &pSrcData[(y + nYSrc) * nSrcStep * srcVMultiplier + srcVOffset];

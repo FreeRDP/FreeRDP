@@ -310,7 +310,7 @@ void wf_info_find_invalid_region(wfInfo* wfi)
 	GETCHANGESBUF* buf;
 	buf = (GETCHANGESBUF*)wfi->changeBuffer;
 
-	for (int i = wfi->lastUpdate; i != wfi->nextUpdate; i = (i + 1) % MAXCHANGES_BUF)
+	for (ULONG i = wfi->lastUpdate; i != wfi->nextUpdate; i = (i + 1) % MAXCHANGES_BUF)
 	{
 		LPRECT lpR = &buf->buffer->pointrect[i].rect;
 

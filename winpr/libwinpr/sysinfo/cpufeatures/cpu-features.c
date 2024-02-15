@@ -428,7 +428,8 @@ static void cpulist_parse(CpuList* list, const char* line, int line_len)
 	 */
 	while (p < end && *p != '\n')
 	{
-		int start_value, end_value;
+		int start_value = 0;
+		int end_value = 0;
 		/* Find the end of current item, and put it into 'q' */
 		q = memchr(p, ',', end - p);
 
