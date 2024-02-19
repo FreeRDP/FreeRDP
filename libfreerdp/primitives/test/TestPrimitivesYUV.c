@@ -45,7 +45,7 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 
 	for (x = 0; x < size; x++)
 	{
-		const double maxDiff = 4.0;
+		const LONG maxDiff = 4;
 		UINT32 sColor = 0;
 		UINT32 dColor = 0;
 		BYTE sR = 0;
@@ -63,7 +63,7 @@ static BOOL similarRGB(const BYTE* src, const BYTE* dst, size_t size, UINT32 for
 		FreeRDPSplitColor(sColor, format, &sR, &sG, &sB, &sA, NULL);
 		FreeRDPSplitColor(dColor, format, &dR, &dG, &dB, &dA, NULL);
 
-		if ((abs(sR - dR) > maxDiff) || (abs(sG - dG) > maxDiff) || (abs(sB - dB) > maxDiff))
+		if ((labs(sR - dR) > maxDiff) || (labs(sG - dG) > maxDiff) || (labs(sB - dB) > maxDiff))
 		{
 			fprintf(
 			    stderr,
@@ -477,7 +477,7 @@ static BOOL TestPrimitiveYUV(primitives_t* prims, prim_size_t roi, BOOL use444)
 	yuv_step[1] = uvwidth;
 	yuv_step[2] = uvwidth;
 
-	for (x = 0; x < sizeof(formats) / sizeof(formats[0]); x++)
+	for (x = 0; x < ARRAYSIZE(formats); x++)
 	{
 		pstatus_t rc = 0;
 		const UINT32 DstFormat = formats[x];
