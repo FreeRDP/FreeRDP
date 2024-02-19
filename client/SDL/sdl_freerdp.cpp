@@ -852,6 +852,11 @@ static int sdl_run(SdlContext* sdl)
 			        windowEvent.type);
 #endif
 			std::lock_guard<CriticalSection> lock(sdl->critical);
+			/* The session might have been disconnected while we were waiting for a new SDL event.
+			 * In that case ignore the SDL event and terminate. */
+			if (freerdp_shall_disconnect_context(sdl->context()))
+				continue;
+
 			if (sdl->connection_dialog)
 			{
 				if (sdl->connection_dialog->handle(windowEvent))
@@ -1327,7 +1332,10 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 		}
 	}
 
-	freerdp_disconnect(instance);
+	{ /* lock here so we do not process any SDL events while disconnecting the RDP session. */
+		std::lock_guard<CriticalSection> lock(sdl->critical);
+		freerdp_disconnect(instance);
+	}
 
 terminate:
 	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
