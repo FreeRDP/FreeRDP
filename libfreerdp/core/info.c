@@ -469,8 +469,12 @@ static BOOL rdp_write_extended_info_packet(rdpRdp* rdp, wStream* s)
 	rdpSettings* settings = rdp->settings;
 	WINPR_ASSERT(settings);
 
-	const UINT16 clientAddressFamily =
-	    settings->IPv6Enabled ? ADDRESS_FAMILY_INET6 : ADDRESS_FAMILY_INET;
+	UINT16 clientAddressFamily = ADDRESS_FAMILY_INET;
+	if (settings->ConnectChildSession)
+		clientAddressFamily = 0x0000;
+	else if (settings->IPv6Enabled)
+		clientAddressFamily = ADDRESS_FAMILY_INET6;
+
 	WCHAR* clientAddress = ConvertUtf8ToWCharAlloc(settings->ClientAddress, &cbClientAddress);
 
 	if (cbClientAddress > (UINT16_MAX / sizeof(WCHAR)))

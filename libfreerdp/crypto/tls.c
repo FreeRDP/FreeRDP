@@ -985,6 +985,7 @@ static int pollAndHandshake(rdpTls* tls)
 			case WAIT_OBJECT_0:
 				break;
 			case WAIT_TIMEOUT:
+			case WAIT_IO_COMPLETION:
 				continue;
 			default:
 				WLog_ERR(TAG, "error during WaitForSingleObject(): 0x%08" PRIX32 "", status);

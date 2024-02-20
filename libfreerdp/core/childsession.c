@@ -2,7 +2,7 @@
  * FreeRDP: A Remote Desktop Protocol Implementation
  * Named pipe transport
  *
- * Copyright 2023 David Fort <contact@hardening-consulting.com>
+ * Copyright 2023-2024 David Fort <contact@hardening-consulting.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,29 @@
  */
 
 #include "tcp.h"
+
 #include <winpr/library.h>
 #include <winpr/assert.h>
+#include <winpr/print.h>
+#include <winpr/sysinfo.h>
+
+#include <freerdp/utils/ringbuffer.h>
+
 #include "childsession.h"
 
 #define TAG FREERDP_TAG("childsession")
 
 typedef struct
 {
+	OVERLAPPED readOverlapped;
 	HANDLE hFile;
+	BOOL opInProgress;
+	BOOL lastOpClosed;
+	RingBuffer readBuffer;
+	BOOL blocking;
+	BYTE tmpReadBuffer[4096];
+
+	HANDLE readEvent;
 } WINPR_BIO_NAMED;
 
 static int transport_bio_named_uninit(BIO* bio);
@@ -44,16 +58,76 @@ static int transport_bio_named_write(BIO* bio, const char* buf, int size)
 	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 	DWORD written = 0;
 
+	UINT64 start = GetTickCount64();
 	BOOL ret = WriteFile(ptr->hFile, buf, size, &written, NULL);
-	WLog_VRB(TAG, "transport_bio_named_write(%d)=%d written=%d", size, ret, written);
+	// winpr_HexDump(TAG, WLOG_DEBUG, buf, size);
 
 	if (!ret)
-		return -1;
+	{
+		WLog_VRB(TAG, "error or deferred");
+		return 0;
+	}
+
+	WLog_VRB(TAG, "(%d)=%d written=%d duration=%d", size, ret, written, GetTickCount64() - start);
 
 	if (written == 0)
-		return -1;
+	{
+		WLog_VRB(TAG, "closed on write");
+		return 0;
+	}
 
 	return written;
+}
+
+static BOOL treatReadResult(WINPR_BIO_NAMED* ptr, DWORD readBytes)
+{
+	WLog_VRB(TAG, "treatReadResult(readBytes=%" PRIu32 ")", readBytes);
+	ptr->opInProgress = FALSE;
+	if (readBytes == 0)
+	{
+		WLog_VRB(TAG, "readBytes == 0");
+		return TRUE;
+	}
+
+	if (!ringbuffer_write(&ptr->readBuffer, ptr->tmpReadBuffer, readBytes))
+	{
+		WLog_VRB(TAG, "ringbuffer_write()");
+		return FALSE;
+	}
+
+	return SetEvent(ptr->readEvent);
+}
+
+static BOOL doReadOp(WINPR_BIO_NAMED* ptr)
+{
+	DWORD readBytes;
+
+	if (!ResetEvent(ptr->readEvent))
+		return FALSE;
+
+	ptr->opInProgress = TRUE;
+	if (!ReadFile(ptr->hFile, ptr->tmpReadBuffer, sizeof(ptr->tmpReadBuffer), &readBytes,
+	              &ptr->readOverlapped))
+	{
+		DWORD error = GetLastError();
+		switch (error)
+		{
+			case ERROR_NO_DATA:
+				WLog_VRB(TAG, "No Data, unexpected");
+				return TRUE;
+			case ERROR_IO_PENDING:
+				WLog_VRB(TAG, "ERROR_IO_PENDING");
+				return TRUE;
+			case ERROR_BROKEN_PIPE:
+				WLog_VRB(TAG, "broken pipe");
+				ptr->lastOpClosed = TRUE;
+				return TRUE;
+			default:
+				return FALSE;
+		}
+	}
+
+	return treatReadResult(ptr, readBytes);
 }
 
 static int transport_bio_named_read(BIO* bio, char* buf, int size)
@@ -62,29 +136,111 @@ static int transport_bio_named_read(BIO* bio, char* buf, int size)
 	WINPR_ASSERT(buf);
 
 	WINPR_BIO_NAMED* ptr = (WINPR_BIO_NAMED*)BIO_get_data(bio);
-
 	if (!buf)
 		return 0;
 
-	BIO_clear_flags(bio, BIO_FLAGS_READ);
+	BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_READ);
 
-	DWORD readBytes = 0;
-	BOOL ret = ReadFile(ptr->hFile, buf, size, &readBytes, NULL);
-	WLog_VRB(TAG, "transport_bio_named_read(%d)=%d read=%d", size, ret, readBytes);
-	if (!ret)
+	if (ptr->blocking)
 	{
-		if (GetLastError() == ERROR_NO_DATA)
-			BIO_set_flags(bio, (BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_READ));
-		return -1;
+		while (!ringbuffer_used(&ptr->readBuffer))
+		{
+			if (ptr->lastOpClosed)
+				return 0;
+
+			if (ptr->opInProgress)
+			{
+				DWORD status = WaitForSingleObjectEx(ptr->readEvent, 500, TRUE);
+				switch (status)
+				{
+					case WAIT_TIMEOUT:
+					case WAIT_IO_COMPLETION:
+						continue;
+					case WAIT_OBJECT_0:
+						break;
+					default:
+						return -1;
+				}
+
+				DWORD readBytes;
+				if (!GetOverlappedResult(ptr->hFile, &ptr->readOverlapped, &readBytes, FALSE))
+				{
+					WLog_ERR(TAG, "GetOverlappedResult blocking(lastError=%" PRIu32 ")",
+					         GetLastError());
+					return -1;
+				}
+
+				if (!treatReadResult(ptr, readBytes))
+				{
+					WLog_ERR(TAG, "treatReadResult blocking");
+					return -1;
+				}
+			}
+		}
+	}
+	else
+	{
+		if (ptr->opInProgress)
+		{
+			DWORD status = WaitForSingleObject(ptr->readEvent, 0);
+			switch (status)
+			{
+				case WAIT_OBJECT_0:
+					break;
+				default:
+					WLog_ERR(TAG, "error WaitForSingleObject(readEvent)=0x%" PRIu32 "", status);
+					return -1;
+			}
+
+			DWORD readBytes;
+			if (!GetOverlappedResult(ptr->hFile, &ptr->readOverlapped, &readBytes, FALSE))
+			{
+				WLog_ERR(TAG, "GetOverlappedResult non blocking(lastError=%" PRIu32 ")",
+				         GetLastError());
+				return -1;
+			}
+
+			if (!treatReadResult(ptr, readBytes))
+			{
+				WLog_ERR(TAG, "error treatReadResult non blocking");
+				return -1;
+			}
+		}
 	}
 
-	if (readBytes == 0)
+	int ret = MIN(size, ringbuffer_used(&ptr->readBuffer));
+	if (ret)
 	{
-		BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
-		return 0;
+		DataChunk chunks[2];
+		int nchunks = ringbuffer_peek(&ptr->readBuffer, chunks, ret);
+		for (int i = 0; i < nchunks; i++)
+		{
+			memcpy(buf, chunks[i].data, chunks[i].size);
+			buf += chunks[i].size;
+		}
+
+		ringbuffer_commit_read_bytes(&ptr->readBuffer, ret);
+
+		WLog_VRB(TAG, "(%d)=%d nchunks=%d", size, ret, nchunks);
+	}
+	else
+	{
+		ret = -1;
 	}
 
-	return readBytes;
+	if (!ringbuffer_used(&ptr->readBuffer))
+	{
+		if (!ptr->opInProgress && !doReadOp(ptr))
+		{
+			WLog_ERR(TAG, "error rearming read");
+			return -1;
+		}
+	}
+
+	if (ret <= 0)
+		BIO_set_flags(bio, (BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_READ));
+
+	return ret;
 }
 
 static int transport_bio_named_puts(BIO* bio, const char* str)
@@ -100,7 +256,7 @@ static int transport_bio_named_gets(BIO* bio, char* str, int size)
 	WINPR_ASSERT(bio);
 	WINPR_ASSERT(str);
 
-	return transport_bio_named_write(bio, str, size);
+	return transport_bio_named_read(bio, str, size);
 }
 
 static long transport_bio_named_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
@@ -119,7 +275,7 @@ static long transport_bio_named_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			if (!BIO_get_init(bio) || !arg2)
 				return 0;
 
-			*((HANDLE*)arg2) = ptr->hFile;
+			*((HANDLE*)arg2) = ptr->readEvent;
 			return 1;
 		case BIO_C_SET_HANDLE:
 			BIO_set_init(bio, 1);
@@ -127,18 +283,25 @@ static long transport_bio_named_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 				return 0;
 
 			ptr->hFile = (HANDLE)arg2;
+			ptr->blocking = TRUE;
+			if (!doReadOp(ptr))
+				return -1;
 			return 1;
 		case BIO_C_SET_NONBLOCK:
 		{
+			WLog_DBG(TAG, "BIO_C_SET_NONBLOCK");
+			ptr->blocking = FALSE;
 			return 1;
 		}
 		case BIO_C_WAIT_READ:
 		{
+			WLog_DBG(TAG, "BIO_C_WAIT_READ");
 			return 1;
 		}
 
 		case BIO_C_WAIT_WRITE:
 		{
+			WLog_DBG(TAG, "BIO_C_WAIT_WRITE");
 			return 1;
 		}
 
@@ -173,16 +336,33 @@ static long transport_bio_named_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	return status;
 }
 
+static void BIO_NAMED_free(WINPR_BIO_NAMED* ptr)
+{
+	if (!ptr)
+		return;
+
+	if (ptr->hFile)
+	{
+		CloseHandle(ptr->hFile);
+		ptr->hFile = NULL;
+	}
+
+	if (ptr->readEvent)
+	{
+		CloseHandle(ptr->readEvent);
+		ptr->readEvent = NULL;
+	}
+
+	ringbuffer_destroy(&ptr->readBuffer);
+	free(ptr);
+}
+
 static int transport_bio_named_uninit(BIO* bio)
 {
 	WINPR_ASSERT(bio);
 	WINPR_BIO_NAMED* ptr = (WINPR_BIO_NAMED*)BIO_get_data(bio);
 
-	if (ptr && ptr->hFile)
-	{
-		CloseHandle(ptr->hFile);
-		ptr->hFile = NULL;
-	}
+	BIO_NAMED_free(ptr);
 
 	BIO_set_init(bio, 0);
 	BIO_set_flags(bio, 0);
@@ -192,15 +372,27 @@ static int transport_bio_named_uninit(BIO* bio)
 static int transport_bio_named_new(BIO* bio)
 {
 	WINPR_ASSERT(bio);
-	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 
 	WINPR_BIO_NAMED* ptr = (WINPR_BIO_NAMED*)calloc(1, sizeof(WINPR_BIO_NAMED));
 	if (!ptr)
 		return 0;
 
+	if (!ringbuffer_init(&ptr->readBuffer, 0xfffff))
+		goto error;
+
+	ptr->readEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
+	if (!ptr->readEvent || ptr->readEvent == INVALID_HANDLE_VALUE)
+		goto error;
+
+	ptr->readOverlapped.hEvent = ptr->readEvent;
+
 	BIO_set_data(bio, ptr);
 	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	return 1;
+
+error:
+	BIO_NAMED_free(ptr);
+	return 0;
 }
 
 static int transport_bio_named_free(BIO* bio)
@@ -295,7 +487,8 @@ static BOOL createChildSessionTransport(HANDLE* pFile)
 	ConvertWCharNToUtf8(pipePath, 0x80, pipePathA, sizeof(pipePathA));
 	WLog_DBG(TAG, "child session is at '%s'", pipePathA);
 
-	HANDLE f = CreateFileW(pipePath, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+	HANDLE f = CreateFileW(pipePath, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+	                       FILE_FLAG_OVERLAPPED, NULL);
 	if (f == INVALID_HANDLE_VALUE)
 	{
 		WLog_ERR(TAG, "error when connecting to local named pipe");
