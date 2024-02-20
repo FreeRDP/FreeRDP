@@ -524,9 +524,11 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 		int rc = ftruncate(window->shmid, sizeof(window->handle));
 		if (rc != 0)
 		{
+#ifdef WITH_DEBUG_X11
 			char ebuffer[256] = { 0 };
 			DEBUG_X11("ftruncate failed with %s [%d]", winpr_strerror(rc, ebuffer, sizeof(ebuffer)),
 			          rc);
+#endif
 		}
 		else
 		{
