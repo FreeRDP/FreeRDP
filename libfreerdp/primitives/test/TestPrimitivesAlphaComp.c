@@ -161,9 +161,8 @@ static int test_alphaComp_speed(void)
 	BYTE ALIGN(src1[SRC1_WIDTH * SRC1_HEIGHT]) = { 0 };
 	BYTE ALIGN(src2[SRC2_WIDTH * SRC2_HEIGHT]) = { 0 };
 	BYTE ALIGN(dst1[DST_WIDTH * DST_HEIGHT]) = { 0 };
-	char testStr[256] = { 0 };
 	UINT32* ptr = NULL;
-	testStr[0] = '\0';
+
 	winpr_RAND(src1, sizeof(src1));
 	/* Special-case the first two values */
 	src1[0] &= 0x00FFFFFFU;

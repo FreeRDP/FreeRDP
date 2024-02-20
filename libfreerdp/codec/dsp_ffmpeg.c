@@ -759,7 +759,6 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* format,
                                const BYTE* data, size_t length, wStream* out)
 {
-	int rc = 0;
 	AUDIO_FORMAT fmt = { 0 };
 
 	if (!context || !format || !data || !out || !context->encoder)
@@ -807,9 +806,12 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 #else
 			const int channels = context->context->ch_layout.nb_channels;
 #endif
-			rc = av_samples_copy(context->buffered->extended_data,
-			                     context->resampled->extended_data, (int)context->bufferedSamples,
-			                     copied, inSamples, channels, context->context->sample_fmt);
+			const int rc =
+			    av_samples_copy(context->buffered->extended_data, context->resampled->extended_data,
+			                    (int)context->bufferedSamples, copied, inSamples, channels,
+			                    context->context->sample_fmt);
+			if (rc < 0)
+				return FALSE;
 			rest -= inSamples;
 			copied += inSamples;
 			context->bufferedSamples += (UINT32)inSamples;

@@ -206,7 +206,6 @@ static BOOL prepare_certificates(const char* path)
 	char* exe = NULL;
 	DWORD status = 0;
 	STARTUPINFOA si = { 0 };
-	SECURITY_ATTRIBUTES saAttr = { 0 };
 	PROCESS_INFORMATION process = { 0 };
 	char commandLine[8192] = { 0 };
 
@@ -218,9 +217,6 @@ static BOOL prepare_certificates(const char* path)
 	if (!exe)
 		return FALSE;
 	_snprintf(commandLine, sizeof(commandLine), "%s -format crt -path . -n server", exe);
-	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-	saAttr.bInheritHandle = TRUE;
-	saAttr.lpSecurityDescriptor = NULL;
 
 	rc = CreateProcessA(exe, commandLine, NULL, NULL, TRUE, 0, NULL, path, &si, &process);
 	free(exe);

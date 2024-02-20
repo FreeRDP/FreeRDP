@@ -324,7 +324,7 @@ fail:
 	gdi_DeleteObject((HGDIOBJECT)rgn2);
 	gdi_DeleteObject((HGDIOBJECT)bmp);
 	gdi_DeleteDC(hdc);
-	return 0;
+	return rc;
 }
 
 int TestGdiClip(int argc, char* argv[])

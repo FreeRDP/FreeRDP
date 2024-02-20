@@ -531,7 +531,7 @@ fail:
 	gdi_DeleteDC(hdcSrc);
 	gdi_DeleteDC(hdcDst);
 	fprintf(stderr, "%s: TODO Test not implemented!!!\n", __func__);
-	return TRUE; // rc;
+	return rc;
 }
 
 int TestGdiBitBlt(int argc, char* argv[])

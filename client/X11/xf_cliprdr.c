@@ -1398,7 +1398,6 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 			formatId = format->formatId;
 			rawTransfer = FALSE;
 			xfCachedData* cached_data = NULL;
-			xfCachedData* converted_data = NULL;
 			UINT32 dstFormatId = 0;
 
 			if (formatId == CF_RAW)
@@ -1444,7 +1443,7 @@ static BOOL xf_cliprdr_process_selection_request(xfClipboard* clipboard,
 				              cached_raw_data ? cached_raw_data->data_length : 0);
 
 				if (cached_raw_data && cached_raw_data->data_length != 0)
-					converted_data = cached_data = convert_data_from_existing_raw_data(
+					cached_data = convert_data_from_existing_raw_data(
 					    clipboard, cached_raw_data, srcFormatId, nullTerminated, dstFormatId);
 			}
 
