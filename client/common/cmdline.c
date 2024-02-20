@@ -4753,11 +4753,14 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			                                 "vs-debug") ||
 			    !freerdp_settings_set_string(settings, FreeRDP_ServerHostname, "localhost") ||
 			    !freerdp_settings_set_string(settings, FreeRDP_AuthenticationPackageList, "ntlm") ||
+			    !freerdp_settings_set_string(settings, FreeRDP_ClientAddress, "0.0.0.0") ||
 			    !freerdp_settings_set_bool(settings, FreeRDP_NegotiateSecurityLayer, FALSE) ||
 			    !freerdp_settings_set_bool(settings, FreeRDP_VmConnectMode, TRUE) ||
 			    !freerdp_settings_set_bool(settings, FreeRDP_ConnectChildSession, TRUE) ||
 			    !freerdp_settings_set_bool(settings, FreeRDP_NlaSecurity, TRUE) ||
-			    !freerdp_settings_set_uint32(settings, FreeRDP_AuthenticationLevel, 0))
+			    !freerdp_settings_set_uint32(settings, FreeRDP_AuthenticationLevel, 0) ||
+			    !freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect, TRUE) ||
+			    !freerdp_settings_set_uint32(settings, FreeRDP_ConnectionType, CONNECTION_TYPE_LAN))
 				return COMMAND_LINE_ERROR_MEMORY;
 		}
 #endif

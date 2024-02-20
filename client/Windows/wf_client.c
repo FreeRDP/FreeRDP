@@ -1022,7 +1022,7 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 	rdpSettings* settings = context->settings;
 	WINPR_ASSERT(settings);
 
-	while (1)
+	while (!freerdp_shall_disconnect_context(instance->context))
 	{
 		HANDLE handles[MAXIMUM_WAIT_OBJECTS] = { 0 };
 		DWORD nCount = 0;
@@ -1045,7 +1045,9 @@ static DWORD WINAPI wf_client_thread(LPVOID lpParam)
 			nCount += tmp;
 		}
 
-		if (MsgWaitForMultipleObjects(nCount, handles, FALSE, 1000, QS_ALLINPUT) == WAIT_FAILED)
+		DWORD status = MsgWaitForMultipleObjectsEx(nCount, handles, 5 * 1000, QS_ALLINPUT,
+		                                           MWMO_ALERTABLE | MWMO_INPUTAVAILABLE);
+		if (status == WAIT_FAILED)
 		{
 			WLog_ERR(TAG, "wfreerdp_run: WaitForMultipleObjects failed: 0x%08lX", GetLastError());
 			break;
