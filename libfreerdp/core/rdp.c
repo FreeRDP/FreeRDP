@@ -1058,6 +1058,8 @@ static BOOL rdp_recv_monitor_layout_pdu(rdpRdp* rdp, wStream* s)
 
 	IFCALLRET(rdp->update->RemoteMonitors, ret, rdp->context, monitorCount, monitorDefArray);
 	free(monitorDefArray);
+	if (!ret)
+		return FALSE;
 	return rdp_set_monitor_layout_pdu_state(rdp, TRUE);
 }
 

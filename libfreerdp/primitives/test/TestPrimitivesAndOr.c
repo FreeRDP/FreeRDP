@@ -134,8 +134,7 @@ static BOOL test_or_32u_speed(void)
 {
 	UINT32 ALIGN(src[FUNC_TEST_SIZE + 3]) = { 0 };
 	UINT32 ALIGN(dst[FUNC_TEST_SIZE + 3]) = { 0 };
-	char testStr[256];
-	testStr[0] = '\0';
+
 	winpr_RAND(src, sizeof(src));
 
 	if (!speed_test("add16s", "aligned", g_Iterations, (speed_test_fkt)generic->orC_32u,

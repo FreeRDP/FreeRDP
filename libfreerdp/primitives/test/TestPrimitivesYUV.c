@@ -696,7 +696,6 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 	UINT32 yuv_step[3];
 	BYTE* rgb = NULL;
 	size_t size = 0;
-	size_t uvsize = 0;
 	size_t uvwidth = 0;
 	const size_t padding = 0x1000;
 	UINT32 stride = 0;
@@ -721,7 +720,6 @@ static BOOL TestPrimitiveRgbToLumaChroma(primitives_t* prims, prim_size_t roi, U
 	stride = awidth * sizeof(UINT32);
 	size = awidth * aheight;
 	uvwidth = (awidth + 1) / 2;
-	uvsize = (aheight + 1) / 2 * uvwidth;
 
 	if (!prims || !generic)
 		return FALSE;
