@@ -1332,10 +1332,7 @@ static DWORD WINAPI sdl_client_thread_proc(SdlContext* sdl)
 		}
 	}
 
-	{ /* lock here so we do not process any SDL events while disconnecting the RDP session. */
-		std::lock_guard<CriticalSection> lock(sdl->critical);
-		freerdp_disconnect(instance);
-	}
+	freerdp_disconnect(instance);
 
 terminate:
 	if (freerdp_settings_get_bool(settings, FreeRDP_AuthenticationOnly))
