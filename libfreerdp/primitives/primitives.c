@@ -200,7 +200,6 @@ static BOOL primitives_YUV_benchmark_run(primitives_YUV_benchmark* bench, primit
 static BOOL primitives_autodetect_best(primitives_t* prims)
 {
 	BOOL ret = FALSE;
-	UINT64 benchDuration = 150; /* 150 ms */
 	struct prim_benchmark
 	{
 		const char* name;
@@ -235,6 +234,7 @@ static BOOL primitives_autodetect_best(primitives_t* prims)
 	}
 #else
 	{
+		UINT64 benchDuration = 150; /* 150 ms */
 		primitives_YUV_benchmark bench = { 0 };
 		primitives_YUV_benchmark* yuvBench = primitives_YUV_benchmark_init(&bench);
 		if (!yuvBench)

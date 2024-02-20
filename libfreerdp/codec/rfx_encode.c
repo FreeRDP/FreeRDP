@@ -46,8 +46,6 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 	int x_exceed = 0;
 	int y_exceed = 0;
 	const BYTE* src = NULL;
-	const UINT32* src_32 = NULL;
-	const UINT16* src_16 = NULL;
 	INT16 r = 0;
 	INT16 g = 0;
 	INT16 b = 0;

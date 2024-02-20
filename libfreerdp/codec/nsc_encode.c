@@ -116,8 +116,6 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UI
 	UINT16 rw = 0;
 	BYTE ccl = 0;
 	const BYTE* src = NULL;
-	const UINT32* src_32 = NULL;
-	const UINT16* src_16 = NULL;
 	BYTE* yplane = NULL;
 	BYTE* coplane = NULL;
 	BYTE* cgplane = NULL;

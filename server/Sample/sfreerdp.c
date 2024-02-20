@@ -462,7 +462,7 @@ static void test_peer_draw_icon(freerdp_peer* client, UINT32 x, UINT32 y)
 	{
 		const UINT32 colorFormat =
 		    context->image->bitsPerPixel > 24 ? PIXEL_FORMAT_BGRA32 : PIXEL_FORMAT_BGR24;
-		const UINT32 bpp = FreeRDPGetBytesPerPixel(colorFormat);
+
 		if (RemoteFxCodec)
 		{
 			rfx_context_set_pixel_format(context->rfx_context, colorFormat);
