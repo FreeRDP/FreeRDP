@@ -62,6 +62,14 @@ endif()
 find_package(SDL2 REQUIRED COMPONENTS)
 include_directories(${SDL2_INCLUDE_DIR})
 include_directories(${SDL2_INCLUDE_DIRS})
+find_package(cJSON)
+
+set(LIBS "")
+if (cJSON_FOUND)
+    include_directories(${CJSON_INCLUDE_DIRS})
+    list(APPEND LIBS ${CJSON_LIBRARIES})
+    add_compile_definitions(CJSON_FOUND)
+endif()
 
 find_package(Threads REQUIRED)
 
@@ -89,7 +97,7 @@ set(SRCS
 )
 
 add_subdirectory(aad)
-set(LIBS
+list(APPEND LIBS
         winpr
         freerdp
         freerdp-client
