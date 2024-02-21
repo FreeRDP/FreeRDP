@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include <string>
+
 #include <winpr/wtypes.h>
 #include <freerdp/freerdp.h>
 #include <SDL.h>
@@ -44,6 +46,9 @@ class sdlInput
 	static BOOL keyboard_set_indicators(rdpContext* context, UINT16 led_flags);
 	static BOOL keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32 imeState,
 	                                    UINT32 imeConvMode);
+
+	static uint32_t prefToMask();
+	static uint32_t prefKeyValue(const std::string& key, uint32_t fallback = SDL_SCANCODE_UNKNOWN);
 
   private:
 	SdlContext* _sdl;
