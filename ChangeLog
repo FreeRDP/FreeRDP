@@ -1,3 +1,36 @@
+# 2024-02-22 Version 3.3.0
+
+This release concentrates on code cleanup and overall quality improvements.
+Some usability issues and inconvenient API functions were fixed on the way.
+
+New features have been introduced (better image clipboard) but that stays
+deactivated by default as we´re in a stable series.
+
+Check the new CMake options:
+* PLUGIN_ABS_PATHS_DEFAULT disables loading of external channels from all
+  but a specified absolute plugin directory defined by FREERDP_PLUGIN_PATH
+* WINPR_UTILS_IMAGE_PNG enables PNG support with libpng in winpr image/clipboard
+* WITH_LODEPNG enables PNG support with lodepng library in winpr image/clipboard
+* WINPR_UTILS_IMAGE_WEBP enables WEBP support in winpr image/clipboard
+* WINPR_UTILS_IMAGE_JPEG enables JPEG support in winpr image/clipboard
+* USE_EXECINFO enables or disables backtrace support with execinfo
+* WITH_WEBVIEW now defaults to OFF on windows, apple and android (not implemented)
+
+Noteworthy changes:
+* Improved image clipboard (xfreerdp, wlfreerdp) (#9873, #9826)
+* Improved SDL client (#9875, #9887, #9883, #9878, #9792)
+* Allow plugin loader to only use absolute paths (#9809)
+* Improved TLS channel binding (#9838)
+* Add GCC/clang attribute malloc wrapper WINPR_ATTR_MALLOC (#9863)
+* Major clang-tidy code cleanups and bugfixes (#9799, #9834)
+* Provide some defaults for wObject functions (#9799)
+* Fix a bug in shadow with GFX breaking mstsc (#9818)
+* Improved manpages and help (#9813, #9804)
+* Blocking mode via transport IO interface (#9793)
+
+For a complete and detailed change log since the last release run:
+git log 3.3.0...3.2.0
+
 # 2024-01-19 Version 3.2.0
 
 This release mostly addresses issues reported since the last release.
