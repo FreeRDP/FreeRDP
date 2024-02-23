@@ -482,13 +482,19 @@ char* freerdp_key_get_param(const rdpPrivateKey* key, enum FREERDP_KEY_PARAM par
 		switch (param)
 		{
 			case FREERDP_KEY_PARAM_RSA_D:
+#if OPENSSL_VERSION_NUMBER >= 0x10101007L
 				cbn = RSA_get0_d(rsa);
+#endif
 				break;
 			case FREERDP_KEY_PARAM_RSA_E:
+#if OPENSSL_VERSION_NUMBER >= 0x10101007L
 				cbn = RSA_get0_e(rsa);
+#endif
 				break;
 			case FREERDP_KEY_PARAM_RSA_N:
+#if OPENSSL_VERSION_NUMBER >= 0x10101007L
 				cbn = RSA_get0_n(rsa);
+#endif
 				break;
 			default:
 				return NULL;

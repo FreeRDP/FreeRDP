@@ -1107,7 +1107,7 @@ TlsHandshakeResult freerdp_tls_accept_ex(rdpTls* tls, BIO* underlying, rdpSettin
 	 * Disable SSL client site renegotiation.
 	 */
 
-#if (OPENSSL_VERSION_NUMBER >= 0x10100000L) && (OPENSSL_VERSION_NUMBER < 0x30000000L) && \
+#if (OPENSSL_VERSION_NUMBER >= 0x10101000L) && (OPENSSL_VERSION_NUMBER < 0x30000000L) && \
     !defined(LIBRESSL_VERSION_NUMBER)
 	options |= SSL_OP_NO_RENEGOTIATION;
 #endif
