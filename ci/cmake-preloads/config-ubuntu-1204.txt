@@ -1,6 +1,6 @@
 message("PRELOADING cache")
 set (CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "preload")
-set (WITH_MANPAGES OFF CACHE BOOL "man pages")
+set (WITH_MANPAGES ON CACHE BOOL "man pages")
 set (CMAKE_BUILD_TYPE "Debug" CACHE STRING "build type")
 set (WITH_CUPS OFF CACHE BOOL "CUPS printing")
 set (WITH_KRB5 ON CACHE BOOL "Kerberos support")
