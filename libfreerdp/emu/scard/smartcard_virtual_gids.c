@@ -1047,8 +1047,10 @@ static BOOL vgids_perform_digital_signature(vgidsContext* context)
 		{ g_PKCS1_SHA256, sizeof(g_PKCS1_SHA256), EVP_sha256() },
 		{ g_PKCS1_SHA384, sizeof(g_PKCS1_SHA384), EVP_sha384() },
 		{ g_PKCS1_SHA512, sizeof(g_PKCS1_SHA512), EVP_sha512() },
+#if OPENSSL_VERSION_NUMBER >= 0x10101000L
 		{ g_PKCS1_SHA512_224, sizeof(g_PKCS1_SHA512_224), EVP_sha512_224() },
 		{ g_PKCS1_SHA512_256, sizeof(g_PKCS1_SHA512_256), EVP_sha512_256() }
+#endif
 	};
 
 	if (!pk)
