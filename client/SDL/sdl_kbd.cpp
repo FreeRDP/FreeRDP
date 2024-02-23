@@ -380,7 +380,7 @@ BOOL sdlInput::keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
 
 uint32_t sdlInput::prefToMask()
 {
-	const std::map<std::string, SDL_Keymod> mapping = {
+	const std::map<std::string, uint32_t> mapping = {
 		{ "KMOD_LSHIFT", KMOD_LSHIFT },
 		{ "KMOD_RSHIFT", KMOD_RSHIFT },
 		{ "KMOD_LCTRL", KMOD_LCTRL },
