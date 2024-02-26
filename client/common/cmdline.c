@@ -370,7 +370,7 @@ static char* print_token(char* text, size_t start_offset, size_t* current, size_
 	const size_t tlen = strnlen(text, limit);
 	size_t len = tlen;
 	const SSIZE_T force_at = forced_newline_at(text, len, limit - *current, force_newline);
-	BOOL isForce = (force_at > 0);
+	BOOL isForce = (force_at >= 0);
 
 	if (isForce)
 		len = MIN(len, (size_t)force_at);
@@ -394,7 +394,7 @@ static char* print_token(char* text, size_t start_offset, size_t* current, size_
 		printf("\n");
 		*current = 0;
 
-		const size_t offset = len + (isForce ? 1 : 0);
+		const size_t offset = len + ((isForce && (force_at == 0)) ? 1 : 0);
 		return &text[offset];
 	}
 
@@ -411,8 +411,10 @@ static size_t print_optionals(const char* text, size_t start_offset, size_t curr
 	char* str = _strdup(text);
 	char* cur = str;
 
-	while ((cur = print_token(cur, start_offset + 1, &current, limit, "[], ", "\r\n")) != NULL)
-		;
+	do
+	{
+		cur = print_token(cur, start_offset + 1, &current, limit, "[], ", "\r\n");
+	} while (cur != NULL);
 
 	free(str);
 	return current;
@@ -424,8 +426,10 @@ static size_t print_description(const char* text, size_t start_offset, size_t cu
 	char* str = _strdup(text);
 	char* cur = str;
 
-	while ((cur = print_token(cur, start_offset, &current, limit, " ", "\r\n")) != NULL)
-		;
+	do
+	{
+		cur = print_token(cur, start_offset, &current, limit, " ", "\r\n");
+	} while (cur != NULL);
 
 	free(str);
 	current += (size_t)printf("\n");
