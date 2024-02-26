@@ -1,0 +1,88 @@
+name: abi-checker
+on:
+  workflow_dispatch:
+    branches: [ master, stable* ]
+    inputs:
+      GITHUB_BASE_REF:
+        description: 'Base revision for ABI compatibility check'
+        required: true
+        default: '3.0.0'
+  pull_request_target:
+    branches: [ master, stable* ]
+
+jobs:
+  build_job:
+    runs-on: ubuntu-latest
+    name: "Test on ${{ matrix.os }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [
+          ubuntu-latest
+        ]
+    steps:
+      - uses: actions/checkout@v4
+        name: "Run tests"
+        id: build
+        with:
+          os: ${{ matrix.os }}
+          githubToken: ${{ github.token }}
+          install: |
+            apt-get update -q -y
+            apt-get install -q -y \
+              libxrandr-dev \
+              libxinerama-dev \
+              libusb-1.0-0-dev \
+              xserver-xorg-dev \
+              libswscale-dev \
+              libswresample-dev \
+              libavutil-dev \
+              libavcodec-dev \
+              libcups2-dev \
+              libpulse-dev \
+              libasound2-dev \
+              libpcsclite-dev \
+              xsltproc \
+              libxcb-cursor-dev \
+              libxcursor-dev \
+              libcairo2-dev \
+              libfaad-dev \
+              libjpeg-dev \
+              libgsm1-dev \
+              ninja-build \
+              libxfixes-dev \
+              libxkbcommon-dev \
+              libwayland-dev \
+              libpam0g-dev \
+              libxdamage-dev \
+              libxcb-damage0-dev \
+              libxtst-dev \
+              libfuse3-dev \
+              libsystemd-dev \
+              libcairo2-dev \
+              libsoxr-dev \
+              libsdl2-dev \
+              docbook-xsl \
+              libkrb5-dev \
+              libcjson-dev \
+              libpkcs11-helper1-dev \
+              libsdl2-ttf-dev \
+              libwebkit2gtk-4.0-dev \
+              libopus-dev \
+              libwebp-dev \
+              libpng-dev \
+              libjpeg-dev \
+              liburiparser-dev \
+              cmake \
+              clang \
+              abigail-tools \
+              pylint \
+              curl
+          run: |
+            mkdir -p checker
+            cp ci/cmake-preloads/config-abi.txt checker/
+            curl https://gist.githubusercontent.com/akallabeth/aa35caed0d39241fa17c3dc8a0539ea3/raw/ef12f8c720ac6be51aa1878710e2502b1b39cf4c/check-abi -o checker/check-abi
+            chmod +x checker/check-abi
+            echo "GITHUB_BASE_REF=$GITHUB_BASE_REF"
+            echo "GITHUB_HEAD_REF=$GITHUB_HEAD_REF"
+            ./checker/check-abi --parameters="-Cchecker/config-abi.txt" $GITHUB_BASE_REF $(git rev-parse HEAD) 
