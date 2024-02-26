@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 100
+          fetch-depth: 0
           ref: ${{steps.pr.outputs.merge_commit_sha}}
 
       - name: "Prepare environment"
