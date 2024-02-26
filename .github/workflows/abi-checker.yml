@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     branches: [ master, stable* ]
     inputs:
-      GITHUB_BASE_REF:
+      API_BASE_REF:
         description: 'Base revision for ABI compatibility check'
         required: true
         default: '3.0.0'
@@ -13,13 +13,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: "Test on ${{ matrix.os }}"
+    name: "Run ABI checker on ubuntu-latest"
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 100
+          ref: ${{steps.pr.outputs.merge_commit_sha}}
+
       - name: "Prepare environment"
         run: |
-          apt-get update -q -y
-          apt-get install -q -y \
+          sudo apt-get update -q -y
+          sudo apt-get install -q -y \
             libxrandr-dev \
             libxinerama-dev \
             libusb-1.0-0-dev \
@@ -35,7 +39,7 @@ jobs:
             xsltproc \
             libxcb-cursor-dev \
             libxcursor-dev \
-            libcairo2-dev \
+              libcairo2-dev \
             libfaad-dev \
             libjpeg-dev \
             libgsm1-dev \
@@ -68,13 +72,22 @@ jobs:
             abigail-tools \
             pylint \
             curl
-        - name: "Prepare configuration"
-          run: |
-            mkdir -p checker
-            cp ci/cmake-preloads/config-abi.txt checker/
-            curl https://gist.githubusercontent.com/akallabeth/aa35caed0d39241fa17c3dc8a0539ea3/raw/ef12f8c720ac6be51aa1878710e2502b1b39cf4c/check-abi -o checker/check-abi
-            chmod +x checker/check-abi
-            echo "GITHUB_BASE_REF=$GITHUB_BASE_REF"
-            echo "GITHUB_HEAD_REF=$GITHUB_HEAD_REF"
-        - name: "Run ABI check..."
-          run: ./checker/check-abi --parameters="-Cchecker/config-abi.txt" $GITHUB_BASE_REF $(git rev-parse HEAD) 
+
+      - name: "Prepare configuration"
+        run: |
+          mkdir -p checker
+          cp ci/cmake-preloads/config-abi.txt checker/
+          curl https://gist.githubusercontent.com/akallabeth/aa35caed0d39241fa17c3dc8a0539ea3/raw/ef12f8c720ac6be51aa1878710e2502b1b39cf4c/check-abi -o checker/check-abi
+          chmod +x checker/check-abi
+          echo "GITHUB_BASE_REF=$GITHUB_BASE_REF"
+          echo "GITHUB_HEAD_REF=$GITHUB_HEAD_REF"
+          echo "API_BASE_REF=$API_BASE_REF"
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "remotes=$(git remote -v)"
+
+      - name: "Run ABI check..."
+        env:
+          BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'pull_request_target' && github.event.pull_request.base.sha || inputs.API_BASE_REF }}
+        run: |
+          echo "BASE_REF=$BASE_REF"
+          ./checker/check-abi --parameters="-Cchecker/config-abi.txt" $BASE_REF $(git rev-parse HEAD) 
