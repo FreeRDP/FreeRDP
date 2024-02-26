@@ -55,6 +55,14 @@ static int shadow_server_print_command_line_help(int argc, char** argv,
 
 	printf("Usage: %s [options]\n", argv[0]);
 	printf("\n");
+	printf("Notes: By default NLA security is active.\n");
+	printf("\tIn this mode a SAM database is required.\n");
+	printf("\tProvide one with /sam-file:<file with path>\n");
+	printf("\telse the default path /etc/winpr/SAM is used.\n");
+	printf("\tIf there is no existing SAM file authentication for all users will fail.\n");
+	printf(
+	    "\n\tIf authentication against PAM is desired, start with -sec-nla (requires compiled in "
+	    "support for PAM)\n\n");
 	printf("Syntax:\n");
 	printf("    /flag (enables flag)\n");
 	printf("    /option:<value> (specifies option with value)\n");

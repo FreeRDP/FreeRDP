@@ -64,6 +64,14 @@ Print the version and exit.
 .IP /help
 Print the help and exit.
 
+.SH USAGE
+
+#MANPAGE_NAME@ - start the shadow server on port 3389 with NLA security, SAM database at /etc/winpr/SAM
+.br
+@MANPAGE_NAME@ /sam-file:SAM.db - same as above, but a custom SAM database provided as argument
+.br
+@MANPAGE_NAME@ -sec-nla - start the shadow server on port 3380 with TLS/NLA security. This allows authenticating against PAM with unix users. Be aware that the password is transmitted plain text like with basic HTTP auth
+
 .SH EXAMPLES
 @MANPAGE_NAME@ /port:12345
 
