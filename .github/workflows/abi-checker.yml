@@ -14,12 +14,6 @@ jobs:
   build_job:
     runs-on: ubuntu-latest
     name: "Test on ${{ matrix.os }}"
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [
-          ubuntu-latest
-        ]
     steps:
       - uses: actions/checkout@v4
         name: "Run tests"
