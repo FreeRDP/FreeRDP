@@ -23,10 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         name: "Run tests"
-        id: build
+        id: abi-check
         with:
-          os: ${{ matrix.os }}
-          githubToken: ${{ github.token }}
           install: |
             apt-get update -q -y
             apt-get install -q -y \
