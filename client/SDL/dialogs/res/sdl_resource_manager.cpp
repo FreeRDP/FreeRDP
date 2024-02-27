@@ -49,7 +49,7 @@ SDL_RWops* SDLResourceManager::get(const std::string& type, const std::string& i
 		          << fs::absolute(path) << std::endl;
 		std::cerr << "file not found, application will fail" << std::endl;
 	}
-	return SDL_RWFromFile(path.native().c_str(), "rb");
+	return SDL_RWFromFile(path.u8string().c_str(), "rb");
 #endif
 }
 
