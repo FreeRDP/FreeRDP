@@ -1,0 +1,9 @@
+# settings are opaque, ignore all changes
+[suppress_type]
+type_kind = struct
+name = rdp_settings
+
+# allow insertions at end of structs
+[suppress_type]
+type_kind = struct
+has_data_members_inserted_at = end
