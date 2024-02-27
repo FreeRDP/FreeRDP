@@ -57,14 +57,14 @@ typedef struct
 	snd_pcm_uframes_t period_size;
 } rdpsndAlsaPlugin;
 
-#define SND_PCM_CHECK(_func, _status)                  \
-	do                                                 \
-	{                                                  \
-		if (_status < 0)                               \
-		{                                              \
-			WLog_ERR(TAG, "%s: %d\n", _func, _status); \
-			return -1;                                 \
-		}                                              \
+#define SND_PCM_CHECK(_func, _status)                      \
+	do                                                     \
+	{                                                      \
+		if ((_status) < 0)                                 \
+		{                                                  \
+			WLog_ERR(TAG, "%s: %d\n", (_func), (_status)); \
+			return -1;                                     \
+		}                                                  \
 	} while (0)
 
 static int rdpsnd_alsa_set_hw_params(rdpsndAlsaPlugin* alsa)

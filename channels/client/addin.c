@@ -104,19 +104,19 @@ static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName
 	for (size_t i = 0; CLIENT_STATIC_ADDIN_TABLE[i].name != NULL; i++)
 	{
 		FREERDP_ADDIN* pAddin = (FREERDP_ADDIN*)calloc(1, sizeof(FREERDP_ADDIN));
-
+		const STATIC_ADDIN_TABLE* table = &CLIENT_STATIC_ADDIN_TABLE[i];
 		if (!pAddin)
 		{
 			WLog_ERR(TAG, "calloc failed!");
 			goto error_out;
 		}
 
-		sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s", CLIENT_STATIC_ADDIN_TABLE[i].name);
+		sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s", table->name);
 		pAddin->dwFlags = FREERDP_ADDIN_CLIENT;
 		pAddin->dwFlags |= FREERDP_ADDIN_STATIC;
 		pAddin->dwFlags |= FREERDP_ADDIN_NAME;
 		ppAddins[nAddins++] = pAddin;
-		subsystems = (const STATIC_SUBSYSTEM_ENTRY*)CLIENT_STATIC_ADDIN_TABLE[i].table;
+		subsystems = table->table;
 
 		for (size_t j = 0; subsystems[j].name != NULL; j++)
 		{
@@ -128,8 +128,7 @@ static FREERDP_ADDIN** freerdp_channels_list_client_static_addins(LPCSTR pszName
 				goto error_out;
 			}
 
-			sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s",
-			          CLIENT_STATIC_ADDIN_TABLE[i].name);
+			sprintf_s(pAddin->cName, ARRAYSIZE(pAddin->cName), "%s", table->name);
 			sprintf_s(pAddin->cSubsystem, ARRAYSIZE(pAddin->cSubsystem), "%s", subsystems[j].name);
 			pAddin->dwFlags = FREERDP_ADDIN_CLIENT;
 			pAddin->dwFlags |= FREERDP_ADDIN_STATIC;
