@@ -69,52 +69,51 @@ cmake \
 cmake --build "$BUILD_BASE/cJSON"
 cmake --install "$BUILD_BASE/cJSON"
 
-# TODO: Deactivated until mingw supports c++ standard required for sdl-client
-#git clone --depth 1 -b release-2.30.0 https://github.com/libsdl-org/SDL.git
-#cmake \
-#    -GNinja \
-#    -DCMAKE_TOOLCHAIN_FILE="$SCRIPT_PATH/mingw64.cmake" \
-#    -DCMAKE_PREFIX_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
-#    -DCMAKE_MODULE_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
-#    -DCMAKE_INSTALL_PREFIX="$INSTALL_BASE" \
-#    -S SDL \
-#    -B "$BUILD_BASE/SDL" \
-#    -DSDL_TEST=OFF \
-#    -DSDL_TESTS=OFF \
-#    -DSDL_STATIC_PIC=ON
-#cmake --build "$BUILD_BASE/SDL"
-#cmake --install "$BUILD_BASE/SDL"
-#
-#git clone --depth 1 --shallow-submodules --recurse-submodules -b release-2.22.0 https://github.com/libsdl-org/SDL_ttf.git
-#cmake \
-#    -GNinja \
-#    -DCMAKE_TOOLCHAIN_FILE="$SCRIPT_PATH/mingw64.cmake" \
-#    -DCMAKE_PREFIX_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
-#    -DCMAKE_MODULE_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
-#    -DCMAKE_INSTALL_PREFIX="$INSTALL_BASE" \
-#    -S SDL_ttf \
-#    -B "$BUILD_BASE/SDL_ttf" \
-#    -DSDL2TTF_HARFBUZZ=ON \
-#    -DSDL2TTF_FREETYPE=ON \
-#    -DSDL2TTF_VENDORED=ON \
-#    -DFT_DISABLE_ZLIB=OFF \
-#    -DSDL2TTF_SAMPLES=OFF
-#cmake --build "$BUILD_BASE/SDL_ttf"
-#cmake --install "$BUILD_BASE/SDL_ttf"
-#
-#git clone --depth 1 --shallow-submodules --recurse-submodules -b release-2.8.2 https://github.com/libsdl-org/SDL_image.git
-#cmake \
-#     -GNinja \
-#     -DCMAKE_TOOLCHAIN_FILE="$SCRIPT_PATH/mingw64.cmake" \
-#     -DCMAKE_PREFIX_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
-#     -DCMAKE_MODULE_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
-#     -DCMAKE_INSTALL_PREFIX="$INSTALL_BASE" \
-#     -S SDL_image \
-#     -B "$BUILD_BASE/SDL_image" \
-#     -DSDL2IMAGE_SAMPLES=OFF \
-#     -DSDL2IMAGE_DEPS_SHARED=OFF
-#cmake --build "$BUILD_BASE/SDL_image"
-#cmake --install "$BUILD_BASE/SDL_image"
+git clone --depth 1 -b release-2.30.0 https://github.com/libsdl-org/SDL.git
+cmake \
+    -GNinja \
+    -DCMAKE_TOOLCHAIN_FILE="$SCRIPT_PATH/mingw64.cmake" \
+    -DCMAKE_PREFIX_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
+    -DCMAKE_MODULE_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
+    -DCMAKE_INSTALL_PREFIX="$INSTALL_BASE" \
+    -S SDL \
+    -B "$BUILD_BASE/SDL" \
+    -DSDL_TEST=OFF \
+    -DSDL_TESTS=OFF \
+    -DSDL_STATIC_PIC=ON
+cmake --build "$BUILD_BASE/SDL"
+cmake --install "$BUILD_BASE/SDL"
+
+git clone --depth 1 --shallow-submodules --recurse-submodules -b release-2.22.0 https://github.com/libsdl-org/SDL_ttf.git
+cmake \
+    -GNinja \
+    -DCMAKE_TOOLCHAIN_FILE="$SCRIPT_PATH/mingw64.cmake" \
+    -DCMAKE_PREFIX_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
+    -DCMAKE_MODULE_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
+    -DCMAKE_INSTALL_PREFIX="$INSTALL_BASE" \
+    -S SDL_ttf \
+    -B "$BUILD_BASE/SDL_ttf" \
+    -DSDL2TTF_HARFBUZZ=ON \
+    -DSDL2TTF_FREETYPE=ON \
+    -DSDL2TTF_VENDORED=ON \
+    -DFT_DISABLE_ZLIB=OFF \
+    -DSDL2TTF_SAMPLES=OFF
+cmake --build "$BUILD_BASE/SDL_ttf"
+cmake --install "$BUILD_BASE/SDL_ttf"
+
+git clone --depth 1 --shallow-submodules --recurse-submodules -b release-2.8.2 https://github.com/libsdl-org/SDL_image.git
+cmake \
+     -GNinja \
+     -DCMAKE_TOOLCHAIN_FILE="$SCRIPT_PATH/mingw64.cmake" \
+     -DCMAKE_PREFIX_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
+     -DCMAKE_MODULE_PATH="$INSTALL_BASE/lib/cmake;$INSTALL_BASE/lib;$INSTALL_BASE" \
+     -DCMAKE_INSTALL_PREFIX="$INSTALL_BASE" \
+     -S SDL_image \
+     -B "$BUILD_BASE/SDL_image" \
+     -DSDL2IMAGE_SAMPLES=OFF \
+     -DSDL2IMAGE_DEPS_SHARED=OFF
+cmake --build "$BUILD_BASE/SDL_image"
+cmake --install "$BUILD_BASE/SDL_image"
 
 git clone --depth 1 --shallow-submodules --recurse-submodules -b v1.0.27 https://github.com/libusb/libusb-cmake.git
 cmake \
@@ -172,9 +171,7 @@ cmake \
      -DWITH_SAMPLE=ON \
      -DWITH_PLATFORM_SERVER=OFF \
      -DUSE_UNWIND=OFF \
-     -DSDL_USE_COMPILED_RESOURCES=OFF \ # off due helper utility being compiled by mingw/wrong arch
-     -DWITH_CLIENT_SDL=OFF \    # off due to lacking c++ support in mingw
-     -DWITH_PROXY_MODULES=OFF \ # off due to lacking c++ support in mingw
+     -DSDL_USE_COMPILED_RESOURCES=OFF \
      -DWITH_SWSCALE=OFF \
      -DWITH_FFMPEG=OFF \
      -DWITH_OPENH264=ON \
