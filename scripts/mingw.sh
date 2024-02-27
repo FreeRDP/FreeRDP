@@ -167,6 +167,8 @@ cmake \
      -S "$SCRIPT_PATH/.." \
      -B "$BUILD_BASE/freerdp" \
      -DWITH_SERVER=ON \
+     -DWITH_SHADOW=ON \
+     -DWITH_PLATFORM_SERVER=OFF \
      -DWITH_SAMPLE=ON \
      -DWITH_PLATFORM_SERVER=OFF \
      -DUSE_UNWIND=OFF \
