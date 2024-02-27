@@ -41,10 +41,13 @@
 #define TAG CLIENT_TAG("x11")
 
 #define CLAMP_COORDINATES(x, y) \
-	if (x < 0)                  \
-		x = 0;                  \
-	if (y < 0)                  \
-	y = 0
+	do                          \
+	{                           \
+		if ((x) < 0)            \
+			(x) = 0;            \
+		if ((y) < 0)            \
+			(y) = 0;            \
+	} while (0)
 
 const char* x11_event_string(int event)
 {

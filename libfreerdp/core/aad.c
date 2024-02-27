@@ -210,8 +210,8 @@ cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length)
 
 static INLINE const char* aad_auth_result_to_string(DWORD code)
 {
-#define ERROR_CASE(cd, x) \
-	if (cd == (DWORD)(x)) \
+#define ERROR_CASE(cd, x)   \
+	if ((cd) == (DWORD)(x)) \
 		return #x;
 
 	ERROR_CASE(code, S_OK)

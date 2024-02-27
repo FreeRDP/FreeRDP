@@ -67,15 +67,15 @@ typedef struct
 	rdpContext* rdpcontext;
 } AudinOSSDevice;
 
-#define OSS_LOG_ERR(_text, _error)                                    \
-	do                                                                \
-	{                                                                 \
-		if (_error != 0)                                              \
-		{                                                             \
-			char buffer[256] = { 0 };                                 \
-			WLog_ERR(TAG, "%s: %i - %s\n", _text, _error,             \
-			         winpr_strerror(_error, buffer, sizeof(buffer))); \
-		}                                                             \
+#define OSS_LOG_ERR(_text, _error)                                      \
+	do                                                                  \
+	{                                                                   \
+		if ((_error) != 0)                                              \
+		{                                                               \
+			char buffer[256] = { 0 };                                   \
+			WLog_ERR(TAG, "%s: %i - %s\n", (_text), (_error),           \
+			         winpr_strerror((_error), buffer, sizeof(buffer))); \
+		}                                                               \
 	} while (0)
 
 static UINT32 audin_oss_get_format(const AUDIO_FORMAT* format)
@@ -233,7 +233,8 @@ static DWORD WINAPI audin_oss_thread_func(LPVOID arg)
 	if (ioctl(pcm_handle, SNDCTL_DSP_SETFRAGMENT, &tmp) == -1)
 		OSS_LOG_ERR("SNDCTL_DSP_SETFRAGMENT failed", errno);
 
-	buffer_size = (oss->FramesPerPacket * oss->format.nChannels * (oss->format.wBitsPerSample / 8));
+	buffer_size =
+	    (1ull * oss->FramesPerPacket * oss->format.nChannels * (oss->format.wBitsPerSample / 8ull));
 	buffer = (BYTE*)calloc((buffer_size + sizeof(void*)), sizeof(BYTE));
 
 	if (NULL == buffer)

@@ -55,7 +55,7 @@ typedef struct
 
 	rdpContext* rdpcontext;
 	wLog* log;
-	int bytes_per_frame;
+	size_t bytes_per_frame;
 } AudinALSADevice;
 
 static snd_pcm_format_t audin_alsa_format(UINT32 wFormatTag, UINT32 bitPerChannel)
