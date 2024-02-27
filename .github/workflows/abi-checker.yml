@@ -47,7 +47,7 @@ jobs:
             xsltproc \
             libxcb-cursor-dev \
             libxcursor-dev \
-              libcairo2-dev \
+            libcairo2-dev \
             libfaad-dev \
             libjpeg-dev \
             libgsm1-dev \
@@ -85,6 +85,7 @@ jobs:
         run: |
           mkdir -p checker
           cp ci/cmake-preloads/config-abi.txt checker/
+          cp scripts/abi-suppr.txt checker/
           curl https://gist.githubusercontent.com/akallabeth/aa35caed0d39241fa17c3dc8a0539ea3/raw/ef12f8c720ac6be51aa1878710e2502b1b39cf4c/check-abi -o checker/check-abi
           chmod +x checker/check-abi
           echo "GITHUB_BASE_REF=$GITHUB_BASE_REF"
@@ -98,4 +99,4 @@ jobs:
           BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'pull_request_target' && github.event.pull_request.base.sha || inputs.API_BASE_REF }}
         run: |
           echo "BASE_REF=$BASE_REF"
-          ./checker/check-abi --parameters="-Cchecker/config-abi.txt" $BASE_REF $(git rev-parse HEAD) 
+          ./checker/check-abi -s checker/abi-suppr.txt --parameters="-Cchecker/config-abi.txt" $BASE_REF $(git rev-parse HEAD) 
