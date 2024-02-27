@@ -16,6 +16,8 @@ on:
     branches: [ master, stable* ]
   pull_request_target:
     branches: [ master, stable* ]
+  schedule:
+    - cron: '30 2 * * SUN'
     
 permissions:
   contents: read

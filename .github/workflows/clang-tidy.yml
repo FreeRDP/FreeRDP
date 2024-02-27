@@ -2,6 +2,8 @@ name: clang-tidy-review
 on:
   pull_request_target:
     branches: [ master, stable* ]
+  schedule:
+    - cron: '30 3 * * SUN'
 
 jobs:
   build:
