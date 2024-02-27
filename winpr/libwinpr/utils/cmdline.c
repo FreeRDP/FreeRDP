@@ -515,13 +515,6 @@ static size_t get_element_count(const char* list, BOOL* failed, BOOL fullquoted)
 				if (!fullquoted)
 				{
 					int now = is_quoted(*it);
-					if ((quoted == 0) && !first)
-					{
-						WLog_ERR(TAG, "Invalid argument (misplaced quote) '%s'", list);
-						*failed = TRUE;
-						return 0;
-					}
-
 					if (now == quoted)
 						quoted = 0;
 					else if (quoted == 0)
