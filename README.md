@@ -4,6 +4,13 @@ FreeRDP is a free implementation of the Remote Desktop Protocol (RDP), released 
 Enjoy the freedom of using your software wherever you want, the way you want it, in a world where
 interoperability can finally liberate your computing experience.
 
+## Code Quality Status
+
+[![[arm,ppc,ricsv] architecture builds](https://github.com/FreeRDP/FreeRDP/actions/workflows/alt-architectures.yml/badge.svg)](https://github.com/FreeRDP/FreeRDP/actions/workflows/alt-architectures.yml)
+[![abi-checker](https://github.com/FreeRDP/FreeRDP/actions/workflows/abi-checker.yml/badge.svg)](https://github.com/FreeRDP/FreeRDP/actions/workflows/abi-checker.yml)
+[![clang-tidy-review](https://github.com/FreeRDP/FreeRDP/actions/workflows/clang-tidy.yml/badge.svg)](https://github.com/FreeRDP/FreeRDP/actions/workflows/clang-tidy.yml)
+[![CodeQL](https://github.com/FreeRDP/FreeRDP/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/FreeRDP/FreeRDP/actions/workflows/codeql-analysis.yml)
+
 ## Resources
 
 Project website: https://www.freerdp.com/  

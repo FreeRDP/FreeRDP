@@ -9,6 +9,8 @@ on:
         default: '3.0.0'
   pull_request_target:
     branches: [ master, stable* ]
+  schedule:
+    - cron: '30 4 * * SUN'
 
 jobs:
   build:
