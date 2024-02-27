@@ -151,7 +151,6 @@ meson setup --cross-file "$SCRIPT_PATH/mingw-meson.conf" \
     -Db_pie=true \
     -Db_lto=true \
     -Dbuildtype=release \
-    -Dpkgconfig.relocatable=true \
     -Dtests=disabled \
     -Ddefault_library=both \
     "$BUILD_BASE/openh264" \
