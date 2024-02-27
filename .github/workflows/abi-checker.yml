@@ -15,9 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     name: "Run ABI checker on ubuntu-latest"
     steps:
-      - uses: suzuki-shunsuke/get-pr-action@v0.1.0
+      - name: "Check out pull request"
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'pull_request_target'  }}
+        uses: suzuki-shunsuke/get-pr-action@v0.1.0
         id: pr
-      - uses: actions/checkout@v4
+
+      - name: "Check out source"
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{steps.pr.outputs.merge_commit_sha}}
