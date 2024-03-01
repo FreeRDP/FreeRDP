@@ -100,6 +100,7 @@ struct x11_shadow_subsystem
 #ifdef WITH_XFIXES
 	int xfixes_cursor_notify_event;
 #endif
+	UINT32 format;
 };
 
 #ifdef __cplusplus
