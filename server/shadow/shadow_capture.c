@@ -29,7 +29,7 @@
 
 #define TAG SERVER_TAG("shadow")
 
-int shadow_capture_align_clip_rect(RECTANGLE_16* rect, RECTANGLE_16* clip)
+int shadow_capture_align_clip_rect(RECTANGLE_16* rect, const RECTANGLE_16* clip)
 {
 	int dx = 0;
 	int dy = 0;
@@ -78,55 +78,40 @@ int shadow_capture_align_clip_rect(RECTANGLE_16* rect, RECTANGLE_16* clip)
 	return 1;
 }
 
-int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nHeight, BYTE* pData2,
-                           UINT32 nStep2, RECTANGLE_16* rect)
+int shadow_capture_compare(const BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nHeight,
+                           const BYTE* pData2, UINT32 nStep2, RECTANGLE_16* rect)
 {
-	BOOL equal = 0;
-	BOOL allEqual = 0;
+	BOOL allEqual = TRUE;
 	UINT32 tw = 0;
-	UINT32 th = 0;
-	UINT32 nrow = 0;
-	UINT32 ncol = 0;
-	UINT32 l = 0;
-	UINT32 t = 0;
+	const UINT32 nrow = (nHeight + 15) / 16;
+	const UINT32 ncol = (nWidth + 15) / 16;
+	UINT32 l = ncol + 1;
+	UINT32 t = nrow + 1;
 	UINT32 r = 0;
 	UINT32 b = 0;
-	BYTE* p1 = NULL;
-	BYTE* p2 = NULL;
-	BOOL rows[1024];
-#ifdef WITH_DEBUG_SHADOW_CAPTURE
-	BOOL cols[1024] = { FALSE };
-#endif
-	allEqual = TRUE;
-	ZeroMemory(rect, sizeof(RECTANGLE_16));
-	FillMemory(rows, sizeof(rows), 0xFF);
-#ifdef WITH_DEBUG_SHADOW_CAPTURE
-	FillMemory(cols, sizeof(cols), 0xFF);
-#endif
-	nrow = (nHeight + 15) / 16;
-	ncol = (nWidth + 15) / 16;
-	l = ncol + 1;
-	r = 0;
-	t = nrow + 1;
-	b = 0;
+	const RECTANGLE_16 empty = { 0 };
+	WINPR_ASSERT(rect);
+
+	*rect = empty;
 
 	for (UINT32 ty = 0; ty < nrow; ty++)
 	{
-		th = ((ty + 1) == nrow) ? (nHeight % 16) : 16;
+		BOOL rowEqual = TRUE;
+		UINT32 th = ((ty + 1) == nrow) ? (nHeight % 16) : 16;
 
 		if (!th)
 			th = 16;
 
 		for (UINT32 tx = 0; tx < ncol; tx++)
 		{
-			equal = TRUE;
+			BOOL equal = TRUE;
 			tw = ((tx + 1) == ncol) ? (nWidth % 16) : 16;
 
 			if (!tw)
 				tw = 16;
 
-			p1 = &pData1[(ty * 16 * nStep1) + (tx * 16 * 4)];
-			p2 = &pData2[(ty * 16 * nStep2) + (tx * 16 * 4)];
+			const BYTE* p1 = &pData1[(ty * 16 * nStep1) + (tx * 16 * 4)];
+			const BYTE* p2 = &pData2[(ty * 16 * nStep2) + (tx * 16 * 4)];
 
 			for (UINT32 k = 0; k < th; k++)
 			{
@@ -142,11 +127,7 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 
 			if (!equal)
 			{
-				rows[ty] = FALSE;
-#ifdef WITH_DEBUG_SHADOW_CAPTURE
-				cols[tx] = FALSE;
-#endif
-
+				rowEqual = FALSE;
 				if (l > tx)
 					l = tx;
 
@@ -155,7 +136,7 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 			}
 		}
 
-		if (!rows[ty])
+		if (!rowEqual)
 		{
 			allEqual = FALSE;
 
@@ -187,46 +168,145 @@ int shadow_capture_compare(BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nH
 	if (rect->bottom > nHeight)
 		rect->bottom = (UINT16)nHeight;
 
-#ifdef WITH_DEBUG_SHADOW_CAPTURE
-	size_t size = ncol + 1;
-	char* col_str = calloc(size, sizeof(char));
+	return 1;
+}
 
-	if (!col_str)
+static BOOL color_equal(UINT32 colorA, UINT32 formatA, UINT32 colorB, UINT32 formatB)
+{
+	BYTE ar = 0;
+	BYTE ag = 0;
+	BYTE ab = 0;
+	BYTE aa = 0;
+	BYTE br = 0;
+	BYTE bg = 0;
+	BYTE bb = 0;
+	BYTE ba = 0;
+	FreeRDPSplitColor(colorA, formatA, &ar, &ag, &ab, &aa, NULL);
+	FreeRDPSplitColor(colorB, formatB, &br, &bg, &bb, &ba, NULL);
+
+	if (ar != br)
+		return FALSE;
+	if (ag != bg)
+		return FALSE;
+	if (ab != bb)
+		return FALSE;
+	if (aa != ba)
+		return FALSE;
+	return TRUE;
+}
+
+static BOOL pixel_equal(const BYTE* a, UINT32 formatA, const BYTE* b, UINT32 formatB, size_t count)
+{
+	const size_t bppA = FreeRDPGetBytesPerPixel(formatA);
+	const size_t bppB = FreeRDPGetBytesPerPixel(formatB);
+
+	for (size_t x = 0; x < count; x++)
 	{
-		WLog_ERR(TAG, "calloc failed!");
-		return 1;
+		const UINT32 colorA = FreeRDPReadColor(&a[bppA * x], formatA);
+		const UINT32 colorB = FreeRDPReadColor(&b[bppB * x], formatB);
+		if (!color_equal(colorA, formatA, colorB, formatB))
+			return FALSE;
 	}
 
-	for (UINT32 tx = 0; tx < ncol; tx++)
-		sprintf_s(&col_str[tx], size - tx, "-");
+	return TRUE;
+}
 
-	WLog_INFO(TAG, "%s", col_str);
+int shadow_capture_compare_with_format(const BYTE* pData1, UINT32 format1, UINT32 nStep1,
+                                       UINT32 nWidth, UINT32 nHeight, const BYTE* pData2,
+                                       UINT32 format2, UINT32 nStep2, RECTANGLE_16* rect)
+{
+	if (format1 == format2)
+		return shadow_capture_compare(pData1, nStep1, nWidth, nHeight, pData2, nStep2, rect);
 
-	for (UINT32 tx = 0; tx < ncol; tx++)
-		sprintf_s(&col_str[tx], size - tx, "%c", cols[tx] ? 'O' : 'X');
+	BOOL allEqual = TRUE;
+	UINT32 tw = 0;
+	const UINT32 nrow = (nHeight + 15) / 16;
+	const UINT32 ncol = (nWidth + 15) / 16;
+	UINT32 l = ncol + 1;
+	UINT32 t = nrow + 1;
+	UINT32 r = 0;
+	UINT32 b = 0;
+	const size_t bppA = FreeRDPGetBytesPerPixel(format1);
+	const size_t bppB = FreeRDPGetBytesPerPixel(format2);
+	const RECTANGLE_16 empty = { 0 };
+	WINPR_ASSERT(rect);
 
-	WLog_INFO(TAG, "%s", col_str);
+	*rect = empty;
 
-	for (UINT32 tx = 0; tx < ncol; tx++)
-		sprintf_s(&col_str[tx], size - tx, "-");
-
-	WLog_INFO(TAG, "%s", col_str);
-
-	for (UINT32 ty = 0; ty < nrow; ty++)
+	for (size_t ty = 0; ty < nrow; ty++)
 	{
-		for (UINT32 tx = 0; tx < ncol; tx++)
-			sprintf_s(&col_str[tx], size - tx, "%c", cols[tx] ? 'O' : 'X');
+		BOOL rowEqual = TRUE;
+		size_t th = ((ty + 1) == nrow) ? (nHeight % 16) : 16;
 
-		WLog_INFO(TAG, "%s", col_str);
-		WLog_INFO(TAG, "|%s|", rows[ty] ? "O" : "X");
+		if (!th)
+			th = 16;
+
+		for (size_t tx = 0; tx < ncol; tx++)
+		{
+			BOOL equal = TRUE;
+			tw = ((tx + 1) == ncol) ? (nWidth % 16) : 16;
+
+			if (!tw)
+				tw = 16;
+
+			const BYTE* p1 = &pData1[(ty * 16 * nStep1) + (tx * 16ull * bppA)];
+			const BYTE* p2 = &pData2[(ty * 16 * nStep2) + (tx * 16ull * bppB)];
+
+			for (size_t k = 0; k < th; k++)
+			{
+				if (!pixel_equal(p1, format1, p2, format2, tw))
+				{
+					equal = FALSE;
+					break;
+				}
+
+				p1 += nStep1;
+				p2 += nStep2;
+			}
+
+			if (!equal)
+			{
+				rowEqual = FALSE;
+				if (l > tx)
+					l = tx;
+
+				if (r < tx)
+					r = tx;
+			}
+		}
+
+		if (!rowEqual)
+		{
+			allEqual = FALSE;
+
+			if (t > ty)
+				t = ty;
+
+			if (b < ty)
+				b = ty;
+		}
 	}
 
-	WLog_INFO(TAG,
-	          "left: %" PRIu32 " top: %" PRIu32 " right: %" PRIu32 " bottom: %" PRIu32
-	          " ncol: %" PRIu32 " nrow: %" PRIu32,
-	          l, t, r, b, ncol, nrow);
-	free(col_str);
-#endif
+	if (allEqual)
+		return 0;
+
+	WINPR_ASSERT(l * 16 <= UINT16_MAX);
+	WINPR_ASSERT(t * 16 <= UINT16_MAX);
+	WINPR_ASSERT((r + 1) * 16 <= UINT16_MAX);
+	WINPR_ASSERT((b + 1) * 16 <= UINT16_MAX);
+	rect->left = (UINT16)l * 16;
+	rect->top = (UINT16)t * 16;
+	rect->right = (UINT16)(r + 1) * 16;
+	rect->bottom = (UINT16)(b + 1) * 16;
+
+	WINPR_ASSERT(nWidth <= UINT16_MAX);
+	if (rect->right > nWidth)
+		rect->right = (UINT16)nWidth;
+
+	WINPR_ASSERT(nHeight <= UINT16_MAX);
+	if (rect->bottom > nHeight)
+		rect->bottom = (UINT16)nHeight;
+
 	return 1;
 }
 

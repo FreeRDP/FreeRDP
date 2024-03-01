@@ -796,9 +796,10 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 		          subsystem->xshm_gc, 0, 0, subsystem->width, subsystem->height, 0, 0);
 
 		EnterCriticalSection(&surface->lock);
-		status = shadow_capture_compare(surface->data, surface->scanline, surface->width,
-		                                surface->height, (BYTE*)&(image->data[surface->width * 4]),
-		                                image->bytes_per_line, &invalidRect);
+		status = shadow_capture_compare_with_format(
+		    surface->data, surface->format, surface->scanline, surface->width, surface->height,
+		    (BYTE*)&(image->data[surface->width * 4ull]), subsystem->format, image->bytes_per_line,
+		    &invalidRect);
 		LeaveCriticalSection(&surface->lock);
 	}
 	else
@@ -810,9 +811,9 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 
 		if (image)
 		{
-			status = shadow_capture_compare(surface->data, surface->scanline, surface->width,
-			                                surface->height, (BYTE*)image->data,
-			                                image->bytes_per_line, &invalidRect);
+			status = shadow_capture_compare_with_format(
+			    surface->data, surface->format, surface->scanline, surface->width, surface->height,
+			    (BYTE*)image->data, subsystem->format, image->bytes_per_line, &invalidRect);
 		}
 		LeaveCriticalSection(&surface->lock);
 		if (!image)
@@ -854,7 +855,7 @@ static int x11_shadow_screen_grab(x11ShadowSubsystem* subsystem)
 			WINPR_ASSERT(height >= 0);
 			success = freerdp_image_copy(surface->data, surface->format, surface->scanline, x, y,
 			                             (UINT32)width, (UINT32)height, (BYTE*)image->data,
-			                             PIXEL_FORMAT_BGRX32, (UINT32)image->bytes_per_line, x, y,
+			                             subsystem->format, (UINT32)image->bytes_per_line, x, y,
 			                             NULL, FREERDP_FLIP_NONE);
 			LeaveCriticalSection(&surface->lock);
 			if (!success)
@@ -1392,6 +1393,9 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 		          subsystem->use_xfixes, subsystem->use_xinerama, subsystem->use_xdamage,
 		          subsystem->use_xshm);
 	}
+
+	subsystem->format = (ImageByteOrder(subsystem->display) == LSBFirst) ? PIXEL_FORMAT_BGRX32
+	                                                                     : PIXEL_FORMAT_XRGB32;
 	return 1;
 }
 
