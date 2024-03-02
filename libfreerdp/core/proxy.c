@@ -284,14 +284,12 @@ static BOOL check_no_proxy(rdpSettings* settings, const char* no_proxy)
 
 void proxy_read_environment(rdpSettings* settings, char* envname)
 {
-	DWORD envlen = 0;
-	char* env = NULL;
-	envlen = GetEnvironmentVariableA(envname, NULL, 0);
+	const DWORD envlen = GetEnvironmentVariableA(envname, NULL, 0);
 
-	if (!envlen)
+	if (!envlen || (envlen <= 1))
 		return;
 
-	env = calloc(1, envlen);
+	char* env = calloc(1, envlen);
 
 	if (!env)
 	{
