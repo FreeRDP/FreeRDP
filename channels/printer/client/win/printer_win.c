@@ -136,7 +136,7 @@ static void printer_win_close_printjob(rdpPrintJob* printjob)
 	{
 	}
 
-	if (!ClosePrinter(win_printer->hPrinter))
+	if (!EndDocPrinter(win_printer->hPrinter))
 	{
 	}
 
@@ -207,6 +207,9 @@ static void printer_win_free_printer(rdpPrinter* printer)
 
 	if (win_printer->printjob)
 		win_printer->printjob->printjob.Close((rdpPrintJob*)win_printer->printjob);
+
+	if (win_printer->hPrinter)
+		ClosePrinter(win_printer->hPrinter);
 
 	if (printer->backend)
 		printer->backend->ReleaseRef(printer->backend);
