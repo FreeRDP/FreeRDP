@@ -94,7 +94,7 @@ replace_rpath() {
 }
 
 CMAKE_ARCHS=
-OSSL_FLAGS="-mmacosx-version-min=$DEPLOYMENT_TARGET"
+OSSL_FLAGS="-mmacosx-version-min=$DEPLOYMENT_TARGET -I$INSTALL/include -L$INSTALL/lib"
 for ARCH in $DEPLOYMENT_ARCH;
 do
 	OSSL_FLAGS="$OSSL_FLAGS -arch $ARCH"
