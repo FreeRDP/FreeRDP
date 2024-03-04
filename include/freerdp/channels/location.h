@@ -24,6 +24,7 @@
 #include <freerdp/dvc.h>
 #include <freerdp/types.h>
 
+#define LOCATION_CHANNEL_NAME "location"
 #define LOCATION_DVC_CHANNEL_NAME "Microsoft::Windows::RDS::Location"
 
 #ifdef __cplusplus

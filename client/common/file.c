@@ -1309,7 +1309,7 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	file->RedirectComPorts = (freerdp_settings_get_bool(settings, FreeRDP_RedirectSerialPorts) ||
 	                          freerdp_settings_get_bool(settings, FreeRDP_RedirectParallelPorts));
 	file->RedirectLocation =
-	    freerdp_dynamic_channel_collection_find(settings, LOCATION_DVC_CHANNEL_NAME) ? TRUE : FALSE;
+	    freerdp_dynamic_channel_collection_find(settings, LOCATION_CHANNEL_NAME) ? TRUE : FALSE;
 	if (!FILE_POPULATE_STRING(&file->DrivesToRedirect, settings, FreeRDP_DrivesToRedirect) ||
 	    !FILE_POPULATE_STRING(&file->PreconnectionBlob, settings, FreeRDP_PreconnectionBlob) ||
 	    !FILE_POPULATE_STRING(&file->KdcProxyName, settings, FreeRDP_KerberosKdcUrl))
@@ -2299,8 +2299,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 	if (~file->RedirectLocation)
 	{
 		size_t count = 0;
-		char** str =
-		    CommandLineParseCommaSeparatedValuesEx(LOCATION_DVC_CHANNEL_NAME, NULL, &count);
+		char** str = CommandLineParseCommaSeparatedValuesEx(LOCATION_CHANNEL_NAME, NULL, &count);
 		const BOOL rc = freerdp_client_add_dynamic_channel(settings, count, str);
 		free(str);
 		if (!rc)
