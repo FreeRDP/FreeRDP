@@ -1,7 +1,8 @@
 # FreeRDP: A Remote Desktop Protocol Implementation
 # FreeRDP cmake build script
 #
-# Copyright 2023 Pascal Nowack <Pascal.Nowack@gmx.de>
+# Copyright 2024 Armin Novak <anovak@thincast.com>
+# Copyright 2024 Thincast Technologies GmbH
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,12 +16,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-define_channel("location")
+define_channel_client("location")
 
-if(WITH_CLIENT_CHANNELS)
-	add_channel_client(${MODULE_PREFIX} ${CHANNEL_NAME})
-endif()
+set(${MODULE_PREFIX}_SRCS
+	location_main.c
+)
 
-if(WITH_SERVER_CHANNELS)
-	add_channel_server(${MODULE_PREFIX} ${CHANNEL_NAME})
-endif()
+set(${MODULE_PREFIX}_LIBS
+	winpr
+)
+include_directories(..)
+
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
