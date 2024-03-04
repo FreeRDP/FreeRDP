@@ -123,6 +123,84 @@ BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value)
 	return TRUE;
 }
 
+BOOL freerdp_write_four_byte_signed_integer(wStream* s, INT32 value)
+{
+	FOUR_BYTE_SIGNED_INTEGER si = { 0 };
+
+	WINPR_ASSERT(s);
+
+	if (value < 0)
+	{
+		si.s = NEGATIVE_VAL;
+		value = -value;
+	}
+
+	if (value < 0x1F)
+	{
+		si.c = ONE_BYTE_VAL;
+		si.val1 = value & 0x1f;
+	}
+	else if (value < 0x1FFF)
+	{
+		si.c = TWO_BYTE_VAL;
+		si.val1 = (value >> 8) & 0x1f;
+		si.val2 = value & 0xff;
+	}
+	else if (value < 0x1FFFFF)
+	{
+		si.c = THREE_BYTE_VAL;
+		si.val1 = (value >> 16) & 0x1f;
+		si.val2 = (value >> 8) & 0xff;
+		si.val3 = value & 0xff;
+	}
+	else if (value < 0x1FFFFFFF)
+	{
+		si.c = FOUR_BYTE_VAL;
+		si.val1 = (value >> 24) & 0x1f;
+		si.val2 = (value >> 16) & 0xff;
+		si.val3 = (value >> 8) & 0xff;
+		si.val4 = value & 0xff;
+	}
+	else
+	{
+		WLog_ERR(TAG, "Invalid byte count for value %" PRId32, value);
+		return FALSE;
+	}
+
+	if (!Stream_EnsureRemainingCapacity(s, si.c + 1))
+		return FALSE;
+
+	const BYTE byte = ((si.c << 6) & 0xC0) | ((si.s << 5) & 0x20) | (si.val1 & 0x1F);
+	Stream_Write_UINT8(s, byte);
+
+	switch (si.c)
+	{
+		case ONE_BYTE_VAL:
+			break;
+		case TWO_BYTE_VAL:
+			Stream_Write_UINT8(s, si.val2);
+			break;
+		case THREE_BYTE_VAL:
+			Stream_Write_UINT8(s, si.val2);
+			Stream_Write_UINT8(s, si.val3);
+			break;
+		case FOUR_BYTE_VAL:
+			Stream_Write_UINT8(s, si.val2);
+			Stream_Write_UINT8(s, si.val3);
+			Stream_Write_UINT8(s, si.val4);
+			break;
+		case FIVE_BYTE_VAL:
+		case SIX_BYTE_VAL:
+		case SEVEN_BYTE_VAL:
+		case EIGHT_BYTE_VAL:
+		default:
+			WLog_ERR(TAG, "Invalid byte count value in si.c: %u", si.c);
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 BOOL freerdp_read_four_byte_float(wStream* s, double* value)
 {
 	FOUR_BYTE_FLOAT f = { 0 };
@@ -182,6 +260,96 @@ BOOL freerdp_read_four_byte_float(wStream* s, double* value)
 
 	if (f.s == NEGATIVE_VAL)
 		*value *= -1.0;
+
+	return TRUE;
+}
+
+BOOL freerdp_write_four_byte_float(wStream* s, double value)
+{
+	FOUR_BYTE_FLOAT si = { 0 };
+
+	WINPR_ASSERT(s);
+
+	if (value < 0)
+	{
+		si.s = NEGATIVE_VAL;
+		value = -value;
+	}
+
+	int exp = 0;
+	frexp(value, &exp);
+
+	if ((exp < 0) || (exp > 0x07))
+	{
+		WLog_ERR(TAG, "value %ld has out of supported range [0,0xff] exponent %d", value, exp);
+		return FALSE;
+	}
+	si.e = (BYTE)exp;
+	UINT64 base = (UINT64)ldexp(value, exp);
+
+	if (base < 0x03)
+	{
+		si.c = ONE_BYTE_VAL;
+		si.val1 = base & 0x03;
+	}
+	else if (base < 0x03ff)
+	{
+		si.c = TWO_BYTE_VAL;
+		si.val1 = (base >> 8) & 0x03;
+		si.val2 = base & 0xff;
+	}
+	else if (base < 0x03ffff)
+	{
+		si.c = THREE_BYTE_VAL;
+		si.val1 = (base >> 16) & 0x03;
+		si.val2 = (base >> 8) & 0xff;
+		si.val3 = base & 0xff;
+	}
+	else if (base < 0x03ffff)
+	{
+		si.c = FOUR_BYTE_VAL;
+		si.val1 = (base >> 24) & 0x03;
+		si.val2 = (base >> 16) & 0xff;
+		si.val3 = (base >> 8) & 0xff;
+		si.val4 = base & 0xff;
+	}
+	else
+	{
+		WLog_ERR(TAG, "Invalid byte count for value %ld", value);
+		return FALSE;
+	}
+
+	if (!Stream_EnsureRemainingCapacity(s, si.c + 1))
+		return FALSE;
+
+	const BYTE byte =
+	    ((si.c << 6) & 0xC0) | ((si.s << 5) & 0x20) | ((si.e << 2) & 0x1c) | (si.val1 & 0x03);
+	Stream_Write_UINT8(s, byte);
+
+	switch (si.c)
+	{
+		case ONE_BYTE_VAL:
+			break;
+		case TWO_BYTE_VAL:
+			Stream_Write_UINT8(s, si.val2);
+			break;
+		case THREE_BYTE_VAL:
+			Stream_Write_UINT8(s, si.val2);
+			Stream_Write_UINT8(s, si.val3);
+			break;
+		case FOUR_BYTE_VAL:
+			Stream_Write_UINT8(s, si.val2);
+			Stream_Write_UINT8(s, si.val3);
+			Stream_Write_UINT8(s, si.val4);
+			break;
+		case FIVE_BYTE_VAL:
+		case SIX_BYTE_VAL:
+		case SEVEN_BYTE_VAL:
+		case EIGHT_BYTE_VAL:
+		default:
+			WLog_ERR(TAG, "Invalid byte count value in si.c: %u", si.c);
+			return FALSE;
+	}
 
 	return TRUE;
 }

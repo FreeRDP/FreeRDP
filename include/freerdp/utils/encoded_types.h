@@ -30,8 +30,10 @@ extern "C"
 #endif
 
 	FREERDP_API BOOL freerdp_read_four_byte_signed_integer(wStream* s, INT32* value);
+	FREERDP_API BOOL freerdp_write_four_byte_signed_integer(wStream* s, INT32 value);
 
 	FREERDP_API BOOL freerdp_read_four_byte_float(wStream* s, double* value);
+	FREERDP_API BOOL freerdp_write_four_byte_float(wStream* s, double value);
 
 #ifdef __cplusplus
 }
