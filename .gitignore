@@ -1,2 +1,4 @@
 **/CMakeCache.txt
 **/CMakeFiles
+build*
+.vs/

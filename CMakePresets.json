@@ -1,0 +1,301 @@
+{
+	"version": 7,
+	"cmakeMinimumRequired": {
+		"major": 3,
+		"minor": 27,
+		"patch": 0
+	},
+	"configurePresets": [
+		{
+			"name": "vcpkg",
+			"displayName": "Configure with vcpkg. please set VCPKG_ROOT environment first",
+			"toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+		},
+
+		{
+			"name": "default",
+			"displayName": "Freerdp library minimal features",
+			"description": "Freerdp library minimal features with vcpkg",
+			"inherits": "vcpkg",
+			"cacheVariables": {
+				"WITH_FFMPEG": "OFF",
+				"WITH_SWSCALE": "OFF",
+				"CHANNEL_URBDRC": "OFF",
+				"WITH_PKCS11": "OFF",
+				"WITH_CUPS": "OFF",
+				"WITH_MANPAGES": "OFF",
+				"WITH_KRB5": "OFF",
+				"WITH_CLIENT_COMMON": "ON",
+				"WITH_CLIENT": "OFF",
+				"WITH_SERVER": "OFF",
+				"WITH_PROXY": "OFF",
+				"WITH_SHADOW": "OFF",
+				"WITH_PLATFORM_SERVER": "OFF",
+				"WITH_VERBOSE_WINPR_ASSERT": "OFF",
+				"WITH_OPAQUE_SETTINGS": "OFF"
+			}
+		},
+		{
+			"name": "default-msvc",
+			"displayName": "Default using Visual Studio 17 2022",
+			"description": "Freerdp library minimal features using Visual Studio 17 2022",
+			"inherits": "default",
+			"generator": "Visual Studio 17 2022",
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Windows"
+			}
+		},
+		{
+			"name": "default-ninja",
+			"displayName": "Default using ninja",
+			"description": "Freerdp library minimal features using ninja",
+			"inherits": "default",
+			"generator": "Ninja"
+		},
+		{
+			"name": "default-android",
+			"displayName": "Default for android",
+			"description": "Freerdp library minimal features for android",
+			"hidden": true,
+			"inherits": "default-ninja",
+			"cacheVariables": {
+				"VCPKG_CHAINLOAD_TOOLCHAIN_FILE":
+				    "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake"
+			}
+		},
+		{
+			"name": "default-android-arm64",
+			"displayName": "Default for android arm64",
+			"description": "Freerdp library minimal features for android arm64",
+			"inherits": "default-android",
+			"cacheVariables": {
+				"ANDROID_ABI": "arm64-v8a",
+				"VCPKG_TARGET_TRIPLET": "arm64-android"
+			}
+		},
+		{
+			"name": "default-android-arm64-make",
+			"displayName": "Default for android arm64 with make",
+			"description": "Freerdp library minimal features for android arm64 with make",
+			"inherits": "default-android-arm64",
+			"generator": "Unix Makefiles",
+			"cacheVariables": {
+				"CMAKE_MAKE_PROGRAM":
+				    "$env{ANDROID_NDK_HOME}/prebuilt/${hostSystemName}-x86_64/bin/make"
+			}
+		},
+		{
+			"name": "default-android-x86_64",
+			"displayName": "Default for android x86_64",
+			"description": "Freerdp library minimal features for android x86_64",
+			"inherits": "default-android",
+			"cacheVariables": {
+				"ANDROID_ABI": "x86_64",
+				"VCPKG_TARGET_TRIPLET": "x64-android"
+			}
+		},
+		{
+			"name": "default-android-x86_64-make",
+			"displayName": "Default for android x86_64 with make",
+			"description": "Freerdp library minimal features for android x86_64 with make",
+			"inherits": "default-android-x86_64",
+			"generator": "Unix Makefiles",
+			"cacheVariables": {
+				"CMAKE_MAKE_PROGRAM":
+				    "$env{ANDROID_NDK_HOME}/prebuilt/${hostSystemName}-x86_64/bin/make"
+			}
+		},
+
+		{
+			"name": "freerdp",
+			"displayName": "Freerdp library with ffmpeg etc",
+			"description": "Freerdp library with ffmpeg etc with vcpkg",
+			"inherits": "vcpkg",
+			"cacheVariables": {
+				"WITH_CLIENT_COMMON": "ON",
+				"WITH_CLIENT": "OFF",
+				"WITH_SERVER": "OFF",
+				"WITH_PROXY": "OFF",
+				"WITH_SHADOW": "OFF",
+				"WITH_PLATFORM_SERVER": "OFF",
+				"WITH_VERBOSE_WINPR_ASSERT": "OFF",
+				"WITH_OPAQUE_SETTINGS": "OFF",
+				"VCPKG_MANIFEST_FEATURES": "freerdp;channel"
+			}
+		},
+		{
+			"name": "freerdp-msvc",
+			"displayName": "Freerdp using Visual Studio 17 2022",
+			"description":
+			    "Freerdp library with ffmpeg etc  with vcpkg using Visual Studio 17 2022",
+			"inherits": "freerdp",
+			"generator": "Visual Studio 17 2022",
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Windows"
+			}
+		},
+		{
+			"name": "freerdp-ninja",
+			"displayName": "Freerdp using ninja",
+			"inherits": "freerdp",
+			"generator": "Ninja"
+		},
+		{
+			"name": "freerdp-android",
+			"displayName": "freerdp for android",
+			"hidden": true,
+			"inherits": "freerdp",
+			"generator": "Unix Makefiles",
+			"cacheVariables": {
+				"VCPKG_CHAINLOAD_TOOLCHAIN_FILE":
+				    "$env{ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake"
+			}
+		},
+		{
+			"name": "freerdp-android-arm64",
+			"displayName": "Freerdp for android arm64",
+			"inherits": "freerdp-android",
+			"cacheVariables": {
+				"ANDROID_ABI": "arm64-v8a",
+				"VCPKG_TARGET_TRIPLET": "arm64-android"
+			}
+		},
+		{
+			"name": "freerdp-android-arm64-make",
+			"displayName": "Freerdp for android arm64 with make",
+			"inherits": "freerdp-android-arm64",
+			"generator": "Unix Makefiles",
+			"cacheVariables": {
+				"CMAKE_MAKE_PROGRAM":
+				    "$env{ANDROID_NDK_HOME}/prebuilt/${hostSystemName}-x86_64/bin/make"
+			}
+		},
+		{
+			"name": "freerdp-android-x86_64",
+			"displayName": "Freerdp for android x86_64",
+			"inherits": "freerdp-android",
+			"cacheVariables": {
+				"ANDROID_ABI": "x86_64",
+				"VCPKG_TARGET_TRIPLET": "x64-android"
+			}
+		},
+		{
+			"name": "freerdp-android-x86_64-make",
+			"displayName": "Freerdp for android x86_64 with make",
+			"inherits": "freerdp-android-x86_64",
+			"generator": "Unix Makefiles",
+			"cacheVariables": {
+				"CMAKE_MAKE_PROGRAM":
+				    "$env{ANDROID_NDK_HOME}/prebuilt/${hostSystemName}-x86_64/bin/make"
+			}
+		},
+
+		{
+			"name": "client",
+			"displayName": "Client",
+			"description": "Client with vcpkg",
+			"inherits": "vcpkg",
+			"cacheVariables": {
+				"WITH_CLIENT_COMMON": "ON",
+				"WITH_CLIENT": "ON",
+				"WITH_SERVER": "OFF",
+				"WITH_PROXY": "OFF",
+				"WITH_SHADOW": "OFF",
+				"WITH_PLATFORM_SERVER": "OFF",
+				"WITH_VERBOSE_WINPR_ASSERT": "OFF",
+				"WITH_OPAQUE_SETTINGS": "OFF",
+				"VCPKG_MANIFEST_FEATURES": "client;channel;freerdp"
+			}
+		},
+		{
+			"name": "client-msvc",
+			"displayName": "Client using Visual Studio",
+			"inherits": "client",
+			"generator": "Visual Studio 17 2022",
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Windows"
+			}
+		},
+		{
+			"name": "client-ninja",
+			"displayName": "Client using ninja",
+			"inherits": "client",
+			"generator": "Ninja"
+		},
+
+		{
+			"name": "server",
+			"displayName": "Server",
+			"description": "Server with vcpkg",
+			"inherits": "vcpkg",
+			"cacheVariables": {
+				"WITH_CLIENT_COMMON": "OFF",
+				"WITH_CLIENT": "OFF",
+				"WITH_SERVER": "ON",
+				"WITH_PROXY": "ON",
+				"WITH_SHADOW": "ON",
+				"WITH_PLATFORM_SERVER": "ON",
+				"WITH_VERBOSE_WINPR_ASSERT": "OFF",
+				"WITH_OPAQUE_SETTINGS": "OFF",
+				"VCPKG_MANIFEST_FEATURES": "channel;freerdp;server"
+			}
+		},
+		{
+			"name": "server-msvc",
+			"displayName": "Server using Visual Studio 17 2022",
+			"inherits": "server",
+			"generator": "Visual Studio 17 2022",
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Windows"
+			}
+		},
+		{
+			"name": "server-ninja",
+			"displayName": "Server using ninja",
+			"inherits": "server",
+			"generator": "Ninja"
+		},
+
+		{
+			"name": "all",
+			"displayName": "All",
+			"inherits": "vcpkg",
+			"cacheVariables": {
+				"WITH_CLIENT_COMMON": "ON",
+				"WITH_CLIENT": "ON",
+				"WITH_SERVER": "ON",
+				"WITH_PROXY": "ON",
+				"WITH_SHADOW": "ON",
+				"WITH_PLATFORM_SERVER": "ON",
+				"WITH_VERBOSE_WINPR_ASSERT": "OFF",
+				"WITH_OPAQUE_SETTINGS": "OFF",
+				"VCPKG_MANIFEST_FEATURES": "freerdp;channel;client;server"
+			}
+		},
+		{
+			"name": "all-msvc",
+			"displayName": "All using Visual Studio 17 2022",
+			"inherits": "all",
+			"generator": "Visual Studio 17 2022",
+			"condition": {
+				"type": "equals",
+				"lhs": "${hostSystemName}",
+				"rhs": "Windows"
+			}
+		},
+		{
+			"name": "all-ninja",
+			"displayName": "All using ninja",
+			"inherits": "all",
+			"generator": "Ninja"
+		}
+	]
+}
