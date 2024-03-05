@@ -82,94 +82,8 @@ int shadow_capture_compare(const BYTE* WINPR_RESTRICT pData1, UINT32 nStep1, UIN
                            UINT32 nHeight, const BYTE* WINPR_RESTRICT pData2, UINT32 nStep2,
                            RECTANGLE_16* WINPR_RESTRICT rect)
 {
-	BOOL allEqual = TRUE;
-	UINT32 tw = 0;
-	const UINT32 nrow = (nHeight + 15) / 16;
-	const UINT32 ncol = (nWidth + 15) / 16;
-	UINT32 l = ncol + 1;
-	UINT32 t = nrow + 1;
-	UINT32 r = 0;
-	UINT32 b = 0;
-	const RECTANGLE_16 empty = { 0 };
-	WINPR_ASSERT(rect);
-
-	*rect = empty;
-
-	for (UINT32 ty = 0; ty < nrow; ty++)
-	{
-		BOOL rowEqual = TRUE;
-		UINT32 th = ((ty + 1) == nrow) ? (nHeight % 16) : 16;
-
-		if (!th)
-			th = 16;
-
-		for (UINT32 tx = 0; tx < ncol; tx++)
-		{
-			BOOL equal = TRUE;
-			tw = ((tx + 1) == ncol) ? (nWidth % 16) : 16;
-
-			if (!tw)
-				tw = 16;
-
-			const BYTE* p1 = &pData1[(ty * 16 * nStep1) + (tx * 16 * 4)];
-			const BYTE* p2 = &pData2[(ty * 16 * nStep2) + (tx * 16 * 4)];
-
-			for (UINT32 k = 0; k < th; k++)
-			{
-				if (memcmp(p1, p2, tw * 4) != 0)
-				{
-					equal = FALSE;
-					break;
-				}
-
-				p1 += nStep1;
-				p2 += nStep2;
-			}
-
-			if (!equal)
-			{
-				rowEqual = FALSE;
-				if (l > tx)
-					l = tx;
-
-				if (r < tx)
-					r = tx;
-			}
-		}
-
-		if (!rowEqual)
-		{
-			allEqual = FALSE;
-
-			if (t > ty)
-				t = ty;
-
-			if (b < ty)
-				b = ty;
-		}
-	}
-
-	if (allEqual)
-		return 0;
-
-	WINPR_ASSERT(l * 16 <= UINT16_MAX);
-	WINPR_ASSERT(t * 16 <= UINT16_MAX);
-	WINPR_ASSERT((r + 1) * 16 <= UINT16_MAX);
-	WINPR_ASSERT((b + 1) * 16 <= UINT16_MAX);
-	rect->left = (UINT16)l * 16;
-	rect->top = (UINT16)t * 16;
-	rect->right = (UINT16)(r + 1) * 16;
-	rect->bottom = (UINT16)(b + 1) * 16;
-
-	WINPR_ASSERT(nWidth <= UINT16_MAX);
-	if (rect->right > nWidth)
-		rect->right = (UINT16)nWidth;
-
-	WINPR_ASSERT(nHeight <= UINT16_MAX);
-	if (rect->bottom > nHeight)
-		rect->bottom = (UINT16)nHeight;
-
-	return 1;
+	return shadow_capture_compare_with_format(pData1, PIXEL_FORMAT_BGRX32, nStep1, nWidth, nHeight,
+	                                          pData2, PIXEL_FORMAT_BGRX32, nStep2, rect);
 }
 
 static BOOL color_equal(UINT32 colorA, UINT32 formatA, UINT32 colorB, UINT32 formatB)
@@ -250,6 +164,15 @@ static BOOL pixel_equal_no_alpha(const BYTE* WINPR_RESTRICT a, UINT32 formatA,
 	return TRUE;
 }
 
+static BOOL pixel_equal_same_format(const BYTE* WINPR_RESTRICT a, UINT32 formatA,
+                                    const BYTE* WINPR_RESTRICT b, UINT32 formatB, size_t count)
+{
+	if (formatA != formatB)
+		return FALSE;
+	const size_t bppA = FreeRDPGetBytesPerPixel(formatA);
+	return memcmp(a, b, count * bppA) == 0;
+}
+
 int shadow_capture_compare_with_format(const BYTE* WINPR_RESTRICT pData1, UINT32 format1,
                                        UINT32 nStep1, UINT32 nWidth, UINT32 nHeight,
                                        const BYTE* WINPR_RESTRICT pData2, UINT32 format2,
@@ -259,9 +182,8 @@ int shadow_capture_compare_with_format(const BYTE* WINPR_RESTRICT pData1, UINT32
 	(const BYTE* a, UINT32 formatA, const BYTE* b, UINT32 formatB, size_t count) = pixel_equal;
 
 	if (format1 == format2)
-		return shadow_capture_compare(pData1, nStep1, nWidth, nHeight, pData2, nStep2, rect);
-
-	if (!FreeRDPColorHasAlpha(format1) || !FreeRDPColorHasAlpha(format2))
+		pixel_equal_fn = pixel_equal_same_format;
+	else if (!FreeRDPColorHasAlpha(format1) || !FreeRDPColorHasAlpha(format2))
 		pixel_equal_fn = pixel_equal_no_alpha;
 
 	BOOL allEqual = TRUE;
