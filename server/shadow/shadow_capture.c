@@ -78,8 +78,9 @@ int shadow_capture_align_clip_rect(RECTANGLE_16* rect, const RECTANGLE_16* clip)
 	return 1;
 }
 
-int shadow_capture_compare(const BYTE* pData1, UINT32 nStep1, UINT32 nWidth, UINT32 nHeight,
-                           const BYTE* pData2, UINT32 nStep2, RECTANGLE_16* rect)
+int shadow_capture_compare(const BYTE* WINPR_RESTRICT pData1, UINT32 nStep1, UINT32 nWidth,
+                           UINT32 nHeight, const BYTE* WINPR_RESTRICT pData2, UINT32 nStep2,
+                           RECTANGLE_16* WINPR_RESTRICT rect)
 {
 	BOOL allEqual = TRUE;
 	UINT32 tw = 0;
@@ -195,7 +196,8 @@ static BOOL color_equal(UINT32 colorA, UINT32 formatA, UINT32 colorB, UINT32 for
 	return TRUE;
 }
 
-static BOOL pixel_equal(const BYTE* a, UINT32 formatA, const BYTE* b, UINT32 formatB, size_t count)
+static BOOL pixel_equal(const BYTE* WINPR_RESTRICT a, UINT32 formatA, const BYTE* WINPR_RESTRICT b,
+                        UINT32 formatB, size_t count)
 {
 	const size_t bppA = FreeRDPGetBytesPerPixel(formatA);
 	const size_t bppB = FreeRDPGetBytesPerPixel(formatB);
@@ -231,8 +233,8 @@ static BOOL color_equal_no_alpha(UINT32 colorA, UINT32 formatA, UINT32 colorB, U
 	return TRUE;
 }
 
-static BOOL pixel_equal_no_alpha(const BYTE* a, UINT32 formatA, const BYTE* b, UINT32 formatB,
-                                 size_t count)
+static BOOL pixel_equal_no_alpha(const BYTE* WINPR_RESTRICT a, UINT32 formatA,
+                                 const BYTE* WINPR_RESTRICT b, UINT32 formatB, size_t count)
 {
 	const size_t bppA = FreeRDPGetBytesPerPixel(formatA);
 	const size_t bppB = FreeRDPGetBytesPerPixel(formatB);
@@ -248,9 +250,10 @@ static BOOL pixel_equal_no_alpha(const BYTE* a, UINT32 formatA, const BYTE* b, U
 	return TRUE;
 }
 
-int shadow_capture_compare_with_format(const BYTE* pData1, UINT32 format1, UINT32 nStep1,
-                                       UINT32 nWidth, UINT32 nHeight, const BYTE* pData2,
-                                       UINT32 format2, UINT32 nStep2, RECTANGLE_16* rect)
+int shadow_capture_compare_with_format(const BYTE* WINPR_RESTRICT pData1, UINT32 format1,
+                                       UINT32 nStep1, UINT32 nWidth, UINT32 nHeight,
+                                       const BYTE* WINPR_RESTRICT pData2, UINT32 format2,
+                                       UINT32 nStep2, RECTANGLE_16* WINPR_RESTRICT rect)
 {
 	BOOL(*pixel_equal_fn)
 	(const BYTE* a, UINT32 formatA, const BYTE* b, UINT32 formatB, size_t count) = pixel_equal;

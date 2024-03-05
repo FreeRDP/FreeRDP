@@ -326,13 +326,16 @@ extern "C"
 	FREERDP_API rdpShadowServer* shadow_server_new(void);
 
 	FREERDP_API int shadow_capture_align_clip_rect(RECTANGLE_16* rect, const RECTANGLE_16* clip);
-	FREERDP_API int shadow_capture_compare(const BYTE* pData1, UINT32 nStep1, UINT32 nWidth,
-	                                       UINT32 nHeight, const BYTE* pData2, UINT32 nStep2,
-	                                       RECTANGLE_16* rect);
-	FREERDP_API int shadow_capture_compare_with_format(const BYTE* pData1, UINT32 format1,
-	                                                   UINT32 nStep1, UINT32 nWidth, UINT32 nHeight,
-	                                                   const BYTE* pData2, UINT32 format2,
-	                                                   UINT32 nStep2, RECTANGLE_16* rect);
+	FREERDP_API int shadow_capture_compare(const BYTE* WINPR_RESTRICT pData1, UINT32 nStep1,
+	                                       UINT32 nWidth, UINT32 nHeight,
+	                                       const BYTE* WINPR_RESTRICT pData2, UINT32 nStep2,
+	                                       RECTANGLE_16* WINPR_RESTRICT rect);
+	FREERDP_API int shadow_capture_compare_with_format(const BYTE* WINPR_RESTRICT pData1,
+	                                                   UINT32 format1, UINT32 nStep1, UINT32 nWidth,
+	                                                   UINT32 nHeight,
+	                                                   const BYTE* WINPR_RESTRICT pData2,
+	                                                   UINT32 format2, UINT32 nStep2,
+	                                                   RECTANGLE_16* WINPR_RESTRICT rect);
 
 	FREERDP_API void shadow_subsystem_frame_update(rdpShadowSubsystem* subsystem);
 
