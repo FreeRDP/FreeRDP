@@ -1037,7 +1037,10 @@ static int x11_shadow_xinerama_init(x11ShadowSubsystem* subsystem)
 #ifdef WITH_XINERAMA
 	int xinerama_event = 0;
 	int xinerama_error = 0;
-	x11_shadow_subsystem_base_init(subsystem);
+
+	const int rc = x11_shadow_subsystem_base_init(subsystem);
+	if (rc < 0)
+		return rc;
 
 	if (!XineramaQueryExtension(subsystem->display, &xinerama_event, &xinerama_error))
 		return -1;
@@ -1271,7 +1274,12 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 		return -1;
 
 	subsystem->common.numMonitors = x11_shadow_enum_monitors(subsystem->common.monitors, 16);
-	x11_shadow_subsystem_base_init(subsystem);
+	const int rc = x11_shadow_subsystem_base_init(subsystem);
+	if (rc < 0)
+		return rc;
+
+	subsystem->format = (ImageByteOrder(subsystem->display) == LSBFirst) ? PIXEL_FORMAT_BGRA32
+	                                                                     : PIXEL_FORMAT_ARGB32;
 
 	if ((subsystem->depth != 24) && (subsystem->depth != 32))
 	{
@@ -1394,8 +1402,6 @@ static int x11_shadow_subsystem_init(rdpShadowSubsystem* sub)
 		          subsystem->use_xshm);
 	}
 
-	subsystem->format = (ImageByteOrder(subsystem->display) == LSBFirst) ? PIXEL_FORMAT_BGRX32
-	                                                                     : PIXEL_FORMAT_XRGB32;
 	return 1;
 }
 
