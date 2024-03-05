@@ -190,20 +190,23 @@ UINT32 shadow_enum_monitors(MONITOR_DEF* monitors, UINT32 maxMonitors)
  * Caller should free the andMaskData and xorMaskData later.
  */
 int shadow_subsystem_pointer_convert_alpha_pointer_data(
-    BYTE* pixels, BOOL premultiplied, UINT32 width, UINT32 height,
+    const BYTE* WINPR_RESTRICT pixels, BOOL premultiplied, UINT32 width, UINT32 height,
+    SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* WINPR_RESTRICT pointerColor)
+{
+	return shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
+	    pixels, PIXEL_FORMAT_BGRX32, premultiplied, width, height, pointerColor);
+}
+
+int shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
+    const BYTE* pixels, UINT32 format, BOOL premultiplied, UINT32 width, UINT32 height,
     SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* pointerColor)
 {
-	BYTE* pSrc8 = NULL;
-	BYTE* pDst8 = NULL;
 	UINT32 xorStep = 0;
 	UINT32 andStep = 0;
 	UINT32 andBit = 0;
 	BYTE* andBits = NULL;
 	UINT32 andPixel = 0;
-	BYTE A = 0;
-	BYTE R = 0;
-	BYTE G = 0;
-	BYTE B = 0;
+	const size_t bpp = FreeRDPGetBytesPerPixel(format);
 
 	xorStep = (width * 3);
 	xorStep += (xorStep % 2);
@@ -227,20 +230,23 @@ int shadow_subsystem_pointer_convert_alpha_pointer_data(
 		return -1;
 	}
 
-	for (UINT32 y = 0; y < height; y++)
+	for (size_t y = 0; y < height; y++)
 	{
-		pSrc8 = &pixels[(width * 4) * (height - 1 - y)];
-		pDst8 = &(pointerColor->xorMaskData[y * xorStep]);
+		const BYTE* pSrc8 = &pixels[(width * bpp) * (height - 1 - y)];
+		BYTE* pDst8 = &(pointerColor->xorMaskData[y * xorStep]);
 
 		andBit = 0x80;
 		andBits = &(pointerColor->andMaskData[andStep * y]);
 
-		for (UINT32 x = 0; x < width; x++)
+		for (size_t x = 0; x < width; x++)
 		{
-			B = *pSrc8++;
-			G = *pSrc8++;
-			R = *pSrc8++;
-			A = *pSrc8++;
+			BYTE B = 0;
+			BYTE G = 0;
+			BYTE R = 0;
+			BYTE A = 0;
+
+			const UINT32 color = FreeRDPReadColor(&pSrc8[x * bpp], format);
+			FreeRDPSplitColor(color, format, &R, &G, &B, &A, NULL);
 
 			andPixel = 0;
 

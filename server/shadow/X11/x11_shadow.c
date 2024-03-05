@@ -463,8 +463,8 @@ static int x11_shadow_pointer_alpha_update(x11ShadowSubsystem* subsystem)
 	msg->width = subsystem->cursorWidth;
 	msg->height = subsystem->cursorHeight;
 
-	if (shadow_subsystem_pointer_convert_alpha_pointer_data(subsystem->cursorPixels, TRUE,
-	                                                        msg->width, msg->height, msg) < 0)
+	if (shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
+	        subsystem->cursorPixels, subsystem->format, TRUE, msg->width, msg->height, msg) < 0)
 	{
 		free(msg);
 		return -1;

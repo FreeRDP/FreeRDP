@@ -302,9 +302,15 @@ extern "C"
 	FREERDP_API void shadow_subsystem_set_entry_builtin(const char* name);
 	FREERDP_API void shadow_subsystem_set_entry(pfnShadowSubsystemEntry pEntry);
 
-	FREERDP_API int shadow_subsystem_pointer_convert_alpha_pointer_data(
-	    BYTE* pixels, BOOL premultiplied, UINT32 width, UINT32 height,
-	    SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* pointerColor);
+	FREERDP_API WINPR_DEPRECATED_VAR(
+	    "Use shadow_subsystem_pointer_convert_alpha_pointer_data_to_format instead",
+	    int shadow_subsystem_pointer_convert_alpha_pointer_data(
+	        const BYTE* WINPR_RESTRICT pixels, BOOL premultiplied, UINT32 width, UINT32 height,
+	        SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* WINPR_RESTRICT pointerColor));
+
+	FREERDP_API int shadow_subsystem_pointer_convert_alpha_pointer_data_to_format(
+	    const BYTE* WINPR_RESTRICT pixels, UINT32 format, BOOL premultiplied, UINT32 width,
+	    UINT32 height, SHADOW_MSG_OUT_POINTER_ALPHA_UPDATE* WINPR_RESTRICT pointerColor);
 
 	FREERDP_API int shadow_server_parse_command_line(rdpShadowServer* server, int argc, char** argv,
 	                                                 COMMAND_LINE_ARGUMENT_A* cargs);
