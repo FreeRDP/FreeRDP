@@ -211,12 +211,55 @@ static BOOL pixel_equal(const BYTE* a, UINT32 formatA, const BYTE* b, UINT32 for
 	return TRUE;
 }
 
+static BOOL color_equal_no_alpha(UINT32 colorA, UINT32 formatA, UINT32 colorB, UINT32 formatB)
+{
+	BYTE ar = 0;
+	BYTE ag = 0;
+	BYTE ab = 0;
+	BYTE br = 0;
+	BYTE bg = 0;
+	BYTE bb = 0;
+	FreeRDPSplitColor(colorA, formatA, &ar, &ag, &ab, NULL, NULL);
+	FreeRDPSplitColor(colorB, formatB, &br, &bg, &bb, NULL, NULL);
+
+	if (ar != br)
+		return FALSE;
+	if (ag != bg)
+		return FALSE;
+	if (ab != bb)
+		return FALSE;
+	return TRUE;
+}
+
+static BOOL pixel_equal_no_alpha(const BYTE* a, UINT32 formatA, const BYTE* b, UINT32 formatB,
+                                 size_t count)
+{
+	const size_t bppA = FreeRDPGetBytesPerPixel(formatA);
+	const size_t bppB = FreeRDPGetBytesPerPixel(formatB);
+
+	for (size_t x = 0; x < count; x++)
+	{
+		const UINT32 colorA = FreeRDPReadColor(&a[bppA * x], formatA);
+		const UINT32 colorB = FreeRDPReadColor(&b[bppB * x], formatB);
+		if (!color_equal_no_alpha(colorA, formatA, colorB, formatB))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
 int shadow_capture_compare_with_format(const BYTE* pData1, UINT32 format1, UINT32 nStep1,
                                        UINT32 nWidth, UINT32 nHeight, const BYTE* pData2,
                                        UINT32 format2, UINT32 nStep2, RECTANGLE_16* rect)
 {
+	BOOL(*pixel_equal_fn)
+	(const BYTE* a, UINT32 formatA, const BYTE* b, UINT32 formatB, size_t count) = pixel_equal;
+
 	if (format1 == format2)
 		return shadow_capture_compare(pData1, nStep1, nWidth, nHeight, pData2, nStep2, rect);
+
+	if (!FreeRDPColorHasAlpha(format1) || !FreeRDPColorHasAlpha(format2))
+		pixel_equal_fn = pixel_equal_no_alpha;
 
 	BOOL allEqual = TRUE;
 	UINT32 tw = 0;
@@ -254,7 +297,7 @@ int shadow_capture_compare_with_format(const BYTE* pData1, UINT32 format1, UINT3
 
 			for (size_t k = 0; k < th; k++)
 			{
-				if (!pixel_equal(p1, format1, p2, format2, tw))
+				if (!pixel_equal_fn(p1, format1, p2, format2, tw))
 				{
 					equal = FALSE;
 					break;
