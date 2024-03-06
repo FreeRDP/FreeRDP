@@ -237,6 +237,33 @@ BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device)
 	return TRUE;
 }
 
+BOOL freerdp_device_collection_del(rdpSettings* settings, const RDPDR_DEVICE* device)
+{
+	WINPR_ASSERT(settings);
+
+	if (!device)
+		return FALSE;
+
+	const UINT32 count = settings->DeviceCount;
+	for (size_t x = 0; x < count; x++)
+	{
+		const RDPDR_DEVICE* cur = settings->DeviceArray[x];
+		if (cur == device)
+		{
+			for (size_t y = x + 1; y < count; y++)
+			{
+				RDPDR_DEVICE* next = settings->DeviceArray[y];
+				settings->DeviceArray[y - 1] = next;
+			}
+			settings->DeviceArray[count - 1] = NULL;
+			settings->DeviceCount--;
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
 RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings, const char* name)
 {
 	RDPDR_DEVICE* device = NULL;

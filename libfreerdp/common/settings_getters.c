@@ -252,6 +252,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 		case FreeRDP_GatewayHttpUseWebsockets:
 			return settings->GatewayHttpUseWebsockets;
 
+		case FreeRDP_GatewayIgnoreRedirectionPolicy:
+			return settings->GatewayIgnoreRedirectionPolicy;
+
 		case FreeRDP_GatewayRpcTransport:
 			return settings->GatewayRpcTransport;
 
@@ -906,6 +909,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 
 		case FreeRDP_GatewayHttpUseWebsockets:
 			settings->GatewayHttpUseWebsockets = cnv.c;
+			break;
+
+		case FreeRDP_GatewayIgnoreRedirectionPolicy:
+			settings->GatewayIgnoreRedirectionPolicy = cnv.c;
 			break;
 
 		case FreeRDP_GatewayRpcTransport:

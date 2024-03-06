@@ -35,6 +35,7 @@
 #include "rpc_bind.h"
 #include "rpc_client.h"
 #include "tsg.h"
+#include "../utils.h"
 #include "../../crypto/opensslcompat.h"
 
 #define TAG FREERDP_TAG("core.gateway.tsg")
@@ -1590,7 +1591,7 @@ fail:
 	return FALSE;
 }
 
-static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, RPC_PDU* pdu,
+static BOOL TsProxyCreateTunnelReadResponse(rdpTsg* tsg, const RPC_PDU* pdu,
                                             CONTEXT_HANDLE* tunnelContext, UINT32* tunnelId)
 {
 	BOOL rc = FALSE;
@@ -1728,7 +1729,41 @@ fail:
 	return FALSE;
 }
 
-static BOOL TsProxyAuthorizeTunnelReadResponse(wLog* log, RPC_PDU* pdu)
+static UINT32 tsg_redir_to_flags(const TSG_REDIRECTION_FLAGS* redirect)
+{
+	UINT32 flags = 0;
+	if (redirect->enableAllRedirections)
+		flags |= HTTP_TUNNEL_REDIR_ENABLE_ALL;
+	if (redirect->disableAllRedirections)
+		flags |= HTTP_TUNNEL_REDIR_DISABLE_ALL;
+
+	if (redirect->driveRedirectionDisabled)
+		flags |= HTTP_TUNNEL_REDIR_DISABLE_DRIVE;
+	if (redirect->printerRedirectionDisabled)
+		flags |= HTTP_TUNNEL_REDIR_DISABLE_PRINTER;
+	if (redirect->portRedirectionDisabled)
+		flags |= HTTP_TUNNEL_REDIR_DISABLE_PORT;
+	if (redirect->clipboardRedirectionDisabled)
+		flags |= HTTP_TUNNEL_REDIR_DISABLE_CLIPBOARD;
+	if (redirect->pnpRedirectionDisabled)
+		flags |= HTTP_TUNNEL_REDIR_DISABLE_PNP;
+	return flags;
+}
+
+static BOOL tsg_redirect_apply(rdpTsg* tsg, const TSG_REDIRECTION_FLAGS* redirect)
+{
+	WINPR_ASSERT(tsg);
+	WINPR_ASSERT(redirect);
+
+	rdpTransport* transport = tsg->transport;
+	WINPR_ASSERT(transport);
+
+	rdpContext* context = transport_get_context(transport);
+	UINT32 redirFlags = tsg_redir_to_flags(redirect);
+	return utils_apply_gateway_policy(tsg->log, context, redirFlags, "TSG");
+}
+
+static BOOL TsProxyAuthorizeTunnelReadResponse(rdpTsg* tsg, const RPC_PDU* pdu)
 {
 	BOOL rc = FALSE;
 	UINT32 SwitchValue = 0;
@@ -1736,8 +1771,12 @@ static BOOL TsProxyAuthorizeTunnelReadResponse(wLog* log, RPC_PDU* pdu)
 	TSG_PACKET packet = { 0 };
 	UINT32 PacketPtr = 0;
 	UINT32 PacketResponsePtr = 0;
-	if (!pdu)
-		return FALSE;
+
+	WINPR_ASSERT(tsg);
+	WINPR_ASSERT(pdu);
+
+	wLog* log = tsg->log;
+	WINPR_ASSERT(log);
 
 	if (!tsg_ndr_pointer_read(log, pdu->s, &index, &PacketPtr, TRUE))
 		goto fail;
@@ -1773,6 +1812,9 @@ static BOOL TsProxyAuthorizeTunnelReadResponse(wLog* log, RPC_PDU* pdu)
 		goto fail;
 
 	rc = TRUE;
+
+	if (packet.tsgPacket.packetResponse.flags & TSG_PACKET_TYPE_QUARREQUEST)
+		rc = tsg_redirect_apply(tsg, &packet.tsgPacket.packetResponse.redirectionFlags);
 fail:
 	return rc;
 }
@@ -1846,7 +1888,7 @@ static BOOL TsProxyReadPacketSTringMessage(rdpTsg* tsg, wStream* s, TSG_PACKET_S
 	return tsg_ndr_read_string(tsg->log, s, &msg->msgBuffer, msg->msgBytes);
 }
 
-static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, RPC_PDU* pdu)
+static BOOL TsProxyMakeTunnelCallReadResponse(rdpTsg* tsg, const RPC_PDU* pdu)
 {
 	BOOL rc = FALSE;
 	UINT32 index = 0;
@@ -2036,7 +2078,7 @@ fail:
 	return FALSE;
 }
 
-static BOOL TsProxyCreateChannelReadResponse(wLog* log, RPC_PDU* pdu,
+static BOOL TsProxyCreateChannelReadResponse(wLog* log, const RPC_PDU* pdu,
                                              CONTEXT_HANDLE* channelContext, UINT32* channelId)
 {
 	BOOL rc = FALSE;
@@ -2090,7 +2132,7 @@ fail:
 	return FALSE;
 }
 
-static BOOL TsProxyCloseChannelReadResponse(wLog* log, RPC_PDU* pdu, CONTEXT_HANDLE* context)
+static BOOL TsProxyCloseChannelReadResponse(wLog* log, const RPC_PDU* pdu, CONTEXT_HANDLE* context)
 {
 	BOOL rc = FALSE;
 	WLog_Print(log, WLOG_DEBUG, "TsProxyCloseChannelReadResponse");
@@ -2146,7 +2188,7 @@ fail:
 	return FALSE;
 }
 
-static BOOL TsProxyCloseTunnelReadResponse(wLog* log, RPC_PDU* pdu, CONTEXT_HANDLE* context)
+static BOOL TsProxyCloseTunnelReadResponse(wLog* log, const RPC_PDU* pdu, CONTEXT_HANDLE* context)
 {
 	BOOL rc = FALSE;
 	WLog_Print(log, WLOG_DEBUG, "TsProxyCloseTunnelReadResponse");
@@ -2294,7 +2336,7 @@ static BOOL tsg_proxy_reauth(rdpTsg* tsg)
 	return tsg_transition_to_state(tsg, TSG_STATE_INITIAL);
 }
 
-BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
+BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
 {
 	BOOL rc = FALSE;
 	RpcClientCall* call = NULL;
@@ -2345,7 +2387,7 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, RPC_PDU* pdu)
 			CONTEXT_HANDLE* TunnelContext = NULL;
 			TunnelContext = (tsg->reauthSequence) ? &tsg->NewTunnelContext : &tsg->TunnelContext;
 
-			if (!TsProxyAuthorizeTunnelReadResponse(tsg->log, pdu))
+			if (!TsProxyAuthorizeTunnelReadResponse(tsg, pdu))
 			{
 				WLog_Print(tsg->log, WLOG_ERROR, "TsProxyAuthorizeTunnelReadResponse failure");
 				return FALSE;

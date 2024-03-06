@@ -68,6 +68,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_GatewayHttpExtAuthSspiNtlm,
 	FreeRDP_GatewayHttpTransport,
 	FreeRDP_GatewayHttpUseWebsockets,
+	FreeRDP_GatewayIgnoreRedirectionPolicy,
 	FreeRDP_GatewayRpcTransport,
 	FreeRDP_GatewayUdpTransport,
 	FreeRDP_GatewayUseSameCredentials,
