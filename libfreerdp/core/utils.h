@@ -24,6 +24,15 @@
 #include <winpr/winpr.h>
 #include <freerdp/freerdp.h>
 
+/* HTTP tunnel redir flags. */
+#define HTTP_TUNNEL_REDIR_ENABLE_ALL 0x80000000
+#define HTTP_TUNNEL_REDIR_DISABLE_ALL 0x40000000
+#define HTTP_TUNNEL_REDIR_DISABLE_DRIVE 0x1
+#define HTTP_TUNNEL_REDIR_DISABLE_PRINTER 0x2
+#define HTTP_TUNNEL_REDIR_DISABLE_PORT 0x4
+#define HTTP_TUNNEL_REDIR_DISABLE_CLIPBOARD 0x8
+#define HTTP_TUNNEL_REDIR_DISABLE_PNP 0x10
+
 typedef enum
 {
 	AUTH_SUCCESS,
@@ -46,5 +55,8 @@ BOOL utils_str_is_empty(const char* str);
 BOOL utils_str_copy(const char* value, char** dst);
 
 const char* utils_is_vsock(const char* hostname);
+
+BOOL utils_apply_gateway_policy(wLog* log, rdpContext* context, UINT32 flags, const char* module);
+char* utils_redir_flags_to_string(UINT32 flags, char* buffer, size_t size);
 
 #endif /* FREERDP_LIB_CORE_UTILS_H */

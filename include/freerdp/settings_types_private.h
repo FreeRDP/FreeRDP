@@ -467,7 +467,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAvdDiagnosticserviceurl); /* 2009 */
 	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAvdHubdiscoverygeourl);   /* 2010 */
 	SETTINGS_DEPRECATED(ALIGN64 char* GatewayAvdActivityhint);         /* 2011 */
-	UINT64 padding2015[2015 - 2012];                                   /* 2012 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GatewayIgnoreRedirectionPolicy);  /* 2012 */
+	UINT64 padding2015[2015 - 2013];                                   /* 2013 */
 
 	/* Proxy */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 ProxyType);    /* 2015 */

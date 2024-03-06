@@ -164,6 +164,17 @@ typedef struct rdp_settings rdpSettings;
 	                                                     const char* option, const char* value);
 
 	FREERDP_API BOOL freerdp_device_collection_add(rdpSettings* settings, RDPDR_DEVICE* device);
+
+	/** \brief Removed a device from the settings, returns ownership of the allocated device to
+	 * caller.
+	 *
+	 *  \param settings the settings to remove the device from
+	 *  \param device the device to remove
+	 *
+	 *  \return \b TRUE if the device was removed, \b FALSE if device was not found or is NULL
+	 */
+	FREERDP_API BOOL freerdp_device_collection_del(rdpSettings* settings,
+	                                               const RDPDR_DEVICE* device);
 	FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find(rdpSettings* settings,
 	                                                         const char* name);
 	FREERDP_API RDPDR_DEVICE* freerdp_device_collection_find_type(rdpSettings* settings,

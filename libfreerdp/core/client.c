@@ -661,6 +661,8 @@ static int freerdp_channels_process_sync(rdpChannels* channels, freerdp* instanc
 	int status = TRUE;
 	wMessage message = { 0 };
 
+	WINPR_ASSERT(channels);
+
 	while (MessageQueue_Peek(channels->queue, &message, TRUE))
 	{
 		freerdp_channels_process_message(instance, &message);
@@ -728,6 +730,8 @@ int freerdp_channels_process_pending_messages(freerdp* instance)
  */
 BOOL freerdp_channels_check_fds(rdpChannels* channels, freerdp* instance)
 {
+	WINPR_ASSERT(channels);
+
 	if (WaitForSingleObject(MessageQueue_Event(channels->queue), 0) == WAIT_OBJECT_0)
 	{
 		freerdp_channels_process_sync(channels, instance);
@@ -741,6 +745,8 @@ UINT freerdp_channels_disconnect(rdpChannels* channels, freerdp* instance)
 	UINT error = CHANNEL_RC_OK;
 	CHANNEL_OPEN_DATA* pChannelOpenData = NULL;
 	CHANNEL_CLIENT_DATA* pChannelClientData = NULL;
+
+	WINPR_ASSERT(channels);
 
 	if (!channels->connected)
 		return 0;
@@ -807,8 +813,6 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 			                                            CHANNEL_EVENT_TERMINATED, 0, 0);
 		}
 	}
-
-	channels->clientDataCount = 0;
 
 	for (int index = 0; index < channels->openDataCount; index++)
 	{

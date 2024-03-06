@@ -114,6 +114,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_GatewayHttpTransport, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GatewayHttpTransport" },
 	{ FreeRDP_GatewayHttpUseWebsockets, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_GatewayHttpUseWebsockets" },
+	{ FreeRDP_GatewayIgnoreRedirectionPolicy, FREERDP_SETTINGS_TYPE_BOOL,
+	  "FreeRDP_GatewayIgnoreRedirectionPolicy" },
 	{ FreeRDP_GatewayRpcTransport, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GatewayRpcTransport" },
 	{ FreeRDP_GatewayUdpTransport, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GatewayUdpTransport" },
 	{ FreeRDP_GatewayUseSameCredentials, FREERDP_SETTINGS_TYPE_BOOL,
