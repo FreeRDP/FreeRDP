@@ -59,4 +59,6 @@ const char* utils_is_vsock(const char* hostname);
 BOOL utils_apply_gateway_policy(wLog* log, rdpContext* context, UINT32 flags, const char* module);
 char* utils_redir_flags_to_string(UINT32 flags, char* buffer, size_t size);
 
+BOOL utils_reload_channels(rdpContext* context);
+
 #endif /* FREERDP_LIB_CORE_UTILS_H */

@@ -360,18 +360,7 @@ static BOOL disable_pnp(rdpSettings* settings)
 static BOOL apply_gw_policy(rdpContext* context)
 {
 	WINPR_ASSERT(context);
-
-	freerdp_channels_disconnect(context->channels, context->instance);
-	freerdp_channels_close(context->channels, context->instance);
-	freerdp_channels_free(context->channels);
-	context->channels = freerdp_channels_new(context->instance);
-	WINPR_ASSERT(context->channels);
-
-	BOOL rc = TRUE;
-	IFCALLRET(context->instance->LoadChannels, rc, context->instance);
-	if (rc)
-		return freerdp_channels_pre_connect(context->channels, context->instance) == CHANNEL_RC_OK;
-	return rc;
+	return utils_reload_channels(context);
 }
 
 BOOL utils_apply_gateway_policy(wLog* log, rdpContext* context, UINT32 flags, const char* module)
@@ -473,4 +462,21 @@ char* utils_redir_flags_to_string(UINT32 flags, char* buffer, size_t size)
 	winpr_str_append(fbuffer, buffer, size, " ");
 	winpr_str_append("{", buffer, size, "}");
 	return buffer;
+}
+
+BOOL utils_reload_channels(rdpContext* context)
+{
+	WINPR_ASSERT(context);
+
+	freerdp_channels_disconnect(context->channels, context->instance);
+	freerdp_channels_close(context->channels, context->instance);
+	freerdp_channels_free(context->channels);
+	context->channels = freerdp_channels_new(context->instance);
+	WINPR_ASSERT(context->channels);
+
+	BOOL rc = TRUE;
+	IFCALLRET(context->instance->LoadChannels, rc, context->instance);
+	if (rc)
+		return freerdp_channels_pre_connect(context->channels, context->instance) == CHANNEL_RC_OK;
+	return rc;
 }

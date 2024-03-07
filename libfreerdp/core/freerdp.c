@@ -84,7 +84,6 @@ static void sig_abort_connect(int signum, const char* signame, void* ctx)
 static int freerdp_connect_begin(freerdp* instance)
 {
 	BOOL rc = 0;
-	UINT status2 = CHANNEL_RC_OK;
 	rdpRdp* rdp = NULL;
 	BOOL status = TRUE;
 	rdpSettings* settings = NULL;
@@ -121,16 +120,9 @@ static int freerdp_connect_begin(freerdp* instance)
 	freerdp_settings_print_warnings(settings);
 
 	if (status)
-	{
-		if (!rdp_set_backup_settings(rdp))
-			return 0;
-
-		WINPR_ASSERT(instance->LoadChannels);
-		if (!instance->LoadChannels(instance))
-			return 0;
-
-		status2 = freerdp_channels_pre_connect(instance->context->channels, instance);
-	}
+		status = rdp_set_backup_settings(rdp);
+	if (status)
+		status = utils_reload_channels(instance->context);
 
 	KeyboardLayout = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout);
 	switch (KeyboardLayout)
@@ -151,7 +143,7 @@ static int freerdp_connect_begin(freerdp* instance)
 			break;
 	}
 
-	if (!status || (status2 != CHANNEL_RC_OK))
+	if (!status)
 	{
 		rdpContext* context = instance->context;
 		WINPR_ASSERT(context);
