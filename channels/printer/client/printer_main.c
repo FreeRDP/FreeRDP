@@ -62,6 +62,7 @@ typedef struct
 	HANDLE thread;
 	rdpContext* rdpcontext;
 	char port[64];
+	BOOL async;
 } PRINTER_DEVICE;
 
 typedef enum
@@ -684,8 +685,21 @@ static UINT printer_irp_request(DEVICE* device, IRP* irp)
 	WINPR_ASSERT(printer_dev);
 	WINPR_ASSERT(irp);
 
-	InterlockedPushEntrySList(printer_dev->pIrpList, &(irp->ItemEntry));
-	SetEvent(printer_dev->event);
+	if (printer_dev->async)
+	{
+		InterlockedPushEntrySList(printer_dev->pIrpList, &(irp->ItemEntry));
+		SetEvent(printer_dev->event);
+	}
+	else
+	{
+		UINT error = printer_process_irp(printer_dev, irp);
+		if (error)
+		{
+			WLog_ERR(TAG, "printer_process_irp failed with error %" PRIu32 "!", error);
+			return error;
+		}
+	}
+
 	return CHANNEL_RC_OK;
 }
 
@@ -890,31 +904,34 @@ static UINT printer_free(DEVICE* device)
 
 	WINPR_ASSERT(printer_dev);
 
-	SetEvent(printer_dev->stopEvent);
-
-	if (WaitForSingleObject(printer_dev->thread, INFINITE) == WAIT_FAILED)
+	if (printer_dev->async)
 	{
-		error = GetLastError();
-		WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
+		SetEvent(printer_dev->stopEvent);
 
-		/* The analyzer is confused by this premature return value.
-		 * Since this case can not be handled gracefully silence the
-		 * analyzer here. */
+		if (WaitForSingleObject(printer_dev->thread, INFINITE) == WAIT_FAILED)
+		{
+			error = GetLastError();
+			WLog_ERR(TAG, "WaitForSingleObject failed with error %" PRIu32 "", error);
+
+			/* The analyzer is confused by this premature return value.
+			 * Since this case can not be handled gracefully silence the
+			 * analyzer here. */
 #ifndef __clang_analyzer__
-		return error;
+			return error;
 #endif
-	}
+		}
 
-	while ((irp = (IRP*)InterlockedPopEntrySList(printer_dev->pIrpList)) != NULL)
-	{
-		WINPR_ASSERT(irp->Discard);
-		irp->Discard(irp);
-	}
+		while ((irp = (IRP*)InterlockedPopEntrySList(printer_dev->pIrpList)) != NULL)
+		{
+			WINPR_ASSERT(irp->Discard);
+			irp->Discard(irp);
+		}
 
-	CloseHandle(printer_dev->thread);
-	CloseHandle(printer_dev->stopEvent);
-	CloseHandle(printer_dev->event);
-	winpr_aligned_free(printer_dev->pIrpList);
+		CloseHandle(printer_dev->thread);
+		CloseHandle(printer_dev->stopEvent);
+		CloseHandle(printer_dev->event);
+		winpr_aligned_free(printer_dev->pIrpList);
+	}
 
 	if (printer_dev->printer)
 	{
@@ -961,47 +978,62 @@ static UINT printer_register(PDEVICE_SERVICE_ENTRY_POINTS pEntryPoints, rdpPrint
 	printer_dev->device.Free = printer_free;
 	printer_dev->rdpcontext = pEntryPoints->rdpcontext;
 	printer_dev->printer = printer;
-	printer_dev->pIrpList = (WINPR_PSLIST_HEADER)winpr_aligned_malloc(sizeof(WINPR_SLIST_HEADER),
-	                                                                  MEMORY_ALLOCATION_ALIGNMENT);
 
-	if (!printer_dev->pIrpList)
-	{
-		WLog_ERR(TAG, "_aligned_malloc failed!");
-		error = CHANNEL_RC_NO_MEMORY;
-		goto error_out;
-	}
+	if (!freerdp_settings_get_bool(pEntryPoints->rdpcontext->settings,
+	                               FreeRDP_SynchronousStaticChannels))
+		printer_dev->async = TRUE;
 
 	if (!printer_load_from_config(pEntryPoints->rdpcontext->settings, printer, printer_dev))
 		goto error_out;
 
-	InitializeSListHead(printer_dev->pIrpList);
-
-	if (!(printer_dev->event = CreateEvent(NULL, TRUE, FALSE, NULL)))
+	if (printer_dev->async)
 	{
-		WLog_ERR(TAG, "CreateEvent failed!");
-		error = ERROR_INTERNAL_ERROR;
-		goto error_out;
+		printer_dev->pIrpList = (WINPR_PSLIST_HEADER)winpr_aligned_malloc(
+		    sizeof(WINPR_SLIST_HEADER), MEMORY_ALLOCATION_ALIGNMENT);
+
+		if (!printer_dev->pIrpList)
+		{
+			WLog_ERR(TAG, "_aligned_malloc failed!");
+			error = CHANNEL_RC_NO_MEMORY;
+			goto error_out;
+		}
+
+		InitializeSListHead(printer_dev->pIrpList);
+
+		printer_dev->event = CreateEvent(NULL, TRUE, FALSE, NULL);
+		if (!printer_dev->event)
+		{
+			WLog_ERR(TAG, "CreateEvent failed!");
+			error = ERROR_INTERNAL_ERROR;
+			goto error_out;
+		}
+
+		printer_dev->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		if (!printer_dev->stopEvent)
+		{
+			WLog_ERR(TAG, "CreateEvent failed!");
+			error = ERROR_INTERNAL_ERROR;
+			goto error_out;
+		}
 	}
 
-	if (!(printer_dev->stopEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
-	{
-		WLog_ERR(TAG, "CreateEvent failed!");
-		error = ERROR_INTERNAL_ERROR;
-		goto error_out;
-	}
-
-	if ((error = pEntryPoints->RegisterDevice(pEntryPoints->devman, &printer_dev->device)))
+	error = pEntryPoints->RegisterDevice(pEntryPoints->devman, &printer_dev->device);
+	if (error)
 	{
 		WLog_ERR(TAG, "RegisterDevice failed with error %" PRIu32 "!", error);
 		goto error_out;
 	}
 
-	if (!(printer_dev->thread =
-	          CreateThread(NULL, 0, printer_thread_func, (void*)printer_dev, 0, NULL)))
+	if (printer_dev->async)
 	{
-		WLog_ERR(TAG, "CreateThread failed!");
-		error = ERROR_INTERNAL_ERROR;
-		goto error_out;
+		printer_dev->thread =
+		    CreateThread(NULL, 0, printer_thread_func, (void*)printer_dev, 0, NULL);
+		if (!printer_dev->thread)
+		{
+			WLog_ERR(TAG, "CreateThread failed!");
+			error = ERROR_INTERNAL_ERROR;
+			goto error_out;
+		}
 	}
 
 	WINPR_ASSERT(printer->AddRef);
