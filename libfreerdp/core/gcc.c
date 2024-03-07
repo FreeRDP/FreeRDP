@@ -1704,7 +1704,13 @@ BOOL gcc_read_server_security_data(wStream* s, rdpMcs* mcs)
 	Stream_Read_UINT32(s, settings->ServerCertificateLength); /* serverCertLen */
 
 	if ((settings->ServerRandomLength == 0) || (settings->ServerCertificateLength == 0))
+	{
+		WLog_ERR(TAG,
+		         "Invalid ServerRandom (length=%" PRIu32 ") or ServerCertificate (length=%" PRIu32
+		         ")",
+		         settings->ServerRandomLength, settings->ServerCertificateLength);
 		return FALSE;
+	}
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, settings->ServerRandomLength))
 		return FALSE;

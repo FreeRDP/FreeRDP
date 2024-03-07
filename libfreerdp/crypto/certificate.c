@@ -301,8 +301,8 @@ static BOOL certificate_read_x509_certificate(const rdpCertBlob* cert, rdpCertIn
 	size_t exponent_length = 0;
 	int error = 0;
 
-	if (!cert || !info)
-		return FALSE;
+	WINPR_ASSERT(cert);
+	WINPR_ASSERT(info);
 
 	cert_info_free(info);
 
@@ -571,6 +571,9 @@ fail2:
 	rc = TRUE;
 
 fail:
+	if (!rc)
+		WLog_ERR(TAG, "failed to update x509 from rdpCertInfo");
+
 #if !defined(OPENSSL_VERSION_MAJOR) || (OPENSSL_VERSION_MAJOR < 3)
 	if (rsa)
 		RSA_free(rsa);
@@ -600,7 +603,7 @@ static BOOL certificate_process_server_public_key(rdpCertificate* cert, wStream*
 
 	if (memcmp(magic, rsa_magic, sizeof(magic)) != 0)
 	{
-		WLog_ERR(TAG, "magic error");
+		WLog_ERR(TAG, "invalid RSA magic bytes");
 		return FALSE;
 	}
 
@@ -612,14 +615,33 @@ static BOOL certificate_process_server_public_key(rdpCertificate* cert, wStream*
 	Stream_Read_UINT32(s, datalen);
 	Stream_Read(s, info->exponent, 4);
 
-	if ((keylen <= 8) || (!Stream_CheckAndLogRequiredLength(TAG, s, keylen)))
+	if (keylen <= 8)
+	{
+		WLog_ERR(TAG, "Invalid RSA keylen=%" PRIu32 " <= 8", keylen);
 		return FALSE;
-
+	}
+	if (!Stream_CheckAndLogRequiredLength(TAG, s, keylen))
+		return FALSE;
+	if (keylen != (bitlen / 8ull) + 8ull)
+	{
+		WLog_ERR(TAG, "Invalid RSA key bitlen %" PRIu32 ", expected %" PRIu32, bitlen,
+		         (keylen - 8) * 8);
+		return FALSE;
+	}
+	if (datalen != (bitlen / 8ull) - 1ull)
+	{
+		WLog_ERR(TAG, "Invalid RSA key datalen %" PRIu32 ", expected %" PRIu32, datalen,
+		         (bitlen / 8ull) - 1ull);
+		return FALSE;
+	}
 	info->ModulusLength = keylen - 8;
 	BYTE* tmp = realloc(info->Modulus, info->ModulusLength);
 
 	if (!tmp)
+	{
+		WLog_ERR(TAG, "Failed to reallocate modulus of length %" PRIu32, info->ModulusLength);
 		return FALSE;
+	}
 	info->Modulus = tmp;
 
 	Stream_Read(s, info->Modulus, info->ModulusLength);
@@ -957,6 +979,7 @@ static BOOL certificate_read_server_x509_certificate_chain(rdpCertificate* cert,
 
 			if (!res)
 			{
+				WLog_ERR(TAG, "Failed to read x509 certificate");
 				return FALSE;
 			}
 

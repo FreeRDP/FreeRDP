@@ -144,7 +144,10 @@ BOOL cert_info_allocate(rdpCertInfo* info, size_t size)
 	info->Modulus = (BYTE*)malloc(size);
 
 	if (!info->Modulus && (size > 0))
+	{
+		WLog_ERR(TAG, "Failed to allocate info->Modulus of size %" PRIuz, size);
 		return FALSE;
+	}
 	info->ModulusLength = (UINT32)size;
 	return TRUE;
 }
@@ -154,7 +157,10 @@ BOOL cert_info_read_modulus(rdpCertInfo* info, size_t size, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, size))
 		return FALSE;
 	if (size > UINT32_MAX)
+	{
+		WLog_ERR(TAG, "modulus size %" PRIuz " exceeds limit of %" PRIu32, size, UINT32_MAX);
 		return FALSE;
+	}
 	if (!cert_info_allocate(info, size))
 		return FALSE;
 	Stream_Read(s, info->Modulus, info->ModulusLength);
@@ -166,9 +172,15 @@ BOOL cert_info_read_exponent(rdpCertInfo* info, size_t size, wStream* s)
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, size))
 		return FALSE;
 	if (size > 4)
+	{
+		WLog_ERR(TAG, "exponent size %" PRIuz " exceeds limit of %" PRIu32, size, 4);
 		return FALSE;
+	}
 	if (!info->Modulus || (info->ModulusLength == 0))
+	{
+		WLog_ERR(TAG, "invalid modulus=%p [%" PRIu32 "]", info->Modulus, info->ModulusLength);
 		return FALSE;
+	}
 	Stream_Read(s, &info->exponent[4 - size], size);
 	crypto_reverse(info->Modulus, info->ModulusLength);
 	crypto_reverse(info->exponent, 4);
