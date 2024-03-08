@@ -322,6 +322,17 @@ extern "C"
 
 #endif
 
+#define WINPR_TIME_NS_TO_S(ns) ((ns) / 1000000000ull)
+#define WINPR_TIME_NS_TO_MS(ns) ((ns) / 1000000ull)
+#define WINPR_TIME_NS_TO_US(ns) ((ns) / 1000ull)
+
+#define WINPR_TIME_NS_REM_NS(ns) ((ns) % 1000000000ull)
+#define WINPR_TIME_NS_REM_US(ns) (WINPR_TIME_NS_REM_NS(ns) / 1000ull)
+#define WINPR_TIME_NS_REM_MS(ns) (WINPR_TIME_NS_REM_US(ns) / 1000ull)
+
+	WINPR_API UINT64 winpr_GetTickCount64NS(void);
+	WINPR_API UINT64 winpr_GetUnixTimeNS(void);
+
 	WINPR_API DWORD GetTickCountPrecise(void);
 
 	WINPR_API BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature);

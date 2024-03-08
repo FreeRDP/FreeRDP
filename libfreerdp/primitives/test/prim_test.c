@@ -36,31 +36,15 @@ int test_sizes[] = { 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096 };
 
 /* ------------------------------------------------------------------------- */
 
-#ifdef _WIN32
-float _delta_time(const struct timespec* t0, const struct timespec* t1)
+float measure_delta_time(UINT64 t0, UINT64 t1)
 {
-	return 0.0f;
+	INT64 diff = (INT64)(t1 - t0);
+	double retval = diff / 1000000000.0;
+	return (retval < 0.0) ? 0.0f : (float)retval;
 }
-#else
-float _delta_time(const struct timespec* t0, const struct timespec* t1)
-{
-	INT64 secs = (INT64)(t1->tv_sec) - (INT64)(t0->tv_sec);
-	long nsecs = t1->tv_nsec - t0->tv_nsec;
-	double retval = NAN;
-
-	if (nsecs < 0)
-	{
-		--secs;
-		nsecs += 1000000000;
-	}
-
-	retval = (double)secs + (double)nsecs / (double)1000000000.0;
-	return (retval < 0.0) ? 0.0 : (float)retval;
-}
-#endif
 
 /* ------------------------------------------------------------------------- */
-void _floatprint(float t, char* output)
+void measure_floatprint(float t, char* output)
 {
 	/* I don't want to link against -lm, so avoid log,exp,... */
 	float f = 10.0;

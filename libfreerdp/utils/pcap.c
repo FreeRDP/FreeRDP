@@ -27,26 +27,10 @@
 #include <winpr/assert.h>
 #include <winpr/file.h>
 #include <winpr/crt.h>
+#include <winpr/sysinfo.h>
 #include <freerdp/log.h>
 
 #define TAG FREERDP_TAG("utils")
-
-#ifndef _WIN32
-#include <sys/time.h>
-#else
-#include <time.h>
-#include <sys/timeb.h>
-#include <winpr/windows.h>
-
-int gettimeofday(struct timeval* tp, void* tz)
-{
-	struct _timeb timebuffer;
-	_ftime(&timebuffer);
-	tp->tv_sec = (long)timebuffer.time;
-	tp->tv_usec = timebuffer.millitm * 1000;
-	return 0;
-}
-#endif
 
 #include <freerdp/types.h>
 #include <freerdp/utils/pcap.h>
@@ -131,14 +115,11 @@ static BOOL pcap_write_record(rdpPcap* pcap, const pcap_record* record)
 
 BOOL pcap_add_record(rdpPcap* pcap, const void* data, size_t length)
 {
-	pcap_record* record = NULL;
-	struct timeval tp;
-
 	WINPR_ASSERT(pcap);
 	WINPR_ASSERT(data || (length == 0));
 	WINPR_ASSERT(length <= UINT32_MAX);
 
-	record = (pcap_record*)calloc(1, sizeof(pcap_record));
+	pcap_record* record = (pcap_record*)calloc(1, sizeof(pcap_record));
 	if (!record)
 		return FALSE;
 
@@ -147,9 +128,10 @@ BOOL pcap_add_record(rdpPcap* pcap, const void* data, size_t length)
 	record->header.incl_len = (UINT32)length;
 	record->header.orig_len = (UINT32)length;
 
-	gettimeofday(&tp, 0);
-	record->header.ts_sec = (UINT32)tp.tv_sec;
-	record->header.ts_usec = (UINT32)tp.tv_usec;
+	const UINT64 ns = winpr_GetUnixTimeNS();
+
+	record->header.ts_sec = WINPR_TIME_NS_TO_S(ns);
+	record->header.ts_usec = WINPR_TIME_NS_REM_US(ns);
 
 	if (pcap->tail == NULL)
 	{

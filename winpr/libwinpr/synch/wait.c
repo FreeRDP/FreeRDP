@@ -59,59 +59,15 @@
 
 #include "../pipe/pipe.h"
 
-/* clock_gettime is not implemented on OSX prior to 10.12 */
-#if defined(__MACH__) && defined(__APPLE__)
-
-#include <mach/mach_time.h>
-
-#ifndef CLOCK_REALTIME
-#define CLOCK_REALTIME 0
-#endif
-
-#ifndef CLOCK_MONOTONIC
-#define CLOCK_MONOTONIC 0
-#endif
-
-/* clock_gettime is not implemented on OSX prior to 10.12 */
-int _mach_clock_gettime(int clk_id, struct timespec* t);
-
-int _mach_clock_gettime(int clk_id, struct timespec* t)
+static struct timespec ts_from_ns(void)
 {
-	UINT64 time = 0;
-	double seconds = 0.0;
-	double nseconds = 0.0;
-	mach_timebase_info_data_t timebase = { 0 };
-	mach_timebase_info(&timebase);
-	time = mach_absolute_time();
-	nseconds = ((double)time * (double)timebase.numer) / ((double)timebase.denom);
-	seconds = ((double)time * (double)timebase.numer) / ((double)timebase.denom * 1e9);
-	t->tv_sec = seconds;
-	t->tv_nsec = nseconds;
-	return 0;
+	const UINT64 ns = winpr_GetUnixTimeNS();
+	struct timespec timeout = { 0 };
+	timeout.tv_sec = WINPR_TIME_NS_TO_S(ns);
+	timeout.tv_nsec = WINPR_TIME_NS_REM_NS(ns);
+	;
+	return timeout;
 }
-
-/* if clock_gettime is declared, then __CLOCK_AVAILABILITY will be defined */
-#ifdef __CLOCK_AVAILABILITY
-/* If we compiled with Mac OSX 10.12 or later, then clock_gettime will be declared
- * * but it may be NULL at runtime. So we need to check before using it. */
-int _mach_safe_clock_gettime(int clk_id, struct timespec* t);
-
-int _mach_safe_clock_gettime(int clk_id, struct timespec* t)
-{
-	if (clock_gettime)
-	{
-		return clock_gettime(clk_id, t);
-	}
-
-	return _mach_clock_gettime(clk_id, t);
-}
-
-#define clock_gettime _mach_safe_clock_gettime
-#else
-#define clock_gettime _mach_clock_gettime
-#endif
-
-#endif
 
 /**
  * Drop in replacement for pthread_mutex_timedlock
@@ -148,14 +104,14 @@ STATIC_NEEDED int pthread_mutex_timedlock(pthread_mutex_t* mutex,
 	unsigned long long diff = 0;
 	int retcode = -1;
 	/* This is just to avoid a completely busy wait */
-	clock_gettime(CLOCK_MONOTONIC, &timenow);
+	timenow = ts_from_ns();
 	diff = ts_difftime(&timenow, timeout);
 	sleepytime.tv_sec = diff / 1000000000LL;
 	sleepytime.tv_nsec = diff % 1000000000LL;
 
 	while ((retcode = pthread_mutex_trylock(mutex)) == EBUSY)
 	{
-		clock_gettime(CLOCK_MONOTONIC, &timenow);
+		timenow = ts_from_ns();
 
 		if (ts_difftime(timeout, &timenow) >= 0)
 		{
@@ -237,8 +193,8 @@ DWORD WaitForSingleObjectEx(HANDLE hHandle, DWORD dwMilliseconds, BOOL bAlertabl
 		if (dwMilliseconds != INFINITE)
 		{
 			int status = 0;
-			struct timespec timeout = { 0 };
-			clock_gettime(CLOCK_MONOTONIC, &timeout);
+			struct timespec timeout = ts_from_ns();
+
 			ts_add_ms(&timeout, dwMilliseconds);
 			status = pthread_mutex_timedlock(&mutex->mutex, &timeout);
 

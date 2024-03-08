@@ -248,15 +248,12 @@ BOOL ntlm_write_ntlm_v2_response(wStream* s, const NTLMv2_RESPONSE* response)
 
 void ntlm_current_time(BYTE* timestamp)
 {
-	FILETIME filetime = { 0 };
-	ULARGE_INTEGER time64 = { 0 };
+	FILETIME ft = { 0 };
 
 	WINPR_ASSERT(timestamp);
 
-	GetSystemTimeAsFileTime(&filetime);
-	time64.u.LowPart = filetime.dwLowDateTime;
-	time64.u.HighPart = filetime.dwHighDateTime;
-	CopyMemory(timestamp, &(time64.QuadPart), 8);
+	GetSystemTimeAsFileTime(&ft);
+	CopyMemory(timestamp, &(ft), sizeof(ft));
 }
 
 /**
