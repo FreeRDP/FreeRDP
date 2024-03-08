@@ -339,8 +339,14 @@ static bool sdl_draw_to_window_rect(SdlContext* sdl, SdlWindow& window, SDL_Surf
 		return sdl_draw_to_window_rect(sdl, window, surface, offset,
 		                               { 0, 0, surface->w, surface->h });
 	}
+
+	bool multimon = freerdp_settings_get_bool(sdl->context()->settings, FreeRDP_UseMultimon) != 0;
+	SDL_Rect windowRect = window.rect();
 	for (auto& srcRect : rects)
 	{
+		if (multimon && SDL_HasIntersection(&srcRect, &windowRect) == SDL_FALSE)
+			continue;
+
 		if (!sdl_draw_to_window_rect(sdl, window, surface, offset, srcRect))
 			return false;
 	}
