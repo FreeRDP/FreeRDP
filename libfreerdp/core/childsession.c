@@ -187,8 +187,11 @@ static int transport_bio_named_read(BIO* bio, char* buf, int size)
 			{
 				case WAIT_OBJECT_0:
 					break;
+				case WAIT_TIMEOUT:
+					BIO_set_flags(bio, (BIO_FLAGS_SHOULD_RETRY | BIO_FLAGS_READ));
+					return -1;
 				default:
-					WLog_ERR(TAG, "error WaitForSingleObject(readEvent)=0x%" PRIu32 "", status);
+					WLog_ERR(TAG, "error WaitForSingleObject(readEvent)=0x%" PRIx32 "", status);
 					return -1;
 			}
 
@@ -403,13 +406,10 @@ static int transport_bio_named_free(BIO* bio)
 		return 0;
 
 	transport_bio_named_uninit(bio);
-	ptr = (WINPR_BIO_NAMED*)BIO_get_data(bio);
 
+	ptr = (WINPR_BIO_NAMED*)BIO_get_data(bio);
 	if (ptr)
-	{
 		BIO_set_data(bio, NULL);
-		free(ptr);
-	}
 
 	return 1;
 }
