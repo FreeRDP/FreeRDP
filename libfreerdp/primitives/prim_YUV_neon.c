@@ -157,7 +157,8 @@ static INLINE pstatus_t neon_YUV420ToX(const BYTE* const WINPR_RESTRICT pSrc[3],
 		uint8_t* pRGB2 = pRGB1 + dstStep;
 		const BOOL lastY = y >= nHeight - 1;
 
-		for (UINT32 x = 0; x < nWidth - pad;)
+		UINT32 x = 0;
+		for (; x < nWidth - pad;)
 		{
 			const uint8x8_t Uraw = vld1_u8(pU);
 			const uint8x8x2_t Uu = vzip_u8(Uraw, Uraw);
@@ -409,7 +410,8 @@ static pstatus_t neon_LumaToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[3],
 		BYTE* pU1 = pU + dstStep[1];
 		BYTE* pV1 = pV + dstStep[2];
 
-		for (UINT32 x = 0; x + 16 < halfWidth; x += 16)
+		UINT32 x = 0;
+		for (; x + 16 < halfWidth; x += 16)
 		{
 			{
 				const uint8x16_t u = vld1q_u8(Um);
@@ -477,7 +479,8 @@ static pstatus_t neon_ChromaFilter(BYTE* WINPR_RESTRICT pDst[3], const UINT32 ds
 		if (val2y1 > nHeight)
 			continue;
 
-		for (UINT32 x = roi->left / 2; x < halfWidth + roi->left / 2 - halfPad; x += 16)
+		UINT32 x = roi->left / 2;
+		for (; x < halfWidth + roi->left / 2 - halfPad; x += 16)
 		{
 			{
 				/* U = (U2x,2y << 2) - U2x1,2y - U2x,2y1 - U2x1,2y1 */
@@ -597,7 +600,8 @@ static pstatus_t neon_ChromaV1ToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[
 		BYTE* pU = pDst[1] + dstStep[1] * val2y;
 		BYTE* pV = pDst[2] + dstStep[2] * val2y;
 
-		for (UINT32 x = 0; x < halfWidth - halfPad; x += 16)
+		UINT32 x = 0;
+		for (; x < halfWidth - halfPad; x += 16)
 		{
 			{
 				uint8x16x2_t u = vld2q_u8(&pU[2 * x]);
@@ -646,7 +650,8 @@ static pstatus_t neon_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[3],
 		BYTE* pU = pDst[1] + dstStep[1] * yTop + roi->left;
 		BYTE* pV = pDst[2] + dstStep[2] * yTop + roi->left;
 
-		for (UINT32 x = 0; x < halfWidth - halfPad; x += 16)
+		UINT32 x = 0;
+		for (; x < halfWidth - halfPad; x += 16)
 		{
 			{
 				uint8x16x2_t u = vld2q_u8(&pU[2 * x]);
@@ -678,7 +683,8 @@ static pstatus_t neon_ChromaV2ToYUV444(const BYTE* const WINPR_RESTRICT pSrc[3],
 		BYTE* pU = pDst[1] + dstStep[1] * (2 * y + 1 + roi->top) + roi->left;
 		BYTE* pV = pDst[2] + dstStep[2] * (2 * y + 1 + roi->top) + roi->left;
 
-		for (UINT32 x = 0; x < quaterWidth - quaterPad; x += 16)
+		UINT32 x = 0;
+		for (; x < quaterWidth - quaterPad; x += 16)
 		{
 			{
 				uint8x16x4_t u = vld4q_u8(&pU[4 * x]);
