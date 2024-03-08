@@ -22,38 +22,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <winpr/sysinfo.h>
 #include <freerdp/utils/stopwatch.h>
-
-#ifdef _WIN32
-LARGE_INTEGER stopwatch_freq = { 0 };
-#else
-#include <sys/time.h>
-#endif
 
 static void stopwatch_set_time(UINT64* usecs)
 {
-#ifdef _WIN32
-	LARGE_INTEGER perfcount;
-	QueryPerformanceCounter(&perfcount);
-	*usecs = (perfcount.QuadPart * 1000000) / stopwatch_freq.QuadPart;
-#else
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	*usecs = tv.tv_sec * 1000000 + tv.tv_usec;
-#endif
+	const UINT64 ns = winpr_GetTickCount64NS();
+	*usecs = WINPR_TIME_NS_TO_US(ns);
 }
 
 STOPWATCH* stopwatch_create(void)
 {
-	STOPWATCH* sw = NULL;
-#ifdef _WIN32
-	if (stopwatch_freq.QuadPart == 0)
-	{
-		QueryPerformanceFrequency(&stopwatch_freq);
-	}
-#endif
-
-	sw = (STOPWATCH*)malloc(sizeof(STOPWATCH));
+	STOPWATCH* sw = (STOPWATCH*)calloc(1, sizeof(STOPWATCH));
 	if (!sw)
 		return NULL;
 	stopwatch_reset(sw);

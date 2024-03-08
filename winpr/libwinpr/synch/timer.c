@@ -707,11 +707,11 @@ static void timespec_add_ms(struct timespec* tspec, UINT32 ms)
 
 static void timespec_gettimeofday(struct timespec* tspec)
 {
-	struct timeval tval;
 	WINPR_ASSERT(tspec);
-	gettimeofday(&tval, NULL);
-	tspec->tv_sec = tval.tv_sec;
-	tspec->tv_nsec = tval.tv_usec * 1000;
+
+	const UINT64 ns = winpr_GetUnixTimeNS();
+	tspec->tv_sec = WINPR_TIME_NS_TO_S(ns);
+	tspec->tv_nsec = WINPR_TIME_NS_REM_NS(ns);
 }
 
 static INT64 timespec_compare(const struct timespec* tspec1, const struct timespec* tspec2)
