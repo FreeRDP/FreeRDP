@@ -49,6 +49,8 @@ AnalyzeTemporaryDtors: false
 FormatStyle:     file
 User:            nin
 CheckOptions:
+  - key:             readability-implicit-bool-conversion.AllowIntegerConditions
+    value:           'true'
   - key:             llvm-else-after-return.WarnOnConditionVariables
     value:           'false'
   - key:             modernize-loop-convert.MinConfidence
