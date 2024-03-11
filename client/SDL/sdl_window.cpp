@@ -186,9 +186,9 @@ bool SdlWindow::blit(SDL_Surface* surface, const SDL_Rect& srcRect, SDL_Rect& ds
 	if (!screen || !surface)
 		return false;
 	if (!SDL_SetClipRect(surface, &srcRect))
-		return false;
+		return true;
 	if (!SDL_SetClipRect(screen, &dstRect))
-		return false;
+		return true;
 	auto rc = SDL_BlitScaled(surface, &srcRect, screen, &dstRect);
 	if (rc != 0)
 	{
