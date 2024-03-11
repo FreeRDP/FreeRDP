@@ -277,7 +277,7 @@ struct xf_context
 	button_map button_map[NUM_BUTTONS_MAPPED];
 	BYTE savedMaximizedState;
 	UINT32 locked;
-	BOOL firstPressRightCtrl;
+	BOOL wasRightCtrlAlreadyPressed;
 	BOOL ungrabKeyboardWithRightCtrl;
 
 #if defined(WITH_XI)
