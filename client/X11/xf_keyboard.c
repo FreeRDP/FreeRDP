@@ -555,11 +555,11 @@ BOOL xf_keyboard_handle_special_keys(xfContext* xfc, KeySym keysym)
 	// do not return anything such that the key could be used by client if ungrab is not the goal
 	if (keysym == XK_Control_R)
 	{
-		if (mod.RightCtrl && xfc->firstPressRightCtrl)
+		if (mod.RightCtrl && !xfc->wasRightCtrlAlreadyPressed)
 		{
 			// Right Ctrl is pressed, getting ready to ungrab
 			xfc->ungrabKeyboardWithRightCtrl = TRUE;
-			xfc->firstPressRightCtrl = FALSE;
+			xfc->wasRightCtrlAlreadyPressed = TRUE;
 		}
 	}
 	else
@@ -689,7 +689,7 @@ void xf_keyboard_handle_special_keys_release(xfContext* xfc, KeySym keysym)
 	if (keysym != XK_Control_R)
 		return;
 
-	xfc->firstPressRightCtrl = TRUE;
+	xfc->wasRightCtrlAlreadyPressed = FALSE;
 
 	if (!xfc->ungrabKeyboardWithRightCtrl)
 		return;
