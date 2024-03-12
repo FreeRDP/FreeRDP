@@ -1053,12 +1053,13 @@ static void http_response_print(wLog* log, DWORD level, const HttpResponse* resp
 	           freerdp_http_status_string_format(status, buffer, ARRAYSIZE(buffer)));
 
 	for (size_t i = 0; i < response->count; i++)
-		WLog_Print(log, level, "[%" PRIuz "] %s", i, response->lines[i]);
+		WLog_Print(log, WLOG_DEBUG, "[%" PRIuz "] %s", i, response->lines[i]);
 
 	if (response->ReasonPhrase)
 		WLog_Print(log, level, "[reason] %s", response->ReasonPhrase);
 
-	WLog_Print(log, level, "[body][%" PRIuz "] %s", response->BodyLength, response->BodyContent);
+	WLog_Print(log, WLOG_TRACE, "[body][%" PRIuz "] %s", response->BodyLength,
+	           response->BodyContent);
 }
 
 static BOOL http_use_content_length(const char* cur)
