@@ -822,6 +822,7 @@ void freerdp_channels_close(rdpChannels* channels, freerdp* instance)
 
 	channels->openDataCount = 0;
 	channels->initDataCount = 0;
+	channels->clientDataCount = 0;
 
 	WINPR_ASSERT(instance->context);
 	WINPR_ASSERT(instance->context->settings);
