@@ -16,7 +16,7 @@
 # limitations under the License.
 
 set(MODULE_NAME "wfreerdp-server-cli")
-set(OUTPUT_NAME " wfreerdp-server")
+set(OUTPUT_NAME "wfreerdp-server")
 set(MODULE_PREFIX "FREERDP_SERVER_WINDOWS_CLI")
 
 include_directories(..)
@@ -43,8 +43,10 @@ add_executable(${MODULE_NAME} ${${MODULE_PREFIX}_SRCS})
 
 if (WITH_BINARY_VERSIONING)
 	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${OUTPUT_NAME}${FREERDP_API_VERSION}")
+	set_target_properties(${MODULE_NAME} PROPERTIES PDB_NAME "${OUTPUT_NAME}${FREERDP_API_VERSION}${CMAKE_EXECUTABLE_SUFFIX}")
 else()
 	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${OUTPUT_NAME}")
+	set_target_properties(${MODULE_NAME} PROPERTIES PDB_NAME "${OUTPUT_NAME}${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
 
 set(${MODULE_PREFIX}_LIBS wfreerdp-server)
