@@ -119,6 +119,16 @@
 #define INLINE inline
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#define WINPR_ALIGN64 __attribute__((aligned(8)))
+#else
+#ifdef _WIN32
+#define WINPR_ALIGN64 __declspec(align(8))
+#else
+#define WINPR_ALIGN64
+#endif
+#endif
+
 WINPR_API void winpr_get_version(int* major, int* minor, int* revision);
 WINPR_API const char* winpr_get_version_string(void);
 WINPR_API const char* winpr_get_build_revision(void);
