@@ -32,49 +32,39 @@
 #include "../synch/event.h"
 #include "apc.h"
 
-#ifdef __GNUC__
-#define ALIGN64 __attribute__((aligned(8)))
-#else
-#ifdef _WIN32
-#define ALIGN64 __declspec(align(8))
-#else
-#define ALIGN64
-#endif
-#endif
-
 typedef void* (*pthread_start_routine)(void*);
 typedef struct winpr_APC_item WINPR_APC_ITEM;
 
 typedef struct
 {
-	ALIGN64 pthread_mutex_t mux;
-	ALIGN64 pthread_cond_t cond;
-	ALIGN64 BOOL val;
+	WINPR_ALIGN64 pthread_mutex_t mux;
+	WINPR_ALIGN64 pthread_cond_t cond;
+	WINPR_ALIGN64 BOOL val;
 } mux_condition_bundle;
 
 struct winpr_thread
 {
 	WINPR_HANDLE common;
 
-	ALIGN64 BOOL started;
-	ALIGN64 WINPR_EVENT_IMPL event;
-	ALIGN64 BOOL mainProcess;
-	ALIGN64 BOOL detached;
-	ALIGN64 BOOL joined;
-	ALIGN64 BOOL exited;
-	ALIGN64 DWORD dwExitCode;
-	ALIGN64 pthread_t thread;
-	ALIGN64 SIZE_T dwStackSize;
-	ALIGN64 LPVOID lpParameter;
-	ALIGN64 pthread_mutex_t mutex;
+	WINPR_ALIGN64 BOOL started;
+	WINPR_ALIGN64 WINPR_EVENT_IMPL event;
+	WINPR_ALIGN64 BOOL mainProcess;
+	WINPR_ALIGN64 BOOL detached;
+	WINPR_ALIGN64 BOOL joined;
+	WINPR_ALIGN64 BOOL exited;
+	WINPR_ALIGN64 DWORD dwExitCode;
+	WINPR_ALIGN64 pthread_t thread;
+	WINPR_ALIGN64 SIZE_T dwStackSize;
+	WINPR_ALIGN64 LPVOID lpParameter;
+	WINPR_ALIGN64 pthread_mutex_t mutex;
 	mux_condition_bundle isRunning;
 	mux_condition_bundle isCreated;
-	ALIGN64 LPTHREAD_START_ROUTINE lpStartAddress;
-	ALIGN64 LPSECURITY_ATTRIBUTES lpThreadAttributes;
-	ALIGN64 APC_QUEUE apc;
+	WINPR_ALIGN64 LPTHREAD_START_ROUTINE lpStartAddress;
+	WINPR_ALIGN64 LPSECURITY_ATTRIBUTES lpThreadAttributes;
+	WINPR_ALIGN64 APC_QUEUE apc;
 #if defined(WITH_DEBUG_THREADS)
-	ALIGN64 void* create_stack;
-	ALIGN64 void* exit_stack;
+	WINPR_ALIGN64 void* create_stack;
+	WINPR_ALIGN64 void* exit_stack;
 #endif
 };
 
