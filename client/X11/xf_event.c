@@ -648,6 +648,8 @@ static BOOL xf_event_FocusIn(xfContext* xfc, const XFocusInEvent* event, BOOL ap
 	 * if the WM decided to use an alternate event order */
 	if (!app)
 		xf_keyboard_release_all_keypress(xfc);
+	else
+		xf_rail_send_activate(xfc, event->window, TRUE);
 
 	xf_pointer_update_scale(xfc);
 
@@ -676,6 +678,8 @@ static BOOL xf_event_FocusOut(xfContext* xfc, const XFocusOutEvent* event, BOOL 
 		XUngrabKeyboard(xfc->display, CurrentTime);
 
 	xf_keyboard_release_all_keypress(xfc);
+	if (app)
+		xf_rail_send_activate(xfc, event->window, FALSE);
 
 	return TRUE;
 }
