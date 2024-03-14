@@ -477,6 +477,13 @@ endif()
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 
 include(pkg-config-install-prefix)
+set(FREERDP_REQUIRES_PRIVATE "")
+if(cJSON_FOUND)
+    string(APPEND FREERDP_REQUIRES_PRIVATE " libcjson")
+endif()
+if(WITH_SMARTCARD_EMULATE)
+    string(APPEND FREERDP_REQUIRES_PRIVATE " zlib")
+endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp${FREERDP_VERSION_MAJOR}.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp${FREERDP_VERSION_MAJOR}.pc DESTINATION ${PKG_CONFIG_PC_INSTALL_DIR})
 
