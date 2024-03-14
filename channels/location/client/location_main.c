@@ -73,7 +73,7 @@ static BOOL location_read_header(wLog* log, wStream* s, UINT16* ppduType, UINT32
 		           *ppduLength);
 		return FALSE;
 	}
-	return Stream_CheckAndLogRequiredLengthWLog(log, s, *ppduLength);
+	return Stream_CheckAndLogRequiredLengthWLog(log, s, *ppduLength - 6ull);
 }
 
 static BOOL location_write_header(wStream* s, UINT16 pduType, UINT32 pduLength)
