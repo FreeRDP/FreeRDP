@@ -53,6 +53,8 @@ static UINT generic_on_new_channel_connection(IWTSListenerCallback* pListenerCal
 	callback->channel = pChannel;
 
 	listener_callback->channel_callback = callback;
+	listener_callback->channel = pChannel;
+
 	*ppCallback = (IWTSVirtualChannelCallback*)callback;
 	return CHANNEL_RC_OK;
 }
