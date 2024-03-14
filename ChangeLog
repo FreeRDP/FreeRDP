@@ -1,3 +1,31 @@
+# 2024-03-14 Version 3.4.0
+
+This release concentrates on improving test coverage and ci builds.
+Some usability issues and inconvenient API functions were fixed on the way.
+
+New features have been introduced (stub for location channel)
+
+Noteworthy changes:
+* fix a bug in RAIL mode not activating window focus (#9973)
+* improve logging (#9969, #9943)
+* OpenSSL <= 1.1.1 build fixes (#9897)
+* improved help (#9899, #9905)
+* improved MINGW support (#9914, #9915, #9919, #9964, #9965, #9920)
+* fix right control ungrab for xfreerdp (#9960)
+* fix RPATH option settings (#9963)
+* fix SDL client screen updates (#9962, #9954)
+* fix issues with childSession under windows (#9961, #9956, #9922)
+* fix xfreerdp crash with +auth-only (#9947)
+* fix windows printer channel (#9934)
+* add support to enforce gateway policy (#9942)
+* improve big endian support (#9927)
+* ignore empty proxy environment variables (#9929)
+* improve quoting support for command line (#9912)
+
+For a complete and detailed change log since the last release run:
+git log 3.4.0...3.3.0
+
+
 # 2024-02-22 Version 3.3.0
 
 This release concentrates on code cleanup and overall quality improvements.
