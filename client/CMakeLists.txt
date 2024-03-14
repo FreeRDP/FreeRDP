@@ -92,6 +92,11 @@ if(WITH_CLIENT)
 	endforeach()
 endif()
 
+if (WITH_FUSE)
+    list(APPEND FREERDP_CLIENT_PC_PRIVATE_LIBS "-lfuse3")
+endif()
+
+list(JOIN FREERDP_CLIENT_PC_PRIVATE_LIBS " " FREERDP_CLIENT_PC_PRIVATE_LIBS)
 include(pkg-config-install-prefix)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp-client.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp-client${FREERDP_VERSION_MAJOR}.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp-client${FREERDP_VERSION_MAJOR}.pc DESTINATION ${PKG_CONFIG_PC_INSTALL_DIR})

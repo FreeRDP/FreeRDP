@@ -11,5 +11,5 @@ Version: @FREERDP_VERSION@
 Requires: 
 Requires.private: @WINPR_PKG_CONFIG_FILENAME@ freerdp@FREERDP_VERSION_MAJOR@
 Libs: -L${libdir} ${libs}
-Libs.private: -ldl -lpthread
+Libs.private: -ldl -lpthread @FREERDP_CLIENT_PC_PRIVATE_LIBS@
 Cflags: -I${includedir}
