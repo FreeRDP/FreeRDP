@@ -750,7 +750,7 @@ static BOOL rdg_recv_auth_token(wLog* log, rdpCredsspAuth* auth, HttpResponse* r
 	return TRUE;
 }
 
-static BOOL rdg_skip_seed_payload(rdpContext* context, rdpTls* tls, SSIZE_T lastResponseLength,
+static BOOL rdg_skip_seed_payload(rdpContext* context, rdpTls* tls, size_t lastResponseLength,
                                   rdg_http_encoding_context* transferEncoding)
 {
 	BYTE seed_payload[10] = { 0 };
@@ -759,7 +759,7 @@ static BOOL rdg_skip_seed_payload(rdpContext* context, rdpTls* tls, SSIZE_T last
 	/* Per [MS-TSGU] 3.3.5.1 step 4, after final OK response RDG server sends
 	 * random "seed" payload of limited size. In practice it's 10 bytes.
 	 */
-	if (lastResponseLength < (SSIZE_T)size)
+	if (lastResponseLength < size)
 	{
 		if (!rdg_read_all(context, tls, seed_payload, size - lastResponseLength, transferEncoding))
 		{
