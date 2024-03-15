@@ -226,20 +226,20 @@ static UINT location_send_base_location3d(IWTSVirtualChannel* channel,
 		WLog_DBG(TAG, "latitude=%lf, logitude=%lf, altitude=%" PRId32, pdu->latitude,
 		         pdu->longitude, pdu->altitude);
 
-	if (location_write_header(s, PDUTYPE_BASE_LOCATION3D, pdu->source ? 25 : 12))
+	if (!location_write_header(s, PDUTYPE_BASE_LOCATION3D, pdu->source ? 25 : 12))
 		return ERROR_OUTOFMEMORY;
 
 	if (!freerdp_write_four_byte_float(s, pdu->latitude) ||
 	    !freerdp_write_four_byte_float(s, pdu->longitude) ||
 	    !freerdp_write_four_byte_signed_integer(s, pdu->altitude))
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 
 	if (pdu->source)
 	{
 		if (!freerdp_write_four_byte_float(s, *pdu->speed) ||
 		    !freerdp_write_four_byte_float(s, *pdu->heading) ||
 		    !freerdp_write_four_byte_float(s, *pdu->horizontalAccuracy))
-			return FALSE;
+			return ERROR_INTERNAL_ERROR;
 
 		Stream_Write_UINT8(s, *pdu->source);
 	}
@@ -266,18 +266,18 @@ static UINT location_send_location2d_delta(IWTSVirtualChannel* channel,
 	else
 		WLog_DBG(TAG, "latitude=%lf, logitude=%lf", pdu->latitudeDelta, pdu->longitudeDelta);
 
-	if (location_write_header(s, PDUTYPE_LOCATION2D_DELTA, ext ? 16 : 8))
+	if (!location_write_header(s, PDUTYPE_LOCATION2D_DELTA, ext ? 16 : 8))
 		return ERROR_OUTOFMEMORY;
 
 	if (!freerdp_write_four_byte_float(s, pdu->latitudeDelta) ||
 	    !freerdp_write_four_byte_float(s, pdu->longitudeDelta))
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 
 	if (ext)
 	{
 		if (!freerdp_write_four_byte_float(s, *pdu->speedDelta) ||
 		    !freerdp_write_four_byte_float(s, *pdu->headingDelta))
-			return FALSE;
+			return ERROR_INTERNAL_ERROR;
 	}
 
 	return location_channel_send(channel, s);
@@ -304,19 +304,19 @@ static UINT location_send_location3d_delta(IWTSVirtualChannel* channel,
 		WLog_DBG(TAG, "latitude=%lf, logitude=%lf, altitude=%" PRId32, pdu->latitudeDelta,
 		         pdu->longitudeDelta, pdu->altitudeDelta);
 
-	if (location_write_header(s, PDUTYPE_LOCATION3D_DELTA, ext ? 20 : 12))
+	if (!location_write_header(s, PDUTYPE_LOCATION3D_DELTA, ext ? 20 : 12))
 		return ERROR_OUTOFMEMORY;
 
 	if (!freerdp_write_four_byte_float(s, pdu->latitudeDelta) ||
 	    !freerdp_write_four_byte_float(s, pdu->longitudeDelta) ||
 	    !freerdp_write_four_byte_signed_integer(s, pdu->altitudeDelta))
-		return FALSE;
+		return ERROR_INTERNAL_ERROR;
 
 	if (ext)
 	{
 		if (!freerdp_write_four_byte_float(s, *pdu->speedDelta) ||
 		    !freerdp_write_four_byte_float(s, *pdu->headingDelta))
-			return FALSE;
+			return ERROR_INTERNAL_ERROR;
 	}
 
 	return location_channel_send(channel, s);
