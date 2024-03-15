@@ -216,7 +216,7 @@ static UINT location_send_base_location3d(IWTSVirtualChannel* channel,
 	WINPR_ASSERT(channel);
 	WINPR_ASSERT(pdu);
 
-	if (location_write_header(s, PDUTYPE_BASE_LOCATION3D, 32))
+	if (location_write_header(s, PDUTYPE_BASE_LOCATION3D, pdu->source ? 25 : 12))
 		return ERROR_OUTOFMEMORY;
 
 	if (!freerdp_write_four_byte_float(s, pdu->latitude) ||
@@ -250,7 +250,7 @@ static UINT location_send_location2d_delta(IWTSVirtualChannel* channel,
 
 	const BOOL ext = pdu->speedDelta && pdu->headingDelta;
 
-	if (location_write_header(s, PDUTYPE_LOCATION2D_DELTA, 32))
+	if (location_write_header(s, PDUTYPE_LOCATION2D_DELTA, ext ? 16 : 8))
 		return ERROR_OUTOFMEMORY;
 
 	if (!freerdp_write_four_byte_float(s, pdu->latitudeDelta) ||
@@ -279,7 +279,7 @@ static UINT location_send_location3d_delta(IWTSVirtualChannel* channel,
 	WINPR_ASSERT(pdu);
 
 	const BOOL ext = pdu->speedDelta && pdu->headingDelta;
-	if (location_write_header(s, PDUTYPE_LOCATION3D_DELTA, 32))
+	if (location_write_header(s, PDUTYPE_LOCATION3D_DELTA, ext ? 20 : 12))
 		return ERROR_OUTOFMEMORY;
 
 	if (!freerdp_write_four_byte_float(s, pdu->latitudeDelta) ||
