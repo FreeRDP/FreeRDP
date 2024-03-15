@@ -128,6 +128,10 @@ BOOL freerdp_write_four_byte_signed_integer(wStream* s, INT32 value)
 	FOUR_BYTE_SIGNED_INTEGER si = { 0 };
 
 	WINPR_ASSERT(s);
+	if (value > FREERDP_FOUR_BYTE_SIGNED_INT_MAX)
+		return FALSE;
+	if (value < FREERDP_FOUR_BYTE_SIGNED_INT_MIN)
+		return FALSE;
 
 	if (value < 0)
 	{
@@ -135,25 +139,25 @@ BOOL freerdp_write_four_byte_signed_integer(wStream* s, INT32 value)
 		value = -value;
 	}
 
-	if (value < 0x1F)
+	if (value <= 0x1F)
 	{
 		si.c = ONE_BYTE_VAL;
 		si.val1 = value & 0x1f;
 	}
-	else if (value < 0x1FFF)
+	else if (value <= 0x1FFF)
 	{
 		si.c = TWO_BYTE_VAL;
 		si.val1 = (value >> 8) & 0x1f;
 		si.val2 = value & 0xff;
 	}
-	else if (value < 0x1FFFFF)
+	else if (value <= 0x1FFFFF)
 	{
 		si.c = THREE_BYTE_VAL;
 		si.val1 = (value >> 16) & 0x1f;
 		si.val2 = (value >> 8) & 0xff;
 		si.val3 = value & 0xff;
 	}
-	else if (value < 0x1FFFFFFF)
+	else if (value <= 0x1FFFFFFF)
 	{
 		si.c = FOUR_BYTE_VAL;
 		si.val1 = (value >> 24) & 0x1f;
@@ -202,6 +206,11 @@ BOOL freerdp_write_four_byte_signed_integer(wStream* s, INT32 value)
 }
 
 BOOL freerdp_read_four_byte_float(wStream* s, double* value)
+{
+	return freerdp_read_four_byte_float_exp(s, value, NULL);
+}
+
+BOOL freerdp_read_four_byte_float_exp(wStream* s, double* value, BYTE* exp)
 {
 	FOUR_BYTE_FLOAT f = { 0 };
 	UINT32 base = 0;
@@ -261,6 +270,9 @@ BOOL freerdp_read_four_byte_float(wStream* s, double* value)
 	if (f.s == NEGATIVE_VAL)
 		*value *= -1.0;
 
+	if (exp)
+		*exp = f.e;
+
 	return TRUE;
 }
 
@@ -270,6 +282,11 @@ BOOL freerdp_write_four_byte_float(wStream* s, double value)
 
 	WINPR_ASSERT(s);
 
+	if (value > FREERDP_FOUR_BYTE_FLOAT_MAX)
+		return FALSE;
+	if (value < FREERDP_FOUR_BYTE_FLOAT_MIN)
+		return FALSE;
+
 	if (value < 0)
 	{
 		si.s = NEGATIVE_VAL;
@@ -277,35 +294,64 @@ BOOL freerdp_write_four_byte_float(wStream* s, double value)
 	}
 
 	int exp = 0;
-	frexp(value, &exp);
-
-	if ((exp < 0) || (exp > 0x07))
+	double ival = FP_NAN;
+	const double aval = fabs(value);
+	const double frac = modf(aval, &ival);
+	if (frac != 0.0)
 	{
-		WLog_ERR(TAG, "value %ld has out of supported range [0,0xff] exponent %d", value, exp);
-		return FALSE;
+		const double maxfrac = frac * 10000000.0;
+		if (maxfrac <= 1.0)
+			exp = 0;
+		else if (maxfrac <= 10.0)
+			exp = 1;
+		else if (maxfrac <= 100.0)
+			exp = 2;
+		else if (maxfrac <= 1000.0)
+			exp = 3;
+		else if (maxfrac <= 10000.0)
+			exp = 4;
+		else if (maxfrac <= 100000.0)
+			exp = 5;
+		else if (maxfrac <= 1000000.0)
+			exp = 6;
+		else
+			exp = 7;
 	}
-	si.e = (BYTE)exp;
-	UINT64 base = (UINT64)ldexp(value, exp);
 
-	if (base < 0x03)
+	UINT64 base = aval;
+	while (exp >= 0)
+	{
+		const double div = pow(10.0, exp);
+		const double dval = (aval * div);
+		base = (UINT64)dval;
+		if (base <= 0x03ffffff)
+			break;
+		exp--;
+	}
+
+	if (exp < 0)
+		return FALSE;
+
+	si.e = (BYTE)exp;
+	if (base <= 0x03)
 	{
 		si.c = ONE_BYTE_VAL;
 		si.val1 = base & 0x03;
 	}
-	else if (base < 0x03ff)
+	else if (base <= 0x03ff)
 	{
 		si.c = TWO_BYTE_VAL;
 		si.val1 = (base >> 8) & 0x03;
 		si.val2 = base & 0xff;
 	}
-	else if (base < 0x03ffff)
+	else if (base <= 0x03ffff)
 	{
 		si.c = THREE_BYTE_VAL;
 		si.val1 = (base >> 16) & 0x03;
 		si.val2 = (base >> 8) & 0xff;
 		si.val3 = base & 0xff;
 	}
-	else if (base < 0x03ffff)
+	else if (base <= 0x03ffffff)
 	{
 		si.c = FOUR_BYTE_VAL;
 		si.val1 = (base >> 24) & 0x03;
