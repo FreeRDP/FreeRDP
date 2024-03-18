@@ -992,8 +992,14 @@ static LONG WINAPI PCSC_SCardListReadersW(SCARDCONTEXT hContext, LPCWSTR mszGrou
 			return SCARD_E_NO_MEMORY;
 	}
 
-	status =
-	    PCSC_SCardListReaders_Internal(hContext, mszGroupsA, (LPSTR*)&mszReadersA, pcchReaders);
+	union
+	{
+		LPSTR* ppc;
+		LPSTR pc;
+	} cnv;
+	cnv.ppc = &mszReadersA;
+
+	status = PCSC_SCardListReaders_Internal(hContext, mszGroupsA, cnv.pc, pcchReaders);
 	if (status == SCARD_S_SUCCESS)
 	{
 		size_t size = 0;
