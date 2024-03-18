@@ -24,10 +24,12 @@ typedef struct
 // TODO: The unit tests do not check for valid code points, so always end the test
 // strings with a simple ASCII symbol for now.
 static const testcase_t unit_testcases[] = {
-	{ "foo", 3, "f\x00o\x00o\x00\x00\x00", 3 },
-	{ "foo", 4, "f\x00o\x00o\x00\x00\x00", 4 },
+	{ "foo", 3, (const WCHAR*)"f\x00o\x00o\x00\x00\x00", 3 },
+	{ "foo", 4, (const WCHAR*)"f\x00o\x00o\x00\x00\x00", 4 },
 	{ "✊🎅ęʥ꣸𑗊a", 19,
-	  "\x0a\x27\x3c\xd8\x85\xdf\x19\x01\xa5\x02\xf8\xa8\x05\xd8\xca\xdd\x61\x00\x00\x00", 9 }
+	  (const WCHAR*)"\x0a\x27\x3c\xd8\x85\xdf\x19\x01\xa5\x02\xf8\xa8\x05\xd8\xca\xdd\x61\x00\x00"
+	                "\x00",
+	  9 }
 };
 
 static void create_prefix(char* prefix, size_t prefixlen, size_t buffersize, SSIZE_T rc,
