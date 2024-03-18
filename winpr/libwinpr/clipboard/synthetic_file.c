@@ -276,7 +276,13 @@ static BOOL add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* l
                                            const WCHAR* remote_name, wArrayList* files)
 {
 	BOOL result = FALSE;
-	const WCHAR* wildcard = "/\0*\0\0\0";
+	union
+	{
+		const char* c;
+		const WCHAR* w;
+	} wildcard;
+	const char buffer[4] = "/\0*\0\0\0";
+	wildcard.c = buffer;
 	const size_t wildcardLen = 3;
 
 	WINPR_ASSERT(clipboard);
@@ -290,7 +296,7 @@ static BOOL add_directory_contents_to_list(wClipboard* clipboard, const WCHAR* l
 		return FALSE;
 
 	_wcsncat(namebuf, local_name, len);
-	_wcsncat(namebuf, wildcard, wildcardLen);
+	_wcsncat(namebuf, wildcard.w, wildcardLen);
 
 	result = do_add_directory_contents_to_list(clipboard, local_name, remote_name, namebuf, files);
 
