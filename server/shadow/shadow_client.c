@@ -252,7 +252,7 @@ static BOOL shadow_client_context_new(freerdp_peer* peer, rdpContext* context)
 		goto fail;
 
 	region16_init(&(client->invalidRegion));
-	client->vcm = WTSOpenServerA(peer->context);
+	client->vcm = WTSOpenServerA((LPSTR)peer->context);
 
 	if (!client->vcm || client->vcm == INVALID_HANDLE_VALUE)
 		goto fail;
