@@ -2802,18 +2802,25 @@ BOOL license_server_send_request(rdpLicense* license)
 	return license_set_state(license, LICENSE_STATE_REQUEST);
 }
 
-static BOOL license_set_string(const char* what, const char* value, WCHAR** dst, UINT32* dstLen)
+static BOOL license_set_string(const char* what, const char* value, BYTE** bdst, UINT32* dstLen)
 {
 	WINPR_ASSERT(what);
 	WINPR_ASSERT(value);
-	WINPR_ASSERT(dst);
+	WINPR_ASSERT(bdst);
 	WINPR_ASSERT(dstLen);
 
-	size_t len = 0;
-	*dst = (BYTE*)ConvertUtf8ToWCharAlloc(value, &len);
-	if (!*dst || (len > UINT32_MAX / sizeof(WCHAR)))
+	union
 	{
-		WLog_ERR(TAG, "license->ProductInfo: %s == %p || %" PRIu32 " > UINT32_MAX", what, *dst,
+		WCHAR** w;
+		BYTE** b;
+	} cnv;
+	cnv.b = bdst;
+
+	size_t len = 0;
+	*cnv.w = ConvertUtf8ToWCharAlloc(value, &len);
+	if (!*cnv.w || (len > UINT32_MAX / sizeof(WCHAR)))
+	{
+		WLog_ERR(TAG, "license->ProductInfo: %s == %p || %" PRIu32 " > UINT32_MAX", what, *cnv.w,
 		         len);
 		return FALSE;
 	}
