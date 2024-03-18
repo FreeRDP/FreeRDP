@@ -1368,7 +1368,7 @@ const RFX_TILE** rfx_message_get_tiles(const RFX_MESSAGE* message, UINT16* numTi
 	WINPR_ASSERT(message);
 	if (numTiles)
 		*numTiles = message->numTiles;
-	return message->tiles;
+	return (const RFX_TILE**)message->tiles;
 }
 
 UINT16 rfx_message_get_tile_count(const RFX_MESSAGE* message)
