@@ -214,17 +214,19 @@ static BOOL freerdp_client_add_drive(rdpSettings* settings, const char* path, co
 
 	if (!path)
 		goto fail;
-	else
+
 	{
 		BOOL isSpecial = FALSE;
 		BOOL isPath = freerdp_path_valid(path, &isSpecial);
 
 		if (!isPath && !isSpecial)
+		{
+			WLog_WARN(TAG, "Invalid drive to redirect: '%s' does not exist, skipping.", path);
+			freerdp_device_free(device);
+		}
+		else if (!freerdp_device_collection_add(settings, device))
 			goto fail;
 	}
-
-	if (!freerdp_device_collection_add(settings, device))
-		goto fail;
 
 	return TRUE;
 
