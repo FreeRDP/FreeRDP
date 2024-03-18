@@ -511,7 +511,7 @@ static UINT drive_process_irp_query_volume_information(DRIVE_DEVICE* drive, IRP*
 			/* http://msdn.microsoft.com/en-us/library/cc232101.aspx */
 			const WCHAR* diskType =
 			    InitializeConstWCharFromUtf8("FAT32", LabelBuffer, ARRAYSIZE(LabelBuffer));
-			const size_t diskTypeLen = (wcslen(diskType) + 1) * sizeof(WCHAR);
+			const size_t diskTypeLen = (_wcslen(diskType) + 1) * sizeof(WCHAR);
 			const size_t length = 12ul + diskTypeLen;
 			Stream_Write_UINT32(output, length); /* Length */
 
