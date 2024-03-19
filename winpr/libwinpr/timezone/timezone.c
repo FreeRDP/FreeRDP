@@ -247,10 +247,11 @@ static char* winpr_get_unix_timezone_identifier_from_file(void)
 #else
 	FILE* fp = NULL;
 	char* tzid = NULL;
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-	fp = winpr_fopen("/var/db/zoneinfo", "r");
+#if !defined(WINPR_TIMEZONE_FILE)
+#error \
+    "Please define WINPR_TIMEZONE_FILE with the path to your timezone file (e.g. /etc/timezone or similar)"
 #else
-	fp = winpr_fopen("/etc/timezone", "r");
+	fp = winpr_fopen(WINPR_TIMEZONE_FILE, "r");
 #endif
 
 	if (NULL == fp)
