@@ -47,10 +47,6 @@ if(WIN32)
 	freerdp_library_add(cfgmgr32)
 endif()
 
-if(${CMAKE_SYSTEM_NAME} MATCHES SunOS)
-	freerdp_library_add(rt)
-endif()
-
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()

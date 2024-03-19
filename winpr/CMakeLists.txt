@@ -323,11 +323,6 @@ endif()
 
 add_definitions(-DWINPR_EXPORTS)
 
-# Enable 64bit file support on linux and FreeBSD.
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux" OR FREEBSD)
-	add_definitions("-D_FILE_OFFSET_BITS=64")
-endif()
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/include)
 
