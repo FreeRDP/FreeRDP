@@ -21,7 +21,7 @@ if (NOT FREERDP_DEFAULT_PROJECT_VERSION)
 	set(FREERDP_DEFAULT_PROJECT_VERSION "1.0.0.0")
 endif()
 
-project(xfreerdp
+project(xfreerdp-client
 	LANGUAGES C
 	VERSION ${FREERDP_DEFAULT_PROJECT_VERSION}
 )
@@ -84,27 +84,12 @@ if (CHANNEL_TSMF_CLIENT)
 	)
 endif()
 
-if(WITH_CLIENT_INTERFACE)
-	if(CLIENT_INTERFACE_SHARED)
-		add_library(${PROJECT_NAME} SHARED ${SRCS})
-		if (WITH_LIBRARY_VERSIONING)
-			set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
-		endif()
-	else()
-		add_library(${PROJECT_NAME} ${SRCS})
-	endif()
-	target_include_directories(${PROJECT_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
-
+if(CLIENT_INTERFACE_SHARED)
+	AddTargetWithResourceFile(${PROJECT_NAME} "SHARED" "${PROJECT_VERSION}" SRCS)
 else()
-	list(APPEND SRCS
-		cli/xfreerdp.c xfreerdp.h
-	)
-	add_executable(${PROJECT_NAME} ${SRCS})
-	if (WITH_BINARY_VERSIONING)
-		set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}${PROJECT_VERSION_MAJOR}")
-	endif()
-	include_directories(..)
+	AddTargetWithResourceFile(${PROJECT_NAME} "STATIC" "${PROJECT_VERSION}" SRCS)
 endif()
+target_include_directories(${PROJECT_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 
 set(LIBS
 	${X11_LIBRARIES}
@@ -233,13 +218,10 @@ if(WITH_IPP)
 	target_link_libraries(${PROJECT_NAME} PRIVATE ${IPP_LIBRARY_LIST})
 endif()
 
-option(WITH_CLIENT_INTERFACE "Build clients as a library with an interface" OFF)
 if(WITH_CLIENT_INTERFACE)
 	install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
-	add_subdirectory(cli)
-else()
-	install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 endif()
+add_subdirectory(cli)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/X11")
 

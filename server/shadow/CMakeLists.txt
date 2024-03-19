@@ -64,24 +64,7 @@ else()
 	include_directories(${PROJECT_BINARY_DIR}/rdtk/include)
 endif()
 
-# On windows create dll version information.
-# Vendor, product and year are already set in top level CMakeLists.txt
-if (WIN32)
-  set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
-  set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
-  set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
-  set (RC_VERSION_PATCH 0)
-  set (RC_VERSION_FILE "${CMAKE_SHARED_LIBRARY_PREFIX}${MODULE_NAME}${FREERDP_API_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}" )
-
-  configure_file(
-	${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-	${CMAKE_CURRENT_BINARY_DIR}/version.rc
-	@ONLY)
-
-list (APPEND SRCS ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-endif()
-
-add_library(${MODULE_NAME} ${SRCS})
+AddTargetWithResourceFile(${MODULE_NAME} "FALSE" "${FREERDP_VERSION}" SRCS)
 
 list(APPEND LIBS
 	freerdp
@@ -94,20 +77,10 @@ list(APPEND LIBS
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
-set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${FREERDP_VERSION_MAJOR})
-if (WITH_LIBRARY_VERSIONING)
-	  set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
-endif()
-
 install(TARGETS ${MODULE_NAME} COMPONENT server EXPORT FreeRDP-ShadowTargets
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-if (WITH_DEBUG_SYMBOLS AND MSVC)
-	get_target_property(OUTPUT_FILENAME ${MODULE_NAME} OUTPUT_NAME)
-	install(FILES ${PROJECT_BINARY_DIR}/${OUTPUT_FILENAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT symbols)
-endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 
@@ -126,21 +99,7 @@ elseif(APPLE AND NOT IOS)
 	add_subdirectory(Mac)
 endif()
 
-if (WIN32)
-  set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
-  set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
-  set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
-  set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
-
-  configure_file(
-	${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-	${CMAKE_CURRENT_BINARY_DIR}/version.rc
-	@ONLY)
-
-  set ( SRCS ${SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-endif()
-
-add_library(${MODULE_NAME} ${SRCS})
+AddTargetWithResourceFile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" SRCS)
 
 list(APPEND LIBS
 	freerdp-shadow-subsystem-impl
@@ -151,11 +110,6 @@ list(APPEND LIBS
 
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
-
-set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${FREERDP_API_VERSION})
-if (WITH_LIBRARY_VERSIONING)
-	set_target_properties(${MODULE_NAME} PROPERTIES VERSION ${FREERDP_VERSION} SOVERSION ${FREERDP_API_VERSION})
-endif()
 
 if (NOT BUILD_SHARED_LIBS)
 	install(TARGETS freerdp-shadow-subsystem-impl
@@ -169,12 +123,6 @@ install(TARGETS ${MODULE_NAME} COMPONENT server EXPORT FreeRDP-ShadowTargets
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-if (WITH_DEBUG_SYMBOLS AND MSVC)
-	get_target_property(OUTPUT_FILENAME ${MODULE_NAME} OUTPUT_NAME)
-	install(FILES ${PROJECT_BINARY_DIR}/${OUTPUT_FILENAME}.pdb DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		COMPONENT symbols)
-endif()
-
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 
 # command-line executable
@@ -184,46 +132,20 @@ set(MODULE_NAME "freerdp-shadow-cli")
 set(SRCS
 	shadow.c)
 
-# On windows create dll version information.
-# Vendor, product and year are already set in top level CMakeLists.txt
-if (WIN32)
-  set (RC_VERSION_MAJOR ${FREERDP_VERSION_MAJOR})
-  set (RC_VERSION_MINOR ${FREERDP_VERSION_MINOR})
-  set (RC_VERSION_BUILD ${FREERDP_VERSION_REVISION})
-  set (RC_VERSION_FILE "${MODULE_NAME}${CMAKE_EXECUTABLE_SUFFIX}" )
-
-  configure_file(
-	${PROJECT_SOURCE_DIR}/cmake/WindowsDLLVersion.rc.in
-	${CMAKE_CURRENT_BINARY_DIR}/version.rc
-	@ONLY)
-
-  set ( SRCS ${SRCS} ${CMAKE_CURRENT_BINARY_DIR}/version.rc)
-endif()
-
-add_executable(${MODULE_NAME} ${SRCS})
-
-set(MANPAGE_NAME "${MODULE_NAME}")
-if (WITH_BINARY_VERSIONING)
-	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${FREERDP_API_VERSION}")
-	set(MANPAGE_NAME "${MODULE_NAME}${FREERDP_API_VERSION}")
-endif()
+AddTargetWithResourceFile(${MODULE_NAME} TRUE "${FREERDP_VERSION}" SRCS)
 
 list(APPEND LIBS freerdp-shadow-subsystem freerdp-shadow freerdp winpr)
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
 
 install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT server)
-if (WITH_DEBUG_SYMBOLS AND MSVC)
-	install(FILES ${PROJECT_BINARY_DIR}/${MODULE_NAME}.pdb DESTINATION ${CMAKE_INSTALL_BINDIR}
-		COMPONENT symbols)
-endif()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "Server/shadow")
 
 include(pkg-config-install-prefix)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/freerdp-shadow.pc.in ${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow${FREERDP_VERSION_MAJOR}.pc @ONLY)
-configure_file(freerdp-shadow-cli.1.in ${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.1)
-install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${MANPAGE_NAME}.1 1)
+
+generate_and_install_freerdp_man_from_template(${MODULE_NAME} "1" "${FREERDP_API_VERSION}")
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/freerdp-shadow${FREERDP_VERSION_MAJOR}.pc DESTINATION ${PKG_CONFIG_PC_INSTALL_DIR})
 

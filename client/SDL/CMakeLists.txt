@@ -46,7 +46,7 @@ option(WITH_WIN_CONSOLE "Build ${PROJECT_NAME} with console support" ON)
 option(WITH_SDL_LINK_SHARED "link SDL dynamic or static" ON)
 
 if(WITH_WIN_CONSOLE)
-  set(WIN32_GUI_FLAG "")
+  set(WIN32_GUI_FLAG "TRUE")
 else()
   set(WIN32_GUI_FLAG "WIN32")
 endif()
@@ -113,14 +113,8 @@ else()
     list(APPEND LIBS ${SDL2_LIBRARIES})
 endif()
 
-add_executable(${PROJECT_NAME}
-	${WIN32_GUI_FLAG}
-	${SRCS}
-    )
+AddTargetWithResourceFile(${PROJECT_NAME} "${WIN32_GUI_FLAG}" "${PROJECT_VERSION}" SRCS)
 
-if (WITH_BINARY_VERSIONING)
-	set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}${PROJECT_VERSION_MAJOR}")
-endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/SDL")
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
