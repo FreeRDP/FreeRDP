@@ -491,13 +491,13 @@ static BOOL createChildSessionTransport(HANDLE* pFile)
 		 * so add it if it's not there
 		 */
 		size_t len = _wcslen(pipePath);
-		if (len > 0x80 - (8 + 1))
+		if (len > 0x80 - (4 + 1))
 		{
 			WLog_ERR(TAG, "pipePath is too long to be adjusted");
 			goto out;
 		}
 
-		memmove(pipePath + 8, pipePath, (len + 1) * sizeof(WCHAR));
+		memmove(pipePath + 4, pipePath, (len + 1) * sizeof(WCHAR));
 		memcpy(pipePath, startOfPath, 8);
 	}
 
