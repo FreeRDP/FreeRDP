@@ -48,13 +48,11 @@ include(CommonConfigOptions)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_library(${PROJECT_NAME} SHARED
+set(SRCS
 	bitmap-filter.cpp
 )
+AddTargetWithResourceFile(${PROJECT_NAME} FALSE "${PROJECT_VERSION}" SRCS FALSE)
 
 target_link_libraries(${PROJECT_NAME} winpr freerdp)
-
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
-set_target_properties(${PROJECT_NAME} PROPERTIES NO_SONAME 1)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION ${FREERDP_PROXY_PLUGINDIR})

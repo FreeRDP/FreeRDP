@@ -34,4 +34,4 @@ include(GNUInstallDirsWrapper)
 include(MSVCRuntime)
 include(ConfigureRPATH)
 include(ClangTidy)
-
+include(AddTargetWithResourceFile)

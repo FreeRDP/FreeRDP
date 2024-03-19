@@ -25,10 +25,7 @@ include_directories(${X11_INCLUDE_DIR})
 set(SRCS
 	rdtk_x11.c)
 
-add_executable(${MODULE_NAME} ${SRCS})
-if (WITH_BINARY_VERSIONING)
-	set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME "${MODULE_NAME}${RDTK_API_VERSION}")
-endif()
+AddTargetWithResourceFile(${MODULE_NAME} TRUE "${RDTK_VERSION}" SRCS)
 
 set(LIBS rdtk)
 

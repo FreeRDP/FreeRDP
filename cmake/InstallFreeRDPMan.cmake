@@ -7,11 +7,27 @@ function(install_freerdp_man manpage section)
 	endif()
 endfunction()
 
-function(generate_and_install_freerdp_man_from_xml template manpage dependencies)
+function(generate_and_install_freerdp_man_from_template name_base section api)
 	if(WITH_MANPAGES)
-		find_program(XSLTPROC_EXECUTABLE NAMES xsltproc REQUIRED)
-		if (NOT DOCBOOKXSL_FOUND)
-			message(FATAL_ERROR "docbook xsl not found but required for manpage generation")
+		if (WITH_BINARY_VERSIONING)
+			set(manpage "${CMAKE_CURRENT_BINARY_DIR}/${name_base}${api}.${section}")
+		else()
+			set(manpage "${CMAKE_CURRENT_BINARY_DIR}/${name_base}.${section}")
+		endif()
+		configure_file(${name_base}.${section}.in ${manpage})
+		install_freerdp_man(${manpage} ${section})
+	endif()
+endfunction()
+
+function(generate_and_install_freerdp_man_from_xml name_base section api dependencies)
+	if(WITH_MANPAGES)
+		set(template "${name_base}.${section}")
+		if (WITH_BINARY_VERSIONING)
+			set(MANPAGE_NAME "${name_base}${api}")
+			set(manpage "${name_base}${api}.${section}")
+		else()
+			set(MANPAGE_NAME "${name_base}")
+			set(manpage "${name_base}.${section}")
 		endif()
 
 		# We need the variable ${MAN_TODAY} to contain the current date in ISO
@@ -34,8 +50,13 @@ function(generate_and_install_freerdp_man_from_xml template manpage dependencies
 			endif()
 		endforeach()
 
+		find_program(XSLTPROC_EXECUTABLE NAMES xsltproc REQUIRED)
+		if (NOT DOCBOOKXSL_FOUND)
+			message(FATAL_ERROR "docbook xsl not found but required for manpage generation")
+		endif()
+
 		add_custom_command(
-					OUTPUT ${manpage}
+                                        OUTPUT "${manpage}"
 					COMMAND ${CMAKE_BINARY_DIR}/client/common/man/generate_argument_docbook
 					COMMAND ${XSLTPROC_EXECUTABLE} --path "${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}" ${DOCBOOKXSL_DIR}/manpages/docbook.xsl ${manpage}.xml
 					WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -50,6 +71,6 @@ function(generate_and_install_freerdp_man_from_xml template manpage dependencies
 			DEPENDS
 				${manpage}
 			)
-		install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${manpage} 1)
+		install_freerdp_man(${CMAKE_CURRENT_BINARY_DIR}/${manpage} ${section})
 	endif()
 endfunction()

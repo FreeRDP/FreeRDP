@@ -670,12 +670,6 @@ fail:
 	return ret;
 }
 
-#else
-
-#ifdef _MSC_VER
-#pragma comment(lib, "shlwapi.lib")
-#endif
-
 #endif
 
 BOOL winpr_MoveFile(LPCSTR lpExistingFileName, LPCSTR lpNewFileName)

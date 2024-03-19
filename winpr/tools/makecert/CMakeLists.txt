@@ -32,13 +32,7 @@ endif()
 winpr_tools_module_add(${${MODULE_PREFIX}_SRCS})
 
 if(OPENSSL_FOUND)
-	if(WIN32)
-		list(APPEND ${MODULE_PREFIX}_LIBS ${OPENSSL_LIBRARIES})
-	else()
-		# if ${OPENSSL_LIBRARIES} libssl and libcrypto is linked
-		# therefor explicitly link against libcrypto
-		list(APPEND ${MODULE_PREFIX}_LIBS ${OPENSSL_CRYPTO_LIBRARIES})
-	endif()
+	list(APPEND ${MODULE_PREFIX}_LIBS ${OPENSSL_LIBRARIES})
 endif()
 
 if(MBEDTLS_FOUND)
