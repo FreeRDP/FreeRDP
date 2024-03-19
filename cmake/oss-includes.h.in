@@ -1,0 +1,6 @@
+#ifndef OSS_INCLUDES_H_
+#define OSS_INCLUDES_H_
+
+#include <@OSS_HDR_NAME@>
+
+#endif /* OSS_INCLUDES_H_ */
