@@ -59,12 +59,6 @@ endif()
 # Include our extra modules
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/)
 
-if((CMAKE_SYSTEM_NAME MATCHES "WindowsStore") AND (CMAKE_SYSTEM_VERSION MATCHES "10.0"))
-	set(UWP 1)
-	add_definitions("-D_UWP")
-	set(CMAKE_WINDOWS_VERSION "WIN10")
-endif()
-
 # Check for cmake compatibility (enable/disable features)
 include(CheckCmakeCompat)
 
@@ -212,16 +206,6 @@ endif(EXPORT_ALL_SYMBOLS)
 if(FREEBSD)
 	find_path(EPOLLSHIM_INCLUDE_DIR NAMES sys/epoll.h sys/timerfd.h HINTS /usr/local/include/libepoll-shim)
 	find_library(EPOLLSHIM_LIBS NAMES epoll-shim libepoll-shim HINTS /usr/local/lib)
-endif()
-
-# Enable 64bit file support on linux and FreeBSD.
-if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux" OR FREEBSD)
-	add_definitions("-D_FILE_OFFSET_BITS=64")
-endif()
-
-# Use Standard conforming getpwnam_r() on Solaris.
-if("${CMAKE_SYSTEM_NAME}" MATCHES "SunOS")
-	add_definitions("-D_POSIX_PTHREAD_SEMANTICS")
 endif()
 
 # Compiler-specific flags

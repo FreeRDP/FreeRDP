@@ -36,14 +36,6 @@
 
 #include <stdlib.h>
 
-#if defined(__APPLE__)
-#include <malloc/malloc.h>
-#elif defined(__FreeBSD__) || defined(__OpenBSD__)
-#include <stdlib.h>
-#else
-#include <malloc.h>
-#endif
-
 #include "../log.h"
 #define TAG WINPR_TAG("crt")
 
@@ -108,7 +100,7 @@ void* winpr_aligned_offset_malloc(size_t size, size_t alignment, size_t offset)
 	/* malloc size + alignment to make sure we can align afterwards */
 #if defined(_ISOC11_SOURCE)
 	base = aligned_alloc(alignment, alignsize);
-#elif _POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600
+#elif defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200112L) || (_XOPEN_SOURCE >= 600)
 	if (posix_memalign(&base, alignment, alignsize) != 0)
 		return NULL;
 #else
