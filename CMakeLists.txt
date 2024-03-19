@@ -68,7 +68,6 @@ if(WITH_CLANG_FORMAT)
 endif()
 
 include(CompilerFlags)
-include(DetectBSD)
 include(CheckIncludeFiles)
 include(CheckLibraryExists)
 include(CheckSymbolExists)
@@ -778,18 +777,6 @@ endif()
 
 
 add_subdirectory(libfreerdp)
-
-if(BSD)
-	if(IS_DIRECTORY /usr/local/include)
-		include_directories(/usr/local/include)
-		link_directories(/usr/local/lib)
-	endif()
-	if(OPENBSD)
-		if(IS_DIRECTORY /usr/X11R6/include)
-			include_directories(/usr/X11R6/include)
-		endif()
-	endif()
-endif()
 
 if(WITH_CHANNELS)
 	add_subdirectory(channels)

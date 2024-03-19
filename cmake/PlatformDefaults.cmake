@@ -3,7 +3,7 @@
 #
 # Compilation will fail without a replacement defining the symbols, but that can be
 # done by supplying a TOOLCHAIN_FILE defining these.
-option(USE_PLATFORM_DEFAULT "Use this configuration file for platform defaults. Supply -DCMAKE_TOOLCHAIN_FILE=<yourfile> otherwise." ON)
+option(USE_PLATFORM_DEFAULT "Use this configuration file for platform defaults. Supply -DCMAKE_TOOLCHAIN_FILE=<yourfile>." ON)
 if (USE_PLATFORM_DEFAULT)
     # default defines or other required preferences per platform
     if((CMAKE_SYSTEM_NAME MATCHES "WindowsStore") AND (CMAKE_SYSTEM_VERSION MATCHES "10.0"))
@@ -19,6 +19,8 @@ if (USE_PLATFORM_DEFAULT)
     endif()
 
     if("${CMAKE_SYSTEM_NAME}" MATCHES "FreeBSD")
+        set(BSD TRUE CACHE INTERNAL "platform default")
+        set(FREEBSD TRUE CACHE INTERNAL "platform default")
         # we want POSIX 2008. FreeBSD 14 does only support 2001 fully, but the subset we require from 2008
         # is implemented, so ignore _POSIX_VERSION from unistd.h
         add_definitions("-D_POSIX_C_SOURCE=200809L")
@@ -49,6 +51,35 @@ if (USE_PLATFORM_DEFAULT)
         # as _POSIX_C_SOURCE sets a fully POSIX confirmant environment reenable
         # MacOS API visibility by defining the following feature test macro
         add_definitions("-D_DARWIN_C_SOURCE")
+    endif()
+
+    if(${CMAKE_SYSTEM_NAME} MATCHES "kFreeBSD")
+        set(BSD TRUE CACHE INTERNAL "platform default")
+        set(KFREEBSD TRUE CACHE INTERNAL "platform default")
+        add_definitions(-DKFREEBSD)
+        add_definitions("-D_GNU_SOURCE")
+	endif()
+
+    if(${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
+        set(BSD TRUE CACHE INTERNAL "platform default")
+        set(OPENBSD TRUE CACHE INTERNAL "platform default")
+	endif()
+
+    if(${CMAKE_SYSTEM_NAME} MATCHES "DragonFly")
+        set(BSD TRUE CACHE INTERNAL "platform default")
+        set(FREEBSD TRUE CACHE INTERNAL "platform default")
+
+        # we want POSIX 2008. FreeBSD 14 does only support 2001 fully, but the subset we require from 2008
+        # is implemented, so ignore _POSIX_VERSION from unistd.h
+        add_definitions("-D_POSIX_C_SOURCE=200809L")
+        # TODO: FreeBSD allows mixing POSIX and BSD API calls if we do not set
+        # _POSIX_C_SOURCE but lack a macro to reenable the BSD calls...
+        add_definitions("-D__BSD_VISIBLE")
+
+        # There are some symbols only visible for XOpen standard
+        add_definitions("-D_XOPEN_SOURCE=700")
+        add_definitions("-D_FILE_OFFSET_BITS=64")
+        set(WINPR_TIMEZONE_FILE "/var/db/zoneinfo")
     endif()
 
     # define a fallback for systems that do not support a timezone file or we did not yet test.

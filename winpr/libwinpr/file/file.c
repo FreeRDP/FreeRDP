@@ -23,11 +23,6 @@
 #include <winpr/debug.h>
 #include <winpr/assert.h>
 
-#if defined(__FreeBSD_kernel__) && defined(__GLIBC__)
-#define _GNU_SOURCE
-#define KFREEBSD
-#endif
-
 #include <winpr/wtypes.h>
 #include <winpr/crt.h>
 #include <winpr/file.h>
