@@ -82,11 +82,22 @@ if (USE_PLATFORM_DEFAULT)
         set(WINPR_TIMEZONE_FILE "/var/db/zoneinfo")
     endif()
 
+    if(BSD)
+        if(IS_DIRECTORY /usr/local/include)
+            include_directories(/usr/local/include)
+            link_directories(/usr/local/lib)
+        endif()
+        if(OPENBSD)
+            if(IS_DIRECTORY /usr/X11R6/include)
+                include_directories(/usr/X11R6/include)
+            endif()
+        endif()
+    endif()
+
     # define a fallback for systems that do not support a timezone file or we did not yet test.
     # since most of these are BSD try a sensible default
     if (NOT WINPR_TIMEZONE_FILE)
         set(WINPR_TIMEZONE_FILE "/var/db/zoneinfo")
     endif()
-
     add_definitions("-DWINPR_TIMEZONE_FILE=\"${WINPR_TIMEZONE_FILE}\"")
 endif()
