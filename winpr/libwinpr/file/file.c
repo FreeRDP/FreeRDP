@@ -21,6 +21,7 @@
 
 #include <winpr/config.h>
 #include <winpr/debug.h>
+#include <winpr/assert.h>
 
 #if defined(__FreeBSD_kernel__) && defined(__GLIBC__)
 #define _GNU_SOURCE
@@ -565,100 +566,114 @@ static UINT64 FileTimeToUS(const FILETIME* ft)
 	return tmp;
 }
 
+#if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200809L)
+static struct timespec filetimeToTimespec(const FILETIME* ftime)
+{
+	WINPR_ASSERT(ftime);
+	UINT64 tmp = FileTimeToUS(ftime);
+	struct timespec ts = { 0 };
+	ts.tv_sec = tmp / 1000000ULL;
+	ts.tv_nsec = (tmp % 1000000ULL) * 1000ULL;
+	return ts;
+}
+
 static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
                             const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime)
 {
-	int rc = 0;
-#if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__) || defined(KFREEBSD)
-	struct stat buf;
-	/* OpenBSD, NetBSD and DragonflyBSD support POSIX futimens */
-	struct timeval timevals[2];
-#else
-	struct timespec times[2]; /* last access, last modification */
-#endif
+	struct timespec times[2] = { { UTIME_OMIT, UTIME_OMIT },
+		                         { UTIME_OMIT, UTIME_OMIT } }; /* last access, last modification */
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
 
 	if (!hFile)
 		return FALSE;
 
-#if defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__) || defined(KFREEBSD)
-	rc = fstat(fileno(pFile->fp), &buf);
+	if (lpLastAccessTime)
+		times[0] = filetimeToTimespec(lpLastAccessTime);
 
-	if (rc < 0)
-		return FALSE;
-
-#endif
-
-	if (!lpLastAccessTime)
-	{
-#if defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
-		timevals[0].tv_sec = buf.st_atime;
-#ifdef _POSIX_SOURCE
-		TIMESPEC_TO_TIMEVAL(&timevals[0], &buf.st_atim);
-#else
-		TIMESPEC_TO_TIMEVAL(&timevals[0], &buf.st_atimespec);
-#endif
-#elif defined(ANDROID)
-		timevals[0].tv_sec = buf.st_atime;
-		timevals[0].tv_usec = buf.st_atimensec / 1000UL;
-#else
-		times[0].tv_sec = UTIME_OMIT;
-		times[0].tv_nsec = UTIME_OMIT;
-#endif
-	}
-	else
-	{
-		UINT64 tmp = FileTimeToUS(lpLastAccessTime);
-#if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
-		timevals[0].tv_sec = tmp / 1000000ULL;
-		timevals[0].tv_usec = tmp % 1000000ULL;
-#else
-		times[0].tv_sec = tmp / 1000000ULL;
-		times[0].tv_nsec = (tmp % 1000000ULL) * 1000ULL;
-#endif
-	}
-
-	if (!lpLastWriteTime)
-	{
-#if defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
-		timevals[1].tv_sec = buf.st_mtime;
-#ifdef _POSIX_SOURCE
-		TIMESPEC_TO_TIMEVAL(&timevals[1], &buf.st_mtim);
-#else
-		TIMESPEC_TO_TIMEVAL(&timevals[1], &buf.st_mtimespec);
-#endif
-#elif defined(ANDROID)
-		timevals[1].tv_sec = buf.st_mtime;
-		timevals[1].tv_usec = buf.st_mtimensec / 1000UL;
-#else
-		times[1].tv_sec = UTIME_OMIT;
-		times[1].tv_nsec = UTIME_OMIT;
-#endif
-	}
-	else
-	{
-		UINT64 tmp = FileTimeToUS(lpLastWriteTime);
-#if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
-		timevals[1].tv_sec = tmp / 1000000ULL;
-		timevals[1].tv_usec = tmp % 1000000ULL;
-#else
-		times[1].tv_sec = tmp / 1000000ULL;
-		times[1].tv_nsec = (tmp % 1000000ULL) * 1000ULL;
-#endif
-	}
+	if (lpLastWriteTime)
+		times[1] = filetimeToTimespec(lpLastWriteTime);
 
 	// TODO: Creation time can not be handled!
-#if defined(ANDROID) || defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
-	rc = utimes(pFile->lpFileName, timevals);
-#else
-	rc = futimens(fileno(pFile->fp), times);
-#endif
-
+	const int rc = futimens(fileno(pFile->fp), times);
 	if (rc != 0)
 		return FALSE;
 
 	return TRUE;
 }
+#elif defined(__APPLE__) || defined(ANDROID) || defined(__FreeBSD__) || defined(KFREEBSD)
+static struct timeval filetimeToTimeval(const FILETIME* ftime)
+{
+	WINPR_ASSERT(ftime);
+	UINT64 tmp = FileTimeToUS(ftime);
+	struct timeval tv = { 0 };
+	tv.tv_sec = tmp / 1000000ULL;
+	tv.tv_usec = tmp % 1000000ULL;
+	return tv;
+}
+
+static struct timeval statToTimeval(const struct stat* sval)
+{
+	WINPR_ASSERT(sval);
+	struct timeval tv = { 0 };
+#if defined(__FreeBSD__) || defined(__APPLE__) || defined(KFREEBSD)
+	tv.tv_sec = sval->st_atime;
+#ifdef _POSIX_SOURCE
+	TIMESPEC_TO_TIMEVAL(&tv, &sval->st_atim);
+#else
+	TIMESPEC_TO_TIMEVAL(&tv, &sval->st_atimespec);
+#endif
+#elif defined(ANDROID)
+	tv.tv_sec = sval->st_atime;
+	tv.tv_usec = sval->st_atimensec / 1000UL;
+#endif
+	return tv;
+}
+
+static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
+                            const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime)
+{
+	struct stat buf = { 0 };
+	/* OpenBSD, NetBSD and DragonflyBSD support POSIX futimens */
+	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
+
+	if (!hFile)
+		return FALSE;
+
+	const int rc = fstat(fileno(pFile->fp), &buf);
+	if (rc < 0)
+		return FALSE;
+
+	struct timeval timevals[2] = { statToTimeval(&buf), statToTimeval(&buf) };
+	if (lpLastAccessTime)
+		timevals[0] = filetimeToTimeval(lpLastAccessTime);
+
+	if (lpLastWriteTime)
+		timevals[1] = filetimeToTimeval(lpLastWriteTime);
+
+	// TODO: Creation time can not be handled!
+	{
+		const int rc = utimes(pFile->lpFileName, timevals);
+		if (rc != 0)
+			return FALSE;
+	}
+
+	return TRUE;
+}
+#else
+static BOOL FileSetFileTime(HANDLE hFile, const FILETIME* lpCreationTime,
+                            const FILETIME* lpLastAccessTime, const FILETIME* lpLastWriteTime)
+{
+	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
+
+	if (!hFile)
+		return FALSE;
+
+	WLog_WARN(TAG, "TODO: Creation, Access and Write time can not be handled!");
+	WLog_WARN(TAG,
+	          "TODO: Define _POSIX_C_SOURCE >= 200809L or implement a platform specific handler!");
+	return TRUE;
+}
+#endif
 
 static HANDLE_OPS fileOps = {
 	FileIsHandled,
