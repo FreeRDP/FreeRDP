@@ -4,17 +4,17 @@ if((CMAKE_SYSTEM_NAME MATCHES "WindowsStore") AND (CMAKE_SYSTEM_VERSION MATCHES 
 	add_definitions("-D_UWP")
     set(CMAKE_WINDOWS_VERSION "WIN10" CACHE STRING "platform default")
 endif()
-# Enable 64bit file support on linux and FreeBSD.
+
 if("${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
 	add_definitions("-D_FILE_OFFSET_BITS=64")
+    add_definitions("-DWINPR_TIMEZONE_FILE=\"/etc/timezone\"")
 endif()
 
-if("${CMAKE_SYSTEM_NAME}" MATCHES FREEBSD)
+if("${CMAKE_SYSTEM_NAME}" MATCHES "FreeBSD")
 	add_definitions("-D_FILE_OFFSET_BITS=64")
+    add_definitions("-DWINPR_TIMEZONE_FILE=\"/var/db/zoneinfo\"")
 endif()
 
-# Use Standard conforming getpwnam_r() on Solaris.
-# Use Standard conforming getpwnam_r() on Solaris.
 if("${CMAKE_SYSTEM_NAME}" MATCHES "SunOS")
 	add_definitions("-D_POSIX_PTHREAD_SEMANTICS")
     list(APPEND CMAKE_STANDARD_LIBRARIES rt)
