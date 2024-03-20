@@ -9,10 +9,15 @@
 	},
 	"command": "freerdp.sh",
 	"cleanup": [
+		"*.a",
 		"*.la",
 		"/include",
 		"/lib/cmake",
-		"/lib/pkgconfig"
+		"/lib/pkgconfig",
+		"/sbin",
+		"/share/doc",
+		"/share/examples",
+		"/share/man"
 	],
 	"finish-args": [
 		"--device=dri",
@@ -42,6 +47,7 @@
 		}
 	},
 	"modules": [
+		"modules/openssl.json",
 		"modules/libusb.json",
 		"modules/uriparser.json",
 		"modules/cJSON.json",
