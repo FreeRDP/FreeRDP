@@ -1,0 +1,17 @@
+{
+	"name": "openssl",
+	"buildsystem": "simple",
+	"build-commands": [
+		"./config --prefix=/app --openssldir=/app --libdir=lib shared",
+		"make -j build_sw",
+		"make -j install_sw"
+	],
+	"cleanup": [],
+	"sources": [
+		{
+			"type": "archive",
+			"url": "https://openssl.org/source/openssl-3.1.5.tar.gz",
+			"sha256": "6ae015467dabf0469b139ada93319327be24b98251ffaeceda0221848dc09262"
+		}
+	]
+}
