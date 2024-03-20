@@ -589,3 +589,31 @@ BOOL rail_is_extended_spi_supported(UINT32 channelFlags)
 {
 	return (channelFlags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED) ? TRUE : FALSE;
 }
+
+const char* rail_handshake_ex_flags_to_string(UINT32 flags, char* buffer, size_t len)
+{
+	if (len < 1)
+		return NULL;
+
+	_snprintf(buffer, len, "{");
+	char* fbuffer = &buffer[1];
+	len--;
+
+	if (flags & TS_RAIL_ORDER_HANDSHAKEEX_FLAGS_HIDEF)
+		winpr_str_append("HIDEF", fbuffer, len, "|");
+	if (flags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_SUPPORTED)
+		winpr_str_append("EXTENDED_SPI_SUPPORTED", fbuffer, len, "|");
+	if (flags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_SNAP_ARRANGE_SUPPORTED)
+		winpr_str_append("SNAP_ARRANGE_SUPPORTED", fbuffer, len, "|");
+	if (flags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_TEXT_SCALE_SUPPORTED)
+		winpr_str_append("TEXT_SCALE_SUPPORTED", fbuffer, len, "|");
+	if (flags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_CARET_BLINK_SUPPORTED)
+		winpr_str_append("CARET_BLINK_SUPPORTED", fbuffer, len, "|");
+	if (flags & TS_RAIL_ORDER_HANDSHAKE_EX_FLAGS_EXTENDED_SPI_2_SUPPORTED)
+		winpr_str_append("EXTENDED_SPI_2_SUPPORTED", fbuffer, len, "|");
+
+	char number[16] = { 0 };
+	_snprintf(number, sizeof(number), "[0x%08" PRIx32 "]", flags);
+	winpr_str_append(number, buffer, len, "}");
+	return buffer;
+}

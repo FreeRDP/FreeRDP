@@ -583,6 +583,9 @@ typedef enum
 	FREERDP_API BOOL utf8_string_to_rail_string(const char* string,
 	                                            RAIL_UNICODE_STRING* unicode_string);
 
+	FREERDP_API const char* rail_handshake_ex_flags_to_string(UINT32 flags, char* buffer,
+	                                                          size_t len);
+
 #ifdef __cplusplus
 }
 #endif
