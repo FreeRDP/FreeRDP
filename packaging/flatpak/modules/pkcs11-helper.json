@@ -1,0 +1,21 @@
+{
+	"name": "pkcs11-helper",
+	"buildsystem": "autotools",
+	"cleanup": [],
+	"config-opts": [],
+	"sources": [
+		{
+			"type": "git",
+			"url": "https://github.com/OpenSC/pkcs11-helper.git",
+			"tag": "pkcs11-helper-1.30.0",
+			"commit": "8bed16034f629a0361fa8ff89deed2b43dc45d8b"
+		},
+		{
+			"type": "script",
+			"dest-filename": "autogen.sh",
+			"commands": [
+				"autoreconf -vfi"
+			]
+		}
+	]
+}

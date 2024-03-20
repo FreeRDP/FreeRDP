@@ -15,6 +15,7 @@
 		"/lib/pkgconfig"
 	],
 	"finish-args": [
+		"--device=dri",
 		/* X11 + XShm access */
 		"--share=ipc",
 		"--socket=x11",
@@ -36,19 +37,19 @@
 		},
 		"org.freedesktop.Platform.openh264": {
 			"directory": "lib/openh264",
-			"version": "2.3.1",
+			"version": "2.4.1",
 			"add-ld-path": "."
 		}
 	},
 	"modules": [
 		"modules/libusb.json",
 		"modules/uriparser.json",
-		"modules/cJSON-1.7.16.json",
-		"modules/xprop-1.2.6.json",
-		"modules/pcsc-1.9.9.json",
-		"modules/pkcs11-helper-1.29.0.json",
-		"modules/krb5-1.21.1.json",
-		"modules/opensc-0.23.0.json",
+		"modules/cJSON.json",
+		"modules/xprop.json",
+		"modules/pcsc.json",
+		"modules/pkcs11-helper.json",
+		"modules/krb5.json",
+		"modules/opensc.json",
 		{
 			"name": "freerdp",
 			"buildsystem": "cmake-ninja",

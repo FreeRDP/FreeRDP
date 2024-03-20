@@ -1,0 +1,23 @@
+{
+	"name": "pcsc",
+	"config-opts": [
+		"--disable-libsystemd",
+		"--enable-pic",
+		"--disable-libusb",
+		"--disable-polkit",
+		"--enable-shared",
+		"--with-systemdsystemunitdir=/app/lib/systemd/"
+	],
+	"sources": [
+		{
+			"type": "git",
+			"url": "https://github.com/LudovicRousseau/PCSC.git",
+			"tag": "2.0.3",
+			"commit": "c4e7f6f9c6fe56fafd3f13c31fcc4f670ad6d022"
+		}
+	],
+	"cleanup": [
+		"/share/doc",
+		"/share/man"
+	]
+}
