@@ -469,6 +469,13 @@ static UINT rail_recv_handshake_ex_order(railPlugin* rail, wStream* s)
 	rail->channelBuildNumber = serverHandshake.buildNumber;
 	rail->channelFlags = serverHandshake.railHandshakeFlags;
 
+	{
+		char buffer[192] = { 0 };
+		WLog_DBG(TAG, "HandshakeFlags=%s [buildNumber=0x%08" PRIx32 "]",
+		         rail_handshake_ex_flags_to_string(rail->channelFlags, buffer, sizeof(buffer)),
+		         rail->channelBuildNumber);
+	}
+
 	if (rail->sendHandshake)
 	{
 		RAIL_HANDSHAKE_ORDER clientHandshake = { 0 };
