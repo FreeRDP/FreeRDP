@@ -1193,8 +1193,10 @@ BOOL freerdp_settings_set_value_for_name(rdpSettings* settings, const char* name
 
 		case RDP_SETTINGS_TYPE_BOOL:
 		{
-			BOOL val = _strnicmp(value, "TRUE", 5) == 0;
-			if (!val && _strnicmp(value, "FALSE", 6) != 0)
+			const BOOL val = (_strnicmp(value, "TRUE", 5) == 0) || (_strnicmp(value, "ON", 5) == 0);
+			const BOOL nval =
+			    (_strnicmp(value, "FALSE", 6) == 0) || (_strnicmp(value, "OFF", 6) == 0);
+			if (!val && !nval)
 				return parsing_fail(name, "BOOL", value);
 			return freerdp_settings_set_bool(settings, (FreeRDP_Settings_Keys_Bool)index, val);
 		}
