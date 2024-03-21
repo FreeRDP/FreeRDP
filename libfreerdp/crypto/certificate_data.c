@@ -176,43 +176,44 @@ void freerdp_certificate_data_free(rdpCertificateData* data)
 
 const char* freerdp_certificate_data_get_host(const rdpCertificateData* cert)
 {
-	WINPR_ASSERT(cert);
+	if (!cert)
+		return NULL;
 	return cert->hostname;
 }
 
 UINT16 freerdp_certificate_data_get_port(const rdpCertificateData* cert)
 {
-	WINPR_ASSERT(cert);
+	if (!cert)
+		return 0;
 	return cert->port;
 }
 
 const char* freerdp_certificate_data_get_pem(const rdpCertificateData* cert)
 {
-	WINPR_ASSERT(cert);
-	WINPR_ASSERT(cert->cached_pem);
-
+	if (!cert)
+		return NULL;
 	return cert->cached_pem;
 }
 
 const char* freerdp_certificate_data_get_subject(const rdpCertificateData* cert)
 {
-	WINPR_ASSERT(cert);
-	WINPR_ASSERT(cert->cached_subject);
+	if (!cert)
+		return NULL;
 
 	return cert->cached_subject;
 }
 
 const char* freerdp_certificate_data_get_issuer(const rdpCertificateData* cert)
 {
-	WINPR_ASSERT(cert);
-	WINPR_ASSERT(cert->cached_issuer);
+	if (!cert)
+		return NULL;
 
 	return cert->cached_issuer;
 }
 const char* freerdp_certificate_data_get_fingerprint(const rdpCertificateData* cert)
 {
-	WINPR_ASSERT(cert);
-	WINPR_ASSERT(cert->cached_fingerprint);
+	if (!cert)
+		return NULL;
 
 	return cert->cached_fingerprint;
 }
@@ -241,8 +242,8 @@ BOOL freerdp_certificate_data_equal(const rdpCertificateData* a, const rdpCertif
 
 const char* freerdp_certificate_data_get_hash(const rdpCertificateData* cert)
 {
-	WINPR_ASSERT(cert);
-	WINPR_ASSERT(cert->cached_hash);
+	if (!cert)
+		return NULL;
 
 	return cert->cached_hash;
 }
