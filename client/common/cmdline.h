@@ -34,7 +34,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	  "desktop composition" },
 	{ "app", COMMAND_LINE_VALUE_REQUIRED,
 	  "program:[<path>|<||alias>],cmd:<command>,file:<filename>,guid:<guid>,icon:<filename>,name:<"
-	  "name>,workdir:<directory>",
+	  "name>,workdir:<directory>,hidef:[on|off]",
 	  NULL, NULL, -1, NULL, "Remote application program" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)
 	{ "app-cmd", COMMAND_LINE_VALUE_REQUIRED, "<parameters>", NULL, NULL, -1, NULL,

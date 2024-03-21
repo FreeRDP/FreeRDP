@@ -3582,18 +3582,18 @@ static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 		struct app_map
 		{
 			const char* name;
-			FreeRDP_Settings_Keys_String id;
+			SSIZE_T id;
 			int (*fkt)(rdpSettings* settings, const char* value);
 		};
-		const struct app_map amap[] = {
-			{ "program:", FreeRDP_RemoteApplicationProgram, parse_app_option_program },
-			{ "workdir:", FreeRDP_RemoteApplicationWorkingDir, NULL },
-			{ "name:", FreeRDP_RemoteApplicationName, NULL },
-			{ "icon:", FreeRDP_RemoteApplicationIcon, NULL },
-			{ "cmd:", FreeRDP_RemoteApplicationCmdLine, NULL },
-			{ "file:", FreeRDP_RemoteApplicationFile, NULL },
-			{ "guid:", FreeRDP_RemoteApplicationGuid, NULL },
-		};
+		const struct app_map amap[] = { { "program:", FreeRDP_RemoteApplicationProgram,
+			                              parse_app_option_program },
+			                            { "workdir:", FreeRDP_RemoteApplicationWorkingDir, NULL },
+			                            { "name:", FreeRDP_RemoteApplicationName, NULL },
+			                            { "icon:", FreeRDP_RemoteApplicationIcon, NULL },
+			                            { "cmd:", FreeRDP_RemoteApplicationCmdLine, NULL },
+			                            { "file:", FreeRDP_RemoteApplicationFile, NULL },
+			                            { "guid:", FreeRDP_RemoteApplicationGuid, NULL },
+			                            { "hidef:", FreeRDP_HiDefRemoteApp, NULL } };
 		for (size_t x = 0; x < count; x++)
 		{
 			BOOL handled = FALSE;
@@ -3607,8 +3607,12 @@ static int parse_app_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 					const char* xval = &val[strlen(cur->name)];
 					if (cur->fkt)
 						rc = cur->fkt(settings, xval);
-					else if (!freerdp_settings_set_string(settings, cur->id, xval))
-						rc = COMMAND_LINE_ERROR_MEMORY;
+					else
+					{
+						const char* name = freerdp_settings_get_name_for_key(cur->id);
+						if (!freerdp_settings_set_value_for_name(settings, name, xval))
+							rc = COMMAND_LINE_ERROR_MEMORY;
+					}
 
 					handled = TRUE;
 					break;
