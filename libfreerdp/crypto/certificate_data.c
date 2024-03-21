@@ -50,11 +50,21 @@ struct rdp_certificate_data
 	char* cached_pem;
 };
 
+/* ensure our hostnames (and therefore filenames) always use the same capitalization.
+ * the user might have input random case, but we always need to have a sane
+ * baseline to compare against. */
+static char* ensure_lowercase(char* str, size_t length)
+{
+	const size_t len = strnlen(str, length);
+	for (size_t x = 0; x < len; x++)
+		str[x] = tolower(str[x]);
+	return str;
+}
 static const char* freerdp_certificate_data_hash_(const char* hostname, UINT16 port, char* name,
                                                   size_t length)
 {
 	_snprintf(name, length, "%s_%" PRIu16 ".pem", hostname, port);
-	return name;
+	return ensure_lowercase(name, length);
 }
 
 static BOOL freerdp_certificate_data_load_cache(rdpCertificateData* data)
@@ -107,8 +117,7 @@ static rdpCertificateData* freerdp_certificate_data_new_nocopy(const char* hostn
 	certdata->hostname = _strdup(hostname);
 	if (!certdata->hostname)
 		goto fail;
-	for (size_t i = 0; i < strlen(hostname); i++)
-		certdata->hostname[i] = tolower(certdata->hostname[i]);
+	ensure_lowercase(certdata->hostname, strlen(certdata->hostname));
 
 	certdata->cert = xcert;
 	if (!freerdp_certificate_data_load_cache(certdata))
