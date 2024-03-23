@@ -200,7 +200,7 @@ static BOOL register_raw_events(xfContext* xfc, Window window)
 	settings = xfc->common.context.settings;
 	WINPR_ASSERT(settings);
 
-	if (freerdp_client_use_relative_mouse_events(&xfc->common))
+	if (freerdp_settings_get_bool(settings, FreeRDP_MouseUseRelativeMove))
 	{
 		XISetMask(mask_bytes, XI_RawMotion);
 		XISetMask(mask_bytes, XI_RawButtonPress);
@@ -780,21 +780,26 @@ int xf_input_event(xfContext* xfc, const XEvent* xevent, XIDeviceEvent* event, i
 	switch (evtype)
 	{
 		case XI_ButtonPress:
-			xfc->xi_event = TRUE;
-			xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
-			                       event->event, xfc->remote_app, TRUE);
-			break;
-
 		case XI_ButtonRelease:
-			xfc->xi_event = TRUE;
-			xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
-			                       event->event, xfc->remote_app, FALSE);
+			xfc->xi_event = !xfc->common.mouse_grabbed ||
+			                !freerdp_client_use_relative_mouse_events(&xfc->common);
+
+			if (xfc->xi_event)
+			{
+				xf_generic_ButtonEvent(xfc, (int)event->event_x, (int)event->event_y, event->detail,
+				                       event->event, xfc->remote_app, evtype == XI_ButtonPress);
+			}
 			break;
 
 		case XI_Motion:
-			xfc->xi_event = TRUE;
-			xf_generic_MotionNotify(xfc, (int)event->event_x, (int)event->event_y, event->detail,
-			                        event->event, xfc->remote_app);
+			xfc->xi_event = !xfc->common.mouse_grabbed ||
+			                !freerdp_client_use_relative_mouse_events(&xfc->common);
+
+			if (xfc->xi_event)
+			{
+				xf_generic_MotionNotify(xfc, (int)event->event_x, (int)event->event_y,
+				                        event->detail, event->event, xfc->remote_app);
+			}
 			break;
 		case XI_RawButtonPress:
 		case XI_RawButtonRelease:
