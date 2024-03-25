@@ -842,7 +842,11 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 	    0)
 	{
 		*retry = TRUE;
-		WLog_DBG(TAG, "Starting your VM. It may take up to 5 minutes");
+		const cJSON* message = cJSON_GetObjectItemCaseSensitive(json, "Message");
+		if (!cJSON_IsString(message) || !message->valuestring)
+			WLog_WARN(TAG, "Starting your VM. It may take up to 5 minutes");
+		else
+			WLog_WARN(TAG, "%s", message->valuestring);
 	}
 	else
 	{
