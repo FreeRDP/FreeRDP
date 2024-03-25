@@ -38,6 +38,9 @@ void sdl_OnChannelConnectedEventHandler(void* context, const ChannelConnectedEve
 
 	if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
+		auto rail = reinterpret_cast<RailClientContext*>(e->pInterface);
+		WINPR_ASSERT(rail);
+		sdl->rail.init(rail);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{
@@ -65,6 +68,9 @@ void sdl_OnChannelDisconnectedEventHandler(void* context, const ChannelDisconnec
 	// TODO: Set resizeable depending on disp channel and /dynamic-resolution
 	if (strcmp(e->name, RAIL_SVC_CHANNEL_NAME) == 0)
 	{
+		auto rail = reinterpret_cast<RailClientContext*>(e->pInterface);
+		WINPR_ASSERT(rail);
+		sdl->rail.uninit(rail);
 	}
 	else if (strcmp(e->name, CLIPRDR_SVC_CHANNEL_NAME) == 0)
 	{

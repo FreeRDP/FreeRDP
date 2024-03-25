@@ -77,7 +77,9 @@ enum
 	SDL_USEREVENT_CERT_RESULT,
 	SDL_USEREVENT_SHOW_RESULT,
 	SDL_USEREVENT_AUTH_RESULT,
-	SDL_USEREVENT_SCARD_RESULT
+	SDL_USEREVENT_SCARD_RESULT,
+
+	SDL_USEREVENT_RAILS_APPLY_STYLE
 };
 
 typedef struct
@@ -91,7 +93,7 @@ typedef struct
 	Sint32 result;
 } SDL_UserAuthArg;
 
-BOOL sdl_push_user_event(Uint32 type, ...);
+bool sdl_push_user_event(Uint32 type, ...);
 
 bool sdl_push_quit();
 
@@ -100,7 +102,7 @@ const char* sdl_event_type_str(Uint32 type);
 const char* sdl_error_string(Uint32 res);
 
 #define sdl_log_error(res, log, what) sdl_log_error_ex(res, log, what, __FILE__, __LINE__, __func__)
-BOOL sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file, size_t line,
+bool sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file, size_t line,
                       const char* fkt);
 
 std::string sdl_get_pref_dir();

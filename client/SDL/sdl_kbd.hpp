@@ -51,6 +51,10 @@ class sdlInput
 	static uint32_t prefKeyValue(const std::string& key, uint32_t fallback = SDL_SCANCODE_UNKNOWN);
 
   private:
+	sdlInput(const sdlInput& other) = delete;
+	sdlInput(sdlInput&& other) = delete;
+
+  private:
 	SdlContext* _sdl;
 	Uint32 _lastWindowID;
 };
