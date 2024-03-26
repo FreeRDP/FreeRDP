@@ -2133,6 +2133,8 @@ wf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 			globlemem = (char*)GlobalLock(hClipdata);
 			size = (int)GlobalSize(hClipdata);
 			buff = malloc(size);
+			if (buff == NULL)
+				return ERROR_INTERNAL_ERROR;
 			CopyMemory(buff, globlemem, size);
 			GlobalUnlock(hClipdata);
 			CloseClipboard();
