@@ -333,7 +333,9 @@ BOOL sdlDispContext::handle_window_event(const SDL_WindowEvent* ev)
 {
 	WINPR_ASSERT(ev);
 
-	auto bordered = freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_Decorations)
+	bool decorations = freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_Decorations) != 0;
+	bool multimon = freerdp_settings_get_bool(_sdl->context()->settings, FreeRDP_UseMultimon) != 0;
+	auto bordered = decorations && !multimon
 	                    ? SDL_TRUE
 	                    : SDL_FALSE;
 
