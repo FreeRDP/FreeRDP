@@ -417,6 +417,10 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 			resolution += "@" + sharedPreferences.getInt("bookmark.colors", 16);
 			findPreference("bookmark.screen").setSummary(resolution);
 		}
+		else if (key.equals("bookmark.scale"))
+		{
+			String scale = String.valueOf(sharedPreferences.getInt("bookmark.scale", 100));
+		}
 	}
 
 	private void initAdvancedSettings(SharedPreferences sharedPreferences)
@@ -495,6 +499,7 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 		screenSettingsChanged(sharedPreferences, "bookmark.resolution");
 		screenSettingsChanged(sharedPreferences, "bookmark.width");
 		screenSettingsChanged(sharedPreferences, "bookmark.height");
+		screenSettingsChanged(sharedPreferences, "bookmark.scale");
 	}
 
 	private void initScreenSettings3G(SharedPreferences sharedPreferences)
@@ -539,6 +544,10 @@ public class BookmarkActivity extends PreferenceActivity implements OnSharedPref
 			findPreference(key).setSummary(String.valueOf(sharedPreferences.getInt(key, 800)));
 		else if (key.equals("bookmark.height") || key.equals("bookmark.height_3g"))
 			findPreference(key).setSummary(String.valueOf(sharedPreferences.getInt(key, 600)));
+		else if (key.equals("bookmark.scale"))
+		{
+			findPreference(key).setSummary(String.valueOf(sharedPreferences.getInt(key, 100)));
+		}
 	}
 
 	private void initDebugSettings(SharedPreferences sharedPreferences)

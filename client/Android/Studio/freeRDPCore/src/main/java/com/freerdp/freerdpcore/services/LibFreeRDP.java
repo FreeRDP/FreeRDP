@@ -282,6 +282,9 @@ public class LibFreeRDP
 		    String.format("/size:%dx%d", screenSettings.getWidth(), screenSettings.getHeight()));
 		args.add("/bpp:" + String.valueOf(screenSettings.getColors()));
 
+		args.add(
+		    String.format(Locale.ENGLISH, "/scale:%d ", screenSettings.getScale()));
+		
 		if (advanced.getConsoleMode())
 		{
 			args.add("/admin");
