@@ -562,6 +562,7 @@ xfWindow* xf_CreateDesktopWindow(xfContext* xfc, char* name, int width, int heig
 		else
 			res_class = _strdup("xfreerdp");
 
+		classHints->res_class = res_class;
 		XSetClassHint(xfc->display, window->handle, classHints);
 		XFree(classHints);
 		free(res_class);
