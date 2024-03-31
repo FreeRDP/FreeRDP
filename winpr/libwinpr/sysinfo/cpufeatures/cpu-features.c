@@ -73,6 +73,7 @@
 #include <sys/system_properties.h>
 #include <unistd.h>
 #include <winpr/wtypes.h>
+#include <winpr/debug.h>
 
 static pthread_once_t g_once;
 static int g_inited;
