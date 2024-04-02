@@ -47,265 +47,254 @@ typedef struct
 } XKB_KEY_NAME_SCANCODE;
 
 static const XKB_KEY_NAME_SCANCODE XKB_KEY_NAME_SCANCODE_TABLE[] = {
-	{ "AB00", RDP_SCANCODE_LSHIFT },
-	{ "AB01", RDP_SCANCODE_KEY_Z },      // evdev 52
-	{ "AB02", RDP_SCANCODE_KEY_X },      // evdev 53
-	{ "AB03", RDP_SCANCODE_KEY_C },      // evdev 54
-	{ "AB04", RDP_SCANCODE_KEY_V },      // evdev 55
-	{ "AB05", RDP_SCANCODE_KEY_B },      // evdev 56
-	{ "AB06", RDP_SCANCODE_KEY_N },      // evdev 57
-	{ "AB07", RDP_SCANCODE_KEY_M },      // evdev 58
-	{ "AB08", RDP_SCANCODE_OEM_COMMA },  // evdev 59
-	{ "AB09", RDP_SCANCODE_OEM_PERIOD }, // evdev 60
-	{ "AB10", RDP_SCANCODE_OEM_2 },      // evdev 61. Not KP, not RDP_SCANCODE_DIVIDE
-	{ "AB11", RDP_SCANCODE_ABNT_C1 },    // evdev 97.  Brazil backslash/underscore.
-	{ "AC01", RDP_SCANCODE_KEY_A },      // evdev 38
-	{ "AC02", RDP_SCANCODE_KEY_S },      // evdev 39
-	{ "AC03", RDP_SCANCODE_KEY_D },      // evdev 40
-	{ "AC04", RDP_SCANCODE_KEY_F },      // evdev 41
-	{ "AC05", RDP_SCANCODE_KEY_G },      // evdev 42
-	{ "AC06", RDP_SCANCODE_KEY_H },      // evdev 43
-	{ "AC07", RDP_SCANCODE_KEY_J },      // evdev 44
-	{ "AC08", RDP_SCANCODE_KEY_K },      // evdev 45
-	{ "AC09", RDP_SCANCODE_KEY_L },      // evdev 46
-	{ "AC10", RDP_SCANCODE_OEM_1 },      // evdev 47
-	{ "AC11", RDP_SCANCODE_OEM_7 },      // evdev 48
-	{ "AC12", RDP_SCANCODE_OEM_5 },      // alias of evdev 51 backslash
-	{ "AD01", RDP_SCANCODE_KEY_Q },      // evdev 24
-	{ "AD02", RDP_SCANCODE_KEY_W },      // evdev 25
-	{ "AD03", RDP_SCANCODE_KEY_E },      // evdev 26
-	{ "AD04", RDP_SCANCODE_KEY_R },      // evdev 27
-	{ "AD05", RDP_SCANCODE_KEY_T },      // evdev 28
-	{ "AD06", RDP_SCANCODE_KEY_Y },      // evdev 29
-	{ "AD07", RDP_SCANCODE_KEY_U },      // evdev 30
-	{ "AD08", RDP_SCANCODE_KEY_I },      // evdev 31
-	{ "AD09", RDP_SCANCODE_KEY_O },      // evdev 32
-	{ "AD10", RDP_SCANCODE_KEY_P },      // evdev 33
-	{ "AD11", RDP_SCANCODE_OEM_4 },      // evdev 34
-	{ "AD12", RDP_SCANCODE_OEM_6 },      // evdev 35
-	{ "AE00", RDP_SCANCODE_OEM_3 },
-	{ "AE01", RDP_SCANCODE_KEY_1 },        // evdev 10
-	{ "AE02", RDP_SCANCODE_KEY_2 },        // evdev 11
-	{ "AE03", RDP_SCANCODE_KEY_3 },        // evdev 12
-	{ "AE04", RDP_SCANCODE_KEY_4 },        // evdev 13
-	{ "AE05", RDP_SCANCODE_KEY_5 },        // evdev 14
-	{ "AE06", RDP_SCANCODE_KEY_6 },        // evdev 15
-	{ "AE07", RDP_SCANCODE_KEY_7 },        // evdev 16
-	{ "AE08", RDP_SCANCODE_KEY_8 },        // evdev 17
-	{ "AE09", RDP_SCANCODE_KEY_9 },        // evdev 18
-	{ "AE10", RDP_SCANCODE_KEY_0 },        // evdev 19
-	{ "AE11", RDP_SCANCODE_OEM_MINUS },    // evdev 20
-	{ "AE12", RDP_SCANCODE_OEM_PLUS },     // evdev 21
-	{ "AE13", RDP_SCANCODE_BACKSLASH_JP }, // JP 132 Yen next to backspace
-	// { "AGAI", RDP_SCANCODE_ },	// evdev 137
-	{ "ALGR", RDP_SCANCODE_RMENU },     // alias of evdev 108 RALT
-	{ "ALT", RDP_SCANCODE_LMENU },      // evdev 204, fake keycode for virtual key
-	{ "BKSL", RDP_SCANCODE_OEM_5 },     // evdev 51
-	{ "BKSP", RDP_SCANCODE_BACKSPACE }, // evdev 22
-	// { "BRK",  RDP_SCANCODE_ },	// evdev 419
-	{ "CAPS", RDP_SCANCODE_CAPSLOCK }, // evdev 66
-	{ "COMP", RDP_SCANCODE_APPS },     // evdev 135
-	// { "COPY", RDP_SCANCODE_ },	// evdev 141
-	// { "CUT",  RDP_SCANCODE_ },	// evdev 145
-	{ "DELE", RDP_SCANCODE_DELETE }, // evdev 119
-	{ "DOWN", RDP_SCANCODE_DOWN },   // evdev 116
-	{ "END", RDP_SCANCODE_END },     // evdev 115
-	{ "ESC", RDP_SCANCODE_ESCAPE },  // evdev 9
-	// { "FIND", RDP_SCANCODE_ },	// evdev 144
-	{ "FK01", RDP_SCANCODE_F1 },  // evdev 67
-	{ "FK02", RDP_SCANCODE_F2 },  // evdev 68
-	{ "FK03", RDP_SCANCODE_F3 },  // evdev 69
-	{ "FK04", RDP_SCANCODE_F4 },  // evdev 70
-	{ "FK05", RDP_SCANCODE_F5 },  // evdev 71
-	{ "FK06", RDP_SCANCODE_F6 },  // evdev 72
-	{ "FK07", RDP_SCANCODE_F7 },  // evdev 73
-	{ "FK08", RDP_SCANCODE_F8 },  // evdev 74
-	{ "FK09", RDP_SCANCODE_F9 },  // evdev 75
-	{ "FK10", RDP_SCANCODE_F10 }, // evdev 76
-	{ "FK11", RDP_SCANCODE_F11 }, // evdev 95
-	{ "FK12", RDP_SCANCODE_F12 }, // evdev 96
-	{ "FK13", RDP_SCANCODE_F13 }, // evdev 191
-	{ "FK14", RDP_SCANCODE_F14 }, // evdev 192
-	{ "FK15", RDP_SCANCODE_F15 }, // evdev 193
-	{ "FK16", RDP_SCANCODE_F16 }, // evdev 194
-	{ "FK17", RDP_SCANCODE_F17 }, // evdev 195
-	{ "FK18", RDP_SCANCODE_F18 }, // evdev 196
-	{ "FK19", RDP_SCANCODE_F19 }, // evdev 197
-	{ "FK20", RDP_SCANCODE_F20 }, // evdev 198
-	{ "FK21", RDP_SCANCODE_F21 }, // evdev 199
-	{ "FK22", RDP_SCANCODE_F22 }, // evdev 200
-	{ "FK23", RDP_SCANCODE_F23 }, // evdev 201
-	{ "FK24", RDP_SCANCODE_F24 }, // evdev 202
-	// { "FRNT", RDP_SCANCODE_ },	// evdev 140
-	{ "HANJ", RDP_SCANCODE_HANJA },
-	{ "HELP", RDP_SCANCODE_HELP },       // evdev 146
-	{ "HENK", RDP_SCANCODE_CONVERT_JP }, // JP evdev 100 Henkan
-	{ "HIRA", RDP_SCANCODE_HIRAGANA },   // JP evdev  99	Hiragana
-	{ "HJCV", RDP_SCANCODE_HANJA },      // KR evdev 131 Hangul->Hanja
-	{ "HKTG", RDP_SCANCODE_HIRAGANA },   // JP evdev 101 Hiragana/Katakana toggle
-	{ "HNGL", RDP_SCANCODE_HANGUL },     // KR evdev 130 Hangul/Latin toggle
-	{ "HOME", RDP_SCANCODE_HOME },       // evdev 110
-	{ "HYPR", RDP_SCANCODE_LWIN },       // evdev 207, fake keycode for virtual key
-	{ "HZTG", RDP_SCANCODE_OEM_3 },      // JP alias of evdev 49
-	// { "I120", RDP_SCANCODE_ },	// evdev 120 KEY_MACRO
-	// { "I126", RDP_SCANCODE_ },	// evdev 126 KEY_KPPLUSMINUS
-	// { "I128", RDP_SCANCODE_ },	// evdev 128 KEY_SCALE
-	{ "I129", RDP_SCANCODE_ABNT_C2 }, // evdev 129 KEY_KPCOMMA Brazil
-	// { "I147", RDP_SCANCODE_ },	// evdev 147 KEY_MENU
-	// { "I148", RDP_SCANCODE_ },	// evdev 148 KEY_CALC
-	// { "I149", RDP_SCANCODE_ },	// evdev 149 KEY_SETUP
-	{ "I150", RDP_SCANCODE_SLEEP }, // evdev 150 KEY_SLEEP
-	// { "I151", RDP_SCANCODE_ },	// evdev 151 KEY_WAKEUP
-	// { "I152", RDP_SCANCODE_ },	// evdev 152 KEY_FILE
-	// { "I153", RDP_SCANCODE_ },	// evdev 153 KEY_SENDFILE
-	// { "I154", RDP_SCANCODE_ },	// evdev 154 KEY_DELETEFILE
-	// { "I155", RDP_SCANCODE_ },	// evdev 155 KEY_XFER
-	// { "I156", RDP_SCANCODE_ },	// evdev 156 KEY_PROG1 VK_LAUNCH_APP1
-	// { "I157", RDP_SCANCODE_ },	// evdev 157 KEY_PROG2 VK_LAUNCH_APP2
-	// { "I158", RDP_SCANCODE_ },	// evdev 158 KEY_WWW
-	// { "I159", RDP_SCANCODE_ },	// evdev 159 KEY_MSDOS
-	// { "I160", RDP_SCANCODE_ },	// evdev 160 KEY_COFFEE
-	// { "I161", RDP_SCANCODE_ },	// evdev 161 KEY_DIRECTION
-	// { "I162", RDP_SCANCODE_ },	// evdev 162 KEY_CYCLEWINDOWS
-	{ "I163", RDP_SCANCODE_LAUNCH_MAIL },       // evdev 163 KEY_MAIL
-	{ "I164", RDP_SCANCODE_BROWSER_FAVORITES }, // evdev 164 KEY_BOOKMARKS
-	// { "I165", RDP_SCANCODE_ },	// evdev 165 KEY_COMPUTER
-	{ "I166", RDP_SCANCODE_BROWSER_BACK },    // evdev 166 KEY_BACK
-	{ "I167", RDP_SCANCODE_BROWSER_FORWARD }, // evdev 167 KEY_FORWARD
-	// { "I168", RDP_SCANCODE_ },	// evdev 168 KEY_CLOSECD
-	// { "I169", RDP_SCANCODE_ },	// evdev 169 KEY_EJECTCD
-	// { "I170", RDP_SCANCODE_ },	// evdev 170 KEY_EJECTCLOSECD
-	{ "I171", RDP_SCANCODE_MEDIA_NEXT_TRACK }, // evdev 171 KEY_NEXTSONG
-	{ "I172", RDP_SCANCODE_MEDIA_PLAY_PAUSE }, // evdev 172 KEY_PLAYPAUSE
-	{ "I173", RDP_SCANCODE_MEDIA_PREV_TRACK }, // evdev 173 KEY_PREVIOUSSONG
-	{ "I174", RDP_SCANCODE_MEDIA_STOP },       // evdev 174 KEY_STOPCD
-	// { "I175", RDP_SCANCODE_ },	// evdev 175 KEY_RECORD              167
-	// { "I176", RDP_SCANCODE_ },	// evdev 176 KEY_REWIND
-	// { "I177", RDP_SCANCODE_ },	// evdev 177 KEY_PHONE
-	// { "I178", RDP_SCANCODE_ },	// evdev 178 KEY_ISO
-	// { "I179", RDP_SCANCODE_ },	// evdev 179 KEY_CONFIG
-	{ "I180", RDP_SCANCODE_BROWSER_HOME },    // evdev 180 KEY_HOMEPAGE
-	{ "I181", RDP_SCANCODE_BROWSER_REFRESH }, // evdev 181 KEY_REFRESH
-	// { "I182", RDP_SCANCODE_ },	// evdev 182 KEY_EXIT
-	// { "I183", RDP_SCANCODE_ },	// evdev 183 KEY_MOVE
-	// { "I184", RDP_SCANCODE_ },	// evdev 184 KEY_EDIT
-	// { "I185", RDP_SCANCODE_ },	// evdev 185 KEY_SCROLLUP
-	// { "I186", RDP_SCANCODE_ },	// evdev 186 KEY_SCROLLDOWN
-	// { "I187", RDP_SCANCODE_ },	// evdev 187 KEY_KPLEFTPAREN
-	// { "I188", RDP_SCANCODE_ },	// evdev 188 KEY_KPRIGHTPAREN
-	// { "I189", RDP_SCANCODE_ },	// evdev 189 KEY_NEW
-	// { "I190", RDP_SCANCODE_ },	// evdev 190 KEY_REDO
-	// { "I208", RDP_SCANCODE_ },	// evdev 208 KEY_PLAYCD
-	// { "I209", RDP_SCANCODE_ },	// evdev 209 KEY_PAUSECD
-	// { "I210", RDP_SCANCODE_ },	// evdev 210 KEY_PROG3
-	// { "I211", RDP_SCANCODE_ },	// evdev 211 KEY_PROG4
-	// { "I212", RDP_SCANCODE_ },	// evdev 212 KEY_DASHBOARD
-	// { "I213", RDP_SCANCODE_ },	// evdev 213 KEY_SUSPEND
-	// { "I214", RDP_SCANCODE_ },	// evdev 214 KEY_CLOSE
-	// { "I215", RDP_SCANCODE_ },	// evdev 215 KEY_PLAY
-	// { "I216", RDP_SCANCODE_ },	// evdev 216 KEY_FASTFORWARD
-	// { "I217", RDP_SCANCODE_ },	// evdev 217 KEY_BASSBOOST
-	// { "I218", RDP_SCANCODE_ },	// evdev 218 KEY_PRINT
-	// { "I219", RDP_SCANCODE_ },	// evdev 219 KEY_HP
-	// { "I220", RDP_SCANCODE_ },	// evdev 220 KEY_CAMERA
-	// { "I221", RDP_SCANCODE_ },	// evdev 221 KEY_SOUND
-	// { "I222", RDP_SCANCODE_ },	// evdev 222 KEY_QUESTION
-	// { "I223", RDP_SCANCODE_ },	// evdev 223 KEY_EMAIL
-	// { "I224", RDP_SCANCODE_ },	// evdev 224 KEY_CHAT
-	{ "I225", RDP_SCANCODE_BROWSER_SEARCH }, // evdev 225 KEY_SEARCH
-	// { "I226", RDP_SCANCODE_ },	// evdev 226 KEY_CONNECT
-	// { "I227", RDP_SCANCODE_ },	// evdev 227 KEY_FINANCE
-	// { "I228", RDP_SCANCODE_ },	// evdev 228 KEY_SPORT
-	// { "I229", RDP_SCANCODE_ },	// evdev 229 KEY_SHOP
-	// { "I230", RDP_SCANCODE_ },	// evdev 230 KEY_ALTERASE
-	// { "I231", RDP_SCANCODE_ },	// evdev 231 KEY_CANCEL
-	// { "I232", RDP_SCANCODE_ },	// evdev 232 KEY_BRIGHTNESSDOWN
-	// { "I233", RDP_SCANCODE_ },	// evdev 233 KEY_BRIGHTNESSUP
-	// { "I234", RDP_SCANCODE_ },	// evdev 234 KEY_MEDIA
-	// { "I235", RDP_SCANCODE_ },	// evdev 235 KEY_SWITCHVIDEOMODE
-	// { "I236", RDP_SCANCODE_ },	// evdev 236 KEY_KBDILLUMTOGGLE
-	// { "I237", RDP_SCANCODE_ },	// evdev 237 KEY_KBDILLUMDOWN
-	// { "I238", RDP_SCANCODE_ },	// evdev 238 KEY_KBDILLUMUP
-	// { "I239", RDP_SCANCODE_ },	// evdev 239 KEY_SEND
-	// { "I240", RDP_SCANCODE_ },	// evdev 240 KEY_REPLY
-	// { "I241", RDP_SCANCODE_ },	// evdev 241 KEY_FORWARDMAIL
-	// { "I242", RDP_SCANCODE_ },	// evdev 242 KEY_SAVE
-	// { "I243", RDP_SCANCODE_ },	// evdev 243 KEY_DOCUMENTS
-	// { "I244", RDP_SCANCODE_ },	// evdev 244 KEY_BATTERY
-	// { "I245", RDP_SCANCODE_ },	// evdev 245 KEY_BLUETOOTH
-	// { "I246", RDP_SCANCODE_ },	// evdev 246 KEY_WLAN
-	// { "I247", RDP_SCANCODE_ },	// evdev 247 KEY_UWB
-	// { "I248", RDP_SCANCODE_ },	// evdev 248 KEY_UNKNOWN
-	// { "I249", RDP_SCANCODE_ },	// evdev 249 KEY_VIDEO_NEXT
-	// { "I250", RDP_SCANCODE_ },	// evdev 250 KEY_VIDEO_PREV
-	// { "I251", RDP_SCANCODE_ },	// evdev 251 KEY_BRIGHTNESS_CYCLE
-	// { "I252", RDP_SCANCODE_ },	// evdev 252 KEY_BRIGHTNESS_ZERO
-	// { "I253", RDP_SCANCODE_ },	// evdev 253 KEY_DISPLAY_OFF
-	{ "INS", RDP_SCANCODE_INSERT }, // evdev 118
-	// { "JPCM", RDP_SCANCODE_ },	// evdev 103 KPJPComma
-	// { "KATA", RDP_SCANCODE_ },	// evdev  98 Katakana VK_DBE_KATAKANA
-	{ "KP0", RDP_SCANCODE_NUMPAD0 },    // evdev 90
-	{ "KP1", RDP_SCANCODE_NUMPAD1 },    // evdev 87
-	{ "KP2", RDP_SCANCODE_NUMPAD2 },    // evdev 88
-	{ "KP3", RDP_SCANCODE_NUMPAD3 },    // evdev 89
-	{ "KP4", RDP_SCANCODE_NUMPAD4 },    // evdev 83
-	{ "KP5", RDP_SCANCODE_NUMPAD5 },    // evdev 84
-	{ "KP6", RDP_SCANCODE_NUMPAD6 },    // evdev 85
-	{ "KP7", RDP_SCANCODE_NUMPAD7 },    // evdev 79
-	{ "KP8", RDP_SCANCODE_NUMPAD8 },    // evdev 80
-	{ "KP9", RDP_SCANCODE_NUMPAD9 },    // evdev 81
-	{ "KPAD", RDP_SCANCODE_ADD },       // evdev 86
-	{ "KPDL", RDP_SCANCODE_DECIMAL },   // evdev 91
-	{ "KPDV", RDP_SCANCODE_DIVIDE },    // evdev 106
-	{ "KPEN", RDP_SCANCODE_RETURN_KP }, // evdev 104 KP!
-	// { "KPEQ", RDP_SCANCODE_ },	// evdev 125
-	{ "KPMU", RDP_SCANCODE_MULTIPLY }, // evdev 63
-	{ "KPPT", RDP_SCANCODE_ABNT_C2 },  // BR alias of evdev 129
-	{ "KPSU", RDP_SCANCODE_SUBTRACT }, // evdev 82
-	{ "LALT", RDP_SCANCODE_LMENU },    // evdev 64
-	{ "LCTL", RDP_SCANCODE_LCONTROL }, // evdev 37
-	{ "LEFT", RDP_SCANCODE_LEFT },     // evdev 113
-	{ "LFSH", RDP_SCANCODE_LSHIFT },   // evdev 50
-	{ "LMTA", RDP_SCANCODE_LWIN },     // alias of evdev 133 LWIN
-	// { "LNFD", RDP_SCANCODE_ },	// evdev 109 KEY_LINEFEED
-	{ "LSGT", RDP_SCANCODE_OEM_102 },       // evdev 94
-	{ "LVL3", RDP_SCANCODE_RMENU },         // evdev 92, fake keycode for virtual key
-	{ "LWIN", RDP_SCANCODE_LWIN },          // evdev 133
-	{ "MDSW", RDP_SCANCODE_RMENU },         // evdev 203, fake keycode for virtual key
-	{ "MENU", RDP_SCANCODE_APPS },          // alias of evdev 135 COMP
-	{ "META", RDP_SCANCODE_LMENU },         // evdev 205, fake keycode for virtual key
-	{ "MUHE", RDP_SCANCODE_NONCONVERT_JP }, // JP evdev 102 Muhenkan
-	{ "MUTE", RDP_SCANCODE_VOLUME_MUTE },   // evdev 121
-	{ "NFER", RDP_SCANCODE_NONCONVERT_JP }, // JP alias of evdev 102 Muhenkan
-	{ "NMLK", RDP_SCANCODE_NUMLOCK },       // evdev 77
-	// { "OPEN", RDP_SCANCODE_ },	// evdev 142
-	// { "PAST", RDP_SCANCODE_ },	// evdev 143
-	{ "PAUS", RDP_SCANCODE_PAUSE }, // evdev 127
-	{ "PGDN", RDP_SCANCODE_NEXT },  // evdev 117
-	{ "PGUP", RDP_SCANCODE_PRIOR }, // evdev 112
-	// { "POWR", RDP_SCANCODE_ },	// evdev 124
-	// { "PROP", RDP_SCANCODE_ },	// evdev 138
-	{ "PRSC", RDP_SCANCODE_PRINTSCREEN }, // evdev 107
-	{ "RALT", RDP_SCANCODE_RMENU },       // evdev 108 RALT
-	{ "RCTL", RDP_SCANCODE_RCONTROL },    // evdev 105
-	{ "RGHT", RDP_SCANCODE_RIGHT },       // evdev 114
-	{ "RMTA", RDP_SCANCODE_RWIN },        // alias of evdev 134 RWIN
-	// { "RO",   RDP_SCANCODE_ },	// JP evdev  97	Romaji
-	{ "RTRN", RDP_SCANCODE_RETURN },       // not KP, evdev 36
-	{ "RTSH", RDP_SCANCODE_RSHIFT },       // evdev 62
-	{ "RWIN", RDP_SCANCODE_RWIN },         // evdev 134
-	{ "SCLK", RDP_SCANCODE_SCROLLLOCK },   // evdev 78
-	{ "SPCE", RDP_SCANCODE_SPACE },        // evdev 65
-	{ "STOP", RDP_SCANCODE_BROWSER_STOP }, // evdev 136
-	{ "SUPR", RDP_SCANCODE_LWIN },         // evdev 206, fake keycode for virtual key
-	{ "SYRQ", RDP_SCANCODE_SYSREQ },       // evdev 107
-	{ "TAB", RDP_SCANCODE_TAB },           // evdev 23
-	{ "TLDE", RDP_SCANCODE_OEM_3 },        // evdev 49
-	// { "UNDO", RDP_SCANCODE_ },	// evdev 139
-	{ "UP", RDP_SCANCODE_UP },            // evdev 111
-	{ "VOL-", RDP_SCANCODE_VOLUME_DOWN }, // evdev 122
-	{ "VOL+", RDP_SCANCODE_VOLUME_UP },   // evdev 123
-	{ "XFER", RDP_SCANCODE_CONVERT_JP },  // JP alias of evdev 100 Henkan
+	{ "", RDP_SCANCODE_UNKNOWN },                 /* 008:  [(null)] */
+	{ "ESC", RDP_SCANCODE_ESCAPE },               /* 009: ESC [Escape] */
+	{ "AE01", RDP_SCANCODE_KEY_1 },               /* 010: AE01 [1] */
+	{ "AE02", RDP_SCANCODE_KEY_2 },               /* 011: AE02 [2] */
+	{ "AE03", RDP_SCANCODE_KEY_3 },               /* 012: AE03 [3] */
+	{ "AE04", RDP_SCANCODE_KEY_4 },               /* 013: AE04 [4] */
+	{ "AE05", RDP_SCANCODE_KEY_5 },               /* 014: AE05 [5] */
+	{ "AE06", RDP_SCANCODE_KEY_6 },               /* 015: AE06 [6] */
+	{ "AE07", RDP_SCANCODE_KEY_7 },               /* 016: AE07 [7] */
+	{ "AE08", RDP_SCANCODE_KEY_8 },               /* 017: AE08 [8] */
+	{ "AE09", RDP_SCANCODE_KEY_9 },               /* 018: AE09 [9] */
+	{ "AE10", RDP_SCANCODE_KEY_0 },               /* 019: AE10 [0] */
+	{ "AE11", RDP_SCANCODE_OEM_MINUS },           /* 020: AE11 [minus] */
+	{ "AE12", RDP_SCANCODE_OEM_PLUS },            /* 021: AE12 [equal] */
+	{ "BKSP", RDP_SCANCODE_BACKSPACE },           /* 022: BKSP [BackSpace] */
+	{ "TAB", RDP_SCANCODE_TAB },                  /* 023: TAB [Tab] */
+	{ "AD01", RDP_SCANCODE_KEY_Q },               /* 024: AD01 [q] */
+	{ "AD02", RDP_SCANCODE_KEY_W },               /* 025: AD02 [w] */
+	{ "AD03", RDP_SCANCODE_KEY_E },               /* 026: AD03 [e] */
+	{ "AD04", RDP_SCANCODE_KEY_R },               /* 027: AD04 [r] */
+	{ "AD05", RDP_SCANCODE_KEY_T },               /* 028: AD05 [t] */
+	{ "AD06", RDP_SCANCODE_KEY_Y },               /* 029: AD06 [y] */
+	{ "AD07", RDP_SCANCODE_KEY_U },               /* 030: AD07 [u] */
+	{ "AD08", RDP_SCANCODE_KEY_I },               /* 031: AD08 [i] */
+	{ "AD09", RDP_SCANCODE_KEY_O },               /* 032: AD09 [o] */
+	{ "AD10", RDP_SCANCODE_KEY_P },               /* 033: AD10 [p] */
+	{ "AD11", RDP_SCANCODE_OEM_4 },               /* 034: AD11 [bracketleft] */
+	{ "AD12", RDP_SCANCODE_OEM_6 },               /* 035: AD12 [bracketright] */
+	{ "RTRN", RDP_SCANCODE_RETURN },              /* 036: RTRN [Return] */
+	{ "LCTL", RDP_SCANCODE_LCONTROL },            /* 037: LCTL [Control_L] */
+	{ "AC01", RDP_SCANCODE_KEY_A },               /* 038: AC01 [a] */
+	{ "AC02", RDP_SCANCODE_KEY_S },               /* 039: AC02 [s] */
+	{ "AC03", RDP_SCANCODE_KEY_D },               /* 040: AC03 [d] */
+	{ "AC04", RDP_SCANCODE_KEY_F },               /* 041: AC04 [f] */
+	{ "AC05", RDP_SCANCODE_KEY_G },               /* 042: AC05 [g] */
+	{ "AC06", RDP_SCANCODE_KEY_H },               /* 043: AC06 [h] */
+	{ "AC07", RDP_SCANCODE_KEY_J },               /* 044: AC07 [j] */
+	{ "AC08", RDP_SCANCODE_KEY_K },               /* 045: AC08 [k] */
+	{ "AC09", RDP_SCANCODE_KEY_L },               /* 046: AC09 [l] */
+	{ "AC10", RDP_SCANCODE_OEM_1 },               /* 047: AC10 [semicolon] */
+	{ "AC11", RDP_SCANCODE_OEM_7 },               /* 048: AC11 [dead_acute] */
+	{ "TLDE", RDP_SCANCODE_OEM_3 },               /* 049: TLDE [dead_grave] */
+	{ "LFSH", RDP_SCANCODE_LSHIFT },              /* 050: LFSH [Shift_L] */
+	{ "BKSL", RDP_SCANCODE_OEM_5 },               /* 051: BKSL [backslash] */
+	{ "AB01", RDP_SCANCODE_KEY_Z },               /* 052: AB01 [z] */
+	{ "AB02", RDP_SCANCODE_KEY_X },               /* 053: AB02 [x] */
+	{ "AB03", RDP_SCANCODE_KEY_C },               /* 054: AB03 [c] */
+	{ "AB04", RDP_SCANCODE_KEY_V },               /* 055: AB04 [v] */
+	{ "AB05", RDP_SCANCODE_KEY_B },               /* 056: AB05 [b] */
+	{ "AB06", RDP_SCANCODE_KEY_N },               /* 057: AB06 [n] */
+	{ "AB07", RDP_SCANCODE_KEY_M },               /* 058: AB07 [m] */
+	{ "AB08", RDP_SCANCODE_OEM_COMMA },           /* 059: AB08 [comma] */
+	{ "AB09", RDP_SCANCODE_OEM_PERIOD },          /* 060: AB09 [period] */
+	{ "AB10", RDP_SCANCODE_OEM_2 },               /* 061: AB10 [slash] */
+	{ "RTSH", RDP_SCANCODE_RSHIFT },              /* 062: RTSH [Shift_R] */
+	{ "KPMU", RDP_SCANCODE_MULTIPLY },            /* 063: KPMU [KP_Multiply] */
+	{ "LALT", RDP_SCANCODE_LMENU },               /* 064: LALT [Alt_L] */
+	{ "SPCE", RDP_SCANCODE_SPACE },               /* 065: SPCE [space] */
+	{ "CAPS", RDP_SCANCODE_CAPSLOCK },            /* 066: CAPS [Caps_Lock] */
+	{ "FK01", RDP_SCANCODE_F1 },                  /* 067: FK01 [F1] */
+	{ "FK02", RDP_SCANCODE_F2 },                  /* 068: FK02 [F2] */
+	{ "FK03", RDP_SCANCODE_F3 },                  /* 069: FK03 [F3] */
+	{ "FK04", RDP_SCANCODE_F4 },                  /* 070: FK04 [F4] */
+	{ "FK05", RDP_SCANCODE_F5 },                  /* 071: FK05 [F5] */
+	{ "FK06", RDP_SCANCODE_F6 },                  /* 072: FK06 [F6] */
+	{ "FK07", RDP_SCANCODE_F7 },                  /* 073: FK07 [F7] */
+	{ "FK08", RDP_SCANCODE_F8 },                  /* 074: FK08 [F8] */
+	{ "FK09", RDP_SCANCODE_F9 },                  /* 075: FK09 [F9] */
+	{ "FK10", RDP_SCANCODE_F10 },                 /* 076: FK10 [F10] */
+	{ "NMLK", RDP_SCANCODE_NUMLOCK },             /* 077: NMLK [Num_Lock] */
+	{ "SCLK", RDP_SCANCODE_SCROLLLOCK },          /* 078: SCLK [Multi_key] */
+	{ "KP7", RDP_SCANCODE_NUMPAD7 },              /* 079: KP7 [KP_Home] */
+	{ "KP8", RDP_SCANCODE_NUMPAD8 },              /* 080: KP8 [KP_Up] */
+	{ "KP9", RDP_SCANCODE_NUMPAD9 },              /* 081: KP9 [KP_Prior] */
+	{ "KPSU", RDP_SCANCODE_SUBTRACT },            /* 082: KPSU [KP_Subtract] */
+	{ "KP4", RDP_SCANCODE_NUMPAD4 },              /* 083: KP4 [KP_Left] */
+	{ "KP5", RDP_SCANCODE_NUMPAD5 },              /* 084: KP5 [KP_Begin] */
+	{ "KP6", RDP_SCANCODE_NUMPAD6 },              /* 085: KP6 [KP_Right] */
+	{ "KPAD", RDP_SCANCODE_ADD },                 /* 086: KPAD [KP_Add] */
+	{ "KP1", RDP_SCANCODE_NUMPAD1 },              /* 087: KP1 [KP_End] */
+	{ "KP2", RDP_SCANCODE_NUMPAD2 },              /* 088: KP2 [KP_Down] */
+	{ "KP3", RDP_SCANCODE_NUMPAD3 },              /* 089: KP3 [KP_Next] */
+	{ "KP0", RDP_SCANCODE_NUMPAD0 },              /* 090: KP0 [KP_Insert] */
+	{ "KPDL", RDP_SCANCODE_DECIMAL },             /* 091: KPDL [KP_Delete] */
+	{ "LVL3", RDP_SCANCODE_RMENU },               /* 092: LVL3 [ISO_Level3_Shift] */
+	{ "", RDP_SCANCODE_UNKNOWN },                 /* 093:  [(null)] */
+	{ "LSGT", RDP_SCANCODE_OEM_102 },             /* 094: LSGT [backslash] */
+	{ "FK11", RDP_SCANCODE_F11 },                 /* 095: FK11 [F11] */
+	{ "FK12", RDP_SCANCODE_F12 },                 /* 096: FK12 [F12] */
+	{ "AB11", RDP_SCANCODE_ABNT_C1 },             /* 097: AB11 [(null)] */
+	{ "KATA", RDP_SCANCODE_KANA_HANGUL },         /* 098: KATA [Katakana] */
+	{ "HIRA", RDP_SCANCODE_HIRAGANA },            /* 099: HIRA [Hiragana] */
+	{ "HENK", RDP_SCANCODE_CONVERT_JP },          /* 100: HENK [Henkan_Mode] */
+	{ "HKTG", RDP_SCANCODE_HIRAGANA },            /* 101: HKTG [Hiragana_Katakana] */
+	{ "MUHE", RDP_SCANCODE_NONCONVERT_JP },       /* 102: MUHE [Muhenkan] */
+	{ "JPCM", RDP_SCANCODE_UNKNOWN },             /* 103: JPCM [(null)] */
+	{ "KPEN", RDP_SCANCODE_RETURN_KP },           /* 104: KPEN [KP_Enter] */
+	{ "RCTL", RDP_SCANCODE_RCONTROL },            /* 105: RCTL [Control_R] */
+	{ "KPDV", RDP_SCANCODE_DIVIDE },              /* 106: KPDV [KP_Divide] */
+	{ "PRSC", RDP_SCANCODE_PRINTSCREEN },         /* 107: PRSC [Print] */
+	{ "RALT", RDP_SCANCODE_RMENU },               /* 108: RALT [ISO_Level3_Shift] */
+	{ "LNFD", RDP_SCANCODE_UNKNOWN },             /* 109: LNFD [Linefeed] */
+	{ "HOME", RDP_SCANCODE_HOME },                /* 110: HOME [Home] */
+	{ "UP", RDP_SCANCODE_UP },                    /* 111: UP [Up] */
+	{ "PGUP", RDP_SCANCODE_PRIOR },               /* 112: PGUP [Prior] */
+	{ "LEFT", RDP_SCANCODE_LEFT },                /* 113: LEFT [Left] */
+	{ "RGHT", RDP_SCANCODE_RIGHT },               /* 114: RGHT [Right] */
+	{ "END", RDP_SCANCODE_END },                  /* 115: END [End] */
+	{ "DOWN", RDP_SCANCODE_DOWN },                /* 116: DOWN [Down] */
+	{ "PGDN", RDP_SCANCODE_NEXT },                /* 117: PGDN [Next] */
+	{ "INS", RDP_SCANCODE_INSERT },               /* 118: INS [Insert] */
+	{ "DELE", RDP_SCANCODE_DELETE },              /* 119: DELE [Delete] */
+	{ "I120", RDP_SCANCODE_UNKNOWN },             /* 120: I120 [(null)] */
+	{ "MUTE", RDP_SCANCODE_VOLUME_MUTE },         /* 121: MUTE [XF86AudioMute] */
+	{ "VOL-", RDP_SCANCODE_VOLUME_DOWN },         /* 122: VOL- [XF86AudioLowerVolume] */
+	{ "VOL+", RDP_SCANCODE_VOLUME_UP },           /* 123: VOL+ [XF86AudioRaiseVolume] */
+	{ "POWR", RDP_SCANCODE_UNKNOWN },             /* 124: POWR [XF86PowerOff] */
+	{ "KPEQ", RDP_SCANCODE_UNKNOWN },             /* 125: KPEQ [KP_Equal] */
+	{ "I126", RDP_SCANCODE_UNKNOWN },             /* 126: I126 [plusminus] */
+	{ "PAUS", RDP_SCANCODE_PAUSE },               /* 127: PAUS [Pause] */
+	{ "I128", RDP_SCANCODE_LAUNCH_MEDIA_SELECT }, /* 128: I128 [XF86LaunchA] */
+	{ "I129", RDP_SCANCODE_ABNT_C2 },             /* 129: I129 [KP_Decimal] */
+	{ "HNGL", RDP_SCANCODE_HANGUL },              /* 130: HNGL [Hangul] */
+	{ "HJCV", RDP_SCANCODE_HANJA },               /* 131: HJCV [Hangul_Hanja] */
+	{ "AE13", RDP_SCANCODE_BACKSLASH_JP },        /* 132: AE13 [(null)] */
+	{ "LWIN", RDP_SCANCODE_LWIN },                /* 133: LWIN [Super_L] */
+	{ "RWIN", RDP_SCANCODE_RWIN },                /* 134: RWIN [Super_R] */
+	{ "COMP", RDP_SCANCODE_APPS },                /* 135: COMP [Menu] */
+	{ "STOP", RDP_SCANCODE_BROWSER_STOP },        /* 136: STOP [Cancel] */
+	{ "AGAI", RDP_SCANCODE_UNKNOWN },             /* 137: AGAI [Redo] */
+	{ "PROP", RDP_SCANCODE_UNKNOWN },             /* 138: PROP [SunProps] */
+	{ "UNDO", RDP_SCANCODE_UNKNOWN },             /* 139: UNDO [Undo] */
+	{ "FRNT", RDP_SCANCODE_UNKNOWN },             /* 140: FRNT [SunFront] */
+	{ "COPY", RDP_SCANCODE_UNKNOWN },             /* 141: COPY [XF86Copy] */
+	{ "OPEN", RDP_SCANCODE_UNKNOWN },             /* 142: OPEN [XF86Open] */
+	{ "PAST", RDP_SCANCODE_UNKNOWN },             /* 143: PAST [XF86Paste] */
+	{ "FIND", RDP_SCANCODE_UNKNOWN },             /* 144: FIND [Find] */
+	{ "CUT", RDP_SCANCODE_UNKNOWN },              /* 145: CUT [XF86Cut] */
+	{ "HELP", RDP_SCANCODE_HELP },                /* 146: HELP [Help] */
+	{ "I147", RDP_SCANCODE_UNKNOWN },             /* 147: I147 [XF86MenuKB] */
+	{ "I148", RDP_SCANCODE_UNKNOWN },             /* 148: I148 [XF86Calculator] */
+	{ "I149", RDP_SCANCODE_UNKNOWN },             /* 149: I149 [(null)] */
+	{ "I150", RDP_SCANCODE_SLEEP },               /* 150: I150 [XF86Sleep] */
+	{ "I151", RDP_SCANCODE_UNKNOWN },             /* 151: I151 [XF86WakeUp] */
+	{ "I152", RDP_SCANCODE_UNKNOWN },             /* 152: I152 [XF86Explorer] */
+	{ "I153", RDP_SCANCODE_UNKNOWN },             /* 153: I153 [XF86Send] */
+	{ "I154", RDP_SCANCODE_UNKNOWN },             /* 154: I154 [(null)] */
+	{ "I155", RDP_SCANCODE_UNKNOWN },             /* 155: I155 [XF86Xfer] */
+	{ "I156", RDP_SCANCODE_LAUNCH_APP1 },         /* 156: I156 [XF86Launch1] */
+	{ "I157", RDP_SCANCODE_LAUNCH_APP2 },         /* 157: I157 [XF86Launch2] */
+	{ "I158", RDP_SCANCODE_BROWSER_HOME },        /* 158: I158 [XF86WWW] */
+	{ "I159", RDP_SCANCODE_UNKNOWN },             /* 159: I159 [XF86DOS] */
+	{ "I160", RDP_SCANCODE_UNKNOWN },             /* 160: I160 [XF86ScreenSaver] */
+	{ "I161", RDP_SCANCODE_UNKNOWN },             /* 161: I161 [XF86RotateWindows] */
+	{ "I162", RDP_SCANCODE_UNKNOWN },             /* 162: I162 [XF86TaskPane] */
+	{ "I163", RDP_SCANCODE_LAUNCH_MAIL },         /* 163: I163 [XF86Mail] */
+	{ "I164", RDP_SCANCODE_BROWSER_FAVORITES },   /* 164: I164 [XF86Favorites] */
+	{ "I165", RDP_SCANCODE_UNKNOWN },             /* 165: I165 [XF86MyComputer] */
+	{ "I166", RDP_SCANCODE_BROWSER_BACK },        /* 166: I166 [XF86Back] */
+	{ "I167", RDP_SCANCODE_BROWSER_FORWARD },     /* 167: I167 [XF86Forward] */
+	{ "I168", RDP_SCANCODE_UNKNOWN },             /* 168: I168 [(null)] */
+	{ "I169", RDP_SCANCODE_UNKNOWN },             /* 169: I169 [XF86Eject] */
+	{ "I170", RDP_SCANCODE_UNKNOWN },             /* 170: I170 [XF86Eject] */
+	{ "I171", RDP_SCANCODE_MEDIA_NEXT_TRACK },    /* 171: I171 [XF86AudioNext] */
+	{ "I172", RDP_SCANCODE_MEDIA_PLAY_PAUSE },    /* 172: I172 [XF86AudioPlay] */
+	{ "I173", RDP_SCANCODE_MEDIA_PREV_TRACK },    /* 173: I173 [XF86AudioPrev] */
+	{ "I174", RDP_SCANCODE_MEDIA_STOP },          /* 174: I174 [XF86AudioStop] */
+	{ "I175", RDP_SCANCODE_UNKNOWN },             /* 175: I175 [XF86AudioRecord] */
+	{ "I176", RDP_SCANCODE_UNKNOWN },             /* 176: I176 [XF86AudioRewind] */
+	{ "I177", RDP_SCANCODE_UNKNOWN },             /* 177: I177 [XF86Phone] */
+	{ "I178", RDP_SCANCODE_UNKNOWN },             /* 178: I178 [(null)] */
+	{ "I179", RDP_SCANCODE_UNKNOWN },             /* 179: I179 [XF86Tools] */
+	{ "I180", RDP_SCANCODE_BROWSER_HOME },        /* 180: I180 [XF86HomePage] */
+	{ "I181", RDP_SCANCODE_BROWSER_REFRESH },     /* 181: I181 [XF86Reload] */
+	{ "I182", RDP_SCANCODE_UNKNOWN },             /* 182: I182 [XF86Close] */
+	{ "I183", RDP_SCANCODE_UNKNOWN },             /* 183: I183 [(null)] */
+	{ "I184", RDP_SCANCODE_UNKNOWN },             /* 184: I184 [(null)] */
+	{ "I185", RDP_SCANCODE_UNKNOWN },             /* 185: I185 [XF86ScrollUp] */
+	{ "I186", RDP_SCANCODE_UNKNOWN },             /* 186: I186 [XF86ScrollDown] */
+	{ "I187", RDP_SCANCODE_UNKNOWN },             /* 187: I187 [parenleft] */
+	{ "I188", RDP_SCANCODE_UNKNOWN },             /* 188: I188 [parenright] */
+	{ "I189", RDP_SCANCODE_UNKNOWN },             /* 189: I189 [XF86New] */
+	{ "I190", RDP_SCANCODE_UNKNOWN },             /* 190: I190 [Redo] */
+	{ "FK13", RDP_SCANCODE_F13 },                 /* 191: FK13 [XF86Tools] */
+	{ "FK14", RDP_SCANCODE_F14 },                 /* 192: FK14 [XF86Launch5] */
+	{ "FK15", RDP_SCANCODE_F15 },                 /* 193: FK15 [XF86Launch6] */
+	{ "FK16", RDP_SCANCODE_F16 },                 /* 194: FK16 [XF86Launch7] */
+	{ "FK17", RDP_SCANCODE_F17 },                 /* 195: FK17 [XF86Launch8] */
+	{ "FK18", RDP_SCANCODE_F18 },                 /* 196: FK18 [XF86Launch9] */
+	{ "FK19", RDP_SCANCODE_F19 },                 /* 197: FK19 [(null)] */
+	{ "FK20", RDP_SCANCODE_F20 },                 /* 198: FK20 [XF86AudioMicMute] */
+	{ "FK21", RDP_SCANCODE_F21 },                 /* 199: FK21 [XF86TouchpadToggle] */
+	{ "FK22", RDP_SCANCODE_F22 },                 /* 200: FK22 [XF86TouchpadOn] */
+	{ "FK23", RDP_SCANCODE_F23 },                 /* 201: FK23 [XF86TouchpadOff] */
+	{ "FK24", RDP_SCANCODE_F24 },                 /* 202: FK24 [(null)] */
+	{ "LVL5", RDP_SCANCODE_UNKNOWN },             /* 203: LVL5 [ISO_Level5_Shift] */
+	{ "ALT", RDP_SCANCODE_LMENU },                /* 204: ALT [(null)] */
+	{ "META", RDP_SCANCODE_LMENU },               /* 205: META [(null)] */
+	{ "SUPR", RDP_SCANCODE_LWIN },                /* 206: SUPR [(null)] */
+	{ "HYPR", RDP_SCANCODE_LWIN },                /* 207: HYPR [(null)] */
+	{ "I208", RDP_SCANCODE_MEDIA_PLAY_PAUSE },    /* 208: I208 [XF86AudioPlay] */
+	{ "I209", RDP_SCANCODE_MEDIA_PLAY_PAUSE },    /* 209: I209 [XF86AudioPause] */
+	{ "I210", RDP_SCANCODE_UNKNOWN },             /* 210: I210 [XF86Launch3] */
+	{ "I211", RDP_SCANCODE_UNKNOWN },             /* 211: I211 [XF86Launch4] */
+	{ "I212", RDP_SCANCODE_UNKNOWN },             /* 212: I212 [XF86LaunchB] */
+	{ "I213", RDP_SCANCODE_UNKNOWN },             /* 213: I213 [XF86Suspend] */
+	{ "I214", RDP_SCANCODE_UNKNOWN },             /* 214: I214 [XF86Close] */
+	{ "I215", RDP_SCANCODE_MEDIA_PLAY_PAUSE },    /* 215: I215 [XF86AudioPlay] */
+	{ "I216", RDP_SCANCODE_MEDIA_NEXT_TRACK },    /* 216: I216 [XF86AudioForward] */
+	{ "I217", RDP_SCANCODE_UNKNOWN },             /* 217: I217 [(null)] */
+	{ "I218", RDP_SCANCODE_UNKNOWN },             /* 218: I218 [Print] */
+	{ "I219", RDP_SCANCODE_UNKNOWN },             /* 219: I219 [(null)] */
+	{ "I220", RDP_SCANCODE_UNKNOWN },             /* 220: I220 [XF86WebCam] */
+	{ "I221", RDP_SCANCODE_UNKNOWN },             /* 221: I221 [XF86AudioPreset] */
+	{ "I222", RDP_SCANCODE_UNKNOWN },             /* 222: I222 [(null)] */
+	{ "I223", RDP_SCANCODE_LAUNCH_MAIL },         /* 223: I223 [XF86Mail] */
+	{ "I224", RDP_SCANCODE_UNKNOWN },             /* 224: I224 [XF86Messenger] */
+	{ "I225", RDP_SCANCODE_BROWSER_SEARCH },      /* 225: I225 [XF86Search] */
+	{ "I226", RDP_SCANCODE_UNKNOWN },             /* 226: I226 [XF86Go] */
+	{ "I227", RDP_SCANCODE_UNKNOWN },             /* 227: I227 [XF86Finance] */
+	{ "I228", RDP_SCANCODE_UNKNOWN },             /* 228: I228 [XF86Game] */
+	{ "I229", RDP_SCANCODE_UNKNOWN },             /* 229: I229 [XF86Shop] */
+	{ "I230", RDP_SCANCODE_UNKNOWN },             /* 230: I230 [(null)] */
+	{ "I231", RDP_SCANCODE_UNKNOWN },             /* 231: I231 [Cancel] */
+	{ "I232", RDP_SCANCODE_UNKNOWN },             /* 232: I232 [XF86MonBrightnessDown] */
+	{ "I233", RDP_SCANCODE_UNKNOWN },             /* 233: I233 [XF86MonBrightnessUp] */
+	{ "I234", RDP_SCANCODE_LAUNCH_MEDIA_SELECT }, /* 234: I234 [XF86AudioMedia] */
+	{ "I235", RDP_SCANCODE_UNKNOWN },             /* 235: I235 [XF86Display] */
+	{ "I236", RDP_SCANCODE_UNKNOWN },             /* 236: I236 [XF86KbdLightOnOff] */
+	{ "I237", RDP_SCANCODE_UNKNOWN },             /* 237: I237 [XF86KbdBrightnessDown] */
+	{ "I238", RDP_SCANCODE_UNKNOWN },             /* 238: I238 [XF86KbdBrightnessUp] */
+	{ "I239", RDP_SCANCODE_UNKNOWN },             /* 239: I239 [XF86Send] */
+	{ "I240", RDP_SCANCODE_UNKNOWN },             /* 240: I240 [XF86Reply] */
+	{ "I241", RDP_SCANCODE_UNKNOWN },             /* 241: I241 [XF86MailForward] */
+	{ "I242", RDP_SCANCODE_UNKNOWN },             /* 242: I242 [XF86Save] */
+	{ "I243", RDP_SCANCODE_UNKNOWN },             /* 243: I243 [XF86Documents] */
+	{ "I244", RDP_SCANCODE_UNKNOWN },             /* 244: I244 [XF86Battery] */
+	{ "I245", RDP_SCANCODE_UNKNOWN },             /* 245: I245 [XF86Bluetooth] */
+	{ "I246", RDP_SCANCODE_UNKNOWN },             /* 246: I246 [XF86WLAN] */
+	{ "I247", RDP_SCANCODE_UNKNOWN },             /* 247: I247 [XF86UWB] */
+	{ "I248", RDP_SCANCODE_UNKNOWN },             /* 248: I248 [(null)] */
+	{ "I249", RDP_SCANCODE_UNKNOWN },             /* 249: I249 [XF86Next_VMode] */
+	{ "I250", RDP_SCANCODE_UNKNOWN },             /* 250: I250 [XF86Prev_VMode] */
+	{ "I251", RDP_SCANCODE_UNKNOWN },             /* 251: I251 [XF86MonBrightnessCycle] */
+	{ "I252", RDP_SCANCODE_UNKNOWN },             /* 252: I252 [XF86BrightnessAuto] */
+	{ "I253", RDP_SCANCODE_UNKNOWN },             /* 253: I253 [XF86DisplayOff] */
+	{ "I254", RDP_SCANCODE_UNKNOWN },             /* 254: I254 [XF86WWAN] */
+	{ "I255", RDP_SCANCODE_UNKNOWN }              /* 255: I255 [XF86RFKill] */
 };
 
 static int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId);
@@ -428,6 +417,46 @@ int detect_keyboard_layout_from_xkbfile(void* display, DWORD* keyboardLayoutId)
 	return 0;
 }
 
+static int xkb_cmp(const void* pva, const void* pvb)
+{
+	const XKB_KEY_NAME_SCANCODE* a = pva;
+	const XKB_KEY_NAME_SCANCODE* b = pvb;
+	if (!a)
+		return 1;
+	if (!b)
+		return -1;
+	if (!a && !b)
+		return 0;
+	return strcmp(a->xkb_keyname, b->xkb_keyname);
+}
+
+static BOOL try_add(size_t offset, const char* xkb_keyname, DWORD* x11_keycode_to_rdp_scancode,
+
+                    size_t count)
+{
+	static BOOL initialized = FALSE;
+	static XKB_KEY_NAME_SCANCODE copy[ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE)] = { 0 };
+	if (!initialized)
+	{
+		memcpy(copy, XKB_KEY_NAME_SCANCODE_TABLE, sizeof(copy));
+		qsort(copy, ARRAYSIZE(copy), sizeof(XKB_KEY_NAME_SCANCODE), xkb_cmp);
+		initialized = TRUE;
+	}
+
+	XKB_KEY_NAME_SCANCODE key = { 0 };
+	key.xkb_keyname = xkb_keyname;
+	XKB_KEY_NAME_SCANCODE* found =
+	    bsearch(&key, copy, ARRAYSIZE(copy), sizeof(XKB_KEY_NAME_SCANCODE), xkb_cmp);
+	if (found)
+	{
+		DEBUG_KBD("%4s: keycode: 0x%02" PRIuz " -> rdp scancode: 0x%08" PRIx32 "", xkb_keyname,
+		          offset, found->rdp_scancode);
+		x11_keycode_to_rdp_scancode[offset] = found->rdp_scancode;
+		return TRUE;
+	}
+	return FALSE;
+}
+
 int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD* x11_keycode_to_rdp_scancode,
                                            size_t count)
 {
@@ -463,22 +492,7 @@ int freerdp_keyboard_load_map_from_xkbfile(void* display, DWORD* x11_keycode_to_
 			if (strnlen(xkb_keyname, ARRAYSIZE(xkb_keyname)) < 1)
 				continue;
 
-			for (size_t j = 0; j < ARRAYSIZE(XKB_KEY_NAME_SCANCODE_TABLE); j++)
-			{
-				if (!strcmp(xkb_keyname, XKB_KEY_NAME_SCANCODE_TABLE[j].xkb_keyname))
-				{
-					DEBUG_KBD("%4s: keycode: 0x%02X -> rdp scancode: 0x%08" PRIX32 "", xkb_keyname,
-					          i, XKB_KEY_NAME_SCANCODE_TABLE[j].rdp_scancode);
-
-					if (found)
-					{
-						DEBUG_KBD("Internal error! duplicate key %s!", xkb_keyname);
-					}
-
-					x11_keycode_to_rdp_scancode[i] = XKB_KEY_NAME_SCANCODE_TABLE[j].rdp_scancode;
-					found = TRUE;
-				}
-			}
+			found = try_add(i, xkb_keyname, x11_keycode_to_rdp_scancode, count);
 
 			if (!found)
 			{
