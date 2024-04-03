@@ -22,6 +22,8 @@
 #include <malloc.h>
 #include <freerdp/settings.h>
 
+#include "wf_defaults.h"
+
 static PCWSTR ValidateString(const BYTE* pb, ULONG cb)
 {
 	if (!pb || !cb)

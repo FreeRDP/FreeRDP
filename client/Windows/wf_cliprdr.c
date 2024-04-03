@@ -775,7 +775,6 @@ static CliprdrDataObject* CliprdrDataObject_New(FORMATETC* fmtetc, STGMEDIUM* st
 
 	if (count > 0)
 	{
-		ULONG i;
 		instance->m_pFormatEtc = (FORMATETC*)calloc(count, sizeof(FORMATETC));
 
 		if (!instance->m_pFormatEtc)
@@ -1247,7 +1246,7 @@ static UINT cliprdr_send_format_list(wfClipboard* clipboard)
 			}
 			else
 			{
-				while (formatId = EnumClipboardFormats(formatId))
+				while ((formatId = EnumClipboardFormats(formatId)) != 0)
 					formats[index++].formatId = formatId;
 			}
 
@@ -1755,9 +1754,9 @@ static BOOL wf_cliprdr_traverse_directory(wfClipboard* clipboard, WCHAR* Dir, si
 
 	while (FindNextFile(hFind, &FindFileData))
 	{
-		if ((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0 &&
-		        wcscmp(FindFileData.cFileName, _T(".")) == 0 ||
-		    wcscmp(FindFileData.cFileName, _T("..")) == 0)
+		if ((((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) &&
+		     (wcscmp(FindFileData.cFileName, _T(".")) == 0)) ||
+		    (wcscmp(FindFileData.cFileName, _T("..")) == 0))
 		{
 			continue;
 		}
@@ -2006,7 +2005,7 @@ static BOOL wf_cliprdr_process_filename(wfClipboard* clipboard, WCHAR* wFileName
 	return TRUE;
 }
 
-static SSIZE_T wf_cliprdr_tryopen(wfClipboard* clipboard, UINT32 requestedFormatId, void** pData)
+static SSIZE_T wf_cliprdr_tryopen(wfClipboard* clipboard, UINT32 requestedFormatId, BYTE** pData)
 {
 	SSIZE_T rc = -1;
 	WINPR_ASSERT(clipboard);
@@ -2044,7 +2043,7 @@ fail:
 	return rc;
 }
 
-static SSIZE_T wf_cliprdr_get_filedescriptor(wfClipboard* clipboard, void** pData)
+static SSIZE_T wf_cliprdr_get_filedescriptor(wfClipboard* clipboard, BYTE** pData)
 {
 	WINPR_ASSERT(clipboard);
 	WINPR_ASSERT(pData);
@@ -2111,7 +2110,8 @@ static SSIZE_T wf_cliprdr_get_filedescriptor(wfClipboard* clipboard, void** pDat
 	GlobalUnlock(stg_medium.hGlobal);
 	ReleaseStgMedium(&stg_medium);
 exit:
-	const size_t size = 4 + clipboard->nFiles * sizeof(FILEDESCRIPTORW);
+{
+	const size_t size = 4ull + clipboard->nFiles * sizeof(FILEDESCRIPTORW);
 	FILEGROUPDESCRIPTORW* groupDsc = (FILEGROUPDESCRIPTORW*)calloc(size, 1);
 
 	if (groupDsc)
@@ -2124,9 +2124,10 @@ exit:
 				groupDsc->fgd[i] = *clipboard->fileDescriptor[i];
 		}
 
-		*pData = groupDsc;
+		*pData = (BYTE*)groupDsc;
 		rc = size;
 	}
+}
 
 	IDataObject_Release(dataObj);
 	return rc;
@@ -2155,8 +2156,7 @@ wf_cliprdr_server_format_data_request(CliprdrClientContext* context,
 
 	if (requestedFormatId == RegisterClipboardFormat(CFSTR_FILEDESCRIPTORW))
 	{
-		const SSIZE_T res = wf_cliprdr_get_filedescriptor(clipboard, requestedFormatId,
-		                                                  &response.requestedFormatData);
+		const SSIZE_T res = wf_cliprdr_get_filedescriptor(clipboard, &response.requestedFormatData);
 		if (res > 0)
 			response.common.dataLen = (UINT32)res;
 	}
