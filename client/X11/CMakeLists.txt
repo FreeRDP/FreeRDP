@@ -91,7 +91,7 @@ else()
 endif()
 target_include_directories(${PROJECT_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 
-set(LIBS
+set(PRIV_LIBS
 	${X11_LIBRARIES}
 )
 
@@ -101,7 +101,7 @@ find_package(X11 REQUIRED)
 if(X11_XShm_FOUND)
 	add_definitions(-DWITH_XSHM)
 	include_directories(${X11_XShm_INCLUDE_PATH})
-	list(APPEND LIBS
+	list(APPEND PRIV_LIBS
 		${X11_Xext_LIB}
 	)
 endif()
@@ -113,7 +113,7 @@ if (WITH_XINERAMA)
 	if(X11_Xinerama_FOUND)
 		add_definitions(-DWITH_XINERAMA)
 		include_directories(${X11_Xinerama_INCLUDE_PATH})
-		list(APPEND LIBS
+		list(APPEND PRIV_LIBS
 			${X11_Xinerama_LIB}
 		)
 	endif()
@@ -124,7 +124,7 @@ if (WITH_XEXT)
 	find_package(X11 REQUIRED)
 	if(X11_Xext_FOUND)
 		add_definitions(-DWITH_XEXT)
-		list(APPEND LIBS
+		list(APPEND PRIV_LIBS
 			${X11_Xext_LIB}
 		)
 	endif()
@@ -136,7 +136,7 @@ if (WITH_XCURSOR)
 	if(X11_Xcursor_FOUND)
 		add_definitions(-DWITH_XCURSOR)
 		include_directories(${X11_Xcursor_INCLUDE_PATH})
-		list(APPEND LIBS
+		list(APPEND PRIV_LIBS
 			${X11_Xcursor_LIB}
 		)
 	endif()
@@ -148,7 +148,7 @@ if (WITH_XV)
 	if(X11_Xv_FOUND)
 		add_definitions(-DWITH_XV)
 		include_directories(${X11_Xv_INCLUDE_PATH})
-		list(APPEND LIBS
+		list(APPEND PRIV_LIBS
 			${X11_Xv_LIB}
 		)
 	endif()
@@ -160,7 +160,7 @@ if (WITH_XI)
 	if(X11_Xi_FOUND)
 		add_definitions(-DWITH_XI)
 		include_directories(${X11_Xi_INCLUDE_PATH})
-		list(APPEND LIBS
+		list(APPEND PRIV_LIBS
 			${X11_Xi_LIB}
 		)
 	endif()
@@ -172,7 +172,7 @@ if(WITH_XRENDER)
 	if(X11_Xrender_FOUND)
 		add_definitions(-DWITH_XRENDER)
 		include_directories(${X11_Xrender_INCLUDE_PATH})
-		list(APPEND LIBS
+		list(APPEND PRIV_LIBS
 			${X11_Xrender_LIB}
 		)
 	endif()
@@ -184,7 +184,7 @@ if (WITH_XRANDR)
 	if(X11_Xrandr_FOUND)
 		add_definitions(-DWITH_XRANDR)
 		include_directories(${X11_Xrandr_INCLUDE_PATH})
-		list(APPEND LIBS
+		list(APPEND PRIV_LIBS
 			${X11_Xrandr_LIB}
 		)
 	endif()
@@ -196,7 +196,7 @@ if (WITH_XFIXES)
 	if(X11_Xfixes_FOUND)
 		add_definitions(-DWITH_XFIXES)
 		include_directories(${X11_Xfixes_INCLUDE_PATH})
-		list(APPEND LIBS
+		list(APPEND PRIV_LIBS
 			${X11_Xfixes_LIB}
 		)
 	endif()
@@ -204,15 +204,18 @@ endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/resources)
 
-list(APPEND LIBS
+list(APPEND PUB_LIBS
 	freerdp-client
-	freerdp
+)
+
+list(APPEND PRIV_LIBS
 	m
 )
 if (NOT APPLE)
-	list(APPEND LIBS rt)
+	list(APPEND PRIV_LIBS rt)
 endif()
-target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
+target_link_libraries(${PROJECT_NAME} PUBLIC ${PUB_LIBS})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${PRIV_LIBS})
 
 if(WITH_IPP)
 	target_link_libraries(${PROJECT_NAME} PRIVATE ${IPP_LIBRARY_LIST})
