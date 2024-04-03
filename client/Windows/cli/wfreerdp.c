@@ -35,8 +35,8 @@
 
 #include "../resource/resource.h"
 
-#include "wf_client.h"
-#include "wf_defaults.h"
+#include <wf_client.h>
+#include <wf_defaults.h>
 
 #include <shellapi.h>
 

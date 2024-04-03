@@ -19,8 +19,10 @@
 #ifndef FREERDP_CLIENT_WIN_DEFAULTS_H
 #define FREERDP_CLIENT_WIN_DEFAULTS_H
 
+#include <winpr/wtypes.h>
+#include <freerdp/api.h>
 #include <freerdp/settings.h>
 
-void WINAPI AddDefaultSettings(_Inout_ rdpSettings* settings);
+FREERDP_API void WINAPI AddDefaultSettings(_Inout_ rdpSettings* settings);
 
 #endif /* FREERDP_CLIENT_WIN_DEFAULTS_H */
