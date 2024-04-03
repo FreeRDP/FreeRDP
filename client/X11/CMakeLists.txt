@@ -214,10 +214,6 @@ if (NOT APPLE)
 endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
 
-if(WITH_IPP)
-	target_link_libraries(${PROJECT_NAME} PRIVATE ${IPP_LIBRARY_LIST})
-endif()
-
 if(WITH_CLIENT_INTERFACE)
 	install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
 endif()

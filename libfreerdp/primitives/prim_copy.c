@@ -18,10 +18,6 @@
 #include <string.h>
 #include <freerdp/types.h>
 #include <freerdp/primitives.h>
-#ifdef WITH_IPP
-#include <ipps.h>
-#include <ippi.h>
-#endif /* WITH_IPP */
 #include "prim_internal.h"
 
 static primitives_t* generic = NULL;
@@ -132,19 +128,6 @@ static pstatus_t general_copy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDs
 	return PRIMITIVES_SUCCESS;
 }
 
-#ifdef WITH_IPP
-/* ------------------------------------------------------------------------- */
-/* This is just ippiCopy_8u_AC4R without the IppiSize structure parameter.   */
-static pstatus_t ippiCopy_8u_AC4r(const BYTE* pSrc, INT32 srcStep, BYTE* pDst, INT32 dstStep,
-                                  INT32 width, INT32 height)
-{
-	IppiSize roi;
-	roi.width = width;
-	roi.height = height;
-	return (pstatus_t)ippiCopy_8u_AC4R(pSrc, srcStep, pDst, dstStep, roi);
-}
-#endif /* WITH_IPP */
-
 /* ------------------------------------------------------------------------- */
 void primitives_init_copy(primitives_t* prims)
 {
@@ -161,10 +144,6 @@ void primitives_init_copy_opt(primitives_t* prims)
 	generic = primitives_get_generic();
 	primitives_init_copy(prims);
 	/* Pick tuned versions if possible. */
-#ifdef WITH_IPP
-	prims->copy_8u = (__copy_8u_t)ippsCopy_8u;
-	prims->copy_8u_AC4r = (__copy_8u_AC4r_t)ippiCopy_8u_AC4r;
-#endif
 	/* Performance with an SSE2 version with no prefetch seemed to be
 	 * all over the map vs. memcpy.
 	 * Sometimes it was significantly faster, sometimes dreadfully slower,

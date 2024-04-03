@@ -17,7 +17,6 @@
  *   newval = alpha1*val1 + (1-alpha1)*val2
  * rather than
  *   newval = alpha1*val1 + (1-alpha1)*alpha2*val2
- * The IPP gives other options.
  */
 
 #include <freerdp/config.h>

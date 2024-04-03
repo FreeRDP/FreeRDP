@@ -24,7 +24,6 @@ option(WITH_GPROF "Compile with GProf profiler." OFF)
 
 option(WITH_SSE2 "Enable SSE2 optimization." OFF)
 option(WITH_NEON "Enable NEON optimization." OFF)
-option(WITH_IPP "Use Intel Performance Primitives." OFF)
 
 option(WITH_JPEG "Use JPEG decoding." OFF)
 
