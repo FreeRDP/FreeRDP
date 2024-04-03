@@ -65,15 +65,16 @@ else()
 endif()
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 
-list(APPEND LIBS freerdp-client)
-list(APPEND LIBS winpr freerdp)
+list(APPEND PUB_LIBS freerdp-client)
+list(APPEND PUB_LIBS winpr freerdp)
 
-list(APPEND LIBS msimg32.lib credui.lib)
+list(APPEND PRIV_LIBS msimg32.lib credui.lib)
 
 if (MINGW)
-	list(APPEND LIBS ntdll.lib) # only required with MINGW
+    list(APPEND PRIV_LIBS ntdll.lib) # only required with MINGW
 endif()
-target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
+target_link_libraries(${MODULE_NAME} PUBLIC ${PUB_LIBS})
+target_link_libraries(${MODULE_NAME} PRIVATE ${PRIV_LIBS})
 
 if(WITH_CLIENT_INTERFACE)
 	install(TARGETS ${MODULE_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)

@@ -27,7 +27,6 @@ set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "..")
 
 list(APPEND LIBS
     xfreerdp-client
-    freerdp-client
 )
 
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBS})
