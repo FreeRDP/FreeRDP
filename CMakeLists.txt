@@ -503,10 +503,6 @@ set(VAAPI_FEATURE_TYPE "OPTIONAL")
 set(VAAPI_FEATURE_PURPOSE "multimedia")
 set(VAAPI_FEATURE_DESCRIPTION "VA-API hardware acceleration for video playback")
 
-set(IPP_FEATURE_TYPE "OPTIONAL")
-set(IPP_FEATURE_PURPOSE "performance")
-set(IPP_FEATURE_DESCRIPTION "Intel Integrated Performance Primitives library")
-
 set(OPENH264_FEATURE_TYPE "OPTIONAL")
 set(OPENH264_FEATURE_PURPOSE "codec")
 set(OPENH264_FEATURE_DESCRIPTION "use OpenH264 library")
@@ -634,13 +630,6 @@ if (WITH_OPENH264 AND NOT OPENH264_FOUND)
 	message(FATAL_ERROR "OpenH264 support requested but not detected")
 endif()
 set(WITH_OPENH264 ${OPENH264_FOUND})
-
-if(TARGET_ARCH MATCHES "x86|x64")
-	if (NOT APPLE)
-		# Intel Performance Primitives
-		find_feature(IPP ${IPP_FEATURE_TYPE} ${IPP_FEATURE_PURPOSE} ${IPP_FEATURE_DESCRIPTION})
-	endif()
-endif()
 
 if(OPENSSL_FOUND)
 	add_definitions("-DWITH_OPENSSL")

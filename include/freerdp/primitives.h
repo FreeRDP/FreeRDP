@@ -70,12 +70,11 @@ enum
 	PRIM_FLAGS_HAVE_EXTGPU = (1U << 1), /* primitives are using the GPU */
 };
 
-/* Structures compatible with IPP */
 typedef struct
 {
 	UINT32 width;
 	UINT32 height;
-} prim_size_t; /* like IppiSize */
+} prim_size_t;
 
 typedef enum
 {

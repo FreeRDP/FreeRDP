@@ -217,10 +217,6 @@ endif()
 target_link_libraries(${PROJECT_NAME} PUBLIC ${PUB_LIBS})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PRIV_LIBS})
 
-if(WITH_IPP)
-	target_link_libraries(${PROJECT_NAME} PRIVATE ${IPP_LIBRARY_LIST})
-endif()
-
 if(WITH_CLIENT_INTERFACE)
 	install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT libraries)
 endif()

@@ -21,15 +21,6 @@ set(MODULE_PREFIX "FREERDP")
 # CMake modules includes
 include(FindCairo)
 
-# Create imported targets for Intel IPP libraries
-
-if(IPP_FOUND)
-    foreach(ipp_lib ${IPP_LIBRARIES})
-        add_library("${ipp_lib}_imported" STATIC IMPORTED)
-        set_property(TARGET "${ipp_lib}_imported" PROPERTY IMPORTED_LOCATION "${IPP_LIBRARY_DIRS}/${ipp_lib}")
-    endforeach()
-endif()
-
 set(LIBFREERDP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(LIBFREERDP_SRCS "")
 set(LIBFREERDP_LIBS "")
@@ -376,15 +367,6 @@ set(PRIMITIVES_OPT_SRCS
     ${PRIMITIVES_SSSE3_SRCS}
     ${PRIMITIVES_OPENCL_SRCS})
 
-### IPP Variable debugging
-if(WITH_IPP)
-    if(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
-        foreach(INCLDIR ${IPP_INCLUDE_DIRS})
-            set(OPTIMIZATION "${OPTIMIZATION} -I${INCLDIR}")
-        endforeach(INCLDIR)
-    endif()
-endif()
-
 if(WITH_SSE2)
     if(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
         set_source_files_properties(${PRIMITIVES_SSE2_SRCS}
@@ -412,13 +394,6 @@ endif()
 set(PRIMITIVES_SRCS ${PRIMITIVES_SRCS} ${PRIMITIVES_OPT_SRCS})
 
 freerdp_module_add(${PRIMITIVES_SRCS})
-
-if(IPP_FOUND)
-    freerdp_include_directory_add(${IPP_INCLUDE_DIRS})
-        foreach(ipp_lib ${IPP_LIBRARIES})
-        freerdp_library_add("${ipp_lib}_imported")
-    endforeach()
-endif()
 
 if(BUILD_TESTING AND NOT WIN32 AND NOT APPLE)
     add_subdirectory(primitives/test)
