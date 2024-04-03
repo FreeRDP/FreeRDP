@@ -22,6 +22,22 @@ usage () {
   echo "target [$DEPLOYMENT_TARGET]"
 }
 
+check_tools() {
+    for TOOL in mkdir rm mv git dirname pwd find cut basename grep xargs cmake ninja autoconf automake aclocal autoheader glibtoolize lipo otool install_name_tool;
+    do
+        set +e
+        TOOL_PATH=$(which "$TOOL")
+        set -e
+        echo "$TOOL: $TOOL_PATH"
+
+        if [ ! -f "$TOOL_PATH" ];
+        then
+            echo "Missing $TOOL! please install and add to PATH."
+            exit 1
+        fi
+    done
+}
+
 while [[ $# -gt 0 ]]; do
   case $1 in
     -a|--arch)
@@ -48,6 +64,8 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+check_tools
 
 fix_rpath() {
 	SEARCH_PATH=$1
