@@ -210,7 +210,7 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 			if ((rv = profile_flush_to_file(profile, tmp_profile_path)))
 				goto cleanup;
 
-			profile_release(profile);
+			profile_abandon(profile);
 			profile = NULL;
 			if ((rv = profile_init_path(tmp_profile_path, &profile)))
 				goto cleanup;
@@ -239,7 +239,7 @@ cleanup:
 	krb5_get_init_creds_opt_free(ctx, gic_opt);
 	if (is_temp_ctx)
 		krb5_free_context(ctx);
-	profile_release(profile);
+	profile_abandon(profile);
 	winpr_DeleteFile(tmp_profile_path);
 	free(tmp_profile_path);
 
