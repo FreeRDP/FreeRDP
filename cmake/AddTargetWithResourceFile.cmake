@@ -64,7 +64,7 @@ macro(AddTargetWithResourceFile nameAndTarget is_exe version sources)
 
     set(OUTPUT_FILENAME "${name}")
     if (VERSIONING)
-        set(OUTPUT_FILENAME "${name}${RC_VERSION_MAJOR}")
+        string(APPEND OUTPUT_FILENAME "${RC_VERSION_MAJOR}")
     endif()
 
     if (IS_EXE)
@@ -80,7 +80,7 @@ macro(AddTargetWithResourceFile nameAndTarget is_exe version sources)
             PROPERTIES
             OUTPUT_NAME ${OUTPUT_FILENAME}
         )
-        set (OUTPUT_FILENAME "${OUTPUT_FILENAME}${CMAKE_EXECUTABLE_SUFFIX}" )
+        string(APPEND OUTPUT_FILENAME "${CMAKE_EXECUTABLE_SUFFIX}")
     else()
         message("add_library(${target}) [${lib_options}]")
         add_library(${target}
@@ -96,7 +96,6 @@ macro(AddTargetWithResourceFile nameAndTarget is_exe version sources)
                 )
         else()
             set_target_properties(${target} PROPERTIES PREFIX "")
-            set_target_properties(${target} PROPERTIES NO_SONAME 1)
         endif()
 
         set_target_properties(
