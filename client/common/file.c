@@ -2296,7 +2296,7 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 			return FALSE;
 	}
 
-	if (~file->RedirectLocation)
+	if (~file->RedirectLocation && file->RedirectLocation != 0)
 	{
 		size_t count = 0;
 		union
