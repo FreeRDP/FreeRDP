@@ -1012,6 +1012,8 @@ static BOOL rdg_process_extauth_sspi(rdpRdg* rdg, wStream* s)
 	}
 
 	authTokenData = malloc(authBlobLen);
+	if (authTokenData == NULL)
+		return FALSE;
 	Stream_Read(s, authTokenData, authBlobLen);
 
 	authToken.pvBuffer = authTokenData;
