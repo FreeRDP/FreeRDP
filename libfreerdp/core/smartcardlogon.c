@@ -222,11 +222,14 @@ static BOOL set_info_certificate(SmartcardCertInfo* cert, BYTE* certBytes, DWORD
 		return FALSE;
 	}
 
-	if (userFilter && cert->userHint && strcmp(cert->userHint, userFilter) != 0)
+	if (userFilter && (!cert->upn || (strcmp(cert->upn, userFilter) != 0)))
 	{
-		WLog_DBG(TAG, "discarding non matching cert by user %s@%s", cert->userHint,
-		         cert->domainHint);
-		return FALSE;
+		if (cert->userHint && strcmp(cert->userHint, userFilter) != 0)
+		{
+			WLog_DBG(TAG, "discarding non matching cert by user %s@%s", cert->userHint,
+			         cert->domainHint);
+			return FALSE;
+		}
 	}
 
 	if (domainFilter && cert->domainHint && strcmp(cert->domainHint, domainFilter) != 0)
