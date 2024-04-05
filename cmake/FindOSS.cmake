@@ -9,7 +9,7 @@ IF(UNIX)
 	set(PLATFORM_PREFIX "sys/")
   ELSEIF(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
 	set(PLATFORM_PREFIX "machine/")
-  ENDIF(CMAKE_SYSTEM_NAME MATCHES "OpenBSD")
+  ENDIF()
 ENDIF(UNIX)
 
 set(OSS_HDR_NAME "${PLATFORM_PREFIX}soundcard.h" CACHE STRING "oss header include file name")
