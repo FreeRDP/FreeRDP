@@ -19,6 +19,7 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/freerdp.h>
 
 #include <winpr/crt.h>
 #include <winpr/wlog.h>
@@ -1362,6 +1363,10 @@ LONG WINAPI Emulate_SCardGetStatusChangeA(SmartcardEmulationContext* smartcard,
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
 
+		freerdp* inst =
+		    freerdp_settings_get_pointer_writable(smartcard->settings, FreeRDP_instance);
+		WINPR_ASSERT(inst);
+
 		status = SCARD_E_TIMEOUT;
 		do
 		{
@@ -1410,6 +1415,11 @@ LONG WINAPI Emulate_SCardGetStatusChangeA(SmartcardEmulationContext* smartcard,
 			Sleep(diff);
 			if (dwTimeout != INFINITE)
 				dwTimeout -= MIN(dwTimeout, diff);
+			if (freerdp_shall_disconnect_context(inst->context))
+			{
+				status = SCARD_E_CANCELLED;
+				break;
+			}
 		} while (dwTimeout > 0);
 	}
 
@@ -1435,6 +1445,10 @@ LONG WINAPI Emulate_SCardGetStatusChangeW(SmartcardEmulationContext* smartcard,
 		size_t eventCount = 0;
 		SCardContext* value = HashTable_GetItemValue(smartcard->contexts, (const void*)hContext);
 		WINPR_ASSERT(value); /* Must be valid after Emulate_SCardIsValidContext */
+
+		freerdp* inst =
+		    freerdp_settings_get_pointer_writable(smartcard->settings, FreeRDP_instance);
+		WINPR_ASSERT(inst);
 
 		status = SCARD_E_TIMEOUT;
 		do
@@ -1483,6 +1497,11 @@ LONG WINAPI Emulate_SCardGetStatusChangeW(SmartcardEmulationContext* smartcard,
 			Sleep(diff);
 			if (dwTimeout != INFINITE)
 				dwTimeout -= MIN(dwTimeout, diff);
+			if (freerdp_shall_disconnect_context(inst->context))
+			{
+				status = SCARD_E_CANCELLED;
+				break;
+			}
 		} while (dwTimeout > 0);
 	}
 
