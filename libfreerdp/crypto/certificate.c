@@ -1615,6 +1615,8 @@ BOOL freerdp_certificate_publickey_encrypt(const rdpCertificate* cert, const BYT
 
 	size_t outputSize = EVP_PKEY_size(pkey);
 	output = malloc(outputSize);
+	if (output == NULL)
+		goto out;
 	*pcbOutput = outputSize;
 
 	if (EVP_PKEY_encrypt_init(ctx) != 1 ||
