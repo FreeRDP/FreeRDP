@@ -181,7 +181,7 @@ static xfCachedData* xf_cached_data_new(BYTE* data, UINT32 data_length)
 	return cached_data;
 }
 
-static xfCachedData* xf_cached_data_new_copy(BYTE* data, UINT32 data_length)
+static xfCachedData* xf_cached_data_new_copy(const BYTE* data, size_t data_length)
 {
 	BYTE* copy = NULL;
 	if (data_length > 0)
@@ -214,26 +214,28 @@ static void xf_clipboard_free_server_formats(xfClipboard* clipboard)
 	}
 }
 
-static void xf_cliprdr_check_owner(xfClipboard* clipboard)
+static BOOL xf_cliprdr_update_owner(xfClipboard* clipboard)
 {
-	Window owner = 0;
-	xfContext* xfc = NULL;
-
 	WINPR_ASSERT(clipboard);
 
-	xfc = clipboard->xfc;
+	xfContext* xfc = clipboard->xfc;
 	WINPR_ASSERT(xfc);
 
-	if (clipboard->sync)
-	{
-		owner = XGetSelectionOwner(xfc->display, clipboard->clipboard_atom);
+	if (!clipboard->sync)
+		return FALSE;
 
-		if (clipboard->owner != owner)
-		{
-			clipboard->owner = owner;
-			xf_cliprdr_send_client_format_list(clipboard, FALSE);
-		}
-	}
+	Window owner = XGetSelectionOwner(xfc->display, clipboard->clipboard_atom);
+	if (clipboard->owner == owner)
+		return FALSE;
+
+	clipboard->owner = owner;
+	return TRUE;
+}
+
+static void xf_cliprdr_check_owner(xfClipboard* clipboard)
+{
+	if (xf_cliprdr_update_owner(clipboard))
+		xf_cliprdr_send_client_format_list(clipboard, FALSE);
 }
 
 static BOOL xf_cliprdr_is_self_owned(xfClipboard* clipboard)
@@ -580,9 +582,11 @@ static CLIPRDR_FORMAT* xf_cliprdr_get_raw_server_formats(xfClipboard* clipboard,
 	WINPR_ASSERT(xfc);
 
 	*numFormats = 0;
-	LogTagAndXGetWindowProperty(
-	    TAG, xfc->display, clipboard->owner, clipboard->raw_format_list_atom, 0, 4096, False,
-	    clipboard->raw_format_list_atom, &type, &format, &length, &remaining, &data);
+
+	Window owner = XGetSelectionOwner(xfc->display, clipboard->clipboard_atom);
+	LogTagAndXGetWindowProperty(TAG, xfc->display, owner, clipboard->raw_format_list_atom, 0, 4096,
+	                            False, clipboard->raw_format_list_atom, &type, &format, &length,
+	                            &remaining, &data);
 
 	if (data && length > 0 && format == 8 && type == clipboard->raw_format_list_atom)
 	{
