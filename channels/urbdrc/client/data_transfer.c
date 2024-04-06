@@ -705,7 +705,10 @@ static UINT urb_control_transfer(IUDEVICE* pdev, GENERIC_CHANNEL_CALLBACK* callb
 	if (transferDir == USBD_TRANSFER_DIRECTION_OUT)
 	{
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, OutputBufferSize))
+		{
+			Stream_Free(out, TRUE);
 			return ERROR_INVALID_DATA;
+		}
 		Stream_Copy(s, out, OutputBufferSize);
 	}
 
