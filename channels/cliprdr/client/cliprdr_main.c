@@ -654,7 +654,10 @@ static UINT cliprdr_temp_directory(CliprdrClientContext* context,
 
 	if (Stream_Write_UTF16_String_From_UTF8(s, tmpDirCharLen - 1, tempDirectory->szTempDir,
 	                                        ARRAYSIZE(tempDirectory->szTempDir), TRUE) < 0)
+	{
+		Stream_Free(s, TRUE);
 		return ERROR_INTERNAL_ERROR;
+	}
 	/* Path must be 260 UTF16 characters with '\0' termination.
 	 * ensure this here */
 	Stream_Write_UINT16(s, 0);
