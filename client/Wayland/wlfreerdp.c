@@ -224,29 +224,29 @@ static BOOL wl_pre_connect(freerdp* instance)
 
 static BOOL wl_post_connect(freerdp* instance)
 {
-	rdpGdi* gdi = NULL;
-	UwacWindow* window = NULL;
-	wlfContext* context = NULL;
-	rdpSettings* settings = NULL;
-	char* title = "FreeRDP";
-	char* app_id = "wlfreerdp";
-	UINT32 w = 0;
-	UINT32 h = 0;
-
 	if (!instance || !instance->context)
 		return FALSE;
 
-	context = (wlfContext*)instance->context;
-	settings = instance->context->settings;
+	wlfContext* context = (wlfContext*)instance->context;
+	WINPR_ASSERT(context);
 
+	rdpSettings* settings = instance->context->settings;
+	WINPR_ASSERT(settings);
+
+	const char* title = "FreeRDP";
 	const char* wtitle = freerdp_settings_get_string(settings, FreeRDP_WindowTitle);
 	if (wtitle)
 		title = wtitle;
 
+	const char* app_id = "wlfreerdp";
+	const char* wmclass = freerdp_settings_get_string(settings, FreeRDP_WmClass);
+	if (wmclass)
+		app_id = wmclass;
+
 	if (!gdi_init(instance, PIXEL_FORMAT_BGRA32))
 		return FALSE;
 
-	gdi = instance->context->gdi;
+	rdpGdi* gdi = instance->context->gdi;
 
 	if (!gdi || (gdi->width < 0) || (gdi->height < 0))
 		return FALSE;
@@ -254,8 +254,8 @@ static BOOL wl_post_connect(freerdp* instance)
 	if (!wlf_register_pointer(instance->context->graphics))
 		return FALSE;
 
-	w = (UINT32)gdi->width;
-	h = (UINT32)gdi->height;
+	UINT32 w = (UINT32)gdi->width;
+	UINT32 h = (UINT32)gdi->height;
 
 	if (freerdp_settings_get_bool(settings, FreeRDP_SmartSizing) && !context->fullscreen)
 	{
@@ -268,15 +268,16 @@ static BOOL wl_post_connect(freerdp* instance)
 			h = sh;
 	}
 
-	context->window = window = UwacCreateWindowShm(context->display, w, h, WL_SHM_FORMAT_XRGB8888);
+	context->window = UwacCreateWindowShm(context->display, w, h, WL_SHM_FORMAT_XRGB8888);
 
-	if (!window)
+	if (!context->window)
 		return FALSE;
 
 	UwacWindowSetFullscreenState(
-	    window, NULL, freerdp_settings_get_bool(instance->context->settings, FreeRDP_Fullscreen));
-	UwacWindowSetTitle(window, title);
-	UwacWindowSetAppId(window, app_id);
+	    context->window, NULL,
+	    freerdp_settings_get_bool(instance->context->settings, FreeRDP_Fullscreen));
+	UwacWindowSetTitle(context->window, title);
+	UwacWindowSetAppId(context->window, app_id);
 	UwacWindowSetOpaqueRegion(context->window, 0, 0, w, h);
 	instance->context->update->EndPaint = wl_end_paint;
 	instance->context->update->DesktopResize = wl_resize_display;
