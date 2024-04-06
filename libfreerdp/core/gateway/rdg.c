@@ -1441,7 +1441,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 	const size_t bodyLength = http_response_get_body_length(response);
 	const TRANSFER_ENCODING encoding = http_response_get_transfer_encoding(response);
 	const BOOL isWebsocket = http_response_is_websocket(rdg->http, response);
-	http_response_free(response);
+
 	WLog_Print(rdg->log, WLOG_DEBUG, "%s authorization result: %s", method,
 	           freerdp_http_status_string_format(statusCode, buffer, ARRAYSIZE(buffer)));
 
@@ -1451,11 +1451,14 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 			/* old rdg endpoint without websocket support, don't request websocket for RDG_IN_DATA
 			 */
 			http_context_enable_websocket_upgrade(rdg->http, FALSE);
+			http_response_free(response);
 			break;
 		case HTTP_STATUS_DENIED:
 			freerdp_set_last_error_log(rdg->context, FREERDP_ERROR_CONNECT_ACCESS_DENIED);
+			http_response_free(response);
 			return FALSE;
 		case HTTP_STATUS_SWITCH_PROTOCOLS:
+			http_response_free(response);
 			if (!isWebsocket)
 			{
 				/*
@@ -1486,6 +1489,7 @@ static BOOL rdg_establish_data_connection(rdpRdg* rdg, rdpTls* tls, const char* 
 			return TRUE;
 		default:
 			http_response_log_error_status(rdg->log, WLOG_WARN, response);
+			http_response_free(response);
 			return FALSE;
 	}
 
