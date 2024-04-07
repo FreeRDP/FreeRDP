@@ -126,12 +126,18 @@ BOOL freerdp_http_request(const char* url, const char* body, long* status_code, 
 	{
 		blen = strlen(body);
 		if (winpr_asprintf(&headers, &size, post_header_fmt, path, hostname, blen) < 0)
+		{
+			free(hostname);
 			return FALSE;
+		}
 	}
 	else
 	{
 		if (winpr_asprintf(&headers, &size, get_header_fmt, path, hostname) < 0)
+		{
+			free(hostname);
 			return FALSE;
+		}
 	}
 
 	ssl_ctx = SSL_CTX_new(TLS_client_method());
