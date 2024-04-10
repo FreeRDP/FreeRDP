@@ -14,7 +14,7 @@
 %global __provides_exclude_from ^%{INSTALL_PREFIX}.*$
 
 # do not require our own libs
-%global __requires_exclude ^(libfreerdp.*|libwinpr|librdtk|libuwac).*$
+%global __requires_exclude ^(libfreerdp.*|libwinpr.*|librdtk.*|libuwac.*).*$
 
 Name:           freerdp-nightly
 Version:        3.0
@@ -229,6 +229,8 @@ export NO_BRP_CHECK_RPATH true
 %postun -p /sbin/ldconfig
 
 %changelog
+* Wed Apr 10 2024 FreeRDP Team <team@freerdp.com> - 3.0.0-5
+- Fix exclusion of libuwac and librdtk
 * Fri Feb 09 2024 FreeRDP Team <team@freerdp.com> - 3.0.0-4
 - Deactivate ASAN due to issues with clang
 * Fri Feb 09 2024 FreeRDP Team <team@freerdp.com> - 3.0.0-3
