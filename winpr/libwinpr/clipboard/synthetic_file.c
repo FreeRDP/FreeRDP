@@ -1085,7 +1085,6 @@ static UINT file_get_range(struct synthetic_file* file, UINT64 offset, UINT32 si
 	UINT error = NO_ERROR;
 	DWORD dwLow = 0;
 	DWORD dwHigh = 0;
-	BYTE* buffer = NULL;
 
 	WINPR_ASSERT(file);
 	WINPR_ASSERT(actual_data);
@@ -1156,7 +1155,7 @@ static UINT file_get_range(struct synthetic_file* file, UINT64 offset, UINT32 si
 			}
 		}
 
-		buffer = malloc(size);
+		BYTE* buffer = malloc(size);
 		if (!buffer)
 		{
 			error = ERROR_NOT_ENOUGH_MEMORY;
@@ -1164,6 +1163,7 @@ static UINT file_get_range(struct synthetic_file* file, UINT64 offset, UINT32 si
 		}
 		if (!ReadFile(file->fd, buffer, size, (LPDWORD)actual_size, NULL))
 		{
+			free(buffer);
 			error = GetLastError();
 			break;
 		}
@@ -1174,10 +1174,6 @@ static UINT file_get_range(struct synthetic_file* file, UINT64 offset, UINT32 si
 		         *actual_size, file->offset);
 	} while (0);
 
-	if (NO_ERROR != error)
-	{
-		free(buffer);
-	}
 	synthetic_file_read_close(file, TRUE /* (error != NO_ERROR) && (size > 0) */);
 	return error;
 }
