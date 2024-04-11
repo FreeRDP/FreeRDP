@@ -180,7 +180,7 @@ void xf_keyboard_key_press(xfContext* xfc, const XKeyEvent* event, KeySym keysym
 
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
-	WINPR_ASSERT(event->keycode <= ARRAYSIZE(xfc->KeyboardState));
+	WINPR_ASSERT(event->keycode < ARRAYSIZE(xfc->KeyboardState));
 
 	last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = TRUE;
