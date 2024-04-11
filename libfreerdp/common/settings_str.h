@@ -50,6 +50,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_AutoLogonEnabled, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_AutoLogonEnabled" },
 	{ FreeRDP_AutoReconnectionEnabled, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_AutoReconnectionEnabled" },
+	{ FreeRDP_AutoReconnectionPacketSupported, FREERDP_SETTINGS_TYPE_BOOL,
+	  "FreeRDP_AutoReconnectionPacketSupported" },
 	{ FreeRDP_BitmapCacheEnabled, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_BitmapCacheEnabled" },
 	{ FreeRDP_BitmapCachePersistEnabled, FREERDP_SETTINGS_TYPE_BOOL,
 	  "FreeRDP_BitmapCachePersistEnabled" },

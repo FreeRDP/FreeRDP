@@ -213,7 +213,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 ARC_CS_PRIVATE_PACKET* ClientAutoReconnectCookie); /* 834 */
 	SETTINGS_DEPRECATED(ALIGN64 ARC_SC_PRIVATE_PACKET* ServerAutoReconnectCookie); /* 835 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL PrintReconnectCookie);                        /* 836 */
-	UINT64 padding0896[896 - 837];                                                 /* 837 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL AutoReconnectionPacketSupported);             /* 837 */
+	UINT64 padding0896[896 - 838];                                                 /* 838 */
 
 	/* Client Info (Time Zone) */
 	SETTINGS_DEPRECATED(ALIGN64 TIME_ZONE_INFORMATION* ClientTimeZone); /* 896 */

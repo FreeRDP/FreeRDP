@@ -105,6 +105,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 		case FreeRDP_AutoReconnectionEnabled:
 			return settings->AutoReconnectionEnabled;
 
+		case FreeRDP_AutoReconnectionPacketSupported:
+			return settings->AutoReconnectionPacketSupported;
+
 		case FreeRDP_BitmapCacheEnabled:
 			return settings->BitmapCacheEnabled;
 
@@ -713,6 +716,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 
 		case FreeRDP_AutoReconnectionEnabled:
 			settings->AutoReconnectionEnabled = cnv.c;
+			break;
+
+		case FreeRDP_AutoReconnectionPacketSupported:
+			settings->AutoReconnectionPacketSupported = cnv.c;
 			break;
 
 		case FreeRDP_BitmapCacheEnabled:
