@@ -2119,7 +2119,7 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, const BYTE* pSrcData, UINT32 SrcSi
 				CopyOffset = ncrush->OffsetCache[OffsetCacheIndex];
 				const UINT16 Mask = get_word(&HuffTableMask[21]);
 				const UINT32 MaskedBits = bits & Mask;
-				if (MaskedBits > ARRAYSIZE(HuffTableLOM))
+				if (MaskedBits >= ARRAYSIZE(HuffTableLOM))
 					return -1;
 				LengthOfMatch = HuffTableLOM[MaskedBits] & 0xFFF;
 				BitLength = HuffTableLOM[MaskedBits] >> 12;
