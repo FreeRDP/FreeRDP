@@ -322,8 +322,9 @@ static BOOL list_append(HttpContext* context, WINPR_FORMAT_ARG const char* str, 
 	}
 	else
 		sstr = Pragma;
-	free(context->Pragma);
+	Pragma = NULL;
 
+	free(context->Pragma);
 	context->Pragma = sstr;
 
 	rc = TRUE;
