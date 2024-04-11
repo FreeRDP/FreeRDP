@@ -549,6 +549,7 @@ static BOOL arm_pick_base64Utf16Field(const cJSON* json, const char* name, BYTE*
 	if (!output1 || !len1)
 	{
 		WLog_ERR(TAG, "error when first unbase64 for %s", name);
+		free(output1);
 		return FALSE;
 	}
 
