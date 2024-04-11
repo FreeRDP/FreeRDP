@@ -2259,7 +2259,7 @@ rdpRdp* rdp_new(rdpContext* context)
 
 	/* Keep a backup copy of settings for later comparisons */
 	if (!rdp_set_backup_settings(rdp))
-		return FALSE;
+		goto fail;
 
 	rdp->settings->instance = context->instance;
 
