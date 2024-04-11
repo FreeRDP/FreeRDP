@@ -182,8 +182,8 @@ static UINT location_on_data_received(IWTSVirtualChannelCallback* pChannelCallba
 					break;
 			}
 
-			char cbuffer[32] = { 0 };
-			char sbuffer[32] = { 0 };
+			char cbuffer[64] = { 0 };
+			char sbuffer[64] = { 0 };
 			WLog_Print(plugin->baseDynPlugin.log, WLOG_DEBUG,
 			           "Server version %s, client version %s",
 			           location_version_str(callback->serverVersion, sbuffer, sizeof(sbuffer)),
