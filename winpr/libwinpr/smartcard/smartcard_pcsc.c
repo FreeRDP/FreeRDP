@@ -2820,6 +2820,9 @@ static LONG WINAPI PCSC_SCardReadCacheW(SCARDCONTEXT hContext, UUID* CardIdentif
 {
 	PCSC_CACHE_ITEM* data = NULL;
 	PCSC_SCARDCONTEXT* ctx = PCSC_GetCardContextData(hContext);
+	if (!ctx)
+		return SCARD_E_INVALID_HANDLE;
+
 	char* id = card_id_and_name_w(CardIdentifier, LookupName);
 
 	data = HashTable_GetItemValue(ctx->cache, id);
