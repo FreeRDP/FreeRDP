@@ -558,6 +558,7 @@ static BOOL arm_pick_base64Utf16Field(const cJSON* json, const char* name, BYTE*
 	if (!output2 || !len2)
 	{
 		WLog_ERR(TAG, "error when decode('utf-16') for %s", name);
+		free(output2);
 		return FALSE;
 	}
 
@@ -567,6 +568,7 @@ static BOOL arm_pick_base64Utf16Field(const cJSON* json, const char* name, BYTE*
 	if (!output || !*plen)
 	{
 		WLog_ERR(TAG, "error when second unbase64 for %s", name);
+		free(output);
 		return FALSE;
 	}
 
