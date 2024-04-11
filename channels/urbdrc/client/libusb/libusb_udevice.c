@@ -877,7 +877,7 @@ static UINT32 libusb_udev_control_query_device_text(IUDEVICE* idev, UINT32 TextT
 				 * not honor strings with multi '\0' characters well.
 				 */
 				const size_t rchar = _wcsnlen((WCHAR*)&data[2], sizeof(data) / 2);
-				len = MIN((BYTE)ret, slen);
+				len = MIN((BYTE)ret - 2, slen);
 				len = MIN(len, inSize);
 				len = MIN(len, rchar * 2 + sizeof(WCHAR));
 				memcpy(Buffer, &data[2], len);
