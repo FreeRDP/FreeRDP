@@ -120,7 +120,7 @@ static BOOL xf_keyboard_action_script_init(xfContext* xfc)
 		char* context = NULL;
 		strtok_s(buffer, "\n", &context);
 
-		if (!buffer || !ArrayList_Append(xfc->keyCombinations, buffer))
+		if (!ArrayList_Append(xfc->keyCombinations, buffer))
 		{
 			ArrayList_Free(xfc->keyCombinations);
 			xfc->actionScriptExists = FALSE;

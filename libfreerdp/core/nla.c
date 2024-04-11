@@ -1244,7 +1244,7 @@ static BOOL nla_read_ts_credentials(rdpNla* nla, SecBuffer* data)
 	WinPrAsn1_OctetString credentials = { 0 };
 	BOOL error = FALSE;
 	WinPrAsn1_INTEGER credType = -1;
-	BOOL ret = true;
+	BOOL ret = TRUE;
 
 	WINPR_ASSERT(nla);
 	WINPR_ASSERT(data);
