@@ -675,6 +675,9 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 			if (!init_context.mech)
 			{
 				/* Use the output buffer to store the optimistic token */
+				if (!output_buffer)
+					goto cleanup;
+
 				CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
 				if (bindings_buffer)
