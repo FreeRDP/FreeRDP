@@ -1290,6 +1290,8 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 		return ERROR_SUCCESS;
 
 	out_load_library:
+		if (library)
+			FreeLibrary(library);
 		modulePaths++;
 	}
 
