@@ -195,7 +195,7 @@ void xf_keyboard_key_release(xfContext* xfc, const XKeyEvent* event, KeySym keys
 {
 	WINPR_ASSERT(xfc);
 	WINPR_ASSERT(event);
-	WINPR_ASSERT(event->keycode <= ARRAYSIZE(xfc->KeyboardState));
+	WINPR_ASSERT(event->keycode < ARRAYSIZE(xfc->KeyboardState));
 
 	BOOL last = xfc->KeyboardState[event->keycode];
 	xfc->KeyboardState[event->keycode] = FALSE;
