@@ -379,6 +379,8 @@ int UwacWindowShmAllocBuffers(UwacWindow* w, int nbuffers, int allocSize, uint32
 
 	wl_shm_pool_destroy(pool);
 	w->nbuffers += nbuffers;
+	munmap(data, 1ull * allocSize * nbuffers);
+
 error_mmap:
 	close(fd);
 	return ret;
