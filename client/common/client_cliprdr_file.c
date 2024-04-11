@@ -1806,7 +1806,7 @@ static CliprdrFuseFile* get_parent_directory(CliprdrFileContext* file_context, c
 
 static BOOL set_selection_for_clip_data_entry(CliprdrFileContext* file_context,
                                               CliprdrFuseClipDataEntry* clip_data_entry,
-                                              FILEDESCRIPTORW* files, UINT32 n_files)
+                                              const FILEDESCRIPTORW* files, UINT32 n_files)
 {
 	CliprdrFuseFile* clip_data_dir = NULL;
 
@@ -1826,7 +1826,7 @@ static BOOL set_selection_for_clip_data_entry(CliprdrFileContext* file_context,
 	// NOLINTBEGIN(clang-analyzer-unix.Malloc) HashTable_Insert owns fuse_file
 	for (UINT32 i = 0; i < n_files; ++i)
 	{
-		FILEDESCRIPTORW* file = &files[i];
+		const FILEDESCRIPTORW* file = &files[i];
 		CliprdrFuseFile* fuse_file = NULL;
 		char* filename = NULL;
 		size_t path_length = 0;
@@ -2016,6 +2016,7 @@ BOOL cliprdr_file_context_update_server_data(CliprdrFileContext* file_context, w
 	}
 	HashTable_Unlock(file_context->inode_table);
 
+	free(files);
 	return TRUE;
 #else
 	return FALSE;
