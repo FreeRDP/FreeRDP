@@ -555,6 +555,7 @@ static UINT prepare_clip_data_entry_with_id(CliprdrFileContext* file_context)
 	{
 		WLog_Print(file_context->log, WLOG_ERROR, "Failed to insert clipDataEntry");
 		clip_data_entry_free(clip_data_entry);
+		HashTable_Unlock(file_context->inode_table);
 		return ERROR_INTERNAL_ERROR;
 	}
 	HashTable_Unlock(file_context->inode_table);
