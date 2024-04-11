@@ -199,6 +199,8 @@ static BOOL wst_recv_auth_token(rdpCredsspAuth* auth, HttpResponse* response)
 		authToken.cbBuffer = authTokenLength;
 		credssp_auth_take_input_buffer(auth, &authToken);
 	}
+	else
+		free(authTokenData);
 
 	rc = credssp_auth_authenticate(auth);
 	if (rc < 0)
