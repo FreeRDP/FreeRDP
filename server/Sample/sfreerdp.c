@@ -537,6 +537,7 @@ static BOOL test_sleep_tsdiff(UINT32* old_sec, UINT32* old_usec, UINT32 new_sec,
 
 static BOOL tf_peer_dump_rfx(freerdp_peer* client)
 {
+	BOOL rc = FALSE;
 	wStream* s = NULL;
 	UINT32 prev_seconds = 0;
 	UINT32 prev_useconds = 0;
@@ -559,8 +560,9 @@ static BOOL tf_peer_dump_rfx(freerdp_peer* client)
 	update = client->context->update;
 	WINPR_ASSERT(update);
 
-	if (!(pcap_rfx = pcap_open(info->test_pcap_file, FALSE)))
-		return FALSE;
+	pcap_rfx = pcap_open(info->test_pcap_file, FALSE);
+	if (!pcap_rfx)
+		goto fail;
 
 	prev_seconds = prev_useconds = 0;
 
@@ -589,9 +591,11 @@ static BOOL tf_peer_dump_rfx(freerdp_peer* client)
 			break;
 	}
 
+	rc = TRUE;
+fail:
 	Stream_Free(s, TRUE);
 	pcap_close(pcap_rfx);
-	return TRUE;
+	return rc;
 }
 
 static DWORD WINAPI tf_debug_channel_thread_func(LPVOID arg)
