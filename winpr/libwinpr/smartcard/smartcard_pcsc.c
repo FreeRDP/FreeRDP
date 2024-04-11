@@ -2386,7 +2386,10 @@ static LONG WINAPI PCSC_SCardGetAttrib_Internal(SCARDHANDLE hCard, DWORD dwAttrI
 			status = g_PCSC.pfnSCardGetAttrib(hCard, pcsc_dwAttrId, tmp, &pcsc_cbAttrLen);
 
 			if (status != SCARD_S_SUCCESS)
+			{
 				free(tmp);
+				tmp = NULL;
+			}
 			else
 				PCSC_AddMemoryBlock(hContext, tmp);
 			*(BYTE**)pbAttr = tmp;
