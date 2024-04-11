@@ -885,7 +885,7 @@ static WIN32_FILE_SEARCH* file_search_new(const char* name, size_t namelen, cons
 	WIN32_FILE_SEARCH* pFileSearch = (WIN32_FILE_SEARCH*)calloc(1, sizeof(WIN32_FILE_SEARCH));
 	if (!pFileSearch)
 		return NULL;
-	strncpy(pFileSearch->magic, file_search_magic, sizeof(pFileSearch->magic));
+	strncpy(pFileSearch->magic, file_search_magic, sizeof(pFileSearch->magic) - 1);
 
 	pFileSearch->lpPath = strndup(name, namelen);
 	pFileSearch->lpPattern = strndup(pattern, patternlen);
