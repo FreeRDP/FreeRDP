@@ -190,6 +190,7 @@ static BOOL pf_server_get_target_info(rdpContext* context, rdpSettings* settings
 
 static BOOL pf_server_setup_channels(freerdp_peer* peer)
 {
+	BOOL rc = FALSE;
 	char** accepted_channels = NULL;
 	size_t accepted_channels_count = 0;
 	pServerContext* ps = (pServerContext*)peer->context;
@@ -209,7 +210,7 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 		if (!channelContext)
 		{
 			PROXY_LOG_ERR(TAG, ps, "error seting up channelContext for '%s'", cname);
-			return FALSE;
+			goto fail;
 		}
 
 		if (strcmp(cname, DRDYNVC_SVC_CHANNEL_NAME) == 0)
@@ -218,7 +219,7 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 			{
 				PROXY_LOG_ERR(TAG, ps, "error while setting up dynamic channel");
 				StaticChannelContext_free(channelContext);
-				return FALSE;
+				goto fail;
 			}
 		}
 		else if (strcmp(cname, RDPDR_SVC_CHANNEL_NAME) == 0 &&
@@ -228,7 +229,7 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 			{
 				PROXY_LOG_ERR(TAG, ps, "error while setting up redirection channel");
 				StaticChannelContext_free(channelContext);
-				return FALSE;
+				goto fail;
 			}
 		}
 		else
@@ -237,7 +238,7 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 			{
 				PROXY_LOG_ERR(TAG, ps, "error while setting up generic channel");
 				StaticChannelContext_free(channelContext);
-				return FALSE;
+				goto fail;
 			}
 		}
 
@@ -246,12 +247,14 @@ static BOOL pf_server_setup_channels(freerdp_peer* peer)
 		{
 			StaticChannelContext_free(channelContext);
 			PROXY_LOG_ERR(TAG, ps, "error inserting channelContext in byId table for '%s'", cname);
-			return FALSE;
+			goto fail;
 		}
 	}
 
+	rc = TRUE;
+fail:
 	free(accepted_channels);
-	return TRUE;
+	return rc;
 }
 
 /* Event callbacks */
