@@ -211,7 +211,7 @@ wStream* StreamPool_Take(wStreamPool* pool, size_t size)
 		if (!s)
 			goto out_fail;
 	}
-	else
+	else if (s)
 	{
 		Stream_SetPosition(s, 0);
 		Stream_SetLength(s, Stream_Capacity(s));
