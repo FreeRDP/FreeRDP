@@ -457,7 +457,6 @@ static UINT dvcman_call_on_receive(DVCMAN_CHANNEL* channel, wStream* data)
 static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL fromHashTableFn)
 {
 	UINT error = CHANNEL_RC_OK;
-	drdynvcPlugin* drdynvc = NULL;
 	DrdynvcClientContext* context = NULL;
 
 	WINPR_ASSERT(channel);
@@ -466,20 +465,24 @@ static UINT dvcman_channel_close(DVCMAN_CHANNEL* channel, BOOL perRequest, BOOL 
 		case DVC_CHANNEL_INIT:
 			break;
 		case DVC_CHANNEL_RUNNING:
-			drdynvc = channel->dvcman->drdynvc;
-			context = drdynvc->context;
-			if (perRequest)
-				WLog_Print(drdynvc->log, WLOG_DEBUG, "sending close confirm for '%s'",
-				           channel->channel_name);
-
-			error = dvcchannel_send_close(channel);
-			if (error != CHANNEL_RC_OK)
+			if (channel->dvcman)
 			{
-				const char* msg = "error when sending close confirm for '%s'";
+				drdynvcPlugin* drdynvc = channel->dvcman->drdynvc;
+				WINPR_ASSERT(drdynvc);
+				context = drdynvc->context;
 				if (perRequest)
-					msg = "error when sending closeRequest for '%s'";
+					WLog_Print(drdynvc->log, WLOG_DEBUG, "sending close confirm for '%s'",
+					           channel->channel_name);
 
-				WLog_Print(drdynvc->log, WLOG_DEBUG, msg, channel->channel_name);
+				error = dvcchannel_send_close(channel);
+				if (error != CHANNEL_RC_OK)
+				{
+					const char* msg = "error when sending close confirm for '%s'";
+					if (perRequest)
+						msg = "error when sending closeRequest for '%s'";
+
+					WLog_Print(drdynvc->log, WLOG_DEBUG, msg, channel->channel_name);
+				}
 			}
 
 			channel->state = DVC_CHANNEL_CLOSED;
