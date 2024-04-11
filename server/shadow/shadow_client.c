@@ -1444,7 +1444,6 @@ static BOOL shadow_client_send_surface_bits(rdpShadowClient* client, BYTE* pSrcD
 			const RFX_MESSAGE* msg = rfx_message_list_get(messages, i);
 			if (!rfx_write_message(encoder->rfx, s, msg))
 			{
-				rfx_message_list_free(messages);
 				WLog_ERR(TAG, "rfx_write_message failed");
 				ret = FALSE;
 				break;
