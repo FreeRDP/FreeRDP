@@ -1301,7 +1301,7 @@ terminate:
 			default:
 			{
 				std::lock_guard<CriticalSection> lock(sdl->critical);
-				if (sdl->connection_dialog)
+				if (sdl->connection_dialog && error_msg)
 					sdl->connection_dialog->showError(error_msg);
 			}
 			break;
