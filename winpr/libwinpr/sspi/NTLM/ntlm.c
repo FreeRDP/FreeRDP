@@ -1303,7 +1303,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 	WINPR_HMAC_CTX* hmac = winpr_HMAC_New();
 
 	if (!winpr_HMAC_Init(hmac, WINPR_MD_MD5, context->RecvSigningKey, WINPR_MD5_DIGEST_LENGTH))
+	{
+		winpr_HMAC_Free(hmac);
 		return SEC_E_INTERNAL_ERROR;
+	}
 
 	Data_Write_UINT32(&seq_no, MessageSeqNo);
 	winpr_HMAC_Update(hmac, (BYTE*)&seq_no, 4);
