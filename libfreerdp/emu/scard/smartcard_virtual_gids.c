@@ -842,14 +842,14 @@ static BOOL vgids_get_public_key(vgidsContext* context, UINT16 doTag)
 	/* set response data */
 	Stream_SetPosition(response, 0);
 	context->responseData = response;
+	response = NULL;
 
 	rc = TRUE;
 handle_error:
 	free(n);
 	free(e);
 	Stream_Free(pubKey, TRUE);
-	if (!rc)
-		Stream_Free(response, TRUE);
+	Stream_Free(response, TRUE);
 	return rc;
 }
 
