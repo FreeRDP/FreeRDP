@@ -410,7 +410,7 @@ static int rdtk_font_parse_descriptor_buffer(rdtkFont* font, uint8_t* buffer, si
 
 		*r = '\0';
 		/* start parsing glyph */
-		if (index > font->glyphCount)
+		if (index >= font->glyphCount)
 			return -1;
 
 		rdtkGlyph* glyph = &font->glyphs[index];
