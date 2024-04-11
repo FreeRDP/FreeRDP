@@ -901,7 +901,10 @@ static BOOL read_pem_file(rdpSettings* settings, FreeRDP_Settings_Keys_String id
 	size_t length = 0;
 	char* pem = crypto_read_pem(file, &length);
 	if (!pem || (length == 0))
+	{
+		free(pem);
 		return FALSE;
+	}
 
 	BOOL rc = freerdp_settings_set_string_len(settings, id, pem, length);
 	free(pem);
