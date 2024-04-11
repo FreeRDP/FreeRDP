@@ -168,7 +168,7 @@ static BOOL rdp_apply_general_capability_set(rdpSettings* settings, const rdpSet
 
 	settings->NoBitmapCompressionHeader = src->NoBitmapCompressionHeader;
 	settings->LongCredentialsSupported = src->LongCredentialsSupported;
-	settings->AutoReconnectionEnabled = src->AutoReconnectionEnabled;
+	settings->AutoReconnectionPacketSupported = src->AutoReconnectionPacketSupported;
 	if (!src->FastPathOutput)
 		settings->FastPathOutput = FALSE;
 
@@ -223,7 +223,8 @@ static BOOL rdp_read_general_capability_set(wStream* s, rdpSettings* settings)
 	settings->NoBitmapCompressionHeader = (extraFlags & NO_BITMAP_COMPRESSION_HDR) ? TRUE : FALSE;
 	settings->LongCredentialsSupported = (extraFlags & LONG_CREDENTIALS_SUPPORTED) ? TRUE : FALSE;
 
-	settings->AutoReconnectionEnabled = (extraFlags & AUTORECONNECT_SUPPORTED) ? TRUE : FALSE;
+	settings->AutoReconnectionPacketSupported =
+	    (extraFlags & AUTORECONNECT_SUPPORTED) ? TRUE : FALSE;
 	settings->FastPathOutput = (extraFlags & FASTPATH_OUTPUT_SUPPORTED) ? TRUE : FALSE;
 	settings->SaltedChecksum = (extraFlags & ENC_SALTED_CHECKSUM) ? TRUE : FALSE;
 	settings->RefreshRect = refreshRectSupport;
@@ -252,7 +253,7 @@ static BOOL rdp_write_general_capability_set(wStream* s, const rdpSettings* sett
 	if (settings->NoBitmapCompressionHeader)
 		extraFlags |= NO_BITMAP_COMPRESSION_HDR;
 
-	if (settings->AutoReconnectionEnabled)
+	if (settings->AutoReconnectionPacketSupported)
 		extraFlags |= AUTORECONNECT_SUPPORTED;
 
 	if (settings->FastPathOutput)

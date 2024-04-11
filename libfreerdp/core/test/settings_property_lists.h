@@ -19,6 +19,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_AutoDenyCertificate,
 	FreeRDP_AutoLogonEnabled,
 	FreeRDP_AutoReconnectionEnabled,
+	FreeRDP_AutoReconnectionPacketSupported,
 	FreeRDP_BitmapCacheEnabled,
 	FreeRDP_BitmapCachePersistEnabled,
 	FreeRDP_BitmapCacheV3Enabled,
