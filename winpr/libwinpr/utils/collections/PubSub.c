@@ -102,7 +102,7 @@ void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, size_t count)
 		new_size = pubSub->size * 2;
 		new_event = (wEventType*)realloc(pubSub->events, new_size * sizeof(wEventType));
 		if (!new_event)
-			return;
+			goto fail;
 		pubSub->size = new_size;
 		pubSub->events = new_event;
 	}
@@ -110,6 +110,7 @@ void PubSub_AddEventTypes(wPubSub* pubSub, wEventType* events, size_t count)
 	CopyMemory(&pubSub->events[pubSub->count], events, count * sizeof(wEventType));
 	pubSub->count += count;
 
+fail:
 	if (pubSub->synchronized)
 		PubSub_Unlock(pubSub);
 }
