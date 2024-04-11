@@ -808,6 +808,7 @@ static SecurityFunctionTable* auth_resolve_sspi_table(const rdpSettings* setting
 		if (!hSSPI)
 		{
 			WLog_ERR(TAG, "Failed to load SSPI module: %s", module_name);
+			free(sspi_module);
 			return FALSE;
 		}
 
