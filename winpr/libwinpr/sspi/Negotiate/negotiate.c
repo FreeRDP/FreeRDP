@@ -97,13 +97,14 @@ static const WinPrAsn1_OID negoex_OID = { 10, (BYTE*)"\x2b\x06\x01\x04\x01\x82\x
 #ifdef WITH_KRB5
 static const SecPkg SecPkgTable[] = {
 	{ KERBEROS_SSP_NAME, &KERBEROS_SecurityFunctionTableA, &KERBEROS_SecurityFunctionTableW },
+	{ KERBEROS_SSP_NAME, &KERBEROS_SecurityFunctionTableA, &KERBEROS_SecurityFunctionTableW },
 	{ NTLM_SSP_NAME, &NTLM_SecurityFunctionTableA, &NTLM_SecurityFunctionTableW }
 };
 
 static const Mech MechTable[] = {
 	{ &kerberos_u2u_OID, &SecPkgTable[0], ISC_REQ_INTEGRITY | ISC_REQ_USE_SESSION_KEY, TRUE },
-	{ &kerberos_OID, &SecPkgTable[0], ISC_REQ_INTEGRITY, TRUE },
-	{ &ntlm_OID, &SecPkgTable[1], 0, FALSE },
+	{ &kerberos_OID, &SecPkgTable[1], ISC_REQ_INTEGRITY, TRUE },
+	{ &ntlm_OID, &SecPkgTable[2], 0, FALSE },
 };
 #else
 static const SecPkg SecPkgTable[] = { { NTLM_SSP_NAME, &NTLM_SecurityFunctionTableA,
