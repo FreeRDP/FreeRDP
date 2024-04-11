@@ -1002,7 +1002,7 @@ PCSTR PathGetSharedLibraryExtensionA(unsigned long dwFlags)
 
 PCWSTR PathGetSharedLibraryExtensionW(unsigned long dwFlags)
 {
-	WCHAR buffer[6][16] = { 0 };
+	static WCHAR buffer[6][16] = { 0 };
 	const WCHAR* SharedLibraryExtensionDotDllW = InitializeConstWCharFromUtf8(
 	    SharedLibraryExtensionDotDllA, buffer[0], ARRAYSIZE(buffer[0]));
 	const WCHAR* SharedLibraryExtensionDotSoW =
