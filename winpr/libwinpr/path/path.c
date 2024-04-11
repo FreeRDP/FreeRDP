@@ -1131,11 +1131,12 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 	WCHAR starbuffer[8] = { 0 };
 	const WCHAR* star = InitializeConstWCharFromUtf8("*", starbuffer, ARRAYSIZE(starbuffer));
 	const HRESULT hr = NativePathCchAppendW(path_slash, path_slash_len, star);
+	HANDLE dir = INVALID_HANDLE_VALUE;
 	if (FAILED(hr))
 		goto fail;
 
 	WIN32_FIND_DATAW findFileData = { 0 };
-	HANDLE dir = FindFirstFileW(path_slash, &findFileData);
+	dir = FindFirstFileW(path_slash, &findFileData);
 
 	if (dir == INVALID_HANDLE_VALUE)
 		goto fail;
@@ -1167,8 +1168,6 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 			break;
 	} while (ret && FindNextFileW(dir, &findFileData) != 0);
 
-	FindClose(dir);
-
 	if (ret)
 	{
 		if (!RemoveDirectoryW(lpPathName))
@@ -1176,6 +1175,7 @@ BOOL winpr_RemoveDirectory_RecursiveW(LPCWSTR lpPathName)
 	}
 
 fail:
+	FindClose(dir);
 	free(path_slash);
 	return ret;
 }
