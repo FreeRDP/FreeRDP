@@ -2421,7 +2421,10 @@ static UINT rdpdr_server_send_device_query_directory_request(RdpdrServerContext*
 	{
 		if (Stream_Write_UTF16_String_From_UTF8(s, pathLength / sizeof(WCHAR), path,
 		                                        pathLength / sizeof(WCHAR), TRUE) < 0)
+		{
+			Stream_Free(s, TRUE);
 			return ERROR_INTERNAL_ERROR;
+		}
 	}
 
 	return rdpdr_seal_send_free_request(context, s);
