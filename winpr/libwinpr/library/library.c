@@ -274,18 +274,17 @@ DWORD GetModuleFileNameA(HMODULE hModule, LPSTR lpFilename, DWORD nSize)
 
 	if (!hModule)
 	{
-		char buffer[4096];
+		char buffer[4096] = { 0 };
 		sprintf_s(path, ARRAYSIZE(path), "/proc/%d/exe", getpid());
-		status = readlink(path, buffer, sizeof(buffer));
+		status = readlink(path, buffer, ARRAYSIZE(buffer) - 1);
 
-		if (status < 0)
+		if ((status < 0) || (status >= ARRAYSIZE(buffer)))
 		{
 			SetLastError(ERROR_INTERNAL_ERROR);
 			return 0;
 		}
 
-		buffer[status] = '\0';
-		length = strnlen(buffer, sizeof(buffer));
+		length = strnlen(buffer, ARRAYSIZE(buffer));
 
 		if (length < nSize)
 		{
