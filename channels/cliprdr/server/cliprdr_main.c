@@ -119,7 +119,6 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
                                         const CLIPRDR_CAPABILITIES* capabilities)
 {
 	size_t offset = 0;
-	wStream* s = NULL;
 
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(capabilities);
@@ -135,7 +134,7 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
 		return ERROR_INVALID_PARAMETER;
 	}
 
-	s = cliprdr_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
+	wStream* s = cliprdr_packet_new(CB_CLIP_CAPS, 0, 4 + CB_CAPSTYPE_GENERAL_LEN);
 
 	if (!s)
 	{
@@ -173,6 +172,7 @@ static UINT cliprdr_server_capabilities(CliprdrServerContext* context,
 				if (!Stream_SafeSeek(s, cap->capabilitySetLength))
 				{
 					WLog_ERR(TAG, "short stream");
+					Stream_Free(s, TRUE);
 					return ERROR_NO_DATA;
 				}
 				break;
