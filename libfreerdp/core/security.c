@@ -592,6 +592,7 @@ static void fips_expand_key_bits(const BYTE* in, size_t in_len, BYTE* out, size_
 		}
 		else
 		{
+			WINPR_ASSERT(p + 1 < sizeof(buf));
 			/* c is accumulator */
 			BYTE c = (BYTE)(buf[p] << r) & 0xFF;
 			c |= buf[p + 1] >> (8 - r);
