@@ -1189,11 +1189,7 @@ static SECURITY_STATUS initialize_pkcs11(HANDLE handle,
 	ret = (NCryptP11ProviderHandle*)ncrypt_new_handle(
 	    WINPR_NCRYPT_PROVIDER, sizeof(*ret), NCryptP11GetProperty, NCryptP11StorageProvider_dtor);
 	if (!ret)
-	{
-		if (handle)
-			FreeLibrary(handle);
 		return NTE_NO_MEMORY;
-	}
 
 	ret->library = handle;
 	ret->baseProvider.enumKeysFn = NCryptP11EnumKeys;
