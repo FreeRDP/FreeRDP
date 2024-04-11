@@ -2480,10 +2480,6 @@ static int ncrush_find_best_match(NCRUSH_CONTEXT* ncrush, UINT16 HistoryOffset,
 
 static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 {
-	int NewHash = 0;
-	int NewMatch = 0;
-	UINT32 HistoryOffset = 0;
-
 	WINPR_ASSERT(ncrush);
 	WINPR_ASSERT(HistoryPtr);
 
@@ -2497,11 +2493,11 @@ static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 	const intptr_t hsize = HistoryPtr - 32768 - ncrush->HistoryBuffer;
 	WINPR_ASSERT(hsize <= UINT32_MAX);
 	WINPR_ASSERT(hsize >= 0);
-	HistoryOffset = (UINT32)hsize;
+	UINT32 HistoryOffset = (UINT32)hsize;
 
 	for (int i = 0; i < 65536; i += 4)
 	{
-		NewHash = ncrush->HashTable[i + 0] - HistoryOffset;
+		INT64 NewHash = ncrush->HashTable[i + 0] - HistoryOffset;
 		ncrush->HashTable[i + 0] = (NewHash <= 0) ? 0 : NewHash;
 		NewHash = ncrush->HashTable[i + 1] - HistoryOffset;
 		ncrush->HashTable[i + 1] = (NewHash <= 0) ? 0 : NewHash;
@@ -2513,7 +2509,10 @@ static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 
 	for (int j = 0; j < 32768; j += 4)
 	{
-		NewMatch = ncrush->MatchTable[HistoryOffset + j + 0] - HistoryOffset;
+		if (HistoryOffset + j + 3ull > ARRAYSIZE(ncrush->MatchTable))
+			continue;
+
+		INT64 NewMatch = ncrush->MatchTable[HistoryOffset + j + 0] - HistoryOffset;
 		ncrush->MatchTable[j + 0] = (NewMatch <= 0) ? 0 : NewMatch;
 		NewMatch = ncrush->MatchTable[HistoryOffset + j + 1] - HistoryOffset;
 		ncrush->MatchTable[j + 1] = (NewMatch <= 0) ? 0 : NewMatch;
