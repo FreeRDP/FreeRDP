@@ -419,6 +419,9 @@ fail:
 
 void freerdp_device_free(RDPDR_DEVICE* device)
 {
+	if (!device)
+		return;
+
 	union
 	{
 		RDPDR_DEVICE* dev;
@@ -430,8 +433,6 @@ void freerdp_device_free(RDPDR_DEVICE* device)
 	} cnv;
 
 	cnv.dev = device;
-	if (!cnv.dev)
-		return;
 
 	switch (device->Type)
 	{
