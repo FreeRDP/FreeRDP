@@ -1114,10 +1114,9 @@ BOOL license_generate_hwid(rdpLicense* license)
 		const char* hostname = license->rdp->settings->ClientHostname;
 		wStream* s = Stream_StaticInit(&buffer, license->HardwareId, 4);
 		Stream_Write_UINT32(s, license->PlatformId);
-		Stream_Free(s, TRUE);
 
 		hashTarget = (const BYTE*)hostname;
-		targetLen = strlen(hostname);
+		targetLen = hostname ? strlen(hostname) : 0;
 	}
 
 	/* Allow FIPS override for use of MD5 here, really this does not have to be MD5 as we are just
