@@ -409,7 +409,7 @@ static int x11_shadow_pointer_position_update(x11ShadowSubsystem* subsystem)
 {
 	UINT32 msgId = SHADOW_MSG_OUT_POINTER_POSITION_UPDATE_ID;
 	rdpShadowServer* server = NULL;
-	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE templateMsg;
+	SHADOW_MSG_OUT_POINTER_POSITION_UPDATE templateMsg = { 0 };
 	int count = 0;
 
 	if (!subsystem || !subsystem->common.server || !subsystem->common.server->clients)
