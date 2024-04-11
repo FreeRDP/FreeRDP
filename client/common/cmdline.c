@@ -1391,24 +1391,27 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 
 static UINT32 freerdp_get_keyboard_layout_for_type(const char* name, DWORD type)
 {
+	UINT32 res = 0;
 	size_t count = 0;
 	RDP_KEYBOARD_LAYOUT* layouts =
 	    freerdp_keyboard_get_layouts(RDP_KEYBOARD_LAYOUT_TYPE_STANDARD, &count);
 
 	if (!layouts || (count == 0))
-		return FALSE;
+		goto fail;
 
 	for (size_t x = 0; x < count; x++)
 	{
 		const RDP_KEYBOARD_LAYOUT* layout = &layouts[x];
 		if (option_equals(layout->name, name))
 		{
-			return layout->code;
+			res = layout->code;
+			break;
 		}
 	}
 
+fail:
 	freerdp_keyboard_layouts_free(layouts, count);
-	return 0;
+	return res;
 }
 
 static UINT32 freerdp_map_keyboard_layout_name_to_id(const char* name)
