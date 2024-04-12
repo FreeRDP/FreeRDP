@@ -188,10 +188,11 @@ static BOOL freerdp_listener_open(freerdp_listener* instance, const char* bind_a
 
 		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (void*)&option_value,
 		               sizeof(option_value)) == -1)
-			WLog_ERR(TAG, "setsockopt");
+			WLog_ERR(TAG, "setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR)");
 
 #ifndef _WIN32
-		fcntl(sockfd, F_SETFL, O_NONBLOCK);
+		if (fcntl(sockfd, F_SETFL, O_NONBLOCK) != 0)
+			WLog_ERR(TAG, "fcntl(sockfd, F_SETFL, O_NONBLOCK)");
 #else
 		arg = 1;
 		ioctlsocket(sockfd, FIONBIO, &arg);

@@ -141,6 +141,7 @@ static BOOL attributes_have_unallocated_buffers(CK_ATTRIBUTE_PTR attributes, CK_
 
 static BOOL attribute_allocate_attribute_array(CK_ATTRIBUTE_PTR attribute)
 {
+	WINPR_ASSERT(attribute);
 	attribute->pValue = calloc(attribute->ulValueLen, sizeof(void*));
 	return !!attribute->pValue;
 }
