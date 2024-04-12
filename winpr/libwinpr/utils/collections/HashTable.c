@@ -561,7 +561,8 @@ size_t HashTable_GetKeys(wHashTable* table, ULONG_PTR** ppKeys)
 
 	iKey = 0;
 	count = table->numOfElements;
-	*ppKeys = NULL;
+	if (ppKeys)
+		*ppKeys = NULL;
 
 	if (count < 1)
 	{
