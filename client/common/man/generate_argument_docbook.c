@@ -15,6 +15,7 @@ static char* resize(char** buffer, size_t* size, size_t increment)
 		fprintf(stderr, "Could not reallocate string buffer from %" PRIuz " to %" PRIuz " bytes.\n",
 		        *size, nsize);
 		free(*buffer);
+		return NULL;
 	}
 	memset(&tmp[*size], '\0', increment);
 	*size = nsize;
