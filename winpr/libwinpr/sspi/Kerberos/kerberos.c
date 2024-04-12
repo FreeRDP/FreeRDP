@@ -1304,6 +1304,9 @@ static KRB_CONTEXT* get_context(PCtxtHandle phContext)
 		return NULL;
 
 	TCHAR* name = sspi_SecureHandleGetUpperPointer(phContext);
+	if (!name)
+		return NULL;
+
 	if (_tcscmp(KERBEROS_SSP_NAME, name) != 0)
 		return NULL;
 	return sspi_SecureHandleGetLowerPointer(phContext);
