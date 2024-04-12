@@ -2326,7 +2326,8 @@ static int parse_codec_cache_options(rdpSettings* settings, const COMMAND_LINE_A
 	}
 	else if (option_equals(arg->Value, "nsc"))
 	{
-		freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE);
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, TRUE))
+			return COMMAND_LINE_ERROR;
 	}
 
 #if defined(WITH_JPEG)
@@ -2343,6 +2344,7 @@ static int parse_codec_cache_options(rdpSettings* settings, const COMMAND_LINE_A
 	}
 
 #endif
+	return 0;
 }
 #endif
 
