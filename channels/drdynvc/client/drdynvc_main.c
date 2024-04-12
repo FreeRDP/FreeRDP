@@ -396,14 +396,13 @@ static void dvcman_channel_free(DVCMAN_CHANNEL* channel)
 
 static void dvcman_channel_unref(DVCMAN_CHANNEL* channel)
 {
-	DVCMAN* dvcman = NULL;
-
 	WINPR_ASSERT(channel);
 	if (InterlockedDecrement(&channel->refCounter))
 		return;
 
-	dvcman = channel->dvcman;
-	HashTable_Remove(dvcman->channelsById, &channel->channel_id);
+	DVCMAN* dvcman = channel->dvcman;
+	if (dvcman)
+		HashTable_Remove(dvcman->channelsById, &channel->channel_id);
 }
 
 static UINT dvcchannel_send_close(DVCMAN_CHANNEL* channel)
