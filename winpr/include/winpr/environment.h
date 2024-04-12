@@ -87,7 +87,13 @@ extern "C"
 	 * http://blogs.msdn.com/b/oldnewthing/archive/2013/01/17/10385718.aspx
 	 */
 
+	WINPR_API BOOL FreeEnvironmentStringsA(LPCH lpszEnvironmentBlock);
+	WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
+
+	WINPR_ATTR_MALLOC(FreeEnvironmentStringsA, 1)
 	WINPR_API LPCH GetEnvironmentStrings(VOID);
+
+	WINPR_ATTR_MALLOC(FreeEnvironmentStringsW, 1)
 	WINPR_API LPWCH GetEnvironmentStringsW(VOID);
 
 	WINPR_API BOOL SetEnvironmentStringsA(LPCH NewEnvironment);
@@ -95,9 +101,6 @@ extern "C"
 
 	WINPR_API DWORD ExpandEnvironmentStringsA(LPCSTR lpSrc, LPSTR lpDst, DWORD nSize);
 	WINPR_API DWORD ExpandEnvironmentStringsW(LPCWSTR lpSrc, LPWSTR lpDst, DWORD nSize);
-
-	WINPR_API BOOL FreeEnvironmentStringsA(LPCH lpszEnvironmentBlock);
-	WINPR_API BOOL FreeEnvironmentStringsW(LPWCH lpszEnvironmentBlock);
 
 #ifdef __cplusplus
 }
