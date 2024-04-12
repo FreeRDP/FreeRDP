@@ -2168,15 +2168,15 @@ fail:
 
 static BOOL TsProxyCloseTunnelWriteRequest(rdpTsg* tsg, const CONTEXT_HANDLE* context)
 {
-	wStream* s = NULL;
-	rdpRpc* rpc = NULL;
+	WINPR_ASSERT(tsg);
+	WINPR_ASSERT(context);
+
 	WLog_Print(tsg->log, WLOG_DEBUG, "TsProxyCloseTunnelWriteRequest");
 
-	if (!tsg || !tsg->rpc || !context)
-		return FALSE;
+	rdpRpc* rpc = tsg->rpc;
+	WINPR_ASSERT(rpc);
 
-	rpc = tsg->rpc;
-	s = Stream_New(NULL, 20);
+	wStream* s = Stream_New(NULL, 20);
 
 	if (!s)
 		return FALSE;
@@ -2193,10 +2193,12 @@ fail:
 static BOOL TsProxyCloseTunnelReadResponse(wLog* log, const RPC_PDU* pdu, CONTEXT_HANDLE* context)
 {
 	BOOL rc = FALSE;
-	WLog_Print(log, WLOG_DEBUG, "TsProxyCloseTunnelReadResponse");
 
-	if (!pdu || !context)
-		return FALSE;
+	WINPR_ASSERT(log);
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(context);
+
+	WLog_Print(log, WLOG_DEBUG, "TsProxyCloseTunnelReadResponse");
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, pdu->s, 24))
 		goto fail;
