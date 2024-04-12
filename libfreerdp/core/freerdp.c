@@ -405,8 +405,8 @@ static BOOL freerdp_prevent_session_lock(rdpContext* context)
 		if (now - in->lastInputTimestamp > FakeMouseMotionInterval)
 		{
 			WLog_Print(context->log, WLOG_DEBUG,
-			           "fake mouse move: x=%d y=%d lastInputTimestamp=%d "
-			           "FakeMouseMotionInterval=%d",
+			           "fake mouse move: x=%d y=%d lastInputTimestamp=%" PRIu64 " "
+			           "FakeMouseMotionInterval=%" PRIu32,
 			           in->lastX, in->lastY, in->lastInputTimestamp, FakeMouseMotionInterval);
 
 			BOOL status = freerdp_input_send_mouse_event(context->input, PTR_FLAGS_MOVE, in->lastX,
