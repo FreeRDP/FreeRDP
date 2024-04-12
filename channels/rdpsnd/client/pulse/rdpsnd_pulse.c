@@ -752,7 +752,7 @@ FREERDP_ENTRY_POINT(UINT pulse_freerdp_rdpsnd_client_subsystem_entry(
 	if (pa_threaded_mainloop_start(pulse->mainloop) < 0)
 	{
 		pa_threaded_mainloop_unlock(pulse->mainloop);
-		return FALSE;
+		goto error;
 	}
 
 	pa_threaded_mainloop_unlock(pulse->mainloop);
