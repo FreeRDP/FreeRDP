@@ -78,6 +78,10 @@ static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	char* path = NULL;
 	UINT32 PathLength = 0;
+
+	WINPR_ASSERT(parallel);
+	WINPR_ASSERT(irp);
+
 	if (!Stream_SafeSeek(irp->input, 28))
 		return ERROR_INVALID_DATA;
 	/* DesiredAccess(4) AllocationSize(8), FileAttributes(4) */
@@ -123,6 +127,9 @@ static UINT parallel_process_irp_create(PARALLEL_DEVICE* parallel, IRP* irp)
  */
 static UINT parallel_process_irp_close(PARALLEL_DEVICE* parallel, IRP* irp)
 {
+	WINPR_ASSERT(parallel);
+	WINPR_ASSERT(irp);
+
 	if (close(parallel->file) < 0)
 	{
 	}
@@ -145,6 +152,10 @@ static UINT parallel_process_irp_read(PARALLEL_DEVICE* parallel, IRP* irp)
 	UINT64 Offset = 0;
 	ssize_t status = 0;
 	BYTE* buffer = NULL;
+
+	WINPR_ASSERT(parallel);
+	WINPR_ASSERT(irp);
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
 		return ERROR_INVALID_DATA;
 	Stream_Read_UINT32(irp->input, Length);
@@ -201,6 +212,9 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
 	UINT64 Offset = 0;
 	ssize_t status = 0;
 
+	WINPR_ASSERT(parallel);
+	WINPR_ASSERT(irp);
+
 	if (!Stream_CheckAndLogRequiredLength(TAG, irp->input, 12))
 		return ERROR_INVALID_DATA;
 
@@ -240,6 +254,9 @@ static UINT parallel_process_irp_write(PARALLEL_DEVICE* parallel, IRP* irp)
  */
 static UINT parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* irp)
 {
+	WINPR_ASSERT(parallel);
+	WINPR_ASSERT(irp);
+
 	Stream_Write_UINT32(irp->output, 0); /* OutputBufferLength */
 	return irp->Complete(irp);
 }
@@ -252,6 +269,9 @@ static UINT parallel_process_irp_device_control(PARALLEL_DEVICE* parallel, IRP* 
 static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 {
 	UINT error = 0;
+
+	WINPR_ASSERT(parallel);
+	WINPR_ASSERT(irp);
 
 	switch (irp->MajorFunction)
 	{
@@ -311,11 +331,10 @@ static UINT parallel_process_irp(PARALLEL_DEVICE* parallel, IRP* irp)
 
 static DWORD WINAPI parallel_thread_func(LPVOID arg)
 {
-	IRP* irp = NULL;
-	wMessage message = { 0 };
 	PARALLEL_DEVICE* parallel = (PARALLEL_DEVICE*)arg;
 	UINT error = CHANNEL_RC_OK;
 
+	WINPR_ASSERT(parallel);
 	while (1)
 	{
 		if (!MessageQueue_Wait(parallel->queue))
@@ -325,6 +344,7 @@ static DWORD WINAPI parallel_thread_func(LPVOID arg)
 			break;
 		}
 
+		wMessage message = { 0 };
 		if (!MessageQueue_Peek(parallel->queue, &message, TRUE))
 		{
 			WLog_ERR(TAG, "MessageQueue_Peek failed!");
@@ -335,7 +355,7 @@ static DWORD WINAPI parallel_thread_func(LPVOID arg)
 		if (message.id == WMQ_QUIT)
 			break;
 
-		irp = (IRP*)message.wParam;
+		IRP* irp = (IRP*)message.wParam;
 
 		if ((error = parallel_process_irp(parallel, irp)))
 		{
