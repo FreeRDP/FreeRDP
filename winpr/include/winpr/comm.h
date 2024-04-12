@@ -25,8 +25,6 @@
 
 #include <winpr/collections.h>
 #include <winpr/file.h>
-#include <winpr/winpr.h>
-#include <winpr/wtypes.h>
 
 #if defined __linux__ && !defined ANDROID
 
@@ -392,6 +390,7 @@ extern "C"
 	 * also ensures that CommCreateFileA() has been registered through
 	 * RegisterHandleCreator().
 	 */
+	WINPR_ATTR_MALLOC(CloseHandle, 1)
 	WINPR_API HANDLE CommCreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode,
 	                                 LPSECURITY_ATTRIBUTES lpSecurityAttributes,
 	                                 DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes,

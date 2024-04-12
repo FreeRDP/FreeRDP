@@ -22,6 +22,7 @@
 
 #include <winpr/winpr.h>
 #include <winpr/wtypes.h>
+#include <winpr/handle.h>
 
 #ifdef _WIN32
 
@@ -71,6 +72,7 @@ extern "C"
 	                               DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize,
 	                               LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped);
 
+	WINPR_ATTR_MALLOC(CloseHandle, 1)
 	WINPR_API HANDLE CreateIoCompletionPort(HANDLE FileHandle, HANDLE ExistingCompletionPort,
 	                                        ULONG_PTR CompletionKey,
 	                                        DWORD NumberOfConcurrentThreads);

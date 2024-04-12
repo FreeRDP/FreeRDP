@@ -1164,10 +1164,10 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
                        LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition,
                        DWORD dwFlagsAndAttributes, HANDLE hTemplateFile)
 {
-	CHAR devicePath[MAX_PATH];
-	struct stat deviceStat;
+	CHAR devicePath[MAX_PATH] = { 0 };
+	struct stat deviceStat = { 0 };
 	WINPR_COMM* pComm = NULL;
-	struct termios upcomingTermios;
+	struct termios upcomingTermios = { 0 };
 
 	if (!CommInitialized())
 		return INVALID_HANDLE_VALUE;
