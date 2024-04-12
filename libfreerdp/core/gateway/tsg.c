@@ -2082,10 +2082,12 @@ static BOOL TsProxyCreateChannelReadResponse(wLog* log, const RPC_PDU* pdu,
                                              CONTEXT_HANDLE* channelContext, UINT32* channelId)
 {
 	BOOL rc = FALSE;
-	WLog_Print(log, WLOG_DEBUG, "TsProxyCreateChannelReadResponse");
 
-	if (!pdu)
-		return FALSE;
+	WINPR_ASSERT(log);
+	WINPR_ASSERT(pdu);
+	WINPR_ASSERT(channelId);
+
+	WLog_Print(log, WLOG_DEBUG, "TsProxyCreateChannelReadResponse");
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(log, pdu->s, 28))
 		goto fail;
@@ -2110,15 +2112,15 @@ fail:
 
 static BOOL TsProxyCloseChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* context)
 {
-	wStream* s = NULL;
-	rdpRpc* rpc = NULL;
+	WINPR_ASSERT(tsg);
+	WINPR_ASSERT(context);
+
 	WLog_Print(tsg->log, WLOG_DEBUG, "TsProxyCloseChannelWriteRequest");
 
-	if (!tsg || !tsg->rpc || !context)
-		return FALSE;
+	rdpRpc* rpc = tsg->rpc;
+	WINPR_ASSERT(rpc);
 
-	rpc = tsg->rpc;
-	s = Stream_New(NULL, 20);
+	wStream* s = Stream_New(NULL, 20);
 
 	if (!s)
 		return FALSE;
