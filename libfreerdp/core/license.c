@@ -1722,14 +1722,15 @@ void license_free_scope_list(SCOPE_LIST* scopeList)
 BOOL license_send_license_info(rdpLicense* license, const LICENSE_BLOB* calBlob,
                                const BYTE* signature, size_t signature_length)
 {
-	wStream* s = license_send_stream_init(license);
-
 	WINPR_ASSERT(calBlob);
 	WINPR_ASSERT(signature);
 	WINPR_ASSERT(license->certificate);
 
 	const rdpCertInfo* info = freerdp_certificate_get_info(license->certificate);
+	if (!info)
+		return FALSE;
 
+	wStream* s = license_send_stream_init(license);
 	if (!s)
 		return FALSE;
 
