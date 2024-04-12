@@ -1176,6 +1176,14 @@ static int freerdp_client_command_line_post_filter(void* context, COMMAND_LINE_A
 static BOOL freerdp_parse_username_ptr(const char* username, const char** user, size_t* userlen,
                                        const char** domain, size_t* domainlen)
 {
+	WINPR_ASSERT(user);
+	WINPR_ASSERT(userlen);
+	WINPR_ASSERT(domain);
+	WINPR_ASSERT(domainlen);
+
+	if (!username)
+		return FALSE;
+
 	const char* p = strchr(username, '\\');
 
 	*user = NULL;
@@ -1193,7 +1201,7 @@ static BOOL freerdp_parse_username_ptr(const char* username, const char** user, 
 		*domain = username;
 		*domainlen = length;
 	}
-	else if (username)
+	else
 	{
 		/* Do not break up the name for '@'; both credSSP and the
 		 * ClientInfo PDU expect 'user@corp.net' to be transmitted
@@ -1202,8 +1210,6 @@ static BOOL freerdp_parse_username_ptr(const char* username, const char** user, 
 		*user = username;
 		*userlen = strlen(username);
 	}
-	else
-		return FALSE;
 
 	return TRUE;
 }
