@@ -1135,7 +1135,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_AcceptSecurityContext(
 				return SEC_E_INVALID_TOKEN;
 
 			/* Use the output buffer to store the optimistic token */
-			CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
+			if (output_buffer)
+				CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
 			status = context->mech->pkg->table->AcceptSecurityContext(
 			    sub_cred, &context->sub_context, &mech_input, fContextReq | context->mech->flags,
