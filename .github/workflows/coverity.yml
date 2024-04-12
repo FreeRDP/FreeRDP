@@ -77,7 +77,12 @@ jobs:
         export CC=/usr/bin/clang
         export CXX=/usr/bin/clang++
         # in source build is used to help coverity to determine relative file path
-        cmake -DALLOW_IN_SOURCE_BUILD=true -GNinja .
+        cmake \
+              -GNinja \
+              -C ci/cmake-preloads/config-coverity.txt \
+              -DALLOW_IN_SOURCE_BUILD=true \
+              -B. \
+              -S.
         cov-build --dir cov-int cmake --build .
 
     - name: Submit build result to Coverity Scan
