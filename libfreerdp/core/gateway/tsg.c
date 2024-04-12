@@ -2033,20 +2033,20 @@ fail:
 
 static BOOL TsProxyCreateChannelWriteRequest(rdpTsg* tsg, CONTEXT_HANDLE* tunnelContext)
 {
-	size_t count = 0;
-	wStream* s = NULL;
-	rdpRpc* rpc = NULL;
+	WINPR_ASSERT(tsg);
+	WINPR_ASSERT(tunnelContext);
+
 	WLog_Print(tsg->log, WLOG_DEBUG, "TsProxyCreateChannelWriteRequest");
 
-	if (!tsg || !tsg->rpc || !tunnelContext || !tsg->Hostname)
+	if (!tsg->rpc || !tsg->Hostname)
 		return FALSE;
 
-	rpc = tsg->rpc;
-	count = _wcslen(tsg->Hostname) + 1;
+	rdpRpc* rpc = tsg->rpc;
+	const size_t count = _wcslen(tsg->Hostname) + 1;
 	if (count > UINT32_MAX)
 		return FALSE;
-	s = Stream_New(NULL, 60 + count * 2);
 
+	wStream* s = Stream_New(NULL, 60 + count * 2);
 	if (!s)
 		return FALSE;
 
@@ -2388,8 +2388,8 @@ BOOL tsg_recv_pdu(rdpTsg* tsg, const RPC_PDU* pdu)
 
 		case TSG_STATE_CONNECTED:
 		{
-			CONTEXT_HANDLE* TunnelContext = NULL;
-			TunnelContext = (tsg->reauthSequence) ? &tsg->NewTunnelContext : &tsg->TunnelContext;
+			CONTEXT_HANDLE* TunnelContext =
+			    (tsg->reauthSequence) ? &tsg->NewTunnelContext : &tsg->TunnelContext;
 
 			if (!TsProxyAuthorizeTunnelReadResponse(tsg, pdu))
 			{
