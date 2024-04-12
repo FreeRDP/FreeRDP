@@ -1002,13 +1002,19 @@ extern "C"
 	WINPR_API BOOL WINAPI WTSEnumerateServersA(LPSTR pDomainName, DWORD Reserved, DWORD Version,
 	                                           PWTS_SERVER_INFOA* ppServerInfo, DWORD* pCount);
 
+	WINPR_API VOID WINAPI WTSCloseServer(HANDLE hServer);
+
+	WINPR_ATTR_MALLOC(WTSCloseServer, 1)
 	WINPR_API HANDLE WINAPI WTSOpenServerW(LPWSTR pServerName);
+
+	WINPR_ATTR_MALLOC(WTSCloseServer, 1)
 	WINPR_API HANDLE WINAPI WTSOpenServerA(LPSTR pServerName);
 
+	WINPR_ATTR_MALLOC(WTSCloseServer, 1)
 	WINPR_API HANDLE WINAPI WTSOpenServerExW(LPWSTR pServerName);
-	WINPR_API HANDLE WINAPI WTSOpenServerExA(LPSTR pServerName);
 
-	WINPR_API VOID WINAPI WTSCloseServer(HANDLE hServer);
+	WINPR_ATTR_MALLOC(WTSCloseServer, 1)
+	WINPR_API HANDLE WINAPI WTSOpenServerExA(LPSTR pServerName);
 
 	WINPR_API BOOL WINAPI WTSEnumerateSessionsW(HANDLE hServer, DWORD Reserved, DWORD Version,
 	                                            PWTS_SESSION_INFOW* ppSessionInfo, DWORD* pCount);

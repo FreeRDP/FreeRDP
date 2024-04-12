@@ -297,10 +297,12 @@ extern "C"
 	WINPR_API void WSASetLastError(int iError);
 	WINPR_API int WSAGetLastError(void);
 
+	WINPR_API BOOL WSACloseEvent(HANDLE hEvent);
+
+	WINPR_ATTR_MALLOC(WSACloseEvent, 1)
 	WINPR_API HANDLE WSACreateEvent(void);
 	WINPR_API BOOL WSASetEvent(HANDLE hEvent);
 	WINPR_API BOOL WSAResetEvent(HANDLE hEvent);
-	WINPR_API BOOL WSACloseEvent(HANDLE hEvent);
 
 	WINPR_API int WSAEventSelect(SOCKET s, WSAEVENT hEventObject, LONG lNetworkEvents);
 
