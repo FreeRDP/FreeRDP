@@ -818,6 +818,8 @@ static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32
 	assert(input);
 
 	UwacWindow* window = input->pointer_focus;
+	if (!window || !window->display)
+		return;
 
 	int scale = window->display->actual_scale;
 	int sx_i = wl_fixed_to_int(sx_w) * scale;
@@ -825,7 +827,7 @@ static void pointer_handle_motion(void* data, struct wl_pointer* pointer, uint32
 	double sx_d = wl_fixed_to_double(sx_w) * scale;
 	double sy_d = wl_fixed_to_double(sy_w) * scale;
 
-	if (!window || (sx_i < 0) || (sy_i < 0))
+	if ((sx_i < 0) || (sy_i < 0))
 		return;
 
 	input->sx = sx_d;
