@@ -256,7 +256,14 @@ static BOOL freerdp_listener_open_local(freerdp_listener* instance, const char* 
 		return FALSE;
 	}
 
-	fcntl(sockfd, F_SETFL, O_NONBLOCK);
+	int rc = fcntl(sockfd, F_SETFL, O_NONBLOCK);
+	if (rc != 0)
+	{
+		WLog_ERR(TAG, "fcntl(sockfd, F_SETFL, O_NONBLOCK)");
+		closesocket((SOCKET)sockfd);
+		return FALSE;
+	}
+
 	addr.sun_family = AF_UNIX;
 	strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
 	unlink(path);
