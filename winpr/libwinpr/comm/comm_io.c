@@ -398,8 +398,8 @@ BOOL CommWriteFile(HANDLE hDevice, LPCVOID lpBuffer, DWORD nNumberOfBytesToWrite
 	/* discard a possible and no more relevant event */
 	eventfd_read(pComm->fd_write_event, NULL);
 	/* ms */
-	ULONGLONG Tmax = nNumberOfBytesToWrite * pComm->timeouts.WriteTotalTimeoutMultiplier +
-	                 pComm->timeouts.WriteTotalTimeoutConstant;
+	ULONGLONG Tmax = 1ull * nNumberOfBytesToWrite * pComm->timeouts.WriteTotalTimeoutMultiplier +
+	                 1ull * pComm->timeouts.WriteTotalTimeoutConstant;
 	/* NB: select() may update the timeout argument to indicate
 	 * how much time was left. Keep the timeout variable out of
 	 * the while() */
