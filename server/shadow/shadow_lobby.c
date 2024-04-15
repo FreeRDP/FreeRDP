@@ -27,9 +27,9 @@
 
 BOOL shadow_client_init_lobby(rdpShadowServer* server)
 {
+	BOOL rc = FALSE;
 	int width = 0;
 	int height = 0;
-	rdtkEngine* engine = NULL;
 	rdtkSurface* surface = NULL;
 	RECTANGLE_16 invalidRect;
 	rdpShadowSurface* lobby = server->lobby;
@@ -37,17 +37,14 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 	if (!lobby)
 		return FALSE;
 
-	if (!(engine = rdtk_engine_new()))
-	{
-		return FALSE;
-	}
+	rdtkEngine* engine = rdtk_engine_new();
+	if (!engine)
+		goto fail;
 
-	if (!(surface =
-	          rdtk_surface_new(engine, lobby->data, lobby->width, lobby->height, lobby->scanline)))
-	{
-		rdtk_engine_free(engine);
-		return FALSE;
-	}
+	EnterCriticalSection(&lobby->lock);
+	surface = rdtk_surface_new(engine, lobby->data, lobby->width, lobby->height, lobby->scanline);
+	if (!surface)
+		goto fail;
 
 	invalidRect.left = 0;
 	invalidRect.top = 0;
@@ -77,9 +74,11 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 
 	rdtk_surface_free(surface);
 
-	rdtk_engine_free(engine);
-
 	region16_union_rect(&(lobby->invalidRegion), &(lobby->invalidRegion), &invalidRect);
+	LeaveCriticalSection(&lobby->lock);
 
-	return TRUE;
+	rc = TRUE;
+fail:
+	rdtk_engine_free(engine);
+	return rc;
 }
