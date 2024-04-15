@@ -96,14 +96,15 @@ static BOOL FileCloseHandle(HANDLE handle)
 static BOOL FileSetEndOfFile(HANDLE hFile)
 {
 	WINPR_FILE* pFile = (WINPR_FILE*)hFile;
-	INT64 size = 0;
 
 	if (!hFile)
 		return FALSE;
 
-	size = _ftelli64(pFile->fp);
+	const INT64 size = _ftelli64(pFile->fp);
+	if (size < 0)
+		return FALSE;
 
-	if (ftruncate(fileno(pFile->fp), size) < 0)
+	if (ftruncate(fileno(pFile->fp), (off_t)size) < 0)
 	{
 		char ebuffer[256] = { 0 };
 		WLog_ERR(TAG, "ftruncate %s failed with %s [0x%08X]", pFile->lpFileName,
