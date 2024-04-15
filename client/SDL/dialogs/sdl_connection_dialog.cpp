@@ -164,6 +164,7 @@ bool SDLConnectionDialog::clearWindow(SDL_Renderer* renderer)
 
 bool SDLConnectionDialog::update(SDL_Renderer* renderer)
 {
+	std::lock_guard lock(_mux);
 	if (!renderer)
 		return false;
 
