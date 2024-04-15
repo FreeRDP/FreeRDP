@@ -881,12 +881,13 @@ static void* TimerQueueThread(void* arg)
 
 		status = pthread_cond_timedwait(&(timerQueue->cond), &(timerQueue->cond_mutex), &timeout);
 		FireExpiredTimerQueueTimers(timerQueue);
+		const BOOL bCancelled = timerQueue->bCancelled;
 		pthread_mutex_unlock(&(timerQueue->cond_mutex));
 
 		if ((status != ETIMEDOUT) && (status != 0))
 			break;
 
-		if (timerQueue->bCancelled)
+		if (bCancelled)
 			break;
 	}
 
