@@ -1277,7 +1277,6 @@ static UINT rdpdr_send_client_name_request(rdpdrPlugin* rdpdr)
 	WINPR_ASSERT(rdpdr->computerName);
 	computerNameW = ConvertUtf8ToWCharAlloc(rdpdr->computerName, &computerNameLenW);
 	computerNameLenW *= sizeof(WCHAR);
-	WINPR_ASSERT(computerNameLenW >= 0);
 
 	if (computerNameLenW > 0)
 		computerNameLenW += sizeof(WCHAR); // also write '\0'
