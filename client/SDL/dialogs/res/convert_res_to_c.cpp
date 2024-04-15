@@ -79,6 +79,10 @@ static int readwrite(std::ofstream& out, std::ifstream& ifs)
 {
 	size_t pos = 0;
 	char c = 0;
+
+	std::ios backup(nullptr);
+	backup.copyfmt(out);
+
 	while (ifs.read(&c, 1) && ifs.good())
 	{
 		unsigned val = c & 0xff;
@@ -88,6 +92,8 @@ static int readwrite(std::ofstream& out, std::ifstream& ifs)
 		if ((pos++ % 16) == 15)
 			out << std::endl;
 	}
+
+	out.copyfmt(backup);
 
 	return 0;
 }
