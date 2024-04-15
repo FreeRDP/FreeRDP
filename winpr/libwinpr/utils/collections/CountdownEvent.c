@@ -48,7 +48,10 @@ struct CountdownEvent
 size_t CountdownEvent_CurrentCount(wCountdownEvent* countdown)
 {
 	WINPR_ASSERT(countdown);
-	return countdown->count;
+	EnterCriticalSection(&countdown->lock);
+	const size_t rc = countdown->count;
+	LeaveCriticalSection(&countdown->lock);
+	return rc;
 }
 
 /**
@@ -58,7 +61,10 @@ size_t CountdownEvent_CurrentCount(wCountdownEvent* countdown)
 size_t CountdownEvent_InitialCount(wCountdownEvent* countdown)
 {
 	WINPR_ASSERT(countdown);
-	return countdown->initialCount;
+	EnterCriticalSection(&countdown->lock);
+	const size_t rc = countdown->initialCount;
+	LeaveCriticalSection(&countdown->lock);
+	return rc;
 }
 
 /**
