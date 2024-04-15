@@ -186,8 +186,8 @@ BOOL CommReadFile(HANDLE hDevice, LPVOID lpBuffer, DWORD nNumberOfBytesToRead,
 	else
 	{
 		/* Tmax */
-		Tmax = nNumberOfBytesToRead * pTimeouts->ReadTotalTimeoutMultiplier +
-		       pTimeouts->ReadTotalTimeoutConstant;
+		Tmax = 1ull * nNumberOfBytesToRead * pTimeouts->ReadTotalTimeoutMultiplier +
+		       1ull * pTimeouts->ReadTotalTimeoutConstant;
 
 		/* INDEFinitely */
 		if ((Tmax == 0) && (pTimeouts->ReadIntervalTimeout < MAXULONG) &&
