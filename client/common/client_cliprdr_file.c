@@ -353,7 +353,6 @@ static BOOL maybe_clear_fuse_request(const void* key, void* value, void* arg)
 
 	fuse_reply_err(fuse_request->fuse_req, EIO);
 	HashTable_Remove(file_context->request_table, key);
-	free(fuse_request);
 
 	return TRUE;
 }
@@ -749,7 +748,6 @@ static BOOL request_file_size_async(CliprdrFileContext* file_context, CliprdrFus
 		           "Failed to send FileContentsRequest for file \"%s\"",
 		           fuse_file->filename_with_root);
 		HashTable_Remove(file_context->request_table, (void*)(UINT_PTR)fuse_request->stream_id);
-		free(fuse_request);
 		return FALSE;
 	}
 	DEBUG_CLIPRDR(file_context->log, "Requested file size for file \"%s\" with stream id %u",
@@ -1192,18 +1190,17 @@ static UINT cliprdr_file_context_server_file_contents_response(
 		HashTable_Unlock(file_context->inode_table);
 		return CHANNEL_RC_OK;
 	}
-	HashTable_Remove(file_context->request_table,
-	                 (void*)(UINT_PTR)file_contents_response->streamId);
 
 	if (!(file_contents_response->common.msgFlags & CB_RESPONSE_OK))
 	{
 		WLog_Print(file_context->log, WLOG_WARN,
 		           "FileContentsRequests for file \"%s\" was unsuccessful",
 		           fuse_request->fuse_file->filename);
-		HashTable_Unlock(file_context->inode_table);
 
 		fuse_reply_err(fuse_request->fuse_req, EIO);
-		free(fuse_request);
+		HashTable_Remove(file_context->request_table,
+		                 (void*)(UINT_PTR)file_contents_response->streamId);
+		HashTable_Unlock(file_context->inode_table);
 		return CHANNEL_RC_OK;
 	}
 
@@ -1214,10 +1211,10 @@ static UINT cliprdr_file_context_server_file_contents_response(
 		WLog_Print(file_context->log, WLOG_WARN,
 		           "Received invalid file size for file \"%s\" from the client",
 		           fuse_request->fuse_file->filename);
-		HashTable_Unlock(file_context->inode_table);
-
 		fuse_reply_err(fuse_request->fuse_req, EIO);
-		free(fuse_request);
+		HashTable_Remove(file_context->request_table,
+		                 (void*)(UINT_PTR)file_contents_response->streamId);
+		HashTable_Unlock(file_context->inode_table);
 		return CHANNEL_RC_OK;
 	}
 
@@ -1259,7 +1256,8 @@ static UINT cliprdr_file_context_server_file_contents_response(
 			break;
 	}
 
-	free(fuse_request);
+	HashTable_Remove(file_context->request_table,
+	                 (void*)(UINT_PTR)file_contents_response->streamId);
 
 	return CHANNEL_RC_OK;
 }
@@ -2419,9 +2417,16 @@ CliprdrFileContext* cliprdr_file_context_new(void* context)
 	if (!file->inode_table || !file->clip_data_table || !file->request_table)
 		goto fail;
 
-	wObject* ctobj = HashTable_ValueObject(file->clip_data_table);
-	WINPR_ASSERT(ctobj);
-	ctobj->fnObjectFree = clip_data_entry_free;
+	{
+		wObject* ctobj = HashTable_ValueObject(file->request_table);
+		WINPR_ASSERT(ctobj);
+		ctobj->fnObjectFree = free;
+	}
+	{
+		wObject* ctobj = HashTable_ValueObject(file->clip_data_table);
+		WINPR_ASSERT(ctobj);
+		ctobj->fnObjectFree = clip_data_entry_free;
+	}
 
 	file->root_dir = fuse_file_new_root(file);
 	if (!file->root_dir)
