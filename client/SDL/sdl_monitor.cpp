@@ -198,8 +198,17 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 		float vdpi = 1.0f;
 		SDL_Rect rect = {};
 
-		SDL_GetDisplayBounds(*id, &rect);
-		SDL_GetDisplayDPI(*id, &ddpi, &hdpi, &vdpi);
+		if (SDL_GetDisplayBounds(*id, &rect) < 0)
+			return FALSE;
+
+		if (SDL_GetDisplayDPI(*id, &ddpi, &hdpi, &vdpi) < 0)
+			return FALSE;
+
+		WINPR_ASSERT(rect.w > 0);
+		WINPR_ASSERT(rect.h > 0);
+		WINPR_ASSERT(ddpi > 0);
+		WINPR_ASSERT(hdpi > 0);
+		WINPR_ASSERT(vdpi > 0);
 
 		bool highDpi = hdpi > 100;
 
