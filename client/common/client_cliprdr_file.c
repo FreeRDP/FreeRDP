@@ -504,16 +504,15 @@ static void clear_no_cdi_entry(CliprdrFileContext* file_context)
 {
 	WINPR_ASSERT(file_context);
 
-	if (!file_context->clip_data_entry_without_id)
-		return;
-
 	WINPR_ASSERT(file_context->inode_table);
-
 	HashTable_Lock(file_context->inode_table);
-	clear_entry_selection(file_context->clip_data_entry_without_id);
+	if (file_context->clip_data_entry_without_id)
+	{
+		clear_entry_selection(file_context->clip_data_entry_without_id);
 
-	clip_data_entry_free(file_context->clip_data_entry_without_id);
-	file_context->clip_data_entry_without_id = NULL;
+		clip_data_entry_free(file_context->clip_data_entry_without_id);
+		file_context->clip_data_entry_without_id = NULL;
+	}
 	HashTable_Unlock(file_context->inode_table);
 }
 
