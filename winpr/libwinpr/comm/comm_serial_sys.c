@@ -1027,15 +1027,27 @@ static const ULONG _SERIAL_SYS_SUPPORTED_EV_MASK =
     SERIAL_EV_EVENT2*/
     ;
 
+static BOOL is_wait_set(WINPR_COMM* pComm)
+{
+	WINPR_ASSERT(pComm);
+
+	EnterCriticalSection(&pComm->EventsLock);
+	const BOOL isWaiting = (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING) != 0;
+	LeaveCriticalSection(&pComm->EventsLock);
+	return isWaiting;
+}
+
 static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 {
 	ULONG possibleMask = 0;
 
+	WINPR_ASSERT(pComm);
+	WINPR_ASSERT(pWaitMask);
+
 	/* Stops pending IOCTL_SERIAL_WAIT_ON_MASK
 	 * http://msdn.microsoft.com/en-us/library/ff546805%28v=vs.85%29.aspx
 	 */
-
-	if (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
+	if (is_wait_set(pComm))
 	{
 		/* FIXME: any doubt on reading PendingEvents out of a critical section? */
 
@@ -1044,7 +1056,7 @@ static BOOL _set_wait_mask(WINPR_COMM* pComm, const ULONG* pWaitMask)
 		LeaveCriticalSection(&pComm->EventsLock);
 
 		/* waiting the end of the pending _wait_on_mask() */
-		while (pComm->PendingEvents & SERIAL_EV_WINPR_WAITING)
+		while (is_wait_set(pComm))
 			Sleep(10); /* 10ms */
 	}
 
