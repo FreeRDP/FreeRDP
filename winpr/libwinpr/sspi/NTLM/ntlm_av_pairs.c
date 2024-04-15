@@ -124,7 +124,6 @@ static INLINE BOOL ntlm_av_pair_get_id(const NTLM_AV_PAIR* pAvPair, size_t size,
 
 ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 {
-	size_t size = 0;
 	size_t cbAvPair = 0;
 	NTLM_AV_PAIR* pAvPair = NULL;
 
@@ -132,8 +131,12 @@ ULONG ntlm_av_pair_list_length(NTLM_AV_PAIR* pAvPairList, size_t cbAvPairList)
 	if (!pAvPair)
 		return 0;
 
-	size = ((PBYTE)pAvPair - (PBYTE)pAvPairList) + sizeof(NTLM_AV_PAIR);
+	if (pAvPair < pAvPairList)
+		return 0;
+
+	const size_t size = ((PBYTE)pAvPair - (PBYTE)pAvPairList) + sizeof(NTLM_AV_PAIR);
 	WINPR_ASSERT(size <= ULONG_MAX);
+	WINPR_ASSERT(size >= 0);
 	return (ULONG)size;
 }
 

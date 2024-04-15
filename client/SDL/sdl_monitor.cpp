@@ -189,7 +189,7 @@ static BOOL sdl_apply_display_properties(SdlContext* sdl)
 
 	for (UINT32 x = 0; x < numIds; x++)
 	{
-		auto id = static_cast<const UINT32*>(
+		auto id = static_cast<const int*>(
 		    freerdp_settings_get_pointer_array(settings, FreeRDP_MonitorIds, x));
 		WINPR_ASSERT(id);
 
