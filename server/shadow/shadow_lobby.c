@@ -39,7 +39,7 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 
 	rdtkEngine* engine = rdtk_engine_new();
 	if (!engine)
-		goto fail;
+		return FALSE;
 
 	EnterCriticalSection(&lobby->lock);
 	surface = rdtk_surface_new(engine, lobby->data, lobby->width, lobby->height, lobby->scanline);
@@ -75,10 +75,10 @@ BOOL shadow_client_init_lobby(rdpShadowServer* server)
 	rdtk_surface_free(surface);
 
 	region16_union_rect(&(lobby->invalidRegion), &(lobby->invalidRegion), &invalidRect);
-	LeaveCriticalSection(&lobby->lock);
 
 	rc = TRUE;
 fail:
+	LeaveCriticalSection(&lobby->lock);
 	rdtk_engine_free(engine);
 	return rc;
 }
