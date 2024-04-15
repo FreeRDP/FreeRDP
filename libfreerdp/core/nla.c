@@ -1148,6 +1148,11 @@ static BOOL nla_read_TSCspDataDetail(WinPrAsn1Decoder* dec, rdpSettings* setting
 
 static BOOL nla_read_KERB_TICKET_LOGON(rdpNla* nla, wStream* s, KERB_TICKET_LOGON* ticket)
 {
+	WINPR_ASSERT(nla);
+
+	if (!ticket)
+		return FALSE;
+
 	/* mysterious extra 16 bytes before TGS/TGT content */
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 16 + 16))
 		return FALSE;
