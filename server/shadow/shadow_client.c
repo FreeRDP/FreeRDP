@@ -1981,7 +1981,10 @@ static INLINE BOOL shadow_client_no_surface_update(rdpShadowClient* client,
 	server = client->server;
 	WINPR_ASSERT(server);
 	surface = client->inLobby ? server->lobby : server->surface;
-	return shadow_client_surface_update(client, &(surface->invalidRegion));
+	EnterCriticalSection(&surface->lock);
+	const BOOL rc = shadow_client_surface_update(client, &(surface->invalidRegion));
+	LeaveCriticalSection(&surface->lock);
+	return rc;
 }
 
 static int shadow_client_subsystem_process_message(rdpShadowClient* client, wMessage* message)
