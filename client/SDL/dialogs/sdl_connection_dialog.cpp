@@ -218,7 +218,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 		case SDL_KEYUP:
 			if (visible())
 			{
-				auto ev = reinterpret_cast<const SDL_KeyboardEvent&>(event);
+				auto& ev = reinterpret_cast<const SDL_KeyboardEvent&>(event);
 				update(_renderer);
 				switch (event.key.keysym.sym)
 				{
@@ -245,7 +245,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 		case SDL_MOUSEMOTION:
 			if (visible())
 			{
-				auto ev = reinterpret_cast<const SDL_MouseMotionEvent&>(event);
+				auto& ev = reinterpret_cast<const SDL_MouseMotionEvent&>(event);
 
 				_buttons.set_mouseover(event.button.x, event.button.y);
 				update(_renderer);
@@ -256,7 +256,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 		case SDL_MOUSEBUTTONUP:
 			if (visible())
 			{
-				auto ev = reinterpret_cast<const SDL_MouseButtonEvent&>(event);
+				auto& ev = reinterpret_cast<const SDL_MouseButtonEvent&>(event);
 				update(_renderer);
 
 				auto button = _buttons.get_selected(event.button);
@@ -275,7 +275,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 		case SDL_MOUSEWHEEL:
 			if (visible())
 			{
-				auto ev = reinterpret_cast<const SDL_MouseWheelEvent&>(event);
+				auto& ev = reinterpret_cast<const SDL_MouseWheelEvent&>(event);
 				update(_renderer);
 				return windowID == ev.windowID;
 			}
@@ -284,7 +284,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 		case SDL_FINGERDOWN:
 			if (visible())
 			{
-				auto ev = reinterpret_cast<const SDL_TouchFingerEvent&>(event);
+				auto& ev = reinterpret_cast<const SDL_TouchFingerEvent&>(event);
 				update(_renderer);
 #if SDL_VERSION_ATLEAST(2, 0, 18)
 				return windowID == ev.windowID;
@@ -295,7 +295,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 			return false;
 		case SDL_WINDOWEVENT:
 		{
-			auto ev = reinterpret_cast<const SDL_WindowEvent&>(event);
+			auto& ev = reinterpret_cast<const SDL_WindowEvent&>(event);
 			switch (ev.event)
 			{
 				case SDL_WINDOWEVENT_CLOSE:
