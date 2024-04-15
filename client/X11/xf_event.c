@@ -204,7 +204,7 @@ BOOL xf_event_action_script_init(xfContext* xfc)
 		char* context = NULL;
 		strtok_s(buffer, "\n", &context);
 
-		if (!buffer || !ArrayList_Append(xfc->xevents, buffer))
+		if (!ArrayList_Append(xfc->xevents, buffer))
 		{
 			pclose(actionScript);
 			ArrayList_Free(xfc->xevents);
