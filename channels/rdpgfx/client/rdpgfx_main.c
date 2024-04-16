@@ -2093,6 +2093,7 @@ static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 	if (status < 0)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "zgfx_decompress failure! status: %d", status);
+		free(pDstData);
 		return ERROR_INTERNAL_ERROR;
 	}
 
