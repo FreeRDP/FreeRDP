@@ -2489,46 +2489,36 @@ static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 	WINPR_ASSERT(ncrush);
 	WINPR_ASSERT(HistoryPtr);
 
-	if (HistoryPtr < &ncrush->HistoryBuffer[32768])
+	const size_t history_half = ARRAYSIZE(ncrush->HistoryBuffer) / 2;
+	if (HistoryPtr < &ncrush->HistoryBuffer[history_half])
 		return -1;
 
-	if (HistoryPtr > &ncrush->HistoryBuffer[65536])
+	if (HistoryPtr > &ncrush->HistoryBuffer[ARRAYSIZE(ncrush->HistoryBuffer)])
 		return -1;
 
-	MoveMemory(ncrush->HistoryBuffer, HistoryPtr - 32768, 32768);
-	const intptr_t hsize = HistoryPtr - 32768 - ncrush->HistoryBuffer;
-	WINPR_ASSERT(hsize <= UINT32_MAX);
+	MoveMemory(ncrush->HistoryBuffer, HistoryPtr - history_half, history_half * sizeof(BYTE));
+	const intptr_t hsize = HistoryPtr - history_half - ncrush->HistoryBuffer;
+	WINPR_ASSERT(hsize <= UINT16_MAX);
 	WINPR_ASSERT(hsize >= 0);
-	UINT32 HistoryOffset = (UINT32)hsize;
+	INT32 HistoryOffset = (INT32)hsize;
 
-	for (int i = 0; i < 65536; i += 4)
+	for (size_t i = 0; i < ARRAYSIZE(ncrush->HashTable); i++)
 	{
-		INT64 NewHash = ncrush->HashTable[i + 0] - HistoryOffset;
-		ncrush->HashTable[i + 0] = (NewHash <= 0) ? 0 : NewHash;
-		NewHash = ncrush->HashTable[i + 1] - HistoryOffset;
-		ncrush->HashTable[i + 1] = (NewHash <= 0) ? 0 : NewHash;
-		NewHash = ncrush->HashTable[i + 2] - HistoryOffset;
-		ncrush->HashTable[i + 2] = (NewHash <= 0) ? 0 : NewHash;
-		NewHash = ncrush->HashTable[i + 3] - HistoryOffset;
-		ncrush->HashTable[i + 3] = (NewHash <= 0) ? 0 : NewHash;
+		INT32 NewHash = ncrush->HashTable[i] - HistoryOffset;
+		ncrush->HashTable[i] = (NewHash <= 0) ? 0 : NewHash;
 	}
 
-	for (int j = 0; j < 32768; j += 4)
+	const size_t match_half = ARRAYSIZE(ncrush->MatchTable) / 2;
+	for (size_t j = 0; j < match_half; j++)
 	{
-		if (HistoryOffset + j + 3ull > ARRAYSIZE(ncrush->MatchTable))
+		if (HistoryOffset + j > ARRAYSIZE(ncrush->MatchTable))
 			continue;
 
-		INT64 NewMatch = ncrush->MatchTable[HistoryOffset + j + 0] - HistoryOffset;
-		ncrush->MatchTable[j + 0] = (NewMatch <= 0) ? 0 : NewMatch;
-		NewMatch = ncrush->MatchTable[HistoryOffset + j + 1] - HistoryOffset;
-		ncrush->MatchTable[j + 1] = (NewMatch <= 0) ? 0 : NewMatch;
-		NewMatch = ncrush->MatchTable[HistoryOffset + j + 2] - HistoryOffset;
-		ncrush->MatchTable[j + 2] = (NewMatch <= 0) ? 0 : NewMatch;
-		NewMatch = ncrush->MatchTable[HistoryOffset + j + 3] - HistoryOffset;
-		ncrush->MatchTable[j + 3] = (NewMatch <= 0) ? 0 : NewMatch;
+		INT32 NewMatch = ncrush->MatchTable[HistoryOffset + j] - HistoryOffset;
+		ncrush->MatchTable[j] = (NewMatch <= 0) ? 0 : NewMatch;
 	}
 
-	ZeroMemory(&ncrush->MatchTable[32768], 65536);
+	ZeroMemory(&ncrush->MatchTable[match_half], match_half * sizeof(UINT16));
 	return 1;
 }
 
