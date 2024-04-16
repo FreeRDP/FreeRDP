@@ -788,18 +788,26 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 		rawHeights[3] = nSrcHeight;
 	}
 
+	const size_t diff = srcp - pSrcData;
+	if (SrcSize < diff)
+	{
+		WLog_ERR(TAG, "Size mismatch %" PRIu32 " < %" PRIuz, SrcSize, diff);
+		return FALSE;
+	}
+
 	if (!rle) /* RAW */
 	{
+
 		UINT32 base = planeSize * 3;
 		if (cs)
 			base = planeSize + planeSize / 2;
 
 		if (alpha)
 		{
-			if ((SrcSize - (srcp - pSrcData)) < (planeSize + base))
+			if ((SrcSize - diff) < (planeSize + base))
 			{
-				WLog_ERR(TAG, "Alpha plane size mismatch %" PRIu32 " < %" PRIu32,
-				         SrcSize - (srcp - pSrcData), (planeSize + base));
+				WLog_ERR(TAG, "Alpha plane size mismatch %" PRIuz " < %" PRIu32, SrcSize - diff,
+				         (planeSize + base));
 				return FALSE;
 			}
 
@@ -817,10 +825,9 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 		}
 		else
 		{
-			if ((SrcSize - (srcp - pSrcData)) < base)
+			if ((SrcSize - diff) < base)
 			{
-				WLog_ERR(TAG, "plane size mismatch %" PRIu32 " < %" PRIu32,
-				         SrcSize - (srcp - pSrcData), base);
+				WLog_ERR(TAG, "plane size mismatch %" PRIu32 " < %" PRIu32, SrcSize - diff, base);
 				return FALSE;
 			}
 
@@ -841,8 +848,8 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 		if (alpha)
 		{
 			planes[3] = srcp;
-			rleSizes[3] = planar_skip_plane_rle(planes[3], SrcSize - (planes[3] - pSrcData),
-			                                    rawWidths[3], rawHeights[3]); /* AlphaPlane */
+			rleSizes[3] = planar_skip_plane_rle(planes[3], SrcSize - diff, rawWidths[3],
+			                                    rawHeights[3]); /* AlphaPlane */
 
 			if (rleSizes[3] < 0)
 				return FALSE;
@@ -852,22 +859,41 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 		else
 			planes[0] = srcp;
 
-		rleSizes[0] = planar_skip_plane_rle(planes[0], SrcSize - (planes[0] - pSrcData),
-		                                    rawWidths[0], rawHeights[0]); /* RedPlane */
+		const size_t diff0 = (planes[0] - pSrcData);
+		if (SrcSize < diff0)
+		{
+			WLog_ERR(TAG, "Size mismatch %" PRIu32 " < %" PRIuz, SrcSize, diff0);
+			return FALSE;
+		}
+		rleSizes[0] = planar_skip_plane_rle(planes[0], SrcSize - diff0, rawWidths[0],
+		                                    rawHeights[0]); /* RedPlane */
 
 		if (rleSizes[0] < 0)
 			return FALSE;
 
 		planes[1] = planes[0] + rleSizes[0];
-		rleSizes[1] = planar_skip_plane_rle(planes[1], SrcSize - (planes[1] - pSrcData),
-		                                    rawWidths[1], rawHeights[1]); /* GreenPlane */
+
+		const size_t diff1 = (planes[1] - pSrcData);
+		if (SrcSize < diff1)
+		{
+			WLog_ERR(TAG, "Size mismatch %" PRIu32 " < %" PRIuz, SrcSize, diff1);
+			return FALSE;
+		}
+		rleSizes[1] = planar_skip_plane_rle(planes[1], SrcSize - diff1, rawWidths[1],
+		                                    rawHeights[1]); /* GreenPlane */
 
 		if (rleSizes[1] < 1)
 			return FALSE;
 
 		planes[2] = planes[1] + rleSizes[1];
-		rleSizes[2] = planar_skip_plane_rle(planes[2], SrcSize - (planes[2] - pSrcData),
-		                                    rawWidths[2], rawHeights[2]); /* BluePlane */
+		const size_t diff2 = (planes[2] - pSrcData);
+		if (SrcSize < diff2)
+		{
+			WLog_ERR(TAG, "Size mismatch %" PRIu32 " < %" PRIuz, SrcSize, diff);
+			return FALSE;
+		}
+		rleSizes[2] = planar_skip_plane_rle(planes[2], SrcSize - diff2, rawWidths[2],
+		                                    rawHeights[2]); /* BluePlane */
 
 		if (rleSizes[2] < 1)
 			return FALSE;
