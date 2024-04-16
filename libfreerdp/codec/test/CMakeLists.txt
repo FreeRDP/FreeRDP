@@ -35,3 +35,9 @@ endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Test")
 
+set(FUZZERS
+	TestFuzzCodecs.c
+)
+
+include (AddFuzzerTest)
+add_fuzzer_test("${FUZZERS}" "freerdp winpr")

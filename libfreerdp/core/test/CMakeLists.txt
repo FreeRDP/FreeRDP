@@ -9,8 +9,9 @@ set(${MODULE_PREFIX}_TESTS
 	TestStreamDump.c
 	TestSettings.c)
 
-set(${MODULE_PREFIX}_FUZZERS
-	TestFuzzCryptoCertificateDataSetPEM.c)
+set(FUZZERS
+	TestFuzzCryptoCertificateDataSetPEM.c
+)
 
 if(WITH_SAMPLE AND WITH_SERVER AND NOT WIN32)
 	add_definitions(-DCMAKE_EXECUTABLE_SUFFIX="${CMAKE_EXECUTABLE_SUFFIX}")
@@ -32,16 +33,8 @@ add_definitions(-DTESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 
 target_link_libraries(${MODULE_NAME} freerdp winpr freerdp-client)
 
-if (BUILD_FUZZERS)
-	foreach(test ${${MODULE_PREFIX}_FUZZERS})
-		get_filename_component(TestName ${test} NAME_WE)
-		add_executable(${TestName} ${test})
-		target_link_libraries(${TestName} freerdp winpr freerdp-client fuzzer_config)
-		add_test(${TestName} ${TESTING_OUTPUT_DIRECTORY}/${MODULE_NAME} ${TestName})
-		set_target_properties(${TestName} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
-		add_dependencies(fuzzers ${TestName})
-	endforeach()
-endif (BUILD_FUZZERS)
+include (AddFuzzerTest)
+add_fuzzer_test("${FUZZERS}" "freerdp winpr")
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
