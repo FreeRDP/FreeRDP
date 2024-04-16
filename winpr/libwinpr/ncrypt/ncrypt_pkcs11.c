@@ -1224,26 +1224,7 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
                                                LPCSTR* modulePaths)
 {
 	SECURITY_STATUS status = ERROR_INVALID_PARAMETER;
-#if defined(__LP64__) || (defined(__x86_64__) && !defined(__ILP32__)) || defined(_M_X64) || \
-    defined(__ia64) || defined(_M_IA64) || defined(__aarch64__) || defined(__powerpc64__)
-#define LIBS64
-#endif
-
-	LPCSTR openscPaths[] = { "opensc-pkcs11.so", /* In case winpr is installed in system paths */
-#ifdef __APPLE__
-		                     "/usr/local/lib/pkcs11/opensc-pkcs11.so",
-#else
-	/* linux and UNIXes */
-#ifdef LIBS64
-		                     "/usr/lib/x86_64-linux-gnu/pkcs11/opensc-pkcs11.so", /* Ubuntu/debian
-		                                                                           */
-		                     "/lib64/pkcs11/opensc-pkcs11.so",                    /* Fedora */
-#else
-		                     "/usr/lib/i386-linux-gnu/opensc-pkcs11.so", /* debian */
-		                     "/lib32/pkcs11/opensc-pkcs11.so",           /* Fedora */
-#endif
-#endif
-		                     NULL };
+	LPCSTR openscPaths[] = { "opensc-pkcs11.so", NULL };
 
 	if (!phProvider)
 		return ERROR_INVALID_PARAMETER;
