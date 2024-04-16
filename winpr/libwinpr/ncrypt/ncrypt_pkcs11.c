@@ -18,7 +18,6 @@
  */
 
 #include <stdlib.h>
-#include <pkcs11-helper-1.0/pkcs11.h>
 
 #include <winpr/library.h>
 #include <winpr/assert.h>
@@ -28,6 +27,9 @@
 
 #include "../log.h"
 #include "ncrypt.h"
+
+/* https://github.com/latchset/pkcs11-headers/blob/main/public-domain/3.1/pkcs11.h */
+#include "pkcs11-headers/pkcs11.h"
 
 #define TAG WINPR_TAG("ncryptp11")
 
@@ -1231,11 +1233,6 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 
 	if (!phProvider)
 		return ERROR_INVALID_PARAMETER;
-
-#if defined(WITH_OPENSC_PKCS11_LINKED)
-	if (!modulePaths)
-		return initialize_pkcs11(NULL, C_GetFunctionList, phProvider);
-#endif
 
 	if (!modulePaths)
 		modulePaths = openscPaths;

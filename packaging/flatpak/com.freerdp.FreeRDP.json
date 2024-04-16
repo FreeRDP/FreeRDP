@@ -53,7 +53,6 @@
 		"modules/cJSON.json",
 		"modules/xprop.json",
 		"modules/pcsc.json",
-		"modules/pkcs11-helper.json",
 		"modules/krb5.json",
 		"modules/opensc.json",
 		{

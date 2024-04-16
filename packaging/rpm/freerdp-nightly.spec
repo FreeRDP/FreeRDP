@@ -49,7 +49,6 @@ BuildRequires: uriparser-devel
 BuildRequires: libpng-devel
 BuildRequires: libwebp-devel
 BuildRequires: fuse3-devel
-BuildRequires: pkcs11-helper-devel
 BuildRequires: pam-devel
 BuildRequires: libicu-devel
 

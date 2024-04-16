@@ -56,7 +56,6 @@ jobs:
          docbook-xsl \
          libkrb5-dev \
          libcjson-dev \
-         libpkcs11-helper1-dev \
          libsdl2-ttf-dev \
          libsdl2-image-dev \
          libwebkit2gtk-4.0-dev \

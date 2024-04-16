@@ -313,7 +313,6 @@ else()
 endif()
 option(WITH_PKCS11 "encryption, certificate validation, hashing functions" ${PKCS11_DEFAULT})
 if (WITH_PKCS11)
-	find_package(Pkcs11 REQUIRED)
 	add_definitions("-DWITH_PKCS11")
 endif()
 
