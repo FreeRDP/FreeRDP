@@ -237,7 +237,7 @@ static UINT ExtractRunLengthLiteFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, 
 	runLength = *pbOrderHdr & g_MaskLiteRunLength;
 	if (runLength == 0)
 	{
-		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
+		if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
 		{
 			*advance = 0;
 			return 0;
