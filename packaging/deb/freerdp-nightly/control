@@ -50,7 +50,6 @@ Build-Depends:
  libsdl2-ttf-dev,
  libsdl2-image-dev,
  libsystemd-dev,
- libpkcs11-helper1-dev,
  libwebkit2gtk-4.0-dev,
  liburiparser-dev,
  libopus-dev,
