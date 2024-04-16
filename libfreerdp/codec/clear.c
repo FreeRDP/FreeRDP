@@ -410,7 +410,7 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 			}
 		}
 
-		if ((pixelIndex + runLengthFactor) > pixelCount)
+		if ((pixelIndex >= pixelCount) || (runLengthFactor > (pixelCount - pixelIndex)))
 		{
 			WLog_ERR(TAG,
 			         "pixelIndex %" PRIu32 " + runLengthFactor %" PRIu32 " > pixelCount %" PRIu32

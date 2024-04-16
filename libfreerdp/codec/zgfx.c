@@ -230,7 +230,10 @@ static BOOL zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, wStream* stream, size_t 
 	BYTE* pbSegment;
 	size_t cbSegment;
 
-	if (!zgfx || !stream || (segmentSize < 2))
+	WINPR_ASSERT(zgfx);
+	WINPR_ASSERT(stream);
+
+	if (segmentSize < 2)
 		return FALSE;
 
 	cbSegment = segmentSize - 1;
@@ -349,8 +352,9 @@ static BOOL zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, wStream* stream, size_t 
 
 						if (count > sizeof(zgfx->OutputBuffer) - zgfx->OutputCount)
 							return FALSE;
-
-						if (count > zgfx->cBitsRemaining / 8)
+						else if (count > zgfx->cBitsRemaining / 8)
+							return FALSE;
+						else if (zgfx->pbInputCurrent + count > zgfx->pbInputEnd)
 							return FALSE;
 
 						CopyMemory(&(zgfx->OutputBuffer[zgfx->OutputCount]), zgfx->pbInputCurrent,
@@ -388,8 +392,8 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 	BYTE descriptor;
 	wStream* stream = Stream_New((BYTE*)pSrcData, SrcSize);
 
-	if (!stream)
-		return -1;
+	WINPR_ASSERT(zgfx);
+	WINPR_ASSERT(stream);
 
 	if (Stream_GetRemainingLength(stream) < 1)
 		goto fail;
