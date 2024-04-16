@@ -1,3 +1,38 @@
+# 2024-04-16 Version 3.5.0
+
+This release focus is on squashing bugs.
+The improved test coverage and ci builds revealed a number of previously
+unnoticed issues we have addressed and we also got a report from
+Evgeny Legerov of Kaspersky Lab identifying a number of out of bound reads
+in decoder components and one very nasty out of bound write.
+
+CVE:
+CVE-2024-32041 [Low[ OutOfBound Read in zgfx_decompress_segment
+CVE-2024-32039 [Moderate] Integer overflow & OutOfBound Write in clear_decompress_residual_data
+CVE-2024-32040 [Low] integer underflow in nsc_rle_decode
+CVE-2024-32458 [Low] OutOfBound Read in planar_skip_plane_rle
+CVE-2024-32459 [Low] OutOfBound Read in ncrush_decompress
+CVE-2024-32460 [Low] OutOfBound Read in interleaved_decompress
+
+Noteworthy changes:
+* location channel support #9981, #9984, #10065
+* bugfixes for report from Evgeny Legerov of Kaspersky Lab #10077
+* fuzzer tests from Evgeny Legerov of Kaspersky Lab #10078
+* bugfixes for coverty scanner #10066, #10068,  #10069, #10070, #10075
+* clipboard and generic locking fixes #10076
+* split autoreconnect support from enabling it #10063
+* various nightly and workflow fixes #10064, #10058, #10062
+* always set wm-class to app_id #10051
+* refactored and simplified CMake #10046, #10047
+* fix relative mouse event sending #10010
+* improve and unify check for APIs used (POSIX, win32, mac, ...) #9995
+* fix termination for gateway connections #9985
+* fix drivestoredirect RDP file setting, ignore invalid #9989
+* drop IPP support #10038
+
+For a complete and detailed change log since the last release run:
+git log 3.5.0...3.4.0
+
 # 2024-03-14 Version 3.4.0
 
 This release concentrates on improving test coverage and ci builds.
