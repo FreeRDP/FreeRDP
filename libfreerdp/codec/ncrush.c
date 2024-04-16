@@ -2041,6 +2041,12 @@ int ncrush_decompress(NCRUSH_CONTEXT* ncrush, BYTE* pSrcData, UINT32 SrcSize, BY
 		return 1;
 	}
 
+	if (SrcSize < 4)
+	{
+		WLog_ERR(TAG, "Input size short: SrcSize %" PRIu32 " < 4", SrcSize);
+		return -1;
+	}
+
 	const BYTE* SrcEnd = &pSrcData[SrcSize];
 	const BYTE* SrcPtr = pSrcData + 4;
 
