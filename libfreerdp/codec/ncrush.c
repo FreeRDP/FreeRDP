@@ -2511,7 +2511,7 @@ static int ncrush_move_encoder_windows(NCRUSH_CONTEXT* ncrush, BYTE* HistoryPtr)
 	const size_t match_half = ARRAYSIZE(ncrush->MatchTable) / 2;
 	for (size_t j = 0; j < match_half; j++)
 	{
-		if (HistoryOffset + j > ARRAYSIZE(ncrush->MatchTable))
+		if (HistoryOffset + j >= ARRAYSIZE(ncrush->MatchTable))
 			continue;
 
 		INT32 NewMatch = ncrush->MatchTable[HistoryOffset + j] - HistoryOffset;
