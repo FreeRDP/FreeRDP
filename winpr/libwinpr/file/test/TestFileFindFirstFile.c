@@ -98,7 +98,8 @@ static BOOL find_first_file_success(const char* FilePath)
 	}
 	rc = TRUE;
 fail:
-	FindClose(hFind);
+	if (hFind != INVALID_HANDLE_VALUE)
+		FindClose(hFind);
 	return rc;
 }
 

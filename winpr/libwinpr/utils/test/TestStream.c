@@ -124,7 +124,13 @@ static BOOL TestStream_Static(void)
 	if (v != 2)
 		return FALSE;
 
+	// Intentional warning as the stream is not allocated.
+	// Still, Stream_Free should not release such memory, therefore this statement
+	// is required to test that.
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	Stream_Free(s, TRUE);
+	WINPR_PRAGMA_DIAG_POP
 	return TRUE;
 }
 

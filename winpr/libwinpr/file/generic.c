@@ -925,7 +925,10 @@ static WIN32_FILE_SEARCH* file_search_new(const char* name, size_t namelen, cons
 
 	return pFileSearch;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	FindClose(pFileSearch);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

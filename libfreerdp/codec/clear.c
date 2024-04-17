@@ -1169,7 +1169,10 @@ CLEAR_CONTEXT* clear_context_new(BOOL Compressor)
 
 	return clear;
 error_nsc:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	clear_context_free(clear);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

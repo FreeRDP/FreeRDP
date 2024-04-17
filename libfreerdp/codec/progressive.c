@@ -2631,7 +2631,10 @@ PROGRESSIVE_CONTEXT* progressive_context_new_ex(BOOL Compressor, UINT32 Threadin
 	}
 	return progressive;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	progressive_context_free(progressive);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

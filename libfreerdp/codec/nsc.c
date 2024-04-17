@@ -363,7 +363,10 @@ NSC_CONTEXT* nsc_context_new(void)
 	NSC_INIT_SIMD(context);
 	return context;
 error:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	nsc_context_free(context);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
