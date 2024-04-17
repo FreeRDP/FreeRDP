@@ -379,7 +379,7 @@ static void* clipboard_synthesize_image_format_to_bmp(wClipboard* clipboard, UIN
 	WINPR_ASSERT(data);
 	WINPR_ASSERT(pSize);
 
-	void* dst = NULL;
+	BYTE* dst = NULL;
 	const UINT32 SrcSize = *pSize;
 	size_t size = 0;
 	wImage* image = winpr_image_new();

@@ -347,9 +347,9 @@ typedef struct
 typedef struct
 {
 	UINT16 flags;
-	char* RemoteApplicationProgram;
-	char* RemoteApplicationWorkingDir;
-	char* RemoteApplicationArguments;
+	const char* RemoteApplicationProgram;
+	const char* RemoteApplicationWorkingDir;
+	const char* RemoteApplicationArguments;
 } RAIL_EXEC_ORDER;
 
 typedef struct

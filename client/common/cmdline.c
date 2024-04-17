@@ -5321,7 +5321,7 @@ static void argv_free(int* pargc, char** pargv[])
 	free(argv);
 }
 
-static BOOL argv_append(int* pargc, char** pargv[], const char* what)
+static BOOL argv_append(int* pargc, char** pargv[], char* what)
 {
 	WINPR_ASSERT(pargc);
 	WINPR_ASSERT(pargv);

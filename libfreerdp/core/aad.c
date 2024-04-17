@@ -716,11 +716,11 @@ static char* bn_to_base64_url(wLog* wlog, rdpPrivateKey* key, enum FREERDP_KEY_P
 	WINPR_ASSERT(key);
 
 	size_t len = 0;
-	char* bn = freerdp_key_get_param(key, param, &len);
+	BYTE* bn = freerdp_key_get_param(key, param, &len);
 	if (!bn)
 		return NULL;
 
-	char* b64 = (char*)crypto_base64url_encode(bn, len);
+	char* b64 = crypto_base64url_encode(bn, len);
 	free(bn);
 
 	if (!b64)

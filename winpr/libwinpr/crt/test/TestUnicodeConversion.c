@@ -15,9 +15,9 @@
 
 typedef struct
 {
-	char* utf8;
+	const char* utf8;
 	size_t utf8len;
-	WCHAR* utf16;
+	const WCHAR* utf16;
 	size_t utf16len;
 } testcase_t;
 

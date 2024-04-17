@@ -70,6 +70,13 @@ typedef struct
 	char* responseMime;
 } wlf_request;
 
+typedef struct
+{
+	const FILE* responseFile;
+	UINT32 responseFormat;
+	const char* responseMime;
+} wlf_const_request;
+
 struct wlf_clipboard
 {
 	wlfContext* wfc;
@@ -311,7 +318,7 @@ static BOOL wlf_cliprdr_add_client_format(wfClipboard* clipboard, const char* mi
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT wlf_cliprdr_send_data_request(wfClipboard* clipboard, const wlf_request* rq)
+static UINT wlf_cliprdr_send_data_request(wfClipboard* clipboard, const wlf_const_request* rq)
 {
 	WINPR_ASSERT(rq);
 
@@ -522,7 +529,7 @@ static void wlf_cliprdr_transfer_data(UwacSeat* seat, void* context, const char*
 
 	EnterCriticalSection(&clipboard->lock);
 
-	wlf_request request = { 0 };
+	wlf_const_request request = { 0 };
 	if (wlf_mime_is_html(mime))
 	{
 		request.responseMime = mime_html;
@@ -720,7 +727,7 @@ wlf_cliprdr_server_format_data_request(CliprdrClientContext* context,
                                        const CLIPRDR_FORMAT_DATA_REQUEST* formatDataRequest)
 {
 	UINT rc = CHANNEL_RC_OK;
-	BYTE* data = NULL;
+	char* data = NULL;
 	size_t size = 0;
 	const char* mime = NULL;
 	UINT32 formatId = 0;

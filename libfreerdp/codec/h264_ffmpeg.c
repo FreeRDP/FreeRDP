@@ -636,6 +636,7 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 				goto fail_hwdevice_create;
 			}
 		}
+		WLog_Print(h264->log, WLOG_INFO, "Using VAAPI for accelerated H264 decoding");
 
 		sys->codecDecoderContext->get_format = libavcodec_get_format;
 		sys->hw_pix_fmt = AV_PIX_FMT_VAAPI;

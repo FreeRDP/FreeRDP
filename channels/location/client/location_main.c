@@ -110,7 +110,7 @@ static UINT location_channel_send(IWTSVirtualChannel* channel, wStream* s)
 static UINT location_send_client_ready_pdu(const LOCATION_CALLBACK* callback)
 {
 	wStream sbuffer = { 0 };
-	char buffer[32] = { 0 };
+	BYTE buffer[32] = { 0 };
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	WINPR_ASSERT(s);
 
@@ -210,7 +210,7 @@ static UINT location_send_base_location3d(IWTSVirtualChannel* channel,
                                           const RDPLOCATION_BASE_LOCATION3D_PDU* pdu)
 {
 	wStream sbuffer = { 0 };
-	char buffer[32] = { 0 };
+	BYTE buffer[32] = { 0 };
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(channel);
@@ -251,7 +251,7 @@ static UINT location_send_location2d_delta(IWTSVirtualChannel* channel,
                                            const RDPLOCATION_LOCATION2D_DELTA_PDU* pdu)
 {
 	wStream sbuffer = { 0 };
-	char buffer[32] = { 0 };
+	BYTE buffer[32] = { 0 };
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	WINPR_ASSERT(s);
 
@@ -287,7 +287,7 @@ static UINT location_send_location3d_delta(IWTSVirtualChannel* channel,
                                            const RDPLOCATION_LOCATION3D_DELTA_PDU* pdu)
 {
 	wStream sbuffer = { 0 };
-	char buffer[32] = { 0 };
+	BYTE buffer[32] = { 0 };
 	wStream* s = Stream_StaticInit(&sbuffer, buffer, sizeof(buffer));
 	WINPR_ASSERT(s);
 
