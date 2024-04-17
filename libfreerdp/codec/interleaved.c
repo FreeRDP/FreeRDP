@@ -21,6 +21,7 @@
  * limitations under the License.
  */
 
+#include <winpr/assert.h>
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -30,15 +31,16 @@
 
 #define TAG FREERDP_TAG("codec")
 
-#define UNROLL_BODY(_exp, _count)      \
-	do                                 \
-	{                                  \
-		size_t x;                      \
-		for (x = 0; x < (_count); x++) \
-		{                              \
-			do                         \
-				_exp while (FALSE);    \
-		}                              \
+#define UNROLL_BODY(_exp, _count)             \
+	do                                        \
+	{                                         \
+		for (size_t x = 0; x < (_count); x++) \
+		{                                     \
+			do                                \
+			{                                 \
+				_exp                          \
+			} while (FALSE);                  \
+		}                                     \
 	} while (FALSE)
 
 #define UNROLL_MULTIPLE(_condition, _exp, _count) \
@@ -97,6 +99,80 @@ static const BYTE g_MaskSpecialFgBg2 = 0x05;
 static const BYTE g_MaskRegularRunLength = 0x1F;
 static const BYTE g_MaskLiteRunLength = 0x0F;
 
+static const char* rle_code_str(UINT32 code)
+{
+	switch (code)
+	{
+		case REGULAR_BG_RUN:
+			return "REGULAR_BG_RUN";
+		case MEGA_MEGA_BG_RUN:
+			return "MEGA_MEGA_BG_RUN";
+		case REGULAR_FG_RUN:
+			return "REGULAR_FG_RUN";
+		case MEGA_MEGA_FG_RUN:
+			return "MEGA_MEGA_FG_RUN";
+		case LITE_SET_FG_FG_RUN:
+			return "LITE_SET_FG_FG_RUN";
+		case MEGA_MEGA_SET_FG_RUN:
+			return "MEGA_MEGA_SET_FG_RUN";
+		case LITE_DITHERED_RUN:
+			return "LITE_DITHERED_RUN";
+		case MEGA_MEGA_DITHERED_RUN:
+			return "MEGA_MEGA_DITHERED_RUN";
+		case REGULAR_COLOR_RUN:
+			return "REGULAR_COLOR_RUN";
+		case MEGA_MEGA_COLOR_RUN:
+			return "MEGA_MEGA_COLOR_RUN";
+		case REGULAR_FGBG_IMAGE:
+			return "REGULAR_FGBG_IMAGE";
+		case MEGA_MEGA_FGBG_IMAGE:
+			return "MEGA_MEGA_FGBG_IMAGE";
+		case LITE_SET_FG_FGBG_IMAGE:
+			return "LITE_SET_FG_FGBG_IMAGE";
+		case MEGA_MEGA_SET_FGBG_IMAGE:
+			return "MEGA_MEGA_SET_FGBG_IMAGE";
+		case REGULAR_COLOR_IMAGE:
+			return "REGULAR_COLOR_IMAGE";
+		case MEGA_MEGA_COLOR_IMAGE:
+			return "MEGA_MEGA_COLOR_IMAGE";
+		case SPECIAL_FGBG_1:
+			return "SPECIAL_FGBG_1";
+		case SPECIAL_FGBG_2:
+			return "SPECIAL_FGBG_2";
+		case SPECIAL_WHITE:
+			return "SPECIAL_WHITE";
+		case SPECIAL_BLACK:
+			return "SPECIAL_BLACK";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+static const char* rle_code_str_buffer(UINT32 code, char* buffer, size_t size)
+{
+	const char* str = rle_code_str(code);
+	_snprintf(buffer, size, "%s [0x%08" PRIx32 "]", str, code);
+	return buffer;
+}
+
+#define buffer_within_range(pbSrc, size, pbEnd) \
+	buffer_within_range_((pbSrc), (size), (pbEnd), __func__, __FILE__, __LINE__)
+static INLINE BOOL buffer_within_range_(const void* pbSrc, size_t size, const void* pbEnd,
+                                        const char* fkt, const char* file, size_t line)
+{
+	WINPR_UNUSED(file);
+	WINPR_ASSERT(pbSrc);
+	WINPR_ASSERT(pbEnd);
+
+	if ((const char*)pbSrc + size > (const char*)pbEnd)
+	{
+		WLog_ERR(TAG, "[%s:%" PRIuz "] pbSrc=%p + %" PRIuz " > pbEnd=%p", fkt, line, pbSrc, size,
+		         pbEnd);
+		return FALSE;
+	}
+	return TRUE;
+}
+
 /**
  * Reads the supplied order header and extracts the compression
  * order code ID.
@@ -127,71 +203,155 @@ static INLINE UINT32 ExtractCodeId(BYTE bOrderHdr)
 /**
  * Extract the run length of a compression order.
  */
-static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, UINT32* advance)
+static UINT ExtractRunLengthRegularFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
 {
-	UINT32 runLength;
-	UINT32 ladvance;
-	ladvance = 1;
-	runLength = 0;
+	UINT runLength = 0;
+
+	WINPR_ASSERT(pbOrderHdr);
+	WINPR_ASSERT(pbEnd);
+	WINPR_ASSERT(advance);
+
+	runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
+	if (runLength == 0)
+	{
+		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
+		{
+			*advance = 0;
+			return 0;
+		}
+		runLength = *(pbOrderHdr + 1) + 1;
+		(*advance)++;
+	}
+	else
+		runLength = runLength * 8;
+
+	return runLength;
+}
+
+static UINT ExtractRunLengthLiteFgBg(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
+{
+	UINT runLength = 0;
+
+	WINPR_ASSERT(pbOrderHdr);
+	WINPR_ASSERT(pbEnd);
+	WINPR_ASSERT(advance);
+
+	runLength = *pbOrderHdr & g_MaskLiteRunLength;
+	if (runLength == 0)
+	{
+		if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
+		{
+			*advance = 0;
+			return 0;
+		}
+		runLength = *(pbOrderHdr + 1) + 1;
+		(*advance)++;
+	}
+	else
+		runLength = runLength * 8;
+
+	return runLength;
+}
+
+static UINT ExtractRunLengthRegular(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
+{
+	UINT runLength = 0;
+
+	WINPR_ASSERT(pbOrderHdr);
+	WINPR_ASSERT(pbEnd);
+	WINPR_ASSERT(advance);
+
+	runLength = *pbOrderHdr & g_MaskRegularRunLength;
+	if (runLength == 0)
+	{
+		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
+		{
+			*advance = 0;
+			return 0;
+		}
+		runLength = *(pbOrderHdr + 1) + 32;
+		(*advance)++;
+	}
+
+	return runLength;
+}
+
+static UINT ExtractRunLengthMegaMega(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
+{
+	UINT runLength = 0;
+
+	WINPR_ASSERT(pbOrderHdr);
+	WINPR_ASSERT(pbEnd);
+	WINPR_ASSERT(advance);
+
+	if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
+	{
+		*advance = 0;
+		return 0;
+	}
+
+	runLength = ((UINT16)pbOrderHdr[1]) | (((UINT16)pbOrderHdr[2]) << 8);
+	(*advance) += 2;
+
+	return runLength;
+}
+
+static UINT ExtractRunLengthLite(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT32* advance)
+{
+	UINT runLength = 0;
+
+	WINPR_ASSERT(pbOrderHdr);
+	WINPR_ASSERT(pbEnd);
+	WINPR_ASSERT(advance);
+
+	runLength = *pbOrderHdr & g_MaskLiteRunLength;
+	if (runLength == 0)
+	{
+		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
+		{
+			*advance = 0;
+			return 0;
+		}
+		runLength = *(pbOrderHdr + 1) + 16;
+		(*advance)++;
+	}
+	return runLength;
+}
+
+static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, const BYTE* pbEnd,
+                                      UINT32* advance)
+{
+	UINT32 runLength = 0;
+	UINT32 ladvance = 1;
+
+	WINPR_ASSERT(pbOrderHdr);
+	WINPR_ASSERT(pbEnd);
+	WINPR_ASSERT(advance);
+
+	*advance = 0;
+	if (!buffer_within_range(pbOrderHdr, 0, pbEnd))
+		return 0;
 
 	switch (code)
 	{
 		case REGULAR_FGBG_IMAGE:
-			runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
-
-			if (runLength == 0)
-			{
-				runLength = (*(pbOrderHdr + 1)) + 1;
-				ladvance += 1;
-			}
-			else
-			{
-				runLength = runLength * 8;
-			}
-
+			runLength = ExtractRunLengthRegularFgBg(pbOrderHdr, pbEnd, &ladvance);
 			break;
 
 		case LITE_SET_FG_FGBG_IMAGE:
-			runLength = (*pbOrderHdr) & g_MaskLiteRunLength;
-
-			if (runLength == 0)
-			{
-				runLength = (*(pbOrderHdr + 1)) + 1;
-				ladvance += 1;
-			}
-			else
-			{
-				runLength = runLength * 8;
-			}
-
+			runLength = ExtractRunLengthLiteFgBg(pbOrderHdr, pbEnd, &ladvance);
 			break;
 
 		case REGULAR_BG_RUN:
 		case REGULAR_FG_RUN:
 		case REGULAR_COLOR_RUN:
 		case REGULAR_COLOR_IMAGE:
-			runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
-
-			if (runLength == 0)
-			{
-				/* An extended (MEGA) run. */
-				runLength = (*(pbOrderHdr + 1)) + 32;
-				ladvance += 1;
-			}
-
+			runLength = ExtractRunLengthRegular(pbOrderHdr, pbEnd, &ladvance);
 			break;
 
 		case LITE_SET_FG_FG_RUN:
 		case LITE_DITHERED_RUN:
-			runLength = (*pbOrderHdr) & g_MaskLiteRunLength;
-
-			if (runLength == 0)
-			{
-				/* An extended (MEGA) run. */
-				runLength = (*(pbOrderHdr + 1)) + 16;
-				ladvance += 1;
-			}
-
+			runLength = ExtractRunLengthLite(pbOrderHdr, pbEnd, &ladvance);
 			break;
 
 		case MEGA_MEGA_BG_RUN:
@@ -202,8 +362,12 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, UINT3
 		case MEGA_MEGA_FGBG_IMAGE:
 		case MEGA_MEGA_SET_FGBG_IMAGE:
 		case MEGA_MEGA_COLOR_IMAGE:
-			runLength = ((UINT16)pbOrderHdr[1]) | ((UINT16)(pbOrderHdr[2] << 8));
-			ladvance += 2;
+			runLength = ExtractRunLengthMegaMega(pbOrderHdr, pbEnd, &ladvance);
+			break;
+
+		default:
+			runLength = 0;
+			ladvance = 0;
 			break;
 	}
 
@@ -211,20 +375,32 @@ static INLINE UINT32 ExtractRunLength(UINT32 code, const BYTE* pbOrderHdr, UINT3
 	return runLength;
 }
 
-static INLINE BOOL ensure_capacity(const BYTE* start, const BYTE* end, size_t size, size_t base)
+#define ensure_capacity(start, end, size, base) \
+	ensure_capacity_((start), (end), (size), (base), __func__, __FILE__, __LINE__)
+static INLINE BOOL ensure_capacity_(const BYTE* start, const BYTE* end, size_t size, size_t base,
+                                    const char* fkt, const char* file, size_t line)
 {
 	const size_t available = (uintptr_t)end - (uintptr_t)start;
 	const BOOL rc = available >= size * base;
-	return rc && (start <= end);
+	const BOOL res = rc && (start <= end);
+
+	if (!res)
+		WLog_ERR(TAG,
+		         "[%s:%" PRIuz "] failed: start=%p <= end=%p, available=%" PRIuz " >= size=%" PRIuz
+		         " * base=%" PRIuz,
+		         fkt, line, start, end, available, size, base);
+	return res;
 }
 
 static INLINE void write_pixel_8(BYTE* _buf, BYTE _pix)
 {
+	WINPR_ASSERT(_buf);
 	*_buf = _pix;
 }
 
 static INLINE void write_pixel_24(BYTE* _buf, UINT32 _pix)
 {
+	WINPR_ASSERT(_buf);
 	(_buf)[0] = (BYTE)(_pix);
 	(_buf)[1] = (BYTE)((_pix) >> 8);
 	(_buf)[2] = (BYTE)((_pix) >> 16);
@@ -232,6 +408,7 @@ static INLINE void write_pixel_24(BYTE* _buf, UINT32 _pix)
 
 static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 {
+	WINPR_ASSERT(_buf);
 	_buf[0] = _pix & 0xFF;
 	_buf[1] = (_pix >> 8) & 0xFF;
 }
@@ -239,19 +416,30 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
 #undef SRCREADPIXEL
-#undef DESTNEXTPIXEL
-#undef SRCNEXTPIXEL
 #undef WRITEFGBGIMAGE
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
 #undef WHITE_PIXEL
+#undef PIXEL_SIZE
+#undef PIXEL
+#define PIXEL_SIZE 1
+#define PIXEL BYTE
 #define WHITE_PIXEL 0xFF
-#define DESTWRITEPIXEL(_buf, _pix) write_pixel_8(_buf, _pix)
+#define DESTWRITEPIXEL(_buf, _pix) \
+	do                             \
+	{                              \
+		write_pixel_8(_buf, _pix); \
+		_buf += 1;                 \
+	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0]
-#define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0]
-#define DESTNEXTPIXEL(_buf) _buf += 1
-#define SRCNEXTPIXEL(_buf) _buf += 1
+#define SRCREADPIXEL(_pix, _buf) \
+	do                           \
+	{                            \
+		_pix = (_buf)[0];        \
+		_buf += 1;               \
+	} while (0)
+
 #define WRITEFGBGIMAGE WriteFgBgImage8to8
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage8to8
 #define RLEDECOMPRESS RleDecompress8to8
@@ -263,19 +451,29 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
 #undef SRCREADPIXEL
-#undef DESTNEXTPIXEL
-#undef SRCNEXTPIXEL
 #undef WRITEFGBGIMAGE
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
 #undef WHITE_PIXEL
+#undef PIXEL_SIZE
+#undef PIXEL
+#define PIXEL_SIZE 2
+#define PIXEL UINT16
 #define WHITE_PIXEL 0xFFFF
-#define DESTWRITEPIXEL(_buf, _pix) write_pixel_16(_buf, _pix)
+#define DESTWRITEPIXEL(_buf, _pix)  \
+	do                              \
+	{                               \
+		write_pixel_16(_buf, _pix); \
+		_buf += 2;                  \
+	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = ((UINT16*)(_buf))[0]
-#define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8)
-#define DESTNEXTPIXEL(_buf) _buf += 2
-#define SRCNEXTPIXEL(_buf) _buf += 2
+#define SRCREADPIXEL(_pix, _buf)             \
+	do                                       \
+	{                                        \
+		_pix = (_buf)[0] | ((_buf)[1] << 8); \
+		_buf += 2;                           \
+	} while (0)
 #define WRITEFGBGIMAGE WriteFgBgImage16to16
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage16to16
 #define RLEDECOMPRESS RleDecompress16to16
@@ -287,19 +485,30 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #undef DESTWRITEPIXEL
 #undef DESTREADPIXEL
 #undef SRCREADPIXEL
-#undef DESTNEXTPIXEL
-#undef SRCNEXTPIXEL
 #undef WRITEFGBGIMAGE
 #undef WRITEFIRSTLINEFGBGIMAGE
 #undef RLEDECOMPRESS
 #undef RLEEXTRA
 #undef WHITE_PIXEL
-#define WHITE_PIXEL 0xFFFFFF
-#define DESTWRITEPIXEL(_buf, _pix) write_pixel_24(_buf, _pix)
+#undef PIXEL_SIZE
+#undef PIXEL
+#define PIXEL_SIZE 3
+#define PIXEL UINT32
+#define WHITE_PIXEL 0xffffff
+#define DESTWRITEPIXEL(_buf, _pix)  \
+	do                              \
+	{                               \
+		write_pixel_24(_buf, _pix); \
+		_buf += 3;                  \
+	} while (0)
 #define DESTREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16)
-#define SRCREADPIXEL(_pix, _buf) _pix = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16)
-#define DESTNEXTPIXEL(_buf) _buf += 3
-#define SRCNEXTPIXEL(_buf) _buf += 3
+#define SRCREADPIXEL(_pix, _buf)                                 \
+	do                                                           \
+	{                                                            \
+		_pix = (_buf)[0] | ((_buf)[1] << 8) | ((_buf)[2] << 16); \
+		_buf += 3;                                               \
+	} while (0)
+
 #define WRITEFGBGIMAGE WriteFgBgImage24to24
 #define WRITEFIRSTLINEFGBGIMAGE WriteFirstLineFgBgImage24to24
 #define RLEDECOMPRESS RleDecompress24to24
@@ -308,18 +517,32 @@ static INLINE void write_pixel_16(BYTE* _buf, UINT16 _pix)
 #define ENSURE_CAPACITY(_start, _end, _size) ensure_capacity(_start, _end, _size, 3)
 #include "include/bitmap.c"
 
+struct S_BITMAP_INTERLEAVED_CONTEXT
+{
+	BOOL Compressor;
+
+	UINT32 TempSize;
+	BYTE* TempBuffer;
+
+	wStream* bts;
+};
+
 BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE* pSrcData,
                             UINT32 SrcSize, UINT32 nSrcWidth, UINT32 nSrcHeight, UINT32 bpp,
                             BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
                             UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
                             const gdiPalette* palette)
 {
-	UINT32 scanline;
-	UINT32 SrcFormat;
-	UINT32 BufferSize;
+	UINT32 scanline = 0;
+	UINT32 SrcFormat = 0;
+	UINT32 BufferSize = 0;
 
 	if (!interleaved || !pSrcData || !pDstData)
+	{
+		WLog_ERR(TAG, "invalid arguments: interleaved=%p, pSrcData=%p, pDstData=%p", interleaved,
+		         pSrcData, pDstData);
 		return FALSE;
+	}
 
 	switch (bpp)
 	{
@@ -352,19 +575,26 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 
 	if (BufferSize > interleaved->TempSize)
 	{
-		interleaved->TempBuffer = _aligned_realloc(interleaved->TempBuffer, BufferSize, 16);
+		interleaved->TempBuffer =
+		    _aligned_recalloc(interleaved->TempBuffer, BufferSize, sizeof(BYTE), 16);
 		interleaved->TempSize = BufferSize;
 	}
 
 	if (!interleaved->TempBuffer)
+	{
+		WLog_ERR(TAG, "interleaved->TempBuffer=%p", interleaved->TempBuffer);
 		return FALSE;
+	}
 
 	switch (bpp)
 	{
 		case 24:
 			if (!RleDecompress24to24(pSrcData, SrcSize, interleaved->TempBuffer, scanline,
 			                         nSrcWidth, nSrcHeight))
+			{
+				WLog_ERR(TAG, "RleDecompress24to24 failed");
 				return FALSE;
+			}
 
 			break;
 
@@ -372,24 +602,36 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 		case 15:
 			if (!RleDecompress16to16(pSrcData, SrcSize, interleaved->TempBuffer, scanline,
 			                         nSrcWidth, nSrcHeight))
+			{
+				WLog_ERR(TAG, "RleDecompress16to16 failed");
 				return FALSE;
+			}
 
 			break;
 
 		case 8:
 			if (!RleDecompress8to8(pSrcData, SrcSize, interleaved->TempBuffer, scanline, nSrcWidth,
 			                       nSrcHeight))
+			{
+				WLog_ERR(TAG, "RleDecompress8to8 failed");
 				return FALSE;
+			}
 
 			break;
 
 		default:
+			WLog_ERR(TAG, "Invalid color depth %" PRIu32 "", bpp);
 			return FALSE;
 	}
 
-	return freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
-	                          interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette,
-	                          FREERDP_FLIP_VERTICAL);
+	if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
+	                        interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette,
+	                        FREERDP_FLIP_VERTICAL))
+	{
+		WLog_ERR(TAG, "freerdp_image_copy failed");
+		return FALSE;
+	}
+	return TRUE;
 }
 
 BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData, UINT32* pDstSize,
@@ -397,10 +639,10 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstDat
                           UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* palette,
                           UINT32 bpp)
 {
-	BOOL status;
-	wStream* s;
+	BOOL status = 0;
+	wStream* s = NULL;
 	UINT32 DstFormat = 0;
-	const size_t maxSize = 64 * 64 * 4;
+	const UINT32 maxSize = 64 * 64 * 4;
 
 	if (!interleaved || !pDstData || !pSrcData)
 		return FALSE;
@@ -442,7 +684,7 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstDat
 	}
 
 	if (!freerdp_image_copy(interleaved->TempBuffer, DstFormat, 0, 0, 0, nWidth, nHeight, pSrcData,
-	                        SrcFormat, nSrcStep, nXSrc, nYSrc, palette, FREERDP_FLIP_NONE))
+	                        SrcFormat, nSrcStep, nXSrc, nYSrc, palette, 0))
 		return FALSE;
 
 	s = Stream_New(pDstData, *pDstSize);
@@ -474,33 +716,29 @@ BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved)
 
 BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 {
-	BITMAP_INTERLEAVED_CONTEXT* interleaved;
-	interleaved = (BITMAP_INTERLEAVED_CONTEXT*)calloc(1, sizeof(BITMAP_INTERLEAVED_CONTEXT));
+	BITMAP_INTERLEAVED_CONTEXT* interleaved = NULL;
+	interleaved = (BITMAP_INTERLEAVED_CONTEXT*)_aligned_recalloc(
+	    NULL, 1, sizeof(BITMAP_INTERLEAVED_CONTEXT), 32);
 
 	if (interleaved)
 	{
 		interleaved->TempSize = 64 * 64 * 4;
-		interleaved->TempBuffer = _aligned_malloc(interleaved->TempSize, 16);
+		interleaved->TempBuffer = _aligned_malloc(interleaved->TempSize * sizeof(BYTE), 16);
 
 		if (!interleaved->TempBuffer)
-		{
-			free(interleaved);
-			WLog_ERR(TAG, "_aligned_malloc failed!");
-			return NULL;
-		}
+			goto fail;
 
 		interleaved->bts = Stream_New(NULL, interleaved->TempSize);
 
 		if (!interleaved->bts)
-		{
-			_aligned_free(interleaved->TempBuffer);
-			free(interleaved);
-			WLog_ERR(TAG, "Stream_New failed!");
-			return NULL;
-		}
+			goto fail;
 	}
 
 	return interleaved;
+
+fail:
+	bitmap_interleaved_context_free(interleaved);
+	return NULL;
 }
 
 void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* interleaved)
@@ -510,5 +748,5 @@ void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* interleaved)
 
 	_aligned_free(interleaved->TempBuffer);
 	Stream_Free(interleaved->bts, TRUE);
-	free(interleaved);
+	_aligned_free(interleaved);
 }
