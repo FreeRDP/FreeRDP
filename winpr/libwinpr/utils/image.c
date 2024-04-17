@@ -52,12 +52,12 @@
 #include "../log.h"
 #define TAG WINPR_TAG("utils.image")
 
-static SSIZE_T winpr_convert_from_jpeg(const char* comp_data, size_t comp_data_bytes, UINT32* width,
-                                       UINT32* height, UINT32* bpp, char** ppdecomp_data);
-static SSIZE_T winpr_convert_from_png(const char* comp_data, size_t comp_data_bytes, UINT32* width,
-                                      UINT32* height, UINT32* bpp, char** ppdecomp_data);
-static SSIZE_T winpr_convert_from_webp(const char* comp_data, size_t comp_data_bytes, UINT32* width,
-                                       UINT32* height, UINT32* bpp, char** ppdecomp_data);
+static SSIZE_T winpr_convert_from_jpeg(const BYTE* comp_data, size_t comp_data_bytes, UINT32* width,
+                                       UINT32* height, UINT32* bpp, BYTE** ppdecomp_data);
+static SSIZE_T winpr_convert_from_png(const BYTE* comp_data, size_t comp_data_bytes, UINT32* width,
+                                      UINT32* height, UINT32* bpp, BYTE** ppdecomp_data);
+static SSIZE_T winpr_convert_from_webp(const BYTE* comp_data, size_t comp_data_bytes, UINT32* width,
+                                       UINT32* height, UINT32* bpp, BYTE** ppdecomp_data);
 
 static BOOL writeBitmapFileHeader(wStream* s, const WINPR_BITMAP_FILE_HEADER* bf)
 {
@@ -484,7 +484,7 @@ int winpr_image_read(wImage* image, const char* filename)
 
 	if (pos > 0)
 	{
-		char* buffer = malloc((size_t)pos);
+		BYTE* buffer = malloc((size_t)pos);
 		if (buffer)
 		{
 			size_t r = fread(buffer, 1, (size_t)pos, fp);
@@ -518,9 +518,8 @@ int winpr_image_read_buffer(wImage* image, const BYTE* buffer, size_t size)
 	         (sig[8] == 'W') && (sig[9] == 'E') && (sig[10] == 'B') && (sig[11] == 'P'))
 	{
 		image->type = WINPR_IMAGE_WEBP;
-		const SSIZE_T rc =
-		    winpr_convert_from_webp((const char*)buffer, size, &image->width, &image->height,
-		                            &image->bitsPerPixel, ((char**)&image->data));
+		const SSIZE_T rc = winpr_convert_from_webp(buffer, size, &image->width, &image->height,
+		                                           &image->bitsPerPixel, &image->data);
 		if (rc >= 0)
 		{
 			image->bytesPerPixel = (image->bitsPerPixel + 7) / 8;
@@ -533,9 +532,8 @@ int winpr_image_read_buffer(wImage* image, const BYTE* buffer, size_t size)
 	         (sig[10] == 0x00))
 	{
 		image->type = WINPR_IMAGE_JPEG;
-		const SSIZE_T rc =
-		    winpr_convert_from_jpeg((const char*)buffer, size, &image->width, &image->height,
-		                            &image->bitsPerPixel, ((char**)&image->data));
+		const SSIZE_T rc = winpr_convert_from_jpeg(buffer, size, &image->width, &image->height,
+		                                           &image->bitsPerPixel, &image->data);
 		if (rc >= 0)
 		{
 			image->bytesPerPixel = (image->bitsPerPixel + 7) / 8;
@@ -547,9 +545,8 @@ int winpr_image_read_buffer(wImage* image, const BYTE* buffer, size_t size)
 	         (sig[4] == '\r') && (sig[5] == '\n') && (sig[6] == 0x1A) && (sig[7] == '\n'))
 	{
 		image->type = WINPR_IMAGE_PNG;
-		const SSIZE_T rc =
-		    winpr_convert_from_png((const char*)buffer, size, &image->width, &image->height,
-		                           &image->bitsPerPixel, ((char**)&image->data));
+		const SSIZE_T rc = winpr_convert_from_png(buffer, size, &image->width, &image->height,
+		                                          &image->bitsPerPixel, &image->data);
 		if (rc >= 0)
 		{
 			image->bytesPerPixel = (image->bitsPerPixel + 7) / 8;
@@ -625,11 +622,11 @@ void* winpr_convert_to_jpeg(const void* data, size_t size, UINT32 width, UINT32 
 
 	jpeg_start_compress(&cinfo, TRUE);
 
-	const unsigned char* cdata = data;
+	const JSAMPLE* cdata = data;
 	for (size_t x = 0; x < height; x++)
 	{
 		const JDIMENSION offset = x * stride;
-		const JSAMPROW coffset = &cdata[offset];
+		const JSAMPLE* coffset = &cdata[offset];
 		if (jpeg_write_scanlines(&cinfo, &coffset, 1) != 1)
 			goto fail;
 	}
@@ -643,8 +640,8 @@ fail:
 #endif
 }
 
-SSIZE_T winpr_convert_from_jpeg(const char* comp_data, size_t comp_data_bytes, UINT32* width,
-                                UINT32* height, UINT32* bpp, char** ppdecomp_data)
+SSIZE_T winpr_convert_from_jpeg(const BYTE* comp_data, size_t comp_data_bytes, UINT32* width,
+                                UINT32* height, UINT32* bpp, BYTE** ppdecomp_data)
 {
 	WINPR_ASSERT(comp_data || (comp_data_bytes == 0));
 	WINPR_ASSERT(width);
@@ -658,7 +655,7 @@ SSIZE_T winpr_convert_from_jpeg(const char* comp_data, size_t comp_data_bytes, U
 	struct jpeg_decompress_struct cinfo = { 0 };
 	struct jpeg_error_mgr jerr;
 	SSIZE_T size = -1;
-	char* decomp_data = NULL;
+	BYTE* decomp_data = NULL;
 
 	cinfo.err = jpeg_std_error(&jerr);
 	jpeg_create_decompress(&cinfo);
@@ -734,8 +731,8 @@ void* winpr_convert_to_webp(const void* data, size_t size, UINT32 width, UINT32 
 #endif
 }
 
-SSIZE_T winpr_convert_from_webp(const char* comp_data, size_t comp_data_bytes, UINT32* width,
-                                UINT32* height, UINT32* bpp, char** ppdecomp_data)
+SSIZE_T winpr_convert_from_webp(const BYTE* comp_data, size_t comp_data_bytes, UINT32* width,
+                                UINT32* height, UINT32* bpp, BYTE** ppdecomp_data)
 {
 	WINPR_ASSERT(comp_data || (comp_data_bytes == 0));
 	WINPR_ASSERT(width);
@@ -751,13 +748,20 @@ SSIZE_T winpr_convert_from_webp(const char* comp_data, size_t comp_data_bytes, U
 	return -1;
 #else
 
-	uint8_t* dst = WebPDecodeBGRA(comp_data, comp_data_bytes, width, height);
-	if (!dst)
+	int w = 0;
+	int h = 0;
+	uint8_t* dst = WebPDecodeBGRA(comp_data, comp_data_bytes, &w, &h);
+	if (!dst || (w < 0) || (h < 0))
+	{
+		free(dst);
 		return -1;
+	}
 
+	*width = w;
+	*height = h;
 	*bpp = 32;
 	*ppdecomp_data = dst;
-	return (*width) * (*height) * 4;
+	return 4ll * w * h;
 #endif
 }
 
@@ -1006,8 +1010,8 @@ void* winpr_convert_to_png(const void* data, size_t size, UINT32 width, UINT32 h
 #endif
 }
 
-SSIZE_T winpr_convert_from_png(const char* comp_data, size_t comp_data_bytes, UINT32* width,
-                               UINT32* height, UINT32* bpp, char** ppdecomp_data)
+SSIZE_T winpr_convert_from_png(const BYTE* comp_data, size_t comp_data_bytes, UINT32* width,
+                               UINT32* height, UINT32* bpp, BYTE** ppdecomp_data)
 {
 #if defined(WINPR_UTILS_IMAGE_PNG)
 	size_t len = 0;

@@ -650,7 +650,7 @@ static UINT rail_read_client_status_order(wStream* s, RAIL_CLIENT_STATUS_ORDER* 
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT rail_read_exec_order(wStream* s, RAIL_EXEC_ORDER* exec)
+static UINT rail_read_exec_order(wStream* s, RAIL_EXEC_ORDER* exec, char* args[])
 {
 	RAIL_EXEC_ORDER order = { 0 };
 	UINT16 exeLen = 0;
@@ -671,30 +671,31 @@ static UINT rail_read_exec_order(wStream* s, RAIL_EXEC_ORDER* exec)
 	if (exeLen > 0)
 	{
 		const SSIZE_T len = exeLen / sizeof(WCHAR);
-		exec->RemoteApplicationProgram = Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
+		exec->RemoteApplicationProgram = args[0] = Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
 		if (!exec->RemoteApplicationProgram)
 			goto fail;
 	}
 	if (workLen > 0)
 	{
 		const SSIZE_T len = workLen / sizeof(WCHAR);
-		exec->RemoteApplicationWorkingDir = Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
+		exec->RemoteApplicationWorkingDir = args[1] =
+		    Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
 		if (!exec->RemoteApplicationWorkingDir)
 			goto fail;
 	}
 	if (argLen > 0)
 	{
 		const SSIZE_T len = argLen / sizeof(WCHAR);
-		exec->RemoteApplicationArguments = Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
+		exec->RemoteApplicationArguments = args[2] = Stream_Read_UTF16_String_As_UTF8(s, len, NULL);
 		if (!exec->RemoteApplicationArguments)
 			goto fail;
 	}
 
 	return CHANNEL_RC_OK;
 fail:
-	free(exec->RemoteApplicationProgram);
-	free(exec->RemoteApplicationArguments);
-	free(exec->RemoteApplicationWorkingDir);
+	free(args[0]);
+	free(args[1]);
+	free(args[2]);
 	*exec = order;
 	return ERROR_INTERNAL_ERROR;
 }
@@ -948,12 +949,14 @@ static UINT rail_recv_client_client_status_order(RailServerContext* context,
 static UINT rail_recv_client_exec_order(RailServerContext* context, wStream* s)
 {
 	UINT error = 0;
+	char* args[3] = { 0 };
 	RAIL_EXEC_ORDER exec = { 0 };
 
 	if (!context || !s)
 		return ERROR_INVALID_PARAMETER;
 
-	if ((error = rail_read_exec_order(s, &exec)))
+	error = rail_read_exec_order(s, &exec, args);
+	if (error)
 	{
 		WLog_ERR(TAG, "rail_read_client_status_order failed with error %" PRIu32 "!", error);
 		return error;
@@ -964,9 +967,9 @@ static UINT rail_recv_client_exec_order(RailServerContext* context, wStream* s)
 	if (error)
 		WLog_ERR(TAG, "context.Exec failed with error %" PRIu32 "", error);
 
-	free(exec.RemoteApplicationProgram);
-	free(exec.RemoteApplicationArguments);
-	free(exec.RemoteApplicationWorkingDir);
+	free(args[0]);
+	free(args[1]);
+	free(args[2]);
 	return error;
 }
 

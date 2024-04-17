@@ -38,8 +38,8 @@
 #define MAX_CACHE_ITEM_SIZE 4096
 #define MAX_CACHE_ITEM_VALUES 4096
 
-static const CHAR g_ReaderNameA[] = { 'F', 'r', 'e', 'e', 'R', 'D', 'P', ' ',  'E',
-	                                  'm', 'u', 'l', 'a', 't', 'o', 'r', '\0', '\0' };
+static CHAR g_ReaderNameA[] = { 'F', 'r', 'e', 'e', 'R', 'D', 'P', ' ',  'E',
+	                            'm', 'u', 'l', 'a', 't', 'o', 'r', '\0', '\0' };
 static INIT_ONCE g_ReaderNameWGuard = INIT_ONCE_STATIC_INIT;
 static WCHAR g_ReaderNameW[32] = { 0 };
 static size_t g_ReaderNameWLen = 0;

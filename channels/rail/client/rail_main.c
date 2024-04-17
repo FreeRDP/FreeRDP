@@ -112,7 +112,7 @@ UINT rail_send_channel_data(railPlugin* rail, wStream* src)
  */
 static UINT rail_client_execute(RailClientContext* context, const RAIL_EXEC_ORDER* exec)
 {
-	char* exeOrFile = NULL;
+	const char* exeOrFile = NULL;
 	UINT error = 0;
 	railPlugin* rail = NULL;
 	UINT16 flags = 0;

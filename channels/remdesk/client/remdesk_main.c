@@ -69,7 +69,7 @@ static UINT remdesk_virtual_channel_write(remdeskPlugin* remdesk, wStream* s)
  */
 static UINT remdesk_generate_expert_blob(remdeskPlugin* remdesk)
 {
-	char* name = NULL;
+	const char* name = NULL;
 	char* pass = NULL;
 	const char* password = NULL;
 	rdpSettings* settings = NULL;

@@ -1765,6 +1765,9 @@ static BOOL gcc_update_server_random(rdpSettings* settings)
  */
 BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 {
+	if (!gcc_update_server_random(mcs_get_settings(mcs)))
+		return FALSE;
+
 	const rdpSettings* settings = mcs_get_const_settings(mcs);
 
 	WINPR_ASSERT(s);
@@ -1779,8 +1782,6 @@ BOOL gcc_write_server_security_data(wStream* s, rdpMcs* mcs)
 
 	if (settings->EncryptionMethods == ENCRYPTION_METHOD_NONE)
 		return TRUE;
-	if (!gcc_update_server_random(settings))
-		return FALSE;
 
 	if (!Stream_EnsureRemainingCapacity(s, sizeof(UINT32) + settings->ServerRandomLength))
 		return FALSE;

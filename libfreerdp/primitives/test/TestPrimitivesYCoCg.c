@@ -76,7 +76,7 @@ static BOOL test_YCoCgRToRGB_8u_AC4R_func(UINT32 width, UINT32 height)
 
 				if (c != sse)
 				{
-					printf("optimized->YCoCgRToRGB FAIL[%s] [%" PRIu32 "]: 0x%08" PRIx32
+					printf("optimized->YCoCgRToRGB FAIL[%s] [%" PRIuz "]: 0x%08" PRIx32
 					       " -> C 0x%08" PRIx32 " vs optimized 0x%08" PRIx32 "\n",
 					       formatName, i, in[i + 1], c, sse);
 					status = -1;

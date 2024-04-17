@@ -161,7 +161,7 @@ char** winpr_backtrace_symbols(void* buffer, size_t* used)
 	*msgptr = msg;
 	strncpy(msg, support_msg, len);
 	*used = 1;
-	return ppmsg;
+	return msgptr;
 #endif
 }
 
