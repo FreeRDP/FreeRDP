@@ -308,6 +308,11 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 			free(tzid);
 			tzid = NULL;
 		}
+		else if (tzid[0] == ':')
+		{
+			/* Remove leading colon, see tzset(3) */
+			memmove(tzid, tzid + 1, nSize - sizeof(char));
+		}
 	}
 
 	if (tzid == NULL)
@@ -323,7 +328,14 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 		char buf[1024] = { 0 };
 		const char* links[] = { buf };
 
-		snprintf(buf, ARRAYSIZE(buf), "%s%s", zipath, tzid);
+		if (tzid[0] == '/')
+		{
+			/* Full path given in TZ */
+			links[0] = tzid;
+		}
+		else
+			snprintf(buf, ARRAYSIZE(buf), "%s%s", zipath, tzid);
+
 		ntzid = winpr_get_timezone_from_link(links, 1);
 		if (ntzid != NULL)
 		{
