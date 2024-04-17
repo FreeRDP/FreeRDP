@@ -124,7 +124,7 @@ fail:
 	if (hBitmap)
 		gdi_DeleteObject((HGDIOBJECT)hBitmap);
 	else
-		free(data);
+		winpr_aligned_free(data);
 
 	return rc;
 }
