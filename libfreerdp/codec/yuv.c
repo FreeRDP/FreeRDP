@@ -251,7 +251,10 @@ YUV_CONTEXT* yuv_context_new(BOOL encoder, UINT32 ThreadingFlags)
 	return ret;
 
 error_threadpool:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	yuv_context_free(ret);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

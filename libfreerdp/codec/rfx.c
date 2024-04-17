@@ -342,7 +342,10 @@ RFX_CONTEXT* rfx_context_new_ex(BOOL encoder, UINT32 ThreadingFlags)
 	context->expectedDataBlockType = WBT_FRAME_BEGIN;
 	return context;
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	rfx_context_free(context);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 

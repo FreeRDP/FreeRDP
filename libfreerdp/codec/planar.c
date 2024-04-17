@@ -1747,7 +1747,10 @@ BITMAP_PLANAR_CONTEXT* freerdp_bitmap_planar_context_new(DWORD flags, UINT32 max
 
 	if (!freerdp_bitmap_planar_context_reset(context, maxWidth, maxHeight))
 	{
+		WINPR_PRAGMA_DIAG_PUSH
+		WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 		freerdp_bitmap_planar_context_free(context);
+		WINPR_PRAGMA_DIAG_POP
 		return NULL;
 	}
 

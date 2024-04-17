@@ -1343,7 +1343,10 @@ HANDLE CommCreateFileA(LPCSTR lpDeviceName, DWORD dwDesiredAccess, DWORD dwShare
 
 	return (HANDLE)pComm;
 error_handle:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	CloseHandle(pComm);
+	WINPR_PRAGMA_DIAG_POP
 	return INVALID_HANDLE_VALUE;
 }
 

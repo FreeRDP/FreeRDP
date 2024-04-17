@@ -735,7 +735,10 @@ BITMAP_INTERLEAVED_CONTEXT* bitmap_interleaved_context_new(BOOL Compressor)
 	return interleaved;
 
 fail:
+	WINPR_PRAGMA_DIAG_PUSH
+	WINPR_PRAGMA_DIAG_IGNORED_MISMATCHED_DEALLOC
 	bitmap_interleaved_context_free(interleaved);
+	WINPR_PRAGMA_DIAG_POP
 	return NULL;
 }
 
