@@ -89,15 +89,15 @@ class SDLConnectionDialog
   private:
 	struct widget_cfg_t
 	{
-		SDL_Color fgcolor;
-		SDL_Color bgcolor;
+		SDL_Color fgcolor = {};
+		SDL_Color bgcolor = {};
 		SdlWidget widget;
 	};
 
   private:
-	rdpContext* _context;
-	SDL_Window* _window;
-	SDL_Renderer* _renderer;
+	rdpContext* _context = nullptr;
+	SDL_Window* _window = nullptr;
+	SDL_Renderer* _renderer = nullptr;
 	mutable std::mutex _mux;
 	std::string _title;
 	std::string _msg;
@@ -124,6 +124,6 @@ class SDLConnectionDialogHider
 	SDLConnectionDialog* get(rdpContext* context);
 
   private:
-	SDLConnectionDialog* _dialog;
-	bool _visible;
+	SDLConnectionDialog* _dialog = nullptr;
+	bool _visible = false;
 };
