@@ -1,3 +1,19 @@
+# 2024-04-17 Version 2.11.6
+
+CVE:
+ CVE-2024-32041 [Low[ OutOfBound Read in zgfx_decompress_segment
+ CVE-2024-32039 [Moderate] Integer overflow & OutOfBound Write in clear_decompress_residual_data
+ CVE-2024-32040 [Low] integer underflow in nsc_rle_decode
+ CVE-2024-32458 [Low] OutOfBound Read in planar_skip_plane_rle
+ CVE-2024-32459 [Low] OutOfBound Read in ncrush_decompress
+ CVE-2024-32460 [Low] OutOfBound Read in interleaved_decompress
+
+Noteworthy changes:
+* Backported #10077
+
+For a complete and detailed change log since the last release run:
+git log 2.11.6...2.11.5
+
 # 2024-01-19 Version 2.11.5
 
 Noteworthy changes:
