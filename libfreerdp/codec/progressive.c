@@ -2312,6 +2312,82 @@ static SSIZE_T progressive_parse_block(PROGRESSIVE_CONTEXT* progressive, wStream
 	return rc;
 }
 
+static BOOL update_tiles(PROGRESSIVE_CONTEXT* progressive, PROGRESSIVE_SURFACE_CONTEXT* surface,
+                         BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
+                         UINT32 nYDst, PROGRESSIVE_BLOCK_REGION* region, REGION16* invalidRegion)
+{
+	BOOL rc = TRUE;
+	REGION16 clippingRects = { 0 };
+	region16_init(&clippingRects);
+
+	for (UINT32 i = 0; i < region->numRects; i++)
+	{
+		RECTANGLE_16 clippingRect = { 0 };
+		const RFX_RECT* rect = &(region->rects[i]);
+
+		clippingRect.left = (UINT16)nXDst + rect->x;
+		clippingRect.top = (UINT16)nYDst + rect->y;
+		clippingRect.right = clippingRect.left + rect->width;
+		clippingRect.bottom = clippingRect.top + rect->height;
+		region16_union_rect(&clippingRects, &clippingRects, &clippingRect);
+	}
+
+	for (UINT32 i = 0; i < surface->numUpdatedTiles; i++)
+	{
+		UINT32 nbUpdateRects = 0;
+		const RECTANGLE_16* updateRects = NULL;
+		RECTANGLE_16 updateRect = { 0 };
+
+		WINPR_ASSERT(surface->updatedTileIndices);
+		const UINT32 index = surface->updatedTileIndices[i];
+
+		WINPR_ASSERT(index < surface->tilesSize);
+		RFX_PROGRESSIVE_TILE* tile = surface->tiles[index];
+		WINPR_ASSERT(tile);
+
+		updateRect.left = nXDst + tile->x;
+		updateRect.top = nYDst + tile->y;
+		updateRect.right = updateRect.left + 64;
+		updateRect.bottom = updateRect.top + 64;
+
+		REGION16 updateRegion = { 0 };
+		region16_init(&updateRegion);
+		region16_intersect_rect(&updateRegion, &clippingRects, &updateRect);
+		updateRects = region16_rects(&updateRegion, &nbUpdateRects);
+
+		for (UINT32 j = 0; j < nbUpdateRects; j++)
+		{
+			const RECTANGLE_16* rect = &updateRects[j];
+			if (rect->left < updateRect.left)
+				goto fail;
+			const UINT32 nXSrc = rect->left - updateRect.left;
+			const UINT32 nYSrc = rect->top - updateRect.top;
+			const UINT32 width = rect->right - rect->left;
+			const UINT32 height = rect->bottom - rect->top;
+
+			if (rect->left + width > surface->width)
+				goto fail;
+			if (rect->top + height > surface->height)
+				goto fail;
+			rc = freerdp_image_copy(pDstData, DstFormat, nDstStep, rect->left, rect->top, width,
+			                        height, tile->data, progressive->format, tile->stride, nXSrc,
+			                        nYSrc, NULL, FREERDP_KEEP_DST_ALPHA);
+			if (!rc)
+				break;
+
+			if (invalidRegion)
+				region16_union_rect(invalidRegion, invalidRegion, rect);
+		}
+
+		region16_uninit(&updateRegion);
+		tile->dirty = FALSE;
+	}
+
+fail:
+	region16_uninit(&clippingRects);
+	return rc;
+}
+
 INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData, UINT32 SrcSize,
                              BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
                              UINT32 nYDst, REGION16* invalidRegion, UINT16 surfaceId,
@@ -2373,75 +2449,9 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 		goto fail;
 	}
 
-	REGION16 clippingRects = { 0 };
-	region16_init(&clippingRects);
-
-	for (UINT32 i = 0; i < region->numRects; i++)
-	{
-		RECTANGLE_16 clippingRect = { 0 };
-		const RFX_RECT* rect = &(region->rects[i]);
-
-		clippingRect.left = (UINT16)nXDst + rect->x;
-		clippingRect.top = (UINT16)nYDst + rect->y;
-		clippingRect.right = clippingRect.left + rect->width;
-		clippingRect.bottom = clippingRect.top + rect->height;
-		region16_union_rect(&clippingRects, &clippingRects, &clippingRect);
-	}
-
-	for (UINT32 i = 0; i < surface->numUpdatedTiles; i++)
-	{
-		UINT32 nbUpdateRects = 0;
-		const RECTANGLE_16* updateRects = NULL;
-		RECTANGLE_16 updateRect = { 0 };
-
-		WINPR_ASSERT(surface->updatedTileIndices);
-		const UINT32 index = surface->updatedTileIndices[i];
-
-		WINPR_ASSERT(index < surface->tilesSize);
-		RFX_PROGRESSIVE_TILE* tile = surface->tiles[index];
-		WINPR_ASSERT(tile);
-
-		updateRect.left = nXDst + tile->x;
-		updateRect.top = nYDst + tile->y;
-		updateRect.right = updateRect.left + 64;
-		updateRect.bottom = updateRect.top + 64;
-
-		REGION16 updateRegion = { 0 };
-		region16_init(&updateRegion);
-		region16_intersect_rect(&updateRegion, &clippingRects, &updateRect);
-		updateRects = region16_rects(&updateRegion, &nbUpdateRects);
-
-		for (UINT32 j = 0; j < nbUpdateRects; j++)
-		{
-			const RECTANGLE_16* rect = &updateRects[j];
-			if (rect->left < updateRect.left)
-				goto fail;
-			const UINT32 nXSrc = rect->left - updateRect.left;
-			const UINT32 nYSrc = rect->top - updateRect.top;
-			const UINT32 width = rect->right - rect->left;
-			const UINT32 height = rect->bottom - rect->top;
-
-			if (rect->left + width > surface->width)
-				goto fail;
-			if (rect->top + height > surface->height)
-				goto fail;
-			if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, rect->left, rect->top, width,
-			                        height, tile->data, progressive->format, tile->stride, nXSrc,
-			                        nYSrc, NULL, FREERDP_KEEP_DST_ALPHA))
-			{
-				rc = -42;
-				break;
-			}
-
-			if (invalidRegion)
-				region16_union_rect(invalidRegion, invalidRegion, rect);
-		}
-
-		region16_uninit(&updateRegion);
-		tile->dirty = FALSE;
-	}
-
-	region16_uninit(&clippingRects);
+	if (!update_tiles(progressive, surface, pDstData, DstFormat, nDstStep, nXDst, nYDst, region,
+	                  invalidRegion))
+		return -2002;
 fail:
 	return rc;
 }
