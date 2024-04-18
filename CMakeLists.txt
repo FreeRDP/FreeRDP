@@ -202,11 +202,6 @@ if (EXPORT_ALL_SYMBOLS)
 	add_definitions(-DEXPORT_ALL_SYMBOLS)
 endif(EXPORT_ALL_SYMBOLS)
 
-if(FREEBSD)
-	find_path(EPOLLSHIM_INCLUDE_DIR NAMES sys/epoll.h sys/timerfd.h HINTS /usr/local/include/libepoll-shim)
-	find_library(EPOLLSHIM_LIBS NAMES epoll-shim libepoll-shim HINTS /usr/local/lib)
-endif()
-
 # Compiler-specific flags
 if(CMAKE_COMPILER_IS_GNUCC)
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "i686")
