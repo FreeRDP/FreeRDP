@@ -14,6 +14,8 @@ set (WITH_AAD OFF CACHE BOOL "oss fuzz")
 set (WITH_FFMPEG OFF CACHE BOOL "oss fuzz")
 set (WITH_SWSCALE OFF CACHE BOOL "oss fuzz")
 set (WITH_LIBSYSTEMD OFF CACHE BOOL "oss fuzz")
+set (WITH_UNICODE_BUILTIN ON CACHE BOOL "oss fuzz")
+set (WITH_OPUS OFF CACHE BOOL "oss fuzz")
 
 set (BUILD_SHARED_LIBS OFF CACHE BOOL "oss fuzz")
 
