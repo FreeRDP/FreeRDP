@@ -2442,7 +2442,6 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcD
 	}
 
 	region16_uninit(&clippingRects);
-	surface->numUpdatedTiles = 0;
 fail:
 	return rc;
 }
