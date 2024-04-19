@@ -42,6 +42,7 @@ typedef struct
 
 	HANDLE library;
 	CK_FUNCTION_LIST_PTR p11;
+	char* modulePath;
 } NCryptP11ProviderHandle;
 
 /** @brief a handle returned by NCryptOpenKey */
@@ -111,6 +112,8 @@ static SECURITY_STATUS NCryptP11StorageProvider_dtor(NCRYPT_HANDLE handle)
 	if (rv != CKR_OK)
 	{
 	}
+
+	free(provider->modulePath);
 
 	if (provider->library)
 		FreeLibrary(provider->library);
@@ -1242,6 +1245,7 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 		HANDLE library = LoadLibrary(*modulePaths);
 		typedef CK_RV (*c_get_function_list_t)(CK_FUNCTION_LIST_PTR_PTR);
 		c_get_function_list_t c_get_function_list = NULL;
+		NCryptP11ProviderHandle* provider = NULL;
 
 		WLog_DBG(TAG, "Trying pkcs11-helper module '%s'", *modulePaths);
 		if (!library)
@@ -1264,6 +1268,9 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 			goto out_load_library;
 		}
 
+		provider = (NCryptP11ProviderHandle*)*phProvider;
+		provider->modulePath = _strdup(*modulePaths);
+
 		WLog_DBG(TAG, "module '%s' loaded", *modulePaths);
 		return ERROR_SUCCESS;
 
@@ -1274,4 +1281,13 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 	}
 
 	return status;
+}
+
+const char* NCryptGetModulePath(NCRYPT_PROV_HANDLE phProvider)
+{
+	NCryptP11ProviderHandle* provider = (NCryptP11ProviderHandle*)phProvider;
+
+	WINPR_ASSERT(provider);
+
+	return provider->modulePath;
 }

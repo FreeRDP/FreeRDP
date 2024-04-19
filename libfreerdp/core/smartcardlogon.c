@@ -243,13 +243,12 @@ static BOOL set_info_certificate(SmartcardCertInfo* cert, BYTE* certBytes, DWORD
 }
 
 #ifndef _WIN32
-static BOOL build_pkinit_args(const rdpSettings* settings, SmartcardCertInfo* scCert)
+static BOOL build_pkinit_args(NCRYPT_PROV_HANDLE provider, SmartcardCertInfo* scCert)
 {
 	/* pkinit args only under windows
 	 * 		PKCS11:module_name=opensc-pkcs11.so
 	 */
-	const char* Pkcs11Module = freerdp_settings_get_string(settings, FreeRDP_Pkcs11Module);
-	const char* pkModule = Pkcs11Module ? Pkcs11Module : "opensc-pkcs11.so";
+	const char* pkModule = winpr_NCryptGetModulePath(provider);
 	size_t size = 0;
 
 	if (winpr_asprintf(&scCert->pkinitArgs, &size, "PKCS11:module_name=%s:slotid=%" PRIu16,
@@ -515,7 +514,7 @@ static BOOL list_provider_keys(const rdpSettings* settings, NCRYPT_PROV_HANDLE p
 			goto endofloop;
 
 #ifndef _WIN32
-		if (!build_pkinit_args(settings, cert))
+		if (!build_pkinit_args(provider, cert))
 		{
 			WLog_ERR(TAG, "error build pkinit args");
 			goto endofloop;
