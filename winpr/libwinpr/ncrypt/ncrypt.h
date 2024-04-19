@@ -89,6 +89,8 @@ void* ncrypt_new_handle(NCryptHandleType kind, size_t len, NCryptGetPropertyFn g
 SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
                                                LPCWSTR pszProviderName, DWORD dwFlags,
                                                LPCSTR* modulePaths);
+
+const char* NCryptGetModulePath(NCRYPT_PROV_HANDLE phProvider);
 #endif
 
 #endif /* WINPR_LIBWINPR_NCRYPT_NCRYPT_H_ */

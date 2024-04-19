@@ -345,3 +345,12 @@ const char* winpr_NCryptSecurityStatusError(SECURITY_STATUS status)
 
 #undef NTE_CASE
 }
+
+const char* winpr_NCryptGetModulePath(NCRYPT_PROV_HANDLE phProvider)
+{
+#if defined(WITH_PKCS11)
+	return NCryptGetModulePath(phProvider);
+#else
+	return NULL;
+#endif
+}
