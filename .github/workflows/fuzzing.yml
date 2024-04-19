@@ -5,6 +5,8 @@ on:
     branches: [ master, stable* ]
   pull_request:
     branches: [ master, stable* ]
+  schedule:
+  - cron: "0 3 21 * *"
 
 jobs:
   fuzzing:
@@ -15,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sanitizer: [address]
+        sanitizer: [address, undefined]
 
     steps:
       - uses: actions/checkout@v4
