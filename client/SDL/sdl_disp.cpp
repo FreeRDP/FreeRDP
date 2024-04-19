@@ -142,6 +142,8 @@ static BOOL sdl_disp_check_context(void* context, SdlContext** ppsdl, sdlDispCon
 		return FALSE;
 
 	auto sdl = get_context(context);
+	if (!sdl)
+		return FALSE;
 
 	if (!sdl->context()->settings)
 		return FALSE;
@@ -200,6 +202,9 @@ Uint32 sdlDispContext::OnTimer(Uint32 interval, void* param)
 		return 0;
 
 	SdlContext* sdl = ctx->_sdl;
+	if (!sdl)
+		return 0;
+
 	sdlDispContext* sdlDisp = nullptr;
 	rdpSettings* settings = nullptr;
 
