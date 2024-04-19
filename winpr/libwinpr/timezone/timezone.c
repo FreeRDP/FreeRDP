@@ -474,8 +474,8 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 	WLog_DBG(TAG, "tz not found, using computed bias %" PRId32 ".", tz->Bias);
 out_error:
 	free(dtz);
-	memcpy(tz->StandardName, L"Client Local Time", sizeof(tz->StandardName));
-	memcpy(tz->DaylightName, L"Client Local Time", sizeof(tz->DaylightName));
+	ConvertUtf8ToWChar("Client Local Time", tz->StandardName, ARRAYSIZE(tz->StandardName));
+	memcpy(tz->DaylightName, tz->StandardName, sizeof(tz->DaylightName));
 	return 0; /* TIME_ZONE_ID_UNKNOWN */
 }
 
