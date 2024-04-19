@@ -264,7 +264,7 @@ static UINT ExtractRunLengthRegular(const BYTE* pbOrderHdr, const BYTE* pbEnd, U
 	runLength = *pbOrderHdr & g_MaskRegularRunLength;
 	if (runLength == 0)
 	{
-		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
+		if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
 		{
 			*advance = 0;
 			return 0;
@@ -307,7 +307,7 @@ static UINT ExtractRunLengthLite(const BYTE* pbOrderHdr, const BYTE* pbEnd, UINT
 	runLength = *pbOrderHdr & g_MaskLiteRunLength;
 	if (runLength == 0)
 	{
-		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
+		if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
 		{
 			*advance = 0;
 			return 0;
