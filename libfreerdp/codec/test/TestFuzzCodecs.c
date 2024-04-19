@@ -453,28 +453,15 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 	if (Size < 4)
 		return 0;
 
-	int i = 0;
-	winpr_RAND(&i, sizeof(i));
-	i = i % 18;
-
-	if (i < 2)
-		TestFreeRDPCodecClear(Data, Size);
-	else if (i < 4)
-		TestFreeRDPCodecXCrush(Data, Size);
-	else if (i < 6)
-		TestFreeRDPCodecZGfx(Data, Size);
-	else if (i < 8)
-		TestFreeRDPCodecNCrush(Data, Size);
-	else if (i < 10)
-		TestFreeRDPCodecRemoteFX(Data, Size);
-	else if (i < 12)
-		TestFreeRDPCodecMppc(Data, Size);
-	else if (i < 14)
-		TestFreeRDPCodecProgressive(Data, Size);
-	else if (i < 16)
-		TestFreeRDPCodecInterleaved(Data, Size);
-	else if (i < 18)
-		TestFreeRDPCodecPlanar(Data, Size);
+	TestFreeRDPCodecClear(Data, Size);
+	TestFreeRDPCodecXCrush(Data, Size);
+	TestFreeRDPCodecZGfx(Data, Size);
+	TestFreeRDPCodecNCrush(Data, Size);
+	TestFreeRDPCodecRemoteFX(Data, Size);
+	TestFreeRDPCodecMppc(Data, Size);
+	TestFreeRDPCodecProgressive(Data, Size);
+	TestFreeRDPCodecInterleaved(Data, Size);
+	TestFreeRDPCodecPlanar(Data, Size);
 
 	return 0;
 }
