@@ -488,6 +488,66 @@ uint32_t sdlInput::prefKeyValue(const std::string& key, uint32_t fallback)
 	return val;
 }
 
+std::list<std::string> sdlInput::tokenize(const std::string& data, const std::string& delimiter)
+{
+	size_t lastpos = 0;
+	size_t pos = 0;
+	std::list<std::string> list;
+	while ((pos = data.find(delimiter, lastpos)) != std::string::npos)
+	{
+		auto token = data.substr(lastpos, pos);
+		lastpos = pos + 1;
+		list.push_back(token);
+	}
+	auto token = data.substr(lastpos);
+	list.push_back(token);
+	return list;
+}
+
+bool sdlInput::extract(const std::string& token, uint32_t& key, uint32_t& value)
+{
+	int rc = sscanf(token.c_str(), "%" PRIu32 "=%" PRIu32, &key, &value);
+	if (rc != 2)
+		rc = sscanf(token.c_str(), "%" PRIx32 "=%" PRIx32 "", &key, &value);
+	if (rc != 2)
+		rc = sscanf(token.c_str(), "%" PRIu32 "=%" PRIx32, &key, &value);
+	if (rc != 2)
+		rc = sscanf(token.c_str(), "%" PRIx32 "=%" PRIu32, &key, &value);
+	return (rc == 2);
+}
+
+uint32_t sdlInput::remapScancode(uint32_t scancode)
+{
+	if (!_remapInitialized.exchange(true))
+		remapInitialize();
+	auto it = _remapList.find(scancode);
+	if (it != _remapList.end())
+		return it->second;
+	return scancode;
+}
+
+void sdlInput::remapInitialize()
+{
+	WINPR_ASSERT(_sdl);
+
+	auto context = _sdl->context();
+	WINPR_ASSERT(context);
+	auto KeyboardRemappingList =
+	    freerdp_settings_get_string(context->settings, FreeRDP_KeyboardRemappingList);
+	if (!KeyboardRemappingList)
+		return;
+
+	auto list = tokenize(KeyboardRemappingList);
+	for (auto& token : list)
+	{
+		uint32_t key = 0;
+		uint32_t value = 0;
+		if (!extract(token, key, value))
+			continue;
+		_remapList.emplace(key, value);
+	}
+}
+
 BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 {
 	WINPR_ASSERT(ev);
@@ -526,8 +586,10 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 			}
 		}
 	}
+
+	auto scancode = remapScancode(rdp_scancode);
 	return freerdp_input_send_keyboard_event_ex(_sdl->context()->input, ev->type == SDL_KEYDOWN,
-	                                            ev->repeat, rdp_scancode);
+	                                            ev->repeat, scancode);
 }
 
 BOOL sdlInput::keyboard_grab(Uint32 windowID, SDL_bool enable)
@@ -564,5 +626,4 @@ BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
 
 sdlInput::sdlInput(SdlContext* sdl) : _sdl(sdl), _lastWindowID(UINT32_MAX)
 {
-	WINPR_ASSERT(_sdl);
 }

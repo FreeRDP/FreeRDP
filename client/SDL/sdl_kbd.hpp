@@ -20,6 +20,9 @@
 #pragma once
 
 #include <string>
+#include <map>
+#include <list>
+#include <atomic>
 
 #include <winpr/wtypes.h>
 #include <freerdp/freerdp.h>
@@ -51,6 +54,16 @@ class sdlInput
 	static uint32_t prefKeyValue(const std::string& key, uint32_t fallback = SDL_SCANCODE_UNKNOWN);
 
   private:
+	static std::list<std::string> tokenize(const std::string& data,
+	                                       const std::string& delimiter = ",");
+	static bool extract(const std::string& token, uint32_t& key, uint32_t& value);
+
+	uint32_t remapScancode(uint32_t scancode);
+	void remapInitialize();
+
+  private:
 	SdlContext* _sdl;
 	Uint32 _lastWindowID;
+	std::map<uint32_t, uint32_t> _remapList;
+	std::atomic<bool> _remapInitialized = false;
 };
