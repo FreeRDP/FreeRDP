@@ -3,7 +3,7 @@ name: Fuzzing testing
 on:
   workflow_dispatch:
     branches: [ master, stable* ]
-  pull_request_target:
+  pull_request:
     branches: [ master, stable* ]
 
 jobs:
@@ -18,11 +18,7 @@ jobs:
         sanitizer: [address]
 
     steps:
-      - uses: suzuki-shunsuke/get-pr-action@v0.1.0
-        id: pr
       - uses: actions/checkout@v4
-        with:
-          ref: ${{steps.pr.outputs.merge_commit_sha}}
 
       - name: Build fuzzers (${{ matrix.sanitizer }})
         id: build
