@@ -500,12 +500,12 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 		{
 			case 0: /* Uncompressed */
 			{
-				UINT32 nSrcStep = width * FreeRDPGetBytesPerPixel(PIXEL_FORMAT_BGR24);
-				UINT32 nSrcSize = nSrcStep * height;
+				const UINT32 nSrcStep = width * FreeRDPGetBytesPerPixel(PIXEL_FORMAT_BGR24);
+				const size_t nSrcSize = 1ull * nSrcStep * height;
 
 				if (bitmapDataByteCount != nSrcSize)
 				{
-					WLog_ERR(TAG, "bitmapDataByteCount %" PRIu32 " != nSrcSize %" PRIu32 "",
+					WLog_ERR(TAG, "bitmapDataByteCount %" PRIu32 " != nSrcSize %" PRIuz "",
 					         bitmapDataByteCount, nSrcSize);
 					return FALSE;
 				}
@@ -799,7 +799,8 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 
 				if (count > 0)
 				{
-					const size_t offset = (y - vBarYOn) * FreeRDPGetBytesPerPixel(clear->format);
+					const size_t offset =
+					    (1ull * y - vBarYOn) * FreeRDPGetBytesPerPixel(clear->format);
 					pSrcPixel = &vBarShortEntry->pixels[offset];
 					if (offset + count > vBarShortEntry->count)
 					{
