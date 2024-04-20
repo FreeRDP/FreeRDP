@@ -212,7 +212,7 @@ static UINT ExtractRunLengthRegularFgBg(const BYTE* pbOrderHdr, const BYTE* pbEn
 	runLength = (*pbOrderHdr) & g_MaskRegularRunLength;
 	if (runLength == 0)
 	{
-		if (!buffer_within_range(pbOrderHdr, 1, pbEnd))
+		if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
 		{
 			*advance = 0;
 			return 0;
@@ -282,7 +282,7 @@ static UINT ExtractRunLengthMegaMega(const BYTE* pbOrderHdr, const BYTE* pbEnd, 
 	WINPR_ASSERT(pbEnd);
 	WINPR_ASSERT(advance);
 
-	if (!buffer_within_range(pbOrderHdr, 2, pbEnd))
+	if (!buffer_within_range(pbOrderHdr, 3, pbEnd))
 	{
 		*advance = 0;
 		return 0;
