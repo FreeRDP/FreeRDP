@@ -86,8 +86,8 @@ static BOOL nsc_decode(NSC_CONTEXT* context)
 		for (UINT32 x = 0; x < context->width; x++)
 		{
 			INT16 y_val = (INT16)*yplane;
-			INT16 co_val = (INT16)(INT8)(*coplane << shift);
-			INT16 cg_val = (INT16)(INT8)(*cgplane << shift);
+			INT16 co_val = (INT16)(INT8)(((INT16)*coplane) << shift);
+			INT16 cg_val = (INT16)(INT8)(((INT16)*cgplane) << shift);
 			INT16 r_val = y_val + co_val - cg_val;
 			INT16 g_val = y_val + cg_val;
 			INT16 b_val = y_val - co_val - cg_val;
@@ -250,6 +250,13 @@ static BOOL nsc_stream_initialize(NSC_CONTEXT* context, wStream* s)
 	}
 
 	Stream_Read_UINT8(s, context->ColorLossLevel);         /* ColorLossLevel (1 byte) */
+	if ((context->ColorLossLevel < 1) || (context->ColorLossLevel > 7))
+	{
+		WLog_Print(context->priv->log, WLOG_ERROR,
+		           "ColorLossLevel=%" PRIu8 " out of range, must be [1,7] inclusive",
+		           context->ColorLossLevel);
+		return FALSE;
+	}
 	Stream_Read_UINT8(s, context->ChromaSubsamplingLevel); /* ChromaSubsamplingLevel (1 byte) */
 	Stream_Seek(s, 2);                                     /* Reserved (2 bytes) */
 	context->Planes = Stream_Pointer(s);
