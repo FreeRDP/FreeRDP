@@ -821,8 +821,15 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 					count = (vBarPixelCount > y) ? (vBarPixelCount - y) : 0;
 
 				if (count > 0)
-					pSrcPixel =
-					    &vBarShortEntry->pixels[(y - vBarYOn) * GetBytesPerPixel(clear->format)];
+				{
+					const size_t offset = (y - vBarYOn) * GetBytesPerPixel(clear->format);
+					pSrcPixel = &vBarShortEntry->pixels[offset];
+					if (offset + count > vBarShortEntry->count)
+					{
+						WLog_ERR(TAG, "offset + count > vBarShortEntry->count");
+						return FALSE;
+					}
+				}
 
 				for (x = 0; x < count; x++)
 				{
