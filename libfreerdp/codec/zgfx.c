@@ -382,16 +382,46 @@ static BYTE* aligned_zgfx_malloc(size_t size)
 	return malloc(size + 64);
 }
 
+static BOOL zgfx_append(ZGFX_CONTEXT* zgfx, BYTE** ppConcatenated, size_t uncompressedSize,
+                        size_t* pUsed)
+{
+	WINPR_ASSERT(zgfx);
+	WINPR_ASSERT(ppConcatenated);
+	WINPR_ASSERT(pUsed);
+
+	const size_t used = *pUsed;
+	if (zgfx->OutputCount > UINT32_MAX - used)
+		return FALSE;
+
+	if (used + zgfx->OutputCount > uncompressedSize)
+		return FALSE;
+
+	BYTE* tmp = realloc(*ppConcatenated, used + zgfx->OutputCount + 64ull);
+	if (!tmp)
+		return FALSE;
+	*ppConcatenated = tmp;
+	CopyMemory(&tmp[used], zgfx->OutputBuffer, zgfx->OutputCount);
+	*pUsed = used + zgfx->OutputCount;
+	return TRUE;
+}
+
 int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
                     UINT32* pDstSize, UINT32 flags)
 {
 	int status = -1;
 	BYTE descriptor = 0;
 	wStream sbuffer = { 0 };
+	size_t used = 0;
+	BYTE* pConcatenated = NULL;
 	wStream* stream = Stream_StaticConstInit(&sbuffer, pSrcData, SrcSize);
 
 	WINPR_ASSERT(zgfx);
 	WINPR_ASSERT(stream);
+	WINPR_ASSERT(ppDstData);
+	WINPR_ASSERT(pDstSize);
+
+	*ppDstData = NULL;
+	*pDstSize = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, stream, 1))
 		goto fail;
@@ -403,16 +433,15 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 		if (!zgfx_decompress_segment(zgfx, stream, Stream_GetRemainingLength(stream)))
 			goto fail;
 
-		*ppDstData = NULL;
-
 		if (zgfx->OutputCount > 0)
-			*ppDstData = aligned_zgfx_malloc(zgfx->OutputCount);
-
-		if (!*ppDstData)
-			goto fail;
-
-		*pDstSize = zgfx->OutputCount;
-		CopyMemory(*ppDstData, zgfx->OutputBuffer, zgfx->OutputCount);
+		{
+			if (!zgfx_append(zgfx, &pConcatenated, zgfx->OutputCount, &used))
+				goto fail;
+			if (used != zgfx->OutputCount)
+				goto fail;
+			*ppDstData = pConcatenated;
+			*pDstSize = zgfx->OutputCount;
+		}
 	}
 	else if (descriptor == ZGFX_SEGMENTED_MULTIPART)
 	{
@@ -420,25 +449,12 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 		UINT16 segmentNumber = 0;
 		UINT16 segmentCount = 0;
 		UINT32 uncompressedSize = 0;
-		BYTE* pConcatenated = NULL;
-		size_t used = 0;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, stream, 6))
 			goto fail;
 
 		Stream_Read_UINT16(stream, segmentCount);     /* segmentCount (2 bytes) */
 		Stream_Read_UINT32(stream, uncompressedSize); /* uncompressedSize (4 bytes) */
-
-		if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, stream, segmentCount, sizeof(UINT32)))
-			goto fail;
-
-		pConcatenated = aligned_zgfx_malloc(uncompressedSize);
-
-		if (!pConcatenated)
-			goto fail;
-
-		*ppDstData = pConcatenated;
-		*pDstSize = uncompressedSize;
 
 		for (segmentNumber = 0; segmentNumber < segmentCount; segmentNumber++)
 		{
@@ -450,16 +466,15 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 			if (!zgfx_decompress_segment(zgfx, stream, segmentSize))
 				goto fail;
 
-			if (zgfx->OutputCount > UINT32_MAX - used)
+			if (!zgfx_append(zgfx, &pConcatenated, uncompressedSize, &used))
 				goto fail;
-
-			if (used + zgfx->OutputCount > uncompressedSize)
-				goto fail;
-
-			CopyMemory(pConcatenated, zgfx->OutputBuffer, zgfx->OutputCount);
-			pConcatenated += zgfx->OutputCount;
-			used += zgfx->OutputCount;
 		}
+
+		if (used != uncompressedSize)
+			goto fail;
+
+		*ppDstData = pConcatenated;
+		*pDstSize = uncompressedSize;
 	}
 	else
 	{
@@ -468,6 +483,8 @@ int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BY
 
 	status = 1;
 fail:
+	if (status < 0)
+		free(pConcatenated);
 	return status;
 }
 
