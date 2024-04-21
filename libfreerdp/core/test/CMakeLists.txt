@@ -10,7 +10,8 @@ set(${MODULE_PREFIX}_TESTS
 	TestSettings.c)
 
 set(FUZZERS
-	TestFuzzCryptoCertificateDataSetPEM.c
+    TestFuzzFastpath.c
+    TestFuzzCryptoCertificateDataSetPEM.c
 )
 
 if(WITH_SAMPLE AND WITH_SERVER AND NOT WIN32)
@@ -44,4 +45,3 @@ foreach(test ${${MODULE_PREFIX}_TESTS})
 endforeach()
 
 set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/Core/Test")
-
