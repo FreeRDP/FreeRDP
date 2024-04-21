@@ -1398,6 +1398,10 @@ static BOOL rdp_write_logon_info_v1(wStream* s, logon_info* info)
 		return FALSE;
 
 	/* domain */
+	WINPR_ASSERT(info);
+	if (!info->domain || !info->username)
+		return FALSE;
+
 	len = strnlen(info->domain, charLen + 1);
 	if (len > charLen)
 		return FALSE;
