@@ -3299,6 +3299,9 @@ void update_free(rdpUpdate* update)
 
 		MessageQueue_Free(up->queue);
 		DeleteCriticalSection(&up->mux);
+
+		if (up->us)
+			Stream_Free(up->us, TRUE);
 		free(update);
 	}
 }
