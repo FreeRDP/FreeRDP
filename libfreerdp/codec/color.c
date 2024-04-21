@@ -613,6 +613,9 @@ BOOL freerdp_image_copy(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32
 	if (!pDstData || !pSrcData)
 		return FALSE;
 
+	if ((nWidth == 0) || (nHeight == 0))
+		return TRUE;
+
 	if (nDstStep == 0)
 		nDstStep = nWidth * GetBytesPerPixel(DstFormat);
 
