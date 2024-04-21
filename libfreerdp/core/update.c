@@ -3331,7 +3331,9 @@ BOOL update_begin_paint(rdpUpdate* update)
 
 	/* Reset the invalid regions, we start a new frame here. */
 	rdpGdi* gdi = update->context->gdi;
-	WINPR_ASSERT(gdi);
+	if (!gdi)
+		return FALSE;
+
 	if (gdi->hdc && gdi->primary && gdi->primary->hdc)
 	{
 		HGDI_WND hwnd = gdi->primary->hdc->hwnd;
