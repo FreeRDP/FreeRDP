@@ -23,6 +23,7 @@
 #include <winpr/wtypes.h>
 #include <winpr/timezone.h>
 #include <winpr/crt.h>
+#include <winpr/assert.h>
 #include <winpr/file.h>
 #include "../log.h"
 
@@ -402,17 +403,20 @@ winpr_get_current_time_zone_rule(const TIME_ZONE_RULE_ENTRY* rules, UINT32 count
 DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
 	time_t t = 0;
-	struct tm tres;
-	struct tm* local_time = NULL;
+	struct tm tres = { 0 };
 	TIME_ZONE_ENTRY* dtz = NULL;
+	const TIME_ZONE_INFORMATION empty = { 0 };
 	LPTIME_ZONE_INFORMATION tz = lpTimeZoneInformation;
-	lpTimeZoneInformation->StandardBias = 0;
-	time(&t);
-	local_time = localtime_r(&t, &tres);
+
+	WINPR_ASSERT(tz);
+
+	*tz = empty;
+
+	t = time(NULL);
+	struct tm* local_time = localtime_r(&t, &tres);
 	if (!local_time)
 		goto out_error;
 
-	memset(tz, 0, sizeof(TIME_ZONE_INFORMATION));
 #ifdef WINPR_HAVE_TM_GMTOFF
 	{
 		long bias = -(local_time->tm_gmtoff / 60L);
@@ -422,19 +426,14 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 
 		tz->Bias = (LONG)bias;
 	}
-#else
-	tz->Bias = 0;
 #endif
 	dtz = winpr_detect_windows_time_zone();
 
 	if (dtz != NULL)
 	{
-		const TIME_ZONE_INFORMATION empty = { 0 };
-
 		WLog_DBG(TAG, "tz: Bias=%" PRId32 " sn='%s' dln='%s'", dtz->Bias, dtz->StandardName,
 		         dtz->DaylightName);
 
-		*tz = empty;
 		tz->Bias = dtz->Bias;
 
 		if (ConvertUtf8ToWChar(dtz->StandardName, tz->StandardName, ARRAYSIZE(tz->StandardName)) <
@@ -474,7 +473,8 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 	WLog_DBG(TAG, "tz not found, using computed bias %" PRId32 ".", tz->Bias);
 out_error:
 	free(dtz);
-	ConvertUtf8ToWChar("Client Local Time", tz->StandardName, ARRAYSIZE(tz->StandardName));
+	if (ConvertUtf8ToWChar("Client Local Time", tz->StandardName, ARRAYSIZE(tz->StandardName)) <= 0)
+		WLog_WARN(TAG, "Failed to set default timezone name");
 	memcpy(tz->DaylightName, tz->StandardName, sizeof(tz->DaylightName));
 	return 0; /* TIME_ZONE_ID_UNKNOWN */
 }
