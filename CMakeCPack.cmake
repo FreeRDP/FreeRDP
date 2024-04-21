@@ -2,6 +2,7 @@
 # Generate .txt license file for CPack (PackageMaker requires a file extension)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/LICENSE ${CMAKE_CURRENT_BINARY_DIR}/LICENSE.txt @ONLY)
 
+
 # Workaround to remove c++ compiler macros and defines for Eclipse.
 # If c++ macros/defines are set __cplusplus is also set which causes
 # problems when compiling freerdp/jni. To prevent this problem we set the macros to "".
