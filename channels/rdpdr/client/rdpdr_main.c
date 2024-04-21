@@ -1861,7 +1861,7 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	UINT status = 0;
 	rdpdrPlugin* plugin = (rdpdrPlugin*)rdpdr;
 
-	if (!rdpdr || !s)
+	if (!s)
 	{
 		Stream_Release(s);
 		return CHANNEL_RC_NULL_DATA;
@@ -1870,15 +1870,13 @@ UINT rdpdr_send(rdpdrPlugin* rdpdr, wStream* s)
 	if (!plugin)
 	{
 		Stream_Release(s);
-		status = CHANNEL_RC_BAD_INIT_HANDLE;
+		return CHANNEL_RC_BAD_INIT_HANDLE;
 	}
-	else
-	{
-		const size_t pos = Stream_GetPosition(s);
-		rdpdr_dump_send_packet(rdpdr->log, WLOG_TRACE, s, "[rdpdr-channel] send");
-		status = plugin->channelEntryPoints.pVirtualChannelWriteEx(
-		    plugin->InitHandle, plugin->OpenHandle, Stream_Buffer(s), pos, s);
-	}
+
+	const size_t pos = Stream_GetPosition(s);
+	rdpdr_dump_send_packet(rdpdr->log, WLOG_TRACE, s, "[rdpdr-channel] send");
+	status = plugin->channelEntryPoints.pVirtualChannelWriteEx(
+	    plugin->InitHandle, plugin->OpenHandle, Stream_Buffer(s), pos, s);
 
 	if (status != CHANNEL_RC_OK)
 	{
