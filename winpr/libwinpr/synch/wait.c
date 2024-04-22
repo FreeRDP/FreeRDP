@@ -65,7 +65,6 @@ static struct timespec ts_from_ns(void)
 	struct timespec timeout = { 0 };
 	timeout.tv_sec = WINPR_TIME_NS_TO_S(ns);
 	timeout.tv_nsec = WINPR_TIME_NS_REM_NS(ns);
-	;
 	return timeout;
 }
 
