@@ -10,7 +10,8 @@ set(${MODULE_PREFIX}_TESTS
 	TestSettings.c)
 
 set(FUZZERS
-    TestFuzzFastpath.c
+	TestFuzzCoreClient.c
+	TestFuzzCoreServer.c
     TestFuzzCryptoCertificateDataSetPEM.c
 )
 
@@ -35,7 +36,7 @@ add_definitions(-DTESTING_SRC_DIRECTORY="${PROJECT_SOURCE_DIR}")
 target_link_libraries(${MODULE_NAME} freerdp winpr freerdp-client)
 
 include (AddFuzzerTest)
-add_fuzzer_test("${FUZZERS}" "freerdp winpr")
+add_fuzzer_test("${FUZZERS}" "freerdp-client freerdp winpr")
 
 set_target_properties(${MODULE_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${TESTING_OUTPUT_DIRECTORY}")
 
