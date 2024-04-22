@@ -797,6 +797,7 @@ static INLINE BOOL update_write_4byte_unsigned(wStream* s, UINT32 value)
 static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 {
 	BYTE byte;
+	UINT32 uvalue = 0;
 
 	if (Stream_GetRemainingLength(s) < 1)
 	{
@@ -807,9 +808,9 @@ static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x40)
-		*value = (byte | ~0x3F);
+		uvalue = (byte | ~0x3F);
 	else
-		*value = (byte & 0x3F);
+		uvalue = (byte & 0x3F);
 
 	if (byte & 0x80)
 	{
@@ -820,8 +821,9 @@ static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 		}
 
 		Stream_Read_UINT8(s, byte);
-		*value = (*value << 8) | byte;
+		uvalue = (uvalue << 8) | byte;
 	}
+	*value = (INT32)uvalue;
 
 	return TRUE;
 }
