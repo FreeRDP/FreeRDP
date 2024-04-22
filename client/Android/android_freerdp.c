@@ -57,7 +57,7 @@
 #define TAG CLIENT_TAG("android")
 
 /* Defines the JNI version supported by this library. */
-#define FREERDP_JNI_VERSION "2.11.7-dev"
+#define FREERDP_JNI_VERSION "2.11.7"
 
 static void android_OnChannelConnectedEventHandler(void* context, ChannelConnectedEventArgs* e)
 {
