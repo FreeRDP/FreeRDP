@@ -27,6 +27,11 @@
 #include <winpr/file.h>
 #include "../log.h"
 
+#if defined(WITH_XML)
+#include <libxml/xmlmemory.h>
+#include <libxml/parser.h>
+#endif
+
 #define TAG WINPR_TAG("timezone")
 
 #ifndef _WIN32
@@ -314,7 +319,7 @@ static TIME_ZONE_ENTRY* winpr_unix_to_windows_time_zone(const char* tzid)
 
 	WLog_INFO(TAG, "tzid: %s", tzid);
 
-#if WITH_XML
+#if defined(WITH_XML)
 	for (size_t i = 0; i < TimeZoneTableNrElements; i++)
 	{
 		const TIME_ZONE_ENTRY* tze = &TimeZoneTable[i];

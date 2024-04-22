@@ -15,4 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+option(WITH_XML "Add support to read XML windowsTimeZones.xml" ON)
+if (WITH_XML)
+    find_package(LibXml2 REQUIRED)
+
+    winpr_definition_add(-DWITH_XML)
+    winpr_include_directory_add(${LIBXML2_INCLUDE_DIRS})
+    winpr_library_add_private(${LIBXML2_LIBRARIES})
+endif()
+
 winpr_module_add(timezone.c TimeZones.c WindowsZones.c TimeZones.h WindowsZones.h)
