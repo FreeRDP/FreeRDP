@@ -8,7 +8,8 @@ name = os.path.realpath(__file__)
 base = os.path.normpath(os.path.join(os.path.dirname(name), '..'))
 rname = os.path.relpath(name, base)
 zfile = os.path.join(base, 'winpr/libwinpr/timezone/WindowsZones.c')
-url = 'https://raw.githubusercontent.com/unicode-org/cldr/latest/common/supplemental/windowsZones.xml'
+#url = 'https://raw.githubusercontent.com/unicode-org/cldr/latest/common/supplemental/windowsZones.xml'
+url = 'https://raw.githubusercontent.com/unicode-org/cldr/main/common/supplemental/windowsZones.xml'
 
 try:
     with urllib.request.urlopen(url) as response:
