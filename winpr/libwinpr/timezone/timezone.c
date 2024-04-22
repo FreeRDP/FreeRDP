@@ -294,59 +294,10 @@ static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, con
 	return FALSE;
 }
 
-static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
+static TIME_ZONE_ENTRY* winpr_unix_to_windows_time_zone(const char* tzid)
 {
-	char* tzid = NULL;
-	char* ntzid = NULL;
-	LPCSTR tz = "TZ";
-
-	DWORD nSize = GetEnvironmentVariableA(tz, NULL, 0);
-	if (nSize)
-	{
-		tzid = (char*)malloc(nSize);
-		if (!GetEnvironmentVariableA(tz, tzid, nSize))
-		{
-			free(tzid);
-			tzid = NULL;
-		}
-		else if (tzid[0] == ':')
-		{
-			/* Remove leading colon, see tzset(3) */
-			memmove(tzid, tzid + 1, nSize - sizeof(char));
-		}
-	}
-
 	if (tzid == NULL)
-		tzid = winpr_get_unix_timezone_identifier_from_file();
-
-	if (tzid == NULL)
-	{
-		tzid = winpr_get_timezone_from_link(NULL, 0);
-	}
-	else
-	{
-		const char* zipath = "/usr/share/zoneinfo/";
-		char buf[1024] = { 0 };
-		const char* links[] = { buf };
-
-		if (tzid[0] == '/')
-		{
-			/* Full path given in TZ */
-			links[0] = tzid;
-		}
-		else
-			snprintf(buf, ARRAYSIZE(buf), "%s%s", zipath, tzid);
-
-		ntzid = winpr_get_timezone_from_link(links, 1);
-		if (ntzid != NULL)
-		{
-			free(tzid);
-			tzid = ntzid;
-		}
-	}
-
-	if (tzid == NULL)
-		return NULL;
+		goto end;
 
 	WLog_INFO(TAG, "tzid: %s", tzid);
 
@@ -364,7 +315,6 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 			if (winpr_match_unix_timezone_identifier_with_list(tzid, wzid->tzid))
 			{
 				TIME_ZONE_ENTRY* ctimezone = (TIME_ZONE_ENTRY*)malloc(sizeof(TIME_ZONE_ENTRY));
-				free(tzid);
 
 				if (!ctimezone)
 					return NULL;
@@ -375,9 +325,102 @@ static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(void)
 		}
 	}
 
+end:
 	WLog_ERR(TAG, "Unable to find a match for unix timezone: %s", tzid);
+	return NULL;
+}
+
+static char* winpr_time_zone_from_env(void)
+{
+	LPCSTR tz = "TZ";
+	char* tzid = NULL;
+
+	DWORD nSize = GetEnvironmentVariableA(tz, NULL, 0);
+	if (nSize > 0)
+	{
+		tzid = (char*)calloc(nSize, sizeof(char));
+		if (!tzid)
+			goto fail;
+		if (!GetEnvironmentVariableA(tz, tzid, nSize))
+			goto fail;
+		else if (tzid[0] == ':')
+		{
+			/* Remove leading colon, see tzset(3) */
+			memmove(tzid, tzid + 1, nSize - sizeof(char));
+		}
+	}
+
+	return tzid;
+
+fail:
 	free(tzid);
 	return NULL;
+}
+
+static char* winpr_translate_time_zone(const char* tzid)
+{
+	const char* zipath = "/usr/share/zoneinfo/";
+	char* buf = NULL;
+	const char* links[] = { buf };
+
+	if (!tzid)
+		return NULL;
+
+	if (tzid[0] == '/')
+	{
+		/* Full path given in TZ */
+		links[0] = tzid;
+	}
+	else
+	{
+		size_t bsize = 0;
+		winpr_asprintf(&buf, &bsize, "%s%s", zipath, tzid);
+		links[0] = buf;
+	}
+
+	char* ntzid = winpr_get_timezone_from_link(links, 1);
+	free(buf);
+	return ntzid;
+}
+
+static char* winpr_guess_time_zone(void)
+{
+	char* tzid = winpr_time_zone_from_env();
+	if (tzid)
+		goto end;
+	tzid = winpr_get_unix_timezone_identifier_from_file();
+	if (tzid)
+		goto end;
+	tzid = winpr_get_timezone_from_link(NULL, 0);
+	if (tzid)
+		goto end;
+
+end:
+{
+	char* ntzid = winpr_translate_time_zone(tzid);
+	if (ntzid)
+	{
+		free(tzid);
+		return ntzid;
+	}
+	return tzid;
+}
+}
+
+static TIME_ZONE_ENTRY* winpr_detect_windows_time_zone(const char* tzstr)
+{
+	char* tzid = NULL;
+
+	if (tzstr)
+		tzid = _strdup(tzstr);
+	else
+		tzid = winpr_guess_time_zone();
+	if (!tzid)
+		return NULL;
+
+	TIME_ZONE_ENTRY* ctimezone = winpr_unix_to_windows_time_zone(tzid);
+	free(tzid);
+	return ctimezone;
 }
 
 static const TIME_ZONE_RULE_ENTRY*
@@ -402,6 +445,12 @@ winpr_get_current_time_zone_rule(const TIME_ZONE_RULE_ENTRY* rules, UINT32 count
 
 DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
+	return GetTimeZoneInformationFromTZ(lpTimeZoneInformation, NULL);
+}
+
+DWORD GetTimeZoneInformationFromTZ(LPTIME_ZONE_INFORMATION lpTimeZoneInformation, const char* tzstr)
+{
+
 	time_t t = 0;
 	struct tm tres = { 0 };
 	TIME_ZONE_ENTRY* dtz = NULL;
@@ -427,7 +476,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 		tz->Bias = (LONG)bias;
 	}
 #endif
-	dtz = winpr_detect_windows_time_zone();
+	dtz = winpr_detect_windows_time_zone(tzstr);
 
 	if (dtz != NULL)
 	{

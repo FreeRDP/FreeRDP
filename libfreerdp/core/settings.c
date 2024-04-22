@@ -693,6 +693,9 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	if (!settings->ClientTimeZone)
 		goto out_fail;
 
+	if (!settings->ServerMode)
+		GetTimeZoneInformation(settings->ClientTimeZone);
+
 	if (!freerdp_settings_set_bool(settings, FreeRDP_TcpKeepAlive, TRUE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpKeepAliveRetries, 3) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpKeepAliveDelay, 5) ||

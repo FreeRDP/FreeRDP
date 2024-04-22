@@ -58,6 +58,9 @@ extern "C"
 	    *LPDYNAMIC_TIME_ZONE_INFORMATION;
 
 	WINPR_API DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation);
+	WINPR_API DWORD GetTimeZoneInformationFromTZ(LPTIME_ZONE_INFORMATION lpTimeZoneInformation,
+	                                             const char* tzstr);
+
 	WINPR_API BOOL SetTimeZoneInformation(const TIME_ZONE_INFORMATION* lpTimeZoneInformation);
 	WINPR_API BOOL SystemTimeToFileTime(const SYSTEMTIME* lpSystemTime, LPFILETIME lpFileTime);
 	WINPR_API BOOL FileTimeToSystemTime(const FILETIME* lpFileTime, LPSYSTEMTIME lpSystemTime);

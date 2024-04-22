@@ -4601,6 +4601,15 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			if (!freerdp_settings_set_bool(settings, FreeRDP_DisableThemes, !enable))
 				return COMMAND_LINE_ERROR;
 		}
+#ifndef _WIN32
+		CommandLineSwitchCase(arg, "timezone")
+		{
+			TIME_ZONE_INFORMATION tz = { 0 };
+			GetTimeZoneInformationFromTZ(&tz, arg->Value);
+			if (!freerdp_settings_set_pointer_array(settings, FreeRDP_ClientTimeZone, 0, &tz))
+				return COMMAND_LINE_ERROR;
+		}
+#endif
 		CommandLineSwitchCase(arg, "timeout")
 		{
 			ULONGLONG val = 0;
