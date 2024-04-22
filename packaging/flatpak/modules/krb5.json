@@ -1,5 +1,5 @@
 {
-	"name": "pkcs11-helper",
+	"name": "krb5",
 	"buildsystem": "autotools",
 	"subdir": "src",
 	"sources": [
