@@ -1,3 +1,19 @@
+# 2024-04-22 Version 3.5.1
+
+This release eliminates a bunch of issues detected during oss-fuzz runs.
+The test coverage was increased and detected issues eliminates, so an update
+is highly recommended.
+
+Noteworthy changes:
+* Lots of fixes for oss-fuzz reports
+* Timezone detection fixes (#10106)
+* SDL key remapping support (#10103)
+* Improved help (#10099)
+* FreeBSD epoll detection fix (#10097)
+
+For a complete and detailed change log since the last release run:
+git log 3.5.1...3.5.0
+
 # 2024-04-16 Version 3.5.0
 
 This release focus is on squashing bugs.
