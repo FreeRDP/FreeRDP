@@ -243,7 +243,7 @@ static BOOL rdp_redirection_read_base64_wchar(UINT32 flag, wStream* s, UINT32* p
 	const WCHAR* wchar = (const WCHAR*)ptr;
 
 	size_t utf8_len = 0;
-	char* utf8 = ConvertWCharNToUtf8Alloc(wchar, *pLength, &utf8_len);
+	char* utf8 = ConvertWCharNToUtf8Alloc(wchar, *pLength / sizeof(WCHAR), &utf8_len);
 	if (!utf8)
 		goto fail;
 
