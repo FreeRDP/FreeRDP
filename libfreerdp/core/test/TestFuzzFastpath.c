@@ -51,9 +51,18 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 		rdp_read_share_data_header(rdp, s, &length, &btype, &share_id, &compressed_type,
 		                           &compressed_len);
 		rdp_recv_message_channel_pdu(rdp, s, securityFlags);
-		rdp_recv_out_of_sequence_pdu(rdp, s, type, length);
+
+		freerdp_settings_set_bool(rdp->settings, FreeRDP_ServerMode, FALSE);
 		rdp_recv_callback(rdp->transport, s, rdp);
+		rdp_read_security_header(rdp, s, &flags, &length);
+		rdp_read_header(rdp, s, &length, &channelId);
+		rdp_read_share_control_header(rdp, s, &tpktLength, &remainingLength, &type, &channelId);
+		rdp_read_share_data_header(rdp, s, &length, &btype, &share_id, &compressed_type,
+		                           &compressed_len);
 		rdp_recv_enhanced_security_redirection_packet(rdp, s);
+		rdp_recv_out_of_sequence_pdu(rdp, s, type, length);
+		rdp_recv_message_channel_pdu(rdp, s, securityFlags);
+		freerdp_settings_set_bool(rdp->settings, FreeRDP_ServerMode, TRUE);
 	}
 	{
 		rdpUpdate* update = rdp->update;
