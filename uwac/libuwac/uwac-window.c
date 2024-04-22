@@ -86,6 +86,8 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 {
 	UwacWindow* window = (UwacWindow*)data;
 	int scale = window->display->actual_scale;
+	int32_t actual_width = width;
+	int32_t actual_height = height;
 	width *= scale;
 	height *= scale;
 	UwacConfigureEvent* event = NULL;
@@ -156,10 +158,9 @@ static void xdg_handle_toplevel_configure(void* data, struct xdg_toplevel* xdg_t
 		if (window->viewport)
 		{
 			wp_viewport_set_source(window->viewport, wl_fixed_from_int(0), wl_fixed_from_int(0),
-			                       wl_fixed_from_int(window->width * scale),
-			                       wl_fixed_from_int(window->height * scale));
-			wp_viewport_set_destination(window->viewport, window->width * scale,
-			                            window->height * scale);
+			                       wl_fixed_from_int(actual_width),
+			                       wl_fixed_from_int(actual_height));
+			wp_viewport_set_destination(window->viewport, actual_width, actual_height);
 		}
 	}
 	else
