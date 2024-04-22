@@ -797,9 +797,11 @@ static INLINE BOOL update_write_4byte_unsigned(wStream* s, UINT32 value)
 
 	return TRUE;
 }
+
 static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 {
 	BYTE byte = 0;
+	UINT32 uvalue = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 1))
 		return FALSE;
@@ -807,9 +809,9 @@ static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 	Stream_Read_UINT8(s, byte);
 
 	if (byte & 0x40)
-		*value = (byte | ~0x3F);
+		uvalue = (byte | ~0x3F);
 	else
-		*value = (byte & 0x3F);
+		uvalue = (byte & 0x3F);
 
 	if (byte & 0x80)
 	{
@@ -817,8 +819,9 @@ static INLINE BOOL update_read_delta(wStream* s, INT32* value)
 			return FALSE;
 
 		Stream_Read_UINT8(s, byte);
-		*value = (*value << 8) | byte;
+		uvalue = (uvalue << 8) | byte;
 	}
+	*value = (INT32)uvalue;
 
 	return TRUE;
 }
