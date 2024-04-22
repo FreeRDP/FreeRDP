@@ -1,21 +1,24 @@
-#include <freerdp/peer.h>
+#include <freerdp/client.h>
+
 #include "../fastpath.h"
 #include "../surface.h"
 #include "../window.h"
 #include "../info.h"
 #include "../multitransport.h"
 
-int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
+static BOOL test_client(const uint8_t* Data, size_t Size)
 {
-	freerdp_peer* client = calloc(1, sizeof(freerdp_peer));
-	if (!client)
-		goto fail;
-	client->ContextSize = sizeof(rdpContext);
-	if (!freerdp_peer_context_new(client))
+	RDP_CLIENT_ENTRY_POINTS entry = { 0 };
+
+	entry.Version = RDP_CLIENT_INTERFACE_VERSION;
+	entry.Size = sizeof(RDP_CLIENT_ENTRY_POINTS_V1);
+	entry.ContextSize = sizeof(rdpContext);
+
+	rdpContext* context = freerdp_client_context_new(&entry);
+	if (!context)
 		goto fail;
 
-	WINPR_ASSERT(client->context);
-	rdpRdp* rdp = client->context->rdp;
+	rdpRdp* rdp = context->rdp;
 	WINPR_ASSERT(rdp);
 
 	wStream sbuffer = { 0 };
@@ -45,14 +48,7 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 		BYTE compressed_type = 0;
 		BYTE btype = 0;
 		UINT16 compressed_len = 0;
-		rdp_read_security_header(rdp, s, &flags, &length);
-		rdp_read_header(rdp, s, &length, &channelId);
-		rdp_read_share_control_header(rdp, s, &tpktLength, &remainingLength, &type, &channelId);
-		rdp_read_share_data_header(rdp, s, &length, &btype, &share_id, &compressed_type,
-		                           &compressed_len);
-		rdp_recv_message_channel_pdu(rdp, s, securityFlags);
 
-		freerdp_settings_set_bool(rdp->settings, FreeRDP_ServerMode, FALSE);
 		rdp_recv_callback(rdp->transport, s, rdp);
 		rdp_read_security_header(rdp, s, &flags, &length);
 		rdp_read_header(rdp, s, &length, &channelId);
@@ -62,7 +58,6 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 		rdp_recv_enhanced_security_redirection_packet(rdp, s);
 		rdp_recv_out_of_sequence_pdu(rdp, s, type, length);
 		rdp_recv_message_channel_pdu(rdp, s, securityFlags);
-		freerdp_settings_set_bool(rdp->settings, FreeRDP_ServerMode, TRUE);
 	}
 	{
 		rdpUpdate* update = rdp->update;
@@ -107,12 +102,15 @@ int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
 		rdp_recv_server_synchronize_pdu(rdp, s);
 		rdp_recv_client_synchronize_pdu(rdp, s);
 
-		freerdp_settings_set_bool(rdp->settings, FreeRDP_ServerMode, FALSE);
 		rdp_recv_data_pdu(rdp, s);
 		rdp_recv_font_map_pdu(rdp, s);
 	}
 fail:
-	freerdp_peer_context_free(client);
-	free(client);
+	freerdp_client_context_free(context);
+}
+
+int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
+{
+	test_client(Data, Size);
 	return 0;
 }
