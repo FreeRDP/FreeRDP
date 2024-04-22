@@ -1,3 +1,11 @@
+# 2024-04-22 Version 2.11.7
+
+Noteworthy changes:
+* Backported oss-fuzz fixes
+
+For a complete and detailed change log since the last release run:
+git log 2.11.7...2.11.6
+
 # 2024-04-17 Version 2.11.6
 
 CVE:
