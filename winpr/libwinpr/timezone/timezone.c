@@ -294,12 +294,43 @@ static BOOL winpr_match_unix_timezone_identifier_with_list(const char* tzid, con
 	return FALSE;
 }
 
+static TIME_ZONE_ENTRY* tzclone(const TIME_ZONE_ENTRY* tz)
+{
+	if (!tz)
+		return NULL;
+
+	TIME_ZONE_ENTRY* ctimezone = (TIME_ZONE_ENTRY*)malloc(sizeof(TIME_ZONE_ENTRY));
+	if (!ctimezone)
+		return NULL;
+
+	*ctimezone = *tz;
+	return ctimezone;
+}
+
 static TIME_ZONE_ENTRY* winpr_unix_to_windows_time_zone(const char* tzid)
 {
 	if (tzid == NULL)
 		goto end;
 
 	WLog_INFO(TAG, "tzid: %s", tzid);
+
+#if WITH_XML
+	for (size_t i = 0; i < TimeZoneTableNrElements; i++)
+	{
+		const TIME_ZONE_ENTRY* tze = &TimeZoneTable[i];
+
+		for (size_t j = 0; j < WindowsTimeZoneIdTableNrElements; j++)
+		{
+			const WINDOWS_TZID_ENTRY* wzid = &WindowsTimeZoneIdTable[j];
+
+			if (strcmp(tze->Id, wzid->windows) != 0)
+				continue;
+
+			if (winpr_match_unix_timezone_identifier_with_list(tzid, wzid->tzid))
+				return tzclone(&TimeZoneTable[i]);
+		}
+	}
+#endif
 
 	for (size_t i = 0; i < TimeZoneTableNrElements; i++)
 	{
@@ -313,15 +344,7 @@ static TIME_ZONE_ENTRY* winpr_unix_to_windows_time_zone(const char* tzid)
 				continue;
 
 			if (winpr_match_unix_timezone_identifier_with_list(tzid, wzid->tzid))
-			{
-				TIME_ZONE_ENTRY* ctimezone = (TIME_ZONE_ENTRY*)malloc(sizeof(TIME_ZONE_ENTRY));
-
-				if (!ctimezone)
-					return NULL;
-
-				*ctimezone = TimeZoneTable[i];
-				return ctimezone;
-			}
+				return tzclone(&TimeZoneTable[i]);
 		}
 	}
 
