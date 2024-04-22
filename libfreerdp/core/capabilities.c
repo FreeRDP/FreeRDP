@@ -1960,8 +1960,8 @@ static BOOL rdp_apply_bitmap_cache_v2_capability_set(rdpSettings* settings, cons
 	{
 		const UINT32 BitmapCacheV2NumCells =
 		    freerdp_settings_get_uint32(src, FreeRDP_BitmapCacheV2NumCells);
-		if (!freerdp_settings_set_uint32(settings, FreeRDP_BitmapCacheV2NumCells,
-		                                 BitmapCacheV2NumCells))
+		if (!freerdp_settings_set_pointer_len(settings, FreeRDP_BitmapCacheV2CellInfo, NULL,
+		                                      BitmapCacheV2NumCells))
 			return FALSE;
 
 		for (size_t x = 0; x < BitmapCacheV2NumCells; x++)
