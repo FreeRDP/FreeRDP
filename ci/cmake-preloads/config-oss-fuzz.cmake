@@ -16,6 +16,8 @@ set (WITH_SWSCALE OFF CACHE BOOL "oss fuzz")
 set (WITH_LIBSYSTEMD OFF CACHE BOOL "oss fuzz")
 set (WITH_UNICODE_BUILTIN ON CACHE BOOL "oss fuzz")
 set (WITH_OPUS OFF CACHE BOOL "oss fuzz")
+set (WITH_CUPS OFF CACHE BOOL "oss fuzz")
+set (CHANNEL_URBDRC OFF CACHE BOOL "oss fuzz")
 
 set (BUILD_SHARED_LIBS OFF CACHE BOOL "oss fuzz")
 
