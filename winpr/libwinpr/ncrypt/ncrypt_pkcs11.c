@@ -1229,13 +1229,13 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
                                                LPCSTR* modulePaths)
 {
 	SECURITY_STATUS status = ERROR_INVALID_PARAMETER;
-	LPCSTR openscPaths[] = { "opensc-pkcs11.so", NULL };
+	LPCSTR defaultPaths[] = { "p11-kit-proxy.so", "opensc-pkcs11.so", NULL };
 
 	if (!phProvider)
 		return ERROR_INVALID_PARAMETER;
 
 	if (!modulePaths)
-		modulePaths = openscPaths;
+		modulePaths = defaultPaths;
 
 	while (*modulePaths)
 	{
@@ -1244,7 +1244,7 @@ SECURITY_STATUS NCryptOpenP11StorageProviderEx(NCRYPT_PROV_HANDLE* phProvider,
 		c_get_function_list_t c_get_function_list = NULL;
 		NCryptP11ProviderHandle* provider = NULL;
 
-		WLog_DBG(TAG, "Trying pkcs11-helper module '%s'", *modulePaths);
+		WLog_DBG(TAG, "Trying pkcs11 module '%s'", *modulePaths);
 		if (!library)
 		{
 			status = NTE_PROV_DLL_NOT_FOUND;
