@@ -2031,7 +2031,9 @@ static BOOL update_send_cache_brush(rdpContext* context, const CACHE_BRUSH_ORDER
 		return FALSE;
 
 	const size_t em = Stream_GetPosition(s);
-	WINPR_ASSERT(em > bm + 13);
+	if (em <= bm + 13)
+		return FALSE;
+
 	const size_t orderLength = (em - bm) - 13;
 	WINPR_ASSERT(orderLength <= UINT16_MAX);
 	Stream_SetPosition(s, bm);
