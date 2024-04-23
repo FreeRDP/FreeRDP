@@ -15,4 +15,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-winpr_module_add(timezone.c TimeZones.c WindowsZones.c TimeZones.h WindowsZones.h)
+
+if (NOT WIN32)
+	set(SRCS
+		timezone.c
+	)
+
+	option(WITH_TIMEZONE_BUILTIN "Use compiled in timezone mapping" ON)
+
+	if (NOT WITH_TIMEZONE_BUILTIN)
+		find_package(ICU COMPONENTS i18n uc REQUIRED)
+		winpr_include_directory_add(${ICU_INCLUDE_DIRS})
+		winpr_library_add_private(${ICU_LIBRARIES})
+	else()
+		winpr_definition_add(-DWITH_TIMEZONE_BUILTIN)
+		list(APPEND SRCS
+			TimeZones.c
+			WindowsZones.c
+			TimeZones.h
+			WindowsZones.h
+		)
+	endif()
+
+	winpr_module_add(${SRCS})
+endif()
