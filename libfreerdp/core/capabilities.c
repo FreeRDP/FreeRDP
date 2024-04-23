@@ -2001,11 +2001,25 @@ static BOOL rdp_read_bitmap_cache_v2_capability_set(wStream* s, rdpSettings* set
 
 	Stream_Seek_UINT8(s);                                  /* pad2 (1 byte) */
 	Stream_Read_UINT8(s, settings->BitmapCacheV2NumCells); /* numCellCaches (1 byte) */
-	for (size_t x = 0; x < 5; x++)
+	if (settings->BitmapCacheV2NumCells > 5)
+	{
+		WLog_ERR(TAG, "Invalid TS_BITMAPCACHE_CAPABILITYSET_REV2::numCellCaches %" PRIu32 " > 5",
+		         settings->BitmapCacheV2NumCells);
+		return FALSE;
+	}
+
+	for (size_t x = 0; x < settings->BitmapCacheV2NumCells; x++)
 	{
 		BITMAP_CACHE_V2_CELL_INFO* info =
 		    freerdp_settings_get_pointer_array_writable(settings, FreeRDP_BitmapCacheV2CellInfo, x);
 		if (!rdp_read_bitmap_cache_cell_info(s, info))
+			return FALSE;
+	}
+
+	/* Input must always have 5 BitmapCacheV2CellInfo values */
+	for (size_t x = settings->BitmapCacheV2NumCells; x < 5; x++)
+	{
+		if (!Stream_SafeSeek(s, 4))
 			return FALSE;
 	}
 	Stream_Seek(s, 12); /* pad3 (12 bytes) */
