@@ -211,6 +211,14 @@ static BOOL rdp_read_general_capability_set(wStream* s, rdpSettings* settings)
 	Stream_Read_UINT16(s, settings->OsMinorType); /* osMinorType (2 bytes) */
 
 	Stream_Read_UINT16(s, settings->CapsProtocolVersion); /* protocolVersion (2 bytes) */
+	if (settings->CapsProtocolVersion != TS_CAPS_PROTOCOLVERSION)
+	{
+		WLog_ERR(TAG,
+		         "TS_GENERAL_CAPABILITYSET::protocolVersion(0x%04" PRIx16
+		         ") != TS_CAPS_PROTOCOLVERSION(0x%04" PRIx32 ")",
+		         settings->CapsProtocolVersion, TS_CAPS_PROTOCOLVERSION);
+		return FALSE;
+	}
 	Stream_Seek_UINT16(s);                                /* pad2OctetsA (2 bytes) */
 	Stream_Read_UINT16(
 	    s, settings->CapsGeneralCompressionTypes); /* generalCompressionTypes (2 bytes) */
@@ -269,6 +277,14 @@ static BOOL rdp_write_general_capability_set(wStream* s, const rdpSettings* sett
 		         "OsMajorType=%08" PRIx32 ", OsMinorType=%08" PRIx32
 		         " they need to be smaller %04" PRIx16,
 		         settings->OsMajorType, settings->OsMinorType, UINT16_MAX);
+		return FALSE;
+	}
+	if (settings->CapsProtocolVersion != TS_CAPS_PROTOCOLVERSION)
+	{
+		WLog_ERR(TAG,
+		         "TS_GENERAL_CAPABILITYSET::protocolVersion(0x%04" PRIx16
+		         ") != TS_CAPS_PROTOCOLVERSION(0x%04" PRIx32 ")",
+		         settings->CapsProtocolVersion, TS_CAPS_PROTOCOLVERSION);
 		return FALSE;
 	}
 	Stream_Write_UINT16(s, (UINT16)settings->OsMajorType); /* osMajorType (2 bytes) */
