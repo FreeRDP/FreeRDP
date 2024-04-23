@@ -239,6 +239,9 @@ extern "C"
 #define MSTSC_COOKIE_MAX_LENGTH 9
 #define DEFAULT_COOKIE_MAX_LENGTH 0xFF
 
+	/* General capability set */
+#define TS_CAPS_PROTOCOLVERSION 0x200
+
 /* Order Support */
 #define NEG_DSTBLT_INDEX 0x00
 #define NEG_PATBLT_INDEX 0x01
