@@ -166,6 +166,7 @@ static BOOL rdp_apply_general_capability_set(rdpSettings* settings, const rdpSet
 		settings->OsMinorType = src->OsMinorType;
 	}
 
+	settings->CapsProtocolVersion = src->CapsProtocolVersion;
 	settings->NoBitmapCompressionHeader = src->NoBitmapCompressionHeader;
 	settings->LongCredentialsSupported = src->LongCredentialsSupported;
 	settings->AutoReconnectionPacketSupported = src->AutoReconnectionPacketSupported;
