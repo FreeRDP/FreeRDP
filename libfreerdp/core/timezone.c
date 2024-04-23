@@ -143,7 +143,6 @@ BOOL rdp_write_client_time_zone(wStream* s, rdpSettings* settings)
 	if (!tz)
 		return FALSE;
 
-	GetTimeZoneInformation(tz);
 	if (!Stream_EnsureRemainingCapacity(s, 4ull + sizeof(tz->StandardName)))
 		return FALSE;
 
