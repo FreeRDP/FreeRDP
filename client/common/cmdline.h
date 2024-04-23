@@ -297,7 +297,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "list", COMMAND_LINE_VALUE_REQUIRED | COMMAND_LINE_PRINT,
 	  "[kbd|kbd-scancode|kbd-lang[:<value>]|smartcard[:[pkinit-anchors:<path>][,pkcs11-module:<"
 	  "name>]]|"
-	  "monitor|tune]",
+	  "monitor|tune|timezones]",
 	  "List available options for subcommand", NULL, -1, NULL,
 	  "List available options for subcommand" },
 	{ "log-filters", COMMAND_LINE_VALUE_REQUIRED, "<tag>:<level>[,<tag>:<level>[,...]]", NULL, NULL,
@@ -453,6 +453,9 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "timeout", COMMAND_LINE_VALUE_REQUIRED, "<time in ms>", "9000", NULL, -1, "timeout",
 	  "Advanced setting for high latency links: Adjust connection timeout, use if you encounter "
 	  "timeout failures with your connection" },
+	{ "timezone", COMMAND_LINE_VALUE_REQUIRED, "<windows timezone>", NULL, NULL, -1, NULL,
+	  "Use supplied windows timezone for connection (requires server support), see /list:timezones "
+	  "for allowed values" },
 	{ "tls", COMMAND_LINE_VALUE_REQUIRED, "[ciphers|seclevel|secrets-file|enforce]", NULL, NULL, -1,
 	  NULL,
 	  "TLS configuration options:"

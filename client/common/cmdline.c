@@ -30,6 +30,7 @@
 #include <winpr/path.h>
 #include <winpr/ncrypt.h>
 #include <winpr/environment.h>
+#include <winpr/timezone.h>
 
 #include <freerdp/freerdp.h>
 #include <freerdp/addin.h>
@@ -1666,11 +1667,24 @@ static void freerdp_client_print_keyboard_list(void)
 	                                        RDP_KEYBOARD_LAYOUT_TYPE_IME);
 }
 
+static void freerdp_client_print_timezone_list(void)
+{
+	DWORD index = 0;
+	DYNAMIC_TIME_ZONE_INFORMATION info = { 0 };
+	while (EnumDynamicTimeZoneInformation(index++, &info) != ERROR_NO_MORE_ITEMS)
+	{
+		char TimeZoneKeyName[ARRAYSIZE(info.TimeZoneKeyName) + 1] = { 0 };
+
+		ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName), TimeZoneKeyName,
+		                    ARRAYSIZE(TimeZoneKeyName));
+		printf("%" PRIu32 ": '%s'\n", index, TimeZoneKeyName);
+	}
+}
+
 static void freerdp_client_print_tune_list(const rdpSettings* settings)
 {
 	SSIZE_T type = 0;
 
-	printf("%s\t%50s\t%s\t%s", "<index>", "<key>", "<type>", "<default value>\n");
 	for (size_t x = 0; x < FreeRDP_Settings_StableAPI_MAX; x++)
 	{
 		const char* name = freerdp_settings_get_name_for_key(x);
@@ -1755,7 +1769,9 @@ int freerdp_client_settings_command_line_status_print_ex(rdpSettings* settings, 
 
 		if (arg->Flags & COMMAND_LINE_ARGUMENT_PRESENT)
 		{
-			if (option_equals("tune", arg->Value))
+			if (option_equals("timezones", arg->Value))
+				freerdp_client_print_timezone_list();
+			else if (option_equals("tune", arg->Value))
 				freerdp_client_print_tune_list(settings);
 			else if (option_equals("kbd", arg->Value))
 				freerdp_client_print_keyboard_list();
@@ -4717,6 +4733,43 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 				return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_TcpAckTimeout, (UINT32)val))
 				return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
+		}
+		CommandLineSwitchCase(arg, "timezone")
+		{
+			BOOL found = FALSE;
+			DWORD index = 0;
+			DYNAMIC_TIME_ZONE_INFORMATION info = { 0 };
+			char TimeZoneKeyName[ARRAYSIZE(info.TimeZoneKeyName) + 1] = { 0 };
+			while (EnumDynamicTimeZoneInformation(index++, &info) != ERROR_NO_MORE_ITEMS)
+			{
+				ConvertWCharNToUtf8(info.TimeZoneKeyName, ARRAYSIZE(info.TimeZoneKeyName),
+				                    TimeZoneKeyName, ARRAYSIZE(TimeZoneKeyName));
+
+				if (strncmp(TimeZoneKeyName, arg->Value, ARRAYSIZE(TimeZoneKeyName)) == 0)
+				{
+					found = TRUE;
+					break;
+				}
+			}
+			if (!found)
+				return fail_at(arg, COMMAND_LINE_ERROR_UNEXPECTED_VALUE);
+
+			if (!freerdp_settings_set_string(settings, FreeRDP_DynamicDSTTimeZoneKeyName,
+			                                 TimeZoneKeyName))
+				return fail_at(arg, COMMAND_LINE_ERROR);
+
+			TIME_ZONE_INFORMATION* tz =
+			    freerdp_settings_get_pointer_writable(settings, FreeRDP_ClientTimeZone);
+			if (!tz)
+				return fail_at(arg, COMMAND_LINE_ERROR_MEMORY);
+
+			tz->Bias = info.Bias;
+			tz->DaylightBias = info.DaylightBias;
+			tz->DaylightDate = info.DaylightDate;
+			memcpy(tz->DaylightName, info.DaylightName, sizeof(tz->DaylightName));
+			tz->StandardBias = info.StandardBias;
+			tz->StandardDate = info.StandardDate;
+			memcpy(tz->StandardName, info.StandardName, sizeof(tz->StandardName));
 		}
 		CommandLineSwitchCase(arg, "aero")
 		{

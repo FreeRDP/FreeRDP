@@ -38,9 +38,7 @@
 #include "TimeZoneNameMap.h"
 #include "TimeZoneIanaAbbrevMap.h"
 
-#ifdef _WIN32
-#pragma comment(lib, "advapi32")
-#else
+#ifndef _WIN32
 
 #include <time.h>
 #include <unistd.h>
@@ -845,7 +843,7 @@ BOOL TzSpecificLocalTimeToSystemTimeEx(const DYNAMIC_TIME_ZONE_INFORMATION* lpTi
 
 #endif
 
-#if !defined(_WIN32) || (defined(_WIN32) && (_WIN32_WINNT < 0x0602)) /* Windows 8 */
+#if !defined(_WIN32)
 
 DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
                                      PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation)
@@ -909,7 +907,24 @@ DWORD GetDynamicTimeZoneInformationEffectiveYears(
 	WINPR_UNUSED(lpTimeZoneInformation);
 	WINPR_UNUSED(FirstYear);
 	WINPR_UNUSED(LastYear);
-	return 0;
+	return ERROR_FILE_NOT_FOUND;
 }
 
+#elif _WIN32_WINNT < 0x0602 /* Windows 8 */
+DWORD EnumDynamicTimeZoneInformation(const DWORD dwIndex,
+                                     PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation)
+{
+	WINPR_UNUSED(dwIndex);
+	WINPR_UNUSED(lpTimeZoneInformation);
+	return ERROR_NO_MORE_ITEMS;
+}
+
+DWORD GetDynamicTimeZoneInformationEffectiveYears(
+    const PDYNAMIC_TIME_ZONE_INFORMATION lpTimeZoneInformation, LPDWORD FirstYear, LPDWORD LastYear)
+{
+	WINPR_UNUSED(lpTimeZoneInformation);
+	WINPR_UNUSED(FirstYear);
+	WINPR_UNUSED(LastYear);
+	return ERROR_FILE_NOT_FOUND;
+}
 #endif
