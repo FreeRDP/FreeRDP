@@ -451,6 +451,8 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "timeout", COMMAND_LINE_VALUE_REQUIRED, "<time in ms>", "9000", NULL, -1, "timeout",
 	  "Advanced setting for high latency links: Adjust connection timeout, use if you encounter "
 	  "timeout failures with your connection" },
+	{ "timezone", COMMAND_LINE_VALUE_REQUIRED, "<IANA timezone>", NULL, NULL, -1, NULL,
+	  "Use supplied IANA timezone for connection (requires server support)" },
 	{ "tls", COMMAND_LINE_VALUE_REQUIRED, "[ciphers|seclevel|secrets-file|enforce]", NULL, NULL, -1,
 	  NULL,
 	  "TLS configuration options:"

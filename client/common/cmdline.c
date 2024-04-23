@@ -4609,6 +4609,22 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			if (!freerdp_settings_set_uint32(settings, FreeRDP_TcpAckTimeout, (UINT32)val))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 		}
+		CommandLineSwitchCase(arg, "timezone")
+		{
+			TIME_ZONE_INFORMATION* ctz = winpr_GetWindowsTimezoneFromIANA(arg->Value);
+			if (!ctz)
+				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+
+			TIME_ZONE_INFORMATION* tz =
+			    freerdp_settings_get_pointer_writable(settings, FreeRDP_ClientTimeZone);
+			if (!tz)
+			{
+				free(ctz);
+				return COMMAND_LINE_ERROR_MEMORY;
+			}
+			*tz = *ctz;
+			free(ctz);
+		}
 		CommandLineSwitchCase(arg, "aero")
 		{
 			if (!freerdp_settings_set_bool(settings, FreeRDP_AllowDesktopComposition, enable))
