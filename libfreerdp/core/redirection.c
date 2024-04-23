@@ -815,6 +815,18 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 		Stream_Read_UINT32(s, targetNetAddressesLength);
 		Stream_Read_UINT32(s, redirection->TargetNetAddressesCount);
 		const UINT32 count = redirection->TargetNetAddressesCount;
+		/* sanity check: the whole packet has a length limit of UINT16_MAX
+		 * each TargetNetAddress is a WCHAR string, so minimum length 2 bytes
+		 */
+		if (count * sizeof(WCHAR) > Stream_GetRemainingLength(s))
+		{
+			WLog_ERR(TAG,
+			         "Invalid RDP_SERVER_REDIRECTION_PACKET::TargetNetAddressLength %" PRIuz
+			         ", sanity limit is %" PRIuz,
+			         count * sizeof(WCHAR), Stream_GetRemainingLength(s));
+			return STATE_RUN_FAILED;
+		}
+
 		redirection->TargetNetAddresses = NULL;
 		if (count > 0)
 		{
