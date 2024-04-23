@@ -685,3 +685,14 @@ DWORD GetDynamicTimeZoneInformationEffectiveYears(
 }
 
 #endif
+
+TIME_ZONE_INFORMATION* winpr_GetWindowsTimezoneFromIANA(const char* tzid)
+{
+	WCHAR* wzid = tz_map_iana_to_windows(tzid);
+	if (!wzid)
+		return NULL;
+
+	TIME_ZONE_INFORMATION* entry = winpr_get_from_id(tzid, wzid);
+	free(wzid);
+	return entry;
+}
