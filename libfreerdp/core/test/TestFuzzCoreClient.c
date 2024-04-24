@@ -107,6 +107,7 @@ static BOOL test_client(const uint8_t* Data, size_t Size)
 	}
 fail:
 	freerdp_client_context_free(context);
+	return TRUE;
 }
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)

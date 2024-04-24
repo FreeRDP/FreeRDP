@@ -77,7 +77,6 @@ static BOOL test_server(const uint8_t* Data, size_t Size)
 		rdp_recv_heartbeat_packet(rdp, s);
 		rdp->state = CONNECTION_STATE_SECURE_SETTINGS_EXCHANGE;
 		rdp_recv_client_info(rdp, s);
-		rdp_recv_save_session_info(rdp, s);
 	}
 	{
 		freerdp_is_valid_mcs_create_request(Data, Size);
@@ -99,6 +98,7 @@ static BOOL test_server(const uint8_t* Data, size_t Size)
 fail:
 	freerdp_peer_context_free(client);
 	free(client);
+	return TRUE;
 }
 
 int LLVMFuzzerTestOneInput(const uint8_t* Data, size_t Size)
