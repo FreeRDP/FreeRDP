@@ -698,7 +698,24 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		goto out_fail;
 
 	if (!settings->ServerMode)
-		GetTimeZoneInformation(settings->ClientTimeZone);
+	{
+		DYNAMIC_TIME_ZONE_INFORMATION dynamic = { 0 };
+		TIME_ZONE_INFORMATION* tz =
+		    freerdp_settings_get_pointer_writable(settings, FreeRDP_ClientTimeZone);
+		WINPR_ASSERT(tz);
+
+		GetTimeZoneInformation(tz);
+		GetDynamicTimeZoneInformation(&dynamic);
+
+		if (!freerdp_settings_set_string_from_utf16N(settings, FreeRDP_DynamicDSTTimeZoneKeyName,
+		                                             dynamic.TimeZoneKeyName,
+		                                             ARRAYSIZE(dynamic.TimeZoneKeyName)))
+			goto out_fail;
+
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DynamicDaylightTimeDisabled,
+		                               dynamic.DynamicDaylightTimeDisabled))
+			goto out_fail;
+	}
 
 	if (!freerdp_settings_set_bool(settings, FreeRDP_TcpKeepAlive, TRUE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_TcpKeepAliveRetries, 3) ||
