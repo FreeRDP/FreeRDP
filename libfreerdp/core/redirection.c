@@ -808,40 +808,44 @@ static state_run_t rdp_recv_server_redirection_pdu(rdpRdp* rdp, wStream* s)
 	if (redirection->flags & LB_TARGET_NET_ADDRESSES)
 	{
 		UINT32 targetNetAddressesLength = 0;
+		UINT32 TargetNetAddressesCount = 0;
 
 		if (!Stream_CheckAndLogRequiredLength(TAG, s, 8))
 			return STATE_RUN_FAILED;
 
 		Stream_Read_UINT32(s, targetNetAddressesLength);
-		Stream_Read_UINT32(s, redirection->TargetNetAddressesCount);
-		const UINT32 count = redirection->TargetNetAddressesCount;
+		Stream_Read_UINT32(s, TargetNetAddressesCount);
+
 		/* sanity check: the whole packet has a length limit of UINT16_MAX
 		 * each TargetNetAddress is a WCHAR string, so minimum length 2 bytes
 		 */
-		if (count * sizeof(WCHAR) > Stream_GetRemainingLength(s))
+		if (TargetNetAddressesCount * sizeof(WCHAR) > Stream_GetRemainingLength(s))
 		{
 			WLog_ERR(TAG,
 			         "Invalid RDP_SERVER_REDIRECTION_PACKET::TargetNetAddressLength %" PRIuz
 			         ", sanity limit is %" PRIuz,
-			         count * sizeof(WCHAR), Stream_GetRemainingLength(s));
+			         TargetNetAddressesCount * sizeof(WCHAR), Stream_GetRemainingLength(s));
 			return STATE_RUN_FAILED;
 		}
 
 		redirection->TargetNetAddresses = NULL;
-		if (count > 0)
+		if (TargetNetAddressesCount > 0)
 		{
-			redirection->TargetNetAddresses = (char**)calloc(count, sizeof(char*));
+			redirection->TargetNetAddresses =
+			    (char**)calloc(TargetNetAddressesCount, sizeof(char*));
 
 			if (!redirection->TargetNetAddresses)
 			{
-				WLog_ERR(TAG, "TargetNetAddresses %" PRIu32 " failed to allocate", count);
+				WLog_ERR(TAG, "TargetNetAddresses %" PRIu32 " failed to allocate",
+				         TargetNetAddressesCount);
 				return STATE_RUN_FAILED;
 			}
 		}
+		redirection->TargetNetAddressesCount = TargetNetAddressesCount;
 
-		WLog_DBG(TAG, "TargetNetAddressesCount: %" PRIu32 "", count);
+		WLog_DBG(TAG, "TargetNetAddressesCount: %" PRIu32 "", TargetNetAddressesCount);
 
-		for (UINT32 i = 0; i < count; i++)
+		for (UINT32 i = 0; i < TargetNetAddressesCount; i++)
 		{
 			if (!rdp_redirection_read_unicode_string(s, &(redirection->TargetNetAddresses[i]), 80))
 				return STATE_RUN_FAILED;
