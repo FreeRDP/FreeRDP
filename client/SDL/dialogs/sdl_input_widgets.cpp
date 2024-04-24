@@ -164,10 +164,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 				{
 					auto it = std::remove(pressed.begin(), pressed.end(), event.key.keysym.sym);
 					pressed.erase(it, pressed.end());
-				}
-				break;
-				case SDL_KEYDOWN:
-					pressed.push_back(event.key.keysym.sym);
+
 					switch (event.key.keysym.sym)
 					{
 						case SDLK_BACKSPACE:
@@ -210,6 +207,10 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 						default:
 							break;
 					}
+				}
+				break;
+				case SDL_KEYDOWN:
+					pressed.push_back(event.key.keysym.sym);
 					break;
 				case SDL_TEXTINPUT:
 				{

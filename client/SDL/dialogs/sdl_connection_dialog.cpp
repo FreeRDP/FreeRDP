@@ -49,7 +49,11 @@ SDLConnectionDialog::~SDLConnectionDialog()
 
 bool SDLConnectionDialog::visible() const
 {
-	return _window && _renderer;
+	if (!_window || !_renderer)
+		return false;
+
+	auto flags = SDL_GetWindowFlags(_window);
+	return (flags & (SDL_WINDOW_HIDDEN | SDL_WINDOW_MINIMIZED)) == 0;
 }
 
 bool SDLConnectionDialog::setTitle(const char* fmt, ...)
