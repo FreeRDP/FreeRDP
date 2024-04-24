@@ -29,6 +29,10 @@
 
 #define TAG WINPR_TAG("timezone")
 
+#ifndef MIN
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif
+
 #if defined(WITH_TIMEZONE_BUILTIN)
 #include "WindowsZones.h"
 #include "TimeZones.h"
@@ -700,9 +704,7 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 		*tz = *dtz;
 
 		free(dtz);
-		/* 1 ... TIME_ZONE_ID_STANDARD
-		 * 2 ... TIME_ZONE_ID_DAYLIGHT */
-		return local_time->tm_isdst ? 2 : 1;
+		return local_time->tm_isdst ? TIME_ZONE_ID_DAYLIGHT : TIME_ZONE_ID_STANDARD;
 	}
 
 	/* could not detect timezone, use computed bias from tm_gmtoff */
@@ -712,7 +714,7 @@ out_error:
 	if (ConvertUtf8ToWChar("Client Local Time", tz->StandardName, ARRAYSIZE(tz->StandardName)) <= 0)
 		WLog_WARN(TAG, "Failed to set default timezone name");
 	memcpy(tz->DaylightName, tz->StandardName, sizeof(tz->DaylightName));
-	return 0; /* TIME_ZONE_ID_UNKNOWN */
+	return TIME_ZONE_ID_UNKNOWN;
 }
 
 BOOL SetTimeZoneInformation(const TIME_ZONE_INFORMATION* lpTimeZoneInformation)
@@ -765,8 +767,28 @@ BOOL TzSpecificLocalTimeToSystemTime(LPTIME_ZONE_INFORMATION lpTimeZoneInformati
 
 DWORD GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION pTimeZoneInformation)
 {
-	WINPR_UNUSED(pTimeZoneInformation);
-	return 0;
+	TIME_ZONE_INFORMATION tz = { 0 };
+	const DWORD rc = GetTimeZoneInformation(&tz);
+
+	WINPR_ASSERT(pTimeZoneInformation);
+	pTimeZoneInformation->Bias = tz.Bias;
+	memcpy(pTimeZoneInformation->StandardName, tz.StandardName,
+	       MIN(sizeof(tz.StandardName), sizeof(pTimeZoneInformation->StandardName)));
+	pTimeZoneInformation->StandardDate = tz.StandardDate;
+	pTimeZoneInformation->StandardBias = tz.StandardBias;
+
+	memcpy(pTimeZoneInformation->DaylightName, tz.DaylightName,
+	       MIN(sizeof(tz.DaylightName), sizeof(pTimeZoneInformation->DaylightName)));
+	pTimeZoneInformation->DaylightDate = tz.DaylightDate;
+	pTimeZoneInformation->DaylightBias = tz.DaylightBias;
+
+	memcpy(pTimeZoneInformation->TimeZoneKeyName, tz.StandardName,
+	       MIN(sizeof(tz.StandardName), sizeof(pTimeZoneInformation->TimeZoneKeyName)));
+
+	/* https://learn.microsoft.com/en-us/windows/win32/api/timezoneapi/ns-timezoneapi-dynamic_time_zone_information
+	 */
+	pTimeZoneInformation->DynamicDaylightTimeDisabled = FALSE;
+	return rc;
 }
 
 BOOL SetDynamicTimeZoneInformation(const DYNAMIC_TIME_ZONE_INFORMATION* lpTimeZoneInformation)

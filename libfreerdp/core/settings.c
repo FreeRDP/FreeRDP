@@ -712,8 +712,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		                                             ARRAYSIZE(dynamic.TimeZoneKeyName)))
 			goto out_fail;
 
-		if (freerdp_settings_set_bool(settings, FreeRDP_DynamicDaylightTimeDisabled,
-		                              dynamic.DynamicDaylightTimeDisabled))
+		if (!freerdp_settings_set_bool(settings, FreeRDP_DynamicDaylightTimeDisabled,
+		                               dynamic.DynamicDaylightTimeDisabled))
 			goto out_fail;
 	}
 
