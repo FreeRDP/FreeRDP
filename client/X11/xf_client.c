@@ -1991,11 +1991,14 @@ static void xfreerdp_client_free(freerdp* instance, rdpContext* context)
 	if (!context)
 		return;
 
-	PubSub_UnsubscribeTerminate(context->pubSub, xf_TerminateEventHandler);
+	if (context->pubSub)
+	{
+		PubSub_UnsubscribeTerminate(context->pubSub, xf_TerminateEventHandler);
 #ifdef WITH_XRENDER
-	PubSub_UnsubscribeZoomingChange(context->pubSub, xf_ZoomingChangeEventHandler);
-	PubSub_UnsubscribePanningChange(context->pubSub, xf_PanningChangeEventHandler);
+		PubSub_UnsubscribeZoomingChange(context->pubSub, xf_ZoomingChangeEventHandler);
+		PubSub_UnsubscribePanningChange(context->pubSub, xf_PanningChangeEventHandler);
 #endif
+	}
 }
 
 int RdpClientEntry(RDP_CLIENT_ENTRY_POINTS* pEntryPoints)
