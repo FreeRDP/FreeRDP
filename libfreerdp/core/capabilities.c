@@ -1414,7 +1414,7 @@ static BOOL rdp_read_input_capability_set(wStream* s, rdpSettings* settings)
 		if (ConvertWCharNToUtf8(wstr, ARRAYSIZE(wstr), str, ARRAYSIZE(str)) < 0)
 			memset(str, 0, sizeof(str));
 
-		if (!freerdp_settings_set_string(settings, FreeRDP_ImeFileName, str))
+		if (!freerdp_settings_set_string_len(settings, FreeRDP_ImeFileName, str, ARRAYSIZE(str)))
 			return FALSE;
 	}
 
