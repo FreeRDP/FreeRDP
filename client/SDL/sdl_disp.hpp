@@ -43,6 +43,10 @@ class sdlDispContext
 	BOOL handle_window_event(const SDL_WindowEvent* ev);
 
   private:
+	sdlDispContext(const sdlDispContext& other) = delete;
+	sdlDispContext(sdlDispContext&& other) = delete;
+
+  private:
 	UINT DisplayControlCaps(UINT32 maxNumMonitors, UINT32 maxMonitorAreaFactorA,
 	                        UINT32 maxMonitorAreaFactorB);
 	BOOL set_window_resizable();

@@ -62,6 +62,10 @@ class sdlInput
 	void remapInitialize();
 
   private:
+	sdlInput(const sdlInput& other) = delete;
+	sdlInput(sdlInput&& other) = delete;
+
+  private:
 	SdlContext* _sdl;
 	Uint32 _lastWindowID;
 	std::map<uint32_t, uint32_t> _remapList;

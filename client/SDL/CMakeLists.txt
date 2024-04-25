@@ -74,6 +74,7 @@ endif()
 find_package(Threads REQUIRED)
 
 add_subdirectory(dialogs)
+add_subdirectory(rails)
 set(SRCS
     sdl_types.hpp
     sdl_utils.cpp
@@ -105,6 +106,7 @@ list(APPEND LIBS
         sdl_client_res
         dialogs
         aad-view
+        rails
     )
 
 if (NOT WITH_SDL_LINK_SHARED)
