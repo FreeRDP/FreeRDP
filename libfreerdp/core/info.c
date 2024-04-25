@@ -1062,14 +1062,14 @@ static BOOL rdp_info_read_string(const char* what, wStream* s, size_t size, size
 	}
 
 	const WCHAR* str = Stream_ConstPointer(s);
+	if (!Stream_SafeSeek(s, skipMax ? max : size))
+		return FALSE;
+
 	if (str[size / sizeof(WCHAR) - 1])
 	{
 		WLog_ERR(TAG, "protocol error: %s must be null terminated", what);
 		return FALSE;
 	}
-
-	if (!Stream_SafeSeek(s, skipMax ? max : size))
-		return FALSE;
 
 	size_t len = 0;
 	char* rc = ConvertWCharNToUtf8Alloc(str, size / sizeof(WCHAR), &len);
