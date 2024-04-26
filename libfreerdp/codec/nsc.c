@@ -230,6 +230,7 @@ static BOOL nsc_rle_decompress_data(NSC_CONTEXT* context)
 		}
 
 		rle += planeSize;
+		rleSize -= planeSize;
 	}
 
 	return TRUE;
