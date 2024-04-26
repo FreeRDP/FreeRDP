@@ -21,6 +21,7 @@
 #include "sdl_disp.hpp"
 #include "sdl_freerdp.hpp"
 #include "sdl_utils.hpp"
+#include "sdl_prefs.hpp"
 
 #include <map>
 

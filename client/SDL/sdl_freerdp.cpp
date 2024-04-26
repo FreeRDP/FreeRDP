@@ -56,6 +56,7 @@
 #include "sdl_kbd.hpp"
 #include "sdl_touch.hpp"
 #include "sdl_pointer.hpp"
+#include "sdl_prefs.hpp"
 #include "dialogs/sdl_dialogs.hpp"
 
 #include "aad/sdl_webview.hpp"
