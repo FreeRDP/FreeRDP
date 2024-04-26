@@ -476,8 +476,8 @@ BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* mess
 	return TRUE;
 }
 
-BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data, UINT32 width,
-                         UINT32 height, UINT32 scanline)
+BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* WINPR_RESTRICT data,
+                         UINT32 width, UINT32 height, UINT32 scanline)
 {
 	BOOL rc = 0;
 	NSC_MESSAGE message = { 0 };
@@ -515,8 +515,8 @@ BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* data, UIN
 	return nsc_write_message(context, s, &message);
 }
 
-BOOL nsc_decompose_message(NSC_CONTEXT* context, wStream* s, BYTE* bmpdata, UINT32 x, UINT32 y,
-                           UINT32 width, UINT32 height, UINT32 rowstride, UINT32 format,
+BOOL nsc_decompose_message(NSC_CONTEXT* context, wStream* s, BYTE* WINPR_RESTRICT bmpdata, UINT32 x,
+                           UINT32 y, UINT32 width, UINT32 height, UINT32 rowstride, UINT32 format,
                            UINT32 flip)
 {
 	size_t size = Stream_GetRemainingLength(s);
