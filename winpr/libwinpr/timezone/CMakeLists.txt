@@ -42,3 +42,10 @@ else()
 endif()
 
 winpr_module_add(${SRCS})
+
+if (WIN32)
+    option(WITH_TIMEZONE_UPDATER "Build C# tzextract" OFF)
+    if (WITH_TIMEZONE_UPDATER)
+        add_subdirectory(utils)
+    endif()
+endif()
