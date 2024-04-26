@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include <string>
-
 #include <winpr/synch.h>
 #include <winpr/wlog.h>
 
