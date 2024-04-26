@@ -110,8 +110,8 @@ static BOOL nsc_decode(NSC_CONTEXT* context)
 	return TRUE;
 }
 
-static BOOL nsc_rle_decode(const BYTE* in, size_t inSize, BYTE* out, UINT32 outSize,
-                           UINT32 originalSize)
+static BOOL nsc_rle_decode(const BYTE* WINPR_RESTRICT in, size_t inSize, BYTE* WINPR_RESTRICT out,
+                           UINT32 outSize, UINT32 originalSize)
 {
 	UINT32 left = originalSize;
 
@@ -432,9 +432,9 @@ BOOL nsc_context_set_parameters(NSC_CONTEXT* context, NSC_PARAMETER what, UINT32
 }
 
 BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT32 width, UINT32 height,
-                         const BYTE* data, UINT32 length, BYTE* pDstData, UINT32 DstFormat,
-                         UINT32 nDstStride, UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
-                         UINT32 nHeight, UINT32 flip)
+                         const BYTE* WINPR_RESTRICT data, UINT32 length,
+                         BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStride,
+                         UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, UINT32 flip)
 {
 	wStream* s = NULL;
 	wStream sbuffer = { 0 };
