@@ -112,9 +112,9 @@ static const char* map_fallback(const char* iana, TimeZoneNameType type)
 	if (!iana)
 		return NULL;
 
-	for (size_t x = 0; x < WindowsTimeZoneIdTableNrElements; x++)
+	for (size_t x = 0; x < WindowsZonesNrElements; x++)
 	{
-		const WINDOWS_TZID_ENTRY* const entry = &WindowsTimeZoneIdTable[x];
+		const WINDOWS_TZID_ENTRY* const entry = &WindowsZones[x];
 		if (strcmp(entry->tzid, iana) == 0)
 			return entry->windows;
 	}

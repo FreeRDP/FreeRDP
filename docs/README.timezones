@@ -1,12 +1,22 @@
-On an up to date windows machine run the following scripts (from checkout root):
+On an up to date windows machine run the following binary after a build with -DWITH_TIMEZONE_UPDATER=ON (from build directory):
 
-csi.exe scripts/TimeZones.csx
-csi.exe scripts/WindowsZones.csx
+tzextract <path to source>\winpr\libwinpr\timezone
 
 After running the scripts check
- * winpr/libwinpr/timezone/TimeZones.c
+ * git clang-format -f to eliminate formatting changes
  * winpr/libwinpr/timezone/WindowsZones.c
 for changes.
 
-Commit if the definitions changed and create a pull request at
-https://github.com/FreeRDP/FreeRDP
+on any machine run the following script from checkout root:
+
+./scripts/update-windows-zones.py
+
+After running the scripts check
+ * git clang-format -f to eliminate formatting changes
+ * winpr/libwinpr/timezone/WindowsZones.c
+for changes.
+
+Commit if the definitions changed:
+1. run `git clang-format -f` on these changed files
+2. commit these changes
+3. create a pull request at https://github.com/FreeRDP/FreeRDP
