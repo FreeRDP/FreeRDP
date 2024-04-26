@@ -22,7 +22,9 @@ set(SRCS
 	)
 if (NOT WIN32)
 	list(APPEND SRCS
-		timezone.c
+            TimeZoneIanaAbbrevMap.c
+            TimeZoneIanaAbbrevMap.h
+            timezone.c
 	)
 endif()
 

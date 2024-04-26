@@ -3,6 +3,8 @@
  * Time Zone
  *
  * Copyright 2012 Marc-Andre Moreau <marcandre.moreau@gmail.com>
+ * Copyright 2024 Armin Novak <anovak@thincast.com>
+ * Copyright 2024 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +36,7 @@
 #endif
 
 #include "TimeZoneNameMap.h"
+#include "TimeZoneIanaAbbrevMap.h"
 
 #ifndef _WIN32
 
@@ -465,8 +468,25 @@ static LONG get_bias(const struct tm* start, BOOL dstBias)
 	return 0;
 }
 
+static BOOL map_iana_id(const char* iana, LPTIME_ZONE_INFORMATION tz)
+{
+	const char* winId = TimeZoneIanaToWindows(iana, TIME_ZONE_NAME_ID);
+	if (!winId)
+		return FALSE;
+
+	const char* winStd = TimeZoneIanaToWindows(iana, TIME_ZONE_NAME_STANDARD);
+	const char* winDst = TimeZoneIanaToWindows(iana, TIME_ZONE_NAME_DAYLIGHT);
+
+	ConvertUtf8ToWChar(winStd, tz->StandardName, ARRAYSIZE(tz->StandardName));
+	ConvertUtf8ToWChar(winDst, tz->DaylightName, ARRAYSIZE(tz->DaylightName));
+
+	return TRUE;
+}
+
 DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 {
+	const char** list = NULL;
+	char* tzid = NULL;
 	const char* defaultName = "Client Local Time";
 	DWORD res = TIME_ZONE_ID_UNKNOWN;
 	const TIME_ZONE_INFORMATION empty = { 0 };
@@ -476,8 +496,6 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 
 	*tz = empty;
 	ConvertUtf8ToWChar(defaultName, tz->StandardName, ARRAYSIZE(tz->StandardName));
-
-	char* tzid = winpr_guess_time_zone();
 
 	const time_t t = time(NULL);
 	struct tm tres = { 0 };
@@ -495,22 +513,30 @@ DWORD GetTimeZoneInformation(LPTIME_ZONE_INFORMATION lpTimeZoneInformation)
 		get_transition_date(local_time, TRUE, &tz->DaylightDate);
 	}
 
-	ConvertUtf8ToWChar(local_time->tm_zone, tz->StandardName, ARRAYSIZE(tz->StandardName));
-
-	const char* winId = TimeZoneIanaToWindows(tzid, TIME_ZONE_NAME_ID);
-	if (winId)
+	tzid = winpr_guess_time_zone();
+	if (!map_iana_id(tzid, tz))
 	{
-		const char* winStd = TimeZoneIanaToWindows(tzid, TIME_ZONE_NAME_STANDARD);
-		const char* winDst = TimeZoneIanaToWindows(tzid, TIME_ZONE_NAME_DAYLIGHT);
-
-		ConvertUtf8ToWChar(winStd, tz->StandardName, ARRAYSIZE(tz->StandardName));
-		ConvertUtf8ToWChar(winDst, tz->DaylightName, ARRAYSIZE(tz->DaylightName));
-
-		res = (local_time->tm_isdst) ? TIME_ZONE_ID_DAYLIGHT : TIME_ZONE_ID_STANDARD;
+		const size_t len = TimeZoneIanaAbbrevGet(local_time->tm_zone, NULL, 0);
+		list = calloc(len, sizeof(char*));
+		if (!list)
+			goto out_error;
+		const size_t size = TimeZoneIanaAbbrevGet(local_time->tm_zone, list, len);
+		for (size_t x = 0; x < size; x++)
+		{
+			const char* id = list[x];
+			if (map_iana_id(id, tz))
+			{
+				res = (local_time->tm_isdst) ? TIME_ZONE_ID_DAYLIGHT : TIME_ZONE_ID_STANDARD;
+				break;
+			}
+		}
 	}
+	else
+		res = (local_time->tm_isdst) ? TIME_ZONE_ID_DAYLIGHT : TIME_ZONE_ID_STANDARD;
 
 out_error:
 	free(tzid);
+	free(list);
 	switch (res)
 	{
 		case TIME_ZONE_ID_DAYLIGHT:
