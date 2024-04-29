@@ -1554,7 +1554,7 @@ static void SDLCALL winpr_LogOutputFunction(void* userdata, int category, SDL_Lo
 
 static void print_config_file_help()
 {
-#if defined(CJSON_FOUND)
+#if defined(WITH_CJSON)
 	std::cout << "CONFIGURATION FILE" << std::endl;
 	std::cout << std::endl;
 	std::cout << "  The SDL client supports some user defined configuration options." << std::endl;

@@ -32,11 +32,11 @@ namespace fs = std::experimental::filesystem;
 
 #include <winpr/path.h>
 #include <freerdp/version.h>
-#if defined(CJSON_FOUND)
+#if defined(WITH_CJSON)
 #include <cjson/cJSON.h>
 #endif
 
-#if defined(CJSON_FOUND)
+#if defined(WITH_CJSON)
 using cJSONPtr = std::unique_ptr<cJSON, decltype(&cJSON_Delete)>;
 
 static cJSONPtr get()
@@ -71,7 +71,7 @@ static std::string item_to_str(cJSON* item, const std::string& fallback = "")
 
 std::string sdl_get_pref_string(const std::string& key, const std::string& fallback)
 {
-#if defined(CJSON_FOUND)
+#if defined(WITH_CJSON)
 	auto item = get_item(key);
 	return item_to_str(item, fallback);
 #else
@@ -81,7 +81,7 @@ std::string sdl_get_pref_string(const std::string& key, const std::string& fallb
 
 bool sdl_get_pref_bool(const std::string& key, bool fallback)
 {
-#if defined(CJSON_FOUND)
+#if defined(WITH_CJSON)
 	auto item = get_item(key);
 	if (!item || !cJSON_IsBool(item))
 		return fallback;
@@ -93,7 +93,7 @@ bool sdl_get_pref_bool(const std::string& key, bool fallback)
 
 int64_t sdl_get_pref_int(const std::string& key, int64_t fallback)
 {
-#if defined(CJSON_FOUND)
+#if defined(WITH_CJSON)
 	auto item = get_item(key);
 	if (!item || !cJSON_IsNumber(item))
 		return fallback;
@@ -107,7 +107,7 @@ int64_t sdl_get_pref_int(const std::string& key, int64_t fallback)
 std::vector<std::string> sdl_get_pref_array(const std::string& key,
                                             const std::vector<std::string>& fallback)
 {
-#if defined(CJSON_FOUND)
+#if defined(WITH_CJSON)
 	auto item = get_item(key);
 	if (!item || !cJSON_IsArray(item))
 		return fallback;

@@ -67,7 +67,7 @@ set(PREFS_LIBS "")
 if (cJSON_FOUND)
     include_directories(${CJSON_INCLUDE_DIRS})
     list(APPEND PREFS_LIBS ${CJSON_LIBRARIES})
-    add_compile_definitions(CJSON_FOUND)
+    add_compile_definitions(WITH_CJSON)
 endif()
 
 find_package(Threads REQUIRED)
