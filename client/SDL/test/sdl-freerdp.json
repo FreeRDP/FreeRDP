@@ -1,0 +1,10 @@
+{
+	"string_key": "abc",
+	"int_key": 123,
+	"bool_key": true,
+	"array_key": [
+		"a",
+		"b",
+		"c"
+	]
+}
