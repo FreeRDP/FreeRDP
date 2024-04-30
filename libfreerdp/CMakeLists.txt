@@ -248,21 +248,6 @@ if(FAAC_FOUND)
 endif()
 
 if (WITH_AAD)
-    if (NOT cJSON_FOUND)
-        find_package(PkgConfig REQUIRED)
-        pkg_check_modules(CJSON libcjson)
-    endif()
-    if (NOT CJSON_LIBRARIES OR NOT CJSON_INCLUDE_DIRS)
-        find_path(CJSON_INCLUDE_DIRS
-            NAMES cjson/cJSON.h
-            REQUIRED
-        )
-        find_library(CJSON_LIBRARIES
-            NAMES cjson
-            REQUIRED
-        )
-    endif()
-
     freerdp_library_add(${CJSON_LIBRARIES})
     include_directories(${CJSON_INCLUDE_DIRS})
 endif()

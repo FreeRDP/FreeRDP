@@ -563,6 +563,9 @@ find_feature(PCSC ${PCSC_FEATURE_TYPE} ${PCSC_FEATURE_PURPOSE} ${PCSC_FEATURE_DE
 
 find_package(cJSON)
 option(WITH_AAD "Compile with support for Azure AD authentication" ${cJSON_FOUND})
+if (WITH_ADD AND NOT cJSON_FOUND)
+	message(FATAL_ERROR "AAD support requested but cJSON not found")
+endif()
 
 if (WITH_DSP_FFMPEG OR WITH_VIDEO_FFMPEG OR WITH_FFMPEG)
 	set(FFMPEG_FEATURE_TYPE "REQUIRED" )
