@@ -17,16 +17,18 @@ int TestSDLPrefs(int argc, char* argv[])
 
 #if defined(WITH_CJSON)
 	printf("implementation: cJSON\n");
+#elif defined(WITH_JSONC)
+	printf("implementation: JSON-C\n");
 #else
 	printf("implementation: fallback\n");
 #endif
 
-#if defined(WITH_CJSON)
+#if defined(WITH_CJSON) || defined(WITH_JSONC)
 	printf("config: %s\n", sdl_get_pref_file().c_str());
 #endif
 
 	auto string_value = sdl_get_pref_string("string_key", "cba");
-#if defined(WITH_CJSON)
+#if defined(WITH_CJSON) || defined(WITH_JSONC)
 	WINPR_ASSERT(string_value == "abc");
 #else
 	WINPR_ASSERT(string_value == "cba");
@@ -36,7 +38,7 @@ int TestSDLPrefs(int argc, char* argv[])
 	WINPR_ASSERT(string_value_nonexistent == "cba");
 
 	auto int_value = sdl_get_pref_int("int_key", 321);
-#if defined(WITH_CJSON)
+#if defined(WITH_CJSON) || defined(WITH_JSONC)
 	WINPR_ASSERT(int_value == 123);
 #else
 	WINPR_ASSERT(int_value == 321);
@@ -46,7 +48,7 @@ int TestSDLPrefs(int argc, char* argv[])
 	WINPR_ASSERT(int_value_nonexistent == 321);
 
 	auto bool_value = sdl_get_pref_bool("bool_key", false);
-#if defined(WITH_CJSON)
+#if defined(WITH_CJSON) || defined(WITH_JSONC)
 	WINPR_ASSERT(bool_value);
 #else
 	WINPR_ASSERT(!bool_value);
@@ -56,7 +58,7 @@ int TestSDLPrefs(int argc, char* argv[])
 	WINPR_ASSERT(!bool_value_nonexistent);
 
 	auto array_value = sdl_get_pref_array("array_key", { "c", "b", "a" });
-#if defined(WITH_CJSON)
+#if defined(WITH_CJSON) || defined(WITH_JSONC)
 	WINPR_ASSERT(array_value.size() == 3 && array_value[0] == "a" && array_value[1] == "b" &&
 	             array_value[2] == "c");
 #else

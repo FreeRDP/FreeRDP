@@ -561,6 +561,11 @@ endif()
 
 find_feature(PCSC ${PCSC_FEATURE_TYPE} ${PCSC_FEATURE_PURPOSE} ${PCSC_FEATURE_DESCRIPTION})
 
+option(WITH_JSONC "Build with JSON-C instead of cJSON" OFF)
+if (WITH_JSONC)
+	find_package(JSONC REQUIRED)
+endif()
+
 find_package(cJSON)
 option(WITH_AAD "Compile with support for Azure AD authentication" ${cJSON_FOUND})
 if (WITH_ADD AND NOT cJSON_FOUND)
