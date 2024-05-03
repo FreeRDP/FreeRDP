@@ -699,6 +699,8 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 	Atom window_type = 0;
 	BOOL redirect = FALSE;
 
+	window_type = xfc->_NET_WM_WINDOW_TYPE_NORMAL;
+
 	if ((ex_style & WS_EX_NOACTIVATE) || (ex_style & WS_EX_TOOLWINDOW))
 	{
 		redirect = TRUE;
@@ -714,16 +716,25 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 	{
 		window_type = xfc->_NET_WM_WINDOW_TYPE_NORMAL;
 	}
-	else if (style & WS_POPUP)
+
+	if (style & WS_POPUP)
 	{
-		/* this includes dialogs, popups, etc, that need to be full-fledged windows */
-		appWindow->is_transient = TRUE;
 		window_type = xfc->_NET_WM_WINDOW_TYPE_DIALOG;
-		xf_SetWindowUnlisted(xfc, appWindow->handle);
+		/* this includes dialogs, popups, etc, that need to be full-fledged windows */
+
+		if (!((ex_style & WS_EX_DLGMODALFRAME) || (ex_style & WS_EX_LAYERED) ||
+		      (style & WS_SYSMENU)))
+		{
+			appWindow->is_transient = TRUE;
+			redirect = TRUE;
+
+			xf_SetWindowUnlisted(xfc, appWindow->handle);
+		}
 	}
-	else
+
+	if (!(style == 0 && ex_style == 0))
 	{
-		window_type = xfc->_NET_WM_WINDOW_TYPE_NORMAL;
+		xf_SetWindowActions(xfc, appWindow);
 	}
 
 	{
@@ -743,6 +754,35 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 
 	LogTagAndXChangeProperty(TAG, xfc->display, appWindow->handle, xfc->_NET_WM_WINDOW_TYPE,
 	                         XA_ATOM, 32, PropModeReplace, (BYTE*)&window_type, 1);
+}
+
+void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow)
+{
+	Atom allowed_actions[] = {
+		xfc->_NET_WM_ACTION_CLOSE,         xfc->_NET_WM_ACTION_MINIMIZE,
+		xfc->_NET_WM_ACTION_MOVE,          xfc->_NET_WM_ACTION_RESIZE,
+		xfc->_NET_WM_ACTION_MAXIMIZE_HORZ, xfc->_NET_WM_ACTION_MAXIMIZE_VERT,
+		xfc->_NET_WM_ACTION_FULLSCREEN,    xfc->_NET_WM_ACTION_CHANGE_DESKTOP
+	};
+
+	if (!(appWindow->dwStyle & WS_SYSMENU))
+		allowed_actions[0] = 0;
+
+	if (!(appWindow->dwStyle & WS_MINIMIZEBOX))
+		allowed_actions[1] = 0;
+
+	if (!(appWindow->dwStyle & WS_SIZEBOX))
+		allowed_actions[3] = 0;
+
+	if (!(appWindow->dwStyle & WS_MAXIMIZEBOX))
+	{
+		allowed_actions[4] = 0;
+		allowed_actions[5] = 0;
+		allowed_actions[6] = 0;
+	}
+
+	XChangeProperty(xfc->display, appWindow->handle, xfc->_NET_WM_ALLOWED_ACTIONS, XA_ATOM, 32,
+	                PropModeReplace, (unsigned char*)&allowed_actions, 8);
 }
 
 void xf_SetWindowText(xfContext* xfc, xfAppWindow* appWindow, const char* name)
