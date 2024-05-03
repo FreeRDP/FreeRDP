@@ -1011,26 +1011,28 @@ size_t WinPrAsn1DecReadBoolean(WinPrAsn1Decoder* dec, WinPrAsn1_BOOL* target)
 static size_t WinPrAsn1DecReadIntegerLike(WinPrAsn1Decoder* dec, WinPrAsn1_tag expectedTag,
                                           WinPrAsn1_INTEGER* target)
 {
-	signed char v = 0;
 	WinPrAsn1_tag tag = 0;
 	size_t len = 0;
-	size_t ret = 0;
 
 	WINPR_ASSERT(dec);
 	WINPR_ASSERT(target);
 
-	ret = readTagAndLen(dec, &dec->source, &tag, &len);
-	if (!ret || tag != expectedTag)
+	size_t ret = readTagAndLen(dec, &dec->source, &tag, &len);
+	if (!ret || (tag != expectedTag))
 		return 0;
-	if (!Stream_CheckAndLogRequiredLength(TAG, &dec->source, len) || len > 4)
+	if (!Stream_CheckAndLogRequiredLength(TAG, &dec->source, len) || (len > 4))
 		return 0;
 
-	ret += len;
-	for (*target = 0; len; len--)
+	WinPrAsn1_INTEGER val = 0;
+	for (size_t x = 0; x < len; x++)
 	{
+		INT8 v = 0;
 		Stream_Read_INT8(&dec->source, v);
-		*target = (*target << 8) + v;
+		val = (WinPrAsn1_INTEGER)(((UINT32)val) << 8);
+		val |= v;
 	}
+	*target = val;
+	ret += len;
 
 	/* TODO: check ber/der rules */
 	return ret;
