@@ -115,6 +115,11 @@ void mac_set_view_size(rdpContext *context, MRDPView *view);
 	return YES;
 }
 
+- (BOOL)applicationSupportsSecureRestorableState:(NSApplication *)app
+{
+	return YES;
+}
+
 - (int)ParseCommandLineArguments
 {
 	int i;
