@@ -106,8 +106,6 @@ void xf_rail_send_activate(xfContext* xfc, Window xwindow, BOOL enabled)
 
 	if (enabled)
 		xf_SetWindowStyle(xfc, appWindow, appWindow->dwStyle, appWindow->dwExStyle);
-	else
-		xf_SetWindowStyle(xfc, appWindow, 0, 0);
 
 	activate.windowId = appWindow->windowId;
 	activate.enabled = enabled;
@@ -549,6 +547,13 @@ static BOOL xf_rail_window_common(rdpContext* context, const WINDOW_ORDER_INFO* 
 			xf_SetWindowVisibilityRects(xfc, appWindow, visibilityRectsOffsetX,
 			                            visibilityRectsOffsetY, appWindow->visibilityRects,
 			                            appWindow->numVisibilityRects);
+		}
+
+		if (appWindow->rail_state == WINDOW_SHOW_MAXIMIZED)
+		{
+			xf_SendClientEvent(xfc, appWindow->handle, xfc->_NET_WM_STATE, 4, _NET_WM_STATE_ADD,
+			                   xfc->_NET_WM_STATE_MAXIMIZED_VERT, xfc->_NET_WM_STATE_MAXIMIZED_HORZ,
+			                   0, 0);
 		}
 	}
 

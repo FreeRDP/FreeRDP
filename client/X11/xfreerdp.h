@@ -256,6 +256,18 @@ struct xf_context
 	Atom WM_PROTOCOLS;
 	Atom WM_DELETE_WINDOW;
 
+	/* Allow actions */
+	Atom _NET_WM_ALLOWED_ACTIONS;
+
+	Atom _NET_WM_ACTION_CLOSE;
+	Atom _NET_WM_ACTION_MINIMIZE;
+	Atom _NET_WM_ACTION_MOVE;
+	Atom _NET_WM_ACTION_RESIZE;
+	Atom _NET_WM_ACTION_MAXIMIZE_HORZ;
+	Atom _NET_WM_ACTION_MAXIMIZE_VERT;
+	Atom _NET_WM_ACTION_FULLSCREEN;
+	Atom _NET_WM_ACTION_CHANGE_DESKTOP;
+
 	/* Channels */
 #if defined(CHANNEL_TSMF_CLIENT)
 	TsmfClientContext* tsmf;
