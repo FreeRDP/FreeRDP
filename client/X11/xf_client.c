@@ -1930,18 +1930,18 @@ BOOL xf_setup_x11(xfContext* xfc)
 	xfc->WM_STATE = XInternAtom(xfc->display, "WM_STATE", False);
 	xfc->x11event = CreateFileDescriptorEvent(NULL, FALSE, FALSE, xfc->xfds, WINPR_FD_READ);
 
-	xfc->_NET_WM_ALLOWED_ACTIONS = XInternAtom(xfc->display, "_NET_WM_ALLOWED_ACTIONS", False);
+	xfc->NET_WM_ALLOWED_ACTIONS = XInternAtom(xfc->display, "_NET_WM_ALLOWED_ACTIONS", False);
 
-	xfc->_NET_WM_ACTION_CLOSE = XInternAtom(xfc->display, "_NET_WM_ACTION_CLOSE", False);
-	xfc->_NET_WM_ACTION_MINIMIZE = XInternAtom(xfc->display, "_NET_WM_ACTION_MINIMIZE", False);
-	xfc->_NET_WM_ACTION_MOVE = XInternAtom(xfc->display, "_NET_WM_ACTION_MOVE", False);
-	xfc->_NET_WM_ACTION_RESIZE = XInternAtom(xfc->display, "_NET_WM_ACTION_RESIZE", False);
-	xfc->_NET_WM_ACTION_MAXIMIZE_HORZ =
+	xfc->NET_WM_ACTION_CLOSE = XInternAtom(xfc->display, "_NET_WM_ACTION_CLOSE", False);
+	xfc->NET_WM_ACTION_MINIMIZE = XInternAtom(xfc->display, "_NET_WM_ACTION_MINIMIZE", False);
+	xfc->NET_WM_ACTION_MOVE = XInternAtom(xfc->display, "_NET_WM_ACTION_MOVE", False);
+	xfc->NET_WM_ACTION_RESIZE = XInternAtom(xfc->display, "_NET_WM_ACTION_RESIZE", False);
+	xfc->NET_WM_ACTION_MAXIMIZE_HORZ =
 	    XInternAtom(xfc->display, "_NET_WM_ACTION_MAXIMIZE_HORZ", False);
-	xfc->_NET_WM_ACTION_MAXIMIZE_VERT =
+	xfc->NET_WM_ACTION_MAXIMIZE_VERT =
 	    XInternAtom(xfc->display, "_NET_WM_ACTION_MAXIMIZE_VERT", False);
-	xfc->_NET_WM_ACTION_FULLSCREEN = XInternAtom(xfc->display, "_NET_WM_ACTION_FULLSCREEN", False);
-	xfc->_NET_WM_ACTION_CHANGE_DESKTOP =
+	xfc->NET_WM_ACTION_FULLSCREEN = XInternAtom(xfc->display, "_NET_WM_ACTION_FULLSCREEN", False);
+	xfc->NET_WM_ACTION_CHANGE_DESKTOP =
 	    XInternAtom(xfc->display, "_NET_WM_ACTION_CHANGE_DESKTOP", False);
 
 	if (!xfc->x11event)

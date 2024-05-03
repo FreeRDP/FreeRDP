@@ -759,10 +759,10 @@ void xf_SetWindowStyle(xfContext* xfc, xfAppWindow* appWindow, UINT32 style, UIN
 void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow)
 {
 	Atom allowed_actions[] = {
-		xfc->_NET_WM_ACTION_CLOSE,         xfc->_NET_WM_ACTION_MINIMIZE,
-		xfc->_NET_WM_ACTION_MOVE,          xfc->_NET_WM_ACTION_RESIZE,
-		xfc->_NET_WM_ACTION_MAXIMIZE_HORZ, xfc->_NET_WM_ACTION_MAXIMIZE_VERT,
-		xfc->_NET_WM_ACTION_FULLSCREEN,    xfc->_NET_WM_ACTION_CHANGE_DESKTOP
+		xfc->NET_WM_ACTION_CLOSE,         xfc->NET_WM_ACTION_MINIMIZE,
+		xfc->NET_WM_ACTION_MOVE,          xfc->NET_WM_ACTION_RESIZE,
+		xfc->NET_WM_ACTION_MAXIMIZE_HORZ, xfc->NET_WM_ACTION_MAXIMIZE_VERT,
+		xfc->NET_WM_ACTION_FULLSCREEN,    xfc->NET_WM_ACTION_CHANGE_DESKTOP
 	};
 
 	if (!(appWindow->dwStyle & WS_SYSMENU))
@@ -781,7 +781,7 @@ void xf_SetWindowActions(xfContext* xfc, xfAppWindow* appWindow)
 		allowed_actions[6] = 0;
 	}
 
-	XChangeProperty(xfc->display, appWindow->handle, xfc->_NET_WM_ALLOWED_ACTIONS, XA_ATOM, 32,
+	XChangeProperty(xfc->display, appWindow->handle, xfc->NET_WM_ALLOWED_ACTIONS, XA_ATOM, 32,
 	                PropModeReplace, (unsigned char*)&allowed_actions, 8);
 }
 
