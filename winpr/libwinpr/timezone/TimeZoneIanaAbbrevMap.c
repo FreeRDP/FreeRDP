@@ -93,7 +93,7 @@ static void append_timezone(const char* dir, const char* name)
 	free(tz);
 }
 
-static void handle_link(const char* dir, const char* name, const char* base);
+static void handle_link(const char* base, const char* dir, const char* name);
 
 static char* topath(const char* base, const char* bname, const char* name)
 {
@@ -244,7 +244,7 @@ static void TimeZoneIanaAbbrevInitialize(void)
 		return;
 
 	iterate_subdir_recursive(zonepath, NULL, NULL);
-	atexit(TimeZoneIanaAbbrevCleanup);
+	(void)atexit(TimeZoneIanaAbbrevCleanup);
 	initialized = TRUE;
 }
 
