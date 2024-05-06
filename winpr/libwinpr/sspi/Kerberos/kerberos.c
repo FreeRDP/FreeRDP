@@ -39,6 +39,7 @@
 #include <winpr/crypto.h>
 #include <winpr/path.h>
 #include <winpr/wtypes.h>
+#include <winpr/winsock.h>
 
 #include "kerberos.h"
 
@@ -197,6 +198,25 @@ static INLINE krb5glue_key get_key(struct krb5glue_keyset* keyset)
 }
 
 #endif /* WITH_KRB5 */
+
+static BOOL isValidIPv4(const char* ipAddress)
+{
+	struct sockaddr_in sa = { 0 };
+	int result = inet_pton(AF_INET, ipAddress, &(sa.sin_addr));
+	return result != 0;
+}
+
+static BOOL isValidIPv6(const char* ipAddress)
+{
+	struct sockaddr_in6 sa = { 0 };
+	int result = inet_pton(AF_INET6, ipAddress, &(sa.sin6_addr));
+	return result != 0;
+}
+
+static BOOL isValidIP(const char* ipAddress)
+{
+	return isValidIPv4(ipAddress) || isValidIPv6(ipAddress);
+}
 
 static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
     SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage, ULONG fCredentialUse, void* pvLogonID,
@@ -822,6 +842,11 @@ static SECURITY_STATUS SEC_ENTRY kerberos_InitializeSecurityContextA(
 		}
 		else
 			host = target;
+		if (isValidIP(host))
+		{
+			status = SEC_E_NO_CREDENTIALS;
+			goto cleanup;
+		}
 	}
 
 	/* SSPI flags are compatible with GSS flags except INTEG_FLAG */
