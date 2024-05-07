@@ -607,7 +607,7 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(const char* metadata, rdpSett
 		return FALSE;
 	}
 
-	const cJSON* iface = cJSON_GetObjectItem(json, "interface");
+	const cJSON* iface = cJSON_GetObjectItemCaseSensitive(json, "interface");
 	if (!iface)
 	{
 		ret = TRUE;
@@ -634,11 +634,11 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(const char* metadata, rdpSett
 		if (!interN)
 			continue;
 
-		const cJSON* ipv4 = cJSON_GetObjectItem(interN, "ipv4");
+		const cJSON* ipv4 = cJSON_GetObjectItemCaseSensitive(interN, "ipv4");
 		if (!ipv4)
 			continue;
 
-		const cJSON* ipAddress = cJSON_GetObjectItem(ipv4, "ipAddress");
+		const cJSON* ipAddress = cJSON_GetObjectItemCaseSensitive(ipv4, "ipAddress");
 		if (!ipAddress || !cJSON_IsArray(ipAddress))
 			continue;
 
@@ -649,7 +649,8 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(const char* metadata, rdpSett
 			if (!adressN)
 				continue;
 
-			const cJSON* publicIpNode = cJSON_GetObjectItem(adressN, "publicIpAddress");
+			const cJSON* publicIpNode =
+			    cJSON_GetObjectItemCaseSensitive(adressN, "publicIpAddress");
 			if (!publicIpNode || !cJSON_IsString(publicIpNode))
 				continue;
 
@@ -766,7 +767,7 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 			status = TRUE;
 	}
 
-	const cJSON* serverNameNode = cJSON_GetObjectItem(json, "redirectedServerName");
+	const cJSON* serverNameNode = cJSON_GetObjectItemCaseSensitive(json, "redirectedServerName");
 	if (serverNameNode)
 	{
 		char* serverName = cJSON_GetStringValue(serverNameNode);
@@ -774,7 +775,7 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 			status = freerdp_settings_set_string(settings, FreeRDP_ServerHostname, serverName);
 	}
 
-	const cJSON* azureMeta = cJSON_GetObjectItem(json, "azureInstanceNetworkMetadata");
+	const cJSON* azureMeta = cJSON_GetObjectItemCaseSensitive(json, "azureInstanceNetworkMetadata");
 	if (azureMeta && cJSON_IsString(azureMeta))
 	{
 		if (!arm_treat_azureInstanceNetworkMetadata(cJSON_GetStringValue(azureMeta), settings))

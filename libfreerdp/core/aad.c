@@ -89,7 +89,7 @@ static BOOL json_get_object(wLog* wlog, cJSON* json, const char* key, cJSON** ob
 		return FALSE;
 	}
 
-	cJSON* prop = cJSON_GetObjectItem(json, key);
+	cJSON* prop = cJSON_GetObjectItemCaseSensitive(json, key);
 	if (!prop)
 	{
 		WLog_Print(wlog, WLOG_ERROR, "[json] object for key '%s' is NULL", key);
@@ -857,7 +857,7 @@ char* freerdp_utils_aad_get_access_token(wLog* log, const char* data, size_t len
 		goto cleanup;
 	}
 
-	access_token_prop = cJSON_GetObjectItem(json, "access_token");
+	access_token_prop = cJSON_GetObjectItemCaseSensitive(json, "access_token");
 	if (!access_token_prop)
 	{
 		WLog_Print(log, WLOG_ERROR, "Response has no \"access_token\" property");
