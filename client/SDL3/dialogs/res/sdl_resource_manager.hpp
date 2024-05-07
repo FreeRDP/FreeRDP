@@ -20,14 +20,14 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 class SDLResourceManager
 {
 	friend class SDLResourceFile;
 
   public:
-	static SDL_RWops* get(const std::string& type, const std::string& id);
+	static SDL_IOStream* get(const std::string& type, const std::string& id);
 
 	static const std::string typeFonts();
 	static const std::string typeImages();

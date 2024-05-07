@@ -72,8 +72,8 @@ static BOOL sdl_Pointer_New(rdpContext* context, rdpPointer* pointer)
 static void sdl_Pointer_Clear(sdlPointer* ptr)
 {
 	WINPR_ASSERT(ptr);
-	SDL_FreeCursor(ptr->cursor);
-	SDL_FreeSurface(ptr->image);
+	SDL_DestroyCursor(ptr->cursor);
+	SDL_DestroySurface(ptr->image);
 	ptr->cursor = nullptr;
 	ptr->image = nullptr;
 }
@@ -95,14 +95,14 @@ static BOOL sdl_Pointer_SetDefault(rdpContext* context)
 {
 	WINPR_UNUSED(context);
 
-	return sdl_push_user_event(SDL_USEREVENT_POINTER_DEFAULT);
+	return sdl_push_user_event(SDL_EVENT_USER_POINTER_DEFAULT);
 }
 
 static BOOL sdl_Pointer_Set(rdpContext* context, rdpPointer* pointer)
 {
 	auto sdl = get_context(context);
 
-	return sdl_push_user_event(SDL_USEREVENT_POINTER_SET, pointer, sdl);
+	return sdl_push_user_event(SDL_EVENT_USER_POINTER_SET, pointer, sdl);
 }
 
 BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
@@ -145,9 +145,7 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 
 	sdl_Pointer_Clear(ptr);
 
-	const DWORD bpp = FreeRDPGetBitsPerPixel(gdi->dstFormat);
-	ptr->image =
-	    SDL_CreateRGBSurfaceWithFormat(0, sw, sh, static_cast<int>(bpp), sdl->sdl_pixel_format);
+	ptr->image = SDL_CreateSurface(sw, sh, sdl->sdl_pixel_format);
 	if (!ptr->image)
 		return FALSE;
 
@@ -167,7 +165,7 @@ BOOL sdl_Pointer_Set_Process(SDL_UserEvent* uptr)
 		return FALSE;
 
 	SDL_SetCursor(ptr->cursor);
-	SDL_ShowCursor(SDL_ENABLE);
+	SDL_ShowCursor();
 	return TRUE;
 }
 
@@ -175,7 +173,7 @@ static BOOL sdl_Pointer_SetNull(rdpContext* context)
 {
 	WINPR_UNUSED(context);
 
-	return sdl_push_user_event(SDL_USEREVENT_POINTER_NULL);
+	return sdl_push_user_event(SDL_EVENT_USER_POINTER_NULL);
 }
 
 static BOOL sdl_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
@@ -183,7 +181,7 @@ static BOOL sdl_Pointer_SetPosition(rdpContext* context, UINT32 x, UINT32 y)
 	auto sdl = get_context(context);
 	WINPR_ASSERT(sdl);
 
-	return sdl_push_user_event(SDL_USEREVENT_POINTER_POSITION, x, y);
+	return sdl_push_user_event(SDL_EVENT_USER_POINTER_POSITION, x, y);
 }
 
 BOOL sdl_register_pointer(rdpGraphics* graphics)

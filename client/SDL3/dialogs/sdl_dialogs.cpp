@@ -24,7 +24,7 @@
 #include <freerdp/log.h>
 #include <freerdp/utils/smartcardlogon.h>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "../sdl_freerdp.hpp"
 #include "sdl_dialogs.hpp"
@@ -76,10 +76,10 @@ static int sdl_show_dialog(rdpContext* context, const char* title, const char* m
 {
 	SDL_Event event = { 0 };
 
-	if (!sdl_push_user_event(SDL_USEREVENT_SHOW_DIALOG, title, message, flags))
+	if (!sdl_push_user_event(SDL_EVENT_USER_SHOW_DIALOG, title, message, flags))
 		return 0;
 
-	if (!sdl_wait_for_result(context, SDL_USEREVENT_SHOW_RESULT, &event))
+	if (!sdl_wait_for_result(context, SDL_EVENT_USER_SHOW_RESULT, &event))
 		return 0;
 
 	return event.user.code;
@@ -131,10 +131,10 @@ BOOL sdl_authenticate_ex(freerdp* instance, char** username, char** password, ch
 	d = *domain;
 	p = *password;
 
-	if (!sdl_push_user_event(SDL_USEREVENT_AUTH_DIALOG, title, u, d, p, reason))
+	if (!sdl_push_user_event(SDL_EVENT_USER_AUTH_DIALOG, title, u, d, p, reason))
 		goto fail;
 
-	if (!sdl_wait_for_result(instance->context, SDL_USEREVENT_AUTH_RESULT, &event))
+	if (!sdl_wait_for_result(instance->context, SDL_EVENT_USER_AUTH_RESULT, &event))
 		goto fail;
 	else
 	{
@@ -194,10 +194,10 @@ BOOL sdl_choose_smartcard(freerdp* instance, SmartcardCertInfo** cert_list, DWOR
 	const char* title = "Select a logon smartcard certificate";
 	if (gateway)
 		title = "Select a gateway logon smartcard certificate";
-	if (!sdl_push_user_event(SDL_USEREVENT_SCARD_DIALOG, title, list.data(), count))
+	if (!sdl_push_user_event(SDL_EVENT_USER_SCARD_DIALOG, title, list.data(), count))
 		goto fail;
 
-	if (!sdl_wait_for_result(instance->context, SDL_USEREVENT_SCARD_RESULT, &event))
+	if (!sdl_wait_for_result(instance->context, SDL_EVENT_USER_SCARD_RESULT, &event))
 		goto fail;
 
 	res = (event.user.code >= 0) ? TRUE : FALSE;
@@ -318,11 +318,11 @@ static DWORD sdl_show_ceritifcate_dialog(rdpContext* context, const char* title,
                                          const char* message)
 {
 	SDLConnectionDialogHider hider(context);
-	if (!sdl_push_user_event(SDL_USEREVENT_CERT_DIALOG, title, message))
+	if (!sdl_push_user_event(SDL_EVENT_USER_CERT_DIALOG, title, message))
 		return 0;
 
 	SDL_Event event = { 0 };
-	if (!sdl_wait_for_result(context, SDL_USEREVENT_CERT_RESULT, &event))
+	if (!sdl_wait_for_result(context, SDL_EVENT_USER_CERT_RESULT, &event))
 		return 0;
 	return static_cast<DWORD>(event.user.code);
 }
@@ -502,7 +502,7 @@ BOOL sdl_cert_dialog_show(const char* title, const char* message)
 		}
 	}
 
-	return sdl_push_user_event(SDL_USEREVENT_CERT_RESULT, value);
+	return sdl_push_user_event(SDL_EVENT_USER_CERT_RESULT, value);
 }
 
 BOOL sdl_message_dialog_show(const char* title, const char* message, Sint32 flags)
@@ -540,7 +540,7 @@ BOOL sdl_message_dialog_show(const char* title, const char* message, Sint32 flag
 		}
 	}
 
-	return sdl_push_user_event(SDL_USEREVENT_SHOW_RESULT, value);
+	return sdl_push_user_event(SDL_EVENT_USER_SHOW_RESULT, value);
 }
 
 BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
@@ -606,7 +606,7 @@ BOOL sdl_auth_dialog_show(const SDL_UserAuthArg* args)
 			pwd = _strdup(result[2].c_str());
 		}
 	}
-	return sdl_push_user_event(SDL_USEREVENT_AUTH_RESULT, user, domain, pwd, rc);
+	return sdl_push_user_event(SDL_EVENT_USER_AUTH_RESULT, user, domain, pwd, rc);
 }
 
 BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list)
@@ -617,5 +617,5 @@ BOOL sdl_scard_dialog_show(const char* title, Sint32 count, const char** list)
 		vlist.emplace_back(list[x]);
 	SdlSelectList slist(title, vlist);
 	Sint32 value = slist.run();
-	return sdl_push_user_event(SDL_USEREVENT_SCARD_RESULT, value);
+	return sdl_push_user_event(SDL_EVENT_USER_SCARD_RESULT, value);
 }

@@ -28,7 +28,7 @@
 #include <freerdp/freerdp.h>
 #include <freerdp/gdi/gdi.h>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #define TAG CLIENT_TAG("SDL.touch")
 
@@ -104,11 +104,7 @@ static BOOL sdl_get_touch_scaled(SdlContext* sdl, const SDL_TouchFingerEvent* ev
 	WINPR_ASSERT(px);
 	WINPR_ASSERT(py);
 
-#if SDL_VERSION_ATLEAST(2, 0, 12)
 	SDL_Window* window = SDL_GetWindowFromID(ev->windowID);
-#else
-	SDL_Window* window = SDL_GetMouseFocus();
-#endif
 
 	if (!window)
 		return FALSE;
@@ -168,7 +164,7 @@ BOOL sdl_handle_touch_up(SdlContext* sdl, const SDL_TouchFingerEvent* ev)
 	if (!sdl_get_touch_scaled(sdl, ev, &x, &y, TRUE))
 		return FALSE;
 	return freerdp_client_handle_touch(sdl->common(), FREERDP_TOUCH_UP | FREERDP_TOUCH_HAS_PRESSURE,
-	                                   static_cast<INT32>(ev->fingerId),
+	                                   static_cast<INT32>(ev->fingerID),
 	                                   sdl_scale_pressure(ev->pressure), x, y);
 }
 
@@ -183,7 +179,7 @@ BOOL sdl_handle_touch_down(SdlContext* sdl, const SDL_TouchFingerEvent* ev)
 		return FALSE;
 	return freerdp_client_handle_touch(
 	    sdl->common(), FREERDP_TOUCH_DOWN | FREERDP_TOUCH_HAS_PRESSURE,
-	    static_cast<INT32>(ev->fingerId), sdl_scale_pressure(ev->pressure), x, y);
+	    static_cast<INT32>(ev->fingerID), sdl_scale_pressure(ev->pressure), x, y);
 }
 
 BOOL sdl_handle_touch_motion(SdlContext* sdl, const SDL_TouchFingerEvent* ev)
@@ -197,7 +193,7 @@ BOOL sdl_handle_touch_motion(SdlContext* sdl, const SDL_TouchFingerEvent* ev)
 		return FALSE;
 	return freerdp_client_handle_touch(
 	    sdl->common(), FREERDP_TOUCH_MOTION | FREERDP_TOUCH_HAS_PRESSURE,
-	    static_cast<INT32>(ev->fingerId), sdl_scale_pressure(ev->pressure), x, y);
+	    static_cast<INT32>(ev->fingerID), sdl_scale_pressure(ev->pressure), x, y);
 }
 
 BOOL sdl_handle_mouse_motion(SdlContext* sdl, const SDL_MouseMotionEvent* ev)

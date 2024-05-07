@@ -86,4 +86,10 @@ add_library(sdl3_client_res OBJECT
     ${SRCS}
     ${FACTORY_SRCS}
 )
+if (NOT WITH_SDL_LINK_SHARED)
+	target_link_libraries(sdl3_client_res ${SDL3_STATIC_LIBRARIES})
+else()
+	target_link_libraries(sdl3_client_res ${SDL3_LIBRARIES})
+endif()
+
 set_property(TARGET sdl3_client_res PROPERTY POSITION_INDEPENDENT_CODE ON)

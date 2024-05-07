@@ -22,8 +22,8 @@
 #include <string>
 
 #include <vector>
-#include <SDL.h>
-#include <SDL_ttf.h>
+#include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -48,8 +48,8 @@ typedef SSIZE_T ssize_t;
 class SdlWidget
 {
   public:
-	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input);
-	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, SDL_RWops* ops);
+	SdlWidget(SDL_Renderer* renderer, const SDL_FRect& rect, bool input);
+	SdlWidget(SDL_Renderer* renderer, const SDL_FRect& rect, SDL_IOStream* ops);
 	SdlWidget(SdlWidget&& other) noexcept;
 	virtual ~SdlWidget();
 
@@ -61,7 +61,7 @@ class SdlWidget
 
 	bool wrap() const;
 	bool set_wrap(bool wrap = true, size_t width = 0);
-	const SDL_Rect& rect() const;
+	const SDL_FRect& rect() const;
 
   public:
 #define widget_log_error(res, what) SdlWidget::error_ex(res, what, __FILE__, __LINE__, __func__)
@@ -72,14 +72,14 @@ class SdlWidget
 	SdlWidget(const SdlWidget& other) = delete;
 
 	SDL_Texture* render_text(SDL_Renderer* renderer, const std::string& text, SDL_Color fgcolor,
-	                         SDL_Rect& src, SDL_Rect& dst);
+	                         SDL_FRect& src, SDL_FRect& dst);
 	SDL_Texture* render_text_wrapped(SDL_Renderer* renderer, const std::string& text,
-	                                 SDL_Color fgcolor, SDL_Rect& src, SDL_Rect& dst);
+	                                 SDL_Color fgcolor, SDL_FRect& src, SDL_FRect& dst);
 
   private:
 	TTF_Font* _font = nullptr;
 	SDL_Texture* _image = nullptr;
-	SDL_Rect _rect;
+	SDL_FRect _rect;
 	bool _input = false;
 	bool _wrap = false;
 	size_t _text_width = 0;

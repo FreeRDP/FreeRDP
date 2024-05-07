@@ -45,9 +45,9 @@
 #include <winpr/synch.h>
 #include <freerdp/log.h>
 
-#include <SDL.h>
-#include <SDL_hints.h>
-#include <SDL_video.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_hints.h>
+#include <SDL3/SDL_video.h>
 
 #include "sdl_channels.hpp"
 #include "sdl_freerdp.hpp"
@@ -465,7 +465,7 @@ static BOOL sdl_end_paint(rdpContext* context)
 	WINPR_ASSERT(sdl);
 
 	std::lock_guard<CriticalSection> lock(sdl->critical);
-	const BOOL rc = sdl_push_user_event(SDL_USEREVENT_UPDATE, context);
+	const BOOL rc = sdl_push_user_event(SDL_EVENT_USER_UPDATE, context);
 
 	return rc;
 }
@@ -489,20 +489,20 @@ static BOOL sdl_create_primary(SdlContext* sdl)
 	WINPR_ASSERT(gdi);
 
 	sdl_destroy_primary(sdl);
-	sdl->primary = SDLSurfacePtr(
-	    SDL_CreateRGBSurfaceWithFormatFrom(gdi->primary_buffer, static_cast<int>(gdi->width),
-	                                       static_cast<int>(gdi->height),
-	                                       static_cast<int>(FreeRDPGetBitsPerPixel(gdi->dstFormat)),
-	                                       static_cast<int>(gdi->stride), sdl->sdl_pixel_format),
-	    SDL_FreeSurface);
-	sdl->primary_format = SDLPixelFormatPtr(SDL_AllocFormat(sdl->sdl_pixel_format), SDL_FreeFormat);
+	sdl->primary =
+	    SDLSurfacePtr(SDL_CreateSurfaceFrom(gdi->primary_buffer, static_cast<int>(gdi->width),
+	                                        static_cast<int>(gdi->height),
+	                                        static_cast<int>(gdi->stride), sdl->sdl_pixel_format),
+	                  SDL_DestroySurface);
+	sdl->primary_format =
+	    SDLPixelFormatPtr(SDL_CreatePixelFormat(sdl->sdl_pixel_format), SDL_DestroyPixelFormat);
 
 	if (!sdl->primary || !sdl->primary_format)
 		return FALSE;
 
 	SDL_SetSurfaceBlendMode(sdl->primary.get(), SDL_BLENDMODE_NONE);
-	SDL_FillRect(sdl->primary.get(), nullptr,
-	             SDL_MapRGBA(sdl->primary_format.get(), 0, 0, 0, 0xff));
+	SDL_FillSurfaceRect(sdl->primary.get(), nullptr,
+	                    SDL_MapRGBA(sdl->primary_format.get(), 0, 0, 0, 0xff));
 
 	return TRUE;
 }
@@ -706,15 +706,13 @@ static BOOL sdl_create_windows(SdlContext* sdl)
 			h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
 		}
 
-		Uint32 flags = SDL_WINDOW_SHOWN;
+		Uint32 flags = 0;
 		Uint32 startupX = SDL_WINDOWPOS_CENTERED_DISPLAY(x);
 		Uint32 startupY = SDL_WINDOWPOS_CENTERED_DISPLAY(x);
 
 		if (monitor->attributes.desktopScaleFactor > 100)
 		{
-#if SDL_VERSION_ATLEAST(2, 0, 1)
-			flags |= SDL_WINDOW_ALLOW_HIGHDPI;
-#endif
+			flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
 		}
 
 		if (freerdp_settings_get_bool(settings, FreeRDP_Fullscreen) &&
@@ -761,7 +759,7 @@ static BOOL sdl_wait_create_windows(SdlContext* sdl)
 {
 	std::lock_guard<CriticalSection> lock(sdl->critical);
 	sdl->windows_created.clear();
-	if (!sdl_push_user_event(SDL_USEREVENT_CREATE_WINDOWS, sdl))
+	if (!sdl_push_user_event(SDL_EVENT_USER_CREATE_WINDOWS, sdl))
 		return FALSE;
 
 	HANDLE handles[] = { sdl->initialized.handle(), freerdp_abort_event(sdl->context()) };
@@ -805,12 +803,8 @@ static int sdl_run(SdlContext* sdl)
 
 	SDL_Init(SDL_INIT_VIDEO);
 	TTF_Init();
-#if SDL_VERSION_ATLEAST(2, 0, 16)
 	SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "0");
-#endif
-#if SDL_VERSION_ATLEAST(2, 0, 8)
 	SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
-#endif
 
 	freerdp_add_signal_cleanup_handler(sdl->context(), sdl_term_handler);
 
@@ -821,11 +815,11 @@ static int sdl_run(SdlContext* sdl)
 		SDL_Event windowEvent = { 0 };
 		while (!shall_abort(sdl) && SDL_WaitEventTimeout(nullptr, 1000))
 		{
-			/* Only poll standard SDL events and SDL_USEREVENTS meant to create dialogs.
+			/* Only poll standard SDL events and SDL_EVENT_USERS meant to create dialogs.
 			 * do not process the dialog return value events here.
 			 */
-			const int prc = SDL_PeepEvents(&windowEvent, 1, SDL_GETEVENT, SDL_FIRSTEVENT,
-			                               SDL_USEREVENT_RETRY_DIALOG);
+			const int prc = SDL_PeepEvents(&windowEvent, 1, SDL_GETEVENT, SDL_EVENT_FIRST,
+			                               SDL_EVENT_USER_RETRY_DIALOG);
 			if (prc < 0)
 			{
 				if (sdl_log_error(prc, sdl->log, "SDL_PeepEvents"))
@@ -852,147 +846,105 @@ static int sdl_run(SdlContext* sdl)
 
 			switch (windowEvent.type)
 			{
-				case SDL_QUIT:
+				case SDL_EVENT_QUIT:
 					freerdp_abort_connect_context(sdl->context());
 					break;
-				case SDL_KEYDOWN:
-				case SDL_KEYUP:
+				case SDL_EVENT_KEY_DOWN:
+				case SDL_EVENT_KEY_UP:
 				{
 					const SDL_KeyboardEvent* ev = &windowEvent.key;
 					sdl->input.keyboard_handle_event(ev);
 				}
 				break;
-				case SDL_KEYMAPCHANGED:
+				case SDL_EVENT_KEYMAP_CHANGED:
 				{
 				}
 				break; // TODO: Switch keyboard layout
-				case SDL_MOUSEMOTION:
+				case SDL_EVENT_MOUSE_MOTION:
 				{
 					const SDL_MouseMotionEvent* ev = &windowEvent.motion;
 					sdl_handle_mouse_motion(sdl, ev);
 				}
 				break;
-				case SDL_MOUSEBUTTONDOWN:
-				case SDL_MOUSEBUTTONUP:
+				case SDL_EVENT_MOUSE_BUTTON_DOWN:
+				case SDL_EVENT_MOUSE_BUTTON_UP:
 				{
 					const SDL_MouseButtonEvent* ev = &windowEvent.button;
 					sdl_handle_mouse_button(sdl, ev);
 				}
 				break;
-				case SDL_MOUSEWHEEL:
+				case SDL_EVENT_MOUSE_WHEEL:
 				{
 					const SDL_MouseWheelEvent* ev = &windowEvent.wheel;
 					sdl_handle_mouse_wheel(sdl, ev);
 				}
 				break;
-				case SDL_FINGERDOWN:
+				case SDL_EVENT_FINGER_DOWN:
 				{
 					const SDL_TouchFingerEvent* ev = &windowEvent.tfinger;
 					sdl_handle_touch_down(sdl, ev);
 				}
 				break;
-				case SDL_FINGERUP:
+				case SDL_EVENT_FINGER_UP:
 				{
 					const SDL_TouchFingerEvent* ev = &windowEvent.tfinger;
 					sdl_handle_touch_up(sdl, ev);
 				}
 				break;
-				case SDL_FINGERMOTION:
+				case SDL_EVENT_FINGER_MOTION:
 				{
 					const SDL_TouchFingerEvent* ev = &windowEvent.tfinger;
 					sdl_handle_touch_motion(sdl, ev);
 				}
 				break;
-#if SDL_VERSION_ATLEAST(2, 0, 10)
-				case SDL_DISPLAYEVENT:
-				{
-					const SDL_DisplayEvent* ev = &windowEvent.display;
-					sdl->disp.handle_display_event(ev);
-				}
-				break;
-#endif
-				case SDL_WINDOWEVENT:
-				{
-					const SDL_WindowEvent* ev = &windowEvent.window;
-					sdl->disp.handle_window_event(ev);
 
-					switch (ev->event)
-					{
-						case SDL_WINDOWEVENT_RESIZED:
-						case SDL_WINDOWEVENT_SIZE_CHANGED:
-						{
-							auto window = sdl->windows.find(ev->windowID);
-							if (window != sdl->windows.end())
-							{
-								window->second.fill();
-								window->second.updateSurface();
-							}
-						}
-						break;
-						case SDL_WINDOWEVENT_MOVED:
-						{
-							auto window = sdl->windows.find(ev->windowID);
-							if (window != sdl->windows.end())
-							{
-								auto r = window->second.rect();
-								auto id = window->second.id();
-								WLog_DBG(SDL_TAG, "%lu: %dx%d-%dx%d", id, r.x, r.y, r.w, r.h);
-							}
-						}
-						break;
-						default:
-							break;
-					}
-				}
-				break;
-
-				case SDL_RENDER_TARGETS_RESET:
+				case SDL_EVENT_RENDER_TARGETS_RESET:
 					sdl_redraw(sdl);
 					break;
-				case SDL_RENDER_DEVICE_RESET:
+				case SDL_EVENT_RENDER_DEVICE_RESET:
 					sdl_redraw(sdl);
 					break;
-				case SDL_APP_WILLENTERFOREGROUND:
+				case SDL_EVENT_WILL_ENTER_FOREGROUND:
 					sdl_redraw(sdl);
 					break;
-				case SDL_USEREVENT_CERT_DIALOG:
+				case SDL_EVENT_USER_CERT_DIALOG:
 				{
 					auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char*>(windowEvent.user.data2);
 					sdl_cert_dialog_show(title, msg);
 				}
 				break;
-				case SDL_USEREVENT_SHOW_DIALOG:
+				case SDL_EVENT_USER_SHOW_DIALOG:
 				{
 					auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char*>(windowEvent.user.data2);
 					sdl_message_dialog_show(title, msg, windowEvent.user.code);
 				}
 				break;
-				case SDL_USEREVENT_SCARD_DIALOG:
+				case SDL_EVENT_USER_SCARD_DIALOG:
 				{
 					auto title = static_cast<const char*>(windowEvent.user.data1);
 					auto msg = static_cast<const char**>(windowEvent.user.data2);
 					sdl_scard_dialog_show(title, windowEvent.user.code, msg);
 				}
 				break;
-				case SDL_USEREVENT_AUTH_DIALOG:
+				case SDL_EVENT_USER_AUTH_DIALOG:
 					sdl_auth_dialog_show(
 					    reinterpret_cast<const SDL_UserAuthArg*>(windowEvent.padding));
 					break;
-				case SDL_USEREVENT_UPDATE:
+				case SDL_EVENT_USER_UPDATE:
 				{
 					auto context = static_cast<rdpContext*>(windowEvent.user.data1);
 					sdl_end_paint_process(context);
 				}
 				break;
-				case SDL_USEREVENT_CREATE_WINDOWS:
+				case SDL_EVENT_USER_CREATE_WINDOWS:
 				{
 					auto ctx = static_cast<SdlContext*>(windowEvent.user.data1);
 					sdl_create_windows(ctx);
 				}
 				break;
-				case SDL_USEREVENT_WINDOW_RESIZEABLE:
+				case SDL_EVENT_USER_WINDOW_RESIZEABLE:
 				{
 					auto window = static_cast<SdlWindow*>(windowEvent.user.data1);
 					const SDL_bool use = windowEvent.user.code != 0 ? SDL_TRUE : SDL_FALSE;
@@ -1000,7 +952,7 @@ static int sdl_run(SdlContext* sdl)
 						window->resizeable(use);
 				}
 				break;
-				case SDL_USEREVENT_WINDOW_FULLSCREEN:
+				case SDL_EVENT_USER_WINDOW_FULLSCREEN:
 				{
 					auto window = static_cast<SdlWindow*>(windowEvent.user.data1);
 					const SDL_bool enter = windowEvent.user.code != 0 ? SDL_TRUE : SDL_FALSE;
@@ -1008,17 +960,17 @@ static int sdl_run(SdlContext* sdl)
 						window->fullscreen(enter);
 				}
 				break;
-				case SDL_USEREVENT_POINTER_NULL:
-					SDL_ShowCursor(SDL_DISABLE);
+				case SDL_EVENT_USER_POINTER_NULL:
+					SDL_HideCursor();
 					break;
-				case SDL_USEREVENT_POINTER_DEFAULT:
+				case SDL_EVENT_USER_POINTER_DEFAULT:
 				{
 					SDL_Cursor* def = SDL_GetDefaultCursor();
 					SDL_SetCursor(def);
-					SDL_ShowCursor(SDL_ENABLE);
+					SDL_ShowCursor();
 				}
 				break;
-				case SDL_USEREVENT_POINTER_POSITION:
+				case SDL_EVENT_USER_POINTER_POSITION:
 				{
 					const auto x =
 					    static_cast<INT32>(reinterpret_cast<uintptr_t>(windowEvent.user.data1));
@@ -1037,11 +989,51 @@ static int sdl_run(SdlContext* sdl)
 					}
 				}
 				break;
-				case SDL_USEREVENT_POINTER_SET:
+				case SDL_EVENT_USER_POINTER_SET:
 					sdl_Pointer_Set_Process(&windowEvent.user);
 					break;
-				case SDL_USEREVENT_QUIT:
+				case SDL_EVENT_USER_QUIT:
 				default:
+					if ((windowEvent.type >= SDL_EVENT_DISPLAY_FIRST) &&
+					    (windowEvent.type <= SDL_EVENT_DISPLAY_LAST))
+					{
+						const SDL_DisplayEvent* ev = &windowEvent.display;
+						sdl->disp.handle_display_event(ev);
+					}
+					else if ((windowEvent.type >= SDL_EVENT_WINDOW_FIRST) &&
+					         (windowEvent.type <= SDL_EVENT_WINDOW_LAST))
+					{
+						const SDL_WindowEvent* ev = &windowEvent.window;
+						sdl->disp.handle_window_event(ev);
+
+						switch (ev->type)
+						{
+							case SDL_EVENT_WINDOW_RESIZED:
+							case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+							{
+								auto window = sdl->windows.find(ev->windowID);
+								if (window != sdl->windows.end())
+								{
+									window->second.fill();
+									window->second.updateSurface();
+								}
+							}
+							break;
+							case SDL_EVENT_WINDOW_MOVED:
+							{
+								auto window = sdl->windows.find(ev->windowID);
+								if (window != sdl->windows.end())
+								{
+									auto r = window->second.rect();
+									auto id = window->second.id();
+									WLog_DBG(SDL_TAG, "%lu: %dx%d-%dx%d", id, r.x, r.y, r.w, r.h);
+								}
+							}
+							break;
+							default:
+								break;
+						}
+					}
 					break;
 			}
 		}
@@ -1311,10 +1303,8 @@ terminate:
 	}
 	free(error_msg);
 	sdl->exit_code = exit_code;
-	sdl_push_user_event(SDL_USEREVENT_QUIT);
-#if SDL_VERSION_ATLEAST(2, 0, 16)
-	SDL_TLSCleanup();
-#endif
+	sdl_push_user_event(SDL_EVENT_USER_QUIT);
+	SDL_CleanupTLS();
 	return 0;
 }
 
@@ -1635,7 +1625,7 @@ int main(int argc, char* argv[])
 		return rc;
 	}
 
-	SDL_LogSetOutputFunction(winpr_LogOutputFunction, sdl);
+	SDL_SetLogOutputFunction(winpr_LogOutputFunction, sdl);
 	auto level = WLog_GetLogLevel(sdl->log);
 	SDL_LogSetAllPriority(wloglevel2dl(level));
 
@@ -1663,7 +1653,7 @@ BOOL SdlContext::update_fullscreen(BOOL enter)
 	std::lock_guard<CriticalSection> lock(critical);
 	for (const auto& window : windows)
 	{
-		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_FULLSCREEN, &window.second, enter))
+		if (!sdl_push_user_event(SDL_EVENT_USER_WINDOW_FULLSCREEN, &window.second, enter))
 			return FALSE;
 	}
 	fullscreen = enter;
@@ -1681,7 +1671,7 @@ BOOL SdlContext::update_resizeable(BOOL enable)
 
 	for (const auto& window : windows)
 	{
-		if (!sdl_push_user_event(SDL_USEREVENT_WINDOW_RESIZEABLE, &window.second, use))
+		if (!sdl_push_user_event(SDL_EVENT_USER_WINDOW_RESIZEABLE, &window.second, use))
 			return FALSE;
 	}
 	resizeable = use;
@@ -1691,7 +1681,7 @@ BOOL SdlContext::update_resizeable(BOOL enable)
 
 SdlContext::SdlContext(rdpContext* context)
     : _context(context), log(WLog_Get(SDL_TAG)), update_complete(true), disp(this), input(this),
-      primary(nullptr, SDL_FreeSurface), primary_format(nullptr, SDL_FreeFormat)
+      primary(nullptr, SDL_DestroySurface), primary_format(nullptr, SDL_DestroyPixelFormat)
 {
 }
 

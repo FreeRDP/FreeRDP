@@ -23,8 +23,8 @@
 
 #include <string>
 
-#include <SDL.h>
-#include <SDL_ttf.h>
+#include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #include "sdl_widget.hpp"
 #include "sdl_button.hpp"
@@ -44,12 +44,13 @@ SdlInputWidget::SdlInputWidget(SDL_Renderer* renderer, const std::string& label,
                                size_t width, size_t height)
     : _flags(flags), _text(initial), _text_label(label),
       _label(renderer,
-             { 0, static_cast<int>(offset * (height + vpadding)), static_cast<int>(width),
-               static_cast<int>(height) },
+             { 0, static_cast<float>(offset * (height + vpadding)), static_cast<float>(width),
+               static_cast<float>(height) },
              false),
       _input(renderer,
-             { static_cast<int>(width + hpadding), static_cast<int>(offset * (height + vpadding)),
-               static_cast<int>(width), static_cast<int>(height) },
+             { static_cast<float>(width + hpadding),
+               static_cast<float>(offset * (height + vpadding)), static_cast<float>(width),
+               static_cast<float>(height) },
              true),
       _highlight(false), _mouseover(false)
 {
@@ -146,7 +147,7 @@ bool SdlInputWidget::append_str(SDL_Renderer* renderer, const std::string& str)
 	return update_input(renderer);
 }
 
-const SDL_Rect& SdlInputWidget::input_rect() const
+const SDL_FRect& SdlInputWidget::input_rect() const
 {
 	return _input.rect();
 }

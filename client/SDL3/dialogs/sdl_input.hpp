@@ -22,7 +22,7 @@
 #include <vector>
 #include <string>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "sdl_widget.hpp"
 
 class SdlInputWidget
@@ -51,7 +51,7 @@ class SdlInputWidget
 	bool remove_str(SDL_Renderer* renderer, size_t count);
 	bool append_str(SDL_Renderer* renderer, const std::string& text);
 
-	[[nodiscard]] const SDL_Rect& input_rect() const;
+	[[nodiscard]] const SDL_FRect& input_rect() const;
 	[[nodiscard]] std::string value() const;
 
 	[[nodiscard]] bool readonly() const;

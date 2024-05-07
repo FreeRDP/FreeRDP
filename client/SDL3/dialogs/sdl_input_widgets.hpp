@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "sdl_input.hpp"
 #include "sdl_buttons.hpp"

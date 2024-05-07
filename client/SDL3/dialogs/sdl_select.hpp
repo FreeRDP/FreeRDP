@@ -22,13 +22,13 @@
 #include <string>
 #include <vector>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "sdl_widget.hpp"
 
 class SdlSelectWidget : public SdlWidget
 {
   public:
-	SdlSelectWidget(SDL_Renderer* renderer, const std::string& label, const SDL_Rect& rect);
+	SdlSelectWidget(SDL_Renderer* renderer, const std::string& label, const SDL_FRect& rect);
 	SdlSelectWidget(SdlSelectWidget&& other) noexcept;
 	~SdlSelectWidget() override = default;
 

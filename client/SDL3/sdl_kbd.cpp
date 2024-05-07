@@ -297,14 +297,12 @@ static UINT32 sdl_get_kbd_flags(void)
 	UINT32 flags = 0;
 
 	SDL_Keymod mod = SDL_GetModState();
-	if ((mod & KMOD_NUM) != 0)
+	if ((mod & SDL_KMOD_NUM) != 0)
 		flags |= KBD_SYNC_NUM_LOCK;
-	if ((mod & KMOD_CAPS) != 0)
+	if ((mod & SDL_KMOD_CAPS) != 0)
 		flags |= KBD_SYNC_CAPS_LOCK;
-#if SDL_VERSION_ATLEAST(2, 0, 18)
-	if ((mod & KMOD_SCROLL) != 0)
+	if ((mod & SDL_KMOD_SCROLL) != 0)
 		flags |= KBD_SYNC_SCROLL_LOCK;
-#endif
 
 	// TODO: KBD_SYNC_KANA_LOCK
 
@@ -347,16 +345,14 @@ BOOL sdlInput::keyboard_set_indicators(rdpContext* context, UINT16 led_flags)
 {
 	WINPR_UNUSED(context);
 
-	int state = KMOD_NONE;
+	int state = SDL_KMOD_NONE;
 
 	if ((led_flags & KBD_SYNC_NUM_LOCK) != 0)
-		state |= KMOD_NUM;
+		state |= SDL_KMOD_NUM;
 	if ((led_flags & KBD_SYNC_CAPS_LOCK) != 0)
-		state |= KMOD_CAPS;
-#if SDL_VERSION_ATLEAST(2, 0, 18)
+		state |= SDL_KMOD_CAPS;
 	if ((led_flags & KBD_SYNC_SCROLL_LOCK) != 0)
-		state |= KMOD_SCROLL;
-#endif
+		state |= SDL_KMOD_SCROLL;
 
 	// TODO: KBD_SYNC_KANA_LOCK
 
@@ -382,26 +378,16 @@ BOOL sdlInput::keyboard_set_ime_status(rdpContext* context, UINT16 imeId, UINT32
 uint32_t sdlInput::prefToMask()
 {
 	const std::map<std::string, uint32_t> mapping = {
-		{ "KMOD_LSHIFT", KMOD_LSHIFT },
-		{ "KMOD_RSHIFT", KMOD_RSHIFT },
-		{ "KMOD_LCTRL", KMOD_LCTRL },
-		{ "KMOD_RCTRL", KMOD_RCTRL },
-		{ "KMOD_LALT", KMOD_LALT },
-		{ "KMOD_RALT", KMOD_RALT },
-		{ "KMOD_LGUI", KMOD_LGUI },
-		{ "KMOD_RGUI", KMOD_RGUI },
-		{ "KMOD_NUM", KMOD_NUM },
-		{ "KMOD_CAPS", KMOD_CAPS },
-		{ "KMOD_MODE", KMOD_MODE },
-#if SDL_VERSION_ATLEAST(2, 0, 18)
-		{ "KMOD_SCROLL", KMOD_SCROLL },
-#endif
-		{ "KMOD_CTRL", KMOD_CTRL },
-		{ "KMOD_SHIFT", KMOD_SHIFT },
-		{ "KMOD_ALT", KMOD_ALT },
-		{ "KMOD_GUI", KMOD_GUI }
+		{ "KMOD_LSHIFT", SDL_KMOD_LSHIFT }, { "KMOD_RSHIFT", SDL_KMOD_RSHIFT },
+		{ "KMOD_LCTRL", SDL_KMOD_LCTRL },   { "KMOD_RCTRL", SDL_KMOD_RCTRL },
+		{ "KMOD_LALT", SDL_KMOD_LALT },     { "KMOD_RALT", SDL_KMOD_RALT },
+		{ "KMOD_LGUI", SDL_KMOD_LGUI },     { "KMOD_RGUI", SDL_KMOD_RGUI },
+		{ "KMOD_NUM", SDL_KMOD_NUM },       { "KMOD_CAPS", SDL_KMOD_CAPS },
+		{ "KMOD_MODE", SDL_KMOD_MODE },     { "KMOD_SCROLL", SDL_KMOD_SCROLL },
+		{ "KMOD_CTRL", SDL_KMOD_CTRL },     { "KMOD_SHIFT", SDL_KMOD_SHIFT },
+		{ "KMOD_ALT", SDL_KMOD_ALT },       { "KMOD_GUI", SDL_KMOD_GUI }
 	};
-	uint32_t mod = KMOD_NONE;
+	uint32_t mod = SDL_KMOD_NONE;
 	for (const auto& val : SdlPref::instance()->get_array("SDL_KeyModMask", { "KMOD_RSHIFT" }))
 	{
 		auto it = mapping.find(val);
@@ -562,7 +548,7 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 
 	if ((mods & mask) == mask)
 	{
-		if (ev->type == SDL_KEYDOWN)
+		if (ev->type == SDL_EVENT_KEY_DOWN)
 		{
 			if (ev->keysym.scancode == valFullscreen)
 			{
@@ -589,8 +575,8 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 	}
 
 	auto scancode = remapScancode(rdp_scancode);
-	return freerdp_input_send_keyboard_event_ex(_sdl->context()->input, ev->type == SDL_KEYDOWN,
-	                                            ev->repeat, scancode);
+	return freerdp_input_send_keyboard_event_ex(
+	    _sdl->context()->input, ev->type == SDL_EVENT_KEY_DOWN, ev->repeat, scancode);
 }
 
 BOOL sdlInput::keyboard_grab(Uint32 windowID, SDL_bool enable)

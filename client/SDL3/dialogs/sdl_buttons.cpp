@@ -20,7 +20,8 @@ bool SdlButtonList::populate(SDL_Renderer* renderer, const std::vector<std::stri
 	for (size_t x = 0; x < ids.size(); x++)
 	{
 		const size_t curOffsetX = offsetX + x * (static_cast<size_t>(width) + hpadding);
-		const SDL_Rect rect = { static_cast<int>(curOffsetX), offsetY, width, height };
+		const SDL_FRect rect = { static_cast<float>(curOffsetX), static_cast<float>(offsetY),
+			                     static_cast<float>(width), static_cast<float>(height) };
 		_list.emplace_back(renderer, labels[x], ids[x], rect);
 	}
 	return true;

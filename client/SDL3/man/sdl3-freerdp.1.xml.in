@@ -3,9 +3,9 @@
 PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
 "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
 	<!ENTITY syntax SYSTEM "freerdp-argument.1.xml">
-	<!ENTITY config SYSTEM "sdl-freerdp-config.1.xml">
-	<!ENTITY envvar SYSTEM "sdl-freerdp-envvar.1.xml">
-	<!ENTITY examples SYSTEM "sdl-freerdp-examples.1.xml">
+	<!ENTITY config SYSTEM "sdl3-freerdp-config.1.xml">
+	<!ENTITY envvar SYSTEM "sdl3-freerdp-envvar.1.xml">
+	<!ENTITY examples SYSTEM "sdl3-freerdp-examples.1.xml">
 	]
 >
 

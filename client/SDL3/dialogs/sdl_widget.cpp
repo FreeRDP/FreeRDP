@@ -21,8 +21,8 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <SDL.h>
-#include <SDL_ttf.h>
+#include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 
 #include "sdl_widget.hpp"
 #include "../sdl_utils.hpp"
@@ -32,7 +32,7 @@
 #include <freerdp/log.h>
 
 #if defined(WITH_SDL_IMAGE_DIALOGS)
-#include <SDL_image.h>
+#include <SDL3_image/SDL_image.h>
 #endif
 
 #define TAG CLIENT_TAG("SDL.widget")
@@ -41,7 +41,7 @@ static const SDL_Color backgroundcolor = { 0x38, 0x36, 0x35, 0xff };
 
 static const Uint32 hpadding = 10;
 
-SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
+SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_FRect& rect, bool input)
     : _rect(rect), _input(input)
 {
 	assert(renderer);
@@ -52,20 +52,20 @@ SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input)
 		widget_log_error(-1, "SDLResourceManager::get");
 	else
 	{
-		_font = TTF_OpenFontRW(ops, 1, 64);
+		_font = TTF_OpenFontIO(ops, 1, 64);
 		if (!_font)
 			widget_log_error(-1, "TTF_OpenFontRW");
 	}
 }
 
 #if defined(WITH_SDL_IMAGE_DIALOGS)
-SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, SDL_RWops* ops) : _rect(rect)
+SdlWidget::SdlWidget(SDL_Renderer* renderer, const SDL_FRect& rect, SDL_IOStream* ops) : _rect(rect)
 {
 	if (ops)
 	{
-		_image = IMG_LoadTexture_RW(renderer, ops, 1);
+		_image = IMG_LoadTexture_IO(renderer, ops, 1);
 		if (!_image)
-			widget_log_error(-1, "IMG_LoadTextureTyped_RW");
+			widget_log_error(-1, "IMG_LoadTexture_IO");
 	}
 }
 #endif
@@ -79,7 +79,7 @@ SdlWidget::SdlWidget(SdlWidget&& other) noexcept
 }
 
 SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& text,
-                                    SDL_Color fgcolor, SDL_Rect& src, SDL_Rect& dst)
+                                    SDL_Color fgcolor, SDL_FRect& src, SDL_FRect& dst)
 {
 	auto surface = TTF_RenderUTF8_Blended(_font, text.c_str(), fgcolor);
 	if (!surface)
@@ -89,15 +89,19 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 	}
 
 	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_FreeSurface(surface);
+	SDL_DestroySurface(surface);
 	if (!texture)
 	{
 		widget_log_error(-1, "SDL_CreateTextureFromSurface");
 		return nullptr;
 	}
 
-	TTF_SizeUTF8(_font, text.c_str(), &src.w, &src.h);
+	int w = 0;
+	int h = 0;
+	TTF_SizeUTF8(_font, text.c_str(), &w, &h);
 
+	src.w = w;
+	src.h = h;
 	/* Do some magic:
 	 * - Add padding before and after text
 	 * - if text is too long only show the last elements
@@ -106,21 +110,21 @@ SDL_Texture* SdlWidget::render_text(SDL_Renderer* renderer, const std::string& t
 	dst = _rect;
 	dst.x += hpadding;
 	dst.w -= 2 * hpadding;
-	const float scale = static_cast<float>(dst.h) / static_cast<float>(src.h);
-	const float sws = static_cast<float>(src.w) * scale;
-	const float dws = static_cast<float>(dst.w) / scale;
-	if (static_cast<float>(dst.w) > sws)
-		dst.w = static_cast<int>(sws);
-	if (static_cast<float>(src.w) > dws)
+	const float scale = dst.h / src.h;
+	const float sws = (src.w) * scale;
+	const float dws = (dst.w) / scale;
+	if (dst.w > sws)
+		dst.w = sws;
+	if (src.w > dws)
 	{
-		src.x = src.w - static_cast<int>(dws);
-		src.w = static_cast<int>(dws);
+		src.x = src.w - dws;
+		src.w = dws;
 	}
 	return texture;
 }
 
 SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::string& text,
-                                            SDL_Color fgcolor, SDL_Rect& src, SDL_Rect& dst)
+                                            SDL_Color fgcolor, SDL_FRect& src, SDL_FRect& dst)
 {
 	Sint32 w = 0;
 	Sint32 h = 0;
@@ -136,7 +140,7 @@ SDL_Texture* SdlWidget::render_text_wrapped(SDL_Renderer* renderer, const std::s
 	src.h = surface->h;
 
 	auto texture = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_FreeSurface(surface);
+	SDL_DestroySurface(surface);
 	if (!texture)
 	{
 		widget_log_error(-1, "SDL_CreateTextureFromSurface");
@@ -175,7 +179,7 @@ bool SdlWidget::error_ex(Uint32 res, const char* what, const char* file, size_t 
 	return sdl_log_error_ex(res, log, what, file, line, fkt);
 }
 
-static bool draw_rect(SDL_Renderer* renderer, const SDL_Rect* rect, SDL_Color color)
+static bool draw_rect(SDL_Renderer* renderer, const SDL_FRect* rect, SDL_Color color)
 {
 	const int drc = SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 	if (widget_log_error(drc, "SDL_SetRenderDrawColor"))
@@ -228,7 +232,7 @@ bool SdlWidget::set_wrap(bool wrap, size_t width)
 	return _wrap;
 }
 
-const SDL_Rect& SdlWidget::rect() const
+const SDL_FRect& SdlWidget::rect() const
 {
 	return _rect;
 }
@@ -239,15 +243,19 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 	if (text.empty())
 		return true;
 
-	SDL_Rect src{};
-	SDL_Rect dst{};
+	SDL_FRect src{};
+	SDL_FRect dst{};
 
 	SDL_Texture* texture = nullptr;
 	if (_image)
 	{
 		texture = _image;
 		dst = _rect;
-		auto rc = SDL_QueryTexture(_image, nullptr, nullptr, &src.w, &src.h);
+		int w = 0;
+		int h = 0;
+		auto rc = SDL_QueryTexture(_image, nullptr, nullptr, &w, &h);
+		src.w = w;
+		src.h = h;
 		if (rc < 0)
 			widget_log_error(rc, "SDL_QueryTexture");
 	}
@@ -258,7 +266,7 @@ bool SdlWidget::update_text(SDL_Renderer* renderer, const std::string& text, SDL
 	if (!texture)
 		return false;
 
-	const int rc = SDL_RenderCopy(renderer, texture, &src, &dst);
+	const int rc = SDL_RenderTexture(renderer, texture, &src, &dst);
 	if (!_image)
 		SDL_DestroyTexture(texture);
 	if (rc < 0)

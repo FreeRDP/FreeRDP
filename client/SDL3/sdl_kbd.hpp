@@ -26,7 +26,7 @@
 
 #include <winpr/wtypes.h>
 #include <freerdp/freerdp.h>
-#include <SDL.h>
+#include <SDL3/SDL.h>
 
 #include "sdl_types.hpp"
 

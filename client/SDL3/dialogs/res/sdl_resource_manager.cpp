@@ -27,7 +27,7 @@ namespace fs = std::experimental::filesystem;
 #error Could not find system header "<filesystem>" or "<experimental/filesystem>"
 #endif
 
-SDL_RWops* SDLResourceManager::get(const std::string& type, const std::string& id)
+SDL_IOStream* SDLResourceManager::get(const std::string& type, const std::string& id)
 {
 	std::string uuid = type + "/" + id;
 
@@ -37,7 +37,7 @@ SDL_RWops* SDLResourceManager::get(const std::string& type, const std::string& i
 		return nullptr;
 
 	const auto& v = val->second;
-	return SDL_RWFromConstMem(v.data(), v.size());
+	return SDL_IOFromConstMem(v.data(), v.size());
 #else
 	fs::path path(SDL_RESOURCE_ROOT);
 	path /= type;
@@ -49,7 +49,7 @@ SDL_RWops* SDLResourceManager::get(const std::string& type, const std::string& i
 		          << fs::absolute(path) << std::endl;
 		std::cerr << "file not found, application will fail" << std::endl;
 	}
-	return SDL_RWFromFile(path.u8string().c_str(), "rb");
+	return SDL_IOFromFile(path.u8string().c_str(), "rb");
 #endif
 }
 

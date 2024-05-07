@@ -21,7 +21,7 @@
 
 #include <winpr/wtypes.h>
 
-#include <SDL.h>
+#include <SDL3/SDL.h>
 #include "sdl_types.hpp"
 
 BOOL sdl_scale_coordinates(SdlContext* sdl, Uint32 windowId, INT32* px, INT32* py,

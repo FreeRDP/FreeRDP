@@ -22,9 +22,9 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 	const size_t total_width = widget_width + widget_width;
 	const size_t input_height = labels.size() * (widget_heigth + vpadding) + vpadding;
 	const size_t total_height = input_height + widget_heigth;
-	_window = SDL_CreateWindow(
-	    title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, total_width, total_height,
-	    SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS);
+	_window = SDL_CreateWindow(title.c_str(), total_width, total_height,
+	                           SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |
+	                               SDL_WINDOW_INPUT_FOCUS);
 	if (_window == nullptr)
 	{
 		widget_log_error(-1, "SDL_CreateWindow");
@@ -32,7 +32,7 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 	else
 	{
 
-		_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
+		_renderer = SDL_CreateRenderer(_window, nullptr, SDL_RENDERER_PRESENTVSYNC);
 		if (_renderer == nullptr)
 		{
 			widget_log_error(-1, "SDL_CreateRenderer");
@@ -160,7 +160,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 			SDL_WaitEvent(&event);
 			switch (event.type)
 			{
-				case SDL_KEYUP:
+				case SDL_EVENT_KEY_UP:
 				{
 					auto it = std::remove(pressed.begin(), pressed.end(), event.key.keysym.sym);
 					pressed.erase(it, pressed.end());
@@ -209,10 +209,10 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 					}
 				}
 				break;
-				case SDL_KEYDOWN:
+				case SDL_EVENT_KEY_DOWN:
 					pressed.push_back(event.key.keysym.sym);
 					break;
-				case SDL_TEXTINPUT:
+				case SDL_EVENT_TEXT_INPUT:
 				{
 					auto cur = get(CurrentActiveTextInput);
 					if (cur)
@@ -222,7 +222,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 					}
 				}
 				break;
-				case SDL_MOUSEMOTION:
+				case SDL_EVENT_MOUSE_MOTION:
 				{
 					auto TextInputIndex = get_index(event.button);
 					for (auto& cur : _list)
@@ -240,7 +240,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 					_buttons.set_mouseover(event.button.x, event.button.y);
 				}
 				break;
-				case SDL_MOUSEBUTTONDOWN:
+				case SDL_EVENT_MOUSE_BUTTON_DOWN:
 				{
 					auto val = get_index(event.button);
 					if (valid(val))
@@ -257,7 +257,7 @@ int SdlInputWidgetList::run(std::vector<std::string>& result)
 					}
 				}
 				break;
-				case SDL_QUIT:
+				case SDL_EVENT_QUIT:
 					res = INPUT_BUTTON_CANCEL;
 					running = false;
 					break;

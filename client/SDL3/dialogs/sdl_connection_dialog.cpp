@@ -212,14 +212,14 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 
 	switch (event.type)
 	{
-		case SDL_USEREVENT_RETRY_DIALOG:
+		case SDL_EVENT_USER_RETRY_DIALOG:
 			return update();
-		case SDL_QUIT:
+		case SDL_EVENT_QUIT:
 			resetTimer();
 			destroyWindow();
 			return false;
-		case SDL_KEYDOWN:
-		case SDL_KEYUP:
+		case SDL_EVENT_KEY_DOWN:
+		case SDL_EVENT_KEY_UP:
 			if (visible())
 			{
 				auto& ev = reinterpret_cast<const SDL_KeyboardEvent&>(event);
@@ -230,7 +230,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 					case SDLK_RETURN2:
 					case SDLK_ESCAPE:
 					case SDLK_KP_ENTER:
-						if (event.type == SDL_KEYUP)
+						if (event.type == SDL_EVENT_KEY_UP)
 						{
 							freerdp_abort_event(_context);
 							sdl_push_quit();
@@ -246,7 +246,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 				return windowID == ev.windowID;
 			}
 			return false;
-		case SDL_MOUSEMOTION:
+		case SDL_EVENT_MOUSE_MOTION:
 			if (visible())
 			{
 				auto& ev = reinterpret_cast<const SDL_MouseMotionEvent&>(event);
@@ -256,8 +256,8 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 				return windowID == ev.windowID;
 			}
 			return false;
-		case SDL_MOUSEBUTTONDOWN:
-		case SDL_MOUSEBUTTONUP:
+		case SDL_EVENT_MOUSE_BUTTON_DOWN:
+		case SDL_EVENT_MOUSE_BUTTON_UP:
 			if (visible())
 			{
 				auto& ev = reinterpret_cast<const SDL_MouseButtonEvent&>(event);
@@ -266,7 +266,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 				auto button = _buttons.get_selected(event.button);
 				if (button)
 				{
-					if (event.type == SDL_MOUSEBUTTONUP)
+					if (event.type == SDL_EVENT_MOUSE_BUTTON_UP)
 					{
 						freerdp_abort_event(_context);
 						sdl_push_quit();
@@ -276,7 +276,7 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 				return windowID == ev.windowID;
 			}
 			return false;
-		case SDL_MOUSEWHEEL:
+		case SDL_EVENT_MOUSE_WHEEL:
 			if (visible())
 			{
 				auto& ev = reinterpret_cast<const SDL_MouseWheelEvent&>(event);
@@ -284,40 +284,36 @@ bool SDLConnectionDialog::handle(const SDL_Event& event)
 				return windowID == ev.windowID;
 			}
 			return false;
-		case SDL_FINGERUP:
-		case SDL_FINGERDOWN:
+		case SDL_EVENT_FINGER_UP:
+		case SDL_EVENT_FINGER_DOWN:
 			if (visible())
 			{
 				auto& ev = reinterpret_cast<const SDL_TouchFingerEvent&>(event);
 				update(_renderer);
-#if SDL_VERSION_ATLEAST(2, 0, 18)
 				return windowID == ev.windowID;
-#else
-				return false;
-#endif
 			}
 			return false;
-		case SDL_WINDOWEVENT:
-		{
-			auto& ev = reinterpret_cast<const SDL_WindowEvent&>(event);
-			switch (ev.event)
-			{
-				case SDL_WINDOWEVENT_CLOSE:
-					if (windowID == ev.windowID)
-					{
-						freerdp_abort_event(_context);
-						sdl_push_quit();
-					}
-					break;
-				default:
-					update(_renderer);
-					setModal();
-					break;
-			}
-
-			return windowID == ev.windowID;
-		}
 		default:
+			if ((event.type >= SDL_EVENT_WINDOW_FIRST) && (event.type <= SDL_EVENT_WINDOW_LAST))
+			{
+				auto& ev = reinterpret_cast<const SDL_WindowEvent&>(event);
+				switch (ev.type)
+				{
+					case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+						if (windowID == ev.windowID)
+						{
+							freerdp_abort_event(_context);
+							sdl_push_quit();
+						}
+						break;
+					default:
+						update(_renderer);
+						setModal();
+						break;
+				}
+
+				return windowID == ev.windowID;
+			}
 			return false;
 	}
 }
@@ -330,9 +326,9 @@ bool SDLConnectionDialog::createWindow()
 	const size_t widget_width = 600;
 	const size_t total_height = 300;
 
-	_window = SDL_CreateWindow(
-	    _title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, widget_width,
-	    total_height, SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS);
+	_window = SDL_CreateWindow(_title.c_str(), widget_width, total_height,
+	                           SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |
+	                               SDL_WINDOW_INPUT_FOCUS);
 	if (_window == nullptr)
 	{
 		widget_log_error(-1, "SDL_CreateWindow");
@@ -340,7 +336,7 @@ bool SDLConnectionDialog::createWindow()
 	}
 	setModal();
 
-	_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
+	_renderer = SDL_CreateRenderer(_window, nullptr, SDL_RENDERER_PRESENTVSYNC);
 	if (_renderer == nullptr)
 	{
 		widget_log_error(-1, "SDL_CreateRenderer");
@@ -385,7 +381,8 @@ bool SDLConnectionDialog::createWindow()
 	}
 
 	int height = (total_height - 3ul * vpadding) / 2ul;
-	SDL_Rect iconRect{ hpadding, vpadding, widget_width / 4ul - 2ul * hpadding, height };
+	SDL_FRect iconRect{ hpadding, vpadding, widget_width / 4ul - 2ul * hpadding,
+		                static_cast<float>(height) };
 	widget_cfg_t icon{ textcolor,
 		               res_bgcolor,
 		               { _renderer, iconRect,
@@ -401,11 +398,11 @@ bool SDLConnectionDialog::createWindow()
 		                                         "FreeRDP_Icon.svg") } };
 	_list.emplace_back(std::move(logo));
 
-	SDL_Rect rect = { widget_width / 4ul, vpadding, widget_width * 3ul / 4ul,
-		              total_height - 3ul * vpadding - widget_height };
+	SDL_FRect rect = { widget_width / 4ul, vpadding, widget_width * 3ul / 4ul,
+		               total_height - 3ul * vpadding - widget_height };
 #else
-	SDL_Rect rect = { hpadding, vpadding, widget_width - 2ul * hpadding,
-		              total_height - 2ul * vpadding };
+	SDL_FRect rect = { hpadding, vpadding, widget_width - 2ul * hpadding,
+		               total_height - 2ul * vpadding };
 #endif
 
 	widget_cfg_t w{ textcolor, backgroundcolor, { _renderer, rect, false } };
@@ -446,7 +443,7 @@ bool SDLConnectionDialog::show(MsgType type, const char* fmt, va_list ap)
 bool SDLConnectionDialog::show(MsgType type)
 {
 	_type = type;
-	return sdl_push_user_event(SDL_USEREVENT_RETRY_DIALOG);
+	return sdl_push_user_event(SDL_EVENT_USER_RETRY_DIALOG);
 }
 
 std::string SDLConnectionDialog::print(const char* fmt, va_list ap)

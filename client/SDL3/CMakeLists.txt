@@ -59,9 +59,7 @@ if (WITH_DEBUG_SDL_KBD_EVENTS)
 	add_definitions(-DWITH_DEBUG_SDL_KBD_EVENTS)
 endif()
 
-find_package(SDL2 REQUIRED COMPONENTS)
-include_directories(${SDL2_INCLUDE_DIR})
-include_directories(${SDL2_INCLUDE_DIRS})
+find_package(SDL3 REQUIRED COMPONENTS)
 
 find_package(Threads REQUIRED)
 
@@ -106,9 +104,9 @@ list(APPEND LIBS
     )
 
 if (NOT WITH_SDL_LINK_SHARED)
-    list(APPEND LIBS ${SDL2_STATIC_LIBRARIES})
+	list(APPEND LIBS ${SDL3_STATIC_LIBRARIES})
 else()
-    list(APPEND LIBS ${SDL2_LIBRARIES})
+	list(APPEND LIBS ${SDL3_LIBRARIES})
 endif()
 
 AddTargetWithResourceFile(${PROJECT_NAME} "${WIN32_GUI_FLAG}" "${PROJECT_VERSION}" SRCS)

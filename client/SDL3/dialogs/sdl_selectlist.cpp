@@ -9,9 +9,8 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 	const size_t widget_width = 600;
 
 	const size_t total_height = labels.size() * (widget_height + vpadding) + vpadding;
-	_window = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-	                           widget_width, total_height + widget_height,
-	                           SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS |
+	_window = SDL_CreateWindow(title.c_str(), widget_width, total_height + widget_height,
+	                           SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |
 	                               SDL_WINDOW_INPUT_FOCUS);
 	if (_window == nullptr)
 	{
@@ -19,14 +18,14 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 	}
 	else
 	{
-		_renderer = SDL_CreateRenderer(_window, -1, SDL_RENDERER_ACCELERATED);
+		_renderer = SDL_CreateRenderer(_window, nullptr, SDL_RENDERER_PRESENTVSYNC);
 		if (_renderer == nullptr)
 		{
 			widget_log_error(-1, "SDL_CreateRenderer");
 		}
 		else
 		{
-			SDL_Rect rect = { 0, 0, widget_width, widget_height };
+			SDL_FRect rect = { 0, 0, widget_width, widget_height };
 			for (auto& label : labels)
 			{
 				_list.emplace_back(_renderer, label, rect);
@@ -76,7 +75,7 @@ int SdlSelectList::run()
 			SDL_WaitEvent(&event);
 			switch (event.type)
 			{
-				case SDL_KEYDOWN:
+				case SDL_EVENT_KEY_DOWN:
 					switch (event.key.keysym.sym)
 					{
 						case SDLK_UP:
@@ -108,7 +107,7 @@ int SdlSelectList::run()
 							break;
 					}
 					break;
-				case SDL_MOUSEMOTION:
+				case SDL_EVENT_MOUSE_MOTION:
 				{
 					ssize_t TextInputIndex = get_index(event.button);
 					reset_mouseover();
@@ -122,7 +121,7 @@ int SdlSelectList::run()
 					_buttons.set_mouseover(event.button.x, event.button.y);
 				}
 				break;
-				case SDL_MOUSEBUTTONDOWN:
+				case SDL_EVENT_MOUSE_BUTTON_DOWN:
 				{
 					auto button = _buttons.get_selected(event.button);
 					if (button)
@@ -139,7 +138,7 @@ int SdlSelectList::run()
 					}
 				}
 				break;
-				case SDL_QUIT:
+				case SDL_EVENT_QUIT:
 					res = INPUT_BUTTON_CANCEL;
 					running = false;
 					break;

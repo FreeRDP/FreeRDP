@@ -29,8 +29,8 @@
 #include <freerdp/client/cliprdr.h>
 #include <freerdp/client/rdpgfx.h>
 
-#include <SDL.h>
-#include <SDL_video.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_video.h>
 
 #include "sdl_types.hpp"
 #include "sdl_disp.hpp"
@@ -39,8 +39,8 @@
 #include "sdl_window.hpp"
 #include "dialogs/sdl_connection_dialog.hpp"
 
-using SDLSurfacePtr = std::unique_ptr<SDL_Surface, decltype(&SDL_FreeSurface)>;
-using SDLPixelFormatPtr = std::unique_ptr<SDL_PixelFormat, decltype(&SDL_FreeFormat)>;
+using SDLSurfacePtr = std::unique_ptr<SDL_Surface, decltype(&SDL_DestroySurface)>;
+using SDLPixelFormatPtr = std::unique_ptr<SDL_PixelFormat, decltype(&SDL_DestroyPixelFormat)>;
 
 class SdlContext
 {
@@ -75,7 +75,7 @@ class SdlContext
 	SDLSurfacePtr primary;
 	SDLPixelFormatPtr primary_format;
 
-	Uint32 sdl_pixel_format = 0;
+	SDL_PixelFormatEnum sdl_pixel_format = SDL_PIXELFORMAT_UNKNOWN;
 
 	std::unique_ptr<SDLConnectionDialog> connection_dialog;
 
