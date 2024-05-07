@@ -758,10 +758,10 @@ static BOOL arm_fill_gateway_parameters(rdpArm* arm, const char* message, size_t
 
 	rdpSettings* settings = arm->context->settings;
 	const cJSON* gwurl = cJSON_GetObjectItemCaseSensitive(json, "gatewayLocation");
-	if (cJSON_IsString(gwurl) && (gwurl->valuestring != NULL))
+	if (cJSON_IsString(gwurl) && (cJSON_GetStringValue(gwurl) != NULL))
 	{
-		WLog_DBG(TAG, "extracted target url %s", gwurl->valuestring);
-		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayUrl, gwurl->valuestring))
+		WLog_DBG(TAG, "extracted target url %s", cJSON_GetStringValue(gwurl));
+		if (!freerdp_settings_set_string(settings, FreeRDP_GatewayUrl, cJSON_GetStringValue(gwurl)))
 			status = FALSE;
 		else
 			status = TRUE;
@@ -835,22 +835,22 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 	}
 
 	const cJSON* gateway_code_str = cJSON_GetObjectItemCaseSensitive(json, "Code");
-	if (!cJSON_IsString(gateway_code_str) || (gateway_code_str->valuestring == NULL))
+	if (!cJSON_IsString(gateway_code_str) || (cJSON_GetStringValue(gateway_code_str) == NULL))
 	{
 		WLog_ERR(TAG, "Response has no \"Code\" property");
 		http_response_log_error_status(WLog_Get(TAG), WLOG_ERROR, response);
 		goto fail;
 	}
 
-	if (strcmp(gateway_code_str->valuestring, "E_PROXY_ORCHESTRATION_LB_SESSIONHOST_DEALLOCATED") ==
-	    0)
+	if (strcmp(cJSON_GetStringValue(gateway_code_str),
+	           "E_PROXY_ORCHESTRATION_LB_SESSIONHOST_DEALLOCATED") == 0)
 	{
 		*retry = TRUE;
 		const cJSON* message = cJSON_GetObjectItemCaseSensitive(json, "Message");
-		if (!cJSON_IsString(message) || !message->valuestring)
+		if (!cJSON_IsString(message) || !cJSON_GetStringValue(message))
 			WLog_WARN(TAG, "Starting your VM. It may take up to 5 minutes");
 		else
-			WLog_WARN(TAG, "%s", message->valuestring);
+			WLog_WARN(TAG, "%s", cJSON_GetStringValue(message));
 	}
 	else
 	{
