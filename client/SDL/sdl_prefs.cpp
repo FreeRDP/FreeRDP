@@ -55,7 +55,7 @@ static cJSON* get_item(const std::string& key)
 		config = get();
 	if (!config)
 		return nullptr;
-	return cJSON_GetObjectItem(config.get(), key.c_str());
+	return cJSON_GetObjectItemCaseSensitive(config.get(), key.c_str());
 }
 
 static std::string item_to_str(cJSON* item, const std::string& fallback = "")
