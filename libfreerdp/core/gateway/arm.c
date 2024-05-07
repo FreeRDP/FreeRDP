@@ -825,10 +825,9 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 	{
 		const char* error_ptr = WINPR_JSON_GetErrorPtr();
 		if (error_ptr != NULL)
-		{
 			WLog_ERR(TAG, "NullPoException: %s", error_ptr);
-			return FALSE;
-		}
+
+		return FALSE;
 	}
 
 	WINPR_JSON* gateway_code_obj = WINPR_JSON_GetObjectItemCaseSensitive(json, "Code");
