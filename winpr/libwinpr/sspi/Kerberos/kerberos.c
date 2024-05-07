@@ -197,8 +197,6 @@ static INLINE krb5glue_key get_key(struct krb5glue_keyset* keyset)
 	                               : keyset->session_key;
 }
 
-#endif /* WITH_KRB5 */
-
 static BOOL isValidIPv4(const char* ipAddress)
 {
 	struct sockaddr_in sa = { 0 };
@@ -217,6 +215,8 @@ static BOOL isValidIP(const char* ipAddress)
 {
 	return isValidIPv4(ipAddress) || isValidIPv6(ipAddress);
 }
+
+#endif /* WITH_KRB5 */
 
 static SECURITY_STATUS SEC_ENTRY kerberos_AcquireCredentialsHandleA(
     SEC_CHAR* pszPrincipal, SEC_CHAR* pszPackage, ULONG fCredentialUse, void* pvLogonID,
