@@ -992,6 +992,9 @@ static int sdl_run(SdlContext* sdl)
 				case SDL_EVENT_USER_POINTER_SET:
 					sdl_Pointer_Set_Process(&windowEvent.user);
 					break;
+				case SDL_EVENT_CLIPBOARD_UPDATE:
+					sdl->clip.handle_update();
+					break;
 				case SDL_EVENT_USER_QUIT:
 				default:
 					if ((windowEvent.type >= SDL_EVENT_DISPLAY_FIRST) &&
@@ -1680,8 +1683,9 @@ BOOL SdlContext::update_resizeable(BOOL enable)
 }
 
 SdlContext::SdlContext(rdpContext* context)
-    : _context(context), log(WLog_Get(SDL_TAG)), update_complete(true), disp(this), input(this),
-      primary(nullptr, SDL_DestroySurface), primary_format(nullptr, SDL_DestroyPixelFormat)
+    : _context(context), log(WLog_Get(SDL_TAG)), update_complete(true), disp(this), clip(this),
+      input(this), primary(nullptr, SDL_DestroySurface),
+      primary_format(nullptr, SDL_DestroyPixelFormat)
 {
 }
 

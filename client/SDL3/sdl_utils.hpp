@@ -25,6 +25,10 @@
 #include <SDL3/SDL.h>
 #include <string>
 #include <vector>
+#include <memory>
+#include <functional>
+
+template <typename T> using deleted_unique_ptr = std::unique_ptr<T, std::function<void(T*)>>;
 
 class CriticalSection
 {

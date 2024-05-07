@@ -84,6 +84,8 @@ set(SRCS
     sdl_channels.cpp
     sdl_window.hpp
     sdl_window.cpp
+	sdl_clip.hpp
+	sdl_clip.cpp
 )
 
 add_library(sdl3-prefs STATIC

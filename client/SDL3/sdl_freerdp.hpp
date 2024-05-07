@@ -35,6 +35,7 @@
 #include "sdl_types.hpp"
 #include "sdl_disp.hpp"
 #include "sdl_kbd.hpp"
+#include "sdl_clip.hpp"
 #include "sdl_utils.hpp"
 #include "sdl_window.hpp"
 #include "dialogs/sdl_connection_dialog.hpp"
@@ -71,6 +72,7 @@ class SdlContext
 
 	sdlDispContext disp;
 	sdlInput input;
+	sdlClip clip;
 
 	SDLSurfacePtr primary;
 	SDLPixelFormatPtr primary_format;
