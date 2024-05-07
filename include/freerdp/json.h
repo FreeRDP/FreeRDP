@@ -24,18 +24,31 @@
 
 #include <cjson/cJSON.h>
 
+#if CJSON_VERSION_MAJOR == 1
+#if CJSON_VERSION_MINOR <= 7
+#if CJSON_VERSION_PATCH < 13
+#define USE_CJSON_COMPAT
+#endif
+#endif
+#endif
+
 #elif defined(WITH_JSONC)
 
 #include <json-c/json.h>
 #include <winpr/string.h>
 
 #define cJSON json_object
+#define cJSON_AddNullToObject(json, key) json_object_object_add(json, key, NULL)
+#define cJSON_AddStringToObject(json, key, val) \
+	json_object_object_add(json, key, json_object_new_string(val))
+#define cJSON_CreateObject json_object_new_object
 #define cJSON_Delete json_object_put
 #define cJSON_GetArrayItem json_object_array_get_idx
 #define cJSON_GetArraySize json_object_array_length
 #define cJSON_GetNumberValue json_object_get_double
 #define cJSON_GetObjectItemCaseSensitive json_object_object_get
 #define cJSON_GetStringValue(item) (char *)json_object_get_string((json_object *)item)
+#define cJSON_HasObjectItem(item, key) json_object_object_get_ex(item, key, NULL)
 #define cJSON_IsArray(item) json_object_is_type(item, json_type_array)
 #define cJSON_IsBool(item) json_object_is_type(item, json_type_boolean)
 #define cJSON_IsNumber(item) \
@@ -43,6 +56,8 @@
 #define cJSON_IsString(item) json_object_is_type(item, json_type_string)
 #define cJSON_IsTrue json_object_get_boolean
 #define cJSON_Parse json_tokener_parse
+#define cJSON_PrintUnformatted(json) \
+	_strdup(json_object_to_json_string_ext(json, JSON_C_TO_STRING_PLAIN))
 
 #endif
 

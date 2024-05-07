@@ -194,7 +194,7 @@ static BOOL json_get_string_alloc(wLog* wlog, cJSON* json, const char* key, char
 	return *result != NULL;
 }
 
-#if defined(USE_CJSON_COMPAT)
+#if defined(USE_CJSON_COMPAT) || defined(WITH_JSONC)
 cJSON* cJSON_ParseWithLength(const char* value, size_t buffer_length)
 {
 	// Check for string '\0' termination.

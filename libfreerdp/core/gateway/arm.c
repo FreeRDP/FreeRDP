@@ -55,7 +55,7 @@
 
 //#define WITH_AAD
 #ifdef WITH_AAD
-#include <cjson/cJSON.h>
+#include <freerdp/json.h>
 #endif
 
 #include <string.h>
@@ -823,10 +823,24 @@ static BOOL arm_handle_bad_request(rdpArm* arm, const HttpResponse* response, BO
 
 	WLog_DBG(TAG, "Got HTTP Response data: %s", msg);
 
+#if defined(WITH_CJSON)
 	cJSON* json = cJSON_ParseWithLength(msg, len);
 	if (json == NULL)
 	{
 		const char* error_ptr = cJSON_GetErrorPtr();
+#elif defined(WITH_JSONC)
+	struct json_tokener* tok = json_tokener_new();
+	struct json_object* json = json_tokener_parse_ex(tok, msg, len);
+	size_t parse_end = json_tokener_get_parse_end(tok);
+	json_tokener_free(tok);
+
+	if (json == NULL)
+	{
+		const char* error_ptr = NULL;
+
+		if (parse_end < len)
+			error_ptr = msg + parse_end;
+#endif
 		if (error_ptr != NULL)
 			WLog_ERR(TAG, "NullPoException: %s", error_ptr);
 
