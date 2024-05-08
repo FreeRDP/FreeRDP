@@ -86,7 +86,7 @@ static void redirection_free_data(BYTE** str, UINT32* length)
 	*str = NULL;
 }
 
-static BOOL redirection_copy_data(char** dst, UINT32* plen, const char* str, UINT32 len)
+static BOOL redirection_copy_data(BYTE** dst, UINT32* plen, const BYTE* str, UINT32 len)
 {
 	redirection_free_data(dst, plen);
 
@@ -109,7 +109,7 @@ static BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, c
 	switch (id)
 	{
 		case FreeRDP_TargetNetAddress:
-			pdata = &settings->TargetNetAddress;
+			pdata = (BYTE**)&settings->TargetNetAddress;
 			plen = &settings->TargetNetAddressCount;
 			break;
 		case FreeRDP_LoadBalanceInfo:
