@@ -85,7 +85,7 @@ static BOOL rdp_read_info_null_string(const char* what, UINT32 flags, wStream* s
 
 	if (cbLen > 0)
 	{
-		const WCHAR* domain = Stream_Pointer(s);
+		const WCHAR* domain = (WCHAR*)Stream_Pointer(s);
 
 		if (isNullTerminated && (max > 0))
 			max -= nullSize;
