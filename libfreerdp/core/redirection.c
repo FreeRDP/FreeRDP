@@ -86,7 +86,7 @@ static void redirection_free_data(BYTE** str, UINT32* length)
 	*str = NULL;
 }
 
-static BOOL redirection_copy_data(char** dst, UINT32* plen, const char* str, UINT32 len)
+static BOOL redirection_copy_data(BYTE** dst, UINT32* plen, const BYTE* str, UINT32 len)
 {
 	redirection_free_data(dst, plen);
 
