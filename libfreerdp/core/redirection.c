@@ -109,7 +109,7 @@ static BOOL freerdp_settings_set_pointer_len(rdpSettings* settings, size_t id, c
 	switch (id)
 	{
 		case FreeRDP_TargetNetAddress:
-			pdata = &settings->TargetNetAddress;
+			pdata = (BYTE**)&settings->TargetNetAddress;
 			plen = &settings->TargetNetAddressCount;
 			break;
 		case FreeRDP_LoadBalanceInfo:
