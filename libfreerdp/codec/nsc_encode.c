@@ -111,7 +111,6 @@ fail:
 
 static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UINT32 scanline)
 {
-	UINT16 x = 0;
 	UINT16 y = 0;
 	UINT16 rw = 0;
 	BYTE ccl = 0;
@@ -138,7 +137,8 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UI
 		cgplane = context->priv->PlaneBuffers[2] + y * rw;
 		aplane = context->priv->PlaneBuffers[3] + y * context->width;
 
-		for (UINT16 x = 0; x < context->width; x++)
+		UINT16 x = 0;
+		for (; x < context->width; x++)
 		{
 			switch (context->format)
 			{

@@ -2396,14 +2396,14 @@ static int parse_host_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 
 		if (p)
 		{
-			LONGLONG val = 0;
+			LONGLONG lval = 0;
 			size_t length = 0;
 
-			if (!value_to_int(&p[1], &val, 1, UINT16_MAX))
+			if (!value_to_int(&p[1], &lval, 1, UINT16_MAX))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 			length = (size_t)(p - arg->Value);
-			if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, val))
+			if (!freerdp_settings_set_uint32(settings, FreeRDP_ServerPort, lval))
 				return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 			if (!freerdp_settings_set_string_len(settings, FreeRDP_ServerHostname, arg->Value,
 			                                     length))

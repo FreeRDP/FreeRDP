@@ -362,20 +362,20 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 		polled = 0;
 
 		/* first collect file descriptors to poll */
-		DWORD index = 0;
-		for (; index < nCount; index++)
+		DWORD idx = 0;
+		for (; idx < nCount; idx++)
 		{
 			if (bWaitAll)
 			{
-				if (signalled_handles[index])
+				if (signalled_handles[idx])
 					continue;
 
-				poll_map[polled] = index;
+				poll_map[polled] = idx;
 			}
 
-			if (!winpr_Handle_GetInfo(lpHandles[index], &Type, &Object))
+			if (!winpr_Handle_GetInfo(lpHandles[idx], &Type, &Object))
 			{
-				WLog_ERR(TAG, "invalid event file descriptor at %" PRIu32, index);
+				WLog_ERR(TAG, "invalid event file descriptor at %" PRIu32, idx);
 				winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 				SetLastError(ERROR_INVALID_HANDLE);
 				goto out;
@@ -384,7 +384,7 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 			fd = winpr_Handle_getFd(Object);
 			if (fd == -1)
 			{
-				WLog_ERR(TAG, "invalid file descriptor at %" PRIu32, index);
+				WLog_ERR(TAG, "invalid file descriptor at %" PRIu32, idx);
 				winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 				SetLastError(ERROR_INVALID_HANDLE);
 				goto out;
@@ -392,7 +392,7 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 
 			if (!pollset_add(&pollset, fd, Object->Mode))
 			{
-				WLog_ERR(TAG, "unable to register fd in pollset at %" PRIu32, index);
+				WLog_ERR(TAG, "unable to register fd in pollset at %" PRIu32, idx);
 				winpr_log_backtrace(TAG, WLOG_ERROR, 20);
 				SetLastError(ERROR_INVALID_HANDLE);
 				goto out;
@@ -426,10 +426,10 @@ DWORD WaitForMultipleObjectsEx(DWORD nCount, const HANDLE* lpHandles, BOOL bWait
 			{
 				char ebuffer[256] = { 0 };
 #ifdef WINPR_HAVE_POLL_H
-				WLog_ERR(TAG, "poll() handle %" PRIu32 " (%" PRIu32 ") failure [%d] %s", index,
+				WLog_ERR(TAG, "poll() handle %" PRIu32 " (%" PRIu32 ") failure [%d] %s", idx,
 				         nCount, errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 #else
-				WLog_ERR(TAG, "select() handle %" PRIu32 " (%" PRIu32 ") failure [%d] %s", index,
+				WLog_ERR(TAG, "select() handle %" PRIu32 " (%" PRIu32 ") failure [%d] %s", idx,
 				         nCount, errno, winpr_strerror(errno, ebuffer, sizeof(ebuffer)));
 #endif
 				winpr_log_backtrace(TAG, WLOG_ERROR, 20);

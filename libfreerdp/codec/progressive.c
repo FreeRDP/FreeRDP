@@ -1673,7 +1673,6 @@ static INLINE SSIZE_T progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive
 	int status = 0;
 	size_t end = 0;
 	const size_t start = Stream_GetPosition(s);
-	UINT16 index = 0;
 	UINT16 blockType = 0;
 	UINT32 blockLen = 0;
 	UINT32 count = 0;
@@ -1779,10 +1778,10 @@ static INLINE SSIZE_T progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive
 		return -1;
 	}
 
-	for (UINT32 index = 0; index < region->numTiles; index++)
+	for (UINT32 idx = 0; idx < region->numTiles; idx++)
 	{
-		RFX_PROGRESSIVE_TILE* tile = region->tiles[index];
-		PROGRESSIVE_TILE_PROCESS_WORK_PARAM* param = &params[index];
+		RFX_PROGRESSIVE_TILE* tile = region->tiles[idx];
+		PROGRESSIVE_TILE_PROCESS_WORK_PARAM* param = &params[idx];
 		param->progressive = progressive;
 		param->region = region;
 		param->context = context;
@@ -1790,41 +1789,38 @@ static INLINE SSIZE_T progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive
 
 		if (progressive->rfx_context->priv->UseThreads)
 		{
-			if (!(work_objects[index] = CreateThreadpoolWork(
-			          progressive_process_tiles_tile_work_callback, (void*)&params[index],
+			if (!(work_objects[idx] = CreateThreadpoolWork(
+			          progressive_process_tiles_tile_work_callback, (void*)&params[idx],
 			          &progressive->rfx_context->priv->ThreadPoolEnv)))
 			{
-				WLog_ERR(TAG, "CreateThreadpoolWork failed.");
+				WLog_Print(progressive->log, WLOG_ERROR,
+				           "Failed to create ThreadpoolWork for tile %" PRIu32, idx);
 				status = -1;
 				break;
 			}
 
-			SubmitThreadpoolWork(work_objects[index]);
-			close_cnt = index + 1;
+			SubmitThreadpoolWork(work_objects[idx]);
+			close_cnt = idx + 1;
 		}
 		else
 		{
-			progressive_process_tiles_tile_work_callback(0, &params[index], 0);
+			progressive_process_tiles_tile_work_callback(0, &params[idx], 0);
 		}
 
 		if (status < 0)
 		{
 			WLog_Print(progressive->log, WLOG_ERROR, "Failed to decompress %s at %" PRIu16,
-			           rfx_get_progressive_block_type_string(tile->blockType), index);
+			           rfx_get_progressive_block_type_string(tile->blockType), idx);
 			goto fail;
 		}
 	}
 
-	if (status < 0)
-		WLog_Print(progressive->log, WLOG_ERROR,
-		           "Failed to create ThreadpoolWork for tile %" PRIu16, index);
-
 	if (progressive->rfx_context->priv->UseThreads)
 	{
-		for (UINT32 index = 0; index < close_cnt; index++)
+		for (UINT32 idx = 0; idx < close_cnt; idx++)
 		{
-			WaitForThreadpoolWorkCallbacks(work_objects[index], FALSE);
-			CloseThreadpoolWork(work_objects[index]);
+			WaitForThreadpoolWorkCallbacks(work_objects[idx], FALSE);
+			CloseThreadpoolWork(work_objects[idx]);
 		}
 	}
 
@@ -2525,10 +2521,10 @@ int progressive_compress(PROGRESSIVE_CONTEXT* progressive, const BYTE* pSrcData,
 	if (invalidRegion)
 	{
 		const RECTANGLE_16* region_rects = region16_rects(invalidRegion, NULL);
-		for (UINT32 x = 0; x < numRects; x++)
+		for (UINT32 idx = 0; idx < numRects; idx++)
 		{
-			const RECTANGLE_16* r = &region_rects[x];
-			RFX_RECT* rect = &rects[x];
+			const RECTANGLE_16* r = &region_rects[idx];
+			RFX_RECT* rect = &rects[idx];
 
 			rect->x = r->left;
 			rect->y = r->top;

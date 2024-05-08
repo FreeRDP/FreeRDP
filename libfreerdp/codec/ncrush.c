@@ -2936,12 +2936,12 @@ static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(28 < ARRAYSIZE(LOMBitsLUT));
 
-	UINT32 k = 0;
+	UINT32 cnt = 0;
 	for (int i = 0; i < 28; i++)
 	{
 		for (int j = 0; j < 1 << LOMBitsLUT[i]; j++)
 		{
-			size_t l = (k++) + 2ull;
+			size_t l = (cnt++) + 2ull;
 			context->HuffTableLOM[l] = (int)i;
 		}
 	}
@@ -2961,8 +2961,7 @@ static int ncrush_generate_tables(NCRUSH_CONTEXT* context)
 			return -1;
 	}
 
-	k = 0;
-
+	size_t k = 0;
 	for (int i = 0; i < 16; i++)
 	{
 		for (int j = 0; j < 1 << CopyOffsetBitsLUT[i]; j++)

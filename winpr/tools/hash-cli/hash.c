@@ -189,8 +189,8 @@ int main(int argc, char* argv[])
 
 	if (format == 0)
 	{
-		for (int index = 0; index < 16; index++)
-			printf("%02" PRIx8 "", NtHash[index]);
+		for (int idx = 0; idx < 16; idx++)
+			printf("%02" PRIx8 "", NtHash[idx]);
 
 		printf("\n");
 	}
@@ -205,8 +205,8 @@ int main(int argc, char* argv[])
 
 		printf(":");
 
-		for (int index = 0; index < 16; index++)
-			printf("%02" PRIx8 "", NtHash[index]);
+		for (int idx = 0; idx < 16; idx++)
+			printf("%02" PRIx8 "", NtHash[idx]);
 
 		printf(":::");
 		printf("\n");
