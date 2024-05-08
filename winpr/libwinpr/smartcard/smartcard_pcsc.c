@@ -1610,11 +1610,11 @@ static LONG WINAPI PCSC_SCardGetStatusChange_Internal(SCARDCONTEXT hContext, DWO
 		if (map[i] < 0)
 			continue; /* unmapped */
 
-		PCSC_DWORD j = (PCSC_DWORD)map[i];
-		rgReaderStates[i].dwCurrentState = (DWORD)states[j].dwCurrentState;
-		rgReaderStates[i].cbAtr = (DWORD)states[j].cbAtr;
-		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[j].rgbAtr), PCSC_MAX_ATR_SIZE);
-		rgReaderStates[i].dwEventState = (DWORD)states[j].dwEventState;
+		PCSC_DWORD k = (PCSC_DWORD)map[i];
+		rgReaderStates[i].dwCurrentState = (DWORD)states[k].dwCurrentState;
+		rgReaderStates[i].cbAtr = (DWORD)states[k].cbAtr;
+		CopyMemory(&(rgReaderStates[i].rgbAtr), &(states[k].rgbAtr), PCSC_MAX_ATR_SIZE);
+		rgReaderStates[i].dwEventState = (DWORD)states[k].dwEventState;
 	}
 
 	free(map);

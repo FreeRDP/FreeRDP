@@ -109,10 +109,10 @@ void winpr_HexLogDump(wLog* log, UINT32 lvl, const void* data, size_t length)
 			pos += (size_t)rc;
 		}
 
-		for (size_t i = 0; i < line; i++)
+		for (size_t j = 0; j < line; j++)
 		{
 			rc = _snprintf(&buffer[pos], blen - pos, "%c",
-			               (p[i] >= 0x20 && p[i] < 0x7F) ? (char)p[i] : '.');
+			               (p[j] >= 0x20 && p[j] < 0x7F) ? (char)p[j] : '.');
 
 			if (rc < 0)
 				goto fail;

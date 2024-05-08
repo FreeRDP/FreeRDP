@@ -1351,8 +1351,8 @@ BOOL freerdp_assistance_populate_settings_from_assistance_file(rdpAssistanceFile
 
 	for (size_t x = 0; x < ports; x++)
 	{
-		const UINT32 port = (UINT32)ArrayList_GetItem(file->MachinePorts, x);
-		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetPorts, x, &port))
+		const UINT32 mport = (UINT32)ArrayList_GetItem(file->MachinePorts, x);
+		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetPorts, x, &mport))
 			return FALSE;
 	}
 	for (size_t i = 0; i < addresses; i++)
