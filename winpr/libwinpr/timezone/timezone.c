@@ -355,10 +355,10 @@ static SYSTEMTIME tm2systemtime(const struct tm* t)
 	return st;
 }
 
-static LONG get_gmtoff_min(struct tm* t)
+static LONG get_gmtoff_min(const struct tm* t)
 {
 	WINPR_ASSERT(t);
-	return -t->tm_gmtoff / 60l;
+	return -(LONG)(t->tm_gmtoff / 60l);
 }
 
 static struct tm next_day(const struct tm* start)
