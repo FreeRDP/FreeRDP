@@ -129,7 +129,7 @@ static void iterate_subdir_recursive(const char* base, const char* bname, const 
 	if (!path)
 		return;
 
-	struct DIR* d = opendir(path);
+	DIR* d = opendir(path);
 	if (d)
 	{
 		struct dirent* dp = NULL;
