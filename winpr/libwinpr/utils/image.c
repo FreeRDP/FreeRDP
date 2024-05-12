@@ -626,7 +626,10 @@ static void* winpr_convert_to_jpeg(const void* data, size_t size, UINT32 width, 
 	for (size_t x = 0; x < height; x++)
 	{
 		const JDIMENSION offset = x * stride;
-		const JSAMPLE* coffset = &cdata[offset];
+
+		/* libjpeg is not const correct, we must cast here to avoid issues
+		 * with newer C compilers type check errors */
+		JSAMPLE* coffset = (JSAMPLE*)&cdata[offset];
 		if (jpeg_write_scanlines(&cinfo, &coffset, 1) != 1)
 			goto fail;
 	}
