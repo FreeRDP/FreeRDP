@@ -261,6 +261,9 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_UseMultimon, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_UseMultimon" },
 	{ FreeRDP_UseRdpSecurityLayer, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_UseRdpSecurityLayer" },
 	{ FreeRDP_UsingSavedCredentials, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_UsingSavedCredentials" },
+#ifdef WITH_VAAPI
+	{ FreeRDP_Vaapi, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_Vaapi" },
+#endif
 	{ FreeRDP_VideoDisable, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_VideoDisable" },
 	{ FreeRDP_VmConnectMode, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_VmConnectMode" },
 	{ FreeRDP_WaitForOutputBufferFlush, FREERDP_SETTINGS_TYPE_BOOL,

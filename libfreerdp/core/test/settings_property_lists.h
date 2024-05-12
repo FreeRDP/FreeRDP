@@ -190,6 +190,9 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_UseMultimon,
 	FreeRDP_UseRdpSecurityLayer,
 	FreeRDP_UsingSavedCredentials,
+#ifdef WITH_VAAPI
+	FreeRDP_Vaapi,
+#endif
 	FreeRDP_VideoDisable,
 	FreeRDP_VmConnectMode,
 	FreeRDP_WaitForOutputBufferFlush,

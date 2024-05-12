@@ -108,6 +108,9 @@ struct rdp_file
 	DWORD EncodeRedirectedVideoCapture;          /* encode redirected video capture */
 	DWORD RedirectedVideoCaptureEncodingQuality; /* redirected video capture encoding quality */
 	DWORD VideoPlaybackMode;                     /* videoplaybackmode */
+#ifdef WITH_VAAPI
+	DWORD Vaapi;                                 /* enable VA-API */
+#endif
 
 	DWORD ConnectionType; /* connection type */
 
@@ -334,6 +337,9 @@ static const char key_int_screen_mode_id[] = "screen mode id";
 static const char key_int_singlemoninwindowedmode[] = "singlemoninwindowedmode";
 static const char key_int_maximizetocurrentdisplays[] = "maximizetocurrentdisplays";
 static const char key_int_use_multimon[] = "use multimon";
+#ifdef WITH_VAAPI
+static const char key_int_vaapi[] = "vaapi";
+#endif
 static const char key_int_redirectwebauthn[] = "redirectwebauthn";
 
 static SSIZE_T freerdp_client_rdp_file_add_line(rdpFile* file);
@@ -492,6 +498,10 @@ static BOOL freerdp_client_rdp_file_find_integer_entry(rdpFile* file, const char
 		*outValue = &file->GatewayCredentialsSource;
 	else if (_stricmp(name, key_int_use_redirection_server_name) == 0)
 		*outValue = &file->UseRedirectionServerName;
+#ifdef WITH_VAAPI
+	else if (_stricmp(name, vaapi) == 0)
+		*outValue = &file->Vaapi;
+#endif
 	else if (_stricmp(name, key_int_rdgiskdcproxy) == 0)
 		*outValue = &file->RdgIsKdcProxy;
 	else if (_stricmp(name, key_int_redirectwebauthn) == 0)
@@ -1341,6 +1351,10 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 
 	file->KeyboardHook = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardHook);
 
+#ifdef WITH_VAAPI
+	file->Vaapi = freerdp_settings_get_bool(settings, FreeRDP_Vaapi);
+#endif
+
 	return TRUE;
 }
 
@@ -1563,6 +1577,9 @@ size_t freerdp_client_write_rdp_file_buffer(const rdpFile* file, char* buffer, s
 	WRITE_SETTING_INT(key_int_gatewayprofileusagemethod, file->GatewayProfileUsageMethod);
 	WRITE_SETTING_INT(key_int_gatewaycredentialssource, file->GatewayCredentialsSource);
 	WRITE_SETTING_INT(key_int_use_redirection_server_name, file->UseRedirectionServerName);
+#ifdef WITH_VAAPI
+	WRITE_SETTING_INT(key_int_vaapi, file->Vaapi);
+#endif
 	WRITE_SETTING_INT(key_int_rdgiskdcproxy, file->RdgIsKdcProxy);
 	WRITE_SETTING_INT(key_int_redirectwebauthn, file->RedirectWebauthN);
 
@@ -2474,6 +2491,14 @@ BOOL freerdp_client_populate_settings_from_rdp_file(const rdpFile* file, rdpSett
 		                                 file->DesktopScaleFactor))
 			return FALSE;
 	}
+
+#ifdef WITH_VAAPI
+	if (~file->Vaapi)
+	{
+		if (!freerdp_settings_set_bool(settings, FreeRDP_Vaapi, file->Vaapi != 0))
+			return FALSE;
+	}
+#endif
 
 	if (~file->VideoPlaybackMode)
 	{

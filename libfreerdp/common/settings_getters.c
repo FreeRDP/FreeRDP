@@ -618,6 +618,11 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 		case FreeRDP_UsingSavedCredentials:
 			return settings->UsingSavedCredentials;
 
+#ifdef WITH_VAAPI
+		case FreeRDP_Vaapi:
+			return settings->Vaapi;
+#endif
+
 		case FreeRDP_VideoDisable:
 			return settings->VideoDisable;
 
@@ -1401,6 +1406,12 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 		case FreeRDP_UsingSavedCredentials:
 			settings->UsingSavedCredentials = cnv.c;
 			break;
+
+#ifdef WITH_VAAPI
+		case FreeRDP_Vaapi:
+			settings->Vaapi = cnv.c;
+			break;
+#endif
 
 		case FreeRDP_VideoDisable:
 			settings->VideoDisable = cnv.c;

@@ -5214,6 +5214,13 @@ static int freerdp_client_settings_parse_command_line_arguments_int(
 			if (rc != 0)
 				return rc;
 		}
+#ifdef WITH_VAAPI
+		CommandLineSwitchCase(arg, "vaapi")
+		{
+			if (!freerdp_settings_set_bool(settings, FreeRDP_Vaapi, enable))
+				return COMMAND_LINE_ERROR;
+		}
+#endif
 		CommandLineSwitchDefault(arg)
 		{
 			if (handle_option)
