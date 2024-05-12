@@ -110,7 +110,7 @@ static char* topath(const char* base, const char* bname, const char* name)
 		return _strdup(base);
 
 	if (!base && !bname)
-		return _strdup(bname);
+		return _strdup(name);
 
 	if (!base)
 		winpr_asprintf(&path, &plen, "%s/%s", bname, name);
