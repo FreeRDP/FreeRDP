@@ -85,6 +85,9 @@ extern "C"
 #define PERF_ENABLE_DESKTOP_COMPOSITION 0x00000100
 
 /* Connection Types */
+#define CONNECTION_TYPE_INVALID                                                       \
+	0x00 /* synthetic, removes RNS_UD_CS_VALID_CONNECTION_TYPE from ConnectionType in \
+	        EarlyCapabilityFlags */
 #define CONNECTION_TYPE_MODEM 0x01
 #define CONNECTION_TYPE_BROADBAND_LOW 0x02
 #define CONNECTION_TYPE_SATELLITE 0x03

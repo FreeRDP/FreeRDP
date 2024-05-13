@@ -341,7 +341,7 @@ static const COMMAND_LINE_ARGUMENT_A global_cmd_args[] = {
 	{ "nego", COMMAND_LINE_VALUE_BOOL, NULL, BoolValueTrue, NULL, -1, NULL,
 	  "protocol security negotiation" },
 	{ "network", COMMAND_LINE_VALUE_REQUIRED,
-	  "[modem|broadband|broadband-low|broadband-high|wan|lan|auto]", NULL, NULL, -1, NULL,
+	  "[invalid|modem|broadband|broadband-low|broadband-high|wan|lan|auto]", NULL, NULL, -1, NULL,
 	  "Network connection type" },
 	{ "nsc", COMMAND_LINE_VALUE_FLAG, NULL, NULL, NULL, -1, "nscodec", "NSCodec support" },
 #if defined(WITH_FREERDP_DEPRECATED_COMMANDLINE)

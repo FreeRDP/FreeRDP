@@ -1319,6 +1319,9 @@ static BOOL freerdp_apply_connection_type(rdpSettings* settings, UINT32 type)
 
 	switch (type)
 	{
+		case CONNECTION_TYPE_INVALID:
+			return TRUE;
+
 		case CONNECTION_TYPE_MODEM:
 		case CONNECTION_TYPE_BROADBAND_LOW:
 		case CONNECTION_TYPE_BROADBAND_HIGH:
@@ -1328,7 +1331,7 @@ static BOOL freerdp_apply_connection_type(rdpSettings* settings, UINT32 type)
 		case CONNECTION_TYPE_AUTODETECT:
 			break;
 		default:
-			WLog_WARN(TAG, "Invalid ConnectionType %" PRIu32 ", aborting", type);
+			WLog_WARN(TAG, "Unknown ConnectionType %" PRIu32 ", aborting", type);
 			return FALSE;
 	}
 
@@ -1349,26 +1352,12 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 
 	switch (type)
 	{
+		case CONNECTION_TYPE_INVALID:
 		case CONNECTION_TYPE_MODEM:
-			if (!freerdp_apply_connection_type(settings, type))
-				return FALSE;
-			break;
 		case CONNECTION_TYPE_BROADBAND_LOW:
-			if (!freerdp_apply_connection_type(settings, type))
-				return FALSE;
-			break;
 		case CONNECTION_TYPE_SATELLITE:
-			if (!freerdp_apply_connection_type(settings, type))
-				return FALSE;
-			break;
 		case CONNECTION_TYPE_BROADBAND_HIGH:
-			if (!freerdp_apply_connection_type(settings, type))
-				return FALSE;
-			break;
 		case CONNECTION_TYPE_WAN:
-			if (!freerdp_apply_connection_type(settings, type))
-				return FALSE;
-			break;
 		case CONNECTION_TYPE_LAN:
 			if (!freerdp_apply_connection_type(settings, type))
 				return FALSE;
@@ -1388,6 +1377,7 @@ BOOL freerdp_set_connection_type(rdpSettings* settings, UINT32 type)
 				return FALSE;
 			break;
 		default:
+			WLog_WARN(TAG, "Unknown ConnectionType %" PRIu32 ", aborting", type);
 			return FALSE;
 	}
 
@@ -3078,9 +3068,11 @@ static int parse_network_options(rdpSettings* settings, const COMMAND_LINE_ARGUM
 	WINPR_ASSERT(settings);
 	WINPR_ASSERT(arg);
 
-	UINT32 type = 0;
+	UINT32 type = CONNECTION_TYPE_INVALID;
 
-	if (option_equals(arg->Value, "modem"))
+	if (option_equals(arg->Value, "invalid"))
+		type = CONNECTION_TYPE_INVALID;
+	else if (option_equals(arg->Value, "modem"))
 		type = CONNECTION_TYPE_MODEM;
 	else if (option_equals(arg->Value, "broadband"))
 		type = CONNECTION_TYPE_BROADBAND_HIGH;
@@ -3101,7 +3093,7 @@ static int parse_network_options(rdpSettings* settings, const COMMAND_LINE_ARGUM
 	{
 		LONGLONG val = 0;
 
-		if (!value_to_int(arg->Value, &val, 1, 7))
+		if (!value_to_int(arg->Value, &val, 0, 7))
 			return COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 
 		type = (UINT32)val;
