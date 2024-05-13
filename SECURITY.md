@@ -20,6 +20,7 @@ The following table shows the currently supported versions:
 | ------- |--------------| ------------------ |
 | < 2.0.0 | stable-1.x   | :x:                |
 | 2.x.x   | stable-2.0   | :heavy_check_mark: |
+| 3.x.x   | stable-3.0   | :white_check_mark: |
 | -       | master       | :white_check_mark: |
 
 
