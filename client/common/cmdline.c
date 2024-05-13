@@ -1314,8 +1314,7 @@ static BOOL freerdp_apply_connection_type(rdpSettings* settings, UINT32 type)
 		{ FreeRDP_AllowDesktopComposition, { FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, TRUE } },
 		{ FreeRDP_DisableFullWindowDrag, { TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE } },
 		{ FreeRDP_DisableMenuAnims, { TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE } },
-		{ FreeRDP_DisableThemes, { TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE } },
-		{ FreeRDP_NetworkAutoDetect, { FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE } }
+		{ FreeRDP_DisableThemes, { TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE } }
 	};
 
 	switch (type)

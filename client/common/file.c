@@ -1253,8 +1253,10 @@ BOOL freerdp_client_populate_rdp_file_from_settings(rdpFile* file, const rdpSett
 	    freerdp_settings_get_bool(settings, FreeRDP_DisableFullWindowDrag);
 	file->DisableMenuAnims = freerdp_settings_get_bool(settings, FreeRDP_DisableMenuAnims);
 	file->DisableThemes = freerdp_settings_get_bool(settings, FreeRDP_DisableThemes);
-	file->BandwidthAutoDetect =
-	    (freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType) >= 7) ? TRUE : FALSE;
+	file->BandwidthAutoDetect = (freerdp_settings_get_uint32(settings, FreeRDP_ConnectionType) >=
+	                             CONNECTION_TYPE_AUTODETECT)
+	                                ? TRUE
+	                                : FALSE;
 	file->NetworkAutoDetect =
 	    freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect) ? 1 : 0;
 	file->AutoReconnectionEnabled =
