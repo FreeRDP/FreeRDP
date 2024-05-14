@@ -22,20 +22,20 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 option(WITH_LODEPNG "build WinPR with PNG support" OFF)
 if (WITH_LODEPNG)
-        find_package(lodepng REQUIRED)
+		find_package(lodepng REQUIRED)
 
-        winpr_definition_add(-DWITH_LODEPNG)
-        set(WINPR_WITH_PNG ON CACHE BOOL "build cache")
+		winpr_definition_add(-DWITH_LODEPNG)
+		set(WINPR_WITH_PNG ON CACHE BOOL "build cache")
 
-        winpr_include_directory_add(${lodepng_INCLUDE_DIRS})
-        winpr_library_add_private(${lodepng_LIBRARIES})
+		winpr_include_directory_add(${lodepng_INCLUDE_DIRS})
+		winpr_library_add_private(${lodepng_LIBRARIES})
 endif()
 
 option(WINPR_UTILS_IMAGE_PNG "Add PNG <--> BMP conversion support to clipboard" OFF)
 if (WINPR_UTILS_IMAGE_PNG)
 	find_package(PNG REQUIRED)
 
-        set(WINPR_WITH_PNG ON CACHE BOOL "build cache")
+		set(WINPR_WITH_PNG ON CACHE BOOL "build cache")
 	winpr_include_directory_add(${PNG_INCLUDE_DIRS})
 	winpr_library_add_private(${PNG_LIBRARIES})
 endif()
@@ -51,11 +51,11 @@ endif()
 
 option(WINPR_UTILS_IMAGE_JPEG "Add Jpeg <--> BMP conversion support to clipboard" OFF)
 if (WINPR_UTILS_IMAGE_JPEG)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(JPEG libjpeg REQUIRED)
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(JPEG libjpeg REQUIRED)
 
-    winpr_include_directory_add(${JPEG_INCLUDE_DIRS})
-    winpr_library_add_private(${JPEG_LIBRARIES})
+	winpr_include_directory_add(${JPEG_INCLUDE_DIRS})
+	winpr_library_add_private(${JPEG_LIBRARIES})
 endif()
 
 
@@ -64,7 +64,7 @@ set(COLLECTIONS_SRCS
 	collections/Queue.c
 	collections/Stack.c
 	collections/PubSub.c
-        collections/BitStream.c
+		collections/BitStream.c
 	collections/ArrayList.c
 	collections/LinkedList.c
 	collections/HashTable.c
@@ -86,16 +86,16 @@ endif()
 find_package(libsystemd)
 option(WITH_SYSTEMD "allows to export wLog to systemd journal" ${libsystemd_FOUND})
 if(WITH_LIBSYSTEMD)
-    find_package(libsystemd REQUIRED)
-    set(WINPR_HAVE_JOURNALD_H TRUE)
-    set(JOURNALD_SRCS
+	find_package(libsystemd REQUIRED)
+	set(WINPR_HAVE_JOURNALD_H TRUE)
+	set(JOURNALD_SRCS
 		wlog/JournaldAppender.c
 		wlog/JournaldAppender.h
-    )
+	)
 	winpr_include_directory_add(${LIBSYSTEMD_INCLUDE_DIR})
 	winpr_library_add_private(${LIBSYSTEMD_LIBRARY})
 else()
-    unset(WINPR_HAVE_JOURNALD_H)
+	unset(WINPR_HAVE_JOURNALD_H)
 endif()
 
 set(WLOG_SRCS
@@ -148,52 +148,76 @@ set(SRCS
 if (ANDROID)
 	list(APPEND SRCS android.h android.c)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-    if (NOT WINPR_HAVE_UNWIND_H)
-        message("[backtrace] android NDK without unwind.h, falling back to corkscrew")
-        set(WINPR_HAVE_CORKSCREW 1)
-    endif()
+	if (NOT WINPR_HAVE_UNWIND_H)
+		message("[backtrace] android NDK without unwind.h, falling back to corkscrew")
+		set(WINPR_HAVE_CORKSCREW 1)
+	endif()
 endif()
 
 if (WINPR_HAVE_CORKSCREW)
-    list(APPEND SRCS
-        corkscrew/debug.c
-        corkscrew/debug.h)
+	list(APPEND SRCS
+		corkscrew/debug.c
+		corkscrew/debug.h)
 endif()
 
 if (WIN32)
-    list(APPEND SRCS
-        windows/debug.c
-        windows/debug.h)
+	list(APPEND SRCS
+		windows/debug.c
+		windows/debug.h)
 endif()
 
 if (WINPR_HAVE_EXECINFO_H)
-    option(USE_EXECINFO "Use execinfo.h to generate backtraces" ON)
-    if (USE_EXECINFO)
-        winpr_definition_add(-DUSE_EXECINFO)
-        list(APPEND SRCS
-            execinfo/debug.c
-            execinfo/debug.h)
-    endif()
+	option(USE_EXECINFO "Use execinfo.h to generate backtraces" ON)
+	if (USE_EXECINFO)
+		winpr_definition_add(-DUSE_EXECINFO)
+		list(APPEND SRCS
+			execinfo/debug.c
+			execinfo/debug.h)
+	endif()
 endif()
 
 if (WINPR_HAVE_UNWIND_H)
-    option(USE_UNWIND "Use unwind.h to generate backtraces" ON)
-    if (USE_UNWIND)
-        winpr_definition_add(-DUSE_UNWIND)
-        list(APPEND SRCS
-            unwind/debug.c
-            unwind/debug.h)
-    endif()
+	option(USE_UNWIND "Use unwind.h to generate backtraces" ON)
+	if (USE_UNWIND)
+		winpr_definition_add(-DUSE_UNWIND)
+		list(APPEND SRCS
+			unwind/debug.c
+			unwind/debug.h)
+	endif()
 endif()
 
 option(WITH_JSON_DISABLED "Build without any JSON support"  OFF)
 CMAKE_DEPENDENT_OPTION(WITH_CJSON_REQUIRED "Build with cJSON (fail if not found)" OFF "NOT WITH_JSON_DISABLED" OFF)
 CMAKE_DEPENDENT_OPTION(WITH_JSONC_REQUIRED "Build with JSON-C (fail if not found)" OFF "NOT WITH_JSON_DISABLED" OFF)
 if (NOT WITH_JSON_DISABLED)
+	find_package(cJSON)
+
+	# Fallback detection:
+	# older ubuntu releases did not ship CMake or pkg-config files
+	# for cJSON. Be optimistic and try pkg-config and as last resort
+	# try manual detection
+	if (NOT cJSON_FOUND)
+		find_package(PkgConfig)
+		if (PKG_CONFIG_FOUND)
+			pkg_check_modules(CJSON libcjson)
+		endif()
+
+		if (NOT CJSON_LIBRARIES OR NOT CJSON_INCLUDE_DIRS)
+			find_path(CJSON_INCLUDE_DIRS
+				NAMES cjson/cJSON.h
+			)
+			find_library(CJSON_LIBRARIES
+				NAMES cjson
+			)
+		endif()
+	endif()
+
 	if (WITH_CJSON_REQUIRED)
-		find_package(cJSON REQUIRED)
+		if (NOT CJSON_FOUND)
+			message(FATAL_ERROR "cJSON was requested but not found")
+		endif()
 	else()
-		find_package(cJSON)
+
 	endif()
 	if (WITH_JSONC_REQUIRED)
 		find_package(JSONC REQUIRED)
