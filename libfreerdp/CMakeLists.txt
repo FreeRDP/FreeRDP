@@ -248,23 +248,9 @@ if(FAAC_FOUND)
 endif()
 
 if (WITH_AAD)
-    if (NOT cJSON_FOUND)
-        find_package(PkgConfig REQUIRED)
-        pkg_check_modules(CJSON libcjson)
-    endif()
-    if (NOT CJSON_LIBRARIES OR NOT CJSON_INCLUDE_DIRS)
-        find_path(CJSON_INCLUDE_DIRS
-            NAMES cjson/cJSON.h
-            REQUIRED
-        )
-        find_library(CJSON_LIBRARIES
-            NAMES cjson
-            REQUIRED
-        )
-    endif()
-
-    freerdp_library_add(${CJSON_LIBRARIES})
-    include_directories(${CJSON_INCLUDE_DIRS})
+	if (NOT WITH_WINPR_JSON)
+		message(FATAL_ERROR "Trying to build -DWITH_AAD=ON but WITH_WINPR_JSON is not defined")
+	endif()
 endif()
 
 if(WITH_NEON)
@@ -424,10 +410,7 @@ set_property(TARGET ${MODULE_NAME} PROPERTY FOLDER "FreeRDP/libfreerdp")
 
 include(pkg-config-install-prefix)
 set(FREERDP_REQUIRES_PRIVATE "")
-if(cJSON_FOUND)
-    string(APPEND FREERDP_REQUIRES_PRIVATE " libcjson")
-    list(APPEND FREERDP_PC_PRIVATE_LIBS "-lcjson")
-endif()
+
 if(WITH_SMARTCARD_EMULATE)
     string(APPEND FREERDP_REQUIRES_PRIVATE " zlib")
     list(APPEND FREERDP_PC_PRIVATE_LIBS "-lz")

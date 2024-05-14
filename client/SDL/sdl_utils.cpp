@@ -36,10 +36,9 @@ namespace fs = std::experimental::filesystem;
 #include <SDL.h>
 
 #include <winpr/path.h>
+#include <winpr/config.h>
 #include <freerdp/version.h>
-#if defined(CJSON_FOUND)
-#include <cjson/cJSON.h>
-#endif
+#include <winpr/json.h>
 
 const char* sdl_event_type_str(Uint32 type)
 {
@@ -355,33 +354,33 @@ std::string sdl_window_event_str(Uint8 ev)
 	}
 }
 
-#if defined(CJSON_FOUND)
-using cJSONPtr = std::unique_ptr<cJSON, decltype(&cJSON_Delete)>;
+#if defined(WINPR_JSON_FOUND)
+using WINPR_JSONPtr = std::unique_ptr<WINPR_JSON, decltype(&WINPR_JSON_Delete)>;
 
-static cJSONPtr get()
+static WINPR_JSONPtr get()
 {
 	auto config = sdl_get_pref_file();
 
 	std::ifstream ifs(config);
 	std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-	return { cJSON_ParseWithLength(content.c_str(), content.size()), cJSON_Delete };
+	return { WINPR_JSON_ParseWithLength(content.c_str(), content.size()), WINPR_JSON_Delete };
 }
 
-static cJSON* get_item(const std::string& key)
+static WINPR_JSON* get_item(const std::string& key)
 {
-	static cJSONPtr config{ nullptr, cJSON_Delete };
+	static WINPR_JSONPtr config{ nullptr, WINPR_JSON_Delete };
 	if (!config)
 		config = get();
 	if (!config)
 		return nullptr;
-	return cJSON_GetObjectItem(config.get(), key.c_str());
+	return WINPR_JSON_GetObjectItem(config.get(), key.c_str());
 }
 
-static std::string item_to_str(cJSON* item, const std::string& fallback = "")
+static std::string item_to_str(WINPR_JSON* item, const std::string& fallback = "")
 {
-	if (!item || !cJSON_IsString(item))
+	if (!item || !WINPR_JSON_IsString(item))
 		return fallback;
-	auto str = cJSON_GetStringValue(item);
+	auto str = WINPR_JSON_GetStringValue(item);
 	if (!str)
 		return {};
 	return str;
@@ -390,7 +389,7 @@ static std::string item_to_str(cJSON* item, const std::string& fallback = "")
 
 std::string sdl_get_pref_string(const std::string& key, const std::string& fallback)
 {
-#if defined(CJSON_FOUND)
+#if defined(WINPR_JSON_FOUND)
 	auto item = get_item(key);
 	return item_to_str(item, fallback);
 #else
@@ -400,11 +399,11 @@ std::string sdl_get_pref_string(const std::string& key, const std::string& fallb
 
 bool sdl_get_pref_bool(const std::string& key, bool fallback)
 {
-#if defined(CJSON_FOUND)
+#if defined(WINPR_JSON_FOUND)
 	auto item = get_item(key);
-	if (!item || !cJSON_IsBool(item))
+	if (!item || !WINPR_JSON_IsBool(item))
 		return fallback;
-	return cJSON_IsTrue(item);
+	return WINPR_JSON_IsTrue(item);
 #else
 	return fallback;
 #endif
@@ -412,11 +411,11 @@ bool sdl_get_pref_bool(const std::string& key, bool fallback)
 
 int64_t sdl_get_pref_int(const std::string& key, int64_t fallback)
 {
-#if defined(CJSON_FOUND)
+#if defined(WINPR_JSON_FOUND)
 	auto item = get_item(key);
-	if (!item || !cJSON_IsNumber(item))
+	if (!item || !WINPR_JSON_IsNumber(item))
 		return fallback;
-	auto val = cJSON_GetNumberValue(item);
+	auto val = WINPR_JSON_GetNumberValue(item);
 	return static_cast<int64_t>(val);
 #else
 	return fallback;
@@ -426,15 +425,15 @@ int64_t sdl_get_pref_int(const std::string& key, int64_t fallback)
 std::vector<std::string> sdl_get_pref_array(const std::string& key,
                                             const std::vector<std::string>& fallback)
 {
-#if defined(CJSON_FOUND)
+#if defined(WINPR_JSON_FOUND)
 	auto item = get_item(key);
-	if (!item || !cJSON_IsArray(item))
+	if (!item || !WINPR_JSON_IsArray(item))
 		return fallback;
 
 	std::vector<std::string> values;
-	for (int x = 0; x < cJSON_GetArraySize(item); x++)
+	for (int x = 0; x < WINPR_JSON_GetArraySize(item); x++)
 	{
-		auto cur = cJSON_GetArrayItem(item, x);
+		auto cur = WINPR_JSON_GetArrayItem(item, x);
 		values.push_back(item_to_str(cur));
 	}
 

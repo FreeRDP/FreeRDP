@@ -40,6 +40,7 @@
 #include <freerdp/channels/channels.h>
 
 #include <winpr/crt.h>
+#include <winpr/config.h>
 #include <winpr/assert.h>
 #include <winpr/synch.h>
 #include <freerdp/log.h>
@@ -1553,7 +1554,7 @@ static void SDLCALL winpr_LogOutputFunction(void* userdata, int category, SDL_Lo
 
 static void print_config_file_help()
 {
-#if defined(CJSON_FOUND)
+#if defined(WITH_WINPR_JSON)
 	std::cout << "CONFIGURATION FILE" << std::endl;
 	std::cout << std::endl;
 	std::cout << "  The SDL client supports some user defined configuration options." << std::endl;

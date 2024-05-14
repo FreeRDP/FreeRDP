@@ -561,9 +561,6 @@ endif()
 
 find_feature(PCSC ${PCSC_FEATURE_TYPE} ${PCSC_FEATURE_PURPOSE} ${PCSC_FEATURE_DESCRIPTION})
 
-find_package(cJSON)
-option(WITH_AAD "Compile with support for Azure AD authentication" ${cJSON_FOUND})
-
 if (WITH_DSP_FFMPEG OR WITH_VIDEO_FFMPEG OR WITH_FFMPEG)
 	set(FFMPEG_FEATURE_TYPE "REQUIRED" )
 endif()
@@ -729,6 +726,8 @@ else()
 	find_package(WinPR 3 REQUIRED)
 	include_directories(${WinPR_INCLUDE_DIR})
 endif()
+
+option(WITH_AAD "Compile with support for Azure AD authentication" ${WITH_WINPR_JSON})
 
 # Include directories
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
