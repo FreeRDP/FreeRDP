@@ -16,6 +16,7 @@
 # limitations under the License.
 
 include(CheckFunctionExists)
+include(CMakeDependentOption)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -184,6 +185,42 @@ if (WINPR_HAVE_UNWIND_H)
             unwind/debug.h)
     endif()
 endif()
+
+option(WITH_JSON_DISABLED "Build without any JSON support"  OFF)
+CMAKE_DEPENDENT_OPTION(WITH_CJSON_REQUIRED "Build with cJSON (fail if not found)" OFF "NOT WITH_JSON_DISABLED" OFF)
+CMAKE_DEPENDENT_OPTION(WITH_JSONC_REQUIRED "Build with JSON-C (fail if not found)" OFF "NOT WITH_JSON_DISABLED" OFF)
+if (NOT WITH_JSON_DISABLED)
+	if (WITH_CJSON_REQUIRED)
+		find_package(cJSON REQUIRED)
+	else()
+		find_package(cJSON)
+	endif()
+	if (WITH_JSONC_REQUIRED)
+		find_package(JSONC REQUIRED)
+	else()
+		find_package(JSONC)
+	endif()
+
+	if (JSONC_FOUND AND NOT WITH_CJSON_REQUIRED)
+		winpr_library_add_private(${JSONC_LIBRARIES})
+		winpr_include_directory_add(${JSONC_INCLUDE_DIRS})
+		winpr_definition_add(-DWITH_JSONC)
+		set(WITH_WINPR_JSON ON CACHE INTERNAL "internal")
+	elseif (CJSON_FOUND)
+		winpr_library_add_private(${CJSON_LIBRARIES})
+		winpr_include_directory_add(${CJSON_INCLUDE_DIRS})
+		winpr_definition_add(-DWITH_CJSON)
+		set(WITH_WINPR_JSON ON CACHE INTERNAL "internal")
+	else()
+		set(WITH_WINPR_JSON OFF CACHE INTERNAL "internal")
+		message("compiling without JSON support. Install cJSON or json-c to enable")
+	endif()
+else()
+	set(WITH_WINPR_JSON OFF CACHE INTERNAL "internal")
+	message("forced compile without JSON support. Set -DWITH_JSON_DISABLED=OFF to enable compile time detection")
+endif()
+
+winpr_module_add(json/json.c)
 
 winpr_module_add(${SRCS}
 	${COLLECTIONS_SRCS}
