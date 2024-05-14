@@ -38,6 +38,7 @@ jobs:
             CTEST_OUTPUT_ON_FAILURE: 1
             WLOG_LEVEL: 'trace'
           install: |
+            sed -i '/deb-src/s/^# //' /etc/apt/sources.list
             apt-get update -q -y
             apt-get install -q -y \
               devscripts \
