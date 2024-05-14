@@ -15,7 +15,6 @@ jobs:
 
       - name: "Prepare environment"
         run: |
-          sed -i '/deb-src/s/^# //' /etc/apt/sources.list
           sudo apt-get update -q -y
           sudo apt-get install -q -y \
             git \

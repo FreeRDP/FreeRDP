@@ -78,7 +78,6 @@ jobs:
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
     - if: matrix.build-mode == 'manual'
       run: |
-        sudo sed -i '/deb-src/s/^# //' /etc/apt/sources.list
         sudo apt update
         sudo apt-get install -q -y \
               devscripts \

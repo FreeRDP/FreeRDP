@@ -17,7 +17,6 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install apt dependencies
       run: |
-        sudo sed -i '/deb-src/s/^# //' /etc/apt/sources.list
         sudo apt-get update
         sudo apt-get install -q -y \
               devscripts \
