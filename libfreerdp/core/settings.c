@@ -448,7 +448,8 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 	    !freerdp_settings_set_bool(settings, FreeRDP_DisableFullWindowDrag, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_DisableMenuAnims, TRUE) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_DisableThemes, FALSE) ||
-	    !freerdp_settings_set_uint32(settings, FreeRDP_ConnectionType, CONNECTION_TYPE_LAN) ||
+	    !freerdp_settings_set_uint32(settings, FreeRDP_ConnectionType,
+	                                 CONNECTION_TYPE_AUTODETECT) ||
 	    !freerdp_settings_set_bool(settings, FreeRDP_NetworkAutoDetect, TRUE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_EncryptionMethods, ENCRYPTION_METHOD_NONE) ||
 	    !freerdp_settings_set_uint32(settings, FreeRDP_EncryptionLevel, ENCRYPTION_LEVEL_NONE) ||

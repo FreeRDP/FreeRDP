@@ -812,30 +812,45 @@ state_run_t autodetect_recv_request_packet(rdpAutoDetect* autodetect, RDP_TRANSP
 	Stream_Read_UINT16(s, autodetectReqPdu.sequenceNumber); /* sequenceNumber (2 bytes) */
 	Stream_Read_UINT16(s, autodetectReqPdu.requestType);    /* requestType (2 bytes) */
 
-	char rbuffer[128] = { 0 };
-	const char* requestTypeStr = autodetect_request_type_to_string_buffer(
-	    autodetectReqPdu.requestType, rbuffer, sizeof(rbuffer));
+	if (WLog_IsLevelActive(autodetect->log, WLOG_TRACE))
+	{
+		char rbuffer[128] = { 0 };
+		const char* requestTypeStr = autodetect_request_type_to_string_buffer(
+		    autodetectReqPdu.requestType, rbuffer, sizeof(rbuffer));
 
-	char hbuffer[128] = { 0 };
-	const char* headerStr =
-	    autodetect_header_type_string(autodetectReqPdu.headerTypeId, hbuffer, sizeof(hbuffer));
+		char hbuffer[128] = { 0 };
+		const char* headerStr =
+		    autodetect_header_type_string(autodetectReqPdu.headerTypeId, hbuffer, sizeof(hbuffer));
 
-	WLog_Print(autodetect->log, WLOG_TRACE,
-	           "rdp_recv_autodetect_request_packet: headerLength=%" PRIu8
-	           ", headerTypeId=%s, sequenceNumber=%" PRIu16 ", requestType=%s",
-	           autodetectReqPdu.headerLength, headerStr, autodetectReqPdu.sequenceNumber,
-	           requestTypeStr);
+		WLog_Print(autodetect->log, WLOG_TRACE,
+		           "rdp_recv_autodetect_request_packet: headerLength=%" PRIu8
+		           ", headerTypeId=%s, sequenceNumber=%" PRIu16 ", requestType=%s",
+		           autodetectReqPdu.headerLength, headerStr, autodetectReqPdu.sequenceNumber,
+		           requestTypeStr);
+	}
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
 	{
+		char rbuffer[128] = { 0 };
+		const char* requestTypeStr = autodetect_request_type_to_string_buffer(
+		    autodetectReqPdu.requestType, rbuffer, sizeof(rbuffer));
+
 		WLog_Print(autodetect->log, WLOG_WARN,
 		           "Received a [MS-RDPBCGR] 2.2.14.1.1 RTT Measure Request [%s] "
 		           "message but support was not enabled",
 		           requestTypeStr);
+		goto fail;
 	}
 
 	if (autodetectReqPdu.headerTypeId != TYPE_ID_AUTODETECT_REQUEST)
 	{
+		char rbuffer[128] = { 0 };
+		const char* requestTypeStr = autodetect_request_type_to_string_buffer(
+		    autodetectReqPdu.requestType, rbuffer, sizeof(rbuffer));
+		char hbuffer[128] = { 0 };
+		const char* headerStr =
+		    autodetect_header_type_string(autodetectReqPdu.headerTypeId, hbuffer, sizeof(hbuffer));
+
 		WLog_Print(autodetect->log, WLOG_ERROR,
 		           "Received a [MS-RDPBCGR] 2.2.14.1.1 RTT Measure Request [%s] "
 		           "message with invalid headerTypeId=%s",
@@ -919,31 +934,44 @@ state_run_t autodetect_recv_response_packet(rdpAutoDetect* autodetect, RDP_TRANS
 	Stream_Read_UINT16(s, autodetectRspPdu.sequenceNumber); /* sequenceNumber (2 bytes) */
 	Stream_Read_UINT16(s, autodetectRspPdu.responseType);   /* responseType (2 bytes) */
 
-	char rbuffer[128] = { 0 };
+	if (WLog_IsLevelActive(autodetect->log, WLOG_TRACE))
+	{
+		char rbuffer[128] = { 0 };
+		const char* requestStr = autodetect_request_type_to_string_buffer(
+		    autodetectRspPdu.responseType, rbuffer, sizeof(rbuffer));
+		char hbuffer[128] = { 0 };
+		const char* headerStr =
+		    autodetect_header_type_string(autodetectRspPdu.headerTypeId, hbuffer, sizeof(hbuffer));
 
-	const char* requestStr = autodetect_request_type_to_string_buffer(autodetectRspPdu.responseType,
-	                                                                  rbuffer, sizeof(rbuffer));
-
-	char hbuffer[128] = { 0 };
-	const char* headerStr =
-	    autodetect_header_type_string(autodetectRspPdu.headerTypeId, hbuffer, sizeof(hbuffer));
-
-	WLog_Print(autodetect->log, WLOG_TRACE,
-	           "rdp_recv_autodetect_response_packet: headerLength=%" PRIu8 ", headerTypeId=%s"
-	           ", sequenceNumber=%" PRIu16 ", requestType=%s",
-	           autodetectRspPdu.headerLength, headerStr, autodetectRspPdu.sequenceNumber,
-	           requestStr);
+		WLog_Print(autodetect->log, WLOG_TRACE,
+		           "rdp_recv_autodetect_response_packet: headerLength=%" PRIu8 ", headerTypeId=%s"
+		           ", sequenceNumber=%" PRIu16 ", requestType=%s",
+		           autodetectRspPdu.headerLength, headerStr, autodetectRspPdu.sequenceNumber,
+		           requestStr);
+	}
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_NetworkAutoDetect))
 	{
+		char rbuffer[128] = { 0 };
+
+		const char* requestStr = autodetect_request_type_to_string_buffer(
+		    autodetectRspPdu.responseType, rbuffer, sizeof(rbuffer));
+
 		WLog_Print(autodetect->log, WLOG_WARN,
 		           "Received a [MS-RDPBCGR] 2.2.14.2.1 RTT Measure Response [%s] "
 		           "message but support was not enabled",
 		           requestStr);
+		return STATE_RUN_FAILED;
 	}
 
 	if (autodetectRspPdu.headerTypeId != TYPE_ID_AUTODETECT_RESPONSE)
 	{
+		char rbuffer[128] = { 0 };
+		const char* requestStr = autodetect_request_type_to_string_buffer(
+		    autodetectRspPdu.responseType, rbuffer, sizeof(rbuffer));
+		char hbuffer[128] = { 0 };
+		const char* headerStr =
+		    autodetect_header_type_string(autodetectRspPdu.headerTypeId, hbuffer, sizeof(hbuffer));
 		WLog_Print(autodetect->log, WLOG_ERROR,
 		           "Received a [MS-RDPBCGR] 2.2.14.2.1 RTT Measure Response [%s] "
 		           "message with invalid headerTypeId=%s",
