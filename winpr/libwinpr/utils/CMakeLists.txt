@@ -196,7 +196,7 @@ if (NOT WITH_JSON_DISABLED)
 	# older ubuntu releases did not ship CMake or pkg-config files
 	# for cJSON. Be optimistic and try pkg-config and as last resort
 	# try manual detection
-	if (NOT cJSON_FOUND)
+	if (NOT CJSON_FOUND)
 		find_package(PkgConfig)
 		if (PKG_CONFIG_FOUND)
 			pkg_check_modules(CJSON libcjson)
@@ -209,6 +209,9 @@ if (NOT WITH_JSON_DISABLED)
 			find_library(CJSON_LIBRARIES
 				NAMES cjson
 			)
+			if (NOT "${CJSON_LIBRARIES}" EQUAL "CJSON_LIBRARIES-NOTFOUND" AND NOT "${CJSON_INCLUDE_DIRS}" EQUAL "CJSON_INCLUDE_DIRS-NOTFOUND")
+				set(CJSON_FOUND ON)
+			endif()
 		endif()
 	endif()
 
@@ -216,9 +219,8 @@ if (NOT WITH_JSON_DISABLED)
 		if (NOT CJSON_FOUND)
 			message(FATAL_ERROR "cJSON was requested but not found")
 		endif()
-	else()
-
 	endif()
+
 	if (WITH_JSONC_REQUIRED)
 		find_package(JSONC REQUIRED)
 	else()
