@@ -35,7 +35,7 @@ namespace fs = std::experimental::filesystem;
 #include <freerdp/version.h>
 #include <winpr/json.h>
 
-#if defined(WINPR_JSON_FOUND)
+#if defined(WITH_WINPR_JSON)
 using WINPR_JSONPtr = std::unique_ptr<WINPR_JSON, decltype(&WINPR_JSON_Delete)>;
 
 static WINPR_JSONPtr get()
@@ -70,7 +70,7 @@ static std::string item_to_str(WINPR_JSON* item, const std::string& fallback = "
 
 std::string sdl_get_pref_string(const std::string& key, const std::string& fallback)
 {
-#if defined(WINPR_JSON_FOUND)
+#if defined(WITH_WINPR_JSON)
 	auto item = get_item(key);
 	return item_to_str(item, fallback);
 #else
@@ -80,7 +80,7 @@ std::string sdl_get_pref_string(const std::string& key, const std::string& fallb
 
 bool sdl_get_pref_bool(const std::string& key, bool fallback)
 {
-#if defined(WINPR_JSON_FOUND)
+#if defined(WITH_WINPR_JSON)
 	auto item = get_item(key);
 	if (!item || !WINPR_JSON_IsBool(item))
 		return fallback;
@@ -92,7 +92,7 @@ bool sdl_get_pref_bool(const std::string& key, bool fallback)
 
 int64_t sdl_get_pref_int(const std::string& key, int64_t fallback)
 {
-#if defined(WINPR_JSON_FOUND)
+#if defined(WITH_WINPR_JSON)
 	auto item = get_item(key);
 	if (!item || !WINPR_JSON_IsNumber(item))
 		return fallback;
@@ -106,7 +106,7 @@ int64_t sdl_get_pref_int(const std::string& key, int64_t fallback)
 std::vector<std::string> sdl_get_pref_array(const std::string& key,
                                             const std::vector<std::string>& fallback)
 {
-#if defined(WINPR_JSON_FOUND)
+#if defined(WITH_WINPR_JSON)
 	auto item = get_item(key);
 	if (!item || !WINPR_JSON_IsArray(item))
 		return fallback;
