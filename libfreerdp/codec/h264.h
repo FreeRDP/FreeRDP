@@ -60,6 +60,7 @@ extern "C"
 		UINT32 FrameRate;
 		UINT32 QP;
 		UINT32 NumberOfThreads;
+		UINT32 HardwareAccelerated; /* 0 - non accelerated, != 0 - accelerated */
 
 		UINT32 iStride[3];
 		BYTE* pOldYUVData[3];

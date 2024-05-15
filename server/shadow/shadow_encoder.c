@@ -256,6 +256,11 @@ static int shadow_encoder_init_h264(rdpShadowEncoder* encoder)
 	if (!h264_context_set_option(encoder->h264, H264_CONTEXT_OPTION_QP, encoder->server->h264QP))
 		goto fail;
 
+	UINT32 hardware_accelerated = freerdp_settings_get_bool(encoder->server->settings, FreeRDP_SoftwareGdi) ? 0 : 1;
+
+	if (!h264_context_set_option(encoder->h264, H264_CONTEXT_OPTION_HW_ACCELERATED, hardware_accelerated))
+		goto fail;
+
 	encoder->codecs |= FREERDP_CODEC_AVC420 | FREERDP_CODEC_AVC444;
 	return 1;
 fail:
