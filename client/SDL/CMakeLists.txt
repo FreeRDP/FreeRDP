@@ -119,3 +119,7 @@ set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/SDL")
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 
 add_subdirectory(man)
+
+if(BUILD_TESTING)
+	add_subdirectory(test)
+endif()

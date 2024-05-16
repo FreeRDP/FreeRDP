@@ -1561,7 +1561,7 @@ static void print_config_file_help()
 	std::cout << "  The SDL client supports some user defined configuration options." << std::endl;
 	std::cout << "  Settings are stored in JSON format" << std::endl;
 	std::cout << "  The location is a per user file. Location for current user is "
-	          << sdl_get_pref_file() << std::endl;
+	          << SdlPref::instance()->get_pref_file() << std::endl;
 	std::cout
 	    << "  The XDG_CONFIG_HOME environment variable can be used to override the base directory."
 	    << std::endl;
