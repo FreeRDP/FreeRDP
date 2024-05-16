@@ -27,5 +27,12 @@
 class SDL3ResourceManager : public SDLResourceManager
 {
   public:
+	SDL3ResourceManager() = delete;
+	SDL3ResourceManager(const SDL3ResourceManager& other) = delete;
+	SDL3ResourceManager(const SDL3ResourceManager&& other) = delete;
+	~SDL3ResourceManager() = delete;
+	SDL3ResourceManager operator=(const SDL3ResourceManager& other) = delete;
+	SDL3ResourceManager& operator=(SDL3ResourceManager&& other) = delete;
+
 	static SDL_IOStream* get(const std::string& type, const std::string& id);
 };

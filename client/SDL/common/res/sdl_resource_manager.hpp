@@ -26,6 +26,13 @@ class SDLResourceManager
 	friend class SDLResourceFile;
 
   public:
+	SDLResourceManager() = delete;
+	SDLResourceManager(const SDLResourceManager& other) = delete;
+	SDLResourceManager(const SDLResourceManager&& other) = delete;
+	~SDLResourceManager() = delete;
+	SDLResourceManager operator=(const SDLResourceManager& other) = delete;
+	SDLResourceManager& operator=(SDLResourceManager&& other) = delete;
+
 	static const std::string typeFonts();
 	static const std::string typeImages();
 
@@ -39,10 +46,5 @@ class SDLResourceManager
 	static bool useCompiledResources();
 
   private:
-	SDLResourceManager() = delete;
-	SDLResourceManager(const SDLResourceManager& other) = delete;
-	SDLResourceManager(const SDLResourceManager&& other) = delete;
-	~SDLResourceManager() = delete;
-
 	static std::map<std::string, std::vector<unsigned char>>& resources();
 };

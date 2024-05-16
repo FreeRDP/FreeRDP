@@ -27,5 +27,12 @@
 class SDL2ResourceManager : public SDLResourceManager
 {
   public:
+	SDL2ResourceManager() = delete;
+	SDL2ResourceManager(const SDL2ResourceManager& other) = delete;
+	SDL2ResourceManager(const SDL2ResourceManager&& other) = delete;
+	~SDL2ResourceManager() = delete;
+	SDL2ResourceManager operator=(const SDL2ResourceManager& other) = delete;
+	SDL2ResourceManager& operator=(SDL2ResourceManager&& other) = delete;
+
 	static SDL_RWops* get(const std::string& type, const std::string& id);
 };
