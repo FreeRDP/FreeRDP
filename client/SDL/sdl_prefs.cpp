@@ -35,29 +35,23 @@ namespace fs = std::experimental::filesystem;
 #include <freerdp/version.h>
 #include <winpr/json.h>
 
-#if defined(WITH_WINPR_JSON)
-using WINPR_JSONPtr = std::unique_ptr<WINPR_JSON, decltype(&WINPR_JSON_Delete)>;
-
-static WINPR_JSONPtr get()
+SdlPref::WINPR_JSONPtr SdlPref::get()
 {
-	auto config = sdl_get_pref_file();
+	auto config = get_pref_file();
 
 	std::ifstream ifs(config);
 	std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 	return { WINPR_JSON_ParseWithLength(content.c_str(), content.size()), WINPR_JSON_Delete };
 }
 
-static WINPR_JSON* get_item(const std::string& key)
+WINPR_JSON* SdlPref::get_item(const std::string& key)
 {
-	static WINPR_JSONPtr config{ nullptr, WINPR_JSON_Delete };
-	if (!config)
-		config = get();
-	if (!config)
+	if (!_config)
 		return nullptr;
-	return WINPR_JSON_GetObjectItem(config.get(), key.c_str());
+	return WINPR_JSON_GetObjectItem(_config.get(), key.c_str());
 }
 
-static std::string item_to_str(WINPR_JSON* item, const std::string& fallback = "")
+std::string SdlPref::item_to_str(WINPR_JSON* item, const std::string& fallback)
 {
 	if (!item || !WINPR_JSON_IsString(item))
 		return fallback;
@@ -66,47 +60,33 @@ static std::string item_to_str(WINPR_JSON* item, const std::string& fallback = "
 		return {};
 	return str;
 }
-#endif
 
-std::string sdl_get_pref_string(const std::string& key, const std::string& fallback)
+std::string SdlPref::get_string(const std::string& key, const std::string& fallback)
 {
-#if defined(WITH_WINPR_JSON)
 	auto item = get_item(key);
 	return item_to_str(item, fallback);
-#else
-	return fallback;
-#endif
 }
 
-bool sdl_get_pref_bool(const std::string& key, bool fallback)
+bool SdlPref::get_bool(const std::string& key, bool fallback)
 {
-#if defined(WITH_WINPR_JSON)
 	auto item = get_item(key);
 	if (!item || !WINPR_JSON_IsBool(item))
 		return fallback;
 	return WINPR_JSON_IsTrue(item);
-#else
-	return fallback;
-#endif
 }
 
-int64_t sdl_get_pref_int(const std::string& key, int64_t fallback)
+int64_t SdlPref::get_int(const std::string& key, int64_t fallback)
 {
-#if defined(WITH_WINPR_JSON)
 	auto item = get_item(key);
 	if (!item || !WINPR_JSON_IsNumber(item))
 		return fallback;
 	auto val = WINPR_JSON_GetNumberValue(item);
 	return static_cast<int64_t>(val);
-#else
-	return fallback;
-#endif
 }
 
-std::vector<std::string> sdl_get_pref_array(const std::string& key,
+std::vector<std::string> SdlPref::get_array(const std::string& key,
                                             const std::vector<std::string>& fallback)
 {
-#if defined(WITH_WINPR_JSON)
 	auto item = get_item(key);
 	if (!item || !WINPR_JSON_IsArray(item))
 		return fallback;
@@ -119,12 +99,13 @@ std::vector<std::string> sdl_get_pref_array(const std::string& key,
 	}
 
 	return values;
-#else
-	return fallback;
-#endif
 }
 
-std::string sdl_get_pref_dir()
+SdlPref::SdlPref(const std::string& file) : _name(file), _config(get())
+{
+}
+
+std::string SdlPref::get_pref_dir()
 {
 	using CStringPtr = std::unique_ptr<char, decltype(&free)>;
 	CStringPtr path(GetKnownPath(KNOWN_PATH_XDG_CONFIG_HOME), free);
@@ -137,9 +118,22 @@ std::string sdl_get_pref_dir()
 	return config.string();
 }
 
-std::string sdl_get_pref_file()
+std::string SdlPref::get_default_file()
 {
-	fs::path config{ sdl_get_pref_dir() };
+	fs::path config{ SdlPref::get_pref_dir() };
 	config /= "sdl-freerdp.json";
 	return config.string();
+}
+
+std::shared_ptr<SdlPref> SdlPref::instance(const std::string& name)
+{
+	static std::shared_ptr<SdlPref> _instance;
+	if (!_instance || (_instance->get_pref_file() != name))
+		_instance.reset(new SdlPref(name));
+	return _instance;
+}
+
+std::string SdlPref::get_pref_file()
+{
+	return _name;
 }

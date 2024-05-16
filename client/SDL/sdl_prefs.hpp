@@ -21,12 +21,34 @@
 
 #include <string>
 #include <vector>
+#include <memory>
+#include <winpr/json.h>
 
-std::string sdl_get_pref_dir();
-std::string sdl_get_pref_file();
+class SdlPref
+{
+  public:
+	static std::shared_ptr<SdlPref> instance(const std::string& name = SdlPref::get_default_file());
 
-std::string sdl_get_pref_string(const std::string& key, const std::string& fallback = "");
-int64_t sdl_get_pref_int(const std::string& key, int64_t fallback = 0);
-bool sdl_get_pref_bool(const std::string& key, bool fallback = false);
-std::vector<std::string> sdl_get_pref_array(const std::string& key,
-                                            const std::vector<std::string>& fallback = {});
+	std::string get_pref_file();
+
+	std::string get_string(const std::string& key, const std::string& fallback = "");
+	int64_t get_int(const std::string& key, int64_t fallback = 0);
+	bool get_bool(const std::string& key, bool fallback = false);
+	std::vector<std::string> get_array(const std::string& key,
+	                                   const std::vector<std::string>& fallback = {});
+
+  private:
+	using WINPR_JSONPtr = std::unique_ptr<WINPR_JSON, decltype(&WINPR_JSON_Delete)>;
+
+	std::string _name;
+	WINPR_JSONPtr _config;
+
+	SdlPref(const std::string& file);
+
+	WINPR_JSON* get_item(const std::string& key);
+	WINPR_JSONPtr get();
+
+	static std::string get_pref_dir();
+	static std::string get_default_file();
+	static std::string item_to_str(WINPR_JSON* item, const std::string& fallback = "");
+};

@@ -402,7 +402,7 @@ uint32_t sdlInput::prefToMask()
 		{ "KMOD_GUI", KMOD_GUI }
 	};
 	uint32_t mod = KMOD_NONE;
-	for (const auto& val : sdl_get_pref_array("SDL_KeyModMask", { "KMOD_RSHIFT" }))
+	for (const auto& val : SdlPref::instance()->get_array("SDL_KeyModMask", { "KMOD_RSHIFT" }))
 	{
 		auto it = mapping.find(val);
 		if (it != mapping.end())
@@ -480,7 +480,7 @@ static UINT32 sdl_scancode_to_rdp(Uint32 scancode)
 
 uint32_t sdlInput::prefKeyValue(const std::string& key, uint32_t fallback)
 {
-	auto item = sdl_get_pref_string(key);
+	auto item = SdlPref::instance()->get_string(key);
 	if (item.empty())
 		return fallback;
 	auto val = sdl_scancode_val(item.c_str());
