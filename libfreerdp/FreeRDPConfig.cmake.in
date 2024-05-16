@@ -1,8 +1,6 @@
 include(CMakeFindDependencyMacro)
 find_dependency(WinPR @FREERDP_VERSION@)
-if("@cJSON_FOUND@" AND NOT "@BUILD_SHARED_LIBS@")
-	find_dependency(cJSON)
-endif()
+
 if("@WITH_SMARTCARD_EMULATE@" AND NOT "@BUILD_SHARED_LIBS@")
 	find_dependency(ZLIB)
 endif()

@@ -62,14 +62,6 @@ endif()
 find_package(SDL2 REQUIRED COMPONENTS)
 include_directories(${SDL2_INCLUDE_DIR})
 include_directories(${SDL2_INCLUDE_DIRS})
-find_package(cJSON)
-
-set(LIBS "")
-if (cJSON_FOUND)
-    include_directories(${CJSON_INCLUDE_DIRS})
-    list(APPEND LIBS ${CJSON_LIBRARIES})
-    add_compile_definitions(CJSON_FOUND)
-endif()
 
 find_package(Threads REQUIRED)
 
@@ -96,8 +88,13 @@ set(SRCS
     sdl_window.cpp
 )
 
+add_library(sdl_prefs STATIC
+    sdl_prefs.hpp
+    sdl_prefs.cpp
+)
+
 add_subdirectory(aad)
-list(APPEND LIBS
+set(LIBS
         winpr
         freerdp
         freerdp-client
@@ -105,6 +102,7 @@ list(APPEND LIBS
         sdl_client_res
         dialogs
         aad-view
+        sdl_prefs
     )
 
 if (NOT WITH_SDL_LINK_SHARED)
@@ -116,6 +114,7 @@ endif()
 AddTargetWithResourceFile(${PROJECT_NAME} "${WIN32_GUI_FLAG}" "${PROJECT_VERSION}" SRCS)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
+target_link_libraries(sdl_prefs winpr)
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/SDL")
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 

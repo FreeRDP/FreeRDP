@@ -34,6 +34,8 @@
 #cmakedefine WITH_INTERNAL_MD4
 #cmakedefine WITH_INTERNAL_MD5
 
+#cmakedefine WITH_WINPR_JSON
+
 #cmakedefine WITH_DEBUG_NTLM
 #cmakedefine WITH_DEBUG_THREADS
 #cmakedefine WITH_DEBUG_EVENTS

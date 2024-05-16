@@ -47,6 +47,12 @@ if(WIN32)
 	freerdp_library_add(cfgmgr32)
 endif()
 
+CHECK_LIBRARY_EXISTS(m pow "" HAVE_LIB_M)
+
+if (HAVE_LIB_M)
+	freerdp_library_add(m)
+endif()
+
 if(BUILD_TESTING)
 	add_subdirectory(test)
 endif()

@@ -19,8 +19,6 @@
 
 #pragma once
 
-#include <string>
-
 #include <winpr/synch.h>
 #include <winpr/wlog.h>
 
@@ -102,12 +100,3 @@ const char* sdl_error_string(Uint32 res);
 #define sdl_log_error(res, log, what) sdl_log_error_ex(res, log, what, __FILE__, __LINE__, __func__)
 BOOL sdl_log_error_ex(Uint32 res, wLog* log, const char* what, const char* file, size_t line,
                       const char* fkt);
-
-std::string sdl_get_pref_dir();
-std::string sdl_get_pref_file();
-
-std::string sdl_get_pref_string(const std::string& key, const std::string& fallback = "");
-int64_t sdl_get_pref_int(const std::string& key, int64_t fallback = 0);
-bool sdl_get_pref_bool(const std::string& key, bool fallback = false);
-std::vector<std::string> sdl_get_pref_array(const std::string& key,
-                                            const std::vector<std::string>& fallback = {});
