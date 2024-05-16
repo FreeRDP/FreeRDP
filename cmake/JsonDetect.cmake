@@ -1,3 +1,5 @@
+include(CMakeDependentOption)
+
 option(WITH_JSON_DISABLED "Build without any JSON support"  OFF)
 CMAKE_DEPENDENT_OPTION(WITH_CJSON_REQUIRED "Build with cJSON (fail if not found)" OFF "NOT WITH_JSON_DISABLED" OFF)
 CMAKE_DEPENDENT_OPTION(WITH_JSONC_REQUIRED "Build with JSON-C (fail if not found)" OFF "NOT WITH_JSON_DISABLED" OFF)
