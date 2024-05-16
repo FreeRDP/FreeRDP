@@ -683,6 +683,15 @@ static UINT cliprdr_client_format_list(CliprdrClientContext* context,
 	cliprdr = (cliprdrPlugin*)context->handle;
 	WINPR_ASSERT(cliprdr);
 
+	{
+		const UINT32 mask = CB_RESPONSE_OK | CB_RESPONSE_FAIL;
+		if ((formatList->common.msgFlags & mask) != 0)
+			WLog_WARN(TAG,
+			          "Sending clipboard request with invalid flags msgFlags = 0x%08" PRIx32
+			          ". Correct in your client!",
+			          formatList->common.msgFlags & mask);
+	}
+
 	const UINT32 mask =
 	    freerdp_settings_get_uint32(context->rdpcontext->settings, FreeRDP_ClipboardFeatureMask);
 	CLIPRDR_FORMAT_LIST filterList = cliprdr_filter_format_list(
