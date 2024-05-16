@@ -32,8 +32,14 @@ if(FREERDP_VENDOR AND WITH_CLIENT)
 		endif()
 	endif()
 
+	cmake_dependent_option(WITH_CLIENT_SDL_VERSIONED "append sdl version to client binaries" OFF WITH_CLIENT_SDL OFF)
 	cmake_dependent_option(WITH_CLIENT_SDL2 "[experimental] build experimental SDL2 client" ON WITH_CLIENT_SDL OFF)
 	cmake_dependent_option(WITH_CLIENT_SDL3 "[experimental] build experimental SDL3 client" OFF WITH_CLIENT_SDL OFF)
+
+	if (WITH_CLIENT_SDL2 AND WITH_CLIENT_SDL3)
+		message("Building both, SDL2 and SDL3 clients, forcing WITH_CLIENT_SDL_VERSIONED=ON")
+		set(WITH_CLIENT_SDL_VERSIONED ON)
+	endif()
 
 	if (WITH_CLIENT_SDL2)
 		find_package(SDL2)

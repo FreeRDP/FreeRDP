@@ -116,6 +116,12 @@ AddTargetWithResourceFile(${PROJECT_NAME} "${WIN32_GUI_FLAG}" "${PROJECT_VERSION
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
 target_link_libraries(sdl3-prefs winpr)
 set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Client/SDL")
+if (NOT WITH_CLIENT_SDL_VERSIONED)
+	set_target_properties(${PROJECT_NAME}
+		PROPERTIES
+		OUTPUT_NAME "sdl-freerdp"
+	)
+endif()
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT client)
 
 add_subdirectory(man)
