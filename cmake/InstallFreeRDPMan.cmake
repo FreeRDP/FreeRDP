@@ -19,16 +19,12 @@ function(generate_and_install_freerdp_man_from_template name_base section api)
 	endif()
 endfunction()
 
-function(generate_and_install_freerdp_man_from_xml name_base section api dependencies)
+function(generate_and_install_freerdp_man_from_xml target section dependencies)
 	if(WITH_MANPAGES)
-		set(template "${name_base}.${section}")
-		if (WITH_BINARY_VERSIONING)
-			set(MANPAGE_NAME "${name_base}${api}")
-			set(manpage "${name_base}${api}.${section}")
-		else()
-			set(MANPAGE_NAME "${name_base}")
-			set(manpage "${name_base}.${section}")
-		endif()
+		get_target_property(name_base ${target} OUTPUT_NAME)
+		set(template "${target}.${section}")
+		set(MANPAGE_NAME "${name_base}")
+		set(manpage "${name_base}.${section}")
 
 		# We need the variable ${MAN_TODAY} to contain the current date in ISO
 		# format to replace it in the configure_file step.
