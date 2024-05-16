@@ -61,20 +61,26 @@ endif()
 
 include(CMakeDependentOption)
 
+find_package(SDL2)
+find_package(SDL3)
+
 cmake_dependent_option(WITH_CLIENT_SDL_VERSIONED "append sdl version to client binaries" OFF WITH_CLIENT_SDL OFF)
-cmake_dependent_option(WITH_CLIENT_SDL2 "[experimental] build experimental SDL2 client" ON WITH_CLIENT_SDL OFF)
-cmake_dependent_option(WITH_CLIENT_SDL3 "[experimental] build experimental SDL3 client" OFF WITH_CLIENT_SDL OFF)
+cmake_dependent_option(WITH_CLIENT_SDL2 "[experimental] build experimental SDL2 client" ${SDL2_FOUND} WITH_CLIENT_SDL OFF)
+cmake_dependent_option(WITH_CLIENT_SDL3 "[experimental] build experimental SDL3 client" ${SDL3_FOUND} WITH_CLIENT_SDL OFF)
 
 if (WITH_CLIENT_SDL2 AND WITH_CLIENT_SDL3)
 	message("Building both, SDL2 and SDL3 clients, forcing WITH_CLIENT_SDL_VERSIONED=ON")
 	set(WITH_CLIENT_SDL_VERSIONED ON)
 endif()
 
+if (NOT SDL2_FOUND AND NOT SDL3_FOUND)
+	message(FATAL_ERROR "No SDL library detected, giving up. Install SDL2 or SDL3 development package to fix")
+endif()
+
 add_subdirectory(common)
 include_directories(common)
 
 if (WITH_CLIENT_SDL2)
-	find_package(SDL2)
 	if (SDL2_FOUND)
 		add_subdirectory(SDL2)
 	else()
@@ -83,7 +89,6 @@ if (WITH_CLIENT_SDL2)
 endif()
 
 if (WITH_CLIENT_SDL3)
-	find_package(SDL3)
 	if (SDL3_FOUND)
 		add_subdirectory(SDL3)
 	else()
