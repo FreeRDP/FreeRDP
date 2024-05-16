@@ -16,6 +16,7 @@
 # limitations under the License.
 
 include(CheckFunctionExists)
+include(JsonDetect)
 
 set(WINPR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(WINPR_SRCS "")
