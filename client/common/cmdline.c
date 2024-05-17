@@ -2050,13 +2050,12 @@ static int parse_tls_enforce(rdpSettings* settings, const char* Value)
 			const char* name;
 			UINT16 version;
 		};
-		const struct map_t map[] = {
-			{ "1.0", TLS1_VERSION },
-			{ "1.1", TLS1_1_VERSION },
-			{ "1.2", TLS1_2_VERSION }
+		const struct map_t map[] = { { "1.0", TLS1_VERSION },
+			                         { "1.1", TLS1_1_VERSION },
+			                         { "1.2", TLS1_2_VERSION }
 #if defined(TLS1_3_VERSION)
-			,
-			{ "1.3", TLS1_3_VERSION }
+			                         ,
+			                         { "1.3", TLS1_3_VERSION }
 #endif
 		};
 
@@ -2891,30 +2890,62 @@ static int parse_dump_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT
 	BOOL failed = FALSE;
 	size_t count = 0;
 	char** args = CommandLineParseCommaSeparatedValues(arg->Value, &count);
-	if (!args || (count != 2))
+	if (!args)
 		failed = TRUE;
 	else
 	{
-		if (!freerdp_settings_set_string(settings, FreeRDP_TransportDumpFile, args[1]))
+		BOOL modernsyntax = FALSE;
+		BOOL oldsyntax = FALSE;
+		for (size_t x = 0; (x < count) && !failed; x++)
+		{
+			const char* carg = args[x];
+			if (option_starts_with("file:", carg))
+			{
+				const char* val = &carg[5];
+				if (oldsyntax)
+					failed = TRUE;
+				else if (!freerdp_settings_set_string(settings, FreeRDP_TransportDumpFile, val))
+					failed = TRUE;
+				modernsyntax = TRUE;
+			}
+			else if (option_equals("replay", carg))
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDump, FALSE))
+					failed = TRUE;
+				else if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDumpReplay, TRUE))
+					failed = TRUE;
+			}
+			else if (option_equals("record", carg))
+			{
+				if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDump, TRUE))
+					failed = TRUE;
+				else if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDumpReplay, FALSE))
+					failed = TRUE;
+			}
+			else if (option_equals("nodelay", carg))
+			{
+				if (oldsyntax)
+					failed = TRUE;
+				else if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDumpReplayNodelay,
+				                                    TRUE))
+					failed = TRUE;
+				modernsyntax = TRUE;
+			}
+			else
+			{
+				/* compat:
+				 * support syntax record,<filename> and replay,<filename>
+				 */
+				if (modernsyntax)
+					failed = TRUE;
+				else if (!freerdp_settings_set_string(settings, FreeRDP_TransportDumpFile, carg))
+					failed = TRUE;
+				oldsyntax = TRUE;
+			}
+		}
+
+		if (oldsyntax && (count != 2))
 			failed = TRUE;
-		else if (option_equals(args[0], "replay"))
-		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDump, FALSE))
-				failed = TRUE;
-			else if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDumpReplay, TRUE))
-				failed = TRUE;
-		}
-		else if (option_equals(args[0], "record"))
-		{
-			if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDump, TRUE))
-				failed = TRUE;
-			else if (!freerdp_settings_set_bool(settings, FreeRDP_TransportDumpReplay, FALSE))
-				failed = TRUE;
-		}
-		else
-		{
-			failed = TRUE;
-		}
 	}
 	free(args);
 	if (failed)
