@@ -254,6 +254,8 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_ToggleFullscreen, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_ToggleFullscreen" },
 	{ FreeRDP_TransportDump, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_TransportDump" },
 	{ FreeRDP_TransportDumpReplay, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_TransportDumpReplay" },
+	{ FreeRDP_TransportDumpReplayNodelay, FREERDP_SETTINGS_TYPE_BOOL,
+	  "FreeRDP_TransportDumpReplayNodelay" },
 	{ FreeRDP_UnicodeInput, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_UnicodeInput" },
 	{ FreeRDP_UnmapButtons, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_UnmapButtons" },
 	{ FreeRDP_UseCommonStdioCallbacks, FREERDP_SETTINGS_TYPE_BOOL,

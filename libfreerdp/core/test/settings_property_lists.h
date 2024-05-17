@@ -184,6 +184,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_ToggleFullscreen,
 	FreeRDP_TransportDump,
 	FreeRDP_TransportDumpReplay,
+	FreeRDP_TransportDumpReplayNodelay,
 	FreeRDP_UnicodeInput,
 	FreeRDP_UnmapButtons,
 	FreeRDP_UseCommonStdioCallbacks,

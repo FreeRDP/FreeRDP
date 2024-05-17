@@ -432,7 +432,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 char* TransportDumpFile);       /* 1861 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL TransportDumpReplay);      /* 1862 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL DeactivateClientDecoding); /* 1863 */
-	UINT64 padding1920[1920 - 1864];                            /* 1864 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL TransportDumpReplayNodelay); /* 1864 */
+	UINT64 padding1920[1920 - 1865];                              /* 1865 */
 	UINT64 padding1984[1984 - 1920];                            /* 1920 */
 
 	/**
