@@ -600,6 +600,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 		case FreeRDP_TransportDumpReplay:
 			return settings->TransportDumpReplay;
 
+		case FreeRDP_TransportDumpReplayNodelay:
+			return settings->TransportDumpReplayNodelay;
+
 		case FreeRDP_UnicodeInput:
 			return settings->UnicodeInput;
 
@@ -1376,6 +1379,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 
 		case FreeRDP_TransportDumpReplay:
 			settings->TransportDumpReplay = cnv.c;
+			break;
+
+		case FreeRDP_TransportDumpReplayNodelay:
+			settings->TransportDumpReplayNodelay = cnv.c;
 			break;
 
 		case FreeRDP_UnicodeInput:
