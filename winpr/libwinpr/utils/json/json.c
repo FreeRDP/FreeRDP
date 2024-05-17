@@ -39,6 +39,17 @@
 #endif
 #endif
 
+#if defined(WITH_JSONC)
+#if JSON_C_MAJOR_VERSION == 0
+#if JSON_C_MINOR_VERSION < 14
+static struct json_object* json_object_new_null(void)
+{
+	return NULL;
+}
+#endif
+#endif
+#endif
+
 #if defined(USE_CJSON_COMPAT)
 static double cJSON_GetNumberValue(const cJSON* const prop)
 {
