@@ -179,7 +179,28 @@ UINT rdpdr_process_capability_request(rdpdrPlugin* rdpdr, wStream* s)
 		return CHANNEL_RC_NULL_DATA;
 
 	WINPR_ASSERT(rdpdr->state == RDPDR_CHANNEL_STATE_SERVER_CAPS);
-	rdpdr_state_advance(rdpdr, RDPDR_CHANNEL_STATE_CLIENT_CAPS);
+	/*
+	NOTE(tomsci): Workaround for https://github.com/FreeRDP/FreeRDP/issues/9506 when the following
+	occurs:
+	* The following state transitions have occurred during channel bringup:
+	  RDPDR_CHANNEL_STATE_INITIAL -> RDPDR_CHANNEL_STATE_ANNOUNCE ->
+	  RDPDR_CHANNEL_STATE_ANNOUNCE_REPLY -> RDPDR_CHANNEL_STATE_NAME_REQUEST.
+	* State is RDPDR_CHANNEL_STATE_NAME_REQUEST when client receives a PAKID_CORE_CLIENTID_CONFIRM
+	  and attempts to transition to RDPDR_CHANNEL_STATE_CLIENTID_CONFIRM (rdpdr_check_channel_state
+	  also patched to allow this) and then to RDPDR_CHANNEL_STATE_READY.
+	* Client receives a PAKID_CORE_SERVER_CAPABILITY and transitions from READY to
+	  RDPDR_CHANNEL_STATE_SERVER_CAPS, which results in execution reaching this comment.
+	* At this point, the server seems to think the client is immediately ready after processing the
+	  PAKID_CORE_SERVER_CAPABILITY and sends several PAKID_CORE_DEVICE_IOREQUESTs (which causes
+	  the state machine checks in rdpdr_check_channel_state to fail and breaks things).
+
+	The best thing to do seems to therefore be to return to RDPDR_CHANNEL_STATE_READY after
+	processing the PAKID_CORE_SERVER_CAPABILITY in the situations where we had previously reached
+	the ready state, rather than moving to RDPDR_CHANNEL_STATE_CLIENT_CAPS as the code did
+	previously.
+	*/
+	rdpdr_state_advance(rdpdr,
+		rdpdr->hasBeenReady ? RDPDR_CHANNEL_STATE_READY : RDPDR_CHANNEL_STATE_CLIENT_CAPS);
 
 	if (!Stream_CheckAndLogRequiredLengthWLog(rdpdr->log, s, 4))
 		return ERROR_INVALID_DATA;

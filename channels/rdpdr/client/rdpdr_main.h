@@ -113,6 +113,7 @@ typedef struct
 	wStreamPool* pool;
 	wLog* log;
 	BOOL async;
+	BOOL hasBeenReady;
 } rdpdrPlugin;
 
 BOOL rdpdr_state_advance(rdpdrPlugin* rdpdr, enum RDPDR_CHANNEL_STATE next);
