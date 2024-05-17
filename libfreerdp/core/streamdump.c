@@ -40,6 +40,7 @@ struct stream_dump_context
 	UINT64 replayTime;
 	CONNECTION_STATE state;
 	BOOL isServer;
+	BOOL nodelay;
 };
 
 static UINT32 crc32b(const BYTE* data, size_t length)
@@ -347,8 +348,11 @@ static int stream_dump_replay_transport_read(rdpTransport* transport, wStream* s
 			return -1;
 	} while (flags & STREAM_MSG_SRV_RX);
 
-	if ((ctx->dump->replayTime > 0) && (ts > ctx->dump->replayTime))
-		slp = ts - ctx->dump->replayTime;
+	if (!ctx->dump->nodelay)
+	{
+		if ((ctx->dump->replayTime > 0) && (ts > ctx->dump->replayTime))
+			slp = ts - ctx->dump->replayTime;
+	}
 	ctx->dump->replayTime = ts;
 
 	size = Stream_Length(s);
@@ -393,17 +397,18 @@ static BOOL stream_dump_replay_transport_accept(rdpTransport* transport)
 
 static BOOL stream_dump_register_read_handlers(rdpContext* context)
 {
-	rdpTransportIo dump;
 	const rdpTransportIo* dfl = freerdp_get_io_callbacks(context);
 
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_TransportDumpReplay))
 		return TRUE;
 
 	WINPR_ASSERT(dfl);
-	dump = *dfl;
+	rdpTransportIo dump = *dfl;
 
 	/* Remember original callbacks for later */
 	WINPR_ASSERT(context->dump);
+	context->dump->nodelay =
+	    freerdp_settings_get_bool(context->settings, FreeRDP_TransportDumpReplayNodelay);
 	context->dump->io.ReadPdu = dfl->ReadPdu;
 	context->dump->io.WritePdu = dfl->WritePdu;
 
