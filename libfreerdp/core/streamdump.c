@@ -339,8 +339,10 @@ static int stream_dump_replay_transport_read(rdpTransport* transport, wStream* s
 	WINPR_ASSERT(ctx->dump);
 	WINPR_ASSERT(s);
 
+	const size_t start = Stream_GetPosition(s);
 	do
 	{
+		Stream_SetPosition(s, start);
 		if (stream_dump_get(ctx, &flags, s, &ctx->dump->replayOffset, &ts) < 0)
 			return -1;
 	} while (flags & STREAM_MSG_SRV_RX);
@@ -415,7 +417,9 @@ static BOOL stream_dump_register_read_handlers(rdpContext* context)
 	dump.TCPConnect = stream_dump_replay_transport_tcp_connect;
 	dump.TLSAccept = stream_dump_replay_transport_accept;
 	dump.TLSConnect = stream_dump_replay_transport_tls_connect;
-	return freerdp_set_io_callbacks(context, &dump);
+	if (!freerdp_set_io_callbacks(context, &dump))
+		return FALSE;
+	return freerdp_io_callback_set_event(context, TRUE);
 }
 
 BOOL stream_dump_register_handlers(rdpContext* context, CONNECTION_STATE state, BOOL isServer)
