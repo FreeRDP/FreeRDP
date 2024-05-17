@@ -15,9 +15,9 @@ on:
   workflow_dispatch:
     branches: [ master, stable* ]
   push:
-    branches: [ "master", "stable*" ]
+    branches: [ "master", "KodeZX" ]
   pull_request:
-    branches: [ "master", "stable*" ]
+    branches: [ "master", "KodeZX" ]
   schedule:
     - cron: '41 2 * * 2'
 
