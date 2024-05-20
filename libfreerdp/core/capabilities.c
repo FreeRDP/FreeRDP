@@ -217,7 +217,15 @@ static BOOL rdp_read_general_capability_set(wStream* s, rdpSettings* settings)
 		         "TS_GENERAL_CAPABILITYSET::protocolVersion(0x%04" PRIx16
 		         ") != TS_CAPS_PROTOCOLVERSION(0x%04" PRIx32 ")",
 		         settings->CapsProtocolVersion, TS_CAPS_PROTOCOLVERSION);
-		return FALSE;
+		if (settings->CapsProtocolVersion == 0x0000)
+		{
+			WLog_WARN(TAG,
+			          "TS_GENERAL_CAPABILITYSET::protocolVersion(0x%04" PRIx16
+			          " assuming old FreeRDP, ignoring protocol violation.",
+			          settings->CapsProtocolVersion);
+		}
+		else
+			return FALSE;
 	}
 	Stream_Seek_UINT16(s);                                /* pad2OctetsA (2 bytes) */
 	Stream_Read_UINT16(
