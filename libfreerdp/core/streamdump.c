@@ -31,6 +31,8 @@
 
 #include "streamdump.h"
 
+#define TAG FREERDP_TAG("streamdump")
+
 struct stream_dump_context
 {
 	rdpTransportIo io;
@@ -41,6 +43,7 @@ struct stream_dump_context
 	CONNECTION_STATE state;
 	BOOL isServer;
 	BOOL nodelay;
+	wLog* log;
 };
 
 static UINT32 crc32b(const BYTE* data, size_t length)
@@ -292,7 +295,7 @@ static int stream_dump_transport_read(rdpTransport* transport, wStream* s)
 
 static BOOL stream_dump_register_write_handlers(rdpContext* context)
 {
-	rdpTransportIo dump;
+	rdpTransportIo dump = { 0 };
 	const rdpTransportIo* dfl = freerdp_get_io_callbacks(context);
 
 	if (!freerdp_settings_get_bool(context->settings, FreeRDP_TransportDump))
@@ -321,7 +324,7 @@ static int stream_dump_replay_transport_write(rdpTransport* transport, wStream* 
 	WINPR_ASSERT(s);
 
 	size = Stream_Length(s);
-	WLog_ERR("abc", "replay write %" PRIuz, size);
+	WLog_Print(ctx->dump->log, WLOG_TRACE, "replay write %" PRIuz, size);
 	// TODO: Compare with write file
 
 	return 1;
@@ -357,7 +360,7 @@ static int stream_dump_replay_transport_read(rdpTransport* transport, wStream* s
 
 	size = Stream_Length(s);
 	Stream_SetPosition(s, 0);
-	WLog_ERR("abc", "replay read %" PRIuz, size);
+	WLog_Print(ctx->dump->log, WLOG_TRACE, "replay read %" PRIuz, size);
 
 	if (slp > 0)
 	{
@@ -448,6 +451,7 @@ rdpStreamDumpContext* stream_dump_new(void)
 	rdpStreamDumpContext* dump = calloc(1, sizeof(rdpStreamDumpContext));
 	if (!dump)
 		return NULL;
+	dump->log = WLog_Get(TAG);
 
 	return dump;
 }

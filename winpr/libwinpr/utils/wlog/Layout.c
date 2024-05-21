@@ -253,7 +253,7 @@ BOOL WLog_Layout_GetMessagePrefix(wLog* log, wLogLayout* layout, wLogMessage* me
 		  &recurse }, /* log level */
 		{ ENTRY("%mi"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wMinute, NULL,
 		  &recurse }, /* minutes */
-		{ ENTRY("%ml"), ENTRY("%02u"), NULL, (void*)(size_t)localTime.wMilliseconds, NULL,
+		{ ENTRY("%ml"), ENTRY("%03u"), NULL, (void*)(size_t)localTime.wMilliseconds, NULL,
 		  &recurse },                                                   /* milliseconds */
 		{ ENTRY("%mn"), ENTRY("%s"), NULL, log->Name, NULL, &recurse }, /* module name */
 		{ ENTRY("%mo"), ENTRY("%u"), NULL, (void*)(size_t)localTime.wMonth, NULL,
