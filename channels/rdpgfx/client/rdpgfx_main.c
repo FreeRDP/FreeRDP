@@ -2077,7 +2077,6 @@ static UINT rdpgfx_recv_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStream* s)
  */
 static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback, wStream* data)
 {
-	wStream* s = NULL;
 	int status = 0;
 	UINT32 DstSize = 0;
 	BYTE* pDstData = NULL;
@@ -2097,11 +2096,13 @@ static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 		return ERROR_INTERNAL_ERROR;
 	}
 
-	s = Stream_New(pDstData, DstSize);
+	wStream sbuffer = { 0 };
+	wStream* s = Stream_StaticConstInit(&sbuffer, pDstData, DstSize);
 
 	if (!s)
 	{
 		WLog_Print(gfx->log, WLOG_ERROR, "calloc failed!");
+		free(pDstData);
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
@@ -2115,7 +2116,7 @@ static UINT rdpgfx_on_data_received(IWTSVirtualChannelCallback* pChannelCallback
 		}
 	}
 
-	Stream_Free(s, TRUE);
+	free(pDstData);
 	return error;
 }
 
