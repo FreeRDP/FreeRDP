@@ -1689,6 +1689,7 @@ static INLINE SSIZE_T progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive
 	while ((Stream_GetRemainingLength(s) >= 6) &&
 	       (region->tileDataSize > (Stream_GetPosition(s) - start)))
 	{
+		BOOL skip = FALSE;
 		const size_t pos = Stream_GetPosition(s);
 
 		Stream_Read_UINT16(s, blockType);
@@ -1723,9 +1724,8 @@ static INLINE SSIZE_T progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive
 				break;
 
 			case PROGRESSIVE_WBT_TILE_UPGRADE:
-				if (!progressive_tile_read_upgrade(progressive, s, blockType, blockLen, surface,
-				                                   region, context))
-					return -1032;
+				Stream_Seek(s, blockLen - 6);
+				skip = TRUE;
 				break;
 			default:
 				WLog_ERR(TAG, "Invalid block type %04" PRIx16 " (%s)", blockType,
@@ -1740,7 +1740,8 @@ static INLINE SSIZE_T progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive
 			           "Actual block read %" PRIuz " but expected %" PRIu32, rem - pos, blockLen);
 			return -1040;
 		}
-		count++;
+		if (!skip)
+			count++;
 	}
 
 	end = Stream_GetPosition(s);
@@ -1753,12 +1754,7 @@ static INLINE SSIZE_T progressive_process_tiles(PROGRESSIVE_CONTEXT* progressive
 	}
 
 	if (count != region->numTiles)
-	{
-		WLog_Print(progressive->log, WLOG_WARN,
-		           "numTiles inconsistency: actual: %" PRIu32 ", expected: %" PRIu16 "\n", count,
-		           region->numTiles);
-		return -1044;
-	}
+		region->numTiles = count;
 
 	{
 		size_t tcount = 1;
