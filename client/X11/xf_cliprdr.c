@@ -793,7 +793,7 @@ static UINT xf_cliprdr_send_format_list(xfClipboard* clipboard, const CLIPRDR_FO
 		const CLIPRDR_FORMAT* cpv;
 		CLIPRDR_FORMAT* pv;
 	} cnv = { .cpv = formats };
-	const CLIPRDR_FORMAT_LIST formatList = { .common.msgFlags = CB_RESPONSE_OK,
+	const CLIPRDR_FORMAT_LIST formatList = { .common.msgFlags = 0,
 		                                     .numFormats = numFormats,
 		                                     .formats = cnv.pv,
 		                                     .common.msgType = CB_FORMAT_LIST };
