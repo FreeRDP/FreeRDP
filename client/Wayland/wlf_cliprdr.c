@@ -225,7 +225,7 @@ static UINT wlf_cliprdr_send_client_format_list(wfClipboard* clipboard)
 {
 	WINPR_ASSERT(clipboard);
 
-	const CLIPRDR_FORMAT_LIST formatList = { .common.msgFlags = CB_RESPONSE_OK,
+	const CLIPRDR_FORMAT_LIST formatList = { .common.msgFlags = 0,
 		                                     .numFormats = (UINT32)clipboard->numClientFormats,
 		                                     .formats = clipboard->clientFormats,
 		                                     .common.msgType = CB_FORMAT_LIST };

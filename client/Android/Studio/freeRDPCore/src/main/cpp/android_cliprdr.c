@@ -74,7 +74,7 @@ UINT android_cliprdr_send_client_format_list(CliprdrClientContext* cliprdr)
 		}
 	}
 
-	formatList.common.msgFlags = CB_RESPONSE_OK;
+	formatList.common.msgFlags = 0;
 	formatList.numFormats = numFormats;
 	formatList.formats = formats;
 	formatList.common.msgType = CB_FORMAT_LIST;
