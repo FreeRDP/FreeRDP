@@ -1,6 +1,6 @@
 name: clang-tidy-review
 on:
-  pull_request_target:
+  pull_request:
     branches: [ master, stable* ]
 
 jobs:
@@ -8,12 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: suzuki-shunsuke/get-pr-action@v0.1.0
-      id: pr
     - uses: actions/checkout@v4
-      with:
-        ref: ${{steps.pr.outputs.merge_commit_sha}}
-
     # Run clang-tidy
     - uses: ZedThree/clang-tidy-review@v0.17.1
       id: review
