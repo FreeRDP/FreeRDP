@@ -645,13 +645,22 @@ static BOOL freerdp_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD D
 	}
 	else if (FreeRDPAreColorFormatsEqualNoAlpha(SrcFormat, DstFormat))
 	{
-		for (SSIZE_T y = 0; y < nHeight; y++)
+		if (!vSrcVFlip && (nDstStep == nSrcStep) && (xSrcOffset == 0) && (xDstOffset == 0))
 		{
-			const BYTE* WINPR_RESTRICT srcLine =
-			    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
-			BYTE* WINPR_RESTRICT dstLine =
-			    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
-			memcpy(&dstLine[xDstOffset], &srcLine[xSrcOffset], copyDstWidth);
+			const void* src = &pSrcData[1ull * nYSrc * nSrcStep];
+			void* dst = &pDstData[1ull * nYDst * nDstStep];
+			memcpy(dst, src, 1ull * nDstStep * nHeight);
+		}
+		else
+		{
+			for (SSIZE_T y = 0; y < nHeight; y++)
+			{
+				const BYTE* WINPR_RESTRICT srcLine =
+				    &pSrcData[srcVMultiplier * (y + nYSrc) * nSrcStep + srcVOffset];
+				BYTE* WINPR_RESTRICT dstLine =
+				    &pDstData[dstVMultiplier * (y + nYDst) * nDstStep + dstVOffset];
+				memcpy(&dstLine[xDstOffset], &srcLine[xSrcOffset], copyDstWidth);
+			}
 		}
 	}
 	else
