@@ -572,6 +572,9 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 {
 	WINPR_ASSERT(s);
 	WINPR_ASSERT(mcs);
+
+	BOOL gotMultitransport = FALSE;
+
 	while (length > 0)
 	{
 		wStream sbuffer = { 0 };
@@ -641,6 +644,7 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 
 			case 0xC009:
 			case CS_MULTITRANSPORT:
+				gotMultitransport = TRUE;
 				if (!gcc_read_client_multitransport_channel_data(sub, mcs))
 					return FALSE;
 
@@ -676,6 +680,14 @@ BOOL gcc_read_client_data_blocks(wStream* s, rdpMcs* mcs, UINT16 length)
 			length -= blockLength;
 	}
 
+	if (!gotMultitransport)
+	{
+		rdpSettings* settings = mcs_get_settings(mcs);
+		if (!freerdp_settings_set_bool(settings, FreeRDP_SupportMultitransport, FALSE))
+			return FALSE;
+		if (!freerdp_settings_set_uint32(settings, FreeRDP_MultitransportFlags, 0))
+			return FALSE;
+	}
 	return TRUE;
 }
 
