@@ -7,7 +7,7 @@ on:
         description: 'Base revision for ABI compatibility check'
         required: true
         default: '3.0.0'
-  pull_request_target:
+  pull_request:
     branches: [ master, stable* ]
   schedule:
     - cron: '30 4 * * SUN'
@@ -18,7 +18,7 @@ jobs:
     name: "Run ABI checker on ubuntu-latest"
     steps:
       - name: "Check out pull request"
-        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'pull_request_target'  }}
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'pull_request'  }}
         uses: suzuki-shunsuke/get-pr-action@v0.1.0
         id: pr
 
@@ -95,7 +95,7 @@ jobs:
 
       - name: "Run ABI check..."
         env:
-          BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'pull_request_target' && github.event.pull_request.base.sha || github.event_name == 'workflow_dispatch' && inputs.API_BASE_REF || '3.0.0' }}
+          BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event_name == 'workflow_dispatch' && inputs.API_BASE_REF || '3.0.0' }}
         run: |
           echo "BASE_REF=$BASE_REF"
           ./checker/check-abi -s checker/abi-suppr.txt --parameters="-Cchecker/config-abi.txt" $BASE_REF $(git rev-parse HEAD) 
