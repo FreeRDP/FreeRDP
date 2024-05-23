@@ -241,8 +241,8 @@ BOOL freerdp_image_copy_from_icon_data(BYTE* WINPR_RESTRICT pDstData, UINT32 Dst
 		return FALSE;
 
 	fill_gdi_palette_for_icon(colorTable, cbColorTable, &palette);
-	if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight, bitsColor,
-	                        format, 0, 0, 0, &palette, FREERDP_FLIP_VERTICAL))
+	if (!freerdp_image_copy_no_overlap(pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight,
+	                                   bitsColor, format, 0, 0, 0, &palette, FREERDP_FLIP_VERTICAL))
 		return FALSE;
 
 	/* apply alpha mask */
@@ -576,12 +576,11 @@ static INLINE BOOL overlapping(const BYTE* pDstData, UINT32 nXDst, UINT32 nYDst,
 	return FALSE;
 }
 
-static BOOL freerdp_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat,
-                                          UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
-                                          UINT32 nWidth, UINT32 nHeight,
-                                          const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
-                                          UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
-                                          const gdiPalette* WINPR_RESTRICT palette, UINT32 flags)
+BOOL freerdp_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep,
+                                   UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
+                                   const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
+                                   UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                                   const gdiPalette* WINPR_RESTRICT palette, UINT32 flags)
 {
 	const SSIZE_T dstByte = FreeRDPGetBytesPerPixel(DstFormat);
 	const SSIZE_T srcByte = FreeRDPGetBytesPerPixel(SrcFormat);
@@ -696,11 +695,10 @@ static BOOL freerdp_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD D
 	return TRUE;
 }
 
-static BOOL freerdp_image_copy_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep,
-                                       UINT32 nXDst, UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
-                                       const BYTE* pSrcData, DWORD SrcFormat, UINT32 nSrcStep,
-                                       UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* palette,
-                                       UINT32 flags)
+BOOL freerdp_image_copy_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst,
+                                UINT32 nYDst, UINT32 nWidth, UINT32 nHeight, const BYTE* pSrcData,
+                                DWORD SrcFormat, UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                                const gdiPalette* palette, UINT32 flags)
 {
 	const UINT32 dstByte = FreeRDPGetBytesPerPixel(DstFormat);
 	const UINT32 srcByte = FreeRDPGetBytesPerPixel(SrcFormat);

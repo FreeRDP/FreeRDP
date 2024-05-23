@@ -505,8 +505,9 @@ BOOL nsc_process_message(NSC_CONTEXT* context, UINT16 bpp, UINT32 width, UINT32 
 			return FALSE;
 	}
 
-	if (!freerdp_image_copy(pDstData, DstFormat, nDstStride, nXDst, nYDst, width, height,
-	                        context->BitmapData, PIXEL_FORMAT_BGRA32, 0, 0, 0, NULL, flip))
+	if (!freerdp_image_copy_no_overlap(pDstData, DstFormat, nDstStride, nXDst, nYDst, width, height,
+	                                   context->BitmapData, PIXEL_FORMAT_BGRA32, 0, 0, 0, NULL,
+	                                   flip))
 		return FALSE;
 
 	return TRUE;

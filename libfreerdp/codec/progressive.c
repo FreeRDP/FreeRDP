@@ -2365,9 +2365,9 @@ static BOOL update_tiles(PROGRESSIVE_CONTEXT* progressive, PROGRESSIVE_SURFACE_C
 				goto fail;
 			if (rect->top + height > surface->height)
 				goto fail;
-			rc = freerdp_image_copy(pDstData, DstFormat, nDstStep, rect->left, rect->top, width,
-			                        height, tile->data, progressive->format, tile->stride, nXSrc,
-			                        nYSrc, NULL, FREERDP_KEEP_DST_ALPHA);
+			rc = freerdp_image_copy_no_overlap(
+			    pDstData, DstFormat, nDstStep, rect->left, rect->top, width, height, tile->data,
+			    progressive->format, tile->stride, nXSrc, nYSrc, NULL, FREERDP_KEEP_DST_ALPHA);
 			if (!rc)
 				break;
 

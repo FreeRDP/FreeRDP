@@ -978,8 +978,9 @@ BOOL planar_decompress(BITMAP_PLANAR_CONTEXT* planar, const BYTE* pSrcData, UINT
 
 		if (pTempData != pDstData)
 		{
-			if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, w, h, pTempData,
-			                        TempFormat, nTempStep, nXDst, nYDst, NULL, FREERDP_FLIP_NONE))
+			if (!freerdp_image_copy_no_overlap(pDstData, DstFormat, nDstStep, nXDst, nYDst, w, h,
+			                                   pTempData, TempFormat, nTempStep, nXDst, nYDst, NULL,
+			                                   FREERDP_FLIP_NONE))
 			{
 				WLog_ERR(TAG, "planar image copy failed");
 				return FALSE;
