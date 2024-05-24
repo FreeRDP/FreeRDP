@@ -131,6 +131,11 @@ if(NOT IOS)
     endif()
 endif()
 
+check_function_exists(pthread_setschedprio PTHREAD_SETSCHEDPRIO)
+if (PTHREAD_SETSCHEDPRIO)
+	winpr_definition_add(-DPTHREAD_SETSCHEDPRIO)
+endif()
+
 if (ANDROID)
     winpr_library_add_private(log)
 endif()
