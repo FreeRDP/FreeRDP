@@ -128,13 +128,14 @@ static int write_hpp_header(const fs::path& prg, const fs::path& file, const std
 	    << "#include \"sdl_resource_file.hpp\"" << std::endl
 	    << std::endl
 	    << "class " << name << " {" << std::endl
+	    << "friend class SDLResourceManager;" << std::endl
 	    << "public:" << std::endl
 	    << name << "() = delete;" << std::endl
 	    << std::endl
 	    << "static std::string name();" << std::endl
 	    << "static std::string type();" << std::endl
 	    << std::endl
-	    << "private:" << std::endl
+	    << "protected:" << std::endl
 	    << "static std::vector<unsigned char> init();" << std::endl
 	    << "static const SDLResourceFile _initializer;" << std::endl
 	    << std::endl

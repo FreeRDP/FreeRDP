@@ -49,7 +49,9 @@ class SdlWidget
 {
   public:
 	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, bool input);
+#if defined(WITH_SDL_IMAGE_DIALOGS)
 	SdlWidget(SDL_Renderer* renderer, const SDL_Rect& rect, SDL_RWops* ops);
+#endif
 	SdlWidget(SdlWidget&& other) noexcept;
 	virtual ~SdlWidget();
 
