@@ -19,6 +19,10 @@ add_executable(sdl-common-res2bin
 	   convert_res_to_c.cpp
 )
 
+set(FACTORY_SRCS "")
+set(FACTORY_HDR "")
+set(FACTORY_CLASSES "")
+
 macro(convert_to_bin FILE FILE_TYPE)
 	get_filename_component(FILE_NAME ${FILE} NAME)
 	string(REGEX REPLACE "[^a-zA-Z0-9]" "_" TARGET_NAME ${FILE_NAME})
@@ -26,9 +30,16 @@ macro(convert_to_bin FILE FILE_TYPE)
 	set(FILE_BIN_DIR ${CMAKE_CURRENT_BINARY_DIR}/bin)
 	set(FILE_BYPRODUCTS ${FILE_BIN_DIR}/${TARGET_NAME}.hpp ${FILE_BIN_DIR}/${TARGET_NAME}.cpp)
 
-	list(APPEND FACTORY_SRCS
-		${FILE_BYPRODUCTS}
+	list(APPEND FACTORY_HDR
+		${FILE_BIN_DIR}/${TARGET_NAME}.hpp
 	)
+	list(APPEND FACTORY_SRCS
+		${FILE_BIN_DIR}/${TARGET_NAME}.cpp
+	)
+
+list(APPEND FACTORY_CLASSES
+	${TARGET_NAME}
+)
 
 	add_custom_command(
 		OUTPUT ${FILE_BYPRODUCTS}
@@ -68,14 +79,28 @@ if (SDL_USE_COMPILED_RESOURCES)
 
     if (WITH_SDL_IMAGE_DIALOGS)
         foreach(FILE ${RES_SVG_FILES})
-            convert_to_bin("${FILE}" "images")
+			convert_to_bin("${FILE}" "images")
         endforeach()
     endif()
 
     foreach(FILE ${RES_FONT_FILES})
-        convert_to_bin("${FILE}" "fonts")
+		convert_to_bin("${FILE}" "fonts")
     endforeach()
     add_definitions(-DSDL_USE_COMPILED_RESOURCES)
+
+	set(FINIT ${CMAKE_CURRENT_BINARY_DIR}/resource-init.cpp)
+	list(APPEND FACTORY_SRCS ${FINIT})
+
+	write_file(${FINIT} "#include <sdl_resource_manager.hpp>")
+	foreach(HDR ${FACTORY_HDR})
+		write_file(${FINIT} "#include <${HDR}>" APPEND)
+	endforeach()
+
+	write_file(${FINIT} "void SDLResourceManager::init() {" APPEND)
+	foreach(CLASS ${FACTORY_CLASSES})
+		write_file(${FINIT} "\t${CLASS}::init();" APPEND)
+	endforeach()
+	write_file(${FINIT} "}" APPEND)
 else()
 	set(SDL_RESOURCE_ROOT ${CMAKE_INSTALL_FULL_DATAROOTDIR}/FreeRDP)
     if (WITH_BINARY_VERSIONING)
@@ -97,9 +122,10 @@ else()
     )
 endif()
 
-add_library(sdl-common-client-res OBJECT
+add_library(sdl-common-client-res STATIC
     ${RES_FILES}
     ${SRCS}
+	${FACTORY_HDR}
     ${FACTORY_SRCS}
 )
 set_property(TARGET sdl-common-client-res PROPERTY POSITION_INDEPENDENT_CODE ON)

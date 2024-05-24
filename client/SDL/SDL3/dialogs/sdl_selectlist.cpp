@@ -9,36 +9,27 @@ SdlSelectList::SdlSelectList(const std::string& title, const std::vector<std::st
 	const size_t widget_width = 600;
 
 	const size_t total_height = labels.size() * (widget_height + vpadding) + vpadding;
-	_window = SDL_CreateWindow(title.c_str(), widget_width, total_height + widget_height,
-	                           SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |
-	                               SDL_WINDOW_INPUT_FOCUS);
-	if (_window == nullptr)
-	{
-		widget_log_error(-1, "SDL_CreateWindow");
-	}
+	auto rc = SDL_CreateWindowAndRenderer(title.c_str(), widget_width, total_height + widget_height,
+	                                      SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |
+	                                          SDL_WINDOW_INPUT_FOCUS,
+	                                      &_window, &_renderer);
+	if (rc != 0)
+		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
 	else
 	{
-		_renderer = SDL_CreateRenderer(_window, nullptr, SDL_RENDERER_PRESENTVSYNC);
-		if (_renderer == nullptr)
+		SDL_FRect rect = { 0, 0, widget_width, widget_height };
+		for (auto& label : labels)
 		{
-			widget_log_error(-1, "SDL_CreateRenderer");
+			_list.emplace_back(_renderer, label, rect);
+			rect.y += widget_height + vpadding;
 		}
-		else
-		{
-			SDL_FRect rect = { 0, 0, widget_width, widget_height };
-			for (auto& label : labels)
-			{
-				_list.emplace_back(_renderer, label, rect);
-				rect.y += widget_height + vpadding;
-			}
 
-			const std::vector<int> buttonids = { INPUT_BUTTON_ACCEPT, INPUT_BUTTON_CANCEL };
-			const std::vector<std::string> buttonlabels = { "accept", "cancel" };
-			_buttons.populate(
-			    _renderer, buttonlabels, buttonids, widget_width, static_cast<Sint32>(total_height),
-			    static_cast<Sint32>(widget_width / 2), static_cast<Sint32>(widget_height));
-			_buttons.set_highlight(0);
-		}
+		const std::vector<int> buttonids = { INPUT_BUTTON_ACCEPT, INPUT_BUTTON_CANCEL };
+		const std::vector<std::string> buttonlabels = { "accept", "cancel" };
+		_buttons.populate(_renderer, buttonlabels, buttonids, widget_width,
+		                  static_cast<Sint32>(total_height), static_cast<Sint32>(widget_width / 2),
+		                  static_cast<Sint32>(widget_height));
+		_buttons.set_highlight(0);
 	}
 }
 

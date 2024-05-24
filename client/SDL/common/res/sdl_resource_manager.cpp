@@ -93,5 +93,7 @@ std::map<std::string, std::vector<unsigned char>>& SDLResourceManager::resources
 {
 
 	static std::map<std::string, std::vector<unsigned char>> resources = {};
+	if (resources.empty())
+		init();
 	return resources;
 }
