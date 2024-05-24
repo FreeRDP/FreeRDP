@@ -291,6 +291,9 @@ BOOL freerdp_settings_get_bool(const rdpSettings* settings, FreeRDP_Settings_Key
 		case FreeRDP_GfxSmallCache:
 			return settings->GfxSmallCache;
 
+		case FreeRDP_GfxSuspendFrameAck:
+			return settings->GfxSuspendFrameAck;
+
 		case FreeRDP_GfxThinClient:
 			return settings->GfxThinClient;
 
@@ -967,6 +970,10 @@ BOOL freerdp_settings_set_bool(rdpSettings* settings, FreeRDP_Settings_Keys_Bool
 
 		case FreeRDP_GfxSmallCache:
 			settings->GfxSmallCache = cnv.c;
+			break;
+
+		case FreeRDP_GfxSuspendFrameAck:
+			settings->GfxSuspendFrameAck = cnv.c;
 			break;
 
 		case FreeRDP_GfxThinClient:

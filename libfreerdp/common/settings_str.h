@@ -130,6 +130,7 @@ static const struct settings_str_entry settings_map[] = {
 	{ FreeRDP_GfxProgressiveV2, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxProgressiveV2" },
 	{ FreeRDP_GfxSendQoeAck, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxSendQoeAck" },
 	{ FreeRDP_GfxSmallCache, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxSmallCache" },
+	{ FreeRDP_GfxSuspendFrameAck, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxSuspendFrameAck" },
 	{ FreeRDP_GfxThinClient, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GfxThinClient" },
 	{ FreeRDP_GrabKeyboard, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GrabKeyboard" },
 	{ FreeRDP_GrabMouse, FREERDP_SETTINGS_TYPE_BOOL, "FreeRDP_GrabMouse" },

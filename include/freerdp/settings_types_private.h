@@ -691,7 +691,8 @@ struct rdp_settings
 	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxAVC444v2);      /* 3847 */
 	SETTINGS_DEPRECATED(ALIGN64 UINT32 GfxCapsFilter);  /* 3848 */
 	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxPlanar);        /* 3849 */
-	UINT64 padding3904[3904 - 3850];                    /* 3850 */
+	SETTINGS_DEPRECATED(ALIGN64 BOOL GfxSuspendFrameAck); /* 3850 */
+	UINT64 padding3904[3904 - 3851];                      /* 3851 */
 
 	/**
 	 * Caches
