@@ -326,22 +326,16 @@ bool SDLConnectionDialog::createWindow()
 	const size_t widget_width = 600;
 	const size_t total_height = 300;
 
-	_window = SDL_CreateWindow(_title.c_str(), widget_width, total_height,
-	                           SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |
-	                               SDL_WINDOW_INPUT_FOCUS);
-	if (_window == nullptr)
+	auto rc = SDL_CreateWindowAndRenderer(title.c_str(), widget_width, total_height,
+	                                      SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |
+	                                          SDL_WINDOW_INPUT_FOCUS,
+	                                      &_window, &_renderer);
+	if (rc != 0)
 	{
-		widget_log_error(-1, "SDL_CreateWindow");
+		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
 		return false;
 	}
 	setModal();
-
-	_renderer = SDL_CreateRenderer(_window, nullptr, SDL_RENDERER_PRESENTVSYNC);
-	if (_renderer == nullptr)
-	{
-		widget_log_error(-1, "SDL_CreateRenderer");
-		return false;
-	}
 
 	SDL_Color res_bgcolor;
 	switch (_type_active)

@@ -22,32 +22,22 @@ SdlInputWidgetList::SdlInputWidgetList(const std::string& title,
 	const size_t total_width = widget_width + widget_width;
 	const size_t input_height = labels.size() * (widget_heigth + vpadding) + vpadding;
 	const size_t total_height = input_height + widget_heigth;
-	_window = SDL_CreateWindow(title.c_str(), total_width, total_height,
-	                           SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |
-	                               SDL_WINDOW_INPUT_FOCUS);
-	if (_window == nullptr)
-	{
-		widget_log_error(-1, "SDL_CreateWindow");
-	}
+	auto rc = SDL_CreateWindowAndRenderer(title.c_str(), total_width, total_height,
+	                                      SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_MOUSE_FOCUS |
+	                                          SDL_WINDOW_INPUT_FOCUS,
+	                                      &_window, &_renderer);
+	if (rc != 0)
+		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
 	else
 	{
+		for (size_t x = 0; x < labels.size(); x++)
+			_list.emplace_back(_renderer, labels[x], initial[x], flags[x], x, widget_width,
+			                   widget_heigth);
 
-		_renderer = SDL_CreateRenderer(_window, nullptr, SDL_RENDERER_PRESENTVSYNC);
-		if (_renderer == nullptr)
-		{
-			widget_log_error(-1, "SDL_CreateRenderer");
-		}
-		else
-		{
-			for (size_t x = 0; x < labels.size(); x++)
-				_list.emplace_back(_renderer, labels[x], initial[x], flags[x], x, widget_width,
-				                   widget_heigth);
-
-			_buttons.populate(_renderer, buttonlabels, buttonids, total_width,
-			                  static_cast<Sint32>(input_height), static_cast<Sint32>(widget_width),
-			                  static_cast<Sint32>(widget_heigth));
-			_buttons.set_highlight(0);
-		}
+		_buttons.populate(_renderer, buttonlabels, buttonids, total_width,
+		                  static_cast<Sint32>(input_height), static_cast<Sint32>(widget_width),
+		                  static_cast<Sint32>(widget_heigth));
+		_buttons.set_highlight(0);
 	}
 }
 
