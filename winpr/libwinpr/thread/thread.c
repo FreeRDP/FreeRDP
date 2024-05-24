@@ -28,6 +28,14 @@
 
 #include <winpr/thread.h>
 
+#ifndef MIN
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#endif
+
+#ifndef MAX
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#endif
+
 /**
  * api-ms-win-core-processthreads-l1-1-1.dll
  *
@@ -73,6 +81,7 @@
 #include <winpr/crt.h>
 #include <winpr/platform.h>
 
+#include <string.h>
 #ifdef WINPR_HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -605,6 +614,60 @@ error:
 	return rc;
 }
 
+BOOL SetThreadPriority(HANDLE hThread, int nPriority)
+{
+	ULONG Type = 0;
+	WINPR_HANDLE* Object = NULL;
+
+	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
+		return FALSE;
+
+	WINPR_THREAD* thread = (WINPR_THREAD*)Object;
+
+	const int min = 19;
+	const int max = 0;
+	const int diff = (max - min);
+	const int normal = min + diff / 2;
+	const int off = MIN(1, diff / 4);
+	int sched_priority = -1;
+
+	switch (nPriority & ~(THREAD_MODE_BACKGROUND_BEGIN | THREAD_MODE_BACKGROUND_END))
+	{
+		case THREAD_PRIORITY_ABOVE_NORMAL:
+			sched_priority = MIN(normal + off, max);
+			break;
+		case THREAD_PRIORITY_BELOW_NORMAL:
+			sched_priority = MAX(normal - off, min);
+			break;
+		case THREAD_PRIORITY_HIGHEST:
+			sched_priority = max;
+			break;
+		case THREAD_PRIORITY_IDLE:
+			sched_priority = min;
+			break;
+		case THREAD_PRIORITY_LOWEST:
+			sched_priority = min;
+			break;
+		case THREAD_PRIORITY_TIME_CRITICAL:
+			sched_priority = max;
+			break;
+		default:
+		case THREAD_PRIORITY_NORMAL:
+			sched_priority = normal;
+			break;
+	}
+#if defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 200809L) && defined(PTHREAD_SETSCHEDPRIO)
+	const int rc = pthread_setschedprio(thread->thread, sched_priority);
+	if (rc != 0)
+		WLog_ERR(TAG, "pthread_setschedprio(%d) %s [%d]", sched_priority, strerror(rc), rc);
+	return rc == 0;
+#else
+	WLog_WARN(TAG, "pthread_setschedprio(%d) not implemented, requires POSIX 2008 or later",
+	          sched_priority);
+	return TRUE;
+#endif
+}
+
 HANDLE CreateThread(LPSECURITY_ATTRIBUTES lpThreadAttributes, SIZE_T dwStackSize,
                     LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter,
                     DWORD dwCreationFlags, LPDWORD lpThreadId)
@@ -952,7 +1015,7 @@ BOOL TerminateThread(HANDLE hThread, DWORD dwExitCode)
 	WINPR_HANDLE* Object = NULL;
 	WINPR_THREAD* thread = NULL;
 
-	if (!winpr_Handle_GetInfo(hThread, &Type, &Object))
+	if (!winpr_Handle_GetInfo(hThread, &Type, &Object) || Object->Type != HANDLE_TYPE_THREAD)
 		return FALSE;
 
 	thread = (WINPR_THREAD*)Object;
