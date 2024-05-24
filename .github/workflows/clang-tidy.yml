@@ -3,9 +3,6 @@ on:
   pull_request:
     branches: [ master, stable* ]
 
-permissions:
-  pull-requests: write
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,17 +10,18 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     # Run clang-tidy
-    - uses: ZedThree/clang-tidy-review@v0.17.1
+    - uses: ZedThree/clang-tidy-review@v0.19.0
       id: review
       with:
+        split_workflow: true
         clang_tidy_checks: ''
         # List of packages to install
-        apt_packages: libkrb5-dev,libxkbcommon-dev,libxkbfile-dev,libx11-dev,libwayland-dev,libxrandr-dev,libxi-dev,libxrender-dev,libxext-dev,libxinerama-dev,libxfixes-dev,libxcursor-dev,libxv-dev,libxdamage-dev,libxtst-dev,libcups2-dev,libcairo2-dev,libpcsclite-dev,libasound2-dev,libswscale-dev,libpulse-dev,libavcodec-dev,libavutil-dev,libfuse3-dev,libswresample-dev,libusb-1.0-0-dev,libudev-dev,libdbus-glib-1-dev,libpam0g-dev,uuid-dev,libxml2-dev,libcjson-dev,libsdl2-2.0-0,libsdl2-dev,libsdl2-ttf-dev,libsdl2-image-dev,libsystemd-dev,libwebkit2gtk-4.0-dev,liburiparser-dev,libopus-dev,libwebp-dev,libjpeg-dev,libpng-dev,xsltproc,docbook-xsl,libgsm1-dev,libfaac-dev,libfaad-dev,libsoxr-dev,opencl-c-headers,opencl-headers,ocl-icd-opencl-dev,libssl-dev
+        apt_packages: libkrb5-dev,libxkbcommon-dev,libxkbfile-dev,libx11-dev,libwayland-dev,libxrandr-dev,libxi-dev,libxrender-dev,libxext-dev,libxinerama-dev,libxfixes-dev,libxcursor-dev,libxv-dev,libxdamage-dev,libxtst-dev,libcups2-dev,libcairo2-dev,libpcsclite-dev,libasound2-dev,libswscale-dev,libpulse-dev,libavcodec-dev,libavutil-dev,libfuse3-dev,libswresample-dev,libusb-1.0-0-dev,libudev-dev,libdbus-glib-1-dev,libpam0g-dev,uuid-dev,libxml2-dev,libcjson-dev,libsdl2-2.0-0,libsdl2-dev,libsdl2-ttf-dev,libsdl2-image-dev,libsystemd-dev,liburiparser-dev,libopus-dev,libwebp-dev,libjpeg-dev,libpng-dev,xsltproc,docbook-xsl,libgsm1-dev,libfaac-dev,libfaad-dev,libsoxr-dev,opencl-c-headers,opencl-headers,ocl-icd-opencl-dev,libssl-dev
 
         # CMake command to run in order to generate compile_commands.json
         build_dir: tidy
-        cmake_command: cmake -Btidy -S. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWITH_DEBUG_ALL=ON -DWITH_INTERNAL_MD4=ON -DWITH_INTERNAL_MD5=ON -DWITH_INTERNAL_RC4=ON -DBUILD_TESTING=ON -DWINPR_UTILS_IMAGE_JPEG=ON -DWINPR_UTILS_IMAGE_PNG=ON -DWINPR_UTILS_IMAGE_WEBP=ON  -DWITH_BINARY_VERSIONING=ON -DWITH_CAIRO=ON -DWITH_DSP_EXPERIMENTAL=ON -DWITH_FAAC=ON -DWITH_FAAD2=ON -DWITH_FREERDP_DEPRECATED=ON -DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON -DWITH_GSM=ON -DWITH_OPUS=ON -DWITH_PROXY_EMULATE_SMARTCARD=ON -DWITH_PULSE=ON -DWITH_SMARTCARD_INSPECT=ON -DWITH_SOXR=ON -DWITH_UNICODE_BUILTIN=ON -DWITH_VAAPI=ON -DWITH_WINPR_DEPRECATED=ON -DWITH_SDL_IMAGE_DIALOGS=ON -DWITH_PROFILER=ON -DWITH_OPENCL=ON -DCHANNEL_TSMF=ON
+        cmake_command: cmake -Btidy -S. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DWITH_DEBUG_ALL=ON -DWITH_INTERNAL_MD4=ON -DWITH_INTERNAL_MD5=ON -DWITH_INTERNAL_RC4=ON -DBUILD_TESTING=ON -DWINPR_UTILS_IMAGE_JPEG=ON -DWINPR_UTILS_IMAGE_PNG=ON -DWINPR_UTILS_IMAGE_WEBP=ON  -DWITH_BINARY_VERSIONING=ON -DWITH_CAIRO=ON -DWITH_DSP_EXPERIMENTAL=ON -DWITH_FAAC=ON -DWITH_FAAD2=ON -DWITH_FREERDP_DEPRECATED=ON -DWITH_FREERDP_DEPRECATED_COMMANDLINE=ON -DWITH_GSM=ON -DWITH_OPUS=ON -DWITH_PROXY_EMULATE_SMARTCARD=ON -DWITH_PULSE=ON -DWITH_SMARTCARD_INSPECT=ON -DWITH_SOXR=ON -DWITH_UNICODE_BUILTIN=ON -DWITH_VAAPI=ON -DWITH_WINPR_DEPRECATED=ON -DWITH_SDL_IMAGE_DIALOGS=ON -DWITH_PROFILER=ON -DWITH_OPENCL=ON -DCHANNEL_TSMF=ON -DWITH_WEBVIEW=OFF
 
     # Uploads an artefact containing clang_fixes.json
-    - uses: ZedThree/clang-tidy-review/upload@v0.17.1
+    - uses: ZedThree/clang-tidy-review/upload@v0.19.0
       id: upload-review

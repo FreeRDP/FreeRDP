@@ -81,6 +81,7 @@ static const size_t bool_list_indices[] = {
 	FreeRDP_GfxProgressiveV2,
 	FreeRDP_GfxSendQoeAck,
 	FreeRDP_GfxSmallCache,
+	FreeRDP_GfxSuspendFrameAck,
 	FreeRDP_GfxThinClient,
 	FreeRDP_GrabKeyboard,
 	FreeRDP_GrabMouse,

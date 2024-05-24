@@ -2341,6 +2341,8 @@ static UINT init_plugin_cb(GENERIC_DYNVC_PLUGIN* base, rdpContext* rcontext, rdp
 		return CHANNEL_RC_NO_MEMORY;
 	}
 
+	gfx->suspendFrameAcks =
+	    freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxSuspendFrameAck);
 	gfx->MaxCacheSlots =
 	    freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxSmallCache) ? 4096 : 25600;
 
