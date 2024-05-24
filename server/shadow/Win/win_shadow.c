@@ -314,8 +314,9 @@ static int win_shadow_surface_copy(winShadowSubsystem* subsystem)
 	if (status <= 0)
 		return status;
 
-	if (!freerdp_image_copy(surface->data, surface->format, surface->scanline, x, y, width, height,
-	                        pDstData, DstFormat, nDstStep, x, y, NULL, FREERDP_FLIP_NONE))
+	if (!freerdp_image_copy_no_overlap(surface->data, surface->format, surface->scanline, x, y,
+	                                   width, height, pDstData, DstFormat, nDstStep, x, y, NULL,
+	                                   FREERDP_FLIP_NONE))
 		return ERROR_INTERNAL_ERROR;
 
 	ArrayList_Lock(server->clients);

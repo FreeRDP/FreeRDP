@@ -637,8 +637,9 @@ static BOOL gdi_patblt(rdpContext* context, PATBLT_ORDER* patblt)
 
 				brushFormat = gdi_get_pixel_format(bpp);
 
-				if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0, 8, 8, brush->data,
-				                        brushFormat, 0, 0, 0, &gdi->palette, FREERDP_FLIP_NONE))
+				if (!freerdp_image_copy_no_overlap(data, gdi->drawing->hdc->format, 0, 0, 0, 8, 8,
+				                                   brush->data, brushFormat, 0, 0, 0, &gdi->palette,
+				                                   FREERDP_FLIP_NONE))
 					goto out_error;
 			}
 			else
@@ -898,8 +899,9 @@ static BOOL gdi_mem3blt(rdpContext* context, MEM3BLT_ORDER* mem3blt)
 
 				brushFormat = gdi_get_pixel_format(bpp);
 
-				if (!freerdp_image_copy(data, gdi->drawing->hdc->format, 0, 0, 0, 8, 8, brush->data,
-				                        brushFormat, 0, 0, 0, &gdi->palette, FREERDP_FLIP_NONE))
+				if (!freerdp_image_copy_no_overlap(data, gdi->drawing->hdc->format, 0, 0, 0, 8, 8,
+				                                   brush->data, brushFormat, 0, 0, 0, &gdi->palette,
+				                                   FREERDP_FLIP_NONE))
 				{
 					ret = FALSE;
 					winpr_aligned_free(data);
@@ -1108,10 +1110,10 @@ static BOOL gdi_surface_bits(rdpContext* context, const SURFACE_BITS_COMMAND* cm
 				goto out;
 			}
 
-			if (!freerdp_image_copy(gdi->primary_buffer, gdi->dstFormat, gdi->stride, cmdRect.left,
-			                        cmdRect.top, cmdRect.right - cmdRect.left,
-			                        cmdRect.bottom - cmdRect.top, cmd->bmp.bitmapData, format, 0, 0,
-			                        0, &gdi->palette, FREERDP_FLIP_VERTICAL))
+			if (!freerdp_image_copy_no_overlap(
+			        gdi->primary_buffer, gdi->dstFormat, gdi->stride, cmdRect.left, cmdRect.top,
+			        cmdRect.right - cmdRect.left, cmdRect.bottom - cmdRect.top, cmd->bmp.bitmapData,
+			        format, 0, 0, 0, &gdi->palette, FREERDP_FLIP_VERTICAL))
 			{
 				WLog_ERR(TAG, "Failed to process nocodec message");
 				goto out;

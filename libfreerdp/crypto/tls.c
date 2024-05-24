@@ -898,6 +898,12 @@ TlsHandshakeResult freerdp_tls_connect_ex(rdpTls* tls, BIO* underlying, const SS
 	return freerdp_tls_handshake(tls);
 }
 
+static int bio_err_print(const char* str, size_t len, void* u)
+{
+	wLog* log = u;
+	WLog_Print(log, WLOG_ERROR, "[BIO_do_handshake] %s [%" PRIuz "]", str, len);
+}
+
 TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 {
 	TlsHandshakeResult ret = TLS_HANDSHAKE_ERROR;
@@ -907,7 +913,12 @@ TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
 	if (status != 1)
 	{
 		if (!BIO_should_retry(tls->bio))
+		{
+			wLog* log = WLog_Get(TAG);
+			WLog_Print(log, WLOG_ERROR, "BIO_do_handshake failed");
+			ERR_print_errors_cb(bio_err_print, log);
 			return TLS_HANDSHAKE_ERROR;
+		}
 
 		return TLS_HANDSHAKE_CONTINUE;
 	}

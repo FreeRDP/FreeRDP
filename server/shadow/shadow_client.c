@@ -1335,8 +1335,8 @@ static BOOL shadow_client_send_surface_gfx(rdpShadowClient* client, const BYTE* 
 
 		WINPR_ASSERT(data);
 
-		rc = freerdp_image_copy(data, PIXEL_FORMAT_BGRA32, 0, 0, 0, w, h, pSrcData, SrcFormat,
-		                        nSrcStep, cmd.left, cmd.top, NULL, 0);
+		rc = freerdp_image_copy_no_overlap(data, PIXEL_FORMAT_BGRA32, 0, 0, 0, w, h, pSrcData,
+		                                   SrcFormat, nSrcStep, cmd.left, cmd.top, NULL, 0);
 		WINPR_ASSERT(rc);
 
 		cmd.data = data;

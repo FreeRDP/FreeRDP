@@ -1327,9 +1327,9 @@ BOOL rfx_process_message(RFX_CONTEXT* context, const BYTE* data, UINT32 length, 
 				const UINT32 nWidth = updateRects[j].right - updateRects[j].left;
 				const UINT32 nHeight = updateRects[j].bottom - updateRects[j].top;
 
-				if (!freerdp_image_copy(dst, dstFormat, dstStride, nXDst, nYDst, nWidth, nHeight,
-				                        tile->data, context->pixel_format, stride, nXSrc, nYSrc,
-				                        NULL, FREERDP_FLIP_NONE))
+				if (!freerdp_image_copy_no_overlap(dst, dstFormat, dstStride, nXDst, nYDst, nWidth,
+				                                   nHeight, tile->data, context->pixel_format,
+				                                   stride, nXSrc, nYSrc, NULL, FREERDP_FLIP_NONE))
 				{
 					region16_uninit(&updateRegion);
 					WLog_Print(context->priv->log, WLOG_ERROR,

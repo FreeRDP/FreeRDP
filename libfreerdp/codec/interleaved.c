@@ -622,9 +622,9 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 			return FALSE;
 	}
 
-	if (!freerdp_image_copy(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth, nDstHeight,
-	                        interleaved->TempBuffer, SrcFormat, scanline, 0, 0, palette,
-	                        FREERDP_FLIP_VERTICAL | FREERDP_KEEP_DST_ALPHA))
+	if (!freerdp_image_copy_no_overlap(pDstData, DstFormat, nDstStep, nXDst, nYDst, nDstWidth,
+	                                   nDstHeight, interleaved->TempBuffer, SrcFormat, scanline, 0,
+	                                   0, palette, FREERDP_FLIP_VERTICAL | FREERDP_KEEP_DST_ALPHA))
 	{
 		WLog_ERR(TAG, "freerdp_image_copy failed");
 		return FALSE;
@@ -681,8 +681,9 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstDat
 			return FALSE;
 	}
 
-	if (!freerdp_image_copy(interleaved->TempBuffer, DstFormat, 0, 0, 0, nWidth, nHeight, pSrcData,
-	                        SrcFormat, nSrcStep, nXSrc, nYSrc, palette, FREERDP_KEEP_DST_ALPHA))
+	if (!freerdp_image_copy_no_overlap(interleaved->TempBuffer, DstFormat, 0, 0, 0, nWidth, nHeight,
+	                                   pSrcData, SrcFormat, nSrcStep, nXSrc, nYSrc, palette,
+	                                   FREERDP_KEEP_DST_ALPHA))
 		return FALSE;
 
 	s = Stream_New(pDstData, *pDstSize);

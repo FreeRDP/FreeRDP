@@ -405,9 +405,9 @@ static void (^mac_capture_stream_handler)(
 	  }
 	  else
 	  {
-		  freerdp_image_copy(surface->data, surface->format, surface->scanline, x, y, width, height,
-			                 pSrcData, PIXEL_FORMAT_BGRX32, nSrcStep, x, y, NULL,
-			                 FREERDP_FLIP_NONE);
+		  freerdp_image_copy_no_overlap(surface->data, surface->format, surface->scanline, x, y,
+			                            width, height, pSrcData, PIXEL_FORMAT_BGRX32, nSrcStep, x,
+			                            y, NULL, FREERDP_FLIP_NONE);
 	  }
 	  LeaveCriticalSection(&(surface->lock));
 

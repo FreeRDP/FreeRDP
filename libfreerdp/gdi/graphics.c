@@ -59,8 +59,9 @@ HGDI_BITMAP gdi_create_bitmap(rdpGdi* gdi, UINT32 nWidth, UINT32 nHeight, UINT32
 	pSrcData = data;
 	nSrcStep = nWidth * FreeRDPGetBytesPerPixel(SrcFormat);
 
-	if (!freerdp_image_copy(pDstData, gdi->dstFormat, nDstStep, 0, 0, nWidth, nHeight, pSrcData,
-	                        SrcFormat, nSrcStep, 0, 0, &gdi->palette, FREERDP_FLIP_NONE))
+	if (!freerdp_image_copy_no_overlap(pDstData, gdi->dstFormat, nDstStep, 0, 0, nWidth, nHeight,
+	                                   pSrcData, SrcFormat, nSrcStep, 0, 0, &gdi->palette,
+	                                   FREERDP_FLIP_NONE))
 	{
 		winpr_aligned_free(pDstData);
 		return NULL;
@@ -183,9 +184,9 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 				return FALSE;
 			}
 
-			return freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0, DstWidth, DstHeight,
-			                          pSrcData, PIXEL_FORMAT_XRGB32, 0, 0, 0, &gdi->palette,
-			                          FREERDP_FLIP_VERTICAL);
+			return freerdp_image_copy_no_overlap(bitmap->data, bitmap->format, 0, 0, 0, DstWidth,
+			                                     DstHeight, pSrcData, PIXEL_FORMAT_XRGB32, 0, 0, 0,
+			                                     &gdi->palette, FREERDP_FLIP_VERTICAL);
 		}
 		else if (bpp < 32)
 		{
@@ -231,8 +232,9 @@ static BOOL gdi_Bitmap_Decompress(rdpContext* context, rdpBitmap* bitmap, const 
 			}
 		}
 
-		if (!freerdp_image_copy(bitmap->data, bitmap->format, 0, 0, 0, DstWidth, DstHeight,
-		                        pSrcData, SrcFormat, 0, 0, 0, &gdi->palette, FREERDP_FLIP_VERTICAL))
+		if (!freerdp_image_copy_no_overlap(bitmap->data, bitmap->format, 0, 0, 0, DstWidth,
+		                                   DstHeight, pSrcData, SrcFormat, 0, 0, 0, &gdi->palette,
+		                                   FREERDP_FLIP_VERTICAL))
 		{
 			WLog_ERR(TAG, "freerdp_image_copy failed");
 			return FALSE;

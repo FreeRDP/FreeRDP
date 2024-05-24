@@ -124,8 +124,9 @@ static BOOL convert_color(BYTE* dst, UINT32 nDstStep, UINT32 DstFormat, UINT32 n
 	if (nHeight + nYDst > nDstHeight)
 		nHeight = nDstHeight - nYDst;
 
-	return freerdp_image_copy(dst, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight, src,
-	                          SrcFormat, nSrcStep, 0, 0, palette, FREERDP_KEEP_DST_ALPHA);
+	return freerdp_image_copy_no_overlap(dst, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight,
+	                                     src, SrcFormat, nSrcStep, 0, 0, palette,
+	                                     FREERDP_KEEP_DST_ALPHA);
 }
 
 static BOOL clear_decompress_nscodec(NSC_CONTEXT* nsc, UINT32 width, UINT32 height, wStream* s,
@@ -1118,8 +1119,9 @@ INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSiz
 
 	if (glyphData)
 	{
-		if (!freerdp_image_copy(glyphData, clear->format, 0, 0, 0, nWidth, nHeight, pDstData,
-		                        DstFormat, nDstStep, nXDst, nYDst, palette, FREERDP_KEEP_DST_ALPHA))
+		if (!freerdp_image_copy_no_overlap(glyphData, clear->format, 0, 0, 0, nWidth, nHeight,
+		                                   pDstData, DstFormat, nDstStep, nXDst, nYDst, palette,
+		                                   FREERDP_KEEP_DST_ALPHA))
 			goto fail;
 	}
 
