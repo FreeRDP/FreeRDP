@@ -2251,7 +2251,7 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 					if (bval == PARSE_FAIL)
 						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxSuspendFrameAck,
-					                                    bval != PARSE_OFF))
+					                                    bval == PARSE_OFF))
 						rc = COMMAND_LINE_ERROR;
 				}
 			}
