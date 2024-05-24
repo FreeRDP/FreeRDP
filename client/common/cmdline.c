@@ -2245,6 +2245,15 @@ static int parse_gfx_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 							rc = COMMAND_LINE_ERROR;
 					}
 				}
+				else if (option_starts_with("frame-ack", val))
+				{
+					const PARSE_ON_OFF_RESULT bval = parse_on_off_option(val);
+					if (bval == PARSE_FAIL)
+						rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
+					else if (!freerdp_settings_set_bool(settings, FreeRDP_GfxSuspendFrameAck,
+					                                    bval != PARSE_OFF))
+						rc = COMMAND_LINE_ERROR;
+				}
 			}
 
 			if ((rc == CHANNEL_RC_OK) && codecSelected)
