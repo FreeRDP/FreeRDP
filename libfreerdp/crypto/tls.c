@@ -902,6 +902,7 @@ static int bio_err_print(const char* str, size_t len, void* u)
 {
 	wLog* log = u;
 	WLog_Print(log, WLOG_ERROR, "[BIO_do_handshake] %s [%" PRIuz "]", str, len);
+	return 0;
 }
 
 TlsHandshakeResult freerdp_tls_handshake(rdpTls* tls)
