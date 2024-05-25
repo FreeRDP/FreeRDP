@@ -79,7 +79,7 @@ if (SDL_USE_COMPILED_RESOURCES)
 
     if (WITH_SDL_IMAGE_DIALOGS)
         foreach(FILE ${RES_SVG_FILES})
-			convert_to_bin("${FILE}" "images")
+            convert_to_bin("${FILE}" "images")
         endforeach()
     endif()
 
@@ -125,7 +125,7 @@ endif()
 add_library(sdl-common-client-res STATIC
     ${RES_FILES}
     ${SRCS}
-	${FACTORY_HDR}
+    ${FACTORY_HDR}
     ${FACTORY_SRCS}
 )
 set_property(TARGET sdl-common-client-res PROPERTY POSITION_INDEPENDENT_CODE ON)

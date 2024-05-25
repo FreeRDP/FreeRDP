@@ -47,5 +47,7 @@ class SDLResourceManager
 
   private:
 	static std::map<std::string, std::vector<unsigned char>>& resources();
+#if defined(SDL_USE_COMPILED_RESOURCES)
 	static void init(); // implemented in generated file
+#endif
 };
