@@ -593,6 +593,9 @@ BOOL freerdp_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD DstForma
 	SSIZE_T dstVOffset = 0;
 	SSIZE_T dstVMultiplier = 1;
 
+	if ((nWidth == 0) || (nHeight == 0))
+		return TRUE;
+
 	if ((nHeight > INT32_MAX) || (nWidth > INT32_MAX))
 		return FALSE;
 
@@ -710,6 +713,9 @@ BOOL freerdp_image_copy_overlap(BYTE* pDstData, DWORD DstFormat, UINT32 nDstStep
 	SSIZE_T srcVMultiplier = 1;
 	SSIZE_T dstVOffset = 0;
 	SSIZE_T dstVMultiplier = 1;
+
+	if ((nWidth == 0) || (nHeight == 0))
+		return TRUE;
 
 	if ((nHeight > INT32_MAX) || (nWidth > INT32_MAX))
 		return FALSE;
