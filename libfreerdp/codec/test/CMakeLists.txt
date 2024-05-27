@@ -11,6 +11,7 @@ set(${MODULE_PREFIX}_TESTS
 	TestFreeRDPCodecXCrush.c
 	TestFreeRDPCodecZGfx.c
 	TestFreeRDPCodecPlanar.c
+    TestFreeRDPCodecCopy.c
 	TestFreeRDPCodecClear.c
 	TestFreeRDPCodecInterleaved.c
 	TestFreeRDPCodecProgressive.c
