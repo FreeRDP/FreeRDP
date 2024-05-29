@@ -79,7 +79,6 @@ extern "C"
 	FREERDP_API WINPR_DEPRECATED_VAR("Use freerdp_client_codecs_free",
 	                                 void codecs_free(rdpCodecs* codecs));
 
-	WINPR_ATTR_MALLOC(codecs_free, 1)
 	FREERDP_API WINPR_DEPRECATED_VAR("Use freerdp_client_codecs_new",
 	                                 rdpCodecs* codecs_new(rdpContext* context));
 
