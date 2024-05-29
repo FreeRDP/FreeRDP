@@ -207,8 +207,9 @@ static BOOL rdp_client_reset_codecs(rdpContext* context)
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_DeactivateClientDecoding))
 	{
-		codecs_free(context->codecs);
-		context->codecs = codecs_new(context);
+		const UINT32 flags = freerdp_settings_get_uint32(settings, FreeRDP_ThreadingFlags);
+		freerdp_client_codecs_free(context->codecs);
+		context->codecs = freerdp_client_codecs_new(flags);
 
 		if (!context->codecs)
 			return FALSE;
@@ -495,7 +496,7 @@ BOOL rdp_client_disconnect(rdpRdp* rdp)
 	if (freerdp_channels_disconnect(context->channels, context->instance) != CHANNEL_RC_OK)
 		return FALSE;
 
-	codecs_free(context->codecs);
+	freerdp_client_codecs_free(context->codecs);
 	context->codecs = NULL;
 	return TRUE;
 }

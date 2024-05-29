@@ -1859,8 +1859,9 @@ BOOL gdi_graphics_pipeline_init_ex(rdpGdi* gdi, RdpgfxClientContext* gfx,
 	{
 		const UINT32 w = freerdp_settings_get_uint32(settings, FreeRDP_DesktopWidth);
 		const UINT32 h = freerdp_settings_get_uint32(settings, FreeRDP_DesktopHeight);
+		const UINT32 flags = freerdp_settings_get_uint32(settings, FreeRDP_ThreadingFlags);
 
-		gfx->codecs = codecs_new(context);
+		gfx->codecs = freerdp_client_codecs_new(flags);
 		if (!gfx->codecs)
 			return FALSE;
 		if (!freerdp_client_codecs_prepare(gfx->codecs, FREERDP_CODEC_ALL, w, h))
@@ -1895,7 +1896,7 @@ void gdi_graphics_pipeline_uninit(rdpGdi* gdi, RdpgfxClientContext* gfx)
 		return;
 
 	gfx->custom = NULL;
-	codecs_free(gfx->codecs);
+	freerdp_client_codecs_free(gfx->codecs);
 	gfx->codecs = NULL;
 	DeleteCriticalSection(&gfx->mux);
 	PROFILER_PRINT_HEADER
