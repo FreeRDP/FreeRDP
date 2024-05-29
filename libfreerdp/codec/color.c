@@ -51,7 +51,7 @@ static INLINE DWORD FreeRDPAreColorFormatsEqualNoAlpha_int(DWORD first, DWORD se
 	return (first & mask) == (second & mask);
 }
 
-BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* data)
+BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* WINPR_RESTRICT data)
 {
 	/*
 	 * converts a 1-bit-per-pixel glyph to a one-byte-per-pixel glyph:

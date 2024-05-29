@@ -280,7 +280,8 @@ typedef struct gdi_palette gdiPalette;
 	 * @return          A buffer allocated with winpr_aligned_malloc(width * height, 16)
 	 *                  if successful, NULL otherwise.
 	 */
-	FREERDP_API BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height, const BYTE* data);
+	FREERDP_API BYTE* freerdp_glyph_convert(UINT32 width, UINT32 height,
+	                                        const BYTE* WINPR_RESTRICT data);
 
 	/***
 	 *
