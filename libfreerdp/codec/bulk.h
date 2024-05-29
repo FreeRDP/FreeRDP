@@ -28,14 +28,16 @@ typedef struct rdp_bulk rdpBulk;
 #define BULK_COMPRESSION_FLAGS_MASK 0xE0
 #define BULK_COMPRESSION_TYPE_MASK 0x0F
 
-FREERDP_LOCAL UINT32 bulk_compression_max_size(rdpBulk* bulk);
+FREERDP_LOCAL UINT32 bulk_compression_max_size(rdpBulk* WINPR_RESTRICT bulk);
 
-FREERDP_LOCAL int bulk_decompress(rdpBulk* bulk, const BYTE* pSrcData, UINT32 SrcSize,
-                                  const BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
-FREERDP_LOCAL int bulk_compress(rdpBulk* bulk, const BYTE* pSrcData, UINT32 SrcSize,
-                                const BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
+FREERDP_LOCAL int bulk_decompress(rdpBulk* WINPR_RESTRICT bulk, const BYTE* WINPR_RESTRICT pSrcData,
+                                  UINT32 SrcSize, const BYTE** WINPR_RESTRICT ppDstData,
+                                  UINT32* WINPR_RESTRICT pDstSize, UINT32 flags);
+FREERDP_LOCAL int bulk_compress(rdpBulk* WINPR_RESTRICT bulk, const BYTE* WINPR_RESTRICT pSrcData,
+                                UINT32 SrcSize, const BYTE** WINPR_RESTRICT ppDstData,
+                                UINT32* WINPR_RESTRICT pDstSize, UINT32* WINPR_RESTRICT pFlags);
 
-FREERDP_LOCAL void bulk_reset(rdpBulk* bulk);
+FREERDP_LOCAL void bulk_reset(rdpBulk* WINPR_RESTRICT bulk);
 
 FREERDP_LOCAL void bulk_free(rdpBulk* bulk);
 
