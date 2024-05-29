@@ -39,9 +39,10 @@
 
 #define MINMAX(_v, _l, _h) ((_v) < (_l) ? (_l) : ((_v) > (_h) ? (_h) : (_v)))
 
-static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, int rowstride,
-                                  UINT32 pixel_format, const BYTE* palette, INT16* r_buf,
-                                  INT16* g_buf, INT16* b_buf)
+static void rfx_encode_format_rgb(const BYTE* WINPR_RESTRICT rgb_data, int width, int height,
+                                  int rowstride, UINT32 pixel_format,
+                                  const BYTE* WINPR_RESTRICT palette, INT16* WINPR_RESTRICT r_buf,
+                                  INT16* WINPR_RESTRICT g_buf, INT16* WINPR_RESTRICT b_buf)
 {
 	int x_exceed = 0;
 	int y_exceed = 0;
@@ -233,8 +234,10 @@ static void rfx_encode_format_rgb(const BYTE* rgb_data, int width, int height, i
 
 /* rfx_encode_rgb_to_ycbcr code now resides in the primitives library. */
 
-static void rfx_encode_component(RFX_CONTEXT* context, const UINT32* quantization_values,
-                                 INT16* data, BYTE* buffer, int buffer_size, int* size)
+static void rfx_encode_component(RFX_CONTEXT* WINPR_RESTRICT context,
+                                 const UINT32* WINPR_RESTRICT quantization_values,
+                                 INT16* WINPR_RESTRICT data, BYTE* WINPR_RESTRICT buffer,
+                                 int buffer_size, int* WINPR_RESTRICT size)
 {
 	INT16* dwt_buffer = NULL;
 	dwt_buffer = BufferPool_Take(context->priv->BufferPool, -1); /* dwt_buffer */
@@ -255,7 +258,7 @@ static void rfx_encode_component(RFX_CONTEXT* context, const UINT32* quantizatio
 	BufferPool_Return(context->priv->BufferPool, dwt_buffer);
 }
 
-void rfx_encode_rgb(RFX_CONTEXT* context, RFX_TILE* tile)
+void rfx_encode_rgb(RFX_CONTEXT* WINPR_RESTRICT context, RFX_TILE* WINPR_RESTRICT tile)
 {
 	union
 	{
