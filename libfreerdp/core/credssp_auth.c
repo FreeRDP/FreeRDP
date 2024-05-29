@@ -205,7 +205,12 @@ static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 		ULONG buffer_size = 0;
 
 		str_size = ConvertUtf8ToWChar(auth->kerberosSettings.kdcUrl, NULL, 0);
-		if (str_size <= 0)
+		if (str_size == 0)
+		{
+			WLog_WARN(TAG, "Ignoring empty kdcUrl");
+			return TRUE;
+		}
+		if (str_size < 0)
 			return FALSE;
 		str_size++;
 
