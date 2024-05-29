@@ -82,7 +82,7 @@ static const UINT32 CLEAR_LOG2_FLOOR[256] = {
 
 static const BYTE CLEAR_8BIT_MASKS[9] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF };
 
-static void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
+static void clear_reset_vbar_storage(CLEAR_CONTEXT* WINPR_RESTRICT clear, BOOL zero)
 {
 	if (zero)
 	{
@@ -105,7 +105,7 @@ static void clear_reset_vbar_storage(CLEAR_CONTEXT* clear, BOOL zero)
 	clear->ShortVBarStorageCursor = 0;
 }
 
-static void clear_reset_glyph_cache(CLEAR_CONTEXT* clear)
+static void clear_reset_glyph_cache(CLEAR_CONTEXT* WINPR_RESTRICT clear)
 {
 	for (size_t i = 0; i < ARRAYSIZE(clear->GlyphCache); i++)
 		winpr_aligned_free(clear->GlyphCache[i].pixels);
@@ -113,10 +113,11 @@ static void clear_reset_glyph_cache(CLEAR_CONTEXT* clear)
 	ZeroMemory(clear->GlyphCache, sizeof(clear->GlyphCache));
 }
 
-static BOOL convert_color(BYTE* dst, UINT32 nDstStep, UINT32 DstFormat, UINT32 nXDst, UINT32 nYDst,
-                          UINT32 nWidth, UINT32 nHeight, const BYTE* src, UINT32 nSrcStep,
-                          UINT32 SrcFormat, UINT32 nDstWidth, UINT32 nDstHeight,
-                          const gdiPalette* palette)
+static BOOL convert_color(BYTE* WINPR_RESTRICT dst, UINT32 nDstStep, UINT32 DstFormat, UINT32 nXDst,
+                          UINT32 nYDst, UINT32 nWidth, UINT32 nHeight,
+                          const BYTE* WINPR_RESTRICT src, UINT32 nSrcStep, UINT32 SrcFormat,
+                          UINT32 nDstWidth, UINT32 nDstHeight,
+                          const gdiPalette* WINPR_RESTRICT palette)
 {
 	if (nWidth + nXDst > nDstWidth)
 		nWidth = nDstWidth - nXDst;
@@ -129,8 +130,9 @@ static BOOL convert_color(BYTE* dst, UINT32 nDstStep, UINT32 DstFormat, UINT32 n
 	                                     FREERDP_KEEP_DST_ALPHA);
 }
 
-static BOOL clear_decompress_nscodec(NSC_CONTEXT* nsc, UINT32 width, UINT32 height, wStream* s,
-                                     UINT32 bitmapDataByteCount, BYTE* pDstData, UINT32 DstFormat,
+static BOOL clear_decompress_nscodec(NSC_CONTEXT* WINPR_RESTRICT nsc, UINT32 width, UINT32 height,
+                                     wStream* WINPR_RESTRICT s, UINT32 bitmapDataByteCount,
+                                     BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
                                      UINT32 nDstStep, UINT32 nXDstRel, UINT32 nYDstRel)
 {
 	BOOL rc = 0;
@@ -145,8 +147,9 @@ static BOOL clear_decompress_nscodec(NSC_CONTEXT* nsc, UINT32 width, UINT32 heig
 	return rc;
 }
 
-static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount, UINT32 width,
-                                          UINT32 height, BYTE* pDstData, UINT32 DstFormat,
+static BOOL clear_decompress_subcode_rlex(wStream* WINPR_RESTRICT s, UINT32 bitmapDataByteCount,
+                                          UINT32 width, UINT32 height,
+                                          BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
                                           UINT32 nDstStep, UINT32 nXDstRel, UINT32 nYDstRel,
                                           UINT32 nDstWidth, UINT32 nDstHeight)
 {
@@ -323,7 +326,7 @@ static BOOL clear_decompress_subcode_rlex(wStream* s, UINT32 bitmapDataByteCount
 	return TRUE;
 }
 
-static BOOL clear_resize_buffer(CLEAR_CONTEXT* clear, UINT32 width, UINT32 height)
+static BOOL clear_resize_buffer(CLEAR_CONTEXT* WINPR_RESTRICT clear, UINT32 width, UINT32 height)
 {
 	UINT32 size = 0;
 
@@ -350,11 +353,13 @@ static BOOL clear_resize_buffer(CLEAR_CONTEXT* clear, UINT32 width, UINT32 heigh
 	return TRUE;
 }
 
-static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
-                                           UINT32 residualByteCount, UINT32 nWidth, UINT32 nHeight,
-                                           BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-                                           UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth,
-                                           UINT32 nDstHeight, const gdiPalette* palette)
+static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                                           wStream* WINPR_RESTRICT s, UINT32 residualByteCount,
+                                           UINT32 nWidth, UINT32 nHeight,
+                                           BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
+                                           UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                                           UINT32 nDstWidth, UINT32 nDstHeight,
+                                           const gdiPalette* WINPR_RESTRICT palette)
 {
 	UINT32 nSrcStep = 0;
 	UINT32 suboffset = 0;
@@ -441,11 +446,13 @@ static BOOL clear_decompress_residual_data(CLEAR_CONTEXT* clear, wStream* s,
 	                     palette);
 }
 
-static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
-                                            UINT32 subcodecByteCount, UINT32 nWidth, UINT32 nHeight,
-                                            BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-                                            UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth,
-                                            UINT32 nDstHeight, const gdiPalette* palette)
+static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                                            wStream* WINPR_RESTRICT s, UINT32 subcodecByteCount,
+                                            UINT32 nWidth, UINT32 nHeight,
+                                            BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
+                                            UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                                            UINT32 nDstWidth, UINT32 nDstHeight,
+                                            const gdiPalette* WINPR_RESTRICT palette)
 {
 	UINT16 xStart = 0;
 	UINT16 yStart = 0;
@@ -547,7 +554,8 @@ static BOOL clear_decompress_subcodecs_data(CLEAR_CONTEXT* clear, wStream* s,
 	return TRUE;
 }
 
-static BOOL resize_vbar_entry(CLEAR_CONTEXT* clear, CLEAR_VBAR_ENTRY* vBarEntry)
+static BOOL resize_vbar_entry(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                              CLEAR_VBAR_ENTRY* WINPR_RESTRICT vBarEntry)
 {
 	if (vBarEntry->count > vBarEntry->size)
 	{
@@ -580,10 +588,12 @@ static BOOL resize_vbar_entry(CLEAR_CONTEXT* clear, CLEAR_VBAR_ENTRY* vBarEntry)
 	return TRUE;
 }
 
-static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32 bandsByteCount,
-                                        UINT32 nWidth, UINT32 nHeight, BYTE* pDstData,
-                                        UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
-                                        UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight)
+static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                                        wStream* WINPR_RESTRICT s, UINT32 bandsByteCount,
+                                        UINT32 nWidth, UINT32 nHeight,
+                                        BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat,
+                                        UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                                        UINT32 nDstWidth, UINT32 nDstHeight)
 {
 	UINT32 suboffset = 0;
 
@@ -885,11 +895,13 @@ static BOOL clear_decompress_bands_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 	return TRUE;
 }
 
-static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32 glyphFlags,
-                                        UINT32 nWidth, UINT32 nHeight, BYTE* pDstData,
+static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* WINPR_RESTRICT clear,
+                                        wStream* WINPR_RESTRICT s, UINT32 glyphFlags, UINT32 nWidth,
+                                        UINT32 nHeight, BYTE* WINPR_RESTRICT pDstData,
                                         UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
                                         UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
-                                        const gdiPalette* palette, BYTE** ppGlyphData)
+                                        const gdiPalette* WINPR_RESTRICT palette,
+                                        BYTE** WINPR_RESTRICT ppGlyphData)
 {
 	UINT16 glyphIndex = 0;
 
@@ -992,7 +1004,7 @@ static BOOL clear_decompress_glyph_data(CLEAR_CONTEXT* clear, wStream* s, UINT32
 	return TRUE;
 }
 
-static INLINE BOOL updateContextFormat(CLEAR_CONTEXT* clear, UINT32 DstFormat)
+static INLINE BOOL updateContextFormat(CLEAR_CONTEXT* WINPR_RESTRICT clear, UINT32 DstFormat)
 {
 	if (!clear || !clear->nsc)
 		return FALSE;
@@ -1001,10 +1013,11 @@ static INLINE BOOL updateContextFormat(CLEAR_CONTEXT* clear, UINT32 DstFormat)
 	return nsc_context_set_parameters(clear->nsc, NSC_COLOR_FORMAT, DstFormat);
 }
 
-INT32 clear_decompress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSize, UINT32 nWidth,
-                       UINT32 nHeight, BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep,
-                       UINT32 nXDst, UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
-                       const gdiPalette* palette)
+INT32 clear_decompress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RESTRICT pSrcData,
+                       UINT32 SrcSize, UINT32 nWidth, UINT32 nHeight, BYTE* WINPR_RESTRICT pDstData,
+                       UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                       UINT32 nDstWidth, UINT32 nDstHeight,
+                       const gdiPalette* WINPR_RESTRICT palette)
 {
 	INT32 rc = -1;
 	BYTE seqNumber = 0;
@@ -1131,14 +1144,14 @@ fail:
 	return rc;
 }
 
-int clear_compress(CLEAR_CONTEXT* clear, const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
-                   UINT32* pDstSize)
+int clear_compress(CLEAR_CONTEXT* WINPR_RESTRICT clear, const BYTE* WINPR_RESTRICT pSrcData,
+                   UINT32 SrcSize, BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize)
 {
 	WLog_ERR(TAG, "TODO: not implemented!");
 	return 1;
 }
 
-BOOL clear_context_reset(CLEAR_CONTEXT* clear)
+BOOL clear_context_reset(CLEAR_CONTEXT* WINPR_RESTRICT clear)
 {
 	if (!clear)
 		return FALSE;
