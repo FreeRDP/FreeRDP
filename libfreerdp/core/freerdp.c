@@ -896,7 +896,7 @@ void freerdp_context_free(freerdp* instance)
 	freerdp_channels_free(ctx->channels);
 	ctx->channels = NULL;
 
-	codecs_free(ctx->codecs);
+	freerdp_client_codecs_free(ctx->codecs);
 	ctx->codecs = NULL;
 
 	stream_dump_free(ctx->dump);
