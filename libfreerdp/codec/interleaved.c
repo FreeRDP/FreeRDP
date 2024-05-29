@@ -525,11 +525,12 @@ struct S_BITMAP_INTERLEAVED_CONTEXT
 	wStream* bts;
 };
 
-BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE* pSrcData,
-                            UINT32 SrcSize, UINT32 nSrcWidth, UINT32 nSrcHeight, UINT32 bpp,
-                            BYTE* pDstData, UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst,
-                            UINT32 nYDst, UINT32 nDstWidth, UINT32 nDstHeight,
-                            const gdiPalette* palette)
+BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved,
+                            const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize, UINT32 nSrcWidth,
+                            UINT32 nSrcHeight, UINT32 bpp, BYTE* WINPR_RESTRICT pDstData,
+                            UINT32 DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+                            UINT32 nDstWidth, UINT32 nDstHeight,
+                            const gdiPalette* WINPR_RESTRICT palette)
 {
 	UINT32 scanline = 0;
 	UINT32 SrcFormat = 0;
@@ -632,10 +633,11 @@ BOOL interleaved_decompress(BITMAP_INTERLEAVED_CONTEXT* interleaved, const BYTE*
 	return TRUE;
 }
 
-BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstData, UINT32* pDstSize,
-                          UINT32 nWidth, UINT32 nHeight, const BYTE* pSrcData, UINT32 SrcFormat,
-                          UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* palette,
-                          UINT32 bpp)
+BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved,
+                          BYTE* WINPR_RESTRICT pDstData, UINT32* pDstSize, UINT32 nWidth,
+                          UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcFormat,
+                          UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc,
+                          const gdiPalette* WINPR_RESTRICT palette, UINT32 bpp)
 {
 	BOOL status = 0;
 	wStream* s = NULL;
@@ -705,7 +707,7 @@ BOOL interleaved_compress(BITMAP_INTERLEAVED_CONTEXT* interleaved, BYTE* pDstDat
 	return status;
 }
 
-BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* interleaved)
+BOOL bitmap_interleaved_context_reset(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved)
 {
 	if (!interleaved)
 		return FALSE;
@@ -743,7 +745,7 @@ fail:
 	return NULL;
 }
 
-void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* interleaved)
+void bitmap_interleaved_context_free(BITMAP_INTERLEAVED_CONTEXT* WINPR_RESTRICT interleaved)
 {
 	if (!interleaved)
 		return;

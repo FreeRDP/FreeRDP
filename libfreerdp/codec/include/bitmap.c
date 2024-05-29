@@ -24,7 +24,8 @@
 /**
  * Write a foreground/background image to a destination buffer.
  */
-static INLINE BYTE* WRITEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd, UINT32 rowDelta,
+static INLINE BYTE* WRITEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
+                                   const BYTE* WINPR_RESTRICT pbDestEnd, UINT32 rowDelta,
                                    BYTE bitmask, PIXEL fgPel, INT32 cBits)
 {
 	PIXEL xorPixel;
@@ -58,7 +59,8 @@ static INLINE BYTE* WRITEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd, UINT32 r
  * Write a foreground/background image to a destination buffer
  * for the first line of compressed data.
  */
-static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd, BYTE bitmask,
+static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* WINPR_RESTRICT pbDest,
+                                            const BYTE* WINPR_RESTRICT pbDestEnd, BYTE bitmask,
                                             PIXEL fgPel, UINT32 cBits)
 {
 	BYTE mask = 0x01;
@@ -89,8 +91,9 @@ static INLINE BYTE* WRITEFIRSTLINEFGBGIMAGE(BYTE* pbDest, const BYTE* pbDestEnd,
 /**
  * Decompress an RLE compressed bitmap.
  */
-static INLINE BOOL RLEDECOMPRESS(const BYTE* pbSrcBuffer, UINT32 cbSrcBuffer, BYTE* pbDestBuffer,
-                                 UINT32 rowDelta, UINT32 width, UINT32 height)
+static INLINE BOOL RLEDECOMPRESS(const BYTE* WINPR_RESTRICT pbSrcBuffer, UINT32 cbSrcBuffer,
+                                 BYTE* WINPR_RESTRICT pbDestBuffer, UINT32 rowDelta, UINT32 width,
+                                 UINT32 height)
 {
 #if defined(WITH_DEBUG_CODECS)
 	char sbuffer[128] = { 0 };
