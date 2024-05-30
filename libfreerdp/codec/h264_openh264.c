@@ -68,13 +68,15 @@ static const char* openh264_library_names[] = {
 };
 #endif
 
-static void openh264_trace_callback(H264_CONTEXT* h264, int level, const char* message)
+static void openh264_trace_callback(H264_CONTEXT* WINPR_RESTRICT h264, int level,
+                                    const char* WINPR_RESTRICT message)
 {
 	if (h264)
 		WLog_Print(h264->log, WLOG_TRACE, "%d - %s", level, message);
 }
 
-static int openh264_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize)
+static int openh264_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
+                               const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize)
 {
 	DECODING_STATE state = dsInvalidArgument;
 	SBufferInfo sBufferInfo = { 0 };
@@ -179,8 +181,10 @@ static int openh264_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 
 	return 1;
 }
 
-static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UINT32* iStride,
-                             BYTE** ppDstData, UINT32* pDstSize)
+static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
+                             const BYTE** WINPR_RESTRICT pYUVData,
+                             const UINT32* WINPR_RESTRICT iStride, BYTE** WINPR_RESTRICT ppDstData,
+                             UINT32* WINPR_RESTRICT pDstSize)
 {
 	int status = 0;
 	SFrameBSInfo info = { 0 };
@@ -384,7 +388,7 @@ static int openh264_compress(H264_CONTEXT* h264, const BYTE** pYUVData, const UI
 	return 1;
 }
 
-static void openh264_uninit(H264_CONTEXT* h264)
+static void openh264_uninit(H264_CONTEXT* WINPR_RESTRICT h264)
 {
 	H264_CONTEXT_OPENH264* sysContexts = NULL;
 
@@ -483,7 +487,7 @@ static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 }
 #endif
 
-static BOOL openh264_init(H264_CONTEXT* h264)
+static BOOL openh264_init(H264_CONTEXT* WINPR_RESTRICT h264)
 {
 #if defined(WITH_OPENH264_LOADING)
 	BOOL success = FALSE;
