@@ -92,7 +92,7 @@ static BOOL ffmpeg_codec_is_filtered(enum AVCodecID id, BOOL encoder)
 	}
 }
 
-static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* format)
+static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* WINPR_RESTRICT format)
 {
 	if (!format)
 		return AV_CODEC_ID_NONE;
@@ -144,7 +144,7 @@ static enum AVCodecID ffmpeg_get_avcodec(const AUDIO_FORMAT* format)
 	}
 }
 
-static int ffmpeg_sample_format(const AUDIO_FORMAT* format)
+static int ffmpeg_sample_format(const AUDIO_FORMAT* WINPR_RESTRICT format)
 {
 	switch (format->wFormatTag)
 	{
@@ -184,7 +184,7 @@ static int ffmpeg_sample_format(const AUDIO_FORMAT* format)
 	}
 }
 
-static void ffmpeg_close_context(FREERDP_DSP_CONTEXT* context)
+static void ffmpeg_close_context(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context)
 {
 	if (context)
 	{
@@ -223,7 +223,7 @@ static void ffmpeg_close_context(FREERDP_DSP_CONTEXT* context)
 	}
 }
 
-static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* context)
+static BOOL ffmpeg_open_context(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context)
 {
 	int ret = 0;
 
@@ -370,7 +370,8 @@ fail:
 }
 
 #if defined(SWRESAMPLE_FOUND)
-static BOOL ffmpeg_resample_frame(SwrContext* context, AVFrame* in, AVFrame* out)
+static BOOL ffmpeg_resample_frame(SwrContext* WINPR_RESTRICT context, AVFrame* WINPR_RESTRICT in,
+                                  AVFrame* WINPR_RESTRICT out)
 {
 	int ret = 0;
 
@@ -401,7 +402,8 @@ static BOOL ffmpeg_resample_frame(SwrContext* context, AVFrame* in, AVFrame* out
 	return TRUE;
 }
 #else
-static BOOL ffmpeg_resample_frame(AVAudioResampleContext* context, AVFrame* in, AVFrame* out)
+static BOOL ffmpeg_resample_frame(AVAudioResampleContext* WINPR_RESTRICT context,
+                                  AVFrame* WINPR_RESTRICT in, AVFrame* WINPR_RESTRICT out)
 {
 	int ret;
 
@@ -433,8 +435,8 @@ static BOOL ffmpeg_resample_frame(AVAudioResampleContext* context, AVFrame* in, 
 }
 #endif
 
-static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in, AVPacket* packet,
-                                wStream* out)
+static BOOL ffmpeg_encode_frame(AVCodecContext* WINPR_RESTRICT context, AVFrame* WINPR_RESTRICT in,
+                                AVPacket* WINPR_RESTRICT packet, wStream* WINPR_RESTRICT out)
 {
 	if (in->format == AV_SAMPLE_FMT_FLTP)
 	{
@@ -497,8 +499,9 @@ static BOOL ffmpeg_encode_frame(AVCodecContext* context, AVFrame* in, AVPacket* 
 	return TRUE;
 }
 
-static BOOL ffmpeg_fill_frame(AVFrame* frame, const AUDIO_FORMAT* inputFormat, const BYTE* data,
-                              size_t size)
+static BOOL ffmpeg_fill_frame(AVFrame* WINPR_RESTRICT frame,
+                              const AUDIO_FORMAT* WINPR_RESTRICT inputFormat,
+                              const BYTE* WINPR_RESTRICT data, size_t size)
 {
 	int ret = 0;
 	int bpp = 0;
@@ -525,8 +528,9 @@ static BOOL ffmpeg_fill_frame(AVFrame* frame, const AUDIO_FORMAT* inputFormat, c
 	return TRUE;
 }
 #if defined(SWRESAMPLE_FOUND)
-static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt, AVFrame* frame,
-                          SwrContext* resampleContext, AVFrame* resampled, wStream* out)
+static BOOL ffmpeg_decode(AVCodecContext* WINPR_RESTRICT dec_ctx, AVPacket* WINPR_RESTRICT pkt,
+                          AVFrame* WINPR_RESTRICT frame, SwrContext* WINPR_RESTRICT resampleContext,
+                          AVFrame* WINPR_RESTRICT resampled, wStream* WINPR_RESTRICT out)
 #else
 static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt, AVFrame* frame,
                           AVAudioResampleContext* resampleContext, AVFrame* resampled, wStream* out)
@@ -611,7 +615,7 @@ static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt, AVFrame* frame
 	return TRUE;
 }
 
-BOOL freerdp_dsp_ffmpeg_supports_format(const AUDIO_FORMAT* format, BOOL encode)
+BOOL freerdp_dsp_ffmpeg_supports_format(const AUDIO_FORMAT* WINPR_RESTRICT format, BOOL encode)
 {
 	enum AVCodecID id = ffmpeg_get_avcodec(format);
 
@@ -658,8 +662,8 @@ void freerdp_dsp_ffmpeg_context_free(FREERDP_DSP_CONTEXT* context)
 	}
 }
 
-BOOL freerdp_dsp_ffmpeg_context_reset(FREERDP_DSP_CONTEXT* context,
-                                      const AUDIO_FORMAT* targetFormat)
+BOOL freerdp_dsp_ffmpeg_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                      const AUDIO_FORMAT* WINPR_RESTRICT targetFormat)
 {
 	if (!context || !targetFormat)
 		return FALSE;
@@ -669,9 +673,11 @@ BOOL freerdp_dsp_ffmpeg_context_reset(FREERDP_DSP_CONTEXT* context,
 	return ffmpeg_open_context(context);
 }
 
-static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                    const AUDIO_FORMAT* srcFormat, const BYTE** data,
-                                    size_t* length, AUDIO_FORMAT* dstFormat)
+static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                    const BYTE* WINPR_RESTRICT src, size_t size,
+                                    const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
+                                    const BYTE** WINPR_RESTRICT data, size_t* WINPR_RESTRICT length,
+                                    AUDIO_FORMAT* WINPR_RESTRICT dstFormat)
 {
 	UINT32 bpp = 0;
 	size_t samples = 0;
@@ -756,8 +762,10 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 	return FALSE;
 }
 
-BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* format,
-                               const BYTE* data, size_t length, wStream* out)
+BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                               const AUDIO_FORMAT* WINPR_RESTRICT format,
+                               const BYTE* WINPR_RESTRICT data, size_t length,
+                               wStream* WINPR_RESTRICT out)
 {
 	AUDIO_FORMAT fmt = { 0 };
 
@@ -830,8 +838,10 @@ BOOL freerdp_dsp_ffmpeg_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT*
 	}
 }
 
-BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
-                               const BYTE* data, size_t length, wStream* out)
+BOOL freerdp_dsp_ffmpeg_decode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                               const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
+                               const BYTE* WINPR_RESTRICT data, size_t length,
+                               wStream* WINPR_RESTRICT out)
 {
 	if (!context || !srcFormat || !data || !out || context->encoder)
 		return FALSE;

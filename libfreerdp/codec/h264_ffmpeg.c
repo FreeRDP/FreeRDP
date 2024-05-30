@@ -91,7 +91,7 @@ typedef struct
 #endif
 } H264_CONTEXT_LIBAVCODEC;
 
-static void libavcodec_destroy_encoder(H264_CONTEXT* h264)
+static void libavcodec_destroy_encoder(H264_CONTEXT* WINPR_RESTRICT h264)
 {
 	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 
@@ -114,7 +114,7 @@ static void libavcodec_destroy_encoder(H264_CONTEXT* h264)
 	sys->codecEncoderContext = NULL;
 }
 
-static BOOL libavcodec_create_encoder(H264_CONTEXT* h264)
+static BOOL libavcodec_create_encoder(H264_CONTEXT* WINPR_RESTRICT h264)
 {
 	BOOL recreate = FALSE;
 	H264_CONTEXT_LIBAVCODEC* sys = NULL;
@@ -186,7 +186,8 @@ EXCEPTION:
 	return FALSE;
 }
 
-static int libavcodec_decompress(H264_CONTEXT* h264, const BYTE* pSrcData, UINT32 SrcSize)
+static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
+                                 const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize)
 {
 	union
 	{
@@ -324,8 +325,10 @@ fail:
 	return rc;
 }
 
-static int libavcodec_compress(H264_CONTEXT* h264, const BYTE** pSrcYuv, const UINT32* pStride,
-                               BYTE** ppDstData, UINT32* pDstSize)
+static int libavcodec_compress(H264_CONTEXT* WINPR_RESTRICT h264,
+                               const BYTE** WINPR_RESTRICT pSrcYuv,
+                               const UINT32* WINPR_RESTRICT pStride,
+                               BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize)
 {
 	union
 	{
@@ -454,7 +457,7 @@ fail:
 	return rc;
 }
 
-static void libavcodec_uninit(H264_CONTEXT* h264)
+static void libavcodec_uninit(H264_CONTEXT* WINPR_RESTRICT h264)
 {
 	WINPR_ASSERT(h264);
 
@@ -577,7 +580,7 @@ static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
 }
 #endif
 
-static BOOL libavcodec_init(H264_CONTEXT* h264)
+static BOOL libavcodec_init(H264_CONTEXT* WINPR_RESTRICT h264)
 {
 	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 

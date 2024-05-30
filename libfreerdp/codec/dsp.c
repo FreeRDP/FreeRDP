@@ -121,7 +121,7 @@ struct S_FREERDP_DSP_CONTEXT
 };
 
 #if defined(WITH_OPUS)
-static BOOL opus_is_valid_samplerate(const AUDIO_FORMAT* format)
+static BOOL opus_is_valid_samplerate(const AUDIO_FORMAT* WINPR_RESTRICT format)
 {
 	WINPR_ASSERT(format);
 
@@ -139,14 +139,15 @@ static BOOL opus_is_valid_samplerate(const AUDIO_FORMAT* format)
 }
 #endif
 
-static INT16 read_int16(const BYTE* src)
+static INT16 read_int16(const BYTE* WINPR_RESTRICT src)
 {
 	return (INT16)(src[0] | (src[1] << 8));
 }
 
-static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                    const AUDIO_FORMAT* srcFormat, const BYTE** data,
-                                    size_t* length)
+static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                    const BYTE* WINPR_RESTRICT src, size_t size,
+                                    const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
+                                    const BYTE** WINPR_RESTRICT data, size_t* WINPR_RESTRICT length)
 {
 	UINT32 bpp;
 	size_t samples;
@@ -231,8 +232,10 @@ static BOOL freerdp_dsp_channel_mix(FREERDP_DSP_CONTEXT* context, const BYTE* sr
  * http://download.microsoft.com/download/9/8/6/9863C72A-A3AA-4DDB-B1BA-CA8D17EFD2D4/RIFFNEW.pdf
  */
 
-static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                 const AUDIO_FORMAT* srcFormat, const BYTE** data, size_t* length)
+static BOOL freerdp_dsp_resample(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                 const BYTE* WINPR_RESTRICT src, size_t size,
+                                 const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
+                                 const BYTE** WINPR_RESTRICT data, size_t* WINPR_RESTRICT length)
 {
 #if defined(WITH_SOXR)
 	soxr_error_t error;
@@ -315,7 +318,8 @@ static const INT16 ima_step_size_table[] = {
 	12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
 };
 
-static UINT16 dsp_decode_ima_adpcm_sample(ADPCM* adpcm, unsigned int channel, BYTE sample)
+static UINT16 dsp_decode_ima_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, unsigned int channel,
+                                          BYTE sample)
 {
 	INT32 ss;
 	INT32 d;
@@ -352,8 +356,9 @@ static UINT16 dsp_decode_ima_adpcm_sample(ADPCM* adpcm, unsigned int channel, BY
 	return (UINT16)d;
 }
 
-static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                         wStream* out)
+static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                         const BYTE* WINPR_RESTRICT src, size_t size,
+                                         wStream* WINPR_RESTRICT out)
 {
 	BYTE sample;
 	UINT16 decoded;
@@ -432,8 +437,9 @@ static BOOL freerdp_dsp_decode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYT
 }
 
 #if defined(WITH_GSM)
-static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                      wStream* out)
+static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                      const BYTE* WINPR_RESTRICT src, size_t size,
+                                      wStream* WINPR_RESTRICT out)
 {
 	size_t offset = 0;
 
@@ -461,8 +467,9 @@ static BOOL freerdp_dsp_decode_gsm610(FREERDP_DSP_CONTEXT* context, const BYTE* 
 	return TRUE;
 }
 
-static BOOL freerdp_dsp_encode_gsm610(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                      wStream* out)
+static BOOL freerdp_dsp_encode_gsm610(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                      const BYTE* WINPR_RESTRICT src, size_t size,
+                                      wStream* WINPR_RESTRICT out)
 {
 	size_t offset = 0;
 
@@ -489,8 +496,9 @@ static BOOL freerdp_dsp_encode_gsm610(FREERDP_DSP_CONTEXT* context, const BYTE* 
 #endif
 
 #if defined(WITH_LAME)
-static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                   wStream* out)
+static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                   const BYTE* WINPR_RESTRICT src, size_t size,
+                                   wStream* WINPR_RESTRICT out)
 {
 	int rc;
 	short* pcm_l;
@@ -525,8 +533,9 @@ static BOOL freerdp_dsp_decode_mp3(FREERDP_DSP_CONTEXT* context, const BYTE* src
 	return TRUE;
 }
 
-static BOOL freerdp_dsp_encode_mp3(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                   wStream* out)
+static BOOL freerdp_dsp_encode_mp3(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                   const BYTE* WINPR_RESTRICT src, size_t size,
+                                   wStream* WINPR_RESTRICT out)
 {
 	size_t samples_per_channel;
 	int rc;
@@ -553,8 +562,9 @@ static BOOL freerdp_dsp_encode_mp3(FREERDP_DSP_CONTEXT* context, const BYTE* src
 #endif
 
 #if defined(WITH_FAAC)
-static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                    wStream* out)
+static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                    const BYTE* WINPR_RESTRICT src, size_t size,
+                                    wStream* WINPR_RESTRICT out)
 {
 	const int16_t* inSamples = (const int16_t*)src;
 	unsigned int bpp;
@@ -593,8 +603,9 @@ static BOOL freerdp_dsp_encode_faac(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 #endif
 
 #if defined(WITH_OPUS)
-static BOOL freerdp_dsp_decode_opus(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                    wStream* out)
+static BOOL freerdp_dsp_decode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                    const BYTE* WINPR_RESTRICT src, size_t size,
+                                    wStream* WINPR_RESTRICT out)
 {
 	size_t max_size = 5760;
 	int frames;
@@ -616,8 +627,9 @@ static BOOL freerdp_dsp_decode_opus(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 	return TRUE;
 }
 
-static BOOL freerdp_dsp_encode_opus(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                    wStream* out)
+static BOOL freerdp_dsp_encode_opus(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                    const BYTE* WINPR_RESTRICT src, size_t size,
+                                    wStream* WINPR_RESTRICT out)
 {
 	if (!context || !src || !out)
 		return FALSE;
@@ -638,8 +650,9 @@ static BOOL freerdp_dsp_encode_opus(FREERDP_DSP_CONTEXT* context, const BYTE* sr
 #endif
 
 #if defined(WITH_FAAD2)
-static BOOL freerdp_dsp_decode_faad(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                    wStream* out)
+static BOOL freerdp_dsp_decode_faad(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                    const BYTE* WINPR_RESTRICT src, size_t size,
+                                    wStream* WINPR_RESTRICT out)
 {
 	NeAACDecFrameInfo info;
 	size_t offset = 0;
@@ -725,7 +738,7 @@ static const struct
 	                          { 1, 4 }, { 5, 4 }, { 2, 0 }, { 6, 0 }, { 2, 4 }, { 6, 4 },
 	                          { 3, 0 }, { 7, 0 }, { 3, 4 }, { 7, 4 } };
 
-static BYTE dsp_encode_ima_adpcm_sample(ADPCM* adpcm, int channel, INT16 sample)
+static BYTE dsp_encode_ima_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, int channel, INT16 sample)
 {
 	INT32 e;
 	INT32 d;
@@ -788,8 +801,9 @@ static BYTE dsp_encode_ima_adpcm_sample(ADPCM* adpcm, int channel, INT16 sample)
 	return enc;
 }
 
-static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                         wStream* out)
+static BOOL freerdp_dsp_encode_ima_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                         const BYTE* WINPR_RESTRICT src, size_t size,
+                                         wStream* WINPR_RESTRICT out)
 {
 	INT16 sample;
 	BYTE encoded;
@@ -873,7 +887,8 @@ static const INT32 ms_adpcm_coeffs1[7] = { 256, 512, 0, 192, 240, 460, 392 };
 
 static const INT32 ms_adpcm_coeffs2[7] = { 0, -256, 0, 64, 0, -208, -232 };
 
-static INLINE INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* adpcm, BYTE sample, int channel)
+static INLINE INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, BYTE sample,
+                                                       int channel)
 {
 	INT8 nibble;
 	INT32 presample;
@@ -898,8 +913,9 @@ static INLINE INT16 freerdp_dsp_decode_ms_adpcm_sample(ADPCM* adpcm, BYTE sample
 	return (INT16)presample;
 }
 
-static BOOL freerdp_dsp_decode_ms_adpcm(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                        wStream* out)
+static BOOL freerdp_dsp_decode_ms_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                        const BYTE* WINPR_RESTRICT src, size_t size,
+                                        wStream* WINPR_RESTRICT out)
 {
 	BYTE sample;
 	const size_t out_size = size * 4;
@@ -979,7 +995,8 @@ static BOOL freerdp_dsp_decode_ms_adpcm(FREERDP_DSP_CONTEXT* context, const BYTE
 	return TRUE;
 }
 
-static BYTE freerdp_dsp_encode_ms_adpcm_sample(ADPCM* adpcm, INT32 sample, int channel)
+static BYTE freerdp_dsp_encode_ms_adpcm_sample(ADPCM* WINPR_RESTRICT adpcm, INT32 sample,
+                                               int channel)
 {
 	INT32 presample;
 	INT32 errordelta;
@@ -1014,8 +1031,9 @@ static BYTE freerdp_dsp_encode_ms_adpcm_sample(ADPCM* adpcm, INT32 sample, int c
 	return ((BYTE)errordelta) & 0x0F;
 }
 
-static BOOL freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* context, const BYTE* src, size_t size,
-                                        wStream* out)
+static BOOL freerdp_dsp_encode_ms_adpcm(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                                        const BYTE* WINPR_RESTRICT src, size_t size,
+                                        wStream* WINPR_RESTRICT out)
 {
 	size_t start;
 	INT32 sample;
@@ -1222,8 +1240,9 @@ void freerdp_dsp_context_free(FREERDP_DSP_CONTEXT* context)
 #endif
 }
 
-BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
-                        const BYTE* data, size_t length, wStream* out)
+BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                        const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
+                        const BYTE* WINPR_RESTRICT data, size_t length, wStream* WINPR_RESTRICT out)
 {
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_encode(context, srcFormat, data, length, out);
@@ -1287,8 +1306,9 @@ BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 #endif
 }
 
-BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
-                        const BYTE* data, size_t length, wStream* out)
+BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                        const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
+                        const BYTE* WINPR_RESTRICT data, size_t length, wStream* WINPR_RESTRICT out)
 {
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_decode(context, srcFormat, data, length, out);
@@ -1339,7 +1359,7 @@ BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFor
 #endif
 }
 
-BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
+BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* WINPR_RESTRICT format, BOOL encode)
 {
 #if defined(WITH_DSP_FFMPEG)
 	return freerdp_dsp_ffmpeg_supports_format(format, encode);
@@ -1404,7 +1424,8 @@ BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode)
 #endif
 }
 
-BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* targetFormat,
+BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+                               const AUDIO_FORMAT* WINPR_RESTRICT targetFormat,
                                UINT32 FramesPerPacket)
 {
 #if defined(WITH_DSP_FFMPEG)
