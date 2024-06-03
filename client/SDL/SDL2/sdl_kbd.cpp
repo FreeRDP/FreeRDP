@@ -555,27 +555,27 @@ BOOL sdlInput::keyboard_handle_event(const SDL_KeyboardEvent* ev)
 	const UINT32 rdp_scancode = sdl_scancode_to_rdp(ev->keysym.scancode);
 	const SDL_Keymod mods = SDL_GetModState();
 
-	if ((mods & hotkey_modmask) == hotkey_modmask)
+	if ((mods & _hotkeyModmask) == _hotkeyModmask)
 	{
 		if (ev->type == SDL_KEYDOWN)
 		{
-			if (ev->keysym.scancode == hotkey_fullscreen)
+			if (ev->keysym.scancode == _hotkeyFullscreen)
 			{
 				_sdl->update_fullscreen(!_sdl->fullscreen);
 				return TRUE;
 			}
-			if (ev->keysym.scancode == hotkey_resizable)
+			if (ev->keysym.scancode == _hotkeyResizable)
 			{
 				_sdl->update_resizeable(!_sdl->resizeable);
 				return TRUE;
 			}
 
-			if (ev->keysym.scancode == hotkey_grab)
+			if (ev->keysym.scancode == _hotkeyGrab)
 			{
 				keyboard_grab(ev->windowID, _sdl->grab_kbd ? SDL_FALSE : SDL_TRUE);
 				return TRUE;
 			}
-			if (ev->keysym.scancode == hotkey_disconnect)
+			if (ev->keysym.scancode == _hotkeyDisconnect)
 			{
 				freerdp_abort_connect_context(_sdl->context());
 				return TRUE;
@@ -622,9 +622,9 @@ BOOL sdlInput::mouse_grab(Uint32 windowID, SDL_bool enable)
 
 sdlInput::sdlInput(SdlContext* sdl) : _sdl(sdl), _lastWindowID(UINT32_MAX)
 {
-	hotkey_modmask = prefToMask();
-	hotkey_fullscreen = prefKeyValue("SDL_Fullscreen", SDL_SCANCODE_RETURN);
-	hotkey_resizable = prefKeyValue("SDL_Resizeable", SDL_SCANCODE_R);
-	hotkey_grab = prefKeyValue("SDL_Grab", SDL_SCANCODE_G);
-	hotkey_disconnect = prefKeyValue("SDL_Disconnect", SDL_SCANCODE_D);
+	_hotkeyModmask = prefToMask();
+	_hotkeyFullscreen = prefKeyValue("SDL_Fullscreen", SDL_SCANCODE_RETURN);
+	_hotkeyResizable = prefKeyValue("SDL_Resizeable", SDL_SCANCODE_R);
+	_hotkeyGrab = prefKeyValue("SDL_Grab", SDL_SCANCODE_G);
+	_hotkeyDisconnect = prefKeyValue("SDL_Disconnect", SDL_SCANCODE_D);
 }

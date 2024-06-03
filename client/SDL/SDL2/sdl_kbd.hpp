@@ -68,6 +68,9 @@ class sdlInput
 	std::atomic<bool> _remapInitialized = false;
 
 	// hotkey handling
-	uint32_t hotkey_modmask; // modifier keys mask
-	uint32_t hotkey_fullscreen, hotkey_resizable, hotkey_grab, hotkey_disconnect;
+	uint32_t _hotkeyModmask; // modifier keys mask
+	uint32_t _hotkeyFullscreen;
+	uint32_t _hotkeyResizable;
+	uint32_t _hotkeyGrab;
+	uint32_t _hotkeyDisconnect;
 };
