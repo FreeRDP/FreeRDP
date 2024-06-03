@@ -405,7 +405,7 @@ static int makecert_context_parse_arguments(MAKECERT_CONTEXT* context,
 
 			val = strtol(arg->Value, NULL, 0);
 
-			if ((errno != 0) || (val < 1) || (val > 12))
+			if ((errno != 0) || (val < 0))
 				return -1;
 
 			context->duration_months = (int)val;
@@ -999,10 +999,9 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 #endif
 		X509_gmtime_adj(before, 0);
 
-		if (context->duration_months)
-			X509_gmtime_adj(after, (long)(60 * 60 * 24 * 31 * context->duration_months));
-		else if (context->duration_years)
-			X509_gmtime_adj(after, (long)(60 * 60 * 24 * 365 * context->duration_years));
+		long duration = context->duration_months * 31l + context->duration_years * 365l;
+		duration *= 60l * 60l * 24l;
+		X509_gmtime_adj(after, duration);
 	}
 	X509_set_pubkey(context->x509, context->pkey);
 	name = X509_get_subject_name(context->x509);

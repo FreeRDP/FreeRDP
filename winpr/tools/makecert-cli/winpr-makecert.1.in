@@ -72,10 +72,10 @@ can be thought as "dummy" mode.
 .IP "-n common_name"
 The common name to use in the certificate.
 .IP "-m months"
-Validity period in months.
+Validity period in months (multiple of 31 days, not clanendar months).
 .IP "-y years"
-Validity period in years. If months and years are specified the specified
-month parameter will take precedence.
+Validity period in years (365 days, leap years not accounted). If months and years are specified the specified
+the values are accumulated.
 .IP "-len length"
 Key length in bits to use.
 .IP "-a { \fImd5\fP | \fIsha1\fP | \fIsha256\fP | \fIs384\fP | \fIsha512\fP }"
