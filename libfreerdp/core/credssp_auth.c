@@ -34,6 +34,7 @@
 
 #include <freerdp/log.h>
 
+#include "utils.h"
 #include "credssp_auth.h"
 
 #define TAG FREERDP_TAG("core.auth")
@@ -197,7 +198,7 @@ static BOOL credssp_auth_client_init_cred_attributes(rdpCredsspAuth* auth)
 {
 	WINPR_ASSERT(auth);
 
-	if (auth->kerberosSettings.kdcUrl)
+	if (!utils_str_is_empty(auth->kerberosSettings.kdcUrl))
 	{
 		SECURITY_STATUS status = ERROR_INTERNAL_ERROR;
 		SecPkgCredentials_KdcProxySettingsW* secAttr = NULL;
