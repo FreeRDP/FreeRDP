@@ -450,12 +450,12 @@ static BOOL xf_event_MotionNotify(xfContext* xfc, const XMotionEvent* event, BOO
 {
 	WINPR_ASSERT(xfc);
 
+	if (xfc->window)
+		xf_floatbar_set_root_y(xfc->window->floatbar, event->y);
+
 	if (xfc->xi_event ||
 	    (xfc->common.mouse_grabbed && freerdp_client_use_relative_mouse_events(&xfc->common)))
 		return TRUE;
-
-	if (xfc->window)
-		xf_floatbar_set_root_y(xfc->window->floatbar, event->y);
 
 	return xf_generic_MotionNotify(xfc, event->x, event->y, event->state, event->window, app);
 }
