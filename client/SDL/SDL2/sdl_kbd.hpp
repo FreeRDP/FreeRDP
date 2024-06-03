@@ -66,4 +66,11 @@ class sdlInput
 	Uint32 _lastWindowID;
 	std::map<uint32_t, uint32_t> _remapList;
 	std::atomic<bool> _remapInitialized = false;
+
+	// hotkey handling
+	uint32_t _hotkeyModmask; // modifier keys mask
+	uint32_t _hotkeyFullscreen;
+	uint32_t _hotkeyResizable;
+	uint32_t _hotkeyGrab;
+	uint32_t _hotkeyDisconnect;
 };
