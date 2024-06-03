@@ -21,6 +21,8 @@
 #error "This file must only be included with MIT kerberos"
 #endif
 
+#include <string.h>
+
 #include <winpr/path.h>
 #include <winpr/wlog.h>
 #include <winpr/endian.h>
@@ -171,7 +173,7 @@ krb5_error_code krb5glue_get_init_creds(krb5_context ctx, krb5_principal princ, 
 			if (rv)
 				goto cleanup;
 		}
-		if (krb_settings->kdcUrl)
+		if (krb_settings->kdcUrl && (strnlen(krb_settings->kdcUrl, 2) > 0))
 		{
 			const char* names[4] = { 0 };
 			char* realm = NULL;
