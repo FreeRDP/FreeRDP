@@ -1932,6 +1932,13 @@ BOOL gcc_read_server_network_data(wStream* s, rdpMcs* mcs)
 	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, channelCount, 2ull))
 		return FALSE;
 
+	if (mcs->channelMaxCount < parsedChannelCount)
+	{
+		WLog_ERR(TAG, "requested %" PRIu32 " channels > channelMaxCount %" PRIu16,
+		         mcs->channelCount, mcs->channelMaxCount);
+		return FALSE;
+	}
+
 	for (UINT32 i = 0; i < parsedChannelCount; i++)
 	{
 		rdpMcsChannel* channel = &mcs->channels[i];
