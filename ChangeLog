@@ -1,3 +1,31 @@
+# 2024-07-03 Version 3.6.0
+
+With this release we did improve decoder speed so you should notice a significant
+speed improvement with progressive and other gfx codecs.
+We've also eliminated a couple of issues along the way, so an update
+is highly recommended.
+
+Noteworthy changes:
+* Improved command line failure logging (#10333)
+* p11-kit support (#10081)
+* json-c support (#10183)
+* (experimental) SDL3 port SDL client (#10195)
+* New option '/gfx:frame-ack:off' for connection delay testing (#10214)
+* improved decoder speed (#10222, #10235)
+* xfreerdp floatbar hide bug (#10237)
+* winpr-makecert month bug (#10236)
+* kerberos kdcUrl check fixes (#10238)
+* timezone updates (#10120, #10144, #10170)
+* fixed a capability protocol violation bug (#10132)
+* fix SDL client dialog bug terminating on credential dialog (#10134)
+* some more oss-fuzz issues (#10126, #10141, #10148, #10161, #10239)
+* rails popup window fixes (#10160)
+
+
+For a complete and detailed change log since the last release run:
+git log 3.6.0...3.5.1
+
+
 # 2024-04-22 Version 3.5.1
 
 This release eliminates a bunch of issues detected during oss-fuzz runs.
