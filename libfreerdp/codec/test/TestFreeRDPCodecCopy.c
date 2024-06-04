@@ -1,5 +1,8 @@
 
 #include <math.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #include <winpr/sysinfo.h>
 
@@ -86,6 +89,8 @@ int TestFreeRDPCodecCopy(int argc, char* argv[])
 	WINPR_UNUSED(argc);
 	WINPR_UNUSED(argv);
 
+	UINT32 width = 192;
+	UINT32 height = 108;
 	const UINT32 formats[] = {
 		PIXEL_FORMAT_ABGR15, PIXEL_FORMAT_ARGB15, PIXEL_FORMAT_BGR15,  PIXEL_FORMAT_BGR16,
 		PIXEL_FORMAT_BGR24,  PIXEL_FORMAT_RGB15,  PIXEL_FORMAT_RGB16,  PIXEL_FORMAT_RGB24,
@@ -93,15 +98,28 @@ int TestFreeRDPCodecCopy(int argc, char* argv[])
 		PIXEL_FORMAT_BGRA32, PIXEL_FORMAT_RGBA32, PIXEL_FORMAT_BGRX32, PIXEL_FORMAT_RGBX32,
 	};
 
+	if (argc == 3)
+	{
+		errno = 0;
+		width = strtoul(argv[1], NULL, 0);
+		height = strtoul(argv[2], NULL, 0);
+		if ((errno != 0) || (width == 0) || (height == 0))
+		{
+			char buffer[128] = { 0 };
+			fprintf(stderr, "%s failed: width=%" PRIu32 ", height=%" PRIu32 ", errno=%s\n",
+			        __func__, width, height, winpr_strerror(errno, buffer, sizeof(buffer)));
+			return -1;
+		}
+	}
 	for (size_t x = 0; x < ARRAYSIZE(formats); x++)
 	{
 		const UINT32 SrcFormat = formats[x];
 		for (size_t y = 0; y < ARRAYSIZE(formats); y++)
 		{
 			const UINT32 DstFormat = formats[y];
-			if (!TestFreeRDPImageCopy(1920, 1080, SrcFormat, DstFormat, TEST_RUNS))
+			if (!TestFreeRDPImageCopy(width, height, SrcFormat, DstFormat, TEST_RUNS))
 				return -1;
-			if (!TestFreeRDPImageCopy_no_overlap(1920, 1080, SrcFormat, DstFormat, TEST_RUNS))
+			if (!TestFreeRDPImageCopy_no_overlap(width, height, SrcFormat, DstFormat, TEST_RUNS))
 				return -1;
 		}
 	}

@@ -201,7 +201,8 @@ BOOL audio_format_write(wStream* s, const AUDIO_FORMAT* format)
 	return TRUE;
 }
 
-BOOL audio_format_copy(const AUDIO_FORMAT* srcFormat, AUDIO_FORMAT* dstFormat)
+BOOL audio_format_copy(const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
+                       AUDIO_FORMAT* WINPR_RESTRICT dstFormat)
 {
 	if (!srcFormat || !dstFormat)
 		return FALSE;

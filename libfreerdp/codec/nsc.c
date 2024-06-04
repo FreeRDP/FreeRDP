@@ -46,7 +46,7 @@
 	} while (0)
 #endif
 
-static BOOL nsc_decode(NSC_CONTEXT* context)
+static BOOL nsc_decode(NSC_CONTEXT* WINPR_RESTRICT context)
 {
 	UINT16 rw = 0;
 	BYTE shift = 0;
@@ -188,7 +188,7 @@ static BOOL nsc_rle_decode(const BYTE* WINPR_RESTRICT in, size_t inSize, BYTE* W
 	return TRUE;
 }
 
-static BOOL nsc_rle_decompress_data(NSC_CONTEXT* context)
+static BOOL nsc_rle_decompress_data(NSC_CONTEXT* WINPR_RESTRICT context)
 {
 	if (!context)
 		return FALSE;
@@ -236,7 +236,7 @@ static BOOL nsc_rle_decompress_data(NSC_CONTEXT* context)
 	return TRUE;
 }
 
-static BOOL nsc_stream_initialize(NSC_CONTEXT* context, wStream* s)
+static BOOL nsc_stream_initialize(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s)
 {
 	WINPR_ASSERT(context);
 	WINPR_ASSERT(context->priv);
@@ -265,7 +265,7 @@ static BOOL nsc_stream_initialize(NSC_CONTEXT* context, wStream* s)
 	return Stream_CheckAndLogRequiredLengthWLog(context->priv->log, s, total);
 }
 
-static BOOL nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
+static BOOL nsc_context_initialize(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s)
 {
 	if (!nsc_stream_initialize(context, s))
 		return FALSE;
@@ -317,7 +317,7 @@ static BOOL nsc_context_initialize(NSC_CONTEXT* context, wStream* s)
 	return TRUE;
 }
 
-static void nsc_profiler_print(NSC_CONTEXT_PRIV* priv)
+static void nsc_profiler_print(NSC_CONTEXT_PRIV* WINPR_RESTRICT priv)
 {
 	WINPR_UNUSED(priv);
 
@@ -329,7 +329,7 @@ static void nsc_profiler_print(NSC_CONTEXT_PRIV* priv)
 	PROFILER_PRINT_FOOTER
 }
 
-BOOL nsc_context_reset(NSC_CONTEXT* context, UINT32 width, UINT32 height)
+BOOL nsc_context_reset(NSC_CONTEXT* WINPR_RESTRICT context, UINT32 width, UINT32 height)
 {
 	if (!context)
 		return FALSE;

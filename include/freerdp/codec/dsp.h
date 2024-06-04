@@ -37,14 +37,19 @@ extern "C"
 	WINPR_ATTR_MALLOC(freerdp_dsp_context_free, 1)
 	FREERDP_API FREERDP_DSP_CONTEXT* freerdp_dsp_context_new(BOOL encoder);
 
-	FREERDP_API BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* format, BOOL encode);
-	FREERDP_API BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
-	                                    const BYTE* data, size_t length, wStream* out);
-	FREERDP_API BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* context, const AUDIO_FORMAT* srcFormat,
-	                                    const BYTE* data, size_t length, wStream* out);
+	FREERDP_API BOOL freerdp_dsp_supports_format(const AUDIO_FORMAT* WINPR_RESTRICT format,
+	                                             BOOL encode);
+	FREERDP_API BOOL freerdp_dsp_encode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+	                                    const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
+	                                    const BYTE* WINPR_RESTRICT data, size_t length,
+	                                    wStream* WINPR_RESTRICT out);
+	FREERDP_API BOOL freerdp_dsp_decode(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+	                                    const AUDIO_FORMAT* WINPR_RESTRICT srcFormat,
+	                                    const BYTE* WINPR_RESTRICT data, size_t length,
+	                                    wStream* out);
 
-	FREERDP_API BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* context,
-	                                           const AUDIO_FORMAT* targetFormat,
+	FREERDP_API BOOL freerdp_dsp_context_reset(FREERDP_DSP_CONTEXT* WINPR_RESTRICT context,
+	                                           const AUDIO_FORMAT* WINPR_RESTRICT targetFormat,
 	                                           UINT32 FramesPerPacket);
 
 #ifdef __cplusplus

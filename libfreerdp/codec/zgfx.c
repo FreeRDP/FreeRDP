@@ -114,7 +114,7 @@ static const ZGFX_TOKEN ZGFX_TOKEN_TABLE[] = {
 	{ 0 }
 };
 
-static INLINE BOOL zgfx_GetBits(ZGFX_CONTEXT* zgfx, UINT32 nbits)
+static INLINE BOOL zgfx_GetBits(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, UINT32 nbits)
 {
 	if (!zgfx)
 		return FALSE;
@@ -136,7 +136,8 @@ static INLINE BOOL zgfx_GetBits(ZGFX_CONTEXT* zgfx, UINT32 nbits)
 	return TRUE;
 }
 
-static void zgfx_history_buffer_ring_write(ZGFX_CONTEXT* zgfx, const BYTE* src, size_t count)
+static INLINE void zgfx_history_buffer_ring_write(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
+                                                  const BYTE* WINPR_RESTRICT src, size_t count)
 {
 	UINT32 front = 0;
 
@@ -167,7 +168,8 @@ static void zgfx_history_buffer_ring_write(ZGFX_CONTEXT* zgfx, const BYTE* src, 
 	}
 }
 
-static void zgfx_history_buffer_ring_read(ZGFX_CONTEXT* zgfx, int offset, BYTE* dst, UINT32 count)
+static INLINE void zgfx_history_buffer_ring_read(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, int offset,
+                                                 BYTE* WINPR_RESTRICT dst, UINT32 count)
 {
 	UINT32 front = 0;
 	UINT32 index = 0;
@@ -214,7 +216,8 @@ static void zgfx_history_buffer_ring_read(ZGFX_CONTEXT* zgfx, int offset, BYTE* 
 	} while ((bytesLeft -= bytes) > 0);
 }
 
-static BOOL zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, wStream* stream, size_t segmentSize)
+static INLINE BOOL zgfx_decompress_segment(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
+                                           wStream* WINPR_RESTRICT stream, size_t segmentSize)
 {
 	BYTE c = 0;
 	BYTE flags = 0;
@@ -377,13 +380,14 @@ static BOOL zgfx_decompress_segment(ZGFX_CONTEXT* zgfx, wStream* stream, size_t 
  * the actual available data, so ensure that it will never be a
  * out of bounds read.
  */
-static BYTE* aligned_zgfx_malloc(size_t size)
+static INLINE BYTE* aligned_zgfx_malloc(size_t size)
 {
 	return malloc(size + 64);
 }
 
-static BOOL zgfx_append(ZGFX_CONTEXT* zgfx, BYTE** ppConcatenated, size_t uncompressedSize,
-                        size_t* pUsed)
+static INLINE BOOL zgfx_append(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
+                               BYTE** WINPR_RESTRICT ppConcatenated, size_t uncompressedSize,
+                               size_t* WINPR_RESTRICT pUsed)
 {
 	WINPR_ASSERT(zgfx);
 	WINPR_ASSERT(ppConcatenated);
@@ -405,8 +409,9 @@ static BOOL zgfx_append(ZGFX_CONTEXT* zgfx, BYTE** ppConcatenated, size_t uncomp
 	return TRUE;
 }
 
-int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
-                    UINT32* pDstSize, UINT32 flags)
+int zgfx_decompress(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, const BYTE* WINPR_RESTRICT pSrcData,
+                    UINT32 SrcSize, BYTE** WINPR_RESTRICT ppDstData,
+                    UINT32* WINPR_RESTRICT pDstSize, UINT32 flags)
 {
 	int status = -1;
 	BYTE descriptor = 0;
@@ -488,8 +493,9 @@ fail:
 	return status;
 }
 
-static BOOL zgfx_compress_segment(ZGFX_CONTEXT* zgfx, wStream* s, const BYTE* pSrcData,
-                                  UINT32 SrcSize, UINT32* pFlags)
+static BOOL zgfx_compress_segment(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, wStream* WINPR_RESTRICT s,
+                                  const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
+                                  UINT32* WINPR_RESTRICT pFlags)
 {
 	/* FIXME: Currently compression not implemented. Just copy the raw source */
 	if (!Stream_EnsureRemainingCapacity(s, SrcSize + 1))
@@ -504,8 +510,9 @@ static BOOL zgfx_compress_segment(ZGFX_CONTEXT* zgfx, wStream* s, const BYTE* pS
 	return TRUE;
 }
 
-int zgfx_compress_to_stream(ZGFX_CONTEXT* zgfx, wStream* sDst, const BYTE* pUncompressed,
-                            UINT32 uncompressedSize, UINT32* pFlags)
+int zgfx_compress_to_stream(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, wStream* WINPR_RESTRICT sDst,
+                            const BYTE* WINPR_RESTRICT pUncompressed, UINT32 uncompressedSize,
+                            UINT32* WINPR_RESTRICT pFlags)
 {
 	int fragment = 0;
 	UINT16 maxLength = 0;
@@ -586,8 +593,9 @@ int zgfx_compress_to_stream(ZGFX_CONTEXT* zgfx, wStream* sDst, const BYTE* pUnco
 	return status;
 }
 
-int zgfx_compress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BYTE** ppDstData,
-                  UINT32* pDstSize, UINT32* pFlags)
+int zgfx_compress(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, const BYTE* WINPR_RESTRICT pSrcData,
+                  UINT32 SrcSize, BYTE** WINPR_RESTRICT ppDstData, UINT32* WINPR_RESTRICT pDstSize,
+                  UINT32* WINPR_RESTRICT pFlags)
 {
 	int status = 0;
 	wStream* s = Stream_New(NULL, SrcSize);
@@ -598,7 +606,7 @@ int zgfx_compress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize, BYTE
 	return status;
 }
 
-void zgfx_context_reset(ZGFX_CONTEXT* zgfx, BOOL flush)
+void zgfx_context_reset(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, BOOL flush)
 {
 	zgfx->HistoryIndex = 0;
 }

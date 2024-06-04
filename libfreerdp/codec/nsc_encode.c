@@ -54,9 +54,10 @@ typedef struct
 	UINT8 ChromaSubsamplingLevel;
 } NSC_MESSAGE;
 
-static BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* message);
+static BOOL nsc_write_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
+                              const NSC_MESSAGE* WINPR_RESTRICT message);
 
-static BOOL nsc_context_initialize_encode(NSC_CONTEXT* context)
+static BOOL nsc_context_initialize_encode(NSC_CONTEXT* WINPR_RESTRICT context)
 {
 	UINT32 length = 0;
 	UINT32 tempWidth = 0;
@@ -109,7 +110,8 @@ fail:
 	return FALSE;
 }
 
-static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UINT32 scanline)
+static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* WINPR_RESTRICT context,
+                                      const BYTE* WINPR_RESTRICT data, UINT32 scanline)
 {
 	UINT16 y = 0;
 	UINT16 rw = 0;
@@ -268,7 +270,7 @@ static BOOL nsc_encode_argb_to_aycocg(NSC_CONTEXT* context, const BYTE* data, UI
 	return TRUE;
 }
 
-static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
+static BOOL nsc_encode_subsampling(NSC_CONTEXT* WINPR_RESTRICT context)
 {
 	UINT32 tempWidth = 0;
 	UINT32 tempHeight = 0;
@@ -312,7 +314,8 @@ static BOOL nsc_encode_subsampling(NSC_CONTEXT* context)
 	return TRUE;
 }
 
-BOOL nsc_encode(NSC_CONTEXT* context, const BYTE* bmpdata, UINT32 rowstride)
+BOOL nsc_encode(NSC_CONTEXT* WINPR_RESTRICT context, const BYTE* WINPR_RESTRICT bmpdata,
+                UINT32 rowstride)
 {
 	if (!context || !bmpdata || (rowstride == 0))
 		return FALSE;
@@ -329,7 +332,8 @@ BOOL nsc_encode(NSC_CONTEXT* context, const BYTE* bmpdata, UINT32 rowstride)
 	return TRUE;
 }
 
-static UINT32 nsc_rle_encode(const BYTE* in, BYTE* out, UINT32 originalSize)
+static UINT32 nsc_rle_encode(const BYTE* WINPR_RESTRICT in, BYTE* WINPR_RESTRICT out,
+                             UINT32 originalSize)
 {
 	UINT32 left = 0;
 	UINT32 runlength = 1;
@@ -383,7 +387,7 @@ static UINT32 nsc_rle_encode(const BYTE* in, BYTE* out, UINT32 originalSize)
 	return planeSize;
 }
 
-static void nsc_rle_compress_data(NSC_CONTEXT* context)
+static void nsc_rle_compress_data(NSC_CONTEXT* WINPR_RESTRICT context)
 {
 	UINT32 planeSize = 0;
 	UINT32 originalSize = 0;
@@ -412,8 +416,8 @@ static void nsc_rle_compress_data(NSC_CONTEXT* context)
 	}
 }
 
-static UINT32 nsc_compute_byte_count(NSC_CONTEXT* context, UINT32* ByteCount, UINT32 width,
-                                     UINT32 height)
+static UINT32 nsc_compute_byte_count(NSC_CONTEXT* WINPR_RESTRICT context,
+                                     UINT32* WINPR_RESTRICT ByteCount, UINT32 width, UINT32 height)
 {
 	UINT32 tempWidth = 0;
 	UINT32 tempHeight = 0;
@@ -440,7 +444,8 @@ static UINT32 nsc_compute_byte_count(NSC_CONTEXT* context, UINT32* ByteCount, UI
 	return maxPlaneSize;
 }
 
-BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* message)
+BOOL nsc_write_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
+                       const NSC_MESSAGE* WINPR_RESTRICT message)
 {
 	UINT32 totalPlaneByteCount = 0;
 	totalPlaneByteCount = message->LumaPlaneByteCount + message->OrangeChromaPlaneByteCount +
@@ -476,8 +481,9 @@ BOOL nsc_write_message(NSC_CONTEXT* context, wStream* s, const NSC_MESSAGE* mess
 	return TRUE;
 }
 
-BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* WINPR_RESTRICT data,
-                         UINT32 width, UINT32 height, UINT32 scanline)
+BOOL nsc_compose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
+                         const BYTE* WINPR_RESTRICT data, UINT32 width, UINT32 height,
+                         UINT32 scanline)
 {
 	BOOL rc = 0;
 	NSC_MESSAGE message = { 0 };
@@ -515,9 +521,9 @@ BOOL nsc_compose_message(NSC_CONTEXT* context, wStream* s, const BYTE* WINPR_RES
 	return nsc_write_message(context, s, &message);
 }
 
-BOOL nsc_decompose_message(NSC_CONTEXT* context, wStream* s, BYTE* WINPR_RESTRICT bmpdata, UINT32 x,
-                           UINT32 y, UINT32 width, UINT32 height, UINT32 rowstride, UINT32 format,
-                           UINT32 flip)
+BOOL nsc_decompose_message(NSC_CONTEXT* WINPR_RESTRICT context, wStream* WINPR_RESTRICT s,
+                           BYTE* WINPR_RESTRICT bmpdata, UINT32 x, UINT32 y, UINT32 width,
+                           UINT32 height, UINT32 rowstride, UINT32 format, UINT32 flip)
 {
 	size_t size = Stream_GetRemainingLength(s);
 

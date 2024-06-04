@@ -39,15 +39,20 @@ extern "C"
 
 	typedef struct S_ZGFX_CONTEXT ZGFX_CONTEXT;
 
-	FREERDP_API int zgfx_decompress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize,
-	                                BYTE** ppDstData, UINT32* pDstSize, UINT32 flags);
-	FREERDP_API int zgfx_compress(ZGFX_CONTEXT* zgfx, const BYTE* pSrcData, UINT32 SrcSize,
-	                              BYTE** ppDstData, UINT32* pDstSize, UINT32* pFlags);
-	FREERDP_API int zgfx_compress_to_stream(ZGFX_CONTEXT* zgfx, wStream* sDst,
-	                                        const BYTE* pUncompressed, UINT32 uncompressedSize,
-	                                        UINT32* pFlags);
+	FREERDP_API int zgfx_decompress(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
+	                                const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
+	                                BYTE** WINPR_RESTRICT ppDstData,
+	                                UINT32* WINPR_RESTRICT pDstSize, UINT32 flags);
+	FREERDP_API int zgfx_compress(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
+	                              const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize,
+	                              BYTE** WINPR_RESTRICT ppDstData, UINT32* pDstSize,
+	                              UINT32* WINPR_RESTRICT pFlags);
+	FREERDP_API int zgfx_compress_to_stream(ZGFX_CONTEXT* WINPR_RESTRICT zgfx,
+	                                        wStream* WINPR_RESTRICT sDst,
+	                                        const BYTE* WINPR_RESTRICT pUncompressed,
+	                                        UINT32 uncompressedSize, UINT32* WINPR_RESTRICT pFlags);
 
-	FREERDP_API void zgfx_context_reset(ZGFX_CONTEXT* zgfx, BOOL flush);
+	FREERDP_API void zgfx_context_reset(ZGFX_CONTEXT* WINPR_RESTRICT zgfx, BOOL flush);
 
 	FREERDP_API void zgfx_context_free(ZGFX_CONTEXT* zgfx);
 
