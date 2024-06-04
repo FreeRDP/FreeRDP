@@ -402,7 +402,7 @@ UwacDisplay* UwacOpenDisplay(const char* name, UwacReturnCode* err)
 
 	if (ret->display == NULL)
 	{
-		fprintf(stderr, "failed to connect to Wayland display %s: %m\n", name);
+		fprintf(stderr, "failed to connect to Wayland display %s: %s\n", name, strerror(errno));
 		*err = UWAC_ERROR_UNABLE_TO_CONNECT;
 		goto out_free;
 	}

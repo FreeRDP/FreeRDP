@@ -885,7 +885,8 @@ static WIN32_FILE_SEARCH* file_search_new(const char* name, size_t namelen, cons
 	WIN32_FILE_SEARCH* pFileSearch = (WIN32_FILE_SEARCH*)calloc(1, sizeof(WIN32_FILE_SEARCH));
 	if (!pFileSearch)
 		return NULL;
-	strncpy(pFileSearch->magic, file_search_magic, sizeof(pFileSearch->magic) - 1);
+	WINPR_ASSERT(sizeof(file_search_magic) == sizeof(pFileSearch->magic));
+	strncpy(pFileSearch->magic, file_search_magic, sizeof(pFileSearch->magic));
 
 	pFileSearch->lpPath = strndup(name, namelen);
 	pFileSearch->lpPattern = strndup(pattern, patternlen);
@@ -939,7 +940,7 @@ static BOOL is_valid_file_search_handle(HANDLE handle)
 		return FALSE;
 	if (pFileSearch == INVALID_HANDLE_VALUE)
 		return FALSE;
-	if (strcmp(file_search_magic, pFileSearch->magic) != 0)
+	if (strncmp(file_search_magic, pFileSearch->magic, sizeof(file_search_magic)) != 0)
 		return FALSE;
 	return TRUE;
 }

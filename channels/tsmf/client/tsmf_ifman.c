@@ -485,7 +485,6 @@ UINT tsmf_ifman_update_geometry_info(TSMF_IFMAN* ifman)
 	RDP_RECT* rects = NULL;
 	int num_rects = 0;
 	UINT error = CHANNEL_RC_OK;
-	int i = 0;
 	size_t pos = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, ifman->input, GUID_SIZE + 32))

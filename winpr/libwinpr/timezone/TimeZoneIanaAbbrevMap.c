@@ -30,8 +30,8 @@
 
 typedef struct
 {
-	const char* Iana;
-	const char* Abbrev;
+	char* Iana;
+	char* Abbrev;
 } TimeZoneInanaAbbrevMapEntry;
 
 const static char* zonepath = "/usr/share/zoneinfo";

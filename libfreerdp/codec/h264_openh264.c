@@ -388,7 +388,7 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 	return 1;
 }
 
-static void openh264_uninit(H264_CONTEXT* WINPR_RESTRICT h264)
+static void openh264_uninit(H264_CONTEXT* h264)
 {
 	H264_CONTEXT_OPENH264* sysContexts = NULL;
 
@@ -487,7 +487,7 @@ static BOOL openh264_load_functionpointers(H264_CONTEXT* h264, const char* name)
 }
 #endif
 
-static BOOL openh264_init(H264_CONTEXT* WINPR_RESTRICT h264)
+static BOOL openh264_init(H264_CONTEXT* h264)
 {
 #if defined(WITH_OPENH264_LOADING)
 	BOOL success = FALSE;

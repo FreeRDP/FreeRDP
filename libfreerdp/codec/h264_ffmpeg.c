@@ -457,7 +457,7 @@ fail:
 	return rc;
 }
 
-static void libavcodec_uninit(H264_CONTEXT* WINPR_RESTRICT h264)
+static void libavcodec_uninit(H264_CONTEXT* h264)
 {
 	WINPR_ASSERT(h264);
 
@@ -580,7 +580,7 @@ static enum AVPixelFormat libavcodec_get_format(struct AVCodecContext* ctx,
 }
 #endif
 
-static BOOL libavcodec_init(H264_CONTEXT* WINPR_RESTRICT h264)
+static BOOL libavcodec_init(H264_CONTEXT* h264)
 {
 	H264_CONTEXT_LIBAVCODEC* sys = NULL;
 

@@ -396,7 +396,7 @@ static void tsmf_pulse_free(ITSMFAudioDevice* audio)
 	free(pulse);
 }
 
-FREERDP_ENTRY_POINT(ITSMFAudioDevice* pulse_freerdp_tsmf_client_audio_subsystem_entry(void))
+FREERDP_ENTRY_POINT(ITSMFAudioDevice* pulse_freerdp_tsmf_client_audio_subsystem_entry(void*))
 {
 	TSMFPulseAudioDevice* pulse = NULL;
 	pulse = (TSMFPulseAudioDevice*)calloc(1, sizeof(TSMFPulseAudioDevice));

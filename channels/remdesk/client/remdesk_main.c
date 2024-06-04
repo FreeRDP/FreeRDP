@@ -351,9 +351,7 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 	size_t cbExpertBlobW = 0;
 	WCHAR* expertBlobW = NULL;
 	size_t cbRaConnectionStringW = 0;
-	WCHAR* raConnectionStringW = NULL;
-	REMDESK_CTL_AUTHENTICATE_PDU pdu = { 0 };
-	rdpSettings* settings = NULL;
+	REMDESK_CTL_HEADER ctlHeader = { 0 };
 
 	WINPR_ASSERT(remdesk);
 
@@ -363,29 +361,30 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 		return error;
 	}
 
-	pdu.expertBlob = remdesk->ExpertBlob;
+	const char* expertBlob = remdesk->ExpertBlob;
 	WINPR_ASSERT(remdesk->rdpcontext);
-	settings = remdesk->rdpcontext->settings;
+	rdpSettings* settings = remdesk->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
-	pdu.raConnectionString =
+	const char* raConnectionString =
 	    freerdp_settings_get_string(settings, FreeRDP_RemoteAssistanceRCTicket);
-	raConnectionStringW = ConvertUtf8ToWCharAlloc(pdu.raConnectionString, &cbRaConnectionStringW);
+	WCHAR* raConnectionStringW =
+	    ConvertUtf8ToWCharAlloc(raConnectionString, &cbRaConnectionStringW);
 
 	if (!raConnectionStringW || (cbRaConnectionStringW > UINT32_MAX / sizeof(WCHAR)))
 		goto out;
 
 	cbRaConnectionStringW = cbRaConnectionStringW * sizeof(WCHAR);
 
-	expertBlobW = ConvertUtf8ToWCharAlloc(pdu.expertBlob, &cbExpertBlobW);
+	expertBlobW = ConvertUtf8ToWCharAlloc(expertBlob, &cbExpertBlobW);
 
 	if (!expertBlobW || (cbExpertBlobW > UINT32_MAX / sizeof(WCHAR)))
 		goto out;
 
 	cbExpertBlobW = cbExpertBlobW * sizeof(WCHAR);
-	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_AUTHENTICATE,
+	remdesk_prepare_ctl_header(&(ctlHeader), REMDESK_CTL_AUTHENTICATE,
 	                           cbRaConnectionStringW + cbExpertBlobW);
-	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
+	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
 
 	if (!s)
 	{
@@ -394,9 +393,9 @@ static UINT remdesk_send_ctl_authenticate_pdu(remdeskPlugin* remdesk)
 		goto out;
 	}
 
-	remdesk_write_ctl_header(s, &(pdu.ctlHeader));
-	Stream_Write(s, (BYTE*)raConnectionStringW, cbRaConnectionStringW);
-	Stream_Write(s, (BYTE*)expertBlobW, cbExpertBlobW);
+	remdesk_write_ctl_header(s, &(ctlHeader));
+	Stream_Write(s, raConnectionStringW, cbRaConnectionStringW);
+	Stream_Write(s, expertBlobW, cbExpertBlobW);
 	Stream_SealLength(s);
 
 	if ((error = remdesk_virtual_channel_write(remdesk, s)))
@@ -418,28 +417,24 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 {
 	UINT error = 0;
 	size_t length = 0;
-	wStream* s = NULL;
-	size_t cbRaConnectionStringW = 0;
-	WCHAR* raConnectionStringW = NULL;
-	REMDESK_CTL_REMOTE_CONTROL_DESKTOP_PDU pdu = { 0 };
-	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(remdesk);
 	WINPR_ASSERT(remdesk->rdpcontext);
-	settings = remdesk->rdpcontext->settings;
+	rdpSettings* settings = remdesk->rdpcontext->settings;
 	WINPR_ASSERT(settings);
 
-	pdu.raConnectionString =
+	const char* raConnectionString =
 	    freerdp_settings_get_string(settings, FreeRDP_RemoteAssistanceRCTicket);
-	raConnectionStringW = ConvertUtf8ToWCharAlloc(pdu.raConnectionString, &length);
+	WCHAR* raConnectionStringW = ConvertUtf8ToWCharAlloc(raConnectionString, &length);
+	size_t cbRaConnectionStringW = length * sizeof(WCHAR);
 
 	if (!raConnectionStringW)
 		return ERROR_INTERNAL_ERROR;
 
-	cbRaConnectionStringW = length * sizeof(WCHAR);
-	remdesk_prepare_ctl_header(&(pdu.ctlHeader), REMDESK_CTL_REMOTE_CONTROL_DESKTOP,
+	REMDESK_CTL_HEADER ctlHeader = { 0 };
+	remdesk_prepare_ctl_header(&ctlHeader, REMDESK_CTL_REMOTE_CONTROL_DESKTOP,
 	                           cbRaConnectionStringW);
-	s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + pdu.ctlHeader.ch.DataLength);
+	wStream* s = Stream_New(NULL, REMDESK_CHANNEL_CTL_SIZE + ctlHeader.ch.DataLength);
 
 	if (!s)
 	{
@@ -448,8 +443,8 @@ static UINT remdesk_send_ctl_remote_control_desktop_pdu(remdeskPlugin* remdesk)
 		goto out;
 	}
 
-	remdesk_write_ctl_header(s, &(pdu.ctlHeader));
-	Stream_Write(s, (BYTE*)raConnectionStringW, cbRaConnectionStringW);
+	remdesk_write_ctl_header(s, &ctlHeader);
+	Stream_Write(s, raConnectionStringW, cbRaConnectionStringW);
 	Stream_SealLength(s);
 
 	if ((error = remdesk_virtual_channel_write(remdesk, s)))
