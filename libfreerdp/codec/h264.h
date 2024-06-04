@@ -30,8 +30,8 @@ extern "C"
 {
 #endif
 
-	typedef BOOL (*pfnH264SubsystemInit)(H264_CONTEXT* WINPR_RESTRICT h264);
-	typedef void (*pfnH264SubsystemUninit)(H264_CONTEXT* WINPR_RESTRICT h264);
+	typedef BOOL (*pfnH264SubsystemInit)(H264_CONTEXT* h264);
+	typedef void (*pfnH264SubsystemUninit)(H264_CONTEXT* h264);
 
 	typedef int (*pfnH264SubsystemDecompress)(H264_CONTEXT* WINPR_RESTRICT h264,
 	                                          const BYTE* WINPR_RESTRICT pSrcData, UINT32 SrcSize);
