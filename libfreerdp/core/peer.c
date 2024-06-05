@@ -1456,7 +1456,10 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 	option_len = sizeof(option_value);
 
 	if (sockfd >= 0)
-		setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&option_value, option_len);
+	{
+		if (setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&option_value, option_len) < 0)
+			goto fail;
+	}
 
 	if (client)
 	{
@@ -1487,6 +1490,10 @@ freerdp_peer* freerdp_peer_new(int sockfd)
 	}
 
 	return client;
+
+fail:
+	freerdp_peer_free(client);
+	return NULL;
 }
 
 void freerdp_peer_free(freerdp_peer* client)
