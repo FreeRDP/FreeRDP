@@ -37,6 +37,13 @@ endif()
 
 function(target_link_webview2 target)
 	if(WIN32)
+		if (CMAKE_CXX_COMPILER_ARCHITECTURE_ID)
+			set(ARCH ${CMAKE_CXX_COMPILER_ARCHITECTURE_ID})
+		elseif (CMAKE_C_COMPILER_ARCHITECTURE_ID)
+			set(ARCH ${CMAKE_C_COMPILER_ARCHITECTURE_ID})
+		else()
+			message(FATAL_ERROR "Unknown CMAKE_<lang>_COMPILER_ARCHITECTURE_ID")
+		endif()
 		target_include_directories(${target}
 			PRIVATE
 				"${WEBVIEW2_PACKAGE_DIR}/build/native/include"
@@ -45,7 +52,7 @@ function(target_link_webview2 target)
 			PRIVATE
 				shlwapi
 				version
-				"${WEBVIEW2_PACKAGE_DIR}/build/native/${CMAKE_VS_PLATFORM_NAME}/WebView2LoaderStatic.lib"
+				"${WEBVIEW2_PACKAGE_DIR}/build/native/${ARCH}/WebView2LoaderStatic.lib"
 		)
 	endif()
 endfunction()
