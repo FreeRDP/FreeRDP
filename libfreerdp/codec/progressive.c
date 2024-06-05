@@ -388,18 +388,18 @@ static INLINE RFX_PROGRESSIVE_TILE* progressive_tile_new(void)
 	tile->stride = 4 * tile->width;
 
 	size_t dataLen = 1ull * tile->stride * tile->height;
-	tile->data = (BYTE*)winpr_aligned_calloc(dataLen, sizeof(BYTE), 16);
+	tile->data = (BYTE*)winpr_aligned_malloc(dataLen, 16);
 	if (!tile->data)
 		goto fail;
 	memset(tile->data, 0xFF, dataLen);
 
 	size_t signLen = (8192 + 32) * 3;
-	tile->sign = (BYTE*)winpr_aligned_calloc(signLen, sizeof(BYTE), 16);
+	tile->sign = (BYTE*)winpr_aligned_malloc(signLen, 16);
 	if (!tile->sign)
 		goto fail;
 
 	size_t currentLen = (8192 + 32) * 3;
-	tile->current = (BYTE*)winpr_aligned_calloc(currentLen, sizeof(BYTE), 16);
+	tile->current = (BYTE*)winpr_aligned_malloc(currentLen, 16);
 	if (!tile->current)
 		goto fail;
 
@@ -410,8 +410,8 @@ fail:
 	return NULL;
 }
 
-static BOOL progressive_allocate_tile_cache(PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surface,
-                                            size_t min)
+static INLINE BOOL
+progressive_allocate_tile_cache(PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surface, size_t min)
 {
 	size_t oldIndex = 0;
 
@@ -474,10 +474,10 @@ static PROGRESSIVE_SURFACE_CONTEXT* progressive_surface_context_new(UINT16 surfa
 	return surface;
 }
 
-static BOOL progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surface,
-                                             PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region,
-                                             const RFX_PROGRESSIVE_TILE* WINPR_RESTRICT tile,
-                                             BOOL upgrade)
+static INLINE BOOL
+progressive_surface_tile_replace(PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surface,
+                                 PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region,
+                                 const RFX_PROGRESSIVE_TILE* WINPR_RESTRICT tile, BOOL upgrade)
 {
 	RFX_PROGRESSIVE_TILE* t = NULL;
 
@@ -1650,14 +1650,6 @@ static INLINE BOOL progressive_tile_read(PROGRESSIVE_CONTEXT* WINPR_RESTRICT pro
 	return progressive_surface_tile_replace(surface, region, &tile, FALSE);
 }
 
-typedef struct
-{
-	PROGRESSIVE_CONTEXT* progressive;
-	PROGRESSIVE_BLOCK_REGION* region;
-	const PROGRESSIVE_BLOCK_CONTEXT* context;
-	RFX_PROGRESSIVE_TILE* tile;
-} PROGRESSIVE_TILE_PROCESS_WORK_PARAM;
-
 static void CALLBACK progressive_process_tiles_tile_work_callback(PTP_CALLBACK_INSTANCE instance,
                                                                   void* context, PTP_WORK work)
 {
@@ -1698,8 +1690,6 @@ static INLINE SSIZE_T progressive_process_tiles(
 	UINT16 blockType = 0;
 	UINT32 blockLen = 0;
 	UINT32 count = 0;
-	PTP_WORK* work_objects = NULL;
-	PROGRESSIVE_TILE_PROCESS_WORK_PARAM* params = NULL;
 	UINT16 close_cnt = 0;
 
 	WINPR_ASSERT(progressive);
@@ -1782,28 +1772,10 @@ static INLINE SSIZE_T progressive_process_tiles(
 		return -1044;
 	}
 
-	{
-		size_t tcount = 1;
-		if (progressive->rfx_context->priv->UseThreads)
-			tcount = region->numTiles;
-
-		work_objects = (PTP_WORK*)winpr_aligned_calloc(tcount, sizeof(PTP_WORK), 32);
-		if (!work_objects)
-			return -1;
-	}
-
-	params = (PROGRESSIVE_TILE_PROCESS_WORK_PARAM*)winpr_aligned_calloc(
-	    region->numTiles, sizeof(PROGRESSIVE_TILE_PROCESS_WORK_PARAM), 32);
-	if (!params)
-	{
-		winpr_aligned_free(work_objects);
-		return -1;
-	}
-
 	for (UINT32 idx = 0; idx < region->numTiles; idx++)
 	{
 		RFX_PROGRESSIVE_TILE* tile = region->tiles[idx];
-		PROGRESSIVE_TILE_PROCESS_WORK_PARAM* param = &params[idx];
+		PROGRESSIVE_TILE_PROCESS_WORK_PARAM* param = &progressive->params[idx];
 		param->progressive = progressive;
 		param->region = region;
 		param->context = context;
@@ -1811,9 +1783,10 @@ static INLINE SSIZE_T progressive_process_tiles(
 
 		if (progressive->rfx_context->priv->UseThreads)
 		{
-			if (!(work_objects[idx] = CreateThreadpoolWork(
-			          progressive_process_tiles_tile_work_callback, (void*)&params[idx],
-			          &progressive->rfx_context->priv->ThreadPoolEnv)))
+			progressive->work_objects[idx] =
+			    CreateThreadpoolWork(progressive_process_tiles_tile_work_callback, (void*)param,
+			                         &progressive->rfx_context->priv->ThreadPoolEnv);
+			if (!progressive->work_objects[idx])
 			{
 				WLog_Print(progressive->log, WLOG_ERROR,
 				           "Failed to create ThreadpoolWork for tile %" PRIu32, idx);
@@ -1821,12 +1794,12 @@ static INLINE SSIZE_T progressive_process_tiles(
 				break;
 			}
 
-			SubmitThreadpoolWork(work_objects[idx]);
+			SubmitThreadpoolWork(progressive->work_objects[idx]);
 			close_cnt = idx + 1;
 		}
 		else
 		{
-			progressive_process_tiles_tile_work_callback(0, &params[idx], 0);
+			progressive_process_tiles_tile_work_callback(0, param, 0);
 		}
 
 		if (status < 0)
@@ -1841,14 +1814,12 @@ static INLINE SSIZE_T progressive_process_tiles(
 	{
 		for (UINT32 idx = 0; idx < close_cnt; idx++)
 		{
-			WaitForThreadpoolWorkCallbacks(work_objects[idx], FALSE);
-			CloseThreadpoolWork(work_objects[idx]);
+			WaitForThreadpoolWorkCallbacks(progressive->work_objects[idx], FALSE);
+			CloseThreadpoolWork(progressive->work_objects[idx]);
 		}
 	}
 
 fail:
-	winpr_aligned_free(work_objects);
-	winpr_aligned_free(params);
 
 	if (status < 0)
 		return -1;
@@ -2050,9 +2021,7 @@ static INLINE SSIZE_T progressive_wb_read_region_header(
     PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive, wStream* WINPR_RESTRICT s, UINT16 blockType,
     UINT32 blockLen, PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region)
 {
-	SSIZE_T len = 0;
-
-	memset(region, 0, sizeof(PROGRESSIVE_BLOCK_REGION));
+	region->usedTiles = 0;
 
 	if (!Stream_CheckAndLogRequiredLength(TAG, s, 12))
 		return -1011;
@@ -2090,58 +2059,64 @@ static INLINE SSIZE_T progressive_wb_read_region_header(
 		return -1014;
 	}
 
-	len = Stream_GetRemainingLength(s);
-	if (!Stream_CheckAndLogRequiredLengthOfSize(TAG, s, region->numRects, 8ull))
+	const SSIZE_T rc = Stream_GetRemainingLength(s);
+	const SSIZE_T expect = region->numRects * 8ll + region->numQuant * 5ll +
+	                       region->numProgQuant * 16ll + region->tileDataSize;
+	SSIZE_T len = rc;
+	if (expect != rc)
 	{
-		WLog_Print(progressive->log, WLOG_ERROR, "ProgressiveRegion data short for region->rects");
-		return -1015;
-	}
-	len -= region->numRects * 8ULL;
+		if (len / 8LL < region->numRects)
+		{
+			WLog_Print(progressive->log, WLOG_ERROR,
+			           "ProgressiveRegion data short for region->rects");
+			return -1015;
+		}
+		len -= region->numRects * 8LL;
 
-	if (len / 5 < region->numQuant)
-	{
-		WLog_Print(progressive->log, WLOG_ERROR, "ProgressiveRegion data short for region->cQuant");
-		return -1018;
-	}
-	len -= region->numQuant * 5ULL;
+		if (len / 5LL < region->numQuant)
+		{
+			WLog_Print(progressive->log, WLOG_ERROR,
+			           "ProgressiveRegion data short for region->cQuant");
+			return -1018;
+		}
+		len -= region->numQuant * 5LL;
 
-	if (len / 16 < region->numProgQuant)
-	{
-		WLog_Print(progressive->log, WLOG_ERROR,
-		           "ProgressiveRegion data short for region->cProgQuant");
-		return -1021;
-	}
-	len -= region->numProgQuant * 16ULL;
+		if (len / 16LL < region->numProgQuant)
+		{
+			WLog_Print(progressive->log, WLOG_ERROR,
+			           "ProgressiveRegion data short for region->cProgQuant");
+			return -1021;
+		}
+		len -= region->numProgQuant * 16LL;
 
-	if (len < region->tileDataSize * 1ll)
-	{
-		WLog_Print(progressive->log, WLOG_ERROR, "ProgressiveRegion data short for region->tiles");
-		return -1024;
+		if (len < region->tileDataSize * 1ll)
+		{
+			WLog_Print(progressive->log, WLOG_ERROR,
+			           "ProgressiveRegion data short for region->tiles");
+			return -1024;
+		}
+		len -= region->tileDataSize;
+
+		if (len > 0)
+			WLog_Print(progressive->log, WLOG_WARN,
+			           "Unused bytes detected, %" PRIdz " bytes not processed", len);
 	}
-	len -= region->tileDataSize;
-	if (len > 0)
-		WLog_Print(progressive->log, WLOG_WARN,
-		           "Unused bytes detected, %" PRIuz " bytes not processed", len);
-	return len;
+
+	return rc;
 }
 
 static INLINE SSIZE_T progressive_wb_skip_region(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
                                                  wStream* WINPR_RESTRICT s, UINT16 blockType,
                                                  UINT32 blockLen)
 {
-	SSIZE_T rc = 0;
-	size_t total = 0;
-	PROGRESSIVE_BLOCK_REGION* region = &progressive->region;
+	PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region = &progressive->region;
 
-	rc = progressive_wb_read_region_header(progressive, s, blockType, blockLen, region);
+	const SSIZE_T rc =
+	    progressive_wb_read_region_header(progressive, s, blockType, blockLen, region);
 	if (rc < 0)
 		return rc;
 
-	total = (region->numRects * 8);
-	total += (region->numQuant * 5);
-	total += (region->numProgQuant * 16);
-	total += region->tileDataSize;
-	if (!Stream_SafeSeek(s, total))
+	if (!Stream_SafeSeek(s, rc))
 		return -1111;
 
 	return rc;
@@ -2268,10 +2243,10 @@ static INLINE SSIZE_T progressive_wb_region(PROGRESSIVE_CONTEXT* WINPR_RESTRICT 
 	return (size_t)rc;
 }
 
-static SSIZE_T progressive_parse_block(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
-                                       wStream* WINPR_RESTRICT s,
-                                       PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surface,
-                                       PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region)
+static INLINE SSIZE_T progressive_parse_block(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
+                                              wStream* WINPR_RESTRICT s,
+                                              PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surface,
+                                              PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region)
 {
 	UINT16 blockType = 0;
 	UINT32 blockLen = 0;
@@ -2337,12 +2312,12 @@ static SSIZE_T progressive_parse_block(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progr
 	return rc;
 }
 
-static BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
-                         PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surface,
-                         BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStep,
-                         UINT32 nXDst, UINT32 nYDst,
-                         PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region,
-                         REGION16* WINPR_RESTRICT invalidRegion)
+static INLINE BOOL update_tiles(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
+                                PROGRESSIVE_SURFACE_CONTEXT* WINPR_RESTRICT surface,
+                                BYTE* WINPR_RESTRICT pDstData, UINT32 DstFormat, UINT32 nDstStep,
+                                UINT32 nXDst, UINT32 nYDst,
+                                PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region,
+                                REGION16* WINPR_RESTRICT invalidRegion)
 {
 	BOOL rc = TRUE;
 	REGION16 clippingRects = { 0 };
@@ -2434,7 +2409,7 @@ INT32 progressive_decompress(PROGRESSIVE_CONTEXT* WINPR_RESTRICT progressive,
 		return -1001;
 	}
 
-	PROGRESSIVE_BLOCK_REGION* region = &progressive->region;
+	PROGRESSIVE_BLOCK_REGION* WINPR_RESTRICT region = &progressive->region;
 	WINPR_ASSERT(region);
 
 	if (surface->frameId != frameId)
