@@ -3035,7 +3035,9 @@ static BOOL rdp_apply_bitmap_codecs_capability_set(rdpSettings* settings, const 
 		/* only enable a codec if we've announced/enabled it before */
 		settings->RemoteFxCodec = settings->RemoteFxCodec && src->RemoteFxCodecId;
 		settings->RemoteFxImageCodec = settings->RemoteFxImageCodec && src->RemoteFxImageCodec;
-		freerdp_settings_set_bool(settings, FreeRDP_NSCodec, settings->NSCodec && src->NSCodec);
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec,
+		                               settings->NSCodec && src->NSCodec))
+			return FALSE;
 		settings->JpegCodec = src->JpegCodec;
 	}
 	return TRUE;
@@ -3237,10 +3239,14 @@ static BOOL rdp_read_bitmap_codecs_capability_set(wStream* s, rdpSettings* setti
 		bitmapCodecCount--;
 
 		/* only enable a codec if we've announced/enabled it before */
-		settings->RemoteFxCodec = guidRemoteFx;
-		settings->RemoteFxImageCodec = guidRemoteFxImage;
-		freerdp_settings_set_bool(settings, FreeRDP_NSCodec, guidNSCodec);
-		settings->JpegCodec = FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, guidRemoteFx))
+			return FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxImageCodec, guidRemoteFxImage))
+			return FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, guidNSCodec))
+			return FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_JpegCodec, FALSE))
+			return FALSE;
 	}
 
 	return TRUE;
@@ -4492,9 +4498,12 @@ BOOL rdp_recv_confirm_active(rdpRdp* rdp, wStream* s, UINT16 pduLength)
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_BITMAP_CODECS])
 	{
 		/* client does not support bitmap codecs */
-		settings->RemoteFxCodec = FALSE;
-		freerdp_settings_set_bool(settings, FreeRDP_NSCodec, FALSE);
-		settings->JpegCodec = FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_RemoteFxCodec, FALSE))
+			return FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_NSCodec, FALSE))
+			return FALSE;
+		if (!freerdp_settings_set_bool(settings, FreeRDP_JpegCodec, FALSE))
+			return FALSE;
 	}
 
 	if (!settings->ReceivedCapabilities[CAPSET_TYPE_MULTI_FRAGMENT_UPDATE])
