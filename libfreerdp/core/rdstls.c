@@ -53,6 +53,19 @@ typedef enum
 	RDSTLS_STATE_FINAL,
 } RDSTLS_STATE;
 
+typedef enum
+{
+
+	RDSTLS_RESULT_SUCCESS = 0x00000000,
+	RDSTLS_RESULT_ACCESS_DENIED = 0x00000005,
+	RDSTLS_RESULT_LOGON_FAILURE = 0x0000052e,
+	RDSTLS_RESULT_INVALID_LOGON_HOURS = 0x00000530,
+	RDSTLS_RESULT_PASSWORD_EXPIRED = 0x00000532,
+	RDSTLS_RESULT_ACCOUNT_DISABLED = 0x00000533,
+	RDSTLS_RESULT_PASSWORD_MUST_CHANGE = 0x00000773,
+	RDSTLS_RESULT_ACCOUNT_LOCKED_OUT = 0x00000775
+} RDSTLS_RESULT_CODE;
+
 struct rdp_rdstls
 {
 	BOOL server;
@@ -60,10 +73,34 @@ struct rdp_rdstls
 	rdpContext* context;
 	rdpTransport* transport;
 
-	UINT32 resultCode;
+	RDSTLS_RESULT_CODE resultCode;
 	wLog* log;
 };
 
+static const char* rdstls_result_code_str(UINT32 resultCode)
+{
+	switch (resultCode)
+	{
+		case RDSTLS_RESULT_SUCCESS:
+			return "RDSTLS_RESULT_SUCCESS";
+		case RDSTLS_RESULT_ACCESS_DENIED:
+			return "RDSTLS_RESULT_ACCESS_DENIED";
+		case RDSTLS_RESULT_LOGON_FAILURE:
+			return "RDSTLS_RESULT_LOGON_FAILURE";
+		case RDSTLS_RESULT_INVALID_LOGON_HOURS:
+			return "RDSTLS_RESULT_INVALID_LOGON_HOURS";
+		case RDSTLS_RESULT_PASSWORD_EXPIRED:
+			return "RDSTLS_RESULT_PASSWORD_EXPIRED";
+		case RDSTLS_RESULT_ACCOUNT_DISABLED:
+			return "RDSTLS_RESULT_ACCOUNT_DISABLED";
+		case RDSTLS_RESULT_PASSWORD_MUST_CHANGE:
+			return "RDSTLS_RESULT_PASSWORD_MUST_CHANGE";
+		case RDSTLS_RESULT_ACCOUNT_LOCKED_OUT:
+			return "RDSTLS_RESULT_ACCOUNT_LOCKED_OUT";
+		default:
+			return "RDSTLS_RESULT_UNKNOWN";
+	}
+}
 /**
  * Create new RDSTLS state machine.
  *
@@ -451,21 +488,21 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 	serverDomain = freerdp_settings_get_string(settings, FreeRDP_Domain);
 	serverPassword = freerdp_settings_get_string(settings, FreeRDP_Password);
 
-	rdstls->resultCode = ERROR_SUCCESS;
+	rdstls->resultCode = RDSTLS_RESULT_SUCCESS;
 
 	if (!rdstls_cmp_data(rdstls->log, "RedirectionGuid", serverRedirectionGuid,
 	                     serverRedirectionGuidLength, clientRedirectionGuid,
 	                     clientRedirectionGuidLength))
-		rdstls->resultCode = ERROR_LOGON_FAILURE;
+		rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
 
 	if (!rdstls_cmp_str(rdstls->log, "UserName", serverUsername, clientUsername))
-		rdstls->resultCode = ERROR_LOGON_FAILURE;
+		rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
 
 	if (!rdstls_cmp_str(rdstls->log, "Domain", serverDomain, clientDomain))
-		rdstls->resultCode = ERROR_LOGON_FAILURE;
+		rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
 
 	if (!rdstls_cmp_str(rdstls->log, "Password", serverPassword, clientPassword))
-		rdstls->resultCode = ERROR_LOGON_FAILURE;
+		rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
 
 	rc = TRUE;
 fail:
@@ -525,11 +562,10 @@ static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s
 	}
 
 	Stream_Read_UINT32(s, resultCode);
-	if (resultCode != ERROR_SUCCESS)
+	if (resultCode != RDSTLS_RESULT_SUCCESS)
 	{
-		WLog_Print(rdstls->log, WLOG_ERROR, "resultCode: %s [0x%08" PRIX32 "] %s",
-		           freerdp_get_last_error_name(resultCode), resultCode,
-		           freerdp_get_last_error_string(resultCode));
+		WLog_Print(rdstls->log, WLOG_ERROR, "resultCode: %s [0x%08" PRIX32 "]",
+		           rdstls_result_code_str(resultCode), resultCode);
 		return FALSE;
 	}
 
@@ -825,7 +861,7 @@ static int rdstls_server_authenticate(rdpRdstls* rdstls)
 	if (!rdstls_send_authentication_response(rdstls))
 		return -1;
 
-	if (rdstls->resultCode != 0)
+	if (rdstls->resultCode != RDSTLS_RESULT_SUCCESS)
 		return -1;
 
 	return 1;

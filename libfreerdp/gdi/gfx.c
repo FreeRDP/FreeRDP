@@ -918,9 +918,9 @@ static void dump_cmd(const RDPGFX_SURFACE_COMMAND* cmd, UINT32 frameId)
 	static UINT64 xxx = 0;
 	const char* path = "/tmp/dump/";
 	WINPR_ASSERT(cmd);
-	char* fname[1024] = { 0 };
+	char fname[1024] = { 0 };
 
-	snprintf(fname, sizeof(fname), "%s/%08" PRIx32 ".raw", path, xxx++);
+	snprintf(fname, sizeof(fname), "%s/%08" PRIx64 ".raw", path, xxx++);
 	FILE* fp = fopen(fname, "w");
 	if (!fp)
 		return;
