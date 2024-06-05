@@ -49,17 +49,12 @@ if (WITH_WEBVIEW)
       wrapper/webview_impl.cpp
     )
 
-    if (WIN32)
-      find_package(unofficial-webview2 CONFIG REQUIRED)
-      list(APPEND LIBS
-        unofficial::webview2::webview2
-      )
-    elseif(APPLE)
+    if(APPLE)
       find_library(WEBKIT Webkit REQUIRED)
       list(APPEND LIBS
         ${WEBKIT}
       )
-    else()
+    elseif(NOT WIN32)
       find_package(PkgConfig REQUIRED)
       pkg_check_modules(WEBVIEW_GTK webkit2gtk-4.1)
       if (NOT WEBVIEW_GTK_FOUND)
@@ -93,4 +88,8 @@ target_compile_definitions(
   PUBLIC
   ${DEFINITIONS}
 )
+if (WITH_WEBVIEW AND NOT WITH_WEBVIEW_QT)
+    include (WebView2)
+    target_link_webview2("sdl-common-aad-view")
+endif()
 
