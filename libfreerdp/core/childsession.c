@@ -100,7 +100,7 @@ static BOOL treatReadResult(WINPR_BIO_NAMED* ptr, DWORD readBytes)
 
 static BOOL doReadOp(WINPR_BIO_NAMED* ptr)
 {
-	DWORD readBytes;
+	DWORD readBytes = 0;
 
 	if (!ResetEvent(ptr->readEvent))
 		return FALSE;
@@ -162,7 +162,7 @@ static int transport_bio_named_read(BIO* bio, char* buf, int size)
 						return -1;
 				}
 
-				DWORD readBytes;
+				DWORD readBytes = 0;
 				if (!GetOverlappedResult(ptr->hFile, &ptr->readOverlapped, &readBytes, FALSE))
 				{
 					WLog_ERR(TAG, "GetOverlappedResult blocking(lastError=%" PRIu32 ")",
@@ -195,7 +195,7 @@ static int transport_bio_named_read(BIO* bio, char* buf, int size)
 					return -1;
 			}
 
-			DWORD readBytes;
+			DWORD readBytes = 0;
 			if (!GetOverlappedResult(ptr->hFile, &ptr->readOverlapped, &readBytes, FALSE))
 			{
 				WLog_ERR(TAG, "GetOverlappedResult non blocking(lastError=%" PRIu32 ")",
