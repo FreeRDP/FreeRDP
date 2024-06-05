@@ -42,8 +42,21 @@ static constexpr char plugin_name[] = "bitmap-filter";
 static constexpr char plugin_desc[] =
     "this plugin deactivates and filters persistent bitmap cache.";
 
-static const std::vector<std::string> plugin_static_intercept = { DRDYNVC_SVC_CHANNEL_NAME };
-static const std::vector<std::string> plugin_dyn_intercept = { RDPGFX_DVC_CHANNEL_NAME };
+static const std::vector<std::string>& plugin_static_intercept()
+{
+	static std::vector<std::string> vec;
+	if (vec.empty())
+		vec.push_back(DRDYNVC_SVC_CHANNEL_NAME);
+	return vec;
+}
+
+static const std::vector<std::string>& plugin_dyn_intercept()
+{
+	static std::vector<std::string> vec;
+	if (vec.empty())
+		vec.push_back(RDPGFX_DVC_CHANNEL_NAME);
+	return vec;
+}
 
 class DynChannelState
 {
@@ -126,8 +139,8 @@ static BOOL filter_dyn_channel_intercept_list(proxyPlugin* plugin, proxyData* pd
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(data);
 
-	auto intercept = std::find(plugin_dyn_intercept.begin(), plugin_dyn_intercept.end(),
-	                           data->name) != plugin_dyn_intercept.end();
+	auto intercept = std::find(plugin_dyn_intercept().begin(), plugin_dyn_intercept().end(),
+	                           data->name) != plugin_dyn_intercept().end();
 	if (intercept)
 		data->intercept = TRUE;
 	return TRUE;
@@ -141,8 +154,8 @@ static BOOL filter_static_channel_intercept_list(proxyPlugin* plugin, proxyData*
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(data);
 
-	auto intercept = std::find(plugin_static_intercept.begin(), plugin_static_intercept.end(),
-	                           data->name) != plugin_static_intercept.end();
+	auto intercept = std::find(plugin_static_intercept().begin(), plugin_static_intercept().end(),
+	                           data->name) != plugin_static_intercept().end();
 	if (intercept)
 		data->intercept = TRUE;
 	return TRUE;
