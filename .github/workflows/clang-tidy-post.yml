@@ -9,7 +9,7 @@ on:
 permissions:
   pull-requests: write
   issues: write
-  repository: read
+  checks: write
 
 jobs:
   build:
