@@ -8,6 +8,7 @@ on:
 
 permissions:
   pull-requests: write
+  issues: write
 
 jobs:
   build:
@@ -17,6 +18,6 @@ jobs:
       - uses: ZedThree/clang-tidy-review/post@v0.19.0
         # lgtm_comment_body, max_comments, and annotations need to be set on the posting workflow in a split setup
         with:
-          lgtm_comment_body: ''
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           annotations: true
-          max_comments: 10          
+          max_comments: 10

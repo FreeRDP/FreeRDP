@@ -391,8 +391,10 @@ static BOOL wst_handle_ok_or_forbidden(rdpWst* wst, HttpResponse** ppresponse, D
 				return FALSE;
 			free(wst->gwpath);
 			wst->gwpath = urlWithAuth;
-			http_context_set_uri(wst->http, wst->gwpath);
-			http_context_enable_websocket_upgrade(wst->http, TRUE);
+			if (!http_context_set_uri(wst->http, wst->gwpath))
+				return FALSE;
+			if (!http_context_enable_websocket_upgrade(wst->http, TRUE))
+				return FALSE;
 		}
 
 		if (!wst_send_http_request(wst, wst->tls))

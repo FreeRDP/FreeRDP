@@ -818,7 +818,7 @@ static int nla_server_authenticate(rdpNla* nla)
 					break;
 			}
 
-			nla_send(nla);
+			(void)nla_send(nla);
 			/* Access Denied */
 			goto fail;
 		}

@@ -830,6 +830,8 @@ static SECURITY_STATUS SEC_ENTRY negotiate_InitializeSecurityContextW(
 		if (context->state == NEGOTIATE_STATE_NEGORESP)
 		{
 			/* Store the mech token in the output buffer */
+			if (!output_buffer)
+				goto cleanup;
 			CopyMemory(&output_token.mechToken, output_buffer, sizeof(SecBuffer));
 
 			mech_input_buffers[0] = input_token.mechToken;

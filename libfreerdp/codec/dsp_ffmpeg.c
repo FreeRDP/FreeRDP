@@ -607,7 +607,8 @@ static BOOL ffmpeg_decode(AVCodecContext* dec_ctx, AVPacket* pkt, AVFrame* frame
 			const size_t channels = resampled->ch_layout.nb_channels;
 #endif
 			const size_t data_size = channels * resampled->nb_samples * 2;
-			Stream_EnsureRemainingCapacity(out, data_size);
+			if (!Stream_EnsureRemainingCapacity(out, data_size))
+				return FALSE;
 			Stream_Write(out, resampled->data[0], data_size);
 		}
 	}

@@ -886,7 +886,7 @@ static WIN32_FILE_SEARCH* file_search_new(const char* name, size_t namelen, cons
 	if (!pFileSearch)
 		return NULL;
 	WINPR_ASSERT(sizeof(file_search_magic) == sizeof(pFileSearch->magic));
-	strncpy(pFileSearch->magic, file_search_magic, sizeof(pFileSearch->magic));
+	memcpy(pFileSearch->magic, file_search_magic, sizeof(pFileSearch->magic));
 
 	pFileSearch->lpPath = strndup(name, namelen);
 	pFileSearch->lpPattern = strndup(pattern, patternlen);

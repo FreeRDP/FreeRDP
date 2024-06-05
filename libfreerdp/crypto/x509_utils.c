@@ -79,16 +79,23 @@ static char* crypto_print_name(const X509_NAME* name)
 	{
 		UINT64 size = BIO_number_written(outBIO);
 		if (size > INT_MAX)
-			return NULL;
+			goto fail;
 		buffer = calloc(1, (size_t)size + 1);
 
 		if (!buffer)
-			return NULL;
+			goto fail;
 
 		ERR_clear_error();
-		BIO_read(outBIO, buffer, (int)size);
+		const int rc = BIO_read(outBIO, buffer, (int)size);
+		if (rc <= 0)
+		{
+			free(buffer);
+			buffer = NULL;
+			goto fail;
+		}
 	}
 
+fail:
 	BIO_free_all(outBIO);
 	return buffer;
 }
