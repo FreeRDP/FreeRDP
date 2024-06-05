@@ -55,7 +55,13 @@ static constexpr char plugin_name[] = "dyn-channel-dump";
 static constexpr char plugin_desc[] =
     "This plugin dumps configurable dynamic channel data to a file.";
 
-static const std::vector<std::string> plugin_static_intercept = { DRDYNVC_SVC_CHANNEL_NAME };
+static const std::vector<std::string>& plugin_static_intercept()
+{
+	static std::vector<std::string> vec;
+	if (vec.empty())
+		vec.push_back(DRDYNVC_SVC_CHANNEL_NAME);
+	return vec;
+}
 
 static constexpr char key_path[] = "path";
 static constexpr char key_channels[] = "channels";
@@ -286,8 +292,8 @@ static BOOL dump_static_channel_intercept_list(proxyPlugin* plugin, proxyData* p
 	WINPR_ASSERT(pdata);
 	WINPR_ASSERT(data);
 
-	auto intercept = std::find(plugin_static_intercept.begin(), plugin_static_intercept.end(),
-	                           data->name) != plugin_static_intercept.end();
+	auto intercept = std::find(plugin_static_intercept().begin(), plugin_static_intercept().end(),
+	                           data->name) != plugin_static_intercept().end();
 	if (intercept)
 	{
 		WLog_INFO(TAG, "intercepting channel '%s'", data->name);
