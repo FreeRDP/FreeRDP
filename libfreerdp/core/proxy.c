@@ -306,7 +306,8 @@ void proxy_read_environment(rdpSettings* settings, char* envname)
 				WLog_INFO(TAG, "deactivating proxy: %s [%s=%s]",
 				          freerdp_settings_get_string(settings, FreeRDP_ServerHostname), envname,
 				          env);
-				freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_NONE);
+				if (!freerdp_settings_set_uint32(settings, FreeRDP_ProxyType, PROXY_TYPE_NONE))
+					WLog_WARN(TAG, "failed to set FreeRDP_ProxyType=PROXY_TYPE_NONE");
 			}
 		}
 		else
