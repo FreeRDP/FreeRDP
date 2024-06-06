@@ -493,7 +493,7 @@ static BOOL rdstls_process_authentication_request_with_password(rdpRdstls* rdstl
 	if (!rdstls_cmp_data(rdstls->log, "RedirectionGuid", serverRedirectionGuid,
 	                     serverRedirectionGuidLength, clientRedirectionGuid,
 	                     clientRedirectionGuidLength))
-		rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
+		rdstls->resultCode = RDSTLS_RESULT_ACCESS_DENIED;
 
 	if (!rdstls_cmp_str(rdstls->log, "UserName", serverUsername, clientUsername))
 		rdstls->resultCode = RDSTLS_RESULT_LOGON_FAILURE;
@@ -566,6 +566,37 @@ static BOOL rdstls_process_authentication_response(rdpRdstls* rdstls, wStream* s
 	{
 		WLog_Print(rdstls->log, WLOG_ERROR, "resultCode: %s [0x%08" PRIX32 "]",
 		           rdstls_result_code_str(resultCode), resultCode);
+
+		UINT32 error;
+		switch (resultCode)
+		{
+			case RDSTLS_RESULT_ACCESS_DENIED:
+				error = FREERDP_ERROR_CONNECT_ACCESS_DENIED;
+				break;
+			case RDSTLS_RESULT_ACCOUNT_DISABLED:
+				error = FREERDP_ERROR_CONNECT_ACCOUNT_DISABLED;
+				break;
+			case RDSTLS_RESULT_ACCOUNT_LOCKED_OUT:
+				error = FREERDP_ERROR_CONNECT_ACCOUNT_LOCKED_OUT;
+				break;
+			case RDSTLS_RESULT_LOGON_FAILURE:
+				error = FREERDP_ERROR_CONNECT_LOGON_FAILURE;
+				break;
+			case RDSTLS_RESULT_INVALID_LOGON_HOURS:
+				error = FREERDP_ERROR_CONNECT_ACCOUNT_RESTRICTION;
+				break;
+			case RDSTLS_RESULT_PASSWORD_EXPIRED:
+				error = FREERDP_ERROR_CONNECT_PASSWORD_EXPIRED;
+				break;
+			case RDSTLS_RESULT_PASSWORD_MUST_CHANGE:
+				error = FREERDP_ERROR_CONNECT_PASSWORD_MUST_CHANGE;
+				break;
+			default:
+				error = ERROR_INVALID_PARAMETER;
+				break;
+		}
+
+		freerdp_set_last_error_if_not(rdstls->context, error);
 		return FALSE;
 	}
 
