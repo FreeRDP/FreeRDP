@@ -594,9 +594,93 @@ static BOOL arm_pick_base64Utf16Field(const WINPR_JSON* json, const char* name, 
  *
  */
 
+static size_t arm_parse_ipvx_count(WINPR_JSON* ipvX)
+{
+	WINPR_ASSERT(ipvX);
+	WINPR_JSON* ipAddress = WINPR_JSON_GetObjectItem(ipvX, "ipAddress");
+	if (!ipAddress || !WINPR_JSON_IsArray(ipAddress))
+		return 0;
+	return WINPR_JSON_GetArraySize(ipAddress);
+}
+
+static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAddressIdx)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(ipv6);
+	WINPR_ASSERT(pAddressIdx);
+
+	if (!freerdp_settings_get_bool(settings, FreeRDP_IPv6Enabled))
+		return TRUE;
+
+	WINPR_JSON* ipAddress = WINPR_JSON_GetObjectItem(ipv6, "ipAddress");
+	if (!ipAddress || !WINPR_JSON_IsArray(ipAddress))
+		return TRUE;
+	const size_t naddresses = WINPR_JSON_GetArraySize(ipAddress);
+	for (size_t j = 0; j < naddresses; j++)
+	{
+		WINPR_JSON* adressN = WINPR_JSON_GetArrayItem(ipAddress, j);
+		if (!adressN || !WINPR_JSON_IsString(adressN))
+			continue;
+		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
+		                                        (*pAddressIdx)++, adressN))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAddressIdx)
+{
+	WINPR_ASSERT(settings);
+	WINPR_ASSERT(ipv4);
+	WINPR_ASSERT(pAddressIdx);
+
+	WINPR_JSON* ipAddress = WINPR_JSON_GetObjectItem(ipv4, "ipAddress");
+	if (!ipAddress || !WINPR_JSON_IsArray(ipAddress))
+		return TRUE;
+
+	const size_t naddresses = WINPR_JSON_GetArraySize(ipAddress);
+	for (size_t j = 0; j < naddresses; j++)
+	{
+		WINPR_JSON* adressN = WINPR_JSON_GetArrayItem(ipAddress, j);
+		if (!adressN)
+			continue;
+
+		WINPR_JSON* publicIpNode = WINPR_JSON_GetObjectItem(adressN, "publicIpAddress");
+		if (publicIpNode && WINPR_JSON_IsString(publicIpNode))
+		{
+			const char* publicIp = WINPR_JSON_GetStringValue(publicIpNode);
+			if (publicIp)
+			{
+				if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
+				                                        (*pAddressIdx)++, publicIp))
+					return FALSE;
+			}
+		}
+
+		WINPR_JSON* privateIpNode = WINPR_JSON_GetObjectItem(adressN, "privateIpAddress");
+		if (privateIpNode && WINPR_JSON_IsString(privateIpNode))
+		{
+			const char* privateIp = WINPR_JSON_GetStringValue(privateIpNode);
+			if (privateIp)
+			{
+				if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
+				                                        (*pAddressIdx)++, privateIp))
+					return FALSE;
+			}
+		}
+	}
+	return TRUE;
+}
+
 static BOOL arm_treat_azureInstanceNetworkMetadata(const char* metadata, rdpSettings* settings)
 {
 	BOOL ret = FALSE;
+
+	WINPR_ASSERT(settings);
+
+	if (!freerdp_target_net_adresses_reset(settings, 0))
+		return FALSE;
+
 	WINPR_JSON* json = WINPR_JSON_Parse(metadata);
 	if (!json)
 	{
@@ -625,43 +709,48 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(const char* metadata, rdpSett
 		goto out;
 	}
 
+	size_t count = 0;
 	for (size_t i = 0; i < interfaceSz; i++)
 	{
 		WINPR_JSON* interN = WINPR_JSON_GetArrayItem(iface, i);
 		if (!interN)
 			continue;
 
+		WINPR_JSON* ipv6 = WINPR_JSON_GetObjectItem(interN, "ipv6");
+		if (ipv6)
+			count += arm_parse_ipvx_count(ipv6);
+
 		WINPR_JSON* ipv4 = WINPR_JSON_GetObjectItem(interN, "ipv4");
-		if (!ipv4)
+		if (ipv4)
+			count += arm_parse_ipvx_count(ipv4);
+	}
+
+	if (!freerdp_target_net_adresses_reset(settings, count))
+		return FALSE;
+
+	size_t addressIdx = 0;
+	for (size_t i = 0; i < interfaceSz; i++)
+	{
+		WINPR_JSON* interN = WINPR_JSON_GetArrayItem(iface, i);
+		if (!interN)
 			continue;
 
-		WINPR_JSON* ipAddress = WINPR_JSON_GetObjectItem(ipv4, "ipAddress");
-		if (!ipAddress || !WINPR_JSON_IsArray(ipAddress))
-			continue;
-
-		size_t naddresses = WINPR_JSON_GetArraySize(ipAddress);
-		for (size_t j = 0; j < naddresses; j++)
+		WINPR_JSON* ipv6 = WINPR_JSON_GetObjectItem(interN, "ipv6");
+		if (ipv6)
 		{
-			WINPR_JSON* adressN = WINPR_JSON_GetArrayItem(ipAddress, j);
-			if (!adressN)
-				continue;
-
-			WINPR_JSON* publicIpNode = WINPR_JSON_GetObjectItem(adressN, "publicIpAddress");
-			if (!publicIpNode || !WINPR_JSON_IsString(publicIpNode))
-				continue;
-
-			const char* publicIp = WINPR_JSON_GetStringValue(publicIpNode);
-			if (publicIp && strlen(publicIp) &&
-			    freerdp_settings_set_string(settings, FreeRDP_RedirectionTargetFQDN, publicIp))
-			{
-				WLog_INFO(TAG, "connecting to publicIp %s", publicIp);
-				ret = TRUE;
+			if (!arm_parse_ipv6(settings, ipv6, &addressIdx))
 				goto out;
-			}
+		}
+
+		WINPR_JSON* ipv4 = WINPR_JSON_GetObjectItem(interN, "ipv4");
+		if (ipv4)
+		{
+			if (!arm_parse_ipv4(settings, ipv4, &addressIdx))
+				goto out;
 		}
 	}
 
-	ret = TRUE;
+	ret = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount) > 0;
 
 out:
 	WINPR_JSON_Delete(json);
