@@ -734,58 +734,9 @@ int shadow_server_stop(rdpShadowServer* server)
 
 static int shadow_server_init_config_path(rdpShadowServer* server)
 {
-#ifdef _WIN32
-
 	if (!server->ConfigPath)
 	{
-		server->ConfigPath = GetEnvironmentSubPath("LOCALAPPDATA", "freerdp");
-	}
-
-#endif
-#ifdef __APPLE__
-
-	if (!server->ConfigPath)
-	{
-		char* userLibraryPath;
-		char* userApplicationSupportPath;
-		userLibraryPath = GetKnownSubPath(KNOWN_PATH_HOME, "Library");
-
-		if (userLibraryPath)
-		{
-			if (!winpr_PathFileExists(userLibraryPath) && !winpr_PathMakePath(userLibraryPath, 0))
-			{
-				WLog_ERR(TAG, "Failed to create directory '%s'", userLibraryPath);
-				free(userLibraryPath);
-				return -1;
-			}
-
-			userApplicationSupportPath = GetCombinedPath(userLibraryPath, "Application Support");
-
-			if (userApplicationSupportPath)
-			{
-				if (!winpr_PathFileExists(userApplicationSupportPath) &&
-				    !winpr_PathMakePath(userApplicationSupportPath, 0))
-				{
-					WLog_ERR(TAG, "Failed to create directory '%s'", userApplicationSupportPath);
-					free(userLibraryPath);
-					free(userApplicationSupportPath);
-					return -1;
-				}
-
-				server->ConfigPath = GetCombinedPath(userApplicationSupportPath, "freerdp");
-			}
-
-			free(userLibraryPath);
-			free(userApplicationSupportPath);
-		}
-	}
-
-#endif
-
-	if (!server->ConfigPath)
-	{
-		char* configHome = NULL;
-		configHome = GetKnownPath(KNOWN_PATH_XDG_CONFIG_HOME);
+		char* configHome = freerdp_settings_get_config_path();
 
 		if (configHome)
 		{
@@ -796,8 +747,7 @@ static int shadow_server_init_config_path(rdpShadowServer* server)
 				return -1;
 			}
 
-			server->ConfigPath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, "freerdp");
-			free(configHome);
+			server->ConfigPath = configHome;
 		}
 	}
 

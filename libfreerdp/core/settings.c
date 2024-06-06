@@ -350,9 +350,39 @@ BOOL freerdp_capability_buffer_allocate(rdpSettings* settings, UINT32 count)
 	        settings->ReceivedCapabilityDataSizes);
 }
 
+#if !defined(WITH_FULL_CONFIG_PATH)
+static char* freerdp_settings_get_legacy_config_path(void)
+{
+	char product[sizeof(FREERDP_PRODUCT_STRING)] = { 0 };
+
+	for (size_t i = 0; i < sizeof(product); i++)
+		product[i] = tolower(FREERDP_PRODUCT_STRING[i]);
+
+	return GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
+}
+#endif
+
+char* freerdp_settings_get_config_path(void)
+{
+	char* path = NULL;
+	/* For default FreeRDP continue using same config directory
+	 * as in old releases.
+	 * Custom builds use <Vendor>/<Product> as config folder. */
+#if !defined(WITH_FULL_CONFIG_PATH)
+	if (_stricmp(FREERDP_VENDOR_STRING, FREERDP_PRODUCT_STRING) == 0)
+		return freerdp_settings_get_legacy_config_path();
+#endif
+
+	char* base = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, FREERDP_VENDOR_STRING);
+	if (base)
+		path = GetCombinedPath(base, FREERDP_PRODUCT_STRING);
+	free(base);
+
+	return path;
+}
+
 rdpSettings* freerdp_settings_new(DWORD flags)
 {
-	char* base = NULL;
 	char* issuers[] = { "FreeRDP", "FreeRDP-licenser" };
 	const BOOL server = (flags & FREERDP_SETTINGS_SERVER_MODE) != 0 ? TRUE : FALSE;
 	const BOOL remote = (flags & FREERDP_SETTINGS_REMOTE_MODE) != 0 ? TRUE : FALSE;
@@ -728,7 +758,7 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 
 	if (!freerdp_settings_get_bool(settings, FreeRDP_ServerMode))
 	{
-		BOOL rc = 0;
+		BOOL rc = FALSE;
 		char* path = NULL;
 		if (!freerdp_settings_set_bool(settings, FreeRDP_RedirectClipboard, TRUE))
 			goto out_fail;
@@ -740,42 +770,10 @@ rdpSettings* freerdp_settings_new(DWORD flags)
 		if (!rc || !freerdp_settings_get_string(settings, FreeRDP_HomePath))
 			goto out_fail;
 
-		/* For default FreeRDP continue using same config directory
-		 * as in old releases.
-		 * Custom builds use <Vendor>/<Product> as config folder. */
-		if (_stricmp(FREERDP_VENDOR_STRING, FREERDP_PRODUCT_STRING))
-		{
-			BOOL res = TRUE;
-			base = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, FREERDP_VENDOR_STRING);
-
-			if (base)
-			{
-				char* combined = GetCombinedPath(base, FREERDP_PRODUCT_STRING);
-				res = freerdp_settings_set_string(settings, FreeRDP_ConfigPath, combined);
-				free(combined);
-			}
-
-			free(base);
-			if (!res)
-				goto out_fail;
-		}
-		else
-		{
-			BOOL res = 0;
-			char* cpath = NULL;
-			char product[sizeof(FREERDP_PRODUCT_STRING)] = { 0 };
-
-			for (size_t i = 0; i < sizeof(product); i++)
-				product[i] = tolower(FREERDP_PRODUCT_STRING[i]);
-
-			cpath = GetKnownSubPath(KNOWN_PATH_XDG_CONFIG_HOME, product);
-			res = freerdp_settings_set_string(settings, FreeRDP_ConfigPath, cpath);
-			free(cpath);
-			if (!res)
-				goto out_fail;
-		}
-
-		if (!freerdp_settings_get_string(settings, FreeRDP_ConfigPath))
+		char* config = freerdp_settings_get_config_path();
+		rc = freerdp_settings_set_string(settings, FreeRDP_ConfigPath, config);
+		free(config);
+		if (!rc)
 			goto out_fail;
 	}
 

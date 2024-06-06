@@ -35,8 +35,9 @@ function(generate_and_install_freerdp_man_from_xml target section dependencies)
 		configure_file(${template}.xml.in ${manpage}.xml @ONLY IMMEDIATE)
 
 		foreach(DEP IN LISTS dependencies)
+			get_filename_component(DNAME "${DEP}" NAME)
 			set(SRC ${CMAKE_CURRENT_SOURCE_DIR}/${DEP}.in)
-			set(DST ${CMAKE_CURRENT_BINARY_DIR}/${DEP})
+			set(DST ${CMAKE_CURRENT_BINARY_DIR}/${DNAME})
 
 			if (EXISTS ${SRC})
 				message("generating ${DST} from ${SRC}")

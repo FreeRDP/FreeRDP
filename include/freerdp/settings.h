@@ -713,6 +713,10 @@ typedef struct rdp_settings rdpSettings;
 	FREERDP_API const char* freerdp_supported_color_depths_string(UINT16 mask, char* buffer,
 	                                                              size_t size);
 
+	/** \brief return the configuration directory for the library
+	 */
+	FREERDP_API char* freerdp_settings_get_config_path(void);
+
 #ifdef __cplusplus
 }
 #endif

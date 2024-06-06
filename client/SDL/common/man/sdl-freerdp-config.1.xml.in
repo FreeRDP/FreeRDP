@@ -8,7 +8,7 @@
 				<para>The configuration file is stored per user.<sbr/>
 					The <replaceable>XDG_CONFIG_HOME</replaceable> environment variable can be used to override the base directory.<sbr/>
 					This defaults to <replaceable>~/.config</replaceable>
-					The location relative to <replaceable>XDG_CONFIG_HOME</replaceable> is <replaceable>$XDG_CONFIG_HOME/@VENDOR@/@PRODUCT@/@MODULE_NAME@.json</replaceable><sbr/>
+					The location relative to <replaceable>XDG_CONFIG_HOME</replaceable> is <replaceable>$XDG_CONFIG_HOME/@VENDOR_PRODUCT@/sdl-freerdp.json</replaceable><sbr/>
 					The configuration is stored in JSON format</para>
 			</listitem>
 		</varlistentry>

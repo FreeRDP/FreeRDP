@@ -34,6 +34,7 @@ namespace fs = std::experimental::filesystem;
 #include <winpr/config.h>
 #include <freerdp/version.h>
 #include <winpr/json.h>
+#include <freerdp/settings.h>
 
 SdlPref::WINPR_JSONPtr SdlPref::get()
 {
@@ -108,13 +109,11 @@ SdlPref::SdlPref(const std::string& file) : _name(file), _config(get())
 std::string SdlPref::get_pref_dir()
 {
 	using CStringPtr = std::unique_ptr<char, decltype(&free)>;
-	CStringPtr path(GetKnownPath(KNOWN_PATH_XDG_CONFIG_HOME), free);
+	CStringPtr path(freerdp_settings_get_config_path(), free);
 	if (!path)
 		return {};
 
 	fs::path config{ path.get() };
-	config /= FREERDP_VENDOR;
-	config /= FREERDP_PRODUCT;
 	return config.string();
 }
 
