@@ -398,6 +398,10 @@ AddTargetWithResourceFile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" LIBFREERDP_S
 
 add_definitions(${LIBFREERDP_DEFINITIONS})
 
+if (WITH_FULL_CONFIG_PATH)
+    add_definitions(-DWITH_FULL_CONFIG_PATH)
+endif()
+
 target_include_directories(${MODULE_NAME} INTERFACE $<INSTALL_INTERFACE:include>)
 target_link_libraries(${MODULE_NAME} PRIVATE ${LIBFREERDP_LIBS})
 target_link_libraries(${MODULE_NAME} PUBLIC ${LIBFREERDP_PUB_LIBS})

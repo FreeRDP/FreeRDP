@@ -237,3 +237,5 @@ if (BUILD_FUZZERS)
             >
     )
 endif()
+
+option(WITH_FULL_CONFIG_PATH "Use <appdata>/Vendor/Product instead of <appdata>/product (lowercase, only if vendor equals product) as config directory" OFF)

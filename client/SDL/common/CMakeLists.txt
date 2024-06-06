@@ -23,7 +23,7 @@ add_library(sdl-common-prefs STATIC
 	sdl_prefs.hpp
 	sdl_prefs.cpp
 )
-target_link_libraries(sdl-common-prefs winpr)
+target_link_libraries(sdl-common-prefs winpr freerdp)
 
 if(BUILD_TESTING)
 	add_subdirectory(test)
