@@ -226,6 +226,7 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	packet->size = (int)MIN(SrcSize, INT32_MAX);
 
 	WINPR_ASSERT(sys->codecDecoderContext);
+
 	/* avcodec_decode_video2 is deprecated with libavcodec 57.48.101 */
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 48, 101)
 	status = avcodec_send_packet(sys->codecDecoderContext, packet);
@@ -265,7 +266,6 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 	}
 
 #ifdef WITH_VAAPI
-
 	if (sys->hwctx)
 	{
 		if (sys->hwVideoFrame->format == sys->hw_pix_fmt)
@@ -288,7 +288,6 @@ static int libavcodec_decompress(H264_CONTEXT* WINPR_RESTRICT h264,
 		           av_err2str(status));
 		goto fail;
 	}
-
 #endif
 #if 0
 	WLog_Print(h264->log, WLOG_INFO,
@@ -485,7 +484,6 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 	}
 
 #ifdef WITH_VAAPI
-
 	if (sys->hwVideoFrame)
 	{
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55, 18, 102)
@@ -499,7 +497,6 @@ static void libavcodec_uninit(H264_CONTEXT* h264)
 		av_buffer_unref(&sys->hwctx);
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(57, 80, 100)
-
 	if (sys->hw_frames_ctx)
 		av_buffer_unref(&sys->hw_frames_ctx);
 
@@ -624,29 +621,32 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 #endif
 
 #ifdef WITH_VAAPI
-
-		if (!sys->hwctx)
+		if (h264->HardwareAccelerated != 0)
 		{
-			int ret =
-			    av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, VAAPI_DEVICE, NULL, 0);
-
-			if (ret < 0)
+			if (!sys->hwctx)
 			{
-				WLog_Print(h264->log, WLOG_ERROR,
-				           "Could not initialize hardware decoder, falling back to software: %s",
-				           av_err2str(ret));
-				sys->hwctx = NULL;
-				goto fail_hwdevice_create;
-			}
-		}
-		WLog_Print(h264->log, WLOG_INFO, "Using VAAPI for accelerated H264 decoding");
+				int ret =
+				    av_hwdevice_ctx_create(&sys->hwctx, AV_HWDEVICE_TYPE_VAAPI, VAAPI_DEVICE, NULL, 0);
 
-		sys->codecDecoderContext->get_format = libavcodec_get_format;
-		sys->hw_pix_fmt = AV_PIX_FMT_VAAPI;
+				if (ret < 0)
+				{
+					WLog_Print(h264->log, WLOG_ERROR,
+					           "Could not initialize hardware decoder, falling back to software: %s",
+					           av_err2str(ret));
+					sys->hwctx = NULL;
+					goto fail_hwdevice_create;
+				}
+			}
+			WLog_Print(h264->log, WLOG_INFO, "Using VAAPI for accelerated H264 decoding");
+
+			sys->codecDecoderContext->get_format = libavcodec_get_format;
+			sys->hw_pix_fmt = AV_PIX_FMT_VAAPI;
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(57, 80, 100)
-		sys->codecDecoderContext->hw_device_ctx = av_buffer_ref(sys->hwctx);
+			sys->codecDecoderContext->hw_device_ctx = av_buffer_ref(sys->hwctx);
 #endif
-		sys->codecDecoderContext->opaque = (void*)h264;
+			sys->codecDecoderContext->opaque = (void*)h264;
+		}
+
 	fail_hwdevice_create:
 #endif
 
@@ -668,7 +668,10 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT(55, 18, 102)
 	sys->videoFrame = av_frame_alloc();
 #ifdef WITH_VAAPI
-	sys->hwVideoFrame = av_frame_alloc();
+	if (h264->HardwareAccelerated != 0)
+	{
+		sys->hwVideoFrame = av_frame_alloc();
+	}
 #endif
 #else
 	sys->videoFrame = avcodec_alloc_frame();
@@ -681,11 +684,13 @@ static BOOL libavcodec_init(H264_CONTEXT* h264)
 	}
 
 #ifdef WITH_VAAPI
-
-	if (!sys->hwVideoFrame)
+	if (h264->HardwareAccelerated != 0)
 	{
-		WLog_Print(h264->log, WLOG_ERROR, "Failed to allocate libav hw frame");
-		goto EXCEPTION;
+		if (!sys->hwVideoFrame)
+		{
+			WLog_Print(h264->log, WLOG_ERROR, "Failed to allocate libav hw frame");
+			goto EXCEPTION;
+		}
 	}
 
 #endif

@@ -749,6 +749,9 @@ BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UIN
 		case H264_CONTEXT_OPTION_QP:
 			h264->QP = value;
 			return TRUE;
+		case H264_CONTEXT_OPTION_HW_ACCELERATED:
+			h264->HardwareAccelerated = value;
+			return TRUE;
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
@@ -769,6 +772,8 @@ UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option)
 			return h264->RateControlMode;
 		case H264_CONTEXT_OPTION_QP:
 			return h264->QP;
+		case H264_CONTEXT_OPTION_HW_ACCELERATED:
+			return h264->HardwareAccelerated;
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
