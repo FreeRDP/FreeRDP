@@ -31,17 +31,12 @@
 #include <pmmintrin.h>
 #endif /* WITH_SSE2 */
 
-#ifdef WITH_IPP
-#include <ippi.h>
-#endif /* WITH_IPP */
-
 #include "prim_internal.h"
 
 static primitives_t* generic = NULL;
 
 /* ------------------------------------------------------------------------- */
 #ifdef WITH_SSE2
-#if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 
 static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 src1Step,
                                      const BYTE* WINPR_RESTRICT pSrc2, UINT32 src2Step,
@@ -210,20 +205,6 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 
 	return PRIMITIVES_SUCCESS;
 }
-#endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
-#endif
-
-#ifdef WITH_IPP
-/* ------------------------------------------------------------------------- */
-static pstatus_t ipp_alphaComp_argb(const BYTE* pSrc1, INT32 src1Step, const BYTE* pSrc2,
-                                    INT32 src2Step, BYTE* pDst, INT32 dstStep, INT32 width,
-                                    INT32 height)
-{
-	IppiSize sz;
-	sz.width = width;
-	sz.height = height;
-	return ippiAlphaComp_8u_AC4R(pSrc1, src1Step, pSrc2, src2Step, pDst, dstStep, sz, ippAlphaOver);
-}
 #endif
 
 /* ------------------------------------------------------------------------- */
@@ -231,9 +212,7 @@ void primitives_init_alphaComp_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	generic = primitives_get_generic();
 	primitives_init_alphaComp(prims);
-#ifdef WITH_IPP
-	prims->alphaComp_argb = ipp_alphaComp_argb;
-#elif defined(WITH_SSE2)
+#if defined(WITH_SSE2)
 
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE)) /* for LDDQU */
