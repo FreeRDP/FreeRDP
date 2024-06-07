@@ -249,7 +249,7 @@ VOID winpr_SetThreadpoolThreadMaximum(PTP_POOL ptpp, DWORD cthrdMost)
 		ArrayList_Clear(ptpp->Threads);
 		ResetEvent(ptpp->TerminateEvent);
 	}
-	ArrayList_Lock(ptpp->Threads);
+	ArrayList_Unlock(ptpp->Threads);
 	winpr_SetThreadpoolThreadMinimum(ptpp, ptpp->Minimum);
 }
 
