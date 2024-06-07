@@ -82,6 +82,13 @@ static UINT32 rdpdr_deviceid_hash(const void* id)
 	return *((const UINT32*)id);
 }
 
+static BOOL rdpdr_device_equal(const void* v1, const void* v2)
+{
+	const UINT32* p1 = (const UINT32*)v1;
+	const UINT32* p2 = (const UINT32*)v2;
+	return *p1 == *p2;
+}
+
 static RdpdrDevice* rdpdr_device_new(void)
 {
 	return calloc(1, sizeof(RdpdrDevice));
@@ -3531,6 +3538,9 @@ static RdpdrServerPrivate* rdpdr_server_private_new(void)
 	WINPR_ASSERT(obj);
 	obj->fnObjectFree = rdpdr_device_free_h;
 	obj->fnObjectNew = rdpdr_device_clone;
+
+	obj = HashTable_KeyObject(priv->devicelist);
+	obj->fnObjectEquals = rdpdr_device_equal;
 
 	return priv;
 fail:
