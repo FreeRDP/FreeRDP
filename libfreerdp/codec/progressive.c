@@ -867,7 +867,7 @@ static INLINE void progressive_rfx_decode_block(const primitives_t* prims,
 	if (!shift)
 		return;
 
-	prims->lShiftC_16s(buffer, shift, buffer, length);
+	prims->lShiftC_16s_inplace(buffer, shift, length);
 }
 
 static INLINE int progressive_rfx_decode_component(

@@ -104,14 +104,14 @@ typedef pstatus_t (*__add_16s_t)(const INT16* WINPR_RESTRICT pSrc1,
 	                             UINT32 len);
 typedef pstatus_t (*__add_16s_inplace_t)(INT16* WINPR_RESTRICT pSrcDst1,
 	                                     INT16* WINPR_RESTRICT pSrcDst2, UINT32 len);
+typedef pstatus_t (*__lShiftC_16s_inplace_t)(INT16* WINPR_RESTRICT pSrcDst, UINT32 val, UINT32 len);
 typedef pstatus_t (*__lShiftC_16s_t)(const INT16* pSrc, UINT32 val, INT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__lShiftC_16u_t)(const UINT16* pSrc, UINT32 val, UINT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__rShiftC_16s_t)(const INT16* pSrc, UINT32 val, INT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__rShiftC_16u_t)(const UINT16* pSrc, UINT32 val, UINT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__shiftC_16s_t)(const INT16* pSrc, INT32 val, INT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__shiftC_16u_t)(const UINT16* pSrc, INT32 val, UINT16* pSrcDst, UINT32 len);
-typedef pstatus_t (*__sign_16s_t)(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_RESTRICT pDst,
-	                              UINT32 len);
+typedef pstatus_t (*__sign_16s_t)(const INT16* pSrc, INT16* pSrcDst, UINT32 len);
 typedef pstatus_t (*__yCbCrToRGB_16s8u_P3AC4R_t)(const INT16* const WINPR_RESTRICT pSrc[3],
 	                                             UINT32 srcStep, BYTE* WINPR_RESTRICT pDst,
 	                                             UINT32 dstStep, UINT32 DstFormat,
@@ -221,6 +221,7 @@ typedef struct
 	 *  pSrcDst1 = pSrcDst2 = pSrcDst1  + pSrcDst2
 	 */
 	__add_16s_inplace_t add_16s_inplace;
+	__lShiftC_16s_inplace_t lShiftC_16s_inplace;
 } primitives_t;
 
 typedef enum
