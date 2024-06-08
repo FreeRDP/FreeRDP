@@ -59,6 +59,7 @@ class SdlContext
 	bool resizeable = false;
 	bool grab_mouse = false;
 	bool grab_kbd = false;
+	bool grab_kbd_enabled = true;
 
 	std::map<Uint32, SdlWindow> windows;
 
