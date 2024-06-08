@@ -331,7 +331,7 @@ bool SDLConnectionDialog::createWindow()
 	const size_t total_height = 300;
 
 	auto flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MOUSE_FOCUS | SDL_WINDOW_INPUT_FOCUS;
-	auto rc = SDL_CreateWindowAndRenderer(widget_width, widget_height, flags, &_window, &_renderer);
+	auto rc = SDL_CreateWindowAndRenderer(widget_width, total_height, flags, &_window, &_renderer);
 	if (rc != 0)
 	{
 		widget_log_error(rc, "SDL_CreateWindowAndRenderer");
