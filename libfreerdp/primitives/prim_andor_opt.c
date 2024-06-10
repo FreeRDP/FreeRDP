@@ -24,22 +24,16 @@
 #include <pmmintrin.h>
 #endif /* WITH_SSE2 */
 
-#ifdef WITH_IPP
-#include <ipps.h>
-#endif /* WITH_IPP */
-
 #include "prim_internal.h"
 #include "prim_templates.h"
 
 static primitives_t* generic = NULL;
 
 #ifdef WITH_SSE2
-#if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 /* ------------------------------------------------------------------------- */
 SSE3_SCD_PRE_ROUTINE(sse3_andC_32u, UINT32, generic->andC_32u, _mm_and_si128,
                      *dptr++ = *sptr++ & val)
 SSE3_SCD_PRE_ROUTINE(sse3_orC_32u, UINT32, generic->orC_32u, _mm_or_si128, *dptr++ = *sptr++ | val)
-#endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
 #endif
 
 /* ------------------------------------------------------------------------- */
@@ -47,10 +41,7 @@ void primitives_init_andor_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	generic = primitives_get_generic();
 	primitives_init_andor(prims);
-#if defined(WITH_IPP)
-	prims->andC_32u = (__andC_32u_t)ippsAndC_32u;
-	prims->orC_32u = (__orC_32u_t)ippsOrC_32u;
-#elif defined(WITH_SSE2)
+#if defined(WITH_SSE2)
 
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))

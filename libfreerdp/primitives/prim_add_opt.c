@@ -25,21 +25,152 @@
 #include <pmmintrin.h>
 #endif /* WITH_SSE2 */
 
-#ifdef WITH_IPP
-#include <ipps.h>
-#endif /* WITH_IPP */
-
 #include "prim_internal.h"
 #include "prim_templates.h"
 
 static primitives_t* generic = NULL;
 
 #ifdef WITH_SSE2
-#if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 /* ------------------------------------------------------------------------- */
 SSE3_SSD_ROUTINE(sse3_add_16s, INT16, generic->add_16s, _mm_adds_epi16,
                  generic->add_16s(sptr1++, sptr2++, dptr++, 1))
-#endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
+
+static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
+                                      INT16* WINPR_RESTRICT pSrcDst2, UINT32 len)
+{
+	const int shifts = 2;
+	UINT32 offBeatMask;
+	INT16* dptr1 = pSrcDst1;
+	INT16* dptr2 = pSrcDst2;
+
+	size_t count;
+	if (len < 16) /* pointless if too small */
+		return generic->add_16s_inplace(pSrcDst1, pSrcDst2, len);
+
+	offBeatMask = (1 << (shifts - 1)) - 1;
+	if ((ULONG_PTR)pSrcDst1 & offBeatMask)
+	{
+		/* Incrementing the pointer skips over 16-byte boundary. */
+		return generic->add_16s_inplace(pSrcDst1, pSrcDst2, len);
+	}
+	/* Get to the 16-byte boundary now. */
+	const size_t rem = ((UINT_PTR)dptr1 & 0xf) / sizeof(INT16);
+	if (rem != 0)
+	{
+		const size_t add = 16 - rem;
+		pstatus_t status = generic->add_16s_inplace(dptr1, dptr2, add);
+		if (status != PRIMITIVES_SUCCESS)
+			return status;
+		dptr1 += add;
+		dptr2 += add;
+	}
+	/* Use 4 128-bit SSE registers. */
+	count = len >> (7 - shifts);
+	len -= count << (7 - shifts);
+	if (((const ULONG_PTR)dptr1 & 0x0f) || ((const ULONG_PTR)dptr2 & 0x0f))
+	{
+		/* Unaligned loads */
+		while (count--)
+		{
+			const __m128i* vsptr1 = (const __m128i*)dptr1;
+			const __m128i* vsptr2 = (const __m128i*)dptr2;
+			__m128i* vdptr1 = (__m128i*)dptr1;
+			__m128i* vdptr2 = (__m128i*)dptr2;
+
+			__m128i xmm0 = _mm_lddqu_si128(vsptr1++);
+			__m128i xmm1 = _mm_lddqu_si128(vsptr1++);
+			__m128i xmm2 = _mm_lddqu_si128(vsptr1++);
+			__m128i xmm3 = _mm_lddqu_si128(vsptr1++);
+			__m128i xmm4 = _mm_lddqu_si128(vsptr2++);
+			__m128i xmm5 = _mm_lddqu_si128(vsptr2++);
+			__m128i xmm6 = _mm_lddqu_si128(vsptr2++);
+			__m128i xmm7 = _mm_lddqu_si128(vsptr2++);
+
+			xmm0 = _mm_adds_epi16(xmm0, xmm4);
+			xmm1 = _mm_adds_epi16(xmm1, xmm5);
+			xmm2 = _mm_adds_epi16(xmm2, xmm6);
+			xmm3 = _mm_adds_epi16(xmm3, xmm7);
+
+			_mm_store_si128(vdptr1++, xmm0);
+			_mm_store_si128(vdptr1++, xmm1);
+			_mm_store_si128(vdptr1++, xmm2);
+			_mm_store_si128(vdptr1++, xmm3);
+
+			_mm_store_si128(vdptr2++, xmm0);
+			_mm_store_si128(vdptr2++, xmm1);
+			_mm_store_si128(vdptr2++, xmm2);
+			_mm_store_si128(vdptr2++, xmm3);
+
+			dptr1 = (INT16*)vdptr1;
+			dptr2 = (INT16*)vdptr2;
+		}
+	}
+	else
+	{
+		/* Aligned loads */
+		while (count--)
+		{
+			const __m128i* vsptr1 = (const __m128i*)dptr1;
+			const __m128i* vsptr2 = (const __m128i*)dptr2;
+			__m128i* vdptr1 = (__m128i*)dptr1;
+			__m128i* vdptr2 = (__m128i*)dptr2;
+
+			__m128i xmm0 = _mm_load_si128(vsptr1++);
+			__m128i xmm1 = _mm_load_si128(vsptr1++);
+			__m128i xmm2 = _mm_load_si128(vsptr1++);
+			__m128i xmm3 = _mm_load_si128(vsptr1++);
+			__m128i xmm4 = _mm_load_si128(vsptr2++);
+			__m128i xmm5 = _mm_load_si128(vsptr2++);
+			__m128i xmm6 = _mm_load_si128(vsptr2++);
+			__m128i xmm7 = _mm_load_si128(vsptr2++);
+
+			xmm0 = _mm_adds_epi16(xmm0, xmm4);
+			xmm1 = _mm_adds_epi16(xmm1, xmm5);
+			xmm2 = _mm_adds_epi16(xmm2, xmm6);
+			xmm3 = _mm_adds_epi16(xmm3, xmm7);
+
+			_mm_store_si128(vdptr1++, xmm0);
+			_mm_store_si128(vdptr1++, xmm1);
+			_mm_store_si128(vdptr1++, xmm2);
+			_mm_store_si128(vdptr1++, xmm3);
+
+			_mm_store_si128(vdptr2++, xmm0);
+			_mm_store_si128(vdptr2++, xmm1);
+			_mm_store_si128(vdptr2++, xmm2);
+			_mm_store_si128(vdptr2++, xmm3);
+
+			dptr1 = (INT16*)vdptr1;
+			dptr2 = (INT16*)vdptr2;
+		}
+	}
+	/* Use a single 128-bit SSE register. */
+	count = len >> (5 - shifts);
+	len -= count << (5 - shifts);
+	while (count--)
+	{
+		const __m128i* vsptr1 = (const __m128i*)dptr1;
+		const __m128i* vsptr2 = (const __m128i*)dptr2;
+		__m128i* vdptr1 = (__m128i*)dptr1;
+		__m128i* vdptr2 = (__m128i*)dptr2;
+
+		__m128i xmm0 = LOAD_SI128(vsptr1);
+		__m128i xmm1 = LOAD_SI128(vsptr2);
+
+		xmm0 = _mm_adds_epi16(xmm0, xmm1);
+
+		_mm_store_si128(vdptr1++, xmm0);
+		_mm_store_si128(vdptr2++, xmm0);
+
+		dptr1 = (INT16*)vdptr1;
+		dptr2 = (INT16*)vdptr2;
+	}
+	/* Finish off the remainder. */
+	if (len > 0)
+		return generic->add_16s_inplace(dptr1, dptr2, len);
+
+	return PRIMITIVES_SUCCESS;
+}
+
 #endif
 
 /* ------------------------------------------------------------------------- */
@@ -47,14 +178,13 @@ void primitives_init_add_opt(primitives_t* WINPR_RESTRICT prims)
 {
 	generic = primitives_get_generic();
 	primitives_init_add(prims);
-#ifdef WITH_IPP
-	prims->add_16s = (__add_16s_t)ippsAdd_16s;
-#elif defined(WITH_SSE2)
 
+#if defined(WITH_SSE2)
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE)) /* for LDDQU */
 	{
 		prims->add_16s = sse3_add_16s;
+		prims->add_16s_inplace = sse3_add_16s_inplace;
 	}
 
 #endif

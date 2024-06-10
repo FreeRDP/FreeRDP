@@ -186,7 +186,7 @@ void crypto_reverse(BYTE* data, size_t length)
 	}
 }
 
-char* crypto_read_pem(const char* filename, size_t* plength)
+char* crypto_read_pem(const char* WINPR_RESTRICT filename, size_t* WINPR_RESTRICT plength)
 {
 	char* pem = NULL;
 	FILE* fp = NULL;
@@ -234,7 +234,8 @@ fail:
 	return NULL;
 }
 
-BOOL crypto_write_pem(const char* filename, const char* pem, size_t length)
+BOOL crypto_write_pem(const char* WINPR_RESTRICT filename, const char* WINPR_RESTRICT pem,
+                      size_t length)
 {
 	WINPR_ASSERT(filename);
 	WINPR_ASSERT(pem || (length == 0));

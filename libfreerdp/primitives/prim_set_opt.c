@@ -24,9 +24,6 @@
 #ifdef WITH_SSE2
 #include <emmintrin.h>
 #endif /* WITH_SSE2 */
-#ifdef WITH_IPP
-#include <ipps.h>
-#endif /* WITH_IPP */
 
 #include "prim_internal.h"
 
@@ -34,7 +31,6 @@ static primitives_t* generic = NULL;
 
 /* ========================================================================= */
 #ifdef WITH_SSE2
-#if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
 {
 	BYTE byte = 0;
@@ -116,12 +112,10 @@ static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
 
 	return PRIMITIVES_SUCCESS;
 }
-#endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
 #endif /* WITH_SSE2 */
 
 /* ------------------------------------------------------------------------- */
 #ifdef WITH_SSE2
-#if !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS)
 static pstatus_t sse2_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, UINT32 len)
 {
 	const primitives_t* prim = primitives_get_generic();
@@ -219,18 +213,7 @@ static pstatus_t sse2_set_32s(INT32 val, INT32* WINPR_RESTRICT pDst, UINT32 len)
 	UINT32 uval = *((UINT32*)&val);
 	return sse2_set_32u(uval, (UINT32*)pDst, len);
 }
-#endif /* !defined(WITH_IPP) || defined(ALL_PRIMITIVES_VERSIONS) */
 #endif /* WITH_SSE2 */
-
-#ifdef WITH_IPP
-/* ------------------------------------------------------------------------- */
-static pstatus_t ipp_wrapper_set_32u(UINT32 val, UINT32* WINPR_RESTRICT pDst, INT32 len)
-{
-	/* A little type conversion, then use the signed version. */
-	INT32 sval = *((INT32*)&val);
-	return ippsSet_32s(sval, (INT32*)pDst, len);
-}
-#endif
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_set_opt(primitives_t* WINPR_RESTRICT prims)
@@ -238,12 +221,8 @@ void primitives_init_set_opt(primitives_t* WINPR_RESTRICT prims)
 	generic = primitives_get_generic();
 	primitives_init_set(prims);
 	/* Pick tuned versions if possible. */
-#ifdef WITH_IPP
-	prims->set_8u = (__set_8u_t)ippsSet_8u;
-	prims->set_32s = (__set_32s_t)ippsSet_32s;
-	prims->set_32u = (__set_32u_t)ipp_wrapper_set_32u;
-	prims->zero = (__zero_t)ippsZero_8u;
-#elif defined(WITH_SSE2)
+
+#if defined(WITH_SSE2)
 
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{

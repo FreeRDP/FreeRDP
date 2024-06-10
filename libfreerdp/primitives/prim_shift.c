@@ -20,6 +20,25 @@
 
 #include "prim_internal.h"
 /* ------------------------------------------------------------------------- */
+static INLINE INT16 shift(INT16 val, UINT32 sh)
+{
+	return val << sh;
+}
+
+static INLINE pstatus_t general_lShiftC_16s_inplace(INT16* WINPR_RESTRICT pSrcDst, UINT32 val,
+                                                    UINT32 len)
+{
+	if (val == 0)
+		return PRIMITIVES_SUCCESS;
+	if (val >= 16)
+		return -1;
+
+	for (UINT32 x = 0; x < len; x++)
+		pSrcDst[x] = shift(pSrcDst[x], val);
+
+	return PRIMITIVES_SUCCESS;
+}
+
 static INLINE pstatus_t general_lShiftC_16s(const INT16* pSrc, UINT32 val, INT16* pDst, UINT32 len)
 {
 	if (val == 0)
@@ -27,8 +46,8 @@ static INLINE pstatus_t general_lShiftC_16s(const INT16* pSrc, UINT32 val, INT16
 	if (val >= 16)
 		return -1;
 
-	while (len--)
-		*pDst++ = (INT16)((UINT16)*pSrc++ << val);
+	for (UINT32 x = 0; x < len; x++)
+		pDst[x] = shift(pSrc[x], val);
 
 	return PRIMITIVES_SUCCESS;
 }
@@ -105,6 +124,7 @@ static INLINE pstatus_t general_shiftC_16u(const UINT16* pSrc, INT32 val, UINT16
 void primitives_init_shift(primitives_t* prims)
 {
 	/* Start with the default. */
+	prims->lShiftC_16s_inplace = general_lShiftC_16s_inplace;
 	prims->lShiftC_16s = general_lShiftC_16s;
 	prims->rShiftC_16s = general_rShiftC_16s;
 	prims->lShiftC_16u = general_lShiftC_16u;
