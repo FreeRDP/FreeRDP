@@ -621,8 +621,12 @@ static BOOL arm_parse_ipv6(rdpSettings* settings, WINPR_JSON* ipv6, size_t* pAdd
 		WINPR_JSON* adressN = WINPR_JSON_GetArrayItem(ipAddress, j);
 		if (!adressN || !WINPR_JSON_IsString(adressN))
 			continue;
+
+		const char* addr = WINPR_JSON_GetStringValue(adressN);
+		if (utils_str_is_empty(addr))
+			continue;
 		if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
-		                                        (*pAddressIdx)++, adressN))
+		                                        (*pAddressIdx)++, addr))
 			return FALSE;
 	}
 	return TRUE;
@@ -649,7 +653,7 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 		if (publicIpNode && WINPR_JSON_IsString(publicIpNode))
 		{
 			const char* publicIp = WINPR_JSON_GetStringValue(publicIpNode);
-			if (publicIp)
+			if (!utils_str_is_empty(publicIp))
 			{
 				if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
 				                                        (*pAddressIdx)++, publicIp))
@@ -661,7 +665,7 @@ static BOOL arm_parse_ipv4(rdpSettings* settings, WINPR_JSON* ipv4, size_t* pAdd
 		if (privateIpNode && WINPR_JSON_IsString(privateIpNode))
 		{
 			const char* privateIp = WINPR_JSON_GetStringValue(privateIpNode);
-			if (privateIp)
+			if (!utils_str_is_empty(privateIp))
 			{
 				if (!freerdp_settings_set_pointer_array(settings, FreeRDP_TargetNetAddresses,
 				                                        (*pAddressIdx)++, privateIp))
@@ -749,6 +753,8 @@ static BOOL arm_treat_azureInstanceNetworkMetadata(const char* metadata, rdpSett
 				goto out;
 		}
 	}
+	if (!freerdp_settings_set_uint32(settings, FreeRDP_TargetNetAddressCount, addressIdx))
+		goto out;
 
 	ret = freerdp_settings_get_uint32(settings, FreeRDP_TargetNetAddressCount) > 0;
 
