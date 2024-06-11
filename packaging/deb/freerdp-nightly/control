@@ -57,6 +57,7 @@ Build-Depends:
  libpng-dev,
  libjpeg-dev,
  opensc-pkcs11,
+ libv4l-dev,
  libasan5 | libasan6 | libasan8
 Standards-Version: 3.9.5
 Homepage: http://www.freerdp.com/

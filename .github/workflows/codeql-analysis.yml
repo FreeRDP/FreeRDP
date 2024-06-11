@@ -89,6 +89,7 @@ jobs:
           libavutil-dev \
           libavcodec-dev \
           libcups2-dev \
+          libv4l-dev \
           libpulse-dev \
           libasound2-dev \
           libpcsclite-dev \

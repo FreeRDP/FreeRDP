@@ -51,6 +51,7 @@ BuildRequires: libwebp-devel
 BuildRequires: fuse3-devel
 BuildRequires: pam-devel
 BuildRequires: libicu-devel
+BuildRequires: libv4l-devel
 
 # (Open)Suse
 %if %{defined suse_version}

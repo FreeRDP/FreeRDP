@@ -72,6 +72,7 @@ jobs:
             libopus-dev \
             libwebp-dev \
             libpng-dev \
+            libv4l-dev \
             libjpeg-dev \
             liburiparser-dev \
             cmake \
