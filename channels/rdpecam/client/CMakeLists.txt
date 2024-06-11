@@ -17,16 +17,12 @@
 
 define_channel_client("rdpecam")
 
-# swscale is required and is either part of FFMPEG or standalone library
-if(NOT WITH_FFMPEG)
-	find_package(SWScale REQUIRED)
-endif()
-
-if(NOT WITH_OPENH264 AND NOT WITH_FFMPEG)
-	message(FATAL_ERROR "WITH_OPENH264 or WITH_FFMPEG required for CHANNEL_RDPECAM_CLIENT")
+if(NOT WITH_SWSCALE OR NOT WITH_FFMPEG)
+    message(FATAL_ERROR "WITH_FFMPEG and WITH_SWSCALE required for CHANNEL_RDPECAM_CLIENT")
 endif()
 
 # currently camera redirect client supported for platforms with Video4Linux only
+find_package(SWScale REQUIRED)
 find_package(V4L)
 if(V4L_FOUND)
 	set(WITH_V4L ON)
@@ -42,7 +38,10 @@ set(${MODULE_PREFIX}_SRCS
 )
 
 set(${MODULE_PREFIX}_LIBS
-	freerdp winpr
+	freerdp
+    winpr
+    ${SWScale_LIBRARY}
+    ${FFMPEG_LIBRARIES}
 )
 
 add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
