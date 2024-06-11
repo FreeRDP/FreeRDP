@@ -18,6 +18,7 @@
  * limitations under the License.
  */
 #include <math.h>
+#include <errno.h>
 
 #include <winpr/json.h>
 #include <winpr/assert.h>
