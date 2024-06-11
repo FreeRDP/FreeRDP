@@ -232,6 +232,44 @@ static BOOL detect_changes(BOOL firstFrameDone, const UINT32 QP, const RECTANGLE
 	return TRUE;
 }
 
+/**
+ * Function description
+ *
+ * @return
+ */
+INT32 h264_get_yuv_buffer(H264_CONTEXT* h264, UINT32 nSrcStride, UINT32 nSrcWidth,
+                          UINT32 nSrcHeight, BYTE* YUVData[3], UINT32 stride[3])
+{
+	if (!h264 || !h264->Compressor || !h264->subsystem || !h264->subsystem->Compress)
+		return -1;
+
+	if (!avc420_ensure_buffer(h264, nSrcStride, nSrcWidth, nSrcHeight))
+		return -1;
+
+	for (size_t x = 0; x < 3; x++)
+	{
+		YUVData[x] = h264->pYUVData[x];
+		stride[x] = h264->iStride[x];
+	}
+
+	return 0;
+}
+
+/**
+ * Function description
+ *
+ * @return
+ */
+INT32 h264_compress(H264_CONTEXT* h264, BYTE** ppDstData, UINT32* pDstSize)
+{
+	if (!h264 || !h264->Compressor || !h264->subsystem || !h264->subsystem->Compress)
+		return -1;
+
+	const BYTE* pcYUVData[3] = { h264->pYUVData[0], h264->pYUVData[1], h264->pYUVData[2] };
+
+	return h264->subsystem->Compress(h264, pcYUVData, h264->iStride, ppDstData, pDstSize);
+}
+
 INT32 avc420_compress(H264_CONTEXT* h264, const BYTE* pSrcData, DWORD SrcFormat, UINT32 nSrcStep,
                       UINT32 nSrcWidth, UINT32 nSrcHeight, const RECTANGLE_16* regionRect,
                       BYTE** ppDstData, UINT32* pDstSize, RDPGFX_H264_METABLOCK* meta)
@@ -749,6 +787,9 @@ BOOL h264_context_set_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option, UIN
 		case H264_CONTEXT_OPTION_QP:
 			h264->QP = value;
 			return TRUE;
+		case H264_CONTEXT_OPTION_USAGETYPE:
+			h264->UsageType = value;
+			return TRUE;
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);
@@ -769,6 +810,8 @@ UINT32 h264_context_get_option(H264_CONTEXT* h264, H264_CONTEXT_OPTION option)
 			return h264->RateControlMode;
 		case H264_CONTEXT_OPTION_QP:
 			return h264->QP;
+		case H264_CONTEXT_OPTION_USAGETYPE:
+			return h264->UsageType;
 		default:
 			WLog_Print(h264->log, WLOG_WARN, "Unknown H264_CONTEXT_OPTION[0x%08" PRIx32 "]",
 			           option);

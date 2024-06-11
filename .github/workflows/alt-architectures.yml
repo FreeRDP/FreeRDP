@@ -86,6 +86,7 @@ jobs:
               liburiparser-dev \
               libssl-dev \
               opensc-pkcs11 \
+              libv4l-dev \
               cmake \
               clang
           run: |

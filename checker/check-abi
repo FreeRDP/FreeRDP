@@ -1,0 +1,282 @@
+#!/usr/bin/python3
+
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Copyright 2019 Mathieu Bridon
+# Copyright 2021 Bastien Nocera
+
+"""check-abi"""
+
+import argparse
+import contextlib
+import glob
+import os
+import shutil
+import subprocess
+import sys
+
+VERSION = '0.1'
+
+def format_title(title):
+    """Put title in a box"""
+    box = {
+        'tl': '╔', 'tr': '╗', 'bl': '╚', 'br': '╝', 'h': '═', 'v': '║',
+    }
+    hline = box['h'] * (len(title) + 2)
+
+    return '\n'.join([
+        f"{box['tl']}{hline}{box['tr']}",
+        f"{box['v']} {title} {box['v']}",
+        f"{box['bl']}{hline}{box['br']}",
+    ])
+
+
+def rm_rf(path):
+    """rm -rf"""
+    try:
+        shutil.rmtree(path)
+    except FileNotFoundError:
+        pass
+
+
+def sanitize_path(name):
+    """Replace slashes with dashes"""
+    return name.replace('/', '-')
+
+
+def get_current_revision():
+    """gets the current git revision"""
+    revision = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
+                                       encoding='utf-8').strip()
+
+    if revision == 'HEAD':
+        # This is a detached HEAD, get the commit hash
+        revision = subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip().decode('utf-8')
+
+    return revision
+
+
+def get_meson_version():
+    """Retrieves the version of Meson as a tuple"""
+    res = subprocess.check_output(['meson', '--version']).strip().decode('utf-8')
+    return [int(x) for x in res.split('.')]
+
+
+def build_meson(build_dir, parameters, env):
+    """Builds using Meson"""
+    _setup_args = ['meson', 'setup', build_dir, '--prefix=/usr', '--libdir=lib']
+    meson_version = get_meson_version()
+    if meson_version[0] > 0 or (meson_version[0] == 0 and meson_version[1] >= 54):
+        _compile_args = ['meson', 'compile', '-v', '-C', build_dir]
+    else:
+        _compile_args = ['ninja', '-v', '-C', build_dir]
+    if meson_version[0] > 0 or (meson_version[0] == 0 and meson_version[1] >= 47):
+        _install_args = ['meson', 'install', '-C', build_dir]
+    else:
+        _install_args = ['ninja', '-v', '-C', build_dir, 'install']
+    if parameters is not None:
+        _setup_args += parameters.split(' ')
+    subprocess.check_call(_setup_args)
+    subprocess.check_call(_compile_args)
+    subprocess.check_call(_install_args, env=env)
+
+
+def get_cmake_version():
+    """Retrieves the version of CMake as a tuple"""
+    res = subprocess.check_output(['cmake', '--version']).strip().decode('utf-8')
+    lines = res.split('\n')
+    ver = lines[0].replace('cmake version ', '')
+    return [int(x) for x in ver.split('.')]
+
+
+def build_cmake(build_dir, parameters, env):
+    """Builds using CMake"""
+    _setup_args = [
+        "cmake",
+        "-GNinja",
+        "-B",
+        build_dir,
+        "-S",
+        ".",
+        "-DCMAKE_INSTALL_PREFIX=/usr",
+        "-DCMAKE_INSTALL_LIBDIR=lib",
+    ]
+    _compile_args = ['cmake', '--build', build_dir]
+    _install_args = ['cmake', '--install', build_dir]
+    if parameters is not None:
+        _setup_args += parameters.split(' ')
+    subprocess.check_call(_setup_args)
+    subprocess.check_call(_compile_args)
+    subprocess.check_call(_install_args, env=env)
+
+
+def build_autotools(revision, src_dir_copy, build_dir, parameters, env):
+    """Builds using Autotools"""
+    src_dir = os.getcwd()
+
+    # Setup src dir copy
+    os.mkdir(src_dir_copy)
+    os.chdir(src_dir_copy)
+    subprocess.check_call(['git', 'clone', src_dir, '.'])
+    subprocess.check_call(['git', 'checkout', '-q', revision])
+    subprocess.check_call(['sed',
+                           '-i',
+                           's/AM_GNU_GETTEXT_VERSION.*/AM_GNU_GETTEXT_VERSION([0.21])/',
+                           'configure.ac'])
+    os.chdir('..')
+
+    os.mkdir(build_dir)
+    os.chdir(build_dir)
+    autogen_path = src_dir_copy + '/autogen.sh'
+    _args = [autogen_path, '--prefix=/usr', '--libdir=/usr/lib']
+    if parameters is not None:
+        _args += parameters.split(' ')
+    subprocess.check_call(_args)
+    subprocess.check_call(['make'])
+    subprocess.check_call(['make','install'], env=env)
+    os.chdir(src_dir)
+
+
+@contextlib.contextmanager
+def checkout_git_revision(revision):
+    """Checkout a git revision before reverting to the current one"""
+    current_revision = get_current_revision()
+    subprocess.check_call(['git', 'checkout', '-q', revision])
+
+    try:
+        yield
+    finally:
+        subprocess.check_call(['git', 'checkout', '-q', current_revision])
+
+
+def build_install(revision, build_system, parameters):
+    """Build git revision with the passed build system"""
+    build_dir = '_check_abi_build'
+    dest_dir = os.path.abspath(sanitize_path(revision))
+    src_dir_copy = os.getcwd() + '/_src_copy'
+    if not args.quiet:
+        print(format_title(f'# Building and installing {revision} in {dest_dir}'),
+              end='\n\n', flush=True)
+
+    with checkout_git_revision(revision):
+        rm_rf(build_dir)
+        rm_rf(revision)
+        rm_rf(src_dir_copy)
+
+        env = os.environ.copy()
+        env['DESTDIR'] = dest_dir
+        env['V'] = '1'
+
+        if not build_system or build_system == 'autodetect':
+            if os.path.exists('meson.build'):
+                build_system = 'meson'
+            elif os.path.exists('CMakeLists.txt'):
+                build_system = 'cmake'
+            elif os.path.exists('configure.ac') and os.path.exists('autogen.sh'):
+                build_system = 'autotools'
+            else:
+                print('Could not detect build system', file=sys.stderr)
+                assert()
+
+        if build_system == 'meson':
+            build_meson(build_dir, parameters, env)
+        elif build_system == 'cmake':
+            build_cmake(build_dir, parameters, env)
+        elif build_system == 'autotools':
+            build_autotools(revision, src_dir_copy, build_dir, parameters, env)
+        else:
+            print(f'Unsupported build system "f{build_system}"', file=sys.stderr)
+            assert()
+
+    return dest_dir
+
+
+def compare(_old_tree, _new_tree):
+    """Compare the ABIs between 2 build trees"""
+    if not args.quiet:
+        print(format_title('# Comparing the two ABIs'), end='\n\n', flush=True)
+
+    if not args.library_name:
+        paths = glob.glob(os.path.join(_old_tree, 'usr', 'lib') + '/*.so')
+        libs_name = []
+        for path in paths:
+            libs_name.append(os.path.basename(path))
+    else:
+        libs_name = [ args.library_name ]
+
+    for lib_name in libs_name:
+
+        old_headers = os.path.join(_old_tree, 'usr', 'include')
+        old_lib = os.path.join(_old_tree, 'usr', 'lib', lib_name)
+
+        new_headers = os.path.join(_new_tree, 'usr', 'include')
+        new_lib = os.path.join(_new_tree, 'usr', 'lib', lib_name)
+
+        cmd = [
+                'abidiff', '--headers-dir1', old_headers, '--headers-dir2', new_headers,
+                '--drop-private-types', '--fail-no-debug-info', '--no-added-syms'
+                ]
+        if args.suppr:
+            cmd.append ('--suppr')
+            cmd.append (args.suppr)
+
+        cmd.append (old_lib)
+        cmd.append (new_lib)
+
+        subprocess.check_call(cmd)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('old', help='the previous git revision, considered the reference')
+    parser.add_argument('new', help='the new git revision, to compare to the reference')
+    parser.add_argument('-q', '--quiet', action='store_true', help='increase output verbosity')
+    parser.add_argument('-s', '--suppr', help='Pass a suppression file to abidiff')
+    parser.add_argument('--old-build-system',
+            help='build system to use for the reference git revision (default: autodetect)',
+            type=str, choices=['autodetect', 'meson',  'cmake', 'autotools'])
+    parser.add_argument('--new-build-system',
+            help='build system to use for the new git revision (default: autodetect)',
+            type=str, choices=['autodetect', 'meson', 'cmake', 'autotools'])
+    parser.add_argument('--old-parameters',
+            help='additional arguments to pass to the reference git revisionʼs build system',
+            type=str)
+    parser.add_argument('--new-parameters',
+            help='additional arguments to pass to the new git revisionʼs build system',
+            type=str)
+    parser.add_argument('--parameters',
+            help="additional arguments to pass to both the old and the"
+                 " new git revisionʼs build systems",
+            type=str)
+    parser.add_argument('-l', '--library-name',
+            help='the name of the shared library to compare (default: \'*.so\')',
+            type=str)
+
+    args = parser.parse_args()
+
+    if args.parameters:
+        if args.old_parameters or args.new_parameters:
+            if not args.quiet:
+                print("Can't pass --parameters with either --old-parameters"
+                      " or --new-parameters")
+            sys.exit(1)
+        args.old_parameters = args.parameters
+        args.new_parameters = args.parameters
+
+    if args.old == args.new and args.old_parameters == args.new_parameters:
+        if not args.quiet:
+            print("Let's not waste time comparing something to itself")
+        sys.exit(0)
+
+    old_tree = build_install(args.old, args.old_build_system, args.old_parameters)
+    new_tree = build_install(args.new, args.new_build_system, args.new_parameters)
+
+    try:
+        compare(old_tree, new_tree)
+
+    except Exception: # pylint: disable=broad-except
+        sys.exit(1)
+
+    if not args.quiet:
+        print(f'Hurray! {args.old} and {args.new} are ABI-compatible!')

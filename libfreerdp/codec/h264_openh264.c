@@ -228,14 +228,32 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 			return status;
 		}
 
-		sys->EncParamExt.iUsageType = SCREEN_CONTENT_REAL_TIME;
+		EUsageType usageType;
+
+		switch (h264->UsageType)
+		{
+			case H264_CAMERA_VIDEO_NON_REAL_TIME:
+				usageType = CAMERA_VIDEO_NON_REAL_TIME;
+				break;
+			case H264_CAMERA_VIDEO_REAL_TIME:
+				usageType = CAMERA_VIDEO_REAL_TIME;
+				break;
+			case H264_SCREEN_CONTENT_NON_REAL_TIME:
+				usageType = SCREEN_CONTENT_NON_REAL_TIME;
+				break;
+			case H264_SCREEN_CONTENT_REAL_TIME:
+			default:
+				usageType = SCREEN_CONTENT_REAL_TIME;
+				break;
+		}
+
+		sys->EncParamExt.iUsageType = usageType;
 		sys->EncParamExt.iPicWidth = (int)h264->width;
 		sys->EncParamExt.iPicHeight = (int)h264->height;
 		sys->EncParamExt.fMaxFrameRate = (int)h264->FrameRate;
 		sys->EncParamExt.iMaxBitrate = UNSPECIFIED_BIT_RATE;
 		sys->EncParamExt.bEnableDenoise = 0;
 		sys->EncParamExt.bEnableLongTermReference = 0;
-		sys->EncParamExt.bEnableFrameSkip = 0;
 		sys->EncParamExt.iSpatialLayerNum = 1;
 		sys->EncParamExt.iMultipleThreadIdc = (int)h264->NumberOfThreads;
 		sys->EncParamExt.sSpatialLayers[0].fFrameRate = h264->FrameRate;
@@ -250,11 +268,13 @@ static int openh264_compress(H264_CONTEXT* WINPR_RESTRICT h264,
 				sys->EncParamExt.iTargetBitrate = (int)h264->BitRate;
 				sys->EncParamExt.sSpatialLayers[0].iSpatialBitrate =
 				    sys->EncParamExt.iTargetBitrate;
+				sys->EncParamExt.bEnableFrameSkip = 1;
 				break;
 
 			case H264_RATECONTROL_CQP:
 				sys->EncParamExt.iRCMode = RC_OFF_MODE;
 				sys->EncParamExt.sSpatialLayers[0].iDLayerQp = (int)h264->QP;
+				sys->EncParamExt.bEnableFrameSkip = 0;
 				break;
 		}
 
