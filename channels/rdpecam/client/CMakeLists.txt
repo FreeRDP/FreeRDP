@@ -15,45 +15,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-option(WITH_MS_RDPECAM_CLIENT "Build with video camera redirect client" OFF)
+define_channel_client("rdpecam")
 
-if(WITH_MS_RDPECAM_CLIENT)
-
-	define_channel_client("rdpecam")
-
-	# swscale is required and is either part of FFMPEG or standalone library
-	if(NOT WITH_FFMPEG)
-		find_package(SWScale REQUIRED)
-	endif()
-
-	if(NOT WITH_OPENH264 AND NOT WITH_FFMPEG)
-		message(FATAL_ERROR "WITH_OPENH264 or WITH_FFMPEG required for WITH_MS_RDPECAM_CLIENT")
-	endif()
-
-	# currently camera redirect client supported for platforms with Video4Linux only
-	find_package(V4L)
-	if(V4L_FOUND)
-		set(WITH_V4L ON)
-		add_definitions("-DWITH_V4L")
-	else()
-		message(FATAL_ERROR "libv4l-dev required for WITH_MS_RDPECAM_CLIENT")
-	endif()
-
-	set(${MODULE_PREFIX}_SRCS
-		camera_device_enum_main.c
-		camera_device_main.c
-		encoding.c
-	)
-
-	set(${MODULE_PREFIX}_LIBS
-		freerdp winpr
-	)
-
-	add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
-
-	if(V4L_FOUND)
-		add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "v4l" "")
-	endif()
-
+# swscale is required and is either part of FFMPEG or standalone library
+if(NOT WITH_FFMPEG)
+	find_package(SWScale REQUIRED)
 endif()
 
+if(NOT WITH_OPENH264 AND NOT WITH_FFMPEG)
+	message(FATAL_ERROR "WITH_OPENH264 or WITH_FFMPEG required for CHANNEL_RDPECAM_CLIENT")
+endif()
+
+# currently camera redirect client supported for platforms with Video4Linux only
+find_package(V4L)
+if(V4L_FOUND)
+	set(WITH_V4L ON)
+	add_definitions("-DWITH_V4L")
+else()
+	message(FATAL_ERROR "libv4l-dev required for CHANNEL_RDPECAM_CLIENT")
+endif()
+
+set(${MODULE_PREFIX}_SRCS
+	camera_device_enum_main.c
+	camera_device_main.c
+	encoding.c
+)
+
+set(${MODULE_PREFIX}_LIBS
+	freerdp winpr
+)
+
+add_channel_client_library(${MODULE_PREFIX} ${MODULE_NAME} ${CHANNEL_NAME} TRUE "DVCPluginEntry")
+
+if(V4L_FOUND)
+	add_channel_client_subsystem(${MODULE_PREFIX} ${CHANNEL_NAME} "v4l" "")
+endif()

@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if(WITH_MS_RDPECAM_CLIENT AND WITH_V4L)
+if(WITH_V4L)
 
 	define_channel_client_subsystem("rdpecam" "v4l" "")
 
