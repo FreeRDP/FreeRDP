@@ -788,6 +788,7 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 			return features & ANDROID_CPU_ARM_FEATURE_NEON;
 
 		default:
+			WLog_WARN(TAG, "feature 0x%08" PRIx32 " check not implemented", ProcessorFeature);
 			return FALSE;
 	}
 
@@ -857,8 +858,15 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 				ret = TRUE;
 
 			break;
-
+		case PF_ARM_V8_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_V81_ATOMIC_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_V83_JSCVT_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_V83_LRCPC_INSTRUCTIONS_AVAILABLE:
 		default:
+			WLog_WARN(TAG, "feature 0x%08" PRIx32 " check not implemented", ProcessorFeature);
 			break;
 	}
 
@@ -872,7 +880,15 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 			ret = TRUE;
 #endif
 			break;
+		case PF_ARM_V8_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_V81_ATOMIC_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_V83_JSCVT_INSTRUCTIONS_AVAILABLE:
+		case PF_ARM_V83_LRCPC_INSTRUCTIONS_AVAILABLE:
 		default:
+			WLog_WARN(TAG, "feature 0x%08" PRIx32 " check not implemented", ProcessorFeature);
 			break;
 	}
 
@@ -912,12 +928,29 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 			break;
 
 		case PF_SSE3_INSTRUCTIONS_AVAILABLE:
-			if (c & C_BIT_SSE3)
-				ret = TRUE;
-
+			ret = __builtin_cpu_supports("sse3");
 			break;
 
+		case PF_SSSE3_INSTRUCTIONS_AVAILABLE:
+			ret = __builtin_cpu_supports("ssse3");
+			break;
+		case PF_SSE4_1_INSTRUCTIONS_AVAILABLE:
+			ret = __builtin_cpu_supports("sse4.1");
+			break;
+		case PF_SSE4_2_INSTRUCTIONS_AVAILABLE:
+			ret = __builtin_cpu_supports("sse4.2");
+			break;
+		case PF_AVX_INSTRUCTIONS_AVAILABLE:
+			ret = __builtin_cpu_supports("avx");
+			break;
+		case PF_AVX2_INSTRUCTIONS_AVAILABLE:
+			ret = __builtin_cpu_supports("avx2");
+			break;
+		case PF_AVX512F_INSTRUCTIONS_AVAILABLE:
+			ret = __builtin_cpu_supports("avx512f");
+			break;
 		default:
+			WLog_WARN(TAG, "feature 0x%08" PRIx32 " check not implemented", ProcessorFeature);
 			break;
 	}
 
