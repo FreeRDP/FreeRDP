@@ -1,8 +1,9 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * RemoteFX Codec Library - SSE2 Optimizations
+ * NSCodec Library - SSE2 Optimizations
  *
- * Copyright 2011 Stephen Erisman
+ * Copyright 2024 Armin Novak <anovak@thincast.com>
+ * Copyright 2024 Thincast Technologies GmbH
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +18,21 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_LIB_CODEC_RFX_SSE2_H
-#define FREERDP_LIB_CODEC_RFX_SSE2_H
+#include <winpr/sysinfo.h>
+#include <freerdp/config.h>
+#include <freerdp/log.h>
 
-#include <freerdp/codec/rfx.h>
-#include <freerdp/api.h>
+#include "../nsc_types.h"
+#include "nsc_neon.h"
 
-FREERDP_LOCAL void rfx_init_sse2(RFX_CONTEXT* context);
+#define TAG FREERDP_TAG("codec.nsc.neon")
 
-#ifdef WITH_SSE2
-#ifndef RFX_INIT_SIMD
-#define RFX_INIT_SIMD(_rfx_context) rfx_init_sse2(_rfx_context)
+void nsc_init_neon(NSC_CONTEXT* context)
+{
+#if defined(WITH_NEON)
+	if (!IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
+		return;
+
+	WLog_WARN(TAG, "TODO: Implement neon optimized version of this function");
 #endif
-#endif
-
-#endif /* FREERDP_LIB_CODEC_RFX_SSE2_H */
+}

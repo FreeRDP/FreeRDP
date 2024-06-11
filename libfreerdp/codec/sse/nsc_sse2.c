@@ -18,7 +18,14 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/log.h>
 
+#include "../nsc_types.h"
+#include "nsc_sse2.h"
+
+#define TAG FREERDP_TAG("codec.nsc.sse2")
+
+#if defined(WITH_SSE2)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,9 +36,6 @@
 #include <freerdp/codec/color.h>
 #include <winpr/crt.h>
 #include <winpr/sysinfo.h>
-
-#include "nsc_types.h"
-#include "nsc_sse2.h"
 
 static BOOL nsc_encode_argb_to_aycocg_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanline)
 {
@@ -373,12 +377,17 @@ static BOOL nsc_encode_sse2(NSC_CONTEXT* context, const BYTE* data, UINT32 scanl
 
 	return TRUE;
 }
+#endif
 
 void nsc_init_sse2(NSC_CONTEXT* context)
 {
+#if defined(WITH_SSE2)
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 		return;
 
 	PROFILER_RENAME(context->priv->prof_nsc_encode, "nsc_encode_sse2")
 	context->encode = nsc_encode_sse2;
+#else
+	WINPR_UNUSED(context);
+#endif
 }

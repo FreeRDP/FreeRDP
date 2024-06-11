@@ -40,15 +40,17 @@ set(CODEC_SRCS
 	yuv.c)
 
 set(CODEC_SSE2_SRCS
-	rfx_sse2.c
-	rfx_sse2.h
-	nsc_sse2.c
-	nsc_sse2.h
+	sse/rfx_sse2.c
+	sse/rfx_sse2.h
+	sse/nsc_sse2.c
+	sse/nsc_sse2.h
 )
 
 set(CODEC_NEON_SRCS
-	rfx_neon.c
-	rfx_neon.h
+	neon/rfx_neon.c
+	neon/rfx_neon.h
+	neon/nsc_neon.c
+	neon/nsc_neon.h
 )
 
 # Append initializers
@@ -116,6 +118,8 @@ if (NOT WITH_DSP_FFMPEG)
             set(OPUS_DEFAULT ${OPUS_FOUND})
         endif()
     endif()
+
+		message("Using OPUS: ${OPUS_DEFAULT}")
 endif()
 
 option(WITH_OPUS "compile with opus codec support" ${OPUS_DEFAULT})

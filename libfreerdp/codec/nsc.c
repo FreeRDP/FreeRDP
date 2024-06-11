@@ -34,7 +34,8 @@
 #include "nsc_types.h"
 #include "nsc_encode.h"
 
-#include "nsc_sse2.h"
+#include "sse/nsc_sse2.h"
+#include "neon/nsc_neon.h"
 
 #include <freerdp/log.h>
 #define TAG FREERDP_TAG("codec.nsc")
@@ -368,7 +369,8 @@ NSC_CONTEXT* nsc_context_new(void)
 	context->ColorLossLevel = 3;
 	context->ChromaSubsamplingLevel = 1;
 	/* init optimized methods */
-	NSC_INIT_SIMD(context);
+	nsc_init_sse2(context);
+	nsc_init_neon(context);
 	return context;
 error:
 	WINPR_PRAGMA_DIAG_PUSH
