@@ -5,6 +5,7 @@ set(CODEC_SRCS
 	bulk.h
 	dsp.c
 	color.c
+	color.h
 	audio.c
 	planar.c
 	bitmap.c
