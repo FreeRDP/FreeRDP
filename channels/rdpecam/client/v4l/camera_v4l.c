@@ -53,6 +53,7 @@ typedef struct
 	int fd;
 	size_t nBuffers;
 	CamV4lBuffer* buffers;
+	HANDLE captureThread;
 
 } CamV4lStream;
 
@@ -64,6 +65,10 @@ typedef struct
 
 } CamV4lHal;
 
+static void cam_v4l_stream_free(void* obj);
+static void cam_v4l_stream_close_device(CamV4lStream* stream);
+static UINT cam_v4l_stream_stop(CamV4lStream* stream);
+
 /**
  * Function description
  *
@@ -71,7 +76,7 @@ typedef struct
  */
 static const char* cam_v4l_get_fourcc_str(unsigned int fourcc)
 {
-	static char buf[5];
+	static char buf[5] = { 0 };
 	buf[0] = (fourcc & 0xFF);
 	buf[1] = (fourcc >> 8) & 0xFF;
 	buf[2] = (fourcc >> 16) & 0xFF;
@@ -447,7 +452,7 @@ static UINT cam_v4l_stream_capture_thread(void* param)
  *
  * @return void
  */
-static void cam_v4l_stream_close_device(CamV4lStream* stream)
+void cam_v4l_stream_close_device(CamV4lStream* stream)
 {
 	if (stream->fd != -1)
 	{
@@ -492,12 +497,19 @@ static CamV4lStream* cam_v4l_stream_create(CameraDevice* dev, int streamIndex,
  *
  * @return 0 on success, otherwise a Win32 error code
  */
-static UINT cam_v4l_stream_stop(CamV4lStream* stream)
+UINT cam_v4l_stream_stop(CamV4lStream* stream)
 {
 	if (!stream || !stream->streaming)
 		return CHANNEL_RC_OK;
 
 	stream->streaming = FALSE; /* this will terminate capture thread */
+
+	if (stream->captureThread)
+	{
+		WaitForSingleObject(stream->captureThread, INFINITE);
+		CloseHandle(stream->captureThread);
+		stream->captureThread = NULL;
+	}
 
 	EnterCriticalSection(&stream->lock);
 
@@ -536,7 +548,11 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 		if (!stream)
 			return CAM_ERROR_CODE_OutOfMemory;
 
-		HashTable_Insert(hal->streams, dev->deviceId, stream);
+		if (!HashTable_Insert(hal->streams, dev->deviceId, stream))
+		{
+			cam_v4l_stream_free(stream);
+			return CAM_ERROR_CODE_UnexpectedError;
+		}
 	}
 
 	if (stream->streaming)
@@ -599,16 +615,7 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 	if (maxSample == 0)
 	{
 		WLog_ERR(TAG, "Failure to allocate video buffers");
-		cam_v4l_stream_close_device(stream);
-		return CAM_ERROR_CODE_OutOfMemory;
-	}
-
-	HANDLE captureThread = CreateThread(NULL, 0, cam_v4l_stream_capture_thread, stream, 0, NULL);
-	if (!captureThread)
-	{
-		WLog_ERR(TAG, "CreateThread failure");
-		cam_v4l_stream_free_buffers(stream);
-		cam_v4l_stream_close_device(stream);
+		cam_v4l_stream_stop(stream);
 		return CAM_ERROR_CODE_OutOfMemory;
 	}
 
@@ -622,6 +629,14 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 		WLog_ERR(TAG, "Failure in VIDIOC_STREAMON, errno %d", errno);
 		cam_v4l_stream_stop(stream);
 		return CAM_ERROR_CODE_UnexpectedError;
+	}
+
+	stream->captureThread = CreateThread(NULL, 0, cam_v4l_stream_capture_thread, stream, 0, NULL);
+	if (!stream->captureThread)
+	{
+		WLog_ERR(TAG, "CreateThread failure");
+		cam_v4l_stream_stop(stream);
+		return CAM_ERROR_CODE_OutOfMemory;
 	}
 
 	WLog_INFO(TAG, "Camera format: %s, width: %d, height: %d, fps: %d",
@@ -655,7 +670,7 @@ static UINT cam_v4l_stream_stop_by_device_id(ICamHal* ihal, const char* deviceId
  *
  * @return void
  */
-static void cam_v4l_stream_free(void* obj)
+void cam_v4l_stream_free(void* obj)
 {
 	CamV4lStream* stream = (CamV4lStream*)obj;
 	if (!stream)
@@ -712,7 +727,10 @@ FREERDP_ENTRY_POINT(
 
 	hal->streams = HashTable_New(FALSE);
 	if (!hal->streams)
-		return CHANNEL_RC_NO_MEMORY;
+	{
+		ret = CHANNEL_RC_NO_MEMORY;
+		goto error;
+	}
 
 	HashTable_SetupForStringData(hal->streams, FALSE);
 

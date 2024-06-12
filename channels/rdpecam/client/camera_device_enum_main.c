@@ -84,7 +84,7 @@ UINT ecam_channel_write(CameraPlugin* ecam, GENERIC_CHANNEL_CALLBACK* hchannel, 
 		return ERROR_INVALID_PARAMETER;
 
 	Stream_SealLength(out);
-	WINPR_ASSERT(Stream_Length(out) <= ULONG_MAX);
+	WINPR_ASSERT(Stream_Length(out) <= UINT32_MAX);
 
 	WLog_DBG(TAG, "ChannelId=%d, MessageId=0x%02" PRIx8 ", Length=%d",
 	         hchannel->channel_mgr->GetChannelId(hchannel->channel), msg, Stream_Length(out));
@@ -145,7 +145,11 @@ static UINT ecam_ihal_device_added_callback(CameraPlugin* ecam, GENERIC_CHANNEL_
 	if (!HashTable_ContainsKey(ecam->devices, deviceId))
 	{
 		CameraDevice* dev = ecam_dev_create(ecam, deviceId, deviceName);
-		HashTable_Insert(ecam->devices, deviceId, dev);
+		if (!HashTable_Insert(ecam->devices, deviceId, dev))
+		{
+			ecam_dev_destroy(dev);
+			return ERROR_INTERNAL_ERROR;
+		}
 	}
 	else
 	{
