@@ -2196,10 +2196,12 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 		events[nCount++] = ChannelEvent;
 		events[nCount++] = MessageQueue_Event(MsgQueue);
 
+#if defined(CHANNEL_RDPGFX_SERVER)
 		HANDLE gfxevent = rdpgfx_server_get_event_handle(client->rdpgfx);
 
 		if (gfxevent)
 			events[nCount++] = gfxevent;
+#endif
 
 		status = WaitForMultipleObjects(nCount, events, FALSE, INFINITE);
 
@@ -2329,6 +2331,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 			}
 		}
 
+#if defined(CHANNEL_RDPGFX_SERVER)
 		if (gfxevent)
 		{
 			if (WaitForSingleObject(gfxevent, 0) == WAIT_OBJECT_0)
@@ -2336,6 +2339,7 @@ static DWORD WINAPI shadow_client_thread(LPVOID arg)
 				rdpgfx_server_handle_messages(client->rdpgfx);
 			}
 		}
+#endif
 
 		if (WaitForSingleObject(MessageQueue_Event(MsgQueue), 0) == WAIT_OBJECT_0)
 		{
