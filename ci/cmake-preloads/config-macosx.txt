@@ -13,4 +13,5 @@ set (WITH_FREERDP_DEPRECATED_COMMANDLINE ON CACHE BOOL "Enable deprecated comman
 set (WITH_KRB5 OFF CACHE BOOL "Kerberos support")
 set (WITH_WEBVIEW OFF CACHE BOOL "ci default")
 set (WITH_FFMPEG OFF CACHE BOOL "ci default")
+set (WITH_OPUS OFF CACHE BOOL "ci default")
 set (WITH_SWSCALE OFF CACHE BOOL "ci default")

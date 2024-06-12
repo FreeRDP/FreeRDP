@@ -18,6 +18,12 @@
 */
 
 #include <freerdp/config.h>
+#include <freerdp/log.h>
+
+#include "../rfx_types.h"
+#include "rfx_neon.h"
+
+#define TAG FREERDP_TAG("codec.rfx.neon")
 
 #if defined(WITH_NEON)
 
@@ -26,9 +32,6 @@
 #include <string.h>
 #include <arm_neon.h>
 #include <winpr/sysinfo.h>
-
-#include "rfx_types.h"
-#include "rfx_neon.h"
 
 /* rfx_decode_YCbCr_to_RGB_NEON code now resides in the primitives library. */
 
@@ -517,9 +520,11 @@ static void rfx_dwt_2d_extrapolate_decode_neon(INT16* buffer, INT16* temp)
 	rfx_dwt_2d_decode_extrapolate_block_neon(&buffer[3007], temp, 2);
 	rfx_dwt_2d_decode_extrapolate_block_neon(&buffer[0], temp, 1);
 }
+#endif // WITH_NEON
 
 void rfx_init_neon(RFX_CONTEXT* context)
 {
+#if defined(WITH_NEON)
 	if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
 	{
 		DEBUG_RFX("Using NEON optimizations");
@@ -531,6 +536,7 @@ void rfx_init_neon(RFX_CONTEXT* context)
 		context->dwt_2d_decode = rfx_dwt_2d_decode_NEON;
 		context->dwt_2d_extrapolate_decode = rfx_dwt_2d_extrapolate_decode_neon;
 	}
+#else
+	WINPR_UNUSED(context);
+#endif
 }
-
-#endif // WITH_NEON

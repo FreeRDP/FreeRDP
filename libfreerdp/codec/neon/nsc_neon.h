@@ -1,6 +1,6 @@
 /**
  * FreeRDP: A Remote Desktop Protocol Implementation
- * NSCodec Library - SSE2 Optimizations
+ * NSCodec Library - NEON Optimizations
  *
  * Copyright 2012 Vic Lee
  *
@@ -17,18 +17,12 @@
  * limitations under the License.
  */
 
-#ifndef FREERDP_LIB_CODEC_NSC_SSE2_H
-#define FREERDP_LIB_CODEC_NSC_SSE2_H
+#ifndef FREERDP_LIB_CODEC_NSC_NEON_H
+#define FREERDP_LIB_CODEC_NSC_NEON_H
 
 #include <freerdp/codec/nsc.h>
 #include <freerdp/api.h>
 
-FREERDP_LOCAL void nsc_init_sse2(NSC_CONTEXT* context);
+FREERDP_LOCAL void nsc_init_neon(NSC_CONTEXT* context);
 
-#ifdef WITH_SSE2
-#ifndef NSC_INIT_SIMD
-#define NSC_INIT_SIMD(_context) nsc_init_sse2(_context)
-#endif
-#endif
-
-#endif /* FREERDP_LIB_CODEC_NSC_SSE2_H */
+#endif /* FREERDP_LIB_CODEC_NSC_NEON_H */

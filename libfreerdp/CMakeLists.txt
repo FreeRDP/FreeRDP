@@ -23,9 +23,11 @@ include(FindCairo)
 
 set(LIBFREERDP_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(LIBFREERDP_SRCS "")
+set(LIBFREERDP_OBJECT_LIBS "")
 set(LIBFREERDP_LIBS "")
 set(LIBFREERDP_INCLUDES "")
 set(LIBFREERDP_DEFINITIONS "")
+set(LIBFREERDP_COMPILE_OPTIONS "")
 
 macro (freerdp_module_add)
         file (RELATIVE_PATH _relPath "${LIBFREERDP_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -66,6 +68,13 @@ macro (freerdp_library_add_public)
     set (LIBFREERDP_PUB_LIBS ${LIBFREERDP_PUB_LIBS} PARENT_SCOPE)
 endmacro()
 
+macro (freerdp_object_library_add)
+	foreach (_lib ${ARGN})
+		list (APPEND LIBFREERDP_OBJECT_LIBS "$<TARGET_OBJECTS:${_lib}>")
+	endforeach()
+	set (LIBFREERDP_OBJECT_LIBS ${LIBFREERDP_OBJECT_LIBS} PARENT_SCOPE)
+endmacro()
+
 macro (freerdp_library_add)
     foreach (_lib ${ARGN})
         list (APPEND LIBFREERDP_LIBS "${_lib}")
@@ -78,6 +87,13 @@ macro (freerdp_definition_add)
                         list (APPEND LIBFREERDP_DEFINITIONS "${_define}")
         endforeach()
          set (LIBFREERDP_DEFINITIONS ${LIBFREERDP_DEFINITIONS} PARENT_SCOPE)
+endmacro()
+
+macro (freerdp_compile_options_add)
+	foreach (_lib ${ARGN})
+		list (APPEND LIBFREERDP_COMPILE_OPTIONS "${_lib}")
+	endforeach()
+	set (LIBFREERDP_COMPILE_OPTIONS ${LIBFREERDP_COMPILE_OPTIONS} PARENT_SCOPE)
 endmacro()
 
 if (WITH_SWSCALE)
@@ -118,275 +134,14 @@ if (NOT WITH_DSP_FFMPEG AND NOT WITH_FAAC)
     message(WARNING "Compiling without WITH_DSP_FFMPEG and WITH_FAAC, AAC encoder support disabled")
 endif ()
 
-## cmake source properties are only seen by targets in the same CMakeLists.txt
-## therefore primitives and codecs need to be defined here
-
-# codec
-set(CODEC_SRCS
-    codec/bulk.c
-    codec/bulk.h
-    codec/dsp.c
-    codec/color.c
-    codec/audio.c
-    codec/planar.c
-    codec/bitmap.c
-    codec/interleaved.c
-    codec/progressive.c
-    codec/rfx_bitstream.h
-    codec/rfx_constants.h
-    codec/rfx_decode.c
-    codec/rfx_decode.h
-    codec/rfx_differential.h
-    codec/rfx_dwt.c
-    codec/rfx_dwt.h
-    codec/rfx_encode.c
-    codec/rfx_encode.h
-    codec/rfx_quantization.c
-    codec/rfx_quantization.h
-    codec/rfx_rlgr.c
-    codec/rfx_rlgr.h
-    codec/rfx_types.h
-    codec/rfx.c
-    codec/region.c
-    codec/nsc.c
-    codec/nsc_encode.c
-    codec/nsc_encode.h
-    codec/nsc_types.h
-    codec/ncrush.c
-    codec/xcrush.c
-    codec/mppc.c
-    codec/zgfx.c
-    codec/clear.c
-    codec/jpeg.c
-    codec/h264.c
-    codec/yuv.c)
-
-set(CODEC_SSE2_SRCS
-    codec/rfx_sse2.c
-    codec/rfx_sse2.h
-    codec/nsc_sse2.c
-    codec/nsc_sse2.h)
-
-set(CODEC_NEON_SRCS
-    codec/rfx_neon.c
-    codec/rfx_neon.h)
-
-if(WITH_SSE2)
-    set(CODEC_SRCS ${CODEC_SRCS} ${CODEC_SSE2_SRCS})
-
-    if(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
-        set_source_files_properties(${CODEC_SSE2_SRCS} PROPERTIES COMPILE_FLAGS "-msse2" )
-    endif()
-
-    if(MSVC)
-        set_source_files_properties(${CODEC_SSE2_SRCS} PROPERTIES COMPILE_FLAGS "/arch:SSE2" )
-    endif()
-endif()
-
-if (WITH_DSP_FFMPEG)
-    set(CODEC_SRCS
-        ${CODEC_SRCS}
-        codec/dsp_ffmpeg.c
-        codec/dsp_ffmpeg.h)
-        freerdp_include_directory_add(${FFMPEG_INCLUDE_DIRS})
-        freerdp_library_add(${FFMPEG_LIBRARIES})
-endif (WITH_DSP_FFMPEG)
-
-if (WITH_SOXR)
-    freerdp_library_add(${SOXR_LIBRARIES})
-    include_directories(${SOXR_INCLUDE_DIR})
-endif(WITH_SOXR)
-
-if(GSM_FOUND)
-    freerdp_library_add(${GSM_LIBRARIES})
-    include_directories(${GSM_INCLUDE_DIRS})
-endif()
-
-if(LAME_FOUND)
-    freerdp_library_add(${LAME_LIBRARIES})
-    include_directories(${LAME_INCLUDE_DIRS})
-endif()
-
-set(OPUS_DEFAULT OFF)
-if (NOT WITH_DSP_FFMPEG)
-    find_package(Opus)
-    if (Opus_FOUND)
-            set(OPUS_DEFAULT ${OPUS_FOUND})
-    else()
-        find_package(PkgConfig)
-        if (PkgConfig_FOUND)
-            pkg_check_modules(OPUS opus)
-            set(OPUS_DEFAULT ${OPUS_FOUND})
-        endif()
-    endif()
-endif()
-
-option(WITH_OPUS "compile with opus codec support" ${OPUS_DEFAULT})
-if (WITH_OPUS)
-    find_package(Opus)
-    if (Opus_FOUND)
-        freerdp_library_add(Opus::opus)
-    else()
-        find_package(PkgConfig REQUIRED)
-        pkg_check_modules(OPUS REQUIRED opus)
-        if(OPUS_FOUND)
-            freerdp_library_add(${OPUS_LIBRARIES})
-            include_directories(${OPUS_INCLUDE_DIRS})
-	    link_directories(${OPUS_LIBRARY_DIRS})
-        endif()
-    endif()
-endif()
-
-if(FAAD2_FOUND)
-    freerdp_library_add(${FAAD2_LIBRARIES})
-    include_directories(${FAAD2_INCLUDE_DIRS})
-endif()
-
-if(FAAC_FOUND)
-    freerdp_library_add(${FAAC_LIBRARIES})
-    include_directories(${FAAC_INCLUDE_DIRS})
-endif()
+add_subdirectory(codec)
+add_subdirectory(primitives)
 
 if (WITH_AAD)
 	if (NOT WITH_WINPR_JSON)
 		message(FATAL_ERROR "Trying to build -DWITH_AAD=ON but WITH_WINPR_JSON is not defined")
 	endif()
 endif()
-
-if(WITH_NEON)
-    check_symbol_exists("_M_AMD64"     ""  MSVC_ARM64)
-    check_symbol_exists("__aarch64__"  ""  ARCH_ARM64)
-
-    if (NOT MSVC_ARM64 AND NOT ARCH_ARM64)
-        set_source_files_properties(${CODEC_NEON_SRCS} PROPERTIES COMPILE_FLAGS "-mfpu=neon" )
-    endif()
-
-    set(CODEC_SRCS ${CODEC_SRCS} ${CODEC_NEON_SRCS})
-endif()
-
-if(WITH_OPENH264)
-    set(CODEC_SRCS ${CODEC_SRCS} codec/h264_openh264.c)
-    freerdp_include_directory_add(${OPENH264_INCLUDE_DIR})
-    if (NOT WITH_OPENH264_LOADING)
-        freerdp_library_add(${OPENH264_LIBRARIES})
-    endif (NOT WITH_OPENH264_LOADING)
-endif()
-
-if(WITH_VIDEO_FFMPEG)
-    set(CODEC_SRCS ${CODEC_SRCS} codec/h264_ffmpeg.c)
-    freerdp_include_directory_add(${FFMPEG_INCLUDE_DIRS})
-    freerdp_library_add(${FFMPEG_LIBRARIES})
-endif()
-
-if(WIN32 AND WITH_MEDIA_FOUNDATION)
-    set(CODEC_SRCS ${CODEC_SRCS} codec/h264_mf.c)
-endif()
-
-if(ANDROID AND WITH_MEDIACODEC)
-    list(APPEND CODEC_SRCS codec/h264_mediacodec.c)
-
-    find_library(MEDIACODEC mediandk REQUIRED)
-    freerdp_library_add(${MEDIACODEC})
-endif()
-
-freerdp_module_add(${CODEC_SRCS})
-
-if(BUILD_TESTING)
-    add_subdirectory(codec/test)
-endif()
-
-# /codec
-
-# primitives
-
-set(PRIMITIVES_SRCS
-    primitives/prim_add.c
-    primitives/prim_andor.c
-    primitives/prim_alphaComp.c
-    primitives/prim_colors.c
-    primitives/prim_copy.c
-    primitives/prim_set.c
-    primitives/prim_shift.c
-    primitives/prim_sign.c
-    primitives/prim_YUV.c
-    primitives/prim_YCoCg.c
-    primitives/primitives.c
-    primitives/prim_internal.h)
-
-if (WITH_SSE2 OR WITH_NEON)
-    set(PRIMITIVES_SSE2_SRCS
-        primitives/prim_colors_opt.c
-        primitives/prim_set_opt.c)
-
-    set(PRIMITIVES_SSE3_SRCS
-        primitives/prim_add_opt.c
-        primitives/prim_alphaComp_opt.c
-        primitives/prim_andor_opt.c
-        primitives/prim_shift_opt.c)
-
-    set(PRIMITIVES_SSSE3_SRCS
-        primitives/prim_sign_opt.c
-        primitives/prim_YCoCg_opt.c)
-
-    if (WITH_SSE2)
-        set(PRIMITIVES_SSSE3_SRCS ${PRIMITIVES_SSSE3_SRCS}
-            primitives/prim_YUV_ssse3.c)
-    endif()
-
-    if (WITH_NEON)
-        set(PRIMITIVES_SSSE3_SRCS ${PRIMITIVES_SSSE3_SRCS}
-            primitives/prim_YUV_neon.c)
-    endif()
-endif()
-
-if (WITH_OPENCL)
-    set(PRIMITIVES_OPENCL_SRCS primitives/prim_YUV_opencl.c)
-
-        freerdp_include_directory_add(${OpenCL_INCLUDE_DIRS})
-        freerdp_library_add(OpenCL::OpenCL)
-
-endif()
-
-set(PRIMITIVES_OPT_SRCS
-    ${PRIMITIVES_SSE2_SRCS}
-    ${PRIMITIVES_SSE3_SRCS}
-    ${PRIMITIVES_SSSE3_SRCS}
-    ${PRIMITIVES_OPENCL_SRCS})
-
-if(WITH_SSE2)
-    if(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
-        set_source_files_properties(${PRIMITIVES_SSE2_SRCS}
-            PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -msse2")
-        set_source_files_properties(${PRIMITIVES_SSE3_SRCS}
-            PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -msse3")
-        set_source_files_properties(${PRIMITIVES_SSSE3_SRCS}
-            PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -mssse3")
-    endif()
-
-    if(MSVC)
-        set_source_files_properties(${PRIMITIVES_OPT_SRCS}
-            PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} /arch:SSE2")
-    endif()
-elseif(WITH_NEON)
-    if(CMAKE_COMPILER_IS_GNUCC OR ${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
-        if (NOT MSVC_ARM64 AND NOT ARCH_ARM64)
-            set_source_files_properties(${PRIMITIVES_OPT_SRCS}
-                PROPERTIES COMPILE_FLAGS "${OPTIMIZATION} -mfpu=neon")
-        endif()
-    endif()
-    # TODO: Add MSVC equivalent
-endif()
-
-set(PRIMITIVES_SRCS ${PRIMITIVES_SRCS} ${PRIMITIVES_OPT_SRCS})
-
-freerdp_module_add(${PRIMITIVES_SRCS})
-
-if(BUILD_TESTING AND NOT WIN32 AND NOT APPLE)
-    add_subdirectory(primitives/test)
-endif()
-
-
-# /primitives
 
 list(APPEND LIBFREERDP_PUB_LIBS winpr)
 
@@ -397,6 +152,16 @@ include_directories(${LIBFREERDP_INCLUDES})
 AddTargetWithResourceFile(${MODULE_NAME} FALSE "${FREERDP_VERSION}" LIBFREERDP_SRCS)
 
 add_definitions(${LIBFREERDP_DEFINITIONS})
+
+if (LIBFREERDP_COMPILE_OPTIONS)
+	list(REMOVE_DUPLICATES LIBFREERDP_COMPILE_OPTIONS)
+	target_compile_options(${MODULE_NAME} PRIVATE ${LIBFREERDP_COMPILE_OPTIONS})
+endif()
+
+if (LIBFREERDP_OBJECT_LIBS)
+	list(REMOVE_DUPLICATES LIBFREERDP_OBJECT_LIBS)
+	target_link_libraries(${MODULE_NAME} PRIVATE ${LIBFREERDP_OBJECT_LIBS})
+endif()
 
 if (WITH_FULL_CONFIG_PATH)
     add_definitions(-DWITH_FULL_CONFIG_PATH)

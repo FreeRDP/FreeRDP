@@ -19,7 +19,14 @@
  */
 
 #include <freerdp/config.h>
+#include <freerdp/log.h>
 
+#include "../rfx_types.h"
+#include "rfx_sse2.h"
+
+#define TAG FREERDP_TAG("codec.rfx.sse2")
+
+#if defined(WITH_SSE2)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,9 +34,6 @@
 
 #include <xmmintrin.h>
 #include <emmintrin.h>
-
-#include "rfx_types.h"
-#include "rfx_sse2.h"
 
 #ifdef _MSC_VER
 #define __attribute__(...)
@@ -477,9 +481,11 @@ static void rfx_dwt_2d_encode_sse2(INT16* WINPR_RESTRICT buffer, INT16* WINPR_RE
 	rfx_dwt_2d_encode_block_sse2(buffer + 3072, dwt_buffer, 16);
 	rfx_dwt_2d_encode_block_sse2(buffer + 3840, dwt_buffer, 8);
 }
+#endif
 
 void rfx_init_sse2(RFX_CONTEXT* context)
 {
+#if defined(WITH_SSE2)
 	if (!IsProcessorFeaturePresent(PF_XMMI64_INSTRUCTIONS_AVAILABLE))
 		return;
 
@@ -491,4 +497,7 @@ void rfx_init_sse2(RFX_CONTEXT* context)
 	context->quantization_encode = rfx_quantization_encode_sse2;
 	context->dwt_2d_decode = rfx_dwt_2d_decode_sse2;
 	context->dwt_2d_encode = rfx_dwt_2d_encode_sse2;
+#else
+	WINPR_UNUSED(context);
+#endif
 }
