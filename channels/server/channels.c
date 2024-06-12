@@ -45,14 +45,22 @@
 #include <freerdp/server/cliprdr.h>
 #include <freerdp/server/echo.h>
 #include <freerdp/server/rdpdr.h>
+#if defined(CHANNEL_RAIL_SERVER)
 #include <freerdp/server/rdpei.h>
+#endif
 #include <freerdp/server/drdynvc.h>
 #include <freerdp/server/remdesk.h>
 #include <freerdp/server/encomsp.h>
+#if defined(CHANNEL_RAIL_SERVER)
 #include <freerdp/server/rail.h>
+#endif
 #include <freerdp/server/telemetry.h>
+#if defined(CHANNEL_RDPGFX_SERVER)
 #include <freerdp/server/rdpgfx.h>
+#endif
+#if defined(CHANNEL_DISP_SERVER)
 #include <freerdp/server/disp.h>
+#endif
 
 #if defined(CHANNEL_RDPEMSC_SERVER)
 #include <freerdp/server/rdpemsc.h>
@@ -87,13 +95,21 @@ void freerdp_channels_dummy(void)
 	echo_server_context* echo = NULL;
 	RdpdrServerContext* rdpdr = NULL;
 	DrdynvcServerContext* drdynvc = NULL;
+#if defined(CHANNEL_RDPEI_SERVER)
 	RdpeiServerContext* rdpei = NULL;
+#endif
 	RemdeskServerContext* remdesk = NULL;
 	EncomspServerContext* encomsp = NULL;
+#if defined(CHANNEL_RAIL_SERVER)
 	RailServerContext* rail = NULL;
+#endif
 	TelemetryServerContext* telemetry = NULL;
+#if defined(CHANNEL_RDPGFX_SERVER)
 	RdpgfxServerContext* rdpgfx = NULL;
+#endif
+#if defined(CHANNEL_DISP_SERVER)
 	DispServerContext* disp = NULL;
+#endif
 #if defined(CHANNEL_RDPEMSC_SERVER)
 	MouseCursorServerContext* mouse_cursor = NULL;
 #endif /* CHANNEL_RDPEMSC_SERVER */
@@ -123,21 +139,28 @@ void freerdp_channels_dummy(void)
 	rdpdr_server_context_free(rdpdr);
 	drdynvc = drdynvc_server_context_new(NULL);
 	drdynvc_server_context_free(drdynvc);
+#if defined(CHANNEL_RDPEI_SERVER)
 	rdpei = rdpei_server_context_new(NULL);
 	rdpei_server_context_free(rdpei);
+#endif
 	remdesk = remdesk_server_context_new(NULL);
 	remdesk_server_context_free(remdesk);
 	encomsp = encomsp_server_context_new(NULL);
 	encomsp_server_context_free(encomsp);
+#if defined(CHANNEL_RAIL_SERVER)
 	rail = rail_server_context_new(NULL);
 	rail_server_context_free(rail);
+#endif
 	telemetry = telemetry_server_context_new(NULL);
 	telemetry_server_context_free(telemetry);
+#if defined(CHANNEL_RDPGFX_SERVER)
 	rdpgfx = rdpgfx_server_context_new(NULL);
 	rdpgfx_server_context_free(rdpgfx);
+#endif
+#if defined(CHANNEL_DISP_SERVER)
 	disp = disp_server_context_new(NULL);
 	disp_server_context_free(disp);
-
+#endif
 #if defined(CHANNEL_RDPEMSC_SERVER)
 	mouse_cursor = mouse_cursor_server_context_new(NULL);
 	mouse_cursor_server_context_free(mouse_cursor);
