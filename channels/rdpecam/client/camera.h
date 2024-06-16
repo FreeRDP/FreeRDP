@@ -56,11 +56,6 @@
  */
 #define ECAM_SAMPLE_RESPONSE_BUFFER_SIZE (1024 * 4050)
 
-/* 4 Mbps max encoded bitrate seems to produce reasonably
- * good quality with H264_RATECONTROL_VBR.
- */
-#define ECAM_H264_ENCODED_BITRATE 4000000
-
 typedef struct s_ICamHal ICamHal;
 
 typedef struct
