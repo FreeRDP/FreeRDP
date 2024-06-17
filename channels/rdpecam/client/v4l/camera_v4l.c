@@ -33,6 +33,9 @@
 #define CAM_V4L2_BUFFERS_COUNT 4
 #define CAM_V4L2_CAPTURE_THREAD_SLEEP_MS 1000
 
+#define CAM_V4L2_FRAMERATE_NUMERATOR_DEFAULT 30
+#define CAM_V4L2_FRAMERATE_DENOMINATOR_DEFAULT 1
+
 typedef struct
 {
 	void* start;
@@ -117,6 +120,24 @@ static UINT32 ecamToV4L2PixFormat(CAM_MEDIA_FORMAT ecamFormat)
 /**
  * Function description
  *
+ * @return TRUE or FALSE
+ */
+static BOOL cam_v4l_format_supported(int fd, UINT32 format)
+{
+	struct v4l2_fmtdesc fmtdesc = { 0 };
+	fmtdesc.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+	for (fmtdesc.index = 0; ioctl(fd, VIDIOC_ENUM_FMT, &fmtdesc) == 0; fmtdesc.index++)
+	{
+		if (fmtdesc.pixelformat == format)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+/**
+ * Function description
+ *
  * @return file descriptor
  */
 static int cam_v4l_open_device(const char* deviceId, int flags)
@@ -172,17 +193,6 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* hal, const char* devic
 	size_t nTypes = 0;
 	int formatIndex;
 	BOOL formatFound = FALSE;
-	struct v4l2_format video_fmt = { 0 };
-
-	video_fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	video_fmt.fmt.pix.sizeimage = 0;
-
-	unsigned int videoSizes[][2] = { { 160, 90 },   { 160, 120 },  { 320, 180 },   { 320, 240 },
-		                             { 432, 240 },  { 352, 288 },  { 640, 360 },   { 800, 448 },
-		                             { 640, 480 },  { 848, 480 },  { 864, 480 },   { 960, 540 },
-		                             { 1024, 576 }, { 800, 600 },  { 960, 720 },   { 1280, 720 },
-		                             { 1024, 768 }, { 1600, 896 }, { 1440, 1080 }, { 1920, 1080 } };
-	const int totalSizes = sizeof(videoSizes) / sizeof(unsigned int[2]);
 
 	if ((fd = cam_v4l_open_device(deviceId, O_RDONLY)) == -1)
 	{
@@ -194,32 +204,48 @@ static INT16 cam_v4l_get_media_type_descriptions(ICamHal* hal, const char* devic
 	{
 		UINT32 pixelFormat = ecamToV4L2PixFormat(supportedFormats[formatIndex].inputFormat);
 		WINPR_ASSERT(pixelFormat != 0);
+		struct v4l2_frmsizeenum frmsize = { 0 };
 
-		for (int i = 0; i < totalSizes; i++)
+		if (!cam_v4l_format_supported(fd, pixelFormat))
+			continue;
+
+		frmsize.pixel_format = pixelFormat;
+		for (frmsize.index = 0; ioctl(fd, VIDIOC_ENUM_FRAMESIZES, &frmsize) == 0; frmsize.index++)
 		{
-			video_fmt.fmt.pix.pixelformat = pixelFormat;
-			video_fmt.fmt.pix.width = videoSizes[i][0];
-			video_fmt.fmt.pix.height = videoSizes[i][1];
+			struct v4l2_frmivalenum frmival = { 0 };
 
-			if (ioctl(fd, VIDIOC_TRY_FMT, &video_fmt) < 0 ||
-			    video_fmt.fmt.pix.pixelformat != pixelFormat ||
-			    video_fmt.fmt.pix.width != videoSizes[i][0] ||
-			    video_fmt.fmt.pix.height != videoSizes[i][1])
-				continue;
+			if (frmsize.type != V4L2_FRMSIZE_TYPE_DISCRETE)
+				break; /* don't support size types other than discrete */
 
 			formatFound = TRUE;
-			mediaTypes->Width = video_fmt.fmt.pix.width;
-			mediaTypes->Height = video_fmt.fmt.pix.height;
+			mediaTypes->Width = frmsize.discrete.width;
+			mediaTypes->Height = frmsize.discrete.height;
 			mediaTypes->Format = supportedFormats[formatIndex].inputFormat;
-			/* V4l2 does not have a stable method of knowing fps so we use 30 */
-			mediaTypes->FrameRateNumerator = 30;
-			mediaTypes->FrameRateDenominator = 1;
+
+			/* query frame rate (1st is highest fps supported) */
+			frmival.index = 0;
+			frmival.pixel_format = pixelFormat;
+			frmival.width = frmsize.discrete.width;
+			frmival.height = frmsize.discrete.height;
+			if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival) == 0 &&
+			    frmival.type == V4L2_FRMIVAL_TYPE_DISCRETE)
+			{
+				/* inverse of a fraction */
+				mediaTypes->FrameRateNumerator = frmival.discrete.denominator;
+				mediaTypes->FrameRateDenominator = frmival.discrete.numerator;
+			}
+			else
+			{
+				WLog_DBG(TAG, "VIDIOC_ENUM_FRAMEINTERVALS failed, using default framerate");
+				mediaTypes->FrameRateNumerator = CAM_V4L2_FRAMERATE_NUMERATOR_DEFAULT;
+				mediaTypes->FrameRateDenominator = CAM_V4L2_FRAMERATE_DENOMINATOR_DEFAULT;
+			}
+
 			mediaTypes->PixelAspectRatioNumerator = mediaTypes->PixelAspectRatioDenominator = 1;
 
-			WLog_DBG(
-			    TAG, "Camera capability %d: width: %d, height: %d, fourcc: %s, type: %d, fps: %d",
-			    nTypes, mediaTypes->Width, mediaTypes->Height, cam_v4l_get_fourcc_str(pixelFormat),
-			    mediaTypes->Format, mediaTypes->FrameRateNumerator);
+			WLog_DBG(TAG, "Camera format: %s, width: %u, height: %u, fps: %u/%u",
+			         cam_v4l_get_fourcc_str(pixelFormat), mediaTypes->Width, mediaTypes->Height,
+			         mediaTypes->FrameRateNumerator, mediaTypes->FrameRateDenominator);
 
 			mediaTypes++;
 			nTypes++;
@@ -615,7 +641,7 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 	if (maxSample == 0)
 	{
 		WLog_ERR(TAG, "Failure to allocate video buffers");
-		cam_v4l_stream_stop(stream);
+		cam_v4l_stream_close_device(stream);
 		return CAM_ERROR_CODE_OutOfMemory;
 	}
 
@@ -639,9 +665,9 @@ static UINT cam_v4l_stream_start(ICamHal* ihal, CameraDevice* dev, int streamInd
 		return CAM_ERROR_CODE_OutOfMemory;
 	}
 
-	WLog_INFO(TAG, "Camera format: %s, width: %d, height: %d, fps: %d",
+	WLog_INFO(TAG, "Camera format: %s, width: %u, height: %u, fps: %u/%u",
 	          cam_v4l_get_fourcc_str(pixelFormat), mediaType->Width, mediaType->Height,
-	          mediaType->FrameRateNumerator);
+	          mediaType->FrameRateNumerator, mediaType->FrameRateDenominator);
 
 	return CHANNEL_RC_OK;
 }

@@ -26,6 +26,44 @@
 /**
  * Function description
  *
+ * @return bitrate in bps
+ */
+static UINT32 ecam_encoder_h264_get_max_bitrate(CameraDeviceStream* stream)
+{
+	static struct Bitrates
+	{
+		UINT32 height;
+		UINT32 bitrate; /* kbps */
+
+	} bitrates[] = {
+		/* source: https://livekit.io/webrtc/bitrate-guide (webcam streaming)
+		 *
+		 * sorted by height in descending order
+		 */
+		{ 1080, 2700 }, { 720, 1250 }, { 480, 700 }, { 360, 400 },
+		{ 240, 170 },   { 180, 140 },  { 0, 100 },
+	};
+	const size_t nBitrates = ARRAYSIZE(bitrates);
+
+	UINT32 height = stream->currMediaType.Height;
+
+	for (size_t i = 0; i < nBitrates; i++)
+	{
+		if (height >= bitrates[i].height)
+		{
+			UINT32 bitrate = bitrates[i].bitrate;
+			WLog_DBG(TAG, "Setting h264 max bitrate: %u kbps", bitrate);
+			return bitrate * 1000;
+		}
+	}
+
+	WINPR_ASSERT(FALSE);
+	return 0;
+}
+
+/**
+ * Function description
+ *
  * @return enum AVPixelFormat value
  */
 static enum AVPixelFormat ecamToAVPixFormat(CAM_MEDIA_FORMAT ecamFormat)
@@ -136,11 +174,12 @@ static BOOL ecam_encoder_context_init_h264(CameraDeviceStream* stream)
 		goto fail;
 
 	if (!h264_context_set_option(stream->h264, H264_CONTEXT_OPTION_FRAMERATE,
-	                             stream->currMediaType.FrameRateNumerator))
+	                             stream->currMediaType.FrameRateNumerator /
+	                                 stream->currMediaType.FrameRateDenominator))
 		goto fail;
 
 	if (!h264_context_set_option(stream->h264, H264_CONTEXT_OPTION_BITRATE,
-	                             ECAM_H264_ENCODED_BITRATE))
+	                             ecam_encoder_h264_get_max_bitrate(stream)))
 		goto fail;
 
 	if (!h264_context_set_option(stream->h264, H264_CONTEXT_OPTION_RATECONTROL,
