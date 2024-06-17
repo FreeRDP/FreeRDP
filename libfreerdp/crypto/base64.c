@@ -27,7 +27,7 @@ static const char enc_base64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrst
 static const char enc_base64url[] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
-static const char dec_base64url[] = {
+static const signed char dec_base64url[] = {
 	-1, /* 0        000	00	00000000	NUL	&#00;	 	Null character */
 	-1, /* 1        001	01	00000001	SOH	&#01;	 	Start of Heading */
 	-1, /* 2        002	02	00000010	STX	&#02;	 	Start of Text */
@@ -164,7 +164,7 @@ static const char dec_base64url[] = {
 	-1, /* 126        176	7E	01111110	~	&#126;	&tilde;	Equivalency sign - tilde */
 	-1, /* 127        177	7F	01111111	DEL	&#127;	 	Delete */
 };
-static const char dec_base64[] = {
+static const signed char dec_base64[] = {
 	-1, /* 0        000	00	00000000	NUL	&#00;	 	Null character */
 	-1, /* 1        001	01	00000001	SOH	&#01;	 	Start of Heading */
 	-1, /* 2        002	02	00000010	STX	&#02;	 	Start of Text */
@@ -391,13 +391,13 @@ static INLINE char* base64_encode_ex(const char* WINPR_RESTRICT alphabet,
 	return ret;
 }
 
-static INLINE char* base64_encode(const char* WINPR_RESTRICT alphabet,
+static INLINE char* base64_encode(const signed char* WINPR_RESTRICT alphabet,
                                   const BYTE* WINPR_RESTRICT data, size_t length, BOOL pad)
 {
 	return base64_encode_ex(alphabet, data, length, pad, FALSE, 64);
 }
 
-static INLINE int base64_decode_char(const char* WINPR_RESTRICT alphabet, char c)
+static INLINE int base64_decode_char(const signed char* WINPR_RESTRICT alphabet, char c)
 {
 	if (c <= '\0')
 		return -1;
@@ -405,8 +405,9 @@ static INLINE int base64_decode_char(const char* WINPR_RESTRICT alphabet, char c
 	return alphabet[c];
 }
 
-static INLINE void* base64_decode(const char* WINPR_RESTRICT alphabet, const char* WINPR_RESTRICT s,
-                                  size_t length, size_t* WINPR_RESTRICT data_len, BOOL pad)
+static INLINE void* base64_decode(const signed char* WINPR_RESTRICT alphabet,
+                                  const char* WINPR_RESTRICT s, size_t length,
+                                  size_t* WINPR_RESTRICT data_len, BOOL pad)
 {
 	int n[4];
 	BYTE* q = NULL;
