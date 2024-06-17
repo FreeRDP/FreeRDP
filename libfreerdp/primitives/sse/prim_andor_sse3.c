@@ -19,6 +19,8 @@
 #include <freerdp/primitives.h>
 #include <winpr/sysinfo.h>
 
+#include "prim_andor.h"
+
 #ifdef WITH_SSE2
 #include <emmintrin.h>
 #include <pmmintrin.h>
@@ -27,9 +29,9 @@
 #include "prim_internal.h"
 #include "prim_templates.h"
 
+#ifdef WITH_SSE2
 static primitives_t* generic = NULL;
 
-#ifdef WITH_SSE2
 /* ------------------------------------------------------------------------- */
 SSE3_SCD_PRE_ROUTINE(sse3_andC_32u, UINT32, generic->andC_32u, _mm_and_si128,
                      *dptr++ = *sptr++ & val)
@@ -37,11 +39,11 @@ SSE3_SCD_PRE_ROUTINE(sse3_orC_32u, UINT32, generic->orC_32u, _mm_or_si128, *dptr
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_andor_opt(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_andor_sse3(primitives_t* WINPR_RESTRICT prims)
 {
+#if defined(WITH_SSE2)
 	generic = primitives_get_generic();
 	primitives_init_andor(prims);
-#if defined(WITH_SSE2)
 
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
@@ -50,5 +52,7 @@ void primitives_init_andor_opt(primitives_t* WINPR_RESTRICT prims)
 		prims->orC_32u = sse3_orC_32u;
 	}
 
+#else
+	WINPR_UNUSED(prims);
 #endif
 }

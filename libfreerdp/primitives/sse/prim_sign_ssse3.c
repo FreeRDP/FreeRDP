@@ -19,16 +19,18 @@
 #include <freerdp/primitives.h>
 #include <winpr/sysinfo.h>
 
-#ifdef WITH_SSE2
+#include "prim_sign.h"
+
+#if defined(WITH_SSE2)
 #include <emmintrin.h>
 #include <tmmintrin.h>
-#endif /* WITH_SSE2 */
+#endif
 
 #include "prim_internal.h"
 
+#if defined(WITH_SSE2)
 static primitives_t* generic = NULL;
 
-#ifdef WITH_SSE2
 /* ------------------------------------------------------------------------- */
 static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_RESTRICT pDst,
                                 UINT32 len)
@@ -167,13 +169,13 @@ static pstatus_t ssse3_sign_16s(const INT16* WINPR_RESTRICT pSrc, INT16* WINPR_R
 #endif /* WITH_SSE2 */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_sign_opt(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_sign_ssse3(primitives_t* WINPR_RESTRICT prims)
 {
+#if defined(WITH_SSE2)
 	generic = primitives_get_generic();
 	primitives_init_sign(prims);
 	/* Pick tuned versions if possible. */
 	/* I didn't spot an IPP version of this. */
-#if defined(WITH_SSE2)
 
 	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
@@ -181,5 +183,7 @@ void primitives_init_sign_opt(primitives_t* WINPR_RESTRICT prims)
 		prims->sign_16s = ssse3_sign_16s;
 	}
 
+#else
+	WINPR_UNUSED(prims);
 #endif
 }

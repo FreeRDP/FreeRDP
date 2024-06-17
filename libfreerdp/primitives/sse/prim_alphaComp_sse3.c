@@ -26,6 +26,8 @@
 #include <freerdp/primitives.h>
 #include <winpr/sysinfo.h>
 
+#include "prim_alphaComp.h"
+
 #ifdef WITH_SSE2
 #include <emmintrin.h>
 #include <pmmintrin.h>
@@ -33,10 +35,9 @@
 
 #include "prim_internal.h"
 
-static primitives_t* generic = NULL;
-
 /* ------------------------------------------------------------------------- */
 #ifdef WITH_SSE2
+static primitives_t* generic = NULL;
 
 static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 src1Step,
                                      const BYTE* WINPR_RESTRICT pSrc2, UINT32 src2Step,
@@ -208,11 +209,11 @@ static pstatus_t sse2_alphaComp_argb(const BYTE* WINPR_RESTRICT pSrc1, UINT32 sr
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_alphaComp_opt(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_alphaComp_sse3(primitives_t* WINPR_RESTRICT prims)
 {
+#if defined(WITH_SSE2)
 	generic = primitives_get_generic();
 	primitives_init_alphaComp(prims);
-#if defined(WITH_SSE2)
 
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE)) /* for LDDQU */
@@ -220,5 +221,7 @@ void primitives_init_alphaComp_opt(primitives_t* WINPR_RESTRICT prims)
 		prims->alphaComp_argb = sse2_alphaComp_argb;
 	}
 
+#else
+	WINPR_UNUSED(prims);
 #endif
 }

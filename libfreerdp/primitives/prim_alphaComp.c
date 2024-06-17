@@ -25,6 +25,7 @@
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
+#include "prim_alphaComp.h"
 
 #define ALPHA(_k_) (((_k_)&0xFF000000U) >> 24)
 #define RED(_k_) (((_k_)&0x00FF0000U) >> 16)
@@ -90,4 +91,9 @@ static pstatus_t general_alphaComp_argb(const BYTE* pSrc1, UINT32 src1Step, cons
 void primitives_init_alphaComp(primitives_t* prims)
 {
 	prims->alphaComp_argb = general_alphaComp_argb;
+}
+
+void primitives_init_alphaComp_opt(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_alphaComp_sse3(prims);
 }
