@@ -1455,22 +1455,21 @@ char* freerdp_certificate_get_pem(const rdpCertificate* cert, size_t* pLength)
 		goto fail;
 	}
 
-#if 0
-        if (chain)
-        {
-            int count = sk_X509_num(chain);
-            for (int x = 0; x < count; x++)
-            {
-                X509* c = sk_X509_value(chain, x);
-                status = PEM_write_bio_X509(bio, c);
-                if (status < 0)
-                {
-                    WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", status);
-                    goto fail;
-                }
-            }
-        }
-#endif
+	if (cert->chain)
+	{
+		int count = sk_X509_num(cert->chain);
+		for (int x = 0; x < count; x++)
+		{
+			X509* c = sk_X509_value(cert->chain, x);
+			status = PEM_write_bio_X509(bio, c);
+			if (status < 0)
+			{
+				WLog_ERR(TAG, "PEM_write_bio_X509 failure: %d", status);
+				goto fail;
+			}
+		}
+	}
+
 	if (!bio_read_pem(bio, &pem, pLength))
 		goto fail;
 fail:
