@@ -48,11 +48,13 @@ void primitives_init_andor_sse3(primitives_t* WINPR_RESTRICT prims)
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
+		WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
 		prims->andC_32u = sse3_andC_32u;
 		prims->orC_32u = sse3_orC_32u;
 	}
 
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
 	WINPR_UNUSED(prims);
 #endif
 }

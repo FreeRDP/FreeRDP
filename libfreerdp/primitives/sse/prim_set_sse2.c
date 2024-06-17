@@ -226,12 +226,14 @@ void primitives_init_set_sse2(primitives_t* WINPR_RESTRICT prims)
 
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
+		WLog_VRB(PRIM_TAG, "SSE2 optimizations");
 		prims->set_8u = sse2_set_8u;
 		prims->set_32s = sse2_set_32s;
 		prims->set_32u = sse2_set_32u;
 	}
 
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
 	WINPR_UNUSED(prims);
 #endif
 }

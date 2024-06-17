@@ -273,9 +273,11 @@ void primitives_init_copy_sse41(primitives_t* prims)
 #if defined(WITH_SSE2)
 	if (IsProcessorFeaturePresent(PF_SSE4_1_INSTRUCTIONS_AVAILABLE))
 	{
+		WLog_VRB(PRIM_TAG, "SSE4.1 optimizations");
 		prims->copy_no_overlap = sse_image_copy_no_overlap;
 	}
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
 	WINPR_UNUSED(prims);
 #endif
 }

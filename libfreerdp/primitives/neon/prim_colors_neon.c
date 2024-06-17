@@ -355,11 +355,13 @@ void primitives_init_colors_neon(primitives_t* prims)
 
 	if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
 	{
+		WLog_VRB(PRIM_TAG, "NEON optimizations");
 		prims->RGBToRGB_16s8u_P3AC4R = neon_RGBToRGB_16s8u_P3AC4R;
 		prims->yCbCrToRGB_16s8u_P3AC4R = neon_yCbCrToRGB_16s8u_P3AC4R;
 		prims->yCbCrToRGB_16s16s_P3P3 = neon_yCbCrToRGB_16s16s_P3P3;
 	}
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_NEON");
 	WINPR_UNUSED(prims);
 #endif
 }

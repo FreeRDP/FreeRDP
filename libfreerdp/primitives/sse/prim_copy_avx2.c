@@ -274,9 +274,11 @@ void primitives_init_copy_avx2(primitives_t* prims)
 #if defined(WITH_SSE2)
 	if (IsProcessorFeaturePresent(PF_AVX2_INSTRUCTIONS_AVAILABLE))
 	{
+		WLog_VRB(PRIM_TAG, "AVX2 optimizations");
 		prims->copy_no_overlap = avx2_image_copy_no_overlap;
 	}
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
 	WINPR_UNUSED(prims);
 #endif
 }
