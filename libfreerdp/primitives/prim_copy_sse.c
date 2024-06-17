@@ -34,6 +34,12 @@
 #include <emmintrin.h>
 #include <immintrin.h>
 
+static INLINE pstatus_t sse_image_copy_no_overlap_convert(
+    BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
+    UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
+    UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,
+    SSIZE_T srcVMultiplier, SSIZE_T srcVOffset, SSIZE_T dstVMultiplier, SSIZE_T dstVOffset);
+
 static INLINE pstatus_t sse_image_copy_bgr24_bgrx32(BYTE* WINPR_RESTRICT pDstData, UINT32 nDstStep,
                                                     UINT32 nXDst, UINT32 nYDst, UINT32 nWidth,
                                                     UINT32 nHeight,
@@ -167,12 +173,13 @@ static pstatus_t sse_image_copy_no_overlap_dst_alpha(
 			break;
 	}
 
-	WLog_DBG(TAG, "unsupported format src %s --> dst %s", FreeRDPGetColorFormatName(SrcFormat),
-	         FreeRDPGetColorFormatName(DstFormat));
-	return -1;
+	/* Fall back to pixel copy */
+	return sse_image_copy_no_overlap_convert(
+	    pDstData, DstFormat, nDstStep, nXDst, nYDst, nWidth, nHeight, pSrcData, SrcFormat, nSrcStep,
+	    nXSrc, nYSrc, palette, srcVMultiplier, srcVOffset, dstVMultiplier, dstVOffset);
 }
 
-static INLINE pstatus_t sse_image_copy_no_overlap_convert(
+pstatus_t sse_image_copy_no_overlap_convert(
     BYTE* WINPR_RESTRICT pDstData, DWORD DstFormat, UINT32 nDstStep, UINT32 nXDst, UINT32 nYDst,
     UINT32 nWidth, UINT32 nHeight, const BYTE* WINPR_RESTRICT pSrcData, DWORD SrcFormat,
     UINT32 nSrcStep, UINT32 nXSrc, UINT32 nYSrc, const gdiPalette* WINPR_RESTRICT palette,

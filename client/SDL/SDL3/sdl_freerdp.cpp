@@ -1689,7 +1689,6 @@ SdlContext::SdlContext(rdpContext* context)
 {
 	WINPR_ASSERT(context);
 	grab_kbd_enabled = freerdp_settings_get_bool(context->settings, FreeRDP_GrabKeyboard);
-	`: w
 }
 
 rdpContext* SdlContext::context() const
