@@ -26,11 +26,12 @@
 #endif /* WITH_SSE2 */
 
 #include "prim_internal.h"
-
-static primitives_t* generic = NULL;
+#include "prim_set.h"
 
 /* ========================================================================= */
 #ifdef WITH_SSE2
+static primitives_t* generic = NULL;
+
 static pstatus_t sse2_set_8u(BYTE val, BYTE* WINPR_RESTRICT pDst, UINT32 len)
 {
 	BYTE byte = 0;
@@ -216,13 +217,12 @@ static pstatus_t sse2_set_32s(INT32 val, INT32* WINPR_RESTRICT pDst, UINT32 len)
 #endif /* WITH_SSE2 */
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_set_opt(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_set_sse2(primitives_t* WINPR_RESTRICT prims)
 {
+#if defined(WITH_SSE2)
 	generic = primitives_get_generic();
 	primitives_init_set(prims);
 	/* Pick tuned versions if possible. */
-
-#if defined(WITH_SSE2)
 
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
@@ -231,5 +231,7 @@ void primitives_init_set_opt(primitives_t* WINPR_RESTRICT prims)
 		prims->set_32u = sse2_set_32u;
 	}
 
+#else
+	WINPR_UNUSED(prims);
 #endif
 }

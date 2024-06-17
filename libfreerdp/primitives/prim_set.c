@@ -22,6 +22,7 @@
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
+#include "prim_set.h"
 
 /* ========================================================================= */
 static pstatus_t general_set_8u(BYTE val, BYTE* pDst, UINT32 len)
@@ -119,4 +120,9 @@ void primitives_init_set(primitives_t* prims)
 	prims->set_32s = general_set_32s;
 	prims->set_32u = general_set_32u;
 	prims->zero = general_zero;
+}
+
+void primitives_init_set_opt(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_set_sse2(prims);
 }

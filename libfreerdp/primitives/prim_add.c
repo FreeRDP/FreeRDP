@@ -22,6 +22,7 @@
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
+#include "prim_add.h"
 
 /* ----------------------------------------------------------------------------
  * 16-bit signed add with saturation (under and over).
@@ -73,4 +74,9 @@ void primitives_init_add(primitives_t* prims)
 {
 	prims->add_16s = general_add_16s;
 	prims->add_16s_inplace = general_add_16s_inplace;
+}
+
+void primitives_init_add_opt(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_add_sse3(prims);
 }

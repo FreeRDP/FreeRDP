@@ -268,7 +268,7 @@ static pstatus_t sse_image_copy_no_overlap(BYTE* WINPR_RESTRICT pDstData, DWORD 
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_copy_sse(primitives_t* prims)
+void primitives_init_copy_sse41(primitives_t* prims)
 {
 #if defined(WITH_SSE2)
 	if (IsProcessorFeaturePresent(PF_SSE4_1_INSTRUCTIONS_AVAILABLE))

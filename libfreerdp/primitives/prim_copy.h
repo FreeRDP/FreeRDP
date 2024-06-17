@@ -22,6 +22,7 @@
 #define FREERDP_LIB_PRIM_COPY_H
 
 #include <winpr/wtypes.h>
+#include <freerdp/config.h>
 #include <freerdp/primitives.h>
 
 pstatus_t generic_image_copy_no_overlap_convert(
@@ -37,6 +38,7 @@ pstatus_t generic_image_copy_no_overlap_memcpy(
     SSIZE_T srcVMultiplier, SSIZE_T srcVOffset, SSIZE_T dstVMultiplier, SSIZE_T dstVOffset,
     UINT32 flags);
 
-extern void primitives_init_copy_sse(primitives_t* prims);
-extern void primitives_init_copy_avx2(primitives_t* prims);
+void primitives_init_copy_sse41(primitives_t* prims);
+void primitives_init_copy_avx2(primitives_t* prims);
+
 #endif

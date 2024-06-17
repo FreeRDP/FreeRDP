@@ -392,22 +392,8 @@ void primitives_init_copy(primitives_t* prims)
 	prims->copy_no_overlap = generic_image_copy_no_overlap;
 }
 
-#if defined(WITH_SSE2) || defined(WITH_NEON)
 void primitives_init_copy_opt(primitives_t* prims)
 {
-	generic = primitives_get_generic();
-	primitives_init_copy(prims);
-	/* Pick tuned versions if possible. */
-	/* Performance with an SSE2 version with no prefetch seemed to be
-	 * all over the map vs. memcpy.
-	 * Sometimes it was significantly faster, sometimes dreadfully slower,
-	 * and it seemed to vary a lot depending on block size and processor.
-	 * Hence, no SSE version is used here unless once can be written that
-	 * is consistently faster than memcpy.
-	 */
-	/* This is just an alias with void* parameters */
-	prims->copy = (__copy_t)(prims->copy_8u);
-	primitives_init_copy_sse(prims);
+	primitives_init_copy_sse41(prims);
 	primitives_init_copy_avx2(prims);
 }
-#endif

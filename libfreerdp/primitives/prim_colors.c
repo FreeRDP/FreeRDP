@@ -24,6 +24,7 @@
 #include <freerdp/codec/color.h>
 
 #include "prim_internal.h"
+#include "prim_colors.h"
 
 #ifndef MINMAX
 #define MINMAX(_v_, _l_, _h_) ((_v_) < (_l_) ? (_l_) : ((_v_) > (_h_) ? (_h_) : (_v_)))
@@ -506,4 +507,11 @@ void primitives_init_colors(primitives_t* prims)
 	prims->yCbCrToRGB_16s16s_P3P3 = general_yCbCrToRGB_16s16s_P3P3;
 	prims->RGBToYCbCr_16s16s_P3P3 = general_RGBToYCbCr_16s16s_P3P3;
 	prims->RGBToRGB_16s8u_P3AC4R = general_RGBToRGB_16s8u_P3AC4R;
+}
+
+/* ------------------------------------------------------------------------- */
+void primitives_init_colors_opt(primitives_t* prims)
+{
+	primitives_init_colors_sse2(prims);
+	primitives_init_colors_neon(prims);
 }

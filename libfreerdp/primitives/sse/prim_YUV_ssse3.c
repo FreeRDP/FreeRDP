@@ -29,13 +29,11 @@
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
+#include "prim_YUV.h"
 
+#if defined(WITH_SSE2)
 #include <emmintrin.h>
 #include <tmmintrin.h>
-
-#if !defined(WITH_SSE2)
-#error "This file needs WITH_SSE2 enabled!"
-#endif
 
 static primitives_t* generic = NULL;
 
@@ -1496,9 +1494,11 @@ static pstatus_t ssse3_YUV420CombineToYUV444(avc444_frame_type type,
 			return -1;
 	}
 }
+#endif
 
-void primitives_init_YUV_opt(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_YUV_ssse3(primitives_t* WINPR_RESTRICT prims)
 {
+#if defined(WITH_SSE2)
 	generic = primitives_get_generic();
 	primitives_init_YUV(prims);
 
@@ -1512,4 +1512,7 @@ void primitives_init_YUV_opt(primitives_t* WINPR_RESTRICT prims)
 		prims->YUV444ToRGB_8u_P3AC4R = ssse3_YUV444ToRGB_8u_P3AC4R;
 		prims->YUV420CombineToYUV444 = ssse3_YUV420CombineToYUV444;
 	}
+#else
+	WINPR_UNUSED(prims);
+#endif
 }

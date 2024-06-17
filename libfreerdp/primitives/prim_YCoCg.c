@@ -23,6 +23,7 @@
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
+#include "prim_YCoCg.h"
 
 /* helper function to convert raw 8 bit values to signed 16bit values.
  */
@@ -70,4 +71,10 @@ static pstatus_t general_YCoCgToRGB_8u_AC4R(const BYTE* pSrc, INT32 srcStep, BYT
 void primitives_init_YCoCg(primitives_t* prims)
 {
 	prims->YCoCgToRGB_8u_AC4R = general_YCoCgToRGB_8u_AC4R;
+}
+
+void primitives_init_YCoCg_opt(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_YCoCg_ssse3(prims);
+	primitives_init_YCoCg_neon(prims);
 }

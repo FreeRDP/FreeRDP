@@ -19,6 +19,8 @@
 #include <freerdp/primitives.h>
 
 #include "prim_internal.h"
+#include "prim_shift.h"
+
 /* ------------------------------------------------------------------------- */
 static INLINE INT16 shift(INT16 val, UINT32 sh)
 {
@@ -132,4 +134,9 @@ void primitives_init_shift(primitives_t* prims)
 	/* Wrappers */
 	prims->shiftC_16s = general_shiftC_16s;
 	prims->shiftC_16u = general_shiftC_16u;
+}
+
+void primitives_init_shift_opt(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_shift_sse3(prims);
 }

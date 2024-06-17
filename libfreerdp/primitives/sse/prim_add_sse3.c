@@ -20,6 +20,8 @@
 #include <freerdp/primitives.h>
 #include <winpr/sysinfo.h>
 
+#include "prim_add.h"
+
 #ifdef WITH_SSE2
 #include <emmintrin.h>
 #include <pmmintrin.h>
@@ -28,9 +30,9 @@
 #include "prim_internal.h"
 #include "prim_templates.h"
 
+#ifdef WITH_SSE2
 static primitives_t* generic = NULL;
 
-#ifdef WITH_SSE2
 /* ------------------------------------------------------------------------- */
 SSE3_SSD_ROUTINE(sse3_add_16s, INT16, generic->add_16s, _mm_adds_epi16,
                  generic->add_16s(sptr1++, sptr2++, dptr++, 1))
@@ -174,12 +176,12 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 #endif
 
 /* ------------------------------------------------------------------------- */
-void primitives_init_add_opt(primitives_t* WINPR_RESTRICT prims)
+void primitives_init_add_sse3(primitives_t* WINPR_RESTRICT prims)
 {
+#if defined(WITH_SSE2)
 	generic = primitives_get_generic();
 	primitives_init_add(prims);
 
-#if defined(WITH_SSE2)
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE)) /* for LDDQU */
 	{
@@ -187,5 +189,7 @@ void primitives_init_add_opt(primitives_t* WINPR_RESTRICT prims)
 		prims->add_16s_inplace = sse3_add_16s_inplace;
 	}
 
+#else
+	WINPR_UNUSED(prims);
 #endif
 }

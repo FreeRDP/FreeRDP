@@ -29,6 +29,7 @@
 #include <freerdp/primitives.h>
 #include <freerdp/codec/color.h>
 #include "prim_internal.h"
+#include "prim_YUV.h"
 
 static pstatus_t general_LumaToYUV444(const BYTE* const WINPR_RESTRICT pSrcRaw[3],
                                       const UINT32 srcStep[3], BYTE* WINPR_RESTRICT pDstRaw[3],
@@ -1874,4 +1875,10 @@ void primitives_init_YUV(primitives_t* WINPR_RESTRICT prims)
 	prims->YUV444SplitToYUV420 = general_YUV444SplitToYUV420;
 	prims->RGBToAVC444YUV = general_RGBToAVC444YUV;
 	prims->RGBToAVC444YUVv2 = general_RGBToAVC444YUVv2;
+}
+
+void primitives_init_YUV_opt(primitives_t* WINPR_RESTRICT prims)
+{
+	primitives_init_YUV_ssse3(prims);
+	primitives_init_YUV_neon(prims);
 }
