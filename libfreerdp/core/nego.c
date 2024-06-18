@@ -82,17 +82,6 @@ static const char* nego_state_string(NEGO_STATE state)
 	return NEGO_STATE_STRINGS[state];
 }
 
-static const char* protocol_security_string(UINT32 security)
-{
-	static const char* PROTOCOL_SECURITY_STRINGS[] = { "RDP", "TLS", "NLA", "UNK", "RDSTLS",
-		                                               "UNK", "UNK", "UNK", "EXT", "UNK",
-		                                               "UNK", "UNK", "UNK", "UNK", "UNK",
-		                                               "UNK", "AAD", "UNK", "UNK", "UNK" };
-	if (security >= ARRAYSIZE(PROTOCOL_SECURITY_STRINGS))
-		return PROTOCOL_SECURITY_STRINGS[ARRAYSIZE(PROTOCOL_SECURITY_STRINGS) - 1];
-	return PROTOCOL_SECURITY_STRINGS[security];
-}
-
 static BOOL nego_tcp_connect(rdpNego* nego);
 static BOOL nego_transport_connect(rdpNego* nego);
 static BOOL nego_transport_disconnect(rdpNego* nego);
@@ -254,7 +243,11 @@ BOOL nego_connect(rdpNego* nego)
 		} while (nego_get_state(nego) != NEGO_STATE_FINAL);
 	}
 
-	WLog_DBG(TAG, "Negotiated %s security", protocol_security_string(nego->SelectedProtocol));
+	{
+		char buffer[64] = { 0 };
+		WLog_DBG(TAG, "Negotiated %s security",
+		         nego_protocol_to_str(nego->SelectedProtocol, buffer, sizeof(buffer)));
+	}
 
 	/* update settings with negotiated protocol security */
 	if (!nego_update_settings_from_state(nego, settings))
@@ -281,8 +274,9 @@ BOOL nego_connect(rdpNego* nego)
 	/* finally connect security layer (if not already done) */
 	if (!nego_security_connect(nego))
 	{
+		char buffer[64] = { 0 };
 		WLog_DBG(TAG, "Failed to connect with %s security",
-		         protocol_security_string(nego->SelectedProtocol));
+		         nego_protocol_to_str(nego->SelectedProtocol, buffer, sizeof(buffer)));
 		return FALSE;
 	}
 
@@ -810,7 +804,11 @@ int nego_recv(rdpTransport* transport, wStream* s, void* extra)
 			case TYPE_RDP_NEG_RSP:
 				if (!nego_process_negotiation_response(nego, s))
 					return -1;
-				WLog_DBG(TAG, "selected_protocol: %" PRIu32 "", nego->SelectedProtocol);
+				{
+					char buffer[64] = { 0 };
+					WLog_DBG(TAG, "selected_protocol: %s",
+					         nego_protocol_to_str(nego->SelectedProtocol, buffer, sizeof(buffer)));
+				}
 
 				/* enhanced security selected ? */
 
@@ -1116,7 +1114,11 @@ BOOL nego_send_negotiation_request(rdpNego* nego)
 		length += cookie_length + 19;
 	}
 
-	WLog_DBG(TAG, "RequestedProtocols: %" PRIu32 "", nego->RequestedProtocols);
+	{
+		char buffer[64] = { 0 };
+		WLog_DBG(TAG, "RequestedProtocols: %s",
+		         nego_protocol_to_str(nego->RequestedProtocols, buffer, sizeof(buffer)));
+	}
 
 	if ((nego->RequestedProtocols > PROTOCOL_RDP) || (nego->sendNegoData))
 	{
@@ -1264,7 +1266,11 @@ BOOL nego_process_negotiation_request(rdpNego* nego, wStream* s)
 			return FALSE;
 	}
 
-	WLog_DBG(TAG, "RDP_NEG_REQ: RequestedProtocol: 0x%08" PRIX32 "", nego->RequestedProtocols);
+	{
+		char buffer[64] = { 0 };
+		WLog_DBG(TAG, "RDP_NEG_REQ: RequestedProtocol: %s",
+		         nego_protocol_to_str(nego->RequestedProtocols, buffer, sizeof(buffer)));
+	}
 	nego_set_state(nego, NEGO_STATE_FINAL);
 	return TRUE;
 }
@@ -1970,4 +1976,32 @@ const BYTE* nego_get_routing_token(rdpNego* nego, DWORD* RoutingTokenLength)
 	if (RoutingTokenLength)
 		*RoutingTokenLength = nego->RoutingTokenLength;
 	return nego->RoutingToken;
+}
+
+const char* nego_protocol_to_str(UINT32 protocol, char* buffer, size_t size)
+{
+	const UINT32 mask = ~(PROTOCOL_SSL | PROTOCOL_HYBRID | PROTOCOL_RDSTLS | PROTOCOL_HYBRID_EX |
+	                      PROTOCOL_RDSAAD | PROTOCOL_FAILED_NEGO);
+	char str[48] = { 0 };
+
+	if (protocol & PROTOCOL_SSL)
+		(void)winpr_str_append("SSL", str, sizeof(str), "|");
+	if (protocol & PROTOCOL_HYBRID)
+		(void)winpr_str_append("HYBRID", str, sizeof(str), "|");
+	if (protocol & PROTOCOL_RDSTLS)
+		(void)winpr_str_append("RDSTLS", str, sizeof(str), "|");
+	if (protocol & PROTOCOL_HYBRID_EX)
+		(void)winpr_str_append("HYBRID_EX", str, sizeof(str), "|");
+	if (protocol & PROTOCOL_RDSAAD)
+		(void)winpr_str_append("RDSAAD", str, sizeof(str), "|");
+	if (protocol & PROTOCOL_FAILED_NEGO)
+		(void)winpr_str_append("NEGO FAILED", str, sizeof(str), "|");
+
+	if (protocol == PROTOCOL_RDP)
+		(void)winpr_str_append("RDP", str, sizeof(str), "");
+	else if ((protocol & mask) != 0)
+		(void)winpr_str_append("UNKNOWN", str, sizeof(str), "|");
+
+	(void)_snprintf(buffer, size, "[%s][0x%08" PRIx32 "]", str, protocol);
+	return buffer;
 }

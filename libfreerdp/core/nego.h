@@ -152,4 +152,6 @@ FREERDP_LOCAL SEC_WINNT_AUTH_IDENTITY* nego_get_identity(rdpNego* nego);
 
 FREERDP_LOCAL void nego_free_nla(rdpNego* nego);
 
+FREERDP_LOCAL const char* nego_protocol_to_str(UINT32 protocol, char* buffer, size_t size);
+
 #endif /* FREERDP_LIB_CORE_NEGO_H */
