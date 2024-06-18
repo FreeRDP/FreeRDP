@@ -69,6 +69,7 @@ AIDs = {
     "a00000039742544659": "MsGidsAID",
     "a000000308": "PIV",
     "a0000003974349445f0100": "SC PNP",
+    "a0000001510000": "GPC",
 }
 
 FIDs = {
@@ -89,7 +90,9 @@ DOs = {
 
 ERROR_CODES = {
     0x9000: "success",
+    0x6100: "more bytes",
     0x6282: "end of file or record",
+    0x6283: "card locked",
     0x63C0: "warning counter 0",
     0x63C1: "warning counter 1",
     0x63C2: "warning counter 2",
@@ -101,6 +104,7 @@ ERROR_CODES = {
     0x63C8: "warning counter 8",
     0x63C9: "warning counter 9",
     0x6982: "security status not satisfied",
+    0x6882: "Secure messaging not supported",
     0x6985: "condition of use not satisfied",
     0x6A80: "incorrect parameter cmd data field",
     0x6A81: "function not suppported",
@@ -126,56 +130,124 @@ PIV_OIDs = {
 }
 
 class ApplicationDummy(object):
+    """Base application"""
+
     def __init__(self, aid):
         self.aid = aid
-    
+
     def getAID(self):
         return self.aid
 
     def selectResult(self, fci, status, body):
-        return 'selectResult(%s, %s, %s)\n' %(fci, status, body.hex())
-    
+        return 'selectResult(fci=%s, status=0x%x) = %s\n' %(fci, status, body.hex())
+
     def getData(self, fileId, bytes):
-        return 'getData(0x%x, %s)\n' %(fileId, bytes.hex())
-    
+        return 'getData(status=0x%x) = %s\n' %(fileId, bytes.hex())
+
     def getDataResult(self, status, body):
-        return 'getDataResult(0x%x, %s)\n' %(status, body.hex())
-    
+        return 'getDataResult(status=0x%x) = %s\n' %(status, body.hex())
+
     def mse(self, body):
         return body.hex()
 
     def mseResult(self, status, body):
         return body.hex()
-    
+
     def pso(self, body):
         return body.hex()
 
     def psoResult(self, status, body):
         return body.hex()
 
+    def getResponse(self, status, body):
+        return body.hex()
+
+    def getResponseResult(self, status, body):
+        return body.hex()
+
+    def verify(self, status, body):
+        return "verify(%s)" % body.hex()
+
+    def verifyResult(self, status, body):
+        return "verify(%s)" % body.hex()
+
+
+'''
+'''
+class ApplicationGpc(object):
+    """GlobalPlatform application"""
+
+    def __init__(self, aid):
+        self.aid = aid
+        self.lastGetData = None
+
+    def getAID(self):
+        return self.aid
+
+    def selectResult(self, fci, status, body):
+        return 'selectResult(fci=%s, status=0x%x) = %s\n' %(fci, status, body.hex())
+
+    def getData(self, fileId, bytes):
+        tags = {
+            0x42: 'Issuer Identification Number',
+            0x45: 'Card Image Number',
+            0x66: 'Card Data',
+            0x67: 'Card Capability Information' # ???
+        }
+        self.lastGetData = fileId
+        return 'getData(%s)\n' % tags.get(fileId, '<unknown 0x%x>' % fileId)
+
+    def getDataResult(self, status, body):
+        if self.lastGetData == 0x66:
+            # Card Data
+            pass
+        return 'getDataResult(0x%x) = %s\n' %(status, body.hex())
+
+    def mse(self, body):
+        return body.hex()
+
+    def mseResult(self, status, body):
+        return body.hex()
+
+    def pso(self, body):
+        return body.hex()
+
+    def psoResult(self, status, body):
+        return body.hex()
+
+    def getResponse(self, status, body):
+        return body.hex()
+
+    def getResponseResult(self, status, body):
+        return body.hex()
+
 
 class ApplicationPIV(object):
+    """PIV application"""
+
     def __init__(self, aid):
         self.lastGet = None
         self.aid = aid
-    
+
     def getAID(self):
         return self.aid
-    
+
     def selectResult(self, selectT, status, body):
         ret = ''
         appTag = body[0]
         appLen = body[1]
-    
+
         body = body[2:2+appLen]
         while len(body) > 2:
             tag = body[0]
             tagLen = body[1]
+            if tagLen != 1:
+                pass
             if selectT == "FCI":
                 if tag == 0x4f:
                     ret += "\tpiv version: %s\n" % body[2:2 + tagLen].hex()
                 elif tag == 0x79:
-                    subBody = body[2:2 + tagLen]                                
+                    subBody = body[2:2 + tagLen]
                     
                     subTag = subBody[0]
                     subLen = subBody[1]
@@ -184,13 +256,13 @@ class ApplicationPIV(object):
                     if subTag == 0x4f:
                         v = content[4:]
                         if v.startswith('a000000308'):
-                            content = 'NIST RID'                                                                        
-                    ret += '\tCoexistent tag allocation authority: %s\n' % content                                
+                            content = 'NIST RID'
+                    ret += '\tCoexistent tag allocation authority: %s\n' % content
                     
                 elif tag == 0x50:
-                    ret += '\tapplication label\n'
+                    ret += '\tapplication label: %s\n' % body[2:2+tagLen].decode('utf8')
                 elif tag == 0xac:
-                    ret += '\tCryptographic algorithms supported\n'
+                    ret += '\tCryptographic algorithms supported: %s\n' % body[2:2+tagLen].hex()
                 else:
                     rety += '\tunknown tag 0x%x\n' % tag
                     
@@ -200,9 +272,12 @@ class ApplicationPIV(object):
             body = body[2+tagLen:]
             
         return ret
-    
+
     def getData(self, fileId, bytes):
-        ret = "\tfileId=%s\n" % FIDs.get(fileId, "%0.4x" % fileId)
+        ret = "\tfileId=%s(%0.4x)\n" % (FIDs.get(fileId, ""), fileId)
+
+        if len(bytes) < 7:
+            return ret + "\t/!\\ too short !!!!"
 
         lc = bytes[4]
         tag = bytes[5]
@@ -210,7 +285,7 @@ class ApplicationPIV(object):
 
         if lc == 4:
             ret += "\tdoId=%0.4x\n"% (bytes[7] * 256 + bytes[8])
-            
+
         elif lc == 0xa:
             keyStr = ''
             # TLV
@@ -224,16 +299,20 @@ class ApplicationPIV(object):
             tag = bytes[i]
             tagLen = bytes[i+1]
             keyStr += "value(tag=0x%x len=%d)"
+        elif lc == 3:
+            ret += "\tDiscovery Object\n"
+        elif lc == 4:
+            ret += "\tBiometric Information Templates (BIT) Group Template\n"
         elif lc == 5:
             if tag == 0x5C:
-                tagStr = bytes[7:].hex()
+                tagStr = bytes[7:10].hex()
                 ret += '\ttag: %s(%s)\n' % (tagStr, PIV_OIDs.get(tagStr, '<unknown>'))
                 self.lastGet = tagStr
         else:
-            ret += "\tunknown key access\n"
+            ret += "\tunknown key access(lc=0x%x)\n" % lc
 
         return ret
-    
+
     def getDataResult(self, status, body):
         ret = ''
         if not len(body):
@@ -246,7 +325,7 @@ class ApplicationPIV(object):
             tag = body[0]
             tagLen = body[1]
             tagBody = body[2:2+tagLen]
-            
+
             if self.lastGet in ('5fc102',):
                 # Card holder Unique Identifier
                 if tag == 0x30:
@@ -259,32 +338,78 @@ class ApplicationPIV(object):
                     ret += '\tIssuer Asymmetric Signature: %s\n' % tagBody.hex()
                 else:
                     ret += "\tunknown tag=0x%x len=%d content=%s\n" % (tag, tagLen, tagBody.hex())
+
+            elif self.lastGet in ('5fc107',):
+                # Card Capability Container
+                capas = {
+                    0xf0: "Card Identifier",
+                    0xf1: "Capability Container version number",
+                    0xf2: "Capability Grammar version number",
+                    0xf3: "Applications CardURL",
+                    0xf4: "PKCS#15",
+                    0xf5: "Registered Data Model number",
+                    0xf6: "Access Control Rule Table",
+                    0xf7: "Card APDUs",
+                    0xfa: "Redirection Tag",
+                    0xfb: "Capability Tuples (CTs)",
+                    0xfc: "Status Tuples (STs)",
+                    0xfd: "Next CCC",
+                    0xe3: "Extended Application CardURL",
+                    0xb4: "Security Object Buffer",
+                    0xfe: "Error Detection Code"
+                }
+
+                if tag in capas.keys():
+                    if tagLen:
+                        ret += "\t%s: len=%d %s\n" % (capas[tag], tagLen, tagBody.hex())
+                else:
+                    ret += "\tunknown capa tag 0x%x: %s\n" % (tag, tagBody.hex())
+
+            elif self.lastGet == '5fc105':
+                # X.509 Certificate for PIV Authentication
+                pass
+
             else:
-                ret += "\t%s: unknown tag=0x%x len=%d content=%s\n" % (self.lastGet, tag, tagLen, tagBody.hex())
-            
+                ret += "\t%s: unimplemented tag=0x%x len=%d content=%s\n" % (self.lastGet, tag, tagLen, tagBody.hex())
+
             body = body[2+tagLen:]
 
         return ret
-    
+
+    def getResponse(self, status, body):
+        return body.hex()
+
+    def getResponseResult(self, status, body):
+        return body.hex()
+
     def mse(self, body):
         return body.hex()
 
     def mseResult(self, status, body):
         return body.hex()
-    
+
     def pso(self, body):
         return body.hex()
 
     def psoResult(self, status, body):
         return body.hex()
 
+    def verify(self, status, body):
+        return "verify(%s)" % body.hex()
 
-  
+    def verifyResult(self, status, body):
+        return "verify(%s)" % body.hex()
+
+
+
+
 class ApplicationGids(object):
+    """GIDS application"""
+
     def __init__(self, aid):
         self.aid = aid
         self.lastDo = None
-    
+
     def getAID(self):
         return self.aid
 
@@ -292,9 +417,9 @@ class ApplicationGids(object):
         ret = ''
         tag = bytes[0]
         tagLen = bytes[1]
-        
+
         body = bytes[2:2+tagLen]
-                
+
         if tag == 0x62:
             ret += '\tFCP\n'
 
@@ -302,7 +427,7 @@ class ApplicationGids(object):
                 tag2 = body[0]
                 tag2Len = body[1]
                 tag2Body = body[2:2+tag2Len] 
-                
+
                 if tag2 == 0x82:
                     ret += '\t\tFileDescriptor: %s\n' % tag2Body.hex() 
                 elif tag2 == 0x8a:
@@ -313,39 +438,39 @@ class ApplicationGids(object):
                     ret += '\t\tSecurityAttributes: %s\n' % tag2Body.hex()
                 else:
                     ret += '\t\tunhandled tag=0x%x body=%s\n' % (tag2, tag2Body.hex())
-                
+
                 body = body[2+tag2Len:]
-        
+
         return ret
-    
+
     def parseFci(self, bytes):
         ret = ''
         tag = bytes[0]
         tagLen = bytes[1]
-        
+
         body = bytes[2:2+tagLen]
-                
+
         if tag == 0x61:
             ret += '\tFCI\n'
-            
+
             while len(body) > 2:
                 tag2 = body[0]
                 tag2Len = body[1]
                 tag2Body = body[2:2+tag2Len]
-                
+
                 if tag2 == 0x4F:
                     ret += '\t\tApplication AID: %s\n' % tag2Body.hex()
-                    
+
                 elif tag2 == 0x50:
                     ret += '\t\tApplication label: %s\n' % tag2Body.encode('utf8')
-                    
+
                 elif tag2 == 0x73:                    
                     body2 = tag2Body
                     tokens = []
                     while len(body2) > 2:
                         tag3 = body2[0]
                         tag3Len = body2[1]
-                        
+
                         if tag3 == 0x40:
                             v = body2[2] 
                             if v & 0x80:
@@ -355,29 +480,29 @@ class ApplicationGids(object):
                             if v & 0x20:
                                 tokens.append('keyEstabIntAuthECC')
 
-                        
+
                         body2 = body2[2+tag3Len:]
-                    
+
                     ret += '\t\tDiscretionary data objects: %s\n' % ",".join(tokens)
                 else:
                     ret += '\t\tunhandled tag=0x%x body=%s\n' % (tag2, tag2Body.hex())
-                
+
                 body = body[2+tag2Len:]
 
         return ret
 
-    
+
     def selectResult(self, selectT, status, body):
         if not len(body):
             return ''
-        
+
         if selectT == 'FCP':
             return self.parseFcp(body)
         elif selectT == 'FCI':
             return self.parseFci(body)
         else:
-            return '\tselectResult(%s, %s, %s)\n' % (selectT, status, body.hex())
-    
+            return '\tselectResult(fci=%s, status=0x%x) = %s\n' % (selectT, status, body.hex())
+
     def getData(self, fileId, bytes):
         lc = bytes[4]
         tag = bytes[5]
@@ -391,7 +516,7 @@ class ApplicationGids(object):
             ret = '\tunknown tag=0%x len=%d v=%s' % (tag, tagLen, bytes[7:7+tagLen].hex())
 
         return ret
-    
+
     def getDataResult(self, status, body):
         ret = ''
         '''
@@ -404,13 +529,19 @@ class ApplicationGids(object):
             body = body[2+tagLen:]
         '''
         return ret
-    
+
     def mse(self, body):
         return body.hex()
 
     def mseResult(self, status, body):
         return body.hex()
-    
+
+    def getResponse(self, status, body):
+        return body.hex()
+
+    def getResponseResult(self, status, body):
+        return body.hex()
+
     def pso(self, body):
         return body.hex()
 
@@ -420,14 +551,23 @@ class ApplicationGids(object):
 
 
 def createAppByAid(aid):
-    if aid == "a000000308":
+    if aid in ("a000000308", 'a00000030800001000',):
         return ApplicationPIV(aid)
-    
+
     elif aid in ('a00000039742544659',):
         return ApplicationGids(aid)
     
+    elif aid in ('a0000001510000',):
+        return ApplicationGpc(aid)
+
     return ApplicationDummy(aid)
 
+
+def getErrorCode(status):
+    if status & 0x6100:
+        return "%d more bytes" % (status & 0xff)
+
+    return ERROR_CODES.get(status, "<unknown>")
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -497,7 +637,7 @@ if __name__ == '__main__':
                      
                 elif p1 == 0x4:                    
                     aid = bytes[i:i+lc].hex()
-                    lastSelect = AIDs.get(aid, '')
+                    lastSelect = AIDs.get(aid, '<unknown %s>' % aid)
                     print("\tselectByAID: %s(%s)" % (aid, lastSelect))
                                         
                     if p2 == 0x00:
@@ -536,7 +676,14 @@ if __name__ == '__main__':
                 
                 ret = currentApp.getData(fileId, bytes)
                 print("%s" % ret)
+
+            elif cmdName == "GET RESPONSE":
+                #lc = bytes[4]
+                #fileId = p1 * 256 + p2
                 
+                #ret = currentApp.getResponse(fileId, bytes)
+                #print("%s" % ret)
+                pass
             elif cmdName == "MSE":
                 ret = currentApp.mse(bytes[5:5+lc])
                 print("%s" % ret)
@@ -551,13 +698,16 @@ if __name__ == '__main__':
             
         else:
             # Responses
+            if not len(bytes):
+                continue
+
             status = bytes[-1] + bytes[-2] * 256
             body = bytes[0:-2]
-            print("status=0x%0.4x(%s)" %  (status, ERROR_CODES.get(status, "<unknown>")))
+            print("status=0x%0.4x(%s)" %  (status, getErrorCode(status)))
 
             if not len(body):
                 continue
-            
+
             ret = ''
             if lastCmd == "SELECT":                
                 ret = currentApp.selectResult(lastSelectT, status, body)
@@ -567,6 +717,10 @@ if __name__ == '__main__':
                 ret = currentApp.mseResult(status, body)
             elif lastCmd == "PSO":
                 ret = currentApp.psoResult(status, body)
-            
+            elif lastCmd == "GET RESPONSE":
+                ret = currentApp.getResponseResult(status, body)
+            elif lastCmd == "VERIFY":
+                ret = currentApp.verifyResult(status, body)
+
             if ret:
                 print("%s" % ret)
