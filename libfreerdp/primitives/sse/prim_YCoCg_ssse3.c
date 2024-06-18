@@ -448,9 +448,11 @@ void primitives_init_YCoCg_ssse3(primitives_t* WINPR_RESTRICT prims)
 	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
+		WLog_VRB(PRIM_TAG, "SSE3/SSSE3 optimizations");
 		prims->YCoCgToRGB_8u_AC4R = ssse3_YCoCgRToRGB_8u_AC4R;
 	}
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
 	WINPR_UNUSED(prims);
 #endif
 }

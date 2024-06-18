@@ -710,7 +710,7 @@ static void cpuid(unsigned info, unsigned* eax, unsigned* ebx, unsigned* ecx, un
 	*edx = a[3];
 #endif
 }
-#elif defined(_M_ARM)
+#elif defined(_M_ARM) || defined(_M_ARM64)
 #if defined(__linux__)
 // HWCAP flags from linux kernel - uapi/asm/hwcap.h
 #define HWCAP_SWP (1 << 0)
@@ -775,6 +775,12 @@ static unsigned GetARMCPUCaps(void)
 
 #ifndef _WIN32
 
+#if defined(_M_ARM) || defined(_M_ARM64)
+#ifdef __linux__
+#include <sys/auxv.h>
+#endif
+#endif
+
 BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 {
 	BOOL ret = FALSE;
@@ -792,14 +798,15 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 			return FALSE;
 	}
 
-#elif defined(_M_ARM)
+#elif defined(_M_ARM) || defined(_M_ARM64)
 #ifdef __linux__
-	const unsigned caps = GetARMCPUCaps();
+	const unsigned long caps = getauxval(AT_HWCAP);
 
 	switch (ProcessorFeature)
 	{
 		case PF_ARM_NEON_INSTRUCTIONS_AVAILABLE:
 		case PF_ARM_NEON:
+
 			if (caps & HWCAP_NEON)
 				ret = TRUE;
 
@@ -893,7 +900,9 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 	}
 
 #endif // __linux__
-#elif defined(_M_IX86_AMD64)
+#endif
+
+#if defined(_M_IX86_AMD64)
 #ifdef __GNUC__
 	unsigned a = 0;
 	unsigned b = 0;
@@ -955,7 +964,9 @@ BOOL IsProcessorFeaturePresent(DWORD ProcessorFeature)
 	}
 
 #endif // __GNUC__
-#elif defined(_M_E2K)
+#endif
+
+#if defined(_M_E2K)
 	/* compiler flags on e2k arch determine CPU features */
 	switch (ProcessorFeature)
 	{
@@ -1003,7 +1014,7 @@ DWORD GetTickCountPrecise(void)
 BOOL IsProcessorFeaturePresentEx(DWORD ProcessorFeature)
 {
 	BOOL ret = FALSE;
-#ifdef _M_ARM
+#if defined(_M_ARM) || defined(_M_ARM64)
 #ifdef __linux__
 	unsigned caps;
 	caps = GetARMCPUCaps();

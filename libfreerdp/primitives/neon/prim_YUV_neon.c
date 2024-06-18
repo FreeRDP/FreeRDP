@@ -750,11 +750,13 @@ void primitives_init_YUV_neon(primitives_t* prims)
 
 	if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
 	{
+		WLog_VRB(PRIM_TAG, "NEON optimizations");
 		prims->YUV420ToRGB_8u_P3AC4R = neon_YUV420ToRGB_8u_P3AC4R;
 		prims->YUV444ToRGB_8u_P3AC4R = neon_YUV444ToRGB_8u_P3AC4R;
 		prims->YUV420CombineToYUV444 = neon_YUV420CombineToYUV444;
 	}
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_NEON");
 	WINPR_UNUSED(prims);
 #endif
 }

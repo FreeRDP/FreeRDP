@@ -1253,6 +1253,7 @@ void primitives_init_colors_sse2(primitives_t* prims)
 
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE))
 	{
+		WLog_VRB(PRIM_TAG, "SSE2 optimizations");
 		prims->RGBToRGB_16s8u_P3AC4R = sse2_RGBToRGB_16s8u_P3AC4R;
 		prims->yCbCrToRGB_16s16s_P3P3 = sse2_yCbCrToRGB_16s16s_P3P3;
 		prims->yCbCrToRGB_16s8u_P3AC4R = sse2_yCbCrToRGB_16s8u_P3AC4R;
@@ -1260,6 +1261,7 @@ void primitives_init_colors_sse2(primitives_t* prims)
 	}
 
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
 	WINPR_UNUSED(prims);
 #endif
 }

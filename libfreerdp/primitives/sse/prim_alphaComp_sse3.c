@@ -218,10 +218,12 @@ void primitives_init_alphaComp_sse3(primitives_t* WINPR_RESTRICT prims)
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE)) /* for LDDQU */
 	{
+		WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
 		prims->alphaComp_argb = sse2_alphaComp_argb;
 	}
 
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
 	WINPR_UNUSED(prims);
 #endif
 }

@@ -185,11 +185,13 @@ void primitives_init_add_sse3(primitives_t* WINPR_RESTRICT prims)
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE)) /* for LDDQU */
 	{
+		WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
 		prims->add_16s = sse3_add_16s;
 		prims->add_16s_inplace = sse3_add_16s_inplace;
 	}
 
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
 	WINPR_UNUSED(prims);
 #endif
 }

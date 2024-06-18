@@ -1505,6 +1505,7 @@ void primitives_init_YUV_ssse3(primitives_t* WINPR_RESTRICT prims)
 	if (IsProcessorFeaturePresentEx(PF_EX_SSSE3) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
+		WLog_VRB(PRIM_TAG, "SSE3/SSSE3 optimizations");
 		prims->RGBToYUV420_8u_P3AC4R = ssse3_RGBToYUV420;
 		prims->RGBToAVC444YUV = ssse3_RGBToAVC444YUV;
 		prims->RGBToAVC444YUVv2 = ssse3_RGBToAVC444YUVv2;
@@ -1513,6 +1514,7 @@ void primitives_init_YUV_ssse3(primitives_t* WINPR_RESTRICT prims)
 		prims->YUV420CombineToYUV444 = ssse3_YUV420CombineToYUV444;
 	}
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
 	WINPR_UNUSED(prims);
 #endif
 }

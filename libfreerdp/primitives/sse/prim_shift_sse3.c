@@ -153,6 +153,7 @@ void primitives_init_shift_sse3(primitives_t* WINPR_RESTRICT prims)
 	if (IsProcessorFeaturePresent(PF_SSE2_INSTRUCTIONS_AVAILABLE) &&
 	    IsProcessorFeaturePresent(PF_SSE3_INSTRUCTIONS_AVAILABLE))
 	{
+		WLog_VRB(PRIM_TAG, "SSE2/SSE3 optimizations");
 		prims->lShiftC_16s_inplace = sse2_lShiftC_16s_inplace;
 		prims->lShiftC_16s = sse2_lShiftC_16s;
 		prims->rShiftC_16s = sse2_rShiftC_16s;
@@ -161,6 +162,7 @@ void primitives_init_shift_sse3(primitives_t* WINPR_RESTRICT prims)
 	}
 
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_SSE2");
 	WINPR_UNUSED(prims);
 #endif
 }

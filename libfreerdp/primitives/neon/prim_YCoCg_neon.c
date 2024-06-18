@@ -165,9 +165,11 @@ void primitives_init_YCoCg_neon(primitives_t* WINPR_RESTRICT prims)
 
 	if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
 	{
+		WLog_VRB(PRIM_TAG, "NEON optimizations");
 		prims->YCoCgToRGB_8u_AC4R = neon_YCoCgToRGB_8u_AC4R;
 	}
 #else
+	WLog_VRB(PRIM_TAG, "undefined WITH_NEON");
 	WINPR_UNUSED(prims);
 #endif
 }
