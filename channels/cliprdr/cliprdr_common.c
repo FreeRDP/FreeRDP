@@ -360,7 +360,7 @@ UINT cliprdr_read_file_contents_request(wStream* s, CLIPRDR_FILE_CONTENTS_REQUES
 	Stream_Read_UINT32(s, request->nPositionHigh); /* nPositionHigh (4 bytes) */
 	Stream_Read_UINT32(s, request->cbRequested);   /* cbRequested (4 bytes) */
 
-	if (Stream_GetRemainingLength(s) >= 4)
+	if (Stream_GetRemainingLength(s) >= sizeof(CLIPRDR_FILE_CONTENTS_REQUEST) - sizeof(CLIPRDR_HEADER) - sizeof(BOOL))
 	{
 		Stream_Read_UINT32(s, request->clipDataId); /* clipDataId (4 bytes) */
 		request->haveClipDataId = TRUE;
