@@ -234,14 +234,30 @@
 #define YORUBA 0x046A
 #define ZULU 0x0435
 
+#define LOCALE_LANGUAGE_LEN 6
+#define LOCALE_COUNTRY_LEN 10
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+	typedef struct
+	{
+		char language[LOCALE_LANGUAGE_LEN]; /* Two or three letter language code */
+		char country[LOCALE_COUNTRY_LEN]; /* Two or three letter country code (Sometimes with Cyrl_
+		                                     prefix) */
+		DWORD code;                       /* 32-bit unsigned integer corresponding to the locale */
+	} SYSTEM_LOCALE;
+
 	FREERDP_API DWORD freerdp_get_system_locale_id(void);
 	FREERDP_API const char* freerdp_get_system_locale_name_from_id(DWORD localeId);
 	FREERDP_API int freerdp_detect_keyboard_layout_from_system_locale(DWORD* keyboardLayoutId);
+
+	FREERDP_API const SYSTEM_LOCALE* freerdp_get_system_locale_list(size_t* count);
+
+	FREERDP_API INT64 freerdp_get_locale_id_from_string(const char* locale);
+	FREERDP_API DWORD freerdp_get_keyboard_default_layout_for_locale(DWORD locale);
 
 #ifdef __cplusplus
 }
