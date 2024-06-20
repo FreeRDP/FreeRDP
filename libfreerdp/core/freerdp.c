@@ -51,6 +51,7 @@
 #include <freerdp/error.h>
 #include <freerdp/event.h>
 #include <freerdp/locale/keyboard.h>
+#include <freerdp/locale/locale.h>
 #include <freerdp/channels/channels.h>
 #include <freerdp/version.h>
 #include <freerdp/log.h>
@@ -124,7 +125,11 @@ static int freerdp_connect_begin(freerdp* instance)
 	if (status)
 		status = utils_reload_channels(instance->context);
 
-	KeyboardLayout = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout);
+	const UINT32 cp = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardCodePage);
+	KeyboardLayout = freerdp_get_keyboard_default_layout_for_locale(cp);
+	if (KeyboardLayout == 0)
+		KeyboardLayout = freerdp_settings_get_uint32(settings, FreeRDP_KeyboardLayout);
+
 	switch (KeyboardLayout)
 	{
 		case KBD_JAPANESE:
