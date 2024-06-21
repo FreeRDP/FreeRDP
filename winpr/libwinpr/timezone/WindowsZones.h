@@ -8,8 +8,8 @@
 
 typedef struct
 {
-	const char* windows;
 	const char* tzid;
+	const char* windows;
 } WINDOWS_TZID_ENTRY;
 
 extern const WINDOWS_TZID_ENTRY WindowsZones[];

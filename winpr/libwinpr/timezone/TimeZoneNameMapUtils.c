@@ -115,7 +115,28 @@ static const char* map_fallback(const char* iana, TimeZoneNameType type)
 	for (size_t x = 0; x < WindowsZonesNrElements; x++)
 	{
 		const WINDOWS_TZID_ENTRY* const entry = &WindowsZones[x];
-		if (strcmp(entry->tzid, iana) == 0)
+		if (strchr(entry->tzid, ' '))
+		{
+			const char* res = NULL;
+			char* tzid = _strdup(entry->tzid);
+			char* ctzid = tzid;
+			while (tzid)
+			{
+				char* space = strchr(tzid, ' ');
+				if (space)
+					*space++ = '\0';
+				if (strcmp(tzid, iana) == 0)
+				{
+					res = entry->windows;
+					break;
+				}
+				tzid = space;
+			}
+			free(ctzid);
+			if (res)
+				return res;
+		}
+		else if (strcmp(entry->tzid, iana) == 0)
 			return entry->windows;
 	}
 
