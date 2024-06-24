@@ -1184,6 +1184,7 @@ static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStrea
 	Stream_Read_UINT32(s, pdu.frameId); /* frameId (4 bytes) */
 	DEBUG_RDPGFX(gfx->log, "RecvEndFramePdu: frameId: %" PRIu32 "", pdu.frameId);
 
+	const UINT64 start = GetTickCount64();
 	if (context)
 	{
 		IFCALLRET(context->EndFrame, error, context, &pdu);
@@ -1195,7 +1196,8 @@ static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStrea
 			return error;
 		}
 	}
-
+	const UINT64 end = GetTickCount64();
+	const UINT64 EndFrameTime = end - start;
 	gfx->TotalDecodedFrames++;
 
 	if (!gfx->sendFrameAcks)
@@ -1235,7 +1237,7 @@ static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStrea
 		case RDPGFX_CAPVERSION_107:
 			if (freerdp_settings_get_bool(gfx->rdpcontext->settings, FreeRDP_GfxSendQoeAck))
 			{
-				RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU qoe;
+				RDPGFX_QOE_FRAME_ACKNOWLEDGE_PDU qoe = { 0 };
 				UINT64 diff = (GetTickCount64() - gfx->StartDecodingTime);
 
 				if (diff > 65000)
@@ -1244,7 +1246,7 @@ static UINT rdpgfx_recv_end_frame_pdu(GENERIC_CHANNEL_CALLBACK* callback, wStrea
 				qoe.frameId = pdu.frameId;
 				qoe.timestamp = gfx->StartDecodingTime;
 				qoe.timeDiffSE = diff;
-				qoe.timeDiffEDR = 1;
+				qoe.timeDiffEDR = EndFrameTime;
 
 				if ((error = rdpgfx_send_qoe_frame_acknowledge_pdu(context, &qoe)))
 					WLog_Print(gfx->log, WLOG_ERROR,
