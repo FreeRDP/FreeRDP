@@ -1239,7 +1239,7 @@ HttpResponse* http_response_recv(rdpTls* tls, BOOL readContentLength)
 		char* end = NULL;
 		/* Read until we encounter \r\n\r\n */
 		ERR_clear_error();
-		const int wstatus = BIO_wait_read(tls->bio, timeout);
+		const long wstatus = BIO_wait_read(tls->bio, timeout);
 		if (wstatus < 0)
 		{
 			if (!BIO_should_retry(tls->bio))
