@@ -344,7 +344,7 @@ static SYSTEMTIME tm2systemtime(const struct tm* t)
 	if (t)
 	{
 		st.wYear = (WORD)1900 + t->tm_year;
-		st.wMonth = (WORD)t->tm_mon;
+		st.wMonth = (WORD)t->tm_mon + 1;
 		st.wDay = (WORD)t->tm_mday;
 		st.wDayOfWeek = (WORD)t->tm_wday;
 		st.wHour = (WORD)t->tm_hour;
@@ -353,6 +353,24 @@ static SYSTEMTIME tm2systemtime(const struct tm* t)
 		st.wMilliseconds = 0;
 	}
 	return st;
+}
+
+static struct tm systemtime2tm(const SYSTEMTIME* st)
+{
+	struct tm t = { 0 };
+	if (st)
+	{
+		if (st->wYear >= 1900)
+			t.tm_year = st->wYear - 1900;
+		if (st->wMonth > 0)
+			t.tm_mon = st->wMonth - 1;
+		t.tm_mday = st->wDay;
+		t.tm_wday = st->wDayOfWeek;
+		t.tm_hour = st->wHour;
+		t.tm_min = st->wMinute;
+		t.tm_sec = st->wSecond;
+	}
+	return t;
 }
 
 static LONG get_gmtoff_min(const struct tm* t)
@@ -386,28 +404,74 @@ static struct tm adjust_time(const struct tm* start, int hour, int minute)
 	return cur;
 }
 
+/* [MS-RDPBCGR] 2.2.1.11.1.1.1.1.1  System Time (TS_SYSTEMTIME) */
+static WORD get_transition_weekday_occurrence(const SYSTEMTIME* st)
+{
+	WORD count = 0;
+	struct tm start = systemtime2tm(st);
+
+	WORD last = 0;
+	struct tm next = start;
+	next.tm_mday = 1;
+	next.tm_isdst = -1;
+	do
+	{
+
+		const time_t t = mktime(&next);
+		next.tm_mday++;
+
+		struct tm cur = { 0 };
+		localtime_r(&t, &cur);
+
+		if (cur.tm_mon + 1 != st->wMonth)
+			break;
+
+		if (cur.tm_wday == st->wDayOfWeek)
+		{
+			if (cur.tm_mday <= st->wDay)
+				count++;
+			last++;
+		}
+
+	} while (TRUE);
+
+	if (count == last)
+		count = 5;
+
+	return count;
+}
+
+static SYSTEMTIME tm2transitiontime(const struct tm* cur)
+{
+	SYSTEMTIME t = tm2systemtime(cur);
+	if (cur)
+	{
+		t.wDay = get_transition_weekday_occurrence(&t);
+		t.wYear = 0;
+	}
+
+	return t;
+}
+
 static SYSTEMTIME get_transition_time(const struct tm* start, BOOL toDst)
 {
 	BOOL toggled = FALSE;
 	struct tm first = adjust_time(start, 0, 0);
 	for (int hour = 0; hour < 24; hour++)
 	{
-		for (int minute = 0; minute < 60; minute++)
-		{
-			struct tm cur = adjust_time(start, hour, minute);
-			if (cur.tm_isdst != first.tm_isdst)
-				toggled = TRUE;
+		struct tm cur = adjust_time(start, hour, 0);
+		if (cur.tm_isdst != first.tm_isdst)
+			toggled = TRUE;
 
-			if (toggled)
-			{
-				if (toDst && (cur.tm_isdst > 0))
-					return tm2systemtime(&cur);
-				else if (!toDst && (cur.tm_isdst == 0))
-					return tm2systemtime(&cur);
-			}
+		if (toggled)
+		{
+			if (toDst && (cur.tm_isdst > 0))
+				return tm2transitiontime(&cur);
+			else if (!toDst && (cur.tm_isdst == 0))
+				return tm2transitiontime(&cur);
 		}
 	}
-	return tm2systemtime(start);
+	return tm2transitiontime(start);
 }
 
 static BOOL get_transition_date(const struct tm* start, BOOL toDst, SYSTEMTIME* pdate)
@@ -415,7 +479,7 @@ static BOOL get_transition_date(const struct tm* start, BOOL toDst, SYSTEMTIME* 
 	WINPR_ASSERT(start);
 	WINPR_ASSERT(pdate);
 
-	*pdate = tm2systemtime(NULL);
+	*pdate = tm2transitiontime(NULL);
 
 	if (start->tm_isdst < 0)
 		return FALSE;
@@ -423,8 +487,10 @@ static BOOL get_transition_date(const struct tm* start, BOOL toDst, SYSTEMTIME* 
 	BOOL val = start->tm_isdst > 0; // the year starts with DST or not
 	BOOL toggled = FALSE;
 	struct tm cur = *start;
+	struct tm last = cur;
 	for (int day = 1; day <= 365; day++)
 	{
+		last = cur;
 		cur = next_day(&cur);
 		const BOOL curDst = (cur.tm_isdst > 0);
 		if ((val != curDst) && !toggled)
@@ -434,12 +500,12 @@ static BOOL get_transition_date(const struct tm* start, BOOL toDst, SYSTEMTIME* 
 		{
 			if (toDst && curDst)
 			{
-				*pdate = get_transition_time(&cur, toDst);
+				*pdate = get_transition_time(&last, toDst);
 				return TRUE;
 			}
 			if (!toDst && !curDst)
 			{
-				*pdate = get_transition_time(&cur, toDst);
+				*pdate = get_transition_time(&last, toDst);
 				return TRUE;
 			}
 		}
