@@ -263,8 +263,12 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			} while ((status < 0) && (errno == EINTR));
 
 #endif
+			/* Convert timeout to error return */
+			if (status == 0)
+				errno = ETIMEDOUT;
 		}
 		break;
+
 		case BIO_C_WAIT_WRITE:
 		{
 			int timeout = (int)arg1;
@@ -298,14 +302,12 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			} while ((status < 0) && (errno == EINTR));
 
 #endif
+			/* Convert timeout to error return */
+			if (status == 0)
+				errno = ETIMEDOUT;
 		}
 		break;
-		default:
-			break;
-	}
 
-	switch (cmd)
-	{
 		case BIO_C_SET_FD:
 			if (arg2)
 			{
@@ -336,11 +338,8 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			status = 1;
 			break;
 
-		case BIO_CTRL_DUP:
-			status = 1;
-			break;
-
 		case BIO_CTRL_FLUSH:
+		case BIO_CTRL_DUP:
 			status = 1;
 			break;
 
