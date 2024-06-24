@@ -144,7 +144,7 @@ static UINT rdpsnd_ios_play(rdpsndDevicePlugin* device, const BYTE* data, size_t
 }
 
 static BOOL rdpsnd_ios_open(rdpsndDevicePlugin* device, const AUDIO_FORMAT* format,
-                            int __unused latency)
+                            UINT32 __unused latency)
 {
 	rdpsndIOSPlugin* p = THIS(device);
 
