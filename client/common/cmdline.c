@@ -49,6 +49,7 @@
 #include <freerdp/utils/proxy_utils.h>
 #include <freerdp/channels/urbdrc.h>
 #include <freerdp/channels/rdpdr.h>
+#include <freerdp/locale/locale.h>
 
 #if defined(CHANNEL_AINPUT_CLIENT)
 #include <freerdp/channels/ainput.h>
@@ -2796,6 +2797,9 @@ static int parse_kbd_options(rdpSettings* settings, const COMMAND_LINE_ARGUMENT_
 				LONGLONG ival = 0;
 				const BOOL isInt = value_to_int(&val[5], &ival, 1, UINT32_MAX);
 				if (!isInt)
+					ival = freerdp_get_locale_id_from_string(&val[5]);
+
+				if (ival <= 0)
 					rc = COMMAND_LINE_ERROR_UNEXPECTED_VALUE;
 				else if (!freerdp_settings_set_uint32(settings, FreeRDP_KeyboardCodePage,
 				                                      (UINT32)ival))
