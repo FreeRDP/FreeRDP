@@ -23,15 +23,13 @@
 #include <freerdp/primitives.h>
 #include <winpr/sysinfo.h>
 
-#if defined(WITH_NEON)
-#include <arm_neon.h>
-#endif
-
 #include "prim_internal.h"
 #include "prim_templates.h"
 #include "prim_YCoCg.h"
 
-#if defined(WITH_NEON)
+#if defined(NEON_ENABLED)
+#include <arm_neon.h>
+
 static primitives_t* generic = NULL;
 
 static pstatus_t neon_YCoCgToRGB_8u_X(const BYTE* WINPR_RESTRICT pSrc, INT32 srcStep,
@@ -159,7 +157,7 @@ static pstatus_t neon_YCoCgToRGB_8u_AC4R(const BYTE* WINPR_RESTRICT pSrc, INT32 
 /* ------------------------------------------------------------------------- */
 void primitives_init_YCoCg_neon(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(WITH_NEON)
+#if defined(NEON_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_YCoCg(prims);
 

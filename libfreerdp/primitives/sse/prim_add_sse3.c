@@ -22,15 +22,13 @@
 
 #include "prim_add.h"
 
-#ifdef WITH_SSE2
-#include <emmintrin.h>
-#include <pmmintrin.h>
-#endif /* WITH_SSE2 */
-
 #include "prim_internal.h"
 #include "prim_templates.h"
 
-#ifdef WITH_SSE2
+#if defined(SSE2_ENABLED)
+#include <emmintrin.h>
+#include <pmmintrin.h>
+
 static primitives_t* generic = NULL;
 
 /* ------------------------------------------------------------------------- */
@@ -172,13 +170,12 @@ static pstatus_t sse3_add_16s_inplace(INT16* WINPR_RESTRICT pSrcDst1,
 
 	return PRIMITIVES_SUCCESS;
 }
-
 #endif
 
 /* ------------------------------------------------------------------------- */
 void primitives_init_add_sse3(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_add(prims);
 

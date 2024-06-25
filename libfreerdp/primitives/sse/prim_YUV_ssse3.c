@@ -31,7 +31,7 @@
 #include "prim_internal.h"
 #include "prim_YUV.h"
 
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 #include <emmintrin.h>
 #include <tmmintrin.h>
 
@@ -1498,7 +1498,7 @@ static pstatus_t ssse3_YUV420CombineToYUV444(avc444_frame_type type,
 
 void primitives_init_YUV_ssse3(primitives_t* WINPR_RESTRICT prims)
 {
-#if defined(WITH_SSE2)
+#if defined(SSE2_ENABLED)
 	generic = primitives_get_generic();
 	primitives_init_YUV(prims);
 

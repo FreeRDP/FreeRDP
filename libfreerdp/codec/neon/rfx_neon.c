@@ -17,6 +17,7 @@
    limitations under the License.
 */
 
+#include <winpr/platform.h>
 #include <freerdp/config.h>
 #include <freerdp/log.h>
 
@@ -26,6 +27,12 @@
 #define TAG FREERDP_TAG("codec.rfx.neon")
 
 #if defined(WITH_NEON)
+#if defined(_M_ARM64) || defined(_M_ARM)
+#define NEON_ENABLED
+#endif
+#endif
+
+#if defined(NEON_ENABLED)
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -520,11 +527,11 @@ static void rfx_dwt_2d_extrapolate_decode_neon(INT16* buffer, INT16* temp)
 	rfx_dwt_2d_decode_extrapolate_block_neon(&buffer[3007], temp, 2);
 	rfx_dwt_2d_decode_extrapolate_block_neon(&buffer[0], temp, 1);
 }
-#endif // WITH_NEON
+#endif // NEON_ENABLED
 
 void rfx_init_neon(RFX_CONTEXT* context)
 {
-#if defined(WITH_NEON)
+#if defined(NEON_ENABLED)
 	if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE))
 	{
 		DEBUG_RFX("Using NEON optimizations");
