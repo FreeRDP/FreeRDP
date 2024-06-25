@@ -27,9 +27,7 @@ option(WITH_NEON "Enable NEON optimization." OFF)
 
 option(WITH_JPEG "Use JPEG decoding." OFF)
 
-if(CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-	set(CMAKE_COMPILER_IS_CLANG 1)
-endif()
+include(CompilerDetect)
 
 if(NOT WIN32)
 	CMAKE_DEPENDENT_OPTION(WITH_VALGRIND_MEMCHECK "Compile with valgrind helpers." OFF

@@ -73,6 +73,7 @@ include(CheckLibraryExists)
 include(CheckSymbolExists)
 include(CheckStructHasMember)
 include(TestBigEndian)
+include(CompilerDetect)
 
 include(FindFeature)
 include(ShowCMakeVars)
@@ -249,7 +250,7 @@ if (CMAKE_GENERATOR MATCHES "Unix Makefile*")
 	endif()
 endif()
 
-if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
+if(CMAKE_COMPILER_IS_CLANG)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-c11-extensions -Wno-gnu")
 endif()
 
@@ -260,7 +261,7 @@ if(NOT IOS)
 endif()
 
 # Enable address sanitizer, where supported and when required
-if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang" OR CMAKE_COMPILER_IS_GNUCC)
+if(CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_GNUCC)
 	CHECK_C_COMPILER_FLAG ("-fno-omit-frame-pointer" fno-omit-frame-pointer)
 
 	if (fno-omit-frame-pointer)
